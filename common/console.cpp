@@ -8,9 +8,15 @@
    
    Implementation guidelines: none. see what the neighbour did.  
    Keep the functions small (total less than 25 lines) or make calls
-   to functions in modules in your own platform/ area. 
+   to functions in modules in your own platform area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.11  1998/10/26 02:53:55  cyp
+// Added "Press any key..." functionality to DeinitializeConsole()
+//
+// Revision 1.10  1998/10/19 12:42:15  cyp
+// win16 changes
+//
 // Revision 1.9  1998/10/11 05:24:29  cyp
 // Implemented ConIsScreen(): a real (not a macro) isatty wrapper.
 //
@@ -41,7 +47,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.9 1998/10/11 05:24:29 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.11 1998/10/26 02:53:55 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -57,6 +63,7 @@ return "@(#)$Id: console.cpp,v 1.9 1998/10/11 05:24:29 cyp Exp $"; }
 #define USE_TERMIOS_FOR_INKEY
 #endif
 #endif
+#define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
 
 /* ---------------------------------------------------- */
 
@@ -69,15 +76,34 @@ static struct
 
 /* ---------------------------------------------------- */
 
-int DeinitializeConsole(void)
+int DeinitializeConsole(int autoclose)
 {
-
   if (constatics.initlevel == 1)
     {
-    #if (CLIENT_OS == OS_WIN32)
+    if (!autoclose && !constatics.runhidden)
+      {
+      #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || \
+          (CLIENT_OS==OS_WIN32S)
+        {
+        int init = 0;
+        time_t endtime = (CliTimer(NULL)->tv_sec) + CONCLOSE_DELAY;
+        do{
+          char buffer[80];
+          int remaining = (int)(endtime - (CliTimer(NULL)->tv_sec));
+          if (remaining <= 0)
+            break;
+          sprintf( buffer, "%sPress any key to continue... %d  ",
+                   ((!init)?("\n\n"):("\r")), remaining );
+          init = 1;
+          ConOut( buffer );
+          } while (ConInKey(1000) == 0);
+        }
+      #endif
+      }
+    #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
       w32DeinitializeConsole();
     #endif
-    } /* constatics.initlevel == 0 */
+    } 
 
   constatics.initlevel--;
 
@@ -90,22 +116,21 @@ int InitializeConsole(int runhidden)
 {
   int retcode = 0;
 
-  constatics.initlevel++;
-  if (constatics.initlevel == 1) 
+  if ((++constatics.initlevel) == 1) 
     {
     memset( (void *)&constatics, 0, sizeof(constatics) );
     constatics.initlevel = 1;
     constatics.runhidden = runhidden;
 
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
     retcode = w32InitializeConsole(runhidden);
     #endif
 
     if (retcode != 0)
-      DeinitializeConsole(); /* decrement constatics.initlevel */
+      --constatics.initlevel;
     else if (!runhidden)
       {
-      #if (CLIENT_OS == OS_WIN32)
+      #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
         constatics.conisatty = w32ConIsScreen();
       #elif (CLIENT_OS == OS_RISCOS)
         constatics.conisatty = 1;
@@ -135,7 +160,7 @@ int ConOut(const char *msg)
 {
   if (constatics.initlevel > 0 /*&& constatics.conisatty*/ )
     {
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
       w32ConOut(msg);
     #else
       fwrite( msg, sizeof(char), strlen(msg), stdout);
@@ -155,7 +180,7 @@ int ConOut(const char *msg)
 
 int ConOutModal(const char *msg)
 {
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
      MessageBox( NULL, msg, CLICONS_LONGNAME, 
            MB_OK | MB_ICONINFORMATION );
   #elif (CLIENT_OS == OS_OS2)
@@ -177,9 +202,9 @@ int ConOutModal(const char *msg)
 
 int ConOutErr(const char *msg)
 {
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
     MessageBox( NULL, msg, CLICONS_LONGNAME, 
-                 MB_OK | MB_TASKMODAL | MB_ICONERROR );
+                 MB_OK | MB_TASKMODAL | MB_ICONSTOP /*MB_ICONERROR*/ );
   #elif (CLIENT_OS == OS_OS2)
      WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, msg, (PSZ)NULL,
            CLICONS_LONGNAME, MB_OK | MB_APPLMODAL | MB_ERROR | MB_MOVEABLE );
@@ -233,6 +258,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_NETWARE) || \
          (CLIENT_OS == OS_OS2)
         {
+        fflush(stdout);
         if (kbhit())
           {
           ch = getch();
@@ -245,6 +271,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         struct termios stored;
         struct termios newios;
 
+        fflush(stdout);
         tcgetattr(0,&stored); /* Get the original termios configuration */
         memcpy(&newios,&stored,sizeof(struct termios));
         newios.c_lflag &= ~(ICANON|ECHO|ECHONL); /* disable canonical mode */
@@ -308,9 +335,12 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
   if (!buffer || !buflen)
     return 0;
 
-  if ((flags & (CONINSTR_BYEXAMPLE|CONINSTR_ASPASSWORD)) == CONINSTR_BYEXAMPLE)
+  if ((flags & CONINSTR_ASPASSWORD)!=0)
+    flags = CONINSTR_ASPASSWORD;
+
+  if ((flags & CONINSTR_BYEXAMPLE) != 0)
     {
-    printf("%s",buffer);
+    ConOut(buffer);
     pos = strlen( buffer );
     }
   else
@@ -320,7 +350,6 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
     }
 
   do {
-     fflush(stdout);
      ch = ConInKey(-1);
      exitreq = CheckExitRequestTriggerNoIO();
 
@@ -330,15 +359,13 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
          {
          if (pos > 0)  
            {
-           putchar('\b');
-           putchar(' ');
-           putchar('\b');
+           ConOut("\b \b");
            pos--;
            }
          }
        else if (ch == '\n' || ch == '\r') 
          {
-         putchar('\n');
+         ConOut("\n");
          exitreq = 1;
          }
        else if (pos < (buflen-1)) 
@@ -347,13 +374,17 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
          if ((flags & CONINSTR_ASPASSWORD) != 0)
            ch = '*';
          if (isalpha(ch) || isspace(ch) || isdigit(ch) || ispunct(ch))
-         /* if (!isctrl(ch)) */
-           putchar(ch);
+           {
+           /* if (!isctrl(ch)) */
+           char x[2];
+           x[0]=ch; x[1]=0;
+           ConOut(x);
+           }
          }
        }
      } while (!exitreq);
 
-   fflush(stdout);
+   ConOut(""); /* flush */
    buffer[pos] = 0;
 
    return strlen(buffer);
@@ -400,11 +431,13 @@ int ConInStr(char *buffer, unsigned int buflen )
 /* ---------------------------------------------------- */
 
 #if 0  /* unimplemented */
-int ConGetPos( int *row, int *col )  /* zero-based */
+int ConGetPos( int *col, int *row )  /* zero-based */
 {
   if (constatics.initlevel > 0 && constatics.conisatty)
     {
-    #if (CLIENT_OS == OS_NETWARE)
+    #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+    w32ConGetPos(col,row);
+    #elif (CLIENT_OS == OS_NETWARE)
     short x, y;
     GetOutputCursorPosition( &x, &y );
     row = (int)y; col = (int)x;
@@ -418,13 +451,12 @@ int ConGetPos( int *row, int *col )  /* zero-based */
 /* ---------------------------------------------------- */
 
 #if 0 /* unimplemented */
-int ConSetPos( int row, int col )  /* zero-based */
+int ConSetPos( int col, int row )  /* zero-based */
 {
   if (constatics.initlevel > 0 && constatics.conisatty)
     {
-    #if (CLIENT_OS == OS_WIN32)
-    COORD newpos = {col,row};
-    SetConsoleCursorPosition( GetStdHandle(STD_OUTPUT_HANDLE), newpos );
+    #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+    w32ConSetPos(col,row);
     #elif (CLIENT_OS == OS_NETWARE)
     gotoxy( (short)col, (short)row );
     #endif
@@ -445,7 +477,7 @@ int ConClear(void)
 {
   if (constatics.initlevel > 0 && constatics.conisatty)
     {
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
       if (w32ClearScreen() != 0)
         return -1;
     #elif (CLIENT_OS == OS_OS2)
