@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.221 1999/05/05 00:25:17 remi Exp $
+# @(#)$Id: configure,v 1.222 1999/05/07 20:54:27 remi Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -862,7 +862,7 @@ case "$1" in
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ \
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS=""
