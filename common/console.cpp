@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.47 2000/11/02 18:29:46 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.48 2000/11/04 20:01:34 oliver Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -115,6 +115,8 @@ int InitializeConsole(int *runhidden,int doingmodes)
      #if defined(__EMX__)
      v_init();
      #endif
+    #elif (CLIENT_OS == OS_AMIGAOS)
+    retcode = amigaInitializeConsole(constatics.runhidden,doingmodes);
     #endif
 
     if (retcode != 0)
