@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: threadcd.cpp,v $
+// Revision 1.10  1998/07/05 22:57:16  cyruspatel
+// Added code to suppress compiler warnings that appear in non-mt makes.
+//
 // Revision 1.9  1998/06/29 04:22:30  jlawson
 // Updates for 16-bit Win16 support
 //
@@ -28,7 +31,11 @@
 // This module encapsulates functions for the creation and destruction of
 // a single thread - used by client.cpp and piproxy.cpp
 
-static const char *id="@(#)$Id: threadcd.cpp,v 1.9 1998/06/29 04:22:30 jlawson Exp $";
+#if (!defined(lint) && defined(__showids__))
+const char *threadcd_cpp(void) { 
+static const char *id="@(#)$Id: threadcd.cpp,v 1.10 1998/07/05 22:57:16 cyruspatel Exp $";
+return id; } 
+#endif
 
 #include "threadcd.h"   //includes implementation and porting notes.
 #include "sleepdef.h"   //sleep() and usleep()
@@ -42,6 +49,7 @@ int CliDestroyThread( THREADID cliThreadID )
 {
   int rescode = 0;
   #if !defined(OS_SUPPORTS_THREADING)
+     rescode = ((cliThreadID)?(1):(0)); //suppress compiler warning
      rescode = -1;
   #elif (CLIENT_OS == OS_OS2)
      DosWaitThread( &cliThreadID, DCWW_WAIT);
@@ -111,6 +119,7 @@ THREADID CliCreateThread( void (*proc)(void *), void *param )
   THREADID cliThreadID;
 
   #ifndef OS_SUPPORTS_THREADING
+    cliThreadID = (param==NULL || proc==NULL); //suppress compiler warns
     cliThreadID = (THREADID) NULL;
   #else
     {
