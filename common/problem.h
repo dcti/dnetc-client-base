@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.53.2.3 2001/03/22 22:12:50 sampo Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.53.2.4 2001/03/23 08:41:47 sampo Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -200,37 +200,23 @@ int ProblemIsInitialized(void *__thisprob);
 // Returns RESULT_* or -1 if error.
 int ProblemRun(void *__thisprob);
 
-// more than you'll ever care to know :) any arg can be 0/null */
-// returns RESULT_* or -1 if bad state
-// *tcount* == total (n/a if not finished), *ccount* == numdone so far 
-// this time, *dcount* == numdone so far all times. 
-// numstring_style: -1=unformatted, 0=commas, 
-// 1=0+space between magna and number (or at end), 2=1+"nodes"/"keys"
-
-/* more info than you ever wanted. :)
- * sig/idbuf: packet identifier
- * cwpbuf: current working position
- * tcount = total_number_of_iterations_to_do
- * ccount = number_of_iterations_done_thistime.
- * dcount = number_of_iterations_done_ever
- * counts are unbiased (adjustment for DES etc already done)
-*/
-
 typedef struct ProblemInfo {
-  u32 elapsed_secs;
+  u32 elapsed_secs;                 // elapsed core runtime so far.
   u32 elapsed_usecs;
-  u32 swucount;
-  u32 c_permille;
-  u32 s_permille;
+  u32 swucount;                     // no. of work units problem has loaded
+  u32 c_permille;                   // current permille
+  u32 s_permille;                   // start   permille
   int permille_only_if_exact;
   int is_test_packet;
   int show_exact_iterations_done;
-//int stats_units_are_integer
-  u32 ratehi, ratelo;
-  u32 tcounthi, tcountlo;
-  u32 ccounthi, ccountlo;
-  u32 dcounthi, dcountlo;
-  char *ratebuf, *sigbuf, *cwpbuf;
+  int stats_units_are_integer
+  u32 ratehi, ratelo;               // core rate
+  u32 tcounthi, tcountlo;           // total number of iterations to do
+  u32 ccounthi, ccountlo;           // number of iterations done this time
+  u32 dcounthi, dcountlo;           // number of iterations done ever
+  char *ratebuf;
+  char *sigbuf;                     // packet identifier
+  char *cwpbuf;                     // current working position
   u32 ratebufsz, sigbufsz, cwpbufsz;
 } ProblemInfo;
 
@@ -246,6 +232,7 @@ typedef struct ProblemInfo {
 #define P_INFO_SIGBUF      0x00000200
 #define P_INFO_CWPBUF      0x00000400
 
+// returns RESULT_* or -1 if bad state
 int ProblemGetInfo(void *__thisprob, ProblemInfo *info, u32 flags);
 
 Problem *ProblemAlloc(void);

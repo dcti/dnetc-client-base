@@ -12,7 +12,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.66.2.3 2001/03/22 22:31:04 sampo Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.66.2.4 2001/03/23 08:41:47 sampo Exp $"; }
 
 //#define TRACE
 
@@ -528,6 +528,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
             if (finito && info.show_exact_iterations_done)
             {
               Log("%s: %s [%s]\n", CliGetContestNameFromID(cont_i), pktid,
+              // XXX is this supposed to be info.dcount[hi,lo], or info.ccount[hi,lo] ?
               ProblemComputeRate(cont_i, 0, 0, info.dcounthi, info.dcountlo, 0, 0, dcountbuf, sizeof(dcountbuf)));
             }
           } /* if (reason_msg) else */
