@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.73 2001/05/15 01:07:53 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.74 2001/05/22 12:36:16 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -869,7 +869,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0000,     -1, NULL     }
           }; internalxref = &vpc[0];
       vendorname = "Connectix";
-      cpuidbmask = 0x0ff0;
+      cpuidbmask = 0x0fff;
     }
     else if ( vendorid == 0x6543 /* 'eC' */ ) /* "CentaurHauls" */
     {
@@ -883,7 +883,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
       vendorname = "Centaur/IDT";
       if (cpuid >= 0x0600)
         vendorname = "VIA";
-      cpuidbmask = 0xfff0;
+      cpuidbmask = 0x0ff0;
     }
     else if ( vendorid == 0x6952 /* 'iR' */  ) /* "RiseRiseRiseRise" */
     {
@@ -962,6 +962,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0510,      0, "Pentium" },
           {  0x0520,      0, "Pentium" },
           {  0x0530,      0, "Pentium Overdrive" },
+          {  0x0545,      0, "Pentium (buggy-MMX)" }, /* MMX core crash - #2204 */
           {  0x0540,  0x100, "Pentium MMX" },
           {  0x0570,      0, "Pentium" },
           {  0x0580,  0x100, "Pentium MMX" },
@@ -984,7 +985,11 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0000,     -1, NULL }
           }; internalxref = &intelxref[0];
       vendorname = "Intel"; 
-      cpuidbmask = 0x0ff0; //strip brand/type AND stepping bits.
+
+      cpuidbmask = 0x0fff; //strip brand/type
+      if ((cpuid & cpuidbmask) != 0x0545) /* not buggy mmx */
+        cpuidbmask = 0x0ff0; //strip brand/type AND stepping bits.
+
       if ((cpuid & 0x0f00) == 0x0F00) /* end of the road */
         cpuid &= 0x0f00;
       else if ((cpuid & 0x0ff0) >= 0x650) /* have brand bits */
@@ -1015,7 +1020,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
   
       for (pos = 0; internalxref[pos].cpuname; pos++ )
       {
-        if (maskedid == (internalxref[pos].cpuid & cpuidbmask)) /* found it */
+        if (maskedid == internalxref[pos].cpuid) /* found it */
         {
           simpleid    = internalxref[pos].simpleid;
           detectedtype = dettype;
