@@ -18,7 +18,7 @@
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.4 2003/01/24 05:09:24 snake Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.5 2003/02/18 00:43:07 snake Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -540,8 +540,6 @@
   }
 
 #elif (CLIENT_CPU == CPU_VAX) && defined(__GNUC__)
-
-  #error "please check this"
 
   typedef struct { __volatile int spl; } fastlock_t;
   #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
