@@ -3,6 +3,19 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.20.2.3  1998/12/15 23:37:02  remi
+// Synced with :
+//
+//  Revision 1.23  1998/12/14 11:43:27  cyp
+//  (*unit_func)(...) style core selection is now completed in Prob::LoadState()
+//
+//  Revision 1.22  1998/12/01 19:49:14  cyp
+//  Cleaned up MULT1THREAD #define. See cputypes.h for full log entry.
+//
+//  Revision 1.21  1998/11/28 17:44:38  remi
+//  Integration of the 386/486 self modifying core.
+//  Wrapped $Log comments.
+//
 // Revision 1.20.2.2  1998/11/08 11:51:53  remi
 // Lots of $Log tags.
 //
@@ -116,13 +129,14 @@ int Client::SelectCore(int quietly)
     {
     if (cputype == -1)
       {
-      double fasttime = 0;
       if (!quietly)
         LogScreen("Manually selecting fastest core...\n"
                 "This is a guess based on a small test of each core.\n"
                 "If you know what processor this machine has, then please\n"
                 "please set it in the client's configuration.\n");
 
+      double fasttime = 0;
+      int whichcrunch;      
       for (whichcrunch = 0; whichcrunch < 2; whichcrunch++)
         {
         const s32 benchsize = 500000L;
@@ -138,12 +152,8 @@ int Client::SelectCore(int quietly)
         contestwork.iterations.hi = htonl( 0 );
         problem.LoadState( &contestwork, 0, benchsize, whichcrunch ); // RC5 core selection
 
-        //if (!quietly)
-        //  LogScreen("Benchmarking the %s core... ", ((whichcrunch)?("second"):("first")));
         problem.Run( 0 ); //threadnum
         double elapsed = CliGetKeyrateForProblemNoSave( &problem );
-        //if (!quietly)
-        //  LogScreen( "%.1f kkeys/sec\n", (elapsed / 1000.0) );
 
         if (cputype < 0 || elapsed < fasttime)
           {cputype = whichcrunch; fasttime = elapsed;}
@@ -152,10 +162,10 @@ int Client::SelectCore(int quietly)
       }
     }
   #endif
-  whichcrunch = cputype;
   
   if (!quietly)
     LogScreen( "Selected %s code.\n", GetCoreNameFromCoreType(cputype) ); 
+
 #elif (CLIENT_CPU == CPU_68K)
 
   if (cputype == -1)
@@ -163,15 +173,9 @@ int Client::SelectCore(int quietly)
     
   const char *corename = NULL;
   if (cputype == 4 || cputype == 5 ) // there is no 68050, so type5=060
-    {
-    rc5_unit_func = rc5_unit_func_040_060;
     corename = "040/060";
-    }
   else //if (cputype == 0 || cputype == 1 || cputype == 2 || cputype == 3)
-    {
-    rc5_unit_func = rc5_unit_func_000_030;
     corename = "000/010/020/030";
-    }
   if (!quietly)
     LogScreen( "Selected code optimized for the Motorola 68%s.\n", corename ); 
 
@@ -191,63 +195,61 @@ int Client::SelectCore(int quietly)
     /* we need detection for mmx cores */
     detectedtype = GetProcessorType(1); /* but do it quietly */
 
-  #if ((defined(KWAN) || defined(MEGGS)) && !defined(MMX_BITSLICER))
-    #define DESUNITFUNC51 des_unit_func_slice
-    #define DESUNITFUNC52 des_unit_func_slice
-    #define DESUNITFUNC61 des_unit_func_slice
-    #define DESUNITFUNC62 des_unit_func_slice
-    selmsg_des = "Kwan bitslice";
-  #else
-    #define DESUNITFUNC51 p1des_unit_func_p5
-    #define DESUNITFUNC52 p1des_unit_func_p5
-    #define DESUNITFUNC61 p1des_unit_func_pro
-    #define DESUNITFUNC62 p1des_unit_func_pro
-  #endif
-
   if (cputype == 1) // Intel 386/486
     {
-    rc5_unit_func = rc5_unit_func_486;
-    des_unit_func = DESUNITFUNC51;  //p1des_unit_func_p5;
-    des_unit_func2 = DESUNITFUNC52; //p2des_unit_func_p5;
+    //rc5_unit_func = rc5_unit_func_486;
+    #if defined(SMC) 
+      {
+      #if defined(CLIENT_SUPPORTS_SMP)
+      if (numcpu < 2)
+      #endif
+        {
+        //rc5_unit_func =  rc5_unit_func_486_smc;
+        selmsg_rc5 = "80386 & 80486 self modifying";
+        }
+      }
+    #endif
+    //des_unit_func = DESUNITFUNC51;  //p1des_unit_func_p5;
+    //des_unit_func2 = DESUNITFUNC52; //p2des_unit_func_p5;
     }
   else if (cputype == 2) // Ppro/PII
     {
-    rc5_unit_func = rc5_unit_func_p6;
-    des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
-    des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
+    //rc5_unit_func = rc5_unit_func_p6;
+    //des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
+    //des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
     selppro_des = 1;
     }
   else if (cputype == 3) // 6x86(mx)
     {
-    rc5_unit_func = rc5_unit_func_6x86;
-    des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
-    des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
+    //rc5_unit_func = rc5_unit_func_6x86;
+    //des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
+    //des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
     selppro_des = 1;
     }
   else if (cputype == 4) // K5
     {
-    rc5_unit_func = rc5_unit_func_k5;
-    des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
-    des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
+    //rc5_unit_func = rc5_unit_func_k5;
+    //des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
+    //des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
     }
   else if (cputype == 5) // K6/K6-2
     {
-    rc5_unit_func = rc5_unit_func_k6;
-    des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
-    des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
+    //rc5_unit_func = rc5_unit_func_k6;
+    //des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
+    //des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
     selppro_des = 1;
     }
   else // Pentium (0/6) + others
     {
-    rc5_unit_func = rc5_unit_func_p5;
-    des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
-    des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
+    //rc5_unit_func = rc5_unit_func_p5;
+    //des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
+    //des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
     cputype = 0;
     
     #if defined(MMX_RC5)
     if (detectedtype == 0x106) /* Pentium MMX only! */
       {
-      rc5_unit_func = rc5_unit_func_p5_mmx;
+      //rc5_unit_func = rc5_unit_func_p5_mmx;
       selmsg_rc5 = "Pentium MMX";
       }
     #endif
@@ -256,7 +258,7 @@ int Client::SelectCore(int quietly)
   #if defined(MMX_BITSLICER)
   if (detectedtype & 0x100)   // use the MMX DES core ?
     { 
-    des_unit_func = des_unit_func2 = des_unit_func_mmx;
+    //des_unit_func = des_unit_func2 = des_unit_func_mmx;
     selmsg_des = "MMX bitslice";
     }
   #endif
@@ -270,11 +272,6 @@ int Client::SelectCore(int quietly)
     LogScreen( "DES: selecting %s core.\n"
                "RC5: selecting %s core.\n", selmsg_des, selmsg_rc5 );
       
-  #undef DESUNITFUNC61
-  #undef DESUNITFUNC62
-  #undef DESUNITFUNC51
-  #undef DESUNITFUNC52
-
 #elif (CLIENT_CPU == CPU_ARM)
   if (cputype == -1)
     {
