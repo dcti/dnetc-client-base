@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.34  1998/12/08 05:27:51  dicamillo
+// Add includes for MacOS
+//
 // Revision 1.33  1998/11/25 09:23:26  chrisb
 // various changes to support x86 coprocessor under RISC OS
 //
@@ -277,6 +280,28 @@ extern "C" {
   };
   extern "C" int gethostname(char *, int);
   extern "C" int gettimeofday(struct timeval *, struct timezone *);
+#elif (CLIENT_OS == OS_MACOS)
+  #include <sys/time.h>
+  #include <stat.mac.h>
+  #include <machine/endian.h>
+  #include <unistd.h>
+  #define _UTIME
+  #include <unix.mac.h>
+  #include "mac_extras.h"
+  #include <console.h>
+  void YieldToMain(char force_events);
+  u32 GetTimesliceToUse(u32 contestid);
+  void tick_sleep(unsigned long tickcount);
+  extern short MP_active;
+  #if defined(MAC_GUI)
+    #include "gui_incs.h"
+  #endif
+  #if defined(MULTITHREAD)
+    #include <Multiprocessing.h>
+    extern "C" unsigned long mp_sleep(unsigned long seconds);
+    extern MPCriticalRegionID MP_count_region;
+	extern volatile s32 ThreadIsDone[2*MAC_MAXCPUS];
+  #endif
 #endif
 
 // --------------------------------------------------------------------------
