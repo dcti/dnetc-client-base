@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.44  1998/10/05 02:43:28  cyp
+// Removed "-nommx" from the option list. -nommx is/will be undocumented and
+// for internal/developer use only.
+//
 // Revision 1.43  1998/10/04 19:43:00  remi
 // Added help lines for -benchmark*
 //
@@ -138,7 +142,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.43 1998/10/04 19:43:00 remi Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.44 1998/10/05 02:43:28 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -330,14 +334,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
   "-e <address>       the email id by which you are known to distributed.net",
   "-nice <[0-2]>      niceness",
   "-c <cputype>       cpu type (run -config for a list of valid cputype numbers)",
-  #if defined(MMX_BITSLICER) || defined(MMX_RC5)
-  "-nommx             don't use MMX instructions",
-  #endif
-  #ifdef MULTITHREAD
-  "-numcpu <n>        run simultaneously on <n> CPUs",
-  #else
-  "-numcpu <n>        run simultaneously on <n> CPUs (ignored on this platform)",
-  #endif
+  "-numcpu <n>        run <n> threads/run on <n> cpus",
   "-h <hours>         time limit in hours",
   "-n <count>         blocks to complete",
   "-until <HHMM>      quit at HHMM (eg 0700)",
@@ -372,7 +369,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
 #if (CLIENT_OS == OS_WIN32)
   "-install           install the client as a service",
   "-uninstall         uninstall the client if running as a service",
-  "-hide              hide the client from the desktop",
+  "-hide              run hidden",
 #endif
 #if (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)
   "-lurk              automatically detect modem connections",
