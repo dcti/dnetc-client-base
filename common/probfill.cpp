@@ -12,7 +12,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.66.2.4 2001/03/23 08:41:47 sampo Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.66.2.5 2001/03/23 21:40:55 sampo Exp $"; }
 
 //#define TRACE
 
@@ -398,7 +398,6 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       const char *action_msg = 0;
       const char *reason_msg = 0;
       int discarded = 0;
-      char pktid[32], ratebuf[32]; 
       char dcountbuf[64]; /* we use this as scratch space too */
       struct timeval tv;
 
@@ -473,10 +472,6 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
           action_msg = "Completed";
       }
       ProblemInfo info;
-      info.sigbuf = pktid;
-      info.sigbufsz = sizeof(pktid);
-      info.ratebuf = ratebuf;
-      info.ratebufsz = sizeof(ratebuf);
       info.permille_only_if_exact = 1;
       
       if (ProblemGetInfo( thisprob, &info, P_INFO_E_TIME   | P_INFO_SWUCOUNT | P_INFO_C_PERMIL |
@@ -495,7 +490,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
             //[....] Discarded CSC 12345678:ABCDEF00 4*2^28
             //       (project disabled/closed)
             Log("%s: %s %s%c(%s)\n", CliGetContestNameFromID(cont_i), action_msg,
-                                     pktid, ((strlen(reason_msg)>10)?('\n'):(' ')), reason_msg );
+                                     info.sigbuf, ((strlen(reason_msg)>10)?('\n'):(' ')), reason_msg );
           }
           else
           {
@@ -505,7 +500,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
                      ((resultcode==RESULT_NOTHING)?("NOTHING"):("FOUND")) );
             else if (finito) /* finished non-test packet */ 
             {
-              char *p = strrchr(pktid,':'); /* HACK! to supress too long */
+              char *p = strrchr(info.sigbuf,':'); /* HACK! to supress too long */
               if (p) *p = '\0';            /* crypto "Completed" lines */
               sprintf( dcountbuf, "%u.%02u stats units", info.swucount/100, info.swucount%100);
             }
@@ -523,11 +518,11 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
             //[....] OGR: Completed 22/1-3-5-7 (12.30 stats units)
             //       1.23:45:67:89 - [987,654,321 nodes/s]
             Log("%s: %s %s (%s)\n%s - [%s/s]\n", 
-              CliGetContestNameFromID(cont_i), action_msg, pktid, dcountbuf,
-              CliGetTimeString( &tv, 2 ), ratebuf );
+              CliGetContestNameFromID(cont_i), action_msg, info.sigbuf, dcountbuf,
+              CliGetTimeString( &tv, 2 ), info.ratebuf );
             if (finito && info.show_exact_iterations_done)
             {
-              Log("%s: %s [%s]\n", CliGetContestNameFromID(cont_i), pktid,
+              Log("%s: %s [%s]\n", CliGetContestNameFromID(cont_i), info.sigbuf,
               // XXX is this supposed to be info.dcount[hi,lo], or info.ccount[hi,lo] ?
               ProblemComputeRate(cont_i, 0, 0, info.dcounthi, info.dcountlo, 0, 0, dcountbuf, sizeof(dcountbuf)));
             }
@@ -705,11 +700,9 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     
         if (load_problem_count <= COMBINEMSG_THRESHOLD)
         {
-          char pktid[32]; char ddonebuf[15];
+          char ddonebuf[15];
           ProblemInfo info;
           info.permille_only_if_exact = 1;
-          info.sigbuf = pktid;
-          info.sigbufsz = sizeof(pktid);
           if (ProblemGetInfo( thisprob, &info, P_INFO_S_PERMIL | P_INFO_SIGBUF | P_INFO_DCOUNT) != -1)
           {
             const char *extramsg = ""; 
@@ -733,7 +726,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
             
             Log("%s: Loaded %s%s%s\n",
                  CliGetContestNameFromID(thisprob->pub_data.contest),
-                 ((thisprob->pub_data.is_random)?("random "):("")), pktid, extramsg );
+                 ((thisprob->pub_data.is_random)?("random "):("")), info.sigbuf, extramsg );
           } /* if (thisprob->GetProblemInfo(...) != -1) */
         } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
       } /* if (LoadState(...) != -1) */

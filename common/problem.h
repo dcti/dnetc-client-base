@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.53.2.4 2001/03/23 08:41:47 sampo Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.53.2.5 2001/03/23 21:40:59 sampo Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -214,10 +214,9 @@ typedef struct ProblemInfo {
   u32 tcounthi, tcountlo;           // total number of iterations to do
   u32 ccounthi, ccountlo;           // number of iterations done this time
   u32 dcounthi, dcountlo;           // number of iterations done ever
-  char *ratebuf;
-  char *sigbuf;                     // packet identifier
-  char *cwpbuf;                     // current working position
-  u32 ratebufsz, sigbufsz, cwpbufsz;
+  char ratebuf[32];
+  char sigbuf[32];                     // packet identifier
+  char cwpbuf[32];                     // current working position
 } ProblemInfo;
 
 #define P_INFO_E_TIME      0x00000001

@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.52.2.3 2001/03/22 22:15:44 sampo Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.52.2.4 2001/03/23 21:40:54 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1024,21 +1024,18 @@ void LogScreenPercent( unsigned int load_problem_count )
       pbuf[prob_i] = 0;
       if (selprob)
       {
-        unsigned int permille = 0, startpermille = 0;  int girc = -1;
-        cont_i = 0;
+        int girc = -1;
+        cont_i = selprob->pub_data.contest;
  
         if (disp_format != DISPFORMAT_PERC &&
             (!buffer[0] || prob_i == selprob_i))
         {
-          char blkdone[32], blksig[32];
+          char blkdone[32];
           ProblemInfo info;
-          info.cwpbuf = blksig;
-          info.cwpbufsz = sizeof(blksig);
           info.permille_only_if_exact = 0;
           
           girc = ProblemGetInfo(selprob, &info, P_INFO_S_PERMIL | P_INFO_C_PERMIL  |
                                                 P_INFO_CWPBUF   | P_INFO_DCOUNT);
-          cont_i = selprob->pub_data.contest;
           permille = info.c_permille;
           startpermille = info.s_permille;
 
@@ -1047,7 +1044,7 @@ void LogScreenPercent( unsigned int load_problem_count )
           else if (girc != -1)
           {
             sprintf(buffer, "#%u: %s:%s [%s]", 
-                    prob_i+1, CliGetContestNameFromID(cont_i), blksig, 
+                    prob_i+1, CliGetContestNameFromID(cont_i), info.cwpbuf,
                     U64stringify(blkdone, sizeof(blkdone), info.dcounthi,
                     info.dcountlo, 2, CliGetContestUnitFromID(cont_i)));
             //there isn't enough space for percent so don't even think about it
@@ -1058,7 +1055,6 @@ void LogScreenPercent( unsigned int load_problem_count )
           ProblemInfo info;
           info.permille_only_if_exact = 0;
           girc = ProblemGetInfo(selprob, &info, P_INFO_C_PERMIL | P_INFO_S_PERMIL);
-          cont_i = selprob->pub_data.contest;
           permille = info.c_permille;
           startpermille = info.s_permille;
         }

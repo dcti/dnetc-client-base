@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.108.2.7 2001/03/22 22:41:24 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.108.2.8 2001/03/23 21:40:57 sampo Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -2076,7 +2076,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, u32 flags)
     info->is_test_packet = contestid == RC5 && 
                            work.crypto.iterations.lo == 0x00100000 &&
                            work.crypto.iterations.hi == 0;
-    //info->stats_units_are_integer = (contestid != OGR);
+    info->stats_units_are_integer = (contestid != OGR);
     info->show_exact_iterations_done = (contestid == OGR);
 
     if (flags & (P_INFO_E_TIME | P_INFO_RATE | P_INFO_RATEBUF))
@@ -2188,24 +2188,18 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, u32 flags)
             }
             if (flags & P_INFO_SIGBUF)
             {
-              char scratch[32];
-              sprintf( scratch, "%08lX:%08lX:%u*2^%u", 
+              sprintf( info->sigbuf, "%08lX:%08lX:%u*2^%u", 
                        (unsigned long) ( work.crypto.key.hi ),
                        (unsigned long) ( work.crypto.key.lo ),
                        units, twoxx );
-              strncpy( info->sigbuf, scratch, info->sigbufsz );
-              info->sigbuf[info->sigbufsz-1] = '\0';
             }
             if (flags & P_INFO_CWPBUF)
             {
               // ToDo: do something different here - any ideas for a cwp for crypto packets?
-              char scratch[32];
-              sprintf( scratch, "%08lX:%08lX:%u*2^%u", 
+              sprintf( info->cwpbuf, "%08lX:%08lX:%u*2^%u", 
                        (unsigned long) ( work.crypto.key.hi ),
                        (unsigned long) ( work.crypto.key.lo ),
                        units, twoxx );
-              strncpy( info->cwpbuf, scratch, info->cwpbufsz );
-              info->cwpbuf[info->cwpbufsz-1] = '\0';
             }
             if ((flags & P_INFO_SWUCOUNT) && (tcounthi || tcountlo)) /* only if finished */
             {
@@ -2233,11 +2227,11 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, u32 flags)
 
             if (flags & P_INFO_SIGBUF)
             {
-              ogr_stubstr_r( &work.ogr.workstub.stub, info->sigbuf, info->sigbufsz, 0);
+              ogr_stubstr_r( &work.ogr.workstub.stub, info->sigbuf, 32, 0);
             }
             if (flags & P_INFO_CWPBUF)
             {
-              ogr_stubstr_r( &work.ogr.workstub.stub, info->cwpbuf, info->cwpbufsz, work.ogr.workstub.worklength);
+              ogr_stubstr_r( &work.ogr.workstub.stub, info->cwpbuf, 32, work.ogr.workstub.worklength);
             }
             if ((flags & P_INFO_SWUCOUNT) && (tcounthi || tcountlo)) /* only if finished */
             {
@@ -2261,26 +2255,15 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, u32 flags)
 
         if (flags & (P_INFO_RATE | P_INFO_RATEBUF))
         {
-          char * _ratebuf = 0;
-          u32 _ratebufsz = 0;
-          
-          if(flags & P_INFO_RATEBUF)
-          {
-            _ratebuf = info->ratebuf;
-            _ratebufsz = info->ratebufsz;
-          }
           ProblemComputeRate( contestid, e_sec, e_usec, ccounthi, ccountlo,
-                              &hi, &lo, _ratebuf, _ratebufsz );
+                              &hi, &lo, info->ratebuf, 32 );
           if (rate2wuspeed && lo)
           {
             CliSetContestWorkUnitSpeed( contestid, (unsigned int)
                                         ((1+rate2wuspeed) / lo) );     
           }
-          if (flags & P_INFO_RATE)
-          {
-            info->ratehi = hi;
-            info->ratelo = lo;
-          }
+          info->ratehi = hi;
+          info->ratelo = lo;
         }
         if (flags & P_INFO_C_PERMIL)
         {

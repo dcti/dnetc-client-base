@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.57.2.3 2001/03/22 22:18:15 sampo Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.57.2.4 2001/03/23 21:40:52 sampo Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -269,11 +269,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         }                                 
         if (permille == 1000) /* time is up or ran out of work */
         {
-          char ratebuf[32];
           ProblemInfo info;
-          info.ratebuf = ratebuf;
-          info.ratebufsz = sizeof(ratebuf);
-          
           if (ProblemGetInfo(thisprob, &info, P_INFO_E_TIME | P_INFO_RATEBUF |
                                               P_INFO_RATE) == -1)
           {
@@ -284,7 +280,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
           if (bestlo || besthi)
           {
             ProblemComputeRate( contestid, 0, 0, besthi, bestlo, &(info.ratehi), 
-                                &(info.ratelo), ratebuf, sizeof(ratebuf) );                                       
+                                &(info.ratelo), info.ratebuf, sizeof(ratebuf) );                                       
           }
           retvalue = (long)info.ratelo;
           #if (ULONG_MAX > 0xfffffffful)
@@ -299,7 +295,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
             Log("%s: Benchmark for core #%d (%s)\n%s [%s/sec]\n",
                contname, thisprob->pub_data.coresel, 
                selcoreGetDisplayName(contestid, thisprob->pub_data.coresel),
-               CliGetTimeString( &tv, 2 ), ratebuf );
+               CliGetTimeString( &tv, 2 ), info.ratebuf );
           }
           //ClientEventSyncPost(CLIEVENT_BENCHMARK_FINISHED, (long)problem );
           break;
