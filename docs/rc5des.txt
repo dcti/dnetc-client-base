@@ -205,6 +205,7 @@
      Squid                    Unix        HHTP proxy
                                           http://squid.nlanr.net
      AltaVista 97 proxy       Unix/Win32  HTTP proxy
+     Gauntlet Firewall        ?           HTTP proxy
 
   5.2  Flushing and fetching via e-mail ----
 
