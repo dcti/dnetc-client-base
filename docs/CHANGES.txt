@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.110 2002/04/05 07:09:55 zebe Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.111 2002/04/06 04:41:48 sampo Exp $
 ==========================================================================
 
 2.8000
@@ -37,6 +37,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.110 2002/04/05 07:09:55 zebe Exp $
             new: all: configurable frequent update failure retry interval.
             fix: hpux: threading, timing fixes (#2371)
             fix: fbsd: occasionally not responding to SIG(INT/TERM) (#1985)
+            fix: decunix: also not responding ot SIG(INT/TERM) (#1613)
             fix: linux: no alpha SMP support (#2142)
             new: alpha: OGR core for processors supporting the CIX extension.
             fix: ppc: linux kernel cpu string additions. (#2407)
