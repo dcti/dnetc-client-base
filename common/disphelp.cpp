@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.22  1998/06/22 17:29:09  remi
+// Added gettermheight() so the pager is allowed to use more than 25 lines
+// if there is more. Win32 only for the moment.
+//
 // Revision 1.21  1998/06/22 00:41:37  cyruspatel
 // What started out as an intension to add two fflush()es turned into a four
 // hour journey through hell :). Redirection is now handled properly and AFAIK
@@ -43,7 +47,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: disphelp.cpp,v 1.21 1998/06/22 00:41:37 cyruspatel Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.22 1998/06/22 17:29:09 remi Exp $";
 #endif
 
 #include "client.h"
@@ -99,6 +103,26 @@ static int readkeypress()
 #endif
 
   return ch;
+}
+
+// --------------------------------------------------------------------------
+
+// How many visible lines there is in this terminal ?
+static int gettermheight() {
+
+#if (CLIENT_OS == OS_WIN32)
+
+  HANDLE hStdout;
+  CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+
+  hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+  if (hStdout == INVALID_HANDLE_VALUE) return -1;
+  if (! GetConsoleScreenBufferInfo(hStdout, &csbiInfo)) return -1;
+  return csbiInfo.srWindow.Bottom - csbiInfo.srWindow.Top + 1;
+
+#else
+  return 25;
+#endif
 }
 
 // --------------------------------------------------------------------------
@@ -271,7 +295,8 @@ void Client::DisplayHelp( const char * unrecognized_option )
       }
     }
 
-  maxscreenlines = 24;    /* you can decrease, but don't increase this */
+  if ((maxscreenlines = gettermheight()) == -1) maxscreenlines = 25;
+  maxscreenlines--;
   headerlines = (sizeof(helpheader) / sizeof(char *));
   bodylines = (sizeof(helpbody) / sizeof(char *));
   footerlines = 2;
