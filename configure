@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.128 2000/02/13 21:43:03 lyndon Exp $
+# @(#)$Id: configure,v 1.222.2.129 2000/02/14 04:23:08 petermack Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -892,16 +892,18 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
-    *alpha-gcc-digital_unix-static)
+    *alpha-digital_unix)
 	TARGET_CC="g++"
-	TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6  -DMEGGS -DKWAN -DDEC_UNIX_CPU_SELECT"
+	TARGET_AS="as"
+	TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DDEC_UNIX_CPU_SELECT -DHAVE_OGR_CORES -DHAVE_CSC_CORES -DHAVE_DES_CORES"
 	TARGET_CCFLAGS="-mcpu=ev4 $TARGET_BASE_CCFLAGS"
 	TARGET_EV5_CCFLAGS="-mcpu=ev5 $TARGET_BASE_CCFLAGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/alphaasm/rc5-digital-unix-alpha-ev4.cpp"
-	TARGET_DIGITAL_UNIX_EV5_SRCS="rc5/alphaasm/rc5-digital-unix-alpha-ev5.cpp des/alpha-asm/deseval-dworz3.S des/alpha-asm/des-slice-dworz.cpp"
+	TARGET_ADDSRCS="rc5/alpha/axp-bmeyer.cpp $OGR_ANSI_SRCS $CSC_ANSI_SRCS $DWORZ_SLICE_SRCS" 
+	TARGET_ADDASMS="rc5/alpha/axp-bmeyer-osf.s"
 	TARGET_LIBS="-static"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_OS=DIGITAL_UNIX
+	TARGET_TARBALL="alpha-digital_unix"
 	;;
 
 
@@ -1426,18 +1428,12 @@ case "$1" in
 	TARGET_TARBALL="next-x86"
 	;;
 
-    *m68k-next-gcc)
+    *m68k-next)
 	TARGET_CC="gcc -static"
 	TARGET_CCFLAGS="$OPTS_NEXT_M68K -D_NeXT_ -DHAVE_OGR_CORES"
-	TARGET_ADDSRCS="rc5/68k/crunch.68k.gcc.s $OGR_ANSI_SRCS"
+	TARGET_ADDSRCS="rc5/68k/crunch.68k.gcc.s rc5/68k/rc5_68k_gcc_crunch.cpp $OGR_ANSI_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_TARBALL="next-m68k"
-	;;
-
-    *m68k-next)
-	TARGET_CC="cc++"
-	TARGET_CCLAGS="$OPTS_NEXT_M68K -arch m68k -D_NeXT_"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *sparc-next)
