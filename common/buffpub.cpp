@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2001 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
@@ -8,7 +8,7 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.1.2.12 2001/01/31 05:11:26 cyp Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.1.2.13 2001/02/03 18:20:36 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -98,7 +98,8 @@ static FILE *BufferOpenFile( const char *filename, unsigned long *countP )
   {
     if (access(qfname, 0)!=0) // file still doesn't exist
     {
-      Log("Error opening buffer file... Access was denied.\n" );
+      Log("Error opening buffer file '%s'\n"
+          "Access was denied.\n", filename );
       return NULL;
     }
     file = fopen( qfname, "r+" BUFFOPEN_MODE );
@@ -107,25 +108,29 @@ static FILE *BufferOpenFile( const char *filename, unsigned long *countP )
   }
   if (failed != 0)
   {
-    Log("Open failed. Check your file privileges (or your disk).\n" );
+    Log("Open failed for '%s'\n"
+        "Check your file privileges (or your disk).\n", filename);
     return NULL;
   }
 
   if (fflush( file ) != 0 || fseek( file, 0, SEEK_END )!=0)
   {
-    Log("Open failed. Unable to obtain directory information.\n");
+    Log("Open failed for '%s'\n"
+        "Unable to obtain directory information.\n", filename);
     fclose( file );
     return NULL;
   }
   if ((filelen = ftell(file)) == -1L)
   {
-    Log("Open failed. Unable to determine file length.\n");
+    Log("Open failed for '%s'\n"
+        "Unable to determine file length.\n", filename);
     fclose( file );
     return NULL;
   }
   if ((filelen % sizeof(WorkRecord)) != 0)
   {
-    Log("Open failed. Buffer file record count is inconsistent.\n");
+    Log("Open failed for '%s'\n"
+        "Buffer file record count is inconsistent.\n", filename);
     fclose( file );
     return NULL;
   }
@@ -142,59 +147,6 @@ static int BufferCloseFile( FILE *file )
 {
   fclose(file);
   return 0;
-}
-
-/* --------------------------------------------------------------------- */
-
-// Note that we do not distinguish between translating to-or-from
-// network-order, since the conversion is mathematically reversible
-// with the same operation on both little-endian and big-endian
-// machines (only on PDP machines does this assumption fail).
-
-static void  __switchborder( WorkRecord *dest, const WorkRecord *source,
-                             int from_disk /* going net->host */ )
-{
-  if (((const WorkRecord *)dest) != source )
-    memcpy( (void *)dest, (const void *)source, sizeof(WorkRecord));
-
-  dest->id[sizeof(dest->id)-1] = '\0';
-  if (from_disk)
-  {
-    #if (CLIENT_OS == OS_OS390)
-    __atoe(dest->id);
-    #endif
-  }
-  else
-  {
-    #if (CLIENT_OS == OS_OS390)
-    __etoa(dest->id);
-    #endif
-  }
-
-  switch (dest->contest)
-  {
-    case RC5:
-    case DES:
-    case CSC:
-    {
-      u32 *w = (u32 *)(&(dest->work));
-      for (unsigned i=0; i<(sizeof(dest->work)/sizeof(u32)); i++)
-        w[i] = (u32)ntohl(w[i]);
-      break;
-    }
-    case OGR:
-    {
-      dest->work.ogr.workstub.stub.marks  = (u16)ntohs(dest->work.ogr.workstub.stub.marks);
-      dest->work.ogr.workstub.stub.length = (u16)ntohs(dest->work.ogr.workstub.stub.length);
-      for (int i = 0; i < STUB_MAX; i++)
-        dest->work.ogr.workstub.stub.diffs[i] = (u16)ntohs(dest->work.ogr.workstub.stub.diffs[i]);
-      dest->work.ogr.workstub.worklength  = (u32)ntohl(dest->work.ogr.workstub.worklength);
-      dest->work.ogr.nodes.hi             = (u32)ntohl(dest->work.ogr.nodes.hi);
-      dest->work.ogr.nodes.lo             = (u32)ntohl(dest->work.ogr.nodes.lo);
-      break;
-    }
-  }
-  return;
 }
 
 /* --------------------------------------------------------------------- */
@@ -224,6 +176,58 @@ int BufferNetUpdate(Client *client,int updatereq_flags, int break_pending,
 
 /* --------------------------------------------------------------------- */
 
+static void __switch_byte_order( WorkRecord *dest, const WorkRecord *source,
+                             int from_disk /* going net->host */ )
+{
+  if (((const WorkRecord *)dest) != source )
+    memcpy( (void *)dest, (const void *)source, sizeof(WorkRecord));
+
+  dest->id[sizeof(dest->id)-1] = '\0';
+  if (from_disk)
+  {
+    #if (CLIENT_OS == OS_OS390)
+    __atoe(dest->id);
+    #endif
+  }
+  else
+  {
+    #if (CLIENT_OS == OS_OS390)
+    __etoa(dest->id);
+    #endif
+  }
+
+  // Note that we do not distinguish between translating to-or-from
+  // network-order, since the conversion is mathematically reversible
+  // with the same operation on both little-endian and big-endian
+  // machines (only on PDP machines does this assumption fail).
+  switch (dest->contest)
+  {
+    case RC5:
+    case DES:
+    case CSC:
+    {
+      u32 *w = (u32 *)(&(dest->work));
+      for (unsigned i=0; i<(sizeof(dest->work)/sizeof(u32)); i++)
+        w[i] = (u32)ntohl(w[i]);
+      break;
+    }
+    case OGR:
+    {
+      dest->work.ogr.workstub.stub.marks  = (u16)ntohs(dest->work.ogr.workstub.stub.marks);
+      dest->work.ogr.workstub.stub.length = (u16)ntohs(dest->work.ogr.workstub.stub.length);
+      for (int i = 0; i < STUB_MAX; i++)
+        dest->work.ogr.workstub.stub.diffs[i] = (u16)ntohs(dest->work.ogr.workstub.stub.diffs[i]);
+      dest->work.ogr.workstub.worklength  = (u32)ntohl(dest->work.ogr.workstub.worklength);
+      dest->work.ogr.nodes.hi             = (u32)ntohl(dest->work.ogr.nodes.hi);
+      dest->work.ogr.nodes.lo             = (u32)ntohl(dest->work.ogr.nodes.lo);
+      break;
+    }
+  }
+  return;
+}
+
+/* --------------------------------------------------------------------- */
+
 /* on failure returns -1, else 0 */
 int BufferPutFileRecord( const char *filename, const WorkRecord * data,
                          unsigned long *countP )
@@ -249,14 +253,14 @@ int BufferPutFileRecord( const char *filename, const WorkRecord * data,
       else /* blank record. write here */	
       {
         writerec = recno; /* blank record, write here */
-	if (!countP) /* don't need to count to the end */
-	  break;
+        if (!countP) /* don't need to count to the end */
+          break;
       }	  
       recno++;
     }
     if (count >= 0)
     {
-      __switchborder( &scratch, data, 0 /* going host->net order */ );
+      __switch_byte_order( &scratch, data, 0 /* going host->net order */ );
       if (fseek( file, (writerec * sizeof(WorkRecord)), SEEK_SET ) != 0)
         count = -1L;
       else if (fwrite( (void *)&scratch, sizeof(WorkRecord), 1, file ) != 1)
@@ -304,8 +308,8 @@ int BufferGetFileRecordNoOpt( const char *filename, WorkRecord * data,
       else
       {
         blanked++;
-        __switchborder( data, &scratch, 1 /* going net->host order */ );
-	rc = 0;
+        __switch_byte_order( data, &scratch, 1 /* going net->host order */ );
+        rc = 0;
         break; /* got it */
       }	
       recno++;
@@ -355,9 +359,9 @@ int BufferCountFileRecords( const char *filename, unsigned int contest,
         ; /* blank record, ignore it */
       else 
       {
-        __switchborder( &scratch, &scratch, 1 /* going net->host order */ );
+        __switch_byte_order( &scratch, &scratch, 1 /* going net->host order */ );
         if ( ((unsigned int)(scratch.contest)) == contest )
-	{
+        {
           packetcount++;
           if ( normcountP )
           {
@@ -366,7 +370,7 @@ int BufferCountFileRecords( const char *filename, unsigned int contest,
             {
               normcount += swucount;
             }
-	  }    
+          }    
         } /* contest is same */
       }
       recno++;

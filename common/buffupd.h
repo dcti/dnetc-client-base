@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2001 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __BUFFUPD_H__
-#define __BUFFUPD_H__ "@(#)$Id: buffupd.h,v 1.5.2.4 2001/01/29 05:03:53 cyp Exp $"
+#define __BUFFUPD_H__ "@(#)$Id: buffupd.h,v 1.5.2.5 2001/02/03 18:20:36 cyp Exp $"
 
 // pass flags ORd with BUFFERUPDATE_FETCH/*_FLUSH. 
 // if interactive, prints "Input buffer full. No fetch required" etc.
