@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.73 2002/09/24 16:34:25 jlawson Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.74 2002/09/25 00:06:51 acidblood Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -440,12 +440,12 @@ long SelfTest( unsigned int contest )
 
         case RC5_72:
         {
-          contestwork.bigcrypto.iv.lo =  ( (*test_cases)[testnum][2] );
-          contestwork.bigcrypto.iv.hi =  ( (*test_cases)[testnum][3] );
-          contestwork.bigcrypto.plain.lo = ( (*test_cases)[testnum][4] );
-          contestwork.bigcrypto.plain.hi = ( (*test_cases)[testnum][5] );
-          contestwork.bigcrypto.cypher.lo = ( (*test_cases)[testnum][6] );
-          contestwork.bigcrypto.cypher.hi = ( (*test_cases)[testnum][7] );
+          contestwork.bigcrypto.iv.lo =  ( (*test_cases)[testnum][3] );
+          contestwork.bigcrypto.iv.hi =  ( (*test_cases)[testnum][4] );
+          contestwork.bigcrypto.plain.lo = ( (*test_cases)[testnum][5] );
+          contestwork.bigcrypto.plain.hi = ( (*test_cases)[testnum][6] );
+          contestwork.bigcrypto.cypher.lo = ( (*test_cases)[testnum][7] );
+          contestwork.bigcrypto.cypher.hi = ( (*test_cases)[testnum][8] );
           contestwork.bigcrypto.keysdone.lo = ( 0 );
           contestwork.bigcrypto.keysdone.hi = ( 0 );
           contestwork.bigcrypto.iterations.lo = ( 0x00020000L ); // 17 bits instead of 16
