@@ -1,6 +1,6 @@
 
  distributed.net client for the unix family
- document revision $Id: readme._ix,v 1.5.2.2 1999/10/11 18:44:23 cyp Exp $
+ document revision $Id: readme._ix,v 1.5.2.3 2002/04/12 10:40:59 zebe Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -27,8 +27,8 @@
     A list of command line options is available by starting the client 
     with '-help' or '--help'.
 
-    A "Complete Step-by-Step Guide to Running Your First Client" is 
-    available at http://distributed.net/FAQ/
+    A complete step-by-step guide to running your first client is 
+    available at: http://www.distributed.net/docs/tutor_clients.html
 
  2.0  Notes: ---------------------------------------------------------
 

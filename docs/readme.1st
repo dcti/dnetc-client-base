@@ -1,6 +1,31 @@
 ---------- WARNING ------------
+Backwards-compatibility advisories
 
-starting with the 2.7110 clients , distributed.net clients now support
-packet sizes up to 2^33 -  because of this buffers CANNOT be shared with
-older version clients.  Also client version 2.7111 and up require a proxyper
-of at least build 306 because of the big-packet changes
+* v2.8012.465
+  v2.8012.466
+  Due to a bug in these builds, they are no longer available from
+  distributed.net and work submitted from clients of these versions will
+  be rejected. Please visit the distributed.net download page to download
+  replacement clients: http://www.distributed.net/download/
+
+* v2.8009.460+ (July 7, 2000)
+  Client version v2.8009.460 will be the minimum build from which OGR
+  results will be accepted, even though earlier builds on some platforms
+  included preliminary beta OGR support. Please be sure to verify all of
+  your installed client versions.
+
+* v2.8000+ (Dec 14, 1999)
+  All personal proxies for use with client version v2.8000 or later
+  must be version 311 or above. Due to networking issues with build 311
+  of the personal proxy, however, updating to at least build 313 is
+  recommended, if it is available for your platform.
+
+* v2.7110+ (May 30, 1999)
+  These clients support block sizes up to 2^33, while pre-2.7110 only
+  support blocks less than or equal to 2^32. Do not enable 2^33 block
+  support if sharing buffers with older clients. Clients of this build
+  or later may only be used with personal proxy builds 306 or later.
+
+* v2.7100+ (June 27, 1998)
+  These clients cannot connect to personal proxies older than v278.
+
