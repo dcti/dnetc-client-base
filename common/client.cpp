@@ -3,6 +3,15 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.48  1998/06/14 12:24:15  ziggyb
+// Fixed the OS/2 lurk mode so that it updates less freqently. It only
+// does a -update after a completed block. I've also OS2 defined -fetch/-flush
+// so that if a connection is lost while in lurk mode, it will stop trying to
+// connect and return with a value of -3.
+//
+// Win32 clients may want to look at that to reduce the client trying to -update
+// after a connection is lost in lurk mode.
+//
 // Revision 1.47  1998/06/14 08:26:38  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
 // material of the binary executable
@@ -12,7 +21,7 @@
 //
 //
 
-static char *id="@(#)$Id: client.cpp,v 1.47 1998/06/14 08:26:38 friedbait Exp $";
+static char *id="@(#)$Id: client.cpp,v 1.48 1998/06/14 12:24:15 ziggyb Exp $";
 
 #include "client.h"
 
@@ -365,6 +374,15 @@ s32 Client::Fetch( u8 contest, Network *netin, s32 quietness )
     if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
       SignalTriggered = UserBreakTriggered = 1;
 #endif
+
+#if (CLIENT_OS == OS_OS2)
+    if(lurk && !connectstatus)   // lost tcpip connection while trying to fetch
+       {
+       LogScreenf("TCPIP Connection Lost - Aborting fetch\n");
+       return -3;                 // so stop trying and return
+       }
+#endif
+
     if ( SignalTriggered )
       return -2;
     // at this point we need more data, so try until we get a connection
@@ -724,6 +742,15 @@ s32 Client::Flush( u8 contest , Network *netin, s32 quietness )
     if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C)
       SignalTriggered = UserBreakTriggered = 1;
     #endif
+
+#if (CLIENT_OS == OS_OS2)
+    if(lurk && !connectstatus)   // lost tcpip connection while trying to flush
+       {
+       LogScreenf("TCPIP Connection Lost - Aborting flush\n");
+       return -3;                 // so stop trying and return
+       }
+#endif
+
     if ( 1==SignalTriggered ) return -1;
     // Note that this ignores signaltriggered==2 (used when -nodisk is specified)
 
@@ -1928,59 +1955,61 @@ PreferredIsDone1:
     //------------------------------------
     // Lurking in OS/2
     //------------------------------------
-#if (CLIENT_OS == OS_OS2) && defined(MULTITHREADED)
+
+#if (CLIENT_OS == OS_OS2) && defined(MULTITHREAD)
     {
       if(lurk)
-      {
-        const s32 index = 68;     // index to check if connected
-        s32  s, rc, tmpmode;
-        char netstat[128];
+         {
+         const s32 index = 68;     // index to check if connected
+         s32  s, rc, tmpmode;
+         char netstat[128];
 
-        netstat[index] = 0;       // clear the bit
-        // Get routing data
-        s = socket(PF_INET, SOCK_DGRAM, 0);
-        rc = ioctl(s, SIOSTATRT, netstat, 128);
-        soclose(s);
+         netstat[index] = 0;       // clear the bit
+         // Get routing data
+         s = socket(PF_INET, SOCK_DGRAM, 0);
+         rc = ioctl(s, SIOSTATRT, netstat, 128);
+         soclose(s);
 
-        if(rc != 0)
-        {
-          Log("Unable to get routing information, lurk mode disabled\n");
-          lurk = 0;
-        }
-        else
-        {
-          if(!netstat[index])
-          {
-            tmpmode = 0;
-            if(connectstatus != tmpmode)    // No connection
+         if(rc != 0)
             {
-              Log("TCP/IP Connection Disconnected");
-              connectstatus = tmpmode;
-              if(lurk == 2)
-              {
-                Log(" - Offline Mode");
-                offlinemode = 1;
-              }
-              Log("\n");
+            LogScreenf("Unable to get routing information, lurk mode disabled\n");
+            lurk = 0;
             }
-          }
-          else if(netstat[index])
-          {
-            tmpmode = 1;
-            connectrequested = 2;     // update blocks in all cases
-            if(connectstatus != tmpmode)
+         else
             {
-              // Only put out message the first time.
-              Log("TCP/IP Connection Detected\n");
-              connectstatus = tmpmode;
-              if(lurk == 2) offlinemode = 0;
+            if(!netstat[index])
+               {
+               tmpmode = 0;
+               if(connectstatus != tmpmode)    // No connection
+                  {
+                  Log("TCP/IP Connection Disconnected");
+                  connectstatus = tmpmode;
+                  if(lurk == 2)
+                     {
+                     Log(" - Offline Mode");
+                     offlinemode = 1;
+                     connectrequested = 0; // cancel any connection requests
+                     }
+                  Log("\n");
+                  }
+               }
+            else
+//             if(netstat[index])
+               {
+               tmpmode = 1;
+               if(connectstatus != tmpmode)
+                  {
+                  // Only put out message the first time.
+                  Log("TCP/IP Connection Detected\n");
+                  connectstatus = tmpmode;
+                  if(lurk == 2)
+                     offlinemode = 0;
+                  }
+               }
             }
-          }
-        }
-     }
-  }
+         }
+    }
 #endif
-
     //------------------------------------
     //Modem detection stuff for WinNT/Win95
     //------------------------------------
@@ -2308,7 +2337,14 @@ PreferredIsDone1:
           // See if the request to quit after the completed block
           //---------------------
           if(exitcode == 1) TimeToQuit=1; // Time to quit
-
+          
+#if (CLIENT_OS == OS_OS2)
+          //---------------------
+          // If lurk mode, now is the time to do an update
+          //---------------------
+          if(lurk && connectstatus)
+             connectrequested = 2;
+#endif
           //---------------------
           //now load another block for this contest
           //---------------------
