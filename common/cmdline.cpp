@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.62 2000/09/17 11:46:28 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.63 2000/10/26 15:00:08 cyp Exp $"; }
 
 //#define TRACE
 
@@ -1206,14 +1206,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           skip_next = 1;
           if (run_level != 0)
           {
-            /* if (logging_is_initialized) */
-              LogScreenRaw("Setting SOCKS/HTTP proxy port to %u\n",
-              (unsigned int)client->httpport);
-          }
-          else
-          {
-            *inimissing = 0; // Don't complain if the inifile is missing
-            client->httpport = atoi( argvalue );
+            LogScreenRaw("-hp switch is obsolete: Please use '-ha name:port'\n");
           }
         }
       }
@@ -1263,13 +1256,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           skip_next = 1;
           if (run_level != 0)
           {
-            /* if (logging_is_initialized) */
-              LogScreenRaw("Setting smtp port to %u\n",
-              (unsigned int)client->smtpport);
-          }
-          else
-          {
-            client->smtpport = atoi(argvalue);
+            LogScreenRaw("-smtpport is obsolete: please use '-smtpsrvr name:port'\n");
           }
         }
       }

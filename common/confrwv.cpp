@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.43 2000/10/21 00:29:46 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.44 2000/10/26 15:00:10 cyp Exp $"; }
 
 //#define TRACE
 
@@ -346,11 +346,9 @@ static int _readwrite_fwallstuff(int aswrite, const char *fn, Client *client)
             client->uuehttpmode |= 1;
         }
       }
-      client->httpport = 0;
       client->httpproxy[0] = '\0';
-      _readwrite_hostname_and_port( 0, fn, OPTSECT_NET, "firewall-host",
-                                    client->httpproxy, sizeof(client->httpproxy),
-                                    &(client->httpport), 0 );
+      GetPrivateProfileStringB( OPTSECT_NET, "firewall-host", "", client->httpproxy, sizeof(client->httpproxy), fn );
+
       client->httpid[0] = '\0';
       if (GetPrivateProfileStringB( OPTSECT_NET, "firewall-auth", "", buffer, sizeof(buffer), fn ))
       {
@@ -386,16 +384,20 @@ static int _readwrite_fwallstuff(int aswrite, const char *fn, Client *client)
       if (GetPrivateProfileStringB( OPTION_SECTION, "httpproxy", client->httpproxy, client->httpproxy, sizeof(client->httpproxy), fn ))
       {
         if (client->httpproxy[0])
+        {
           aswrite = 1;  /* key exists, need rewrite */
+          that = client->httpproxy;
+          while (*that && *that != ':')
+            that++;
+          if (*that != ':') /* no embedded port # */
+          {
+            int i = GetPrivateProfileIntB( OPTION_SECTION, "httpport", 0, fn );
+            if (i > 0 && i < 0xffff)
+              sprintf(&(client->httpproxy[strlen(client->httpproxy)]),":%d",i);
+          }
+        }
       }
       TRACE_OUT((0,"old httpproxy=\"%s\"\n",client->httpproxy));
-      if (GetPrivateProfileStringB( OPTION_SECTION, "httpport", "", scratch, sizeof(scratch), fn ))
-      {
-        client->httpport = GetPrivateProfileIntB( OPTION_SECTION, "httpport", client->httpport, fn );
-        if (client->httpport)
-        aswrite = 1;  /* key exists, need rewrite */
-      }
-      TRACE_OUT((0,"old httpport=%d\n",client->httpport));
       if (GetPrivateProfileStringB( OPTION_SECTION, "httpid", client->httpid, client->httpid, sizeof(client->httpid), fn ))
       {
         if (client->httpid[0])
@@ -448,9 +450,9 @@ static int _readwrite_fwallstuff(int aswrite, const char *fn, Client *client)
     if (*that || GetPrivateProfileStringB( OPTSECT_NET, "firewall-type", "", scratch, sizeof(scratch), fn ))
       WritePrivateProfileStringB( OPTSECT_NET, "firewall-type", that, fn);
 
-    _readwrite_hostname_and_port( 1, fn, OPTSECT_NET, "firewall-host",
-                                client->httpproxy, sizeof(client->httpproxy),
-                                &(client->httpport), 0 );
+    if (client->httpproxy[0] || GetPrivateProfileStringB( OPTSECT_NET, "firewall-host", "", scratch, sizeof(scratch), fn ))
+      WritePrivateProfileStringB( OPTSECT_NET, "firewall-host", client->httpproxy, fn );
+
     buffer[0] = '\0';
     if (client->httpid[0])
     {
@@ -676,17 +678,15 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
   }
   if (!GetPrivateProfileStringB( OPTSECT_LOG, "mail-log-via", "", buffer, sizeof(buffer), fn ))
   {
-    if (GetPrivateProfileStringB( OPTION_SECTION, "smtpsrvr", "", buffer, sizeof(buffer), fn ))
+    if (GetPrivateProfileStringB( OPTION_SECTION, "smtpsrvr", "", buffer, sizeof(buffer)-10, fn ))
     {
+      i = GetPrivateProfileIntB( OPTION_SECTION, "smtpport", 0, fn );
+      if (i != 25 && i > 0 && i < 0xffff && !strchr(buffer,':'))
+        sprintf(&(buffer[strlen(buffer)]),":%d",i);
       strncpy( client->smtpsrvr, buffer, sizeof(client->smtpsrvr) );
-      i = GetPrivateProfileIntB( OPTION_SECTION, "smtpport", client->smtpport, fn );
-      if (i == 25) i = 0;
-      client->smtpport = i;
-      modfail += _readwrite_hostname_and_port( 1, fn,
-                                OPTSECT_LOG, "mail-log-via",
-                                client->smtpsrvr, sizeof(client->smtpsrvr),
-                                &(client->smtpport), 0 );
-      TRACE_OUT((0,"remapped hostname/port (%d)\n", modfail));
+      client->smtpsrvr[sizeof(client->smtpsrvr)-1]='\0';
+      modfail += (!WritePrivateProfileStringB( OPTSECT_LOG, "mail-log-via", buffer, fn ));
+      TRACE_OUT((0,"remapped smtp hostname/port (%d)\n", modfail));
     }
   }
   if (!GetPrivateProfileStringB( OPTSECT_LOG, "log-file", "", buffer, sizeof(buffer), fn ))
@@ -1295,9 +1295,7 @@ int ConfigRead(Client *client)
 
   /* --------------------- */
 
-  _readwrite_hostname_and_port( 0, fn, OPTSECT_LOG, "mail-log-via",
-                                client->smtpsrvr, sizeof(client->smtpsrvr),
-                                &(client->smtpport), 0 );
+  GetPrivateProfileStringB( OPTSECT_LOG, "mail-log-via", client->smtpsrvr, client->smtpsrvr, sizeof(client->smtpsrvr), fn );
   client->messagelen = GetPrivateProfileIntB( OPTSECT_LOG, "mail-log-max", client->messagelen, fn );
   GetPrivateProfileStringB( OPTSECT_LOG, "mail-log-from", client->smtpfrom, client->smtpfrom, sizeof(client->smtpfrom), fn );
   GetPrivateProfileStringB( OPTSECT_LOG, "mail-log-dest", client->smtpdest, client->smtpdest, sizeof(client->smtpdest), fn );
@@ -1539,10 +1537,7 @@ int ConfigWrite(Client *client)
 
     /* --- CONF_MENU_LOG -- */
 
-    if ((i = client->smtpport) == 25) i = 0;
-    _readwrite_hostname_and_port( 1, fn, OPTSECT_LOG, "mail-log-via",
-                                client->smtpsrvr, sizeof(client->smtpsrvr),
-                                &(i), 0 );
+    __XSetProfileStr( OPTSECT_LOG, "mail-log-via", client->smtpsrvr, fn, NULL);
     __XSetProfileInt( OPTSECT_LOG, "mail-log-max", client->messagelen, fn, 0, 0);
     __XSetProfileStr( OPTSECT_LOG, "mail-log-from", client->smtpfrom, fn, NULL);
     __XSetProfileStr( OPTSECT_LOG, "mail-log-dest", client->smtpdest, fn, NULL);

@@ -6,7 +6,7 @@
 */ 
 
 #ifndef __CONFOPT_H__
-#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.16.2.7 2000/06/19 16:38:43 cyp Exp $"
+#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.16.2.8 2000/10/26 15:00:10 cyp Exp $"
 
 enum /* anonymous */
 {
@@ -53,7 +53,6 @@ enum /* anonymous */
   CONF_LOGLIMIT                , /* CONF_MENU_LOG */
   CONF_MESSAGELEN              , /* CONF_MENU_LOG */
   CONF_SMTPSRVR                , /* CONF_MENU_LOG */
-  CONF_SMTPPORT                , /* CONF_MENU_LOG */
   CONF_SMTPFROM                , /* CONF_MENU_LOG */
   CONF_SMTPDEST                , /* CONF_MENU_LOG */
 
@@ -64,7 +63,6 @@ enum /* anonymous */
   CONF_NOFALLBACK              , /* CONF_MENU_NET */
   CONF_FWALLTYPE               , /* CONF_MENU_NET */
   CONF_FWALLHOSTNAME           , /* CONF_MENU_NET */
-  CONF_FWALLHOSTPORT           , /* CONF_MENU_NET */
   CONF_FWALLUSERNAME           , /* CONF_MENU_NET */
   CONF_FWALLPASSWORD           , /* CONF_MENU_NET */
   CONF_FORCEHTTP               , /* CONF_MENU_NET */

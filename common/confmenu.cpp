@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.23 2000/09/17 11:46:29 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.24 2000/10/26 15:00:09 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -351,7 +351,6 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   conf_options[CONF_LOGLIMIT].thevariable=&logkblimit[0];
   conf_options[CONF_MESSAGELEN].thevariable=&(client->messagelen);
   conf_options[CONF_SMTPSRVR].thevariable=&(client->smtpsrvr[0]);
-  conf_options[CONF_SMTPPORT].thevariable=&(client->smtpport);
   conf_options[CONF_SMTPFROM].thevariable=&(client->smtpfrom[0]);
   conf_options[CONF_SMTPDEST].thevariable=&(client->smtpdest[0]);
   conf_options[CONF_SMTPFROM].defaultsetting=(char *)conf_options[CONF_ID].thevariable;
@@ -399,7 +398,6 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   conf_options[CONF_FWALLTYPE].choicemax=(int)((sizeof(fwall_types)/sizeof(fwall_types[0]))-1);
   
   conf_options[CONF_FWALLHOSTNAME].thevariable=&(client->httpproxy[0]);
-  conf_options[CONF_FWALLHOSTPORT].thevariable=&(client->httpport);
   userpass.username[0] = userpass.password[0] = 0;
   
   if (client->httpid[0])
@@ -553,7 +551,6 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
                     logtype != LOGFILETYPE_NOLIMIT) ? (NULL) : 
                   ("n/a [inappropriate for log type]"));
       conf_options[CONF_SMTPSRVR].disabledtext=
-      conf_options[CONF_SMTPPORT].disabledtext=
       conf_options[CONF_SMTPDEST].disabledtext=
       conf_options[CONF_SMTPFROM].disabledtext=
                   ((client->messagelen > 0)?(NULL):
@@ -570,7 +567,6 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
       if (fwall_type == FWALL_TYPE_NONE)
       {
         conf_options[CONF_FWALLHOSTNAME].disabledtext=
-        conf_options[CONF_FWALLHOSTPORT].disabledtext=
         conf_options[CONF_FWALLUSERNAME].disabledtext=
         conf_options[CONF_FWALLPASSWORD].disabledtext=
               "n/a [firewall support disabled]";
@@ -585,7 +581,6 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
         }
         if (client->httpproxy[0] == 0)
         {
-          conf_options[CONF_FWALLHOSTPORT].disabledtext=
           conf_options[CONF_FWALLUSERNAME].disabledtext=
           conf_options[CONF_FWALLPASSWORD].disabledtext=
                 "n/a [firewall hostname missing]";

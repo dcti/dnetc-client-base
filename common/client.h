@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.16 2000/07/05 03:09:43 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.17 2000/10/26 15:00:08 cyp Exp $"
 
 
 // ------------------
@@ -105,7 +105,6 @@ typedef struct
     char keyproxy[MINCLIENTOPTSTRLEN];
     int  keyport;
     char httpproxy[MINCLIENTOPTSTRLEN];
-    int  httpport;
     int  uuehttpmode;
     char httpid[MINCLIENTOPTSTRLEN*2];
   int  noupdatefromfile;
@@ -144,7 +143,6 @@ typedef struct
   char logfilelimit[MINCLIENTOPTSTRLEN]; /* "nnn K|M|days" etc */
   int  messagelen;
   char smtpsrvr[MINCLIENTOPTSTRLEN];
-  int  smtpport;
   char smtpfrom[MINCLIENTOPTSTRLEN];
   char smtpdest[MINCLIENTOPTSTRLEN];
 

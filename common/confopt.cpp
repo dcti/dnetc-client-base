@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.42 2000/10/21 00:29:45 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.43 2000/10/26 15:00:09 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -378,10 +378,13 @@ struct optionstruct conf_options[/*CONF_OPTION_COUNT*/] = {
   "The following options are extensions to normal threshold management and are\n"
   "not usually necessary:\n"
   "   0) no additional buffer-level checking. (default)\n"
-  "   1) ensure that there is always work available.\n"
-  "   2) ensure that all completed work is kept flushed.\n"
+  "   1) fetch/flush all buffers if any in-buffer is not full.\n"
+/*"   1) ensure that there is always work available.\n"*/
+  "   2) fetch/flush all buffers if any out-buffer is not empty.\n"
+/*"   2) ensure that all completed work is kept flushed.\n" */
   "   3) both 1) and 2). (implied if 'Dialup detection options' are enabled)\n"
-  "   4) update on per-project buffer exhaustion.\n"
+  "   4) fetch/flush all buffers if any in-buffer is empty.\n"
+/*"   4) update on per-project buffer exhaustion.\n" */
   "\n"
   "Options 1, 2 and 3 will cause the client to frequently check buffers levels.\n"
   "(Frequency/interval is determined by the 'Buffer-level check interval' option)\n"
@@ -606,28 +609,26 @@ struct optionstruct conf_options[/*CONF_OPTION_COUNT*/] = {
 },
 { 
   CONF_SMTPSRVR                , /* CONF_MENU_LOG */
-  CFGTXT("SMTP Server to use"), "",
+  CFGTXT("SMTP server:port"), "",
   CFGTXT(
   "Specify the name or DNS address of the SMTP host via which the client should\n"
-  "relay mail logs. The default is the host-name component of the email address from\n"
-  "which logs will be mailed.\n"
+  "relay mail logs. For example: \"mercury.pegasus.org:25\"\n"
+  "\n"
+  "The default hostname is the hostname component of the email address\n"
+  "specified in the \"E-mail address that logs will be mailed from\" option.\n"
+  "\n"
+  "The default port specifier is 25.\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
-{ 
-  CONF_SMTPPORT                , /* CONF_MENU_LOG */
-  CFGTXT("SMTP Port"), "25 (default)",
-  CFGTXT(
-  "Specify the port on the SMTP host to which the client's mail subsystem should\n"
-  "connect when sending mail logs. The default is port 25.\n"
-  ),CONF_MENU_LOG,CONF_TYPE_INT,NULL,NULL,0,0xFFFF,NULL,NULL
-},
 { 
   CONF_SMTPFROM                , /* CONF_MENU_LOG */
   CFGTXT("E-mail address that logs will be mailed from"),
   "" /* *((const char *)(options[CONF_ID].thevariable)) */,
   CFGTXT(
-  "Some servers require this to be a local address. If no address is\n"
-  "specified, the client will send logs from the address specified in the\n"
-  "'distributed.net ID' option.\n"
+  "This setting determines what sender address to use for mailing logs.\n"
+  "Some servers require this to be a local address.\n"
+  "\n"
+  "The default is the email address specified in the 'distributed.net ID'\n"
+  "option.\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
 { 
@@ -636,7 +637,8 @@ struct optionstruct conf_options[/*CONF_OPTION_COUNT*/] = {
   "" /* *((const char *)(options[CONF_ID].thevariable)) */,
   CFGTXT(
   "Full name and site eg: you@your.site.  Comma delimited list permitted.\n"
-  "The default is to send logs to the address specified in the\n"
+  "\n"
+  "The default is to send logs to the address specified as the\n"
   "'distributed.net ID'\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
@@ -724,20 +726,14 @@ struct optionstruct conf_options[/*CONF_OPTION_COUNT*/] = {
 },
 { 
   CONF_FWALLHOSTNAME           , /* CONF_MENU_NET */
-  CFGTXT("Firewall host name"), "",
+  CFGTXT("Firewall hostname:port"), "",
   CFGTXT(
   "This field determines the host name or IP address of the firewall proxy\n"
   "through which the client should communicate. The proxy is expected to be\n"
-  "on a local network.\n"
+  "on a local network. For example: \"socks.proxy.my:1080\"\n"
+  "\n"
+  "The port specifier defaults to 1080 for SOCKS and 8080 for HTTP.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
-},
-{ 
-  CONF_FWALLHOSTPORT           , /* CONF_MENU_NET */
-  CFGTXT("Firewall port"), "" /* note: atol("")==0 */,
-  CFGTXT(
-  "This field determines the port number on the firewall proxy to which the\n"
-  "the client should connect. The port number must be valid.\n"
-  ),CONF_MENU_NET,CONF_TYPE_INT,NULL,NULL,0,0xFFFF,NULL,NULL
 },
 { 
   CONF_FWALLUSERNAME           , /* CONF_MENU_NET */

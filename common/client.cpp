@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.90 2000/10/20 21:24:41 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.91 2000/10/26 15:00:07 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -37,89 +37,19 @@ void ResetClientData(Client *client)
   /* everything here should also be validated in the appropriate subsystem,
      so if zeroing here causes something to break elsewhere, the subsystem
      init needs fixing.
-     Variables are initialized in the same order that they are declared in
-     the client object. Keep it that way to ensure we don't miss something.
      When creating new variables, name them such that the default is 0/"",
      eg 'nopauseonbatterypower'.
-   */
+  */
 
   int contest;
   memset((void *)client,0,sizeof(Client));
 
-  /* non-user-configurable variables */
-  client->nonewblocks=0;
-  client->randomchanged=0;
-  client->randomprefix=0;
-  client->rc564closed=0;
-  client->stopiniio=0;
-  client->scheduledupdatetime = 0;
-  client->inifilename[0]=0;
-  client->last_buffupd_time = 0;
-  memset(&(client->project_flags[0]),0,sizeof(client->project_flags));
-
-  /* -- general -- */
-  client->id[0]='\0';
-  client->quietmode=0;
-  client->blockcount = 0;
-  client->minutes = 0;
-  client->percentprintingoff=0;
-
-  /* -- buffers -- */
-  client->nodiskbuffers=0;
-  memset((void *)&(client->membufftable[0]),0,sizeof(client->membufftable));
-  client->in_buffer_basename[0] = '\0';
-  client->out_buffer_basename[0] = '\0';
-  client->checkpoint_file[0]=0;
-  client->offlinemode = 0;
-    /* -- net -- */
-    client->nettimeout=60;
-    client->nofallback=0;
-    client->autofindkeyserver=1;
-    client->keyproxy[0] = 0;
-    client->keyport = 0;
-    client->httpproxy[0] = 0;
-    client->httpport = 0;
-    client->uuehttpmode = 0;
-    client->httpid[0] = 0;
-  client->noupdatefromfile = 0;
-    client->remote_update_dir[0] = '\0';
-  #ifdef LURK 
-  memset(&(client->lurk_conf),0,sizeof(client->lurk_conf));
-  #endif
-  client->connectoften=0;
-  memset(&(client->inthreshold[0]),0,sizeof(client->inthreshold));
-  memset(&(client->timethreshold[0]),0,sizeof(client->timethreshold));
-  client->max_buffupd_interval = 0;
-  #if (!defined(NO_OUTBUFFER_THRESHOLDS))
-  memset(&(client->outhreshold),0,sizeof(client->outhreshold));
-  #endif
-  memset(&(client->preferred_blocksize[0]),0,sizeof(client->preferred_blocksize));
+  client->nettimeout=60;
+  client->autofindkeyserver=1;
   projectmap_build(client->loadorder_map,"");
-
-  /* -- perf -- */
   client->numcpu = -1;
-  client->priority = 0;
   for (contest=0; contest<CONTEST_COUNT; contest++)
     client->coretypes[contest] = -1;
-
-  /* triggers */
-  client->restartoninichange=0;
-  client->pauseplist[0]=0;
-  client->pausefile[0]=0;
-  client->exitflagfile[0]=0;
-  client->nopauseifnomainspower=0;
-  client->watchcputempthresh=0;
-  client->cputempthresh[0]=0;
-
-  /* -- log -- */
-  client->logname[0]= 0;
-  client->logfiletype[0] = 0;
-  client->logfilelimit[0] = 0;
-  client->messagelen = 0;
-  client->smtpport = 25;
-  client->smtpsrvr[0]=0;
-  client->smtpfrom[0]=0;
-  client->smtpdest[0]=0;
 }
 
 // --------------------------------------------------------------------------
@@ -525,8 +455,7 @@ static int ClientMain( int argc, char *argv[] )
                                  client->logfiletype,
                                  client->logfilelimit,
                                  ((domodes)?(0):(client->messagelen)),
-                                 client->smtpsrvr,
-                                 client->smtpport,
+                                 client->smtpsrvr, 0,
                                  client->smtpfrom,
                                  client->smtpdest,
                                  client->id );
