@@ -309,7 +309,7 @@ options[CONF_NETTIMEOUT].thevariable=&nettimeout;
 options[CONF_EXITFILECHECKTIME].thevariable=&exitfilechecktime;
 options[CONF_OFFLINEMODE].thevariable=&offlinemode;
 
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
 options[CONF_LURKMODE].thevariable=&lurk;
 #endif
 options[CONF_RC5IN].thevariable=&in_buffer_file[0];
@@ -363,7 +363,7 @@ printf("------------------------------------------------------------\n\n");
            || (choice == CONF_NETTIMEOUT)
            || (choice == CONF_EXITFILECHECKTIME)
            || (choice == CONF_OFFLINEMODE)
-#if (CLIENT_OS==OS_WIN32)
+#if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_OS2)
            || (choice == CONF_LURKMODE)
 #endif
 //           || (choice == CONF_RC5IN)
@@ -438,7 +438,7 @@ printf("------------------------------------------------------------\n\n");
            || (choice == CONF_NETTIMEOUT)
            || (choice == CONF_EXITFILECHECKTIME)
            || (choice == CONF_OFFLINEMODE)
-#if (CLIENT_OS==OS_WIN32)
+#if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_OS2)
            || (choice == CONF_LURKMODE)
 #endif
 //           || (choice == CONF_RC5IN)
@@ -761,7 +761,7 @@ printf("------------------------------------------------------------\n\n");
           if (choice < 0) choice=0;
           if (choice > 2) choice=2;
           *(s32 *)options[CONF_OFFLINEMODE].thevariable=choice;
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS==OS_OS2)
         case CONF_LURKMODE:
           choice=atoi(parm);
           if (choice < 0) choice=0;
@@ -976,7 +976,7 @@ s32 Client::ReadConfig(void)
   if (tempconfig) noexitfilecheck=1;
   tempconfig=ini.getkey(OPTION_SECTION, "exitfilechecktime", "30")[0];
   if (tempconfig) exitfilechecktime=max(tempconfig,1);
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS==OS_OS2)
 #if (!defined(WINNTSERVICE))
   tempconfig=ini.getkey(OPTION_SECTION, "win95hidden", "0")[0];
   if (tempconfig) win95hidden=1;
@@ -1270,7 +1270,7 @@ s32 Client::WriteConfig(void)
   ini.setrecord(OPTION_SECTION, "contestdone",  IniString(contestdone[0]));
   ini.setrecord(OPTION_SECTION, "contestdone2", IniString(contestdone[1]));
 
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS==OS_OS2)
 
   if (lurk==0)
     {
@@ -2237,7 +2237,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
 #endif
 #endif
 
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
     else if ( strcmp( Argv[i], "-lurk" ) == 0 ) // Detect modem connections
     {
       lurk=1;
