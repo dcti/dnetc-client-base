@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.43 2000/11/03 18:38:36 andreasb Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.44 2000/11/21 18:26:52 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -40,6 +40,7 @@ int InitializeTimers(void)
   #endif
   if (CliClock(NULL)!=0) /* do the one-shot clock init */
     return -1;
+  CliGetThreadUserTime(NULL); /* do init if needed */
   /* currently don't have anything else to do */
   return 0;
 }
@@ -527,60 +528,53 @@ int CliGetMonotonicClock( struct timeval *tv )
          fact that that hasn't been noticed in 5 years is a pretty good
          indication that no linux box ever runs more than 497 days :)
       */
-      #if 1
+      #ifdef HAVE_KTHREADS
+      int fd = -1;
+      #else
       static int fd = -1;
-      char buffer[128]; int len;
+      #endif
+      int rc = -1; 
       if (fd == -1)
         fd = open("/proc/uptime",O_RDONLY);
-      if (fd == -1)
-        return -1;
-      if (lseek( fd, 0, SEEK_SET)!=0)
-        return -1;
-      len = read( fd, buffer, sizeof(buffer));
-      if (len < 1 || len >= ((int)(sizeof(buffer)-1)) )
-        return -1;
-      buffer[len-1] = '\0';
+      if (fd != -1)
       {
-        unsigned long tt = 0, t2 = 0, t1 = 0;
-	register char *p = buffer;
-	while (t1>=tt && *p >= '0' && *p <='9')
-	{
-	  tt = t1;
-	  t1 = (t1*10)+((*p++)-'0');
-	}  
-	if (*p++ != '.') return -1;
-	tt=0;
-	while (t2>=tt && *p >= '0' && *p <='9')
-	{
-	  tt = t2;
-	  t2 = (t2*10)+((*p++)-'0');
-	}  
-	if (*p++ != ' ') return -1;
-        tv->tv_usec = (long)(10000UL * t2);
-        tv->tv_sec = (time_t)t1;
-        //printf("\rt=%d.%06d\n",tv->tv_sec,tv->tv_usec);
-      }
-      #elif 0
-      if (gettimeofday(tv,0)!=0)
-        return -1;
-      #else      
-      int rc = -1;
-      FILE *file = fopen("/proc/uptime","r");
-      if (file)
-      {
-        double uptime, idletime; /* eg "10762.56 10733.61\n" */
-        if (fscanf(file,"%lf %lf", &uptime, &idletime) == 2)
+        if (lseek( fd, 0, SEEK_SET)==0)
         {
-          unsigned long secs = (unsigned long)uptime;
-          tv->tv_usec = (long)(1000000.0 * (uptime - ((double)secs)));
-          tv->tv_sec = (time_t)secs;
-          rc = 0;
-        }
-        fclose(file);
-      }
-      if (rc != 0)
-        return -1;
-      #endif
+          char buffer[128];
+          int len = read( fd, buffer, sizeof(buffer));
+          if (len >= 1 && len < ((int)(sizeof(buffer)-1)) )
+          {
+            unsigned long tt = 0, t2 = 0, t1 = 0;
+            register char *p = buffer;
+            buffer[len-1] = '\0';
+            while (t1>=tt && *p >= '0' && *p <='9')
+            {
+              tt = t1;
+              t1 = (t1*10)+((*p++)-'0');
+	    }  
+            if (*p++ == '.')
+            {
+              tt=0;
+              while (t2>=tt && *p >= '0' && *p <='9')
+              {
+                tt = t2;
+                t2 = (t2*10)+((*p++)-'0');
+	      }  
+              if (*p++ == ' ')
+              {
+                tv->tv_usec = (long)(10000UL * t2);
+                tv->tv_sec = (time_t)t1;
+                //printf("\rt=%d.%06d\n",tv->tv_sec,tv->tv_usec);
+                rc = 0;
+              }
+            }
+          }
+        } /* lseek */
+        #ifdef HAVE_KTHREADS
+        close(fd);
+        #endif
+      } /* open */
+      return rc;
     }
     #elif (CLIENT_OS == OS_AMIGAOS)
     {
@@ -649,61 +643,64 @@ int CliGetMonotonicClock( struct timeval *tv )
 /* --------------------------------------------------------------------- */
 
 /* Get thread (user) cpu time, used for fine-slice benchmark etc. */
-
+/* if tv is NULL, the function must still return 0 if supported */
 int CliGetThreadUserTime( struct timeval *tv )
 {
+#if (CLIENT_OS == OS_BEOS)
   if (tv)
   {
-    #if (CLIENT_OS == OS_BEOS)
-    {
-      thread_info tInfo;
-      get_thread_info(find_thread(NULL), &tInfo);
-      tv->tv_sec = tInfo.user_time / 1000000; // convert from microseconds
-      tv->tv_usec = tInfo.user_time % 1000000;
-      return 0;
-    }
-    #elif defined(HAVE_GETRUSAGE) && defined(THREADS_HAVE_OWN_ACCOUNTING)
-    struct rusage rus;
-    if (getrusage(RUSAGE_SELF,&rus) == 0)
-    {
-      tv->tv_sec = rus.ru_utime.tv_sec;
-      tv->tv_usec = rus.ru_utime.tv_usec;
-      //printf("\rgetrusage(%d) => %d.%02d\n", getpid(), tv->tv_sec, tv->tv_usec/10000 ); 
-      return 0;
-    }
-    //printf("\rgetrusage() => %s\n", strerror(errno));
-    #elif (CLIENT_OS == OS_WIN32)
-    {
-      static int isnt = -1;
-      if ( isnt != 0 )
-      {
-        FILETIME ct,et,kt,ut;
-        if (GetThreadTimes(GetCurrentThread(),&ct,&et,&kt,&ut))
-        {
-          unsigned __int64 now, epoch;
-          unsigned long ell;
-          //epoch.dwHighDate = 27111902UL;
-          //epoch.dwLowDate = 3577643008UL;
-          epoch = 116444736000000000ui64;
-          now = ut.dwHighDateTime;
-          now <<= 32;
-          now += ut.dwLowDateTime;
-          now -= epoch;
-          now /= 10UL;
-          ell = (unsigned long)(now % 1000000ul);
-          tv->tv_usec = ell;
-          ell = (unsigned long)(now / 1000000ul);
-          tv->tv_sec = ell;
-          isnt = 1;
-          return 0;
-        }
-        if (isnt < 0) /* first try? */
-          isnt = 0; /* don't try again */
-      }
-    }
-    #endif
+    thread_info tInfo;
+    get_thread_info(find_thread(NULL), &tInfo);
+    tv->tv_sec = tInfo.user_time / 1000000; // convert from microseconds
+    tv->tv_usec = tInfo.user_time % 1000000;
   }
+  return 0;
+#elif defined(HAVE_GETRUSAGE) && defined(THREADS_HAVE_OWN_ACCOUNTING)
+  if (tv)
+  {
+    struct rusage rus;
+    if (getrusage(RUSAGE_SELF,&rus) != 0)
+      return -1;
+    tv->tv_sec = rus.ru_utime.tv_sec;
+    tv->tv_usec = rus.ru_utime.tv_usec;
+    //printf("\rgetrusage(%d) => %d.%02d\n", getpid(), tv->tv_sec, tv->tv_usec/10000 ); 
+  }
+  return 0;
+#elif (CLIENT_OS == OS_WIN32)
+  static int is_supp = -1;
+  FILETIME ct,et,kt,ut;
+  if (is_supp == 0)
+    return -1;
+  if ( !tv && is_supp > 0 )
+    return 0;
+  if (!GetThreadTimes(GetCurrentThread(),&ct,&et,&kt,&ut))
+  {
+    if (is_supp < 0) /* first time? */
+      is_supp = 0; /* don't try again */
+    return -1;
+  }
+  if (tv)
+  {
+    unsigned __int64 now, epoch;
+    unsigned long ell;
+    //epoch.dwHighDate = 27111902UL;
+    //epoch.dwLowDate = 3577643008UL;
+    epoch = 116444736000000000ui64;
+    now = ut.dwHighDateTime;
+    now <<= 32;
+    now += ut.dwLowDateTime;
+    now -= epoch;
+    now /= 10UL;
+    ell = (unsigned long)(now % 1000000ul);
+    tv->tv_usec = ell;
+    ell = (unsigned long)(now / 1000000ul);
+    tv->tv_sec = ell;
+  }
+  is_supp = 1;
+  return 0;
+#else
   return -1;
+#endif
 }
 
 // ---------------------------------------------------------------------
