@@ -6,7 +6,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.57 1999/04/09 13:46:48 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.58 1999/04/11 00:12:40 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -63,10 +63,17 @@ protected: /* these members *must* be protected for thread safety */
   #ifdef MAX_MEM_REQUIRED_BY_CORE
   char core_membuffer[MAX_MEM_REQUIRED_BY_CORE];
   #endif
+  u32 timehi, timelo;
 public: /* anything public must be thread safe */
-  u32 runtime_sec, runtime_usec; /* ~time spent in core */
+  u32 runtime_sec, runtime_usec; /* ~total time spent in core */
+  u32 last_runtime_sec, last_runtime_usec; /* time spent in core in last run */
+  u32 core_run_count; /* used by go_mt and other things */
 
-  u32 startpermille;              /* -,                                   */
+  struct
+  { u32 avg_coretime_usecs;
+  } profiling;                   /* -- managed by non-preemptive OSs     */
+
+  u32 startpermille;             /* -,                                   */
   unsigned int contest;          /*  |__ assigned in LoadState()         */
   int cputype;                   /*  |                                   */
   u32 tslice;                    /* -' -- adjusted by non-preemptive OSs */
@@ -108,7 +115,7 @@ public: /* anything public must be thread safe */
   int IsInitialized() { return (initialized!=0); }
 
   int LoadState( ContestWork * work, unsigned int _contest, 
-		 u32 _timeslice, int _cputype );
+     u32 _timeslice, int _cputype );
     // Load state into internal structures.
     // state is invalid (will generate errors) until this is called.
     // returns: -1 on error, 0 is OK
