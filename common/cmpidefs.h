@@ -1,6 +1,9 @@
 // Hey, Emacs, this a -*-C++-*- file !
 // 
 // $Log: cmpidefs.h,v $
+// Revision 1.3  1998/06/29 07:58:39  ziggyb
+// strncmpi(x,y,n) doesn't seem to be defined in my older version of watcom.
+//
 // Revision 1.2  1998/06/26 10:02:49  cyruspatel
 // Fixed cmpidefs.h to be platform-centric instead of compiler-centric.
 //
@@ -16,7 +19,7 @@
   Copyright 1998 Distributed Computing Technologies Inc. 
 */
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) 
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)
   #if defined(__TURBOC__)
   // Borland already knows strcmpi
   // Borland already knows strncmpi
@@ -24,7 +27,9 @@
     #define strcmpi(x,y)  _stricmp(x,y)
     #define strncmpi(x,y,n)  _strnicmp(x,y,n)
   #elif defined(__WATCOMC__)
+    #define strncmpi(x,y,n)  strnicmp(x,y,n)
     // watcom knows both
+    // Older version of watcom does do strncmpi
   #else
     //nada. Let the compiler generate the error if needed
   #endif
