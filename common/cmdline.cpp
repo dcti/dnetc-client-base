@@ -8,13 +8,13 @@
  *
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>                         
  *
- * Note to porters: your port is seriously out-of-bounds (and can be 
- * expected to break frequently) if your implementation does not call this 
- * or does start the client via the Client::Main() in client.cpp
+ * Note to porters: your port can be expected to break frequently if your 
+ * implementation does not call this or does start the client via the 
+ * Client::Main() in client.cpp
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.8 1999/06/01 15:57:51 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.9 1999/06/02 17:13:02 cyp Exp $"; }
 
 //#define TRACE
 
@@ -45,7 +45,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
   int inimissing = 0;
   int terminate_app = 0, havemode = 0;
   int pos, skip_next;
-  const char *thisarg, *nextarg;
+  const char *thisarg, *argvalue;
 
   TRACE_OUT((+1,"ParseCommandline(%d,%d)\n",run_level,argc));
   
@@ -69,7 +69,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       thisarg = argv[pos];
       if (thisarg && *thisarg=='-' && thisarg[1]=='-')
         thisarg++;
-      nextarg = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
+      argvalue = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
+      if (argvalue && *argvalue == '-')
+        argvalue = NULL; 
       skip_next = 0;
     
       if ( thisarg == NULL )
@@ -83,10 +85,10 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         loop0_quiet = 0; //used for stuff in this loop
       else if ( strcmp(thisarg, "-ini" ) == 0)
       {
-        if (nextarg)
+        if (argvalue)
         {
           skip_next = 1; 
-          strcpy( inifilename, nextarg );
+          strcpy( inifilename, argvalue );
         }
         else
           terminate_app = 1;
@@ -204,17 +206,26 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             closedir(dirp);
           }  
           #endif
-          #if (CLIENT_OS != OS_LINUX) /* already done above */
-          const char *pscmd = "ps -ax -o pid -o command 2>/dev/null"; 
-          //sprintf(buffer,"ps auxwww|grep \"%s\"|awk '{print$2}'", binname);
-          //"ps auxwww|grep \"%s\" |tr -s \' \'|cut -d\' \' -f2|tr \'\\n\' \' \'"
-          #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
-          pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*bsd'ish is /usr/ucb/ps*/
+          #if (CLIENT_OS != OS_LINUX)
+          // this part is only needed for OSs that do not read /proc OR
+          // do not have a reliable method to set the name as read from /proc
+          // (as opposed to reading it from ps output)
+          const char *pscmd = NULL;
+          #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
+              (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_LINUX)
+          pscmd = "ps ax|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
+          //fbsd: "ps ax -o pid -o command 2>/dev/null";  /* bsd + -o ext */
+          //lnux: "ps ax --format pid,comm 2>/dev/null";  /* bsd + gnu -o */
+          #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || \
+                (CLIENT_OS == OS_DEC_UNIX) 
+          pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
+          #else
+          #error fixme: select an appropriate ps syntax
           #endif
-          FILE *file = popen( pscmd, "r" );
-          if (file == NULL)
+          FILE *file = (pscmd ? popen( pscmd, "r" ) : ((FILE *)NULL));
+          if (file == ((FILE *)NULL))
           {
-            if (kill_found == 0)
+            if (kill_found == 0) /* /proc read also failed/wasn't done? */
               kill_found = -1; /* spawn failed */
           }
           else
@@ -222,6 +233,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
 	    pid_t ourpid = getpid();
 	    unsigned int linelen = 0;
 	    int got_output = 0, eof_count = 0;
+            //ConOutModal(pscmd);
 	    while (file) /* dummy while */
 	    {
 	      int ch;
@@ -252,7 +264,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                   if (thatpid == ourpid)  /* ignore it */
                   {
 		    got_output = 1;
-                  //printf("%s pid='%d' ** THIS IS US ** \n",buffer,thatpid);
+                    //printf("'%s' ** THIS IS US ** \n",buffer,thatpid);
 		    thatpid = 0;
                   }
 		  else if (thatpid != 0)
@@ -494,11 +506,14 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
   {
     for (pos = 1; pos < argc; pos += (1+skip_next))
     {
+      int missing_value = 0;
+      skip_next = 0;
       thisarg = argv[pos];
       if (thisarg && *thisarg=='-' && thisarg[1]=='-')
         thisarg++;
-      nextarg = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
-      skip_next = 0;
+      argvalue = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
+      if (argvalue && *argvalue == '-')
+        argvalue = NULL;
 
       if ( thisarg == NULL )
         ; //nothing
@@ -507,8 +522,10 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       else if ( strcmp( thisarg, "-ini" ) == 0) 
       {
         //we already did this so skip it
-        if (nextarg)
+        if (argvalue)
           skip_next = 1;
+        else 
+          missing_value = 1;
       }
       else if ( strcmp( thisarg, "-guiriscos" ) == 0) 
       {                       
@@ -567,7 +584,11 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       }
       else if ( strcmp( thisarg, "-interfaces" ) == 0 )
       {
-        if (nextarg)
+        if (!argvalue)
+        {
+          missing_value = 1;
+        }
+        else
         {
           skip_next = 1;
           #if defined(LURK)
@@ -579,7 +600,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else
           {
-            strncpy(dialup.connifacemask, nextarg, sizeof(dialup.connifacemask) );
+            strncpy(dialup.connifacemask, argvalue, sizeof(dialup.connifacemask) );
             dialup.connifacemask[sizeof(dialup.connifacemask)-1] = 0;
           }
           #endif
@@ -648,7 +669,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       }
       else if ( strcmp( thisarg, "-b" ) == 0 || strcmp( thisarg, "-b2" ) == 0 )
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           int conid = (( strcmp( thisarg, "-b2" ) == 0 ) ? (1) : (0));
@@ -658,16 +681,18 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
               LogScreenRaw("Setting %s buffer thresholds to %u\n",
                    CliGetContestNameFromID(conid), (unsigned int)inthreshold[conid] );
           }
-          else if ( atoi( nextarg ) > 0)
+          else if ( atoi( argvalue ) > 0)
           {
             inimissing = 0; // Don't complain if the inifile is missing
-            outthreshold[conid] = inthreshold[conid] = (s32) atoi( nextarg );
+            outthreshold[conid] = inthreshold[conid] = (s32) atoi( argvalue );
           }
         }
       }
       else if ( strcmp( thisarg, "-bin" ) == 0 || strcmp( thisarg, "-bin2")==0)
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           int conid = (( strcmp( thisarg, "-bin2" ) == 0 ) ? (1) : (0));
@@ -677,16 +702,18 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
               LogScreenRaw("Setting %s in-buffer threshold to %u\n",
                  CliGetContestNameFromID(conid), (unsigned int)inthreshold[conid] );
           }
-          else if ( atoi( nextarg ) > 0)
+          else if ( atoi( argvalue ) > 0)
           {
             inimissing = 0; // Don't complain if the inifile is missing
-            inthreshold[conid] = (s32) atoi( nextarg );
+            inthreshold[conid] = (s32) atoi( argvalue );
           }
         }
       }
       else if ( strcmp( thisarg, "-bout" ) == 0 || strcmp( thisarg, "-bout2")==0)
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           int conid = (( strcmp( thisarg, "-bout2" ) == 0 ) ? (1) : (0));
@@ -696,23 +723,25 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
               LogScreenRaw("Setting %s out-buffer threshold to %u\n",
                   CliGetContestNameFromID(conid), (unsigned int)outthreshold[conid] );
           }
-          else if ( atoi( nextarg ) > 0)
+          else if ( atoi( argvalue ) > 0)
           {
             inimissing = 0; // Don't complain if the inifile is missing
-            outthreshold[conid] = (s32) atoi( nextarg );
+            outthreshold[conid] = (s32) atoi( argvalue );
           }
         }
       }
       else if ( strcmp( thisarg, "-inbase" ) == 0 || strcmp( thisarg, "-outbase")==0 )
       {
-        if ( nextarg ) 
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           int out = ( strcmp( thisarg, "-outbase" ) == 0 );
           char *p = (out ? out_buffer_basename : in_buffer_basename);
           skip_next = 1;
           if ( run_level == 0 )
           {
-            strncpy( p, nextarg, sizeof(in_buffer_basename) );
+            strncpy( p, argvalue, sizeof(in_buffer_basename) );
             p[sizeof(in_buffer_basename)-1]=0;
             inimissing = 0; // Don't complain if the inifile is missing
           }
@@ -725,7 +754,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       }
       else if ( strcmp( thisarg, "-u" ) == 0 ) // UUE/HTTP Mode
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
@@ -735,13 +766,15 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else
           {
-            uuehttpmode = atoi( nextarg );
+            uuehttpmode = atoi( argvalue );
           }
         }
       }
       else if ( strcmp( thisarg, "-a" ) == 0 ) // Override the keyserver name
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
@@ -753,13 +786,15 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           {
             inimissing = 0; // Don't complain if the inifile is missing
             autofindkeyserver = 0;
-            strcpy( keyproxy, nextarg );
+            strcpy( keyproxy, argvalue );
           }
         }
       }
       else if ( strcmp( thisarg, "-p" ) == 0 ) // UUE/HTTP Mode
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level!=0)
@@ -770,13 +805,15 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           else
           {
             inimissing = 0; // Don't complain if the inifile is missing
-            keyport = atoi( nextarg );
+            keyport = atoi( argvalue );
           }
         }
       }
       else if ( strcmp( thisarg, "-ha" ) == 0 ) // Override the http proxy name
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
@@ -787,13 +824,15 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           else
           {
             inimissing = 0; // Don't complain if the inifile is missing
-            strcpy( httpproxy, nextarg );
+            strcpy( httpproxy, argvalue );
           }
         }
       }
       else if ( strcmp( thisarg, "-hp" ) == 0 ) // Override the socks/http proxy port
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
@@ -804,13 +843,15 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           else
           {
             inimissing = 0; // Don't complain if the inifile is missing
-            httpport = (s32) atoi( nextarg );
+            httpport = (s32) atoi( argvalue );
           }
         }
       }
       else if ( strcmp( thisarg, "-l" ) == 0 ) // Override the log file name
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
@@ -820,13 +861,15 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else
           {
-            strcpy( logname, nextarg );
+            strcpy( logname, argvalue );
           }
         }
       }
       else if ( strcmp( thisarg, "-smtplen" ) == 0 ) // Override the mail message length
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
@@ -836,13 +879,15 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else
           {
-            messagelen = (s32) atoi(nextarg);
+            messagelen = (s32) atoi(argvalue);
           }
         }
       }
       else if ( strcmp( thisarg, "-smtpport" ) == 0 ) // Override the smtp port for mailing
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
@@ -852,13 +897,15 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else
           {
-            smtpport = (s32) atoi(nextarg);
+            smtpport = (s32) atoi(argvalue);
           }
         }
       }
       else if ( strcmp( thisarg, "-smtpsrvr" ) == 0 ) // Override the smtp server name
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
@@ -868,13 +915,15 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else
           {
-            strcpy( smtpsrvr, nextarg );
+            strcpy( smtpsrvr, argvalue );
           }
         }
       }
       else if ( strcmp( thisarg, "-smtpfrom" ) == 0 ) // Override the smtp source id
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
@@ -883,12 +932,14 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
               LogScreenRaw("Setting mail 'from' address to %s\n", smtpfrom );
           }
           else
-            strcpy( smtpfrom, nextarg );
+            strcpy( smtpfrom, argvalue );
         }
       }
       else if ( strcmp( thisarg, "-smtpdest" ) == 0 ) // Override the smtp source id
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
@@ -898,13 +949,15 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else
           {
-            strcpy( smtpdest, nextarg );
+            strcpy( smtpdest, argvalue );
           }
         }
       }
       else if ( strcmp( thisarg, "-e" ) == 0 )     // Override the email id
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
@@ -914,14 +967,16 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else
           {
-            strcpy( id, nextarg );
+            strcpy( id, argvalue );
             inimissing = 0; // Don't complain if the inifile is missing
           }
         }
       }
       else if ( strcmp( thisarg, "-nettimeout" ) == 0 ) // Change network timeout
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
@@ -932,13 +987,15 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else
           {
-            nettimeout = atoi(nextarg);
+            nettimeout = atoi(argvalue);
           }
         }
       }
       else if ( strcmp( thisarg, "-exitfilechecktime" ) == 0 ) 
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           /* obsolete */
@@ -946,7 +1003,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       }
       else if ( strcmp( thisarg, "-c" ) == 0 || strcmp( thisarg, "-cputype" ) == 0)
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
@@ -956,14 +1015,16 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else
           {
-            cputype = (s32) atoi( nextarg );
+            cputype = (s32) atoi( argvalue );
             inimissing = 0; // Don't complain if the inifile is missing
           }
         }
       }
       else if ( strcmp( thisarg, "-nice" ) == 0 ) // Nice level
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
@@ -973,7 +1034,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else
           {
-            priority = (s32) atoi( nextarg );
+            priority = (s32) atoi( argvalue );
             priority = ((priority==2)?(8):((priority==1)?(4):(0)));
             inimissing = 0; // Don't complain if the inifile is missing
           }
@@ -981,7 +1042,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       }
       else if ( strcmp( thisarg, "-priority" ) == 0 ) // Nice level
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
@@ -991,26 +1054,28 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else
           {
-            priority = (s32) atoi( nextarg );
+            priority = (s32) atoi( argvalue );
             inimissing = 0; // Don't complain if the inifile is missing
           }
         }
       }
       else if ( strcmp( thisarg, "-h" ) == 0 || strcmp( thisarg, "-until" ) == 0)
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           int isuntil = (strcmp( thisarg, "-until" ) == 0);
           int h=0, m=0, pos, isok = 0, dotpos=0;
-          if (isdigit(*nextarg))
+          if (isdigit(*argvalue))
           {
             isok = 1;
-            for (pos = 0; nextarg[pos] != 0; pos++)
+            for (pos = 0; argvalue[pos] != 0; pos++)
             {
-              if (!isdigit(nextarg[pos]))
+              if (!isdigit(argvalue[pos]))
               {
-                if (dotpos != 0 || (nextarg[pos] != ':' && nextarg[pos] != '.'))
+                if (dotpos != 0 || (argvalue[pos] != ':' && argvalue[pos] != '.'))
                 {
                   isok = 0;
                   break;
@@ -1020,15 +1085,15 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             }
             if (isok)
             {
-              if ((h = atoi( nextarg )) < 0)
+              if ((h = atoi( argvalue )) < 0)
                 isok = 0;
               else if (isuntil && h > 23)
                 isok = 0;
               else if (dotpos == 0 && isuntil)
                 isok = 0;
-              else if (dotpos != 0 && strlen(nextarg+dotpos+1) != 2)
+              else if (dotpos != 0 && strlen(argvalue+dotpos+1) != 2)
                 isok = 0;
-              else if (dotpos != 0 && ((m = atoi(nextarg+dotpos+1)) > 59))
+              else if (dotpos != 0 && ((m = atoi(argvalue+dotpos+1)) > 59))
                 isok = 0;
             }
           }
@@ -1064,7 +1129,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       }
       else if ( strcmp( thisarg, "-n" ) == 0 ) // Blocks to complete in a run
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
@@ -1079,27 +1146,31 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                     ((blockcount==0)?(" (no limit)"):("")));
             }
           }
-          else if ( (blockcount = atoi( nextarg )) < 0)
+          else if ( (blockcount = atoi( argvalue )) < 0)
             blockcount = -1;
         }
       }
       else if ( strcmp( thisarg, "-numcpu" ) == 0 ) // Override the number of cpus
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
             ;
           else
           {
-            numcpu = (s32) atoi(nextarg);
+            numcpu = (s32) atoi(argvalue);
             inimissing = 0; // Don't complain if the inifile is missing
           }
         }
       }
       else if ( strcmp( thisarg, "-ckpoint" ) == 0 || strcmp( thisarg, "-ckpoint2" ) == 0 )
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
@@ -1110,13 +1181,15 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else
           {
-            strcpy(checkpoint_file, nextarg );
+            strcpy(checkpoint_file, argvalue );
           }
         }
       }
       else if ( strcmp( thisarg, "-cktime" ) == 0 )
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           /* obsolete */
@@ -1124,7 +1197,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       }
       else if ( strcmp( thisarg, "-pausefile" ) == 0)
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
@@ -1134,13 +1209,15 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else
           {
-            strcpy(pausefile, nextarg );
+            strcpy(pausefile, argvalue );
           }
         }
       }
       else if ( strcmp( thisarg, "-blsize" ) == 0)
       {
-        if (nextarg)
+        if (!argvalue)
+          missing_value = 1;
+        else
         {
           skip_next = 1;
           if (run_level != 0)
@@ -1150,7 +1227,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else
           {
-            preferred_blocksize = (s32) atoi(nextarg);
+            preferred_blocksize = (s32) atoi(argvalue);
           }
         }
       }
@@ -1170,8 +1247,18 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       else if (( strcmp( thisarg, "-forceunlock" ) == 0 ) ||
                ( strcmp( thisarg, "-import" ) == 0 ))
       {
-        skip_next = 1; //f'd up "mode" - handled in next loop
-        havemode = 1;
+        if (!argvalue)
+        {
+          havemode = 0;
+          missing_value = 1;
+          if (run_level!=0)
+            terminate_app = 1;
+        }
+        else
+        { 
+          skip_next = 1;
+          havemode = 1; //f'd up "mode" - handled in next loop
+        }
       }
       else if (run_level==0)
       {
@@ -1183,6 +1270,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         havemode = 0;
         break;
       }
+      if (run_level!=0 && missing_value && logging_is_initialized)
+        LogScreenRaw ("%s option ignored. (argument missing)\n", thisarg );
     }
   }
 
@@ -1199,7 +1288,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       thisarg = argv[pos];
       if (thisarg && *thisarg=='-' && thisarg[1]=='-')
         thisarg++;
-      nextarg = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
+      argvalue = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
+      if (argvalue && *argvalue == '-')
+        argvalue = NULL;
       skip_next = 0;
   
       if ( thisarg == NULL )
@@ -1278,25 +1369,25 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       }
       else if ( strcmp( thisarg, "-forceunlock" ) == 0 )
       {
-        if (!inimissing && nextarg)
+        if (!inimissing && argvalue)
         {
           quietmode = 0;
           skip_next = 1;
           ModeReqClear(-1); //clear all - only do -forceunlock
           ModeReqSet(MODEREQ_UNLOCK);
-          ModeReqSetArg(MODEREQ_UNLOCK,(void *)nextarg);
+          ModeReqSetArg(MODEREQ_UNLOCK,(void *)argvalue);
           break;
         }
       }
       else if ( strcmp( thisarg, "-import" ) == 0 )
       {
-        if (!inimissing && nextarg)
+        if (!inimissing && argvalue)
         {
           quietmode = 0;
           skip_next = 1;
           ModeReqClear(-1); //clear all - only do -import
           ModeReqSet(MODEREQ_IMPORT);
-          ModeReqSetArg(MODEREQ_IMPORT,(void *)nextarg);
+          ModeReqSetArg(MODEREQ_IMPORT,(void *)argvalue);
           break;
         }
       }
