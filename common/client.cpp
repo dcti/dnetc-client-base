@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.198.2.1  1999/04/04 13:42:26  jlawson
+// changed network.h to network2.h
+//
 // Revision 1.198  1999/04/01 03:20:41  cyp
 // Updated to reflect changed [in|out]_buffer_[file->basename] semantics.
 //
@@ -215,7 +218,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.198 1999/04/01 03:20:41 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.198.2.1 1999/04/04 13:42:26 jlawson Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -232,7 +235,7 @@ return "@(#)$Id: client.cpp,v 1.198 1999/04/01 03:20:41 cyp Exp $"; }
 #include "triggers.h"  // [De]InitializeTriggers(),RestartRequestTrigger()
 #include "logstuff.h"  // [De]InitializeLogging(),Log()/LogScreen()
 #include "console.h"   // [De]InitializeConsole(), ConOutErr()
-#include "network.h"   // [De]InitializeConnectivity()
+#include "network2.h"  // [De]InitializeConnectivity()
 
 // --------------------------------------------------------------------------
 
