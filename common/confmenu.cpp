@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.16 2000/02/04 08:29:57 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.17 2000/04/03 20:12:11 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -1018,7 +1018,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
             int mmin = conf_options[editthis].choicemin;
             int mmax = conf_options[editthis].choicemax;
             int mdef = atoi(conf_options[editthis].defaultsetting);
-            if (mmin && mmax)
+            if (mmin || mmax)
             {
               for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
               {
