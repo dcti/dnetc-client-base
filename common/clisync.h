@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.16 2003/09/07 11:33:33 mweiser Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.17 2003/09/08 19:12:25 mweiser Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -455,7 +455,7 @@
     }
   }
 
-#elif ((CLIENT_CPU == CPU_S390) || (CLIENT_CPU == CPU_S390X) && \
+#elif ((CLIENT_CPU == CPU_S390) || (CLIENT_CPU == CPU_S390X)) && \
       defined(__GNUC__)
   /* based on
   ** http://lxr.linux.no/source/include/asm-s390/spinlock.h?a=s390 */
