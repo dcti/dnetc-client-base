@@ -21,13 +21,14 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.23 2000/01/18 19:59:26 ctate Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.24 2000/01/18 20:32:40 cyp Exp $
 ==========================================================================
 
 2.8000
 ------
 
-2.8005.456  fix: BeOS brought up to v2.8005
+2.8006.456  chg: all: OGR cores reactivated.
+            upd: BeOS: x86/ppc clients brought up to date
 
 2.8005.455  fix: all: client not rotating to next project
             fix: win32/16: all font issues resolved
