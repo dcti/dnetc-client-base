@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.42  1998/11/14 14:12:05  cyp
+// Fixed assignment of -1 to an unsigned variable.
+//
 // Revision 1.41  1998/11/14 13:56:15  cyp
 // Fixed pipeline_count for x86 clients (DES cores were running with 4
 // pipelines). Fixed unused parameter warning in LoadState(). Problem manager
@@ -101,7 +104,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.41 1998/11/14 13:56:15 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.42 1998/11/14 14:12:05 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -153,7 +156,7 @@ extern void CliSignalHandler(int);
 
 Problem::Problem()
 {
-  probman_index = -1; /* assume problem is not managed by probman */
+  probman_index = (unsigned int)(-1); /* assume not managed by probman */
   initialized = 0;
   finished = 0;
   started = 0;
