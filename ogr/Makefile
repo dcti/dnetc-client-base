@@ -1,4 +1,4 @@
-CFLAGS = -O2 -g -Wall -Du16=short -Du32=long
+CFLAGS = -O2 -g -Wall -Du16="unsigned short" -Du32="unsigned long"
 
 all: choose test-ogr test-stubsplit
 
