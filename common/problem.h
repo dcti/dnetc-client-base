@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.53.2.6 2001/03/23 21:48:06 sampo Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.53.2.7 2001/03/23 22:16:03 sampo Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -232,7 +232,7 @@ typedef struct ProblemInfo {
 #define P_INFO_CWPBUF      0x00000400
 
 // returns RESULT_* or -1 if bad state
-int ProblemGetInfo(void *__thisprob, ProblemInfo *info, u32 flags);
+int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags);
 
 Problem *ProblemAlloc(void);
 void ProblemFree(void *__thisprob);

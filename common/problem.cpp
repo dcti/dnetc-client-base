@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.108.2.8 2001/03/23 21:40:57 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.108.2.9 2001/03/23 22:16:04 sampo Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -2058,7 +2058,7 @@ int WorkGetSWUCount( const ContestWork *work,
 // thisprob may be 0, gracefully exits
 // info may not be zero, it must be a valid address of a ProblemInfo struct
 // see problem.h for flag values
-int ProblemGetInfo(void *__thisprob, ProblemInfo *info, u32 flags)
+int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
 {
   int rescode = -1;
   ContestWork work;
