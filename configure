@@ -5,6 +5,42 @@
 # Any other distribution or use of this source violates copyright.
 
 # $Log: configure,v $
+# Revision 1.113.2.18  1999/01/17 12:11:13  remi
+# Synced with :
+#
+#  Revision 1.170  1999/01/13 21:28:29  patrick
+#  new target for OS2: x86-os2-gcc
+#
+#  Revision 1.169  1999/01/13 11:57:19  snake
+#  fixed sparc-openbsd target
+#
+#  Revision 1.168  1999/01/12 21:48:23  remi
+#  Little fix for linux-aout.
+#
+#  Revision 1.167  1999/01/12 21:03:00  remi
+#  - Added conditional $Id tags in NASM files
+#  - Added -d __showids__ to NASM_FLAGS in targets where __showids_ was
+#    already defined in CFLAGS
+#
+#  Revision 1.166  1999/01/12 09:39:41  chrisb
+#  small fixes to the x86-solaris config
+#
+#  Revision 1.165  1999/01/12 08:51:33  silby
+#  Changes for ELF deseval-mmx builds.
+#
+#  Revision 1.164  1999/01/12 08:31:00  silby
+#  Added mmx-bitslice include path for nasm.
+#
+#  Revision 1.163  1999/01/12 08:23:15  silby
+#  Changes to use new des mmx core.
+#
+#  Revision 1.162  1999/01/11 20:50:00  patrick
+#  modified aix-pwer-gcc
+#  CHANGE of DELETECHARS broke AIX compile (only changed POWER targets)
+#
+#  Revision 1.161  1999/01/11 11:44:13  cramer
+#  added -pipe to some solaris targets
+#
 # Revision 1.113.2.17  1999/01/17 11:58:54  remi
 # Synced with :
 #
@@ -424,9 +460,10 @@ MEGGS_SLICE_SRCS1="des/deseval-meggs2.cpp des/des-slice-meggs.cpp"
 MEGGS_SLICE_SRCS2="des/deseval-meggs3.cpp des/des-slice-meggs.cpp"
 
 DESX86_SRCS="des/des-x86.cpp"
-DESMMX_SRCS="des/deseval-meggs3-mmx.cpp \
-	     des/sboxes-mmx.cpp \
-	     des/des-slice-meggs.cpp"
+
+DESMMX_SRCS="des/des-slice-meggs.cpp"
+NASM_DESMMX_SRCS="des/mmx-bitslice/deseval-mmx.asm"
+
 
 DESULTRA_SRCS_C="platforms/ultrasparc/des-slice-ultrasparc.cpp \
 		 platforms/ultrasparc/simple.c \
@@ -455,7 +492,7 @@ TARGET_LDFLAGS=""
 TARGET_LIBS=""
 TARGET_AS="gas"
 TARGET_NASM="nasm"
-TARGET_NASMFLAGS="-i rc5/nasm/ -f elf"
+TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -d__ELF__ -f elf"
 TARGET_ASFLAGS=""
 TARGET_STRIP="touch"
 TARGET_CP="cp"
@@ -588,10 +625,11 @@ case "$1" in
 ###### Sparc/UltraSparc or Sun/SunOS/Solaris
 
     *sparc-openbsd)
-	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC272_NONULTRA_SPARC \
-			-DPIPELINE_COUNT=2 -DBIT_32 -DKWAN"
-	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
+	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
+	TARGET_CCFLAGS="$OPTS_GCC272_SPARC1 \
+			-DPIPELINE_COUNT=2 -DBIT_32 -DKWAN -DMEGGS"
+	#TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
+	TARGET_ADDSRCS="des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
 	;;
 
     *sparc-linux)
@@ -668,7 +706,7 @@ case "$1" in
 
     *sparc-solaris-gcc-crunch-slice)   # fastest rc5 & des for ultra
 	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
-	TARGET_CC="gcc"
+	TARGET_CC="gcc -pipe"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
 			-DPIPELINE_COUNT=2 \
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
@@ -678,7 +716,7 @@ case "$1" in
 
     *sparc-solaris-gcc-crunch-asmslice)      # fastest rc5 & VIS DES
 	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
-	TARGET_CC="gcc"
+	TARGET_CC="gcc -pipe"
 	TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris \
 			-DPIPELINE_COUNT=2 -DULTRA_CRUNCH=1"
 	TARGET_ADDSRCS="$DESULTRA_SRCS_ASM"
@@ -689,12 +727,12 @@ case "$1" in
 
     #####
 
-    *x86-solaris)
+    *x86-solaris)    # gcc, nomt, dynamic
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -Dsolaris $OPTS_DES_MMX -DMMX_RC5 \
 			-DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	TARGET_ADDASMS="output/bdeslow.S output/x86ident.S des/p1bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_LIBS="-lnsl -lsocket -ldl"
 	;;
 
@@ -862,15 +900,18 @@ case "$1" in
 	;;
 
   ### AIX POWER targets
+	# classes are buggy with AIX !
 
-    *aix-power-gcc-pipe1)  # AIX POWER with PIPELINE_COUNT=1
+    *aix-power-gcc-pipe1)  # AIX POWER with PIPELINE_COUNT=1 (do not use)
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/rc5ansi1-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_POWER -D_AIX -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	;;
 
-    *aix-power-gcc-pipe2)  # AIX POWER with PIPELINE_COUNT=2
+    *aix-power-gcc-pipe2)  # AIX POWER with PIPELINE_COUNT=2 (preferred)
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_POWER -D_AIX -DPIPELINE_COUNT=2 \
 			-DBIT_32 -DMEGGS -DKWAN"
@@ -878,23 +919,35 @@ case "$1" in
 	;;
 
 ###### Intel X86 Linux platforms
-    *x86-linux-egcs)              # uses EGCS options
+
+    *x86-linux-gcc)			# nomt, static, gcc/pipe
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -pipe -DSMC"
+	TARGET_LDFLAGS="-static -Xlinker -omagic"
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp \
+			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
+	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
+			  -d__ELF__ \
+			  -f elf"
+	TARGET_LIBS=""
+	;;
+
+    *x86-linux-egcs)		   # nomt, static, egcs
 	TARGET_AS="g++ -c"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -DSMC"
-	TARGET_LDFLAGS="-Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+	TARGET_LDFLAGS="-static -Xlinker -omagic"
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp \
+			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-	;;
-
-    *x86-linux-gcc)               # uses standard GCC options plus '-pipe'
-	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC272_X86 $OPTS_DES_MMX -DMMX_RC5 -DSMC"
-	TARGET_LDFLAGS="-Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
+	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
+			  -d__ELF__ \
+			  -f elf"
+	TARGET_LIBS=""
 	;;
 
 ###### Intel X86 FreeBSD/NetBSD/OpenBSD
@@ -906,8 +959,8 @@ case "$1" in
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_LIBS="-lc_r"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -f aoutb"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
+	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -f aoutb"
 	;;
 
     *x86-freebsd-elf)
@@ -916,8 +969,7 @@ case "$1" in
 			-DPIPELINE_COUNT=2 -D__ELF__"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -f elf"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_NASM="/usr/local/bin/nasm"
 	TARGET_LIBS="-lc_r"
 	;;
@@ -928,7 +980,7 @@ case "$1" in
 			-DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	;;
 
     *x86-qnx4)
@@ -944,7 +996,7 @@ case "$1" in
 			-DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	;;
 
     *x86-bsdi)
@@ -961,7 +1013,10 @@ case "$1" in
 			-DPIPELINE_COUNT=2 -D__ELF__"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
+	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
+			  -d__showids__ -d__ELF__ \
+			  -f elf"
        ;;
 
 ####### Intel X86 SCO5
@@ -972,7 +1027,7 @@ case "$1" in
 			-DPIPELINE_COUNT=2 -belf -Dsco5"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_LIBS="-lsocket"
 	;;
 
@@ -984,7 +1039,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EPC_DYNIX -DMMX_RC5 -DPIPELINE_COUNT=2 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS1"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_LIBS="-lsocket -lnsl -lseq -L/opt/epc/ec++/lib -lec++"
 	;;
 
@@ -993,7 +1048,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_DYNIX -DMMX_RC5 -DPIPELINE_COUNT=2 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_LDFLAGS="-L."
 	# Don't panic; -lXbsd is for gettimeofday()
 	TARGET_LIBS="-lsocket -linet -lnsl -lXbsd -lseq"
@@ -1008,7 +1063,7 @@ case "$1" in
 			-DPIPELINE_COUNT=2 -DBIT_32"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+	TARGET_ADDNASMS="$RC5X86_SRCS $NASM_DESMMX_SRCS"
 	;;
 
     *m68k-next-gcc)
@@ -1107,9 +1162,38 @@ case "$1" in
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
 			platforms/x86ident.S \
 			des/p1bdespro.S des/p2bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
+	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
+			  -d__showids__ -d__ELF__ \
+			  -f elf"
 	TARGET_LIBS=""
 	;;
+
+####### OS/2 (x86, emx)
+    # requires EMX, gcc 2.72 
+    # if you don't have a basename command, you can use the following script:
+    # just copy it to basename.cmd
+        #@echo off
+        #ksh -c "parm=%1 ; echo ${parm##*[\\/]}"
+       
+    *x86-os2-gcc)      
+        basename ()
+        {
+        export parm=$1
+        ksh -c 'echo ${parm##*/}'
+        }
+	TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+	TARGET_CCFLAGS="-Zmts -pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -I. -I${C_INCLUDE_PATH} -DMULTITHREAD -D__showids__"
+	TARGET_LDFLAGS="-Zmts"
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp $RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 platforms/os2cli/os2inst.cpp"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+	TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm $NASM_DESMMX_SRCS"
+        TARGET_NASMFLAGS="-i rc5/nasm/ -f aout"
+        TARGET_LIBS="-lsocket"
+        TARGET_OS=OS2
+        ;;
+
 
 ###### Unknown
     *list)
@@ -1186,7 +1270,11 @@ else
     echo " ---------------------------------------------"
     exit
   fi
-  ${TARGET_STRIP} testplat
+  if [ $TARGET_OS = OS2 ]; then
+     emxbind testplat
+  else
+     ${TARGET_STRIP} testplat
+  fi
 fi
 
 
@@ -1244,6 +1332,23 @@ echo "" >> Makefile
 echo "Generating Makefile production targets..."
 echo "# Regular targets follow" >> Makefile
 
+if [ $TARGET_OS=OS2 ]; then
+
+echo "${EXENAME}.exe:	\${BUILDNAME}.exe" >> Makefile
+echo "	\${CP} \${BUILDNAME}.exe ${EXENAME}.exe" >> Makefile
+echo "" >> Makefile
+
+echo "\${BUILDNAME}.exe:	\${ALLOBJS} \${ADDOBJS} output/\${BUILDNAME}.res" >> Makefile
+echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o \${BUILDNAME}" >> Makefile
+echo "	emxbind -b -r output/\${BUILDNAME}.res \${BUILDNAME}" >> Makefile
+echo "" >> Makefile
+
+echo "output/\${BUILDNAME}.res: platforms/os2cli/rc5des.rc" >> Makefile
+echo "	 platforms\\os2cli\\gcc_rc.cmd \${BUILDNAME}.res" >> Makefile
+echo "" >> Makefile
+
+else
+
 echo "${EXENAME}:	\${BUILDNAME}" >> Makefile
 echo "	\${CP} \${BUILDNAME} ${EXENAME}" >> Makefile
 echo "	\${STRIP} ${EXENAME}" >> Makefile
@@ -1253,8 +1358,13 @@ echo "\${BUILDNAME}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
 echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o \${BUILDNAME}" >> Makefile
 echo "" >> Makefile
 
+fi
+
 echo "clean:" >> Makefile
-echo "	rm -f \${ALLOBJS} ${EXENAME}" >> Makefile
+echo "	rm -f \${ALLOBJS}  ${EXENAME}" >> Makefile
+if [ $TARGET_OS=OS2 ]; then
+echo "	rm -f output/\${BUILDNAME}.res" >> Makefile
+fi
 echo "" >> Makefile
 
 echo "superclean: clean" >> Makefile
