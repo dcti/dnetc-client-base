@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.53  1998/06/17 10:51:23  kbracey
+// Fixed printfs for machines with 64-bit longs.
+//
 // Revision 1.52  1998/06/17 07:53:02  cberry
 // replaced the % in [%s] Both RC5 and DES are marked as finished.  Quitting.
 //
@@ -33,7 +36,7 @@
 //
 //
 
-static const char *id="@(#)$Id: client.cpp,v 1.52 1998/06/17 07:53:02 cberry Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.53 1998/06/17 10:51:23 kbracey Exp $";
 
 #include "client.h"
 
@@ -1780,7 +1783,8 @@ PreferredIsDone1:
              "[%s] %d Blocks remain in file %s\n"
              "[%s] %d Blocks are in file %s\n",
              Time(), (fileentry.contest == 1 ? "DES":"RC5"),tmpblkcnt,tmpblksize,
-                 ntohl( fileentry.key.hi ), ntohl( fileentry.key.lo ),
+                 (unsigned long) ntohl( fileentry.key.hi ),
+                 (unsigned long) ntohl( fileentry.key.lo ),
              Time(), count, (nodiskbuffers? "(memory-in)":ini_in_buffer_file[fileentry.contest]),
              Time(), CountBufferOutput(fileentry.contest), (nodiskbuffers? "(memory-out)":ini_out_buffer_file[fileentry.contest]) );
         gettimeofday( &stop, &dummy );
@@ -2668,7 +2672,8 @@ PreferredIsDone1:
           else
           {
             Log( "[%s] Saved block %08lX:%08lX (%d.%02d percent complete)\n",
-                Time(), temphi , templo , percent2/100, percent2%100 );
+                Time(), (unsigned long) temphi, (unsigned long) templo,
+                percent2/100, percent2%100 );
           }
         }
       } //endfor(cpu_i)
