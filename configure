@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.208  1999/03/20 08:34:29  cyp
+# Tadaaa! buffupd.cpp, buffwork.cpp (including exclusive dependancies scram.h,
+# scram.cpp and packets.h) are now the only files that are non-public.
+#
 # Revision 1.207  1999/03/18 07:48:52  gregh
 # Add an x86-linux-mt-gcc-gregh target that contains OGR stuff for now.
 #
@@ -931,6 +935,7 @@ COMMON_SRCS="common/client.cpp \
 	     common/confopt.cpp \
 	     common/checkpt.cpp \
 	     common/util.cpp \
+	     common/random.cpp \
 	     common/base64.cpp"
 
 #
