@@ -119,7 +119,7 @@ unauthorized installations is help in uninstalling them.
          are behind a firewall or have other special configuration
          needs.) When you are done, type 0 [ENTER] to exit and save
          the settings.
-     c.  Run "rc5dessrv.exe -install" so that the client will
+     c.  Run "rc5desrv.exe -install" so that the client will
          install itself as a system service. You must have
          administrator access for this to work properly.
      d.  Go into the windows control panel and into "Services". If
@@ -852,12 +852,12 @@ Command line argument: -u <UUE/HTTP mode>
 Config file entry: uuehttpmode=<UUE/HTTP mode>
 Default setting: 0
 
-If the firemode option is set to 5, this option determines the firewall
-communications mode the client will use. The types of modes are:
+This option determines the firewall communications mode the client will
+use. The types of modes are:
 
    0  : Direct communications mode, no firewall support
    1  : UUE encoding (for telnet proxies)
-   2  : HTTP encoding
+   2  : HTTP encoding 
    3  : HTTP+UUE encoding
    4  : SOCKS4 proxy
    5  : SOCKS5 proxy
@@ -1126,53 +1126,6 @@ Config file entry: randomprefix=<some number>
 Default setting: Whatever it's at - leave it alone.
 This setting is used / set by the client to specify where in the RC5
 keyspace random blocks should be created from.  Please do not change it.
-
----------------------------
-Command line argument: none
-Config file entry: firemode=<firewall communications mode>
-Default setting: 1
-
-   Here are the different modes:
-
-1) I can communicate freely to the Internet on all ports.
-
-This is the preferred option of commmunications. It communicates
-directly with the keyproxy network, and is the most reliable mode of
-communication. Unfortunately, this option will not allow you to connect
-through some firewalls.
-
-2) I can communicate freely on telnet ports
-
-If you are behind a firewall that blocks normal communications (network
-mode 1), but does allow telnet connections, this communication option
-should work. Enabling it will cause the client to connect through port 23,
-as if it were a telnet program. When you enable this option, you must also
-make sure to change the keyproxy selected to the specific IP address of
-a keyproxy that is accepting connections on port 23 (not all do.)  Check
-http://www.distributed.net/rc5/proxyinfo.html - proxies that answer on
-port 23 will have "US23" in the far right column.
-
-3) I can communicate freely on telnet ports, but need uuencoding
-
-If the telnet proxy you are connecting through only passes the lower 7-
-bits of each character, you will need to use this option to connect.  In
-short, if option 2 should work, but doesn't, try this option.
-
-4) I have a local HTTP proxy that I can go through
-
-If your firewall includes a http proxy (almost all do), this
-communications mode should be tried. It connects to the keyproxies as if
-they were websites it was accessing. When configuring this option, make
-sure to specify the keyserver you are going to use by IP alone. Not all
-keyservers accept http connections - check the proxy listing at
-http://www.distributed.net/rc5/proxyinfo.html and look for proxies that
-are in the US80 DNS.  Also, check the section on proxy configuration
-below for more information.
-
-5) Let me specify custom network settings (expert mode)
-
-If you need to tweak the telnet/http proxy support, or use the SOCKS4
-proxy support, you'll need to enable this mode.
 
 8.  Operation of the client
 ---------------------------
@@ -1615,14 +1568,14 @@ blocks. The setup of this is simple and reliable; all you must do is
 download a personal proxy (http://www.distributed.net/rc5/proxies.html),
 set it up to run on the machine that functions as the firewall, and set
 all the clients to connect to that machine to receive blocks (via
-firemode=5 and keyproxy=<IP/DNS of the computer with the personal
+keyproxy=<IP/DNS of the computer with the personal
 proxy.)  The major downside to this option is that you must be
 authorized to run an outside program on the firewall computer.
 
 2.  The next most reliable option is to set the firewall to allow
 connections through port 2064 (the port the client uses for
 communication to the keyservers.)  If this is done correctly, you will
-be able to set the client with firemode=5 and keyproxy=<IP/DNS of the
+be able to set the client with keyproxy=<IP/DNS of the
 firewall> and have the proxy redirect communications to one of the main
 proxies.  The problem with this configuration is that it requires that
 you have access to the configuration of the firewall.  This method will
@@ -1631,39 +1584,38 @@ documentation.
 
 3.  The most reliable option for sending/receiving blocks through the
 firewall if you are unable to directly modify the firewall's
-confguration is to use SOCKS support (if your firewall supports it, of
-course.)  To configure SOCKS, enter the menu configuration and select
-option 9 (network communications mode) - set it to 5 (Let me specify
-custom network settings). Now, select option 14 (UUE/HTTP/SOCKS mode).
-If you are using a SOCKS4 proxy, choose option 4, or choose option 5
-if you are using a SOCKS5 proxy. If you are unsure as to which version
-of SOCKS you are using, select SOCKS4. Now, edit options 12 and 13
-(Proxy address and port, respectively), ensuring that they point to
-the SOCKS proxy you will be communicating through. If you must use a
-SOCKS userid/password, enter it in option 15. In some situations,
-option 10 (the address of the keyproxy to use) may need to be changed
-to the specific IP address of a proxy. However, SOCKS support *should*
-work "out of the box" on most proxies.
+configuration is to use SOCKS support (if your firewall supports it, of
+course.)  To configure SOCKS, enter the Communications Options menu
+and select option 1 (Firewall Communications mode). If you are using
+a SOCKS4 proxy, choose option 4, or choose option 5 if you are using a
+SOCKS5 proxy. If you are unsure as to which version of SOCKS you are
+using, select SOCKS4. Now, edit options 4 and 5 (Proxy address and
+port, respectively), ensuring that they point to the SOCKS proxy you
+will be communicating through. If you must use a SOCKS userid/password,
+enter it in option 6. In some situations, option 2 (the address of the
+keyproxy to use) may need to be changed to the specific IP address of a
+proxy. However, SOCKS support *should* work "out of the box" on most 
+proxies.
 
 4.  The most compatible firewall communications option is to use the
 http proxy support of the client. To setup http proxy support, enter
-the client's configuration utility (rc5des -config) and select option
-9 (network communication mode). Choose mode 5 (Let me specify custom
-network settings). Next, select option 14 (UUE/HTTP/SOCKS mode) and
-select mode 2 (HTTP encoding). Next, select option 12, and input
+the client's configuration utility (rc5des -config) and enter the
+Communications Options menu. Select option 1 (Firewall Communications
+mode) and select mode 2 (HTTP encoding). Next, select option 4, and input
 the address of the HTTP proxy you will be connecting through. Finally,
-select option 10 and enter "us80.v27.distributed.net". Also, if you
-must use a username/password to connect through your http proxy,
-make sure to set option 15 (HTTP/SOCKS userid/password).
+select option 2, enter "us80.v27.distributed.net", and select option 3
+and enter "80". Also, if you must use a username/password to connect
+through your http proxy, make sure to set option 6 (HTTP/SOCKS
+userid/password).
 
 *This should work, but it may not.*
 
 If the HTTP proxy support does not work at this point, there are a few
 more options to fiddle with. One of the first things to try is to edit
-option ten again, and enter the IP address of one of the us80 proxies
+option two again, and enter the IP address of one of the us80 proxies
 directly (obtainable by nslookup us80.v27.distributed.net). If this does
-not fix the problem, try changing option 14 (UUE/HTTP/SOCKS mode) to 3
-(HTTP+UUE encoding).
+not fix the problem, try changing option 1 (Firewall Communications
+mode) to 3 (HTTP+UUE encoding).
 
 In all cases, whether it works or not, please e-mail silby@execpc.com so
 the list of known working/non-working proxies can be kept up to date.
@@ -1770,3 +1722,6 @@ help file.
 
 Mike "Silby" Silbersack (silby@execpc.com) updated this document and
 added information about specific platforms on 05/13/1998
+
+Mike "Silby" Silbersack (silby@execpc.com) slightly updated this
+document for 2.7100 on 6/26/1998
