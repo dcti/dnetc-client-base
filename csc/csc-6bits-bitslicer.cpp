@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-6bits-bitslicer.cpp,v $
+// Revision 1.1.2.4  1999/10/26 20:48:52  remi
+// Moved tp1[] and tp2[] to the 16-byte aligned memory pool.
+//
 // Revision 1.1.2.3  1999/10/24 23:54:53  remi
 // Use Problem::core_membuffer instead of stack for CSC cores.
 // Align frequently used memory to 16-byte boundary in CSC cores.
@@ -20,7 +23,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_6bits_bitslicer_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-6bits-bitslicer.cpp,v 1.1.2.3 1999/10/24 23:54:53 remi Exp $"; }
+return "@(#)$Id: csc-6bits-bitslicer.cpp,v 1.1.2.4 1999/10/26 20:48:52 remi Exp $"; }
 #endif
 
 // ------------------------------------------------------------------
@@ -47,15 +50,17 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 
 /*
   Memory usage :
+  	- key	    :  512 bytes -+
+	- plain     :  256 bytes  | allocated in csc-6bit-driver.cpp
+	- cipher    :  256 bytes -+
   	- subkey    : 2816 bytes
 	- cfr       :  256 bytes
 	- tp1+tp2   :  256 bytes
 	- totwiddle :  696 bytes
 	- tcp+tep   : 2816 bytes
-	- msg       :  256 bytes
 	- loc.var.  :   64 bytes
 		      ----
-                      7160 bytes (or 14230 bytes on a 64-bit cpu)
+                      7928 bytes (or 15856 bytes on a 64-bit cpu)
  */
 
 //#include <stdio.h>
@@ -70,14 +75,17 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 
   //ulong *totwiddle[6][7*(1+3)+1];
   ulong *(*totwiddle)[6][7*(1+3)+1] = (ulong *(*)[6][7*(1+3)+1])membuffer;
-  //membuffer += (sizeof(*totwiddle) + 15) & 0xFFFFFFF0;
+  membuffer += (sizeof(*totwiddle) + 15) & 0xFFFFFFF0;
 
-  ulong cfr[64];
-  //ulong *cfr = (ulong*)membuffer;
-  //membuffer += ((64 * sizeof(ulong)) + 15) & 0xFFFFFFF0;
-
-  ulong tp1[4][8], tp2[4][8];
+  //ulong tp1[4][8], tp2[4][8];
+  ulong (*tp1)[4][8] = (ulong (*)[4][8])membuffer;
+  membuffer += (sizeof(*tp1) + 15) & 0xFFFFFFF0;
+  ulong (*tp2)[4][8] = (ulong (*)[4][8])membuffer;
+  //membuffer += (sizeof(*tp2) + 15) & 0xFFFFFFF0;
   
+  ulong cfr[64];
+  //ulong (*cfr)[64] = (ulong(*)[64])membuffer;
+
 
   ulong *skp;  // subkey[n]
   ulong *skp1; // subkey[n-1]
@@ -91,12 +99,12 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
   //exit( 0 );
 
 #define APPLY_MP0(adr, adl)							\
-  transP( tp1[adr/16][7], tp1[adr/16][6], tp1[adr/16][5], tp1[adr/16][4],	\
-	  tp1[adr/16][3], tp1[adr/16][2], tp1[adr/16][1], tp1[adr/16][0],	\
+  transP( (*tp1)[adr/16][7], (*tp1)[adr/16][6], (*tp1)[adr/16][5], (*tp1)[adr/16][4],	\
+	  (*tp1)[adr/16][3], (*tp1)[adr/16][2], (*tp1)[adr/16][1], (*tp1)[adr/16][0],	\
 	  cfr[adl+7], cfr[adl+6], cfr[adl+5], cfr[adl+4],			\
 	  cfr[adl+3], cfr[adl+2], cfr[adl+1], cfr[adl+0] );			\
-  transP( tp2[adr/16][7], tp2[adr/16][6], tp2[adr/16][5], tp2[adr/16][4],	\
-	  tp2[adr/16][3], tp2[adr/16][2], tp2[adr/16][1], tp2[adr/16][0],	\
+  transP( (*tp2)[adr/16][7], (*tp2)[adr/16][6], (*tp2)[adr/16][5], (*tp2)[adr/16][4],	\
+	  (*tp2)[adr/16][3], (*tp2)[adr/16][2], (*tp2)[adr/16][1], (*tp2)[adr/16][0],	\
 	  cfr[adr+7], cfr[adr+6], cfr[adr+5], cfr[adr+4],			\
 	  cfr[adr+3], cfr[adr+2], cfr[adr+1], cfr[adr+0] )
 
@@ -182,13 +190,13 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
       if( x & (1<<j) ) {
 	unsigned n = j*8+i;
 	(*totwiddle)[i-2][ntt++] = &(*subkey)[2][n];
-	(*totwiddle)[i-2][ntt++] = &tp1[n/16][n & 7];
+	(*totwiddle)[i-2][ntt++] = &(*tp1)[n/16][n & 7];
 	if( (n & 15) <= 7 )
-	  (*totwiddle)[i-2][ntt++] = &tp2[n/16][n & 15];
+	  (*totwiddle)[i-2][ntt++] = &(*tp2)[n/16][n & 15];
 	else {
-	  (*totwiddle)[i-2][ntt++] = &tp2[n/16][(n+1) & 7];
+	  (*totwiddle)[i-2][ntt++] = &(*tp2)[n/16][(n+1) & 7];
 	  if( n & 1 )
-	    (*totwiddle)[i-2][ntt++] = &tp1[n/16][(n+1) & 7];
+	    (*totwiddle)[i-2][ntt++] = &(*tp1)[n/16][(n+1) & 7];
 	}
       }
     }
@@ -203,19 +211,19 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
     x4 = msg[n*16+8+4] ^ skp[4+8]; x5 = msg[n*16+8+5] ^ skp[5+8];
     x6 = msg[n*16+8+6] ^ skp[6+8]; x7 = msg[n*16+8+7] ^ skp[7+8];
 
-    tp1[n][7] = x7 ^ (y7 = msg[n*16+7] ^ skp[7]);
-    tp1[n][6] = x6 ^ (tp2[n][6] = x5 ^ msg[n*16+6] ^ skp[6]);
-    tp1[n][5] = x5 ^ (y5 = msg[n*16+5] ^ skp[5]);
-    tp1[n][4] = x4 ^ (tp2[n][4] = x3 ^ msg[n*16+4] ^ skp[4]);
-    tp1[n][3] = x3 ^ (y3 = msg[n*16+3] ^ skp[3]);
-    tp1[n][2] = x2 ^ (tp2[n][2] = x1 ^ msg[n*16+2] ^ skp[2]);
-    tp1[n][1] = x1 ^ (y1 = msg[n*16+1] ^ skp[1]);
-    tp1[n][0] = x0 ^ (tp2[n][0] = x7 ^ msg[n*16+0] ^ skp[0]);
+    (*tp1)[n][7] = x7 ^ (y7 = msg[n*16+7] ^ skp[7]);
+    (*tp1)[n][6] = x6 ^ ((*tp2)[n][6] = x5 ^ msg[n*16+6] ^ skp[6]);
+    (*tp1)[n][5] = x5 ^ (y5 = msg[n*16+5] ^ skp[5]);
+    (*tp1)[n][4] = x4 ^ ((*tp2)[n][4] = x3 ^ msg[n*16+4] ^ skp[4]);
+    (*tp1)[n][3] = x3 ^ (y3 = msg[n*16+3] ^ skp[3]);
+    (*tp1)[n][2] = x2 ^ ((*tp2)[n][2] = x1 ^ msg[n*16+2] ^ skp[2]);
+    (*tp1)[n][1] = x1 ^ (y1 = msg[n*16+1] ^ skp[1]);
+    (*tp1)[n][0] = x0 ^ ((*tp2)[n][0] = x7 ^ msg[n*16+0] ^ skp[0]);
 
-    tp2[n][7] = x6 ^ y7;
-    tp2[n][5] = x4 ^ y5;
-    tp2[n][3] = x2 ^ y3;
-    tp2[n][1] = x0 ^ y1;
+    (*tp2)[n][7] = x6 ^ y7;
+    (*tp2)[n][5] = x4 ^ y5;
+    (*tp2)[n][3] = x2 ^ y3;
+    (*tp2)[n][1] = x0 ^ y1;
 
     skp += 16;
   }
