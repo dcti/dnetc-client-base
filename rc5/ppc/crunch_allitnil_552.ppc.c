@@ -1,4 +1,4 @@
-#include "rc5.h"
+#include "problem.h"
 extern "C" int crunch_allitnil(RC5UnitWork *work, unsigned long itr);
  
 // allitnil -- the 601 companion for lintilla
