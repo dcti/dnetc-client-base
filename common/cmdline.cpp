@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.4  1998/10/03 23:12:58  remi
+// -nommx is for both DES and RC5 mmx cores.
+// we don't need any .ini file for -ident, -cpuinfo, -test and -benchmark*
+//
 // Revision 1.3  1998/10/03 12:32:19  cyp
 // Removed a trailing ^Z
 //
@@ -19,7 +23,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.3 1998/10/03 12:32:19 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.4 1998/10/03 23:12:58 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -284,7 +288,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         }
       else if ( strcmp(thisarg, "-nommx" ) == 0)
         {
-        #if (CLIENT_CPU == CPU_X86) && defined(MMX_BITSLICER)
+        #if (CLIENT_CPU == CPU_X86) && (defined(MMX_BITSLICER) || defined(MMX_RC5))
         usemmx=0;
         if (logging_is_initialized)
           LogScreenRaw("Won't use MMX instructions\n");
@@ -745,6 +749,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         {
         quietmode = runhidden = 0;
         do_break = 1;
+	inimissing = 0; // Don't complain if the inifile is missing
         CliIdentifyModules();
         retcode = 0;
         }
@@ -752,23 +757,22 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         {
         quietmode = runhidden = 0;
         do_break = 1;
+	inimissing = 0; // Don't complain if the inifile is missing
         DisplayProcessorInformation(); //in cpucheck.cpp
         retcode = 0; //and break out of loop
         }
       else if ( strcmp( thisarg, "-test" ) == 0 )
-        {
-        if (!inimissing)
-          {
-          quietmode = runhidden = 0;
-          do_break = 1;
-          if ( SelfTest(1) > 0 && SelfTest(2) > 0 ) //both OK
-            retcode = 0;
-          else if ( CheckExitRequestTrigger() )
-            retcode = -1;
-          else  //one of them failed
-            retcode = 1; 
-          }
-        }
+	{
+	quietmode = runhidden = 0;
+	do_break = 1;
+	inimissing = 0;	// Don't complain if the inifile is missing
+	if ( SelfTest(1) > 0 && SelfTest(2) > 0 ) //both OK
+	  retcode = 0;
+	else if ( CheckExitRequestTrigger() )
+	  retcode = -1;
+	else			//one of them failed
+	  retcode = 1; 
+	}
       else if (( strcmp( thisarg, "-benchmark2rc5" ) == 0 ) ||
                ( strcmp( thisarg, "-benchmark2des" ) == 0 ) ||
                ( strcmp( thisarg, "-benchmark2" ) == 0 ) ||
@@ -776,54 +780,52 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
                ( strcmp( thisarg, "-benchmarkdes" ) == 0 ) ||
                ( strcmp( thisarg, "-benchmark" ) == 0 ))
         {
-        if (!inimissing)
+        quietmode = runhidden = 0;
+        do_break = 1;
+	inimissing = 0; // Don't complain if the inifile is missing
+        int dobench = '1';  //default to benchmark2
+             if ( strcmp( thisarg, "-benchmark2rc5" ) == 0 ) dobench = '2';
+        else if ( strcmp( thisarg, "-benchmark2des" ) == 0 ) dobench = '3';
+        else if ( strcmp( thisarg, "-benchmarkrc5" ) == 0 )  dobench = '5';
+        else if ( strcmp( thisarg, "-benchmarkdes" ) == 0 )  dobench = '6';
+        else if ( strcmp( thisarg, "-benchmark2"   ) == 0 )  dobench = '1';
+        else if ( isatty(fileno(stdout)) ) // -benchmark
           {
-          quietmode = runhidden = 0;
-          do_break = 1;
-          int dobench = '1';  //default to benchmark2
-          if ( strcmp( thisarg, "-benchmark2rc5" ) == 0 )      dobench = '2';
-          else if ( strcmp( thisarg, "-benchmark2des" ) == 0 ) dobench = '3';
-          else if ( strcmp( thisarg, "-benchmarkrc5" ) == 0 )  dobench = '5';
-          else if ( strcmp( thisarg, "-benchmarkdes" ) == 0 )  dobench = '6';
-          else if ( strcmp( thisarg, "-benchmark2"   ) == 0 )  dobench = '1';
-          else if ( isatty(fileno(stdout)) ) // -benchmark
-            {
-            LogScreenRaw( "Block type combinations to benchmark:\n" 
-                       "\n1. Both a short RC5 block and a short DES block."
-                       "\n2. Only a short RC5 block."
-                       "\n3. Only a short DES block."
-                       "\n4. Both a long RC5 block and a long DES block."
-                       "\n5. Only a long RC5 block."
-                       "\n6. Only a long DES block."
-                       "\n\nSelect block type(s) to benchmark or "
-                       "press any other key to quit: " );
-            do{
-              fflush(stdin);
-              #if (CLIENT_OS == OS_DOS || CLIENT_OS == OS_NETWARE || \
-                   CLIENT_OS == OS_WIN32 || CLIENT_OS == OS_WIN16 || \
-                   CLIENT_OS == OS_WIN16S || CLIENT_OS == OS_OS2)
-              dobench = getch();
-              if (!dobench) getch(); //purge the extended keystroke
-              #else
-              //could do a select() here in lieu of kbhit()
-              dobench = getchar();
-              #endif
-              if (isprint(dobench) || dobench == 0x1B) //ESC
-                break;
-              usleep(100000); //in case getchar()/getch() is non-blocking
-              } while (!CheckExitRequestTrigger());
-            LogScreenRaw("%c\n", ((isprint(dobench))?(dobench):('\n')) );
-            } 
-          if ( !CheckExitRequestTrigger() && ( dobench == '1' || dobench == '2' ))
-            Benchmark(1, 1<<20 ); //1048576 instead of 1000000
-          if ( !CheckExitRequestTrigger() && ( dobench == '1' || dobench == '3' ))
-            Benchmark(2, 1<<20 ); //1048576 instead of 1000000
-          if ( !CheckExitRequestTrigger() && ( dobench == '4' || dobench == '5' ))
-            Benchmark(1, 0 );
-          if ( !CheckExitRequestTrigger() && ( dobench == '4' || dobench == '6' ))
-            Benchmark(2, 0 );
-          retcode = ( CheckExitRequestTrigger() ? -1 : 0 ); //and break out of loop
+          LogScreenRaw( "Block type combinations to benchmark:\n" 
+                     "\n1. Both a short RC5 block and a short DES block."
+                     "\n2. Only a short RC5 block."
+                     "\n3. Only a short DES block."
+                     "\n4. Both a long RC5 block and a long DES block."
+                     "\n5. Only a long RC5 block."
+                     "\n6. Only a long DES block."
+                     "\n\nSelect block type(s) to benchmark or "
+                     "press any other key to quit: " );
+          do {
+            fflush(stdin);
+            #if (CLIENT_OS == OS_DOS || CLIENT_OS == OS_NETWARE || \
+                 CLIENT_OS == OS_WIN32 || CLIENT_OS == OS_WIN16 || \
+                 CLIENT_OS == OS_WIN16S || CLIENT_OS == OS_OS2)
+            dobench = getch();
+            if (!dobench) getch(); //purge the extended keystroke
+            #else
+            //could do a select() here in lieu of kbhit()
+            dobench = getchar();
+            #endif
+            if (isprint(dobench) || dobench == 0x1B) //ESC
+              break;
+            usleep(100000); //in case getchar()/getch() is non-blocking
+            } while (!CheckExitRequestTrigger());
+          LogScreenRaw("%c\n", ((isprint(dobench))?(dobench):('\n')) );
           }
+        if ( !CheckExitRequestTrigger() && ( dobench == '1' || dobench == '2' ))
+          Benchmark(1, 1<<20 ); //1048576 instead of 1000000
+        if ( !CheckExitRequestTrigger() && ( dobench == '1' || dobench == '3' ))
+          Benchmark(2, 1<<20 ); //1048576 instead of 1000000
+        if ( !CheckExitRequestTrigger() && ( dobench == '4' || dobench == '5' ))
+          Benchmark(1, 0 );
+        if ( !CheckExitRequestTrigger() && ( dobench == '4' || dobench == '6' ))
+          Benchmark(2, 0 );
+        retcode = ( CheckExitRequestTrigger() ? -1 : 0 ); //and break out of loop
         }
       else if ( strcmp( thisarg, "-forceunlock" ) == 0 )
         {
