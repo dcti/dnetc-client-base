@@ -9,7 +9,7 @@
 */
 
 #ifndef __CLIEVENT_H__
-#define __CLIEVENT_H__ "@(#)$Id: clievent.h,v 1.10 1999/04/09 08:38:49 cyp Exp $"
+#define __CLIEVENT_H__ "@(#)$Id: clievent.h,v 1.10.2.1 1999/12/16 03:02:36 cyp Exp $"
 
                                               /* parm is ... */
 #define CLIEVENT_CLIENT_STARTED        0x0001 /* ...client ptr */
@@ -46,28 +46,6 @@ struct Fetch_Flush_Info {
   unsigned long combinedtrans;	// blocks transferred for all contests
 };
   
-/*
-  #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-        NewProxyMessage(proxymessage);
-  #endif     
-  #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-      FinishThreadProgress(prob_i, rc5result.iterations);
-  #endif
-  #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-        StartActiveFetch();
-  #endif
-  #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-        EndActiveFetch();
-  #endif
-  #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-        StartActiveFlush();
-  #endif
-  #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-        EndActiveFlush();
-  #endif
-*/
-
-
 /* add a procedure that will be called when a particular event occurs */
 int ClientEventAddListener(int event_id, void (*proc)(int event_id, long parm));
 
