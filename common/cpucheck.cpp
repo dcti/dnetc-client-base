@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.62  1999/01/18 00:24:42  remi
+// Added IDT WinChip 2 to the list.
+//
 // Revision 1.61  1999/01/15 20:22:49  michmarc
 // Fix GetProcessorType for Non-Digital-Unix Alpha platforms
 //
@@ -212,7 +215,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.61 1999/01/15 20:22:49 michmarc Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.62 1999/01/18 00:24:42 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -661,8 +664,9 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
     vendorname = "Centaur/IDT";
     cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
     static struct _cpuxref __cpuxref[]={
-      {  0x0540, 1200,0x100, "C6"      }, // use Pentium core
-      {  0x0000, 1200,    0, NULL      }  // default core == Pentium
+      {  0x0540, 1200,0x100, "C6"        }, // use Pentium core
+      {  0x0585, 1200,0x100, "WinChip 2" }  // ditto
+      {  0x0000, 1200,    0, NULL        }  // default core == Pentium
       }; cpuxref = &__cpuxref[0];
     }
   else if ( vendorid == 0x7541) // AMD CPU
