@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.35 2000/06/04 11:00:19 oliver Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.36 2000/06/13 00:19:09 mfeiri Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ return "@(#)$Id: network.cpp,v 1.97.2.35 2000/06/04 11:00:19 oliver Exp $"; }
 #include "netres.h"    // NetResolve()
 #include "network.h"   // thats us
 
-#if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_MACOS)
+#if (CLIENT_OS == OS_DOS)
 #define ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG
 #endif
 
@@ -1134,8 +1134,7 @@ int Network::Close(void)
   #define strncasecmp(x,y,n)  _strnicmp(x,y,n)
 #elif defined(__WATCOMC__) || defined(__IBMCPP__) || defined(__SASC__)
   #define strncasecmp(x,y,n)  strnicmp(x,y,n)
-#elif (CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_MACOS) || \
-      (CLIENT_OS == OS_ULTRIX)
+#elif (CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_ULTRIX)
   extern "C" int strcasecmp(const char *s1, const char *s2);
   extern "C" int strncasecmp(const char *s1, const char *s2, size_t);
 #endif
@@ -1784,27 +1783,6 @@ int Network::LowLevelConnectSocket( u32 that_address, int that_port )
     }
   }
   return rc;
-#elif (CLIENT_OS == OS_MACOS)
-  // The Mac OS client simulates just the most essential socket calls, as a
-  // convenience in interfacing to a non-socket network library. "Select" is
-  // not available, but the timeout for a connection can be specified.
-
-  // set up the address structure
-  struct sockaddr_in sin;
-  memset((void *) &sin, 0, sizeof(sin));
-  sin.sin_family = AF_INET;
-  sin.sin_port = htons(((u16)that_port));
-  sin.sin_addr.s_addr = that_address;
-
-  // set timeout for connect
-  if (iotimeout > 0)
-  {
-    // timeout for this call must be >0 to not have default used
-    socket_set_conn_timeout(sock, iotimeout);
-  }
-
-  return(connect(sock, (struct sockaddr *)&sin, sizeof(sin)));
-
 #elif defined(AF_INET) //BSD sox
 
   // set up the address structure
@@ -1933,10 +1911,6 @@ int Network::LowLevelPut(const char *ccdata, int length)
   #elif (CLIENT_OS == OS_WIN16)
   if (sendquota > 0x7FFF)  /* 16 bit OS but int is 32 bits */
     sendquota = 0x7FFF;
-  #elif (CLIENT_OS == OS_MACOS)
-  if (sendquota > 0xFFFF)  // Mac network library uses "unsigned short"
-    sendquota = 0xFFFF;
-  #else
   if (sendquota > INT_MAX)
     sendquota = INT_MAX;
   #endif
@@ -1986,27 +1960,6 @@ int Network::LowLevelPut(const char *ccdata, int length)
           if (look == T_DISCONNECT || look == T_UDERR|| look == T_ERROR)
             return 0;
         }
-      }
-    }
-   #elif (CLIENT_OS == OS_MACOS)
-    // Note: MacOS client does not use XTI, and the socket emulation
-    // code doesn't support select.
-    int noiocount = 0;
-    written = -2;
-    while (written == -2)
-    {
-      written = write(sock, data, (unsigned long)towrite);
-      if (written == 0)       // transport provider accepted nothing
-      {                   // should never happen unless 'towrite' was 0
-        if ((++noiocount) < 3)
-        {
-          written = -2;   // retry
-          usleep(500000); // 0.5 secs
-        }
-      }
-      else if (written == -1)
-      {
-        if (!valid_socket(sock)) return(0);
       }
     }
     #elif defined(AF_INET) && defined(SOCK_STREAM)      //BSD 4.3 sockets
@@ -2136,10 +2089,6 @@ int Network::LowLevelGet(char *data,int length)
   #elif ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32))
   if (rcvquota > 0x7FFF)
     rcvquota = 0x7FFF;
-  #elif (CLIENT_OS == OS_MACOS)
-  if (rcvquota > 0xFFFF)  // Mac network library uses "unsigned short"
-    rcvquota = 0xFFFF;
-  #else
   if (rcvquota > INT_MAX)
     rcvquota = INT_MAX;
   #endif
@@ -2179,19 +2128,6 @@ int Network::LowLevelGet(char *data,int length)
         bytesread = 0; /* treat as closed */
       else /* else T_DATA (Normal data received), and T_GODATA and family */
         bytesread = -1;
-    }
-    #elif (CLIENT_OS == OS_MACOS)
-    // Note: MacOS client does not use XTI, and the socket emulation
-    // code doesn't support select.
-    {
-      bytesread = read( sock, data, toread);
-      if (bytesread == -1)
-      {
-        if ( !valid_socket(sock) )
-          bytesread = 0; // set as socket closed
-      }
-      else if (bytesread == 0) // should never happen?
-        bytesread = -1; // set as none waiting
     }
     #elif (defined(AF_INET) && defined(SOCK_STREAM))        //BSD 4.3
     {
@@ -2345,9 +2281,6 @@ int Network::LowLevelSetSocketOption( int cond_type, int parm )
       return IoctlSocket(sock, FIONBIO, &flagon);
     #elif (CLIENT_OS == OS_DOS)
       return ((parm == 0 /* off */)?(0):(-1)); //always non-blocking
-    #elif (CLIENT_OS == OS_MACOS)
-      char flagon = ((parm == 0 /* off */) ? (1): (0));
-      return ioctl(sock, FIONBIO, &flagon);
     #elif (defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK)))
     {
       int flag, res, arg;
