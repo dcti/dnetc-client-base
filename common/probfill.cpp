@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.50 2000/11/04 18:57:19 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.51 2000/11/07 21:57:50 oliver Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -93,8 +93,8 @@ static unsigned int __get_thresh_secs(Client *client, int contestid,
     
     if (stats_units) /* get projected time to completion */
       sec = (stats_units * sec) / (divx * 100); /* statsunits=workunits*100 */
-    else             /* get number of workunits per hour */
-      sec = (3600 * divx) / sec; 
+    else             /* get number of workunits per 1000 hours */
+      sec = (1000 * 3600 * divx) / sec; 
   }
   return sec;
 }
@@ -121,11 +121,11 @@ unsigned int ClientGetInThreshold(Client *client,
 
     if (client->timethreshold[contestid] > 0) /* use time */
     {
-      unsigned int secs, numcrunchers, timethresh = 0;
+      unsigned int secs, numcrunchers = 0, timethresh = 0;
       secs = __get_thresh_secs(client, contestid, force, 0, &numcrunchers );
 
       if (secs)
-        timethresh = 1 + (client->timethreshold[contestid] * secs);
+        timethresh = 1 + (client->timethreshold[contestid] * secs / 1000);
       if (((int)timethresh) > client->inthreshold[contestid])
         thresh = timethresh;
       if (thresh < ((int)numcrunchers))
