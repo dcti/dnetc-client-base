@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.100 2000/01/20 11:09:30 snake Exp $
+# @(#)$Id: configure,v 1.222.2.101 2000/01/20 22:11:03 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -784,10 +784,10 @@ case "$1" in
 ###### Sparc/UltraSparc or Sun/SunOS/Solaris
 
     *sparc-openbsd)                   # snake, now without DES
-	TARGET_CCFLAGS="$OPTS_GCC272_SPARC1  -DHAVE_CSC_CORES \
-                    $CSC_ANSI_CCOPTS -DLURK"
+	TARGET_CCFLAGS="$OPTS_GCC272_SPARC1 -DLURK"
+                    # $CSC_ANSI_CCOPTS -DHAVE_CSC_CORES
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c common/lurk.cpp $CSC_ANSI_SRCS"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c common/lurk.cpp" # $CSC_ANSI_SRCS"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_TARBALL="openbsd-sparc-aout"
 	;;
@@ -908,13 +908,13 @@ case "$1" in
     *alpha-openbsd)                  # snake
 	TARGET_AS="g++ -c"
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_GCC_ALPHA  -DKWAN -DDWORZ -DHAVE_CSC_CORES -DLURK"
+	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DDWORZ -DLURK" #-DHAVE_CSC_CORES"
 	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS rc5/alpha/axp-bmeyer.cpp \
-             common/lurk.cpp ${CSC_ANSI_SRCS}"
+             common/lurk.cpp" # ${CSC_ANSI_SRCS}"
 	TARGET_ADDASMS="rc5/alpha/axp-bmeyer.s"
 	TARGET_LDFLAGS="-static"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="openbsd-alpha-aout"
+	TARGET_TARBALL="openbsd-alpha"
 	;;
 
     *alpha-linux)                     # jlawson
@@ -1254,12 +1254,12 @@ case "$1" in
     # following FreeBSD 2 target for a.out. The above target can't be used
     # for that, as it assumes FreeBSD 3.x stuff.
 
-    *x86-freebsd2)             # FreeBSD 2.x , snake 
+    *x86-freebsd2)             # FreeBSD 2.x experimental, snake 
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -DMMX_RC5 -DLURK"
 			#-DHAVE_CSC_CORES -DMMX_CSC" #-DHAVE_OGR_CORES
                         # -DHAVE_DES_CORES $OPTS_DES_MMX 
-    TARGET_LDFLAGS="-static"
+	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp" #$OGR_ANSI_SRCS 
                         #$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4
 	TARGET_ADDASMS="platforms/x86ident.S"
@@ -1267,8 +1267,8 @@ case "$1" in
 			#des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
 	TARGET_NASM_FMT="aoutb"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"  #$CSC_ASM_SRCS" $NASM_DESMMX_SRCS 
-    TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-    TARGET_TARBALL="freebsd-x86-aout"
+	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="freebsd2-x86-aout"
         ;;
 
     *x86-freebsd-elf)       # [dbaker] elf
@@ -1330,9 +1330,11 @@ case "$1" in
 	# nasm doesn't support BSD/OS aout format, so please don't do it again!!
     *x86-bsdos)                        # snake
 	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC272_X86 -DHAVE_CSC_CORES -DLURK"  #-DHAVE_OGR_CORES
+	TARGET_CCFLAGS="$OPTS_GCC272_X86 -DLURK" 
+		 # -DHAVE_CSC_CORES -DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $CSC_ANSI_SRCS common/lurk.cpp" #$OGR_ANSI_SRCS
+	TARGET_ADDSRCS="$RC5X86_SRCS common/lurk.cpp"
+		 #$CSC_ANSI_SRCS $OGR_ANSI_SRCS
 	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_TARBALL="bsdos2-x86-aout"
@@ -1341,10 +1343,10 @@ case "$1" in
     # bsdos-4 client is still experimental, found a severe bug with PentiumII
     *x86-bsdos4)      # BSD/OS 4.0 with ELF format, now without DES -snake
 	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="-g $OPTS_GCC272_X86 -DMMX_RC5 -DHAVE_CSC_CORES"
-					 # -DMMX_CSC #-DHAVE_OGR_CORES
+	TARGET_CCFLAGS="-g $OPTS_GCC272_X86 -DMMX_RC5"
+		#  -DHAVE_CSC_CORES" -DMMX_CSC -DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$CSC_ANSI_SRCS" #$OGR_ANSI_SRCS
+	#TARGET_ADDSRCS="$CSC_ANSI_SRCS" #$OGR_ANSI_SRCS
 	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_NASM_FMT="elf"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS" # $CSC_ASM_SRCS"
@@ -1448,10 +1450,10 @@ case "$1" in
 	*m68k-netbsd)
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer \
-			-m68020-40 -DASM_68K -DHAVE_CSC_CORES -DLURK"
+			-m68020-40 -DASM_68K -DLURK" #-DHAVE_CSC_CORES
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="rc5/68k/rc5_68k_gcc_crunch.c common/lurk.cpp \
-			${CSC_ANSI_SRCS}"
+	TARGET_ADDSRCS="rc5/68k/rc5_68k_gcc_crunch.c common/lurk.cpp"
+			# ${CSC_ANSI_SRCS}"
 	TARGET_ADDASMS="rc5/68k/crunch.68k.gcc.s"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_TARBALL="netbsd-68k"
