@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.54 2000/03/09 21:48:35 jlawson Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.55 2000/03/18 12:14:22 jlawson Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -972,6 +972,11 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
 
 /* ----------------------------------------------------------------------- */
 
+// Returns 1 if it is safe to load the specified contest onto a
+// specified problem slot, or 0 if it is not allowed.  Core
+// thread-safety and contest availability checks are used to determine
+// allowability, but not contest closure.
+
 int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
 {
   prob_index = prob_index; /* possibly unused */
@@ -1017,3 +1022,4 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
   return 0;
 }
 
+/* ----------------------------------------------------------------------- */
