@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.36 2002/10/20 22:42:33 andreasb Exp $
+## $Id: makefile.wat,v 1.37 2002/10/22 00:12:58 andreasb Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -112,7 +112,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 #%rc564mmxamd_SYMALIAS = #
 #---
 %rc572std_LINKOBJS = output\r72ansi1.obj output\r72ansi2.obj output\r72ansi4.obj &
-                   output\r72-ses1.obj output\r72-ses2.obj
+                   output\r72-ses1.obj output\r72-ses2.obj output\r72-dg2.obj
 %rc572std_DEFALL   = /DHAVE_RC5_72_CORES /DHAVE_RC5_72_ASM_CORES
 %rc572std_SYMALIAS = #
 #---
@@ -161,14 +161,14 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %CCASM    =wasm
 %LINK     =wlink
 %NASMEXE  =nasm           #point this to nasm (don't call the envvar 'NASM'!)
-%NASMFLAGS=-f obj -D__OMF__ -s
+%NASMFLAGS=-f obj -D__OMF__ -s -O2
 %TASMEXE  =               #point this to tasm in your section if you have it
 %TFLAGS   =/ml /m9 /q /t  #if TASMEXE.==. then wasm will be executed
 %STACKSIZE=48K            #may be redefined in the platform specific section
 %AFLAGS   =/5s /fp3 /mf   #may be defined in the platform specific section
 %LFLAGS   =               #may be defined in the platform specific section
 %CFLAGS   =/6s /fp3 /ei /mf #may be defined in the platform specific section
-%CWARNLEV =/wx /we /wcd=604 /wcd=594
+%CWARNLEV =/w8 /we /wcd=604 /wcd=594
 %OPT_SIZE =/s /os         #may be redefined in the platform specific section
 %OPT_SPEED=/s /os /oa /oe=4096 /oi+ /ol+  #see note above
 %LIBPATH  =               #may be defined in the platform specific section
@@ -746,6 +746,10 @@ output\r72-ses1.obj : rc5-72\x86\r72-ses1.asm $(%dependall)
   @set isused=1
 
 output\r72-ses2.obj : rc5-72\x86\r72-ses2.asm $(%dependall)
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@
+  @set isused=1
+
+output\r72-dg2.obj : rc5-72\x86\r72-dg2.asm $(%dependall)
   $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@
   @set isused=1
 
