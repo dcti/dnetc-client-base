@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.26 2000/02/06 06:59:50 jlawson Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.27 2000/03/11 16:49:32 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -226,22 +226,33 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       }
       if (msg)
       {
-        char workunit[80];
-        switch (cont_i)
+        char workpacket[80];
+        workpacket[0] = '\0';
+        switch (cont_i) 
         {
           case RC5:
           case DES:
           case CSC:
-                 sprintf(workunit, "%08lX:%08lX", 
-                       (long) ( wrdata.work.crypto.key.hi ),
-                       (long) ( wrdata.work.crypto.key.lo ) );
-                 break;
+          {
+            unsigned int packet_iter_size = // can't use norm_key_count: zero on error
+              (unsigned int) __iter2norm((wrdata.work.crypto.iterations.lo),
+                                         (wrdata.work.crypto.iterations.hi));
+            sprintf(workpacket, " %u*2^28 packet %08lX:%08lX", packet_iter_size,
+                    (unsigned long) ( wrdata.work.crypto.key.hi ),
+                    (unsigned long) ( wrdata.work.crypto.key.lo ) );
+            break;
+          }
           case OGR:
-                 strcpy(workunit, ogr_stubstr(&wrdata.work.ogr.workstub.stub));
-                 break;
+          {
+            sprintf(workpacket," stub %s", ogr_stubstr(&wrdata.work.ogr.workstub.stub) );
+            break;
+          }
         }
-        Log( "%s packet %s%c(%u.%u0%% complete)\n", msg, workunit,
-              ((permille == 0)?('\0'):(' ')), permille/10, permille%10 );
+        char perdone[48]; 
+        perdone[0]='\0';
+        if (permille!=0 && permille<=1000)
+          sprintf(perdone, " (%u.%u0%% done)", (permille/10), (permille%10));
+        Log("%s %s%s%s\n", msg, CliGetContestNameFromID(cont_i), workpacket, perdone);
       }
     } /* unconditional unload */
     
