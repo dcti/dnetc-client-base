@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.83 2000/01/04 23:26:28 snake Exp $
+# @(#)$Id: configure,v 1.222.2.84 2000/01/04 23:35:18 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -215,7 +215,7 @@ OPTS_GCC="-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
 	  -funroll-loops -fno-inline-functions -fno-handle-exceptions \
 	  $OPTS_WARN"
 OPTS_GCC272="-fomit-frame-pointer -fno-inline-functions \
-	     -fno-exceptions -fno-rtti \
+	     -fno-rtti \
 	     -Wall -Wtraditional -Wpointer-arith -Wcast-align \
 	     -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes \
 	     -Wconversion  -Winline -Waggregate-return -Wcast-qual \
