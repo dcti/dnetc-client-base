@@ -3,7 +3,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.16 2001/02/07 16:56:37 andreasb Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.17 2001/02/18 16:02:36 andreasb Exp $"
 
 // define this to use the new struct Stub
 //#define OGR_NEW_STUB_FORMAT
@@ -194,17 +194,29 @@ struct WorkStub { /* size is 28 */
 #else /* OGR_NEW_STUB_FORMAT */
 #define STUB_MAX 32
 
-struct Stub { /* size is 1+1+32 = 34 */
-  u8 marks;            /* N-mark ruler to which this stub applies */
-  u8 depth;            /* number of valid elements in the diffs[] array */
-  u8 diffs[STUB_MAX];  /* first <length> differences in ruler */
-};
+/* we are safe to use bytes for the diffs up to OGR-29 at least, because
+ * an upper limit for the length of a first difference is
+ * max_first_diff_length = OGR_length[depth] - sum(i = 1 .. depth - 1, i)
+ * and max_first_diff_length < 255 for depth up to 29
+ * But check in ogr_getresult() whether a diff exceeds this, anyway. 
+ * Some limits might be not strong enough.
+ */
 
-struct WorkStub { /* size is 34+1+8 = 43 */
-  Stub stub;           /* stub we're working on */
+/* The client may read these values, but NOT MODIFY them !!! (except ntoh/hton()) */
+/* maximum size is 48 */
+struct NewStub { /* size is 1+1+1+32+8 = 43 [+1 = 44] */
+  u8 marks;            /* N-mark ruler to which this stub applies */
+  u8 depth;            /* startdepth, can calculate stopdepth from depth,depththdiff */
   u8 workdepth;        /* depth of current state */
-  u32 nodeshi, nodeslo;
+  u8 diffs[STUB_MAX];  /* first <depth> differences in ruler */
+  struct { u32 hi, lo; } nodes;
   /* anything else needed ? */
+  u8 depththdiff;      /* if 0: stopdepth = startdepth
+                          else: stopdepth = startdepth - 1 ==> finish the remaining stubs on this branch 
+                                ==> depththdiff = diffs[depth-1] */
+  /* marks, depth, diffs[0 .. depth-2], depththdiff are CONST. Do not modify them in the core!
+     workdepth, diffs[depth-1 .. STUB_MAX-1], nodes may be modified by the core. */
+  /* we need an ogr_resetstub() function. */
 };
 
 #endif /* OGR_NEW_STUB_FORMAT */
