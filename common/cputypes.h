@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.15 2003/09/12 13:22:37 mweiser Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.16 2003/10/15 03:06:53 jr_brady Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -325,7 +325,7 @@
   #define CLIENT_OS        OS_IRIX
   #define CLIENT_CPU       CPU_MIPS
 #elif defined(__VMS)
-  #define CLIENT_OS_NAME   "VMS"
+  #define CLIENT_OS_NAME   "OpenVMS"
   #define CLIENT_OS        OS_VMS
   #if defined(__ALPHA)
     #define CLIENT_CPU     CPU_ALPHA
