@@ -10,7 +10,7 @@
 //
 
 const char *autobuff_cpp(void) {
-return "@(#)$Id: autobuff.cpp,v 1.14 1999/04/05 01:30:36 jlawson Exp $"; }
+return "@(#)$Id: autobuff.cpp,v 1.15 1999/04/27 01:06:59 jlawson Exp $"; }
 
 #include <string.h>
 #include "cputypes.h" //u32 
@@ -127,38 +127,38 @@ AutoBuffer AutoBuffer::operator+ (const AutoBuffer &that) const
 // destructively returns a copy of the first whole text line,
 // and removes it from the head of the buffer.
 // returns true if a complete line was found.
-bool AutoBuffer::RemoveLine(AutoBuffer &line)
+bool AutoBuffer::RemoveLine(AutoBuffer *line)
 {
   u32 offset = 0;
-  bool result = StepLine(line, offset);
+  bool result = StepLine(line, &offset);
   if (result) RemoveHead(offset);
   return result;
 }
 
 // non-destructively returns a copy of the first whole text line.
 // returns true if a complete line was found.
-bool AutoBuffer::StepLine(AutoBuffer &line, u32 &offset) const
+bool AutoBuffer::StepLine(AutoBuffer *line, u32 *offset) const
 {
-  line.Clear();
+  line->Clear();
   int eol = -1;
-  for (int pos = (int)offset ; pos < (int)GetLength(); pos++)
+  for (int pos = (int)(*offset) ; pos < (int)GetLength(); pos++)
   {
     char ch = GetHead()[pos];
     if (ch == 0 || ch == '\r' || ch == '\n')
-      { eol = (pos - (int)offset); break; }
+      { eol = (pos - (int)(*offset) ); break; }
   }
   if (eol < 0) return false;
 
-  line.Reserve(eol + 1);
-  memmove(line.GetHead(), GetHead() + offset, eol);
-  line.GetHead()[eol] = 0;   // end with a null, but don't include...
-  line.MarkUsed(eol);        // ...as part of allocated buffer
+  line->Reserve(eol + 1);
+  memmove(line->GetHead(), GetHead() + (*offset), eol);
+  line->GetHead()[eol] = 0;   // end with a null, but don't include...
+  line->MarkUsed(eol);        // ...as part of allocated buffer
 
-  offset += eol;
-  if (GetHead()[(int)offset] == '\r' &&
-      (int)GetLength() > (int)offset + 1 &&
-      GetHead()[(int)offset + 1] == '\n') offset += 2;
-  else offset++;
+  (*offset) += eol;
+  if (GetHead()[(int)(*offset)] == '\r' &&
+      (int)GetLength() > (int)(*offset) + 1 &&
+      GetHead()[(int)(*offset) + 1] == '\n') (*offset) += 2;
+  else (*offset)++;
   return true;
 }
 
