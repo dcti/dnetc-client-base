@@ -7,12 +7,12 @@
  *
  * ----------------------------------------------------------------------
  * The file contains:
- * - CliIdentifyModules() which lists the cvs id strings to stdout. 
- *   Users can assist us (when making bug reports) by telling us 
- *   exactly which modules were actually in effect when the binary was made. 
- *   Currently, starting the client with the '-ident' switch will exec the 
+ * - CliIdentifyModules() which lists the cvs id strings to stdout.
+ *   Users can assist us (when making bug reports) by telling us
+ *   exactly which modules were actually in effect when the binary was made.
+ *   Currently, starting the client with the '-ident' switch will exec the
  *   function.
- * - CliGetNewestModuleTime() returns time_t of the newest module 
+ * - CliGetNewestModuleTime() returns time_t of the newest module
  *   in the list - useful for asserting beta expiry, that the
  *   time obtained from proxies is sane etc.
  * - CliGetFullVersionDescriptor() returns the unique build descriptor
@@ -20,9 +20,9 @@
  * - CliIsDevelVersion() returns non-zero if the client was built from
  *   the devel branch or BETA or BETA_PERIOD is defined
  * ----------------------------------------------------------------------
-*/ 
-const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.27.2.6 2003/09/01 22:26:20 mweiser Exp $"; } 
+*/
+const char *cliident_cpp(void) {
+return "@(#)$Id: cliident.cpp,v 1.27.2.7 2003/09/08 20:43:17 mweiser Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -85,7 +85,7 @@ return "@(#)$Id: cliident.cpp,v 1.27.2.6 2003/09/01 22:26:20 mweiser Exp $"; }
 #include "next_sup.h"
 #endif
 
-static const char *h_ident_table[] = 
+static const char *h_ident_table[] =
 {
   (const char *)__BASE64_H__,
   (const char *)__BASEINCS_H__,
@@ -205,7 +205,7 @@ extern const char *os2inst_cpp(void);
 extern const char *next_sup_cpp(void);
 #endif
 
-static const char * (*ident_table[])(void) = 
+static const char * (*ident_table[])(void) =
 {
   base64_cpp,
   bench_cpp,
@@ -260,7 +260,7 @@ static const char * (*ident_table[])(void) =
   #if (CLIENT_OS == OS_NEXTSTEP)
   next_sup_cpp,
   #endif
-  ((const char * (*)(void))0)  
+  ((const char * (*)(void))0)
 };
 
 
@@ -283,7 +283,7 @@ static const char *split_line( char *buffer, const char *p1, unsigned int bufsiz
         p3 = p1;
         while ( *p3 && *p3 != ' ' )
         { p3++; len++; }
-        if (!*p3) 
+        if (!*p3)
           break;
         if (pos == 0 && len>2 && *(p3-1)=='v' && *(p3-2)==',')
           len-=2;
@@ -301,7 +301,7 @@ static const char *split_line( char *buffer, const char *p1, unsigned int bufsiz
     }
   }
   return (const char *)0;
-}  
+}
 
 
 
@@ -318,12 +318,12 @@ void CliIdentifyModules(void)
     }
   }
   return;
-}  
+}
 
 
 
 /*
- *  Get Date/Time the newest module was committed. Used, for instance, to 
+ *  Get Date/Time the newest module was committed. Used, for instance, to
  *  'ensure' that time from the .ini or recvd from a proxy is sane.
  */
 time_t CliGetNewestModuleTime(void)
@@ -335,7 +335,7 @@ time_t CliGetNewestModuleTime(void)
     const char *p; struct tm bd; unsigned int pos; time_t bdtime;
     unsigned int cppidcount = (sizeof(ident_table)/sizeof(ident_table[0]));
     unsigned int hidcount = (sizeof(h_ident_table)/sizeof(h_ident_table[0]));
-   
+
     for (pos = 0; pos < (cppidcount + hidcount); pos++)
     {
       p = ((const char *)0);
@@ -352,8 +352,8 @@ time_t CliGetNewestModuleTime(void)
         #define BD_TIMEPOS (BD_DATEPOS+15)
         // 0         1         2         3         4         5
         // 012345678901234567890123456789012345678901234567890123456789
-        // cliident.cpp,v      1.14           1999/04/05     17:56:51  
-        // cliident.h,v        1.4            1999/04/06     10:20:47  
+        // cliident.cpp,v      1.14           1999/04/05     17:56:51
+        // cliident.h,v        1.4            1999/04/06     10:20:47
         memset((void *)&bd,-1,sizeof(bd));
         bd.tm_year = atoi(&buffer[BD_DATEPOS+0])-1900;
         bd.tm_mon  = atoi(&buffer[BD_DATEPOS+5])-1;
@@ -363,7 +363,7 @@ time_t CliGetNewestModuleTime(void)
         bd.tm_sec  = atoi(&buffer[BD_TIMEPOS+6]);
         #undef BD_DATEPOS
         #undef BD_TIMEPOS
-        if (bd.tm_mon >= 0  && bd.tm_mon  <= 11 && 
+        if (bd.tm_mon >= 0  && bd.tm_mon  <= 11 &&
            bd.tm_mday >= 1  && bd.tm_mday <= 31 &&
            bd.tm_year >= 99 && bd.tm_year <= 132 &&
            bd.tm_hour >= 0  && bd.tm_hour <= 23 &&
@@ -403,7 +403,7 @@ time_t CliGetNewestModuleTime(void)
           else if (bd.tm_sec < 0 || bd.tm_sec > 61)
             bd.tm_sec = 0;
           #endif
-          if (bd.tm_mon >= 0 && bd.tm_mon <= 11 && 
+          if (bd.tm_mon >= 0 && bd.tm_mon <= 11 &&
               bd.tm_mday >= 1 && bd.tm_mday <= 31 &&
               bd.tm_year >= 99 && bd.tm_year <= 132 )
           {
@@ -443,7 +443,7 @@ time_t CliGetNewestModuleTime(void)
     }
   }
   return newest;
-}  
+}
 
 
 //! Determines whether the current build is a "development" or
@@ -472,8 +472,8 @@ int CliIsDevelVersion(void)
     if (p)
     {
       if (p[1] == 'v')
-      { 
-        char scratch[80]; 
+      {
+        char scratch[80];
         unsigned int len = 0;
         p+=2;
         while (*p && *p==' ')
@@ -493,7 +493,7 @@ int CliIsDevelVersion(void)
 const char *CliGetFullVersionDescriptor(void)
 {
   static char buffer[10+32+sizeof("v"CLIENT_VERSIONSTRING"-XXX-99071523-*dev* client for "CLIENT_OS_NAME)];
-  struct timeval tv; tv.tv_usec = 0; 
+  struct timeval tv; tv.tv_usec = 0;
   tv.tv_sec = CliGetNewestModuleTime();
   sprintf( buffer, "%s v" CLIENT_VERSIONSTRING "-"
          "%c"  /* GUI == "G", CLI == "C" */
@@ -507,13 +507,13 @@ const char *CliGetFullVersionDescriptor(void)
          "P"   /* polling */
          #endif
          "%c"  /* limited release or dev branch or public release */
-         "-%s" /* date is in bugzilla format yymmddhh */ 
+         "-%s" /* date is in bugzilla format yymmddhh */
          "%s"  /* "-*dev*" or "" */
          " for "CLIENT_OS_NAME,
          utilGetAppName(),
-         ((ConIsGUI())?('G'):('C')),  
+         ((ConIsGUI())?('G'):('C')),
          ((CliIsDevelVersion())?('L'):('R')),
          CliGetTimeString(&tv,4),
          ((CliIsDevelVersion())?("-*dev*"):("")) );
   return buffer;
-}  
+}
