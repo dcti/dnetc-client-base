@@ -3,11 +3,11 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; AMD64 (x86_64) 3-pipe core by:
-;     Steven Snikkel <snikkel@distributed.net>
+;     Steven Nikkel <snikkel@distributed.net>
 ;     Jeff Lawson <bovine@distributed.net>
 ;
 ; Based off of the r72-dg3.asm core by Décio Luiz Gazzoni Filho.
-; $Id: r72-snjl.asm,v 1.1.2.4 2003/10/20 06:13:17 jlawson Exp $
+; $Id: r72-snjl.asm,v 1.1.2.5 2003/10/20 06:15:51 snikkel Exp $
 
 [SECTION .text]
 BITS 64
@@ -34,8 +34,6 @@ BITS 64
 %endmacro
 
 ;; local storage variables
-;defwork work_L1,3
-;defwork work_L2,3
 defwork work_L3,1
 defwork work_s1,26
 defwork work_s2,26
