@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.95 2002/09/25 17:48:34 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.96 2002/09/26 02:01:06 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -2009,6 +2009,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       default:
         unit_func.rc5_72 = rc5_72_unit_func_ansi_1;
         pipeline_count = 1;
+        coresel = 2; // yes, we explicitly set coresel in the default case !
         break;
     }
   }
