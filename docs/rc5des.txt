@@ -54,18 +54,18 @@
     ongoing projects: The brute-force decryption of a RC5-64 message, and
     the brute force decryption of a DES message. The RC5-64 contest is a
     long-term contest, which may take a couple of years to solve. The DES
-    contests, run twice a year, are short, and should take less than a 
-    month to solve. As a result, this client will work on DES during DES 
-    contests, and switch back to RC5-64 when no DES contest is going on. 
-    No user intervention is required for this switchover.
+    contests, run twice a year, are short (refer to the DES contest 
+    documentation for details). As a result, this client will work on DES 
+    during DES contests, and switch back to RC5-64 when no DES contest is 
+    running. No user intervention is required for this switchover.
 
     If you'd like more information on our current project status, you 
     should visit the RC5-64 and DES homepages.  RC5-64 may be found at
     http://www.distributed.net/rc5/ , and DES may be found at
-    http://www.distributed.net/des/ . In the next few months, 
+    http://www.distributed.net/des/. In the next few months, 
     distributed.net will begin working on other (non-encryption related) 
     projects. For information on other projects, please look at
-    http://www.distributed.net/projects/ .
+    http://www.distributed.net/projects/.
 
 
  2.0  General system requirements ------------------------------------
@@ -108,11 +108,11 @@
                                                                      
  3.0  Getting and starting the client --------------------------------
 
-    Clients are *only* available from http://www.distributed.net/clients/ 
-    or from ftp servers linked from that page and occasionally directly 
-    from distributed.net coders in the #distributed channel on EFNet IRC.
-    If you have downloaded the client from any other site, *delete* it at 
-    once - only clients obtained from distributed.net are authentic.
+    Clients are (barring a few exceptions) *only* available from 
+    http://www.distributed.net/clients/ or from ftp servers linked from 
+    that page. They are occasionally available directly from distributed.net 
+    coders in the #distributed channel on EFNet IRC. FreeBSD clients are 
+    also available on FreeBSD Distribution CDs. 
 
     Once you have downloaded the client, it is a simple matter of getting
     going. Simply unpack/unzip/unarc the archive you downloaded and fire 
@@ -130,7 +130,7 @@
     for sources of assistance.
 
     A "Complete Step-by-Step Guide to Running Your First Client" is 
-    available from http://distributed.net/FAQ/
+    available from http://distributed.net/faq/
 
     The client's configuration may be adjusted at any time by starting 
     the client with the -config switch. A list of other command line 
@@ -197,16 +197,16 @@
 
      Firewall software Known to work with the distributed.net client.
 
-     Wingate 2.x              Win32       HTTP proxy, Direct port mapping,
-                                          SOCKS 4 & 5
-                                          http://www.wingate.com
-     Internet Gate            OS/2        Direct port mapping
-     Microsoft Proxy Server   WinNT       HTTP proxy 
-     Novell BorderManager     NetWare     HTTP proxy
-     Squid                    Unix        HTTP proxy
-                                          http://squid.nlanr.net
-     AltaVista 97 proxy       Unix/Win32  HTTP proxy
-     Gauntlet Firewall        ?           HTTP proxy
+     Software              Platform    Method       Download from
+     --------------------- ----------- ------------ -------------------
+     Squid                 Unix        HTTP Proxy   http://squid.nlanr.net
+     Internet Gate         OS/2        Port Mapping
+     MS Proxy Server       WinNT       HTTP Proxy
+     Novell BorderManager  NetWare     HTTP Proxy
+     Purveyor HTTP Proxy   VMS/NetWare HTTP Proxy
+     Wingate 2.x           Win32       HTTP Proxy   http://www.wingate.com
+                                       Port Mapping
+     AltaVista 97 proxy    Unix/Win32  HTTP
 
   5.2  Flushing and fetching via e-mail ----
 
@@ -250,13 +250,13 @@
        and setup of the client is to connect to an EFNet IRC server and 
        join the channel #distributed. Although there are dozens of EFNet
        servers world-wide, the following should give you a starting point:
-       In the U.S: irc.cs.cmu.edu:6667, irc.idle.net:6667,
-       irc.frontiernet.net:6667. In Europe: irc.ec-lille.fr:6667, 
+       In the U.S: irc.cs.cmu.edu:6667, ingenue.eecs.berkeley.edu:6667,
+       piglet.cc.utexas.edu:6667. In Europe: irc.ec-lille.fr:6667, 
        irc.nijenrode.nl:6667, or efnet.demon.co.uk:6667 
 
      - If you need further assistance with client use or operation, refer 
        to the the list of "Frequently asked Questions" (FAQs) available 
-       online at http://www.distributed.net/FAQ/  Documents cover every 
+       online at http://www.distributed.net/faq/  Documents cover every 
        aspect of running a client including "The Complete Step by Step 
        Guide to Running Your First Client", "How To Join A Team", and 
        the popular "Statistics Server FAQ".
