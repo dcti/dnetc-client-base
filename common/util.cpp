@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.29.2.15 2004/01/08 20:20:24 oliver Exp $"; }
+return "@(#)$Id: util.cpp,v 1.29.2.16 2004/01/29 21:35:03 kakace Exp $"; }
 
 //#define TRACE
 
@@ -1105,11 +1105,16 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         const char *pscmd = ((char *)NULL);
         #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
             (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_LINUX) || \
-            (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOSX) || \
-            (CLIENT_OS == OS_PS2LINUX)
+            (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_PS2LINUX)
         pscmd = "ps axw|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
         /* fbsd: "ps ax -o pid -o command 2>/dev/null"; */ /* bsd + -o ext */
         /* lnux: "ps ax --format pid,comm 2>/dev/null"; */ /* bsd + gnu -o */
+        #elif (CLIENT_OS == OS_MACOSX)
+        /* White spaces in directory/file names make parsing very error */
+        /* prone. The workaround is to ask 'ps' to output the pid and   */
+        /* executable name only, so that we can deal with white spaces  */
+        /* in program names (quite frequent under Mac OS X)             */
+        pscmd = "ps acxw -o pid,command 2>/dev/null";
         #elif (CLIENT_OS == OS_NEXTSTEP)
         /* NeXTstep porduces spaces in process status columns like
          * 26513 p1 SW    0:01 -bash (bash)
@@ -1205,8 +1210,14 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                     while (*foundname && isspace(*foundname))
                       foundname++;
                     p = foundname;
+                    #if (CLIENT_OS == OS_MACOSX)
+                    /* Skip to the end of line, and accept white spaces */
+                    while (*p)
+                      p++;
+                    #else
                     while (*p && !isspace(*p))
                       p++;
+                    #endif
                     *p = '\0';
                     if (!usefullpathcmp)
                     {
