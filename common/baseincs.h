@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.15  1998/09/07 18:22:51  blast
+// Added fcntl.h for AmigaOS
+//
 // Revision 1.14  1998/08/05 15:29:41  cyruspatel
 // Added <ctype.h>
 //
@@ -104,6 +107,8 @@ extern "C" {
   #ifndef QSV_NUMPROCESSORS       /* This is only defined in the SMP toolkit */
     #define QSV_NUMPROCESSORS     26
   #endif
+#elif (CLIENT_OS == OS_AMIGAOS)
+  #include <fcntl.h>
 #elif (CLIENT_OS == OS_RISCOS)
   extern "C"
   {
