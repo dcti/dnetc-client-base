@@ -14,6 +14,9 @@
 
 */
 // $Log: lurk.cpp,v $
+// Revision 1.35  1999/03/08 16:16:52  jlawson
+// symlinked lurk.cpp/h and w32svc.cpp/h and w32ras.cpp with those from client.
+//
 // Revision 1.34  1999/03/05 21:39:33  patrick
 //
 // added define for SIOSTATAT, defined solcose to be close for OS2-EMX target
@@ -113,14 +116,13 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.34 1999/03/05 21:39:33 patrick Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.35 1999/03/08 16:16:52 jlawson Exp $"; }
 #endif
 
 #include "cputypes.h"
 #include "lurk.h"
 #ifdef PROXYTYPE
 #include "globals.h"
-#define  LogScreen blah
 #else
 #include "logstuff.h"
 #endif
