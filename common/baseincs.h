@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.30  1998/10/31 21:59:12  silby
+// Added in an OS_FREEBSD include that was missing.
+//
 // Revision 1.29  1998/10/30 00:14:07  foxyloxy
 //
 // Added unistd.h to Irix standard includes.
@@ -246,7 +249,7 @@ extern "C" {
   #if (((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS==OS_FREEBSD) || (CLIENT_OS==OS_BSDI))
     #include <errno.h> // glibc2 has errno only here
   #endif
-  #if (CLIENT_OS == OS_LINUX)
+  #if ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD))
     #include <sched.h>
   #endif
 #elif (CLIENT_OS == OS_NETBSD) && (CLIENT_CPU == CPU_ARM)
