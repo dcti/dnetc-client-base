@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.52 2000/11/12 02:00:14 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.53 2000/11/12 23:02:19 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -31,7 +31,7 @@ return "@(#)$Id: probfill.cpp,v 1.58.2.52 2000/11/12 02:00:14 cyp Exp $"; }
 // (+>=3 lines for every load+save cycle), so we suppress/combine individual 
 // load/save messages if the 'load_problem_count' exceeds COMBINEMSG_THRESHOLD
 // into a single line 'Loaded|Saved n RC5|DES packets from|to filename'.
-#define COMBINEMSG_THRESHOLD 4 // anything above this and we don't show 
+#define COMBINEMSG_THRESHOLD 8 // anything above this and we don't show 
                                // individual load/save messages
 // =======================================================================   
 
@@ -49,6 +49,25 @@ int SetProblemLoaderFlags( const char *loaderflags_map )
 }  
 
 /* ----------------------------------------------------------------------- */
+
+static void __get_num_c_and_p(Client *client, int contestid,
+                              unsigned int *numcrunchersP, 
+                              unsigned int *numprocsP) 
+{
+  int numcrunchers = ProblemCountLoaded(contestid);
+  int numprocs = client->numcpu;
+  if (numprocs < 0) /* auto-detect */
+    numprocs = GetNumberOfDetectedProcessors();
+  if (numprocs < 1) /* forced single cpu (0) or failed auto-detect (-1) */
+    numprocs = 1;  
+  if (!numcrunchers)
+    numcrunchers = numprocs;
+  if (numcrunchersP)
+    *numcrunchersP = numcrunchers;
+  if (numprocs)
+    *numprocsP = numprocs;
+}
+
 
 static unsigned int __get_thresh_secs(Client *client, int contestid,
                                       int force, unsigned int stats_units,
@@ -68,19 +87,8 @@ static unsigned int __get_thresh_secs(Client *client, int contestid,
 
   if (sec != 0) /* we have a rate */
   {
-    unsigned int divx;
-    int numcrunchers = ProblemCountLoaded(contestid);
-    int numprocs = client->numcpu;
-    if (numprocs == 0) /* forced single cpu */
-      numprocs = 1;  
-    else if (numprocs < 0) /* auto-detect */
-    {
-      numprocs = GetNumberOfDetectedProcessors();
-      if (numprocs < 0)
-        numprocs = 1;
-    } 
-    if (!numcrunchers)
-      numcrunchers = numprocs;
+    unsigned int divx, numcrunchers, numprocs;
+    __get_num_c_and_p( client, contestid, &numcrunchers, &numprocs );
 
     if (numcrunchersP)
       *numcrunchersP = numcrunchers;
@@ -93,8 +101,8 @@ static unsigned int __get_thresh_secs(Client *client, int contestid,
     
     if (stats_units) /* get projected time to completion */
       sec = (stats_units * sec) / (divx * 100); /* statsunits=workunits*100 */
-    else             /* get number of workunits per 1000 hours */
-      sec = (1000 * 3600 * divx) / sec; 
+    else             /* get number of stats units per day */
+      sec = (100 * 24 * 3600 * divx) / sec; 
   }
   return sec;
 }
@@ -108,31 +116,45 @@ unsigned int ClientGetInThreshold(Client *client,
   // If time threshold is 0, then use inthreshold exclusively.
   // If inthreshold is <=0, AND time is 0, then use BUFTHRESHOLD_DEFAULT
   // If inthreshold > 0 AND time > 0, then use MAX(inthreshold, effective_workunits(time))
-  int thresh = BUFTHRESHOLD_DEFAULT;
+  unsigned int numcrunchers = 0; /* unknown */
+  unsigned int bufthresh = 0; /* unknown */
 
   // OGR time threshold NYI
   client->timethreshold[OGR] = 0;
 
-  if (contestid < CONTEST_COUNT)
+  if (!(contestid < CONTEST_COUNT))
   {
-    thresh = client->inthreshold[contestid];
-    if (thresh <= 0)
-      thresh = BUFTHRESHOLD_DEFAULT; /* default (if time is also zero) */
-
-    if (client->timethreshold[contestid] > 0) /* use time */
-    {
-      unsigned int secs, numcrunchers = 0, timethresh = 0;
-      secs = __get_thresh_secs(client, contestid, force, 0, &numcrunchers );
-
-      if (secs)
-        timethresh = 1 + (client->timethreshold[contestid] * secs / 1000);
-      if (((int)timethresh) > client->inthreshold[contestid])
-        thresh = timethresh;
-      if (thresh < ((int)numcrunchers))
-        thresh = numcrunchers;
-    }
+    return 1000; /* something, anything */
   }
-  return 100*((unsigned int)thresh);
+  if (client->inthreshold[contestid] > 0)
+  {
+    bufthresh = client->inthreshold[contestid] * 100;
+  }
+  if (client->timethreshold[contestid] > 0) /* use time */
+  {
+    unsigned int secs, timethresh = 0;
+    secs = __get_thresh_secs(client, contestid, force, 0, &numcrunchers );
+
+    if (secs) /* number of stats units per 24 hour period */
+      timethresh = 1 + (client->timethreshold[contestid] * secs / 24);
+    if (timethresh > bufthresh)
+      bufthresh = timethresh;
+  }
+  if (numcrunchers < 1) /* undetermined */
+  {
+    __get_num_c_and_p( client, contestid, &numcrunchers, 0 );
+  }
+  if (bufthresh < 1) /* undetermined */
+  {
+    #define BUFTHRESHOLD_DEFAULT_PER_CRUNCHER (24*100)  /* in stats units */
+    bufthresh = BUFTHRESHOLD_DEFAULT_PER_CRUNCHER * numcrunchers;
+    #undef BUFTHRESHOLD_DEFAULT_PER_CRUNCHER
+  }
+  if (bufthresh < (numcrunchers * 100)) /* ensure at least 1.00 stats */
+  {                                     /* units per per cruncher */
+    bufthresh = numcrunchers * 100;
+  }
+  return bufthresh;
 }
 
 /* 
@@ -548,11 +570,14 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       work = &wrdata.work;
 
       /* if the total number of packets in buffers is less than the number 
-         of crunchers running then try to fetch *now*. This means that the
-         effective _total_ minimum threshold is always >= num crunchers
+         of crunchers running then post a fetch request. This means that the
+         effective minimum threshold is always >= num crunchers
       */   
-      if (((unsigned long)(bufcount)) < (load_problem_count - prob_i))
+      if (bufcount <= 1 /* only one packet left */ ||
+         ((unsigned long)(bufcount)) < (load_problem_count - prob_i))
+      {
         *bufupd_pending |= BUFFERUPDATE_FETCH;
+      }
     }
 
     /* loadstate can fail if it selcore fails or the previous problem */
