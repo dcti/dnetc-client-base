@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mac_client.cpp,v $
+// Revision 1.10  1999/03/23 06:13:04  dicamillo
+// Additions to InitializeClient code.
+//
 // Revision 1.9  1999/03/22 08:08:53  dicamillo
 // Update InitializeTriggers calls.
 //
@@ -33,7 +36,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *mac_client_cpp(void) {
-return "@(#)$Id: mac_client.cpp,v 1.9 1999/03/22 08:08:53 dicamillo Exp $"; }
+return "@(#)$Id: mac_client.cpp,v 1.10 1999/03/23 06:13:04 dicamillo Exp $"; }
 #endif
 
 // This file contains the routines added to the Client class for the Mac_Client
@@ -55,6 +58,7 @@ return "@(#)$Id: mac_client.cpp,v 1.9 1999/03/22 08:08:53 dicamillo Exp $"; }
 #include "Mac_Client.h"
 #include "String.h"
 #include "clirate.h"
+#include "random.h"
 #if defined(MAC_GUI)
 #include "DrawGUI.h"
 #endif
@@ -81,21 +85,36 @@ double CliGetKeyrateForProblemNoSave( Problem *prob );
 
 int Mac_Client::InitializeClient(void)
 {
-     int domodes = (ModeReqIsSet(-1) != 0);
-     if (InitializeTriggers(((noexitfilecheck ||
-                              domodes)?(NULL):("exitrc5" EXTN_SEP "now")),
-                              ((domodes)?(NULL):(pausefile)) )!=0) {
+	int retcode = 0;
+	int my_argc = 1;
+	char *my_argv[] = {"rc5des"};
+      
+	this->Client();  /* reset everything in the object */
+
+	if (ParseCommandline( 0, my_argc, my_argv, &retcode, 0 ) != 0) {
 		return(1);
 	}
-	if (InitializeConnectivity() != 0) {
+	  
+	int domodes = (ModeReqIsSet(-1) != 0);
+	if (InitializeTriggers(((noexitfilecheck ||
+							domodes)?(NULL):("exitrc5" EXTN_SEP "now")),
+							((domodes)?(NULL):(pausefile)) )!=0) {
 		return(2);
 	}
-	if (InitializeConsole(0, 0) != 0) {
+	if (InitializeConnectivity() != 0) {
 		return(3);
+	}
+	if (InitializeConsole(0, 0) != 0) {
+		return(4);
 	}	
     InitializeLogging( (quietmode!=0), (percentprintingoff!=0), 
                        logname, LOGFILETYPE_NOLIMIT, 0, messagelen, 
                        smtpsrvr, smtpport, smtpfrom, smtpdest, id );
+
+	ParseCommandline( 1, my_argc, my_argv, NULL, true); //show overrides
+
+	InitRandom2( id );
+
 	return(0);
 }
 
