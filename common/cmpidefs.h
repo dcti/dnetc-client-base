@@ -1,6 +1,9 @@
 // Hey, Emacs, this a -*-C++-*- file !
 // 
 // $Log: cmpidefs.h,v $
+// Revision 1.5  1998/07/05 07:04:26  jlawson
+// changes for Win32s
+//
 // Revision 1.4  1998/07/01 03:12:45  blast
 // AmigaOS changes...
 //
@@ -22,7 +25,7 @@
   Copyright 1998 Distributed Computing Technologies Inc. 
 */
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)
   #if defined(__TURBOC__)
   // Borland already knows strcmpi
   // Borland already knows strncmpi

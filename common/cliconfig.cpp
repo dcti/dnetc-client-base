@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.126  1998/07/05 07:04:19  jlawson
+// changes for Win32s
+//
 // Revision 1.125  1998/07/04 23:24:25  jlawson
 // integer cast warnings on win16 resolved and other formatting cleanup.
 //
@@ -161,7 +164,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.125 1998/07/04 23:24:25 jlawson Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.126 1998/07/05 07:04:19 jlawson Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -2215,7 +2218,7 @@ void Client::SetNiceness(void)
               //   really needed when GO-VMS.COM isn't used.
 #elif (CLIENT_OS == OS_AMIGAOS)
   SetTaskPri(FindTask(NULL), -20);
-#elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16)
+#elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
   // nothing
 #elif (CLIENT_OS == OS_BEOS)
   // Main control thread runs at normal priority, since it does very little;
@@ -2237,7 +2240,7 @@ void Client::SetNiceness(void)
   // nothing
 #elif (CLIENT_OS == OS_NETWARE)
   // nothing - set dynamically
-#elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16)
+#elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
   // nothing
 #elif (CLIENT_OS == OS_VMS)
   nice( 2 );
@@ -2307,7 +2310,7 @@ void CliSignalHandler( int sig )
     ConsolePrintf("RC5DES: Client has shut down.\r\n");
   return;
 }
-#elif (CLIENT_OS != OS_AMIGAOS) && (CLIENT_OS != OS_WIN16)
+#elif (CLIENT_OS != OS_AMIGAOS) && (CLIENT_OS != OS_WIN16) && (CLIENT_OS != OS_WIN32S)
   #if (CLIENT_OS == OS_OS390)
     extern "C" void CliSignalHandler( int )
   #else
@@ -2315,14 +2318,14 @@ void CliSignalHandler( int sig )
   #endif
 {
   #if (CLIENT_OS == OS_OS2)
-  DosSetPriority(PRTYS_THREAD, PRTYC_REGULAR, 0, 0);
-  // Give prioirty boost quit works faster
+    // Give priority boost quit works faster
+    DosSetPriority(PRTYS_THREAD, PRTYC_REGULAR, 0, 0);
   #endif
   #if (CLIENT_OS != OS_DOS)
-  #if (CLIENT_OS == OS_RISCOS)
-  if (!guiriscos)
-  #endif
-    fprintf(stderr, "*Break*\n");
+    #if (CLIENT_OS == OS_RISCOS)
+    if (!guiriscos)
+    #endif
+      fprintf(stderr, "*Break*\n");
   #endif
   SignalTriggered = UserBreakTriggered = 1;
 
@@ -2358,7 +2361,7 @@ void CliSetupSignals( void )
 {
   SignalTriggered = 0;
 
-  #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_WIN16)
+  #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
     // nothing
   #elif (CLIENT_OS == OS_WIN32)
     SetConsoleCtrlHandler( (PHANDLER_ROUTINE) CliSignalHandler, TRUE );
