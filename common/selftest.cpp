@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.59 1999/12/04 15:54:03 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.60 1999/12/13 05:39:48 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -233,7 +233,7 @@ int SelfTest( unsigned int contest )
     {
       const u32 (*test_cases)[TEST_CASE_COUNT][TEST_CASE_DATA] = NULL;
       int resultcode; const char *resulttext = NULL;
-      u64 expectedsolution;
+      u32 expectedsolution_hi, expectedsolution_lo;
       ContestWork contestwork;
       Problem *problem = new Problem(threadindex);
 
@@ -260,8 +260,8 @@ int SelfTest( unsigned int contest )
       if (contest == RC5)
       { 
         test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])&rc5_test_cases[0][0];
-        expectedsolution.lo = (*test_cases)[testnum][0];
-        expectedsolution.hi = (*test_cases)[testnum][1];
+        expectedsolution_lo = (*test_cases)[testnum][0];
+        expectedsolution_hi = (*test_cases)[testnum][1];
 
         #if (CLIENT_OS == OS_RISCOS)
         if (threadcount == 2)
@@ -313,12 +313,12 @@ int SelfTest( unsigned int contest )
         keybyte_inside_core[2] == keybyte_outside_core[5], etc...
         */
 
-        contestwork.crypto.key.lo = expectedsolution.lo & 0xFFFF0000L;
-        contestwork.crypto.key.hi = expectedsolution.hi;
+        contestwork.crypto.key.lo = expectedsolution_lo & 0xFFFF0000L;
+        contestwork.crypto.key.hi = expectedsolution_hi;
         if (testnum>1 && testnum<=6) 
         {
           contestwork.crypto.key.lo -= 0x00010000;
-          if ((expectedsolution.lo & 0xFFFF0000L) == 0)
+          if ((expectedsolution_lo & 0xFFFF0000L) == 0)
             contestwork.crypto.key.hi--;
         }
       }
@@ -326,41 +326,41 @@ int SelfTest( unsigned int contest )
       if (contest == DES)
       {
         test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])&des_test_cases[0][0];
-        expectedsolution.lo = (*test_cases)[testnum][0];
-        expectedsolution.hi = (*test_cases)[testnum][1];
+        expectedsolution_lo = (*test_cases)[testnum][0];
+        expectedsolution_hi = (*test_cases)[testnum][1];
 
-        convert_key_from_des_to_inc ( (u32 *) &expectedsolution.hi, 
-                                      (u32 *) &expectedsolution.lo);
+        convert_key_from_des_to_inc ( (u32 *) &expectedsolution_hi, 
+                                      (u32 *) &expectedsolution_lo);
 
         // to test also success on complementary keys
-        if (expectedsolution.hi & 0x00800000L)
+        if (expectedsolution_hi & 0x00800000L)
         {
-          expectedsolution.hi ^= 0x00FFFFFFL;
-          expectedsolution.lo = ~expectedsolution.lo;
+          expectedsolution_hi ^= 0x00FFFFFFL;
+          expectedsolution_lo = ~expectedsolution_lo;
         }
-        contestwork.crypto.key.lo = expectedsolution.lo & 0xFFFF0000L;
-        contestwork.crypto.key.hi = expectedsolution.hi;
+        contestwork.crypto.key.lo = expectedsolution_lo & 0xFFFF0000L;
+        contestwork.crypto.key.hi = expectedsolution_hi;
       }
 #endif      
 #ifdef HAVE_OGR_CORES
       if (contest == OGR)
       {
         test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])&ogr_test_cases[0][0];
-        expectedsolution.lo = (*test_cases)[testnum][0];
+        expectedsolution_lo = (*test_cases)[testnum][0];
       }
 #endif
 #ifdef HAVE_CSC_CORES
       if (contest == CSC) // CSC
       {
         test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])&csc_test_cases[0][0];
-        expectedsolution.lo = (*test_cases)[testnum][0];
-        expectedsolution.hi = (*test_cases)[testnum][1];
+        expectedsolution_lo = (*test_cases)[testnum][0];
+        expectedsolution_hi = (*test_cases)[testnum][1];
 
-        convert_key_from_csc_to_inc ( (u32 *) &expectedsolution.hi,
-                                      (u32 *) &expectedsolution.lo);
+        convert_key_from_csc_to_inc ( (u32 *) &expectedsolution_hi,
+                                      (u32 *) &expectedsolution_lo);
 
-        contestwork.crypto.key.lo = expectedsolution.lo & 0xFFFF0000L;
-        contestwork.crypto.key.hi = expectedsolution.hi;
+        contestwork.crypto.key.lo = expectedsolution_lo & 0xFFFF0000L;
+        contestwork.crypto.key.hi = expectedsolution_hi;
       }
 #endif
 
@@ -437,8 +437,8 @@ int SelfTest( unsigned int contest )
               resulttext = "FAILED";
               resultcode = -1;
             }
-            else if (contestwork.crypto.key.lo != expectedsolution.lo || 
-                     contestwork.crypto.key.hi != expectedsolution.hi)   
+            else if (contestwork.crypto.key.lo != expectedsolution_lo || 
+                     contestwork.crypto.key.hi != expectedsolution_hi)   
             {                                                /* wrong solution */
               resulttext = "FAILED";
               resultcode = -1;
@@ -451,8 +451,8 @@ int SelfTest( unsigned int contest )
               if (contest == DES)
               {
                 /* original expected solution */
-                expectedsolution.hi = (*test_cases)[testnum][1]; 
-                expectedsolution.lo = (*test_cases)[testnum][0];
+                expectedsolution_hi = (*test_cases)[testnum][1]; 
+                expectedsolution_lo = (*test_cases)[testnum][0];
                 convert_key_from_inc_to_des(&(contestwork.crypto.key.hi), 
                                             &(contestwork.crypto.key.lo));
               } 
@@ -461,14 +461,14 @@ int SelfTest( unsigned int contest )
             LogScreen( "\r%s: Test %02d %s: %08X:%08X-%08X:%08X\n", 
                contname, testnum + 1, resulttext,
                contestwork.crypto.key.hi, contestwork.crypto.key.lo, 
-               expectedsolution.hi, expectedsolution.lo );
+               expectedsolution_hi, expectedsolution_lo );
             break;
 
           case OGR:
-            if (expectedsolution.lo & 0x80000000) { // no solution
-              expectedsolution.lo = ~expectedsolution.lo;
+            if (expectedsolution_lo & 0x80000000) { // no solution
+              expectedsolution_lo = ~expectedsolution_lo;
               if (resultcode != RESULT_NOTHING ||
-                  contestwork.ogr.nodes.lo != expectedsolution.lo) {
+                  contestwork.ogr.nodes.lo != expectedsolution_lo) {
                 resulttext = "FAILED";
                 resultcode = -1;
               } else {
@@ -477,7 +477,7 @@ int SelfTest( unsigned int contest )
               }
             } else {
               if (resultcode != RESULT_FOUND ||
-                  contestwork.ogr.nodes.lo != expectedsolution.lo) {
+                  contestwork.ogr.nodes.lo != expectedsolution_lo) {
                 resulttext = "FAILED";
                 resultcode = -1;
               } else {
@@ -488,7 +488,7 @@ int SelfTest( unsigned int contest )
             LogScreen( "\r%s: Test %02d %s: %s %08X-%08X\n", 
                contname, testnum + 1, resulttext,
                ogr_stubstr(&contestwork.ogr.workstub.stub),
-               contestwork.ogr.nodes.lo, expectedsolution.lo );
+               contestwork.ogr.nodes.lo, expectedsolution_lo );
             break;
         } /* switch */
 

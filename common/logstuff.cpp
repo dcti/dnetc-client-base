@@ -4,7 +4,7 @@
  * Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.40 1999/12/06 19:59:12 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.41 1999/12/13 05:39:47 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -546,7 +546,7 @@ const char *LogGetCurrentLogFilename( void )
 
 void LogScreenPercent( unsigned int load_problem_count )
 {
-  static unsigned int lastperc = 0, displevel = 0;
+  static unsigned int displevel = 0, lastperc = 0;
   unsigned int percent, restartperc, endperc, equals, prob_i;
   int isatty, multiperc;
   char ch; char buffer[88];
@@ -588,7 +588,7 @@ void LogScreenPercent( unsigned int load_problem_count )
     if (load_problem_count <= 26) /* a-z */
       pbuf[prob_i] = (unsigned char)(percent);
   }
-    
+  
   if (!logstatics.lastwasperc || isatty)
     lastperc = 0;
   multiperc = (load_problem_count > 1 && load_problem_count <= 26 /*a-z*/ 
@@ -632,10 +632,21 @@ void LogScreenPercent( unsigned int load_problem_count )
     ;
   else
   {
+    int doit = 1;
     *bufptr = 0;
-    LogWithPointer( LOGTO_SCREEN|LOGTO_RAWMODE, buffer, NULL );
-    logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0 
-    logstatics.lastwasperc = 1; //(endperc != 0); //percbar requires reset
+    if (logstatics.lastwasperc)
+    {
+      static char lastbuffer[sizeof(buffer)] = {0};
+      doit = strcmp( lastbuffer, buffer );
+      if (doit)
+        strcpy( lastbuffer, buffer );
+    }
+    if (doit)
+    {
+      LogWithPointer( LOGTO_SCREEN|LOGTO_RAWMODE, buffer, NULL );
+      logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0 
+      logstatics.lastwasperc = 1; //(endperc != 0); //percbar requires reset
+    }
   }
   return;
 }
