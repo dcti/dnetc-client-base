@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg2.asm,v 1.3 2002/10/21 05:22:26 acidblood Exp $
+; $Id: r72-dg2.asm,v 1.4 2002/10/21 05:39:06 acidblood Exp $
 
 [GLOBAL rc5_72_unit_func_dg_2_]
 [GLOBAL _rc5_72_unit_func_dg_2]
@@ -711,7 +711,7 @@ test_key_2:
         mov     ecx, [RC5_72UnitWork_L0mid]
 
         mov     edx, [RC5_72UnitWork_L0lo]
-        jne     inc_hi
+        jne     inc_key
 
         inc     dword [RC5_72UnitWork_CMCcount]
 
@@ -746,41 +746,30 @@ test_key_2:
         ret
 
 k7align 16
-inc_hi:
+inc_key:
         add     bl, 2
         bswap   ecx
+        bswap   edx
 
         mov     [RC5_72UnitWork_L0hi], ebx
         mov     L1(2), ebx
-        jnc     inc_iter
+        adc     ecx, 0
 
-inc_mid:
-        inc     ecx
-
-        jnz     inc_iter
-
-inc_lo:
-        bswap   edx
-
-        inc     edx
-
-        bswap   edx
-
-        mov     [RC5_72UnitWork_L0lo], edx
-
-k7align 16
-inc_iter:
-        inc     ebx
-        dec     dword [work_iterations]
         bswap   ecx
+        adc     edx, 0
+        inc     ebx
 
+        bswap   edx
+        dec     dword [work_iterations]
         mov     L2(2), ebx
+
         mov     L1(1), ecx
         mov     L2(1), ecx
-
         mov     L1(0), edx
+
         mov     L2(0), edx
         mov     [RC5_72UnitWork_L0mid], ecx
+        mov     [RC5_72UnitWork_L0lo], edx
 
         jnz     key_setup_1
 
