@@ -9,7 +9,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.96 2001/05/14 21:30:06 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.97 2001/06/17 17:20:03 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1605,7 +1605,7 @@ int ClientRun( Client *client )
     }
   }
 
-  #ifdef TRACE
+  #if defined(TRACE) && 0
   for (prob_i = 0; prob_i < CONTEST_COUNT; ++prob_i)
   {
     if (IsProblemLoadPermitted(0, prob_i))
@@ -1838,6 +1838,7 @@ int ClientRun( Client *client )
             }
             if (desisrunning == 0)
             {
+              TRACE_BUFFUPD((0, "BufferUpdate: reason = ClientRun && universally coordinated update\n"));
               int rc = BufferUpdate( client, BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH, 0 );
               if (rc > 0 && (rc & BUFFERUPDATE_FETCH)!=0)
                 desisrunning = (GetBufferCount( client, DES, 0/*in*/, NULL) != 0);

@@ -9,14 +9,17 @@
  * "mode" requests (--flush,--fetch etc) and the like. Client::Run() will 
  * clear/run the modes when appropriate.
  * ---------------------------------------------------------------
-*/    
+*/
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.28.2.11 2001/02/17 20:31:42 sampo Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.28.2.12 2001/06/17 17:20:04 andreasb Exp $"; }
+
+//#define TRACE
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
 #include "triggers.h" //RaiseRestartRequestTrigger/CheckExitRequestTriggerNoIO
 #include "modereq.h"  //our constants
+#include "util.h"     //trace
 
 #include "disphelp.h" //"mode" DisplayHelp()
 #include "cpucheck.h" //"mode" DisplayProcessorInformation()
@@ -224,6 +227,7 @@ int ModeReqRun(Client *client)
           int interactive = ((bits & MODEREQ_FQUIET) == 0);
           domode  = ((bits & MODEREQ_FETCH) ? BUFFERUPDATE_FETCH : 0);
           domode |= ((bits & MODEREQ_FLUSH) ? BUFFERUPDATE_FLUSH : 0);
+          TRACE_BUFFUPD((0, "BufferUpdate: reason = ModeReqRun\n"));
           domode = BufferUpdate( client, domode, interactive );
           if (domode & BUFFERUPDATE_FETCH)
             retval |= MODEREQ_FETCH;

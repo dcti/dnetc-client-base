@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __BUFFUPD_H__
-#define __BUFFUPD_H__ "@(#)$Id: buffupd.h,v 1.5.2.5 2001/02/03 18:20:36 cyp Exp $"
+#define __BUFFUPD_H__ "@(#)$Id: buffupd.h,v 1.5.2.6 2001/06/17 17:20:03 andreasb Exp $"
 
 // pass flags ORd with BUFFERUPDATE_FETCH/*_FLUSH. 
 // if interactive, prints "Input buffer full. No fetch required" etc.
@@ -32,5 +32,9 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int upd_flags);
 #define BUFFERUPDATE_STATE_MSGPOSTED (BUFFERUPDATE_LASTBIT<<3)
 int BufferNetUpdate(Client *client,int updatereq_flags, int break_pending, 
                     int interactive, char *loaderflags_map);
+
+// define any/all/some of the following to TRACE_OUT(x) for sectional tracing
+// to get an effect you must define TRACE in all .cpp files that include this header
+#define TRACE_BUFFUPD(x) //TRACE_OUT(x)
 
 #endif /* __BUFFUPD_H__ */

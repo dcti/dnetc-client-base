@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.60 2001/04/20 16:11:46 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.61 2001/06/17 17:20:02 andreasb Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -926,6 +926,8 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
   #define BUFFERUPDATE_MODE_FILE 0x01
   #define BUFFERUPDATE_MODE_NET  0x02
 
+  TRACE_BUFFUPD((+1, "BufferUpdate: req_flags = %d, interactive = %d\n", req_flags, interactive));
+  
   /* -------------------------------------- */
 
   updatefailflags = updatemodeflags = 0;
@@ -973,6 +975,8 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
     if (interactive)
       LogScreen( "%sThis client has been configured to run without\n"
                  "updating its buffers.\n",ffmsg);
+    TRACE_BUFFUPD((-1, "BufferUpdate = -1: %sThis client has been configured to run without\n"
+                 "updating its buffers.\n",ffmsg));
     return -1;
   }
 
@@ -1108,6 +1112,7 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
 
   if (updatefailflags == updatemodeflags && !didfetch && !didflush)
   {                             /* all methods failed completely */
+    TRACE_BUFFUPD((-1, "BufferUpdate = -1: failed\n"));
     return -1;
   }
   if (interactive && (break_pending || !CheckExitRequestTrigger()))
@@ -1118,6 +1123,7 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
     if (!dontflush && !doflush && !didflush)
       LogScreen(ffmsg, "Out", "empty. ", "flush");
   }    
+  TRACE_BUFFUPD((-1, "BufferUpdate = %d: success\n", req_flags));
   return (req_flags);
 }
 
@@ -1192,7 +1198,7 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
         if (closed_expired < 0) /* undetermined */
         {
           struct timeval tv;
-	  tv.tv_sec = 0; // shaddup compiler
+          tv.tv_sec = 0; // shaddup compiler
           suspend_expired = 0;
           closed_expired = 0;
           if (client->last_buffupd_time == 0)

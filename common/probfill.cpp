@@ -12,7 +12,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.71 2001/04/12 11:09:46 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.72 2001/06/17 17:20:04 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -622,6 +622,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     if (bufcount < 0 && client->nonewblocks == 0)
     {
       //Log("3. BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0)\n");
+      TRACE_BUFFUPD((0, "BufferUpdate: reason = __IndividualProblemLoad && no more blocks\n"));
       int didupdate = 
          BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0);
       if (!(didupdate < 0))
@@ -644,6 +645,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     else  /* using randoms is permitted */
       *load_needed = 0;
 
+    TRACE_BUFFUPD((0, "__Indiv...Load: bufcount = %d, load_needed = %d\n", bufcount, *load_needed));
     if (*load_needed == 0)
     {
       u32 timeslice = 0x10000;
@@ -672,9 +674,8 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
         /* if the total number of packets in buffers is less than the number 
            of crunchers running then post a fetch request. This means that the
            effective minimum threshold is always >= num crunchers
-        */   
-        if (bufcount <= 1 /* only one packet left */ ||
-           ((unsigned long)(bufcount)) < (load_problem_count - prob_i))
+        */
+        if (((unsigned long)(bufcount)) < (load_problem_count - prob_i))
         {
           *bufupd_pending |= BUFFERUPDATE_FETCH;
         } 
@@ -863,7 +864,9 @@ unsigned int LoadSaveProblems(Client *client,
     prob_first = 0;
     prob_last  = (load_problem_count - 1);
     prob_step  = -1;
-  }  
+  }
+  
+  TRACE_BUFFUPD((+1, "LoadSaveProblems(%d)\n", mode));
 
   /* ============================================================= */
 
@@ -913,6 +916,8 @@ unsigned int LoadSaveProblems(Client *client,
     if (load_needed)
       empty_problems++;
 
+    TRACE_BUFFUPD((0, "__IndividualProblemSave ==> bufupd_pending = %d\n", bufupd_pending));
+
     //---------------------------------------
 
     if (load_needed && mode!=PROBFILL_UNLOADALL && mode!=PROBFILL_RESIZETABLE)
@@ -933,6 +938,7 @@ unsigned int LoadSaveProblems(Client *client,
           loaded_problems_count[cont_i]++;
           changed_flag = 1;
         }
+        TRACE_BUFFUPD((0, "__IndividualProblemLoad ==> bufupd_pending = %d\n", bufupd_pending));
         if (load_needed)
         {
           getbuff_errs++;
@@ -964,6 +970,7 @@ unsigned int LoadSaveProblems(Client *client,
     }
     else /* no disk buffers */
     {
+      TRACE_BUFFUPD((0, "BufferUpdate: reason = LoadSaveProblem && unload all && membuffers\n"));
       BufferUpdate(client,BUFFERUPDATE_FLUSH,0);
       /* in case the flush fails, empty the membuf table manually */
       for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
@@ -994,6 +1001,8 @@ unsigned int LoadSaveProblems(Client *client,
       int req = MODEREQ_FLUSH; // always flush while fetching
       if (!CheckExitRequestTriggerNoIO()) //((bufupd_pending & BUFFERUPDATE_FETCH)!=0)
         req |= MODEREQ_FETCH;
+      TRACE_BUFFUPD((0, "ModeReqSet(flush=%d, fetch=%d, fquiet=1)\n", 
+                        (req & MODEREQ_FLUSH) != 0, (req & MODEREQ_FETCH) != 0));
       ModeReqSet( req|MODEREQ_FQUIET ); /* delegate to the client.run loop */
     }
 
@@ -1164,6 +1173,8 @@ unsigned int LoadSaveProblems(Client *client,
       Log("Shutdown complete.\n");
   }
   --reentrant_count;
+
+  TRACE_BUFFUPD((-1, "LoadSaveProblems => %d\n", retval));
 
   return retval;
 }  
