@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.121  1998/07/01 03:30:35  silby
+// Added/uses CheckForcedKeyproxy to help make config make more sense.
+//
 // Revision 1.120  1998/06/30 03:10:15  silby
 // Fixed version number reporting in -config menus.
 //
@@ -145,7 +148,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.120 1998/06/30 03:10:15 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.121 1998/07/01 03:30:35 silby Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -648,6 +651,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           break;
         case CONF_KEYPORT:
           keyport = atoi(parm);
+          CheckForcedKeyproxy();
           ValidateConfig();
           break;
         case CONF_HTTPPROXY:
@@ -2957,5 +2961,46 @@ bool Client::CheckForcedKeyport(void)
   }
   return Forced;
 }
+
+// --------------------------------------------------------------------------
+
+bool Client::CheckForcedKeyproxy(void)
+{
+  bool Forced = false;
+  char buffer[200];
+  char *temp;
+  char *dot = strchr(keyproxy, '.');
+  if (dot && (strcmpi(dot, ".v27.distributed.net") == 0 ||
+      strcmpi(dot, ".distributed.net") == 0))
+  {
+      if (keyport != 3064)// && keyport != foundport)
+      {
+        if ((keyport == 80) || (keyport == 23))
+          {
+          buffer[0]=0;
+          for (temp=&keyproxy[0];isalpha(*temp) > 0;temp++) {};
+          *temp=0;
+          strcpy(buffer,keyproxy);
+          sprintf(keyproxy,"%s%i.v27.distributed.net\0",buffer,keyport);
+          }
+        else if (keyport == 2064)
+          {
+          buffer[0]=0;
+          for (temp=&keyproxy[0];isalpha(*temp) > 0;temp++) {};
+          *temp=0;
+          strcpy(buffer,keyproxy);
+          sprintf(keyproxy,"%s.v27.distributed.net\0",buffer);
+          }
+        else
+          {
+//          keyport = foundport;
+          Forced = true;
+          };
+//      }
+    }
+  }
+  return Forced;
+}
+
 
 // --------------------------------------------------------------------------
