@@ -1,10 +1,10 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
+// Copyright distributed.net 1997-2002 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 
 const char *netio_cpp(void) {
-return "@(#)$Id: netio.cpp,v 1.5 2000/07/11 00:52:21 mfeiri Exp $"; }
+return "@(#)$Id: netio.cpp,v 1.6 2002/09/02 01:15:45 andreasb Exp $"; }
 
 #define __NETIO_CPP__ /* suppress redefinitions in netio.h */
 #include "netio.h"

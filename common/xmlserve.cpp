@@ -1,9 +1,11 @@
-/* Created by Michael Feiri (michael.feiri@mfeiri.lake.de)
- *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
+ * Created by Michael Feiri (michael.feiri@mfeiri.lake.de)
+ * 
+ * $Id: xmlserve.cpp,v 1.6 2002/09/02 01:15:45 andreasb Exp $
 */
 
 #include "client.h"

@@ -1,12 +1,12 @@
 // Hey, Emacs, this a -*-C++-*- file !
 //
-// Copyright distributed.net 1997-1999 - All Rights Reserved
+// Copyright distributed.net 1997-2002 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 
 #ifndef __MINIHTTP_H__
-#define __MINIHTTP_H__ "@(#)$Id: minihttp.h,v 1.1 2000/06/03 03:24:39 jlawson Exp $"
+#define __MINIHTTP_H__ "@(#)$Id: minihttp.h,v 1.2 2002/09/02 01:15:45 andreasb Exp $"
 
 #include "cputypes.h"
 #include <time.h>

@@ -1,10 +1,10 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
+// Copyright distributed.net 1997-2002 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 
 const char *minihttp_cpp(void) {
-return "@(#)$Id: minihttp.cpp,v 1.2 2000/07/03 07:17:04 jlawson Exp $"; }
+return "@(#)$Id: minihttp.cpp,v 1.3 2002/09/02 01:15:45 andreasb Exp $"; }
 
 
 #include "cputypes.h"

@@ -1,12 +1,12 @@
 // Hey, Emacs, this a -*-C++-*- file !
 //
-// Copyright distributed.net 1997-1999 - All Rights Reserved
+// Copyright distributed.net 1997-2002 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 
 #ifndef __NETIO_H__
-#define __NETIO_H__ "@(#)$Id: netio.h,v 1.5 2000/07/05 21:10:19 mfeiri Exp $"
+#define __NETIO_H__ "@(#)$Id: netio.h,v 1.6 2002/09/02 01:15:45 andreasb Exp $"
 
 #include "cputypes.h"
 
