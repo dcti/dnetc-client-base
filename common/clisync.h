@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.14 2003/09/05 14:30:55 mweiser Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.15 2003/09/07 00:05:51 oliver Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -351,17 +351,10 @@
   }
 
   static inline void fastlock_unlock(fastlock_t *l) {
-# if (CLIENT_OS == OS_NEXTSTEP)
     /* l = 0; */
     asm volatile ("clrb %0"
                   : "=m"  (*l)
                   :  "0"  (*l));
-# else
-    /* l = 0; */
-    asm volatile ("clr.b %0"
-                  : "=m"  (*l)
-                  :  "0"  (*l));
-# endif
   }
 
   /* _trylock returns -1 on EINVAL, 0 if could not lock, +1 if could lock */
