@@ -14,6 +14,8 @@ mv /T/${2} /T/${3}
 mv /T/drawer.info /T/${3}.info
 if [ "$3" = "dnetc_mos" ]; then
   cp -p dnetc dnetcgui.library /T/${3}
+elif [ "$3" = "dnetc" ]; then
+  cp -p dnetc dnetcgui.library /T/${3}
 else
   cp -p dnetc_${2} dnetcgui.library /T/${3}
 fi
