@@ -7,7 +7,7 @@
 .path.obj = output;platforms/win32-os2
 
 
-BCCOPTS = -w -Icommon -DPIPELINE_COUNT=2 -D_CPU_32BIT_ -O -tWM -DMULTITHREAD
+BCCOPTS = -d -w -Icommon -DPIPELINE_COUNT=2 -D_CPU_32BIT_ -O -tWM -DMULTITHREAD
 
 # --------------------------------------------
 
