@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.170  1999/01/13 21:28:29  patrick
+# new target for OS2: x86-os2-gcc
+#
 # Revision 1.169  1999/01/13 11:57:19  snake
 #
 # fixed sparc-openbsd target
@@ -1874,6 +1877,32 @@ case "$1" in
 	TARGET_LIBS=""
 	;;
 
+####### OS/2 (x86, emx)
+    # requires EMX, gcc 2.72 
+    # if you don't have a basename command, you can use the following script:
+    # just copy it to basename.cmd
+        #@echo off
+        #ksh -c "parm=%1 ; echo ${parm##*[\\/]}"
+       
+    *x86-os2-gcc)      
+        basename ()
+        {
+        export parm=$1
+        ksh -c 'echo ${parm##*/}'
+        }
+	TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+	TARGET_CCFLAGS="-Zmts -pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -I. -I${C_INCLUDE_PATH} -DMULTITHREAD -D__showids__"
+	TARGET_LDFLAGS="-Zmts"
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp $RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 platforms/os2cli/os2inst.cpp"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+	TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm $NASM_DESMMX_SRCS"
+        TARGET_NASMFLAGS="-i rc5/nasm/ -f aout"
+        TARGET_LIBS="-lsocket"
+        TARGET_OS=OS2
+        ;;
+
+
 ###### Unknown
     *list)
 	egrep "^[ ]*\*" $0 | more
@@ -1949,7 +1978,11 @@ else
     echo " ---------------------------------------------"
     exit
   fi
-  ${TARGET_STRIP} testplat
+  if [ $TARGET_OS = OS2 ]; then
+     emxbind testplat
+  else
+     ${TARGET_STRIP} testplat
+  fi
 fi
 
 
@@ -2008,6 +2041,23 @@ echo "" >> Makefile
 echo "Generating Makefile production targets..."
 echo "# Regular targets follow" >> Makefile
 
+if [ $TARGET_OS=OS2 ]; then
+
+echo "${EXENAME}.exe:	\${BUILDNAME}.exe" >> Makefile
+echo "	\${CP} \${BUILDNAME}.exe ${EXENAME}.exe" >> Makefile
+echo "" >> Makefile
+
+echo "\${BUILDNAME}.exe:	\${ALLOBJS} \${ADDOBJS} output/\${BUILDNAME}.res" >> Makefile
+echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o \${BUILDNAME}" >> Makefile
+echo "	emxbind -b -r output/\${BUILDNAME}.res \${BUILDNAME}" >> Makefile
+echo "" >> Makefile
+
+echo "output/\${BUILDNAME}.res: platforms/os2cli/rc5des.rc" >> Makefile
+echo "	 platforms\\os2cli\\gcc_rc.cmd \${BUILDNAME}.res" >> Makefile
+echo "" >> Makefile
+
+else
+
 echo "${EXENAME}:	\${BUILDNAME}" >> Makefile
 echo "	\${CP} \${BUILDNAME} ${EXENAME}" >> Makefile
 echo "	\${STRIP} ${EXENAME}" >> Makefile
@@ -2017,8 +2067,13 @@ echo "\${BUILDNAME}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
 echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o \${BUILDNAME}" >> Makefile
 echo "" >> Makefile
 
+fi
+
 echo "clean:" >> Makefile
-echo "	rm -f \${ALLOBJS} ${EXENAME}" >> Makefile
+echo "	rm -f \${ALLOBJS}  ${EXENAME}" >> Makefile
+if [ $TARGET_OS=OS2 ]; then
+echo "	rm -f output/\${BUILDNAME}.res" >> Makefile
+fi
 echo "" >> Makefile
 
 echo "superclean: clean" >> Makefile
