@@ -59,7 +59,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.13 2000/11/26 15:18:44 cyp Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.14 2001/01/13 22:40:50 andreasb Exp $"; }
 
 #define TRACE /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -1627,7 +1627,7 @@ static int net_ioctl( SOCKET sock, unsigned long opt, int *i_optval )
 /* --------------------------------------------------------------------- */
 
 #if defined(HAVE_FCNTL_FIONBIO)  /* no FIONBIO but have fcntl() */
-static int ___fcntl_O_NONBLOCK(int fd, int set_blocking)
+static int ___fcntl_O_NONBLOCK(int sock, int set_blocking)
 {
   int res, flag;
   #if (defined(FNDELAY))
