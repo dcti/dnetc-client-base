@@ -1,5 +1,5 @@
 /* 
- * Copyright distributed.net 1998-2002 - All Rights Reserved
+ * Copyright distributed.net 1998-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.8 2003/01/16 09:35:03 oliver Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.9 2003/01/18 00:44:37 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -57,11 +57,11 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.8 2003/01/16 09:35:03 oliver Exp $"; }
 //                                    u32 *iterations, void *scratch_area );
 // 1 pipeline: rc5/ansi/rc5ansi1-b2.cpp
 //   extern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 iterations );
-#endif                                                                
+#endif
 
 #if defined(HAVE_RC5_64_CORES)
 
-  // default ansi cores  
+  // default ansi cores
   // rc5/ansi/rc5ansi1-b2.cpp
   extern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 iterations );
   // rc5/ansi/rc5ansi_2-rg.cpp
@@ -145,8 +145,8 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.8 2003/01/16 09:35:03 oliver Exp $"; }
       (CLIENT_CPU == CPU_VAX)
   // only use already prototyped ansi cores
 #else
-  #error "How did you get here?" 
-#endif    
+  #error "How did you get here?"
+#endif
 
 #endif
 
@@ -155,12 +155,12 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.8 2003/01/16 09:35:03 oliver Exp $"; }
 #if defined(HAVE_DES_CORES)
 /* DES cores take the 'iterations_to_do', adjust it to min/max/nbbits
   and store it back in 'iterations_to_do'. all return 'iterations_done'.
-*/   
+*/
 #if (CLIENT_CPU == CPU_ARM)
   //des/arm/des-arm-wrappers.cpp
   extern u32 des_unit_func_slice_arm( RC5UnitWork * , u32 *iter, char *coremem );
   extern u32 des_unit_func_slice_strongarm(RC5UnitWork *, u32 *iter, char *coremem);
-#elif (CLIENT_CPU == CPU_ALPHA) 
+#elif (CLIENT_CPU == CPU_ALPHA)
   //des/alpha/des-slice-dworz.cpp
   extern u32 des_unit_func_slice_dworz( RC5UnitWork * , u32 *iter, char *);
 #elif (CLIENT_CPU == CPU_X86)
@@ -213,13 +213,13 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.8 2003/01/16 09:35:03 oliver Exp $"; }
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_030(void);
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_040(void);
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_060(void);
-  #elif (CLIENT_CPU == CPU_X86)      
+  #elif (CLIENT_CPU == CPU_X86)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void); //A
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_nobsr(void); //B
   #else
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
   #endif
-#endif    
+#endif
 
 /* ------------------------------------------------------------- */
 
@@ -261,7 +261,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
 {
   // PROJECT_NOT_HANDLED("sorry, you still have to enter you core's names into this ugly struct")
 // OK!
-  /* 
+  /*
    When selecting corenames, use names that describe how (what optimization)
    they are different from their predecessor(s). If only one core,
    use the obvious "MIPS optimized" or similar.
@@ -491,7 +491,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     return (const char **)(&(corenames_table[cont_i][0]));
   }
   return ((const char **)0);
-}  
+}
 
 /* -------------------------------------------------------------------- */
 
@@ -551,9 +551,9 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
     #if defined(_AIXALL)                /* is a power/PPC hybrid client */
     have_pwr = (det >= 0 && (det & 1L<<24)!=0);
     #elif (CLIENT_CPU == CPU_POWER)     /* power only */
-    have_pwr = 1;                       /* see note above */  
+    have_pwr = 1;                       /* see note above */
     #endif
-    #if defined(__VEC__)                /* OS+compiler support altivec */ 
+    #if defined(__VEC__)                /* OS+compiler support altivec */
     have_vec = (det >= 0 && (det & 1L<<25)!=0); /* have altivec */
     #endif
     if (contestid == RC5)
@@ -576,7 +576,7 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
       if (!have_vec && cindex == 2)     /* "PPC-vector" */
         cindex = 0;                     /* "PPC-scalar" */
     }
-  }  
+  }
   #elif (CLIENT_CPU == CPU_X86)
   {
     long det = GetProcessorType(1);
@@ -593,12 +593,12 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
     #endif
     if (contestid == RC5)
     {
-      if (!have_nasm && cindex == 6)    /* "RG/HB re-pair II" */ 
+      if (!have_nasm && cindex == 6)    /* "RG/HB re-pair II" */
         cindex = ((have_3486 && have_smc)?(7):(3)); /* "RG self-mod" or
                                                        "RG/HB re-pair I" */
       if (!have_smc && cindex == 7)     /* "RG self-modifying" */
         cindex = 1;                     /* "RG class 3/4" */
-      if (have_smc && cindex == 7 && GetManagedProblemCount() > 1)     
+      if (have_smc && cindex == 7 && GetManagedProblemCount() > 1)
                                         /* "RG self-modifying" */
         cindex = 1;                     /* "RG class 3/4" */
       if (!have_nasm && cindex == 8)    /* "AK Class 7" */
@@ -619,10 +619,10 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
         cindex = 1;                   /* "movzx Bryd" */
       #endif
       if (!have_mmx && cindex == 3)   /* "BRF MMX bitslice */
-        cindex = 1;                   /* "movzx Bryd" */ 
+        cindex = 1;                   /* "movzx Bryd" */
     }
   }
-  #endif         
+  #endif
   contestid = contestid; /* possibly unused */
   return cindex;
 }
@@ -639,7 +639,7 @@ static unsigned int __corecount_for_contest( unsigned int cont_i )
       cont_i++;
     return cont_i;
   }
-  return 0;  
+  return 0;
 }
 
 /* ===================================================================== */
@@ -671,10 +671,10 @@ void selcoreEnumerateWide( int (*enumcoresproc)(
       if (! ((*enumcoresproc)( &carray[0], (int)corenum, userdata )) )
         break;
     }
-  }  
+  }
   return;
 }
-  
+
 /* ---------------------------------------------------------------------- */
 
 void selcoreEnumerate( int (*enumcoresproc)(unsigned int cont, 
@@ -699,7 +699,7 @@ void selcoreEnumerate( int (*enumcoresproc)(unsigned int cont,
     }
   }
   return;
-}  
+}
 
 /* --------------------------------------------------------------------- */
 
@@ -709,7 +709,7 @@ int selcoreValidateCoreIndex( unsigned int cont_i, int idx )
   {
     if (idx == __apply_selcore_substitution_rules(cont_i, idx))
       return idx;
-  }  
+  }
   return -1;
 }
 
@@ -736,7 +736,7 @@ static int selcore_initlev = -1; /* not initialized yet */
 
 
 int DeinitializeCoreTable( void )  /* ClientMain calls this */
-{ 
+{
   if (selcore_initlev <= 0)
   {
     Log("ACK! DeinitializeCoreTable() called for uninitialized table\n");
@@ -756,7 +756,7 @@ int DeinitializeCoreTable( void )  /* ClientMain calls this */
   #endif /* ifdef SMC */
 
   selcore_initlev--;
-  return 0; 
+  return 0;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -779,12 +779,12 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
 
   #if (CLIENT_CPU == CPU_X86) && defined(SMC)
   {                      /* self-modifying code needs initialization */
-   
+ 
     #if defined(USE_DPMI) && ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16))
-    /* 
+    /*
     ** Unlike all other targets, the dpmi based ones need to initialize on
     ** InitializeCoreTable(), and deinitialize on DeinitializeCoreTable()
-    */ 
+    */
     if (x86_smc_initialized < 0) /* didn't fail before */
     {
       if (smc_dpmi_ds_alias_alloc() > 0)
@@ -798,7 +798,7 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
       if (mprotect( addr, 4096*3, PROT_READ|PROT_WRITE|PROT_EXEC )==0)
         x86_smc_initialized = +1;
     }
-    #elif (CLIENT_OS == OS_NETWARE) 
+    #elif (CLIENT_OS == OS_NETWARE)
     if (x86_smc_initialized < 0) /* one shot */
     {
       if (GetFileServerMajorVersionNumber() <= 4)
@@ -847,7 +847,7 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
       }
       #endif
     }
-  }  
+  }
   #endif
 
   if (first_time) /* we only want to do this once */
@@ -868,7 +868,7 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
         idx = coretypes[cont_i];
         if (idx < 0 || idx >= ((int)__corecount_for_contest( cont_i )))
           idx = -1;
-      }      
+      }
       if (first_time || idx != selcorestatics.user_cputype[cont_i])
         selcorestatics.corenum[cont_i] = -1; /* got change */
       selcorestatics.user_cputype[cont_i] = idx;
@@ -877,7 +877,7 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
 
   selcore_initlev++;
   return 0;
-}  
+}
 
 /* ---------------------------------------------------------------------- */
 
@@ -899,12 +899,12 @@ static long __bench_or_test( int which,
   invop.sa_handler = sig_invop;
   sigaction(SIGILL, &invop, &old_handler);
   #endif
- 
+
   if (selcore_initlev > 0                  /* core table is initialized? */
       && cont_i < CONTEST_COUNT)           /* valid contest id? */
   {
     /* save current state */
-    int user_cputype = selcorestatics.user_cputype[cont_i]; 
+    int user_cputype = selcorestatics.user_cputype[cont_i];
     int corenum = selcorestatics.corenum[cont_i];
     int coreidx, corecount = __corecount_for_contest( cont_i );
 
@@ -928,20 +928,20 @@ static long __bench_or_test( int which,
             selcorestatics.user_cputype[cont_i] = coreidx;
             in_corenum = -1;
           }
-        }   
+        }
         selcorestatics.corenum[cont_i] = -1; /* reset to show name */
 
         #if (CLIENT_OS == OS_AIX)
         if (setjmp(context)) /* setjump will return true if coming from the handler */
-        { 
+        {
           LogScreen("Error: Core #%i does not work for this system.\n", coreidx);
-        } 
-        else 
+        }
+        else
         #endif
         {
           if (which == 's') /* selftest */
             rc = SelfTest( cont_i );
-          else 
+          else
             rc = TBenchmark( cont_i, benchsecs, 0 );
           #if (CLIENT_OS != OS_WIN32 || !defined(SMC))
           if (rc <= 0) /* failed (<0) or not supported (0) */
@@ -958,10 +958,10 @@ static long __bench_or_test( int which,
           }
           #endif
         }
-      }  
+      }
     } /* for (coreidx = 0; coreidx < corecount; coreidx++) */
 
-    selcorestatics.user_cputype[cont_i] = user_cputype; 
+    selcorestatics.user_cputype[cont_i] = user_cputype;
     selcorestatics.corenum[cont_i] = corenum;
 
     #if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
@@ -979,8 +979,8 @@ static long __bench_or_test( int which,
           rc = SelfTest( cont_i );
         ProblemFree(prob);
       }
-    }      
-    #endif 
+    }
+    #endif
 
   } /* if (cont_i < CONTEST_COUNT) */
 
@@ -1001,6 +1001,424 @@ long selcoreSelfTest( unsigned int cont_i, int corenum)
 }
 
 /* ---------------------------------------------------------------------- */
+
+int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
+{
+  static long detected_type = -123;
+  static unsigned long detected_flags = 0;
+  int cindex = -1;
+
+  if (detected_type == -123) /* haven't autodetected yet? */
+  {
+    detected_type = GetProcessorType(1 /* quietly */);
+    if (detected_type < 0)
+      detected_type = -1;
+    detected_flags = GetProcessorFeatureFlags();
+  }
+
+  // PROJECT_NOT_HANDLED("you may add your pre-selected core depending on arch
+  //  and cpu here, but leaving the defaults (runs micro-benchmark) is ok")
+
+  #if (CLIENT_CPU == CPU_ALPHA)
+  if (projectid == RC5)
+  {
+    // FIXME
+  }
+  else if (projectid == DES)
+  {
+    // FIXME
+  }
+  #if defined(HAVE_RC5_64_CORES) || defined(HAVE_DES_CORES)
+  #error !!!FIXME!!! Please split this in a senseful way like it is done
+  #error for every otherarchitecture! Populate the empty blocks above!
+  else if (projectid == RC5 || projectid == DES) /* old style */
+  {
+    {
+      /* this is only useful if more than one core, which is currently
+         only OSF/DEC-UNIX. If only one core, then that will have been 
+         handled in the generic code above, but we play it safe anyway.
+      */
+      if (detected_type == 5 /*EV5*/ || detected_type == 7 /*EV56*/ ||
+          detected_type == 8 /*EV6*/ || detected_type == 9 /*PCA56*/)
+        cindex = 1;
+      else /* ev3 and ev4 (EV4, EV4, LCA4, EV45) */
+        cindex = 0;
+    }
+    if (cindex < 0 || 
+      cindex >= (int)__corecount_for_project(projectid))
+    {
+      cindex = 0;
+    }
+  }
+  #endif
+  else if (projectid == OGR)
+  {
+    if (detected_type > 0)
+    {
+      if (detected_type >= 11)
+        cindex = 1;
+      else
+        cindex = 0;
+    }
+  }
+  #elif (CLIENT_CPU == CPU_68K)
+  if (projectid == RC5)
+  {
+    if (detected_type > 0)
+    {
+      cindex = 0;
+      #if defined(__GCC__) || defined(__GNUC__) || \
+          (CLIENT_OS == OS_AMIGAOS)// || (CLIENT_OS == OS_MACOS)
+      if (detected_type >= 68040)
+        cindex = 2; /* rc5-060-re-jg.s */
+      else if (detected_type >= 68020)
+        cindex = 1; /* rc5-020_030-jg.s */
+      #endif
+    }
+  }
+  else if (contestid == DES)
+  {
+    cindex = 0; // only one core
+  }
+  else if (contestid == OGR)
+  {
+    if (detected_type > 0)
+    {
+      if (detected_type >= 68060)
+        cindex = 4;
+      else if (detected_type == 68040)
+        cindex = 3;
+      else if (detected_type == 68030)
+        cindex = 2;
+      else if (detected_type == 68020)
+        cindex = 1;
+      else
+        cindex = 0;
+    }
+  }
+  else if (projectid == RC5_72)
+  {
+    if (detected_type > 0)
+    {
+      #if (CLIENT_OS == OS_AMIGAOS)
+      if (detected_type >= 68020 && detected_type <= 68030)
+        cindex = 0; /* 020/030 optimized */
+      else
+        cindex = 1; /* 060 optimized (best for 68000/040 too) */
+      #endif
+    }
+  }
+  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+  if (projectid == DES)
+  {
+    cindex = 0; /* only one DES core */
+  }
+  else if (projectid == RC5)
+  {
+    if (detected_type > 0)
+    {
+      switch ( detected_type & 0xffff) // only compare the low PVR bits
+      {
+        case 0x0001: cindex = 0; break; // 601            == allitnil
+        case 0x0003: cindex = 1; break; // 603            == lintilla
+        case 0x0004: cindex = 2; break; // 604            == lintilla-604
+        case 0x0006: cindex = 1; break; // 603e           == lintilla
+        case 0x0007: cindex = 1; break; // 603r/603ev     == lintilla
+        case 0x0008: cindex = 1; break; // 740/750 (G3)   == lintilla
+        case 0x0009: cindex = 2; break; // 604e           == lintilla-604
+        case 0x000A: cindex = 2; break; // 604ev          == lintilla-604
+//        Let G4s do a minibench if AltiVec is unavailable
+//        case 0x000C: cindex = 1; break; // 7400 (G4)      == lintilla
+        default:     cindex =-1; break; // no default (used to be lintilla)
+      }
+      #if defined(_AIXALL)             /* Power/PPC hybrid */
+      if (( detected_type & (1L<<24) ) != 0) //ARCH_IS_POWER?
+        cindex = 3;                    /* "PowerRS" */
+      #elif (CLIENT_CPU == CPU_POWER)  /* Power only */
+        cindex = 3;                    /* "PowerRS" */
+      #endif
+      #if defined(__VEC__)             /* OS+compiler support altivec */
+      if (( detected_type & (1L<<25) ) != 0) //altivec?
+        {
+          switch ( detected_type & 0xffff) // only compare the low PVR bits
+          {
+            case 0x000C: cindex = 4; break; // 7400 (G4)   == crunch-vec
+            case 0x8000: cindex = 5; break; // 7450 (G4+)  == crunch-vec-7450
+            case 0x8001: cindex = 5; break; // 7455 (G4+) == crunch-vec-7450
+            case 0x800C: cindex = 4; break; // 7410 (G4)   == crunch-vec
+            default:     cindex =-1; break; // no default
+          }
+        }
+      #endif
+    }
+  }
+  else if (projectid == OGR)
+  {
+    if (detected_type > 0)
+    {
+      cindex = 0;                       /* PPC-scalar */
+
+      #if defined (_AIXALL)             /* Power/PPC hybrid */
+      if (( detected_type & (1L<<24) ) != 0) /* ARCH_IS_POWER? */
+        cindex = 1;                     /* PowerRS */
+      #elif (CLIENT_CPU == CPU_POWER)   /* Power only */
+        cindex = 1;                     /* "PowerRS" */
+      #endif
+      #if defined(__VEC__)              /* OS+compiler support altivec */
+      if (( detected_type & (1L<<25) ) != 0) /* proc supports altivec? */
+        cindex = 2;                     /* PPC-vector */
+      #endif
+    }
+  }
+  else if (projectid == RC5_72)
+  {
+    if (detected_type > 0)
+    {
+      switch ( detected_type & 0xffff) // only compare the low PVR bits
+      {
+        case 0x0003: cindex = 3; break; // 603            == MH 2-pipe
+        case 0x0004: cindex = 3; break; // 604            == MH 2-pipe
+        case 0x0006: cindex = 3; break; // 603e           == MH 2-pipe
+        case 0x0007: cindex = 3; break; // 603r/603ev     == MH 2-pipe
+        case 0x0008: cindex = 3; break; // 740/750 (G3)   == MH 2-pipe
+        case 0x0009: cindex = 3; break; // 604e           == MH 2-pipe
+        case 0x000A: cindex = 3; break; // 604ev          == MH 2-pipe
+        default:     cindex =-1; break; // no default
+      }
+    }
+  }
+  #elif (CLIENT_CPU == CPU_X86)
+  {
+    int have_mmx = ((detected_flags & CPU_F_MMX) == CPU_F_MMX);
+    if (projectid == RC5)
+    {
+      if (detected_type >= 0)
+      {
+        int have_smc = 0;
+        #if defined(SMC)
+        have_smc = (x86_smc_initialized > 0);
+        #endif
+        switch (detected_type & 0xff) // FIXME remove &0xff
+        {
+          case 0x00: cindex = ((have_mmx)?(9):(0)); break; // P5 == RG/BRF class 5
+          case 0x01: cindex = ((have_smc)?(7 /*#99*/):(6 /*#1939*/)); break; // 386/486
+          case 0x02: cindex = 2; break; // PII/PIII   == RG class 6
+          case 0x03: cindex = 6; break; // Cx6x86/MII == RG re-pair II
+          case 0x04: cindex = 4; break; // K5         == RG RISC-rotate I
+          case 0x05: cindex = 5; break; // K6-1/2/3   == RG RISC-rotate II
+          case 0x06: cindex = ((have_smc)?(7 /*#99*/):(6 /*#804*/)); break; // cx486
+          case 0x07: cindex = 2; break; // Celeron    == RG class 6
+          case 0x08: cindex = 2; break; // PPro       == RG class 6
+          case 0x09: cindex = 6; break; // AMD>=K7/Cx>MII == RG/HB re-pair II
+          case 0x0A: cindex = 6; break; // Centaur C6 == RG/HB re-pair II (#2082)
+          case 0x0B: cindex = 8; break; // P4         == ak/P4
+          default:   cindex =-1; break; // no default
+        }
+        #if defined(HAVE_NO_NASM)
+        if (cindex == 6)   /* ("RG/HB re-pair II") */
+        {
+          cindex = 3;      /* ("RG re-pair I") */
+          if ((detected_type & 0xff) == 0x01) /* 386/486 */
+            cindex = 1;    /* "RG class 3/4" */
+        }
+        if (cindex == 8)   /* "AK Class 7" */
+          cindex = 2;      /* "RG class 6" */
+        if (cindex == 9)   /* "jasonp P5/MMX" */
+          cindex = 0;      /* "RG Class 5" */
+        #endif
+      }
+    }
+    else if (projectid == DES)
+    {
+      if (detected_type >= 0)
+      {
+        switch ( detected_type & 0xff ) // FIXME remove &0xff
+        {
+          case 0x00: cindex = 0; break; // P5             == standard Bryd
+          case 0x01: cindex = 0; break; // 386/486        == standard Bryd
+          case 0x02: cindex = 1; break; // PII/PIII       == movzx Bryd
+          case 0x03: cindex = 1; break; // Cx6x86         == movzx Bryd
+          case 0x04: cindex = 0; break; // K5             == standard Bryd
+          case 0x05: cindex = 1; break; // K6             == movzx Bryd
+          case 0x06: cindex = 0; break; // Cx486          == movzx Bryd
+          case 0x07: cindex = 1; break; // orig Celeron   == movzx Bryd
+          case 0x08: cindex = 1; break; // PPro           == movzx Bryd
+          case 0x09: cindex = 1; break; // AMD K7         == movzx Bryd
+          case 0x0A: cindex = 0; break; // Centaur C6
+          case 0x0B: cindex = 1; break; // Pentium 4
+          default:   cindex =-1; break; // no default
+        }
+        #ifdef MMX_BITSLICER
+        if (have_mmx)
+          cindex = 2; /* mmx bitslicer */
+        #endif
+      }
+    }
+    else if (projectid == CSC)
+    {
+      if (detected_type >= 0)
+      {
+        // this is only valid for nasm'd cores or GCC 2.95 and up
+        switch ( detected_type & 0xff ) // FIXME remove &0xff
+        {
+          case 0x00: cindex = 3; break; // P5           == 1key - called
+          case 0x01: cindex = 3; break; // 386/486      == 1key - called
+          case 0x02: cindex = 2; break; // PII/PIII     == 1key - inline
+          case 0x03: cindex = 3; break; // Cx6x86       == 1key - called
+          case 0x04: cindex = 2; break; // K5           == 1key - inline
+          case 0x05: cindex = 0; break; // K6/K6-2/K6-3 == 6bit - inline
+          case 0x06: cindex = 3; break; // Cyrix 486    == 1key - called
+          case 0x07: cindex = 3; break; // orig Celeron == 1key - called
+          case 0x08: cindex = 3; break; // PPro         == 1key - called
+          case 0x09: cindex = 0; break; // AMD K7       == 6bit - inline
+          case 0x0A: cindex = 3; break; // Centaur C6
+          case 0x0B: cindex = 0; break; // Pentium 4
+          default:   cindex =-1; break; // no default
+        }
+        #if !defined(HAVE_NO_NASM)
+        if (have_mmx)
+          cindex = 1; /* == 6bit - called - MMX */
+        #endif
+      }
+    }
+    else if (projectid == OGR)
+    {
+      if (detected_type >= 0)
+      {
+        switch ( detected_type & 0xff ) // FIXME remove &0xff
+        {
+          case 0x00: cindex = 1; break; // P5           == without BSR (B)
+          case 0x01: cindex = 1; break; // 386/486      == without BSR (B)
+          case 0x02: cindex = 0; break; // PII/PIII     == with BSR (A)
+          case 0x03: cindex = 0; break; // Cx6x86       == with BSR (A)
+          case 0x04: cindex = 1; break; // K5           == without BSR (B)
+          #if defined(__GNUC__) || defined(__WATCOMC__) || defined(__BORLANDC__)
+          case 0x05: cindex = 1; break; // K6/K6-2/K6-3 == without BSR (B)  #2228
+          #elif defined(_MSC_VER)
+          case 0x05: cindex = 0; break; // K6/K6-2/K6-3 == with BSR (A)  #2789
+          #else
+          #warning "FIXME: no OGR core autoselected on a K6 for your compiler"
+          #endif
+          case 0x06: cindex = 1; break; // Cyrix 486    == without BSR (B)
+          case 0x07: cindex = 0; break; // orig Celeron == with BSR (A)
+          case 0x08: cindex = 0; break; // PPro         == with BSR (A)
+          case 0x09: cindex = 0; break; // AMD K7       == with BSR (A)
+          case 0x0A: cindex = 1; break; // Centaur C6   == without BSR (B)
+          #if defined(__GNUC__) || defined(__ICC)
+          case 0x0B: cindex = 0; break; // Pentium 4    == with BSR (A)
+          #elif defined(_MSC_VER) || defined(__WATCOMC__) || defined(__BORLANDC__)
+          case 0x0B: cindex = 1; break; // Pentium 4    == without BSR (B)
+          #else
+          #warning "FIXME: no OGR core autoselected on a P4 for your compiler"
+          #endif
+          default:   cindex =-1; break; // no default
+        }
+      }
+    }
+    else if (projectid == RC5_72)
+    {
+      if (detected_type >= 0)
+      {
+        switch (detected_type & 0xff) // FIXME remove &0xff
+        {
+          // FIXME: ADD MORE
+          case 0x09: cindex = 8; break; // AMD>=K7/Cx>MII == SS 2-pipe
+          case 0x0B: cindex = 6; break; // Pentium 4 == DG 3-pipe
+          default:   cindex =-1; break; // no default
+        }
+        #if defined(HAVE_NO_NASM)
+        if (cindex == 8)   /* ("SS 2-pipe") */
+          cindex = 1;      /* ("ANSI 2-pipe") */
+        if (cindex == 6)   /* ("DG 3-pipe") */
+          cindex = 0;      /* ("ANSI 4-pipe") */
+        #endif
+      }
+    }
+  }
+  #elif (CLIENT_CPU == CPU_ARM)
+  // what about switch?
+  if (projectid == RC5)
+  {
+    if (detected_type > 0)
+    {
+      if (detected_type == 0x300  || /* ARM 3 */
+          detected_type == 0x600  || /* ARM 600 */
+          detected_type == 0x610  || /* ARM 610 */
+          detected_type == 0x700  || /* ARM 700 */
+          detected_type == 0x710  || /* ARM 710 */
+          detected_type == 0x7500 || /* ARM 7500 */
+          detected_type == 0x7500FE) /* ARM 7500FE */
+        cindex = 0;
+      else if (detected_type == 0x810 || /* ARM 810 */
+               detected_type == 0xA10 || /* StrongARM 110 */
+               detected_type == 0xA11 || /* StrongARM 1100 */
+               detected_type == 0xB11)   /* StrongARM 1110 */
+        cindex = 1;
+      else if (detected_type == 0x200 || /* ARM 2 */
+               detected_type == 0x250)   /* ARM 250 */
+        cindex = 2;
+    }
+  }
+  else if (projectid == DES)
+  {
+    if (detected_type > 0)
+    {
+      if (detected_type == 0x810 ||  /* ARM 810 */
+          detected_type == 0xA10 ||  /* StrongARM 110 */
+          detected_type == 0xA11 ||  /* StrongARM 1100 */
+          detected_type == 0xB11 ||  /* StrongARM 1110 */
+          detected_type == 0x200 ||  /* ARM 2 */
+          detected_type == 0x250)    /* ARM 250 */
+        cindex = 1;
+      else /* "ARM 3, 610, 700, 7500, 7500FE" or  "ARM 710" */
+        cindex = 0;
+    }
+  }
+  else if (projectid == RC5_72)
+  {
+    if (detected_type > 0)
+    {
+      if (detected_type == 0x200  || /* ARM 2 */
+          detected_type == 0x250  || /* ARM 250 */
+          detected_type == 0x300  || /* ARM 3 */
+          detected_type == 0x600  || /* ARM 600 */
+          detected_type == 0x610  || /* ARM 610 */
+          detected_type == 0x700  || /* ARM 700 */
+          detected_type == 0x710  || /* ARM 710 */
+          detected_type == 0x7500 || /* ARM 7500 */
+          detected_type == 0x7500FE) /* ARM 7500FE */
+        cindex = 1;
+      else if (detected_type == 0x810 || /* ARM 810 */
+               detected_type == 0xA10 || /* StrongARM 110 */
+               detected_type == 0xA11 || /* StrongARM 1100 */
+               detected_type == 0xB11)   /* StrongARM 1110 */
+        cindex = 0;
+    }
+  }
+  #elif (CLIENT_CPU == CPU_SPARC)
+  if (projectid == RC5)
+  {
+    #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
+    cindex = 0; // ultra-crunch is faster on everything I found ...
+    #elif (CLIENT_OS == OS_LINUX)
+    // run micro benchmark
+    #endif
+  }
+  #elif (CLIENT_OS == OS_PS2LINUX) // OUCH !!!! SELECT_BY_CPU !!!!! FIXME
+  #error Please make this decision by CLIENT_CPU!
+  #error CLIENT_OS may only be used for sub-selects (only if neccessary)
+  if (projectid == RC5)
+  {
+    cindex = 1; // now we use mips-crunch.cpp
+  }
+  else if (projectid == RC5_72)
+  {
+    cindex = 1; // now we use ansi-2pipe
+  }
+  #endif
+
+  return cindex;
+}
 
 /* this is called from Problem::LoadState() */
 int selcoreGetSelectedCoreForContest( unsigned int contestid )
@@ -1039,470 +1457,9 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       detected_type = -1;
   }
 
-  // PROJECT_NOT_HANDLED("you may add your pre-selected core depending on arch
-  //  and cpu here, but leaving the defaults (runs micro-benchmark) is ok")
-  #if (CLIENT_CPU == CPU_ALPHA)
-  if (contestid == RC5 || contestid == DES) /* old style */
-  {
-    selcorestatics.corenum[contestid] = selcorestatics.user_cputype[contestid];
-    if (selcorestatics.corenum[contestid] < 0)
-    {
-      /* this is only useful if more than one core, which is currently
-         only OSF/DEC-UNIX. If only one core, then that will have been 
-         handled in the generic code above, but we play it safe anyway.
-      */
-      if (detected_type == 5 /*EV5*/ || detected_type == 7 /*EV56*/ ||
-          detected_type == 8 /*EV6*/ || detected_type == 9 /*PCA56*/)
-        selcorestatics.corenum[contestid] = 1;
-      else /* ev3 and ev4 (EV4, EV4, LCA4, EV45) */
-        selcorestatics.corenum[contestid] = 0;
-    }    
-    if (selcorestatics.corenum[contestid] < 0 || 
-      selcorestatics.corenum[contestid] >= (int)__corecount_for_contest(contestid))
-    {
-      selcorestatics.corenum[contestid] = 0;
-    }  
-  }
-  else if (contestid == CSC)
-  {
-    selcorestatics.corenum[CSC] = selcorestatics.user_cputype[CSC];
-    if (selcorestatics.corenum[CSC] < 0)
-    {
-      ; // Who knows?  Just benchmark them all below
-    }
-  }
-  else if (contestid == OGR)
-  {
-    selcorestatics.corenum[OGR] = selcorestatics.user_cputype[OGR];
-    if (selcorestatics.corenum[OGR] < 0 && detected_type > 0)
-    {
-      if (detected_type >= 11)
-        selcorestatics.corenum[OGR] = 1;
-      else
-        selcorestatics.corenum[OGR] = 0;
-    }
-  }
-  #elif (CLIENT_CPU == CPU_68K)
-  if (contestid == RC5)
-  {
-    selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
-    if (selcorestatics.corenum[RC5] < 0 && detected_type >= 0)
-    {
-      selcorestatics.corenum[RC5] = 0;
-      #if defined(__GCC__) || defined(__GNUC__) || \
-          (CLIENT_OS == OS_AMIGAOS)// || (CLIENT_OS == OS_MACOS)
-      if (detected_type >= 68040)
-        selcorestatics.corenum[RC5] = 2; /* rc5-060-re-jg.s */
-      else if (detected_type >= 68020)
-        selcorestatics.corenum[RC5] = 1; /* rc5-020_030-jg.s */
-      #endif
-    }
-  }
-  else if (contestid == DES)
-  {
-    selcorestatics.corenum[DES] = 0; //only one core
-  }
-  else if (contestid == OGR)
-  {
-    selcorestatics.corenum[OGR] = selcorestatics.user_cputype[OGR];
-    if (selcorestatics.corenum[OGR] < 0 && detected_type > 0)
-    {
-      int cindex = 0;
-      if (detected_type >= 68060)
-        cindex = 4;
-      else if (detected_type == 68040)
-        cindex = 3;
-      else if (detected_type == 68030)
-        cindex = 2;
-      else if (detected_type == 68020)
-        cindex = 1;
-      selcorestatics.corenum[OGR] = cindex;
-    }
-  }
-  else if (contestid == RC5_72)
-  {
-    selcorestatics.corenum[RC5_72] = selcorestatics.user_cputype[RC5_72];
-    if (selcorestatics.corenum[RC5_72] < 0 && detected_type >= 0)
-    {
-      int cindex;
-      #if (CLIENT_OS == OS_AMIGAOS)
-      if (detected_type >= 68020 && detected_type <= 68030)
-        cindex = 0; /* 020/030 optimized */
-      else
-        cindex = 1; /* 060 optimized (best for 68000/040 too) */
-      #else
-      cindex = -1;
-      #endif
-      selcorestatics.corenum[RC5_72] = cindex;
-    }
-  }
-  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-  if (contestid == DES)
-  {
-    selcorestatics.corenum[DES] = 0; /* only one DES core */
-  }
-  else if (contestid == RC5)
-  {
-    selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
-    if (selcorestatics.corenum[RC5] < 0 && detected_type > 0)
-    {
-      int cindex = -1;
-      switch ( detected_type & 0xffff) // only compare the low PVR bits
-      {
-        case 0x0001: cindex = 0; break; // 601            == allitnil
-        case 0x0003: cindex = 1; break; // 603            == lintilla
-        case 0x0004: cindex = 2; break; // 604            == lintilla-604
-        case 0x0006: cindex = 1; break; // 603e           == lintilla
-        case 0x0007: cindex = 1; break; // 603r/603ev     == lintilla
-        case 0x0008: cindex = 1; break; // 740/750 (G3)   == lintilla
-        case 0x0009: cindex = 2; break; // 604e           == lintilla-604
-        case 0x000A: cindex = 2; break; // 604ev          == lintilla-604
-//        Let G4s do a minibench if AltiVec is unavailable
-//        case 0x000C: cindex = 1; break; // 7400 (G4)      == lintilla
-        default:     cindex =-1; break; // no default (used to be lintilla)
-      }
-      #if defined(_AIXALL)             /* Power/PPC hybrid */
-      if (( detected_type & (1L<<24) ) != 0) //ARCH_IS_POWER?
-        cindex = 3;                    /* "PowerRS" */
-      #elif (CLIENT_CPU == CPU_POWER)  /* Power only */
-        cindex = 3;                    /* "PowerRS" */
-      #endif
-      #if defined(__VEC__)             /* OS+compiler support altivec */
-      if (( detected_type & (1L<<25) ) != 0) //altivec?
-        {
-          switch ( detected_type & 0xffff) // only compare the low PVR bits
-          {
-            case 0x000C: cindex = 4; break; // 7400 (G4)   == crunch-vec
-            case 0x8000: cindex = 5; break; // 7450 (G4+)  == crunch-vec-7450
-            case 0x8001: cindex = 5; break; // 7455 (G4+) == crunch-vec-7450
-            case 0x800C: cindex = 4; break; // 7410 (G4)   == crunch-vec
-            default:     cindex =-1; break; // no default
-          }
-        }
-      #endif
-      selcorestatics.corenum[RC5] = cindex;
-    }
-  }
-  else if (contestid == CSC)
-  {
-    selcorestatics.corenum[CSC] = selcorestatics.user_cputype[CSC];
-    if (selcorestatics.corenum[CSC] < 0 && detected_type > 0)
-    {
-      int cindex = -1;/* micro benchmark */
-      selcorestatics.corenum[CSC] = cindex;
-    }
-  }
-  else if (contestid == OGR)
-  {
-    selcorestatics.corenum[OGR] = selcorestatics.user_cputype[OGR];
-    if (selcorestatics.corenum[OGR] < 0 && detected_type > 0)
-    {
-      int cindex = 0;                   /* PPC-scalar */
-
-      #if defined (_AIXALL)             /* Power/PPC hybrid */
-      if (( detected_type & (1L<<24) ) != 0) /* ARCH_IS_POWER? */
-        cindex = 1;                     /* PowerRS */ 
-      #elif (CLIENT_CPU == CPU_POWER)   /* Power only */
-        cindex = 1;                     /* "PowerRS" */
-      #endif
-      #if defined(__VEC__)              /* OS+compiler support altivec */
-      if (( detected_type & (1L<<25) ) != 0) /* proc supports altivec? */
-        cindex = 2;                     /* PPC-vector */
-      #endif
-
-      selcorestatics.corenum[OGR] = cindex;
-    }
-  }
-  else if (contestid == RC5_72)
-  {
-    selcorestatics.corenum[RC5_72] = selcorestatics.user_cputype[RC5_72];
-    if (selcorestatics.corenum[RC5_72] < 0 && detected_type > 0)
-    {
-      int cindex;
-      switch ( detected_type & 0xffff) // only compare the low PVR bits
-      {
-        case 0x0003: cindex = 3; break; // 603            == MH 2-pipe
-        case 0x0004: cindex = 3; break; // 604            == MH 2-pipe
-        case 0x0006: cindex = 3; break; // 603e           == MH 2-pipe
-        case 0x0007: cindex = 3; break; // 603r/603ev     == MH 2-pipe
-        case 0x0008: cindex = 3; break; // 740/750 (G3)   == MH 2-pipe
-        case 0x0009: cindex = 3; break; // 604e           == MH 2-pipe
-        case 0x000A: cindex = 3; break; // 604ev          == MH 2-pipe
-        default:     cindex =-1; break; // no default
-      }
-      selcorestatics.corenum[RC5_72] = cindex;
-    }
-  }
-  #elif (CLIENT_CPU == CPU_X86)
-  {
-    if (contestid == RC5)
-    {
-      selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
-      if (selcorestatics.corenum[RC5] < 0)
-      {
-        if (detected_type >= 0)
-        {
-          int cindex = -1; 
-          int have_smc = 0;
-          int have_mmx = ((detected_type & 0x100)!=0);
-          #if defined(SMC)
-          have_smc = (x86_smc_initialized > 0);
-          #endif
-          switch (detected_type & 0xff)
-          {
-            case 0x00: cindex = ((have_mmx)?(9):(0)); break; // P5 == RG/BRF class 5
-            case 0x01: cindex = ((have_smc)?(7 /*#99*/):(6 /*#1939*/)); break; // 386/486
-            case 0x02: cindex = 2; break; // PII/PIII   == RG class 6
-            case 0x03: cindex = 6; break; // Cx6x86/MII == RG re-pair II
-            case 0x04: cindex = 4; break; // K5         == RG RISC-rotate I
-            case 0x05: cindex = 5; break; // K6-1/2/3   == RG RISC-rotate II
-            case 0x06: cindex = ((have_smc)?(7 /*#99*/):(6 /*#804*/)); break; // cx486
-            case 0x07: cindex = 2; break; // Celeron    == RG class 6
-            case 0x08: cindex = 2; break; // PPro       == RG class 6
-            case 0x09: cindex = 6; break; // AMD>=K7/Cx>MII == RG/HB re-pair II
-            case 0x0A: cindex = 6; break; // Centaur C6 == RG/HB re-pair II (#2082)
-            case 0x0B: cindex = 8; break; // P4         == ak/P4 
-            default:   cindex =-1; break; // no default
-          }
-          #if defined(HAVE_NO_NASM)
-          if (cindex == 6)   /* ("RG/HB re-pair II") */
-          {   
-            cindex = 3;      /* ("RG re-pair I") */
-            if ((detected_type & 0xff) == 0x01) /* 386/486 */
-              cindex = 1;    /* "RG class 3/4" */
-          }
-          if (cindex == 8)   /* "AK Class 7" */
-            cindex = 2;      /* "RG class 6" */
-          if (cindex == 9)   /* "jasonp P5/MMX" */
-            cindex = 0;      /* "RG Class 5" */
-          #endif
-          selcorestatics.corenum[RC5] = cindex;
-        }
-      }
-    }     
-    else if (contestid == DES)
-    {  
-      selcorestatics.corenum[DES] = selcorestatics.user_cputype[DES];
-      if (selcorestatics.corenum[DES] < 0)
-      {
-        if (detected_type >= 0)
-        {
-          int cindex = -1;
-          switch ( detected_type & 0xff )
-          {
-            case 0x00: cindex = 0; break; // P5             == standard Bryd
-            case 0x01: cindex = 0; break; // 386/486        == standard Bryd
-            case 0x02: cindex = 1; break; // PII/PIII       == movzx Bryd
-            case 0x03: cindex = 1; break; // Cx6x86         == movzx Bryd
-            case 0x04: cindex = 0; break; // K5             == standard Bryd
-            case 0x05: cindex = 1; break; // K6             == movzx Bryd
-            case 0x06: cindex = 0; break; // Cx486          == movzx Bryd
-            case 0x07: cindex = 1; break; // orig Celeron   == movzx Bryd
-            case 0x08: cindex = 1; break; // PPro           == movzx Bryd
-            case 0x09: cindex = 1; break; // AMD K7         == movzx Bryd
-            case 0x0A: cindex = 0; break; // Centaur C6
-            case 0x0B: cindex = 1; break; // Pentium 4
-            default:   cindex =-1; break; // no default
-          }
-          #ifdef MMX_BITSLICER
-          if ((detected_type & 0x100) != 0) /* have mmx */
-            cindex = 2; /* mmx bitslicer */
-          #endif
-          selcorestatics.corenum[DES] = cindex;
-        }
-      }
-    }
-    else if (contestid == CSC)
-    {
-      selcorestatics.corenum[CSC] = selcorestatics.user_cputype[CSC];
-      if (selcorestatics.corenum[CSC] < 0)
-      {
-        if (detected_type >= 0)
-        {
-          int cindex = -1; 
-          // this is only valid for nasm'd cores or GCC 2.95 and up
-          switch ( detected_type & 0xff )
-          {
-            case 0x00: cindex = 3; break; // P5           == 1key - called
-            case 0x01: cindex = 3; break; // 386/486      == 1key - called
-            case 0x02: cindex = 2; break; // PII/PIII     == 1key - inline
-            case 0x03: cindex = 3; break; // Cx6x86       == 1key - called
-            case 0x04: cindex = 2; break; // K5           == 1key - inline
-            case 0x05: cindex = 0; break; // K6/K6-2/K6-3 == 6bit - inline
-            case 0x06: cindex = 3; break; // Cyrix 486    == 1key - called
-            case 0x07: cindex = 3; break; // orig Celeron == 1key - called
-            case 0x08: cindex = 3; break; // PPro         == 1key - called
-            case 0x09: cindex = 0; break; // AMD K7       == 6bit - inline
-            case 0x0A: cindex = 3; break; // Centaur C6
-            case 0x0B: cindex = 0; break; // Pentium 4
-            default:   cindex =-1; break; // no default
-          }
-          #if !defined(HAVE_NO_NASM)
-          if ((detected_type & 0x100) != 0) /* have mmx */
-            cindex = 1; /* == 6bit - called - MMX */
-          #endif
-          selcorestatics.corenum[CSC] = cindex;
-        }
-      }
-    }
-    else if (contestid == OGR)
-    {
-      selcorestatics.corenum[OGR] = selcorestatics.user_cputype[OGR];
-      if (selcorestatics.corenum[OGR] < 0)
-      {
-        if (detected_type >= 0)
-        {
-          int cindex = -1; 
-          switch ( detected_type & 0xff )
-          {
-            case 0x00: cindex = 1; break; // P5           == without BSR (B)
-            case 0x01: cindex = 1; break; // 386/486      == without BSR (B)
-            case 0x02: cindex = 0; break; // PII/PIII     == with BSR (A)
-            case 0x03: cindex = 0; break; // Cx6x86       == with BSR (A)
-            case 0x04: cindex = 1; break; // K5           == without BSR (B)
-            #if defined(__GNUC__) || defined(__WATCOMC__) || defined(__BORLANDC__)
-            case 0x05: cindex = 1; break; // K6/K6-2/K6-3 == without BSR (B)  #2228
-            #elif defined(_MSC_VER)
-            case 0x05: cindex = 0; break; // K6/K6-2/K6-3 == with BSR (A)  #2789
-            #else
-            #warning "FIXME: no OGR core autoselected on a K6 for your compiler"
-            #endif
-            case 0x06: cindex = 1; break; // Cyrix 486    == without BSR (B)
-            case 0x07: cindex = 0; break; // orig Celeron == with BSR (A)
-            case 0x08: cindex = 0; break; // PPro         == with BSR (A)
-            case 0x09: cindex = 0; break; // AMD K7       == with BSR (A)
-            case 0x0A: cindex = 1; break; // Centaur C6   == without BSR (B)
-            #if defined(__GNUC__) || defined(__ICC)
-            case 0x0B: cindex = 0; break; // Pentium 4    == with BSR (A)
-            #elif defined(_MSC_VER) || defined(__WATCOMC__) || defined(__BORLANDC__)
-            case 0x0B: cindex = 1; break; // Pentium 4    == without BSR (B)
-            #else
-            #warning "FIXME: no OGR core autoselected on a P4 for your compiler"
-            #endif
-            default:   cindex =-1; break; // no default
-          }
-          selcorestatics.corenum[OGR] = cindex;
-        }
-      }
-    }
-    else if (contestid == RC5_72)
-    {
-      selcorestatics.corenum[RC5_72] = selcorestatics.user_cputype[RC5_72];
-      if (selcorestatics.corenum[RC5_72] < 0)
-      {
-        if (detected_type >= 0)
-        {
-          int cindex = -1; 
-          switch (detected_type & 0xff)
-          {
-            case 0x09: cindex = 8; break; // AMD>=K7/Cx>MII == SS 2-pipe
-            case 0x0B: cindex = 6; break; // Pentium 4 == DG 3-pipe
-            default:   cindex =-1; break; // no default
-          }
-          #if defined(HAVE_NO_NASM)
-          if (cindex == 8)   /* ("SS 2-pipe") */
-            cindex = 1;      /* ("ANSI 2-pipe") */
-          if (cindex == 6)   /* ("DG 3-pipe") */
-            cindex = 0;      /* ("ANSI 4-pipe") */
-          #endif
-          selcorestatics.corenum[RC5_72] = cindex;
-        }
-      }
-    }
-  }
-  #elif (CLIENT_CPU == CPU_ARM)
-  if (contestid == RC5)
-  {
-    selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
-    if (selcorestatics.corenum[RC5] < 0 && detected_type > 0)
-    {
-      int cindex = -1;
-      if (detected_type == 0x300  || /* ARM 3 */ 
-          detected_type == 0x600  || /* ARM 600 */
-          detected_type == 0x610  || /* ARM 610 */
-          detected_type == 0x700  || /* ARM 700 */
-          detected_type == 0x710  || /* ARM 710 */
-          detected_type == 0x7500 || /* ARM 7500 */ 
-          detected_type == 0x7500FE) /* ARM 7500FE */
-        cindex = 0;
-      else if (detected_type == 0x810 || /* ARM 810 */
-               detected_type == 0xA10 || /* StrongARM 110 */
-               detected_type == 0xA11 || /* StrongARM 1100 */
-               detected_type == 0xB11)   /* StrongARM 1110 */
-        cindex = 1;
-      else if (detected_type == 0x200 || /* ARM 2 */
-               detected_type == 0x250)   /* ARM 250 */
-        cindex = 2;
-      selcorestatics.corenum[RC5] = cindex;
-    }
-  }
-  else if (contestid == DES)
-  {
-    selcorestatics.corenum[DES] = selcorestatics.user_cputype[DES];
-    if (selcorestatics.corenum[DES] < 0 && detected_type > 0)
-    {
-      int cindex = -1;
-      if (detected_type == 0x810 ||  /* ARM 810 */
-          detected_type == 0xA10 ||  /* StrongARM 110 */
-          detected_type == 0xA11 ||  /* StrongARM 1100 */
-          detected_type == 0xB11 ||  /* StrongARM 1110 */
-          detected_type == 0x200 ||  /* ARM 2 */
-          detected_type == 0x250)    /* ARM 250 */
-        cindex = 1;
-      else /* "ARM 3, 610, 700, 7500, 7500FE" or  "ARM 710" */
-        cindex = 0;
-      selcorestatics.corenum[DES] = cindex;  
-    }  
-  }
-  else if (contestid == RC5_72)
-  {
-    selcorestatics.corenum[RC5_72] = selcorestatics.user_cputype[RC5_72];
-    if (selcorestatics.corenum[RC5_72] < 0 && detected_type > 0)
-    {
-      int cindex = -1;
-      if (detected_type == 0x200  || /* ARM 2 */
-          detected_type == 0x250  || /* ARM 250 */
-          detected_type == 0x300  || /* ARM 3 */ 
-          detected_type == 0x600  || /* ARM 600 */
-          detected_type == 0x610  || /* ARM 610 */
-          detected_type == 0x700  || /* ARM 700 */
-          detected_type == 0x710  || /* ARM 710 */
-          detected_type == 0x7500 || /* ARM 7500 */ 
-          detected_type == 0x7500FE) /* ARM 7500FE */
-        cindex = 1;
-      else if (detected_type == 0x810 || /* ARM 810 */
-               detected_type == 0xA10 || /* StrongARM 110 */
-               detected_type == 0xA11 || /* StrongARM 1100 */
-               detected_type == 0xB11)   /* StrongARM 1110 */
-        cindex = 0;
-      selcorestatics.corenum[RC5_72] = cindex;
-    }
-  }
-  #elif (CLIENT_CPU == CPU_SPARC)
-  if (contestid == RC5)
-  {
-    selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
-    #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
-    if (selcorestatics.corenum[RC5] < 0)
-      selcorestatics.corenum[RC5] = 0; // ultra-crunch is faster on everything I found ...
-    #elif (CLIENT_OS == OS_LINUX)
-    // run micro benchmark
-    #endif
-  }
-  #elif (CLIENT_OS == OS_PS2LINUX)
-  if (contestid == RC5)
-  {
-    selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
-    if (selcorestatics.corenum[RC5] < 0)
-      selcorestatics.corenum[RC5] = 1; // now we use mips-cruch.cpp
-  }
-  else if (contestid == RC5_72)
-  {
-    selcorestatics.corenum[RC5_72] = selcorestatics.user_cputype[RC5_72];
-    if (selcorestatics.corenum[RC5_72] < 0)
-      selcorestatics.corenum[RC5_72] = 1; // now we use ansi-2pipe
-  }
-  #endif
+  selcorestatics.corenum[contestid] = selcorestatics.user_cputype[contestid];
+  if (selcorestatics.corenum[contestid] < 0)
+    selcorestatics.corenum[contestid] = __selcoreGetPreselectedCoreForProject(contestid);
 
   TRACE_OUT((0, "cpu/arch preselection done: %d\n", selcorestatics.corenum[contestid]));
 
@@ -1524,7 +1481,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         /* test only if not substituted */
         if (whichcrunch == __apply_selcore_substitution_rules(contestid, 
                                                               whichcrunch))
-        {                                                              
+        {
           long rate;
           selcorestatics.corenum[contestid] = whichcrunch;
           if (!saidmsg)
@@ -1543,9 +1500,9 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             if (fastestcrunch < 0 || ((unsigned long)rate) > fasttime)
             {
               fasttime = rate;
-              fastestcrunch = whichcrunch; 
+              fastestcrunch = whichcrunch;
             }
-          }  
+          }
         }
       }
 
@@ -1556,11 +1513,11 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   }
 
   if (selcorestatics.corenum[contestid] >= 0) /* didn't fail */
-  { 
-    /* 
+  {
+    /*
     ** substitution according to real selcoreSelectCore() rules
     ** Returns original if no substitution occurred.
-    */ 
+    */
     int override = __apply_selcore_substitution_rules(contestid, 
                                        selcorestatics.corenum[contestid]);
     if (!corename_printed)
@@ -1574,15 +1531,15 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
                  selcoreGetDisplayName(contestid, selcorestatics.corenum[contestid]),
                  override, selcoreGetDisplayName(contestid, override) );
       }
-      else               
+      else
       {
        Log("%s: using core #%d (%s).\n", contname, 
            selcorestatics.corenum[contestid], 
            selcoreGetDisplayName(contestid, selcorestatics.corenum[contestid]) );
-      }      
-    }  
+      }
+    }
     selcorestatics.corenum[contestid] = override;
-  }  
+  }
 
   TRACE_OUT((-1, "selcoreGetSelectedCoreForContest(%d) => %d\n", contestid, selcorestatics.corenum[contestid]));
   return selcorestatics.corenum[contestid];
@@ -1592,7 +1549,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 
 int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
                        int *client_cpuP, struct selcore *selinfo )
-{                               
+{
   int use_generic_proto = 0; /* if rc5/des unit_func proto is generic */
   unit_func_union unit_func; /* declared in problem.h */
   int cruncher_is_asynchronous = 0; /* on a co-processor or similar */
@@ -1644,9 +1601,9 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         cruncher_is_asynchronous = 1; /* on a co-processor or similar */
         pipeline_count = 1;
         coresel = 0;
-      }  
+      }
       #endif
-    }  
+    }
     #elif (CLIENT_CPU == CPU_S390)
     {
       // rc5/ansi/rc5ansi_2-rg.cpp
@@ -1713,7 +1670,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         unit_func.rc5 = rc5_unit_func_mips_crunch;
         pipeline_count = 2;
         coresel = 0;
-      }  
+      }
       #elif (CLIENT_OS == OS_PS2LINUX)
       if (coresel == 0)
       {
@@ -1729,7 +1686,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         unit_func.rc5 = rc5_unit_func_mips_crunch;
         pipeline_count = 2;
         coresel = 1;
-      }  
+      }
       #else
         #error "What's up, Doc?"
       #endif
@@ -1788,7 +1745,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         pipeline_count = 1; //the default is 2
         coresel = 0;
       }
-      #else 
+      #else
       {
         // rc5/ansi/rc5ansi1-b2.cpp
         //xtern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 );
@@ -1816,7 +1773,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         pipeline_count = 2;
         coresel = 3;
       }
-      #elif (CLIENT_OS == OS_WIN32) 
+      #elif (CLIENT_OS == OS_WIN32)
       {
         //  rc5/ansi/rc5ansi_2-rg.cpp
         //  xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32  );
@@ -1825,10 +1782,10 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         coresel = 3;
       }
       #else
-      { 
+      {
         client_cpu = CPU_POWERPC;
         if (coresel == 0)         // G1 (PPC 601)
-        {  
+        {
           unit_func.rc5 = rc5_unit_func_allitnil_compat;
           pipeline_count = 1;
         }
@@ -1921,7 +1878,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
     #else
     {
-      #error "How did you get here?"  
+      #error "How did you get here?"
       coresel = -1;
     }
     #endif
@@ -1929,7 +1886,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
   #endif  // HAVE_RC5_64_CORES
 
   /* ================================================================== */
-  
+
   #if defined(HAVE_DES_CORES)
   if (contestid == DES)
   {
@@ -1946,7 +1903,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         coresel = 1;
       }
     }
-    #elif (CLIENT_CPU == CPU_ALPHA) 
+    #elif (CLIENT_CPU == CPU_ALPHA)
     {
       //des/alpha/des-slice-dworz.cpp
       //xtern u32 des_unit_func_slice_dworz( RC5UnitWork * , u32 *, char * );
@@ -1971,26 +1928,26 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       #if defined(CLIENT_SUPPORTS_SMP)
       bryd_fallback = kwan = des_unit_func_slice; //kwan
       #endif
-      #if defined(MMX_BITSLICER) 
+      #if defined(MMX_BITSLICER)
       {
         long det = GetProcessorType(1 /* quietly */);
         if ((det >= 0 && (det & 0x100)!=0)) /* ismmx */
           bryd_fallback = mmxslice = des_unit_func_mmx;
       }
-      #endif  
+      #endif
 
       if (coresel == 3 && mmxslice)
       {
-        unit_func.des = mmxslice; 
+        unit_func.des = mmxslice;
       }
       else if (coresel == 2 && kwan) /* Kwan */
       {
-        unit_func.des = kwan; 
+        unit_func.des = kwan;
       }
       else if (coresel == 1) /* movzx bryd */
       {
         unit_func.des = p1des_unit_func_pro;
-        #if defined(CLIENT_SUPPORTS_SMP) 
+        #if defined(CLIENT_SUPPORTS_SMP)
         if (threadindex > 0)  /* not first thread */
         {
           if (threadindex == 1)  /* second thread */
@@ -2008,7 +1965,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       {
         coresel = 0;
         unit_func.des = p1des_unit_func_p5;
-        #if defined(CLIENT_SUPPORTS_SMP) 
+        #if defined(CLIENT_SUPPORTS_SMP)
         if (threadindex > 0)  /* not first thread */
         {
           if (threadindex == 1)          /* second thread */
@@ -2056,7 +2013,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       {
         unit_func.ogr = ogr_get_dispatch_table(); /* "PPC-scalar" */
         coresel = 0;
-      }   
+      }
     #elif (CLIENT_CPU == CPU_68K)
       //extern CoreDispatchTable *ogr_get_dispatch_table_000(void);
       //extern CoreDispatchTable *ogr_get_dispatch_table_020(void);
@@ -2084,11 +2041,11 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     #elif (CLIENT_CPU == CPU_X86)
       if (coresel == 0) //A
         unit_func.ogr = ogr_get_dispatch_table(); //A
-      else 
+      else
       {
         unit_func.ogr = ogr_get_dispatch_table_nobsr(); //B
         coresel = 1;
-      }  
+      }
     #else
       //extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
       unit_func.ogr = ogr_get_dispatch_table();
@@ -2111,18 +2068,18 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     unit_func.gen = csc_unit_func_1k;
    #else
     use_generic_proto = 1; /* all CSC cores use generic form */
-    switch( coresel ) 
+    switch( coresel )
     {
       case 0 : unit_func.gen = csc_unit_func_6b_i;
                break;
-      case 1 : unit_func.gen = csc_unit_func_6b;      
+      case 1 : unit_func.gen = csc_unit_func_6b;
                #if (CLIENT_CPU == CPU_X86) && !defined(HAVE_NO_NASM)
                {               //6b-non-mmx isn't used (by default) on x86
                  long det = GetProcessorType(1 /* quietly */);
                  if ((det >= 0 && (det & 0x100)!=0)) /* ismmx */
                    unit_func.gen = csc_unit_func_6b_mmx;
                }
-               #endif     
+               #endif
                break;
       default: coresel = 2;
       case 2 : unit_func.gen = csc_unit_func_1k_i;
