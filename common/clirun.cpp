@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.29  1998/11/09 01:15:54  remi
+// Linux/aout doesn't have sched_yield(), replaced by NonPolledUSleep( 0 );
+//
 // Revision 1.28  1998/11/06 04:23:16  cyp
 // Fixed incorrect thread data * index in pthread startup code. This may
 // be the cause for the FreeBSD crashes.
@@ -114,7 +117,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.28 1998/11/06 04:23:16 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.29 1998/11/09 01:15:54 remi Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -333,7 +336,11 @@ static void yield_pump( void *tv_p )
     if (riscos_in_taskwindow)
     { riscos_upcall_6(); }
   #elif (CLIENT_OS == OS_LINUX)
+    #if defined(__ELF__)
     sched_yield();
+    #else // a.out libc4
+    NonPolledUSleep( 0 ); /* yield */
+    #endif
   #elif (CLIENT_OS == OS_MACOS)
     WaitNextEvent( everyEvent, &event, 0, nil );
   #else
