@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.16 1999/12/08 00:41:47 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.17 1999/12/12 01:34:20 mfeiri Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -177,6 +177,9 @@ int ConOut(const char *msg)
       w32ConOut(msg);
     #elif (CLIENT_OS == OS_OS2 && defined(OS2_PM))
       os2conout(msg);
+    #elif (CLIENT_OS == OS_MACOS)
+      extern MacConOut(const char *);
+      MacConOut(msg);
     #else
       fwrite( msg, sizeof(char), strlen(msg), stdout);
       fflush(stdout);
