@@ -1902,7 +1902,7 @@ PreferredIsDone1:
 			 s = socket(PF_INET, SOCK_DGRAM, 0);
 			 rc = ioctl(s, SIOSTATRT, netstat, 128);
 			 soclose(s);
-			 
+
 			 if(rc != 0)
 				 {
 				 Log("Unable to get routing information, lurk mode disabled\n");
@@ -1938,7 +1938,7 @@ PreferredIsDone1:
 			 }
 	 }
 #endif
-	 
+
     //------------------------------------
     //Modem detection stuff for WinNT/Win95
     //------------------------------------
@@ -3215,8 +3215,7 @@ int main( int argc, char *argv[] )
     // prompt the user to do the configuration if there wasn't an ini file
     if ( inimissing )
     {
-      client.Configure();
-      client.WriteConfig();
+      if (client.Configure()==1) client.WriteConfig();
       retcode = 0;
     }
   }
