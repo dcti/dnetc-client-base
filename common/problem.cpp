@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.171 2002/10/08 09:30:11 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.172 2002/10/16 10:30:59 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -873,10 +873,12 @@ static int __InternalLoadState( InternalProblem *thisprob,
           if (thisprob->pub_data.client_cpu != expected_cputype || thisprob->pub_data.coresel != expected_corenum ||
               CLIENT_OS != expected_os || CLIENT_VERSION != expected_build)
             {
-              thisprob->priv_data.contestwork.bigcrypto.keysdone.lo = thisprob->priv_data.contestwork.bigcrypto.keysdone.hi = 0;
+              thisprob->priv_data.contestwork.bigcrypto.keysdone.hi = 0;
+              thisprob->priv_data.contestwork.bigcrypto.keysdone.lo = 0;
               thisprob->priv_data.contestwork.bigcrypto.check.count = 0;
-              thisprob->priv_data.contestwork.bigcrypto.check.hi = thisprob->priv_data.contestwork.bigcrypto.check.mid =
-              thisprob->priv_data.contestwork.bigcrypto.check.lo = 0;
+              thisprob->priv_data.contestwork.bigcrypto.check.hi    = 0;
+              thisprob->priv_data.contestwork.bigcrypto.check.mid   = 0;
+              thisprob->priv_data.contestwork.bigcrypto.check.lo    = 0;
               thisprob->pub_data.was_reset = 1;
             }
         }
@@ -894,6 +896,14 @@ static int __InternalLoadState( InternalProblem *thisprob,
       thisprob->priv_data.rc5_72unitwork.plain.lo = thisprob->priv_data.contestwork.bigcrypto.plain.lo ^ thisprob->priv_data.contestwork.bigcrypto.iv.lo;
       thisprob->priv_data.rc5_72unitwork.cypher.hi = thisprob->priv_data.contestwork.bigcrypto.cypher.hi;
       thisprob->priv_data.rc5_72unitwork.cypher.lo = thisprob->priv_data.contestwork.bigcrypto.cypher.lo;
+      thisprob->priv_data.rc5_72unitwork.check.count =
+          thisprob->priv_data.contestwork.bigcrypto.check.count;
+      thisprob->priv_data.rc5_72unitwork.check.hi =
+          thisprob->priv_data.contestwork.bigcrypto.check.hi;
+      thisprob->priv_data.rc5_72unitwork.check.mid =
+          thisprob->priv_data.contestwork.bigcrypto.check.mid;
+      thisprob->priv_data.rc5_72unitwork.check.lo =
+          thisprob->priv_data.contestwork.bigcrypto.check.lo;
 
       thisprob->pub_data.startkeys.hi = thisprob->priv_data.contestwork.bigcrypto.keysdone.hi;
       thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
@@ -1498,6 +1508,7 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
     u32 keystocheck = *keyscheckedP;
     // don't allow a too large of a keystocheck be used ie (>(iter-keysdone))
     // (technically not necessary, but may save some wasted time)
+    // FIXME: RETHINK - is this correct and/or useful?
     if (thisprob->priv_data.contestwork.bigcrypto.keysdone.hi == thisprob->priv_data.contestwork.bigcrypto.iterations.hi)
     {
       u32 todo = thisprob->priv_data.contestwork.bigcrypto.iterations.lo-thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
@@ -1558,6 +1569,7 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
     }
     else /* old style */
     {
+      // FIXME! do not use old style any longer, just "rescore = -1"
       *keyscheckedP = (*(thisprob->pub_data.unit_func.rc5_72))(&thisprob->priv_data.rc5_72unitwork,(keystocheck/thisprob->pub_data.pipeline_count));
       //don't use the next few lines as a guide for conversion to unified
       //prototypes!  look at the end of rc5/ansi/rc5ansi_2-rg.cpp instead.
@@ -1603,6 +1615,16 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
   thisprob->priv_data.contestwork.bigcrypto.keysdone.lo += *keyscheckedP;
   if (thisprob->priv_data.contestwork.bigcrypto.keysdone.lo < *keyscheckedP)
       thisprob->priv_data.contestwork.bigcrypto.keysdone.hi++;
+
+  // update counter measure checks
+  thisprob->priv_data.contestwork.bigcrypto.check.count = 
+      thisprob->priv_data.rc5_72unitwork.check.count;
+  thisprob->priv_data.contestwork.bigcrypto.check.hi = 
+      thisprob->priv_data.rc5_72unitwork.check.hi;
+  thisprob->priv_data.contestwork.bigcrypto.check.mid = 
+      thisprob->priv_data.rc5_72unitwork.check.mid;
+  thisprob->priv_data.contestwork.bigcrypto.check.lo = 
+      thisprob->priv_data.rc5_72unitwork.check.lo;
 
   // Update data returned to caller
   if (*resultcode == RESULT_FOUND)  //(*keyscheckedP < keystocheck)
