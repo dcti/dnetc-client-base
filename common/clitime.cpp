@@ -21,7 +21,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.4 1999/09/17 15:18:27 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.5 1999/09/27 04:08:31 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -40,6 +40,24 @@ static int __GetTimeOfDay( struct timeval *tv )
       ftime(&tb);
       tv->tv_sec = tb.time;
       tv->tv_usec = tb.millitm*1000;
+    }
+    #elif (CLIENT_OS == OS_WIN32)
+    {
+      unsigned __int64 now, epoch;
+      FILETIME ft;
+      SYSTEMTIME st;
+      GetSystemTime(&st);
+      SystemTimeToFileTime(&st, &ft);
+      //epoch.dwHighDate = 27111902UL;
+      //epoch.dwLowDate = 3577643008UL; 
+      epoch = 116444736000000000ui64;
+      now = ft.dwHighDateTime;
+      now <<= 32;
+      now += ft.dwLowDateTime;
+      now -= epoch;
+      now /= 10UL;
+      tv->tv_usec = (now % 1000000UL);
+      tv->tv_sec = (now / 1000000UL);
     }
     #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
     {
@@ -67,6 +85,44 @@ static int __GetTimeOfDay( struct timeval *tv )
   }
   return 0;
 }
+
+/*
+ * Unlike __GetTimeOfDay(), which may change when the user changes
+ * the day/date, __GetMonotonicClock should return a monotonic time.
+ * This is particularly critical for timing on non-preemptive systems.
+*/ 
+static int __GetMonotonicClock( struct timeval *tv )
+{
+  #if (CLIENT_OS == OS_NETWARE) /* use hardware clock */
+  /* we have two time sources at our disposal: a low res (software) one
+   * which is (often) network adjusted, and a high res one, which is a
+   * raw read of the hardware clock but is liable to drift.
+   * NetWare is a non-preemptive OS and dynamically adjusts timeslice, for
+   * which it needs a high res timesource. So, we use the ftime() for
+   * "displayable" time and the hardware clock for core timing since 
+   * hwclock skew hardly figures when measuring elapsed time, but
+   * is quite visible if we were to use it for "displayable time". 
+  */  
+  return nwCliGetHardwareClock(tv); /* hires but not sync'd with time() */
+  #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+  /* with win16 this is not soooo critical since its a single user system */
+  static DWORD lastcheck = 0;
+  static unsigned long basetime = 0;
+  DWORD ticks = GetTickCount(); /* millisecs elapsed since OS start */
+  if (lastcheck == 0 || (ticks < lastcheck))
+  {
+    __GetTimeOfDay(tv);
+    lastcheck = ticks;
+    basetime = ((unsigned long)tv->tv_sec)-(((unsigned long)ticks)/1000UL);
+  }
+  tv->tv_usec = ((ticks%1000UL)*1000UL);
+  tv->tv_sec = (time_t)(basetime + (ticks/1000UL));
+  return 0;
+  #else
+  return __GetTimeOfDay(tv); /* should optimize into a jump :) */
+  #endif
+}
+
 
 static int __GetMinutesWest(void) /* see CliTimeGetMinutesWest() for descr */
 {
@@ -145,31 +201,17 @@ struct timeval *CliClock( struct timeval *tv )
   static struct timeval base_tv = {-1,0};  /* base time for CliClock() */
   static struct timeval stv = {0,0};
 
-  #if (CLIENT_OS == OS_NETWARE) /* use hardware clock */
-  /* we have two time sources at our disposal: a low res (software) one
-   * which is (often) network adjusted, and a high res one, which is a
-   * raw read of the hardware clock but is liable to drift (monotonic).
-   * NetWare is a non-preemptive OS and dynamically adjusts timeslice, for
-   * which it needs a high res timesource. So, we use the ftime() for
-   * "displayable" time and the hardware clock for core timing since 
-   * hwclock skew hardly figures when measuring elapsed millisecs time, 
-   * but is quite visible if we were to use it for "displayable time". 
-  */  
-  #define _GTOD nwCliGetHardwareClock /* hires but not sync'd with time() */
-  #else
-  #define _GTOD __GetTimeOfDay 
-  #endif
 
   /* initialization is not thread safe, (see ctor above) */
   if (base_tv.tv_sec == -1) /* CliClock() not initialized */
   {                         
-    _GTOD(&base_tv);        /* set cliclock to current time */
+    __GetMonotonicClock(&base_tv); /* set cliclock to current time */
     base_tv.tv_sec--;       /* we've been running 1 second. :) */
   }
 
   if ( !tv )                /* if we have an arg, we can run thread safe */
     tv = &stv;              /* ... otherwise use the static */
-  _GTOD(tv);                /* get the current time */
+  __GetMonotonicClock(tv);  /* get the current time */
 
   if ( ((unsigned long)tv->tv_usec) < ((unsigned long)base_tv.tv_usec) )
   {
