@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.32 2004/08/18 15:30:38 snikkel Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.33 2004/08/18 21:59:41 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -368,9 +368,9 @@ int selcoreGetPreselectedCoreForProject_ogr()
           #warning "FIXME: no OGR core autoselected on a P4 for your compiler"
           #endif
           case 0x0C: cindex = 1; break; // Via C3       == without BSR (B)
-          #if defined(__GNUC__) || defined(__ICC)
+          #if defined(__GNUC__) || defined(__ICC) || defined(_MSC_VER)
           case 0x0D: cindex = 0; break; // Pentium M    == with BSR (A)
-          #elif defined(_MSC_VER) || defined(__WATCOMC__) || defined(__BORLANDC__)
+          #elif defined(__WATCOMC__) || defined(__BORLANDC__)
           case 0x0D: cindex = 1; break; // Pentium M    == without BSR (B)
           #else 
           #warning "FIXME: no OGR core autoselected on a PM for your compiler"
