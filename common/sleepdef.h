@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: sleepdef.h,v $
+// Revision 1.5  1998/06/15 09:12:56  jlawson
+// moved more sleep defines into sleepdef.h
+//
 // Revision 1.4  1998/06/14 11:25:13  ziggyb
 // Made the sleep/usleep defines work correctly in OS/2
 //
@@ -76,7 +79,7 @@
   // found in <unistd.h>, but requires _XOPEN_SOURCE_EXTENDED,
   // which causes more trouble...
   extern "C" int usleep(useconds_t);
-#elif ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU==CPU_68K))
+#elif ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K))
   #include <unistd.h>
   extern "C" void usleep(unsigned int);
 #elif (CLIENT_OS == OS_HPUX)

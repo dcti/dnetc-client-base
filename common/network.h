@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.18  1998/06/15 09:12:54  jlawson
+// moved more sleep defines into sleepdef.h
+//
 // Revision 1.17  1998/06/15 08:28:39  jlawson
 // moved win32 sleep macros out of network.h
 //
@@ -164,11 +167,6 @@ extern "C" {
   #include <fcntl.h>
   #include <netdb.h>
   typedef int SOCKET;
-  #if (CLIENT_OS == OS_DEC_UNIX)
-    // found in <unistd.h>, but requires _XOPEN_SOURCE_EXTENDED,
-    // which causes more trouble...
-    extern "C" int usleep(useconds_t);
-  #endif
   #if (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_ALPHA)
     #include <asm/byteorder.h>
   #endif
@@ -176,7 +174,6 @@ extern "C" {
     #include <errno.h>
   #endif
   #if ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU==CPU_68K))
-    extern "C" void usleep(unsigned int);
     #if defined(_SUNOS3_)
       #define _SOCKET_H_ALREADY_
       extern "C" int fcntl(int, int, int);
