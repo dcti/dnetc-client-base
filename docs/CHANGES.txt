@@ -21,11 +21,13 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.49 2004/01/22 17:52:29 piru Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.50 2004/01/24 05:36:02 lightning Exp $
 ==========================================================================
 
 2.9000
 ------
+2.9007-489  new: x86: new rc5-72 cores (#3265, #3398)
+
 2.9007-488  imp: all: Force partial work to be restarted when fetched from a
                       shared buffer by a different user.
             new: morphos: MorphOS pre-release
