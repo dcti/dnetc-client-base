@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.215 1999/04/05 21:49:23 patrick Exp $
+# @(#)$Id: configure,v 1.216 1999/04/08 19:09:20 snake Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -459,7 +459,7 @@ case "$1" in
 
 ###### Sparc/UltraSparc or Sun/SunOS/Solaris
 
-    *sparc-openbsd)
+    *sparc-openbsd)                   # snake
 	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC272_SPARC1 \
 			-DPIPELINE_COUNT=2 -DBIT_32 -DKWAN -DMEGGS"
@@ -645,13 +645,12 @@ case "$1" in
 	TARGET_LIBS="-ltermcap"
 	;;
 
-    *alpha-openbsd)
+    *alpha-openbsd)                  # snake
 	TARGET_AS="g++ -c"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DBIT_64 -DKWAN -DDWORZ"
-	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS \
-			rc5/alpha/axp-bmeyer.cpp \
-			rc5/alpha/axp-bmeyer.s"
+	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS rc5/alpha/axp-bmeyer.cpp"
+	TARGER_ADDASMS="rc5/alpha/axp-bmeyer.s"
 	TARGET_LDFLAGS="-static"
 	;;
 
@@ -1196,19 +1195,18 @@ case "$1" in
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	;;
 
-    *x86-bsdi)
+    *x86-bsdi)                        # snake
 	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC272_X86 -DPIPELINE_COUNT=2 -DKWAN"
+	TARGET_CCFLAGS="$OPTS_GCC272_X86 -DKWAN -D_CPU_32BIT_"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
        ;;
 
 ####### BSD/OS 4.0 with ELF format
-    *x86-bsdi4)
+    *x86-bsdi4)                       # snake
 	TARGET_AS="g++ -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-DPIPELINE_COUNT=2 -D__ELF__"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__ELF__"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
