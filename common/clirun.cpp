@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.1 1999/05/30 18:15:01 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.2 1999/06/06 13:37:30 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -26,6 +26,17 @@ return "@(#)$Id: clirun.cpp,v 1.98.2.1 1999/05/30 18:15:01 cyp Exp $"; }
 #include "probfill.h"  // LoadSaveProblems(), FILEENTRY_xxx macros
 #include "modereq.h"   // ModeReq[Set|IsSet|Run]()
 #include "clievent.h"  // ClientEventSyncPost() and constants
+
+#if (CLIENT_OS == OS_FREEBSD)
+#include <sys/mman.h>     /* minherit() */
+#include <sys/wait.h>     /* wait() */
+#include <sys/resource.h> /* WIF*() macros */
+#include <sys/sysctl.h>   /* sysctl()/sysctlbyname() */
+extern int TBF_MakeTriggersVMInheritable(void); /* probman.cpp */
+extern int TBF_MakeProblemsVMInheritable(void); /* triggers.cpp */
+//#define USE_THREADCODE_ONLY_WHEN_SMP_KERNEL_FOUND /* otherwise its for >=3.0 */
+#define FIRST_THREAD_UNDER_MAIN_CONTROL /* otherwise main is separate */
+#endif
 
 // --------------------------------------------------------------------------
 
@@ -70,7 +81,9 @@ static int checkifbetaexpired(void)
 
 struct thread_param_block
 {
-  #if (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)
+  #if (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
+    pthread_t threadID;
+  #elif (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)
     unsigned long threadID;
   #elif (CLIENT_OS == OS_NETWARE)
     int threadID;
@@ -78,8 +91,6 @@ struct thread_param_block
     thread_id threadID;
   #elif (CLIENT_OS == OS_MACOS)
     MPTaskID threadID;
-  #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
-    pthread_t threadID;
   #else
     int threadID;
   #endif
@@ -176,7 +187,7 @@ static void yield_pump( void *tv_p )
   #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
     thr_yield();
   #elif (CLIENT_OS == OS_BSDI)
-    #if defined(__ELF__) /* actually, libc_r */
+    #if defined(__ELF__)
     sched_yield();
     #else // a.out
     NonPolledUSleep( 0 ); /* yield */
@@ -215,7 +226,7 @@ static void yield_pump( void *tv_p )
   #elif (CLIENT_OS == OS_NETBSD)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_FREEBSD)
-    NonPolledUSleep( 0 ); /* ->nanosleep() */
+    NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_QNX)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_AIX)
@@ -223,8 +234,9 @@ static void yield_pump( void *tv_p )
   #elif (CLIENT_OS == OS_ULTRIX)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_HPUX)
-    sched_yield();
+    sched_yield();;
   #elif (CLIENT_OS == OS_DEC_UNIX)
+   #error if you have "MULTITHREAD" defined something is broken. grep for multithread.
    #if defined(MULTITHREAD)
      sched_yield();
    #else
@@ -715,7 +727,6 @@ if (targ->realthread)
   if (targ->realthread)
     exit(0);
   #endif
-
   #if (CLIENT_OS == OS_MACOS)
   if (targ->realthread)
   {
@@ -739,7 +750,9 @@ static int __StopThread( struct thread_param_block *thrparams )
     {
       if (thrparams->realthread) //real thread
       {
-        #if (CLIENT_OS == OS_OS2)
+        #if (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
+        pthread_join( thrparams->threadID, (void **)NULL);
+        #elif (CLIENT_OS == OS_OS2)
         DosSetPriority( 2, PRTYC_REGULAR, 0, 0); /* thread to normal prio */
         DosWaitThread( &(thrparams->threadID), DCWW_WAIT);
         #elif (CLIENT_OS == OS_WIN32)
@@ -751,8 +764,8 @@ static int __StopThread( struct thread_param_block *thrparams )
         while (thrparams->threadID) delay(100);
         #elif (CLIENT_OS == OS_MACOS)
         while (thrparams->threadID) tick_sleep(60);
-        #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
-        pthread_join( thrparams->threadID, (void **)NULL);
+        #elif (CLIENT_OS == OS_FREEBSD)
+        while (thrparams->threadID) NonPolledUSleep(1000);
         #endif
       }
     }
@@ -798,6 +811,138 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     {
       #if (!defined(CLIENT_SUPPORTS_SMP)) //defined in cputypes.h
         use_poll_process = 1; //no thread support or cores are not thread safe
+      #elif (CLIENT_OS == OS_FREEBSD)
+      static int ok2thread = 0; /* <0 = no, >0 = yes, 0 = unknown */
+      #ifdef USE_THREADCODE_ONLY_WHEN_SMP_KERNEL_FOUND
+      if (ok2thread == 0)
+      {
+        if (GetNumberOfDetectedProcessors()<2)
+          ok2thread = -1;
+        else
+        { 
+          int issmp = 0; size_t len = sizeof(issmp);
+          if (sysctlbyname("machdep.smp_active", &issmp, &len, NULL, 0)!=0)
+          {
+            issmp = 0; len = sizeof(issmp);
+            if (sysctlbyname("smp.smp_active", &issmp, &len, NULL, 0)!=0)
+              issmp = 0;
+          }
+          if (issmp)
+            issmp = (len == sizeof(issmp));
+          if (!issmp)
+            ok2thread = -1;
+        }
+      }
+      #endif
+      if (ok2thread == 0)
+      {
+        char buffer[64];size_t len=sizeof(buffer),len2=sizeof(buffer);
+        if (sysctlbyname("kern.ostype",buffer,&len,NULL,0)!=0) 
+          ok2thread = -2;
+        else if (len<7 || memcmp(buffer,"FreeBSD",7)!=0)      
+          ok2thread = -3;
+        else if (sysctlbyname("kern.osrelease",buffer,&len2,NULL,0)!=0)
+          ok2thread = -4;
+        else if (len<3 || !isdigit(buffer[0]) || buffer[1]!='.' || !isdigit(buffer[2]))
+          ok2thread = -5;
+        else
+        {
+          ok2thread = ((buffer[0]-'0')*100)+((buffer[2]-'0')*10);
+          //printf("found fbsd ver %d\n", ok2thread );
+          if (ok2thread < 300)
+            ok2thread = -6;
+        }
+      }
+      if (ok2thread<1) /* not FreeBSD or not >=3.0 (or non-SMP kernel) */
+      { 
+        use_poll_process = 1; /* can't use this stuff */
+      }
+      else 
+      { 
+        static int assertedvms = 0;
+        if (thrparams->threadnum == 0) /* the first to spin up */
+        {  
+          if (TBF_MakeTriggersVMInheritable()!=0 ||
+              TBF_MakeProblemsVMInheritable()!=0 ||
+              minherit((void *)&runstatics, sizeof(runstatics), 0)!=0)
+            assertedvms = -1;
+          else
+            assertedvms = +1;
+          #ifdef FIRST_THREAD_UNDER_MAIN_CONTROL
+          use_poll_process = 1; /* the first thread is always non-real */ 
+          #endif
+        }
+        if (assertedvms != +1)
+          use_poll_process = 1; /* can't use this stuff */ 
+      }
+      if (use_poll_process == 0)
+      {
+        thrparams->threadID = 0;
+        success = 0;
+        if (minherit((void *)thrparams, sizeof(struct thread_param_block), 
+                                  0 /* undocumented VM_INHERIT_SHARE*/)==0)
+        {
+          int rforkflags=RFPROC|RFTHREAD|RFSIGSHARE|RFNOWAIT/*|RFMEM*/;
+          pid_t new_threadID = rfork(rforkflags);
+          if (new_threadID == -1) /* failed */
+            success = 0;
+          else if (new_threadID == 0) /* child */
+          { 
+            int newprio=((22*(9-thrparams->priority))+5)/10;/*scale 0-9 to 20-0*/
+            thrparams->threadID = getpid(); /* may have gotten here first */
+            setpriority(PRIO_PROCESS,thrparams->threadID,newprio);
+            //nice(newprio); 
+            if ((rforkflags & RFNOWAIT) != 0) /* running under init (pid 1) */
+             { seteuid(65534); setegid(65534); } /* so become nobody */
+            Go_mt( (void *)thrparams );
+            _exit(0);
+          }  
+          else if ((rforkflags & RFNOWAIT) != 0) 
+          {    /* thread is detached (a child of init), so we can't wait() */
+            int count = 0;
+            while (count<100 && thrparams->threadID==0) /* set by child */
+              NonPolledUSleep(1000);
+            if (thrparams->threadID) /* child started ok */
+              success = 1;
+            else
+              kill(new_threadID, SIGKILL); /* its hung. kill it */
+          }
+          else /* "normal" parent, so we can wait() for spinup */
+          {  
+            int status, res;
+            NonPolledUSleep(3000); /* wait for fork1() */
+            res = waitpid(new_threadID,&status,WNOHANG|WUNTRACED);
+            success = 0;
+            if (res == 0) 
+            {
+              //printf("waitpid() returns 0\n");          
+              thrparams->threadID = new_threadID; /* may have gotten here first */
+              success = 1;
+            }
+            #if 0 /* debug stuff */
+            else if (res == -1)
+              printf("waitpid() returns -1, err=%s\n", strerror(errno));
+            else if (res != new_threadID)
+              printf("strange. waitpid() returns something wierd\n");
+            else if (WIFEXITED(status))
+              printf("child %d called exit(%d) or _exit(%d)\n",new_threadID,
+                WEXITSTATUS(status), WEXITSTATUS(status));
+            else if (WIFSIGNALED(status))
+            {
+              int sig = WTERMSIG(status);
+              printf("child %d caught %s signal %d\n",new_threadID,
+                     (sig < NSIG ? sys_signame[sig] : "unknown"), sig );
+            }
+            else if (WIFSTOPPED(status))
+              printf("child %d stopped on %d signal\n",new_threadID,WSTOPSIG(status));
+            else
+              printf("unkown cause for stop\n");
+            #endif
+            if (!success)
+              kill(new_threadID, SIGKILL); /* its hung. kill it */
+          } /* if parent or child */
+        } /* thrparam inheritance ok */
+      } /* FreeBSD >= 3.0 (+ SMP kernel optional) + global inheritance ok */
       #elif (CLIENT_OS == OS_WIN32)
         thrparams->threadID = _beginthread( Go_mt, 8192, (void *)thrparams );
         success = ( (thrparams->threadID) != 0);
@@ -977,46 +1122,6 @@ int Client::Run( void )
     force_no_realthreads = 0; /* this is a hint. it does not reflect capability */
     unsigned int numcrunchers = (unsigned int)numcpu;
 
-    #if (CLIENT_OS == OS_FREEBSD) && defined(_POSIX_THREADS_SUPPORTED)
-    if (numcrunchers != 0 && GetNumberOfDetectedProcessors()>1 /*SMP kernel*/)
-    {
-      /* running threaded is ok unless ... 
-           ... FreeBSD OS < 4 
-                           - show warning about non-SMP-threads
-                           - and disable threads since a) they are useless
-                             b) using static 4.0-release libc_r will make 
-                             the kernel bitch
-           ... FreeBSD OS == 4.0-pre
-                           - disable threading. kernel threads (rfork()) are
-                             already SMP aware but libc_r/uthreads is not
-      */
-      int ver = 0, nompthreads = 0;
-      char buffer[32];size_t len=sizeof(buffer),len2=sizeof(buffer);
-      if (sysctlbyname("kern.ostype",buffer,&len,NULL,0)!=0) 
-        nompthreads = 1;
-      else if (len!=7 || memcmp(buffer,"FreeBSD",7)!=0)      
-        nompthreads = 1;
-      else if (sysctlbyname("kern.osrelease",buffer,&len2,NULL,0)!=0)
-        nompthreads = 1;
-      else if ((ver = atoi(buffer))<4) /* eg "3.2-RELEASE" */
-        nompthreads = 1;
-      if (nompthreads)
-      {
-        if (numcrunchers > 1)
-        {
-          if (ver == 4)
-            LogScreen("FreeBSD 4.x pre-release libc_r is not SMP aware.\n"
-                      "(threads will not migrate to secondary processors).\n"
-                      "Please run one client per processor.\n");
-          else            
-            LogScreen("FreeBSD 1.x/2.x/3.x threads as well as 4.0 pre-release\n"
-                      "libc_r are not SMP aware (do not migrate to secondary\n"
-                      "processors). Please run one client per processor.\n");
-        }
-        numcrunchers = 0; /* disable threads or rfork() will bitch */
-      }
-    }
-    #endif
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_OS2) || (CLIENT_OS==OS_BEOS)
     if (numcrunchers == 0) // must run with real threads because the
       numcrunchers = 1;    // main thread runs at normal priority

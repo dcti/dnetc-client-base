@@ -6,7 +6,7 @@
  *
 */ 
 const char *probman_cpp(void) {
-return "@(#)$Id: probman.cpp,v 1.9 1999/04/05 17:56:52 cyp Exp $"; }
+return "@(#)$Id: probman.cpp,v 1.9.2.1 1999/06/06 13:37:31 cyp Exp $"; }
 
 #include "baseincs.h"  // malloc()/NULL/memset()
 #include "problem.h"   // Problem class
@@ -110,5 +110,47 @@ int DeinitializeProblemManager(void)
   probmanstatics.probtable = NULL;
   return 0;
 }
+
+// -----------------------------------------------------------------------
+
+#if (CLIENT_OS == OS_FREEBSD)
+#include <sys/mman.h>
+int TBF_MakeProblemsVMInheritable(void)
+{
+  Problem **probtable = probmanstatics.probtable;
+  unsigned int probcount  = probmanstatics.probcount;
+
+  if (probtable != NULL && probcount != 0)
+  {
+    unsigned int i;  
+    int failed = 0, mflag = 0; /*VM_INHERIT_SHARE*/ /*MAP_SHARED|MAP_INHERIT*/;
+
+    for (i=0;(!failed && i<probcount);i++)
+    {
+      if (probtable[i]==NULL)
+        break;
+      failed = (minherit((void *)probtable[i],sizeof(Problem),mflag)!=0);
+      //if (failed)
+      //  fprintf(stderr,"probman_inherit:1:%u %s\n",i,strerror(errno));
+    }
+    if (!failed)
+    {
+      failed = (minherit((void *)probtable, 
+          probmanstatics.tablesize * sizeof(Problem *), mflag)!=0);
+      //if (failed)
+      //  perror("probman_inherit:2");
+    }
+    if (!failed)
+    {
+      failed=(minherit((void*)&probmanstatics,sizeof(probmanstatics),mflag)!=0);
+      //if (failed)
+      //  perror("probman_inherit:3");
+    }
+    if (!failed)
+      return 0;
+  }   
+  return -1;
+}
+#endif
 
 // -----------------------------------------------------------------------

@@ -6,7 +6,7 @@
 // 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.2 1999/05/11 01:41:31 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.3 1999/06/06 13:37:31 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -410,6 +410,9 @@
 #elif (CLIENT_OS == OS_MACOS)
   #include <Multiprocessing.h>
   typedef MPTaskID THREADID;
+  #define OS_SUPPORTS_SMP
+#elif (CLIENT_OS == OS_FREEBSD)
+  typedef int /*pid_t*/ THREADID;
   #define OS_SUPPORTS_SMP
 #elif defined(MULTITHREAD)
   #include <pthread.h>

@@ -1,8 +1,8 @@
-/* Copyright distributed.net 1997-1999 - All Rights Reserved
+/* Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * 
  * This module contains functions for raising/checking flags normally set
  * (asynchronously) by user request. Encapsulating the flags in 
  * functions has two benefits: (1) Transparency: the caller doesn't 
@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.2 1999/05/20 16:02:33 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.3 1999/06/06 13:37:31 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -394,3 +394,13 @@ void CliSetupSignals( void )
 
 // -----------------------------------------------------------------------
 
+#if (CLIENT_OS == OS_FREEBSD)
+#include <sys/mman.h>
+int TBF_MakeTriggersVMInheritable(void)
+{
+  int mflag = 0; /*VM_INHERIT_SHARE*/ /*MAP_SHARED|MAP_INHERIT*/;
+  if (minherit((void*)&trigstatics,sizeof(trigstatics),mflag)!=0)
+    return -1;
+  return 0;
+}  
+#endif
