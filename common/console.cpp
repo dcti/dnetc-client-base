@@ -13,6 +13,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: console.cpp,v $
+// Revision 1.44  1999/03/16 09:18:22  snake
+// added termios for BSD/OS and OpenBSD
+//
 // Revision 1.43  1999/02/21 00:56:17  trevorh
 // Correct typing error compiling os2gui
 //
@@ -166,7 +169,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.43 1999/02/21 00:56:17 trevorh Exp $"; }
+return "@(#)$Id: console.cpp,v 1.44 1999/03/16 09:18:22 snake Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -185,7 +188,8 @@ return "@(#)$Id: console.cpp,v 1.43 1999/02/21 00:56:17 trevorh Exp $"; }
 #if !defined(NOTERMIOS) && ((CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) || \
     (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
     || (CLIENT_OS==OS_FREEBSD) || defined(__EMX__) || (CLIENT_OS==OS_AIX) \
-    || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==OS_HPUX) )
+    || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==BSDI) \
+	|| (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_HPUX) )
 #include <termios.h>
 #define TERMIOS_IS_AVAILABLE
 #endif
