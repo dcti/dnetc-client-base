@@ -7,7 +7,7 @@
  * Specify 'cpu', 'os', 'intsizes' or 'build_dependancies' as argument.
 */ 
 const char *testplat_cpp(void) { 
-return "@(#)$Id: testplat.cpp,v 1.4.2.1 2000/03/11 03:02:44 andreasb Exp $"; } 
+return "@(#)$Id: testplat.cpp,v 1.4.2.2 2000/08/09 19:23:48 cyp Exp $"; } 
 
 static const char *include_dirs[] = { "common", "rc5", "des", "ogr" };
 
@@ -85,9 +85,7 @@ static unsigned int build_dependancies( char *cppname ) /* ${TARGETSRC} */
             }
             if ( fileexists( foundbuf ) )
             {
-              if ( count != 0 )
-                putc( ' ', stdout );
-              printf( "%s", foundbuf );
+              printf( "%s%s", ((count!=0)?(" "):("")), foundbuf );
               count++;
             }
           }
