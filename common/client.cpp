@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.175  1998/12/08 05:35:47  dicamillo
+// MacOS updates: allow PrintBanner to be called by Mac client;
+// added help text; Mac client provides its own "main".
+//
 // Revision 1.174  1998/12/01 23:31:43  cyp
 // Removed ::totalBlocksDone. count was inaccurate if client was restarted.
 // ::Main() (as opposed to realmain()) now controls restart.
@@ -137,7 +141,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.174 1998/12/01 23:31:43 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.175 1998/12/08 05:35:47 dicamillo Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -258,7 +262,7 @@ static const char *GetBuildOrEnvDescription(void)
 
 // --------------------------------------------------------------------------
 
-static void PrintBanner(const char *dnet_id,int level,int restarted)
+void PrintBanner(const char *dnet_id,int level,int restarted)
 {
   //level = 0 = show copyright/version,  1 = show startup message
   
@@ -304,7 +308,11 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
               "Interactive help is available, or select 'Help contents' from the menu for\n"
               "detailed client information.\n" :
               #endif
+			  #if (CLIENT_OS == OS_MACOS)
+                "Select ""Help..."" from the Apple menu for detailed client information.\n"
+			  #else
               "Start the client with '-help' for a list of valid command line options.\n"
+			  #endif
               );
       }
     else if ( level == 1 )
@@ -508,6 +516,8 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine,
   return winClientPrelude( hInst, hPrevInst, lpszCmdLine, nCmdShow, realmain);
 }
 #endif
+#elif (CLIENT_OS == OS_MACOS)
+// nothing- Mac framework provides main
 #else
 int main( int argc, char *argv[] )
 { 
