@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk.cpp,v $
+// Revision 1.24  1999/02/08 23:21:52  remi
+// Rewrote connifacemask[] parsing code and moved it out of CLIENT_OS defines.
+// Added FreeBSD support, same code may work on other BSD systems.
+//
 // Revision 1.23  1999/02/08 17:11:39  cyp
 // re-added errno.h for linux
 //
@@ -62,7 +66,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.23 1999/02/08 17:11:39 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.24 1999/02/08 23:21:52 remi Exp $"; }
 #endif
 
 /* --------------------------------- */
@@ -120,7 +124,7 @@ int Lurk::CheckForStatusChange(void) //returns -1 if connection dropped
 /* ================================================================== */
 
 
-#if (CLIENT_OS == OS_LINUX)
+#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -420,8 +424,8 @@ int Lurk::GetCapabilityFlags(void)
   #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
   if (have_winsock) what = ( CONNECT_LURK | CONNECT_LURKONLY);
   if (demand_loadable) what |= CONNECT_DOD;
-  #elif (CLIENT_OS == OS_LINUX)
-  what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DOD | CONNECT_IFACEMASK);
+  #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)
+  what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYSCRIPT | CONNECT_IFACEMASK);
   #elif (CLIENT_OS == OS_OS2)
   what = ( CONNECT_LURK | CONNECT_LURKONLY);
   #endif
@@ -432,10 +436,34 @@ int Lurk::GetCapabilityFlags(void)
 
 int Lurk::IsConnected(void)               // Checks status of connection
 {                                              
+  char *ifacestowatch[sizeof(connifacemask)/2+1];
+  
   conndevice[0]=0;
 
   if (!islurkstarted)
     return 0;
+
+  // Parse connifacemask[] and store each interface name
+  // in *ifacestowatch[]
+  if (GetCapabilityFlags() & CONNECT_IFACEMASK)
+    {
+    static char storage[sizeof(connifacemask)];
+    char **ptr_ifacestowatch = &(ifacestowatch[0]);
+    char *c, *p, *p1;
+    p1 = p = &(storage[0]);
+    for (c = &(connifacemask[0]); *c && (isspace(*c) || *c == ':'); c++);
+    while (*c)
+      {
+      for (p1 = p; *c && *c != ':'; c++) 
+        if (!isspace(*c)) *p++ = *c;
+      for (; *c && (isspace(*c) || *c == ':'); c++);
+      *p++ = '\0';
+      *ptr_ifacestowatch++ = p1;
+      }
+    *ptr_ifacestowatch = NULL;
+    }
+  else
+    ifacestowatch[0] = NULL;
 
 #if (CLIENT_OS == OS_WIN32)
   if (rasenumconnections && rasgetconnectstatus)
@@ -525,7 +553,7 @@ int Lurk::IsConnected(void)               // Checks status of connection
 #elif ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN16S))
    if ( GetModuleHandle("WINSOCK") )
      return 1;
-#elif (CLIENT_OS == OS_LINUX)
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)  // maybe other *BSD systems
    struct ifconf ifc;
    struct ifreq *ifr;
    int n, foundif = 0;
@@ -552,58 +580,95 @@ int Lurk::IsConnected(void)               // Checks status of connection
          break;
        // assume overflow, enlarge buffer
        numreqs += 10;
-       p = (char *)realloc((void *)ifc.ifc_buf, sizeof(struct ifreq)*numreqs);
+       p = (char *) realloc( (void *)ifc.ifc_buf, sizeof(struct ifreq)*numreqs );
        if (!p)
          break;
        ifc.ifc_buf = (caddr_t)p;
-       } 
+       }
 
      // now browse through the interface watch list
      // and check if there is an interface up and running
      if (ifc.ifc_len)
        {
-       char ifacestowatch[sizeof(connifacemask)+4]; //64+4
-       int i = 1, anydev = 0;
-       strcpy( ifacestowatch, ":" );
-       for (n=0;connifacemask[n];n++)
+#if (CLIENT_OS == OS_LINUX)
+       for (n = 0, ifr = ifc.ifc_req; n < ifc.ifc_len; n += sizeof(struct ifreq), ifr++) 
          {
-         if (!isspace(connifacemask[n]))
-           ifacestowatch[i++]=connifacemask[n];
-         }
-       ifacestowatch[i]=0;
-       anydev = (i==1);
-       strcat( ifacestowatch, ":" );
-       
-       //LogScreenf ("ifacestowatch = '%s'\n", ifacestowatch);
-       for (n = 0, ifr = ifc.ifc_req; n < ifc.ifc_len; n += sizeof(struct ifreq), ifr++)
-         {
+         // detect if connifacemask (parsed in ifacestowatch) 
+         // contains ifr->ifr_name
          int founddev = 0;
-         //LogScreenf ("looking at '%s'\n", ifr->ifr_name);
-         if (anydev)
+         char **ifn = &(ifacestowatch[0]);
+         if (*ifn == NULL)
            founddev = 1;
          else
            {
-           p = strstr( ifacestowatch, ifr->ifr_name );
-           if (p) 
-             founddev = (*(p-1)==':' && p[strlen(ifr->ifr_name)]==':');
+           for (; *ifn && strcmp(*ifn, ifr->ifr_name) != 0; ifn++);
+           if (*ifn)
+             founddev = 1;
            }
-         if (founddev)
+         // now check if this iface is up and running
+         if (founddev) 
            {
            strncpy( conndevice, ifr->ifr_name, sizeof(conndevice) );
-           conndevice[sizeof(conndevice)-1]=0;
-           // now check if this iface is up and running
-           if ( ioctl(fd, SIOCGIFFLAGS, ifr) >= 0) // get iface flags
+           conndevice[sizeof(conndevice)-1] = 0;
+           ioctl (fd, SIOCGIFFLAGS, ifr); // get iface flags
+           if ((ifr->ifr_flags & (IFF_UP | IFF_RUNNING | IFF_LOOPBACK)) 
+               == (IFF_UP | IFF_RUNNING))
              {
-             //LogScreenf ("   flags = 0x%x\n", ifr->ifr_flags);
+             foundif = (n / sizeof(struct ifreq)) + 1;
+             break;
+             }
+           }
+         }
+#elif (CLIENT_OS == OS_FREEBSD)  // maybe other *BSD systems
+        /*
+         * In BSD4.4, SIOCGIFCONF returns an entry for every
+         * address associated with the if. including physical..
+         * They even included a sockaddr which is VARIABLE LENGTH!
+         *
+         * On n0 (FreeBSD 2.2.8) the last entry seems bogus, as
+         * it has only 17 bytes... (sizeof(struct ifreq) == 32)
+         */
+       for (n = ifc.ifc_len, ifr = ifc.ifc_req; n >= sizeof(struct ifreq); )
+         {
+         struct sockaddr *sa = &(ifr->ifr_addr);
+         if (sa->sa_family == AF_INET)  // filter-out anything other than AF_INET
+           {                            // (in fact this filter-out AF_LINK)
+           // detect if connifacemask (parsed in ifacestowatch) 
+           // contains ifr->ifr_name
+           int founddev = 0;
+           char **ifn = &(ifacestowatch[0]);
+           if (*ifn == NULL)
+             founddev = 1;
+           else
+             {
+             for (; *ifn && strcmp(*ifn, ifr->ifr_name) != 0; ifn++);
+             if (*ifn)
+               founddev = 1;
+             }
+           // now check if this iface is up and running
+           if (founddev) 
+             {
+             strncpy( conndevice, ifr->ifr_name, sizeof(conndevice) );
+             conndevice[sizeof(conndevice)-1] = 0;
+             ioctl (fd, SIOCGIFFLAGS, ifr); // get iface flags
              if ((ifr->ifr_flags & (IFF_UP | IFF_RUNNING | IFF_LOOPBACK)) 
-                                   == (IFF_UP | IFF_RUNNING))
+                 == (IFF_UP | IFF_RUNNING))
                {
                foundif = (n / sizeof(struct ifreq)) + 1;
                break;
                }
              }
            }
+         // calculate the length of this entry and jump to the next
+         int ifrsize = IFNAMSIZ + sa->sa_len;
+         ifr = (struct ifreq *)((caddr_t)ifr + ifrsize);
+         n -= ifrsize;
          }
+       
+#else
+       #error "What's up Doc ?"
+#endif
+
        }
 
      if (ifc.ifc_buf) 
@@ -615,7 +680,7 @@ int Lurk::IsConnected(void)               // Checks status of connection
      return 1;
    conndevice[0]=0;
      
-#endif // OS_LINUX
+#endif // OS_LINUX || FREEBSD
   return 0;// Not connected
 }
 
@@ -711,7 +776,7 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
   rasgeterrorstring(returnvalue,errorstring,sizeof(errorstring));
   LogScreen("Connection initiation error:\n%s",errorstring);
 
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2)
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_FREEBSD)
 
   if (connstartcmd[0] == 0)  /* we don't do dialup */
     return 0;                /* bad! but same result as !dialwhenneeded */
@@ -803,7 +868,7 @@ int Lurk::HangupIfNeeded(void) //returns 0 on success, -1 on fail
         }
       }
     }
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2)
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_FREEBSD)
 
   if (connstopcmd[0] == 0) //what can we do?
     {
