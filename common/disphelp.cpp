@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.7 1999/10/11 04:26:56 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.8 1999/10/24 19:18:13 remi Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -116,7 +116,7 @@ static const char *helpbody[] =
 
 /* ------------------------------------------------------------------------ */
 
-#define _istrofspecial(_c) (!(!strchr("\\-[]\"<>",_c)))
+#define _istrofspecial(_c) (!(!strchr("\\-\"",_c)))
 
 void GenerateManPage( void )
 {
@@ -157,6 +157,7 @@ void GenerateManPage( void )
     fprintf(manp, ".Nd distributed.net distributed computing client for "
                     CLIENT_OS_NAME"\n" );
 
+    fprintf(manp,"\n");
     fprintf(manp, ".Sh SYNOPSIS\n");
     fprintf(manp, ".Nm %s\n", appname);
     for (pos=0;pos<(sizeof(helpbody)/sizeof(helpbody[0]));pos++)
@@ -190,6 +191,7 @@ void GenerateManPage( void )
       }
     }
 
+    fprintf(manp,"\n");
     fprintf(manp, ".Sh DESCRIPTION\n");
     fprintf(manp, 
       ".Ar %s\nis a distributed computing client that coordinates with servers\n"
@@ -199,6 +201,7 @@ void GenerateManPage( void )
       "It is designed to run in idle time so as to not impact the normal operation\n"
       "of the computer.\n", appname);
 
+    fprintf(manp,"\n");
     fprintf(manp, ".Sh INSTALLATION\n");
     fprintf(manp, 
       "Since you are already reading this, I assume you know how to\n"
@@ -218,6 +221,7 @@ void GenerateManPage( void )
       "A list of command line options is listed below.\n"
       );
 
+    fprintf(manp,"\n");
     fprintf(manp, ".Sh COMMAND LINE OPTIONS\n");
 
     for (pos=0;pos<(sizeof(helpbody)/sizeof(helpbody[0]));pos++)
@@ -225,8 +229,8 @@ void GenerateManPage( void )
       cp = helpbody[pos];
       if (*cp=='-')
       {
-        fprintf(manp,".sp 0\n" );
-        fprintf(manp,"\\fB");
+        fprintf(manp,".It Fl ");
+	cp++;
         while (*cp && *cp != ' ')
         {
           if (*cp == '\"')
@@ -241,14 +245,13 @@ void GenerateManPage( void )
             fputc(*cp++,manp);
           }
         }
-        fprintf(manp,"\\fP");
         while (*cp == ' ')
           cp++;
         while (*cp == '<' || *cp == '[')
         {
           const char closure = ((*cp == '<')?('>'):(']'));
+	  fprintf(manp, (*cp == '<')?(" Ar "):(" Op "));
           cp++;
-          fprintf(manp," \\fI");
           while (*cp && *cp!=closure)
           {
             if (*cp == '\"')
@@ -263,7 +266,6 @@ void GenerateManPage( void )
               fputc(*cp++,manp);
             }
           }
-          fprintf(manp,"\\fP");
           if (*cp == closure)
             cp++;
           while (*cp == ' ')
@@ -272,7 +274,6 @@ void GenerateManPage( void )
         fprintf(manp,"\n");
         if (*cp)
         {
-          fprintf(manp,".sp 0\n");
           while (*cp)
           {
             if (*cp == '\"')
@@ -315,15 +316,17 @@ void GenerateManPage( void )
       }
       else if (*cp) /* new section */
       {
-        fprintf(manp, ".Pp\n" );
-        fprintf(manp,"\\fB");
+	if (pos) 
+	  fprintf(manp,".El\n");
+        fprintf(manp, ".sp 2\n");
+        fprintf(manp,".Ss \"");
         while (*cp)
         {
           if (*cp == '\"')
           {
             cp++;
             fputc('\'', manp);
-          }  
+          }
           else
           {
             if (_istrofspecial(*cp))
@@ -331,21 +334,24 @@ void GenerateManPage( void )
             fputc(*cp++,manp);
           }
         }
-        fprintf(manp,"\\fP\n");
-        fprintf(manp,".sp 1\n");
+        fprintf(manp,"\"\n");
+        fprintf(manp,".Bl -tag -width Fl\n");
       }
     }
 
     #if 0
+    fprintf(manp,"\n");
     fprintf(manp,".Sh ENVIRONMENT\n"
                  ".Pp\N"
                  ".Ip \\\"RC5INI\\\"\n"
                  "Full path to alternate .ini file\n");
     #endif
+    fprintf(manp,"\n");
     fprintf(manp,".Sh SEE ALSO\n"
                  ".Pp\n"
                  "Client documentation: %s.txt and http://www.distributed.net/FAQ/\n",
                  appname);
+    fprintf(manp,"\n");
     fprintf(manp,".Sh AUTHOR\n"
                  "distributed.net\n"
                  "http://www.distributed.net/\n");
