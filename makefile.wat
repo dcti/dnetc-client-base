@@ -5,7 +5,20 @@
 ##   where <platform> is one of [dos | netware | os2 | w32 | w_h | wsv ]
 ##                       or anything else defined at the end of this makefile
 ##
-## $Id: makefile.wat,v 1.12 1998/06/18 08:19:17 cyruspatel Exp $
+## $Log: makefile.wat,v $
+## Revision 1.13  1998/06/18 08:38:10  cyruspatel
+## Fixed Log and Id mixup
+##
+## Revision 1.12  1998/06/18 08:19:17  cyruspatel 
+## Converted all names to lower case (ncpfs serves case sensitive names).
+## Modified for use of the pre-assembled objs of the p?despro cores until a
+## wasm version is available. Fixed use of %PATHOPS (got evaluated at
+## assignment time, so %PATHOPS was always "/fr= /fo= /i"). Fixed misplaced
+## colons that were causing unconditional makes for some files. Changed
+## global /zp8 to /zp1 to work around alignment problems (no speed hit :).
+## Compacted all those long dependency lists into .autodepend directives.
+## Added suppression of wcpp/wasm 'whoami' banners. $Log and cleaned up a bit.
+##
 ## Revision 1.11  1998/06/18 07:22:46  jlawson
 ## updated makefile with new paths to des/rc5 cores 
 ##
@@ -31,6 +44,7 @@
 ##
 ## Revision 1.6  1998/06/14 01:43:16  cyruspatel
 ## added support for new disphelp.cpp; removed obsolete chdir cmds;
+## added $Log
 ##          
 ## Revision 1.5  1998/06/09 08:54:12  jlawson
 ## NetWare patches - NetWare no longer uses watcom static clib
@@ -49,6 +63,8 @@
 ## Revision 1.1  1998/05/24 14:25:37  daa
 ## Import 5/23/98 client tree
 ## 
+
+## $Id: makefile.wat,v 1.13 1998/06/18 08:38:10 cyruspatel Exp $
 
 CC=wpp386
 CCASM=wasm
