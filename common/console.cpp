@@ -11,6 +11,9 @@
    to functions in modules in your own platform area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.26  1998/12/30 08:56:31  silby
+// Conclose_delay is now not active if WIN32GUI defined.
+//
 // Revision 1.25  1998/12/29 09:28:35  dicamillo
 // For MacOS, ConOut now call macConOut.
 //
@@ -94,7 +97,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.25 1998/12/29 09:28:35 dicamillo Exp $"; }
+return "@(#)$Id: console.cpp,v 1.26 1998/12/30 08:56:31 silby Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -148,8 +151,8 @@ int DeinitializeConsole(void)
     {
     if (constatics.doingmodes && !constatics.runhidden)
       {
-      #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || \
-          (CLIENT_OS==OS_WIN32S)
+      #if (((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || \
+          (CLIENT_OS==OS_WIN32S)) && (!defined(WIN32GUI)))
         {
         int init = 0;
         time_t endtime = (CliTimer(NULL)->tv_sec) + CONCLOSE_DELAY;
