@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.39 2000/10/31 11:47:37 oliver Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.40 2000/11/01 19:58:19 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -194,10 +194,13 @@ public: /* anything public must be thread safe */
 
   // more than you'll ever care to know :) any arg can be 0/null */
   // returns RESULT_* or -1 if bad state
-  // *tcount* == total (n/a if not finished), *ccount* == numdone so far
+  // *tcount* == total (n/a if not finished), *ccount* == numdone so far 
+  // this time, *dcount* == numdone so far all times. 
+  // numstring_style: -1=unformatted, 0=commas, 
+  // 1=0+space between magna and number (or at end), 2=1+"nodes"/"keys"
   int GetProblemInfo(unsigned int *cont_id, const char **cont_name, 
                      u32 *elapsed_secs, u32 *elapsed_usecs, 
-                     unsigned int *swucount, int pad_strings,
+                     unsigned int *swucount, int numstring_style,
                      const char **unit_name, 
                      unsigned int *c_permille, unsigned int *s_permille,
                      int permille_only_if_exact,
@@ -207,7 +210,9 @@ public: /* anything public must be thread safe */
                      u32 *ubtcounthi, u32 *ubtcountlo, 
                      char *tcountbuf, unsigned int tcountbufsz,
                      u32 *ubccounthi, u32 *ubccountlo, 
-                     char *ccountbuf, unsigned int ccountbufsz);
+                     char *ccountbuf, unsigned int ccountbufsz,
+                     u32 *ubdcounthi, u32 *ubdcountlo, 
+                     char *dcountbuf, unsigned int dcountbufsz);
 };
 
 unsigned int ProblemCountLoaded(int contestid); /* -1=total for all contests */

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.43 2000/10/31 11:47:35 oliver Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.44 2000/11/01 19:58:18 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -111,7 +111,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     int silent = 1, run = RESULT_WORKING;
     unsigned long last_permille = 1001;
 
-    ClientEventSyncPost(CLIEVENT_BENCHMARK_STARTED, (long)problem );
+    //ClientEventSyncPost(CLIEVENT_BENCHMARK_STARTED, (long)problem );
     if ((flags & TBENCHMARK_QUIET) == 0)
     {
       silent = 0;
@@ -128,7 +128,8 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         {
           u32 newtslice;
           if (problem->GetProblemInfo(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                      &ratelo, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ) == -1)
+                                      &ratelo, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                      0, 0, 0, 0 ) == -1)
           {
             run = -1;
             break;
@@ -195,7 +196,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
                      contname, (unsigned int)(permille/10), 
                              (unsigned int)((permille%10)*10) );
         last_permille = (permille / 10);
-        ClientEventSyncPost(CLIEVENT_BENCHMARK_BENCHING, (long)problem );
+        //ClientEventSyncPost(CLIEVENT_BENCHMARK_BENCHING, (long)problem );
       }                                 
       if (permille == 1000) /* time is up or ran out of work */
       {
@@ -207,7 +208,8 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
                                     0, 0,    /* idbuf, idbufsz */
                                     &ratehi, &ratelo, 
                                     ratebuf, sizeof(ratebuf),
-                                    0, 0, 0, 0,   0, 0, 0, 0 ) == -1)
+                                    0, 0, 0, 0,   0, 0, 0, 0, 
+                                    0, 0, 0, 0 ) == -1)
         {
           run = -1;
           break;
@@ -222,7 +224,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
              selcoreGetDisplayName(contestid, problem->coresel),
              CliGetTimeString( &tv, 2 ), ratebuf );
         }
-        ClientEventSyncPost(CLIEVENT_BENCHMARK_FINISHED, (long)problem );
+        //ClientEventSyncPost(CLIEVENT_BENCHMARK_FINISHED, (long)problem );
         break;
       } /* permille == 1000 */
     } /* while ( run == RESULT_WORKING ) */

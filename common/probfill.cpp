@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.46 2000/10/31 11:47:35 oliver Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.47 2000/11/01 19:58:18 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -111,8 +111,9 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       const char *reason_msg = NULL;
       int discarded = 0;
       unsigned int permille, swucount = 0;
-      const char *contname, *unitname;
-      char pktid[32], ratebuf[32], ccountbuf[10];
+      const char *contname;
+      char pktid[32], ratebuf[32]; 
+      char dcountbuf[64]; /* we use this as scratch space too */
       u32 secs, usecs, ccounthi, ccountlo;
       struct timeval tv;
 
@@ -178,8 +179,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 
       if (thisprob->GetProblemInfo( 0, &contname, 
                                     &secs, &usecs,
-                                    &swucount, 1, 
-                                    &unitname, 
+                                    &swucount, 2, 
+                                    0, 
                                     &permille, 0, 1,
                                     pktid, sizeof(pktid),
                                     0, 0, 
@@ -187,52 +188,48 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
                                     0, 0, 
                                     0, 0,
                                     &ccounthi, &ccountlo,
-                                    ccountbuf, sizeof(ccountbuf) ) != -1)
+                                    0, 0,
+                                    0, 0, dcountbuf, 15 ) != -1)
       {
         tv.tv_sec = secs; tv.tv_usec = usecs;
 
-        if (finito && !discarded)
-        {
-          if (swucount == 0) /* test packet (<1*2^28) */
-          {
-            strcpy(ccountbuf,"Test:");
-            unitname = ((resultcode==RESULT_NOTHING)?
-                        ("RESULT_NOTHING"):("RESULT_FOUND"));
-          }
-          else /* adjust cumulative stats */
-          {
-            CliAddContestInfoSummaryData(cont_i,ccounthi,ccountlo,&tv,swucount);
-            sprintf(ccountbuf, "%u.%02u ", swucount/100, swucount%100 );
-            unitname = "stats units";
-          }
-        }
+        if (finito && !discarded && swucount) /* swucount is zero for TEST */
+          CliAddContestInfoSummaryData(cont_i,ccounthi,ccountlo,&tv,swucount);
+
         if (action_msg)
         {
-          char percbuf[20]; percbuf[0] ='\0';
-          if (!reason_msg) /* not discarded or finished */
+          if (reason_msg) /* was discarded */
           {
-            reason_msg = percbuf;
-            if (!finito && permille > 0 && permille < 1000)
-              sprintf( percbuf, " (%u.%u0%% done)", permille/10, permille%10);
-          }  
-          //[....] Saved RC5 12345678:ABCDEF00 4*2^28 (5.20%% done)
-          //       1.23:45:67:89 - [987654321 keys/s] - 1234567 keys
-          //[....] Saved OGR 25/1-6-13-8-16-18 (5.30% done)
-          //       1.23:45:67:89 - [987654321 nodes/s] - 1234567 nodes
-          //[....] Discarded CSC 12345678:ABCDEF00 4*2^28
-          //       (project disabled/closed)
-          //[....] Completed RC5 68E0D85A:A0000000 4*2^28
-          //       1.23:45:67:89 - [987654321 keys/s] - 1234567 keys
-          //[....] Completed OGR 22/1-3-5-7
-          //       1.23:45:67:89 - [987654321 nodes/s] - 1234567 nodes
-          Log("%s %s %s%s\n%c%s - [%s/s] - %s%s\n", action_msg, 
-              contname, pktid, reason_msg, ((discarded)?('\0'):(' ')), 
-              CliGetTimeString( &tv, 2 ), ratebuf,
-              ccountbuf, unitname );
-          /* note that for incomplete packets we always print the number  */
-          /* of iters we did _this_ time and never the total number of iters */
-          /* in the packet */
-        }
+            //[....] Discarded CSC 12345678:ABCDEF00 4*2^28
+            //       (project disabled/closed)
+            Log("%s %s %s%s\n", action_msg, contname, pktid, reason_msg );
+          }
+          else
+          {
+            if (finito && !swucount) /* finished test packet */
+              strcat( strcpy( dcountbuf,"Test: RESULT_"),
+                     ((resultcode==RESULT_NOTHING)?("NOTHING"):("FOUND")) );
+            else if (finito) /* finished non-test packet */ 
+              sprintf( dcountbuf, "%u.%02u stats units", 
+                                  swucount/100, swucount%100);
+            else if (permille > 0)
+              sprintf( dcountbuf, "%u.%u0%% done", permille/10, permille%10);
+            else
+              strcat( dcountbuf, " done" );
+
+            //[....] Saved RC5 12345678:ABCDEF00 4*2^28 (5.20% done)
+            //       1.23:45:67:89 - [987,654,321 keys/s]
+            //[....] Saved OGR 25/1-6-13-8-16-18 (12.34 Mnodes done)
+            //       1.23:45:67:89 - [987,654,321 nodes/s]
+            //[....] Completed RC5 68E0D85A:A0000000 4*2^28 (4.00 stats units)
+            //       1.23:45:67:89 - [987,654,321 keys/s]
+            //[....] Completed OGR 22/1-3-5-7 (12.30 stats units)
+            //       1.23:45:67:89 - [987,654,321 nodes/s]
+            Log("%s %s %s (%s)\n%s - [%s/s]\n", 
+              action_msg, contname, pktid, dcountbuf,
+              CliGetTimeString( &tv, 2 ), ratebuf );
+          } /* if (reason_msg) else */
+        } /* if (action_msg) */
       } /* if (thisprob->GetProblemInfo( ... ) != -1) */
     
       /* we can purge the object now */
@@ -388,11 +385,11 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
 
       if (load_problem_count <= COMBINEMSG_THRESHOLD)
       {
-        unsigned int permille;
-        const char *contname; char pktid[32]; 
+        unsigned int permille; u32 ddonehi, ddonelo;
+        const char *contname; char pktid[32]; char ddonebuf[15];
         if (thisprob->GetProblemInfo( loaded_for_contest, &contname, 
                                       0, 0,
-                                      0, 1, 
+                                      0, 2, 
                                       0, 
                                       0, &permille, 1,
                                       pktid, sizeof(pktid),
@@ -400,21 +397,28 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
                                       0, 0, 
                                       0, 0,
                                       0, 0,
-                                      0, 0 ) != -1)
+                                      0, 0,
+                                      &ddonehi, &ddonelo,
+                                      ddonebuf, sizeof(ddonebuf) ) != -1)
         {
           const char *extramsg = ""; 
-          char perdone[20]; 
+          char perdone[32]; 
 
           if (thisprob->was_reset)
             extramsg="\nPacket was from a different core/client cpu/os/build.";
-
-          if (permille > 0 && permille < 1000)
+          else if (permille > 0 && permille < 1000)
           {
             sprintf(perdone, " (%u.%u0%% done)", (permille/10), (permille%10));
             extramsg = perdone;
           }
+          else if (ddonehi || ddonelo)
+          {
+            strcat( strcat( strcpy(perdone, " ("), ddonebuf)," done)");
+            extramsg = perdone;
+          }
+          
           Log("Loaded %s %s%s%s\n",
-               contname, ((thisprob->is_random)?("random "):("")), 
+               contname, ((thisprob->is_random)?("random "):("")),
                pktid, extramsg );
         } /* if (thisprob->GetProblemInfo(...) != -1) */
       } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.76 2000/10/31 11:47:36 oliver Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.77 2000/11/01 19:58:18 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -1374,14 +1374,36 @@ static void __u64div( u32 numerhi, u32 numerlo, u32 denomhi, u32 denomlo,
 /* ----------------------------------------------------------------------- */
 
 static char *__u64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
-                            int space_pad )
+                            int numstr_style, const char *numstr_suffix )
 {
+  /* numstring_style: 
+   * -1=unformatted, 
+   *  0=commas, 
+   *  1=0+space between magna and number (or at end if no magnitude char)
+   *  2=1+numstr_suffix
+  */
   if (buffer && buflen)
   {
     char numbuf[32]; /* U64MAX is "18,446,744,073,709,551,615" (len=26) */
+    unsigned int suffix_len;
+
+    if (numstr_style != 2 || !numstr_suffix)
+      numstr_suffix = ""; 
+    suffix_len = strlen( numstr_suffix );
+    if (numstr_style == 2 && suffix_len == 0)
+      numstr_style = 1;
+    if (numstr_style == 1 || numstr_style == 2) 
+      suffix_len++; 
+    if (buflen > suffix_len)
+      buflen -= suffix_len;
+    else if (buflen >= 5) /* so that it falls into next part */
+      buflen = 4;
+
     if (buflen < 5)
     {
       strcpy( numbuf, "***" );
+      suffix_len = 0;
+      numstr_style = 0;
     }
     else
     {
@@ -1414,7 +1436,7 @@ static char *__u64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
         }
       }
       #endif
-      if (len > 3) /* at least one comma separator */
+      if (numstr_style != -1 && len > 3) /* at least one comma separator */
       {
         char fmtbuf[sizeof(numbuf)];
         char *r = &numbuf[len];
@@ -1433,20 +1455,18 @@ static char *__u64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
         if (len >= buflen)
         {
           pos = buflen-4; /* "00X\0" */
-          if (space_pad)
-            pos--;
-          while (len > pos || numbuf[len]!=',')
+          while (len > pos || numbuf[len] != ',')
           {
+            len--;
             if (numbuf[len] == ',')
               magna++;
-            len--;
-          }  
+          }
           numbuf[len] = '.';
           len += 3;
           numbuf[len] = '\0';
         }
       } /* len > 3 */
-      if (space_pad)
+      if (numstr_style == 1 || numstr_style == 2)
         numbuf[len++] = ' ';
       if (magna)
         numbuf[len++] = magna_tab[magna];
@@ -1454,6 +1474,8 @@ static char *__u64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
     } /* buflen >= 5 */
     strncpy( buffer, numbuf, buflen ); 
     buffer[buflen-1] = '\0';
+    if (numstr_style == 2) /* buflen has already been checked to ensure */
+      strcat(buffer, numstr_suffix); /* this strcat() is ok */
   }
   return buffer;
 }
@@ -1483,8 +1505,7 @@ const char *ProblemComputeRate( unsigned int contestid,
   if (ratelo) *ratelo = lo;
   if (ratebuf && ratebufsz)
   {
-    unsigned int len;
-    const char *unitname = "???"; 
+    const char *unitname = ""; 
     switch (contestid)
     {
       case RC5:
@@ -1493,14 +1514,7 @@ const char *ProblemComputeRate( unsigned int contestid,
       case OGR: unitname = "nodes"; break;
       default:  break;
     }
-    len = strlen( unitname );
-    if ((len+3+1) >= ratebufsz)
-    {
-      unitname = "";
-      len = 0;
-    }
-    ratebufsz -= len;
-    strcat( __u64stringify( ratebuf, ratebufsz, hi, lo, 1 ), unitname );
+    __u64stringify( ratebuf, ratebufsz, hi, lo, 2, unitname );
   }
   return ratebuf;
 }
@@ -1549,13 +1563,17 @@ static unsigned int __compute_permille(unsigned int cont_i, ContestWork *work)
   return permille;
 }
 
-/* more info than you ever wanted. :) any/all params can be NULL/0 */
-/* tcount = totalnumberofiterationstodo. tcountbuf="nn*2^28" for crypto */
-/* ccount = numberofiterationdonethistime. ccountbuf="nnn,nnn,nnn" done ever */
-/* counts are unbiased (adjustment for DES etc already done) */
+/* more info than you ever wanted. :) any/all params can be NULL/0
+ * tcount = total_number_of_iterations_to_do
+ * ccount = number_of_iterations_done_thistime.
+ * dcount = number_of_iterations_done_ever
+ * counts are unbiased (adjustment for DES etc already done)
+ * numstring_style: -1=unformatted, 0=commas, 
+ * 1=0+space between magna and number (or at end), 2=1+"nodes"/"keys"
+*/
 int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name, 
                             u32 *elapsed_secsP, u32 *elapsed_usecsP, 
-                            unsigned int *swucount, int pad_strings,
+                            unsigned int *swucount, int numstring_style,
                             const char **unit_name, 
                             unsigned int *c_permille, unsigned int *s_permille,
                             int permille_only_if_exact,
@@ -1565,7 +1583,9 @@ int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name,
                             u32 *ubtcounthi, u32 *ubtcountlo, 
                             char *tcountbuf, unsigned int tcountbufsz,
                             u32 *ubccounthi, u32 *ubccountlo, 
-                            char *ccountbuf, unsigned int ccountbufsz)
+                            char *ccountbuf, unsigned int ccountbufsz,
+                            u32 *ubdcounthi, u32 *ubdcountlo,
+                            char *dcountbuf, unsigned int dcountbufsz)
 {
   int rescode = last_resultcode;
   if (initialized && rescode >= 0)
@@ -1685,7 +1705,8 @@ int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name,
     if ( sigbuf     || c_permille || s_permille ||
          ratehi     || ratelo     || ratebuf   ||  
          ubtcounthi || ubtcountlo || tcountbuf ||
-         ubccounthi || ubccountlo || ccountbuf )
+         ubccounthi || ubccountlo || ccountbuf ||
+         ubdcounthi || ubdcountlo || dcountbuf )
     { 
       ContestWork work;
       unsigned int contestid = 0;
@@ -1695,8 +1716,9 @@ int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name,
       {
         u32 hi, lo;
         u32 tcounthi=0, tcountlo=0; /*total 'iter' (n/a if not finished)*/
-        u32 ccounthi=0, ccountlo=0; /*'iter' done (so far, all starts) */
-        u32 scounthi=0, scountlo=0; /* start pos */
+        u32 ccounthi=0, ccountlo=0; /*'iter' done (so far, this start) */
+        u32 dcounthi=0, dcountlo=0; /*'iter' done (so far, all starts) */
+        const char *numstr_suffix = "";
         unsigned long rate2wuspeed = 0;
 
         switch (contestid)
@@ -1706,20 +1728,27 @@ int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name,
           case CSC:
           { 
             unsigned int units, twoxx;
- 
+            numstr_suffix = "keys";
             rate2wuspeed = 1UL<<28;
-            scounthi = startkeys.hi;
-            scountlo = startkeys.lo;
+
+            ccounthi = startkeys.hi;
+            ccountlo = startkeys.lo;
             tcounthi = work.crypto.iterations.hi;
             tcountlo = work.crypto.iterations.lo;
-            ccounthi = work.crypto.keysdone.hi;
-            ccountlo = work.crypto.keysdone.lo;
+            dcounthi = work.crypto.keysdone.hi;
+            dcountlo = work.crypto.keysdone.lo;
             if (contestid == DES)
             {
               tcounthi <<= 1; tcounthi |= (tcountlo >> 31); tcountlo <<= 1; 
-              ccounthi <<= 1; ccounthi |= (ccountlo >> 31); ccountlo <<= 1; 
-              scounthi <<= 1; scounthi |= (scountlo >> 31); scountlo <<= 1;
+              dcounthi <<= 1; dcounthi |= (dcountlo >> 31); dcountlo <<= 1; 
+              ccounthi <<= 1; ccounthi |= (ccountlo >> 31); ccountlo <<= 1;
             }
+            /* current = donecount - startpos */
+            ccountlo = dcountlo - ccountlo;
+            ccounthi = dcounthi - ccounthi;
+            if (ccountlo > dcountlo)
+              ccounthi--;
+
             units = ((tcountlo >> 28)+(tcounthi << 4)); 
             twoxx = 28;
             if (!units) /* less than 2^28 packet (eg test) */
@@ -1735,7 +1764,7 @@ int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name,
             if (sigbuf)
             {
               char scratch[32];
-              sprintf( scratch, "%08lX:%08lX %u*2^%u", 
+              sprintf( scratch, "%08lX:%08lX:%u*2^%u", 
                        (unsigned long) ( work.crypto.key.hi ),
                        (unsigned long) ( work.crypto.key.lo ),
                        units, twoxx );
@@ -1753,15 +1782,20 @@ int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name,
           case OGR:
           {
             rate2wuspeed = 0;
-            scounthi = startkeys.hi;
-            scountlo = startkeys.lo;
-            ccounthi = work.ogr.nodes.hi;
-            ccountlo = work.ogr.nodes.lo;
+            numstr_suffix = "nodes";
+            dcounthi = work.ogr.nodes.hi;
+            dcountlo = work.ogr.nodes.lo;
             if (rescode == RESULT_NOTHING || rescode == RESULT_FOUND)
             {
-              tcounthi = ccounthi;
-              tcountlo = ccountlo;
+              tcounthi = dcounthi;
+              tcountlo = dcountlo;
             }
+            /* current = donecount - startpos */
+            ccountlo = dcountlo - startkeys.lo;
+            ccounthi = dcounthi - startkeys.hi;
+            if (ccountlo > dcountlo)
+              ccounthi--;
+
             if (sigbuf)
             {
               ogr_stubstr_r( &work.ogr.workstub.stub, sigbuf, sigbufsz );
@@ -1786,20 +1820,19 @@ int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name,
 
         if (tcountbuf && (tcounthi || tcountlo)) /* only if finished */
         {
-          __u64stringify(tcountbuf,tcountbufsz,tcounthi,tcountlo,pad_strings);
+          __u64stringify( tcountbuf, tcountbufsz, tcounthi, tcountlo, 
+                          numstring_style, numstr_suffix);
         }
-        if (ccountbuf)
+        if (ccountbuf) /* count - this time */
         {
-          __u64stringify(ccountbuf,ccountbufsz,ccounthi,ccountlo,pad_strings);
+          __u64stringify( ccountbuf, ccountbufsz, ccounthi, ccountlo,
+                          numstring_style, numstr_suffix);
         }
-        /* donecount = currentpos - startpos */
-        scountlo = ccountlo - scountlo;
-        scounthi = ccounthi - scounthi;
-        if (scountlo > ccountlo)
-          scounthi--;
-        ccounthi = scounthi;
-        ccountlo = scountlo;
-
+        if (dcountbuf) /* count - all times */
+        {
+          __u64stringify( dcountbuf, dcountbufsz, dcounthi, dcountlo,
+                          numstring_style, numstr_suffix);
+        }
         if (ratehi || ratelo || ratebuf)
         {
           ProblemComputeRate( contestid, e_sec, e_usec, ccounthi, ccountlo,
@@ -1823,6 +1856,10 @@ int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name,
         }
         if (s_permille)
           *s_permille = startpermille;
+        if (ubdcounthi)
+          *ubdcounthi = dcounthi;
+        if (ubdcountlo)
+          *ubdcountlo = dcountlo;
         if (ubccounthi)
           *ubccounthi = ccounthi;
         if (ubccountlo)
