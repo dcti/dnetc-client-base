@@ -5,17 +5,21 @@ Any other distribution or use of this source violates copyright.
 Bugs Listing
   This is a text file that lists any bugs that have been found by either
   the coders, or by users.
-
+ 
 1998/Aug/24 - Cyrus Patel
-  "Lurk"ers: fix the FIXMEs in netinit.cpp
-  Win32 gui (only?) 417: (a) the client is not following the ini's path if 
+  Win32 (gui only?) 417: (a) the client is not following the ini's path if 
   one has been specified on the command line. (b) the client is writing 
   the names of the checkpoint files supplied on the command line back to 
   the ini (It might be writing back more than that, unchecked.) even when
   config is not run (See related report 1998/Jan/06 by Remi). 
   The combination of (a) and (b) makes cross-platform buffer sharing 
   impossible. 
-  
+
+1998/Aug/24 - Cyrus Patel
+  "Lurk"ers: fix the FIXMEs in netinit.cpp
+FIXED (half) - myself
+  Win32 is fixed, OS/2 is mostly fixed, two FIXMEs remain pending.  
+    
 1998/Jul/01 - Oscar Chang
   Can't figure out how to fix the weirdness of -runbuffers. Can someone more
   farmilar with the Run() loops take a look?
