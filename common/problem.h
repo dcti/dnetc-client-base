@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.19 1999/12/23 21:43:25 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.20 1999/12/31 21:09:22 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -62,6 +62,17 @@ typedef union
   } ogr;
 } ContestWork;
 
+typedef union
+{
+    /* this is our generic prototype */
+    s32 (*gen)( RC5UnitWork *, u32 *iterations, void *memblk );
+    u32 (*rc5)( RC5UnitWork * , u32 iterations );
+    #if defined(HAVE_DES_CORES)
+    u32 (*des)( RC5UnitWork * , u32 *iterations, char *membuf );
+    #endif  
+} unit_func_union;
+
+
 #ifdef __cplusplus
 
 class Problem
@@ -101,15 +112,9 @@ public: /* anything public must be thread safe */
   int loaderflags; /* used by problem loader (probfill.cpp) */
 
   unsigned int pipeline_count;
-  union
-  {
-    /* this is our generic prototype */
-    s32 (*gen)( RC5UnitWork *, u32 *iterations, void *memblk );
-    u32 (*rc5)( RC5UnitWork * , u32 iterations );
-    #if defined(HAVE_DES_CORES)
-    u32 (*des)( RC5UnitWork * , u32 *iterations, char *membuf );
-    #endif  
-  } unit_func;
+  unit_func_union unit_func;
+  int use_generic_proto; /* RC5/DES unit_func prototype is generic form */
+  int cruncher_is_asynchronous; /* on a co-processor or similar */
 
   int Run_RC5(u32 *iterations,int *core_retcode); /* \  run for n iterations.              */
   int Run_DES(u32 *iterations,int *core_retcode); /*  > set actual number of iter that ran */

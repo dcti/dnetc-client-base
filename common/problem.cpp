@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.45 1999/12/23 23:14:57 gregh Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.46 1999/12/31 21:09:22 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -262,6 +262,8 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
     return -1;
 
   client_cpu = CLIENT_CPU; /* usual case */
+  use_generic_proto = 0; /* assume RC5/DES unit_func is _not_ generic form */
+  cruncher_is_asynchronous = 0; /* not a co-processor */
   memset( &unit_func, 0, sizeof(unit_func) );
   coresel = selcoreSelectCore( contestid, threadindex, &client_cpu, this );
   if (coresel < 0)
@@ -450,8 +452,28 @@ LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
           pipeline_count, iterations%pipeline_count );
 #endif
 
-  kiter = (*(unit_func.rc5))(&rc5unitwork, iterations/pipeline_count );
-  *iterationsP = iterations;
+  if (use_generic_proto)
+  {
+    s32 rescode;
+    *iterationsP = iterations/pipeline_count;
+    rescode = (*(unit_func.gen))( &rc5unitwork, iterationsP, core_membuffer );
+    if (rescode < 0) /* "kiter" error */
+    {
+      *resultcode = -1;
+      return -1;
+    }
+    *resultcode = (int)rescode;
+    if (cruncher_is_asynchronous) /* co-processor or similar */
+    {
+      if (rescode == RESULT_WORKING)
+        return rescode;
+    }
+  }
+  else /* old style */
+  {  
+    kiter = (*(unit_func.rc5))(&rc5unitwork, iterations/pipeline_count );
+    *iterationsP = iterations;
+  }
 
   __IncrementKey(&refL0.hi, &refL0.lo, iterations, contest);
     // Increment reference key count
