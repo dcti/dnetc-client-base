@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: bench.cpp,v $
+// Revision 1.3  1998/10/04 21:31:08  blast
+// Added #include "baseincs.h"
+//
 // Revision 1.2  1998/09/29 10:03:33  chrisb
 // RISC OS doesn't understand fileno
 //
@@ -15,7 +18,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.2 1998/09/29 10:03:33 chrisb Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.3 1998/10/04 21:31:08 blast Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -28,6 +31,7 @@ return "@(#)$Id: bench.cpp,v 1.2 1998/09/29 10:03:33 chrisb Exp $"; }
 #include "clisrate.h"
 #include "cpucheck.h"  //GetTimesliceBaseline()
 #include "logstuff.h"  //Log()/LogScreen()/LogScreenPercent()/LogFlush()
+#include "baseincs.h"  //General includes
 
 // --------------------------------------------------------------------------
 
