@@ -16,6 +16,10 @@
 // -----------------------------------------------------------------------
 //
 // $Log: triggers.cpp,v $
+// Revision 1.14  1999/03/31 21:43:00  cyp
+// Moved RISC OS _kernel_escape_seen() poll from Problem::Run() to the poller
+// here.
+//
 // Revision 1.13  1999/01/17 14:11:43  cyp
 // use copies of exitfile and pausfile.
 //
@@ -53,11 +57,10 @@
 // Revision 1.1  1998/08/10 20:12:15  cyruspatel
 // Created
 //
-//
 
 #if (!defined(lint) && defined(__showids__))
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.13 1999/01/17 14:11:43 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.14 1999/03/31 21:43:00 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -247,7 +250,7 @@ int DeinitializeTriggers(void)
 int InitializeTriggers( const char *exitfile, const char *pausefile )
 {
   if (!trigstatics.isinit)
-    {
+  {
     memset( (void *)(&trigstatics), 0, sizeof(trigstatics) );
     trigstatics.isinit = 1;
     trigstatics.exittrig.pollinterval.whenon = 0;
@@ -255,9 +258,9 @@ int InitializeTriggers( const char *exitfile, const char *pausefile )
     trigstatics.pausetrig.pollinterval.whenon = PAUSEFILE_CHECKTIME_WHENON;
     trigstatics.pausetrig.pollinterval.whenoff = PAUSEFILE_CHECKTIME_WHENOFF;
     CliSetupSignals();
-    }
+  }
   if (exitfile)
-    {
+  {
     trigstatics.exittrig.flagfile = NULL;
     while (*exitfile && isspace(*exitfile))
       exitfile++;
@@ -268,9 +271,9 @@ int InitializeTriggers( const char *exitfile, const char *pausefile )
       trigstatics.exitfilebuf[--len]=0;
     if (len > 0 && strcmp(trigstatics.exitfilebuf,"none")!=0)
       trigstatics.exittrig.flagfile = trigstatics.exitfilebuf;
-    }
+  }
   if (pausefile)
-    {
+  {
     trigstatics.pausetrig.flagfile = NULL;
     while (*pausefile && isspace(*pausefile))
       pausefile++;
@@ -281,7 +284,7 @@ int InitializeTriggers( const char *exitfile, const char *pausefile )
       trigstatics.pausefilebuf[--len]=0;
     if (len > 0 && strcmp(trigstatics.pausefilebuf,"none")!=0)
       trigstatics.pausetrig.flagfile = trigstatics.pausefilebuf;
-    }
+  }
   return (CheckExitRequestTrigger());
 }  
 
@@ -325,10 +328,10 @@ void CliSignalHandler( int sig )
   if (sig == SIGHUP)
     RaiseRestartRequestTrigger();
   else
-    {
+  {
     RaiseExitRequestTrigger();
     nwCliSignalHandler( sig ); //never to return...
-    }
+  }
 }
 #define CLISIGHANDLER_IS_SPECIAL
 #endif
@@ -362,12 +365,16 @@ void CliSignalHandler( int )
 #if (CLIENT_OS == OS_RISCOS)
 void CliSignalHandler( int )
 {
-  // clear escape trigger for polling check in Problem::Run
-  _kernel_escape_seen(); 
+  _kernel_escape_seen();  // clear escape trigger for polling check below
   RaiseExitRequestTrigger();
   CliSetupSignals(); //reset the signal handlers
 }
 #define CLISIGHANDLER_IS_SPECIAL
+void CliPollDrivenBreakCheck( void )
+{
+  if (_kernel_escape_seen())
+    CliSignalHandler(SIGINT);
+}
 #endif  
 
 // -----------------------------------------------------------------------
@@ -390,11 +397,11 @@ void CliPollDrivenBreakCheck( void )
 {
   #if 0
   if (kbhit())
-    {
+  {
     int key = getch();
     if ( key == 3 ) RaiseExitRequestTrigger();
     else if (!key ) getch();
-    }
+  }
   #endif
   return;  
 }      
@@ -411,15 +418,9 @@ void CliPollDrivenBreakCheck( void )
 // -----------------------------------------------------------------------
 
 #ifndef CLISIGHANDLER_IS_SPECIAL
-void CliSignalHandler
-  (
-#ifdef SIGHUP
-  int sig
-#else 
-  int
-#endif 
-  )
+void CliSignalHandler( int sig )
 {
+  sig = sig; /* squelch compiler warning */
 #ifdef SIGHUP
   if (sig == SIGHUP)
     RaiseRestartRequestTrigger();
@@ -438,6 +439,12 @@ void CliSetupSignals( void )
   #elif (CLIENT_OS == OS_AMIGAOS)
     SetSignal(0L, SIGBREAKF_CTRL_C); // Clear the signal triggers
     RegisterPollDrivenBreakCheck( CliPollDrivenBreakCheck );
+  #elif (CLIENT_OS == OS_DOS)
+    break_on(); //break on any dos call 
+    signal( SIGINT, CliSignalHandler );  //The  break_o functions can be used
+    signal( SIGTERM, CliSignalHandler ); // with DOS to restrict break checking
+    signal( SIGABRT, CliSignalHandler ); // break_off(): raise() on conio only
+    signal( SIGBREAK, CliSignalHandler ); //break_on(): raise() on any dos call
   #elif (CLIENT_OS == OS_WIN32)
     SetConsoleCtrlHandler( (PHANDLER_ROUTINE) CliSignalHandler, TRUE );
   #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || \
@@ -446,15 +453,10 @@ void CliSetupSignals( void )
     RegisterPollDrivenBreakCheck( CliPollDrivenBreakCheck );
   #elif (CLIENT_OS == OS_RISCOS)
     signal( SIGINT, CliSignalHandler );
+    RegisterPollDrivenBreakCheck( CliPollDrivenBreakCheck );
   #elif (CLIENT_OS == OS_OS2)
     signal( SIGINT, CliSignalHandler );
     signal( SIGTERM, CliSignalHandler );
-  #elif (CLIENT_OS == OS_DOS)
-    break_on(); //break on any dos call 
-    signal( SIGINT, CliSignalHandler );  //The  break_o functions can be used
-    signal( SIGTERM, CliSignalHandler ); // with DOS to restrict break checking
-    signal( SIGABRT, CliSignalHandler ); // break_off(): raise() on conio only
-    signal( SIGBREAK, CliSignalHandler ); //break_on(): raise() on any dos call
   #elif (CLIENT_OS == OS_IRIX) && defined(__GNUC__)
     signal( SIGHUP, (void(*)(...)) CliSignalHandler );
     signal( SIGQUIT, (void(*)(...)) CliSignalHandler );
