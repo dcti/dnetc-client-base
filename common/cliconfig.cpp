@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.136  1998/07/08 16:29:52  remi
+// Adjusted DES credits.
+//
 // Revision 1.135  1998/07/08 09:46:31  remi
 // Added support for the MMX bitslicer.
 // Added -nommx command line option and 'usemmx' ini file setting so the user
@@ -218,7 +221,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.135 1998/07/08 09:46:31 remi Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.136 1998/07/08 16:29:52 remi Exp $";
 return id; }
 #endif
 
@@ -3014,9 +3017,11 @@ void Client::PrintBanner(const char * /*clname*/)
   LogScreenf( "\nRC5DES v2.%d.%d client - a project of distributed.net\n"
           "Copyright distributed.net 1997-1998\n"
           #if defined(KWAN)
-          "DES search routines Copyright Matthew Kwan\n"
             #if defined(MEGGS) //t'is only fair - 1998/06/21 cyrus
             "DES bitslice driver Copyright Andrew Meggs\n"
+            "DES sboxes routines Copyright Matthew Kwan\n"
+            #else
+            "DES search routines Copyright Matthew Kwan\n"
             #endif
           #endif
           #if (CLIENT_CPU == CPU_X86)
