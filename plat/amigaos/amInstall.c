@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amInstall.c,v 1.2.4.4 2004/01/22 18:21:35 piru Exp $
+ * $Id: amInstall.c,v 1.2.4.5 2004/05/07 23:43:12 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -25,17 +25,19 @@
 #pragma pack()
 #endif
 
-#ifdef __MORPHOS__
-#define WBSTARTICONNAME "SYS:WBStartup/dnetc"
-#define CLIENTSTACKSIZE 4096
+#if defined(__OS3PPC__)
+  #define WBSTARTICONNAME "SYS:WBStartup/dnetc_ppc"
+  #define CLIENTSTACKSIZE 200000
+#elif !defined(__PPC__)
+  #define WBSTARTICONNAME "SYS:WBStartup/dnetc_68k"
+  #define CLIENTSTACKSIZE 64*1024
 #else
-#ifdef __PPC__
-#define WBSTARTICONNAME "SYS:WBStartup/dnetc_ppc"
-#define CLIENTSTACKSIZE 200000
-#else
-#define WBSTARTICONNAME "SYS:WBStartup/dnetc_68k"
-#define CLIENTSTACKSIZE 64*1024
-#endif
+  #define WBSTARTICONNAME "SYS:WBStartup/dnetc"
+  #if defined(__MORPHOS__)
+    #define CLIENTSTACKSIZE 4096
+  #else
+    #define CLIENTSTACKSIZE 200000
+  #endif
 #endif
 
 int amigaInstall(int quiet, const char *progname)
