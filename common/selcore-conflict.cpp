@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.11 1999/10/22 17:57:05 michmarc Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.12 1999/10/24 10:45:42 remi Exp $"; }
 
 
 #include "cputypes.h"
@@ -503,6 +503,21 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       selcorestatics.corenum[CSC] = selcorestatics.user_cputype[CSC];
       if (selcorestatics.corenum[CSC] < 0)
       {
+  #if (__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 95))
+	// select the right cores if compiled with GCC 2.95 and up
+	switch( detected_type & 0xff ) {
+	case 2:  // 386/486
+	  selcorestatics.corenum[CSC] = 3; // 1key - called
+	  break;
+	case 3:  // Ppro/PII/Celeron/PIII
+	case 5:  // K5
+	  selcorestatics.corenum[CSC] = 2; // 1key - inline
+	  break;
+	case 6:  // K6/K6-2/K6-3
+	  selcorestatics.corenum[CSC] = 0; // 6bit - inline
+	  break;
+	}
+  #endif
   #if 0
         int cpu2core = detected_type & 0xff;
         /* note: because these are C cores, crunch efficacy can swing
