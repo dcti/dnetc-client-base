@@ -6,7 +6,7 @@
  * This is based on GARSP 5.13 "Garry's adaptions of Rado's search principles".
  * There were many modifications ... can anyone tell?
  */
-#define __OGR_CORE__ "@(#)$Id: ogr_g_r.cor,v 1.1.2.11.2.2 2001/04/01 20:19:09 andreasb Exp $"
+#define __OGR_CORE__ "@(#)$Id: ogr_g_r.cor,v 1.1.2.11.2.3 2001/04/01 20:38:12 andreasb Exp $"
 
 #if (OGROPT_ALTERNATE_CYCLE == 0)
 
@@ -277,59 +277,6 @@ const char* ogr_name()
     a4 = b | a4;                      \
     lev2->comp[4] = a4;               \
   }
-
-
-/* ************************************************************************* */
-
-
-static int found_one(const struct State *oState)
-{
-  /* confirm ruler is golomb */
-  {
-    register int i, j;
-    #if (OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE == 2)
-    char diffs[((1024-64)+7)/8];
-    #elif (OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE == 1)
-    char diffs[((1024)+7)/8];
-    #else
-    char diffs[1024];
-    #endif
-    register int max = oState->max;
-    register int maxmarks = oState->maxmarks;
-    #if 1 /* (OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE == 1) || \
-             (OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE == 2) */
-    memset( diffs, 0, sizeof(diffs) );
-    #else
-    for (i = max>>1; i>=1; i--) diffs[i] = 0;
-    #endif
-    for (i = 1; i < maxmarks; i++) {
-      register int marks_i = oState->Levels[i].cnt2;
-      for (j = 0; j < i; j++) {
-        register int diff = marks_i - oState->Levels[j].cnt2;
-        if (diff+diff <= max) {        /* Principle 1 */
-          if (diff <= 64) break;      /* 2 bitmaps always tracked */
-          #if (OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE == 2) || \
-              (OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE == 1)
-          {
-            register int mask;
-            #if (OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE == 2)
-            diff -= 64;
-            #endif
-            mask = 1<<(diff&7);
-            diff >>= 3;
-            if ((diffs[diff] & mask)!=0) return 0;
-            diffs[diff] |= (char)mask;
-          }
-          #else
-          if (diffs[diff]) return 0;
-          diffs[diff] = 1;
-          #endif
-        }
-      }
-    }
-  }
-  return 1;
-}
 
 
 /* ************************************************************************* */
@@ -610,15 +557,10 @@ stay:
     }
 #endif
 
-    /* New ruler? */
+    /* New ruler? Verification will be done at master. */
     if (depth == oState->maxdepth) {
-      //oState->markpos[oState->maxdepth] = lev->cnt2;       /* not placed yet into list arrays! */
-      /* found_one() doesn't use part 2 of State */
-      if (found_one(oState)) {
-        retval = CORE_S_SUCCESS;
-        break;
-      }
-      goto stay;
+      retval = CORE_S_SUCCESS;
+      break;
     }
 
     /* Go Deeper */

@@ -8,7 +8,7 @@
  * - use the processor cache better when many registers are available
  * - support altivec
  */
-#define __OGR_CORE__ "@(#)$Id: ogr_o_c.cor,v 1.1.2.8.2.2 2001/04/01 20:19:09 andreasb Exp $"
+#define __OGR_CORE__ "@(#)$Id: ogr_o_c.cor,v 1.1.2.8.2.3 2001/04/01 20:38:12 andreasb Exp $"
 
 #if ( (OGROPT_ALTERNATE_CYCLE == 1) || (OGROPT_ALTERNATE_CYCLE == 2))
 
@@ -1335,49 +1335,6 @@ const char* ogr_name()
 /* ************************************************************************* */
 
 
-static int found_one(const struct State *oState)
-{
-   /* confirm ruler is golomb */
-   int i, j;
-   const int maximum = oState->max;
-   const int maximum2 = maximum >> 1;     // shouldn't this be rounded up?
-   const int maxmarks = oState->maxmarks;
-   const struct Level *levels = &oState->Levels[0];
-   char diffs[1024]; // first 64 entries will never be used!
-
-   // always check for buffer overruns!
-   if (maximum2 >= 1024)
-      return CORE_E_MEMORY;
-
-   memset( diffs, 0, maximum2 + 1 );
-
-   for (i = 1; i < maxmarks; i++) {
-      int levelICount = levels[i].cnt2;
-
-      for (j = 0; j < i; j++) {
-           int diff = levelICount - levels[j].cnt2;
-
-         if (2*diff <= maximum) {      /* Principle 1 */
-
-            if (diff <= 64)
-               break;     /* 2 bitmaps always tracked */
-
-            if (diffs[diff] != 0)
-               return CORE_S_CONTINUE;
-
-            diffs[diff] = 1;
-         }
-
-      }   /* for (j = 0; j < i; j++) */
-
-   }  /* for (i = 1; i < maxmarks; i++) */
-
-  return CORE_S_SUCCESS;
-}
-
-
-/* ************************************************************************* */
-
 
 static int ogr_create(void *input, int inputlen, void *state, int statelen)
 {
@@ -1624,14 +1581,11 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
          if (comp == 0xffffffff)    goto stay;
       }
 
-      /* New ruler? */
+      /* New ruler? Verification will be done at master. */
       if (depth == oStateMaxDepthM1) {
          levMaxM1->cnt2 = cnt2;       /* not placed yet into list arrays! */
-         retval = found_one(oState);
-         if (retval != CORE_S_CONTINUE) {
-            break;
-         }
-         goto stay;
+        retval = CORE_S_SUCCESS;
+        break;
       }
 
       /* Go Deeper */

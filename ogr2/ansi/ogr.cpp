@@ -8,7 +8,7 @@
  * - it #includes all neccessary .cor (core functions/macros), 
  *   .mac (general macros), .inc (general stuff) files
  */
-#define __OGR_CPP__ "@(#)$Id: ogr.cpp,v 1.1.2.43.2.1 2001/04/01 20:19:09 andreasb Exp $"
+#define __OGR_CPP__ "@(#)$Id: ogr.cpp,v 1.1.2.43.2.2 2001/04/01 20:38:11 andreasb Exp $"
 
 #include <stdio.h>      /* printf for debugging */
 #include <stdlib.h>     /* malloc (if using non-static choose dat) */
@@ -30,7 +30,6 @@
   #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 0/1 - default is 1 ('yes') */
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* 0/1 - default is hw dependant */
   #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 0-2 - default is 1 */
-  #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 0-2 - default is 2 */
   #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* 0/1 - default is 1 ('yes') */
   #define OGROPT_ALTERNATE_CYCLE                0 /* 0/1 - default is 0 ('no') */
   #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* 0-2 - default is 0 */
@@ -46,7 +45,6 @@
   #define OGROPT_BITOFLIST_DIRECT_BIT             0 /* 'no' irrelevant */
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM     0 /* 'no' no asm */
   #define OGROPT_COPY_LIST_SET_BIT_JUMPS          1 /* 0-2 - default is 1 */
-  #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE   2 /* 0-2 - default is 2 */
   #define OGROPT_STRENGTH_REDUCE_CHOOSE           1 /* 0/1 - default is 1 ('yes') */
   #define OGROPT_ALTERNATE_CYCLE                  1 /* 0/1 - default is 0 ('no') */
   #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT   0 /* 0-2 - default is 0 */
@@ -56,7 +54,6 @@
   #if (__MWERKS__)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
-    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* MWC does benefit */
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
@@ -64,7 +61,6 @@
   #elif (__MRC__)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
-    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* MrC is better    */
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
@@ -72,7 +68,6 @@
   #elif (__APPLE_CC__)//GCC with exclusive ppc, mach-o and ObjC extensions
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
-    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* ACC does benefit */
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
@@ -80,7 +75,6 @@
   #elif (__GNUC__)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
-    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* GCC does benefit */
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
@@ -92,7 +86,6 @@
   #if (__GNUC__)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
-    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* GCC does benefit */
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
@@ -104,7 +97,6 @@
   #if (__GNUC__)
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1
     #define OGROPT_BITOFLIST_DIRECT_BIT           0
-    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         1
     #define OGROPT_ALTERNATE_CYCLE                0
     #define OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP 1
@@ -154,22 +146,6 @@
 */
 #ifndef OGROPT_COPY_LIST_SET_BIT_JUMPS
 #define OGROPT_COPY_LIST_SET_BIT_JUMPS 1        /* 0 (no opt) or 1 or 2 */
-#endif
-
-
-/* reduction of found_one maps by using single bits intead of whole chars
-   0=no reduction (upto 1024 octets); 1=1024 bits in 128 chars; 2=120 chars
-   opt 1 or 2 adds two shifts, two bitwise 'and's and one bitwise 'or'.
-   NOTE: that found_one() is not a speed critical function, and *should*
-   have no effect on -benchmark at all since it is never called for -bench,
-   Some compilers/archs show a negative impact on -benchmark because
-   they optimize register usage in ogr_cycle while tracking those used in
-   found_one and/or are size sensitive, and the increased size of found_one()
-   skews -benchmark. [the latter can be compensated for by telling the
-   compiler to align functions, the former by making found_one() non static]
-*/
-#ifndef OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE
-#define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2 /* 0 (no opt) or 1 or 2 */
 #endif
 
 
@@ -301,7 +277,6 @@ static const int OGR_length[] = { /* use: OGR_length[depth] */
 
 #ifndef __MRC__
 static int init_load_choose(void);
-static int found_one(const struct State *oState);
 static int ogr_init(void);
 static const char* ogr_name(void);
 static const char* ogr_core_id(void);
