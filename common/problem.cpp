@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.84  1999/03/01 06:50:28  foxyloxy
+// Prototype correction.... crunch() declared extern "C++" instead of "C".
+//
 // Revision 1.83  1999/02/21 21:44:59  cyp
 // tossed all redundant byte order changing. all host<->net order conversion
 // as well as scram/descram/checksumming is done at [get|put][net|disk] points
@@ -256,7 +259,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.83 1999/02/21 21:44:59 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.84 1999/03/01 06:50:28 foxyloxy Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -343,7 +346,7 @@ extern void CliSignalHandler(int);
 #elif (CLIENT_CPU == CPU_MIPS)
   #if (CLIENT_OS != OS_ULTRIX)
     #if (MIPS_CRUNCH == 1)
-    extern "C" u32 crunch( register RC5UnitWork * rc5unitwork, u32 timeslice);
+    extern "C++" u32 crunch( register RC5UnitWork * rc5unitwork, u32 timeslice);
     extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
     #else
     extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
