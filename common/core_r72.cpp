@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.6 2003/09/12 13:25:16 mweiser Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.7 2003/10/19 12:10:09 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -43,6 +43,8 @@ extern "C" s32 CDECL rc5_72_unit_func_dg_2( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_dg_3( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_dg_3a( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_ss_2( RC5_72UnitWork *, u32 *, void *);
+#elif (CLIENT_CPU == CPU_X86_64)
+extern "C" s32 CDECL rc5_72_unit_func_snjl( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_ARM)
 extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 rc5_72_unit_func_arm2( RC5_72UnitWork *, u32 *, void *);
@@ -111,6 +113,7 @@ const char **corenames_for_contest_rc572()
       "ANSI 1-pipe",
       #endif
   #elif (CLIENT_CPU == CPU_X86_64)
+      "DG64 3-pipe",
       "ANSI 4-pipe",
       "ANSI 2-pipe",
       "ANSI 1-pipe",
@@ -451,6 +454,7 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         unit_func.gen_72 = rc5_72_unit_func_arm2;
         pipeline_count = 1;
         break;
+     // -----------
      #elif (CLIENT_CPU == CPU_68K) && (defined(__GCC__) || defined(__GNUC__))
       case 0:
         unit_func.gen_72 = rc5_72_unit_func_030_mh_1;
@@ -466,6 +470,7 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         unit_func.gen_72 = rc5_72_unit_func_060_mh_2;
         pipeline_count = 2;
         break;
+     // -----------
      #elif (CLIENT_CPU == CPU_X86) && !defined(HAVE_NO_NASM)
       case 0:
         unit_func.gen_72 = rc5_72_unit_func_ses;
@@ -493,6 +498,27 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         unit_func.gen_72 = rc5_72_unit_func_ss_2;
         pipeline_count = 2;
         break;
+     // -----------
+     #elif (CLIENT_CPU == CPU_X86_64)
+      case 0:
+        unit_func.gen_72 = rc5_72_unit_func_snjl;
+        pipeline_count = 3;
+        break;
+      case 1:
+        unit_func.gen_72 = rc5_72_unit_func_ansi_4;
+        pipeline_count = 4;
+        break;
+      case 2:
+        unit_func.gen_72 = rc5_72_unit_func_ansi_2;
+        pipeline_count = 2;
+        break;
+      case 3:
+      default:
+        unit_func.gen_72 = rc5_72_unit_func_ansi_1;
+        pipeline_count = 1;
+        coresel = 3; // yes, we explicitly set coresel in the default case !
+        break;
+    // -----------
     #elif (CLIENT_CPU == CPU_POWERPC) && \
           (CLIENT_OS != OS_WIN32) && (CLIENT_OS != OS_MACOS)
       case 0:
@@ -533,6 +559,7 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
           pipeline_count = 4;
           break;
       #endif
+     // -----------
      #else /* the ansi cores */
       case 0:
         unit_func.gen_72 = rc5_72_unit_func_ansi_4;
@@ -550,6 +577,7 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         break;
      #endif
 
+     // -----------
      /* additional cores */
      #if (CLIENT_CPU == CPU_SPARC)
        case 3:
@@ -565,6 +593,7 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
          pipeline_count = 2;
          break;
      #endif
+     // -----------
      #if (CLIENT_CPU == CPU_MIPS)
        case 3:
          unit_func.gen_72 = rc5_72_unit_func_MIPS_2;
