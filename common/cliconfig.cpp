@@ -501,7 +501,8 @@ printf("------------------------------------------------------------\n\n");
         case CONF_HOURS:
           minutes = (s32) (60. * atol(parm));
           if ( minutes < 0 ) minutes = 0;
-          strncpy( hours, parm, sizeof(hours) - 1 );
+          sprintf(hours,"%u.%02u", (unsigned)(minutes/60),
+          (unsigned)(minutes%60)); //1.000000 hours looks silly          sprintf( hours, "%d", minutes/60);
           break;
         case CONF_TIMESLICE:
           timeslice = atoi(parm);
