@@ -3,12 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk-conflict.cpp,v $
+// Revision 1.22  1999/02/07 16:02:38  cyp
+// gericificied variable/function names; fixed blatant bugs.
+//
 // Revision 1.21  1999/02/06 09:08:08  remi
 // Enhanced the lurk fonctionnality on Linux. Now it use a list of interfaces
 // to watch for online/offline status. If this list is empty (the default), any
-// interface up and running (besides the lookback one) will trigger the online
+// interface up and running (besides the loopback one) will trigger the online
 // status.
-// Fixed formating in lurk.cpp.
 //
 // Revision 1.20  1999/02/05 23:24:38  silby
 // Changed long -> unsigned long so type matched.
@@ -57,7 +59,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk-conflict.cpp,v 1.21 1999/02/06 09:08:08 remi Exp $"; }
+return "@(#)$Id: lurk-conflict.cpp,v 1.22 1999/02/07 16:02:38 cyp Exp $"; }
 #endif
 
 /* --------------------------------- */
@@ -77,28 +79,33 @@ int Lurk::CheckIfConnectRequested(void) //yes/no
 
   if (IsConnected()) //we are connected!
     {
-      if ( lastcheckshowedconnect ) // We previously weren't connected
-        LogScreen("Dialup Connection Detected."); // so this is the first time
-      lastcheckshowedconnect = 1;
-      return 1;
+    if ( lastcheckshowedconnect == 0 ) // We previously weren't connected
+      {
+      if (conndevice[0]==0)
+        LogScreen("Dialup Connection Detected...\n"); // so this is the first time
+      else
+        LogScreen("Connection detected on '%s'...\n", conndevice );
+      }
+    lastcheckshowedconnect = 1;
+    return 1;
     }
   else if ( lastcheckshowedconnect ) // we were previously connected...connection lost
     {
-      char *msg = "";
-      lastcheckshowedconnect = 0;        // So we know next time through this loop
-      if (lurkmode == CONNECT_LURKONLY) // Lurk-only mode
-        msg = "\nConnections will not be initiated by the client.";
-      LogScreen("Dialup Connection Disconnected.%s",msg);
+    char *msg = "";
+    lastcheckshowedconnect = 0;        // So we know next time through this loop
+    if (lurkmode == CONNECT_LURKONLY) // Lurk-only mode
+      msg = "\nConnections will not be initiated by the client.";
+    LogScreen("Dialup Connection Disconnected.%s",msg);
     }
   return 0;
 }
 
 /* ---------------------------------------------------------- */
 
-int Lurk::CheckForStatusChange(void) //returns !0 if connection dropped
+int Lurk::CheckForStatusChange(void) //returns -1 if connection dropped
 {
-  if ( (lurkmode == 0) && (!dialwhenneeded) )
-    return 0; // We're not lurking.
+  //if ( (lurkmode == 0) && (!dialwhenneeded) )
+  //  return 0; // We're not lurking.
   if ( lastcheckshowedconnect && !IsConnected() ) //if (Status() < oldlurkstatus)
     return -1;  // we got disconnected!
   return 0;
@@ -119,14 +126,19 @@ int Lurk::CheckForStatusChange(void) //returns !0 if connection dropped
 //#include <linux/if_slip.h>
 //#include <linux/if.h>
 #include <stdio.h>
-#include <errno.h>
+//#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
 
 #include <windows.h>
+#include <string.h>
+static int have_winsock = 0;
+static int demand_loadable = 0;
+static HINSTANCE hwsockinst = NULL;
 
 #elif (CLIENT_OS == OS_WIN32)
 
@@ -156,22 +168,23 @@ static rasenumentriesT rasenumentries = NULL;
 
 static HINSTANCE hrasapiInstance = NULL;
 static int rasapiinitialized = 0;
+char rasapiiniterrmsg[64];
 
 static int DeinitializeRASAPI(void)
 {
   if ((--rasapiinitialized) == 0) 
-  {
+    {
     if (hrasapiInstance)
       FreeLibrary(hrasapiInstance);
     hrasapiInstance = NULL;
-  }
+    }
   return 0;
 }
 
 static int InitializeRASAPI(void)
 {
   if ((++rasapiinitialized) == 1)
-  {
+    {
     OFSTRUCT ofstruct;
     ofstruct.cBytes = sizeof(ofstruct);
 
@@ -181,14 +194,14 @@ static int InitializeRASAPI(void)
     #define OF_SEARCH 0x0400
     #endif
     if ( OpenFile( "RASAPI32.dll", &ofstruct, OF_EXIST|OF_SEARCH) >= 0)
-    {
+      {
       hrasapiInstance = LoadLibrary( ofstruct.szPathName );
       if ((UINT)hrasapiInstance <= 32)
         hrasapiInstance = NULL;
       else
         rasapiinitialized = 1;
+      }
     }
-  }
   return ((rasapiinitialized > 0)?(0):(-1));
 }
 
@@ -217,12 +230,12 @@ struct ifact
 {
   short ifNumber;
   struct iftable
-  {
+    {
     ULONG ifa_addr;
     short  ifIndex;
     ULONG ifa_netm;
     ULONG ifa_brdcast;
-  } iftable[IFMIB_ENTRIES];
+    } iftable[IFMIB_ENTRIES];
 };
 #pragma pack()
 #if defined(__EMX__)
@@ -239,43 +252,107 @@ struct ifact
 
 /* ========================================================== */
 
-char *Lurk::GetEntryList(long *finalcount)
+Lurk::Lurk()
 {
-  *finalcount=0;
+  islurkstarted = lastcheckshowedconnect = dohangupcontrol = 0;
+  lurkmode = dialwhenneeded = 0;
+  conndevice[0] = connprofile[0] = connifacemask[0] = 0;
+  connstartcmd[0] = connstopcmd[0] = 0;
 
-  if (!islurkstarted)
-    return NULL; // Lurk can't be started, evidently
+#if (CLIENT_OS == OS_WIN32)
+  if (InitializeRASAPI() != 0)
+    strcpy(rasapiiniterrmsg,"RASAPI32.DLL is not available.");
+  else  
+    {
+    rasapiiniterrmsg[0]=0;
+    rasenumconnections = (rasenumconnectionsT) LoadRASAPIProc("RasEnumConnectionsA");
+    rasgetconnectstatus = (rasgetconnectstatusT) LoadRASAPIProc("RasGetConnectStatusA");
+    rashangup = (rashangupT) LoadRASAPIProc("RasHangUpA");
+    rasdial = (rasdialT) LoadRASAPIProc("RasDialA");
+    rasgeterrorstring = (rasgeterrorstringT) LoadRASAPIProc("RasGetErrorStringA");
+    rasgetentrydialparams = (rasgetentrydialparamsT)LoadRASAPIProc("RasGetEntryDialParamsA");
+    rasenumentries = (rasenumentriesT)LoadRASAPIProc("RasEnumEntriesA");
 
-#if (CLIENT_OS==OS_WIN32)
+    if (!rasenumconnections || !rasgetconnectstatus || !rashangup ||
+        !rasdial || !rasgeterrorstring || !rasgetentrydialparams ||
+        !rasenumentries )
+      {
+      LPVOID lpMsgBuf;
+      FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+        NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+        (LPTSTR) &lpMsgBuf,0,NULL);
+      strncpy( rasapiiniterrmsg, (char *)lpMsgBuf, sizeof(rasapiiniterrmsg));
+      rasapiiniterrmsg[sizeof(rasapiiniterrmsg)-1]=0;
+      LocalFree( lpMsgBuf );
+      DeinitializeRASAPI();
+      }
+    }
+#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+  OFSTRUCT ofstruct;
+  ofstruct.cBytes = sizeof(ofstruct);
 
-  RASENTRYNAME rasentries[10];
-  static char configentries[10][60];
-  unsigned long buffersize;
-  unsigned long entrycount;
-  char *EntryList;
-
-  rasentries[0].dwSize=sizeof(RASENTRYNAME);
-
-  buffersize=sizeof(rasentries);
-  entrycount=0;
-
-  rasenumentries(NULL,NULL,&rasentries[0],&buffersize,&entrycount);
-
-  if (entrycount >= 1)
-  {
-    if (entrycount > 10)
-      entrycount = 10;
-    for (unsigned int temp=0;temp < entrycount;temp++)
-      strncpy(&configentries[temp][0],&rasentries[temp].szEntryName[0], 60);
-  }
-
-  EntryList=&configentries[0][0];
-  *finalcount=(int)entrycount;
-  return EntryList;
-
-#else
-  return NULL;
+  demand_loadable = 0;
+  have_winsock = 0;
+  if ( OpenFile( "WINSOCK.DLL", &ofstruct, OF_EXIST|OF_SEARCH) >= 0)
+    {
+    char *p = strrchr( ofstruct.szPathName, '\\' );
+    const char *q = "TRUMPWSK.INI";
+    have_winsock = 1;
+    if (p != NULL)
+      {
+      strcpy( p+1, q );
+      q = (const char *)(&ofstruct.szPathName[0]);
+      }
+    if ( OpenFile( q, &ofstruct, OF_EXIST|OF_SEARCH) >= 0)
+      {      
+      int i=GetPrivateProfileInt( "Trumpet Winsock", "dial-option", 0, ofstruct.szPathName );
+      if (i != 0) /* 1==login on demand, 2=login/logout on demand */
+        demand_loadable = 1;
+      }
+    }
 #endif
+  return;
+}
+
+/* ---------------------------------------------------------- */
+
+Lurk::~Lurk()
+{
+  islurkstarted = lastcheckshowedconnect = 0;
+  #if (CLIENT_OS==OS_WIN32)
+  DeinitializeRASAPI();
+  #endif
+  return;
+}
+
+/* ---------------------------------------------------------- */
+
+const char **Lurk::GetConnectionProfileList(void)
+{
+#if (CLIENT_OS==OS_WIN32)
+  static RASENTRYNAME rasentries[10];
+  static char *configptrs[(sizeof(rasentries)/sizeof(rasentries[0]))+1];
+  if (rasapiinitialized > 0)
+    {
+    DWORD buffersize = sizeof(rasentries);
+    DWORD maxentries = 0;
+    rasentries[0].dwSize=sizeof(RASENTRYNAME);
+    if ( rasenumentries(NULL,NULL,&rasentries[0],&buffersize,&maxentries) != 0)
+      maxentries = 0;
+    if (maxentries >= 1)
+      {
+      DWORD entry = 0;
+      unsigned int index = 0;
+      for (;((entry < maxentries) && 
+            (index < (sizeof(configptrs)/sizeof(configptrs[0])))); entry++)
+        configptrs[index++]=rasentries[entry].szEntryName;
+      configptrs[index] = NULL;
+      return (const char **)(&configptrs[0]);
+      }
+    }    
+#endif
+  return NULL;
 }
 
 /* ---------------------------------------------------------- */
@@ -283,46 +360,38 @@ char *Lurk::GetEntryList(long *finalcount)
 int Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
 {
   if (lurkmode != CONNECT_LURKONLY && lurkmode != CONNECT_LURK)
-  {
+    {
     lurkmode = 0;
     return -1; // We're not supposed to lurk!
-  }
+    }
   if (islurkstarted)
     return 0;
 
 #if (CLIENT_OS == OS_WIN32)
-
-  if (InitializeRASAPI() != 0)
-  {
-    LogScreen("Couldn't load rasapi32.dll\n"
-              "Dial-up must be installed for -lurk/-lurkonly");
+  if (rasapiinitialized <= 0)
+    {
+    char *msg = "Dial-up must be installed for -lurk/-lurkonly.";
+    if (rasapiiniterrmsg)
+      LogScreen("%s\n%s", rasapiiniterrmsg, msg );
+    else
+      LogScreen(msg);
     lurkmode = 0;
     return -1;
-  }
-
-  rasenumconnections = (rasenumconnectionsT) LoadRASAPIProc("RasEnumConnectionsA");
-  rasgetconnectstatus = (rasgetconnectstatusT) LoadRASAPIProc("RasGetConnectStatusA");
-  rashangup = (rashangupT) LoadRASAPIProc("RasHangUpA");
-  rasdial = (rasdialT) LoadRASAPIProc("RasDialA");
-  rasgeterrorstring = (rasgeterrorstringT) LoadRASAPIProc("RasGetErrorStringA");
-  rasgetentrydialparams = (rasgetentrydialparamsT)LoadRASAPIProc("RasGetEntryDialParamsA");
-  rasenumentries = (rasenumentriesT)LoadRASAPIProc("RasEnumEntriesA");
-
-  if (!rasenumconnections || !rasgetconnectstatus || !rashangup ||
-      !rasdial || !rasgeterrorstring || !rasgetentrydialparams ||
-      !rasenumentries )
-  {
-    LPVOID lpMsgBuf;
-    FormatMessage(
-      FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-      NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-      (LPTSTR) &lpMsgBuf,0,NULL);
-    LogScreen("%s\nDial-up must be installed for -lurk/-lurkonly",lpMsgBuf);
-    LocalFree( lpMsgBuf );
-    DeinitializeRASAPI();
-    lurkmode = 0;
+    }
+#elif (CLIENT_OS == OS_WIN16)
+  if (!have_winsock)
+    {
+    LogScreen("Winsock must be available for -lurk/-lurkonly.");
+    dialwhenneeded = lurkmode = 0;
     return -1;
-  }
+    }
+  if (dialwhenneeded && !demand_loadable)
+    {
+    LogScreen("Demand dialing is only supported for Trumpet Winsock.\n");
+    dialwhenneeded = 0;
+    }
+#elif (CLIENT_OS == OS_OS2)
+  dialwhenneeded = 0; /* disabled until we can get this fixed */  
 #endif
 
   islurkstarted=1;
@@ -333,28 +402,41 @@ int Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
 
 int Lurk::Stop(void)// DeInitializes Lurk Mode. returns 0 on success.
 {
-  if (islurkstarted)
-  {
-    #if (CLIENT_OS==OS_WIN32)
-    DeinitializeRASAPI();
-    #endif
-    islurkstarted=0;
-  };
+  islurkstarted=0;
   return 0;
 }
 
 /* ---------------------------------------------------------- */
 
-int Lurk::IsConnected(void)   // Checks status of connection
+int Lurk::GetCapabilityFlags(void)
 {
+  int what = 0;
+  #if (CLIENT_OS == OS_WIN32) /* does not support iface masking */
+  if (rasapiinitialized > 0)
+    what = (CONNECT_LURK|CONNECT_LURKONLY|CONNECT_DOD|CONNECT_DODBYPROFILE);
+  #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+  if (have_winsock) what = ( CONNECT_LURK | CONNECT_LURKONLY);
+  if (demand_loadable) what |= CONNECT_DOD;
+  #elif (CLIENT_OS == OS_LINUX)
+  what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DOD | CONNECT_IFACEMASK);
+  #elif (CLIENT_OS == OS_OS2)
+  what = ( CONNECT_LURK | CONNECT_LURKONLY);
+  #endif
+  return what;
+}
+
+/* ---------------------------------------------------------- */
+
+int Lurk::IsConnected(void)               // Checks status of connection
+{                                              
+  conndevice[0]=0;
+
   if (!islurkstarted)
     return 0;
-  if (lurkmode != CONNECT_LURKONLY && lurkmode != CONNECT_LURK)
-    return 1; // We're not supposed to lurk!
 
 #if (CLIENT_OS == OS_WIN32)
   if (rasenumconnections && rasgetconnectstatus)
-  {
+    {
     RASCONN rasconn[8];
     DWORD cb;
     DWORD cConnections;
@@ -362,161 +444,173 @@ int Lurk::IsConnected(void)   // Checks status of connection
     (rasconn[0]).dwSize = sizeof(RASCONN);
     cb = sizeof(rasconn);
     if (rasenumconnections(&rasconn[0], &cb, &cConnections) == 0)
-    {
-      if (cConnections > 0)
       {
+      if (cConnections > 0)
+        {
         rasconnstatus.dwSize = sizeof(RASCONNSTATUS);
         for (DWORD whichconn = 1; whichconn <= cConnections; whichconn++)
-        {
+          {
           if (rasgetconnectstatus((rasconn[whichconn-1]).hrasconn,&rasconnstatus) == 0 && 
               rasconnstatus.rasconnstate == RASCS_Connected)
+            {
+            strncpy( conndevice, (rasconn[whichconn-1]).szEntryName, sizeof(conndevice) );
+            conndevice[sizeof(conndevice)-1]=0;
             return 1;// We're connected
+            }
+          }
         }
       }
     }
-  }
 #elif (CLIENT_OS == OS_OS2)
-   int s, rc, i, j;
+   int s, i, rc, j, foundif = 0;
    struct ifmib MyIFMib = {0};
    struct ifact MyIFNet = {0};
 
    MyIFNet.ifNumber = 0;
    s = socket(PF_INET, SOCK_STREAM, 0);
    if (s >= 0)
-   {
-     /* get active interfaces list */
-     rc = ioctl(s, SIOSTATAT, (char *)&MyIFNet, sizeof(MyIFNet));
-     if (rc >= 0)
      {
+     /* get active interfaces list */
+     if ( ioctl(s, SIOSTATAT, (char *)&MyIFNet, sizeof(MyIFNet)) >= 0 )
+       {
        if ( ioctl(s, SIOSTATIF, (char *)&MyIFMib, sizeof(MyIFMib)) < 0)
          MyIFNet.ifNumber = 0;
        }
-     }
-     soclose(s);
-   }
-   for (i = 0; i < MyIFNet.ifNumber; i++)
-   {
-     j = MyIFNet.iftable[i].ifIndex;      /* j is now the index into the stats table for this i/f */
-     if (MyIFMib.iftable[j].ifType != HT_ETHER)   /* i/f is not ethernet */
-     {
-       if (MyIFMib.iftable[j].ifType != HT_PPP)  /* i/f is not loopback (yes I know it says PPP) */
+     for (i = 0; i < MyIFNet.ifNumber; i++)
        {
-         if (MyIFNet.iftable[i].ifa_addr != 0x0100007f)  /* same thing for TCPIP < 4.1 */
+       j = MyIFNet.iftable[i].ifIndex;      /* j is now the index into the stats table for this i/f */
+       if (MyIFMib.iftable[j].ifType != HT_ETHER)   /* i/f is not ethernet */
          {
-         if (MyIFNet.iftable[i].ifa_addr != 0x0100007f)  /* same thing for TCPIP < 4.1 */
+         if (MyIFMib.iftable[j].ifType != HT_PPP)  /* i/f is not loopback (yes I know it says PPP) */
            {
-           struct ifreq MyIFReq = {0};
-           if (j < 9)
-              {
-              sprintf(MyIFReq.ifr_name, "lan%d", j);
-              }
-           else
-              {
-              if (j > 9)
+           if (MyIFNet.iftable[i].ifa_addr != 0x0100007f)  /* same thing for TCPIP < 4.1 */
+             {
+             struct ifreq MyIFReq = {0};
+             if (j < 9)
+               {
+               sprintf(MyIFReq.ifr_name, "lan%d", j);
+               }
+             else if (j > 9)
+               {
+               sprintf(MyIFReq.ifr_name, "ppp%d", j-10);
+               }
+             else
+               {
+               strcpy(MyIFReq.ifr_name, "lo");
+               }
+             strncpy( conndevice, MyIFReq.ifr_name, sizeof(conndevice) );
+             conndevice[sizeof(conndevice)-1]=0;
+             rc = ioctl(s, SIOCGIFFLAGS, (char*)&MyIFReq, sizeof(MyIFReq));
+             if (!rc)
+               {
+               if ((MyIFReq.ifr_flags & IFF_UP) != 0)
                  {
-                 sprintf(MyIFReq.ifr_name, "ppp%d", j-10);
+                 foundif = i+1; // Report online if SLIP or PPP detected
+                 break;
                  }
-              else
-                 {
-                 strcpy(MyIFReq.ifr_name, "lo");
-                 }
-              }
-           rc = ioctl(s, SIOCGIFFLAGS, (char*)&MyIFReq, sizeof(MyIFReq));
-           if (!rc)
-              {
-              if ((MyIFReq.ifr_flags & IFF_UP) != 0)
-                 {
-                 soclose(s);
-                 return 1;      // Report online if SLIP or PPP detected
-                 }
-              }
-           }
-         }
-       }
-     }
+               }
+             } // != 0x0100007f
+           } // != HT_PPP (loopback actually)
+         } // != HT_ETHER
+       } //for ...
      soclose(s);
+     }
+   if (foundif)
+     return 1;
+   conndevice[0]=0;
+   
 #elif ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN16S))
-   HMODULE hmod = GetModuleHandle("WINSOCK");
-   if (hmod)
+   if ( GetModuleHandle("WINSOCK") )
      return 1;
 #elif (CLIENT_OS == OS_LINUX)
    struct ifconf ifc;
    struct ifreq *ifr;
    int n, foundif = 0;
+   char *p;
 
    int fd = socket(PF_INET,SOCK_STREAM,0);
    if (fd >= 0) 
-   {
+     {
      // retrive names of all interfaces
      // note : SIOCGIFCOUNT doesn't work so we have to hack around
      //        to retrieve the number of interfaces
      unsigned numreqs = 10;
      ifc.ifc_len = 0;
-     ifc.ifc_buf = (caddr_t) malloc (sizeof(struct ifreq) * numreqs);
+     ifc.ifc_buf = (caddr_t) malloc( sizeof(struct ifreq) * numreqs );
      while (ifc.ifc_buf)
-     {
+       {
        ifc.ifc_len = sizeof(struct ifreq) * numreqs;
        if (ioctl (fd, SIOCGIFCONF, &ifc) < 0)
-       {
+         {
          ifc.ifc_len = 0;
          break;
-       }
+         }
        if ((ifc.ifc_len / sizeof(struct ifreq)) < numreqs )
          break;
-
        // assume overflow, enlarge buffer
        numreqs += 10;
-       free (ifc.ifc_buf);
-       ifc.ifc_len = 0;
-       ifc.ifc_buf = (caddr_t) malloc (sizeof(struct ifreq) * numreqs);
-     } 
+       p = (char *)realloc((void *)ifc.ifc_buf, sizeof(struct ifreq)*numreqs);
+       if (!p)
+         break;
+       ifc.ifc_buf = (caddr_t)p;
+       } 
 
      // now browse through the interface watch list
      // and check if there is an interface up and running
      if (ifc.ifc_len)
-     {
+       {
+       char ifacestowatch[sizeof(connifacemask)+4]; //64+4
+       int i = 1, anydev = 0;
+       strcpy( ifacestowatch, ":" );
+       for (n=0;connifacemask[n];n++)
+         {
+         if (!isspace(connifacemask[n]))
+           ifacestowatch[i++]=connifacemask[n];
+         }
+       ifacestowatch[i]=0;
+       anydev = (i==1);
+       strcat( ifacestowatch, ":" );
+       
        //LogScreenf ("ifacestowatch = '%s'\n", ifacestowatch);
        for (n = 0, ifr = ifc.ifc_req; n < ifc.ifc_len; n += sizeof(struct ifreq), ifr++)
-       {
-         // check if this iface is in the iface watch list
-         //LogScreenf ("looking at '%s'\n", ifr->ifr_name);
-         if (ifacestowatch[0])
          {
-           char *ifaces = strdup(ifacestowatch);
-           if (ifaces)
+         int founddev = 0;
+         //LogScreenf ("looking at '%s'\n", ifr->ifr_name);
+         if (anydev)
+           founddev = 1;
+         else
            {
-             char *p = strtok (ifaces, ":");
-             while (p)
+           p = strstr( ifacestowatch, ifr->ifr_name );
+           if (p) 
+             founddev = (*(p-1)==':' && p[strlen(ifr->ifr_name)]==':');
+           }
+         if (founddev)
+           {
+           strncpy( conndevice, ifr->ifr_name, sizeof(conndevice) );
+           conndevice[sizeof(conndevice)-1]=0;
+           // now check if this iface is up and running
+           if ( ioctl(fd, SIOCGIFFLAGS, ifr) >= 0) // get iface flags
              {
-               if (strcmp (p, ifr->ifr_name) == 0)
-                 break;
-               p = strtok (NULL, ":");
+             //LogScreenf ("   flags = 0x%x\n", ifr->ifr_flags);
+             if ((ifr->ifr_flags & (IFF_UP | IFF_RUNNING | IFF_LOOPBACK)) 
+                                   == (IFF_UP | IFF_RUNNING))
+               {
+               foundif = (n / sizeof(struct ifreq)) + 1;
+               break;
+               }
              }
-             free (ifaces);
-             if (!p)     // iface not found in the watch list ?
-               continue; // go to the next
            }
          }
-
-         // now check if this iface is up and running
-         ioctl (fd, SIOCGIFFLAGS, ifr); // get iface flags
-         //LogScreenf ("   flags = 0x%x\n", ifr->ifr_flags);
-         if ((ifr->ifr_flags & (IFF_UP | IFF_RUNNING | IFF_LOOPBACK)) 
-             == (IFF_UP | IFF_RUNNING))
-         {
-           foundif = (n / sizeof(struct ifreq)) + 1;
-           break;
-         }
        }
-     }
 
      if (ifc.ifc_buf) 
        free (ifc.ifc_buf);
      close (fd);
-   }
+     }
 
    if (foundif)
      return 1;
+   conndevice[0]=0;
      
 #endif // OS_LINUX
   return 0;// Not connected
@@ -525,12 +619,9 @@ int Lurk::IsConnected(void)   // Checks status of connection
 /* ---------------------------------------------------------- */
 
 int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
-{                                /* returns 0 if connected, !0 if error */
+{                                /* returns 0 if connected, -1 if error */
   if (!islurkstarted)
     return -1; // Lurk can't be started, evidently
-
-  if (lurkmode != CONNECT_LURKONLY && lurkmode != CONNECT_LURK)
-    return 0; // We're not supposed to lurk!
 
   if (IsConnected()) // We're already connected
     return 0;
@@ -551,8 +642,29 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
   DWORD returnvalue;
   char errorstring[128];
 
+  if (connprofile[0]==0)
+    {
+    int n=0;
+    const char **connlist = GetConnectionProfileList();
+    if (connlist == NULL)
+      return -1;
+    if (connlist[0]==NULL)
+      return -1;
+    while (connlist[n])
+      {
+      if (strlen(connlist[n]) < sizeof(connprofile))
+        {
+        strcpy( connprofile, connlist[n] );
+        break;
+        }
+      n++;
+      }
+    if (connprofile[0]==0)
+      return -1;
+    }
+
   dialparameters.dwSize=sizeof(RASDIALPARAMS);
-  strcpy(dialparameters.szEntryName,connectionname);
+  strcpy(dialparameters.szEntryName,connprofile);
   strcpy(dialparameters.szPhoneNumber,"");
   strcpy(dialparameters.szCallbackNumber,"*");
   strcpy(dialparameters.szUserName,"");
@@ -563,17 +675,17 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
     rasgetentrydialparams(NULL,&dialparameters,&passwordretrieved);
 
   if ( returnvalue==0 )
-  {
+    {
     //if (passwordretrieved != TRUE)
     //  LogScreen("Password could not be found, connection may fail.");
-  }
+    }
   else
-  {
-    switch(returnvalue)
     {
+    switch(returnvalue)
+      {
       case ERROR_CANNOT_FIND_PHONEBOOK_ENTRY:
         LogScreen("Phonebook entry %s could not be found, aborting dial.",
-                  connectionname);
+                  dialparameters.szEntryName);
         return -1;
       case ERROR_CANNOT_OPEN_PHONEBOOK:
         LogScreen("The phonebook cound not be opened, aborting dial.");
@@ -581,44 +693,55 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
       case ERROR_BUFFER_INVALID:
         LogScreen( "Invalid buffer passed, aborting dial.");
         return -1;
+      }
     }
-  }
 
-  LogScreen("Dialing phonebook entry %s...",connectionname);
+  LogScreen("Dialing %s...",dialparameters.szEntryName);
   returnvalue=rasdial(NULL,NULL,&dialparameters,NULL,NULL,&connectionhandle);
 
   if (returnvalue == 0)
-  {
+    {
     dohangupcontrol = 1;  // should we also control hangup?
     return 0;             // If we got here, connection successful.
-  }
+    }
 
   rasgeterrorstring(returnvalue,errorstring,sizeof(errorstring));
   LogScreen("Connection initiation error:\n%s",errorstring);
 
-#elif (CLIENT_OS == OS_LINUX)
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2)
 
-  if (connectionname[0] == 0)  /* we don't do dialup */
-    return 0;                  /* bad! but same result as !dialwhenneeded */
+  if (connstartcmd[0] == 0)  /* we don't do dialup */
+    return 0;                /* bad! but same result as !dialwhenneeded */
 
-  if (system( connectionname ) == 127 /*exec error */)
-  {                                        //pppstart of whatever
-    LogScreen("Unable to exec '%s'\n%s\n", connectionname, strerror(errno));
+  if (system( connstartcmd ) == 127 /*exec error */)
+    {                                        //pppstart of whatever
+    LogScreen("Unable to exec '%s'\n%s\n", connstartcmd, strerror(errno));
     return -1;
-  }
+    }
   int retry;
   for (retry = 0; retry < 30; retry++)  // 30s max to connect with a modem
-  {
+    {
     sleep(1);
     if (IsConnected())
-    {
+      {
+      //LogScreen("Opened connection on %s...\n", conndevice );
       dohangupcontrol = 1;  // we should also control hangup
       return 0;
+      }
     }
-  }
-  if (stopconnection[0] != 0)
-    system( stopconnection );
+  if (connstopcmd[0] != 0)
+    system( connstopcmd );
 
+#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+  if (demand_loadable)
+    {
+    HINSTANCE tmp;
+    if ((tmp = LoadLibrary("WINSOCK.DLL")) < ((HINSTANCE)(32)))
+      return -1;
+    hwsockinst = tmp;
+    dohangupcontrol = 1;  // we should also control hangup
+    return 0;
+    }    
 #endif
 
   return -1; //failed
@@ -627,13 +750,10 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
 
 /* ---------------------------------------------------------- */
 
-int Lurk::HangupIfNeeded(void) //returns 0 on success, !0 on fail
+int Lurk::HangupIfNeeded(void) //returns 0 on success, -1 on fail
 {
   if (!islurkstarted)
     return -1;  // Lurk can't be started, evidently
-
-  if (lurkmode != CONNECT_LURKONLY && lurkmode != CONNECT_LURK)
-    return 0;              // We're not supposed to lurk!
 
   if (!dialwhenneeded)     // We don't handle dialing
     return 0;
@@ -644,14 +764,14 @@ int Lurk::HangupIfNeeded(void) //returns 0 on success, !0 on fail
     return ((isconnected)?(-1):(0));
 
   if (!isconnected)     // We're already disconnected
-  {
+    {
     dohangupcontrol = 0;
     return 0; 
-  }
+    }
 
 #if (CLIENT_OS == OS_WIN32)
   if (rasenumconnections && rasgetconnectstatus)
-  {
+    {
     RASCONN rasconn[8];
     DWORD cb;
     DWORD cConnections;
@@ -659,50 +779,61 @@ int Lurk::HangupIfNeeded(void) //returns 0 on success, !0 on fail
     (rasconn[0]).dwSize = sizeof(RASCONN);
     cb = sizeof(rasconn);
     if (rasenumconnections(&rasconn[0], &cb, &cConnections) == 0)
-    {
-      if (cConnections > 0)
       {
+      if (cConnections > 0)
+        {
         rasconnstatus.dwSize = sizeof(RASCONNSTATUS);
         for (DWORD whichconn = 1; whichconn <= cConnections; whichconn++)
-        {
+          {
           if (rasgetconnectstatus((rasconn[whichconn-1]).hrasconn,&rasconnstatus) == 0 && 
               rasconnstatus.rasconnstate == RASCS_Connected)
-          {
+            {
             // We're connected
             if (rashangup(rasconn[whichconn-1].hrasconn) == 0) // So kill it!
-            {
+              {
               dohangupcontrol = 0;
               return 0; // Successful hangup
-            }
+              }
             return -1; // RasHangUp reported an error.
+            }
           }
         }
       }
     }
-  }
-#elif (CLIENT_OS == OS_LINUX)
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2)
 
-  if (stopconnection[0] == 0) //what can we do?
-  {
+  if (connstopcmd[0] == 0) //what can we do?
+    {
     dohangupcontrol = 0;
     return 0;
-  }
-  if (system( stopconnection ) == 127 /* exec error */)
-  {                                               //pppstop of whatever
-    LogScreen("Unable to exec '%s'\n%s\n", stopconnection, strerror(errno));
+    }
+  if (system( connstopcmd ) == 127 /* exec error */)
+    {                                               //pppstop of whatever
+    LogScreen("Unable to exec '%s'\n%s\n", connstopcmd, strerror(errno));
     return -1;
-  } 
+    } 
   int droppedconn = 0, retry = 0;
   for (;retry < 10;retry++)
-  {
+    {
     if ((droppedconn = (!IsConnected()))!=0) //whee! connection closed
       break;
     sleep(1);
-  }
+    }
   if (!droppedconn)
     return -1;
   dohangupcontrol = 0;
 
+#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+  if (demand_loadable)
+    {
+    if (hwsockinst)
+      {
+      FreeLibrary(hwsockinst);
+      hwsockinst = NULL;
+      }
+    dohangupcontrol = 0;
+    return 0;
+    }
 #endif
   return 0;
 }
