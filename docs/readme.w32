@@ -1,6 +1,6 @@
 
  distributed.net client for Win32 (Win9x/WinNT/Win32s)
- document revision $Id: readme.w32,v 1.1.2.12 2001/01/25 13:56:18 cyp Exp $
+ document revision $Id: readme.w32,v 1.1.2.13 2002/04/12 10:59:17 zebe Exp $
 
  Welcome to the distributed.net client.
 
@@ -147,7 +147,8 @@
  3.0  FAQ: -----------------------------------------------------------
 
     Q: What are the changes in this version of the client?
-    A: Read CHANGES.txt as included with this distribution!
+    A: They are listed in the file CHANGES.txt, included with this
+       client distribution.
 
     Q: Where is the (what-used-to-be-) GUI version of the client?
     A: The "GUI" features not in the non-"GUI" client, are/will be
@@ -177,10 +178,10 @@
        'kerneltoys' pack or at http://www.distributed.net/addon.html)
        
     Q: What are the client's service keys/ID? 
-    A: if you use NT, it will be in the service manager. The client's 
+    A: If you use NT, it will be in the service manager. The client's 
        service ID (shortname) is "dnetc" for v2.80xx and later, and
        "rc5desnt" or "bovrc5nt" for pre-2.80xx clients. 
-       On win9x (win9x doesn't have a service manager), the client is 
+       On Win9x (Win9x doesn't have a service manager), the client is 
        registered with the registry as "distributed.net client" (or 
        "bovwin32" in very old versions) under HKEY_LOCAL_MACHINE in
        \Software\Microsoft\Windows\CurrentVersion\RunService
@@ -213,9 +214,9 @@
        check 'interact with desktop' in the scheduler config and 
        install the service with "-quiet -install".
 
-    Q: I run the client from the startup menu of windows (it fires up 
-       alone every time i log into windows). I want it to be minimized 
-       when it starts... How do i do that?
+    Q: I run the client from the Startup menu of Windows (it fires up 
+       alone every time I log into Windows). I want it to be minimized 
+       when it starts... How do I do that?
     A: The way you would for any application:
        - highlight the name in the menu
        - right-click. A menu will pop up menu.
@@ -233,9 +234,9 @@
        the LiteMAN module fixes whatever it is in Litestep thats broken. 
        Here's the link: http://www.litestep.org/binaries/liteman-b3.zip
        
-    Q: I want to run the client and XXX simultaneously, but XXX
+    Q: I want to run the client and XYZ simultaneously, but XYZ
        destroys my crunch rate. What can I do?
-    A: Uninstall XXX :)
+    A: Uninstall XYZ :)
     
     Q: I want to run the client as a screen saver. How do I do this?
     A: Beginning with v2.7112.444, the client release archive includes a
@@ -252,7 +253,7 @@
        assignment is brain dead beyond belief. Read the text in the 
        config screen before you fiddle with the priority setting!
 
-    Q: My client's window shows characters in a wierd font. Is the 
+    Q: My client's window shows characters in a weird font. Is the 
        client trying to access a font not on my system?
     A: No. The client never loads fonts by name. It loads by type/family,
        that is, only fonts of fixed-pitch (every 'character' has the same

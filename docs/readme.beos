@@ -1,6 +1,6 @@
  distributed.net client for BeOS (x86 and PowerPC)
  Released by Christopher Tate <ctate@be.com>
- document revision $Id: readme.beos,v 1.1.2.6 2000/07/06 00:23:08 ctate Exp $
+ document revision $Id: readme.beos,v 1.1.2.7 2002/04/12 11:01:28 zebe Exp $
 
  Welcome to the distributed.net client.
 
@@ -31,8 +31,10 @@
     A list of command line options is available by starting the client 
     with '-help' or '--help'.
 
-    A "Complete Step-by-Step Guide to Running Your First Client" is 
-    available at http://distributed.net/FAQ/
+    A complete step-by-step guide to running your first client is 
+    available at: http://www.distributed.net/docs/tutor_clients.html
+
+
 
  2.0  Notes: ---------------------------------------------------------
 
