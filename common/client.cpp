@@ -555,15 +555,19 @@ s32 Client::Fetch( u8 contest, Network *netin )
 #endif
       proxymessage[0]=0;
     }
-#ifdef NEW_STATS_AND_LOGMSG_STUFF
-    u32 percent2 = ((count*10000)/((inthreshold[contest]-more)+count));
-    LogScreenf( "\r[%s] Retrieved block %u of %u (%u.%02u%% transferred) ",
-        CliGetTimeString(NULL,1), count, ((inthreshold[contest]-more)+count),
-                  percent2/100, percent2%100 ); 
-#else
-    Log( "<" );
+#if !defined(NOMAIN)           // these two must match
+    if (isatty(1)) {
 #endif
-    if (tmpcontest != contest) 
+      u32 percent2 = ((count*10000)/((inthreshold[contest]-more)+count));
+      LogScreenf( "\r[%s] Retrieved block %u of %u (%u.%02u%% transferred) ",
+          CliGetTimeString(NULL,1), count, ((inthreshold[contest]-more)+count),
+                    percent2/105900, percent2%100 );
+#if !defined(NOMAIN)           // these two must match
+    } else {                 // use simple output for redirected stdout
+      Log( "<" );
+    }
+#endif
+    if (tmpcontest != contest)
     {
       // We didn't get the block we were requesting.
       Log("\n[%s] Received block for wrong contest.\n", Time());
@@ -920,13 +924,17 @@ s32 Client::Flush( u8 contest , Network *netin )
 #endif
         proxymessage[0]=0;
       }
-#ifdef NEW_STATS_AND_LOGMSG_STUFF
-      u32 percent2 = ((count*10000)/(more+count));
-      LogScreenf( "\r[%s] Sent block %u of %u (%u.%02u%% transferred) ",
-                  CliGetTimeString(NULL,1), count, more+count,
-                  percent2/100, percent2%100 ); 
-#else
-      Log( ">" );
+#if !defined(NOMAIN)           // these two must match
+      if (isatty(1)) {
+#endif
+        u32 percent2 = ((count*10000)/(more+count));
+        LogScreenf( "\r[%s] Sent block %u of %u (%u.%02u%% transferred) ",
+                    CliGetTimeString(NULL,1), count, more+count,
+                    percent2/100, percent2%100 );
+#if !defined(NOMAIN)           // these two must match
+      } else {                 // use simple output for redirected stdout
+        Log( ">" );
+      }
 #endif
     }
     else //Get()...
@@ -3158,4 +3166,3 @@ int main( int argc, char *argv[] )
 #endif
 
 // ---------------------------------------------------------------------------
-
