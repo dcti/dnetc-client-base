@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.135 2004/07/16 13:27:04 kakace Exp $
+# @(#)$Id: configure,v 1.288.2.136 2004/07/16 22:55:23 oliver Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -539,17 +539,21 @@ add_sources() # $1=os, $2=arch, $3=custom
 
     if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
       #DEFAULT_OGR="1" # this is just an addition to default core
-      if [ "${1}" = "macosx" -o "${1}" = "morphos" -o "${1}" = "linux" ]; then
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"
+
+      if [ "$1" = "aix" ]; then
+        # No Altivec or KOGE optimized core support yet
+        TARGET_ADDSRCS="$TARGET_ADDSRCS"
+      else
+        if [ "X$3" = "Xaltivec" ] ; then
+          TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"
+        fi
         if [ "$TARGET_CC" != "mwcc" ]; then   # CodeWarrior (MacOS)
           # KOGE optimized cores
           HAVE_KOGE_PPC_CORES="1"
-          TARGET_ADDASMS="$TARGET_ADDASMS ogr/ppc/OGR_PPC_scalar.gas.s \
-                                          ogr/ppc/OGR_PPC_hybrid.gas.s"
-        fi
-      elif [ "X$3" = "Xaltivec" ] ; then
-        if [ $gccver -ge 3000000 ]; then # works only for gcc > 3 
-          TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"
+          TARGET_ADDASMS="$TARGET_ADDASMS ogr/ppc/OGR_PPC_scalar.gas.s"
+          if [ "X$3" = "Xaltivec" ] ; then
+            TARGET_ADDASMS="$TARGET_ADDASMS ogr/ppc/OGR_PPC_hybrid.gas.s"
+          fi
         fi
       fi
     fi # HAVE_OGR
@@ -2092,7 +2096,7 @@ case "$1" in
         TARGET_TARBALL="macosx-ppc"
         TARGET_ASFLAGS="-force_cpusubtype_ALL"
         TARGET_GENMAN=""
-        add_sources "macosx" "ppc"
+        add_sources "macosx" "ppc" "altivec"
         ;;
 
     *ppc-aix-xlc)
@@ -2737,14 +2741,15 @@ case "$1" in
         generate_gcc_opts "ppc" "amigaos"
         TARGET_CCFLAGS="$OPTS_GCC -I./ -I./plat/amigaos/guilib \
                         -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
-                        -DDYN_TIMESLICE -D__USE_INLINE__" #-maltivec -mabi=altivec"
+                        -DDYN_TIMESLICE -D__USE_INLINE__" #-maltivec -mabi=altivec -mvrsave=yes"
         TARGET_TARBALL="amigaos-ppc"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
         TARGET_STRIP="ppc-amigaos-strip -R.comment"
         TARGET_GENMAN=
         TARGET_ARCTYPE="amigaosgui"
         TARGET_MAKEARC="os4 ${TARGET_BINNAME}_OS4"
-        add_sources "amigaos" "ppc" #"altivec"
+        add_sources "amigaos" "ppc"
+        #add_sources "amigaos" "ppc" "altivec" # not yet AltiVec
         ;;
 
     *ppc-amigaos-wos)           # [oliver] <oliver@futaura.co.uk>
