@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.139  1998/09/28 21:42:07  remi
+// Cleared a warning in InitConsole. Wrapped $Log comments.
+//
 // Revision 1.138  1998/09/28 04:13:08  cyp
 // Split: clirun.cpp, bench.cpp, setprio.cpp, probfill.cpp; client.cpp is now
 // startup code only; bugs fixed here (client.cpp): win32 client now does
@@ -14,7 +17,8 @@
 // Changed checkifbetaexpired from s32 to int
 //
 // Revision 1.136  1998/09/19 08:50:15  silby
-// Added in beta test client timeouts.  Enabled/controlled from version.h by defining BETA, and setting the expiration time.
+// Added in beta test client timeouts.  Enabled/controlled from
+// version.h by defining BETA, and setting the expiration time.
 //
 // Revision 1.135  1998/08/28 22:28:12  cyp
 // Restructured main() so that it is now restartable. Command line is
@@ -52,11 +56,15 @@
 // Quite hack to get winnt service compiling.
 //
 // Revision 1.127  1998/08/20 02:40:34  silby
-// Kicked version to 2.7100.418-BETA1, ensured that clients report the string ver (which has beta1 in it) in the startup.
+// Kicked version to 2.7100.418-BETA1, ensured that clients report the
+// string ver (which has beta1 in it) in the startup.
 //
 // Revision 1.126  1998/08/16 06:00:28  silby
-// Changed ::Update back so that it checks contest/buffer status before connecting (lurk connecting every few seconds wasn't pretty.)
-// Also, changed command line option handling so that update() would be called with force so that it would connect over all.
+// Changed ::Update back so that it checks contest/buffer status
+// before connecting (lurk connecting every few seconds wasn't
+// pretty.)
+// Also, changed command line option handling so that update() would
+// be called with force so that it would connect over all.
 //
 // Revision 1.125  1998/08/15 21:32:49  jlawson
 // added parens around an abiguous shift operation.
@@ -96,7 +104,8 @@
 // Completed support for logging.
 //
 // Revision 1.115  1998/08/02 05:36:19  silby
-// Lurk functionality is now fully encapsulated inside the Lurk Class, much less code floating inside client.cpp now.
+// Lurk functionality is now fully encapsulated inside the Lurk Class,
+// much less code floating inside client.cpp now.
 //
 // Revision 1.114  1998/08/02 03:16:31  silby
 // Major reorganization:  Log,LogScreen, and LogScreenf 
@@ -110,13 +119,18 @@
 // printf. client.cpp has had variable names changed as well, etc.
 //
 // Revision 1.113  1998/07/30 05:08:59  silby
-// Fixed DONT_USE_PATHWORK handling, ini_etc strings were still being included, now they are not. Also, added the logic for dialwhenneeded, which is a new lurk feature.
+// Fixed DONT_USE_PATHWORK handling, ini_etc strings were still being
+// included, now they are not. Also, added the logic for
+// dialwhenneeded, which is a new lurk feature.
 //
 // Revision 1.112  1998/07/30 02:18:18  blast
 // AmigaOS update
 //
 // Revision 1.111  1998/07/29 05:14:40  silby
-// Changes to win32 so that LurkInitiateConnection now works - required the addition of a new .ini key connectionname=.  Username and password are automatically retrieved based on the connectionname.
+// Changes to win32 so that LurkInitiateConnection now works -
+// required the addition of a new .ini key connectionname=.  Username
+// and password are automatically retrieved based on the
+// connectionname.
 //
 // Revision 1.110  1998/07/26 12:45:52  cyruspatel
 // new inifile option: 'autofindkeyserver', ie if keyproxy= points to a
@@ -125,10 +139,13 @@
 // constructor extended to take this as an argument.
 //
 // Revision 1.109  1998/07/25 06:31:39  silby
-// Added lurk functions to initiate a connection and hangup a connection.  win32 hangup is functional.
+// Added lurk functions to initiate a connection and hangup a
+// connection.  win32 hangup is functional.
 //
 // Revision 1.108  1998/07/25 05:29:49  silby
-// Changed all lurk options to use a LURK define (automatically set in client.h) so that lurk integration of mac/amiga clients needs only touch client.h and two functions in client.cpp
+// Changed all lurk options to use a LURK define (automatically set in
+// client.h) so that lurk integration of mac/amiga clients needs only
+// touch client.h and two functions in client.cpp
 //
 // Revision 1.107  1998/07/20 00:32:19  silby
 // Changes to facilitate 95 CLI/NT service integration
@@ -140,7 +157,8 @@
 // Added -cpuinfo option (you forget this one cyp! :-)
 //
 // Revision 1.104  1998/07/16 16:58:58  silby
-// x86 clients in MMX mode will now permit des on > 2 processors.  Bryddes is still set at two, however.
+// x86 clients in MMX mode will now permit des on > 2 processors.
+// Bryddes is still set at two, however.
 //
 // Revision 1.103  1998/07/16 08:25:07  cyruspatel
 // Added more NO!NETWORK wrappers around calls to Update/Fetch/Flush. Balanced
@@ -148,14 +166,17 @@
 // 100% unless there was a real send/retrieve fault.
 //
 // Revision 1.101  1998/07/15 06:58:03  silby
-// Changes to Flush, Fetch, and Update so that when the win32 gui sets connectoften to initiate one of the above more verbose feedback will be given.  Also, when force=1, a connect will be made regardless of offlinemode and lurk.
+// Changes to Flush, Fetch, and Update so that when the win32 gui sets
+// connectoften to initiate one of the above more verbose feedback
+// will be given.  Also, when force=1, a connect will be made
+// regardless of offlinemode and lurk.
 //
 // Revision 1.100  1998/07/15 06:10:54  silby
 // Fixed an improper #ifdef
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.138 1998/09/28 04:13:08 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.139 1998/09/28 21:42:07 remi Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -541,6 +562,9 @@ WNDPROC FAR __export PASCAL WindowProc( HWND hwnd, unsigned msg,
 }    
 #endif
 
+#if (CLIENT_OS != OS_WIN32)
+static int InitializeConsole(int) { return 0; }
+#else
 static int InitializeConsole(int runhidden)
 {
   int retcode = 0;
@@ -701,6 +725,7 @@ static int InitializeConsole(int runhidden)
 
   return retcode;
 }  
+#endif // (CLIENT_OS != OS_WIN32)
 
 
 #if !defined(NOMAIN)
