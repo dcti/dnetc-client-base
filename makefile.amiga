@@ -43,7 +43,8 @@ common/mail.o_ppc\
 common/convdes.o_ppc\
 common/cpucheck.o_ppc\
 common/disphelp.o_ppc\
-common/pathwork.o_ppc
+common/pathwork.o_ppc\
+common/cliident.o_ppc
 
 RC5_OBJS_PPC	=\
 common/problem.o_ppc\
@@ -76,7 +77,8 @@ common/mail.o_68k\
 common/convdes.o_68k\
 common/cpucheck.o_68k\
 common/disphelp.o_68k\
-common/pathwork.o_68k
+common/pathwork.o_68k\
+common/cliident.o_68k
 
 RC5_OBJS_68K	=\
 common/problem.o_68k\
@@ -168,6 +170,8 @@ common/mail.o_ppc	:	common/mail.cpp
 common/convdes.o_ppc	:	common/convdes.cpp
 common/cpucheck.o_ppc	:	common/cpucheck.cpp
 common/disphelp.o_ppc	:	common/disphelp.cpp
+common/pathwork.o_ppc	:	common/pathwork.cpp
+common/cliident.o_ppc	:	common/cliident.cpp
 
 # RC5 Dependencies
 
@@ -204,6 +208,8 @@ common/mail.o_68k	:	common/mail.cpp
 common/convdes.o_68k	:	common/convdes.cpp
 common/cpucheck.o_68k	:	common/cpucheck.cpp
 common/disphelp.o_68k	:	common/disphelp.cpp
+common/pathwork.o_68k	:	common/pathwork.cpp
+common/cliident.o_68k	:	common/cliident.cpp
 
 # RC5 Dependencies
 

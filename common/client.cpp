@@ -3,6 +3,18 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.82  1998/07/07 21:55:14  cyruspatel
+// Serious house cleaning - client.h has been split into client.h (Client
+// class, FileEntry struct etc - but nothing that depends on anything) and
+// baseincs.h (inclusion of generic, also platform-specific, header files).
+// The catchall '#include "client.h"' has been removed where appropriate and
+// replaced with correct dependancies. cvs Ids have been encapsulated in
+// functions which are later called from cliident.cpp. Corrected other
+// compile-time warnings where I caught them. Removed obsolete timer and
+// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
+// Made MailMessage in the client class a static object (in client.cpp) in
+// anticipation of global log functions.
+//
 // Revision 1.81  1998/07/07 02:52:57  silby
 // Another slight change to logging where date will now be shown for proper alignment in the win32gui.
 //
@@ -146,13 +158,36 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.81 1998/07/07 02:52:57 silby Exp $";
+const char *client_cpp(void) {
+static const char *id="@(#)$Id: client.cpp,v 1.82 1998/07/07 21:55:14 cyruspatel Exp $";
+return id; }
 #endif
 
-#include "client.h"
+// --------------------------------------------------------------------------
+
+#include "cputypes.h"
+#include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc 
+#include "baseincs.h"  // basic (even if port-specific) #includes
+#include "version.h"
+#include "problem.h"
+#include "network.h"
+#include "mail.h"
+#include "scram.h"
+#include "convdes.h"
+#include "sleepdef.h"
+#include "threadcd.h"
+#include "buffwork.h"
+#include "clitime.h"
+#include "clirate.h"
+#include "clisrate.h"
+#include "clicdata.h"
+#include "cliident.h"  // CliIdentifyModules()
+#define Time() (CliGetTimeString(NULL,1))
 #ifndef DONT_USE_PATHWORK
 #include "pathwork.h"
 #endif
+
+// --------------------------------------------------------------------------
 
 #if (CLIENT_OS == OS_AMIGAOS)
 #if (CLIENT_CPU == CPU_68K)
@@ -165,9 +200,12 @@ long __stack  = 65536L; // AmigaOS has no automatic stack extension
 s32 guiriscos, guirestart;
 #endif
 
+// --------------------------------------------------------------------------
+
 Problem problem[2*MAXCPUS];
 volatile u32 SignalTriggered, UserBreakTriggered;
 volatile s32 pausefilefound = 0;
+MailMessage mailmessage; 
 
 // --------------------------------------------------------------------------
 
@@ -739,12 +777,13 @@ s32 Client::Fetch( u8 contest, Network *netin, s32 quietness )
     if (proxymessage[0] != 0) {
       if (quietness <= 1) // if > 1, don't show proxy message
         {
-#ifdef NEW_STATS_AND_LOGMSG_STUFF  //handles linewrap //in clisrate.cpp
-        Log( CliReformatMessage( "The proxy says: ", proxymessage ) );
-#else
-        Log( "\n[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
-#endif
-        };
+        #if (CLIENT_OS == OS_WIN32) 
+          //uses proportional font, so reformatting looks wierd
+          Log( "[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
+        #else
+          Log( CliReformatMessage( "The proxy says: ", proxymessage ) );
+        #endif
+        }
       proxymessage[0]=0;
     }
 #if !defined(NOMAIN)           // these two must match
@@ -977,12 +1016,13 @@ s32 Client::Flush( u8 contest , Network *netin, s32 quietness )
         {
         if (quietness <= 1) // if > 1, don't show proxy message
           {
-#ifdef NEW_STATS_AND_LOGMSG_STUFF       //handles linewrap
-          Log( CliReformatMessage( "The proxy says: ", proxymessage ) );
-#else
-          Log( "\n[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
-#endif
-          };
+          #if (CLIENT_OS == OS_WIN32) 
+            //uses proportional font, so reformatting looks wierd
+            Log( "[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
+          #else
+            Log( CliReformatMessage( "The proxy says: ", proxymessage ) );
+          #endif
+          }
         proxymessage[0]=0;
       }
       //Log( "\n[%s] Sent %d %s block(s) to server\n", Time(), (int) count, (contest == 1 ? "DES":"RC5") );
@@ -1132,12 +1172,13 @@ s32 Client::Flush( u8 contest , Network *netin, s32 quietness )
       {
         if (quietness <= 1) // if > 1, don't show proxy message
           {
-#ifdef NEW_STATS_AND_LOGMSG_STUFF       //handles linewrap
-          Log( CliReformatMessage( "The proxy says: ", proxymessage ) );
-#else
-          Log( "\n[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
-#endif
-          };
+          #if (CLIENT_OS == OS_WIN32) 
+            //uses proportional font, so reformatting looks wierd
+            Log( "[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
+          #else
+            Log( CliReformatMessage( "The proxy says: ", proxymessage ) );
+          #endif
+          }
         proxymessage[0]=0;
       }
 #if !defined(NOMAIN)           // these two must match
@@ -1299,6 +1340,8 @@ s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr )
 
 u32 Client::Benchmark( u8 contest, u32 numk )
 {
+  ContestWork contestwork;
+
   u32 numkeys = 10000000L;
   u32 percent2, tslice;
 
@@ -1325,14 +1368,6 @@ u32 Client::Benchmark( u8 contest, u32 numk )
   contestwork.iterations.hi = htonl( 0 );
 
   (problem[0]).LoadState( &contestwork , (u32) (contest - 1) );
-
-#ifndef NEW_STATS_AND_LOGMSG_STUFF  //this is not req'd anyway because ::Run() will do it
-  struct timezone dummy;
-  struct timeval stop;
-  gettimeofday( &stop, &dummy );
-  (problem[0]).timehi = stop.tv_sec;
-  (problem[0]).timelo = stop.tv_usec;
-#endif
 
   (problem[0]).percent = 0;
   tslice = ( 100000L / PIPELINE_COUNT );
@@ -1364,8 +1399,7 @@ u32 Client::Benchmark( u8 contest, u32 numk )
       return 0;
     }
 
-#ifdef NEW_STATS_AND_LOGMSG_STUFF
-  #if 0
+  #if 0 //could use this, but it shows the block number ("00000000:00000000")
     LogScreenf("\n[%s] %s\n", CliGetTimeString( NULL, 1 ),
                 CliGetMessageForProblemCompletedNoSave( &(problem[0]) ) );
     return (u32)0;  //unused, so we don't care
@@ -1380,29 +1414,6 @@ u32 Client::Benchmark( u8 contest, u32 numk )
                              CliGetKeyrateAsString( ratestr, rate ) );
     return (u32)(rate);
   #endif
-#else //old_timing here
-  double lenhi = (double) ((problem[0]).timehi);
-  double lenlo = (double) ((problem[0]).timelo);
-  if ( gettimeofday( &stop, &dummy ) < 0 ) return( 0 );
-  double len = max(.01, ((double)stop.tv_sec - lenhi) + \
-      ((double)stop.tv_usec - lenlo)/1000000.0 );
-
-  // DES cores *might* check more keys than asked
-  // for small benchmarks it could be problematic
-  if (contest == 2) {
-    RC5Result result;
-    (problem[0]).GetResult( &result );
-    numkeys = htonl( result.keysdone.lo ) * 2;
-  }
-
-  LogScreenf(contest == 1 ?
-       "\nComplete in %02d.%02d seconds. [%.2f RC5 keys/sec]\n" :
-       "\nComplete in %02d.%02d seconds. [%.2f DES keys/sec]\n",
-    (int) (len), ((int) (len*100))%100,
-    (double) ((double) numkeys / len )     );
-
-  return( (u32) ( (double) numkeys / len ) );
-#endif  //NEW_STATS_AND_LOGMSG_STUFF
 }
 
 // ---------------------------------------------------------------------------
@@ -1412,6 +1423,8 @@ s32 Client::SelfTest( u8 contest )
   s32 run;
   s32 successes = 0;
   u32 (*test_cases)[TEST_CASE_COUNT][8];
+  ContestWork contestwork;
+  RC5Result rc5result;
   u64 expectedsolution;
 
   if (SelectCore()) return 0;
@@ -1643,26 +1656,6 @@ void Go_mt( void * parm )
 
 // ---------------------------------------------------------------------------
 
-#ifndef NEW_STATS_AND_LOGMSG_STUFF
-u32 log2x(u32 x)
-{
-  u32 n,x2;
-  if (x==0) {
-    return 32;
-  } else {
-    n=0;
-    x2=x;
-    while ((x2 & 0x01) != 1) {
-      n++;
-      x2 = x2 >> 1;
-    }
-  }
-  return n;
-}
-#endif
-
-// ---------------------------------------------------------------------------
-
 // returns:
 //    -2 = exit by error (all contests closed)
 //    -1 = exit by error (critical)
@@ -1674,6 +1667,8 @@ u32 log2x(u32 x)
 s32 Client::Run( void )
 {
   FileEntry fileentry;
+  RC5Result rc5result;
+
 #if defined(MULTITHREAD)
   char buffer[MAXCPUS][4][40];
   #if (CLIENT_OS == OS_BEOS)
@@ -1697,17 +1692,6 @@ s32 Client::Run( void )
   #endif
 #endif
 
-#ifndef NEW_STATS_AND_LOGMSG_STUFF
-  struct timezone dummy;
-  struct timeval stop;
-  u32 global_timehi, global_timelo;
-  u32 global_timehi2, global_timelo2;
-  u32 totkeyscount[2];
-  double len, lenlo, lenhi;
-  //u32 percent2,temphi,templo;
-  totkeyscount[0] = totkeyscount[1] = 0;
-#endif
-
   s32 count = 0, nextcheckpointtime = 0;
   s32 TimeToQuit = 0, getbuff_errs = 0;
 
@@ -1720,14 +1704,9 @@ s32 Client::Run( void )
   u32 connectloops = 0;
 #endif
 
-  struct stat buf;
   s32 cpu_i;
   s32 exitchecktime;
   s32 tmpcontest;
-#ifndef NEW_STATS_AND_LOGMSG_STUFF
-  s32 tmpblksize,tmpblkcnt;
-  char keyscompleted[40];
-#endif
   s32 exitcode = 0;
 
 
@@ -1772,23 +1751,15 @@ s32 Client::Run( void )
   // --------------------------------------
 
   timeStarted = time( NULL );
-  #ifndef NEW_STATS_AND_LOGMSG_STUFF
-  {
-    gettimeofday( &stop, &dummy );
-    global_timehi = stop.tv_sec;
-    global_timelo = stop.tv_usec;
-  }
-  #endif
-
   exitchecktime = timeStarted + 5;
 
   // --------------------------------------
   // Clear the signal triggers
   // --------------------------------------
 
-#if (CLIENT_OS == OS_AMIGAOS)
-  SetSignal(0L, SIGBREAKF_CTRL_C);
-#endif
+  #if (CLIENT_OS == OS_AMIGAOS)
+    SetSignal(0L, SIGBREAKF_CTRL_C);
+  #endif
   SignalTriggered = UserBreakTriggered = pausefilefound = 0;
 
   // --------------------------------------
@@ -1896,7 +1867,6 @@ PreferredIsDone1:
         }
       }
 
-      #ifdef NEW_STATS_AND_LOGMSG_STUFF
       {
         if (cpu_i==0 && load_problem_count>1)
           Log( "[%s] %s\n", CliGetTimeString(NULL,1),
@@ -1950,37 +1920,6 @@ PreferredIsDone1:
           }
         }
       }
-      #else
-      {
-        tmpblksize = log2x(ntohl(fileentry.iterations.lo));
-        tmpblkcnt = ntohl(fileentry.iterations.lo) / (1<<tmpblksize);
-#if defined(MULTITHREAD)
-        Log( "[%s] %s %d*2^%d Block: %08lX:%08lX ready to process\n"
-#else
-        Log( "[%s] %s %d*2^%d Block: %08lX:%08lX being processed\n"
-#endif
-             "[%s] %d Blocks remain in file %s\n"
-             "[%s] %d Blocks are in file %s\n",
-             Time(), (fileentry.contest == 1 ? "DES":"RC5"),tmpblkcnt,tmpblksize,
-                 (unsigned long) ntohl( fileentry.key.hi ),
-                 (unsigned long) ntohl( fileentry.key.lo ),
-             Time(), count, (nodiskbuffers? "(memory-in)":
-#ifdef DONT_USE_PATHWORK
-             ini_in_buffer_file[fileentry.contest]),
-#else             
-             in_buffer_file[fileentry.contest]),
-#endif             
-             Time(), CountBufferOutput(fileentry.contest), (nodiskbuffers? "(memory-out)":
-#ifdef DONT_USE_PATHWORK
-             ini_out_buffer_file[fileentry.contest]) );
-#else
-             out_buffer_file[fileentry.contest]) );
-#endif
-        gettimeofday( &stop, &dummy );
-        (problem[cpu_i]).timehi = stop.tv_sec;
-        (problem[cpu_i]).timelo = stop.tv_usec;
-      }
-      #endif //NEW_STATS_AND_LOGMSG_STUFF
 
       (problem[cpu_i]).LoadState( (ContestWork *) &fileentry , (u32) (fileentry.contest) );
 
@@ -2022,10 +1961,7 @@ PreferredIsDone1:
             case 2: be_priority = B_NORMAL_PRIORITY; break;
             default: be_priority = B_LOW_PRIORITY; break;
           }
-          if (fileentry.contest == 0)
-            sprintf(thread_name, "crunch#%d (RC5)", cpu_i + 1);
-          else
-            sprintf(thread_name, "crunch#%d (DES)", cpu_i + 1);
+          sprintf(thread_name, "RC5DES crunch#%d", cpu_i + 1);
           threadid[cpu_i] = spawn_thread((long (*)(void *)) Go_mt, thread_name,
                 be_priority, (void *)thstart[cpu_i]);
           thread_error = (threadid[cpu_i] < B_NO_ERROR);
@@ -2048,12 +1984,6 @@ PreferredIsDone1:
           {
             Log("[%s] Could not start child thread '%c'.\n",Time(),cpu_i+'A');
             return(-1);  //All those loaded blocks are gonna get lost
-          }
-          else
-          {
-            #ifndef NEW_STATS_AND_LOGMSG_STUFF
-              Log("[%s] Child thread '%c' has been started.\n",Time(),cpu_i+'A');
-            #endif
           }
         }
       }
@@ -2337,53 +2267,10 @@ PreferredIsDone1:
           //print the keyrate and update the totals for this contest
           //---------------------
 
-          #ifdef NEW_STATS_AND_LOGMSG_STUFF
           {
             Log( "\n[%s] %s", CliGetTimeString(NULL,1), /* == Time() */
                    CliGetMessageForProblemCompleted( &(problem[cpu_i]) ) );
           }
-          #else
-          {
-            gettimeofday( &stop, &dummy );
-            lenhi = (double) ((problem[cpu_i]).timehi);
-            lenlo = (double) ((problem[cpu_i]).timelo);
-            len = max(.01, ((double)stop.tv_sec - lenhi) + ((double)stop.tv_usec - lenlo)/1000000.0 );
-
-            (problem[cpu_i]).timehi = (u32) len;
-            (problem[cpu_i]).timelo = (u32) ( ((u32) (len*1000000.0)) % 1000000L);
-
-            if ((ntohl( rc5result.iterations.lo ) * (tmpcontest == 1 ? 2 : 1)) == 0)
-              strcpy(keyscompleted,"4294967296");
-            else
-              sprintf(keyscompleted,"%u",ntohl( rc5result.iterations.lo ) * (tmpcontest == 1 ? 2 : 1));
-
-            if ( (problem[cpu_i]).timehi > 0 )
-              {
-              Log( "\n[%s] Completed block %08lX:%08lX (%s keys)\n"
-                 "                        %02d:%02d:%02d.%02d - [%.2f keys/sec]\n",
-                Time(), ntohl( rc5result.key.hi ) , ntohl( rc5result.key.lo ),
-                keyscompleted,
-                (problem[cpu_i]).timehi / 3600 , ((problem[cpu_i]).timehi % 3600) / 60,
-                (problem[cpu_i]).timehi % 60, (problem[cpu_i]).timelo/10000L,
-                ( ( ( (double) ntohl( rc5result.keysdone.lo ) ) * ( tmpcontest == 1 ? 2 : 1 )/
-                ( ( (double) (problem[cpu_i]).timehi) + (((double)((problem[cpu_i]).timelo))/1000000.0) ) ) *
-                ( 100000.0 - (double) (problem[cpu_i]).startpercent ) / 100000.0 )
-                );
-              }
-            else
-              {
-              Log( "\n[%s] Completed block %08lX:%08lX (%s keys)\n"
-                 "                        %02d:%02d:%02d.%02d - [--- keys/sec]\n",
-                 Time(), ntohl( rc5result.key.hi ) , ntohl( rc5result.key.lo ),
-                 keyscompleted,
-                 (problem[cpu_i]).timehi / 3600 , ((problem[cpu_i]).timehi % 3600) / 60,
-                 (problem[cpu_i]).timehi % 60, (problem[cpu_i]).timelo/10000L );
-              }
-            totkeyscount[tmpcontest] += (u32) ((ntohl( rc5result.keysdone.lo ) *
-              ( ( 100000.0 - (double) (problem[cpu_i]).startpercent ) / 100000.0 ) )
-              / (tmpcontest == 0 ? 32768. : 16384.));
-          }
-          #endif //statistics are smart or not
 
           //----------------------------------------
           // Figure out which contest block was from, and increment totals
@@ -2400,7 +2287,6 @@ PreferredIsDone1:
           // Detect/report any changes to the total completed blocks...
 
 
-          #ifdef NEW_STATS_AND_LOGMSG_STUFF
           {
           //display summaries only of contests w/ more than one block done
           int i=1;
@@ -2415,25 +2301,6 @@ PreferredIsDone1:
                 }
             }
           }
-          #else
-          {
-          gettimeofday( &stop, &dummy );
-          len = max(.01, ((double)stop.tv_sec - global_timehi) + ((double)stop.tv_usec - global_timelo)/1000000.0 );
-          global_timehi2 = (u32) len;
-          global_timelo2 = (u32) ( ((u32) (len*1000000.0)) % 1000000L);
-
-          Log( "[%s] Tot: %d RC5 blocks %02d:%02d:%02d.%02d - [%.2f keys/sec]\n"
-               "                        Tot: %d DES blocks %02d:%02d:%02d.%02d - [%.2f keys/sec]\n",
-          Time(), totalBlocksDone[0],
-          global_timehi2 / 3600 , (global_timehi2 % 3600) / 60, global_timehi2 % 60, global_timelo2/10000L,
-           ( ( ( (double) totkeyscount[0]) /
-           ( ( (double) (global_timehi2) + (((double) global_timelo2)/1000000.0) ) / 32768.0 ) ) ),
-          totalBlocksDone[1],
-          global_timehi2 / 3600 , (global_timehi2 % 3600) / 60, global_timehi2 % 60, global_timelo2/10000L,
-          ( ( ( (double) totkeyscount[1]) /
-          ( ( (double) (global_timehi2) + (((double) global_timelo2)/1000000.0) ) / 32768.0 ) ) ) );
-          }
-          #endif
 
           //---------------------
           //put the completed problem away
@@ -2596,7 +2463,6 @@ PreferredIsDone1:
           // display the status of the file buffers
           //---------------------
 
-          #ifdef NEW_STATS_AND_LOGMSG_STUFF
           if (!nonewblocks)
           {
             int outcount = CountBufferOutput(fileentry.contest);
@@ -2621,37 +2487,6 @@ PreferredIsDone1:
                  out_buffer_file[fileentry.contest]) );
 #endif                 
           }
-          #else
-          if (!nonewblocks)
-          {
-            tmpblksize=log2x(ntohl(fileentry.iterations.lo));
-            tmpblkcnt = ntohl(fileentry.iterations.lo) / (1<<tmpblksize);
-
-            Log( "[%s] %s %d*2^%d Block: %08lX:%08lX %s\n"
-                 "[%s] %d Blocks remain in file %s\n"
-                 "[%s] %d Blocks are in file %s\n",
-                 Time(), (fileentry.contest == 1 ? "DES":"RC5"),tmpblkcnt,tmpblksize,
-                 ntohl( fileentry.key.hi ), ntohl( fileentry.key.lo ),
-                 Time(), count, (nodiskbuffers ? "(memory-in)": 
-#ifdef DONT_USE_PATHWORK
-                 ini_in_buffer_file[fileentry.contest]),
-#else                 
-                 in_buffer_file[fileentry.contest]),
-#endif                 
-                 Time(), CountBufferOutput(fileentry.contest),
-                 (nodiskbuffers ? "(memory-out)" : 
-#ifdef DONT_USE_PATHWORK
-                 ini_out_buffer_file[fileentry.contest]),
-#else                 
-                 out_buffer_file[fileentry.contest]),
-#endif                 
-                 ((load_problem_count>1)?("ready to process"):("being processed")));
-
-            gettimeofday( &stop, &dummy );
-            (problem[cpu_i]).timehi = stop.tv_sec;
-            (problem[cpu_i]).timelo = stop.tv_usec;
-          }
-          #endif
 
           //---------------------
           // now load the problem with the fileentry
@@ -2698,11 +2533,7 @@ PreferredIsDone1:
 
     for (int tmpc = 0; tmpc < 2; tmpc++)
     {
-      #ifdef NEW_STATS_AND_LOGMSG_STUFF
       const char *contname = CliGetContestNameFromID( tmpc ); //clicdata.cpp
-      #else
-      const char *contname = ((tmpc) ? ("DES") : ("RC5"));
-      #endif
       if ((consecutivesolutions[tmpc] >= 32) && !contestdone[tmpc])
       {
         Log( "\n[%s] Too many consecutive %s solutions detected.\n", Time(), contname );
@@ -2750,7 +2581,7 @@ PreferredIsDone1:
         //----------------------------------------
         // Found an "exitrc5.now" flag file?
         //----------------------------------------
-        if( stat( exit_flag_file, &buf ) != -1 )
+        if( access( exit_flag_file, 0 ) == 0 )
         {
           Log( "[%s] Found \"exitrc5" EXTN_SEP "now\" file.  Exiting.\n", Time() );
           TimeToQuit = 1;
@@ -2763,7 +2594,7 @@ PreferredIsDone1:
     //------------------------------------
 
     pausefilefound = ( *pausefile != 0 && strcmp(pausefile,"none") != 0 &&
-          stat(pausefile, &buf) != -1 ? 1 : 0);
+          access( pausefile, 0 ) == 0 ? 1 : 0 );
 
     //----------------------------------------
     // Are we quitting?
@@ -2933,7 +2764,29 @@ void Client::DoCheckpoint( int load_problem_count )
   }
 }
 
-// ---------------------------------------------------------------------------
+// ------------------------------------------------------------------------
+
+void Client::MailInitialize(void)
+{
+  strcpy(mailmessage.destid,smtpdest);
+  strcpy(mailmessage.fromid,smtpfrom);
+  strcpy(mailmessage.smtp,smtpsrvr);
+  strcpy(mailmessage.rc5id,id);
+  mailmessage.messagelen=messagelen;
+  mailmessage.port=(int)smtpport;
+  //mailmessage.quietmode=quietmode;
+}
+
+// ------------------------------------------------------------------------
+
+void Client::MailDeinitialize(void)
+{
+  mailmessage.quietmode=quietmode;
+  if (!offlinemode)
+    mailmessage.checktosend(1);
+}  
+
+// ------------------------------------------------------------------------
 
 // gui clients will override this function in their derrived classes
 void Client::LogScreen ( const char *text)
@@ -2999,7 +2852,7 @@ void Client::Log( const char *format, ...)
   // print it out and log it
   LogScreen(logstr);
 
-  if ( (*logname != 0) && (strcmpi( logname, "none" ) != 0) )
+  if ( (*logname != 0) && (strcmp( logname, "none" ) != 0) )
     {
 #ifdef DONT_USE_PATHWORK
       FILE *file = fopen ( logname, "a" );
@@ -3016,10 +2869,8 @@ void Client::Log( const char *format, ...)
 
 // ---------------------------------------------------------------------------
 
-
 void Client::LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted)
 {
-#ifdef NEW_LOGSCREEN_PERCENT_SINGLE
   // fixes the problem of "100%" running off an 80 column screen and
   // also gives a '.' sooner for new blocks.
   char buffer[88];
@@ -3041,15 +2892,6 @@ void Client::LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted
   }
   LogScreen( buffer );
   return;
-#else
-  for ( u32 p = lastpercent + 1 ; p < percent + 1 ; p++ )
-  {
-    if ( ( p % 2 ) == 0 ) LogScreen( "." );
-    if ( ( p % 10 ) == 0 ) LogScreenf( "%d%%", p );
-  }
-  if (restarted) LogScreen( "R" );
-  fflush( stdout );
-#endif
 }
 
 // ---------------------------------------------------------------------------
@@ -3134,6 +2976,7 @@ int main( int argc, char *argv[] )
   {
     strncpy( client.inifilename, getenv( "RC5INI" ), 127 );
   }
+#ifdef DONT_USE_PATHWORK
   else
   {
 #if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
@@ -3180,6 +3023,7 @@ int main( int argc, char *argv[] )
     strcat( client.inifilename, EXTN_SEP "ini" );
 #endif
   }
+#endif
 
   // See if there's a command line parameter to override the INI filename...
   for (i = 1; i < argc; i++)
@@ -3233,7 +3077,7 @@ int main( int argc, char *argv[] )
   client.PrintBanner(argv[0]);
 
   // start parsing the command line
-  client.ParseCommandlineOptions(argc, argv, inimissing);
+  client.ParseCommandlineOptions(argc, argv, &inimissing);
 
   //The NetWare client must go through to the end (CliExitClient())
   //or risk spewing out half a dozen "resource not freed" messages
@@ -3249,6 +3093,13 @@ int main( int argc, char *argv[] )
   for (i = 1; ((retcode == OK_TO_RUN) && (i < argc)); i++)
   {
     if ( argv[i][0] == 0 ) continue;
+    else if ( strcmp(argv[i], "-ident" ) == 0)
+      {
+      #if (!defined(lint) && defined(__showids__))
+        CliIdentifyModules();
+        retcode = 0;
+      #endif
+      }
     else if ( strcmp( argv[i], "-test" ) == 0 )
     {
       int i = client.SelfTest(1);
@@ -3297,9 +3148,9 @@ int main( int argc, char *argv[] )
       }
       if (client.contestdone[1]) retcode=1;
 
-      client.mailmessage.quietmode = client.quietmode;
+      mailmessage.quietmode = client.quietmode;
       if (!client.offlinemode)
-         client.mailmessage.checktosend(1);
+         mailmessage.checktosend(1);
       NetworkDeinitialize();
       if (retcode < 0 || retcode2 < 0)
       {
@@ -3331,9 +3182,9 @@ int main( int argc, char *argv[] )
       }
       if (client.contestdone[1]) retcode = 0;
 
-      client.mailmessage.quietmode=client.quietmode;
+      mailmessage.quietmode=client.quietmode;
       if (!client.offlinemode)
-         client.mailmessage.checktosend(1);
+         mailmessage.checktosend(1);
       NetworkDeinitialize();
       if (retcode < 0 || retcode2 < 0)
       {
@@ -3359,9 +3210,9 @@ int main( int argc, char *argv[] )
       // DES We care about both the fetch & flush errors.
       int retcode2 = client.contestdone[1] ? 0 : client.Update(1,1,1);
 
-      client.mailmessage.quietmode = client.quietmode;
+      mailmessage.quietmode = client.quietmode;
       if (!client.offlinemode)
-         client.mailmessage.checktosend(1);
+         mailmessage.checktosend(1);
       NetworkDeinitialize();
 
       if (retcode < 0 || retcode2 < 0)
@@ -3380,18 +3231,20 @@ int main( int argc, char *argv[] )
       //only write config if 1 is returned
       retcode = 0; //and break out of loop
     }
-#if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2))
     else if ( strcmp( argv[i], "-install" ) == 0 )
     {
+      #if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2))
       client.Install();
       retcode = 0; //and break out of loop
+      #endif
     }
     else if ( strcmp( argv[i], "-uninstall" ) == 0 )
     {
+      #if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2))
       client.Uninstall();
       retcode = 0; //and break out of loop
+      #endif
     }
-#endif
     else if ( strcmp( argv[i], "-forceunlock" ) == 0 )
     {
       retcode = client.UnlockBuffer(argv[i+1]);
@@ -3431,7 +3284,10 @@ int main( int argc, char *argv[] )
     #if defined(NONETWORK)
       client.offlinemode=1;
     #endif
-    if (!client.offlinemode) NetworkInitialize();
+    if (!client.offlinemode) 
+      NetworkInitialize();
+    client.MailInitialize(); //copy the smtp ini settings over
+
 #if (CLIENT_OS == OS_RISCOS)
     if (!guirestart)
 #endif
@@ -3454,15 +3310,14 @@ int main( int argc, char *argv[] )
 //client.LogScreenf("noexitfilecheck: %d\n", client.noexitfilecheck);
 
     client.Run();
-    if (client.randomchanged) client.WriteContestandPrefixConfig();
-    client.mailmessage.quietmode=client.quietmode;
-//  No use trying to send a message when we know the system is offline right?
-//  if ((!client.offlinemode) || (client.messagelen > 0))
+
+    client.MailDeinitialize(); //checktosend(1) if not offlinemode
     if (!client.offlinemode)
-      {
-      client.mailmessage.checktosend(1);
       NetworkDeinitialize();
-      }
+    
+    if (client.randomchanged) 
+      client.WriteContestandPrefixConfig();
+
     retcode = ( UserBreakTriggered ? -1 : 0 );
   } //if (retcode == OK_TO_RUN)
 

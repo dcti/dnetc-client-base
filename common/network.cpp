@@ -5,6 +5,18 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.27  1998/07/07 21:55:46  cyruspatel
+// Serious house cleaning - client.h has been split into client.h (Client
+// class, FileEntry struct etc - but nothing that depends on anything) and
+// baseincs.h (inclusion of generic, also platform-specific, header files).
+// The catchall '#include "client.h"' has been removed where appropriate and
+// replaced with correct dependancies. cvs Ids have been encapsulated in
+// functions which are later called from cliident.cpp. Corrected other
+// compile-time warnings where I caught them. Removed obsolete timer and
+// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
+// Made MailMessage in the client class a static object (in client.cpp) in
+// anticipation of global log functions.
+//
 // Revision 1.26  1998/06/29 06:58:06  jlawson
 // added new platform OS_WIN32S to make code handling easier.
 //
@@ -42,11 +54,16 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: network.cpp,v 1.26 1998/06/29 06:58:06 jlawson Exp $";
+const char *network_cpp(void) {
+static const char *id="@(#)$Id: network.cpp,v 1.27 1998/07/07 21:55:46 cyruspatel Exp $";
+return id; }
 #endif
 
+#include "cputypes.h"
 #include "network.h"
 #include "sleepdef.h"    //  Fix sleep()/usleep() macros there! <--
+#include "autobuff.h"
+#include "cmpidefs.h"
 
 #define VERBOSE_OPEN //print cause of ::Open() errors
 

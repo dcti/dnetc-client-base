@@ -8,6 +8,18 @@
 // the time. 'time' is always stored/passed/returned in timeval format.
 // 
 // $Log: clitime.h,v $
+// Revision 1.7  1998/07/07 21:55:32  cyruspatel
+// Serious house cleaning - client.h has been split into client.h (Client
+// class, FileEntry struct etc - but nothing that depends on anything) and
+// baseincs.h (inclusion of generic, also platform-specific, header files).
+// The catchall '#include "client.h"' has been removed where appropriate and
+// replaced with correct dependancies. cvs Ids have been encapsulated in
+// functions which are later called from cliident.cpp. Corrected other
+// compile-time warnings where I caught them. Removed obsolete timer and
+// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
+// Made MailMessage in the client class a static object (in client.cpp) in
+// anticipation of global log functions.
+//
 // Revision 1.6  1998/06/29 06:57:58  jlawson
 // added new platform OS_WIN32S to make code handling easier.
 //
@@ -19,7 +31,7 @@
 #ifndef _CLITIME_H_
 #define _CLITIME_H_
 
-#include "client.h" //need definition of time functions and CLIENT_OS
+//#include "baseincs.h" //we need this for timeval
 
 // Get the current time in timeval format (pass NULL if storage not req'd)
 struct timeval *CliTimer( struct timeval *tv );
@@ -40,5 +52,3 @@ int CliTimerAdd( struct timeval *result, struct timeval *tv1, struct timeval *tv
 int CliTimerDiff( struct timeval *result, struct timeval *tv1, struct timeval *tv2 );
 
 #endif //ifndef _CLITIME_H_
-
-

@@ -3,6 +3,18 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.25  1998/07/07 21:55:50  cyruspatel
+// Serious house cleaning - client.h has been split into client.h (Client
+// class, FileEntry struct etc - but nothing that depends on anything) and
+// baseincs.h (inclusion of generic, also platform-specific, header files).
+// The catchall '#include "client.h"' has been removed where appropriate and
+// replaced with correct dependancies. cvs Ids have been encapsulated in
+// functions which are later called from cliident.cpp. Corrected other
+// compile-time warnings where I caught them. Removed obsolete timer and
+// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
+// Made MailMessage in the client class a static object (in client.cpp) in
+// anticipation of global log functions.
+//
 // Revision 1.24  1998/07/06 09:21:26  jlawson
 // added lint tags around cvs id's to suppress unused variable warnings.
 //
@@ -37,19 +49,16 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id_problem_cpp="@(#)$Id: problem.cpp,v 1.24 1998/07/06 09:21:26 jlawson Exp $";
+const char *problem_cpp(void) {
+static const char *id="@(#)$Id: problem.cpp,v 1.25 1998/07/07 21:55:50 cyruspatel Exp $";
+return id; }
 #endif
 
-
-#define NEW_STATS_AND_LOGMSG_STUFF
-
+#include "cputypes.h"
 #include "problem.h"
-#include "network.h"
-#include "client.h"
-
-#ifdef NEW_STATS_AND_LOGMSG_STUFF
+#include "network.h" // for timeval and htonl/ntohl
 #include "clitime.h" //for CliTimer() which gets a timeval of the current time
-#endif
+#include <stdio.h> //printf()
 
 #ifndef _CPU_32BIT_
 #error "everything assumes a 32bit CPU..."
@@ -148,11 +157,11 @@ s32 Problem::LoadState( ContestWork * work , u32 contesttype )
   printf("key    hi/lo:  %08x:%08x\n", contestwork.key.hi, contestwork.key.lo);
   printf("iv     hi/lo:  %08x:%08x\n", contestwork.iv.hi, contestwork.iv.lo);
   printf("plain  hi/lo:  %08x:%08x\n",
-	 contestwork.plain.hi, contestwork.plain.lo);
+   contestwork.plain.hi, contestwork.plain.lo);
   printf("cipher hi/lo:  %08x:%08x\n",
-	 contestwork.cypher.hi, contestwork.cypher.lo);
+   contestwork.cypher.hi, contestwork.cypher.lo);
   printf("iter   hi/lo:  %08x:%08x\n",
-	 contestwork.iterations.hi, contestwork.iterations.lo);
+   contestwork.iterations.hi, contestwork.iterations.lo);
 #endif
 
   // determine the starting key number
@@ -232,7 +241,6 @@ s32 Problem::RetrieveState( ContestWork * work , s32 setflags )
 
 s32 Problem::Run( u32 timeslice , u32 threadnum )
 {
-  struct timeval stop;
 
   if ( !initialized )
     return ( -1 );
@@ -242,14 +250,13 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
 
   if (!started)
   {
-#ifdef NEW_STATS_AND_LOGMSG_STUFF
+    struct timeval stop;
     CliTimer(&stop);
-#else
-    struct timezone dummy;
-    gettimeofday( &stop, &dummy );
-#endif
     timehi = stop.tv_sec;
     timelo = stop.tv_usec;
+    #if ((CLIENT_CPU != CPU_X86) || !defined(MULTITHREAD))
+       started = threadnum; //suppress unused argument compiler warning
+    #endif
     started=1;
   }
 

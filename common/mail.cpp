@@ -4,6 +4,18 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mail.cpp,v $
+// Revision 1.13  1998/07/07 21:55:43  cyruspatel
+// Serious house cleaning - client.h has been split into client.h (Client
+// class, FileEntry struct etc - but nothing that depends on anything) and
+// baseincs.h (inclusion of generic, also platform-specific, header files).
+// The catchall '#include "client.h"' has been removed where appropriate and
+// replaced with correct dependancies. cvs Ids have been encapsulated in
+// functions which are later called from cliident.cpp. Corrected other
+// compile-time warnings where I caught them. Removed obsolete timer and
+// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
+// Made MailMessage in the client class a static object (in client.cpp) in
+// anticipation of global log functions.
+//
 // Revision 1.12  1998/07/06 09:21:24  jlawson
 // added lint tags around cvs id's to suppress unused variable warnings.
 //
@@ -17,9 +29,21 @@
 // Revision 1.9  1998/06/14 08:12:56  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
-//
+// Revision 0.0  1997/09/17 09:17:07  timc
+// Created
+//-------------------------------------------------------------------------
 
+#if (!defined(lint) && defined(__showids__))
+const char *mail_cpp(void) {
+static const char *id="@(#)$Id: mail.cpp,v 1.13 1998/07/07 21:55:43 cyruspatel Exp $";
+return id; }
+#endif
 
+#include "network.h"
+#include "baseincs.h"
+#include "mail.h"
+
+//-------------------------------------------------------------------------
 
 #undef SHOWMAIL               // define showmail to see mail transcript on stdout
 #define GEN_HEADER_AT_SEND    // if defined, then the message header is
@@ -32,15 +56,7 @@
 #define GEN_HEADER_AT_SEND    // FIFO buffer requires generating headers at
 #endif                        // send time rather than at msg creation time.
 
-#if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: mail.cpp,v 1.12 1998/07/06 09:21:24 jlawson Exp $";
-#endif
-
-
-#include "network.h"
-#include "client.h"
-#include "mail.h"
-
+//-------------------------------------------------------------------------
 
 char *rfc822Date(void); // at the end of this file
 

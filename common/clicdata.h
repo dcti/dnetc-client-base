@@ -5,6 +5,18 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clicdata.h,v $
+// Revision 1.9  1998/07/07 21:55:08  cyruspatel
+// Serious house cleaning - client.h has been split into client.h (Client
+// class, FileEntry struct etc - but nothing that depends on anything) and
+// baseincs.h (inclusion of generic, also platform-specific, header files).
+// The catchall '#include "client.h"' has been removed where appropriate and
+// replaced with correct dependancies. cvs Ids have been encapsulated in
+// functions which are later called from cliident.cpp. Corrected other
+// compile-time warnings where I caught them. Removed obsolete timer and
+// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
+// Made MailMessage in the client class a static object (in client.cpp) in
+// anticipation of global log functions.
+//
 // Revision 1.8  1998/06/29 06:57:29  jlawson
 // added new platform OS_WIN32S to make code handling easier.
 //
@@ -27,9 +39,6 @@
 
 #ifndef _CLICDATA_H_
 #define _CLICDATA_H_
-
-#include "client.h" //required for struct timeval and NULL definition
-#include "clitime.h" //required for CliTimerDiff()
 
 // return 0 if contestID is invalid, non-zero if valid.
 int CliIsContestIDValid(int contestID);

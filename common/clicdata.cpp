@@ -2,7 +2,26 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
+// This file contains functions for obtaining contest constants (name, id,
+// iteration-to-keycount-multiplication-factor) or obtaining/adding to
+// contest summary data (totalblocks, totaliterations, totaltime).
+// The data itself is hidden from other modules to protect integrity and
+// ease maintenance.
+//
+//
 // $Log: clicdata.cpp,v $
+// Revision 1.11  1998/07/07 21:55:07  cyruspatel
+// Serious house cleaning - client.h has been split into client.h (Client
+// class, FileEntry struct etc - but nothing that depends on anything) and
+// baseincs.h (inclusion of generic, also platform-specific, header files).
+// The catchall '#include "client.h"' has been removed where appropriate and
+// replaced with correct dependancies. cvs Ids have been encapsulated in
+// functions which are later called from cliident.cpp. Corrected other
+// compile-time warnings where I caught them. Removed obsolete timer and
+// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
+// Made MailMessage in the client class a static object (in client.cpp) in
+// anticipation of global log functions.
+//
 // Revision 1.10  1998/06/29 08:43:45  jlawson
 // More OS_WIN32S/OS_WIN16 differences and long constants added.
 //
@@ -27,17 +46,14 @@
 // 'Log' keywords added to maintain automatic change history
 //
 
-// This file contains functions for obtaining contest constants (name, id,
-// iteration-to-keycount-multiplication-factor) or obtaining/adding to
-// contest summary data (totalblocks, totaliterations, totaltime).
-// The data itself is hidden from other modules to protect integrity and
-// ease maintenance.
-
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: clicdata.cpp,v 1.10 1998/06/29 08:43:45 jlawson Exp $";
+const char *clicdata_cpp(void) {
+static const char *id="@(#)$Id: clicdata.cpp,v 1.11 1998/07/07 21:55:07 cyruspatel Exp $";
+return id; }
 #endif
 
-#include "clicdata.h" //includes client.h for timeval and NULL definitions
+#include "baseincs.h" //for timeval
+#include "clitime.h" //required for CliTimerDiff() and CliClock()
 
 // ---------------------------------------------------------------------------
 

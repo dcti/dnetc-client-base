@@ -5,6 +5,18 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.25  1998/07/07 21:55:48  cyruspatel
+// Serious house cleaning - client.h has been split into client.h (Client
+// class, FileEntry struct etc - but nothing that depends on anything) and
+// baseincs.h (inclusion of generic, also platform-specific, header files).
+// The catchall '#include "client.h"' has been removed where appropriate and
+// replaced with correct dependancies. cvs Ids have been encapsulated in
+// functions which are later called from cliident.cpp. Corrected other
+// compile-time warnings where I caught them. Removed obsolete timer and
+// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
+// Made MailMessage in the client class a static object (in client.cpp) in
+// anticipation of global log functions.
+//
 // Revision 1.24  1998/06/29 08:01:13  ziggyb
 // DOD defines
 //
@@ -58,9 +70,11 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
+#define NETTIMEOUT (60)
+
+
 #include "cputypes.h"
 #include "autobuff.h"
-#include "sleepdef.h"    //  Fix sleep()/usleep() macros there! <--
 
 #if ((CLIENT_OS == OS_AMIGAOS)|| (CLIENT_OS == OS_RISCOS))
 extern "C" {
@@ -220,8 +234,6 @@ extern "C" {
     #define inet_addr(x) my_inet_addr(x)
   #endif
 #endif
-
-#include "cmpidefs.h"
 
 ///////////////////////////////////////////////////////////////////////////
 

@@ -8,6 +8,18 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 // 
 // $Log: clisrate.h,v $
+// Revision 1.14  1998/07/07 21:55:28  cyruspatel
+// Serious house cleaning - client.h has been split into client.h (Client
+// class, FileEntry struct etc - but nothing that depends on anything) and
+// baseincs.h (inclusion of generic, also platform-specific, header files).
+// The catchall '#include "client.h"' has been removed where appropriate and
+// replaced with correct dependancies. cvs Ids have been encapsulated in
+// functions which are later called from cliident.cpp. Corrected other
+// compile-time warnings where I caught them. Removed obsolete timer and
+// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
+// Made MailMessage in the client class a static object (in client.cpp) in
+// anticipation of global log functions.
+//
 // Revision 1.13  1998/06/29 06:57:53  jlawson
 // added new platform OS_WIN32S to make code handling easier.
 //
@@ -62,11 +74,11 @@
 #ifndef _CLICSTAT_H_
 #define _CLICSTAT_H_
 
-#include "client.h" //timeval, sprintf(), u64, Problem/Fileentry/RC5Result
-#include "clitime.h" // for CliTimer(), CliTimerDiff(), CliGetTimeString()
-#include "clirate.h"  // for CliGetKeyrateFor[Problem|Contest]()
-#include "clicdata.h" // for CliGetContestInfo[Base|Summary]Data()
+//#include "cputypes.h" // u64
+//#include "problem.h"  // Problem class
+//#include "client.h"   // Fileentry struct
 
+// ---------------------------------------------------------------------------
 
 #ifndef _U32LimitDouble_
   #define _U32LimitDouble_  ((double)(0xFFFFFFFFul))

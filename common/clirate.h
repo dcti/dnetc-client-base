@@ -8,6 +8,18 @@
 // problem and for obtaining the total/average keyrate for an entire contest.
 // 
 // $Log: clirate.h,v $
+// Revision 1.9  1998/07/07 21:55:24  cyruspatel
+// Serious house cleaning - client.h has been split into client.h (Client
+// class, FileEntry struct etc - but nothing that depends on anything) and
+// baseincs.h (inclusion of generic, also platform-specific, header files).
+// The catchall '#include "client.h"' has been removed where appropriate and
+// replaced with correct dependancies. cvs Ids have been encapsulated in
+// functions which are later called from cliident.cpp. Corrected other
+// compile-time warnings where I caught them. Removed obsolete timer and
+// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
+// Made MailMessage in the client class a static object (in client.cpp) in
+// anticipation of global log functions.
+//
 // Revision 1.8  1998/06/29 06:57:49  jlawson
 // added new platform OS_WIN32S to make code handling easier.
 //
@@ -42,9 +54,7 @@
 #ifndef _CLIRATE_H_
 #define _CLIRATE_H_
 
-#include "client.h" //uses Problem and RC5Result class definitions 
-#include "clicdata.h" //Cli[Add|Get]ContestInfoSummaryData, CliGetContestInfoBaseData
-#include "clitime.h" //CliTimerDiff
+//#include "problem.h" //uses Problem and RC5Result class definitions 
 
 // return (cumulative) keyrate for a particular contest
 double CliGetKeyrateForContest( int contestid );

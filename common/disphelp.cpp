@@ -5,6 +5,18 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.32  1998/07/07 21:55:39  cyruspatel
+// Serious house cleaning - client.h has been split into client.h (Client
+// class, FileEntry struct etc - but nothing that depends on anything) and
+// baseincs.h (inclusion of generic, also platform-specific, header files).
+// The catchall '#include "client.h"' has been removed where appropriate and
+// replaced with correct dependancies. cvs Ids have been encapsulated in
+// functions which are later called from cliident.cpp. Corrected other
+// compile-time warnings where I caught them. Removed obsolete timer and
+// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
+// Made MailMessage in the client class a static object (in client.cpp) in
+// anticipation of global log functions.
+//
 // Revision 1.31  1998/07/06 01:41:19  cyruspatel
 // Added support for /DNOTERMIOS and /DNOCURSES compiler switches to allow
 // the linux client to be built on systems without termios/curses libraries
@@ -87,8 +99,8 @@
 // Revision 1.15  1998/06/14 08:12:51  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
-//
-
+// Revision 0.00  1998/05/28 28:05:07  cyruspatel
+// Created
 
 // Created 28. May 98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 //
@@ -96,11 +108,19 @@
 // or NULL or "-help" or "help" (or whatever)
 //
 
+// -----------------------------------------------------------------------
+
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: disphelp.cpp,v 1.31 1998/07/06 01:41:19 cyruspatel Exp $";
+const char *disphelp_cpp(void) {
+static const char *id="@(#)$Id: disphelp.cpp,v 1.32 1998/07/07 21:55:39 cyruspatel Exp $";
+return id; }
 #endif
 
-#include "client.h"
+#include "cputypes.h"
+#include "version.h"  //CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
+#include "client.h"   //client class and signaltriggered/userbreaktriggered
+#include "baseincs.h" 
+#include "cmpidefs.h" //strcmpi()
 
 // --------------------------------------------------------------------------
 

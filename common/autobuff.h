@@ -5,6 +5,18 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: autobuff.h,v $
+// Revision 1.6  1998/07/07 21:54:59  cyruspatel
+// Serious house cleaning - client.h has been split into client.h (Client
+// class, FileEntry struct etc - but nothing that depends on anything) and
+// baseincs.h (inclusion of generic, also platform-specific, header files).
+// The catchall '#include "client.h"' has been removed where appropriate and
+// replaced with correct dependancies. cvs Ids have been encapsulated in
+// functions which are later called from cliident.cpp. Corrected other
+// compile-time warnings where I caught them. Removed obsolete timer and
+// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
+// Made MailMessage in the client class a static object (in client.cpp) in
+// anticipation of global log functions.
+//
 // Revision 1.5  1998/06/14 08:12:26  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -12,21 +24,8 @@
 #ifndef __AUTOBUFF_H__
 #define __AUTOBUFF_H__
 
-#include "cputypes.h"
-
-
 #ifndef AUTOBUFFER_INCREMENT
 #define AUTOBUFFER_INCREMENT 100
-#endif
-
-#if (CLIENT_OS == OS_AMIGAOS)
-extern "C" {
-#endif
-
-#include <string.h>
-
-#if (CLIENT_OS == OS_AMIGAOS)
-}
 #endif
 
 class AutoBuffer

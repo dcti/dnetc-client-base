@@ -6,6 +6,18 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.21  1998/07/07 21:55:25  cyruspatel
+// Serious house cleaning - client.h has been split into client.h (Client
+// class, FileEntry struct etc - but nothing that depends on anything) and
+// baseincs.h (inclusion of generic, also platform-specific, header files).
+// The catchall '#include "client.h"' has been removed where appropriate and
+// replaced with correct dependancies. cvs Ids have been encapsulated in
+// functions which are later called from cliident.cpp. Corrected other
+// compile-time warnings where I caught them. Removed obsolete timer and
+// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
+// Made MailMessage in the client class a static object (in client.cpp) in
+// anticipation of global log functions.
+//
 // Revision 1.20  1998/07/05 21:49:30  silby
 // Modified logging so that manual wrapping is not done on win32gui, as it looks terrible in a non-fixed spaced font.
 //
@@ -81,12 +93,20 @@
 //
 // ==============================================================
 
-
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: clisrate.cpp,v 1.20 1998/07/05 21:49:30 silby Exp $";
+const char *clisrate_cpp(void) {
+static const char *id="@(#)$Id: clisrate.cpp,v 1.21 1998/07/07 21:55:25 cyruspatel Exp $";
+return id; }
 #endif
 
-#include "clisrate.h" //includes client.h, clitime.h, clirate.h, clicdata.h
+#include "cputypes.h"  // for u64
+#include "problem.h"   // for Problem class
+#include "client.h"    // for Fileentry struct
+#include "baseincs.h"  // for timeval, sprintf et al
+#include "clitime.h"   // for CliTimer(), CliTimerDiff(), CliGetTimeString()
+#include "clirate.h"   // for CliGetKeyrateFor[Problem|Contest]()
+#include "clicdata.h"  // for CliGetContestInfo[Base|Summary]Data()
+#include "clisrate.h"  // included just to keep prototypes accurate
 
 // ---------------------------------------------------------------------------
 
@@ -284,10 +304,6 @@ const char *CliReformatMessage( const char *header, const char *message )
 {
   static char strspace[160];
 
-#if ((CLIENT_OS==OS_WIN32) && defined(NEEDVIRTUALMETHODS))
-  sprintf(strspace,"\r[%s] %s %s\n", CliGetTimeString(NULL,1),header,message);
-  return (const char *)(strspace);
-#else
   unsigned int prelen, linelen, doquote = (header!=NULL);
   char buffer[84], *bptr, *sptr;
   const char *mptr = message;
@@ -390,7 +406,6 @@ const char *CliReformatMessage( const char *header, const char *message )
     }
   }
   return (const char *)(strspace);
-#endif
 }
 
 // ---------------------------------------------------------------------------

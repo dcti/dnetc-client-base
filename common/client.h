@@ -4,7 +4,26 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
+// This file contains the basic types used in a lot of places: Client class;
+// Operation, contest_id_t enums; Packet, FileHeader and FileEntry structs; 
+// none of them depend on anything other than cputypes.h, and network.h
+// (which stands alone too) for Client::Fetch() and Client::Flush())
+// 
+// ------------------------------------------------------------------
+//
 // $Log: client.h,v $
+// Revision 1.63  1998/07/07 21:55:18  cyruspatel
+// Serious house cleaning - client.h has been split into client.h (Client
+// class, FileEntry struct etc - but nothing that depends on anything) and
+// baseincs.h (inclusion of generic, also platform-specific, header files).
+// The catchall '#include "client.h"' has been removed where appropriate and
+// replaced with correct dependancies. cvs Ids have been encapsulated in
+// functions which are later called from cliident.cpp. Corrected other
+// compile-time warnings where I caught them. Removed obsolete timer and
+// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
+// Made MailMessage in the client class a static object (in client.cpp) in
+// anticipation of global log functions.
+//
 // Revision 1.62  1998/07/06 03:15:31  jlawson
 // prototype for InternalGetLocalFilename no longer defined by default.
 //
@@ -94,208 +113,21 @@
 //
 //
 
-// For WinNT Service:
-//#define WINNTSERVICE "bovrc5nt"
-// For Win32 hidden console:
-//#define WIN32HIDDEN
-// For GUIs and such
-//#define NOMAIN
 
-#define NEW_STATS_AND_LOGMSG_STUFF    //if you want a 'better looking' screen
-#define NEW_LOGSCREEN_PERCENT_SINGLE  //if the percbar is to stay < 80 chars
-//#define PERCBAR_ON_ONE_LINE         //percents for all threads on 1 line
+#ifndef __CLIBASICS_H__
+#define __CLIBASICS_H__
 
-
-#ifndef CLIENT_H
-#define CLIENT_H
+#include "cputypes.h"
+#include "network.h" //needs this for the fetch() and flush() method defs.
 
 // --------------------------------------------------------------------------
 
-// all revision comments moved to the changeLog.txt
-
-#include "version.h"
-#include "cputypes.h"
-#include "problem.h"
-#include "iniread.h"
-#include "network.h"
-#include "scram.h"
-#include "mail.h"
-#include "convdes.h"
-#include "sleepdef.h"
-#include "threadcd.h"
-#include "cpucheck.h"
-#include "buffwork.h"
-
-#define OPTION_SECTION "parameters"
+//#define OPTION_SECTION "parameters" //now a const char * in cliconfig.cpp
 
 #define PACKET_VERSION      0x03
 
 #define MAXCPUS             16
-#define BUFFER_RETRY        10
 #define FETCH_RETRY         10
-#define NETTIMEOUT          60
-
-// --------------------------------------------------------------------------
-
-#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
-extern "C" {
-#endif
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <signal.h>
-#include <stdarg.h>
-#include <string.h>
-#include <sys/types.h>
-
-#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
-}
-#endif
-
-#if (CLIENT_OS == OS_IRIX)
-  #include <limits.h>
-  #include <sys/types.h>
-  #include <sys/prctl.h>
-  #include <sys/schedctl.h>
-  #include <fcntl.h>
-#elif (CLIENT_OS == OS_OS2)
-  #include <sys/timeb.h>
-  #include <conio.h>
-  #include <share.h>
-  #include <direct.h>
-  #include <fcntl.h>
-  #include "platforms/os2cli/os2defs.h"
-  #ifndef QSV_NUMPROCESSORS       /* This is only defined in the SMP toolkit */
-    #define QSV_NUMPROCESSORS     26
-  #endif
-#elif (CLIENT_OS == OS_RISCOS)
-  extern "C"
-  {
-    #include <sys/fcntl.h>
-    #include <unistd.h>
-    #include <stdarg.h>
-    #include <machine/endian.h>
-    #include <swis.h>
-    extern unsigned int ARMident(), IOMDident();
-    extern void riscos_clear_screen();
-    extern bool riscos_check_taskwindow();
-    extern int riscos_find_local_directory(const char *argv0);
-    extern char *riscos_localise_filename(const char *filename);
-    extern int getch();
-
-    #define fileno(f) ((f)->__file)
-    #define isatty(f) ((f) == 0)
-  }
-  extern s32 guiriscos, guirestart;
-  extern bool riscos_in_taskwindow;
-#elif (CLIENT_OS == OS_VMS)
-  #include <fcntl.h>
-  #include <types.h>
-  #define unlink remove
-#elif (CLIENT_OS == OS_SCO)
-  #include <fcntl.h>
-  #include <sys/time.h>
-#elif (CLIENT_OS == OS_WIN16)
-  #include <sys/timeb.h>
-  #include <io.h>
-  #include <conio.h>
-  #include <dos.h>
-  #include <share.h>
-  #include <dir.h>
-  #include <fcntl.h>
-#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S)
-  #include <sys/timeb.h>
-  #include <process.h>
-  #include <ras.h>
-  #include <conio.h>
-  #include <share.h>
-  #include <fcntl.h>
-  #ifdef __TURBOC__
-    #include <dir.h>
-  #endif
-  #if (CLIENT_OS == OS_WIN32)
-    typedef DWORD (CALLBACK *rasenumconnectionsT)(LPRASCONN, LPDWORD, LPDWORD);
-    typedef DWORD (CALLBACK *rasgetconnectstatusT)(HRASCONN, LPRASCONNSTATUS);
-    extern rasenumconnectionsT rasenumconnections;
-    extern rasgetconnectstatusT rasgetconnectstatus;
-  #endif
-#elif (CLIENT_OS == OS_DOS)
-  #include <sys/timeb.h>
-  #include <io.h>
-  #include <conio.h>
-  #include <share.h>
-  #include <fcntl.h>
-  #include "platforms/dos/clidos.h"
-#elif (CLIENT_OS == OS_BEOS)
-// nothing  #include <share.h>
-  #include <fcntl.h>
-#elif (CLIENT_OS == OS_NETWARE)
-  #include <sys/time.h>
-  #include <process.h>
-  #include <conio.h>
-  #include <direct.h>
-  #include <share.h>
-  #include <fcntl.h>
-  #include "platforms/netware/netware.h" //for stuff in netware.cpp
-#elif (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS)
-  #include <fcntl.h>
-  extern "C" int nice(int);
-  extern "C" int gethostname(char *, int); // Keep g++ happy.
-#endif
-
-// --------------------------------------------------------------------------
-
-#ifdef max
-#undef max
-#endif
-#define max(a,b)            (((a) > (b)) ? (a) : (b))
-
-#ifdef min
-#undef min
-#endif
-#define min(a,b)            (((a) < (b)) ? (a) : (b))
-
-// --------------------------------------------------------------------------
-
-#ifdef DONT_USE_PATHWORK
-  #if (CLIENT_OS == OS_NETWARE)
-  //#define PATH_SEP   "\\"   //left undefined so I can see
-  //#define PATH_SEP_C '\\'   //where the references are
-  #define EXTN_SEP   "."
-  #define EXTN_SEP_C '.'
-  #elif ((CLIENT_OS == OS_DOS) || CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)
-  #define PATH_SEP   "\\"
-  #define PATH_SEP_C '\\'
-  #define ALT_PATH_SEP '/'
-  #define ALT_PATH_SEP_C '/'
-  #define DRIVE_SEP ':'
-  #define DRIVE_SEP_C ':'
-  #define EXTN_SEP   "."
-  #define EXTN_SEP_C '.'
-  #elif (CLIENT_OS == OS_MACOS)
-  #define PATH_SEP   ":"
-  #define PATH_SEP_C ':'
-  #define EXTN_SEP   "."
-  #define EXTN_SEP_C '.'
-  #elif (CLIENT_OS == OS_RISCOS)
-  #define PATH_SEP   "."
-  #define PATH_SEP_C '.'
-  #define EXTN_SEP   "/"
-  #define EXTN_SEP_C '/'
-  #else
-  #define PATH_SEP   "/"
-  #define PATH_SEP_C '/'
-  #define EXTN_SEP   "."
-  #define EXTN_SEP_C '.'
-  #endif
-#else
-  #if (CLIENT_OS == OS_RISCOS)
-    #define EXTN_SEP   "/"
-  #else
-    #define EXTN_SEP   "."
-  #endif
-#endif
 
 // --------------------------------------------------------------------------
 
@@ -338,6 +170,34 @@ typedef enum
 
 #pragma pack(1)               // no padding allowed
 
+typedef struct
+{
+  u32 lock;
+  u32 count;
+} FileHeader;
+
+// note this begins exactly as a ContestWork struct,
+// so that we can just pass it to LoadWork.
+
+typedef struct
+{
+  u64  key;               // starting key
+  u64  iv;                // initialization vector
+  u64  plain;             // plaintext we're searching for
+  u64  cypher;            // cyphertext
+  u64  keysdone;          // iterations done (also current position in block)
+  u64  iterations;        // iterations to do
+  u32  op;                // (out)OP_SUCCESS, (out)OP_DONE, or (in)OP_DATA
+  char id[59];            // email address of original worker...
+  u8   contest;           //
+  u8   cpu;               // added 97.11.25
+  u8   os;                // added 97.11.25
+  u8   buildhi;           // added 97.11.25
+  u8   buildlo;           // added 97.11.25
+  u32  checksum;          // checksum for file curruption
+  u32  scramble;          // scramble key for this entry (NOT! the same as OP_KEY)
+} FileEntry;
+
 // remember that for now, the u64's come from the server in the "wrong" order
 // lo|hi, not hi|lo like they should
 // - everything in network byte order.
@@ -364,38 +224,6 @@ typedef struct Packet
   u32  scramble;      // the key we're using to scrambling this -------|
 } Packet;
 
-// --------------------------------------------------------------------------
-
-typedef struct
-{
-  u32 lock;
-  u32 count;
-} FileHeader;
-
-// --------------------------------------------------------------------------
-
-// note this begins exactly as a ContestWork struct,
-// so that we can just pass it to LoadWork.
-
-typedef struct
-{
-  u64  key;               // starting key
-  u64  iv;                // initialization vector
-  u64  plain;             // plaintext we're searching for
-  u64  cypher;            // cyphertext
-  u64  keysdone;          // iterations done (also current position in block)
-  u64  iterations;        // iterations to do
-  u32  op;                // (out)OP_SUCCESS, (out)OP_DONE, or (in)OP_DATA
-  char id[59];            // email address of original worker...
-  u8   contest;           //
-  u8   cpu;               // added 97.11.25
-  u8   os;                // added 97.11.25
-  u8   buildhi;           // added 97.11.25
-  u8   buildlo;           // added 97.11.25
-  u32  checksum;          // checksum for file curruption
-  u32  scramble;          // scramble key for this entry (NOT! the same as OP_KEY)
-} FileEntry;
-
 #pragma pack()
 
 // --------------------------------------------------------------------------
@@ -421,12 +249,16 @@ public:
   s32  uuehttpmode;
   char httpid[128];
   s32  cputype;
+  s32  offlinemode;
+
   s32  messagelen;
   char smtpsrvr[128];
   s32  smtpport;
   char smtpfrom[128];
   char smtpdest[128];
-  s32  offlinemode;
+  void MailInitialize(void); //copy the mail specific settings over
+  void MailDeinitialize(void); //checktosend(1) if not offline mode
+  //MailMessage mailmessage; //this is now a static in main.cpp
 
 #ifndef DONT_USE_PATHWORK
   char ini_logname[128];// Logfile name as is in the .ini
@@ -443,7 +275,6 @@ public:
   char checkpoint_file[2][128];
   char pausefile[128];
 
-  MailMessage mailmessage;
   s32  numcpu, numcputemp;
   s32 checkpoint_min;
   s32 percentprintingoff;
@@ -480,8 +311,8 @@ protected:
   char proxymessage[64];
   char logstr[1024];
 
-  ContestWork contestwork;
-  RC5Result rc5result;
+  //ContestWork contestwork; //local variable in Benchmark and SelfTest
+  //RC5Result rc5result; //local variable in SelfTest and Run
 
   u32 totalBlocksDone[2];
   u32 old_totalBlocksDone[2];
@@ -496,11 +327,6 @@ protected:
 #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
   virtual void SurrenderCPU( void ) {};
     // pause for other tasks
-#endif
-
-#ifndef NEW_STATS_AND_LOGMSG_STUFF //Substituted by CliTimeString(NULL,1)
-  const char * Time( void );
-    // Returns: string with GMT time in "mm/dd/yy hh:mm:ss"
 #endif
 
   void RandomWork( FileEntry * data );
@@ -561,7 +387,7 @@ public:
   void PrintBanner(const char * clname);
     // prints out a version banner to screen
 
-  void ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing);
+  void ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing);
     // parses commandline options, setting parsed items to NULL
 
   s32 CkpointToBufferInput(u8 contest);
@@ -720,56 +546,53 @@ public:
 };
 
 // --------------------------------------------------------------------------
-#if (CLIENT_OS == OS_OS2)
-  #include "platforms\os2cli\dod.h"   // needs to be included after Client
-#endif
-// --------------------------------------------------------------------------
 
-#ifdef NEW_STATS_AND_LOGMSG_STUFF
-  #include "clitime.h"
-  #include "clirate.h"
-  #include "clisrate.h"
-  #define Time() (CliGetTimeString(NULL,1))
+#ifdef DONT_USE_PATHWORK
+  #if (CLIENT_OS == OS_NETWARE)
+  //#define PATH_SEP   "\\"   //left undefined so I can see
+  //#define PATH_SEP_C '\\'   //where the references are
+  #define EXTN_SEP   "."
+  #define EXTN_SEP_C '.'
+  #elif ((CLIENT_OS == OS_DOS) || CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)
+  #define PATH_SEP   "\\"
+  #define PATH_SEP_C '\\'
+  #define ALT_PATH_SEP '/'
+  #define ALT_PATH_SEP_C '/'
+  #define DRIVE_SEP ':'
+  #define DRIVE_SEP_C ':'
+  #define EXTN_SEP   "."
+  #define EXTN_SEP_C '.'
+  #elif (CLIENT_OS == OS_MACOS)
+  #define PATH_SEP   ":"
+  #define PATH_SEP_C ':'
+  #define EXTN_SEP   "."
+  #define EXTN_SEP_C '.'
+  #elif (CLIENT_OS == OS_RISCOS)
+  #define PATH_SEP   "."
+  #define PATH_SEP_C '.'
+  #define EXTN_SEP   "/"
+  #define EXTN_SEP_C '/'
+  #else
+  #define PATH_SEP   "/"
+  #define PATH_SEP_C '/'
+  #define EXTN_SEP   "."
+  #define EXTN_SEP_C '.'
+  #endif
 #else
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_NETWARE) || \
-      (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32S) || \
-      (CLIENT_OS == OS_WIN16) || \
-      ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
-    #ifdef __WATCOMC__
-      // disable "Warning! W481: col(1) class/enum has the same name
-      // as the function/variable 'timezone'"
-      #pragma warning 481 9 ;
-    #endif
-    struct timezone
-    {
-      int  tz_minuteswest;    /* of Greenwich */
-      int  tz_dsttime;        /* type of dst correction to apply */
-    };
+  #if (CLIENT_OS == OS_RISCOS)
+    #define EXTN_SEP   "/"
+  #else
+    #define EXTN_SEP   "."
   #endif
-  #if (((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K)) ||   \
-     (CLIENT_OS == OS_MACOS) ||                              \
-     (CLIENT_OS == OS_SCO) ||                                \
-     (CLIENT_OS == OS_OS2) ||                                \
-     (CLIENT_OS == OS_AMIGAOS) ||                            \
-     (CLIENT_OS == OS_NETWARE) ||                            \
-     (CLIENT_OS == OS_WIN32) ||                              \
-     (CLIENT_OS == OS_WIN32S) ||                             \
-     (CLIENT_OS == OS_WIN16) ||                              \
-     (CLIENT_OS == OS_DOS) ||                                \
-     ((CLIENT_OS == OS_VMS) && !defined(MULTINET)))
-  extern "C" gettimeofday(struct timeval *tv, struct timezone *);
-  #endif
-#endif //#ifdef NEW_STATS_AND_LOGMSG_STUFF
+#endif
 
 // --------------------------------------------------------------------------
 
-extern Problem problem[2*MAXCPUS];
-
+//extern Problem problem[2*MAXCPUS];
 extern volatile u32 SignalTriggered, UserBreakTriggered;
 extern volatile s32 pausefilefound;
 extern void CliSetupSignals( void );
 
 // --------------------------------------------------------------------------
 
-#endif //CLIENT_H
-
+#endif // __CLIBASICS_H__

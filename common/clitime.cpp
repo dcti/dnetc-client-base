@@ -5,7 +5,25 @@
 // This file contains functions for obtaining/formatting/manipulating
 // the time. 'time' is always stored/passed/returned in timeval format.
 //
+// CliTimer() requires porting so that it returns the time as gettimeofday() 
+// would, ie seconds since 1.1.70 GMT in tv_sec, and remaining fraction in 
+// microseconds in tv_usec;
+//
+// ---------------------------------------------------------------------
+//
 // $Log: clitime.cpp,v $
+// Revision 1.17  1998/07/07 21:55:29  cyruspatel
+// Serious house cleaning - client.h has been split into client.h (Client
+// class, FileEntry struct etc - but nothing that depends on anything) and
+// baseincs.h (inclusion of generic, also platform-specific, header files).
+// The catchall '#include "client.h"' has been removed where appropriate and
+// replaced with correct dependancies. cvs Ids have been encapsulated in
+// functions which are later called from cliident.cpp. Corrected other
+// compile-time warnings where I caught them. Removed obsolete timer and
+// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
+// Made MailMessage in the client class a static object (in client.cpp) in
+// anticipation of global log functions.
+//
 // Revision 1.16  1998/07/06 09:21:22  jlawson
 // added lint tags around cvs id's to suppress unused variable warnings.
 //
@@ -25,23 +43,20 @@
 // Revision 1.11  1998/06/14 08:12:45  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
-//
-
-
-/*
-   Portability notes:
-   CliTimer() requires porting so that it returns the time
-   as gettimeofday() would, ie seconds since 1.1.70 GMT in tv_sec,
-   and remaining fraction in mincroseconds in tv_usec;
-*/
+// Revision 0.00  1998/05/01 05:01:08  cyruspatel
+// Created
+// 
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: clitime.cpp,v 1.16 1998/07/06 09:21:22 jlawson Exp $";
+const char *clitime_cpp(void) {
+static const char *id="@(#)$Id: clitime.cpp,v 1.17 1998/07/07 21:55:29 cyruspatel Exp $";
+return id; }
 #endif
 
-
-#include "clitime.h" //which #includes client.h
-
+#include "cputypes.h"
+#include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
+#include "sleepdef.h" // usleep for amiga and where gettimeofday is supported
+#include "clitime.h"  // just to keep the prototypes in sync
 
 // ---------------------------------------------------------------------
 
@@ -138,7 +153,7 @@ struct timeval *CliTimer( struct timeval *tv )
       }
       else if ((long) stv.tv_sec == (long) (secs = ((unsigned int)(time(NULL)))))
       {
-        usleep(100000L);
+        usleep(100000L); //1/10 sec
         stv.tv_usec += 100000L;
       }
       else

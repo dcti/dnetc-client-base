@@ -6,6 +6,18 @@
 // problem and for obtaining the total/average keyrate for an entire contest.
 //
 // $Log: clirate.cpp,v $
+// Revision 1.14  1998/07/07 21:55:22  cyruspatel
+// Serious house cleaning - client.h has been split into client.h (Client
+// class, FileEntry struct etc - but nothing that depends on anything) and
+// baseincs.h (inclusion of generic, also platform-specific, header files).
+// The catchall '#include "client.h"' has been removed where appropriate and
+// replaced with correct dependancies. cvs Ids have been encapsulated in
+// functions which are later called from cliident.cpp. Corrected other
+// compile-time warnings where I caught them. Removed obsolete timer and
+// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
+// Made MailMessage in the client class a static object (in client.cpp) in
+// anticipation of global log functions.
+//
 // Revision 1.13  1998/06/29 08:44:02  jlawson
 // More OS_WIN32S/OS_WIN16 differences and long constants added.
 //
@@ -59,10 +71,22 @@
 
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: clirate.cpp,v 1.13 1998/06/29 08:44:02 jlawson Exp $";
+const char *clirate_cpp(void) {
+static const char *id="@(#)$Id: clirate.cpp,v 1.14 1998/07/07 21:55:22 cyruspatel Exp $";
+return id; }
 #endif
 
-#include "clirate.h" //includes client.h, clicdata.h, clitime.h
+#include "cputypes.h" //for u64 define
+#include "problem.h"  //uses Problem and RC5Result class definitions 
+#include "clicdata.h" //Cli[Add|Get]ContestInfoSummaryData, CliGetContestInfoBaseData
+#include "clitime.h"  //CliTimerDiff
+#include "clirate.h"  //keep the prototypes in sync.
+#include "network.h"  // for ntohl and timeval
+
+// ---------------------------------------------------------------------------
+
+#define LASTDONE_LIST_SIZE (16) //the number of block id's we cache 
+                                //to see if we've already added them
 
 // ---------------------------------------------------------------------------
 
@@ -87,7 +111,7 @@ double CliGetKeyrateForContest( int contestid )
 //internal - see CliGetKeyrateForProblem() for description
 static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
 {
-  static struct { u64 key; signed char contest; } last_done_list[MAXCPUS*2];
+  static struct { u64 key; signed char contest; } last_done_list[LASTDONE_LIST_SIZE];
   static int last_done_pos = -1;
 
   RC5Result rc5result;
@@ -120,13 +144,13 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
     return ((double)(0));
 
   additive = 1;
-  for (int i = 0; i < (MAXCPUS*2); i++)
+  for (int i = 0; i < (LASTDONE_LIST_SIZE); i++)
   {
     if (last_done_pos==-1)
     {
       last_done_list[i].key.lo = last_done_list[i].key.hi = 0;
       last_done_list[i].contest = -1;
-      if (i == ((MAXCPUS*2)-1)) last_done_pos = 0;
+      if (i == ((LASTDONE_LIST_SIZE)-1)) last_done_pos = 0;
     }
     else if (last_done_list[i].key.hi == rc5result.key.hi &&
         last_done_list[i].key.lo == rc5result.key.lo &&
@@ -142,7 +166,7 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
     last_done_list[last_done_pos].key.hi = rc5result.key.hi;
     last_done_list[last_done_pos].key.lo = rc5result.key.lo;
     last_done_list[last_done_pos].contest = (u8) contestid;
-    if ((++last_done_pos) >= (MAXCPUS*2))
+    if ((++last_done_pos) >= (LASTDONE_LIST_SIZE))
       last_done_pos=0;
 
     count = 1; //number of blocks to add to clicdata.cpp information

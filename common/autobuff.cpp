@@ -3,6 +3,18 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: autobuff.cpp,v $
+// Revision 1.7  1998/07/07 21:54:57  cyruspatel
+// Serious house cleaning - client.h has been split into client.h (Client
+// class, FileEntry struct etc - but nothing that depends on anything) and
+// baseincs.h (inclusion of generic, also platform-specific, header files).
+// The catchall '#include "client.h"' has been removed where appropriate and
+// replaced with correct dependancies. cvs Ids have been encapsulated in
+// functions which are later called from cliident.cpp. Corrected other
+// compile-time warnings where I caught them. Removed obsolete timer and
+// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
+// Made MailMessage in the client class a static object (in client.cpp) in
+// anticipation of global log functions.
+//
 // Revision 1.6  1998/07/06 09:21:19  jlawson
 // added lint tags around cvs id's to suppress unused variable warnings.
 //
@@ -19,11 +31,14 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: autobuff.cpp,v 1.6 1998/07/06 09:21:19 jlawson Exp $";
+const char *autobuff_cpp(void) {
+static const char *id="@(#)$Id: autobuff.cpp,v 1.7 1998/07/07 21:54:57 cyruspatel Exp $";
+return id; }
 #endif
 
+#include <string.h>
+#include "cputypes.h" //u32 
 #include "autobuff.h"
-
 
 AutoBuffer::AutoBuffer(void)
 {
@@ -142,4 +157,3 @@ bool AutoBuffer::RemoveLine(AutoBuffer &line)
   else RemoveHead(eol + 1);
   return true;
 }
-

@@ -3,6 +3,18 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.132  1998/07/07 21:55:10  cyruspatel
+// Serious house cleaning - client.h has been split into client.h (Client
+// class, FileEntry struct etc - but nothing that depends on anything) and
+// baseincs.h (inclusion of generic, also platform-specific, header files).
+// The catchall '#include "client.h"' has been removed where appropriate and
+// replaced with correct dependancies. cvs Ids have been encapsulated in
+// functions which are later called from cliident.cpp. Corrected other
+// compile-time warnings where I caught them. Removed obsolete timer and
+// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
+// Made MailMessage in the client class a static object (in client.cpp) in
+// anticipation of global log functions.
+//
 // Revision 1.131  1998/07/07 07:28:36  jlawson
 // eliminated printf type warning with gcc
 //
@@ -180,25 +192,41 @@
 // Added $Log.
 //
 
-#include "client.h"
+#if (!defined(lint) && defined(__showids__))
+const char *cliconfig_cpp(void) {
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.132 1998/07/07 21:55:10 cyruspatel Exp $";
+return id; }
+#endif
+
+#include "cputypes.h"
+#include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc 
+#include "baseincs.h"  // basic (even if port-specific) #includes
+#include "version.h"
+#include "iniread.h"
+#include "problem.h"   // ___unit_func(), PIPELINE_COUNT
+#include "cpucheck.h"  // cpu selection, GetTimesliceBaseline()
+#include "mail.h"      // MAXMAILSIZE
+#include "scram.h"     // InitRandom2(id)
 #ifndef DONT_USE_PATHWORK
 #include "pathwork.h"
 #endif
 
-#if (!defined(lint) && defined(__showids__))
-const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.131 1998/07/07 07:28:36 jlawson Exp $";
-return id; }
-#endif
-
+#if (CLIENT_OS == OS_WIN32)
 #if defined(WINNTSERVICE)
   #define NTSERVICEID "rc5desnt"
+  #include "network.h" //NetworkInitialize()
+#else
+  #include "sleepdef.h" //RunStartup()
+#endif  
 #endif
 
 // --------------------------------------------------------------------------
 
 #define OPTION_COUNT    44
 #define MAXMENUENTRIES  18
+static const char *OPTION_SECTION="parameters"; //#define OPTION_SECTION "parameters"
+
+// --------------------------------------------------------------------------
 
 #if defined(NOCONFIG)
   #define CFGTXT(x) NULL
@@ -1551,13 +1579,7 @@ void Client::ValidateConfig( void )
 
 
   CheckForcedKeyport();
-
-  strcpy(mailmessage.destid,smtpdest);
-  strcpy(mailmessage.fromid,smtpfrom);
-  strcpy(mailmessage.smtp,smtpsrvr);
-  strcpy(mailmessage.rc5id,id);
-  mailmessage.messagelen=messagelen;
-  mailmessage.port=(int)smtpport;
+  MailInitialize();  // in client.cpp - copies the smtp ini settings over
 
   //validate numcpu is now in SelectCore(); //1998/06/21 cyrus
 
@@ -1568,8 +1590,8 @@ void Client::ValidateConfig( void )
 
   if ( contestdone[0] && contestdone[1])
   {
-    Log( "[%s] Both contests are marked as over.  Correct the ini file and restart\n", Time() );
-    Log( "[%s] This may mean the contests are over.  Check at http://www.distributed.net/rc5/\n", Time() );
+    Log( "Both contests are marked as over.  Correct the ini file and restart\n" );
+    Log( "This may mean the contests are over.  Check at http://www.distributed.net/rc5/\n" );
     exit(-1);
   }
 }
@@ -1826,9 +1848,9 @@ void ServiceMain(DWORD Argc, LPTSTR *Argv)
   // start working
   NetworkInitialize();
   mainclient->ValidateConfig();
+  mainclient->MailInitialize(); //client.cpp: copies smtp ini settings over
   mainclient->Run();
-  mainclient->mailmessage.quietmode = mainclient->quietmode;
-  mainclient->mailmessage.checktosend(1);
+  mainclient->MailDeinitialize(); //checktosend(1) if not offline mode
   NetworkDeinitialize();
 
   // update our status to stopped
@@ -2134,31 +2156,13 @@ s32 Client::SelectCore(void)
 
       fflush( stdout );
 
-      #ifndef NEW_STATS_AND_LOGMSG_STUFF
-      struct timeval start, stop;
-      struct timezone dummy;
-      gettimeofday( &start, &dummy );
-      #endif
-
       problem.Run( benchsize , 0 );
 
-      #ifdef NEW_STATS_AND_LOGMSG_STUFF
-        double elapsed = CliGetKeyrateForProblemNoSave( &problem );
-        LogScreenf( "%.1f kkeys/sec\n", (elapsed / 1000.0) );
+      double elapsed = CliGetKeyrateForProblemNoSave( &problem );
+      LogScreenf( "%.1f kkeys/sec\n", (elapsed / 1000.0) );
 
-        if (fastcore < 0 || elapsed > fasttime)
-            {fastcore = whichcrunch; fasttime = elapsed;}
-
-      #else
-      gettimeofday( &stop, &dummy );
-
-      double elapsed = max(.001,(stop.tv_sec - start.tv_sec) +
-                  (((double)stop.tv_usec - (double)start.tv_usec)/1000000.0));
-        LogScreenf( "%.1f kkeys/sec\n", (benchsize / 1000.0) / elapsed );
-
-      if (fastcore < 0 || elapsed < fasttime)
+      if (fastcore < 0 || elapsed > fasttime)
           {fastcore = whichcrunch; fasttime = elapsed;}
-      #endif
     }
   }
   whichcrunch = fastcore;
@@ -2448,12 +2452,9 @@ void CliSignalHandler( int )
     signal( SIGINT, CliSignalHandler );
     signal( SIGTERM, CliSignalHandler );
   #elif (CLIENT_OS == OS_DOS)
-    //don't do any console i/o
-    break_off(); //break only on screen i/o (different from setup signals)
-    signal( SIGINT, CliSignalHandler );  //The  break_o functions can be used 
-    signal( SIGTERM, CliSignalHandler ); // with DOS to restrict break checking
-    signal( SIGABRT, CliSignalHandler ); // break_off(): raise() on conio only
-    signal( SIGBREAK, CliSignalHandler ); //break_on(): raise() on any dos call
+    //break_off(); //break only on screen i/o (different from setup signals)
+    //- don't reset sighandlers or we may end up in an 
+    //  infinite loop (keyboard buffer isn't clear yet)
   #else  
     fprintf(stderr, "*Break*\n");
     CliSetupSignals(); //reset the signal handlers
@@ -2475,10 +2476,6 @@ void CliSetupSignals( void )
     SetConsoleCtrlHandler( (PHANDLER_ROUTINE) CliSignalHandler, TRUE );
   #elif (CLIENT_OS == OS_RISCOS)
     signal( SIGINT, CliSignalHandler );
-  #elif (CLIENT_OS == OS_NETWARE)
-    signal( SIGABRT, CliSignalHandler ); //abort on floating point [...]printf
-    signal( SIGINT, CliSignalHandler );  //       and mathlib.nlm isn't loaded
-    signal( SIGTERM, CliSignalHandler );
   #elif (CLIENT_OS == OS_OS2)
     signal( SIGINT, CliSignalHandler );
     signal( SIGTERM, CliSignalHandler );
@@ -2499,6 +2496,14 @@ void CliSetupSignals( void )
     signal( SIGQUIT, CliSignalHandler );
     signal( SIGTERM, CliSignalHandler );
     signal( SIGINT, CliSignalHandler );
+  #elif (CLIENT_OS == OS_NETWARE)
+    signal( SIGHUP, CliSignalHandler );
+    signal( SIGQUIT, CliSignalHandler );
+    signal( SIGTERM, CliSignalHandler );
+    signal( SIGINT, CliSignalHandler );
+    signal( SIGSTOP, CliSignalHandler ); 
+    //workaround NW 3.x bug - printf "%f" handler is in mathlib not clib, which
+    signal( SIGABRT, CliSignalHandler ); //raises abrt if mathlib isn't loaded
   #else
     signal( SIGHUP, CliSignalHandler );
     signal( SIGQUIT, CliSignalHandler );
@@ -2510,8 +2515,10 @@ void CliSetupSignals( void )
 
 // --------------------------------------------------------------------------
 
-void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
+void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
 {
+  int l_inimissing = (int)(*inimissing);
+
   for (int i=1;i<Argc;i++)
   {
     if ( strcmp(Argv[i], "-percentoff" ) == 0) // This should be checked here, in case it
@@ -2598,7 +2605,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
            outthreshold[0] = inthreshold[0]  = (s32) atoi( Argv[i+1] );
         ValidateConfig();
         LogScreenf("Setting RC5 buffer size to %d\n",outthreshold[0]);
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2608,7 +2615,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
            outthreshold[1] = inthreshold[1]  = (s32) atoi( Argv[i+1] );
         ValidateConfig();
         LogScreenf("Setting DES buffer size to %d\n",outthreshold[1]);
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2618,7 +2625,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
            inthreshold[0]  = (s32) atoi( Argv[i+1] );
         ValidateConfig();
         LogScreenf("Setting RC5 input buffer size to %d\n",inthreshold[0]);
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2628,7 +2635,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
            inthreshold[1]  = (s32) atoi( Argv[i+1] );
         ValidateConfig();
         LogScreenf("Setting DES input buffer size to %d\n",inthreshold[1]);
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2638,7 +2645,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
            outthreshold[0]  = (s32) atoi( Argv[i+1] );
         ValidateConfig();
         LogScreenf("Setting RC5 output buffer size to %d\n",outthreshold[0]);
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2648,7 +2655,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
            outthreshold[1]  = (s32) atoi( Argv[i+1] );
         ValidateConfig();
         LogScreenf("Setting DES output buffer size to %d\n",outthreshold[1]);
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2657,7 +2664,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
         uuehttpmode = (s32) atoi( Argv[i+1] );
         ValidateConfig();
         LogScreenf("Setting uue/http mode to %d\n",uuehttpmode);
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2697,7 +2704,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {
         LogScreenf("Setting keyserver to %s\n",Argv[i+1]);
         strcpy( keyproxy, Argv[i+1] );
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2706,7 +2713,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
         keyport = (s32) atoi(Argv[i+1]);
         ValidateConfig();
         LogScreenf("Setting keyserver port to %d\n",keyport);
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2714,7 +2721,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {
         LogScreenf("Setting http proxy to %s\n",Argv[i+1]);
         strcpy( httpproxy, Argv[i+1] );
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2722,7 +2729,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {
         LogScreenf("Setting http proxy port to %s\n",Argv[i+1]);
         httpport = (s32) atoi(Argv[i+1]);
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2731,7 +2738,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
         LogScreenf("Setting log file to %s\n",Argv[i+1]);
         strcpy( logname, Argv[i+1] );
         strcpy( ini_logname, Argv[i+1] );
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2739,7 +2746,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {
         LogScreenf("Setting Mail message length to %s\n",Argv[i+1]);
         messagelen = (s32) atoi(Argv[i+1]);
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2747,7 +2754,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {
         LogScreenf("Setting smtp port to %s\n",Argv[i+1]);
         smtpport = (s32) atoi(Argv[i+1]);
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2755,7 +2762,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {
         LogScreenf("Setting smtp server to %s\n",Argv[i+1]);
         strcpy(smtpsrvr, Argv[i+1]);
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2763,7 +2770,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {
         LogScreenf("Setting smtp 'from' address to %s\n",Argv[i+1]);
         strcpy(smtpfrom, Argv[i+1]);
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2771,7 +2778,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {
         LogScreenf("Setting smtp 'To' address to %s\n",Argv[i+1]);
         strcpy(smtpdest, Argv[i+1]);
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2779,7 +2786,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {
         LogScreenf("Setting network timeout to %s\n",Argv[i+1]);
         nettimeout = (s32) min(300,max(30,atoi(Argv[i+1])));
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2792,7 +2799,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       else if ( strcmp(Argv[i], "-c" ) == 0)      // set cpu type
       {
         cputype = (s32) atoi( Argv[i+1] );
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2800,7 +2807,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {
         LogScreenf("Setting email for notifications to %s\n",Argv[i+1]);
         strcpy( id, Argv[i+1] );
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2808,7 +2815,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {
         LogScreenf("Setting nice option to %s\n",Argv[i+1]);
         niceness = (s32) atoi( Argv[i+1] );
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2817,7 +2824,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
         LogScreenf("Setting time limit to %s hours\n",Argv[i+1]);
         minutes = (s32) (60. * atol( Argv[i+1] ));
         strncpy(hours,Argv[i+1],sizeof(hours));
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2825,7 +2832,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {
         blockcount = max(0, (s32) atoi( Argv[i+1] ));
         LogScreenf("Setting block completion limit to %d\n",blockcount);
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2838,12 +2845,11 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
         if (minutes<0) minutes += 24*60;
         if (minutes<0) minutes = 0;
         LogScreenf("Setting time limit to %d minutes\n",minutes);
-  #if (CLIENT_OS == OS_NETWARE)
-        sprintf(hours,"%u.%02u",minutes/60, minutes%60);
-  #else
-        sprintf(hours,"%f",minutes/60.);
-  #endif
-        inimissing=0; // Don't complain if the inifile is missing
+        sprintf(hours,"%u.%02u",(unsigned int)(minutes/60), 
+                                (unsigned int)(minutes%60));
+        //was sprintf(hours,"%f",minutes/60.); -> "0.000000" which looks silly
+        //and could cause a NetWare 3.x client to raise(SIGABRT)
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2852,7 +2858,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
         //LogScreenf("Configuring for %s CPUs\n",Argv[i+1]);
         //Message appears in SelectCore()
         numcpu = (s32) atoi(Argv[i+1]);
-        inimissing=0; // Don't complain if the inifile is missing
+        l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2915,6 +2921,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       }
     }
   }
+  *inimissing = l_inimissing;
   ValidateConfig();  // Some bad values are getting through
 }
 
@@ -2990,7 +2997,7 @@ bool Client::CheckForcedKeyproxy(void)
           for (temp=&keyproxy[0];isalpha(*temp) > 0;temp++) {};
           *temp=0;
           strcpy(buffer,keyproxy);
-          sprintf(keyproxy,"%s%i.v27.distributed.net",buffer,(int)keyport);
+          sprintf(keyproxy,"%s%li.v27.distributed.net",buffer,(int)keyport);
           }
         else if (keyport == 2064)
           {
