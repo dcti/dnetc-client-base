@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.11  1998/10/07 08:10:48  chrisb
+// Fixed parameter cast error in call to RegPolledProcedure(yield_pump,...)
+// in Client::Run()
+//
 // Revision 1.10  1998/10/06 21:10:38  cyp
 // Removed call to LogSetTimeStampMode(). Function is obsolete.
 //
@@ -47,7 +51,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.10 1998/10/06 21:10:38 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.11 1998/10/07 08:10:48 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -186,7 +190,7 @@ struct thread_param_block
 #elif (CLIENT_OS == OS_RISCOS)
   #define TIMER_GRANULARITY       1000000
   #define MIN_RUNS_PER_TIME_GRAIN     2
-  #define MAX_RUNS_PER_TIME_GRAIN     100
+  #define MAX_RUNS_PER_TIME_GRAIN     5
   #define INITIAL_TIMESLICE_RC5    512
   #define INITIAL_TIMESLICE_DES    512
   #define MIN_SANE_TIMESLICE_RC5    256
@@ -260,7 +264,7 @@ static void yield_pump( void *tv_p )
       struct timeval *tv = (struct timeval *)tv_p;
       tv->tv_usec<<=1; tv->tv_sec<<=1;
       if (tv->tv_usec>1000000)
-        { tv->tv_sec=tv->tv_usec/1000000; tv->tv_usec%=1000000; }
+        { tv->tv_sec+=tv->tv_usec/1000000; tv->tv_usec%=1000000; }
       }
     if (RegPolledProcedure(yield_pump, tv_p, (struct timeval *)tv_p, 32 )==-1)
       {         //should never happen, but better safe than sorry...
@@ -378,6 +382,13 @@ fflush(stdout);
       if (under_par)  /* change is large enough to warrant adjustement */
         {
         underrun_count++;
+	if (under_par == MIN_RUNS_PER_TIME_GRAIN)
+	{
+#ifdef DEBUG
+	    printf("under_par: divide by 0!\n");
+#endif
+	    under_par--;
+	}
         ts = (totalslice_table[0]/runcounters.yield_run_count)/
                                     (MIN_RUNS_PER_TIME_GRAIN-under_par);
         if (tslice_table[0] > ts)
@@ -415,8 +426,15 @@ printf("-%lu=> ", ts );
       goodrun_count = 0;
       
       if (over_par) /* don't do micro adjustments */
-        {
-ts = tslice_table[0];
+      {
+	  ts = tslice_table[0];
+	  if (over_par ==  MAX_RUNS_PER_TIME_GRAIN)
+	  {
+#ifdef DEBUG
+	      printf("over_par: divide by 0!\n"); 
+#endif
+	      over_par++;
+	  }
         tslice_table[0] += (totalslice_table[0]/runcounters.yield_run_count)/
                                      (over_par-MAX_RUNS_PER_TIME_GRAIN);
 #ifdef DEBUG
@@ -508,7 +526,6 @@ static void Go_nonmt( void * parm )
 {
   unsigned int threadnum, prob_i;
   u32 run;
-  
   runcounters.nonmt_ran = 1;
 
   if (!CheckExitRequestTriggerNoIO())
@@ -792,7 +809,9 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       }
         
     if (success)
+    {
       yield_pump(NULL);   //let the thread start
+    }
     else
       {
       delete thrparams;
@@ -1078,7 +1097,7 @@ int Client::Run( void )
       tv.tv_usec = 500;
       #endif
     
-      if (RegPolledProcedure(yield_pump, (void *)&tv, tv, 32 ) == -1)
+      if (RegPolledProcedure(yield_pump, (void *)&tv, (timeval *)&tv, 32 ) == -1)
         {
         Log("Unable to initialize yield pump\n" );
         TimeToQuit = -1; 
