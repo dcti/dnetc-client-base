@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.75.2.7 2003/09/02 00:48:53 mweiser Exp $"; }
+return "@(#)$Id: console.cpp,v 1.75.2.8 2003/09/12 13:25:59 mweiser Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -26,10 +26,6 @@ return "@(#)$Id: console.cpp,v 1.75.2.7 2003/09/02 00:48:53 mweiser Exp $"; }
 #include "util.h"     //utilGetAppName(), DNETC_UNUSED_*
 #include "sleepdef.h" //usleep()
 #include "console.h"  //ourselves
-
-#if (CLIENT_OS == OS_AIX)
-#include <sys/select.h>   // only needed if compiled on AIX 4.1
-#endif
 
 #if !defined(NOTERMIOS) && ((CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) \
   || (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
