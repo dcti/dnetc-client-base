@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mac_client.h,v $
+// Revision 1.4  1999/01/07 03:19:31  dicamillo
+// Add ReInitializeClient method.
+//
 // Revision 1.3  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -18,6 +21,7 @@ unsigned long file_dates[4];
 
 public:
 	int InitializeClient(void);
+	void ReInitializeClient(void);
 	void ResetClient(void);
 	void DeInitializeClient(void);
 	double TimeCore(u32 numk, short core);

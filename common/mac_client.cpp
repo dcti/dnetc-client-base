@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mac_client.cpp,v $
+// Revision 1.6  1999/01/07 03:19:06  dicamillo
+// Add ReInitializeClient method.
+//
 // Revision 1.5  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -21,7 +24,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *mac_client_cpp(void) {
-return "@(#)$Id: mac_client.cpp,v 1.5 1999/01/01 02:45:15 cramer Exp $"; }
+return "@(#)$Id: mac_client.cpp,v 1.6 1999/01/07 03:19:06 dicamillo Exp $"; }
 #endif
 
 // This file contains the routines added to the Client class for the Mac_Client
@@ -80,6 +83,11 @@ int Mac_Client::InitializeClient(void)
                        logname, LOGFILETYPE_NOLIMIT, 0, messagelen, 
                        smtpsrvr, smtpport, smtpfrom, smtpdest, id );
 	return(0);
+}
+
+void Mac_Client::ReInitializeClient(void)
+{
+((Client *)this)->Client();
 }
 
 void Mac_Client::ResetClient(void)
