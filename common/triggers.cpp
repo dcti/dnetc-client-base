@@ -18,7 +18,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.3 2003/01/19 22:49:51 snake Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.4 2003/02/18 02:00:31 mfeiri Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -619,6 +619,12 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 
 // -----------------------------------------------------------------------
 
+
+#if (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+#include <mach/mach.h>
+#include <mach/mach_error.h>
+#endif
+
 static int __CPUTemperaturePoll(void)
 {
   int lowthresh = (int)trigstatics.cputemp.lothresh;
@@ -633,8 +639,34 @@ static int __CPUTemperaturePoll(void)
     int cputemp = -1;
     #if (CLIENT_OS == OS_MACOS)
       cputemp = macosCPUTemp();
+    #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+      kern_return_t          ret;
+      natural_t              processorCount;
+      processor_info_array_t processorInfoList;
+      mach_msg_type_number_t processorInfoCount;
+
+      // pass a message to the kernel that we need some info
+      ret = host_processor_info( mach_host_self(), // get info from this host
+                                 PROCESSOR_TEMPERATURE, // want temperature
+                                 &processorCount,	// get processor count
+                                 &processorInfoList,
+                                 &processorInfoCount);
+
+      if (ret==KERN_SUCCESS) {
+          // get temperature for 1st processor, -1 on failure
+          cputemp = ((int*)processorInfoList)[0];
+          if (vm_deallocate(mach_task_self(),
+                            (vm_address_t)processorInfoList,
+                            processorInfoCount)!=KERN_SUCCESS) {
+              //deallocation failed?
+              cputemp = -1;
+          }
+          if (cputemp!=-1) {
+              cputemp += 273/*.15*/; /* C -> K */
+          }
+      }
     #elif 0 /* other client_os */
-    cputemp = fooyaddablahblahbar();
+      cputemp = fooyaddablahblahbar();
     #endif
     if (cputemp < 0) /* error */
       ; 
