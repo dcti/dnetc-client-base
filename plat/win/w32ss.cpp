@@ -6,10 +6,8 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 
-#if (!defined(lint) && defined(__showids__))
 const char *w32ss_cpp(void) {
-return "@(#)$Id: w32ss.cpp,v 1.1.2.3 2001/04/12 14:58:10 cyp Exp $"; }
-#endif
+return "@(#)$Id: w32ss.cpp,v 1.1.2.4 2001/04/13 17:16:57 cyp Exp $"; }
 
 #include "cputypes.h"
 #define INCLUDE_COMMDLG_H
@@ -124,8 +122,8 @@ static LRESULT CALLBACK SaverWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
         ss.sstype = 0;
       else if ((ss.sstype = SSGetProfileInt( "type", 0 )) != -1)
         ss.sstype = 0;
-      else if (!ss.hParentWnd && (ss.width > GetSystemMetrics(SM_CXSCREEN) ||
-                                 ss.height > GetSystemMetrics(SM_CYSCREEN)) )
+      else if (!ss.hParentWnd && (ss.width > (UINT)GetSystemMetrics(SM_CXSCREEN) ||
+                                 ss.height > (UINT)GetSystemMetrics(SM_CYSCREEN)) )
       { /* compensate for multi-monitor */
         GetWindowRect(GetDesktopWindow(), &rc);
         ss.top = rc.top;
