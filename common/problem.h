@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.29  1998/11/28 17:45:58  remi
+// Integration of the 386/486 self-modifying core.
+//
 // Revision 1.28  1998/11/25 09:23:37  chrisb
 // various changes to support x86 coprocessor under RISC OS
 //
@@ -165,6 +168,9 @@ typedef enum
   extern "C" u32 rc5_unit_func_k5( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern "C" u32 rc5_unit_func_k6( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern "C" u32 rc5_unit_func_p5_mmx( RC5UnitWork * rc5unitwork, u32 timeslice );
+  #if defined(SMC)
+    extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * rc5unitwork, u32 timeslice );
+  #endif
   extern u32 p1des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern u32 p1des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 timeslice );
   #if defined(MULTITHREAD)
