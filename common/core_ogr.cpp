@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.30 2004/08/14 23:31:59 kakace Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.31 2004/08/17 20:52:54 thsv Exp $"; }
 
 //#define TRACE
 
@@ -68,6 +68,8 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.30 2004/08/14 23:31:59 kakace Exp $"; }
 #elif (CLIENT_CPU == CPU_AMD64)
     extern "C" CoreDispatchTable *ogr64_get_dispatch_table(void);
 #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
+    extern "C" CoreDispatchTable *ogr64_get_dispatch_table(void); 
+#elif (CLIENT_CPU == CPU_MIPS) && (SIZEOF_LONG == 8)
     extern "C" CoreDispatchTable *ogr64_get_dispatch_table(void); 
 #else
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
@@ -196,6 +198,8 @@ const char **corenames_for_contest_ogr()
     #endif
   #elif (CLIENT_CPU == CPU_SPARC)
       "GARSP 6.0",
+  #elif (CLIENT_CPU == CPU_MIPS) && (SIZEOF_LONG == 8)
+      "GARSP 6.0-64",
   #elif (CLIENT_OS == OS_PS2LINUX)
       "GARSP 6.0",
   #else
@@ -508,6 +512,9 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
     coresel = 1;
   }
 #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
+  unit_func.ogr = ogr64_get_dispatch_table();
+  coresel = 0;
+#elif (CLIENT_CPU == CPU_MIPS) && (SIZEOF_LONG == 8)
   unit_func.ogr = ogr64_get_dispatch_table();
   coresel = 0;
 #else

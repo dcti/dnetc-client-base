@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.139 2004/08/15 21:04:12 piru Exp $
+# @(#)$Id: configure,v 1.288.2.140 2004/08/17 20:52:54 thsv Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -373,7 +373,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi # sparc64
     fi # HAVE_OGR/P2
   #-----------------------------------------------------------------
-  elif [ "$2" = "mips" ]; then
+  elif [ "$2" = "mips" -o "$2" = "mips64" ]; then
     if [ "$HAVE_RC5_64" = "1" ]; then
       DEFAULT_RC5_64="0"
       if [ "$TARGET_CC" = "CC" -o "$1" = "netbsd" ]; then # mips-crunch doesn't compile with IRIX CC
@@ -389,6 +389,12 @@ add_sources() # $1=os, $2=arch, $3=custom
     if [ "$HAVE_RC5_72" = "1" ]; then
       TARGET_ADDSRCS="$TARGET_ADDSRCS rc5-72/mips/r72mips2.cpp"
     fi # HAVE_RC5_72
+    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
+      if [ "$2" = "mips64" ]; then
+        DEFAULT_OGR="0"       # don't add the ansi core
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ansi/ogr-64.cpp"
+      fi # mips64
+    fi # HAVE_OGR/P2
   #-----------------------------------------------------------------
   elif [ "$2" = "hppa" ]; then
     if [ "$HAVE_RC5_64" = "1" ]; then
@@ -1532,24 +1538,22 @@ case "$1" in
 
     *mips-cc-n32)	# [lyndon]	Generic 32 bit client
        TARGET_CC="CC"
-       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} \
-                       -DCLIENT_OS_NAME=\"\\\"Irix (generic-n32)\\\"\""
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32}"
        TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_32}"
        TARGET_LIBS="-lpthread"
-       TARGET_DOCFILES="${OPTS_MIPSPRO_DOCS} readme.irix"
+       TARGET_DOCFILES="${OPTS_MIPSPRO_DOCS} docs/readme.irix"
        TARGET_TARBALL="irix6.5-mips-n32"
        add_sources "irix" "mips"
        ;;
 
     *mips-cc-64)	# [lyndon]	Generic 64 bit client
        TARGET_CC="CC"
-       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} \
-                       -DCLIENT_OS_NAME=\"\\\"Irix (generic-64)\\\"\""
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64}"
        TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_64}"
        TARGET_LIBS="-lpthread"
-       TARGET_DOCFILES="${OPTS_MIPSPRO_DOCS} readme.irix"
+       TARGET_DOCFILES="${OPTS_MIPSPRO_DOCS} docs/readme.irix"
        TARGET_TARBALL="irix6.5-mips-64"
-       add_sources "irix" "mips"
+       add_sources "irix" "mips64"
        ;;
 
     *mips-cc-ip19)	# [lyndon]
