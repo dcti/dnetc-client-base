@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.156  1998/11/11 05:26:57  cramer
+// Various minor fixes...
+//
 // Revision 1.155  1998/11/11 00:32:07  cyp
 // Fixed DoSingleInstanceProtection() for win32. (many thanks davehart)
 //
@@ -72,7 +75,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.155 1998/11/11 00:32:07 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.156 1998/11/11 05:26:57 cramer Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -256,7 +259,7 @@ static void PrintBanner(const char *dnet_id)
       } 
     else
       {
-      LogScreenRaw("Notice: This is beta release and expires on %s\n\n",
+      LogScreenRaw("Notice: This is a beta release and expires on %s\n\n",
        CliGetTimeString(&expirationtime,1) );
       }
     #endif // BETA

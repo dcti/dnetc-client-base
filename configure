@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.120  1998/11/11 05:26:55  cramer
+# Various minor fixes...
+#
 # Revision 1.119  1998/11/10 10:35:31  jlawson
 # moved location of the parisc rc5 core files into the rc5 directory
 #
@@ -413,8 +416,7 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
     -fexpensive-optimizations -fomit-frame-pointer \
     -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
     -funroll-loops -Wall -Icommon -Irc5 -Ides -Iplatforms \
-    -fno-inline-functions -fno-exceptions \
-    '
+    -fno-inline-functions -fno-exceptions'
 
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
@@ -831,7 +833,7 @@ case "$1" in
     *alpha-linux)
 	TARGET_AS="g++ -c"
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN
+	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS rc5/alphaasm/axp-bmeyer.cpp rc5/alphaasm/axp-bmeyer.s"
 	TARGET_LDFLAGS="-static"
 	;;
@@ -1262,8 +1264,8 @@ echo "Scanning output C++ dependencies..."
 for target in ${COMMON_SRCS} ${TARGET_ADDSRCS}; do
     TARGETOBJECT=output/`basename $target .cpp`.o
     SAFENAME=`echo ${TARGETOBJECT} | tr -d '/.\$\-'`
-    echo "  $target -> $TARGETOBJECT ($SAFENAME)"
-    eval "DEPEND_${SAFENAME}=$target"
+    echo "  ${target} -> ${TARGETOBJECT} (${SAFENAME})"
+    eval "DEPEND_${SAFENAME}=${target}"
     TARGET_ALLCCOBJS="${TARGET_ALLCCOBJS} ${TARGETOBJECT}"
 done
 

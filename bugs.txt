@@ -41,6 +41,9 @@ FIXED SORTOF - Jeff
   No longer prints funny stuff, but the client quits as soon as the
   buffers are emptied instead of after the blocks currently in memory
   are completed.
+FIXED SORTOF - Cramer
+  -runbuffers now exits after it runs out of blocks for processing.  It tends
+  to exit as soon as any thread runs out of blocks, tho.
 
 1998/Jun/23 - Kevin Bracey
   The help display crashes if the terminal height is more than the
