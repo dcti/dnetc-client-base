@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.103  1998/06/22 01:04:08  silby
+// Fixed problem with x86 cpu type detection not working.
+//
 // Revision 1.102  1998/06/22 00:55:25  silby
 // Removed no longer needed variable in ValidateConfig (due to moving of cpuchecking into seperate file.)
 //
@@ -77,7 +80,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.102 1998/06/22 00:55:25 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.103 1998/06/22 01:04:08 silby Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -2145,7 +2148,7 @@ previouscputype=cputype;// Set this so we know next time this proc is run.
 #elif (CLIENT_CPU == CPU_X86)
   // benchmark all cores
   int fastcore = cputype;
-  if (fastcore == -1) GetProcessorType();  //was x86id(); now in cpucheck.cpp
+  if (fastcore == -1) fastcore=GetProcessorType();  //was x86id(); now in cpucheck.cpp
     // Will return 0 if unable to identify.
 
 // Old "try every code" speed detect removed; it was never right, and
