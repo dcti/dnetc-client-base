@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.45  1998/12/01 07:11:50  foxyloxy
+// Fixed IRIX MT finally! Woohoo! (Embarrasingly trivial and stupid fix...
+// doh)
+//
 // Revision 1.44  1998/12/01 02:18:27  cyp
 // win32 change: __StopThread() boosts a cruncher's priority to its own
 // priority level when waiting for the thread to die. This is primarily
@@ -169,7 +173,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.44 1998/12/01 02:18:27 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.45 1998/12/01 07:11:50 foxyloxy Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -196,7 +200,6 @@ return "@(#)$Id: clirun.cpp,v 1.44 1998/12/01 02:18:27 cyp Exp $"; }
 #include "probman.h"   //GetProblemPointerFromIndex()
 #include "probfill.h"  //LoadSaveProblems(), FILEENTRY_xxx macros
 #include "modereq.h"   //ModeReq[Set|IsSet|Run]()
-
 // --------------------------------------------------------------------------
 
 static struct
@@ -844,12 +847,14 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     thrparams->next = NULL;
   
     use_poll_process = 0;
+	no_realthreads = 0;
     if ( no_realthreads )
-      use_poll_process = 1;
+	use_poll_process = 1;
     else
       {
       #if ((CLIENT_CPU != CPU_X86) && (CLIENT_CPU != CPU_88K) && \
-         (CLIENT_CPU != CPU_SPARC) && (CLIENT_CPU != CPU_POWERPC))
+         (CLIENT_CPU != CPU_SPARC) && (CLIENT_CPU != CPU_POWERPC) \
+	&& (CLIENT_CPU != CPU_MIPS))
          use_poll_process = 1; //core routines are not thread safe
       #elif (CLIENT_OS == OS_WIN32) 
         unsigned int thraddr;
@@ -876,7 +881,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
              (resume_thread(thrparams->threadID) == B_NO_ERROR) )
           success = 1;
       #elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && defined(MULTITHREAD)
-        SetGlobalPriority( thrparams->priority );  
+	SetGlobalPriority( thrparams->priority );  
         pthread_attr_t thread_sched;
         pthread_attr_init(&thread_sched);
         pthread_attr_setscope(&thread_sched,PTHREAD_SCOPE_SYSTEM);
@@ -886,11 +891,12 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
           success = 1;
         SetGlobalPriority( 9 ); //back to normal
       #elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && defined(MULTITHREAD)
-        if (pthread_create( &(thrparams->threadID), NULL, 
+	if (pthread_create( &(thrparams->threadID), NULL, 
            (void *(*)(void*)) Go_mt, (void *)thrparams ) == 0 )
           success = 1;
       #else
-        use_poll_process = 1;
+#error usepoolprocess	
+	use_poll_process = 1;
       #endif
       //everything from this point on shouldn't need MULTITHREAD so ...
       #undef MULTITHREAD 
