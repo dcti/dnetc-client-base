@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.18 2000/01/09 04:57:59 mfeiri Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.19 2000/01/15 00:06:14 cyp Exp $"; }
 
 //#define TRACE
 
@@ -500,26 +500,26 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
         const char *cont_sect = __getprojsectname(cont_i);
         int oldstyle_inout[2];
         oldstyle_inout[0] = GetPrivateProfileIntB( cont_sect, "fetch-threshold", -123, fn );
-	oldstyle_inout[1] = GetPrivateProfileIntB( cont_sect, "flush-threshold", -123, fn );
-	if (oldstyle_inout[0] != -123 || oldstyle_inout[1] != -123)
+        oldstyle_inout[1] = GetPrivateProfileIntB( cont_sect, "flush-threshold", -123, fn );
+        if (oldstyle_inout[0] != -123 || oldstyle_inout[1] != -123)
         {                             /* post 2.8000. */
-	  /* delete them here */
-	  WritePrivateProfileStringB( cont_sect, "fetch-threshold", NULL, fn );
-	  WritePrivateProfileStringB( cont_sect, "flush-threshold", NULL, fn );
-	}
-	else if ((cont_i == RC5) && /* pre-2.8000 */
-	  GetPrivateProfileStringB( OPTION_SECTION, "threshold", "", buffer, sizeof(buffer), fn ))
-	{
+          /* delete them here */
+          WritePrivateProfileStringB( cont_sect, "fetch-threshold", NULL, fn );
+          WritePrivateProfileStringB( cont_sect, "flush-threshold", NULL, fn );
+        }
+        else if ((cont_i == RC5) && /* pre-2.8000 */
+          GetPrivateProfileStringB( OPTION_SECTION, "threshold", "", buffer, sizeof(buffer), fn ))
+        {
           if ((i = atoi( buffer )) > 0)
-	  {
+          {
             oldstyle_inout[0] = i;
-	    if ((p = strchr( buffer, ':' )) != NULL)
-	      oldstyle_inout[1] = atoi( p+1 );
-	  }
-	  /* deleted at end of function */
-	}  
+            if ((p = strchr( buffer, ':' )) != NULL)
+              oldstyle_inout[1] = atoi( p+1 );
+          }
+          /* deleted at end of function */
+        }  
         if (oldstyle_inout[0] > 0)
-	{
+        {
           int multiplier = 1;
           switch (cont_i)
           {
@@ -527,41 +527,41 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
              case DES:
              case CSC:
                multiplier = GetPrivateProfileIntB( cont_sect, 
-	                    "preferred-blocksize", PREFERREDBLOCKSIZE_DEFAULT, fn );
-	       if ( multiplier < 1)
- 	         multiplier = PREFERREDBLOCKSIZE_DEFAULT;
+                            "preferred-blocksize", PREFERREDBLOCKSIZE_DEFAULT, fn );
+               if ( multiplier < 1)
+                 multiplier = PREFERREDBLOCKSIZE_DEFAULT;
                else if ( multiplier < PREFERREDBLOCKSIZE_MIN)
                  multiplier = PREFERREDBLOCKSIZE_MIN;
                else if (multiplier > PREFERREDBLOCKSIZE_MAX)
                  multiplier = PREFERREDBLOCKSIZE_DEFAULT;
-	       multiplier -= (PREFERREDBLOCKSIZE_MIN-1); 
+               multiplier -= (PREFERREDBLOCKSIZE_MIN-1); 
                break;
              case OGR:
                multiplier = 1;
                break;
           }
-	  if (oldstyle_inout[0] > 500) /* our old limit */
-	    oldstyle_inout[0] = 500;
-	  if (oldstyle_inout[0] != 10) /* oldstyle default */
-	  {
- 	    /* convert using preferred blocksize */
-	    client->inthreshold[cont_i] = 
-	        oldstyle_inout[0] * multiplier;
+          if (oldstyle_inout[0] > 500) /* our old limit */
+            oldstyle_inout[0] = 500;
+          if (oldstyle_inout[0] != 10) /* oldstyle default */
+          {
+            /* convert using preferred blocksize */
+            client->inthreshold[cont_i] = 
+                oldstyle_inout[0] * multiplier;
             modfail += (!WritePrivateProfileIntB( cont_sect, "fetch-workunit-threshold", client->inthreshold[cont_i], fn));
-	  }    	
-	  if (oldstyle_inout[1] > 0)
-	  {
-	    /* outthreshold >= inthreshold implied 'inthreshold decides' */
-	    if (oldstyle_inout[1] < oldstyle_inout[0]) /* old meaning */
-  	    {   
- 	      /* convert using preferred blocksize */
-	      client->outthreshold[cont_i] = 
-	        oldstyle_inout[1] * multiplier;
+          }     
+          if (oldstyle_inout[1] > 0)
+          {
+            /* outthreshold >= inthreshold implied 'inthreshold decides' */
+            if (oldstyle_inout[1] < oldstyle_inout[0]) /* old meaning */
+            {   
+              /* convert using preferred blocksize */
+              client->outthreshold[cont_i] = 
+                oldstyle_inout[1] * multiplier;
               modfail += (!WritePrivateProfileIntB( cont_sect, "flush-workunit-threshold", client->outthreshold[cont_i], fn));
-	    }    	
-	  }       
-	}
-      }	/* for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++ ) */
+            }           
+          }       
+        }
+      } /* for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++ ) */
     } /* if !donethresholds */  
   }
 
@@ -876,12 +876,12 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
              "contestdone" /* now in "rc564" */, "contestdone2", 
              "contestdone3", "contestdoneflags", "descontestclosed",
              "scheduledupdatetime", "checkpointfile", "hours",
-             "processdes", "usemmx", "runoffline", "in","out","in2","out2",
+             "usemmx", "runoffline", "in","out","in2","out2",
              "in3","out3","nodisk", "dialwhenneeded","connectionname",
              "cputype","threshold","threshold2","preferredblocksize",
              "logname", "keyproxy", "keyport", "numcpu", "count",
              "smtpsrvr", "smtpport", "messagelen", "smtpfrom", "smtpdest",
-             "lurk", "lurkonly", "nettimout", "nofallback", "frequent",
+             "lurk", "lurkonly", "nettimeout", "nofallback", "frequent",
              "pausefile","noexitfilecheck","percentoff", "quiet" };
     for (ui = 0; ui < (sizeof(obskeys) / sizeof(obskeys[0])); ui++)
       modfail += (!WritePrivateProfileStringB( OPTION_SECTION, obskeys[ui], NULL, fn ));
@@ -1196,11 +1196,11 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
         {
           __XSetProfileInt( p, "core", client->coretypes[cont_i], fn, -1, 0 );
           if ((int)client->preferred_blocksize > 0 ||
-	      GetPrivateProfileStringB(p,"preferred-blocksize","",buffer,2,fn))
-	  {      
+              GetPrivateProfileStringB(p,"preferred-blocksize","",buffer,2,fn))
+          {      
             __XSetProfileInt( p, "preferred-blocksize", 
               client->preferred_blocksize[cont_i], fn, 0, 0 );
-	  }      
+          }      
         }
       }
     }
