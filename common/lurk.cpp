@@ -14,6 +14,9 @@
 
 */
 // $Log: lurk.cpp,v $
+// Revision 1.30  1999/02/10 21:39:21  remi
+// Cleared a warning on FreeBSD.
+//
 // Revision 1.29  1999/02/10 03:49:30  cyp
 // fixed a couple of LogScreen()s that weren't terminated with '\n'
 //
@@ -95,7 +98,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.29 1999/02/10 03:49:30 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.30 1999/02/10 21:39:21 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -666,7 +669,7 @@ int Lurk::IsConnected(void)               // Checks status of connection
            }
          }
        #elif (CLIENT_OS == OS_FREEBSD)  // maybe other *BSD systems
-       for (n = ifc.ifc_len, ifr = ifc.ifc_req; n >= sizeof(struct ifreq); )
+       for (n = ifc.ifc_len, ifr = ifc.ifc_req; n >= (int)sizeof(struct ifreq); )
          {
          /*
           * In BSD4.4, SIOCGIFCONF returns an entry for every address
