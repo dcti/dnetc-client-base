@@ -3,9 +3,6 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
-// Revision 1.6  1998/12/21 01:21:39  remi
-// Recommitted to get the right modification time.
-//
 // Revision 1.5  1998/12/21 14:23:58  remi
 // Fixed the weirdness of proxy, keyport, uuehttpmode etc... handling :
 // - if keyproxy ends in .distributed.net, keyport and uuehttpmode are
@@ -46,7 +43,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.6 1998/12/21 01:21:39 remi Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.5 1998/12/21 14:23:58 remi Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -888,5 +885,4 @@ s32 Client::Configure( void )
 }
 
 //----------------------------------------------------------------------------
-
 

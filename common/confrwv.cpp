@@ -3,9 +3,6 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
-// Revision 1.7  1998/12/21 01:21:39  remi
-// Recommitted to get the right modification time.
-//
 // Revision 1.6  1998/12/21 14:23:57  remi
 // Fixed the weirdness of proxy, keyport, uuehttpmode etc... handling :
 // - if keyproxy ends in .distributed.net, keyport and uuehttpmode are
@@ -51,7 +48,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.7 1998/12/21 01:21:39 remi Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.6 1998/12/21 14:23:57 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -647,6 +644,5 @@ int Client::WriteConfig(int writefull /* defaults to 0*/)
 }
 
 // --------------------------------------------------------------------------
-
 
 
