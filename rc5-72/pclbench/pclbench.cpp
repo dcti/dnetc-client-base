@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 1998-2003 - All Rights Reserved
+ * Copyright distributed.net 2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: pclbench.cpp,v 1.1.2.1 2003/03/03 01:45:59 andreasb Exp $
+ * $Id: pclbench.cpp,v 1.1.2.2 2003/03/03 02:05:02 andreasb Exp $
  */
 
 #include "baseincs.h"
