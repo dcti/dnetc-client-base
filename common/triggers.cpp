@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.22 2000/02/09 18:47:22 ivo Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.23 2000/02/10 17:33:02 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -63,6 +63,7 @@ static struct
   char pauseplistbuffer[128];
   char *pauseplist[16];
   int lastactivep;
+  int doingmodes;
 } trigstatics;
 
 static void __assert_statics(void)
@@ -219,11 +220,14 @@ int CheckExitRequestTrigger(void)
     if ( trigstatics.exittrig.trigger )
     {
       trigstatics.exittrig.laststate = 1;             
-      LogScreen("*Break* %s\n",
-        ( ((trigstatics.exittrig.trigger & TRIGSETBY_FLAGFILE)!=0)?
-             ("(found exit flag file)"): 
-         ((trigstatics.huptrig.trigger)?("Restarting..."):("Shutting down..."))
-          ) );
+      if (!trigstatics.doingmodes)
+      {
+        LogScreen("*Break* %s\n",
+          ( ((trigstatics.exittrig.trigger & TRIGSETBY_FLAGFILE)!=0)?
+               ("(found exit flag file)"): 
+           ((trigstatics.huptrig.trigger)?("Restarting..."):("Shutting down..."))
+            ) );
+      }
     }
     --trigstatics.exittrig.incheck;
   }
@@ -244,6 +248,8 @@ int CheckPauseRequestTrigger(void)
 {
   __assert_statics(); 
   if ( CheckExitRequestTrigger() )   //only check if not exiting
+    return 0;
+  if (trigstatics.doingmodes)
     return 0;
   if ( (++trigstatics.pausetrig.incheck) == 1 )
   {
@@ -276,9 +282,9 @@ int CheckPauseRequestTrigger(void)
         if (!(utilGetPIDList( pp[index], &pidlist[0], 1 ) > 0))
         {
           Log("%s... ('%s' inactive)\n",
-            (((trigstatics.pausetrig.laststate 
-                 & ~TRIGSETBY_APPACTIV)!=0)?("Pause level lowered"):
-            ("Running again after pause")), pp[index] );
+              (((trigstatics.pausetrig.laststate 
+                   & ~TRIGSETBY_APPACTIV)!=0)?("Pause level lowered"):
+              ("Running again after pause")), pp[index] );
           trigstatics.pausetrig.laststate &= ~TRIGSETBY_APPACTIV;
           trigstatics.pausetrig.trigger &= ~TRIGSETBY_APPACTIV;
           trigstatics.lastactivep = 0;
@@ -319,14 +325,14 @@ int CheckPauseRequestTrigger(void)
       {
         trigstatics.pausetrig.laststate &= ~TRIGSETBY_SIGNAL;
         Log("%s... (user cleared)\n",
-          ((trigstatics.pausetrig.laststate)?("Pause level lowered"):
-          ("Running again after pause")) );
+            ((trigstatics.pausetrig.laststate)?("Pause level lowered"):
+            ("Running again after pause")) );
       }
       if ((trigstatics.pausetrig.trigger & TRIGSETBY_FLAGFILE)!=0 &&
           (trigstatics.pausetrig.laststate & TRIGSETBY_FLAGFILE)==0)
       {
         Log("Pause%sd... (found flagfile)\n",
-             ((trigstatics.pausetrig.laststate)?(" level raise"):("")) );
+              ((trigstatics.pausetrig.laststate)?(" level raise"):("")) );
         trigstatics.pausetrig.laststate |= TRIGSETBY_FLAGFILE;
       }
       else if ((trigstatics.pausetrig.trigger & TRIGSETBY_FLAGFILE)==0 &&
@@ -652,6 +658,7 @@ int InitializeTriggers(int doingmodes,
   trigstatics.pausetrig.pollinterval.whenoff = PAUSEFILE_CHECKTIME_WHENOFF;
   __init_signal_handlers( doingmodes );
 
+  trigstatics.doingmodes = doingmodes;
   if (!doingmodes)
   {
     trigstatics.exittrig.flagfile = _init_trigfile(exitfile, 
