@@ -1,4 +1,4 @@
-/* Hey, Emacs, this a -*-C-*- file !
+/* -*-C-*-
  *
  * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.22 2004/01/08 20:20:23 oliver Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.23 2004/06/27 21:37:59 jlawson Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -86,12 +86,23 @@
 /* #define OS_MACOSX    43 */ /* obsolete, is now 27, was PS2LINUX */
 #define OS_PS2LINUX     44
 #define OS_MORPHOS      45
+#define OS_WIN64        46
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 
 /* ----------------------------------------------------------------- */
 
 /* determine current compiling platform */
-#if defined(WIN32) || defined(__WIN32__) || defined(_Windows) || defined(_WIN32)
+#if defined(_WIN64)
+  #if defined(_M_AMD64)
+    #define CLIENT_CPU     CPU_AMD64
+    #define CLIENT_OS      OS_WIN64
+    #define CLIENT_OS_NAME "Win64"
+  #elif defined(_M_IA64)
+    #define CLIENT_CPU     CPU_IA64
+    #define CLIENT_OS      OS_WIN64
+    #define CLIENT_OS_NAME "Win64"
+  #endif
+#elif defined(WIN32) || defined(__WIN32__) || defined(_Windows) || defined(_WIN32)
   #if defined(NTALPHA) || defined(_M_ALPHA)
     #define CLIENT_CPU     CPU_ALPHA
     #define CLIENT_OS      OS_WIN32
@@ -610,30 +621,6 @@
     */
     #error "To build a proxy you must use a compiler that has intrinsic support for 'bool'"
     /* IT IS NOT SUFFICIENT TO 'typedef int bool'!! */
-  #elif !defined(true)
-    #define false ((bool)0)
-    #define true  (!false)
-  #endif
-#elif (CLIENT_OS != OS_MACOS) /* MacOS APIs (UniversalInterfaces) need bool */
-  /* puke before others have to deal with errant code */
-  /* IT IS NOT SUFFICIENT TO 'typedef int bool'!! */
- #if (!defined(HAVE_DES_CORES)) /* old DES cores use bool - so don't use them ;-) */
-  #undef true
-  #define true  bool_type_is_not_portable
-  #undef false
-  #define false bool_type_is_not_portable
-  #undef bool
-  #define bool  bool_type_is_not_portable
- #endif
-  #undef class
-  /* There is a reference to 'class' in the Win32 unknwn.h header, */
-  /* so don't break the class keyword in this case. */
-  /* Need to disable this for VC 5.0, since installation of recent */
-  /* platform SDK's (e.g. January 2000) puts the class back in unknwn.h */
-  /* Borland C++ 5.5 needs the class keyword in stdlib.h */
-  #if (!defined(_MSC_VER) || (_MSC_VER < 1100)) && \
-      (!defined(__BORLANDC__)  || ((__BORLANDC__ != 0x0550) && (__BORLANDC__ != 0x0551)))
-    #define class the_client_is_class_free /* phew! */
   #endif
 #endif
 
