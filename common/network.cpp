@@ -13,7 +13,7 @@
 
 #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_DOS)
   #include <varargs.h>
-#elif (CLIENT_OS == OS_AMIGA)
+#elif (CLIENT_OS == OS_AMIGAOS)
   static struct Library *SocketBase;
 #elif ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU==CPU_68K))
   extern "C" void usleep(unsigned int);
@@ -119,7 +119,7 @@ void NetworkInitialize(void)
     WSAStartup(0x0101, &wsaData);
   #elif defined(DJGPP) || (CLIENT_OS == OS_OS2)
     sock_init();
-  #elif (CLIENT_OS == OS_AMIGA)
+  #elif (CLIENT_OS == OS_AMIGAOS)
     #define SOCK_LIB_NAME "bsdsocket.library"
     SocketBase = OpenLibrary((unsigned char *)SOCK_LIB_NAME, 4UL);
     __assert((int)SocketBase, "Failed to open " SOCK_LIB_NAME "\n",
@@ -139,7 +139,7 @@ void NetworkDeinitialize(void)
   // perform platform specific socket deinitialization
   #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     WSACleanup();
-  #elif (CLIENT_OS == OS_AMIGA)
+  #elif (CLIENT_OS == OS_AMIGAOS)
   if (SocketBase) {
     CloseLibrary(SocketBase);
     SocketBase = NULL;
@@ -477,7 +477,11 @@ s32 Network::Open( void )
     lastaddress = 0;
 #ifdef VERBOSE_OPEN
     printf("Network::connect() to proxy %s failed\n         ",
+#if (CLIENT_OS == OS_AMIGAOS)
+        inet_ntoa( sin.sin_addr ));
+#else
         inet_ntoa( *(struct in_addr *)(&sin.sin_addr.s_addr) ));
+#endif
     printf("\n");
 #endif
 #endif
@@ -1106,7 +1110,7 @@ void MakeNonBlocking(SOCKET socket, bool nonblocking)
   ioctl(socket, FIONBIO, &flagon);
 #elif (CLIENT_OS == OS_OS2)
   ioctl(socket, FIONBIO, (char *) &nonblocking, sizeof(nonblocking));
-#elif (CLIENT_OS == OS_AMIGA)
+#elif (CLIENT_OS == OS_AMIGAOS)
   char flagon = nonblocking;
   IoctlSocket(socket, FIONBIO, &flagon);
 #elif defined(FNDELAY)

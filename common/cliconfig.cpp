@@ -1673,7 +1673,7 @@ s32 Client::RunStartup(void)
 
 s32 Client::SelectCore(void)
 {
-#if (CLIENT_OS == OS_AMIGA)
+#if (CLIENT_OS == OS_AMIGAOS)
   if (!(SysBase->AttnFlags & AFF_68020))
   {
     LogScreen("\nIncompatible CPU type.  Sorry.\n");
@@ -1921,7 +1921,7 @@ void Client::SetNiceness(void)
               //   configuration, thus nice to 0 priority (lowest)
               // GO-VMS.COM also sets the priority, so this is only
               //   really needed when GO-VMS.COM isn't used.
-#elif (CLIENT_OS == OS_AMIGA)
+#elif (CLIENT_OS == OS_AMIGAOS)
   SetTaskPri(FindTask(NULL), -20);
 #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16)
   // nothing
@@ -1949,7 +1949,7 @@ void Client::SetNiceness(void)
   // nothing
 #elif (CLIENT_OS == OS_VMS)
   nice( 2 );
-#elif (CLIENT_OS == OS_AMIGA)
+#elif (CLIENT_OS == OS_AMIGAOS)
   SetTaskPri(FindTask(NULL), -10);
 #elif (CLIENT_OS == OS_BEOS)
   // nothing
@@ -1969,7 +1969,7 @@ void Client::SetNiceness(void)
 
 // ---------------------------------------------------------------------------
 
-#if (CLIENT_OS == OS_AMIGA)
+#if (CLIENT_OS == OS_AMIGAOS)
 /* Disable SAS/C CTRL-C handing */
 extern "C" void __regargs __chkabort(void) { return ;}
 #endif
@@ -2013,7 +2013,7 @@ void CliSignalHandler( int sig )
     ConsolePrintf("RC5DES: Client has shut down.\r\n");
   return;
 }
-#elif (CLIENT_OS != OS_AMIGA) && (CLIENT_OS != OS_WIN16)
+#elif (CLIENT_OS != OS_AMIGAOS) && (CLIENT_OS != OS_WIN16)
   #if (CLIENT_OS == OS_OS390)
     extern "C" void CliSignalHandler( int )
   #else
@@ -2062,7 +2062,7 @@ void CliSetupSignals( void )
 {
   SignalTriggered = 0;
 
-  #if (CLIENT_OS == OS_AMIGA) || (CLIENT_OS == OS_WIN16)
+  #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_WIN16)
     // nothing
   #elif (CLIENT_OS == OS_WIN32)
     SetConsoleCtrlHandler( (PHANDLER_ROUTINE) CliSignalHandler, TRUE );
@@ -2149,7 +2149,7 @@ int gettimeofday(struct timeval *tv, struct timezone *)
   return 0;
 
 }
-#elif (CLIENT_OS == OS_AMIGA)
+#elif (CLIENT_OS == OS_AMIGAOS)
 int gettimeofday(struct timeval *tv, struct timezone *)
 {
   return timer((unsigned int *)tv);

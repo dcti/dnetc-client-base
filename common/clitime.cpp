@@ -91,7 +91,7 @@ struct timeval *CliTimer( struct timeval *tv )
     stv.tv_sec += (stv.tv_usec/1000000);
     stv.tv_usec = (stv.tv_usec%1000000);
   }
-#elif (CLIENT_OS == OS_AMIGA)
+#elif (CLIENT_OS == OS_AMIGAOS)
   int dofallback = timer((unsigned int *)(stv)) );
   #define REQUIRES_TIMER_FALLBACK
 #else

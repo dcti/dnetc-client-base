@@ -337,7 +337,7 @@ s32 Client::Fetch( u8 contest, Network *netin )
     sleep( 3 );
 #endif
 
-#if (CLIENT_OS == OS_AMIGA)
+#if (CLIENT_OS == OS_AMIGAOS)
     if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
       SignalTriggered = UserBreakTriggered = 1;
 #endif
@@ -581,7 +581,7 @@ s32 Client::Fetch( u8 contest, Network *netin )
       if (!netin) delete net;
       return( -1 );
     }
-#if (CLIENT_OS == OS_AMIGA)
+#if (CLIENT_OS == OS_AMIGAOS)
     if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
       SignalTriggered = UserBreakTriggered = 1;
 #endif
@@ -693,7 +693,7 @@ s32 Client::Flush( u8 contest , Network *netin )
 #if (CLIENT_OS != OS_WIN16)
     sleep( 3 );
 #endif
-#if (CLIENT_OS == OS_AMIGA)
+#if (CLIENT_OS == OS_AMIGAOS)
     if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C)
       SignalTriggered = UserBreakTriggered = 1;
     #endif
@@ -959,7 +959,7 @@ s32 Client::Flush( u8 contest , Network *netin )
       return( count ? count : -1 );
     }
 
-#if (CLIENT_OS == OS_AMIGA)
+#if (CLIENT_OS == OS_AMIGAOS)
     if (SetSignal(0L,0L) & SIGBREAKF_CTRL_C)
       SignalTriggered = UserBreakTriggered = 1;
 #endif
@@ -1120,7 +1120,7 @@ u32 Client::Benchmark( u8 contest, u32 numk )
         problem[0].percent = percent2;
       }
     }
-#if (CLIENT_OS == OS_AMIGA)
+#if (CLIENT_OS == OS_AMIGAOS)
     if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C)
       SignalTriggered = UserBreakTriggered = 1;
 #endif
@@ -1220,7 +1220,7 @@ s32 Client::SelfTest( u8 contest )
 //      fflush( stdout );
     }
 
-#if (CLIENT_OS == OS_AMIGA)
+#if (CLIENT_OS == OS_AMIGAOS)
     if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C)
       SignalTriggered = UserBreakTriggered = 1;
 #endif
@@ -1356,7 +1356,7 @@ void Go_mt( void * parm )
       run = 0;
       while (!SignalTriggered && (run == 0))
       {
-#if (CLIENT_OS == OS_AMIGA)
+#if (CLIENT_OS == OS_AMIGAOS)
         if (SetSignal(0L,0L) & SIGBREAKF_CTRL_C)
           SignalTriggered = UserBreakTriggered = 1;
 #endif
@@ -1529,7 +1529,7 @@ s32 Client::Run( void )
   // Clear the signal triggers
   // --------------------------------------
 
-#if (CLIENT_OS == OS_AMIGA)
+#if (CLIENT_OS == OS_AMIGAOS)
   SetSignal(0L, SIGBREAKF_CTRL_C);
 #endif
   SignalTriggered = UserBreakTriggered = pausefilefound = 0;
@@ -2304,7 +2304,7 @@ PreferredIsDone1:
     // Check for user break
     //----------------------------------------
 
-#if (CLIENT_OS == OS_AMIGA)
+#if (CLIENT_OS == OS_AMIGAOS)
     if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
       SignalTriggered = UserBreakTriggered = 1;
 #endif
@@ -2838,7 +2838,7 @@ int main( int argc, char *argv[] )
 
   // generate the paths of the other files based on the ini filename
 #if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
-#elif (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_AMIGA) || (CLIENT_OS == OS_RISCOS)
+#elif (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS)
 #else
   {
     char buffer[200];

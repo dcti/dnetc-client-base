@@ -5,13 +5,13 @@
 #ifndef MAIL_H
 #define MAIL_H
 
-#if (CLIENT_OS == OS_AMIGA)
+#if (CLIENT_OS == OS_AMIGAOS)
 extern "C" {
 #endif
 
 #include <string.h>
 
-#if (CLIENT_OS == OS_AMIGA)
+#if (CLIENT_OS == OS_AMIGAOS)
 }
 #endif
 

@@ -14,7 +14,7 @@
 #include "cputypes.h"
 #include "autobuff.h"
 
-#if ((CLIENT_OS == OS_AMIGA)|| (CLIENT_OS == OS_RISCOS))
+#if ((CLIENT_OS == OS_AMIGAOS)|| (CLIENT_OS == OS_RISCOS))
 extern "C" {
 #endif
 
@@ -126,8 +126,8 @@ extern "C" {
   #define StartDOD   "StartDOD.CMD"
   #define StopDOD    "StopDOD.CMD"
   #define DODCfg     "DOD.CFG"
-#elif (CLIENT_OS == OS_AMIGA)
-  #include "amiga.h"
+#elif (CLIENT_OS == OS_AMIGAOS)
+  #include "platforms/amiga.h"
   #include <assert.h>
   #include <clib/socket_protos.h>
   #include <pragmas/socket_pragmas.h>
@@ -180,7 +180,7 @@ extern "C" {
   typedef int SOCKET;
 #endif
 
-#if ((CLIENT_OS == OS_AMIGA) || (CLIENT_OS == OS_RISCOS))
+#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
 }
 #endif
 

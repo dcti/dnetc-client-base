@@ -46,7 +46,7 @@
 
 // --------------------------------------------------------------------------
 
-#if ((CLIENT_OS == OS_AMIGA) || (CLIENT_OS == OS_RISCOS))
+#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
 extern "C" {
 #endif
 
@@ -204,7 +204,7 @@ extern "C" {
 
 
 
-#if ((CLIENT_OS == OS_AMIGA) || (CLIENT_OS == OS_RISCOS))
+#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
 }
 #endif
 
@@ -638,7 +638,7 @@ public:
      (CLIENT_OS == OS_SCO) ||                                \
      (CLIENT_OS == OS_OS2) ||                                \
      (CLIENT_OS == OS_WIN32) ||                              \
-     (CLIENT_OS == OS_AMIGA) ||                              \
+     (CLIENT_OS == OS_AMIGAOS) ||                            \
      (CLIENT_OS == OS_NETWARE) ||                            \
      (CLIENT_OS == OS_WIN16) ||                              \
      (CLIENT_OS == OS_DOS) ||                                \

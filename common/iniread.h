@@ -12,7 +12,7 @@
 
 #include "cputypes.h"
 
-#if (CLIENT_OS == OS_AMIGA) || (CLIENT_OS == OS_RISCOS)
+#if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS)
 extern "C" {
 #endif
 
@@ -39,7 +39,7 @@ extern "C" {
   // strcmpi() has no equivalent in DEC C++ 5.0  (not true if based on MS C)  #define NO_STRCASECMP
   #define NO_STRCASECMP
   #define strcmpi(x,y)  strcasecmp(x,y)
-#elif (CLIENT_OS == OS_AMIGA)
+#elif (CLIENT_OS == OS_AMIGAOS)
   // SAS/C already knows strcmpi
 #elif (CLIENT_OS == OS_RISCOS)
   #include <unixlib.h>
@@ -60,7 +60,7 @@ extern "C" {
   #define strcmpi(x,y)  strcasecmp(x,y)
 #endif
 
-#if (CLIENT_OS == OS_AMIGA) || (CLIENT_OS == OS_RISCOS)
+#if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS)
 }
 #endif
 
