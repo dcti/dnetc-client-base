@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.8 1999/10/22 06:12:58 gregh Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.9 1999/10/26 20:43:58 remi Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -21,7 +21,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
 
 /* ----------------------------------------------------------------------- */
 
-#if (CLIENT_CPU == CPU_X86)
+#if defined(MMX_BITSLICER) || defined(HAVE_CSC_CORES)
   #define MAX_MEM_REQUIRED_BY_CORE (17*1024)
 #endif
 
