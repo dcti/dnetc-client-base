@@ -9,10 +9,10 @@
  * and are therefore intended to behave more like spinlocks than mutexes.
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.2 2001/01/26 13:26:54 cyp Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.3 2001/01/28 14:31:25 cyp Exp $"
 
 #include "cputypes.h"           /* thread defines */
-#include "sleepdef.h"           /* usleep() */
+#include "sleepdef.h"           /* NonPolledUSleep() */
 
 #if !defined(CLIENT_SUPPORTS_SMP) /* non-threaded client */
 
@@ -112,13 +112,15 @@
      while (mutex_trylock(m) <= 0)
      {
        #if defined(__unix__)
-       usleep(1);
+       NonPolledUSleep(1);
        #elif (CLIENT_OS == OS_NETWARE)
        ThreadSwitchLowPriority();
        #elif (CLIENT_OS == OS_OS2)
        DosSleep(1);       
        #elif (CLIENT_OS == OS_WIN32)
        Sleep(1);
+       #else
+       #error "What's up Doc?"
        #endif
      }
    }
