@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probman.cpp,v $
+// Revision 1.3  1998/11/06 03:55:01  cyp
+// Fixed InitializeProblemManager(): was returning 1 problem more than it was
+// being asked for.
+//
 // Revision 1.2  1998/11/06 02:32:27  cyp
 // Ok, no more restrictions (at least from the client's perspective) on the
 // number of processors that the client can run on.
@@ -15,7 +19,7 @@
 // 
 #if (!defined(lint) && defined(__showids__))
 const char *probman_cpp(void) {
-return "@(#)$Id: probman.cpp,v 1.2 1998/11/06 02:32:27 cyp Exp $"; }
+return "@(#)$Id: probman.cpp,v 1.3 1998/11/06 03:55:01 cyp Exp $"; }
 #endif
 
 #include "baseincs.h"  // malloc()/NULL/memset()
@@ -50,7 +54,7 @@ int InitializeProblemManager(unsigned int maxnumproblems)
     return -1;
   if (((int)(maxnumproblems)) < 0)
     maxnumproblems = (16*1024);
-    
+
   probmanstatics.probtable=(Problem **)
                              malloc(maxnumproblems * sizeof(Problem *));
   if (probmanstatics.probtable == NULL)
@@ -76,7 +80,7 @@ int InitializeProblemManager(unsigned int maxnumproblems)
     probmanstatics.tablesize = 0;
     return -1;
     }
-  probmanstatics.probcount = probcount+1;
+  probmanstatics.probcount = probcount;
   return (int)(probmanstatics.probcount);
 }    
 
