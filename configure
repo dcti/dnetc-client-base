@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.250 1999/12/08 02:47:02 cyp Exp $
+# @(#)$Id: configure,v 1.251 1999/12/27 13:32:02 patrick Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -880,13 +880,14 @@ case "$1" in
         DELETECHARS="'/.\$\-'"
 	AIXALL=TRUE
         TARGET_CCFLAGS="$OPTS_EGCS -mcpu=common -D_AIX -D_AIXALL \
-                         -DMEGGS -DKWAN"
-        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $RC5PPC_SRCS \
+                         -DMEGGS -DKWAN -DHAVE_CSC_CORES"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $RC5PPC_SRCS $CSC_ANSI_SRCS \
                 rc5/ansi/rc5ansi_2-rg.cpp "
         AIXPPC601FLAGS="$OPTS_EGCS_PPC601 -D_AIX -DBIT32 -DMEGGS -DKWAN"
         AIXPPC604FLAGS="$OPTS_EGCS_PPC601 -D_AIX -DBIT32 -DMEGGS -DKWAN"
         AIXPOWERFLAGS="$OPTS_EGCS_POWER -D_AIX -DBIT32 -DMEGGS -DKWAN"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="aix-all-aix4.1"
         ;;
 
 
