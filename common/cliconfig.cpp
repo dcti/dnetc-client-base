@@ -187,7 +187,7 @@ s32 Client::Configure( void )
                         httpproxy, httpport, uuehttpmode, httpid, cputype,
                         messagelen,smtpsrvr,smtpport,smtpfrom,smtpdest,numcpu,
                         checkpoint_file[0], checkpoint_file[1], randomprefix,
-                        preferred_blocksize, preferred_contest_id);
+                        preferred_blocksize, preferred_contest_id + 1);
     for ( choice = 0; choice < OPTION_COUNT; choice++ )
     {
       if ((choice >= 0 && choice < 1+CONF_FIREMODE) ||
