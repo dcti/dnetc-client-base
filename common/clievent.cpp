@@ -28,6 +28,9 @@
  *
  */ 
 // $Log: clievent.cpp,v $
+// Revision 1.3  1999/01/24 00:27:48  silby
+// I want more listeners! :)
+//
 // Revision 1.2  1999/01/01 02:45:14  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -39,7 +42,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clievent_cpp(void) {
-return "@(#)$Id: clievent.cpp,v 1.2 1999/01/01 02:45:14 cramer Exp $"; }
+return "@(#)$Id: clievent.cpp,v 1.3 1999/01/24 00:27:48 silby Exp $"; }
 #endif
 
 #include "baseincs.h"   /* NULL, memset */
@@ -47,7 +50,7 @@ return "@(#)$Id: clievent.cpp,v 1.2 1999/01/01 02:45:14 cramer Exp $"; }
 
 
 #ifndef MAX_EVENT_LISTENERS
-#define MAX_EVENT_LISTENERS 4
+#define MAX_EVENT_LISTENERS 8
 #endif
 
 /* ------------------------------------------------------------ */
