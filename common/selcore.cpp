@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.105 2002/10/21 10:50:43 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.106 2002/10/21 13:23:43 acidblood Exp $"; }
 
 //#define TRACE
 
@@ -2089,6 +2089,8 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         break;
       case 5:
         unit_func.gen_72 = rc5_72_unit_func_dg_2;
+        pipeline_count = 2;
+        break;
      #endif
 
     }
