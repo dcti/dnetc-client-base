@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.35 2000/06/13 00:41:28 mfeiri Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.36 2000/06/18 15:08:15 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -225,26 +225,34 @@
   extern "C" int clock_gettime(int clktype, struct timespec *tsp);
   #include <unistd.h>
   #define fileno(f) ((f)->handle)
-#elif (CLIENT_OS == OS_MACOSX)
+#elif (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_RHAPSODY)
+  //rhapsody is mach 2.x based and altivec unsafe
+  #include <sys/time.h>
+  #include <sys/sysctl.h>
   #include <unistd.h>
 #elif (CLIENT_OS == OS_FREEBSD)  
   #include <sys/time.h>
   #include <unistd.h>
+  #include <sys/sysctl.h>
   #if defined(__FreeBSD__) && (__FreeBSD__ < 3)
     #include <sys/unistd.h>
   #else
     #include <sched.h>
+    #include <sys/rtprio.h>
   #endif
 #elif (CLIENT_OS == OS_OPENBSD)
   #include <sys/time.h>
+  #include <sys/sysctl.h>
   #include <unistd.h>
 #elif (CLIENT_OS == OS_BSDOS)
   #include <sys/param.h>
   #include <sys/time.h>
+  #include <sys/sysctl.h>
   #include <unistd.h>
   #include <sched.h>
 #elif (CLIENT_OS == OS_NETBSD)
   #include <sys/time.h>
+  #include <sys/sysctl.h>
   #include <unistd.h>
 #elif (CLIENT_OS == OS_QNX)
   #include <sys/time.h>
