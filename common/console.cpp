@@ -11,11 +11,13 @@
    to functions in modules in your own platform area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.21  1998/11/11 05:09:31  cyp
+// Passing on 'doingmodes' flag from InitializeConsole() to w32InitializeCon -
+// used on win16 to ensure only a single instance of the client can run.
+//
 // Revision 1.20  1998/11/10 21:36:02  cyp
 // Changed InitializeConsole() so that terms know in advance whether the
-// client will be running "modes" or not. This is needed for platforms where
-// the client uses a different screen for "modes" or for others that wait
-// with a "Press any key..." message before destroying the screen/window.
+// client will be running "modes" or not. 
 //
 // Revision 1.19  1998/11/10 09:49:28  silby
 // added termios for freebsd, console input works much nicer now.
@@ -24,13 +26,12 @@
 // Added riscos_backspace() to work round some lame implementation of consoles.
 //
 // Revision 1.17  1998/11/09 16:54:04  cyp
-// Added special bksp handling for ANSI compliant terms.
+// Added bksp handling for any ANSI compliant term.
 //
 // Revision 1.16  1998/11/08 22:24:15  foxyloxy
 // Really did the below comment this time.
 //
 // Revision 1.15  1998/11/08 22:16:19  foxyloxy
-//
 // Made sure that termios.h is included for Irix/Solaris builds.
 // This fixes the "I can't backspace" problem.
 //
@@ -80,7 +81,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.20 1998/11/10 21:36:02 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.21 1998/11/11 05:09:31 cyp Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -139,6 +140,11 @@ int DeinitializeConsole(void)
         {
         int init = 0;
         time_t endtime = (CliTimer(NULL)->tv_sec) + CONCLOSE_DELAY;
+        int row=-1, height=0;
+        ConGetPos(NULL, &row);
+        ConGetSize(NULL, &height);
+        if (height > 2 && row!=-1)
+          ConSetPos(0, height-((row<(height-2))?(3):(1)));
         do{
           char buffer[80];
           int remaining = (int)(endtime - (CliTimer(NULL)->tv_sec));
@@ -176,7 +182,7 @@ int InitializeConsole(int runhidden,int doingmodes)
     constatics.doingmodes = doingmodes;
 
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-    retcode = w32InitializeConsole(runhidden);
+    retcode = w32InitializeConsole(runhidden,doingmodes);
     #endif
 
     if (retcode != 0)
@@ -501,42 +507,38 @@ int ConInStr(char *buffer, unsigned int buflen )
 
 /* ---------------------------------------------------- */
 
-#if 0 //unimplemented
 int ConGetPos( int *col, int *row )  /* zero-based */
 {
   if (constatics.initlevel > 0 && constatics.conisatty)
     {
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-    w32ConGetPos(col,row);
+    return w32ConGetPos(col,row);
     #elif (CLIENT_OS == OS_NETWARE)
     short x, y;
     GetOutputCursorPosition( &x, &y );
     row = (int)y; col = (int)x;
-    #endif
     return 0;
+    #endif
     }
   return -1;
 }
-#endif
 
 /* ---------------------------------------------------- */
 
-#if 0 //unimplemented
 int ConSetPos( int col, int row )  /* zero-based */
 {
   if (constatics.initlevel > 0 && constatics.conisatty)
     {
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-    w32ConSetPos(col,row);
+    return w32ConSetPos(col,row);
     #elif (CLIENT_OS == OS_NETWARE)
     WORD c = col, r = row;
     gotoxy( c, r );
-    #endif
     return 0;
+    #endif
     }
   return -1;
 }
-#endif
 
 /* ---------------------------------------------------- */
 
@@ -648,7 +650,7 @@ int ConClear(void)
   if (constatics.initlevel > 0 && constatics.conisatty)
     {
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-      if (w32ClearScreen() != 0)
+      if (w32ConClear() != 0)
         return -1;
     #elif (CLIENT_OS == OS_OS2)
       BYTE space[] = " ";
