@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.104 2002/10/21 04:04:18 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.105 2002/10/21 10:50:43 acidblood Exp $"; }
 
 //#define TRACE
 
@@ -1111,6 +1111,27 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             default:   cindex =-1; break; // no default
           }
           selcorestatics.corenum[OGR] = cindex;
+        }
+      }
+    }
+    else if (contestid == RC5_72)
+    {
+      selcorestatics.corenum[RC5_72] = selcorestatics.user_cputype[RC5_72];
+      if (selcorestatics.corenum[RC5_72] < 0)
+      {
+        if (detected_type >= 0)
+        {
+          int cindex = -1; 
+          switch (detected_type & 0xff)
+          {
+            case 0x09: cindex = 5; break; // AMD>=K7/Cx>MII == DG 2-pipe
+            default:   cindex =-1; break; // no default
+          }
+          #if defined(HAVE_NO_NASM)
+          if (cindex == 5)   /* ("DG 2-pipe") */
+            cindex = 1;      /* ("ANSI 2-pipe") */
+          #endif
+          selcorestatics.corenum[RC5_72] = cindex;
         }
       }
     }
