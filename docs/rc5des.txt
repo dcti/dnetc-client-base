@@ -542,7 +542,7 @@ PPC CPU types:
       0  : PPC 601
       1  : PPC 603/603e/604/604e/750
 
-  ARM CPU types:
+ARM CPU types:
      -1  : Auto detect
       0  : ARM 2/250/3/600/610/700/710/7500/7500FE
       1  : ARM 810/StrongARM 110
@@ -1186,8 +1186,8 @@ how you read them.  The averages
 
           For help with the RISC OS client, you can either ask through
           "standard" support channels (listed below), or visit the ant.org
-          RC5 team homepage (http://ant.org/rc5/) for more RISC OS-specific
-          information. (Or e-mail rc5@ant.org)
+          RC5 team homepage (http://www.ant.org/rc5/) for more RISC OS-
+          specific information. (Or e-mail rc5@ant.org)
 
           If you have problems with the RISC OS port you believe to be
           RISC OS specific, mail kbracey@acorn.co.uk.
