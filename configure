@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.255 2000/01/11 11:01:21 friedbait Exp $
+# @(#)$Id: configure,v 1.256 2000/02/12 06:23:26 andrewm Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1259,6 +1259,31 @@ case "$1" in
 	TARGET_LIBS="-lm"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
+
+    *arm-linuxelf)				# andrewm
+	TARGET_CC="gcc"
+	TARGET_AS="as"
+	TARGET_CCFLAGS="-O2 -s -fno-rtti -fno-exceptions -W -Wall \
+			-DARM -DKWAN -DHAVE_OGR_CORES"
+	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
+        TARGET_ADDASMS="rc5/arm/rc5-arm-1-gnu-elf.s \
+			rc5/arm/rc5-arm-2-gnu-elf.s \
+                        rc5/arm/rc5-arm-3-gnu-elf.s \
+                        des/arm/des-slice-sa-gnu-elf.s \
+			des/arm/des-slice-arm-gnu-elf.s"
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="linux-arm-elf"
+	rm -f $TARGET_ADDASMS
+	echo 'Converting GNU a.out cores to ELF'
+	for file in $TARGET_ADDASMS ; do
+		BASENAME=`basename $file`
+		echo "  $file -> `basename $file -elf.s`.s"
+		DIR=`echo $file | sed -e s/$BASENAME//`
+		( cd $DIR ; sed -e 's/_\([a-zA-Z0-9_]\{1,\}\)/\1/g' \
+			< `basename $file -elf.s`.s > $BASENAME )
+	done
+        ;;
 
     *arm-netbsd)				# chrisb
 	TARGET_CC="gcc"
