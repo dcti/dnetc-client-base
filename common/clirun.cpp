@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.64  1999/01/01 11:23:38  silby
+// Modifyed scheduledupdatetime handling:
+// 1) Now checks buffercount to determine if it needs
+//    to connect in addition to contest status
+// 2) Corrected condition where client started after
+//    contest start would play catchup with flush_scheduled_adj
+//
 // Revision 1.63  1999/01/01 02:45:14  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -244,7 +251,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.63 1999/01/01 02:45:14 cramer Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.64 1999/01/01 11:23:38 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -1441,7 +1448,7 @@ int Client::Run( void )
     #define UPDATE_INTERVAL 600 // Ten minutes
 
     if (scheduledupdatetime != 0 && (preferred_contest_id==1) && 
-      (timeNow >= scheduledupdatetime) && (contestdone[1] != 0) &&
+      (timeNow >= scheduledupdatetime) &&
       (timeNow < (scheduledupdatetime+TIME_AFTER_START_TO_UPDATE)) )
       { 
       if (scheduledupdatetime != last_scheduledupdatetime)
@@ -1451,6 +1458,7 @@ int Client::Run( void )
         flush_scheduled_adj = (Random(NULL,0)%UPDATE_INTERVAL); 
         Log("Buffer update scheduled in %u minutes %02u seconds.\n", 
              flush_scheduled_adj/60, flush_scheduled_adj%60 );
+        flush_scheduled_adj+=timeNow-scheduledupdatetime; // Catch up
         }
       if ( (flush_scheduled_adj < TIME_AFTER_START_TO_UPDATE) &&
         (timeNow >= (time_t)(flush_scheduled_adj+scheduledupdatetime)) )
@@ -1458,8 +1466,13 @@ int Client::Run( void )
         //flush_scheduled_count++; /* for use with exponential staging */
         flush_scheduled_adj += ((UPDATE_INTERVAL>>1)+
                                (Random(NULL,0)%(UPDATE_INTERVAL>>1)));
-        contestdone[1]=0;          //open the contest so we can get past the 
-        ModeReqSet(MODEREQ_FETCH); // contestdone check in ::BufferUpdate()
+        if ((contestdone[1] != 0) ||
+            (GetBufferCount(1,0,0) == 0))
+          // Check if contest is opened yet and if we have blocks.
+          {
+          contestdone[1]=0;          //open the contest so we can get past the 
+          ModeReqSet(MODEREQ_FETCH); // contestdone check in ::BufferUpdate()
+          }
         }
       }
 
