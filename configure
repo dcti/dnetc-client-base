@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.76 1999/12/13 18:17:38 snake Exp $
+# @(#)$Id: configure,v 1.222.2.77 1999/12/14 02:57:29 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -287,6 +287,7 @@ OPTS_CC_ALPHA_EV5='-O4 -tune ev5 -inline all'
 OPTS_CC_ALPHA='-O4 -fast -arch ev56 -tune ev56 -inline all'
 
 OPTS_GCC_ALPHA="$OPTS_GCC -O6 -DASM_ALPHA -static"
+OPTS_GCC272_ALPHA="$OPTS_GCC272 -O6 -DASM_ALPHA -static"
 OPTS_EGCS_ALPHA="$OPTS_EGCS -Os -DASM_ALPHA -static"
 
 #-- HPUX
@@ -905,12 +906,13 @@ case "$1" in
     *alpha-openbsd)                  # snake
 	TARGET_AS="g++ -c"
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_GCC_ALPHA  -DKWAN -DDWORZ"
-	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS rc5/alpha/axp-bmeyer.cpp"
-#            rc5/alpha/axp-bmeyer.s"
+	TARGET_CCFLAGS="$OPTS_GCC_ALPHA  -DKWAN -DDWORZ -DHAVE_CSC_CORES"
+	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS rc5/alpha/axp-bmeyer.cpp \
+             ${CSC_ANSI_SRCS}"
 	TARGET_ADDASMS="rc5/alpha/axp-bmeyer.s"
 	TARGET_LDFLAGS="-static"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="openbsd-alpha-aout"
 	;;
 
     *alpha-linux)                     # jlawson
@@ -1317,11 +1319,11 @@ case "$1" in
 	# nasm doesn't support BSD/OS aout format, so please don't do it again!!
     *x86-bsdi)                        # snake
 	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC272_X86 -DKWAN \
-	                -DHAVE_DES_CORES"  #-DHAVE_OGR_CORES
+	TARGET_CCFLAGS="$OPTS_GCC272_X86 -DKWAN -DHAVE_DES_CORES \
+	               -DHAVE_CSC_CORES"  #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $KWAN_SLICE_SRCS4 \
-	                " #$OGR_ANSI_SRCS
+	                $CSC_ANSI_SRCS" #$OGR_ANSI_SRCS
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S \
 	                des/brydgnu/p1bdespro.S"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
