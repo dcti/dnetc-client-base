@@ -5,7 +5,7 @@
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.37 2000/02/07 16:17:37 chrisb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.38 2000/02/12 23:21:41 mfeiri Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -954,6 +954,11 @@ int ClientRun( Client *client )
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_OS2) || (CLIENT_OS==OS_BEOS)
     force_no_realthreads = 0; // must run with real threads because the
                               // main thread runs at normal priority
+    #elif (CLIENT_OS == OS_MACOS)
+    #if (CLIENT_CPU == CPU_POWERPC)
+    if (!MPLibraryIsLoaded())
+    #endif
+      force_no_realthreads = 1;
     #elif (CLIENT_OS == OS_NETWARE)
     //if (numcrunchers == 1) // NetWare client prefers non-threading
     //  force_no_realthreads = 1; // if only one thread/processor is to used
