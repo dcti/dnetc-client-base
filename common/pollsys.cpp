@@ -27,6 +27,9 @@
 // does away with the 'timeslice factor' crutch.
 //
 // $Log: pollsys.cpp,v $
+// Revision 1.2  1998/09/28 21:07:24  remi
+// Cleared 3 "might be used uninitialised" warnings.
+//
 // Revision 1.1  1998/09/28 02:52:24  cyp
 // Created.
 //
@@ -34,7 +37,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *pollsys_cpp(void) {
-return "@(#)$Id: pollsys.cpp,v 1.1 1998/09/28 02:52:24 cyp Exp $"; }
+return "@(#)$Id: pollsys.cpp,v 1.2 1998/09/28 21:07:24 remi Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -228,10 +231,10 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
 {
   static unsigned int isrunning = 0;
   struct timeval now, until;
-  struct polldata *thisp, *nextp;
-  void *arg;
+  struct polldata *thisp, *nextp = NULL;
+  void *arg = NULL;
   unsigned int runprio;
-  register void (*proc)(void *);
+  register void (*proc)(void *) = NULL;
   int reclock, loopend, dorun;
 
   if ((++isrunning) > 1)
