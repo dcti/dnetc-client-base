@@ -4,8 +4,11 @@
  * Any other distribution or use of this source violates copyright.
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */ 
+
+//#define TRACE
+
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.38 2000/02/12 23:21:41 mfeiri Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.39 2000/02/13 04:21:11 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -76,7 +79,7 @@ struct thread_param_block
   #elif (CLIENT_OS == OS_BEOS)
     thread_id threadID;
   #elif (CLIENT_OS == OS_MACOS)
-    MPTaskID threadID;
+    long threadID; /* MPTaskID but we cast */
   #else
     int threadID;
   #endif
@@ -127,9 +130,9 @@ static void __thread_yield__(void)
   #elif (CLIENT_OS == OS_IRIX)
     #ifdef _irix5_
     sginap(0);
-    #else	// !_irix5_
+    #else       // !_irix5_
     sched_yield();
-    #endif	// !_irix5_
+    #endif      // !_irix5_
   #elif (CLIENT_OS == OS_WIN32)
     w32Yield(); //Sleep(0);
   #elif (CLIENT_OS == OS_DOS)
@@ -158,7 +161,10 @@ static void __thread_yield__(void)
   #elif (CLIENT_OS == OS_NETBSD)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_FREEBSD)
+    //fprintf(stderr,"non-polled-usleep 1\n");
+    //sched_yield(); /* 4.4bsd */
     NonPolledUSleep( 0 ); /* yield */
+    //fprintf(stderr,"non-polled-usleep 2\n");
   #elif (CLIENT_OS == OS_QNX)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_AIX)
@@ -305,7 +311,9 @@ void Go_mt( void * parm )
         run = nwCliRunProblemAsCallback( thisprob, threadnum+1, thrparams->priority);
       else
       #endif
+      //fprintf(stderr,"thisprob->Run()\n");
       run = thisprob->Run();
+      //fprintf(stderr,"thisprob->Run() = %d\n", run);
       thrparams->is_suspended = 1;
 
       if (thisprob->runtime_usec < elapsed_usec)
@@ -341,9 +349,9 @@ void Go_mt( void * parm )
         {
           #if (CLIENT_OS==OS_MACOS)
           if (!thrparams->realthread)
-          macosTickSleep(0); /* only non-realthreads are non-preemptive */
+            macosTickSleep(0); /* only non-realthreads are non-preemptive */
           #else
-          __thread_yield__();
+            __thread_yield__();
           #endif
         }
         optimal_timeslice = thisprob->tslice; /* get the number done back */
@@ -545,6 +553,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       if (ok2thread == 0)
       {
         char buffer[64];size_t len=sizeof(buffer),len2=sizeof(buffer);
+        //fprintf(stderr,"sysctlbyname()\n");
         if (sysctlbyname("kern.ostype",buffer,&len,NULL,0)!=0) 
           ok2thread = -2;
         else if (len<7 || memcmp(buffer,"FreeBSD",7)!=0)      
@@ -555,8 +564,9 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
           ok2thread = -5;
         else
         {
+          buffer[sizeof(buffer)-1] = '\0';
           ok2thread = ((buffer[0]-'0')*100)+((buffer[2]-'0')*10);
-          //printf("found fbsd ver %d\n", ok2thread );
+          //fprintf(stderr, "found fbsd '%s' (interp ver %d)\n", buffer, ok2thread );
           if (ok2thread < 300) /* FreeBSD < 3.0 */
             ok2thread = -6;
         }
@@ -564,6 +574,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       if (ok2thread<1) /* not FreeBSD or not >=3.0 (or non-SMP kernel) */
       { 
         use_poll_process = 1; /* can't use this stuff */
+        //fprintf(stderr,"using poll-process\n");
       }
       else 
       { 
@@ -580,12 +591,15 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
             //children are faster, main is slower
             extern int TBF_MakeTriggersVMInheritable(void); /* probman.cpp */
             extern int TBF_MakeProblemsVMInheritable(void); /* triggers.cpp */
+            //fprintf(stderr, "beginning TBF_MakeProblemsVMInheritable()\n" );
             if (TBF_MakeProblemsVMInheritable() == 0 )
             {
+              //fprintf(stderr, "beginning TBF_MakeTriggersVMInheritable()\n" );
               if (TBF_MakeTriggersVMInheritable() == 0 )
                 assertedvms = +1; //success
             }     
           }
+          //fprintf(stderr, "assertedvms = %d\n", assertedvms );
           #else
           {
             extern _start; //iffy since crt0 is at the top only by default
@@ -619,10 +633,12 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       {
         thrparams->threadID = 0;
         success = 0;
+        //fprintf(stderr, "beginning minherit()\n" );
         if (minherit((void *)thrparams, sizeof(struct thread_param_block), 
                                   0 /* undocumented VM_INHERIT_SHARE*/)==0)
         {
           int rforkflags=RFPROC|RFTHREAD|RFSIGSHARE|RFNOWAIT/*|RFMEM*/;
+          //fprintf(stderr, "beginning rfork()\n" );
           pid_t new_threadID = rfork(rforkflags);
           if (new_threadID == -1) /* failed */
             success = 0;
@@ -710,22 +726,27 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
                thread_name, be_priority, (void *)thrparams );
         if ( ((thrparams->threadID) >= B_NO_ERROR) &&
              (resume_thread(thrparams->threadID) == B_NO_ERROR) )
-	    success = 1;
-	    #elif (CLIENT_OS == OS_MACOS)
-	      if (thrparams->threadnum == 0) /* the first to spin up */
-	      use_poll_process = 1;
-	      else
-	      {
-        OSErr thread_error;
-        thread_error = MPCreateTask((long (*)(void *))Go_mt,  // TaskProc
+            success = 1;
+      #elif (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
+        if (thrparams->threadnum == 0 /* the first to spin up */
+           || !MPLibraryIsLoaded()) /* or no MP library available */
+          use_poll_process = 1;
+        else
+        {
+          OSErr thread_error;
+          MPTaskID *taskidP = (MPTaskID *)(&(thrparams->threadID));
+          thrparams->is_non_preemptive_os = 0; /* assume MPCreateTask works */
+          thread_error = MPCreateTask((long (*)(void *))Go_mt,  // TaskProc
                                    (void *)thrparams,         // Parameters
                                    nil,                       // default stacksize
                                    kInvalidID,                // no comm queue
                                    nil, nil,                  // termination params
                                    nil,                       // task options
-                                   &(thrparams->threadID));   // ID new_threadid
-        if (thread_error == noErr)
-          success = 1;
+                                   taskidP);                  // ID new_threadid
+          if (thread_error == noErr)
+            success = 1;
+          else  /* restore it */
+            thrparams->is_non_preemptive_os = is_non_preemptive_os;
         }
       #elif ((CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS))
          if (thr_create(NULL, 0, (void *(*)(void *))Go_mt, 
@@ -756,16 +777,10 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     {
       thrparams->realthread = 0;            /* int */
       thrparams->dyn_timeslice_table = &(default_dyn_timeslice_table[0]);
-      #if (CLIENT_OS == OS_MACOS)
-      // shouldnt RegPolledProcedure be of type THREADID as defined
-      // in cputypes instead of being just plain int???
-      thrparams->threadID = (MPTaskID)RegPolledProcedure(Go_mt,
-                                (void *)thrparams , NULL, 0 );
-      #else
+      //fprintf(stderr,"scheduling poll-process\n");
       thrparams->threadID = RegPolledProcedure(Go_mt,
                                 (void *)thrparams , NULL, 0 );
-      #endif
-      success = ((int)thrparams->threadID != -1);
+      success = (((int)thrparams->threadID) != -1);
     }
 
     if (success)
@@ -907,6 +922,7 @@ int ClientRun( Client *client )
 
   if (!checkpointsDisabled) //!nodiskbuffers
   {
+    TRACE_OUT((0,"doing CheckpointAction(CHECKPOINT_OPEN)\n"));
     if (CheckpointAction( client, CHECKPOINT_OPEN, 0 )) //-> !0 if checkpts disabled
     {
       checkpointsDisabled = 1;
@@ -932,6 +948,7 @@ int ClientRun( Client *client )
     }
     else if (numcrunchers < 0) /* autoselect */
     {
+      TRACE_OUT((0,"doing GetNumberOfDetectedProcessors()\n"));
       numcrunchers = GetNumberOfDetectedProcessors(); /* cpucheck.cpp */
       if (numcrunchers < 1)
       {
@@ -954,11 +971,6 @@ int ClientRun( Client *client )
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_OS2) || (CLIENT_OS==OS_BEOS)
     force_no_realthreads = 0; // must run with real threads because the
                               // main thread runs at normal priority
-    #elif (CLIENT_OS == OS_MACOS)
-    #if (CLIENT_CPU == CPU_POWERPC)
-    if (!MPLibraryIsLoaded())
-    #endif
-      force_no_realthreads = 1;
     #elif (CLIENT_OS == OS_NETWARE)
     //if (numcrunchers == 1) // NetWare client prefers non-threading
     //  force_no_realthreads = 1; // if only one thread/processor is to used
@@ -973,7 +985,9 @@ int ClientRun( Client *client )
 
   if (!TimeToQuit)
   {
+    TRACE_OUT((+1,"doing InitializeProblemManager(%d)\n",load_problem_count));
     probmanIsInit = InitializeProblemManager(load_problem_count);
+    TRACE_OUT((-1,"InitializeProblemManager() =>%d\n",probmanIsInit));
     if (probmanIsInit > 0)
       load_problem_count = (unsigned int)probmanIsInit;
     else
@@ -997,7 +1011,9 @@ int ClientRun( Client *client )
       //  selcoreGetSelectedCoreForContest( prob_i );      //... out of the way.
       if (load_problem_count > 1)
         Log( "Loading crunchers with work...\n" );
+      TRACE_OUT((+1,"LoadSaveProblems(%d)\n",load_problem_count));
       load_problem_count = LoadSaveProblems( client, load_problem_count, 0 );
+      TRACE_OUT((-1,"LoadSaveProblems() =>%d\n",load_problem_count));
     }
     if (CheckExitRequestTrigger())
     {
@@ -1408,12 +1424,12 @@ int ClientRun( Client *client )
             }
             unsigned long count;
             if (GetBufferCount( client, cont_i, 0, &count ) >= 0)
-	    {
+            {
               if (count >= (unsigned int)ClientGetInThreshold( client, cont_i, 1 /* force */ )) 
               {         
                 have_one_full = 1; /* at least one in-buffer is full */
               }
-	    }  
+            }  
           }
         }
         doupd = (have_non_empty || !have_one_full);
