@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-6bits-bitslicer-mmx.cpp,v $
+// Revision 1.1.2.3  1999/11/28 20:23:15  remi
+// Updated core.
+//
 // Revision 1.1.2.2  1999/11/23 23:39:45  remi
 // csc_transP() optimized.
 // modified csc_transP() calling convention.
@@ -12,8 +15,10 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_6bits_bitslicer_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-6bits-bitslicer-mmx.cpp,v 1.1.2.2 1999/11/23 23:39:45 remi Exp $"; }
+return "@(#)$Id: csc-6bits-bitslicer-mmx.cpp,v 1.1.2.3 1999/11/28 20:23:15 remi Exp $"; }
 #endif
+
+#include <stdio.h>
 
 // ------------------------------------------------------------------
 #ifdef __cplusplus
@@ -36,7 +41,7 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 	- tcp+tep   : 2816 bytes
 	- loc.var.  :   64 bytes
 		      ----
-                      7928 bytes (or 15856 bytes on a 64-bit cpu)
+                      7928 bytes (or 15856 bytes on a 64-bit cpu or with MMX)
  */
 
 //#include <stdio.h>
@@ -65,7 +70,7 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 
   // allocate parameters on the aligned membuffer
   csc_mmxParameters *csc_params = (csc_mmxParameters*) membuffer;
-
+  membuffer += (sizeof(*csc_params) + 15) & 0xFFFFFFF0;
 
   ulong *skp;  // subkey[n]
   ulong *skp1; // subkey[n-1]
@@ -121,6 +126,7 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 	  (*cfr)[adr+3], (*cfr)[adr+2], (*cfr)[adr+1], (*cfr)[adr+0] );	\
   skp += 16;
 
+/*
 #define APPLY_Me(adr, adl)						\
   x0 = (*cfr)[adl+0] ^ tep[0+8]; x1 = (*cfr)[adl+1] ^ tep[1+8];		\
   x2 = (*cfr)[adl+2] ^ tep[2+8]; x3 = (*cfr)[adl+3] ^ tep[3+8];		\
@@ -143,7 +149,197 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 	  (*cfr)[adr+7], (*cfr)[adr+6], (*cfr)[adr+5], (*cfr)[adr+4],	\
 	  (*cfr)[adr+3], (*cfr)[adr+2], (*cfr)[adr+1], (*cfr)[adr+0] );	\
   tep += 16;
+*/
 
+#define APPLY_Me(adr, adl)		\
+  do {					\
+  ulong *x_y_xy = (ulong*)membuffer;	\
+  asm volatile ("
+
+	## eax == cfr
+	## ebx == tep
+	## ecx == x[8]
+	## edx == csc_params
+	##        y[4] == ecx + 8*8
+	##        xy[4] == ecx + 8*8 + 8*4
+
+	movl	%3, %%eax	# cfr
+	movl	%0, %%ebx	# tep
+	movl	%2, %%ecx	# x_y_xy
+
+	movq	8*("#adl"+0)(%%eax), %%mm0
+	pxor	8*(8+0)(%%ebx), %%mm0
+	movq	%%mm0, 8*0(%%ecx)			# x0 = (*cfr)[adl+0] ^ tep[0+8];
+
+	movq	8*("#adl"+1)(%%eax), %%mm1
+	pxor	8*(8+1)(%%ebx), %%mm1
+	movq	%%mm1, 8*1(%%ecx)			# x1 = (*cfr)[adl+1] ^ tep[1+8];
+
+	movq	8*("#adl"+2)(%%eax), %%mm2
+	pxor	8*(8+2)(%%ebx), %%mm2
+	movq	%%mm2, 8*2(%%ecx)			# x2 = (*cfr)[adl+2] ^ tep[2+8];
+
+	movq	8*("#adl"+3)(%%eax), %%mm3
+	pxor	8*(8+3)(%%ebx), %%mm3
+	movq	%%mm3, 8*3(%%ecx)			# x3 = (*cfr)[adl+3] ^ tep[3+8];
+
+	movq	8*("#adl"+4)(%%eax), %%mm4
+	pxor	8*(8+4)(%%ebx), %%mm4
+	movq	%%mm4, 8*4(%%ecx)			# x4 = (*cfr)[adl+4] ^ tep[4+8];
+
+	movq	8*("#adl"+5)(%%eax), %%mm5
+	pxor	8*(8+5)(%%ebx), %%mm5
+	movq	%%mm5, 8*5(%%ecx)			# x5 = (*cfr)[adl+5] ^ tep[5+8];
+
+	movq	8*("#adl"+6)(%%eax), %%mm6
+	pxor	8*(8+6)(%%ebx), %%mm6
+	movq	%%mm6, 8*6(%%ecx)			# x6 = (*cfr)[adl+6] ^ tep[6+8];
+
+	movq	8*("#adl"+7)(%%eax), %%mm7
+	pxor	8*(8+7)(%%ebx), %%mm7
+	movq	%%mm7, 8*7(%%ecx)			# x7 = (*cfr)[adl+7] ^ tep[7+8];
+
+
+	pxor	8*0(%%ebx), %%mm7
+	pxor	8*("#adr"+0)(%%eax), %%mm7
+	movq	%%mm7, 8*0+8*8+8*4(%%ecx)		# xy70 = x7 ^ (*cfr)[adr+0] ^ tep[0]
+	pxor	%%mm0, %%mm7
+	movq	%%mm7, 8*0(%%edx)			# in0 = x0 ^ xy70;
+
+	movq	8*1(%%ebx), %%mm0
+	pxor	8*("#adr"+1)(%%eax), %%mm0
+	movq	%%mm0, 8*0+8*8(%%ecx)			# y1 = (*cfr)[adr+1] ^ tep[1]
+	pxor	%%mm1, %%mm0
+	movq	%%mm0, 8*1(%%edx)			# in1 = x1 ^ y1;
+
+	pxor	8*2(%%ebx), %%mm1
+	pxor	8*("#adr"+2)(%%eax), %%mm1
+	movq	%%mm1, 8*1+8*8+8*4(%%ecx)		# xy12 = x1 ^ (*cfr)[adr+2] ^ tep[2]
+	pxor	%%mm2, %%mm1
+	movq	%%mm1, 8*2(%%edx)			# in2 = x2 ^ xy12
+
+	movq	8*3(%%ebx), %%mm2
+	pxor	8*("#adr"+3)(%%eax), %%mm2
+	movq	%%mm2, 8*1+8*8(%%ecx)			# y3 = (*cfr)[adr+3] ^ tep[3]
+	pxor	%%mm3, %%mm2
+	movq	%%mm2, 8*3(%%edx)			# in3 = x3 ^ y3
+
+	pxor	8*4(%%ebx), %%mm3
+	pxor	8*("#adr"+4)(%%eax), %%mm3
+	movq	%%mm3, 8*2+8*8+8*4(%%ecx)		# xy34 = x3 ^ (*cfr)[adr+4] ^ tep[4]
+	pxor	%%mm4, %%mm3
+	movq	%%mm3, 8*4(%%edx)			# in4 = x4 ^ xy34
+
+	movq	8*5(%%ebx), %%mm4
+	pxor	8*("#adr"+5)(%%eax), %%mm4
+	movq	%%mm4, 8*2+8*8(%%ecx)			# y5 = (*cfr)[adr+5] ^ tep[5]
+	pxor	%%mm5, %%mm4
+	movq	%%mm4, 8*5(%%edx)			# in5 = x5 ^ y5
+
+	pxor	8*6(%%ebx), %%mm5
+	pxor	8*("#adr"+6)(%%eax), %%mm5
+	movq	%%mm5, 8*3+8*8+8*4(%%ecx)		# xy56 = x5 ^ (*cfr)[adr+6] ^ tep[6]
+	pxor	%%mm6, %%mm5
+	movq	%%mm5, 8*6(%%edx)			# in6 = x6 ^ xy56
+
+	movq	8*7(%%ebx), %%mm6
+	pxor	8*("#adr"+7)(%%eax), %%mm6
+	movq	%%mm6, 8*3+8*8(%%ecx)			# y7 = (*cfr)[adr+7] ^ tep[7]
+	pxor	8*7(%%ecx), %%mm6
+	movq	%%mm6, 8*7(%%edx)			# in7 = x7 ^ y7
+
+	leal	8*("#adl"+0)(%%eax), %%edi
+	movl	%%edi, 8*8+4*0(%%edx)
+	addl	$8, %%edi
+	movl	%%edi, 8*8+4*1(%%edx)
+	addl	$8, %%edi
+	movl	%%edi, 8*8+4*2(%%edx)
+	addl	$8, %%edi
+	movl	%%edi, 8*8+4*3(%%edx)
+	addl	$8, %%edi
+	movl	%%edi, 8*8+4*4(%%edx)
+	addl	$8, %%edi
+	movl	%%edi, 8*8+4*5(%%edx)
+	addl	$8, %%edi
+	movl	%%edi, 8*8+4*6(%%edx)
+	addl	$8, %%edi
+	movl	%%edi, 8*8+4*7(%%edx)
+
+	pushl	%%eax
+	pushl	%%ecx
+	pushl	%%edx
+	call	csc_transP
+	popl	%%edx
+	popl	%%ecx
+	popl	%%eax
+
+	# csc_transP_call(
+	#      x6 ^ y7, xy56, x4 ^ y5, xy34,
+   	#      x2 ^ y3, xy12, x0 ^ y1, xy70,
+	#  (*cfr)[adr+7], (*cfr)[adr+6], (*cfr)[adr+5], (*cfr)[adr+4],
+	#  (*cfr)[adr+3], (*cfr)[adr+2], (*cfr)[adr+1], (*cfr)[adr+0] );
+
+	movq	8*0+8*8+8*4(%%ecx), %%mm0
+	movq	%%mm0, 8*0(%%edx)		# in0 = xy70
+	
+	movq	8*0(%%ecx), %%mm1
+	pxor	8*0+8*8(%%ecx), %%mm1
+	movq	%%mm1, 8*1(%%edx)		# in1 = x0 ^ y1
+
+	movq	8*1+8*8+8*4(%%ecx), %%mm2
+	movq	%%mm2, 8*2(%%edx)		# in2 = xy12
+
+	movq	8*2(%%ecx), %%mm3
+	pxor	8*1+8*8(%%ecx), %%mm3
+	movq	%%mm3, 8*3(%%edx)		# in3 = x2 ^ y3
+
+	movq	8*2+8*8+8*4(%%ecx), %%mm4
+	movq	%%mm4, 8*4(%%edx)		# in4 = xy34
+
+	movq	8*4(%%ecx), %%mm5
+	pxor	8*2+8*8(%%ecx), %%mm5
+	movq	%%mm5, 8*5(%%edx)		# in5 = x4 ^ y5
+
+	movq	8*3+8*8+8*4(%%ecx), %%mm6
+	movq	%%mm6, 8*6(%%edx)		# in6 = xy56
+
+	movq	8*6(%%ecx), %%mm7
+	pxor	8*3+8*8(%%ecx), %%mm7
+	movq	%%mm7, 8*7(%%edx)		# in7 = x6 ^ y7
+
+	leal	8*("#adr"+0)(%%eax), %%edi
+	movl	%%edi, 8*8+4*0(%%edx)
+	addl	$8, %%edi
+	movl	%%edi, 8*8+4*1(%%edx)
+	addl	$8, %%edi
+	movl	%%edi, 8*8+4*2(%%edx)
+	addl	$8, %%edi
+	movl	%%edi, 8*8+4*3(%%edx)
+	addl	$8, %%edi
+	movl	%%edi, 8*8+4*4(%%edx)
+	addl	$8, %%edi
+	movl	%%edi, 8*8+4*5(%%edx)
+	addl	$8, %%edi
+	movl	%%edi, 8*8+4*6(%%edx)
+	addl	$8, %%edi
+	movl	%%edi, 8*8+4*7(%%edx)
+
+	pushl	%%eax
+	pushl	%%ecx
+	pushl	%%edx
+	call	csc_transP
+	popl	%%edx
+	popl	%%ecx
+	popl	%%eax
+
+	addl	$16*8, %%ebx
+	movl	%%ebx, %0	# tep += 16;
+	
+  " : "=m"(tep)						\
+    : "m"(skp), "m"(x_y_xy), "m"(cfr), "d"(csc_params)	\
+    : "%eax","%ebx","%ecx","%edi"			\
+  );							\
+  } while( 0 )
 
   // global initializations
   memcpy( &(*subkey)[0], &key[1], sizeof((*subkey)[0]) );
@@ -249,11 +445,101 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
     skp1 = &(*subkey)[2][0];
     tcp = &csc_tabc[1][0];
     for( int sk=7; sk; sk-- ) {
-      for( int n=8; n; n--,tcp+=8,skp1+=8,skp++ )
+      /*for( int n=8; n; n--,tcp+=8,skp1+=8,skp++ )
 	csc_transP_call( 
 	        skp1[7] ^ tcp[7], skp1[6] ^ tcp[6], skp1[5] ^ tcp[5], skp1[4] ^ tcp[4],
 		skp1[3] ^ tcp[3], skp1[2] ^ tcp[2], skp1[1] ^ tcp[1], skp1[0] ^ tcp[0],
 		skp[56], skp[48], skp[40], skp[32], skp[24], skp[16], skp[ 8], skp[ 0] );
+      */
+#define _skp    "%0"
+#define _skp1   "%1"
+#define _tcp    "%2"
+#define _params "%3"
+      asm volatile ("
+	movl	"_skp1", %%eax
+	movl	"_tcp", %%ebx
+	movl	"_skp", %%ecx
+	movl	$8, %%esi
+
+.loop:
+	movq	7*8(%%eax), %%mm0
+	movl	%%ecx, 0*4+8*8(%%edx)
+	pxor	7*8(%%ebx), %%mm0
+	addl	$8*8, %%ecx
+	movq	%%mm0, 7*8(%%edx)
+	movl	%%ecx, 1*4+8*8(%%edx)
+
+	movq	6*8(%%eax), %%mm1
+	addl	$8*8, %%ecx
+	pxor	6*8(%%ebx), %%mm1
+	movl	%%ecx, 2*4+8*8(%%edx)
+	movq	%%mm1, 6*8(%%edx)
+
+	movq	5*8(%%eax), %%mm2
+	addl	$8*8, %%ecx
+	pxor	5*8(%%ebx), %%mm2
+	movl	%%ecx, 3*4+8*8(%%edx)
+	movq	%%mm2, 5*8(%%edx)
+
+	movq	4*8(%%eax), %%mm3
+	addl	$8*8, %%ecx
+	pxor	4*8(%%ebx), %%mm3
+	movl	%%ecx, 4*4+8*8(%%edx)
+	movq	%%mm3, 4*8(%%edx)
+
+	movq	3*8(%%eax), %%mm4
+	addl	$8*8, %%ecx
+	pxor	3*8(%%ebx), %%mm4
+	movl	%%ecx, 5*4+8*8(%%edx)
+	movq	%%mm4, 3*8(%%edx)
+
+	movq	2*8(%%eax), %%mm5
+	addl	$8*8, %%ecx
+	pxor	2*8(%%ebx), %%mm5
+	movl	%%ecx, 6*4+8*8(%%edx)
+	movq	%%mm5, 2*8(%%edx)
+
+	movq	1*8(%%eax), %%mm6
+	addl	$8*8, %%ecx
+	pxor	1*8(%%ebx), %%mm6
+	movl	%%ecx, 7*4+8*8(%%edx)
+	movq	%%mm6, 1*8(%%edx)
+
+	movq	0*8(%%eax), %%mm7
+	subl	$(7*8)*8, %%ecx
+	pxor	0*8(%%ebx), %%mm7
+	pushl	%%eax
+	movq	%%mm7, 0*8(%%edx)
+
+	pushl	%%ecx
+	pushl	%%edx
+	call	csc_transP
+	popl	%%edx
+	popl	%%ecx
+	popl	%%eax
+
+	addl	$8*8, %%eax
+	addl	$8*8, %%ebx
+	addl	$1*8, %%ecx
+
+	decl	%%esi
+	jg	.loop
+
+	movl	%%eax, "_skp1"
+	movl	%%ebx, "_tcp"
+	movl	%%ecx, "_skp"
+
+.end_of_loop:
+
+      " : "=m"(skp), "=m"(skp1), "=m"(tcp)
+        : "d"(csc_params)
+        : "%eax","%ebx","%ecx","%esi"
+      );
+#undef _params
+#undef _skp
+#undef _skp1
+#undef _tcp
+
       skp -= 8;
 
       APPLY_Ms(  0,  8);
