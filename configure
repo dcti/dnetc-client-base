@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.23  1998/06/09 09:50:40  daa
+# add 2 new files in common/ disphelp.cpp and threadcd.cpp
+#
 # Revision 1.22  1998/06/08 19:31:49  friedbait
 # Reverted the changes to copy the 'stubs' to ./common instead of ./rc5.
 # Per Jeff's suggestion we achieve the same effect with appropriate '-I'
@@ -154,7 +157,8 @@ COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
     common/autobuff.cpp common/iniread.cpp common/network.cpp
     common/scram.cpp common/buffwork.cpp common/mail.cpp
     common/convdes.cpp common/clicdata.cpp common/clirate.cpp 
-    common/clisrate.cpp common/clitime.cpp"
+    common/clisrate.cpp common/clitime.cpp common/disphelp.cpp
+    common/threadcd.cpp"
 SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
 SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
 SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"
