@@ -19,13 +19,11 @@ CFLAGS_68K   = $(DEBUG_68K) $(OPTIMIZE_68K) $(CFLAGS) define=PIPELINE_COUNT=2 CP
 DISASM_68K   = $(DISASM)
 LFLAGS_68K   = $(LFLAGS)
 
-FINAL_OBJS_PPC =\
-common_objs.o_ppc\
-core_objs.o_ppc
-
-COMMON_OBJS_PPC =\
+AMIGA_OBJS_PPC =\
 platforms/amiga/_tzset.o_ppc\
 platforms/amiga/amiga_version.o_ppc\
+
+COMMON_OBJS_PPC =\
 common/cliconfig.o_ppc\
 common/selftest.o_ppc\
 common/cmdline.o_ppc\
@@ -50,13 +48,13 @@ common/logstuff.o_ppc\
 common/triggers.o_ppc\
 common/buffupd.o_ppc\
 common/selcore.o_ppc\
-common/guistuff.o_ppc\ 
+common/guistuff.o_ppc\
 common/clirun.o_ppc\
-common/pollsys.o_ppc\  
-common/probman.o_ppc\ 
-common/probfill.o_ppc\ 
+common/pollsys.o_ppc\
+common/probman.o_ppc\
+common/probfill.o_ppc\
 common/bench.o_ppc\
-common/setprio.o_ppc   
+common/setprio.o_ppc
 
 RC5_OBJS_PPC	=\
 common/problem.o_ppc\
@@ -75,9 +73,11 @@ EXTRA_OBJS_68K	=\
 platforms/amiga/sleep.o_ppc\
 platforms/amiga/usleep.o_ppc
 
-COMMON_OBJS_68K =\
+AMIGA_OBJS_68K =\
 platforms/amiga/_tzset.o_68k\
 platforms/amiga/amiga_version.o_68k\
+
+COMMON_OBJS_68K =\
 common/cliident.o_68k\
 common/clirate.o_68k\
 common/clisrate.o_68k\
@@ -102,20 +102,18 @@ common/logstuff.o_68k\
 common/triggers.o_68k\
 common/buffupd.o_68k\
 common/selcore.o_68k\
-common/guistuff.o_68k\ 
+common/guistuff.o_68k\
 common/clirun.o_68k\
-common/pollsys.o_68k\  
-common/probman.o_68k\ 
-common/probfill.o_68k\ 
+common/pollsys.o_68k\
+common/probman.o_68k\
+common/probfill.o_68k\
 common/bench.o_68k\
-common/setprio.o_68k   
+common/setprio.o_68k
 
 RC5_OBJS_68K	=\
 common/problem.o_68k\
 rc5/rc5-040_060-jg.o_68k\
 rc5/rc5-000_030-jg.o_68k
-
-#rc5/keycheck_opt.o_68k
 
 DES_OBJS_68K	=\
 des/des-slice-meggs.o_68k\
@@ -127,11 +125,11 @@ platforms/amiga/usleep.o_68k
 
 LIBSTART     = lib:c.o
 LIBSTART_PPC = $(LIBSTART)
-OBJS_PPC     = $(RC5_OBJS_PPC) $(DES_OBJS_PPC) $(EXTRA_OBJS_PPC) $(COMMON_OBJS_PPC)
+OBJS_PPC     = $(RC5_OBJS_PPC) $(DES_OBJS_PPC) $(EXTRA_OBJS_PPC) $(AMIGA_OBJS_PPC) $(COMMON_OBJS_PPC)
 LIBS_PPC     = LIB:sccxxppc.lib LIB:scppc.lib #LIB:end.o
 
 LIBSTART_68K = $(LIBSTART)
-OBJS_68K     = $(COMMON_OBJS_68K) $(RC5_OBJS_68K) $(DES_OBJS_68K) $(EXTRA_OBJS_68K)
+OBJS_68K     = $(COMMON_OBJS_68K) $(RC5_OBJS_68K) $(DES_OBJS_68K) $(AMIGA_OBJS_68K) $(EXTRA_OBJS_68K)
 LIBS_68K     = LIB:scm.lib LIB:sc.lib LIB:amiga.lib LIB:debug.lib
 
 .s.o_ppc:
