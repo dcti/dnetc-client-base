@@ -39,7 +39,9 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/cpucheck.obj   \
 	$(OUTPUTPATH)/pathwork.obj   \
 	$(OUTPUTPATH)/cliident.obj   \
-        $(OUTPUTPATH)/des-slice-meggs.obj
+	$(OUTPUTPATH)/lurk.obj \
+	$(OUTPUTPATH)/logging.obj \
+	$(OUTPUTPATH)/des-slice-meggs.obj 
 
 PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/rg-486.obj   \
@@ -53,8 +55,8 @@ PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/p1bdespro.obj  \
 	$(OUTPUTPATH)/p2bdespro.obj  \
 	$(OUTPUTPATH)/x86ident.obj  \
-        $(OUTPUTPATH)/sboxes-mmx.obj \
-        $(OUTPUTPATH)/deseval-meggs3-mmx.obj
+	$(OUTPUTPATH)/sboxes-mmx.obj \
+	$(OUTPUTPATH)/deseval-meggs3-mmx.obj
 
 RC5_LIBS = wsock32.lib advapi32.lib
 
@@ -67,7 +69,7 @@ RC5_LIBS = wsock32.lib advapi32.lib
 	tasm32 /t /m /ml /i$(DESPATH:/=\)\brydmasm $(**:/=\), $(@:/=\)
 
 {$(DESPATH)/mmx-bitslice}.obj{$(OUTPUTPATH)}.obj:
-        copy $(**:/=\), $(@:/=\)
+	copy $(**:/=\), $(@:/=\)
 
 {$(RC5PATH)}.asm{$(OUTPUTPATH)}.obj:
 	tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
