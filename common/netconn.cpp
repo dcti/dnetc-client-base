@@ -17,7 +17,7 @@
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.1.2.1 2000/10/20 21:00:03 cyp Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.1.2.2 2000/10/21 00:29:45 cyp Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET
@@ -1804,7 +1804,6 @@ void *netconn_open( const char * _servname, int _servport,
     if (_servname)
     {
       const char *p = _servname;
-      netstate->servername_count = 0;
       while (*p)
       {
         int selport = -1, badname = 0; 
@@ -1822,12 +1821,13 @@ void *netconn_open( const char * _servname, int _servport,
                 badname = 1;
               else if (namelen == 0) /* port without name */
                 badname = 1;
+              else if (!isdigit(*(p+1))) /* is not a number */
+                badname = 1;    
               else          /* skip to the end of the number */
               {             /* try to construct a port number while skipping */
                 selport = 0;
-                while (isdigit(*(p+1)))
+                while (isdigit(*++p))
                 {
-                  p++;
                   if (selport >= 0)
                   {
                     selport = ((selport * 10)+ (*p - '0'));
@@ -1844,9 +1844,13 @@ void *netconn_open( const char * _servname, int _servport,
               }
             } /* (*p == ':') */
             else if (selport >= 0) /* ack! part of name follows port # */
+            {
               badname = 1;
+            }  
             else if ((buf_used+namelen) == (sizeof(netstate->servername_buffer)-1) )
+            {
               badname = 1;
+            }
             else if (badname == 0)
             {
               netstate->servername_buffer[buf_used+namelen] = (char)tolower(*p);
@@ -1856,7 +1860,6 @@ void *netconn_open( const char * _servname, int _servport,
           } /* if (!badname) */
         } /* while (*p && !(*p == ',' || *p == ';' || isspace(*p))) */
         netstate->servername_buffer[buf_used+namelen] = '\0';
-
         if (!badname && namelen)
         {
           const char *hostname = &netstate->servername_buffer[buf_used];

@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.42 2000/09/17 12:25:57 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.43 2000/10/21 00:29:46 cyp Exp $"; }
 
 //#define TRACE
 
@@ -137,67 +137,159 @@ void ConfigWriteUniversalNews( Client *client )
 static int _readwrite_hostname_and_port( int aswrite, const char *fn,
                                          const char *sect, const char *opt,
                                          char *hostname, unsigned int hnamelen,
-                                         int *port )
+                                         int *port, int multiple )
 {
   char buffer[128];
+  char hostbuf[sizeof(buffer)]; /* needed for multiple parse */
+  unsigned int len;
   int pos = 0;
+
   if (!aswrite)
   {
     // when reading, hostname and port are assumed to be
     // pre-loaded with default values
-    if (GetPrivateProfileStringB( sect, opt, "", buffer, sizeof(buffer), fn ))
+    if (hostname && hnamelen &&
+        GetPrivateProfileStringB( sect, opt, "", buffer, sizeof(buffer), fn ))
     {
-      char *q, *that = buffer;
-      while (*that && isspace(*that))
-        that++;
-      q = that;
-      while (*q && *q != ':' && !isspace(*q))
-        q++;
-      pos = (*q == ':');
-      *q++ = '\0';
-      if (pos && port)
+      int hostcount = 0, foundport = 0;
+      char *p = buffer;
+      while (*p)
       {
-        while (*q && isspace(*q))
-          q++;
-        pos = 0;
-        while (isdigit(q[pos]))
-          pos++;
-        if (pos)
+        int portnum = 0;
+        len = 0;
+        while (*p && (isspace(*p) || *p == ';' || *p == ','))
+          p++;
+        while (*p && !isspace(*p) && *p!=';' && *p!=',')
+          hostbuf[len++] = *p++;
+        hostbuf[len] = '\0';
+        if (len)
         {
-          q[pos] = '\0';
-          *port = atoi(q);
+          pos = 0;
+          while (hostbuf[pos] && hostbuf[pos]!=':')
+            pos++;
+          if (hostbuf[pos] == ':')
+          {
+            portnum = atoi(&hostbuf[pos+1]);
+            hostbuf[pos]='\0';
+            if (portnum <= 0 || portnum >= 0xffff)
+              portnum = 0;
+            len = pos;  
+          }
+          if (foundport == 0)
+            foundport = portnum;
+        }  
+        if (len && strcmp(hostbuf,"*")!=0 && strcmp(hostbuf,"auto")!=0)
+        {
+          if (portnum)
+          {
+            sprintf(&hostbuf[len],":%d", portnum);
+            len = strlen(hostbuf);
+          }    
+          if ((len + 3) >= hnamelen)
+            break; /* no more space for hostnames */
+          if (hostcount)
+          {
+            *hostname++ = ';';
+            hnamelen--;
+          }
+          strcpy(hostname, hostbuf);
+          hostname += len;
+          hnamelen -= len;
+          hostcount++;
+          if (!multiple)
+            break;
         }
-      }
-      if (hostname && hnamelen)
-      {
-        if (strcmp( that, "*" ) == 0)
-          *that = '\0';
-        strncpy( hostname, buffer, hnamelen );
-        hostname[hnamelen-1] = '\0';
-      }
-    }
+      } /* while (*p) */
+      if (foundport && port)
+        *port = foundport;
+    }               
     pos = 0;
   }
   else /* aswrite */
   {
-    char scratch[2];
-    buffer[0] = '\0';
-    if (!hostname)
-      hostname = buffer;
-    pos = 0;
-    if (port)
-      pos = *port;
-TRACE_OUT((0,"host:%s,port=%d\n",hostname,pos));
-    if (pos>0 && pos<0xffff)
+    int foundport = 0;
+    if (port)    
     {
-      if (!*hostname)
-        hostname = "*";
-      sprintf(buffer,"%s:%d", hostname, pos );
-      hostname = buffer;
+      foundport = *port;
+      if (foundport < 0 || foundport > 0xffff)
+        foundport = 0;
     }
+    if (!hostname)
+      hostname = "";
+    if (!foundport) /* no port to tack on, just sanitize */
+    {
+      len = 0;
+      while (*hostname && isspace(*hostname))
+        hostname++;
+      len = 0;
+      while (*hostname && len < (sizeof(hostbuf)-1))
+      {
+        if (*hostname == ',' || *hostname == ';')
+        {
+          if (!multiple)
+            break;
+          hostbuf[len++] = ';';
+        }  
+        else if (!isspace(*hostname))
+          hostbuf[len++] = *hostname;
+        else if (!multiple)
+          break;  
+        hostname++;
+      }
+      hostbuf[len] = '\0';
+      hostname = hostbuf;        
+    }
+    else /* tack port on to first hostname (if it doesn't already have one) */
+    {    
+      char *p = hostname;
+      len = 0; 
+      while (*p && (isspace(*p) || *p == ';' || *p == ','))
+        p++;
+      while (*p && !isspace(*p) && *p!=';' && *p!=',')
+        hostbuf[len++] = *p++;
+      hostbuf[len] = '\0';
+      if (!len)
+      {
+        strcpy(hostbuf,"*");
+        len = 1;
+      }
+      else
+      {
+        pos = 0;
+        while (hostbuf[pos] && hostbuf[pos]!=':')
+          pos++;
+        if (hostbuf[pos] == ':')
+          len = 0;
+      }      
+      if (len) /* doesn't already have a port */
+      {
+        sprintf(&hostbuf[len],":%d", foundport);
+        if (multiple)
+        {
+          len = strlen(hostbuf);
+          while (*p && (isspace(*p) || *p == ';' || *p == ','))
+            p++;
+          if (*p)
+          {
+            strcat(hostbuf,";");
+            len++;
+            while (*p && len < (sizeof(hostbuf)-1))
+            {
+              if (*p == ',')
+                hostbuf[len++] = ';';
+              else if (!isspace(*p))
+                hostbuf[len++] = *p;
+              p++;
+            }
+            hostbuf[len] = '\0';
+          }    
+        }  
+        hostname = hostbuf;
+      }  
+    } /* if need to tack on port to first name */     
+TRACE_OUT((0,"host:'%s'\n",hostname));
     pos = 0;
-    if (*hostname ||
-       GetPrivateProfileStringB( sect, opt, "", scratch, sizeof(scratch), fn ))
+    if (*hostname || GetPrivateProfileStringB( sect, opt, "", buffer, 2, fn ))
       pos = (!WritePrivateProfileStringB( sect, opt, hostname, fn));
   }
   return 0;
@@ -258,7 +350,7 @@ static int _readwrite_fwallstuff(int aswrite, const char *fn, Client *client)
       client->httpproxy[0] = '\0';
       _readwrite_hostname_and_port( 0, fn, OPTSECT_NET, "firewall-host",
                                     client->httpproxy, sizeof(client->httpproxy),
-                                    &(client->httpport) );
+                                    &(client->httpport), 0 );
       client->httpid[0] = '\0';
       if (GetPrivateProfileStringB( OPTSECT_NET, "firewall-auth", "", buffer, sizeof(buffer), fn ))
       {
@@ -358,7 +450,7 @@ static int _readwrite_fwallstuff(int aswrite, const char *fn, Client *client)
 
     _readwrite_hostname_and_port( 1, fn, OPTSECT_NET, "firewall-host",
                                 client->httpproxy, sizeof(client->httpproxy),
-                                &(client->httpport) );
+                                &(client->httpport), 0 );
     buffer[0] = '\0';
     if (client->httpid[0])
     {
@@ -593,7 +685,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
       modfail += _readwrite_hostname_and_port( 1, fn,
                                 OPTSECT_LOG, "mail-log-via",
                                 client->smtpsrvr, sizeof(client->smtpsrvr),
-                                &(client->smtpport) );
+                                &(client->smtpport), 0 );
       TRACE_OUT((0,"remapped hostname/port (%d)\n", modfail));
     }
   }
@@ -872,7 +964,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
       modfail += _readwrite_hostname_and_port( 1, fn,
                                 OPTSECT_NET, "keyserver",
                                 client->keyproxy, sizeof(client->keyproxy),
-                                &(client->keyport) );
+                                &(client->keyport), 0 );
     }
     TRACE_OUT((0,"remapped keyserver/port (%d)\n", modfail));
   }
@@ -1158,7 +1250,7 @@ int ConfigRead(Client *client)
   _readwrite_fwallstuff( 0, fn, client );
   _readwrite_hostname_and_port( 0, fn, OPTSECT_NET, "keyserver",
                                 client->keyproxy, sizeof(client->keyproxy),
-                                &(client->keyport) );
+                                &(client->keyport), 1 );
   //NetOpen() gets (autofindkeyserver)?(""):(client->keyproxy))
   client->autofindkeyserver = GetPrivateProfileIntB( OPTSECT_NET, "autofindkeyserver", __getautofinddefault(client->keyproxy), fn );
   client->nettimeout = GetPrivateProfileIntB( OPTSECT_NET, "nettimeout", client->nettimeout, fn );
@@ -1205,7 +1297,7 @@ int ConfigRead(Client *client)
 
   _readwrite_hostname_and_port( 0, fn, OPTSECT_LOG, "mail-log-via",
                                 client->smtpsrvr, sizeof(client->smtpsrvr),
-                                &(client->smtpport) );
+                                &(client->smtpport), 0 );
   client->messagelen = GetPrivateProfileIntB( OPTSECT_LOG, "mail-log-max", client->messagelen, fn );
   GetPrivateProfileStringB( OPTSECT_LOG, "mail-log-from", client->smtpfrom, client->smtpfrom, sizeof(client->smtpfrom), fn );
   GetPrivateProfileStringB( OPTSECT_LOG, "mail-log-dest", client->smtpdest, client->smtpdest, sizeof(client->smtpdest), fn );
@@ -1424,7 +1516,7 @@ int ConfigWrite(Client *client)
     __XSetProfileInt( OPTSECT_NET, "autofindkeyserver", client->autofindkeyserver, fn, 1, 'y');
     _readwrite_hostname_and_port( 1, fn, OPTSECT_NET, "keyserver",
                                 client->keyproxy, sizeof(client->keyproxy),
-                                &(client->keyport) );
+                                &(client->keyport), 1 );
 
     #if defined(LURK)
     {
@@ -1450,7 +1542,7 @@ int ConfigWrite(Client *client)
     if ((i = client->smtpport) == 25) i = 0;
     _readwrite_hostname_and_port( 1, fn, OPTSECT_LOG, "mail-log-via",
                                 client->smtpsrvr, sizeof(client->smtpsrvr),
-                                &(i) );
+                                &(i), 0 );
     __XSetProfileInt( OPTSECT_LOG, "mail-log-max", client->messagelen, fn, 0, 0);
     __XSetProfileStr( OPTSECT_LOG, "mail-log-from", client->smtpfrom, fn, NULL);
     __XSetProfileStr( OPTSECT_LOG, "mail-log-dest", client->smtpdest, fn, NULL);

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.41 2000/09/17 11:46:29 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.42 2000/10/21 00:29:45 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -666,12 +666,21 @@ struct optionstruct conf_options[/*CONF_OPTION_COUNT*/] = {
 },
 { 
   CONF_KEYSERVNAME             , /* CONF_MENU_NET */
-  CFGTXT("Keyserver host name"), "",
+  CFGTXT("Keyserver host name(s)"), "",
   CFGTXT(
-  "This is the name or IP address of the machine that your client will\n"
-  "obtain keys from and send completed packets to. Avoid IP addresses\n"
-  "if possible unless your client will be communicating through a HTTP\n"
-  "proxy (firewall) and you have trouble fetching or flushing packets.\n"
+  "This is the name(s) or IP address(s) of the machine(s) that your client\n"
+  "will obtain keys from and send completed packets to. Avoid IP addresses\n"
+  "unless the client has trouble resolving names to addresses.\n"
+  "\n"
+  "By default, the client will select a distributed.net keyserver in the\n"
+  "client's approximate geographic vicinity.\n"
+  "\n"
+  "Multiple names/addresses may be specified (separated by commas or\n"
+  "semi-colon), and may include a port number override. For example:\n"
+  "\"keyserv.hellsbells.org, join.the.dots.de:1234\".\n"
+  "\n"
+  "Host names/addresses without port numbers will inherit the port number\n"
+  "from the \"Keyserver port\" option.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
 { 
@@ -686,17 +695,20 @@ struct optionstruct conf_options[/*CONF_OPTION_COUNT*/] = {
   "   or distributed.net host) through a firewall, and the firewall does\n"
   "   *not* permit connections to port 2064.\n"
   "\n"
-  "All keyservers (personal proxy as well as distributed.net hosts) accept\n"
-  "all encoding methods (UUE, HTTP, raw) on any/all ports the listen on.\n"
+  "The default port number is 80 when using HTTP encoding, and 23 when using\n"
+  "UUE encoding, and 2064 otherwise. All keyservers (personal proxy as well\n"
+  "as distributed.net hosts) accept all encoding methods (UUE, HTTP, raw) on\n"
+  "any/all ports the listen on.\n"
   ),CONF_MENU_NET,CONF_TYPE_INT,NULL,NULL,0,0xFFFF,NULL,NULL
 },
 { 
   CONF_NOFALLBACK              , /* CONF_MENU_NET */
-  CFGTXT("Keyserver is a personal proxy on a protected LAN?"),"no",
+  CFGTXT("Disable fallback to a distributed.net keysever?"),"no",
   CFGTXT(
   "If the keyserver that your client will be connecting to is a personal\n"
   "proxy inside a protected LAN (inside a firewall), set this option to 'yes'.\n"
-  "Otherwise leave it at 'No'.\n\n\n"
+  "Otherwise leave it at 'No'.\n"
+  "\n"
   "(This option controls whether the client will 'fall-back' to an official\n"
   "distributed.net keyserver after connection failures to the server address\n"
   "you have manually specified.)\n"
