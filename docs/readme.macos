@@ -1,70 +1,63 @@
+distributed.net client for Mac OS 
+Version 2.8004-450
 
- distributed.net client for Mac OS
- document revision $Id: readme.macos,v 1.1.2.8 1999/12/20 03:09:25 cyp Exp $
+Welcome to the distributed.net client.
 
- Welcome to the distributed.net client.
+This document covers information specific to the client for Mac OS.  For general information, be sure to read "dnetc.txt" or browse through http://www.distributed.net/docs/ online.
 
- This document covers information specific to the client for Mac OS.
- Refer to other enclosed documentation or browse the online FAQ at
- http://www.distributed.net/FAQ for non-platform-specific documentation.
+   1.0  Getting started
+   2.0  Introduction to the new Mac client
+   3.0  Known issues
+   4.0  Credits and contacts
 
-    1.0  Getting started
-    2.0  Client for Mac OS specific notes
-    3.0  Client for Mac OS specific FAQ
-   
- 1.0  Getting started ------------------------------------------------
+ 1.0  Getting started
 
-    Just unpack the client in a folder of your choice and fire it up.
+The first time you launch the client, it will begin a keyboard-driven configuration.  You can navigate through different screens by pressing the corresponding number keys on your keyboard -- no need for mouse.  Most of the settings (except for your all-important email address, in the General Settings screen) have been pre-configured, so you won't need to spend a long time there. Choose "Save Settings and Exit" when you're done. 
 
-    If you have never run the client before, it will initiate the
-    menu-driven configuration. You can navigate through different screens 
-    by pressing the corresponding number keys on your keyboard -- no
-    need for mouse.  Most of the settings (except for your all-important 
-    email address, in the General Settings screen) have been pre-configured, 
-    so you won't need to spend a long time there. 
+To start the client working, just launch it again. if you prefer to have the client start automatically when the computer is powered up, make an alias of the client and place it in your startup items folder (in your system folder). 
 
-    The configuration options are fairly self-explanatory and can be run
-    at any time by selecting 'Configure' from the Commands menu.
-    
-    Choose "Save Settings and Exit" when you're done. The configuration 
-    file will be saved in the same folder as the client. 
+The configuration file is saved in the same folder as the client, along with various control files.  Unless you need to reset the client, you should never move it from this folder.  The folder itself can go anywhere.
 
-    To start the client working, just launch it again. If you prefer to 
-    have the client start automatically when the computer is powered up, 
-    make an alias of the client and place it in your startup items folder 
-    (in your system folder). (NB: It's important never to move the client 
-    out of it's folder, or you'll reset the configuration.)
+A "Complete Step-by-Step Guide to Running Your First Client" is available at http://www.distributed.net/docs/run-client.html . 
 
-    A detailed guide to the various configuration options is available
-    online at http://www.distributed.net/FAQ/
+ 2.0  Mac notes
 
-    A "Complete Step-by-Step Guide to Running Your First Client" is 
-    available at http://www.distributed.net/docs/run-client.html . 
+This is the second major iteration of the Mac port of the distributed.net client. There hasn’t been a Mac release in far too long - about six months. As such, there are some issues that need addressing here.
 
- 2.0  Notes: ---------------------------------------------------------
+The first thing you’ll notice is that this client lacks a GUI. The year-old graphical “wrapper” proved too difficult to bludgeon into playing nice with the constantly-moving target that is distributed.net’s common code. But further, keeping in mind that the dnetc code is inherently platform-independent, it made sense to create a minimalist text-based shell for the Mac lying around. This program will not break, no matter what changes occur in the common code. And the client’s stability is enhanced, since the chances that a bug will remain undetected for long are greatly reduced. With virtually zero maintenance, there is now an assured upgrade path for Mac participants in distributed.net projects. 
 
-    v2.8003.450 and higher clients have been written from the ground up, 
-    and while they may not be as 'Mac'ish as older clients were, the
-    emulation of a 'console' in a GUI window allows the client to use
-    exactly the same source code base as all the other clients on all 
-    the other platforms. 
-    - This enhances the client's stability since the chances that a bug 
-      will remain undetected for long are greatly reduced; 
-    - allows the port to grow in any and all directions that the
-      common source may go;
-    - makes it significantly easier to maintain since the dependancies 
-      on client code remaining unchanged no longer apply.
-      
-    Some 'services' that used to built into the client are now standalone
-    utilities and are available on the client addon page at
-    http://www.distributed.net/addon.html
+Next, if you own a G4, you will notice that the client now hauls ass at RC5. It’s nearly three times faster than a Pentium III of comparable clock speed. You can thank Dan Oetting for this, who created the new bitslicing Velocity Engine RC5 core. Yet another reason to own a Mac... ;)
 
-    The people responsible for the Mac port of the distributed.net client 
-    are Michael Feiri and Don Bruder. They deserve your eternal gratitude, 
-    but they will accept a nice box of Godiva chocolates. :)
+We hope you’ll understand our reasons for removing the client’s graphical user interface. We’ve got quite a lot in store for the Mac client in the future. You can keep up-to-date on this and other aspects of distributed.net by periodically reading the .plans at http://n0cgi.distributed.net/cgi/dnet-finger.cgi . 
 
- 3.0  FAQ: -----------------------------------------------------------
+ 3.0  Known issues
 
-    Q: What are the changes in this version of the client?
-    A: Read CHANGES.txt as included with this distribution!
+The performance of the Velocity Engine-enhanced RC5 core is nothing short of stellar. But there is no CSC core of equal speed in this client. One of our coders has such a core “in the pipeline”, but we felt that holding back the client’s release just for this one crunching engine would hurt the CS-Cypher project as a whole. At the time of this writing, the CSC keyspace will be exhausted in approximately twenty days - very possibly before the fast core is complete. 
+
+The client’s yielding and timing functions are slightly off-kilter as well. These will be tweaked over time. Partially because of this, automatic core selection is a little wonky. The “microbench” by which the client detects which core is fastest for your particular computer is usually correct, but in rare cases it chooses wrongly. You can force the client to use a particular core in Configure. 
+
+No, there is no edit menu. No, this is not a bug. :) The client uses a SIOUX window for console input & output, and it does not handle mouse clicks very well. This led us to simply disable all mouse clicks in the console window, You can still copy and paste as usual from the client’s log file (which can be turned on in Configure). 
+
+Some 'services' that used to built into the client are now standalone utilities, and are available on the client add-on page at http://www.distributed.net/addon.html .
+
+If you find an issue that you think is outstanding, by all means stick it in bugzilla at http://www.distributed.net/bugs/ . Make sure you include the full version of the client, which is printed on launch (it’s dnetc v2.8004-450-CTR-99122001 in this build). For help with other aspects of the client, please email help@distributed.net . 
+
+ 4.0  Credits
+
+The people primarily responsible for the Mac port of the distributed.net client are Michael Feiri and Don Bruder. They deserve your eternal gratitude, but they will accept a nice box of Godiva chocolates. Cyrus Patel wrote the majority of common distributed.net client code, which is of course a very large part of this Mac port. And Matthias Neerarcher’s GUSI networking package proved invaluable. 
+
+Supplemental personnell for this project are Evan Vetere and Joseph McLean. Dan Oetting wrote the AltiVec RC5 core - you know, the thing that gets four-plus megakeys a second for the same price as a Pentium III with 1/5 the performance? The internal beta team consisted of Matt Lee, Ryan Dumperth, Doug Clements, and Nick Robbins. And while we’re quite grateful to all of them, we ain’t done with their services yet, because the Mac team has a lot more in store for you. 
+
+Keep on cracking. 
+
+ 
+
+
+
+
+
+
+
+
+
 
