@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version-conflict.h,v $
+// Revision 1.23  1998/11/08 19:18:23  cyp
+// Let'errip. We are now at .419.
+//
 // Revision 1.22  1998/10/29 15:00:47  chrisb
 // bumped expiry date by another couple of weeks
 //
@@ -87,18 +90,19 @@
 
 #define CLIENT_CONTEST      71
 #define CLIENT_BUILD        01
-#define CLIENT_BUILD_FRAC   418
+#define CLIENT_BUILD_FRAC   419
 
-#define CLIENT_VERSIONSTRING    "v2.7101.418-BETA3"
-#define CLIENT_VERSIONSTRING2   "2.7101.418-BETA3"        // no leading "v"
+#define CLIENT_VERSIONSTRING    "v2.7101.419"
+#define CLIENT_VERSIONSTRING2   "2.7101.419"        // no leading "v"
 
 // When releasing a beta client, please set the expiration time to
 // about two weeks into the future; that should be an adequate beta
 // time period.
 
+#if 0
 #define BETA
 #define BETA_EXPIRATION_TIME    911433600  /* Nov 19 00:00:00 GMT */
-
+#endif
 
 
 #endif // _VERSION_H
