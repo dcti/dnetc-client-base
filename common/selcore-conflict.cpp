@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.37  1999/03/18 03:38:01  cyp
+// Removed ineffective/obsolete client::ismmx flag.
+//
 // Revision 1.36  1999/02/21 21:44:59  cyp
 // tossed all redundant byte order changing. all host<->net order conversion
 // as well as scram/descram/checksumming is done at [get|put][net|disk] points
@@ -139,7 +142,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.36 1999/02/21 21:44:59 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.37 1999/03/18 03:38:01 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -401,7 +404,7 @@ int Client::SelectCore(int quietly)
     cputype = 0;
     
     #if defined(MMX_RC5)
-    if (detectedtype == 0x106 && usemmx) /* Pentium MMX only! */
+    if (detectedtype == 0x106) /* Pentium MMX only! */
       {
       //rc5_unit_func = rc5_unit_func_p5_mmx;
       selmsg_rc5 = "Pentium MMX";
@@ -410,7 +413,7 @@ int Client::SelectCore(int quietly)
     }
 
   #if defined(MMX_BITSLICER)
-  if (((detectedtype & 0x100) != 0) && usemmx)   // use the MMX DES core ?
+  if ((detectedtype & 0x100) != 0)   // use the MMX DES core ?
     {
     //des_unit_func = des_unit_func2 = des_unit_func_mmx;
     selmsg_des = "MMX bitslice";
