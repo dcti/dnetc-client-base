@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.109 2002/03/29 23:38:34 zebe Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.110 2002/04/05 07:09:55 zebe Exp $
 ==========================================================================
 
 2.8000
@@ -42,7 +42,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.109 2002/03/29 23:38:34 zebe Exp $
             fix: ppc: linux kernel cpu string additions. (#2407)
             new: macosx: platform-specific read me doc (#2580)
             new: macosx: now supports -[un]install for /Library/StartupItems/
-            fix: macosx: mem leaks in pause-if-on-battery code. (#2465)
+            fix: macosx: leaks in pause-if-on-battery code. (#2465)
 
 2.8016.470  new: ppc: new AltiVec RC5 core for the PPC 7450 by Dan Oetting.
             fix: all: flushed when 1 packet was left in in-buffer (#2209).
