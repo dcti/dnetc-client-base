@@ -9,6 +9,10 @@
 // function.
 //
 // $Log: cliident.cpp,v $
+// Revision 1.2  1998/07/09 09:43:31  remi
+// Give an error message when the user ask for '-ident' and there is no support
+// for it in the client.
+//
 // Revision 1.1  1998/07/07 21:55:20  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -25,16 +29,16 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliident_cpp(void) { 
-static const char *id="@(#)$Id: cliident.cpp,v 1.1 1998/07/07 21:55:20 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliident.cpp,v 1.2 1998/07/09 09:43:31 remi Exp $";
 return id; } 
 #endif
 
 //-----------------------------------------------------------------------
 
-#if defined(__showids__) //not needed if we're not showing ids anyway
-
 #include <stdio.h>
 #include "cliident.h" //just to keep the prototypes in sync.
+
+#if defined(__showids__) //not needed if we're not showing ids anyway
 
 extern const char *disphelp_cpp(void);
 extern const char *cliconfig_cpp(void);
@@ -67,6 +71,13 @@ void CliIdentifyModules(void)
   unsigned int i;
   for (i=0;i<(sizeof(ident_table)/sizeof(ident_table[0]));i++)
     printf( "%s\n", (*ident_table[i])() );
+}
+
+#else //#if defined(__showids__)
+
+void CliIdentifyModules(void)
+{
+  printf( "No support for -ident in this client.\n" );
 }
   
 #endif //#if defined(__showids__)

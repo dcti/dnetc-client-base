@@ -3,12 +3,16 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.88  1998/07/09 09:43:25  remi
+// Give an error message when the user ask for '-ident' and there is no support
+// for it in the client.
+//
 // Revision 1.87  1998/07/09 04:37:56  jlawson
 // cleared integer cast warning.
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.87 1998/07/09 04:37:56 jlawson Exp $.
+// Tweaked $Id: client.cpp,v 1.88 1998/07/09 09:43:25 remi Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -184,7 +188,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.87 1998/07/09 04:37:56 jlawson Exp $"; }
+return "@(#)$Id: client.cpp,v 1.88 1998/07/09 09:43:25 remi Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -3124,10 +3128,8 @@ int main( int argc, char *argv[] )
     if ( argv[i][0] == 0 ) continue;
     else if ( strcmp(argv[i], "-ident" ) == 0)
       {
-      #if (!defined(lint) && defined(__showids__))
         CliIdentifyModules();
         retcode = 0;
-      #endif
       }
     else if ( strcmp( argv[i], "-test" ) == 0 )
     {
