@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CPUCHECK_H__
-#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.14.4.6 2004/01/24 18:25:45 snikkel Exp $"
+#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.14.4.7 2004/06/16 18:30:22 kakace Exp $"
 
 // cpu feature flags (use by selcore.cpp)
 
@@ -27,6 +27,9 @@
   #define CPU_F_HYPERTHREAD     (0x00010000L)	/* supported and enabled */
 #endif
 
+#if (CLIENT_CPU == CPU_POWERPC)
+  #define CPU_F_ALTIVEC         (0x00000001L)
+#endif
 
 //return number of processors detected (by the hardware/from the OS)
 //returns -1 if detection is not supported.
@@ -56,5 +59,8 @@ void GetProcessorInformationStrings( const char ** scpuid,
 //Wrapper for GetProcessorInformationStrings()
 //(used to be a client class function for access to the log functions)
 void DisplayProcessorInformation( void );
+
+//Return the CPU frequency (in MHz)
+unsigned int GetProcessorFrequency();
 
 #endif /* __CPUCHECK_H__ */
