@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.134 2004/07/14 01:57:05 piru Exp $
+# @(#)$Id: configure,v 1.288.2.135 2004/07/16 13:27:04 kakace Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -541,16 +541,11 @@ add_sources() # $1=os, $2=arch, $3=custom
       #DEFAULT_OGR="1" # this is just an addition to default core
       if [ "${1}" = "macosx" -o "${1}" = "morphos" -o "${1}" = "linux" ]; then
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"
-        if [ "$TARGET_CC" != "mwcc" ]; then
+        if [ "$TARGET_CC" != "mwcc" ]; then   # CodeWarrior (MacOS)
           # KOGE optimized cores
           HAVE_KOGE_PPC_CORES="1"
-          if [ "${1}" = "morphos" -o "${1}" = "linux" ]; then
-            TARGET_ADDASMS="$TARGET_ADDASMS ogr/ppc/OGR_PPC_scalar.gas.s \
-                                            ogr/ppc/OGR_PPC_hybrid.gas.s"
-          else
-            TARGET_ADDASMS="$TARGET_ADDASMS ogr/ppc/OGR_PPC_scalar.osx.s \
-                                            ogr/ppc/OGR_PPC_hybrid.osx.s"
-          fi
+          TARGET_ADDASMS="$TARGET_ADDASMS ogr/ppc/OGR_PPC_scalar.gas.s \
+                                          ogr/ppc/OGR_PPC_hybrid.gas.s"
         fi
       elif [ "X$3" = "Xaltivec" ] ; then
         if [ $gccver -ge 3000000 ]; then # works only for gcc > 3 
