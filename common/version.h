@@ -5,6 +5,18 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: version.h,v $
+// Revision 1.22.2.9  1999/01/17 12:50:15  remi
+// Synced with :
+//
+//  Revision 1.37  1999/01/15 05:15:54  cyp
+//  .431
+//
+//  Revision 1.36  1999/01/13 19:48:18  cyp
+//  blah. 2.7105.430
+//
+//  Revision 1.35  1999/01/12 09:13:40  silby
+//  Moved to 2.7104.428 in honor of new des mmx core.
+//
 // Revision 1.22.2.8  1999/01/09 11:51:01  remi
 // Synced with :
 //
@@ -61,11 +73,15 @@
 #define _VERSION_H
 
 #define CLIENT_CONTEST      71
-#define CLIENT_BUILD        02
-#define CLIENT_BUILD_FRAC   427
+#define CLIENT_BUILD        05
+#define CLIENT_BUILD_FRAC   431
 
-#define CLIENT_VERSIONSTRING    "v2.7102.427-TEST"
-#define CLIENT_VERSIONSTRING2   "2.7102.427-TEST"        // no leading "v"
+#define CLIENT_VERSIONSTRING    "v2.7105.431-TEST"
+#define CLIENT_VERSIONSTRING2   "2.7105.431-TEST"        // no leading "v"
+
+// When releasing a beta client, please set the expiration time to
+// about two weeks into the future; that should be an adequate beta
+// time period.
 
 #endif // _VERSION_H
 
