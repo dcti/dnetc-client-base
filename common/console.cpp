@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.4 1999/06/11 19:37:17 patrick Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.5 1999/06/15 13:02:52 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -613,7 +613,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
       height  = winsz.ts_lines;
     }
   #elif defined(TIOCGWINSZ)
-    #error please add support for TIOCGWINSZ (will be used by graph stuff)
+    #error please add support for TIOCGWINSZ to avoid the following stuff
   #else 
   {
     char *envp = getenv( "LINES" );
@@ -630,7 +630,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
       if (width <= 0 || width >= 300)
         width = 0;
     }
-    #if 0 //-- no longer needed since paging is disabled on unix targets
+    #if 0 
     if (height == 0 && width == 0)
     {
       unsigned int loc = 0;
@@ -641,7 +641,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
         "/usr/share/terminfo",       // ncurses 1.9.9g defaults
         "/usr/local/share/terminfo", //
         "/usr/lib/terminfo",         // Debian 1.3x use this one
-        "/usr/share/lib/terminfo",   // ex. AIX (has a link to /usr/lib)
+        "/usr/share/lib/terminfo",   // ex. AIX (link to /usr/lib)
         "/usr/local/lib/terminfo",   // linux variation
         "/etc/terminfo",             // another linux variation
         "~/.terminfo",               // last resort
@@ -651,31 +651,40 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
       do
       {
         int termerr;
+        char ebuf[128];
         if ( envp )
+        {
+          #if (CLIENT_OS == OS_IRIX)
+          putenv(strcat(strcpy(ebuf,"TERMINFO="),envp));
+          #else
           setenv( "TERMINFO", envp, 1);
+          #endif
+        }
         if (setupterm( NULL, 1, &termerr ) != ERR)
         {
           if (termerr == 1)
           {
-            char buf[sizeof(int)*3];
             height = tigetnum( "lines" );
             if (height <= 0 || height >= 300)
               height = 0;
-            else
-            {
-              sprintf( buf, "%d", height );
-              setenv( "LINES", buf , 1);
-            }
             width = tigetnum( "columns" );
             if (width <= 0 || width >= 300)
               width = 0;
-            else
-            {
-              sprintf( buf, "%d", width );
-              setenv( "COLUMNS", buf , 1);
-            }
             if (width != 0 && height != 0)
-              break;
+            {
+              #if (CLIENT_OS == OS_IRIX)
+              sprintf( ebuf, "LINES=%d", height );
+              putenv( ebuf );
+              sprintf( ebuf, "COLUMNS=%d", width );
+              putenv( ebuf );
+              #else
+              sprintf( ebuf, "%d", height );
+              setenv( "LINES", ebuf, 1);
+              sprintf( ebuf, "%d", width );
+              setenv( "COLUMNS", ebuf , 1);
+              #endif
+              break; /* get out of do{}while loop */
+            }
           }
         }
         envp = terminfo_locations[loc++];
