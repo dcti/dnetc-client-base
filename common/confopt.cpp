@@ -1,98 +1,12 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: confopt.cpp,v $
-// Revision 1.28  1999/04/01 03:20:40  cyp
-// Updated to reflect changed [in|out]_buffer_[file->basename] semantics.
-//
-// Revision 1.27  1999/03/18 05:40:43  cyp
-// oops. "Project priority" was in the wrong menu.
-//
-// Revision 1.26  1999/03/18 03:59:09  cyp
-// new "Project priority" option.
-//
-// Revision 1.25  1999/03/02 04:26:39  foxyloxy
-// Upped the maximum for preferred block size to 33.
-//
-// Revision 1.24  1999/02/20 03:07:17  gregh
-// Add OGR options to configuration data.
-//
-// Revision 1.23  1999/02/09 23:41:39  cyp
-// Lurk iface mask changes: a) default iface mask no longer needs to be known
-// outside lurk; b) iface mask now supports wildcards; c) redid help text.
-//
-// Revision 1.22  1999/02/09 03:24:34  remi
-// Reverted the previous patch. connifacemask default is now set in confmenu.cpp.
-//
-// Revision 1.21  1999/02/08 23:19:39  remi
-// The right default for interface-to-watch is "ppp0:sl0" not "\0"
-// (at least on Linux).
-// FreeBSD now supports lurk mode also.
-//
-// Revision 1.20  1999/02/07 16:00:08  cyp
-// Lurk changes: genericified variable names, made less OS-centric.
-//
-// Revision 1.19  1999/02/06 10:42:55  remi
-// - the default for dialup.ifacestowatch is now 'ppp0:sl0'.
-// - #ifdef'ed dialup.ifacestowatch (only Linux at the moment)
-// - modified a bit the help text in confopt.cpp
-//
-// Revision 1.18  1999/02/06 09:08:08  remi
-// Enhanced the lurk fonctionnality on Linux. Now it use a list of interfaces
-// to watch for online/offline status. If this list is empty (the default), any
-// interface up and running (besides the lookback one) will trigger the online
-// status.
-//
-// Revision 1.17  1999/02/04 10:44:19  cyp
-// Added support for script-driven dialup. (currently linux only)
-//
-// Revision 1.16  1999/01/29 18:59:52  jlawson
-// fixed formatting.
-//
-// Revision 1.15  1999/01/29 01:25:59  cyp
-// permitting nettimeout=-1 got lost in one of the last two revs.
-//
-// Revision 1.14  1999/01/15 00:32:44  cyp
-// changed phrasing of 'distributed.net ID' at Nugget's request.
-//
-// Revision 1.13  1999/01/13 15:17:02  kbracey
-// Fixes to RISC OS processor detection and scheduling
-//
-// Revision 1.12  1999/01/12 14:57:35  cyp
-// -1 is a legal nettimeout value (force blocking net i/o).
-//
-// Revision 1.11  1999/01/04 02:47:30  cyp
-// Cleaned up menu options and handling.
-//
-// Revision 1.9  1998/12/23 00:41:45  silby
-// descontestclosed and scheduledupdatetime now read from the .ini file.
-//
-// Revision 1.7  1998/12/21 00:21:01  silby
-// Universally scheduled update time is now retrieved from the proxy,
-// and stored in the .ini file.  Not yet used, however.
-//
-// Revision 1.6  1998/12/20 23:00:35  silby
-// Descontestclosed value is now stored and retrieved from the ini file,
-// additional updated of the .ini file's contest info when fetches and
-// flushes are performed are now done.  Code to throw away old des blocks
-// has not yet been implemented.
-//
-// Revision 1.5  1998/12/01 11:24:11  chrisb
-// more riscos x86 changes
-//
-// Revision 1.4  1998/11/26 22:27:24  cyp
-// Fixed _IsHostnameDNetHost() to work with any/all distributed.net hostnames.
-//
-// Revision 1.3  1998/11/26 06:51:31  cyp
-// Added missing log entry.
-//
-//
-
-#if (!defined(lint) && defined(__showids__))
+/* 
+ * Copyright distributed.net 1997-1998 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.28 1999/04/01 03:20:40 cyp Exp $"; }
-#endif
+return "@(#)$Id: confopt.cpp,v 1.29 1999/04/04 16:15:14 cyp Exp $"; }
+
+/* ----------------------------------------------------------------------- */
 
 #include "cputypes.h" // CLIENT_OS, s32
 #include "baseincs.h" // strcmp() etc as used by isstringblank() et al.
@@ -101,15 +15,7 @@ return "@(#)$Id: confopt.cpp,v 1.28 1999/04/01 03:20:40 cyp Exp $"; }
 #include "confopt.h"  // ourselves
 #include "pathwork.h" // EXTN_SEP
 
-// --------------------------------------------------------------------------
-
-#if defined(NOCONFIG)
-  #define CFGTXT(x) NULL
-#else
-  #define CFGTXT(x) x
-#endif
-
-// --------------------------------------------------------------------------
+/* ----------------------------------------------------------------------- */
 
 static const char *uuehttptable[] =
 {
@@ -128,8 +34,9 @@ static const char *lurkmodetable[] =
   "Dial-up detection ONLY mode"
 };
 
-
 // --------------------------------------------------------------------------
+
+#define CFGTXT(x) x
 
 struct optionstruct conf_options[CONF_OPTION_COUNT]=
 {
@@ -559,6 +466,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL}
 };
 
+#if 0
 // --------------------------------------------------------------------------
 
 int confopt_IsHostnameDNetHost( const char * hostname )
@@ -609,4 +517,4 @@ void confopt_killwhitespace( char *string )
 }
 
 // --------------------------------------------------------------------------
-
+#endif
