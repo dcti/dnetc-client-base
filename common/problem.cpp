@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.77  1999/02/15 09:10:01  silby
+// Fixed bug in last change.
+//
 // Revision 1.76  1999/02/15 06:26:36  silby
 // Complete rewrite of Problem::Run to make it 64-bit
 // compliant and begin combination of all processor
@@ -225,7 +228,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.76 1999/02/15 06:26:36 silby Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.77 1999/02/15 09:10:01 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -877,16 +880,6 @@ if (contest == 0) // RC5
 
   IncrementKey(refL0, timeslice*pipeline_count);
     // Increment reference key count
-
-  if (((refL0.hi != rc5unitwork.L0.hi) ||  // Compare ref to core
-      (refL0.lo != rc5unitwork.L0.lo)) &&  // key incrementation
-      (kiter >= timeslice*pipeline_count))
-    {
-    Log("Internal Client Error #23: Please contact help@distributed.net\n"
-        "Debug Information: %x:%x - %x:%x\n",ntohl(rc5unitwork.L0.lo),
-        ntohl(rc5unitwork.L0.hi), ntohl(refL0.lo), ntohl(refL0.hi));
-    return -1;
-    };
 
   contestwork.keysdone.lo+=kiter;
   if (contestwork.keysdone.lo < kiter)
