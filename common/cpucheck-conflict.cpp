@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.22  1998/08/05 18:41:12  cyruspatel
+// Converted more printf()s to LogScreen()s, changed some Log()/LogScreen()s
+// to LogRaw()/LogScreenRaw()s, ensured that DeinitializeLogging() is called,
+// and InitializeLogging() is called only once (*before* the banner is shown)
+//
 // Revision 1.21  1998/08/05 16:40:53  cberry
 // fixed typo in ARM part of GetProcessorInformationStrings()
 //
@@ -10,7 +15,7 @@
 // Completed support for logging.
 //
 // Revision 1.19  1998/07/18 17:05:39  cyruspatel
-// Lowered the TimesliceBaseline for 486's from 1024 to 512. The high timeslice
+// Lowered the TimesliceBaseline for 486's from 1024 to 512. The high tslice
 // was causing problems on 486s with 3com and other poll-driven NICs.
 //
 // Revision 1.17  1998/07/13 23:39:33  cyruspatel
@@ -89,8 +94,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.21 1998/08/05 16:40:53 cberry Exp $";
-}
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.22 1998/08/05 18:41:12 cyruspatel Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -98,7 +102,7 @@ return "@(#)$Id: cpucheck-conflict.cpp,v 1.21 1998/08/05 16:40:53 cberry Exp $";
 #include "client.h"    // for the client class
 #include "cpucheck.h"  //just to keep the prototypes in sync.
 #include "threadcd.h"  //for the OS_SUPPORTS_THREADING define
-#include "logstuff.h"  //LogScreen()
+#include "logstuff.h"  //LogScreen()/LogScreenRaw()
 
 #if (CLIENT_OS == OS_SOLARIS)
 #include <unistd.h>    // cramer - sysconf()
@@ -197,13 +201,13 @@ void Client::ValidateProcessorCount( void )
       // returns -1 if no hardware detection
       if ( cpu_count < 1 )
         {
-        LogScreen("Automatic processor count detection failed."
+        LogScreenRaw("Automatic processor count detection failed."
         "\nA single processor machine is assumed.\n");
         cpu_count = 1;
         }
       else
         {
-        LogScreen("Automatic processor detection found %d processor%s\n",
+        LogScreenRaw("Automatic processor detection found %d processor%s\n",
            cpu_count, ((cpu_count==1)?(""):("s")) );
         }
       }
@@ -218,7 +222,7 @@ void Client::ValidateProcessorCount( void )
     if ( numcputemp > 1 )
       {
       numcputemp = 1;
-      LogScreen("Core routines not yet updated for thread safe operation. "
+      LogScreenRaw("Core routines not yet updated for thread safe operation. "
                 "Using 1 processor.\n");
       }
   #endif
@@ -375,25 +379,25 @@ int Client::GetProcessorType()
   struct _cpuxref *cpuxref = 
           __GetProcessorXRef( &cpuidb, &vendorid, &pronoun, &vendorname );
 
-  LogScreen( "Automatic processor detection " );
+  const char *apd = "Automatic processor detection";
   if ( cpuxref == NULL ) // fell through
     {
-    LogScreen( "failed. (id: %04X:%04X)\n", vendorid, cpuidb );
+    LogScreenRaw( "%s failed. (id: %04X:%04X)\n", apd, vendorid, cpuidb );
     coretouse = 0;
     }
   else if ( cpuxref->cpuname == NULL )  // fell through to last element
     {
     coretouse = (cpuxref->coretouse);
-    LogScreen("found an unrecognized %s processor. (id: %04X)\n",
+    LogScreenRaw("%s found an unrecognized %s processor. (id: %04X)\n", apd,
                                                     vendorname, cpuidb );
     }
   else // if ( cpuidb == (cpuxref->cpuidb))
     {
     coretouse = (cpuxref->coretouse);      
     if ( !vendorname || !*vendorname )  // generic type - no vendor name
-      LogScreen( "found %s %s.\n", pronoun, (cpuxref->cpuname));
+      LogScreenRaw( "%s found %s %s.\n", apd, pronoun, (cpuxref->cpuname));
     else
-      LogScreen( "found %s %s %s.\n", pronoun,
+      LogScreenRaw( "%s found %s %s %s.\n", apd, pronoun,
                                      vendorname, (cpuxref->cpuname));
     }
   return coretouse;
@@ -470,12 +474,12 @@ int Client::GetProcessorType()
   u32 detectedvalue = GetARMIdentification(); //must be interpreted
   int coretouse; // the core the client should use
 
-  LogScreen("Automatic processor detection ");
+  const char *apd = "Automatic processor detection";
 
   switch (detectedvalue)
   {
     case 0x200:
-      LogScreen("found an ARM 2 or ARM 250.\n");
+      LogScreenRaw("%s found an ARM 2 or ARM 250.\n", apd);
       coretouse=2;
       break;
     case 0x3:
@@ -484,23 +488,23 @@ int Client::GetProcessorType()
     case 0x700:
     case 0x7500:
     case 0x7500FE:
-      LogScreen("found an ARM %X.\n", detectedvalue);
+      LogScreenRaw("%s found an ARM %X.\n", apd, detectedvalue);
       coretouse=0;
       break;
     case 0x710:
-      LogScreen("found an ARM %X.\n", detectedvalue);
+      LogScreenRaw("%s found an ARM %X.\n", apd, detectedvalue);
       coretouse=3;
       break;
     case 0x810:
-      LogScreen("found an ARM %X.\n", detectedvalue);
+      LogScreenRaw("%s found an ARM %X.\n", apd, detectedvalue);
       coretouse=1;
       break;
     case 0xA10:
-      LogScreen("found a StrongARM 110.\n");
+      LogScreenRaw("%s found a StrongARM 110.\n", apd );
       coretouse=1;
       break;
     default:
-      LogScreen("failed. (id: %08X)\n", detectedvalue);
+      LogScreenRaw("%s failed. (id: %08X)\n", apd, detectedvalue);
       coretouse=-1;
       break;
   }
@@ -598,7 +602,7 @@ void DisplayProcessorInformation(void)
   const char *scpuid, *smaxcpus, *sfoundcpus;
   GetProcessorInformationStrings( &scpuid, &smaxcpus, &sfoundcpus );
   
-  LogScreen("Automatic processor identification tag:\n\t%s\n"
+  LogScreenRaw("Automatic processor identification tag:\n\t%s\n"
    "Number of processors detected by this client:\n\t%s\n"
    "Number of processors supported by each instance of this client:\n\t%s\n",
    scpuid, sfoundcpus, smaxcpus );
