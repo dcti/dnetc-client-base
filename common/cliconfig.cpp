@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.155  1998/07/14 09:06:30  remi
+// Users are now able to change the 'usemmx' setting with -config.
+//
 // Revision 1.154  1998/07/14 08:03:29  myshkin
 // Added #include "clirate.h" for the appropriate PPC platforms, to declare
 // CliGetKeyrateForProblemNoSave().
@@ -53,10 +56,13 @@
 // mmx capable will use it now.
 //
 // Revision 1.142  1998/07/09 05:27:51  silby
-// Changes to the MMX autodetect - still appear to be some overrides from user-set settings happening on pentium mmxes.
+// Changes to the MMX autodetect - still appear to be some overrides from
+// user-set settings happening on pentium mmxes.
 //
 // Revision 1.141  1998/07/09 03:21:20  silby
-// Changed autodetect so that autodetection on x86 is always done, and mmx cores are forced if usemmx=1 no matter which core is selected. (prevents costly des keyrate loss)
+// Changed autodetect so that autodetection on x86 is always done, and mmx
+// cores are forced if usemmx=1 no matter which core is selected. (prevents
+// costly des keyrate loss)
 //
 // Revision 1.140  1998/07/09 03:13:20  remi
 // Fixed -nommx message for x86 clients without the MMX bitslicer.
@@ -289,7 +295,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.154 1998/07/14 08:03:29 myshkin Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.155 1998/07/14 09:06:30 remi Exp $";
 return id; }
 #endif
 
@@ -1155,9 +1161,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           break;
         #ifdef MMX_BITSLICER
   case CONF_MMX:
-          choice = yesno(parm);
-    if ((choice < 0) || (choice >= 1))
-      usemmx = 1;
+          usemmx = yesno(parm);
           break;
         #endif
         default:
