@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.18 2000/11/17 00:39:34 mfeiri Exp $
+ * $Id: ogr.cpp,v 1.1.2.19 2000/11/20 20:20:14 teichp Exp $
  */
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
@@ -65,6 +65,15 @@
   #else
     #error play with the defines to find optimal settings for your compiler
   #endif
+#elif defined(ASM_ARM)
+  #if (__GNUC__)
+    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1
+    #define OGROPT_BITOFLIST_DIRECT_BIT           0
+    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2
+    #define OGROPT_STRENGTH_REDUCE_CHOOSE         1
+    #define OGROPT_ALTERNATE_CYCLE                0
+    #define OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP 1
+  #endif
 #endif  
 
 /* -- various optimization option defaults ------------------------------- */
@@ -92,6 +101,7 @@
       (defined(__ICC)) /* icc is Intel only (duh!) */ || \
       (defined(__GNUC__) && (defined(ASM_ALPHA) \
                              || defined(ASM_X86) \
+			     || defined(ASM_ARM) \
                              || (defined(ASM_68K) && (defined(mc68020) \
                              || defined(mc68030) || defined(mc68040) \
                              || defined(mc68060)))))
@@ -1569,17 +1579,46 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
     lev->list[0] >>= s;                                         \
   }
 
-#define COMP_LEFT_LIST_RIGHT_32(lev)              \
-  lev->comp[0] = lev->comp[1];                    \
-  lev->comp[1] = lev->comp[2];                    \
-  lev->comp[2] = lev->comp[3];                    \
-  lev->comp[3] = lev->comp[4];                    \
-  lev->comp[4] = 0;                               \
-  lev->list[4] = lev->list[3];                    \
-  lev->list[3] = lev->list[2];                    \
-  lev->list[2] = lev->list[1];                    \
-  lev->list[1] = lev->list[0];                    \
-  lev->list[0] = 0;
+#if defined(ASM_ARM) && defined(__GNUC__)
+  #define COMP_LEFT_LIST_RIGHT_32(lev) \
+  { \
+    int a1, a2; \
+    \
+    asm ("ldr %0,[%2,#44]\n \
+          ldr %1,[%2,#48]\n \
+	  str %0,[%2,#40]\n \
+	  ldr %0,[%2,#52]\n \
+	  str %1,[%2,#44]\n \
+	  ldr %1,[%2,#56]\n \
+	  str %0,[%2,#48]\n \
+          ldr %0,[%2,#12]\n \
+	  str %1,[%2,#52]\n \
+	  ldr %1,[%2,#8]\n \
+	  str %0,[%2,#16]\n \
+          ldr %0,[%2,#4]\n \
+	  str %1,[%2,#12]\n \
+	  ldr %1,[%2,#0]\n \
+	  str %0,[%2,#8]\n \
+	  mov %0,#0\n \
+	  str %1,[%2,#4]\n \
+	  str %0,[%2,#56]\n \
+	  str %0,[%2,#0]" : \
+	 "=r" (a1), "=r" (a2),\
+	 "=r" (lev) : "2" (lev)); \
+  }
+#else
+  #define COMP_LEFT_LIST_RIGHT_32(lev)              \
+    lev->comp[0] = lev->comp[1];                    \
+    lev->comp[1] = lev->comp[2];                    \
+    lev->comp[2] = lev->comp[3];                    \
+    lev->comp[3] = lev->comp[4];                    \
+    lev->comp[4] = 0;                               \
+    lev->list[4] = lev->list[3];                    \
+    lev->list[3] = lev->list[2];                    \
+    lev->list[2] = lev->list[1];                    \
+    lev->list[1] = lev->list[0];                    \
+    lev->list[0] = 0;
+#endif
 
 #if (OGROPT_BITOFLIST_DIRECT_BIT == 0)
   #define BITOFLIST(x) ogr_bit_of_LIST[x]
@@ -1664,6 +1703,98 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
   lev2->comp[2] = lev->comp[2] | lev2->dist[2];   \
   lev2->comp[3] = lev->comp[3] | lev2->dist[3];   \
   lev2->comp[4] = lev->comp[4] | lev2->dist[4];
+
+#define COPY_LIST_SET_BIT_COPY_DIST_COMP(lev2,lev,bitindex) \
+  {                                   \
+    int b, d;                         \
+    int a0, a1, a2, a3, a4;           \
+                                      \
+    b = BITOFLIST(bitindex);          \
+    d = bitindex;                     \
+    if(d<=32)                         \
+    {                                 \
+      a0 = lev->list[0] | b;          \
+      a1 = lev->list[1];              \
+      a2 = lev->list[2];              \
+      a3 = lev->list[3];              \
+      a4 = lev->list[4];              \
+    }                                 \
+    else if(d<=64)                    \
+    {                                 \
+      a0 = lev->list[0];              \
+      a1 = lev->list[1] | b;          \
+      a2 = lev->list[2];              \
+      a3 = lev->list[3];              \
+      a4 = lev->list[4];              \
+    }                                 \
+    else if(d<=96)                    \
+    {                                 \
+      a0 = lev->list[0];              \
+      a1 = lev->list[1];              \
+      a2 = lev->list[2] | b;          \
+      a3 = lev->list[3];              \
+      a4 = lev->list[4];              \
+    }                                 \
+    else if(d<=128)                   \
+    {                                 \
+      a0 = lev->list[0];              \
+      a1 = lev->list[1];              \
+      a2 = lev->list[2];              \
+      a3 = lev->list[3] | b;          \
+      a4 = lev->list[4];              \
+    }                                 \
+    else if(d<=160)                   \
+    {                                 \
+      a0 = lev->list[0];              \
+      a1 = lev->list[1];              \
+      a2 = lev->list[2];              \
+      a3 = lev->list[3];              \
+      a4 = lev->list[4] | b;          \
+    }                                 \
+    else                              \
+    {                                 \
+      a0 = lev->list[0];              \
+      a1 = lev->list[1];              \
+      a2 = lev->list[2];              \
+      a3 = lev->list[3];              \
+      a4 = lev->list[4];              \
+    }                                 \
+    lev2->list[0] = a0;               \
+    lev2->list[1] = a1;               \
+    lev2->list[2] = a2;               \
+    lev2->list[3] = a3;               \
+    b = lev->dist[0];                 \
+    lev2->list[4] = a4;               \
+    a0 = b | a0;                      \
+    b = lev->dist[1];                 \
+    lev2->dist[0] = a0;               \
+    a1 = b | a1;                      \
+    b = lev->dist[2];                 \
+    lev2->dist[1] = a1;               \
+    a2 = b | a2;                      \
+    b = lev->dist[3];                 \
+    lev2->dist[2] = a2;               \
+    a3 = b | a3;                      \
+    b = lev->dist[4];                 \
+    lev2->dist[3] = a3;               \
+    a4 = b | a4;                      \
+    b = lev->comp[0];                 \
+    lev2->dist[4] = a4;               \
+    a0 = b | a0;                      \
+    b = lev->comp[1];                 \
+    lev2->comp[0] = a0;               \
+    a1 = b | a1;                      \
+    b = lev->comp[2];                 \
+    lev2->comp[1] = a1;               \
+    a2 = b | a2;                      \
+    b = lev->comp[3];                 \
+    lev2->comp[2] = a2;               \
+    a3 = b | a3;                      \
+    b = lev->comp[4];                 \
+    lev2->comp[3] = a3;               \
+    a4 = b | a4;                      \
+    lev2->comp[4] = a4;               \
+  }
 
 #endif
 
@@ -1893,6 +2024,42 @@ static int found_one(const struct State *oState)
 #elif defined(ASM_68K) && defined(__GNUC__) /* Bit field find first one set (020+) */
   static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
   { i = ~i; __asm__ ("bfffo %0,0,0,%0" : "=d" (i) : "0" (i)); return ++i; }  
+#elif defined(ASM_ARM)
+  #if defined(__GNUC__)
+    static char first[256] = {
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+      2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+      2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+      2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+      3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+      3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+      4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+      5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 8, 9
+    };
+    static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int input)
+    {
+      register int temp, result;
+      __asm__ ("mov     %0,#0\n\t"             \
+               "cmp     %1,#0xffff0000\n\t"    \
+	       "movcs   %1,%1,lsl#16\n\t"      \
+	       "addcs   %0,%0,#16\n\t"         \
+	       "cmp	%1,#0xff000000\n\t"    \
+	       "movcs	%1,%1,lsl#8\n\t"       \
+	       "ldrb	%1,[%3,%1,lsr#24]\n\t" \
+	       "addcs	%0,%0,#8\n\t"          \
+	       "add	%0,%0,%1"              \
+	       :"=r" (result), "=r" (temp) : "1" (input), "r" (first));
+      return result;
+    }
+  #endif
 #else
   #error OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM is defined, and no code to match
 #endif
@@ -2391,8 +2558,12 @@ stay:
 
     /* Go Deeper */
     lev2 = lev + 1;
+#if (OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP == 1)
+    COPY_LIST_SET_BIT_COPY_DIST_COMP(lev2, lev, lev->cnt2-lev->cnt1);
+#else
     COPY_LIST_SET_BIT(lev2, lev, lev->cnt2-lev->cnt1);
     COPY_DIST_COMP(lev2, lev);
+#endif
     lev2->cnt1 = lev->cnt2;
     lev2->cnt2 = lev->cnt2;
     lev->limit = limit;
