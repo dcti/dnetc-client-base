@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.21 2003/04/05 12:39:17 gavin Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.22 2003/04/07 04:45:43 snikkel Exp $
 ==========================================================================
 
 2.9000
@@ -36,7 +36,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.21 2003/04/05 12:39:17 gavin Exp $
             new: 68k: optimized rc5-72 cores, now not only for AmigaOS
             fix: some: network cleanup failed during rare error condition
             new: ppc: two new rc5-72 non-Altivec cores by Malcolm Howell
-            chg: ppc: more optimisations to rc5-72 cores by Didier Levet
+            chg: ppc: more optimizations to rc5-72 cores by Didier Levet
             chg: ppc: ansi cores removed, asm cores are faster
 
 2.9004-482  undo: x86: rc5-72 SS-2 core (Athlon optimized) removed due to 
