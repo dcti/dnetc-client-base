@@ -14,6 +14,7 @@
  *  | | `------- New cores, for any platform, *requires* a "build version"
  *  | |          change, ie 2.7103.x to 2.7104.x. This is needed to be able
  *  | |          to isolate bad blocks in the master keyspace bitmap.
+ *  | |          New significant feature(s) also increment build version.
  *  | `--------- A "client contest" change follows a code freeze at which
  *  |            point the client is assumed to be stable. Code that
  *  |            would make clients incompatible with previous clients or
@@ -22,12 +23,12 @@
  * ---------------------------------------------------------------------
 */
 #ifndef __VERSION_H__
-#define __VERSION_H__ "@(#)$Id: version-conflict.h,v 1.49 1999/04/17 21:03:27 cyp Exp $"
+#define __VERSION_H__ "@(#)$Id: version-conflict.h,v 1.50 1999/05/04 06:27:03 cyp Exp $"
 
 #define CLIENT_MAJOR_VER     2
 #define CLIENT_CONTEST       71
 #define CLIENT_BUILD         10
-#define CLIENT_BUILD_FRAC    441
-#define CLIENT_VERSIONSTRING "2.7110.441"
+#define CLIENT_BUILD_FRAC    442
+#define CLIENT_VERSIONSTRING "2.7110.442"
 
 #endif /* __VERSION_H__ */
