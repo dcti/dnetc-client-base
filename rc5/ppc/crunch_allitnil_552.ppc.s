@@ -1,5 +1,9 @@
 #
 # $Log: crunch_allitnil_552.ppc.s,v $
+# Revision 1.3.2.2  2000/01/03 14:34:00  patrick
+#
+# GCC on AIX needs the #defines. Please keep 'em.
+#
 # Revision 1.3.2.1  1999/12/06 09:56:55  myshkin
 # Minor changes to conform to gas syntax (version 980114).
 #
@@ -16,17 +20,25 @@
 gcc2_compiled.:
 # .csect	.text[PR]
 # .align 8
+#if (CLIENT_OS == OS_AIX)
+ .globl .crunch_allitnil
+#else
  .globl crunch_allitnil
- .type	 crunch_allitnil,@function
+#endif
+# .type  crunch_allitnil,@function
 
-# stratagy: straight code in inner loop, 256 key cycle, load S0_n from
+# strategy: straight code in inner loop, 256 key cycle, load S0_n from
 # pre-calculated constants
 #			runtime calculation of round 1 constants for key.lo
 #				r0	r1	r2	r3	r4	...	r24	r25	r26	r27	r28	r29	r30	r31
 # registers:	tmp	SP	Sr2	Sr3	Sr4	...	24	25	Lr0	Lr1	key1 --	Sr0	Sr1
 #							ptr	cnt	Lt0	Lt1	S0r	Qr	key0	Ax	Bx
 
+#if (CLIENT_OS == OS_AIX)
+.crunch_allitnil:
+#else
 crunch_allitnil:
+#endif
 
 .set plain_hi,0     # plaintext, already mixed with IV
 .set plain_lo,4
