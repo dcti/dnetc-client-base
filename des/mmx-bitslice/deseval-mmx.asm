@@ -2,12 +2,15 @@
 ;
 ; Based on deseval-meggs3.cpp by Andrew Meggs
 ;
-; Needs work on memory allocation and freeing, extern declarations etc. 
+; Needs work on memory allocation and freeing, extern declarations etc.
 ; for various platforms.
 ; Look for PLATFORM
 ;
 ;
 ; $Log: deseval-mmx.asm,v $
+; Revision 1.9  1999/01/25 23:54:12  trevorh
+; Added [section text use32] for OS/2 to allow nasm to generate 32 bit code
+;
 ; Revision 1.8  1999/01/17 20:58:32  cyp
 ; Core gets a mem pointer on the stack. Obviates need for malloc/free and
 ; boosts speed yet a bit more.
@@ -1385,7 +1388,7 @@ global _whack16
    pxor  mm5,[esi+112]        ; out3 ^= x44
    pxor  mm2,mm3              ; x54 = x50 ^ x53
 
-; These five instructions are removed for pairing with 
+; These five instructions are removed for pairing with
 ; integer instructions at the end of full_round
 ;   pxor  mm2,[esi+208]        ; out2 ^= x54
 
@@ -1408,14 +1411,18 @@ SECTION DATA USE32 ALIGN=16
 %else
 [SECTION .data]
 %endif
-idtag:    db "@(#)$Id: deseval-mmx.asm,v 1.8 1999/01/17 20:58:32 cyp Exp $\0"
+idtag:    db "@(#)$Id: deseval-mmx.asm,v 1.9 1999/01/25 23:54:12 trevorh Exp $\0"
 %endif
 
 ; PLATFORM  text segment definition
 %ifdef BCC
 SECTION TEXT USE32 ALIGN=16
 %else
+%ifdef OS2
+ SEGMENT _TEXT USE32 FLAT PUBLIC ASSUME SS:FLAT,DS:FLAT,ES:FLAT,CS:FLAT
+%else
 [SECTION .text]
+%endif
 %endif
 
 ; PLATFORM external routines and memory allocation
@@ -1514,7 +1521,7 @@ t4_49:
    ; they are correct for the start of the next outermost loop
    movq  [rnd16_kbit49], mm0
    movq  [rnd15_kbit49], mm0
- 
+
    jnz   near create_tail
 
    retn
@@ -2486,7 +2493,7 @@ t6_08:
 
    movq  [L1+16],mm4          ; bit 2 round 1
    lea   esi, [CL]
-   
+
    movq  [L1+56],mm5          ; bit 7 round 1
    lea   edi, [L13]
 
