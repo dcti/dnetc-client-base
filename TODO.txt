@@ -1,5 +1,5 @@
 
-$Id: TODO.txt,v 1.8.2.6 2000/03/28 00:14:06 andreasb Exp $
+$Id: TODO.txt,v 1.8.2.7 2000/05/13 12:15:31 andreasb Exp $
 
 This file contains a list of mini-projects. Submissions as well as
 volunteers :) are welcome.
@@ -63,7 +63,3 @@ More difficult:
 
 -- Look into the MPI (message passing interface) API for parent<->child
    process communications.                            Priority: Medium
-
--- Add configurable contest rotation.
-   Currently #define ROTATE_BETWEEN_CONTESTS switches contests before new
-   work is fetched.                                   Priority:
