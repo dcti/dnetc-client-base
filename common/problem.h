@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.80 2000/07/11 03:49:06 mfeiri Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.81 2000/07/11 07:42:32 mfeiri Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -131,7 +131,6 @@ public: /* anything public must be thread safe */
   u32 tslice;                    /* -' -- adjusted by non-preemptive OSs */
   int was_reset;                 /* set if loadstate reset the block     */
 
-  u32 permille;    /* used by % bar */
   int loaderflags; /* used by problem loader (probfill.cpp) */
 
   unsigned int pipeline_count;
