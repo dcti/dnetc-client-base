@@ -22,8 +22,8 @@ Index:
     e.  MS-DOS client installation instructions
     f.  Amiga client installation instructions
     g.  RISC OS CLI installation instructions
-   (Windows and Macintosh GUI installation instructions are included with
-   their respective programs.)
+   (Windows, Macintosh, OS/2 and RISC OS GUI installation instructions
+   are included with their respective programs.)
 4.  Upgrading from a previous version of the client
 5.  Configuration of the client via the client config menu
 6.  Client commands
@@ -228,10 +228,9 @@ the clients have compatible buffer formats.
 5.  Configuration of the client via the client config menu
 ----------------------------------------------------------
 
-When you first run a CLI client (all versions excluding the windows and
-macintosh GUI), it will take you to this menu, which allows you to
-configure the client in a manner a little simpler than by .ini file
-editing.  (If you are .ini inclined, check section #7.)
+When you first run a CLI client, it will take you to this menu, which
+allows you to configure the client in a manner a little simpler than by
+.ini file editing.  (If you are .ini inclined, check section #7.)
 
 (Note that some options on this menu are dependant on other options,
 and will not initially show.)
@@ -243,7 +242,7 @@ CLIENT CONFIG MENU
 3)  DES Blocks to Buffer [in:out] [default:10] ==> 10:10
 4)  Blocks to complete in run [default:0] ==> 0
 5)  Hours to complete in a run [default:0.0] ==> 0.0
-6)  Keys per timeslice - for Macs, Netware, Win16, etc [default:65536] ==> 65536
+6)  Keys per timeslice - for Macs, Win16, RISC OS, etc [default:65536] ==> 65536
 7)  Level of niceness to run at [default:0] ==> 0
 8)  File to log to [default:] ==>
 9)  Network communication mode [default:1] ==> 1
@@ -312,8 +311,8 @@ editing, see section #7.
 
 6) [timeslice] This should be left alone for optimal performance on
    true pre-emptive multitasking systems.  It should only be changed on
-   mac/netware/win 3.1 clients where it will change the multitasking
-   priority.
+   Mac/Netware/Win 3.1/RISC OS clients where it will change the
+   multitasking priority.
 
 7) [niceness] This allows you to select the priority that the client will
    execute at.  A setting of 0, or 'very nice' will ensure that the client
@@ -1370,11 +1369,11 @@ quake/compile large programs, and I can't afford any slowdown.
 
 A:  If you leave the client at its default niceness setting (0), it will
 run at the lowest priority level on your system so that it does not
-interfere with the running of any program. The only two exceptions to this
-rule are the Windows 3.1 and the Macintosh clients, which are hindered
-by non-preemptively multitasking operating systems. On these systems,
-you can reduce the processor time consumed by reducing the keys per
-timeslice setting.
+interfere with the running of any program. The only exceptions to this
+rule are the Windows 3.1, Macintosh and RISC OS clients, which are
+hindered by non-preemptively multitasking operating systems. On these
+systems, you can reduce the processor time consumed by reducing the keys
+per timeslice setting.
 
 Q:  I've been watching my keyrate, and it seems that it gets SLOWER
 during the times I'm not at my computer! Shouldn't the processor be
