@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-x86.cpp,v $
+// Revision 1.19  1998/11/25 06:12:54  dicamillo
+// Update for BeOS R4 for Intel because elf format is used now.
+//
 // Revision 1.18  1998/11/07 08:29:46  remi
 // Changed a #ifdef to be a bit more human-readable.
 //
@@ -56,7 +59,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_x86_cpp(void) {
-return "@(#)$Id: des-x86.cpp,v 1.18 1998/11/07 08:29:46 remi Exp $"; }
+return "@(#)$Id: des-x86.cpp,v 1.19 1998/11/25 06:12:54 dicamillo Exp $"; }
 #endif
 
 
@@ -75,7 +78,8 @@ return "@(#)$Id: des-x86.cpp,v 1.18 1998/11/07 08:29:46 remi Exp $"; }
     ((CLIENT_OS == OS_SOLARIS) && (CLIENT_CPU == CPU_X86)) || \
     ((CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_X86) && defined(__ELF__)) || \
     ((CLIENT_OS == OS_BSDI) && (CLIENT_CPU == CPU_X86) && defined(__ELF__)) || \
-    ((CLIENT_OS == OS_FREEBSD) && (CLIENT_CPU == CPU_X86) && defined(__ELF__))
+    ((CLIENT_OS == OS_FREEBSD) && (CLIENT_CPU == CPU_X86) && defined(__ELF__)) || \
+    ((CLIENT_OS == OS_BEOS) && (CLIENT_CPU == CPU_X86) && defined(__ELF__))
  #define bryd_des _bryd_des
  #define bbryd_des _bbryd_des
  #define p1bryd_des _p1bryd_des
@@ -84,7 +88,7 @@ return "@(#)$Id: des-x86.cpp,v 1.18 1998/11/07 08:29:46 remi Exp $"; }
  #define bryd_key_found _bryd_key_found
  #define bbryd_continue _bbryd_continue
  #define bbryd_key_found _bbryd_key_found
-#elif ((CLIENT_OS == OS_BEOS) && (CLIENT_CPU == CPU_X86))
+#elif (CLIENT_CPU == CPU_X86)
  #define bbryd_des BBRYD_DES
  #define bbryd_continue BBRYD_CONTINUE
  #define bbryd_key_found BBRYD_KEY_FOUND
