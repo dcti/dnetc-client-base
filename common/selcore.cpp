@@ -1,152 +1,19 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: selcore.cpp,v $
-// Revision 1.38  1999/03/19 18:00:57  michmarc
-// Fix Alpha/NT builds
-//
-// Revision 1.37  1999/03/18 03:38:01  cyp
-// Removed ineffective/obsolete client::ismmx flag.
-//
-// Revision 1.36  1999/02/21 21:44:59  cyp
-// tossed all redundant byte order changing. all host<->net order conversion
-// as well as scram/descram/checksumming is done at [get|put][net|disk] points
-// and nowhere else.
-//
-// Revision 1.35  1999/02/09 04:23:06  dworz
-// fixed a typo on line 166
-// include machine/cpuconf.h only when CLIENT_OS!=OS_LINUX
-//
-// Revision 1.34  1999/02/04 23:06:44  remi
-// Added OS_LINUX in the Alpha cputypetable[] #ifdef block.
-//
-// Revision 1.33  1999/01/31 20:19:09  cyp
-// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
-//
-// Revision 1.32  1999/01/31 14:02:28  snake
-// prepare alpha OpenBSD for multiple cores when available
-//
-// Revision 1.31  1999/01/30 12:13:29  snake
-// added multiple core selection for OpenBSD Alpha
-//
-// Revision 1.30  1999/01/29 18:54:30  jlawson
-// fixed formatting.  changed some int vars to bool.
-//
-// Revision 1.29  1999/01/29 04:15:35  pct
-// Updates for the initial attempt at a multithreaded/multicored Digital
-// Unix Alpha client.  Sorry if these changes cause anyone any grief.
-//
-// Revision 1.28  1999/01/21 05:02:42  pct
-// Minor updates for Digital Unix clients.
-//
-// Revision 1.27  1999/01/14 23:02:12  pct
-// Updates for Digital Unix alpha client and ev5 related code.  This also
-// includes inital code for autodetection of CPU type and SMP.
-//
-// Revision 1.26  1999/01/05 17:49:19  chrisb
-// fixes to the ARM core selection
-//
-// Revision 1.25  1999/01/01 02:45:16  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.24  1998/12/18 18:29:27  sampo
-// MacOS doesn't use the PPC whichrcunch calculation loop.
-//
-// Revision 1.23  1998/12/14 11:43:27  cyp
-// (*unit_func)(...) style core selection is now completed in Prob::LoadState()
-//
-// Revision 1.22  1998/12/01 19:49:14  cyp
-// Cleaned up MULT1THREAD #define. See cputypes.h for full log entry.
-//
-// Revision 1.21  1998/11/28 17:44:38  remi
-// Integration of the 386/486 self modifying core.
-// Wrapped $Log comments.
-//
-// Revision 1.20  1998/11/02 04:40:07  cyp
-// Removed redundant ::numcputemp. ::numcpu does it all.
-//
-// Revision 1.19  1998/10/29 08:39:39  silby
-// Fixed the condition where core already specified would cause mmx
-// des detection to be skipped and always enabled.
-//
-// Revision 1.18  1998/10/29 08:19:31  silby
-// cputype was not properly being & 0xff'd from detectedtype, messing
-// up x86 mmx processor detection for rc5 cores.
-//
-// Revision 1.17  1998/10/11 00:43:23  cyp
-// Implemented 'quietly' in SelectCore() and ValidateProcessorCount()
-//
-// Revision 1.16  1998/10/09 12:25:25  cyp
-// ValidateProcessorCount() is no longer a client method [is now standalone].
-//
-// Revision 1.15  1998/10/08 21:23:02  blast
-// Fixed Automatic CPU detection that cyp had written a little strangely
-// for 68K CPU's under AmigaOS. It was good thinking but it would've 
-// reported the wrong cpu type, and also, there is no 68050, cyp :)
-//
-// Revision 1.14  1998/10/08 11:05:28  cyp
-// Moved AmigaOS 68k hardware detection code from selcore.cpp to cpucheck.cpp
-//
-// Revision 1.13  1998/10/08 10:12:17  cyp
-// Modified SelectCore(): (a) simply returns 0 if the cputype hasn't changed
-// between calls; (b) autodetection never runs more than once; (c) x86
-// autodetection (which is always run to check for mmx capability) only
-// prints a message when autodetect is actually requested. (d) all Log...()
-// calls are now normal LogScreen() calls. (e) Adjusted log message lengths so
-// that they don't cause line wraps on the screen.
-//
-// Revision 1.12  1998/10/05 22:10:41  remi
-// Added missing usemmx test in RC5 core selection.
-//
-// Revision 1.11  1998/10/05 01:53:23  cyp
-// Cleaned up x86 core selection.
-//
-// Revision 1.10  1998/10/04 00:02:34  remi
-// Removed extraneous #if defined(KWAN) && defined(MEGGS). MMX_BITSLICER is now
-// defined only when the MMX DES core is compiled.
-//
-// Revision 1.9  1998/10/03 23:19:06  remi
-// usemmx select both DES and RC5 cores.
-// LogScreenRaw instead of LogScreen for DES core selection.
-//
-// Revision 1.8  1998/10/03 05:14:58  sampo
-// minor change for MacOS CVS build
-//
-// Revision 1.7  1998/10/03 03:22:07  cyp
-// Moved 68k core kudos to PrintBanner() [client.cpp]
-//
-// Revision 1.6  1998/09/25 11:31:23  chrisb
-// Added stuff to support 3 cores in the ARM clients.
-//
-// Revision 1.5  1998/09/23 22:02:42  blast
-// Added multi-core support for all 68k platforms.
-// AmigaOS now has autodetection (-1) or manual (0, 1) of cores.
-// Other 68k porters will have to add autodetection if their OS can handle
-// autodetection.
-//
-// Revision 1.4  1998/09/04 06:05:46  silby
-// Made selcore more verbose on x86 so that people would not confused
-// rc5 and des core selections.
-//
-// Revision 1.3  1998/09/01 22:32:22  remi
-// Allow a P5-MMX to use the RC5 MMX core.
-//
-// Revision 1.2  1998/08/22 08:01:46  silby
-// Rewrote x86 core selection.
-//
-// Revision 1.1  1998/08/21 23:34:54  cyruspatel
-// Created from code in cliconfig.cpp. x86 SelectCore() works again - clients
-// on P5s are back up to speed. Validation of cputype is now done in SelectCore.
-// All CLIENT_CPU types should be setting cputype correctly now. Coders! please
-// verify this! Calls to Problem::LoadState() expects cputype to be valid.
-//
-//
-
-#if (!defined(lint) && defined(__showids__))
+/* 
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * ----------------------------------------------------------------------
+ * PORTER NOTE: when adding support for a new processor family, add each
+ * major processor type individually - *even_if_one_core_covers_more_than_
+ * one_processor*. This is to avoid having obsolete cputype entries
+ * in inis when more cores become available.                   - cyp
+ * ----------------------------------------------------------------------
+ */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.38 1999/03/19 18:00:57 michmarc Exp $"; }
-#endif
+return "@(#)$Id: selcore.cpp,v 1.39 1999/04/04 17:51:22 cyp Exp $"; }
+
+/* ----------------------------------------------------------------------- */
 
 #include "cputypes.h"
 #include "client.h"   // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -159,7 +26,7 @@ return "@(#)$Id: selcore.cpp,v 1.38 1999/03/19 18:00:57 michmarc Exp $"; }
 #include "clirate.h" //for PPC CliGetKeyrateForProblemNoSave() in SelectCore
 #include "selcore.h"  //keep prototypes in sync
 
-// --------------------------------------------------------------------------
+/* ------------------------------------------------------------------------ */
 
 //************************************
 //"--------- max width = 34 ---------" (35 including terminating '\0')
@@ -232,12 +99,13 @@ static const char *cputypetable[]=
   #define NO_CPUTYPE_TABLE
 #endif
 
-/* *******************************************************************
-   PORTER NOTE: when adding support for a new processor family, add each
-   major processor type individually - *even_if_one_core_covers_more_than_
-   one_processor*. This is to avoid having obsolete cputype entries
-   in inis when more cores become available.
-   ******************************************************************** */
+/* ----------------------------------------------------------------------
+ * PORTER NOTE: when adding support for a new processor family, add each
+ * major processor type individually - *even_if_one_core_covers_more_than_
+ * one_processor*. This is to avoid having obsolete cputype entries
+ * in inis when more cores become available.                   - cyp
+ * ----------------------------------------------------------------------
+*/ 
 
 // ---------------------------------------------------------------------------
 

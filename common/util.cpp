@@ -1,32 +1,10 @@
-/* Copyright distributed.net 1997-1999 - All Rights Reserved
+/* 
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
- *
- * ****************** THIS IS WORLD-READABLE SOURCE *********************
- *
- * $Log: util.cpp,v $
- * Revision 1.5  1999/03/31 11:43:09  cyp
- * created BufferGetDefaultFilename
- *
- * Revision 1.4  1999/03/20 07:32:42  cyp
- * moved IsFilenameValid() and DoesFileExist() to utils.cpp
- *
- * Revision 1.3  1999/03/18 17:31:48  gregh
- * Initialize the default preferred contest map appropriately
- * based on the number of contests.
- *
- * Revision 1.2  1999/03/18 07:52:47  gregh
- * Cast short to int when passing to printf(%d).
- *
- * Revision 1.1  1999/03/18 03:51:18  cyp
- * Created.
- *
 */
-
-#if (!defined(lint) && defined(__showids__))
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.5 1999/03/31 11:43:09 cyp Exp $"; }
-#endif
+return "@(#)$Id: util.cpp,v 1.6 1999/04/04 17:48:00 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h */
 #include "client.h"   /* CONTEST_COUNT, stub definition */

@@ -1,69 +1,24 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// ----------------------------------------------------------------------
-// This module contains functions for raising/checking flags normally set
-// (asynchronously) by user request. Encapsulating the flags in 
-// functions has two benefits: (1) Transparency: the caller doesn't 
-// (_shouldn't_) need to care whether the triggers are async from signals
-// or polled. (2) Portability: we don't need a bunch of #if (CLIENT_OS...) 
-// sections preceding every signal variable check. As such, someone writing 
-// new code doesn't need to ensure that someone else's signal handling isn't 
-// affected, and inversely, that coder doesn't need to check if his platform 
-// is affected by every itty-bitty change. (3) Modularity: gawd knows we need
-// some of this. (4) Extensibility: hup, two, three, four...
-// -----------------------------------------------------------------------
-//
-// $Log: triggers.cpp,v $
-// Revision 1.14  1999/03/31 21:43:00  cyp
-// Moved RISC OS _kernel_escape_seen() poll from Problem::Run() to the poller
-// here.
-//
-// Revision 1.13  1999/01/17 14:11:43  cyp
-// use copies of exitfile and pausfile.
-//
-// Revision 1.12  1999/01/05 01:35:57  cramer
-// Fixed the "Broken Pipe" exits under solaris.
-//
-// Revision 1.11  1999/01/01 02:45:16  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.10  1998/12/08 06:01:58  dicamillo
-// Add MacOS definitions.
-//
-// Revision 1.9  1998/11/25 06:09:39  dicamillo
-// Update for BeOS R4.  Changes so that SIGHUP is not intercepted for BeOS.
-//
-// Revision 1.8  1998/11/02 04:43:42  cyp
-// win16 no longer polls for ^C. Created [Raise|Clear]PauseRequestTrigger().
-//
-// Revision 1.7  1998/10/04 17:52:49  silby
-// Made CliSetupSignals public because win32 needs to call it when console is initted.
-//
-// Revision 1.6  1998/09/28 02:17:40  cyp
-// NetWare change: removed signal handling for SIGINT, polls keyboard instead.
-//
-// Revision 1.5  1998/09/25 11:31:25  chrisb
-// Added stuff to support 3 cores in the ARM clients.
-//
-// Revision 1.4  1998/09/17 18:59:16  cyp
-// Implemented -HUP handling. (See main() for implemention details)
-//
-// Revision 1.2  1998/09/06 21:01:04  silby
-// Changes to make deinittriggers clear all info so a subsequent call to 
-// inittriggers will be fruitful.
-//
-// Revision 1.1  1998/08/10 20:12:15  cyruspatel
-// Created
-//
+/* Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * 
+ * This module contains functions for raising/checking flags normally set
+ * (asynchronously) by user request. Encapsulating the flags in 
+ * functions has two benefits: (1) Transparency: the caller doesn't 
+ * (_shouldn't_) need to care whether the triggers are async from signals
+ * or polled. (2) Portability: we don't need a bunch of #if (CLIENT_OS...) 
+ * sections preceding every signal variable check. As such, someone writing 
+ * new code doesn't need to ensure that someone else's signal handling isn't 
+ * affected, and inversely, that coder doesn't need to check if his platform 
+ * is affected by every itty-bitty change. (3) Modularity: gawd knows we need
+ * some of this. (4) Extensibility: hup, two, three, four...  - cyp
+*/   
 
-#if (!defined(lint) && defined(__showids__))
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.14 1999/03/31 21:43:00 cyp Exp $"; }
-#endif
+return "@(#)$Id: triggers.cpp,v 1.15 1999/04/04 17:48:00 cyp Exp $"; }
 
-// --------------------------------------------------------------------------
+/* ------------------------------------------------------------------------ */
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -72,7 +27,7 @@ return "@(#)$Id: triggers.cpp,v 1.14 1999/03/31 21:43:00 cyp Exp $"; }
 #include "logstuff.h"  // LogScreen()
 #include "triggers.h"  // for xxx_CHECKTIME defines
 
-// --------------------------------------------------------------------------
+/* ----------------------------------------------------------------------- */
 
 #define TRIGSETBY_INTERNAL  1  /* signal or explicit call to raise */ 
 #define TRIGSETBY_EXTERNAL  2  /* flag file */

@@ -1,181 +1,23 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// ----------------------------------------------------------------------
-// This module contains the screen i/o primitives/wrappers for all
-// those GUIs and less-than-G UIs we have been threatened with :)
-// and we pretty much have scattered about anyway.
-//
-// Implementation guidelines: none. see what the neighbour did.
-// Keep the functions small (total less than 25 lines) or make calls
-// to functions in modules in your own platform area.   - cyp
-// ----------------------------------------------------------------------
-//
-// $Log: console.cpp,v $
-// Revision 1.45  1999/03/31 13:58:55  cyp
-// non-printable char suppression fix in ConInStr()
-//
-// Revision 1.44  1999/03/16 09:18:22  snake
-// added termios for BSD/OS and OpenBSD
-//
-// Revision 1.43  1999/02/21 00:56:17  trevorh
-// Correct typing error compiling os2gui
-//
-// Revision 1.42  1999/02/19 03:32:56  silby
-// Uses termios for hpux now.
-//
-// Revision 1.41  1999/02/04 22:49:06  trevorh
-// Corrected another problem with Vio calls being incorrect
-//
-// Revision 1.40  1999/02/04 14:50:34  patrick
-//
-// added TERMIOS support for AIX, now the menues work again. There seams to be
-// a problem with non-termios unix clients and the cursor postioning though.
-// The initial position is at pos 1 (for integers between 1 and 9 at least).
-// This pos is counted as zero though. Thus the old value can not be erased.
-//
-// Revision 1.39  1999/01/31 20:19:08  cyp
-// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
-//
-// Revision 1.38  1999/01/29 18:50:33  jlawson
-// fixed formatting.  changed some int vars to bool.
-//
-// Revision 1.37  1999/01/29 04:15:35  pct
-// Updates for the initial attempt at a multithreaded/multicored Digital
-// Unix Alpha client.  Sorry if these changes cause anyone any grief.
-//
-// Revision 1.36  1999/01/28 00:20:18  trevorh
-// Corrected VioCalls for OS/2 and fixed getch() in Watcom!
-//
-// Revision 1.35  1999/01/25 23:49:07  trevorh
-// #ifdef around the WinMessageBox() calls to make them used only when the
-// OS/2 GUI is being compiled. WinMessageBox() is invalid in the CLI.
-// VioGetCurPos() will not compile under Watcom 11.0
-//
-// Revision 1.34  1999/01/24 23:27:43  silby
-// Change so conisatty even when win32gui is run in hidden mode.
-//
-// Revision 1.33  1999/01/19 15:37:25  patrick
-//
-// had to add sys/select.h for AIX 4.1 compiles. AIX 4.2 and later has the
-// stuff in sys/time.h, which is included as default.
-//
-// Revision 1.32  1999/01/19 09:46:48  patrick
-//
-// changed behaviour for OS2-EMX to be more *ix like, added some casts.
-//
-// Revision 1.31  1999/01/13 08:49:27  cramer
-// Removed the stdin isatty() check -- who gives a flip if stdin is a tty;
-// stdout is what matters. (Note: if rc5des is started from a script...)
-//
-// Revision 1.30  1999/01/12 15:01:41  cyp
-// Created an itty-bitty ConBeep(). (used by Client::Configure())
-//
-// Revision 1.29  1999/01/09 05:46:08  cyp
-// x86dos clear screen fix.
-//
-// Revision 1.28  1999/01/07 02:15:57  cyp
-// ConInStr() now has a special 'boolean' mode. woohoo!
-//
-// Revision 1.27  1999/01/01 02:45:15  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.26  1998/12/30 08:56:31  silby
-// Conclose_delay is now not active if WIN32GUI defined.
-//
-// Revision 1.25  1998/12/29 09:28:35  dicamillo
-// For MacOS, ConOut now call macConOut.
-//
-// Revision 1.24  1998/12/08 05:40:19  dicamillo
-// MacOS: define conistty; call yield routine after output; remove
-// GetKeys- Mac client never reads console input.
-//
-// Revision 1.23  1998/11/16 19:07:06  cyp
-// Fixed integer truncation warnings.
-//
-// Revision 1.22  1998/11/16 17:04:38  cyp
-// Cleared up a couple of unused parameter warnings
-//
-// Revision 1.21  1998/11/11 05:09:31  cyp
-// Passed on 'doingmodes' flag from InitializeConsole() to w32InitializeCon -
-// used on win16 to ensure only a single instance of the client can run.
-//
-// Revision 1.20  1998/11/10 21:36:02  cyp
-// Changed InitializeConsole() so that terms know in advance whether the
-// client will be running "modes" or not.
-//
-// Revision 1.19  1998/11/10 09:49:28  silby
-// added termios for freebsd, console input works much nicer now.
-//
-// Revision 1.18  1998/11/09 17:24:35  chrisb
-// Added riscos_backspace() to work round some lame implementation of consoles.
-//
-// Revision 1.17  1998/11/09 16:54:04  cyp
-// Added bksp handling for any ANSI compliant term.
-//
-// Revision 1.16  1998/11/08 22:24:15  foxyloxy
-// Really did the below comment this time.
-//
-// Revision 1.15  1998/11/08 22:16:19  foxyloxy
-// Made sure that termios.h is included for Irix/Solaris builds.
-// This fixes the "I can't backspace" problem.
-//
-// Revision 1.14  1998/11/08 19:05:02  cyp
-// Created new function ConGetSize(int *width, int *height) from stuff in
-// DisplayHelp().
-//
-// Revision 1.13  1998/10/31 03:31:39  sampo
-// removed MacOS specific #include, checked for EOF input
-//
-// Revision 1.12  1998/10/29 03:15:26  sampo
-// Finally got a MacOS keyboard input thingie.  Not final, but close.
-//
-// Revision 1.11  1998/10/26 02:53:55  cyp
-// Added "Press any key..." functionality to DeinitializeConsole()
-//
-// Revision 1.10  1998/10/19 12:42:15  cyp
-// win16 changes
-//
-// Revision 1.9  1998/10/11 05:24:29  cyp
-// Implemented ConIsScreen(): a real (not a macro) isatty wrapper.
-//
-// Revision 1.8  1998/10/11 00:53:10  cyp
-// new win32 callouts: w32ConOut(), w32ConGetCh(), w32ConKbhit()
-//
-// Revision 1.7  1998/10/07 20:43:37  silby
-// Various quick hacks to make the win32gui operational again (will
-// be cleaned up).
-//
-// Revision 1.6  1998/10/07 18:36:18  silby
-// Changed logic in ConInKey once more so it's not reading uninit
-// variables.  Should be solid now. :)
-//
-// Revision 1.5  1998/10/07 12:56:46  silby
-// Reordered Deinitconsole so console functions would still be
-// available during w32deinitconsole.
-//
-// Revision 1.4  1998/10/07 12:25:04  silby
-// Figured out that MSVC doesn't understand continue as it was used;
-// changed ConInKey's loop so that it doesn't rely on continue.
-// (Functionality unchanged.)
-//
-// Revision 1.3  1998/10/07 04:04:20  silby
-// Fixed ConInKey - the logic was reversed when checking for timeout
-//
-// Revision 1.2  1998/10/04 18:55:58  remi
-// We want to output something, even stdout is redirected, grr...
-//
-// Revision 1.1  1998/10/03 05:34:45  cyp
-// Created.
-//
-//
-#if (!defined(lint) && defined(__showids__))
+/*
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * ----------------------------------------------------------------------
+ * This module contains the screen i/o primitives/wrappers for all
+ * those GUIs and less-than-G UIs we have been threatened with :)
+ * and we pretty much have scattered about anyway.
+ *
+ * Implementation guidelines: none. see what the neighbour did.
+ * Keep the functions small (total less than 25 lines) or make calls
+ * to functions in modules in your own platform area.   - cyp
+ * ----------------------------------------------------------------------
+*/
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.45 1999/03/31 13:58:55 cyp Exp $"; }
-#endif
+return "@(#)$Id: console.cpp,v 1.46 1999/04/04 17:48:00 cyp Exp $"; }
 
-#define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
+/* -------------------------------------------------------------------- */
+
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -188,6 +30,7 @@ return "@(#)$Id: console.cpp,v 1.45 1999/03/31 13:58:55 cyp Exp $"; }
 #include <sys/select.h>   // only needed if compiled on AIX 4.1
 #endif
 
+#define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
 #if !defined(NOTERMIOS) && ((CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) || \
     (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
     || (CLIENT_OS==OS_FREEBSD) || defined(__EMX__) || (CLIENT_OS==OS_AIX) \

@@ -19,51 +19,9 @@
  * filenames or maintain duplicate filename buffers. In addition, each
  * platform has its own code sections to avoid cross-platform assumptions
  * altogether.
- *
- * --------------------------------------------------------------------
- *
- * $Log: pathwork.cpp,v $
- * Revision 1.13  1999/04/01 03:04:37  cyp
- * Created GetFullPathForFilenameAndDir(). Like GetFullPathForFilename() but
- * can use a directory other than the client's wd.
- *
- * Revision 1.12  1999/01/23 21:29:48  patrick
- * OS2-EMX does not need special care here
- *
- * Revision 1.11  1999/01/08 21:20:38  sugalskd
- * Fixed VMS path-finding code
- *
- * Revision 1.10  1998/10/04 11:35:49  remi
- * Id tags fun.
- *
- * Revision 1.9  1998/08/05 16:49:32  cberry
- * commented out #define DEBUG that KB had put in for some reason.
- *
- * Revision 1.8  1998/07/30 02:11:52  blast
- * AmigaOS update
- *
- * Revision 1.7  1998/07/13 12:40:31  kbracey
- * RISC OS update. Added -noquiet option.
- *
- * Revision 1.6  1998/07/05 23:32:12  cyruspatel
- * Fixed missing semicolon in *nix'ish code section.
- *
- * Revision 1.3  1998/07/05 20:27:02  jlawson
- * headers for win32s and win16 and borland/dos
- *
- * Revision 1.2  1998/07/05 20:13:41  jlawson
- * modified headers for Win32
- *
- * Revision 1.1  1998/07/05 13:09:07  cyruspatel
- * Created - see documentation above. - my apologies to all non-win32 people,
- * for the sake of one platform, we bork the rest. :(
- *
 */
-
-#if (!defined(lint) && defined(__showids__))
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.13 1999/04/01 03:04:37 cyp Exp $"; }
-#endif
+return "@(#)$Id: pathwork.cpp,v 1.14 1999/04/04 17:47:59 cyp Exp $"; }
 
 #include <stdio.h>
 #include <string.h>

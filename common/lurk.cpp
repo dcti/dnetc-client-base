@@ -1,130 +1,22 @@
 //#define LURKDEBUG
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this sce violates copyright.
-//
-/*
-   This module contains functions for both lurking and dial initiation/hangup.
-   The workhorse protected function, IsConnected(), is needed to support both.
-
-   Lurk detection is trivial and contain no OS specific routines.
-     CheckIfConnectRequested() and CheckForStatusChange()
-   Public function used for dial initiation/hangup:
-     DialIfNeeded() and HangupIfNeeded()
-
+/* 
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ *
+ * This module contains functions for both lurking and dial initiation/hangup.
+ * The workhorse protected function, IsConnected(), is needed to support both.
+ * Lurk detection is trivial and contain no OS specific routines.
+ *                  CheckIfConnectRequested() and CheckForStatusChange()
+ * Public function used for dial initiation/hangup:
+ *                  DialIfNeeded() and HangupIfNeeded()
+ *                                                              - cyp
 */
-// $Log: lurk.cpp,v $
-// Revision 1.37  1999/04/01 03:01:11  cyp
-// Did one-shot RAS init/deinit properly.
-//
-// Revision 1.36  1999/03/09 07:04:29  silby
-// Win32 RAS is only initted/deinitted once.  Initialization on the fly
-// is causing too many complaints.
-//
-// Revision 1.35  1999/03/08 16:16:52  jlawson
-// symlinked lurk.cpp/h and w32svc.cpp/h and w32ras.cpp with those from client.
-//
-// Revision 1.34  1999/03/05 21:39:33  patrick
-//
-// added define for SIOSTATAT, defined solcose to be close for OS2-EMX target
-//
-// Revision 1.33  1999/02/14 02:48:58  silby
-// Switch back to old win32 naming convention for RAS procs.
-//
-// Revision 1.32  1999/02/14 00:32:32  silby
-// Changed order DialIfNeeded checks status so RAS is not inited if
-// it doesn't need to be.
-//
-// Revision 1.31  1999/02/12 23:21:19  silby
-// Changed win32 RAS function names used so that they
-// do not conflict with system headers.
-//
-// Revision 1.30  1999/02/10 21:39:21  remi
-// Cleared a warning on FreeBSD.
-//
-// Revision 1.29  1999/02/10 03:49:30  cyp
-// fixed a couple of LogScreen()s that weren't terminated with '\n'
-//
-// Revision 1.28  1999/02/10 00:30:11  trevorh
-// Removed #include for platforms\os2cli\os2defs.h
-//
-// Revision 1.27  1999/02/10 00:01:56  trevorh
-// Change delay() to sleep() for ifdefed OS/2 code
-//
-// Revision 1.26  1999/02/09 23:46:22  cyp
-// a) Default Ifacemask is internal to lurk; b) added wildcard support for
-// iface masking. b) Changed mask default to '\0' which now means 'all
-// dialup' ('*' is 'all')
-//
-// Revision 1.25  1999/02/09 10:45:00  remi
-// Added GetDefaultIFaceMask().
-// Lots of Win16/Win32 fixes from Cyp.
-//
-// Revision 1.24  1999/02/08 23:21:52  remi
-// Rewrote connifacemask[] parsing code and moved it out of CLIENT_OS defines.
-// Added FreeBSD support, same code may work on other BSD systems.
-//
-// Revision 1.23  1999/02/08 17:11:39  cyp
-// re-added errno.h for linux
-//
-// Revision 1.22  1999/02/07 16:02:38  cyp
-// gericificied variable/function names; fixed blatant bugs.
-//
-// Revision 1.21  1999/02/06 09:08:08  remi
-// Enhanced the lurk fonctionnality on Linux. Now it use a list of interfaces
-// to watch for online/offline status. If this list is empty (the default), any
-// interface up and running (besides the loopback one) will trigger the online
-// status.
-//
-// Revision 1.20  1999/02/05 23:24:38  silby
-// Changed long -> unsigned long so type matched.
-//
-// Revision 1.19  1999/02/04 22:53:15  trevorh
-// Corrected compilation errors for OS/2 after cyp change
-//
-// Revision 1.18  1999/02/04 07:47:06  cyp
-// Re-import from proxy base. Cleaned up. Added linux and win16 support.
-//
-// Revision 1.17  1999/02/03 20:18:57  patrick
-// changed the define for the SIOSTATIF call
-//
-// Revision 1.16  1999/01/29 18:49:05  jlawson
-// fixed formatting.
-//
-// Revision 1.4  1999/01/29 01:27:28  trevorh
-// Corrected detection of lurkonly mode. The move from client to proxy
-// changed the numbers used for lurkonly. Now uses CONNECT_LURKONLY define.
-//
-// Revision 1.3  1999/01/28 19:52:46  trevorh
-// Detect existing dialup connection under OS/2
-//
-// Revision 1.2  1999/01/24 23:14:58  dbaker
-// copyright 1999 changes
-//
-// Revision 1.1  1998/12/30 01:45:11  jlawson
-// added lurk code from client.
-//
-// Revision 1.11  1998/12/01 19:49:14  cyp
-// Cleaned up MULT1THREAD #define. See cputypes.h for details.
-//
-// Revision 1.10  1998/11/17 05:49:02  silby
-// Fixed an uninit variable that was causing updates that should not have been.
-//
-// Revision 1.9  1998/11/12 13:09:01  silby
-// Added a stop function, made start and stop public.
-//
-// Revision 1.8  1998/11/01 20:35:11  cyp
-// Adjusted so that attempts to LoadLibrary("RASAPI.DLL") don't put the client
-// into an infinite loop on NT/Win32s. Note to Silby: lurk never de-initializes
-// itself - a balancing FreeLibrary() is missing.
-//
-// Revision 1.7  1998/10/04 11:37:48  remi
-// Added Log and Id tags.
-//
-#if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.37 1999/04/01 03:01:11 cyp Exp $"; }
-#endif
+return "@(#)$Id: lurk.cpp,v 1.38 1999/04/04 17:48:00 cyp Exp $"; }
+
+/* ---------------------------------------------------------- */
 
 #include "cputypes.h"
 #include "lurk.h"

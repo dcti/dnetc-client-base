@@ -1,78 +1,10 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: selftest.cpp,v $
-// Revision 1.44  1999/03/31 22:39:40  cyp
-// gcc squawks about '''s in comments within #if 0 sections. fixed.
-//
-// Revision 1.43  1999/03/31 21:47:45  cyp
-// a) Add of keysdone to key on RESULT_FOUND is done in Problem::Run() (where
-// it should have been in the first place), and not here. b) Cleaned up a bit.
-//
-// Revision 1.42  1999/03/01 08:19:44  gregh
-// Changed ContestWork to a union that contains crypto (RC5/DES) and OGR data.
-//
-// Revision 1.41  1999/02/21 21:44:59  cyp
-// tossed all redundant byte order changing. all host<->net order conversion
-// as well as scram/descram/checksumming is done at [get|put][net|disk] points
-// and nowhere else.
-//
-// Revision 1.40  1999/01/26 17:28:50  michmarc
-// Made the failed test message look nicer.
-//
-// Revision 1.39  1999/01/18 12:12:35  cramer
-// - Added code for ncpu detection for linux/alpha
-// - Corrected the alpha RC5 core handling (support "timeslice")
-// - Changed the way selftest runs... it will not stop if a test fails,
-//     but will terminate at the end of each contest selftest if any test
-//     failed.  Interrupting the test is seen as the remaining tests
-//     having failed (to be fixed later)
-//
-// Revision 1.38  1999/01/09 08:53:15  remi
-// Fixed my comment's formating.
-//
-// Revision 1.37  1999/01/08 10:05:42  chrisb
-// Added 'threadindex' parameter (defaults to -1L, as with
-// Problem::Problem) to SelfTest(). Allows RISC OS to self test the
-// x86 core.
-//
-// Revision 1.36  1999/01/01 02:45:16  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.35  1998/12/28 21:23:09  cyp
-// Added event support.
-//
-// Revision 1.34  1998/12/23 11:33:42  remi
-// Expressed doubts on the ARM cores, please look at the comments.
-//
-// Revision 1.33  1998/12/22 19:34:07  chrisb
-// ARM cores don't handle high-word increments, so the tests for this 
-// are modified on ARM.
-//
-// Revision 1.32  1998/11/30 00:57:03  remi
-// Added key incrementation system check.
-//
-// Revision 1.31  1998/10/26 03:14:27  cyp
-// Version fun.
-//
-// Revision 1.3  1998/10/20 07:24:08  silby
-// Change an unsigned int to an int so that a type conversion was not
-// necessary on the return.
-//
-// Revision 1.2  1998/10/11 00:45:31  cyp
-// SelfTest() is now standalone. Modified to use the same contest numbering
-// conventions used everywhere else, ie 0==RC5, 1==DES.
-//
-// Revision 1.1  1998/08/28 21:28:59  cyp
-// Spun off from client.cpp - this code very rarely changes.
-//
-//
-
-#if (!defined(lint) && defined(__showids__))
+/* 
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.44 1999/03/31 22:39:40 cyp Exp $"; }
-#endif
+return "@(#)$Id: selftest.cpp,v 1.45 1999/04/04 17:47:59 cyp Exp $"; }
 
 // --------------------------------------------------------------------------
 
