@@ -11,7 +11,7 @@
  * ---------------------------------------------------------------
 */    
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.28.2.7 1999/11/02 14:11:27 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.28.2.8 1999/11/23 22:48:32 cyp Exp $"; }
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
@@ -89,7 +89,7 @@ int ModeReqLimitProject(int mode, unsigned int contest_i)
 
 /* --------------------------------------------------------------- */
 
-int ModeReqSetArg(int mode, void *arg)
+int ModeReqSetArg(int mode, const void *arg)
 {
   if (mode == MODEREQ_UNLOCK)
     modereq.filetounlock = (const char *)arg;

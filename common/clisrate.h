@@ -10,7 +10,7 @@
  * ----------------------------------------------------------------------
 */ 
 #ifndef __CLISRATE_H__
-#define __CLISRATE_H__ "@(#)$Id: clisrate.h,v 1.20 1999/04/06 11:55:43 cyp Exp $"
+#define __CLISRATE_H__ "@(#)$Id: clisrate.h,v 1.20.2.1 1999/11/23 22:48:27 cyp Exp $"
 
 //#include "cputypes.h" // u64
 //#include "problem.h"  // Problem class
@@ -23,7 +23,7 @@
 
 /* returns keyrate as string (maxlen=26) "nnnn.nn ['k'|'M'|'G'|'T']" */
 /* return value is a pointer to buffer.                           */
-char *CliGetKeyrateAsString( char *buffer, double rate );
+const char *CliGetKeyrateAsString( char *buffer, double rate );
 
 /* return iter/keysdone/whatever as string.                       */
 /* set contestID = -1 to have the ID ignored                      */

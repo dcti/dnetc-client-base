@@ -12,7 +12,7 @@
 // 
 
 #ifndef __AUTOBUFF_H__
-#define __AUTOBUFF_H__ "@(#)$Id: autobuff.h,v 1.14 1999/04/27 01:06:59 jlawson Exp $"
+#define __AUTOBUFF_H__ "@(#)$Id: autobuff.h,v 1.14.2.1 1999/11/23 22:48:24 cyp Exp $"
 
 #ifndef AUTOBUFFER_INCREMENT
 #define AUTOBUFFER_INCREMENT 100
@@ -21,29 +21,31 @@
 class AutoBuffer
 {
   char *buffer;
-  u32 bufferfilled;
-  u32 buffersize;
+  unsigned int bufferfilled;
+  unsigned int buffersize;
 public:
   AutoBuffer(void);
   AutoBuffer(const AutoBuffer &that);
   AutoBuffer(const char *szText);
-  AutoBuffer(const char *chData, u32 amount);
+  AutoBuffer(const char *chData, unsigned int amount);
   ~AutoBuffer(void);
   operator const char* (void) const {return buffer;}
   char *GetHead(void) const {return buffer;}
   char *GetTail(void) const {return buffer + (int)bufferfilled;}
-  char *Reserve(u32 amount);
-  void MarkUsed(u32 amount);
-  void RemoveHead(u32 amount);
-  void RemoveTail(u32 amount);
-  u32 GetLength(void) const {return bufferfilled;}
-  u32 GetSlack(void) const {return buffersize - bufferfilled;}
+  char *Reserve(unsigned int amount);
+  void MarkUsed(unsigned int amount);
+  void RemoveHead(unsigned int amount);
+  void RemoveTail(unsigned int amount);
+  unsigned int GetLength(void) const {return bufferfilled;}
+  unsigned int GetSlack(void) const {return buffersize - bufferfilled;}
   void Clear(void) {bufferfilled = 0;}
   void operator+= (const AutoBuffer &that);
   void operator= (const AutoBuffer &that);
+  #ifdef PROXYTYPE /* not for client: aggregate returns are not portable */
   AutoBuffer operator+ (const AutoBuffer &that) const;
+  #endif
   bool RemoveLine(AutoBuffer *line);
-  bool StepLine(AutoBuffer *line, u32 *offset) const;
+  bool StepLine(AutoBuffer *line, unsigned int *offset) const;
 };
 
 #endif /* __AUTOBUFF_H__ */

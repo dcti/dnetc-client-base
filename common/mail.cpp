@@ -7,7 +7,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.32.2.1 1999/09/18 18:02:33 cyp Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.32.2.2 1999/11/23 22:48:30 cyp Exp $"; }
 
 #include "baseincs.h"
 #include "network.h"
@@ -690,7 +690,7 @@ unsigned long smtp_countspooled( struct mailmessage *msg )
 
 //-------------------------------------------------------------------------
 
-int smtp_deinitialize_message( struct mailmessage *msg ); //fwd resolution
+//int smtp_deinitialize_message( struct mailmessage *msg ); //fwd resolution
 
 //returns 0 if success, <0 if send error, >0 no network (should defer)
 int smtp_send_message( struct mailmessage *msg )

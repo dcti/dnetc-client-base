@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.9 1999/11/23 16:21:04 jlawson Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.10 1999/11/23 22:48:33 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -1293,6 +1293,7 @@ int Network::Put( const char * data, int length )
       return -1;
   }
 
+  #if (CLIENT_OS != OS_390) /* can't do UUE with EBCDIC */ 
   if (mode & MODE_UUE)
   {
     /**************************/
@@ -1333,24 +1334,30 @@ int Network::Put( const char * data, int length )
     outbuf += AutoBuffer("end\r\n");
   }
   else
+  #endif
   {
     outbuf = AutoBuffer(data, length);
   }
 
   if (mode & MODE_HTTP)
   {
-    char userpass[((sizeof(fwall_userpass)+1)*4)/3];
-    char header[500];
+    AutoBuffer header;
+    char userpass[(((sizeof(fwall_userpass)+1)*4)/3)];
+
     userpass[0] = '\0';
     if (fwall_userpass[0])
     {
-      if (base64_encode(userpass, fwall_userpass, 
-                  sizeof(userpass), strlen(fwall_userpass))<0)
-        userpass[0]='\0';
+      if ( base64_encode( userpass, fwall_userpass, 
+                  sizeof(userpass), strlen(fwall_userpass)) < 0 )
+        userpass[0] = '\0';
       userpass[sizeof(userpass)-1]='\0';
     }
-    sprintf(header,
+    
+    header.Reserve(1024);
+    header.MarkUsed(
+            sprintf(header.GetHead(),
             "POST http://%s:%u/cgi-bin/rc5.cgi HTTP/1.0\r\n"
+            "Proxy-Connection: Keep-Alive\r\n"
             "%s%s%s"
             "Content-Type: application/octet-stream\r\n"
             "Content-Length: %lu\r\n\r\n",
@@ -1359,12 +1366,15 @@ int Network::Put( const char * data, int length )
             ((unsigned int)(svc_hostport)),
             ((userpass[0])?("Proxy-authorization: Basic "):("")),
             ((userpass[0])?(userpass):("")),
-            ((userpass[0])?("\r\nProxy-Connection: Keep-Alive\r\n"):("")),
-            (unsigned long) outbuf.GetLength());
+            ((userpass[0])?("\r\n"):("")),
+            (unsigned long) outbuf.GetLength()));
     #if (CLIENT_OS == OS_OS390)
-      __etoa(header);
+      __etoa(header.GetHead());
     #endif
-    outbuf = AutoBuffer(header) + outbuf;
+    //outbuf = header + outbuf;
+    header += outbuf;
+    outbuf = header;
+             
     puthttpdone = 1;
   }
 
@@ -1729,7 +1739,7 @@ int Network::LowLevelConnectSocket( u32 that_address, int that_port )
 //------------------------------------------------------------------------
 
 // Returns length of sent data or 0 if the socket is closed, or -1 if timeout+nodata
-int Network::LowLevelPut(const char *data,int length)
+int Network::LowLevelPut(const char *ccdata,int length)
 {
   if ( sock == INVALID_SOCKET )
     return 0; /* sock closed */
@@ -1745,6 +1755,8 @@ int Network::LowLevelPut(const char *data,int length)
   time_t timenow = 0, stoptime = 0;
   int sleptcount = 0; /* ... in a row */
   int sleepms = 250; /* sleep time in millisecs. adjust here if needed */
+  char *data;
+  *((const char **)&data) = ccdata; /* get around const being used for send */
 
   if (isnonblocking)
     stoptime = (time(NULL))+(time_t)iotimeout;

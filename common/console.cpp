@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.11 1999/11/02 16:03:43 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.12 1999/11/23 22:48:30 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -160,7 +160,11 @@ int ConBeep(void)
 {
   if (constatics.initlevel > 0 && constatics.conisatty) /*can't beep to file*/
   {
+    #if (CLIENT_OS == OS_OS390)
     ConOut("\a");
+    #else
+    ConOut("\007");
+    #endif
     return 0;
   }
   return -1;
@@ -431,7 +435,7 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
       for (ch = 0; scratch[ch] != 0; ch++)
       {
         #ifdef TERM_IS_ANSI_COMPLIANT
-        ConOut("\x1B" "[1D" );
+        ConOut("\033" "[1D" );
         #elif (CLIENT_OS == OS_RISCOS)
         if (scratch[ch+1]!=0) /* not the first char */
          riscos_backspace();
@@ -486,7 +490,7 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
         if (pos > 0)
         {
           #ifdef TERM_IS_ANSI_COMPLIANT
-          ConOut("\x1B" "[1D" " " "\x1B" "[1D");
+          ConOut("\033" "[1D" " " "\033" "[1D");
           #elif (CLIENT_OS == OS_RISCOS)
           riscos_backspace();
           #else
@@ -556,7 +560,7 @@ int ConSetPos( int col, int row )  /* zero-based */
   if (constatics.initlevel > 0 && constatics.conisatty)
   {
     #if defined(TERM_IS_ANSI_COMPLIANT)
-    printf("\x1B" "[%d;%dH", row+1, col+1 );
+    printf("\033" "[%d;%dH", row+1, col+1 );
     return 0;
     #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
     return w32ConSetPos(col,row);
@@ -746,7 +750,7 @@ int ConClear(void)
       riscos_clear_screen();
       return 0;
     #elif defined(TERM_IS_ANSI_COMPLIANT)
-      printf("\x1B" "[2J" "\x1B" "[H" "\r       \r" );
+      printf("\033" "[2J" "\033" "[H" "\r       \r" );
       /* ANSI cls  '\r space \r' is in case ansi is not supported */
       return 0;
     #endif

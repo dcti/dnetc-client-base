@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.13 1999/11/11 21:28:37 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.14 1999/11/23 22:48:34 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -105,7 +105,7 @@ static const u32 des_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
 // [0] - expected number of nodes (~ if no solution expected to be found)
 // [1] - number of marks
 // [2..7] - first differences
-static const u32 ogr_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
+static const s32 ogr_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
   { 0x000D1B52, 21, 2, 22, 32, 21, 5, 1},
   {~0x0057102A, 21, 1, 2, 4, 5, 8, 10},
   {~0x00A8EE70, 21, 2, 22, 32, 21, 5, 2},
@@ -191,7 +191,6 @@ static const u32 csc_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
 
 // ---------------------------------------------------------------------------
 
-// returns 0 if not supported, <0 on failed or break
 int SelfTest( unsigned int contest )
 {
   int threadpos, threadcount = 1;
@@ -205,10 +204,10 @@ int SelfTest( unsigned int contest )
   if (contest >= CONTEST_COUNT)
   {
     LogScreen("test::error. invalid contest %u\n", contest );
-    return 0;
+    return -TEST_CASE_COUNT;
   }
   if (!IsProblemLoadPermitted(-1, contest)) /* also checks HAVE_xxx_CORES */
-    return 0;
+    return -TEST_CASE_COUNT;
   #if (CLIENT_OS == OS_RISCOS)
   if (contest == RC5 && GetNumberOfDetectedProcessors() == 2)
     threadcount = 2;
@@ -236,13 +235,6 @@ int SelfTest( unsigned int contest )
       u64 expectedsolution;
       ContestWork contestwork;
       Problem *problem = new Problem(threadindex);
-
-      u32 tslice = 0x1000;
-      #if (CLIENT_OS == OS_NETWARE)
-      tslice = GetTimesliceBaseline();
-      #elif (CLIENT_OS == OS_MACOS)
-      tslice = GetTimesliceToUse(contestid);
-      #endif
 
       if (contest == RC5)
       { 
@@ -372,7 +364,7 @@ int SelfTest( unsigned int contest )
           for (int i = 0; i < TEST_CASE_DATA-2; i++) {
             contestwork.ogr.workstub.stub.diffs[i] = (u16)((*test_cases)[testnum][2+i]);
             if (contestwork.ogr.workstub.stub.diffs[i] == 0) {
-              contestwork.ogr.workstub.stub.length = (u16)i;
+              contestwork.ogr.workstub.stub.length = i;
               break;
             }
           }
@@ -381,8 +373,8 @@ int SelfTest( unsigned int contest )
           break;
       }
   
-      problem->LoadState( &contestwork, contest, tslice, 0 /* unused */);
-
+      problem->LoadState( &contestwork, contest, 0x1000, 0 /* unused */);
+  
       ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (long)(problem) );
 
       do
@@ -479,9 +471,7 @@ int SelfTest( unsigned int contest )
 
     } /* for ( testnum = 0 ; testnum < TEST_CASE_COUNT ; testnum++ ) */
 
-    if (userbreak)
-      successes = -1;
-    else 
+    if (!userbreak)
     {
       if (successes > 0)
       {

@@ -8,7 +8,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.45.2.2 1999/11/23 05:40:23 cyp Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.45.2.3 1999/11/23 22:48:27 cyp Exp $"; }
 
 #include "cputypes.h"  // u64
 #include "problem.h"   // Problem class
@@ -56,7 +56,7 @@ return "@(#)$Id: clisrate.cpp,v 1.45.2.2 1999/11/23 05:40:23 cyp Exp $"; }
  *
  */
 
-static char *num_sep(const char *number)
+static const char *num_sep(const char *number)
 {
   static char num_string[(sizeof(long)*3*2) + 1];
 
@@ -73,7 +73,7 @@ static char *num_sep(const char *number)
   digits = strlen(number);
 
   if (digits >= (sizeof(num_string)-1))
-    return ((char *)number);
+    return number;
 
   strcpy(num_string, number);
   rp = num_string + digits - 1;
@@ -128,7 +128,7 @@ static char *__CliGetKeyrateAsString( char *buffer, double rate, double limit )
 
 // returns keyrate as string (len<=26) "nnnn.nn ['k'|'M'|'G'|'T']"
 // return value is a pointer to buffer.
-char *CliGetKeyrateAsString( char *buffer, double rate )
+const char *CliGetKeyrateAsString( char *buffer, double rate )
 { 
   return (num_sep(__CliGetKeyrateAsString( buffer, rate, _U32LimitDouble_ )));
 }

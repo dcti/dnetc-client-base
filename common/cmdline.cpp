@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.32 1999/10/24 17:03:17 remi Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.33 1999/11/23 22:48:27 cyp Exp $"; }
 
 //#define TRACE
 
@@ -1415,7 +1415,7 @@ int ParseCommandline( Client *client,
         client->quietmode = 0;
         ModeReqClear(-1); /* clear all */
         ModeReqSet( MODEREQ_CMDLINE_HELP );
-        ModeReqSetArg(MODEREQ_CMDLINE_HELP,(void *)thisarg);
+        ModeReqSetArg(MODEREQ_CMDLINE_HELP,(const void *)thisarg);
         inimissing = 0; // don't need an .ini file if we just want help
         havemode = 0;
         break;
@@ -1522,7 +1522,7 @@ int ParseCommandline( Client *client,
           skip_next = 1;
           ModeReqClear(-1); //clear all - only do -forceunlock
           ModeReqSet(MODEREQ_UNLOCK);
-          ModeReqSetArg(MODEREQ_UNLOCK,(void *)argvalue);
+          ModeReqSetArg(MODEREQ_UNLOCK,(const void *)argvalue);
           break;
         }
       }
@@ -1534,7 +1534,7 @@ int ParseCommandline( Client *client,
           skip_next = 1;
           ModeReqClear(-1); //clear all - only do -import
           ModeReqSet(MODEREQ_IMPORT);
-          ModeReqSetArg(MODEREQ_IMPORT,(void *)argvalue);
+          ModeReqSetArg(MODEREQ_IMPORT,(const void *)argvalue);
           break;
         }
       }
@@ -1544,7 +1544,7 @@ int ParseCommandline( Client *client,
         inimissing = 0; // Don't complain if the inifile is missing
         ModeReqClear(-1); //clear all - only do -config
         ModeReqSet( MODEREQ_CONFIG );
-        ModeReqSetArg( MODEREQ_CONFIG, (void *)thisarg /* anything */);
+        ModeReqSetArg( MODEREQ_CONFIG, (const void *)thisarg /* anything */);
         break;
       }
     }

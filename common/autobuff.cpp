@@ -10,10 +10,9 @@
 //
 
 const char *autobuff_cpp(void) {
-return "@(#)$Id: autobuff.cpp,v 1.15 1999/04/27 01:06:59 jlawson Exp $"; }
+return "@(#)$Id: autobuff.cpp,v 1.15.2.1 1999/11/23 22:48:24 cyp Exp $"; }
 
-#include <string.h>
-#include "cputypes.h" //u32 
+#include <string.h> /* memmove() */
 #include "autobuff.h"
 
 AutoBuffer::AutoBuffer(void)
@@ -39,7 +38,7 @@ AutoBuffer::AutoBuffer(const char *szText)
   memmove(buffer, szText, (int)bufferfilled);
 }
 
-AutoBuffer::AutoBuffer(const char *chData, u32 amount)
+AutoBuffer::AutoBuffer(const char *chData, unsigned int amount)
 {
   bufferfilled = amount;
   buffersize = bufferfilled + AUTOBUFFER_INCREMENT;
@@ -54,7 +53,7 @@ AutoBuffer::~AutoBuffer(void)
 
 // Ensures that the buffer is large enough to contain at least
 // the indicated number of characters, enlarging it if necessary.
-char *AutoBuffer::Reserve(u32 amount)
+char *AutoBuffer::Reserve(unsigned int amount)
 {
   if (!buffer) {
     buffersize = amount + AUTOBUFFER_INCREMENT;
@@ -72,14 +71,14 @@ char *AutoBuffer::Reserve(u32 amount)
 
 // Indicates that the specified number of characters beyond the
 // currently used tail have now been occupied.
-void AutoBuffer::MarkUsed(u32 amount)
+void AutoBuffer::MarkUsed(unsigned int amount)
 {
   if (buffersize >= amount + bufferfilled) bufferfilled += amount;
 }
 
 // Deallocates the indicated number of characters starting from the
 // front of the buffer.
-void AutoBuffer::RemoveHead(u32 amount)
+void AutoBuffer::RemoveHead(unsigned int amount)
 {
   if (bufferfilled >= amount) {
     memmove(buffer, buffer + (int)amount, (int)(bufferfilled - amount));
@@ -89,7 +88,7 @@ void AutoBuffer::RemoveHead(u32 amount)
 
 // Deallocates the indicated number of characters starting from
 // the end of the currently allocated buffer.
-void AutoBuffer::RemoveTail(u32 amount)
+void AutoBuffer::RemoveTail(unsigned int amount)
 {
   if (bufferfilled >= amount) bufferfilled -= amount;
 }
@@ -113,6 +112,7 @@ void AutoBuffer::operator= (const AutoBuffer &that)
   MarkUsed(that.GetLength());
 }
 
+#ifdef PROXYTYPE /* Not for client. Aggregate returns are not portable */
 // Returns a dynamic copy of the two combined buffers
 AutoBuffer AutoBuffer::operator+ (const AutoBuffer &that) const
 {
@@ -123,13 +123,14 @@ AutoBuffer AutoBuffer::operator+ (const AutoBuffer &that) const
   output.MarkUsed(GetLength() + that.GetLength());
   return output;
 }
+#endif
 
 // destructively returns a copy of the first whole text line,
 // and removes it from the head of the buffer.
 // returns true if a complete line was found.
 bool AutoBuffer::RemoveLine(AutoBuffer *line)
 {
-  u32 offset = 0;
+  unsigned int offset = 0;
   bool result = StepLine(line, &offset);
   if (result) RemoveHead(offset);
   return result;
@@ -137,7 +138,7 @@ bool AutoBuffer::RemoveLine(AutoBuffer *line)
 
 // non-destructively returns a copy of the first whole text line.
 // returns true if a complete line was found.
-bool AutoBuffer::StepLine(AutoBuffer *line, u32 *offset) const
+bool AutoBuffer::StepLine(AutoBuffer *line, unsigned int *offset) const
 {
   line->Clear();
   int eol = -1;

@@ -14,7 +14,7 @@
 */ 
 
 #ifndef __MODEREQ_H__
-#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.11.2.5 1999/11/02 15:59:21 cyp Exp $"
+#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.11.2.6 1999/11/23 22:48:32 cyp Exp $"
 
 #define MODEREQ_IDENT              0x00000001
 #define MODEREQ_CPUINFO            0x00000002
@@ -54,10 +54,10 @@ int ModeReqIsProjectLimited(int mode, unsigned int contest_i);
 extern int ModeReqIsRunning(void);
 
 /* set an optional argument * for a mode. The mode must support it */
-extern int ModeReqSetArg( int mode, void *arg );
+extern int ModeReqSetArg( int mode, const void *arg );
 
 /* this is the mode runner. bits can be set/cleared while active.
    returns a mask of modebits that were cleared during the run. */
-extern int ModeReqRun( Client *client ); 
+extern int ModeReqRun( Client *client );
 
 #endif /* __MODEREQ_H__ */
