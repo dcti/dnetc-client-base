@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.41 2004/01/24 05:07:08 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.42 2004/01/31 21:06:57 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -580,23 +580,27 @@ static long __GetRawProcessorID(const char **cpuname)
     io_object_t device = NULL;
     io_iterator_t objectIterator = NULL;
     CFMutableDictionaryRef properties = NULL;
+    mach_port_t master_port = NULL;
     detectedtype = -1L;
 
     // In I/O Registry Search for "IOPlatformDevice" devices
-    if (kIOReturnSuccess == IOServiceGetMatchingServices(kIOMasterPortDefault, IOServiceMatching("IOPlatformDevice"), &objectIterator)) {
+    if (kIOReturnSuccess == IOMasterPort(MACH_PORT_NULL, &master_port)) {
+      if (kIOReturnSuccess == IOServiceGetMatchingServices(master_port, IOServiceMatching("IOPlatformDevice"), &objectIterator)) {
         // Test the results for a certain property entry, in this case we look for a "cpu-version" field
         while ((device = IOIteratorNext(objectIterator))) {
-            if (kIOReturnSuccess == IORegistryEntryCreateCFProperties(device, &properties, kCFAllocatorDefault, kNilOptions)) {
-                if(CFDictionaryGetValueIfPresent(properties, CFSTR("cpu-version"), (const void **)&value)) {
-                    CFDataGetBytes(value, CFRangeMake(0,4/*CFDataGetLength((void *)value)*/ ), (UInt8 *)&detectedtype);
-                    //printf("PVR Hi:%04x Lo:%04x\n",(detectedtype>>16)&0xffff,detectedtype&0xffff);
-                    detectedtype = (detectedtype>>16)&0xffff;
-                }
-                CFRelease(properties);
+          if (kIOReturnSuccess == IORegistryEntryCreateCFProperties(device, &properties, kCFAllocatorDefault, kNilOptions)) {
+            if(CFDictionaryGetValueIfPresent(properties, CFSTR("cpu-version"), (const void **)&value)) {
+              CFDataGetBytes(value, CFRangeMake(0,4/*CFDataGetLength((void *)value)*/ ), (UInt8 *)&detectedtype);
+              //printf("PVR Hi:%04x Lo:%04x\n",(detectedtype>>16)&0xffff,detectedtype&0xffff);
+              detectedtype = (detectedtype>>16)&0xffff;
             }
-            IOObjectRelease(device);
+            CFRelease(properties);
+          }
+          IOObjectRelease(device);
         }
         IOObjectRelease(objectIterator);
+      }
+      mach_port_deallocate(mach_task_self(), master_port);
     }
     
     // AltiVec support now has a proper sysctl value HW_VECTORUNIT to check for

@@ -21,14 +21,15 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.51 2004/01/29 21:38:42 kakace Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.52 2004/01/31 21:07:08 kakace Exp $
 ==========================================================================
 
 2.9000
 ------
 2.9007-489  new: x86: new rc5-72 cores (#3265, #3398)
 
-2.9007-488  imp: all: Force partial work to be restarted when fetched from a
+2.9007-488  fix: macosx: Undefined symbol issue (10.1.5, #3578)
+            imp: all: Force partial work to be restarted when fetched from a
                       shared buffer by a different user.
             imp: macosx: somewhat fix the "Pause if running" option (#3566)
             new: morphos: MorphOS pre-release
