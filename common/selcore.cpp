@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.45 2000/01/14 22:41:42 mfeiri Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.46 2000/01/21 22:12:08 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -41,10 +41,10 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       /* we should be using names that tell us how the cores are different
          (just like "bryd" and "movzx bryd")
       */
-      "RG/BRF class 5", /* P5/Am486/Cx486 - may become P5MMX at runtime*/
+      "RG/BRF class 5", /* P5/Am486 - may become P5MMX at runtime*/
       "RG class 3/4",   /* 386/486 - may become SMC at runtime */
       "RG class 6",     /* PPro/II/III */
-      "RG Cx re-pair",  /* Cyrix 6x86[MX]/M2, AMD K7 */
+      "RG Cx re-pair",  /* Cyrix 486/6x86[MX]/M2, AMD K7 */
       "RG RISC-rotate I", /* K5 */
       "RG RISC-rotate II", /* K6 - may become mmx-k6-2 core at runtime */
       NULL
@@ -590,9 +590,9 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             case 0x04: cindex = 4; break; // K5 ("RG RISC-rotate I")
             case 0x05: cindex = 5; break; // K6/K6-2/K6-3 ("RG RISC-rotate II)
             #if defined(SMC)    
-            case 0x06: cindex = 1; break; // cyrix 486 uses SMC if available
+            case 0x06: cindex = 1; break; // cx486 uses SMC if avail (bug #99)
             #else 
-            case 0x06: cindex = 0; break; // else default to P5 (see /bugs/ #99)
+            case 0x06: cindex = 3; break; // else core 3. (bug #804)
             #endif
             case 0x07: cindex = 2; break; // castrated Celeron
             case 0x08: cindex = 2; break; // PPro
