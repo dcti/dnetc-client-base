@@ -11,7 +11,7 @@
  * ----------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.46 1999/04/17 07:38:37 gregh Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47 1999/04/18 15:06:14 patrick Exp $"; }
 
 
 #include "cputypes.h"
@@ -64,14 +64,14 @@ static const char *cputypetable[]=
   "ARM 710"
 };
 #elif (CLIENT_OS == OS_AIX) || ((CLIENT_CPU == CPU_POWERPC) && \
-      ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX || (CLIENT_OS == OS_MACOS))))
+      ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_MACOS)))
 static const char *cputypetable[]=
 {
+  #if (CLIENT_OS == OS_AIX)
+  "POWER CPU",
+  #endif
   "PowerPC 601",
   "PowerPC 603/604/750"
-  #if (CLIENT_OS == OS_AIX)
-  , "POWER CPU"
-  #endif
 };
 #elif (CLIENT_CPU == CPU_68K)
 static const char *cputypetable[]=
