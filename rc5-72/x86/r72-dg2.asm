@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg2.asm,v 1.13.2.6 2003/02/06 20:59:42 andreasb Exp $
+; $Id: r72-dg2.asm,v 1.13.2.7 2003/03/17 11:55:22 acidblood Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -28,7 +28,7 @@
 %endmacro
 
 %macro fedifed 2
-    %define %1 ebp+%2-128
+    %define %1 ebp+%2-232
 %endmacro
 
 %macro defwork 1-2 1
@@ -38,8 +38,8 @@
 %endmacro
 
 defwork work_L1,3
-defwork work_L2,3
 defwork work_s1,26
+defwork work_L2,3
 defwork work_s2,26
 defwork work_P_0
 defwork work_P_1
@@ -63,11 +63,11 @@ defwork save_ebp
 %define RC5_72UnitWork_CMCmid   eax+36
 %define RC5_72UnitWork_CMClo    eax+40
 
-%define RC5_72UnitWork          esp+work_size+4
-%define iterations              esp+work_size+8
+%define RC5_72UnitWork          ebp+(work_size-232)+4
+%define iterations              ebp+(work_size-232)+8
 
 %define S1(N)                   [work_s1+((N)*4)]
-%define S2(N)                   [ebp+((N)*4)]
+%define S2(N)                   [ebp-26*4+((N)*4)]
 %define L1(N)                   [work_L1+((N)*4)]
 %define L2(N)                   [work_L2+((N)*4)]
 
@@ -206,15 +206,15 @@ rc5_72_unit_func_dg_2:
 rc5_72_unit_func_dg_2_:
 _rc5_72_unit_func_dg_2:
 
+	mov	[esp-4], ebp
+	lea	ebp, [esp-work_size+232]
         sub     esp, work_size
-        mov     [save_ebp], ebp
-        lea     ebp, S1(26)
 
         mov     eax, [RC5_72UnitWork]
-        mov     [save_ebx], ebx
-        mov     [save_esi], esi
+        mov     [save_ebx_ebp], ebx
+        mov     [save_esi_ebp], esi
 
-        mov     [save_edi], edi
+        mov     [save_edi_ebp], edi
         mov     esi, [RC5_72UnitWork_plainlo]
         mov     edi, [RC5_72UnitWork_plainhi]
 
@@ -507,15 +507,11 @@ test_key_1:
 
         jne     short test_key_2
 
-        mov     ecx, [work_iterations_ebp]
-        mov     esi, [iterations]
+        xor     ecx, ecx
 
-        shl     ecx, 1
+;        mov     eax, RESULT_FOUND
 
-        sub     [esi], ecx
-        mov     eax, RESULT_FOUND
-
-        jmp     finished
+        jmp     short finished_found
 
 ;    if (A2 == rc5_72unitwork->cypher.lo)
 ;    {
@@ -530,7 +526,7 @@ test_key_1:
 ;      }
 ;    }
 
-k7align 16
+k7align 8
 test_key_2:
         cmp     A2, [work_C_0_ebp]
         mov     edx, [RC5_72UnitWork_L0hi]
@@ -550,17 +546,12 @@ test_key_2:
         cmp     B2, [work_C_1_ebp]
         jne     short inc_key
 
-        mov     ecx, [work_iterations_ebp]
-        mov     esi, [iterations]
-
-        shl     ecx, 1
-
+        xor     ecx, ecx
         dec     ecx
 
-        sub     [esi], ecx
-        mov     eax, RESULT_FOUND
+;        mov     eax, RESULT_FOUND
 
-        jmp     short finished
+        jmp     short finished_found
 
 k7align 16
 inc_key:
@@ -588,14 +579,28 @@ inc_key:
 
         jnz     key_setup_1
 
-        mov     eax, RESULT_NOTHING
+        xor     eax, eax
+;        mov     eax, RESULT_NOTHING
+        jmp     short finished
+
+finished_found:
+        xor     eax, eax
+        inc     eax
+
+        mov     esi, [iterations]
+
+        add     ecx, [work_iterations_ebp]
+        add     ecx, [work_iterations_ebp]
+
+        sub     [esi], ecx
 
 finished:
-        mov     ebx, [save_ebx]
-        mov     esi, [save_esi]
+        inc     eax
+        mov     ebx, [save_ebx_ebp]
+        mov     esi, [save_esi_ebp]
 
-        mov     edi, [save_edi]
-        mov     ebp, [save_ebp]
+        mov     edi, [save_edi_ebp]
+        mov     ebp, [save_ebp_ebp]
         add     esp, work_size
 
         ret
