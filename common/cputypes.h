@@ -5,8 +5,11 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.35  1998/11/17 01:34:12  cyp
+// Fixed a missing \"
+//
 // Revision 1.34  1998/11/16 23:22:35  remi
-// Fixed an unterminated string. Cyp, you need a better editor ;-))
+// Fixed an unterminated string.
 //
 // Revision 1.33  1998/11/16 22:30:05  cyp
 // Added CLIENT_OS_NAME
