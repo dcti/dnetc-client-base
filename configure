@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.144 2000/03/20 14:27:52 jbaker Exp $
+# @(#)$Id: configure,v 1.222.2.145 2000/03/20 20:16:15 jbaker Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1344,7 +1344,8 @@ case "$1" in
 	TARGET_AS="g++ -c -DNO_BALIGN"
         TARGET_CCFLAGS="$OPTS_GCC272_X86 -DMMX_RC5 \
 			-DHAVE_OGR_CORES"
-  	TARGET_NASM="/home/jbaker/nasm.qnx4"
+  	#TARGET_NASM="/home/jbaker/nasm.qnx4"
+	TARGET_NASM="nasm"
 	TARGET_LIBS="-lsocket"
         TARGET_ADDSRCS="$OGR_ANSI_SRCS"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
@@ -1354,7 +1355,8 @@ case "$1" in
     ;;
     *x86-nto2)
 	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_NASM="//55/home/jbaker/nasm.nto2"
+	#TARGET_NASM="//55/home/jbaker/nasm.nto2"
+	TARGET_NASM="nasm"
 	TARGET_NASM_FMT="elf"
 	TARGET_CCFLAGS="$OPTS_GCC295_X86 -DMMX_RC5 -DHAVE_OGR_CORES \
 			-DMULTITHREAD"
