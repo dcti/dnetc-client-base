@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.61 2000/12/14 19:27:41 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.62 2001/01/02 20:11:50 patrick Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -373,6 +373,7 @@ static long __GetRawProcessorID(const char **cpuname)
                 {(1L<<16)+5,   "630"                   }, //not PVR based
                 {(1L<<16)+6,   "A35"                   }, //not PVR based
                 {(1L<<16)+7,   "RS64II"                }, //not PVR based
+		{(1L<<16)+8,   "RS64III"	       }, //not PVR based
                 };
   #if (CLIENT_OS == OS_AIX)
   if (detectedtype == -2L)
@@ -388,7 +389,8 @@ static long __GetRawProcessorID(const char **cpuname)
                   { 0x0040   ,   (1L<<16)+4 }, /* POWER_620 */
                   { 0x0080   ,   (1L<<16)+5 }, /* POWER_630 */
                   { 0x0100   ,   (1L<<16)+6 }, /* POWER_A35 */
-                  { 0x0200   ,   (1L<<16)+7 }  /* POWER_RS64II */
+                  { 0x0200   ,   (1L<<16)+7 }, /* POWER_RS64II */
+		  { 0x0400   ,   (1L<<16)+8 }, /* POWER_RS64III */
                   };
     unsigned int imp_i;
     detectedtype = -1L; /* assume failed */
