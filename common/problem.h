@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.28 2000/06/04 11:07:14 oliver Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.29 2000/06/06 14:43:00 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -102,7 +102,6 @@ protected: /* these members *must* be protected for thread safety */
   RC5UnitWork rc5unitwork; /* MUST BE longword (64bit) aligned */
   struct {u32 hi,lo;} refL0;               
   ContestWork contestwork;
-  CoreDispatchTable *ogr;
   /* --------------------------------------------------------------- */
   char __core_membuffer_space[(MAX_MEM_REQUIRED_BY_CORE+(1UL<<CORE_MEM_ALIGNMENT)-1)];
   void *core_membuffer; /* aligned pointer to __core_membuffer_space */

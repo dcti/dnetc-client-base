@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.64 2000/06/06 12:21:06 oliver Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.65 2000/06/06 14:43:00 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -1216,20 +1216,16 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         if (threadindex == 0) /* first thread or benchmark/test */
           unit_func.rc5 =  rc5_unit_func_486_smc;
         #endif
-	break;
-
+        break;
       case 2: // Ppro/PII
         unit_func.rc5 = rc5_unit_func_p6;
-	break;
-
+        break;
       case 3: // 6x86(mx)
         unit_func.rc5 = rc5_unit_func_6x86;
-	break;
-
+        break;
       case 4: // K5
         unit_func.rc5 = rc5_unit_func_k5;
-	break;
-
+        break;
       case 5: // K6/K6-2
         unit_func.rc5 = rc5_unit_func_k6;
         #if defined(MMX_RC5_AMD)
@@ -1239,14 +1235,12 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
           pipeline_count = 4;
         }
         #endif
-	break;
-
-#ifdef MMX_RC5
+        break;
+      #ifdef MMX_RC5
       case 6: // K7
         unit_func.rc5 = rc5_unit_func_k7;
-	break;
-#endif
-
+	      break;
+      #endif
       default: // Pentium (0) + others
         unit_func.rc5 = rc5_unit_func_p5;
         #if defined(MMX_RC5)
@@ -1390,11 +1384,10 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
   {
     #if (CLIENT_CPU == CPU_POWERPC)
       extern CoreDispatchTable *ogr_get_dispatch_table();
-      //extern CoreDispatchTable *vec_ogr_get_dispatch_table();
-      //if (coresel == 1)    // G1,G2,G3
+      extern CoreDispatchTable *vec_ogr_get_dispatch_table();
+      unit_func.ogr = ogr_get_dispatch_table(); //default
+      //if (coresel == 1)    // our vec_ogr core
       //  unit_func.ogr = vec_ogr_get_dispatch_table();
-      //else                 // G4
-      unit_func.ogr = ogr_get_dispatch_table();
     #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
       extern CoreDispatchTable *ogr_get_dispatch_table_000();
       extern CoreDispatchTable *ogr_get_dispatch_table_020();
@@ -1415,6 +1408,8 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         coresel = 0;
       }
     #else
+      extern CoreDispatchTable *ogr_get_dispatch_table();
+      unit_func.ogr = ogr_get_dispatch_table();
       coresel = 0;
     #endif
   }

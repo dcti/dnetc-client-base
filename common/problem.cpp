@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.62 2000/06/06 12:22:32 oliver Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.63 2000/06/06 14:43:00 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -237,7 +237,7 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
                 }
         case OGR:
                 WorkStub curstub;
-                ogr->getresult(core_membuffer, &curstub, sizeof(curstub));
+                (unit_func.ogr)->getresult(core_membuffer, &curstub, sizeof(curstub));
                 // This is just a quick&dirty calculation that resembles progress.
                 retpermille = curstub.stub.diffs[contestwork.ogr.workstub.stub.length]*10
                             + curstub.stub.diffs[contestwork.ogr.workstub.stub.length+1]/10;
@@ -401,17 +401,11 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
           contestwork.ogr.nodes.hi = contestwork.ogr.nodes.lo = 0;
         }  
       }
-      #if ((CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)) || \
-          ((CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K))
-      ogr = unit_func.ogr;
-      #else
-      extern CoreDispatchTable *ogr_get_dispatch_table();
-      ogr = ogr_get_dispatch_table();
-      #endif
-      int r = ogr->init();
+      //unit_func.org = [xxx_]ogr_get_dispatch_table(); was done by selcore
+      int r = (unit_func.ogr)->init();
       if (r != CORE_S_OK)
         return -1;
-      r = ogr->create(&contestwork.ogr.workstub, 
+      r = (unit_func.ogr)->create(&contestwork.ogr.workstub, 
                       sizeof(WorkStub), core_membuffer, MAX_MEM_REQUIRED_BY_CORE);
       if (r != CORE_S_OK)
         return -1;
@@ -453,7 +447,7 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dop
         // nothing special needs to be done here
         break;
       case OGR:
-        ogr->getresult(core_membuffer, &contestwork.ogr.workstub, sizeof(WorkStub));
+        (unit_func.ogr)->getresult(core_membuffer, &contestwork.ogr.workstub, sizeof(WorkStub));
         break;
     }
     memcpy( (void *)work, (void *)&contestwork, sizeof(ContestWork));
@@ -756,7 +750,7 @@ int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
     *iterationsP = 0x100000UL;
 
   nodes = (int)(*iterationsP);
-  r = ogr->cycle(core_membuffer, &nodes);
+  r = (unit_func.ogr)->cycle(core_membuffer, &nodes);
   *iterationsP = (u32)nodes;
 
   u32 newnodeslo = contestwork.ogr.nodes.lo + nodes;
@@ -769,7 +763,7 @@ int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
   {
     case CORE_S_OK:
     {
-      r = ogr->destroy(core_membuffer);
+      r = (unit_func.ogr)->destroy(core_membuffer);
       if (r == CORE_S_OK) 
       {
         *resultcode = RESULT_NOTHING;
@@ -784,7 +778,7 @@ int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
     }
     case CORE_S_SUCCESS:
     {
-      if (ogr->getresult(core_membuffer, &contestwork.ogr.workstub, sizeof(WorkStub)) == CORE_S_OK)
+      if ((unit_func.ogr)->getresult(core_membuffer, &contestwork.ogr.workstub, sizeof(WorkStub)) == CORE_S_OK)
       {
         //Log("OGR Success!\n");
         contestwork.ogr.workstub.stub.length = 
