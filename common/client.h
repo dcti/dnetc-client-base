@@ -5,8 +5,10 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.12 2000/04/16 19:27:20 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.13 2000/04/23 12:53:52 jlawson Exp $"
 
+
+// ------------------
 
 enum {
   RC5, // http://www.rsa.com/rsalabs/97challenge/
@@ -16,8 +18,12 @@ enum {
 };
 #define CONTEST_COUNT       4  /* RC5,DES,OGR,CSC */
 
+// ------------------
+
 #include "problem.h"           /* ContestWork structure */
 #include "lurk.h"              /* client structure copy of lurk_conf */
+
+// ------------------
 
 #ifndef MIPSpro
 #pragma pack(1)               /* no padding allowed */
@@ -39,6 +45,8 @@ typedef struct
 # pragma pack()
 #endif /* ! MIPSpro */
 
+// ------------------
+
 #define __TEXTIFY(x) #x
 #define _TEXTIFY(x) __TEXTIFY(x)
 
@@ -57,9 +65,10 @@ struct membuffstruct
   WorkRecord *buff[500];
 };
 
+// ------------------
+
 typedef struct
 {
-public:
   /* non-user-configurable */
   int  nonewblocks;
   int  randomchanged;
@@ -132,9 +141,13 @@ public:
 
 } Client;
 
+// ------------------
+
 void ResetClientData(Client *client); /* reset everything */
 unsigned int ClientGetInThreshold(Client *client, int contestid, int force = 0 );
 unsigned int ClientGetOutThreshold(Client *client, int contestid, int force = 0 );
 int ClientRun(Client *client);  /* run the loop, do the work */
+
+// ------------------
 
 #endif /* __CLIENT_H__ */
