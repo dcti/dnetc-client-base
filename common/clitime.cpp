@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.36 2000/07/04 17:25:32 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.37 2000/07/13 21:10:15 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -508,11 +508,33 @@ int CliGetMonotonicClock( struct timeval *tv )
     }
     #elif (CLIENT_OS == OS_LINUX) /*only RTlinux has clock_gettime/gethrtime*/
     {
-      /* this is computationally expensive, but we don't have a choice,
-         and since linux supports thread time, this is only called when 
-         a block starts/ends. /proc/uptime is buggy (it wraps) in 2.0.x 
-         kernels for uptimes greater than ~18 months.
+      /* this is computationally expensive, but we don't have a choice.
+         /proc/uptime is buggy even in the newest kernel (2.4-test2): 
+         it wraps at jiffies/HZ, ie ~497 days on a 32bit cpu (and the
+         fact that that hasn't been noticed in 5 years is a pretty good
+         indication that no linux box ever runs more than 497 days :)
       */
+      #if 1
+      static int fd = -1;
+      char buffer[128]; int len;
+      unsigned long secs;
+      double uptime, idletime; 
+      if (fd == -1)
+        fd = open("/proc/uptime",O_RDONLY);
+      if (fd == -1)
+        return -1;
+      if (lseek( fd, 0, SEEK_SET)!=0)
+        return -1;
+      len = read( fd, buffer, sizeof(buffer));
+      if (len < 1 || len >= ((int)(sizeof(buffer)-1)) )
+        return -1;
+      buffer[len-1] = '\0';
+      if (sscanf( buffer, "%lf %lf", &uptime, &idletime)!=2)
+        return -1;
+      secs = (unsigned long)uptime;
+      tv->tv_usec = (long)(1000000.0 * (uptime - ((double)secs)));
+      tv->tv_sec = (time_t)secs;
+      #else 
       int rc = -1;
       FILE *file = fopen("/proc/uptime","r");
       if (file)
@@ -529,6 +551,7 @@ int CliGetMonotonicClock( struct timeval *tv )
       }
       if (rc != 0)
         return -1;
+      #endif
     }
     #elif (CLIENT_OS == OS_AMIGAOS)
     {
