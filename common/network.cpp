@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.43  1998/09/20 15:24:26  blast
+// AmigaOS changes
+//
 // Revision 1.42  1998/09/06 02:30:48  cyp
 // Added check 'if (t_errno < t_nerr)' before getting t_errlist[t_errno].
 //
@@ -110,7 +113,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.42 1998/09/06 02:30:48 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.43 1998/09/20 15:24:26 blast Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -130,7 +133,6 @@ extern "C"
 #else
 #include <errno.h>     // for errno and EINTR
 #endif
-
 
 #include "network.h"   // thats us
 extern int NetCheckIsOK(void); // used before doing i/o

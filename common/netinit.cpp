@@ -10,6 +10,9 @@
 */
 //
 // $Log: netinit.cpp,v $
+// Revision 1.7  1998/09/20 15:23:26  blast
+// AmigaOS changes
+//
 // Revision 1.6  1998/08/28 21:41:37  cyp
 // Stopped network->Open() from being retried in a no-network environment.
 //
@@ -34,7 +37,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.6 1998/08/28 21:41:37 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.7 1998/09/20 15:23:26 blast Exp $"; }
 #endif
 
 //--------------------------------------------------------------------------
@@ -57,6 +60,8 @@ return "@(#)$Id: netinit.cpp,v 1.6 1998/08/28 21:41:37 cyp Exp $"; }
   be localized. The function is called with (> 0) to init, (< 0) to deinint 
   and (== 0) to return the current 'isOK' state.
 */
+
+static struct Library *SocketBase;
 
 static int __netInitAndDeinit( int doWhat )  
 {                                            
@@ -220,7 +225,7 @@ static int __netInitAndDeinit( int doWhat )
   #if (CLIENT_OS == OS_AMIGAOS)
   if (success)
     {
-    static struct Library *SocketBase;
+//    static struct Library *SocketBase;
     if ( doWhat == 0 )     //request to check online mode
       {
       return 1;            //assume always online once initialized
