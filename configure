@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.267 2002/03/27 23:06:58 sampo Exp $
+# @(#)$Id: configure,v 1.222.2.268 2002/03/29 08:51:53 sampo Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -144,8 +144,8 @@ add_sources() # $1=os, $2=arch, $3=custom
   # only generic/ansi cores are declared here. 
   # arch specific ones are declared in each arch specific section.
   #-- RC5 -- --------------------------------------------------
-  RC5_ANSI4_SRCS="rc5/ansi/rc5ansi_4-rg.cpp" # 4 pipeline ("rc5/ansi/2-rg.c")
-  RC5_ANSI2_SRCS="rc5/ansi/rc5ansi_2-rg.cpp" # 2 pipeline ("rc5/ansi/2-rg.c")
+  RC5_ANSI4_SRCS="rc5/ansi/rc5ansi_4-rg.cpp" # 4 pipeline
+  RC5_ANSI2_SRCS="rc5/ansi/rc5ansi_2-rg.cpp" # 2 pipeline
   RC5_ANSI1_SRCS="rc5/ansi/rc5ansi_1-rg.cpp" # 1 pipeline
   # -- DES -- (needs -DHAVE_DES_CORES) -------------------------
   KWAN_SLICE_SRCS1="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
@@ -341,13 +341,11 @@ add_sources() # $1=os, $2=arch, $3=custom
   #-----------------------------------------------------------------  
   elif [ "$2" = "alpha" ]; then
     if [ "${1}" = "digital-unix" ]; then  
+      TARGET_CCFLAGS="${TARGET_CCFLAGS} -pthread"      
       TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alpha/axp-bmeyer.cpp"
       TARGET_ADDASMS="${TARGET_ADDASMS} rc5/alpha/axp-bmeyer-osf.s"
       TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alphaasm/rc5-digital-unix-alpha-ev4.cpp"
-      if [ "${1}-${3}" = "digital-unix-mt" ]; then  
-        TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alphaasm/rc5-digital-unix-alpha-ev5.cpp"
-        ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -Ddes_alpha_osf_ev5=des_alpha_osf_ev4"
-      fi  
+      TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alphaasm/rc5-digital-unix-alpha-ev5.cpp"
       ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMEGGS -DKWAN -DHAVE_DES_CORES"
       ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
     else  
@@ -359,6 +357,10 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi  
     ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
     ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
+    if [ "$TARGET_CC" = "g++" ]; then
+      TARGET_CCFLAGS="${TARGET_CCFLAGS} -mcpu=ev67 -mno-fix -mno-max"
+      TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev67.cpp"
+    fi
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
     TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
@@ -906,7 +908,9 @@ fi
 
 case "$1" in
 
-    *ansi-generic)        # unoptimized vanilla ansi
+# Misc / Generic
+
+    *ansi-generic)      # unoptimized vanilla ansi
         TARGET_AS="cc -c"
         TARGET_CC="cc"
         TARGET_CCFLAGS="-DASM_NONE"
@@ -923,6 +927,173 @@ case "$1" in
         TARGET_TARBALL=""
         add_sources "ansi" "generic" 
         ;;
+
+# 88k ******************************************************************
+
+    *88k-dgux)          # data general unix
+        TARGET_CC="/usr/local/bin/g++"
+        generate_gcc_opts "88k" "dgux"
+        TARGET_CCFLAGS="$OPTS_GCC -D_POSIX4A_DRAFT6_SOURCE -D_DGUX -DHAVE_POSIX_THREADS"
+        TARGET_LIBS="-lthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        add_sources "hpux" "88k"
+        ;;
+
+# Alpha ****************************************************************
+
+
+    *alpha-digital_unix)
+        TARGET_CC="cxx"
+        TARGET_AS="as"
+        TARGET_CCFLAGS="-DHAVE_POSIX_THREADS"
+        TARGET_ASFLAGS=""
+        TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        add_sources "digital-unix" "alpha"
+        ;;
+
+    *alpha-linux)       # dworz / jlawson
+        TARGET_CC="g++"
+        TARGET_AS="as"
+        generate_gcc_opts "alpha" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS=""
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-alpha"
+        add_sources "linux" "alpha"
+        ;;
+
+    *alpha-netbsd)
+        TARGET_CC="g++"
+        generate_gcc_opts "alpha" "netbsd"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-ltermcap"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="netbsd-alpha"
+        add_sources "netbsd" "alpha"
+        ;;
+
+    *alpha-openbsd)     # snake
+        TARGET_AS="g++ -c"
+        TARGET_CC="g++"
+        generate_gcc_opts "alpha" "openbsd"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="openbsd-alpha"
+        add_sources "openbsd" "alpha"
+        ;;
+
+# ARM ******************************************************************
+
+    *arm-linux-aout)    # chrisb
+        TARGET_CC="gcc"
+        TARGET_AS="as"
+        generate_gcc_opts "arm" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -Dlinux"
+        TARGET_LIBS="-lm"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-arm-aout"
+        add_sources "linux" "arm" "aout"
+        ;;
+
+    *arm-linux-elf)     # andrewm
+        TARGET_CC="gcc"
+        TARGET_AS="as"
+        generate_gcc_opts "arm" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -Dlinux"
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-arm-elf"
+        add_sources "linux" "arm"
+
+        rm -f $TARGET_ADDASMS
+        echo 'Converting GNU a.out cores to ELF'
+        for file in $TARGET_ADDASMS ; do
+          BASENAME=`basename $file`
+          echo "  $file -> `basename $file -elf.s`.s"
+          DIR=`echo $file | sed -e s/$BASENAME//`
+          ( cd $DIR ; sed -e 's/_\([a-zA-Z0-9_]\{1,\}\)/\1/g' \
+               < `basename $file -elf.s`.s > $BASENAME )
+        done
+        ;;
+
+    *arm-netbsd)        # chrisb
+        TARGET_CC="gcc"
+        TARGET_AS="as"
+        generate_gcc_opts "arm" "netbsd"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LIBS="-lm"
+        TARGET_TARBALL="netbsd-arm32"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        add_sources "netbsd" "arm"
+        ;;
+
+    *arm-nto2)
+        TARGET_AS="qcc -Vgcc_ntoarmle -c"
+        TARGET_CC="qcc -Vgcc_ntoarmle"
+        TARGET_STRIP="/usr/gcc/bin/ntoarmle-strip"
+        TARGET_ASFLAGS="-DNO_BALIGN"
+        TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
+                        -fno-exceptions -fno-rtti -DASM_ARM -DHAVE_POSIX_THREADS"
+        TARGET_LIBS="-lsocket"
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="nto2-arm"
+        TARGET_GENMAN=
+        TARGET_IS_CROSSCOMPILE=1
+        add_sources "nto2" "arm"
+        ;;
+
+    *arm-riscos)
+        TARGET_CC="armcpp -aif -nodebug -littleend -apcs 3/26bit/swst/hardfp/fpe2 \
+            -zps1 -nounusedareas -l/home/cberry/play/riscoslib/CLib/stubs.o"
+        TARGET_AS="armasm"
+        TARGET_ASFLAGS="-apcs 3/26bit"
+        TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -I$OGR -Iplat/riscos \
+	                -I/home/cberry/play/riscoslib/OSLib \
+			-I/home/cberry/play/riscoslib/TCPIPLibs \
+			-J/home/cberry/play/riscoslib/CLib \
+			-DCOMPAT_INET4 -D__riscos -DHAVE_OGR_CORES" 
+        TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o \
+                     /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o \
+                     /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
+        TARGET_DOCFILES="docs/readme.riscos"   #platform specific docfile
+        TARGET_STRIP=touch
+        TARGET_BINNAME_SUFFIX=",ff8"
+        TARGET_IS_CROSSCOMPILE=1
+        add_sources "riscos" "arm"
+        ;;
+
+    *arm-riscos-gccsdk) # RiscOS client crosscompiled under Unix using GCCSDK
+                        # and Unixlib (http://hard-mofo.dsvr.net/)
+        TARGET_CC="/home/peter/gccsdk/cross/bin/gcc"
+        generate_gcc_opts "arm" "riscos"
+        TARGET_CCFLAGS="$OPTS_GCC -Iplat/riscos -D__riscos"
+        TARGET_AS="/home/peter/gccsdk/cross/bin/gcc"
+        TARGET_ASFLAGS="-c"
+        TARGET_DOCFILES="docs/readme.riscos"   #platform specific docfile
+        TARGET_STRIP=touch
+        TARGET_BINNAME_SUFFIX=",ff8"
+        TARGET_IS_CROSSCOMPILE=1
+        add_sources "riscos" "arm" "gccsdk"
+        ;;                              
+
+# IA64 *****************************************************************
+
+    *ia64-linux)
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "ia64" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-ia64"
+        add_sources "linux" "ia64" 
+        ;;
+
+# MIPS *****************************************************************
 
     # IRIX w/MIPSpro compilers.
     #
@@ -1127,7 +1298,7 @@ case "$1" in
        add_sources "irix" "mips"
        ;;
 
-    *mips-cc-ip32_10k-64)	# [lyndon]
+    *mips-cc-ip32_10k-64)
        TARGET_CC="CC"
        TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} -TARG:platform=ip32_10k \
 			        -DCLIENT_OS_NAME=\"\\\"Irix IP32/R10K-64\\\"\""
@@ -1140,7 +1311,7 @@ case "$1" in
 
 # END of MIPSpro targets.
 
-    *mips-linux)	#
+    *mips-linux)
         TARGET_CC="gcc"
         generate_gcc_opts "mips" "linux"
         TARGET_CCFLAGS="$OPTS_GCC -mcpu=r3000"
@@ -1151,7 +1322,7 @@ case "$1" in
         add_sources "linux" "mips"
         ;;
 
-    *mips-sni)	   #For MIPS SINIX
+    *mips-sni)	        #For MIPS SINIX
         TARGET_CC="g++"
         generate_gcc_opts "mips" "sinix"
         TARGET_CCFLAGS="$OPTS_GCC -Dsinix"
@@ -1170,7 +1341,7 @@ case "$1" in
         add_sources "irix" "mips"
         ;;
 
-    *mips-irix64-gcc)     #needs "very recent" egcs
+    *mips-irix64-gcc)   #needs "very recent" egcs
         TARGET_CC="g++"
         generate_gcc_opts "mips" "irix"
         TARGET_CCFLAGS="$OPTS_GCC -mabi=64 -DHAVE_POSIX_THREADS"
@@ -1180,7 +1351,7 @@ case "$1" in
         add_sources "irix" "mips"
         ;;
 
-    *mips-irix32-gcc)	   # [lyndon] Irix 6, gcc, threaded (assumes n32 ABI)
+    *mips-irix32-gcc)	# [lyndon] Irix 6, gcc, threaded (assumes n32 ABI)
         TARGET_CC="gcc"
         generate_gcc_opts "mips" "irix"
         TARGET_CCFLAGS="$OPTS_GCC -mabi=n32 -DHAVE_POSIX_THREADS"
@@ -1265,7 +1436,7 @@ case "$1" in
         TARGET_IS_CROSSCOMPILE=1
         ;;
 
-     *linux-hppa-cross)   #  <Rule@freegates.be>
+    *linux-hppa-cross)   #  <Rule@freegates.be>
         TARGET_CC="hppa-linux-g++"
         TARGET_AS="hppa-linux-g++ -c"
         TARGET_STRIP="hppa-linux-strip"
@@ -1304,15 +1475,6 @@ case "$1" in
         TARGET_ASFLAGS="$OPTS_GAS -v -V --register-prefix-optional -m68030"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "hpux" "68k"
-        ;;
-
-    *88k-dgux)     # DGUX (Data General Unix)
-        TARGET_CC="/usr/local/bin/g++"
-        generate_gcc_opts "88k" "dgux"
-        TARGET_CCFLAGS="$OPTS_GCC -D_POSIX4A_DRAFT6_SOURCE -D_DGUX -DHAVE_POSIX_THREADS"
-        TARGET_LIBS="-lthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        add_sources "hpux" "88k"
         ;;
 
 ###### Sparc/UltraSparc
@@ -1489,64 +1651,6 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix docs/readme.x86-solaris libstdc++.so.2.8.1"
         TARGET_TARBALL="x86-solaris"
         add_sources "solaris" "x86"
-        ;;
-
-###### Alpha
-
-
-    *alpha-digital_unix-mt)
-        TARGET_CC="g++"
-        generate_gcc_opts "alpha" "decunix"
-        TARGET_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DDEC_UNIX_CPU_SELECT \
-                        -DHAVE_POSIX_THREADS -D_THREAD_SAFE -D_REENTRANT"
-        TARGET_LIBS="-lpthread -lexc"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        add_sources "digital-unix" "alpha" "mt"
-        ;;
-
-    *alpha-digital_unix)
-        TARGET_CC="g++"
-        TARGET_AS="as"
-        generate_gcc_opts "alpha" "decunix"
-        TARGET_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DDEC_UNIX_CPU_SELECT"
-        TARGET_LIBS="-static"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="digital_unix-alpha"
-        add_sources "digital-unix" "alpha"
-        ;;
-
-    *alpha-netbsd)
-        TARGET_CC="g++"
-        generate_gcc_opts "alpha" "netbsd"
-        TARGET_CCFLAGS="$OPTS_GCC"
-        TARGET_LDFLAGS="-static"
-        TARGET_LIBS="-ltermcap"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="netbsd-alpha"
-        add_sources "netbsd" "alpha"
-        ;;
-
-    *alpha-openbsd)                  # snake
-        TARGET_AS="g++ -c"
-        TARGET_CC="g++"
-        generate_gcc_opts "alpha" "openbsd"
-        TARGET_CCFLAGS="$OPTS_GCC"
-        TARGET_LDFLAGS="-static"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="openbsd-alpha"
-        add_sources "openbsd" "alpha"
-        ;;
-
-    *alpha-linux)               # [dworz/jlawson]
-        TARGET_AS="as"
-        TARGET_CC="g++"
-        generate_gcc_opts "alpha" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC"
-        TARGET_LDFLAGS=""
-        TARGET_LIBS=""
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-alpha"
-        add_sources "linux" "alpha"
         ;;
 
 ###### PowerPC/POWER
@@ -1956,97 +2060,6 @@ case "$1" in
         add_sources "netbsd" "68k" 
         ;;
 
-    *arm-riscos)
-        TARGET_CC="armcpp -aif -nodebug -littleend -apcs 3/26bit/swst/hardfp/fpe2 -zps1 -nounusedareas -l/home/cberry/play/riscoslib/CLib/stubs.o"
-        TARGET_AS="armasm"
-        TARGET_ASFLAGS="-apcs 3/26bit"
-        TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -I$OGR -Iplat/riscos \
-	                -I/home/cberry/play/riscoslib/OSLib \
-			-I/home/cberry/play/riscoslib/TCPIPLibs \
-			-J/home/cberry/play/riscoslib/CLib \
-			-DCOMPAT_INET4 -D__riscos -DHAVE_OGR_CORES" 
-        TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o \
-                     /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o \
-                     /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
-        TARGET_DOCFILES="docs/readme.riscos"   #platform specific docfile
-        TARGET_STRIP=touch
-        TARGET_BINNAME_SUFFIX=",ff8"
-        TARGET_IS_CROSSCOMPILE=1
-        add_sources "riscos" "arm"
-        ;;
-
-    *arm-riscos-gccsdk) # RiscOS client crosscompiled under Unix using GCCSDK
-                        # and Unixlib (http://hard-mofo.dsvr.net/)
-        TARGET_CC="/home/peter/gccsdk/cross/bin/gcc"
-        generate_gcc_opts "arm" "riscos"
-        TARGET_CCFLAGS="$OPTS_GCC -Iplat/riscos -D__riscos"
-        TARGET_AS="/home/peter/gccsdk/cross/bin/gcc"
-        TARGET_ASFLAGS="-c"
-        TARGET_DOCFILES="docs/readme.riscos"   #platform specific docfile
-        TARGET_STRIP=touch
-        TARGET_BINNAME_SUFFIX=",ff8"
-        TARGET_IS_CROSSCOMPILE=1
-        add_sources "riscos" "arm" "gccsdk"
-        ;;                              
-
-    *arm-linux-aout)					# chrisb
-        TARGET_CC="gcc"
-        TARGET_AS="as"
-        generate_gcc_opts "arm" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -Dlinux"
-        TARGET_LIBS="-lm"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-arm-aout"
-        add_sources "linux" "arm" "aout"
-        ;;
-
-    *arm-linux-elf)				# andrewm
-        TARGET_CC="gcc"
-        TARGET_AS="as"
-        generate_gcc_opts "arm" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -Dlinux"
-        TARGET_LIBS=""
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-arm-elf"
-        add_sources "linux" "arm"
-
-        rm -f $TARGET_ADDASMS
-        echo 'Converting GNU a.out cores to ELF'
-        for file in $TARGET_ADDASMS ; do
-          BASENAME=`basename $file`
-          echo "  $file -> `basename $file -elf.s`.s"
-          DIR=`echo $file | sed -e s/$BASENAME//`
-          ( cd $DIR ; sed -e 's/_\([a-zA-Z0-9_]\{1,\}\)/\1/g' \
-               < `basename $file -elf.s`.s > $BASENAME )
-        done
-        ;;
-
-    *arm-netbsd)				# chrisb
-        TARGET_CC="gcc"
-        TARGET_AS="as"
-        generate_gcc_opts "arm" "netbsd"
-        TARGET_CCFLAGS="$OPTS_GCC"
-        TARGET_LIBS="-lm"
-        TARGET_TARBALL="netbsd-arm32"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        add_sources "netbsd" "arm"
-        ;;
-
-    *arm-nto2)
-        TARGET_AS="qcc -Vgcc_ntoarmle -c"
-        TARGET_CC="qcc -Vgcc_ntoarmle"
-        TARGET_STRIP="/usr/gcc/bin/ntoarmle-strip"
-        TARGET_ASFLAGS="-DNO_BALIGN"
-        TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
-                        -fno-exceptions -fno-rtti -DASM_ARM -DHAVE_POSIX_THREADS"
-        TARGET_LIBS="-lsocket"
-        TARGET_DOCFILES="docs/readme._ix"
-        TARGET_TARBALL="nto2-arm"
-        TARGET_GENMAN=
-        TARGET_IS_CROSSCOMPILE=1
-        add_sources "nto2" "arm"
-        ;;
-
     *vax-netbsd)
         TARGET_CC="g++"
         generate_gcc_opts "vax" "netbsd"
@@ -2211,19 +2224,6 @@ case "$1" in
         TARGET_GENMAN=
         TARGET_ARCTYPE="lha"
         add_sources "amigaos" "ppc"
-        ;;
-
-###### IA-64
-
-    *ia64-linux)
-        TARGET_AS="gcc -c"
-        TARGET_CC="gcc"
-        generate_gcc_opts "ia64" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC"
-        TARGET_LIBS=""
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-ia64"
-        add_sources "linux" "ia64" 
         ;;
 
 ###### Unknown

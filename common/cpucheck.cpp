@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.83 2002/03/28 01:07:44 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.84 2002/03/29 08:51:52 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1481,7 +1481,8 @@ static long __GetRawProcessorID(const char **cpuname)
                 {       7, "EV5.6 (21164A)"      },
                 {       8, "EV6 (21264)",        },
                 {       9, "EV5.6 (21164PC)"     },
-                {      10, "EV5.7"               }
+                {      10, "EV5.7"               },
+                {      11, "EV67"                }
                 };
   
   #if (CLIENT_OS == OS_DEC_UNIX)
@@ -1553,6 +1554,7 @@ static long __GetRawProcessorID(const char **cpuname)
            { "EV6",            8      },
            { "PCA56",          9      },
            { "PCA57",         10      }, /* 2.2.x kernel */
+           { "EV67",          11      }  /* 2.4.x kernel */
            };
           p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
           for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )

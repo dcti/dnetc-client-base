@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.53 2002/03/27 22:55:47 sampo Exp $
+ * $Id: ogr.cpp,v 1.1.2.54 2002/03/29 08:51:54 sampo Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -214,7 +214,7 @@
    Note that this option gets ignored if OGROPT_ALTERNATE_CYCLE != 1.
 
    OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 0 -> default COMP_LEFT_LIST_RIGHT
-   OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 1 -> alternate approach by sampoo
+   OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 1 -> alternate approach by sampo
    OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 2 -> assembly versions
 */
 #ifndef OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT

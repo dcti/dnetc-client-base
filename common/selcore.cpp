@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.133 2002/03/28 01:07:47 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.134 2002/03/29 08:51:52 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -137,6 +137,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
     { /* OGR */
       "GARSP 5.13",
+      "GARSP 5.13-CIX",
       NULL
     },
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
@@ -240,6 +241,12 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
   {
     if (cindex != 0) /* "1 key - called" */
       return 0;      /* the only supported core */
+  }
+  #elif (CLIENT_CPU == CPU_ALPHA)
+  if (contestid == OGR)
+  {
+    long det = GetProcessorType(1);
+    if (det != 11) cindex = 0;
   }
   #elif (CLIENT_CPU == CPU_68K)
   if (contestid == OGR)
@@ -780,6 +787,17 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     if (selcorestatics.corenum[CSC] < 0)
     {
       ; // Who knows?  Just benchmark them all below
+    }
+  }
+  else if (contestid == OGR)
+  {
+    selcorestatics.corenum[OGR] = selcorestatics.user_cputype[OGR];
+    if (selcorestatics.corenum[OGR] < 0 && detected_type > 0)
+    {
+      if (detected_type == 11)
+        selcorestatics.corenum[OGR] = 1;
+      else
+        selcorestatics.corenum[OGR] = 0;
     }
   }
   #elif (CLIENT_CPU == CPU_68K)
@@ -1342,6 +1360,9 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       #if defined(__VEC__)      /* compilor supports AltiVec */
       extern "C" CoreDispatchTable *vec_ogr_get_dispatch_table(void);
       #endif
+  #elif (CLIENT_CPU == CPU_ALPHA)
+      extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
+      extern "C" CoreDispatchTable *ogr_get_dispatch_table_cix(void);
   #elif (CLIENT_CPU == CPU_68K)
       extern "C" CoreDispatchTable *ogr_get_dispatch_table_000(void);
       extern "C" CoreDispatchTable *ogr_get_dispatch_table_020(void);
@@ -1817,6 +1838,11 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         unit_func.ogr = ogr_get_dispatch_table_000();
         coresel = 0;
       }
+    #elif (CLIENT_CPU == CPU_ALPHA)
+      if (coresel == 1)
+        unit_func.ogr = ogr_get_dispatch_table_cix();
+      else
+        unit_func.ogr = ogr_get_dispatch_table();
     #elif (CLIENT_CPU == CPU_X86)
       if (coresel == 0) //A
         unit_func.ogr = ogr_get_dispatch_table(); //A
