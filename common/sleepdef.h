@@ -7,26 +7,30 @@
  * ------------------------------------------------------------------
  * This include file ensures that sleep() and usleep() are valid.
  * They MUST actually block/yield for approx. the duration requested.
- * "approx" does not mean a factor of. :)
+ * "approx" does not mean "a factor of". :)
  *
  * Porter notes: Check network.cpp and network.h to remove duplicate
  * or conflicting defines or code in the platform specific sections there.
  *
  * 1. if your platform does not support frac second sleep, try using
- *    select() as a substitute: For example:
- *    #define usleep(x) { struct timeval tv = {0,(x)}; \
- *                         select(0,NULL,NULL,NULL,&tv); }
- *    (Not all implementations support this: some don't sleep at all, 
- *    while others sleep forever)
- * 2. If you can't use select() for usleep()ing, you can still roll a 
- *    usleep() using your sched_yield()[or whatever] and gettimeofday() 
- * 3. if usleep(x) or sleep(x) are macros, make sure that 'x' is
+ *    one of the following substitutes:
+ *    a) #define usleep(x) poll(NULL, 0, (x)/1000);
+ *    b) #define usleep(x) { struct timespec interval, remainder; \
+ *                           interval.tv_sec = 0; interval.tv_nsec = (x)*100;\
+ *                           nanosleep(&_interval, &_remainder); }
+ *    c) #define usleep(x) { struct timeval tv = {0,(x)}; \
+ *                           select(0,NULL,NULL,NULL,&tv); }
+ *       (Not all implementations support (c): some don't sleep at all, 
+ *       while others sleep forever)
+ *    d) roll a usleep() using your sched_yield()[or whatever] and 
+ *       gettimeofday() 
+ * 2. if usleep(x) or sleep(x) are macros, make sure that 'x' is
  *    enclosed in parens. ie #define sleep(x) myDelay((x)/1000)
  *    otherwise expect freak outs with sleep(sleepstep+10) and the like.
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.4 1999/06/16 12:22:15 ivo Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.5 1999/09/15 13:22:05 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -53,9 +57,9 @@
   #define sleep(x) DosSleep(1000*(x))
   #define usleep(x) DosSleep((x)/1000)
 #elif (CLIENT_OS == OS_NETWARE)
-  extern "C" void delay(unsigned int msecs);
-  #define sleep(x)  delay((x)*1000)
-  #define usleep(x) delay((x)/1000)
+  //emulated in platforms/netware/...
+  extern "C" void usleep(unsigned long);
+  extern "C" unsigned int sleep(unsigned int);
 #elif (CLIENT_OS == OS_BEOS)
   #include <unistd.h>
   #define usleep(x) snooze((x))
@@ -70,25 +74,6 @@
   // found in <unistd.h>, but requires _XOPEN_SOURCE_EXTENDED,
   // which causes more trouble...
   extern "C" int usleep(useconds_t);
-#elif ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K))
-  #include <unistd.h>
-  extern "C" void usleep(unsigned int);
-#elif (CLIENT_OS == OS_HPUX)
-  #include <unistd.h>
-  #include <sys/time.h>
-  #if 1 //good for all HP-UX's (according to select(2) manpage)
-  #undef usleep
-  #define usleep(x) {struct timeval tv={0,(x)};select(0,NULL,NULL,NULL,&tv);}
-  #elif defined(_STRUCT_TIMESPEC)
-     // HP-UX 10.x has nanosleep() rather than usleep()
-     #define usleep(x) { \
-       struct timespec interval, remainder; \
-       interval.tv_sec = 0; interval.tv_nsec = (x)*100; \
-       nanosleep(&interval, &remainder); }
-  #else // HP-UX 9.x doesn't have nanosleep() or usleep()
-    #undef usleep
-    #define usleep(x) {struct timeval tv={0,(x)};select(0,NULL,NULL,NULL,&tv);}
-  #endif
 #elif (CLIENT_OS == OS_IRIX)
   #include <unistd.h>
   #undef usleep
@@ -108,16 +93,31 @@
   #define usleep(n) Delay(n*TICKS_PER_SECOND/1000000);
   #error Intentionally left unfixed. (hint: use parenthesis)
   }
+#elif (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS)
+  //Jul '99: It appears Sol/Sparc and/or Sol/ultra have a
+  //problem with usleep() (sudden crash with bad lib link)
+  #if (CLIENT_CPU == CPU_68K) || (CLIENT_CPU == CPU_X86)
+  #include <unistd.h>
+  extern "C" void usleep(unsigned int);
+  #else /* pukes at runtime on Sparcs/Ultras */
+  #undef usleep
+  #define usleep(x) poll(NULL, 0, (x)/1000);
+  #endif
+#elif (CLIENT_OS == OS_HPUX)
+  #include <unistd.h>
+  #include <sys/time.h>
+  //HP-UX 10.x has nanosleep() but no usleep(), 9.x has neither, so ...
+  //we do whats good for all HP-UX's (according to select(2) manpage)
+  #undef usleep
+  #define usleep(x) {struct timeval tv={0,(x)};select(0,NULL,NULL,NULL,&tv);}
 #elif (CLIENT_OS == OS_RISCOS)
   extern "C" {
   #include <unistd.h>
   }
 #elif (CLIENT_OS == OS_DYNIX)
-  // DYNIX doesn't have nanosleep() or usleep()
-  //#define usleep(x) sleep(1)
-  #error FIXME - is this correct?
+  // DYNIX doesn't have nanosleep() or usleep(), but has poll()
   #undef usleep
-  #define usleep(x) {struct timeval tv={0,(x)};select(0,NULL,NULL,NULL,&tv);}
+  #define usleep(x) poll(NULL, 0, (x)/1000);
 #elif (CLIENT_OS == OS_ULTRIX)
   #define usleep(x) {struct timeval tv={0,(x)};select(0,NULL,NULL,NULL,&tv);}
 #else
