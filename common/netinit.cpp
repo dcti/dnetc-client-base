@@ -10,25 +10,28 @@
 */
 //
 // $Log: netinit.cpp,v $
+// Revision 1.5  1998/08/25 08:21:33  cyp
+// Removed the default values from the declaration of NetOpen().
+//
 // Revision 1.4  1998/08/25 00:01:16  cyp
 // Merged (a) the Network destructor and DeinitializeNetwork() into NetClose()
 // (b) the Network constructor and InitializeNetwork() into NetOpen().
 // These two new functions (in netinit.cpp) are essentially what the static
-// FetchFlushNetwork[Open|Close]() functions in buffupd.cpp used to be.
+// FetchFlush[Create|Destroy]Net() functions in buffupd.cpp used to be.
 //
-// Revision 1.3  1998/08/24 07:09:19  cyruspatel
+// Revision 1.3  1998/08/24 07:09:19  cyp
 // Added FIXME comments for "lurk"ers.
 //
-// Revision 1.2  1998/08/20 19:27:16  cyruspatel
+// Revision 1.2  1998/08/20 19:27:16  cyp
 // Made the purpose of NetworkInitialize/Deinitialize a little more
 // transparent.
 //
-// Revision 1.1  1998/08/10 21:53:55  cyruspatel
+// Revision 1.1  1998/08/10 21:53:55  cyp
 // Created - see documentation above.
 //
 #if (!defined(lint) && defined(__showids__))
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.4 1998/08/25 00:01:16 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.5 1998/08/25 08:21:33 cyp Exp $"; }
 #endif
 
 //--------------------------------------------------------------------------
@@ -180,9 +183,9 @@ static int __netInitAndDeinit( int doWhat )
 
         #if defined(LURK)
         if ( dialup.DialIfNeeded(1) < 0 )
-	  {
+          {
           success = 0;           //FIXME: sock_deinit()? missing (?)
-	  } 
+          } 
         #endif
         }
       }
@@ -304,9 +307,14 @@ int NetClose( Network *net )
 
 //----------------------------------------------------------------------
 
-Network *NetOpen(const char *keyserver, s32 keyserverport, int nofallback = 1, 
-          int autofindks = 0, s32 proxytype = 0, const char *proxyhost = NULL, 
-          s32 proxyport = 0, const char *proxyuid = NULL)
+// prototype is: 
+// ork *NetOpen(const char *keyserver, s32 keyserverport, int nofallback = 1, 
+//       int autofindks = 0, s32 proxytype = 0, const char *proxyhost = NULL, 
+//       s32 proxyport = 0, const char *proxyuid = NULL)
+
+Network *NetOpen(const char *keyserver, s32 keyserverport, int nofallback, 
+          int autofindks, s32 proxytype, const char *proxyhost, 
+          s32 proxyport, const char *proxyuid)
 {
   const char *fbkeyserver;
   Network *net;
@@ -355,10 +363,10 @@ Network *NetOpen(const char *keyserver, s32 keyserverport, int nofallback = 1,
     do{
       if (!net->Open()) //opened ok
         {
-	success = 1;
+        success = 1;
         break;
-	}
-      if (!CheckExitRequestTrigger())
+        }
+      if ((retry < 4) && (!CheckExitRequestTrigger()))
         {
         LogScreen( "[%s] Network::Open Error %d - "
                    "sleeping for 3 seconds\n", Time(), retry );
@@ -370,8 +378,8 @@ Network *NetOpen(const char *keyserver, s32 keyserverport, int nofallback = 1,
         {
         Log("[%s] Network::Open Error - TCP/IP Connection Lost.\n", Time());
         break;
-	}
-      } while (++retry <= 3);
+        }
+      } while ((++retry) <= 4);
     }
             
   if (!success)
