@@ -136,6 +136,8 @@ s32 Lurk::DialIfNeeded(s32 force)
 {
 s32 returnvalue;
 
+if (lurkmode < 1) return 0; // We're not supposed to lurk!
+
 if (Status() == 1) // We're already connected
   {
   dialstatus=0; // Make sure we won't hangup
@@ -196,6 +198,9 @@ s32 Lurk::Start(void)// Initializes Lurk Mode
   // 0 == Successfully started lurk mode
   // -1 == Start of lurk mode failed
 {
+
+if (lurkmode < 1) return -1; // We're not supposed to lurk!
+
 #if (CLIENT_OS == OS_WIN32) && defined(MULTITHREAD)
   LPVOID lpMsgBuf;
 
@@ -308,6 +313,9 @@ s32 Lurk::Status(void)// Checks status of connection
   // 0 == not currently connected
   // 1 == currently connected
 {
+
+if (lurkmode < 1) return 1; // We're not supposed to lurk!
+
 if (islurkstarted != 1) Start();
 if (islurkstarted != 1) return 0; // Lurk can't be started, evidently
 
@@ -346,6 +354,9 @@ s32 Lurk::InitiateConnection(void)
   // 0 = already connected, 1 = connection started,
   // -1 = connection failed
 {
+
+if (lurkmode < 1) return 0; // We're not supposed to lurk!
+
 if (islurkstarted != 1) Start();
 if (islurkstarted != 1) return -1; // Lurk can't be started, evidently
 
@@ -408,6 +419,9 @@ s32 Lurk::TerminateConnection(void)
   // -1 = connection did not terminate properly, 0 = connection
   // terminated
 {
+
+if (lurkmode < 1) return 0; // We're not supposed to lurk!
+
 if (islurkstarted != 1) Start();
 if (islurkstarted != 1) return -1; // Lurk can't be started, evidently
 
