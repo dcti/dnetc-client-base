@@ -6,7 +6,7 @@
 */
 
 #ifndef __NETWORK_H__
-#define __NETWORK_H__ "@(#)$Id: network.h,v 1.67 1999/04/13 06:49:26 cyp Exp $"
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.68 1999/05/08 19:35:10 patrick Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
@@ -110,7 +110,7 @@ extern "C" {
   #if defined(__EMX__)
     // this has to stay as long as the define below is needed
     #include <io.h>
-    #define close(sock) soclose(sock)
+    #define soclose(sock) close(sock)
   #endif
   typedef int SOCKET;
   #define read(sock, buff, len) recv(sock, (char*)buff, len, 0)
