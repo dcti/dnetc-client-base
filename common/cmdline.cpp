@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.157 2002/09/23 03:14:02 acidblood Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.158 2002/10/09 22:22:15 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -444,7 +444,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
             #if defined(__QNXNTO__) /* neutrino */
             pscmd = "ps -A -o pid,comm 2>/dev/null";
             #else
-            pscmd = "ps -A -F"%p %c" 2>/dev/null";
+            pscmd = "ps -A -F\"%p %c\" 2>/dev/null";
             #endif
           #else
           #error fixme: select an appropriate ps syntax

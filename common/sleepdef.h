@@ -17,7 +17,7 @@
  *    a) #define usleep(x) poll(NULL, 0, (x)/1000);
  *    b) #define usleep(x) { struct timespec interval, remainder; \
  *                           interval.tv_sec = 0; interval.tv_nsec = (x)*100;\
- *                           nanosleep(&_interval, &_remainder); }
+ *                           nanosleep(&interval, &remainder); }
  *    c) #define usleep(x) { struct timeval tv__ = {0,(x)}; \
  *                           select(0,NULL,NULL,NULL,&tv__); }
  *       (Not all implementations support (c): some don't sleep at all, 
@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.36 2002/09/02 00:35:43 andreasb Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.37 2002/10/09 22:22:15 andreasb Exp $"
 
 #include "cputypes.h"
 
@@ -134,6 +134,11 @@
   #define usleep(x) _xsleep(0,(x))
   #undef sleep
   #define sleep(x) _xsleep((x),0)
+#elif (CLIENT_OS == OS_QNX) && !(defined(__QNXNTO__))
+  #include <sys/time.h>
+  #define usleep(x) { struct timespec interval, remainder; \
+                      interval.tv_sec = 0; interval.tv_nsec = (x)*100;\
+                      nanosleep(&interval, &remainder); }
 #else
   #include <unistd.h> //has both sleep() and usleep()
 #endif

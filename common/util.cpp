@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.28 2002/10/06 19:57:49 andreasb Exp $"; }
+return "@(#)$Id: util.cpp,v 1.29 2002/10/09 22:22:15 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -19,6 +19,7 @@ return "@(#)$Id: util.cpp,v 1.28 2002/10/06 19:57:49 andreasb Exp $"; }
 #include "cliident.h" /* CliIsDevelVersion() */
 #include "clicdata.h" /* CliGetContestNameFromID() */
 #include "pathwork.h" /* GetFullPathForFilename() */
+#include "sleepdef.h" /* usleep() */
 #include "util.h"     /* ourselves */
 #define MAX_CONTEST_NAME_LEN 6
 // PROJECT_NOT_HANDLED("is MAX_CONTEST_NAME_LEN still ok?")
@@ -1113,7 +1114,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           #if defined(__QNXNTO__) /* neutrino */
           pscmd = "ps -A -o pid,comm 2>/dev/null";
           #else
-          pscmd = "ps -A -F"%p %c" 2>/dev/null";
+          pscmd = "ps -A -F\"%p %c\" 2>/dev/null";
           #endif
         #else
         #error fixme: select an appropriate ps syntax (or use another method to get pidlist)

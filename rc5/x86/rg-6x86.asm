@@ -1,6 +1,6 @@
 ; Cyrix 6x86 optimized version (nasm version of .cpp core)
 ;
-; $Id: rg-6x86.asm,v 1.2 2002/09/02 00:35:57 andreasb Exp $
+; $Id: rg-6x86.asm,v 1.3 2002/10/09 22:22:15 andreasb Exp $
 ;
 ; 980226 :
 ;	- Corrected bug in the key incrementation algorithm that caused the
@@ -67,11 +67,12 @@
 ; PR133 = 110		PR166 = 150
 
 %ifdef __OMF__ ; Watcom and Borland compilers/linkers
-[SECTION _TEXT USE32 ALIGN=16]
+[SECTION _TEXT FLAT USE32 ALIGN=16 CLASS=CODE]
 %else
 [SECTION .text]
 %endif
 
+[GLOBAL rc5_unit_func_6x86_]
 [GLOBAL _rc5_unit_func_6x86]
 [GLOBAL rc5_unit_func_6x86]
 
@@ -334,6 +335,7 @@
 ;      else SOMETHING_WENT_WRONG... )
 
 align 4
+rc5_unit_func_6x86_:
 _rc5_unit_func_6x86:
 rc5_unit_func_6x86:
 ;u32 rc5_unit_func_6x86( RC5UnitWork * rc5unitwork, u32 timeslice )

@@ -2,14 +2,15 @@
 ; * For use in distributed.net projects only.
 ; * Any other distribution or use of this source violates copyright.
 
-; $Id: ak-p7.asm,v 1.2 2002/09/02 00:35:57 andreasb Exp $
+; $Id: ak-p7.asm,v 1.3 2002/10/09 22:22:15 andreasb Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
-[SECTION _TEXT USE32 align=16]
+[SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
 %else
 [SECTION .text]
 %endif
 
+[GLOBAL rc5_unit_func_p7_]
 [GLOBAL _rc5_unit_func_p7]
 [GLOBAL rc5_unit_func_p7]
 
@@ -438,7 +439,7 @@
 ;       else SOMETHING_GET_WRONG... )
 
 
-
+rc5_unit_func_p7_:
 _rc5_unit_func_p7:
 rc5_unit_func_p7:
 ;u32 rc5_unit_func_p7( RC5UnitWork * rc5unitwork, u32 timeslice )

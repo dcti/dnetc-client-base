@@ -43,7 +43,7 @@
  *   #endif
 */
 const char *w32sock_cpp(void) {
-return "@(#)$Id: w32sock.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $"; }
+return "@(#)$Id: w32sock.cpp,v 1.3 2002/10/09 22:22:15 andreasb Exp $"; }
 
 #include <windows.h>
 #include "w32sock.h" // <windows.h> and <winsock.h> as documented above.
@@ -380,10 +380,8 @@ int PASCAL FAR gethostname(char FAR * name, int namelen)
         if ((*_GetComputerNameExA)( 7 /*ComputerNamePhysicalDnsFullyQualified*/,
                                    buffer, &maxlen ))
         {
-          DWORD i;
-          if (maxlen < (DWORD)namelen)
-            namelen = maxlen;
-          for (i = 0; i < (DWORD)(namelen-1); i++)
+          int i;
+          for (i = 0; buffer[i] && (DWORD)i < maxlen && i < (namelen-1); i++)
             *name++ = buffer[i];
           *name++ = '\0';
           return 0;

@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.113 2002/09/02 00:35:42 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114 2002/10/09 22:22:15 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1280,7 +1280,7 @@ static long __GetRawProcessorID(const char **cpuname )
 #if (CLIENT_CPU == CPU_MIPS)
 static long __GetRawProcessorID(const char **cpuname)
 {
-  static const ridPS2 = 99;      /* Please set a same rid of R5900 */
+  static const int ridPS2 = 99;      /* Please set a same rid of R5900 */
 
   static int detectedtype = -2L; /* -1 == failed, -2 == not supported */
   static const char *detectedname = NULL;

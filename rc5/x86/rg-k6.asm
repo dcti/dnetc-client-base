@@ -16,19 +16,19 @@
 ; K6 optimized version
 ; Rémi Guyomarch - rguyom@mail.dotcom.fr
 ;
-; $Id: rg-k6.asm,v 1.2 2002/09/02 00:35:57 andreasb Exp $
+; $Id: rg-k6.asm,v 1.3 2002/10/09 22:22:16 andreasb Exp $
 ;
 ; 980307 :
 ;	- Finally a K6 optimization that works ...
 ;	- Based on the 486/980226 version
 
 %ifdef __OMF__ ; Watcom and Borland compilers/linkers
-[SECTION _TEXT USE32 ALIGN=16]
+[SECTION _TEXT FLAT USE32 ALIGN=16 CLASS=CODE]
 %else
 [SECTION .text]
 %endif
 
-
+[GLOBAL rc5_unit_func_k6_]
 [GLOBAL _rc5_unit_func_k6]
 [GLOBAL rc5_unit_func_k6]
 
@@ -294,6 +294,7 @@
 ; (can't use static variables, and can't use push/pop in this
 ;  function because &work_struct is relative to %esp)
 
+rc5_unit_func_k6_:
 _rc5_unit_func_k6:
 rc5_unit_func_k6:
 ;u32 rc5_unit_func_k6( RC5UnitWork * rc5unitwork, u32 timeslice )

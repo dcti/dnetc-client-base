@@ -9,15 +9,16 @@
 ;                                               jasonp@glue.umd.edu
 ;                                                   7/26/98
 ;---------------------------------------------------------------------
-; $Id: jp-mmx.asm,v 1.2 2002/09/02 00:35:57 andreasb Exp $
+; $Id: jp-mmx.asm,v 1.3 2002/10/09 22:22:15 andreasb Exp $
 
 %include "jp-mmx.mac"
 
+[GLOBAL rc5_unit_func_p5_mmx_]
 [GLOBAL _rc5_unit_func_p5_mmx]
 [GLOBAL rc5_unit_func_p5_mmx]
 
 %ifdef __OMF__ ; Watcom and Borland compilers/linkers
-[SECTION _DATA USE32 ALIGN=16]
+[SECTION _DATA FLAT USE32 ALIGN=16 CLASS=DATA]
 %else
 [SECTION .data]
 %endif
@@ -51,11 +52,12 @@
               dd 0x2b4c3474, 0x2b4c3474
 
 %ifdef __OMF__ ; Watcom and Borland compilers/linkers
-[SECTION _TEXT USE32 ALIGN=16]
+[SECTION _TEXT FLAT USE32 ALIGN=16 CLASS=CODE]
 %else
 [SECTION .text]
 %endif
 
+rc5_unit_func_p5_mmx_:
 _rc5_unit_func_p5_mmx:
 rc5_unit_func_p5_mmx:
    push ebx

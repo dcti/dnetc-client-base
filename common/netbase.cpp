@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.2 2002/09/02 00:35:42 andreasb Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.3 2002/10/09 22:22:15 andreasb Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -183,6 +183,9 @@ extern "C" {
     #include <asm/byteorder.h>
   #elif (CLIENT_OS == OS_QNX)
     #include <sys/select.h>
+    #if !defined(__QNXNTO__)
+      #include <unix.h>
+    #endif
   #elif (CLIENT_OS == OS_DYNIX) && defined(NTOHL)
     #define ntohl(x)  NTOHL(x)
     #define htonl(x)  HTONL(x)
@@ -228,13 +231,12 @@ extern "C" {
     || (CLIENT_OS == OS_MACOS) \
     || (CLIENT_OS == OS_OPENBSD) \
     || (CLIENT_OS == OS_NETBSD) \
+    || ((CLIENT_OS == OS_QNX) && (defined(__QNXNTO__))) \
     || ((CLIENT_OS == OS_FREEBSD) && (__FreeBSD__ >= 4))
   /* nothing - socklen_t already defined */
 #elif ((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION < 199701))
   #define socklen_t size_t
   /* only needed for old BSD/OS (before 4.x) */
-#elif (CLIENT_OS == OS_QNX)
-  #define socklen_t size_t
 #elif (CLIENT_OS == OS_DYNIX)
   #define socklen_t size_t
   extern "C" int gethostname(char *, size_t);

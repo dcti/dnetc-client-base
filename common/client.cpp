@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.250 2002/10/06 19:57:12 andreasb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251 2002/10/09 22:22:14 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -64,6 +64,7 @@ static const char *GetBuildOrEnvDescription(void)
   send us log extracts but don't mention the OS they are running on.
   Only useful for win-weenies I suppose.
   */
+
 #if (CLIENT_OS == OS_DOS)
   return dosCliGetEmulationDescription(); //if in win/os2 VM
 #elif ((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16))
@@ -132,6 +133,12 @@ static const char *GetBuildOrEnvDescription(void)
     // on AIX version is the major and release the minor
     static char buffer[sizeof(ut.sysname)+1+sizeof(ut.release)+1+sizeof(ut.version)+1];
     return strcat(strcat(strcat(strcat(strcpy(buffer,ut.sysname)," "),ut.version),"."),ut.release);
+    #elif (CLIENT_OS == OS_QNX) && !defined(__QNXNTO__)
+    static char buffer[sizeof(ut.sysname)+1+
+		       sizeof(ut.version)+1+
+		       sizeof(ut.release)+1];
+    return strcat(strcat(strcat(strcpy(buffer,ut.sysname)," "),
+			 ut.version),ut.release);;
     #else
     static char buffer[sizeof(ut.sysname)+1+sizeof(ut.release)+1];
     return strcat(strcat(strcpy(buffer,ut.sysname)," "),ut.release);
@@ -583,7 +590,11 @@ int main( int argc, char *argv[] )
       }
     }
 
+#if (CLIENT_OS == OS_QNX) && !defined(__QNXNTO__)
+    if ( execvp( p, (char const * const *)&argv[0] ) == -1)
+#else
     if ( execvp( p, &argv[0] ) == -1)
+#endif
     {
       ConOutErr("Unable to restart self");
       return -1;
