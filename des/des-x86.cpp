@@ -6,7 +6,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_x86_cpp(void) {
-return "@(#)$Id: des-x86.cpp,v 1.25.2.4 2000/01/03 12:33:08 snake Exp $"; }
+return "@(#)$Id: des-x86.cpp,v 1.25.2.5 2000/06/17 06:20:25 bernd Exp $"; }
 #endif
 
 
@@ -29,6 +29,7 @@ return "@(#)$Id: des-x86.cpp,v 1.25.2.4 2000/01/03 12:33:08 snake Exp $"; }
     ((CLIENT_OS == OS_LINUX) && defined(__ELF__)) || \
     ((CLIENT_OS == OS_BSDOS) && defined(__ELF__)) || \
     ((CLIENT_OS == OS_FREEBSD) && defined(__ELF__)) || \
+    ((CLIENT_OS == OS_NETBSD) && defined(__ELF__)) || \
     ((CLIENT_OS == OS_BEOS) && defined(__ELF__)) || \
     ((CLIENT_OS == OS_QNX))
     
