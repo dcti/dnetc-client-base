@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.67 1999/11/29 19:37:54 lyndon Exp $
+# @(#)$Id: configure,v 1.222.2.68 1999/11/30 14:36:00 ivo Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -198,7 +198,7 @@ TARGET_ARCTYPE="tgz"  # or "zip"
 #
 OPTS_WARN="-Wall -Wtraditional -Wpointer-arith -Wcast-align \
 	  -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes \
-	  -Wconversion -Winline -Werror -Waggregate-return -Wcast-qual \
+	  -Wconversion -Werror -Winline -Waggregate-return -Wcast-qual \
 	  -Woverloaded-virtual -Wnested-externs -Wredundant-decls"
 #
 # Common compiler options
@@ -209,6 +209,8 @@ OPTS_GCC="-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
 	  -funroll-loops -fno-inline-functions -fno-handle-exceptions \
 	  $OPTS_WARN"
 OPTS_GCC272="-fomit-frame-pointer -fno-inline-functions \
+	     -fno-exceptions -fno-rtti $OPTS_WARN"
+OPTS_GCC295="-fomit-frame-pointer -fno-inline-functions \
 	     -fno-exceptions -fno-rtti $OPTS_WARN"
 OPTS_XLC3="-O3 -qansialias -qlibansi"
 OPTS_EGCS="-O2 -fstrict-aliasing -fno-exceptions -fomit-frame-pointer $OPTS_WARN"
@@ -229,6 +231,7 @@ OPTS_GCC272_SPARC1="$OPTS_GCC272 -O6 -mcypress -DASM_SPARC"
 # (sparc/v8 [SS5+]      gcc)
 OPTS_GCC_SPARC="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
 OPTS_GCC272_SPARC="$OPTS_GCC272 -O6 -msupersparc -DASM_SPARC"
+OPTS_GCC295_SPARC="$OPTS_GCC295 -O6 -msupersparc -DASM_SPARC"
 
 # (sparc/v9 [Ultra]     gcc)
 OPTS_GCC_ULTRA="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
@@ -314,6 +317,7 @@ OPTS_XLC3_POWER="$OPTS_XLC3 -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
 
 OPTS_GCC_X86="$OPTS_GCC -O6 -m486 -DASM_X86"
 OPTS_GCC272_X86="$OPTS_GCC272 -O6 -m486 -DASM_X86"
+OPTS_GCC295_X86="$OPTS_GCC295 -O6 -m486 -DASM_X86"
 
 OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentiumpro -malign-functions=4 -malign-loops=4 -DASM_X86"
 
@@ -776,7 +780,7 @@ case "$1" in
     *sparc-solaris-gcc-nomt)   # [ivo solaris/nonultra/nomt] fastest rc5 & des for ultra
         #DELETECHARS="'/.\$\-'"
         TARGET_CC="gcc -pipe" 
-        TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
+        TARGET_CCFLAGS="$OPTS_GCC295_SPARC -Dsolaris \
                         -DHAVE_CSC_CORES -DHAVE_DES_CORES \
                         -DBIT_32 -DKWAN -DMEGGS"
         TARGET_ADDSRCS="rc5/ultra/rc5-ultra-crunch.cpp \
@@ -789,7 +793,7 @@ case "$1" in
     *sparc-solaris-gcc)   # [ivo solaris/nonultra/mt] fastest rc5
         #DELETECHARS="'/.\$\-'"
         TARGET_CC="gcc -pipe"
-        TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
+        TARGET_CCFLAGS="$OPTS_GCC295_SPARC -Dsolaris \
                         -DMULTITHREAD \
                         -DHAVE_CSC_CORES -DHAVE_DES_CORES \
                         -DBIT_32 -DKWAN -DMEGGS"
