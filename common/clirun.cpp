@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.72  1999/01/28 07:29:04  skand
+// NetBSD/i386 fixes.
+//
 // Revision 1.71  1999/01/26 17:50:05  dbaker
 // changes for freebsd4 to allow smp threads or whatever
 //
@@ -273,7 +276,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.71 1999/01/26 17:50:05 dbaker Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.72 1999/01/28 07:29:04 skand Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -483,6 +486,8 @@ static void yield_pump( void *tv_p )
   #elif (CLIENT_OS == OS_BEOS)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_OPENBSD)
+    NonPolledUSleep( 0 ); /* yield */
+  #elif (CLIENT_OS == OS_NETBSD)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_QNX)
     NonPolledUSleep( 0 ); /* yield */

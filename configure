@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.179  1999/01/28 07:29:04  skand
+# NetBSD/i386 fixes.
+#
 # Revision 1.178  1999/01/27 20:13:16  patrick
 #
 # added lurk code to os2-emx
@@ -891,7 +894,7 @@ TARGET_CC="g++"
 TARGET_CCFLAGS="$OPTS_GCC"
 TARGET_LDFLAGS=""
 TARGET_LIBS=""
-TARGET_AS="gas"
+TARGET_AS="as"
 TARGET_NASM="nasm"
 TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -d__ELF__ -f elf"
 TARGET_ASFLAGS=""
@@ -1750,6 +1753,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -d__AOUT__ -f aoutb"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	;;
 
