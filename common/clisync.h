@@ -9,7 +9,7 @@
  * and are therefore intended to behave more like spinlocks than mutexes.
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.5 2001/02/05 03:08:31 sampo Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.6 2001/02/07 18:34:05 oliver Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -191,21 +191,22 @@
     char lacquired;
     __asm__  __volatile__ (
              "bset #0,%1\n"      \
-             "sne %0"            \
+             "seq %0"            \
              : "=d" (lacquired)  \
              :  "m" (m->spl));
     return lacquired;  // -1 = acquired, 0 = not aquired
   }
   static __inline__ void mutex_lock(mutex_t *m)
   {
-    while (mutex_try_lock(m) == 0)
+    do
     {
+      if (mutex_try_lock(m) != 0) return;
       #if (CLIENT_OS == OS_AMIGAOS)
       NonPolledUSleep(1);
       #else
       #error "What's up Doc?"
       #endif
-    }
+    } while(1);
   }
 
 #else
