@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.44 2003/02/25 19:23:01 teichp Exp $
+# @(#)$Id: configure,v 1.288.2.45 2003/02/26 15:00:00 snake Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -413,6 +413,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi # HAVE_RC5_64
     if [ "$HAVE_OGR" = "1" ]; then
       # this is just an addition to the default ansi core
+      # maybe this should be moved in to specific targets ?
       TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev67.cpp"
     fi # HAVE_OGR
   #-----------------------------------------------------------------
@@ -1190,7 +1191,7 @@ case "$1" in
         TARGET_LDFLAGS="-static"
         TARGET_LIBS="-ltermcap"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="netbsd-alpha"
+        TARGET_TARBALL="netbsd-alpha-elf"
         add_sources "netbsd" "alpha"
         ;;
 
@@ -1593,7 +1594,7 @@ case "$1" in
         add_sources "irix" "mips"
         ;;
 
-    *mipsel-netbsd)     # [snake] NetBSD on DECstation, PS2 etc.
+    *mipsel-netbsd)     # [snake] NetBSD on DECstation, PS2, ARC etc.
         TARGET_CC="g++"
         generate_gcc_opts "mips" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC -DSINGLE_CRUNCHER_ONLY"
@@ -1604,7 +1605,7 @@ case "$1" in
         add_sources "netbsd" "mips"
         ;;
 
-    *mipseb-netbsd)     # NetBSD on SGI, ARC etc.
+    *mipseb-netbsd)     # NetBSD on SGI, Sony NEWS etc.
         TARGET_CC="g++"
         generate_gcc_opts "mips" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -2964,10 +2965,15 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       #----------------
       CCFLAGS_SELECT="\${CCFLAGS}"
       if [ "$target" = "output/ev67.o" ]; then
-        if [ "$TARGET_CC" = "g++" ]; then
-          CCFLAGS_SELECT="-mcpu=ev67 ${CCFLAGS_SELECT}"
+        if [ $gccver -ge 3000000 ]; then # works only for gcc > 3 
+          if [ "$TARGET_CC" = "g++" ] ; then
+            CCFLAGS_SELECT="-mcpu=ev67 ${CCFLAGS_SELECT}"
+          else
+            CCFLAGS_SELECT="-march=ev67 ${CCFLAGS_SELECT}"
+          fi
         else
-          CCFLAGS_SELECT="-march=ev67 ${CCFLAGS_SELECT}"
+          # works for NetBSD/FreeBSD and probably also OpenBSD
+          CCFLAGS_SELECT="-Wa,-mev6 ${CCFLAGS_SELECT}"
         fi
       elif [ "${BUILDNAME}" = "aix-powerandppc" ]; then
         if [ "$target" = "output/problem.o" ]; then 
