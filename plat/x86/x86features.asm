@@ -176,8 +176,9 @@ SSE3_test:
 HT_test:
   test edx, 10000000h   ; Test for Hyper-Threading support
   jz Return
-  test ebx, 00FF0000h   ; Check if Hyper-Threading enabled
-  jz Return
+  and ebx, 00FF0000h
+  cmp ebx, 00010000h    ; Check if Hyper-Threading enabled
+  jne Return
   or esi, CPU_F_HYPERTHREAD ; Hyper-Threading supported and enabled
   jmp Return
 
