@@ -474,7 +474,7 @@ public:
   void PrintBanner(char * clname);
     // prints out a version banner to screen
 
-  void ParseCommandlineOptions(int argc, char *argv[], s32 &inimissing);
+  void ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing);
     // parses commandline options, setting parsed items to NULL
 
   s32 CkpointToBufferInput(u8 contest);

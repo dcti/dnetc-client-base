@@ -1358,7 +1358,7 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
 static Client *mainclient;
 
 #pragma argsused
-void ServiceMain(DWORD argc, LPTSTR *argv)
+void ServiceMain(DWORD Argc, LPTSTR *Argv)
 {
   SERVICE_STATUS serviceStatus;
   serviceStatusHandle = RegisterServiceCtrlHandler(WINNTSERVICE,
@@ -2201,28 +2201,28 @@ const char * Client::Time( void )
 
 // --------------------------------------------------------------------------
 
-void Client::ParseCommandlineOptions(int argc, char *argv[], s32 &inimissing)
+void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
 {
-  for (int i=1;i<argc;i++)
+  for (int i=1;i<Argc;i++)
   {
-    if ( strcmp(argv[i], "-percentoff" ) == 0) // This should be checked here, in case it
+    if ( strcmp(Argv[i], "-percentoff" ) == 0) // This should be checked here, in case it
     {
       percentprintingoff = 1;                 // follows a -benchmark
-      argv[i][0] = 0;
+      Argv[i][0] = 0;
     }
-    else if ( strcmp( argv[i], "-nofallback" ) == 0 ) // Don't try rc5proxy.distributed.net
+    else if ( strcmp( Argv[i], "-nofallback" ) == 0 ) // Don't try rc5proxy.distributed.net
     {                                                 // After multiple errors
       nofallback=1;
-      argv[i][0] = 0;
+      Argv[i][0] = 0;
     }
-    else if ( strcmp( argv[i], "-quiet" ) == 0 ) // No messages
+    else if ( strcmp( Argv[i], "-quiet" ) == 0 ) // No messages
     {
       quietmode=1;
-      argv[i][0] = 0;
+      Argv[i][0] = 0;
     }
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
 #if (!defined(WINNTSERVICE))
-    else if ( strcmp( argv[i], "-hide" ) == 0 ) // Hide the client
+    else if ( strcmp( Argv[i], "-hide" ) == 0 ) // Hide the client
     {
       quietmode=1;
 #if (CLIENT_OS == OS_OS2)
@@ -2230,280 +2230,280 @@ void Client::ParseCommandlineOptions(int argc, char *argv[], s32 &inimissing)
 #else
       win95hidden=1;
 #endif
-      argv[i][0] = 0;
+      Argv[i][0] = 0;
     }
 #endif
 #endif
 
 #if (CLIENT_OS == OS_WIN32)
-    else if ( strcmp( argv[i], "-lurk" ) == 0 ) // Detect modem connections
+    else if ( strcmp( Argv[i], "-lurk" ) == 0 ) // Detect modem connections
     {
       lurk=1;
-      argv[i][0] = 0;
+      Argv[i][0] = 0;
     }
-    else if ( strcmp( argv[i], "-lurkonly" ) == 0 ) // Only connect when modem connects
+    else if ( strcmp( Argv[i], "-lurkonly" ) == 0 ) // Only connect when modem connects
     {
       lurk=2;
-      argv[i][0] = 0;
+      Argv[i][0] = 0;
     }
 #endif
-    else if ( strcmp( argv[i], "-noexitfilecheck" ) == 0 ) // Change network timeout
+    else if ( strcmp( Argv[i], "-noexitfilecheck" ) == 0 ) // Change network timeout
     {
       noexitfilecheck=1;
-      argv[i][0] = 0;
+      Argv[i][0] = 0;
     }
-    else if ( strcmp( argv[i], "-runoffline" ) == 0 ) // Run offline
+    else if ( strcmp( Argv[i], "-runoffline" ) == 0 ) // Run offline
     {
       offlinemode=1;
-      argv[i][0] = 0;
+      Argv[i][0] = 0;
     }
-    else if ( strcmp( argv[i], "-runbuffers" ) == 0 ) // Run offline & exit when buffer empty
+    else if ( strcmp( Argv[i], "-runbuffers" ) == 0 ) // Run offline & exit when buffer empty
     {
       offlinemode=2;
-      argv[i][0] = 0;
+      Argv[i][0] = 0;
     }
-    else if ( strcmp( argv[i], "-run" ) == 0 ) // Run online
+    else if ( strcmp( Argv[i], "-run" ) == 0 ) // Run online
     {
       offlinemode=0;
-      argv[i][0] = 0;
+      Argv[i][0] = 0;
     }
-    else if ( strcmp( argv[i], "-nodisk" ) == 0 ) // No disk buff-*.rc5 files.
+    else if ( strcmp( Argv[i], "-nodisk" ) == 0 ) // No disk buff-*.rc5 files.
     {
       nodiskbuffers=1;
       strcpy(checkpoint_file[0],"none");
       strcpy(checkpoint_file[1],"none");
-      argv[i][0] = 0;
+      Argv[i][0] = 0;
     }
-    else if ( strcmp(argv[i], "-frequent" ) == 0)
+    else if ( strcmp(Argv[i], "-frequent" ) == 0)
     {
       LogScreenf("Setting connections to frequent\n");
       connectoften=1;
-      argv[i][0] = 0;
+      Argv[i][0] = 0;
     }
-    else if ((i+1) < argc) {
-      if ( strcmp( argv[i], "-b" ) == 0 ) // Buffer threshold size
+    else if ((i+1) < Argc) {
+      if ( strcmp( Argv[i], "-b" ) == 0 ) // Buffer threshold size
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting rc5 buffer size to %s\n",argv[i+1]);
-        outthreshold[0] = inthreshold[0]  = (s32) atoi( argv[i+1] );
+        LogScreenf("Setting rc5 buffer size to %s\n",Argv[i+1]);
+        outthreshold[0] = inthreshold[0]  = (s32) atoi( Argv[i+1] );
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-b2" ) == 0 ) // Buffer threshold size
+      else if ( strcmp( Argv[i], "-b2" ) == 0 ) // Buffer threshold size
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting des buffer size to %s\n",argv[i+1]);
-        outthreshold[1] = inthreshold[1]  = (s32) atoi( argv[i+1] );
+        LogScreenf("Setting des buffer size to %s\n",Argv[i+1]);
+        outthreshold[1] = inthreshold[1]  = (s32) atoi( Argv[i+1] );
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-bin" ) == 0 ) // Buffer input threshold size
+      else if ( strcmp( Argv[i], "-bin" ) == 0 ) // Buffer input threshold size
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting rc5 input buffer size to %s\n",argv[i+1]);
-        inthreshold[0]  = (s32) atoi( argv[i+1] );
+        LogScreenf("Setting rc5 input buffer size to %s\n",Argv[i+1]);
+        inthreshold[0]  = (s32) atoi( Argv[i+1] );
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-bin2" ) == 0 ) // Buffer input threshold size
+      else if ( strcmp( Argv[i], "-bin2" ) == 0 ) // Buffer input threshold size
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting des input buffer size to %s\n",argv[i+1]);
-        inthreshold[1]  = (s32) atoi( argv[i+1] );
+        LogScreenf("Setting des input buffer size to %s\n",Argv[i+1]);
+        inthreshold[1]  = (s32) atoi( Argv[i+1] );
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-bout" ) == 0 ) // Buffer output threshold size
+      else if ( strcmp( Argv[i], "-bout" ) == 0 ) // Buffer output threshold size
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting rc5 output buffer size to %s\n",argv[i+1]);
-        outthreshold[0]  = (s32) atoi( argv[i+1] );
+        LogScreenf("Setting rc5 output buffer size to %s\n",Argv[i+1]);
+        outthreshold[0]  = (s32) atoi( Argv[i+1] );
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-bout2" ) == 0 ) // Buffer output threshold size
+      else if ( strcmp( Argv[i], "-bout2" ) == 0 ) // Buffer output threshold size
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting des output buffer size to %s\n",argv[i+1]);
-        outthreshold[1]  = (s32) atoi( argv[i+1] );
+        LogScreenf("Setting des output buffer size to %s\n",Argv[i+1]);
+        outthreshold[1]  = (s32) atoi( Argv[i+1] );
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-u" ) == 0 ) // UUE/HTTP Mode
+      else if ( strcmp( Argv[i], "-u" ) == 0 ) // UUE/HTTP Mode
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting uue/http mode to %s\n",argv[i+1]);
-        uuehttpmode = (s32) atoi( argv[i+1] );
+        LogScreenf("Setting uue/http mode to %s\n",Argv[i+1]);
+        uuehttpmode = (s32) atoi( Argv[i+1] );
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp(argv[i], "-in" ) == 0)
+      else if ( strcmp(Argv[i], "-in" ) == 0)
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting rc5 buffer input file to %s\n",argv[i+1]);
-        strcpy(in_buffer_file[0], argv[i+1]);
-        argv[i][0] = argv[i+1][0] = 0;
+        LogScreenf("Setting rc5 buffer input file to %s\n",Argv[i+1]);
+        strcpy(in_buffer_file[0], Argv[i+1]);
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp(argv[i], "-in2" ) == 0)
+      else if ( strcmp(Argv[i], "-in2" ) == 0)
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting des buffer input file to %s\n",argv[i+1]);
-        strcpy(in_buffer_file[1], argv[i+1]);
-        argv[i][0] = argv[i+1][0] = 0;
+        LogScreenf("Setting des buffer input file to %s\n",Argv[i+1]);
+        strcpy(in_buffer_file[1], Argv[i+1]);
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp(argv[i], "-out" ) == 0)
+      else if ( strcmp(Argv[i], "-out" ) == 0)
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting rc5 buffer output file to %s\n",argv[i+1]);
-        strcpy(out_buffer_file[0], argv[i+1]);
-        argv[i][0] = argv[i+1][0] = 0;
+        LogScreenf("Setting rc5 buffer output file to %s\n",Argv[i+1]);
+        strcpy(out_buffer_file[0], Argv[i+1]);
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp(argv[i], "-out2" ) == 0)
+      else if ( strcmp(Argv[i], "-out2" ) == 0)
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting des buffer output file to %s\n",argv[i+1]);
-        strcpy(out_buffer_file[1], argv[i+1]);
-        argv[i][0] = argv[i+1][0] = 0;
+        LogScreenf("Setting des buffer output file to %s\n",Argv[i+1]);
+        strcpy(out_buffer_file[1], Argv[i+1]);
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-a" ) == 0 ) // Override the keyserver name
+      else if ( strcmp( Argv[i], "-a" ) == 0 ) // Override the keyserver name
       {
-        LogScreenf("Setting keyserver to %s\n",argv[i+1]);
-        strcpy( keyproxy, argv[i+1] );
+        LogScreenf("Setting keyserver to %s\n",Argv[i+1]);
+        strcpy( keyproxy, Argv[i+1] );
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-p" ) == 0 ) // Override the keyserver port
+      else if ( strcmp( Argv[i], "-p" ) == 0 ) // Override the keyserver port
       {
-        LogScreenf("Setting keyserver port to %s\n",argv[i+1]);
-        keyport = (s32) atoi(argv[i+1]);
+        LogScreenf("Setting keyserver port to %s\n",Argv[i+1]);
+        keyport = (s32) atoi(Argv[i+1]);
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-ha" ) == 0 ) // Override the http proxy name
+      else if ( strcmp( Argv[i], "-ha" ) == 0 ) // Override the http proxy name
       {
-        LogScreenf("Setting http proxy to %s\n",argv[i+1]);
-        strcpy( httpproxy, argv[i+1] );
+        LogScreenf("Setting http proxy to %s\n",Argv[i+1]);
+        strcpy( httpproxy, Argv[i+1] );
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-hp" ) == 0 ) // Override the http proxy port
+      else if ( strcmp( Argv[i], "-hp" ) == 0 ) // Override the http proxy port
       {
-        LogScreenf("Setting http proxy port to %s\n",argv[i+1]);
-        httpport = (s32) atoi(argv[i+1]);
+        LogScreenf("Setting http proxy port to %s\n",Argv[i+1]);
+        httpport = (s32) atoi(Argv[i+1]);
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-l" ) == 0 ) // Override the log file name
+      else if ( strcmp( Argv[i], "-l" ) == 0 ) // Override the log file name
       {
-        LogScreenf("Setting log file to %s\n",argv[i+1]);
-        strcpy( logname, argv[i+1] );
+        LogScreenf("Setting log file to %s\n",Argv[i+1]);
+        strcpy( logname, Argv[i+1] );
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-smtplen" ) == 0 ) // Override the mail message length
+      else if ( strcmp( Argv[i], "-smtplen" ) == 0 ) // Override the mail message length
       {
-        LogScreenf("Setting Mail message length to %s\n",argv[i+1]);
-        messagelen = (s32) atoi(argv[i+1]);
+        LogScreenf("Setting Mail message length to %s\n",Argv[i+1]);
+        messagelen = (s32) atoi(Argv[i+1]);
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-smtpport" ) == 0 ) // Override the smtp port for mailing
+      else if ( strcmp( Argv[i], "-smtpport" ) == 0 ) // Override the smtp port for mailing
       {
-        LogScreenf("Setting smtp port to %s\n",argv[i+1]);
-        smtpport = (s32) atoi(argv[i+1]);
+        LogScreenf("Setting smtp port to %s\n",Argv[i+1]);
+        smtpport = (s32) atoi(Argv[i+1]);
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-smtpsrvr" ) == 0 ) // Override the smtp server name
+      else if ( strcmp( Argv[i], "-smtpsrvr" ) == 0 ) // Override the smtp server name
       {
-        LogScreenf("Setting smtp server to %s\n",argv[i+1]);
-        strcpy(smtpsrvr, argv[i+1]);
+        LogScreenf("Setting smtp server to %s\n",Argv[i+1]);
+        strcpy(smtpsrvr, Argv[i+1]);
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-smtpfrom" ) == 0 ) // Override the smtp source id
+      else if ( strcmp( Argv[i], "-smtpfrom" ) == 0 ) // Override the smtp source id
       {
-        LogScreenf("Setting smtp 'from' address to %s\n",argv[i+1]);
-        strcpy(smtpfrom, argv[i+1]);
+        LogScreenf("Setting smtp 'from' address to %s\n",Argv[i+1]);
+        strcpy(smtpfrom, Argv[i+1]);
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-smtpdest" ) == 0 ) // Override the smtp destination id
+      else if ( strcmp( Argv[i], "-smtpdest" ) == 0 ) // Override the smtp destination id
       {
-        LogScreenf("Setting smtp 'To' address to %s\n",argv[i+1]);
-        strcpy(smtpdest, argv[i+1]);
+        LogScreenf("Setting smtp 'To' address to %s\n",Argv[i+1]);
+        strcpy(smtpdest, Argv[i+1]);
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-nettimeout" ) == 0 ) // Change network timeout
+      else if ( strcmp( Argv[i], "-nettimeout" ) == 0 ) // Change network timeout
       {
-        LogScreenf("Setting network timeout to %s\n",argv[i+1]);
-        nettimeout = (s32) min(300,max(30,atoi(argv[i+1])));
+        LogScreenf("Setting network timeout to %s\n",Argv[i+1]);
+        nettimeout = (s32) min(300,max(30,atoi(Argv[i+1])));
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-exitfilechecktime" ) == 0 ) // Change network timeout
+      else if ( strcmp( Argv[i], "-exitfilechecktime" ) == 0 ) // Change network timeout
       {
-        exitfilechecktime=max(1,atoi(argv[i+1]));
-        argv[i][0] = argv[i+1][0] = 0;
+        exitfilechecktime=max(1,atoi(Argv[i+1]));
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp(argv[i], "-c" ) == 0)      // set cpu type
+      else if ( strcmp(Argv[i], "-c" ) == 0)      // set cpu type
       {
-        cputype = (s32) atoi( argv[i+1] );
+        cputype = (s32) atoi( Argv[i+1] );
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-e" ) == 0 ) // Override the email id
+      else if ( strcmp( Argv[i], "-e" ) == 0 ) // Override the email id
       {
-        LogScreenf("Setting email for notifications to %s\n",argv[i+1]);
-        strcpy( id, argv[i+1] );
+        LogScreenf("Setting email for notifications to %s\n",Argv[i+1]);
+        strcpy( id, Argv[i+1] );
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-nice" ) == 0 ) // Nice level
+      else if ( strcmp( Argv[i], "-nice" ) == 0 ) // Nice level
       {
-        LogScreenf("Setting nice option to %s\n",argv[i+1]);
-        niceness = (s32) atoi( argv[i+1] );
+        LogScreenf("Setting nice option to %s\n",Argv[i+1]);
+        niceness = (s32) atoi( Argv[i+1] );
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-h" ) == 0 ) // Hours to run
+      else if ( strcmp( Argv[i], "-h" ) == 0 ) // Hours to run
       {
-        LogScreenf("Setting time limit to %s hours\n",argv[i+1]);
-        minutes = (s32) (60. * atol( argv[i+1] ));
-        strncpy(hours,argv[i+1],sizeof(hours));
+        LogScreenf("Setting time limit to %s hours\n",Argv[i+1]);
+        minutes = (s32) (60. * atol( Argv[i+1] ));
+        strncpy(hours,Argv[i+1],sizeof(hours));
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-n" ) == 0 ) // Blocks to complete in a run
+      else if ( strcmp( Argv[i], "-n" ) == 0 ) // Blocks to complete in a run
       {
-        blockcount = min(1, (s32) atoi( argv[i+1] ));
+        blockcount = min(1, (s32) atoi( Argv[i+1] ));
         LogScreenf("Setting block completion limit to %d\n",blockcount);
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp( argv[i], "-until" ) == 0 ) // Exit time
+      else if ( strcmp( Argv[i], "-until" ) == 0 ) // Exit time
       {
         time_t timenow = time( NULL );
         struct tm *gmt = localtime(&timenow );
-        minutes = atoi( argv[i+1] );
+        minutes = atoi( Argv[i+1] );
         minutes = (int)( ( ((int)(minutes/100))*60 + (minutes%100) ) - ((60. * gmt->tm_hour) + gmt->tm_min));
         if (minutes<0) minutes += 24*60;
         if (minutes<0) minutes = 0;
@@ -2514,67 +2514,67 @@ void Client::ParseCommandlineOptions(int argc, char *argv[], s32 &inimissing)
         sprintf(hours,"%f",minutes/60.);
   #endif
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
   #if defined(MULTITHREAD)
-      else if ( strcmp( argv[i], "-numcpu" ) == 0 ) // Override the number of cpus
+      else if ( strcmp( Argv[i], "-numcpu" ) == 0 ) // Override the number of cpus
       {
-        LogScreenf("Configuring for %s CPUs\n",argv[i+1]);
-        numcpu = (s32) atoi(argv[i+1]);
+        LogScreenf("Configuring for %s CPUs\n",Argv[i+1]);
+        numcpu = (s32) atoi(Argv[i+1]);
         inimissing=0; // Don't complain if the inifile is missing
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
   #endif
-      else if ( strcmp(argv[i], "-ckpoint" ) == 0)
+      else if ( strcmp(Argv[i], "-ckpoint" ) == 0)
       {
-        LogScreenf("Setting rc5 checkpoint file to %s\n",argv[i+1]);
-        strcpy(checkpoint_file[0], argv[i+1]);
-        argv[i][0] = argv[i+1][0] = 0;
+        LogScreenf("Setting rc5 checkpoint file to %s\n",Argv[i+1]);
+        strcpy(checkpoint_file[0], Argv[i+1]);
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp(argv[i], "-ckpoint2" ) == 0)
+      else if ( strcmp(Argv[i], "-ckpoint2" ) == 0)
       {
-        LogScreenf("Setting des checkpoint file to %s\n",argv[i+1]);
-        strcpy(checkpoint_file[1], argv[i+1]);
-        argv[i][0] = argv[i+1][0] = 0;
+        LogScreenf("Setting des checkpoint file to %s\n",Argv[i+1]);
+        strcpy(checkpoint_file[1], Argv[i+1]);
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp(argv[i], "-cktime" ) == 0)
+      else if ( strcmp(Argv[i], "-cktime" ) == 0)
       {
-        LogScreenf("Setting checkpointing to %s minutes\n",argv[i+1]);
-        checkpoint_min=(s32) atoi(argv[i+1]);
+        LogScreenf("Setting checkpointing to %s minutes\n",Argv[i+1]);
+        checkpoint_min=(s32) atoi(Argv[i+1]);
         checkpoint_min=max(2, checkpoint_min);
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp(argv[i], "-pausefile" ) == 0)
+      else if ( strcmp(Argv[i], "-pausefile" ) == 0)
       {
-        LogScreenf("Setting pause file to %s\n",argv[i+1]);
-        strcpy(pausefile, argv[i+1]);
-        argv[i][0] = argv[i+1][0] = 0;
+        LogScreenf("Setting pause file to %s\n",Argv[i+1]);
+        strcpy(pausefile, Argv[i+1]);
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp(argv[i], "-blsize" ) == 0)
+      else if ( strcmp(Argv[i], "-blsize" ) == 0)
       {
-        preferred_blocksize = (s32) atoi(argv[i+1]);
+        preferred_blocksize = (s32) atoi(Argv[i+1]);
         if (preferred_blocksize < 28) preferred_blocksize = 28;
         if (preferred_blocksize > 31) preferred_blocksize = 31;
         LogScreenf("Setting preferred blocksize to 2^%d\n",preferred_blocksize);
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp(argv[i], "-prefer" ) == 0)
+      else if ( strcmp(Argv[i], "-prefer" ) == 0)
       {
-        preferred_contest_id = (s32) atoi(argv[i+1]) - 1;
+        preferred_contest_id = (s32) atoi(Argv[i+1]) - 1;
         if (preferred_contest_id == 0) {
           LogScreen("Setting preferred contest to RC5\n");
         } else {
           LogScreen("Setting preferred contest to DES\n");
           preferred_contest_id = 1;
         }
-        argv[i][0] = argv[i+1][0] = 0;
+        Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
     }
@@ -3014,3 +3014,4 @@ bool Client::CheckForcedKeyport(void)
 }
 
 // --------------------------------------------------------------------------
+
