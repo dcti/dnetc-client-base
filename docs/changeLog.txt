@@ -1,5 +1,8 @@
 Dual mode (RC5DES) clients
---------------------------
+==========================
+
+2.7100
+------
 v2.7100.418 98.08.19 RC5 MMX cores are now in place. 50% speed
                      improvement on Pentium MMX processors.
 v2.7100.418 98.08.19 Complete rewrite of logging code; blocks now
@@ -45,6 +48,10 @@ v2.7100.412 98.06.28 Invalid cpu type value now ignored.
 v2.7100.412 98.06.28 Buffer path problem and buffer truncation issue addressed
 v2.7100.412 98.06.27 GUI autolaunches in minimized state correctly now
 v2.7100.412 98.06.26 Finally reached 2.7100!
+
+
+2.7000
+------
 v2.7025.410 98.06.24 New ARM DES cores from Steve Lee
 v2.7025.410 98.06.23 Fixed various things in the help pager
 v2.7024.409 98.06.14 Finalized lurk modes for OS/2
@@ -90,7 +97,6 @@ v2.7019.402 98.04.13 Fixed Socks4/Socks5 support
 v2.7019.402 98.04.13 Arm/StrongArm fixes
 v2.7019.402 98.04.13 Added aflags to open call in buffwork/sh_fopen
 v2.7019.402 98.04.03 Added SOCKS5 support (with username/password and no auth)
-
 v2.7019.402 98.04.02 Fixed SOCKS4 support which wasn't working.
 v2.7019.402 98.04.02 Use only correct port with well-known keyserver RRs.
 v2.7018.401 98.04.02 Client::Run returns 'fuller' return codes
