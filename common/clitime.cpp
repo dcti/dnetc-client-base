@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.47 2001/01/01 05:09:19 michmarc Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.48 2001/01/11 16:41:25 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -414,7 +414,7 @@ int CliGetMonotonicClock( struct timeval *tv )
     }
     #elif (CLIENT_OS == OS_WIN32)
     {
-      #if 1
+      #if 0 /* too many failures to be useful */
       static int using_qff = -1;
       if (using_qff != 0)
       {
