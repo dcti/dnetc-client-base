@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.32 1999/12/23 21:45:25 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.33 1999/12/31 20:25:43 michmarc Exp $"; }
 
 
 #include "cputypes.h"
@@ -85,7 +85,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ev3 and ev4 optimized",
       "ev5 and ev6 optimized",
       #elif (CLIENT_OS == OS_WIN32)
-      "michmarch series A",  /* :) */
+      "Marcelais",
       #else
       "axp bmeyer",
       #endif
