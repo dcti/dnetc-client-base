@@ -379,7 +379,7 @@ static int ogr_cycle(void *state, int *pnodes)
     if (State->LOGGING) dump_ruler(State, depth);
     if (depth <= State->half_depth2) {
       if (depth <= State->half_depth) {
-        dump_ruler(State, depth);
+        //dump_ruler(State, depth);
         if (nodes >= nodeslimit) {
           break;
         }
