@@ -73,17 +73,26 @@
 #define DESII2_PLAINLO 0x756e6b6e
 #define DESII2_PLAINHI 0x54686520
 
-// DES-II-3: (this is fake data here since it is not yet known)
-#define DESII3_CYPHERLO 0
-#define DESII3_CYPHERHI 0
-#define DESII3_IVLO 0
-#define DESII3_IVHI 0
-#define DESII3_CYPHERLO 0
-#define DESII3_CYPHERHI 0
-#define DESII3_PLAINLO 0x756e6b6e
-#define DESII3_PLAINHI 0x54686520
+// DES Challenge III:
+// Identifier: DES-Challenge-III
+// Cipher: DES
+// Start: January 18, 1999 9:00 AM PST
+// IV: da 4b be f1 6b 6e 98 3d
+// Ciphertext:
+//   bd 0d de 91 99 60 b8 8a 47 9c b1 5c 23 7b 81 18 99 05
+//   45 bc de 82 01 ab 53 4d 6f 1c b4 30 63 3c ee cd 96 2e
+//   07 c6 e6 95 99 9c 96 46 5a 95 70 02 02 70 98 bd 41 c2
+//   88 a9 f0 2f 8b e5 48 20 d2 a8 a0 6b bf 93 de 89 f6 e2
+//   52 fd 8a 25 eb d0 7d 96 83 ee a4 2d c8 8d 1b 71
+#define DESIII_CYPHERHI 0xbd0dde91
+#define DESIII_CYPHERLO 0x9960b88a
+#define DESIII_IVHI 0xda4bbef1
+#define DESIII_IVLO 0x6b6e983d
+#define DESIII_PLAINHI 0x54686520
+#define DESIII_PLAINLO 0x756e6b6e
 
-// Signals used to indiciate contest closure.
+
+// distributed.net signals used to indiciate contest closure.
 #define RC5CLOSEDCODE 0x1337F00DL
 #define DESCLOSEDCODE 0xBEEFF00DL
 
