@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.237 1999/11/01 19:58:36 patrick Exp $
+# @(#)$Id: configure,v 1.238 1999/11/01 20:32:30 patrick Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -882,18 +882,14 @@ case "$1" in
     *ppc-gcc-aix32)	# AIX 3.2.x gcc [patrick] <patrick@mail4you.de>
 	DELETECHARS="'/.\$\-'"
 	TARGET_CCFLAGS="$OPTS_GCC_PPC -DBIT_32 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-		rc5/ppc/crunch_allitnil_552.ppc.s \
-		rc5/ppc/crunch_lintilla_296.ppc.s"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $RC5PPC_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *aix4-ppc-egcs)			# [patrick] <patrick@mail4you.de>
         DELETECHARS="'/.\$\-'"
         TARGET_CCFLAGS="$OPTS_EGCS -D_AIX -mcpu=ppc601 -DASM_PPC -DBIT_32 -DMEGGS -DKWAN"
-        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2\
-			rc5/ppc/crunch_allitnil_552.ppc.s \
-                        rc5/ppc/crunch_lintilla_296.ppc.s"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $RC5PPC_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         ;;
 
@@ -925,10 +921,8 @@ case "$1" in
 	AIXALL=TRUE
         TARGET_CCFLAGS="$OPTS_EGCS -mcpu=common -D_AIX -D_AIXALL \
                         -DBIT_32 -DMEGGS -DKWAN"
-        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-                rc5/ansi/rc5ansi_2-rg.cpp \
-                rc5/ppc/crunch_allitnil_552.ppc.s \
-                rc5/ppc/crunch_lintilla_296.ppc.s"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $RC5PPC_SRCS \
+                rc5/ansi/rc5ansi_2-rg.cpp "
         AIXPPC601FLAGS="$OPTS_EGCS_PPC601 -D_AIX -DBIT32 -DMEGGS -DKWAN"
         AIXPPC604FLAGS="$OPTS_EGCS_PPC601 -D_AIX -DBIT32 -DMEGGS -DKWAN"
         AIXPOWERFLAGS="$OPTS_EGCS_POWER -D_AIX -DBIT32 -DMEGGS -DKWAN"
