@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.64 2000/10/31 03:07:30 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.65 2000/11/02 18:29:45 cyp Exp $"; }
 
 //#define TRACE
 
@@ -383,8 +383,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           const char *pscmd = NULL;
           #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
               (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_LINUX) || \
-              (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOSX) || \
-              (CLIENT_OS == OS_RHAPSODY)
+              (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOSX)
           pscmd = "ps ax|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
           //fbsd: "ps ax -o pid -o command 2>/dev/null";  /* bsd + -o ext */
           //lnux: "ps ax --format pid,comm 2>/dev/null";  /* bsd + gnu -o */

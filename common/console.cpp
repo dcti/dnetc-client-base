@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.46 2000/10/25 00:57:22 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.47 2000/11/02 18:29:46 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -36,13 +36,12 @@ return "@(#)$Id: console.cpp,v 1.48.2.46 2000/10/25 00:57:22 cyp Exp $"; }
   || (CLIENT_OS==OS_FREEBSD) || ((CLIENT_OS==OS_OS2) && defined(__EMX__)) \
   || (CLIENT_OS==OS_AIX) || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==BSDOS) \
   || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_HPUX) || (CLIENT_OS==OS_SUNOS) \
-  || (CLIENT_OS==OS_NTO2) || (CLIENT_OS==OS_MACOSX) || (CLIENT_OS==OS_RHAPSODY))
+  || ((CLIENT_OS==OS_MACOSX) && !defined(__RHAPSODY__)) || (CLIENT_OS==OS_NTO2))
 #include <termios.h>
 #define HAVE_TERMIOS
 #endif
 #if defined(__unix__) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_OS390) || \
-                  (CLIENT_OS == OS_NEXTSTEP) || (CLIENT_OS == OS_AMIGAOS) || \
-                  (CLIENT_OS == OS_RHAPSODY)
+                  (CLIENT_OS == OS_NEXTSTEP) || (CLIENT_OS == OS_AMIGAOS)
 #define HAVE_ANSICOMPLIANTTERM /* tty understands basic ansi sequences */
 #endif
 #if defined(__unix__)
@@ -675,8 +674,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
         (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_IRIX) || \
         (CLIENT_OS == OS_HPUX)  || (CLIENT_OS == OS_AIX) || \
         (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_NEXTSTEP) || \
-        (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_MACOSX) || \
-        (CLIENT_OS == OS_RHAPSODY)
+        (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_MACOSX)
     /* good for any non-sco flavour? */
     struct winsize winsz;
     winsz.ws_col = winsz.ws_row = 0;

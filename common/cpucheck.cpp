@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.58 2000/10/28 16:22:52 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.59 2000/11/02 18:29:46 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -26,7 +26,7 @@ return "@(#)$Id: cpucheck.cpp,v 1.79.2.58 2000/10/28 16:22:52 cyp Exp $"; }
 #  include <Multiprocessing.h>
 #elif (CLIENT_OS == OS_AIX)
 #  include <sys/systemcfg.h>
-#elif (CLIENT_OS == OS_MACOSX)
+#elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
 #  include <mach/mach.h>
 #endif
 
@@ -64,7 +64,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       //if (sysctlbyname("hw.ncpu", &ncpus, &len, NULL, 0 ) == 0)
         cpucount = ncpus;
     }
-    #elif (CLIENT_OS == OS_MACOSX)
+    #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
     {
       unsigned int    count;
       struct host_basic_info  info;
@@ -437,7 +437,7 @@ static long __GetRawProcessorID(const char **cpuname)
       }
     }
   }
-  #elif (CLIENT_OS == OS_MACOSX)
+  #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
   if (detectedtype == -2L)
   {
     kern_return_t   kr;

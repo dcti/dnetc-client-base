@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.36 2000/09/21 18:07:36 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.37 2000/11/02 18:29:46 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -61,7 +61,7 @@
 /* #define OS_UNUSED_5  24 */ /* never used. was mach10 */
 #define OS_AIX          25
 /* #define OS_UNUSED_6  26 */ /* never used. was AUX */
-#define OS_RHAPSODY     27 /* MACH 2.x based and AltiVec unsafe variants of MacOSX (MXS and others) */
+#define OS_MACOSX       27 /* was 'OS_RHAPSODY'. (macosx was 43) */
 #define OS_AMIGAOS      28
 #define OS_OPENBSD      29
 #define OS_NETWARE      30
@@ -77,7 +77,6 @@
 /* #define OS_UNUSED4   40 */ /* never used. was os_maspar */
 #define OS_WIN16        41 /* windows 3.1, 3.11, wfw (was 16bit, now 32bit) */
 #define OS_DESCRACKER   42 /* eff des cracker */
-#define OS_MACOSX       43 /* MACH 3.x based versions of Mac OS X (min. Mac OS X DP4 or Darwin 1.0) */
 
 /* ----------------------------------------------------------------- */
 
@@ -339,10 +338,16 @@
   #endif
 #elif defined(__APPLE__)
    #define CLIENT_OS_NAME  "Mac OS X"
+   #define CLIENT_OS OS_MACOSX
+   #ifndef __unix__
+   #define __unix__
+   #endif
    #if (__APPLE_CC__ < 795)
-     #define CLIENT_OS OS_RHAPSODY
-   #else
-     #define CLIENT_OS OS_MACOSX
+     #define __RHAPSODY__
+     /* MACH 2.x based and AltiVec unsafe variants of MacOSX (MXS and others) */
+   #elif defined(__RHAPSODY__)
+     #undef __RHAPSODY__
+     /* MACH 3.x based versions of Mac OS X (min. Mac OS X DP4 or Darwin 1.0) */
    #endif
    #if defined(__ppc__)
      #define CLIENT_CPU CPU_POWERPC

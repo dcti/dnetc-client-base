@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.77 2000/10/28 14:47:31 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.78 2000/11/02 18:29:47 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -932,7 +932,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       extern "C" u32 rc5_unit_func_allitnil_compat( RC5UnitWork *, u32 );
       extern "C" u32 rc5_unit_func_lintilla_compat( RC5UnitWork *, u32 );
       extern "C" u32 rc5_unit_func_lintilla_604_compat( RC5UnitWork *, u32 );
-      #if (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_MACOSX)
+      #if (CLIENT_OS == OS_MACOS) || \
+          ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__))
         extern "C" u32 rc5_unit_func_vec_compat( RC5UnitWork *, u32 );
       #else /* MacOS currently is the only one to support altivec cores */
         #define rc5_unit_func_vec_compat  rc5_unit_func_lintilla_compat

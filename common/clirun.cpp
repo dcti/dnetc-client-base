@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.72 2000/10/31 03:07:29 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.73 2000/11/02 18:29:44 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -161,9 +161,11 @@ static void __cruncher_yield__(int is_non_preemptive_cruncher)
     #endif
       macosSmartYield();
   #elif (CLIENT_OS == OS_MACOSX)
-    sched_yield();
-  #elif (CLIENT_OS == OS_RHAPSODY)
+    #if defined(__RHAPSODY__)
     NonPolledUSleep( 0 ); /* yield */
+    #else
+    sched_yield();
+    #endif
   #elif (CLIENT_OS == OS_BEOS)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_OPENBSD)

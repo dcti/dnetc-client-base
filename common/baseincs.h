@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.43 2000/10/23 03:10:56 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.44 2000/11/02 18:29:44 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -240,7 +240,7 @@
   #include <unistd.h>
   #define fileno(f) ((f)->handle)
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
-#elif (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_RHAPSODY)
+#elif (CLIENT_OS == OS_MACOSX)
   //rhapsody is mach 2.x based and altivec unsafe
   #include <sys/time.h>
   #include <sys/sysctl.h>
