@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.7  1998/10/02 17:06:17  chrisb
+// removed a #define DEBUG I left in by mistake
+//
 // Revision 1.6  1998/10/02 16:59:01  chrisb
 // lots of fiddling in a vain attempt to get the NON_PREEMPTIVE_OS_PROFILING to be a bit sane under RISC OS
 //
@@ -27,7 +30,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.6 1998/10/02 16:59:01 chrisb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.7 1998/10/02 17:06:17 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -341,7 +344,6 @@ unsigned long do_ts_profiling( unsigned long tslice, int contest, int threadnum 
       perc = (((unsigned long)(TIMER_GRANULARITY))*100) / usecs;
     if (perc)  /* yield count in one hundred timer units */
       hgrain_run_count = (runcounters.yield_run_count * 10000) / perc; 
-#define DEBUG
 #ifdef DEBUG
 printf("%d. oldslice = %lu, y_real = %lu/%lu, y_adj (%lu%%) = %lu/%lu ",
           threadnum, tslice_table[contest], runcounters.yield_run_count, usecs,
