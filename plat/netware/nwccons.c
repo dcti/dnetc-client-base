@@ -9,7 +9,7 @@
  *   int nwCliKbHit(void);
  *   int nwCliGetCh(void);
  *
- * $Id: nwccons.c,v 1.1.2.1 2001/01/21 15:10:29 cyp Exp $
+ * $Id: nwccons.c,v 1.1.2.2 2001/04/12 15:12:37 cyp Exp $
 */
 
 #include <stdio.h>    /* printf(), EOF */
@@ -78,6 +78,8 @@ static int __conCmdHandlerInitDeinit( int doWhat,LONG screenID, char *cmdline)
   static struct 
   { int cmdnamelen;
     char cmdname[64];
+    int we_posted_shutdown;
+    int we_posted_restart;
     struct commandParserStructure cmdparserstruct;
     void (*_RegisterConsoleCommand)( struct commandParserStructure * );
     LONG (*_UnRegisterConsoleCommand)( struct commandParserStructure * );
@@ -129,6 +131,11 @@ static int __conCmdHandlerInitDeinit( int doWhat,LONG screenID, char *cmdline)
     }
     if (concmdhandler_initialized == 0)
     {
+      if (concmdhandler.we_posted_restart)
+      {
+        ConsolePrintf( "\r%s: restarted.\r\n",concmdhandler.cmdname );
+        concmdhandler.we_posted_restart = 0;
+      }
       (*concmdhandler._RegisterConsoleCommand)
          ( &(concmdhandler.cmdparserstruct) );
       concmdhandler_initialized = 1;
@@ -142,6 +149,12 @@ static int __conCmdHandlerInitDeinit( int doWhat,LONG screenID, char *cmdline)
       (*concmdhandler._UnRegisterConsoleCommand)
          ( &(concmdhandler.cmdparserstruct) );
       concmdhandler_initialized = 0;
+      if (concmdhandler.we_posted_shutdown)
+      {
+        OutputToScreen( screenID, "\r%s: shutdown complete.\r\n",
+                        concmdhandler.cmdname );
+        concmdhandler.we_posted_shutdown = 0;
+      }
       return 0;
     }
   }
@@ -211,26 +224,41 @@ static int __conCmdHandlerInitDeinit( int doWhat,LONG screenID, char *cmdline)
           static struct   { const char *signame, *sigalias; int key; } 
           signame2key[]={ { "hup",  "restart",  K_CTRL_SIGHUP  },
                           { "tstp", "pause",    K_CTRL_SIGTSTP },
+                          { "cont", "resume",   K_CTRL_SIGCONT },
                           { "cont", "unpause",  K_CTRL_SIGCONT },
                           { "kill", "shutdown", K_CTRL_SIGINT  }  };
           for (len=0;len<(sizeof(signame2key)/sizeof(signame2key[0]));len++)
           {
-            if ( strcmp( keyword, signame2key[len].signame ) == 0 ||
-                 strcmp( keyword, signame2key[len].sigalias ) == 0 )
+            /* ARCSERVE pre/post actions uppercase the -xxx switch */ 
+            if ( strcmpi( keyword, signame2key[len].signame ) == 0 ||
+                 strcmpi( keyword, signame2key[len].sigalias ) == 0 )
             {
               nwconstatics.cmdlinesig = signame2key[len].key;
               if (!quietly)
               {
-                OutputToScreen( screenID, "%s: signal acknowledged. "
-                "Process will %s shortly...\r\n", concmdhandler.cmdname,
-                signame2key[len].sigalias );
+                if (signame2key[len].key == K_CTRL_SIGINT)
+                  concmdhandler.we_posted_shutdown = 1;
+                else if (signame2key[len].key == K_CTRL_SIGHUP)
+                  concmdhandler.we_posted_restart = 1;
+                else
+                {
+                  quietly = 1;
+                  OutputToScreen( screenID, "\r%s: -%s acknowledged.\r\n",
+                                  concmdhandler.cmdname, keyword );
+                }
+                if (!quietly)
+                {
+                  OutputToScreen( screenID, "\r%s: signal acknowledged. "
+                    "Process will %s shortly...\r\n", concmdhandler.cmdname,
+                    signame2key[len].sigalias );
+                }
               }
               return 0;
             }
           }
           if (!quietly && GetFileServerMajorVersionNumber() < 5)
           {
-            OutputToScreen( screenID, "%s: Unrecognized keyword '%s%s'.\r\n",
+            OutputToScreen( screenID, "\r%s: Unrecognized keyword '%s%s'.\r\n",
                 concmdhandler.cmdname, hyphens, keyword );
             return 0;
           }
