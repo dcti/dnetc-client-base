@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.97 2001/01/28 14:10:05 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.98 2001/02/03 18:17:59 cyp Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -554,6 +554,7 @@ static inline int __InternalLoadState( InternalProblem *thisprob,
   thisprob->pub_data.contest = contestid;
   thisprob->pub_data.tslice = _iterations;
   thisprob->pub_data.was_reset = 0;
+  thisprob->pub_data.was_truncated = 0;
   thisprob->pub_data.is_random = genned_random;
   thisprob->pub_data.is_benchmark = genned_benchmark;
   
@@ -584,117 +585,108 @@ static inline int __InternalLoadState( InternalProblem *thisprob,
 
   //----------------------------------------------------------------
 
-  switch (thisprob->pub_data.contest)
+  if (thisprob->pub_data.contest == RC5)
   {
-    case RC5:
     if (!thisprob->pub_data.is_random &&
        (work->crypto.iterations.hi || work->crypto.iterations.lo >= (1L<<28)))
     {
       last_rc5_prefix = (int)(work->crypto.key.hi >> 24);
     }    
-    /* fallthrough */
-    #if defined(HAVE_DES_CORES)
-    case DES:
-    #endif
-    #if defined(HAVE_CSC_CORES)
-    case CSC: // HAVE_CSC_CORES
-    #endif
+  }
+  if (thisprob->pub_data.contest == RC5
+   || thisprob->pub_data.contest == DES
+   || thisprob->pub_data.contest == CSC)
+  {
+    // copy over the state information
+    thisprob->priv_data.contestwork.crypto.key.hi = ( work->crypto.key.hi );
+    thisprob->priv_data.contestwork.crypto.key.lo = ( work->crypto.key.lo );
+    thisprob->priv_data.contestwork.crypto.iv.hi = ( work->crypto.iv.hi );
+    thisprob->priv_data.contestwork.crypto.iv.lo = ( work->crypto.iv.lo );
+    thisprob->priv_data.contestwork.crypto.plain.hi = ( work->crypto.plain.hi );
+    thisprob->priv_data.contestwork.crypto.plain.lo = ( work->crypto.plain.lo );
+    thisprob->priv_data.contestwork.crypto.cypher.hi = ( work->crypto.cypher.hi );
+    thisprob->priv_data.contestwork.crypto.cypher.lo = ( work->crypto.cypher.lo );
+    thisprob->priv_data.contestwork.crypto.keysdone.hi = ( work->crypto.keysdone.hi );
+    thisprob->priv_data.contestwork.crypto.keysdone.lo = ( work->crypto.keysdone.lo );
+    thisprob->priv_data.contestwork.crypto.iterations.hi = ( work->crypto.iterations.hi );
+    thisprob->priv_data.contestwork.crypto.iterations.lo = ( work->crypto.iterations.lo );
+
+    if (thisprob->priv_data.contestwork.crypto.keysdone.lo || thisprob->priv_data.contestwork.crypto.keysdone.hi)
     {
-      // copy over the state information
-      thisprob->priv_data.contestwork.crypto.key.hi = ( work->crypto.key.hi );
-      thisprob->priv_data.contestwork.crypto.key.lo = ( work->crypto.key.lo );
-      thisprob->priv_data.contestwork.crypto.iv.hi = ( work->crypto.iv.hi );
-      thisprob->priv_data.contestwork.crypto.iv.lo = ( work->crypto.iv.lo );
-      thisprob->priv_data.contestwork.crypto.plain.hi = ( work->crypto.plain.hi );
-      thisprob->priv_data.contestwork.crypto.plain.lo = ( work->crypto.plain.lo );
-      thisprob->priv_data.contestwork.crypto.cypher.hi = ( work->crypto.cypher.hi );
-      thisprob->priv_data.contestwork.crypto.cypher.lo = ( work->crypto.cypher.lo );
-      thisprob->priv_data.contestwork.crypto.keysdone.hi = ( work->crypto.keysdone.hi );
-      thisprob->priv_data.contestwork.crypto.keysdone.lo = ( work->crypto.keysdone.lo );
-      thisprob->priv_data.contestwork.crypto.iterations.hi = ( work->crypto.iterations.hi );
-      thisprob->priv_data.contestwork.crypto.iterations.lo = ( work->crypto.iterations.lo );
-
-      if (thisprob->priv_data.contestwork.crypto.keysdone.lo || thisprob->priv_data.contestwork.crypto.keysdone.hi)
+      if (thisprob->pub_data.client_cpu != expected_cputype || thisprob->pub_data.coresel != expected_corenum ||
+          CLIENT_OS != expected_os || CLIENT_BUILD_FRAC!=expected_buildfrac)
       {
-        if (thisprob->pub_data.client_cpu != expected_cputype || thisprob->pub_data.coresel != expected_corenum ||
-            CLIENT_OS != expected_os || CLIENT_BUILD_FRAC!=expected_buildfrac)
-        {
-          thisprob->priv_data.contestwork.crypto.keysdone.lo = thisprob->priv_data.contestwork.crypto.keysdone.hi = 0;
-          thisprob->pub_data.was_reset = 1;
-        }
+        thisprob->priv_data.contestwork.crypto.keysdone.lo = thisprob->priv_data.contestwork.crypto.keysdone.hi = 0;
+        thisprob->pub_data.was_reset = 1;
       }
-
-      //determine starting key number. accounts for carryover & highend of keysdone
-      thisprob->priv_data.rc5unitwork.L0.hi = thisprob->priv_data.contestwork.crypto.key.hi + thisprob->priv_data.contestwork.crypto.keysdone.hi +
-         ((((thisprob->priv_data.contestwork.crypto.key.lo & 0xffff) + (thisprob->priv_data.contestwork.crypto.keysdone.lo & 0xffff)) +
-           ((thisprob->priv_data.contestwork.crypto.key.lo >> 16) + (thisprob->priv_data.contestwork.crypto.keysdone.lo >> 16))) >> 16);
-      thisprob->priv_data.rc5unitwork.L0.lo = thisprob->priv_data.contestwork.crypto.key.lo + thisprob->priv_data.contestwork.crypto.keysdone.lo;
-      if (thisprob->pub_data.contest == RC5)
-        __SwitchRC5Format(&(thisprob->priv_data.rc5unitwork.L0.hi), &(thisprob->priv_data.rc5unitwork.L0.lo));
-      thisprob->priv_data.refL0.lo = thisprob->priv_data.rc5unitwork.L0.lo;
-      thisprob->priv_data.refL0.hi = thisprob->priv_data.rc5unitwork.L0.hi;
-
-      // set up the unitwork structure
-      thisprob->priv_data.rc5unitwork.plain.hi = thisprob->priv_data.contestwork.crypto.plain.hi ^ thisprob->priv_data.contestwork.crypto.iv.hi;
-      thisprob->priv_data.rc5unitwork.plain.lo = thisprob->priv_data.contestwork.crypto.plain.lo ^ thisprob->priv_data.contestwork.crypto.iv.lo;
-      thisprob->priv_data.rc5unitwork.cypher.hi = thisprob->priv_data.contestwork.crypto.cypher.hi;
-      thisprob->priv_data.rc5unitwork.cypher.lo = thisprob->priv_data.contestwork.crypto.cypher.lo;
-
-      thisprob->pub_data.startkeys.hi = thisprob->priv_data.contestwork.crypto.keysdone.hi;
-      thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.crypto.keysdone.lo;
-      thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
-      break;
     }
-    #if defined(HAVE_OGR_CORES)
-    case OGR:
-    {
-      int r;
-      thisprob->priv_data.contestwork.ogr = work->ogr;
-      if (thisprob->priv_data.contestwork.ogr.nodes.hi != 0 || thisprob->priv_data.contestwork.ogr.nodes.lo != 0)
-      {
-        if (thisprob->pub_data.client_cpu != expected_cputype || thisprob->pub_data.coresel != expected_corenum ||
-            CLIENT_OS != expected_os || CLIENT_BUILD_FRAC!=expected_buildfrac)
-        {
-          thisprob->pub_data.was_reset = 1;
-          thisprob->priv_data.contestwork.ogr.workstub.worklength = thisprob->priv_data.contestwork.ogr.workstub.stub.length;
-          thisprob->priv_data.contestwork.ogr.nodes.hi = thisprob->priv_data.contestwork.ogr.nodes.lo = 0;
-        }
-      }
-      //thisprob->pub_data.unit_func.ogr = [xxx_]ogr_get_dispatch_table(); was done by selcore
+    //determine starting key number. accounts for carryover & highend of keysdone
+    thisprob->priv_data.rc5unitwork.L0.hi = thisprob->priv_data.contestwork.crypto.key.hi + thisprob->priv_data.contestwork.crypto.keysdone.hi +
+       ((((thisprob->priv_data.contestwork.crypto.key.lo & 0xffff) + (thisprob->priv_data.contestwork.crypto.keysdone.lo & 0xffff)) +
+         ((thisprob->priv_data.contestwork.crypto.key.lo >> 16) + (thisprob->priv_data.contestwork.crypto.keysdone.lo >> 16))) >> 16);
+    thisprob->priv_data.rc5unitwork.L0.lo = thisprob->priv_data.contestwork.crypto.key.lo + thisprob->priv_data.contestwork.crypto.keysdone.lo;
+    if (thisprob->pub_data.contest == RC5)
+      __SwitchRC5Format(&(thisprob->priv_data.rc5unitwork.L0.hi), &(thisprob->priv_data.rc5unitwork.L0.lo));
+    thisprob->priv_data.refL0.lo = thisprob->priv_data.rc5unitwork.L0.lo;
+    thisprob->priv_data.refL0.hi = thisprob->priv_data.rc5unitwork.L0.hi;
+    // set up the unitwork structure
+    thisprob->priv_data.rc5unitwork.plain.hi = thisprob->priv_data.contestwork.crypto.plain.hi ^ thisprob->priv_data.contestwork.crypto.iv.hi;
+    thisprob->priv_data.rc5unitwork.plain.lo = thisprob->priv_data.contestwork.crypto.plain.lo ^ thisprob->priv_data.contestwork.crypto.iv.lo;
+    thisprob->priv_data.rc5unitwork.cypher.hi = thisprob->priv_data.contestwork.crypto.cypher.hi;
+    thisprob->priv_data.rc5unitwork.cypher.lo = thisprob->priv_data.contestwork.crypto.cypher.lo;
 
-      r = (thisprob->pub_data.unit_func.ogr)->init();
-      if (r == CORE_S_OK)
-        r = (thisprob->pub_data.unit_func.ogr)->create(&thisprob->priv_data.contestwork.ogr.workstub,
-                        sizeof(WorkStub), thisprob->priv_data.core_membuffer, MAX_MEM_REQUIRED_BY_CORE);
-      if (r != CORE_S_OK)
-      {
-        const char *msg = "Unknown error";
-        if      (r == CORE_E_MEMORY)  msg = "CORE_E_MEMORY: Insufficient memory";
-        else if (r == CORE_E_FORMAT)  msg = "CORE_E_FORMAT: Format or range error";
-        Log("OGR stub load failure: %s\n", msg );
-        return -1;
-      }
-      if (thisprob->priv_data.contestwork.ogr.workstub.worklength > (u32)thisprob->priv_data.contestwork.ogr.workstub.stub.length)
-      {
-        thisprob->pub_data.startkeys.hi = thisprob->priv_data.contestwork.ogr.nodes.hi;
-        thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.ogr.nodes.lo;
-        thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
-      }
-      break;
-    }
-    #endif
-    default:
+    thisprob->pub_data.startkeys.hi = thisprob->priv_data.contestwork.crypto.keysdone.hi;
+    thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.crypto.keysdone.lo;
+    thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
+  }
+  #if defined(HAVE_OGR_CORES)
+  else if (thisprob->pub_data.contest == OGR)
+  {
+    int r;
+    thisprob->priv_data.contestwork.ogr = work->ogr;
+    if (thisprob->priv_data.contestwork.ogr.nodes.hi != 0 || thisprob->priv_data.contestwork.ogr.nodes.lo != 0)
     {
+      if (thisprob->pub_data.client_cpu != expected_cputype || thisprob->pub_data.coresel != expected_corenum ||
+          CLIENT_OS != expected_os || CLIENT_BUILD_FRAC!=expected_buildfrac)
+      {
+        thisprob->pub_data.was_reset = 1;
+        thisprob->priv_data.contestwork.ogr.workstub.worklength = thisprob->priv_data.contestwork.ogr.workstub.stub.length;
+        thisprob->priv_data.contestwork.ogr.nodes.hi = thisprob->priv_data.contestwork.ogr.nodes.lo = 0;
+      }
+    }
+
+    r = (thisprob->pub_data.unit_func.ogr)->init();
+    if (r == CORE_S_OK)
+    {
+      r = (thisprob->pub_data.unit_func.ogr)->create(&thisprob->priv_data.contestwork.ogr.workstub,
+                      sizeof(WorkStub), thisprob->priv_data.core_membuffer, MAX_MEM_REQUIRED_BY_CORE);
+    }
+    if (r != CORE_S_OK)
+    {
+      /* if it got here, then the stub is truly bad or init failed and
+      ** it is ok to discard the stub (and let the network recycle it)
+      */
+      const char *msg = "Unknown error";
+      if      (r == CORE_E_MEMORY)  msg = "CORE_E_MEMORY: Insufficient memory";
+      else if (r == CORE_E_FORMAT)  msg = "CORE_E_FORMAT: Format or range error";
+      Log("OGR load failure: %s\nStub discarded.\n", msg );
       return -1;
     }
+    if (thisprob->priv_data.contestwork.ogr.workstub.worklength > (u32)thisprob->priv_data.contestwork.ogr.workstub.stub.length)
+    {
+      thisprob->pub_data.startkeys.hi = thisprob->priv_data.contestwork.ogr.nodes.hi;
+      thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.ogr.nodes.lo;
+      thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
+    }
   }
+  #endif
 
   //---------------------------------------------------------------
 
   {
     // set timers
-    thisprob->priv_data.loadtime_sec = 0;
     struct timeval tv;
+    thisprob->priv_data.loadtime_sec = 0;
     if (CliGetMonotonicClock(&tv) != 0)
     {
       if (CliGetMonotonicClock(&tv) != 0)
@@ -755,6 +747,7 @@ int ProblemLoadState( void *__thisprob,
 /* LoadState() and RetrieveState() work in pairs. A LoadState() without
    a previous RetrieveState(,,purge) will fail, and vice-versa.
 */
+
 int ProblemRetrieveState( void *__thisprob,
                           ContestWork * work, unsigned int *contestid, 
                           int dopurge, int dontwait )
@@ -776,19 +769,52 @@ int ProblemRetrieveState( void *__thisprob,
   { 
     if (work) // store back the state information
     {
-      switch (thisprob->pub_data.contest) {
+      switch (thisprob->pub_data.contest) 
+      {
         case RC5:
         case DES:
         case CSC:
-          // nothing special needs to be done here
+        {
+          memcpy( (void *)work, 
+                  (void *)&thisprob->priv_data.contestwork, 
+                  sizeof(ContestWork));
           break;
+        }
         #if defined(HAVE_OGR_CORES)
         case OGR:
-          (thisprob->pub_data.unit_func.ogr)->getresult(thisprob->priv_data.core_membuffer, &thisprob->priv_data.contestwork.ogr.workstub, sizeof(WorkStub));
+        {
+          (thisprob->pub_data.unit_func.ogr)->getresult(
+                       thisprob->priv_data.core_membuffer, 
+                       &thisprob->priv_data.contestwork.ogr.workstub, 
+                       sizeof(WorkStub));
+          memcpy( (void *)work, 
+                  (void *)&thisprob->priv_data.contestwork, 
+                  sizeof(ContestWork));
+
+          /* is the stub invalid? */
+          if (thisprob->priv_data.last_resultcode == RESULT_NOTHING &&
+              work->ogr.nodes.hi == 0 && work->ogr.nodes.lo == 0)
+          {
+            #if defined(STUB_E_GOLOMB) /* newer ansi core */
+            if (!thisprob->pub_data.was_truncated)
+            {
+              unsigned int r = work->ogr.workstub.worklength;
+              const char *reason = "STUB_E_*: Undefined core error";
+              if      (r == STUB_E_MARKS)  reason = "STUB_E_MARKS: Stub is not supported by this client";
+              else if (r == STUB_E_GOLOMB) reason = "STUB_E_GOLOMB: Stub is not golomb";
+              else if (r == STUB_E_LIMIT)  reason = "STUB_E_LIMIT: Stub is obsolete";
+              thisprob->pub_data.was_truncated = reason;
+            }
+            #endif
+          }    
           break;
+        } 
         #endif
-      }
-      memcpy( (void *)work, (void *)&thisprob->priv_data.contestwork, sizeof(ContestWork));
+        default: /* cannot happen */  
+        {
+          break;  
+        }
+      } /* switch */
     }
     if (contestid)
       *contestid = thisprob->pub_data.contest;
@@ -945,6 +971,21 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
     *resultcode = RESULT_NOTHING;
     return RESULT_NOTHING;
   }
+
+  #ifdef STRESS_THREADS_AND_BUFFERS
+  if (core_prob->priv_data.contestwork.crypto.key.hi ||
+      core_prob->priv_data.contestwork.crypto.key.lo) /* not bench */
+  {
+    core_prob->priv_data.contestwork.crypto.key.hi = 0;
+    core_prob->priv_data.contestwork.crypto.key.lo = 0;
+    core_prob->priv_data.contestwork.crypto.keysdone.hi = 
+      core_prob->priv_data.contestwork.crypto.iterations.hi;
+    core_prob->priv_data.contestwork.crypto.keysdone.lo = 
+      core_prob->priv_data.contestwork.crypto.iterations.lo;
+    *resultcode = RESULT_NOTHING;
+  }
+  #endif
+
   // more to do, come back later.
   *resultcode = RESULT_WORKING;
   return RESULT_WORKING;    // Done with this round
@@ -1290,113 +1331,118 @@ static void __compute_run_times(InternalProblem *thisprob,
   return;
 }
 
+/* ------------------------------------------------------------- */
+
+int __prime_run_times( u32 *runstart_secs, u32 *runstart_usecs,
+                       int using_ptime )
+{
+  struct timeval tv;
+  int err = 0;
+
+  tv.tv_sec = 0;
+  tv.tv_usec = 0;
+
+  if (using_ptime)
+  {
+    if (CliGetThreadUserTime(&tv) != 0)
+      using_ptime = 0;
+  }
+  if (!using_ptime)
+  {
+    if (CliGetMonotonicClock(&tv) != 0)
+    {
+      if (CliGetMonotonicClock(&tv) != 0)
+        err = 1;
+    }
+  }
+  if (!err)
+  {
+    *runstart_secs = tv.tv_sec;
+    *runstart_usecs = tv.tv_usec;
+  }
+  else
+  {
+    *runstart_secs = 0xffffffff;
+    *runstart_usecs = 0;
+  }
+  return using_ptime;
+}
+
 /* ---------------------------------------------------------------- */
 
 int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
 {
-  int retcode;
+  int last_resultcode;
   InternalProblem *main_prob = __pick_probptr(__thisprob, PICKPROB_MAIN);
-  InternalProblem *core_prob = __pick_probptr(__thisprob, PICKPROB_CORE);
+  InternalProblem *core_prob = main_prob; //__pick_probptr(__thisprob, PICKPROB_CORE);
 
   if (!main_prob || !core_prob)
   {
     return -1;
   }
-
   if ( !main_prob->priv_data.initialized )
-    return ( -1 );
+  {
+    return -1;
+  }
 
   __assert_lock(__thisprob);
   main_prob->priv_data.started = 1;
   main_prob->pub_data.last_runtime_is_invalid = 1; /* haven't changed runtime fields yet */
+  main_prob->pub_data.last_runtime_usec = 0;
+  main_prob->pub_data.last_runtime_sec = 0;
   __copy_internal_problem( core_prob, main_prob ); /* copy main->core */
   __release_lock(__thisprob);
   
-  
-#ifdef STRESS_THREADS_AND_BUFFERS
-  if (core_prob->pub_data.contest == RC5)
-  {
-    core_prob->priv_data.contestwork.crypto.key.hi = core_prob->priv_data.contestwork.crypto.key.lo = 0;
-    core_prob->priv_data.contestwork.crypto.keysdone.hi = core_prob->priv_data.contestwork.crypto.iterations.hi;
-    core_prob->priv_data.contestwork.crypto.keysdone.lo = core_prob->priv_data.contestwork.crypto.iterations.lo;
-    core_prob->pub_data.runtime_usec = 1; /* ~1Tkeys for a 2^20 packet */
-    core_prob->pub_data.elapsed_time_usec = 1;
-    core_prob->priv_data.last_resultcode = RESULT_NOTHING;
-    core_prob->priv_data.started = 1;
-  }
-#endif
-
-  retcode = core_prob->priv_data.last_resultcode;
-  if ( core_prob->priv_data.last_resultcode == RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
+  last_resultcode = core_prob->priv_data.last_resultcode;
+  if ( last_resultcode == RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
   {
     static volatile int s_using_ptime = -1;
-    struct timeval tv;
-    int core_resultcode, using_ptime;
-    u32 iterations, runstart_secs, runstart_usecs;
+    int retcode; u32 iterations, runstart_secs, runstart_usecs;
+    int using_ptime = __prime_run_times( &runstart_secs, &runstart_usecs,
+                                         s_using_ptime );
+
+    /* +++++++++++++++++ */
 
     /*
-      On return from the Run_XXX core_prob->priv_data.contestwork must be in a state that we
-      can put away to disk - that is, do not expect the loader (probfill
-      et al) to fiddle with iterations or key or whatever.
+      On return from the Run_XXX core_prob->priv_data.contestwork must be in a 
+      state that we can put away to disk - that is, do not expect the loader 
+      (probfill et al) to fiddle with iterations or key or whatever.
 
-      The Run_XXX functions do *not* update problem.core_prob->priv_data.last_resultcode, they use
-      core_resultcode instead. This is so that members of the problem object
+      The Run_XXX functions do *not* update 
+      problem.core_prob->priv_data.last_resultcode, they use the local
+      last_resultcode instead. This is so that members of the problem object
       that are updated after the resultcode has been set will not be out of
       sync when the main thread gets it with RetrieveState().
-
-      note: although the value returned by Run_XXX is usually the same as
-      the core_resultcode it is not always the case. For instance, if
-      post-LoadState() initialization  failed, but can be deferred, Run_XXX
-      may choose to return -1, but keep core_resultcode at RESULT_WORKING.
     */
 
-    core_prob->priv_data.started = 1;
-    core_prob->pub_data.last_runtime_usec = core_prob->pub_data.last_runtime_sec = 0;
-    runstart_secs = 0xfffffffful;
-    using_ptime = s_using_ptime;
-    if (using_ptime)
-    {
-      if (CliGetThreadUserTime(&tv) != 0)
-        using_ptime = 0;
-      else
-        runstart_secs = 0;
-    }
-    if (!using_ptime)
-    {
-      runstart_secs = 0;
-      if (CliGetMonotonicClock(&tv) != 0)
-      {
-        if (CliGetMonotonicClock(&tv) != 0)
-          runstart_secs = 0xfffffffful;
-      }
-    }
-    runstart_usecs = 0; /* shaddup compiler */
-    if (runstart_secs == 0)
-    {
-      runstart_secs = tv.tv_sec;
-      runstart_usecs = tv.tv_usec;
-    }
+    /* Run_XXX retcode:
+    ** although the value returned by Run_XXX is usually the same as
+    ** the priv_data.last_resultcode it is not always the case. For instance, 
+    ** if post-LoadState() initialization  failed, but can be deferred, Run_XXX
+    ** may choose to return -1, but keep priv_data.last_resultcode at 
+    ** RESULT_WORKING.
+    */
 
-    iterations = core_prob->pub_data.tslice;
-    core_resultcode = core_prob->priv_data.last_resultcode;
-
+    retcode         = -1;
+    iterations      = core_prob->pub_data.tslice;
     switch (core_prob->pub_data.contest)
     {
-      case RC5: retcode = Run_RC5( core_prob, &iterations, &core_resultcode );
+      case RC5: retcode = Run_RC5( core_prob, &iterations, &last_resultcode );
                 break;
-      case DES: retcode = Run_DES( core_prob, &iterations, &core_resultcode );
+      case DES: retcode = Run_DES( core_prob, &iterations, &last_resultcode );
                 break;
-      case OGR: retcode = Run_OGR( core_prob, &iterations, &core_resultcode );
+      case OGR: retcode = Run_OGR( core_prob, &iterations, &last_resultcode );
                 break;
-      case CSC: retcode = Run_CSC( core_prob, &iterations, &core_resultcode );
+      case CSC: retcode = Run_CSC( core_prob, &iterations, &last_resultcode );
                 break;
-      default: retcode = core_resultcode = core_prob->priv_data.last_resultcode = -1;
+      default:  retcode = 0; last_resultcode = -1;
                 break;
     }
 
     if (retcode < 0)
     {
       /* don't touch core_prob->pub_data.tslice or runtime as long as retcode < 0!!! */
+      last_resultcode = core_prob->priv_data.last_resultcode;
     }
     else 
     {
@@ -1407,28 +1453,41 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
         /* whoops! RetrieveState(,,purge) [with or without a subsequent 
         ** LoadState()] was called while we in core.
         */
-        retcode = -1; // discard the purged block
+        last_resultcode = -1;
       }
-      else /* update the remaining core related things, and synchronize */
-      {  
-        /* runtimes update must come after we have checked that a 
-        ** RetrieveState(,,purge) wasn't called while we in core
+      else /* update the remaining Run() related things, and synchronize */
+      { 
+        /* update the core's copy of the public area. It might have 
+        ** changed while we in core.
         */
-        core_prob->pub_data.core_run_count++;
+        memcpy( &(core_prob->pub_data), &(main_prob->pub_data), 
+                                         sizeof(core_prob->pub_data) );
+
+        /*
+        ** make the necessary modifications to the public area 
+        */  
         __compute_run_times( core_prob, runstart_secs, runstart_usecs, 
-                             &core_prob->priv_data.loadtime_sec, &core_prob->priv_data.loadtime_usec,
-                             using_ptime, &s_using_ptime, core_resultcode );
+                             &core_prob->priv_data.loadtime_sec, 
+                             &core_prob->priv_data.loadtime_usec,
+                             using_ptime, &s_using_ptime, last_resultcode );
+        core_prob->pub_data.core_run_count++;
         core_prob->pub_data.tslice = iterations;
-        core_prob->priv_data.last_resultcode = core_resultcode;
-        retcode = core_resultcode;
+
+        /*
+        ** make the necessary modifications to the private area
+        */
+        core_prob->priv_data.last_resultcode = last_resultcode;
+
+        /*
+        ** now blast the whole (public AND private) core_prob into main_prob.
+        */
         __copy_internal_problem( main_prob, core_prob ); /* copy core->main */
       }  
       __release_lock(__thisprob);
     }    
-    
-  } /* if (core_prob->priv_data.last_resultcode == RESULT_WORKING) */
+  } /* if (last_resultcode == RESULT_WORKING) */
 
-  return retcode;
+  return last_resultcode;
 }
 
 /* ----------------------------------------------------------------------- */
