@@ -1,20 +1,19 @@
+// Hey, Emacs, this is a -*-C++-*- file !
+
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-//
-//
 // $Log: pathwork.h,v $
+// Revision 1.2  1998/07/06 01:47:05  cyruspatel
+// Added signature so that emacs recognizes this to be a c++ file.
+//
 // Revision 1.1  1998/07/05 13:09:09  cyruspatel
-// Created new pathwork.cpp which contains functions for determining/setting
-// the "work directory" and pathifying a filename that has no dirspec.
-// GetFullPathForFilename() is ideally suited for use in (or just prior to) a
-// call to fopen(). This obviates the neccessity to pre-parse filenames or
-// maintain separate filename buffers. In addition, each platform has its own
-// code section to avoid cross-platform assumptions. More doc in pathwork.cpp
-// #define DONT_USE_PATHWORK if you don't want to use these functions.
+// Created - see pathwork.cpp for documentation 
 //
-//
+
+#ifndef __PATHWORK_H__
+#define __PATHWORK_H__
 
 // -------------------------------------------------------------------
 // Get the working directory previously initialized with 
@@ -39,3 +38,5 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
 const char *GetFullPathForFilename( const char *filename );
 
 // -------------------------------------------------------------------
+
+#endif //__PATHWORK_H__
