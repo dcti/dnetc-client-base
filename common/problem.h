@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.15  1998/07/08 09:56:11  remi
+// Added support for the MMX bitslicer.
+//
 // Revision 1.14  1998/06/23 21:58:56  remi
 // Use only two x86 DES cores (P5 & PPro) when not multithreaded.
 //
@@ -108,13 +111,18 @@ typedef enum
   extern "C" u32 rc5_unit_func_6x86( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern "C" u32 rc5_unit_func_k5( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern "C" u32 rc5_unit_func_k6( RC5UnitWork * rc5unitwork, u32 timeslice );
-  extern u32 des_unit_func_slice( RC5UnitWork * rc5unitwork, u32 nbbits );
   extern u32 p1des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern u32 p1des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 timeslice );
 #if defined(MULTITHREAD)
   extern u32 p2des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern u32 p2des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 timeslice );
 #endif
+#if defined(MMX_BITSLICER)
+  extern u32 des_unit_func_mmx( RC5UnitWork * rc5unitwork, u32 nbbits );
+#elif defined(MEGGS) || defined(KWAN)
+  extern u32 des_unit_func_slice( RC5UnitWork * rc5unitwork, u32 nbbits );
+#endif
+
 #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
   #if (PIPELINE_COUNT != 1)
   #error "Expecting PIPELINE_COUNT=1"

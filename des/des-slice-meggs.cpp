@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-meggs.cpp,v $
+// Revision 1.8  1998/07/08 10:00:31  remi
+// Added support for the MMX bitslicer.
+//
 // Revision 1.7  1998/06/14 08:27:02  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
 // material of the binary executable
@@ -12,9 +15,9 @@
 //
 //
 
-// encapsulate the bitslice SolNET code
+// encapsulate Meggs' bitslicer
 
-static char *id="@(#)$Id: des-slice-meggs.cpp,v 1.7 1998/06/14 08:27:02 friedbait Exp $";
+static char *id="@(#)$Id: des-slice-meggs.cpp,v 1.8 1998/07/08 10:00:31 remi Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,8 +25,18 @@ static char *id="@(#)$Id: des-slice-meggs.cpp,v 1.7 1998/06/14 08:27:02 friedbai
 #include "problem.h"
 #include "convdes.h"
 
+//#define DEBUG
+
 #ifndef _CPU_32BIT_
 #error "everything assumes a 32bit CPU..."
+#endif
+
+#ifdef MMX_BITSLICER
+  #define BASIC_SLICE_TYPE unsigned long long
+  #define NOTZERO ~(0ull)
+#else
+  #define BASIC_SLICE_TYPE unsigned long
+  #define NOTSZERO ~(0ul)
 #endif
 
 #ifdef BIT_32
@@ -36,13 +49,19 @@ static char *id="@(#)$Id: des-slice-meggs.cpp,v 1.7 1998/06/14 08:27:02 friedbai
 #endif
 
 #if (CLIENT_OS == OS_BEOS)
-extern "C" unsigned long whack16 (unsigned long *plain,
-			      unsigned long *cypher,
-			      unsigned long *key);
+extern "C" BASIC_SLICE_TYPE whack16 (BASIC_SLICE_TYPE *plain,
+			      BASIC_SLICE_TYPE *cypher,
+			      BASIC_SLICE_TYPE *key);
 #else
-extern unsigned long whack16 (unsigned long *plain,
-			      unsigned long *cypher,
-			      unsigned long *key);
+extern BASIC_SLICE_TYPE whack16 (BASIC_SLICE_TYPE *plain,
+			      BASIC_SLICE_TYPE *cypher,
+			      BASIC_SLICE_TYPE *key);
+#endif
+
+#if defined(MMX_BITSLICER)
+  #define des_unit_func des_unit_func_mmx
+#elif (CLIENT_CPU == CPU_X86)
+  #define des_unit_func des_unit_func_slice
 #endif
 
 // ------------------------------------------------------------------
@@ -55,21 +74,21 @@ extern unsigned long whack16 (unsigned long *plain,
 
 u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
 {
-    unsigned long key[56];
-    unsigned long plain[64];
-    unsigned long cypher[64];
+    BASIC_SLICE_TYPE key[56];
+    BASIC_SLICE_TYPE plain[64];
+    BASIC_SLICE_TYPE cypher[64];
     u32 i;
 
     // check if we have the right BIT_xx define
     // this should be phased out by an optimizing compiler
     // if the right BIT_xx is defined
 #ifdef BIT_32
-    if (sizeof(unsigned long) != 4) {
+    if (sizeof(BASIC_SLICE_TYPE) != 4) {
 	printf ("Bad BIT_32 define !\n");
 	exit (-1);
     }
 #elif BIT_64
-    if (sizeof(unsigned long) != 8) {
+    if (sizeof(BASIC_SLICE_TYPE) != 8) {
 	printf ("Bad BIT_64 define !\n");
 	exit (-1);
     }
@@ -92,8 +111,8 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
     u32 cc = rc5unitwork->cypher.lo;
     u32 mask = 1;
     for (i=0; i<64; i++) {
-	plain[i] = (pp & mask) ? ~(0ul) : 0;
-	cypher[i] = (cc & mask) ? ~(0ul) : 0;
+	plain[i] = (pp & mask) ? NOTZERO : 0;
+	cypher[i] = (cc & mask) ? NOTZERO : 0;
 	if ((u32)(mask <<= 1) == 0) {
 	    pp = rc5unitwork->plain.hi;
 	    cc = rc5unitwork->cypher.hi;
@@ -113,7 +132,7 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
     mask = 1;
     for (i=0; i<56; i++) {
 	if ((i % 7) == 0) mask <<= 1;
-	key[i] = (kk & mask) ? ~(0ul) : 0;
+	key[i] = (kk & mask) ? NOTZERO : 0;
 	if ((mask <<= 1) == 0) {
 	    kk = keyhi;
 	    mask = 1;
@@ -128,6 +147,13 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
     key[ 0] = 0xF0F0F0F0ul;
     key[ 1] = 0xFF00FF00ul;
     key[ 2] = 0xFFFF0000ul;
+#elif MMX_BITSLICER
+    key[40] = 0xAAAAAAAAAAAAAAAAull;
+    key[41] = 0xCCCCCCCCCCCCCCCCull;
+    key[ 0] = 0x0F0F0F0FF0F0F0F0ull;
+    key[ 1] = 0xFF00FF00FF00FF00ull;
+    key[ 2] = 0xFFFF0000FFFF0000ull;
+    key[ 4] = 0xFFFFFFFF00000000ull;
 #elif BIT_64
     key[40] = 0xAAAAAAAAAAAAAAAAul;
     key[41] = 0xCCCCCCCCCCCCCCCCul;
@@ -138,13 +164,17 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
 #endif
 	
 #if defined(DEBUG) && defined(BIT_32)
-    for (i=0; i<64; i++) printf ("bit %02d of plain  = %08X\n", plain[i]);
-    for (i=0; i<64; i++) printf ("bit %02d of cypher = %08X\n", cypher[i]);
-    for (i=0; i<56; i++) printf ("bit %02d of key    = %08X\n", key[i]);
+    for (i=0; i<64; i++) printf ("bit %02d of plain  = %08X\n", i, plain[i]);
+    for (i=0; i<64; i++) printf ("bit %02d of cypher = %08X\n", i, cypher[i]);
+    for (i=0; i<56; i++) printf ("bit %02d of key    = %08X\n", i, key[i]);
+#elif defined(DEBUG) && defined(MMX_BITSLICER)
+    for (i=0; i<64; i++) printf ("bit %02ld of plain  = %08X%08X\n", i, (unsigned)(plain[i] >> 32), (unsigned)(plain[i] & 0xFFFFFFFF));
+    for (i=0; i<64; i++) printf ("bit %02ld of cypher = %08X%08X\n", i, (unsigned)(cypher[i] >> 32), (unsigned)(cypher[i] & 0xFFFFFFFF));
+    for (i=0; i<56; i++) printf ("bit %02ld of key    = %08X%08X\n", i, (unsigned)(key[i] >> 32), (unsigned)(key[i] & 0xFFFFFFFF));
 #elif defined(DEBUG) && defined(BIT_64)
-    for (i=0; i<64; i++) printf ("bit %02d of plain  = %016X\n", plain[i]);
-    for (i=0; i<64; i++) printf ("bit %02d of cypher = %016X\n", cypher[i]);
-    for (i=0; i<56; i++) printf ("bit %02d of key    = %016X\n", key[i]);
+    for (i=0; i<64; i++) printf ("bit %02d of plain  = %016X\n", i, plain[i]);
+    for (i=0; i<64; i++) printf ("bit %02d of cypher = %016X\n", i, cypher[i]);
+    for (i=0; i<56; i++) printf ("bit %02d of key    = %016X\n", i, key[i]);
 #endif
 
     // Zero out all the bits that are to be varied
@@ -152,7 +182,7 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
     key[42]=key[43]=key[45]=key[46]=key[49]=key[50]=0;
 
     // Launch a crack session
-    unsigned long result = whack16( plain, cypher, key);
+    BASIC_SLICE_TYPE result = whack16( plain, cypher, key);
     // Test also the complementary key
     if (result == 0 && complement == false) {
 	keyhi = ~keyhi;
@@ -167,9 +197,9 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
 #ifdef DEBUG
 	// print all keys in binary format
 	for (i=0; i<56; i++) {
-	    printf ("key[%02d] = ", i);
+	    printf ("key[%02ld] = ", i);
 	    for (int j=0; j<32; j++)
-		printf ((key[i] & (1ul << (BITS_PER_SLICE-1-j))) ? "1":"0");
+		printf ((key[i] & ((BASIC_SLICE_TYPE)1 << (BITS_PER_SLICE-1-j))) ? "1":"0");
 	    printf ("\n");
 	}
 #endif
@@ -178,11 +208,11 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
 	// search the first bit set to 1 in result
 	int numkeyfound = -1;
 	for (i=0; i<BITS_PER_SLICE; i++)
-	    if ((result & (1ul << i)) != 0) numkeyfound = i;
+	    if ((result & ((BASIC_SLICE_TYPE)1 << i)) != 0) numkeyfound = i;
 #ifdef DEBUG
 	printf ("result = ");
 	for (i=0; i<BITS_PER_SLICE; i++)
-	    printf (result & (1ul << (BITS_PER_SLICE-1-i)) ? "1":"0");
+	    printf (result & ((BASIC_SLICE_TYPE)1 << (BITS_PER_SLICE-1-i)) ? "1":"0");
 	printf ("\n");
 #endif
 
