@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.115 2002/04/12 23:46:20 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.116 2002/04/13 13:01:50 andreasb Exp $
 ==========================================================================
 
 2.8000
@@ -38,6 +38,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.115 2002/04/12 23:46:20 andreasb Ex
             new: all: configurable frequent update failure retry interval.
             fix: all: client ignores "--" on command line by itself. (#2474)
             fix: all: Errors in generated man page (#2451)
+            fix: all: lurking caused ENETDOWN on -fetch/-flush/-update (#2417)
             fix: hpux: threading, timing fixes (#2371)
             fix: fbsd: occasionally not responding to SIG(INT/TERM) (#1985)
             fix: decunix: also not responding to SIG(INT/TERM) (#1613)
