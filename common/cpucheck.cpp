@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.78 2005/03/08 22:25:27 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.79 2005/03/08 22:29:13 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1189,7 +1189,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x4F40, CPU_F_I686,       9, "K8-4 (Opteron 2xx)" },
           {  0x5F40, CPU_F_I686,       9, "K8-4 (Opteron 8xx)" },
           {  0x7F40, CPU_F_I686,       9, "K8-4 (Mobile Athlon XP-M)" },
-          {  0x8F40, CPU_F_I686,       9, "K8-4 (Athlon XP/Sempron/Mobile Sempron" },
+          {  0x8F40, CPU_F_I686,       9, "K8-4 (Athlon XP/Sempron/Mobile Sempron)" },
           {  0x9F40, CPU_F_I686,       9, "K8-4 (Athlon 64 FX)" },
           {  0x0F50, CPU_F_I686,       9, "K8-5" }, //engineering sample
           {  0x1F50, CPU_F_I686,       9, "K8-5 (Athlon 64)" },
@@ -1198,7 +1198,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x4F50, CPU_F_I686,       9, "K8-5 (Opteron 2xx)" },
           {  0x5F50, CPU_F_I686,       9, "K8-5 (Opteron 8xx)" },
           {  0x7F50, CPU_F_I686,       9, "K8-5 (Mobile Athlon XP-M)" },
-          {  0x8F50, CPU_F_I686,       9, "K8-5 (Athlon XP/Sempron/Mobile Sempron" },
+          {  0x8F50, CPU_F_I686,       9, "K8-5 (Athlon XP/Sempron/Mobile Sempron)" },
           {  0x9F50, CPU_F_I686,       9, "K8-5 (Athlon 64 FX)" },
           {  0x0F70, CPU_F_I686,       9, "K8-7" }, //engineering sample
           {  0x1F70, CPU_F_I686,       9, "K8-7 (Athlon 64)" },
@@ -1207,7 +1207,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x4F70, CPU_F_I686,       9, "K8-7 (Opteron 2xx)" },
           {  0x5F70, CPU_F_I686,       9, "K8-7 (Opteron 8xx)" },
           {  0x7F70, CPU_F_I686,       9, "K8-7 (Mobile Athlon XP-M)" },
-          {  0x8F70, CPU_F_I686,       9, "K8-7 (Athlon XP/Sempron/Mobile Sempron" },
+          {  0x8F70, CPU_F_I686,       9, "K8-7 (Athlon XP/Sempron/Mobile Sempron)" },
           {  0x9F70, CPU_F_I686,       9, "K8-7 (Athlon 64 FX)" },
           {  0x0F80, CPU_F_I686,       9, "K8-8" }, //engineering sample
           {  0x1F80, CPU_F_I686,       9, "K8-8 (Athlon 64)" },
@@ -1216,7 +1216,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x4F80, CPU_F_I686,       9, "K8-8 (Opteron 2xx)" },
           {  0x5F80, CPU_F_I686,       9, "K8-8 (Opteron 8xx)" },
           {  0x7F80, CPU_F_I686,       9, "K8-8 (Mobile Athlon XP-M)" },
-          {  0x8F80, CPU_F_I686,       9, "K8-8 (Athlon XP/Sempron/Mobile Sempron" },
+          {  0x8F80, CPU_F_I686,       9, "K8-8 (Athlon XP/Sempron/Mobile Sempron)" },
           {  0x9F80, CPU_F_I686,       9, "K8-8 (Athlon 64 FX)" },
           {  0x0FB0, CPU_F_I686,       9, "K8-11" }, //engineering sample
           {  0x1FB0, CPU_F_I686,       9, "K8-11 (Athlon 64)" },
@@ -1225,7 +1225,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x4FB0, CPU_F_I686,       9, "K8-11 (Opteron 2xx)" },
           {  0x5FB0, CPU_F_I686,       9, "K8-11 (Opteron 8xx)" },
           {  0x7FB0, CPU_F_I686,       9, "K8-11 (Mobile Athlon XP-M)" },
-          {  0x8FB0, CPU_F_I686,       9, "K8-11 (Athlon XP/Sempron/Mobile Sempron" },
+          {  0x8FB0, CPU_F_I686,       9, "K8-11 (Athlon XP/Sempron/Mobile Sempron)" },
           {  0x9FB0, CPU_F_I686,       9, "K8-11 (Athlon 64 FX)" },
           {  0x0FC0, CPU_F_I686,       9, "K8-12" }, //engineering sample
           {  0x1FC0, CPU_F_I686,       9, "K8-12 (Athlon 64)" },
@@ -1234,7 +1234,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x4FC0, CPU_F_I686,       9, "K8-12 (Opteron 2xx)" },
           {  0x5FC0, CPU_F_I686,       9, "K8-12 (Opteron 8xx)" },
           {  0x7FC0, CPU_F_I686,       9, "K8-12 (Mobile Athlon XP-M)" },
-          {  0x8FC0, CPU_F_I686,       9, "K8-12 (Athlon XP/Sempron/Mobile Sempron" },
+          {  0x8FC0, CPU_F_I686,       9, "K8-12 (Athlon XP/Sempron/Mobile Sempron)" },
           {  0x9FC0, CPU_F_I686,       9, "K8-12 (Athlon 64 FX)" },
           {  0x0FE0, CPU_F_I686,       9, "K8-14" }, //engineering sample
           {  0x1FE0, CPU_F_I686,       9, "K8-14 (Athlon 64)" },
@@ -1243,7 +1243,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x4FE0, CPU_F_I686,       9, "K8-14 (Opteron 2xx)" },
           {  0x5FE0, CPU_F_I686,       9, "K8-14 (Opteron 8xx)" },
           {  0x7FE0, CPU_F_I686,       9, "K8-14 (Mobile Athlon XP-M)" },
-          {  0x8FE0, CPU_F_I686,       9, "K8-14 (Athlon XP/Sempron/Mobile Sempron" },
+          {  0x8FE0, CPU_F_I686,       9, "K8-14 (Athlon XP/Sempron/Mobile Sempron)" },
           {  0x9FE0, CPU_F_I686,       9, "K8-14 (Athlon 64 FX)" },
           {  0x0FF0, CPU_F_I686,       9, "K8-15" }, //engineering sample
           {  0x1FF0, CPU_F_I686,       9, "K8-15 (Athlon 64)" },
