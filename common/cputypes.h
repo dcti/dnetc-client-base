@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.34  1998/11/16 23:22:35  remi
+// Fixed an unterminated string. Cyp, you need a better editor ;-))
+//
 // Revision 1.33  1998/11/16 22:30:05  cyp
 // Added CLIENT_OS_NAME
 //
@@ -419,7 +422,7 @@ struct s128 { s64 hi, lo; };
 #if !defined(CLIENT_OS) || !defined(CLIENT_CPU)
   #define CLIENT_OS     OS_UNKNOWN
   #define CLIENT_CPU    CPU_UNKNOWN
-  #define CLIENT_OS_NAME "**Unknown OS**
+  #define CLIENT_OS_NAME "**Unknown OS**"
 #endif
 #if (CLIENT_OS == OS_UNKNOWN) || (CLIENT_CPU == CPU_UNKNOWN)
   #if !defined(IGNOREUNKNOWNCPUOS)
