@@ -15,7 +15,7 @@
  *
 */
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.11.2.10 2000/10/26 15:32:44 cyp Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.11.2.11 2000/11/12 02:00:13 cyp Exp $"; }
 
 #include "client.h"   // FileHeader, Client class
 #include "baseincs.h" // memset(), strlen()
@@ -89,26 +89,28 @@ int CheckpointAction( Client *client, int action, unsigned int load_problem_coun
         Problem *thisprob = GetProblemPointerFromIndex(prob_i);
         if ( thisprob )
         {
-          if (thisprob->IsInitialized())
+          if (ProblemIsInitialized(thisprob))
           {
             WorkRecord work;
             unsigned int cont_i;
             memset((void *)&work, 0, sizeof(WorkRecord));
-            thisprob->RetrieveState((ContestWork *)&work, &cont_i, 0, 0);
-            if (cont_i < CONTEST_COUNT /* 0,1,2...*/ )
+            if (ProblemRetrieveState(thisprob, (ContestWork *)&work, &cont_i, 0, 0) >= 0)
             {
-              work.resultcode = RESULT_WORKING;
-              work.contest = (u8)cont_i;
-              work.cpu     = FILEENTRY_CPU(thisprob->client_cpu,thisprob->coresel);
-              work.os      = FILEENTRY_OS;
-              work.buildhi = FILEENTRY_BUILDHI; 
-              work.buildlo = FILEENTRY_BUILDLO;
+              if (cont_i < CONTEST_COUNT)
+              {
+                work.resultcode = RESULT_WORKING;
+                work.contest = (u8)cont_i;
+                work.cpu     = FILEENTRY_CPU(thisprob->pub_data.client_cpu,thisprob->pub_data.coresel);
+                work.os      = FILEENTRY_OS;
+                work.buildhi = FILEENTRY_BUILDHI; 
+                work.buildlo = FILEENTRY_BUILDLO;
 
-              if (BufferPutFileRecord( client->checkpoint_file, &work, NULL ) < 0) 
-              {                        /* returns <0 on ioerr */
-                //Log( "Checkpoint %u, Buffer Error \"%s\"\n", 
-                //                     prob_i+1, client->checkpoint_file );
-                //break;
+                if (BufferPutFileRecord( client->checkpoint_file, &work, NULL ) < 0) 
+                {                        /* returns <0 on ioerr */
+                  //Log( "Checkpoint %u, Buffer Error \"%s\"\n", 
+                  //                     prob_i+1, client->checkpoint_file );
+                  //break;
+                }
               }
             }
           } 

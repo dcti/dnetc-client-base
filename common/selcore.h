@@ -5,13 +5,13 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.3.2.7 2000/06/28 15:21:32 cyp Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.3.2.8 2000/11/12 02:00:16 cyp Exp $"
 
 #if defined(__PROBLEM_H__)
 /* Set the xx_unit_func vectors/cputype/coresel in the problem. */
 /* Returns core # or <0 if error. Called from Prob::LoadState and probfill */
 int selcoreSelectCore( unsigned int cont_id, unsigned int thrindex, 
-                       int *client_cpuP, Problem *problem );
+                       int *client_cpuP, struct selcore *selinfo );
 #endif                       
 
 /* Get the core # for a contest. Informational use only. */

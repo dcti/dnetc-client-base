@@ -6,7 +6,7 @@
  *
 */ 
 const char *probman_cpp(void) {
-return "@(#)$Id: probman.cpp,v 1.9.2.2 1999/12/19 19:23:26 cyp Exp $"; }
+return "@(#)$Id: probman.cpp,v 1.9.2.3 2000/11/12 02:00:15 cyp Exp $"; }
 
 #include "baseincs.h"  // malloc()/NULL/memset()
 #include "problem.h"   // Problem class
@@ -71,7 +71,7 @@ int InitializeProblemManager(unsigned int maxnumproblems)
   probcount = 0;
   for (i=0;i<maxnumproblems;i++)
   {
-    probmanstatics.probtable[i]=new Problem();
+    probmanstatics.probtable[i]=ProblemAlloc();
     if (probmanstatics.probtable[i]==NULL)
       break;
     probcount++;
@@ -99,7 +99,7 @@ int DeinitializeProblemManager(void)
     for (;probmanstatics.probcount>0;probmanstatics.probcount--)
     {
       if (probtable[probmanstatics.probcount-1])
-        delete probtable[probmanstatics.probcount-1];
+        ProblemFree(probtable[probmanstatics.probcount-1]);
       probtable[probmanstatics.probcount-1] = NULL;
     }
     free((void *)probtable);

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.79 2000/11/05 22:33:18 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.80 2000/11/12 02:00:14 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -46,7 +46,7 @@ return "@(#)$Id: problem.cpp,v 1.108.2.79 2000/11/05 22:33:18 andreasb Exp $"; }
    client version are saved in partially completed work, and work is reset
    by LoadState if any of them don't match.
    24 was chosen because it is evenly divisible by any/all the
-   pipeline_counts currently in use (1,2,3,4[,6?])
+   data.pub.pipeline_counts currently in use (1,2,3,4[,6?])
 */
 #endif
 
@@ -61,49 +61,108 @@ static unsigned int __problem_counter = 0;
    actual crunching threads themselves.
 */
 
-Problem::~Problem()
+/* ------------------------------------------------------------------- */
+
+#if !defined(MIPSpro) 
+  #if (SIZEOF_LONG == 8)  /* SIZEOF_LONG is defined in cputypes.h */
+    #pragma pack(8)
+  #else    
+    #pragma pack(4)
+  #endif    
+#endif
+
+typedef struct
 {
-  __problem_counter--;
-  initialized = started = 0;
-  running = 0;
+  struct problem_publics pub_data; /* public members - must come first */
+  struct
+  {
+    /* the following must be protected for thread safety */
+    /* --------------------------------------------------------------- */
+    RC5UnitWork rc5unitwork; /* MUST BE longword (64bit) aligned */
+    struct {u32 hi,lo;} refL0;
+    ContestWork contestwork;
+    /* --------------------------------------------------------------- */
+    char __core_membuffer_space[(MAX_MEM_REQUIRED_BY_CORE+(1UL<<CORE_MEM_ALIGNMENT)-1)];
+    void *core_membuffer; /* aligned pointer to __core_membuffer_space */
+    /* --------------------------------------------------------------- */
+    u32 loadtime_sec, loadtime_usec; /* LoadState() time */
+    int last_resultcode; /* the rescode the last time contestwork was stable */
+    int started;
+    int initialized;
+    unsigned int threadindex; /* 0-n (globally unique identifier) */
+    volatile int running; /* RetrieveState(,,purge) has to wait while Run()ning */
+  } priv_data;
+} InternalProblem;
+
+#ifndef MIPSpro
+#pragma pack()
+#endif
+
+static InternalProblem *__validate_probptr(void *thisprob)
+{
+   /* nothing yet */
+  return (InternalProblem *)thisprob;
 }
 
 /* ------------------------------------------------------------------- */
 
-Problem::Problem(void)
+void ProblemFree(void *__thisprob)
 {
-  threadindex = __problem_counter++;
-  initialized = 0;
-  started = 0;
-  running = 0;
-
-  //align core_membuffer to 16byte boundary
+  InternalProblem *thisprob = __validate_probptr(__thisprob);
+  if (thisprob)
   {
-    char *p = &__core_membuffer_space[0];
-    while ((((unsigned long)p) & ((1UL << CORE_MEM_ALIGNMENT) - 1)) != 0)
-      p++;
-    core_membuffer = p;
+    memset( thisprob, 0, sizeof(InternalProblem) );
+    __problem_counter--;
+    free((void *)thisprob);
   }
+  return;
+}
 
+int ProblemIsInitialized(void *__thisprob)
+{ 
+  InternalProblem *thisprob = __validate_probptr(__thisprob);
+  if (thisprob)
+    return (thisprob->priv_data.initialized!=0); 
+  return 0;
+}
+
+Problem *ProblemAlloc(void)
+{
+  InternalProblem *thisprob = (InternalProblem *)0;
+
+  #ifdef STRESS_THREADS_AND_BUFFERS
   {
-    unsigned int sz = sizeof(int);
-    if (sz < sizeof(u32)) /* need to do it this way to suppress compiler warnings. */
+    static int runlevel = 0;
+    if (runlevel == 0)
     {
-      LogScreen("FATAL: sizeof(int) < sizeof(u32)\n");
-      //#error "everything assumes a 32bit CPU..."
-      RaiseExitRequestTrigger();
-      return;
+      RaisePauseRequestTrigger();
+      LogScreen("Warning! STRESS_THREADS_AND_BUFFERS is defined.\n"
+                "Are you sure that the client is pointing at\n"
+                "a test proxy? If so, type 'yes': ");
+      char getyes[10];
+      ConInStr(getyes,4,0);
+      ClearPauseRequestTrigger();
+      if (strcmp( getyes, "yes" ) == 0)
+        runlevel = +1;
+      else
+        runlevel = -1;
+    }
+    if (runlevel < 0)
+      return (InternalProblem *)0;
+  }
+  #endif
+  {
+    thisprob = (InternalProblem *)malloc(sizeof(InternalProblem));
+    if (!thisprob)
+    {
+      Log("Insufficient memory to allocate problem data\n");
     }
     else
     {
-      /*
-       this next part is essential for alpha, but is probably beneficial to
-       all platforms. If it fails for your os/cpu, we may need to redesign
-       how objects are allocated/how rc5unitwork is addressed, so let me know.
-                                                         -cyp Jun 14 1999
-      */
-      RC5UnitWork *w = &rc5unitwork;
-      unsigned long ww = ((unsigned long)w);
+      char *p; unsigned long ww;
+
+      p = (char *)&(thisprob->priv_data.rc5unitwork);
+      ww = ((unsigned long)p);
 
       #if (CLIENT_CPU == CPU_ALPHA) /* sizeof(long) can be either 4 or 8 */
       ww &= 0x7; /* (sizeof(longword)-1); */
@@ -112,58 +171,41 @@ Problem::Problem(void)
       #endif
       if (ww)
       {
-        Log("rc5unitwork for problem %d is misaligned!\n", threadindex);
+        Log("priv_data.rc5unitwork for problem %d is misaligned!\n", __problem_counter);
         RaiseExitRequestTrigger();
-        return;
+        free((void *)thisprob);
+        thisprob = (InternalProblem *)0;
+      }
+      else
+      {
+        memset( thisprob, 0, sizeof(InternalProblem) );
+        thisprob->priv_data.threadindex = __problem_counter++;
+
+        //align core_membuffer to 16byte boundary
+        p = &(thisprob->priv_data.__core_membuffer_space[0]);
+        while ((((unsigned long)p) & ((1UL << CORE_MEM_ALIGNMENT) - 1)) != 0)
+          p++;
+        thisprob->priv_data.core_membuffer = p;
       }
     }
   }
-
-//LogScreen("Problem created. threadindex=%u\n", threadindex);
-
-  #ifdef STRESS_THREADS_AND_BUFFERS
-  {
-    static int runlevel = 0;
-    if (runlevel != -12345)
-    {
-      if ((++runlevel) != 1)
-      {
-        --runlevel;
-        return;
-      }
-      RaisePauseRequestTrigger();
-      LogScreen("Warning! STRESS_THREADS_AND_BUFFERS is defined.\n"
-                "Are you sure that the client is pointing at\n"
-                "a test proxy? If so, type 'yes': ");
-      char getyes[10];
-      ConInStr(getyes,4,0);
-      ClearPauseRequestTrigger();
-      if (strcmp( getyes, "yes" ) == 0)  FIXME: exit if entered 'yes' ?!
-      {
-        runlevel = +12345;
-        RaiseExitRequestTrigger();
-        return;
-      }
-      runlevel = -12345;
-    }
-  }
-  #endif
+  return (Problem *)thisprob;
 }
 
 /* ------------------------------------------------------------------- */
 
 // for some odd reasons, the RC5 algorithm requires keys in reversed order
 //         key.hi   key.lo
-// ie key 01234567:89ABCDEF is sent to rc5_unit_func like that :
+// ie key 01234567:89ABCDEF is sent to rc5_pub_data.unit_func like that :
 //        EFCDAB89:67452301
 // This function switches from one format to the other.
 //
 // [Even if it looks like a little/big endian problem, it isn't. Whatever
 //  endianess the underlying system has, we must swap every byte in the key
-//  before sending it to rc5_unit_func()]
+//  before sending it to rc5_pub_data.unit_func()]
 //
 // Note that DES has a similiar but far more complex system, but everything
-// is handled by des_unit_func().
+// is handled by des_pub_data.unit_func().
 
 static void  __SwitchRC5Format(u32 *hi, u32 *lo)
 {
@@ -213,7 +255,7 @@ static void __IncrementKey(u32 *keyhi, u32 *keylo, u32 iters, int contest)
 
 /* ------------------------------------------------------------------- */
 
-/* generate a contestwork for benchmarking (should be 
+/* generate a priv_data.contestwork for benchmarking (should be 
    large enough to not complete in < 20 seconds)
 */
 static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
@@ -313,78 +355,93 @@ static unsigned int __compute_permille(unsigned int cont_i, const ContestWork *w
 /* LoadState() and RetrieveState() work in pairs. A LoadState() without
    a previous RetrieveState(,,purge) will fail, and vice-versa.
 */
-int Problem::LoadState( const ContestWork * work, unsigned int contestid,
-              u32 _iterations, int expected_cputype,
-              int expected_corenum, int expected_os,
-              int expected_buildfrac )
+int ProblemLoadState( void *__thisprob,
+                      const ContestWork * work, unsigned int contestid,
+                      u32 _iterations, int expected_cputype,
+                      int expected_corenum, int expected_os,
+                      int expected_buildfrac )
 {
   ContestWork for_magic;
+  int genned_random = 0, genned_benchmark = 0;
+  InternalProblem *thisprob = __validate_probptr(__thisprob);
+  struct selcore selinfo; int coresel;
 
-  if (initialized)
+  if (!thisprob)
   {
-    /* This can only happen if RetrieveState(,,purge) was not called */
-    Log("BUG! LoadState() without previous RetrieveState(,,purge)!\n");
     return -1;
   }
-
-  last_resultcode = -1;
-  started = initialized = 0;
-  loadtime_sec = loadtime_usec = 0;
-  elapsed_time_sec = elapsed_time_usec = 0;
-  runtime_sec = runtime_usec = 0;
-  last_runtime_sec = last_runtime_usec = 0;
-  last_runtime_is_invalid = 1;
-  memset((void *)&profiling, 0, sizeof(profiling));
-  startpermille = 0;
-// unused:  permille = 0;
-  startkeys.lo = startkeys.hi = 0;
-  loaderflags = 0;
-  contest = contestid;
-  tslice = _iterations;
-  was_reset = 0;
-  is_random = 0;
-  is_benchmark = 0;
-
-  //has to be done before selcore 
+  //has to be done before anything else
   if (work == CONTESTWORK_MAGIC_RANDOM) /* ((const ContestWork *)0) */
   {
     contestid = __gen_random_work(contestid, &for_magic);
     work = &for_magic;
-    is_random = 1;
+    genned_random = 1;
   }
   else if (work == CONTESTWORK_MAGIC_BENCHMARK) /* ((const ContestWork *)1) */
   {
     contestid = __gen_benchmark_work(contestid, &for_magic);
     work = &for_magic;
-    is_benchmark = 1;
+    genned_benchmark = 1;
   }
-
-  if (!IsProblemLoadPermitted(threadindex, contestid))
+  if (thisprob->priv_data.initialized)
+  {
+    /* This can only happen if RetrieveState(,,purge) was not called */
+    Log("BUG! LoadState() without previous RetrieveState(,,purge)!\n");
     return -1;
-
-  client_cpu = CLIENT_CPU; /* usual case */
-  use_generic_proto = 0; /* assume RC5/DES unit_func is _not_ generic form */
-  cruncher_is_asynchronous = 0; /* not a co-processor */
-  memset( &unit_func, 0, sizeof(unit_func) );
-  coresel = selcoreSelectCore( contestid, threadindex, &client_cpu, this );
+  }
+  if (!IsProblemLoadPermitted(thisprob->priv_data.threadindex, contestid))
+  {
+    return -1;
+  }
+  coresel = selcoreSelectCore( contestid, thisprob->priv_data.threadindex, 0, &selinfo );
   if (coresel < 0)
+  {
     return -1;
+  }
+  if (contestid == RC5 && (MINIMUM_ITERATIONS % selinfo.pipeline_count) != 0)
+  {
+    LogScreen("(MINIMUM_ITERATIONS %% thisprob->pub_data.pipeline_count) != 0)\n");
+    return -1;
+  }
+  /* +++++ no point of failure beyond here (once thisprob is changed) +++++ */
+
+  thisprob->priv_data.last_resultcode = -1;
+  thisprob->priv_data.started = thisprob->priv_data.initialized = 0;
+  thisprob->priv_data.loadtime_sec = thisprob->priv_data.loadtime_usec = 0;
+  thisprob->pub_data.elapsed_time_sec = thisprob->pub_data.elapsed_time_usec = 0;
+  thisprob->pub_data.runtime_sec = thisprob->pub_data.runtime_usec = 0;
+  thisprob->pub_data.last_runtime_sec = thisprob->pub_data.last_runtime_usec = 0;
+  thisprob->pub_data.last_runtime_is_invalid = 1;
+  memset((void *)&thisprob->pub_data.profiling, 0, sizeof(thisprob->pub_data.profiling));
+  thisprob->pub_data.startpermille = 0;
+// unused:  permille = 0;
+  thisprob->pub_data.startkeys.lo = 0;
+  thisprob->pub_data.startkeys.hi = 0;
+  thisprob->pub_data.loaderflags = 0;
+  thisprob->pub_data.contest = contestid;
+  thisprob->pub_data.tslice = _iterations;
+  thisprob->pub_data.was_reset = 0;
+  thisprob->pub_data.is_random = genned_random;
+  thisprob->pub_data.is_benchmark = genned_benchmark;
+
+  thisprob->pub_data.coresel = coresel;
+  thisprob->pub_data.client_cpu = selinfo.client_cpu;
+  thisprob->pub_data.pipeline_count = selinfo.pipeline_count;
+  thisprob->pub_data.use_generic_proto = selinfo.use_generic_proto;
+  thisprob->pub_data.cruncher_is_asynchronous = selinfo.cruncher_is_asynchronous;
+  memcpy( (void *)&(thisprob->pub_data.unit_func), 
+          &selinfo.unit_func, sizeof(thisprob->pub_data.unit_func));
 
   //----------------------------------------------------------------
 
-  switch (contest)
+  switch (thisprob->pub_data.contest)
   {
     case RC5:
-    if (!is_random &&
+    if (!thisprob->pub_data.is_random &&
        (work->crypto.iterations.hi || work->crypto.iterations.lo >= (1L<<28)))
     {
       last_rc5_prefix = (int)(work->crypto.key.hi >> 24);
     }    
-    if ((MINIMUM_ITERATIONS % pipeline_count) != 0)
-    {
-      LogScreen("(MINIMUM_ITERATIONS %% pipeline_count) != 0)\n");
-      return -1;
-    }
     /* fallthrough */
     #if defined(HAVE_DES_CORES)
     case DES:
@@ -394,77 +451,77 @@ int Problem::LoadState( const ContestWork * work, unsigned int contestid,
     #endif
     {
       // copy over the state information
-      contestwork.crypto.key.hi = ( work->crypto.key.hi );
-      contestwork.crypto.key.lo = ( work->crypto.key.lo );
-      contestwork.crypto.iv.hi = ( work->crypto.iv.hi );
-      contestwork.crypto.iv.lo = ( work->crypto.iv.lo );
-      contestwork.crypto.plain.hi = ( work->crypto.plain.hi );
-      contestwork.crypto.plain.lo = ( work->crypto.plain.lo );
-      contestwork.crypto.cypher.hi = ( work->crypto.cypher.hi );
-      contestwork.crypto.cypher.lo = ( work->crypto.cypher.lo );
-      contestwork.crypto.keysdone.hi = ( work->crypto.keysdone.hi );
-      contestwork.crypto.keysdone.lo = ( work->crypto.keysdone.lo );
-      contestwork.crypto.iterations.hi = ( work->crypto.iterations.hi );
-      contestwork.crypto.iterations.lo = ( work->crypto.iterations.lo );
+      thisprob->priv_data.contestwork.crypto.key.hi = ( work->crypto.key.hi );
+      thisprob->priv_data.contestwork.crypto.key.lo = ( work->crypto.key.lo );
+      thisprob->priv_data.contestwork.crypto.iv.hi = ( work->crypto.iv.hi );
+      thisprob->priv_data.contestwork.crypto.iv.lo = ( work->crypto.iv.lo );
+      thisprob->priv_data.contestwork.crypto.plain.hi = ( work->crypto.plain.hi );
+      thisprob->priv_data.contestwork.crypto.plain.lo = ( work->crypto.plain.lo );
+      thisprob->priv_data.contestwork.crypto.cypher.hi = ( work->crypto.cypher.hi );
+      thisprob->priv_data.contestwork.crypto.cypher.lo = ( work->crypto.cypher.lo );
+      thisprob->priv_data.contestwork.crypto.keysdone.hi = ( work->crypto.keysdone.hi );
+      thisprob->priv_data.contestwork.crypto.keysdone.lo = ( work->crypto.keysdone.lo );
+      thisprob->priv_data.contestwork.crypto.iterations.hi = ( work->crypto.iterations.hi );
+      thisprob->priv_data.contestwork.crypto.iterations.lo = ( work->crypto.iterations.lo );
 
-      if (contestwork.crypto.keysdone.lo || contestwork.crypto.keysdone.hi)
+      if (thisprob->priv_data.contestwork.crypto.keysdone.lo || thisprob->priv_data.contestwork.crypto.keysdone.hi)
       {
-        if (client_cpu != expected_cputype || coresel != expected_corenum ||
+        if (thisprob->pub_data.client_cpu != expected_cputype || thisprob->pub_data.coresel != expected_corenum ||
             CLIENT_OS != expected_os || CLIENT_BUILD_FRAC!=expected_buildfrac)
         {
-          contestwork.crypto.keysdone.lo = contestwork.crypto.keysdone.hi = 0;
-          was_reset = 1;
+          thisprob->priv_data.contestwork.crypto.keysdone.lo = thisprob->priv_data.contestwork.crypto.keysdone.hi = 0;
+          thisprob->pub_data.was_reset = 1;
         }
       }
 
       //determine starting key number. accounts for carryover & highend of keysdone
-      rc5unitwork.L0.hi = contestwork.crypto.key.hi + contestwork.crypto.keysdone.hi +
-         ((((contestwork.crypto.key.lo & 0xffff) + (contestwork.crypto.keysdone.lo & 0xffff)) +
-           ((contestwork.crypto.key.lo >> 16) + (contestwork.crypto.keysdone.lo >> 16))) >> 16);
-      rc5unitwork.L0.lo = contestwork.crypto.key.lo + contestwork.crypto.keysdone.lo;
-      if (contest == RC5)
-        __SwitchRC5Format(&(rc5unitwork.L0.hi), &(rc5unitwork.L0.lo));
-      refL0.lo = rc5unitwork.L0.lo;
-      refL0.hi = rc5unitwork.L0.hi;
+      thisprob->priv_data.rc5unitwork.L0.hi = thisprob->priv_data.contestwork.crypto.key.hi + thisprob->priv_data.contestwork.crypto.keysdone.hi +
+         ((((thisprob->priv_data.contestwork.crypto.key.lo & 0xffff) + (thisprob->priv_data.contestwork.crypto.keysdone.lo & 0xffff)) +
+           ((thisprob->priv_data.contestwork.crypto.key.lo >> 16) + (thisprob->priv_data.contestwork.crypto.keysdone.lo >> 16))) >> 16);
+      thisprob->priv_data.rc5unitwork.L0.lo = thisprob->priv_data.contestwork.crypto.key.lo + thisprob->priv_data.contestwork.crypto.keysdone.lo;
+      if (thisprob->pub_data.contest == RC5)
+        __SwitchRC5Format(&(thisprob->priv_data.rc5unitwork.L0.hi), &(thisprob->priv_data.rc5unitwork.L0.lo));
+      thisprob->priv_data.refL0.lo = thisprob->priv_data.rc5unitwork.L0.lo;
+      thisprob->priv_data.refL0.hi = thisprob->priv_data.rc5unitwork.L0.hi;
 
       // set up the unitwork structure
-      rc5unitwork.plain.hi = contestwork.crypto.plain.hi ^ contestwork.crypto.iv.hi;
-      rc5unitwork.plain.lo = contestwork.crypto.plain.lo ^ contestwork.crypto.iv.lo;
-      rc5unitwork.cypher.hi = contestwork.crypto.cypher.hi;
-      rc5unitwork.cypher.lo = contestwork.crypto.cypher.lo;
+      thisprob->priv_data.rc5unitwork.plain.hi = thisprob->priv_data.contestwork.crypto.plain.hi ^ thisprob->priv_data.contestwork.crypto.iv.hi;
+      thisprob->priv_data.rc5unitwork.plain.lo = thisprob->priv_data.contestwork.crypto.plain.lo ^ thisprob->priv_data.contestwork.crypto.iv.lo;
+      thisprob->priv_data.rc5unitwork.cypher.hi = thisprob->priv_data.contestwork.crypto.cypher.hi;
+      thisprob->priv_data.rc5unitwork.cypher.lo = thisprob->priv_data.contestwork.crypto.cypher.lo;
 
-      startkeys.hi = contestwork.crypto.keysdone.hi;
-      startkeys.lo = contestwork.crypto.keysdone.lo;
-      startpermille = __compute_permille( contest, &contestwork );
+      thisprob->pub_data.startkeys.hi = thisprob->priv_data.contestwork.crypto.keysdone.hi;
+      thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.crypto.keysdone.lo;
+      thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
       break;
     }
     #if defined(HAVE_OGR_CORES)
     case OGR:
     {
-      contestwork.ogr = work->ogr;
-      if (contestwork.ogr.nodes.hi != 0 || contestwork.ogr.nodes.lo != 0)
+      thisprob->priv_data.contestwork.ogr = work->ogr;
+      if (thisprob->priv_data.contestwork.ogr.nodes.hi != 0 || thisprob->priv_data.contestwork.ogr.nodes.lo != 0)
       {
-        if (client_cpu != expected_cputype || coresel != expected_corenum ||
+        if (thisprob->pub_data.client_cpu != expected_cputype || thisprob->pub_data.coresel != expected_corenum ||
             CLIENT_OS != expected_os || CLIENT_BUILD_FRAC!=expected_buildfrac)
         {
-          was_reset = 1;
-          contestwork.ogr.workstub.worklength = contestwork.ogr.workstub.stub.length;
-          contestwork.ogr.nodes.hi = contestwork.ogr.nodes.lo = 0;
+          thisprob->pub_data.was_reset = 1;
+          thisprob->priv_data.contestwork.ogr.workstub.worklength = thisprob->priv_data.contestwork.ogr.workstub.stub.length;
+          thisprob->priv_data.contestwork.ogr.nodes.hi = thisprob->priv_data.contestwork.ogr.nodes.lo = 0;
         }
       }
-      //unit_func.ogr = [xxx_]ogr_get_dispatch_table(); was done by selcore
-      int r = (unit_func.ogr)->init();
+      //thisprob->pub_data.unit_func.ogr = [xxx_]ogr_get_dispatch_table(); was done by selcore
+      int r = (thisprob->pub_data.unit_func.ogr)->init();
       if (r != CORE_S_OK)
         return -1;
-      r = (unit_func.ogr)->create(&contestwork.ogr.workstub,
-                      sizeof(WorkStub), core_membuffer, MAX_MEM_REQUIRED_BY_CORE);
+      r = (thisprob->pub_data.unit_func.ogr)->create(&thisprob->priv_data.contestwork.ogr.workstub,
+                      sizeof(WorkStub), thisprob->priv_data.core_membuffer, MAX_MEM_REQUIRED_BY_CORE);
       if (r != CORE_S_OK)
         return -1;
-      if (contestwork.ogr.workstub.worklength > (u32)contestwork.ogr.workstub.stub.length)
+      if (thisprob->priv_data.contestwork.ogr.workstub.worklength > (u32)thisprob->priv_data.contestwork.ogr.workstub.stub.length)
       {
-        startkeys.hi = contestwork.ogr.nodes.hi;
-        startkeys.lo = contestwork.ogr.nodes.lo;
-        startpermille = __compute_permille( contest, &contestwork );
+        thisprob->pub_data.startkeys.hi = thisprob->priv_data.contestwork.ogr.nodes.hi;
+        thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.ogr.nodes.lo;
+        thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
       }
       break;
     }
@@ -477,25 +534,25 @@ int Problem::LoadState( const ContestWork * work, unsigned int contestid,
 
   {
     // set timers
-    loadtime_sec = 0;
+    thisprob->priv_data.loadtime_sec = 0;
     struct timeval tv;
     if (CliGetMonotonicClock(&tv) != 0)
     {
       if (CliGetMonotonicClock(&tv) != 0)
-        loadtime_sec = 0xfffffffful;
+        thisprob->priv_data.loadtime_sec = 0xfffffffful;
     }
-    if (loadtime_sec == 0)
+    if (thisprob->priv_data.loadtime_sec == 0)
     {
-      loadtime_sec = tv.tv_sec;
-      loadtime_usec = tv.tv_usec;
+      thisprob->priv_data.loadtime_sec = tv.tv_sec;
+      thisprob->priv_data.loadtime_usec = tv.tv_usec;
     }
-    elapsed_time_sec = 0xfffffffful; // invalid while RESULT_WORKING
+    thisprob->pub_data.elapsed_time_sec = 0xfffffffful; // invalid while RESULT_WORKING
   }
 
-  loaded_problems[contest]++;       /* per contest */  
+  loaded_problems[thisprob->pub_data.contest]++;       /* per contest */  
   loaded_problems[CONTEST_COUNT]++; /* total */
-  last_resultcode = RESULT_WORKING;
-  initialized = 1;
+  thisprob->priv_data.last_resultcode = RESULT_WORKING;
+  thisprob->priv_data.initialized = 1;
   return( 0 );
 }
 
@@ -506,14 +563,18 @@ int Problem::LoadState( const ContestWork * work, unsigned int contestid,
 /* LoadState() and RetrieveState() work in pairs. A LoadState() without
    a previous RetrieveState(,,purge) will fail, and vice-versa.
 */
-int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, 
-                            int dopurge, int dontwait )
+int ProblemRetrieveState( void *__thisprob,
+                          ContestWork * work, unsigned int *contestid, 
+                          int dopurge, int dontwait )
 {
-  if (!initialized)
+  InternalProblem *thisprob = __validate_probptr(__thisprob);
+  if (!thisprob)
+    return -1;
+  if (!thisprob->priv_data.initialized)
     return -1;
   if (work) // store back the state information
   {
-    switch (contest) {
+    switch (thisprob->pub_data.contest) {
       case RC5:
       case DES:
       case CSC:
@@ -521,33 +582,34 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid,
         break;
       #if defined(HAVE_OGR_CORES)
       case OGR:
-        (unit_func.ogr)->getresult(core_membuffer, &contestwork.ogr.workstub, sizeof(WorkStub));
+        (thisprob->pub_data.unit_func.ogr)->getresult(thisprob->priv_data.core_membuffer, &thisprob->priv_data.contestwork.ogr.workstub, sizeof(WorkStub));
         break;
       #endif
     }
-    memcpy( (void *)work, (void *)&contestwork, sizeof(ContestWork));
+    memcpy( (void *)work, (void *)&thisprob->priv_data.contestwork, sizeof(ContestWork));
   }
   if (contestid)
-    *contestid = contest;
+    *contestid = thisprob->pub_data.contest;
   if (dopurge)
   {
-    initialized = 0;
+    thisprob->priv_data.initialized = 0;
     if (!dontwait) /* normal state is to wait. But we can't wait when aborting */
     {
-      while (running) /* need to guarantee that no Run() will occur on a */
+      while (thisprob->priv_data.running) /* need to guarantee that no Run() will occur on a */
         usleep(1000); /* purged problem. */
     }
-    loaded_problems[contest]--;       /* per contest */  
+    loaded_problems[thisprob->pub_data.contest]--;       /* per contest */  
     loaded_problems[CONTEST_COUNT]--; /* total */
   }
-  if (last_resultcode < 0)
+  if (thisprob->priv_data.last_resultcode < 0)
     return -1;
-  return ( last_resultcode );
+  return ( thisprob->priv_data.last_resultcode );
 }
 
 /* ------------------------------------------------------------- */
 
-int Problem::Run_RC5(u32 *keyscheckedP /* count of ... */, int *resultcode)
+static int Run_RC5(InternalProblem *thisprob, /* already validated */
+                   u32 *keyscheckedP /* count of ... */, int *resultcode)
 {
   s32 rescode = -1;
 
@@ -556,9 +618,9 @@ int Problem::Run_RC5(u32 *keyscheckedP /* count of ... */, int *resultcode)
     u32 keystocheck = *keyscheckedP;
     // don't allow a too large of a keystocheck be used ie (>(iter-keysdone))
     // (technically not necessary, but may save some wasted time)
-    if (contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi)
+    if (thisprob->priv_data.contestwork.crypto.keysdone.hi == thisprob->priv_data.contestwork.crypto.iterations.hi)
     {
-      u32 todo = contestwork.crypto.iterations.lo-contestwork.crypto.keysdone.lo;
+      u32 todo = thisprob->priv_data.contestwork.crypto.iterations.lo-thisprob->priv_data.contestwork.crypto.keysdone.lo;
       if (todo < keystocheck)
         keystocheck = todo;
     }
@@ -571,21 +633,21 @@ int Problem::Run_RC5(u32 *keyscheckedP /* count of ... */, int *resultcode)
     #if 0
     LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
               "suggested iterations: %lu (0x%lx)\n"
-              "pipeline_count = %lu, iterations%%pipeline_count = %lu\n",
+              "thisprob->pub_data.pipeline_count = %lu, iterations%%thisprob->pub_data.pipeline_count = %lu\n",
               (unsigned long)keystocheck, (unsigned long)keystocheck,
               (unsigned long)(*keyscheckedP), (unsigned long)(*keyscheckedP),
-              pipeline_count, keystocheck%pipeline_count );
+              thisprob->pub_data.pipeline_count, keystocheck%thisprob->pub_data.pipeline_count );
     #endif
 
-    if (use_generic_proto)
+    if (thisprob->pub_data.use_generic_proto)
     {
-      //we don't care about pipeline_count when using unified cores.
+      //we don't care about thisprob->pub_data.pipeline_count when using unified cores.
       //we _do_ need to care that the keystocheck and starting key are aligned.
 
       *keyscheckedP = keystocheck; /* Pass 'keystocheck', get back 'keyschecked'*/
-      rescode = (*(unit_func.gen))(&rc5unitwork,keyscheckedP,core_membuffer);
+      rescode = (*(thisprob->pub_data.unit_func.gen))(&thisprob->priv_data.rc5unitwork,keyscheckedP,thisprob->priv_data.core_membuffer);
 
-      if (rescode >= 0 && cruncher_is_asynchronous) /* co-processor or similar */
+      if (rescode >= 0 && thisprob->pub_data.cruncher_is_asynchronous) /* co-processor or similar */
       {
         keystocheck = *keyscheckedP; /* always so */
         /* how this works:
@@ -616,7 +678,7 @@ int Problem::Run_RC5(u32 *keyscheckedP /* count of ... */, int *resultcode)
     }
     else /* old style */
     {
-      *keyscheckedP = (*(unit_func.rc5))(&rc5unitwork,(keystocheck/pipeline_count));
+      *keyscheckedP = (*(thisprob->pub_data.unit_func.rc5))(&thisprob->priv_data.rc5unitwork,(keystocheck/thisprob->pub_data.pipeline_count));
       //don't use the next few lines as a guide for conversion to unified
       //prototypes!  look at the end of rc5/ansi/rc5ansi_2-rg.cpp instead.
       if (*keyscheckedP < keystocheck)
@@ -637,43 +699,43 @@ int Problem::Run_RC5(u32 *keyscheckedP /* count of ... */, int *resultcode)
   *resultcode = (int)rescode;
 
   // Increment reference key count
-  __IncrementKey(&refL0.hi, &refL0.lo, *keyscheckedP, contest);
+  __IncrementKey(&thisprob->priv_data.refL0.hi, &thisprob->priv_data.refL0.lo, *keyscheckedP, thisprob->pub_data.contest);
 
   // Compare ref to core key incrementation
-  if (((refL0.hi != rc5unitwork.L0.hi) || (refL0.lo != rc5unitwork.L0.lo))
+  if (((thisprob->priv_data.refL0.hi != thisprob->priv_data.rc5unitwork.L0.hi) || (thisprob->priv_data.refL0.lo != thisprob->priv_data.rc5unitwork.L0.lo))
       && (*resultcode != RESULT_FOUND) )
   {
-    if (contestwork.crypto.iterations.hi == 0 &&
-        contestwork.crypto.iterations.lo == 0x20000) /* test case */
+    if (thisprob->priv_data.contestwork.crypto.iterations.hi == 0 &&
+        thisprob->priv_data.contestwork.crypto.iterations.lo == 0x20000) /* test case */
     {
       Log("RC5 incrementation mismatch:\n"
           "Debug Information: %08x:%08x - %08x:%08x\n",
-          rc5unitwork.L0.hi, rc5unitwork.L0.lo, refL0.hi, refL0.lo);
+          thisprob->priv_data.rc5unitwork.L0.hi, thisprob->priv_data.rc5unitwork.L0.lo, thisprob->priv_data.refL0.hi, thisprob->priv_data.refL0.lo);
     }
     *resultcode = -1;
     return -1;
   };
 
   // Checks passed, increment keys done count.
-  contestwork.crypto.keysdone.lo += *keyscheckedP;
-  if (contestwork.crypto.keysdone.lo < *keyscheckedP)
-    contestwork.crypto.keysdone.hi++;
+  thisprob->priv_data.contestwork.crypto.keysdone.lo += *keyscheckedP;
+  if (thisprob->priv_data.contestwork.crypto.keysdone.lo < *keyscheckedP)
+    thisprob->priv_data.contestwork.crypto.keysdone.hi++;
 
   // Update data returned to caller
   if (*resultcode == RESULT_FOUND)  //(*keyscheckedP < keystocheck)
   {
     // found it!
-    u32 keylo = contestwork.crypto.key.lo;
-    contestwork.crypto.key.lo += contestwork.crypto.keysdone.lo;
-    contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
-    if (contestwork.crypto.key.lo < keylo)
-      contestwork.crypto.key.hi++; // wrap occured ?
+    u32 keylo = thisprob->priv_data.contestwork.crypto.key.lo;
+    thisprob->priv_data.contestwork.crypto.key.lo += thisprob->priv_data.contestwork.crypto.keysdone.lo;
+    thisprob->priv_data.contestwork.crypto.key.hi += thisprob->priv_data.contestwork.crypto.keysdone.hi;
+    if (thisprob->priv_data.contestwork.crypto.key.lo < keylo)
+      thisprob->priv_data.contestwork.crypto.key.hi++; // wrap occured ?
     return RESULT_FOUND;
   }
 
-  if ( ( contestwork.crypto.keysdone.hi > contestwork.crypto.iterations.hi ) ||
-       ( ( contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi ) &&
-       ( contestwork.crypto.keysdone.lo >= contestwork.crypto.iterations.lo ) ) )
+  if ( ( thisprob->priv_data.contestwork.crypto.keysdone.hi > thisprob->priv_data.contestwork.crypto.iterations.hi ) ||
+       ( ( thisprob->priv_data.contestwork.crypto.keysdone.hi == thisprob->priv_data.contestwork.crypto.iterations.hi ) &&
+       ( thisprob->priv_data.contestwork.crypto.keysdone.lo >= thisprob->priv_data.contestwork.crypto.iterations.lo ) ) )
   {
     // done with this block and nothing found
     *resultcode = RESULT_NOTHING;
@@ -686,14 +748,18 @@ int Problem::Run_RC5(u32 *keyscheckedP /* count of ... */, int *resultcode)
 
 /* ------------------------------------------------------------- */
 
-int Problem::Run_CSC(u32 *iterationsP, int *resultcode)
+static int Run_CSC(InternalProblem *thisprob, /* already validated */
+                   u32 *iterationsP, int *resultcode)
 {
 #ifndef HAVE_CSC_CORES
+  thisprob = thisprob;
   *iterationsP = 0;
   *resultcode = -1;
   return -1;
 #else
-  s32 rescode = (*(unit_func.gen))( &rc5unitwork, iterationsP, core_membuffer );
+  s32 rescode = (*(thisprob->pub_data.unit_func.gen))( 
+                   &(thisprob->priv_data.rc5unitwork), 
+                   iterationsP, thisprob->priv_data.core_membuffer );
 
   if (rescode < 0) /* "kiter" error */
   {
@@ -703,41 +769,41 @@ int Problem::Run_CSC(u32 *iterationsP, int *resultcode)
   *resultcode = (int)rescode;
 
   // Increment reference key count
-  __IncrementKey (&refL0.hi, &refL0.lo, *iterationsP, contest);
+  __IncrementKey (&thisprob->priv_data.refL0.hi, &thisprob->priv_data.refL0.lo, *iterationsP, thisprob->pub_data.contest);
 
   // Compare ref to core key incrementation
-  if ((refL0.hi != rc5unitwork.L0.hi) || (refL0.lo != rc5unitwork.L0.lo))
+  if ((thisprob->priv_data.refL0.hi != thisprob->priv_data.rc5unitwork.L0.hi) || (thisprob->priv_data.refL0.lo != thisprob->priv_data.rc5unitwork.L0.lo))
   {
-    if (contestwork.crypto.iterations.hi == 0 &&
-        contestwork.crypto.iterations.lo == 0x20000) /* test case */
+    if (thisprob->priv_data.contestwork.crypto.iterations.hi == 0 &&
+        thisprob->priv_data.contestwork.crypto.iterations.lo == 0x20000) /* test case */
     {
       Log("CSC incrementation mismatch:\n"
           "expected %08x:%08x, got %08x:%08x\n",
-          refL0.lo, refL0.hi, rc5unitwork.L0.lo, rc5unitwork.L0.hi );
+          thisprob->priv_data.refL0.lo, thisprob->priv_data.refL0.hi, thisprob->priv_data.rc5unitwork.L0.lo, thisprob->priv_data.rc5unitwork.L0.hi );
     }
     *resultcode = -1;
     return -1;
   }
 
   // Checks passed, increment keys done count.
-  contestwork.crypto.keysdone.lo += *iterationsP;
-  if (contestwork.crypto.keysdone.lo < *iterationsP)
-    contestwork.crypto.keysdone.hi++;
+  thisprob->priv_data.contestwork.crypto.keysdone.lo += *iterationsP;
+  if (thisprob->priv_data.contestwork.crypto.keysdone.lo < *iterationsP)
+    thisprob->priv_data.contestwork.crypto.keysdone.hi++;
 
   // Update data returned to caller
   if (*resultcode == RESULT_FOUND)
   {
-    u32 keylo = contestwork.crypto.key.lo;
-    contestwork.crypto.key.lo += contestwork.crypto.keysdone.lo;
-    contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
-    if (contestwork.crypto.key.lo < keylo)
-      contestwork.crypto.key.hi++; // wrap occured ?
+    u32 keylo = thisprob->priv_data.contestwork.crypto.key.lo;
+    thisprob->priv_data.contestwork.crypto.key.lo += thisprob->priv_data.contestwork.crypto.keysdone.lo;
+    thisprob->priv_data.contestwork.crypto.key.hi += thisprob->priv_data.contestwork.crypto.keysdone.hi;
+    if (thisprob->priv_data.contestwork.crypto.key.lo < keylo)
+      thisprob->priv_data.contestwork.crypto.key.hi++; // wrap occured ?
     return RESULT_FOUND;
   }
 
-  if ( ( contestwork.crypto.keysdone.hi > contestwork.crypto.iterations.hi ) ||
-       ( ( contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi ) &&
-       ( contestwork.crypto.keysdone.lo >= contestwork.crypto.iterations.lo ) ) )
+  if ( ( thisprob->priv_data.contestwork.crypto.keysdone.hi > thisprob->priv_data.contestwork.crypto.iterations.hi ) ||
+       ( ( thisprob->priv_data.contestwork.crypto.keysdone.hi == thisprob->priv_data.contestwork.crypto.iterations.hi ) &&
+       ( thisprob->priv_data.contestwork.crypto.keysdone.lo >= thisprob->priv_data.contestwork.crypto.iterations.lo ) ) )
   {
     *resultcode = RESULT_NOTHING;
     return RESULT_NOTHING;
@@ -750,47 +816,49 @@ int Problem::Run_CSC(u32 *iterationsP, int *resultcode)
 
 /* ------------------------------------------------------------- */
 
-int Problem::Run_DES(u32 *iterationsP, int *resultcode)
+static int Run_DES(InternalProblem *thisprob, /* already validated */
+                   u32 *iterationsP, int *resultcode)
 {
 #ifndef HAVE_DES_CORES
+  thisprob = thisprob;
   *iterationsP = 0;  /* no keys done */
   *resultcode = -1; /* core error */
   return -1;
 #else
 
   //iterationsP == in: suggested iterations, out: effective iterations
-  u32 kiter = (*(unit_func.des))( &rc5unitwork, iterationsP, (char *)core_membuffer );
+  u32 kiter = (*(thisprob->pub_data.unit_func.des))( &thisprob->priv_data.rc5unitwork, iterationsP, (char *)thisprob->priv_data.core_membuffer );
 
-  __IncrementKey ( &refL0.hi, &refL0.lo, *iterationsP, contest);
+  __IncrementKey ( &thisprob->priv_data.refL0.hi, &thisprob->priv_data.refL0.lo, *iterationsP, thisprob->pub_data.contest);
   // Increment reference key count
 
-  if (((refL0.hi != rc5unitwork.L0.hi) ||  // Compare ref to core
-      (refL0.lo != rc5unitwork.L0.lo)) &&  // key incrementation
+  if (((thisprob->priv_data.refL0.hi != thisprob->priv_data.rc5unitwork.L0.hi) ||  // Compare ref to core
+      (thisprob->priv_data.refL0.lo != thisprob->priv_data.rc5unitwork.L0.lo)) &&  // key incrementation
       (kiter == *iterationsP))
   {
     #if 0 /* can you spell "thread safe"? */
     Log("Internal Client Error #23: Please contact help@distributed.net\n"
         "Debug Information: %08x:%08x - %08x:%08x\n",
-        rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
+        thisprob->priv_data.rc5unitwork.L0.lo, thisprob->priv_data.rc5unitwork.L0.hi, thisprob->priv_data.refL0.lo, thisprob->priv_data.refL0.hi);
     #endif
     *resultcode = -1;
     return -1;
   };
 
-  contestwork.crypto.keysdone.lo += kiter;
-  if (contestwork.crypto.keysdone.lo < kiter)
-    contestwork.crypto.keysdone.hi++;
+  thisprob->priv_data.contestwork.crypto.keysdone.lo += kiter;
+  if (thisprob->priv_data.contestwork.crypto.keysdone.lo < kiter)
+    thisprob->priv_data.contestwork.crypto.keysdone.hi++;
     // Checks passed, increment keys done count.
 
   // Update data returned to caller
   if (kiter < *iterationsP)
   {
     // found it!
-    u32 keylo = contestwork.crypto.key.lo;
-    contestwork.crypto.key.lo += contestwork.crypto.keysdone.lo;
-    contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
-    if (contestwork.crypto.key.lo < keylo)
-      contestwork.crypto.key.hi++; // wrap occured ?
+    u32 keylo = thisprob->priv_data.contestwork.crypto.key.lo;
+    thisprob->priv_data.contestwork.crypto.key.lo += thisprob->priv_data.contestwork.crypto.keysdone.lo;
+    thisprob->priv_data.contestwork.crypto.key.hi += thisprob->priv_data.contestwork.crypto.keysdone.hi;
+    if (thisprob->priv_data.contestwork.crypto.key.lo < keylo)
+      thisprob->priv_data.contestwork.crypto.key.hi++; // wrap occured ?
     *resultcode = RESULT_FOUND;
     return RESULT_FOUND;
   }
@@ -800,15 +868,15 @@ int Problem::Run_DES(u32 *iterationsP, int *resultcode)
     Log("Internal Client Error #24: Please contact help@distributed.net\n"
         "Debug Information: k: %x t: %x\n"
         "Debug Information: %08x:%08x - %08x:%08x\n", kiter, *iterationsP,
-        rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
+        thisprob->priv_data.rc5unitwork.L0.lo, thisprob->priv_data.rc5unitwork.L0.hi, thisprob->priv_data.refL0.lo, thisprob->priv_data.refL0.hi);
     #endif
     *resultcode = -1; /* core error */
     return -1;
   };
 
-  if ( ( contestwork.crypto.keysdone.hi > contestwork.crypto.iterations.hi ) ||
-     ( ( contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi ) &&
-     ( contestwork.crypto.keysdone.lo >= contestwork.crypto.iterations.lo ) ) )
+  if ( ( thisprob->priv_data.contestwork.crypto.keysdone.hi > thisprob->priv_data.contestwork.crypto.iterations.hi ) ||
+     ( ( thisprob->priv_data.contestwork.crypto.keysdone.hi == thisprob->priv_data.contestwork.crypto.iterations.hi ) &&
+     ( thisprob->priv_data.contestwork.crypto.keysdone.lo >= thisprob->priv_data.contestwork.crypto.iterations.lo ) ) )
   {
     // done with this block and nothing found
     *resultcode = RESULT_NOTHING;
@@ -823,31 +891,33 @@ int Problem::Run_DES(u32 *iterationsP, int *resultcode)
 
 /* ------------------------------------------------------------- */
 
-int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
+static int Run_OGR( InternalProblem *thisprob, /* already validated */
+                    u32 *iterationsP, int *resultcode)
 {
 #if !defined(HAVE_OGR_CORES)
+  thisprob = thisprob;
   iterationsP = iterationsP;
 #else
   int r, nodes;
 
-  if (*iterationsP > 0x100000UL && !is_benchmark)
+  if (*iterationsP > 0x100000UL && !thisprob->pub_data.is_benchmark)
     *iterationsP = 0x100000UL;
 
   nodes = (int)(*iterationsP);
-  r = (unit_func.ogr)->cycle(core_membuffer, &nodes);
+  r = (thisprob->pub_data.unit_func.ogr)->cycle(thisprob->priv_data.core_membuffer, &nodes);
   *iterationsP = (u32)nodes;
 
-  u32 newnodeslo = contestwork.ogr.nodes.lo + nodes;
-  if (newnodeslo < contestwork.ogr.nodes.lo) {
-    contestwork.ogr.nodes.hi++;
+  u32 newnodeslo = thisprob->priv_data.contestwork.ogr.nodes.lo + nodes;
+  if (newnodeslo < thisprob->priv_data.contestwork.ogr.nodes.lo) {
+    thisprob->priv_data.contestwork.ogr.nodes.hi++;
   }
-  contestwork.ogr.nodes.lo = newnodeslo;
+  thisprob->priv_data.contestwork.ogr.nodes.lo = newnodeslo;
 
   switch (r)
   {
     case CORE_S_OK:
     {
-      r = (unit_func.ogr)->destroy(core_membuffer);
+      r = (thisprob->pub_data.unit_func.ogr)->destroy(thisprob->priv_data.core_membuffer);
       if (r == CORE_S_OK)
       {
         *resultcode = RESULT_NOTHING;
@@ -862,11 +932,11 @@ int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
     }
     case CORE_S_SUCCESS:
     {
-      if ((unit_func.ogr)->getresult(core_membuffer, &contestwork.ogr.workstub, sizeof(WorkStub)) == CORE_S_OK)
+      if ((thisprob->pub_data.unit_func.ogr)->getresult(thisprob->priv_data.core_membuffer, &thisprob->priv_data.contestwork.ogr.workstub, sizeof(WorkStub)) == CORE_S_OK)
       {
         //Log("OGR Success!\n");
-        contestwork.ogr.workstub.stub.length =
-                  (u16)(contestwork.ogr.workstub.worklength);
+        thisprob->priv_data.contestwork.ogr.workstub.stub.length =
+                  (u16)(thisprob->priv_data.contestwork.ogr.workstub.worklength);
         *resultcode = RESULT_FOUND;
         return RESULT_FOUND;
       }
@@ -881,7 +951,7 @@ int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
 
 /* ------------------------------------------------------------- */
 
-static void __compute_run_times(Problem *problem,
+static void __compute_run_times(InternalProblem *thisprob,
                                 u32 runstart_secs, u32 runstart_usecs,
                                 u32 *probstart_secs, u32 *probstart_usecs,
                                 int using_ptime, volatile int *s_using_ptime,
@@ -941,26 +1011,26 @@ static void __compute_run_times(Problem *problem,
       }
       elapsedhi -= timehi;
       elapsedlo -= timelo;
-      problem->last_runtime_sec = elapsedhi;
-      problem->last_runtime_usec = elapsedlo;
+      thisprob->pub_data.last_runtime_sec = elapsedhi;
+      thisprob->pub_data.last_runtime_usec = elapsedlo;
 
-      elapsedhi += problem->runtime_sec;
-      elapsedlo += problem->runtime_usec;
+      elapsedhi += thisprob->pub_data.runtime_sec;
+      elapsedlo += thisprob->pub_data.runtime_usec;
       if (elapsedlo >= 1000000UL)
       {
         elapsedhi++;
         elapsedlo -= 1000000UL;
       }
-      problem->runtime_sec  = elapsedhi;
-      problem->runtime_usec = elapsedlo;
+      thisprob->pub_data.runtime_sec  = elapsedhi;
+      thisprob->pub_data.runtime_usec = elapsedlo;
     }
   }
   if (last_runtime_is_invalid)
   {
-    problem->last_runtime_sec = 0;
-    problem->last_runtime_usec = 0;
+    thisprob->pub_data.last_runtime_sec = 0;
+    thisprob->pub_data.last_runtime_usec = 0;
   }
-  problem->last_runtime_is_invalid = last_runtime_is_invalid;
+  thisprob->pub_data.last_runtime_is_invalid = last_runtime_is_invalid;
 
   /* ++++++++++++++++++++++++++ */
 
@@ -996,8 +1066,8 @@ static void __compute_run_times(Problem *problem,
     {
       /* either start time is invalid, or end-time < start-time */
       /* both are BadThing(TM)s - have to use the per-run total */
-      elapsedhi = problem->runtime_sec;
-      elapsedlo = problem->runtime_usec;
+      elapsedhi = thisprob->pub_data.runtime_sec;
+      elapsedlo = thisprob->pub_data.runtime_usec;
     }
     else /* start and 'now' time are ok */
     {
@@ -1009,8 +1079,8 @@ static void __compute_run_times(Problem *problem,
       elapsedhi -= timehi;
       elapsedlo -= timelo;
     }
-    problem->elapsed_time_sec  = elapsedhi;
-    problem->elapsed_time_usec = elapsedlo;
+    thisprob->pub_data.elapsed_time_sec  = elapsedhi;
+    thisprob->pub_data.elapsed_time_usec = elapsedlo;
   }
 
   return;
@@ -1018,51 +1088,56 @@ static void __compute_run_times(Problem *problem,
 
 /* ---------------------------------------------------------------- */
 
-int Problem::Run(void) /* returns RESULT_*  or -1 */
+int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
 {
   static volatile int s_using_ptime = -1;
   struct timeval tv;
-  int retcode, core_resultcode;
+  int retcode, core_resultcode, using_ptime;
   u32 iterations, runstart_secs, runstart_usecs;
-  int using_ptime;
+  InternalProblem *thisprob = __validate_probptr(__thisprob);
 
-  last_runtime_is_invalid = 1; /* haven't changed runtime fields yet */
+  if (!thisprob)
+  {
+    return -1;
+  }
 
-  if ( !initialized )
+  thisprob->pub_data.last_runtime_is_invalid = 1; /* haven't changed runtime fields yet */
+
+  if ( !thisprob->priv_data.initialized )
   {
     return ( -1 );
   }
-  if ((++running) > 1)
+  if ((++thisprob->priv_data.running) > 1)
   {
-    --running;
+    --thisprob->priv_data.running;
     return -1;
   }
 
 #ifdef STRESS_THREADS_AND_BUFFERS
-  if (contest == RC5 && !started)
+  if (thisprob->pub_data.contest == RC5 && !thisprob->priv_data.started)
   {
-    contestwork.crypto.key.hi = contestwork.crypto.key.lo = 0;
-    contestwork.crypto.keysdone.hi = contestwork.crypto.iterations.hi;
-    contestwork.crypto.keysdone.lo = contestwork.crypto.iterations.lo;
-    runtime_usec = 1; /* ~1Tkeys for a 2^20 packet */
-    elapsed_time_usec = 1;
-    last_resultcode = RESULT_NOTHING;
-    started = 1;
+    thisprob->priv_data.contestwork.crypto.key.hi = thisprob->priv_data.contestwork.crypto.key.lo = 0;
+    thisprob->priv_data.contestwork.crypto.keysdone.hi = thisprob->priv_data.contestwork.crypto.iterations.hi;
+    thisprob->priv_data.contestwork.crypto.keysdone.lo = thisprob->priv_data.contestwork.crypto.iterations.lo;
+    thisprob->pub_data.runtime_usec = 1; /* ~1Tkeys for a 2^20 packet */
+    thisprob->pub_data.elapsed_time_usec = 1;
+    thisprob->priv_data.last_resultcode = RESULT_NOTHING;
+    thisprob->priv_data.started = 1;
   }
 #endif
 
-  if ( last_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
+  if ( thisprob->priv_data.last_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
   {
-    running--;
-    return ( last_resultcode );
+    thisprob->priv_data.running--;
+    return ( thisprob->priv_data.last_resultcode );
   }
 
   /*
-    On return from the Run_XXX contestwork must be in a state that we
+    On return from the Run_XXX thisprob->priv_data.contestwork must be in a state that we
     can put away to disk - that is, do not expect the loader (probfill
     et al) to fiddle with iterations or key or whatever.
 
-    The Run_XXX functions do *not* update problem.last_resultcode, they use
+    The Run_XXX functions do *not* update problem.thisprob->priv_data.last_resultcode, they use
     core_resultcode instead. This is so that members of the problem object
     that are updated after the resultcode has been set will not be out of
     sync when the main thread gets it with RetrieveState().
@@ -1073,8 +1148,8 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
     may choose to return -1, but keep core_resultcode at RESULT_WORKING.
   */
 
-  started = 1;
-  last_runtime_usec = last_runtime_sec = 0;
+  thisprob->priv_data.started = 1;
+  thisprob->pub_data.last_runtime_usec = thisprob->pub_data.last_runtime_sec = 0;
   runstart_secs = 0xfffffffful;
   using_ptime = s_using_ptime;
   if (using_ptime)
@@ -1099,41 +1174,42 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
     runstart_secs = tv.tv_sec;
     runstart_usecs = tv.tv_usec;
   }
-  iterations = tslice;
-  core_resultcode = last_resultcode;
+  iterations = thisprob->pub_data.tslice;
+  core_resultcode = thisprob->priv_data.last_resultcode;
   retcode = -1;
 
-  switch (contest)
+  switch (thisprob->pub_data.contest)
   {
-    case RC5: retcode = Run_RC5( &iterations, &core_resultcode );
+    case RC5: retcode = Run_RC5( thisprob, &iterations, &core_resultcode );
               break;
-    case DES: retcode = Run_DES( &iterations, &core_resultcode );
+    case DES: retcode = Run_DES( thisprob, &iterations, &core_resultcode );
               break;
-    case OGR: retcode = Run_OGR( &iterations, &core_resultcode );
+    case OGR: retcode = Run_OGR( thisprob, &iterations, &core_resultcode );
               break;
-    case CSC: retcode = Run_CSC( &iterations, &core_resultcode );
+    case CSC: retcode = Run_CSC( thisprob, &iterations, &core_resultcode );
               break;
-    default: retcode = core_resultcode = last_resultcode = -1;
+    default: retcode = core_resultcode = thisprob->priv_data.last_resultcode = -1;
        break;
   }
 
-  if (retcode < 0) /* don't touch tslice or runtime as long as < 0!!! */
+  if (retcode < 0) /* don't touch thisprob->pub_data.tslice or runtime as long as < 0!!! */
   {
-    running--;
+    thisprob->priv_data.running--;
     return -1;
   }
-  if (!started || !initialized) /* RetrieveState(,,purge) has been called */
+  if (!thisprob->priv_data.started || !thisprob->priv_data.initialized) /* RetrieveState(,,purge) has been called */
   {
     core_resultcode = -1; // "Discarded (core error)": discard the purged block
   }
 
-  core_run_count++;
-  __compute_run_times( this, runstart_secs, runstart_usecs, &loadtime_sec, &loadtime_usec,
+  thisprob->pub_data.core_run_count++;
+  __compute_run_times( thisprob, runstart_secs, runstart_usecs, 
+                       &thisprob->priv_data.loadtime_sec, &thisprob->priv_data.loadtime_usec,
                        using_ptime, &s_using_ptime, core_resultcode );
-  tslice = iterations;
-  last_resultcode = core_resultcode;
-  running--;
-  return last_resultcode;
+  thisprob->pub_data.tslice = iterations;
+  thisprob->priv_data.last_resultcode = core_resultcode;
+  thisprob->priv_data.running--;
+  return thisprob->priv_data.last_resultcode;
 }
 
 /* ----------------------------------------------------------------------- */
@@ -1163,7 +1239,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
      Server is extremely laggy.
      256 nodes per call: max achievable yield rate ALSO 13-15/sec
      For the fun of it, I then tried 1024 nodes per call: NetWare
-     started dropping packets, clients disconnected, the profiler
+     thisprob->priv_data.started dropping packets, clients disconnected, the profiler
      froze - I couldn't switch back to the console to unload the
      client and had to power-cycle.
   */
@@ -1242,7 +1318,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
 }
 
 /* ----------------------------------------------------------------------- */
-/* support functions for Problem::GetProblemInfo()                         */
+/* support functions for ProblemGetInfo()                         */
 /* ----------------------------------------------------------------------- */
 
 static void __u64mul( u32 _ahi, u32 _alo, u32 _bhi, u32 _blo,
@@ -1645,34 +1721,42 @@ int ProblemGetSWUCount( const ContestWork *work,
  * numstring_style: -1=unformatted, 0=commas, 
  * 1=0+space between magna and number (or at end), 2=1+"nodes"/"keys"
 */
-int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name, 
-                            u32 *elapsed_secsP, u32 *elapsed_usecsP, 
-                            unsigned int *swucount, int numstring_style,
-                            const char **unit_name, 
-                            unsigned int *c_permille, unsigned int *s_permille,
-                            int permille_only_if_exact,
-                            char *sigbuf, unsigned int sigbufsz,
-                            u32 *ratehi, u32 *ratelo, 
-                            char *ratebuf, unsigned int ratebufsz,
-                            u32 *ubtcounthi, u32 *ubtcountlo, 
-                            char *tcountbuf, unsigned int tcountbufsz,
-                            u32 *ubccounthi, u32 *ubccountlo, 
-                            char *ccountbuf, unsigned int ccountbufsz,
-                            u32 *ubdcounthi, u32 *ubdcountlo,
-                            char *dcountbuf, unsigned int dcountbufsz)
+int ProblemGetInfo(void *__thisprob,
+                   unsigned int *cont_id, const char **cont_name, 
+                   u32 *elapsed_secsP, u32 *elapsed_usecsP, 
+                   unsigned int *swucount, int numstring_style,
+                   const char **unit_name, 
+                   unsigned int *c_permille, unsigned int *s_permille,
+                   int permille_only_if_exact,
+                   char *sigbuf, unsigned int sigbufsz,
+                   u32 *ratehi, u32 *ratelo, 
+                   char *ratebuf, unsigned int ratebufsz,
+                   u32 *ubtcounthi, u32 *ubtcountlo, 
+                   char *tcountbuf, unsigned int tcountbufsz,
+                   u32 *ubccounthi, u32 *ubccountlo, 
+                   char *ccountbuf, unsigned int ccountbufsz,
+                   u32 *ubdcounthi, u32 *ubdcountlo,
+                   char *dcountbuf, unsigned int dcountbufsz)
 {
-  int rescode = last_resultcode;
-  if (initialized && rescode >= 0)
+  int rescode = -1;
+  InternalProblem *thisprob = __validate_probptr(__thisprob);
+
+  if (thisprob)
+  {  
+    if (thisprob->priv_data.initialized)
+      rescode = thisprob->priv_data.last_resultcode;
+  }
+  if (rescode >= 0)
   {
     u32 e_sec = 0, e_usec = 0;
 
     if (cont_id)
     {
-      *cont_id = contest;
+      *cont_id = thisprob->pub_data.contest;
     }
     if (cont_name)
     {
-      switch (contest)
+      switch (thisprob->pub_data.contest)
       {
         case RC5: *cont_name = "RC5"; break;
         case DES: *cont_name = "DES"; break;
@@ -1683,7 +1767,7 @@ int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name,
     }
     if (unit_name)
     {
-      switch (contest)
+      switch (thisprob->pub_data.contest)
       {
         case RC5:
         case DES:
@@ -1722,16 +1806,16 @@ int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name,
     }
     if (elapsed_secsP || elapsed_usecsP || ratehi || ratelo || ratebuf)
     {
-      if (elapsed_time_sec != 0xfffffffful)
+      if (thisprob->pub_data.elapsed_time_sec != 0xfffffffful)
       {
         /* problem finished, elapsed time has already calculated by Run() */
-        e_sec  = elapsed_time_sec;
-        e_usec = elapsed_time_usec;
+        e_sec  = thisprob->pub_data.elapsed_time_sec;
+        e_usec = thisprob->pub_data.elapsed_time_usec;
       }     
       else /* compute elapsed wall clock time since loadtime */
       {
-        u32 start_sec  = loadtime_sec;
-        u32 start_usec = loadtime_usec;
+        u32 start_sec  = thisprob->priv_data.loadtime_sec;
+        u32 start_usec = thisprob->priv_data.loadtime_usec;
 
         if (start_sec != 0xfffffffful) /* our start time was not invalid */
         {
@@ -1752,8 +1836,8 @@ int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name,
         {
           /* either start time is invalid, or current-time < start-time */
           /* both are BadThing(TM)s - have to use the per-run total */
-          e_sec  = runtime_sec;
-          e_usec = runtime_usec;
+          e_sec  = thisprob->pub_data.runtime_sec;
+          e_usec = thisprob->pub_data.runtime_usec;
         }
         else /* start and 'now' time are ok */
         {
@@ -1770,10 +1854,10 @@ int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name,
         *elapsed_secsP = e_sec;
       if (elapsed_usecsP)
         *elapsed_usecsP = e_usec;
-      if (is_benchmark && (runtime_sec || runtime_usec))
+      if (thisprob->pub_data.is_benchmark && (thisprob->pub_data.runtime_sec || thisprob->pub_data.runtime_usec))
       {
-        e_sec = runtime_sec;
-        e_usec = runtime_usec;
+        e_sec = thisprob->pub_data.runtime_sec;
+        e_usec = thisprob->pub_data.runtime_usec;
       }
     } /* if (elapsed || rate || ratebuf) */    
     if ( sigbuf     || c_permille || s_permille ||
@@ -1784,7 +1868,7 @@ int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name,
     { 
       ContestWork work;
       unsigned int contestid = 0;
-      int rescode = RetrieveState( &work, &contestid, 0, 0 );
+      int rescode = ProblemRetrieveState( thisprob, &work, &contestid, 0, 0 );
 
       if (rescode >= 0) /* hmm! */
       {
@@ -1805,8 +1889,8 @@ int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name,
             numstr_suffix = "keys";
             rate2wuspeed = 1UL<<28;
 
-            ccounthi = startkeys.hi;
-            ccountlo = startkeys.lo;
+            ccounthi = thisprob->pub_data.startkeys.hi;
+            ccountlo = thisprob->pub_data.startkeys.lo;
             tcounthi = work.crypto.iterations.hi;
             tcountlo = work.crypto.iterations.lo;
             dcounthi = work.crypto.keysdone.hi;
@@ -1865,8 +1949,8 @@ int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name,
               tcountlo = dcountlo;
             }
             /* current = donecount - startpos */
-            ccountlo = dcountlo - startkeys.lo;
-            ccounthi = dcounthi - startkeys.hi;
+            ccountlo = dcountlo - thisprob->pub_data.startkeys.lo;
+            ccounthi = dcounthi - thisprob->pub_data.startkeys.hi;
             if (ccountlo > dcountlo)
               ccounthi--;
 
@@ -1921,15 +2005,15 @@ int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name,
         }
         if (c_permille)
         {
-          if (!started)
-            *c_permille = startpermille;
+          if (!thisprob->priv_data.started)
+            *c_permille = thisprob->pub_data.startpermille;
           else if (rescode != RESULT_WORKING) /* _FOUND or _NOTHING */
             *c_permille = 1000;
           else
             *c_permille = __compute_permille(contestid, &work); 
         }
         if (s_permille)
-          *s_permille = startpermille;
+          *s_permille = thisprob->pub_data.startpermille;
         if (ubdcounthi)
           *ubdcounthi = dcounthi;
         if (ubdcountlo)
@@ -1944,7 +2028,7 @@ int Problem::GetProblemInfo(unsigned int *cont_id, const char **cont_name,
           *ubtcountlo = tcountlo;
       } /* if (rescode >= 0) */
     } /* if (sigbuf || ... ) */
-  } /* if (initialized && last_resultcode >= 0) */
+  } /* if (rescode >= 0) */
   return rescode;
 }
 

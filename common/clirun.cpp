@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.75 2000/11/10 03:13:33 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.76 2000/11/12 02:00:13 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -374,7 +374,7 @@ void Go_mt( void * parm )
       if (thrparams->realthread) // don't race in the loop
         __cruncher_sleep__(is_non_preemptive_cruncher); 
     }
-    else if (!thisprob->IsInitialized())
+    else if (!ProblemIsInitialized(thisprob))
     {
       thrparams->refillneeded = 1;
       if (thrparams->realthread) // don't race in the loop
@@ -384,50 +384,50 @@ void Go_mt( void * parm )
     {
       int run; u32 optimal_timeslice = 0;
       u32 elapsed_sec, elapsed_usec, runtime_usec;
-      unsigned int contest_i = thisprob->contest;
-      u32 last_count = thisprob->core_run_count; 
+      unsigned int contest_i = thisprob->pub_data.contest;
+      u32 last_count = thisprob->pub_data.core_run_count; 
                   
       #if (!defined(DYN_TIMESLICE)) /* compile time override */
       if (is_non_preemptive_cruncher || contest_i == OGR)
       #endif
       {
         if (last_count == 0) /* prob hasn't started yet */
-          thisprob->tslice = thrparams->dyn_timeslice_table[contest_i].optimal;
-        optimal_timeslice = thisprob->tslice;
+          thisprob->pub_data.tslice = thrparams->dyn_timeslice_table[contest_i].optimal;
+        optimal_timeslice = thisprob->pub_data.tslice;
       }
 
-      elapsed_sec = thisprob->runtime_sec;
-      elapsed_usec = thisprob->runtime_usec;
+      elapsed_sec = thisprob->pub_data.runtime_sec;
+      elapsed_usec = thisprob->pub_data.runtime_usec;
 
       thrparams->is_suspended = 0;
       //fprintf(stderr,"thisprob->Run()\n");
-      run = thisprob->Run();
+      run = ProblemRun(thisprob);
       //fprintf(stderr,"thisprob->Run() = %d\n", run);
       thrparams->is_suspended = 1;
 
       runtime_usec = 0xfffffffful; /* assume time was bad */
-      if (!thisprob->last_runtime_is_invalid)
+      if (!thisprob->pub_data.last_runtime_is_invalid)
       {
-        if (thisprob->runtime_usec < elapsed_usec)
+        if (thisprob->pub_data.runtime_usec < elapsed_usec)
         {
-          if (thisprob->runtime_sec <= elapsed_sec) /* clock is bad */
+          if (thisprob->pub_data.runtime_sec <= elapsed_sec) /* clock is bad */
             elapsed_sec = (0xfffffffful / 1000000ul) + 1; /* overflow it */
           else
           {
-            elapsed_sec = (thisprob->runtime_sec-1) - elapsed_sec;
-            elapsed_usec = (thisprob->runtime_usec+1000000ul) - elapsed_usec;
+            elapsed_sec = (thisprob->pub_data.runtime_sec-1) - elapsed_sec;
+            elapsed_usec = (thisprob->pub_data.runtime_usec+1000000ul) - elapsed_usec;
           }
         }
         else
         {
-          elapsed_sec = thisprob->runtime_sec - elapsed_sec;
-          elapsed_usec = thisprob->runtime_usec - elapsed_usec;
+          elapsed_sec = thisprob->pub_data.runtime_sec - elapsed_sec;
+          elapsed_usec = thisprob->pub_data.runtime_usec - elapsed_usec;
         }
         if (elapsed_sec <= (0xfffffffful / 1000000ul))
           runtime_usec = (elapsed_sec * 1000000ul) + elapsed_usec;
       }
 
-      didwork = (last_count != thisprob->core_run_count);
+      didwork = (last_count != thisprob->pub_data.core_run_count);
       if (run != RESULT_WORKING)
       {
         thrparams->refillneeded = 1;
@@ -446,7 +446,7 @@ void Go_mt( void * parm )
       if (optimal_timeslice != 0)
       {
         if (contest_i != OGR) // OGR makes dynamic timeslicing go crazy!
-          optimal_timeslice = thisprob->tslice; /* get the number done back */
+          optimal_timeslice = thisprob->pub_data.tslice; /* get the number done back */
         
         #if defined(DYN_TIMESLICE_SHOWME)
         if (/*!thrparams->realthread &&*/ 
@@ -490,7 +490,7 @@ void Go_mt( void * parm )
               if (optimal_timeslice < thrparams->dyn_timeslice_table[contest_i].min)
                 optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].min;
             }
-            thisprob->tslice = optimal_timeslice; /* for the next round */
+            thisprob->pub_data.tslice = optimal_timeslice; /* for the next round */
           }
         }
         else /* ok, we've finished. so save it */
@@ -1616,7 +1616,7 @@ int ClientRun( Client *client )
               Problem *thisprob = GetProblemPointerFromIndex( prob_i );
               if (thisprob == NULL)
                 break;
-              if (thisprob->IsInitialized() && thisprob->contest == DES)
+              if (ProblemIsInitialized(thisprob) && thisprob->pub_data.contest == DES)
               {
                 desisrunning = 1;
                 break;

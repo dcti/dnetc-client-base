@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.42 2000/11/03 16:47:50 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.43 2000/11/12 02:00:15 cyp Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -107,6 +107,11 @@ typedef struct
 
 /* ---------------------------------------------------------------------- */
 
+/* the unit_func_union union and struct selcore are here rather than in
+ * selcore.h because they need RC5UnitWork/CoreDispatchTable to
+ * be prototyped first. (yes, its yucky)
+*/
+
 typedef union
 {
     /* this is our generic prototype */
@@ -124,29 +129,19 @@ typedef union
     #endif
 } unit_func_union;
 
+struct selcore
+{
+  int client_cpu;
+  int pipeline_count;
+  int use_generic_proto;
+  int cruncher_is_asynchronous;
+  unit_func_union unit_func;
+};
 
 /* ---------------------------------------------------------------------- */
 
-#ifdef __cplusplus
-class Problem
+struct problem_publics
 {
-protected: /* these members *must* be protected for thread safety */
-  /* --------------------------------------------------------------- */
-  RC5UnitWork rc5unitwork; /* MUST BE longword (64bit) aligned */
-  struct {u32 hi,lo;} refL0;
-  ContestWork contestwork;
-  /* --------------------------------------------------------------- */
-  char __core_membuffer_space[(MAX_MEM_REQUIRED_BY_CORE+(1UL<<CORE_MEM_ALIGNMENT)-1)];
-  void *core_membuffer; /* aligned pointer to __core_membuffer_space */
-  /* --------------------------------------------------------------- */
-  u32 loadtime_sec, loadtime_usec; /* LoadState() time */
-  int last_resultcode; /* the rescode the last time contestwork was stable */
-  int started;
-  int initialized;
-  unsigned int threadindex; /* 0-n (globally unique identifier) */
-  volatile int running; /* RetrieveState(,,purge) has to wait while Run()ning */
-
-public: /* anything public must be thread safe */
   u32 elapsed_time_sec, elapsed_time_usec; /* wall clock time between
         start/finish, only valid after Run() returned RESULT_NOTHING/_FOUND */
   u32 runtime_sec, runtime_usec; /* ~total user time spent in core */
@@ -168,58 +163,67 @@ public: /* anything public must be thread safe */
   int is_random;                 /* set if problem was RC5 'random'      */
   int is_benchmark;              /* set if problem is benchmark          */
 
-// unused:  u32 permille;    /* used by % bar */
   int loaderflags; /* used by problem loader (probfill.cpp) */
 
   unsigned int pipeline_count;
   unit_func_union unit_func;
   int use_generic_proto; /* RC5/DES unit_func prototype is generic form */
   int cruncher_is_asynchronous; /* on a co-processor or similar */
+};
 
-  int Run_RC5(u32 *iterations,int *core_retcode); /* \  run for n iterations.              */
-  int Run_DES(u32 *iterations,int *core_retcode); /*  > set actual number of iter that ran */
-  int Run_OGR(u32 *iterations,int *core_retcode); /* /  returns RESULT_* or -1 if error    */
-  int Run_CSC(u32 *iterations,int *core_retcode); /* /                                     */
+typedef struct
+{
+  struct problem_publics pub_data;
+} Problem;
 
-  Problem();
-  ~Problem();
+/*
+ * in the following functions that take a __thisprob argument, __thisprob
+ * must be a void * to suppress the name mangling for struct Problem.
+*/
 
-  int IsInitialized() { return (initialized!=0); }
+// Load state into internal structures.
+// state is invalid (will generate errors) until this is called.
+// expected_[core|cpu|os|buildnum] are those loaded with the workunit
+//   and allow LoadState to reset the problem if deemed necessary.
+// returns: -1 on error, 0 is OK
+// LoadState() and RetrieveState() work in pairs. A LoadState() without
+// a previous RetrieveState(,,purge) will fail, and vice-versa.
 
-  // LoadState() and RetrieveState() work in pairs. A LoadState() without
-  // a previous RetrieveState(,,purge) will fail, and vice-versa.
+#define CONTESTWORK_MAGIC_RANDOM    ((const ContestWork *)0)
+#define CONTESTWORK_MAGIC_BENCHMARK ((const ContestWork *)1)
+int ProblemLoadState( void *__thisprob,
+                      const ContestWork * work, unsigned int _contest, 
+                      u32 _iterations, int expected_cpunum, 
+                      int expected_corenum,
+                      int expected_os, int expected_buildfrac );
 
-  #define CONTESTWORK_MAGIC_RANDOM    ((const ContestWork *)0)
-  #define CONTESTWORK_MAGIC_BENCHMARK ((const ContestWork *)1)
-  int LoadState( const ContestWork * work, unsigned int _contest, 
-                 u32 _iterations, int expected_cpunum, int expected_corenum,
-                 int expected_os, int expected_buildfrac );
-    // Load state into internal structures.
-    // state is invalid (will generate errors) until this is called.
-    // expected_[core|cpu|os|buildnum] are those loaded with the workunit
-    //   and allow LoadState to reset the problem if deemed necessary.
-    // returns: -1 on error, 0 is OK
+// Retrieve state from internal structures.
+// state is invalid (will generate errors) once the state is purged.
+// 'dontwait' signifies that the purge need not wait for the cruncher
+// to be in a stable state before purging. *not* waiting is necessary
+// when the client is aborting (in which case threads may be hung).
+// Returns RESULT_* or -1 if error.
+// LoadState() and RetrieveState() work in pairs. A LoadState() without
+// a previous RetrieveState(,,purge) will fail, and vice-versa.
+int ProblemRetrieveState( void *__thisprob,
+                          ContestWork * work, unsigned int *contestid, 
+                          int dopurge, int dontwait );
 
-  int RetrieveState( ContestWork * work, unsigned int *contestid, 
-                     int dopurge, int dontwait );
-    // Retrieve state from internal structures.
-    // state is invalid (will generate errors) once the state is purged.
-    // 'dontwait' signifies that the purge need not wait for the cruncher
-    // to be in a stable state before purging. *not* waiting is necessary
-    // when the client is aborting (in which case threads may be hung).
-    // Returns RESULT_* or -1 if error.
+// is the problem initialized? (LoadState() successful, no RetrieveState yet)
+int ProblemIsInitialized(void *__thisprob);
 
-  int Run(void);
-  // Runs calling rc5_unit for iterations times...
-  // Returns RESULT_* or -1 if error.
+// Runs calling unit_func for iterations times...
+// Returns RESULT_* or -1 if error.
+int ProblemRun(void *__thisprob);
 
-  // more than you'll ever care to know :) any arg can be 0/null */
-  // returns RESULT_* or -1 if bad state
-  // *tcount* == total (n/a if not finished), *ccount* == numdone so far 
-  // this time, *dcount* == numdone so far all times. 
-  // numstring_style: -1=unformatted, 0=commas, 
-  // 1=0+space between magna and number (or at end), 2=1+"nodes"/"keys"
-  int GetProblemInfo(unsigned int *cont_id, const char **cont_name, 
+// more than you'll ever care to know :) any arg can be 0/null */
+// returns RESULT_* or -1 if bad state
+// *tcount* == total (n/a if not finished), *ccount* == numdone so far 
+// this time, *dcount* == numdone so far all times. 
+// numstring_style: -1=unformatted, 0=commas, 
+// 1=0+space between magna and number (or at end), 2=1+"nodes"/"keys"
+int ProblemGetInfo(void *__thisprob,
+                     unsigned int *cont_id, const char **cont_name, 
                      u32 *elapsed_secs, u32 *elapsed_usecs, 
                      unsigned int *swucount, int numstring_style,
                      const char **unit_name, 
@@ -234,8 +238,9 @@ public: /* anything public must be thread safe */
                      char *ccountbuf, unsigned int ccountbufsz,
                      u32 *ubdcounthi, u32 *ubdcountlo, 
                      char *dcountbuf, unsigned int dcountbufsz);
-};
-#endif /* __cplusplus */
+
+Problem *ProblemAlloc(void);
+void ProblemFree(void *__thisprob);
 
 unsigned int ProblemCountLoaded(int contestid); /* -1=total for all contests */
 

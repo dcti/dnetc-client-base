@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.35 2000/10/26 15:32:46 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.36 2000/11/12 02:00:16 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -226,30 +226,9 @@ int SelfTest( unsigned int contest )
     for ( testnum = 0 ; !userbreak && testnum < TEST_CASE_COUNT ; testnum++ )
     {
       const u32 (*test_cases)[TEST_CASE_COUNT][TEST_CASE_DATA] = NULL;
-      int resultcode; const char *resulttext = NULL;
       u32 expectedsolution_hi, expectedsolution_lo;
       ContestWork contestwork;
-      Problem *problem = new Problem();
-
-      u32 tslice = 0x1000;
-      int non_preemptive_env = 0;
-
-      #if (CLIENT_OS == OS_NETWARE)
-      non_preemptive_env = (!nwCliIsPreemptiveEnv());
-      if (non_preemptive_env)
-        tslice = 2048;
-      #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32) /* win32s */
-      non_preemptive_env = (winGetVersion() < 400);
-      if (non_preemptive_env)
-        tslice = 2048;
-      #elif (CLIENT_OS == OS_RISCOS)
-      non_preemptive_env = riscos_check_taskwindow();
-      if (non_preemptive_env)
-        tslice = 2048;
-      #elif (CLIENT_OS == OS_MACOS)
-      non_preemptive_env = 1;
-      tslice = 2048;
-      #endif
+      Problem *thisprob;
 
       expectedsolution_lo = expectedsolution_hi = 0; /* shaddup compiler */
       if (contest == RC5)
@@ -383,119 +362,155 @@ int SelfTest( unsigned int contest )
           contestwork.ogr.nodes.lo = contestwork.ogr.nodes.hi = 0;
           break;
       }
-  
-      problem->LoadState( &contestwork, contest, tslice, 0, 0, 0, 0 );
 
-      ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (long)(problem) );
-
-      do
+      thisprob = ProblemAlloc();
+      if (thisprob)
       {
+        u32 tslice = 0x1000;
+        int non_preemptive_env = 0;
+        int resultcode; 
+
+        #if (CLIENT_OS == OS_NETWARE)
+        non_preemptive_env = (!nwCliIsPreemptiveEnv());
         if (non_preemptive_env)
-        {
-          #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) /* win32s */
-          w32Yield(); /* pump waiting messages */
-          #elif (CLIENT_OS == OS_MACOS)
-          macosSmartYield();
-          #elif (CLIENT_OS == OS_RISCOS)
-          riscos_upcall_6();
-          #elif (CLIENT_OS == OS_NETWARE)
-          ThreadSwitchLowPriority();
-          #endif
-        }
-        if (CheckExitRequestTrigger())
-        {
-          userbreak = 1;
-          break;
-        }
-        if (contest == OGR) /* show /some/ activity (the time changes) */
-          LogScreen("\r%s: Test %02d working...", contname, testnum + 1 );
-      } while ( problem->Run() == RESULT_WORKING );
-  
-      resultcode = RESULT_WORKING;
-      if (!userbreak)
-      {
-        resultcode = problem->RetrieveState( &contestwork, NULL, 1, 0 );
+          tslice = 2048;
+        #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32) /* win32s */
+        non_preemptive_env = (winGetVersion() < 400);
+        if (non_preemptive_env)
+          tslice = 2048;
+        #elif (CLIENT_OS == OS_RISCOS)
+        non_preemptive_env = riscos_check_taskwindow();
+        if (non_preemptive_env)
+          tslice = 2048;
+        #elif (CLIENT_OS == OS_MACOS)
+        non_preemptive_env = 1;
+        tslice = 2048;
+        #endif
 
-        runtime_sec += problem->runtime_sec;
-        runtime_usec += problem->runtime_usec;
-        if (runtime_usec >= 1000000ul)
+        if (ProblemLoadState( thisprob, &contestwork, 
+                              contest, tslice, 0, 0, 0, 0 ) == 0)
         {
-          runtime_sec++;
-          runtime_usec-=1000000ul;         
-        }
-
-        switch (contest) 
-        {
-          case RC5:
-          case DES:
-          case CSC:
-            if ( resultcode != RESULT_FOUND )                /* no solution */
+          ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (long)(thisprob) );
+          do
+          {
+            if (non_preemptive_env)
             {
-              contestwork.crypto.key.hi = contestwork.crypto.key.lo = 0;
-              resulttext = "FAILED";
-              resultcode = -1;
-            }
-            else if (contestwork.crypto.key.lo != expectedsolution_lo || 
-                     contestwork.crypto.key.hi != expectedsolution_hi)   
-            {                                                /* wrong solution */
-              resulttext = "FAILED";
-              resultcode = -1;
-            } 
-            else                                             /* correct solution */
-            {
-              resulttext = "passed";
-              successes++;
-              #if 0
-              if (contest == DES)
-              {
-                /* original expected solution */
-                expectedsolution_hi = (*test_cases)[testnum][1]; 
-                expectedsolution_lo = (*test_cases)[testnum][0];
-                convert_key_from_inc_to_des(&(contestwork.crypto.key.hi), 
-                                            &(contestwork.crypto.key.lo));
-              } 
+              #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) /* win32s */
+              w32Yield(); /* pump waiting messages */
+              #elif (CLIENT_OS == OS_MACOS)
+              macosSmartYield();
+              #elif (CLIENT_OS == OS_RISCOS)
+              riscos_upcall_6();
+              #elif (CLIENT_OS == OS_NETWARE)
+              ThreadSwitchLowPriority();
               #endif
             }
-            LogScreen( "\r%s: Test %02d %s: %08X:%08X-%08X:%08X\n", 
-               contname, testnum + 1, resulttext,
-               contestwork.crypto.key.hi, contestwork.crypto.key.lo, 
-               expectedsolution_hi, expectedsolution_lo );
-            break;
-
-          #ifdef HAVE_OGR_CORES
-          case OGR:
-            if (expectedsolution_lo & 0x80000000) { // no solution
-              expectedsolution_lo = ~expectedsolution_lo;
-              if (resultcode != RESULT_NOTHING ||
-                  contestwork.ogr.nodes.lo != expectedsolution_lo) {
-                resulttext = "FAILED";
-                resultcode = -1;
-              } else {
-                resulttext = "passed";
-                successes++;
-              }
-            } else {
-              if (resultcode != RESULT_FOUND ||
-                  contestwork.ogr.nodes.lo != expectedsolution_lo) {
-                resulttext = "FAILED";
-                resultcode = -1;
-              } else {
-                resulttext = "passed";
-                successes++;
-              }
+            if (CheckExitRequestTrigger())
+            {
+              userbreak = 1;
+              break;
             }
-            LogScreen( "\r%s: Test %02d %s: %s %08X-%08X\n", 
-               contname, testnum + 1, resulttext,
-               ogr_stubstr(&contestwork.ogr.workstub.stub),
-               contestwork.ogr.nodes.lo, expectedsolution_lo );
-            break;
-          #endif /* HAVE_OGR_CORES */
-        } /* switch */
+            if (contest == OGR) /* show /some/ activity (the time changes) */
+              LogScreen("\r%s: Test %02d working...", contname, testnum + 1 );
+          } while ( ProblemRun(thisprob) == RESULT_WORKING );
+  
+          resultcode = RESULT_WORKING;
+          if (!userbreak)
+          {
+            const char *resulttext = NULL;
+            resultcode = ProblemRetrieveState( thisprob, &contestwork, NULL, 1, 0 );
 
-      } /* if (!userbreak) */
+            runtime_sec += thisprob->pub_data.runtime_sec;
+            runtime_usec += thisprob->pub_data.runtime_usec;
+            if (runtime_usec >= 1000000ul)
+            {
+              runtime_sec++;
+              runtime_usec-=1000000ul;         
+            }
+      
+            switch (contest) 
+            {
+              case RC5:
+              case DES:
+              case CSC:
+              {
+                if ( resultcode != RESULT_FOUND )                /* no solution */
+                {
+                  contestwork.crypto.key.hi = contestwork.crypto.key.lo = 0;
+                  resulttext = "FAILED";
+                  resultcode = -1;
+                }
+                else if (contestwork.crypto.key.lo != expectedsolution_lo || 
+                         contestwork.crypto.key.hi != expectedsolution_hi)   
+                {                                                /* wrong solution */
+                  resulttext = "FAILED";
+                  resultcode = -1;
+                } 
+                else                                             /* correct solution */
+                {
+                  resulttext = "passed";
+                  successes++;
+                  #if 0
+                  if (contest == DES)
+                  {
+                    /* original expected solution */
+                    expectedsolution_hi = (*test_cases)[testnum][1]; 
+                    expectedsolution_lo = (*test_cases)[testnum][0];
+                    convert_key_from_inc_to_des(&(contestwork.crypto.key.hi), 
+                                                &(contestwork.crypto.key.lo));
+                  } 
+                  #endif
+                }
+                LogScreen( "\r%s: Test %02d %s: %08X:%08X-%08X:%08X\n", 
+                   contname, testnum + 1, resulttext,
+                   contestwork.crypto.key.hi, contestwork.crypto.key.lo, 
+                   expectedsolution_hi, expectedsolution_lo );
+                break;
+              }
+              #ifdef HAVE_OGR_CORES
+              case OGR:
+              {
+                if (expectedsolution_lo & 0x80000000)  // no solution
+                { 
+                  expectedsolution_lo = ~expectedsolution_lo;
+                  if (resultcode != RESULT_NOTHING ||
+                    contestwork.ogr.nodes.lo != expectedsolution_lo) 
+                  {
+                    resulttext = "FAILED";
+                    resultcode = -1;
+                  } 
+                  else 
+                  {
+                    resulttext = "passed";
+                    successes++;
+                  }
+                } 
+                else if (resultcode != RESULT_FOUND ||
+                    contestwork.ogr.nodes.lo != expectedsolution_lo) 
+                {
+                  resulttext = "FAILED";
+                  resultcode = -1;
+                } 
+                else 
+                {
+                  resulttext = "passed";
+                  successes++;
+                }
+                LogScreen( "\r%s: Test %02d %s: %s %08X-%08X\n", 
+                                  contname, testnum + 1, resulttext,
+                                  ogr_stubstr(&contestwork.ogr.workstub.stub),
+                                  contestwork.ogr.nodes.lo, expectedsolution_lo );
+                break;
+              }
+              #endif /* HAVE_OGR_CORES */
+            } /* switch */
 
-      ClientEventSyncPost( CLIEVENT_SELFTEST_TESTEND, (long)resultcode );
-      delete problem;
+          } /* if (!userbreak) */
+
+          ClientEventSyncPost( CLIEVENT_SELFTEST_TESTEND, (long)resultcode );
+        } /* if load state ok */
+        ProblemFree(thisprob);
+      } /* if ProblemAlloc() */
 
     } /* for ( testnum = 0 ; testnum < TEST_CASE_COUNT ; testnum++ ) */
 

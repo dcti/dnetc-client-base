@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.46 2000/11/07 20:55:54 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.47 2000/11/12 02:00:13 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -25,7 +25,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   /* non-preemptive os minimum yields per second */
   struct { int yps, did_adjust; } non_preemptive_os;
   long retvalue = -1L; /* assume error */
-  Problem *problem; 
+  Problem *thisprob; 
   u32 tslice; 
 
   if (!IsProblemLoadPermitted(-1 /*any thread*/, contestid))
@@ -103,149 +103,151 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
 
   /* ++++++ run the benchmark +++++ */
   
-  problem = new Problem();
-  if ( problem->LoadState( CONTESTWORK_MAGIC_BENCHMARK, 
-                           contestid, tslice, 0, 0, 0, 0) == 0)
+  thisprob = ProblemAlloc();
+  if (thisprob)
   {
-    const char *contname = CliGetContestNameFromID(contestid);
-    int silent = 1, run = RESULT_WORKING;
-    unsigned long last_permille = 1001;
-
-    //ClientEventSyncPost(CLIEVENT_BENCHMARK_STARTED, (long)problem );
-    if ((flags & TBENCHMARK_QUIET) == 0)
+    if ( ProblemLoadState( thisprob, CONTESTWORK_MAGIC_BENCHMARK, 
+                             contestid, tslice, 0, 0, 0, 0) == 0)
     {
-      silent = 0;
-      LogScreen("%s: Benchmarking ... ", contname );
-    }
-    while ( run == RESULT_WORKING )
-    {
-      unsigned long permille; u32 ratehi, ratelo;
+      const char *contname = CliGetContestNameFromID(contestid);
+      int silent = 1, run = RESULT_WORKING;
+      unsigned long last_permille = 1001;
 
-      if (non_preemptive_os.yps) /* is this a non-preemptive environment? */
+      //ClientEventSyncPost(CLIEVENT_BENCHMARK_STARTED, (long)thisprob );
+      if ((flags & TBENCHMARK_QUIET) == 0)
       {
-        if (non_preemptive_os.did_adjust < 30 /* don't do this too often */
-           && problem->runtime_sec >= ((u32)(2+non_preemptive_os.did_adjust)))
+        silent = 0;
+        LogScreen("%s: Benchmarking ... ", contname );
+      }
+      while ( run == RESULT_WORKING )
+      {
+        unsigned long permille; u32 ratehi, ratelo;
+    
+        if (non_preemptive_os.yps) /* is this a non-preemptive environment? */
         {
-          u32 newtslice;
-          if (problem->GetProblemInfo(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                      &ratelo, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                      0, 0, 0, 0 ) == -1)
+          if (non_preemptive_os.did_adjust < 30 /* don't do this too often */
+             && thisprob->pub_data.runtime_sec >= ((u32)(2+non_preemptive_os.did_adjust)))
           {
-            run = -2;
-            break;
+            u32 newtslice;
+            if (ProblemGetInfo(thisprob, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                               &ratelo, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                               0, 0, 0, 0 ) == -1)
+            {
+              run = -2;
+              break;
+            }
+            newtslice = (u32)(ratelo/((u32)non_preemptive_os.yps));
+            if (newtslice > (tslice + (tslice/10)))
+            {
+              non_preemptive_os.did_adjust++;
+              numsecs++; /* bench for a bit more */
+            }
+            if (newtslice > tslice)
+              thisprob->pub_data.tslice = tslice = newtslice;
           }
-          newtslice = (u32)(ratelo/((u32)non_preemptive_os.yps));
-          if (newtslice > (tslice + (tslice/10)))
-          {
-            non_preemptive_os.did_adjust++;
-            numsecs++; /* bench for a bit more */
-          }
-          if (newtslice > tslice)
-            problem->tslice = tslice = newtslice;
+          #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) /* win32s */
+          w32Yield(); /* pump waiting messages */
+          #elif (CLIENT_OS == OS_MACOS)
+          macosSmartYield();
+          #elif (CLIENT_OS == OS_RISCOS)
+          riscos_upcall_6();
+          #elif (CLIENT_OS == OS_NETWARE)
+          ThreadSwitchLowPriority();
+          #endif
         }
-        #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) /* win32s */
-        w32Yield(); /* pump waiting messages */
-        #elif (CLIENT_OS == OS_MACOS)
-        macosSmartYield();
-        #elif (CLIENT_OS == OS_RISCOS)
-        riscos_upcall_6();
-        #elif (CLIENT_OS == OS_NETWARE)
-        ThreadSwitchLowPriority();
-        #endif
-      }
-      else /* preemptive environment */ if (problem->last_runtime_sec < 2)
-      {
-        /* this tweak is only meaningful for contests that slice */
-        /* precisely and don't have a cap on the maximum tslice, */
-        /* and is probably only useful during the calibration phase. */
-        /* (a simple counter test showed that it only came here one */
-        /* time after tslice had been calibrated) */
-        u32 newtslice; 
-        u32 elapsedus = (problem->last_runtime_sec * 100000ul)+
-                         problem->last_runtime_usec;
-        tslice = problem->tslice;                           
-        newtslice = tslice + ((tslice/100)*(100-(elapsedus/20000ul)));
-        if (newtslice > tslice)
+        else /* preemptive environment */ if (thisprob->pub_data.last_runtime_sec < 2)
         {
-          problem->tslice = tslice = newtslice;
-        }                                    
-      }
-      run = problem->Run();
-      if ( run < 0 )
-      {
-        run = -1;
-        break;
-      }   
-      if ((flags & TBENCHMARK_IGNBRK)==0 && CheckExitRequestTriggerNoIO())
-      {
-        if (!silent)
-          LogScreen("\r%s: Benchmarking ... *Break*", contname );
-        run = -3;
-        break;
-      }
-      permille = 1000; /* assume finished */
-      if (run == RESULT_WORKING) /* not finished */
-      {
-        permille = ((problem->runtime_sec  * 1000) + 
-                    (problem->runtime_usec / 1000)) / numsecs;
-        if (permille > 1000)
-          permille = 1000;
-      }
-      if (permille == 1000 || last_permille != (permille / 10))
-      {    
-        if (!silent)
-          LogScreen("\r%s: Benchmarking ... %u.%02u%% done", 
-                     contname, (unsigned int)(permille/10), 
-                             (unsigned int)((permille%10)*10) );
-        last_permille = (permille / 10);
-        //ClientEventSyncPost(CLIEVENT_BENCHMARK_BENCHING, (long)problem );
-      }                                 
-      if (permille == 1000) /* time is up or ran out of work */
-      {
-        char ratebuf[32]; u32 secs, usecs;
-        if (problem->GetProblemInfo(0, 0, /* cont_id, cont_name */
-                                    &secs, &usecs, 
-                                    0, 0, 0, /* swucount, pad_strings, unit_name */
-                                    0, 0, 0, /* currpermille, startperm, poie */
-                                    0, 0,    /* idbuf, idbufsz */
-                                    &ratehi, &ratelo, 
-                                    ratebuf, sizeof(ratebuf),
-                                    0, 0, 0, 0,   0, 0, 0, 0, 
-                                    0, 0, 0, 0 ) == -1)
+          /* this tweak is only meaningful for contests that slice */
+          /* precisely and don't have a cap on the maximum tslice, */
+          /* and is probably only useful during the calibration phase. */
+          /* (a simple counter test showed that it only came here one */
+          /* time after tslice had been calibrated) */
+          u32 newtslice; 
+          u32 elapsedus = (thisprob->pub_data.last_runtime_sec * 100000ul)+
+                           thisprob->pub_data.last_runtime_usec;
+          tslice = thisprob->pub_data.tslice;                           
+          newtslice = tslice + ((tslice/100)*(100-(elapsedus/20000ul)));
+          if (newtslice > tslice)
+          {
+            thisprob->pub_data.tslice = tslice = newtslice;
+          }                                    
+        }
+        run = ProblemRun(thisprob);
+        if ( run < 0 )
         {
-          run = -4;
+          run = -1;
+          break;
+        }   
+        if ((flags & TBENCHMARK_IGNBRK)==0 && CheckExitRequestTriggerNoIO())
+        {
+          if (!silent)
+            LogScreen("\r%s: Benchmarking ... *Break*", contname );
+          run = -3;
           break;
         }
-        retvalue = (long)ratelo;
-        if (!silent)
+        permille = 1000; /* assume finished */
+        if (run == RESULT_WORKING) /* not finished */
         {
-          struct timeval tv; 
-          tv.tv_sec = secs; tv.tv_usec = usecs;
-          LogScreen("\r");
-          Log("%s: Benchmark for core #%d (%s)\n%s [%s/sec]\n",
-             contname, problem->coresel, 
-             selcoreGetDisplayName(contestid, problem->coresel),
-             CliGetTimeString( &tv, 2 ), ratebuf );
+          permille = ((thisprob->pub_data.runtime_sec  * 1000) + 
+                      (thisprob->pub_data.runtime_usec / 1000)) / numsecs;
+          if (permille > 1000)
+            permille = 1000;
         }
-        //ClientEventSyncPost(CLIEVENT_BENCHMARK_FINISHED, (long)problem );
-        break;
-      } /* permille == 1000 */
-    } /* while ( run == RESULT_WORKING ) */
+        if (permille == 1000 || last_permille != (permille / 10))
+        {    
+          if (!silent)
+            LogScreen("\r%s: Benchmarking ... %u.%02u%% done", 
+                       contname, (unsigned int)(permille/10), 
+                               (unsigned int)((permille%10)*10) );
+          last_permille = (permille / 10);
+          //ClientEventSyncPost(CLIEVENT_BENCHMARK_BENCHING, (long)problem );
+        }                                 
+        if (permille == 1000) /* time is up or ran out of work */
+        {
+          char ratebuf[32]; u32 secs, usecs;
+          if (ProblemGetInfo(thisprob,0, 0, /* cont_id, cont_name */
+                                      &secs, &usecs, 
+                                      0, 0, 0, /* swucount, pad_strings, unit_name */
+                                      0, 0, 0, /* currpermille, startperm, poie */
+                                      0, 0,    /* idbuf, idbufsz */
+                                      &ratehi, &ratelo, 
+                                      ratebuf, sizeof(ratebuf),
+                                      0, 0, 0, 0,   0, 0, 0, 0, 
+                                      0, 0, 0, 0 ) == -1)
+          {
+            run = -4;
+            break;
+          }
+          retvalue = (long)ratelo;
+          if (!silent)
+          {
+            struct timeval tv; 
+            tv.tv_sec = secs; tv.tv_usec = usecs;
+            LogScreen("\r");
+            Log("%s: Benchmark for core #%d (%s)\n%s [%s/sec]\n",
+               contname, thisprob->pub_data.coresel, 
+               selcoreGetDisplayName(contestid, thisprob->pub_data.coresel),
+               CliGetTimeString( &tv, 2 ), ratebuf );
+          }
+          //ClientEventSyncPost(CLIEVENT_BENCHMARK_FINISHED, (long)problem );
+          break;
+        } /* permille == 1000 */
+      } /* while ( run == RESULT_WORKING ) */
 
-    if (!silent)
-    {
-      if (run < 0) /* error */
+      if (!silent)
       {
-        LogScreen("\r");
-        Log("%s: Benchmark failed (error: %d). Unable to determine rate.", contname, run );
+        if (run < 0) /* error */
+        {
+          LogScreen("\r");
+          Log("%s: Benchmark failed (error: %d). Unable to determine rate.", contname, run );
+        }
       }
-    }
-    problem->RetrieveState(NULL, NULL, 1, 0); //purge the problem
+      ProblemRetrieveState(thisprob, NULL, NULL, 1, 0); //purge the problem
 
-  } /* if (LoadState() == 0) */
+    } /* if (LoadState() == 0) */
 
-  delete problem;
-
+    ProblemFree(thisprob);
+  }
   return retvalue;
 }  
 

@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.51 2000/11/07 21:57:50 oliver Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.52 2000/11/12 02:00:14 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -41,8 +41,8 @@ int SetProblemLoaderFlags( const char *loaderflags_map )
   Problem *thisprob;
   while ((thisprob = GetProblemPointerFromIndex(prob_i)) != NULL)
   {
-    if (thisprob->IsInitialized())
-      thisprob->loaderflags |= loaderflags_map[thisprob->contest];
+    if (ProblemIsInitialized(thisprob))
+      thisprob->pub_data.loaderflags |= loaderflags_map[thisprob->pub_data.contest];
     prob_i++;
   }
   return ((prob_i == 0)?(-1):((int)prob_i));
@@ -271,19 +271,19 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 
   *contest = 0;
   *is_empty = 1; /* assume not initialized */
-  if ( thisprob->IsInitialized() )  
+  if ( ProblemIsInitialized(thisprob) )  
   {
     WorkRecord wrdata;
     int resultcode;
     unsigned int cont_i;
     memset( (void *)&wrdata, 0, sizeof(WorkRecord));
-    resultcode = thisprob->RetrieveState( &wrdata.work, &cont_i, 0, 0 );
+    resultcode = ProblemRetrieveState( thisprob, &wrdata.work, &cont_i, 0, 0 );
 
     *is_empty = 0; /* assume problem is in use */
 
     if (resultcode == RESULT_FOUND || resultcode == RESULT_NOTHING ||
        unconditional_unload || resultcode < 0 /* core error */ ||
-      (thisprob->loaderflags & (PROBLDR_DISCARD|PROBLDR_FORCEUNLOAD)) != 0) 
+      (thisprob->pub_data.loaderflags & (PROBLDR_DISCARD|PROBLDR_FORCEUNLOAD)) != 0) 
     { 
       int finito = (resultcode==RESULT_FOUND || resultcode==RESULT_NOTHING);
       const char *action_msg = NULL;
@@ -303,8 +303,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       wrdata.resultcode = resultcode;
       wrdata.contest    = (u8)cont_i;
       wrdata.resultcode = resultcode;
-      wrdata.cpu        = FILEENTRY_CPU(thisprob->client_cpu,
-                                        thisprob->coresel);
+      wrdata.cpu        = FILEENTRY_CPU(thisprob->pub_data.client_cpu,
+                                        thisprob->pub_data.coresel);
       wrdata.os         = FILEENTRY_OS;      //CLIENT_OS
       wrdata.buildhi    = FILEENTRY_BUILDHI; //(CLIENT_BUILDFRAC >> 8)
       wrdata.buildlo    = FILEENTRY_BUILDLO; //CLIENT_BUILDFRAC & 0xff
@@ -325,7 +325,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, (long)prob_i );
       }
 
-      if ((thisprob->loaderflags & PROBLDR_DISCARD)!=0)
+      if ((thisprob->pub_data.loaderflags & PROBLDR_DISCARD)!=0)
       {
         action_msg = "Discarded";
         reason_msg = "\n(project disabled/closed)";
@@ -356,7 +356,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
           action_msg = ((finito)?("Completed"):("Saved"));
       }
 
-      if (thisprob->GetProblemInfo( 0, &contname, 
+      if (ProblemGetInfo( thisprob, 0, &contname, 
                                     &secs, &usecs,
                                     &swucount, 2, 
                                     0, 
@@ -417,7 +417,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
     
       /* we can purge the object now */
       /* we don't wait when aborting. thread might be hung */
-      thisprob->RetrieveState( NULL, NULL, 1, abortive_action /*==dontwait*/ );
+      ProblemRetrieveState( thisprob, NULL, NULL, 1, abortive_action /*==dontwait*/ );
 
     } /* unload needed */
   } /* is initialized */
@@ -558,7 +558,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     /* loadstate can fail if it selcore fails or the previous problem */
     /* hadn't been purged, or the contest isn't available or ... */
 
-    if (thisprob->LoadState( work, *loaded_for_contest, timeslice, 
+    if (ProblemLoadState( thisprob, work, *loaded_for_contest, timeslice, 
          expected_cpu, expected_core, expected_os, expected_build ) != -1)
     {
       *load_needed = 0;
@@ -570,7 +570,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       {
         unsigned int permille; u32 ddonehi, ddonelo;
         const char *contname; char pktid[32]; char ddonebuf[15];
-        if (thisprob->GetProblemInfo( loaded_for_contest, &contname, 
+        if (ProblemGetInfo( thisprob, loaded_for_contest, &contname, 
                                       0, 0,
                                       0, 2, 
                                       0, 
@@ -587,7 +587,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
           const char *extramsg = ""; 
           char perdone[32]; 
 
-          if (thisprob->was_reset)
+          if (thisprob->pub_data.was_reset)
             extramsg="\nPacket was from a different core/client cpu/os/build.";
           else if (permille > 0 && permille < 1000)
           {
@@ -601,7 +601,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
           }
           
           Log("%s: Loaded %s%s%s\n",
-               contname, ((thisprob->is_random)?("random "):("")),
+               contname, ((thisprob->pub_data.is_random)?("random "):("")),
                pktid, extramsg );
         } /* if (thisprob->GetProblemInfo(...) != -1) */
       } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */

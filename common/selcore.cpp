@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.78 2000/11/02 18:29:47 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.79 2000/11/12 02:00:15 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -421,18 +421,22 @@ static long __bench_or_test( int which,
       if (cont_i == RC5 && coreidx == (corecount-1) &&
           GetNumberOfDetectedProcessors() > 1) /* have x86 card */
       {
-        Problem *prob = new Problem(); /* so bench/test gets threadnum+1 */
-        rc = 1;
-        Log("RC5: using x86 core.\n" );
-        if (which != 's') /* bench */
-          rc = TBenchmark( cont_i, benchsecs, 0 );
-        else
+        Problem *prob = ProblemAlloc(); /* so bench/test gets threadnum+1 */
+        rc = -1;
+        if (prob)
         {
-          int irc = SelfTest( cont_i );
-          if (irc <= 0) /* failed or not supported */
-            rc = (long)irc;
+          rc = 1;
+          Log("RC5: using x86 core.\n" );
+          if (which != 's') /* bench */
+            rc = TBenchmark( cont_i, benchsecs, 0 );
+          else
+          {
+            int irc = SelfTest( cont_i );
+            if (irc <= 0) /* failed or not supported */
+              rc = (long)irc;
+          }
+          ProblemFree(prob);
         }
-        delete prob;
         if (rc <= 0) 
           break; /* failed/not supported for this contest */
       }      
@@ -666,7 +670,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             #else
             case 0x09: cindex = 3; break; // AMD>=K7/Cx>=MII ("RG re-pair I")
             #endif
-            case 0x0A: cindex = 3; break; // Centaur C6
+            case 0x0A: cindex = 1; break; // Centaur C6
             //no default
           }
           selcorestatics.corenum[RC5] = cindex;
@@ -1015,7 +1019,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 /* ------------------------------------------------------------- */
 
 int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
-                       int *client_cpuP, Problem *problem )
+                       int *client_cpuP, struct selcore *selinfo )
 {                               
   #if (CLIENT_CPU == CPU_X86) //most projects have an mmx core
   static int ismmx = -1; 
@@ -1503,13 +1507,13 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
   {
     if (client_cpuP)
       *client_cpuP = client_cpu;
-    if (problem)
+    if (selinfo)
     {
-      problem->client_cpu = client_cpu;
-      problem->pipeline_count = pipeline_count;
-      problem->use_generic_proto = use_generic_proto;
-      problem->cruncher_is_asynchronous = cruncher_is_asynchronous;
-      memcpy( (void *)&(problem->unit_func), &unit_func, sizeof(unit_func));
+      selinfo->client_cpu = client_cpu;
+      selinfo->pipeline_count = pipeline_count;
+      selinfo->use_generic_proto = use_generic_proto;
+      selinfo->cruncher_is_asynchronous = cruncher_is_asynchronous;
+      memcpy( (void *)&(selinfo->unit_func), &unit_func, sizeof(unit_func));
     }
     return coresel;
   }
