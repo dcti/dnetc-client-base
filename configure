@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.253 2001/05/20 23:33:35 andreasb Exp $
+# @(#)$Id: configure,v 1.222.2.254 2001/06/20 13:02:04 snake Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1322,7 +1322,7 @@ case "$1" in
         add_sources "openbsd" "sparc"
         ;;
 
-    *sparc-netbsd)
+    *sparc-netbsd)                    # snake, for sun4[cdm]
         TARGET_CC="g++"
         generate_gcc_opts "sparc" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -1815,15 +1815,16 @@ case "$1" in
 
     *x86-bsdos-elf)                        # BSD/OS 4.x+ (ELF) -snake
         # bsdos-4 client is still experimental, found a severe bug with 
-        # PentiumII now under BSD/OS 4.1 it seems to run and compile correctly
-        TARGET_AS="g++ -c -DNO_BALIGN"
-        TARGET_CC="g++"
+        # PentiumII now under BSD/OS 4.1 it seems to run except for rc5 core #9
+        TARGET_AS="g++ -g -c -DNO_BALIGN"
+        TARGET_CC="g++ -g "
         generate_gcc_opts "x86" "bsdos"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="-static"
         TARGET_NASM_FMT="elf"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="bsdos4-x86-elf"
+        TARGET_STRIP="touch"                #for debugging
         add_sources "bsdos" "x86" 
 	;;
 
