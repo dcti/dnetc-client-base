@@ -1,108 +1,12 @@
 ## Compiler, linker, and lib stuff
-## Makefile for use with *ALL* Watcom platforms.
+## Makefile for use with all Watcom platforms.
 ##
 ##   Run as WMAKE <platform>
-##   where <platform> is one of [dos | netware | os2 | w32 ]
-##                or anything else with a section at the end of this file
+##   where <platform> is one of 
+##               [dos | netware | os2 | w32 | w16 | w32ss | w16ss]
+##               or anything else with a section at the end of this file
 ##
-## $Log: makefile.wat,v $
-## Revision 1.27  1999/05/01 00:07:17  cyp
-## refreshed
-##
-## Revision 1.25  1999/01/01 02:45:14  cramer
-## Part 1 of 1999 Copyright updates...
-##
-## Revision 1.24  1998/11/16 22:42:21  cyp
-## Brought up to date
-##
-## Revision 1.21  1998/07/19 20:06:11  cyruspatel
-## Makefile now also gens the upload readme, eg rc5des-416-dos-x86-cli.readme
-##
-## Revision 1.20  1998/07/19 17:52:10  cyruspatel
-## Automated tasm support. make will now also gen a zip if configured for it.
-##
-## Revision 1.19  1998/07/12 17:40:50  cyruspatel
-## Different DES versions can now be made by changing a define.
-##
-## Revision 1.18  1998/07/12 08:41:34  ziggyb
-## oops, typed it wrong, it really puts cliident.obj in the LINKOBJs this time
-##
-## Revision 1.17  1998/07/12 08:29:25  ziggyb
-## Added cliident.cpp to the path and MMX core changes
-##
-## Revision 1.16  1998/07/09 05:45:37  silby
-## This neato file can build the nt service!
-##
-## Revision 1.15  1998/07/07 14:51:51  ziggyb
-## Added the pathwork.cpp file to the link objs and the make process. Also 
-## moved the Cyrix core around, it seems to speed up the core a bit. Well 
-## at least it prevented it from being slowed down, in OS/2 at least.
-##
-## Revision 1.14  1998/06/21 17:10:20  cyruspatel
-## Fixed some NetWare smp problems. Merged duplicate numcpu validation code
-## in ::ReadConfig()/::ValidateConfig() into ::ValidateProcessorCount() and
-## spun that off, together with what used to be ::x86id() or ::ArmId(), into
-## cpucheck.cpp. Adjusted and cleaned up client.h accordingly.
-##
-## Revision 1.13  1998/06/18 08:38:10  cyruspatel
-## Fixed Log and Id mixup
-##
-## Revision 1.12  1998/06/18 08:19:17  cyruspatel 
-## Converted all names to lower case (ncpfs serves case sensitive names).
-## Modified for use of the pre-assembled objs of the p?despro cores until a
-## wasm version is available. Fixed use of %PATHOPS (got evaluated at
-## assignment time, so %PATHOPS was always "/fr= /fo= /i"). Fixed misplaced
-## colons that were causing unconditional makes for some files. Changed
-## global /zp8 to /zp1 to work around alignment problems (no speed hit :).
-## Compacted all those long dependency lists into .autodepend directives.
-## Added suppression of wcpp/wasm 'whoami' banners. $Log and cleaned up a bit.
-##
-## Revision 1.11  1998/06/18 07:22:46  jlawson
-## updated makefile with new paths to des/rc5 cores 
-##
-## Revision 1.10  1998/06/16 22:29:59  silby
-## added p1bdespro.obj and p2bdespro.obj so that they'll get linked (unless 
-## I did it wrong. <g>)
-##
-## Revision 1.9  1998/06/15 02:32:20  ziggyb
-## added os2 dod.obj  Also moved the rc5 cores to the front of the link 
-## list to speed up the keyrates a bit for os2
-##
-## Revision 1.8  1998/06/14 11:16:11  ziggyb
-## Moved the /fr and /fo options to %PATHOPS so that I can change them
-## easily. /fr doesn't work in Watcom 10 :( Also moved all the rc5/des 
-## core files to the front of the list of object files since it does 
-## seem to speed things up a bit.
-##
-## Revision 1.7  1998/06/14 01:43:16  cyruspatel
-## important fix: uniform-ified /zp compiler switch for all modules &
-## all platforms (yeah, I took the liberty). /zp must be uniform,
-## or else indirect pointers to class members (as in clirate's use of
-## prob->timelo) might end up being 'slightly' off.
-##
-## Revision 1.6  1998/06/14 01:43:16  cyruspatel
-## added support for new disphelp.cpp; removed obsolete chdir cmds;
-## added $Log
-##          
-## Revision 1.5  1998/06/09 08:54:12  jlawson
-## NetWare patches - NetWare no longer uses watcom static clib
-##
-## Revision 1.4  1998/06/07 08:39:14  ziggyb
-## Added a override to the stacksize for OS/2 builds. 32k stack size 
-## slows down the rc5 cores.
-##
-## Revision 1.3  1998/05/26 23:02:02  ziggyb
-## Another OS/2 Makefile change (taking out the default watcom/os2 directory)
-##
-## Revision 1.2  1998/05/26 21:02:16  ziggyb
-## Added the new cli source file into the makefile. Also changed some of 
-## the compile options under OS/2.
-##
-## Revision 1.1  1998/05/24 14:25:37  daa
-## Import 5/23/98 client tree
-## 
-
-## $Id: makefile.wat,v 1.27 1999/05/01 00:07:17 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.1 1999/07/24 17:31:09 cyp Exp $
 
 
 %EXTOBJS  = #extra objs (made elsewhere) but need linking here
@@ -565,6 +469,10 @@ output\cdosinet.obj : platforms\dos\cdosinet.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
+output\cdoskeyb.obj : platforms\dos\cdoskeyb.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
 output\w32svc.obj : platforms\win32cli\w32svc.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
@@ -578,6 +486,22 @@ output\w32pre.obj : platforms\win32cli\w32pre.cpp $(%dependall) .AUTODEPEND
   @set isused=1
 
 output\w32sock.obj : platforms\win32cli\w32sock.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\w32ras.obj : platforms\win32cli\w32ras.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\w32x86.obj : platforms\win32cli\w32x86.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\w32util.obj : platforms\win32cli\w32util.cpp $(%dependall) .AUTODEPEND
+  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\w32ss.obj : platforms\win32cli\w32ss.cpp $(%dependall) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
@@ -644,28 +568,42 @@ dolink : .symbolic
   @del $(%BINNAME)
   @echo Target '$(%BINNAME)' deleted.
 
+# -----------------------------------------------------------------------
+
+postlink_win16:  .symbolic
+  @if exist $(LNKbasename).rex @del $(LNKbasename).rex
+  @ren $(%BINNAME) $(LNKbasename).rex 
+  @set _1=$(%BINSUFFIX)
+  @set BINSUFFIX=#
+  @for %i in ($(%_1)) do @set BINSUFFIX=$(%BINSUFFIX)%i
+  @set _1=
+  @wrc -q -30 -bt=windows -r -i=. -i$(%WATCOM)\h;$(%WATCOM)\h\win -fo=.\$(LNKbasename).res platforms\win32cli\w32cons.rc
+  @if $(%BINSUFFIX).==scr. @if not exist $(LNKbasename).exe @set BINSUFFIX=SCR
+  @if $(%BINSUFFIX).==scr. @ren $(LNKbasename).exe $(LNKbasename).!!!
+  @wbind $(%BINNAME) -q -D "SCRNSAVE : distributed.net client" -R $(LNKbasename).res
+  @if not $(%BINSUFFIX).==. @ren $(LNKbasename).exe $(LNKbasename).$(%BINSUFFIX)
+  @if $(%BINSUFFIX).==scr. @ren $(LNKbasename).!!! $(LNKbasename).exe
+  @if exist $(LNKbasename).rex @del $(LNKbasename).rex
+
+postlink_netware: .symbolic 
+  @\develop\sdkcdall\nlmdump\nlm_dos.exe *$(LNKbasename).nlm /b:$(LNKbasename).map 
+  #@\develop\sdkcd13\nwsdk\tools\nlmpackx $(LNKbasename).nlm $(LNKbasename).nlx
+  #@del $(LNKbasename).nlm
+  #@ren $(LNKbasename).nlx $(LNKbasename).nlm
+
+postlink_dos: .symbolic
+  @\develop\pmodew\pmwlite.exe /C4 /S\develop\pmodew\pmodew.exe $(%BINNAME)
+  @\develop\pmodew\pmwsetup.exe /b0 /q $(%BINNAME)
+
+postlink_win32: .symbolic
+  @wrc -31 -bt=nt -i$(%WATCOM)\h;$(%WATCOM)\h\win platforms\win32cli\w32cons.rc $(%BINNAME)
+  @if $(%BINSUFFIX).==. @\develop\upx\upxw.exe -9 $(%BINNAME)
+
 postlink: .symbolic
-  @if $(%OSNAME).==netware.  @\develop\sdkcdall\nlmdump\nlm_dos.exe *$(LNKbasename).nlm /b:$(LNKbasename).map 
-  #@if $(%OSNAME).==netware. @\develop\sdkcd13\nwsdk\tools\nlmpackx $(LNKbasename).nlm $(LNKbasename).nlx
-  #@if $(%OSNAME).==netware. @del $(LNKbasename).nlm
-  #@if $(%OSNAME).==netware. @ren $(LNKbasename).nlx $(LNKbasename).nlm
-
-  @if $(%OSNAME).==dos.      @\develop\pmodew\pmwlite.exe /C4 /S\develop\pmodew\pmodew.exe $(%BINNAME)
-  @if $(%OSNAME).==dos.      @\develop\pmodew\pmwsetup.exe /b0 /q $(%BINNAME)
-
-  @if exist $(LNKbasename).rex @del $(LNKbasename).rex
-  @if $(%OSNAME).==win16.    @ren $(LNKbasename).exe $(LNKbasename).rex 
-  #@if $(%OSNAME).==win16.   @wbind rc5des -n
-  #@if $(%OSNAME).==win16.   @echo "1 ICON platforms\win32gui\cowhead.ico" > $(LNKbasename).rc
-  @if $(%OSNAME).==win16.    @wrc -r -i=. -fo=.\$(LNKbasename).res -bt=windows -30 platforms\win32cli\w32cons.rc
-  @if $(%OSNAME).==win16.    @wbind $(LNKbasename) -R $(LNKbasename).res
-  @if exist $(LNKbasename).rex @del $(LNKbasename).rex
-
-  #@if $(%OSNAME).==win32.   @echo "1 ICON platforms\win32gui\cowhead.ico" > $(LNKbasename).rc
-  @if $(%OSNAME).==win32.    @wrc /bt=nt platforms\win32cli\w32cons.rc $(%BINNAME)
-
-  #@if exist $(LNKbasename).rc @del $(LNKbasename).rc >nul:
-  #@if exist $(LNKbasename).res @del $(LNKbasename).res >nul:
+  @if $(%OSNAME).==netware. @%make postlink_netware
+  @if $(%OSNAME).==win32.   @%make postlink_win32
+  @if $(%OSNAME).==win16.   @%make postlink_win16
+  @if $(%OSNAME).==dos.     @%make postlink_dos
 
 #---------------------- platform specific settings come here ----------
 
@@ -677,7 +615,7 @@ dos: .symbolic                                       # DOS/PMODE
      @set LIBPATH   = $(%watcom)\lib386 $(%watcom)\lib386\dos 
      @set WLINKOPS  = dosseg eliminate map # stub=\develop\pmodew\pmodew.exe
                                            #stub=platforms/dos/d4GwStUb.CoM 
-     @set LFLAGS    = #symtrace printf symtrace whack16 
+     @set LFLAGS    = symtrace usleep  #symtrace printf symtrace whack16 
      @set FORMAT    = os2 le
      @set CFLAGS    = /zp8 /wx /we /6s /fp3 /fpc /zm /ei /mf &
                       /bt=dos /d__MSDOS__ /wcd=604 /wcd=594 /wcd=7 &
@@ -686,7 +624,8 @@ dos: .symbolic                                       # DOS/PMODE
      @set OPT_SIZE  = /s /os 
      @set OPT_SPEED = /oneatx /oh /oi+ 
      @set LINKOBJS  = $(%LINKOBJS) output\cdostime.obj output\cdosidle.obj &
-                      output\cdoscon.obj output\cdosemu.obj output\cdosinet.obj
+                      output\cdoscon.obj output\cdosemu.obj output\cdosinet.obj &
+                      output\cdoskeyb.obj
      @set LIBFILES  = #platforms\dos\libtcp\libtcp.a
      @set MODULES   =
      @set IMPORTS   =
@@ -757,18 +696,19 @@ w16: .symbolic                                       # Windows/16
      @set AFLAGS    = /5s /fp3 /bt=dos /mf # no such thing as /bt=dos4g
      @set NASMEXE   = \develop\nasm\nasm.exe
      @set TASMEXE   = \develop\tasm32\tasm32.exe
-     @set LFLAGS    = system win386 #debug all op de 'RC5DES Client for Windows'
+     @set LFLAGS    = system win386 symtrace open #debug all op de 'SCRSAVE : RC5DES Client for Windows'
      @set CFLAGS    = /3s /w4 /zW /bt=windows /d_Windows &
                       /i$(%watcom)\h;$(%watcom)\h\win /iplatforms/win32cli &
-                      /DBITSLICER_WITH_LESS_BITS 
+                      /DBITSLICER_WITH_LESS_BITS /DDYN_TIMESLICE 
                       #/d2
                       #/zp8 /6s /fp3 /fpc /zm /ei /mf /bt=dos /d_Windows &
                       #/d_ENABLE_AUTODEPEND /d__WINDOWS_386__ &
                       #/bw (bw causes default windowing lib to be linked)
      @set OPT_SIZE  = /s /os 
      @set OPT_SPEED = /oaxt #/oneatx /oh /oi+ 
-     @set LINKOBJS  = $(%LINKOBJS) &
-                      output\w32cons.obj output\w32pre.obj output\w32sock.obj
+     @set LINKOBJS  = output\w32pre.obj output\w32ss.obj output\w32cons.obj &
+                      output\w32sock.obj output\w32svc.obj output\w32x86.obj &
+                      output\w32util.obj $(%LINKOBJS)
      @set LIBFILES  =
      @set MODULES   =
      @set IMPORTS   =
@@ -795,9 +735,9 @@ w32: .symbolic                               # win32
                       /DINIT_TIMESLICE=0x40000 /DDYN_TIMESLICE
      @set OPT_SIZE  = /s /os
      @set OPT_SPEED = /oneatx /oh /oi+ /ei #/oneatx /oh /oi+ 
-     @set LINKOBJS  = $(%LINKOBJS) output\lurk.obj &
-                      output\w32svc.obj output\w32cons.obj &
-                      output\w32pre.obj output\w32sock.obj 
+     @set LINKOBJS  = output\w32pre.obj output\w32ss.obj output\w32svc.obj &
+                      output\w32cons.obj output\w32sock.obj output\w32ras.obj &
+                      output\w32util.obj output\lurk.obj $(%LINKOBJS)
      @set LIBFILES  = 
      @set MODULES   =
      @set IMPORTS   =
@@ -806,10 +746,59 @@ w32: .symbolic                               # win32
      @set ZIPOPTS   = -exo
      @set ZIPFILE   = #$(LNKbasename)-win32-x86-cli
      @set BINNAME   = $(LNKbasename).exe
-     #@%make debug
      @%make declare_for_desmmx
      @%make declare_for_rc5mmx
      @%make declare_for_multithread
+     @%make platform
+
+w32ss: .symbolic                               # win32 screen saver
+     @set OSNAME    = win32
+     @set AFLAGS    = /5s /fp5 /bt=DOS4GW /mf
+     @set TASMEXE   = \develop\tasm32\tasm32.exe
+     @set NASMEXE   = \develop\nasm\nasm.exe
+     @set WLINKOPS  = map #alignment=16 objalign=16
+     @set LFLAGS    = sys nt_win op de 'RC5DES Client for Windows' #nt
+     @set CFLAGS    = /zp8 /s /fpd /6s /fp3 /bm /mf /bt=nt /DWIN32 /DLURK &
+                      /iplatforms/win32cli /i$(%watcom)\h;$(%watcom)\h\nt &
+                      /DSSSTANDALONE
+     @set OPT_SIZE  = /s /os
+     @set OPT_SPEED = /oneatx /oh /oi+ /ei #/oneatx /oh /oi+ 
+     @set LINKOBJS  = output\w32ss.obj output\w32util.obj output\w32cons.obj
+     @set COREOBJS  =
+     @set LIBFILES  = user32,kernel32,advapi32,gdi32
+     @set MODULES   =
+     @set IMPORTS   =
+     @set DOCFILES  = docs\rc5des.txt docs\readme.txt
+     @set ZIPPER    = #c:\util\pkzip
+     @set ZIPOPTS   = -exo
+     @set ZIPFILE   = #$(LNKbasename)-win32-x86-cli
+     @set BINSUFFIX = scr
+     @set BINNAME   = $(LNKbasename).scr
+     @%make platform
+
+w16ss: .symbolic                    # Windows/16 screen saver
+     @set OSNAME    = win16
+     @set AFLAGS    = /5s /fp3 /bt=dos /mf
+     @set NASMEXE   = \develop\nasm\nasm.exe
+     @set TASMEXE   = \develop\tasm32\tasm32.exe
+     @set LFLAGS    = system win386 #symtrace open #debug all
+     @set CFLAGS    = /3s /w4 /zW /bt=windows /d_Windows /DSSSTANDALONE &
+                      /i$(%watcom)\h;$(%watcom)\h\win;platforms/win32cli
+     @set OPT_SIZE  = /s /os 
+     @set OPT_SPEED = /oaxt 
+     @set LINKOBJS  = output\w32ss.obj output\w32util.obj output\w32cons.obj
+     @set DEFALL    =
+     @set COREOBJS  =
+     @set LIBFILES  =
+     @set MODULES   =
+     @set IMPORTS   =
+     @set ZIPPER    = #c:\util\pkzip
+     @set ZIPOPTS   = -exo
+     @set DOCFILES  = docs\rc5des.txt docs\readme.txt
+     @set ZIPFILE   = $(LNKbasename)-win16-x86-cli
+     @set BINSUFFIX = scr
+     @set BINNAME   = $(LNKbasename).scr
+     @if exist $(LNKbasename).rex @del $(LNKbasename).rex
      @%make platform
 
 netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24 '98)
