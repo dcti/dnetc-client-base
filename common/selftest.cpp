@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.85.2.5 2004/01/10 22:45:41 kakace Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.85.2.6 2004/01/12 23:44:55 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -521,7 +521,7 @@ long SelfTest( unsigned int contest )
         {
           int tcd;
           contestwork.ogr.workstub.stub.marks = (u16)((*test_cases)[testnum][1]);
-          contestwork.ogr.workstub.minpos     = (u32)((*test_cases)[testnum][2]);
+          contestwork.ogr.minpos              = (u32)((*test_cases)[testnum][2]);
           contestwork.ogr.workstub.stub.length = 0;
           for (tcd = 0; tcd < TEST_CASE_DATA-3; tcd++) 
           {
@@ -547,7 +547,7 @@ long SelfTest( unsigned int contest )
               break;
             contestwork.ogr.workstub.stub.length++;  
           }
-          contestwork.ogr.workstub.minpos = 0;
+          contestwork.ogr.minpos = 0;
           contestwork.ogr.workstub.worklength = 0;
           contestwork.ogr.nodes.lo = contestwork.ogr.nodes.hi = 0;
           break;

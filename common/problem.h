@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.94.2.7 2003/12/13 12:57:14 kakace Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.94.2.8 2004/01/12 23:44:55 kakace Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -124,15 +124,16 @@ typedef union
   struct {
     struct WorkStub workstub;             // stub to work on (28 bytes)
     struct {u32 hi,lo;} nodes;            // nodes completed
-  } DNETC_PACKED ogr;                     /* 36 bytes */
-  #endif
+    u32    minpos;
+  } DNETC_PACKED ogr;                     /* 40 bytes */
+  #endif // HAVE_OGR_CORES
   struct {
     char unused[80];
   } DNETC_PACKED unused;
 //  #if 0
 //    PROJECT_NOT_HANDLED("in ContestWork");
 //  #endif
-} DNETC_PACKED ContestWork;
+} DNETC_PACKED ContestWork;               // 80 bytes
 
 typedef struct
 {

@@ -9,7 +9,7 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.6.2.4 2004/01/10 23:02:41 kakace Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.6.2.5 2004/01/12 23:44:55 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -227,7 +227,7 @@ static void __switch_byte_order( WorkRecord *dest, const WorkRecord *source,
       for (int i = 0; i < STUB_MAX; i++)
         dest->work.ogr.workstub.stub.diffs[i] = (u16)ntohs(dest->work.ogr.workstub.stub.diffs[i]);
       dest->work.ogr.workstub.worklength  = (u32)ntohl(dest->work.ogr.workstub.worklength);
-      dest->work.ogr.workstub.minpos      = (u32)ntohl(dest->work.ogr.workstub.minpos);
+      dest->work.ogr.minpos               = (u32)ntohl(dest->work.ogr.minpos);
       dest->work.ogr.nodes.hi             = (u32)ntohl(dest->work.ogr.nodes.hi);
       dest->work.ogr.nodes.lo             = (u32)ntohl(dest->work.ogr.nodes.lo);
       break;
@@ -240,7 +240,7 @@ static void __switch_byte_order( WorkRecord *dest, const WorkRecord *source,
       for (int i = 0; i < STUB_MAX; i++)
         dest->work.ogr.workstub.stub.diffs[i] = (u16)ntohs(dest->work.ogr.workstub.stub.diffs[i]);
       dest->work.ogr.workstub.worklength  = (u32)ntohl(dest->work.ogr.workstub.worklength);
-      dest->work.ogr.workstub.minpos      = 0;
+      dest->work.ogr.minpos               = 0;
       dest->work.ogr.nodes.hi             = (u32)ntohl(dest->work.ogr.nodes.hi);
       dest->work.ogr.nodes.lo             = (u32)ntohl(dest->work.ogr.nodes.lo);
       break;

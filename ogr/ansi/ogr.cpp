@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.18 2004/01/10 22:39:22 kakace Exp $
+ * $Id: ogr.cpp,v 1.2.4.19 2004/01/12 23:45:23 kakace Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -365,7 +365,7 @@ int found_one(const struct State *oState);
 static int found_one(const struct State *oState);
 #endif
 static int ogr_init(void);
-static int ogr_create(void *input, int inputlen, void *state, int statelen);
+static int ogr_create(void *input, int inputlen, void *state, int statelen, int minpos);
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints);
 static int ogr_getresult(void *state, void *result, int resultlen);
 static int ogr_destroy(void *state);
@@ -2502,10 +2502,11 @@ static void dump(int depth, struct Level *lev, int limit)
 }
 #endif
 
-static int ogr_create(void *input, int inputlen, void *state, int statelen)
+static int ogr_create(void *input, int inputlen, void *state, int statelen, int dummy)
 {
   struct State *oState;
   struct WorkStub *workstub = (struct WorkStub *)input;
+  dummy = dummy;
 
   if (!input || inputlen != sizeof(struct WorkStub)) {
     return CORE_E_FORMAT;
@@ -3126,7 +3127,8 @@ CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
 ** Regular stubs are processed as usual (100% OGR compatible).
 */
 
-static int ogr_create_pass2(void *input, int inputlen, void *state, int statelen)
+static int ogr_create_pass2(void *input, int inputlen, void *state, 
+        int statelen, int minpos)
 {
   int finalization_stub = 0;
   struct State *oState;
@@ -3161,19 +3163,20 @@ static int ogr_create_pass2(void *input, int inputlen, void *state, int statelen
   ** OGR already handled all stubs upto (and including) length 70, so the
   ** starting point must be higher.
   */
+
   if (workstub->stub.marks == 24 && workstub->stub.length < 5) {
-    if (workstub->minpos <= 70) {
+    if (minpos <= 70 || minpos > OGR[24-1] - OGR[(24-2) - workstub->stub.length]) {
       return CORE_E_FORMAT;         // Too low.
     }
     finalization_stub = 1;
   }
   else if (workstub->stub.marks == 25 && workstub->stub.length < 6) {
-    if (workstub->minpos <= 70) {
+    if (minpos <= 70 || minpos > OGR[25-1] - OGR[(25-2) - workstub->stub.length]) {
       return CORE_E_FORMAT;         // Too low.
     }
     finalization_stub = 1;
   }
-  else if (workstub->minpos != 0) {
+  else if (minpos != 0) {
     // Unsuspected starting point
     return CORE_E_FORMAT;
   }
@@ -3253,7 +3256,7 @@ static int ogr_create_pass2(void *input, int inputlen, void *state, int statelen
         ** As a result, ogr_cycle() will start one level deeper, then
         ** proceed as usual until it backtracks to depth oState->startdepth.
         */
-        s = workstub->minpos - 1;
+        s = minpos - 1;
         if (lev->cnt2 < s) {
           int k = s - lev->cnt2;
           while (k >= 32) {
@@ -3371,7 +3374,7 @@ static int ogr_create_pass2(void *input, int inputlen, void *state, int statelen
         ** As a result, ogr_cycle() will start one level deeper, then
         ** proceed as usual until it backtracks to depth oState->startdepth.
         */
-        s = workstub->minpos - 1;
+        s = minpos - 1;
         if (cnt2 < s) {
           int k = s - cnt2;
           while (k >= 32) {

@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.9 2004/01/10 22:51:00 kakace Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.10 2004/01/12 23:45:23 kakace Exp $"
 
 #ifndef u16
 #include "cputypes.h"
@@ -63,7 +63,7 @@ typedef struct {
    * Create a new work unit, called once for each thread.
    * The format of input is defined by the core.
    */
-  int (*create)(void *input, int inputlen, void *state, int statelen);
+  int (*create)(void *input, int inputlen, void *state, int statelen, int minpos);
 
   /*
    * Continue working, return CORE_S_OK if no more work to do, or
@@ -144,7 +144,6 @@ struct Stub { /* size is 24 */
 
 struct WorkStub { /* size is 28 */
   struct Stub stub;    /* stub we're working on */
-  u32 minpos;          /* OGR-P2 starting point. Unused by OGR */
   u32 worklength;      /* depth of current state */
 } DNETC_PACKED;
 
