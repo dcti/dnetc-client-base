@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.39 2003/09/30 21:19:58 sod75 Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.40 2003/11/04 16:36:52 kakace Exp $
 ==========================================================================
 
 2.9000
@@ -36,6 +36,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.39 2003/09/30 21:19:58 sod75 Exp $
             chg: x86: made Pentium M preselection like Pentium 4 (#3323)
             imp: aix: include assembler cores on ppc
             fix: aix: smp: threads now get correctly spread over all cpus
+            chg: macosx: KKS 970 core temporarily disabled (useless)
 
 2.9006-485  new: decunix: cpu temperature detection
             new: macosx: use AppleCPUthermo to read CPU temperature (#3315)
