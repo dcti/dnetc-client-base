@@ -18,7 +18,7 @@
 //#define TRACE
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.3 1999/05/11 17:43:28 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.4 1999/07/19 01:33:19 trevorh Exp $"; }
 
 /* ---------------------------------------------------------- */
 #include <stdio.h>
@@ -36,8 +36,8 @@ Lurk dialup;
 
 /* ---------------------------------------------------------- */
 
-Lurk::Lurk()  
-{  
+Lurk::Lurk()
+{
   islurkstarted = lastcheckshowedconnect = dohangupcontrol = 0;
   lurkmode = dialwhenneeded = 0;
   conndevice[0] = connprofile[0] = connifacemask[0] = 0;
@@ -138,7 +138,7 @@ static HRASCONN hRasDialConnHandle = NULL; /* conn we opened with RasDial */
 #define soclose(s) close(s)     //handled by EMX
 #else //IBM distributed OS/2 developers toolkit
 #include <process.h>
-#include <types.h>  
+#include <types.h>
 #endif
 extern "C" {
 #include <netinet/in.h>
@@ -214,8 +214,8 @@ int Lurk::GetCapabilityFlags(void)
       {
         #if !defined(_MSC_VER) || defined(_M_ALPHA) //strange, eh?
         isok = ((osver.dwMajorVersion > 4) ||
-                (osver.dwMajorVersion == 4 && 
-                 strncmp(osver.szCSDVersion,"Service Pack ",13)==0 && 
+                (osver.dwMajorVersion == 4 &&
+                 strncmp(osver.szCSDVersion,"Service Pack ",13)==0 &&
                  atoi(&(osver.szCSDVersion[13])) >= 4));
         //http://support.microsoft.com/support/kb/articles/q181/5/20.asp
         //http://support.microsoft.com/support/kb/articles/q170/6/42.asp
@@ -226,8 +226,8 @@ int Lurk::GetCapabilityFlags(void)
       TRACE_OUT((-1,"end: Lurk::GetCapabilityFlags() ioctl check end. caps=0x%08x\n",what));
     }
     caps = what;
-  }  
-  what = caps;  
+  }
+  what = caps;
 #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
   OFSTRUCT ofstruct;
   ofstruct.cBytes = sizeof(ofstruct);
@@ -270,7 +270,7 @@ const char **Lurk::GetConnectionProfileList(void)
     DWORD buffersize = sizeof(rasentries);
     DWORD maxentries = 0;
     int rasok = 0;
-  
+
     rasentries[0].dwSize = sizeof(RASENTRYNAME);
     if (RasEnumEntries(NULL,NULL,&rasentries[0],&buffersize,&maxentries) == 0)
       rasok = 1;
@@ -467,7 +467,7 @@ static int __MatchMask( const char *ifrname, int mask_include_all,
 /* ---------------------------------------------------------- */
 
 int Lurk::IsConnected(void) //must always returns a valid yes/no
-{                           
+{
   conndevice[0]=0;
 
   if (!islurkstarted)
@@ -497,13 +497,13 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
       FARPROC __closesocket = GetProcAddress( ws2lib, "closesocket" );
       if (__WSAStartup && __WSASocket && __WSAIoctl && __WSACleanup && __closesocket)
       {
-        WSADATA winsockData; 
+        WSADATA winsockData;
         if (( (*((int (PASCAL FAR *)(WORD, LPWSADATA))(__WSAStartup)))
                                          (MAKEWORD(2,2), &winsockData)) == 0)
         {
           #define LPWSAPROTOCOL_INFO void *
           #define GROUP unsigned int
-          SOCKET s = 
+          SOCKET s =
           (*((int (PASCAL FAR *)(int,int,int,LPWSAPROTOCOL_INFO,GROUP,DWORD))
             (__WSASocket)))(AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL, 0, 0);
           if (s != INVALID_SOCKET)
@@ -538,17 +538,17 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
                      } iiAddress, iiBroadcastaddress, iiNetmask;
             };
             #pragma pack()
-            char if_info[sizeof(struct if_info_v6)*10]; // Assume no more than 10 IP interfaces 
+            char if_info[sizeof(struct if_info_v6)*10]; // Assume no more than 10 IP interfaces
             memset((void *)(&if_info[0]),0,sizeof(if_info));
-                   
+
             //don't use INTERFACE_INFO format due to NT4SP<4 not grokking IPV6
-            //IMO, Thats a serious bug in the API that returns AF_INET6 data 
+            //IMO, Thats a serious bug in the API that returns AF_INET6 data
             //for an AF_INET[4] socket.
 
             int wsError = (*((int (PASCAL FAR *)(
                 SOCKET,DWORD,LPVOID,DWORD,LPVOID,DWORD,LPDWORD,
                 LPWSAOVERLAPPED,LPWSAOVERLAPPED_COMPLETION_ROUTINE))
-                (__WSAIoctl)))(s, SIO_GET_INTERFACE_LIST, NULL, 0, 
+                (__WSAIoctl)))(s, SIO_GET_INTERFACE_LIST, NULL, 0,
                 (&(if_info[0])), sizeof(if_info), &bytesReturned, NULL, NULL);
             if (wsError == 0)
             {
@@ -558,8 +558,8 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
               if ((bytesReturned%sizeof(struct if_info_v6))!=0)
                 stepsize = sizeof(struct if_info_v4);
               TRACE_OUT((0,"stage5 %u: v4:%u v6:%u struct family=IPv%d\n",bytesReturned,sizeof(struct if_info_v4),sizeof(struct if_info_v6),(stepsize==sizeof(struct if_info_v6)?(6):(4))));
-              
-              for (i=0; i<bytesReturned; i+=stepsize) 
+
+              for (i=0; i<bytesReturned; i+=stepsize)
               {
                 u_long if_flags = ((struct if_info_v4 *)(ifp))->iiFlags;
                 u_long if_addr  = ((struct if_info_v4 *)(ifp))->iiAddress.sin_addr;
@@ -620,7 +620,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
     RASCONN *rasconnp = NULL;
     DWORD cb, whichconn, cConnections;
     int foundconn = 0;
-  
+
     cb = sizeof(rasconn);
     rasconn.dwSize = sizeof(RASCONN);
     rasconnp = &rasconn;
@@ -638,7 +638,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
         }
       }
     }
-  
+
     for (whichconn = 0; whichconn < cConnections; whichconn++ )
     {
       HRASCONN hrasconn = rasconnp[whichconn].hrasconn;
@@ -656,7 +656,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
         }
       }
     }
-  
+
     if (rasconnp != NULL && rasconnp != &rasconn)
       free((void *)rasconnp );
     if (foundconn)
@@ -724,7 +724,6 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
                  if (ismatched)
                  {
                    foundif = i+1; // Report online if SLIP or PPP detected
-                   break;
                  }
                }
              } // ioctl(s, SIOCGIFFLAGS ) == 0
@@ -885,9 +884,9 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
     DWORD returnvalue;
     char buffer[260]; /* maximum registry key length */
     const char *connname = (const char *)(&connprofile[0]);
-  
+
     dohangupcontrol = 0;           // whether we do HangupIfNeeded() or not
-  
+
     if (*connname == 0)
     {
       HKEY hkey;
@@ -920,20 +919,20 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
     strcpy(dialparameters.szUserName,"");
     strcpy(dialparameters.szPassword,"");
     strcpy(dialparameters.szDomain,"*");
-  
+
     returnvalue =
       RasGetEntryDialParams(NULL,&dialparameters,&passwordretrieved);
-  
+
     if ( returnvalue==0 )
     {
       HRASCONN connhandle = NULL;
-  
+
       //if (passwordretrieved != TRUE)
       //  LogScreen("Password could not be found, connection may fail.\n");
-  
+
       LogScreen("Dialing '%s'...\n",dialparameters.szEntryName);
       returnvalue = RasDial(NULL,NULL,&dialparameters,NULL,NULL,&connhandle);
-  
+
       if (returnvalue == 0)
       {
         hRasDialConnHandle = connhandle; //we only hangup this connection
@@ -946,7 +945,7 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
         Sleep(3000);
       }
     }
-  
+
     if (returnvalue == ERROR_CANNOT_FIND_PHONEBOOK_ENTRY)
     {
       LogScreen("Dial cancelled: Unable to find phonebook entry\n%s\n",
