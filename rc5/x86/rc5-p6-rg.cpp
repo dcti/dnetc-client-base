@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-p6-rg.cpp,v $
+// Revision 1.4  1998/06/14 10:03:59  skand
+// define and use a preprocessor macro to hide the .balign directive for
+// ancient assemblers
+//
 // Revision 1.3  1998/06/14 08:27:22  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
 // material of the binary executable
@@ -28,7 +32,7 @@
 // 980104 :
 //	- precalculate some things for ROUND1 & ROUND2
 
-static char *id="@(#)$Id: rc5-p6-rg.cpp,v 1.3 1998/06/14 08:27:22 friedbait Exp $";
+static char *id="@(#)$Id: rc5-p6-rg.cpp,v 1.4 1998/06/14 10:03:59 skand Exp $";
 
 #define CORE_INCREMENTS_KEY
 
@@ -48,6 +52,12 @@ static char *id="@(#)$Id: rc5-p6-rg.cpp,v 1.3 1998/06/14 08:27:22 friedbait Exp 
 
 #define _(s)    __(s)
 #define __(s)   #s
+
+#if defined(__NetBSD__) || defined(__bsdi__)
+#define BALIGN(x)
+#else
+#define BALIGN(x) ".balign 4"
+#endif
 
 // The S0 values for key expansion round 1 are constants.
 
@@ -345,7 +355,7 @@ u32 rc5_unit_func_p6( RC5UnitWork * rc5unitwork, u32 timeslice )
 	leal	(%%eax,%%ebx), %%ecx
 	movl	%%ecx, "work_pre3_r1"
 
-.balign 4
+"BALIGN(4)"
 _loaded_p6:\n"
 
     /* ------------------------------ */
@@ -493,7 +503,7 @@ _loaded_p6:\n"
 	cmpl	"work_C_1", %%edi
 	je	_full_exit_p6
 
-.balign 4
+"BALIGN(4)"
 __exit_1_p6: \n"
 
     /* Restore 2nd key parameters */
@@ -569,7 +579,7 @@ __exit_1_p6: \n"
 	movl	$1, "work_add_iter"
 	jmp	_full_exit_p6
 
-.balign 4
+"BALIGN(4)"
 __exit_2_p6:
 
 	movl	"work_key_hi", %%edx
@@ -589,7 +599,7 @@ _next_iter_p6:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_p6
 
-.balign 4
+"BALIGN(4)"
 _next_iter2_p6:
 	movl	%%ebx, "work_key_lo"
 	movl	%%edx, "work_key_hi"
@@ -602,7 +612,7 @@ _next_iter2_p6:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_p6
 
-.balign 4
+"BALIGN(4)"
 _next_inc_p6:
 	addl	$0x00010000, %%edx
 	testl	$0x00FF0000, %%edx
@@ -641,7 +651,7 @@ _next_inc_p6:
 	# Not much to do here, since we have finished the block ...
 
 
-.balign 4
+"BALIGN(4)"
 _full_exit_p6:
 	movl	"work_save_ebp",%%ebp \n"
 

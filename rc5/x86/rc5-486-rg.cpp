@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-486-rg.cpp,v $
+// Revision 1.4  1998/06/14 10:03:54  skand
+// define and use a preprocessor macro to hide the .balign directive for
+// ancient assemblers
+//
 // Revision 1.3  1998/06/14 08:27:16  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
 // material of the binary executable
@@ -32,7 +36,7 @@
 // Checking two keys at once is still a (slight) win for a 486
 // probably because less load/store operations
 
-static char *id="@(#)$Id: rc5-486-rg.cpp,v 1.3 1998/06/14 08:27:16 friedbait Exp $";
+static char *id="@(#)$Id: rc5-486-rg.cpp,v 1.4 1998/06/14 10:03:54 skand Exp $";
 
 #define CORE_INCREMENTS_KEY
 
@@ -52,6 +56,12 @@ static char *id="@(#)$Id: rc5-486-rg.cpp,v 1.3 1998/06/14 08:27:16 friedbait Exp
 
 #define _(s)    __(s)
 #define __(s)   #s
+
+#if defined(__NetBSD__) || defined(__bsdi__)
+#define BALIGN(x)
+#else
+#define BALIGN(x) ".balign 4"
+#endif
 
 // The S0 values for key expansion round 1 are constants.
 
@@ -322,7 +332,7 @@ u32 rc5_unit_func_486( RC5UnitWork * rc5unitwork, u32 timeslice )
 	leal	(%%eax,%%ebx), %%ecx		# 2
 	movl	%%ecx, "work_pre3_r1"		# 1
 
-.balign 4
+"BALIGN(4)"
 _loaded_486:\n"
 
     /* ------------------------------ */
@@ -480,7 +490,7 @@ _loaded_486:\n"
 	cmpl	"work_C_1", %%edi
 	je	_full_exit_486
 
-.balign 4
+"BALIGN(4)"
 __exit_1_486: \n"
 
     /* Restore 2nd key parameters */
@@ -555,7 +565,7 @@ __exit_1_486: \n"
 	movl	$1, "work_add_iter"
 	jmp	_full_exit_486
 
-.balign 4
+"BALIGN(4)"
 __exit_2_486:
 
 	movl	"work_key_hi", %%edx
@@ -575,7 +585,7 @@ _next_iter_486:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_486
 
-.balign 4
+"BALIGN(4)"
 _next_iter2_486:
 	movl	%%ebx, "work_key_lo"
 	movl	%%edx, "work_key_hi"
@@ -588,7 +598,7 @@ _next_iter2_486:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_486
 
-.balign 4
+"BALIGN(4)"
 _next_inc_486:
 	addl	$0x00010000, %%edx
 	testl	$0x00FF0000, %%edx
@@ -627,7 +637,7 @@ _next_inc_486:
 	# Not much to do here, since we have finished the block ...
 
 
-.balign 4
+"BALIGN(4)"
 _full_exit_486:
 	movl	"work_save_ebp", %%ebp \n"
 

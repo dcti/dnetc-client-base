@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-k5-rg.cpp,v $
+// Revision 1.4  1998/06/14 10:03:56  skand
+// define and use a preprocessor macro to hide the .balign directive for
+// ancient assemblers
+//
 // Revision 1.3  1998/06/14 08:27:18  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
 // material of the binary executable
@@ -55,7 +59,7 @@
 // PR120 =  90   / 60			   rg=193 ? / 307-336 ?
 // PR??? =  75   / ??    v1=120 v2=215-225 rg=165   / 256-280 ?
 
-static char *id="@(#)$Id: rc5-k5-rg.cpp,v 1.3 1998/06/14 08:27:18 friedbait Exp $";
+static char *id="@(#)$Id: rc5-k5-rg.cpp,v 1.4 1998/06/14 10:03:56 skand Exp $";
 
 #define CORE_INCREMENTS_KEY
 
@@ -75,6 +79,12 @@ static char *id="@(#)$Id: rc5-k5-rg.cpp,v 1.3 1998/06/14 08:27:18 friedbait Exp 
 
 #define _(s)    __(s)
 #define __(s)   #s
+
+#if defined(__NetBSD__) || defined(__bsdi__)
+#define BALIGN(x)
+#else
+#define BALIGN(x) ".balign 4"
+#endif
 
 // The S0 values for key expansion round 1 are constants.
 
@@ -353,7 +363,7 @@ u32 rc5_unit_func_k5( RC5UnitWork * rc5unitwork, u32 timeslice )
 	leal	(%%eax,%%ebx), %%ecx		# 2
 	movl	%%ecx, "work_pre3_r1"		# 1
 
-.balign 4
+"BALIGN(4)"
 _loaded_k5:\n"
 
     /* ------------------------------ */
@@ -518,7 +528,7 @@ _loaded_k5:\n"
 	cmpl	"work_C_1", %%edi
 	je	_full_exit_k5
 
-.balign 4
+"BALIGN(4)"
 __exit_1_k5: \n"
 
     /* Restore 2nd key parameters */
@@ -602,7 +612,7 @@ __exit_1_k5: \n"
 	movl	$1, "work_add_iter"
 	jmp	_full_exit_k5
 
-.balign 4
+"BALIGN(4)"
 __exit_2_k5:
 
 	movl	"work_key_hi", %%edx
@@ -622,7 +632,7 @@ _next_iter_k5:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_k5
 
-.balign 4
+"BALIGN(4)"
 _next_iter2_k5:
 	movl	%%ebx, "work_key_lo"
 	movl	%%edx, "work_key_hi"
@@ -635,7 +645,7 @@ _next_iter2_k5:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_k5
 
-.balign 4
+"BALIGN(4)"
 _next_inc_k5:
 	addl	$0x00010000, %%edx
 	testl	$0x00FF0000, %%edx
@@ -674,7 +684,7 @@ _next_inc_k5:
 	# Not much to do here, since we have finished the block ...
 
 
-.balign 4
+"BALIGN(4)"
 _full_exit_k5:
 	movl	"work_save_ebp",%%ebp \n"
 
