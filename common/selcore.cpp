@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.88 2002/09/24 01:57:25 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.89 2002/09/24 11:09:48 acidblood Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -23,12 +23,12 @@ return "@(#)$Id: selcore.cpp,v 1.88 2002/09/24 01:57:25 acidblood Exp $"; }
 #include "bench.h"     // TBenchmark()
 #include "selftest.h"  // SelfTest()
 #include "selcore.h"   // keep prototypes in sync
+#include "probman.h"   // GetManagedProblemCount()
 #if (CLIENT_OS == OS_AIX) // needs signal handler
   #include <sys/signal.h>
   #include <setjmp.h>
 #endif
 #if (CLIENT_CPU == CPU_X86) && defined(SMC)
-  #include "probman.h" // GetManagedProblemCount()
   #if defined(__unix__)
     #include <sys/types.h>
     #include <sys/mman.h>
