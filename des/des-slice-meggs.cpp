@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-meggs.cpp,v $
+// Revision 1.10  1998/07/08 10:06:20  remi
+// Another RCS-id tweaking.
+//
 // Revision 1.9  1998/07/08 10:02:46  remi
 // Declare whack16() with "C" linkage. Will help MS platforms.
 //
@@ -20,7 +23,11 @@
 
 // encapsulate Meggs' bitslicer
 
-static char *id="@(#)$Id: des-slice-meggs.cpp,v 1.9 1998/07/08 10:02:46 remi Exp $";
+#if (!defined(lint) && defined(__showids__))
+const char *des_slice_meggs_cpp(void) {
+static const char *id="@(#)$Id: des-slice-meggs.cpp,v 1.10 1998/07/08 10:06:20 remi Exp $";
+return id; }
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
