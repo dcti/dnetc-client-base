@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.53.2.5 2001/03/23 21:40:59 sampo Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.53.2.6 2001/03/23 21:48:06 sampo Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -209,7 +209,7 @@ typedef struct ProblemInfo {
   int permille_only_if_exact;
   int is_test_packet;
   int show_exact_iterations_done;
-  int stats_units_are_integer
+  int stats_units_are_integer;
   u32 ratehi, ratelo;               // core rate
   u32 tcounthi, tcountlo;           // total number of iterations to do
   u32 ccounthi, ccountlo;           // number of iterations done this time
