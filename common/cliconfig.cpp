@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.143  1998/07/09 17:08:09  silby
+// Ok, DES MMX core selection override code now works. The output of cpucheck and usemmx are the only things it cares about; everyone who's mmx capable will use it now.
+//
 // Revision 1.142  1998/07/09 05:27:51  silby
 // Changes to the MMX autodetect - still appear to be some overrides from user-set settings happening on pentium mmxes.
 //
@@ -241,7 +244,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.142 1998/07/09 05:27:51 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.143 1998/07/09 17:08:09 silby Exp $";
 return id; }
 #endif
 
@@ -2267,18 +2270,7 @@ s32 Client::SelectCore(void)
   else
     fastcore=detectedtype; // use autodetect
 
-#ifdef MMX_BITSLICER
-  if ((usemmx==1) && (detectedtype & 0x100 == 0x100))
-    {
-    s32 temp;
-    temp=0x100+(fastcore & 0xFF);
-    fastcore=temp;
-    };
-    // turn on mmx even if wrong core is chosen manually
-#endif
-
   LogScreenf("Selecting %s code\n", cputypetable[(int)(fastcore & 0xFF)+1]);
-
 
   // select the correct core engine
   #if (defined(KWAN) || defined(MEGGS)) && !defined(MMX_BITSLICER)
@@ -2339,8 +2331,8 @@ s32 Client::SelectCore(void)
       break;
   }
 #ifdef MMX_BITSLICER
-  if ((fastcore & 0x100) && usemmx)   // use the MMX DES core ?
-    {
+  if ((detectedtype & 0x100) && usemmx)   // use the MMX DES core ?
+    { // MMX core doesn't care about selected Rc5 core at all
     des_unit_func = des_unit_func2 = des_unit_func_mmx;
     LogScreen("Using MMX DES cores\n");
     };
