@@ -3,6 +3,26 @@
 # see http://www.distributed.net/
 
 # $Log: makefile.vc,v $
+# Revision 1.37.2.3  1998/12/29 19:46:41  remi
+# Synced with :
+#
+#  revision 1.43
+#  date: 1998/12/28 21:48:38;  author: silby;  state: Exp;  lines: +2 -1
+#  Added clievent.cpp
+#
+#  revision 1.42
+#  date: 1998/12/16 07:32:13;  author: silby;  state: Exp;  lines: +10 -7
+#  up to date.
+#
+#  revision 1.39
+#  date: 1998/11/18 09:31:03;  author: silby;  state: Exp;  lines: +6 -3
+#  Updated makefile so that we now nasm compile sboxes-mmx instead of copying them in.  des
+#  eval-meggs3-mmx is still copied from the version compiled by gnuwin32, though.
+#
+#  revision 1.38
+#  date: 1998/11/08 22:25:16;  author: silby;  state: Exp;  lines: +2 -2
+#  Added RC5_MMX define.
+#
 # Revision 1.37.2.2  1998/11/16 09:57:24  remi
 # Various fixes.
 # Added $Log tag.
@@ -50,14 +70,15 @@ RC5_OBJS =                    \
         $(OUTPUTPATH)/w32pre.obj     \
 	$(OUTPUTPATH)/console.obj    \
 	$(OUTPUTPATH)/modereq.obj
+        $(OUTPUTPATH)/clievent.obj
 
 PREBUILT_OBJS =                   \
-	$(OUTPUTPATH)/rg-486.obj   \
-	$(OUTPUTPATH)/rg-6x86.obj  \
-	$(OUTPUTPATH)/rg-k5.obj    \
-	$(OUTPUTPATH)/rg-k6.obj    \
-	$(OUTPUTPATH)/rc5p5brf.obj \
-	$(OUTPUTPATH)/rg-p6.obj    \
+	$(OUTPUTPATH)/rg486.obj   \
+	$(OUTPUTPATH)/rg6x86.obj  \
+	$(OUTPUTPATH)/rc5-rgk5.obj    \
+	$(OUTPUTPATH)/rc5-rgk6.obj    \
+	$(OUTPUTPATH)/brfp5.obj \
+	$(OUTPUTPATH)/rc5-rgp6.obj    \
 	$(OUTPUTPATH)/bdeslow.obj  \
 	$(OUTPUTPATH)/bbdeslow.obj \
 	$(OUTPUTPATH)/p1bdespro.obj  \
@@ -65,7 +86,10 @@ PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/x86ident.obj  \
 	$(OUTPUTPATH)/sboxes-mmx.obj \
 	$(OUTPUTPATH)/rc5mmx.obj \
-	$(OUTPUTPATH)/deseval-meggs3-mmx.obj
+	$(OUTPUTPATH)/deseval-meggs3-mmx.gcc \
+        $(OUTPUTPATH)/deseval.obj \
+        $(OUTPUTPATH)/des-slice.obj \
+        $(OUTPUTPATH)/sboxes-kwan4.obj
 
 RC5_LIBS = wsock32.lib advapi32.lib user32.lib gdi32.lib
 
@@ -77,7 +101,10 @@ RC5_LIBS = wsock32.lib advapi32.lib user32.lib gdi32.lib
 {$(DESPATH)/brydmasm}.asm{$(OUTPUTPATH)}.obj:
 	tasm32 /t /m /ml /i$(DESPATH:/=\)\brydmasm $(**:/=\), $(@:/=\)
 
-{$(DESPATH)/mmx-bitslice}.obj{$(OUTPUTPATH)}.obj:
+{$(DESPATH)/nasm}.asm{$(OUTPUTPATH)}.obj:
+	nasm -o $(@:/=\) -f win32 -i $(DESPATH:/=\)\nasm\ $(**:/=\)
+
+{$(DESPATH)/mmx-bitslice}.obj{$(OUTPUTPATH)}.gcc:
 	copy $(**:/=\), $(@:/=\)
 
 {$(RC5PATH)}.asm{$(OUTPUTPATH)}.obj:
