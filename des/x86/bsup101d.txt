@@ -1,0 +1,26 @@
+Supplement to
+BrydDES Key Search Library, version 1.01.
+
+BDESLW1.S Small Core, AT&T assembler format. Marked Core 1d.
+BDESLOW.S Large Core, AT&T assembler format. Marked Core 2d.
+
+The two cores could be combined into one file with defines,
+but that is not done yet.
+
+Also I have not tested if these versions are more sensitive
+to the Windows 95 speed issue and I have not optimized code
+alignment. So for now I would use the AT&T versions where
+needed for porting.
+
+In the process of testing the code converting, I noted that
+the GAS assembler produces 3 byte encodings for ror reg,1
+(and rol, shl, shr) This might confuse code alignment
+optimizations. Also the GAS code for ror/rol,1 cannot be
+paired on the Pentium, which could influence other cores.
+
+February 4, 1998.
+Svend Olaf Mikkelsen
+
+svolaf@inet.uni2.dk
+http://inet.uni2.dk/~svolaf/des.htm
+

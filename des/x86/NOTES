@@ -1,0 +1,23 @@
+common:
+  des-x86.cpp
+
+bryd files:
+  - masm-source -          - gas-source -       - preassembled -
+  bbdeslow.asm             bbdeslow.S            bbdeslow.obj
+  bdeslow.asm              bdeslow.S             bdeslow.obj
+  bdeslw1.asm              bdeslw1.S             bdeslw1.obj
+  p1bdespro.asm            p1bdespro.S           p1bdespro.obj
+  p2bdespro.asm            p2bdespro.S           p2bdespro.obj
+  (misc files associtated with masm source: bsup101d.txt bbdeschg.inc
+  bdesmac.inc bbdesdat.inc bbdesmac.inc bdeschg.inc bdesdat.inc)
+
+mmx-bitslice:
+  deseval-meggs3-mmx.cpp
+  deseval-meggs3-mmx.obj
+  deseval-mmx.asm
+  sboxes-mmx-nasm.asm
+  sboxes-mmx.cpp
+  sboxes-mmx.h
+  sboxes-mmx.obj
+  startup.asm
+  

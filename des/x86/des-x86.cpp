@@ -6,7 +6,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_x86_cpp(void) {
-return "@(#)$Id: des-x86.cpp,v 1.25.2.5 2000/06/17 06:20:25 bernd Exp $"; }
+return "@(#)$Id: des-x86.cpp,v 1.1.2.1 2001/01/21 16:57:15 cyp Exp $"; }
 #endif
 
 
