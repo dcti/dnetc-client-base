@@ -15,8 +15,8 @@
  */
 
 /* $Log: s8_2n.h,v $
-/* Revision 1.1  1998/06/14 14:23:51  remi
-/* Initial revision
+/* Revision 1.1.1.1  1998/06/14 14:23:51  remi
+/* Initial integration.
 /* */
 
 

@@ -1,11 +1,11 @@
 /* do_all.c v4.0 */
 
 /* $Log: do_all.c,v $
-/* Revision 1.1  1998/06/14 14:23:49  remi
-/* Initial revision
+/* Revision 1.1.1.1  1998/06/14 14:23:49  remi
+/* Initial integration.
 /* */
 
-static char *id="@(#)$Id: do_all.c,v 1.1 1998/06/14 14:23:49 remi Exp $";
+static char *id="@(#)$Id: do_all.c,v 1.1.1.1 1998/06/14 14:23:49 remi Exp $";
 
 #include "des.h"
 

@@ -1,12 +1,12 @@
 # $Log: simple.handopt.s,v $
-# Revision 1.1  1998/06/14 14:23:52  remi
-# Initial revision
+# Revision 1.1.1.1  1998/06/14 14:23:52  remi
+# Initial integration.
 #
 
 	.file	"simple.c"
 gcc2_compiled.:
 .section	".data"
-id:	.ascii "@(#)$Id: simple.handopt.s,v 1.1 1998/06/14 14:23:52 remi Exp $"
+id:	.ascii "@(#)$Id: simple.handopt.s,v 1.1.1.1 1998/06/14 14:23:52 remi Exp $"
 	.byte 0
 
 .section	".text"

@@ -5,8 +5,8 @@
 // encapsulate UltraSparc bitslice code
 
 // $Log: des-slice-ultrasparc.cpp,v $
-// Revision 1.1  1998/06/14 14:23:52  remi
-// Initial revision
+// Revision 1.1.1.1  1998/06/14 14:23:52  remi
+// Initial integration.
 //
 
 #include <stdio.h>
@@ -21,7 +21,7 @@
 #error "everything assumes a 32bit CPU..."
 #endif
 
-static char *id="@(#)$Id: des-slice-ultrasparc.cpp,v 1.1 1998/06/14 14:23:52 remi Exp $";
+static char *id="@(#)$Id: des-slice-ultrasparc.cpp,v 1.1.1.1 1998/06/14 14:23:52 remi Exp $";
 
 typedef unsigned long long base_slice_type;
 

@@ -1,8 +1,8 @@
 /* s6_f_regs.h v3.0 */
 
 /* $Log: s6_f_regs.h,v $
-/* Revision 1.1  1998/06/14 14:23:50  remi
-/* Initial revision
+/* Revision 1.1.1.1  1998/06/14 14:23:50  remi
+/* Initial integration.
 /* */
 
 #ifdef MANUAL_REGISTER_ALLOCATION

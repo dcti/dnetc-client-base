@@ -2,8 +2,8 @@
 /* does function, pipeline for next function */
 
 /* $Log: s1_3.h,v $
-/* Revision 1.1  1998/06/14 14:23:49  remi
-/* Initial revision
+/* Revision 1.1.1.1  1998/06/14 14:23:49  remi
+/* Initial integration.
 /* */
 
 

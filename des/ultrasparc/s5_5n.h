@@ -15,8 +15,8 @@
  */
 
 /* $Log: s5_5n.h,v $
-/* Revision 1.1  1998/06/14 14:23:50  remi
-/* Initial revision
+/* Revision 1.1.1.1  1998/06/14 14:23:50  remi
+/* Initial integration.
 /* */
 
 

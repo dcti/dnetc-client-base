@@ -1,13 +1,13 @@
 /* do_s5.c v4.0 */
 
 /* $Log: do_s5.c,v $
-/* Revision 1.1  1998/06/14 14:23:49  remi
-/* Initial revision
+/* Revision 1.1.1.1  1998/06/14 14:23:49  remi
+/* Initial integration.
 /* */
 
 #include "des.h"
 
-static char *id="@(#)$Id: do_s5.c,v 1.1 1998/06/14 14:23:49 remi Exp $";
+static char *id="@(#)$Id: do_s5.c,v 1.1.1.1 1998/06/14 14:23:49 remi Exp $";
 
 unsigned long
 do_s5 ( register struct INNER_OFFSET_DISTANCES *offsets

@@ -1,8 +1,8 @@
 /* s2.h v3.0 */
 
 /* $Log: s2.h,v $
-/* Revision 1.1  1998/06/14 14:23:49  remi
-/* Initial revision
+/* Revision 1.1.1.1  1998/06/14 14:23:49  remi
+/* Initial integration.
 /* */
 
 

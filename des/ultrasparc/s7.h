@@ -1,8 +1,8 @@
 /* s7.h v3.0 */
 
 /* $Log: s7.h,v $
-/* Revision 1.1  1998/06/14 14:23:50  remi
-/* Initial revision
+/* Revision 1.1.1.1  1998/06/14 14:23:50  remi
+/* Initial integration.
 /* */
 
 

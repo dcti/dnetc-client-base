@@ -1,11 +1,11 @@
 /* des-ultra-crunch.c v4.0 */
 
 /* $Log: des_ultra_crunch.c,v $
-/* Revision 1.1  1998/06/14 14:23:49  remi
-/* Initial revision
+/* Revision 1.1.1.1  1998/06/14 14:23:49  remi
+/* Initial integration.
 /* */
 
-static char *id="@(#)$Id: des_ultra_crunch.c,v 1.1 1998/06/14 14:23:49 remi Exp $";
+static char *id="@(#)$Id: des_ultra_crunch.c,v 1.1.1.1 1998/06/14 14:23:49 remi Exp $";
 
 /* defines are set in configure & Makefile when compiling DCTI client */
 #ifndef IN_DCTI_CLIENT
