@@ -4,7 +4,7 @@
 //
 
 const char *network_cpp(void) {
-return "@(#)$Id: network2.cpp,v 1.1.2.4 1999/04/14 04:19:39 jlawson Exp $"; }
+return "@(#)$Id: network2.cpp,v 1.1.2.5 1999/04/22 09:17:38 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "dcticonn.h"         // DCTIConnServer class
@@ -219,7 +219,7 @@ int Network::EstablishConnection(void)
       fd_set readfds, writefds;
       FD_ZERO(&readfds);
       FD_ZERO(&writefds);
-      if (sock)
+      if (sock != INVALID_SOCKET)
       {
         // add the socket to our list.
         FD_SET(sock, &readfds);
@@ -272,13 +272,14 @@ int Network::Get( net_packet_t *data )
 {
   if (connserver)
   {
-    if (EstablishConnection() < 0) return -1;
     if (iotimeout < 0)
     {
       // Perform the fetch using blocking operations.
-      while (connserver->IsConnected() &&
-          connserver->IsEstablished() )
+      while (connserver->IsConnected())
       {
+        if (!connserver->IsEstablished() &&
+          EstablishConnection() < 0) return -1;
+
         if (connserver->PullPacket(data)) return 0;
         connserver->FlushOutgoing();
         connserver->FetchIncoming();
@@ -289,11 +290,17 @@ int Network::Get( net_packet_t *data )
       // Perform the fetch using non-blocking operations.
       connserver->RequestFlush();
       while (connserver->IsConnected() &&
-          connserver->IsEstablished() &&
           (int) connserver->GetLastActivity() <= iotimeout)
       {
-        if (connserver->PullPacket(data)) return 0;
+        if (!connserver->IsEstablished() &&
+          EstablishConnection() < 0) return -1;
+        
+        if (connserver->PullPacket(data))
+          return 0;
+
+        // get the associated socket handle.
         SOCKET sock = connserver->GetSocket();
+        if (sock == INVALID_SOCKET) continue;
       
         // set up the file descriptor sets.
         fd_set readfds, writefds;
