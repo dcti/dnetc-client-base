@@ -14,7 +14,7 @@
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.14 2001/03/26 09:57:21 cyp Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.15 2001/03/29 15:08:38 cyp Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -476,7 +476,7 @@
     }
   }
 
-#elif defined(CLIENT_CPU == CPU_IA64) && defined(__GNUC__)
+#elif (CLIENT_CPU == CPU_IA64) && defined(__GNUC__)
 
   /* based on 
      http://lxr.linux.no/source/include/asm-ia64/spinlock.h?v=2.4.0
@@ -581,7 +581,7 @@
 
 #elif (CLIENT_CPU == CPU_SH4) && defined(__GNUC__)
 
-  typedef { __volatile int spl; } fastlock_t;
+  typedef struct { __volatile int spl; } fastlock_t;
   #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
   /*
   * Have 'atomic test-and-set' instruction.  Attempt to acquire the lock,

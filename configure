@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.241 2001/03/20 21:07:35 ephraim Exp $
+# @(#)$Id: configure,v 1.222.2.242 2001/03/29 15:08:36 cyp Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -290,14 +290,11 @@ add_sources() # $1=os, $2=arch, $3=custom
     if [ "$TARGET_CC" = "CC" ]; then
       TARGET_ADDASMS="$TARGET_ADDASMS rc5/parisc/parisc.s"
     else
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS $OGR_ANSI_SRCS"
+      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     fi
     ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
     ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-    if [ "$1" != "linux" ]; then # gcc 2.96 bombs
-      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
-    fi
   #-----------------------------------------------------------------  
   elif [ "$2" = "68k" ]; then
     if [ "$1" = "amigaos" ]; then
@@ -630,6 +627,10 @@ generate_gcc_opts() {
         opts272="$OPTS_GCC272 -O6 -DASM_MIPS -funroll-loops"
         opts295="$OPTS_GCC295 -Os -DASM_MIPS -funroll-loops"
         ;;
+
+    *internal-sh4)
+	opts295="$OPTS_GCC295 -O2 -DASM_SH4 -funroll-loops -static"
+	;;
 
     *internal-hppa)
         opts272="$OPTS_GCC272 -O6 -DASM_HPPA -funroll-loops -static"
@@ -1215,16 +1216,16 @@ case "$1" in
         add_sources "nto2" "mips"
         ;;
 
-    *linux-sh)   #  <Rule@freegates.be>
-        TARGET_CC="sh-linux-g++"
-        TARGET_AS="sh-linux-g++ -c"
-        TARGET_STRIP="sh-linux-strip"
-        generate_gcc_opts "sh" "linux"
+    *linux-sh4)   #  <Rule@freegates.be>
+        TARGET_CC="sh4-linux-g++"
+        TARGET_AS="sh4-linux-g++ -c"
+        TARGET_STRIP="sh4-linux-strip"
+        generate_gcc_opts "sh4" "linux"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
         TARGET_DOCFILES="docs/readme._ix"
-        TARGET_TARBALL="linux-sh" 
-        add_sources "linux" "sh4"
+        TARGET_TARBALL="linux-sh4" 
+        add_sources "linux" "sh"
         TARGET_IS_CROSSCOMPILE=1
         ;;
 
@@ -1233,7 +1234,7 @@ case "$1" in
         TARGET_AS="hppa-linux-g++ -c"
         TARGET_STRIP="hppa-linux-strip"
         generate_gcc_opts "hppa" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -fno-unroll-loops -O1"
+        TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="linux-hppa"
