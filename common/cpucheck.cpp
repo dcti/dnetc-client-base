@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.84 2002/03/29 08:51:52 sampo Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.85 2002/03/29 20:34:51 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1477,12 +1477,18 @@ static long __GetRawProcessorID(const char **cpuname)
                 {       2, "EV4 (21064)"         },
                 {       4, "LCA4 (21066/21068)"  },
                 {       5, "EV5 (21164)"         },
-                {       6, "EV4.5 (21064)"       },
-                {       7, "EV5.6 (21164A)"      },
+                {       6, "EV45 (21064)"        },
+                {       7, "EV56 (21164A)"       },
                 {       8, "EV6 (21264)",        },
-                {       9, "EV5.6 (21164PC)"     },
-                {      10, "EV5.7"               },
-                {      11, "EV67"                }
+                {       9, "EV56 (21164PC)"      },
+                {      10, "EV57"                },
+                {      11, "EV67"                },
+                {      12, "EV68CB"              },
+                {      13, "EV68AL"              },
+                {      14, "EV68CX"              },
+                {      15, "EV69"                },
+                {      16, "EV7"                 },
+                {      17, "EV79"                }
                 };
   
   #if (CLIENT_OS == OS_DEC_UNIX)
@@ -1554,7 +1560,14 @@ static long __GetRawProcessorID(const char **cpuname)
            { "EV6",            8      },
            { "PCA56",          9      },
            { "PCA57",         10      }, /* 2.2.x kernel */
-           { "EV67",          11      }  /* 2.4.x kernel */
+           { "EV67",          11      },
+           { "EV68CB",        12      },
+           { "EV68AL",        13      },
+           { "EV68CX",        14      },
+           { "EV69",          15      },
+           { "EV7",           16      },
+           { "EV79",          17      }
+
            };
           p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
           for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )

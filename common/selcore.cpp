@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.134 2002/03/29 08:51:52 sampo Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.135 2002/03/29 20:34:51 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -246,7 +246,7 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
   if (contestid == OGR)
   {
     long det = GetProcessorType(1);
-    if (det != 11) cindex = 0;
+    if (det <  11) cindex = 0;
   }
   #elif (CLIENT_CPU == CPU_68K)
   if (contestid == OGR)
@@ -794,7 +794,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     selcorestatics.corenum[OGR] = selcorestatics.user_cputype[OGR];
     if (selcorestatics.corenum[OGR] < 0 && detected_type > 0)
     {
-      if (detected_type == 11)
+      if (detected_type >= 11)
         selcorestatics.corenum[OGR] = 1;
       else
         selcorestatics.corenum[OGR] = 0;

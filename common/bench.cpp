@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.62 2002/03/28 01:07:37 andreasb Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.63 2002/03/29 20:34:50 sampo Exp $"; }
 
 //#define TRACE
 
@@ -307,7 +307,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
           }
           retvalue = (long)info.ratelo;
           #if (ULONG_MAX > 0xfffffffful)
-          retvalue = (long)((info.ratehi << 32)+(info.ratelo));
+          retvalue = (((long)info.ratehi) << 32) + info.ratelo;
           #endif
           __BenchSetBestRate(contestid, retvalue);
           if (!silent)

@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.268 2002/03/29 08:51:53 sampo Exp $
+# @(#)$Id: configure,v 1.222.2.269 2002/03/29 20:34:49 sampo Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -338,33 +338,18 @@ add_sources() # $1=os, $2=arch, $3=custom
     TARGET_OGR_MULTI="68k"
     ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN"
     ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $SLICE_SRCS3"
-  #-----------------------------------------------------------------  
+  #-----------------------------------------------------------------
   elif [ "$2" = "alpha" ]; then
-    if [ "${1}" = "digital-unix" ]; then  
-      TARGET_CCFLAGS="${TARGET_CCFLAGS} -pthread"      
-      TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alpha/axp-bmeyer.cpp"
-      TARGET_ADDASMS="${TARGET_ADDASMS} rc5/alpha/axp-bmeyer-osf.s"
-      TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alphaasm/rc5-digital-unix-alpha-ev4.cpp"
-      TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alphaasm/rc5-digital-unix-alpha-ev5.cpp"
-      ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMEGGS -DKWAN -DHAVE_DES_CORES"
-      ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-    else  
-      TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alpha/axp-bmeyer.cpp"
-      TARGET_ADDASMS="${TARGET_ADDASMS} rc5/alpha/axp-bmeyer.s"
-      #DWORZ_SLICE_SRCS="des/alpha-asm/deseval-dworz3.S des/alpha-asm/des-slice-dworz.cpp"
-      ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DDWORZ -DHAVE_DES_CORES"
-      ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DWORZ_SLICE_SRCS"
-    fi  
-    ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
-    ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
+    TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alpha/axp-bmeyer.cpp"
+    TARGET_ADDASMS="${TARGET_ADDASMS} rc5/alpha/axp-bmeyer.s"
+    TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev67.cpp"
     if [ "$TARGET_CC" = "g++" ]; then
       TARGET_CCFLAGS="${TARGET_CCFLAGS} -mcpu=ev67 -mno-fix -mno-max"
-      TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev67.cpp"
     fi
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
     TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
-  #-----------------------------------------------------------------  
+  #-----------------------------------------------------------------
   elif [ "$2" = "ppc" -o "$2" = "power" ]; then
     XLC_LINTILLA_ASMS="rc5/ppc/crunch_lintilla.ppcxlc.s \
 	     rc5/ppc/crunch_allitnil.ppcxlc.s"
@@ -945,7 +930,7 @@ case "$1" in
     *alpha-digital_unix)
         TARGET_CC="cxx"
         TARGET_AS="as"
-        TARGET_CCFLAGS="-DHAVE_POSIX_THREADS"
+        TARGET_CCFLAGS="-pthread -DHAVE_POSIX_THREADS"
         TARGET_ASFLAGS=""
         TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile

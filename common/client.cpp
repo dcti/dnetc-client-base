@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.105 2002/03/28 01:07:39 andreasb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.106 2002/03/29 20:34:51 sampo Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -507,7 +507,8 @@ int main( int argc, char *argv[] )
     char *q = "RC5PROG";
     int didset = 0;
     #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX) || \
-        (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_BEOS)
+        (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_BEOS) \
+        (CLIENT_OS == OS_DEC_UNIX)
     char *m = (char *)malloc( strlen(q)+1+strlen(argv[0])+1 );
     if (m) {
       didset=(0==putenv(strcat(strcat(strcpy(m,q),"="),argv[0]))); //BSD4.3
@@ -558,7 +559,7 @@ int main( int argc, char *argv[] )
         strcat( buffer, ".ini" );
         #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX) || \
             (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_BEOS) || \
-	    (CLIENT_OS == OS_DYNIX)
+	    (CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_DEC_UNIX)
         putenv( buffer );                 //BSD4.3
         #else
         setenv("RC5INI", &buffer[7], 1 ); //SYSV7 and posix
