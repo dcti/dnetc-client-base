@@ -11,6 +11,13 @@
 */
 //
 // $Log: setprio.cpp,v $
+// Revision 1.31  1998/10/26 03:13:24  cyp
+// Changed win32 priority setting so that the main thread always runs at
+// normal priority (but in the idle class). Crunch threads are locked at idle.
+//
+// Revision 1.3  1998/10/20 17:20:17  remi
+// Added two missing #ifdef(MULTITHREAD) in __SetPriority()
+//
 // Revision 1.2  1998/10/11 08:20:34  silby
 // win32 is now locked at max idle priority for cracking threads.
 //
@@ -22,7 +29,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.2 1998/10/11 08:20:34 silby Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.31 1998/10/26 03:13:24 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -71,10 +78,13 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
     else //between THREAD_PRIORITY_NORMAL (+0) and THREAD_PRIORITY_IDLE (-15)
       { 
       SetPriorityClass( GetCurrentProcess(), IDLE_PRIORITY_CLASS );
-      SetThreadPriority( GetCurrentThread(),THREAD_PRIORITY_IDLE);
-//      SetThreadPriority( GetCurrentThread(), 
-//          ((((THREAD_PRIORITY_IDLE + THREAD_PRIORITY_NORMAL)+1)
-//                                                           *(9-prio))/10) );
+      if (GetCurrentThread() != main_thrid)
+        {
+        SetThreadPriority( GetCurrentThread(),THREAD_PRIORITY_IDLE);
+//        SetThreadPriority( GetCurrentThread(), 
+//              ((((THREAD_PRIORITY_IDLE + THREAD_PRIORITY_NORMAL)+1)
+//                                                  *(9-prio))/10) );
+        }
       }
     if (set_for_thread && main_thrid) //if we have threads,...
       SetThreadPriority( main_thrid, THREAD_PRIORITY_NORMAL );
@@ -173,9 +183,9 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
   #else
     if ( set_for_thread )
       {
-      #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING) 
+      #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && defined(MULTITHREAD)
         //nothing - priority is set when created
-      #elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H))
+      #elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && defined(MULTITHREAD)
         //SCHED_OTHER policy
         int newprio;
         if ( prio == 9 )
