@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.121 2002/03/28 01:07:45 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.122 2002/04/01 12:05:00 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -230,7 +230,12 @@ Problem *ProblemAlloc(void)
     thisprob = (SuperProblem *)cmem_alloc(sizeof(SuperProblem));
     if (!thisprob)
     {
+      #ifdef HAVE_MULTICRUNCH_VIA_FORK
+      Log("Insufficient memory to allocate problem data\n"
+          "Do you have CONFIG_SYSVIPC enabled in your kernel?\n");
+      #else
       Log("Insufficient memory to allocate problem data\n");
+      #endif
       err = 1;
     }
   }    
