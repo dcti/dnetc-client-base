@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: client.cpp,v $
+// Revision 1.152.2.6  1998/11/18 15:41:51  remi
+// Cleaned-up the mess I put in the last night... sorry folks !
+//
 // Revision 1.152.2.5  1998/11/17 09:23:03  remi
 // Synced with :
 //  Revision 1.164  1998/11/17 04:39:33  silby
@@ -10,12 +13,6 @@
 //
 // Revision 1.152.2.4  1998/11/17 00:01:42  remi
 // Synced with :
-//  $Log: client.cpp,v $
-//  Revision 1.152.2.5  1998/11/17 09:23:03  remi
-//  Synced with :
-//   Revision 1.164  1998/11/17 04:39:33  silby
-//   Gave GetBuildOrEnvDescription the fixing it was pining for.
-//
 //  Revision 1.163  1998/11/16 22:31:09  cyp
 //  Cleaned up banner(s) and made use of CLIENT_OS_NAME.
 //
@@ -98,7 +95,7 @@ static const char *GetBuildOrEnvDescription(void)
 
 // --------------------------------------------------------------------------
 
-static void PrintBanner(const char *dnet_id)
+static void PrintBanner(void)
 {
   static unsigned int level = 0; //incrementing so messages are not repeated
             //0 = show copyright/version,  1 = show startup message
@@ -160,7 +157,6 @@ static void PrintBanner(const char *dnet_id)
     const char *msg = GetBuildOrEnvDescription();
     if (msg && *msg) LogRaw( "%s\n", msg );
 
-    LogRaw( "Using distributed.net ID %s\n\n", dnet_id );
     }
   return;
 }
@@ -178,12 +174,12 @@ int Client::Main( int argc, const char *argv[], int /* restarted */ )
   if (ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0)
     {
     domodes = (ModeReqIsSet(-1) != 0);
-    if (InitializeTriggers(((noexitfilecheck)?(NULL):(exit_flag_file)),pausefile)==0)
+    if (InitializeTriggers(NULL,NULL)==0)
       {
-      if (InitializeConsole(quietmode,domodes) == 0)
+      if (InitializeConsole(0,domodes) == 0)
         {
         InitializeLogging(0); //enable only screen logging for now
-        PrintBanner(id); //tracks restart state itself
+        PrintBanner(); //tracks restart state itself
         ParseCommandline( 1, argc, argv, NULL, 1 ); //show cmdline overrides
       
         if (domodes)
@@ -273,18 +269,7 @@ int realmain( int argc, char *argv[] )
 
 /* ----------------------------------------------------------------- */
 
-#if !((CLIENT_OS==OS_WIN32) && defined(NEEDVIRTUALMETHODS))
-
-#if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, 
-    int nCmdShow) 
-{ /* abstraction layer between WinMain() and realmain() */
-  return winClientPrelude( hInst, hPrevInst, lpszCmdLine, nCmdShow, realmain);
-}
-#else
 int main( int argc, char *argv[] )
 { 
   return realmain( argc, argv ); 
 }
-#endif
-#endif
