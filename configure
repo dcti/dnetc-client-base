@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.180  1999/01/29 04:15:34  pct
+# Updates for the initial attempt at a multithreaded/multicored Digital
+# Unix Alpha client.  Sorry if these changes cause anyone any grief.
+#
 # Revision 1.179  1999/01/28 07:29:04  skand
 # NetBSD/i386 fixes.
 #
@@ -1187,7 +1191,7 @@ case "$1" in
 	;;
 
 ###### Alpha
-    *alpha-cc-ev5-static)
+    *alpha-cc-ev5-static)	# If anyone is still using this rule, please remove this comment by May 99
 	RC5CORECOPY="rc5/rc5ansi2-bo2.cpp"
 	TARGET_CC="cxx"
 	TARGET_CCFLAGS="$OPTS_CC_ALPHA_EV5 -DPIPELINE_COUNT=2 \
@@ -1196,7 +1200,7 @@ case "$1" in
 	TARGET_LIBS="-non_shared"
 	;;
 
-    *alpha-cc-ev4-static)
+    *alpha-cc-ev4-static)	# If anyone is still using this rule, please remove this comment by May 99
 	RC5CORECOPY="rc5/rc5ansi2-bo2.cpp"
 	TARGET_CC="cxx"
 	TARGET_CCFLAGS="$OPTS_CC_ALPHA_EV4 -DPIPELINE_COUNT=2 \
@@ -1205,25 +1209,29 @@ case "$1" in
 	TARGET_LIBS="-non_shared"
 	;;
 
-    *alpha-gcc-ev5-digital_unix-mt)
-	RC5CORECOPY="rc5/rc5-alpha-osf.cpp"
+    *alpha-gcc-digital_unix-mt)		/* See notes in platforms/digital-unix-alpha */
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="-Wa,-02 -mcpu=ev5 $OPTS_GCC -O6 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN -DMULTITHREAD -D_THREAD_SAFE -D_REENTRANT -DALPHA_EV5_CORE"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
-	TARGET_LDFLAGS=""
+	TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN -DDEC_UNIX_CPU_SELECT -DMULTITHREAD -D_THREAD_SAFE -D_REENTRANT -DCORES_SUPPORT_SMP -Ddes_alpha_osf_ev5=des_alpha_osf_ev4"
+	TARGET_CCFLAGS="-mcpu=ev4 $TARGET_BASE_CCFLAGS"
+	TARGET_EV5_CCFLAGS="-mcpu=ev5 $TARGET_BASE_CCFLAGS"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 platforms/digital-unix-alpha/rc5-digital-unix-alpha-ev4.cpp"
+	TARGET_DIGITAL_UNIX_EV5_SRCS="platforms/digital-unix-alpha/rc5-digital-unix-alpha-ev5.cpp"
 	TARGET_LIBS="-lpthread -lexc"
+	TARGET_OS=DIGITAL_UNIX
 	;;
 
-    *alpha-gcc-ev5-digital_unix-static)
-	RC5CORECOPY="rc5/rc5-alpha-osf.cpp"
+    *alpha-gcc-digital_unix-static)
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="-Wa,-02 -mcpu=ev5 $OPTS_GCC -O6 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN -DALPHA_EV5_CORE"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
-	TARGET_LDFLAGS="-static"
-	TARGET_LIBS=""
+	TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN -DDEC_UNIX_CPU_SELECT"
+	TARGET_CCFLAGS="-mcpu=ev4 $TARGET_BASE_CCFLAGS"
+	TARGET_EV5_CCFLAGS="-mcpu=ev5 $TARGET_BASE_CCFLAGS"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 platforms/digital-unix-alpha/rc5-digital-unix-alpha-ev4.cpp"
+	TARGET_DIGITAL_UNIX_EV5_SRCS="platforms/digital-unix-alpha/rc5-digital-unix-alpha-ev5.cpp platforms/digital-unix-alpha/deseval-dworz3.S platforms/digital-unix-alpha/des-slice-dworz.cpp"
+	TARGET_LIBS="-static"
+	TARGET_OS=DIGITAL_UNIX
 	;;
 
-    *alpha-cc)
+    *alpha-cc)	# If anyone is still using this rule, please remove this comment by May 99
 	RC5CORECOPY="rc5/rc5ansi2-bo2.cpp"
 	TARGET_CC="cxx"
 	TARGET_CCFLAGS="$OPTS_CC_ALPHA -DPIPELINE_COUNT=2 \
@@ -1241,7 +1249,7 @@ case "$1" in
 	TARGET_LIBS=""
 	;;
 
-    *alpha-gcc-mt)
+    *alpha-gcc-mt)	# If anyone is still using this rule, please remove this comment by May 99
 	RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA \
@@ -2032,6 +2040,16 @@ if [ -n "${TARGET_ADDNASMS}" ]; then
   done
 fi
 
+if [ "$TARGET_OS" = "DIGITAL_UNIX" ]; then
+  echo "Scanning additional Digital Unix Sources"
+  for target in ${TARGET_DIGITAL_UNIX_EV5_SRCS}; do
+      TARGETOBJECT=output/`basename $target .cpp`.o
+      SAFENAME=`echo ${TARGETOBJECT} | tr -d ${DELETECHARS}`
+      echo "  ${target} -> ${TARGETOBJECT} (${SAFENAME})"
+      eval "DEPEND_${SAFENAME}=${target}"
+      TARGET_DUEV5OBJS="${TARGET_DUEV5OBJS} ${TARGETOBJECT}"
+  done
+fi
 
 #
 # Build the test program
@@ -2076,6 +2094,9 @@ echo "CLIENT_CPU = $CLIENTCPUNAME ($CLIENTCPU)"
 echo "CLIENT_OS = $CLIENTOSNAME ($CLIENTOS)"
 echo "INTSIZES = $INTSIZES"
 TARGET_CCFLAGS="-DINTSIZES=${INTSIZES} -DBUILDNAME=\${BUILDNAME} ${TARGET_CCFLAGS}"
+if [ "$TARGET_OS" = "DIGITAL_UNIX" ]; then
+TARGET_EV5_CCFLAGS="-DINTSIZES=${INTSIZES} -DBUILDNAME=\${BUILDNAME} ${TARGET_EV5_CCFLAGS}"
+fi
 
 
 #
@@ -2101,7 +2122,7 @@ echo "ASFLAGS = ${TARGET_ASFLAGS}" >> Makefile
 echo "NASM = ${TARGET_NASM}" >> Makefile
 echo "NASMFLAGS = ${TARGET_NASMFLAGS}" >> Makefile
 echo "STRIP = ${TARGET_STRIP}" >> Makefile
-echo "ALLOBJS = ${TARGET_ALLCCOBJS} ${TARGET_ALLASOBJS} ${TARGET_ALLNASMOBJS}" >> Makefile
+echo "ALLOBJS = ${TARGET_ALLCCOBJS} ${TARGET_ALLASOBJS} ${TARGET_ALLNASMOBJS} ${TARGET_DUEV5OBJS}" >> Makefile
 echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
 echo "BUILDNAME = $1" >> Makefile
 echo "" >> Makefile
@@ -2204,6 +2225,18 @@ if [ -n "${TARGET_ALLNASMOBJS}" ]; then
     eval TARGETSRC=$`echo DEPEND_$SAFENAME`
     echo "$target:	${TARGETSRC}" >> Makefile
     echo "	\${NASM} \${NASMFLAGS} ${TARGETSRC} -o $target" >> Makefile
+    echo "" >> Makefile
+  done
+fi
+
+if [ "$TARGET_OS" = "DIGITAL_UNIX" ]; then
+  echo "Generating Makefile Digital Unix EV5 dependency targets..."
+  for target in ${TARGET_DUEV5OBJS}; do
+    SAFENAME=`echo $target | tr -d ${DELETECHARS}`
+    eval TARGETSRC=$`echo DEPEND_$SAFENAME`
+    TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
+    echo "$target:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
+    echo "	\${CC} -c $TARGET_EV5_CCFLAGS ${TARGETSRC} -o $target" >> Makefile
     echo "" >> Makefile
   done
 fi

@@ -1,0 +1,7 @@
+pct:
+	This is the start of the Digital Unix multicore/multiprocessor
+	solution.  Unfortunately I am convinced the fast
+	deseval-dworz3.S is not reentrant and therefore can't be used
+	in the multithreaded version.  The multithreaded version is
+	therefore using the same core for both EV4 and EV5 processors
+	which is the fastest reentrant core for them both.

@@ -11,6 +11,10 @@
    to functions in modules in your own platform area.   - cyp
 */
 // $Log: console.cpp,v $
+// Revision 1.37  1999/01/29 04:15:35  pct
+// Updates for the initial attempt at a multithreaded/multicored Digital
+// Unix Alpha client.  Sorry if these changes cause anyone any grief.
+//
 // Revision 1.36  1999/01/28 00:20:18  trevorh
 // Corrected VioCalls for OS/2 and fixed getch() in Watcom!
 //
@@ -138,7 +142,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.36 1999/01/28 00:20:18 trevorh Exp $"; }
+return "@(#)$Id: console.cpp,v 1.37 1999/01/29 04:15:35 pct Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -156,7 +160,7 @@ return "@(#)$Id: console.cpp,v 1.36 1999/01/28 00:20:18 trevorh Exp $"; }
 
 #if !defined(NOTERMIOS) && ((CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) || \
     (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
-    || (CLIENT_OS==OS_FREEBSD) || defined(__EMX__))
+    || (CLIENT_OS==OS_FREEBSD) || defined(__EMX__) || (CLIENT_OS==OS_DEC_UNIX))
 #include <termios.h>
 #define TERMIOS_IS_AVAILABLE
 #endif
@@ -462,7 +466,6 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
                  (( timenow.tv_sec == timestop.tv_sec ) &&
                  ( timenow.tv_usec < timestop.tv_usec ))));
     }
-
   return ch;
 }
 

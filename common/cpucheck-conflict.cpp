@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.68  1999/01/29 04:15:35  pct
+// Updates for the initial attempt at a multithreaded/multicored Digital
+// Unix Alpha client.  Sorry if these changes cause anyone any grief.
+//
 // Revision 1.67  1999/01/21 19:34:52  michmarc
 // changes to the #ifdef around GetProcessorType broke the link setp on
 // some platforms.
@@ -250,7 +254,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.67 1999/01/21 19:34:52 michmarc Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.68 1999/01/29 04:15:35 pct Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -266,6 +270,10 @@ return "@(#)$Id: cpucheck-conflict.cpp,v 1.67 1999/01/21 19:34:52 michmarc Exp $
 // We really only want to do this for multithreaded clients.
 // Earlier versions of the Digital Unix don't support this.
 #include <unistd.h>
+#include <sys/sysinfo.h>
+#include <machine/hal_sysinfo.h>
+#include <machine/cpuconf.h>
+
 #endif
 
 // --------------------------------------------------------------------------
@@ -393,7 +401,15 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       }
     #elif ( (CLIENT_OS == OS_DEC_UNIX) &&  defined(OS_SUPPORTS_SMP))
       {
-	cpucount = sysconf(_SC_NPROCESSORS_ONLN);
+	int     status=0;
+	struct cpu_info    buf;
+	int     st=0;
+
+	status = getsysinfo(GSI_CPU_INFO, (char *) &buf, sizeof(buf), st, NULL,NULL);
+	if (status == -1)
+	  cpucount = -1;
+	else
+	  cpucount = buf.cpus_in_box;
       }
     #endif
     if (cpucount < 1)  //not supported

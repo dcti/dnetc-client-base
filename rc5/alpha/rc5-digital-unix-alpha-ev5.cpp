@@ -5,7 +5,11 @@
 // For use in distributed.net p/ojects only.
 // Any other distribution or use of this source violates copyright.
 //
-// $Log: rc5-alpha-osf.cpp,v $
+// $Log: rc5-digital-unix-alpha-ev5.cpp,v $
+// Revision 1.1  1999/01/29 04:15:36  pct
+// Updates for the initial attempt at a multithreaded/multicored Digital
+// Unix Alpha client.  Sorry if these changes cause anyone any grief.
+//
 // Revision 1.1  1999/01/14 23:02:12  pct
 // Updates for Digital Unix alpha client and ev5 related code.  This also
 // includes inital code for autodetection of CPU type and SMP.
@@ -14,15 +18,15 @@
 // This file is based on rc5ansi2-bo2.cpp but has been optimised for
 // the Digital EV5 series of chips.
 
-/*  This file is included from rc5.cpp so we can use __inline__.  */
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi2_bo2_cpp (void) {
-return "@(#)$Id: rc5-alpha-osf.cpp,v 1.1 1999/01/14 23:02:12 pct Exp $"; }
+return "@(#)$Id: rc5-digital-unix-alpha-ev5.cpp,v 1.1 1999/01/29 04:15:36 pct Exp $"; }
 #endif
 
+#include "stdio.h"
 #include "problem.h"
-#include "rotate_alpha_osf.h"
+#include "rotate-digital-unix-alpha-ev5.h"
 
 
 #if (PIPELINE_COUNT != 2)
@@ -37,8 +41,8 @@ return "@(#)$Id: rc5-alpha-osf.cpp,v 1.1 1999/01/14 23:02:12 pct Exp $"; }
 #define P     0xB7E15163
 #define Q     0x9E3779B9
 
-unsigned long long	SNOT0 = P;
-u32	SNOT[26]=
+static unsigned long long	SNOT0 = P;
+static u32	SNOT[26]=
 	{
 		(P) & 0x00000000ffffffff,
 		(P+Q) & 0x00000000ffffffff,
@@ -112,8 +116,12 @@ u32	SNOT[26]=
 // Returns: 0 - nothing found, 1 - found on pipeline 1,
 //   2 - found pipeline 2, 3 - ... etc ...
 
+#ifdef DEC_UNIX_CPU_SELECT
+u32 rc5_alpha_osf_ev5( RC5UnitWork * rc5unitwork )
+#else
 static __inline__
 u32 rc5_unit_func( RC5UnitWork * rc5unitwork )
+#endif
 {
   u32 S1_00,S1_01,S1_02,S1_03,S1_04,S1_05,S1_06,S1_07,S1_08,S1_09,
       S1_10,S1_11,S1_12,S1_13,S1_14,S1_15,S1_16,S1_17,S1_18,S1_19,
@@ -231,10 +239,12 @@ u32 rc5_unit_func( RC5UnitWork * rc5unitwork )
 	
     if (rc5unitwork->cypher.lo == eA1 &&
 	    rc5unitwork->cypher.hi == ROTL(eB1 ^ eA1, eA1) +
-	      ROTL3(S1_25 + A1 + ROTL(Llo1 + A1 + Lhi1, A1 + Lhi1))) return 1;
+	      ROTL3(S1_25 + A1 + ROTL(Llo1 + A1 + Lhi1, A1 + Lhi1)))
+		return 1;
     if (rc5unitwork->cypher.lo == eA2 &&
 	    rc5unitwork->cypher.hi == ROTL(eB2 ^ eA2, eA2) +
-	      ROTL3(S2_25 + A2 + ROTL(Llo2 + A2 + Lhi2, A2 + Lhi2))) return 2;
+	      ROTL3(S2_25 + A2 + ROTL(Llo2 + A2 + Lhi2, A2 + Lhi2)))
+		return 2;
 	  return 0;	
   }
 }

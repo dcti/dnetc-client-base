@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.73  1999/01/29 04:15:35  pct
+// Updates for the initial attempt at a multithreaded/multicored Digital
+// Unix Alpha client.  Sorry if these changes cause anyone any grief.
+//
 // Revision 1.72  1999/01/27 02:48:21  silby
 // If there's a kiter error, client will now shut down.
 //
@@ -207,7 +211,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.72 1999/01/27 02:48:21 silby Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.73 1999/01/29 04:15:35 pct Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -315,8 +319,15 @@ extern void CliSignalHandler(int);
      #error "Expecting PIPELINE_COUNT=2"
      #endif
   #elif (CLIENT_OS == OS_DEC_UNIX)
-     extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
-     extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+     #if defined(DEC_UNIX_CPU_SELECT)
+       #include <machine/cpuconf.h>
+       extern u32 rc5_alpha_osf_ev4( RC5UnitWork * rc5unitwork);
+       extern u32 rc5_alpha_osf_ev5( RC5UnitWork * rc5unitwork);
+       extern u32 des_alpha_osf_ev4( RC5UnitWork * rc5unitwork, u32 timeslice );
+       extern u32 des_alpha_osf_ev5( RC5UnitWork * rc5unitwork, u32 timeslice );
+     #else
+       extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+     #endif
   #else
      extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
      extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
@@ -1347,6 +1358,126 @@ printf("RESULT2: result[%X] key[%X/%X] keysdone[%X/%X] iters[%X/%X]\n",
         RaiseExitRequestTrigger();
     }
   }
+#elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_DEC_UNIX) && defined(DEC_UNIX_CPU_SELECT)
+  unsigned long kiter = 0;
+  if (contest == 0) 
+    {
+    while ( timeslice-- ) // timeslice ignores the number of pipelines
+      {
+      u32 result;
+      
+      switch (cputype)
+      {
+	case EV3_CPU:
+	case EV4_CPU:
+	case LCA4_CPU:
+	case EV45_CPU:
+	default:
+	  result = rc5_alpha_osf_ev4( &rc5unitwork );
+	  break;
+	case EV5_CPU:
+	case EV56_CPU:
+	case PCA56_CPU:
+	case EV6_CPU:
+	  result = rc5_alpha_osf_ev5( &rc5unitwork );
+	  break;
+      }
+      if ( result )
+        {
+        // found it?
+        rc5result.key.hi = contestwork.key.hi;
+        rc5result.key.lo = contestwork.key.lo;
+        rc5result.keysdone.hi = contestwork.keysdone.hi;
+        rc5result.keysdone.lo = contestwork.keysdone.lo + result - 1;
+        rc5result.iterations.hi = contestwork.iterations.hi;
+        rc5result.iterations.lo = contestwork.iterations.lo;
+        rc5result.result = RESULT_FOUND;
+        finished = 1;
+        return( 1 );
+        }
+      else
+        {
+        // "mangle-increment" the key number by the number of pipelines
+        rc5unitwork.L0.hi = (rc5unitwork.L0.hi + (pipeline_count << 24)) & 0xFFFFFFFF;
+        if (!(rc5unitwork.L0.hi & 0xFF000000)) 
+          {
+          rc5unitwork.L0.hi = (rc5unitwork.L0.hi + 0x00010000) & 0x00FFFFFF;
+          if (!(rc5unitwork.L0.hi & 0x00FF0000)) 
+            {
+            rc5unitwork.L0.hi = (rc5unitwork.L0.hi + 0x00000100) & 0x0000FFFF;
+            if (!(rc5unitwork.L0.hi & 0x0000FF00)) 
+              {
+              rc5unitwork.L0.hi = (rc5unitwork.L0.hi + 0x00000001) & 0x000000FF;
+              if (!(rc5unitwork.L0.hi & 0x000000FF)) 
+                {
+                rc5unitwork.L0.hi = 0x00000000;
+                rc5unitwork.L0.lo = rc5unitwork.L0.lo + 0x01000000;
+                if (!(rc5unitwork.L0.lo & 0xFF000000)) 
+                  {
+                  rc5unitwork.L0.lo = (rc5unitwork.L0.lo + 0x00010000) & 0x00FFFFFF;
+                  if (!(rc5unitwork.L0.lo & 0x00FF0000)) 
+                    {
+                    rc5unitwork.L0.lo = (rc5unitwork.L0.lo + 0x00000100) & 0x0000FFFF;
+                    if (!(rc5unitwork.L0.lo & 0x0000FF00)) 
+                      {
+                      rc5unitwork.L0.lo = (rc5unitwork.L0.lo + 0x00000001) & 0x000000FF;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        // increment the count of keys done
+        // note: doesn't account for carry
+        contestwork.keysdone.lo += pipeline_count;
+        }
+      }
+    }
+  else
+    {
+    timeslice *= pipeline_count;
+    u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
+
+    if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
+    else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
+    timeslice = (1ul << nbits) / pipeline_count;
+    switch (cputype)
+    {
+      case EV3_CPU:
+      case EV4_CPU:
+      case LCA4_CPU:
+      case EV45_CPU:
+      default:
+        kiter = des_alpha_osf_ev4 ( &rc5unitwork, nbits );
+        break;
+      case EV5_CPU:
+      case EV56_CPU:
+      case PCA56_CPU:
+      case EV6_CPU:
+        kiter = des_alpha_osf_ev5 ( &rc5unitwork, nbits );
+        break;
+    }
+    contestwork.keysdone.lo += kiter;
+    if (kiter < ( timeslice * pipeline_count ) )
+      {
+      // found it?
+      rc5result.key.hi = contestwork.key.hi;
+      rc5result.key.lo = contestwork.key.lo;
+      rc5result.keysdone.hi = contestwork.keysdone.hi;
+      rc5result.keysdone.lo = contestwork.keysdone.lo;
+      rc5result.iterations.hi = contestwork.iterations.hi;
+      rc5result.iterations.lo = contestwork.iterations.lo;
+      rc5result.result = RESULT_FOUND;
+      finished = 1;
+      return( 1 );
+      }
+    else if (kiter != (timeslice * pipeline_count))
+      {
+      LogScreen("kiter wrong %ld %ld\n",
+               (long) kiter, (long)(timeslice*pipeline_count));
+      }
+    }
 #else
   unsigned long kiter = 0;
   if (contest == 0) 

@@ -2,7 +2,11 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 // 
-// $Log: rotate_alpha_osf.h,v $
+// $Log: rotate-digital-unix-alpha-ev5.h,v $
+// Revision 1.1  1999/01/29 04:15:36  pct
+// Updates for the initial attempt at a multithreaded/multicored Digital
+// Unix Alpha client.  Sorry if these changes cause anyone any grief.
+//
 // Revision 1.1  1999/01/14 23:02:12  pct
 // Updates for Digital Unix alpha client and ev5 related code.  This also
 // includes inital code for autodetection of CPU type and SMP.

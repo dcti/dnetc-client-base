@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore.cpp,v $
+// Revision 1.29  1999/01/29 04:15:35  pct
+// Updates for the initial attempt at a multithreaded/multicored Digital
+// Unix Alpha client.  Sorry if these changes cause anyone any grief.
+//
 // Revision 1.28  1999/01/21 05:02:42  pct
 // Minor updates for Digital Unix clients.
 //
@@ -111,7 +115,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.28 1999/01/21 05:02:42 pct Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.29 1999/01/29 04:15:35 pct Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -493,16 +497,10 @@ int Client::SelectCore(int quietly)
 #elif ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_DEC_UNIX))
   if (!quietly)
   {
-    int	tmpcputype;
-
-    LogScreen("Detected a %s type Alpha.\n",GetCoreNameFromCoreType(cputype));
-    tmpcputype = cputype;
-    GET_CPU_FAMILY(&tmpcputype);
-    #ifdef ALPHA_EV5_CORE
-    if (tmpcputype != EV5_CPU)
-	LogScreen("Warning:  This client is optimised for the EV5 family.\n"
-		"There may be a faster client than this for your machine.\n");
-    #endif
+    if (detectedtype != -2)
+      LogScreen("Alpha CPU %s detected.\n",GetCoreNameFromCoreType(cputype));
+    else
+      LogScreen("Alpha CPU %s set in configuration.\n",GetCoreNameFromCoreType(cputype));
   }
 #else
   cputype = 0;

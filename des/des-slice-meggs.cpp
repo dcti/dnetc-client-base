@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-meggs.cpp,v $
+// Revision 1.23  1999/01/29 04:15:36  pct
+// Updates for the initial attempt at a multithreaded/multicored Digital
+// Unix Alpha client.  Sorry if these changes cause anyone any grief.
+//
 // Revision 1.22  1999/01/17 21:48:50  cyp
 // deseval-mmx whack16() is now passed a memblock from the problem object.
 //
@@ -77,7 +81,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_meggs_cpp(void) {
-return "@(#)$Id: des-slice-meggs.cpp,v 1.22 1999/01/17 21:48:50 cyp Exp $"; }
+return "@(#)$Id: des-slice-meggs.cpp,v 1.23 1999/01/29 04:15:36 pct Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -151,6 +155,8 @@ extern BASIC_SLICE_TYPE whack16 (BASIC_SLICE_TYPE *plain,
 
 #if defined(MMX_BITSLICER)
 u32 des_unit_func_mmx( RC5UnitWork * rc5unitwork, u32 nbbits, char *coremem )
+#elif defined(DEC_UNIX_CPU_SELECT)
+u32 des_alpha_osf_ev4( RC5UnitWork * rc5unitwork, u32 nbbits )
 #else
 u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
 #endif
