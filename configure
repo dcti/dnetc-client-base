@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.59 1999/11/28 15:23:52 remi Exp $
+# @(#)$Id: configure,v 1.222.2.60 1999/11/28 16:09:09 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -386,21 +386,18 @@ case "$1" in
 # If compiling on Irix 5 you must -D_irix5_ now to get the usleep()
 # wrapper.
 
-    *mips-cobalt)	# For Cobalt Qube - doesn't work yet - Peter
-	RC5CORECOPY="rc5/mips-crunch.cpp"
+    *mips-linux)	# For Cobalt Qube - doesn't work yet - Peter
 	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_GCC_MIPS -mcpu=r3000 \
-			-DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+	TARGET_CCFLAGS="$OPTS_GCC_MIPS -mcpu=r3000 -DMULTITHREAD \
+			-DBIT_32 -DKWAN -DMEGGS -DHAVE_DES_CORES"
+	TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *mips-sni-gcc)	   #For MIPS SINIX
-	RC5CORECOPY="rc5/mips/mips-crunch.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_MIPS -Dsinix \
-			-DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2"
+	TARGET_CCFLAGS="$OPTS_GCC_MIPS -Dsinix"
 	TARGET_LIBS="-lsocket -lnsl -lc -L/usr/ucblib -lucb"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
@@ -428,9 +425,8 @@ case "$1" in
 	#  mips-crunch.cpp doesn't compile with CC
 	TARGET_CC="CC"
 	TARGET_LDFLAGS="-n32"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -n32 \
-			-DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS "
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -n32 -DMULTITHREAD \
+			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -438,42 +434,39 @@ case "$1" in
 
     *mips-gcc-irix5-crunch)	# faster than mips-gcc for IRIX
         DELETECHARS="'/.\$\-'"
-	RC5CORECOPY="rc5/mips/mips-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -D_irix5_ \
 			-D_CPU_32BIT_ -DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+	TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *mips-egcs-crunch-64)     #needs very recent egcs
-	RC5CORECOPY="rc5/mips/mips-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_EGCS_MIPS -mabi=64 \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 \
 			-DBIT_64 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+	TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
 	TARGET_LDFLAGS="-mabi=64"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *mips-egcs-crunch)	# faster than mips-gcc for IRIX
-	RC5CORECOPY="rc5/mips/mips-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_EGCS_MIPS -mabi=n32 \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 \
 			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+	TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *mips-irix)     # [ivo] generic mips-irix target
         DELETECHARS="'/.\$\-'"
-        RC5CORECOPY="rc5/mips/mips-crunch.cpp"
         TARGET_CC="gcc"
         TARGET_CCFLAGS="$OPTS_GCC_MIPS   \
                         -DHAVE_DES_CORES -DHAVE_CSC_CORES \
                         -DBIT_32 -DKWAN -DMEGGS"
-        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
+        TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2 \
+                        $CSC_ANSI_SRCS"
         #TARGET_LIBS="-lpthread"
         #TARGET_LDFLAGS="-mips3"
 	TARGET_STRIP="touch"
@@ -483,13 +476,13 @@ case "$1" in
 
     *mips-gcc)	# [lyndon] Irix 6, gcc, threaded (assumes n32 ABI)
         DELETECHARS="'/.\$\-'"
-        RC5CORECOPY="rc5/mips/mips-crunch.cpp"
         TARGET_CC="gcc"
         TARGET_CCFLAGS="$OPTS_GCC_MIPS   \
                         -DHAVE_DES_CORES -DHAVE_CSC_CORES \
 			-DMULTITHREAD \
                         -DBIT_32 -DKWAN -DMEGGS"
-        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
+        TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2 \
+                        $CSC_ANSI_SRCS"
         TARGET_LIBS="-lpthread"
 	TARGET_STRIP="strip"
 	TARGET_TARBALL="irix6-mips-n32"
@@ -576,93 +569,48 @@ case "$1" in
 	TARGET_TARBALL="linux-sparc-elf-glibc2"
 	;;
 
-    *sparc-cc)
-        DELETECHARS="'/.\$\-'"
-	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
-	TARGET_CC="cc"
-	TARGET_CCFLAGS="$OPTS_CC_SPARC -DPIPELINE_COUNT=1"
-	TARGET_LIBS="-lnsl -lsocket"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *sun3-gcc)
-        DELETECHARS="'/.\$\-'"
-	TARGET_CCFLAGS="$OPTS_GCC_SUN68K -DPIPELINE_COUNT=1 \
-			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/crunch.sun68k.gcc.s"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *sun2-sunos3-gcc)
-	TARGET_CCFLAGS="$OPTS_GCC_SUN68K -D_SUNOS3_ \
-			-DPIPELINE_COUNT=1 -DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/crunch.sun68k.gcc.s"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *m68k-linux-gcc)
-	TARGET_CFLAGS="$OPTS_GCC_M68K -DPIPELINE_COUNT=1 -DBIT_32 -DKWAN"
-	TARGET_AFLAGS="$OPTS_GAS_M68K"
- 	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
- 	TARGET_ADDASMS="crunch.68k.gcc.s"
- 	TARGET_LIBS=""  #NEVER STATIC FOR GLIBC!!!
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
     #####
-
-    *sparc-solaris-gcc-crunch-mt-old)    # fastest rc5, slower des
-        DELETECHARS="'/.\$\-'"
-	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
-	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
-			-DMULTITHREAD \
-			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN"
-	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
-	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
 
     *sparc-solaris-gcc-nomt)   # [ivo solaris/nonultra/nomt] fastest rc5 & des for ultra
         #DELETECHARS="'/.\$\-'"
-        RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
-        TARGET_CC="gcc -pipe -fpermissive" 
+        TARGET_CC="gcc -pipe" 
         TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
                         -DHAVE_CSC_CORES -DHAVE_DES_CORES \
-                        -DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
-        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
+                        -DBIT_32 -DKWAN -DMEGGS"
+        TARGET_ADDSRCS="rc5/ultra/rc5-ultra-crunch.cpp \
+                        $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
         TARGET_LIBS="-lnsl -lsocket -ldl"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TRAGET_TARBALL="sparc-solaris26-nomt"
         ;;
 
-    *sparc-solaris-gcc)   # [ivo solaris/nonultra/mt] fastest rc5 & des for ultra
+    *sparc-solaris-gcc)   # [ivo solaris/nonultra/mt] fastest rc5
         #DELETECHARS="'/.\$\-'"
-        RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
-        TARGET_CC="gcc -pipe -fpermissive"
+        TARGET_CC="gcc -pipe"
         TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
                         -DMULTITHREAD \
                         -DHAVE_CSC_CORES -DHAVE_DES_CORES \
-                        -DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
-        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
+                        -DBIT_32 -DKWAN -DMEGGS"
+        TARGET_ADDSRCS="rc5/ultra/rc5-ultra-crunch.cpp \
+                        $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="sparc-solaris26"
+        TARGET_TARBALL="solaris26-sparc"
         ;;
 
     *sparc-solaris-gcc-ultra)   # [ivo ultra] fastest rc5 & VIS DES
         #DELETECHARS="'/.\$\-'"
-        RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
-        TARGET_CC="gcc -pipe -fpermissive"
+        TARGET_CC="gcc -pipe"
         TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris \
-                        -DMULTITHREAD -DULTRA_CRUNCH=1 \
+                        -DMULTITHREAD \
                         -DHAVE_CSC_CORES -DHAVE_DES_CORES "
-        TARGET_ADDSRCS="$DESULTRA_SRCS_ASM $CSC_ANSI_SRCS"
+        TARGET_ADDSRCS="rc5/ultra/rc5-ultra-crunch.cpp \
+                        $DESULTRA_SRCS_ASM $CSC_ANSI_SRCS"
         TARGET_ADDASMS="des/ultrasparc/simple.handopt.s"
         TARGET_ASFLAGS="$OPTS_AS_ULTRA"   
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="ultrasparc-solaris26"
+        TARGET_TARBALL="solaris26-ultrasparc"
         ;;
 
     #####
