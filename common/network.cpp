@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.79  1999/02/03 03:45:02  cyp
+// corrected Network::Get() handling of blocking sockets.
+//
 // Revision 1.78  1999/02/01 18:02:44  cyp
 // undid last SillyB change. (so, whats new?)
 //
@@ -167,7 +170,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.78 1999/02/01 18:02:44 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.79 1999/02/03 03:45:02 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -800,21 +803,6 @@ int Network::InitializeConnection(void)
     SOCKS5 *psocks5 = (SOCKS5 *)socksreq;
     u32 len;
 
-    #if 0
-    int tmp_isnonblocking = (isnonblocking != 0);
-    if (isnonblocking)
-      {
-      isnonblocking = (MakeBlocking() != 0);
-      if (isnonblocking)
-        {
-        if (verbose_level > 0)
-          LogScreen("SOCKS5: unable to temporarily revert to blocking mode\n");
-        iotimeout = -1; //force blocking mode in next try
-        return +1; //recoverable
-        }
-      }
-    #endif
-
     // transact a request to the SOCKS5 proxy requesting
     // authentication methods.  If the username/password
     // is provided we ask for no authentication or user/pw.
@@ -979,11 +967,6 @@ int Network::InitializeConnection(void)
         }
       } //if (authaccepted)
       
-    #if 0
-    if (tmp_isnonblocking)
-      isnonblocking = (MakeNonBlocking() == 0);
-    #endif
-      
     return ((success) ? (0) : ((recoverable) ? (+1) : (-1)));
     } //if (startmode & MODE_SOCKS5)
 
@@ -995,21 +978,6 @@ int Network::InitializeConnection(void)
     char socksreq[128];  // min sizeof(fwall_userpass) + sizeof(SOCKS4)
     SOCKS4 *psocks4 = (SOCKS4 *)socksreq;
     u32 len;
-
-    #if 0
-    int tmp_isnonblocking = (isnonblocking != 0);
-    if (isnonblocking)
-      {
-      isnonblocking = (MakeBlocking() != 0);
-      if (isnonblocking)
-        {
-        if (verbose_level > 0)
-          LogScreen("SOCKS4: unable to temporarily revert to blocking mode\n");
-        iotimeout = -1; //force blocking mode in next try
-        return +1; //recoverable
-        }
-      }
-    #endif
 
     // transact a request to the SOCKS4 proxy giving the
     // destination ip/port and username and process its reply.
@@ -1061,11 +1029,6 @@ int Network::InitializeConnection(void)
         }
       }
 
-    #if 0
-    if (tmp_isnonblocking)
-      isnonblocking = (MakeNonBlocking() == 0);
-    #endif
-
     return ((success) ? (0) : ((recoverable) ? (+1) : (-1)));
     }
     
@@ -1093,7 +1056,7 @@ int Network::Close(void)
 int Network::Get( char * data, int length )
 {
   time_t starttime = 0;
-  int need_close = 0;
+  int need_close = 0, timed_out = 0; //timed_out is only used with blocking sox
 
   int tmp_isnonblocking = (isnonblocking != 0); //we handle timeout ourselves
   isnonblocking = 0;                 //so stop LowLevelGet() from doing it.
@@ -1105,7 +1068,7 @@ int Network::Get( char * data, int length )
     if (starttime == 0) /* first pass through */
       time(&starttime);
     else if (!tmp_isnonblocking) /* we are blocking, so no more chances */
-      break;
+      ; //keep going till socket close or timeout or we have data
     else if ((time(NULL) - starttime) > iotimeout)
       break;
 
@@ -1118,6 +1081,7 @@ int Network::Get( char * data, int length )
       int numRead = LowLevelGet(uubuffer.GetTail(), (int)uubuffer.GetSlack());
       if (numRead > 0) uubuffer.MarkUsed((u32)numRead);
       else if (numRead == 0) need_close = 1;       // connection closed
+      else if (numRead < 0 && !tmp_isnonblocking) timed_out = 1;
 
       AutoBuffer line;
       while (uubuffer.RemoveLine(line))
@@ -1178,6 +1142,7 @@ int Network::Get( char * data, int length )
       int numRead = LowLevelGet(uubuffer.GetTail(), (int)uubuffer.GetSlack());
       if (numRead > 0) uubuffer.MarkUsed((u32)numRead);
       else if (numRead == 0) need_close = 1;       // connection closed
+      else if (numRead < 0 && !tmp_isnonblocking) timed_out = 1;
 
       AutoBuffer line;
       while (uubuffer.RemoveLine(line))
@@ -1237,7 +1202,11 @@ int Network::Get( char * data, int length )
       tempbuffer.Reserve((u32)wantedSize);
 
       int numRead = LowLevelGet(tempbuffer.GetTail(),wantedSize);
-      if (numRead > 0)
+      if (numRead < 0 && !tmp_isnonblocking)
+        timed_out = 1; // timed out
+      else if (numRead == 0) 
+        need_close = 1;
+      else if (numRead > 0)
       {
         nothing_done = 0;
         tempbuffer.MarkUsed(numRead);
@@ -1269,12 +1238,11 @@ int Network::Get( char * data, int length )
         }
         else netbuffer += tempbuffer;
       }
-      else if (numRead == 0) need_close = 1;
     }
 
     if (nothing_done)
     {
-      if (need_close || gethttpdone) 
+      if (need_close || gethttpdone || (timed_out && tmp_isnonblocking))
         break;
       #if (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_ULTRIX)
         sleep(1); // full 1 second due to so many reported network problems.
@@ -1522,17 +1490,11 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
       if (isnonblocking && rc == -1 && t_error == TNODATA) 
         {
         time_t stoptime = time(NULL) + (time_t)iotimeout;
-        while (rc == -1)
+        while (rc == -1 && t_error == TNODATA && time(NULL) <= stoptime)
           {
+          usleep(250000);
           if (t_rcvconnect(sock, NULL) != -1) 
             rc = 0;
-          else if (t_error == TNODATA)
-            break;
-          else if (time(NULL) > stoptime)
-            break;
-          else
-            usleep(250000);
-            }
           }
         }
       t_free((char *)sndcall, T_CALL);
@@ -1572,8 +1534,7 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
   int rc = -1;
   time_t starttime = time(NULL);
 
-  do
-    {
+  do{
     if ( connect(sock, (struct sockaddr *)&sin, sizeof(sin)) >= 0 )
       {
       rc = 0;
@@ -1672,7 +1633,7 @@ int Network::LowLevelPut(const char *data,int length)
     if (info.tdsu > 0)
       sendquota = info.tdsu;
     else if (info.tdsu == -1) /* no limit */
-      sendquota = ((length > INT_MAX)?(INT_MAX):(length));
+      sendquota = length;
     else if (info.tdsu == 0) /* no boundaries */
       sendquota = 1;
     else //if (info.tdsu == -2) /* normal send not supp'd (ever happens?)*/
@@ -1695,15 +1656,15 @@ int Network::LowLevelPut(const char *data,int length)
     #if defined(_TIUSER_)                              //TLI/XTI
     int written = -2;
     while (written == -2)
-        {
+      {
       int flag = (((length - towrite)==0) ? (0) : (T_MORE));
       written = t_snd(sock, (char *)data, (unsigned int)towrite, flag );
       if (written == -1 && t_errno == TFLOW ) /* sending too fast */
-          {
+        {
         usleep(500000); // 0.5 secs
         written = -2;
-          }
         }
+      }
     #else                                              //BSD 4.3 sockets
     int written = send(sock, (char*)data, towrite, 0 );
     /*
@@ -1855,7 +1816,7 @@ int Network::LowLevelGet(char *data,int length)
       sleep( sleepdur / 1000000UL );
     if ((sleepdur % 1000000UL) != 0)
       usleep( sleepdur % 1000000UL );
-      } while (length);
+    } while (length);
 
   if (verbose_level > 1) //DEBUG
     Log("LLGet: got %u (requested %u) sockclosed:%s\n", 
@@ -1899,11 +1860,11 @@ int Network::LowLevelConditionSocket( unsigned long cond_type )
       int flagon = ((cond_type == CONDSOCK_BLOCKING_OFF) ? (1): (0));
       int ok = ioctl(sock, FIONBIO, &flagon);
       if (ok && !flagon)
-          {
+        {
         int on = 1;
         // allow blocking socket calls to preemptively multitask
         ioctl(sock, FIOSLEEPTW, &on);
-          }
+        }
     #elif (CLIENT_OS == OS_OS2)
       int flagon = ((cond_type == CONDSOCK_BLOCKING_OFF) ? (1): (0));
       return ioctl(sock, FIONBIO, (char *) &flagon, sizeof(flagon));
