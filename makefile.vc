@@ -1,21 +1,21 @@
-# RC5 client makefile (MS Visual C++ for Win32 x86)
+# RC5 client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.63 1999/10/21 17:22:51 cyp Exp $
+# $Id: makefile.vc,v 1.64 1999/10/22 15:02:04 cyp Exp $
 #
 
 BASENAME = dnetc
 OUTPUTPATH = output
 COMMONPATH = common
+RC5SRCPATH = rc5/x86/nasm
 DESSRCPATH = des
-RC5SRCPATH = rc5
 OGRSRCPATH = ogr
 CSCSRCPATH = csc
 X86SRCPATH = platforms
 PLATSRCPATH = platforms/win32cli
 
 OPTS_MSVC =  -I$(COMMONPATH) -I$(PLATSRCPATH) \
-             -I$(RC5SRCPATH) -I$(DESSRCPATH) -I$(OGRSRCPATH) -I$(CSCSRCPATH) \
+             -I$(DESSRCPATH) -I$(OGRSRCPATH) -I$(CSCSRCPATH) \
              -DMULTITHREAD -D__WIN32__ -D_CPU_32BIT_ -DLURK \
 	     -DHAVE_DES_CORES -DHAVE_OGR_CORES -DHAVE_CSC_CORES
 OPTS_CC_X86 = -DMMX_BITSLICER -DBIT_64 -DMEGGS -DKWAN -DMMX_RC5 \
@@ -95,10 +95,15 @@ PLAT_OBJS =                          \
 	$(OUTPUTPATH)/w32ss.obj      \
 	$(OUTPUTPATH)/w32util.obj
 
+SCR_OBJS =                           \
+	$(OUTPUTPATH)/w32ssb.obj     \
+	$(OUTPUTPATH)/w32ss.obj      \
+	$(OUTPUTPATH)/w32util.obj
+
 X86_OBJS =                           \
 	$(OUTPUTPATH)/x86ident.obj
 
-RC5_OBJS =                           \
+RC5_X86_OBJS =                       \
 	$(OUTPUTPATH)/rg486.obj      \
 	$(OUTPUTPATH)/rg6x86.obj     \
 	$(OUTPUTPATH)/rc5-rgk5.obj   \
@@ -107,7 +112,7 @@ RC5_OBJS =                           \
 	$(OUTPUTPATH)/rc5-rgp6.obj   \
 	$(OUTPUTPATH)/rc5mmx.obj
 				     
-DES_OBJS =                           \
+DES_X86_OBJS =                       \
 	$(OUTPUTPATH)/des-slice-meggs.obj \
 	$(OUTPUTPATH)/des-x86.obj    \
 	$(OUTPUTPATH)/bdeslow.obj    \
@@ -140,16 +145,13 @@ CSC_OBJS =                           \
 	tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
 
 {$(DESSRCPATH)/brydmasm}.asm{$(OUTPUTPATH)}.obj:
-	tasm32 /t /m /ml /i$(DESSRCPATH:/=\)\brydmasm $(**:/=\), $(@:/=\)
+	tasm32 /t /m /ml /dmodelnum=2 /i$(DESSRCPATH:/=\)\brydmasm $(**:/=\), $(@:/=\)
 
 {$(DESSRCPATH)/nasm}.asm{$(OUTPUTPATH)}.obj:
 	nasmw -o $(@:/=\) -f win32 -i $(DESSRCPATH:/=\)\nasm\ $(**:/=\)
 
 {$(DESSRCPATH)/mmx-bitslice}.asm{$(OUTPUTPATH)}.obj:
 	nasmw -o $(@:/=\) -f win32 -i $(DESSRCPATH:/=\)\mmx-bitslice\ $(**:/=\)
-
-{$(RC5SRCPATH)}.asm{$(OUTPUTPATH)}.obj:
-	tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
 
 {$(DESSRCPATH)}.cpp{$(OUTPUTPATH)}.obj:
 	cl -c $(OPTS_MSVC) -Fo$@ $**
@@ -177,14 +179,15 @@ $(RES_FILE):    $(RC_FILE)
 
 # --------------------------------------------
 
-$(BASENAME): $(COMMON_OBJS) $(PLAT_OBJS) $(X86_OBJS) $(RC5_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
-	link $(OPTS_LINK) /OUT:$(BASENAME).exe $(OPTS_LIBS) $**
+$(BASENAME): $(PLAT_OBJS) $(COMMON_OBJS) $(X86_OBJS) $(RC5_X86_OBJS) $(DES_X86_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(SCR_OBJS) $(RES_FILE)
+	link $(OPTS_LINK) /OUT:$(BASENAME).scr $(OPTS_LIBS) $(SCR_OBJS) $(RES_FILE)
+	link $(OPTS_LINK) /OUT:$(BASENAME).exe $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(X86_OBJS) $(RC5_X86_OBJS) $(DES_X86_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
 
 clean:
 	del $(OUTPUTPATH:/=\)\*.obj $(RC_FILE:/=\) $(RES_FILE:/=\)
 
 superclean: clean
-	del $(BASENAME).exe $(BASENAME).ini buff-in.* buff-out.*
+	del $(BASENAME).exe $(BASENAME).scr $(BASENAME).ini buff-in.* buff-out.*
 
 rebuild: clean all
 
