@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.24  1998/07/06 09:21:26  jlawson
+// added lint tags around cvs id's to suppress unused variable warnings.
+//
 // Revision 1.23  1998/06/17 02:14:47  blast
 // Added code to test a new 68030 core which I got from an outside
 // source ... Commented out of course ...
@@ -33,7 +36,10 @@
 // Added $Log.
 //
 
-static const char *id_problem_cpp="@(#)$Id: problem.cpp,v 1.23 1998/06/17 02:14:47 blast Exp $";
+#if (!defined(lint) && defined(__showids__))
+static const char *id_problem_cpp="@(#)$Id: problem.cpp,v 1.24 1998/07/06 09:21:26 jlawson Exp $";
+#endif
+
 
 #define NEW_STATS_AND_LOGMSG_STUFF
 
@@ -95,6 +101,8 @@ extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
 extern "C" void riscos_upcall_6(void);
 extern void CliSignalHandler(int);
 #endif
+
+
 
 Problem::Problem()
 {

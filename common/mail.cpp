@@ -4,6 +4,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mail.cpp,v $
+// Revision 1.12  1998/07/06 09:21:24  jlawson
+// added lint tags around cvs id's to suppress unused variable warnings.
+//
 // Revision 1.11  1998/06/15 12:04:01  kbracey
 // Lots of consts.
 //
@@ -29,7 +32,10 @@
 #define GEN_HEADER_AT_SEND    // FIFO buffer requires generating headers at
 #endif                        // send time rather than at msg creation time.
 
-static const char *id="@(#)$Id: mail.cpp,v 1.11 1998/06/15 12:04:01 kbracey Exp $";
+#if (!defined(lint) && defined(__showids__))
+static const char *id="@(#)$Id: mail.cpp,v 1.12 1998/07/06 09:21:24 jlawson Exp $";
+#endif
+
 
 #include "network.h"
 #include "client.h"

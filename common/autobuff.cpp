@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: autobuff.cpp,v $
+// Revision 1.6  1998/07/06 09:21:19  jlawson
+// added lint tags around cvs id's to suppress unused variable warnings.
+//
 // Revision 1.5  1998/06/15 12:03:42  kbracey
 // Lots of consts.
 //
@@ -15,7 +18,9 @@
 //
 //
 
-static const char *id="@(#)$Id: autobuff.cpp,v 1.5 1998/06/15 12:03:42 kbracey Exp $";
+#if (!defined(lint) && defined(__showids__))
+static const char *id="@(#)$Id: autobuff.cpp,v 1.6 1998/07/06 09:21:19 jlawson Exp $";
+#endif
 
 #include "autobuff.h"
 

@@ -6,6 +6,9 @@
 // the time. 'time' is always stored/passed/returned in timeval format.
 //
 // $Log: clitime.cpp,v $
+// Revision 1.16  1998/07/06 09:21:22  jlawson
+// added lint tags around cvs id's to suppress unused variable warnings.
+//
 // Revision 1.15  1998/06/29 08:44:06  jlawson
 // More OS_WIN32S/OS_WIN16 differences and long constants added.
 //
@@ -32,7 +35,10 @@
    and remaining fraction in mincroseconds in tv_usec;
 */
 
-static const char *id="@(#)$Id: clitime.cpp,v 1.15 1998/06/29 08:44:06 jlawson Exp $";
+#if (!defined(lint) && defined(__showids__))
+static const char *id="@(#)$Id: clitime.cpp,v 1.16 1998/07/06 09:21:22 jlawson Exp $";
+#endif
+
 
 #include "clitime.h" //which #includes client.h
 
