@@ -21,7 +21,9 @@
  *   of the problem object (ie created when the object is new'd) 
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.11 2002/09/24 01:11:09 acidblood Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.12 2002/10/04 22:18:33 andreasb Exp $"
+
+#include "cputypes.h"   /* u32 etc. used here and in the cores */
 
 typedef enum
 {
