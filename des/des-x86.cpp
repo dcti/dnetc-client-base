@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-x86.cpp,v $
+// Revision 1.12  1998/06/23 21:59:08  remi
+// Use only two x86 DES cores (P5 & PPro) when not multithreaded.
+//
 // Revision 1.11  1998/06/18 00:18:26  silby
 // p1bdespro.asm and p2bdespro.asm aren't being removed.
 //
@@ -32,7 +35,7 @@
 
 // encapsulate the BrydDES library
 
-static char *id="@(#)$Id: des-x86.cpp,v 1.11 1998/06/18 00:18:26 silby Exp $";
+static char *id="@(#)$Id: des-x86.cpp,v 1.12 1998/06/23 21:59:08 remi Exp $";
 
 #include <stdio.h>
 #include <string.h>
@@ -90,14 +93,18 @@ static const u8 bitmasks [][8] = {
 };
 
 extern "C" int bryd_des (u8 *plain, u8 *cypher, u8 *iv, u8 *key, const u8 *bitmask);
-extern "C" int bbryd_des (u8 *plain, u8 *cypher, u8 *iv, u8 *key, const u8 *bitmask);
 extern "C" int p1bryd_des (u8 *plain, u8 *cypher, u8 *iv, u8 *key, const u8 *bitmask);
+#if defined(MULTITHREAD)
+extern "C" int bbryd_des (u8 *plain, u8 *cypher, u8 *iv, u8 *key, const u8 *bitmask);
 extern "C" int p2bryd_des (u8 *plain, u8 *cypher, u8 *iv, u8 *key, const u8 *bitmask);
+#endif
 
 static u8 key_found[8];
-static u8 Bkey_found[8];
 static bool key_is_found;
+#if defined(MULTITHREAD)
+static u8 Bkey_found[8];
 static bool Bkey_is_found;
+#endif
 
 // ------------------------------------------------------------------
 // in case we find the key
@@ -112,6 +119,7 @@ void bryd_key_found (u8 *bytekey)
   return;
 }
 
+#if defined(MULTITHREAD)
 extern "C" void bbryd_key_found (u8 *bytekey);
 void bbryd_key_found (u8 *bytekey)
 {
@@ -122,6 +130,7 @@ void bbryd_key_found (u8 *bytekey)
   Bkey_is_found = true;
   return;
 }
+#endif
 
 // ------------------------------------------------------------------
 // Called before keys are tested, and each time 2^16 (65536) keys are tested.
@@ -135,6 +144,7 @@ int bryd_continue (void)
   return key_is_found ? 0 : 1;
 }
 
+#if defined(MULTITHREAD)
 extern "C" int bbryd_continue (void);
 int bbryd_continue (void)
 {
@@ -143,6 +153,7 @@ int bbryd_continue (void)
 #endif
   return Bkey_is_found ? 0 : 1;
 }
+#endif
 
 // ------------------------------------------------------------------
 // Input : 56 bit key, plain & cypher text, timeslice
@@ -254,6 +265,7 @@ u32 p1des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 nbbits )
 
 // ------------------------------------------------------------------
 
+#if defined(MULTITHREAD)
 u32 p2des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 nbbits )
 {
   const u8 *bitmask;
@@ -353,6 +365,7 @@ u32 p2des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 nbbits )
     return 1 << nbbits;
   }
 }
+#endif
 
 // ------------------------------------------------------------------
 // ------------------------------------------------------------------
@@ -470,6 +483,7 @@ u32 p1des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 nbbits )
 
 // rc5unitwork.LO in lo:hi 24+32 incrementable format
 
+#if defined(MULTITHREAD)
 u32 p2des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 nbbits )
 {
   const u8 *bitmask;
@@ -569,3 +583,4 @@ u32 p2des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 nbbits )
     return 1 << nbbits;
   }
 }
+#endif

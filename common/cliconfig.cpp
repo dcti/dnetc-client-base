@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.107  1998/06/23 21:58:52  remi
+// Use only two x86 DES cores (P5 & PPro) when not multithreaded.
+//
 // Revision 1.106  1998/06/23 03:14:13  silby
 // Small fix to make sure e-mail addresses contain @something, so SMTP servers are happy.
 //
@@ -94,7 +97,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.106 1998/06/23 03:14:13 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.107 1998/06/23 21:58:52 remi Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -2177,11 +2180,16 @@ LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
        #define DESUNITFUNC62 des_unit_func_slice
        #define DESUNITFUNC51 des_unit_func_slice
        #define DESUNITFUNC52 des_unit_func_slice
-    #else
+    #elif defined(MULTITHREAD)
        #define DESUNITFUNC51 p1des_unit_func_p5
        #define DESUNITFUNC52 p2des_unit_func_p5
        #define DESUNITFUNC61 p1des_unit_func_pro
        #define DESUNITFUNC62 p2des_unit_func_pro
+    #else
+       #define DESUNITFUNC51 p1des_unit_func_p5
+       #define DESUNITFUNC52 NULL
+       #define DESUNITFUNC61 p1des_unit_func_pro
+       #define DESUNITFUNC62 NULL
     #endif
 
     case 1:rc5_unit_func = rc5_unit_func_486;
