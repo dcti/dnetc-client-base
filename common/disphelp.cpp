@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.3 1999/06/10 18:19:54 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.4 1999/06/17 12:20:00 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -70,12 +70,12 @@ void DisplayHelp( const char * unrecognized_option )
     "-ini <filename>    override default name of INI file",
     "-e <address>       the email id by which you are known to distributed.net",
     "-nodisk            don't use disk buffer files",
-    "-n <count>         blocks to complete. -1 forces exit when buffer is empty.",
+    "-n <count>         packets to complete. -1 forces exit when buffer is empty.",
     "-runbuffers        set -n == -1 (exit when buffers are empty)",
     "-frequent          frequently check for empty buffers",
     "-blsize <n>        set a preferred packet size (2^n keys/packet)",
-    "-b <blocks>        set in-buffer threshold",
-    "-b2 <blocks>       set out-buffer threshold",
+    "-b <n>             set in-buffer threshold to <n> packets",
+    "-b2 <n>            set out-buffer threshold to <n> packets",
     "-inbase <filename> input buffer basename (ie without 'extension'/suffix)",
     "-outbase <filename> output buffer basename (ie without 'extension'/suffix)",
     "-ckpoint <fname>   set the name of the checkpoint file",
@@ -118,7 +118,7 @@ void DisplayHelp( const char * unrecognized_option )
     "-until <HH:MM>     quit at HH:MM (eg 07:30)",
     "-noexitfilecheck   don't check for a 'exitrc5.now' command file",
     "-pausefile <fn>    name of file that causes the client to pause",
-    "-percentoff        don't display block completion as a running percentage",
+    "-percentoff        don't display work completion as a running percentage",
     "-quiet or -hide    suppress screen output (== detach for some clients)",
     "-noquiet           don't suppress screen output (override ini quiet setting)"
   };

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.4 1999/06/11 02:15:38 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.5 1999/06/17 12:19:59 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -1200,7 +1200,7 @@ int Client::Run( void )
   if (!TimeToQuit)
   {
     if (load_problem_count > 1)
-      Log( "Loading one block per cruncher...\n" );
+      Log( "Loading crunchers with work...\n" );
     load_problem_count = LoadSaveProblems( load_problem_count, 0 );
 
     if (CheckExitRequestTrigger())
@@ -1210,7 +1210,7 @@ int Client::Run( void )
     } 
     else if (load_problem_count == 0)
     {
-      Log("Unable to load any blocks. Quitting...\n");
+      Log("Unable to load any work. Quitting...\n");
       TimeToQuit = 1;
       exitcode = -2;
     }
@@ -1605,7 +1605,7 @@ int Client::Run( void )
 
   if (thread_data_table)  //we have threads running
   {
-    LogScreen("Waiting for threads to end...\n");
+    LogScreen("Waiting for crunchers to stop...\n");
     while (thread_data_table)
     {
       struct thread_param_block *thrdatap = thread_data_table;

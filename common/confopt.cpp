@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.3 1999/06/16 18:07:28 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.4 1999/06/17 12:20:00 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -213,7 +213,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "*Warning*: clients older than v2.7106 do not know how to deal with packets\n"
   "larger than 2^31 keys. Do not share buffers with such a client if you set\n"
   "the preferred packet size to a value greater than 31.\n"
-  "*Note*: Currently, the preferred blocksize for DES is always 31 if the RC5\n"
+  "*Note*: Currently, the preferred packet size for DES is always 31 if the RC5\n"
   "preferred packet size is less than or equal to 31, and is always 33 if the\n"
   "RC5 preferred packet size is greater than 31. This is temporary: future\n"
   "client releases will select the DES preferred packet size based on the\n"
