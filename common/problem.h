@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.74 1999/12/08 00:38:02 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.75 1999/12/08 02:27:04 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -102,21 +102,11 @@ public: /* anything public must be thread safe */
 
   /* this is our generic prototype */
   s32 (*unit_func)( RC5UnitWork *, u32 *iterations, void *memblk );
-  
-  #if ((CLIENT_CPU == CPU_68K) && \
-    ((CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_AMIGAOS)))
-    __asm u32 (*rc5_unit_func)(register __a0 RC5UnitWork *, register __d0 u32);
-  #elif (CLIENT_CPU == CPU_ARM)
-    u32 (*rc5_unit_func)( RC5UnitWork * , unsigned long iterations );
-  #elif (CLIENT_CPU == CPU_ALPHA)
-    u32 (*rc5_unit_func)( RC5UnitWork * , unsigned long iterations );
-  #else
-    u32 (*rc5_unit_func)( RC5UnitWork * , u32 iterations );
-  #endif
 
-#if defined(HAVE_DES_CORES)
+  u32 (*rc5_unit_func)( RC5UnitWork * , u32 iterations );
+  #if defined(HAVE_DES_CORES)
   u32 (*des_unit_func)( RC5UnitWork * , u32 *iterations, char *membuf );
-#endif  
+  #endif  
 
   int Run_RC5(u32 *iterations,int *core_retcode); /* \  run for n iterations.              */
   int Run_DES(u32 *iterations,int *core_retcode); /*  > set actual number of iter that ran */
