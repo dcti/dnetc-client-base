@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.102  1998/06/22 00:55:25  silby
+// Removed no longer needed variable in ValidateConfig (due to moving of cpuchecking into seperate file.)
+//
 // Revision 1.101  1998/06/21 17:10:21  cyruspatel
 // Fixed some NetWare smp problems. Merged duplicate numcpu validation code
 // in ::ReadConfig()/::ValidateConfig() into ::ValidateProcessorCount() and
@@ -74,7 +77,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.101 1998/06/21 17:10:21 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.102 1998/06/22 00:55:25 silby Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -1186,7 +1189,6 @@ s32 Client::ReadConfig(void)
 void Client::ValidateConfig( void )
 {
 #if (CLIENT_OS == OS_WIN32)
-  SYSTEM_INFO systeminfo;
   static bool did_detect_message = false;
 #elif (CLIENT_OS == OS_BEOS)
   system_info the_info;
