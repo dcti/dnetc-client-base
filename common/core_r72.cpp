@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.24 2004/05/28 15:33:09 kakace Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.25 2004/05/29 00:33:11 piru Exp $"; }
 
 //#define TRACE
 
@@ -304,6 +304,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 0x8003: cindex = -1; break; // 7447A (G4+)   == ?
         case 0x800C: cindex = -1; break; // 7410 (G4)     == ?
         case 0x0039: cindex = -1; break; // 970 (G5)      == ?
+        case 0x003C: cindex = -1; break; // 970FX (G5)    == ?
         #endif
         default:     cindex =-1; break; // no default
       }

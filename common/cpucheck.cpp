@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.54 2004/05/28 15:33:09 kakace Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.55 2004/05/29 00:33:10 piru Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -859,6 +859,7 @@ static long __GetRawProcessorID(const char **cpuname)
       case 0x8003:   // 7447A (G4)
       case 0x800C:   // 7410 (G4)
       case 0x0039:   // 970 (G5)
+      case 0x003C:   // 970FX (G5)
       detectedtype = cpu; break;
       default: // some PPC processor that we don't know about
                // set the tag (so that the user can tell us), but return 0
