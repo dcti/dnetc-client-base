@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.2  1998/11/26 22:30:36  cyp
+// Fixed an implied signed/unsigned comparison in ::Configure.
+//
 // Revision 1.1  1998/11/22 15:16:17  cyp
 // Split from cliconfig.cpp; Changed runoffline/runbuffers/blockcount handling
 // (runbuffers is now synonymous with blockcount=-1; offlinemode is always
@@ -17,7 +20,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.1 1998/11/22 15:16:17 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.2 1998/11/26 22:30:36 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -68,7 +71,7 @@ static s32 findmenuoption( s32 menu, s32 option)
 // --------------------------------------------------------------------------
 
 // checks for user to type yes or no. Returns 1=yes, 0=no, -1=unknown
-int yesno(char *str)
+static int yesno(char *str)
 {
   if (strcmpi(str, "yes")==0 || strcmpi(str, "y")==0 || 
       strcmpi(str, "true")==0 || strcmpi(str, "t")==0 || 
@@ -102,6 +105,8 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
     
     conf_options[CONF_ID].thevariable=(char *)(&id[0]);
     conf_options[CONF_THRESHOLDI].thevariable=&inthreshold[0];
+
+    conf_options[CONF_THRESHOLDI].choicemax=MAXBLOCKSPERBUFFER; /* client.h */
 
     #if 0 /* obsolete */
     conf_options[CONF_THRESHOLDO].thevariable=&outthreshold[0];
@@ -531,7 +536,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           choice = atoi(parm);
           if (choice >= conf_options[CONF_UUEHTTPMODE].choicemin && 
               choice <= conf_options[CONF_UUEHTTPMODE].choicemax)
-	    {
+            {
             uuehttpmode = choice;
             if ( choice > 0 )
               {
@@ -548,7 +553,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
               strcpy(keyproxy,"rc5proxy.distributed.net");
               //sprintf(keyproxy,"us%s.v27.distributed.net", p );
               }
-	    }
+            }
           break;
         case CONF_CPUTYPE:
           choice = ((parm[0] == 0)?(-1):(atoi(parm)));
@@ -768,8 +773,7 @@ s32 Client::Configure( void )
   int returnvalue = 1;
 
 #if !defined(NOCONFIG)
-  unsigned int choice;
-  char parm[4];
+  int pos;
   returnvalue=0;
 
   if (!ConIsScreen())
@@ -777,32 +781,34 @@ s32 Client::Configure( void )
     ConOutErr("Can't configure when stdin or stdout is redirected.\n");
     returnvalue = -1;
     }
-
   
   while (returnvalue == 0)
     {
-    ConClear(); //in logstuff.cpp
+    ConClear();
     LogScreenRaw(CONFMENU_CAPTION, "");
-    for (choice=1;choice<=(sizeof(menutable)/sizeof(menutable[0]));choice++)
-      LogScreenRaw(" %u) %s\n",choice, menutable[choice-1]);
+    for (pos=1;pos<=(int)(sizeof(menutable)/sizeof(menutable[0]));pos++)
+      LogScreenRaw(" %u) %s\n",pos, menutable[pos-1]);
     LogScreenRaw("\n 9) Discard settings and exit"
                  "\n 0) Save settings and exit\n\n");
 
     if (confopt_isstringblank(id) || strcmpi(id,"rc5@distributed.net")==0)
       LogScreenRaw("Note: You have not yet provided a distributed.net ID.\n"
               "       Please go to the '%s' and set it.\n\n",menutable[0]);
+
     LogScreenRaw("Choice --> ");
-
-    ConInStr(parm, 2, 0);
-
-    choice = ((strlen(parm)==1 && isdigit(parm[0]))?(atoi(parm)):(-1));
-    if (CheckExitRequestTriggerNoIO() || choice==9)
+    char chbuff[10];    
+    ConInStr(chbuff, 2, 0);
+    pos = ((strlen(chbuff)==1 && isdigit(chbuff[0]))?(atoi(chbuff)):(-1));
+    
+    if (CheckExitRequestTriggerNoIO() || pos==9)
       returnvalue = -1; //Breaks and tells it NOT to save
-    else if (choice == 0)
+    else if (pos < 0) 
+      ; /* nothing - ignore it */
+    else if (pos == 0)
       returnvalue=1; //Breaks and tells it to save
-    else if (choice >0 && choice<=(sizeof(menutable)/sizeof(menutable[0])))
+    else if (pos<=(int)(sizeof(menutable)/sizeof(menutable[0])))
       {
-      ConfigureGeneral(choice);
+      ConfigureGeneral(pos);
       if (CheckExitRequestTriggerNoIO())
         returnvalue = -1;
       }
