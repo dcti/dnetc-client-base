@@ -3,6 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.145  1998/07/10 06:24:30  cramer
+// Augmented the domain name requirements for logging.  If no domain is
+// specified, then the smtpsrvr will be appended -- for both user, and user@
+// entries.  [Silby's modification could be tricked into allowing user@.]
+//
+// TODO: fix it for no smtpsrvr being specified.  (just don't display those
+//                                                 options?)
+//
 // Revision 1.144  1998/07/10 04:04:27  silby
 // Change to thread priorities for win32 gui.
 //
@@ -247,7 +255,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.144 1998/07/10 04:04:27 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.145 1998/07/10 06:24:30 cramer Exp $";
 return id; }
 #endif
 
@@ -1510,16 +1518,30 @@ s32 Client::ReadConfig(void)
 
 void Client::ValidateConfig( void )
 {
+  char *at;
+
   killwhitespace(id);
   killwhitespace(keyproxy);
   killwhitespace(httpproxy);
   killwhitespace(smtpsrvr);
-  killwhitespace(smtpdest);
+
   killwhitespace(smtpfrom);
-  if (strchr(smtpfrom,'@') == NULL && (isstringblank(smtpfrom) != 1))
-    strcat(smtpfrom,"@domainnameisrequired");
-  if (strchr(smtpdest,'@') == NULL && (isstringblank(smtpdest) != 1))
-    strcat(smtpdest,"@domainnameisrequired");
+  at = strchr(smtpfrom,'@');
+  if (!at && (isstringblank(smtpfrom) != 1)) {
+    strcat(smtpfrom,"@");
+    strcat(smtpfrom,smtpsrvr);
+  } else if (at && !at[1]) {
+    strcat(smtpfrom,smtpsrvr);
+  }
+
+  killwhitespace(smtpdest);
+  at = strchr(smtpdest,'@');
+  if (!at && (isstringblank(smtpdest) != 1)) {
+    strcat(smtpdest,"@");
+    strcat(smtpdest,smtpsrvr);
+  } else if (at && !at[1]) {
+    strcat(smtpdest,smtpsrvr);
+  }
 
   if ( inthreshold[0] < 1   ) inthreshold[0] = 1;
   if ( inthreshold[0] > 1000 ) inthreshold[0] = 1000;
