@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.65 2000/03/18 00:29:11 andreasb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.66 2000/03/20 12:50:52 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -90,6 +90,7 @@ void ResetClientData(Client *client)
   // If inthreshold is <=0, then use time exclusively.
   // If time threshold is 0, then use inthreshold exclusively.
   // If inthreshold is <=0, AND time is 0, then use BUFTHRESHOLD_DEFAULT
+  // If inthreshold > 0 AND time > 0, then use MAX(inthreshold, effective_workunits(time))
   // If out is <=0, don't do outbuffer threshold checking, regardless of time
   // If out is >0, then use outthreshold, regardless of time
   //memset(&(client->inthreshold),0,sizeof(client->inthreshold));
