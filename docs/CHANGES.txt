@@ -21,12 +21,18 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.9 1999/11/09 17:04:37 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.10 1999/11/23 23:52:35 cyp Exp $
 ==========================================================================
 
 2.8000
 ------
-2.8001.445  new: all: client is now called 'dnetc'
+2.8002.447  chg: all: firewall settings in the .ini have moved to the network
+                 section. socks user:pass is now saved encoded
+            chg: if appropriate, 'Summary:' now also shows # of work units
+            chg: the cow logo is back, and is now the official mascot of
+                 all distributed.net projects :)
+
+2.8002.446  new: all: client is now called 'dnetc'
             new: all: OGR capability
             new: all: CSC capability
             chg: all: more .ini options have been spun off from the 
