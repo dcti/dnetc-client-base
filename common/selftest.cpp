@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.44.2.1 1999/04/13 19:45:30 jlawson Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.44.2.2 1999/04/24 07:37:27 jlawson Exp $"; }
 
 // --------------------------------------------------------------------------
 
@@ -111,11 +111,11 @@ int SelfTest( unsigned int contest, int cputype )
     LogScreen("test::error. invalid contest %u\n", contest );
     return -TEST_CASE_COUNT;
   }
-  if (contest != 0 && contest != 1)
+  if (contest != RC5 && contest != DES)
     return 0;
   
 #if (CLIENT_OS == OS_RISCOS)
-  if (contest == 0 && GetNumberOfDetectedProcessors() == 2)
+  if (contest == RC5 && GetNumberOfDetectedProcessors() == 2)
     threadcount = 2;
 #endif    
 
@@ -141,7 +141,7 @@ int SelfTest( unsigned int contest, int cputype )
       if (CheckExitRequestTriggerNoIO())
         break;
 
-      if (contest == 0) /* RC5-64 */
+      if (contest == RC5)
       { 
         test_cases = (const u32 (*)[TEST_CASE_COUNT][8])&rc5_test_cases[0][0];
         expectedsolution.lo = (*test_cases)[testnum][0];
@@ -206,7 +206,7 @@ int SelfTest( unsigned int contest, int cputype )
             contestwork.crypto.key.hi--;
         }
       }
-      else if (contest == 1)   // DES
+      else if (contest == DES)
       {
         test_cases = (const u32 (*)[TEST_CASE_COUNT][8])&des_test_cases[0][0];
         expectedsolution.lo = (*test_cases)[testnum][0];
@@ -268,7 +268,7 @@ int SelfTest( unsigned int contest, int cputype )
         resulttext = "passed";
         successes++;
         #if 0
-        if (contest == 1) // DES...
+        if (contest == DES)
         {
           /* original expected solution */
           expectedsolution.hi = (*test_cases)[testnum][1]; 

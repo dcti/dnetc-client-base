@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.5.2.1 1999/04/13 19:45:33 jlawson Exp $"; }
+return "@(#)$Id: util.cpp,v 1.5.2.2 1999/04/24 07:37:28 jlawson Exp $"; }
 
 #include "baseincs.h" /* string.h */
 #include "client.h"   /* CONTEST_COUNT, stub definition */
@@ -24,7 +24,7 @@ const char *ogr_stubstr(const struct Stub *stub)
   static char buf[80];
   int i, len = (int)stub->length;
   
-  if (len > 5) {
+  if (len > STUB_MAX) {
     sprintf(buf, "(error:%d/%d)", (int)stub->marks, len);
     return buf;
   }
@@ -34,7 +34,7 @@ const char *ogr_stubstr(const struct Stub *stub)
     return buf;
   }
   for (i = 0; i < len; i++) {
-    sprintf(&buf[strlen(buf)], "%d", (int)stub->stub[i]);
+    sprintf(&buf[strlen(buf)], "%d", (int)stub->diffs[i]);
     if (i+1 < len) {
       strcat(buf, "-");
     }
@@ -188,16 +188,16 @@ const char *projectmap_build( char *buf, const char *strtomap )
       {
         unsigned int thatprio;
         contestid = (((int)map[n]) & 0x7f); /* the contest sitting at pos n */
-	/* find the default priority for the contest sitting at pos n */
-	for (thatprio = 0; thatprio < CONTEST_COUNT; thatprio++ )
-	{
-	  if (contestid == (int)default_map[thatprio] && thatprio > i)
-	  {                                 /* found it */
-	    inspos = (int)n;                /* this is the pos to insert at */
-	    break;
-	  }
+        /* find the default priority for the contest sitting at pos n */
+        for (thatprio = 0; thatprio < CONTEST_COUNT; thatprio++ )
+        {
+          if (contestid == (int)default_map[thatprio] && thatprio > i)
+          {                                 /* found it */
+            inspos = (int)n;                /* this is the pos to insert at */
+            break;
+          }
         }
-      }	    
+      }     
       if (inspos == -1) /* didn't find it */
         map[map_pos++] = default_map[i]; /* so tack it on at the end */
       else
@@ -260,7 +260,11 @@ const char *BufferGetDefaultFilename( unsigned int project, int is_out_type,
   }
   
   if (filename[0] == 0)
-    strcpy( filename, ((is_out_type) ? "buff-out" : "buff-in" ) );
+  {
+    strcpy( filename, ((is_out_type) ? 
+       BUFFER_DEFAULT_OUT_BASENAME /* "buff-out" */: 
+       BUFFER_DEFAULT_IN_BASENAME  /* "buff-in" */  ) );
+  } 
   
   filename[sizeof(filename)-5]='\0';
   strcat( filename, EXTN_SEP );

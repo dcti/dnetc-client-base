@@ -9,10 +9,11 @@
  *
 */
 const char *threadcd_cpp(void) { 
-return "@(#)$Id: threadcd.cpp,v 1.14.2.1 1999/04/13 19:45:32 jlawson Exp $"; } 
+return "@(#)$Id: threadcd.cpp,v 1.14.2.2 1999/04/24 07:37:28 jlawson Exp $"; } 
 
 #include <stdio.h>      //NULL
 #include "threadcd.h"   //includes implementation and porting notes.
+#include "baseincs.h"
 #include "sleepdef.h"   //sleep() and usleep()
 
 /* ---------------------------------------------------------------------- */

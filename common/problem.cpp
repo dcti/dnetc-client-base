@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.94.2.1 1999/04/13 19:45:27 jlawson Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.94.2.2 1999/04/24 07:37:26 jlawson Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -71,12 +71,16 @@ extern "C" void riscos_upcall_6(void);
   extern u32 des_unit_func_mmx( RC5UnitWork * , u32 nbbits, char *coremem );
   extern u32 des_unit_func_slice( RC5UnitWork * , u32 nbbits );
 #elif (CLIENT_OS == OS_AIX)     // this has to stay BEFORE CPU_POWERPC
+  #if defined(_AIXALL) || (CLIENT_CPU == CPU_POWER)
   extern "C" s32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice );
+  #endif
+  #if defined(_AIXALL) || (CLIENT_CPU == CPU_POWERPC)
   extern "C" s32 crunch_allitnil( RC5UnitWork *work, u32 iterations);
   extern "C" s32 crunch_lintilla( RC5UnitWork *work, u32 iterations);
+  #endif
 
   extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
-#elif (CLIENT_CPU == CPU_POWERPC) 
+#elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_AIX) 
   #if (CLIENT_OS == OS_WIN32)   // NT PPC doesn't have good assembly
   extern u32 rc5_unit_func( RC5UnitWork *  ); //rc5ansi2-rg.cpp
   #else
@@ -124,8 +128,8 @@ extern "C" void riscos_upcall_6(void);
   #endif
 #elif (CLIENT_CPU == CPU_ALPHA)
   #if (CLIENT_OS == OS_WIN32)
-     extern "C" u32 rc5_unit_func( RC5UnitWork *, u32 timeslice );
-     extern     u32 des_unit_func( RC5UnitWork *, u32 timeslice );
+     extern "C" u32 rc5_unit_func( RC5UnitWork *, unsigned long timeslice );
+     extern "C" u32 des_unit_func_alpha_dworz( RC5UnitWork * , u32 nbbits );
   #elif (CLIENT_OS == OS_DEC_UNIX)
      #if defined(DEC_UNIX_CPU_SELECT)
        #include <machine/cpuconf.h>
@@ -248,18 +252,18 @@ static void __IncrementKey(u64 *key, u32 iters, int contest)
 {                                                                   
   switch (contest)                                                  
   {                                                                 
-    case 0: // RC5
+    case RC5:
       __SwitchRC5Format (key);                                      
       key->lo += iters;                                             
       if (key->lo < iters) key->hi++;                               
       __SwitchRC5Format (key);                                      
       break;                                                        
-    case 1: // DES
-    case 3: // CSC
+    case DES:
+    case CSC:
       key->lo += iters;                                             
       if (key->lo < iters) key->hi++; /* Account for carry */       
       break;                                                        
-    case 2: // OGR
+    case OGR:
       /* This should never be called for OGR */                     
       break;                                                        
   }                                                                 
@@ -280,9 +284,9 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
     {
       switch (contest)
       {
-        case 0: //RC5
-        case 1: //DES
-        case 3: //CSC
+        case RC5:
+        case DES:
+        case CSC:
                 {
                 retpermille = (u32)( ((double)(1000.0)) *
                 (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
@@ -291,8 +295,12 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
                              ((double)(contestwork.crypto.iterations.lo)))) ); 
                 break;
                 }
-        case 2: //OGR
-                retpermille = 0;
+        case OGR:
+                WorkStub curstub;
+                ogr->getresult(ogrstate, &curstub, sizeof(curstub));
+                // This is just a quick&dirty calculation that resembles progress.
+                retpermille = curstub.stub.diffs[contestwork.ogr.workstub.stub.length]*10
+                            + curstub.stub.diffs[contestwork.ogr.workstub.stub.length+1]/10;
                 break;
       }
     }
@@ -379,6 +387,10 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
     rc5_unit_func = rc5_alpha_osf_ev4;
     des_unit_func = des_alpha_osf_ev4;
   }
+  #elif (CLIENT_OS == OS_WIN32)
+  pipeline_count = 2;
+  rc5_unit_func = ::rc5_unit_func;
+  des_unit_func = des_unit_func_alpha_dworz;
   #else
   pipeline_count = 2;
   rc5_unit_func = rc5_unit_func_axp_bmeyer;
@@ -386,39 +398,39 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   #endif
 #endif
 #if (CLIENT_OS == OS_AIX)
-  #ifdef _AIXALL
   static int detectedtype = -1;
   if (detectedtype == -1)
     detectedtype = GetProcessorType(1 /* quietly */);
-
+ 
+  #if defined(_AIXALL) || (CLIENT_CPU == CPU_POWERPC)
   switch (detectedtype) {
-  case 0:                  // PPC 601
+  case 1:                  // PPC 601
     rc5_unit_func = crunch_allitnil;
     pipeline_count = 1;
     break;
-  case 1:                  // other PPC
+  case 2:                  // other PPC
     rc5_unit_func = crunch_lintilla;
     pipeline_count = 1;
     break;
-  case 2:                  // that's POWER
+  case 0:                  // that's POWER
   default:
+  #ifdef _AIXALL
     rc5_unit_func = rc5_ansi_2_rg_unit_func ;
     pipeline_count = 2;
+  #else                 // no POWER support
+    rc5_unit_func = crunch_allitnil;
+    pipeline_count = 1;
+  #endif
     break;
   } /* endswitch */
   #elif (CLIENT_CPU == CPU_POWER)
-    rc5_unit_func = rc5_ansi_2_rg_unit_func;
-    pipeline_count = 2;
-  #elif (CLIENT_CPU == CPU_POWERPC)
-    pipeline_count = 1;
-    if (cputype == 0)
-      rc5_unit_func = crunch_allitnil;
-    else
-      rc5_unit_func = crunch_lintilla;
+  rc5_unit_func = rc5_ansi_2_rg_unit_func;
+  pipeline_count = 2;
+  #else
+    #error "Systemtype not supported"
   #endif
-// keep the next an ELIF !!!!
-#elif (CLIENT_CPU == CPU_POWERPC)
-  if (contest == 0)
+#elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_AIX)
+  if (contest == RC5)
   {
     rc5_unit_func = crunch_lintilla;
     #if ((CLIENT_OS != OS_BEOS) || (CLIENT_OS != OS_AMIGAOS))
@@ -438,7 +450,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
     cputype = 0;
 
   pipeline_count = 2; /* most cases */
-  if (contest == 1)
+  if (contest == DES)
   {
     #if defined(MMX_BITSLICER) 
     if ((detectedtype & 0x100) != 0) 
@@ -485,7 +497,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
       #endif
     }
   }
-  else if (contest == 0) 
+  else if (contest == RC5) 
   {
     if (cputype == 1)   // Intel 386/486
     {
@@ -524,9 +536,9 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
 
   switch (contest) 
   {
-    case 0: // RC5
-    case 1: // DES
-    case 3: // CSC - CSC_TEST
+    case RC5:
+    case DES:
+    case CSC: // CSC_TEST
 
       // copy over the state information
       contestwork.crypto.key.hi = ( work->crypto.key.hi );
@@ -557,7 +569,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
 
       rc5unitwork.L0.lo = key.lo;
       rc5unitwork.L0.hi = key.hi;
-      if (contest == 0)
+      if (contest == RC5)
         __SwitchRC5Format (&(rc5unitwork.L0));
 
       refL0 = rc5unitwork.L0;
@@ -572,20 +584,28 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
       }     
       break;
 
-    case 2: // OGR
+    case OGR:
 
       #ifndef GREGH
       return -1;
       #else
       extern CoreDispatchTable *ogr_get_dispatch_table();
       contestwork.ogr = work->ogr;
+      contestwork.ogr.nodes.lo = 0;
+      contestwork.ogr.nodes.hi = 0;
       ogr = ogr_get_dispatch_table();
       int r = ogr->init();
       if (r != CORE_S_OK)
         return -1;
-      r = ogr->create(&contestwork.ogr.stub, sizeof(Stub), &ogrstate);
+      r = ogr->create(&contestwork.ogr.workstub, sizeof(WorkStub), &ogrstate);
       if (r != CORE_S_OK)
         return -1;
+      if (contestwork.ogr.workstub.worklength > contestwork.ogr.workstub.stub.length)
+      {
+        // This is just a quick&dirty calculation that resembles progress.
+        startpermille = contestwork.ogr.workstub.stub.diffs[contestwork.ogr.workstub.stub.length]*10
+                      + contestwork.ogr.workstub.stub.diffs[contestwork.ogr.workstub.stub.length+1]/10;
+      }
       break;
       #endif
 
@@ -641,7 +661,22 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dop
   if (!initialized)
     return -1;
   if (work) // store back the state information
+  {
+    switch (contest) {
+      case RC5:
+      case DES:
+      case CSC:
+        // nothing special needs to be done here
+        break;
+      case OGR:
+        if (ogrstate != NULL)
+        {
+          ogr->getresult(ogrstate, &contestwork.ogr.workstub, sizeof(WorkStub));
+        }
+        break;
+    }
     memcpy( (void *)work, (void *)&contestwork, sizeof(ContestWork));
+  }
   if (contestid)
     *contestid = contest;
   if (dopurge)
@@ -716,7 +751,8 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
   #elif ((CLIENT_CPU == CPU_SPARC) && (ULTRA_CRUNCH == 1)) || \
         ((CLIENT_CPU == CPU_MIPS) && (MIPS_CRUNCH == 1)) 
     kiter = crunch( &rc5unitwork, timeslice );
-  #elif (CLIENT_CPU == CPU_68K) || (CLIENT_CPU == CPU_POWERPC)
+  #elif (CLIENT_CPU == CPU_68K) || (CLIENT_CPU == CPU_POWERPC) || \
+        (CLIENT_CPU == CPU_POWER)
     kiter = (*rc5_unit_func)( &rc5unitwork, timeslice );
   #elif (CLIENT_CPU == CPU_ARM)
     #if (CLIENT_OS == OS_RISCOS)
@@ -986,6 +1022,12 @@ int Problem::Run_OGR(u32 *timesliceP, int *resultcode)
   r = ogr->cycle(ogrstate, &nodes);
   *timesliceP = (u32)nodes;
 
+  u32 newnodeslo = contestwork.ogr.nodes.lo + nodes;
+  if (newnodeslo < contestwork.ogr.nodes.lo) {
+    contestwork.ogr.nodes.hi++;
+  }
+  contestwork.ogr.nodes.lo = newnodeslo;
+
   switch (r) 
   {
     case CORE_S_OK:
@@ -1006,10 +1048,10 @@ int Problem::Run_OGR(u32 *timesliceP, int *resultcode)
     }
     case CORE_S_SUCCESS:
     {
-      Stub result;
-      if (ogr->getresult(ogrstate, &result, sizeof(result)) == CORE_S_OK)
+      if (ogr->getresult(ogrstate, &contestwork.ogr.workstub, sizeof(WorkStub)) == CORE_S_OK)
       {
-        Log("OGR Success!\n");
+        //Log("OGR Success!\n");
+        contestwork.ogr.workstub.stub.length = contestwork.ogr.workstub.worklength;
         *resultcode = RESULT_FOUND;
         return RESULT_FOUND;
       }
@@ -1045,7 +1087,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
     started=1;
 
 #ifdef STRESS_THREADS_AND_BUFFERS 
-    contest = 0;
+    contest = RC5;
     contestwork.crypto.key.hi = contestwork.crypto.key.lo = 0;
     contestwork.crypto.keysdone.hi = contestwork.crypto.iterations.hi;
     contestwork.crypto.keysdone.lo = contestwork.crypto.iterations.lo;
@@ -1078,14 +1120,14 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
 
   switch (contest)
   {
-    case 0:  retcode = Run_RC5( &timeslice, &core_resultcode );
-             break;
-    case 1:  retcode = Run_DES( &timeslice, &core_resultcode );
-             break;
-    case 2:  retcode = Run_OGR( &timeslice, &core_resultcode );
-             break;
-    case 3:  retcode = Run_CSC( &timeslice, &core_resultcode );
-             break;
+    case RC5: retcode = Run_RC5( &timeslice, &core_resultcode );
+              break;
+    case DES: retcode = Run_DES( &timeslice, &core_resultcode );
+              break;
+    case OGR: retcode = Run_OGR( &timeslice, &core_resultcode );
+              break;
+    case CSC: retcode = Run_CSC( &timeslice, &core_resultcode );
+              break;
     default: retcode = core_resultcode = last_resultcode = -1;
        break;
   }
@@ -1100,9 +1142,18 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   CliTimer(&stop);
   if ( core_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING */
   {
-    runtime_sec = runtime_usec = 0;
-    start.tv_sec = timehi;
-    start.tv_usec = timelo;
+    if (((u32)(stop.tv_sec)) > ((u32)(timehi)))
+    {
+      u32 tmpdif = timehi - stop.tv_sec;
+      tmpdif = (((tmpdif >= runtime_sec) ?
+        (tmpdif - runtime_sec) : (runtime_sec - tmpdif)));
+      if ( tmpdif < core_run_count )
+      {
+        runtime_sec = runtime_usec = 0;
+        start.tv_sec = timehi;
+        start.tv_usec = timelo;
+      }
+    }
   }
   if (stop.tv_sec < start.tv_sec || 
      (stop.tv_sec == start.tv_sec && stop.tv_usec <= start.tv_usec))
@@ -1148,7 +1199,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
 //  timeslice *= pipeline_count;
 //  done in the cores.
 
-  if (contest == 0)
+  if (contest == RC5)
     {
 #if (CLIENT_OS == OS_RISCOS)
     if (threadindex == 0)

@@ -11,7 +11,7 @@
  * ----------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.38.2.1 1999/04/13 19:45:29 jlawson Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.38.2.2 1999/04/24 07:37:27 jlawson Exp $"; }
 
 
 #include "cputypes.h"
@@ -64,14 +64,14 @@ static const char *cputypetable[]=
   "ARM 710"
 };
 #elif (CLIENT_OS == OS_AIX) || ((CLIENT_CPU == CPU_POWERPC) && \
-      ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX || (CLIENT_OS == OS_MACOS))))
+      ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_MACOS)))
 static const char *cputypetable[]=
 {
+  #if (CLIENT_OS == OS_AIX)
+  "POWER CPU",
+  #endif
   "PowerPC 601",
   "PowerPC 603/604/750"
-  #if (CLIENT_OS == OS_AIX)
-  , "POWER CPU"
-  #endif
 };
 #elif (CLIENT_CPU == CPU_68K)
 static const char *cputypetable[]=
@@ -215,13 +215,14 @@ int Client::SelectCore(int quietly)
   
     if (!quietly)
       LogScreen("Manually selecting fastest core...\n");
-    for ( contestid = 0; contestid < 2; contestid++)
+    for ( contestid = 0; contestid < CONTEST_COUNT; contestid++)
     {
       for ( whichcrunch = 0; whichcrunch < 3; whichcrunch++)
       {
         Problem problem;
         ContestWork contestwork;
 	unsigned long elapsed;
+        //!! This should probably be addressed for OGR, zero data is not valid input.
 	memset( (void *)&contestwork, 0, sizeof(contestwork));
         contestwork.crypto.iterations.lo = benchsize;
         problem.LoadState( &contestwork , contestid, benchsize, whichcrunch );
@@ -229,7 +230,7 @@ int Client::SelectCore(int quietly)
     
         elapsed = (((unsigned long)problem.runtime_sec) * 1000000UL)+
 	          (((unsigned long)problem.runtime_usec));
-        //printf("%s Core %d: %lu usec\n",contestid ? "DES" : "RC5",whichcrunch,elapsed);
+        //printf("%s Core %d: %lu usec\n", CliGetContestName(contestid),whichcrunch,elapsed);
     
         if (fastcoretest[contestid] < 0 || elapsed < fasttime[contestid])
         {
