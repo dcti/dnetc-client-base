@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.137 1999/07/20 04:34:20 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.138 1999/07/23 03:16:52 fordbr Exp $"; }
 
 //#define TRACE
 
@@ -402,7 +402,6 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else if (strcmp( thisarg, "-unpause" ) == 0)
           {
-            cmd = IDM_UNPAUSE;
             dowhat_descrip = "unpaused";
           }
           
@@ -1054,6 +1053,27 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
         }
       }
+#ifdef CSC_TEST
+      else if ( strcmp( thisarg, "-csccore" ) == 0)
+      {
+        if (!argvalue)
+          missing_value = 1;
+        else
+        {
+          skip_next = 1;
+          if (run_level != 0)
+          {
+            if (logging_is_initialized)
+              LogScreenRaw("Setting csc core to %d\n", csc_core);
+          }
+          else
+          {
+            csc_core = atoi( argvalue );
+            inimissing = 0; // Don't complain if the inifile is missing
+          }
+        }
+      }
+#endif
       else if ( strcmp( thisarg, "-nice" ) == 0 ) // Nice level
       {
         if (!argvalue)
@@ -1393,8 +1413,20 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           do_mode |= MODEREQ_BENCHMARK_RC5;
         else if ( strcmp( thisarg, "des" ) == 0 )
            do_mode |= MODEREQ_BENCHMARK_DES;
+#ifdef GREGH
+        else if ( strcmp( thisarg, "ogr" ) == 0 )
+           do_mode |= MODEREQ_BENCHMARK_OGR;
+#endif
+#ifdef CSC_TEST
+        else if ( strcmp( thisarg, "csc" ) == 0 )
+           do_mode |= MODEREQ_BENCHMARK_CSC;
+#endif
         else 
+#ifndef CSC_TEST
           do_mode |= (MODEREQ_BENCHMARK_DES | MODEREQ_BENCHMARK_RC5);
+#else
+          do_mode |= MODEREQ_BENCHMARK_ALL;
+#endif
 
         inimissing = 0; // Don't complain if the inifile is missing
         ModeReqClear(-1); //clear all - only do benchmark

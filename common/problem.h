@@ -6,7 +6,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.64 1999/07/09 14:09:40 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.65 1999/07/23 03:16:56 fordbr Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -106,6 +106,10 @@ public: /* anything public must be thread safe */
   #elif (CLIENT_CPU == CPU_POWERPC)
   s32 (*unit_func)( RC5UnitWork * rc5unitwork, u32 *timeslice );
   #endif
+
+#ifdef CSC_TEST
+  s32 (*csc_unit_func)( RC5UnitWork *, u32 *timeslice, void *membuff );
+#endif
 
   int Run_RC5(u32 *timeslice,int *core_retcode); /* \  run for n timeslices.                */
   int Run_DES(u32 *timeslice,int *core_retcode); /*  > set actual number of slices that ran */

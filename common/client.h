@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133 1999/04/20 02:41:08 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.134 1999/07/23 03:16:52 fordbr Exp $"
 
 
 enum {
@@ -93,6 +93,9 @@ public:
   s32  numcpu;
   s32  cputype;
   s32  priority;
+#ifdef CSC_TEST
+  s32  csc_core;
+#endif
 
   /* -- log -- */
   char logname[128];

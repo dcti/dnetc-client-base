@@ -11,7 +11,7 @@
  * ----------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.47 1999/04/18 15:06:14 patrick Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.48 1999/07/23 03:16:56 fordbr Exp $"; }
 
 
 #include "cputypes.h"
@@ -111,12 +111,19 @@ const char *GetCoreNameFromCoreType( unsigned int coretype )
 int Client::SelectCore(int quietly)
 {
   static s32 last_cputype = -123;
+#ifdef CSC_TEST
+  static s32 last_csccore = -123;
+#endif
   static int detectedtype = -123;
   unsigned int corecount = 0; /* number of cores available */
 
   numcpu = ValidateProcessorCount( numcpu, quietly ); //in cpucheck.cpp
 
-  if (cputype == last_cputype) //no change, so don't bother reselecting
+  if (cputype == last_cputype 
+#ifdef CSC_TEST
+      && csc_core == last_csccore
+#endif
+                             ) //no change, so don't bother reselecting
     return 0;                  //(cputype can change when restarted)
 
   #ifdef NO_CPUTYPE_TABLE
@@ -154,7 +161,13 @@ int Client::SelectCore(int quietly)
   }
 #elif (CLIENT_CPU == CPU_X86)
   int selppro_des = 0;
+#ifndef CSC_TEST
   const char *selmsg_rc5 = NULL, *selmsg_des = NULL;
+#else
+  const char *selmsg_rc5 = NULL, 
+             *selmsg_des = NULL,
+             *selmsg_csc = NULL;
+#endif
     
   if (detectedtype < 0) /* user provided a #, but we need to detect for mmx */
     detectedtype = GetProcessorType(1); /* but do it quietly */
@@ -195,6 +208,24 @@ int Client::SelectCore(int quietly)
     selmsg_des = "MMX bitslice";
   #endif
 
+#ifdef CSC_TEST
+  switch( csc_core ) {
+    case 0 : 
+      selmsg_csc = "6 bit - inline";
+      break;
+    case 1 :
+      selmsg_csc = "6 bit - called";
+      break;
+    default:
+    case 2 :
+      selmsg_csc = "1 key - inline";
+      break;
+    case 3 :
+      selmsg_csc = "1 key - called";
+      break;
+  }
+#endif
+
   if (!selmsg_des)
     selmsg_des = ((selppro_des)?("PentiumPro optimized BrydDES"):("BrydDES"));
   if (!selmsg_rc5)
@@ -202,7 +233,12 @@ int Client::SelectCore(int quietly)
     
   if (!quietly)
     LogScreen( "DES: selecting %s core.\n"
+#ifndef CSC_TEST
                "RC5: selecting %s core.\n", selmsg_des, selmsg_rc5 );
+#else
+               "RC5: selecting %s core.\n"
+               "CSC: selecting %s core.\n", selmsg_des, selmsg_rc5, selmsg_csc );
+#endif
       
 #elif (CLIENT_CPU == CPU_ARM)
   if (cputype == -1)
@@ -293,6 +329,9 @@ int Client::SelectCore(int quietly)
   if (cputype == -1)
     cputype = 0;
   last_cputype = cputype;
+#ifdef CSC_TEST
+  last_csccore = csc_core;
+#endif
   return 0;
 }
 

@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.59 1999/07/09 14:09:39 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.60 1999/07/23 03:16:55 fordbr Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -280,6 +280,7 @@ static long __loadapacket( Client *client, WorkRecord *wrdata,
 if (selproject == 2)
   continue;
 #endif  
+
 #ifndef CSC_TEST
 if (selproject == 3)
   continue;
@@ -442,7 +443,11 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
     *load_needed = 0;
     *contest = (unsigned int)(wrdata.contest);
 
+#ifndef CSC_TEST
     thisprob->LoadState( &wrdata.work, *contest, timeslice, client->cputype );
+#else
+    thisprob->LoadState( &wrdata.work, *contest, timeslice, *contest == CSC ? client->csc_core : client->cputype );
+#endif
     thisprob->loaderflags = 0;
 
     switch (wrdata.contest) 
@@ -671,6 +676,8 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
       }
     } //if (load_needed)
   } //for (prob_i = 0; prob_i < load_problem_count; prob_i++ )
+
+  /* ============================================================= */
 
   ClientEventSyncPost(CLIEVENT_PROBLEM_TFILLFINISHED,
      (long)((previous_load_problem_count==0)?(total_problems_loaded):(total_problems_saved)));

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.209 1999/07/20 04:34:19 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.210 1999/07/23 03:16:52 fordbr Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -99,6 +99,9 @@ static void __initialize_client_object(Client *client)
   client->numcpu = -1;
   client->cputype = -1;
   client->priority = 0;
+#ifdef CSC_TEST
+  client->csc_core = 2;
+#endif
 
   /* -- log -- */
   client->logname[0]= 0;

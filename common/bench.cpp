@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.28 1999/07/09 14:09:35 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.29 1999/07/23 03:16:51 fordbr Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -123,9 +123,15 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
   else if (contestid == RC5)
   {
     keycountshift = 0;
-    contestid = RC5;
     hourstobuffer = (3*24); // 3 Days for RC5
   }
+#ifdef CSC_TEST
+  else if (contestid == CSC)
+  {
+    keycountshift = 0;
+    hourstobuffer = 24; // 24 Hours for CSC
+  }
+#endif
   else 
   {
     //LogScreen("Error: Contest %s cannot be benchmarked\n", contname );

@@ -11,7 +11,7 @@
  * ---------------------------------------------------------------
 */    
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.30 1999/07/09 14:09:38 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.31 1999/07/23 03:16:54 fordbr Exp $"; }
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
@@ -118,6 +118,9 @@ int ModeReqRun(Client *client)
     {
       unsigned int bits = modereq.reqbits;
       if ((bits & (MODEREQ_BENCHMARK_DES | MODEREQ_BENCHMARK_RC5 | 
+#ifdef CSC_TEST
+                   MODEREQ_BENCHMARK_CSC |
+#endif
                                            MODEREQ_BENCHMARK_ALL)) != 0)
       {
         if (client)
@@ -133,21 +136,39 @@ int ModeReqRun(Client *client)
             {
               if (CheckExitRequestTriggerNoIO())
                 break;
+#ifndef CSC_TEST
               Benchmark( contest, benchsize, client->cputype, NULL );
+#else
+              Benchmark( contest, benchsize, contest == CSC ? client->csc_core : client->cputype, NULL );
+#endif
             }
           }
           else
           {
             if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_RC5)!=0) 
-              Benchmark( 0, benchsize, client->cputype, NULL );
+              Benchmark( RC5, benchsize, client->cputype, NULL );
             if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_DES)!=0) 
-              Benchmark( 1, benchsize, client->cputype, NULL );
+              Benchmark( DES, benchsize, client->cputype, NULL );
+#ifdef GREGH
+            if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_OGR)!=0)
+              Benchmark( OGR, benchsize, client->cputype, NULL );
+#endif
+#ifdef CSC_TEST
+            if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_CSC)!=0)
+              Benchmark( CSC, benchsize, client->csc_core, NULL );
+#endif
           }
         }
         retval |= (modereq.reqbits & (MODEREQ_BENCHMARK_DES | 
                  MODEREQ_BENCHMARK_RC5 | MODEREQ_BENCHMARK_ALL | 
+#ifdef CSC_TEST
+                 MODEREQ_BENCHMARK_CSC |
+#endif
                  MODEREQ_BENCHMARK_QUICK ));
         modereq.reqbits &= ~(MODEREQ_BENCHMARK_DES | MODEREQ_BENCHMARK_RC5 | 
+#ifdef CSC_TEST
+                 MODEREQ_BENCHMARK_CSC |
+#endif
                  MODEREQ_BENCHMARK_ALL | MODEREQ_BENCHMARK_QUICK );
       }
       if ((bits & MODEREQ_CMDLINE_HELP) != 0)
@@ -240,7 +261,11 @@ int ModeReqRun(Client *client)
           client->SelectCore( 0 /* not quietly */ );
           for (contestid = 0; contestid < CONTEST_COUNT; contestid++ ) 
           {
+#ifndef CSC_TEST
             if ( SelfTest(contestid, client->cputype ) < 0 ) 
+#else
+            if ( SelfTest(contestid, contestid == CSC ? client->csc_core : client->cputype ) < 0 ) 
+#endif
               break;
           }
         }

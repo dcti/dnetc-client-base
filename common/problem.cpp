@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.112 1999/07/09 14:09:39 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.113 1999/07/23 03:16:55 fordbr Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -56,6 +56,7 @@ extern "C" void riscos_upcall_6(void);
 #undef PIPELINE_COUNT
 
 #if (CLIENT_CPU == CPU_X86)
+  // RC5 cores
   extern "C" u32 rc5_unit_func_486( RC5UnitWork * , u32 timeslice );
   extern "C" u32 rc5_unit_func_p5( RC5UnitWork * , u32 timeslice );
   extern "C" u32 rc5_unit_func_p6( RC5UnitWork * , u32 timeslice );
@@ -64,12 +65,15 @@ extern "C" void riscos_upcall_6(void);
   extern "C" u32 rc5_unit_func_k6( RC5UnitWork * , u32 timeslice );
   extern "C" u32 rc5_unit_func_p5_mmx( RC5UnitWork * , u32 timeslice );
   extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 timeslice );
+
+  // DES cores
   extern u32 p1des_unit_func_p5( RC5UnitWork * , u32 nbbits );
   extern u32 p1des_unit_func_pro( RC5UnitWork * , u32 nbbits );
   extern u32 p2des_unit_func_p5( RC5UnitWork * , u32 nbbits );
   extern u32 p2des_unit_func_pro( RC5UnitWork * , u32 nbbits );
   extern u32 des_unit_func_mmx( RC5UnitWork * , u32 nbbits, char *coremem );
   extern u32 des_unit_func_slice( RC5UnitWork * , u32 nbbits );
+
 #elif (CLIENT_OS == OS_AIX)     // this has to stay BEFORE CPU_POWERPC
   #if defined(_AIXALL) || (CLIENT_CPU == CPU_POWER)
   extern "C" s32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice );
@@ -152,6 +156,13 @@ extern "C" void riscos_upcall_6(void);
   #error RC5ANSICORE is disappearing. Please declare/prototype cores by CLIENT_CPU and assert PIPELINE_COUNT
 #endif
 
+#ifdef CSC_TEST
+// CSC cores
+extern s32 csc_unit_func_1k  ( RC5UnitWork *, u32 *timeslice, void *membuff );
+extern s32 csc_unit_func_1k_i( RC5UnitWork *, u32 *timeslice, void *membuff );
+extern s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *timeslice, void *membuff );
+extern s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *timeslice, void *membuff );
+#endif
 /* ------------------------------------------------------------------- */
 
 Problem::Problem(long _threadindex /* defaults to -1L */)
@@ -260,7 +271,7 @@ static void  __SwitchRC5Format(u64 *_key)
 
 // Input:  - an RC5 key in 'mangled' (reversed) format or a DES key
 //         - an incrementation count
-//         - a contest identifier (0==RC5 1==DES 2==OGR)
+//         - a contest identifier (0==RC5 1==DES 2==OGR 3==CSC)
 //
 // Output: the key incremented
 
@@ -355,6 +366,9 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
     return -1;
 
   pipeline_count = 2;
+#ifdef CSC_TEST
+  csc_unit_func = NULL;
+#endif
 
 #if (CLIENT_CPU == CPU_ARM)
   switch(cputype)
@@ -453,8 +467,33 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   #endif
     unit_func = rc5_unit_func_g2_g3;
   pipeline_count = 1;
+#ifdef CSC_TEST
+  else if( contest == CSC ) // CSC
+  {
+    pipeline_count = 1;
+    switch( cputype ) {
+      case 0 : 
+	csc_unit_func = csc_unit_func_6b_i;
+	break;
+      case 1 :
+	csc_unit_func = csc_unit_func_6b;
+	break;
+      default:
+      case 2 :
+	csc_unit_func = csc_unit_func_1k_i;
+	break;
+      case 3 :
+	csc_unit_func = csc_unit_func_1k;
+	break;
+    }
+  }
+#endif
 #endif
 
+#ifdef CSC_TEST
+  if( contest == CSC && csc_unit_func == NULL )
+    csc_unit_func = csc_unit_func_1k_i;
+#endif
 #if (CLIENT_CPU == CPU_X86)
   static int detectedtype = -1;
   if (detectedtype == -1)
@@ -552,7 +591,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   {
     case RC5:
     case DES:
-    case CSC: // CSC_TEST
+    case CSC:
 
       // copy over the state information
       contestwork.crypto.key.hi = ( work->crypto.key.hi );
@@ -859,7 +898,8 @@ int Problem::Run_CSC(u32 *timesliceP, int *resultcode)
   *resultcode = -1;
   return -1;
 #else  
-  s32 rescode = scs_ansi_unit_func(&rc5unitwork, timesliceP, (void *)0 );
+  s32 rescode = (*csc_unit_func)( &rc5unitwork, timesliceP, (void *)0 );
+
   if (rescode < 0) /* "kiter" error */
   {
     *resultcode = -1;
@@ -875,7 +915,7 @@ int Problem::Run_CSC(u32 *timesliceP, int *resultcode)
   { 
     #ifdef DEBUG_CSC_CORE /* can you spell "thread safe"? */
     Log("CSC incrementation mismatch:\n"
-        "expected %08x:%08x, got %08x:%08x\n"
+        "expected %08x:%08x, got %08x:%08x\n",
   refL0.lo, refL0.hi, rc5unitwork.L0.lo, rc5unitwork.L0.hi );
     #endif
     *resultcode = -1;
@@ -897,8 +937,12 @@ int Problem::Run_CSC(u32 *timesliceP, int *resultcode)
       contestwork.crypto.key.hi++; // wrap occured ?
     return RESULT_FOUND;
   }
-  if (*resultcode == RESULT_NOTHING) // done with this block and nothing found
+
+  if ( ( contestwork.crypto.keysdone.hi > contestwork.crypto.iterations.hi ) ||
+       ( ( contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi ) &&
+       ( contestwork.crypto.keysdone.lo >= contestwork.crypto.iterations.lo ) ) )
   {
+    *resultcode = RESULT_NOTHING;
     return RESULT_NOTHING;
   }
   // more to do, come back later.

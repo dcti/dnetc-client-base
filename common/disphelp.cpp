@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.66 1999/07/09 14:09:38 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.67 1999/07/23 03:16:54 fordbr Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -102,6 +102,9 @@ void DisplayHelp( const char * unrecognized_option )
     "-c <cputype>       cpu type (run -config for a list of valid cputype numbers)",
     "-numcpu <n>        run <n> threads/run on <n> cpus. 0 forces single-threading.",
     "-priority <[0-9]>  scheduling priority from 0 (lowest/idle) to 9 (normal/user)",
+#ifdef CSC_TEST
+    "-csccore <[0-3]>   run CSC with various types of core",
+#endif
     "",
     "Logging options:",
     "",

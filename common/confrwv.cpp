@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.63 1999/07/09 14:09:37 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.64 1999/07/23 03:16:53 fordbr Exp $"; }
 
 //#define TRACE
 
@@ -281,6 +281,7 @@ int ReadConfig(Client *client)
   client->priority = GetPrivateProfileIntB( "processor-usage", "priority", client->priority, fn );
   client->cputype = GetPrivateProfileIntB( sect, "cputype", client->cputype, fn );
   client->numcpu = GetPrivateProfileIntB( sect, "numcpu", client->numcpu, fn );
+  client->csc_core = GetPrivateProfileIntB( sect, "csccore", client->csc_core, fn );
   client->preferred_blocksize = GetPrivateProfileIntB( sect, "preferredblocksize", client->preferred_blocksize, fn );
 
   TRACE_OUT((0,"ReadConfig() [2 begin]\n"));
@@ -478,6 +479,9 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
 
     __XSetProfileInt( sect, "cputype", client->cputype, fn, -1, 0 );
     __XSetProfileInt( sect, "numcpu", client->numcpu, fn, -1, 0 );
+#ifdef CSC_TEST
+    __XSetProfileInt( sect, "csccore", client->csc_core, fn, 2, 0 );
+#endif
     __XSetProfileInt( "processor-usage", "priority", client->priority, fn, 0, 0);
 
     /* --- CONF_MENU_NET -- */

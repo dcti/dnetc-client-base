@@ -7,9 +7,9 @@
  * Specify 'cpu', 'os', 'intsizes' or 'build_dependancies' as argument.
 */ 
 const char *testplat_cpp(void) { 
-return "@(#)$Id: testplat.cpp,v 1.4 1999/04/05 17:56:52 cyp Exp $"; } 
+return "@(#)$Id: testplat.cpp,v 1.5 1999/07/23 03:16:57 fordbr Exp $"; } 
 
-static const char *include_dirs[] = { "common", "rc5", "des", "ogr" };
+static const char *include_dirs[] = { "common", "rc5", "des", "ogr", "csc" };
 
 #include <stdio.h>
 #include <string.h>
