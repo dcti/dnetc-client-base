@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.130 1999/04/17 21:01:03 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.131 1999/05/04 13:40:08 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // Client class
@@ -39,12 +39,68 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
   int pos, skip_next;
   const char *thisarg, *nextarg;
 
+  #if ((CLIENT_OS == OS_DEC_UNIX)    || (CLIENT_OS == OS_HPUX)    || \
+       (CLIENT_OS == OS_QNX)         || (CLIENT_OS == OS_OSF1)    || \
+       (CLIENT_OS == OS_BSDI)        || (CLIENT_OS == OS_SOLARIS) || \
+       (CLIENT_OS == OS_IRIX)        || (CLIENT_OS == OS_SCO)     || \
+       (CLIENT_OS == OS_LINUX)       || (CLIENT_OS == OS_NETBSD)  || \
+       (CLIENT_OS == OS_UNIXWARE)    || (CLIENT_OS == OS_DYNIX)   || \
+       (CLIENT_OS == OS_MINIX)       || (CLIENT_OS == OS_MACH10)  || \
+       (CLIENT_OS == OS_AIX)         || (CLIENT_OS == OS_AUX)     || \
+       (CLIENT_OS == OS_OPENBSD)     || (CLIENT_OS == OS_SUNOS)   || \
+       (CLIENT_OS == OS_ULTRIX)      || (CLIENT_OS == OS_DGUX))
+  {
+    static int doneunhider = 0;
+    if (!doneunhider)
+    {
+      static char oldname[sizeof(Client::inifilename)+10];
+      /* now, will those sysadmins please stop bugging us? :) */
+      char defname[]={('r'^80),('c'^80),('5'^80),('d'^80),('e'^80),('s'^80),0};
+      char scratch[sizeof(defname)+1]; /* obfusciation 101 */
+      unsigned int len, scratchlen = strlen(defname);
+      char *p, *newargv0 = (char *)argv[0];
+      
+      doneunhider = 1;
+      for (len=0;len<scratchlen;len++)
+        scratch[len]=defname[len]^80;
+      scratch[scratchlen]='\0';
+      if ((p = strrchr( argv[0], '/')) != NULL) 
+      {
+        ++p;
+        if (strlen(p) >= scratchlen)
+	  newargv0 = p;
+        if (strcmp(p,scratch)!=0)
+          p = NULL;
+      }
+      if (p == NULL)
+      {
+        len = strlen(argv[0]);
+        if (len < scratchlen || len >= sizeof(oldname))
+        {
+          ConOutErr("fatal: the total length of binary's filename (including "
+	            "\tpath) must be greater than 5 and less than 124");
+          terminate_app = 1;
+        }
+        else 
+        {
+          /* kinda from perl source (assign to $0) */
+	  len = strlen(newargv0);
+          strcpy( oldname, argv[0] );
+	  memset( (void *)newargv0, 0, len );
+	  strcpy( newargv0, scratch );
+	  argv[0] = (const char *)(&oldname[0]);
+        }
+      }
+    }
+  }
+  #endif
+  
   //-----------------------------------
   // In the first loop we (a) get the ini filename and 
   // (b) get switches that won't be overriden by the ini
   //-----------------------------------
 
-  if (run_level == 0)
+  if (!terminate_app && run_level == 0)
   {
     inifilename[0] = 0; //so we know when it changes
     ModeReqClear(-1);   // clear all mode request bits
@@ -159,8 +215,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else
           {
-            const char *binname = (const char *)strrchr( argv[0], '/' );
-            binname = ((binname==NULL)?(argv[0]):(binname+1));
+            const char *binname = "rc5des"; /* this is what ps sees */
+	    //binname = (const char *)strrchr( argv[0], '/' );
+            //binname = ((binname==NULL)?(argv[0]):(binname+1));
             
             sprintf(buffer, "%s %s %s [%lu] `"
 #if (CLIENT_OS == OS_SOLARIS)
@@ -218,7 +275,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         terminate_app = 1;
         #elif (CLIENT_OS == OS_OS2)
         extern int os2CliInstallClient(int quiet, const char *exename);
-        os2CliInstallClient(loop0_quiet,argv[0]); /* os2inst.cpp */
+        os2CliInstallClient(loop0_quiet, argv[0]); /* os2inst.cpp */
         terminate_app = 1;
         #else
         not_supported = 1;
@@ -251,7 +308,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
   // In the next section we get inifilename defaults
   // and load the config from file
   //-----------------------------------
-    
+
   if (!terminate_app && run_level == 0)
   {
     if (inifilename[0]==0) // determine the filename of the ini file
@@ -267,7 +324,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         //not really needed for netware (appname in argv[0] won't be anything 
         //except what I tell it to be at link time.)
         inifilename[0] = 0;
-        if (argv[0] != NULL && ((strlen(argv[0])+5) < sizeof(inifilename)))
+        if (argv[0]!=NULL && ((strlen(argv[0])+5) < sizeof(inifilename)))
         {
           strcpy( inifilename, argv[0] );
           char *slash = strrchr( inifilename, '/' );
@@ -1145,7 +1202,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
        (CLIENT_OS == OS_AIX)         || (CLIENT_OS == OS_AUX)     || \
        (CLIENT_OS == OS_OPENBSD)     || (CLIENT_OS == OS_SUNOS)   || \
        (CLIENT_OS == OS_ULTRIX)      || (CLIENT_OS == OS_DGUX))
-  else if (run_level == 0 && (ModeReqIsSet(-1) == 0) && quietmode)
+  else if (!terminate_app && run_level==0 && (ModeReqIsSet(-1)==0) && quietmode)
   {
     pid_t x = fork();
     if (x) //Parent gets pid or -1, child gets 0
@@ -1161,5 +1218,4 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
     *retcodeP = 0;
   return terminate_app;
 }
-
 
