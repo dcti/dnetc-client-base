@@ -49,7 +49,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.61.4.2 2003/02/25 15:26:32 snake Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.61.4.3 2003/04/03 21:56:24 oliver Exp $"; }
 
 //#define TRACE
 
@@ -1451,6 +1451,12 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
              (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_NETBSD) || \
              ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
              (CLIENT_OS == OS_AMIGAOS)
+       /* Calculate size of ifreq - _SIZEOF_ADDR_IFREQ used by FreeBSD */
+       #ifdef _SIZEOF_ADDR_IFREQ
+       #define SIZEOF_ADDR_IFREQ(sa,ifr) (_SIZEOF_ADDR_IFREQ(*ifr))
+       #else
+       #define SIZEOF_ADDR_IFREQ(sa,ifr) (IFNAMSIZ*sizeof(char) + sa->sa_len)
+       #endif
        for (n = ifc.ifc_len, ifr = ifc.ifc_req; n >= (int)sizeof(struct ifreq); )
        {
          /*
@@ -1462,7 +1468,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
           * 17 bytes while sizeof(struct ifreq) is 32.
           */
          struct sockaddr *sa = &(ifr->ifr_addr);
-         int sa_len = sa->sa_len;
+         int ifrsize = SIZEOF_ADDR_IFREQ(sa,ifr);
          if (sa->sa_family == AF_INET)  // filter-out anything other than AF_INET
          {                            // (in fact this filter-out AF_LINK)
            if (__MatchMask(ifr->ifr_name, 0 /*dunno if its a dialup dev or not*/,
@@ -1512,8 +1518,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
            } /* if matchmask */
          } /* if (sa->sa_family == AF_INET) */
          // calculate the length of this entry and jump to the next
-         int ifrsize = IFNAMSIZ + sa_len;
-         ifr = (struct ifreq *)(ifr + ifrsize);
+         ifr = (struct ifreq *)((caddr_t)ifr + ifrsize);
          n -= ifrsize;
        } /* for (n = 0, ... ) */
        #else
