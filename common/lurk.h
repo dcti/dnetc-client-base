@@ -1,11 +1,13 @@
-/* 
- * Copyright distributed.net 1997-1999 - All Rights Reserved
- * For use in distributed.net projects only.
- * Any other distribution or use of this source violates copyright.
-*/
+// Hey, Emacs, this a -*-C++-*- file !
+//
+// Copyright distributed.net 1997-1999 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+//
+// $Id: lurk.h,v 1.18 1999/04/05 13:51:10 jlawson Exp $
 
 #ifndef __LURK_H__
-#define __LURK_H__ "@(#)$Id: lurk.h,v 1.17 1999/04/05 11:54:16 cyp Exp $"
+#define __LURK_H__
 
 /* lurk: fetch/flush if modem goes online but also go online if fetch/flush needed */
 #define CONNECT_LURK         0x01 
@@ -72,3 +74,4 @@ int dohangupcontrol;        //if we dialed, we're welcome to hangup
 extern Lurk dialup;
 
 #endif /* __LURK_H__ */
+
