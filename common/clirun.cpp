@@ -3,8 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.79  1999/03/04 01:30:15  cyp
+// Changed checkpoint interval to the greater of 10% change and 10 minutes.
+//
 // Revision 1.78  1999/02/19 03:17:02  silby
-// Added HPUX yield
+// HPUX uses sched_yield()
 //
 // Revision 1.77  1999/02/06 00:51:15  silby
 // Change to win32 thread shutdown; win95 goes nuts if
@@ -47,7 +50,8 @@
 // Ultrix modifications for updated client.
 //
 // Revision 1.66  1999/01/06 09:54:29  chrisb
-// fixes to the RISC OS timeslice stuff for DES - now runs about 2.5 times as fast
+// fixes to the RISC OS timeslice stuff for DES - 
+// now runs about 2.5 times as fast
 //
 // Revision 1.65  1999/01/02 01:04:19  silby
 // Changed scheduled update to MODEREQ_FQUIET.
@@ -170,7 +174,8 @@
 // oops, forgot a );
 //
 // Revision 1.34  1998/11/12 03:06:52  silby
-// Added an int cast that was bothering freebsd, and added a message about freebsd's junky posix implementation.
+// Added an int cast that was bothering freebsd, and added a message about 
+// freebsd's junky posix implementation.
 //
 // Revision 1.33  1998/11/10 14:04:08  chrisb
 // changed a < to <= so reports ('a'-'z') when there are  26 threads
@@ -184,10 +189,11 @@
 // minute and time_to_complete_1_percent (an average change of 1% that is).
 //
 // Revision 1.30  1998/11/09 18:01:25  cyp
-// Fixed timeRun adjustment. (checkpoints were always being updated every 3 secs)
+// Fixed timeRun adjustment. (checkpoints were always being updated 
+// every 3 secs)
 //
 // Revision 1.29  1998/11/09 01:15:54  remi
-// Linux/aout doesn't have sched_yield(), replaced by NonPolledUSleep( 0 );
+// Linux/aout doesn't have sched_yield(), replaced by NonPolledUSleep(0);
 //
 // Revision 1.28  1998/11/06 04:23:16  cyp
 // Fixed incorrect thread data * index in pthread startup code. This may
@@ -212,7 +218,8 @@
 // Change for freebsd_nonmt.
 //
 // Revision 1.21  1998/10/31 22:36:11  silby
-// Hack to get freebsd-mt to build.  It seems to work fine, but should *really* be looked over by a pthreads familiar person.
+// Hack to get freebsd-mt to build.  It seems to work fine, but should 
+// *really* be looked over by a pthreads familiar person.
 //
 // Revision 1.20  1998/10/30 12:00:20  cyp
 // Fixed a missing do_suspend=0 initialization.
@@ -300,34 +307,27 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.78 1999/02/19 03:17:02 silby Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.79 1999/03/04 01:30:15 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
-#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
+//#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "problem.h"   // Problem class
-#include "network.h"
-#include "mail.h"
-#include "scram.h"
-#include "convdes.h"  // convert_key_from_des_to_inc
-#include "triggers.h" //[Check|Raise][Pause|Exit]RequestTrigger()
-#include "sleepdef.h" //sleep(), usleep()
-#include "setprio.h"  //SetThreadPriority(), SetGlobalPriority()
-#include "lurk.h"     //dialup object
-#include "buffwork.h"
-#include "clirate.h"
-#include "clitime.h"   //CliTimer(), Time()/(CliGetTimeString(NULL,1))
-#include "logstuff.h"  //Log()/LogScreen()/LogScreenPercent()/LogFlush()
-#include "clisrate.h"
-#include "clicdata.h"
-#include "checkpt.h"
-#include "cpucheck.h"  //GetTimesliceBaseline(), GetNumberOfSupportedProcessors()
-#include "probman.h"   //GetProblemPointerFromIndex()
-#include "probfill.h"  //LoadSaveProblems(), FILEENTRY_xxx macros
-#include "modereq.h"   //ModeReq[Set|IsSet|Run]()
-#include "clievent.h"  //ClientEventSyncPost() and constants
+#include "triggers.h"  // [Check|Raise][Pause|Exit]RequestTrigger()
+#include "sleepdef.h"  // sleep(), usleep()
+#include "setprio.h"   // SetThreadPriority(), SetGlobalPriority()
+#include "lurk.h"      // dialup object
+#include "clitime.h"   // CliTimer(), Time()/(CliGetTimeString(NULL,1))
+#include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
+#include "clicdata.h"  // CliGetContestNameFromID()
+#include "checkpt.h"   // CHECKPOINT_[OPEN|CLOSE|REFRESH|_FREQ_[SECS|PERC]DIFF]
+#include "cpucheck.h"  // GetTimesliceBaseline(), GetNumberOfSupportedProcessors()
+#include "probman.h"   // GetProblemPointerFromIndex()
+#include "probfill.h"  // LoadSaveProblems(), FILEENTRY_xxx macros
+#include "modereq.h"   // ModeReq[Set|IsSet|Run]()
+#include "clievent.h"  // ClientEventSyncPost() and constants
 
 // --------------------------------------------------------------------------
 
@@ -1184,7 +1184,7 @@ int Client::Run( void )
   //
   // Code order:
   //
-  // Initialization: (order is important, 'F' symbolizes code that can fail)
+  // Initialization: (order is important, 'F' denotes code that can fail)
   // 1.    UndoCheckpoint() (it is not affected by TimeToQuit)
   // 2.    Determine number of problems
   // 3. F  Load (or try to load) that many problems (needs number of problems)
@@ -1208,12 +1208,12 @@ int Client::Run( void )
   // --------------------------------------
 
   if (!checkpointsDisabled) //!nodiskbuffers
-      {
+    {
     if (CheckpointAction( CHECKPOINT_OPEN, 0 )) //-> !0 if checkpts disabled
-        {
+      {
       checkpointsDisabled = 1;
-        }
       }
+    }
 
   // --------------------------------------
   // BETA check
@@ -1519,7 +1519,7 @@ int Client::Run( void )
         {
         last_scheduledupdatetime = scheduledupdatetime;
         //flush_scheduled_count = 0;
-        flush_scheduled_adj = (Random(NULL,0)%UPDATE_INTERVAL);
+        flush_scheduled_adj = (rand()%UPDATE_INTERVAL);
         Log("Buffer update scheduled in %u minutes %02u seconds.\n",
              flush_scheduled_adj/60, flush_scheduled_adj%60 );
         flush_scheduled_adj += timeNow - scheduledupdatetime; // Catch up
@@ -1529,7 +1529,7 @@ int Client::Run( void )
         {
         //flush_scheduled_count++; /* for use with exponential staging */
         flush_scheduled_adj += ((UPDATE_INTERVAL>>1)+
-                               (Random(NULL,0)%(UPDATE_INTERVAL>>1)));
+                               (rand()%(UPDATE_INTERVAL>>1)));
         if ((contestdone[1] != 0) ||
             (GetBufferCount(1,0,0) == 0))
           // Check if contest is opened yet and if we have blocks.
@@ -1622,11 +1622,11 @@ int Client::Run( void )
         prob_i = checkpointsPercent;
         checkpointsPercent = (total_percent_now/load_problem_count);
 
-        if (checkpointsPercent != prob_i)
+        if ( abs(checkpointsPercent - prob_i) >= CHECKPOINT_FREQ_PERCDIFF )
           {
           if (CheckpointAction( CHECKPOINT_REFRESH, load_problem_count ))
             checkpointsDisabled = 1;
-          timeNextCheckpoint = timeRun + (time_t)(60);
+          timeNextCheckpoint = timeRun + (time_t)(CHECKPOINT_FREQ_SECSDIFF);
           }
         }
       }
