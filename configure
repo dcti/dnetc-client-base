@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.231 2001/02/07 19:25:41 oliver Exp $
+# @(#)$Id: configure,v 1.222.2.232 2001/02/08 18:27:30 cyp Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -405,7 +405,8 @@ add_sources() # $1=os, $2=arch, $3=custom
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
   #-----------------------------------------------------------------  
-  elif [ "$2" = "88k" -o "$2" = "sh4" -o "$2" = "vax" -o "$2" = "s390" ]; then
+  elif [ "$2" = "88k" -o "$2" = "sh4" \
+      -o "$2" = "vax" -o "$2" = "s390" -o "$2" = "generic" ]; then
     # pure ansi targets. (2 pipeline RC5 core)
     TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
     ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES -DMEGGS -DKWAN"
@@ -804,6 +805,24 @@ fi
 # **********************************************************************
 
 case "$1" in
+
+    *ansi-generic)        # unoptimized vanilla ansi
+        TARGET_AS="cc -c"
+        TARGET_CC="cc"
+        TARGET_CCFLAGS="-DASM_NONE"
+        have_gcc=`whereis -b g++`
+        if [ "X$have_gcc" != "X" -a "X$have_gcc" != "Xg++:" ]; then
+          TARGET_AS="gcc -c"
+          TARGET_CC="g++"
+          generate_gcc_opts "generic" "ansi"
+          TARGET_CCFLAGS="$OPTS_GCC $TARGET_CCFLAGS"
+        fi
+        TARGET_LDFLAGS=""
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL=""
+        add_sources "ansi" "generic" 
+        ;;
 
     # IRIX w/MIPSpro compilers.
     #
