@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-1key-driver.cpp,v $
+// Revision 1.3.2.4  1999/10/08 00:07:01  cyp
+// made (mostly) all extern "C" {}
+//
 // Revision 1.3.2.3  1999/10/07 23:37:40  cyp
 // changed '#elif CSC_BIT_64' to '#elif defined(CSC_BIT_64)' and changed an
 // 'unsigned long' to 'ulong'
@@ -34,10 +37,18 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_1key_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-1key-driver.cpp,v 1.3.2.3 1999/10/07 23:37:40 cyp Exp $"; }
+return "@(#)$Id: csc-1key-driver.cpp,v 1.3.2.4 1999/10/08 00:07:01 cyp Exp $"; }
 #endif
 
 // ------------------------------------------------------------------
+#ifdef __cplusplus
+extern "C" {
+s32
+PASTE(csc_unit_func_,CSC_SUFFIX)
+( RC5UnitWork *unitwork, u32 *timeslice, void * /*membuff*/ );
+}
+#endif
+
 s32
 PASTE(csc_unit_func_,CSC_SUFFIX)
 ( RC5UnitWork *unitwork, u32 *timeslice, void * /*membuff*/ )
