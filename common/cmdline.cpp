@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.7  1998/10/11 00:41:22  cyp
+// Implemented ModeReq
+//
 // Revision 1.6  1998/10/08 20:54:39  cyp
 // Added buffwork.h to include list for UnlockBuffer() prototype.
 //
@@ -29,20 +32,16 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.6 1998/10/08 20:54:39 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.7 1998/10/11 00:41:22 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
 #include "client.h"    // Client class
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
-#include "pathwork.h"
-#include "iniread.h"
-#include "console.h"   // ConInKey()
-#include "triggers.h"  // CheckExitRequestTrigger()
-#include "cliident.h"  // CliIdentifyModules()
-#include "cpucheck.h"  // DisplayProcessorInformation()
+#include "pathwork.h"  // InitWorkingDirectoryFromSamplePaths();
 #include "buffwork.h"  // UnlockBuffer()
+#include "modereq.h"   // get/set/clear mode request bits
 
 /* ------------------------------------------------------------------------
  * runlevel == 0 = pre-anything    (-quiet, -ini, -guistart etc done here)
@@ -77,12 +76,10 @@ return "@(#)$Id: cmdline.cpp,v 1.6 1998/10/08 20:54:39 cyp Exp $"; }
  *------------------------------------------------------------------------ */
 
 int Client::ParseCommandline( int runlevel, int argc, const char *argv[], 
-               int *inimissP, int *retcodeP, int logging_is_initialized )
+                              int *retcodeP, int logging_is_initialized )
 {
-  int inimissing = ((inimissP)?(*inimissP):(1));
-  int skip_next = 0, do_break = 0, retcode = 0;
+  int inimissing, pos, skip_next = 0, do_break = 0, retcode = 0;
   const char *thisarg, *nextarg;
-  int pos;
 
   //---------------------------------------
   //first handle the options that affect option handling
@@ -91,6 +88,8 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
   if (runlevel >= 0) // this is only to protect against an invalid runlevel
     {
     inifilename[0]=0; //so we know when it changes
+    if (runlevel == 0)
+      ModeReqClear(-1); // clear all mode request bits
 
     for (pos = 1;((!do_break) && (pos<argc)); pos+=(1+skip_next))
       {
@@ -158,7 +157,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         }
       } //for ... next
 
-    if (!inifilename[0]) //we don't have an ini filename
+    if (!inifilename[0] && !do_break) //we don't have an ini filename
       {
       // determine the filename of the ini file
       char * inienvp = getenv( "RC5INI" );
@@ -204,10 +203,24 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         #endif
         }
       } // if (inifilename[0]==0)
-    #ifndef DONT_USE_PATHWORK
-    InitWorkingDirectoryFromSamplePaths( inifilename, argv[0] );
-    #endif
+    
+    if (!do_break)
+      {  
+      InitWorkingDirectoryFromSamplePaths( inifilename, argv[0] );
+
+      if (runlevel == 0)
+        {
+        int save_hidden = (runhidden != 0);
+        int save_quiet  = (quietmode != 0);
+        if ( ReadConfig() != 0)
+          ModeReqSet( MODEREQ_CONFIG );
+        runhidden = (save_hidden != 0);
+        quietmode = (save_quiet != 0);
+        }
+      } //if (!do_break)
     } //if (runlevel >= 0)
+
+  inimissing = (ModeReqIsSet( MODEREQ_CONFIG ) != 0);
 
   //---------------------------------------
   // handle the other options 
@@ -297,8 +310,8 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         {
         #if (CLIENT_CPU == CPU_X86) && (defined(MMX_BITSLICER) || defined(MMX_RC5))
         usemmx=0;
-	//we don't print a message because usemmx is internal/undocumented
-	//and for developer use only
+        //we don't print a message because usemmx is 
+        //internal/undocumented and for developer use only
         #endif
         }
       else if ( strcmp( thisarg, "-b" ) == 0 || strcmp( thisarg, "-b2" ) == 0 )
@@ -308,7 +321,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           skip_next = 1;
           if ( atoi( nextarg ) > 0)
             {
-            inimissing=0; // Don't complain if the inifile is missing
+            inimissing = 0; // Don't complain if the inifile is missing
             int conid = (( strcmp( thisarg, "-b2" ) == 0 ) ? (1) : (0));
             outthreshold[conid] = inthreshold[conid] = (s32) atoi( nextarg );
             if (logging_is_initialized)
@@ -324,7 +337,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           skip_next = 1;
           if ( atoi( nextarg ) > 0)
             {
-            inimissing=0; // Don't complain if the inifile is missing
+            inimissing = 0; // Don't complain if the inifile is missing
             int conid = (( strcmp( thisarg, "-bin2" ) == 0 ) ? (1) : (0));
             inthreshold[conid] = (s32) atoi( nextarg );
             if (logging_is_initialized)
@@ -340,7 +353,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           skip_next = 1;
           if ( atoi( nextarg ) > 0)
             {
-            inimissing=0; // Don't complain if the inifile is missing
+            inimissing = 0; // Don't complain if the inifile is missing
             int conid = (( strcmp( thisarg, "-bout2" ) == 0 ) ? (1) : (0));
             outthreshold[conid] = (s32) atoi( nextarg );
             if (logging_is_initialized)
@@ -354,7 +367,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         if (nextarg)
           {
           skip_next = 1;
-          inimissing=0; // Don't complain if the inifile is missing
+          inimissing = 0; // Don't complain if the inifile is missing
           int conid = (( strcmp( thisarg, "-in2" ) == 0 ) ? (1) : (0));
           in_buffer_file[conid][sizeof(in_buffer_file[0])-1]=0;
           strncpy(in_buffer_file[conid], nextarg, sizeof(in_buffer_file[0]) );
@@ -371,7 +384,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         if (nextarg)
           {
           skip_next = 1;
-          inimissing=0; // Don't complain if the inifile is missing
+          inimissing = 0; // Don't complain if the inifile is missing
           int conid = (( strcmp( thisarg, "-out2" ) == 0 ) ? (1) : (0));
           out_buffer_file[conid][sizeof(out_buffer_file[0])-1]=0;
           strncpy(out_buffer_file[conid], nextarg, sizeof(out_buffer_file[0]) );
@@ -388,7 +401,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         if (nextarg)
           {
           skip_next = 1;
-          inimissing=0; // Don't complain if the inifile is missing
+          inimissing = 0; // Don't complain if the inifile is missing
           uuehttpmode = (s32) atoi( nextarg );
           if (logging_is_initialized)
             LogScreenRaw("Setting uue/http mode to %u\n",(unsigned int)uuehttpmode);
@@ -399,7 +412,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         if (nextarg)
           {
           skip_next = 1;
-          inimissing=0; // Don't complain if the inifile is missing
+          inimissing = 0; // Don't complain if the inifile is missing
           strcpy( keyproxy, nextarg );
           if (logging_is_initialized)
             LogScreenRaw("Setting keyserver to %s\n", keyproxy );
@@ -410,7 +423,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         if (nextarg)
           {
           skip_next = 1;
-          inimissing=0; // Don't complain if the inifile is missing
+          inimissing = 0; // Don't complain if the inifile is missing
           keyport = (s32) atoi( nextarg );
           if (logging_is_initialized)
             LogScreenRaw("Setting keyserver port to %u\n",(unsigned int)keyport);
@@ -421,7 +434,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         if (nextarg)
           {
           skip_next = 1;
-          inimissing=0; // Don't complain if the inifile is missing
+          inimissing = 0; // Don't complain if the inifile is missing
           strcpy( httpproxy, nextarg );
           if (logging_is_initialized)
             LogScreenRaw("Setting SOCKS/HTTP proxy to %s\n", httpproxy);
@@ -432,7 +445,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         if (nextarg)
           {
           skip_next = 1;
-          inimissing=0; // Don't complain if the inifile is missing
+          inimissing = 0; // Don't complain if the inifile is missing
           httpport = (s32) atoi( nextarg );
           if (logging_is_initialized)
             LogScreenRaw("Setting SOCKS/HTTP proxy port to %u\n",(unsigned int)httpport);
@@ -504,7 +517,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           {
           skip_next = 1;
           strcpy( id, nextarg );
-          inimissing=0; // Don't complain if the inifile is missing
+          inimissing = 0; // Don't complain if the inifile is missing
           if (logging_is_initialized)
             LogScreenRaw("Setting distributed.net ID to %s\n", id );
           }
@@ -540,7 +553,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           {
           skip_next = 1;
           cputype = (s32) atoi( nextarg );
-          inimissing=0; // Don't complain if the inifile is missing
+          inimissing = 0; // Don't complain if the inifile is missing
           }
         }
       else if ( strcmp( thisarg, "-nice" ) == 0 ) // Nice level
@@ -549,7 +562,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           {
           skip_next = 1;
           niceness = (s32) atoi( nextarg );
-          inimissing=0; // Don't complain if the inifile is missing
+          inimissing = 0; // Don't complain if the inifile is missing
           }
         }
       else if ( strcmp( thisarg, "-h" ) == 0 ) // Hours to run
@@ -601,7 +614,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           {
           skip_next = 1;
           numcpu = (s32) atoi(nextarg);
-          inimissing=0; // Don't complain if the inifile is missing
+          inimissing = 0; // Don't complain if the inifile is missing
           //LogScreenRaw("Configuring for %s CPUs\n",Argv[i+1]);
           //Message appears in SelectCore()
           }
@@ -611,7 +624,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         if (nextarg)
           {
           skip_next = 1;
-          inimissing=0; // Don't complain if the inifile is missing
+          inimissing = 0; // Don't complain if the inifile is missing
           int conid = (( strcmp( thisarg, "-ckpoint2" ) == 0 ) ? (1) : (0));
           strcpy(checkpoint_file[conid], nextarg );
           if (logging_is_initialized)
@@ -624,7 +637,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           {
           skip_next = 1;
           int tmp = atoi(nextarg);
-          inimissing=0; // Don't complain if the inifile is missing
+          inimissing = 0; // Don't complain if the inifile is missing
           checkpoint_min=((tmp <=2)?(2):(tmp));
           if (logging_is_initialized)
             LogScreenRaw("Setting checkpointing to %u minutes\n", (unsigned int)(checkpoint_min));
@@ -697,113 +710,75 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         {
         if (!inimissing)
           {
+          quietmode = runhidden = 0;
           do_break = 1;
-          int dofetch = 0, doflush = 0, doforce = 0;
-          s32 oldofflinemode = offlinemode;
-         
-          if ( strcmp( thisarg, "-fetch" ) == 0 )           dofetch=1;
-          else if ( strcmp( thisarg, "-flush" ) == 0 )      doflush=1;
-          else if ( strcmp( thisarg, "-forcefetch" ) == 0 ) dofetch=doforce=1;
-          else if ( strcmp( thisarg, "-forceflush" ) == 0 ) doflush=doforce=1;
-          else /* ( strcmp( thisarg, "-update" ) == 0) */   dofetch=doflush=doforce=1;
-    
-          retcode = 0;
-          offlinemode=0;
-          for (char contest=0;contest<2;contest++)
-            {
-            if (!contestdone[contest])
-              {
-              int runcode = 0;
-              if ( dofetch & doflush )
-                runcode=(int)Update(contest ,1,1, doforce);
-              else if ( dofetch )
-                runcode=(int)((doforce)?ForceFetch(contest):Fetch(contest));
-              else
-                runcode=(int)((doforce)?ForceFlush(contest):Flush(contest));
-              if (randomchanged) 
-                WriteContestandPrefixConfig();
-              if (!contestdone[contest] && runcode < retcode) 
-                retcode = runcode;
-              if (runcode == -2) //no network
-                break;
-              }
-            }
-    
-          if (retcode < 0)
-            {
-            //unless it was a network error, fetch/flush/update will already
-            //have printed the cause for the "error", so don't say anything here.
-            if (retcode == -2)
-              {
-              LogScreenRaw( 
-              "Network services are not available or are not supported.\n"
-              "TCP/IP network services are required for the -flush,\n"
-              "-forceflush, -fetch, -forcefetch or -update options." );
-              }
-            retcode = -1;
-            }
-          else
-            {
-            //fetch/flush/update will already have said something.
-            //thisarg[1] = (char)toupper(thisarg[1]);
-            //LogScreen( "[%s] %s completed.\n", Time(), thisarg+1 );
-            retcode = 0;
-            }
-          offlinemode = oldofflinemode;//stop any mail flushes beyond this point.
+          int do_mode = 0;
+          
+          if ( strcmp( thisarg, "-fetch" ) == 0 )           
+            do_mode = MODEREQ_FETCH;
+          else if ( strcmp( thisarg, "-flush" ) == 0 )      
+            do_mode = MODEREQ_FLUSH;
+          else if ( strcmp( thisarg, "-forcefetch" ) == 0 )
+            do_mode = MODEREQ_FETCH | MODEREQ_FFORCE;
+          else if ( strcmp( thisarg, "-forceflush" ) == 0 )
+            do_mode = MODEREQ_FLUSH | MODEREQ_FFORCE;
+          else /* ( strcmp( thisarg, "-update" ) == 0) */
+            do_mode = MODEREQ_FETCH | MODEREQ_FLUSH | MODEREQ_FFORCE;
+          
+          ModeReqClear(-1); //clear all - only do -fetch/-flush/-update
+          ModeReqSet( do_mode );
           }
         }
       else if ( strcmp(thisarg, "-ident" ) == 0)
         {
         quietmode = runhidden = 0;
         do_break = 1;
-	inimissing = 0; // Don't complain if the inifile is missing
-        CliIdentifyModules();
+        inimissing = 0; // Don't complain if the inifile is missing
+        ModeReqClear(-1); //clear all - only do -ident
+        ModeReqSet( MODEREQ_IDENT );
         retcode = 0;
         }
       else if ( strcmp( thisarg, "-cpuinfo" ) == 0 )
         {
         quietmode = runhidden = 0;
         do_break = 1;
-	inimissing = 0; // Don't complain if the inifile is missing
-        DisplayProcessorInformation(); //in cpucheck.cpp
+        inimissing = 0; // Don't complain if the inifile is missing
+        ModeReqClear(-1); //clear all - only do -cpuinfo
+        ModeReqSet( MODEREQ_CPUINFO );
         retcode = 0; //and break out of loop
         }
       else if ( strcmp( thisarg, "-test" ) == 0 )
-	{
-	quietmode = runhidden = 0;
-	do_break = 1;
-	inimissing = 0;	// Don't complain if the inifile is missing
-	if ( SelfTest(1) > 0 && SelfTest(2) > 0 ) //both OK
-	  retcode = 0;
-	else if ( CheckExitRequestTrigger() )
-	  retcode = -1;
-	else			//one of them failed
-	  retcode = 1; 
-	}
+        {
+        quietmode = runhidden = 0;
+        do_break = 1;
+        inimissing = 0; // Don't complain if the inifile is missing
+        ModeReqClear(-1); //clear all - only do -test
+        ModeReqSet( MODEREQ_TEST );
+        SelectCore( 1 /* quietly */ );
+        }
       else if (strncmp( thisarg, "-benchmark", 10 ) == 0)
         {
         quietmode = runhidden = 0;
         do_break = 1;
-	inimissing = 0; // Don't complain if the inifile is missing
-        u32 dobench = 0;
-	thisarg += 10;
-	
-	//minimum bench size is 1<<20
-	//short bench is 1048576 (1<<20) instead of  10000000
-	//long  bench is 8388608 (1<<23) instead of 100000000
-	
-              if ( strcmp( thisarg, "2rc5" ) == 0 )  dobench=(1L<<20)|(0x01);
-        else  if ( strcmp( thisarg, "2des" ) == 0 )  dobench=(1L<<20)|(0x02);
-        else  if ( strcmp( thisarg, "2"    ) == 0 )  dobench=(1L<<20)|(0x03);
-        else  if ( strcmp( thisarg, "rc5"  ) == 0 )  dobench=(1L<<23)|(0x01);
-        else  if ( strcmp( thisarg, "des"  ) == 0 )  dobench=(1L<<23)|(0x02);
-        else/*if ( strcmp( thisarg, ""     ) == 0 )*/dobench=(1L<<23)|(0x03);
-	
-	if ( !CheckExitRequestTrigger() && ( dobench & 0x01 ) != 0)
-          Benchmark( 0, (dobench & 0xFFFFFF00) );
-	if ( !CheckExitRequestTrigger() && ( dobench & 0x02 ) != 0)
-          Benchmark( 1, (dobench & 0xFFFFFF00) );
-        retcode = ( CheckExitRequestTrigger() ? -1 : 0 ); 
+        int do_mode = 0;
+        thisarg += 10;
+
+        if (*thisarg == '2')
+          {
+          do_mode |= MODEREQ_BENCHMARK_QUICK;
+          thisarg++;
+          }
+        if ( strcmp( thisarg, "rc5" ) == 0 )  
+          do_mode |= MODEREQ_BENCHMARK_RC5;
+        else if ( strcmp( thisarg, "des" ) == 0 )
+           do_mode |= MODEREQ_BENCHMARK_DES;
+        else 
+          do_mode |= (MODEREQ_BENCHMARK_DES | MODEREQ_BENCHMARK_RC5);
+
+        inimissing = 0; // Don't complain if the inifile is missing
+        ModeReqClear(-1); //clear all - only do benchmark
+        ModeReqSet( do_mode );
+        SelectCore( 1 /* quietly */ );
         }
       else if ( strcmp( thisarg, "-forceunlock" ) == 0 )
         {
@@ -812,31 +787,24 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           quietmode = runhidden = 0;
           do_break = 1;
           retcode = -1;
-	  if (nextarg)
+          ModeReqClear(-1); //clear all - only do -forceunlock
+          if (nextarg)
             retcode = UnlockBuffer(nextarg);
           }
         }
       else if ( strcmp( thisarg, "-config" ) == 0 )
         {
         quietmode = runhidden = 0;
+        do_break = 1;
         retcode = 0;
+        ModeReqClear(-1); //clear all - only do -config
         inimissing = 1; //this should force main to run config
         }
       }
     }
 
-  if (quietmode || runhidden)
-    {
-    IniSection ini;
-    if ( ini.ReadIniFile( GetFullPathForFilename( inifilename ) ) )
-      {
-      quietmode = runhidden = 0;
-      inimissing = 1;
-      }
-    }
-  
-  if (inimissP) 
-    *inimissP = inimissing;
+  if (inimissing)
+    ModeReqSet( MODEREQ_CONFIG );
   if (retcodeP && do_break) 
     *retcodeP = retcode;
   return do_break;

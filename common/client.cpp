@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.147  1998/10/11 00:41:23  cyp
+// Implemented ModeReq
+//
 // Revision 1.146  1998/10/07 20:43:32  silby
 // Various quick hacks to make the win32gui operational again (will be cleaned up).
 //
@@ -41,7 +44,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.146 1998/10/07 20:43:32 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.147 1998/10/11 00:41:23 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -56,6 +59,7 @@ return "@(#)$Id: client.cpp,v 1.146 1998/10/07 20:43:32 silby Exp $"; }
 #include "clitime.h"   // CliTimer(), Time()/(CliGetTimeString(NULL,1))
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "console.h"   // [De]InitializeConsole(), ConOutErr()
+#include "modereq.h"   // ModeReqIsSet()/ModeReqRun()
 
 // --------------------------------------------------------------------------
 
@@ -89,42 +93,20 @@ Client::Client()
   uuehttpmode = 1;
   strcpy(httpid,"");
   totalBlocksDone[0] = totalBlocksDone[1] = 0;
-  timeStarted = 0;
   cputype=-1;
   offlinemode = 0;
   autofindkeyserver = 1;  //implies 'only if keyproxy==dnetkeyserver'
 
-#ifdef DONT_USE_PATHWORK
-  strcpy(ini_logname, "none");
-  strcpy(ini_in_buffer_file[0], "buff-in" EXTN_SEP "rc5");
-  strcpy(ini_out_buffer_file[0], "buff-out" EXTN_SEP "rc5");
-  strcpy(ini_in_buffer_file[1], "buff-in" EXTN_SEP "des");
-  strcpy(ini_out_buffer_file[1], "buff-out" EXTN_SEP "des");
-  strcpy(ini_exit_flag_file, "exitrc5" EXTN_SEP "now");
-  strcpy(ini_checkpoint_file[0],"none");
-  strcpy(ini_checkpoint_file[1],"none");
-  strcpy(ini_pausefile,"none");
-
-  strcpy(logname, "none");
-  strcpy(inifilename, InternalGetLocalFilename("rc5des" EXTN_SEP "ini"));
-  strcpy(in_buffer_file[0], InternalGetLocalFilename("buff-in" EXTN_SEP "rc5"));
-  strcpy(out_buffer_file[0], InternalGetLocalFilename("buff-out" EXTN_SEP "rc5"));
-  strcpy(in_buffer_file[1], InternalGetLocalFilename("buff-in" EXTN_SEP "des"));
-  strcpy(out_buffer_file[0], InternalGetLocalFilename("buff-out" EXTN_SEP "des"));
-  strcpy(exit_flag_file, InternalGetLocalFilename("exitrc5" EXTN_SEP "now"));
-  strcpy(checkpoint_file[1],"none");
-  strcpy(pausefile,"none");
-#else
   strcpy(logname, "none");
   strcpy(inifilename, "rc5des" EXTN_SEP "ini");
   strcpy(in_buffer_file[0], "buff-in" EXTN_SEP "rc5");
   strcpy(out_buffer_file[0], "buff-out" EXTN_SEP "rc5");
   strcpy(in_buffer_file[1], "buff-in" EXTN_SEP "des");
-  strcpy(out_buffer_file[1], "buff-out" EXTN_SEP "des");
-  strcpy(exit_flag_file, "exitrc5" EXTN_SEP "now");
+  strcpy(out_buffer_file[0], "buff-out" EXTN_SEP "des");
+  strcpy(exit_flag_file,     "exitrc5" EXTN_SEP "now" );
   strcpy(checkpoint_file[1],"none");
   strcpy(pausefile,"none");
-#endif
+
   messagelen = 0;
   smtpport = 25;
   strcpy(smtpsrvr,"your.smtp.server");
@@ -248,7 +230,6 @@ static void PrintBanner(const char *dnet_id)
       }
     #endif // BETA
     }
-
   return;
 }
 
@@ -258,34 +239,31 @@ int Client::Main( int argc, const char *argv[], int restarted )
 {
   int retcode = 0;
 
-  // set up break handlers
+  //set up break handlers
   if (InitializeTriggers(NULL, NULL)==0) //CliSetupSignals();
     {
-    //get inifilename and get -quiet/-hidden overrides
-    if (ParseCommandline( 0, argc, argv, NULL, &retcode, 0 ) == 0) //change defaults
-      {
-      int inimissing = (ReadConfig() != 0); //reads using defaults
-      if (InitializeConsole(runhidden||quietmode) == 0) //create console (if required)
+    //get -ini options/defaults, then ReadConfig(), then get -quiet/-hidden
+    if (ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0) //!0 if "mode"
+      {                                                
+      if (InitializeConsole(runhidden||quietmode) == 0) //initialize conio
         {
         InitializeLogging(0); //enable only screen logging for now
         PrintBanner(id); //tracks restart state itself
 
-        if ( ParseCommandline( 2, argc, argv, &inimissing, &retcode, 1 )==0 )
+        //get remaining option overrides and set "mode" bits if applicable
+        if ( ParseCommandline( 2, argc, argv, &retcode, 1 ) !=0 )
+          { 
+          if ( ModeReqIsSet( -1 ) ) //do any "modes" (including -config)
+            ModeReqRun( this );     
+          }
+        else 
           {
-          if (inimissing)
-            {
-            if (Configure() ==1 ) 
-              WriteFullConfig(); //full new build
-            }
-          else 
-            {
-            ValidateConfig();
-            InitializeTriggers(((noexitfilecheck)?(NULL):(exit_flag_file)),pausefile);
-            InitializeLogging(1);   //enable timestamps and file/mail logging
+          InitializeTriggers(((noexitfilecheck)?(NULL):(exit_flag_file)),pausefile);
+          InitializeLogging(1);   //enable timestamps and file/mail logging
             
-            PrintBanner(id);
-            retcode = Run();
-            }
+          PrintBanner( id );
+          SelectCore( 0 );
+          retcode = Run();
           }
         DeinitializeLogging();
         DeinitializeConsole();
@@ -308,27 +286,6 @@ int realmain( int argc, char *argv[] )
   int retcode = -1, init_success = 1;
   int restarted = 0;
   
-  //------------------------------
-  
-  #if (CLIENT_OS == OS_WIN32)
-    {
-    if (win32CliGetVersion() >= 20) /* DOS style version # (>= 20 for NT) */
-      {
-      if (argc == 1) //possibly old style NT service (no commandline options)
-        {            
-        if ( win32CliOldStyleInitializeService() == 0 ) //started ok
-          init_success = 0;  //service ran so quit here
-        }
-      if (argc >= 2 && strcmp( argv[1], "-svcrun" ) == 0) 
-        {                                     
-        if ( win32CliInitializeService(argc,argv) == 0) //started ok
-          init_success = 0;  //service ran so quit here
-        //inappropriate "-svcrun". fall through and let the cmdline parser puke
-        }
-      } // if (VER_PLATFORM_WIN32_NT == osver.dwPlatformId)
-    }
-  #endif //#if (CLIENT_OS == OS_WIN32)   
-
   //------------------------------
   
   #if (CLIENT_OS == OS_RISCOS)
@@ -389,22 +346,17 @@ int realmain( int argc, char *argv[] )
 }
 
 
-#if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-#if !defined(NEEDVIRTUALMETHODS)
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                             LPSTR lpszCmdLine, int nCmdShow)
-{ 
-  lpszCmdLine = lpszCmdLine; nCmdShow = nCmdShow;
-  if (hPrevInstance) 
-    return w32ConShowWindow(); //only shows if not -runhidden
-  return realmain( __argc, __argv );
-}
-#endif
-#else
+/* ----------------------------------------------------------------- */
 
+#if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst,
+                                             LPSTR lpszCmdLine, int nCmdShow)
+{ /* need an abstraction layer between WinMain() and realmain() */
+  return winClientPrelude( hInst, hPrevInst, lpszCmdLine, nCmdShow, realmain);
+}
+#else
 int main( int argc, char *argv[] )
 { 
   return realmain( argc, argv ); 
 }
-
 #endif
