@@ -21,7 +21,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.41 1999/10/11 17:06:23 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.42 1999/10/11 19:48:50 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -44,6 +44,7 @@ static int __GetTimeOfDay( struct timeval *tv )
     #elif (CLIENT_OS == OS_WIN32)
     {
       unsigned __int64 now, epoch;
+			unsigned long ell;
       FILETIME ft;
       SYSTEMTIME st;
       GetSystemTime(&st);
@@ -56,8 +57,10 @@ static int __GetTimeOfDay( struct timeval *tv )
       now += ft.dwLowDateTime;
       now -= epoch;
       now /= 10UL;
-      tv->tv_usec = (now % 1000000UL);
-      tv->tv_sec = (now / 1000000UL);
+			ell = (unsigned long)(now % 1000000ul);
+      tv->tv_usec = ell;
+			ell = (unsigned long)(now / 1000000ul);
+      tv->tv_sec = ell;
     }
     #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
     {
