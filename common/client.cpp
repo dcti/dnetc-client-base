@@ -3,9 +3,19 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: client.cpp,v $
+// Revision 1.152.2.5  1998/11/17 09:23:03  remi
+// Synced with :
+//  Revision 1.164  1998/11/17 04:39:33  silby
+//  Gave GetBuildOrEnvDescription the fixing it was pining for.
+//
 // Revision 1.152.2.4  1998/11/17 00:01:42  remi
 // Synced with :
 //  $Log: client.cpp,v $
+//  Revision 1.152.2.5  1998/11/17 09:23:03  remi
+//  Synced with :
+//   Revision 1.164  1998/11/17 04:39:33  silby
+//   Gave GetBuildOrEnvDescription the fixing it was pining for.
+//
 //  Revision 1.163  1998/11/16 22:31:09  cyp
 //  Cleaned up banner(s) and made use of CLIENT_OS_NAME.
 //
@@ -76,10 +86,10 @@ static const char *GetBuildOrEnvDescription(void)
   */
 
   #if ((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S))
-  static buffer[64];
+  static char buffer[64];
   int major, minor;
   w32ConGetWinVersion(&major,&minor);
-  sprintf(buffer,"Running under Windows%s %u.%u", (major>20)?("NT"):(""), major%20, minor );
+  sprintf(buffer,"Running under Windows%s %u.%u", (major>20)?(" NT"):(""), major%20, minor );
   return buffer;
   #else
   return "";
