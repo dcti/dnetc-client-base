@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.21 2000/02/06 05:29:01 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.22 2000/02/20 19:34:48 remi Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
@@ -328,7 +328,7 @@ static int BufferCloseFile( FILE *file )
 static void  __switchborder( WorkRecord *dest, const WorkRecord *source )
 { 
   if (((const WorkRecord *)dest) != source )
-    memcpy( (void *)dest, (void *)source, sizeof(WorkRecord));
+    memcpy( (void *)dest, (const void *)source, sizeof(WorkRecord));
   /* we don't do PDP byte order, so this is ok */
   switch (dest->contest) 
   {
@@ -449,7 +449,8 @@ int BufferUpdate( Client *client, int updatereq_flags, int interactive )
     {
       if (!dofetch && !dontfetch)
       {
-        if (GetBufferCount( client, contest_i, 0, &count ) >= 0) /* no error */
+	long count = GetBufferCount( client, contest_i, 0, NULL );
+        if (count >= 0) /* no error */
         {
           if (count < ClientGetInThreshold( client, contest_i ) )
           {
