@@ -21,7 +21,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37 1999/04/11 19:50:39 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.1 1999/07/22 12:08:09 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -142,7 +142,7 @@ struct timeval *CliTimer( struct timeval *tv )
   int dofallback = 0;
 
 #if (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_OS2) || \
-    ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
+    (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_VMS)
   struct timeb tb;
   ftime(&tb);
   stv.tv_sec = tb.time;
@@ -161,40 +161,11 @@ struct timeval *CliTimer( struct timeval *tv )
 #elif (CLIENT_OS == OS_NETWARE)
   nwCliGetTimeOfDay( &stv );
 #elif (CLIENT_OS == OS_AMIGAOS)
-  dofallback = timer((unsigned int *)&stv );
+  timer((unsigned int *)&stv );
 #else
-  struct timezone tz;
-  dofallback = gettimeofday(&stv, &tz);
+  //struct timezone tz;
+  gettimeofday(&stv, 0);
 #endif
-  if (dofallback)
-  {
-    static unsigned long lastcheck = 0;
-    static time_t timebase = (time_t)0;
-    unsigned long now = (unsigned long)clock();
-    unsigned long rate = CLOCKS_PER_SEC;
-    unsigned long secs = (now / rate);
-
-    if ((lastcheck == 0) || (lastcheck < now))
-    {
-      timebase = ((unsigned long)(time(NULL))) - secs;
-      lastcheck = now;
-    }
-    stv.tv_sec = (time_t)(timebase + secs);
-    now -= (secs * rate);
-    if ( now == 0 )  
-      stv.tv_usec = 0;
-    else if ( rate <= 1000000UL )
-      stv.tv_usec = now * (1000000UL/rate);
-    else if (rate <= 1000000000UL )
-      stv.tv_usec = ((now * 1000) / (rate/1000));
-    else
-      stv.tv_usec = now / (rate/1000000UL);
-    if (stv.tv_usec > 1000000L)
-    {
-      stv.tv_sec += stv.tv_usec/1000000L;
-      stv.tv_usec %= 1000000L;
-    }
-  }
   stv.tv_sec += adj_time_delta;
   if (cliclock.tv_sec == 0) //CliClock() not initialized
   {
@@ -398,20 +369,20 @@ const char *CliGetTimeString( const struct timeval *tv, int strtype )
       {
         timelast = timenow;
 
-	if (strtype == 3) // "yyyy/mm/dd hh:mm:ss" (cvs/iso format, implied utc)
-	{
+        if (strtype == 3) // "yyyy/mm/dd hh:mm:ss" (cvs/iso format, implied utc)
+        {
           sprintf( timestring, "%04d/%02d/%02d %02d:%02d:%02d",
-	       gmt->tm_year+1900, gmt->tm_mon + 1, gmt->tm_mday,
+               gmt->tm_year+1900, gmt->tm_mon + 1, gmt->tm_mday,
                gmt->tm_hour,  gmt->tm_min, gmt->tm_sec );
-	  timelast = 0;
-	}
-	else if (strtype == 4) // yymmddhh (bugzilla version date format)
-	{
+          timelast = 0;
+        }
+        else if (strtype == 4) // yymmddhh (bugzilla version date format)
+        {
           sprintf( timestring, "%02d%02d%02d%02d",
-	       gmt->tm_year%100, gmt->tm_mon + 1, gmt->tm_mday,
+               gmt->tm_year%100, gmt->tm_mon + 1, gmt->tm_mday,
                gmt->tm_hour );
-	  timelast = 0;
-	}
+          timelast = 0;
+        }
         else if (strtype == -1) // old "un-PC" type of length 21 OR 23 chars
         {
           // old: "04/03/98 11:22:33 GMT"
