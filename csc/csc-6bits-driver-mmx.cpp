@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-6bits-driver-mmx.cpp,v $
+// Revision 1.1.2.3  1999/12/06 10:52:43  remi
+// #include "csc-common.h" -> #include "csc-common-mmx.h"
+//
 // Revision 1.1.2.2  1999/12/05 14:39:43  remi
 // A faster 6bit MMX core.
 //
@@ -51,11 +54,11 @@
 #include "problem.h"
 #include "convcsc.h"
 
-#include "csc-common.h"
+#include "csc-common-mmx.h"
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_6bits_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-6bits-driver-mmx.cpp,v 1.1.2.2 1999/12/05 14:39:43 remi Exp $"; }
+return "@(#)$Id: csc-6bits-driver-mmx.cpp,v 1.1.2.3 1999/12/06 10:52:43 remi Exp $"; }
 #endif
 
 /*

@@ -8,11 +8,11 @@
 #include "problem.h"
 #include "convcsc.h"
 
-#include "csc-common.h"
+#include "csc-common-mmx.h"
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_1key_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-1key-driver-mmx.cpp,v 1.1.2.2 1999/11/28 20:19:14 remi Exp $"; }
+return "@(#)$Id: csc-1key-driver-mmx.cpp,v 1.1.2.3 1999/12/06 10:52:43 remi Exp $"; }
 #endif
 
 // ------------------------------------------------------------------
