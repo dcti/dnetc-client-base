@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.77 1999/12/14 02:57:29 snake Exp $
+# @(#)$Id: configure,v 1.222.2.78 1999/12/20 23:27:55 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1754,7 +1754,7 @@ echo "ALLOBJS = ${TARGET_ALLCCOBJS} ${TARGET_ALLASOBJS} ${TARGET_ALLNASMOBJS} ${
 echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
 echo "BUILDNAME = $1" >> Makefile
 echo "DOCFILES = ${TARGET_DOCFILES}" >>Makefile
-echo "BUILDNUM:= \`grep CLIENT_BUILD_FRAC common/version.h|tr -dc 0-9\`" >>Makefile
+echo "BUILDNUM:= \`grep \" CLIENT_BUILD_FRAC \" common/version.h|tr -dc 0-9\`" >>Makefile
 echo "" >> Makefile
 
 #
