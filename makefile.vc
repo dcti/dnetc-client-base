@@ -79,9 +79,10 @@ PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/p1bdespro.obj  \
 	$(OUTPUTPATH)/p2bdespro.obj  \
 	$(OUTPUTPATH)/x86ident.obj  \
-	$(OUTPUTPATH)/sboxes-mmx.obj \
+#	$(OUTPUTPATH)/sboxes-mmx.obj \
 	$(OUTPUTPATH)/rc5mmx.obj \
-	$(OUTPUTPATH)/deseval-meggs3-mmx.gcc \
+#	$(OUTPUTPATH)/deseval-meggs3-mmx.gcc \
+        $(OUTPUTPATH)/deseval-mmx.obj \
 	$(OUTPUTPATH)/deseval.obj \
 	$(OUTPUTPATH)/des-slice.obj \
 	$(OUTPUTPATH)/sboxes-kwan4.obj
@@ -99,8 +100,8 @@ RC5_LIBS = wsock32.lib advapi32.lib user32.lib gdi32.lib
 {$(DESPATH)/nasm}.asm{$(OUTPUTPATH)}.obj:
 	nasm -o $(@:/=\) -f win32 -i $(DESPATH:/=\)\nasm\ $(**:/=\)
 
-{$(DESPATH)/mmx-bitslice}.obj{$(OUTPUTPATH)}.gcc:
-	copy $(**:/=\), $(@:/=\)
+{$(DESPATH)/mmx-bitslice}.asm{$(OUTPUTPATH)}.obj:
+	nasm -o $(@:/=\) -f win32 -i $(DESPATH:/=\)\mmx-bitslice\ $(**:/=\)
 
 {$(RC5PATH)}.asm{$(OUTPUTPATH)}.obj:
 	tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
