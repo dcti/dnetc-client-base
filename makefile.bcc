@@ -1,7 +1,7 @@
 # makefile distributed.net client (Borland C++ for Win32).
 # For information about distributed.net, see http://www.distributed.net/
 #
-# $Id: makefile.bcc,v 1.23.2.25 2001/03/20 10:03:33 cyp Exp $
+# $Id: makefile.bcc,v 1.23.2.26 2001/03/30 10:11:39 cyp Exp $
 #
 # As of Jul 2000, Borland C++ 5.5.1 compiler is free for download.
 # http://www.borland.com/bcppbuilder/freecompiler/
@@ -24,7 +24,7 @@ COMMONPATH = common
 DESPATH = des
 RC5PATH = rc5
 CSCPATH = csc
-OGRPATH = ogr
+OGRPATH = ogr\ansi
 CHIPSRCPATH = plat\x86
 PLATSRCPATH = plat\win
 
@@ -39,10 +39,8 @@ HAVE_OGR_CORES=1
 # We can't do anything against the following warnings, so let's ignore them:
 #   /w-aus disables "'identifier' is assigned a value that is never used" warning (8004)
 #   /w-par disables "Parameter 'parameter' is never used" warning (8057)
-BCCOPTS = /a4 /Vv /x- /xd- /RT- /r /k- /d /O2 /O /OS /tWM -5\
-        /w /w-aus /w-par \
-        /I$(BCCINCLUDE) /I$(COMMONPATH) /I$(PLATSRCPATH) \
-        /I$(OGRPATH) /I$(CSCPATH) /D_CPU_32BIT_ /DMULTITHREAD /DLURK
+BCCOPTS = /a4 /Vv /x- /xd- /RT- /r /k- /d /O2 /O /OS /tWM -5 \
+        /w /w-aus /w-par /I$(BCCINCLUDE)
 NASMOPTS = -f obj -D__OMF__
 TLINKOPTS = /aa /x /Tpe /n /Gn /B:0x400000 /L$(BCCLIBRARY)
 
@@ -61,7 +59,7 @@ NASMOPTS = $(NASMOPTS) -DBETA
 
 .path.asm = $(RC5PATH)\x86;$(DESPATH)\x86;$(CSCPATH)\x86;$(CSCPATH)\x86;$(OGRPATH)\x86;$(CHIPSRCPATH)
 # do not add $(CSCPATH) to .path.cpp - everything is in .path.asm
-.path.cpp = $(COMMONPATH);$(RC5PATH);$(DESPATH);$(OGRPATH)\ansi;$(PLATSRCPATH)
+.path.cpp = $(COMMONPATH);$(RC5PATH);$(DESPATH);$(OGRPATH);$(PLATSRCPATH)
 .path.c = $(PLATSRCPATH)
 .path.obj = $(OUTPUTPATH)
 
@@ -69,7 +67,7 @@ all:    $(BASENAME).exe
 
 # --------------------------------------------
 
-DEF_FILE = $(OUTPUTPATH)\dnetc.def
+DEF_FILE = $(OUTPUTPATH)\$(BASENAME).def
 RES_FILE = $(OUTPUTPATH)\$(BASENAME).res
 RC_FILE = $(PLATSRCPATH)\w32cons.rc
 
@@ -114,6 +112,7 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/setprio.obj    \
         $(OUTPUTPATH)/triggers.obj   \
         $(OUTPUTPATH)/util.obj
+BCCOPTS = $(BCCOPTS) /I$(COMMONPATH) -DLURK
 
 PLAT_OBJS =                          \
         $(OUTPUTPATH)/w32cons.obj    \
@@ -126,6 +125,7 @@ PLAT_OBJS =                          \
         $(OUTPUTPATH)/w32ini.obj     \
         $(OUTPUTPATH)/w32snapp.obj   \
         $(OUTPUTPATH)/w32util.obj
+BCCOPTS = $(BCCOPTS)  /I$(PLATSRCPATH)
 
 SCR_OBJS =                           \
         $(OUTPUTPATH)/w32ss.obj      \
@@ -152,9 +152,9 @@ RC5_OBJS =                           \
         $(OUTPUTPATH)/rg-486.obj     \
         $(OUTPUTPATH)/rg-6x86.obj    \
         $(OUTPUTPATH)/hb-k7.obj      \
-        $(OUTPUTPATH)/nb-p7.obj
-BCCOPTS = $(BCCOPTS)
-
+        $(OUTPUTPATH)/nb-p7.obj      \
+        $(OUTPUTPATH)/brf-smc.obj
+BCCOPTS = $(BCCOPTS) -DSMC
 
 # --------------------------------- DES ----------------------------
 
@@ -192,7 +192,7 @@ CSC_OBJS =                           \
          $(OUTPUTPATH)/csc-6b-i.obj  \
          $(OUTPUTPATH)/csc-comm.obj  \
          $(OUTPUTPATH)/csc-mmx.obj
-BCCOPTS = $(BCCOPTS) -DHAVE_CSC_CORES
+BCCOPTS = $(BCCOPTS) -DHAVE_CSC_CORES /I$(CSCPATH) 
 !endif
 
 # --------------------------------- OGR ----------------------------
@@ -204,7 +204,7 @@ OGR_OBJS =                        \
         $(OUTPUTPATH)/ogr.aobj    \
         $(OUTPUTPATH)/ogr_dat.obj \
         $(OUTPUTPATH)/ogr_sup.obj
-BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES
+BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES /I$(OGRPATH) 
 !endif
 
 # --------------------------------------------
@@ -227,7 +227,7 @@ BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES
 
 .c.obj:
         bcc32 -q -c @&&|
--P $(BCCOPTS) -n$(OUTPUTPATH)
+        -P $(BCCOPTS) -n$(OUTPUTPATH)
 | $<
 
 

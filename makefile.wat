@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.27.2.24 2001/03/20 10:03:33 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.25 2001/03/30 10:11:39 cyp Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -43,6 +43,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
             output\probman.obj  &
             output\probfill.obj &
             output\checkpt.obj  &
+            output\coremem.obj  &
             output\random.obj   &
             output\clicdata.obj &
             output\base64.obj   &
@@ -50,7 +51,6 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
             output\netconn.obj  &
             output\mail.obj     &
             output\logstuff.obj &
-            output\coremem.obj  &
             output\cpucheck.obj &
             output\selcore.obj  &
             output\x86ident.obj &
@@ -99,9 +99,12 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 #---
 %rc5std_LINKOBJS = output\rg-486.obj output\rg-k5.obj output\brf-p5.obj &
                    output\rg-k6.obj output\rg-p6.obj  output\rg-6x86.obj &
-                   output\hb-k7.obj output\jp-mmx.obj output\brf-smc.obj
+                   output\hb-k7.obj output\jp-mmx.obj output\nb-p7.obj
 %rc5std_DEFALL   = /DHAVE_RC5_CORES
 %rc5std_SYMALIAS = #
+#---
+%rc5smc_LINKOBJS = output\brf-smc.obj
+%rc5smc_DEFALL   = /DSMC
 #---
 #%rc5mmxamd_LINKOBJS = output\rc5mmx-k6-2.obj
 #%rc5mmxamd_DEFALL   = /DMMX_RC5_AMD
@@ -264,6 +267,10 @@ declare_for_rc5 : .symbolic
   @set COREOBJS = $(%rc5std_LINKOBJS) $(%COREOBJS)
   @set DEFALL   = $(%rc5std_DEFALL) $(%DEFALL) 
 
+declare_for_rc5smc : .symbolic
+  @set COREOBJS = $(%rc5smc_LINKOBJS) $(%COREOBJS)
+  @set DEFALL   = $(%rc5smc_DEFALL) $(%DEFALL) 
+
 declare_for_rc5mmxamd : .symbolic
   @set COREOBJS = $(%rc5mmxamd_LINKOBJS) $(%COREOBJS)
   @set DEFALL   = $(%rc5mmxamd_DEFALL) $(%DEFALL) 
@@ -287,6 +294,10 @@ output\brf-p5.obj : rc5\x86\brf-p5.asm $(%dependall)
   @set isused=1
 
 output\rg-p6.obj : rc5\x86\rg-p6.asm $(%dependall)
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
+  @set isused=1
+
+output\nb-p7.obj : rc5\x86\nb-p7.asm $(%dependall)
   $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
   @set isused=1
 
@@ -361,15 +372,15 @@ output\checkpt.obj : common\checkpt.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
+output\coremem.obj : common\coremem.cpp $(%dependall) .AUTODEPEND
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
 output\setprio.obj : common\setprio.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\console.obj : common\console.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\coremem.obj : common\coremem.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
@@ -934,7 +945,7 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      @set CFLAGS    = /zp8 /wx /we /6s /fp3 /fpc /zm /ei /mf &
                       /bt=dos /d__MSDOS__ /wcd=604 /wcd=594 /wcd=7 &
                       /DINIT_TIMESLICE=0x40000 /DDYN_TIMESLICE &
-                      /DUSE_DPMI /DSMC &
+                      /DUSE_DPMI &
                       /Iplat\dos /I$(%watcom)\h #;plat\dos\libtcp
      @set OPT_SIZE  = /s /os 
      @set OPT_SPEED = /oneatx /oh /oi+ 
@@ -950,6 +961,7 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      @set BINNAME   = $(BASENAME).com
      
      @%make declare_for_rc5
+     @%make declare_for_rc5smc
 ##   @%make declare_for_des
 ##   @%make declare_for_desmt
 ##   @%make declare_for_desmmx
@@ -1064,6 +1076,7 @@ win32: .symbolic                               # win32
      @set ZIPOPTS   = -exo
      @set BINNAME   = $(BASENAME).exe
      @%make declare_for_rc5
+     @%make declare_for_rc5smc
 ##   @%make declare_for_des
 ##   @%make declare_for_desmt
 ##   @%make declare_for_desmmx
@@ -1113,6 +1126,7 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
      @set FORMAT    = Novell NLM 'distributed.net client for NetWare'
      @set %dependall=
      @%make declare_for_rc5
+     @%make declare_for_rc5smc
 #    @%make declare_for_des
 #    @%make declare_for_desmt
 ##   @%make declare_for_desmmx
