@@ -2,23 +2,17 @@
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
 ;
-; $Log: csc-comm.asm,v $
-; Revision 1.1.2.2  1999/11/07 01:31:21  remi
-; Increased code alignment.
-;
-; Revision 1.1.2.1  1999/11/06 00:26:17  cyp
-; they're here! (see also bench.res for 'ideal' combination)
-;
+; CSC transformation tables and callable version of csc_transP
 ;
 
 global          csc_tabc,csc_tabe,csc_tabp
-global          csc_transP
+global          csc_transP,csc_transG,csc_transF
 
 %include "csc-mac.inc"
+%include "csc-tran.inc" ; macros for csc_trans[P|G|F]
 
 __DATASECT__
-    db  "@(#)$Id: csc-comm.asm,v 1.1.2.2 1999/11/07 01:31:21 remi Exp $",0
-
+    db  "@(#)$Id: csc-comm.asm,v 1.1.2.3 1999/11/07 19:51:06 cyp Exp $",0
 
 __DATASECT__
     align 16
@@ -419,113 +413,19 @@ csc_tabp:
 __CODESECT__
     align 32
 csc_transP:
-    push      ebx
-    push      ebp
-    push      esi
-    mov       ebx,dword [esp+0x2c]
-    push      edi
-    mov       edi,dword [esp+0x24]
-    mov       ecx,dword [esp+0x20]
-    mov       esi,dword [esp+0x28]
-    mov       edx,edi
-    mov       ebp,dword [esp+0x18]
-    not       edx
-    mov       eax,edx
-    or        eax,ebx
-    xor       ecx,eax
-    mov       eax,esi
-    or        eax,edi
-    xor       eax,edx
-    mov       edx,dword [esp+0x14]
-    xor       edx,eax
-    mov       dword [esp+0x14],edx
-    mov       edx,dword [esp+0x2c]
-    xor       eax,edx
-    or        eax,esi
-    xor       ebp,eax
-    xor       eax,ebx
-    or        eax,edx
-    mov       edx,dword [esp+0x1c]
-    xor       edx,eax
-    mov       eax,ecx
-    mov       dword [esp+0x1c],edx
-    and       eax,edx
-    mov       edx,ecx
-    mov       dword [esp+0x18],ebp
-    or        edx,dword [esp+0x14]
-    xor       eax,edx
-    mov       edx,ecx
-    xor       esi,eax
-    or        edx,ebp
-    mov       dword [esp+0x28],esi
-    mov       esi,dword [esp+0x14]
-    xor       edx,esi
-    mov       esi,eax
-    or        esi,edx
-    xor       esi,ecx
-    mov       dword [esp+0x30],esi
-    xor       ebx,esi
-    mov       esi,ecx
-    and       esi,ebp
-    mov       ebp,ecx
-    mov       dword [esp+0x24],esi
-    mov       esi,dword [esp+0x1c]
-    or        ebp,esi
-    mov       esi,dword [esp+0x24]
-    xor       esi,ebp
-    mov       ebp,esi
-    or        eax,esi
-    mov       esi,dword [esp+0x30]
-    not       ebp
-    xor       eax,esi
-    mov       esi,dword [esp+0x28]
-    xor       edi,ebp
-    mov       ebp,dword [esp+0x2c]
-    xor       eax,edx
-    mov       edx,edi
-    not       edx
-    or        esi,edi
-    not       eax
-    xor       esi,edx
-    xor       ebp,eax
-    mov       eax,esi
-    mov       dword [esp+0x2c],ebp
-    xor       eax,ebp
-    mov       ebp,dword [esp+0x28]
-    or        eax,ebp
-    mov       ebp,dword [esp+0x14]
-    xor       esi,ebp
-    mov       ebp,dword [esp+0x34]
-    mov       dword [ebp],esi
-    mov       ebp,dword [esp+0x18]
-    mov       esi,eax
-    xor       esi,ebp
-    mov       ebp,dword [esp+0x38]
-    xor       eax,ebx
-    or        edx,ebx
-    mov       dword [ebp],esi
-    mov       esi,dword [esp+0x2c]
-    mov       ebp,dword [esp+0x1c]
-    or        eax,esi
-    xor       eax,ebp
-    mov       ebp,dword [esp+0x3c]
-    xor       edx,ecx
-    mov       ecx,dword [esp+0x44]
-    mov       dword [ebp],eax
-    mov       eax,dword [esp+0x40]
-    mov       dword [eax],edx
-    mov       edx,dword [esp+0x48]
-    mov       eax,dword [esp+0x28]
-    mov       dword [ecx],edi
-    mov       ecx,dword [esp+0x4c]
-    mov       dword [edx],eax
-    mov       edx,dword [esp+0x50]
-    pop       edi
-    mov       dword [ecx],esi
-    pop       esi
-    mov       dword [edx],ebx
-    pop       ebp
-    pop       ebx
+    _called_csc_transP
+    ret       
+
+__CODESECT__
+    align 32
+csc_transG:
+    _called_csc_transG
+    ret       
+
+__CODESECT__
+    align 32
+csc_transF:
+    _called_csc_transG
     ret       
 
 __CODESECT__
