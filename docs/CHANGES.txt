@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.74 2004/06/22 15:38:43 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.75 2004/06/24 21:14:50 kakace Exp $
 ==========================================================================
 
 2.9000
@@ -37,6 +37,13 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.74 2004/06/22 15:38:43 snikkel Exp
             fix: macosx: Now recognize PPC 750FX (#3675)
             fix: macosx: No longer read the TAU on G4/G5.
             imp: solaris: Identify SPARC64-IV/US-IV (#3693)
+            fix: all: Fixed the ideal completion time inaccuracy (#3495)
+            fix: some: OGR crunchers no longer busy-wait (#3618)
+            fix: all: Refuse unknown contest/core specified with -bench*/-test
+            fix: all: Added an exponential backoff of the retry timer for
+                      server connections/remote buffers (#3648)
+            imp: all: Client no longer exit when no OGR-P2 work is available
+                      (#3680, #3691)
 
 2.9008-491  chg: all: Disabled OGR (Phase 1) contest
             fix: all: Client didn't stop as instructed (#3672)
