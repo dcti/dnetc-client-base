@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.31  1999/01/30 12:13:29  snake
+//
+// added multiple core selection for OpenBSD Alpha
+//
 // Revision 1.30  1999/01/29 18:54:30  jlawson
 // fixed formatting.  changed some int vars to bool.
 //
@@ -118,7 +122,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.30 1999/01/29 18:54:30 jlawson Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.31 1999/01/30 12:13:29 snake Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -180,8 +184,9 @@ static const char *cputypetable[]=
   "Motorola 68000", "Motorola 68010", "Motorola 68020", "Motorola 68030",
   "Motorola 68040", "Motorola 68060"
   };
-#elif ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_DEC_UNIX))
-#include <machine/cpuconf.h>
+#elif (CLIENT_CPU == CPU_ALPHA)
+  #if ((CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_OPENBSD))
+  #include <machine/cpuconf.h>
 static const char *cputypetable[]=
   {
     "unknown",
@@ -195,6 +200,7 @@ static const char *cputypetable[]=
     "EV6 (21264)",
     "EV5.6 (21164PC)"
   };
+  #endif
 #else
   #define NO_CPUTYPE_TABLE
 #endif
