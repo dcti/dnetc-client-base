@@ -1,6 +1,6 @@
 
  RC5-DES Client for for Win32 CLI (Win9x/WinNT) and Win9x/WinNT service.
- document revision $Id: readme.w32,v 1.2 1999/06/03 20:38:32 cyp Exp $
+ document revision $Id: readme.w32,v 1.3 1999/07/20 04:34:22 cyp Exp $
 
  Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
 
@@ -160,8 +160,8 @@
        sharing buffers all have the same version number. For instance, if 
        you share buffers between 2.7110.440 and other older clients, you 
        must ensure that the client newer than 2.7109 do not request 
-       "big-block"s from the keyservers (ensure 'preferred-packet-size' is 
-       less than 32). Read the general FAQ for specificities.
+       "big-packets"s from the keyservers (ensure 'preferred-packet-size' 
+       is less than 32). Read the general FAQ for specificities.
 
     Q: How can I get the client to update itself from over the net?
     A: That is not possible since the rc5des.exe file is open when it

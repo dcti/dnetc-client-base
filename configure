@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.229 1999/07/10 13:34:44 cyp Exp $
+# @(#)$Id: configure,v 1.230 1999/07/20 04:34:18 cyp Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -25,6 +25,18 @@ fi
 # will interpret such lines as statements rather than assignments.  #
 #####################################################################
 
+#
+# Platform specific docfiles to be included in the tarball. You only need
+# to specify platform specific files. Generic ones are added automatically.
+#
+TARGET_DOCFILES="docs/readme._ix" # override where appropriate
+
+#
+# Target specific tarball options. 
+#
+TARGET_TARBALL=""     # 'rc5desNNN-' is auto prepended, ".tar.gz" is appended
+TARGET_TARBALL_COMMENT="" # special comments for tarball.readme (if needed)
+TARGET_ARCTYPE="tgz"  # or "zip"
 
 #
 # Common compiler options
@@ -341,6 +353,7 @@ case "$1" in
 			-DBIT_32 -DKWAN -DMEGGS -DMIPS_CRUNCH=1"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *mips-sni-gcc)	   #For MIPS SINIX
@@ -348,6 +361,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -Dsinix \
 			-DPIPELINE_COUNT=2 -DMIPS_CRUNCH=1"
 	TARGET_LIBS="-lsocket -lnsl -lc -L/usr/ucblib -lucb"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *mips-cc-64)	     # For 64bit MIPS processors
@@ -358,6 +372,7 @@ case "$1" in
 			-DPIPELINE_COUNT=2 -DBIT_64 -DKWAN -DMEGGS"
 	TARGET_LDFLAGS="-static -64 -IPA -mips4"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *mips5-cc)		# IRIX CC is slower than mips-gcc targets
@@ -367,6 +382,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -D_irix5_ \
 			-DPIPELINE_COUNT=2 -DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *mips-cc)		# IRIX CC is slower than mips-gcc targets
@@ -379,6 +395,7 @@ case "$1" in
 			-DBIT_32 -DKWAN -DMEGGS "
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *mips-gcc-irix5-crunch)	# [ivo] faster than mips-gcc for IRIX
@@ -387,6 +404,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -D_irix5_ \
 			-DMIPS_CRUNCH=1 -D_CPU_32BIT_ -DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *mips-egcs-crunch-64)     #needs very recent egcs
@@ -397,6 +415,7 @@ case "$1" in
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
 	TARGET_LDFLAGS="-mabi=64"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *mips-egcs-crunch)	# faster than mips-gcc for IRIX
@@ -406,6 +425,7 @@ case "$1" in
 			-DMIPS_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *mips-gcc-ultrix)	# For mips based DEC Ultrix machines
@@ -414,6 +434,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
 
@@ -426,6 +447,7 @@ case "$1" in
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/parisc/parisc.s $MEGGS_SLICE_SRCS2"
 	TARGET_LDFLAGS="$LDFLAGS_CC_HPUX"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *hpux-hppa-gcc)  # [ivo]
@@ -435,6 +457,7 @@ case "$1" in
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
         TARGET_ADDASMS="rc5/parisc/parisc.s"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
 
@@ -446,6 +469,7 @@ case "$1" in
 	TARGET_AFLAGS="$OPTS_GAS_M68030K"
 	TARGET_ADDASMS="rc5/crunch.68k.gcc.s"
 	TARGET_ADDSRCS="$SLICE_SRCS3"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	echo $TARGET_CCFLAGS
 	;;
 
@@ -455,6 +479,7 @@ case "$1" in
 	TARGET_CC="/usr/local/bin/g++"
 	TARGET_CCFLAGS="$OPTS_GCC_DGUX"
 	TARGET_LDFLAGS="-static"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *dgux-gcc-mt)
@@ -462,6 +487,7 @@ case "$1" in
 	TARGET_CC="/usr/local/bin/g++"
 	TARGET_CCFLAGS="$OPTS_GCC_DGUX -D_POSIX4A_DRAFT6_SOURCE -DMULTITHREAD"
 	TARGET_LIBS="-lthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
 ###### Sparc/UltraSparc or Sun/SunOS/Solaris
@@ -472,6 +498,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	#TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
 	TARGET_ADDSRCS="des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *sparc-linux)
@@ -482,6 +509,7 @@ case "$1" in
 	TARGET_ADDSRCS="common/lurk.cpp \
 			des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
 	TARGET_LDFLAGS="-static"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *sparc-linux-mt)
@@ -493,6 +521,7 @@ case "$1" in
 			des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
 	TARGET_LDFLAGS="-static"
 	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *sparc-linux-mt-egcs)
@@ -505,32 +534,40 @@ case "$1" in
 			des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
 	TARGET_LDFLAGS="-static"
 	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *sparc-cc)
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
 	TARGET_CC="cc"
 	TARGET_CCFLAGS="$OPTS_CC_SPARC -DPIPELINE_COUNT=1"
 	TARGET_LIBS="-lnsl -lsocket"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *sunos-gcc-static)	
 	# FIX THIS
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -DPIPELINE_COUNT=2"
 	TARGET_LIBS="-static"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *sun3-gcc)
+        DELETECHARS="'/.\$\-'"
 	TARGET_CCFLAGS="$OPTS_GCC_SUN68K -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/crunch.sun68k.gcc.s"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *sun2-sunos3-gcc)
 	TARGET_CCFLAGS="$OPTS_GCC_SUN68K -D_SUNOS3_ \
 			-DPIPELINE_COUNT=1 -DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/crunch.sun68k.gcc.s"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *m68k-linux-gcc)
@@ -539,59 +576,69 @@ case "$1" in
  	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
  	TARGET_ADDASMS="crunch.68k.gcc.s"
  	TARGET_LIBS="-static"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     #####
 
     *sparc-solaris-gcc-mt)	# slower rc5, slower des
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
-			-DMULTITHREAD -DPIPELINE_COUNT=2 \
+			-DMULTITHREAD \
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *sparc-solaris-gcc-crunch-mt)    # fastest rc5, slower des
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
-			-DMULTITHREAD -DPIPELINE_COUNT=2 \
+			-DMULTITHREAD \
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
-    *sparc-solaris-gcc-crunch-slice)   # fastest rc5 & des for ultra
+    *sparc-solaris-gcc-crunch-slice)   # [ivo solaris/nonultra/nomt] fastest rc5 & des for ultra
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
 	TARGET_CC="gcc -pipe"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
-			-DPIPELINE_COUNT=2 \
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lnsl -lsocket -ldl"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
-    *sparc-solaris-gcc-crunch-slice-mt)   # fastest rc5 & des for ultra
+    *sparc-solaris-gcc-crunch-slice-mt)   # [ivo solaris/nonultra/mt] fastest rc5 & des for ultra
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
 	TARGET_CC="gcc -pipe"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
-			-DMULTITHREAD -DPIPELINE_COUNT=2 \
+			-DMULTITHREAD \
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *sparc-solaris-gcc-crunch-asmslice-mt)   # fastest rc5 & VIS DES
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
-	TARGET_CC="gcc -pipe"
+	TARGET_CC="cc -pipe"
 	TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris \
-			-DMULTITHREAD -DPIPELINE_COUNT=2 -DULTRA_CRUNCH=1"
+			-DMULTITHREAD -DULTRA_CRUNCH=1"
 	TARGET_ADDSRCS="$DESULTRA_SRCS_ASM"
  	TARGET_ADDASMS="des/ultrasparc/simple.handopt.s"
 	TARGET_ASFLAGS="$OPTS_AS_ULTRA"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     #####
@@ -603,6 +650,7 @@ case "$1" in
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_LIBS="-lnsl -lsocket -ldl"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *x86-solaris-mt)    # gcc, mt, dynamic
@@ -615,6 +663,7 @@ case "$1" in
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
 ###### Alpha
@@ -628,6 +677,7 @@ case "$1" in
 	TARGET_DIGITAL_UNIX_EV5_SRCS="rc5/alphaasm/rc5-digital-unix-alpha-ev5.cpp"
 	TARGET_LIBS="-lpthread -lexc"
 	TARGET_OS=DIGITAL_UNIX
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *alpha-gcc-digital_unix-static)
@@ -638,6 +688,7 @@ case "$1" in
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/alphaasm/rc5-digital-unix-alpha-ev4.cpp"
 	TARGET_DIGITAL_UNIX_EV5_SRCS="rc5/alphaasm/rc5-digital-unix-alpha-ev5.cpp des/alpha-asm/deseval-dworz3.S des/alpha-asm/des-slice-dworz.cpp"
 	TARGET_LIBS="-static"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_OS=DIGITAL_UNIX
 	;;
 
@@ -650,6 +701,7 @@ case "$1" in
 			rc5/alpha/axp-bmeyer.s"
 	TARGET_LDFLAGS="-static"
 	TARGET_LIBS="-ltermcap"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *alpha-openbsd)                  # snake
@@ -660,6 +712,7 @@ case "$1" in
 #            rc5/alpha/axp-bmeyer.s"
 	TARGET_ADDASMS="rc5/alpha/axp-bmeyer.s"
 	TARGET_LDFLAGS="-static"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *alpha-linux)                     # jlawson
@@ -669,6 +722,7 @@ case "$1" in
 	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS rc5/alpha/axp-bmeyer.cpp"
 	TARGET_ADDASMS="rc5/alpha/axp-bmeyer.s"
 	TARGET_LDFLAGS="-static"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *alpha-linux-egcs)                     # daa
@@ -678,6 +732,7 @@ case "$1" in
 	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS rc5/alpha/axp-bmeyer.cpp"
 	TARGET_ADDASMS="rc5/alpha/axp-bmeyer.s"
 	TARGET_LDFLAGS="-static"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
 ###### PowerPC/POWER
@@ -690,6 +745,7 @@ case "$1" in
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			$RC5PPC_SRCS"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *ppc-601-linux-mt-egcs)		# [cramer] PPC 601-mt target
@@ -699,6 +755,7 @@ case "$1" in
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			$RC5PPC_SRCS"
 	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *ppc-604-linux-egcs)		# [cramer] PPC 604 target
@@ -707,6 +764,7 @@ case "$1" in
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			$RC5PPC_SRCS"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *ppc-604-linux-mt-egcs)		# [cramer] PPC 604-mt target
@@ -716,6 +774,7 @@ case "$1" in
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			$RC5PPC_SRCS"
 	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *ppc-860-linux-egcs)		# [cramer] PPC 860 target
@@ -724,6 +783,7 @@ case "$1" in
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			$RC5PPC_SRCS"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *ppc-860-linux-mt-egcs)		# [cramer] PPC 860-mt target
@@ -733,6 +793,7 @@ case "$1" in
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			$RC5PPC_SRCS"
 	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *ppc-gcc)		# [myshkin] generic PPC target
@@ -740,6 +801,7 @@ case "$1" in
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			$RC5PPC_SRCS"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *ppc860-gcc)	# [myshkin] PPC 821/860 target
@@ -747,6 +809,7 @@ case "$1" in
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			$RC5PPC_SRCS"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *ppc-gcc272)	# [myshkin] generic PPC target, gcc 2.7.2
@@ -754,6 +817,7 @@ case "$1" in
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			$RC5PPC_SRCS"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *ppc860-gcc272)	# [myshkin] PPC 821/860 target, gcc 2.7.2
@@ -761,20 +825,12 @@ case "$1" in
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			$RC5PPC_SRCS"
-	;;
-
-    *power-gcc)	    # generic POWER target
-	# does anybody use this one ? If not I will remove it after april '99
-	# the POWER support should use pipelinecount=2 anyway. 
-	# patrick - patrick@mail4you.de
-	RC5CORECOPY="rc5/ansi/rc5ansi1-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_POWER -DPIPELINE_COUNT=1 \
-			-DBIT_32 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
   ### AIX PPC targets
 	# classes are buggy with AIX !
+
     *aix4-ppc-xlc)	 # This is the fastest build for AIX 4.x PPC machines
 	DELETECHARS="'/.\$\-'"
 	TARGET_CC="xlC"
@@ -782,6 +838,7 @@ case "$1" in
 	TARGET_ADDASMS="$XLC_LINTILLA_ASMS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lCns"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *aix4-ppc601-xlc)      # AIX 4.x PPC, 601 chip
@@ -791,6 +848,7 @@ case "$1" in
 	TARGET_ADDASMS="$XLC_LINTILLA_ASMS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lCns"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *aix32-ppc-xlc)	# AIX 3.2.x PPC
@@ -800,8 +858,8 @@ case "$1" in
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 		rc5/ppc/crunch_allitnil_552.ppc.s \
 		rc5/ppc/crunch_lintilla_296.ppc.s"
-
 	TARGET_LIBS="-lCns"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *ppc-gcc-aix32)	# AIX 3.2.x gcc [patrick] <patrick@mail4you.de>
@@ -810,6 +868,7 @@ case "$1" in
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 		rc5/ppc/crunch_allitnil_552.ppc.s \
 		rc5/ppc/crunch_lintilla_296.ppc.s"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *aix4-ppc-egcs)			# [patrick] <patrick@mail4you.de>
@@ -818,16 +877,19 @@ case "$1" in
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2\
 			rc5/ppc/crunch_allitnil_552.ppc.s \
                         rc5/ppc/crunch_lintilla_296.ppc.s"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         ;;
 
 
   ### AIX POWER targets
         # AIX POWER this one works for all platforms (AIX 3.x, 4.[1-3])!
+
     *power-aix-gcc)                     # [patrick] <patrick@mail4you.de>
         DELETECHARS="'/.\$\-'"
 	TARGET_CCFLAGS="$OPTS_GCC_POWER -D_AIX \
 		-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/ansi/2-rg.c"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *power-aix-egcs)                     # [patrick] <patrick@mail4you.de>
@@ -835,6 +897,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_EGCS -DASM_POWER -mcpu=power -D_AIX \
 		-DBIT_32 -DMEGGS -DKWAN"
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/ansi/2-rg.c"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         ;;
 
         #new all in one AIX target
@@ -852,6 +915,7 @@ case "$1" in
         AIXPPC601FLAGS="$OPTS_EGCS_PPC601 -D_AIX -DBIT32 -DMEGGS -DKWAN"
         AIXPPC604FLAGS="$OPTS_EGCS_PPC601 -D_AIX -DBIT32 -DMEGGS -DKWAN"
         AIXPOWERFLAGS="$OPTS_EGCS_POWER -D_AIX -DBIT32 -DMEGGS -DKWAN"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         ;;
 
 
@@ -873,6 +937,7 @@ case "$1" in
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *x86-linux-aout-nomt-egcs)	 # [remi] nomt, libc4, static, egcs
@@ -889,6 +954,7 @@ case "$1" in
 			  -d__showids__ \
 			  -f aout"
 	TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *x86-linux-libc5-mt-egcs)	   # [remi] mt, libc5, static, egcs
@@ -907,6 +973,7 @@ case "$1" in
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *x86-linux-glibc2-mt-egcs)	 # [remi] mt, glibc2, static, egcs
@@ -924,6 +991,7 @@ case "$1" in
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
   ### Cramer's targets
@@ -942,6 +1010,7 @@ case "$1" in
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *x86-linux-egcs-debug-cramer)      # [cramer] nomt, static, egcs, debug
@@ -959,6 +1028,7 @@ case "$1" in
 			  -f elf"
 	TARGET_STRIP="touch"
 	TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *x86-linux-mt-egcs-cramer)	 # [cramer] mt, static, egcs
@@ -977,6 +1047,7 @@ case "$1" in
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
 
@@ -996,6 +1067,7 @@ case "$1" in
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *x86-linux-gcc-debug)	      # nomt, dynamic, gcc, debug
@@ -1015,6 +1087,7 @@ case "$1" in
 			  -f elf"
 	TARGET_STRIP="touch"
 	TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *x86-linux-mt-gcc)		 # mt, static, gcc
@@ -1032,6 +1105,7 @@ case "$1" in
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *x86-linux-mt-gcc-gregh)		 # mt, static, gcc, ogr
@@ -1050,6 +1124,7 @@ case "$1" in
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *x86-linux-mt-slice-kwan-gcc)      # mt, static, gcc, use integer bitslicer
@@ -1067,6 +1142,7 @@ case "$1" in
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *x86-linux-egcs)		   # nomt, static, egcs
@@ -1083,6 +1159,7 @@ case "$1" in
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *x86-linux-egcs-debug)	     # nomt, dynamic, egcs, debug
@@ -1100,6 +1177,7 @@ case "$1" in
 			  -f elf"
 	TARGET_STRIP="touch"
 	TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *x86-linux-mt-egcs)		# mt, static, egcs
@@ -1118,6 +1196,7 @@ case "$1" in
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
 ###### Intel X86 FreeBSD
@@ -1134,9 +1213,11 @@ case "$1" in
 	TARGET_LIBS="-lc_r"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -f aoutb"
-	;;
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="freebsd-x86-aout"
+        ;;
 
-    *x86-freebsd-mt)         # [dbaker] aout + pthread
+    *x86-freebsd-mt)         # (obsolete) [dbaker] aout + pthread
         echo "The x86-freebsd-mt target is obsolete. Its identical to the x86-freebsd target."
         echo "The only difference is the -DMULTITHREAD switch and thats not needed"
         echo "since we no longer use pthreads"
@@ -1152,6 +1233,7 @@ case "$1" in
  	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
  	TARGET_LIBS="-lc_r"
  	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -f aoutb"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
  	;;
 
     *x86-freebsd-elf)       # [dbaker] elf
@@ -1165,9 +1247,11 @@ case "$1" in
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_LIBS="-lc_r"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="freebsd-x86-elf"
 	;;
  
-    *x86-freebsd-mt-elf)    # [dbaker] elf + pthread
+    *x86-freebsd-mt-elf)    # (obsolete) [dbaker] elf + pthread
         echo "The x86-freebsd-mt-elf target is obsolete. (identical to x86-freebsd-elf)"
         echo "The only difference is the -DMULTITHREAD switch and thats not needed"
         echo "since we no longer use pthreads"
@@ -1182,9 +1266,10 @@ case "$1" in
  		        des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
         TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
         TARGET_LIBS="-lc_r"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         ;;
 
-    *x86-freebsd4-mt-elf)    # [dbaker] elf + pthread + fbsd4
+    *x86-freebsd4-mt-elf)    # (obsolete) [dbaker] elf + pthread + fbsd4
         echo "The x86-freebsd4-mt-elf target is obsolete. (identical to x86-freebsd-elf)"
         echo "The FreeBSD version is detected at runtime."
         exit 1
@@ -1198,6 +1283,7 @@ case "$1" in
                         des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
         TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
         TARGET_LIBS="-lc_r"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         ;;
 
 ###### Intel X86 NetBSD
@@ -1210,6 +1296,7 @@ case "$1" in
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
 	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -d__AOUT__ -f aoutb"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
 ###### Intel X86 OpenBSD
@@ -1222,6 +1309,7 @@ case "$1" in
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
 ###### Intel X86 BSDI
@@ -1232,6 +1320,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
        ;;
 
     *x86-bsdi4)                       # BSD/OS 4.0 with ELF format -snake
@@ -1241,6 +1330,7 @@ case "$1" in
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
        ;;
 
 ####### Intel X86 QNX
@@ -1251,6 +1341,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
 ####### Intel X86 SCO5
@@ -1264,6 +1355,7 @@ case "$1" in
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_LIBS="-lsocket"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
 ####### Intel x86 DYNIX
@@ -1276,6 +1368,7 @@ case "$1" in
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS1"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_LIBS="-lsocket -lnsl -lseq -L/opt/epc/ec++/lib -lec++"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *x86-dynix2)
@@ -1287,6 +1380,7 @@ case "$1" in
 	TARGET_LDFLAGS="-L."
 	# Don't panic; -lXbsd is for gettimeofday()
 	TARGET_LIBS="-lsocket -linet -lnsl -lXbsd -lseq"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
 ###### NeXT (x86, m68k, sparc, hppa)
@@ -1299,6 +1393,7 @@ case "$1" in
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
 	TARGET_ADDNASMS="$RC5X86_SRCS $NASM_DESMMX_SRCS"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *m68k-next-gcc)
@@ -1306,12 +1401,14 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_NEXT_M68K -D_NeXT_ -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DKWAN"
 	TARGET_ADDSRCS="rc5/68k/crunch.68k.gcc.s $KWAN_SLICE_SRCS4"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *m68k-next)
 	RC5CORECOPY="rc5/ansi/rc5ansi1-b2.cpp"
 	TARGET_CC="cc++"
 	TARGET_CCLAGS="$OPTS_NEXT_M68K -arch m68k -D_NeXT_ -DPIPELINE_COUNT=1"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *sparc-next)
@@ -1320,6 +1417,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_NEXT_SPARC -arch sparc -D_NeXT_  \
 			-DPIPELINE_COUNT=2 -DBIT_32"
 	TARGET_ADDSRCS="des/des-slice.cpp des/deseval.cpp"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *hppa-next)
@@ -1328,6 +1426,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_NEXT_HPPA -arch hppa -D_NeXT_ \
 			-DPIPELINE_COUNT=2 -DBIT_32"
 	TARGET_ADDSRCS="des/des-slice.cpp des/deseval.cpp"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
 ###### ARM
@@ -1351,6 +1450,7 @@ case "$1" in
 	TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o \
 		     /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o \
 		     /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
+        TARGET_DOCFILES="docs/readme.riscos"   #platform specific docfile
 	TARGET_STRIP=touch
 	EXENAME=rc5des,ff8
 	;;
@@ -1364,6 +1464,7 @@ case "$1" in
 			rc5/arm/rc5-arm-3-gnu.s \
 			des/arm/des-slice-sa-gnu.s des/arm/des-slice-arm-gnu.s"
 	TARGET_LIBS="-lm"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *arm-netbsd)				# chrisb
@@ -1375,6 +1476,7 @@ case "$1" in
 			rc5/arm/rc5-arm-3-gnu.s \
 			des/arm/des-slice-sa-gnu.s des/arm/des-slice-arm-gnu.s"
 	TARGET_LIBS="-lm"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
 ###### NetBSD/vax
@@ -1385,6 +1487,7 @@ case "$1" in
                         -DMEGGS -DKWAN -DRC5ANSICORE"
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
         TARGET_LIBS="-ltermcap"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         ;;
 
 ###### OS390
@@ -1397,6 +1500,7 @@ case "$1" in
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_ADDASMS=""
 	TARGET_LIBS="$SOCKS_LIBS"
+        TARGET_DOCFILES="docs/readme.os390"   #platform specific docfile
 	;;
 
 ###### Be OS (x86, PPC)
@@ -1415,6 +1519,7 @@ case "$1" in
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
 ####### OS/2 (x86, emx)
@@ -1439,6 +1544,7 @@ case "$1" in
 	TARGET_ADDNASMS="rc5/x86/nasm/rc5mmx.asm $NASM_DESMMX_SRCS"
         TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -d__showids__ -f aout "
         TARGET_LIBS="-lsocket"
+        TARGET_DOCFILES="docs/readme.os2"   #platform specific docfile
         TARGET_OS=OS2
         ;;
 
@@ -1457,6 +1563,7 @@ case "$1" in
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
         TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -d__showids__ -f aout "
         TARGET_LIBS="-lsocket"
+        TARGET_DOCFILES="docs/readme.os2"   #platform specific docfile
         TARGET_OS=OS2
         ;;
 
@@ -1576,6 +1683,13 @@ if [ "$TARGET_OS" = "DIGITAL_UNIX" ]; then
 TARGET_EV5_CCFLAGS="-DINTSIZES=${INTSIZES} -DBUILDNAME=\${BUILDNAME} ${TARGET_EV5_CCFLAGS}"
 fi
 
+#
+# Generate full doc file list.
+#
+if [ -f docs/readme.1st ]; then
+  TARGET_DOCFILES="docs/readme.1st ${TARGET_DOCFILES}"
+fi  
+TARGET_DOCFILES="${TARGET_DOCFILES} docs/CHANGES.txt docs/rc5des.txt"
 
 #
 # Start building the output makefile
@@ -1612,8 +1726,9 @@ echo "STRIP = ${TARGET_STRIP}" >> Makefile
 echo "ALLOBJS = ${TARGET_ALLCCOBJS} ${TARGET_ALLASOBJS} ${TARGET_ALLNASMOBJS} ${TARGET_DUEV5OBJS}" >> Makefile
 echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
 echo "BUILDNAME = $1" >> Makefile
+echo "DOCFILES = ${TARGET_DOCFILES}" >>Makefile
+echo "BUILDNUM:= \`grep CLIENT_BUILD_FRAC common/version.h|tr -dc 0-9\`" >>Makefile
 echo "" >> Makefile
-
 
 #
 # Generate the main production targets in the makefile
@@ -1646,6 +1761,24 @@ else
 echo "${EXENAME}:	\${BUILDNAME}" >> Makefile
 echo "	\${CP} \${BUILDNAME} ${EXENAME}" >> Makefile
 echo "	\${STRIP} ${EXENAME}" >> Makefile
+if [ "X$TARGET_TARBALL" != "X" ]; then
+  if  [ "$TARGET_ARCTYPE" = "zip" ]; then
+    echo "Zip support is not in place"  
+  else     # tgz
+    echo "	tar -czf rc5des\${BUILDNUM}-${TARGET_TARBALL}.tar.gz ${EXENAME} \${DOCFILES}" >>Makefile
+  fi
+  echo "" >> Makefile  
+
+  # make rule to transfer the packaged tarball
+  echo "ftp:" >> Makefile
+  if [ "X$TARGET_TARBALL_COMMENT" != "X" ]; then
+    echo "	echo \"${TARGET_TARBALL_COMMENT}\">rc5des\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
+  fi
+  echo "	sh ./upload.sh rc5des\${BUILDNUM}-${TARGET_TARBALL}" >>Makefile
+  if [ "X$TARGET_TARBALL_COMMENT" != "X" ]; then
+    echo "	rm -f rc5des\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
+  fi
+fi  
 echo "" >> Makefile
 
 echo "\${BUILDNAME}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
@@ -1676,27 +1809,27 @@ echo "ident:	${EXENAME}" >> Makefile
 echo "	ident ${EXENAME} | awk '{ printf(\"%-30s %10s %s %s %s %s%c\", \$\$2,\$\$3,\$\$4,\$\$5,\$\$6,\$\$7,10)}'" >> Makefile
 echo "" >> Makefile
 
-# add binary-tarball targets
-echo "internal-tarpackit:	\${TARGETFILE} \${TAREXTRAS}" >> Makefile
-echo "	strip \${STRIPFLAGS} \${TARGETFILE}" >> Makefile
-echo "	-rm -rf \${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
-echo "	mkdir \${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
-echo "	cp -f \${TARGETFILE} \${TAREXTRAS} \\" >> Makefile
-echo "		\${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
-echo "	tar cvf \${TARBASENAME}\${BUILDNUM}-\${TARNAME}.tar \\" >> Makefile
-echo "		\${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
-echo "	rm -rf \${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
-echo "	-rm -f \${TARBASENAME}\${BUILDNUM}-\${TARNAME}.tar.gz" >> Makefile
-echo "	\${TARCOMPRESS} \${TARBASENAME}\${BUILDNUM}-\${TARNAME}.tar" >> Makefile
-echo "	@echo Type \'make ftp\' to upload the tarball to the ftp site." >> Makefile
-echo "" >> Makefile
+## add binary-tarball targets
+#echo "internal-tarpackit:	\${TARGETFILE} \${TAREXTRAS}" >> Makefile
+#echo "	strip \${STRIPFLAGS} \${TARGETFILE}" >> Makefile
+#echo "	-rm -rf \${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
+#echo "	mkdir \${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
+#echo "	cp -f \${TARGETFILE} \${TAREXTRAS} \\" >> Makefile
+#echo "		\${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
+#echo "	tar cvf \${TARBASENAME}\${BUILDNUM}-\${TARNAME}.tar \\" >> Makefile
+#echo "		\${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
+#echo "	rm -rf \${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
+#echo "	-rm -f \${TARBASENAME}\${BUILDNUM}-\${TARNAME}.tar.gz" >> Makefile
+#echo "	\${TARCOMPRESS} \${TARBASENAME}\${BUILDNUM}-\${TARNAME}.tar" >> Makefile
+#echo "	@echo Type \'make ftp\' to upload the tarball to the ftp site." >> Makefile
+#echo "" >> Makefile
 
 # make rule to transfer the packaged tarball
-echo "ftp:" >> Makefile
-echo "	echo \"user anonymous -luser@distributed.net#cd /incoming#\\" >> Makefile
-echo "	binary#mput \${TARBASENAME}*.tar*#bye#\" | \\" >> Makefile
-echo "	tr \"#\" \"\n\" | ftp -n -i -v upload.distributed.net" >> Makefile
-echo "" >> Makefile
+#echo "ftp:" >> Makefile
+#echo "	echo \"user anonymous -luser@distributed.net#cd /incoming#\\" >> Makefile
+#echo "	binary#mput \${TARBASENAME}*.tar*#bye#\" | \\" >> Makefile
+#echo "	tr \"#\" \"\n\" | ftp -n -i -v upload.distributed.net" >> Makefile
+#echo "" >> Makefile
 
 
 
@@ -1770,4 +1903,9 @@ rm Makefile.tmp
 fi
 
 echo "Makefile auto-generation complete!"
+if [ "X$TARGET_TARBALL" = "X" ]; then
+  echo "TARGET_TARBALL was not defined."
+  echo "Upload-ready tarballs will not be auto-generated"
+  echo "and Makefile does not have an 'ftp' target"
+fi  
 echo ""

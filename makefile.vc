@@ -72,9 +72,11 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/probfill.obj   \
 	$(OUTPUTPATH)/bench.obj      \
 	$(OUTPUTPATH)/w32cons.obj    \
+	$(OUTPUTPATH)/w32sock.obj    \
 	$(OUTPUTPATH)/w32svc.obj     \
 	$(OUTPUTPATH)/w32pre.obj     \
 	$(OUTPUTPATH)/w32ras.obj     \
+	$(OUTPUTPATH)/w32util.obj     \
 	$(OUTPUTPATH)/console.obj    \
 	$(OUTPUTPATH)/setprio.obj    \
 	$(OUTPUTPATH)/modereq.obj    \
@@ -105,7 +107,7 @@ PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/des-slice.obj \
 	$(OUTPUTPATH)/sboxes-kwan4.obj
 
-RC5_LIBS = wsock32.lib advapi32.lib user32.lib gdi32.lib
+RC5_LIBS = advapi32.lib user32.lib gdi32.lib
 
 # --------------------------------------------
 

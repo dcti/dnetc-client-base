@@ -60,6 +60,7 @@ CLI_OBJS =                                \
         $(OUTPUTPATH)\w32sock.obj         \
         $(OUTPUTPATH)\w32ras.obj          \
         $(OUTPUTPATH)\w32svc.obj          \
+        $(OUTPUTPATH)\w32util.obj         \
 
 GUI_OBJS =                                \
 	$(OUTPUTPATH)\gui\client.obj      \

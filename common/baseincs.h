@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.66 1999/07/09 14:09:34 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.67 1999/07/20 04:34:19 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -41,6 +41,12 @@ extern "C" {
   #include <sys/prctl.h>
   #include <sys/schedctl.h>
   #include <fcntl.h>
+#elif (CLIENT_OS == OS_HPUX)
+  #include <unistd.h>
+  #include <sys/types.h>
+  #include <fcntl.h>
+  #include <sys/param.h>
+  #include <sys/pstat.h>
 #elif (CLIENT_OS == OS_OS2)
   #if defined(__WATCOMC__)
     #include "os2defs.h"

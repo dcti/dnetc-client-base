@@ -1,7 +1,7 @@
 
  RC5-DES Client for Win16 (MS-Windows 3.1,WINE or whatever) and above
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
- Document revision $Id: readme.w16,v 1.7 1999/06/03 20:39:24 cyp Exp $
+ Document revision $Id: readme.w16,v 1.8 1999/07/20 04:34:22 cyp Exp $
 
  Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
 
@@ -36,6 +36,14 @@
 
     The Win16 client is a true 32-bit protected mode application and 
     therefore requires Windows to be running in "386 extended" mode.
+
+    Beginning with v2.7112.444, the client can be configured to run
+    as a screen saver. That is, the client has a split personality:
+    it can be installed as a screen saver by simply copying it to 
+    the windows directory and renaming it "rc5des.scr". When installed
+    as a screen saver (and when the screen saver becomes active) it 
+    will lauch *another* client in the background and launch *another* 
+    screen saver in the foreground. 
 
     The Win16 client will use any WinSock sockets implementation if 
     available, and will otherwise not use the network layer. A "lurk"
