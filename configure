@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.20  1998/06/08 11:07:53  kbracey
+# Added -DCOMPAT_INET4 back to RISC OS C flags so it works with Internet 4
+# and FreeNet stack.
+#
 # Revision 1.19  1998/06/05 17:39:33  bovine
 # generated makefiles list cpu, os, and intsizes in comments.
 #
@@ -544,12 +548,12 @@ case "$1" in
 	TARGET_ADDSRCS="des/des-slice.cpp des/deseval.cpp"
 	;;
 
-###### RISCOS
+###### ARM
 
     *riscos)
 	TARGET_CC="armcpp -aif -nodebug -littleend -apcs 3/26bit/swst/hardfp/fpe2 -nounusedareas -l/home/cberry/play/riscoslib/CLib/stubs.o"
 	TARGET_AS="armasm -apcs 3/26bit"
-	TARGET_CCFLAGS="-Icommon -Irc5 -Ides -Iplatforms -J/home/cberry/play/riscoslib/CLib -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -D__riscos -DPIPELINE_COUNT=1 -DBIT_32 -DKWAN"
+	TARGET_CCFLAGS="-Icommon -Irc5 -Ides -Iplatforms -J/home/cberry/play/riscoslib/CLib -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -DCOMPAT_INET4 -D__riscos -DPIPELINE_COUNT=1 -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS="platforms/riscos/riscos.cpp"
 	TARGET_ADDASMS="platforms/riscos/riscosasm.s rc5/rc5-sa.s rc5/rc5-arm.s des/des-slice-arm.s"
 	TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
