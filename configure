@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.214 1999/04/05 21:40:30 patrick Exp $
+# @(#)$Id: configure,v 1.215 1999/04/05 21:49:23 patrick Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -1701,7 +1701,7 @@ if [ "$AIXALL" = "TRUE" ]; then
   awk '
 /allitnil_552.ppc.s -o/ { print "\t\${CC} -c ${PPC601FLAGS} " $4 " " $5 " " $6 ; next }
 /lintilla_296.ppc.s -o/ { print "\t\${CC} -c ${PPC604FLAGS} " $4 " " $5 " " $6 ; next }
-/2-rg.cpp -o/ { print "\t\gcc -c ${POWERFLAGS} " $4 " " $5 " " $6 ; next }
+/2-rg.c -o/ { print "\t\gcc -c ${POWERFLAGS} " $4 " " $5 " " $6 ; next }
 { print $0 }' Makefile.tmp > Makefile
 rm Makefile.tmp
 fi
