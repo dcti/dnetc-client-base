@@ -3,119 +3,8 @@
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-//
-// This file #includes the common header files that the client needs
-// almost everywhere.
-//
-// ------------------------------------------------------------------
-//
-// $Log: baseincs.h,v $
-// Revision 1.30  1998/10/31 21:59:12  silby
-// Added in an OS_FREEBSD include that was missing.
-//
-// Revision 1.29  1998/10/30 00:14:07  foxyloxy
-//
-// Added unistd.h to Irix standard includes.
-//
-// Revision 1.28  1998/10/26 03:21:26  cyp
-// More tags fun.
-//
-// Revision 1.27  1998/10/19 12:42:14  cyp
-// win16 changes
-//
-// Revision 1.26  1998/10/11 00:36:38  cyp
-// include "w32pre.h" for win32
-//
-// Revision 1.25  1998/10/06 15:08:27  blast
-// changed some AmigaOS includes...
-//
-// Revision 1.24  1998/10/04 01:30:54  silby
-// Removed direct references to platforms/win32cli (makefile handles them)
-//
-// Revision 1.23  1998/10/03 03:47:01  cyp
-// added 3 local header files (w32svc, w32cons, lurk) to the win32 section
-// and 2 header files to os2 (os2inst, lurk)
-//
-// Revision 1.22  1998/09/30 08:12:32  snake
-// Removed NASM stuff for BSD/OS, nasm does not support the a.out format of
-// BSD/OS.
-//
-// Revision 1.21  1998/09/30 07:41:05  snake
-// BSD/OS also needs <errno.h>, maybe we should include it for all BSD 
-// like OS's
-//
-// Revision 1.20  1998/09/29 23:14:19  silby
-// Fix for the syntax of the last fix. :)
-//
-// Revision 1.19  1998/09/29 23:11:25  silby
-// Change for freebsd (errno.h)
-//
-// Revision 1.18  1998/09/28 21:04:03  remi
-// Added #include <errno.h> for Linux/glibc2.
-//
-// Revision 1.17  1998/09/25 11:31:14  chrisb
-// Added stuff to support 3 cores in the ARM clients.
-//
-// Revision 1.16  1998/09/20 15:21:56  blast
-// AmigaOS changes (added lines somebody cut out before .. grrr)
-//
-// Revision 1.15  1998/09/07 18:22:51  blast
-// Added fcntl.h for AmigaOS
-//
-// Revision 1.14  1998/08/05 15:29:41  cyruspatel
-// Added <ctype.h>
-//
-// Revision 1.13  1998/08/02 03:16:16  silby
-// Major reorganization: Log,LogScreen, and LogScreenf are now in
-// logging.cpp, and are global functions - client.h #includes
-// logging.h, which is all you need to use those functions.  Lurk
-// handling has been added into the Lurk class, which resides in
-// lurk.cpp, and is auto-included by client.h if lurk is defined as
-// well. baseincs.h has had lurk-specific win32 includes moved to
-// lurk.cpp, cliconfig.cpp has been modified to reflect the changes to
-// log/logscreen/logscreenf, and mail.cpp uses logscreen now, instead
-// of printf. client.cpp has had variable names changed as well, etc.
-//
-// Revision 1.12  1998/07/29 05:14:31  silby
-// Changes to win32 so that LurkInitiateConnection now works -
-// required the addition of a new .ini key connectionname=.  Username
-// and password are automatically retrieved based on the
-// connectionname.
-//
-// Revision 1.11  1998/07/29 03:21:24  silby
-// Added changes for win32 lurk (more needed functions)
-//
-// Revision 1.10 1998/07/25 06:31:37 silby Added lurk functions to
-// initiate a connection and hangup a connection.  win32 hangup is
-// functional.
-//
-// Revision 1.9  1998/07/16 21:47:56  nordquist
-// More DYNIX port changes.
-//
-// Revision 1.8  1998/07/16 21:23:01  nordquist
-// More DYNIX port changes.
-//
-// Revision 1.7  1998/07/15 05:47:42  ziggyb
-// added io.h for Watcom, which has some IO functions not in stdio.h
-//
-// Revision 1.6  1998/07/13 12:40:23  kbracey
-// RISC OS update. Added -noquiet option.
-//
-// Revision 1.5  1998/07/13 00:37:25  silby
-// Changes to make MMX_BITSLICE client buildable on freebsd
-//
-// Revision 1.4  1998/07/12 13:05:11  cyruspatel
-// NetWare changes.
-//
-// Revision 1.3  1998/07/08 05:19:16  jlawson
-// updates to get Borland C++ to compile under Win32.
-//
-// Revision 1.2  1998/07/07 23:05:20  jlawson
-// added time includes for Linux (probably will be needed for others)
-//
-// Revision 1.1  1998/07/07 21:55:01  cyruspatel
-// client.h has been split into client.h and baseincs.h 
-//
+
+// Synchronized with official 1.30
 
 #ifndef __BASEINCS_H__
 #define __BASEINCS_H__
@@ -204,8 +93,7 @@ extern "C" {
   #else
   #include <windows.h>
   #include "w32sock.h"
-  #endif
-  #include <sys/timeb.h>
+  #endif  #include <sys/timeb.h>
   #include <process.h>
   #include <conio.h>
   #include <share.h>
