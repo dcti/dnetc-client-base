@@ -5,7 +5,18 @@ Any other distribution or use of this source violates copyright.
 Bugs Listing
   This is a text file that lists any bugs that have been found by either
   the coders, or by users.
- 
+
+1998/Sep/29 - Remi Guyomarch
+  There is a confusion between httpport and port in network.cpp. If
+  the user configure httpport to 8080 (or something else),
+  Network::LowLevelPut() will send :
+  POST http://someproxy.at.d.net.or.elsewhere:8080/cgi-bin/rc5.cgi
+                                              ^^^^
+  even if the keyproxy port should be 80 (is there any full proxy which
+  listen to other ports in http mode ?).
+  I'm not sure what is the fallback logic in Network::Open() and
+  Network::Put()...
+
 1998/Aug/24 - Cyrus Patel
   Win32 (gui only?) 417: (a) the client is not following the ini's path if 
   one has been specified on the command line. (b) the client is writing 
