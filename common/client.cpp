@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.7 1999/06/08 18:42:44 nsayer Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.8 1999/06/10 18:15:42 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -509,10 +509,11 @@ int main( int argc, char *argv[] )
   #else //SPT_TYPE == SPT_CHANGEARGV (mach) || SPT_NONE (OS_DGUX|OS_DYNIX)
         //|| SPT_REUSEARGV (the rest)
   /* [Net|Free|Open|BSD[i]] are of type SPT_BUILTIN, ie use setproctitle() 
-     but that is only a wrapper for SPT_PSSTRINGS (see above) which makes it 
-     useless for our purposes: ps will show "filename:rc5des (filename)", so 
-     we may as well stick with "rc5des (filename)". FreeBSD could use 
-     strcpy(__progname, defname) and so skip the exec(), but oh, well.
+     which is a stupid smart-wrapper for SPT_PSSTRINGS (see above). The result
+     is exactly the same as when we reexec(): ps will show "rc5des (filename)"
+     so we gain nothing other than avoiding the exec() call, but the way /we/ 
+     would use it is non-standard, so we'd better leave it be:
+     __progname = defname; setproctitle(NULL); //uses default, ie __progname
   */
   #if (CLIENT_OS != OS_FREEBSD) && (CLIENT_OS != OS_NETBSD) && \
       (CLIENT_OS != OS_BSDOS) && (CLIENT_OS != OS_OPENBSD) && \
@@ -562,11 +563,11 @@ int main( int argc, char *argv[] )
         strncpy( &buffer[7], argv[0], sizeof(buffer)-7 );
         buffer[sizeof(buffer)-5]='\0';
         strcat( buffer, ".ini" );
-#if (CLIENT_OS != OS_SOLARIS)
-        setenv("RC5INI", &buffer[7], 1 );
-#else
-        putenv( buffer );
-#endif
+        #if (CLIENT_OS == OS_SOLARIS)
+        putenv( buffer );                 //BSD4.3
+        #else
+        setenv("RC5INI", &buffer[7], 1 ); //SYSV7 and posix
+        #endif
       }
     }
       
