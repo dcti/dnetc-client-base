@@ -6,6 +6,9 @@
 ##                       or anything else defined at the end of this makefile
 ##
 ## $Log: makefile.wat,v $
+## Revision 1.18  1998/07/12 08:41:34  ziggyb
+## oops, typed it wrong, it really puts cliident.obj in the LINKOBJs this time
+##
 ## Revision 1.17  1998/07/12 08:29:25  ziggyb
 ## Added cliident.cpp to the path and MMX core changes
 ##
@@ -81,7 +84,7 @@
 ## Import 5/23/98 client tree
 ## 
 
-## $Id: makefile.wat,v 1.17 1998/07/12 08:29:25 ziggyb Exp $
+## $Id: makefile.wat,v 1.18 1998/07/12 08:41:34 ziggyb Exp $
 
 CC=wpp386
 CCASM=wasm
@@ -104,7 +107,7 @@ LINK=wlink
             output\scram.obj output\des-x86.obj output\convdes.obj &
             output\clitime.obj output\clicdata.obj output\clirate.obj &
             output\clisrate.obj output\cpucheck.obj output\pathwork.obj &
-            output\des-slice-meggs.obj output\des-slice-meggs.obj 
+            output\des-slice-meggs.obj output\cliident.obj
  
             # this list can be added to in the platform specific section
 
