@@ -16,7 +16,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.17.2.10 2000/03/09 21:43:21 jlawson Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.17.2.11 2000/03/28 00:12:05 andreasb Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -26,6 +26,7 @@ return "@(#)$Id: cliident.cpp,v 1.17.2.10 2000/03/09 21:43:21 jlawson Exp $"; }
 #include "buffupd.h"
 #include "client.h"
 #include "buffbase.h"
+#include "buffshim.h"
 #include "ccoreio.h"
 #include "checkpt.h"
 #include "clicdata.h"
@@ -72,6 +73,7 @@ static const char *h_ident_table[] =
   (const char *)__BENCH_H__,
   (const char *)__BUFFUPD_H__,
   (const char *)__BUFFBASE_H__,
+  (const char *)__BUFFSHIM_H__,
   (const char *)__CHECKPT_H__,
   (const char *)__CCOREIO_H__,
   (const char *)__CLICDATA_H__,
@@ -118,7 +120,7 @@ extern const char *base64_cpp(void);
 extern const char *bench_cpp(void);
 extern const char *buffbase_cpp(void);
 extern const char *buffupd_cpp(void);
-extern const char *buffwork_cpp(void);
+extern const char *buffpriv_cpp(void);
 extern const char *checkpt_cpp(void);
 extern const char *clicdata_cpp(void);
 extern const char *client_cpp(void);
@@ -163,7 +165,7 @@ static const char * (*ident_table[])() =
   bench_cpp,
   buffbase_cpp,
   buffupd_cpp,
-  buffwork_cpp,
+  buffpriv_cpp,
   checkpt_cpp,
   clicdata_cpp,
   client_cpp,

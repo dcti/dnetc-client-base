@@ -4,12 +4,16 @@
  * Any other distribution or use of this source violates copyright.
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
-*/
+ * ---------------------------------------------------------------------
+ * Simple public versions of private functions with the same name, 
+ * for use in the public-source code distributions.
+ * ---------------------------------------------------------------------
+ */
 
-const char *buffwork_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.1.2.1 2000/03/10 03:05:50 jlawson Exp $"; }
+const char *buffpriv_cpp(void) {
+return "@(#)$Id: buffpub.cpp,v 1.1.2.2 2000/03/28 00:12:06 andreasb Exp $"; }
 const char *buffupd_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.1.2.1 2000/03/10 03:05:50 jlawson Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.1.2.2 2000/03/28 00:12:06 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
