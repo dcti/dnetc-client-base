@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff-conflict.cpp,v $
+// Revision 1.24  1998/12/29 20:59:41  silby
+// Removed guistuff.h.
+//
 // Revision 1.23  1998/12/08 05:46:15  dicamillo
 // Add MacOS as a client that doesn't support ftruncate.
 //
@@ -89,7 +92,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.23 1998/12/08 05:46:15 dicamillo Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.24 1998/12/29 20:59:41 silby Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -103,7 +106,6 @@ return "@(#)$Id: logstuff-conflict.cpp,v 1.23 1998/12/08 05:46:15 dicamillo Exp 
 #include "problem.h"   // needed for logscreenpercent
 #include "cmpidefs.h"  // strcmpi()
 #include "console.h"   // for ConOut() and ConIsScreen()
-#include "guistuff.h"  // Hooks for the GUIs
 #include "triggers.h"  // don't print percbar if pause/exit/restart triggered
 #include "logstuff.h"  // keep the prototypes in sync
 
