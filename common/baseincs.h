@@ -5,13 +5,23 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.37 2000/06/28 15:16:44 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.38 2000/06/30 19:39:26 jlawson Exp $"
 
 #include "cputypes.h"
 
-// Some environments include old system headers that are not safe for direct
-// inclusion within C++ programs and need to be explicitly wrapped with extern.
-extern "C" {
+// ------------------
+
+#ifdef UNSAFEHEADERS
+  // Some environments include old system headers that are not safe for
+  // direct inclusion within C++ programs and need to be explicitly
+  // wrapped with extern.  However, this should not be unconditionally
+  // done for all platforms, since some platform headers intentionally
+  // try to prototype C++ versions of functions
+  extern "C" {
+#endif
+
+// ------------------
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -27,7 +37,6 @@ extern "C" {
 #if defined(__unix__)
   #include <sys/utsname.h> /* uname() */
 #endif
-} /* extern "C" */
 
 // ------------------
 
@@ -75,7 +84,6 @@ extern "C" {
   #include <sys/unistd.h>
   #include <fcntl.h>
 #elif (CLIENT_OS == OS_RISCOS)
-  extern "C" {
   #include <sys/fcntl.h>
   #include <unistd.h>
   #include <stdarg.h>
@@ -97,7 +105,6 @@ extern "C" {
   #define fileno(f) ((f)->__file)
   #define isatty(f) ((f) == 0)
   #define tzset() /* nothing */
-  } /* extern "C" */
   extern s32 guiriscos, guirestart;
   extern int riscos_in_taskwindow;
 #elif (CLIENT_OS == OS_VMS)
@@ -180,7 +187,7 @@ extern "C" {
   #include <nwfile.h> //sopen()
   #include <fcntl.h> //O_... constants
   #include "platforms/netware/netware.h" //for stuff in netware.cpp
-#elif (CLIENT_OS == OS_SUNOS) 
+#elif (CLIENT_OS == OS_SUNOS)
   #include <fcntl.h>
   #include <unistd.h>
   #include <stdlib.h>
@@ -201,10 +208,10 @@ extern "C" {
   extern "C" int nice(int);
   extern "C" int gethostname(char *, int);
 #elif (CLIENT_OS == OS_AIX)
-  #include <unistd.h>		// nice()
-  #include <strings.h>		// bzero(), strcase...,
-  #include <sys/select.h>	// fd_set on AIX 4.1
-// clock_gettime is called getclock (used in clitime.cpp)
+  #include <unistd.h>   // nice()
+  #include <strings.h>    // bzero(), strcase...,
+  #include <sys/select.h> // fd_set on AIX 4.1
+  // clock_gettime is called getclock (used in clitime.cpp)
   #define clock_gettime(a,b) (getclock(a,b))
 #elif (CLIENT_OS == OS_LINUX)
   #include <sys/time.h>
@@ -226,7 +233,7 @@ extern "C" {
   #include <sys/time.h>
   #include <sys/sysctl.h>
   #include <unistd.h>
-#elif (CLIENT_OS == OS_FREEBSD)  
+#elif (CLIENT_OS == OS_FREEBSD)
   #include <sys/time.h>
   #include <unistd.h>
   #include <sys/param.h>
@@ -285,5 +292,13 @@ extern "C" {
   extern "C" int sleep(unsigned int seconds);
   extern "C" int usleep(unsigned int useconds);
 #endif
+
+// ------------------
+
+#ifdef UNSAFEHEADERS
+} // End the extern needed to handle unsafe system headers.
+#endif
+
+// ------------------
 
 #endif /* __BASEINCS_H__ */
