@@ -1915,20 +1915,25 @@ PreferredIsDone1:
 					 tmpmode = 0;
 					 if(connectstatus != tmpmode)    // No connection
 						 {
-						 Log("TCP/IP Connection Disconnected - Offline Mode\n");
+						 Log("TCP/IP Connection Disconnected");
 						 connectstatus = tmpmode;
 						 if(lurk == 2)
+							 {
+							 Log(" - Offline Mode");
 							 offlinemode = 1;
+							 }
+						 Log("\n");
 						 }
 					 }
 				 else if(netstat[index])
 					 {
 					 tmpmode = 1;
+					 connectrequested = 2;     // update blocks in all cases
 					 if(connectstatus != tmpmode)
 						 {
-						 Log("TCP/IP Connection Detected - Updating Buffers\n");
+						 // Only put out message the first time.
+						 Log("TCP/IP Connection Detected\n");
 						 connectstatus = tmpmode;
-						 connectrequested = 2;     // update blocks.
 						 if(lurk == 2)
 							 offlinemode = 0;
 
