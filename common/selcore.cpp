@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.89 2001/01/16 18:53:37 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.90 2001/01/17 00:21:24 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -30,11 +30,7 @@ return "@(#)$Id: selcore.cpp,v 1.47.2.89 2001/01/16 18:53:37 cyp Exp $"; }
 #include <sys/types.h>
 #include <sys/mman.h>
 extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
-#if (CLIENT_OS == OS_LINUX)
-  static int x86_smc_initialized = +1;
-#else  
-  static int x86_smc_initialized = -1;
-#endif  
+static int x86_smc_initialized = -1;
 #endif
 
 /* ------------------------------------------------------------------------ */
@@ -46,7 +42,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
    they are different from their predecessor(s). If only one core,
    use the obvious "MIPS optimized" or similar.
   */
-  #define LARGEST_SUBLIST 8 /* including the terminating null */
+  #define LARGEST_SUBLIST 9 /* including the terminating null */
   static const char *corenames_table[CONTEST_COUNT][LARGEST_SUBLIST]= 
   #undef LARGEST_SUBLIST
   /* ================================================================== */
@@ -56,23 +52,20 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       /* we should be using names that tell us how the cores are different
          (just like "bryd" and "movzx bryd")
       */
-      "RG/BRF class 5",    /* P5/Am486 - may become P5MMX at runtime*/
-      "RG class 3/4",      /* 386/486 - may become SMC at runtime */
-      "RG class 6",        /* PPro/II/III */
-      "RG re-pair I",      /* Cyrix 486/6x86[MX]/MI */
-      "RG RISC-rotate I",  /* K5 */
-      "RG RISC-rotate II", /* K6 - may become mmx-k6-2 core at runtime */
-      #if !defined(HAVE_NO_NASM)
-      "RG/HB re-pair II",  /* K7 Athlon and Cx-MII, based on Cx re-pair */
-      #endif
+      "RG/BRF class 5",        /* 0. P5/Am486 - may become P5MMX at runtime*/
+      "RG class 3/4",          /* 1. 386/486 */
+      "RG class 6",            /* 2. PPro/II/III */
+      "RG re-pair I",          /* 3. Cyrix 486/6x86[MX]/MI */
+      "RG RISC-rotate I",      /* 4. K5 */
+      "RG RISC-rotate II",     /* 5. K6 - may become mmx-k6-2 core at runtime */
+      "RG/HB re-pair II",      /* 6. K7 Athlon and Cx-MII, based on Cx re-pair */
+      "RG/BRF self-modifying", /* 7. SMC */
       NULL
     },
     { /* DES */
       "byte Bryd",
       "movzx Bryd",
-      #if defined(MMX_BITSLICER) || defined(CLIENT_SUPPORTS_SMP) 
       "Kwan/Bitslice", /* may become MMX bitslice at runtime */
-      #endif
       NULL
     },
     { /* OGR */
@@ -143,9 +136,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       #define NUM_CORE_OGR 1		/* PowerPC defaults to one core */  
       /* lintilla depends on allitnil, and since we need both even on OS's 
          that don't support the 601, we may as well "support" them visually.
-         On POWER/PowerPC hybrid clients ("_AIXALL"), running on a POWER
-         CPU, core #0 becomes "RG AIXALL", and cores #1 and #2 disappear.
-       */
+      */
       "allitnil",
       "lintilla",
       "lintilla-604", /* Roberto Ragusa's core optimized for PPC 604e */
@@ -194,16 +185,10 @@ static const char **__corenames_for_contest( unsigned int cont_i )
   };
   /* ================================================================== */
 
-
   static int fixed_up = -1;
   if (fixed_up < 0)
   {
-    #if (CLIENT_CPU == CPU_ARM)
-    {
-      corenames_table[CSC][0] = "1 key - called";
-      corenames_table[CSC][1] = NULL;
-    }
-    #elif (CLIENT_CPU == CPU_X86)
+    #if (CLIENT_CPU == CPU_X86)
     {
       long det = GetProcessorType(1);
       #ifdef SMC /* actually only for the first thread */
@@ -216,8 +201,6 @@ static const char **__corenames_for_contest( unsigned int cont_i )
         else  
           x86_smc_initialized = 0;
       }      
-      if (x86_smc_initialized > 0)
-        corenames_table[RC5][1] = "RG self-modifying";
       #endif
       if (det >= 0 && (det & 0x100)!=0) /* ismmx */
       {
@@ -260,6 +243,85 @@ static const char **__corenames_for_contest( unsigned int cont_i )
   }
   return ((const char **)0);
 }  
+
+/* -------------------------------------------------------------------- */
+
+/* 
+** Apply substition according to the same rules enforced by
+** selcoreSelectCore() [ie, return the cindex of the core actually used
+** after applying appropriate OS/architecture/#define limitations to
+** ensure the client doesn't crash]
+**
+** This is necessary when the list of cores is a superset of the
+** cores supported by a particular build. For example, all x86 clients
+** display the same core list for RC5, but as not all cores may be 
+** available by a particular client/build, this function maps 
+** between the ones that aren't available to the next best ones that are.
+**
+** Note that we intentionally don't do very intensive validation here. Thats
+** selcoreGetSelectedCoreForContest()'s job when the user chooses to let
+** the client auto-select. If the user has explicitely specified a core #, 
+** they have to live with the possibility that the choice will at some point
+** no longer be optimal.
+*/
+static int __apply_selcore_substitution_rules(unsigned int contestid, 
+                                              int cindex)
+{
+  contestid = contestid; /* possibly unused */
+  
+  #if (CLIENT_CPU == CPU_ARM)
+  if (contestid == CSC)
+  {
+    if (cindex != 0) /* "1 key - called" */
+      return 0;      /* the only supported core */
+  }
+  #elif (CLIENT_CPU == CPU_68K)
+  // only make available ogr cores <= current cpu
+  // (e.g. since the 060 compiled core will crash an 020)
+  if (contestid == OGR)
+  {
+    long det = GetProcessorType(1);
+    int max = 0;
+    switch (det)
+    {
+      case 68000: max = 0; break;
+      case 68020: max = 1; break;
+      case 68030: max = 2; break;
+      case 68040: max = 3; break;
+      default:    max = idx;
+    }
+    if (cindex > max)
+      return max;
+  }    
+  #elif (CLIENT_CPU == CPU_X86)
+  if (contestid == RC5)
+  {
+    if (cindex == 7) /* SMC */
+    {
+      #if defined(SMC)
+      if (x86_smc_initialized <= 0)
+      #endif
+        return 1; /* 386/486 */
+    }    
+    else if (cindex == 6) /* "RG/HB re-pair II" */ 
+    {
+      #if defined(HAVE_NO_NASM)
+      return 3; /* "RG/HB re-pair II" */
+      #endif
+    }  
+  }
+  else if (contestid == DES)
+  {
+    if (cindex == 2) /* Kwan/Bitslice or MMX/Bitslice */
+    {
+      #if !(defined(MMX_BITSLICER) || defined(CLIENT_SUPPORTS_SMP))
+      cindex = 0;
+      #endif
+    }  
+  }
+  #endif         
+  return cindex;
+}
 
 /* -------------------------------------------------------------------- */
 
@@ -341,30 +403,9 @@ int selcoreValidateCoreIndex( unsigned int cont_i, int idx )
 {
   if (idx >= 0 && idx < ((int)__corecount_for_contest( cont_i )))
   {
-    #if defined(HAVE_OGR_CORES)
-      #if (CLIENT_CPU == CPU_68K)
-      // only make available ogr cores <= current cpu
-      // (e.g. since the 060 compiled core will crash an 020)
-      if (cont_i == OGR)
-      {
-        long det = GetProcessorType(1);
-        int max;
-        switch (det)
-        {
-          case 68000: max = 0; break;
-          case 68020: max = 1; break;
-          case 68030: max = 2; break;
-          case 68040: max = 3; break;
-          default:    max = idx;
-        }
-        if (idx > max)
-          idx = -1;  // invalidate user selection (auto-detect instead)
-      }
-      #endif
-    #endif
-
-    return idx;
-  }
+    if (idx == __apply_selcore_substitution_rules(cont_i, idx))
+      return idx;
+  }  
   return -1;
 }
 
@@ -410,8 +451,12 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
     for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
     {
       int idx = 0;
-      if (__corecount_for_contest( cont_i ) > 1)
-        idx = selcoreValidateCoreIndex( cont_i, coretypes[cont_i] );
+      if (__corecount_for_contest( cont_i ) > 0)
+      {
+        idx = coretypes[cont_i];
+        if (idx < 0 || idx >= ((int)__corecount_for_contest( cont_i )))
+          idx = -1;
+      }      
       if (!initialized || idx != selcorestatics.user_cputype[cont_i])
         selcorestatics.corenum[cont_i] = -1; /* got change */
       selcorestatics.user_cputype[cont_i] = idx;
@@ -424,6 +469,7 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
 }  
 
 /* ---------------------------------------------------------------------- */
+
 #if (CLIENT_OS == OS_AIX )
 jmp_buf context;
 
@@ -449,29 +495,33 @@ static long __bench_or_test( int which,
     /* save current state */
     int user_cputype = selcorestatics.user_cputype[cont_i]; 
     int corenum = selcorestatics.corenum[cont_i];
-    unsigned int coreidx, corecount = __corecount_for_contest( cont_i );
+    int coreidx, corecount = __corecount_for_contest( cont_i );
 
     rc = 0; /* assume nothing done */
     for (coreidx = 0; coreidx < corecount; coreidx++)
     {
-      selcorestatics.user_cputype[cont_i] = coreidx; /* as if user set it */
-      selcorestatics.corenum[cont_i] = -1; /* reset to show name */
-
-      #if (CLIENT_OS == OS_AIX)
-      if (setjmp(context)) /* setjump will return true if coming from the handler */
-      { 
-	LogScreen("Error: Core #%i does not work for this system.\n", coreidx);
-      } 
-      else 
-      #endif
+      /* only bench/test cores that won't be automatically substituted */
+      if (__apply_selcore_substitution_rules(cont_i, coreidx) == coreidx)
       {
-        if (which == 's') /* selftest */
-          rc = SelfTest( cont_i );
+        selcorestatics.user_cputype[cont_i] = coreidx; /* as if user set it */
+        selcorestatics.corenum[cont_i] = -1; /* reset to show name */
+
+        #if (CLIENT_OS == OS_AIX)
+        if (setjmp(context)) /* setjump will return true if coming from the handler */
+        { 
+          LogScreen("Error: Core #%i does not work for this system.\n", coreidx);
+        } 
         else 
-          rc = TBenchmark( cont_i, benchsecs, 0 );
-        if (rc <= 0) /* failed (<0) or not supported (0) */
-          break; /* stop */
-      }
+        #endif
+        {
+          if (which == 's') /* selftest */
+            rc = SelfTest( cont_i );
+          else 
+            rc = TBenchmark( cont_i, benchsecs, 0 );
+          if (rc <= 0) /* failed (<0) or not supported (0) */
+            break; /* stop */
+        }
+      }  
     } /* for (coreidx = 0; coreidx < corecount; coreidx++) */
 
     selcorestatics.user_cputype[cont_i] = user_cputype; 
@@ -699,38 +749,47 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         if (detected_type >= 0)
         {
           int cindex = -1; 
+          int have_smc = 0;
+          #if defined(SMC)
+          have_smc = (x86_smc_initialized > 0);
+          #endif
           switch ( detected_type & 0xff )
           {
             case 0x00: cindex = 0; break; // P5 ("RG/BRF class 5")
-            #if !defined(HAVE_NO_NASM)
-            case 0x01: cindex = 6; break; // 386/486 ("RG/HB re-pair II") (#1939)
-            #else
-            case 0x01: cindex = 1; break; // 386/486 ("RG class 3/4")
-            #endif
+            case 0x01:                    // 386/486
+            {
+              cindex = 1; // 386/486 ("RG class 3/4")
+              #if !defined(HAVE_NO_NASM)
+              cindex = 6; // 386/486 ("RG/HB re-pair II") (#1939)
+              #endif
+              if (have_smc)
+                cindex = 7; // 386/486 uses SMC if avail (bug #99)
+              break;
+            }    
             case 0x02: cindex = 2; break; // PII/PIII ("RG class 6")
             case 0x03: cindex = 3; break; // Cx6x86/MII ("RG re-pair I") (#1913)
             case 0x04: cindex = 4; break; // K5 ("RG RISC-rotate I")
             case 0x05: cindex = 5; break; // K6/K6-2/K6-3 ("RG RISC-rotate II")
             case 0x06:                    // cx486
             {
+              cindex = 3; // ("RG re-pair I") (bug #804)
               #if !defined(HAVE_NO_NASM)
-              cindex = 6; // cx486 uses "RG/HB re-pair II" if avail
-              #else 
-              cindex = 3; // cx486 else core 3. (bug #804)
+              cindex = 6; // ("RG/HB re-pair II") if avail
               #endif
-              #if defined(SMC)
-              if (x86_smc_initialized > 0)
-                cindex = 1; // cx486 uses SMC if avail (bug #99)
-              #endif
+              if (have_smc)
+                cindex = 7; // SMC (bug #99)
               break;
             }    
             case 0x07: cindex = 2; break; // Celeron
             case 0x08: cindex = 2; break; // PPro
-            #if !defined(HAVE_NO_NASM)
-            case 0x09: cindex = 6; break; // AMD>=K7/Cx>MII ("RG/HB re-pair II")
-            #else
-            case 0x09: cindex = 3; break; // AMD>=K7/Cx>MII ("RG re-pair I")
-            #endif
+            case 0x09:                    // AMD>=K7/Cx>MII
+            {
+              cindex = 3; // ("RG re-pair I")
+              #if !defined(HAVE_NO_NASM)
+              cindex = 6; //  ("RG/HB re-pair II")
+              #endif
+              break;
+            }  
             case 0x0A: cindex = 1; break; // Centaur C6
             //no default
           }
@@ -841,7 +900,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       if (detected_type == 0x810 ||  /* ARM 810 */
           detected_type == 0xA10 ||  /* StrongARM 110 */
           detected_type == 0x200 ||  /* ARM 2 */
-	  detected_type == 0x250)    /* ARM 250 */
+          detected_type == 0x250)    /* ARM 250 */
         cindex = 1;
       else /* "ARM 3, 610, 700, 7500, 7500FE" or  "ARM 710" */
         cindex = 0;
@@ -864,24 +923,29 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 
       for (whichcrunch = 0; whichcrunch < corecount; whichcrunch++)
       {
-        long rate;
-        selcorestatics.corenum[contestid] = whichcrunch;
-        if (!saidmsg)
-        {
-          LogScreen("%s: Running micro-bench to select fastest core...\n", 
-                    contname);
-          saidmsg = 1;
-        }                                
-        if ((rate = TBenchmark( contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK )) > 0)
-        {
-#ifdef DEBUG
-          LogScreen("%s Core %d: %d keys/sec\n", contname,whichcrunch,rate);
-#endif
-          if (fastestcrunch < 0 || ((unsigned long)rate) > fasttime)
+        /* test only if not substituted */
+        if (whichcrunch == __apply_selcore_substitution_rules(contestid, 
+                                                              whichcrunch))
+        {                                                              
+          long rate;
+          selcorestatics.corenum[contestid] = whichcrunch;
+          if (!saidmsg)
           {
-            fasttime = rate;
-            fastestcrunch = whichcrunch; 
-          }
+            LogScreen("%s: Running micro-bench to select fastest core...\n", 
+                      contname);
+            saidmsg = 1;
+          }                                
+          if ((rate = TBenchmark( contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK )) > 0)
+          {
+#ifdef DEBUG
+            LogScreen("%s Core %d: %d keys/sec\n", contname,whichcrunch,rate);
+#endif
+            if (fastestcrunch < 0 || ((unsigned long)rate) > fasttime)
+            {
+              fasttime = rate;
+              fastestcrunch = whichcrunch; 
+            }
+          }  
         }
       }
 
@@ -891,13 +955,35 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     }
   }
 
-  if (selcorestatics.corenum[contestid] >= 0 && !corename_printed)
-  {  
-    Log("%s: using core #%d (%s).\n", contname, 
-         selcorestatics.corenum[contestid], 
-         selcoreGetDisplayName(contestid, selcorestatics.corenum[contestid]) );
-  }
-  
+  if (selcorestatics.corenum[contestid] >= 0) /* didn't fail */
+  { 
+    /* 
+    ** substitution according to real selcoreSelectCore() rules
+    ** Returns original if no substitution occurred.
+    */ 
+    int override = __apply_selcore_substitution_rules(contestid, 
+                                       selcorestatics.corenum[contestid]);
+    if (!corename_printed)
+    {
+      if (override != selcorestatics.corenum[contestid])
+      {
+        Log("%s: selected core #%d (%s)\n"
+            "     is not supported by this client/OS/architecture.\n"
+            "     Using core #%d (%s) instead.\n", contname, 
+                 selcorestatics.corenum[contestid], 
+                 selcoreGetDisplayName(contestid, selcorestatics.corenum[contestid]),
+                 override, selcoreGetDisplayName(contestid, override) );
+      }
+      else               
+      {
+       Log("%s: using core #%d (%s).\n", contname, 
+           selcorestatics.corenum[contestid], 
+           selcoreGetDisplayName(contestid, selcorestatics.corenum[contestid]) );
+      }      
+    }  
+    selcorestatics.corenum[contestid] = override;
+  }  
+
   return selcorestatics.corenum[contestid];
 }
 
@@ -1330,49 +1416,58 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       pipeline_count = 2; /* most cases */
       switch( coresel )
       {
-      case 1: // Intel 386/486
-        unit_func.rc5 = rc5_unit_func_486;
-        #if defined(SMC) 
-        if (x86_smc_initialized > 0 && 
-           threadindex == 0) /* first thread or benchmark/test */
-          unit_func.rc5 =  rc5_unit_func_486_smc;
-        #endif
-        break;
-      case 2: // Ppro/PII
-        unit_func.rc5 = rc5_unit_func_p6;
-        break;
-      case 3: // 6x86(mx)
-        unit_func.rc5 = rc5_unit_func_6x86;
-        break;
-      case 4: // K5
-        unit_func.rc5 = rc5_unit_func_k5;
-        break;
-      case 5: // K6/K6-2
-        unit_func.rc5 = rc5_unit_func_k6;
-        #if 0 //!defined(HAVE_NO_NASM) //rc5mmx-k6-2.asm fails test
-        if (ismmx)
-        { 
-          unit_func.rc5 = rc5_unit_func_k6_mmx;
-          pipeline_count = 4;
-        }
-        #endif
-        break;
-      #if !defined(HAVE_NO_NASM)
-      case 6: // K7
-        unit_func.rc5 = rc5_unit_func_k7;
-	      break;
-      #endif
-      default: // Pentium (0) + others
-        unit_func.rc5 = rc5_unit_func_p5;
-        #if !defined(HAVE_NO_NASM)
-        if (ismmx)
-        { 
-          unit_func.rc5 = rc5_unit_func_p5_mmx;
-          pipeline_count = 4; // RC5 MMX core is 4 pipelines
-        }
-        #endif
-        coresel = 0;
-      }
+        case 0: // Pentium
+          unit_func.rc5 = rc5_unit_func_p5;
+          #if !defined(HAVE_NO_NASM)
+          if (ismmx)
+          { 
+            unit_func.rc5 = rc5_unit_func_p5_mmx;
+            pipeline_count = 4; // RC5 MMX core is 4 pipelines
+          }
+          #endif
+          break;
+        case 1: // Intel 386/486
+          unit_func.rc5 = rc5_unit_func_486;
+          break;
+        case 2: // Ppro/PII
+          unit_func.rc5 = rc5_unit_func_p6;
+          break;
+        case 3: // 6x86(mx)
+          unit_func.rc5 = rc5_unit_func_6x86;
+          break;
+        case 4: // K5
+          unit_func.rc5 = rc5_unit_func_k5;
+          break;
+        case 5: // K6/K6-2
+          unit_func.rc5 = rc5_unit_func_k6;
+          #if 0 //!defined(HAVE_NO_NASM) //rc5mmx-k6-2.asm fails test
+          if (ismmx)
+          { 
+            unit_func.rc5 = rc5_unit_func_k6_mmx;
+            pipeline_count = 4;
+          }
+          #endif
+          break;
+        case 6: // K7
+          unit_func.rc5 = rc5_unit_func_6x86; /* K7 core is based on 6x86 core */
+          #if !defined(HAVE_NO_NASM)
+          unit_func.rc5 = rc5_unit_func_k7;
+          #endif
+  	      break;
+        case 7: // SMC
+          unit_func.rc5 = rc5_unit_func_486;
+          #if defined(SMC)  /* first thread or benchmark/test */
+          if (x86_smc_initialized > 0 && threadindex == 0)
+            unit_func.rc5 = rc5_unit_func_486_smc;
+          #endif
+          break;
+        default: // hmm!
+        {
+          unit_func.rc5 = rc5_unit_func_p5;
+          coresel = 0;
+          break;
+        }  
+      } /* switch */
     }
     #elif (CLIENT_CPU == CPU_ALPHA)
     {
