@@ -11,6 +11,6 @@ Bugs Listing
            K6-200 using the same CPU core. I've tried taking out the new
            CLI code and playing with the link order with no avail. Me and Daa
            are guessing that it could be the new timing code.
-  New Bug: The X key no longer works on Watcom compiles. It will display the
+  FIXED!!: The X key no longer works on Watcom compiles. It will display the
            message that it will quit after the next block is completed but,
            it just keeps going.
