@@ -1,84 +1,92 @@
-/*
-  INI file reading/processing class for C++
+// Copyright distributed.net 1997-1999 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+//
+// ----------------------------------------------------------------------
+// INI file reading/processing class for C++.
+// Created by Jeff Lawson.
+// ----------------------------------------------------------------------
+//
+// $Log: iniread.cpp,v $
+// Revision 1.20  1999/01/29 19:18:46  jlawson
+// fixed formatting.  changed some int vars to bool.
+//
+// Revision 1.19  1999/01/28 00:51:50  cyp
+// fixed end of string check in IniString == operator.
+//
+// Revision 1.18  1999/01/27 22:52:36  silby
+// Reverted back to pre-ANSIfication.  ANSIficiation
+// is all great, but it didn't work under
+// MSVC, Watcom, or egcs after the changes.
+// (Minor problem.)
+// 
+// Revision 1.17  1999/01/27 17:41:47  cyp
+// ANSIfied (cleaned up clib/os specific stuff)
+// 
+// Revision 1.16  1999/01/27 02:15:55  jlawson
+// corrected return value checks
+// 
+// Revision 1.15  1999/01/27 00:55:26  jlawson
+// committed iniread from proxy again.  now uses INIREAD_SINGLEVALUE and
+// new INIREAD_WIN32_LIKE for client compiles.  the win32-like interface
+// functions all end with B, rather than A, since the global-namespace
+// is already used by the A versions in msvc.
+// 
+// Revision 1.11  1999/01/26 06:56:44  jlawson
+// added changes to allow SINGLEINIVALUE to be defined, which allows
+// iniread to parse an ini file, but without splitting each ini key
+// by commas into an IniStringList.
+// 
+// Revision 1.10  1999/01/22 09:26:38  jlawson
+// quoted values that have their closing quote in the middle with
+// trailing garbage before the next separator/eol, will now have
+// the garbage discarded.
+// 
+// Revision 1.9  1999/01/22 08:56:30  jlawson
+// added parsing for double-quotes around keyname.  fixed parsing of
+// null values in equating lines.  fixed parsing of double-quoted
+// values in equating lines.
+// 
+// Revision 1.8  1998/12/27 22:17:50  jlawson
+// fixed numerous code style and syntax weaknesses caught by lint checker.
+// 
+// Revision 1.7  1998/12/25 02:04:38  jlawson
+// changed usage of ltoa to only Win32
+// 
+// Revision 1.6  1998/12/24 04:53:15  jlawson
+// added handling for HAVE_SNPRINTF.  GetProfileString() functions renamed
+// to GetProfileStringA() since Windows headers sometimes define them such.
+// 
+// Revision 1.5  1998/09/06 20:08:45  jlawson
+// corrected numerous compilation warnings under gcc
+// 
+// Revision 1.4  1998/08/22 08:41:21  jlawson
+// added new iniread code
+// 
+// Revision 1.10  1998/07/07 21:55:41  cyruspatel
+// client.h has been split into client.h and baseincs.h 
+// 
+// Revision 1.9  1998/06/29 08:44:11  jlawson
+// More OS_WIN32S/OS_WIN16 differences and long constants added.
+// 
+// Revision 1.8  1998/06/29 06:58:02  jlawson
+// added new platform OS_WIN32S to make code handling easier.
+// 
+// Revision 1.7  1998/06/15 12:03:59  kbracey
+// Lots of consts.
+// 
+// Revision 1.6  1998/06/14 08:26:49  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+// 
+// Revision 1.5  1998/06/14 08:12:53  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
 
-
-  $Log: iniread.cpp,v $
-  Revision 1.19  1999/01/28 00:51:50  cyp
-  fixed end of string check in IniString == operator.
-
-  Revision 1.18  1999/01/27 22:52:36  silby
-  Reverted back to pre-ANSIfication.  ANSIficiation
-  is all great, but it didn't work under
-  MSVC, Watcom, or egcs after the changes.
-  (Minor problem.)
-
-  Revision 1.17  1999/01/27 17:41:47  cyp
-  ANSIfied (cleaned up clib/os specific stuff)
-
-  Revision 1.16  1999/01/27 02:15:55  jlawson
-  corrected return value checks
-
-  Revision 1.15  1999/01/27 00:55:26  jlawson
-  committed iniread from proxy again.  now uses INIREAD_SINGLEVALUE and
-  new INIREAD_WIN32_LIKE for client compiles.  the win32-like interface
-  functions all end with B, rather than A, since the global-namespace
-  is already used by the A versions in msvc.
-
-  Revision 1.11  1999/01/26 06:56:44  jlawson
-  added changes to allow SINGLEINIVALUE to be defined, which allows
-  iniread to parse an ini file, but without splitting each ini key
-  by commas into an IniStringList.
-
-  Revision 1.10  1999/01/22 09:26:38  jlawson
-  quoted values that have their closing quote in the middle with
-  trailing garbage before the next separator/eol, will now have
-  the garbage discarded.
-
-  Revision 1.9  1999/01/22 08:56:30  jlawson
-  added parsing for double-quotes around keyname.  fixed parsing of
-  null values in equating lines.  fixed parsing of double-quoted
-  values in equating lines.
-
-  Revision 1.8  1998/12/27 22:17:50  jlawson
-  fixed numerous code style and syntax weaknesses caught by lint checker.
-
-  Revision 1.7  1998/12/25 02:04:38  jlawson
-  changed usage of ltoa to only Win32
-
-  Revision 1.6  1998/12/24 04:53:15  jlawson
-  added handling for HAVE_SNPRINTF.  GetProfileString() functions renamed
-  to GetProfileStringA() since Windows headers sometimes define them such.
-
-  Revision 1.5  1998/09/06 20:08:45  jlawson
-  corrected numerous compilation warnings under gcc
-
-  Revision 1.4  1998/08/22 08:41:21  jlawson
-  added new iniread code
-
-  Revision 1.10  1998/07/07 21:55:41  cyruspatel
-  client.h has been split into client.h and baseincs.h 
-  
-  Revision 1.9  1998/06/29 08:44:11  jlawson
-  More OS_WIN32S/OS_WIN16 differences and long constants added.
-
-  Revision 1.8  1998/06/29 06:58:02  jlawson
-  added new platform OS_WIN32S to make code handling easier.
-
-  Revision 1.7  1998/06/15 12:03:59  kbracey
-  Lots of consts.
-
-  Revision 1.6  1998/06/14 08:26:49  friedbait
-  'Id' tags added in order to support 'ident' command to display a bill of
-  material of the binary executable
-
-  Revision 1.5  1998/06/14 08:12:53  friedbait
-  'Log' keywords added to maintain automatic change history
-
-*/
 
 #if (!defined(lint) && defined(__showids__))
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.19 1999/01/28 00:51:50 cyp Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.20 1999/01/29 19:18:46 jlawson Exp $"; }
 #endif
 
 #define COMPILING_INIREAD
@@ -203,19 +211,20 @@ IniString IniString::lcase(void) const
   return output;
 }
 /////////////////////////////////////////////////////////////////////////////
-int IniSection::GetProfileBool(const char *Key, int DefValue)
+bool IniSection::GetProfileBool(const char *Key, bool DefValue)
 {
   const char *value = GetProfileStringA(Key);
   if (!value)
     return DefValue;
   if (atoi(value))
-    return 1;
-  char buf[6];int i=0;
+    return true;
+  char buf[6];
+  int i=0;
   for (;i<5 && value[i];i++)
-    buf[i]=(char)tolower(value[i]);
-  buf[i]=0;
-  if (strcmp(buf,"yes")==0 || strcmp(buf,"on")==0 || strcmp(buf,"true")==0)
-    return 1;
+    buf[i] = (char)tolower(value[i]);
+  buf[i] = 0;
+  if (!strcmp(buf,"yes") || !strcmp(buf,"on") || !strcmp(buf,"true"))
+    return true;
   return 0;
 }  
 /////////////////////////////////////////////////////////////////////////////
@@ -278,6 +287,7 @@ void IniFile::fwrite(FILE *out)
     fprintf(out, "\n");
   }
 }
+/////////////////////////////////////////////////////////////////////////////
 IniRecord *IniSection::findnext()
 {
   for (; lastindex < records.GetCount(); lastindex++)
@@ -288,13 +298,13 @@ IniRecord *IniSection::findnext()
   return NULL;
 }
 /////////////////////////////////////////////////////////////////////////////
-// returns 0 on error
-int IniFile::ReadIniFile(const char *Filename, const char *Section)
+// returns false on error
+bool IniFile::ReadIniFile(const char *Filename, const char *Section)
 {
   // open up the file
   if (Filename) lastfilename = Filename;
   FILE *inf = fopen(lastfilename.c_str(), "r");
-  if (inf == NULL) return 0;             // open failed
+  if (inf == NULL) return false;             // open failed
 
   // start reading the file
   IniSection *section = 0;
@@ -461,19 +471,19 @@ int IniFile::ReadIniFile(const char *Filename, const char *Section)
     }
   }
   fclose(inf);
-  return 1;
+  return true;
 }
 /////////////////////////////////////////////////////////////////////////////
-// returns 0 on error
-int IniFile::WriteIniFile(const char *Filename)
+// returns false on error
+bool IniFile::WriteIniFile(const char *Filename)
 {
   if (Filename) lastfilename = Filename;
   FILE *outf = fopen(lastfilename.c_str(), "w");
   if (outf == NULL) 
-    return 0;
+    return false;
   fwrite(outf);
   fclose(outf);
-  return 1;
+  return true;
 }
 /////////////////////////////////////////////////////////////////////////////
 
@@ -482,7 +492,7 @@ unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
                       const char *defval, char *buffer, 
                       unsigned long buffsize, const char *filename )
 {
-  int foundentry = 0;
+  bool foundentry = false;
   IniFile inifile;
   IniSection *inisect;
   IniRecord *inirec;
@@ -505,7 +515,7 @@ unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
       if ((inirec = inisect->findfirst( key )) != NULL)
       {
         buffer[0] = 0;
-        foundentry = 1;
+        foundentry = true;
 #ifdef INIREAD_SINGLEVALUE
         inirec->values.copyto(buffer, buffsize );
 // printf("foundkey [%s]%s=%s\n",sect,key,buffer); 
@@ -519,7 +529,7 @@ unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
   }
 //else printf("openini for write failed\n");
   
-  if (foundentry==0 && *defval && defval != buffer)
+  if (!foundentry && *defval && defval != buffer)
   {
 //printf("using default for [%s]%s\n",sect,key); 
     strncpy( buffer, defval, buffsize-1 );
@@ -535,7 +545,7 @@ int WritePrivateProfileStringB( const char *sect, const char *key,
   IniSection *inisect;
   IniRecord *inirec;
 
-  int changed = 0;
+  bool changed = false;
   if (sect == NULL)
     return 0;
   if (key == NULL)                 //we do not support section functions
@@ -554,13 +564,13 @@ int WritePrivateProfileStringB( const char *sect, const char *key,
     if ((inirec = inisect->findfirst( key ))!=NULL)
     {
       inisect->deleterecord( inirec );
-      changed = 1;
+      changed = true;
     }
   }
   else
   {
     inisect->setkey(key, value);
-    changed = 1;
+    changed = true;
   }
   if (changed)
   {
@@ -579,7 +589,7 @@ unsigned int GetPrivateProfileIntB( const char *sect, const char *key,
   i = GetPrivateProfileStringB( sect, key, "", buf, sizeof(buf), filename);
   if (i == 0)
     return defvalue;
-  if ((n = atoi( buf ))!=0)
+  if ((n = atoi( buf )) != 0)
     return n;
   if (i < 2 || i > 4)
     return 0;
