@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.2 1999/07/26 16:55:35 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.3 1999/09/07 02:51:26 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -505,7 +505,7 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
           sprintf(perdone, " (%u.%u0%% done)", (permille/10), (permille%10));
         Log("Loaded %s%s%s\n%s",
            CliGetContestNameFromID(*contest), msgbuf, perdone,
-             (work_was_reset ? ("Packet originated from a client "
+             (work_was_reset ? ("Packet was from a client "
              "with another cpu/os/build.\n"):("")) );
       }
     } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
