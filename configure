@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.169  1999/01/13 11:57:19  snake
+#
+# fixed sparc-openbsd target
+#
 # Revision 1.168  1999/01/12 21:48:23  remi
 # Little fix for linux-aout.
 #
@@ -992,11 +996,12 @@ case "$1" in
 ###### Sparc/UltraSparc or Sun/SunOS/Solaris
 
     *sparc-openbsd)
-	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC272_NONULTRA_SPARC \
-			-DPIPELINE_COUNT=2 -DBIT_32 -DKWAN"
+	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
+	TARGET_CCFLAGS="$OPTS_GCC272_SPARC1 \
+			-DPIPELINE_COUNT=2 -DBIT_32 -DKWAN -DMEGGS"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
+	#TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
+	TARGET_ADDSRCS="des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
 	;;
 
     *sparc-linux)
