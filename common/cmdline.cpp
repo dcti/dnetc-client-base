@@ -14,9 +14,10 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.1 1999/05/11 02:03:37 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.2 1999/05/13 00:14:44 cyp Exp $"; }
 
 //#define TRACE
+//#define ENABLE_ARGV0_REWRITE
 
 #include "cputypes.h"
 #include "client.h"    // Client class
@@ -44,6 +45,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
 
   TRACE_OUT((+1,"ParseCommandline(%d,%d)\n",run_level,argc));
 
+  #ifdef ENABLE_ARGV0_REWRITE
   #if defined(__unix__)
   {
     static int doneunhider = 0;
@@ -89,6 +91,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       }
     }
   }
+  #endif
   #endif
   
   //-----------------------------------
@@ -231,8 +234,10 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           else
           {
             const char *binname = "rc5des"; /* this is what ps sees */
-            //binname = (const char *)strrchr( argv[0], '/' );
-            //binname = ((binname==NULL)?(argv[0]):(binname+1));
+	    #ifndef ENABLE_ARGV0_REWRITE
+            binname = (const char *)strrchr( argv[0], '/' );
+            binname = ((binname==NULL)?(argv[0]):(binname+1));
+	    #endif
             
             sprintf(buffer, "%s %s %s [%lu] `"
 #if (CLIENT_OS == OS_SOLARIS)
