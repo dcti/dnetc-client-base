@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.131 1999/12/06 19:11:10 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.132 1999/12/08 00:38:01 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -134,25 +134,34 @@ return "@(#)$Id: problem.cpp,v 1.131 1999/12/06 19:11:10 cyp Exp $"; }
 /* ------------------------------------------------------------- */
 
 #if defined(HAVE_DES_CORES)
+/* DES cores take the 'iterations_to_do', adjust it to min/max/nbbits
+  and store it back in 'iterations_to_do'. all return 'iterations_done'.
+*/   
 #if (CLIENT_CPU == CPU_ARM)
-   extern "C" u32 des_unit_func_arm( RC5UnitWork * , unsigned long );
-   extern "C" u32 des_unit_func_strongarm( RC5UnitWork * , unsigned long );
+   //des/arm/des-arm-wrappers.cpp
+   extern u32 des_unit_func_slice_arm( RC5UnitWork * , u32 *iter, char *coremem );
+   extern u32 des_unit_func_slice_strongarm(RC5UnitWork *, u32 *iter, char *coremem);
 #elif (CLIENT_CPU == CPU_ALPHA) 
    #if (CLIENT_OS == OS_DEC_UNIX) && defined(DEC_UNIX_CPU_SELECT)
-     extern u32 des_alpha_osf_ev4( RC5UnitWork * , u32 nbbits );
-     extern u32 des_alpha_osf_ev5( RC5UnitWork * , u32 nbbits );
+     extern u32 des_alpha_osf_ev4( RC5UnitWork * , u32 *iter, char *coremem );
+     extern u32 des_alpha_osf_ev5( RC5UnitWork * , u32 *iter, char *coremem );
    #else
-     extern "C" u32 des_unit_func_alpha_dworz( RC5UnitWork * , u32 nbbits );
+     //des/alpha/des-slice-dworz.cpp
+     extern u32 des_unit_func_slice_dworz( RC5UnitWork * , u32 *iter, char *);
    #endif
 #elif (CLIENT_CPU == CPU_X86)
-   extern u32 p1des_unit_func_p5( RC5UnitWork * , u32 nbbits );
-   extern u32 p1des_unit_func_pro( RC5UnitWork * , u32 nbbits );
-   extern u32 p2des_unit_func_p5( RC5UnitWork * , u32 nbbits );
-   extern u32 p2des_unit_func_pro( RC5UnitWork * , u32 nbbits );
-   extern u32 des_unit_func_mmx( RC5UnitWork * , u32 nbbits, char *coremem );
-   extern u32 des_unit_func_slice( RC5UnitWork * , u32 nbbits );
+   extern u32 p1des_unit_func_p5( RC5UnitWork * , u32 *iter, char *coremem );
+   extern u32 p1des_unit_func_pro( RC5UnitWork * , u32 *iter, char *coremem );
+   extern u32 p2des_unit_func_p5( RC5UnitWork * , u32 *iter, char *coremem );
+   extern u32 p2des_unit_func_pro( RC5UnitWork * , u32 *iter, char *coremem );
+   extern u32 des_unit_func_mmx( RC5UnitWork * , u32 *iter, char *coremem );
+   extern u32 des_unit_func_slice( RC5UnitWork * , u32 *iter, char *coremem );
+#elif defined(KWAN)
+   extern u32 des_unit_func_slice( RC5UnitWork * , u32 *iter, char *coremem );
+#elif defined(MEGGS)
+   extern u32 des_unit_func_meggs( RC5UnitWork * , u32 *iter, char *coremem );
 #else
-   extern u32 des_unit_func( RC5UnitWork * , u32 nbbits );
+  #error "Whats up, Doc?"
 #endif
 #endif
 
@@ -346,7 +355,7 @@ static int __core_picker(Problem *problem, unsigned int contestid)
 
         problem->client_cpu = CPU_POWERPC;
         #if defined(_AIXALL) //ie POWER/POWERPC hybrid client
-        if (((GetProcessorType(1) & 0x02000000) != 0)) //ARCH_IS_POWER
+        if ((GetProcessorType(1) & (1L<<24)) != 0) //ARCH_IS_POWER
         {
           problem->client_cpu = CPU_POWER;
           problem->rc5_unit_func = rc5_ansi_2_rg_unit_func ; // rc5/ansi/2-rg.c
@@ -475,13 +484,14 @@ static int __core_picker(Problem *problem, unsigned int contestid)
   {
     #if (CLIENT_CPU == CPU_ARM)
     {
-      //xtern "C" u32 des_unit_func_arm( RC5UnitWork * , unsigned long );
-      //xtern "C" u32 des_unit_func_strongarm( RC5UnitWork * , unsigned long );
+      //des/arm/des-arm-wrappers.cpp
+      //xtern u32 des_unit_func_slice_arm( RC5UnitWork * , u32 *, char * );
+      //xtern u32 des_unit_func_slice_strongarm( RC5UnitWork * , u32 *, char * );
       if (coresel == 0)
-        problem->des_unit_func = des_unit_func_arm;
+        problem->des_unit_func = des_unit_func_slice_arm;
       else /* (coresel == 1, default) */
       {
-        problem->des_unit_func = des_unit_func_strongarm;
+        problem->des_unit_func = des_unit_func_slice_strongarm;
         coresel = 1;
       }
     }
@@ -489,8 +499,8 @@ static int __core_picker(Problem *problem, unsigned int contestid)
     {
       #if (CLIENT_OS == OS_DEC_UNIX) && defined(DEC_UNIX_CPU_SELECT)
       {
-        //xtern u32 des_alpha_osf_ev4( RC5UnitWork * , u32 nbbits );
-        //xtern u32 des_alpha_osf_ev5( RC5UnitWork * , u32 nbbits );
+        //xtern u32 des_alpha_osf_ev4( RC5UnitWork * , u32 *, char * );
+        //xtern u32 des_alpha_osf_ev5( RC5UnitWork * , u32 *, char * );
         if (coresel == 1) /* EV5, EV56, PCA56, EV6 */
           problem->des_unit_func = des_alpha_osf_ev5;
         else // EV3_CPU, EV4_CPU, LCA4_CPU, EV45_CPU and default
@@ -498,23 +508,24 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       }
       #else
       {
-        //xtern "C" u32 des_unit_func_alpha_dworz( RC5UnitWork * , u32 nbbits );
-        problem->des_unit_func = des_unit_func_alpha_dworz;
+        //des/alpha/des-slice-dworz.cpp
+        //xtern u32 des_unit_func_slice_dworz( RC5UnitWork * , u32 *, char * );
+        problem->des_unit_func = des_unit_func_slice_dworz;
       }
       #endif
     }
     #elif (CLIENT_CPU == CPU_X86)
     {
-      //xtern u32 p1des_unit_func_p5( RC5UnitWork * , u32 nbbits );
-      //xtern u32 p1des_unit_func_pro( RC5UnitWork * , u32 nbbits );
-      //xtern u32 p2des_unit_func_p5( RC5UnitWork * , u32 nbbits );
-      //xtern u32 p2des_unit_func_pro( RC5UnitWork * , u32 nbbits );
-      //xtern u32 des_unit_func_mmx( RC5UnitWork * , u32 nbbits, char *coremem );
-      //xtern u32 des_unit_func_slice( RC5UnitWork * , u32 nbbits );
-      u32 (*slicit)(RC5UnitWork *,u32,char *) = 
-                   ((u32 (*)(RC5UnitWork *,u32,char *))0);
+      //xtern u32 p1des_unit_func_p5( RC5UnitWork * , u32 *, char * );
+      //xtern u32 p1des_unit_func_pro( RC5UnitWork * , u32 *, char * );
+      //xtern u32 p2des_unit_func_p5( RC5UnitWork * , u32 *, char * );
+      //xtern u32 p2des_unit_func_pro( RC5UnitWork * , u32 *, char * );
+      //xtern u32 des_unit_func_mmx( RC5UnitWork * , u32 *, char * );
+      //xtern u32 des_unit_func_slice( RC5UnitWork * , u32 *, char * );
+      u32 (*slicit)(RC5UnitWork *,u32 *,char *) = 
+                   ((u32 (*)(RC5UnitWork *,u32 *,char *))0);
       #if defined(CLIENT_SUPPORTS_SMP)
-      slicit = (u32 (*)(RC5UnitWork *,u32,char *))des_unit_func_slice; //kwan
+      slicit = des_unit_func_slice; //kwan
       #endif
       #if defined(MMX_BITSLICER) 
       {
@@ -548,16 +559,16 @@ static int __core_picker(Problem *problem, unsigned int contestid)
         #endif
         if (coresel == 1) /* movzx bryd */
         {
-          problem->des_unit_func = (u32 (*)(RC5UnitWork *,u32,char *))p1des_unit_func_pro;
+          problem->des_unit_func = p1des_unit_func_pro;
           #if defined(CLIENT_SUPPORTS_SMP) 
           if (thrindex > 0)  /* not first thread */
           {
             if (thrindex == 1)  /* second thread */
-              problem->des_unit_func = (u32 (*)(RC5UnitWork *,u32,char *))p2des_unit_func_pro;
+              problem->des_unit_func = p2des_unit_func_pro;
             else if (thrindex == 2) /* third thread */
-              problem->des_unit_func = (u32 (*)(RC5UnitWork *,u32,char *))p1des_unit_func_p5;
+              problem->des_unit_func = p1des_unit_func_p5;
             else if (thrindex == 3) /* fourth thread */
-              problem->des_unit_func = (u32 (*)(RC5UnitWork *,u32,char *))p2des_unit_func_p5;
+              problem->des_unit_func = p2des_unit_func_p5;
             else                    /* fifth...nth thread */
               problem->des_unit_func = slicit;
           }
@@ -566,16 +577,16 @@ static int __core_picker(Problem *problem, unsigned int contestid)
         else             /* normal bryd */
         {
           coresel = 0;
-          problem->des_unit_func = (u32 (*)(RC5UnitWork *,u32,char *))p1des_unit_func_p5;
+          problem->des_unit_func = p1des_unit_func_p5;
           #if defined(CLIENT_SUPPORTS_SMP) 
           if (thrindex > 0)  /* not first thread */
           {
             if (thrindex == 1)  /* second thread */
-              problem->des_unit_func = (u32 (*)(RC5UnitWork *,u32,char *))p2des_unit_func_p5;
+              problem->des_unit_func = p2des_unit_func_p5;
             else if (thrindex == 2) /* third thread */
-              problem->des_unit_func = (u32 (*)(RC5UnitWork *,u32,char *))p1des_unit_func_pro;
+              problem->des_unit_func = p1des_unit_func_pro;
             else if (thrindex == 3) /* fourth thread */
-              problem->des_unit_func = (u32 (*)(RC5UnitWork *,u32,char *))p2des_unit_func_pro;
+              problem->des_unit_func = p2des_unit_func_pro;
             else                    /* fifth...nth thread */
               problem->des_unit_func = slicit;
           }
@@ -583,6 +594,12 @@ static int __core_picker(Problem *problem, unsigned int contestid)
         }
       }
     }
+    #elif defined(KWAN)
+      problem->des_unit_func = des_unit_func_slice;
+    #elif defined(MEGGS)
+      problem->des_unit_func = des_unit_func_meggs;
+    #else
+      #error "Whats up, Doc?"
     #endif
     return coresel;
   }
@@ -1175,57 +1192,14 @@ int Problem::Run_DES(u32 *iterationsP, int *resultcode)
   *resultcode = -1; /* core error */
   return -1;
 #else
-  u32 kiter = 0;
-  u32 iterations = *iterationsP;
-  
-  #if (CLIENT_CPU == CPU_X86)
-  {
-    u32 nbits = 1;
-    u32 min_bits = 8;  /* bryd and kwan cores only need a min of 256 */
-    u32 max_bits = 24; /* these are the defaults if !MEGGS && !DES_ULTRA */
-    #if defined(MMX_BITSLICER)
-    {
-      if (des_unit_func == des_unit_func_mmx)
-      {
-        #if defined(BITSLICER_WITH_LESS_BITS)
-        min_bits = 16;
-        #else
-        min_bits = 20;
-        #endif
-        max_bits = min_bits; /* meggs driver has equal MIN and MAX */
-      }
-    }
-    #endif
-    while (iterations > (1ul << nbits)) nbits++;
-    if (nbits < min_bits) nbits = min_bits;
-    else if (nbits > max_bits) nbits = max_bits;
-    iterations = (1ul << nbits);
-    kiter = (*des_unit_func)( &rc5unitwork, nbits, core_membuffer );
-  }
-  #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
-  {
-    u32 nbits = 20;  // from des-slice-dworz.cpp
-    iterations = (1ul << nbits);
-    kiter = des_unit_func ( &rc5unitwork, nbits );
-  }
-  #else
-  {
-    u32 nbits=1; while (iterations > (1ul << nbits)) nbits++;
-    if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
-    else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
-    iterations = (1ul << nbits);
-    kiter = des_unit_func ( &rc5unitwork, nbits );
-  }
-  #endif
+  u32 kiter = (*des_unit_func)( &rc5unitwork, iterationsP, core_membuffer );
 
-  *iterationsP = iterations;
-
-  __IncrementKey (&refL0, iterations, contest);
+  __IncrementKey (&refL0, *iterationsP, contest);
   // Increment reference key count
 
   if (((refL0.hi != rc5unitwork.L0.hi) ||  // Compare ref to core
       (refL0.lo != rc5unitwork.L0.lo)) &&  // key incrementation
-      (kiter == iterations))
+      (kiter == *iterationsP))
   {
     #if 0 /* can you spell "thread safe"? */
     Log("Internal Client Error #23: Please contact help@distributed.net\n"
@@ -1242,7 +1216,7 @@ int Problem::Run_DES(u32 *iterationsP, int *resultcode)
     // Checks passed, increment keys done count.
 
   // Update data returned to caller
-  if (kiter < iterations)
+  if (kiter < *iterationsP)
   {
     // found it!
     u32 keylo = contestwork.crypto.key.lo;
@@ -1253,12 +1227,12 @@ int Problem::Run_DES(u32 *iterationsP, int *resultcode)
     *resultcode = RESULT_FOUND;
     return RESULT_FOUND;
   }
-  else if (kiter != iterations)
+  else if (kiter != *iterationsP)
   {
     #if 0 /* can you spell "thread safe"? */
     Log("Internal Client Error #24: Please contact help@distributed.net\n"
         "Debug Information: k: %x t: %x\n"
-        "Debug Information: %08x:%08x - %08x:%08x\n", kiter, iterations,
+        "Debug Information: %08x:%08x - %08x:%08x\n", kiter, *iterationsP,
         rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
     #endif
     *resultcode = -1; /* core error */

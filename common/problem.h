@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.73 1999/12/07 03:16:25 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.74 1999/12/08 00:38:02 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -45,22 +45,6 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
   
 /* ---------------------------------------------------------------------- */
 
-#if !defined(MEGGS) && !defined(DES_ULTRA) && !defined(DWORZ)
-  #define MIN_DES_BITS  8
-  #define MAX_DES_BITS 24
-#else
-  #if defined(BIT_32)
-    #define MIN_DES_BITS 19
-    #define MAX_DES_BITS 19
-  #elif (defined(BIT_64) && defined(BITSLICER_WITH_LESS_BITS) && !defined(DWORZ))
-    #define MIN_DES_BITS 16
-    #define MAX_DES_BITS 16
-  #elif defined(BIT_64)
-    #define MIN_DES_BITS 20
-    #define MAX_DES_BITS 20
-  #endif
-#endif
-
 typedef union
 {
   struct {
@@ -89,9 +73,7 @@ protected: /* these members *must* be protected for thread safety */
   ContestWork contestwork;
   CoreDispatchTable *ogr;
   /* --------------------------------------------------------------- */
-  #ifdef MAX_MEM_REQUIRED_BY_CORE
   char core_membuffer[MAX_MEM_REQUIRED_BY_CORE];
-  #endif
   u32 timehi, timelo;
   int last_resultcode; /* the rescode the last time contestwork was stable */
   int started;
@@ -133,13 +115,7 @@ public: /* anything public must be thread safe */
   #endif
 
 #if defined(HAVE_DES_CORES)
-  #if (CLIENT_CPU == CPU_X86)
-  u32 (*des_unit_func)( RC5UnitWork * , u32 nbbits, char *membuf );
-  #elif (CLIENT_CPU == CPU_ARM)
-  u32 (*des_unit_func)( RC5UnitWork * , unsigned long nbbits );
-  #else
-  u32 (*des_unit_func)( RC5UnitWork * , u32 nbbits );
-  #endif
+  u32 (*des_unit_func)( RC5UnitWork * , u32 *iterations, char *membuf );
 #endif  
 
   int Run_RC5(u32 *iterations,int *core_retcode); /* \  run for n iterations.              */
