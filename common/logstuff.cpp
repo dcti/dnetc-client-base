@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.48 2001/01/20 12:32:22 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.49 2001/02/03 21:37:27 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -896,7 +896,7 @@ void LogScreenPercent( unsigned int load_problem_count )
   unsigned int percent, restartperc, endperc, prob_i, cont_i;
   unsigned int selprob_i = logstatics.perc_callcount % load_problem_count;
   char buffer[128]; unsigned char pbuf[52]; /* 'a'-'z','A'-'Z' */
-  int disp_format, active_contests = 0;
+  int disp_format, event_only = 0, active_contests = 0;
   unsigned int prob_count[CONTEST_COUNT];
 
   if (!logstatics.crunchmeter || ( logstatics.loggingTo & LOGTO_SCREEN ) == 0 )
@@ -929,7 +929,10 @@ void LogScreenPercent( unsigned int load_problem_count )
     /* anything else is percent */
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     if ((w32ConGetType() & 0xffff) == MAKEWORD('g','t')) /* tray + gui */
+    {
       disp_format = DISPFORMAT_RATE;
+      event_only  = 1; /* don't logscreen it */
+    }
     #endif
   }
 
@@ -1091,10 +1094,13 @@ void LogScreenPercent( unsigned int load_problem_count )
   if (buffer[0] && disp_format != DISPFORMAT_PERC)
   {
     ClientEventSyncPost( CLIEVENT_CLIENT_CRUNCHOMETER, buffer, -1 );
-    LogScreen( "\r%s", buffer, NULL );
-    logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0
-    logstatics.lastwasperc = 1; //(endperc != 0); //percbar requires reset
-    /* simple, eh? :) */
+    if (!event_only)
+    {
+      LogScreen( "\r%s", buffer, NULL );
+      logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0
+      logstatics.lastwasperc = 1; //(endperc != 0); //percbar requires reset
+      /* simple, eh? :) */
+    }
   }
   else
   {
@@ -1166,13 +1172,16 @@ void LogScreenPercent( unsigned int load_problem_count )
       ;
     else
     {
-      static char lastbuffer[sizeof(buffer)] = {0};
-      if (!logstatics.lastwasperc || strcmp( lastbuffer, buffer ) != 0)
+      if (!event_only)
       {
-        strcpy( lastbuffer, buffer );
-        LogWithPointer( LOGTO_SCREEN|LOGTO_RAWMODE, buffer, NULL );
-        logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0
-        logstatics.lastwasperc = 1; //(endperc != 0); //percbar requires reset
+        static char lastbuffer[sizeof(buffer)] = {0};
+        if (!logstatics.lastwasperc || strcmp( lastbuffer, buffer ) != 0)
+        {
+          strcpy( lastbuffer, buffer );
+          LogWithPointer( LOGTO_SCREEN|LOGTO_RAWMODE, buffer, NULL );
+          logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0
+          logstatics.lastwasperc = 1; //(endperc != 0); //percbar requires reset
+        }
       }
       sprintf(buffer, "%u%%\n", endperc);
       ClientEventSyncPost( CLIEVENT_CLIENT_CRUNCHOMETER, buffer, -1 );
