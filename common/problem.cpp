@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.63 2000/06/06 14:43:00 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.64 2000/06/10 18:58:41 andreasb Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -235,6 +235,7 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
                              ((double)(contestwork.crypto.iterations.lo)))) ); 
                 break;
                 }
+        #if defined(HAVE_OGR_CORES)
         case OGR:
                 WorkStub curstub;
                 (unit_func.ogr)->getresult(core_membuffer, &curstub, sizeof(curstub));
@@ -242,6 +243,7 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
                 retpermille = curstub.stub.diffs[contestwork.ogr.workstub.stub.length]*10
                             + curstub.stub.diffs[contestwork.ogr.workstub.stub.length+1]/10;
                 break;
+        #endif
       }
     }
     if (retpermille > 1000)
@@ -446,9 +448,11 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dop
       case CSC:
         // nothing special needs to be done here
         break;
+      #if defined(HAVE_OGR_CORES)
       case OGR:
         (unit_func.ogr)->getresult(core_membuffer, &contestwork.ogr.workstub, sizeof(WorkStub));
         break;
+      #endif
     }
     memcpy( (void *)work, (void *)&contestwork, sizeof(ContestWork));
   }
