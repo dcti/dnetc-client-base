@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.57 1999/11/28 13:34:39 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.58 1999/11/28 13:47:34 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -391,7 +391,7 @@ case "$1" in
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -mcpu=r3000 \
 			-DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS -DMIPS_CRUNCH=1"
+			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -400,7 +400,7 @@ case "$1" in
     *mips-sni-gcc)	   #For MIPS SINIX
 	RC5CORECOPY="rc5/mips/mips-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -Dsinix \
-			-DPIPELINE_COUNT=2 -DMIPS_CRUNCH=1"
+			-DPIPELINE_COUNT=2"
 	TARGET_LIBS="-lsocket -lnsl -lc -L/usr/ucblib -lucb"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
@@ -440,7 +440,7 @@ case "$1" in
         DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/mips/mips-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -D_irix5_ \
-			-DMIPS_CRUNCH=1 -D_CPU_32BIT_ -DBIT_32 -DKWAN -DMEGGS"
+			-D_CPU_32BIT_ -DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
@@ -449,7 +449,7 @@ case "$1" in
 	RC5CORECOPY="rc5/mips/mips-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_EGCS_MIPS -mabi=64 \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 \
-			-DMIPS_CRUNCH=1 -DBIT_64 -DKWAN -DMEGGS"
+			-DBIT_64 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
 	TARGET_LDFLAGS="-mabi=64"
@@ -460,7 +460,7 @@ case "$1" in
 	RC5CORECOPY="rc5/mips/mips-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_EGCS_MIPS -mabi=n32 \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 \
-			-DMIPS_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
+			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -472,7 +472,7 @@ case "$1" in
         TARGET_CC="gcc"
         TARGET_CCFLAGS="$OPTS_GCC_MIPS   \
                         -DHAVE_DES_CORES -DHAVE_CSC_CORES \
-                        -DMIPS_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
+                        -DBIT_32 -DKWAN -DMEGGS"
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
         #TARGET_LIBS="-lpthread"
         #TARGET_LDFLAGS="-mips3"
@@ -488,7 +488,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_GCC_MIPS   \
                         -DHAVE_DES_CORES -DHAVE_CSC_CORES \
 			-DMULTITHREAD \
-                        -DMIPS_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
+                        -DBIT_32 -DKWAN -DMEGGS"
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
         TARGET_LIBS="-lpthread"
 	TARGET_STRIP="strip"
