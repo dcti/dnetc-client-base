@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.50 2000/07/06 18:50:15 ctate Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.51 2000/07/12 14:13:57 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -196,6 +196,10 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       #elif (CLIENT_CPU == CPU_68K) // no MP support on 68k CPUs
         cpucount = 1;
       #endif
+    }
+    #elif (CLIENT_OS == OS_AMIGAOS)
+    {
+      cpucount = 1;
     }
     #elif ( (CLIENT_OS == OS_DEC_UNIX) && defined(OS_SUPPORTS_SMP))
     {
