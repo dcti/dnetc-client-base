@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.44 2000/06/27 01:55:17 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.45 2000/06/28 18:30:53 bernd Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -302,6 +302,12 @@ static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
 
 // -----------------------------------------------------------------------
 
+#if (CLIENT_OS == OS_NETBSD) && (CLIENT_CPU == CPU_X86)
+// for apm support in __IsRunningOnBattery
+#include <machine/apmvar.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
+#endif
 static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 {
   if (trigstatics.pause_if_no_mains_power)
@@ -389,7 +395,31 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
       {
         trigstatics.pause_if_no_mains_power = 0;
       }
-    } /* #if (linux) */
+    }
+    #elif (CLIENT_OS == OS_NETBSD) && (CLIENT_CPU == CPU_X86)
+    {
+      struct apm_power_info buff;
+      int fd;
+      #define _PATH_APM_DEV "/dev/apm"
+
+      fd = open(_PATH_APM_DEV, O_RDONLY);
+
+      if (fd != -1) {
+        if (ioctl(fd, APM_IOC_GETPOWER, &buff) == 0) {
+          close(fd);
+          TRACE_OUT((0,"sps: ACLineStatus = 0x%08x, BatteryFlag = 0x%08x\n",
+            buff.ac_state, buff.battery_state));
+
+          if (buff.ac_state == APM_AC_ON)
+            return 0;       /* we have AC power */
+          if (buff.ac_state == APM_AC_OFF)
+            return 1;       /* we don't have AC */
+        }
+      }
+      close(fd);
+      // We seem to have no apm driver in the kernel, so disable it.
+      trigstatics.pause_if_no_mains_power = 0;
+    } /* #if (NetBSD && i386) */
     #endif
   }  
   return -1; /* unknown */
