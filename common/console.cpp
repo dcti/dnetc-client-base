@@ -11,6 +11,9 @@
    to functions in modules in your own platform/ area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.3  1998/10/07 04:04:20  silby
+// Fixed ConInKey - the logic was reversed when checking for timeout
+//
 // Revision 1.2  1998/10/04 18:55:58  remi
 // We want to output something, even stdout is redirected, grr...
 //
@@ -20,7 +23,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.2 1998/10/04 18:55:58 remi Exp $"; }
+return "@(#)$Id: console.cpp,v 1.3 1998/10/07 04:04:20 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -234,9 +237,9 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         continue;
       
       CliTimer(&timenow);
-      } while (( timenow.tv_sec > timestop.tv_sec ) ||
+      } while (( timenow.tv_sec < timestop.tv_sec ) ||
                  (( timenow.tv_sec == timestop.tv_sec ) &&
-                  ( timenow.tv_usec > timestop.tv_usec )));
+                  ( timenow.tv_usec < timestop.tv_usec )));
     }
 
   return ch;
