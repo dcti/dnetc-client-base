@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.31  1999/01/17 15:57:32  cyp
+// priority is now properly written to file. ValidateConfig() has poofed -
+// Very little was being /properly/ validated there. Individual subsystems
+// are now (as always have been) responsible for their own variables.
+//
 // Revision 1.30  1999/01/15 05:18:15  cyp
 // disable ini i/o once we know that ini writes fail.
 //
@@ -133,7 +138,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.30 1999/01/15 05:18:15 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.31 1999/01/17 15:57:32 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -176,6 +181,9 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
 
   if (INIFIND(CONF_ID) != NULL)
     INIGETKEY(CONF_ID).copyto(client->id, sizeof(client->id));
+  confopt_killwhitespace(client->id);
+  if (confopt_isstringblank(client->id))
+    strcpy(client->id,"rc5@distributed.net");
 
   if (INIFIND(CONF_THRESHOLDI) != NULL)
     {
@@ -245,7 +253,7 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
     INIGETKEY(CONF_KEYSERVNAME).copyto(client->keyproxy, sizeof(client->keyproxy));
     if (confopt_isstringblank(client->keyproxy) || strcmpi( client->keyproxy, "(auto)")==0 ||
       strcmpi( client->keyproxy, "auto")==0 || strcmpi( client->keyproxy, "rc5proxy.distributed.net" )==0) 
-      {                                         
+      { //one config version accidentally wrote "auto" to the ini
       client->keyproxy[0]=0;
       client->autofindkeyserver = 1; //let Network::Open get a better hostname.
       }
@@ -335,76 +343,10 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
 
 // --------------------------------------------------------------------------
 
-void ValidateConfig(Client *client) //DO NOT PRINT TO SCREEN HERE!
+void ValidateConfig(Client * /*client*/ ) //DO NOT PRINT TO SCREEN HERE!
 {
-  unsigned int cont_i;
-  for (cont_i=0;cont_i<CONTEST_COUNT;cont_i++)
-    {
-    if ( client->inthreshold[cont_i] < conf_options[CONF_THRESHOLDI].choicemin ) 
-      client->inthreshold[cont_i] = conf_options[CONF_THRESHOLDI].choicemin;
-    if ( client->inthreshold[cont_i] > conf_options[CONF_THRESHOLDI].choicemax ) 
-      client->inthreshold[cont_i] = conf_options[CONF_THRESHOLDI].choicemax;
-    if ( client->outthreshold[cont_i] < conf_options[CONF_THRESHOLDI].choicemin ) 
-      client->outthreshold[cont_i] = conf_options[CONF_THRESHOLDI].choicemin;
-    if ( client->outthreshold[cont_i] > client->inthreshold[cont_i] ) 
-      client->outthreshold[cont_i]=client->inthreshold[cont_i];
-    if (client->in_buffer_file[cont_i][0] == 0)
-      strcpy(client->in_buffer_file[cont_i], 
-        conf_options[((cont_i==0)?(CONF_RC5IN):(CONF_DESIN))].defaultsetting );
-    if (confopt_isstringblank(client->out_buffer_file[cont_i]))
-      strcpy(client->out_buffer_file[cont_i], 
-        conf_options[((cont_i==0)?(CONF_RC5OUT):(CONF_DESOUT))].defaultsetting );
-    }
-  
-  if (client->blockcount < 0)
-    client->blockcount = -1;
-  if (( client->preferred_contest_id < 0 ) || ( client->preferred_contest_id > 1 )) 
-    client->preferred_contest_id = 1;
-
-  if (client->priority     < conf_options[CONF_NICENESS].choicemin || 
-      client->priority     > conf_options[CONF_NICENESS].choicemax )
-    client->priority       = conf_options[CONF_NICENESS].choicemin;
-  if (client->uuehttpmode  < conf_options[CONF_UUEHTTPMODE].choicemin || 
-      client->uuehttpmode  > conf_options[CONF_UUEHTTPMODE].choicemax ) 
-    client->uuehttpmode    = conf_options[CONF_UUEHTTPMODE].choicemin;
-/*  if (client->smtpport     < conf_options[CONF_SMTPPORT].choicemin ||
-      client->smtpport     > conf_options[CONF_SMTPPORT].choicemax) 
-    client->smtpport=25;
-  if (client->messagelen   < conf_options[CONF_MESSAGELEN].choicemin ||
-      client->messagelen   > conf_options[CONF_MESSAGELEN].choicemax)
-    client->messagelen     = conf_options[CONF_MESSAGELEN].choicemin;*/
-  if (client->preferred_blocksize < conf_options[CONF_PREFERREDBLOCKSIZE].choicemin)
-    client->preferred_blocksize = conf_options[CONF_PREFERREDBLOCKSIZE].choicemin;
-  else if (client->preferred_blocksize > conf_options[CONF_PREFERREDBLOCKSIZE].choicemax) 
-    client->preferred_blocksize = conf_options[CONF_PREFERREDBLOCKSIZE].choicemax;
-  if (client->minutes      < 0) 
-    client->minutes = 0;
-/*  if (client->nettimeout   < conf_options[CONF_NETTIMEOUT].choicemin) 
-    client->nettimeout     = conf_options[CONF_NETTIMEOUT].choicemin;
-  else if (client->nettimeout > conf_options[CONF_NETTIMEOUT].choicemax) 
-    client->nettimeout     = conf_options[CONF_NETTIMEOUT].choicemax;
-*/
-  confopt_killwhitespace(client->keyproxy);
-  confopt_killwhitespace(client->httpproxy);
-  confopt_killwhitespace(client->smtpsrvr);
-  confopt_killwhitespace(client->id);
-
-  if (strcmpi(client->keyproxy,"auto")==0 || strcmpi(client->keyproxy,"(auto)")==0)
-    client->keyproxy[0]=0; //an old version accidentally wrote "auto" to the config so delete it
-  if (client->autofindkeyserver || client->keyproxy[0] == 0 || confopt_IsHostnameDNetHost( client->keyproxy ))
-    if (client->keyport != 3064) client->keyport = 0;
-  if (confopt_isstringblank(client->id))
-    strcpy(client->id,"rc5@distributed.net");
-  if (confopt_isstringblank(client->logname) || strcmpi(client->logname,"none")==0)
-    client->logname[0]=0;
-  if (confopt_isstringblank(client->pausefile) || strcmp(client->pausefile,"none")==0)
-    client->pausefile[0]=0;
-  if (confopt_isstringblank(client->checkpoint_file) || strcmp(client->checkpoint_file,"none")==0)
-    client->checkpoint_file[0]=0;
-
-  //validate numcpu is now in SelectCore(); //1998/06/21 cyrus
-
-  InitRandom2( client->id );
+  //poof! gone. - very little was being properly validated,
+  //and that which was is also validated in the individual subsystems.
 }
 
 // --------------------------------------------------------------------------
@@ -487,7 +429,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     if (client->numcpu!=-1 || INIFIND(CONF_NUMCPU)!=NULL)
       INISETKEY( CONF_NUMCPU, client->numcpu );
     if (client->priority != 0 || ini.findfirst( "processor-usage", "priority"))
-      client->priority = (ini.getkey("processor-usage", "priority", "0")[0]);
+      ini.setrecord("processor-usage", "priority", IniString((s32)client->priority));
     //spaces in a SECTIONname result in a (bad) KEYWORD just anywhere
     if ((tempptr = ini.findfirst( "processor usage", "FOOBAR"))!=NULL)
       tempptr->values.Erase();
