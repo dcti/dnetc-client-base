@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.102 2002/10/19 16:47:56 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.103 2002/10/20 01:22:47 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -230,12 +230,23 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     { /* OGR-next gen */
       NULL
     },
+  #if (CLIENT_CPU == CPU_X86)
+    { /* RC5-72 */
+      "ANSI 4-pipe",
+      "ANSI 2-pipe",
+      "ANSI 1-pipe",
+      "SES 1-pipe",
+      "SES 2-pipe",
+      NULL
+    },
+  #else
     { /* RC5-72 */
       "ANSI 4-pipe",
       "ANSI 2-pipe",
       "ANSI 1-pipe",
       NULL
     },
+  #endif
   };
   /* ================================================================== */
 
@@ -1461,18 +1472,27 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   #endif
 #endif    
 
+
 /* ------------------------------------------------------------- */
 
-// PROJECT_NOT_HANDLED("add your core function prototype(s) here")
+#if defined(HAVE_RC5_72_CORES)
 
-// Since we only have ANSI C++ RC5-72 cores for now, there's no need for
-// CLIENT_CPU checking.
+// These are the standard ANSI cores that are available for all platforms.
 
   extern "C" s32 rc5_72_unit_func_ansi_4( RC5_72UnitWork *, u32 *, void * );
   extern "C" s32 rc5_72_unit_func_ansi_2( RC5_72UnitWork *, u32 *, void * );
   extern "C" s32 rc5_72_unit_func_ansi_1( RC5_72UnitWork *, u32 *, void * );
 
-// OK!
+// These are assembly-optimized versions for each platform.
+  #if (CLIENT_CPU == CPU_X86) && defined(HAVE_RC5_72_ASM_CORES)
+      extern "C" s32 rc5_72_unit_func_ses( RC5_72UnitWork *, u32 *, void *);
+      extern "C" s32 rc5_72_unit_func_ses_2( RC5_72UnitWork *, u32 *, void *);
+  #endif
+#endif
+
+/* ------------------------------------------------------------- */
+
+// PROJECT_NOT_HANDLED("add your core function prototype(s) here")
 
 /* ------------------------------------------------------------- */
 
@@ -2034,6 +2054,18 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         pipeline_count = 1;
         coresel = 2; // yes, we explicitly set coresel in the default case !
         break;
+
+     #if (CLIENT_CPU == CPU_X86) && defined(HAVE_RC5_72_ASM_CORES)
+      case 3:
+        unit_func.gen_72 = rc5_72_unit_func_ses;
+        pipeline_count = 1;
+        break;
+      case 4:
+        unit_func.gen_72 = rc5_72_unit_func_ses_2;
+        pipeline_count = 2;
+        break;
+     #endif
+
     }
   }
   #endif
