@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amSupport.c,v 1.2.4.11 2004/05/22 18:00:45 piru Exp $
+ * $Id: amSupport.c,v 1.2.4.12 2004/07/18 17:48:55 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -94,7 +94,7 @@ extern struct Interface *ISocket;
 #ifndef __MORPHOS__
 const char *amigaGetOSVersion(void)
 {
-   static const char *osver[] = { "2.0","2.0x","2.1","3.0","3.1","3.2","3.3","3.4","3.5","3.9","3.9","3.9","3.9","3.9","4.0pre","4.0" };
+   static const char *osver[] = { "2.0","2.0x","2.1","3.0","3.1","3.2","3.3","3.4","3.5","3.9","3.9","3.9","3.9","3.9","4.0pre","4.0pre","4.0" };
    int ver = SysBase->LibNode.lib_Version;
    #ifndef __amigaos4__
    if (ver >= 40 && ver < 50) {   // Detect OS 3.5/3.9
