@@ -11,6 +11,9 @@
    to functions in modules in your own platform area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.25  1998/12/29 09:28:35  dicamillo
+// For MacOS, ConOut now call macConOut.
+//
 // Revision 1.24  1998/12/08 05:40:19  dicamillo
 // MacOS: define conistty; call yield routine after output; remove
 // GetKeys- Mac client never reads console input.
@@ -91,7 +94,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.24 1998/12/08 05:40:19 dicamillo Exp $"; }
+return "@(#)$Id: console.cpp,v 1.25 1998/12/29 09:28:35 dicamillo Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -233,12 +236,11 @@ int ConOut(const char *msg)
     {
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
       w32ConOut(msg);
+	#elif (CLIENT_OS == OS_MACOS)
+      macConOut(msg);
     #else
       fwrite( msg, sizeof(char), strlen(msg), stdout);
       fflush(stdout);
-      #if (CLIENT_OS == OS_MACOS)
-	    YieldToMain(0);
-      #endif
     #endif
     return 0;
     }
