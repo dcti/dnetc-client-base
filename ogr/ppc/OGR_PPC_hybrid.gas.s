@@ -16,7 +16,7 @@
 ;# - LR register not used nor saved in caller's stack.
 ;# - CTR, CR0, CR1, GPR0 and GPR3-GPR12 are volatile (not preserved).
 ;#
-;# $Id: OGR_PPC_hybrid.gas.s,v 1.1.2.3.2.1 2004/08/08 20:18:22 kakace Exp $
+;# $Id: OGR_PPC_hybrid.gas.s,v 1.1.2.3.2.2 2004/08/12 16:53:59 kakace Exp $
 ;#
 ;#============================================================================
 
@@ -235,21 +235,21 @@ L_push_level:
     addi      r3,r14,SIZEOF_LEVEL       ;# lev+1
     vor       v6,v6,v7                  ;# distV |= listV
     stw       r30,LEVEL_LIST0+SIZEOF_LEVEL(r14) ;# (lev+1)->list0 = list0
-    addi      r16,r16,1                 ;# ++depth
+    or        r29,r29,r30               ;# dist0 |= list0
     vor       v8,v8,v6                  ;# compV |= distV
     stw       r31,LEVEL_COMP0(r14)      ;# store comp0
-    or        r29,r29,r30               ;# dist0 |= list0
+    rlwinm    r8,r29,DIST_SH+2,DIST_MB-2,DIST_ME-2
     subi      r6,r6,SIZEOF_OGR          ;# --ogr
     stvx      v8,r28,r3                 ;# (lev+1)->compV.v = compV
-    or        r31,r31,r29               ;# comp0 |= dist0
-    rlwinm    r8,r29,DIST_SH+2,DIST_MB-2,DIST_ME-2
-    stvx      v7,0,r14                  ;# store listV
-    subi      r5,r5,1                   ;# --choose
     rlwinm    r0,r29,DIST_SH+3,DIST_MB-3,DIST_ME-3
+    or        r31,r31,r29               ;# comp0 |= dist0
     stw       r24,LEVEL_LIMIT(r14)      ;# store limit
-    subi      r19,r19,1                 ;# --remdepth
     add       r0,r8,r0                  ;# (dist0 >> DIST_SHIFT) * DIST_BITS
+    subi      r5,r5,1                   ;# --choose
     lbzx      r24,r5,r0                 ;# choose(dist0 >> ttmDISTBITS, remdepth)
+    subi      r19,r19,1                 ;# --remdepth
+    addi      r16,r16,1                 ;# ++depth
+    stvx      v7,0,r14                  ;# store listV
     addi      r14,r14,SIZEOF_LEVEL      ;# ++lev
 
 L_comp_limit: 
