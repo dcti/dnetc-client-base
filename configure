@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.244 1999/11/15 03:55:25 cyp Exp $
+# @(#)$Id: configure,v 1.245 1999/11/15 19:39:11 dbaker Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -527,6 +527,16 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
+    *sparc-netbsd)                   # dbaker
+	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
+	TARGET_CCFLAGS="$OPTS_GCC272_SPARC1 -DBIT_32 -DKWAN -DMEGGS -DCLIENT_CPU=7\
+	-DHAVE_CSC_CORES -DHAVE_OGR_CORES -DHAVE_DES_CORES"
+	TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp ${CSC_ANSI_SRCS} $OGR_ANSI_SRCS"
+	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="netbsd-sparc"
+	;;
+
     *sparc-linux)
 	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -D__showids__ \
@@ -1029,24 +1039,6 @@ case "$1" in
 	;;
 
 ###### Intel X86 FreeBSD
-
-    *x86-freebsd-mt)         # (obsolete) [dbaker] aout + pthread
-        echo "The x86-freebsd-mt target is obsolete. Its identical to the x86-freebsd target."
-        echo "(the normal x86-freebsd target is multithreaded on SMP, single threaded on non-SMP)"
-        exit 1
- 	;;
-
-    *x86-freebsd-mt-elf)    # (obsolete) [dbaker] elf + pthread
-        echo "The x86-freebsd-mt-elf target is obsolete. (identical to x86-freebsd-elf)"
-        echo "(the normal x86-freebsd target is multithreaded on SMP, single threaded on non-SMP)"
-        exit 1
-        ;;
-
-    *x86-freebsd4-mt-elf)    # (obsolete) [dbaker] elf + pthread + fbsd4
-        echo "The x86-freebsd4-mt-elf target is obsolete. (identical to x86-freebsd-elf)"
-        echo "The FreeBSD version is detected at runtime."
-        exit 1
-        ;;
 
     *x86-freebsd)             # [dbaker] aout
 	TARGET_AS="gcc -c"
