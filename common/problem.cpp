@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.172 2002/10/16 10:30:59 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.173 2002/10/16 21:37:18 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -904,6 +904,9 @@ static int __InternalLoadState( InternalProblem *thisprob,
           thisprob->priv_data.contestwork.bigcrypto.check.mid;
       thisprob->priv_data.rc5_72unitwork.check.lo =
           thisprob->priv_data.contestwork.bigcrypto.check.lo;
+      __SwitchRC572Format(&(thisprob->priv_data.rc5_72unitwork.check.hi),
+                          &(thisprob->priv_data.rc5_72unitwork.check.mid),
+                          &(thisprob->priv_data.rc5_72unitwork.check.lo));
 
       thisprob->pub_data.startkeys.hi = thisprob->priv_data.contestwork.bigcrypto.keysdone.hi;
       thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
@@ -1616,7 +1619,7 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
   if (thisprob->priv_data.contestwork.bigcrypto.keysdone.lo < *keyscheckedP)
       thisprob->priv_data.contestwork.bigcrypto.keysdone.hi++;
 
-  // update counter measure checks
+  // update counter measure checks (core stores mangled key)
   thisprob->priv_data.contestwork.bigcrypto.check.count = 
       thisprob->priv_data.rc5_72unitwork.check.count;
   thisprob->priv_data.contestwork.bigcrypto.check.hi = 
@@ -1625,6 +1628,9 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
       thisprob->priv_data.rc5_72unitwork.check.mid;
   thisprob->priv_data.contestwork.bigcrypto.check.lo = 
       thisprob->priv_data.rc5_72unitwork.check.lo;
+  __SwitchRC572Format(&(thisprob->priv_data.contestwork.bigcrypto.check.hi),
+                      &(thisprob->priv_data.contestwork.bigcrypto.check.mid),
+                      &(thisprob->priv_data.contestwork.bigcrypto.check.lo));
 
   // Update data returned to caller
   if (*resultcode == RESULT_FOUND)  //(*keyscheckedP < keystocheck)
