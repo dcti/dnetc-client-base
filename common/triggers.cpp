@@ -18,7 +18,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.30 2002/09/02 00:35:43 andreasb Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31 2002/11/03 15:06:31 pfeffi Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -1257,7 +1257,7 @@ static void _init_pauseplist( const char *plist )
         p++;
         len++;
       }
-      while (len > 0 && isspace(p[len-1]))
+      while (len > 0 && isspace(plist[len-1]))
         len--;
       if (len)
       {
