@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.56.2.11 1999/12/08 02:49:14 cyp Exp $
+# $Id: makefile.vc,v 1.56.2.12 1999/12/12 07:26:14 jlawson Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
@@ -202,14 +202,19 @@ CSC_OBJS =                           \
         $(OUTPUTPATH)/csc-6b.obj     \
         $(OUTPUTPATH)/csc-6b-i.obj   \
         $(OUTPUTPATH)/csc-common.obj
-!else                                
+!else
 CSC_OBJS =                           \
-        $(OUTPUTPATH)/convcsc.obj    \
-        $(OUTPUTPATH)/csc-1k.obj     \
-        $(OUTPUTPATH)/csc-1k-i.obj   \
-        $(OUTPUTPATH)/csc-6b.obj     \
-        $(OUTPUTPATH)/csc-6b-i.obj   \
-        $(OUTPUTPATH)/csc-comm.obj
+         $(OUTPUTPATH)/convcsc.obj   \
+         $(OUTPUTPATH)/csc-1k.obj    \
+         $(OUTPUTPATH)/csc-1k-i.obj  \
+         $(OUTPUTPATH)/csc-6b.obj    \
+         $(OUTPUTPATH)/csc-6b-i.obj  \
+         $(OUTPUTPATH)/csc-comm.obj
+
+# Enable the following two lines for MMX-enabled CSC.
+CSC_OBJS = $(CSC_OBJS)/csc-mmx.obj
+OPTS_MSVC = $(OPTS_MSVC) -DMMX_CSC
+
 !endif
 
 # -------
@@ -268,9 +273,6 @@ OGR_OBJS =                           \
 {$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -O2 -Fo$(OUTPUTPATH)\ $<
 
-#$(RC_FILE):
-#       echo 1 ICON $(PLATSRCPATH)\w32cons.ico > $(@:/=\)
-
 $(RES_FILE):    $(RC_FILE)
         rc  -i $(OPTS_RC) -I$(COMMONPATH) -fo$@ $(**:/=\)
 
@@ -290,3 +292,4 @@ superclean: clean
 rebuild: clean all
 
 # --------------------------------------------
+
