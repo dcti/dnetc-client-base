@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.27  1998/12/28 04:01:07  silby
+// Win32gui icon now changed by probfill when new blocks are loaded.
+// If MacOS has an icon to change, this would be a good place to hook in as well.
+//
 // Revision 1.26  1998/12/23 03:24:56  silby
 // Client once again listens to keyserver for next contest start time,
 // tested, it correctly updates.  Restarting after des blocks have
@@ -114,7 +118,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.26 1998/12/23 03:24:56 silby Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.27 1998/12/28 04:01:07 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -137,6 +141,7 @@ return "@(#)$Id: probfill.cpp,v 1.26 1998/12/23 03:24:56 silby Exp $"; }
 #include "probfill.h"  // ourselves.
 #include "rsadata.h"   // Get cipher/etc for random blocks
 #include "confrwv.h"   // Needed to trigger .ini to be updated
+#include "guistuff.h"  // SetIcon()
 
 // =======================================================================
 // each individual problem load+save generates 4 or more messages lines 
@@ -518,6 +523,9 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       const char *cont_name = CliGetContestNameFromID(*contest);
       unsigned int startpercent = (unsigned int)( thisprob->startpercent/10 );
       
+      #if defined(GUICLIENT)
+      SetIcon(*contest);
+      #endif
       Log("Loaded %s%s %u*2^28 block %08lX:%08lX%c(%u.%02u%% done)",
               cont_name, ((didrandom)?(" random"):("")), norm_key_count,
               (unsigned long) ntohl( fileentry.key.hi ),
