@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47 1999/04/17 07:38:37 gregh Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.1 1999/09/16 21:27:20 remi Exp $"; }
 
 // --------------------------------------------------------------------------
 
@@ -136,7 +136,7 @@ int SelfTest( unsigned int contest, int cputype )
       int resultcode; const char *resulttext = NULL;
       u64 expectedsolution;
       ContestWork contestwork;
-      Problem problem(threadindex);
+      Problem *problem = new Problem(threadindex);
 
       if (CheckExitRequestTriggerNoIO())
         break;
@@ -236,11 +236,11 @@ int SelfTest( unsigned int contest, int cputype )
       contestwork.crypto.iterations.lo = ( 0x00020000L ); // 17 bits instead of 16
       contestwork.crypto.iterations.hi = ( 0 );
   
-      problem.LoadState( &contestwork, contest, 0x1000, cputype);
+      problem->LoadState( &contestwork, contest, 0x1000, cputype);
   
-      ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (long)((Problem *)(&problem)) );
+      ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (long)(problem) );
   
-      while ( problem.Run() == RESULT_WORKING )
+      while ( problem->Run() == RESULT_WORKING )
       {
         #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
         Yield();
@@ -249,7 +249,7 @@ int SelfTest( unsigned int contest, int cputype )
         #endif
       }
   
-      resultcode = problem.RetrieveState( &contestwork, NULL, 1 );
+      resultcode = problem->RetrieveState( &contestwork, NULL, 1 );
 
       if ( resultcode != RESULT_FOUND )                /* no solution */
       {
@@ -285,7 +285,8 @@ int SelfTest( unsigned int contest, int cputype )
          expectedsolution.hi, expectedsolution.lo );
 
       ClientEventSyncPost( CLIEVENT_SELFTEST_TESTEND, (long)resultcode );
-    
+      delete problem;
+
     } /* for ( testnum = 0 ; testnum < TEST_CASE_COUNT ; testnum++ ) */
 
     if (successes > 0)

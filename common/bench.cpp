@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.1 1999/05/15 07:15:23 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.2 1999/09/16 21:27:19 remi Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -89,7 +89,7 @@ void AutoSetThreshold( Client *clientp, unsigned int contestid,
 u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
 {
   ContestWork contestwork;
-  Problem problem;
+  Problem *problem = new Problem();
 
   int run;
   const char *sm4;
@@ -155,7 +155,7 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
   contestwork.crypto.iterations.lo = ( (1<<itersize) );
   contestwork.crypto.iterations.hi = ( 0 );
 
-  problem.LoadState( &contestwork, contestid, tslice, cputype );
+  problem->LoadState( &contestwork, contestid, tslice, cputype );
 
   percent = 0;
   cm1 = '\n'; 
@@ -196,7 +196,7 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
     LogScreen( "Note: this client does not support the %s core.\n", not_supported );
   #endif
 
-  ClientEventSyncPost( CLIEVENT_BENCHMARK_STARTED, (long)((Problem *)(&problem)));
+  ClientEventSyncPost( CLIEVENT_BENCHMARK_STARTED, (long)(problem));
 
   do
   {
@@ -212,7 +212,7 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
         sm4 = ((percent == 101)?("    \n*Break*\n"):("    \n"));
         cm2 = 0;
       }
-      ClientEventSyncPost( CLIEVENT_BENCHMARK_BENCHING, (long)((Problem *)(&problem)));
+      ClientEventSyncPost( CLIEVENT_BENCHMARK_BENCHING, (long)(problem));
 
       LogScreen( "%cBenchmarking %s with 1*2^%d tests (%u keys):%s%c%u%%",
           cm1, contname, itersize+keycountshift,
@@ -224,10 +224,10 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
 
     if ( run == RESULT_WORKING )
     {
-      ClientEventSyncPost( CLIEVENT_BENCHMARK_BENCHING, (long)((Problem *)(&problem)));
+      ClientEventSyncPost( CLIEVENT_BENCHMARK_BENCHING, (long)(problem));
 
-      run = problem.Run();
-      percent = (problem.CalcPermille() + 5)/10;
+      run = problem->Run();
+      percent = (problem->CalcPermille() + 5)/10;
       if (percent == 0)
         percent = 1;
 
@@ -245,9 +245,9 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
 
   struct timeval tv;
   char ratestr[32];
-  double rate = CliGetKeyrateForProblemNoSave( &problem );
-  tv.tv_sec = problem.runtime_sec;  //read the real core time
-  tv.tv_usec = problem.runtime_usec;
+  double rate = CliGetKeyrateForProblemNoSave( problem );
+  tv.tv_sec = problem->runtime_sec;  //read the real core time
+  tv.tv_usec = problem->runtime_usec;
   ClientEventSyncPost( CLIEVENT_BENCHMARK_FINISHED, (long)((double *)(&rate)));
 
   LogScreen("Completed in %s [%skeys/sec]\n",  CliGetTimeString( &tv, 2 ),
@@ -280,6 +280,7 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
              ((hourstobuffer > 24)?(hourstobuffer/24):(hourstobuffer)),
              ((hourstobuffer > 24)?("days"):("hours")) );
 
+  delete problem;
   return (u32)(itersize);
 }
 
