@@ -5,6 +5,11 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.189  1999/02/11 21:24:42  patrick
+#
+# added new target x86-os2-nams-gcc to select nasm cores, based on a comment
+# by cyp. Couldn't find any difference though
+#
 # Revision 1.188  1999/02/10 21:30:41  remi
 # Added lurk mode to freebsd targets.
 #
@@ -2000,6 +2005,24 @@ case "$1" in
 	TARGET_ADDSRCS="common/lurk.cpp rc5/rc5-486-smc-rg.cpp $RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 platforms/os2cli/os2inst.cpp"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm $NASM_DESMMX_SRCS"
+        TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -d__showids__ -f aout "
+        TARGET_LIBS="-lsocket"
+        TARGET_OS=OS2
+        ;;
+
+    *x86-os2-nasm-gcc)      
+        basename ()
+        {
+        export parm=$1
+        ksh -c 'echo ${parm##*/}'
+        }
+	TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+	TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -I. -I${C_INCLUDE_PATH} -DMULTITHREAD -D__showids__"
+	TARGET_LDFLAGS="-Zmt"
+	TARGET_ADDSRCS="common/lurk.cpp rc5/rc5-486-smc-rg.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 platforms/os2cli/os2inst.cpp"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
         TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -d__showids__ -f aout "
         TARGET_LIBS="-lsocket"
         TARGET_OS=OS2
