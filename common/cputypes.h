@@ -6,7 +6,7 @@
 // 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62 1999/04/13 12:41:25 jlawson Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.1 1999/05/10 23:48:46 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -46,58 +46,62 @@
 #define OS_NETBSD       13
 #define OS_SUNOS        14
 #define OS_SOLARIS      15
-#define OS_OS9          16
-//#define OS_UNUSED_1   17    // was java-vm
+//#define OS_UNUSED_1   16    // never used. was os9
+//#define OS_UNUSED_2   17    // never used. was java-vm
 #define OS_BSDI         18
 #define OS_NEXTSTEP     19
 #define OS_SCO          20
 #define OS_QNX          21
-#define OS_OSF1         22    // oldname for DEC UNIX
-//#define OS_UNUSED_2   23    // was minix
-//#define OS_UNUSED_3   24    // was mach10
+//#define OS_UNUSED_3   22    // never used. was osf1 (oldname for DEC UNIX)
+//#define OS_UNUSED_4   23    // never used. was minix
+//#define OS_UNUSED_5   24    // never used. was mach10
 #define OS_AIX          25
-#define OS_AUX          26
-#define OS_RHAPSODY     27
+//#define OS_UNUSED_6   26    // never used. was AUX
+//#define OS_UNUSED_7   27    // never used. was rhapsody
 #define OS_AMIGAOS      28
 #define OS_OPENBSD      29
 #define OS_NETWARE      30
 #define OS_MVS          31
 #define OS_ULTRIX       32
-#define OS_OS400        33
+//define OS_UNUSED_8    33    // never used. was os400
 #define OS_RISCOS       34
 #define OS_DGUX         35
-#define OS_WIN32S       36    // windows 3.1, 3.11, wfw (32-bit Win32s)
+#define OS_WIN32S       36    // obsolete (32-bit Win32s) w16 client is 32bit
 #define OS_SINIX        37
 #define OS_DYNIX        38
 #define OS_OS390        39
-//#define OS_UNUSED4    40    // os_maspar
-#define OS_WIN16        41    // windows 3.1, 3.11, wfw (16-bit)
+//#define OS_UNUSED4    40    // never used. was os_maspar
+#define OS_WIN16        41    // windows 3.1, 3.11, wfw (was 16bit, now 32bit)
 #define OS_DESCRACKER   42    // eff des cracker
 
 /* ----------------------------------------------------------------- */
 
 // determine current compiling platform
 #if defined(WIN32) || defined(__WIN32__) || defined(_Windows) || defined(_WIN32)
-  #define CLIENT_OS_NAME "Win32"
-  #if defined(NTALPHA)
-    #define CLIENT_OS     OS_WIN32
+  #if defined(NTALPHA) || defined(_M_ALPHA)
     #define CLIENT_CPU    CPU_ALPHA
+    #define CLIENT_OS     OS_WIN32
+    #define CLIENT_OS_NAME "Win32"
   #elif defined(ASM_PPC)
-    #define CLIENT_OS     OS_WIN32
     #define CLIENT_CPU    CPU_POWERPC
-  #elif !defined(WIN32) && !defined(__WIN32__) && !defined(_WIN32)
-    // win16 
-    #define CLIENT_OS     OS_WIN16
-    #define CLIENT_CPU    CPU_X86
-    #undef CLIENT_OS_NAME
-    #define CLIENT_OS_NAME "Win16"
-  #elif defined(__WIN32S__) /* may need to be defined in makefile */
-    // win32s gui
-    #define CLIENT_OS     OS_WIN32S
-    #define CLIENT_CPU    CPU_X86
-  #elif defined(_M_IX86)
     #define CLIENT_OS     OS_WIN32
+    #define CLIENT_OS_NAME "Win32"
+  #elif !defined(WIN32) && !defined(__WIN32__) && !defined(_WIN32) /* win16 */
     #define CLIENT_CPU    CPU_X86
+    #define CLIENT_OS     OS_WIN16
+    #define CLIENT_OS_NAME "Win16"
+  #elif defined(__WIN32S__) /* win32s gui/may need to be defined in makefile*/
+    #define CLIENT_CPU    CPU_X86
+    #define CLIENT_OS     OS_WIN32S
+    #define CLIENT_OS_NAME "Win16"
+  #elif defined(__WINDOWS386__) /* standard 32bit client built for win16 */
+    #define CLIENT_CPU    CPU_X86
+    #define CLIENT_OS     OS_WIN16
+    #define CLIENT_OS_NAME "Win16"
+  #else
+    #define CLIENT_CPU    CPU_X86
+    #define CLIENT_OS     OS_WIN32
+    #define CLIENT_OS_NAME "Win32"
   #endif
 #elif defined(DJGPP) || defined(DOS4G) || defined(__MSDOS__)
   #define CLIENT_OS     OS_DOS
@@ -119,7 +123,13 @@
   #define CLIENT_OS_NAME "OS/2"
   #define CLIENT_OS     OS_OS2
   #define CLIENT_CPU    CPU_X86
+  #if defined(__EMX__) && !defined(__unix__) 
+  #define __unix__  /* should already be defined */
+  #endif
 #elif defined(linux)
+  #ifndef __unix__ /* should already be defined */
+  #define __unix__
+  #endif
   #define CLIENT_OS_NAME "Linux"
   #if defined(__alpha__) || defined(ASM_ALPHA)
     #define CLIENT_OS     OS_LINUX
@@ -141,12 +151,18 @@
     #define CLIENT_CPU    CPU_68K
   #endif
 #elif defined(__FreeBSD__)
+  #ifndef __unix__ /* should already be defined */
+  #define __unix__
+  #endif
   #define CLIENT_OS_NAME "FreeBSD"
   #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_OS     OS_FREEBSD
     #define CLIENT_CPU    CPU_X86
   #endif
 #elif defined(__NetBSD__)
+  #ifndef __unix__ /* should already be defined */
+  #define __unix__
+  #endif
   #define CLIENT_OS_NAME  "NetBSD"
   #define CLIENT_OS       OS_NETBSD
   #if defined(__i386__) || defined(ASM_X86)
@@ -159,6 +175,9 @@
     #define CLIENT_CPU    CPU_VAX
   #endif
 #elif defined(__OpenBSD__) || defined(openbsd)
+  #ifndef __unix__ /* should already be defined */
+  #define __unix__
+  #endif
   #define CLIENT_OS_NAME  "OpenBSD"
   #define CLIENT_OS       OS_OPENBSD
   #if defined(__i386__) || defined(ASM_X86)
@@ -169,12 +188,18 @@
     #define CLIENT_CPU    CPU_SPARC
   #endif
 #elif defined(__QNX__)
+  #ifndef __unix__ /* should already be defined */
+  #define __unix__
+  #endif
   #define CLIENT_OS_NAME  "QNX"
   #define CLIENT_OS       OS_QNX
   #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
   #endif
 #elif defined(solaris) || defined(sun)
+  #ifndef __unix__ /* should already be defined */
+  #define __unix__
+  #endif
   #define CLIENT_OS_NAME  "Solaris"
   #define CLIENT_OS       OS_SOLARIS
   #if defined(__i386__) || defined(ASM_X86)
@@ -183,40 +208,61 @@
     #define CLIENT_CPU    CPU_SPARC
   #endif
 #elif defined(_SUN68K_)
+  #ifndef __unix__ /* should already be defined */
+  #define __unix__
+  #endif
   #define CLIENT_OS_NAME  "SunOS"
   #define CLIENT_OS       OS_SUNOS
   #define CLIENT_CPU      CPU_68K
 #elif defined(bsdi)
+  #ifndef __unix__ /* should already be defined */
+  #define __unix__
+  #endif
   #define CLIENT_OS_NAME  "BSD/OS"
   #define CLIENT_OS       OS_BSDI
   #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
   #endif
 #elif defined(sco5)
+  #ifndef __unix__ /* should already be defined */
+  #define __unix__
+  #endif
   #define CLIENT_OS_NAME  "SCO Unix"
   #define CLIENT_OS       OS_SCO
   #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
   #endif
 #elif defined(__osf__)
+  #ifndef __unix__ /* should already be defined */
+  #define __unix__
+  #endif
   #define CLIENT_OS_NAME  "DEC Unix"
   #define CLIENT_OS       OS_DEC_UNIX
   #if defined(__alpha)
     #define CLIENT_CPU    CPU_ALPHA
   #endif
 #elif defined(sinix)
+  #ifndef __unix__ /* should already be defined */
+  #define __unix__
+  #endif
   #define CLIENT_OS_NAME  "Sinix"
   #define CLIENT_OS       OS_SINIX
   #if defined(ASM_MIPS) || defined(__mips)
     #define CLIENT_CPU    CPU_MIPS
   #endif
 #elif defined(ultrix)
+  #ifndef __unix__ /* should already be defined */
+  #define __unix__
+  #endif
   #define CLIENT_OS_NAME  "Ultrix"
   #define CLIENT_OS       OS_ULTRIX
   #if defined(ASM_MIPS) || defined(__mips)
     #define CLIENT_CPU    CPU_MIPS
   #endif
 #elif (defined(ASM_MIPS) || defined(__mips))
+  #ifndef __unix__ /* should already be defined */
+  #define __unix__
+  #endif
   #define CLIENT_OS_NAME  "Irix"
   #define CLIENT_OS       OS_IRIX
   #define CLIENT_CPU    CPU_MIPS
@@ -227,6 +273,9 @@
     #define CLIENT_CPU    CPU_ALPHA
   #endif
 #elif defined(_HPUX) || defined(__hpux) || defined(__hpux__)
+  #ifndef __unix__ /* should already be defined */
+  #define __unix__
+  #endif
   #define CLIENT_OS_NAME  "HP/UX"
   #define CLIENT_OS       OS_HPUX
   #if defined(__hppa) || defined(__hppa__) || defined(ASM_HPPA)
@@ -235,10 +284,16 @@
     #define CLIENT_CPU    CPU_68K
   #endif
 #elif defined(_DGUX)
+  #ifndef __unix__ /* should already be defined */
+  #define __unix__
+  #endif
   #define CLIENT_OS_NAME  "DG/UX"
   #define CLIENT_OS       OS_DGUX
   #define CLIENT_CPU      CPU_88K
 #elif defined(_AIX)
+  #ifndef __unix__ /* should already be defined */
+  #define __unix__
+  #endif
   #define CLIENT_OS_NAME   "AIX"
 // AIXALL hides itself as POWER, it's more easy copy with this problem
 // in the POWER tree, because this is used on AIX only
@@ -258,16 +313,16 @@
     #define CLIENT_OS     OS_MACOS
     #define CLIENT_CPU    CPU_68K
   #endif
-#elif defined(__dest_os) && defined(__be_os) && (__dest_os == __be_os)
+#elif defined(__BEOS__) || defined(__be_os)
+  #ifndef __unix__ /* 4.4bsd compatible or not? */
+  #define __unix__ 
+  #endif
   #define CLIENT_OS_NAME   "BeOS"
   #define CLIENT_OS     OS_BEOS
-  #if defined(__POWERPC__)
+  #if defined(__POWERPC__) || defined(__PPC__)
     #define CLIENT_CPU    CPU_POWERPC
   #endif
-#elif defined(__BEOS__) && (__BEOS__ == 1)
-  #define CLIENT_OS_NAME   "BeOS"
-  #define CLIENT_OS     OS_BEOS
-  #if defined(__INTEL__) && (__INTEL__ == 1)
+  #elif defined(__INTEL__)
     #define CLIENT_CPU CPU_X86
   #endif
 #elif defined(AMIGA)
@@ -302,6 +357,9 @@
   #define CLIENT_OS     OS_OS390
   #define CLIENT_CPU    CPU_S390
 #elif defined(_SEQUENT_)
+  #ifndef __unix__ 
+  #define __unix__
+  #endif
   #define CLIENT_OS     OS_DYNIX
   #define CLIENT_OS_NAME   "Dynix"
   #if defined(ASM_X86)
@@ -425,17 +483,17 @@ extern "C" {
   #elif (ULONG_MAX < UINT_MAX)
     #error your limits.h is borked. ULONG_MAX can never be less than UINT_MAX
   #else
-    #if (defined(USHRT_MAX) && !defined(USHORT_MAX))
-      #define USHORT_MAX USHRT_MAX
+    #if (!defined(USHRT_MAX) && defined(USHORT_MAX))
+      #define USHRT_MAX USHORT_MAX 
     #endif
-    #if !defined(SIZEOF_SHORT) && defined(USHORT_MAX)
-      #if (USHORT_MAX == 0xFFUL)
+    #if !defined(SIZEOF_SHORT) && defined(USHRT_MAX)
+      #if (USHRT_MAX == 0xFFUL)
         #define SIZEOF_SHORT 1
-      #elif (USHORT_MAX == 0xFFFFUL)
+      #elif (USHRT_MAX == 0xFFFFUL)
         #define SIZEOF_SHORT 2
-      #elif (USHORT_MAX == 0xFFFFFFFFUL)    
+      #elif (USHRT_MAX == 0xFFFFFFFFUL)    
         #define SIZEOF_SHORT 4
-      #elif (USHORT_MAX == 0xFFFFFFFFFFFFFFFFUL)
+      #elif (USHRT_MAX == 0xFFFFFFFFFFFFFFFFUL)
         #define SIZEOF_SHORT 8
       #else
         #fixme: sizeof(unsigned short) !=1 and !=2 and !=4 and !=8?
