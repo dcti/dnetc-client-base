@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.47 2001/04/25 22:02:32 oliver Exp $
+ * $Id: ogr.cpp,v 1.1.2.48 2001/05/20 21:34:12 andreasb Exp $
  */
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
@@ -2085,6 +2085,9 @@ static int found_one(const struct State *oState)
 #endif
 
 
+#if defined(__SUNPRO_CC)
+  #define __inline inline
+#endif
 
 #if !defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
   static const char ogr_first_blank_8bit[256] = {
