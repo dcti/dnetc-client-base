@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.56.2.3 2003/04/26 15:16:48 pfeffi Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.56.2.4 2003/08/09 12:45:25 mweiser Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -664,6 +664,18 @@ int CliGetMonotonicClock( struct timeval *tv )
     {
       if (amigaGetMonoClock(tv) != 0)
         return -1;
+    }
+    #elif (CLIENT_OS == OS_NEXTSTEP)
+    {
+      struct tsval ts;
+
+      /* gives the uptime in microseconds in ts */
+      if (kern_timestamp(&ts) != KERN_SUCCESS)
+        return -1;
+
+      /* the actual timestamp is 64bit but comes in 32bit low and high
+      ** parts so that the latter can be treated as the wrap count */
+      __clks2tv( 1000000, ts.low_val, ts.high_val, tv );
     }
     #elif defined(CLOCK_MONOTONIC) /* POSIX 1003.1c */
     {                           /* defined doesn't always mean supported :( */
