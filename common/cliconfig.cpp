@@ -1128,6 +1128,7 @@ void Client::ValidateConfig( void )
   if ( outthreshold[1] > 1000 ) outthreshold[1] = 1000;
   if ( blockcount < 0 ) blockcount = 0;
   if ( timeslice < 1 ) timeslice = 0x10000;
+  if ( timeslice < PIPELINE_COUNT ) timeslice=PIPELINE_COUNT;
   if ( niceness < 0 || niceness > 2 ) niceness = 0;
   if ( uuehttpmode < 0 || uuehttpmode > 5 ) uuehttpmode = 0;
 #if (CLIENT_CPU == CPU_X86)
