@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: bench.cpp,v $
+// Revision 1.15  1999/01/22 00:09:22  michmarc
+// Make timeslice size the same during benchmark as during actual run.
+// [On my Alpha/NT machine, using 0x1000 instead of 0x10000 as the timeslice
+// results in about a 60% drop in the reported speed because of the increased
+// amount of I/O done.]
+//
 // Revision 1.14  1999/01/18 21:13:00  cyp
 // cleaned up 'a bit'. sheesh!
 //
@@ -55,7 +61,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.14 1999/01/18 21:13:00 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.15 1999/01/22 00:09:22 michmarc Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -179,7 +185,7 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
     hourstobuffer = (3*24); // 3 Days for RC5
     }
 
-  tslice = 0x1000;
+  tslice = 0x10000;
 
   #if (CLIENT_OS == OS_NETWARE)
     tslice = GetTimesliceBaseline(); //in cpucheck.cpp
