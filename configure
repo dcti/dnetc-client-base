@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.101 2003/09/05 16:10:12 snikkel Exp $
+# @(#)$Id: configure,v 1.288.2.102 2003/09/12 13:30:05 mweiser Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -409,7 +409,6 @@ add_sources() # $1=os, $2=arch, $3=custom
                                         rc5-72/68k/r72-0x0-common-mh.ns.s"
         TARGET_ASFLAGS="$TARGET_ASFLAGS -Irc5-72/68k"
       else
-        DEFAULT_RC5_72="0"
         TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/68k/r72-030-mh.gas.s \
                                         rc5-72/68k/r72-040-mh.gas.s \
                                         rc5-72/68k/r72-060-mh.gas.s \
@@ -447,9 +446,9 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev67.cpp"
     fi # HAVE_OGR
   #-----------------------------------------------------------------
-  elif [ "$2" = "ppc" -o "$2" = "power" ]; then
+  elif [ "$2" = "ppc" ]; then
     XLC_LINTILLA_ASMS="rc5/ppc/crunch_lintilla.ppcxlc.s \
-     rc5/ppc/crunch_allitnil.ppcxlc.s"
+        rc5/ppc/crunch_allitnil.ppcxlc.s"
     RC5PPC_SRCS="rc5/ppc/crunch_lintilla.ppcgas.s \
         rc5/ppc/crunch_lintilla_604e.ppcgas.s \
         rc5/ppc/crunch_allitnil.ppcgas.s \
@@ -475,21 +474,10 @@ add_sources() # $1=os, $2=arch, $3=custom
 
     if [ "$HAVE_RC5_64" = "1" ]; then
       DEFAULT_RC5_64="0"
-      if [ "$2" = "power" ]; then
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_64_ANSI2_SRCS"
-        if [ "$1-$3" = "aix-aixall" ]; then
-          TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_SRCS"
-        fi
-      elif [ "$TARGET_CC" = "mwcc" ]; then
+      if [ "$TARGET_CC" = "mwcc" ]; then
         TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_MWCC_SRCS"
       elif [ "$TARGET_CC" = "xlC" ]; then
-        if [ "X$3" = "aix32" ]; then
-          TARGET_ADDASMS="$TARGET_ADDASMS rc5/ppc/crunch_allitnil.ppcgas.s \
-                                          rc5/ppc/crunch_lintilla.ppcgas.s \
-                                          rc5/ppc/crunch_lintilla_604e.ppcgas.s"
-        else # aix4
-          TARGET_ADDASMS="$TARGET_ADDASMS $XLC_LINTILLA_ASMS"
-        fi
+        TARGET_ADDASMS="$TARGET_ADDASMS $XLC_LINTILLA_ASMS"
       elif [ "${1}" = "macosx" ]; then  #... and macosxserver (apple cc)
         TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_APPLE_SRCS"
         if [ "X$3" = "X" ]; then #mach3+
@@ -500,44 +488,43 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
     fi # HAVE_RC5_64
 
-    R72PPC_ASMS="rc5-72/ppc/r72-ppc-mh-2.gas.s \
-        rc5-72/ppc/r72-603e-mh-1-addi.gas.s \
-        rc5-72/ppc/r72-604e-mh-1-addi.gas.s \
-        rc5-72/ppc/r72-KKS2pipes.gas.s \
-        rc5-72/ppc/r72-KKS604e.gas.s"
-    R72PPC_APPLE_ASMS="rc5-72/ppc/r72-ppc-mh-2.osx.s \
-        rc5-72/ppc/r72-603e-mh-1-addi.osx.s \
-        rc5-72/ppc/r72-604e-mh-1-addi.osx.s \
-        rc5-72/ppc/r72-KKS2pipes.osx.s \
-        rc5-72/ppc/r72-KKS604e.osx.s"
-
-    if [ "$HAVE_RC5_72" = "1" ]; then
+    # Metrowerks doesn't have assembler cores, so we leave the defaults
+    if [ "$HAVE_RC5_72" = "1" -a "$TARGET_CC" != "mwcc" ]; then
       DEFAULT_RC5_72="0"
-      # PowerPC
-      if [ "$2" = "power" ]; then
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_72_ANSI_SRCS"
-        if [ "$1-$3" = "aix-aixall" ]; then
-          TARGET_ADDASMS="$TARGET_ADDASMS $R72PPC_ASMS"
-        fi
-      elif [ "$TARGET_CC" = "mwcc" ]; then
-        TARGET_ADDASMS="$TARGET_ADDASMS" # to be completed
-      elif [ "$TARGET_CC" = "xlC" ]; then
-        TARGET_ADDASMS="$TARGET_ADDASMS" # to be completed
-      elif [ "${1}" = "macosx" ]; then  #... and macosxserver (apple cc)
-        TARGET_ADDASMS="$TARGET_ADDASMS $R72PPC_APPLE_ASMS"
-      else # gas targets
-        TARGET_ADDASMS="$TARGET_ADDASMS $R72PPC_ASMS"
-      fi
-      # AltiVec
-      if [ "${1}" = "macosx" ]; then  #... and macosxserver (apple cc)
-        if [ "X$3" = "X" ]; then #mach3+
+
+      if [ "$1" = "aix" ]; then
+        # aix on powerpc uses the TOC cores
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/ppc/r72-ppc-mh-2.toc.s \
+                                        rc5-72/ppc/r72-603e-mh-1-addi.toc.s \
+                                        rc5-72/ppc/r72-604e-mh-1-addi.toc.s \
+                                        rc5-72/ppc/r72-KKS2pipes.toc.s \
+                                        rc5-72/ppc/r72-KKS604e.toc.s"
+      elif [ "${1}" = "macosx" ]; then
+        # macosx and macosxserver (apple cc) have their own asm cores
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/ppc/r72-ppc-mh-2.osx.s \
+                                        rc5-72/ppc/r72-603e-mh-1-addi.osx.s \
+                                        rc5-72/ppc/r72-604e-mh-1-addi.osx.s \
+                                        rc5-72/ppc/r72-KKS2pipes.osx.s \
+                                        rc5-72/ppc/r72-KKS604e.osx.s"
+
+        # mach3+ ?
+        if [ "X$3" = "X" ]; then
           TARGET_ADDSRCS="$TARGET_ADDSRCS rc5-72/ppc/r72-KKS7400.osx.s \
                                           rc5-72/ppc/r72-KKS7450.osx.s \
                                           rc5-72/ppc/r72-KKS970.osx.s"
 	fi
-      elif [ "X$3" = "Xaltivec" ] ; then
+      else
+        # generic gas targets
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/ppc/r72-ppc-mh-2.gas.s \
+                                        rc5-72/ppc/r72-603e-mh-1-addi.gas.s \
+                                        rc5-72/ppc/r72-604e-mh-1-addi.gas.s \
+                                        rc5-72/ppc/r72-KKS2pipes.gas.s \
+                                        rc5-72/ppc/r72-KKS604e.gas.s"
+
+        if [ "X$3" = "Xaltivec" ] ; then
           TARGET_ADDSRCS="$TARGET_ADDSRCS rc5-72/ppc/r72-KKS7400.gas.s \
                                           rc5-72/ppc/r72-KKS7450.gas.s"
+        fi
       fi
     fi # HAVE_RC5_72
 
@@ -638,7 +625,8 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi # HAVE_OGR
   #-----------------------------------------------------------------
   elif [ "$2" = "88k" -o "$2" = "sh4" -o "$2" = "vax" \
-      -o "$2" = "s390" -o "$2" = "s390x" -o "$2" = "generic" ]; then
+      -o "$2" = "s390" -o "$2" = "s390x" -o "$2" = "generic" \
+      -o "$2" = "power" ]; then
     : # pure ansi targets. (2 pipeline RC5 core) ==> DEFAULT
   #-----------------------------------------------------------------
   elif [ "$2" = "ia64" ]; then
@@ -994,14 +982,8 @@ generate_gcc_opts() {
 
     *internal-power)
         opts272="$OPTS_GCC272 -O6 -DASM_POWER -mcpu=power -funroll-loops"
-        opts295="$OPTS_GCC295 -O6 -DASM_POWER -mcpu=power -funroll-loops"
-        opts310="$OPTS_GCC310 -O6 -DASM_POWER -mcpu=power -funroll-loops"
-        ;;
-
-    *internal-aixcommon)
-        opts272="$OPTS_GCC272 -O6 -DASM_COM -mcpu=common -funroll-loops"
-        opts295="$OPTS_GCC295 -O6 -DASM_COM -mcpu=common -funroll-loops"
-        opts310="$OPTS_GCC310 -O6 -DASM_COM -mcpu=common -funroll-loops"
+        opts295="$OPTS_GCC295 -O3 -DASM_POWER -mcpu=power -funroll-loops"
+        opts310="$OPTS_GCC310 -O3 -DASM_POWER -mcpu=power -funroll-loops"
         ;;
 
     *internal-alpha*)
@@ -1111,14 +1093,13 @@ OPTS_CC_ALPHA='-O4 -fast -arch ev56 -tune ev56 -inline all'
 
 #-- PPC, IBM xlC
 
-#OPTS_XLC is being referred to but was nowhere to be found.
-OPTS_XLC_PPC601="$OPTS_XLC -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC"
-OPTS_XLC_PPC="$OPTS_XLC -qarch=ppc -qtune=604 -D_AIX -D_ARCH_PPC"
-OPTS_XLC_POWER="$OPTS_XLC -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
-OPTS_XLC_POWER2="$OPTS_XLC -qarch=pwr2 -qtune=pwr2 -D_AIX -D_ARCH_PWR2"
-OPTS_XLC3="-O3 -qansialias -qlibansi"
-OPTS_XLC3_PPC601="$OPTS_XLC3 -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC"
-OPTS_XLC3_POWER="$OPTS_XLC3 -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
+# O4 and O5 would include IPA but don't gain a lot (if you switch IPA on
+# be sure to add TARGET_LDFLAGS="-qipa" to the compile target)
+# qflag=i:i switches on maximum messages
+# ASM_* is needed to correctly switch on optimisation in ogr.cpp
+OPTS_XLC="-O3 -qflag=i:i"
+OPTS_XLC_PPC="$OPTS_XLC -qarch=ppc -qtune=604 -DASM_PPC"
+OPTS_XLC_POWER="$OPTS_XLC -qarch=pwr -qtune=pwr -DASM_POWER"
 
 #-- PPC, MetroWerks
 
@@ -2058,91 +2039,61 @@ case "$1" in
         add_sources "macosx" "ppc"
         ;;
 
-  ### AIX PPC targets
-        # classes are buggy with AIX !
+    *ppc-aix-xlc)
+        # AIX's system as doesn't support macros, so we have to use gas for cores
+        TARGET_AS="gas"
+        TARGET_CC="xlC_r"
 
-    *ppc-aix4-xlc)	 # This is the fastest build for AIX 4.x PPC machines
-        TARGET_CC="xlC"
         TARGET_CCFLAGS="$OPTS_XLC_PPC"
-        TARGET_LIBS="-lCns"
+        TARGET_ASFLAGS="-mppc"
+
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        add_sources "aix" "ppc" "aix4"
+        add_sources "aix" "ppc"
         ;;
 
-    *ppc601-aix4-xlc)      # AIX 4.x PPC, 601 chip
-        TARGET_CC="xlC"
-        TARGET_CCFLAGS="$OPTS_XLC_PPC601"
-        TARGET_LIBS="-lCns"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        add_sources "aix" "ppc" "aix4"
-        ;;
-
-    *ppc-aix32-xlc)	   # AIX 3.2.x PPC
-        TARGET_CC="xlC"
-        TARGET_CCFLAGS="$OPTS_XLC3_PPC601"
-        TARGET_LIBS="-lCns"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        add_sources "aix" "ppc" "aix32"
-        ;;
-
-    *ppc-aix32-gcc)	   # AIX 3.2.x gcc/egcs [patrick] <patrick@mail4you.de>
+    *ppc-aix-gcc)
+        # system as is recommended for gcc but doesn't support macros,
+        # so we have to use gas for cores
+        TARGET_AS="gas"
         TARGET_CC="g++"
         generate_gcc_opts "ppc" "aix"
-        TARGET_CCFLAGS="$OPTS_GCC -D_AIX"
+
+        # gcc's < 3.2 used -mthreads
+        TARGET_CCFLAGS="$OPTS_GCC -mpowerpc -mtune=604 -pthread"
+        #TARGET_CCFLAGS="$OPTS_GCC -mpowerpc -mtune=604 -mthreads"
+        TARGET_ASFLAGS="-mppc"
+        TARGET_LIBS="-lpthread"
+
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        add_sources "ppc" "aix" "aix32"
+        add_sources "aix" "ppc"
         ;;
 
-  ### AIX POWER targets
-        # AIX POWER this one works for all platforms (AIX 3.x, 4.[1-3])!
-
-    *power-aix)           # gcc/egcs [patrick] <patrick@mail4you.de>
+    *power-aix-gcc)
+        # system as is recommended for gcc but doesn't support macros, so use gas for cores
+        TARGET_AS="gas"
         TARGET_CC="g++"
         generate_gcc_opts "power" "aix"
-        TARGET_CCFLAGS="$OPTS_GCC -D_AIX"
+ 
+        # gcc's < 3.2 used -mthreads
+        TARGET_CCFLAGS="$OPTS_GCC -pthread"
+        #TARGET_CCFLAGS="$OPTS_GCC -mthreads"
+        TARGET_ASFLAGS="-mpower"
+        TARGET_LIBS="-lpthread"
+
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "aix" "power"
         ;;
 
-    *aix-all)                       # [patrick] new all in one AIX target
-        # WARNING: the code will show a PPC CPU even though also POWER
-        # CPUs are supported !
-        TARGET_CC="g++"
-        generate_gcc_opts "power" "aix"
-        AIXPOWERFLAGS="$OPTS_GCC -mthreads -D_AIX"
-        generate_gcc_opts "ppc" "aix"
-        AIXPPC601FLAGS="$OPTS_GCC -mthreads -mcpu=601 -D_AIX"
-        generate_gcc_opts "ppc604" "aix"
-        AIXPPC604FLAGS="$OPTS_GCC -mthreads -D_AIX"
-        generate_gcc_opts "aixcommon" "aix"
-        TARGET_CCFLAGS="$OPTS_GCC -mthreads -D_AIX -D_AIXALL"
-        # ogr_power.o uses the same source as ogr.o, 
-        # only different compiler seetings
-        TARGET_ADDOBJS="output/ogr_power.o $TARGET_ADDOBJS"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_LIBS=$TARGET_LIBS
-        TARGET_LDFLAGS="$TARGET_LDFLAGS -mthreads"
-        TARGET_TARBALL="aix-all-aix4.1"
-        add_sources "aix" "power" "aixall" #easier to do under power than ppc
-        ;;
+    *power-aix-xlc)
+        # AIX's system as doesn't support macros, so we have to use gas for cores
+        TARGET_AS="gas"
+        TARGET_CC="xlC_r"
 
-    *aix-powerandppc)                       #[Stan] all in one AIX target (newest)
-        # -= [Stan] adapted from patricks aix-all =-
-        # WARNING: the code will show a PPC CPU even though also POWER
-        # CPUs are supported !
-        TARGET_CC="g++"
-        generate_gcc_opts "power" "aix"
-        AIXPOWERFLAGS="$OPTS_GCC -mthreads -D_AIX -DHAVE_RC5_72_CORES -DHAVE_OGR_CORES"
-        generate_gcc_opts "aixcommon" "aix"
-        TARGET_CCFLAGS="$OPTS_GCC -mthreads -D_AIX -D_AIXALL"
-        # ogr_power.o uses the same source as ogr.o,
-        # only different compiler seetings
-        TARGET_ADDOBJS="output/ogr_power.o $TARGET_ADDOBJS"
+        TARGET_CCFLAGS="$OPTS_XLC_POWER"
+        TARGET_ASFLAGS="-mpwr"
+
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_LIBS=$TARGET_LIBS
-        TARGET_LDFLAGS="$TARGET_LDFLAGS -mthreads"
-        TARGET_TARBALL="aix-powerandppc-aix4"
-        add_sources "aix" "power" "aixall" #easier to do under power than ppc
+        add_sources "aix" "power"
         ;;
 
   ### QNX PPC targets
