@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.172  1999/01/14 19:30:21  patrick
+# If caluses still buggy because of missing quotes (some shells might work without them)
+#
 # Revision 1.171  1999/01/13 23:03:58  friedbait
 # fixed bug in OS2 conditional path. A syntax error caused OS2 specific
 # stuff being put in the Makefile even if there was no OS2 target selected.
@@ -1989,7 +1992,7 @@ else
     echo " ---------------------------------------------"
     exit
   fi
-  if [ $TARGET_OS = OS2 ]; then
+  if [ "$TARGET_OS" = "OS2" ]; then
      emxbind testplat
   else
      ${TARGET_STRIP} testplat
@@ -2052,7 +2055,7 @@ echo "" >> Makefile
 echo "Generating Makefile production targets..."
 echo "# Regular targets follow" >> Makefile
 
-if [ $TARGET_OS = OS2 ]; then
+if [ "$TARGET_OS" = "OS2" ]; then
 
 echo "${EXENAME}.exe:	\${BUILDNAME}.exe" >> Makefile
 echo "	\${CP} \${BUILDNAME}.exe ${EXENAME}.exe" >> Makefile
@@ -2082,7 +2085,7 @@ fi
 
 echo "clean:" >> Makefile
 echo "	rm -f \${ALLOBJS}  ${EXENAME}" >> Makefile
-if [ $TARGET_OS=OS2 ]; then
+if [ "$TARGET_OS" = "OS2" ]; then
 echo "	rm -f output/\${BUILDNAME}.res" >> Makefile
 fi
 echo "" >> Makefile
