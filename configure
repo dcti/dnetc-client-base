@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.30 1999/11/06 05:51:09 ivo Exp $
+# @(#)$Id: configure,v 1.222.2.31 1999/11/06 05:58:09 ivo Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -1840,13 +1840,16 @@ echo "\${BUILDNAME}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
 echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o \${BUILDNAME}" >> Makefile
 echo "" >> Makefile
 
-echo "reconfigure: $0" >> Makefile
+echo "dep: $0" >> Makefile
 echo "	\$(SHELL) $0 \${BUILDNAME}" >> Makefile
 echo "" >> Makefile
-
-echo "clean: " >> Makefile
+echo "reconfigure: dep" >> Makefile
+echo "" >> Makefile
+echo "clean:" >> Makefile
 echo "	rm -f \${ALLOBJS}  ${TARGET_BINNAME}" >> Makefile
 echo "" >> Makefile
+
+
 
 fi
 
