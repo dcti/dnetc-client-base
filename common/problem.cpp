@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.85 2000/11/22 18:20:30 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.86 2000/12/21 16:56:44 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -303,6 +303,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
       work->crypto.iterations.hi = ( 1 );
       return contestid;
     }
+    #if defined(HAVE_OGR_CORES)
     case OGR:
     {
       //24/2-22-32-21-5-1-12
@@ -321,6 +322,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
       work->ogr.nodes.hi = 0;
       return contestid;
     }
+    #endif
     default:
       break;
   }
@@ -1791,6 +1793,7 @@ int ProblemGetInfo(void *__thisprob,
 {
   int rescode = -1;
   InternalProblem *thisprob = __validate_probptr(__thisprob);
+  permille_only_if_exact = permille_only_if_exact; /* possibly unused */
 
   if (thisprob)
   {  

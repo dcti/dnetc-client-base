@@ -8,11 +8,13 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.45 2000/11/22 18:20:30 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.46 2000/12/21 16:56:44 cyp Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
+#if defined(HAVE_OGR_CORES)
 #include "ogr.h"      /* OGR core stuff */
+#endif
 
 enum {
   RC5, // http://www.rsa.com/rsalabs/97challenge/
@@ -82,11 +84,13 @@ typedef union
     struct {u32 hi,lo;} keysdone;         // iterations done (also current position in block)
     struct {u32 hi,lo;} iterations;       // iterations to do
   } crypto;
+  #if defined(HAVE_OGR_CORES)
   struct {
     struct WorkStub workstub; // stub to work on (28 bytes)
     struct {u32 hi,lo;} nodes;            // nodes completed
     char unused[12];
   } ogr;
+  #endif
 } ContestWork;
 
 typedef struct
