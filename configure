@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.217 1999/04/16 22:27:17 elric Exp $
+# @(#)$Id: configure,v 1.218 1999/04/18 14:40:27 patrick Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -809,11 +809,17 @@ case "$1" in
         # AIX POWER this one works for all platforms (AIX 3.x, 4.[1-3])!
     *power-aix-gcc)                     # [patrick] <patrick@mail4you.de>
         DELETECHARS="'/.\$\-'"
-	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_POWER -D_AIX \
-			-DBIT_32 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+		-DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/ansi/2-rg.c"
 	;;
+
+    *power-aix-egcs)                     # [patrick] <patrick@mail4you.de>
+        DELETECHARS="'/.\$\-'"
+        TARGET_CCFLAGS="$OPTS_EGCS -DASM_POWER -mcpu=power -D_AIX \
+		-DBIT_32 -DMEGGS -DKWAN"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/ansi/2-rg.c"
+        ;;
 
         #new all in one AIX target
     *aixall-egcs)                       # [patrick] <patrick@mail4you.de>
