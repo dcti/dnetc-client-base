@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.53 1999/11/23 08:27:41 elric Exp $
+# @(#)$Id: configure,v 1.222.2.54 1999/11/23 23:20:15 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -61,18 +61,25 @@ TARGET_TARBALL_COMMENT="" # special comments for tarball.readme (if needed)
 TARGET_ARCTYPE="tgz"  # or "zip"
 
 #
+# warn as much as we can for maximum portability
+#
+OPTS_WARN="-Wall -Wtraditional -Wpointer-arith -Wcast-align \
+	  -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes \
+	  -Wconversion -Winline -Werror -Waggregate-return -Wcast-qual \
+	  -Woverloaded-virtual -Wnested-externs -Wredundant-decls"
+#
 # Common compiler options
 #
-OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
+OPTS_GCC="-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
 	  -fexpensive-optimizations -fomit-frame-pointer \
 	  -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
-	  -funroll-loops -fno-inline-functions -fno-exceptions \
-	  -Wall'
-OPTS_GCC272='-fomit-frame-pointer -fno-inline-functions \
-	     -fno-exceptions -fno-rtti -Wall'
-OPTS_XLC3='-O3 -qansialias -qlibansi'
-OPTS_EGCS='-O2 -fstrict-aliasing -fno-exceptions -fomit-frame-pointer -Wall'
-#OPTS_EGCS='-O2 -fno-exceptions -fomit-frame-pointer -Wall'
+	  -funroll-loops -fno-inline-functions -fno-handle-exceptions \
+	  $OPTS_WARN"
+OPTS_GCC272="-fomit-frame-pointer -fno-inline-functions \
+	     -fno-exceptions -fno-rtti $OPTS_WARN"
+OPTS_XLC3="-O3 -qansialias -qlibansi"
+OPTS_EGCS="-O2 -fstrict-aliasing -fno-exceptions -fomit-frame-pointer $OPTS_WARN"
+#OPTS_EGCS="-O2 -fno-exceptions -fomit-frame-pointer $OPTS_WARN"
 
 #
 # Common platform compiler options
@@ -208,7 +215,7 @@ OPTS_DES_ULTRA_ASM="-DASM_SPARC -DIN_DCTI_CLIENT \
 		    -DUSE_IDENTICAL_FLOAT_REGISTERS -DUSE_64_BIT_SENTINEL \
 		    -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc \
 		    -mtune=ultrasparc -fforce-mem -fstrict-aliasing\
-		    -Wall \
+		    $OPTS_WARN \
 		    -mv8plus -mvis -mepilogue -Wa,-xarch=v8plusa -mflat \
 		    -Os -fcall-used-g4 -fcall-used-g5 -fcall-used-g6"
 
