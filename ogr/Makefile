@@ -1,4 +1,4 @@
-CFLAGS = -O2 -g -Wall
+CFLAGS = -O2 -g -Wall -Du16=short
 
 all: choose test-ogr test-stubsplit
 
@@ -6,16 +6,16 @@ test-ogr: test-ogr.o ogr.o choosedat.o crc32.o
 
 test-stubsplit: test-stubsplit.o stubsplit.o
 
-ogr.o: ogr.cpp client2.h crc32.h stub.h
+ogr.o: ogr.cpp client2.h crc32.h ogr.h
 	g++ $(CFLAGS) -c $<
 
-stubsplit.o: stubsplit.cpp stubsplit.h stub.h
+stubsplit.o: stubsplit.cpp stubsplit.h ogr.h
 	g++ $(CFLAGS) -c $<
 
-test-stubsplit.o: test-stubsplit.cpp stubsplit.h stub.h
+test-stubsplit.o: test-stubsplit.cpp stubsplit.h ogr.h
 	g++ $(CFLAGS) -c $<
 
-test-ogr.o: test-ogr.cpp client2.h stub.h
+test-ogr.o: test-ogr.cpp client2.h ogr.h
 	g++ $(CFLAGS) -c $<
 
 choosedat.o: choosedat.cpp
@@ -36,7 +36,7 @@ choose: choose.o
 
 dist:
 	rm -f ogr.zip
-	zip -9 ogr Makefile client2.h ogr.c crc32.h crc32.c test-ogr.c stub.h stubsplit.h stubsplit.c test-stubsplit.c choose.c bin2c.pl
+	zip -9 ogr Makefile client2.h ogr.c crc32.h crc32.c test-ogr.c ogr.h stubsplit.h stubsplit.c test-stubsplit.c choose.c bin2c.pl
 
 clean:
 	rm -f *.o

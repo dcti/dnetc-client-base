@@ -7,7 +7,7 @@
  * is stopped immediately.
  */
 
-#include "stub.h"
+#include "ogr.h"
 
 typedef int (*stub_callback)(void *userdata, struct Stub *stub);
 
