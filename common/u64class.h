@@ -2,18 +2,21 @@
 // 32 bit unsigned integers
 //
 // $Log: u64class.h,v $
+// Revision 1.2  1998/10/05 11:32:45  fordbr
+// Bitwise complement (~) implemented.  Missing from Revision 1.1
+//
 // Revision 1.1  1998/10/05 11:04:52  fordbr
 // A reasonably complete implementation of a 64 bit unsigned integer(u64) using
 // 32 bit unsigned integers(u32).
 //
 // All arithmetic (+ - * / %), bitwise logical (& | ^ ~ << >>) and their assignment
-// equivalents (+= -= *= /= %= &= |= ^= ~= <<= >>=) are overloaded as well as the
+// equivalents (+= -= *= /= %= &= |= ^= <<= >>=) are overloaded as well as the
 // comparison operators (< <= > >= == !=).
 //
 // Explicit constructors from one u32, two u32 (a high and a low part) and another u64
 // are provided.
 //
-// Mainly meant to be portable rather than fast.
+// Meant to be portable rather than fast.
 //
 
 #ifndef _U64CLASS_H
@@ -60,6 +63,7 @@ class u64
       friend u64 operator &  (const u64 &a, const u64 &b);
       friend u64 operator |  (const u64 &a, const u64 &b);
       friend u64 operator ^  (const u64 &a, const u64 &b);
+      friend u64 operator ~  (const u64 &a);
       friend u64 operator >> (const u64 &a, const u32 b);
       friend u64 operator << (const u64 &a, const u32 b);
 
@@ -250,6 +254,12 @@ inline u64
 operator ^ (const u64 &a, const u64 &b)
 {
    return u64(a.hi ^ b.hi, a.lo ^ b.lo);
+}
+
+inline u64
+operator ~ (const u64 &a)
+{
+   return u64(~a.hi, ~a.lo);
 }
 
 inline int
