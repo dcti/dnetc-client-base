@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.7 2003/01/14 23:48:13 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.8 2003/01/15 14:08:58 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1770,8 +1770,9 @@ unsigned long GetProcessorFeatureFlags()
 {
   #if (CLIENT_CPU == CPU_X86)
   return __GetRawProcessorID(NULL, 'f');
-  #endif
+  #else
   return 0;
+  #endif
 }
 
 /* ---------------------------------------------------------------------- */
