@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.47 2004/03/12 15:11:09 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.48 2004/03/29 17:58:16 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1131,10 +1131,10 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0590, CPU_F_I586, 0x0A, "C3" },
           /* I'm not sure about the following two: are they I586 or I686 ? so do it the safe way */
 	  {  0x0650, CPU_F_I586, 0x0C, "6x86MX/MII" },
-          {  0x0660, CPU_F_I586, 0x0C, "Samuel (C3)" }, /* THIS IS NOT A P6 !!! */
-          {  0x0670, CPU_F_I586, 0x0C, "Samuel 2/3 or Ezra (C3)" },
-          {  0x0680, CPU_F_I586, 0x0C, "Ezra-T (C3)" },
-          {  0x0690, CPU_F_I586, 0x0C, "Nehemiah (C3)" },
+          {  0x0660, CPU_F_I586, 0x0C, "C3 (Samuel)" }, /* THIS IS NOT A P6 !!! */
+          {  0x0670, CPU_F_I586, 0x0C, "C3 (Samuel 2/3 or Ezra)" },
+          {  0x0680, CPU_F_I586, 0x0C, "C3 (Ezra-T)" },
+          {  0x0690, CPU_F_I586, 0x0F, "C3 (Nehemiah)" },
           {  0x0000, 0,               -1, NULL }
           }; internalxref = &centaurxref[0];
       vendorname = "Centaur/IDT";

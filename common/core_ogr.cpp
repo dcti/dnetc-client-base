@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.18 2004/03/18 20:25:24 jlawson Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.19 2004/03/29 17:58:16 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -396,6 +396,7 @@ int selcoreGetPreselectedCoreForProject_ogr()
           #warning "FIXME: no OGR core autoselected on a PM for your compiler"
           #endif
           case 0x0E: cindex = 0; break; // Pentium III  == with BSR (A)
+          case 0x0F: cindex = 1; break; // Via C3 Nehemiah == without BSR (B)
           default:   cindex =-1; break; // no default
         }
       }

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.20 2004/03/04 17:20:13 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.21 2004/03/29 17:58:16 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -355,6 +355,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x0C: cindex = 4; break; // Via C3         == DG 3-pipe alt (#3477)
           case 0x0D: cindex = 3; break; // Pentium M      == DG 3-pipe
           case 0x0E: cindex = 6; break; // Pentium III    == GO 2-pipe (#3602)
+          case 0x0F: cindex = 7; break; // Via C3 Nehemiah== SGP 3-pipe (#3621)
           default:   cindex =-1; break; // no default
         }
         #else
@@ -372,6 +373,10 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x09: cindex = 0; break; // K7             == ANSI 4-pipe
           case 0x0A: cindex =-1; break; // Centaur C6     == ?
           case 0x0B: cindex = 0; break; // Pentium 4      == ANSI 4-pipe
+          case 0x0C: cindex =-1; break; // Via C3         == ?
+          case 0x0D: cindex =-1; break; // Pentium M      == ?  
+          case 0x0E: cindex =-1; break; // Pentium III    == ?
+          case 0x0F: cindex =-1; break; // Via C3 Nehemiah== ?
           default:   cindex =-1; break; // no default
         }
         #endif
