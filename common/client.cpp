@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.159  1998/11/12 23:50:15  cyp
+// Added -hide/-quiet support for unix'ish clients
+//
 // Revision 1.158  1998/11/12 13:13:17  silby
 // Lurk mode is initialized in the main loop now.
 //
@@ -81,7 +84,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.158 1998/11/12 13:13:17 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.159 1998/11/12 23:50:15 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -281,11 +284,14 @@ static void PrintBanner(const char *dnet_id)
 
 //------------------------------------------------------------------------
 
-static int DoSingleInstanceProtection(int level) /* >0 set, <0 unset */
+/* level >0 initialize, level <0 uninitialize, return !0 to force exit */
+static int DoInstanceInitialization(int level, int hidden, 
+                                    int argc, const char *argv[]) 
 {
   int retcode = 0;
   #if (CLIENT_OS == OS_WIN32)
   static HANDLE hmutex = NULL;
+  argc = argc; argv = argv;
   if (level > 0)
     {
     SetLastError(0); // only allow one running instance
@@ -294,6 +300,8 @@ static int DoSingleInstanceProtection(int level) /* >0 set, <0 unset */
       {
       retcode = -1;
       level = -1; //fall through
+      if (!hidden)
+        ConOut("A distributed.net client is already running on this machine");
       }
     }
   if (level < 0)
@@ -303,6 +311,44 @@ static int DoSingleInstanceProtection(int level) /* >0 set, <0 unset */
       ReleaseMutex( hmutex );
       CloseHandle( hmutex );
       hmutex = NULL;
+      }
+    }
+  #endif
+  
+  #if ((CLIENT_OS == OS_DEC_UNIX)    || (CLIENT_OS == OS_HPUX)    || \
+       (CLIENT_OS == OS_QNX)         || (CLIENT_OS == OS_OSF1)    || \
+       (CLIENT_OS == OS_BSDI)        || (CLIENT_OS == OS_SOLARIS) || \
+       (CLIENT_OS == OS_IRIX)        || (CLIENT_OS == OS_SCO)     || \
+       (CLIENT_OS == OS_LINUX)       || (CLIENT_OS == OS_NETBSD)  || \
+       (CLIENT_OS == OS_UNIXWARE)    || (CLIENT_OS == OS_DYNIX)   || \
+       (CLIENT_OS == OS_MINIX)       || (CLIENT_OS == OS_MACH10)  || \
+       (CLIENT_OS == OS_AIX)         || (CLIENT_OS == OS_AUX)     || \
+       (CLIENT_OS == OS_OPENBSD)     || (CLIENT_OS == OS_SUNOS)   || \
+       (CLIENT_OS == OS_ULTRIX)      || (CLIENT_OS == OS_DGUX))
+  if (level > 0 && hidden && isatty(fileno(stdout)))
+    {
+    retcode = -1; //always return !0
+    int i;
+    char buffer[1024];
+    char redir[] = ">/dev/null &";
+    strcpy(buffer,argv[0]);
+    for (i=1;i<=argc;i++)
+      {
+      if (argv[i] && argv[i][0])
+        {
+        if ((strlen(buffer)+strlen(argv[i])+4) >= 
+            ((sizeof(buffer)-sizeof(redir))+2))
+          break;
+        strcat(buffer," ");
+        strcat(buffer,argv[i]);
+        }
+      }    
+    strcat(buffer,redir);
+    if (system(buffer) != 0)
+      {
+      sprintf(buffer,"Unable to start quiet/hidden. "
+              "Use \"%s\" instead.",redir);
+      ConOutErr(buffer);
       }
     }
   #endif
@@ -320,7 +366,7 @@ int Client::Main( int argc, const char *argv[], int restarted )
   if (ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0)
     {
     domodes = (ModeReqIsSet(-1) != 0);
-    if (((domodes)?(1):(DoSingleInstanceProtection(+1) == 0)))
+    if (((domodes)?(1):(DoInstanceInitialization(+1,quietmode,argc,argv)==0)))
       {
       if (InitializeTriggers(((noexitfilecheck)?(NULL):(exit_flag_file)),pausefile)==0)
         {
@@ -353,7 +399,7 @@ int Client::Main( int argc, const char *argv[], int restarted )
         DeinitializeTriggers();
         }
       if (!domodes)
-        DoSingleInstanceProtection(-1);
+        DoInstanceInitialization(-1,quietmode,argc,argv);
       }
     }
   return retcode;
