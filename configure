@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.163 2000/06/21 00:13:51 mfeiri Exp $
+# @(#)$Id: configure,v 1.222.2.164 2000/06/23 13:58:44 oliver Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1901,7 +1901,9 @@ case "$1" in
     *m68k-amigaos)              # [oliver] <oliver@futaura.co.uk>
 	TARGET_AS="platforms/amiga/tools/genam_wrapper"
 	TARGET_CC="g++ -V 2.95.2"
-	TARGET_CCFLAGS="-m68000 $OPTS_GCC295 -fpermissive -O6 -I./ -noixemul -DHAVE_OGR_CORES"
+	TARGET_CCFLAGS="$OPTS_GCC295 -m68000 -fpermissive -O6 -I./ -noixemul \
+                        -D__AMIGADATE__=`platforms/amiga/tools/amigadate` \
+                        -DDYN_TIMESLICE -DHAVE_OGR_CORES"
 	TARGET_LDFLAGS="-noixemul"
 	TARGET_ADDSRCS="platforms/amiga/amVersion.c platforms/amiga/amSupport.c \
                         platforms/amiga/amConsole.c platforms/amiga/amNetwork.c \
@@ -1921,7 +1923,9 @@ case "$1" in
     *ppc-amigaos-wos)           # [oliver] <oliver@futaura.co.uk>
 	TARGET_AS="ppc-amigaos-gas -m603"
 	TARGET_CC="ppc-amigaos-g++ -V 2.95.2"
-	TARGET_CCFLAGS="$OPTS_GCC295_PPC -mcpu=603e -mmultiple -mstring -I./ -DHAVE_OGR_CORES"
+	TARGET_CCFLAGS="$OPTS_GCC295_PPC -mcpu=603e -mmultiple -mstring -I./ \
+                        -D__AMIGADATE__=`platforms/amiga/tools/amigadate` \
+                        -DDYN_TIMESLICE -DHAVE_OGR_CORES"
 	TARGET_ADDSRCS="platforms/amiga/amVersion.c platforms/amiga/amSupport.c \
                         platforms/amiga/amConsole.c platforms/amiga/amNetwork.c \
                         $RC5PPC_SRCS $OGR_PPC_SRCS"
@@ -1937,7 +1941,9 @@ case "$1" in
     *ppc-amigaos-pup)           # [oliver] <oliver@futaura.co.uk>
 	TARGET_AS="ppc-amigaos-gas -m603"
 	TARGET_CC="ppc-amigaos-g++ -V 2.95.2"
-	TARGET_CCFLAGS="-pup -D__POWERUP__ $OPTS_GCC295_PPC -mcpu=603e -mmultiple -mstring -I./ -DHAVE_OGR_CORES"
+	TARGET_CCFLAGS="-pup -D__POWERUP__ $OPTS_GCC295_PPC -mcpu=603e -mmultiple \
+                        -D__AMIGADATE__=`platforms/amiga/tools/amigadate` \
+                        -mstring -I./ -DDYN_TIMESLICE -DHAVE_OGR_CORES"
 	TARGET_LDFLAGS="-pup"
 	TARGET_ADDSRCS="platforms/amiga/amVersion.c platforms/amiga/amSupport.c \
                         platforms/amiga/amConsole.c platforms/amiga/amNetwork.c \
