@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.7  1998/11/07 14:55:46  cyp
+// Now also displays the normalized keycount (in addition to the number of
+// blocks) in buffer files.
+//
 // Revision 1.6  1998/11/06 04:31:25  cyp
 // Fixed InitializeProblemManager(): was returning 1 problem more than it was
 // being asked for.
@@ -30,7 +34,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.6 1998/11/06 04:31:25 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.7 1998/11/07 14:55:46 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -288,7 +292,6 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   unsigned int norm_key_count = 0;
 
   u32 optype;
-  u8 u8contest;
   unsigned int contest_count, contest_selected;
   unsigned int contest_preferred, contest_alternate;
   int count;
@@ -320,31 +323,30 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     {
     done_update = (client->nonewblocks != 0);
     contest_selected = ((cont_i)?(contest_alternate):(contest_preferred));
-    u8contest=(u8)(contest_selected);
     error_set = 0;
 
     while (!(client->contestdone[contest_selected]))
       {
       count = (int)client->InternalGetBuffer( 
                    client->in_buffer_file[contest_selected], 
-                   &fileentry, &optype, u8contest );
+                   &fileentry, &optype, contest_selected );
                
       if (count < 0)
         error_set = 1;
       if (count >= 0 && optype == OP_DATA)
         break;
-      count = (int) client->InternalCountBuffer( 
-                    client->in_buffer_file[contest_selected], u8contest);
+      count = (int) client->InternalCountBuffer( contest_selected, 0, NULL );
       if (count == 0) // update only if we have no blocks in buffer
         {
         count = -1;
         if (done_update) //did we update on this round already?
           break;
           
-        if ( (unsigned int)(client->inthreshold[contest_selected]) < load_problem_count)
+        if ( (unsigned int)(client->inthreshold[contest_selected]) < 
+             load_problem_count)
           client->inthreshold[contest_selected] = load_problem_count;
           
-        if (client->Update(u8contest, 1, 0) < 0)
+        if (client->Update(contest_selected, 1, 0) < 0)
           {
           if ( client->offlinemode >= 2)
              client->nonewblocks = 1;
@@ -584,21 +586,36 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
         Log( "Summary: %s\n", CliGetSummaryStringForContest(cont_i) );
         }
 
-      unsigned int in = (unsigned int) CountBufferInput((u8) cont_i);
-      unsigned int out = (unsigned int) CountBufferOutput((u8) cont_i);
-      const char *msg = "%u %s block%s %s in file %s\n";
+      unsigned int in, norm_in, out, norm_out;
+      in = InternalCountBuffer( cont_i, 0, &norm_in );
+      out = InternalCountBuffer( cont_i, 1, &norm_out );
+      const char *msg = "%u %s block%s (%u*2^28 keys) %s in file %s\n";
 
-      Log( msg, in, cont_name, in == 1 ? "" : "s",  
+      sprintf(buffer, msg, in, cont_name, in == 1 ? "" : "s",  norm_in,
             ((mode == PROBFILL_UNLOADALL)?(in==1?"is":"are"):
                                           (in==1?"remains":"remain")),
             (nodiskbuffers ? "(memory-in)" : in_buffer_file[cont_i]));
+            
+      if (( strlen(buffer) + sizeof("[Nov 09 20:10:10 GMT] ") ) > 77 )
+        {
+        char *p = strrchr( buffer, ' ' );
+        if (p) *p = '\n';
+        }
+      Log( "%s", buffer );
 
-      Log( msg, out, cont_name, out == 1 ? "" : "s", 
+      sprintf(buffer, msg, out, cont_name, out == 1 ? "" : "s", norm_out,
             out == 1 ? "is" : "are",
             (nodiskbuffers ? "(memory-out)" : out_buffer_file[cont_i]));
+      
+      if (( strlen(buffer) + sizeof("[Nov 09 20:10:10 GMT] ") ) > 77 )
+        {
+        char *p = strrchr( buffer, ' ' );
+        if (p) *p = '\n';
+        }
+      Log( "%s", buffer );
+
       }
     } //for ( cont_i = 0; cont_i < 2; cont_i++)
-
 
  if (mode == PROBFILL_UNLOADALL)
    {
