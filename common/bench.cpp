@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.30 1999/09/16 21:37:27 remi Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.31 1999/09/18 20:09:56 gregh Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -21,6 +21,7 @@ return "@(#)$Id: bench.cpp,v 1.30 1999/09/16 21:37:27 remi Exp $"; }
 #include "clievent.h"  // event post etc.
 #include "bench.h"     // ourselves
 #include "confrwv.h"   // Read/Validate/WriteConfig()
+#include "util.h"      // ogr_stubstr()
 
 // --------------------------------------------------------------------------
 
@@ -125,6 +126,10 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
     keycountshift = 0;
     hourstobuffer = (3*24); // 3 Days for RC5
   }
+  else if (contestid == OGR)
+  {
+    itersize = 6;
+  }
 #ifdef CSC_TEST
   else if (contestid == CSC)
   {
@@ -148,18 +153,39 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
     tslice = GetTimesliceToUse(contestid);
   #endif
   
-  contestwork.crypto.key.lo = ( 0 );
-  contestwork.crypto.key.hi = ( 0 );
-  contestwork.crypto.iv.lo = ( 0 );
-  contestwork.crypto.iv.hi = ( 0 );
-  contestwork.crypto.plain.lo = ( 0 );
-  contestwork.crypto.plain.hi = ( 0 );
-  contestwork.crypto.cypher.lo = ( 0 );
-  contestwork.crypto.cypher.hi = ( 0 );
-  contestwork.crypto.keysdone.lo = ( 0 );
-  contestwork.crypto.keysdone.hi = ( 0 );
-  contestwork.crypto.iterations.lo = ( (1<<itersize) );
-  contestwork.crypto.iterations.hi = ( 0 );
+  switch (contestid)
+  {
+    case RC5:
+    case DES:
+    case CSC:
+      contestwork.crypto.key.lo = ( 0 );
+      contestwork.crypto.key.hi = ( 0 );
+      contestwork.crypto.iv.lo = ( 0 );
+      contestwork.crypto.iv.hi = ( 0 );
+      contestwork.crypto.plain.lo = ( 0 );
+      contestwork.crypto.plain.hi = ( 0 );
+      contestwork.crypto.cypher.lo = ( 0 );
+      contestwork.crypto.cypher.hi = ( 0 );
+      contestwork.crypto.keysdone.lo = ( 0 );
+      contestwork.crypto.keysdone.hi = ( 0 );
+      contestwork.crypto.iterations.lo = ( (1<<itersize) );
+      contestwork.crypto.iterations.hi = ( 0 );
+      break;
+    case OGR:
+      contestwork.ogr.workstub.stub.marks = 24;
+      contestwork.ogr.workstub.stub.length = itersize;
+      contestwork.ogr.workstub.stub.diffs[0] = 2;
+      contestwork.ogr.workstub.stub.diffs[1] = 22;
+      contestwork.ogr.workstub.stub.diffs[2] = 32;
+      contestwork.ogr.workstub.stub.diffs[3] = 21;
+      contestwork.ogr.workstub.stub.diffs[4] = 5;
+      contestwork.ogr.workstub.stub.diffs[5] = 1;
+      contestwork.ogr.workstub.stub.diffs[6] = 12;
+      contestwork.ogr.workstub.worklength = contestwork.ogr.workstub.stub.length;
+      contestwork.ogr.nodes.lo = 0;
+      contestwork.ogr.nodes.hi = 0;
+      break;
+  }
 
   problem->LoadState( &contestwork, contestid, tslice, cputype );
 
@@ -220,10 +246,23 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
       }
       ClientEventSyncPost( CLIEVENT_BENCHMARK_BENCHING, (long)(problem));
 
-      LogScreen( "%cBenchmarking %s with 1*2^%d tests (%u keys):%s%c%u%%",
-          cm1, contname, itersize+keycountshift,
-          (unsigned int)(1<<(itersize+keycountshift)), sm4, cm2, 
-          (unsigned int)(percent) );
+      switch (contestid)
+      {
+        case RC5:
+        case DES:
+        case CSC:
+          LogScreen( "%cBenchmarking %s with 1*2^%d tests (%u keys):%s%c%u%%",
+              cm1, contname, itersize+keycountshift,
+              (unsigned int)(1<<(itersize+keycountshift)), sm4, cm2, 
+              (unsigned int)(percent) );
+          break;
+        case OGR:
+          LogScreen( "%cBenchmarking %s with %s:%s%c%u%%",
+              cm1, contname, ogr_stubstr(&contestwork.ogr.workstub.stub),
+              sm4, cm2, 
+              (unsigned int)(percent) );
+          break;
+      }
     }
     cm1 = cm3;
     percent = 0;
@@ -256,35 +295,47 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
   tv.tv_usec = problem->runtime_usec;
   ClientEventSyncPost( CLIEVENT_BENCHMARK_FINISHED, (long)((double *)(&rate)));
 
-  LogScreen("Completed in %s [%skeys/sec]\n",  CliGetTimeString( &tv, 2 ),
-                    CliGetKeyrateAsString( ratestr, rate ) );
-
-  itersize += keycountshift;
-  while ((tv.tv_sec < (60*60) && itersize < 33) || (itersize < 28))
+  switch (contestid)
   {
-    tv.tv_sec <<= 1;
-    tv.tv_usec <<= 1;
-    tv.tv_sec += (tv.tv_usec/1000000L);
-    tv.tv_usec %= 1000000L;
-    itersize++;
+    case RC5:
+    case DES:
+    case CSC:
+      LogScreen("Completed in %s [%skeys/sec]\n",  CliGetTimeString( &tv, 2 ),
+                        CliGetKeyrateAsString( ratestr, rate ) );
+
+      itersize += keycountshift;
+      while ((tv.tv_sec < (60*60) && itersize < 33) || (itersize < 28))
+      {
+        tv.tv_sec <<= 1;
+        tv.tv_usec <<= 1;
+        tv.tv_sec += (tv.tv_usec/1000000L);
+        tv.tv_usec %= 1000000L;
+        itersize++;
+      }
+
+      recommendedblockcount = (hourstobuffer*(60*60))/tv.tv_sec;
+      if (numblocks) 
+        *numblocks = recommendedblockcount;
+
+      LogScreen( "The preferred %s blocksize for this machine should be\n"
+                 "set to %d (%d*2^28 keys). At the benchmarked keyrate\n"
+                 "(ie, under ideal conditions) each processor would finish\n"
+                 "a block of that size in approximately %s.\n"
+                 "Your buffer thresholds should be set to %u blocks,\n"
+                 "enough for approximately %u %s.\n", 
+                 CliGetContestNameFromID(contestid), 
+                 (unsigned int)itersize, 
+                 (1<<(itersize-28)),
+                 CliGetTimeString( &tv, 2 ),recommendedblockcount,
+                 ((hourstobuffer > 24)?(hourstobuffer/24):(hourstobuffer)),
+                 ((hourstobuffer > 24)?("days"):("hours")) );
+
+      break;
+    case OGR:
+      LogScreen("Completed in %s [%snodes/sec]\n",  CliGetTimeString( &tv, 2 ),
+                        CliGetKeyrateAsString( ratestr, rate ) );
+      break;
   }
-
-  recommendedblockcount = (hourstobuffer*(60*60))/tv.tv_sec;
-  if (numblocks) 
-    *numblocks = recommendedblockcount;
-
-  LogScreen( "The preferred %s blocksize for this machine should be\n"
-             "set to %d (%d*2^28 keys). At the benchmarked keyrate\n"
-             "(ie, under ideal conditions) each processor would finish\n"
-             "a block of that size in approximately %s.\n"
-             "Your buffer thresholds should be set to %u blocks,\n"
-             "enough for approximately %u %s.\n", 
-             CliGetContestNameFromID(contestid), 
-             (unsigned int)itersize, 
-             (1<<(itersize-28)),
-             CliGetTimeString( &tv, 2 ),recommendedblockcount,
-             ((hourstobuffer > 24)?(hourstobuffer/24):(hourstobuffer)),
-             ((hourstobuffer > 24)?("days"):("hours")) );
 
   delete problem;
   return (u32)(itersize);
