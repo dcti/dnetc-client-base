@@ -1,7 +1,7 @@
 ; AMD K5 optimized version
 ; Rémi Guyomarch <rguyom@mail.dotcom.fr>
 ;
-; $Id: rg-k5.asm,v 1.1.2.1 2001/01/21 17:44:41 cyp Exp $
+; $Id: rg-k5.asm,v 1.1.2.2 2002/10/03 18:02:34 rick Exp $
 ;
 ; 980226 :
 ;	- Corrected bug in the key incrementation algorithm that caused the
@@ -45,12 +45,12 @@
 ; PR??? =  75   / ??    v1=120 v2=215-225 rg=165   / 256-280 ?
 
 %ifdef __OMF__ ; Watcom and Borland compilers/linkers
-[SECTION _TEXT USE32 ALIGN=16]
+[SECTION _TEXT FLAT USE32 ALIGN=16 CLASS=CODE]
 %else
 [SECTION .text]
 %endif
 
-
+[GLOBAL rc5_unit_func_k5_]
 [GLOBAL _rc5_unit_func_k5]
 [GLOBAL rc5_unit_func_k5]
 
@@ -265,6 +265,7 @@
 ;      else SOMETHING_GET_WRONG... )
 
 align 4
+rc5_unit_func_k5_:
 _rc5_unit_func_k5:
 rc5_unit_func_k5:
 ;u32 rc5_unit_func_k5( RC5UnitWork * rc5unitwork, u32 timeslice )

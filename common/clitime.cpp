@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.57 2002/05/31 18:22:34 jt Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.58 2002/10/03 18:02:33 rick Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -28,6 +28,7 @@ extern "C" void _ReleaseSpinLock(long *);
 
 
 #if defined(__unix__)
+ #if !((CLIENT_OS == OS_QNX ) && !(defined(__QNXNTO__)))
   #define HAVE_GETRUSAGE
   #include <sys/resource.h>
   #undef THREADS_HAVE_OWN_ACCOUNTING
@@ -38,6 +39,7 @@ extern "C" void _ReleaseSpinLock(long *);
     // obtain thread-time, otherwise resort to something else
     #define THREADS_HAVE_OWN_ACCOUNTING
   #endif
+ #endif
 #endif
 
 /* --------------------------------------------------------------------- */

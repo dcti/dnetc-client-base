@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.57 2002/05/31 18:22:34 jt Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.58 2002/10/03 18:02:33 rick Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -692,7 +692,8 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
         (CLIENT_OS == OS_HPUX)  || (CLIENT_OS == OS_AIX) || \
         (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_NEXTSTEP) || \
         (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_MACOSX) || \
-	(CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_PS2LINUX)
+	(CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_PS2LINUX) || \
+        ( (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__ ) )
     /* good for any non-sco flavour? */
     struct winsize winsz;
     winsz.ws_col = winsz.ws_row = 0;

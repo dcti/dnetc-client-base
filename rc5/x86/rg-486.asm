@@ -1,7 +1,7 @@
 ; 386/486 optimized version
 ; Rémi Guyomarch - rguyom@mail.dotcom.fr
 ;
-; $Id: rg-486.asm,v 1.1.2.1 2001/01/21 17:44:41 cyp Exp $
+; $Id: rg-486.asm,v 1.1.2.2 2002/10/03 18:02:34 rick Exp $
 ;
 ; 980226 :
 ;	- Corrected bug in the key incrementation algorithm that caused the
@@ -22,11 +22,12 @@
 ; probably because less load/store operations
 
 %ifdef __OMF__ ; Watcom and Borland compilers/linkers
-[SECTION _TEXT USE32 ALIGN=16]
+[SECTION _TEXT FLAT USE32 ALIGN=16 CLASS=CODE]
 %else
 [SECTION .text]
 %endif
 
+[GLOBAL rc5_unit_func_486_]
 [GLOBAL _rc5_unit_func_486]
 [GLOBAL rc5_unit_func_486]
 
@@ -233,6 +234,7 @@
 ;      else SOMETHING_GET_WRONG... )
 
 align 4
+rc5_unit_func_486_:
 _rc5_unit_func_486:
 rc5_unit_func_486:
 ;u32 rc5_unit_func_486( RC5UnitWork * rc5unitwork, u32 timeslice )

@@ -2,7 +2,7 @@
 ; by Bruce Ford, based in part on Remi's smc core.
 ; Slight improvement over RG smc core. 104 kkeys/s on a 486/DX4-100
 ;
-; $Id: brf-smc.asm,v 1.1.2.3 2002/01/16 12:24:42 fordbr Exp $
+; $Id: brf-smc.asm,v 1.1.2.4 2002/10/03 18:02:34 rick Exp $
 
 %macro calign 1  ; code align macro (arg = 'align to')
                  ; [nasm's integral 'align' statement blindly inserts 'nop']
@@ -335,10 +335,12 @@ _dsalf2:ret
 ;      else if (result < timeslice*PIPELINE_COUNT) SOMETHING_FOUND at result+1
 ;      else SOMETHING_GET_WRONG... )
 
+[GLOBAL rc5_unit_func_486_smc_]
 [GLOBAL _rc5_unit_func_486_smc]
 [GLOBAL rc5_unit_func_486_smc]
 
 align 4
+rc5_unit_func_486_smc_:
 _rc5_unit_func_486_smc:
 rc5_unit_func_486_smc:
 ;u32 rc5_unit_func_486_smc( RC5UnitWork * rc5unitwork, u32 timeslice )

@@ -1,4 +1,4 @@
-; $Id: dg-k7.asm,v 1.1.2.2 2002/04/07 21:18:56 andreasb Exp $
+; $Id: dg-k7.asm,v 1.1.2.3 2002/10/03 18:02:34 rick Exp $
 ;
 ; This core is currently not included in the client, because the the signal 
 ; handler overrides the [ESP-offset] part of the stack. (Non threaded client,
@@ -37,11 +37,12 @@
 
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
-[SECTION _TEXT USE32 align=16]
+[SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
 %else
 [SECTION .text]
 %endif
 
+[GLOBAL rc5_unit_func_k7_]
 [GLOBAL _rc5_unit_func_k7]
 [GLOBAL rc5_unit_func_k7]
 
@@ -381,6 +382,7 @@ defwork save_ebx
 align 16
 startseg:                                           ; used by k7align
 rc5_unit_func_k7:
+rc5_unit_func_k7_:
 _rc5_unit_func_k7:
 ;u32 rc5_unit_func_k7( RC5UnitWork * rc5unitwork, u32 timeslice )
 

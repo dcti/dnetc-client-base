@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.62 2002/06/22 21:11:36 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.63 2002/10/03 18:02:33 rick Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -748,7 +748,7 @@ extern "C" {
   #define SIZEOF_LONGLONG 8
   typedef unsigned long long ui64;
   typedef signed long long si64;
-#elif (defined(__WATCOMC__) && (__WATCOMC__ >= 11))
+#elif (defined(__WATCOMC__) && (__WATCOMC__ >= 1100))
   #if 1/*(CLIENT_OS != OS_NETWARE)*/ /* only if intrinsic (no [vfs]printf etc)*/
   #define HAVE_I64
   #define SIZEOF_LONGLONG 8

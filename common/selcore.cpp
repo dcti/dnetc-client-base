@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.145 2002/09/26 17:10:49 rick Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.146 2002/10/03 18:02:34 rick Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -35,6 +35,9 @@ return "@(#)$Id: selcore.cpp,v 1.47.2.145 2002/09/26 17:10:49 rick Exp $"; }
   #elif defined(USE_DPMI)
     extern "C" smc_dpmi_ds_alias_alloc(void);
     extern "C" smc_dpmi_ds_alias_free(void);
+  #endif
+  #if (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__ )
+  extern "C" u32 cdecl rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
   #endif
   extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
   static int x86_smc_initialized = -1;
@@ -1236,6 +1239,19 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   // rc5/ansi/rc5ansi_2-rg.cpp
   extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
 #elif (CLIENT_CPU == CPU_X86)
+  #if (CLIENT_OS == OS_QNX) && !defined(__QNXNTO__)
+  extern "C" u32 cdecl rc5_unit_func_486( RC5UnitWork * , u32 iterations );
+  extern "C" u32 cdecl rc5_unit_func_p5( RC5UnitWork * , u32 iterations );
+  extern "C" u32 cdecl rc5_unit_func_p6( RC5UnitWork * , u32 iterations );
+  extern "C" u32 cdecl rc5_unit_func_6x86( RC5UnitWork * , u32 iterations );
+  extern "C" u32 cdecl rc5_unit_func_k5( RC5UnitWork * , u32 iterations );
+  extern "C" u32 cdecl rc5_unit_func_k6( RC5UnitWork * , u32 iterations );
+  extern "C" u32 cdecl rc5_unit_func_p5_mmx( RC5UnitWork * , u32 iterations );
+  extern "C" u32 cdecl rc5_unit_func_k6_mmx( RC5UnitWork * , u32 iterations );
+// extern "C" u32 cdecl rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
+  extern "C" u32 cdecl rc5_unit_func_k7( RC5UnitWork * , u32 iterations );
+  extern "C" u32 cdecl rc5_unit_func_p7( RC5UnitWork *, u32 iterations );
+  #else
   extern "C" u32 rc5_unit_func_486( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_p5( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_p6( RC5UnitWork * , u32 iterations );
@@ -1247,6 +1263,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   //extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_k7( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_p7( RC5UnitWork *, u32 iterations );
+  #endif
+
 #elif (CLIENT_CPU == CPU_ARM)
   extern "C" u32 rc5_unit_func_arm_1( RC5UnitWork * , u32 );
   extern "C" u32 rc5_unit_func_arm_2( RC5UnitWork * , u32 );
@@ -1271,7 +1289,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
 #elif (CLIENT_CPU == CPU_MIPS)
   #if (CLIENT_OS == OS_ULTRIX) || (CLIENT_OS == OS_IRIX) || \
-      (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD)
+      (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD) || \
+      (CLIENT_OS == OS_QNX)
     // rc5/ansi/rc5ansi_2-rg.cpp
     extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
   #elif (CLIENT_OS == OS_SINIX) || (CLIENT_OS == OS_QNX)
@@ -1518,8 +1537,9 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     #elif (CLIENT_CPU == CPU_MIPS)
     {
       #if (CLIENT_OS == OS_ULTRIX) || (CLIENT_OS == OS_IRIX) || \
-          (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD)
-       {
+          (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD) || \
+          (CLIENT_OS == OS_QNX)
+      {
         // rc5/ansi/rc5ansi_2-rg.cpp
         //xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 );
         unit_func.rc5 = rc5_unit_func_ansi_2_rg;

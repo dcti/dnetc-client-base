@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.57 2002/05/31 18:22:33 jt Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.58 2002/10/03 18:02:33 rick Exp $"
 
 #include "cputypes.h"
 
@@ -272,6 +272,10 @@
   #include <sched.h>
   #include <sys/syspage.h>
   #else
+  #include <ioctl.h>
+  #include <unix.h>
+  #include <sys/sched.h>
+  #include <sys/select.h>
   #include <process.h>
   #include <env.h>
   #endif

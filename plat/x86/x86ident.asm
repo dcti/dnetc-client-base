@@ -7,7 +7,7 @@
 ; Written in a dark and stormy night (Jan 16, 1998) by
 ; Cyrus Patel <cyp@fb14.uni-mainz.de>
 ;
-; $Id: x86ident.asm,v 1.1.2.2 2002/04/12 23:56:55 andreasb Exp $
+; $Id: x86ident.asm,v 1.1.2.3 2002/10/03 18:02:34 rick Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:
@@ -55,7 +55,7 @@
 %define __CODESECT__ [SECTION .text]
 %endif
 
-global          x86ident,_x86ident
+global          x86ident,_x86ident,x86ident_
 global          x86ident_haveioperm, _x86ident_haveioperm
 
 __DATASECT__
@@ -65,6 +65,7 @@ x86ident_haveioperm dd 0          ; we do on win9x (not NT), win16, dos
 
 __CODESECT__
 _x86ident:
+x86ident_:
 x86ident:       mov     eax,[__savident]
                 or      eax, eax
                 jz      _ge386
@@ -450,3 +451,5 @@ _cx4x86:        or      ah, 4          ; 486 class CPU
                 jmp     _end           ; model 0=Cx486SLC/DLC/SRx/DRx,
                                        ; model 1=Cx486S/DX/DX2/DX4, 4=MediaGX
 
+		endp
+		end

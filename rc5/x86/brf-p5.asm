@@ -1,7 +1,7 @@
 ; Pentium optimized version
 ; Rémi Guyomarch - rguyom@mail.dotcom.fr - 97/07/13
 ;
-; $Id: brf-p5.asm,v 1.1.2.1 2001/01/21 17:44:40 cyp Exp $
+; $Id: brf-p5.asm,v 1.1.2.2 2002/10/03 18:02:34 rick Exp $
 ;
 ; Minor improvements:
 ; Bruce Ford - b.ford@qut.edu.au - 97/12/21
@@ -24,12 +24,12 @@
 ;	http://announce.com/agner/assem
 
 %ifdef __OMF__ ; Watcom and Borland compilers/linkers
-[SECTION _TEXT USE32 ALIGN=16]
+[SECTION _TEXT FLAT USE32 ALIGN=16 CLASS=CODE]
 %else
 [SECTION .text]
 %endif
 
-
+[GLOBAL rc5_unit_func_p5_]
 [GLOBAL _rc5_unit_func_p5]
 [GLOBAL rc5_unit_func_p5]
 
@@ -283,6 +283,7 @@
 ;      else SOMETHING_GET_WRONG... )
 
 align 4
+rc5_unit_func_p5_:
 _rc5_unit_func_p5:
 rc5_unit_func_p5:
 ;u32 rc5_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice )

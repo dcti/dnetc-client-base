@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.28 2002/09/26 17:10:49 rick Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.29 2002/10/03 18:02:33 rick Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -183,6 +183,9 @@ extern "C" {
     #include <asm/byteorder.h>
   #elif (CLIENT_OS == OS_QNX)
     #include <sys/select.h>
+    #if !defined(__QNXNTO__)
+      #include <unix.h>
+    #endif
   #elif (CLIENT_OS == OS_DYNIX) && defined(NTOHL)
     #define ntohl(x)  NTOHL(x)
     #define htonl(x)  HTONL(x)
@@ -228,7 +231,7 @@ extern "C" {
     || (CLIENT_OS == OS_MACOS) \
     || (CLIENT_OS == OS_OPENBSD) \
     || (CLIENT_OS == OS_NETBSD) \
-    || (CLIENT_OS == OS_QNX) \
+    || ((CLIENT_OS == OS_QNX) && (defined(__QNXNTO__))) \
     || ((CLIENT_OS == OS_FREEBSD) && (__FreeBSD__ >= 4))
   /* nothing - socklen_t already defined */
 #elif ((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION < 199701))

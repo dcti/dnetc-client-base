@@ -1,6 +1,6 @@
 ; Pentium Pro optimized version
 ;
-; $Id: rg-p6.asm,v 1.1.2.1 2001/01/21 17:44:42 cyp Exp $
+; $Id: rg-p6.asm,v 1.1.2.2 2002/10/03 18:02:34 rick Exp $
 ;
 ; 1999/07/13 :
 ;       - 0.45% speedup patch by Mario Weilguni <mweilguni@sime.com>
@@ -21,12 +21,12 @@
 ;	- precalculate some things for ROUND1 & ROUND2
 
 %ifdef __OMF__ ; Watcom and Borland compilers/linkers
-[SECTION _TEXT USE32 ALIGN=16]
+[SECTION _TEXT FLAT USE32 ALIGN=16 CLASS=CODE]
 %else
 [SECTION .text]
 %endif
 
-
+[GLOBAL rc5_unit_func_p6_]
 [GLOBAL _rc5_unit_func_p6]
 [GLOBAL rc5_unit_func_p6]
 
@@ -265,6 +265,7 @@
 
 
 align 4
+rc5_unit_func_p6_:
 _rc5_unit_func_p6:
 rc5_unit_func_p6:
 ;u32 rc5_unit_func_p6( RC5UnitWork * rc5unitwork, u32 timeslice )

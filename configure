@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.278 2002/09/26 17:10:48 rick Exp $
+# @(#)$Id: configure,v 1.222.2.279 2002/10/03 18:02:33 rick Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -829,6 +829,11 @@ OPTS_XLC3_POWER="$OPTS_XLC3 -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
 OPTS_MWCC="-O7 -lang cplus"
 OPTS_MWCC_PPC603="$OPTS_MWCC -proc 603e"
 OPTS_MWCC_PPC604="$OPTS_MWCC -proc 604e"
+
+#-- Watcom 10.6 QNX 4.2x
+
+#OPTS_WATCOMCC="-DASM_X86 -Otax"
+OPTS_WATCOMCC="-DASM_X86 -g"
 
 # -------------------------------------------------------------------------
 
@@ -1935,22 +1940,25 @@ case "$1" in
 	;;
 
     *x86-qnx4)
-        TARGET_AS="g++ -c -DNO_BALIGN"
-        TARGET_CC="g++"
-        generate_gcc_opts "x86" "qnx"
-        TARGET_CCFLAGS="$OPTS_GCC"
-        TARGET_NASM="/home/jbaker/nasm.qnx4"
-        #TARGET_NASM="nasm"
+        TARGET_AS="cc -c"
+        TARGET_CC="cc"
+        TARGET_CCFLAGS="$OPTS_WATCOMCC -DSINGLE_CRUNCHER_ONLY"
+	TARGET_LDFLAGS="-M"
+        TARGET_STRIP="ls -l"
+        TARGET_NASM="nasm"
+	TARGET_NASM_FMT="obj"
         TARGET_LIBS="-lsocket"
         TARGET_ADDASMS=""
         TARGET_DOCFILES="docs/readme._ix"
+        TARGET_GENMAN=
         TARGET_TARBALL="qnx4-x86"
         add_sources "qnx" "x86" 
         ;;
 
     *x86-nto2)
-    	  TARGET_AS="qcc -Vgcc_ntox86 -c"
+        TARGET_AS="qcc -Vgcc_ntox86 -c"
         TARGET_CC="qcc -Vgcc_ntox86"
+        TARGET_STRIP="strip"
         TARGET_NASM="nasm"
         TARGET_ASFLAGS="-DNO_BALIGN"
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
@@ -1959,7 +1967,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-x86"
         TARGET_GENMAN=
-        TARGET_IS_CROSSCOMPILE=1
+//        TARGET_IS_CROSSCOMPILE=1
         add_sources "nto2" "x86" 
         ;;
 
@@ -2285,6 +2293,8 @@ fi
 TARGET_NASMFLAGS="-f $TARGET_NASM_FMT" # -i rc5/x86/ -i des/x86/ -i csc/x86/"
 if [ "$TARGET_NASM_FMT" = "elf" ]; then
   TARGET_NASMFLAGS="$TARGET_NASMFLAGS -d__ELF__"
+elif [ "$TARGET_NASM_FMT" = "obj" ]; then
+  TARGET_NASMFLAGS="$TARGET_NASMFLAGS -d__OMF__"
 else
   TARGET_NASMFLAGS="$TARGET_NASMFLAGS -d__AOUT__" #for both aout and aoutb
 fi
