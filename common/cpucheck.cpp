@@ -3,8 +3,8 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
-// Revision 1.2  1998/06/22 03:10:25  cyruspatel
-// Fixed win32 processor count detection returning -1.
+// Revision 1.3  1998/06/22 03:40:23  cyruspatel
+// Fixed numcputemp/cpu_count variable mixup. (thanks Silby!)
 //
 // Revision 1.1  1998/06/21 17:12:02  cyruspatel
 // Created from code spun off from cliconfig.cpp
@@ -14,7 +14,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cpucheck.cpp,v 1.2 1998/06/22 03:10:25 cyruspatel Exp $";
+static const char *id="@(#)$Id: cpucheck.cpp,v 1.3 1998/06/22 03:40:23 cyruspatel Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -98,11 +98,12 @@ void Client::ValidateProcessorCount( void )
         {
         // LogScreen("Automatic processor count detection is not supported "
         // "on this platform.\nA single processor machine is assumed.\n");
+        cpu_count = 1;
         }
       else
         {
         LogScreenf("Automatic processor detection found %d processor%s\n", 
-           numcputemp, ((cpu_count==1)?(""):("s")) );
+           cpu_count, ((cpu_count==1)?(""):("s")) );
         }
       }
     numcputemp = cpu_count;
