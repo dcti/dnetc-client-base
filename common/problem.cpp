@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.106 2001/03/07 00:20:23 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.107 2001/03/07 19:36:21 sampo Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -2205,8 +2205,10 @@ unsigned int ProblemGetSWUCount(void *__thisprob)
             tcounthi = work.crypto.iterations.hi;
             tcountlo = work.crypto.iterations.lo;
             if (contestid == DES)
+            {
               tcounthi <<= 1; tcounthi |= (tcountlo >> 31); tcountlo <<= 1; 
-
+            }
+            
             if (rescode != RESULT_NOTHING && rescode != RESULT_FOUND)
             {
               tcounthi = 0;
@@ -2276,8 +2278,9 @@ void ProblemGetWorkbuf(void *__thisprob, char *buf, unsigned int bufsz, unsigned
             tcountlo = work.crypto.iterations.lo;
 
             if (contestid == DES)
+            {
               tcounthi <<= 1; tcounthi |= (tcountlo >> 31); tcountlo <<= 1; 
-
+            }
             units = ((tcountlo >> 28)+(tcounthi << 4)); 
             twoxx = 28;
             
@@ -2411,7 +2414,9 @@ void ProblemGetTCounts(void *__thisprob, u32 *ubtcounthi, u32 *ubtcountlo)
             tcounthi = work.crypto.iterations.hi;
             tcountlo = work.crypto.iterations.lo;
             if (contestid == DES)
+            {
               tcounthi <<= 1; tcounthi |= (tcountlo >> 31); tcountlo <<= 1; 
+            }
 
             if (rescode != RESULT_NOTHING && rescode != RESULT_FOUND)
             {
@@ -2577,7 +2582,9 @@ void ProblemGetDCounts(void *__thisprob, u32 *ubdcounthi, u32 *ubdcountlo)
             dcounthi = work.crypto.keysdone.hi;
             dcountlo = work.crypto.keysdone.lo;
             if (contestid == DES)
+            {
               dcounthi <<= 1; dcounthi |= (dcountlo >> 31); dcountlo <<= 1; 
+            }
           } /* case: crypto */
           break;
 #ifdef HAVE_OGR_CORES
