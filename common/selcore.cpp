@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.52 1999/10/16 22:47:50 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.53 1999/10/26 17:29:16 michmarc Exp $"; }
 
 
 #include "cputypes.h"
@@ -85,7 +85,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ev3 and ev4 optimized",
       "ev5 and ev6 optimized",
       #elif (CLIENT_OS == OS_WIN32)
-      "michmarch series A",  /* :) */
+      "MichMarc A",  /* At least spell it right */
       #else
       "axp bmeyer",
       #endif
@@ -416,12 +416,27 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         selcorestatics.corenum[contestid] = 0;
     }    
     if (selcorestatics.corenum[contestid] < 0 || 
-      selcorestatics.corenum[contestid] >= __corecount_for_contest(contestid))
+      selcorestatics.corenum[contestid] >= (int)__corecount_for_contest(contestid))
     {
       selcorestatics.corenum[contestid] = 0;
     }  
-    LogScreen( "%s: using \"%s\" core.\n", contname, 
-      selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid] );
+  }
+  else if (contestid == CSC)
+  {
+    selcorestatics.corenum[CSC] = selcorestatics.user_cputype[CSC];
+    if (selcorestatics.corenum[CSC] < 0)
+    {
+#if 0
+    // Who knows?  Just benchmark below
+#endif
+    }
+  }
+  if (selcorestatics.corenum[contestid] >= 0)
+  {
+    LogScreen( "%s: %s core #%d (%s)\n", contname, 
+      ((selcorestatics.user_cputype[contestid] >= 0)?("Using"):("Auto-selected")),
+      selcorestatics.corenum[contestid],
+     selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid] ) );
   }
   #elif (CLIENT_CPU == CPU_68K)
   if (contestid == RC5 || contestid == DES) /* old style */

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.220 1999/10/18 02:54:01 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.221 1999/10/26 17:29:16 michmarc Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -173,7 +173,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
       LogScreenRaw( "RC5 PowerPC assembly by Dan Oetting\n");
       #endif
       #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
-      LogScreenRaw( "RC5 Alpha assembly by Mike Marcelais\n");
+      LogScreenRaw( "RC5 Alpha assembly Copyright 1997-1998, Mike Marcelais\n");
       #endif
       #if (CLIENT_CPU == CPU_ARM)
       LogScreenRaw( "ARM assembly by Steve Lee\n");
