@@ -5,10 +5,11 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.147 2002/09/02 00:35:41 andreasb Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.148 2002/10/06 19:57:12 andreasb Exp $"
 
-#include "problem.h" /* WorkRecord, CONTEST_COUNT */
-#include "lurk.h"    /* lurk_conf structure */
+#include "projdata.h" /* PROJECT_COUNT */
+#include "problem.h"  /* WorkRecord, CONTEST_COUNT */
+#include "lurk.h"     /* lurk_conf structure */
 
 #define __TEXTIFY(x) #x
 #define _TEXTIFY(x) __TEXTIFY(x)
@@ -48,7 +49,8 @@ typedef struct
   char inifilename[MINCLIENTOPTSTRLEN*2];
   u32  last_buffupd_time; /* monotonic. goes with max_buffupd_[retry_]interval */
   int  last_buffupd_failed_time;
-  char project_flags[CONTEST_COUNT]; /* do NOT save to disk! */
+  char project_flags[CONTEST_COUNT]; /* do NOT save to disk! */ // FIXME: 2 be integrated into project_state !!!
+  int project_state[PROJECT_COUNT];
 
   /* -- general -- */
   char id[MINCLIENTOPTSTRLEN];
@@ -88,7 +90,7 @@ typedef struct
   int outthreshold[CONTEST_COUNT];
   #endif
   int preferred_blocksize[CONTEST_COUNT];
-  char loadorder_map[CONTEST_COUNT];
+  int project_order_map[PROJECT_COUNT];
 
   /* -- perf -- */
   int  numcpu;

@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.61 2002/09/23 03:14:02 acidblood Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.62 2002/10/06 19:57:12 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -17,6 +17,7 @@ return "@(#)$Id: confmenu.cpp,v 1.61 2002/09/23 03:14:02 acidblood Exp $"; }
 //#define PLAINTEXT_PW
 
 #include "console.h"  // ConOutErr()
+#include "projdata.h" // general project data: ids, flags, states; names, ...
 #include "client.h"   // client->members, MINCLIENTOPTSTRLEN
 #include "baseincs.h" // strlen() etc
 #include "logstuff.h" // LogScreenRaw()
@@ -34,32 +35,40 @@ return "@(#)$Id: confmenu.cpp,v 1.61 2002/09/23 03:14:02 acidblood Exp $"; }
 static const char *CONFMENU_CAPTION="distributed.net client configuration: %s\n"
 "--------------------------------------------------------------------------\n";
 
-static int __is_opt_available_for_project(unsigned int cont_i, int menuoption)
+static int __is_opt_available_for_project(unsigned int projectid, int menuoption)
 {
+  u32 flags = ProjectGetFlags(projectid);
+
+  if ((flags & PROJECT_OK) == 0)
+    return 0;     /* projectid not supported */
+
   if (menuoption == CONF_CPUTYPE)
   {
-    if (selcoreValidateCoreIndex(cont_i,1) < 0) /* second core doesn't exist */
-      return 0;    /* ie only one core, so disable CONF_CPUTYPE opt */
+    if (selcoreValidateCoreIndex(projectid,1) < 0) /* second core doesn't exist */
+      return 0;   /* ie only one core, so disable CONF_CPUTYPE opt */
   }
-  switch (cont_i)
+
+  if (menuoption == CONF_THRESHOLDT && 
+      (flags & PROJECTFLAG_TIME_THRESHOLD) == 0)
+    return 0;     /* project has no time thresholds */
+
+  if (menuoption == CONF_PREFERREDBLOCKSIZE && 
+      (flags & PROJECTFLAG_PREFERRED_BLOCKSIZE) == 0)
+    return 0;     /* project has no preferred blocksize */
+
+  return 1;       /* no restrictions found */
+}
+
+static int __count_projects_having_flag (u32 flag)
+{
+  int proj_i;
+  int count = 0;
+  for (proj_i = 0; proj_i < PROJECT_COUNT; ++proj_i)
   {
-    case RC5_72:
-// OK!
-    case RC5: return 1;
-    #if defined(HAVE_DES_CORES)
-    case DES: return 1;
-    #endif
-    #if defined(HAVE_OGR_CORES)
-    case OGR: return (menuoption != CONF_THRESHOLDT &&
-                      menuoption != CONF_PREFERREDBLOCKSIZE);
-    #endif
-    #if defined(HAVE_CSC_CORES)
-    case CSC: return 1;
-    #endif
-    default: // PROJECT_NOT_HANDLED(cont_i);
-             break;
+    if ((ProjectGetFlags(proj_i) & (flag | PROJECT_OK)) == (flag | PROJECT_OK))
+      ++count;
   }
-  return 0;
+  return count;
 }
 
 
@@ -385,7 +394,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
 
   conf_options[CONF_NODISK].thevariable=&(client->nodiskbuffers);
   conf_options[CONF_LOADORDER].thevariable = 
-       strcpy(loadorder, projectmap_expand( client->loadorder_map ) );
+       strcpy(loadorder, projectmap_expand( client->project_order_map, client->project_state ) );
   conf_options[CONF_INBUFFERBASENAME].thevariable=&(client->in_buffer_basename[0]);
   conf_options[CONF_OUTBUFFERBASENAME].thevariable=&(client->out_buffer_basename[0]);
   conf_options[CONF_CHECKPOINT].thevariable=&(client->checkpoint_file[0]);
@@ -647,6 +656,12 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
       if (!client->connectoften)
         conf_options[CONF_FREQUENT_RETRY_FREQUENCY].disabledtext=
                     "n/a [need additional buffer level checking]";
+      if (__count_projects_having_flag(PROJECTFLAG_PREFERRED_BLOCKSIZE) == 0)
+        conf_options[CONF_PREFERREDBLOCKSIZE].disabledtext= 
+                     "n/a [not needed by a supported project]";
+      if (__count_projects_having_flag(PROJECTFLAG_TIME_THRESHOLD) == 0)
+        conf_options[CONF_THRESHOLDT].disabledtext= 
+                     "n/a [not needed by a supported project]";
     }
     else if (whichmenu == CONF_MENU_LOG)
     {
@@ -1345,9 +1360,9 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
           ((char *)conf_options[editthis].thevariable)[MINCLIENTOPTSTRLEN-1]=0;
           if (editthis == CONF_LOADORDER)
           {
-            projectmap_build(client->loadorder_map, loadorder );
+            projectmap_build(client->project_order_map, client->project_state, loadorder );
             conf_options[CONF_LOADORDER].thevariable = 
-              strcpy(loadorder, projectmap_expand( client->loadorder_map ) );
+              strcpy(loadorder, projectmap_expand( client->project_order_map, client->project_state ) );
           }
         }
         else if ( conf_options[editthis].type == CONF_TYPE_IARRAY)

@@ -8,15 +8,18 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.91 2002/09/28 01:58:06 andreasb Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.92 2002/10/06 19:57:12 andreasb Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
+#include "projdata.h" /* RC5, DES, ..., CONTEST_COUNT */
 #include "selcore.h"
 #if defined(HAVE_OGR_CORES)
 #include "ogr.h"      /* OGR core stuff */
 #endif
 
+#if 0
+// this moved to projdata.h
 enum {
   RC5, // RC5-64, http://www.rsa.com/rsalabs/97challenge/
   DES, // http://www.rsa.com/rsalabs/des3/index.html
@@ -26,6 +29,7 @@ enum {
   RC5_72 // http://www.rsasecurity.com/rsalabs/challenges/secretkey/
 };
 #define CONTEST_COUNT       6  /* RC5,DES,OGR,CSC,OGR_NEXTGEN,RC5_72 */
+#endif
 
 /* ---------------------------------------------------------------------- */
 

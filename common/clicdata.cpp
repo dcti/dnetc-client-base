@@ -12,37 +12,41 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.32 2002/09/23 01:54:06 acidblood Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.33 2002/10/06 19:57:12 andreasb Exp $"; }
 
 #include "baseincs.h" // for timeval
-#include "problem.h"  // for contest IDs
+#include "projdata.h" // general project data: ids, flags, states; names, ...
 #include "clitime.h"  // required for CliTimerDiff() and CliClock()
 #include "bench.h"    // for TBenchmark
 #include "selcore.h"  // for selcoreGetSelectedCoreForContest()
 
 /* ------------------------------------------------------------------------ */
 
+/* all the static information has been moved to projdata.h/.cpp and has been
+   extended  with flags etc. to be shared with the proxynet source */
 static struct contestInfo
 {
+#if 0 // now in projdata.h/.cpp
   const char *ContestName;
   const char *UnitName;
+#endif
   int ContestID;
   unsigned int Iter2KeyFactor; /* by how much must iterations/keysdone
                         be multiplied to get the number of keys checked. */
+  /* FIXME: is Iter2KeyFactor still used anywhere? move it to projdata if needed */
   unsigned int BlocksDone;
   struct { u32 hi, lo; } IterDone, TotalIterDone;
   struct timeval TimeDone;
   unsigned int UnitsDone;
   unsigned int BestTime;  /* in seconds */
   int BestTimeWasForced;
-} conStats[] = {  { "RC5",    "keys",  RC5,     1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  { "DES",    "keys",  DES,     2, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  { "OGR",    "nodes", OGR,     1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  { "CSC",    "keys",  CSC,     1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  { "OGR_NG", "nodes", OGR_NEXTGEN_SOMEDAY,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  { "RC5-72", "keys",  RC5_72,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  {  NULL,    NULL,   -1,       0, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 }  };
-// OK!
+} conStats[] = {  { /*"RC5",    "keys", */ RC5,     1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { /*"DES",    "keys", */ DES,     2, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { /*"OGR",    "nodes",*/ OGR,     1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { /*"CSC",    "keys", */ CSC,     1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { /*"OGR_NG", "nodes",*/ OGR_NEXTGEN_SOMEDAY,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { /*"RC5-72", "keys", */ RC5_72,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { /* NULL,    NULL,   */ -1,      0, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 }  };
 // obsolete projects may be omitted
 #if (CONTEST_COUNT != 6)
   #error PROJECT_NOT_HANDLED("conStats[]: static initializer expects CONTEST_COUNT == 6")
@@ -52,7 +56,7 @@ static struct contestInfo
 
 static struct contestInfo *__internalCliGetContestInfoVectorForID( int contestid )
 {
-  for (int i = 0; conStats[i].ContestName != NULL; i++)
+  for (int i = 0; conStats[i].ContestID >= 0; i++)
   {
     if (conStats[i].ContestID == contestid)
       return (&conStats[i]);
@@ -139,6 +143,7 @@ int CliSetContestWorkUnitSpeed( int contestid, unsigned int sec)
     
 // ---------------------------------------------------------------------------
 
+#if 0 // unused ???
 // obtain constant data for a contest. name/iter2key may be NULL
 // returns 0 if success, !0 if error (bad contestID).
 int CliGetContestInfoBaseData( int contestid, const char **name, unsigned int *iter2key )
@@ -151,6 +156,7 @@ int CliGetContestInfoBaseData( int contestid, const char **name, unsigned int *i
   if (iter2key) *iter2key = (conInfo->Iter2KeyFactor<=1)?(1):(conInfo->Iter2KeyFactor);
   return 0;
 }
+#endif
 
 // ---------------------------------------------------------------------------
 
@@ -243,23 +249,20 @@ int CliAddContestInfoSummaryData( int contestid,
 
 // ---------------------------------------------------------------------------
 
-
+#if 0 // unused
 // return 0 if contestID is invalid, non-zero if valid.
 int CliIsContestIDValid(int contestid)
 {
   return (__internalCliGetContestInfoVectorForID(contestid) != NULL);
 }
+#endif
 
 // ---------------------------------------------------------------------------
 
 // Return a usable contest name.
 const char *CliGetContestNameFromID(int contestid)
 {
-  struct contestInfo *conInfo =
-                     __internalCliGetContestInfoVectorForID( contestid );
-  if (conInfo)
-    return conInfo->ContestName;
-  return ((const char *)("???"));
+  return ProjectGetName(contestid);
 }
 
 // ---------------------------------------------------------------------------
@@ -267,11 +270,7 @@ const char *CliGetContestNameFromID(int contestid)
 // Return a usable contest unit name.
 const char *CliGetContestUnitFromID(int contestid)
 {
-  struct contestInfo *conInfo =
-                     __internalCliGetContestInfoVectorForID( contestid );
-  if (conInfo)
-    return conInfo->UnitName;
-  return ((const char *)("???"));
+  return ProjectGetUnitName(contestid);
 }
 
 // ---------------------------------------------------------------------------

@@ -6,13 +6,14 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.31 2002/09/02 00:35:41 andreasb Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.32 2002/10/06 19:57:11 andreasb Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
+#include "projdata.h" //general project data: ids, flags, states; names, ...
 #include "client.h"   //client struct and threshold functions
 #include "baseincs.h" //basic #includes
 #include "util.h"     //trace
@@ -51,7 +52,7 @@ const char *BufferGetDefaultFilename( unsigned int project, int is_out_type,
                                                        const char *basename )
 {
   static char filename[128];
-  const char *suffix = CliGetContestNameFromID( project );
+  const char *suffix = ProjectGetFileExtension( project );
   unsigned int len, n;
 
   filename[0] = '\0';
@@ -1011,21 +1012,18 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
 
   ClientEventSyncPost(CLIEVENT_BUFFER_UPDATEBEGIN,&req_flags,sizeof(req_flags));
 
-  for (i = 0; i < CONTEST_COUNT; i++)
+  for (i = 0; i < PROJECT_COUNT; i++)
   {
-    unsigned int cont_i = (unsigned int)(client->loadorder_map[i]);
-    if (cont_i >= CONTEST_COUNT) /* disabled */
+    unsigned int projectid = client->project_order_map[i];
+    if (client->project_state[projectid] & PROJECTSTATE_USER_DISABLED)
     {
-      /* retrieve the original contest number from the load order */
-      cont_i &= 0x7f;
-      if (cont_i < CONTEST_COUNT)
-        loaderflags_map[cont_i] = PROBLDR_DISCARD;  /* thus discardable */
+      loaderflags_map[projectid] = PROBLDR_DISCARD;  /* thus discardable */
     }
-    else /* cont_i < CONTEST_COUNT */
+    else
     {
-      loaderflags_map[cont_i] = 0;  
+      loaderflags_map[projectid] = 0;
     }
-  }    
+  }
 
   /* -------------------------------------- */
 
@@ -1215,12 +1213,12 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
   suspend_expired = closed_expired = -1;
   for (pos = cont_start; pos < cont_count; pos++)
   {
-    unsigned int cont_i = (unsigned int)(client->loadorder_map[pos]);
-    if (cont_i < CONTEST_COUNT && /* not user disabled */
-       IsProblemLoadPermitted(-1, cont_i)) /* core not disabled */
+    unsigned int projectid = client->project_order_map[pos];
+    if ((client->project_state[projectid] & PROJECTSTATE_USER_DISABLED) == 0 &&
+       IsProblemLoadPermitted(-1, projectid)) /* core not disabled */
     {
       int fetchable = 1, flushable = 1;
-      char proj_flags = client->project_flags[cont_i];
+      char proj_flags = client->project_flags[projectid];
       TRACE_OUT((0,"proj_flags[cont_i=%d] = 0x%x\n", cont_i, proj_flags));
 
       if (!ignore_closed_flags && 
@@ -1281,7 +1279,7 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
       TRACE_OUT((0,"contest %d, fetchable=%d flushable=%d\n", cont_i, fetchable, flushable));
       if (check_flush && !need_flush && flushable)
       {
-        if (GetBufferCount( client, cont_i, 1 /* use_out_file */, NULL ) > 0)
+        if (GetBufferCount( client, projectid, 1 /* use_out_file */, NULL ) > 0)
         {
           need_flush = 1;
           if (either_or)    /* either criterion satisfied ... */
@@ -1291,10 +1289,10 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
       }      
       if (check_fetch && !need_fetch && fetchable)
       {
-        if (!BufferAssertIsBufferFull(client,cont_i))
+        if (!BufferAssertIsBufferFull(client, projectid))
         {
           unsigned long swucount;
-          long pktcount = GetBufferCount( client, cont_i, 0, &swucount );
+          long pktcount = GetBufferCount( client, projectid, 0, &swucount );
           if (pktcount <= 0) /* buffer is empty */
           {
             need_fetch = 1;
@@ -1303,7 +1301,7 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
           {
             if (swucount == 0) /* count not supported */
               swucount = pktcount * 100; /* >= 1.00 SWU's per packet */
-            if (swucount < ClientGetInThreshold( client, cont_i, 1 /*force*/ ))
+            if (swucount < ClientGetInThreshold( client, projectid, 1 /*force*/ ))
             {     
               need_fetch = 1;
             }  

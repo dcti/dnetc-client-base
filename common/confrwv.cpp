@@ -6,11 +6,12 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.87 2002/09/23 03:14:02 acidblood Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.88 2002/10/06 19:57:12 andreasb Exp $"; }
 
 //#define TRACE
 
 #include "cputypes.h"
+#include "projdata.h"  // general project data: ids, flags, states; names, ...
 #include "client.h"    // Client class
 #include "baseincs.h"  // atoi() etc
 #include "iniread.h"   // [Get|Write]Profile[Int|String]()
@@ -1079,22 +1080,13 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
   {
     if (GetPrivateProfileIntB( OPTION_SECTION, "processdes", sizeof(buffer), fn ) == 0 )
     {
-      int doneclient = 0, doneini = 0;
-      projectmap_build( buffer, "" );
-      for (ui = 0; ui < CONTEST_COUNT && (!doneclient || !doneini); ui++)
-      {
-        if (client->loadorder_map[ui] == 1)
-        {
-          doneclient = 1;
-          client->loadorder_map[ui] |= 0x80;
-        }
-        if (buffer[ui] == DES)
-        {
-          doneini = 1;
-          buffer[ui] |= 0x80; /* disable */
-        }
-      }
-      modfail += (!WritePrivateProfileStringB( OPTSECT_MISC, "project-priority", projectmap_expand(buffer), fn ));
+      int mapbuffer[PROJECT_COUNT], statebuffer[PROJECT_COUNT];
+      projectmap_build( mapbuffer, NULL, NULL );
+      memset(statebuffer, 0, sizeof(statebuffer));
+      client->project_state[DES] |= PROJECTSTATE_USER_DISABLED;
+      statebuffer[DES] |= PROJECTSTATE_USER_DISABLED;
+      modfail += (!WritePrivateProfileStringB( OPTSECT_MISC, "project-priority", 
+                        projectmap_expand(mapbuffer, statebuffer), fn ));
     }
   }
   /* ----------------- OPTSECT_DISPLAY ----------------- */
@@ -1341,18 +1333,21 @@ int ConfigRead(Client *client)
   client->max_buffupd_interval = __readwrite_minutes( OPTSECT_BUFFERS,"threshold-check-interval", NULL, client->max_buffupd_interval, fn, 0 );
   client->max_buffupd_retry_interval = __readwrite_minutes( OPTSECT_BUFFERS,"threshold-check-retry-interval", NULL, client->max_buffupd_retry_interval, fn, 0 );
   GetPrivateProfileStringB( OPTSECT_MISC, "project-priority", "", buffer, sizeof(buffer), fn );
-  projectmap_build(client->loadorder_map, buffer);
+  projectmap_build(client->project_order_map, client->project_state, buffer);
 
   TRACE_OUT((0,"ReadConfig() [3 begin]\n"));
 
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
+    u32 proj_flags = ProjectGetFlags(cont_i);
+    if (proj_flags == PROJECT_UNSUPPORTED)
+      continue;
     if ((cont_name = __getprojsectname(cont_i)) != ((const char *)0))
     {
       client->coretypes[cont_i] =
          GetPrivateProfileIntB(cont_name, "core",
                        client->coretypes[cont_i],fn);
-      if (cont_i != OGR)
+      if (proj_flags & PROJECTFLAG_PREFERRED_BLOCKSIZE)
       {
         /* note that the default preferred_blocksize is now <=0 (auto) */
         client->preferred_blocksize[cont_i] =
@@ -1382,9 +1377,12 @@ int ConfigRead(Client *client)
       if (client->outthreshold[cont_i] > client->inthreshold[cont_i])
         client->outthreshold[cont_i] = client->inthreshold[cont_i];
       #endif        
-      client->timethreshold[cont_i] =
+      if (proj_flags & PROJECTFLAG_TIME_THRESHOLD)
+      {
+        client->timethreshold[cont_i] =
            GetPrivateProfileIntB(cont_name, "fetch-time-threshold",
                          client->timethreshold[cont_i], fn);
+      }
     }
   }
   TRACE_OUT((0,"ReadConfig() [3 end]\n"));
@@ -1490,8 +1488,9 @@ int ConfigWrite(Client *client)
 
     /* --- CONF_MENU_MISC __ */
 
-    strcpy(buffer,projectmap_expand(NULL));
-    __XSetProfileStr( OPTSECT_MISC, "project-priority", projectmap_expand(client->loadorder_map), fn, buffer );
+    strcpy(buffer, projectmap_expand(NULL, NULL));
+    __XSetProfileStr( OPTSECT_MISC, "project-priority", 
+        projectmap_expand(client->project_order_map, client->project_state), fn, buffer );
     __readwrite_minutes( OPTSECT_MISC,"run-time-limit", &(client->minutes), 0, fn, 0 );
     __XSetProfileInt( OPTSECT_MISC, "run-work-limit", client->blockcount, fn, 0, 0 );
 
@@ -1521,6 +1520,9 @@ int ConfigWrite(Client *client)
     TRACE_OUT((+0,"cont_i loop\n"));
     for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
     {
+      u32 proj_flags = ProjectGetFlags(cont_i);
+      if (proj_flags == PROJECT_UNSUPPORTED)
+        continue;
       TRACE_OUT((+0,"cont_i=%u\n", cont_i));
       if ((p =  __getprojsectname(cont_i)) != ((const char *)0))
       {
@@ -1528,10 +1530,14 @@ int ConfigWrite(Client *client)
         #if !defined(NO_OUTBUFFER_THRESHOLDS)          
         __XSetProfileInt( p, "flush-workunit-threshold", client->outthreshold[cont_i], fn, 0, 0 );
         #endif
-        __XSetProfileInt( p, "fetch-time-threshold", client->timethreshold[cont_i], fn, 0, 0 );
-        __XSetProfileInt( p, "core", client->coretypes[cont_i], fn, -1, 0 );
-        if (cont_i != OGR)
+        if (proj_flags & PROJECTFLAG_TIME_THRESHOLD)
         {
+          __XSetProfileInt( p, "fetch-time-threshold", client->timethreshold[cont_i], fn, 0, 0 );
+        }
+        __XSetProfileInt( p, "core", client->coretypes[cont_i], fn, -1, 0 );
+        if (proj_flags & PROJECTFLAG_PREFERRED_BLOCKSIZE)
+        {
+          // FIXME? why do we do this check first?
           if (client->preferred_blocksize[cont_i] > 0 ||
               GetPrivateProfileStringB(p,"preferred-blocksize","",buffer,2,fn))
           {

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.249 2002/09/02 00:35:41 andreasb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.250 2002/10/06 19:57:12 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -13,6 +13,7 @@ return "@(#)$Id: client.cpp,v 1.249 2002/09/02 00:35:41 andreasb Exp $"; }
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
 #include "baseincs.h"  // basic (even if port-specific) #includes
+#include "projdata.h"  // general project data: ids, flags, states; names, ...
 #include "client.h"    // Client class
 #include "cliident.h"  // CliGetFullVersionDescriptor()
 #include "clievent.h"  // ClientEventSyncPost(),_CLIENT_STARTED|FINISHED
@@ -46,7 +47,7 @@ void ResetClientData(Client *client)
   client->nettimeout=60;
   client->autofindkeyserver=1;
   client->crunchmeter=-1;
-  projectmap_build(client->loadorder_map,"");
+  projectmap_build(client->project_order_map, client->project_state, "");
   client->numcpu = -1;
   client->corenumtotestbench = -1;
   for (contest=0; contest<CONTEST_COUNT; contest++)
