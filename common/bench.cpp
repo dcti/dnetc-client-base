@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.8 1999/11/23 05:54:31 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.9 1999/11/27 16:51:37 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -61,6 +61,59 @@ static void __show_notbest_msg(unsigned int contestid)
   return;
 }
 
+/* ----------------------------------------------------------------- */
+
+static double __calc_rate( unsigned int contestid, ContestWork *contestwork, 
+                           int last_run_result, unsigned int timesrun, 
+                           struct timeval *totalruntime, int print_it )
+{                         
+  char ratestr[32];
+  double rate, xdone;
+  rate = 0.0;
+
+  switch (contestid)
+  {
+    case RC5:
+    case DES:
+    case CSC:
+    {
+      unsigned int count;
+      if (CliGetContestInfoBaseData( contestid, NULL, &count ) != 0)
+        count = 1;
+      xdone = ((double)contestwork->crypto.iterations.lo)
+                        * ((double)timesrun);
+      if ( last_run_result == RESULT_WORKING ) //didn't finish
+        xdone = xdone + ((double)contestwork->crypto.keysdone.lo);
+      if (count>1) //iteration-to-keycount-multiplication-factor
+        xdone = (xdone)*((double)(count));
+      rate = ((double)(xdone))/ (((double)(totalruntime->tv_sec))+
+                 (((double)(totalruntime->tv_usec))/((double)(1000000L))));
+      if (print_it)
+      {
+        LogScreen("Completed in %s [%skeys/sec]\n",  
+                 CliGetTimeString( totalruntime, 2 ),
+                 CliGetKeyrateAsString( ratestr, rate ) );
+      }
+      break;
+    }
+    case OGR:
+    {
+      xdone = ((double)contestwork->ogr.nodes.lo) * ((double)timesrun);
+      if ( last_run_result == RESULT_WORKING ) //didn't finish
+        xdone = xdone + ((double)contestwork->ogr.nodes.lo);
+      rate = ((double)(xdone))/ (((double)(totalruntime->tv_sec))+
+              (((double)(totalruntime->tv_usec))/((double)(1000000L))));
+      if (print_it)
+      {
+        LogScreen("Completed in %s [%snodes/sec]\n",
+                 CliGetTimeString( totalruntime, 2 ),
+                 CliGetKeyrateAsString( ratestr, rate ) );
+      }
+      break;
+    }
+  }
+  return (rate);
+}
 
 /* ----------------------------------------------------------------- */
 
@@ -73,6 +126,8 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
 {
   long retvalue;
   int run, scropen; u32 tslice; 
+  struct { int yps, did_adjust; } non_preemptive_os;
+  /* non-preemptive os minimum yields per second */
   Problem *problem;
   ContestWork contestwork;
   const char *contname;
@@ -122,12 +177,34 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   }
 
   tslice = 0x10000;
+  non_preemptive_os.yps = 0; /* assume preemptive OS */
+  non_preemptive_os.did_adjust = 0;
+  
   #if (CLIENT_OS == OS_NETWARE)
   if (GetFileServerMajorVersionNumber() < 5)
-  tslice = GetTimesliceBaseline(); //in cpucheck.cpp
+  {
+    non_preemptive_os.yps = 1000/10; /* 10 ms minimum yield rate */ 
+    tslice = 2048;
+  }  
   #elif (CLIENT_OS == OS_MACOS)
-  tslice = GetTimesliceToUse(contestid);
+  {
+    non_preemptive_os.yps = 1000/20; /* 20 ms minimum yield rate */ 
+    tslice = 4096;
+  }
+  #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32 /* win32s */) 
+  if (winGetVersion() < 400) /* win16 or win32s */
+  {
+    non_preemptive_os.yps = 1000/20; /* 20 ms minimum yield rate */ 
+    tslice = 2048;
+  }
+  #elif (CLIENT_OS == OS_RISCOS)
+  if (riscos_check_taskwindow())
+  {
+    non_preemptive_os.yps = 1000/100; /* 100 ms minimum yield rate */ 
+    tslice = 4096;
+  }
   #endif
+
   totalruntime.tv_sec = 0;
   totalruntime.tv_usec = 0;
   timesrun = 0;
@@ -151,10 +228,37 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     }
     while ( run == RESULT_WORKING )
     {
-      run = problem->Run();
-      #if (CLIENT_OS == OS_NETWARE)   //yield
+      if (non_preemptive_os.yps) /* is this a non-preemptive environment? */
+      {
+        if (non_preemptive_os.did_adjust < 30 /* don't do this too often */
+           && totalruntime.tv_sec >= (2+non_preemptive_os.did_adjust))
+        {
+          ContestWork tmp_work;
+          if (problem->RetrieveState(&tmp_work, NULL, 0) >= 0)
+          {
+            double rate = __calc_rate(contestid, &tmp_work, run, 
+                                      timesrun, &totalruntime, 0);
+            u32 newtslice = (u32)(rate/((double)non_preemptive_os.yps));
+            if (newtslice > (tslice + (tslice/10)))
+            {
+              non_preemptive_os.did_adjust++;
+              numsecs++; /* bench for a bit more */
+            }
+            if (newtslice > tslice)
+              tslice = newtslice;
+          }
+        }
+        #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) /* win32s */
+        w32Yield(); /* pump waiting messages */
+        #elif (CLIENT_OS == OS_MACOS)
+        tick_sleep(0);
+        #elif (CLIENT_OS == OS_RISCOS)
+        riscos_upcall_6();
+        #elif (CLIENT_OS == OS_NETWARE)
         nwCliThreadSwitchLowPriority();
-      #endif
+        #endif
+      }
+      run = problem->Run();
       if ( run < 0 )
         break;
       else if ((flags & TBENCHMARK_IGNBRK)!=0 && 
@@ -214,51 +318,8 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   
   retvalue = -1; /* assume error */
   if (run >= 0) /* no errors, no ^C */
-  {
-    char ratestr[32];
-    double rate, xdone;
-
-    switch (contestid)
-    {
-      case RC5:
-      case DES:
-      case CSC:
-      {
-        unsigned int count;
-        if (CliGetContestInfoBaseData( contestid, NULL, &count ) == 0)
-        {
-          xdone = ((double)contestwork.crypto.iterations.lo)
-                            * ((double)timesrun);
-          if ( run == RESULT_WORKING ) //didn't finish
-            xdone = xdone + ((double)contestwork.crypto.keysdone.lo);
-          if (count>1) //iteration-to-keycount-multiplication-factor
-            xdone = (xdone)*((double)(count));
-          rate = ((double)(xdone))/ (((double)(totalruntime.tv_sec))+
-                   (((double)(totalruntime.tv_usec))/((double)(1000000L))));
-          LogScreen("Completed in %s [%skeys/sec]\n",  
-                 CliGetTimeString( &totalruntime, 2 ),
-                 CliGetKeyrateAsString( ratestr, rate ) );
-          retvalue = (long)rate;
-        }
-        break;
-      }
-      case OGR:
-      {
-        {
-          xdone = ((double)contestwork.ogr.nodes.lo) * ((double)timesrun);
-          if ( run == RESULT_WORKING ) //didn't finish
-            xdone = xdone + ((double)contestwork.ogr.nodes.lo);
-          rate = ((double)(xdone))/ (((double)(totalruntime.tv_sec))+
-                  (((double)(totalruntime.tv_usec))/((double)(1000000L))));
-          LogScreen("Completed in %s [%snodes/sec]\n",
-                   CliGetTimeString( &totalruntime, 2 ),
-                   CliGetKeyrateAsString( ratestr, rate ) );
-          retvalue = (long)rate;
-        }
-        break;
-      }
-    }
-  }
+    retvalue = (long)__calc_rate(contestid, &contestwork, run, 
+                                 timesrun, &totalruntime, 1);
 
   return retvalue;
 }  
