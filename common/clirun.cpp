@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.14  1998/10/24 15:24:37  sampo
+// Added MacOS yielding code
+//
 // Revision 1.13  1998/10/11 05:26:47  cyp
 // Fixes for new-and-improved win32/win16 "console" message pumping.
 //
@@ -58,7 +61,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.13 1998/10/11 05:26:47 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.14 1998/10/24 15:24:37 sampo Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -85,7 +88,6 @@ return "@(#)$Id: clirun.cpp,v 1.13 1998/10/11 05:26:47 cyp Exp $"; }
 #include "probman.h"   //GetProblemPointerFromIndex()
 #include "probfill.h"  //LoadSaveProblems(), RandomWork(), FILEENTRY_xxx macros
 #include "modereq.h"   //ModeReq[Set|IsSet|Run]()
-
 // --------------------------------------------------------------------------
 
 static int IsFilenameValid( const char *filename )
@@ -220,7 +222,7 @@ struct thread_param_block
   #define MIN_SANE_TIMESLICE_DES     256
   #define MAX_SANE_TIMESLICE_RC5   16384
   #define MAX_SANE_TIMESLICE_DES   16384
-  #error "Please check timer granularity and timeslice constants"
+  //#error "Please check timer granularity and timeslice constants"
   #undef NON_PREEMPTIVE_OS_PROFILING  //or undef to do your own profiling
 #else
   #error "Unknown OS. Please check timer granularity and timeslice constants"
@@ -239,6 +241,9 @@ static struct
 
 static void yield_pump( void *tv_p )
 {
+  #if (CLIENT_OS == OS_MACOS)
+  	EventRecord event;
+  #endif
   static int pumps_without_run = 0;
   runcounters.yield_run_count++;
 
@@ -261,6 +266,8 @@ static void yield_pump( void *tv_p )
     { riscos_upcall_6(); }
   #elif (CLIENT_OS == OS_LINUX)
     sched_yield();
+  #elif (CLIENT_OS == OS_MACOS)
+  	WaitNextEvent( everyEvent, &event, 0, nil );
   #else
     #error where is your yield function?
     NonPolledUSleep( 0 ); /* yield */
