@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.98  1998/06/20 22:42:56  silby
+// Improved error checking on some options (notable changes include mins and maxes now on checkpoint time and exitfilechecktime)
+//
 // Revision 1.97  1998/06/20 10:04:12  cyruspatel
 // Modified so x86 make with /DKWAN will work: Renamed des_unit_func() in
 // des_slice to des_unit_func_slice() to resolve conflict with (*des_unit_func)().
@@ -53,7 +56,7 @@
 #include "client.h"
 
 #if (!defined(lint) && !defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.97 1998/06/20 10:04:12 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.98 1998/06/20 22:42:56 silby Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -498,28 +501,28 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           killwhitespace(id);
           break;
         case CONF_THRESHOLDI:
-          inthreshold[0]=atoi(parm);
-          if ( inthreshold[0] < 1   ) inthreshold[0] = 1;
-          if ( inthreshold[0] > 1000 ) inthreshold[0] = 1000;
+          choice=atoi(parm);
+          if (choice > 0) inthreshold[0]=choice;
+          ValidateConfig();          
           outthreshold[0]=inthreshold[0];
           break;
         case CONF_THRESHOLDO:
-          outthreshold[0]=atoi(parm);
-          if ( outthreshold[0] < 1   ) outthreshold[0] = 1;
-          if ( outthreshold[0] > 1000 ) outthreshold[0] = 1000;
+          choice=atoi(parm);
+          if (choice > 0) outthreshold[0]=choice;
+          ValidateConfig();
           if ( outthreshold[0] > inthreshold[0] )
              outthreshold[0]=inthreshold[0];
           break;
         case CONF_THRESHOLDI2:
-          inthreshold[1]=atoi(parm);
-          if ( inthreshold[1] < 1   ) inthreshold[1] = 1;
-          if ( inthreshold[1] > 1000 ) inthreshold[1] = 1000;
+          choice=atoi(parm);
+          if (choice > 0) inthreshold[1]=choice;
+          ValidateConfig();
           outthreshold[1]=inthreshold[1];
           break;
         case CONF_THRESHOLDO2:
-          outthreshold[1]=atoi(parm);
-          if ( outthreshold[1] < 1   ) outthreshold[1] = 1;
-          if ( outthreshold[1] > 1000 ) outthreshold[1] = 1000;
+          choice=atoi(parm);
+          if (choice > 0) outthreshold[1]=choice;
+          ValidateConfig();
           if ( outthreshold[1] > inthreshold[1] )
              outthreshold[1]=inthreshold[1];
           break;
@@ -791,8 +794,8 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           break;
         case CONF_CKTIME:
           choice=atoi(parm);
-          choice=max(2,choice);
-          *(s32 *)options[CONF_CKTIME].thevariable=choice;
+          if (choice > 0) *(s32 *)options[CONF_CKTIME].thevariable=choice;
+          ValidateConfig();
           break;
         case CONF_NETTIMEOUT:
           choice=atoi(parm);
@@ -801,8 +804,8 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           break;
         case CONF_EXITFILECHECKTIME:
           choice=atoi(parm);
-          choice=max(choice,1);
-          *(s32 *)options[CONF_EXITFILECHECKTIME].thevariable=choice;
+          if (choice > 0) *(s32 *)options[CONF_EXITFILECHECKTIME].thevariable=choice;
+          ValidateConfig();
           break;
         case CONF_OFFLINEMODE:
           choice=atoi(parm);
@@ -1294,8 +1297,10 @@ void Client::ValidateConfig( void )
   if (preferred_blocksize > 31) preferred_blocksize = 31;
   if ( minutes < 0 ) minutes=0;
   if ( blockcount < 0 ) blockcount=0;
-
-
+  if (checkpoint_min < 2) checkpoint_min=2;
+    else if (checkpoint_min > 30) checkpoint_min=30;
+  if (exitfilechecktime < 5) exitfilechecktime=5;
+    else if (exitfilechecktime > 600) exitfilechecktime=600;
   // Check for blank filenames, fix if so
   if (isstringblank(ini_in_buffer_file[0]))
     strcpy(ini_in_buffer_file[0],"buff-in" EXTN_SEP "rc5");
