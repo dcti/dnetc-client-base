@@ -18,20 +18,19 @@
 //#define TRACE
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk-conflict.cpp,v 1.52 1999/11/21 11:23:59 jlawson Exp $"; }
+return "@(#)$Id: lurk-conflict.cpp,v 1.53 1999/11/23 15:39:28 jlawson Exp $"; }
 
 /* ---------------------------------------------------------- */
 
+#include <stdio.h>
 #include "cputypes.h"
-#include "baseincs.h"
 #include "lurk.h"
-
 #ifdef PROXYTYPE
-  #include "globals.h"
-  #define TRACE_OUT(x)   /* nothing */
+#include "globals.h"
+#define TRACE_OUT(x) /* nothing */
 #else
-  #include "logstuff.h"
-  #include "util.h"      // trace
+#include "logstuff.h"
+#include "util.h" //trace
 #endif
 
 Lurk dialup;        // publicly exported class instance.
