@@ -16,6 +16,9 @@
 // -----------------------------------------------------------------------
 //
 // $Log: triggers.cpp,v $
+// Revision 1.6  1998/09/28 02:17:40  cyp
+// NetWare change: removed signal handling for SIGINT, polls keyboard instead.
+//
 // Revision 1.5  1998/09/25 11:31:25  chrisb
 // Added stuff to support 3 cores in the ARM clients.
 //
@@ -33,7 +36,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.5 1998/09/25 11:31:25 chrisb Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.6 1998/09/28 02:17:40 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -402,6 +405,7 @@ static void CliSetupSignals( void )
     signal( SIGQUIT, CliSignalHandler );
     signal( SIGTERM, CliSignalHandler );
     signal( SIGINT, CliSignalHandler );
+    RegisterPollDrivenBreakCheck( nwCliCheckForUserBreak );
     signal( SIGSTOP, CliSignalHandler );
     //workaround NW 3.x bug - printf "%f" handler is in mathlib not clib, which
     signal( SIGABRT, CliSignalHandler ); //raises abrt if mathlib isn't loaded
