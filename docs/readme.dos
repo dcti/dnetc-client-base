@@ -37,6 +37,11 @@
     It can however share buffers with any other client, across shared
     network disks if need be. Checkpoint files however *cannot* be shared.
 
+    Beginning with v2.7109.440, the client is capable of treating buffers
+    located somewhere else as a source/destination to fetch/flush from.
+    That is to say, it can use a set of 'remote' buffer files when the
+    'local' buffers run out.
+
     Beginning with v2.7100.416, the DOS client no longer requires the 
     external DOS4GW.EXE DOS extender. The far superior (as can expected 
     from free software) DOS extender, PMODE/W is now built directly into 
@@ -45,25 +50,37 @@
     Beginning with v2.7100.416, the DOS client no longer assumes that the 
     buffer files are in the current directory. The default path is now
     the client's directory.
-    
+
     Note: DOS, Win16 and OS/2 ports may squawk about a missing TZ= variable
     in the environment. Set it in your autoexec (or wherever). For example:
     "SET TZ=EST+5" for eastern standard time or "SET TZ=EST+5DST" when 
     daylight savings time is in effect (ie in the summer). If you live on
     the other side of the zero meridian, ie east of Greenwich, England,
-    your TZ will have a negative offset. For example CET-1 for Central 
-    European Time, or NZT-12 if you live in New Zealand.
+    your TZ will have a negative offset. For example CET-1[DST] for Central 
+    European Time, or NZT-12[DST] if you live in New Zealand.
     
     TZ (TimeZone) is used by all (not only by the client) software that is 
     sensitive to time to properly compute the computer clock's offset to 
     UTC (aka GMT). If you have used the DOS client before, (and you do not 
-    live in Great Britain or in East Africa) you probably also noticed that 
+    live in Great Britain or in West Africa) you probably also noticed that 
     the time was wrong. Well, now you know why: On MS-DOS, TZ is by default 
     set to PST+9 (Pacific Standard Time). Other DOSs have different defaults.
     Note that the timezone offsets are inverted from ones used in the Unix
     world - DOS adds the number of hours to local time to determine what
     GMT/UTC time is. Unix adds the offset to GMT/UTC to determine what 
     local time is.
+
+    A question that occasionally comes up is whether it is possible to 
+    run the DOS client as a TSR (terminate and stay resident utility). 
+    No, it is not for two reasons: a) For all practical purposes, 
+    only real mode executables can be resident. The client runs in 
+    protected mode. b) the client is not designed to run as a callback 
+    which is what it would be if it were a TSR (terminated but resident 
+    - ie providing a point of entry which is called from outside the client). 
+    Furthermore, the only way the client would ever be called would be 
+    if it trapped the timer or idle interrupt, which would make it impossible 
+    to use DOS calls (buffer I/O etc), since the DOS kernel is not reentrant 
+    and the timer interrupt can fire from within the kernel.
 
  3.0  Help: ----------------------------------------------------------
 
@@ -76,3 +93,4 @@
     mailing list, send a message to <majordomo@lists.distributed.net> with 
     "subscribe rc5" as the message text).
 
+    Document revision $Id: readme.dos,v 1.5 1999/04/20 18:23:17 cyp Exp $
