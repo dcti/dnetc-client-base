@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.166 2000/06/30 19:38:13 jlawson Exp $
+# @(#)$Id: configure,v 1.222.2.167 2000/06/30 20:11:48 jlawson Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1035,16 +1035,16 @@ case "$1" in
 	TARGET_TARBALL="openbsd-alpha"
 	;;
 
-    *alpha-linux-glibc)               # [dworz/jlawson]
+    *alpha-linux-elf)               # [dworz/jlawson]
 	TARGET_AS="as"
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DMULTITHREAD -DLURK -DHAVE_OGR_CORES"
+	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DMULTITHREAD -DLURK -DHAVE_OGR_CORES -DUNIVERSALRESOLVER"
 	TARGET_ADDSRCS="rc5/alpha/axp-bmeyer.cpp common/lurk.cpp $OGR_ANSI_SRCS"
 	TARGET_ADDASMS="rc5/alpha/axp-bmeyer.s"
 	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
 	TARGET_LIBS="-lpthread -ldl"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-alpha-glibc21"
+        TARGET_TARBALL="linux-alpha-elf"
 	;;
 
 ###### PowerPC/POWER
