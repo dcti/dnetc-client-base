@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.43 1999/11/15 12:47:04 remi Exp $
+# @(#)$Id: configure,v 1.222.2.44 1999/11/15 21:03:41 ivo Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -478,16 +478,18 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
-    *hpux-hppa-gcc)  # [ivo]
-        DELETECHARS="'/.\$\-'"
-	RC5CORECOPY="rc5/parisc/parisc.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_HPUX \
-			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+   *hpux-hppa-gcc-nomt)  # [ivo]
+        #DELETECHARS="'/.\$\-'"
+        RC5CORECOPY="rc5/parisc/parisc.cpp"
+        TARGET_CCFLAGS="$OPTS_GCC_HPUX  \
+                        -DHAVE_CSC_CORES -DHAVE_DES_CORES \
+                        -DBIT_32 -DKWAN -DMEGGS"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
         TARGET_ADDASMS="rc5/parisc/parisc.s"
+        #TARGET_LDFLAGS="-lpthread"
+        TARGET_TARBALL="hpux1020-hppa11"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
+        ;;
 
     *hpux-m68k-gcc)
 	RC5CORECOPY="rc5/ansi/rc5ansi1-b2.cpp"
