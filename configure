@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.154  1999/01/06 07:32:02  cramer
+# Fixed configure for sparc-linux (oops)
+#
 # Revision 1.153  1999/01/05 08:18:06  cramer
 # A pack of wild dogs rampaged through configure... I cleaned up after them :)
 # (If anything is borked, it's my fault.  There may be a few oops' in there
@@ -563,8 +566,8 @@ OPTS_EGCS='-O2 -fstrict-aliasing -fno-exceptions -fomit-frame-pointer \
 OPTS_CC_SPARC='-fast -xO4 -xtarget=ultra1/140 -DASM_SPARC'
 
 # (sparc/v7 [SS1/2/IPX] gcc)
-OPTS_GCC_SPARC="$OPTS_GCC -O6 -mcypress -DASM_SPARC"
-OPTS_GCC272_SPARC="$OPTS_GCC272 -O6 -mcypress -DASM_SPARC"
+OPTS_GCC_SPARC1="$OPTS_GCC -O6 -mcypress -DASM_SPARC"
+OPTS_GCC272_SPARC1="$OPTS_GCC272 -O6 -mcypress -DASM_SPARC"
 
 # (sparc/v8 [SS5+]      gcc)
 OPTS_GCC_SPARC="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
@@ -935,7 +938,7 @@ case "$1" in
 
     *sparc-linux)
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_NONULTRA_SPARC -D__showids__ \
+	TARGET_CCFLAGS="$OPTS_GCC_SPARC -D__showids__ \
 			-DPIPELINE_COUNT=2 \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
@@ -944,7 +947,7 @@ case "$1" in
 
     *sparc-linux-mt)
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_NONULTRA_SPARC -D__showids__ \
+	TARGET_CCFLAGS="$OPTS_GCC_SPARC -D__showids__ \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
