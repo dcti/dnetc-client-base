@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.108  1998/12/16 05:55:53  cyp
+// MODEREQ_FFORCE doesn't do anything different from normal force/flush, so I
+// recycled it as MODEREQ_FQUIET for use with non-interactive BufferUpdate()
+//
 // Revision 1.107  1998/12/10 18:52:30  cyp
 // Fixed a LogScreen() that should have been a LogScreenRaw()
 //
@@ -101,7 +105,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.107 1998/12/10 18:52:30 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.108 1998/12/16 05:55:53 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -1122,11 +1126,11 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           else if ( strcmp( thisarg, "-flush" ) == 0 )      
             do_mode = MODEREQ_FLUSH;
           else if ( strcmp( thisarg, "-forcefetch" ) == 0 )
-            do_mode = MODEREQ_FETCH | MODEREQ_FFORCE;
+            do_mode = MODEREQ_FETCH;
           else if ( strcmp( thisarg, "-forceflush" ) == 0 )
-            do_mode = MODEREQ_FLUSH | MODEREQ_FFORCE;
+            do_mode = MODEREQ_FLUSH;
           else /* ( strcmp( thisarg, "-update" ) == 0) */
-            do_mode = MODEREQ_FETCH | MODEREQ_FLUSH | MODEREQ_FFORCE;
+            do_mode = MODEREQ_FETCH | MODEREQ_FLUSH;
           
           ModeReqClear(-1); //clear all - only do -fetch/-flush/-update
           ModeReqSet( do_mode );

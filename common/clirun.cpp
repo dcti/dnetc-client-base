@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.52  1998/12/16 05:55:53  cyp
+// MODEREQ_FFORCE doesn't do anything different from normal force/flush, so I
+// recycled it as MODEREQ_FQUIET for use with non-interactive BufferUpdate()
+//
 // Revision 1.51  1998/12/14 10:26:57  snake
 //
 // fixes for OpenBSD sparc
@@ -197,7 +201,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.51 1998/12/14 10:26:57 snake Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.52 1998/12/16 05:55:53 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -1383,7 +1387,7 @@ int Client::Run( void )
     if (!TimeToQuit && !ModeReqIsSet(MODEREQ_FETCH|MODEREQ_FLUSH) && 
         dialup.lurkmode && dialup.CheckIfConnectRequested())
       {
-      ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH);
+      ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
       }
     #endif
 
@@ -1394,7 +1398,7 @@ int Client::Run( void )
     if (!TimeToQuit && connectoften && timeRun > timeNextConnect)
       {
       timeNextConnect = timeRun + 60;
-      ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH);
+      ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
       }
 
     //----------------------------------------

@@ -8,6 +8,10 @@
 */    
 //
 // $Log: modereq.h,v $
+// Revision 1.8  1998/12/16 05:55:53  cyp
+// MODEREQ_FFORCE doesn't do anything different from normal force/flush, so I
+// recycled it as MODEREQ_FQUIET for use with non-interactive BufferUpdate()
+//
 // Revision 1.7  1998/11/10 21:37:48  cyp
 // added support for -forceunlock.
 //
@@ -40,7 +44,7 @@
 #define MODEREQ_CONFIG             0x0008
 #define MODEREQ_FETCH              0x0010
 #define MODEREQ_FLUSH              0x0020
-#define MODEREQ_FFORCE             0x0040
+#define MODEREQ_FQUIET             0x0040 /* fetch/flush quietly */
 #define MODEREQ_CONFRESTART        0x0080 /* set restart flag after successful config? */
 #define MODEREQ_BENCHMARK_RC5      0x0100
 #define MODEREQ_BENCHMARK_DES      0x0200

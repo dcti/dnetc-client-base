@@ -8,6 +8,10 @@
 */    
 //
 // $Log: modereq.cpp,v $
+// Revision 1.14  1998/12/16 05:55:53  cyp
+// MODEREQ_FFORCE doesn't do anything different from normal force/flush, so I
+// recycled it as MODEREQ_FQUIET for use with non-interactive BufferUpdate()
+//
 // Revision 1.13  1998/12/08 05:48:59  dicamillo
 // For MacOS GUI client, add calls to create and destroy benchmark display.
 //
@@ -51,7 +55,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.13 1998/12/08 05:48:59 dicamillo Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.14 1998/12/16 05:55:53 cyp Exp $"; }
 #endif
 
 #include "client.h"   //client class
@@ -238,14 +242,15 @@ int ModeReqRun(Client *client)
         if (client)
           {
           int domode = 0;
+	  int interactive = ((bits & MODEREQ_FQUIET)==0);
           domode  = ((bits & (MODEREQ_FETCH))?(BUFFERUPDATE_FETCH):(0));
           domode |= ((bits & (MODEREQ_FLUSH))?(BUFFERUPDATE_FLUSH):(0));
-          domode = client->BufferUpdate( domode, 1 /* verbose */ );
+          domode = client->BufferUpdate( domode, interactive );
           if (domode & BUFFERUPDATE_FETCH)             retval|=MODEREQ_FETCH;
           if (domode & BUFFERUPDATE_FLUSH)             retval|=MODEREQ_FLUSH;
-          if (domode!=0 && (bits & MODEREQ_FFORCE)!=0) retval|=MODEREQ_FFORCE;
+          if (domode!=0 && (bits & MODEREQ_FQUIET)!=0) retval|=MODEREQ_FQUIET;
           }
-        modereq.reqbits &= ~(MODEREQ_FETCH | MODEREQ_FLUSH | MODEREQ_FFORCE);
+        modereq.reqbits &= ~(MODEREQ_FETCH | MODEREQ_FLUSH | MODEREQ_FQUIET);
         }
       if ((bits & MODEREQ_IDENT)!=0)    
         {
