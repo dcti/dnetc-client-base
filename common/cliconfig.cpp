@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.129  1998/07/05 22:03:14  silby
+// Someone forgot to #if some non-pathwork code out.
+//
 // Revision 1.128  1998/07/05 15:53:54  cyruspatel
 // Implemented EraseCheckpointFile() and TruncateBufferFile() in buffwork.cpp;
 // substituted unlink() with EraseCheckpointFile() in client.cpp; modified
@@ -176,7 +179,7 @@
 #endif
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.128 1998/07/05 15:53:54 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.129 1998/07/05 22:03:14 silby Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -3125,7 +3128,7 @@ bool Client::CheckForcedKeyproxy(void)
 
 // --------------------------------------------------------------------------
 
-//#ifdef DONT_USE_PATHWORK
+#ifdef DONT_USE_PATHWORK
 const char *Client::InternalGetLocalFilename(const char *filename)
 //If there is no path given, add on the path of the client's executAble
 {
@@ -3172,7 +3175,7 @@ const char *Client::InternalGetLocalFilename(const char *filename)
     } //if (strcmpi(filename,"none") != 0)
   return filename;
 }
-//endif
+#endif
 
 // --------------------------------------------------------------------------
 
