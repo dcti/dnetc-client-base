@@ -5,7 +5,7 @@
 ##   where <platform> is one of [dos | netware | os2 | w32 | w_h | wsv ]
 ##                       or anything else defined at the end of this makefile
 ##
-## $Id: makefile.wat,v 1.9 1998/06/15 02:32:20 ziggyb Exp $
+## $Id: makefile.wat,v 1.10 1998/06/16 22:29:59 silby Exp $
 ##
 ## Revision history:
 ## 1.6  cyp Added support for new disphelp.cpp, deleted obsolete "cd xxx" 
@@ -28,7 +28,9 @@ LINK=wlink
            output\iniread.obj output\network.obj output\problem.obj &
            output\scram.obj output\des-x86.obj output\convdes.obj &
            output\clitime.obj output\clicdata.obj output\clirate.obj &
-           output\clisrate.obj output\X86IDENT.OBJ 
+           output\clisrate.obj output\X86IDENT.OBJ &
+           platforms\win32-os2\p1bdespro.obj &
+           platforms\win32-os2\p2bdespro.obj
            # this list can be added to in the platform specific section
 
 %STACKSIZE= 32767          #may be redefined in the platform specific section
