@@ -205,8 +205,6 @@ BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES
 
 # --------------------------------------------
 
-#NASMOMFSTUB = rc5\x86\nasm\omf32.asm
-#nasmw $(NASMOPTS) -p$(NASMOMFSTUB) -i $(<D:/=\) $(<:/=\) -o $(@:/=\)
 .asm.obj:
         nasmw $(NASMOPTS) -DOS2 -i $(<D:/=\) $(<:/=\) -o $(@:/=\)
 
