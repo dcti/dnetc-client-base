@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.cpp,v $
+// Revision 1.5  1998/12/01 11:24:11  chrisb
+// more riscos x86 changes
+//
 // Revision 1.4  1998/11/26 22:27:24  cyp
 // Fixed _IsHostnameDNetHost() to work with any/all distributed.net hostnames.
 //
@@ -13,7 +16,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.4 1998/11/26 22:27:24 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.5 1998/12/01 11:24:11 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -266,13 +269,20 @@ struct optionstruct conf_options[OPTION_COUNT]=
   ),2,1,6,NULL},
 //22
 { "numcpu", CFGTXT("Number of processors available"), "-1 (autodetect)", 
+#if (CLIENT_OS == OS_RISCOS)
+  CFGTXT(
+  "If you have a RiscPC-style x86 processor card, you can make the client\n"
+  "crack keys on it by setting this option to 2. If you don't have such a\n"
+  "card, you should set it to 1.\n")
+#else
   CFGTXT(
   "This option specifies the number of threads you want the client to work on.\n"
   "On multi-processor machines this should be set to the number of processors\n"
   "available or to -1 to have the client attempt to auto-detect the number of\n"
   "processors. Multi-threaded clients can be forced to run single-threaded by\n" 
-  "setting this option to zero.\n"
-  ),4,2,3,NULL,NULL,-1,128},
+  "setting this option to zero.\n")
+#endif
+  ,4,2,3,NULL,NULL,-1,128},
 //23
 { "checkpointfile", CFGTXT("Checkpoint Filename"),"",
   CFGTXT(

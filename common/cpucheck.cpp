@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.45  1998/12/01 11:24:11  chrisb
+// more riscos x86 changes
+//
 // Revision 1.44  1998/11/25 09:23:32  chrisb
 // various changes to support x86 coprocessor under RISC OS
 //
@@ -156,7 +159,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.44 1998/11/25 09:23:32 chrisb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.45 1998/12/01 11:24:11 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -175,7 +178,11 @@ return "@(#)$Id: cpucheck.cpp,v 1.44 1998/11/25 09:23:32 chrisb Exp $"; }
 
 unsigned int GetNumberOfSupportedProcessors( void )
 {
+#if (CLIENT_OS == OS_RISCOS)
+  return ( 2 ); /* not just some arbitrary number */
+#else
   return ( 128 ); /* just some arbitrary number */
+#endif
 }
 
 // -------------------------------------------------------------------------
@@ -291,7 +298,9 @@ unsigned int ValidateProcessorCount( int numcpu, int quietly )
   //--------------------
 
   #ifndef MULTITHREAD           //this is the only place in the config where
+#if (CLIENT_OS != OS_RISCOS)
   detected_count = 0;           //we check this - implies force non-mt
+#endif
   #endif
   
   if (numcpu < 0)                //numcpu == 0 implies force non-mt; 
@@ -815,6 +824,8 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
         (CLIENT_CPU != CPU_SPARC) && (CLIENT_CPU != CPU_POWERPC) && \
         (CLIENT_CPU != CPU_ARM))
     maxcpu_s = "1 (threading is emulated - cores are not thread-safe)";
+  #elif (CLIENT_OS == OS_RISCOS)
+    maxcpu_s = "2 (with RiscPC x86 card)";
   #else
     maxcpu_s = "1 (threading is emulated - OS does not support threads)";
   #endif  
