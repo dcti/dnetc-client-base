@@ -5,6 +5,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probman.cpp,v $
+// Revision 1.4  1998/11/12 18:50:57  cyp
+// Created GetProblemIndexFromPointer(). Note that the function returns -1 if
+// the pointer is not to an object managed by ProblemManager (ie was created
+// from Benchmark etc).
+//
 // Revision 1.3  1998/11/06 03:55:01  cyp
 // Fixed InitializeProblemManager(): was returning 1 problem more than it was
 // being asked for.
@@ -19,7 +24,7 @@
 // 
 #if (!defined(lint) && defined(__showids__))
 const char *probman_cpp(void) {
-return "@(#)$Id: probman.cpp,v 1.3 1998/11/06 03:55:01 cyp Exp $"; }
+return "@(#)$Id: probman.cpp,v 1.4 1998/11/12 18:50:57 cyp Exp $"; }
 #endif
 
 #include "baseincs.h"  // malloc()/NULL/memset()
@@ -43,6 +48,24 @@ Problem *GetProblemPointerFromIndex(unsigned int probindex)
     return probmanstatics.probtable[probindex];
   return NULL;
 }  
+
+// -----------------------------------------------------------------------
+
+//Note: Problems managed from Benchmark etc are not managed by ProblemManager.
+
+int GetProblemIndexFromPointer( Problem *prob )
+{
+  unsigned int probindex;
+  if (probmanstatics.probcount)
+    {
+    for (probindex = 0; probindex < probmanstatics.probcount; probindex++ )
+      {
+      if (probmanstatics.probtable[probindex] == prob)
+        return (int)probindex;
+      }
+    }
+  return -1;
+}
 
 // -----------------------------------------------------------------------
 
