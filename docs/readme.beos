@@ -1,0 +1,39 @@
+
+ RC5-DES Client for BeOS (x86 and PowerPC)
+ Released by Peter DiCamillo <Peter_DiCamillo@brown.edu>
+ document revision $Id: readme.beos,v 1.1 1999/05/06 18:37:35 cyp Exp $
+
+ Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
+
+ This document covers information specific to the client for BeOS.
+ Refer to the enclosed rc5des.txt or browse the online FAQ at
+ http://www.distributed.net/FAQ for non-platform-specific documentation.
+
+    1.0  Getting started
+    2.0  BeOS specific notes
+   
+ 1.0  Getting started ------------------------------------------------
+ 
+    Just unpack the client in a directory of your choice and fire it up
+    with [path]rc5des   
+
+    If you have never run the client before, it will initiate the
+    menu-driven configuration. Save and quit when done, the 
+    configuration file will be saved in the same directory as the 
+    client. Then, simply restart the client. From that point on it will 
+    use the saved configuration.
+    
+    The configuration options are fairly self-explanatory and can be run
+    at any time by starting the client with the '-config' option.
+    A list of command line options is available by starting the client 
+    with '-help'.
+
+    A detailed guide to the various configuration options as well as 
+    applicable command line switches is in the enclosed rc5des.txt.
+    FAQs are available online at http://www.distributed.net/FAQ/
+
+ 2.0  Notes: ---------------------------------------------------------
+
+    Beginning with v2.7100.416, the DOS client no longer assumes that the 
+    buffer files are in the _current_ directory. The default path is now
+    the client's directory.
