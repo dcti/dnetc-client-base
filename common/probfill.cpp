@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.18  1998/12/14 23:45:24  remi
+// Now we don't need to switch to RC5 when more than 2 threads are
+// available during DES contests.
+//
 // Revision 1.17  1998/12/12 12:22:30  cyp
 // 'exit when buffers are empty' (ie blockcount<0) now works correctly.
 //
@@ -74,7 +78,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.17 1998/12/12 12:22:30 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.18 1998/12/14 23:45:24 remi Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -395,19 +399,6 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   contest_alternate = (contest_preferred == 0)?(1):(0);
   contest_count     = 2;
     
-  #if ((CLIENT_CPU == CPU_X86) || (CLIENT_OS == OS_BEOS))
-  /* Must do RC5.  Bryd DES x86 cores aren't thread safe. */
-  if ( prob_i != 0 && prob_i != 1 ) /* Not the 1st or 2nd cracking thread... */
-    {
-    #if (defined(MMX_BITSLICER) && defined(KWAN) && defined(MEGGS))
-    if ( des_unit_func != des_unit_func_mmx ) // if not using mmx cores
-    #endif
-      {
-      contest_preferred = contest_alternate = 0;
-      contest_count     = 1;
-      }
-    }
-  #endif
   #if (CLIENT_OS == OS_RISCOS)
   /* RISC OS x86 thread currently only supports RC5 */
   if (prob_i == 1)
