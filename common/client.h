@@ -478,7 +478,7 @@ protected:
   s32 InternalPutBuffer( const char *filename, const FileEntry * data );
   s32 InternalGetBuffer( const char *filename, FileEntry * data, u32 *optype , u8 contest);
   s32 InternalCountBuffer( const char *filename , u8 contest);
-  const char *InternalGetLocalFilename( const char *filename );
+  static const char *InternalGetLocalFilename( const char *filename );
   s32 EnsureBufferConsistency( const char *filename );
 
 #if defined(NEEDVIRTUALMETHODS)
