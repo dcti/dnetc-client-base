@@ -6,7 +6,7 @@
  This version is a unified client for both SMP and non-SMP machines.
 
     1.0  Getting started
-    2.0  Notes: NetWare specific issues.
+    2.0  NetWare specific notes
     3.0  Help! 
    
     Refer to the enclosed rc5des.txt or browse the online FAQ at
@@ -43,33 +43,37 @@
  
  2.0  Notes: ---------------------------------------------------------
 
-    As mentioned above, is version of the client is for both SMP and 
-    non-SMP machines; that is, it will run with one thread if running 
-    on a single processor machine and will run with two blocks per 
-    thread on multi-processor (or 'numcpu' is specified in rc5des.ini 
-    to be greater than one) machines.
+    Beginning with v2.7012, the two SMP and non-SMP clients have been 
+    merged into one unified client. That is, it will run with only the
+    'main' thread if running on a single processor machine and will run 
+    with two blocks per 'crunch' thread on multi-processor (or 'numcpu' 
+    is specified in rc5des.ini to be greater than one) machines.
 
-    This version of the client can also be loaded more than one time. 
+    Beginning with v2.7014, the client can also be loaded more than once. 
     Unloading and reloading the client for executing -fetch, -flush or 
     -update is therefore no longer necessary. 
-
     The following switches cause the client to use the system 
     console screen for display rather than output to its own screen:
-    -fetch, -flush, -update, -benchmark, -benchmark2 and -test.
+    -fetch, -flush, -update, -benchmark, -benchmark2, -cpuinfo, 
+    -ident and -test.
 
-    Some users have noted that some load-sensitive tasks such as 
-    file server backup would not run well when the client 
-    was active. This was traced to what appeared as 'high' processor
-    utilization which caused those jobs to reschedule themselves 
-    because they believed the file server to be heavily loaded. 
+    Beginning with v2.7100, the client will run without a screen if the
+    -hidden option is specified on the command line. This option is valid
+    *only* from the command line.
+
     Beginning with version 2.7020.403, the client will, when possible, 
     insert itself into the Idle Loop (called the 'Polling Loop' on 
     NetWare 3.x) just like PSERVER does, which allows it to control 
     processor usage far more precisely than it could before. Thus, it 
     will appear as if the client was using no processing power at all.
-    However, due to the added overhead, this also brings a slight loss 
-    of client performance with it. To disable this option use '-nopoll' 
-    on the command line. 
+    This feature was added when users noted that some load-sensitive 
+    tasks such as file server backup would not run well when the client 
+    was active. This was traced to what appeared as 'high' processor
+    utilization which caused those jobs to reschedule themselves 
+    because they believed the file server to be heavily loaded. 
+    Unfortunately, using the polling loop for for cpu intensive work 
+    can degrade system performance on slower machines. To disable 
+    polling use '-nopoll' on the command line. 
 
  3.0  Help: ----------------------------------------------------------
 
@@ -78,9 +82,9 @@
     a response right away.
  
     If you need assistance regarding use or operation, post a message to 
-    the mailing list at <rc5@llamas.net> (To subscribe to the mailing list, 
-    send a message to <majordomo@llamas.net> with "subscribe rc5" as the 
-    message text).
+    the mailing list at <rc5@lists.distributed.net> (To subscribe to the 
+    mailing list, send a message to <majordomo@lists.distributed.net> with 
+    "subscribe rc5" as the message text).
 
     90% of the problems that are brought to my attention are network 
     related. While the trouble may not be on your end (such as when the 
