@@ -1,25 +1,15 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1998 - All Rights Reserved
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * ****************** THIS IS WORLD-READABLE SOURCE *********************
- *
- * $Log: util.h,v $
- * Revision 1.3  1999/03/31 11:43:09  cyp
- * created BufferGetDefaultFilename
- *
- * Revision 1.2  1999/03/20 07:32:42  cyp
- * moved IsFilenameValid() and DoesFileExist() to utils.cpp
- *
- * Revision 1.1  1999/03/18 03:51:18  cyp
- * Created.
- *
-*/
-
+ * ----------------------------------------------------------------
+ * misc functions that don't fit anywhere else
+ * ----------------------------------------------------------------
+*/ 
 #ifndef __CLIENT_UTIL_H__ 
-#define __CLIENT_UTIL_H__ 
+#define __CLIENT_UTIL_H__ "@(#)$Id: util.h,v 1.4 1999/04/05 13:56:41 cyp Exp $"
 
 const char *projectmap_expand( const char *map );
 const char *projectmap_build( char *buf, const char *strtomap );
