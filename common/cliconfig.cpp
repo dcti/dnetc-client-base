@@ -1793,15 +1793,17 @@ s32 Client::SelectCore(void)
 
       #ifdef NEW_STATS_AND_LOGMSG_STUFF
         double elapsed = CliGetKeyrateForProblem( &problem );
+        if (fastcore < 0 || elapsed > fasttime)
+          {fastcore = i; fasttime = elapsed;}
       #else
       gettimeofday( &stop, &dummy );
       double elapsed = (stop.tv_sec - start.tv_sec) +
                        (((double)stop.tv_usec - (double)start.tv_usec)/1000000.0);
-      #endif
-//printf("Core %d: %f\n",i,elapsed);
 
       if (fastcore < 0 || elapsed < fasttime)
         {fastcore = i; fasttime = elapsed;}
+      #endif
+//printf("Core %d: %f\n",i,elapsed);
     }
   }
 
@@ -2493,7 +2495,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       }
       else if ( strcmp( Argv[i], "-n" ) == 0 ) // Blocks to complete in a run
       {
-        blockcount = min(1, (s32) atoi( Argv[i+1] ));
+        blockcount = max(1, (s32) atoi( Argv[i+1] ));
         LogScreenf("Setting block completion limit to %d\n",blockcount);
         inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
