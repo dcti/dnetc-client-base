@@ -1,47 +1,8 @@
-// Copyright distributed.net 1997 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
+// RC5-64 core using self-modifying code. 
+// by Rémi Guyomarch - rguyom@mail.dotcom.fr
 //
-// $Log: rc5-486-smc-rg.cpp,v $
-// Revision 1.9  1999/04/18 22:52:46  remi
-// Little change to make egcs happy.
-//
-// Revision 1.8  1999/04/06 13:30:34  cyp
-// removed #ifndef _32BIT_ guard
-//
-// Revision 1.7  1998/12/21 01:21:39  remi
-// Recommitted to get the right modification time.
-//
-// Revision 1.6  1998/12/21 16:37:28  remi
-// - supressed work_key2_ebp as it's the same as S2(25). Thanks Silby!
-// - put extern "C" in front of the *.cpp cores.
-//
-// Revision 1.5  1998/11/28 17:52:18  remi
-// Corrected BALIGN4 macro for *BSD.
-//
-// Revision 1.4  1998/11/28 17:37:52  remi
-// This one is a bit faster, as I removed an AGI stall in ROUND3. Does
-// 102.3 kkeys/s on my DX4/100.
-// Renamed the function to integrate it in the client, without replacing
-// the original, multithreaded 386/486 core.
-//
-// Revision 1.3  1998/11/20 23:45:08  remi
-// Added FreeBSD support in the BALIGN macro.
-//
-// Revision 1.2  1998/11/18 16:04:19  remi
-// Nothing changed, just a few numbers :
-//
-//                          DX4/100         P/200 MMX       PII/400
-//
-// classic 486 core         97 kkeys/s     224 kkeys/s      984 kkeys/s
-// 486 SMC core            102 kkeys/s     145 kkeys/s       92 kkeys/s (!)
-// using the best core      //             400 kkeys/s     1120 kkeys/s
-// for the given processor
-//
-// DX4/100 under Linux
-// P/200 MMX and PII/400 under NT4
-//
-// Revision 1.1  1998/11/18 05:53:07  remi
+// $Id: rg-smc.cpp,v 1.1.2.1 2001/01/21 17:44:42 cyp Exp $
+// 
 // Ok, this one does 101.8 kkeys/s on my DX4/100 instead of 97 kkeys/s
 // for the previous 386/486 code.
 //
@@ -65,29 +26,6 @@
 // Without this support from the compiler / linker, your binary will
 // probably segfault as soon as it enters this code.
 //
-// Revision 1.7  1998/08/20 00:25:17  silby
-// Took out PIPELINE_COUNT checks inside .cpp x86 cores - they were causing
-// build problems with new PIPELINE_COUNT architecture on x86.
-//
-// Revision 1.6  1998/07/08 22:59:33  remi
-// Lots of $Id: rc5-486-smc-rg.cpp,v 1.9 1999/04/18 22:52:46 remi Exp $ stuff.
-//
-// Revision 1.5  1998/07/08 18:47:43  remi
-// $Id fun ...
-//
-// Revision 1.4  1998/06/14 10:03:54  skand
-// define and use a preprocessor macro to hide the .balign directive for
-// ancient assemblers
-//
-// Revision 1.3  1998/06/14 08:27:16  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-//
-// Revision 1.2  1998/06/14 08:13:33  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-//
-// 386/486 optimized version
 // Rémi Guyomarch - rguyom@mail.dotcom.fr
 //
 // 980226 :
@@ -107,9 +45,6 @@
 //
 // Checking two keys at once is still a (slight) win for a 486
 // probably because less load/store operations
-
-const char *rc5_486_smc_rg_cpp (void) {
-return "@(#)$Id: rc5-486-smc-rg.cpp,v 1.9 1999/04/18 22:52:46 remi Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 

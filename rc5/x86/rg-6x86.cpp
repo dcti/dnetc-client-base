@@ -1,64 +1,6 @@
-// Copyright distributed.net 1997 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-// torment.ntr.net K6 233 sean@ntr.net
-//
-// $Log: rc5-6x86-rg.cpp,v $
-// Revision 1.17.2.2  2000/02/16 04:19:33  petermack
-// Nextstep doesn't understand .balign
-//
-// Revision 1.17.2.1  1999/11/02 19:17:07  remi
-// Upgraded RC5 .cpp cores to compile with gcc 2.95.x
-//
-// Revision 1.17  1999/04/06 13:30:34  cyp
-// removed #ifndef _32BIT_ guard
-//
-// Revision 1.16  1998/12/21 01:21:39  remi
-// Recommitted to get the right modification time.
-//
-// Revision 1.15  1998/12/21 16:37:28  remi
-// - supressed work_key2_ebp as it's the same as S2(25). Thanks Silby!
-// - put extern "C" in front of the *.cpp cores.
-//
-// Revision 1.14  1998/12/14 23:18:52  remi
-// Upgraded (sic) to the *last* version...
-//
-// Revision 1.11  1998/11/28 18:03:31  remi
-// Err, BALIGN4 != BALIGN(4)
-//
-// Revision 1.10  1998/11/28 18:00:13  remi
-// Fixed BALIGN4 macro for *BSD.
-//
-// Revision 1.9  1998/11/20 23:45:08  remi
-// Added FreeBSD support in the BALIGN macro.
-//
-// Revision 1.8  1998/08/20 00:25:18  silby
-// Took out PIPELINE_COUNT checks inside .cpp x86 cores - they were
-// causing build problems with new PIPELINE_COUNT architecture on x86.
-//
-// Revision 1.7  1998/07/08 22:59:34  remi
-// Lots of $Id: rc5-6x86-rg.cpp,v 1.17.2.2 2000/02/16 04:19:33 petermack Exp $ stuff.
-//
-// Revision 1.6  1998/07/08 18:47:45  remi
-// $Id fun ...
-//
-// Revision 1.5  1998/06/16 08:25:29  remi
-// rc5_unit_func_6x86 should not be made "static".
-//
-// Revision 1.4  1998/06/14 10:03:55  skand
-// define and use a preprocessor macro to hide the .balign directive for
-// ancient assemblers
-//
-// Revision 1.3  1998/06/14 08:27:17  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-//
-// Revision 1.2  1998/06/14 08:13:34  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-//
-
 // Cyrix 6x86 optimized version
+//
+// $Id: rg-6x86.cpp,v 1.1.2.1 2001/01/21 17:44:41 cyp Exp $
 //
 // 980226 :
 //	- Corrected bug in the key incrementation algorithm that caused the
@@ -123,9 +65,6 @@
 // PR166 = 133		PR233 = 188 | 200
 // PR150 = 120		PR200 = 166
 // PR133 = 110		PR166 = 150
-
-const char *rc5_6x86_rg_cpp (void) {
-return "@(#)$Id: rc5-6x86-rg.cpp,v 1.17.2.2 2000/02/16 04:19:33 petermack Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 

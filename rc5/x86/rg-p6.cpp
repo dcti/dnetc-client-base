@@ -1,9 +1,7 @@
-// Copyright distributed.net 1997 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
 // Pentium Pro optimized version
 //
+// $Id: rg-p6.cpp,v 1.1.2.1 2001/01/21 17:44:42 cyp Exp $
+// 
 // 1999/07/13 :  
 //      - 0.45% speedup patch by Mario Weilguni <mweilguni@sime.com>
 //
@@ -21,9 +19,6 @@
 //
 // 1998/01/04 :
 //	- precalculate some things for ROUND1 & ROUND2
-
-const char *rc5_p6_rg_cpp (void) {
-return "@(#)$Id: rc5-p6-rg.cpp,v 1.15.2.4 2000/02/16 04:21:00 petermack Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 

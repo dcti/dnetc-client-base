@@ -1,45 +1,7 @@
-// Copyright distributed.net 1997 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: rc5p5brf.cpp,v $
-// Revision 1.12.2.1  1999/11/02 19:17:07  remi
-// Upgraded RC5 .cpp cores to compile with gcc 2.95.x
-//
-// Revision 1.12  1999/04/06 13:30:35  cyp
-// removed #ifndef _32BIT_ guard
-//
-// Revision 1.11  1998/12/21 01:21:39  remi
-// Recommitted to get the right modification time.
-//
-// Revision 1.10  1998/12/21 16:37:28  remi
-// - supressed work_key2_ebp as it's the same as S2(25). Thanks Silby!
-// - put extern "C" in front of the *.cpp cores.
-//
-// Revision 1.9  1998/12/14 23:18:52  remi
-// Upgraded (sic) to the *last* version...
-//
-// Revision 1.6  1998/08/20 00:25:25  silby
-// Took out PIPELINE_COUNT checks inside .cpp x86 cores - they were causing build problems with new PIPELINE_COUNT architecture on x86.
-//
-// Revision 1.5  1998/07/08 22:59:53  remi
-// Lots of $Id: rc5p5brf.cpp,v 1.12.2.1 1999/11/02 19:17:07 remi Exp $ stuff.
-//
-// Revision 1.4  1998/07/08 18:47:42  remi
-// $Id fun ...
-//
-// Revision 1.3  1998/06/14 08:27:37  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-//
-// Revision 1.2  1998/06/14 08:13:54  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-//
-
-
-// Pentium optimized version
+// RC5-64 Pentium optimized version
 // Rémi Guyomarch - rguyom@mail.dotcom.fr - 97/07/13
+//
+// $Id: brf-p5.cpp,v 1.1.2.1 2001/01/21 17:44:40 cyp Exp $
 //
 // Minor improvements:
 // Bruce Ford - b.ford@qut.edu.au - 97/12/21
@@ -60,9 +22,6 @@
 //
 // For a really *good* pentium optimization manual :
 //	http://announce.com/agner/assem
-
-const char *rc5p5brf_cpp (void) {
-return "@(#)$Id: rc5p5brf.cpp,v 1.12.2.1 1999/11/02 19:17:07 remi Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 

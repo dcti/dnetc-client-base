@@ -1,79 +1,11 @@
-// Copyright distributed.net 1997 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: rc5-k6-rg.cpp,v $
-// Revision 1.15.2.2  2000/02/16 04:20:37  petermack
-// Nextstep doesn't understand .balign
-//
-// Revision 1.15.2.1  1999/11/02 19:20:50  remi
-// Updated this core to compile with gcc 2.95.x.
-// Also tweaked a bit alignment directives.
-//
-// Revision 1.15  1999/04/06 13:30:34  cyp
-// removed #ifndef _32BIT_ guard
-//
-// Revision 1.14  1998/12/21 01:21:39  remi
-// Recommitted to get the right modification time.
-//
-// Revision 1.13  1998/12/21 16:37:28  remi
-// - supressed work_key2_ebp as it's the same as S2(25). Thanks Silby!
-// - put extern "C" in front of the *.cpp cores.
-//
-// Revision 1.12  1998/12/14 23:18:52  remi
-// Upgraded (sic) to the *last* version...
-//
-// Revision 1.9  1998/11/28 17:55:04  remi
-// Faster K6 core :
-// 	query : K6/200 - Linux 2.1.129 - client running in the background
-// 				       - idle otherwise
-// 	(reported speed and %CPU usage for -benchmarkrc5)
-// 	previous :	this one :
-// 	350.7 (91.5%)	365.5 (91.2%)
-// 	348.0 (91.0%)	366.8 (91.5%)
-// 	351.5 (91.7%)	366.7 (91.5%)
-//
-// 	nodezero : K6-2/?? - FreeBSD 2.2.7-STABLE - client running
-// 			   - apache - dcti full proxy - mysql etc ...
-// 	(user time for -benchmarkrc5)
-// 	previous : 17.18, 17.25, 17.32
-// 	this one : 16.17, 16.12, 16.18
-//
-// Revision 1.8  1998/11/20 23:45:10  remi
-// Added FreeBSD support in the BALIGN macro.
-//
-// Revision 1.7  1998/08/20 00:25:22  silby
-// Took out PIPELINE_COUNT checks inside .cpp x86 cores - they were
-// causing build problems with new PIPELINE_COUNT architecture on x86.
-//
-// Revision 1.6  1998/07/08 22:59:37  remi
-// Lots of $Id: rc5-k6-rg.cpp,v 1.15.2.2 2000/02/16 04:20:37 petermack Exp $ stuff.
-//
-// Revision 1.5  1998/07/08 18:47:47  remi
-// $Id fun ...
-//
-// Revision 1.4  1998/06/14 10:03:57  skand
-// define and use a preprocessor macro to hide the .balign directive for
-// ancient assemblers
-//
-// Revision 1.3  1998/06/14 08:27:19  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-//
-// Revision 1.2  1998/06/14 08:13:37  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-//
-//
 // K6 optimized version
 // Rimi Guyomarch - rguyom@mail.dotcom.fr
+//
+// $Id: rg-k6.cpp,v 1.1.2.1 2001/01/21 17:44:42 cyp Exp $
 //
 // 980307 :
 //	- Finally a K6 optimization that works ...
 //	- Based on the 486/980226 version
-
-const char *rc5_k6_rg_cpp (void) {
-return "@(#)$Id: rc5-k6-rg.cpp,v 1.15.2.2 2000/02/16 04:20:37 petermack Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 
