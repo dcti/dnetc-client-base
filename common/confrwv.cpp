@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.19  1999/01/02 08:00:16  silby
+// Default scheduledupdatetime is now jan 2nd 17:15:00.
+//
 // Revision 1.18  1999/01/02 01:43:26  silby
 // processdes option read/written again.
 //
@@ -97,7 +100,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.18 1999/01/02 01:43:26 silby Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.19 1999/01/02 08:00:16 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -324,7 +327,7 @@ int ReadConfig(Client *client)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   client->contestdone[1]= (tempconfig != 0);
 
   client->descontestclosed=ntohl(ini.getkey(OPTION_SECTION,"descontestclosed","0")[0]);
-  client->scheduledupdatetime=ntohl(ini.getkey(OPTION_SECTION,"scheduledupdatetime","0")[0]);
+  client->scheduledupdatetime=ntohl(ini.getkey(OPTION_SECTION,"scheduledupdatetime","341085750")[0]);
 
   #if defined(MMX_BITSLICER) || defined(MMX_RC5)
     client->usemmx=ini.getkey(OPTION_SECTION, "usemmx", "1")[0];
