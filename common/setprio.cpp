@@ -9,32 +9,15 @@
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.50.2.8 2000/03/20 14:27:56 jbaker Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.50.2.9 2000/05/06 13:06:18 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
 #include "baseincs.h"  // basic (even if port-specific) #includes
 
-// -----------------------------------------------------------------------
+/* -------------------------------------------------------------------- */
 
-// Internal helper function to set the operating-system priority level
-// for the current process or thread, as appropriate.  If it is indicated
-// that the caller is a computational worker thread, then the specified
-// priority is scaled to be even "nicer".
-//
-//    prio - scaled priority level (0 through 9 inclusive).
-//
-//    set_for_thread - nonzero if being called from a computational
-//        worker thread.
-//
-// Returns 0 on success, -1 on error.
-//
-// 'prio' is a value on the scale of 0 to 9, where 0 is the lowest
-// priority and 9 is the highest priority [9 is what the priority would 
-// be if priority were not set, ie is 'normal' priority.] 
-//
-// prio 9 code should be valid, since the priority is raised when exiting. 
-
+//See public functions at end for explanation
 static int __SetPriority( unsigned int prio, int set_for_thread )
 {
   if (((int)prio) < 0 || prio > 9) 
@@ -62,9 +45,9 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
   }
   #elif (CLIENT_OS == OS_WIN32)
   {
-    static int useidleclass = -1;           // persistent var to track detection state.
+    static int useidleclass = -1;           // track detection state.
     int threadprio = 0, classprio = 0;
-    HANDLE our_thrid = GetCurrentThread();  // really a Win32 pseudo-handle constant.
+    HANDLE our_thrid = GetCurrentThread();  // Win32 pseudo-handle constant.
 
     if (set_for_thread && !win32ConIsLiteUI()) // full-GUI crunchers always
       prio = 0;                                // run at idle prio
@@ -82,11 +65,15 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
     _IDLE               1         1               1          1        16
     ******************************************************************* */
   
-    if (useidleclass == -1) /* not yet detected */
-    {
-      // This is the first pass through this function, and we have
-      // not yet detected whether setting the thread priority is 
-      // allowed on this environment.
+    /* If we want to run with an idle priority *class*, we need to be able
+       to set a *thread* priority of _TIME_CRITICAL for the main and 
+       window-handler threads, otherwise I/O will be laggy beyond belief.
+
+       If we cannot set _TIME_CRITICAL, then we have no choice but to use a 
+       NORMAL_PRIO_CLASS. Such is win32 scheduling; stupid, stupid, stupid.
+    */
+    if (useidleclass == -1) /* haven't selected yet */
+    {         
       SetPriorityClass( GetCurrentProcess(), IDLE_PRIORITY_CLASS );
       Sleep(1);
       SetThreadPriority( our_thrid, THREAD_PRIORITY_TIME_CRITICAL);    
@@ -199,7 +186,7 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
     }
     else
     {
-      nice( (10-(prio+1)) >> 1 ); /* map from 0-9 to 4-0 */
+      nice( (((9-prio) * 10) >> 1)/10 ); /* map from 0-9 to 4-0 */
       // assumes base priority is the default 4. 0 is highest priority.
       // GO-VMS.COM can also be used
     }
@@ -234,51 +221,77 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
   }
   #else // all other UNIX-like environments
   {
-    #if (CLIENT_OS == OS_FREEBSD)
-      #ifndef PRI_OTHER_MAX
-      #define PRI_OTHER_MAX 10
-      #endif
-      #ifndef PRI_OTHER_MIN
-      #define PRI_OTHER_MIN 20
-      #endif
-    #endif
     if ( set_for_thread )
     {
-      #if defined(_POSIX_THREADS_SUPPORTED) //defined in cputypes.h
-        #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
-          //nothing - priority is set when created
-        #else
-          //SCHED_OTHER policy
-          int newprio;
-          if ( prio == 9 )
-            newprio = PRI_OTHER_MAX;
-          else
-            newprio = (PRI_OTHER_MIN + PRI_OTHER_MAX + 1) / 10;
-          if (pthread_setprio(pthread_self(), newprio ) < 0)
-            return -1;
+      #if (CLIENT_OS == OS_FREEBSD)
+        /*
+        On 14 Nov 99 at 2:06, Remi Guyomarch wrote:
+        > options         "P1003_1B"
+        > options         "_KPOSIX_PRIORITY_SCHEDULING"
+        > options         "_KPOSIX_VERSION=199309L"
+        > 
+        > When this code is compiled in the kernel, we can use rtprio() 
+        > to set the client really idle, unlike the Linux one ;)
+        >
+        > !@%#!"~@
+        > Grr, only root can use rtprio() with rtp.type = RTP_PRIO_IDLE
+        */
+        /* 
+          <quote> (/usr/src/sys/kern/kern_resource.c)
+          ... for idle priority, there is a potential for system deadlock 
+          if an idleprio process gains a lock on a resource that other 
+          processes need (and the idleprio process can't run due to a 
+          CPU-bound normal process). Fix me! XXX. 
+          </quote>
+          Doesn't apply to the client I think.
+          I also don't see a dependancy on those options (in 3.4 anyway)
+                                                                   -cyp
+        */
+        #if 0 /* ah, well. leave it out for now. (niceness is inherited) */
+        struct rtprio rtp;
+        rtp.type = RTP_PRIO_IDLE;
+        rtp.prio = RTP_PRIO_MAX - (((RTP_PRIO_MAX + 5) / 10) * prio);
+        if ( rtprio( RTP_SET, 0, &rtp ) != 0 )
+          return -1;
         #endif
+      #elif (!defined(_POSIX_THREADS_SUPPORTED)) //defined in cputypes.h
+        /* nothing - native threads, inherit */
+      #elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
+        /* nothing - priority is set when created */
+      #else //SCHED_OTHER policy
+        #if (CLIENT_OS == OS_FREEBSD)
+          #ifndef PRI_OTHER_MAX
+            #define PRI_OTHER_MAX 10
+          #endif
+          #ifndef PRI_OTHER_MIN
+            #define PRI_OTHER_MIN 20
+          #endif
+        #endif
+        /* not knowing what min and max are is a pita */
+        int newprio = PRI_OTHER_MIN;
+        if (prio == 9)
+          newprio = PRI_OTHER_MAX;
+        else if (prio > 5) /* use the pthreads example */
+          newprio = (PRI_OTHER_MAX + PRI_OTHER_MIN + 1)/2;
+        if (pthread_setprio(pthread_self(), newprio) < 0)
+          return -1;
       #endif
     }
-    else 
+    else
     {
-
-      static int oldnice = -1;
+      static int oldnice = 0; /* nothing to do if newnice is also zero */
       int newnice = ((22*(9-prio))+5)/10;  /* scale from 0-9 to 20-0 */
-      if (oldnice != -1)
-      {
-        errno = 0;
-        nice( -oldnice );   // note: assumes nice() handles the 
-        if ( errno )        // (-20 to 20) range and not 0-40 
+      /* [assumes nice() handles the (-20 to 20) range and not 0-40] */
+      if (newnice != oldnice) 
+      {             
+        if (newnice < oldnice) /* all men are created equal */
           return -1;
-      }
-      if ( newnice != 0 )
-      {
         errno = 0;
-        nice( newnice );
+        nice( newnice-oldnice );
         if ( errno )
           return -1;
+        oldnice = newnice;
       }
-      oldnice = newnice;
     }
   }
   #endif
@@ -286,37 +299,22 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
   return 0;
 }
 
-// -----------------------------------------------------------------------
+/* --------------------------------------------------------------------- */
 
-// Function to set the operating-system priority level for the current
-// process or thread, as appropriate.  This function should not be called
-// by computational worker threads, a separate function is provided for
-// them below.
-//
-//    prio - scaled priority level (0 through 9 inclusive).
-//
-// Returns 0 on success, -1 on error.
-
-int SetGlobalPriority(unsigned int prio) 
+// called on crunch controller startup. not called by worker threads.
+int SetGlobalPriority(unsigned int prio) /* prio level (0-9 inclusive) */
 {
-  return __SetPriority( prio, 0 );
+  return __SetPriority( prio, 0 ); /* => 0 on success, <0 on error */
 }
 
-// -----------------------------------------------------------------------
+/* --------------------------------------------------------------------- */
 
-// Function to set the operating-system priority level for the current
-// process or thread, as appropriate.  This function is intended to be
-// called by each computational worker threads at their startup, since
-// different scaled priorities are used for them.
-//
-//    prio - scaled priority level (0 through 9 inclusive).
-//
-// Returns 0 on success, -1 on error.
-
-int SetThreadPriority(unsigned int prio)
+// called by each worker threads at startup, since different scaled 
+// priorities might be used for them (ie, they don't inherit from global, 
+// or need to override what they inherited)
+int SetThreadPriority(unsigned int prio) /* prio level (0-9 inclusive) */
 {
-  return __SetPriority( prio, 1 );
+  return __SetPriority( prio, 1 ); /* => 0 on success, <0 on error */
 }
 
-// -----------------------------------------------------------------------
 
