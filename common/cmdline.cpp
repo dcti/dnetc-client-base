@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.5 1999/06/01 03:13:39 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.6 1999/06/01 03:31:46 cyp Exp $"; }
 
 //#define TRACE
 
@@ -116,6 +116,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           else if (strcmp( thisarg, "-unpause" ) == 0)
           { sig = SIGCONT; dowhat_descrip = "unpaused"; }
 
+          pid_t already_sigd[128]; unsigned int sigd_count = 0;
           #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
               (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD)
           DIR *dirp = opendir("/proc");
@@ -182,7 +183,11 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                 {
                   kill_found++;
                   if ( kill( thatpid, sig ) == 0)
+		  {
+		    if (sigd_count < (sizeof(already_sigd)/sizeof(pid_t)-1))
+		      already_sigd[sigd_count++] = thatpid;
                     kill_ok++;
+		  }
                   else if ((errno != ESRCH) && (errno != ENOENT))
                   {
                     kill_failed++;
@@ -248,19 +253,34 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
 		  else if (thatpid != 0)
 		  {
 		    got_output = 1;
-		    while (*procname && (isdigit(*procname) || isspace(*procname)))
-		      procname++;
-		    q = procname;
-		    while (*q && !isspace(*q))
+		    if (sigd_count != 0)
 		    {
-		      if (*q == '/')
-		        procname = q+1;
-	              q++;
+		      unsigned int i;
+		      for (i=0;i<sigd_count;i++)
+		      {
+		        if (already_sigd[i] == thatpid)
+			{
+                          thatpid = 0;
+			  break;
+			}
+	              }
 		    }
-		    *q = '\0';
-                    //printf("pid='%d' procname='%s'\n",thatpid,procname);
-		    if (strcmp(procname,binname) && strcmp(procname,altbinname))
-		      thatpid = 0;
+		    if (thatpid != 0)
+		    {
+		      while (*procname && (isdigit(*procname) || isspace(*procname)))
+		        procname++;
+		      q = procname;
+		      while (*q && !isspace(*q))
+		      {
+		        if (*q == '/')
+		          procname = q+1;
+	                q++;
+		      }
+		      *q = '\0';
+                      //printf("pid='%d' procname='%s'\n",thatpid,procname);
+		      if (strcmp(procname,binname) && strcmp(procname,altbinname))
+		        thatpid = 0;
+		    }
 		  }
 		  if (thatpid != 0)
 		  {
