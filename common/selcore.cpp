@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.83 2000/12/25 16:51:10 snake Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.84 2001/01/02 20:12:45 patrick Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -22,6 +22,10 @@ return "@(#)$Id: selcore.cpp,v 1.47.2.83 2000/12/25 16:51:10 snake Exp $"; }
 #include "bench.h"     // TBenchmark()
 #include "selftest.h"  // SelfTest()
 #include "selcore.h"   // keep prototypes in sync
+#if (CLIENT_OS == OS_AIX) // needs signal handler
+  #include <sys/signal.h>
+  #include <setjmp.h>
+#endif
 
 /* ------------------------------------------------------------------------ */
 
@@ -129,6 +133,8 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
     { /* RC5 */
+      #define NUM_CORE_RC5 3		/* default number of RC5 cores. */
+      #define NUM_CORE_OGR 1		/* PowerPC defaults to one core */  
       /* lintilla depends on allitnil, and since we need both even on OS's 
          that don't support the 601, we may as well "support" them visually.
          On POWER/PowerPC hybrid clients ("_AIXALL"), running on a POWER
@@ -137,6 +143,10 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "allitnil",
       "lintilla",
       "lintilla-604", /* Roberto Ragusa's core optimized for PPC 604e */
+    #if defined(_AIXALL)
+	#define NUM_CORE_RC5 4
+      "Power RS",
+    #endif
       NULL, /* this may become the G4 vector core at runtime */
       NULL
     },
@@ -145,7 +155,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       NULL
     },
     { /* OGR */
-      "GARSP 5.13",
+      "GARSP 5.13 PowerPC",
+      #if defined(_AIXALL)
+        #define NUM_CORE_OGR 2
+      "GARSP 5.13 PowerRS",
+      #endif
       NULL, /* possibly used by "GARSP 5.13-vec" */
       NULL
     },
@@ -211,20 +225,14 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     {
       long det = GetProcessorType(1);
       if (det < 0) 
-        ; /* error, Power never errors though */
-      else if (( det & (1L<<24) ) != 0) //ARCH_IS_POWER
-      {                               //only one core - (ansi)
-        corenames_table[RC5][0] = "RG AIXALL (Power CPU)",
-        corenames_table[RC5][1] = NULL;
-        corenames_table[RC5][2] = NULL;
-      }
+        ; /* error */
       else if (( det & (1L<<25) ) != 0) //have altivec
       {
-        corenames_table[RC5][3] = "crunch-vec"; /* aka rc5_unit_func_vec() wrapper */
-        corenames_table[RC5][4] = NULL;
+        corenames_table[RC5][NUM_CORE_RC5] = "crunch-vec"; /* aka rc5_unit_func_vec() wrapper */
+        corenames_table[RC5][NUM_CORE_RC5+1] = NULL;
         corenames_table[OGR][0] = "GARSP 5.13-scalar"; /* rename */
-        corenames_table[OGR][1] = "GARSP 5.13-vector"; /* aka vec_ogr_get_dispatch_table() */
-        corenames_table[OGR][2] = NULL;
+        corenames_table[OGR][NUM_CORE_OGR] = "GARSP 5.13-vector"; /* aka vec_ogr_get_dispatch_table() */
+        corenames_table[OGR][NUM_CORE_OGR+1] = NULL;
       }
     }
     #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
@@ -386,12 +394,27 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
 }  
 
 /* ---------------------------------------------------------------------- */
+#if (CLIENT_OS == OS_AIX )
+jmp_buf context;
+
+void sig_invop( int nothing ) {
+  longjmp (context, 1);
+}
+#endif
 
 static long __bench_or_test( int which, 
                             unsigned int cont_i, unsigned int benchsecs )
 {
   long rc = -1;
-  
+#if (CLIENT_OS == OS_AIX)	/* need a signal handler to be able to test
+				   all cores on all systems 	*/
+  struct sigaction invop, old_handler;
+
+  memset ((void *)&invop, 0, sizeof(invop) );
+  invop.sa_handler = sig_invop;
+  sigaction(SIGILL, &invop, &old_handler);
+#endif
+ 
   if (InitializeCoreTable(((int *)0)) < 0) /* ACK! selcoreInitialize() */
     return -1;                             /* hasn't been called */
 
@@ -401,11 +424,15 @@ static long __bench_or_test( int which,
     int user_cputype = selcorestatics.user_cputype[cont_i]; 
     int corenum = selcorestatics.corenum[cont_i];
     unsigned int coreidx, corecount = __corecount_for_contest( cont_i );
-    rc = 0;
     for (coreidx = 0; coreidx < corecount; coreidx++)
     {
       selcorestatics.user_cputype[cont_i] = coreidx; /* as if user set it */
       selcorestatics.corenum[cont_i] = -1; /* reset to show name */
+    #if (CLIENT_OS == OS_AIX)
+      if ( setjmp(context) ) { /* setjump will return true if coming from the handler */
+	LogScreen("Error: Core #%i does not work for this system.\n", coreidx);
+      } else 
+    #endif
       if (which == 's') /* selftest */
       {
         int irc = SelfTest( cont_i );
@@ -443,6 +470,9 @@ static long __bench_or_test( int which,
       }      
       #endif 
     }
+  #if (CLIENT_OS == OS_AIX)
+    sigaction (SIGILL, &old_handler, NULL);	/* reset handler */
+  #endif
     selcorestatics.user_cputype[cont_i] = user_cputype; 
     selcorestatics.corenum[cont_i] = corenum;
   }
@@ -571,14 +601,14 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     #if (CLIENT_CPU == CPU_POWER)
     if ((detected_type & (1L<<24)) == 0 ) //not power?
     {
-      Log("PANIC::Can't run a PowerPC client on Power architecture\n");
+      Log("PANIC::Can't run a PowerPC client on Power architecture.\n");
       return -1; //this is a good place to abort()
     }
     #else /* PPC */
     if ((detected_type & (1L<<24)) != 0 ) //is power?
     {
-      Log("PANIC::Can't run a Power client on PowerPC architecture\n");
-      return -1; //this is a good place to abort()
+      Log("WARNING::Running a PowerPC client on Power architecture will result i
+n bad performance.\n");
     }
     #endif
   }  
@@ -597,9 +627,9 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     {
       int cindex = -1;
       if (( detected_type & (1L<<24) ) != 0) //ARCH_IS_POWER
-        cindex = 0;                 //only one core - (ansi)
+        cindex = NUM_CORE_RC5-1; 
       else if (( detected_type & (1L<<25) ) != 0) //OS supports altivec
-        cindex = 3;                 // vector
+        cindex = NUM_CORE_RC5;             // vector
       else if (detected_type == 1 ) //PPC 601
         cindex = 0;                 // allitnil
       else if (detected_type == 4 || //PPC 604
@@ -626,8 +656,14 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     if (selcorestatics.corenum[OGR] < 0 && detected_type > 0)
     {
       int cindex = 0; //scalar
+      #if defined (_AIXALL)		// there is also a POWER core
+      if (( detected_type & (1L<<24) ) != 0) //ARCH_IS_POWER
+        cindex = NUM_CORE_OGR-1;
+      else 
+      #endif
       if (( detected_type & (1L<<25) ) != 0) //OS supports altivec
-        cindex = 1;                 // vector
+        cindex = NUM_CORE_OGR;                 // vector
+
       selcorestatics.corenum[OGR] = cindex;
     }
   }
@@ -934,11 +970,12 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       // although Be OS isn't supported on 601 machines and there is
       // is no 601 PPC board for the Amiga, lintilla depends on allitnil,
       // so we have both anyway, we may as well support both.
+      // rc5ansi_2-rg.cpp for AIX is allready prototyped above
       extern "C" u32 rc5_unit_func_allitnil_compat( RC5UnitWork *, u32 );
       extern "C" u32 rc5_unit_func_lintilla_compat( RC5UnitWork *, u32 );
       extern "C" u32 rc5_unit_func_lintilla_604_compat( RC5UnitWork *, u32 );
       #if (CLIENT_OS == OS_MACOS) || \
-          ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__))
+          ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) && defined(__VEC__)
         extern "C" u32 rc5_unit_func_vec_compat( RC5UnitWork *, u32 );
       #else /* MacOS currently is the only one to support altivec cores */
         #define rc5_unit_func_vec_compat  rc5_unit_func_lintilla_compat
@@ -1005,7 +1042,14 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 #if defined(HAVE_OGR_CORES)
   #if (CLIENT_CPU == CPU_POWERPC)
       extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
+      #if defined(_AIXALL)      /* AIX hybrid client */
+      extern "C" CoreDispatchTable *ogr_get_dispatch_table_power();
+      #endif
+      #if defined(__VEC__)      /* compilor supports AltiVec */
       extern "C" CoreDispatchTable *vec_ogr_get_dispatch_table(void);
+      #else 
+      #define vec_ogr_get_dispatch_table ogr_get_dispatch_table
+      #endif
   #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
       extern "C" CoreDispatchTable *ogr_get_dispatch_table_000(void);
       extern "C" CoreDispatchTable *ogr_get_dispatch_table_020(void);
@@ -1221,13 +1265,12 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         int gotcore = 0;
 
         client_cpu = CPU_POWERPC;
-        #if defined(_AIXALL) //ie POWER/POWERPC hybrid client
-        if ((GetProcessorType(1) & (1L<<24)) != 0) //ARCH_IS_POWER
+        #if defined(_AIXALL) // POWER/POWERPC hybrid client
+        if (!gotcore && coresel == NUM_CORE_RC5-1)
         {
           client_cpu = CPU_POWER;
           unit_func.rc5 = rc5_unit_func_ansi_2_rg; //rc5/ansi/rc5ansi_2-rg.cpp
           pipeline_count = 2;
-          coresel = 0; //core #0 is "RG AIXALL" on POWER, and allitnil on PPC
           gotcore = 1;
         }
         #endif
@@ -1243,7 +1286,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
           pipeline_count = 1;
           gotcore = 1;
         }
-        else if (!gotcore && coresel == 3) // G4 (PPC 7400)
+        else if (!gotcore && coresel == NUM_CORE_RC5) // G4 (PPC 7400)
         {
           unit_func.rc5 = rc5_unit_func_vec_compat;
           pipeline_count = 1;
@@ -1439,8 +1482,14 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       //extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
       //extern "C" CoreDispatchTable *vec_ogr_get_dispatch_table(void);
       unit_func.ogr = ogr_get_dispatch_table(); //default
-      if (coresel == 1)    // our vec_ogr core
+      #if defined(_AIXALL)
+      if (coresel == NUM_CORE_OGR-1)    // power core
+        unit_func.ogr = ogr_get_dispatch_table_power();
+      #endif
+      #if defined(__VEC__)      /* compilor supports AltiVec */
+      if (coresel == NUM_CORE_OGR)    // our vec_ogr core
         unit_func.ogr = vec_ogr_get_dispatch_table();
+      #endif
     #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
       //extern CoreDispatchTable *ogr_get_dispatch_table_000(void);
       //extern CoreDispatchTable *ogr_get_dispatch_table_020(void);
