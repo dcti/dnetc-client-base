@@ -24,26 +24,26 @@
 
  This document's revision history ------------------------------------
 
-    Dec 20. 1997 The original (v2.6401) version of this document was 
-                 created by Daniel "dbaker" Baker, assisted by 
-                 Alex "kiddo" Wong
-    Feb 13. 1998 Mike "Silby" Silbersack <silby@silby.com> updated and 
-                 expanded this document.
-                 Paul Gentle <gentleps@muohio.edu> converted this document 
-                 to a Windows help file.
-    May 13. 1998 Mike "Silby" Silbersack <silby@silby.com> updated this 
-                 document and added information about specific platforms.
-    Jun 26. 1998 Mike "Silby" Silbersack <silby@silby.com> slightly 
-                 updated this document for 2.7100
-    Nov 08. 1998 Mike "Silby" Silbersack <silby@silby.com> gutted the 
-                 options sections for 2.7102
+    Revision $Id: rc5des.txt,v 1.34 1999/04/20 18:29:55 cyp Exp $
     Nov 13. 1998 Cyrus Patel <cyp@fb14.uni-mainz.de> moved platform
                  specific information to separate readmes, replaced a 
                  great deal with references to documentation available
                  online or built-in to the client, cleaned up and
                  reorganized the file.
+    Nov 08. 1998 Mike "Silby" Silbersack <silby@silby.com> gutted the 
+                 options sections for 2.7102
+    Jun 26. 1998 Mike "Silby" Silbersack <silby@silby.com> slightly 
+                 updated this document for 2.7100
+    May 13. 1998 Mike "Silby" Silbersack <silby@silby.com> updated this 
+                 document and added information about specific platforms.
+    Feb 13. 1998 Mike "Silby" Silbersack <silby@silby.com> updated and 
+                 expanded this document.
+                 Paul Gentle <gentleps@muohio.edu> converted this document 
+                 to a Windows help file.
+    Dec 20. 1997 The original (v2.6401) version of this document was 
+                 created by Daniel "dbaker" Baker, assisted by 
+                 Alex "kiddo" Wong
 
-                                                                     
  1.0  Introduction ---------------------------------------------------
 
     Congratulations! This distributed.net client will make your computer 
@@ -240,8 +240,8 @@
        join the channel #distributed. Although there are dozens of EFNet
        servers world-wide, the following should give you a starting point:
        In the U.S: irc.cs.cmu.edu:6667, ingenue.eecs.berkeley.edu:6667,
-       piglet.cc.utexas.edu:6667. In Europe: irc.ec-lille.fr:6667, 
-       irc.nijenrode.nl:6667, or efnet.demon.co.uk:6667 
+       piglet.cc.utexas.edu:6667. In Europe: irc.homelien.no:6667, 
+       irc.df.lth.se:6667, or efnet.demon.co.uk:6667 
 
      - If you need further assistance with client use or operation, refer 
        to the the list of "Frequently asked Questions" (FAQs) available 
