@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice.cpp,v $
+// Revision 1.7  1998/12/14 12:12:54  cyp
+// Worked around BIT_64/BIT_32 conflicts when building x86 clients.
+//
 // Revision 1.6  1998/07/08 23:42:07  remi
 // Added support for CliIdentifyModules().
 //
@@ -26,7 +29,7 @@
 // encapsulate the bitslice SolNET code
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_cpp(void) {
-return "@(#)$Id: des-slice.cpp,v 1.6 1998/07/08 23:42:07 remi Exp $"; }
+return "@(#)$Id: des-slice.cpp,v 1.7 1998/12/14 12:12:54 cyp Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -37,6 +40,13 @@ return "@(#)$Id: des-slice.cpp,v 1.6 1998/07/08 23:42:07 remi Exp $"; }
 
 #ifndef _CPU_32BIT_
 #error "everything assumes a 32bit CPU..."
+#endif
+
+#if ((CLIENT_CPU == CPU_X86) && !defined(BIT_32)) //x86 platforms probably
+#if defined(BIT_64)                               //have BIT_64 defined for
+#undef BIT_64                                     //use with mmx cores.
+#endif
+#define BIT_32
 #endif
 
 #ifdef BIT_32
