@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.27 2000/03/05 12:19:05 jlawson Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.28 2000/03/09 01:54:58 jlawson Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -1146,7 +1146,7 @@ int Network::Get( char * data, int length )
       // |  Process HTTP headers on packets  |
       // []---------------------------------[]
       uubuffer.Reserve(500);
-      int numRead = LowLevelGet(uubuffer.GetTail(), (int)uubuffer.GetSlack());
+      int numRead = LowLevelGet(uubuffer.GetTail(), (int)uubuffer.GetTailSlack());
       if (numRead > 0) uubuffer.MarkUsed((u32)numRead);
       else if (numRead == 0) need_close = 1;       // connection closed
       else if (numRead < 0 && !tmp_isnonblocking) timed_out = 1;
@@ -1213,7 +1213,7 @@ int Network::Get( char * data, int length )
       // |  Process UU Encoded packets  |
       // []----------------------------[]
       uubuffer.Reserve(500);
-      int numRead = LowLevelGet(uubuffer.GetTail(), (int)uubuffer.GetSlack());
+      int numRead = LowLevelGet(uubuffer.GetTail(), (int)uubuffer.GetTailSlack());
       if (numRead > 0) uubuffer.MarkUsed((u32)numRead);
       else if (numRead == 0) need_close = 1;       // connection closed
       else if (numRead < 0 && !tmp_isnonblocking) timed_out = 1;
