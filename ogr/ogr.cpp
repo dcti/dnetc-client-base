@@ -5,7 +5,7 @@
  */
 
 const char *ogr_cpp(void) {
-return "@(#)$Id: ogr.cpp,v 1.3.2.17 2000/02/13 09:33:07 sampo Exp $"; }
+return "@(#)$Id: ogr.cpp,v 1.3.2.18 2000/02/13 10:07:26 sampo Exp $"; }
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,26 +41,34 @@ static U bit[200];         /* which bit of LIST to update */
     ss_vec.sca[0] = s - 32;    									\
     s_vec.vec = vec_splat(s_vec.vec,0);							\
     ss_vec.vec = vec_splat(ss_vec.vec,0);						\
-    vector unsigned long list03 = lev->zeroed_comp_vec.vec;     \
-    vector unsigned long list14 = lev->offset_comp_vec.vec;     \
-    list03 = vec_sl(list03,s_vec.vec);                          \
-    list14 = vec_sr(list14,ss_vec.vec);                         \
-    lev->zeroed_comp_vec.vec = vec_or(list03,list14);           \
+    vector unsigned long *ptr03 = (vector unsigned int *)&lev->comp[0];  \
+    vector unsigned long *ptr14 = (vector unsigned int *)&lev->comp[1];  \
+    vector unsigned long tmp  = *ptr03;                         \
+    vector unsigned long tmp2 = *ptr14;                         \
+    tmp = vec_sl(tmp,s_vec.vec);                                \
+    tmp2 = vec_sr(tmp2,ss_vec.vec);                             \
+    *ptr03 = vec_or(tmp,tmp2);                                  \
     lev->comp[4] <<= s;                                         \
-    list03 = lev->zeroed_comp_vec.vec;                          \
-    list14 = lev->offset_comp_vec.vec;                          \
-	list14 = vec_sr(list14,s_vec.vec);                          \
-	list03 = vec_sl(list03,ss_vec.vec);                         \
-	lev->offset_comp_vec.vec = vec_or(list14,list03);           \
+    ptr03 = (vector unsigned int *)&lev->list[0];               \
+    ptr14 = (vector unsigned int *)&lev->list[1];               \
+    tmp  = *ptr03;                                              \
+    tmp2 = *ptr14;                                              \
+	tmp2 = vec_sr(tmp2,s_vec.vec);                              \
+	tmp = vec_sl(tmp,ss_vec.vec);                               \
+    *ptr14 = vec_or(tmp2,tmp);                                  \
     lev->list[0] >>= s;                                         \
   }
 
-#define COMP_LEFT_LIST_RIGHT_32(lev)              		\
-  vector unsigned long temp = lev->offset_comp_vec.vec; \
-  lev->zeroed_comp_vec.vec = temp;	                    \
-  lev->comp[4] = 0;                               		\
-  temp = lev->zeroed_list_vec.vec;                      \
-  lev->offset_list_vec.vec = temp;	                    \
+#define COMP_LEFT_LIST_RIGHT_32(lev)              		 \
+  vector unsigned long *comp10 = (vector unsigned int *)&lev->comp[0];          \
+  vector unsigned long *comp11 = (vector unsigned int *)&lev->comp[1];          \
+  vector unsigned long temp = *comp11;                   \
+  *comp10 = temp;                                        \
+  lev->comp[4] = 0;                               	  	 \
+  vector unsigned long *list10 = (vector unsigned int *)&lev->list[0];          \
+  vector unsigned long *list11 = (vector unsigned int *)&lev->list[1];          \
+  temp = *list10;                                        \
+  *list11 = temp;                                        \
   lev->list[0] = 0;
 
 #define COPY_LIST_SET_BIT(lev2,lev,bitindex)      \
@@ -68,7 +76,10 @@ static U bit[200];         /* which bit of LIST to update */
     int d = bitindex;                             \
     if (d <= 32) {                                \
        lev2->list[0] = lev->list[0] | bit[ d ];   \
-	   lev2->offset_list_vec.vec = lev->offset_list_vec.vec; \
+	   vector unsigned long *list,*list2;          \
+       list = (vector unsigned long *)&lev->list[1];   \
+       list2 = (vector unsigned long *)&lev2->list[1]; \
+       *list2 = *list;                           \
     } else if (d <= 64) {                         \
        lev2->list[0] = lev->list[0];              \
        lev2->list[1] = lev->list[1] | bit[ d ];   \
@@ -88,24 +99,30 @@ static U bit[200];         /* which bit of LIST to update */
        lev2->list[3] = lev->list[3] | bit[ d ];   \
        lev2->list[4] = lev->list[4];              \
     } else if (d <= 160) {                        \
-	   lev2->zeroed_list_vec.vec = lev->zeroed_list_vec.vec; \
+	   vector unsigned long *list,*list2;          \
+       list = (vector unsigned long *)&lev->list[1];   \
+       list2 = (vector unsigned long *)&lev2->list[1]; \
+       *list2 = *list;                           \
        lev2->list[4] = lev->list[4] | bit[ d ];   \
     } else {                                      \
-	   lev2->zeroed_list_vec.vec = lev->zeroed_list_vec.vec; \
+	   vector unsigned long *list,*list2;          \
+       list = (vector unsigned long *)&lev->list[1];   \
+       list2 = (vector unsigned long *)&lev2->list[1]; \
+       *list2 = *list;                           \
        lev2->list[4] = lev->list[4];              \
     }                                             \
   }
 
 #define COPY_DIST_COMP(lev2,lev)                            \
-  vector unsigned long dist0 = lev->zeroed_dist_vec.vec;    \
-  vector unsigned long list0 = lev2->zeroed_list_vec.vec;   \
-  vector unsigned long comp0 = lev->zeroed_comp_vec.vec;    \
-  list0 = vec_or(dist0,list0);                              \
-  lev2->zeroed_dist_vec.vec = list0;                        \
-  lev2->dist[4] = lev->dist[4] | lev2->list[4];             \
-  comp0 = vec_or(comp0,list0);                              \
-  lev2->zeroed_comp_vec.vec = comp0;                        \
-  lev2->comp[4] = lev->comp[4] | lev2->dist[4];             \
+  vector unsigned long *dist10 = (vector unsigned long *)&lev->dist[0];  \
+  vector unsigned long *comp10 = (vector unsigned long *)&lev->comp[0];  \
+  vector unsigned long *comp20 = (vector unsigned long *)&lev2->comp[0]; \
+  vector unsigned long *dist20 = (vector unsigned long *)&lev2->dist[0]; \
+  vector unsigned long *list20 = (vector unsigned long *)&lev2->list[0]; \
+  *dist20 = vec_or(*dist10,*list20);              \
+  lev2->dist[4] = lev->dist[4] | lev2->list[4];   \
+  *comp20 = vec_or(*comp10,*dist20);              \
+  lev2->comp[4] = lev->comp[4] | lev2->dist[4];
 
 #else
 #define COMP_LEFT_LIST_RIGHT(lev,s)                             \
