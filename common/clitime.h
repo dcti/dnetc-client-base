@@ -10,9 +10,10 @@
  * ----------------------------------------------------------------------
 */ 
 #ifndef __CLITIME_H__
-#define __CLITIME_H__ "@(#)$Id: clitime.h,v 1.25 2002/09/02 00:35:41 andreasb Exp $"
+#define __CLITIME_H__ "@(#)$Id: clitime.h,v 1.26 2002/12/20 21:56:25 sod75 Exp $"
 
 #include "baseincs.h" /* struct timeval */
+#include <sys/timers.h> /* int getclock (Stan Vernaillen) */ 
 
 // Initialize/deinitialize. Returns 0 on success.
 int InitializeTimers(void);
