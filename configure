@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.175 2000/07/11 18:02:48 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.176 2000/07/11 20:38:50 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1635,8 +1635,8 @@ case "$1" in
 
 ###### Intel X86 OpenBSD
 
-    *x86-openbsd)
-	TARGET_AS="g++ -c"
+    *x86-openbsd)	# snake
+	TARGET_AS="g++ -c -DNO_BALIGN"
 	TARGET_CC="g++"
         generate_gcc_opts "x86" "openbsd"
 	TARGET_CCFLAGS="$OPTS_GCC -DMMX_RC5 -DLURK -DHAVE_OGR_CORES"
@@ -1651,10 +1651,11 @@ case "$1" in
 	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_CSC -DHAVE_CSC_CORES"
 	##csc## TARGET_ADDNASMS="$TARGET_ADDNASMS $CSC_ASM_SRCS"
 	TARGET_NASM_FMT="aoutb"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+    TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="openbsd-x86-aout"
 	;;
 
-###### Intel X86 BSDI
+###### x86 BSD/OS
 
 	# somebody is again and again trying to change this to use nasm, but
 	# nasm doesn't support BSD/OS aout format, so please don't do it again!!
