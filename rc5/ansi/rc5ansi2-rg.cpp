@@ -6,11 +6,15 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5ansi2-rg.cpp,v $
+// Revision 1.8  1999/04/09 18:15:28  snake
+//
+// fixed for pipeline stuff and 32bit checking
+//
 // Revision 1.7  1999/01/11 21:01:11  patrick
 // added DEFINE RC5ANSICORE so that problem.cpp will not raise an error
 //
 // Revision 1.6  1998/07/08 22:59:50  remi
-// Lots of $Id: rc5ansi2-rg.cpp,v 1.7 1999/01/11 21:01:11 patrick Exp $ stuff.
+// Lots of $Id: rc5ansi2-rg.cpp,v 1.8 1999/04/09 18:15:28 snake Exp $ stuff.
 //
 // Revision 1.5  1998/06/14 08:27:34  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
@@ -51,20 +55,12 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi2_rg_cpp (void) {
-return "@(#)$Id: rc5ansi2-rg.cpp,v 1.7 1999/01/11 21:01:11 patrick Exp $"; }
+return "@(#)$Id: rc5ansi2-rg.cpp,v 1.8 1999/04/09 18:15:28 snake Exp $"; }
 #endif
 
 #include "problem.h"
 #include "rotate.h"
 
-
-#if (PIPELINE_COUNT != 2)
-#error "Expecting pipeline count of 2"
-#endif
-
-#ifndef _CPU_32BIT_
-#error "everything assumes a 32bit CPU..."
-#endif
 
 // this is so problem.cpp knows not to raise an error (patrick)
 #define RC5ANSICORE
