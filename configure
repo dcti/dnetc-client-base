@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.91 2000/01/11 05:23:17 snake Exp $
+# @(#)$Id: configure,v 1.222.2.92 2000/01/12 06:39:10 remi Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -774,13 +774,11 @@ case "$1" in
 	;;
 
     *sparc-linux)	# [remi]
-	TARGET_CC="egcc"
-	TARGET_AS="egcc -c"
+	TARGET_CC="gcc295"
+	TARGET_AS="gcc295 -c"
 	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC -DHAVE_CSC_CORES \
-			-D__showids__ -DLURK -DMULTITHREAD \
-			 -DKWAN -DMEGGS $CSC_ANSI_CCOPTS"
+			-D__showids__ -DLURK -DMULTITHREAD $CSC_ANSI_CCOPTS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c common/lurk.cpp \
-			des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp \
 			$CSC_ANSI_SRCS"
 	TARGET_LIBS="-lpthread"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
