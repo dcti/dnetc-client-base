@@ -6,6 +6,10 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.31  1998/08/07 19:57:33  cyruspatel
+// By popular demand: GetMessageForProblemCompleted() displays the normalized
+// keycount (x*2^28) instead of the numeric value.
+//
 // Revision 1.30  1998/08/07 17:49:15  cyruspatel
 // Modified CliGetMessageForFileEntryLoaded() to handle blocksize x*2^28
 // normalization (eg 4*2^28 rather than 1*2^30)
@@ -129,7 +133,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clisrate_cpp(void) {
-static const char *id="@(#)$Id: clisrate.cpp,v 1.30 1998/08/07 17:49:15 cyruspatel Exp $";
+static const char *id="@(#)$Id: clisrate.cpp,v 1.31 1998/08/07 19:57:33 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -399,10 +403,11 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
   RC5Result rc5result;
   struct timeval tv;
   char keyrate[32];
+  unsigned int mulfactor;
   const char *keyrateP, *name;
   int contestid = prob->GetResult( &rc5result );
 
-  if (CliGetContestInfoBaseData( contestid, &name, NULL )==0) //clicdata
+  if (CliGetContestInfoBaseData( contestid, &name, &mulfactor )==0) //clicdata
     {
     keyrateP = CliGetKeyrateAsString( keyrate, 
         ((doSave) ? ( CliGetKeyrateForProblem( prob ) ) :
@@ -418,6 +423,7 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
   tv.tv_usec = prob->timelo;
   CliTimerDiff( &tv, &tv, NULL );
 
+/*                               Old method with numeric keycount display
   sprintf( str, "Completed %s block %08lX:%08lX (%s keys)\n"
                 "[%s] %s - [%skeys/sec]\n",
                 name,
@@ -427,6 +433,37 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
                 CliGetTimeString( NULL, 1 ),
                 CliGetTimeString( &tv, 2 ),
                 keyrateP );
+*/
+
+  unsigned int /* size=1, count=32, */ itermul=16;
+  if (!rc5result.iterations.hi)
+    {
+    u32 iter = ntohl(rc5result.iterations.lo);
+    /*
+    count = 1;
+    size = 0;
+    while ((iter & count)==0)
+      { size++; count <<= 1; }
+    count = iter / (1<<size);
+    iter = ntohl(rc5result.iterations.lo);
+    */
+    itermul = 0;
+    while (iter > 1 && itermul < 28)
+      { iter>>=1; itermul++; }
+    itermul = (unsigned int)iter;
+    }
+
+//[Aug 01 10:00:00 GMT] Completed one RC5 block 00000000:00000000 (4*2^28 keys)\n"
+  sprintf( str, "Completed one %s " /* "%d*2^%d " */ "block %08lX:%08lX (%u*2^28 keys)\n"
+                "[%s] %s - [%skeys/sec]\n",  
+                name, /* (int)size, (int)count, */
+                (unsigned long) ntohl( rc5result.key.hi ) ,
+                (unsigned long) ntohl( rc5result.key.lo ),
+                (unsigned int)(itermul),
+                CliGetTimeString( NULL, 1 ),
+                CliGetTimeString( &tv, 2 ),
+                keyrateP );
+
   return str;
 }
 
