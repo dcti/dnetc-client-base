@@ -10,11 +10,13 @@
 // ----------------------------------------------------------------------
 // 
 // $Log: clitime.h,v $
+// Revision 1.15  1999/03/03 04:29:36  cyp
+// created CliTimeGetMinutesWest() and CliTimerSetDelta(). See .h for descrip.
+//
 // Revision 1.14  1999/01/29 19:02:22  jlawson
 // fixed formatting.
 //
 // Revision 1.13  1999/01/19 09:36:58  patrick
-//
 // OS2-EMX needs sys/time.h
 //
 // Revision 1.12  1999/01/14 23:02:12  pct
@@ -34,16 +36,7 @@
 // updates to get Borland C++ to compile under Win32.
 //
 // Revision 1.7  1998/07/07 21:55:32  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
+// client.h has been split into client.h and baseincs.h 
 //
 // Revision 1.6  1998/06/29 06:57:58  jlawson
 // added new platform OS_WIN32S to make code handling easier.
@@ -55,16 +48,19 @@
 
 #ifndef _CLITIME_H_
 #define _CLITIME_H_
-#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_BEOS) || \
-     (CLIENT_OS == OS_DEC_UNIX) || ((CLIENT_OS == OS_OS2) && defined(__EMX__)))
-#include <sys/time.h> // To make it compile, define from this file needed..
-#endif
 
-struct timeval;     // prototype
+#include "baseincs.h" /* struct timeval */
 
+
+// Get year-round (ie after compensating for DST) TZ offset in minutes
+int CliTimeGetMinutesWest(void);
 
 // Get the current time in timeval format (pass NULL if storage not req'd)
 struct timeval *CliTimer( struct timeval *tv );
+
+// Set the 'time delta', a value added to the tv_sec member by CliTimer()
+// before it the time is returned. CliTimerSetDelta() returns the old delta.
+int CliTimerSetDelta( int delta );
 
 // Get time as string. Curr time if tv is NULL. Separate buffers for each
 // type: 0=blank type 1, 1="MMM dd hh:mm:ss GMT", 2="hhhh:mm:ss.pp"
