@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.89 2001/01/10 02:20:58 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.90 2001/01/11 04:58:54 cyp Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -450,7 +450,7 @@ int ProblemLoadState( void *__thisprob,
   thisprob->pub_data.was_reset = 0;
   thisprob->pub_data.is_random = genned_random;
   thisprob->pub_data.is_benchmark = genned_benchmark;
-
+  
   thisprob->pub_data.coresel = coresel;
   thisprob->pub_data.client_cpu = selinfo.client_cpu;
   thisprob->pub_data.pipeline_count = selinfo.pipeline_count;
@@ -458,6 +458,23 @@ int ProblemLoadState( void *__thisprob,
   thisprob->pub_data.cruncher_is_asynchronous = selinfo.cruncher_is_asynchronous;
   memcpy( (void *)&(thisprob->pub_data.unit_func), 
           &selinfo.unit_func, sizeof(thisprob->pub_data.unit_func));
+
+  thisprob->pub_data.cruncher_is_time_constrained = 0;
+  if (!genned_benchmark)
+  {
+    /* may also be overridden in go_mt */
+    #if (CLIENT_OS == OS_RISCOS)
+    if (riscos_check_taskwindow() && thisprob->pub_data.client_cpu!=CPU_X86)
+      thisprob->pub_data.cruncher_is_time_constrained = 1;  
+    #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)  
+    if (winGetVersion() < 400)
+      thisprob->pub_data.cruncher_is_time_constrained = 1;  
+    #elif (CLIENT_OS == OS_MACOS)
+      thisprob->pub_data.cruncher_is_time_constrained = 1;
+    #elif (CLIENT_OS == OS_NETWARE)  
+      thisprob->pub_data.cruncher_is_time_constrained = 1;
+    #endif  
+  }
 
   //----------------------------------------------------------------
 
@@ -938,7 +955,10 @@ static int Run_OGR( InternalProblem *thisprob, /* already validated */
   int r, nodes;
 
   nodes = (int)(*iterationsP);
-  r = (thisprob->pub_data.unit_func.ogr)->cycle(thisprob->priv_data.core_membuffer, &nodes);
+  r = (thisprob->pub_data.unit_func.ogr)->cycle(
+                          thisprob->priv_data.core_membuffer, 
+                          &nodes,
+                          thisprob->pub_data.cruncher_is_time_constrained);
   *iterationsP = (u32)nodes;
 
   u32 newnodeslo = thisprob->priv_data.contestwork.ogr.nodes.lo + nodes;

@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.46 2000/12/21 16:56:44 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.47 2001/01/11 04:58:55 cyp Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -181,7 +181,7 @@ struct problem_publics
   unit_func_union unit_func;
   int use_generic_proto; /* RC5/DES unit_func prototype is generic form */
   int cruncher_is_asynchronous; /* on a co-processor or similar */
-
+  int cruncher_is_time_constrained; /* non-preemptive or real-time OS */
 };
 
 typedef struct

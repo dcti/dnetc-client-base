@@ -2,9 +2,8 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.24 2001/01/11 02:29:36 andreasb Exp $
+ * $Id: ogr.cpp,v 1.1.2.25 2001/01/11 04:58:14 cyp Exp $
  */
-#include "baseincs.h"
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -23,7 +22,6 @@
   #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* 0/1 - default is 1 ('yes') */
   #define OGROPT_ALTERNATE_CYCLE                0 /* 0/1 - default is 0 ('no') */
   #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* 0-2 - default is 0 */
-  #define OGROPT_EXACT_NODESLIMIT               0 /* 0/1 - default is 0 ('no') */
 #elif (defined(OVERWRITE_DEFAULT_OPTIMIZATIONS))  /* defines reside in an external file */
 #elif (defined(ASM_X86) || defined(__386__))
   #if defined(OGR_NOFFZ) /* the bsr insn is slooooow on anything less than a PPro */
@@ -90,11 +88,6 @@
   #endif
 #endif
 
-/* OGROPT_EXACT_NODESLIMIT is not compiler but OS dependant */
-#if (CLIENT_OS == RISC_OS) || (CLIENT_OS == OS_MACOS)
-  #define OGROPT_EXACT_NODESLIMIT 1
-#endif
-
 /* -- various optimization option defaults ------------------------------- */
 
 /* optimization for machines where mem access is slower than a shift+sub+and.
@@ -120,7 +113,7 @@
       (defined(__ICC)) /* icc is Intel only (duh!) */ || \
       (defined(__GNUC__) && (defined(ASM_ALPHA) \
                              || defined(ASM_X86) \
-			     || defined(ASM_ARM) \
+                             || defined(ASM_ARM) \
                              || (defined(ASM_68K) && (defined(mc68020) \
                              || defined(mc68030) || defined(mc68040) \
                              || defined(mc68060)))))
@@ -203,20 +196,25 @@
 #endif
 
 
-/* By default the OGR cruncher uses the nodeslimit merely as a hint when to
-   leave the cruncher rather than adhering to it exactly. This gets you a 3%
-   speed increase but it may turn out to considerably slow down non-preemptive
-   systems because in extereme situations it can happen that you request a
-   nodeslimit of 1000 but end up with 32000 nodes done.
-   If you define this then the cruncher will adhere exactly to the requested
-   nodeslimit.
+/* OGROPT_IGNORE_TIME_CONSTRAINT_ARG: By default, ogr_cycle() treats the 
+   nodes_to_do argument as a hint rather than a precise number. This is a 
+   BadThing(TM) in non-preemptive or real-time environments that are running 
+   the cruncher in time contraints, so ogr_cycle() also gets passed a 
+   'with_time_constraints' argument that tells the it whether such an 
+   environment is present or not.
+   However, on most platforms this will never be true, and under those 
+   circumstances, testing the 'with_time_constraints' flag is an uneccessary
+   waste of time. OGROPT_IGNORE_TIME_CONSTRAINT_ARG serves to disable the
+   test. 
 */
-#ifndef OGROPT_EXACT_NODESLIMIT
-#define OGROPT_EXACT_NODESLIMIT 0 /* the default is "no" */
-#endif
+#define OGROPT_IGNORE_TIME_CONSTRAINT_ARG
+#if defined(macintosh) || defined(__riscos) || \
+    (defined(ASM_X86) && defined(GENERATING_ASM))
+    /* x86 asm is optimized by hand anyway */
+  #undef OGROPT_IGNORE_TIME_CONSTRAINT_ARG
+#endif  
 
 /* ----------------------------------------------------------------------- */
-
 
 #if !defined(HAVE_STATIC_CHOOSEDAT) || defined(CRC_CHOOSEDAT_ANYWAY)
 #include "crc32.h" /* only need to crc choose_dat if its not static */
@@ -2404,7 +2402,7 @@ static void dump_ruler(struct State *oState, int depth)
 #endif
 
 #if (OGROPT_ALTERNATE_CYCLE == 2) || (OGROPT_ALTERNATE_CYCLE == 1)
-static int ogr_cycle(void *state, int *pnodes)
+static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
 {
    struct State *oState = (struct State *)state;
    int depth = oState->depth+1;      /* the depth of recursion */
@@ -2431,20 +2429,20 @@ static int ogr_cycle(void *state, int *pnodes)
 
       int maxMinusDepth = oStateMaxDepthM1 - depth;
 
-      #if (OGROPT_EXACT_NODESLIMIT == 1)
-      if (nodes >= nodeslimit) {
-         break;
+      if (with_time_constraints) { /* if (...) is optimized away if unused */
+         #if !defined(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
+         if (nodes >= nodeslimit) {
+           break;
+         }  
+         #endif  
       }
-      #endif
 
       if (depth <= oStateHalfDepth2) {
          if (depth <= oStateHalfDepth) {
          
-            #if (OGROPT_EXACT_NODESLIMIT == 0)
             if (nodes >= nodeslimit) {
                break;
             }
-            #endif
             
             limit = oStateMax - OGR[maxMinusDepth];
             limit = (limit < oStateHalfLength) ? limit : oStateHalfLength;
@@ -2512,7 +2510,7 @@ static int ogr_cycle(void *state, int *pnodes)
    return retval;
 }
 #else
-static int ogr_cycle(void *state, int *pnodes)
+static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
 {
   struct State *oState = (struct State *)state;
   int depth = oState->depth+1;      /* the depth of recursion */
@@ -2530,22 +2528,27 @@ static int ogr_cycle(void *state, int *pnodes)
   for (;;) {
 
     oState->marks[depth-1] = lev->cnt2;
-#if (OGROPT_EXACT_NODESLIMIT == 1)
-    if (nodes >= nodeslimit) {
-      break;
+
+    if (with_time_constraints) { /* if (...) is optimized away if unused */
+       #if !defined(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
+       if (nodes >= nodeslimit) {
+         break;
+       }  
+       #endif  
     }
-#endif
+
 #ifdef OGR_DEBUG
     if (oState->LOGGING) dump_ruler(oState, depth);
 #endif
+
     if (depth <= oState->half_depth2) {
       if (depth <= oState->half_depth) {
+
         //dump_ruler(oState, depth);
-#if (OGROPT_EXACT_NODESLIMIT == 0)
         if (nodes >= nodeslimit) {
           break;
         }
-#endif
+
         limit = oState->max - OGR[oState->maxdepthm1 - depth];
         limit = limit < oState->half_length ? limit : oState->half_length;
       } else {
@@ -2702,18 +2705,7 @@ CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
   static CoreDispatchTable dispatch_table;
   dispatch_table.init      = ogr_init;
   dispatch_table.create    = ogr_create;
-#if (CLIENT_OS == OS_RISCOS)
-  if (riscos_in_taskwindow)
-  {
-    dispatch_table.cycle   = ogr_cycle_non_preemptive;
-  }
-  else
-  {
-    dispatch_table.cycle   = ogr_cycle;
-  }
-#else
   dispatch_table.cycle     = ogr_cycle;
-#endif
   dispatch_table.getresult = ogr_getresult;
   dispatch_table.destroy   = ogr_destroy;
 #if defined(HAVE_OGR_COUNT_SAVE_LOAD_FUNCTIONS)

@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.h,v 1.1.2.5 2001/01/10 02:20:58 andreasb Exp $
+ * $Id: ogr.h,v 1.1.2.6 2001/01/11 04:58:15 cyp Exp $
 */
 #ifndef __OGR_H__
 #define __OGR_H__ 
@@ -67,8 +67,16 @@ typedef struct {
    * On input, nodes should contain the number of algorithm iterations
    * to do. On output, nodes will contain the actual number of iterations
    * done.
-   */
-  int (*cycle)(void *state, int *steps);
+   *
+   * If with_time_constraints is 0, the OGR cruncher uses the nodeslimit 
+   * merely as a hint when to leave the cruncher rather than adhering to it 
+   * exactly. There is a slight speed increase (negligible in a preemptive 
+   * non-realtime environment) when applying the hint scheme, but cannot 
+   * be used in a cruncher that is bound by time constraints (eg 
+   * non-preemptive or real-time environments) because it can happen 
+   * that a nodeslimit request of 1000 will end up with 32000 nodes done.
+  */
+  int (*cycle)(void *state, int *steps, int with_time_constraints);
 
   /*
    * If cycle returns CORE_S_SUCCESS, call getresult to get the successful
@@ -220,4 +228,13 @@ const char *ogr_stubstr_r(const struct Stub *stub,
 const char *ogr_stubstr(const struct Stub *stub);
 
 #endif /* __OGR_H__ */
+
+/* OGROPT_EXACT_NODESLIMIT is not compiler but OS dependant */
+#if (CLIENT_OS == RISC_OS) || (CLIENT_OS == OS_MACOS)
+  #define OGROPT_EXACT_NODESLIMIT 1
+#endif
+
+#ifndef OGROPT_EXACT_NODESLIMIT
+#define OGROPT_EXACT_NODESLIMIT 1 /* the default is "no" */
+#endif
 
