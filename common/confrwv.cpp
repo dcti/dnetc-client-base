@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.5 1999/10/10 23:10:37 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.6 1999/10/18 01:42:51 cyp Exp $"; }
 
 //#define TRACE
 
@@ -320,9 +320,11 @@ int ReadConfig(Client *client)
 
   __remapObsoleteParameters( client, fn ); /* load obsolete options */
 
-  if (!GetPrivateProfileStringB( sect, "id", "", client->id, sizeof(client->id), fn ))
-    strcpy( client->id, "rc5@distributed.net" );
-
+  if (GetPrivateProfileStringB( sect, "id", "", client->id, sizeof(client->id), fn ))
+  {
+    if (strcmp( client->id, "rc5@distributed.net" ) == 0)
+      client->id[0] = '\0';
+  }
   if (GetPrivateProfileStringB( sect, "hours", "", buffer, sizeof(buffer), fn ))
   {
     client->minutes = (atoi(buffer) * 60);
@@ -520,9 +522,9 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
   fn = GetFullPathForFilename( fn );
   if ( !writefull && access( fn, 0 )!=0 )
     writefull = 1;
-
-  if (0 == (i = WritePrivateProfileStringB( sect, "id", 
-    ((strcmp( client->id,"rc5@distributed.net")==0)?(""):(client->id)), fn )))
+ 
+  if (!WritePrivateProfileStringB( sect, "id", 
+    ((strcmp( client->id,"rc5@distributed.net")==0)?(""):(client->id)), fn ))
     return -1; //failed
 
   if (__remapObsoleteParameters( client, fn ) < 0) 
