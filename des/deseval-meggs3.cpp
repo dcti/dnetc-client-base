@@ -1,10 +1,10 @@
 //
 // $Log: deseval-meggs3.cpp,v $
-// Revision 1.8  1998/12/14 01:56:43  dicamillo
-// MacOS: allow use of extern "C" for whack16.
-//
-// Revision 1.7  1998/12/13 21:53:33  dicamillo
-// Mac OS change for compilation and Mac client scheduling.
+// Revision 1.9  1998/12/14 05:57:57  pct
+// Sorry guys.  This is a quick hack.  Unfortunately the #ifs for CLIENT_OS
+// made by someone also requires #include <cputypes> which was left out.
+// Including that multiply defined s8.  So all s? functions have been renamed
+// to f_s?.
 //
 // Revision 1.6  1998/07/14 10:43:40  remi
 // Added support for a minimum timeslice value of 16 instead of 20 when
@@ -34,14 +34,12 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_cpp(void) {
-return "@(#)$Id: deseval-meggs3.cpp,v 1.8 1998/12/14 01:56:43 dicamillo Exp $"; }
+return "@(#)$Id: deseval-meggs3.cpp,v 1.9 1998/12/14 05:57:57 pct Exp $"; }
 #endif
 
-#if (CLIENT_OS != OS_MACOS)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#endif
 
 /* Bitslice driver copyright (C) 1998 Andrew Meggs / casa de la cabeza explosiva */
 /* All rights reserved. A non-transferrable, royalty free license to this code   */
@@ -53,13 +51,6 @@ return "@(#)$Id: deseval-meggs3.cpp,v 1.8 1998/12/14 01:56:43 dicamillo Exp $"; 
 
 #include "kwan-sboxes.h"
 #define WORD_TYPE unsigned long
-
-#if (CLIENT_OS == OS_MACOS)
-#define TICKS ((unsigned long *)0x16a)
-extern void YieldToMain(char force_events);
-extern unsigned long DES_ticks_to_use;
-extern unsigned long DES_yield_ticks;
-#endif
 
 static void
 s1 (
@@ -488,11 +479,7 @@ void multiround( unsigned long S[32], unsigned long N[32], unsigned long M[32], 
 
 
 typedef unsigned long slice;
-#if ((CLIENT_OS == OS_MACOS) && defined(MRCPP_FOR_DES))
-extern "C" slice whack16(slice *P, slice *C, slice *K);
-#else
 extern slice whack16(slice *P, slice *C, slice *K);
-#endif
 
 #define DEBUGPRINT 0
 
@@ -1023,13 +1010,6 @@ slice whack16(slice *P, slice *C, slice *K)
 				break;
 			}
 			// now step the tail
-            #if (CLIENT_OS == OS_MACOS)
-		      if (DES_yield_ticks < *TICKS) {
-	            DES_yield_ticks = *TICKS + DES_ticks_to_use;
-			    YieldToMain(1);
-			  }
-            #endif
-
 			hs = 0;
 			K[49] = ~K[49];
 			++ts;
