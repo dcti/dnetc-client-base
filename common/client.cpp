@@ -603,7 +603,7 @@ s32 Client::Fetch( u8 contest, Network *netin )
 
   // close this connection
   if (!netin) delete net;
-  Log( "\n[%s] Retrieved %d %s block(s) from server\n", Time(), (int) count, (contest == 1 ? "DES":"RC5") );
+  Log( "\r[%s] Retrieved %d %s block(s) from server          \n", Time(), (int) count, (contest == 1 ? "DES":"RC5") );
   return ( count );
 #endif
 }
@@ -982,7 +982,7 @@ s32 Client::Flush( u8 contest , Network *netin )
 
   // close this connection
   if (!netin) delete net;
-  Log( "\n[%s] Sent %d %s block(s) to server\n", Time(), (int) count, (contest == 1 ? "DES":"RC5") );
+  Log( "\r[%s] Sent %d %s block(s) to server          \n", Time(), (int) count, (contest == 1 ? "DES":"RC5") );
   return( count );
 #endif //NONETWORK
 }
