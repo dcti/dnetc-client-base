@@ -3,6 +3,25 @@
 # see http://www.distributed.net/
 
 # $Log: makefile.vc,v $
+# Revision 1.37.2.4  1999/01/04 03:12:45  remi
+# Synced with :
+#
+#  revision 1.47
+#  date: 1999/01/03 07:45:41;  author: silby;  state: Exp;  lines: +7 -1
+#  Now generates the icon resource.
+#
+#  revision 1.46
+#  date: 1999/01/01 22:14:46;  author: silby;  state: Exp;  lines: +2 -1
+#  Added dctistrg.cpp
+#
+#  revision 1.45
+#  date: 1998/12/31 20:09:13;  author: silby;  state: Exp;  lines: +0 -1
+#  Threadcd no longer needed, removed.
+#
+#  revision 1.44
+#  date: 1998/12/31 07:41:03;  author: silby;  state: Exp;  lines: +4 -5
+#  guistuff is gone.
+#
 # Revision 1.37.2.3  1998/12/29 19:46:41  remi
 # Synced with :
 #
@@ -43,6 +62,8 @@ OPTS_MSVC = -nologo -W3 -O1 -MT -I$(RC5PATH) -I$(DESPATH) \
 
 all: rc5des
 
+RES_FILE = $(OUTPUTPATH)/rc5des.res
+
 # --------------------------------------------
 
 RC5_OBJS =                    \
@@ -63,14 +84,16 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/des-slice-meggs.obj \
 	$(OUTPUTPATH)/triggers.obj   \
 	$(OUTPUTPATH)/selcore.obj    \
+	$(OUTPUTPATH)/pollsys.obj    \
 	$(OUTPUTPATH)/probman.obj    \
 	$(OUTPUTPATH)/bench.obj      \
 	$(OUTPUTPATH)/w32cons.obj    \
 	$(OUTPUTPATH)/w32svc.obj     \
         $(OUTPUTPATH)/w32pre.obj     \
 	$(OUTPUTPATH)/console.obj    \
-	$(OUTPUTPATH)/modereq.obj
-        $(OUTPUTPATH)/clievent.obj
+	$(OUTPUTPATH)/modereq.obj    \
+        $(OUTPUTPATH)/clievent.obj   \
+	$(OUTPUTPATH)/dctistrg.obj
 
 PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/rg486.obj   \
@@ -87,9 +110,9 @@ PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/sboxes-mmx.obj \
 	$(OUTPUTPATH)/rc5mmx.obj \
 	$(OUTPUTPATH)/deseval-meggs3-mmx.gcc \
-        $(OUTPUTPATH)/deseval.obj \
-        $(OUTPUTPATH)/des-slice.obj \
-        $(OUTPUTPATH)/sboxes-kwan4.obj
+	$(OUTPUTPATH)/deseval.obj \
+	$(OUTPUTPATH)/des-slice.obj \
+	$(OUTPUTPATH)/sboxes-kwan4.obj
 
 RC5_LIBS = wsock32.lib advapi32.lib user32.lib gdi32.lib
 
@@ -122,12 +145,16 @@ RC5_LIBS = wsock32.lib advapi32.lib user32.lib gdi32.lib
 {$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj:
 	cl -c $(OPTS_MSVC) -Fo$@ $**
 
+$(OUTPUTPATH)/rc5des.res:    $(W32CLIPATH)/rc5des.rc
+	rc -d_Windows -d_M_IX86 -i $(COMMONPATH) -fo$@ $(W32CLIPATH)/rc5des.rc
+
 # --------------------------------------------
 
-rc5des: $(RC5_OBJS) $(PREBUILT_OBJS)
+rc5des: $(RC5_OBJS) $(PREBUILT_OBJS) $(RES_FILE)
 	cl $(OPTS_MSVC) -Fe$(EXENAME) $(RC5_LIBS) $**
 
 clean:
+	echo 1 ICON platforms\win32gui\cowhead.ico > $(W32CLIPATH)/rc5des.rc
 	del $(RC5_OBJS:/=\)
 
 superclean: clean
