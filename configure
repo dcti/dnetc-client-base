@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.225 2001/01/21 18:19:09 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.226 2001/02/01 20:49:36 oliver Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -106,12 +106,12 @@ add_sources() # $1=os, $2=arch, $3=custom
   # additions to COMMON_SRCS need to be before ${COMMON_SRCS}
   # so that speed sensitive stuff can remain together at the 'bottom'
   if [ "$1" = "amigaos" ]; then 
-    COMMON_SRCS="plat/amiga/amVersion.c \
-                 plat/amiga/amSupport.c \
-                 plat/amiga/amMemory.c \
-                 plat/amiga/amTime.c \
-                 plat/amiga/amNetwork.c \
-                 plat/amiga/amConsole.c \
+    COMMON_SRCS="plat/amigaos/amVersion.c \
+                 plat/amigaos/amSupport.c \
+                 plat/amigaos/amMemory.c \
+                 plat/amigaos/amTime.c \
+                 plat/amigaos/amNetwork.c \
+                 plat/amigaos/amConsole.c \
                  ${COMMON_SRCS}"
   elif [ "$1" = "linux" ]; then 
     COMMON_SRCS="plat/linux/li_inst.c ${COMMON_SRCS}"
@@ -277,7 +277,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi  
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp \
-                                    ogr/ansi/ogr_dat.cpp"
+                                    ogr/ansi/ogr_dat.cpp ogr/ansi/ogr_dat2.cpp"
     TARGET_ADDOBJS="$TARGET_ADDOBJS output/ogr000.o output/ogr020.o \
                                     output/ogr030.o output/ogr040.o \
                                     output/ogr060.o"
@@ -1988,11 +1988,11 @@ case "$1" in
 
 ###### AmigaOS (m68k, PPC)
     *m68k-amigaos)              # [oliver] <oliver@futaura.co.uk>
-        TARGET_AS="plat/amiga/tools/genam_wrapper"
+        TARGET_AS="plat/amigaos/tools/genam_wrapper"
         TARGET_CC="g++ -V 2.95.2"
         generate_gcc_opts "68k" "amigaos"
         TARGET_CCFLAGS="$OPTS_GCC -m68000 -fpermissive -O6 -I./ -noixemul \
-                        -D__AMIGADATE__=\`plat/amiga/tools/amigadate\` \
+                        -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
                         -DDYN_TIMESLICE"
         TARGET_LDFLAGS="-noixemul"
         TARGET_ADDOBJS="/gg/lib/libnix/swapstack.o"
@@ -2011,11 +2011,11 @@ case "$1" in
         TARGET_ASFLAGS="-m603"
         generate_gcc_opts "ppc603e" "amigaos"
         TARGET_CCFLAGS="$OPTS_GCC -O6 -mmultiple -mstring -I./ \
-                        -D__AMIGADATE__=\`plat/amiga/tools/amigadate\` \
+                        -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
                         -DDYN_TIMESLICE"
         TARGET_TARBALL="amigaos-ppc-wos"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
-        TARGET_STRIP="plat/amiga/tools/strip_wos"
+        TARGET_STRIP="plat/amigaos/tools/strip_wos"
         TARGET_BINNAME_SUFFIX="_ppc"
         TARGET_OS="AMIGAOS_PPC"
         TARGET_GENMAN=
@@ -2029,12 +2029,12 @@ case "$1" in
         TARGET_ASFLAGS="-m603"
         generate_gcc_opts "ppc603e" "amigaos"
         TARGET_CCFLAGS="$OPTS_GCC -pup -D__POWERUP__ -O6 -mmultiple -mstring \
-                        -D__AMIGADATE__=\`plat/amiga/tools/amigadate\` \
+                        -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
                         -I./ -DDYN_TIMESLICE"
         TARGET_LDFLAGS="-pup"
         TARGET_TARBALL="amigaos-ppc-pup"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
-        TARGET_STRIP="plat/amiga/tools/strip_pup"
+        TARGET_STRIP="plat/amigaos/tools/strip_pup"
         TARGET_BINNAME_SUFFIX="_ppc"
         TARGET_OS="AMIGAOS_PPC"
         TARGET_GENMAN=
@@ -2458,7 +2458,12 @@ if [ "$TARGET_OGR_MULTI" = "68k" ]; then
   for targetext in ${OGR68K}; do
     echo "output/ogr${targetext}.o:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
     echo "	\$(CC) \$(CCFLAGS) -m68${targetext} -c -o output/ogr${targetext}.o ogr/ansi/ogr.cpp \\" >> Makefile
-    echo "	-DOGR_GET_DISPATCH_TABLE_FXN=ogr_get_dispatch_table_${targetext}" >> Makefile
+    if [ "$targetext" = "000" ]; then
+      echo "	-DOGR_GET_DISPATCH_TABLE_FXN=ogr_get_dispatch_table_${targetext}" >> Makefile
+    else
+      echo "	-DOGR_GET_DISPATCH_TABLE_FXN=ogr_get_dispatch_table_${targetext} \\" >> Makefile
+      echo "	-DNO_OGR_IDENT" >> Makefile
+    fi
     echo "" >> Makefile
   done
 fi
