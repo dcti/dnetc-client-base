@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.41 2000/09/17 11:46:28 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.42 2000/10/21 20:24:50 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -88,7 +88,7 @@ static int __GetTimeOfDay( struct timeval *tv )
     #elif (CLIENT_OS == OS_NETWARE)
     {
       unsigned long cas[3];
-      unsigned long secs, fsec, hi, lo;
+      unsigned long secs, fsec;
 
       /* emulated for nw3 in nwlemu.c */
       GetClockStatus(cas);
@@ -98,12 +98,12 @@ static int __GetTimeOfDay( struct timeval *tv )
       /* cas[3] has sync state flags */
 
       #if (CLIENT_CPU == CPU_X86)
-      /* avoid yanking in watcom's crappy static clib for int64 mul/div */
+      /* avoid yanking in watcom's crappy static clib just for int64 mul */
       _asm mov eax, fsec
       _asm xor edx, edx
       _asm mov ecx, 1000000
       _asm mul ecx
-      _asm mov fsec, edx
+      _asm mov fsec, edx /* edx:eax divided by 1<<32 */
       #else
       fsec = (unsigned long)(((unsigned __int64)
              (((unsigned __int64)fsec) * 1000000ul)) >> 32);
@@ -450,10 +450,26 @@ int CliGetMonotonicClock( struct timeval *tv )
       splptr += (sizeof(long)-(((unsigned long)splptr) & (sizeof(long)-1)));
       while (!lacquired)
       {
-        __asm__ __volatile__ ("movl $1, %%eax;\n"
-                              "lock; xchgl %%eax, %0;\n"
-                              "xorl $1,%%eax;\n" :
-                              "=g"(*(splptr)), "=r" (lacquired));
+        #if defined(__GNUC__)
+        /* gcc is sometimes too clever */
+        struct __fool_gcc_volatile { unsigned long a[100]; };
+        /* note: no 'lock' prefix even on SMP since xchg is always atomic */
+        __asm__ __volatile__(
+                   "movl $1,%0\n\t"
+                   "xchgl %0,%1\n\t"
+                   "xorl $1,%0\n\t"
+                   : "=r"(lacquired)
+                   : "m"(*((struct __fool_gcc_volatile *)(splptr)))
+                   : "memory"); 
+        #elif defined(__WATCOMC__)
+        _asm mov edx, splptr
+        _asm mov eax, 1
+        _asm xchg eax,[edx]
+        _asm xor eax, 1
+        _asm mov lacquired,eax
+        #else
+        #error whats up doc?
+        #endif
         if (!lacquired)
           DosSleep(0);
       }
