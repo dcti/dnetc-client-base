@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.66 2004/06/16 18:33:26 kakace Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.66.2.1 2004/08/08 20:21:55 kakace Exp $"; }
 
 //#define TRACE
 
@@ -264,11 +264,8 @@ int DeinitializeCoreTable( void )  /* ClientMain calls this */
   #ifdef HAVE_RC5_72_CORES
   DeinitializeCoreTable_rc572();
   #endif
-  #ifdef HAVE_OGR_CORES
+  #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
   DeinitializeCoreTable_ogr();
-  #endif
-  #ifdef HAVE_OGR_PASS2
-  DeinitializeCoreTable_ogr_p2();
   #endif
   #ifdef HAVE_DES_CORES
   DeinitializeCoreTable_des();
@@ -328,11 +325,8 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
   #ifdef HAVE_RC5_72_CORES
   if (InitializeCoreTable_rc572(first_time) < 0) return -1;
   #endif
-  #ifdef HAVE_OGR_CORES
+  #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
   if (InitializeCoreTable_ogr(first_time) < 0) return -1;
-  #endif
-  #ifdef HAVE_OGR_PASS2
-  if (InitializeCoreTable_ogr_p2(first_time) < 0) return -1;
   #endif
   #ifdef HAVE_DES_CORES
   if (InitializeCoreTable_des(first_time) < 0) return -1;
@@ -654,11 +648,11 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
 #endif
 #ifdef HAVE_OGR_PASS2
     case OGR_P2:
-      return selcoreSelectCore_ogr_p2( threadindex, client_cpuP, selinfo );
+      return selcoreSelectCore_ogr( threadindex, client_cpuP, selinfo, contestid );
 #endif
 #ifdef HAVE_OGR_CORES
     case OGR:
-      return selcoreSelectCore_ogr( threadindex, client_cpuP, selinfo );
+      return selcoreSelectCore_ogr( threadindex, client_cpuP, selinfo, contestid );
 #endif
     default:
       return -1; /* core selection failed */
