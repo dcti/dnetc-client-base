@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.19 2000/01/05 21:31:31 patrick Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.20 2000/01/07 14:24:10 snake Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -170,6 +170,8 @@
     #define CLIENT_CPU    CPU_ALPHA
   #elif defined(__vax__) || defined(ASM_VAX)
     #define CLIENT_CPU    CPU_VAX
+  #elif defined(__m68k__) || defined(ASM_68K)
+    #define CLIENT_CPU    CPU_68K
   #endif
 #elif defined(__OpenBSD__) || defined(openbsd)
   #ifndef __unix__ /* should already be defined */
