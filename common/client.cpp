@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.85  1998/07/08 09:28:10  jlawson
+// eliminate integer size warnings on win16
+//
 // Revision 1.84  1998/07/08 09:22:52  remi
 // Added support for the MMX bitslicer.
 // Wrapped $Log comments to some reasonable value.
@@ -174,7 +177,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-static const char *id="@(#)$Id: client.cpp,v 1.84 1998/07/08 09:22:52 remi Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.85 1998/07/08 09:28:10 jlawson Exp $";
 return id; }
 #endif
 
@@ -401,7 +404,7 @@ Client::Client()
          oldlurkstatus=0;      // Trigger the lurk the first time client is run
 #endif
   contestdone[0]=contestdone[1]=0;
-  srand( time( NULL ) );
+  srand( (unsigned) time( NULL ) );
   InitRandom();
 #ifdef MMX_BITSLICER
   usemmx = 1;
@@ -656,7 +659,7 @@ s32 Client::Fetch( u8 contest, Network *netin, s32 quietness )
     packet.op = htonl( OP_REQUEST_MULTI );
 #if (CLIENT_CPU == CPU_X86)
     // x86 cores require <=31
-    packet.iterations = htonl( 1 << min(31,preferred_blocksize) );
+    packet.iterations = htonl( 1 << min(31, (int) preferred_blocksize) );
 #else
     //packet.iterations = 0x10000000L;     // Request 1 block
     packet.iterations = htonl( 1 << preferred_blocksize );
@@ -1093,7 +1096,7 @@ s32 Client::Flush( u8 contest , Network *netin, s32 quietness )
       packet.build = htonl( ( (u32) data.buildhi) * 100 + ( (u32) data.buildlo ) );
     }
     for ( i = strlen(packet.id) ; i < sizeof(packet.id) ; i++ )
-      packet.id[i] = 0;
+      packet.id[(int) i] = 0;
 
     oper = ntohl( data.op );
     // oper in host order
@@ -1461,12 +1464,12 @@ s32 Client::SelfTest( u8 contest )
     // load test case
     if (contest == 1) {
       // RC5-64
-      expectedsolution.lo = (*test_cases)[i][0];
-      expectedsolution.hi = (*test_cases)[i][1];
+      expectedsolution.lo = (*test_cases)[(int) i][0];
+      expectedsolution.hi = (*test_cases)[(int) i][1];
     } else {
       // DES
-      expectedsolution.lo = (*test_cases)[i][0];
-      expectedsolution.hi = (*test_cases)[i][1];
+      expectedsolution.lo = (*test_cases)[(int) i][0];
+      expectedsolution.hi = (*test_cases)[(int) i][1];
 
       convert_key_from_des_to_inc ( (u32 *) &expectedsolution.hi, (u32 *) &expectedsolution.lo);
 
@@ -1479,12 +1482,12 @@ s32 Client::SelfTest( u8 contest )
     }
     contestwork.key.lo = htonl( expectedsolution.lo & 0xFFFF0000L);
     contestwork.key.hi = htonl( expectedsolution.hi );
-    contestwork.iv.lo = htonl( (*test_cases)[i][2] );
-    contestwork.iv.hi = htonl( (*test_cases)[i][3] );
-    contestwork.plain.lo = htonl( (*test_cases)[i][4] );
-    contestwork.plain.hi = htonl( (*test_cases)[i][5] );
-    contestwork.cypher.lo = htonl( (*test_cases)[i][6] );
-    contestwork.cypher.hi = htonl( (*test_cases)[i][7] );
+    contestwork.iv.lo = htonl( (*test_cases)[(int) i][2] );
+    contestwork.iv.hi = htonl( (*test_cases)[(int) i][3] );
+    contestwork.plain.lo = htonl( (*test_cases)[(int) i][4] );
+    contestwork.plain.hi = htonl( (*test_cases)[(int) i][5] );
+    contestwork.cypher.lo = htonl( (*test_cases)[(int) i][6] );
+    contestwork.cypher.hi = htonl( (*test_cases)[(int) i][7] );
     contestwork.keysdone.lo = htonl( 0 );
     contestwork.keysdone.hi = htonl( 0 );
     contestwork.iterations.lo = htonl( 0x00010000L );  // only need to get to xDEEO
@@ -1529,8 +1532,8 @@ s32 Client::SelfTest( u8 contest )
           if (tmpcontest == 1)
           {
             // DES...
-            u32 hi = (*test_cases)[i][1];
-            u32 lo = (*test_cases)[i][0];
+            u32 hi = (*test_cases)[(int) i][1];
+            u32 lo = (*test_cases)[(int) i][0];
 
             u32 hi2 = ntohl( rc5result.key.hi ) + (u32) ntohl( rc5result.keysdone.hi );
             u32 lo2 = ntohl( rc5result.key.lo ) + (u32) ntohl( rc5result.keysdone.lo );
@@ -1817,11 +1820,11 @@ s32 Client::Run( void )
     {
       if (getbuff_errs == 0)
       {
-        if (!contestdone[ preferred_contest_id ])
+        if (!contestdone[ (int) preferred_contest_id ])
         {
           // Neither contest is done...
           count = GetBufferInput( &fileentry , (u8) preferred_contest_id);
-          if (contestdone[ preferred_contest_id ]) // This contest just finished.
+          if (contestdone[ (int) preferred_contest_id ]) // This contest just finished.
           {
             goto PreferredIsDone1;
           }
@@ -1907,37 +1910,38 @@ PreferredIsDone1:
 
           for (s32 tmpc = 0; tmpc < 2; tmpc++) //once for each contest
           {
-            if (have_loaded_buffers[tmpc]) //load any of this type?
+            if (have_loaded_buffers[(int) tmpc]) //load any of this type?
             {
-              int in = CountBufferInput((u8) tmpc), out = CountBufferOutput((u8) tmpc);
-              Log( " %s  %d %s block%s remain%s in file %s\n", CliGetTimeString(NULL,1),
+              int in = (int) CountBufferInput((u8) tmpc);
+              int out = (int) CountBufferOutput((u8) tmpc);
+              Log( "[%s] %d %s block%s remain%s in file %s\n", CliGetTimeString(NULL,1),
                 in,
-                CliGetContestNameFromID(tmpc),
+                CliGetContestNameFromID((int) tmpc),
                 in == 1 ? "" : "s",
                 in == 1 ? "s" : "",
                 (nodiskbuffers ? "(memory-in)" : 
 #ifdef DONT_USE_PATHWORK
-                ini_in_buffer_file[tmpc]));
+                ini_in_buffer_file[(int) tmpc]));
 #else                
-                in_buffer_file[tmpc]));
+                in_buffer_file[(int) tmpc]));
 #endif                
               Log( " %s  %d %s block%s %s in file %s\n", CliGetTimeString(NULL,0),
                 out,
-                CliGetContestNameFromID(tmpc),
+                CliGetContestNameFromID((int) tmpc),
                 out == 1 ? "" : "s",
                 out == 1 ? "is" : "are",
                 (nodiskbuffers ? "(memory-out)" : 
 #ifdef DONT_USE_PATHWORK
-                ini_out_buffer_file[tmpc]));
+                ini_out_buffer_file[(int) tmpc]));
 #else
-                out_buffer_file[tmpc]));
+                out_buffer_file[(int) tmpc]));
 #endif                
             }
           }
         }
       }
 
-      (problem[cpu_i]).LoadState( (ContestWork *) &fileentry , (u32) (fileentry.contest) );
+      (problem[(int) cpu_i]).LoadState( (ContestWork *) &fileentry , (u32) (fileentry.contest) );
 
       //----------------------------
       //spin off a thread for this problem
@@ -2041,19 +2045,19 @@ PreferredIsDone1:
       for (cpu_i = 0; cpu_i < numcputemp; cpu_i++)
       {
         //startpercent is 1/100000 not 1/100
-        problem[cpu_i].percent = ((problem[cpu_i]).startpercent / 1000);
+        problem[(int) cpu_i].percent = ((problem[(int) cpu_i]).startpercent / 1000);
         if (numcputemp > 1)
         {
           LogScreenPercentMulti((u32) cpu_i%numcputemp,
-            (u32) problem[cpu_i].percent, 0, (bool) problem[cpu_i].restart );
+            (u32) problem[(int) cpu_i].percent, 0, (bool) problem[(int) cpu_i].restart );
           cpu_i++;
         }
         else
         {
-          LogScreenPercentSingle((u32) problem[cpu_i].percent, 0,
-                                        (bool)problem[cpu_i].restart );
+          LogScreenPercentSingle((u32) problem[(int) cpu_i].percent, 0,
+                                        (bool)problem[(int) cpu_i].restart );
         }
-        problem[cpu_i].restart = 0;
+        problem[(int) cpu_i].restart = 0;
       }
     }
   } //if (!percentprintingoff)
@@ -2246,19 +2250,19 @@ PreferredIsDone1:
         }
         else
         #endif
-        if (problem[cpu_i].started == 1)
+        if (problem[(int) cpu_i].started == 1)
         {
-          int percent2 = problem[cpu_i].CalcPercent();
-          if ( percent2 > (int) problem[cpu_i].percent )
+          int percent2 = (int) problem[(int) cpu_i].CalcPercent();
+          if ( percent2 > (int) problem[(int) cpu_i].percent )
           {
             if (numcputemp > 1)
                 LogScreenPercentMulti((u32) cpu_i%numcputemp, (u32) percent2,
-                (u32) problem[cpu_i].percent, (bool) problem[cpu_i].restart);
+                (u32) problem[(int) cpu_i].percent, (bool) problem[(int) cpu_i].restart);
             else
-              LogScreenPercentSingle((u32) percent2, (u32) problem[cpu_i].percent,
-                (bool) problem[cpu_i].restart);
-              problem[cpu_i].percent = percent2;
-              problem[cpu_i].restart = 0;
+              LogScreenPercentSingle((u32) percent2, (u32) problem[(int) cpu_i].percent,
+                (bool) problem[(int) cpu_i].restart);
+              problem[(int) cpu_i].percent = percent2;
+              problem[(int) cpu_i].restart = 0;
           }
         }
       }
@@ -2268,9 +2272,9 @@ PreferredIsDone1:
       // -------------
 
       // Did any threads finish a block???
-      if ((problem[cpu_i]).finished == 1)
+      if ((problem[(int) cpu_i]).finished == 1)
       {
-        (problem[cpu_i]).GetResult( &rc5result );
+        (problem[(int) cpu_i]).GetResult( &rc5result );
 
         //-----------------
         //only do something if RESULT_FOUND or RESULT_NOTHING
@@ -2285,16 +2289,16 @@ PreferredIsDone1:
 
           {
             Log( "\n[%s] %s", CliGetTimeString(NULL,1), /* == Time() */
-                   CliGetMessageForProblemCompleted( &(problem[cpu_i]) ) );
+                   CliGetMessageForProblemCompleted( &(problem[(int) cpu_i]) ) );
           }
 
           //----------------------------------------
           // Figure out which contest block was from, and increment totals
           //----------------------------------------
 
-          tmpcontest = (u8) (problem[cpu_i]).RetrieveState( (ContestWork *) &fileentry , 1 );
+          tmpcontest = (u8) (problem[(int) cpu_i]).RetrieveState( (ContestWork *) &fileentry , 1 );
 
-          totalBlocksDone[tmpcontest]++;
+          totalBlocksDone[(int) tmpcontest]++;
 
           //----------------------------------------
           // Print contest totals
@@ -2305,14 +2309,14 @@ PreferredIsDone1:
 
           {
           //display summaries only of contests w/ more than one block done
-          int i=1;
+          int i = 1;
           for (s32 tmpc = 0; tmpc < 2; tmpc++)
             {
-              if (totalBlocksDone[tmpc] > 0)
+              if (totalBlocksDone[(int) tmpc] > 0)
                 {
                   Log( "%c%s%c Summary: %s\n",
                        ((i == 1) ? ('[') : (' ')), CliGetTimeString(NULL, i),
-                       ((i == 1) ? (']') : (' ')), CliGetSummaryStringForContest(tmpc) );
+                       ((i == 1) ? (']') : (' ')), CliGetSummaryStringForContest((int) tmpc) );
                   if ((--i) < 0) i = 0;
                 }
             }
@@ -2322,7 +2326,7 @@ PreferredIsDone1:
           //put the completed problem away
           //---------------------
 
-          tmpcontest = fileentry.contest = (u8) (problem[cpu_i]).RetrieveState( (ContestWork *) &fileentry , 1 );
+          tmpcontest = fileentry.contest = (u8) (problem[(int) cpu_i]).RetrieveState( (ContestWork *) &fileentry , 1 );
 
           // make it into a reply
           if (rc5result.result == RESULT_FOUND)
@@ -2357,8 +2361,9 @@ PreferredIsDone1:
           if ( PutBufferOutput( &fileentry ) == -1 )
             {
             Log( "PutBuffer Error\n" );
-            totalBlocksDone[tmpcontest]--;// Block didn't get put into a
-                                          //buffer, subtract it from the count.
+
+            // Block didn't get put into a buffer, subtract it from the count.
+            totalBlocksDone[(int)tmpcontest]--;                                          
             };
 
           //---------------------
@@ -2399,11 +2404,11 @@ PreferredIsDone1:
           {
             if (getbuff_errs == 0)
             {
-              if (!contestdone[ preferred_contest_id ])
+              if (!contestdone[ (int) preferred_contest_id ])
               {
                 // Neither contest is done...
                 count = GetBufferInput( &fileentry , (u8) preferred_contest_id);
-                if (contestdone[ preferred_contest_id ]) // This contest just finished.
+                if (contestdone[ (int) preferred_contest_id ]) // This contest just finished.
                 {
                   goto PreferredIsDone2;
                 }
@@ -2452,7 +2457,7 @@ PreferredIsDone1:
             // key -- this will prevent a 2-pipelined core from looping forever.
             if ((ntohl(fileentry.iterations.lo) & 0x00000001L) == 1)
             {
-              fileentry.iterations.lo = htonl((ntohl(fileentry.iterations.lo) & 0xFFFFFFFE) + 1);
+              fileentry.iterations.lo = htonl((ntohl(fileentry.iterations.lo) & 0xFFFFFFFEL) + 1);
               fileentry.key.lo = htonl(ntohl(fileentry.key.lo) & 0xFEFFFFFFL);
             }
             if (fileentry.contest != 1)
@@ -2481,7 +2486,7 @@ PreferredIsDone1:
 
           if (!nonewblocks)
           {
-            int outcount = CountBufferOutput(fileentry.contest);
+            int outcount = (int) CountBufferOutput((int) fileentry.contest);
             Log( "[%s] %s\n", CliGetTimeString(NULL,1), /* == Time() */
                               CliGetMessageForFileentryLoaded( &fileentry ) );
             Log( "[%s] %d %s block%s remain%s in file %s\n"
@@ -2490,17 +2495,17 @@ PreferredIsDone1:
                  count == 1 ? "" : "s", count == 1 ? "s" : "",
                  (nodiskbuffers ? "(memory-in)" : 
 #ifdef DONT_USE_PATHWORK
-                 ini_in_buffer_file[fileentry.contest]),
+                 ini_in_buffer_file[(int)fileentry.contest]),
 #else                 
-                 in_buffer_file[fileentry.contest]),
+                 in_buffer_file[(int)fileentry.contest]),
 #endif                 
                  CliGetTimeString(NULL,1), outcount, CliGetContestNameFromID(fileentry.contest),
                  outcount == 1 ? "" : "s", outcount == 1 ? "is" : "are",
                  (nodiskbuffers ? "(memory-out)" : 
 #ifdef DONT_USE_PATHWORK
-                 ini_out_buffer_file[fileentry.contest]) );
+                 ini_out_buffer_file[(int)fileentry.contest]) );
 #else                 
-                 out_buffer_file[fileentry.contest]) );
+                 out_buffer_file[(int)fileentry.contest]) );
 #endif                 
           }
 
@@ -2508,7 +2513,7 @@ PreferredIsDone1:
           // now load the problem with the fileentry
           //---------------------
           if (!nonewblocks)
-            (problem[cpu_i]).LoadState( (ContestWork *) &fileentry , (u32) (fileentry.contest) );
+            (problem[(int)cpu_i]).LoadState( (ContestWork *) &fileentry , (u32) (fileentry.contest) );
 
         } // end (if 'found' or 'nothing')
 
@@ -2651,9 +2656,9 @@ PreferredIsDone1:
 
       for (cpu_i = (load_problem_count - 1); cpu_i >= 0; cpu_i-- )
       {
-        if ((problem[cpu_i]).IsInitialized())
+        if ((problem[(int)cpu_i]).IsInitialized())
         {
-          fileentry.contest = (u8) (problem[cpu_i]).RetrieveState( (ContestWork *) &fileentry , 1 );
+          fileentry.contest = (u8) (problem[(int)cpu_i]).RetrieveState( (ContestWork *) &fileentry , 1 );
           fileentry.op = htonl( OP_DATA );
 
           fileentry.os = CLIENT_OS;
@@ -2689,9 +2694,9 @@ PreferredIsDone1:
       // Shutting down: delete checkpoint files
       // ----------------
 
-      if ((checkpoint_file[0][0])!=0 && strcmp(checkpoint_file[0],"none") != 0)
+      if ((checkpoint_file[0][0]) != 0 && strcmp(checkpoint_file[0],"none") != 0)
         EraseCheckpointFile(checkpoint_file[0]);
-      if ((checkpoint_file[1][0])!=0 && strcmp(checkpoint_file[1],"none") != 0)
+      if ((checkpoint_file[1][0]) != 0 && strcmp(checkpoint_file[1],"none") != 0)
         EraseCheckpointFile(checkpoint_file[1]);
 
       // ----------------
@@ -2701,10 +2706,10 @@ PreferredIsDone1:
       // no disk buffers -- we had better flush everything.
       if (nodiskbuffers)
       {
-        SignalTriggered=2; // ignored by flush.
+        SignalTriggered = 2; // ignored by flush.
         ForceFlush((u8) preferred_contest_id ) ;
         ForceFlush((u8) ! preferred_contest_id );
-        SignalTriggered=1; // not really required.
+        SignalTriggered = 1; // not really required.
       }
 
     } // TimeToQuit
@@ -2716,14 +2721,14 @@ PreferredIsDone1:
     if (!TimeToQuit)
     {
       // Time to checkpoint?
-      if ( (((checkpoint_file[0][0])!=0 && (strcmp(checkpoint_file[0],"none") != 0)) || 
-            ((checkpoint_file[1][0])!=0 && (strcmp(checkpoint_file[1],"none") != 0)))
+      if ( (((checkpoint_file[0][0]) != 0 && (strcmp(checkpoint_file[0],"none") != 0)) || 
+            ((checkpoint_file[1][0]) != 0 && (strcmp(checkpoint_file[1],"none") != 0)))
            && (!nodiskbuffers) && (!pausefilefound))
       {
         if ( (!TimeToQuit ) && ( ( (s32) time( NULL ) ) > ( (s32) nextcheckpointtime ) ) )
 
         {
-          nextcheckpointtime=time(NULL)+checkpoint_min*60;
+          nextcheckpointtime = time(NULL) + checkpoint_min * 60;
           //Checkpoints may be slightly late (a few seconds). However,
           //this eliminates checkpoint catchup due to pausefiles/clock
           //changes/other nasty things that change the clock
@@ -2748,13 +2753,13 @@ void Client::DoCheckpoint( int load_problem_count )
 {
   FileEntry fileentry;
 
-  for (s32 j = 0; j < 2; j++)
+  for (int j = 0; j < 2; j++)
   {
     if ((checkpoint_file[j][0])!=0 && strcmp(checkpoint_file[j],"none") != 0)
     {
       EraseCheckpointFile(checkpoint_file[j]); // Remove prior checkpoint information (if any).
 
-      for (s32 cpu_i=0 ; cpu_i < load_problem_count ; cpu_i++)
+      for (int cpu_i = 0 ; cpu_i < (int) load_problem_count ; cpu_i++)
       {
         fileentry.contest = (u8) (problem[cpu_i]).RetrieveState( (ContestWork *) &fileentry , 0 );
         if (fileentry.contest == j)
@@ -2890,12 +2895,12 @@ void Client::LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted
   // fixes the problem of "100%" running off an 80 column screen and
   // also gives a '.' sooner for new blocks.
   char buffer[88];
-  unsigned int p, pos = 0;
-  unsigned int restartpercent =
-              (!restarted || percent==100) ? 0 :
-              ( percent - ((percent>90)?(percent&1):(1-(percent&1))) );
-  buffer[0]=0;
-  for ( p = (lastpercent + 1) ; (pos < 80) && (p < (percent+1)) ; p++ )
+  int pos = 0;  
+  u32 restartpercent =
+              (!restarted || percent == 100) ? 0 :
+              ( percent - ((percent > 90) ? (percent & 1) : (1 - (percent & 1))) );
+  buffer[0] = 0;
+  for ( u32 p = (lastpercent + 1) ; (pos < 80) && (p < (percent+1)) ; p++ )
   {
     if ( p == 100 )
       { strcat( buffer, "100" ); pos+=3; } //LogScreen("100");
@@ -2931,28 +2936,30 @@ s32 Client::SetContestDoneState( Packet * packet)
 
   // Set the contestdone state, if possible...
   // Move contestdone[] from 0->1, or 1->0.
-  detect=0;
+  detect = 0;
   if (packet->descontestdone == ntohl(0xBEEFF00DL)) {
-    if (contestdone[1]==0) {detect=2;contestdone[1]=1;}
+    if (contestdone[1]==0) {detect = 2; contestdone[1] = 1;}
   } else {
-    if (contestdone[1]==1) {detect=2;contestdone[1]=0;}
+    if (contestdone[1]==1) {detect = 2; contestdone[1] = 0;}
   }
-  if (detect==2) {
-    Log( "Received notification: %s contest %s.\n",(detect==2?"DES":"RC5"),
-         (contestdone[detect-1]?"is not currently active":"has started") );
+  if (detect == 2) {
+    Log( "Received notification: %s contest %s.\n",
+         (detect == 2 ? "DES" : "RC5"),
+         (contestdone[(int)detect-1]?"is not currently active":"has started") );
   }
 
   if (packet->rc564contestdone == ntohl(0xBEEFF00DL)) {
-    if (contestdone[0]==0) {detect=1;contestdone[0]=1;}
+    if (contestdone[0] == 0) {detect = 1; contestdone[0] = 1;}
   } else {
-    if (contestdone[0]==1) {detect=1;contestdone[0]=0;}
+    if (contestdone[0] == 1) {detect = 1; contestdone[0] = 0;}
   }
-  if (detect==1) {
-    Log( "Received notification: %s CONTEST %s\n",(detect==2?"DES":"RC5"),
-         (contestdone[detect-1]?"IS OVER":"HAS STARTED") );
+  if (detect == 1) {
+    Log( "Received notification: %s CONTEST %s\n",
+        (detect == 2 ? "DES" : "RC5"),
+        (contestdone[(int)detect-1]?"IS OVER":"HAS STARTED") );
   }
 
-  if (detect!=0) {
+  if (detect != 0) {
     WriteContestandPrefixConfig();
     return 1;
   }
