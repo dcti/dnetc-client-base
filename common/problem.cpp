@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.23  1998/06/17 02:14:47  blast
+// Added code to test a new 68030 core which I got from an outside
+// source ... Commented out of course ...
+//
 // Revision 1.22  1998/06/16 21:53:28  silby
 // Added support for dual x86 DES cores (p5/ppro)
 //
@@ -29,7 +33,7 @@
 // Added $Log.
 //
 
-static const char *id_problem_cpp="@(#)$Id: problem.cpp,v 1.22 1998/06/16 21:53:28 silby Exp $";
+static const char *id_problem_cpp="@(#)$Id: problem.cpp,v 1.23 1998/06/17 02:14:47 blast Exp $";
 
 #define NEW_STATS_AND_LOGMSG_STUFF
 
@@ -63,6 +67,8 @@ static const char *id_problem_cpp="@(#)$Id: problem.cpp,v 1.22 1998/06/16 21:53:
   int whichcrunch = 0;
 #elif (CLIENT_CPU == CPU_68K)
   extern "C" int rc5_unit_func( RC5UnitWork *work );
+//  extern "C" __asm int rc5_girv( register __a0 RC5UnitWork *work );
+// Testing a new 68030 core which might be used later...
 #elif (CLIENT_CPU == CPU_ARM)
   u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long iterations  );
 #elif ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU==CPU_68K))
@@ -434,7 +440,10 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     /*
         returns timeslice - keys processed
     */
+
     kiter = rc5_unit_func(&rc5unitwork, timeslice);
+//    kiter = rc5_girv(&rc5unitwork, timeslice);
+// for testing new 68030 core... look above
     contestwork.keysdone.lo += timeslice;
     if (kiter)
     {
@@ -485,6 +494,8 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     while ( timeslice-- ) // timeslice ignores the number of pipelines
     {
       u32 result = rc5_unit_func( &rc5unitwork );
+//      u32 result = rc5_girv( &rc5unitwork );
+// for testing new 68030 core .. Look above...
       if ( result )
       {
       // found it?
