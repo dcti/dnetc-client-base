@@ -5,14 +5,14 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CPUCHECK_H__
-#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.11 1999/04/06 10:20:48 cyp Exp $"
+#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.12 1999/12/04 15:37:08 cyp Exp $"
 
-//get core type by hardware detection
-int GetProcessorType(int quietly);
+//return number of processors detected (by the hardware/from the OS)
+//returns -1 if detection is not supported.
+int GetNumberOfDetectedProcessors( void );
 
-//returns the number of cpus (>=0). 
-//Zero is valid and symbolizes 'force-single-threading'.
-unsigned int ValidateProcessorCount(int numcpu, int quietly);
+//get cpu ident by hardware detection
+long GetProcessorType(int quietly);
 
 //Return cpuid/cputag, maxcpus, foundcpus as descriptive strings.
 //Assists in debugging user complaints/bug reports.
@@ -22,25 +22,5 @@ void GetProcessorInformationStrings( const char ** scpuid,
 //Wrapper for GetProcessorInformationStrings()
 //(used to be a client class function for access to the log functions)
 void DisplayProcessorInformation( void );
-
-//returns number of processors supported by the client.
-//should this be in client.cpp?
-unsigned int GetNumberOfSupportedProcessors( void );
-
-//return number of processors detected (by the hardware/from the OS)
-//returns -1 if detection is not supported.
-int GetNumberOfDetectedProcessors( void );
-
-// GetTimesliceBaseline() returns a value that the ideal RC5 keyrate (kKeys 
-// per Mhz) would be IF a machine were running at peak efficiency. For 
-// non-preemptive systems, it is thus a good indicator of how low we can 
-// set the timeslice/rate-of-yield without losing efficiency. Or inversely, 
-// at what point OS responsiveness starts to suffer - which also applies to 
-// preemptive but non-mt systems handling of a break request. 
-//
-// The function can also be used on non-mt systems to check for an excessive
-// timeslice - on x86 systems an excessive timeslice is > 3*baseline
-
-unsigned int GetTimesliceBaseline(void);
 
 #endif /* __CPUCHECK_H__ */

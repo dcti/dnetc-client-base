@@ -2,25 +2,14 @@
  * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
+ *
+ * This module contains hardware identification stuff.
+ * See notes on implementing __GetRawProcessorID() below.
+ *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.95 1999/12/02 05:15:00 cyp Exp $"; }
-
-/* ------------------------------------------------------------------------ */
-/*
-   Implementing long __GetRawProcessorID( const char **cpuname ):
-   
-   if identification failed:           return ID==-1L, and set cpuname
-                                       to NULL 
-   if identification is not supported: return ID==-2L, and set cpuname
-                                       to NULL 
-   if we have a name, but no ID:       return ID==0, set cpuname to the 
-                                       raw name (eg "PCA56" )
-   if we have an ID and a name:        return ID and fully formatted 
-                                       name (eg "Alpha EV5.6 (21164PC)")
-   if we have an ID but no name:       return ID, set cpuname to ""
-                                                   -  cyp April/03/1999
-*/
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.96 1999/12/04 15:37:08 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -38,19 +27,6 @@ return "@(#)$Id: cpucheck-conflict.cpp,v 1.95 1999/12/02 05:15:00 cyp Exp $"; }
 #  include <machine/cpuconf.h>
 #elif (CLIENT_OS == OS_AIX)
 #  include <sys/systemcfg.h>
-/* if compiled on older versions of 4.x ... */
-#  ifndef POWER_620
-#    define POWER_620 0x0040
-#  endif
-#  ifndef POWER_630
-#    define POWER_630 0x0080
-#  endif
-#  ifndef POWER_A35
-#    define POWER_A35 0x0100
-#  endif
-#  ifndef POWER_RS64II
-#    define POWER_RS64II    0x0200          /* RS64-II class CPU */
-#  endif
 #elif (CLIENT_OS == OS_FREEBSD)
 #  include <sys/sysctl.h>
 #elif (CLIENT_OS == OS_NETBSD)
@@ -59,17 +35,22 @@ return "@(#)$Id: cpucheck-conflict.cpp,v 1.95 1999/12/02 05:15:00 cyp Exp $"; }
 #endif
 
 /* ------------------------------------------------------------------------ */
+/*
+   Implementing long __GetRawProcessorID( const char **cpuname ):
+   
+   if identification failed:           return ID==-1L, and set cpuname
+                                       to NULL 
+   if identification is not supported: return ID==-2L, and set cpuname
+                                       to NULL 
+   if we have a name, but no ID:       return ID==0, set cpuname to the 
+                                       raw name (eg "PCA56" )
+   if we have an ID and a name:        return ID and fully formatted 
+                                       name (eg "Alpha EV5.6 (21164PC)")
+   if we have an ID but no name:       return ID, set cpuname to ""
+                                                   -  cyp April/03/1999
+*/
 
-unsigned int GetNumberOfSupportedProcessors( void )
-{
-#if (CLIENT_OS == OS_RISCOS)
-  return ( 2 ); /* not just some arbitrary number */
-#else
-  return ( 128 ); /* just some arbitrary number */
-#endif
-}
-
-/* ---------------------------------------------------------------------- */
+/* ------------------------------------------------------------------------ */
 
 int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
 {
@@ -187,7 +168,8 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     #elif (CLIENT_OS == OS_AIX)
     {
       cpucount = sysconf(_SC_NPROCESSORS_ONLN);
-//    cpucount = _system_configuration.ncpus; should work the same way but might go
+      //cpucount = _system_configuration.ncpus; 
+      //should work the same way but might go
     }
     #elif (CLIENT_OS == OS_RISCOS)
     {
@@ -212,47 +194,6 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
   }
 
   return cpucount;
-}
-
-/* ---------------------------------------------------------------------- */
-
-unsigned int ValidateProcessorCount( int numcpu, int quietly )
-{
-  static int detected_count = -2;
-
-  //--------------------------------------
-  // Validate processor/thread count:
-  // numcpu with zero implies "force-single-threaded"
-  //--------------------------------------
-
-  if (detected_count == -2)  // returns -1 if no hardware detection
-    detected_count = GetNumberOfDetectedProcessors(); 
-
-  if (numcpu < 0)                //numcpu == 0 implies force non-mt;
-  {                              //numcpu < 0  implies autodetect
-    if ( detected_count < 1 )
-    {
-      if (!quietly)
-        LogScreen( CLIENT_OS_NAME " does not support SMP or\n"
-                  "does not support processor count detection.\n"
-                  /* "Automatic processor count detection failed.\n" */
-                  "A single processor machine is assumed.\n");
-      detected_count = 1;
-    }
-    else if (!quietly)
-    {
-      LogScreen("Automatic processor detection found %d processor%s.\n",
-                detected_count, ((detected_count==1)?(""):("s")) );
-    }
-    numcpu = detected_count;
-    if (numcpu < 0) //zero is legal (implies force-single-threaded)
-      numcpu = 0;
-  }
-
-  if (((unsigned int)(numcpu)) > GetNumberOfSupportedProcessors())
-    numcpu = (int)GetNumberOfSupportedProcessors();
-
-  return (unsigned int)numcpu;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -377,123 +318,121 @@ static long __GetRawProcessorID(const char **cpuname)
 
 /* ---------------------------------------------------------------------- */
 
-#if (CLIENT_OS == OS_AIX)
-
-#define ARCH_IS_POWER 0x20
-
-static long __GetRawProcessorID( const char **cpuname )
-{
-  static long detectedtype = -2; /* -1==failed, -2==not supported */
-  static const char *detectedname = NULL;
-
-  if ( detectedtype == -2 ) {
-    long arch_id;
-// we treat the PPC as the default platform
-    if ( _system_configuration.architecture == POWER_RS ) {
-      arch_id=ARCH_IS_POWER;
-    } else {
-      arch_id=0;
-    }
-
-    switch (_system_configuration.implementation) {
-    case POWER_601:
-      detectedname="PowerPC 601";
-      detectedtype= 0x01 | arch_id;
-      break;
-    case POWER_603:
-      detectedname="PowerPC 603";
-      detectedtype= 0x02 | arch_id;
-      break;
-    case POWER_604:
-      detectedname="PowerPC 604";
-      detectedtype= 0x03 | arch_id;
-      break;
-    case POWER_620:
-      detectedname="PowerPC 620";
-      detectedtype= (0x04 | arch_id);
-      break;
-    case POWER_630:
-      detectedname="PowerPC 630";
-      detectedtype= (0x05 | arch_id);
-      break;
-    case POWER_A35:
-      detectedname="PowerPC A35"; // this should be an AS/400 !!!! (65-bit)
-      detectedtype= (0x05 | arch_id);
-      break;
-    case POWER_RS64II:
-      detectedname="PowerPC RS64II"; // nameing not correct but how
-      detectedtype= (0x06 | arch_id);
-      break;
-    case POWER_RS1:
-      detectedname="POWER RS";
-      detectedtype= (0x10 | arch_id);
-      break;
-    case POWER_RSC:
-      detectedname="POWER RS2 Superchip"; // nameing ??
-      detectedtype= (0x11 | arch_id);
-      break;
-    case POWER_RS2:
-      detectedname="POWER RS2";
-      detectedtype= (0x12 | arch_id);
-      break;
-    default:
-      detectedname=NULL;
-      detectedtype= -1;
-      break;
-    }
-  #ifndef _AIXALL
-  #if (CLIENT_CPU == CPU_POWER)
-    if ( arch_id != ARCH_IS_POWER )
-        LogScreen("The CPU detected is not supported by this client.\n"
-                "Please use this client only on POWER systems.\n");
-  #else
-    if ( arch_id == ARCH_IS_POWER )
-        LogScreen("The CPU detected is not supported by this client.\n"
-                "Please use this client only on PowerPC systems.\n");
-  #endif
-  #endif
-  }
-  *cpuname=detectedname;
-  return(detectedtype);
-
-}
-
-#endif /* (CLIENT_OS == OS_AIX) */
-
-/* ---------------------------------------------------------------------- */
-
-#if (CLIENT_CPU == CPU_POWERPC) && !defined(_AIXALL)
+#if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
 static long __GetRawProcessorID(const char **cpuname)
 {
   /* ******* detected type reference is (PVR value >> 16) *********** */
   static long detectedtype = -2L; /* -1 == failed, -2 == not supported */
+  static int ispower = 0;
   static const char *detectedname = NULL;
   static char namebuf[30];
-  static struct { int rid; const char *name; } cpuridtable[] = {
-                {       1, "601"             },
-                {       3, "603"             },
-                {       4, "604"             },
-                {       6, "603e"            },
-                {       7, "603ev"           },
-                {       8, "740/750/G3"      },
-                {       9, "604e"            },
-                {      10, "604ev"           },
-                {      11, "7400/G4"         }
+  static struct { long rid; const char *name; int powername} cpuridtable[] = {
+    //note: if the name is not prefixed with "Power", it defaults to "PowerPC"
+    //note: Non-PVR based numbers start at 0x10000 (real PVR numbers are 16bit)
+                {         1,   "601"                   }
+                {         3,   "603"                   },
+                {         4,   "604"                   },
+                {         6,   "603e"                  },
+                {         7,   "603ev"                 },
+                {         8,   "740/750/G3"            },
+                {         9,   "604e"                  },
+                {        10,   "604ev"                 },
+                {        12,   "7400/G4"               },
+                {        50,   "821"                   },
+                {        80,   "860"                   },
+                {0x10000L+1,   "Power RS"              }, //not PVR based
+                {0x10000L+2,   "Power RS2 Superchip"   }, //not PVR based
+                {0x10000L+3,   "Power RS2"             }, //not PVR based
+                {0x10000L+4,   "620"                   }, //not PVR based
+                {0x10000L+5,   "630"                   }, //not PVR based
+                {0x10000L+6,   "A35"                   }, //not PVR based
+                {0x10000L+7,   "RS64II"                }, //not PVR based
                 };
-
-  #if (CLIENT_OS == OS_MACOS)
+  #if (CLIENT_OS == OS_AIX)
+  if (detectedtype == -2L)
+  { 
+    /* extract from src/bos/kernel/sys/POWER/systemcfg.h 1.12 */
+    #ifndef POWER_RS1
+    #  define POWER_RS1 0x0001
+    #endif
+    #ifndef POWER_RSC
+    #  define POWER_RSC 0x0002
+    #endif
+    #ifndef POWER_RS2
+    #  define POWER_RS2 0x0004
+    #endif
+    #ifndef POWER_601
+    #  define POWER_601 0x0008
+    #endif
+    #ifndef POWER_603
+    #  define POWER_603 0x0020
+    #endif
+    /* if compiled on older versions of 4.x ... */
+    #ifndef POWER_620
+    #  define POWER_620 0x0040
+    #endif
+    #ifndef POWER_630
+    #  define POWER_630 0x0080
+    #endif
+    #ifndef POWER_A35
+    #  define POWER_A35 0x0100
+    #endif
+    #ifndef POWER_RS64II
+    #  define POWER_RS64II 0x0200 /* RS64-II class CPU */
+    #endif
+    static struct { long imp;   long rid; } cpumap[] = {
+                  { POWER_601,            1 },
+                  { POWER_603,            3 },
+                  { POWER_604,            4 },
+                  { POWER_RS1,   0x10000L+1 },
+                  { POWER_RSC,   0x10000L+2 },
+                  { POWER_RS2,   0x10000L+3 },
+                  { POWER_620,   0x10000L+4 },
+                  { POWER_630,   0x10000L+5 },
+                  { POWER_A35,   0x10000L+6 },
+                  { POWER_RS64II,0x10000L+7 },
+                  };
+    unsigned int imp_i;
+    detectedtype = -1L; /* assume failed */
+    if ( _system_configuration.architecture == POWER_RS ) 
+      ispower = 1;
+    for (imp_i = 0; imp_i < (sizeof(cpumap)/sizeof(cpumap[0])); imp_i++)
+    {
+      if (cpumap[i].imp == _system_configuration.implementation )
+      {
+        detectedtype = cpumap[i].rid;
+        break;
+      }
+    }
+    if (detectedtype == -1L) /* ident failed */
+    {
+      sprintf( namebuf, "impl:0x%lX", _system_configuration.implementation );
+      detectedname = (const char *)&namebuf[0];
+      if (ispower) /* if POWER CPU, then don't let ident fail */
+      {            /*   - we need the power bit in the retval */
+        detectedtype = _system_configuration.implementation + 0x10000;
+      }
+    }
+  }
+  #elif (CLIENT_OS == OS_MACOS)
   if (detectedtype == -2L)
   {
     // Note: need to use gestaltNativeCPUtype in order to get the correct
     // value for G3 upgrade cards in a 601 machine.
-    long result, processorAttributes = 0;
+    // Some Mac people are idiots, so I'll spell it out again:
+    // ******* detected type reference is (PVR value >> 16) ***********
+    // PVR is a hardware value from the cpu and is available on every 
+    // PPC CPU on every PPC Based OS. So, dimwits, don't just make up 
+    // cpu numbers!
+    long result;
     detectedtype = -1;
-    if (Gestalt(gestaltPowerPCProcessorFeatures, &processorAttributes) != noErr)
-      processorAttributes = 0;
-    if ((gestaltPowerPCHasVectorInstructions & processorAttributes) != 0)
-      detectedtype = 11; // AltiVec
-    else if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
-      detectedtype = result - 0x100L;
+    if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
+      detectedtype = result >> 16; // PVR!!
+    else if (Gestalt(gestaltPowerPCProcessorFeatures, &result) == noErr)
+    {
+      if ((gestaltPowerPCHasVectorInstructions & result) != 0)
+        detectedtype = 12; // assume G4
+    }
   }
   #elif (CLIENT_OS == OS_LINUX)
   if (detectedtype == -2L)
@@ -519,6 +458,8 @@ static long __GetRawProcessorID(const char **cpuname)
            { "750",                  8  },
            { "604e",                 9  },
            { "604ev",               10  }
+           { "821",                 50  },
+           { "860",                 80  }
            };
           p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
           for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
@@ -552,9 +493,13 @@ static long __GetRawProcessorID(const char **cpuname)
     detectedname = "";
     for (n = 0; n < (sizeof(cpuridtable)/sizeof(cpuridtable[0])); n++ )
     {
-      if (((long)(cpuridtable[n].rid)) == detectedtype )
+      if (cpuridtable[n].rid == detectedtype )
       {
-        strcpy( namebuf, "PowerPC " );
+        if (strlen( cpuridtable[n].name )>=6 &&
+            memcmp( cpuridtable[n].name, "Power ", 6 )==0)
+          namebuf[0] = '\0';
+        else
+          strcpy( namebuf, "PowerPC ");
         strcat( namebuf, cpuridtable[n].name );
         detectedname = (const char *)&namebuf[0];
         break;
@@ -564,9 +509,11 @@ static long __GetRawProcessorID(const char **cpuname)
   
   if (cpuname)
     *cpuname = detectedname;
+  if (detectedtype >= 0 && ispower)
+    return (0x02000000l | detectedtype);
   return detectedtype;
 }
-#endif /* (CLIENT_CPU == CPU_POWERPC) */
+#endif /* (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) */
 
 /* ---------------------------------------------------------------------- */
 
@@ -586,13 +533,13 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
   static long detectedtype = -2L;  /* -1 == failed, -2 == not supported */
   static const char *detectedname = NULL;
   static int  kKeysPerMhz = 512; /* default rate if not found */
-  static int  coretouse   = 0;   /* default core if not found */
+  static int  simpleid   = 0;   /* default id if not found */
   
   if ( detectedtype == -2L )
   {
     static char namebuf[30];
     const char *vendorname = NULL;
-    struct cpuxref { int cpuid, kKeysPerMhz, coretouse; 
+    struct cpuxref { int cpuid, kKeysPerMhz, simpleid; 
                      const char *cpuname; } *internalxref = NULL;
     u32 dettype     = x86ident();
     int cpuidbmask  = 0xfff0; /* mask with this to find it in the table */
@@ -677,7 +624,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0570, 1611, 0x105, "K6"       },
           {  0x0580, 1690, 0x105, "K6-2"     },
           {  0x0590, 1690, 0x105, "K6-3"     },
-          {  0x0610, 3400, 0x103, "K7"       }, /* P6, or Cyrix core ? */
+          {  0x0610, 3400, 0x109, "K7"       },
           /* There may be a split personality issue here:
              7541:0612  600 MHz K7: core #2 gets 1.798 Mkey/sec, 
                               while core #3 gets 1.809 Mkey/sec consistently.
@@ -736,7 +683,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
            (maskedid == (internalxref[pos].cpuid & cpuidbmask))) /* found it */
         {
           kKeysPerMhz  = internalxref[pos].kKeysPerMhz;
-          coretouse    = internalxref[pos].coretouse;
+          simpleid    = internalxref[pos].simpleid;
           detectedtype = dettype;
           if (detectedtype < 0)
             detectedtype = -1;
@@ -755,7 +702,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
   if (cpuname)
     *cpuname = detectedname;
   if (whattoret == 'c')
-    return ((long)coretouse);
+    return ((long)simpleid);
   if (whattoret == 'k')
     return ((long)kKeysPerMhz);
   return detectedtype;
@@ -1259,14 +1206,14 @@ static long __GetRawProcessorID(const char **cpuname)
 
 /* ---------------------------------------------------------------------- */
 
-int GetProcessorType(int quietly)
+long GetProcessorType(int quietly)
 {
-  int coretouse = -1;
+  long retval = -1L;
   const char *apd = "Automatic processor type detection ";
   #if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K) || \
       (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_X86) || \
       (CLIENT_CPU == CPU_ARM)     || (CLIENT_CPU == CPU_MIPS) || \
-      (CLIENT_CPU == CPU_SPARC)   || (CLIENT_OS == OS_AIX)
+      (CLIENT_CPU == CPU_SPARC)
   {
     const char *cpuname = NULL;
     long rawid = __GetRawProcessorID(&cpuname);
@@ -1275,83 +1222,32 @@ int GetProcessorType(int quietly)
       if (rawid < 0)
         LogScreen("%s%s.\n", apd, ((rawid == -1L)?("failed"):("is not supported")));
       else if (rawid == 0)
-        LogScreen("%sdid not\nrecognized the processor (tag: %s)\n", apd, (cpuname?cpuname:"???") );
+        LogScreen("%sdid not\nrecognize the processor (tag: \"%s\")\n", apd, (cpuname?cpuname:"???") );
       else if (cpuname == NULL || *cpuname == '\0')
-        LogScreen("%sdid not\nrecognized the processor (id: %ld)\n", apd, rawid );
+        LogScreen("%sdid not\nrecognize the processor (id: %ld)\n", apd, rawid );
       else
         LogScreen("%sfound\na%s %s processor.\n",apd, 
            ((strchr("aeiou8", tolower(*cpuname)))?("n"):("")), cpuname);
     }
-    #if (CLIENT_CPU == CPU_68K)
-    if ((coretouse = ((rawid <= 0) ? (-1) : (((int)(rawid-68010L))/10))) == 6)
-      coretouse = 5; /* remap 68060 to 68050 */
-    #elif (CLIENT_CPU == CPU_ALPHA)
-    coretouse = ((rawid <= 0) ? (-1) : ((int)rawid));
-    #elif (CLIENT_OS == OS_AIX)
-    if (rawid && ARCH_IS_POWER) // POWER
-        coretouse=0;
-    else if (rawid == 1) 
-        coretouse=1;            // PowerPC 601
-    else
-        coretouse=2;            // PowerPC 603 and up
-
-    #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_AIX)
-    if (rawid > 10)
-    	coretouse = 2;	//	PowerPC 7400
-    else if (rawid > 1)
-    	coretouse = 1;	//	PowerPC 603 and up
-    else if (rawid > 0)
-    	coretouse = 0;	//	PowerPC 601
-    else
-    	coretouse = -1;
-    //  coretouse = ((rawid < 0) ? (-1) : ((rawid==1L)?(0/*601*/):(1)));
-    #elif (CLIENT_CPU == CPU_X86) /* way too many cpu<->core combinations */
-    if (rawid >= 0) 
+    #if (CLIENT_CPU == CPU_X86) /* simply too many core<->cpu combinations */
+    if (rawid >= 0)             /* so return a simplified id */
     {
-      if (( rawid = __GetRawProcessorID(NULL,'c')) >= 0) 
-        coretouse = (int)rawid;
+      if ((rawid = __GetRawProcessorID(NULL,'c')) >= 0)
+        retval = rawid;
     }
-    #elif (CLIENT_CPU == CPU_ARM)
-    if (rawid <= 0)                                coretouse =-1;
-    else if (rawid == 0x3    || rawid == 0x600 ||
-             rawid == 0x610  || rawid == 0x700 ||
-             rawid == 0x7500 || rawid == 0x7500FE) coretouse = 0;
-    else if (rawid == 0x810  || rawid == 0xA10)    coretouse = 1;
-    else if (rawid == 0x200)                       coretouse = 2;
-    else if (rawid == 0x710)                       coretouse = 3;
+    #else
+    if (rawid >= 0)             /* let selcore figure things out */
+      retval = rawid; 
     #endif
-  }
+  }  
   #else
   {
     if (!quietly)
       LogScreen("%sis not supported.\n", apd );
-    coretouse = -1;
   }
   #endif
-
-  return (coretouse);
-}
-
-/* ---------------------------------------------------------------------- */
-
-// GetTimesliceBaseline() returns a value that the ideal RC5 keyrate (kKeys
-// per Mhz) would be IF a machine were running at peak efficiency. For
-// non-preemptive systems, it is thus a good indicator of how low we can
-// set the timeslice/rate-of-yield without losing efficiency. Or inversely,
-// at what point OS responsiveness starts to suffer - which also applies to
-// preemptive but non-mt systems handling of a break request.
-//
-// The function can also be used on non-mt systems to check for an excessive
-// timeslice - on x86 systems an excessive timeslice is > 4*baseline
-
-unsigned int GetTimesliceBaseline(void)
-{
-#if (CLIENT_CPU == CPU_X86)
-  return __GetRawProcessorID(NULL, 'k');
-#else
-  return 0;
-#endif
-}
+  return retval;
+}  
 
 /* ---------------------------------------------------------------------- */
 
@@ -1400,15 +1296,23 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
 #endif
 
   #if defined(CLIENT_SUPPORTS_SMP)
-    static char maxcpu_b[80];
-    sprintf( maxcpu_b, "%d", (int)GetNumberOfSupportedProcessors() );
-    maxcpu_s = ((const char *)(&maxcpu_b[0]));
+  {
+    maxcpu_s = "128"; /* just some arbitrary number */
+    #if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
+    if (GetNumberOfDetectedProcessors() > 1)
+      maxcpu_s = 2; /* thread 0 is ARM, thread 1 is x86 */
+    #endif
+  }
   #elif (!defined(CORES_SUPPORT_SMP))
     maxcpu_s = "1\n\t(cores are not thread-safe)";
   #elif (CLIENT_OS == OS_RISCOS)
+    #if defined(HAVE_X86_CARD_SUPPORT)
     maxcpu_s = "2\n\t(with RiscPC x86 card)";
+    #else
+    maxcpu_s = "1\n\t(client-build does not support multiple processors)";
+    #endif
   #else
-    maxcpu_s = "1\n\t(OS or client-build does not support threads)";
+    maxcpu_s = "1\n\t(OS or client-build does not support multiple processors)";
   #endif
 
   int cpucount = GetNumberOfDetectedProcessors();
