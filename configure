@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.117 2000/01/28 04:03:24 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.118 2000/01/28 04:15:08 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -628,7 +628,7 @@ case "$1" in
 
     *mips-linux)	# For Cobalt Qube - doesn't work yet - Peter
 	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_GCC_MIPS -DASM_MIPS -mcpu=r3000 -DMULTITHREAD \
+	TARGET_CCFLAGS="$OPTS_GCC272 -O6 -DASM_MIPS -mcpu=r3000 -DMULTITHREAD \
 			-D__showids__ -DLURK -DHAVE_OGR_CORES"
 	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp $OGR_ANSI_SRCS"
 	TARGET_LDFLAGS=""
