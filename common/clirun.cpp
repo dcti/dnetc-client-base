@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.36  1998/11/12 03:13:10  silby
+// Changed freebsd message.
+//
 // Revision 1.35  1998/11/12 03:08:38  silby
 // oops, forgot a );
 //
@@ -137,7 +140,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.35 1998/11/12 03:08:38 silby Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.36 1998/11/12 03:13:10 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -996,7 +999,9 @@ int Client::Run( void )
                                   //processors yet
     if (numcrunchers > 1)
       LogScreen("POSIX threads are not fully implemented in FreeBSD.\n"
-                "Only one processor can be used per running copy of the client.\n");
+                "Only one processor can be used per running copy\n"
+                "of the distributed.net client; please run\n"
+                "one copy of the client per processor.\n");
     #endif
     #if (CLIENT_OS == OS_NETWARE)
     if (numcrunchers == 1) // NetWare client prefers non-threading  
