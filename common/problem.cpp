@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.25 1999/11/28 13:58:52 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.26 1999/11/28 14:07:32 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -506,6 +506,8 @@ static int __core_picker(Problem *problem, unsigned int contestid)
         coresel = 0;
       }
     }
+    #elif defined(HAVE_ANSI2RG_UNIT_FUNC)
+    problem->pipeline_count = 2;
     #endif
     return coresel;
   }
@@ -539,8 +541,8 @@ static int __core_picker(Problem *problem, unsigned int contestid)
     #elif (CLIENT_CPU == CPU_X86)
     {
       u32 (*slicit)(RC5UnitWork *,u32) = ((u32 (*)(RC5UnitWork *,u32))0);
-                        #if defined(CLIENT_SUPPORTS_SMP)
-                          slicit = des_unit_func_slice; //kwan
+      #if defined(CLIENT_SUPPORTS_SMP)
+      slicit = des_unit_func_slice; //kwan
       #endif
       #if defined(MMX_BITSLICER) 
       {
