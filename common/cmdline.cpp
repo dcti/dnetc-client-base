@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.114  1999/01/13 09:48:56  cramer
+// Fixed a few compiler warnings (NULL ain't always a char *)
+// Reworked the -quiet handling for UNIX -- system() is VERY evil.
+//
 // Revision 1.113  1999/01/04 02:49:09  cyp
 // Enforced single checkpoint file for all contests.
 //
@@ -124,7 +128,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.113 1999/01/04 02:49:09 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.114 1999/01/13 09:48:56 cramer Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -167,7 +171,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       thisarg = argv[pos];
       if (thisarg && *thisarg=='-' && thisarg[1]=='-')
         thisarg++;
-      nextarg = ((pos < (argc-1))?(argv[pos+1]):(NULL));
+      nextarg = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
       skip_next = 0;
     
       if ( thisarg == NULL )
@@ -402,7 +406,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       thisarg = argv[pos];
       if (thisarg && *thisarg=='-' && thisarg[1]=='-')
         thisarg++;
-      nextarg = ((pos < (argc-1))?(argv[pos+1]):(NULL));
+      nextarg = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
       skip_next = 0;
 
       if ( thisarg == NULL )
@@ -1134,7 +1138,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       thisarg = argv[pos];
       if (thisarg && *thisarg=='-' && thisarg[1]=='-')
         thisarg++;
-      nextarg = ((pos < (argc-1))?(argv[pos+1]):(NULL));
+      nextarg = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
       skip_next = 0;
   
       if ( thisarg == NULL )
@@ -1257,41 +1261,22 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
        (CLIENT_OS == OS_AIX)         || (CLIENT_OS == OS_AUX)     || \
        (CLIENT_OS == OS_OPENBSD)     || (CLIENT_OS == OS_SUNOS)   || \
        (CLIENT_OS == OS_ULTRIX)      || (CLIENT_OS == OS_DGUX))
-  else if (run_level == 0 && (ModeReqIsSet(-1) == 0) && 
-          quietmode && isatty(fileno(stdout)))
+  else if (run_level == 0 && (ModeReqIsSet(-1) == 0) && quietmode)
     {
-    terminate_app = 1; //always return !0
-    int i,quoteit;
-    char cmd_buffer[1024];
-    char redir[] = ">/dev/null &";
-    strcpy(cmd_buffer,argv[0]);
-    for (i=1;i<=argc;i++)
-      {
-      if (argv[i])
-        {
-        if ((strlen(cmd_buffer)+strlen(argv[i])+4) >= 
-            ((sizeof(cmd_buffer)-sizeof(redir))+2))
-          break;
-        quoteit=(argv[i][0]==0 || strchr(argv[i],' ')!=NULL || 
-                                  strchr(argv[i],'\t')!=NULL);
-        strcat(cmd_buffer," ");
-        if (quoteit) strcat(cmd_buffer,"\"");
-        strcat(cmd_buffer,argv[i]);
-        if (quoteit) strcat(cmd_buffer,"\"");
+    int pid;
+    if ((pid = fork()))
+      { // Parrent || Error
+      terminate_app = 1;
+      if (pid == -1)
+        { // Error
+        ConOutErr("fork() failed.  Unable to start quiet/hidden.");
         }
-      }    
-    strcat(cmd_buffer,redir);
-    if (system(cmd_buffer) != 0)
-      {
-      sprintf(cmd_buffer,"Unable to start quiet/hidden. "
-              "Use \"%s\" instead.",redir);
-      ConOutErr(cmd_buffer);
       }
     }
   #endif
- 
   
   if (retcodeP) 
     *retcodeP = 0;
   return terminate_app;
 }
+
