@@ -45,16 +45,16 @@ body {
 }
 
 .center {
-	text-align:		center;
+	text-align: center;
 }
 
 .fixed {
 	font:	13px courier, monospace;
 	color:	#000;
-	background-color:	transparent;
+	background-color: transparent;
 }
 .ahem {  
-	display:	none;  
+	display: none;  
 }
 .head {
 	margin:	3px 0 5px 12px;
@@ -129,13 +129,13 @@ pre {
 <body>
 <h1> distributed.net</h1>
 <div class="contentcontainer"> 
-        <div class="content"> 
+    <div class="content"> 
     <p>&nbsp;</p>
     <h2>Welcome to the distributed.net client</h2>
 
           <p>This document covers information specific to the client for Win32. 
             Refer to other enclosed documentation or browse the online FAQ at 
-            <a href="http://www.distributed.net/FAQ">http://www.distributed.net/FAQ</a> 
+            <a href="http://www.distributed.net/FAQ/">http://www.distributed.net/FAQ/</a> 
             for non-platform-specific documentation.</p>
           <ul>
             <li><a href="#started">Getting Started</a> 
@@ -161,7 +161,7 @@ pre {
     A list of command line options is available by starting the client 
     with '-help'.</p>
 	      <p>A detailed guide to the various configuration options is available 
-            online at <a href="http://www.distributed.net/FAQ">http://www.distributed.net/FAQ/</a></p>
+            online at <a href="http://www.distributed.net/FAQ/">http://www.distributed.net/FAQ/</a></p>
           <a name="service" class="h3replace"></a><h3>Running the client as a Win9x/WinNT Service</h3>
 		  <p>A Win9x/WinNT service is a process that starts running when the 
     computer is powered up, and does not stop until the computer is powered
@@ -177,7 +177,7 @@ pre {
     computer is powered up. To deinstall a client previously installed as
     a service, start it with the -uninstall switch.
 </p>
-		  <a name="multiplexor" class="h3replace">The screensaver multiplexor</a>
+		  <a name="multiplexor" class="h3replace"><h3>The screensaver multiplexor</h3></a>
 		  <p>Beginning with v2.7112.444, the client release archive includes a
     screensaver multiplexor.</p>
 
@@ -221,7 +221,7 @@ pre {
               to configure the client.</li>
           </ol>
 
-		  <p>Note for Windows NT 3.x: The screensaver API changed between NT 3.x
+	<p>Note for Windows NT 3.x: The screensaver API changed between NT 3.x
     and NT 4.x to support the "mini-preview" mode first introduced in
     Windows95. The multiplexor supports the new interface, but since a 4.x 
     system will not start a 3.x screensaver "correctly", the multiplexor
@@ -229,13 +229,14 @@ pre {
 	<p>Beginning with 2.8001, the _client_ will watch for this condition on
     startup, and if it finds itself in a 3.x environment, will re-brand 
     the .scr as a 3.x executable.</p>
+
 	<a name="notes"></a><h2>Notes</h2>
 	<p>Beginning with v2.8001.445, the client distribution includes a separate
     CUI wrapper that communicates with the GUI client over pipes. Older
     clients can be started in native CUI mode either by renaming the .exe to
     .com, or by using a patch utility to change the executable's subsystem 
     type to CUI.</p>
-	      <p>Beginning with v2.2702.419, the win32 CLI client consolidates the rc5des.exe 
+      <p>Beginning with v2.2702.419, the win32 CLI client consolidates the rc5des.exe 
             (normal CUI client), rc5desh.exe (hidden client) and rc5dessvc.exe 
             (service mode client) in one executable. It no longer runs as a native 
             console session (CUI), but emulates a "console" in a GUI window.</p>
@@ -263,17 +264,18 @@ pre {
 	<a name="faq"></a><h2>FAQ</h2>
 
           
-          <p><strong><strong>Q:</strong></strong> What are the changes in this version of the client?<br>
+          <p><strong>Q:</strong> What are the changes in this version of the client?<br>
             <strong>A:</strong> They are listed in the file CHANGES.txt, included 
             with this client distribution.</p>
-          <p> <strong><strong>Q:</strong></strong> Where is the (what-used-to-be-) GUI version 
+          <p> <strong>Q:</strong> Where is the (what-used-to-be-) GUI version 
             of the client?<br>
 
             <strong>A:</strong> The &quot;GUI&quot; features not in the non-&quot;GUI&quot; 
             client, are/will be release as portable, separate utilities. The code 
             will be &quot;Open Source&quot;. As always, user contribution will 
             be much appreciated. See <a href="http://www.distributed.net/download/addon.php">http://www.distributed.net/download/addon.php</a></p>
-          <p> <strong><strong>Q:</strong></strong> Is it possible to start the client as a service 
+
+          <p> <strong>Q:</strong> Is it possible to start the client as a service 
             and yet keep it visible on the desktop or taskbar?<br>
 
             <strong>A:</strong> Services are not supposed to be interactive. Services 
@@ -358,7 +360,7 @@ pre {
 
           <p> <strong>Q:</strong> I want to run the client and XYZ simultaneously, 
             but XYZ destroys my crunch rate. What can I do?<br>
-			 <strong>A: </strong>Uninstall XYZ :)</p>
+		 <strong>A: </strong>Uninstall XYZ :)</p>
             
             <p><strong>Q:</strong> I want to run the client as a screen saver. How do I do this?<br>
             <strong>A:</strong> Beginning with v2.7112.444, the client release archive includes 
@@ -377,6 +379,7 @@ pre {
             thread scheduling/priority assignment is brain dead beyond belief. 
             Read the text in the config screen before you fiddle with the priority 
             setting!</p>
+
           <p> <strong>Q:</strong> My client's window shows characters in a weird 
             font. Is the client trying to access a font not on my system? <strong>A:</strong> 
             No. The client never loads fonts by name. It loads by type/family, 
@@ -452,6 +455,9 @@ pre {
             to ensure that it is not installed as a service. Then, simply delete 
             all files in the client's directory.</p>
           <p>&nbsp;</p>         
+
+          <hr />
+          <address>document revision $Id: readme.win32.html,v 1.1.2.2 2003/11/07 01:04:48 jlawson Exp $</address>
 	
         </div>
       </div>
