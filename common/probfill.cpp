@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.37  1999/03/02 04:51:35  silby
+// Fixed % complete displayed on shutdown.
+//
 // Revision 1.36  1999/03/02 03:49:49  silby
 // Large block support added, des support fixed (unrelated.)
 //
@@ -150,7 +153,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.36 1999/03/02 03:49:49 silby Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.37 1999/03/02 04:51:35 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -339,9 +342,14 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       {
         unsigned long keyhi = ( fileentry.data.crypto.key.hi );
         unsigned long keylo = ( fileentry.data.crypto.key.lo );
-        percent = (unsigned long) ( (double) 10000.0 *
-                 ((double) (fileentry.data.crypto.keysdone.lo) /
-                  (double) (fileentry.data.crypto.iterations.lo) ) );
+
+        percent = (u32) (((double)(10000.0)) *
+    /* Return the % completed in the current block, to nearest 1%. */
+        (((((double)(fileentry.data.crypto.keysdone.hi))*((double)(4294967296.0)))+
+                                 ((double)(fileentry.data.crypto.keysdone.lo))) /
+        ((((double)(fileentry.data.crypto.iterations.hi))*((double)(4294967296.0)))+
+                                 ((double)(fileentry.data.crypto.iterations.lo)))) );
+
         norm_key_count = 
            (unsigned int)__iter2norm( (fileentry.data.crypto.iterations.lo),
                                       (fileentry.data.crypto.iterations.hi) );
