@@ -4,7 +4,7 @@
 ;
 ; Author: Gnatiuc Ianos <ssianky@hotmail.com>
 ; based on r72-dg2 and r72ansi2 cores
-; $Id: r72-ss2.asm,v 1.1.2.2 2002/12/28 12:42:48 andreasb Exp $
+; $Id: r72-ss2.asm,v 1.1.2.3 2003/01/18 03:23:21 andreasb Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _DATA FLAT USE32 align=32 CLASS=DATA]
@@ -512,6 +512,7 @@ TEST_KEY_2_SS_2:
     mov  [RC5_72UnitWork_CMChi], edx
     bswap ecx
     mov  [RC5_72UnitWork_CMClo], ecx
+    dec  edx
 
     cmp  edi, [work_Chi]
     jne  INC_KEY_HI_SS_2
