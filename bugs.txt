@@ -10,6 +10,8 @@ Bugs Listing
   There seem to be far too many breaks in the switch statement in the x86
   section of Client::SelectCore(). I think the fix is obvious, but I thought
   I'd better leave it to an x86 weenie.
+FIXED - Remi
+  even if I don't think being an x86 weenie ! :-)
 
 06-14-98 - Mike Silbersack
   I just noticed that in the log file, there's a CR after received XX
