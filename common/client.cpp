@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.80 2000/06/14 08:53:36 oliver Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.81 2000/06/15 23:07:44 mfeiri Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -606,7 +606,6 @@ int main( void )
   argv[1] = (char *)0;
   macosInitialize();
   ClientMain(1,argv);
-  macosDeInitialize();
   return 0;
 }
 #elif (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32)
