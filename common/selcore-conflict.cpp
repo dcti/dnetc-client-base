@@ -11,7 +11,7 @@
  * ----------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.2 1999/09/17 17:12:08 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.3 1999/09/18 00:51:41 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -112,7 +112,7 @@ int Client::SelectCore(int quietly)
 {
   static s32 last_cputype = -123;
   static int detectedtype = -123;
-  unsigned int corecount = 0; /* number of cores available */
+  int corecount = 0; /* number of cores available */
 
   numcpu = ValidateProcessorCount( numcpu, quietly ); //in cpucheck.cpp
 
@@ -121,12 +121,13 @@ int Client::SelectCore(int quietly)
 
   #ifdef NO_CPUTYPE_TABLE
   cputype = 0;
+  corecount = 1; /* only one core per contest */
   #else
   corecount = (sizeof(cputypetable)/sizeof(cputypetable[0]));
+  if (cputype<0 || cputype>=corecount)
+    cputype = -1;
   #endif
   
-  if (cputype<0 || cputype>=((int)corecount))
-    cputype = -1;
   if (cputype == -1)
   {
     if (detectedtype == -123) 
@@ -152,6 +153,15 @@ int Client::SelectCore(int quietly)
       corename = "000/010/020/030";
     LogScreen( "Selected code optimized for the Motorola 68%s.\n", corename ); 
   }
+#elif (CLIENT_CPU == CPU_POWERPC)
+  #if ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_AMIGAOS))
+    // Be OS isn't supported on 601 machines
+    // There is no 601 PPC board for the Amiga
+    cputype = 1; //"PowerPC 603/604/750"
+  #elif (CLIENT_OS == OS_WIN32)
+    //actually not supported, but just in case
+    cputype = 1;
+  #endif
 #elif (CLIENT_CPU == CPU_X86)
   int selppro_des = 0;
   const char *selmsg_rc5 = NULL, *selmsg_des = NULL;
@@ -215,29 +225,29 @@ int Client::SelectCore(int quietly)
   
     if (!quietly)
       LogScreen("Manually selecting fastest core...\n");
-    for ( contestid = 0; contestid < CONTEST_COUNT; contestid++)
+    for ( contestid = 0; contestid < 2 /* RC5 AND DES only */; contestid++)
     {
       for ( whichcrunch = 0; whichcrunch < 3; whichcrunch++)
       {
         Problem *problem = new Problem();
         ContestWork contestwork;
-	unsigned long elapsed;
+        unsigned long elapsed;
         //!! This should probably be addressed for OGR, zero data is not valid input.
-	memset( (void *)&contestwork, 0, sizeof(contestwork));
+        memset( (void *)&contestwork, 0, sizeof(contestwork));
         contestwork.crypto.iterations.lo = benchsize;
         problem->LoadState( &contestwork , contestid, benchsize, whichcrunch );
         problem->Run();
     
         elapsed = (((unsigned long)problem->runtime_sec) * 1000000UL)+
-	          (((unsigned long)problem->runtime_usec));
+                  (((unsigned long)problem->runtime_usec));
         //printf("%s Core %d: %lu usec\n", CliGetContestName(contestid),whichcrunch,elapsed);
     
         if (fastcoretest[contestid] < 0 || elapsed < fasttime[contestid])
         {
           fastcoretest[contestid] = whichcrunch; 
-	  fasttime[contestid] = elapsed;
+          fasttime[contestid] = elapsed;
         }
-	delete problem;
+        delete problem;
       }
     }
     cputype = (fastcoretest[0] + ((fastcoretest[1]&1)<<2));
@@ -254,18 +264,9 @@ int Client::SelectCore(int quietly)
   if (!quietly)
     LogScreen("Selecting %s code.\n",
               GetCoreNameFromCoreType(cputype));
-#elif (CLIENT_CPU == CPU_POWERPC)
-  #if ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_AMIGAOS))
-    // Be OS isn't supported on 601 machines
-    // There is no 601 PPC board for the Amiga
-    cputype = 1; //"PowerPC 603/604/750"
-  #elif (CLIENT_OS == OS_WIN32)
-    //actually not supported, but just in case
-    cputype = 1;
-  #endif
 #endif
 
-  if (cputype == -1)
+  if (cputype == -1 && corecount > 1)
   {
     unsigned long fasttime = 0;
     int whichcrunch;
