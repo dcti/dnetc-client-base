@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.87 2002/09/24 01:46:52 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.88 2002/09/24 01:57:25 acidblood Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -2027,12 +2027,12 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
   {
     if (coresel == 0)
     {
-      unit_func.rc5 = rc5_72_unit_func_ansi_4;
+      unit_func.rc5_72 = rc5_72_unit_func_ansi_4;
       pipeline_count = 4;
     }
     else /* coresel == 1 */
     {
-      unit_func.rc5 = rc5_72_unit_func_ansi_2;
+      unit_func.rc5_72 = rc5_72_unit_func_ansi_2;
       pipeline_count = 2;
     }
   }

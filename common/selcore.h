@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.11 2002/09/24 00:26:33 acidblood Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.12 2002/09/24 01:57:25 acidblood Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
@@ -20,7 +20,7 @@ typedef union
     #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
     u32 __regargs (*rc5)( RC5UnitWork * , u32 iterations );
     #else
-    u32 (*rc5)( RC5_72UnitWork * , u32 iterations );
+    u32 (*rc5)( RC5UnitWork * , u32 iterations );
     #endif
     #if defined(HAVE_DES_CORES)
     u32 (*des)( RC5UnitWork * , u32 *iterations, char *membuf );
@@ -28,6 +28,7 @@ typedef union
     #if defined(HAVE_OGR_CORES)
     CoreDispatchTable *ogr;
     #endif
+    u32 (*rc5_72)( RC5_72UnitWork * , u32 iterations );
     #if 0
     PROJECT_NOT_HANDLED("in unit_func_union");
     #endif

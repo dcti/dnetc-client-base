@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.157 2002/09/24 01:46:52 acidblood Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.158 2002/09/24 01:57:25 acidblood Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -1126,7 +1126,7 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
     }
     else /* old style */
     {
-      *keyscheckedP = (*(thisprob->pub_data.unit_func.rc5))(&thisprob->priv_data.rc5_72unitwork,(keystocheck/thisprob->pub_data.pipeline_count));
+      *keyscheckedP = (*(thisprob->pub_data.unit_func.rc5_72))(&thisprob->priv_data.rc5_72unitwork,(keystocheck/thisprob->pub_data.pipeline_count));
       //don't use the next few lines as a guide for conversion to unified
       //prototypes!  look at the end of rc5/ansi/rc5ansi_2-rg.cpp instead.
       if (*keyscheckedP < keystocheck)
@@ -1170,11 +1170,7 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
   // Checks passed, increment keys done count.
   thisprob->priv_data.contestwork.bigcrypto.keysdone.lo += *keyscheckedP;
   if (thisprob->priv_data.contestwork.bigcrypto.keysdone.lo < *keyscheckedP)
-  {
-    thisprob->priv_data.contestwork.bigcrypto.keysdone.mid++;
-    if (thisprob->priv_data.contestwork.bigcrypto.keysdone.mid == 0)
       thisprob->priv_data.contestwork.bigcrypto.keysdone.hi++;
-  }
 
   // Update data returned to caller
   if (*resultcode == RESULT_FOUND)  //(*keyscheckedP < keystocheck)
