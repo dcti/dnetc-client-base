@@ -3,8 +3,8 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
-// Revision 1.80  1999/03/08 02:53:25  sampo
-// fix ambiguous function overload on abs()
+// Revision 1.81  1999/03/18 03:04:35  cyp
+// Minor fixes to reflect client class changes.
 //
 // Revision 1.79  1999/03/04 01:30:15  cyp
 // Changed checkpoint interval to the greater of 10% change and 10 minutes.
@@ -310,7 +310,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.80 1999/03/08 02:53:25 sampo Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.81 1999/03/18 03:04:35 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -322,6 +322,7 @@ return "@(#)$Id: clirun.cpp,v 1.80 1999/03/08 02:53:25 sampo Exp $"; }
 #include "sleepdef.h"  // sleep(), usleep()
 #include "setprio.h"   // SetThreadPriority(), SetGlobalPriority()
 #include "lurk.h"      // dialup object
+#include "buffupd.h"   // BUFFERUPDATE_* constants
 #include "clitime.h"   // CliTimer(), Time()/(CliGetTimeString(NULL,1))
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "clicdata.h"  // CliGetContestNameFromID()
@@ -388,7 +389,6 @@ struct thread_param_block
   unsigned int threadnum;
   unsigned int numthreads;
   int realthread;
-  s32 timeslice;
   unsigned int priority;
   int do_suspend;
   int do_refresh;
@@ -997,8 +997,7 @@ static int __StopThread( struct thread_param_block *thrparams )
 // -----------------------------------------------------------------------
 
 static struct thread_param_block *__StartThread( unsigned int thread_i,
-         unsigned int numthreads, s32 timeslice, unsigned int priority,
-         int no_realthreads )
+        unsigned int numthreads, unsigned int priority, int no_realthreads )
 {
   int success = 1, use_poll_process = 0;
 
@@ -1012,7 +1011,6 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     thrparams->numthreads = numthreads;   /* unsigned int */
     thrparams->threadnum = thread_i;      /* unsigned int */
     thrparams->realthread = 1;            /* int */
-    thrparams->timeslice = timeslice;     /* s32 */
     thrparams->priority = priority;       /* unsigned int */
 #if (CLIENT_OS == OS_RISCOS)
     thrparams->do_suspend = /*thread_i?1:*/0;
@@ -1105,8 +1103,6 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     if (use_poll_process)
       {
       thrparams->realthread = 0;            /* int */
-      if (timeslice > (1<<12))
-        thrparams->timeslice = (1<<12);
     #if (CLIENT_OS == OS_MACOS)
         thrparams->threadID = (MPTaskID)RegPolledProcedure((void (*)(void *))Go_mt,
                                 (void *)thrparams , NULL, 0 );
@@ -1154,7 +1150,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
 //     4 = exit by block count expiration
 int Client::Run( void )
 {
-  unsigned int cont_i, prob_i;
+  unsigned int prob_i;
   int force_no_realthreads = 0;
   struct thread_param_block *thread_data_table = NULL;
 
@@ -1172,6 +1168,7 @@ int Client::Run( void )
   time_t last_scheduledupdatetime = 0; /* we reset the next two vars on != */
   //unsigned int flush_scheduled_count = 0; /* used for exponential staging */
   unsigned int flush_scheduled_adj   = 0; /*time adjustment to next schedule*/
+  time_t ignore_scheduledupdatetime_until = 0; /* ignore schedupdtime until */
 
   int checkpointsDisabled = (nodiskbuffers != 0);
   unsigned int checkpointsPercent = 0;
@@ -1276,30 +1273,23 @@ int Client::Run( void )
   // -------------------------------------
 
   if (!TimeToQuit)
-    {
+  {
     if (load_problem_count > 1)
       Log( "Loading one block per cruncher...\n" );
     load_problem_count = LoadSaveProblems( load_problem_count, 0 );
 
-    if (load_problem_count == 0)
-      {
-      Log("Unable to load any blocks. Quitting...\n");
+    if (CheckExitRequestTrigger())
+    {
       TimeToQuit = 1;
       exitcode = -2;
-      }
-    }
-
-  // --------------------------------------
-  // The contestdone state may have changed, so check it
-  // --------------------------------------
-
-  if (!TimeToQuit && contestdone[0] && contestdone[1])
+    } 
+    else if (load_problem_count == 0)
     {
-    Log( "Both contests are marked as closed. This may mean that the\n"
-         "contests are over. Check at http://www.distributed.net/\n" );
+    Log("Unable to load any blocks. Quitting...\n");
     TimeToQuit = 1;
     exitcode = -2;
     }
+  }
 
   // --------------------------------------
   // Initialize the async "process" subsystem
@@ -1345,7 +1335,7 @@ int Client::Run( void )
       {
       struct thread_param_block *thrparams =
          __StartThread( prob_i, planned_problem_count,
-                        timeslice, priority, force_no_realthreads );
+                        priority, force_no_realthreads );
       if ( thrparams )
         {
         if (!thread_data_table)
@@ -1442,7 +1432,7 @@ int Client::Run( void )
     //------------------------------------
 
     timeNow = CliTimer(NULL)->tv_sec;
-    if (timeLast!=0 && timeNow > timeLast)
+    if (timeLast!=0 && ((unsigned long)timeNow) > ((unsigned long)timeLast))
       timeRun += (timeNow - timeLast); //make sure time is monotonic
     timeLast = timeNow;
 
@@ -1502,9 +1492,9 @@ int Client::Run( void )
     #if defined(LURK)
     if (!TimeToQuit && !ModeReqIsSet(MODEREQ_FETCH|MODEREQ_FLUSH) &&
         dialup.lurkmode && dialup.CheckIfConnectRequested())
-      {
+    {
       ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
-      }
+    }
     #endif
 
     //------------------------------------
@@ -1514,34 +1504,57 @@ int Client::Run( void )
     #define TIME_AFTER_START_TO_UPDATE 10800 // Three hours
     #define UPDATE_INTERVAL 600 // Ten minutes
 
-    if (scheduledupdatetime != 0 && (preferred_contest_id==1) &&
-      (timeNow >= scheduledupdatetime) &&
-      (timeNow < (scheduledupdatetime+TIME_AFTER_START_TO_UPDATE)) )
+    if (scheduledupdatetime != 0 && 
+      (((unsigned long)timeNow) < ((unsigned long)ignore_scheduledupdatetime_until)) &&
+      (((unsigned long)timeNow) >= ((unsigned long)scheduledupdatetime)) &&
+      (((unsigned long)timeNow) < (((unsigned long)scheduledupdatetime)+TIME_AFTER_START_TO_UPDATE)) )
+    {
+      if (last_scheduledupdatetime != ((time_t)scheduledupdatetime))
       {
-      if (scheduledupdatetime != last_scheduledupdatetime)
-        {
-        last_scheduledupdatetime = scheduledupdatetime;
+        last_scheduledupdatetime = (time_t)scheduledupdatetime;
         //flush_scheduled_count = 0;
         flush_scheduled_adj = (rand()%UPDATE_INTERVAL);
         Log("Buffer update scheduled in %u minutes %02u seconds.\n",
              flush_scheduled_adj/60, flush_scheduled_adj%60 );
-        flush_scheduled_adj += timeNow - scheduledupdatetime; // Catch up
-        }
-      if ( (flush_scheduled_adj < TIME_AFTER_START_TO_UPDATE) &&
-        (timeNow >= (time_t)(flush_scheduled_adj+scheduledupdatetime)) )
-        {
+        flush_scheduled_adj += timeNow - last_scheduledupdatetime;
+      }
+      if ( (((unsigned long)flush_scheduled_adj) < TIME_AFTER_START_TO_UPDATE) &&
+        (((unsigned long)timeNow) >= (unsigned long)(flush_scheduled_adj+last_scheduledupdatetime)) )
+      {
         //flush_scheduled_count++; /* for use with exponential staging */
         flush_scheduled_adj += ((UPDATE_INTERVAL>>1)+
                                (rand()%(UPDATE_INTERVAL>>1)));
-        if ((contestdone[1] != 0) ||
-            (GetBufferCount(1,0,0) == 0))
-          // Check if contest is opened yet and if we have blocks.
+        
+        int desisrunning = 0;
+        if (GetBufferCount(1,0,NULL) != 0) /* do we have DES blocks? */
+          desisrunning = 1;
+        else
+        {
+          for (prob_i = 0; prob_i < load_problem_count; prob_i++ )
           {
-          contestdone[1]=0;          //open the contest so we can get past the
-          ModeReqSet(MODEREQ_FETCH|MODEREQ_FQUIET); // contestdone check in ::BufferUpdate()
+            Problem *thisprob = GetProblemPointerFromIndex( prob_i );
+            if (thisprob == NULL)
+              break;
+            if (thisprob->IsInitialized() && thisprob->contest == 1)
+            {
+              desisrunning = 1;
+              break;
+            }
           }
+          if (desisrunning == 0)
+          {
+            int rc = BufferUpdate( BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH, 0 );
+            if (rc > 0 && (rc & BUFFERUPDATE_FETCH)!=0)
+              desisrunning = (GetBufferCount(1,0,NULL) != 0);
+          }
+        }  
+        if (desisrunning)
+        {
+          ignore_scheduledupdatetime_until = timeNow + TIME_AFTER_START_TO_UPDATE;
+          /* if we got DES blocks, start ignoring sched update time */
         }
       }
+    } 
 
     //------------------------------------
     //handle 'connectoften' requests
@@ -1562,37 +1575,6 @@ int Client::Run( void )
       Log( "Shutdown - reached time limit.\n" );
       TimeToQuit = 1;
       exitcode = 3;
-      }
-
-    //----------------------------------------
-    // Check for 32 consecutive solutions
-    //----------------------------------------
-
-    unsigned int closed_count=0;
-    for (cont_i=0; cont_i < CONTEST_COUNT; cont_i++)
-      {
-      const char *contname = CliGetContestNameFromID( cont_i ); //clicdata.cpp
-      if ((consecutivesolutions[cont_i] >= 32) && contestdone[cont_i]==0)
-        {
-        contestdone[cont_i] = 1;
-        if (keyport != 3064)
-          randomchanged = 1;
-        if (!TimeToQuit)
-          {
-          Log( "Too many consecutive %s solutions detected.\n"
-          "Either the contest is over, or this client is pointed at a test port.\n"
-          "Marking contest as closed. Further %s blocks will not be processed.\n",
-            contname, contname );
-          }
-        }
-      if (contestdone[cont_i])
-        closed_count++;
-      }
-    if (!TimeToQuit && closed_count>=CONTEST_COUNT)
-      {
-      TimeToQuit = 1;
-      Log( "All contests are marked as closed. Quitting...\n");
-      exitcode = -2;
       }
 
     //----------------------------------------
@@ -1625,7 +1607,7 @@ int Client::Run( void )
         prob_i = checkpointsPercent;
         checkpointsPercent = (total_percent_now/load_problem_count);
 
-        if ( abs((int)(checkpointsPercent - prob_i)) >= CHECKPOINT_FREQ_PERCDIFF )
+        if ( abs(checkpointsPercent - prob_i) >= CHECKPOINT_FREQ_PERCDIFF )
           {
           if (CheckpointAction( CHECKPOINT_REFRESH, load_problem_count ))
             checkpointsDisabled = 1;
