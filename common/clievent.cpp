@@ -28,6 +28,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: clievent.cpp,v $
+// Revision 1.9  1999/01/29 19:34:30  jlawson
+// added typecast to eliminate unsigned comparison warning.
+//
 // Revision 1.8  1999/01/29 19:17:04  jlawson
 // fixed formatting.
 //
@@ -38,7 +41,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clievent_cpp(void) {
-return "@(#)$Id: clievent.cpp,v 1.8 1999/01/29 19:17:04 jlawson Exp $"; }
+return "@(#)$Id: clievent.cpp,v 1.9 1999/01/29 19:34:30 jlawson Exp $"; }
 #endif
 
 #include "baseincs.h"   /* NULL, memset */
@@ -70,7 +73,7 @@ int ClientEventAddListener(int event_id, void (*proc)(int event_id, long parm))
   if (event_id == 0 || proc == NULL)
     return -1;
 
-  for (int i = 0; i < (sizeof(listeners)/sizeof(listeners[0])); i++)
+  for (int i = 0; i < (int) (sizeof(listeners)/sizeof(listeners[0])); i++)
   {
     if (listeners[i].event_id == 0)
     {
@@ -94,7 +97,7 @@ int ClientEventRemoveListener(int event_id, void (*proc)(int event_id, long parm
   if (listener_count == 0)
     return 0;
 
-  for (int i = 0; i < (sizeof(listeners)/sizeof(listeners[0])); i++)
+  for (int i = 0; i < (int) (sizeof(listeners)/sizeof(listeners[0])); i++)
   {
     if (listeners[i].event_id == event_id && listeners[i].proc == proc)
     {
@@ -119,7 +122,7 @@ int ClientEventSyncPost( int event_id, long parm )
   if (listener_count == 0)
     return 0;
 
-  for (int i = 0; i < (sizeof(listeners)/sizeof(listeners[0])); i++)
+  for (int i = 0; i < (int) (sizeof(listeners)/sizeof(listeners[0])); i++)
   {
     if (listeners[i].proc != NULL && 
         (listeners[i].event_id == event_id || listeners[i].event_id == -1))
