@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.78 1999/12/20 23:27:55 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.79 1999/12/22 04:41:54 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1319,13 +1319,10 @@ case "$1" in
 	# nasm doesn't support BSD/OS aout format, so please don't do it again!!
     *x86-bsdi)                        # snake
 	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC272_X86 -DKWAN -DHAVE_DES_CORES \
-	               -DHAVE_CSC_CORES"  #-DHAVE_OGR_CORES
+	TARGET_CCFLAGS="$OPTS_GCC272_X86 -DHAVE_CSC_CORES"  #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $KWAN_SLICE_SRCS4 \
-	                $CSC_ANSI_SRCS" #$OGR_ANSI_SRCS
-	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S \
-	                des/brydgnu/p1bdespro.S"
+	TARGET_ADDSRCS="$RC5X86_SRCS $CSC_ANSI_SRCS" #$OGR_ANSI_SRCS
+	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_TARBALL="bsdi2-x86-aout"
        ;;
