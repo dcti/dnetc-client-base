@@ -2293,10 +2293,12 @@ LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
     case 0:
       LogScreen("Selecting ARM code\n");
       rc5_unit_func = rc5_unit_func_arm;
+      des_unit_func = des_unit_func_arm;
       break;
     default:
       LogScreen("Selecting StrongARM code\n");
       rc5_unit_func = rc5_unit_func_strongarm;
+      des_unit_func = des_unit_func_strongarm;
       break;
   }
 

@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.29  1998/06/11 14:29:09  cberry
+# changes to allow two DES cores to be selected for different ARM variants.
+#
 # Revision 1.28  1998/06/10 22:50:12  timc
 # Robert Au added for PPC targets
 # CVS:
@@ -585,7 +588,7 @@ case "$1" in
 	TARGET_AS="armasm -apcs 3/26bit"
 	TARGET_CCFLAGS="-Icommon -Irc5 -Ides -Iplatforms -J/home/cberry/play/riscoslib/CLib -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -DCOMPAT_INET4 -D__riscos -DPIPELINE_COUNT=1 -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS="platforms/riscos/riscos.cpp"
-	TARGET_ADDASMS="platforms/riscos/riscosasm.s rc5/rc5-sa.s rc5/rc5-arm.s des/des-slice-arm.s"
+	TARGET_ADDASMS="platforms/riscos/riscosasm.s rc5/rc5-sa.s rc5/rc5-arm.s des/des-slice-arm.s des/des-slice-sa.s"
 	TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
 	TARGET_STRIP=touch
 	EXENAME=rc5des,ff8
@@ -596,7 +599,7 @@ case "$1" in
 	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_ARM -DPIPELINE_COUNT=1 -DBIT_32 -Dlinux -DKWAN"
 	TARGET_ADDSRCS=""
-	TARGET_ADDASMS="rc5/rc5-sa-gnu.s rc5/rc5-arm-gnu.s des/des-slice-arm-gnu.s"
+	TARGET_ADDASMS="rc5/rc5-sa-gnu.s rc5/rc5-arm-gnu.s des/des-slice-sa-gnu.s des/des-slice-arm-gnu.s"
 	TARGET_LIBS="-lm"
 	;;
 
@@ -605,7 +608,7 @@ case "$1" in
 	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_ARM -DPIPELINE_COUNT=1 -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS=""
-	TARGET_ADDASMS="rc5/rc5-sa-gnu.s rc5/rc5-arm-gnu.s des/des-slice-arm-gnu.s"
+	TARGET_ADDASMS="rc5/rc5-sa-gnu.s rc5/rc5-arm-gnu.s des/des-slice-sa-gnu.s des/des-slice-arm-gnu.s"
 	TARGET_LIBS="-lm"
 	;;
 

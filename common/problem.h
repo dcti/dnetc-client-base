@@ -105,8 +105,12 @@ typedef enum
   #error "Expecting PIPELINE_COUNT=1"
   #endif
   extern u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long t );
+  extern u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, unsigned long t );
   extern "C" u32 rc5_unit_func_arm( RC5UnitWork * rc5unitwork , unsigned long t);
   extern "C" u32 rc5_unit_func_strongarm( RC5UnitWork * rc5unitwork , unsigned long t);
+
+  extern "C" u32 des_unit_func_arm( RC5UnitWork * rc5unitwork , unsigned long t);
+  extern "C" u32 des_unit_func_strongarm( RC5UnitWork * rc5unitwork , unsigned long t);
 #endif
 
 class Problem

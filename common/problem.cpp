@@ -40,7 +40,11 @@
   #include "rc5stub.cpp"
 #endif
 
+#if (CLIENT_CPU == CPU_ARM)
+ u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
+#else
 extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+#endif
 
 #if ((CLIENT_CPU == CPU_X86) || (CLIENT_OS == OS_BEOS))
   extern u32 Bdes_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
