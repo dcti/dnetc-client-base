@@ -4,11 +4,12 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.45 1999/04/04 17:47:59 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.46 1999/04/09 16:51:28 cyp Exp $"; }
 
 // --------------------------------------------------------------------------
 
 #include "cputypes.h"
+#include "client.h"    // CONTEST_COUNT
 #include "baseincs.h"  // standard #includes
 #include "problem.h"   // Problem class
 #include "convdes.h"   // convert_key_from_des_to_inc 
@@ -103,13 +104,22 @@ int SelfTest( unsigned int contest, int cputype )
 {
   int threadpos, threadcount = 1;
   int successes = 0;
-  const char *contname = CliGetContestNameFromID( contest );
+  const char *contname;
 
+  if (contest >= CONTEST_COUNT)
+  {
+    LogScreen("test::error. invalid contest %u\n", contest );
+    return -TEST_CASE_COUNT;
+  }
+  if (contest != 0 && contest != 1)
+    return 0;
+  
 #if (CLIENT_OS == OS_RISCOS)
   if (contest == 0 && GetNumberOfDetectedProcessors() == 2)
     threadcount = 2;
 #endif    
 
+  contname = CliGetContestNameFromID( contest );
   for ( threadpos = 0; successes >= 0 && threadpos < threadcount; threadpos++ )
   {
     unsigned int testnum;
@@ -122,7 +132,7 @@ int SelfTest( unsigned int contest, int cputype )
 
     for ( testnum = 0 ; testnum < TEST_CASE_COUNT ; testnum++ )
     {
-      const u32 (*test_cases)[TEST_CASE_COUNT][8];
+      const u32 (*test_cases)[TEST_CASE_COUNT][8] = NULL;
       int resultcode; const char *resulttext = NULL;
       u64 expectedsolution;
       ContestWork contestwork;
@@ -131,26 +141,7 @@ int SelfTest( unsigned int contest, int cputype )
       if (CheckExitRequestTriggerNoIO())
         break;
 
-      // load test case
-      if (contest == 1)   // DES
-      {
-        test_cases = (const u32 (*)[TEST_CASE_COUNT][8])&des_test_cases[0][0];
-        expectedsolution.lo = (*test_cases)[testnum][0];
-        expectedsolution.hi = (*test_cases)[testnum][1];
-
-        convert_key_from_des_to_inc ( (u32 *) &expectedsolution.hi, 
-                                      (u32 *) &expectedsolution.lo);
-
-        // to test also success on complementary keys
-        if (expectedsolution.hi & 0x00800000L)
-        {
-          expectedsolution.hi ^= 0x00FFFFFFL;
-          expectedsolution.lo = ~expectedsolution.lo;
-        }
-        contestwork.crypto.key.lo = expectedsolution.lo & 0xFFFF0000L;
-        contestwork.crypto.key.hi = expectedsolution.hi;
-      }
-      else //if (contest == 0) /* RC5-64 */
+      if (contest == 0) /* RC5-64 */
       { 
         test_cases = (const u32 (*)[TEST_CASE_COUNT][8])&rc5_test_cases[0][0];
         expectedsolution.lo = (*test_cases)[testnum][0];
@@ -215,6 +206,25 @@ int SelfTest( unsigned int contest, int cputype )
             contestwork.crypto.key.hi--;
         }
       }
+      else if (contest == 1)   // DES
+      {
+        test_cases = (const u32 (*)[TEST_CASE_COUNT][8])&des_test_cases[0][0];
+        expectedsolution.lo = (*test_cases)[testnum][0];
+        expectedsolution.hi = (*test_cases)[testnum][1];
+
+        convert_key_from_des_to_inc ( (u32 *) &expectedsolution.hi, 
+                                      (u32 *) &expectedsolution.lo);
+
+        // to test also success on complementary keys
+        if (expectedsolution.hi & 0x00800000L)
+        {
+          expectedsolution.hi ^= 0x00FFFFFFL;
+          expectedsolution.lo = ~expectedsolution.lo;
+        }
+        contestwork.crypto.key.lo = expectedsolution.lo & 0xFFFF0000L;
+        contestwork.crypto.key.hi = expectedsolution.hi;
+      }
+      
       contestwork.crypto.iv.lo =  ( (*test_cases)[testnum][2] );
       contestwork.crypto.iv.hi =  ( (*test_cases)[testnum][3] );
       contestwork.crypto.plain.lo = ( (*test_cases)[testnum][4] );
@@ -230,7 +240,7 @@ int SelfTest( unsigned int contest, int cputype )
   
       ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (long)((Problem *)(&problem)) );
   
-      while ( problem.Run( 0 ) == 0 ) //threadnum
+      while ( problem.Run() == RESULT_WORKING )
       {
         #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
         Yield();
