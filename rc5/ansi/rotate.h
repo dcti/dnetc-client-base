@@ -176,7 +176,7 @@ static __inline__ u32 ROTL3(u32 x)
 
 //// This is based on the post on the rc5 list by micha (mbruck@ins-coin.de)
 //// It'll work on any DEC Alpha platform and maybe others
-//#define ROTL(v, n) (((u32)((v) << ((n) & 31)) + \
+//#define ROTL(v, n) (((u32)((v) << ((n) & 31)) + 
 //	(u32)((v) >> (32 - ((n) & 31)))) & 0xFFFFFFFF)
 //	
 //// This is based on the post on the rc5 list by Joao Miguel Neves
@@ -186,6 +186,7 @@ static __inline__ u32 ROTL3(u32 x)
 //
 // This is from Frank Horowitz <frank@ned.dem.csiro.au>, and is reportedly
 // 10% faster on alphas (posted to rc5-coders@llamas.net Oct 12/97
+//
 static __inline__ u32 ROTL(u32 x, u32 s)
 {
   register union {unsigned long long a;
