@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.29 2001/01/17 02:28:34 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.30 2001/01/24 16:44:30 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -123,7 +123,7 @@ static int __enumcorenames(const char **corenames, int idx, void * /*unused*/)
     {
       if (have_xxx_table[cont_i])
       {
-        const char *xxx = "-1) Auto-select";
+        const char *xxx = " -1) Auto-select";
         if (!xxx) xxx = "";
         if ((i = strlen( xxx )) > colwidth)
           i = colwidth;
@@ -148,11 +148,11 @@ static int __enumcorenames(const char **corenames, int idx, void * /*unused*/)
       i = 0;
       if (corenames[cont_i]) /* have a corename at this idx */
       {
-        char xxx[4+32];
-        const char *cname = corenames[cont_i];
-        if (selcoreValidateCoreIndex(cont_i,idx) != idx)
-          cname = "<not supported>";
-        i = sprintf(xxx,"%2d) %-30.30s", idx, cname );
+        char xxx[4+32]; char iname[8]; 
+        strcpy(iname,"n/a"); 
+        if (selcoreValidateCoreIndex(cont_i,idx) == idx)
+          sprintf(iname, "%3d", idx);
+        i = sprintf(xxx,"%s) %-29.29s", iname, corenames[cont_i] );
         if (i > colwidth)
           i = colwidth;
         strncpy( &scrline[nextpos], xxx, i );
