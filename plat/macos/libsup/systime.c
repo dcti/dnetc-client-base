@@ -2,7 +2,7 @@
  * Created for use in distributed.net projects, but incorporation
  * in other libraries is encouraged.
  *
- * $Id: systime.c,v 1.1.2.2 2001/07/27 07:43:34 mfeiri Exp $
+ * $Id: systime.c,v 1.1.2.3 2001/07/27 08:51:15 mfeiri Exp $
  *
  * POSIX/ANSI time and date functions for MacOS.
  * 
@@ -109,7 +109,7 @@ static unsigned long __kern_get_nano_uptime(unsigned long *secs,
     UnsignedWide now;
     unsigned long long usecs;
     Microseconds(&now); /* Microseconds (toolbox call) */
-    usecs = (((((unsigned long long)now.hi)<<32) 
+    usecs = ((((unsigned long long)now.hi)<<32) 
              + ((unsigned long long)now.lo));
     *nsecs = ((unsigned long)(usecs % 1000000ul)) * 1000ul;
     *secs = ((unsigned long)(usecs / 1000000ul));
