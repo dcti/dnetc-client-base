@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.13 1999/10/24 11:14:08 remi Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.14 1999/10/26 03:42:41 remi Exp $"; }
 
 
 #include "cputypes.h"
@@ -364,6 +364,7 @@ int selcoreSelfTest( unsigned int cont_i )
 /* this is called from Problem::LoadState() */
 int selcoreGetSelectedCoreForContest( unsigned int contestid )
 {
+  bool corename_printed = false;
   static long detected_type = -123;
   const char *contname = CliGetContestNameFromID(contestid);
   if (!contname) /* no such contest */
@@ -437,6 +438,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       ((selcorestatics.user_cputype[contestid] >= 0)?("Using"):("Auto-selected")),
       selcorestatics.corenum[contestid],
      selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid] ) );
+    corename_printed = true;
   }
   #elif (CLIENT_CPU == CPU_68K)
   if (contestid == RC5 || contestid == DES) /* old style */
@@ -453,6 +455,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     else //if (cputype == 0 || cputype == 1 || cputype == 2 || cputype == 3)
       corename = "000/010/020/030";
     LogScreen( "Selected code optimized for the Motorola 68%s.\n", corename );
+    corename_printed = true;
   }
   #elif (CLIENT_CPU == CPU_POWERPC)
   if (contestid == RC5 || contestid == DES) /* old style */
@@ -544,6 +547,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         ((user_selected)?("using"):("auto-selected")),
         selcorestatics.corenum[contestid],
        selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid] ) );
+      corename_printed = true;
     }
   }
   #elif (CLIENT_CPU == CPU_ARM)
@@ -559,12 +563,22 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     {
       LogScreen( "%s: selecting %s optimized code.\n", contname, 
        selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid]));
+      corename_printed = true;
     }
     /* otherwise fall into bench */
   }
   #endif
 
-  if (selcorestatics.corenum[contestid] < 0) /* ok, bench it then */
+  if (selcorestatics.corenum[contestid] < 0)
+    selcorestatics.corenum[contestid] = selcorestatics.user_cputype[contestid];
+
+  if (selcorestatics.corenum[contestid] >= 0) 
+  { 
+    if (!corename_printed)
+      LogScreen("%s: selected core #%d (%s).\n", contname, selcorestatics.corenum[contestid], 
+		selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid] ) );
+  }
+  else /* ok, bench it then */
   {
     int corecount = (int)__corecount_for_contest(contestid);
     selcorestatics.corenum[contestid] = 0;
@@ -613,6 +627,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         selcorestatics.corenum[contestid] = fastestcrunch;
         LogScreen("%s: selected core #%d (%s).\n", contname, fastestcrunch, 
                        selcoreGetDisplayName( contestid, fastestcrunch ) );
+	corename_printed = true;
       }
     }
   }
