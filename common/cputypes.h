@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.18 2000/01/03 02:59:51 jlawson Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.19 2000/01/05 21:31:31 patrick Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -384,7 +384,8 @@
 /* ----------------------------------------------------------------- */
 
 #if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_88K) || \
-     (CLIENT_CPU == CPU_SPARC) || (CLIENT_CPU == CPU_POWERPC) || \
+     (CLIENT_CPU == CPU_SPARC) || \
+     (CLIENT_CPU == CPU_POWER) || (CLIENT_CPU == CPU_POWERPC) || \
      (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM) || \
      ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)))
    #define CORES_SUPPORT_SMP
@@ -409,7 +410,9 @@
 #elif (CLIENT_OS == OS_FREEBSD)
   typedef int /*pid_t*/ THREADID;
   #define OS_SUPPORTS_SMP
-#elif defined(MULTITHREAD)
+// can we just use if defined(_POSIX_THREADS), as this is often defined if POSIX
+// threads are supported ?? Patrick Hildenbrand (patrick@mail4you.de)
+#elif defined(MULTITHREAD) || (CLIENT_OS == OS_AIX)
   #include <pthread.h>
   typedef pthread_t THREADID;
   #define OS_SUPPORTS_SMP
@@ -419,6 +422,9 @@
   #if (CLIENT_OS == OS_DGUX)
     #define PTHREAD_SCOPE_SYSTEM PTHREAD_SCOPE_GLOBAL
     #define pthread_sigmask(a,b,c)
+  #elif (CLIENT_OS == OS_AIX)
+	// only for AIX 4.1 ???
+    #define pthread_sigmask(a,b,c) sigthreadmask(a,b,c)
   #endif
 #else 
   typedef int THREADID;
