@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.18  1998/09/28 21:04:03  remi
+// Added #include <errno.h> for Linux/glibc2.
+//
 // Revision 1.17  1998/09/25 11:31:14  chrisb
 // Added stuff to support 3 cores in the ARM clients.
 //
@@ -23,16 +26,28 @@
 // Added <ctype.h>
 //
 // Revision 1.13  1998/08/02 03:16:16  silby
-// Major reorganization:  Log,LogScreen, and LogScreenf are now in logging.cpp, and are global functions - client.h #includes logging.h, which is all you need to use those functions.  Lurk handling has been added into the Lurk class, which resides in lurk.cpp, and is auto-included by client.h if lurk is defined as well. baseincs.h has had lurk-specific win32 includes moved to lurk.cpp, cliconfig.cpp has been modified to reflect the changes to log/logscreen/logscreenf, and mail.cpp uses logscreen now, instead of printf. client.cpp has had variable names changed as well, etc.
+// Major reorganization: Log,LogScreen, and LogScreenf are now in
+// logging.cpp, and are global functions - client.h #includes
+// logging.h, which is all you need to use those functions.  Lurk
+// handling has been added into the Lurk class, which resides in
+// lurk.cpp, and is auto-included by client.h if lurk is defined as
+// well. baseincs.h has had lurk-specific win32 includes moved to
+// lurk.cpp, cliconfig.cpp has been modified to reflect the changes to
+// log/logscreen/logscreenf, and mail.cpp uses logscreen now, instead
+// of printf. client.cpp has had variable names changed as well, etc.
 //
 // Revision 1.12  1998/07/29 05:14:31  silby
-// Changes to win32 so that LurkInitiateConnection now works - required the addition of a new .ini key connectionname=.  Username and password are automatically retrieved based on the connectionname.
+// Changes to win32 so that LurkInitiateConnection now works -
+// required the addition of a new .ini key connectionname=.  Username
+// and password are automatically retrieved based on the
+// connectionname.
 //
 // Revision 1.11  1998/07/29 03:21:24  silby
 // Added changes for win32 lurk (more needed functions)
 //
-// Revision 1.10  1998/07/25 06:31:37  silby
-// Added lurk functions to initiate a connection and hangup a connection.  win32 hangup is functional.
+// Revision 1.10 1998/07/25 06:31:37 silby Added lurk functions to
+// initiate a connection and hangup a connection.  win32 hangup is
+// functional.
 //
 // Revision 1.9  1998/07/16 21:47:56  nordquist
 // More DYNIX port changes.
@@ -196,6 +211,9 @@ extern "C" {
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)
   #include <sys/time.h>
   #include <unistd.h>
+  #if (CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)
+    #include <errno.h> // glibc2 has errno only here
+  #endif
 #elif (CLIENT_OS == OS_NETBSD) && (CLIENT_CPU == CPU_ARM)
   #include <sys/time.h>
 #elif (CLIENT_OS == OS_DYNIX)
