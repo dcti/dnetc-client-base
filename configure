@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.11 1999/06/23 05:53:38 myshkin Exp $
+# @(#)$Id: configure,v 1.222.2.12 1999/07/01 17:23:15 chrisb Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -1355,24 +1355,25 @@ case "$1" in
 	EXENAME=rc5des,ff8
 	;;
 
-    *arm-linux)
+    *arm-linux)					# chrisb
 	TARGET_CC="gcc"
 	TARGET_AS="as"
-	TARGET_CCFLAGS="$OPTS_GCC_ARM -Dlinux \
-			-DPIPELINE_COUNT=2 -DBIT_32 -DKWAN"
+	TARGET_CCFLAGS="$OPTS_GCC_ARM -Dlinux -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS=""
-	TARGET_ADDASMS="rc5/arm/rc5-sa-gnu.s rc5/arm/rc5-arm-gnu.s \
-			des/des-slice-sa-gnu.s des/des-slice-arm-gnu.s"
+	TARGET_ADDASMS="rc5/arm/rc5-arm-1-gnu.s rc5/arm/rc5-arm-2-gnu.s \
+			rc5/arm/rc5-arm-3-gnu.s \
+			des/arm/des-slice-sa-gnu.s des/arm/des-slice-arm-gnu.s"
 	TARGET_LIBS="-lm"
 	;;
 
-    *arm-netbsd)
+    *arm-netbsd)				# chrisb
 	TARGET_CC="gcc"
 	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_ARM -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS=""
-	TARGET_ADDASMS="rc5/arm/rc5-sa-gnu.s rc5/arm/rc5-arm-gnu.s \
-			des/des-slice-sa-gnu.s des/des-slice-arm-gnu.s"
+	TARGET_ADDASMS="rc5/arm/rc5-arm-1-gnu.s rc5/arm/rc5-arm-2-gnu.s \
+			rc5/arm/rc5-arm-3-gnu.s \
+			des/arm/des-slice-sa-gnu.s des/arm/des-slice-arm-gnu.s"
 	TARGET_LIBS="-lm"
 	;;
 
@@ -1676,25 +1677,25 @@ echo "	ident ${EXENAME} | awk '{ printf(\"%-30s %10s %s %s %s %s%c\", \$\$2,\$\$
 echo "" >> Makefile
 
 # add binary-tarball targets
-echo "internal-tarpackit:     ${TARGETFILE} ${TAREXTRAS}
-echo "        strip ${STRIPFLAGS} ${TARGETFILE}
-echo "        -rm -rf ${TARBASENAME}${BUILDNUM}-${TARNAME}
-echo "        mkdir ${TARBASENAME}${BUILDNUM}-${TARNAME}
-echo "        cp -f ${TARGETFILE} ${TAREXTRAS} \
-echo "                ${TARBASENAME}${BUILDNUM}-${TARNAME}
-echo "        tar cvf ${TARBASENAME}${BUILDNUM}-${TARNAME}.tar \
-echo "                ${TARBASENAME}${BUILDNUM}-${TARNAME}
-echo "        rm -rf ${TARBASENAME}${BUILDNUM}-${TARNAME}
-echo "        -rm -f ${TARBASENAME}${BUILDNUM}-${TARNAME}.tar.gz
-echo "        ${TARCOMPRESS} ${TARBASENAME}${BUILDNUM}-${TARNAME}.tar
-echo "        @echo Type \'make ftp\' to upload the tarball to the ftp site.
+echo "internal-tarpackit:	\${TARGETFILE} \${TAREXTRAS}" >> Makefile
+echo "	strip \${STRIPFLAGS} \${TARGETFILE}" >> Makefile
+echo "	-rm -rf \${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
+echo "	mkdir \${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
+echo "	cp -f \${TARGETFILE} \${TAREXTRAS} \\" >> Makefile
+echo "		\${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
+echo "	tar cvf \${TARBASENAME}\${BUILDNUM}-\${TARNAME}.tar \\" >> Makefile
+echo "		\${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
+echo "	rm -rf \${TARBASENAME}\${BUILDNUM}-\${TARNAME}" >> Makefile
+echo "	-rm -f \${TARBASENAME}\${BUILDNUM}-\${TARNAME}.tar.gz" >> Makefile
+echo "	\${TARCOMPRESS} \${TARBASENAME}\${BUILDNUM}-\${TARNAME}.tar" >> Makefile
+echo "	@echo Type \'make ftp\' to upload the tarball to the ftp site." >> Makefile
 echo "" >> Makefile
 
 # make rule to transfer the packaged tarball
-echo "ftp:
-echo "        echo "user anonymous -luser@distributed.net#cd /incoming#\
-echo "        binary#mput ${TARBASENAME}*.tar*#bye#" | \
-echo "        tr "#" "\n" | ftp -n -i -v upload.distributed.net
+echo "ftp:" >> Makefile
+echo "	echo \"user anonymous -luser@distributed.net#cd /incoming#\\" >> Makefile
+echo "	binary#mput \${TARBASENAME}*.tar*#bye#\" | \\" >> Makefile
+echo "	tr \"#\" \"\n\" | ftp -n -i -v upload.distributed.net" >> Makefile
 echo "" >> Makefile
 
 
