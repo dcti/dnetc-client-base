@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.40  1999/03/18 06:13:08  cyp
+// disable random block generation if rc5 is disabled.
+//
 // Revision 1.39  1999/03/18 03:07:54  cyp
 // This module is now (mostly) OGR ready. Some Log() msgs still need adjustment.
 //
@@ -159,7 +162,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.39 1999/03/18 03:07:54 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.40 1999/03/18 06:13:08 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -534,12 +537,20 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   } 
   else /* normal load from buffer failed */
   {
-    if (client->rc564closed)
+    int norandom = 1;
+    if ((client->rc564closed == 0) && (client->blockcount >= 0))
+    {
+      unsigned int iii;
+      for (iii=0;norandom && iii<CONTEST_COUNT;iii++)
+      {
+        if (client->loadorder_map[iii] == 1 /* rc5 is enabled in map */)
+	  norandom = 0;
+      }
+    }  
+    if (norandom)
       *load_needed = NOLOAD_NORANDOM; /* -1 */
     else if (client->nonewblocks)
       *load_needed = NOLOAD_NONEWBLOCKS; /* -3 */
-    else if (client->blockcount < 0) /* no random blocks permitted */
-      *load_needed = NOLOAD_NORANDOM; /* -1 */
     else /* random blocks permitted */
     {
       *load_needed = 0;
