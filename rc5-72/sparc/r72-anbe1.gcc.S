@@ -7,7 +7,7 @@
 .section	".rodata"
 
 Id_tag:
-	.ascii	"@(#)$Id: r72-anbe1.gcc.S,v 1.1.2.1 2003/04/19 17:32:34 andreasb Exp $\000"
+	.ascii	"@(#)$Id: r72-anbe1.gcc.S,v 1.1.2.2 2003/04/19 17:33:54 andreasb Exp $\000"
 
 
 .section	".text"
@@ -98,7 +98,6 @@ rc5_72_unit_func_anbe_1:
 #define P		0xB7E15163
 #define Q		0x9E3779B9
 #define P_ROTL3		0xBF0A8B1D
-#define P_ROTL3_MOD32	(P_ROTL3 % 32)
 
 #define RGiterations	%i5
 #define RGLlo		%l3
@@ -110,7 +109,6 @@ rc5_72_unit_func_anbe_1:
 #define RCP		%o0
 #define RCP_ROTL3	%o1
 #define RCQ		%o2
-#define RC32		%o3
 
 
 #define R1SS		%g1
@@ -130,19 +128,39 @@ rc5_72_unit_func_anbe_1:
 #define	T1b		%o5
 
 
+#define R2SS		%g2
+#define R2L(i)		R2L_##i
+#define R2L_0		%g3
+#define R2L_1		%g4
+#define R2L_2		%g5
+#define R2Lpred(i)	R2L##i##pred
+#define R2L0pred	R2L_2
+#define R2L1pred	R2L_0
+#define R2L2pred	R2L_1
+
+#define R2A		%g6
+#define R2B		%g7
+
+#define T2a		%i3
+#define	T2b		%i4
+
+
 	ld	[%i1],RGiterations
 	ld	[%i0+r72unitwork_L0_hi],RGLhi
 	ld	[%i0+r72unitwork_L0_mid],RGLmid
 	ld	[%i0+r72unitwork_L0_lo],RGLlo
 
-	set	32,RC32
 	set	P,RCP
 	set	Q,RCQ
 	set	P_ROTL3,RCP_ROTL3
 
+	mov	RCP,RGSinit
+	mov	RCP_ROTL3,R1SS
+	mov	RGLlo,R1L(0)
+
 mainloop:
 
-	mov	RGLlo,R1L(0)
+	!mov	RGLlo,R1L(0)
 	mov	RGLmid,R1L(1)
 	mov	RGLhi,R1L(2)
 
@@ -185,15 +203,15 @@ mainloop:
 	add	R1SS,R1Lpred(j),T1a		;\
 	add	R1L(j),T1a,R1L(j)		;\
 	sll	R1L(j),T1a,T1b			;\
-	sub	RC32,T1a,T1a			;\
+	neg	T1a				;\
 	srl	R1L(j),T1a,R1L(j)		;\
 	or	R1L(j),T1b,R1L(j)		;\
 
 
-	mov	RCP,RGSinit
+	!mov	RCP,RGSinit
 
 	/* ROUND1(0,0) */
-	mov	RCP_ROTL3,R1SS
+	!mov	RCP_ROTL3,R1SS
 	st	R1SS,[s_S1(0)]
 	add	R1L(0),R1SS,R1L(0)
 	sll	R1L(0),(P_ROTL3 % 32),T1a
@@ -256,7 +274,7 @@ mainloop:
 	add	R1SS,R1Lpred(j),T1a		;\
 	add	R1L(j),T1a,R1L(j)		;\
 	sll	R1L(j),T1a,T1b			;\
-	sub	RC32,T1a,T1a			;\
+	neg	T1a				;\
 	srl	R1L(j),T1a,R1L(j)		;\
 	or	R1L(j),T1b,R1L(j)		;\
 
@@ -302,9 +320,29 @@ mainloop:
 	add	R1SS,R1Lpred(j),T1a		;\
 	add	R1L(j),T1a,R1L(j)		;\
 	sll	R1L(j),T1a,T1b			;\
-	sub	RC32,T1a,T1a			;\
+	neg	T1a				;\
 	srl	R1L(j),T1a,R1L(j)		;\
 	or	R1L(j),T1b,R1L(j)		;\
+
+#define ROUND3S(i,j)				\
+/* ! ROUND 3 (i,j) */				\
+	ld	[s_S1(i)],T1a			;\
+	add	R1SS,R1Lpred(j),R1SS		;\
+	add	R1SS,T1a,R1SS			;\
+	sll	R1SS,3,T1a			;\
+	srl	R1SS,29,R1SS			;\
+	or	R1SS,T1a,R1SS			;\
+	/* !st	R1SS,[s_S1(i)]	*/		;\
+
+#define ROUND3L(i,j)				\
+/* ! ROUND 3 (i,j) */				\
+	add	R1SS,R1Lpred(j),T1a		;\
+	add	R1L(j),T1a,R1L(j)		;\
+	sll	R1L(j),T1a,T1b			;\
+	neg	T1a				;\
+	srl	R1L(j),T1a,R1L(j)		;\
+	or	R1L(j),T1b,R1L(j)		;\
+
 
 ! #define FINAL_BLOCK(i) \
 !    A = ROTL(A^B,B)+S[2*i]; \
@@ -323,7 +361,7 @@ mainloop:
 /* ! ENCRYPTION EVEN (i) */			\
 	xor	R1A,R1B,R1A			;\
 	sll	R1A,R1B,T1a			;\
-	sub	RC32,R1B,T1b			;\
+	neg	R1B,T1b				;\
 	srl	R1A,T1b,R1A			;\
 	or	R1A,T1a,R1A			;\
 	add	R1A,R1SS,R1A			;\
@@ -332,7 +370,7 @@ mainloop:
 /* ! ENCRYPTION ODD (i)	*/			\
 	xor	R1B,R1A,R1B			;\
 	sll	R1B,R1A,T1a			;\
-	sub	RC32,R1A,T1b			;\
+	neg	R1A,T1b				;\
 	srl	R1B,T1b,R1B			;\
 	or	R1B,T1a,R1B			;\
 	add	R1B,R1SS,R1B			;\
@@ -392,107 +430,120 @@ mainloop:
 	ENCRYPTION_EVEN(22)
 	ROUND3(23,0)
 	ENCRYPTION_ODD(23)
-	ROUND3(24,1)
+	ROUND3S(24,1)
 	ENCRYPTION_EVEN(24)
+/* ! delayed after cypher_lo test	
+	ROUND3L(24,1)
 	ROUND3(25,2)
 	ENCRYPTION_ODD(25)
+*/
 
 
 
 
+#define RGcypher_lo RGSinit
 
-
-	ld	[s_uw(r72unitwork_cypher_lo)],T1a
+	ld	[s_uw(r72unitwork_cypher_lo)],RGcypher_lo
 test_pipe_1:
-	cmp	R1A,T1a
-	be	test_pipe_1_lo_success
-	nop
-test_pipe_1_done:
+	cmp	R1A,RGcypher_lo
+	be	partial_success
+	 mov	RCP,RGSinit
 	
 increment_key:
 	add	RGLhi,PIPELINES,RGLhi
 	andcc	RGLhi,0xff,RGLhi
 	bz	complex_increment
-	nop
+	 mov	RCP_ROTL3,R1SS
 increment_key_done:
 
 	subcc	RGiterations,PIPELINES,RGiterations
 	bnz	mainloop
-	nop
+	 mov	RGLlo,R1L(0)
 	b	finish
-	mov	RESULT_NOTHING,%i0
+	 mov	RESULT_NOTHING,%i0
 
 
 complex_increment:
-	set	0x01000000,T1a
-	set	0xFF000000,T1b
-	add	RGLmid,T1a,RGLmid
-	btst	T1b,RGLmid
-	bnz,a	increment_key_done
-	nop
-	set	0x00010000,T1a
-	set	0x00FFFFFF,T1b
-	add	RGLmid,T1a,RGLmid
-	set	0x00FF0000,T1a
-	and	RGLmid,T1b,RGLmid
-	btst	T1a,RGLmid
-	bnz,a	increment_key_done
-	nop
-	set	0x0000FFFF,T1b
+#define RI0x01000000 R1A
+#define RI0xFF000000 R1B
+#define RI0x00010000 T1a
+//#define RI0x00FFFFFF
+#define RI0x00FF0000 R1L(0)
+#define RI0x0000FFFF R1L(1)
+#define RI0x0000FF00 R1L(2)
+
+	set	0x01000000,RI0x01000000
+	set	0xFF000000,RI0xFF000000
+	add	RGLmid,RI0x01000000,RGLmid
+	btst	RI0xFF000000,RGLmid
+	bnz	increment_key_done
+	 set	0x00010000,RI0x00010000
+	!set	0x00FFFFFF,RI0x00FFFFFF			!!!
+	!sub	RI0x01000000,1,RI0x00FFFFFF
+	add	RGLmid,RI0x00010000,RGLmid
+	set	0x00FF0000,RI0x00FF0000
+	!and	RGLmid,RI0x00FFFFFF,RGLmid
+	andn	RGLmid,RI0xFF000000,RGLmid
+	btst	RI0x00FF0000,RGLmid
+	bnz	increment_key_done
+	 sub	RI0x00010000,1,RI0x0000FFFF
 	add	RGLmid,0x0100,RGLmid
-	set	0x0000FF00,T1a
-	and	RGLmid,T1b,RGLmid
-	btst	T1a,RGLmid
+	!set	0x0000FF00,RI0x0000FF00			!!!
+	andn	RI0x0000FFFF,0xff,RI0x0000FF00
+	and	RGLmid,RI0x0000FFFF,RGLmid
+	btst	RI0x0000FF00,RGLmid
 	bnz,a	increment_key_done
-	nop
+	 nop
 	add	RGLmid,0x01,RGLmid
 	andcc	RGLmid,0xff,RGLmid
 	bnz,a	increment_key_done
-	nop
-	set	0x01000000,T1a
-	set	0xFF000000,T1b
-	add	RGLlo,T1a,RGLlo
-	btst	T1b,RGLlo
+	 nop
+	add	RGLlo,RI0x01000000,RGLlo
+	btst	RI0xFF000000,RGLlo
 	bnz,a	increment_key_done
-	nop
-	set	0x00010000,T1a
-	set	0x00FFFFFF,T1b
-	add	RGLlo,T1a,RGLlo
-	set	0x00FF0000,T1a
-	and	RGLlo,T1b,RGLlo
-	btst	T1a,RGLlo
+	 nop
+	add	RGLlo,RI0x00010000,RGLlo
+	!and	RGLlo,RI0x00FFFFFF,RGLlo
+	andn	RGLlo,RI0xFF000000,RGLlo
+	btst	RI0x00FF0000,RGLlo
 	bnz,a	increment_key_done
-	nop
-	set	0x0000FFFF,T1b
+	 nop
 	add	RGLlo,0x0100,RGLlo
-	set	0x0000FF00,T1a
-	and	RGLlo,T1b,RGLlo
-	btst	T1a,RGLlo
+	and	RGLlo,RI0x0000FFFF,RGLlo
+	btst	RI0x0000FF00,RGLlo
 	bnz,a	increment_key_done
-	nop
+	 nop
 	add	RGLlo,0x01,RGLlo
 	and	RGLlo,0xff,RGLlo
 	b	increment_key_done
 	nop
 
 
+partial_success:
+	ROUND3L(24,1)
+	ROUND3(25,2)
+	ENCRYPTION_ODD(25)
+	!ld	[s_uw(r72unitwork_cypher_lo)],RGcypher_lo
+	!cmp	R1A,RGcypher_lo
+	!be	test_pipe_1_lo_success
+	! nop
 test_pipe_1_lo_success:
 	ld	[s_uw(r72unitwork_check_count)],T1a
-	st	RGLhi,[s_uw(r72unitwork_check_hi)]
 	inc	T1a
+	st	RGLhi,[s_uw(r72unitwork_check_hi)]
 	st	RGLmid,[s_uw(r72unitwork_check_mid)]
 	st	RGLlo,[s_uw(r72unitwork_check_lo)]
 	st	T1a,[s_uw(r72unitwork_check_count)]
 	ld	[s_uw(r72unitwork_cypher_hi)],T1b
 	cmp	R1B,T1b
-	bne	test_pipe_1_done
-	nop
+	bne	increment_key
+	 mov	RCP,RGSinit
 test_pipe_1_lohi_success:
 	ld	[s_save_iterationsP],T1a
 	ld	[T1a],T1b
 	sub	T1b,RGiterations,T1b
 	st	T1b,[T1a]
-	b	finish
+	!b	finish
 	mov	RESULT_FOUND,%i0
 
 
