@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.37.2.2 2003/03/10 23:23:10 bdragon Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.37.2.3 2003/05/11 18:47:25 pfeffi Exp $"
 
 #include "cputypes.h"
 
@@ -139,6 +139,11 @@
   #define usleep(x) { struct timespec interval, remainder; \
                       interval.tv_sec = 0; interval.tv_nsec = (x)*100;\
                       nanosleep(&interval, &remainder); }
+#elif ( CLIENT_OS == OS_SCO )
+  /* usleep in SCO uses setitimer */
+  #include <poll.h>
+  #undef usleep
+  #define usleep(x) poll(NULL, 0, (x)/1000);
 #else
   #include <unistd.h> //has both sleep() and usleep()
 #endif
