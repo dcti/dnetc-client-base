@@ -5,16 +5,21 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.30 2000/04/21 08:55:34 jlawson Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.31 2000/04/23 12:56:10 jlawson Exp $"
 
 #include "cputypes.h"
 
 // ------------------
 
-#if (CLIENT_OS == OS_RISCOS)
-extern "C" {
+#if (CLIENT_OS == OS_RISCOS) || defined(UNSAFEHEADERS)
+  // Some environments include old system headers that are not safe for direct
+  // inclusion within C++ programs and need to be explicitly wrapped with extern.
+  #define UNSAFEHEADERS
+  extern "C" {
 #endif
-  
+
+// ------------------
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -26,12 +31,9 @@ extern "C" {
 #include <sys/stat.h>
 #include <errno.h>
 #include <limits.h>
+#include <assert.h>
 #if defined(__unix__)
-#include <sys/utsname.h> /* uname() */
-#endif
-
-#if (CLIENT_OS == OS_RISCOS)
-}
+  #include <sys/utsname.h> /* uname() */
 #endif
 
 // ------------------
@@ -80,29 +82,26 @@ extern "C" {
   #include <unistd.h>
   #include <fcntl.h>
 #elif (CLIENT_OS == OS_RISCOS)
-  extern "C"
-  {
-    #include <sys/fcntl.h>
-    #include <unistd.h>
-    #include <stdarg.h>
-    #include <machine/endian.h>
-    #include <sys/time.h>
-    #include <swis.h>
-    extern unsigned int ARMident(), IOMDident();
-    extern void riscos_clear_screen();
-    extern int riscos_check_taskwindow();
-    extern void riscos_backspace();
-    extern int riscos_count_cpus();
-    extern char *riscos_x86_determine_name();
-    extern int riscos_find_local_directory(const char *argv0);
-    extern char *riscos_localise_filename(const char *filename);
-    extern int riscos_get_filelength(int fd, unsigned long *fsizeP);
-    extern int riscos_get_file_modified(const char *filename, unsigned long *timestampP);
-    extern void riscos_upcall_6(void); //yield
-    extern int getch();
-    #define fileno(f) ((f)->__file)
-    #define isatty(f) ((f) == 0)
-  }
+  #include <sys/fcntl.h>
+  #include <unistd.h>
+  #include <stdarg.h>
+  #include <machine/endian.h>
+  #include <sys/time.h>
+  #include <swis.h>
+  extern unsigned int ARMident(), IOMDident();
+  extern void riscos_clear_screen();
+  extern int riscos_check_taskwindow();
+  extern void riscos_backspace();
+  extern int riscos_count_cpus();
+  extern char *riscos_x86_determine_name();
+  extern int riscos_find_local_directory(const char *argv0);
+  extern char *riscos_localise_filename(const char *filename);
+  extern int riscos_get_filelength(int fd, unsigned long *fsizeP);
+  extern int riscos_get_file_modified(const char *filename, unsigned long *timestampP);
+  extern void riscos_upcall_6(void); //yield
+  extern int getch();
+  #define fileno(f) ((f)->__file)
+  #define isatty(f) ((f) == 0)
   extern s32 guiriscos, guirestart;
   extern int riscos_in_taskwindow;
 #elif (CLIENT_OS == OS_VMS)
@@ -274,5 +273,13 @@ extern "C" {
   extern "C" int usleep(unsigned int useconds);
 #endif
 
+// ------------------
+
+#ifdef UNSAFEHEADERS
+  // End the extern needed to handle unsafe system headers.
+  }
+#endif
+
+// ------------------
 
 #endif /* __BASEINCS_H__ */
