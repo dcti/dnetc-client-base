@@ -1,7 +1,7 @@
 /* Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
- * Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
+ * Created by Cyrus Patel (cyp@fb14.uni-mainz.de)
  *
  * ------------------------------------------------------
  * Pardon, oh, pardon, that my sould should make
@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.20 2000/05/08 18:29:56 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.21 2000/05/27 17:39:03 trevorh Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -21,7 +21,7 @@ return "@(#)$Id: logstuff.cpp,v 1.37.2.20 2000/05/08 18:29:56 cyp Exp $"; }
 #include "clitime.h"   // CliGetTimeString(NULL,1)
 #include "pathwork.h"  // GetFullPathForFilename(), GetWorkingDirectory()
 #include "problem.h"   // Problem object for logscreenpercent
-#include "probman.h"   // GetProblemPointerFromIndex() for LogScreenPercent 
+#include "probman.h"   // GetProblemPointerFromIndex() for LogScreenPercent
 #include "console.h"   // for ConOut() and ConIsScreen()
 #include "util.h"      // TRACE
 #include "logstuff.h"  // keep the prototypes in sync
@@ -36,7 +36,7 @@ return "@(#)$Id: logstuff.cpp,v 1.37.2.20 2000/05/08 18:29:56 cyp Exp $"; }
 #define LOGFILETYPE_FIFO    3 //then logLimit is in KByte (minimum 100K)
 #define LOGFILETYPE_ROTATE  4 //then logLimit is in days
 
-#define LOGTO_NONE       0x00 
+#define LOGTO_NONE       0x00
 #define LOGTO_SCREEN     0x01
 #define LOGTO_FILE       0x02
 #define LOGTO_MAIL       0x04
@@ -50,18 +50,18 @@ return "@(#)$Id: logstuff.cpp,v 1.37.2.20 2000/05/08 18:29:56 cyp Exp $"; }
 
 // ========================================================================
 
-static struct 
+static struct
 {
   int initlevel;
-  char loggingTo;            // LOGTO_xxx bitfields 
+  char loggingTo;            // LOGTO_xxx bitfields
   char spoolson;             // mail/file logging and time stamping is on/off.
   char percprint;            // percentprinting is enabled
-  
+
   MailMessage *mailmessage;  //note: pointer, not class struct.
   char basedir[256];         //filled if user's 'logfile' is not qualified
   char logfile[128+20];      //fname when LOGFILETYPE_RESTART or _FIFO
                              //lastused fname when LOGFILETYPE_ROTATE
-  FILE *logstream;           //open logfile 
+  FILE *logstream;           //open logfile
 
   unsigned int logfilebaselen;//len of the log fname without ROTATE suffix
   int  logfileType;          //rotate, restart, fifo, none
@@ -71,8 +71,8 @@ static struct
   char stdoutisatty;         //log screen can handle lines not ending in '\n'
   char stableflag;           //last log screen did end in '\n'
   char lastwasperc;          //last log screen was a percentbar
-  
-} logstatics = { 
+
+} logstatics = {
   0,      // initlevel
   LOGTO_NONE,   // loggingTo
   0,      // spoolson
@@ -118,7 +118,7 @@ static FILE *__fopenlog( const char *fn, const char *mode )
     OSType old_ftype = __gettype(0);
     _ftype = 'RC5L';
     #endif
-    strcat( logstatics.basedir, fn ); 
+    strcat( logstatics.basedir, fn );
     file = fopen( logstatics.basedir, mode );
     logstatics.basedir[len] = '\0';
     #if (CLIENT_OS == OS_MACOS)
@@ -143,14 +143,14 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
 
   int logfileType = logstatics.logfileType;
   unsigned int logfileLimit = logstatics.logfileLimit;
-  
-  if ( !msglen || msgbuffer[msglen-1] != '\n') 
+
+  if ( !msglen || msgbuffer[msglen-1] != '\n')
     return;
   if ( logfileType == LOGFILETYPE_NONE || logstatics.spoolson==0 ||
        (logstatics.loggingTo & LOGTO_FILE) == 0)
     return;
-    
-  if ( logfileType == LOGFILETYPE_RESTART) 
+
+  if ( logfileType == LOGFILETYPE_RESTART)
   {
     if ( logstatics.logfile[0] == 0 )
       return;
@@ -175,13 +175,13 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
           logstatics.logstream = __fopenlog( logstatics.logfile, "w" );
           if (logstatics.logstream && truncated)
           {
-            fprintf( logstatics.logstream, 
+            fprintf( logstatics.logstream,
                "[%s] Log file exceeded %uKbyte limit. Restarted...\n\n",
                 CliGetTimeString( NULL, 1 ),
                (unsigned int)( logstatics.logfileLimit ));
           }
         }
-      }  
+      }
       if (logstatics.logstream)
       {
         logstatics.logfilestarted = 1;
@@ -215,8 +215,8 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
       {
         static const char *monnames[] = { "jan","feb","mar","apr","may","jun",
                                           "jul","aug","sep","oct","nov","dec" };
-        sprintf( logstatics.logfile+logfilebaselen, 
-                 "%02d%s"EXTN_SEP"log", (int)(last_year%100), 
+        sprintf( logstatics.logfile+logfilebaselen,
+                 "%02d%s"EXTN_SEP"log", (int)(last_year%100),
                   monnames[last_mon-1] );
       }
     }
@@ -228,7 +228,7 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
         abortwrite = 1;
       else
       {
-        sprintf( logstatics.logfile+logfilebaselen, 
+        sprintf( logstatics.logfile+logfilebaselen,
                  "%04d"EXTN_SEP"log", (int)last_year );
       }
     }
@@ -246,14 +246,14 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
         abortwrite = 1;
       else
       {
-        sprintf( logstatics.logfile+logfilebaselen, 
-                 "%02dw%02d"EXTN_SEP"log", (int)(last_year%100), 
+        sprintf( logstatics.logfile+logfilebaselen,
+                 "%02dw%02d"EXTN_SEP"log", (int)(last_year%100),
                   ((last_day+6)/7) );
       }
     }
     else /* anything else: daily = 1, fortnightly = 14 etc */
     {
-      if (currtmP != NULL ) 
+      if (currtmP != NULL )
       {
         static unsigned long last_jdn = 0;
         unsigned int curr_year = currtmP->tm_year+ 1900;
@@ -277,8 +277,8 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
         abortwrite = 1;
       else
       {
-        sprintf( logstatics.logfile+logfilebaselen, 
-               "%02d%02d%02d"EXTN_SEP"log", (int)(last_year%100), 
+        sprintf( logstatics.logfile+logfilebaselen,
+               "%02d%02d%02d"EXTN_SEP"log", (int)(last_year%100),
                (int)(last_mon), (int)(last_day) );
       }
     }
@@ -297,7 +297,7 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
       {
         strcpy( lastfilename, logstatics.logfile );
         logstatics.logstream = __fopenlog( logstatics.logfile, "a" );
-      }  
+      }
       if ( logstatics.logstream )
       {
         fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
@@ -308,18 +308,18 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
     }
   }
   #ifndef FTRUNCATE_NOT_SUPPORTED
-  else if ( logfileType == LOGFILETYPE_FIFO ) 
+  else if ( logfileType == LOGFILETYPE_FIFO )
   {
     unsigned long filelen = 0;
     if ( logstatics.logfile[0] == 0 )
       return;
     if ( logfileLimit < 100 )
       logfileLimit = 100;
-      
+
     if (!logstatics.logstream)
     {
       logstatics.logstream = __fopenlog( logstatics.logfile, "a" );
-    }  
+    }
     if ( logstatics.logstream )
     {
       fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
@@ -341,7 +341,7 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
           unsigned long next_top = filelen - /* keep last 90% */
                                  ((((unsigned long)(logfileLimit))<<10)*9)/10;
           if ( fseek( logstatics.logstream, next_top, SEEK_SET ) == 0 &&
-            ( msglen = fread( swapbuffer, sizeof( char ), maxswapsize, 
+            ( msglen = fread( swapbuffer, sizeof( char ), maxswapsize,
                       logstatics.logstream ) ) != 0 )
           {
             /* skip to the beginning of the next line */
@@ -358,13 +358,13 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
               }
               filelen++;
             }
-            
+
             filelen = 0;
             while ( fseek( logstatics.logstream, next_top, SEEK_SET ) == 0 &&
-               ( msglen = fread( swapbuffer, sizeof( char ), maxswapsize, 
+               ( msglen = fread( swapbuffer, sizeof( char ), maxswapsize,
                       logstatics.logstream ) ) != 0 &&
                   fseek( logstatics.logstream, filelen, SEEK_SET ) == 0 &&
-               ( msglen == fwrite( swapbuffer, sizeof( char ), msglen, 
+               ( msglen == fwrite( swapbuffer, sizeof( char ), msglen,
                        logstatics.logstream ) ) )
             {
               next_top += msglen;
@@ -376,7 +376,7 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
           logstatics.logstream = NULL;
         }
         free((void *)swapbuffer);
-      }  
+      }
     }
     logstatics.logfilestarted = 1;
   }
@@ -411,10 +411,10 @@ static void InternalLogMail( const char *msgbuffer, unsigned int msglen, int /*f
 {
   if ( msglen && logstatics.mailmessage && logstatics.spoolson &&
                                   (logstatics.loggingTo & LOGTO_MAIL) != 0)
-  {                              
+  {
     static int recursion_check = 0; //network stuff sometimes Log()s.
     if ((++recursion_check) == 1)
-      logstatics.mailmessage->append( msgbuffer ); 
+      logstatics.mailmessage->append( msgbuffer );
     --recursion_check;
   }
   return;
@@ -425,7 +425,7 @@ static void InternalLogMail( const char *msgbuffer, unsigned int msglen, int /*f
 // On NT/Alpha (and maybe some other platforms) the va_list type is a struct,
 // not an int or a pointer-type.  Hence, NULL is not a valid va_list.  Pass
 // a (va_list *) instead to avoid this problem
-void LogWithPointer( int loggingTo, const char *format, va_list *arglist ) 
+void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
 {
   #if ((!defined(MAX_LOGENTRY_LEN)) || (MAX_LOGENTRY_LEN < 1024))
     #ifdef MAX_LOGENTRY_LEN
@@ -438,18 +438,18 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
   char *buffptr, *obuffptr;
   const char *timestamp;
   int old_loggingTo = loggingTo;
-  
+
   msgbuffer[0]=0;
   loggingTo &= (logstatics.loggingTo|LOGTO_RAWMODE);
 
   if ( !format || !*format )
     loggingTo = LOGTO_NONE;
-  
+
   if ( loggingTo != LOGTO_NONE )
   {
     if ( arglist == NULL )
       strcat( msgbuffer, format );
-    else 
+    else
       vsprintf( msgbuffer, format, *arglist );
     msglen = strlen( msgbuffer );
 
@@ -459,7 +459,7 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
       loggingTo &= LOGTO_SCREEN|LOGTO_RAWMODE;  //screen only obviously
   }
 
-  if (loggingTo != LOGTO_NONE && logstatics.spoolson /* timestamps */ && 
+  if (loggingTo != LOGTO_NONE && logstatics.spoolson /* timestamps */ &&
       (old_loggingTo & LOGTO_RAWMODE) == 0 )
   {
     buffptr = &msgbuffer[0];
@@ -480,7 +480,7 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
         timestamp = CliGetTimeString( NULL, sel );
         memmove( buffptr+(strlen(timestamp)+3), buffptr, strlen( buffptr )+1 );
         *buffptr++=((sel)?('['):(' '));
-        while (*timestamp) 
+        while (*timestamp)
           *buffptr++ = *timestamp++;
         *buffptr++=((sel)?(']'):(' '));
         *buffptr=' ';
@@ -508,8 +508,8 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
       if ((loggingTo & LOGTO_MAIL) != 0 )
         InternalLogMail( buffptr, sel, 0 );
     }
-  }      
-  
+  }
+
   if (( loggingTo & LOGTO_SCREEN ) != 0)
   {
     #ifdef ASSERT_WIDTH_80  //"show" where badly formatted lines are cropping up
@@ -527,35 +527,35 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
         {
           if (scrwidth > 5)
           {
-            obuffptr[(scrwidth-5)] = ' '; 
+            obuffptr[(scrwidth-5)] = ' ';
             obuffptr[(scrwidth-4)] = '.';
             obuffptr[(scrwidth-3)] = '.';
             obuffptr[(scrwidth-2)] = '.';
           }
           memmove( obuffptr+(scrwidth-1), buffptr, strlen(buffptr)+1 );
           buffptr = obuffptr+(scrwidth-1);
-        }    
+        }
       } while (*buffptr);
       msglen = strlen( msgbuffer );
-    }      
+    }
     #endif
 
     buffptr = &msgbuffer[0];
     if ((loggingTo & LOGTO_RAWMODE)==0)
     {
-      if (*buffptr=='\n' && logstatics.stableflag) 
+      if (*buffptr=='\n' && logstatics.stableflag)
       {
         buffptr++;
         msglen--;
       }
-      else if (*buffptr!='\r' && *buffptr!='\n' && !logstatics.stableflag) 
+      else if (*buffptr!='\r' && *buffptr!='\n' && !logstatics.stableflag)
       {
         msglen++;
         memmove( msgbuffer+1, msgbuffer, msglen );
         msgbuffer[0] = '\n';
         logstatics.stableflag = 1;
       }
-    }  
+    }
     if (msglen)
     {
       logstatics.lastwasperc = 0; //perc bar looks for this
@@ -563,7 +563,7 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
       InternalLogScreen( buffptr, msglen, 0 );
     }
   }
-  
+
   return;
 }
 
@@ -597,7 +597,7 @@ void LogScreen( const char *format, ... )
   LogWithPointer( LOGTO_SCREEN, format, &argptr );
   va_end(argptr);
   return;
-}    
+}
 
 void LogScreenRaw( const char *format, ... )
 {
@@ -606,7 +606,7 @@ void LogScreenRaw( const char *format, ... )
   LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN, format, &argptr );
   va_end(argptr);
   return;
-}  
+}
 
 void Log( const char *format, ... )
 {
@@ -615,7 +615,7 @@ void Log( const char *format, ... )
   LogWithPointer( LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL, format, &argptr );
   va_end(argptr);
   return;
-}  
+}
 
 void LogRaw( const char *format, ... )
 {
@@ -624,7 +624,7 @@ void LogRaw( const char *format, ... )
   LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL, format, &argptr );
   va_end(argptr);
   return;
-}  
+}
 
 void LogTo( int towhat, const char *format, ... )
 {
@@ -633,17 +633,17 @@ void LogTo( int towhat, const char *format, ... )
   LogWithPointer( towhat, format, &argptr );
   va_end(argptr);
   return;
-}  
+}
 
 const char *LogGetCurrentLogFilename( void )
 {
-  if ((logstatics.loggingTo & LOGTO_FILE) == 0 || 
+  if ((logstatics.loggingTo & LOGTO_FILE) == 0 ||
     logstatics.logfileType == LOGFILETYPE_NONE )
     return NULL;
   if ( !logstatics.logfilestarted )
     return "";
   return logstatics.logfile;
-}  
+}
 
 // ---------------------------------------------------------------------------
 
@@ -665,7 +665,7 @@ void LogScreenPercent( unsigned int load_problem_count )
   for (prob_i = 0; prob_i < load_problem_count; prob_i++)
   {
     Problem *selprob = GetProblemPointerFromIndex(prob_i);
-    percent = 0; 
+    percent = 0;
 
     if (selprob && selprob->IsInitialized())
     {
@@ -675,11 +675,11 @@ void LogScreenPercent( unsigned int load_problem_count )
       if (permille < 995) /* only round up if < 99.5 */
         permille += 5;
       percent = permille/10;
-      if (load_problem_count == 1 && percent != 100) 
+      if (load_problem_count == 1 && percent != 100)
       {   /* don't do 'R' if multiple-problems */
         restartperc = (selprob->startpermille)/10;
-        restartperc = (!restartperc || percent == 100) ? 0 : 
-            ( restartperc - ((restartperc > 90) ? (restartperc & 1) : 
+        restartperc = (!restartperc || percent == 100) ? 0 :
+            ( restartperc - ((restartperc > 90) ? (restartperc & 1) :
             (1 - (restartperc & 1))) );
       }
       if (percent > endperc)
@@ -690,10 +690,10 @@ void LogScreenPercent( unsigned int load_problem_count )
     if (load_problem_count <= 26) /* a-z */
       pbuf[prob_i] = (unsigned char)(percent);
   }
-  
+
   if (!logstatics.lastwasperc || isatty)
     lastperc = 0;
-  multiperc = (load_problem_count > 1 && load_problem_count <= 26 /*a-z*/ 
+  multiperc = (load_problem_count > 1 && load_problem_count <= 26 /*a-z*/
                  && lastperc == 0 && isatty && endperc < 100);
   if (lastperc == 0 && endperc > 0 && isatty )
     *bufptr++ = '\r';
@@ -704,11 +704,18 @@ void LogScreenPercent( unsigned int load_problem_count )
     { strcpy( bufptr, "100" ); bufptr+=sizeof("100"); /*endperc=0;*/ break;}
     else if ( ( percent % 10 ) == 0 )
     { sprintf( bufptr, "%d%%", (int)(percent) ); bufptr+=3; }
-    else if ( restartperc == percent) 
+    else if ( restartperc == percent)
     { *bufptr++='R'; }
     else if (((percent&1)?(percent<90):(percent>90)))
     {
+    #if (CLIENT_OS == OS_OS2)
+      if (percent+1 >= endperc)
+         ch = 'Û';
+      else
+         ch = '°';
+    #else
       ch = '.';
+    #endif
       if (multiperc)
       {
         equals = 0;
@@ -722,7 +729,7 @@ void LogScreenPercent( unsigned int load_problem_count )
           }
         }
       }
-      *bufptr++ = ch; 
+      *bufptr++ = ch;
     }
   }
   displevel++;
@@ -745,7 +752,7 @@ void LogScreenPercent( unsigned int load_problem_count )
     if (doit)
     {
       LogWithPointer( LOGTO_SCREEN|LOGTO_RAWMODE, buffer, NULL );
-      logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0 
+      logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0
       logstatics.lastwasperc = 1; //(endperc != 0); //percbar requires reset
     }
   }
@@ -756,7 +763,7 @@ void LogScreenPercent( unsigned int load_problem_count )
 
 void DeinitializeLogging(void)
 {
-  if (logstatics.mailmessage && (logstatics.loggingTo & LOGTO_MAIL)!=0) 
+  if (logstatics.mailmessage && (logstatics.loggingTo & LOGTO_MAIL)!=0)
   {
     MailMessage *mmsg = logstatics.mailmessage;
     logstatics.mailmessage = NULL;
@@ -792,7 +799,7 @@ static int fixup_logfilevars( const char *stype, const char *slimit,
   *limit = 0;
   *logname = 0;
   *logbasedir = 0;
-  
+
   if (userslogname)
   {
     while (*userslogname && isspace(*userslogname))
@@ -851,7 +858,7 @@ static int fixup_logfilevars( const char *stype, const char *slimit,
     while (i<len && i<(sizeof(scratch)-1))
       scratch[i++]=(char)tolower(*stype++);
     scratch[i]='\0';
-    
+
     for (i=0;i<(sizeof(logtypelist)/sizeof(logtypelist[0]));i++)
     {
       if (strcmp(logtypelist[i].name, scratch ) == 0)
@@ -893,7 +900,7 @@ static int fixup_logfilevars( const char *stype, const char *slimit,
       *type = LOGFILETYPE_NOLIMIT;
       *limit = 0;
     }
-    else 
+    else
     {
       if (climit == 'b')
         l /= 1024;
@@ -913,12 +920,12 @@ static int fixup_logfilevars( const char *stype, const char *slimit,
   }
   TRACE_OUT((0,"logfile limit = %u\n", *limit));
   return 0;
-}  
+}
 
-void InitializeLogging( int noscreen, int nopercent, const char *logfilename, 
-                        const char *logfiletype, const char *logfilelimit, 
-                        long mailmsglen, const char *smtpsrvr, 
-                        unsigned int smtpport, const char *smtpfrom, 
+void InitializeLogging( int noscreen, int nopercent, const char *logfilename,
+                        const char *logfiletype, const char *logfilelimit,
+                        long mailmsglen, const char *smtpsrvr,
+                        unsigned int smtpport, const char *smtpfrom,
                         const char *smtpdest, const char *id )
 {
   DeinitializeLogging();
@@ -933,7 +940,7 @@ void InitializeLogging( int noscreen, int nopercent, const char *logfilename,
 
   fixup_logfilevars( logfiletype, logfilelimit,
                      &logstatics.logfileType, &logstatics.logfileLimit,
-                     logfilename, logstatics.logfile, 
+                     logfilename, logstatics.logfile,
                      (sizeof(logstatics.logfile)-10),
                      logstatics.basedir, sizeof(logstatics.basedir));
   if (logstatics.logfileType != LOGFILETYPE_NONE)
@@ -952,13 +959,13 @@ void InitializeLogging( int noscreen, int nopercent, const char *logfilename,
       logstatics.loggingTo |= LOGTO_MAIL;
     }
     else
-    {                                           
+    {
       delete logstatics.mailmessage;
       logstatics.mailmessage = NULL;
     }
   }
   return;
-}  
+}
 
 // ---------------------------------------------------------------------------
 
