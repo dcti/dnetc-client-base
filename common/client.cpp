@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.89  1998/07/10 04:34:55  silby
+// Changes to connectrequested variable to allow better GUI interface with the main thread for requested flushes,fetches, and updates.
+//
 // Revision 1.88  1998/07/09 09:43:25  remi
 // Give an error message when the user ask for '-ident' and there is no support
 // for it in the client.
@@ -12,7 +15,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.88 1998/07/09 09:43:25 remi Exp $.
+// Tweaked $Id: client.cpp,v 1.89 1998/07/10 04:34:55 silby Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -188,7 +191,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.88 1998/07/09 09:43:25 remi Exp $"; }
+return "@(#)$Id: client.cpp,v 1.89 1998/07/10 04:34:55 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -2170,13 +2173,35 @@ PreferredIsDone1:
         // Connect every 20*3=60 seconds
         // Non-MT 60 + (time for a client.run())
         connectloops=0;
-        Update(0 ,0,0);  // RC5 We don't care about any of the errors.
-        Update(1 ,0,0);  // DES We don't care about any of the errors.
-        if (connectrequested)
-        {
-          if (connectrequested == 1) Log("Keyblock Update completed\n");
+        if (connectrequested == 1) // forced update by a user
+          {
+          Update(0 ,1,1);  // RC5 We care about the errors.
+          Update(1 ,1,1);  // DES We care about the errors.
+          LogScreen("Keyblock Update completed.\n");
           connectrequested=0;
-        }
+          }
+        else if (connectrequested == 2) // automatic update
+          {
+          Update(0 ,0,0);  // RC5 We don't care about any of the errors.
+          Update(1 ,0,0);  // DES We don't care about any of the errors.
+          connectrequested=0;
+          }
+        else if (connectrequested == 3) // forced flush
+          {
+          Flush(0,NULL,1);
+          Flush(1,NULL,1);
+          LogScreen("Flush request completed.\n");
+          connectrequested=0;
+          }
+        else if (connectrequested == 3) // forced fetch
+          {
+          Fetch(0,NULL,1);
+          Fetch(1,NULL,1);
+          LogScreen("Fetch request completed.\n");
+          connectrequested=0;
+          };
+         
+        
       }
     }
     #endif
