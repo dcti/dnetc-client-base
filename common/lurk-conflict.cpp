@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk-conflict.cpp,v $
+// Revision 1.19  1999/02/04 22:53:15  trevorh
+// Corrected compilation errors for OS/2 after cyp change
+//
 // Revision 1.18  1999/02/04 07:47:06  cyp
 // Re-import from proxy base. Cleaned up. Added linux and win16 support.
 //
@@ -44,7 +47,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk-conflict.cpp,v 1.18 1999/02/04 07:47:06 cyp Exp $"; }
+return "@(#)$Id: lurk-conflict.cpp,v 1.19 1999/02/04 22:53:15 trevorh Exp $"; }
 #endif
 
 /* --------------------------------- */
@@ -95,7 +98,7 @@ int Lurk::CheckForStatusChange(void) //returns !0 if connection dropped
 /* ================================================================== */
 /* ************** OS SPECIFIC STUFF BEGINS HERE ********************* */
 /* ================================================================== */
-   
+
 
 #if (CLIENT_OS == OS_LINUX)
 #include <sys/types.h>
@@ -188,11 +191,14 @@ static FARPROC LoadRASAPIProc( const char *procname )
 
 #elif (CLIENT_OS == OS_OS2)
 
-#define OS2
 #define TCPIPV4               //should also work with V3 though
-#include  <net/if.h>          // ifmib
-#include <sys/socket.h>
-#include <sys/ioctl.h>
+#if defined(__WATCOMC__)
+#include <stdio.h>
+#include <string.h>
+#include <types.h>
+#include "..\platforms\os2cli\os2defs.h"
+#endif
+#include <net/if.h>          // ifmib
 #ifndef ULONG
 typedef unsigned long ULONG;
 #endif
@@ -375,7 +381,6 @@ int Lurk::IsConnected(void)   // Checks status of connection
        if ( ioctl(s, SIOSTATIF, (char *)&MyIFMib, sizeof(MyIFMib)) < 0)
          MyIFNet.ifNumber = 0;
        }
-     soclose(s);
      }
    for (i = 0; i < MyIFNet.ifNumber; i++)
      {
@@ -386,11 +391,36 @@ int Lurk::IsConnected(void)   // Checks status of connection
          {
          if (MyIFNet.iftable[i].ifa_addr != 0x0100007f)  /* same thing for TCPIP < 4.1 */
            {
-           return 1;      // Report online if SLIP or PPP detected
+           struct ifreq MyIFReq = {0};
+           if (j < 9)
+              {
+              sprintf(MyIFReq.ifr_name, "lan%d", j);
+              }
+           else
+              {
+              if (j > 9)
+                 {
+                 sprintf(MyIFReq.ifr_name, "ppp%d", j-10);
+                 }
+              else
+                 {
+                 strcpy(MyIFReq.ifr_name, "lo");
+                 }
+              }
+           rc = ioctl(s, SIOCGIFFLAGS, (char*)&MyIFReq, sizeof(MyIFReq));
+           if (!rc)
+              {
+              if ((MyIFReq.ifr_flags & IFF_UP) != 0)
+                 {
+                 soclose(s);
+                 return 1;      // Report online if SLIP or PPP detected
+                 }
+              }
            }
          }
        }
      }
+     soclose(s);
 #elif ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN16S))
    HMODULE hmod = GetModuleHandle("WINSOCK");
    if (hmod)
@@ -401,7 +431,7 @@ int Lurk::IsConnected(void)   // Checks status of connection
    int n, foundif = 0;
 
    int fd = socket(PF_INET,SOCK_STREAM,0);
-   if (fd >= 0) 
+   if (fd >= 0)
      {
      caddr_t p;
      int numreqs = 10;
@@ -409,7 +439,7 @@ int Lurk::IsConnected(void)   // Checks status of connection
      while (ifc.ifc_buf) /* forever */
        {
        ifc.ifc_len = sizeof(struct ifreq) * numreqs;
-       if (ioctl(fd, SIOCGIFCONF, &ifc) < 0) 
+       if (ioctl(fd, SIOCGIFCONF, &ifc) < 0)
          {
          ifc.ifc_len = 0;
          break;
@@ -420,16 +450,16 @@ int Lurk::IsConnected(void)   // Checks status of connection
        p = (caddr_t)malloc( sizeof(struct ifreq) * (numreqs + 10));
        if (!p)
          break;
-       numreqs += 10; 
+       numreqs += 10;
        free( (void *)(ifc.ifc_buf) );
-       ifc.ifc_buf = p;     
+       ifc.ifc_buf = p;
        }
 
      //printf("count: %d\n", ifc.ifc_len/sizeof(struct ifreq) );
      if (ifc.ifc_len != 0)
        {
        ifr = ifc.ifc_req;
-       for (n = 0; n < ifc.ifc_len; n += sizeof(struct ifreq)) 
+       for (n = 0; n < ifc.ifc_len; n += sizeof(struct ifreq))
          {
          if ((ifr->ifr_flags & (IFF_POINTOPOINT|IFF_UP|IFF_LOOPBACK)) ==
                                (IFF_POINTOPOINT|IFF_UP) )
@@ -447,7 +477,7 @@ int Lurk::IsConnected(void)   // Checks status of connection
      }
    if (foundif)
      return 1;
-     
+
 #endif
   return 0;// Not connected
 }
@@ -465,7 +495,7 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
   if (IsConnected()) // We're already connected
     return 0;
 
-  if (lurkmode == CONNECT_LURKONLY && !force) 
+  if (lurkmode == CONNECT_LURKONLY && !force)
     return -1; // lurk-only, we're not allowed to connect unless forced
 
   if (!dialwhenneeded)           // We don't handle dialing
@@ -527,10 +557,10 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
   LogScreen("Connection initiation error:\n%s",errorstring);
 
 #elif (CLIENT_OS == OS_LINUX)
-  
+
   if (connectionname[0] == 0)  /* we don't do dialup */
     return 0;                  /* bad! but same result as !dialwhenneeded */
-  
+
   if (system( connectionname ) == 127 /*exec error */)
     {                                               //pppstart of whatever
     LogScreen("Unable to exec '%s'\n%s\n", connectionname, strerror(errno));
@@ -567,16 +597,16 @@ int Lurk::HangupIfNeeded(void) //returns 0 on success, !0 on fail
 
   if (!dialwhenneeded)     // We don't handle dialing
     return 0;
- 
+
   int isconnected = IsConnected();
- 
+
   if (!dohangupcontrol) //if we didn't initiate, we shouldn't terminate
     return ((isconnected)?(-1):(0));
 
   if (!isconnected)     // We're already disconnected
     {
     dohangupcontrol = 0;
-    return 0; 
+    return 0;
     }
 
 #if (CLIENT_OS == OS_WIN32)
@@ -621,7 +651,7 @@ int Lurk::HangupIfNeeded(void) //returns 0 on success, !0 on fail
     {                                               //pppstop of whatever
     LogScreen("Unable to exec '%s'\n%s\n", stopconnection, strerror(errno));
     return -1;
-    } 
+    }
   int droppedconn = 0, retry = 0;
   for (;retry < 10;retry++)
     {
@@ -632,7 +662,7 @@ int Lurk::HangupIfNeeded(void) //returns 0 on success, !0 on fail
   if (!droppedconn)
     return -1;
   dohangupcontrol = 0;
-    
+
 #endif
   return 0;
 }
