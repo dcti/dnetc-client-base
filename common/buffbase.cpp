@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.20 2000/01/30 23:06:42 gregh Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.21 2000/02/06 05:29:01 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
@@ -36,11 +36,11 @@ static int BufferPutMemRecord( struct membuffstruct *membuff,
   if (membuff->count == 0)
   {
     unsigned int i;
-    for (i = 0; i < BUFTHRESHOLD_MAX; i++)
+    for (i = 0; i < (sizeof(membuff->buff)/sizeof(membuff->buff[0])); i++)
       membuff->buff[i]=NULL;
   }
 
-  if (membuff->count < BUFTHRESHOLD_MAX)
+  if (membuff->count < (sizeof(membuff->buff)/sizeof(membuff->buff[0])))
   {
     dest = (WorkRecord *)malloc(sizeof(WorkRecord));
     if (dest != NULL)
@@ -59,7 +59,6 @@ static int BufferPutMemRecord( struct membuffstruct *membuff,
 
 
 /* --------------------------------------------------------------------- */
-
 
 static int BufferGetMemRecord( struct membuffstruct *membuff,
                             WorkRecord* data, unsigned long *countP ) 
@@ -160,7 +159,7 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
   #elif (CLIENT_OS == OS_RISCOS)
     if (riscos_get_filelength(fileno(file),(unsigned long *)length) != 0)
     {
-	return -1;
+      return -1;
     }
   #else
     struct stat statbuf;
@@ -847,6 +846,36 @@ long GetBufferRecord( Client *client, WorkRecord* data,
   } while (count && !CheckExitRequestTriggerNoIO()); 
 
   return -1;
+}
+
+/* --------------------------------------------------------------------- */
+
+int BufferAssertIsBufferFull( Client *client, unsigned int contest )
+{
+  int isfull = 0;
+  if (contest < CONTEST_COUNT)
+  {
+    unsigned long reccount;
+    if (client->nodiskbuffers == 0)
+    {
+      const char *filename = client->in_buffer_basename;
+      filename = BufferGetDefaultFilename(contest, 0, filename );
+      if (BufferCountFileRecords( filename, contest, &reccount, NULL ) != 0)
+        isfull = 1;
+      else
+        isfull = (reccount > 500); /* yes, hardcoded. */
+      /* This function should be the only place where maxlimit is checked */
+    }
+    else
+    {
+      struct membuffstruct *membuff = &(client->membufftable[contest].in);
+      if ( BufferCountMemRecords( membuff, contest, &reccount, NULL ) != 0)
+        isfull = 1;
+      else
+        isfull=(reccount >= (sizeof(membuff->buff)/sizeof(membuff->buff[0])));
+    }
+  }
+  return isfull;
 }
 
 /* --------------------------------------------------------------------- */

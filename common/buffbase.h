@@ -10,7 +10,7 @@
  * ------------------------------------------------------------------
 */
 #ifndef __BUFFBASE_H__
-#define __BUFFBASE_H__ "@(#)$Id: buffbase.h,v 1.1.2.1 1999/11/02 14:38:13 cyp Exp $"
+#define __BUFFBASE_H__ "@(#)$Id: buffbase.h,v 1.1.2.2 2000/02/06 05:29:02 cyp Exp $"
 
 /* ..Put() returns <0 on ioerr, else 0 on success */
 int BufferPutFileRecord( const char *filename, const WorkRecord * data, 
@@ -45,5 +45,9 @@ long BufferFetchFile( Client *client, const char *loadermap_flags );
 long PutBufferRecord(Client *client, const WorkRecord * data);
 long GetBufferRecord(Client *client, WorkRecord * data, unsigned int contest, int use_out_file);
 long GetBufferCount(Client *client, unsigned int contest, int use_out_file, unsigned long *normcountP );
+
+/* determine if an in-buffer is full. This is the only correct way to do it,
+   (because we need to limit packets, not work-units) */
+int BufferAssertIsBufferFull( Client *client, unsigned int contest );
 
 #endif /* __BUFFBASE_H__ */
