@@ -3,11 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
-// Revision 1.53  1998/12/14 09:38:59  snake
+// Revision 1.54  1998/12/14 12:48:59  cyp
+// This is the final revision of problem.cpp/problem.h before the class goes
+// to 'u64-clean'. Please check/declare all core prototypes.
 //
-// Re-integrated non-nasm x86 cores, cause nasm doesn't support all x86 platforms.
-// Sorry, no bye-bye to .cpp cores.
-// Moved RC5X86_SRCS to NASM_RC5X86_SRCS and corrected other targets.
+// Revision 1.53  1998/12/14 09:38:59  snake
+// Re-integrated non-nasm x86 cores, cause nasm doesn't support all x86 cores.
+// Sorry, no bye-bye to .cpp cores. Moved RC5X86_SRCS to NASM_RC5X86_SRCS and 
+// corrected other targets.
 //
 // Revision 1.52  1998/12/14 05:16:10  dicamillo
 // Mac OS updates to eliminate use of MULTITHREAD and have a singe client
@@ -145,7 +148,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.53 1998/12/14 09:38:59 snake Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.54 1998/12/14 12:48:59 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -154,8 +157,16 @@ return "@(#)$Id: problem.cpp,v 1.53 1998/12/14 09:38:59 snake Exp $"; }
 #include "network.h" // for timeval and htonl/ntohl
 #include "clitime.h" //for CliTimer() which gets a timeval of the current time
 #include "logstuff.h" //LogScreen()
+#include "cpucheck.h"
 #include "console.h"
 #include "triggers.h"
+#if (CLIENT_OS == OS_RISCOS)
+#include "../platforms/riscos/riscos_x86.h"
+extern "C" void riscos_upcall_6(void);
+extern void CliSignalHandler(int);
+#endif
+
+/* ------------------------------------------------------------- */
 
 //#define STRESS_THREADS_AND_BUFFERS /* !be careful with this! */
 
@@ -163,49 +174,92 @@ return "@(#)$Id: problem.cpp,v 1.53 1998/12/14 09:38:59 snake Exp $"; }
 #error "everything assumes a 32bit CPU..."
 #endif
 
+/* ------------------------------------------------------------- */
+
 #if (CLIENT_CPU == CPU_X86)
-  u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
-  u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
-  u32 (*des_unit_func2)( RC5UnitWork * rc5unitwork, u32 timeslice );
-#elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS == OS_WIN32)
-  // NT PPC doesn't have good assembly
-  #include "rc5ansi2-rg.cpp"
-  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
-#elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_VMS)
-  #include "rc5ansi2-rg.cpp"
-  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
-#elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_LINUX)
-  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+  extern "C" u32 rc5_unit_func_486( RC5UnitWork * rc5unitwork, u32 timeslice );
+  extern "C" u32 rc5_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
+  extern "C" u32 rc5_unit_func_p6( RC5UnitWork * rc5unitwork, u32 timeslice );
+  extern "C" u32 rc5_unit_func_6x86( RC5UnitWork * rc5unitwork, u32 timeslice );
+  extern "C" u32 rc5_unit_func_k5( RC5UnitWork * rc5unitwork, u32 timeslice );
+  extern "C" u32 rc5_unit_func_k6( RC5UnitWork * rc5unitwork, u32 timeslice );
+  extern "C" u32 rc5_unit_func_p5_mmx( RC5UnitWork * rc5unitwork, u32 timeslice );
+  extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * rc5unitwork, u32 timeslice );
+  extern u32 p1des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 nbbits );
+  extern u32 p1des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 nbbits );
+  extern u32 p2des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 nbbits );
+  extern u32 p2des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 nbbits );
+  extern u32 des_unit_func_mmx( RC5UnitWork * rc5unitwork, u32 nbbits );
+  extern u32 des_unit_func_slice( RC5UnitWork * rc5unitwork, u32 nbbits );
+  #if (PIPELINE_COUNT != 2)
+  #error "Expecting PIPELINE_COUNT=2"
+  #endif
 #elif (CLIENT_CPU == CPU_POWERPC)
-  extern "C" int crunch_allitnil( RC5UnitWork *work, unsigned long iterations );
-  extern "C" int crunch_lintilla( RC5UnitWork *work, unsigned long iterations );
-  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
-  int whichcrunch = 0;
-#elif (CLIENT_CPU == CPU_68K)
-  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
-  extern "C" __asm u32 (*rc5_unit_func)( register __a0 RC5UnitWork *work, register __d0 u32 timeslice);
-#elif (CLIENT_CPU == CPU_ARM)
-  u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long iterations  );
-  u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
-#else
-  #include "rc5stub.cpp"
-  #if defined(KWAN) && !defined(MEGGS)
-    #define des_unit_func des_unit_func_slice
+  #if (CLIENT_OS == OS_WIN32)   // NT PPC doesn't have good assembly
+  extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork ); //rc5ansi2-rg.cpp
+  #else
+  extern "C" int crunch_allitnil( RC5UnitWork *work, unsigned long iterations);
+  extern "C" int crunch_lintilla( RC5UnitWork *work, unsigned long iterations);
   #endif
   extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+  #if (PIPELINE_COUNT != 1)
+  #error "Expecting PIPELINE_COUNT=1"
+  #endif
+#elif (CLIENT_CPU == CPU_68K)
+  extern "C" __asm u32 rc5_unit_func_000_030( register __a0 RC5UnitWork * work, register __d0 unsigned long timeslice );
+  extern "C" __asm u32 rc5_unit_func_040_060( register __a0 RC5UnitWork * work, register __d0 unsigned long timeslice );
+  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+  #if (PIPELINE_COUNT != 2)
+  #error "Expecting PIPELINE_COUNT=2"
+  #endif
+#elif (CLIENT_CPU == CPU_ARM) 
+  extern "C" u32 rc5_unit_func_arm_1( RC5UnitWork * rc5unitwork , unsigned long t);
+  extern "C" u32 rc5_unit_func_arm_2( RC5UnitWork * rc5unitwork , unsigned long t);
+  extern "C" u32 rc5_unit_func_arm_3( RC5UnitWork * rc5unitwork , unsigned long t);
+  extern "C" u32 des_unit_func_arm( RC5UnitWork * rc5unitwork , unsigned long t);
+  extern "C" u32 des_unit_func_strongarm( RC5UnitWork * rc5unitwork , unsigned long t);
+  #if (PIPELINE_COUNT != 2)
+  #error "Expecting PIPELINE_COUNT=2"
+  #endif
+#elif (CLIENT_CPU == CPU_PA_RISC)
+  extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
+  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+  #error Please verify these core prototypes
+#elif (CLIENT_CPU == CPU_SPARC)
+  #if (ULTRA_CRUNCH == 1)
+  extern "C" unsigned long crunch( register RC5UnitWork * rc5unitwork, u32 timeslice);
+  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+  #else
+  extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
+  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+  #endif
+  #error Please verify these core prototypes
+#elif (CLIENT_CPU == CPU_MIPS)
+  #if (MIPS_CRUNCH == 1)
+  extern "C" unsigned long crunch( register RC5UnitWork * rc5unitwork, u32 timeslice);
+  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+  #else
+  extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
+  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+  #endif
+  #error Please verify these core prototypes
+#elif (CLIENT_CPU == CPU_ALPHA)
+  extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
+  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+  #error Please verify these core prototypes
+#else
+  extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
+  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+  #error Please declare/prototype cores by CLIENT_CPU if you are not using ansi*.cpp cores.
 #endif
 
-#if (CLIENT_OS == OS_RISCOS)
-#include "../platforms/riscos/riscos_x86.h"
-extern "C" void riscos_upcall_6(void);
-extern void CliSignalHandler(int);
-#endif
+/* ------------------------------------------------------------------- */
 
-//-----------------------------------------------------------------------
-
-Problem::Problem()
+Problem::Problem(long _threadindex /* defaults to -1L */)
 {
-  probman_index = (unsigned int)(-1); /* assume not managed by probman */
+  threadindex_is_valid = (_threadindex!=-1L);
+  threadindex = ((threadindex_is_valid)?((unsigned int)_threadindex):(0));
+
   initialized = 0;
   finished = 0;
   started = 0;
@@ -237,42 +291,138 @@ Problem::Problem()
 #endif    
 }
 
+/* ------------------------------------------------------------------- */
+
 Problem::~Problem()
 {
   started = 0; // nothing to do. - suppress compiler warning
 #if (CLIENT_OS == OS_RISCOS)
   if (GetProblemIndexFromPointer(this) == 1)
-  {
-      _kernel_swi_regs r;
-
-      r.r[0] = 0;
-      _kernel_swi(RC5PC_RetriveBlock,&r,&r);
-  }
-#endif
-
-}
-
-s32 Problem::IsInitialized()
-{
-  return (initialized!=0);
-}
-
-s32 Problem::LoadState( ContestWork * work, u32 _contest, 
-                                            u32 _timeslice, int _cputype )
-{
-  contest = (_cputype != 0); //use up variable
-  contest = _contest;
-
-#if (CLIENT_OS == OS_RISCOS)
-  int x86thread = 0;
-  if (GetProblemPointerFromIndex(1) == this)
     {
-    x86thread = 1;
-    } 
+    _kernel_swi_regs r;
+    r.r[0] = 0;
+    _kernel_swi(RC5PC_RetriveBlock,&r,&r);
+    }
+#endif
+}
+
+/* ------------------------------------------------------------------- */
+
+int Problem::LoadState( ContestWork * work, unsigned int _contest, 
+                              u32 _timeslice, int _cputype )
+{
+  contest = _contest;
+  cputype = _cputype;
+
+  if (contest != 0 && contest != 1)
+    return -1;
+
+  pipeline_count = PIPELINE_COUNT;
+  
+#if (CLIENT_CPU == CPU_ARM)
+  switch(cputype)
+    {
+    case 0: rc5_unit_func = rc5_unit_func_arm_1;
+            des_unit_func = des_unit_func_arm;
+            pipeline_count = 1;
+            break;
+    default:
+    case 1: rc5_unit_func = rc5_unit_func_arm_3;
+            des_unit_func = des_unit_func_strongarm;
+            pipeline_count = 3;
+            break;
+    case 2: rc5_unit_func = rc5_unit_func_arm_2;
+            des_unit_func = des_unit_func_strongarm;
+            pipeline_count = 2;
+            break;
+    case 3: rc5_unit_func = rc5_unit_func_arm_3;
+            des_unit_func = des_unit_func_arm;
+            pipeline_count = 3;
+            break;
+    }
 #endif
 
+#if (CLIENT_CPU == CPU_68K)
+  if (cputype < 0 || cputype > 5) /* just to be safe */
+    cputype = 0;
+  if (cputype == 4 || cputype == 5 ) // there is no 68050, so type5=060
+    rc5_unit_func = rc5_unit_func_040_060;
+  else //if (cputype == 0 || cputype == 1 || cputype == 2 || cputype == 3)
+    rc5_unit_func = rc5_unit_func_000_030;
+#endif    
 
-#ifdef _CPU_32BIT_
+#if (CLIENT_CPU == CPU_X86)
+  static int detectedtype = -1;
+  if (detectedtype == -1)
+    detectedtype = GetProcessorType(1 /* quietly */);
+
+  if (cputype < 0 || cputype > 5)
+    cputype = 0;
+
+  if (contest == 1)
+    {
+    #if defined(MMX_BITSLICER)
+    if ((detectedtype & 0x100) != 0)
+      unit_func = des_unit_func_mmx;
+    else
+    #endif
+      {
+      if (cputype == 2 || cputype == 3 || cputype == 5)
+        unit_func = p1des_unit_func_p5;
+      else
+        unit_func = p1des_unit_func_pro;
+      #if defined(CLIENT_SUPPORTS_SMP)
+      if (threadindex == 1)
+        {
+        if (cputype == 2 || cputype == 3 || cputype == 5)
+          unit_func = p2des_unit_func_p5;
+        else
+          unit_func = p1des_unit_func_pro;
+        }
+      else if (threadindex > 1)
+        {
+        unit_func = des_unit_func_slice;
+        }
+      #endif
+      }
+    }
+  else //if (contest == 0) 
+    {
+    if (cputype == 1)   // Intel 386/486
+      {
+      #if defined(SMC) 
+      if (threadindex == 0)
+        unit_func =  rc5_unit_func_486_smc;
+      else
+      #endif
+        unit_func = rc5_unit_func_486;
+      }
+    else if (cputype == 2) // Ppro/PII
+      unit_func = rc5_unit_func_p6;
+    else if (cputype == 3) // 6x86(mx)
+      unit_func = rc5_unit_func_6x86;
+    else if (cputype == 4) // K5
+      unit_func = rc5_unit_func_k5;
+    else if (cputype == 5) // K6/K6-2
+      unit_func = rc5_unit_func_k6;
+    else // Pentium (0/6) + others
+      {
+      unit_func = rc5_unit_func_p5;
+      #if defined(MMX_RC5)
+      if (detectedtype == 0x106)  /* Pentium MMX only! */
+        {
+        unit_func = rc5_unit_func_p5_mmx;
+        pipeline_count = 4; // RC5 MMX core is 4 pipelines
+        }
+      #endif
+      cputype = 0;
+      }
+    }
+#endif    
+
+
+  //----------------------------------------------------------------
+
   // copy over the state information
   contestwork.key.hi = ntohl( work->key.hi );
   contestwork.key.lo = ntohl( work->key.lo );
@@ -286,16 +436,6 @@ s32 Problem::LoadState( ContestWork * work, u32 _contest,
   contestwork.keysdone.lo = ntohl( work->keysdone.lo );
   contestwork.iterations.hi = ntohl( work->iterations.hi );
   contestwork.iterations.lo = ntohl( work->iterations.lo );
-#if 0
-  LogScreen("key    hi/lo:  %08x:%08x\n", contestwork.key.hi, contestwork.key.lo);
-  LogScreen("iv     hi/lo:  %08x:%08x\n", contestwork.iv.hi, contestwork.iv.lo);
-  LogScreen("plain  hi/lo:  %08x:%08x\n",
-   contestwork.plain.hi, contestwork.plain.lo);
-  LogScreen("cipher hi/lo:  %08x:%08x\n",
-   contestwork.cypher.hi, contestwork.cypher.lo);
-  LogScreen("iter   hi/lo:  %08x:%08x\n",
-   contestwork.iterations.hi, contestwork.iterations.lo);
-#endif
 
   // determine the starting key number
   // (note: doesn't account for carryover to hi or high end of keysdone)
@@ -335,27 +475,7 @@ s32 Problem::LoadState( ContestWork * work, u32 _contest,
   rc5result.iterations.lo = contestwork.iterations.lo;
   rc5result.result = RESULT_WORKING;
 
-#endif
-
   //---------------------------------------------------------------
-
-  pipeline_count = PIPELINE_COUNT;
-  
-#if (CLIENT_CPU == CPU_X86)
-# if (CLIENT_OS != OS_BSDI)
-  if (contest == 0 && rc5_unit_func == rc5_unit_func_p5_mmx)
-    pipeline_count = 4; // RC5 MMX core is 4 pipelines
-# else
-	u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
-# endif
-#elif (CLIENT_CPU == CPU_ARM)
-  if (_cputype == 0)
-    pipeline_count = 1;
-  else if (_cputype == 2)
-    pipeline_count = 2;
-  else
-    pipeline_count = 3;
-#endif
   
   tslice = (( pipeline_count + 1 ) & ( ~1L ));
   if ( _timeslice > tslice )
@@ -367,15 +487,17 @@ s32 Problem::LoadState( ContestWork * work, u32 _contest,
      ( (double) (contestwork.keysdone.lo) /
        (double) (contestwork.iterations.lo) ) );
   percent=0;
-  restart = ( work->keysdone.lo > 0 );
+  restart = ( contestwork.keysdone.lo!=0 || contestwork.keysdone.hi!=0 );
 
   initialized = 1;
   finished = 0;
   started = 0;
 
 
+  //-------------------------------------------------------------------
+
 #if (CLIENT_OS == OS_RISCOS)
-  if (x86thread == 1)
+  if (threadindex == 1 /x86thread*/)
     {
     RC5PCstruct rc5pc;
     _kernel_swi_regs r;
@@ -406,9 +528,29 @@ s32 Problem::LoadState( ContestWork * work, u32 _contest,
   return( 0 );
 }
 
+/* ------------------------------------------------------------------- */
+
+s32 Problem::GetResult( RC5Result * result )
+{
+  if ( !initialized )
+    return ( -1 );
+
+  // note that all but result go back to network byte order at this point.
+  result->key.hi = htonl( rc5result.key.hi );
+  result->key.lo = htonl( rc5result.key.lo );
+  result->keysdone.hi = htonl( rc5result.keysdone.hi );
+  result->keysdone.lo = htonl( rc5result.keysdone.lo );
+  result->iterations.hi = htonl( rc5result.iterations.hi );
+  result->iterations.lo = htonl( rc5result.iterations.lo );
+  result->result = rc5result.result;
+
+  return ( contest );
+}
+
+/* ------------------------------------------------------------------- */
+
 s32 Problem::RetrieveState( ContestWork * work , s32 setflags )
 {
-#ifdef _CPU_32BIT_
   // store back the state information
   work->key.hi = htonl( contestwork.key.hi );
   work->key.lo = htonl( contestwork.key.lo );
@@ -422,7 +564,7 @@ s32 Problem::RetrieveState( ContestWork * work , s32 setflags )
   work->keysdone.lo = htonl( contestwork.keysdone.lo );
   work->iterations.hi = htonl( contestwork.iterations.hi );
   work->iterations.lo = htonl( contestwork.iterations.lo );
-#endif
+
   if (setflags) 
     {
     initialized = 0;
@@ -431,8 +573,9 @@ s32 Problem::RetrieveState( ContestWork * work , s32 setflags )
   return( contest );
 }
 
+/* ------------------------------------------------------------------- */
 
-s32 Problem::Run( u32 threadnum )
+s32 Problem::Run( u32 /*unused*/ )
 {
   u32 timeslice;
   if ( !initialized )
@@ -447,9 +590,6 @@ s32 Problem::Run( u32 threadnum )
     CliTimer(&stop);
     timehi = stop.tv_sec;
     timelo = stop.tv_usec;
-    #if (CLIENT_CPU != CPU_X86)
-       started = (threadnum == 0); //squelch 'unused variable' warning
-    #endif
     started=1;
 
 #ifdef STRESS_THREADS_AND_BUFFERS 
@@ -487,6 +627,9 @@ s32 Problem::Run( u32 threadnum )
   unsigned long kiter = 0;
   if (contest == 0) 
     {
+#if (CLIENT_OS == OS_WIN32)
+    kiter = rc5_unit_func( &rc5unitwork );
+#else    
 #if ((CLIENT_OS != OS_BEOS) || (CLIENT_OS != OS_AMIGAOS))
     if (whichcrunch == 0)
       kiter = crunch_allitnil( &rc5unitwork, timeslice );
@@ -505,6 +648,7 @@ s32 Problem::Run( u32 threadnum )
           }
         } while (kiter < timeslice);
       }
+#endif
     }
   else
     {
@@ -524,9 +668,10 @@ s32 Problem::Run( u32 threadnum )
   // long time (with respect to good user response time) before returning
   #if (CLIENT_OS == OS_MACOS)
     if ((contest == 0) && (MP_active == 0)) {
-  	  YieldToMain(1);
-  	}
+      YieldToMain(1);
+    }
   #endif
+
 
   contestwork.keysdone.lo += kiter;
 
@@ -549,7 +694,7 @@ s32 Problem::Run( u32 threadnum )
   unsigned long kiter;
   if (contest == 0)
     {
-    kiter = (rc5_unit_func) ( &rc5unitwork, timeslice );
+    kiter = (*unit_func)( &rc5unitwork, timeslice );
     }
   else
     {
@@ -561,10 +706,7 @@ s32 Problem::Run( u32 threadnum )
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits) / pipeline_count;
 
-    if (threadnum == 0) //both are the same on non_mt
-      kiter = (des_unit_func) ( &rc5unitwork, nbits );
-    else
-      kiter = (des_unit_func2) ( &rc5unitwork, nbits );
+    kiter = (*unit_func)( &rc5unitwork, nbits );
     }
 
   contestwork.keysdone.lo += kiter;
@@ -675,7 +817,7 @@ s32 Problem::Run( u32 threadnum )
   if (contest == 0)
     {
 #if (CLIENT_OS == OS_RISCOS)
-    if (threadnum == 0)
+    if (threadindex == 0)
       {
 #endif
 #ifdef DEBUG
@@ -723,56 +865,56 @@ s32 Problem::Run( u32 threadnum )
         }
 #if (CLIENT_OS == OS_RISCOS)
       }
-    else // threadnum == 1
+    else // threadindex == 1
       {
-	  /*
-	    This is the RISC OS specific x86 2nd thread magic.
-	  */
-	  _kernel_swi_regs r;
-	  volatile RC5PCstruct *rc5pcr;
-	  _kernel_swi(RC5PC_BufferStatus,&r,&r);
+          /*
+            This is the RISC OS specific x86 2nd thread magic.
+          */
+          _kernel_swi_regs r;
+          volatile RC5PCstruct *rc5pcr;
+          _kernel_swi(RC5PC_BufferStatus,&r,&r);
 
-	  /*
-	    contestwork.keysdone.lo is 0 for a completed block,
-	    so take care when setting it.
-	   */
-	  rc5pcr = (volatile RC5PCstruct *)r.r[1];
+          /*
+            contestwork.keysdone.lo is 0 for a completed block,
+            so take care when setting it.
+           */
+          rc5pcr = (volatile RC5PCstruct *)r.r[1];
 
 //LogScreen("x86: Keysdone %08lx",contestwork.keysdone.lo);
-	  
-	  if (r.r[2]==1)
-	  {
-	      /*
-		block finished
-	      */
-	      r.r[0] = 0;
-	      _kernel_swi(RC5PC_RetriveBlock,&r,&r);
-	      rc5pcr = (volatile RC5PCstruct *)r.r[1];
-	      
-	      if (rc5pcr->result == RESULT_FOUND)
-	      {
-		  contestwork.keysdone.lo = rc5pcr->keysdone.lo;
+          
+          if (r.r[2]==1)
+          {
+              /*
+                block finished
+              */
+              r.r[0] = 0;
+              _kernel_swi(RC5PC_RetriveBlock,&r,&r);
+              rc5pcr = (volatile RC5PCstruct *)r.r[1];
+              
+              if (rc5pcr->result == RESULT_FOUND)
+              {
+                  contestwork.keysdone.lo = rc5pcr->keysdone.lo;
 
-		  rc5result.key.hi = contestwork.key.hi;
-		  rc5result.key.lo = contestwork.key.lo;
-		  rc5result.keysdone.hi = contestwork.keysdone.hi;
-		  rc5result.keysdone.lo = contestwork.keysdone.lo;
-		  rc5result.iterations.hi = contestwork.iterations.hi;
-		  rc5result.iterations.lo = contestwork.iterations.lo;
-		  rc5result.result = RESULT_FOUND;
-		  finished = 1;
-		  return( 1 );
-	      }
-	      else
-	      {
-		  contestwork.keysdone.lo = contestwork.iterations.lo;
-	      }
+                  rc5result.key.hi = contestwork.key.hi;
+                  rc5result.key.lo = contestwork.key.lo;
+                  rc5result.keysdone.hi = contestwork.keysdone.hi;
+                  rc5result.keysdone.lo = contestwork.keysdone.lo;
+                  rc5result.iterations.hi = contestwork.iterations.hi;
+                  rc5result.iterations.lo = contestwork.iterations.lo;
+                  rc5result.result = RESULT_FOUND;
+                  finished = 1;
+                  return( 1 );
+              }
+              else
+              {
+                  contestwork.keysdone.lo = contestwork.iterations.lo;
+              }
 
-	  }
-	  else
-	  {
-	      contestwork.keysdone.lo = rc5pcr->keysdone.lo;
-	  }
+          }
+          else
+          {
+              contestwork.keysdone.lo = rc5pcr->keysdone.lo;
+          }
       }
 #endif
     }
@@ -910,11 +1052,10 @@ s32 Problem::Run( u32 threadnum )
         contestwork.keysdone.lo += pipeline_count;
         }
       }
-	  #if (CLIENT_OS == OS_MACOS)
-		  if (MP_active == 0) {			
-			  YieldToMain(1);
-		  }
-	  #endif
+    #if (CLIENT_OS == OS_MACOS)
+      if (MP_active == 0) {     
+        YieldToMain(1);
+    #endif
     }
   else
     {
@@ -972,43 +1113,10 @@ s32 Problem::Run( u32 threadnum )
 #if 0
 #if (CLIENT_OS == OS_RISCOS)    
 if (!finished)
-  LogScreen("Thread %d: Didn't find the key",threadnum);
-else if (threadnum == 1)
+  LogScreen("Thread %d: Didn't find the key",threadindex);
+else if (threadindex == 1)
   LogScreen("working... %08lx",contestwork.keysdone.lo);
 #endif
 #endif
   return( finished );
 }
-
-
-s32 Problem::GetResult( RC5Result * result )
-{
-  if ( !initialized )
-    return ( -1 );
-
-  // note that all but result go back to network byte order at this point.
-  result->key.hi = htonl( rc5result.key.hi );
-  result->key.lo = htonl( rc5result.key.lo );
-  result->keysdone.hi = htonl( rc5result.keysdone.hi );
-  result->keysdone.lo = htonl( rc5result.keysdone.lo );
-  result->iterations.hi = htonl( rc5result.iterations.hi );
-  result->iterations.lo = htonl( rc5result.iterations.lo );
-  result->result = rc5result.result;
-
-  return ( contest );
-}
-
-u32 Problem::CalcPercent()
-{
-  return (u32) ( (double) 100.0 *
-                  ( ((double) rc5result.keysdone.lo) /
-                    ((double) rc5result.iterations.lo) ) );
-}
-
-#if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-u32 Problem::GetKeysDone()
-{
-  return(rc5result.keysdone.lo);
-}
-#endif
-

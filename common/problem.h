@@ -5,19 +5,15 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.32  1998/12/14 12:48:59  cyp
+// This is the final revision of problem.cpp/problem.h before the class goes
+// to 'u64-clean'. Please check/declare all core prototypes.
+//
 // Revision 1.31  1998/12/08 05:59:40  dicamillo
 // Define new method, GetKeysDone, needed for MacOS GUI.
 //
 // Revision 1.30  1998/12/01 19:49:14  cyp
-// Cleaned up MULT1THREAD #define: The define is used only in cputypes.h (and
-// then undefined). New #define based on MULT1THREAD, CLIENT_CPU and CLIENT_OS
-// are CORE_SUPPORTS_SMP, OS_SUPPORTS_SMP. If both CORE_* and OS_* support
-// SMP, then CLIENT_SUPPORTS_SMP is defined as well. This should keep thread
-// strangeness (as foxy encountered it) out of the picture. threadcd.h
-// (and threadcd.cpp) are no longer used, so those two can disappear as well.
-// Editorial note: The term "multi-threaded" is (and has always been)
-// virtually meaningless as far as the client is concerned. The phrase we
-// should be using is "SMP-aware".
+// Cleaned up MULT1THREAD #define. See cputypes.h for full log entry.
 //
 // Revision 1.29  1998/11/28 17:45:58  remi
 // Integration of the 386/486 self-modifying core.
@@ -158,91 +154,23 @@ typedef enum
 } Resultcode;
 
 
-#if (CLIENT_CPU == CPU_X86)
-  #if (PIPELINE_COUNT != 2)
-  #error "Expecting PIPELINE_COUNT=2"
-  #endif
-
-  #ifdef __WATCOMC__
-    #define rc5_unit_func_486 _rc5_unit_func_486
-    #define rc5_unit_func_p5 _rc5_unit_func_p5
-    #define rc5_unit_func_p6 _rc5_unit_func_p6
-    #define rc5_unit_func_6x86 _rc5_unit_func_6x86
-    #define rc5_unit_func_k5 _rc5_unit_func_k5
-    #define rc5_unit_func_k6 _rc5_unit_func_k6
-  #endif
-
-  extern u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
-  extern u32 (*des_unit_func2)( RC5UnitWork * rc5unitwork, u32 timeslice );
-  extern u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
-  extern "C" u32 rc5_unit_func_486( RC5UnitWork * rc5unitwork, u32 timeslice );
-  extern "C" u32 rc5_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
-  extern "C" u32 rc5_unit_func_p6( RC5UnitWork * rc5unitwork, u32 timeslice );
-  extern "C" u32 rc5_unit_func_6x86( RC5UnitWork * rc5unitwork, u32 timeslice );
-  extern "C" u32 rc5_unit_func_k5( RC5UnitWork * rc5unitwork, u32 timeslice );
-  extern "C" u32 rc5_unit_func_k6( RC5UnitWork * rc5unitwork, u32 timeslice );
-  extern "C" u32 rc5_unit_func_p5_mmx( RC5UnitWork * rc5unitwork, u32 timeslice );
-  #if defined(SMC)
-    extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * rc5unitwork, u32 timeslice );
-  #endif
-  extern u32 p1des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
-  extern u32 p1des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 timeslice );
-  #if defined(CLIENT_SUPPORTS_SMP)
-    extern u32 p2des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
-    extern u32 p2des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 timeslice );
-  #endif
-  #if defined(MMX_BITSLICER)
-    extern u32 des_unit_func_mmx( RC5UnitWork * rc5unitwork, u32 nbbits );
-  #elif defined(MEGGS) || defined(KWAN)
-    extern u32 des_unit_func_slice( RC5UnitWork * rc5unitwork, u32 nbbits );
-  #endif
-
-#elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
-  #if (PIPELINE_COUNT != 1)
-  #error "Expecting PIPELINE_COUNT=1"
-  #endif
-#elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_WIN32)
-  #if (PIPELINE_COUNT != 1)
-  #error "Expecting PIPELINE_COUNT=1"
-  #endif
-  extern int whichcrunch;
-#elif (CLIENT_CPU == CPU_68K)
-  extern "C" extern __asm u32 (*rc5_unit_func)( register __a0 RC5UnitWork *work, register __d0 u32 timeslice);
-  extern "C" __asm u32 rc5_unit_func_000_030( register __a0 RC5UnitWork * work, register __d0 unsigned long timeslice );
-  extern "C" __asm u32 rc5_unit_func_040_060( register __a0 RC5UnitWork * work, register __d0 unsigned long timeslice );
-  #if (PIPELINE_COUNT != 2)
-  #error "Expecting PIPELINE_COUNT=2"
-  #endif
-#elif (CLIENT_CPU == CPU_ARM)
-  #if (PIPELINE_COUNT != 2)
-  #error "Expecting PIPELINE_COUNT=2"
-  #endif
-  extern u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long t );
-  extern u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, unsigned long t );
-  extern "C" u32 rc5_unit_func_arm_1( RC5UnitWork * rc5unitwork , unsigned long t);
-  extern "C" u32 rc5_unit_func_arm_2( RC5UnitWork * rc5unitwork , unsigned long t);
-  extern "C" u32 rc5_unit_func_arm_3( RC5UnitWork * rc5unitwork , unsigned long t);
-
-  extern "C" u32 des_unit_func_arm( RC5UnitWork * rc5unitwork , unsigned long t);
-  extern "C" u32 des_unit_func_strongarm( RC5UnitWork * rc5unitwork , unsigned long t);
-#endif
-
 class Problem
 {
 public:
-  u32 finished;
+  int finished;
   u32 startpercent;
   u32 percent;
-  bool restart;
+  int restart;
   u32 timehi, timelo;
-  u32 started;
-  u32 contest;
+  int started;
+  unsigned int contest;
+  int cputype;
 
-  u32 pipeline_count;
+  unsigned int pipeline_count;
   u32 tslice; 
 
-  unsigned int probman_index; /* index of this problem in the problem table */
-                              /* -1 if the problem is not managed by probman*/
+  unsigned int threadindex; /* index of this problem in the problem table */
+  int threadindex_is_valid; /* 0 if the problem is not managed by probman*/
   
 // protected: ahem.
   u32 initialized;
@@ -250,14 +178,23 @@ public:
   RC5UnitWork rc5unitwork;
   RC5Result rc5result;
 
+  #if (CLIENT_CPU == CPU_X86)
+  u32 (*unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
+  #elif (CLIENT_CPU == CPU_68K)
+  extern "C" __asm u32 (*rc5_unit_func)( register __a0 RC5UnitWork *work, register __d0 u32 timeslice);
+  #elif (CLIENT_CPU == CPU_ARM)
+  u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long iterations  );
+  u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
+  #endif
+
 public:
-  Problem();
+  Problem(long _threadindex = -1L);
   ~Problem();
 
-  s32 IsInitialized(); 
+  int IsInitialized() { return (initialized!=0); }
 
-  s32 LoadState( ContestWork * work, u32 _contest, u32 _timeslice, 
-                                     int _cputype );
+  int LoadState( ContestWork * work, unsigned int _contest, u32 _timeslice, 
+                                                            int _cputype );
     // Load state into internal structures.
     // state is invalid (will generate errors) until this is called.
     // returns: -1 on error, 0 is OK
@@ -269,7 +206,7 @@ public:
     // returns: -1 on error, 0 is OK
     // Note: data is all in Network Byte order (coming out)( Big Endian )
 
-  s32 Run( u32 threadnum );
+  s32 Run( u32 /* unused */ );
     // Runs calling rc5_unit for timeslice times...
     // Returns:
     //   -1 if something goes wrong (state not loaded, already done etc...)
@@ -281,11 +218,13 @@ public:
     // returns: contest=0 (RC5), contest=1 (DES), or -1 = invalid data (state not loaded).
     // Note: data (except result) is all in Network Byte order ( Big Endian )
 
-  u32 CalcPercent();
+  u32 CalcPercent() { return (u32) ( (double) 100.0 *
+                      ( ((double) rc5result.keysdone.lo) /
+                      ((double) rc5result.iterations.lo) ) ); }
     // Return the % completed in the current block, to nearest 1%.
 
 #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-  u32 GetKeysDone();
+  u32 GetKeysDone() { return(rc5result.keysdone.lo); }
     // Returns keys completed for Mac GUI display.
 #endif
 
