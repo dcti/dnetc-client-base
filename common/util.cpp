@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.25 2000/04/14 17:19:55 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.26 2000/04/18 04:36:13 jlawson Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -621,25 +621,242 @@ const char *utilGetAppName(void)
 /* --------------------------------------------------------------------- */
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
-   (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD)
-#  include <dirent.h>        /* for direct read of /proc/ */
+      (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD)
+  #include <dirent.h>         // for direct read of /proc/
 #elif (CLIENT_OS == OS_BEOS)
-#  include <kernel/OS.h>     /* get_next_team_info() */
-#  include <kernel/image.h>  /* get_next_image_info() */
+  #include <kernel/OS.h>      // get_next_team_info()
+  #include <kernel/image.h>   // get_next_image_info()
 #elif (CLIENT_OS == OS_WIN32)
-#  include <tlhelp32.h>      /* toolhelp calls */
-#  include <winperf.h>       /* perf on registry */
+  #include <tlhelp32.h>       // toolhelp calls
+  #include <winperf.h>        // perf on registry
+  #include <ntsecapi.h>       // UNICODE_STRING
 #endif
 #ifdef __unix__
-#  include <fcntl.h>
+  #include <fcntl.h>
 #endif /* __unix__ */
 
 #if (CLIENT_OS == OS_WIN32)
-/*
-    This will work on Windows NT 3.x/4.x and Windows 2000, though
-    on Win2k it's easier to use the Pshelper APIs.  This function
-    ignores the leading path and file extension, if they are given.
-*/
+
+// Fills an array with the PIDs of all processes matching a given filename.
+// This method uses an internal NtQuerySystemInformation function that is
+// only available under Windows NT, and should be usable on NT 3.x, 4.x, and
+// even on Windows2000 (although on Win2k, the publicly-document PsHelper
+// version is preferable).  Ignores leading path on 'procname', if given.
+// If a file extension is given in 'procname', then it will be honored,
+// otherwise any extension will be matched.
+
+static int __utilGetPidUsingNtQuery(const char *procname, long *pidlist, int maxnumpids)
+{
+  // This actually uses an undocumented internal function in ntdll.dll that
+  // is not intended for external-MS use since they are subject to change
+  // between system releases.  However since we intend to only use this on NT4
+  // we should be safe.  There do exist other external-MS utilities that use
+  // this call, such as http://www.sysinternals.com/listdlls.htm
+
+  typedef struct _SYSTEM_PROCESS_INFORMATION {
+      ULONG NextEntryOffset;        // pointer to next record
+      ULONG NumberOfThreads;
+      LARGE_INTEGER SpareLi1;
+      LARGE_INTEGER SpareLi2;
+      LARGE_INTEGER SpareLi3;
+      LARGE_INTEGER CreateTime;
+      LARGE_INTEGER UserTime;
+      LARGE_INTEGER KernelTime;
+      UNICODE_STRING ImageName;     // image name
+      LONG BasePriority;
+      HANDLE UniqueProcessId;       // process id
+      HANDLE InheritedFromUniqueProcessId;
+      ULONG HandleCount;
+      ULONG SpareUl2;
+      ULONG SpareUl3;
+      ULONG PeakVirtualSize;
+      ULONG VirtualSize;
+      ULONG PageFaultCount;
+      ULONG PeakWorkingSetSize;
+      ULONG WorkingSetSize;
+      ULONG QuotaPeakPagedPoolUsage;
+      ULONG QuotaPagedPoolUsage;
+      ULONG QuotaPeakNonPagedPoolUsage;
+      ULONG QuotaNonPagedPoolUsage;
+      ULONG PagefileUsage;
+      ULONG PeakPagefileUsage;
+      ULONG PrivatePageCount;
+  } SYSTEM_PROCESS_INFORMATION, *PSYSTEM_PROCESS_INFORMATION;
+
+  // Find and remove the pathname prefix.
+  unsigned int basenamepos = strlen(procname);
+  while (basenamepos > 0)
+  {
+    basenamepos--;
+    if (procname[basenamepos] == '\\' ||
+        procname[basenamepos] == '/' ||
+        procname[basenamepos] == ':')
+    {
+      basenamepos++;
+      break;
+    }
+  }
+  procname += basenamepos;
+  
+
+  // Find the length of the file extension if specified.
+  unsigned int procnamelen = strlen(procname);
+  unsigned int procsufxlen = 0;
+  if (procnamelen > 3)
+  {
+    if (strcmpi( &procname[procnamelen-4],".com" )==0 ||
+        strcmpi( &procname[procnamelen-4],".exe" )==0 )
+    {
+      procsufxlen = 3;
+      procnamelen -=4;
+    }
+  }
+  
+
+  //
+  // Make sure we have a module handle.  ntdll.dll should always
+  // already be loaded for all Windows applications, so we only
+  // need to get and keep an existing handle.
+  //
+  static HMODULE hNtdll = NULL; 
+  if (hNtdll == NULL) {
+    hNtdll = GetModuleHandle( "ntdll.dll" );
+  }
+  if (hNtdll != NULL)
+  {
+    typedef DWORD (WINAPI *NtQuerySystemInformationT) (
+        DWORD SystemInformationClass, PVOID SystemInformation,
+        ULONG SystemInformationLength, PULONG ReturnLength);
+    
+    static NtQuerySystemInformationT fnNtQuerySystemInformation =
+                (NtQuerySystemInformationT)
+                GetProcAddress(hNtdll, "NtQuerySystemInformation");
+
+    if (fnNtQuerySystemInformation != NULL)
+    {
+      static dwStartingBytes = 8192;
+      DWORD dwNumBytesRet;
+      PSYSTEM_PROCESS_INFORMATION pProcessList;
+
+      //
+      // Ask the system for the list of processes currently running.
+      //
+      if (dwStartingBytes < 8192) dwStartingBytes = 8192;
+      pProcessList = (PSYSTEM_PROCESS_INFORMATION)
+          HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwStartingBytes );
+      while (pProcessList != NULL)
+      {
+        DWORD rc = (*fnNtQuerySystemInformation)(5, pProcessList,
+              dwStartingBytes, &dwNumBytesRet);
+//LogScreen("getinfo %d -> result %d\n", (int) dwStartingBytes, rc);
+        if (rc == 0 && dwNumBytesRet != 0)
+        {
+          //assert(dwNumBytesRet <= dwStartingBytes);
+          break;
+        }
+        else
+        {
+          dwStartingBytes += 1024;
+          HeapFree( GetProcessHeap(), 0, pProcessList);
+          pProcessList = (PSYSTEM_PROCESS_INFORMATION)
+              HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, dwStartingBytes );
+        }
+      }
+      dwStartingBytes -= 128;       // gradually diminish the size for next time.
+
+      //
+      // Walk through the process list and look for the matching processes.
+      //
+      if (pProcessList != NULL)
+      {
+        PSYSTEM_PROCESS_INFORMATION pWalk = pProcessList;
+        int num_found = 0;
+
+
+        while ((BYTE*)pWalk < ((BYTE*)pProcessList) + dwNumBytesRet)
+        {
+          // see if this process matches the one we want.
+          if (pWalk->ImageName.Buffer != NULL)
+          {
+            char foundname[200];
+            unsigned int cbLength = (unsigned int) WideCharToMultiByte( CP_ACP, 0,
+                    pWalk->ImageName.Buffer, pWalk->ImageName.Length / sizeof(WCHAR),
+                    foundname, sizeof(foundname), NULL, NULL);
+            if (cbLength != 0 && cbLength < sizeof(foundname))
+            {
+              foundname[cbLength] = '\0';
+//LogScreen("process %d -> %s\n", (int) pWalk->UniqueProcessId, foundname);
+
+              // first try matching the process name exactly.
+              int cmpresult = strcmpi( procname, foundname );
+
+              // if no extension was provided, then allow
+              // match if basenames (sans-ext) are equal.
+              if ( cmpresult != 0 && procsufxlen == 0)
+              {
+                if ( cbLength > 3 )
+                {
+                  if ( strcmpi( &foundname[cbLength-4], ".exe" ) == 0
+                    || strcmpi( &foundname[cbLength-4], ".com" ) == 0 )
+                  {
+                    if ((cbLength-4) == procnamelen)
+                    {
+                      cmpresult = memicmp( foundname,
+                                       procname, procnamelen );
+                    }
+                  }
+                }
+              }
+              
+              // If it matched, then we have a new PID to add.
+              if ( cmpresult == 0 )
+              {
+                long pid = (long) pWalk->UniqueProcessId;
+                
+                // We have identified the PID to save.
+                if (pid != 0)
+                {
+                  if (pidlist != NULL && maxnumpids > 0)
+                  {
+                    if (num_found < maxnumpids)
+                      pidlist[num_found] = pid;
+                    else
+                      break;
+                  }
+                  num_found++;
+                }
+              }
+            }            
+          }
+
+          // move onto the next record.
+          if (pWalk->NextEntryOffset < sizeof(SYSTEM_PROCESS_INFORMATION)) break;
+          pWalk = (PSYSTEM_PROCESS_INFORMATION) ( ((BYTE*)pWalk) + pWalk->NextEntryOffset);
+        }
+
+//LogScreen("end process enumeration, %d\n", num_found);
+
+        // free the memory buffer.
+        HeapFree( GetProcessHeap(), 0, pProcessList);
+
+//LogScreen("return\n");
+        return num_found;
+      }
+    }
+  }
+  return -1;      // error occurred.
+}
+
+
+#if 0
+// 
+// This method uses Windows NT Performance Counters, which means that custom
+// third-party perfcap libraries may also be indirectly loaded when this is
+// used, which may impose a large memory footprint.  This will work on
+// Windows NT 3.x/4.x and Windows 2000, though on Win2k it's easier to use
+// the Pshelper APIs.  This function ignores the leading path and file
+// extension, if they are given.
+//
 static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int maxnumpids )
 {
   // Information on the format of the PerfCaps data is at:
@@ -876,7 +1093,7 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
           if ( ((DWORD *)(((PBYTE)piddef) + piddef->NameLength)) == 0)
             foundname = NULL; /* name has zero length */
 
-          /* we have all the data we need, skip to the next pid */
+          // we have all the data we need, skip to the next pid.
           piddef = (PPERF_INSTANCE_DEFINITION) (((PBYTE)pcb) + pcb->ByteLength);
 
 //LogScreen("getpidlist 3a: got pid=0x%x\n", thatpid );
@@ -887,7 +1104,7 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
           }
           if (foundname && thatpid != 0 && thatpid != ourpid)
           {
-            /* convert the unicode name into ansi */
+            // Convert the UNICODE name into ANSI.
             dwBytes = (DWORD)WideCharToMultiByte( CP_ACP, 0,
                              (LPCWSTR)foundname, -1, szWorkbuffer,
                              sizeof(szWorkbuffer), NULL, NULL );
@@ -899,24 +1116,25 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
 
 //LogScreen("getpidlist 3b: got name='%s'\n", foundname );
 
-            /* foundname and procname are both in ansi and are both
-               just the basename (no path, no extension)
-            */
+            // 'foundname' and 'procname' are both in ANSI and are
+            // are both just the basename (no path, no extension).
             if ( dwBytes != 0 && procname_baselen == dwBytes &&
                  memicmp( foundname, procname, procname_baselen ) == 0 )
             {
-              if (pidlist)
+              if (thatpid != 0)
               {
-                pidlist[num_found] = (long)thatpid;
-              }
-              num_found++;
-              if (pidlist && num_found == maxnumpids)
-              {
-                break; /* for ( i = 0; i < pot->NumInstances; i++ ) */
+                if (pidlist != NULL && maxnumpids > 0)
+                {
+                  if (num_found < maxnumpids)
+                    pidlist[num_found] = thatpid;
+                  else
+                    break;
+                }
+                num_found++;
               }
             }
-          } /* if (thatpid != 0 && thatpid != ourpid) */
-        } /* for ( i = 0; i < pot->NumInstances; i++ ) */
+          }
+        }
       } /* if RegQueryValueEx == ERROR_SUCCESS */
 
       HeapFree(GetProcessHeap(), 0, (LPVOID)pdb );
@@ -926,11 +1144,26 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
 
   return num_found;
 }
+#endif
+
+
+//
+// The Pshelper methods of obtaining process lists is available on Win9x and
+// Windows 2000 and is preferable to using the Performance Counters or
+// NtQuery methods above.
+// Matches full pathname if specified.  Matches file extension if specified.
+//
 
 static int __utilGetPidUsingPshelper(const char *procname, long *pidlist, int maxnumpids )
 {
   int num_found = -1;
   static HMODULE hKernel32 = NULL;
+
+  if (!pidlist || maxnumpids < 1)
+  {
+    maxnumpids = 0;
+    pidlist = NULL;
+  }
 
   // find the end of the pathname prefix.
   unsigned int basenamepos = strlen(procname);
@@ -1046,14 +1279,16 @@ static int __utilGetPidUsingPshelper(const char *procname, long *pidlist, int ma
                 }
                 if ( cmpresult == 0 )
                 {
-                  if (pidlist)
+                  if (thatpid != 0)
                   {
-                    pidlist[num_found] = (long)thatpid;
-                  }
-                  num_found++;
-                  if (pidlist && num_found == maxnumpids)
-                  {
-                    break; /* while (next) */
+                    if (pidlist != NULL && maxnumpids > 0)
+                    {
+                      if (num_found < maxnumpids)
+                        pidlist[num_found] = thatpid;
+                      else
+                        break;
+                    }
+                    num_found++;
                   }
                 }
               }
@@ -1084,10 +1319,10 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
   if (!pidlist || maxnumpids < 1)
   {
     maxnumpids = 0;
-    pidlist = (long *)0;
+    pidlist = NULL;
   }
 
-  if (procname)
+  if (procname != NULL)
   {
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #if (CLIENT_OS == OS_BEOS)
@@ -1199,8 +1434,10 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
     {
       if (*procname == '*' || *procname == '#')
       {
-        /* match by window title or class name */
-
+        //
+        // Process name began with a special symbol and should
+        // match by window title ('*') or class name ('#').
+        //
         char which = *procname++;
         while (*procname == ' ' || *procname == '\t')
           procname++;
@@ -1214,16 +1451,19 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           num_found = 0;
           if (hwnd != NULL)
           {
+            // We have found a matching window, get its PID.
             DWORD pid = 0;
             #if (CLIENT_OS == OS_WIN32)
             if ( winGetVersion() >= 400 ) /* not win32s please */
             {
-              if (GetWindowThreadProcessId( hwnd, &pid) == 0)
+              // Return the actual PID on Win9x or NT.
+              if (GetWindowThreadProcessId( hwnd, &pid ) == 0)
                 pid = 0;
             }
             else
-            #endif /* we use module handles for win16 */
+            #endif
             {
+              // Return module handles instead of pids for win16 or win32s.
               #ifndef GWL_HINSTANCE /* GWW_HINSTANCE on win16 */
               #define GWL_HINSTANCE (-6)
               #endif
@@ -1235,7 +1475,9 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                   pid = (DWORD)GetModuleHandle( buffer );
               }
             }
-            if (pid != NULL)
+
+            // We have identified the PID to save.
+            if (pid != 0)
             {
               if (pidlist)
               {
@@ -1243,26 +1485,29 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
               }
               num_found++;
             }
-          } /* if (hwnd) */
-        } /* if (*procname) */
-      } /* if win or class name */
+          }
+        }
+      }
       else
       {
-        /* match by process executable name */
-
+        //
+        // Process name did not begin with a special symbol,
+        // so match by literal process executable name.
+        //
         #if (CLIENT_OS == OS_WIN32)
-        if (winGetVersion() >= 2000 && winGetVersion() < 2500) /* NT3/NT4 */
+        if (winGetVersion() >= 2000 && winGetVersion() < 2500) // NT3/NT4
         {
-          num_found = __utilGetPidUsingPerfCaps(procname, pidlist, maxnumpids);
+          //num_found = __utilGetPidUsingPerfCaps(procname, pidlist, maxnumpids);
+          num_found = __utilGetPidUsingNtQuery(procname, pidlist, maxnumpids);
         }
-        else if (winGetVersion() >= 400) /* win9x/NT5, but not win32s please */
+        else if (winGetVersion() >= 400) // win9x/NT5, but not win32s.
         {
           num_found = __utilGetPidUsingPshelper(procname, pidlist, maxnumpids);
         }
         else
         #endif
         {
-          /* we should use taskfirst/tasknext, but thats a *bit* ]:)
+          /* we should use taskfirst/tasknext, but thats a *bit*
              cowplicated from within an extender
           */
           HMODULE hMod = GetModuleHandle(procname);
@@ -1288,6 +1533,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         num_found++;
       }
     }
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #elif (defined(__unix__)) && (CLIENT_OS != OS_NEXTSTEP) && !defined(__EMX__)
     {
       char *p, *foundname;
@@ -1353,6 +1599,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         }
       }
       #endif
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
       #if (CLIENT_OS != OS_LINUX) && (CLIENT_OS != OS_HPUX)
       {
         /* this part is only needed for operating systems that do not read /proc
@@ -1496,6 +1743,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
       }
       #endif /* spawn ps */
     }
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #endif /* #if (defined(__unix__)) */
   } /* if (procname) */
 
