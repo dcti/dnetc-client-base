@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.50 2001/03/19 18:06:55 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.51 2001/03/20 09:48:28 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -216,6 +216,7 @@
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_AIX)
   #include <unistd.h>   // nice()
+  #include <fcntl.h> /* O_RDWR etc */
   #include <strings.h>    // bzero(), strcase...,
   #include <sys/select.h> // fd_set on AIX 4.1
   // clock_gettime is called getclock (used in clitime.cpp)
@@ -225,6 +226,7 @@
   #include <sys/time.h>
   #include <sys/file.h>
   #include <unistd.h>
+  #include <fcntl.h> /* O_RDWR etc */
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
   #undef NULL    /* some broken header unconditionally */
   #define NULL 0 /* defines NULL to be ((void *)0) */
@@ -254,10 +256,12 @@
   #include <sys/time.h>
   #include <sys/sysctl.h>
   #include <unistd.h>
+  #include <fcntl.h> /* O_RDWR etc */
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_FREEBSD)
   #include <sys/time.h>
   #include <unistd.h>
+  #include <fcntl.h> /* O_RDWR etc */
   #include <sys/param.h>
   #include <sys/sysctl.h>
   #if defined(__FreeBSD__) && (__FreeBSD__ < 3)
@@ -271,17 +275,20 @@
   #include <sys/param.h>
   #include <sys/sysctl.h>
   #include <unistd.h>
+  #include <fcntl.h> /* O_RDWR etc */
 #elif (CLIENT_OS == OS_BSDOS)
   #include <sys/time.h>
   #include <sys/param.h>
   #include <sys/sysctl.h>
   #include <unistd.h>
   #include <sched.h>
+  #include <fcntl.h> /* O_RDWR etc */
 #elif (CLIENT_OS == OS_NETBSD)
   #include <sys/time.h>
   #include <sys/param.h>
   #include <sys/sysctl.h>
   #include <unistd.h>
+  #include <fcntl.h> /* O_RDWR etc */
 #elif (CLIENT_OS == OS_QNX)
   #include <sys/time.h>
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
@@ -292,14 +299,16 @@
   #include <process.h>
   #include <env.h>
   #endif
+  #include <fcntl.h> /* O_RDWR etc */
 #elif (CLIENT_OS == OS_DYNIX)
   #include <unistd.h> // sleep(3c)
-  extern "C" int gethostname(char *, int);
+  #include <fcntl.h> /* O_RDWR etc */
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
   #include <machine/cpuconf.h>
   #include <sys/time.h>
+  #include <fcntl.h> /* O_RDWR etc */
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_NEXTSTEP)
   #include <bsd/sys/time.h>
