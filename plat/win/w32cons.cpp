@@ -11,7 +11,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.3 2002/10/14 00:30:24 andreasb Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.4 2002/10/14 14:49:11 jlawson Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE
@@ -1909,16 +1909,16 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
       {
         SetWindowText( hwnd, CliGetFullVersionDescriptor() );
       }
-      if ((hwnd = GetDlgItem( dialog, 202 )) != NULL)
-      {
-        SetWindowText( hwnd, "This client is maintained by\n"
-        #if defined(_M_ALPHA)
-        "Mike Marcelais <michmarc@microsoft.com>"
-        #else
-        "Cyrus Patel <cyp@distributed.net>, <cyp@fb14.uni-mainz.de>"
-        #endif
-        );
-      }
+//      if ((hwnd = GetDlgItem( dialog, 202 )) != NULL)
+//      {
+//        SetWindowText( hwnd, "This client is maintained by\n"
+//        #if defined(_M_ALPHA)
+//        "Mike Marcelais <michmarc@microsoft.com>"
+//        #else
+//        "Cyrus Patel <cyp@distributed.net>, <cyp@fb14.uni-mainz.de>"
+//        #endif
+//        );
+//      }
       if ((hwnd = GetDlgItem( dialog, 203 )) != NULL)
       {
         SetWindowText( hwnd, "http://www.distributed.net/bugs/" );
