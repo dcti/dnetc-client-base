@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.39  1999/02/21 09:58:37  silby
+// Removed prototype for IncrementKey
+//
 // Revision 1.38  1999/02/17 19:09:13  remi
 // Fix for non-x86 targets : an RC5 key should always be 'mangle-incremented',
 // whatever endianess we have. But htonl()/ntohl() does work for DES, so I
@@ -255,12 +258,6 @@ public:
     // returns: contest=0 (RC5), contest=1 (DES), or -1 = invalid data (state not loaded).
     // Note: data (except result) is all in Network Byte order ( Big Endian )
 
-  #if 0
-  u32 CalcPercent() { return (u32) ( (double) 100.0 *
-    /* Return the % completed in the current block, to nearest 1%. */
-                      ( ((double) rc5result.keysdone.lo) /
-                      ((double) rc5result.iterations.lo) ) ); }
-  #endif
   u32 CalcPercent() { return (u32)( ((double)(100.0)) *
     /* Return the % completed in the current block, to nearest 1%. */
         (((((double)(contestwork.keysdone.hi))*((double)(4294967296.0)))+
@@ -279,10 +276,6 @@ public:
 #endif
 
 };
-
-void IncrementKey(u64 &key, u32 iters, int contest);
-   // Increments a key
-
 
 #endif
 
