@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.35 2000/07/12 00:11:53 mfeiri Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.36 2000/08/22 13:35:57 oliver Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -938,6 +938,32 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         if (pidlist)
           pidlist[num_found] = lowLongOfPSN;
         num_found++;
+      }
+    }
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    #elif (CLIENT_OS == OS_AMIGAOS)
+    {
+      num_found = 0;
+      long taskptr;
+
+      #ifndef __PPC__
+      /* 68K */
+      taskptr = (long)FindTask(procname);
+      #else
+      #ifndef __POWERUP__
+      /* WarpOS */
+      taskptr = (long)FindTaskPPC((char *)procname);
+      #else
+      /* PowerUp */
+      taskptr = (long)PPCFindTask((char *)procname);
+      #endif
+      #endif
+
+      if (taskptr)
+      {
+         if (pidlist)
+            pidlist[num_found] = taskptr;
+         num_found++;
       }
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
