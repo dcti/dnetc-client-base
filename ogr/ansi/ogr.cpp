@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.23 2004/03/28 06:15:46 jlawson Exp $
+ * $Id: ogr.cpp,v 1.2.4.24 2004/03/28 19:42:09 oliver Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -89,7 +89,10 @@
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
     #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 2 /* use switch_asm   */
     #if !defined(_AIX) && !defined(__APPLE_CC__)    /* no balignl       */
-      #define OGROPT_CYCLE_CACHE_ALIGN              1
+      #define OGROPT_CYCLE_CACHE_ALIGN            1
+    #endif
+    #if (__GNUC__ >= 3)
+      #define OGROPT_NO_FUNCTION_INLINE           1
     #endif
   #elif defined(__xlC__)
     #include <builtins.h>                           /* __cntlz4()       */
@@ -296,6 +299,16 @@
 #define OGROPT_CYCLE_CACHE_ALIGN 0 /* the default is "no" */
 #endif
 
+/* Some compilers (notably GCC 3.4) may choose to inline functions, which
+   may have an adverse effect on performance of the OGR core.  This option
+   currently only affects the found_one() function and will declare it so
+   that the compiler will never inline it.  If you turn this option on,
+   you'll need to supply suitable code for the OGR_NO_FUNCTION_INLINE macro.
+*/
+#ifndef OGROPT_NO_FUNCTION_INLINE
+#define OGROPT_NO_FUNCTION_INLINE 0 /* the default is "no" */
+#endif
+
 /* ----------------------------------------------------------------------- */
 
 #if !defined(HAVE_STATIC_CHOOSEDAT) || defined(CRC_CHOOSEDAT_ANYWAY)
@@ -361,12 +374,23 @@ static const int OGR[] = {
   /* 11 */   72,  85, 106, 127, 151, 177, 199, 216, 246, 283,
   /* 21 */  333, 356, 372, 425, 480, 492, 553, 585, 623
 };
+
+#if (OGROPT_NO_FUNCTION_INLINE == 1)
+   #if defined(__GNUC__) && (__GNUC__ >= 3)
+      #define OGR_NO_FUNCTION_INLINE(x) x __attribute__ ((noinline))
+   #else
+      #error OGROPT_NO_FUNCTION_INLINE is defined, and no code to match
+   #endif
+#else
+   #define OGR_NO_FUNCTION_INLINE(x) x
+#endif
+
 #ifndef __MRC__
 static int init_load_choose(void);
 #if defined(OGR_NON_STATIC_FOUND_ONE)
-int found_one(const struct State *oState);
+OGR_NO_FUNCTION_INLINE(int found_one(const struct State *oState));
 #else
-static int found_one(const struct State *oState);
+OGR_NO_FUNCTION_INLINE(static int found_one(const struct State *oState));
 #endif
 static int ogr_init(void);
 static int ogr_create(void *input, int inputlen, void *state, int statelen, int minpos);
