@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.15 2003/08/09 12:43:54 mweiser Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.16 2003/08/09 23:03:55 mweiser Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -584,7 +584,8 @@ int main( int argc, char *argv[] )
   */
   #if (CLIENT_OS != OS_FREEBSD) && (CLIENT_OS != OS_NETBSD) && \
       (CLIENT_OS != OS_BSDOS) && (CLIENT_OS != OS_OPENBSD) && \
-      (CLIENT_OS != OS_DGUX) && (CLIENT_OS != OS_DYNIX)
+      (CLIENT_OS != OS_DGUX) && (CLIENT_OS != OS_DYNIX) && \
+      (CLIENT_OS != OS_NEXTSTEP)
   /* ... all the SPT_REUSEARGV types */
   if (needchange && strlen(argv[0]) >= strlen(defname))
   {
