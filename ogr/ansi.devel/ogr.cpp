@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.31 2001/01/16 17:16:29 cyp Exp $
+ * $Id: ogr.cpp,v 1.1.2.32 2001/01/18 01:07:41 andreasb Exp $
  */
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
@@ -245,6 +245,16 @@
   #define CHOOSE_DIST_BITS   12
   #define ttmDISTBITS (32-CHOOSE_DIST_BITS)
 #endif /* OGROPT_NEW_CHOOSEDAT */
+
+/* ----- DEBUG stuff -------------------------------------*/
+#ifdef OGR_DEBUG
+//  #define OGR_DEBUG_CYCLE(__x) __x
+#endif
+#ifndef OGR_DEBUG_CYCLE
+  #define OGR_DEBUG_CYCLE(__x)
+#endif
+/* ------------------------------------------*/
+
 
 #if defined(__cplusplus)
 extern "C" {
@@ -2297,6 +2307,8 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
 {
   struct State *oState;
   struct WorkStub *workstub = (struct WorkStub *)input;
+  int retval = CORE_S_OK; /* will be changed to the first STUB_E_... */
+  /* finish ogr_create() to allow a graceful discard in case of a STUB_E_ */
 
   if (!input || inputlen != sizeof(struct WorkStub)) {
     return CORE_E_FORMAT;
@@ -2342,8 +2354,10 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
 #ifdef OGROPT_NEW_CHOOSEDAT
   /* would we choose values somewhere behind the precalculated values from 
      ogr_choose_dat2 ? */
-  if (oState->maxdepthm1 - (oState->half_depth+1) > (CHOOSE_MAX_MARKS-1) ) {
-    return CORE_E_CHOOSE;
+  if ((oState->maxdepthm1 - (oState->half_depth+1) > (CHOOSE_MAX_MARKS-1) ) &&
+      (retval == CORE_S_OK))
+  {
+    retval = STUB_E_MARKS;
   }
 #endif
 
@@ -2385,13 +2399,13 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
       register int s = workstub->stub.diffs[i];
       
       if (s <= (32*5))
-        if (lev->dist[(s-1)>>5] & BITOFLIST(s))
-          return CORE_E_STUB;
+        if ((lev->dist[(s-1)>>5] & BITOFLIST(s)) && (retval == CORE_S_OK))
+          retval = STUB_E_GOLOMB;
 
       //dump(oState->depth, lev, 0);
       oState->marks[i+1] = oState->marks[i] + s;
-      if ((lev->cnt2 += s) > limit)
-        return CORE_E_STUB;
+      if (((lev->cnt2 += s) > limit) && (retval == CORE_S_OK))
+        retval = STUB_E_LIMIT;
 
       register int t = s;
       while (t >= 32) {
@@ -2500,7 +2514,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
    oState->prof.fo = 0;
    oState->prof.push = 0;
 #endif
-/*
+#ifdef OGR_DEBUG
   printf("sizeof      = %d\n", sizeof(struct State));
   printf("max         = %d\n", oState->max);
   printf("maxdepth    = %d\n", oState->maxdepth);
@@ -2511,14 +2525,14 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
   {
     int i;
     printf("marks       = ");
-    for (i = 1; i < oState->depth; i++) {
+     for (i = 1; i <= oState->depth; i++) {
       printf("%d ", oState->marks[i]-oState->marks[i-1]);
     }
     printf("\n");
   }
-*/
+#endif
 
-  return CORE_S_OK;
+  return retval;
 }
 
 #ifdef OGR_DEBUG
@@ -2660,9 +2674,8 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
   int limit;
   U comp0;
 
-#ifdef OGR_DEBUG
-  oState->LOGGING = 1;
-#endif
+  OGR_DEBUG_CYCLE( oState->LOGGING = 1; )
+  
   for (;;) {
 
     if (with_time_constraints) { /* if (...) is optimized away if unused */
@@ -2673,9 +2686,7 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
        #endif  
     }
 
-#ifdef OGR_DEBUG
-    if (oState->LOGGING) dump_ruler(oState, depth);
-#endif
+    OGR_DEBUG_CYCLE( if (oState->LOGGING) dump_ruler(oState, depth); )
 
     if (depth <= oState->half_depth2) {
       if (depth <= oState->half_depth) {
@@ -2695,23 +2706,17 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
       limit = oState->max - choose(lev->dist[0] >> ttmDISTBITS, oState->maxdepthm1 - depth);
     }
 
-#ifdef OGR_DEBUG
-    if (oState->LOGGING) dump(depth, lev, limit);
-#endif
+    OGR_DEBUG_CYCLE( if (oState->LOGGING) dump(depth, lev, limit); )
 
     nodes++;
 
     /* Find the next available mark location for this level */
 stay:
     comp0 = lev->comp[0];
-#ifdef OGR_DEBUG
-    if (oState->LOGGING) printf("comp0=%08x\n", comp0);
-#endif
+    OGR_DEBUG_CYCLE( if (oState->LOGGING) printf("comp0=%08x\n", comp0); )
     if (comp0 < 0xfffffffe) {
       int s = LOOKUP_FIRSTBLANK( comp0 );
-#ifdef OGR_DEBUG
-  if (oState->LOGGING) printf("depth=%d s=%d len=%d limit=%d\n", depth, s+(lev->cnt2-lev->cnt1), lev->cnt2+s, limit);
-#endif
+      OGR_DEBUG_CYCLE( if (oState->LOGGING) printf("depth=%d s=%d len=%d limit=%d\n", depth, s+(lev->cnt2-lev->cnt1), lev->cnt2+s, limit); )
       if ((lev->cnt2 += s) > limit) goto up; /* no spaces left */
       COMP_LEFT_LIST_RIGHT(lev, s);
     } else {
