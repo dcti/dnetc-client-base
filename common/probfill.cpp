@@ -12,7 +12,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.74 2001/07/08 12:20:33 andreasb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.75 2002/03/27 23:20:52 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -654,6 +654,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       int expected_cpu = 0, expected_core = 0;
       int expected_os  = 0, expected_build = 0;
       const ContestWork *work = &wrdata.work;
+      int res = -1;
         
       #if (defined(INIT_TIMESLICE) && (INIT_TIMESLICE >= 64))
       timeslice = INIT_TIMESLICE;
@@ -686,15 +687,26 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       /* loadstate can fail if it selcore fails or the previous problem */
       /* hadn't been purged, or the contest isn't available or ... */
 
-      if (ProblemLoadState( thisprob, work, *loaded_for_contest, timeslice, 
-           expected_cpu, expected_core, expected_os, expected_build ) == -1)
+      res = ProblemLoadState( thisprob, work, *loaded_for_contest, timeslice,
+                    expected_cpu, expected_core, expected_os, expected_build );
+      
+      if (res != 0)
       {
         /* The problem with LoadState() failing is that it implicitely
         ** causes the block to be discarded, which means, that the 
         ** keyserver network will reissue it - a senseless undertaking
         ** if the data itself is invalid.
         */
-        retry_due_to_failed_loadstate = 1;
+        if (res != -2)
+        {
+          retry_due_to_failed_loadstate = 1;
+        }
+        else
+        {
+          // should never happen
+          Log("Serious ProblemLoadState() error! Aborting!\n");
+          RaiseExitRequestTrigger();
+        }
       }
       else
       {

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.119 2001/07/27 08:46:11 mfeiri Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.120 2002/03/27 23:20:53 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -532,6 +532,10 @@ static unsigned int __compute_permille(unsigned int cont_i, const ContestWork *w
 ** 'thisprob' is a scratch area to work in, and on entry
 ** is a copy of the main InternalProblem. On successful return
 ** the scratch area will be copied back to the main InternalProblem.
+**
+** return values:  0 OK
+**                -1 error -> retry
+**                -2 error -> abort
 */
 static int __InternalLoadState( InternalProblem *thisprob,
                       const ContestWork * work, unsigned int contestid,
@@ -569,12 +573,12 @@ static int __InternalLoadState( InternalProblem *thisprob,
   coresel = selcoreSelectCore( contestid, thisprob->priv_data.threadindex, 0, &selinfo );
   if (coresel < 0)
   {
-    return -1;
+    return -2; // abort - LoadState may loop forever
   }
   if (contestid == RC5 && (MINIMUM_ITERATIONS % selinfo.pipeline_count) != 0)
   {
     LogScreen("(MINIMUM_ITERATIONS %% thisprob->pub_data.pipeline_count) != 0)\n");
-    return -1;
+    return -2; // abort - LoadState may loop forever
   }
   /* +++++ no point of failure beyond here (once thisprob is changed) +++++ */
 
@@ -750,6 +754,10 @@ static int __InternalLoadState( InternalProblem *thisprob,
 
 /* LoadState() and RetrieveState() work in pairs. A LoadState() without
    a previous RetrieveState(,,purge) will fail, and vice-versa.
+
+   return values:  0 OK
+                  -1 error -> retry
+                  -2 error -> abort
 */
 int ProblemLoadState( void *__thisprob,
                       const ContestWork * work, unsigned int contestid,
@@ -759,6 +767,8 @@ int ProblemLoadState( void *__thisprob,
 {
   InternalProblem *temp_prob = __pick_probptr(__thisprob, PICKPROB_TEMP);
   InternalProblem *main_prob = __pick_probptr(__thisprob, PICKPROB_MAIN);
+  int res = -1;
+
   if (!temp_prob || !main_prob)
   {
     return -1;
@@ -768,11 +778,12 @@ int ProblemLoadState( void *__thisprob,
   __copy_internal_problem( temp_prob, main_prob ); /* copy main->temp */
   __release_lock(__thisprob);
 
-  if (__InternalLoadState( temp_prob, work, contestid, _iterations, 
-                           expected_cputype, expected_corenum, expected_os,
-                           expected_buildfrac ) != 0)
+  res = __InternalLoadState( temp_prob, work, contestid, _iterations, 
+                             expected_cputype, expected_corenum, expected_os,
+                             expected_buildfrac );
+  if (res != 0)
   {
-    return -1;
+    return (res<0)?(res):(-1);
   }                             
 
   /* success */
