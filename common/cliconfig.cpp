@@ -78,7 +78,7 @@ static char lurkmodetable[3][60]=
   "Dial-up detection mode",
   "Dial-up detection ONLY mode"
   };
-  
+
 #endif  // !NOCONFIG
 
 // --------------------------------------------------------------------------
@@ -766,6 +766,7 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
           if (choice < 0) choice=0;
           if (choice > 2) choice=2;
           *(s32 *)options[CONF_OFFLINEMODE].thevariable=choice;
+          break;
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS==OS_OS2)
         case CONF_LURKMODE:
           choice=atoi(parm);
@@ -780,7 +781,8 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
             {
             lurk=2;
             connectoften=0;
-            };
+            }
+          break;
 #endif
         case CONF_RC5IN:
           strncpy( ini_in_buffer_file[0] , parm, sizeof(ini_in_buffer_file)/2 -1 );
