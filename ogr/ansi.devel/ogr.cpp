@@ -10,11 +10,12 @@
  *
  */
 const char *ogr_cpp(void) {
-return "@(#)$Id: ogr.cpp,v 1.1.2.34 2001/01/19 02:29:33 andreasb Exp $"; }
+return "@(#)$Id: ogr.cpp,v 1.1.2.35 2001/01/25 01:26:54 andreasb Exp $"; }
 
-#include <stdio.h>  /* printf for debugging */
-#include <stdlib.h> /* malloc (if using non-static choose dat) */
-#include <string.h> /* memset */
+#include <stdio.h>      /* printf for debugging */
+#include <stdlib.h>     /* malloc (if using non-static choose dat) */
+#include <string.h>     /* memset */
+#include "clisync.h"    /* mutex_* */
 
 #define HAVE_STATIC_CHOOSEDAT /* choosedat table is static, pre-generated */
 /* #define CRC_CHOOSEDAT_ANYWAY */ /* you'll need to link crc32 if this is defd */
@@ -23,6 +24,7 @@ return "@(#)$Id: ogr.cpp,v 1.1.2.34 2001/01/19 02:29:33 andreasb Exp $"; }
 /* #define OGR_TEST_BITOFLIST  */ /* test bitoflist table */
 
 /* --- various optimization option overrides ----------------------------- */
+//#define OGROPT_ALTERNATE_CYCLE 3
 
 /* baseline/reference == ogr.cpp without optimization == ~old ogr.cpp */
 #if defined(NO_OGR_OPTIMIZATION) || defined(GIMME_BASELINE_OGR_CPP)
@@ -306,6 +308,7 @@ static const int OGR[] = {
 static int init_load_choose(void);
 static int found_one(const struct State *oState);
 static int ogr_init(void);
+static const char* ogr_name(void);
 static int ogr_create(void *input, int inputlen, void *state, int statelen);
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints);
 static int ogr_getresult(void *state, void *result, int resultlen);
@@ -333,6 +336,16 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 #endif
 
 
+/* use the core as a stubmap generator ... */
+#ifdef OGR_CALLBACK
+  extern int ogr_callback_depth;
+
+  /* returns 0 while ogr_cycle() should continue */
+  int ogr_callback(const struct State *state);
+#endif
+
+
+
 /* ------------------------------------------------------------------ */
 /* Include general macros and functions                               */
 /* ------------------------------------------------------------------ */
@@ -353,6 +366,8 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
   #include "ogr_g_r.cor"
 #elif ((OGROPT_ALTERNATE_CYCLE == 1) || (OGROPT_ALTERNATE_CYCLE == 2))
   #include "ogr_o_c.cor"
+#elif (OGROPT_ALTERNATE_CYCLE == 3)
+  #include "ogr_ab.cor"
 #else
   #error unknown core selected!
 #endif
@@ -531,6 +546,7 @@ static int ogr_init(void)
 }
 
 
+#if 0 // old version
 static int ogr_getresult(void *state, void *result, int resultlen)
 {
   struct State *oState = (struct State *)state;
@@ -555,6 +571,51 @@ static int ogr_getresult(void *state, void *result, int resultlen)
   }
   return CORE_S_OK;
 }
+#else // thread safe version
+static int ogr_getresult(void *state, void *result, int resultlen)
+{
+  struct State *oState = (struct State *)state;
+  struct WorkStub *workstub = (struct WorkStub *)result;
+  int i;
+
+  if (resultlen != sizeof(struct WorkStub)) {
+    return CORE_E_FORMAT;
+  }
+
+  /* ogr_getresult() and ogr_cycle() must interact thread safe */
+
+  /* lock the changing part of public data (part 2) for reading */
+  mutex_lock(&oState->lock);
+
+  workstub->stub.marks = (u16)oState->maxdepth;
+  workstub->stub.length = (u16)oState->startdepth;
+  for (i = 0; i < STUB_MAX; i++) {
+    workstub->stub.diffs[i] = (u16)(oState->marks[i+1] - oState->marks[i]);
+  }
+  workstub->worklength = oState->depth;
+
+  /* This causes node count differences !!! */
+  if (workstub->worklength > STUB_MAX) {
+    workstub->worklength = STUB_MAX;
+  }
+
+  /* will be needed later ...
+  workstub->nodeshi = oState->nodeshi;
+  workstub->nodeslo = oState->nodeslo;
+  */
+  
+  if (oState->stub_error != STUB_OK) {
+    /* stub produced an error at load time */
+    workstub->worklength = oState->stub_error;
+    /* workstub->nodes.hi = workstub->nodes.lo = 0; */
+  }
+
+  /* release lock */
+  mutex_unlock(&oState->lock);
+
+  return CORE_S_OK;
+}
+#endif
 
 
 static int ogr_destroy(void *state)
@@ -608,6 +669,9 @@ CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
 {
   static CoreDispatchTable dispatch_table;
   dispatch_table.init      = ogr_init;
+#if defined(OGR_CORE_HAS_NAME)
+  dispatch_table.name      = ogr_name;
+#endif
   dispatch_table.create    = ogr_create;
   dispatch_table.cycle     = ogr_cycle;
   dispatch_table.getresult = ogr_getresult;

@@ -8,9 +8,17 @@
  *
  */
 const char *ogr_core(void) {
-return "@(#)$Id: ogr_g_r.cor,v 1.1.2.2 2001/01/19 02:29:34 andreasb Exp $"; }
+return "@(#)$Id: ogr_g_r.cor,v 1.1.2.3 2001/01/25 01:26:54 andreasb Exp $"; }
 
 #if (OGROPT_ALTERNATE_CYCLE == 0)
+
+#if defined(OGR_CORE_HAS_NAME)
+const char* ogr_name()
+{
+  return "GARSP 5.13 dnet";
+}
+#endif
+
 
 #define COMP_LEFT_LIST_RIGHT(lev,s)                             \
   {                                                             \
@@ -299,9 +307,9 @@ static int found_one(const struct State *oState)
     for (i = max>>1; i>=1; i--) diffs[i] = 0;
     #endif
     for (i = 1; i < maxdepth; i++) {
-      register int marks_i = oState->marks[i];
+      register int marks_i = oState->Levels[i].cnt2;
       for (j = 0; j < i; j++) {
-        register int diff = marks_i - oState->marks[j];
+        register int diff = marks_i - oState->Levels[j].cnt2;
         if (diff+diff <= max) {        /* Principle 1 */
           if (diff <= 64) break;      /* 2 bitmaps always tracked */
           #if (OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE == 2) || \
@@ -335,8 +343,9 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
 {
   struct State *oState;
   struct WorkStub *workstub = (struct WorkStub *)input;
-  int retval = CORE_S_OK; /* will be changed to the first STUB_E_... */
-  /* finish ogr_create() to allow a graceful discard in case of a STUB_E_ */
+  int retval = CORE_S_OK;
+  /* save STUB_E_ error codes into oState->stub_error and finish ogr_create() 
+     to allow a graceful discard in case of a STUB_E_ */
 
   if (!input || inputlen != sizeof(struct WorkStub)) {
     return CORE_E_FORMAT;
@@ -351,7 +360,13 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
   }
 
   memset(oState, 0, sizeof(struct State));
+  mutex_t initmux = DEFAULTMUTEX; /* {0} or whatever */
+  memcpy( &(oState->lock), &initmux, sizeof(mutex_t) );
 
+  oState->stub_error = STUB_OK; 
+  /* stub_error stores the STUB_E_ error codes. An oState with a non zero 
+     stub_error will be rejected by ogr_cycle(), but returned to network */
+    
   oState->maxdepth = workstub->stub.marks;
   oState->maxdepthm1 = oState->maxdepth-1;
 
@@ -382,11 +397,8 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
 #ifdef OGROPT_NEW_CHOOSEDAT
   /* would we choose values somewhere behind the precalculated values from 
      ogr_choose_dat2 ? */
-  if ((oState->maxdepthm1 - (oState->half_depth+1) > (CHOOSE_MAX_MARKS-1) ) &&
-      (retval == CORE_S_OK))
-  {
-    retval = STUB_E_MARKS;
-  }
+  if (oState->maxdepthm1 - (oState->half_depth+1) > (CHOOSE_MAX_MARKS-1))
+    oState->stub_error |= STUB_E_MARKS;  
 #endif
 
 #if (OGROPT_ALTERNATE_CYCLE == 0)
@@ -427,13 +439,13 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
       register int s = workstub->stub.diffs[i];
       
       if (s <= (32*5))
-        if ((lev->dist[(s-1)>>5] & BITOFLIST(s)) && (retval == CORE_S_OK))
-          retval = STUB_E_GOLOMB;
+        if (lev->dist[(s-1)>>5] & BITOFLIST(s))
+          oState->stub_error |= STUB_E_GOLOMB;
 
       //dump(oState->depth, lev, 0);
       oState->marks[i+1] = oState->marks[i] + s;
-      if (((lev->cnt2 += s) > limit) && (retval == CORE_S_OK))
-        retval = STUB_E_LIMIT;
+      if ((lev->cnt2 += s) > limit)
+        oState->stub_error |= STUB_E_LIMIT;
 
       register int t = s;
       while (t >= 32) {
@@ -512,7 +524,17 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
   int retval = CORE_S_CONTINUE;
   int limit;
   U comp0;
+  
+  /* ogr_cycle() must be thread safe. Only modification of part 3 of oState is
+   * allowed. Part 2 will be updated before leaving ogr_cycle after locking a
+   * mutex.
+   */
 
+  if (oState->stub_error != STUB_OK) {
+    *pnodes = 0;
+    return CORE_S_OK; /* stub is "finished" */
+  }
+  
   OGR_DEBUG_CYCLE( oState->LOGGING = 1; )
   
   for (;;) {
@@ -539,7 +561,10 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
         limit = limit < oState->half_length ? limit : oState->half_length;
       } else {
         limit = oState->max - choose(lev->dist[0] >> ttmDISTBITS, oState->maxdepthm1 - depth);
-        limit = limit < oState->max - oState->marks[oState->half_depth]-1 ? limit : oState->max - oState->marks[oState->half_depth]-1;
+        //limit = limit < oState->max - oState->marks[oState->half_depth]-1  
+        //        ? limit : oState->max - oState->marks[oState->half_depth]-1;
+        limit = limit < oState->max - oState->Levels[oState->half_depth].cnt2-1  
+                ? limit : oState->max - oState->Levels[oState->half_depth].cnt2-1;
       }
     } else {
       limit = oState->max - choose(lev->dist[0] >> ttmDISTBITS, oState->maxdepthm1 - depth);
@@ -565,10 +590,34 @@ stay:
       if (comp0 == 0xffffffff) goto stay;
     }
 
+/* ogr_cycle is being used for stubmap generation ... */
+#ifdef OGR_CALLBACK
+    if (depth == ogr_callback_depth) {
+      // update part 2 of oState
+      /* ogr_getresult() and ogr_cycle() must interact thread safe */  
+      mutex_lock(&oState->lock);
+
+      oState->depth = depth-1;
+
+      for (int i = oState->startdepth+1; i <= oState->maxdepth; ++i) {
+        oState->marks[i] = oState->Levels[i].cnt2;
+      }
+      
+      // don't update oState->nodes[hi|lo] !
+
+      mutex_unlock(&oState->lock);
+      
+      if (ogr_callback(oState) != 0)
+        break;
+
+      goto stay; /* don't go deeper, but repeat this level till done */
+    }
+#endif
 
     /* New ruler? */
     if (depth == oState->maxdepthm1) {
-      oState->marks[oState->maxdepthm1] = lev->cnt2;       /* not placed yet into list arrays! */
+      //oState->marks[oState->maxdepthm1] = lev->cnt2;       /* not placed yet into list arrays! */
+      /* found_one() doesn't use part 2 of State */
       if (found_one(oState)) {
         retval = CORE_S_SUCCESS;
         break;
@@ -584,11 +633,11 @@ stay:
     COPY_LIST_SET_BIT(lev2, lev, lev->cnt2-lev->cnt1);
     COPY_DIST_COMP(lev2, lev);
 #endif
-    oState->marks[depth] = lev->cnt2;
+    //oState->marks[depth] = lev->cnt2;
     lev2->cnt1 = lev->cnt2;
     lev2->cnt2 = lev->cnt2;
     lev->limit = limit;
-    oState->depth = depth;
+    //oState->depth = depth;
     lev++;
     depth++;
 
@@ -597,7 +646,7 @@ stay:
 up:
     lev--;
     depth--;
-    oState->depth = depth-1;
+    //oState->depth = depth-1;
     if (depth <= oState->startdepth) {
       retval = CORE_S_OK;
       break;
@@ -607,7 +656,23 @@ up:
     goto stay; /* repeat this level till done */
   }
 
+  /* ogr_getresult() and ogr_cycle() must interact thread safe */
+
+  /* lock the changing part of public data (part 2) for updating */
+  mutex_lock(&oState->lock);
+
   oState->depth = depth-1;
+
+  for (int i = oState->startdepth+1; i <= oState->maxdepth; ++i) {
+    oState->marks[i] = oState->Levels[i].cnt2;
+  }
+
+  oState->nodeslo += nodes;
+  if (oState->nodeslo < (u32)nodes)
+    oState->nodeshi++;
+
+  /* release lock */
+  mutex_unlock(&oState->lock);
 
   *pnodes = nodes;
 
