@@ -8,6 +8,9 @@
 // common, and all that will be needed are #ifdefs in here.
 //
 // $Log: guistuff.cpp,v $
+// Revision 1.5  1998/12/28 04:04:00  silby
+// Functions not defined if GUICLIENT is !defined.
+//
 // Revision 1.4  1998/12/28 04:01:07  silby
 // Win32gui icon now changed by probfill when new blocks are loaded.
 // If MacOS has an icon to change, this would be a good place to hook in as well.
@@ -20,8 +23,10 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *guistuff_cpp(void) {
-return "@(#)$Id: guistuff.cpp,v 1.4 1998/12/28 04:01:07 silby Exp $"; }
+return "@(#)$Id: guistuff.cpp,v 1.5 1998/12/28 04:04:00 silby Exp $"; }
 #endif
+
+#if defined (GUICLIENT)
 
 #include "guistuff.h"
 #if (CLIENT_OS == OS_WIN32) && defined(WIN32GUI)
@@ -82,3 +87,4 @@ void SetIcon(s32 currentcontest)
 #endif
 }
 
+#endif
