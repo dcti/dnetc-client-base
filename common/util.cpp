@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.28 2000/04/28 04:29:57 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.29 2000/05/04 22:16:19 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -970,13 +970,37 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #elif (CLIENT_OS == OS_NETWARE)
     {
-      int nlmHandle = FindNLMHandle( procname );
-      num_found = 0;
-      if (nlmHandle)
+      char namebuf[64];
+      unsigned int blen, bpos;
+      int need_suffix;
+
+      blen = bpos = strlen(procname);
+      while (bpos > 0 && procname[bpos-1]!='/' && 
+             procname[bpos-1]!='\\' && procname[bpos-1]!=':')
+        bpos--;
+      blen -= bpos;
+      need_suffix = 1;
+      if (blen > 3)
+        need_suffix = (procname[(bpos+blen)-4] != '.');
+      if (bpos || need_suffix)
       {
-        if (pidlist)
-          pidlist[num_found] = (long)nlmHandle;
-        num_found++;
+        if (!need_suffix)
+          procname += bpos;
+        else if ((blen+5) >= sizeof(namebuf))
+          procname = NULL;
+        else 
+          procname = strcat(strcpy(namebuf,&procname[bpos]),".nlm");
+      }
+      if (procname)
+      {      
+        int nlmHandle = FindNLMHandle( (char *)procname );
+        num_found = 0;
+        if (nlmHandle)
+        {
+          if (pidlist)
+            pidlist[num_found] = (long)nlmHandle;
+          num_found++;
+        }
       }
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++

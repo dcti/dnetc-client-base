@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.32 2000/05/01 08:19:17 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.33 2000/05/04 22:16:19 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -108,8 +108,9 @@ struct optionstruct conf_options[] = {
   "since the process list is obtained from 'ps' and/or the programmatic\n"
   "equivalent therof.\n"
   #elif (CLIENT_OS == OS_NETWARE)
-  "For example, \"backup.nlm|restore.nlm|\". An extension (.DLL|.NLM etc)\n"
-  "must be provided for this option to work correctly.\n"
+  "For example, \"backup.nlm|restore.nlm|\". An extension (.DLL|.NLM etc) is\n"
+  "optional and defaults to 'NLM'. Path specifiers, if provided, have no\n"
+  "influence on the outcome of a search.\n" 
   #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   "For example, \"backup.exe|restore.exe\".\n"
   "Win9x: path and extension are optional (that is, they won't influence\n"
