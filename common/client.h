@@ -12,6 +12,10 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.77  1998/08/10 22:02:25  cyruspatel
+// Removed prototypes for xxxTriggered and pausefilefound flags (these are
+// now functions in trigger.cpp) and path-related #defines (now in pathwork.h)
+//
 // Revision 1.76  1998/08/05 18:28:47  cyruspatel
 // Converted more printf()s to LogScreen()s, changed some Log()/LogScreen()s
 // to LogRaw()/LogScreenRaw()s, ensured that DeinitializeLogging() is called,
@@ -143,7 +147,7 @@
 // Revision 1.44  1998/06/22 01:04:56  cyruspatel
 // DOS changes. Fixes various compile-time errors: removed extraneous ')' in
 // sleepdef.h, resolved htonl()/ntohl() conflict with same def in client.h
-// (is now inline asm), added NONETWORK wrapper around Network::Resolve()
+// (is now inline asm), added NO!NETWORK wrapper around Network::Resolve()
 //
 // Revision 1.43  1998/06/21 17:10:26  cyruspatel
 // Fixed some NetWare smp problems. Merged duplicate numcpu validation code
@@ -570,53 +574,6 @@ public:
   void PrintBanner(const char *dummy); 
     //show version/copyright banner
 };
-
-// --------------------------------------------------------------------------
-
-#ifdef DONT_USE_PATHWORK
-  #if (CLIENT_OS == OS_NETWARE)
-  //#define PATH_SEP   "\\"   //left undefined so I can see
-  //#define PATH_SEP_C '\\'   //where the references are
-  #define EXTN_SEP   "."
-  #define EXTN_SEP_C '.'
-  #elif ((CLIENT_OS == OS_DOS) || CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)
-  #define PATH_SEP   "\\"
-  #define PATH_SEP_C '\\'
-  #define ALT_PATH_SEP '/'
-  #define ALT_PATH_SEP_C '/'
-  #define DRIVE_SEP ':'
-  #define DRIVE_SEP_C ':'
-  #define EXTN_SEP   "."
-  #define EXTN_SEP_C '.'
-  #elif (CLIENT_OS == OS_MACOS)
-  #define PATH_SEP   ":"
-  #define PATH_SEP_C ':'
-  #define EXTN_SEP   "."
-  #define EXTN_SEP_C '.'
-  #elif (CLIENT_OS == OS_RISCOS)
-  #define PATH_SEP   "."
-  #define PATH_SEP_C '.'
-  #define EXTN_SEP   "/"
-  #define EXTN_SEP_C '/'
-  #else
-  #define PATH_SEP   "/"
-  #define PATH_SEP_C '/'
-  #define EXTN_SEP   "."
-  #define EXTN_SEP_C '.'
-  #endif
-#else
-  #if (CLIENT_OS == OS_RISCOS)
-    #define EXTN_SEP   "/"
-  #else
-    #define EXTN_SEP   "."
-  #endif
-#endif
-
-// --------------------------------------------------------------------------
-
-extern volatile u32 SignalTriggered, UserBreakTriggered;
-extern volatile s32 pausefilefound;
-extern void CliSetupSignals( void );
 
 // --------------------------------------------------------------------------
 
