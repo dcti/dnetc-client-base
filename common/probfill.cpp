@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.87.2.9 2004/01/17 16:34:14 kakace Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.87.2.10 2004/05/26 22:11:44 kakace Exp $"; }
 
 //#define TRACE
 
@@ -982,8 +982,11 @@ unsigned int LoadSaveProblems(Client *client,
 
     if (load_needed && mode!=PROBFILL_UNLOADALL && mode!=PROBFILL_RESIZETABLE)
     {
-      if (client->blockcount>0 &&
-          totalBlocksDone>=((unsigned long)(client->blockcount)))
+      // Bug #3672 (all clients running at least 2 cores).
+      // Take the number of still active crunchers into account to determine
+      // whether we can load another problem.
+      if (client->blockcount>0 && 
+          totalBlocksDone+load_problem_count-empty_problems>=((unsigned long)(client->blockcount)))
       {
         ; //nothing
       }
@@ -1095,8 +1098,12 @@ unsigned int LoadSaveProblems(Client *client,
           Log( "Shutdown - packet limit exceeded.\n" );
           RaiseExitRequestTrigger();
         }
-        else
-          client->blockcount = ((u32)(totalBlocksDone))+1;
+        // Bug #3672 (all clients running at least 2 cores).
+        // The following two lines prevent the client from stopping as
+        // instructed by option "-n" when running at least two crunchers
+        // simultaneously.
+        //else
+        //  client->blockcount = ((u32)(totalBlocksDone))+1;
       }
     }
 
