@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.37 2003/02/08 11:37:59 andreasb Exp $
+# @(#)$Id: configure,v 1.288.2.38 2003/02/09 15:48:30 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2804,9 +2804,9 @@ echo "ALLOBJS = ${TARGET_ALLOBJS}" >> Makefile
 echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
 echo "BUILDNAME = $1" >> Makefile
 echo "DOCFILES = ${TARGET_DOCFILES}" >>Makefile
-#echo "BUILDNUM:= \`grep \" CLIENT_BUILD_FRAC \" common/version.h|$TARGET_TR -dc 0-9\`" >>Makefile
-# only $(shell ) evaluates only once -- 2002-09-27 anbe x86/linux make 3.79.1
-echo "BUILDNUM:= \$(shell grep \" CLIENT_BUILD_FRAC \" common/version.h|$TARGET_TR -dc 0-9)" >>Makefile
+echo "BUILDNUM = \`grep \" CLIENT_BUILD_FRAC \" common/version.h|$TARGET_TR -dc 0-9\`" >>Makefile
+# GNUMake $(shell ) evaluates only once - but this isn't supported by BSD make etc ...
+#echo "BUILDNUM:= \$(shell grep \" CLIENT_BUILD_FRAC \" common/version.h|$TARGET_TR -dc 0-9)" >>Makefile
 echo "" >> Makefile
 
 
@@ -2852,7 +2852,8 @@ if [ -n "$TARGET_TARBALL" ]; then
       # tar.gz, with buildname(base+doc) directory structure.
       echo "	-rm -rf $FULLTARNAME" >> Makefile
       echo "	mkdir $FULLTARNAME" >> Makefile
-      echo "	cp ${TARGET_BINNAME} \${DOCFILES} $FULLTARNAME" >> Makefile
+      echo "	mkdir $FULLTARNAME/docs" >> Makefile
+      echo "	for file in ${TARGET_BINNAME} \${DOCFILES} ; do cp \$\$file $FULLTARNAME/\$\$file ; done" >> Makefile
       echo "	tar -cvf - $FULLTARNAME | gzip -9 > $FULLTARNAME.tar.gz" >> Makefile
       echo "	rm -rf $FULLTARNAME" >> Makefile
     elif [ "$TARGET_ARCTYPE" = "lha" ]; then
