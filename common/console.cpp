@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.36 2000/05/06 21:12:02 mfeiri Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.37 2000/05/27 17:40:09 trevorh Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -794,7 +794,7 @@ int ConClear(void)
       USHORT row = 0, col = 0;
       HVIO hvio = 0;
 
-      VioScrollUp(0, 0, (USHORT)-1, (USHORT)-1, (USHORT)-1, &attrib, hvio);
+      VioScrollUp(0, 0, (USHORT)-1, (USHORT)-1, (USHORT)-1, (char __far16 *)&attrib, hvio);
       VioSetCurPos(row, col, hvio);      /* move cursor to upper left */
       return 0;
       #else
