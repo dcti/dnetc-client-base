@@ -1,0 +1,46 @@
+#
+# Makefile for dnetcgui.library
+#
+
+TARGET	= ../../../dnetcgui.library
+
+#
+##
+#
+
+CC	= ppc-amigaos-gcc
+RM	= delete
+STRIP   = ppc-amigaos-strip -R.comment
+
+CFLAGS	= -O2 -fomit-frame-pointer -fpermissive -fno-exceptions -fstrict-aliasing -I../../../plat/amigaos -D__USE_INLINE__ -D__USE_BASETYPE__
+LDFLAGS	= -nostartfiles
+LDLIBS	=
+OBJDIR  = ../../../output.os4
+OBJS	= $(OBJDIR)/LibBase.o $(OBJDIR)/main.o $(OBJDIR)/prefs.o $(OBJDIR)/dnetcgui_68k.o
+
+#
+# target
+#
+
+$(TARGET): $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
+	$(STRIP) $@
+
+$(OBJDIR)/LibBase.o: LibBase.c common.h dnetcgui_rev.h
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+$(OBJDIR)/main.o: main.c common.h main.h prefs.h
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+$(OBJDIR)/prefs.o: prefs.c common.h main.h prefs.h
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+$(OBJDIR)/dnetcgui_68k.o: dnetcgui_68k.S
+	$(CC) -c -Wa,-mregnames $< -o $@ -IV:src/kickstart/exec_sg/include
+
+
+includes: fd/dnetcgui_lib.fd clib/dnetcgui_protos.h
+	fd2inline fd/dnetcgui_lib.fd clib/dnetcgui_protos.h > inline/dnetcgui.h
+#	fd2inline -proto fd/dnetcgui_lib.fd clib/dnetcgui_protos.h > proto/dnetcgui.h
+	fd2inline_ -powerup fd/dnetcgui_lib.fd clib/dnetcgui_protos.h > inline/dnetcguippc.h
+#	fd2inline -powerup -proto fd/dnetcgui_lib.fd clib/dnetcgui_protos.h > proto/dnetcguippc.h
