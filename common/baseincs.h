@@ -5,13 +5,9 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.52 2001/04/15 14:41:17 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.53 2001/05/06 11:01:05 teichp Exp $"
 
 #include "cputypes.h"
-
-#if (CLIENT_OS == OS_RISCOS)
- extern "C" { /* headers are unsafe for c++ */
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,10 +22,6 @@
 #include <limits.h>
 #if defined(__unix__)
   #include <sys/utsname.h> /* uname() */
-#endif
-
-#if (CLIENT_OS == OS_RISCOS)
-} /* End the extern needed to handle unsafe standard headers. */
 #endif
 
 /* ------------------------------------------------------------------ */
@@ -81,34 +73,18 @@
   #include <sys/unistd.h>
   #include <fcntl.h>
 #elif (CLIENT_OS == OS_RISCOS)
-  extern "C" {
+  #include <unixlib/local.h>
   #include <sys/fcntl.h>
-  //#include <unistd.h>
+  #include <netinet/in.h>
+  #include <unistd.h>
   #include <stdarg.h>
-  #include <machine/endian.h>
+  #include <endian.h>
   #include <sys/time.h>
-  #include <socklib.h>
-  #include <inetlib.h>
-  #include <unixlib.h>
   #include <sys/ioctl.h>
   #include <netdb.h>
-  #include <swis.h>
+  #include <sys/swis.h>
+  #include <kernel.h>
   #include <riscos_sup.h>
-  extern int getch();
-  #define fileno(f) ((f)->__file)
-  #define isatty(f) ((f) == 0)
-  #undef time
-  #define time riscos_utcbase_time
-  #undef gmtime
-  #define gmtime riscos_utcbase_gmtime
-  #undef localtime
-  #define localtime riscos_utcbase_localtime
-  #define tzset() /* nothing */
-  #define S_IRUSR S_IREAD
-  #define S_IWUSR S_IWRITE
-  #define S_IRGRP 0
-  #define S_IWGRP 0
-  } /* extern "C" */
   extern s32 guiriscos, guirestart;
   extern int riscos_in_taskwindow;
 #elif (CLIENT_OS == OS_VMS)

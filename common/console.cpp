@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.53 2001/03/26 17:51:39 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.54 2001/05/06 11:01:07 teichp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -292,7 +292,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
     {
       #if (CLIENT_OS == OS_RISCOS)
       {
-        ch = _swi(OS_ReadC, _RETURN(0));
+          ch = _kernel_osrdch();
       }
       #elif (CLIENT_OS == OS_MACOS)
       {
@@ -645,11 +645,14 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
   {
     static const int var[3] = { 133, 135, -1 };
     int value[3];
+    _kernel_swi_regs regs;
+    
     if (!riscos_in_taskwindow)
     {
-      if (_swix(OS_ReadVduVariables, _INR(0,1), var, value) == 0)
+      regs.r[0]=(int)var;
+      regs.r[1]=(int)value;
+      if (_kernel_swi(XOS_Bit|OS_ReadVduVariables, &regs, &regs) == 0)
       {
-        // nlines = TWBRow - TWTRow + 1
         height = value[0] - value[1] + 1;
       }
     }

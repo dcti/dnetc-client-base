@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.21 2001/02/05 18:39:42 ephraim Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.22 2001/05/06 11:01:11 teichp Exp $"
 
 #include "cputypes.h"
 
@@ -114,11 +114,8 @@
   #undef usleep
   #define usleep(x) {struct timeval tv__={0,(x)};select(0,NULL,NULL,NULL,&tv__);}
 #elif (CLIENT_OS == OS_RISCOS)
-  extern "C" {
-  //#include <unistd.h>
-  #include <unixlib.h>
+  #include <unistd.h>
   #include <riscos_sup.h>
-  }
 #elif (CLIENT_OS == OS_DYNIX)
   // DYNIX doesn't have nanosleep() or usleep(), but has poll()
   #undef usleep

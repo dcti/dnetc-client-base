@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.52 2001/03/20 19:59:55 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.53 2001/05/06 11:01:06 teichp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -43,7 +43,7 @@ extern "C" void _ReleaseSpinLock(long *);
 
 int InitializeTimers(void)
 {
-  #if ((CLIENT_OS != OS_RISCOS) && (CLIENT_OS != OS_AMIGAOS))
+  #if (CLIENT_OS != OS_AMIGAOS)
   CliIsTimeZoneInvalid(); /* go assume TZ=GMT if invalid timezone */
   tzset();                /* set correct timezone for everyone else */
   #endif

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.102 2001/03/30 13:05:36 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.103 2001/05/06 11:01:05 teichp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -594,9 +594,13 @@ int main( int argc, char *argv[] )
 #elif (CLIENT_OS == OS_RISCOS)
 int main( int argc, char *argv[] )
 {
+  __riscosify_control = __RISCOSIFY_NO_PROCESS;
   riscos_in_taskwindow = riscos_check_taskwindow();
   if (riscos_find_local_directory(argv[0]))
+  {
+    printf("Unable to determine local directory.\n");
     return -1;
+  }
   return ClientMain( argc, argv );
 }
 #elif (CLIENT_OS == OS_NETWARE)

@@ -59,9 +59,9 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.20 2001/03/26 17:39:01 cyp Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.21 2001/05/06 11:01:09 teichp Exp $"; }
 
-#define TRACE /* expect trace to _really_ slow I/O down */
+#define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
 #define TRACE_ERRMGMT(x)  //TRACE_OUT(x) /* error string/number calls */
 #define TRACE_POLL(x)     //TRACE_OUT(x) /* net_poll1() */
@@ -75,7 +75,7 @@ return "@(#)$Id: netbase.cpp,v 1.1.2.20 2001/03/26 17:39:01 cyp Exp $"; }
 #define TRACE_NETDB(x)    //TRACE_OUT(x) /* net_resolve() */
 
 #include "cputypes.h"
-#if ((CLIENT_OS == OS_AMIGAOS)|| (CLIENT_OS == OS_RISCOS))
+#if (CLIENT_OS == OS_AMIGAOS)
 extern "C" {
 #endif
 #include <string.h>
@@ -84,7 +84,7 @@ extern "C" {
 #include <stddef.h>
 #include <time.h>
 #include <errno.h>
-#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
+#if (CLIENT_OS == OS_AMIGAOS)
 }
 #endif
 
@@ -99,16 +99,6 @@ extern "C" {
   #if defined(_MSC_VER)
   #pragma warning(disable:4127) /* 'conditional expression is constant' */
   #endif              /* caused by do{}while(0) in winsock.h fd_set ops */
-#elif (CLIENT_OS == OS_RISCOS)
-  extern "C" {
-  #include <socklib.h>
-  #include <inetlib.h>
-  #include <unixlib.h>
-  #include <sys/ioctl.h>
-  //#include <unistd.h>
-  #include <netdb.h>
-  #undef FIONREAD
-  }
 #elif (CLIENT_OS == OS_DOS)
   //ntohl()/htonl() defines are in...
   #include "plat/dos/clidos.h"
@@ -221,6 +211,11 @@ extern "C" {
     #define HAVE_POLL_SYSCALL
     #pragma pack()
     }
+  #elif (CLIENT_OS == OS_RISCOS)    
+    #include <sys/select.h>
+    #undef FIONREAD
+    #undef HOST_NOT_FOUND
+    #undef NO_ADDRESS
   #endif
 #endif
 
@@ -1785,7 +1780,7 @@ static int bsd_condition_new_socket(SOCKET fd, int as_listener)
   {
     // allow blocking socket calls to preemptively multitask
     int fon = 1;
-    //ioctl(fd, FIOSLEEPTW, &fon);
+    ioctl(fd, FIOSLEEPTW, &fon);
   }
   #endif
   if (rc == 0 && as_listener) /* server */

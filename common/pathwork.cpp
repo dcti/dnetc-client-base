@@ -23,7 +23,7 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.15.2.7 2001/04/16 17:56:28 cyp Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.15.2.8 2001/05/06 11:01:10 teichp Exp $"; }
 
 #include <stdio.h>
 #include <string.h>
@@ -39,7 +39,8 @@ return "@(#)$Id: pathwork.cpp,v 1.15.2.7 2001/04/16 17:56:28 cyp Exp $"; }
     #include <dir.h>
   #endif
 #elif (CLIENT_OS == OS_RISCOS)
-  #include <swis.h>
+  #include <sys/swis.h>
+  #include <kernel.h>
 #elif defined(__unix__)
   #include <unistd.h>    /* geteuid() */
   #include <pwd.h>       /* getpwnam(), getpwuid(), struct passwd */
@@ -275,13 +276,21 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
   #elif ( CLIENT_OS == OS_RISCOS )
   {
     const char *runpath = NULL;
+    _kernel_swi_regs regs;
+
     if (*inipath == '\0')
     {
       inipath = apppath;
       runpath = "Run$Path";
     }
-    _swi(OS_FSControl, _INR(0,5), 37, inipath, __cwd_buffer,
-                         runpath, NULL, sizeof __cwd_buffer);
+    regs.r[0]=37;
+    regs.r[1]=(int)inipath;
+    regs.r[2]=(int)__cwd_buffer;
+    regs.r[3]=(int)runpath;
+    regs.r[4]=NULL;
+    regs.r[5]=sizeof __cwd_buffer;
+    _kernel_swi(OS_FSControl, &regs, &regs);
+ 
     char *slash = strrchr( __cwd_buffer, '.' );
     if ( slash != NULL )
       *(slash+1) = 0;

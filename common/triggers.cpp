@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.64 2001/03/30 11:18:31 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.65 2001/05/06 11:01:11 teichp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -201,13 +201,9 @@ static void __PollExternalTrigger(struct trigstruct *trig, int undoable)
 static unsigned long __get_file_time(const char *filename)
 {
   unsigned long filetime = 0; /* returns zero on error */
-#if (CLIENT_OS == OS_RISCOS)
-  riscos_get_file_modified(filename,(unsigned long *)(&filetime));
-#else
   struct stat statblk;
   if (stat( filename, &statblk ) == 0)
     filetime = (unsigned long)statblk.st_mtime;
-#endif
   return filetime;
 }    
 
@@ -610,8 +606,10 @@ static void __PollDrivenBreakCheck(int io_cycle_allowed)
   */
   io_cycle_allowed = io_cycle_allowed; /* shaddup compiler */
   #if (CLIENT_OS == OS_RISCOS)
-  if (_kernel_escape_seen())
-      RaiseExitRequestTrigger();
+/* This hs no equivalent in Unixlib but strange as it is, it seems to be not
+   necessary */  
+//  if (_kernel_escape_seen())
+//      RaiseExitRequestTrigger();
   #elif (CLIENT_OS == OS_AMIGAOS)
   ULONG trigs;
   if ( (trigs = amigaGetTriggerSigs()) )  // checks for ^C and other sigs

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.116 2001/04/11 16:17:58 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.117 2001/05/06 11:01:10 teichp Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -35,7 +35,7 @@ return "@(#)$Id: problem.cpp,v 1.108.2.116 2001/04/11 16:17:58 sampo Exp $"; }
 #include "coremem.h"  //cmem_alloc() and cmem_free()
 #include "problem.h"  //ourselves
 
-#if (CLIENT_OS == OS_QNX) || (CLIENT_OS == OS_RISCOS)
+#if (CLIENT_OS == OS_QNX)
   #undef offsetof
   #define offsetof(__typ,__id) ((size_t)&(((__typ*)0)->__id))
 #else

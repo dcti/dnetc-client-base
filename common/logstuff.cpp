@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.59 2001/04/20 16:11:47 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.60 2001/05/06 11:01:08 teichp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1227,10 +1227,6 @@ static int __is_path_a_directory( const char *path )
   if ( strlen( path ) > GetFilenameBaseOffset( path ) )
   { /* path does not end with a directory separator ('/' or whatever), so */ 
     /* use stat() to determine if the last component of the path is a subdir */
-
-    #if (CLIENT_OS == OS_RISCOS)
-     #error riscos specific code needed here I think.
-    #else
     {
       struct stat statblk;
       if (stat(path,&statblk)!=0)
@@ -1241,7 +1237,6 @@ static int __is_path_a_directory( const char *path )
       if ((statblk.st_mode & S_IFDIR)==0)
         return 0;
     }
-    #endif
   }
   return 1; /* path ends with a dir separator or was stat()'d as S_IFDIR */
 }

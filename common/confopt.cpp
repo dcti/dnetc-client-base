@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.58 2001/05/01 19:16:00 andreasb Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.59 2001/05/06 11:01:06 teichp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -517,7 +517,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "available or to -1 to have the client attempt to auto-detect the number of\n"
   "processors. Multi-threaded clients can be forced to run single-threaded by\n"
   "setting this option to zero.\n"
-#if (CLIENT_OS == OS_RISCOS)
+#if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
   "Under RISC OS, processor 1 is the ARM, and processor 2 is an x86 processor\n"
   "card, if fitted.\n"
 #endif
