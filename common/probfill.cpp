@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.23  1998/12/21 19:06:08  cyp
+// Removed 'unused'/'unimplemented' sil[l|b]yness added in recent version.
+// See client.h for full comment.
+//
 // Revision 1.22  1998/12/20 23:00:35  silby
 // Descontestclosed value is now stored and retrieved from the ini file,
 // additional updated of the .ini file's contest info when fetches and
@@ -12,8 +16,8 @@
 // has not yet been implemented.
 //
 // Revision 1.21  1998/12/20 18:26:43  silby
-// RC5 iv/cipher/plain are pulled from contestdata.h now, made preferred contest
-// setting more truthful.
+// RC5 iv/cipher/plain are pulled from contestdata.h now, made preferred 
+// contest setting more truthful.
 //
 // Revision 1.20  1998/12/20 17:39:50  cyp
 // Minor tweaks for contestdone 'advertising' such as immediate write of
@@ -96,7 +100,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.22 1998/12/20 23:00:35 silby Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.23 1998/12/21 19:06:08 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -117,7 +121,6 @@ return "@(#)$Id: probfill.cpp,v 1.22 1998/12/20 23:00:35 silby Exp $"; }
 #include "triggers.h"  // RaiseExitRequestTrigger()
 #include "buffupd.h"   // BUFFERUPDATE_FETCH/_FLUSH define
 #include "probfill.h"  // ourselves.
-#include "contestdata.h" // Info about contest ciphers, etc.
 
 // =======================================================================
 // each individual problem load+save generates 4 or more messages lines 
@@ -175,6 +178,192 @@ static const char *__WrapOrTruncateLogLine( char *buffer, int dowrap )
     }
   return start;
 }  
+
+// -----------------------------------------------------------------------
+
+#include "iniread.h"
+#include "pathwork.h"
+
+#define TIME_BASED_CONTEST_CHANGE_HINT
+/* fixme: technically, time-based hints should be on the buffer (preferably 
+   fetch/flush) layer and not on the problem layer. However, since the 
+   former is called with irregular frequency and randomprefix change is
+   already being managed here I've just glued the two together. -cyp 
+*/
+
+// update contestdone and randomprefix .ini entries
+static void __RefreshRandomPrefix( Client *client )
+{       
+  #ifdef TIME_BASED_CONTEST_CHANGE_HINT
+  static struct { /* time is in GMT (PST == GMT-8) */
+    /* 
+       if you don't know the time_t value, leave it at 0. 
+       it will be calc'd and you see a message.
+
+       Note that the times will be adjusted 0<minutes<60 
+       forward to reduce network congestion.
+
+       Also note that the hint has no effect (will not cause
+       additional network access) if the client has already
+       switched contests.
+    */
+    int year,mon,day,hour,min; time_t starttime; } timestart[]= {
+      { 1999,  1,  2, 9+8, 00, (time_t)0x368e5090L }, /* des-ii-3 mock */
+      { 1999,  1, 13, 9+8, 00, (time_t)0x369cd110L }, /* des-ii-3 */
+      { 1999,  7, 13, 9+9, 00, (time_t)0x378b7ea0L }, /* des-ii-4 */
+      { 1999,  1, 13, 9+8, 00, (time_t)0           }  /* des-ii-5 */
+    };
+
+  if (client->contestdone[1]) /* DES only */
+    {
+    unsigned int i;
+    time_t timediff = (time_t)(-1), timenow = 0;
+    for (i=0;i<(sizeof(timestart)/sizeof(timestart[0]));i++)
+      {
+      if (timestart[i].year!=0)
+        {
+        if (timenow == 0)
+          timenow = CliTimer(NULL)->tv_sec;
+        
+        if (timestart[i].starttime == 0)
+          {
+          struct tm tmnow;
+          if (timediff == (time_t)(-1))
+            {
+            memset((void *)&tmnow,0,sizeof(struct tm));
+            tmnow.tm_mday = 2;  tmnow.tm_year = 70;
+            timediff = mktime(&tmnow);
+            timediff = (timediff == (time_t)(-1))?(0):((24*60*60)-timediff);
+            }
+          tmnow.tm_year = timestart[i].year-1900;
+          tmnow.tm_mon  = timestart[i].mon-1;
+          tmnow.tm_mday = timestart[i].day;
+          tmnow.tm_hour = timestart[i].hour;
+          tmnow.tm_min  = timestart[i].min; 
+          tmnow.tm_sec  = tmnow.tm_wday = tmnow.tm_yday = tmnow.tm_isdst = 0;
+          
+          if ((timestart[i].starttime = mktime(&tmnow)) != (time_t)(-1))
+            timestart[i].starttime += timediff;
+
+          if (timestart[i].starttime == ((time_t)(-1)))
+            {
+            timestart[i].starttime = 0;
+            }
+          else if (timenow <= timestart[i].starttime)
+            {
+            /* stuff so that we can set the static time_t s later */
+            timeval tv; tv.tv_usec=0; tv.tv_sec = timestart[i].starttime;
+            LogScreen("DES event scheduled at %s (0x%08x)\n",
+                                  CliGetTimeString(&tv,1), tv.tv_sec);
+            }
+          }
+
+        if (timestart[i].starttime!=0 && timenow > timestart[i].starttime)
+          {
+          timestart[i].year = 0; /* don't do this period again */
+          if ((timestart[i].starttime & 1)==0)
+            {
+            /* add a little space so all clients don't hit simultaneously */
+            timestart[i].starttime += ((time_t)((rand()%(60*60))|1));
+            }
+          if (timenow < (timestart[i].starttime+((time_t)(3*60*60))))
+            {
+            client->contestdone[1] = 0;
+            client->randomchanged = 1;
+            }
+          }
+        }
+      } 
+    }   
+  #endif
+                 
+  if (client->stopiniio == 0 && client->nodiskbuffers == 0)
+    {
+    const char *OPTION_SECTION = "parameters";
+    IniSection ini;
+    unsigned int cont_i;
+    s32 randomprefix, flagbits;
+    int inierror = (ini.ReadIniFile( 
+                       GetFullPathForFilename( client->inifilename ) ) != 0);
+    int inichanged = 0;
+
+    if (client->randomchanged)
+      {
+      randomprefix = (s32)(client->randomprefix);
+      ini.setrecord(OPTION_SECTION, "randomprefix", IniString(randomprefix));
+
+      flagbits = 0;
+      for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+        {
+        flagbits |= ((client->contestdone[cont_i])?(1<<cont_i):(0));
+
+        char buffer[32];
+        if (cont_i==0) strcpy(buffer,"contestdone");
+        else sprintf(buffer,"contestdone%u", cont_i+1 );
+        if (client->contestdone[cont_i])
+          {
+//LogScreen("write: client->contestdone[%u] ==> %u\n", cont_i, client->contestdone[cont_i]);
+          ini.setrecord(OPTION_SECTION, buffer, 
+              IniString((client->contestdone[cont_i])?("1"):("0")));
+//LogScreen("write: end\n");
+          }
+        else
+          {
+//LogScreen("erase: client->contestdone[%u] ==> %u\n", cont_i, client->contestdone[cont_i]);
+          IniRecord *inirec;
+          if ((inirec=ini.findfirst(OPTION_SECTION, buffer))!=NULL)
+            inirec->values.Erase();
+//LogScreen("erase: end\n");
+          }
+        }
+      ini.setrecord(OPTION_SECTION, "contestdoneflags", IniString(flagbits));
+      client->randomchanged = 0;
+      inichanged = 1;
+      }
+    else if (!inierror)
+      {  
+      randomprefix = ini.getkey(OPTION_SECTION, "randomprefix", "0")[0];
+      if (randomprefix) client->randomprefix = randomprefix;
+
+      u32 oldflags=0, newflags=0;
+
+      IniRecord *inirec;
+      if ((inirec=ini.findfirst(OPTION_SECTION, "contestdoneflags"))!=NULL)
+        newflags = ini.getkey(OPTION_SECTION, "contestdoneflags", "0")[0];
+      else
+        {
+        for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+          {
+          char buffer[32];
+          if (cont_i==0) strcpy(buffer,"contestdone");
+          else sprintf(buffer,"contestdone%u", cont_i+1 );
+          flagbits = ini.getkey(OPTION_SECTION, buffer, "0")[0];
+          newflags |= ((flagbits)?(1<<cont_i):(0)); 
+          }
+        }
+      oldflags = 0;
+      for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+        {
+        oldflags |= ((client->contestdone[cont_i])?(1<<cont_i):(0)); 
+        client->contestdone[cont_i]=(((newflags&(1<<cont_i))==0)?(0):(1));
+//LogScreen("read: client->contestdone[%u] ==> %u\n", cont_i, client->contestdone[cont_i]);
+        }
+      if (newflags != oldflags)
+        {
+        for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+          {
+          if ((newflags & (1<<cont_i)) != (oldflags & (1<<cont_i)))
+            CliClearContestInfoSummaryData( cont_i );
+          }
+        RaiseRestartRequestTrigger();
+        }
+      }   
+    
+    if (inichanged)
+      ini.WriteIniFile( GetFullPathForFilename( client->inifilename ) );
+    }
+  return;
+}
 
 // -----------------------------------------------------------------------
 
@@ -348,9 +537,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   s32 cputype;
 
   cputype           = client->cputype; /* needed for FILEENTRY_CPU macro */
-  #define CYPS_PREFERRED_CONTEST 1
-  contest_preferred = CYPS_PREFERRED_CONTEST;
-    //(client->preferred_contest_id == 0)?(0):(1);
+  contest_preferred = (client->preferred_contest_id == 0)?(0):(1);
   contest_alternate = (contest_preferred == 0)?(1):(0);
   contest_count     = 2;
     
@@ -464,12 +651,13 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       fileentry.key.lo = htonl( Random( NULL, 0 ) & 0xF0000000L );
       fileentry.key.hi = htonl( (Random( NULL, 0 ) & 0x00FFFFFFL) + 
                               ( randomprefix << 24) ); // 64 bits significant
-      fileentry.iv.lo = htonl( RC564_IVLO );
-      fileentry.iv.hi = htonl( RC564_IVHI );
-      fileentry.cypher.lo = htonl( RC564_CYPHERLO );
-      fileentry.cypher.hi = htonl( RC564_CYPHERHI );
-      fileentry.plain.lo = htonl( RC564_PLAINLO );
-      fileentry.plain.hi = htonl( RC564_PLAINHI );
+      //constants are in clicdata.h
+      fileentry.iv.lo = htonl( RC564_IVLO );         //htonl( 0xD5D5CE79L );
+      fileentry.iv.hi = htonl( RC564_IVHI );         //htonl( 0xFCEA7550L );
+      fileentry.cypher.lo = htonl( RC564_CYPHERLO ); //htonl( 0x550155BFL );
+      fileentry.cypher.hi = htonl( RC564_CYPHERHI ); //htonl( 0x4BF226DCL );
+      fileentry.plain.lo = htonl( RC564_PLAINLO );   //htonl( 0x20656854L );
+      fileentry.plain.hi = htonl( RC564_PLAINHI );   //htonl( 0x6E6B6E75L );
       fileentry.keysdone.lo = htonl( 0 );
       fileentry.keysdone.hi = htonl( 0 );
       fileentry.iterations.lo = htonl( 0x10000000L );

@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.8  1998/12/21 19:06:08  cyp
+// Removed 'unused'/'unimplemented' sil[l|b]yness added in recent version.
+// See client.h for full comment.
+//
+// Revision 1.7  1998/12/21 01:21:39  remi
+// Recommitted to get the right modification time.
+//
 // Revision 1.6  1998/12/21 14:23:57  remi
 // Fixed the weirdness of proxy, keyport, uuehttpmode etc... handling :
 // - if keyproxy ends in .distributed.net, keyport and uuehttpmode are
@@ -48,7 +55,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.6 1998/12/21 14:23:57 remi Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.8 1998/12/21 19:06:08 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -201,7 +208,7 @@ int Client::ReadConfig(void)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   if (INIFIND(CONF_RANDOMPREFIX) != NULL)
   randomprefix = INIGETKEY(CONF_RANDOMPREFIX);
   if (INIFIND(CONF_PROCESSDES) != NULL)
-  preferred_contest_id = INIGETKEY(CONF_PROCESSDES);
+  preferred_contest_id = 1; // INIGETKEY(CONF_PROCESSDES);
   if (INIFIND(CONF_PREFERREDBLOCKSIZE) != NULL)
   preferred_blocksize = INIGETKEY(CONF_PREFERREDBLOCKSIZE);
 
@@ -270,9 +277,6 @@ int Client::ReadConfig(void)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   #if defined(MMX_BITSLICER) || defined(MMX_RC5)
     usemmx=ini.getkey(OPTION_SECTION, "usemmx", "1")[0];
   #endif
-
-  descontestclosed=ntohl(ini.getkey(OPTION_SECTION, "descontestclosed","0")[0]);
-  scheduledupdatetime=ntohl(ini.getkey(OPTION_SECTION, "scheduledupdatetime","0")[0]);
 
   #if defined(NEEDVIRTUALMETHODS)
     InternalReadConfig(ini);
@@ -644,5 +648,6 @@ int Client::WriteConfig(int writefull /* defaults to 0*/)
 }
 
 // --------------------------------------------------------------------------
+
 
 
