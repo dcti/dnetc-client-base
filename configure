@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.47 1999/11/16 16:45:42 ivo Exp $
+# @(#)$Id: configure,v 1.222.2.48 1999/11/16 16:47:29 ivo Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -629,7 +629,7 @@ case "$1" in
 
     #####
 
-    *sparc-solaris-gcc-mt)	# slower rc5, slower des
+    *sparc-solaris-gcc-mt-old)	# slower rc5, slower des
         DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CC="gcc"
@@ -641,7 +641,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
-    *sparc-solaris-gcc-crunch-mt)    # fastest rc5, slower des
+    *sparc-solaris-gcc-crunch-mt-old)    # fastest rc5, slower des
         DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
 	TARGET_CC="gcc"
