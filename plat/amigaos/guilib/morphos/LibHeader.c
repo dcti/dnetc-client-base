@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: LibHeader.c,v 1.1.2.1 2004/01/09 22:43:27 piru Exp $
+ * $Id: LibHeader.c,v 1.1.2.2 2004/01/14 01:21:19 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -88,8 +88,11 @@ static const struct MyInitData InitData	=
 	0
 };
 
-static const char LibId[]	= "Copyright © 2004 distributed.net. All rights reserved. Written by Ilkka Lehtoranta.";
-static const char LibName[]	= "dnetcgui.library";
+#define LIBNAME PROGRAM_NAME
+
+static const char LibId[]	= LIBNAME " " PROGRAM_VER " " PROGRAM_DATE
+                                  " Copyright © 2004 distributed.net. All rights reserved. Written by Ilkka Lehtoranta.";
+static const char LibName[]	= LIBNAME;
 
 /**********************************************************************
 	Globals

@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: MUIGUI.c,v 1.1.2.2 2004/01/09 23:36:28 piru Exp $
+ * $Id: MUIGUI.c,v 1.1.2.3 2004/01/14 01:21:19 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -66,14 +66,16 @@ ULONG NATDECLFUNC_5(GUI_Open, d0, ULONG, cpu, a0, UBYTE *, ProgramName, a1, stru
 
 	if (!LibBase->App)
 	{
-		Object	*app	= NewObjectA(LibBase->AppMCC->mcc_Class, NULL, NULL);
+		Object	*app;
+
+		strcpy(LibBase->Version, vstring);
+
+		app	= NewObjectA(LibBase->AppMCC->mcc_Class, NULL, NULL);
 
 		if (app)
 		{
 			LibBase->App			= app;
 			LibBase->OwnerTask	= FindTask(NULL);
-
-			strcpy(LibBase->Version, vstring);
 
 			DoMethod(app, MUIM_MyApplication_OpenMainWindow);
 

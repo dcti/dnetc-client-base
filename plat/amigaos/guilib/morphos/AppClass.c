@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: AppClass.c,v 1.1.2.2 2004/01/09 23:36:28 piru Exp $
+ * $Id: AppClass.c,v 1.1.2.3 2004/01/14 01:21:19 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -44,6 +44,7 @@ static ULONG mNew(struct IClass *cl, Object *obj, struct DnetcLibrary *LibBase)
 		DoMethod(data->mainwnd, MUIM_Notify, MUIA_Window_CloseRequest, TRUE, (ULONG)obj, 2, MUIM_Application_ReturnID, MUIV_Application_ReturnID_Quit);
 		DoMethod(data->mainwnd, MUIM_Notify, MUIA_Window_MenuAction, MUIV_EveryTime, (ULONG)obj, 2, MUIM_MyApplication_GetMenuItem, MUIV_TriggerValue);
 		DoMethod(data->req_ok, MUIM_Notify, MUIA_Pressed, FALSE, (ULONG)obj, 1, MUIM_MyApplication_CloseReq);
+		DoMethod(obj, MUIM_Notify, MUIA_Application_Iconified, FALSE, (ULONG)obj, 1, MUIM_MyApplication_UnIconified);
 	}
 
 	return (ULONG)obj;
@@ -76,12 +77,12 @@ static ULONG mCloseReq(struct Application_Data *data, struct DnetcLibrary *LibBa
 }
 
 /**********************************************************************
-	mNativeCall
+	mUnIconifiedc
 **********************************************************************/
 
-static ULONG mNativeCall(struct MUIP_MyApplication_NativeCall *msg)
+static ULONG mUnIconified(struct Application_Data *data)
 {
-	return msg->func(&msg->param1);
+	return DoMethod(data->list, MUIM_NList_Jump, MUIV_NList_Jump_Bottom);
 }
 
 /**********************************************************************
@@ -134,13 +135,41 @@ static ULONG mGetMenuItem(struct Application_Data *data, struct DnetcLibrary *Li
 
 static ULONG mInsertNode(struct Application_Data *data, struct DnetcLibrary *LibBase, struct MUIP_MyApplication_InsertNode *msg)
 {
+#if 1
+	LONG first_index, visible_lines, total_lines;
+
+	set(data->list, MUIA_NList_Quiet, MUIV_NList_Quiet_Full);
+
+	GetAttr(MUIA_NList_First, data->list, &first_index);
+	GetAttr(MUIA_NList_Visible, data->list, &visible_lines);
+	GetAttr(MUIA_NList_Entries, data->list, &total_lines);
+
+	if (msg->overwrite)
+	{
+		DoMethod(data->list, MUIM_NList_Remove, MUIV_NList_Remove_Last);
+	}
+	else if (total_lines >= 1000)
+	{
+		DoMethod(data->list, MUIM_NList_Remove, MUIV_NList_Remove_First);
+	}
+
+	DoMethod(data->list, MUIM_NList_InsertSingle, (ULONG)msg->output, MUIV_NList_Insert_Bottom);
+
+	if (visible_lines > -1 && first_index + visible_lines >= total_lines)
+	{
+		DoMethod(data->list, MUIM_NList_Jump, MUIV_NList_Jump_Bottom);
+	}
+#else
 	set(data->list, MUIA_NList_Quiet, MUIV_NList_Quiet_Full);
 
 	if (msg->overwrite)
 		DoMethod(data->list, MUIM_NList_Remove, MUIV_NList_Remove_Last);
 
 	DoMethod(data->list, MUIM_NList_InsertSingle, (ULONG)msg->output, MUIV_NList_Insert_Bottom);
-	DoMethod(data->list, MUIM_NList_Jump, MUIV_NList_Jump_Bottom);
+
+	if (!msg->overwrite)
+		DoMethod(data->list, MUIM_NList_Jump, MUIV_NList_Jump_Bottom);
+#endif
 
 	return set(data->list, MUIA_NList_Quiet, MUIV_NList_Quiet_None);
 }
@@ -155,11 +184,11 @@ DISPATCHERPROTO(MyApp_Dispatcher)
 	switch (msg->MethodID)
 	{
 		case OM_NEW										: return mNew				(cl, obj, LibBase);
-		case MUIM_MyApplication_NativeCall		: return mNativeCall		((APTR)msg);
 		case MUIM_MyApplication_OpenMainWindow	: return mOpenMainWindow(data, LibBase, obj);
 		case MUIM_MyApplication_InsertNode		: return mInsertNode		(data, LibBase, (APTR)msg);
 		case MUIM_MyApplication_GetMenuItem		: return mGetMenuItem	(data, LibBase, (APTR)msg, obj);
 		case MUIM_MyApplication_CloseReq			: return mCloseReq		(data, LibBase);
+		case MUIM_MyApplication_UnIconified		: return mUnIconified		(data);
 	}
 	return DoSuperMethodA(cl, obj, msg);
 }

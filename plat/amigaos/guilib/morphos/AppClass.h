@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: AppClass.h,v 1.1.2.1 2004/01/09 22:43:27 piru Exp $
+ * $Id: AppClass.h,v 1.1.2.2 2004/01/14 01:21:19 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -33,6 +33,7 @@ struct Application_Data
 #define	MUIM_MyApplication_InsertNode			(TAG_BASE + 0xf003)
 #define	MUIM_MyApplication_GetMenuItem		(TAG_BASE + 0xf004)
 #define	MUIM_MyApplication_CloseReq			(TAG_BASE + 0xf005)
+#define MUIM_MyApplication_UnIconified		(TAG_BASE + 0xf006)
 
 struct MUIP_MyApplication_NativeCall	{ ULONG MethodID; ULONG (*func)(ULONG *); ULONG param1; };
 struct MUIP_MyApplication_InsertNode	{ ULONG MethodID; CONST_STRPTR output; ULONG overwrite; };

@@ -29,8 +29,9 @@ clean:
 	rm -f $(OBJS) $(TARGET) $(TARGET).db
 
 $(TARGET): $(OBJS)
-		  $(CC) $(LDFLAGS) -nostartfiles -o $@.db $(OBJS)
+		  $(CC) $(LDFLAGS) -nostartfiles -o $@.db $(OBJS) -lsyscall
 		  ppc-morphos-strip --strip-unneeded --strip-debug --remove-section .comment -o $@ $@.db
+		  -flushlib dnetcgui.library
 
 GLOBAL		= LibHeader.h CreateGui.h dnetcgui.h ../dnetcgui.h
 LibHeader.o	: LibHeader.c $(GLOBAL) guilib_version.h

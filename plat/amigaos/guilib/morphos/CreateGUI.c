@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: CreateGUI.c,v 1.1.2.4 2004/01/10 15:00:36 piru Exp $
+ * $Id: CreateGUI.c,v 1.1.2.5 2004/01/14 01:21:19 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -19,6 +19,7 @@
 #include	<mui/NFloattext_mcc.h>
 
 #include	<clib/alib_protos.h>
+#include	<proto/exec.h>
 #include	<proto/icon.h>
 #include	<proto/muimaster.h>
 
@@ -29,7 +30,7 @@ struct Library		*MUIMasterBase	= NULL;
 
 #define	MUIA_Application_UsedClasses	0x8042e9a7	/* V20 STRPTR *	i..	*/
 
-static const char VerString[]	= "\0$VER: dnetcgui.library " PROGRAM_VER " (9.1.2004)";
+static const char VerString[]	= "\0$VER: " PROGRAM_NAME " " PROGRAM_VER " " PROGRAM_DATE;
 
 static CONST_STRPTR ClassList[]	=
 {
@@ -40,7 +41,7 @@ static CONST_STRPTR ClassList[]	=
 static struct NewMenu Menus[]	=
 {
    { NM_TITLE, "Project",	NULL, 0, 0, NULL },
-	{	NM_ITEM,	"MUI settings...", "M", 0, 0, (APTR)MENU_MUISETTINGS_ID },
+   {  NM_ITEM, "MUI settings...",	"M", 0, 0, (APTR)MENU_MUISETTINGS_ID },
    {  NM_ITEM, NM_BARLABEL,	NULL, 0, 0, NULL},
    {  NM_ITEM, "About...",		"A",  0, 0, (APTR)MENU_ABOUT_ID },
    {  NM_ITEM, NM_BARLABEL,	NULL, 0, 0, NULL},
@@ -70,14 +71,38 @@ static struct MUI_Command commands[]	=
 	{ "RESTART"	, MC_TEMPLATE_ID, DNETC_MSG_RESTART, NULL }
 };
 
-static const UBYTE about[]	= "\33cdistributed.net client - a product of distributed.net\n\nCopyright 1997-2004 distributed.net\n\n\nMorphOS client maintained by\nHarry Sintonen\n<sintonen@iki.fi>\n\n\nMUI GUI module (v1.0) maintained by\nIlkka Lehtoranta\n<ilkleht@isoveli.org>";
-
 /**********************************************************************
 	CreateGUI
 **********************************************************************/
 
 Object *CreateGUI(struct IClass *cl, Object *obj, struct ObjStore *os, struct DnetcLibrary *LibBase)
 {
+	UBYTE about[512];
+	ULONG array[] =
+	{
+		(ULONG) LibBase->Version,
+		LibBase->Library.lib_Version,
+		LibBase->Library.lib_Revision
+	};
+
+#define SysBase LibBase->MySysBase
+	RawDoFmt(
+	 "\33cdistributed.net client - a product of distributed.net\n"
+	 "%s\n"
+	 "Copyright 1997-2004 distributed.net\n"
+	 "\n"
+	 "\n"
+	 "MorphOS client maintained by\n"
+	 "Harry Sintonen\n"
+	 "<sintonen@iki.fi>\n"
+	 "\n"
+	 "\n"
+	 "MUI GUI module (v%ld.%ld) maintained by\n"
+	 "Ilkka Lehtoranta\n"
+	 "<ilkleht@isoveli.org>",
+	array, NULL, about);
+#undef SysBase
+
 	return DoSuperNew(cl, obj,
 		MUIA_Application_DiskObject	, LibBase->dobj,
 		MUIA_Application_Commands		, commands,
