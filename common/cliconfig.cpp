@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.137  1998/07/08 23:31:51  foxyloxy
+// Added defines to allow non-x86 platforms to compile and properly recognize
+// but ignore the -nommx command line option.
+//
 // Revision 1.136  1998/07/08 16:29:52  remi
 // Adjusted DES credits.
 //
@@ -221,7 +225,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.136 1998/07/08 16:29:52 remi Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.137 1998/07/08 23:31:51 foxyloxy Exp $";
 return id; }
 #endif
 
@@ -2675,8 +2679,12 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
     }
     else if ( strcmp(Argv[i], "-nommx" ) == 0)
     {
+#if (CLIENT_CPU == CPU_X86)
       LogScreenf("Won't use MMX instructions\n");
       usemmx=0;
+#else
+      LogScreenf("-nommx argument ignored on this non-x86 processor.");
+#endif
       Argv[i][0] = 0;
     }
     else if ((i+1) < Argc) {
