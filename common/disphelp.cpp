@@ -40,7 +40,7 @@ static int readkeypress()
   newios.c_cc[VMIN] = 1;
 
   /* Activate the new settings */
-  tcsetattr(0,TCSANOW,&new);
+  tcsetattr(0,TCSANOW,&newios);
 
   /* Read the single character */
   ch = getchar();
@@ -177,10 +177,11 @@ void Client::DisplayHelp( const char * unrecognized_option )
     if (!done)
     {
       printf( "Unrecognized option '%s'\n"
-           "Press enter to display a list of valid command line options\n"
-            "or press any other key to quit... ", unrecognized_option );
+         "Press enter/space to display a list of valid command line\n"
+         "options or press any other key to quit... ", unrecognized_option );
       int i = readkeypress();
-      if (i != '\n' && i != '\r') return;
+      printf("\n");
+      if (i != '\n' && i != '\r' && i != ' ') return;
     }
   }
 
@@ -230,7 +231,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
       break;
     }
   }
-
+  printf("\n");
   clearscreen();
   return;
 }
