@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.10 1999/12/08 00:41:49 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.11 1999/12/11 04:16:39 vetere Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -316,7 +316,7 @@
     #define CLIENT_CPU    CPU_POWER
   #endif
 #elif defined(macintosh)
-  #define CLIENT_OS_NAME   "MacOS"
+  #define CLIENT_OS_NAME   "Mac OS"
   #if __POWERPC__
     #define CLIENT_OS     OS_MACOS
     #define CLIENT_CPU    CPU_POWERPC
