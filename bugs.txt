@@ -10,6 +10,8 @@ Bugs Listing
   I just noticed that in the log file, there's a CR after received XX
   blocks, but none after Sent XX blocks; perhaps one should be removed,
   or the other added so that it's consistant.
+FIXED - Kevin Bracey
+  Should be no CRs in the log file now.
 
 06-11-98 - Kevin Bracey
   During autodetect x86 and ARM cores will say "Automatically selecting
