@@ -6,11 +6,13 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.35 2000/09/17 11:46:26 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.36 2000/09/20 18:01:06 cyp Exp $"; }
+
+//#define PROFILE_DISK_HITS
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
-#include "client.h"   //client class
+#include "client.h"   //client struct and threshold functions
 #include "baseincs.h" //basic #includes
 #include "network.h"  //ntohl(), htonl()
 #include "util.h"     //trace
@@ -21,6 +23,7 @@ return "@(#)$Id: buffbase.cpp,v 1.12.2.35 2000/09/17 11:46:26 cyp Exp $"; }
 #include "pathwork.h" //GetFullPathForFilename() or dummy if DONT_USE_PATHWORK
 #include "problem.h"  //Resultcode enum
 #include "probfill.h"
+#include "clitime.h"  // CliClock(), CliTimer()
 #include "buffupd.h"  // BUFFERUPDATE_FETCH / BUFFERUPDATE_FLUSH
 #include "buffbase.h" //ourselves
 
@@ -268,6 +271,9 @@ long PutBufferRecord(Client *client,const WorkRecord *data)
         filename = client->out_buffer_basename;
       filename = BufferGetDefaultFilename(tmp_contest, tmp_use_out_file,
                                                        filename );
+      #ifdef PROFILE_DISK_HITS
+      LogScreen("Diskhit: BufferPutFileRecord() called from PutBufferRecord()\n");
+      #endif
       tmp_retcode = BufferPutFileRecord( filename, data, &count );
                     /* returns <0 on ioerr, >0 if norecs */
     }
@@ -318,6 +324,9 @@ long GetBufferRecord( Client *client, WorkRecord* data,
         filename = client->out_buffer_basename;
       filename = BufferGetDefaultFilename(contest, use_out_file, filename );
                  /* returns <0 on ioerr, >0 if norecs */
+      #ifdef PROFILE_DISK_HITS
+      LogScreen("Diskhit: BufferGetFileRecord() <- GetBufferRecord()\n");
+      #endif
       retcode = BufferGetFileRecord( filename, data, &count );
 //LogScreen("b:%d\n", retcode);
     }
@@ -374,6 +383,9 @@ long GetBufferRecord( Client *client, WorkRecord* data,
           filename = BufferGetDefaultFilename(tmp_contest, tmp_use_out_file,
                                               filename );
 //LogScreen("new cont:%d, type: %d, name %s\n", tmp_contest, tmp_use_out_file, filename );
+          #ifdef PROFILE_DISK_HITS
+          LogScreen("Diskhit: BufferPutFileRecord() <- GetBufferRecord()\n");
+          #endif
           tmp_retcode = BufferPutFileRecord( filename, data, NULL );
         }
         else
@@ -413,6 +425,9 @@ int BufferAssertIsBufferFull( Client *client, unsigned int contest )
     {
       const char *filename = client->in_buffer_basename;
       filename = BufferGetDefaultFilename(contest, 0, filename );
+      #ifdef PROFILE_DISK_HITS
+      LogScreen("Diskhit: BufferCountFileRecords() <- BufferAssertIsBufferFull()\n");
+      #endif
       if (BufferCountFileRecords( filename, contest, &reccount, NULL ) != 0)
         isfull = 1;
       else
@@ -453,6 +468,9 @@ long GetBufferCount( Client *client, unsigned int contest,
       if (use_out_file)
         filename = client->out_buffer_basename;
       filename = BufferGetDefaultFilename(contest, use_out_file, filename );
+      #ifdef PROFILE_DISK_HITS
+      LogScreen("Diskhit: BufferCountFileRecords() <- GetBufferCount()\n");
+      #endif
       retcode = BufferCountFileRecords( filename, contest, &reccount, normcountP );
     }
     else
@@ -481,6 +499,9 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
   int errs = 0;
   WorkRecord data;
 
+  #ifdef PROFILE_DISK_HITS
+  LogScreen("Diskhit: access() <- GetImportFileRecords()\n");
+  #endif
   if ( access( GetFullPathForFilename(source_file), 0 )!=0 )
   {
     if (interactive)
@@ -488,9 +509,13 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
     return -1L;
   }
 
-  while (BufferGetFileRecordNoOpt( source_file, &data, &remaining ) == 0)
-                           //returns <0 on ioerr/corruption, > 0 if norecs
+  for (;;)
   {
+    #ifdef PROFILE_DISK_HITS
+    LogScreen("Diskhit: BufferGetFileRecordNoOpt() <- BufferImportFileRecords()\n");
+    #endif
+    if (BufferGetFileRecordNoOpt( source_file, &data, &remaining ) != 0)
+      break;  //returned <0 on ioerr/corruption, > 0 if norecs
     if (lastremaining != 0)
     {
       if (lastremaining <= remaining)
@@ -511,6 +536,9 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
   }
   if (recovered > 0)
   {
+    #ifdef PROFILE_DISK_HITS
+    LogScreen("Diskhit: BufferZapFileRecords() <- BufferImportFileRecords()\n");
+    #endif
     BufferZapFileRecords( source_file );
   }
   if (recovered > 0 && interactive)
@@ -632,6 +660,9 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
         unsigned long remaining;
 
         // Retrieve a packet from the remote buffer.
+        #ifdef PROFILE_DISK_HITS
+        LogScreen("Diskhit: BufferGetFileRecordNoOpt() <- BufferFetchFile()\n");
+        #endif
         if ( BufferGetFileRecordNoOpt( remote_file, &wrdata, &remaining ) != 0 )
         {
           //totrans_wu = 0; /* move to next contest on file error */
@@ -642,12 +673,18 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
         {
           Log("Remote buffer %s\ncontains non-%s packets. Stopped fetch for %s.\n",
                        remote_file, contname, contname );
+          #ifdef PROFILE_DISK_HITS
+          LogScreen("Diskhit: BufferPutFileRecord() <- BufferFetchFile()\n");
+          #endif
           BufferPutFileRecord( remote_file, &wrdata, NULL );
           //totrans_wu = 0; /* move to next contest on file error */
           break; /* move to next contest - error msg has been printed */
         }
         else if ((inbuffer_count = PutBufferRecord( client, &wrdata )) < 0) /* can't save here? */
         {                             /* then put it back there */
+          #ifdef PROFILE_DISK_HITS
+          LogScreen("Diskhit: BufferPutFileRecord() <- BufferFetchFile()\n");
+          #endif
           BufferPutFileRecord( remote_file, &wrdata, NULL );
           failed = -1; /* stop further local buffer I/O */
           //totrans_wu = 0; /* move to next contest on file error */
@@ -798,6 +835,9 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
       if (totrans_pkts < 0)
         break;
 
+      #ifdef PROFILE_DISK_HITS
+      LogScreen("Diskhit: BufferPutFileRecord() <- BufferFlushFile()\n");
+      #endif
       if ( BufferPutFileRecord( remote_file, &wrdata, NULL ) != 0 )
       {
         PutBufferRecord( client, &wrdata );
@@ -875,3 +915,130 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
   return totaltrans_pkts;
 }
 
+/* --------------------------------------------------------------------- */
+
+/* BufferCheckIfUpdateNeeded() is called from BufferUpdate and also 
+   from various connect-often test points.
+*/   
+int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
+{
+  int check_flush, check_fetch, need_flush, need_fetch;
+  int closed_expired, pos, cont_start, cont_count;
+  int ignore_closed_flags, fill_even_if_not_totally_empty, either_or;
+
+  check_flush = check_fetch = 0;
+  if ((buffupd_flags & BUFFERUPDATE_FETCH)!=0)
+    check_fetch = 1;
+  if ((buffupd_flags & BUFFERUPDATE_FLUSH)!=0)
+    check_flush = 1;
+  if (!check_fetch && !check_flush)
+    return 0;    
+
+  /* normally an fetch_needed check will be true only if the in-buff is
+     completely empty. With BUFFUPDCHECK_TOPOFF, the fetch_needed check
+     will be also be true if below threshold. Used with connect_often etc.
+  */   
+  fill_even_if_not_totally_empty = 0;
+  if ((buffupd_flags & BUFFUPDCHECK_TOPOFF)!=0)
+    fill_even_if_not_totally_empty = 1;
+  /* if result precision is not necessary, ie the caller only wants to
+     know if _either_ fetch _or_ flush is necessary, then we can do
+     some optimization. The function is then faster, but the result is
+     degraded to a simple true/false.
+  */
+  either_or = 0;
+  if (check_fetch && check_flush && (buffupd_flags & BUFFUPDCHECK_EITHER)!=0)
+    either_or = 1; /* either criterion filled fulfills both criteria */
+                   
+  ignore_closed_flags = 0;
+  cont_start = 0; cont_count = CONTEST_COUNT;
+  if (contestid >= 0 && contestid < CONTEST_COUNT)
+  {
+    /* on some systems (linux), checking for empty-contest expiry is very 
+       slow, so this can be bypassed if doing a single contest check 
+       (the caller already knows its open)
+    */  
+    ignore_closed_flags = 1;
+    cont_start = contestid;
+    cont_count = contestid+1;
+  }    
+
+  need_flush = need_fetch = 0; closed_expired = -1;
+  for (pos = cont_start; pos < cont_count; pos++)
+  {
+    unsigned int cont_i = (unsigned int)(client->loadorder_map[pos]);
+    if (cont_i < CONTEST_COUNT) /* not disabled */
+    {
+      int isclosed = 0;
+      if (!ignore_closed_flags && 
+          (client->project_flags[cont_i] & PROJECTFLAGS_CLOSED) != 0)
+      {
+        /* this next bit is not a good candidate for a code hoist */
+        if (closed_expired < 0) /* undetermined */
+        {
+          struct timeval tv;
+          closed_expired = 0;
+          if (client->last_buffupd_time == 0)
+          {
+            closed_expired = 1;
+          }  
+          else if ((client->scheduledupdatetime != 0 && 
+            ((unsigned long)CliTimer(0)->tv_sec) >= 
+     	      ((unsigned long)client->scheduledupdatetime)))
+          {  
+            closed_expired = 1;
+          }  
+          else if (CliClock(&tv)==0)
+          {
+            #define PROJECTFLAGS_CLOSED_EXPIRY (90*60) /* 90 minutes */
+            if (((unsigned long)tv.tv_sec) > 
+              (unsigned long)(client->last_buffupd_time+PROJECTFLAGS_CLOSED_EXPIRY)) 
+            {  
+              closed_expired = 1;
+            }  
+          }      
+        }  
+        if (!closed_expired)
+          isclosed = 1;
+      }	  
+      if (!isclosed)
+      {
+        if (check_flush && !need_flush)
+        {
+          if (GetBufferCount( client, cont_i, 1 /* use_out_file */, NULL ) > 0)
+          {
+            need_flush = 1;
+            if (either_or)    /* either criterion satisfied ... */
+              need_fetch = 1; /* ... fullfills both criteria */
+          }    
+        }      
+        if (check_fetch && !need_fetch)
+        {
+          if (!BufferAssertIsBufferFull(client,cont_i))
+          {
+            unsigned long wucount;
+            if (GetBufferCount( client, cont_i, 0, &wucount ) <= 0)
+              need_fetch = 1;
+            else if (fill_even_if_not_totally_empty &&
+                 wucount < (unsigned int)ClientGetInThreshold( client, cont_i, 0 ))
+            {     
+	            need_fetch = 1;
+            }  
+	        }      
+          if (need_fetch && either_or) /* either criterion satisfied ... */
+            need_flush = 1;            /* ... fulfills both criteria */
+        }
+	      if (need_flush && need_fetch)
+	        break;
+      } /* if (!isclosed) */
+    } /* if (i < CONTEST_COUNT) */ /* not disabled */
+  } /* for (;cont_i < cont_count; cont_i++) */
+
+  buffupd_flags = 0;
+  if (need_fetch)
+    buffupd_flags |= BUFFERUPDATE_FETCH;
+  if (need_flush)
+    buffupd_flags |= BUFFERUPDATE_FLUSH;
+  
+  return buffupd_flags;
+}  
