@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.130  1998/08/21 09:05:42  cberry
+// Fixed block size suggestion for CPUs so slow that they can't do a 2^28 block in an hour.
+//
 // Revision 1.129  1998/08/20 19:34:34  cyruspatel
 // Removed that terrible PIPELINE_COUNT hack: Timeslice and pipeline count
 // are now computed in Problem::LoadState(). Client::SelectCore() now saves
@@ -116,7 +119,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.129 1998/08/20 19:34:34 cyruspatel Exp $"; }
+return "@(#)$Id: client.cpp,v 1.130 1998/08/21 09:05:42 cberry Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -502,7 +505,7 @@ u32 Client::Benchmark( u8 contest, u32 numk )
                              CliGetKeyrateAsString( ratestr, rate ) );
 
   itersize+=keycountshift;
-  while (tv.tv_sec<(60*60) && itersize<31)
+  while ((tv.tv_sec<(60*60) && itersize<31) || (itersize < 28))
     {
     tv.tv_sec<<=1;
     tv.tv_usec<<=1;
@@ -510,6 +513,7 @@ u32 Client::Benchmark( u8 contest, u32 numk )
     tv.tv_usec%=1000000L;
     itersize++;
     }
+
 
   LogScreenRaw(
   "The preferred %s blocksize for this machine should be set to %d (%d*2^28 keys).\n"
