@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.23 1999/10/11 01:29:32 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.24 1999/10/11 02:55:53 cyp Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -193,7 +193,7 @@ OPTS_DES_ULTRA_C="-DDES_ULTRA -DINLINE=' ' -DIN_DCTI_CLIENT \
 		  -DLOW_WORD_VALID -DMANUAL_REGISTER_ALLOCATION -DBIT_32 \
 		  -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc"
 # a bit hairy, isn't it ? ;-)
-OPTS_DES_ULTRA_ASM="-DINTSIZES=442 -DASM_SPARC -DIN_DCTI_CLIENT \
+OPTS_DES_ULTRA_ASM="-DASM_SPARC -DIN_DCTI_CLIENT \
 		    -DDES_ULTRA -DINLINE=inline -DFULL_64_BIT_VALID -DASM \
 		    -DMANUAL_REGISTER_ALLOCATION -DDO_FLOAT_PIPE -DBIT_64 \
 		    -DUSE_IDENTICAL_FLOAT_REGISTERS -DUSE_64_BIT_SENTINEL \
@@ -1601,7 +1601,7 @@ echo "Platform target for \"$1\" recognized."
 # add (cough, cough) projects to all
 #
 TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS" #$OGR_ANSI_SRCS 
-TARGET_CCFLAGS="$TARGET_CCFLAGS $CSC_ANSI_CCOPTS" #$OGR_ANSI_CCOPTS 
+TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES $CSC_ANSI_CCOPTS" #$OGR_ANSI_CCOPTS 
 
 #
 # Generate the list of output objects, making note of what
@@ -1692,16 +1692,16 @@ if [ $1 = riscos ]; then
 else
   CLIENTCPU=`./testplat cpu`
   CLIENTOS=`./testplat os`
-  INTSIZES=`./testplat intsizes`
+# INTSIZES=`./testplat intsizes`
 fi
 CLIENTOSNAME=`grep "#define OS_.*\<$CLIENTOS\>" common/cputypes.h | head -1 | cut -d' ' -f2`
 CLIENTCPUNAME=`grep "#define CPU_.*\<$CLIENTCPU\>" common/cputypes.h | head -1 | cut -d' ' -f2`
 echo "CLIENT_CPU = $CLIENTCPUNAME ($CLIENTCPU)"
 echo "CLIENT_OS = $CLIENTOSNAME ($CLIENTOS)"
-echo "INTSIZES = $INTSIZES"
-TARGET_CCFLAGS="-DINTSIZES=${INTSIZES} -DBUILDNAME=\${BUILDNAME} ${TARGET_CCFLAGS}"
+#echo "INTSIZES = $INTSIZES"
+TARGET_CCFLAGS="-DBUILDNAME=\${BUILDNAME} ${TARGET_CCFLAGS}"
 if [ "$TARGET_OS" = "DIGITAL_UNIX" ]; then
-TARGET_EV5_CCFLAGS="-DINTSIZES=${INTSIZES} -DBUILDNAME=\${BUILDNAME} ${TARGET_EV5_CCFLAGS}"
+TARGET_EV5_CCFLAGS="-DBUILDNAME=\${BUILDNAME} ${TARGET_EV5_CCFLAGS}"
 fi
 
 #
@@ -1728,7 +1728,7 @@ else
 echo "#   target cpu --> $CLIENTCPUNAME ($CLIENTCPU)" >> Makefile
 fi
 echo "#    target os --> $CLIENTOSNAME ($CLIENTOS)" >> Makefile
-echo "#     intsizes --> $INTSIZES" >> Makefile
+#echo "#     intsizes --> $INTSIZES" >> Makefile
 echo "# see http://www.distributed.net/ for details." >> Makefile
 echo "" >> Makefile
 
