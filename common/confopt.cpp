@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.37 2000/06/14 21:00:10 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.38 2000/06/19 16:38:43 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -352,27 +352,40 @@ struct optionstruct conf_options[] = {
   CFGTXT(ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME),"0 (none)",
   /*CFGTXT(*/
   "The following options are extensions to normal threshold management and are\n"
-  "not usually necessary.\n"
+  "not usually necessary:\n"
+  "   0) no additional buffer-level checking. (default)\n"
+  "   1) ensure that there is always work available.\n"
+  "   2) ensure that all completed work is kept flushed.\n"
+  "   3) both 1) and 2). (implied if 'Dialup detection options' are enabled)\n"
+  "   4) update on per-project buffer exhaustion.\n"
   "\n"
-  " 0) no additional buffer-level checking. (default)\n"
-  " 1) ensure that there is always work available.\n"
-  " 2) ensure that all completed work is kept flushed.\n"
-  " 3) both 1) and 2). (implied if 'Dialup detection options' are enabled)\n"
-  " 4) update on per-project buffer exhaustion.\n"
-  "\n"
-  "Options 1, 2 and 3 will cause the client to check buffers levels every few\n"
-  "minutes or so. You might want to use them if you have a single computer with\n"
-  "a network connection \"feeding\" other clients via a common set of buffers,\n"
-  "or if you want to ensure that completed work is flushed immediately.\n"
+  "Options 1, 2 and 3 will cause the client to frequently check buffers levels.\n"
+  "(Frequency/interval is determined by the 'Buffer-level check interval' option)\n"
+  "You might want to use them if you have a single computer with a network\n"
+  "connection \"feeding\" other clients via a common set of buffers, or if you\n"
+  "want to ensure that completed work is flushed immediately.\n"
   "Option 4 is a hint to the client to work on a single project as long as\n"
   "possible (updating per-project buffers individually), rather than loop through\n"
   "all active/enabled projects (one combined update per pass).\n"
-#if 0  
+  /*)*/,CONF_MENU_BUFF,CONF_TYPE_INT,NULL,NULL,0,4,NULL,NULL
+},
+{  
+  CONF_FREQUENT_FREQUENCY      , /* CONF_MENU_BUFF */
+  CFGTXT("Buffer-level check interval"), "0:00 (on buffer change)",
+  /*CFGTXT(*/
+  "This option determines how how often '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'\n"
+  "should be performed. (More precisely: how much time must elapse between\n"
+  "buffer-level checks)\n" 
   "\n"
-  "Note: enabling (modem-) connection detection implies type 3, ie that\n" 
-  "buffers will be updated frequently while a connection is detected.\n" 
-#endif
-  /*)*/,CONF_MENU_BUFF,CONF_TYPE_INT,NULL,NULL,0,4,NULL,NULL},
+  "This setting is meaningful only if one of the extensions to normal threshold\n"
+  "management is enabled: either implicitely when 'Dialup detection options' are\n"
+  "active or explicitely with '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'.\n"
+  "\n"
+  "The interval specified here is in hours and minutes, and the default denotes\n"
+  "that the client should check buffer-levels whenever it detects a change (by any\n"
+  "client) to a buffer file, but not more often than twice per minute.\n"
+  /*)*/,CONF_MENU_BUFF,CONF_TYPE_TIMESTR,NULL,NULL,0,0,NULL,NULL
+},   
 { 
   CONF_PREFERREDBLOCKSIZE      , /* CONF_MENU_BUFF */
   CFGTXT("Preferred packet size (2^X keys/packet)"), "-1 (auto)",

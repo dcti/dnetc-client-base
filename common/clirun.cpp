@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.61 2000/06/13 00:58:00 mfeiri Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.62 2000/06/19 16:38:42 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1570,6 +1570,17 @@ int ClientRun( Client *client )
     //handle 'connectoften' requests
     //------------------------------------
 
+    #if 0
+    if (client->min_buffupd_interval > 0 && client->last_buffupd_time != 0)
+    {
+      /* Fixup next connect time so that the elapsed time between updates
+         is _at_least_ client->min_buffupd_interval 
+      */   
+      timeNextConnect = ((time_t)client->last_buffupd_time) + 
+                        (time_t)(client->min_buffupd_interval * 60); 
+    }
+    #endif
+
     if (!TimeToQuit && ((local_connectoften & 3)!=0) && timeRun>=timeNextConnect)
     {
       int doupd = 1;
@@ -1608,7 +1619,10 @@ int ClientRun( Client *client )
       {
         ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
       }
-      timeNextConnect = timeRun + 30; /* every 30 seconds */
+      if (client->max_buffupd_interval > 0) /* interval was specified (minutes) */
+        timeNextConnect = timeRun + (client->max_buffupd_interval*60);  
+      else
+        timeNextConnect = timeRun + 30; /* every 30 seconds */
     }
 
     //----------------------------------------

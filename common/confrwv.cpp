@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.39 2000/06/14 21:00:10 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.40 2000/06/19 16:38:43 cyp Exp $"; }
 
 //#define TRACE
 
@@ -323,16 +323,12 @@ static int _readwrite_fwallstuff(int aswrite, const char *fn, Client *client)
 
 /* ------------------------------------------------------------------------ */
 
-// Convert a textual time duration specifier into the equivalent integer
-// representation of the number of equivalent seconds.  The textual string
-// is required to be in the format of "hh[:mm[:ss]]".
+// Convert a "time" string in the form "[hh:]mm[:ss]"
+// into an equivalent number of seconds or < 0 on error.
 //
 // If the argument 'oldstyle_hours_compat' is non-zero, then the textual
 // input may optionally be in the format of "hh.hhh", representing a decimal
 // number of hours.
-// 
-// Returns equivalent number of seconds. Returns 0 for an empty string ("").
-// Otherwise returns a negative value (<0 on error).
 
 static int __parse_timestring(const char *source, int oldstyle_hours_compat )
 {
@@ -392,6 +388,35 @@ static int __parse_timestring(const char *source, int oldstyle_hours_compat )
   return (((hms[0] * 60)+hms[1])*60)+hms[2]; /* hh:mm or hh:mm:ss */
 }
 
+/* ------------------------------------------------------------------------ */
+
+static int __readwrite_minutes(const char *sect, const char *keyname,
+                               const int *write_value, int defaultval,
+                               const char *fn )
+{
+  char buffer[64];
+  if (write_value)
+  {
+    int minutes = *write_value;
+    if (minutes < 0)
+      minutes = defaultval;
+    if (minutes != defaultval || 
+        GetPrivateProfileStringB(sect,keyname, "",buffer,sizeof(buffer),fn))  
+    {
+      sprintf(buffer,"%u:%02u",((unsigned)minutes/60),((unsigned)minutes%60));
+      return WritePrivateProfileStringB( sect, keyname, buffer, fn );
+    }
+    return 0;
+  }
+  if (GetPrivateProfileStringB(sect,keyname, "",buffer,sizeof(buffer),fn))
+  {
+    int seconds = __parse_timestring( buffer, 0 );
+    if (seconds >= 0)
+      return (seconds / 60); /* we only want minutes */
+  }
+  return defaultval;
+}      
+    
 /* ------------------------------------------------------------------------ */
 
 //determine the default value for "autofindkeyserver" based on the keyserver
@@ -844,8 +869,9 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
       if ((i = __parse_timestring( buffer, 1 /* compat */ )) > 0)
       {
         client->minutes = i / 60; /* we only want minutes */
-        sprintf(buffer,"%u:%02u", (unsigned)(client->minutes/60), (unsigned)(client->minutes%60));
-        modfail += (!WritePrivateProfileStringB( OPTSECT_MISC, "run-time-limit", buffer, fn ));
+        if (client->minutes)
+          modfail += __readwrite_minutes(OPTSECT_MISC, "run-time-limit",
+                                                   &(client->minutes), 0, fn );
       }
     }
   }
@@ -1083,12 +1109,7 @@ int ReadConfig(Client *client)
 
   TRACE_OUT((0,"ReadConfig() [2 begin]\n"));
 
-  if (GetPrivateProfileStringB(OPTSECT_MISC,"run-time-limit","",buffer,sizeof(buffer),fn))
-  {
-    if ((client->minutes = __parse_timestring( buffer, 0 )) < 0)
-      client->minutes = 0;
-    client->minutes /= 60; /* we only want minutes */
-  }
+  client->minutes = __readwrite_minutes( OPTSECT_MISC,"run-time-limit", NULL, client->minutes, fn );
   client->blockcount = GetPrivateProfileIntB( OPTSECT_MISC, "run-work-limit", client->blockcount, fn );
 
   TRACE_OUT((0,"ReadConfig() [2 end]\n"));
@@ -1114,6 +1135,7 @@ int ReadConfig(Client *client)
   GetPrivateProfileStringB( OPTSECT_BUFFERS, "alternate-buffer-directory", client->remote_update_dir, client->remote_update_dir, sizeof(client->remote_update_dir), fn );
   GetPrivateProfileStringB( OPTSECT_BUFFERS, "checkpoint-filename", client->checkpoint_file, client->checkpoint_file, sizeof(client->checkpoint_file), fn );
   client->connectoften = GetPrivateProfileIntB( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften , fn );
+  client->max_buffupd_interval = __readwrite_minutes( OPTSECT_BUFFERS,"threshold-check-interval", NULL, client->max_buffupd_interval, fn );
   GetPrivateProfileStringB( OPTSECT_MISC, "project-priority", "", buffer, sizeof(buffer), fn );
   projectmap_build(client->loadorder_map, buffer);
 
@@ -1267,16 +1289,13 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     __XSetProfileInt( OPTSECT_BUFFERS, "allow-update-from-altbuffer", !(client->noupdatefromfile), fn, 1, 'y' );
     __XSetProfileStr( OPTSECT_BUFFERS, "alternate-buffer-directory", client->remote_update_dir, fn, NULL );
     __XSetProfileInt( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften, fn, 0, 0 );
+    __readwrite_minutes( OPTSECT_BUFFERS,"threshold-check-interval", &(client->max_buffupd_interval), 0, fn );
 
     /* --- CONF_MENU_MISC __ */
 
     strcpy(buffer,projectmap_expand(NULL));
     __XSetProfileStr( OPTSECT_MISC, "project-priority", projectmap_expand(client->loadorder_map), fn, buffer );
-    if (client->minutes!=0 || GetPrivateProfileStringB(OPTSECT_MISC,"run-time-limit","",buffer,2,fn))
-    {
-      sprintf(buffer,"%u:%02u", (unsigned)(client->minutes/60), (unsigned)(client->minutes%60));
-      WritePrivateProfileStringB( OPTSECT_MISC, "run-time-limit", buffer, fn );
-    }
+    __readwrite_minutes( OPTSECT_MISC,"run-time-limit", &(client->minutes), 0, fn );
     __XSetProfileInt( OPTSECT_MISC, "run-work-limit", client->blockcount, fn, 0, 0 );
 
     __XSetProfileInt( OPTSECT_TRIGGERS, "restart-on-config-file-change", client->restartoninichange, fn, 0, 'n' );

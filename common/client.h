@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.14 2000/05/01 08:19:19 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.15 2000/06/19 16:38:42 cyp Exp $"
 
 
 // ------------------
@@ -77,6 +77,7 @@ typedef struct
   int  stopiniio;
   u32  scheduledupdatetime;
   char inifilename[MINCLIENTOPTSTRLEN*2];
+  u32  last_buffupd_time; /* monotonic. goes with max_buffupd_interval */
 
   /* -- general -- */
   char id[MINCLIENTOPTSTRLEN];
@@ -110,8 +111,8 @@ typedef struct
   // Don't use inthreshold directly, Use ClientGetInThreshold(client, contest)
   int inthreshold[CONTEST_COUNT]; 
   int timethreshold[CONTEST_COUNT];  /* in hours */
+  int max_buffupd_interval; /* the better 'outthreshold'. in minutes */
   #if (!defined(NO_OUTBUFFER_THRESHOLDS))
-  int  minupdateinterval; /* the better 'outthreshold'. in minutes */
   int outthreshold[CONTEST_COUNT];
   #endif
   int preferred_blocksize[CONTEST_COUNT];

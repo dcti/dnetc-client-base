@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.21 2000/05/04 21:40:56 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.22 2000/06/19 16:38:43 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -293,6 +293,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   conf_options[CONF_REMOTEUPDATEDISABLED].thevariable=&(client->noupdatefromfile);
   conf_options[CONF_REMOTEUPDATEDIR].thevariable=&(client->remote_update_dir[0]);
   conf_options[CONF_FREQUENT].thevariable=&(client->connectoften);
+  conf_options[CONF_FREQUENT_FREQUENCY].thevariable=&(client->max_buffupd_interval);
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
     preferred_blocksize[cont_i] = client->preferred_blocksize[cont_i];
@@ -521,13 +522,14 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
                   (client->noupdatefromfile ? na : NULL );
       conf_options[CONF_FREQUENT].disabledtext= 
                   (client->offlinemode && noremotedir ? na : NULL );
+      conf_options[CONF_FREQUENT_FREQUENCY].disabledtext=
+                  ((client->offlinemode && noremotedir) ? na : NULL );
       conf_options[CONF_PREFERREDBLOCKSIZE].disabledtext= 
                   (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_THRESHOLDI].disabledtext= 
                   (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_THRESHOLDT].disabledtext= 
                   (client->offlinemode && noremotedir ? na : NULL );
- 
     }
     else if (whichmenu == CONF_MENU_LOG)
     {
@@ -776,6 +778,17 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
                 sprintf(parm, "%d:%02u", (t/60), 
                                (unsigned int)(((t<0)?(-t):(t))%60) );
                 descr = parm;
+                if (*conf_options[menuoption].defaultsetting)
+                {
+                  t = strlen(parm);
+                  if (((unsigned int)t) < 
+                      strlen(conf_options[menuoption].defaultsetting) && 
+                      conf_options[menuoption].defaultsetting[t]==' ' &&
+                      memcmp(parm,conf_options[menuoption].defaultsetting,t)==0)
+                  {
+                    descr = conf_options[menuoption].defaultsetting;
+                  }
+                }  
               }
               else if (conf_options[menuoption].type==CONF_TYPE_INT)
               {
