@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.44 2000/01/11 19:43:49 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.45 2000/01/14 22:41:42 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -184,7 +184,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
         corenames_table[RC5][1] = NULL;
       }
       #if (CLIENT_OS == OS_MACOS)
-      else if ( det == 12) //PPC 7500
+      if (macosAltiVecPresent())
       {
         corenames_table[RC5][2] = "crunch-vec"; /* aka rc5_unit_func_vec() wrapper */
         corenames_table[RC5][3] = NULL;
@@ -533,7 +533,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       else if (detected_type == 1 )    //PPC 601
         cindex = 0;               // lintilla
       #if (CLIENT_OS == OS_MACOS) /* vec core is currently macos only */
-      else if (detected_type == 12) //PPC 7500
+      if (macosAltiVecPresent())
         cindex = 2;               // vector
       #endif
       else                        //the rest
@@ -551,18 +551,22 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         ; //don't know yet
       else 
       {
-       /*
+        /*
+         * The perfomance of the CSC cores seems to be quite compiler specific.
+         * Because I dunno about the differences of gcc vs. MacOS compilers regarding
+         * optimized PowerPC code I insert my PowerPC core preselction for MacOS only and 
+         * leave the rest of the preselections as is. Who did these other preselections?
+         */
+        #if (CLIENT_OS == OS_MACOS)
+        cindex = 1; // 6 bit called for all known PowerPC CPUs
+        #else
         long det = (detected_type & 0x00ffffffL);
         if (det == 1)       //PPC 601
           cindex = 2;       // G1: 16k L1 cache - 1 key inline
         else if (det == 12) //PPC 7400
           cindex = 1;       // G4: 64k L1 cache - 6 bit called
         //don't know about the rest
-
-        Uh, whats this? I disable this for now and thus let the client
-        do a mini bench at startup - a wrong core was selected for G4 CPUs
-        
-        */
+        #endif
       }
       selcorestatics.corenum[CSC] = cindex;
     }
