@@ -18,7 +18,7 @@
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.27.2.7 2000/02/02 18:28:02 cyp Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.27.2.8 2000/04/16 18:35:48 cyp Exp $"; }
 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
@@ -418,6 +418,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
         } /* if foundsect */
       } /* if linelen */
     } /* while (offset < filelen) */
+
         
     if (dowrite) 
     {
@@ -550,15 +551,19 @@ static unsigned long ini_doit( int dowrite, const char *sect,
       success--;
     else if (buffer && bufflen)
     {
-      buffer[0]=0;
       if (key == NULL) /* get all key+value pairs for sect */
       {
-        if (bufflen>1)
-          buffer[1]=0;
+        buffer[0] = 0; 
+        if (bufflen > 1) /* getsect is terminated by '\0\0' */
+          buffer[1] = 0;
       }
-      else if (value && bufflen>1)
+      else if (value == NULL || bufflen < 2)
+      {   /* no default or buffer is not long enough */
+        buffer[0] = 0;
+      }
+      else
       {
-        strncpy( buffer, value, bufflen-1);
+        strncpy( buffer, value, bufflen);
         buffer[bufflen-1]=0;
         success = strlen(buffer);
       }
@@ -574,11 +579,7 @@ unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
                       const char *defval, char *buffer, 
                       unsigned long buffsize, const char *filename )
 {
-//  printf("GetStr: [%s]%s=%s\n", sect, key, defval);
-//  getchar();
-  unsigned long x=ini_doit( 0, sect, key, defval, buffer, buffsize, filename );
-//printf("GetStr2: [%s]%s=%s\n", sect, key, buffer );
-  return x;
+  return ini_doit( 0, sect, key, defval, buffer, buffsize, filename );
 }
 
 int WritePrivateProfileStringB( const char *sect, const char *key, 
@@ -593,14 +594,13 @@ unsigned int GetPrivateProfileIntB( const char *sect, const char *key,
                           int defvalue, const char *filename )
 {
   char buf[(sizeof(long)+1)*3];
-  int n;
-  unsigned long i;
+  int n;  unsigned long i;
   i = GetPrivateProfileStringB( sect, key, "", buf, sizeof(buf), filename);
   if (i==0)
     return defvalue;
   if ((n = atoi( buf ))!=0)
     return n;
-  if (i<2)
+  if (i<2 || i>4)
     return 0;
   for (n=0;(i>((unsigned long)(n))) && n<4;n++)
     buf[n]=(char)tolower(buf[n]);
