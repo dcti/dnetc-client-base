@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-x86.cpp,v $
+// Revision 1.16  1998/10/07 17:46:44  snake
+//
+// Modified for BSD/OS 4.0 and ELF
+//
 // Revision 1.15  1998/07/08 23:42:08  remi
 // Added support for CliIdentifyModules().
 //
@@ -46,7 +50,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_x86_cpp(void) {
-return "@(#)$Id: des-x86.cpp,v 1.15 1998/07/08 23:42:08 remi Exp $"; }
+return "@(#)$Id: des-x86.cpp,v 1.16 1998/10/07 17:46:44 snake Exp $"; }
 #endif
 
 
@@ -62,7 +66,7 @@ return "@(#)$Id: des-x86.cpp,v 1.15 1998/07/08 23:42:08 remi Exp $"; }
 //#define DEBUG
 
 
-#if defined(__WATCOMC__) || ((CLIENT_OS == OS_SOLARIS) && (CLIENT_CPU == CPU_X86)) || ((CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_X86) && defined(__ELF__))
+#if defined(__WATCOMC__) || ((CLIENT_OS == OS_SOLARIS) && (CLIENT_CPU == CPU_X86)) || ((CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_X86) && defined(__ELF__)) || ((CLIENT_OS == OS_BSDI) && (CLIENT_CPU == CPU_X86) && defined(__ELF__))
  #define bryd_des _bryd_des
  #define bbryd_des _bbryd_des
  #define p1bryd_des _p1bryd_des
