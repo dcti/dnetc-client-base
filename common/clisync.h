@@ -14,7 +14,7 @@
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.18 2001/07/27 08:44:16 mfeiri Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.19 2001/11/22 08:50:21 sampo Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -440,7 +440,7 @@
   /* based on 
      http://lxr.linux.no/source/include/asm-ia64/spinlock.h?v=2.4.0
   */
-  typedef struct { volatile unsigned int lock; } spinlock_t;
+  typedef struct { volatile unsigned int lock; } fastlock_t;
   #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
 
   static __inline__ void fastlock_unlock(fastlock_t *v)
@@ -456,7 +456,7 @@
               "mov ar.ccv=r0\n" \
               ";;\n"            \
               IA64_SEMFIX"cmpxchg4.acq %0=[%2],%1,ar.ccv\n" 
-             : "=r"(result) : "r"(1), "r"(&(x)->lock) : "ar.ccv", "memory");
+             : "=r"(result) : "r"(1), "r"(&(v)->lock) : "ar.ccv", "memory");
     return ((result == 0) ? (+1) : (0));
   }
   static __inline__ void fastlock_lock(fastlock_t *m)
