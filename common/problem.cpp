@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.56  1998/12/19 04:30:23  chrisb
+// fixed a broken comment which was giving errors
+//
 // Revision 1.55  1998/12/15 03:08:46  dicamillo
 // Changed "whichcrunch" to "cputype" in PowerPC Run code.
 //
@@ -151,7 +154,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.55 1998/12/15 03:08:46 dicamillo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.56 1998/12/19 04:30:23 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -500,7 +503,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   //-------------------------------------------------------------------
 
 #if (CLIENT_OS == OS_RISCOS)
-  if (threadindex == 1 /x86thread*/)
+  if (threadindex == 1 /*x86 thread*/)
     {
     RC5PCstruct rc5pc;
     _kernel_swi_regs r;
