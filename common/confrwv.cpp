@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.32 2000/05/01 08:19:18 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.33 2000/05/04 23:36:46 cyp Exp $"; }
 
 //#define TRACE
 
@@ -1225,8 +1225,6 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
   if (!WritePrivateProfileStringB( OPTION_SECTION, "id",
     ((strcmp( client->id,"rc5@distributed.net")==0)?(""):(client->id)), fn ))
     return -1; //failed
-
-  __remapObsoleteParameters( client, fn ); 
 
   TRACE_OUT((+1,"WriteConfig()\n"));
 
