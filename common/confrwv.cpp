@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.52 1999/04/10 14:38:09 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.53 1999/04/11 21:05:39 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // Client class
@@ -38,7 +38,7 @@ static int __remapObsoleteParameters( const char *fn ) /* returns <0 if failed *
              "contestdone3", "contestdoneflags", "descontestclosed",
              "scheduledupdatetime" /* now in OPTSECT_NET */,
              "processdes", "usemmx", "runoffline", "in","out","in2","out2",
-	     "in3","out3","nodisk", "dialwhenneeded","connectionname" };
+             "in3","out3","nodisk", "dialwhenneeded","connectionname" };
   char buffer[128];
   int i, modfail = 0;
 
@@ -48,6 +48,13 @@ static int __remapObsoleteParameters( const char *fn ) /* returns <0 if failed *
       i = 0;
     else
       modfail += (!WritePrivateProfileStringB( OPTSECT_BUFFERS, "buffer-only-in-memory", "yes", fn ));
+  }
+  if ((i = GetPrivateProfileIntB( OPTION_SECTION, "descontestclosed", 0, fn )) != 0)
+  {
+    if (GetPrivateProfileStringB( OPTION_SECTION, "in2", "", buffer, sizeof(buffer), fn ))
+      unlink( GetFullPathForFilename( buffer ) );
+    if (GetPrivateProfileStringB( OPTION_SECTION, "out2", "", buffer, sizeof(buffer), fn ))
+      unlink( GetFullPathForFilename( buffer ) );
   }
   if (i == 0)
   {
@@ -158,9 +165,10 @@ int ReadConfig(Client *client)
 
   const char *fn = client->inifilename;
   fn = GetFullPathForFilename( fn );
-  if ( access( fn, 0 )!=0 ) 
-    return +1; /* non-fatal error */
 
+  if ( access( fn, 0 ) != 0 ) 
+    return +1; /* fall into config */
+    
   if (__remapObsoleteParameters( fn ) < 0)
   {
     ConOutErr("Config load failed. Unable to upgrade .ini.\n");
@@ -423,6 +431,8 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
       host = NULL; //delete keys so that old inis stay compatible and default.
     else if (confopt_IsHostnameDNetHost(host)) //make clear that name==port
         { af = "0"; if (client->keyport != 3064) port = NULL; }
+    if (port!=NULL && client->keyport==0 && !GetPrivateProfileIntB(sect,"keyport",0,fn))
+      port = NULL;
     if (port!=NULL) sprintf(port,"%d",((int)(client->keyport)));
     WritePrivateProfileStringB( OPTSECT_NET, "autofindkeyserver", af, fn );
     WritePrivateProfileStringB( sect, "keyport", port, fn );
