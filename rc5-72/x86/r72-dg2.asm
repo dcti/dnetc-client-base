@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg2.asm,v 1.8 2002/10/23 02:19:16 acidblood Exp $
+; $Id: r72-dg2.asm,v 1.9 2002/10/23 04:11:33 acidblood Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -28,8 +28,13 @@
     %define %1 esp+%2
 %endmacro
 
+%macro fedifed 2
+    %define %1 ebp+%2-128
+%endmacro
+
 %macro defwork 1-2 1
     defidef %1,work_size
+    fedifed %1_ebp,work_size
     %assign work_size work_size+4*(%2)
 %endmacro
 
@@ -63,7 +68,7 @@ defwork save_ebp
 %define iterations              esp+work_size+8
 
 %define S1(N)                   [work_s1+((N)*4)]
-%define S2(N)                   [work_s2+((N)*4)]
+%define S2(N)                   [ebp+((N)*4)]
 %define L1(N)                   [work_L1+((N)*4)]
 %define L2(N)                   [work_L2+((N)*4)]
 
@@ -106,15 +111,9 @@ defwork save_ebp
 %define A1         eax
 %define A2         edx
 %define B1         ebx
-%define B2         ebp
-%define S_next     esi
-%define L_next     edi
+%define B2         esi
 %define shiftreg   ecx
 %define shiftcount cl
-
-; register allocation for the encryption block is mostly the same
-%define S1_next    esi
-%define S2_next    edi
 
 ;       L1[j]   S2[i]
 ;       S1[i+1] L2[j]
@@ -124,8 +123,7 @@ defwork save_ebp
         add     B1, A1
         lea     A2, [A2 + B2 + S_not(%1)]
 
-        add     B1, L_next
-        mov     L_next, L2(0)
+        add     B1, L1(0)
 
         rol     B1, shiftcount
         rol     A2, 3
@@ -138,8 +136,7 @@ defwork save_ebp
         add     B2, A2
         lea     A1, [A1 + B1 + S_not(%1+1)]
 
-        add     B2, L_next
-        mov     L_next, L1(1)
+        add     B2, L2(0)
 
         rol     B2, shiftcount
         rol     A1, 3
@@ -153,8 +150,7 @@ defwork save_ebp
         add     B1, A1
         lea     A2, [A2 + B2 + S_not(%1)]
 
-        add     B1, L_next
-        mov     L_next, L2(1)
+        add     B1, L1(1)
 
         rol     B1, shiftcount
         rol     A2, 3
@@ -167,8 +163,7 @@ defwork save_ebp
         add     B2, A2
         lea     A1, [A1 + B1 + S_not(%1+1)]
 
-        add     B2, L_next
-        mov     L_next, L1(2)
+        add     B2, L2(1)
 
         rol     B2, shiftcount
         rol     A1, 3
@@ -182,8 +177,7 @@ defwork save_ebp
         add     B1, A1
         lea     A2, [A2 + B2 + S_not(%1)]
 
-        add     B1, L_next
-        mov     L_next, L2(2)
+        add     B1, L1(2)
 
         rol     B1, shiftcount
         rol     A2, 3
@@ -196,8 +190,7 @@ defwork save_ebp
         add     B2, A2
         lea     A1, [A1 + B1 + S_not(%1+1)]
 
-        add     B2, L_next
-        mov     L_next, L1(0)
+        add     B2, L2(2)
 
         rol     B2, shiftcount
         rol     A1, 3
@@ -215,10 +208,9 @@ defwork save_ebp
         add     A1, S1(%1+1)
 
         mov     shiftreg, B1
-        add     B1, L_next
+        add     B1, L1(0)
         rol     A2, 3
 
-        mov     L_next, L2(0)
         rol     B1, shiftcount
         mov     S2(%1), A2
 
@@ -227,10 +219,9 @@ defwork save_ebp
         add     A2, S2(%1+1)
 
         mov     shiftreg, B2
-        add     B2, L_next
+        add     B2, L2(0)
         rol     A1, 3
 
-        mov     L_next, L1(1)
         rol     B2, shiftcount
         mov     S1(%1+1), A1
 
@@ -244,10 +235,9 @@ defwork save_ebp
         add     A1, S1(%1+1)
 
         mov     shiftreg, B1
-        add     B1, L_next
+        add     B1, L1(1)
         rol     A2, 3
 
-        mov     L_next, L2(1)
         rol     B1, shiftcount
         mov     S2(%1), A2
 
@@ -256,10 +246,9 @@ defwork save_ebp
         add     A2, S2(%1+1)
 
         mov     shiftreg, B2
-        add     B2, L_next
+        add     B2, L2(1)
         rol     A1, 3
 
-        mov     L_next, L1(2)
         rol     B2, shiftcount
         mov     S1(%1+1), A1
 
@@ -273,10 +262,9 @@ defwork save_ebp
         add     A1, S1(%1+1)
 
         mov     shiftreg, B1
-        add     B1, L_next
+        add     B1, L1(2)
         rol     A2, 3
 
-        mov     L_next, L2(2)
         rol     B1, shiftcount
         mov     S2(%1), A2
 
@@ -285,10 +273,9 @@ defwork save_ebp
         add     A2, S2(%1+1)
 
         mov     shiftreg, B2
-        add     B2, L_next
+        add     B2, L2(2)
         rol     A1, 3
 
-        mov     L_next, L1(0)
         rol     B2, shiftcount
         mov     S1(%1+1), A1
 
@@ -299,31 +286,26 @@ defwork save_ebp
 %macro ENCRYPTION_BLOCK 1
         mov     shiftreg, B1
         xor     A1, B1
+        xor     A2, B2
 
         rol     A1, shiftcount
         mov     shiftreg, B2
-        xor     A2, B2
 
-        add     A1, S1_next
-        mov     S1_next, S1(2*%1+1)
+        add     A1, S1(2*%1)
         rol     A2, shiftcount
 
-        add     A2, S2_next
-        mov     S2_next, S2(2*%1+1)
+        add     A2, S2(2*%1)
         mov     shiftreg, A1
-
         xor     B1, A1
 
         rol     B1, shiftcount
         mov     shiftreg, A2
         xor     B2, A2
 
-        add     B1, S1_next
-        mov     S1_next, S1(2*%1+2)
+        add     B1, S1(2*%1+1)
         rol     B2, shiftcount
 
-        add     B2, S2_next
-        mov     S2_next, S2(2*%1+2)
+        add     B2, S2(2*%1+1)
 %endmacro
 
 
@@ -334,10 +316,10 @@ rc5_72_unit_func_dg_2_:
 _rc5_72_unit_func_dg_2:
 
         sub     esp, work_size
+        mov     [save_ebp], ebp
+        lea     ebp, S1(26)
 
         mov     eax, [RC5_72UnitWork]
-
-        mov     [save_ebp], ebp
         mov     [save_ebx], ebx
         mov     [save_esi], esi
 
@@ -349,19 +331,19 @@ _rc5_72_unit_func_dg_2:
         mov     ecx, [RC5_72UnitWork_cipherhi]
         mov     edx, [iterations]
 
-        mov     [work_P_0], esi
-        mov     [work_P_1], edi
-        mov     esi, [RC5_72UnitWork_L0hi]
+        mov     [work_P_0_ebp], esi
+        mov     [work_P_1_ebp], edi
+        mov     edi, [RC5_72UnitWork_L0hi]
 
-        mov     [work_C_0], ebx
-        mov     [work_C_1], ecx
-        mov     ebp, [edx]
+        mov     [work_C_0_ebp], ebx
+        mov     [work_C_1_ebp], ecx
+        mov     edi, [edx]
 
-        shr     ebp, 1
+        shr     edi, 1
         mov     ecx, [RC5_72UnitWork_L0mid]
         mov     ebx, [RC5_72UnitWork_L0lo]
 
-        mov     [work_iterations], ebp
+        mov     [work_iterations_ebp], edi
         mov     L1(2), esi
 
         inc     esi
@@ -376,51 +358,25 @@ _rc5_72_unit_func_dg_2:
 
 k7align 16
 key_setup_1:
-        mov     A1, 0xBF0A8B1D ; 0xBF0A8B1D is S[0]
-        lea     B2, [A1 + B1]
+        mov     A2, 0xBF0A8B1D ; 0xBF0A8B1D is S[0]
         add     B1, 0xBF0A8B1D
 
 ;       S1[0]
 
         rol     B1, 0x1D       ; 0x1D are least significant bits of S[0]
-        mov     A2, A1
         mov     S1(0), A2
-
-        lea     A1, [A1 + B1 + S_not(1)]
-        mov     L_next, L1(1)
         mov     S2(0), A2
+
+        mov     B2, B1
+        lea     A1, [A2 + B1 + S_not(1)]
 
 ;       L1[0]   S2[0]
 
-        rol     B2, 0x1D
         rol     A1, 3
         mov     L1(0), B1
 
         mov     L2(0), B2
         mov     S1(1), A1
-
-
-;        mov     A1, 0xBF0A8B1D ; 0xBF0A8B1D is S[0]
-;        add     B1, 0xBF0A8B1D
-;        mov     A2, A1
-
-;       S1[0]
-
-;        rol     B1, 0x1D       ; 0x1D are least significant bits of S[0]
-;        mov     S1(0), A1
-;        mov     S2(0), A2
-
-;        mov     B2, B1
-;        lea     A1, [A1 + B1 + S_not(1)]
-;        mov     L_next, L1(1)
-
-;       L1[0]   S2[0]
-
-;        rol     A1, 3
-;        mov     L1(0), B1
-
-;        mov     L2(0), B2
-;        mov     S1(1), A1
 
 ;       S1[1]   L2[0]
 
@@ -463,8 +419,7 @@ key_setup_2:
         add     B1, A1
         add     A2, S_not(25)
 
-        add     B1, L_next
-        mov     L_next, L2(1)
+        add     B1, L1(1)
         add     A2, B2
 
         rol     B1, shiftcount
@@ -479,10 +434,9 @@ key_setup_2:
         add     A2, S2(0)
 
         mov     shiftreg, B2
-        add     B2, L_next
+        add     B2, L2(1)
         add     A1, B1
 
-        mov     L_next, L1(2)
         rol     B2, shiftcount
         rol     A1, 3
 
@@ -530,10 +484,9 @@ key_setup_3:
         add     A1, S1(0)
 
         mov     shiftreg, B1
-        add     B1, L_next
+        add     B1, L1(0)
         rol     A2, 3
 
-        mov     L_next, L2(0)
         rol     B1, shiftcount
         mov     S2(25), A2
 
@@ -542,10 +495,9 @@ key_setup_3:
         add     A2, S2(0)
 
         mov     shiftreg, B2
-        add     B2, L_next
+        add     B2, L2(0)
         rol     A1, 3
 
-        mov     L_next, L1(1)
         rol     B2, shiftcount
         mov     S1(0), A1
 
@@ -586,9 +538,7 @@ key_setup_3:
 
 ;               S2[25]
 
-        mov     A1, [work_P_0]
-        mov     S1_next, S1(0)
-
+        mov     A1, [work_P_0_ebp]
         add     A2, B2
 
         rol     A2, 3
@@ -602,27 +552,22 @@ key_setup_3:
 
 encryption:
         add     B2, A2
-        mov     S2_next, S2(0)
-        mov     A2, [work_P_0]
+        mov     A2, [work_P_0_ebp]
 
         mov     shiftreg, B2
-        add     B2, L_next
-        mov     B1, [work_P_1]
+        add     B2, L2(0)
+        mov     B1, [work_P_1_ebp]
 
         rol     B2, shiftcount
-        add     A1, S1_next
-        mov     S1_next, S1(1)
+        add     A1, S1(0)
 
         mov     L2(2), B2
-        mov     B2, [work_P_1]
-        add     A2, S2_next
+        mov     B2, [work_P_1_ebp]
+        add     A2, S2(0)
 
-        mov     S2_next, S2(1)
-        add     B1, S1_next
-        mov     S1_next, S1(2)
+        add     B1, S1(1)
 
-        add     B2, S2_next
-        mov     S2_next, S2(2)
+        add     B2, S2(1)
 
         ENCRYPTION_BLOCK 1
         ENCRYPTION_BLOCK 2
@@ -652,7 +597,7 @@ encryption:
 ;    }
 
 test_key_1:
-        cmp     A1, [work_C_0]
+        cmp     A1, [work_C_0_ebp]
         mov     eax, [RC5_72UnitWork]
 
         jne     short test_key_2
@@ -663,7 +608,7 @@ test_key_1:
         mov     esi, [RC5_72UnitWork_L0mid]
         mov     edi, [RC5_72UnitWork_L0lo]
 
-        cmp     B1, [work_C_1]
+        cmp     B1, [work_C_1_ebp]
 
         mov     [RC5_72UnitWork_CMChi], ecx
         mov     [RC5_72UnitWork_CMCmid], esi
@@ -671,7 +616,7 @@ test_key_1:
 
         jne     short test_key_2
 
-        mov     ecx, [work_iterations]
+        mov     ecx, [work_iterations_ebp]
         mov     esi, [iterations]
 
         mov     edi, [esi]
@@ -680,12 +625,12 @@ test_key_1:
         mov     ebx, [save_ebx]
 
         sub     edi, ecx
-        mov     ebp, [save_ebp]
 
         mov     [esi], edi
         mov     esi, [save_esi]
 
         mov     edi, [save_edi]
+        mov     ebp, [save_ebp]
         mov     eax, RESULT_FOUND
         add     esp, work_size
 
@@ -706,7 +651,7 @@ test_key_1:
 
 k7align 16
 test_key_2:
-        cmp     A2, [work_C_0]
+        cmp     A2, [work_C_0_ebp]
         mov     edx, [RC5_72UnitWork_L0hi]
         mov     ecx, [RC5_72UnitWork_L0mid]
 
@@ -715,7 +660,7 @@ test_key_2:
 
         inc     dword [RC5_72UnitWork_CMCcount]
 
-        cmp     B2, [work_C_1]
+        cmp     B2, [work_C_1_ebp]
 
         mov     [RC5_72UnitWork_CMChi], edx
         mov     [RC5_72UnitWork_CMCmid], ecx
@@ -723,13 +668,12 @@ test_key_2:
 
         jne     short inc_key
 
-        mov     ecx, [work_iterations]
+        mov     ecx, [work_iterations_ebp]
         mov     esi, [iterations]
 
         mov     edi, [esi]
 
         shl     ecx, 1
-        mov     ebp, [save_ebp]
 
         sub     ecx, 1
         mov     ebx, [save_ebx]
@@ -740,6 +684,7 @@ test_key_2:
         mov     esi, [save_esi]
 
         mov     edi, [save_edi]
+        mov     ebp, [save_ebp]
         mov     eax, RESULT_FOUND
         add     esp, work_size
 
@@ -760,7 +705,7 @@ inc_key:
         inc     edx
 
         bswap   ebx
-        dec     dword [work_iterations]
+        dec     dword [work_iterations_ebp]
         mov     L2(2), edx
 
         mov     L1(1), ecx
@@ -774,11 +719,11 @@ inc_key:
         jnz     key_setup_1
 
 finished:
-        mov     ebp, [save_ebp]
         mov     ebx, [save_ebx]
         mov     esi, [save_esi]
 
         mov     edi, [save_edi]
+        mov     ebp, [save_ebp]
         mov     eax, RESULT_NOTHING
         add     esp, work_size
 
