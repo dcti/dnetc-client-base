@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.92  1998/07/11 04:31:43  silby
+// Made exitrc5.now files GetFullPathed so they act properly.
+//
 // Revision 1.91  1998/07/11 01:53:14  silby
 // Change in logging statements - all have full timestamps now so they look correct in the win32gui.
 //
@@ -21,7 +24,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.91 1998/07/11 01:53:14 silby Exp $.
+// Tweaked $Id: client.cpp,v 1.92 1998/07/11 04:31:43 silby Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -197,7 +200,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.91 1998/07/11 01:53:14 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.92 1998/07/11 04:31:43 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -371,7 +374,7 @@ Client::Client()
   strcpy(out_buffer_file[0], "buff-out" EXTN_SEP "rc5");
   strcpy(in_buffer_file[1], "buff-in" EXTN_SEP "des");
   strcpy(out_buffer_file[1], "buff-out" EXTN_SEP "des");
-  strcpy(exit_flag_file, "exitrc5" EXTN_SEP "now");
+  strcpy(exit_flag_file, GetFullPathForFilename("exitrc5" EXTN_SEP "now"));
   strcpy(checkpoint_file[1],"none");
   strcpy(pausefile,"none");
 #endif
