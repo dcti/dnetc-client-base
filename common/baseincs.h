@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.24 2000/02/12 23:26:11 mfeiri Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.25 2000/02/14 04:25:36 petermack Exp $"
 
 #include "cputypes.h"
 
@@ -219,6 +219,19 @@ extern "C" {
   extern "C" int gettimeofday(struct timeval *, struct timezone *);
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
+  #include <machine/cpuconf.h>
+  #include <sys/time.h>
+#elif (CLIENT_OS == OS_NEXTSTEP)
+  #include <bsd/sys/time.h>
+  #include <sys/types.h>
+  #include <fcntl.h>
+  #define       S_IRUSR         0x400           /* read permission, */
+  #define       S_IWUSR         0x200           /* write permission, */
+  #define       S_IRGRP         0x040           /* read permission, group */
+  #define       S_IWGRP         0x020           /* write permission, group */
+  #define       CLOCKS_PER_SEC          CLK_TCK
+  extern "C" int sleep(unsigned int seconds);
+  extern "C" int usleep(unsigned int useconds);
 #endif
 
 
