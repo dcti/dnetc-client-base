@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.91  1999/03/22 02:45:11  gregh
+// Add a 'finished = 1;' into the OGR 'not found' handler.
+//
 // Revision 1.90  1999/03/20 19:32:38  gregh
 // Update OGR processing code.
 //
@@ -280,7 +283,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.90 1999/03/20 19:32:38 gregh Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.91 1999/03/22 02:45:11 gregh Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -1160,6 +1163,7 @@ else if (contest == 2) // ******************************* OGR ***************
         {
           ogrstate = NULL;
           resultcode = RESULT_NOTHING;
+          finished = 1;
           return 1;
         }
         break;
