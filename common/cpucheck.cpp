@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.16  1998/07/12 00:40:15  cyruspatel
+// Corrected a cosmetic boo-boo. ("... failed to detect an processor")
+//
 // Revision 1.15  1998/07/11 09:47:18  cramer
 // Added support for solaris numcpu auto detection.
 //
@@ -69,8 +72,8 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-static const char *id="@(#)$Id: cpucheck.cpp,v 1.15 1998/07/11 09:47:18 cramer Exp $";
-return id; }
+return "@(#)$Id: cpucheck.cpp,v 1.16 1998/07/12 00:40:15 cyruspatel Exp $";
+}
 #endif
 
 #include "cputypes.h"
@@ -175,8 +178,8 @@ void Client::ValidateProcessorCount( void )
       // returns -1 if no hardware detection
       if ( cpu_count < 1 )
         {
-        LogScreen("Automatic processor count detection failed to detect "
-        "an processors.\nA single processor machine is assumed.\n");
+        LogScreen("Automatic processor count detection failed."
+        "\nA single processor machine is assumed.\n");
         cpu_count = 1;
         }
       else
@@ -488,13 +491,14 @@ int Client::GetProcessorType()
 // preemptive but non-mt systems handling of a break request. 
 //
 // The function can also be used on non-mt systems to check for an excessive
-// timeslice - on x86 systems an excessive timeslice is > 3*baseline
+// timeslice - on x86 systems an excessive timeslice is > 4*baseline
 
 unsigned int GetTimesliceBaseline(void) 
 { 
 #if (CLIENT_CPU == CPU_X86)    
   struct _cpuxref *cpuxref = __GetProcessorXRef( NULL, NULL, NULL, NULL );
-  return ((!cpuxref) ? ( 1024 ) : ( cpuxref->kKeysPerMhz ));
+  return ((!cpuxref) ? ( 1024 ) : (cpuxref->kKeysPerMhz) );
+   //(cpuxref->kKeysPerMhz * (((cpuxref->coretouse & 0xF00 )!=0)?2:1) ) );
 #else 
   return 0;
 #endif    
