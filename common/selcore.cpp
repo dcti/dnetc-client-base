@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.53 2003/06/19 22:42:27 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.54 2003/07/15 00:29:18 mfeiri Exp $"; }
 
 //#define TRACE
 
@@ -250,7 +250,7 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.53 2003/06/19 22:42:27 andreasb Exp $"; }
     extern "C" s32 CDECL rc5_72_unit_func_040_mh_1( RC5_72UnitWork *, u32 *, void *);
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
     #if (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
-      #if (CLIENT_OS != OS_WIN32) //NT has poor PPC assembly
+      #if (CLIENT_OS != OS_WIN32) && (CLIENT_OS != OS_MACOS)
         extern "C" s32 CDECL rc5_72_unit_func_ppc_mh_2( RC5_72UnitWork *, u32 *, void *);
         extern "C" s32 CDECL rc5_72_unit_func_mh603e_addi( RC5_72UnitWork *, u32 *, void *);
         extern "C" s32 CDECL rc5_72_unit_func_mh604e_addi( RC5_72UnitWork *, u32 *, void *);
@@ -626,18 +626,23 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
     else if (contestid == RC5_72)
     {
       #if (CLIENT_OS == OS_AMIGAOS) && defined(__POWERUP__)
-      /* PowerUp cannot use the KKS cores, since they modify gpr2 */
-      if ((cindex >= 4) && (cindex <= 7))
-        cindex = 8;			/* "MH 1-pipe" */
+        /* PowerUp cannot use the KKS cores, since they modify gpr2 */
+        if ((cindex >= 4) && (cindex <= 7))
+          cindex = 8;			/* "MH 1-pipe" */
+      #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_MACOS)
+        /* Classic Mac OS doenst have assembly cores yet; Windows never had */
+        if (cindex > 2)                 /* asm cores */
+          cindex = 0;                   /* "ANSI 4-pipe" */
+      #else
+        if (have_pwr && cindex > 2)     /* asm cores */
+          cindex = 0;                   /* "ANSI 4-pipe" */
+        if (!have_pwr && cindex <= 2)   /* ANSI cores */
+          cindex = 8;                   /* "MH 1-pipe" */
+        if (!have_vec && cindex == 6)   /* "KKS 7400" */
+          cindex = 4;                   /* "KKS 2pipes" */
+        if (!have_vec && cindex == 7)   /* "KKS 7450" */
+          cindex = 5;                   /* "KKS 604e" */
       #endif
-      if (have_pwr && cindex > 2)       /* asm cores */
-        cindex = 0;			/* "ANSI 4-pipe" */
-      if (!have_pwr && cindex <= 2)     /* ANSI cores */
-        cindex = 8;                     /* "MH 1-pipe" */
-      if (!have_vec && cindex == 6)     /* "KKS 7400" */
-        cindex = 4;                     /* "KKS 2pipes" */
-      if (!have_vec && cindex == 7)     /* "KKS 7450" */
-        cindex = 5;                     /* "KKS 604e" */
     }
   }
   #elif (CLIENT_CPU == CPU_X86)
@@ -2399,7 +2404,8 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         pipeline_count = 2;
         break;
      #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-      #if (CLIENT_CPU == CPU_POWER) || defined(_AIXALL) || (CLIENT_OS == OS_WIN32)
+      #if (CLIENT_CPU == CPU_POWER) || defined(_AIXALL) \
+         || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_MACOS)
       case 0:
         unit_func.gen_72 = rc5_72_unit_func_ansi_4;
         pipeline_count = 4;
@@ -2422,7 +2428,8 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         #endif
         break;
       #endif
-      #if ((CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)) && (CLIENT_OS != OS_WIN32)
+      #if ((CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)) \
+           && (CLIENT_OS != OS_WIN32) && (CLIENT_OS != OS_MACOS)
       case 3:
           unit_func.gen_72 = rc5_72_unit_func_ppc_mh_2;
           pipeline_count = 2;
