@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.38 2000/07/11 03:54:57 mfeiri Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.39 2000/07/11 07:52:55 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -255,7 +255,7 @@ int NetClose( Network *net )
 //----------------------------------------------------------------------
 
 Network *NetOpen( const char *servname, int servport,
-           int _nofallback/*= 1*/, int _iotimeout/*= -1*/, int _enctype/*=0*/,
+           bool _nofallback/*= 1*/, int _iotimeout/*= -1*/, int _enctype/*=0*/,
            const char *_fwallhost /*= NULL*/, int _fwallport /*= 0*/,
            const char *_fwalluid /*= NULL*/ )
 {
