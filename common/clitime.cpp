@@ -21,7 +21,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.19 2000/03/09 10:29:03 jlawson Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.20 2000/03/09 10:30:42 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -266,7 +266,7 @@ static int __GetMinutesWest(void)
     else if (tzdiff > +(12*60))
       tzdiff = +(12*60);
     if (haveutctime && haveloctime)
-      saved_tz = tzdiff;
+      saved_tz = -tzdiff;
   }    
   minwest = saved_tz;
   
