@@ -11,7 +11,7 @@
  * ---------------------------------------------------------------
 */    
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.31 1999/07/23 03:16:54 fordbr Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.32 1999/10/10 23:45:57 gregh Exp $"; }
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
@@ -149,7 +149,7 @@ int ModeReqRun(Client *client)
               Benchmark( RC5, benchsize, client->cputype, NULL );
             if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_DES)!=0) 
               Benchmark( DES, benchsize, client->cputype, NULL );
-#ifdef GREGH
+#ifdef OGR_TEST
             if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_OGR)!=0)
               Benchmark( OGR, benchsize, client->cputype, NULL );
 #endif

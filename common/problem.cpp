@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.114 1999/07/24 00:04:13 remi Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.115 1999/10/10 23:45:58 gregh Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -638,7 +638,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
 
     case OGR:
 
-      #ifndef GREGH
+      #ifndef OGR_TEST
       return -1;
       #else
       extern CoreDispatchTable *ogr_get_dispatch_table();
@@ -1063,7 +1063,7 @@ int Problem::Run_DES(u32 *timesliceP, int *resultcode)
 
 int Problem::Run_OGR(u32 *timesliceP, int *resultcode)
 {
-#ifndef GREGH  
+#ifndef OGR_TEST  
   timesliceP = timesliceP;
 #else
   int r, nodes;

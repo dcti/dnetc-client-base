@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.232 1999/07/28 22:33:18 remi Exp $
+# @(#)$Id: configure,v 1.233 1999/10/10 23:45:56 gregh Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -1122,25 +1122,6 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
-    *x86-linux-mt-gcc-gregh)		 # mt, static, gcc, ogr
-	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
-			-DMULTITHREAD -DSMC -DLURK -DGREGH"
-	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
-			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
-			$OGR_SRCS"
-	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
-			platforms/x86ident.S \
-			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ \
-			  -d__showids__ -d__ELF__ \
-			  -f elf"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
     *x86-linux-mt-slice-kwan-gcc)      # mt, static, gcc, use integer bitslicer
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -DMMX_RC5 -D__showids__ -pipe \
@@ -1595,6 +1576,11 @@ case "$1" in
 	exit 1
 esac
 echo "Platform target for \"$1\" recognized."
+
+#
+# define OGR_TEST to include code for OGR
+#
+TARGET_CCFLAGS="${TARGET_CCFLAGS} -DOGR_TEST"
 
 #
 # define CSC_TEST to include code for CSC

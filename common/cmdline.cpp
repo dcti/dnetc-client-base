@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.138 1999/07/23 03:16:52 fordbr Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.139 1999/10/10 23:45:57 gregh Exp $"; }
 
 //#define TRACE
 
@@ -1413,7 +1413,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           do_mode |= MODEREQ_BENCHMARK_RC5;
         else if ( strcmp( thisarg, "des" ) == 0 )
            do_mode |= MODEREQ_BENCHMARK_DES;
-#ifdef GREGH
+#ifdef OGR_TEST
         else if ( strcmp( thisarg, "ogr" ) == 0 )
            do_mode |= MODEREQ_BENCHMARK_OGR;
 #endif

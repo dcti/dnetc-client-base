@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.60 1999/07/23 03:16:55 fordbr Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.61 1999/10/10 23:45:57 gregh Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -276,7 +276,7 @@ static long __loadapacket( Client *client, WorkRecord *wrdata,
   {
     unsigned int selproject = (unsigned int)client->loadorder_map[cont_i];
 
-#ifndef GREGH
+#ifndef OGR_TEST
 if (selproject == 2)
   continue;
 #endif  
