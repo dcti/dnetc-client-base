@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.56 2000/12/17 02:47:45 mfeiri Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.57 2000/12/18 02:16:44 mfeiri Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -317,6 +317,12 @@ static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
 #include <machine/apm_bios.h>
 #elif (CLIENT_OS == OS_MACOS)
 #include <Power.h>
+#elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+#include <IOKit/IOKitLib.h>
+#include <IOKit/pwr_mgt/IOPMLib.h>
+#include <IOKit/pwr_mgt/IOPM.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <mach/mach_init.h> /* for bootstrap_port */
 #endif
 
 static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
@@ -524,6 +530,31 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
       }
     }
     // We seem to have no PowerManager, so disable battery checking.
+    trigstatics.pause_if_no_mains_power = 0;
+    #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+    mach_port_t master;
+    /* Initialize the connection to IOKit */
+	 if( IOMasterPort(bootstrap_port, &master) == kIOReturnSuccess )
+	 {
+      io_connect_t pmcon = IOPMFindPowerManagement(master);
+      if(pmcon!=0)
+      {
+        CFArrayRef cfarray;
+        /* Get the battery State information */
+        if( IOPMCopyBatteryInfo(master, &cfarray) == kIOReturnSuccess)
+        {
+          long flags;
+          CFDictionaryRef dict = (CFDictionaryRef)CFArrayGetValueAtIndex(cfarray, 0);
+          CFNumberRef cfnum = (CFNumberRef)CFDictionaryGetValue(dict, CFSTR(kIOBatteryFlagsKey));
+          CFNumberGetValue(cfnum, kCFNumberLongType, &flags);
+          if( flags & kIOBatteryChargerConnect )
+            return 0; /* we have AC power */
+          else
+            return 1; /* we don't have AC */
+        } /* if( IOPMCopyBatteryInfo(master, &cfarray) == kIOReturnSuccess) */
+      } /* if(pmcon!=0)*/
+	 } /* if( IOMasterPort(bootstrap_port, &master) == kIOReturnSuccess ) */
+    /* We dont seem to have a PowerManager, disable battery checking. */
     trigstatics.pause_if_no_mains_power = 0;
     #endif
   }  
