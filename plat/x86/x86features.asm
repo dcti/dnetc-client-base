@@ -25,14 +25,14 @@
 
 global          x86features,_x86features
 
-%define MMX             00000001h
-%define CYRIX_MMX_PLUS  00000010h
-%define AMD_MMX_PLUS    00000100h
-%define 3DNOW		00001000h
-%define 3DNOW_PLUS	00010000h
-%define SSE		00100000h
-%define SSE2		01000000h
-%define SSE3		10000000h
+%define MMX             1
+%define CYRIX_MMX_PLUS  2
+%define AMD_MMX_PLUS    4
+%define 3DNOW		8
+%define 3DNOW_PLUS	16
+%define SSE		32
+%define SSE2		64
+%define SSE3		128
 
 __CODESECT__
 _x86features:            
@@ -101,24 +101,6 @@ TryCyrix:
   jne TryExtended
   jmp Cyrix
 
-AMD:
-  ; See if extended CPUID is supported
-  mov eax, 80000000h
-  cpuid
-  cmp eax, 80000000h
-  jl Standard  ; Try standard CPUID instead
-
-  ; Extended CPUID supported, so get extended features
-  mov eax, 80000001h
-  cpuid
-  mov edx, eax
-
-  test edx, 00400000h  ; Test for AMD Ext'd MMX
-  jz Extended
-  or esi, AMD_MMX_PLUS           ; AMD EMMX supported
-
-  jmp Extended
-
 Cyrix:
   ; See if extended CPUID is supported
   mov eax, 80000000h
@@ -130,8 +112,9 @@ Cyrix:
   jz Extended
   or esi, CYRIX_MMX_PLUS           ; Cyrix EMMX supported
 
-  jmp Extended
+  jmp Extended_Checks
 
+AMD:
 TryExtended:
   ; See if extended CPUID is supported
   mov eax, 80000000h
@@ -139,21 +122,26 @@ TryExtended:
   cmp eax, 80000000h
   jl Standard  ; Try standard CPUID instead
 
-Extended:
-
   ; Extended CPUID supported, so get extended features
   mov eax, 80000001h
   cpuid
   mov edx, eax
+
+Extended_Checks:
+
   test edx, 00800000h   ; Test for MMX
-  jz 3DNow
+  jz AMDMMXPLUS
   or esi, MMX           ; MMX Supported
+AMDMMXPlus:
+  test edx, 00400000h   ; Test for AMD Ext'd MMX
+  jz 3DNow
+  or esi, AMD_MMX_PLUS  ; AMD EMMX supported
 3DNow:
   test edx, 80000000h   ; Test for 3DNow!
   jz 3DNowPlus
   or esi, 3DNOW         ; 3DNow! also supported
 3DNowPlus:
-  test edx, 40000000    ; Test for 3DNow!+
+  test edx, 40000000h   ; Test for 3DNow!+
   jz Standard
   or esi, 3DNOW_PLUS    ; 3DNow!+ also supported
 
