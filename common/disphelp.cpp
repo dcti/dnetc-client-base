@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.55  1999/01/31 01:40:00  jlawson
+// fixed formatting.  changed some int vars to bool.
+//
 // Revision 1.54  1999/01/30 12:11:06  snake
 //
 // fixed a small typo affecting BSD/OS
@@ -176,7 +179,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.54 1999/01/30 12:11:06 snake Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.55 1999/01/31 01:40:00 jlawson Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -312,7 +315,7 @@ void DisplayHelp( const char * unrecognized_option )
   bodylines = (sizeof(helpbody) / sizeof(char *));
   footerlines = 2;
   startline = 0;
-  maxpagesize = maxscreenlines - (headerlines+footerlines);
+  maxpagesize = maxscreenlines - (headerlines + footerlines);
 
   #if defined(NO_INTERNAL_PAGING)
   nopaging = 1;
@@ -321,20 +324,20 @@ void DisplayHelp( const char * unrecognized_option )
   /* -------------------------------------------------- */
 
   if (unrecognized_option && *unrecognized_option)
-    {
-    int goodopt = 0;
+  {
+    bool goodopt = false;
 
     for (i = 0; ((goodopt == 0) && (i < (int)
          (sizeof(valid_help_requests)/sizeof(char *)))); i++)
-      goodopt = (strcmpi(unrecognized_option,valid_help_requests[i])==0);
+      goodopt = (strcmpi(unrecognized_option, valid_help_requests[i]) == 0);
 
-    if (goodopt == 0)
-      {
+    if (!goodopt)
+    {
       LogScreenRaw( "\nUnrecognized option '%s'\n\n", unrecognized_option);
       LogScreenRaw( "The following list of command line switches may be obtained\n"
              "at any time by running the client with the '-help' option.\n\n");
       if (!nopaging)
-        {
+      {
         LogScreenRaw("Press enter to continue... ");
         key = ConInKey(-1); /* -1 == wait forever. returns zero if break. */
         LogScreenRaw( "\r                          \r" );
@@ -342,34 +345,35 @@ void DisplayHelp( const char * unrecognized_option )
           return;
         if (key != '\n' && key != '\r' && key != ' ')
           return;
-        }
       }
     }
+  }
 
   /* -------------------------------------------------- */
 
   if (nopaging || (maxscreenlines > (headerlines+bodylines)))
-    {
+  {
     for (i = 0; i < headerlines; i++)
       LogScreenRaw( "%s\n", helpheader[i] );
     for (i = 0; i < bodylines; i++)
       LogScreenRaw( "%s\n", helpbody[i] );
     return;
-    }
+  }
 
   /* -------------------------------------------------- */
 
   key = 0;
-  do{
+  do
+  {
     if (key == 0) /* refresh required */
-      {
+    {
       ConClear();
       for (i = 0; i < headerlines; i++)
         LogScreenRaw( "%s\n", helpheader[i] );
       for (i = startline; i < (startline+maxpagesize); i++)
         LogScreenRaw( "%s\n", helpbody[i] );
       LogScreenRaw("\n");
-      }
+    }
 
     if (startline == 0)
       strcpy( linebuffer, "Press '+' for the next page... ");
@@ -384,7 +388,7 @@ void DisplayHelp( const char * unrecognized_option )
     
     linebuffer[i=strlen(linebuffer)]='\r';
     linebuffer[i+1]=0;
-    for (--i;i>0;i--) 
+    for (--i; i > 0; i--) 
       linebuffer[i]=' ';
     linebuffer[0]='\r';
     LogScreenRaw( linebuffer );
@@ -394,33 +398,34 @@ void DisplayHelp( const char * unrecognized_option )
 
     if (key == '+' || key == '=' || key == ' ' ||
       key == 'f' || key == '\r' || key == '\n')
-      {
+    {
       if (startline <= ((bodylines-maxpagesize) - 1))
-        {
+      {
         startline += maxpagesize;
         if ( startline >= (bodylines-maxpagesize))
           startline = (bodylines-maxpagesize);
         key = 0; //refresh required
-        }
       }
+    }
     else if (key == '-' || key == 'b')
-      {
+    {
       if (startline > 0)
-        {
+      {
         startline -= maxpagesize;
         if ( startline < 0 )
           startline = 0;
         key = 0; //refresh required
-        }
       }
+    }
     else
-      {
+    {
       key = -1; //unknown keystroke, so quit
-      }
-    } while (key >= 0);
+    }
+  } while (key >= 0);
       
   return;
 #endif
 }
 
 // --------------------------------------------------------------------------
+
