@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.52  1998/06/24 08:58:59  kbracey
+# Defined __showids__ for RISC OS
+#
 # Revision 1.51  1998/06/23 21:58:48  remi
 # Use only two x86 DES cores (P5 & PPro) when not multithreaded.
 #
@@ -714,7 +717,7 @@ case "$1" in
     *riscos)
 	TARGET_CC="armcpp -aif -nodebug -littleend -apcs 3/26bit/swst/hardfp/fpe2 -zps1 -nounusedareas -l/home/cberry/play/riscoslib/CLib/stubs.o"
 	TARGET_AS="armasm -apcs 3/26bit"
-	TARGET_CCFLAGS="-Icommon -Irc5 -Ides -Iplatforms -J/home/cberry/play/riscoslib/CLib -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -DCOMPAT_INET4 -D__riscos -DPIPELINE_COUNT=1 -DBIT_32 -DKWAN"
+	TARGET_CCFLAGS="-Icommon -Irc5 -Ides -Iplatforms -J/home/cberry/play/riscoslib/CLib -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -DCOMPAT_INET4 -D__riscos -DPIPELINE_COUNT=1 -DBIT_32 -DKWAN -D__showids__"
 	TARGET_ADDSRCS="platforms/riscos/riscos.cpp"
 	TARGET_ADDASMS="platforms/riscos/riscosasm.s rc5/rc5-sa.s rc5/rc5-arm.s des/des-slice-arm.s des/des-slice-sa.s"
 	TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
