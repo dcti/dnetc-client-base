@@ -46,10 +46,6 @@
 #define FETCH_RETRY         10
 #define NETTIMEOUT          60
 
-#if ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)) && defined(NOMAIN)
-  #define NEEDVIRTUALMETHODS
-#endif
-
 // --------------------------------------------------------------------------
 
 #if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
