@@ -1,17 +1,16 @@
-// Hey, Emacs, this a -*-C++-*- file !
-//
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// ----------------------------------------------------------------------
-// Generic strcmpi() and strncmpi() macros
-// ----------------------------------------------------------------------
-// $Id: cmpidefs.h,v 1.21 1999/04/05 14:04:57 jlawson Exp $
+/* Hey, Emacs, this a -*-C++-*- file !
+ *
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * ----------------------------------------------------------------------
+ * Generic strcmpi() and strncmpi() macros
+ * ----------------------------------------------------------------------
+*/ 
 
 #ifndef __CMPIDEFS_H__
-#define __CMPIDEFS_H__
-
+#define __CMPIDEFS_H__ "@(#)$Id: cmpidefs.h,v 1.22 1999/04/05 18:15:20 cyp Exp $"
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16)
   #if defined(__TURBOC__)

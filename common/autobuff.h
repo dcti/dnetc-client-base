@@ -9,10 +9,10 @@
 // arbitrary binary data for network communications.
 // Created by Jeff Lawson.
 // ----------------------------------------------------------------------
-// $Id: autobuff.h,v 1.12 1999/04/05 14:04:41 jlawson Exp $
+// 
 
 #ifndef __AUTOBUFF_H__
-#define __AUTOBUFF_H__
+#define __AUTOBUFF_H__ "@(#)$Id: autobuff.h,v 1.13 1999/04/05 18:15:20 cyp Exp $"
 
 #ifndef AUTOBUFFER_INCREMENT
 #define AUTOBUFFER_INCREMENT 100

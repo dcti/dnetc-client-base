@@ -1,17 +1,12 @@
-// Hey, Emacs, this a -*-C++-*- file !
-//
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-// 
-// $Id: cputypes.h,v 1.55 1999/04/05 14:34:57 jlawson Exp $
-
-#if ( !defined(_CPU_32BIT_) && !defined(_CPU_64BIT_) )
-#define _CPU_32BIT_
-#endif
+/* Hey, Emacs, this a -*-C++-*- file !
+ *
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/ 
 
 #ifndef _CPUTYPES_H_
-#define _CPUTYPES_H_
+#define _CPUTYPES_H_ "@(#)$Id: cputypes.h,v 1.56 1999/04/05 18:15:20 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -464,5 +459,5 @@ struct s128 { s64 hi, lo; };
 
 /* ----------------------------------------------------------------- */
 
-#endif
+#endif /* _CPUTYPES_H_ */
 
