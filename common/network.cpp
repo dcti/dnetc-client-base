@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.25 2000/02/21 00:56:22 trevorh Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.26 2000/03/03 07:27:56 jlawson Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -30,12 +30,6 @@ return "@(#)$Id: network.cpp,v 1.97.2.25 2000/02/21 00:56:22 trevorh Exp $"; }
 #endif
 
 extern int NetCheckIsOK(void); // used before doing i/o
-
-//----------------------------------------------------------------------
-
-#ifdef NONETWORK
-#error NONETWORK define is obsolete. Networking capability is now a purely network.cpp thing.
-#endif
 
 //----------------------------------------------------------------------
 
@@ -114,6 +108,8 @@ const char *Socks5ErrorText[9] =
 
 //======================================================================
 
+// Returns a pointer to a static buffer that receives a
+// dotted decimal ASCII conversion of the specified IP address.
 // short circuit the u32 -> in_addr.s_addr ->inet_ntoa method.
 // besides, it works around context issues.
 static const char *__inet_ntoa__(u32 addr)
@@ -125,7 +121,10 @@ static const char *__inet_ntoa__(u32 addr)
   return buff;
 }
 
-const char *__print_packet( const char *label, const char *apacket, unsigned int alen )
+#ifdef DEBUGTHIS
+// Logs a hexadecimal dump of the specified raw buffer of data.
+static void __print_packet( const char *label,
+    const char *apacket, unsigned int alen )
 {
   unsigned int i;
   for (i = 0; i < alen; i += 16)
@@ -155,9 +154,15 @@ const char *__print_packet( const char *label, const char *apacket, unsigned int
     LogRaw("\n%s\n",buffer);
   }
   LogRaw("%s total len: %d\n",label, alen);
-  return "";
 }
+#endif
 
+
+// Performs a safe string copy of a given network hostname into a fixed-size
+// target buffer.  The result is guaranteed to be null terminated, and
+// stripped of leading whitespace.  The hostname is additionally forced
+// into lowercase letters during copying.  Copying is terminated at a null,
+// a whitespace character, or length limit of the destination buffer.
 static void __hostnamecpy( char *dest,
     const char *source, unsigned int maxlen)
 {
@@ -170,6 +175,11 @@ static void __hostnamecpy( char *dest,
   return;
 }
 
+
+// Performs a number of cleanup operations on a specified hostname and
+// analysis operations to determine some implied network connectivity
+// settings.  Returns non-zero if the "autofind" mode for identifying
+// the target server.
 static int __fixup_dnethostname( char *host, int *portP, int mode,
                                   int *nofallback )
 {
@@ -230,6 +240,9 @@ static int __fixup_dnethostname( char *host, int *portP, int mode,
 
 //======================================================================
 
+// Initializes a new network object with the specified connectivity
+// options.
+
 Network::Network( const char * servname, int servport, int _nofallback,
                   int _iotimeout, int _enctype, const char *_fwallhost,
                   int _fwallport, const char *_fwalluid)
@@ -243,12 +256,13 @@ Network::Network( const char * servname, int servport, int _nofallback,
      ((dummy = offsetof(SOCKS5, end)) != 10))
     LogScreen("Network::Socks Incorrectly packed structures.\n");
 
-  // intialize communication parameters
+  // intialize communication parameters.
   server_name[0] = 0;
-  if (servname)
+  if (servname != NULL)
      __hostnamecpy( server_name, servname, sizeof(server_name));
   server_port = servport;
 
+  // Reset the general connectivity flags.
   reconnected = 0;
   shown_connection = 0;
   nofallback = _nofallback;
@@ -256,19 +270,24 @@ Network::Network( const char * servname, int servport, int _nofallback,
   iotimeout = _iotimeout; /* if iotimeout is <0, use blocking calls */
   isnonblocking = 0;      /* used later */
 
+  // Reset the encoding state flags.
   gotuubegin = gothttpend = 0;
   httplength = 0;
 
+  // Reset firewall and other hostname buffers.
   fwall_hostaddr = svc_hostaddr = conn_hostaddr = 0;
   fwall_hostname[0] = fwall_userpass[0] = 0;
   resolve_hostname[0] = '\0';
   resolve_addrcount = -1; /* uninitialized */
 
-  #ifndef HTTPUUE_WORKS /* a lie */
+#ifndef HTTPUUE_WORKS
+  // BUGBUG: the HTTP+UUE combination apparently does not work,
+  // so we just silently force the use of HTTP only as appropriate.
   if (_enctype == 3 ) /*http+uue*/
-  _enctype = 2; /* http only */
-  #endif
+    _enctype = 2; /* http only */
+#endif
 
+  // Store and initialize the modes depending on the connection type.
   mode = startmode = 0;
   if (_enctype == 1 /*uue*/ || _enctype == 3 /*http+uue*/)
   {
@@ -302,19 +321,24 @@ Network::Network( const char * servname, int servport, int _nofallback,
   }
   mode = startmode;
 
+  // Do final validation and sanity checks on the hostname, port,
+  // and connection mode flags, possibly adjusting them if needed.
   autofindkeyserver = __fixup_dnethostname(server_name, &server_port,
                                            startmode, &nofallback);
 
+  // Set and validate the connection timeout value.
 #if (CLIENT_OS == OS_RISCOS)
-  iotimeout = -1; // always blocking please
-#endif
+  iotimeout = -1;     // always blocking please
+#else
   if (iotimeout < 0)
-    iotimeout = -1;
+    iotimeout = -1;           // blocking mode
   else if (iotimeout < 5)
-    iotimeout = 5;
+    iotimeout = 5;            // 5 seconds minimum.
   else if (iotimeout > 300)
-    iotimeout = 300;
+    iotimeout = 300;          // 5 minutes maximum.
+#endif
 
+  // Adjust the verbosity level depending on the compilation mode.
   #ifdef NETDEBUG
   verbose_level = 2;
   #elif defined(VERBOSE_OPEN)
@@ -322,8 +346,6 @@ Network::Network( const char * servname, int servport, int _nofallback,
   #else
   verbose_level = 0; //quiet
   #endif
-
-  return;
 }
 
 //----------------------------------------------------------------------
@@ -362,6 +384,12 @@ int Network::Open( SOCKET insock)
 }
 
 /* ----------------------------------------------------------------------- */
+
+// Displays the current hostname (and possibly firewall/proxy being used)
+// that we are connecting to.  This will only have an effect if the verbosity
+// level is high enough.  Additionally, only the first call to this function
+// will have an effect; subsequent calls during the same connection will
+// produce no log output.
 
 void Network::ShowConnection(void)
 {
@@ -403,7 +431,12 @@ void Network::ShowConnection(void)
 
 /* ----------------------------------------------------------------------- */
 
-int Network::Open( void )               // returns -1 on error, 0 on success
+// Initiates a connection opening sequence, and performs the initial
+// negotiation for SOCKS4/SOCKS5 connections.  Blocks until the operation
+// completes or times out.
+// returns -1 on error, 0 on success
+
+int Network::Open( void )
 {
   int didfallback, whichtry, maxtries;
 
@@ -484,6 +517,8 @@ int Network::Open( void )               // returns -1 on error, 0 on success
         if (!didfallback && !nofallback && whichtry == (maxtries-1) &&
            ((startmode & MODE_PROXIED) == 0 || fwall_hostname[0] == 0))
         {                                              /* last chance */
+
+//BUGBUG: didn't __fixup_dnethostname already check for these?
           if (autofindkeyserver || server_name[0]=='\0' ||
               strstr(server_name,".distributed.net"))
             ; /* can't fallback further than a fullserver */
@@ -501,6 +536,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
 
         if (svc_hostname[0] == 0)
         {
+//BUGBUG: didn't __fixup_dnethostname already check for these?
           svc_hostaddr = 0;
           svc_hostname = "rc5proxy.distributed.net"; /* special name for resolve */
           if (svc_hostport != 80 && svc_hostport != 23 &&
@@ -785,6 +821,10 @@ int Network::Open( void )               // returns -1 on error, 0 on success
 
 // -----------------------------------------------------------------------
 
+// Internal function used to negotiate the SOCKS4/SOCKS5 connection
+// establishment sequence.  Blocks until the establishment is complete.
+// returns -1 on error, 0 on success
+
 int Network::InitializeConnection(void)
 {
   // set communications settings
@@ -1050,6 +1090,8 @@ int Network::InitializeConnection(void)
 
 // -----------------------------------------------------------------------
 
+// Closes the connection and clears all flags and communication buffers.
+
 int Network::Close(void)
 {
   LowLevelCloseSocket();
@@ -1065,11 +1107,14 @@ int Network::Close(void)
 
 // -----------------------------------------------------------------------
 
+// Receives data from the connection with any necessary decoding.
 // Returns length of read buffer.
+
 int Network::Get( char * data, int length )
 {
   time_t starttime = 0;
-  int need_close = 0, timed_out = 0; //timed_out is only used with blocking sox
+  int need_close = 0;
+  int timed_out = 0;    //only used with blocking sockets
 
   int tmp_isnonblocking = (isnonblocking != 0); //we handle timeout ourselves
   isnonblocking = 0;                 //so stop LowLevelGet() from doing it.
@@ -1290,7 +1335,7 @@ int Network::Get( char * data, int length )
     memmove(data, netbuffer.GetHead(), bytesfilled);
     netbuffer.RemoveHead((u32)bytesfilled);
     #ifdef DEBUGTHIS
-    Log(__print_packet("Get", data, bytesfilled ));
+    __print_packet("Get", data, bytesfilled );
     #endif
   }
 
@@ -1303,7 +1348,9 @@ int Network::Get( char * data, int length )
 
 //--------------------------------------------------------------------------
 
+// Sends data over the connection, with any necessary encoding.
 // returns bytes sent, -1 on error
+
 int Network::Put( const char * data, int length )
 {
   AutoBuffer outbuf;
@@ -1404,7 +1451,7 @@ int Network::Put( const char * data, int length )
   }
 
   #ifdef DEBUGTHIS
-  Log(__print_packet("Put", outbuf, outbuf.GetLength() ));
+  __print_packet("Put", outbuf, outbuf.GetLength() );
   #endif
 
   int towrite = (int)outbuf.GetLength();
@@ -1421,6 +1468,9 @@ int Network::Put( const char * data, int length )
 // From here on down we have "bottom half" functions that (a) use socket
 // functions or (b) are TCP/IP specific or (c) actually do i/o.
 //---------------------------------------------------------------------
+
+// Retrieves the textual hostname for the machine that we are running on.
+// Returns -1 on error, 0 on success.
 
 int Network::GetHostName( char *buffer, unsigned int len )
 {
@@ -1441,6 +1491,10 @@ int Network::GetHostName( char *buffer, unsigned int len )
 }
 
 /* ----------------------------------------------------------------------- */
+
+// Internal low-level wrapper function around the platform specific
+// acitivies for creating a socket and initializing it with the appropriate
+// blocking-mode and other options.
 
 int Network::LowLevelCreateSocket(void)
 {
@@ -1471,6 +1525,9 @@ int Network::LowLevelCreateSocket(void)
 }
 
 //------------------------------------------------------------------------
+
+// Internal low-level wrapper function around the platform specific
+// activities for closing and destroying a socket.
 
 int Network::LowLevelCloseSocket(void)
 {
@@ -1579,6 +1636,9 @@ void debugtli(const char *label, int fd)
 #endif
 
 // -----------------------------------------------------------------------
+
+// Internal low-level wrapper around platform specific socket connection
+// establishment activities.
 
 int Network::LowLevelConnectSocket( u32 that_address, int that_port )
 {
@@ -1754,8 +1814,11 @@ int Network::LowLevelConnectSocket( u32 that_address, int that_port )
 
 //------------------------------------------------------------------------
 
-// Returns length of sent data or 0 if the socket is closed, or -1 if timeout+nodata
-int Network::LowLevelPut(const char *ccdata,int length)
+// Internal low-level wrapper around platform specific socket connection
+// writing activities.  Returns length of sent data or 0 if the socket is
+// closed, or -1 if timeout/nodata
+
+int Network::LowLevelPut(const char *ccdata, int length)
 {
   if ( sock == INVALID_SOCKET )
     return 0; /* sock closed */
@@ -1935,7 +1998,10 @@ int Network::LowLevelPut(const char *ccdata,int length)
 
 // ----------------------------------------------------------------------
 
-// Returns length of read buffer or 0 if conn closed or -1 if no data waiting+timeout
+// Internal low-level wrapper around platform specific socket writing
+// activities.  Returns length of read buffer or 0 if connection closed
+// or -1 if no-data-waiting/timeout.
+
 int Network::LowLevelGet(char *data,int length)
 {
   if ( sock == INVALID_SOCKET )
@@ -2080,6 +2146,11 @@ int Network::LowLevelGet(char *data,int length)
 }
 
 // ----------------------------------------------------------------------
+
+// Internal low-level wrapper around platform specific activities for
+// socket attribute/option setting.  The option types that can be
+// manipulated are specified via one of our CONDSOCK_* values.  The
+// nature of the parameter is dependent upon the particular value set.
 
 int Network::LowLevelSetSocketOption( int cond_type, int parm )
 {
