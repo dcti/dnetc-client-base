@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.34 2000/05/06 17:01:44 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.35 2000/05/06 21:28:32 mfeiri Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -123,6 +123,9 @@ struct optionstruct conf_options[] = {
   "and/or by window class. To specify a window title, prefix it with '*', for\n"
   "example, \"*Backup Exec\". Prefix class names with '#'. Searching by window\n"
   "title and/or class name is exact, ie sensitive to case and name length.\n"
+  #elif (CLIENT_OS == OS_MACOS)
+  "The name of a process must match its name in the application menu on the far\n"
+  "right. For example 'QuickTime Player|Disk First Aid'.\n"
   #else
   "This option is not supported on all platforms\n"
   #endif
