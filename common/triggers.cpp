@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.55 2000/11/22 19:04:53 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.56 2000/12/17 02:47:45 mfeiri Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -315,6 +315,8 @@ static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
 #elif (CLIENT_OS == OS_FREEBSD) && (CLIENT_CPU == CPU_X86)
 #include <fcntl.h>
 #include <machine/apm_bios.h>
+#elif (CLIENT_OS == OS_MACOS)
+#include <Power.h>
 #endif
 
 static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
@@ -507,6 +509,22 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
       // We seem to have no apm driver in the kernel, so disable it.
       trigstatics.pause_if_no_mains_power = 0;
     } /* #if (NetBSD && i386) */
+    #elif (CLIENT_OS == OS_MACOS)
+    long pmgrAttributes;
+    if (Gestalt(gestaltPowerMgrAttr, &pmgrAttributes)==noErr)
+    {
+      if (pmgrAttributes & (1<<gestaltPMgrExists))
+      {
+        Byte status, power;
+        BatteryStatus(&status,&power);
+        if ((chargerConnMask & status) !=0)
+          return 0; /* we have AC power */
+        else
+          return 1; /* we don't have AC */
+      }
+    }
+    // We seem to have no PowerManager, so disable battery checking.
+    trigstatics.pause_if_no_mains_power = 0;
     #endif
   }  
   return -1; /* unknown */
