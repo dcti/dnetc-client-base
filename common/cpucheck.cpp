@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.71  1999/02/23 04:45:35  silby
+// Added Pentium III to x86 cpu list.
+//
 // Revision 1.70  1999/01/31 20:19:08  cyp
 // Discarded all 'bool' type wierdness. See cputypes.h for explanation.
 //
@@ -254,7 +257,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.70 1999/01/31 20:19:08 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.71 1999/02/23 04:45:35 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -789,6 +792,7 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
         {  0x0630, 2785, 0x102, "Pentium II" },
         {  0x0650, 2785, 0x102, "Pentium II" },
         {  0x0660, 2785, 0x102, "Celeron-A" },
+        {  0x0670, 2785, 0x102, "Pentium III" },
         {  0x0000, 2785,     2, NULL           }  // default core = PPro/PII
         }; cpuxref = &__cpuxref[0];
     }
