@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.64 1999/11/28 21:38:51 lyndon Exp $
+# @(#)$Id: configure,v 1.222.2.65 1999/11/28 21:53:07 lyndon Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -114,7 +114,7 @@ OPTS_GCC_SUN68K="$OPTS_GCC -O2 -DASM_68K -D_SUN68K_"
 
 #-- MIPS
 
-OPTS_CC_MIPS="-n32 -O3 -Olimit=0 -xansi -DASM_MIPS"
+OPTS_CC_MIPS="-n32 -O3 -OPT:Olimit=0 -xansi -DASM_MIPS"
 OPTS_GCC_MIPS="$OPTS_GCC -O6 -DASM_MIPS"
 OPTS_EGCS_MIPS="$OPTS_EGCS -Os -DASM_MIPS" 
 
@@ -411,7 +411,6 @@ case "$1" in
     *mips-cc-ip19)
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip19 \
-			-DCLIENT_OS_NAME=\"Irix (IP19)\" \
 			-DMULTITHREAD \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
@@ -423,7 +422,6 @@ case "$1" in
     *mips-cc-ip20)
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip20 \
-			-DCLIENT_OS_NAME=\"Irix (IP20)\" \
 			-DMULTITHREAD \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
@@ -435,7 +433,6 @@ case "$1" in
     *mips-cc-ip21)
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip21 \
-			-DCLIENT_OS_NAME=\"Irix (IP21)\" \
 			-DMULTITHREAD \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
@@ -447,7 +444,6 @@ case "$1" in
     *mips-cc-ip22_4k)
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip22_4k \
-			-DCLIENT_OS_NAME=\"Irix (IP22/R4K)\" \
 			-DMULTITHREAD \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
@@ -459,7 +455,6 @@ case "$1" in
     *mips-cc-ip22_5k)
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip22_5k \
-			-DCLIENT_OS_NAME=\"Irix (IP22/R5K)\" \
 			-DMULTITHREAD \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
@@ -471,7 +466,6 @@ case "$1" in
     *mips-cc-ip24)
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip24 \
-			-DCLIENT_OS_NAME=\"Irix (IP24)\" \
 			-DMULTITHREAD \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
@@ -483,7 +477,6 @@ case "$1" in
     *mips-cc-ip25)
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip25 \
-			-DCLIENT_OS_NAME=\"Irix (IP25)\" \
 			-DMULTITHREAD \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
@@ -495,7 +488,6 @@ case "$1" in
     *mips-cc-ip26)
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip26 \
-			-DCLIENT_OS_NAME=\"Irix (IP26)\" \
 			-DMULTITHREAD \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
@@ -507,7 +499,6 @@ case "$1" in
     *mips-cc-ip27)
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip27 \
-			-DCLIENT_OS_NAME=\"Irix (IP27)\" \
 			-DMULTITHREAD \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
@@ -519,7 +510,6 @@ case "$1" in
     *mips-cc-ip28)
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip28 \
-			-DCLIENT_OS_NAME=\"Irix (IP28)\" \
 			-DMULTITHREAD \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
@@ -531,7 +521,6 @@ case "$1" in
     *mips-cc-ip30)
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip30 \
-			-DCLIENT_OS_NAME=\"Irix (IP30)\" \
 			-DMULTITHREAD \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
@@ -543,7 +532,6 @@ case "$1" in
     *mips-cc-ip32_5k)
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip32_5k \
-			-DCLIENT_OS_NAME=\"Irix (IP32/R5K)\" \
 			-DMULTITHREAD \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
@@ -555,7 +543,6 @@ case "$1" in
     *mips-cc-ip32_10k)
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -TARG:platform=ip32_10k \
-			-DCLIENT_OS_NAME=\"Irix (IP32/R10K)\" \
 			-DMULTITHREAD \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
