@@ -8,6 +8,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.36  1999/02/21 10:33:20  silby
+// Update for large block support.
+//
 // Revision 1.35  1999/01/29 19:04:31  jlawson
 // fixed formatting.
 //
@@ -140,7 +143,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.35 1999/01/29 19:04:31 jlawson Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.36 1999/02/21 10:33:20 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // for u64
@@ -343,63 +346,6 @@ const char *CliGetU64AsString( u64 *u, int inNetOrder, int contestid )
 
 // ---------------------------------------------------------------------------
 
-// Loaded 1 RC5 1*2^30 block 68E0D85A:A0000000 (10.25% done)
-const char *CliGetMessageForFileentryLoaded( FileEntry *fileentry )
-{
-  static char str[84];
-  const char *name;
-  unsigned int size, count;
-  u32 iter = ntohl(fileentry->iterations.lo);
-  unsigned int startpercent = (unsigned int) ( (double) 10000.0 *
-           ( (double) (ntohl(fileentry->keysdone.lo)) / (double)(iter) ) );
-
-
-  /*                       old format: eg 1*2^30
-  size = 1;
-  count = 32;
-  if (iter)
-  {
-    count = 1;
-    size = 0;
-    while ((iter & count)==0)
-      { size++; count <<= 1; }
-    count = iter / (1<<size);
-  }
-  */
-  
-  //iter = 268435456L;  //1<<28  //2^28 
-  //iter = 536870912L;  //1<<29  //2^29
-  //iter =1073741824L;  //1<<30  //2^30
-  //iter =2147483648L;  //1<<31  //2^31
-  
-  if (!iter)                  /* new format 4*2^28 */
-  {
-    count = 16;
-    size  = 28;
-  }
-  else
-  {
-    size =  0;
-    while (iter>1 && size<28)
-      { size++; iter>>=1; }
-    count = iter;
-  }
-
-  if (CliGetContestInfoBaseData( fileentry->contest, &name, NULL )!=0) //clicdata
-    name = "???";
-
-  sprintf( str, "%s %s %d*2^%d block %08lX:%08lX%c(%u.%02u%% done)",
-           "Loaded",
-           name, (int) count, (int)size,  
-           (unsigned long) ntohl( fileentry->key.hi ),
-           (unsigned long) ntohl( fileentry->key.lo ),
-           ((startpercent)?(' '):(0)),
-           (unsigned)(startpercent/100), (unsigned)(startpercent%100) );
-  return str;
-}
-
-// ---------------------------------------------------------------------------
-
 // internal - with or without adjusting cumulative stats
 // Completed RC5 block 68E0D85A:A0000000 (123456789 keys)
 //          123:45:67:89 - [987654321 keys/s]
@@ -429,35 +375,9 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
   tv.tv_usec = prob->timelo;
   CliTimerDiff( &tv, &tv, NULL );
 
-/*                               Old method with numeric keycount display
-  sprintf( str, "Completed %s block %08lX:%08lX (%s keys)\n"
-                "[%s] %s - [%skeys/sec]\n",
-                name,
-                (unsigned long) ntohl( rc5result.key.hi ) ,
-                (unsigned long) ntohl( rc5result.key.lo ),
-                CliGetU64AsString( &(rc5result.iterations), 1, contestid ),
-                CliGetTimeString( NULL, 1 ),
-                CliGetTimeString( &tv, 2 ),
-                keyrateP );
-*/
-
-  unsigned int /* size=1, count=32, */ itermul=16;
-  if (!rc5result.iterations.hi)
-  {
-    u32 iter = ntohl(rc5result.iterations.lo);
-    /*
-    count = 1;
-    size = 0;
-    while ((iter & count)==0)
-      { size++; count <<= 1; }
-    count = iter / (1<<size);
-    iter = ntohl(rc5result.iterations.lo);
-    */
-    itermul = 0;
-    while (iter > 1 && itermul < 28)
-      { iter>>=1; itermul++; }
-    itermul = (unsigned int)iter;
-  }
+  unsigned int /* size=1, count=32, */ itermul;
+  itermul = (ntohl(rc5result.iterations.lo) >> 28) +
+            (ntohl(rc5result.iterations.hi)*16);
 
 //"Completed one RC5 block 00000000:00000000 (4*2^28 keys)\n"
 //"%s - [%skeys/sec]\n"
