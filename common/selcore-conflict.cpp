@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.19  1998/10/29 08:39:39  silby
+// Fixed the condition where core already specified would cause mmx des detection to be skipped and always enabled.
+//
 // Revision 1.18  1998/10/29 08:19:31  silby
 // cputype was not properly being & 0xff'd from detectedtype, messing up x86 mmx processor detection for rc5 cores.
 //
@@ -77,7 +80,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.18 1998/10/29 08:19:31 silby Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.19 1998/10/29 08:39:39 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -262,7 +265,8 @@ int Client::SelectCore(int quietly)
       detectedtype = GetProcessorType(quietly);
     cputype = (detectedtype & 0xFF);
     }
-  if (detectedtype == -1) /* we need detection for mmx cores */
+  if ((detectedtype == -1) || (detectedtype == -2))
+    /* we need detection for mmx cores */
     detectedtype = GetProcessorType(1); /* but do it quietly */
 
   #if ((defined(KWAN) || defined(MEGGS)) && !defined(MMX_BITSLICER))
