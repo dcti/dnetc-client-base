@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.10 2003/08/25 08:32:07 mweiser Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.11 2003/10/15 03:03:23 jr_brady Exp $"
 
 #include "cputypes.h"
 
@@ -92,12 +92,9 @@
 #elif (CLIENT_OS == OS_VMS)
   #include <fcntl.h>
   #include <types.h>
-  #define unlink remove
-  #ifdef __VMS_UCX__
-    #include <netinet/in.h> //ntohl/htonl/ntohs/htons
-  #elif defined(MULTINET)
-    #include "multinet_root:[multinet.include.netinet]in.h"
-  #endif
+  #include <unistd.h>
+  #include <timers.h>
+  #include <in.h>
 #elif (CLIENT_OS == OS_SCO)
   #include <unistd.h>
   #include <fcntl.h>
