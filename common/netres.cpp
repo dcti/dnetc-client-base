@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.18  1999/01/09 00:12:34  cyp
+// we now assume that nameservers do _not_ rotate. If they rotate, fine, if
+// they don't also fine. :)
+//
 // Revision 1.17  1999/01/08 10:06:53  chrisb
 // #defined tzset() to nothing for RISCOS
 //
@@ -63,7 +67,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.17 1999/01/08 10:06:53 chrisb Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.18 1999/01/09 00:12:34 cyp Exp $"; }
 #endif
 
 //---------------------------------------------------------------------
@@ -408,10 +412,10 @@ int Network::Resolve(const char *host, u32 *hostaddress, int resport )
       if (resolve_hostname[0]==0)
         strcpy( resolve_hostname, plist->proxies[proxypos] );
       
-      maxaddr = addrcount + 1;
-      #ifdef NAMESERVERS_DONT_ROTATE
+      //maxaddr = addrcount + 1;
+      //#ifdef NAMESERVERS_DONT_ROTATE
       maxaddr = (sizeof(addrlist)/sizeof(addrlist[0]));
-      #endif
+      //#endif
       for ( addrpos = 0; hp->h_addr_list[addrpos] && 
                                   (addrcount < maxaddr ); addrpos++ )
         {      
