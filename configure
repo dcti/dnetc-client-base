@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.137  1998/12/10 01:21:21  silby
+# Thanks for finding the missing ", remi. :)
+#
 # Revision 1.136  1998/12/10 00:24:57  silby
 # Here are the nasm x86 cores, folks.  Bye bye .cpp!
 #
@@ -1028,7 +1031,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-        TARGET_ADDNASMS=$RC5X86_SRCS"
+        TARGET_ADDNASMS="$RC5X86_SRCS"
 	TARGET_LIBS=""
 	;;
 
