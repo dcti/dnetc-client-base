@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.1 2002/11/23 02:04:31 andreasb Exp $
+ * $Id: ogr.cpp,v 1.2.4.2 2003/02/24 12:18:59 teichp Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -103,13 +103,12 @@
     #error play with the defines to find optimal settings for your compiler
   #endif
 #elif defined(ASM_ARM)
-  #if (__GNUC__)
-    #define OGROPT_BITOFLIST_DIRECT_BIT           0
-    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2
-    #define OGROPT_STRENGTH_REDUCE_CHOOSE         1
-    #define OGROPT_ALTERNATE_CYCLE                0
-    #define OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP 1
-  #endif
+  #define OGROPT_BITOFLIST_DIRECT_BIT           0
+  #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2
+  #define OGROPT_STRENGTH_REDUCE_CHOOSE         1
+  #define OGROPT_ALTERNATE_CYCLE                0
+  #define OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP 1
+  #define OGR_NON_STATIC_FOUND_ONE
 #elif defined(ASM_SPARC)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0
     #define OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP 1
@@ -323,7 +322,11 @@ static const int OGR[] = {
 };
 #ifndef __MRC__
 static int init_load_choose(void);
+#if defined(OGR_NON_STATIC_FOUND_ONE)
+int found_one(const struct State *oState);
+#else
 static int found_one(const struct State *oState);
+#endif
 static int ogr_init(void);
 static int ogr_create(void *input, int inputlen, void *state, int statelen);
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints);
@@ -2009,7 +2012,11 @@ static int init_load_choose(void)
 /*  found_one() - print out golomb rulers  */
 /*-----------------------------------------*/
 #if (OGROPT_ALTERNATE_CYCLE == 0)
+#if defined(OGR_NON_STATIC_FOUND_ONE)
+int found_one(const struct State *oState)
+#else
 static int found_one(const struct State *oState)
+#endif
 {
   /* confirm ruler is golomb */
   {
@@ -2058,7 +2065,11 @@ static int found_one(const struct State *oState)
   return 1;
 }
 #else
+#if defined(OGR_NON_STATIC_FOUND_ONE)
+int found_one(const struct State *oState)
+#else
 static int found_one(const struct State *oState)
+#endif
 {
    /* confirm ruler is golomb */
    int i, j;

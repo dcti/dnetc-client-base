@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.21 2003/02/22 13:44:16 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.22 2003/02/24 12:18:59 teichp Exp $"; }
 
 //#define TRACE
 
@@ -216,6 +216,9 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.21 2003/02/22 13:44:16 andreasb Exp $"; }
   #elif (CLIENT_CPU == CPU_X86)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void); //A
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_nobsr(void); //B
+  #elif (CLIENT_CPU == CPU_ARM)
+      extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm1(void);
+      extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm2(void);
   #else
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
   #endif
@@ -322,7 +325,8 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       NULL
     },
     { /* OGR */
-      "GARSP 5.13",
+      "GARSP 5.13 ARM 1",
+      "GARSP 5.13 ARM 2",
       NULL
     },
   #elif (CLIENT_CPU == CPU_68K)
@@ -2133,6 +2137,14 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       else
       {
         unit_func.ogr = ogr_get_dispatch_table_nobsr(); //B
+        coresel = 1;
+      }
+    #elif (CLIENT_CPU == CPU_ARM)
+      if (coresel == 0)
+        unit_func.ogr = ogr_get_dispatch_table_arm1();
+      else 
+      {
+        unit_func.ogr = ogr_get_dispatch_table_arm2();
         coresel = 1;
       }
     #else

@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.41 2003/02/18 01:44:34 andreasb Exp $
+# @(#)$Id: configure,v 1.288.2.42 2003/02/24 12:18:59 teichp Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -566,6 +566,26 @@ add_sources() # $1=os, $2=arch, $3=custom
                                         rc5-72/arm/r72arm2-gnu.S"
       fi
     fi # HAVE_RC5_72
+    if [ "$HAVE_OGR" = 1 ]; then
+      if [ "$1" = "riscos" ]; then
+        if [ "$3" = "gccsdk" ]; then
+          TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gccsdk.s \
+                                          ogr/arm/ogr_arm2-gccsdk.s"
+        else
+          echo Add ogr asm cores for arm-riscos!
+          exit 1
+        fi
+      elif [ "$1-$3" = "linux-elf" ]; then
+        TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gnu-elf.S \
+                                        ogr/arm/ogr_arm2-gnu-elf.S"
+      elif [ "$1" = "nto2" ]; then
+        TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gnu-elf.S \
+                                        ogr/arm/ogr_arm2-gnu-elf.S"
+      else
+        TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gnu.S \
+                                        ogr/arm/ogr_arm2-gnu.S"
+      fi
+    fi # HAVE_OGR
   #-----------------------------------------------------------------
   elif [ "$2" = "88k" -o "$2" = "sh4" -o "$2" = "vax" \
       -o "$2" = "s390" -o "$2" = "s390x" -o "$2" = "generic" ]; then
@@ -1207,16 +1227,28 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-arm-elf"
         add_sources "linux" "arm" "elf"
+        ;;
 
-        #rm -f $TARGET_ADDASMS
-        echo 'Converting GNU a.out cores to ELF'
-        for file in $TARGET_ADDASMS ; do
-          BASENAME=`basename $file`
-          echo "  $file -> `basename $file -elf.s`.s"
-          DIR=`echo $file | sed -e s/$BASENAME//`
-          ( cd $DIR ; sed -e 's/_\([a-zA-Z0-9_]\{1,\}\)/\1/g' \
-               < `basename $file -elf.s`.s > $BASENAME )
-        done
+    *arm-linux-elf_pthread)     # teichp
+        TARGET_CC="gcc"
+        TARGET_AS="gcc -c"
+        generate_gcc_opts "arm" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -Dlinux -DHAVE_POSIX_THREADS"
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-arm-elf_pthread"
+        add_sources "linux" "arm" "elf"
+        ;;
+
+    *arm-linux-elf_single)     # teichp
+        TARGET_CC="gcc"
+        TARGET_AS="gcc -c"
+        generate_gcc_opts "arm" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -Dlinux -DSINGLE_CRUNCHER_ONLY"
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-arm-elf_single"
+        add_sources "linux" "arm" "elf"
         ;;
 
     *arm-netbsd)        # teichp
@@ -2800,6 +2832,7 @@ if [ -n "$TARGET_TARBALL" ]; then
       echo "	mkdir -p $FULLTARNAME/!System/310/Modules" >> Makefile
       echo "	cp plat/riscos/package/!System/310/Modules/*,??? $FULLTARNAME/!System/310/Modules" >> Makefile
       echo "	/home/peter/gccsdk-2.95.4-v2/cross/bin/zip -r -, $FULLTARNAME.zip $FULLTARNAME" >> Makefile
+      echo "	rm -rf $FULLTARNAME" >> Makefile
     else
       echo "Warning: Unknown TARGET_ARCTYPE ${TARGET_ARCTYPE}"
     fi

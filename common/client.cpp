@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.9 2003/01/29 01:56:17 andreasb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.10 2003/02/24 12:18:59 teichp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -187,7 +187,18 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
 #endif
 #if defined HAVE_RC5_72_CORES
       #if (CLIENT_CPU == CPU_ARM)
-      LogScreenRaw( "RC5-72 ARM assembly by Peter Teichmann\n");
+        #if defined HAVE_OGR_CORES
+        LogScreenRaw( "RC5-72 and OGR ARM assembly by Peter Teichmann\n");
+        #else
+        LogScreenRaw( "RC5-72 ARM assembly by Peter Teichmann\n");
+        #endif
+      #endif
+#endif
+#if defined HAVE_OGR_CORES
+      #if (CLIENT_CPU == CPU_ARM)
+        #if !defined HAVE_RC5_72_CORES
+        LogScreenRaw( "OGR ARM assembly by Peter Teichmann\n");
+        #endif
       #endif
       #if (CLIENT_CPU == CPU_68K)
       LogScreenRaw( "RC5-72 68K assembly by Malcolm Howell and John Girvin\n");
