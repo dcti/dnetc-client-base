@@ -13,6 +13,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: console.cpp,v $
+// Revision 1.42  1999/02/19 03:32:56  silby
+// Uses termios for hpux now.
+//
 // Revision 1.41  1999/02/04 22:49:06  trevorh
 // Corrected another problem with Vio calls being incorrect
 //
@@ -160,7 +163,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.41 1999/02/04 22:49:06 trevorh Exp $"; }
+return "@(#)$Id: console.cpp,v 1.42 1999/02/19 03:32:56 silby Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -179,7 +182,7 @@ return "@(#)$Id: console.cpp,v 1.41 1999/02/04 22:49:06 trevorh Exp $"; }
 #if !defined(NOTERMIOS) && ((CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) || \
     (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
     || (CLIENT_OS==OS_FREEBSD) || defined(__EMX__) || (CLIENT_OS==OS_AIX) \
-    || (CLIENT_OS==OS_DEC_UNIX)) 
+    || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==OS_HPUX) ) 
 #include <termios.h>
 #define TERMIOS_IS_AVAILABLE
 #endif
