@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.58 2000/02/13 04:06:01 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.59 2000/02/16 04:28:59 petermack Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -229,7 +229,9 @@ static const char *GetBuildOrEnvDescription(void)
       (((osversion & 0x000f) == 0)?(0):('.')), (int)((osversion&0x000f)) );
     return buffer;                                
   }
-  return "";                          
+  return "";       
+#elif (CLIENT_OS == OS_NEXTSTEP)
+  return "";
 #elif defined(__unix__) /* uname -sr */
   struct utsname ut;
   if (uname(&ut)==0) {
@@ -546,7 +548,7 @@ int main( int argc, char *argv[] )
       didset=(0==putenv(strcat(strcat(strcpy(m,q),"="),argv[0]))); //BSD4.3
       free((void *)m); 
     }
-    #else
+    #elif (CLIENT_OS != OS_NEXTSTEP)
     didset = (setenv( q, argv[0], 1 ) == 0); //SYSV7 and posix
     #endif
     if (didset)
@@ -592,7 +594,7 @@ int main( int argc, char *argv[] )
         #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX) || \
             (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_BEOS)
         putenv( buffer );                 //BSD4.3
-        #else
+        #elif (CLIENT_OS != OS_NEXTSTEP)
         setenv("RC5INI", &buffer[7], 1 ); //SYSV7 and posix
         #endif
       }
