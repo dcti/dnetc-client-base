@@ -23,14 +23,16 @@
 %define edi_save	esp+8		;4 bytes
 %define esi_save	esp+12		;4 bytes
 %define counter		esp+16		;4 bytes
-%define LBox1		esp+20		;3 entries, 12 bytes
-%define SBox1		esp+32		;26 entries, 104 bytes
-%define LBox2		esp+136		;3 entries, 12 bytes
-%define SBox2		esp+148		;26 entries, 104 bytes
-%define stacksize	252		;make sure to modify if added values
+%define itersleft	esp+20		;4 bytes
+%define LBox1		esp+24		;3 entries, 12 bytes
+%define SBox1		esp+36		;26 entries, 104 bytes
+%define LBox2		esp+140		;3 entries, 12 bytes
+%define SBox2		esp+152		;26 entries, 104 bytes
+%define stacksize	256		;make sure to modify if added values
 
 ;variables on the stack we want
-%define timeslice	[esp+stacksize+8]
+%define scratchspace	[esp+stacksize+12]
+%define keystodo	[esp+stacksize+8]
 %define workunit	[esp+stacksize+4]
 
 ;define the workunit entries
@@ -183,12 +185,17 @@ rc5_72_unit_func_ses_2:
 	;get the structure
 	mov ebp, workunit
 
-	inc dword timeslice
+	;compute how many iterations to do.
+	mov ebx,keystodo
+	mov eax,dword [ebx]
+	shr eax,1    		; divide keycount by 2, since 2 pipes
+	inc eax			; add 1 since we start with a dec.
+	mov dword [itersleft],eax
 
 timesliceloop:
 	;decrement the amount of time, loop if not at the end
-	dec dword timeslice
-	jz near endloop
+	dec dword [itersleft]
+	jz near foundnothing
 
 	;do our loops
 
@@ -288,7 +295,7 @@ timesliceloop:
 
 	;if (A1 == rc5_72unitwork->cypher.lo)
 	cmp eax, workunitcypher(1)
-	jne continuechecks1
+	jne near continuechecks1
 
 	inc dword workunitcount
 
@@ -304,13 +311,13 @@ timesliceloop:
 
 	;if (B1 == rc5_72unitwork->cypher.hi) return;
 	cmp ebx, workunitcypher(0)
-	je near endloop
+	je near foundsuccess
 
 
 continuechecks1:
 	;if (A2	 == rc5_72unitwork->cypher.lo)
 	cmp edi, workunitcypher(1)
-	jne continuechecks2
+	jne near continuechecks2
 
 	inc dword workunitcount
 
@@ -326,10 +333,10 @@ continuechecks1:
 
 	;if (B2 == rc5_72unitwork->cypher.hi) return;
 	cmp esi, workunitcypher(0)
-	jne near endloop
+	jne near continuechecks2
 
 	inc dword [counter]
-	jmp endloop
+	jmp near foundsuccess
 
 continuechecks2:
 	;now a massive if statement
@@ -379,14 +386,22 @@ continuechecks2:
 	inc byte workunitL0Byte(2,0)
 	jmp timesliceloop
 
+foundsuccess:
+	mov eax,dword [counter]
+	mov ebx,keystodo
+	mov dword [ebx],eax	;  pass back how many keys done
+
+        mov eax,2	;  return code = RESULT_FOUND
+        jmp short endloop
+
+foundnothing:
+	mov eax,1		;  return code = RESULT_NOTHING
+	
 endloop:
 	;restore ebx and edi
 	mov ebx, [ebx_save]
 	mov edi, [edi_save]
 	mov esi, [esi_save]
-
-	;set eax for the counter
-	mov eax, dword [counter]
 
 	;restore ebp
 	mov ebp, [ebp_save]
