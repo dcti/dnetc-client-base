@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.38.2.1 2002/12/15 22:23:55 andreasb Exp $
+## $Id: makefile.wat,v 1.38.2.2 2003/03/01 10:32:16 andreasb Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -113,7 +113,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 #---
 %rc572std_LINKOBJS = output\r72ansi1.obj output\r72ansi2.obj output\r72ansi4.obj &
                    output\r72-ses1.obj output\r72-ses2.obj output\r72-dg2.obj &
-                   output\r72-dg3.obj output\r72-dg3a.obj output\r72-dgp4.obj
+                   output\r72-dg3.obj output\r72-dg3a.obj output\r72-ss2.obj
 %rc572std_DEFALL   = /DHAVE_RC5_72_CORES /DHAVE_RC5_72_ASM_CORES
 %rc572std_SYMALIAS = #
 #---
@@ -162,7 +162,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %CCASM    =wasm
 %LINK     =wlink
 %NASMEXE  =nasm           #point this to nasm (don't call the envvar 'NASM'!)
-%NASMFLAGS=-f obj -D__OMF__ -s -O2
+%NASMFLAGS=-f obj -D__OMF__ -s
 %TASMEXE  =               #point this to tasm in your section if you have it
 %TFLAGS   =/ml /m9 /q /t  #if TASMEXE.==. then wasm will be executed
 %STACKSIZE=48K            #may be redefined in the platform specific section
@@ -762,7 +762,7 @@ output\r72-dg3a.obj : rc5-72\x86\r72-dg3a.asm $(%dependall)
   $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@
   @set isused=1
 
-output\r72-dgp4.obj : rc5-72\x86\r72-dgp4.asm $(%dependall)
+output\r72-ss2.obj : rc5-72\x86\r72-ss2.asm $(%dependall)
   $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@
   @set isused=1
 

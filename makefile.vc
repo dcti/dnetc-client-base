@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.83 2002/10/24 02:40:08 lightning Exp $
+# $Id: makefile.vc,v 1.83.2.1 2003/03/01 10:32:16 andreasb Exp $
 #
 
 BASENAME = dnetc
@@ -220,7 +220,7 @@ RC5_72_OBJS =                        \
         $(OUTPUTPATH)/r72-dg2.obj    \
         $(OUTPUTPATH)/r72-dg3.obj    \
         $(OUTPUTPATH)/r72-dg3a.obj   \
-        $(OUTPUTPATH)/r72-dgp4.obj
+        $(OUTPUTPATH)/r72-ss2.obj
 
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DHAVE_RC5_72_ASM_CORES
 !endif
