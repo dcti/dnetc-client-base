@@ -26,7 +26,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.2 1999/06/15 14:12:46 cyp Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.3 1999/06/15 14:35:11 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -79,7 +79,7 @@
   #if 1 //good for all HP-UX's (according to select(2) manpage)
   #undef usleep
   #define usleep(x) {struct timeval tv={0,(x)};select(0,NULL,NULL,NULL,&tv);}
-  #ifdef _STRUCT_TIMESPEC
+  #elif defined(_STRUCT_TIMESPEC)
      // HP-UX 10.x has nanosleep() rather than usleep()
      #define usleep(x) { \
        struct timespec interval, remainder; \
