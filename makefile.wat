@@ -336,7 +336,7 @@ dos: .symbolic                                       # DOS/DOS4GW
 os2: .symbolic                                       # OS/2
      @set AFLAGS    = /5s /fp5 /bt=DOS4GW /mf
      @set LFLAGS    = sys os2v2
-     @set CFLAGS    = /5s /fp5 /bm /mf /bt=os2 /DOS2 /DMULTITHREAD -i$(%watcom)\h\os2
+     @set CFLAGS    = /5s /fp5 /bm /mf /bt=os2 /DOS2 /DMULTITHREAD
      @set OPT_SIZE  = /oantrlexi /zp4
      @set OPT_SPEED = /oantrlexi /zp8
      @set LIBFILES  = so32dll.lib,tcp32dll.lib
