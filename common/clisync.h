@@ -14,7 +14,7 @@
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.13 2001/03/25 13:02:23 oliver Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.14 2001/03/26 09:57:21 cyp Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -224,8 +224,9 @@
 
   static __inline__ void fastlock_unlock(fastlock_t *__alp)
   { 
+    __volatile int *alp = &(__alp->spl);
     __asm __volatile ("sync");
-    *__alp = FASTLOCK_INITIALIZER_UNLOCKED;
+    *alp = 0; /*FASTLOCK_INITIALIZER_UNLOCKED*/
   }
   static __inline__ int fastlock_trylock(fastlock_t *__alp)
   {
@@ -275,8 +276,9 @@
 
   static __inline__ void fastlock_unlock(fastlock_t *__alp)
   { 
+    volatile int *alp = &(__alp->spl);
     asm { sync }
-    __alp->spl = FASTLOCK_INITIALIZER_UNLOCKED;   
+    *alp = 0; /*FASTLOCK_INITIALIZER_UNLOCKED*/
   }
   static __inline__ int fastlock_trylock(fastlock_t *__alp)
   {
@@ -287,7 +289,7 @@
     asm 
     {
       @1:     lwarx   old,0,alp
-              cmpwi   old,FASTLOCK_INITIALIZER_UNLOCKED
+              cmpwi   old,0 //FASTLOCK_INITIALIZER_UNLOCKED
               bne     @2
               stwcx.  locked,0,alp
               bne-    @1
@@ -338,7 +340,8 @@
   ** BTST is a memory location, the operation must be a byte operation
   */
   typedef struct { volatile char spl; } fastlock_t;
-  #define FASTLOCK_INITIALIZER_UNLOCKED {0}
+  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
+
   static __inline__ void fastlock_unlock(fastlock_t *m)
   { 
     /* m->spl = 0; */
@@ -382,16 +385,16 @@
     __volatile int *__lock = &(__alp->spl);
     *__lock = -1;
   }
-  static __inline__ int fastlock_trylock(fastlock_t *__lock)
+  static __inline__ int fastlock_trylock(fastlock_t *__alp)
   {
     /* based on gnu libc source in
        sysdeps/mach/hppa/machine-lock.h
     */
-    __volatile int *__lock = &(__alp->spl);
-    register int __result;
+    __volatile int *alp = &(__alp->spl);
+    register int result;
     /* LDCW, the only atomic read-write operation PA-RISC has.  Sigh. */
-    __asm__ __volatile__ ("ldcws %0, %1" : "=m" (*__lock), "=r" (__result));
-    if (__result != 0) /* __result is non-zero if we locked it */
+    __asm__ __volatile__ ("ldcws %0, %1" : "=m" (*alp), "=r" (result));
+    if (result != 0) /* __result is non-zero if we locked it */
       return +1;
     return 0;
   }
@@ -416,7 +419,7 @@
   #include <sys/atomic_op.h>
 
   typdef struct { int lock; } fastlock_t __attribute__ ((aligned (8)));  
-  #define FASTLOCK_INITIALIZER_UNLOCKED 0
+  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
 
   static __inline__ void fastlock_unlock(fastlock_t *v)
   {
@@ -447,7 +450,7 @@
   #error "please check this"
 
   typedef struct { volatile unsigned long lock; } fastlock_t;
-  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t)({0UL}))
+  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
 
   static __inline__ void fastlock_unlock(fastlock_t *lp)
   {
@@ -479,7 +482,7 @@
      http://lxr.linux.no/source/include/asm-ia64/spinlock.h?v=2.4.0
   */
   typedef struct { volatile unsigned int lock; } spinlock_t;
-  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t)({0}))
+  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
 
   static __inline__ void fastlock_unlock(fastlock_t *v)
   { 
@@ -513,7 +516,7 @@
     http://cvsweb.netbsd.org/bsdweb.cgi/syssrc/sys/arch/sparc64/include/lock.h?rev=1.4.2.1
   */
   typedef struct { __volatile int spl; } fastlock_t;
-  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t)({0}))
+  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
   #define FASTLOCK_INITIALIZER_LOCKED   ((fastlock_t)({0xff000000}))
 
   static __inline__ int fastlock_trylock(fastlock_t *__alp)
@@ -529,12 +532,12 @@
                                               \
        __v;                                   \
     })
-    return ((__ldstub(alp) == FASTLOCK_INITIALIZER_UNLOCKED) ? (+1) : (0));
+    return ((__ldstub(alp) == 0 /*FASTLOCK_INITIALIZER_UNLOCKED*/)?(+1):(0));
   }
   static __inline__ void fastlock_unlock(fastlock_t *__alp)
   {
     __volatile int *alp = &(__alp->spl);
-    *alp = FASTLOCK_INITIALIZER_UNLOCKED;
+    *alp = 0; /*FASTLOCK_INITIALIZER_UNLOCKED*/
   }
   static __inline__ void fastlock_lock(fastlock_t *m)
   {
@@ -549,7 +552,7 @@
   #error "please check this"
 
   typedef struct { __volatile int spl; } fastlock_t;
-  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t)({0}))
+  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
   /* 
   based on  
   http://cvsweb.netbsd.org/bsdweb.cgi/syssrc/sys/arch/vax/include/lock.h?rev=1.5.2.1
@@ -579,7 +582,7 @@
 #elif (CLIENT_CPU == CPU_SH4) && defined(__GNUC__)
 
   typedef { __volatile int spl; } fastlock_t;
-  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t)({0}))
+  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
   /*
   * Have 'atomic test-and-set' instruction.  Attempt to acquire the lock,
   * but do not wait.  Returns 0 if successful, nonzero if unable
@@ -640,7 +643,7 @@
   }
 
   typedef { volatile long int spl; } fastlock_t;
-  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t)({0}))
+  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
 
   static __inline__ void fastlock_unlock(fastlock_t *__alp)
   {
