@@ -5,13 +5,13 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CPUCHECK_H__
-#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.14.4.3 2003/10/19 12:11:55 jlawson Exp $"
+#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.14.4.4 2003/11/28 00:43:31 snake Exp $"
 
 // cpu feature flags (use by selcore.cpp)
 
 #define CPU_F_MASK              (0x0000ffffL)
 
-#if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_X86_64)
+#if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
   #define CPU_F_I386            (0x00000001L)
   #define CPU_F_I486            (0x00000002L | CPU_F_I386)
   #define CPU_F_I586            (0x00000004L | CPU_F_I486)

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_rc5_cpp(void) {
-return "@(#)$Id: core_rc5.cpp,v 1.1.2.6 2003/10/28 17:11:58 teichp Exp $"; }
+return "@(#)$Id: core_rc5.cpp,v 1.1.2.7 2003/11/28 00:43:31 snake Exp $"; }
 
 //#define TRACE
 
@@ -237,7 +237,7 @@ const char **corenames_for_contest_rc564()
       "RG/BRF self-mod",       /* 7. SMC */
       "AK class 7",            /* 8. P4 */
       "jasonp P5/MMX",         /* 9. P5/MMX *only* - slower on PPro+ */
-  #elif (CLIENT_CPU == CPU_X86_64)
+  #elif (CLIENT_CPU == CPU_AMD64)
       "Generic RC5 core",
   #elif (CLIENT_CPU == CPU_ARM)
       "Series A", /* (autofor for ARM 3/6xx/7xxx) "ARM 3, 610, 700, 7500, 7500FE" */

@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.18 2003/11/11 02:42:39 kakace Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.19 2003/11/28 00:43:31 snake Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -34,7 +34,8 @@
 #define CPU_S390        14
 #define CPU_S390X       15 /* was MASPAR (never used) */
 #define CPU_DESCRACKER  16 /* eff descracker */
-#define CPU_X86_64      17
+#define CPU_AMD64       17 /* official name */
+#define CPU_X86_64      CPU_AMD64 /* old GNU name before AMD announced AMD64 */
 
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 /* Old OSes will stay in stats forever! */
@@ -170,8 +171,8 @@
     #define CLIENT_CPU     CPU_68K
   #elif defined(ASM_MIPS) || defined(__mips)
     #define CLIENT_CPU     CPU_MIPS
-  #elif defined(ASM_X86_64) || defined(__x86_64) || defined(__x86_64__) 
-    #define CLIENT_CPU     CPU_X86_64
+  #elif defined(ASM_AMD64) || defined(__x86_64__) || defined(__amd64__)
+    #define CLIENT_CPU     CPU_AMD64
   #endif
 #elif defined(__FreeBSD__)
   #ifndef __unix__ /* should already be defined */
@@ -188,7 +189,7 @@
   #elif defined(__sparc__) || defined(__sparc_v9__) || defined(ASM_SPARC)
     #define CLIENT_CPU     CPU_SPARC
   #elif defined(__amd64__) || defined(ASM_AMD64)
-    #define CLIENT_CPU     CPU_X86_64
+    #define CLIENT_CPU     CPU_AMD64
   #endif
 #elif defined(__NetBSD__)
   #ifndef __unix__ /* should already be defined */

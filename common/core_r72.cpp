@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.11 2003/11/09 03:11:08 jlawson Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.12 2003/11/28 00:43:31 snake Exp $"; }
 
 //#define TRACE
 
@@ -43,7 +43,7 @@ extern "C" s32 CDECL rc5_72_unit_func_dg_2( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_dg_3( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_dg_3a( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_ss_2( RC5_72UnitWork *, u32 *, void *);
-#elif (CLIENT_CPU == CPU_X86_64)
+#elif (CLIENT_CPU == CPU_AMD64)
 extern "C" s32 CDECL rc5_72_unit_func_snjl( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_ARM)
 extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
@@ -112,7 +112,7 @@ const char **corenames_for_contest_rc572()
       "ANSI 2-pipe",
       "ANSI 1-pipe",
       #endif
-  #elif (CLIENT_CPU == CPU_X86_64)
+  #elif (CLIENT_CPU == CPU_AMD64)
       "SNJL 3-pipe",
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -354,7 +354,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
       }
   }
   // ===============================================================
-  #elif (CLIENT_CPU == CPU_X86_64)
+  #elif (CLIENT_CPU == CPU_AMD64)
   {
     // for now, all x86-64 processors just use the first core.
     cindex = 0;
@@ -518,7 +518,7 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         pipeline_count = 2;
         break;
      // -----------
-     #elif (CLIENT_CPU == CPU_X86_64)
+     #elif (CLIENT_CPU == CPU_AMD64)
       case 0:
         unit_func.gen_72 = rc5_72_unit_func_snjl;
         pipeline_count = 3;

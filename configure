@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.108 2003/11/24 19:41:46 snake Exp $
+# @(#)$Id: configure,v 1.288.2.109 2003/11/28 00:43:31 snake Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -632,12 +632,12 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_64_ANSI4_SRCS"
     fi # HAVE_RC5_64
   #-----------------------------------------------------------------
-  elif [ "$2" = "x86_64" ]; then
+  elif [ "$2" = "amd64" ]; then
     if [ "X$TARGET_YASM" = "X" -o "X$TARGET_YASM_FMT" = "X" ]; then #no YASM
       echo You need YASM to build.
       exit 1
     else
-      TARGET_ADDYASMS="$TARGET_ADDYASMS plat/x86_64/x86ident.asm"
+      TARGET_ADDYASMS="$TARGET_ADDYASMS plat/amd64/x86ident.asm"
     fi
 
     # -------------- rc5-72 --------------
@@ -646,7 +646,7 @@ add_sources() # $1=os, $2=arch, $3=custom
         # -- yasm/rc5 --
         #DEFAULT_RC5_72="0"     # don't add the ansi cores
         TARGET_ADDYASMS="$TARGET_ADDYASMS \
-                         rc5-72/x86_64/r72-snjl.asm"
+                         rc5-72/amd64/r72-snjl.asm"
       fi
     fi # HAVE_RC5_72
 
@@ -1030,8 +1030,8 @@ generate_gcc_opts() {
                  -falign-functions=5 -falign-loops=4 -funroll-loops"
         ;;
 
-    *internal-x86_64)
-        opts310="$OPTS_GCC310 -O2 -DASM_X86_64 \
+    *internal-amd64)
+        opts310="$OPTS_GCC310 -O2 -DASM_AMD64 \
 	    -m64 -mfpmath=sse -mno-3dnow -mno-mmx -fforce-addr \
 	    -falign-functions=5 -falign-loops=4 -funroll-loops"
 	;;
@@ -2212,15 +2212,12 @@ case "$1" in
                             # FreeBSD x86-aout 2.x, snake (experimental)
                             # FreeBSD sparc-elf 5.x, snake (experimental)
                             # FreeBSD alpha-elf 4.x, snake
-                            # FreeBSD x86_64-elf 5.x, snake
+                            # FreeBSD amd64-elf 5.x, snake
         infer_arch_and_version "FreeBSD"
         inferred_bf="elf"
         if [ $inferred_ver_major -lt 3 ]; then
           inferred_bf="aout"
           TARGET_NASM_FMT="aoutb"
-        fi
-        if [ "$inferred_arch" = "amd64" ]; then
-          inferred_arch="x86_64"
         fi
         TARGET_AS="gcc -c"
         TARGET_CC="g++"
@@ -2393,10 +2390,10 @@ case "$1" in
         add_sources "dynix" "x86"
         ;;
 
-###### AMD X86-64
+###### AMD 64
 
 
-    *x86_64-linux*)                # generic. works everywhere
+    *amd64-linux*)                # generic. works everywhere
         infer_arch_and_version "Linux"
         TARGET_YASM_FMT="elf"
         TARGET_AS="gcc -c"          # can make aout if TARGET_CCFLAGS+=-aout
@@ -2408,7 +2405,7 @@ case "$1" in
         TARGET_TARBALL="linux-${inferred_arch}-${TARGET_YASM_FMT}"
         TARGET_DOCFILES="docs/readme.linux"   #platform specific docfile
         TARGET_USES_GNUMAKE="yes"
-        add_sources "linux" "x86_64" ""
+        add_sources "linux" "amd64" ""
 
         ;;
 

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.10 2003/11/04 14:04:23 kakace Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.11 2003/11/28 00:43:31 snake Exp $"; }
 
 //#define TRACE
 
@@ -92,7 +92,7 @@ int InitializeCoreTable_ogr(int first_time)
         ogr_get_dispatch_table();
       #elif (CLIENT_CPU == CPU_SPARC)
         ogr_get_dispatch_table();
-      #elif (CLIENT_CPU == CPU_X86_64)
+      #elif (CLIENT_CPU == CPU_AMD64)
         ogr_get_dispatch_table();
       #else
         #error FIXME! call all your *ogr_get_dispatch_table* functions here once
@@ -123,7 +123,7 @@ const char **corenames_for_contest_ogr()
   #if (CLIENT_CPU == CPU_X86)
       "GARSP 5.13-A",
       "GARSP 5.13-B",
-  #elif (CLIENT_CPU == CPU_X86_64)
+  #elif (CLIENT_CPU == CPU_AMD64)
       "GARSP 5.13",
   #elif (CLIENT_CPU == CPU_ARM)
       "GARSP 5.13 ARM 1",
@@ -396,7 +396,7 @@ int selcoreSelectCore_ogr(unsigned int threadindex,
     unit_func.ogr = ogr_get_dispatch_table_nobsr(); //B
     coresel = 1;
   }
-#elif (CLIENT_CPU == CPU_X86_64)
+#elif (CLIENT_CPU == CPU_AMD64)
   unit_func.ogr = ogr_get_dispatch_table();
   coresel = 0;
 #elif (CLIENT_CPU == CPU_ARM)

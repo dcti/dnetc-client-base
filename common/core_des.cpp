@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_des_cpp(void) {
-return "@(#)$Id: core_des.cpp,v 1.1.2.4 2003/09/02 00:48:53 mweiser Exp $"; }
+return "@(#)$Id: core_des.cpp,v 1.1.2.5 2003/11/28 00:43:31 snake Exp $"; }
 
 //#define TRACE
 
@@ -90,7 +90,7 @@ const char **corenames_for_contest_des()
       "movzx Bryd",
       "Kwan/Bitslice",
       "MMX/Bitslice",
-  #elif (CLIENT_CPU == CPU_X86_64)
+  #elif (CLIENT_CPU == CPU_AMD64)
       "Generic DES core",
   #elif (CLIENT_CPU == CPU_ARM)
       "Standard ARM core", /* "ARM 3, 610, 700, 7500, 7500FE" or  "ARM 710" */
