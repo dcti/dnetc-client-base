@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.84 2003/05/05 03:12:31 snikkel Exp $
+# @(#)$Id: configure,v 1.288.2.85 2003/05/14 19:21:37 snikkel Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1902,7 +1902,7 @@ case "$1" in
         add_sources "solaris" "sparc" "cc"
         ;;
 
-    *sparc-solaris-cc-universal)   # [snikkel sparc 32 bit]
+    *sparc-solaris-cc-universal)   # [snikkel sparc 32/64 bit, sun cc]
         TARGET_CC="CC"
         TARGET_LD="cc"
         TARGET_LDFLAGS="-mt"      
