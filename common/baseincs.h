@@ -11,6 +11,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.56.2.1  1999/04/04 09:44:56  jlawson
+// tzset stubs for riscos and macos
+//
 // Revision 1.56  1999/03/05 20:59:36  patrick
 //
 // timeval is found in sys/time.h for OS/2-EMX (somehow got removed)
@@ -279,6 +282,7 @@ extern "C" {
     extern int getch();
     #define fileno(f) ((f)->__file)
     #define isatty(f) ((f) == 0)
+    #define tzset() 
   }
   extern s32 guiriscos, guirestart;
   extern int riscos_in_taskwindow;
@@ -389,6 +393,7 @@ extern "C" {
   #if defined(MAC_GUI)
     #include "gui_incs.h"
   #endif
+  #define tzset()
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
 #endif
