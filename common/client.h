@@ -3,8 +3,12 @@
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-// 
+//
 // $Log: client.h,v $
+// Revision 1.56  1998/07/02 13:09:28  kbracey
+// A couple of RISC OS fixes - printf format specifiers made long.
+// Changed a "blocks" to "block%s", n==1?"":"s".
+//
 // Revision 1.55  1998/07/01 03:29:02  silby
 // Added prototype for CheckForcedKeyproxy (used in cliconfig)
 //
@@ -60,7 +64,7 @@
 // Revision 1.40  1998/06/14 08:12:36  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
-// 
+//
 
 // For WinNT Service:
 //#define WINNTSERVICE "bovrc5nt"
@@ -199,8 +203,8 @@ extern "C" {
 #elif (CLIENT_OS == OS_NETWARE)
   #include <sys/time.h>
   #include <process.h>
-  #include <conio.h>  
-  #include <direct.h> 
+  #include <conio.h>
+  #include <direct.h>
   #include <share.h>
   #include <fcntl.h>
   #include "platforms/netware/netware.h" //for stuff in netware.cpp
@@ -210,9 +214,6 @@ extern "C" {
   extern "C" int gethostname(char *, int); // Keep g++ happy.
 #endif
 
-#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
-}
-#endif
 // --------------------------------------------------------------------------
 
 #ifdef max
@@ -228,7 +229,7 @@ extern "C" {
 // --------------------------------------------------------------------------
 
 #if (CLIENT_OS == OS_NETWARE)
-//#define PATH_SEP   "\\"   //left undefined so I can see 
+//#define PATH_SEP   "\\"   //left undefined so I can see
 //#define PATH_SEP_C '\\'   //where the references are
 #define EXTN_SEP   "."
 #define EXTN_SEP_C '.'
@@ -446,7 +447,7 @@ protected:
 #if (CLIENT_OS == OS_WIN32) && defined(NEEDVIRTUALMETHODS)
   u32 connectrequested;       // used by win32gui to signal an update
 #endif
-  
+
 
 #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
   virtual void SurrenderCPU( void ) {};
@@ -650,7 +651,7 @@ public:
     // to be called before calling Run() for the first time
     // returns: non-zero on failure
 
-  s32 SelectCore(void); 
+  s32 SelectCore(void);
     // to be called before Run(), Benchmark(), or Test() to configure for cpu
     // returns: non-zero on failure
 
@@ -685,7 +686,7 @@ public:
       (CLIENT_OS == OS_WIN16) || \
       ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
     #ifdef __WATCOMC__
-      // disable "Warning! W481: col(1) class/enum has the same name 
+      // disable "Warning! W481: col(1) class/enum has the same name
       // as the function/variable 'timezone'"
       #pragma warning 481 9 ;
     #endif

@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.123  1998/07/02 13:09:20  kbracey
+// A couple of RISC OS fixes - printf format specifiers made long.
+// Changed a "blocks" to "block%s", n==1?"":"s".
+//
 // Revision 1.122  1998/07/01 09:15:23  ziggyb
 // Cleaned up the OS/2 clearscreen a bit
 //
@@ -77,7 +81,7 @@
 // Fixed problem with x86 cpu type detection not working.
 //
 // Revision 1.102  1998/06/22 00:55:25  silby
-// Removed no longer needed variable in ValidateConfig (due to moving 
+// Removed no longer needed variable in ValidateConfig (due to moving
 // of cpuchecking into separate file.)
 //
 // Revision 1.101  1998/06/21 17:10:21  cyruspatel
@@ -151,7 +155,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.122 1998/07/01 09:15:23 ziggyb Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.123 1998/07/02 13:09:20 kbracey Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -1275,9 +1279,9 @@ void Client::ValidateConfig( void )
   killwhitespace(smtpdest);
   killwhitespace(smtpfrom);
   if (strchr(smtpfrom,'@') == NULL && (isstringblank(smtpfrom) != 1))
-    strcat(smtpfrom,"@domainnameisrequired");  
+    strcat(smtpfrom,"@domainnameisrequired");
   if (strchr(smtpdest,'@') == NULL && (isstringblank(smtpdest) != 1))
-    strcat(smtpdest,"@domainnameisrequired");  
+    strcat(smtpdest,"@domainnameisrequired");
 
   if ( inthreshold[0] < 1   ) inthreshold[0] = 1;
   if ( inthreshold[0] > 1000 ) inthreshold[0] = 1000;
@@ -1394,7 +1398,7 @@ void Client::ValidateConfig( void )
     strcpy(logname,InternalGetLocalFilename(ini_logname));
 
 
-#endif 
+#endif
 
 
 
@@ -2985,7 +2989,7 @@ bool Client::CheckForcedKeyproxy(void)
           for (temp=&keyproxy[0];isalpha(*temp) > 0;temp++) {};
           *temp=0;
           strcpy(buffer,keyproxy);
-          sprintf(keyproxy,"%s%i.v27.distributed.net\0",buffer,keyport);
+          sprintf(keyproxy,"%s%li.v27.distributed.net\0",buffer,keyport);
           }
         else if (keyport == 2064)
           {

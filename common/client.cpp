@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.69  1998/07/02 13:09:25  kbracey
+// A couple of RISC OS fixes - printf format specifiers made long.
+// Changed a "blocks" to "block%s", n==1?"":"s".
+//
 // Revision 1.68  1998/07/01 10:52:04  ziggyb
 // Fixed the problem of a mail message being attemped when run in offline mode
 // after the main thread is quit.
@@ -95,7 +99,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.68 1998/07/01 10:52:04 ziggyb Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.69 1998/07/02 13:09:25 kbracey Exp $";
 #endif
 
 #include "client.h"
@@ -1254,7 +1258,7 @@ u32 Client::Benchmark( u8 contest, u32 numk )
   #if (CLIENT_OS == OS_NETWARE)
     tslice = GetTimesliceBaseline(); //in cpucheck.cpp
   #endif
-  
+
   while ( (problem[0]).Run( tslice , 0 ) == 0 )
     {
     if (!percentprintingoff)
@@ -1266,7 +1270,7 @@ u32 Client::Benchmark( u8 contest, u32 numk )
         problem[0].percent = percent2;
         }
       }
-    #if (CLIENT_OS == OS_NETWARE)   //yield 
+    #if (CLIENT_OS == OS_NETWARE)   //yield
       CliThreadSwitchLowPriority();
     #endif
 
@@ -1274,25 +1278,25 @@ u32 Client::Benchmark( u8 contest, u32 numk )
       if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C)
         SignalTriggered = UserBreakTriggered = 1;
     #endif
-    if ( SignalTriggered ) 
+    if ( SignalTriggered )
       return 0;
-    } 
+    }
 
 #ifdef NEW_STATS_AND_LOGMSG_STUFF
   #if 0
-    LogScreenf("\n[%s] %s\n", CliGetTimeString( NULL, 1 ), 
+    LogScreenf("\n[%s] %s\n", CliGetTimeString( NULL, 1 ),
                 CliGetMessageForProblemCompletedNoSave( &(problem[0]) ) );
     return (u32)0;  //unused, so we don't care
   #else
-    struct timeval tv;  
+    struct timeval tv;
     char ratestr[32];
     double rate = CliGetKeyrateForProblemNoSave( &(problem[0]) );
     tv.tv_sec = (problem[0]).timehi;  //read the time the problem:run started
     tv.tv_usec = (problem[0]).timelo;
     CliTimerDiff( &tv, &tv, NULL );    //get the elapsed time
-    LogScreenf("\nCompleted in %s [%skeys/sec]\n", CliGetTimeString( &tv, 2 ), 
+    LogScreenf("\nCompleted in %s [%skeys/sec]\n", CliGetTimeString( &tv, 2 ),
                              CliGetKeyrateAsString( ratestr, rate ) );
-    return (u32)(rate);                         
+    return (u32)(rate);
   #endif
 #else //old_timing here
   double lenhi = (double) ((problem[0]).timehi);
@@ -1628,7 +1632,7 @@ s32 Client::Run( void )
 #if defined(MULTITHREAD)
   #if (CLIENT_OS == OS_WIN32) && defined(NEEDVIRTUALMETHODS)
     connectrequested = 0;         // uses public class member
-  #else  
+  #else
     u32 connectrequested = 0;
   #endif
   u32 connectloops = 0;
@@ -1652,12 +1656,12 @@ s32 Client::Run( void )
   if ( strcmp(checkpoint_file[0],"none") != 0)
   {
     s32 recovered = CkpointToBufferInput(0); // Recover any checkpointed information in case we abnormally quit.
-    if (recovered != 0) Log("Recovered %d blocks from RC5 checkpoint file\n",recovered);
+    if (recovered != 0) Log("Recovered %d block%s from RC5 checkpoint file\n",recovered,recovered==1?"":"s");
   }
   if ( strcmp(checkpoint_file[1],"none") != 0)
   {
     s32 recovered = CkpointToBufferInput(1); // Recover any checkpointed information in case we abnormally quit.
-    if (recovered != 0) Log("Recovered %d blocks from DES checkpoint file\n",recovered);
+    if (recovered != 0) Log("Recovered %d block%s from DES checkpoint file\n",recovered,recovered==1?"":"s");
   }
 
   // --------------------------------------
@@ -2670,10 +2674,10 @@ PreferredIsDone1:
     //------------------------------------
     // Does a pausefile exist?
     //------------------------------------
- 
+
     pausefilefound = (strcmp(pausefile,"none") != 0 &&
           stat(pausefile, &buf) != -1 ? 1 : 0);
-    
+
     }
 
     //----------------------------------------
@@ -2929,20 +2933,20 @@ void Client::LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted
   // fixes the problem of "100%" running off an 80 column screen and
   // also gives a '.' sooner for new blocks.
   char buffer[88];
-  unsigned int p, pos = 0;      
+  unsigned int p, pos = 0;
   unsigned int restartpercent =
               (!restarted || percent==100) ? 0 :
               ( percent - ((percent>90)?(percent&1):(1-(percent&1))) );
-  buffer[0]=0;        
+  buffer[0]=0;
   for ( p = (lastpercent + 1) ; (pos < 80) && (p < (percent+1)) ; p++ )
   {
-    if ( p == 100 ) 
+    if ( p == 100 )
       { strcat( buffer, "100" ); pos+=3; } //LogScreen("100");
-    else if ( p == restartpercent ) 
+    else if ( p == restartpercent )
       { strcat( buffer, "R" ); pos++; } // LogScreen("R");
-    else if ( ( p % 10 ) == 0 ) 
+    else if ( ( p % 10 ) == 0 )
       { sprintf( (buffer+pos), "%d%%",p ); pos+=3; } //LogScreenf("%d%%",p);
-    else if ( ( p<90 && p&1 ) || ( p>90 && (!(p&1)) ) ) 
+    else if ( ( p<90 && p&1 ) || ( p>90 && (!(p&1)) ) )
       { strcat( buffer, "." ); pos++; } //LogScreen(".");
   }
   LogScreen( buffer );
