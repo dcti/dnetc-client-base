@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.139  1998/12/14 10:26:56  snake
+#
+# fixes for OpenBSD sparc
+#
 # Revision 1.138  1998/12/14 09:38:58  snake
 #
 # Re-integrated non-nasm x86 cores, cause nasm doesn't support all x86 platforms.
@@ -507,6 +511,7 @@ OPTS_GCC_SPARC="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
 OPTS_GCC_ULTRA="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
 OPTS_GAS_ULTRA=-Av9a
 OPTS_GCC_NONULTRA_SPARC="$OPTS_GCC -O6 -DASM_SPARC"
+OPTS_GCC272_NONULTRA_SPARC="$OPTS_GCC272 -O6 -DASM_SPARC"
 OPTS_EGCS_NONULTRA_SPARC="$OPTS_EGCS -O6 -mtune=supersparc -DASM_SPARC"
 
 #--
@@ -765,8 +770,8 @@ case "$1" in
 
     *sparc-openbsd)
 	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_NONULTRA_SPARC -DPIPELINE_COUNT=2 -DBIT_32 -DKWAN"
-	TARGET_ADDSRCS="$SLICE_SRCS3"
+	TARGET_CCFLAGS="$OPTS_GCC272_NONULTRA_SPARC -DPIPELINE_COUNT=2 -DBIT_32 -DKWAN -static"
+	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
 	;;
 
     *sparc-linux)

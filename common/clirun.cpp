@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.51  1998/12/14 10:26:57  snake
+//
+// fixes for OpenBSD sparc
+//
 // Revision 1.50  1998/12/14 09:38:58  snake
 //
 // Re-integrated non-nasm x86 cores, cause nasm doesn't support all x86 platforms.
@@ -193,7 +197,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.50 1998/12/14 09:38:58 snake Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.51 1998/12/14 10:26:57 snake Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -406,6 +410,8 @@ static void yield_pump( void *tv_p )
     // (no toolbox or mixed-mode calls)
     if (MP_active) tick_sleep(60);	// is this optimal?
   #elif (CLIENT_OS == OS_BEOS)
+    NonPolledUSleep( 0 ); /* yield */
+  #elif (CLIENT_OS == OS_OPENBSD)
     NonPolledUSleep( 0 ); /* yield */
   #else
     #error where is your yield function?
