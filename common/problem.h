@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.34 2000/10/26 15:32:46 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.35 2000/10/27 17:58:44 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -184,15 +184,30 @@ public: /* anything public must be thread safe */
     // Returns RESULT_* or -1 if error.
 
   int Run(void);
-    // Runs calling rc5_unit for iterations times...
-    // Returns RESULT_* or -1 if error.
+  // Runs calling rc5_unit for iterations times...
+  // Returns RESULT_* or -1 if error.
 
-  u32 CalcPermille();
-    // Return the % completed in the current block, to nearest 0.1%.
+  // more than you'll ever care to know :) any arg can be 0/null */
+  // returns RESULT_* or -1 if bad state
+  // *tcount* == total (n/a if not finished), *ccount* == numdone so far
+  int GetInfo(unsigned int *cont_id, const char **cont_name, 
+                     u32 *elapsed_secs, u32 *elapsed_usecs, 
+                     unsigned int *swucount, int pad_strings,
+                     const char **unit_name, unsigned int *permille_done,
+                     char *idbuf, unsigned int idbufsz,
+                     double *rate, char *ratebuf, unsigned int ratebufsz,
+                     u32 *ubtcounthi, u32 *ubtcountlo, 
+                     char *tcountbuf, unsigned int tcountbufsz,
+                     u32 *ubccounthi, u32 *ubccountlo, 
+                     char *ccountbuf, unsigned int ccountbufsz);
 
-  int GetElapsedTime(struct timeval *elapsed) const;
-    // Calculates elapsed wall clock time between loadtime and now/finishtime
-    // Stores the result in *elapsed and returns last_resultcode or -1 if error
+  // Return the % completed in the current block, to nearest 0.1%.
+  // used by clirun for checkpoint management (probably shouldn't)
+  u32 CalcPermille() {
+      u32 ret = 0; 
+      GetInfo(0, 0, 0, 0, 0, 0, 0, &ret, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+      return ret;
+  }      
 };
 
 /* ------------------------------------------------------------------- */
@@ -200,6 +215,7 @@ public: /* anything public must be thread safe */
 /* RC5/DES/CSC 2^28 key count conversion.
    belongs in ccoreio.c[pp], but that doesn't exist, and its not worth
    creating for this itty-bitty thing.
+   Only used from buff*.cpp 
 */
 inline u32 __iter2norm( u32 iterlo, u32 iterhi )
 {

@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.18.2.8 2000/09/24 13:40:12 andreasb Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.18.2.9 2000/10/27 17:58:42 cyp Exp $"; }
 
 #include "baseincs.h" //for timeval
 #include "clitime.h" //required for CliTimerDiff() and CliClock()
@@ -72,100 +72,6 @@ int CliGetContestIDFromName( char *name )
 
 // ---------------------------------------------------------------------------
 
-// obtain constant data for a contest. name/iter2key may be NULL
-// returns 0 if success, !0 if error (bad contestID).
-int CliGetContestInfoBaseData( int contestid, const char **name, unsigned int *iter2key )
-{
-  struct contestInfo *conInfo =
-                       __internalCliGetContestInfoVectorForID( contestid );
-  if (!conInfo)
-    return -1;
-  if (name)     *name = conInfo->ContestName;
-  if (iter2key) *iter2key = (conInfo->Iter2KeyFactor<=1)?(1):(conInfo->Iter2KeyFactor);
-  return 0;
-}
-
-// ---------------------------------------------------------------------------
-
-// reset the contest summary data for a contest
-int CliClearContestInfoSummaryData( int contestid )
-{
-  struct contestInfo *conInfo =
-                      __internalCliGetContestInfoVectorForID( contestid );
-  if (!conInfo)
-    return -1;
-  conInfo->BlocksDone = 0;
-  conInfo->IterDone = (double)(0);
-  conInfo->TimeDone.tv_sec = conInfo->TimeDone.tv_usec = 0;
-  conInfo->UnitsDone = 0;
-  conInfo->BestTime = 0;
-  return 0;
-}  
-
-// ---------------------------------------------------------------------------
-
-// obtain summary data for a contest. unrequired args may be NULL
-// returns 0 if success, !0 if error (bad contestID).
-int CliGetContestInfoSummaryData( int contestid, unsigned int *totalblocks,
-      double *totaliter, struct timeval *totaltime, unsigned int *totalunits)
-{
-  struct contestInfo *conInfo =
-                      __internalCliGetContestInfoVectorForID( contestid );
-  if (!conInfo)
-    return -1;
-  if (totalblocks) *totalblocks = conInfo->BlocksDone;
-  if (totaliter)   *totaliter   = conInfo->IterDone;
-  if (totalunits)  *totalunits  = conInfo->UnitsDone;
-  if (totaltime)
-  {
-    totaltime->tv_sec = conInfo->TimeDone.tv_sec;
-    totaltime->tv_usec = conInfo->TimeDone.tv_usec;
-//#if 0  
-    if (conInfo->BlocksDone > 1)
-    {
-      //get time since first call to CliTimer() (time when 1st prob started)
-      CliClock(totaltime);
-      if (totaltime->tv_sec >= conInfo->TimeDone.tv_sec)
-      {
-        //no overlap means non-mt or only single thread
-        totaltime->tv_sec = conInfo->TimeDone.tv_sec;
-        totaltime->tv_usec = conInfo->TimeDone.tv_usec;
-      }
-    }
-//#endif
-  }
-  return 0;
-}
-
-// ---------------------------------------------------------------------------
-
-// add data to the summary data for a contest.
-// returns 0 if added successfully, !0 if error (bad contestID).
-int CliAddContestInfoSummaryData( int contestid, unsigned int *addblocks,
-        double *additer, struct timeval *addtime, unsigned int *addunits)
-{
-  struct contestInfo *conInfo =
-                       __internalCliGetContestInfoVectorForID( contestid );
-  if (!conInfo)
-    return -1;
-  if (addblocks) conInfo->BlocksDone += (*addblocks);
-  if (additer)   conInfo->IterDone = conInfo->IterDone + (*additer);
-  if (addunits)  conInfo->UnitsDone += (*addunits);
-  if (addtime)
-  {
-    conInfo->TimeDone.tv_sec += addtime->tv_sec;
-    if ((conInfo->TimeDone.tv_usec += addtime->tv_usec) > 1000000L)
-    {
-      conInfo->TimeDone.tv_sec += (conInfo->TimeDone.tv_usec / 1000000L);
-      conInfo->TimeDone.tv_usec %= 1000000L;
-    }
-  }
-
-  return 0;
-}
-
-// ---------------------------------------------------------------------------
-
 // returns the expected time to complete a work unit, in seconds
 // if force is true, then a microbenchmark will be done to get the
 // rate if no work on this contest has been completed yet.
@@ -208,6 +114,123 @@ int CliSetContestWorkUnitSpeed( int contestid, unsigned int sec)
 }
     
 // ---------------------------------------------------------------------------
+
+// obtain constant data for a contest. name/iter2key may be NULL
+// returns 0 if success, !0 if error (bad contestID).
+int CliGetContestInfoBaseData( int contestid, const char **name, unsigned int *iter2key )
+{
+  struct contestInfo *conInfo =
+                       __internalCliGetContestInfoVectorForID( contestid );
+  if (!conInfo)
+    return -1;
+  if (name)     *name = conInfo->ContestName;
+  if (iter2key) *iter2key = (conInfo->Iter2KeyFactor<=1)?(1):(conInfo->Iter2KeyFactor);
+  return 0;
+}
+
+// ---------------------------------------------------------------------------
+
+// reset the contest summary data for a contest
+int CliClearContestInfoSummaryData( int contestid )
+{
+  struct contestInfo *conInfo =
+                      __internalCliGetContestInfoVectorForID( contestid );
+  if (!conInfo)
+    return -1;
+  conInfo->BlocksDone = 0;
+  conInfo->IterDone = (double)(0);
+  conInfo->TimeDone.tv_sec = conInfo->TimeDone.tv_usec = 0;
+  conInfo->UnitsDone = 0;
+  conInfo->BestTime = 0;
+  return 0;
+}  
+
+// ---------------------------------------------------------------------------
+
+// obtain summary data for a contest. unrequired args may be NULL
+// returns 0 if success, !0 if error (bad contestID).
+int CliGetContestInfoSummaryData( int contestid, unsigned int *totalblocks,
+                                  double *totaliter, struct timeval *totaltime, 
+                                  unsigned int *totalunits, double *avgrate)
+{
+  struct contestInfo *conInfo =
+                      __internalCliGetContestInfoVectorForID( contestid );
+  if (!conInfo)
+    return -1;
+  if (totalblocks) *totalblocks = conInfo->BlocksDone;
+  if (totaliter)   *totaliter   = conInfo->IterDone;
+  if (totalunits)  *totalunits  = conInfo->UnitsDone;
+  if (totaltime || avgrate)
+  {
+    struct timeval tv;
+    tv.tv_sec = conInfo->TimeDone.tv_sec;
+    tv.tv_usec = conInfo->TimeDone.tv_usec;
+    if (conInfo->BlocksDone > 1)
+    {
+      //get time since first call to CliTimer() (time when 1st prob started)
+      struct timeval tv2;
+      CliClock(&tv2);
+      if (tv2.tv_sec < tv.tv_sec) 
+      {   //no overlap means non-mt or only single thread
+        tv.tv_sec = tv2.tv_sec;
+        tv.tv_usec = tv2.tv_usec;
+      }
+    }
+    if (totaltime)
+    {
+      totaltime->tv_sec = tv.tv_sec;
+      totaltime->tv_usec = tv.tv_usec;
+    }
+    if (avgrate)
+    {
+      double r = ((double)0); 
+      if (conInfo->BlocksDone)
+      {
+        r = conInfo->IterDone;
+        if (tv.tv_sec || tv.tv_usec)
+          r=r/(((double)tv.tv_sec)+(((double)tv.tv_usec)/((double)(1000000L))));
+      }
+      *avgrate = r;
+    }
+  }
+  return 0;
+}
+
+// ---------------------------------------------------------------------------
+
+// add data to the summary data for a contest.
+// returns 0 if added successfully, !0 if error (bad contestID).
+int CliAddContestInfoSummaryData( int contestid, 
+                                  u32 iter_hi, u32 iter_lo, 
+                                  const struct timeval *addtime,
+                                  unsigned int addunits,
+                                  double addrate )
+{
+  struct contestInfo *conInfo =
+                       __internalCliGetContestInfoVectorForID( contestid );
+  if (!conInfo || !addtime)
+    return -1;
+  conInfo->BlocksDone++;
+  if (contestid != 2) /* OGR */
+  {
+    unsigned int sec = (unsigned int)((1<<28)/addrate + 0.5);
+    CliSetContestWorkUnitSpeed(contestid, sec);
+  }
+  conInfo->IterDone = conInfo->IterDone + 
+                       (((double)iter_hi)*4294967296.0)+((double)iter_lo);
+  conInfo->UnitsDone += addunits;
+  conInfo->TimeDone.tv_sec += addtime->tv_sec;
+  conInfo->TimeDone.tv_usec += addtime->tv_usec;
+  if (conInfo->TimeDone.tv_usec > 1000000L)
+  {
+    conInfo->TimeDone.tv_sec += (conInfo->TimeDone.tv_usec / 1000000L);
+    conInfo->TimeDone.tv_usec %= 1000000L;
+  }
+  return 0;
+}
+
+// ---------------------------------------------------------------------------
+
 
 // return 0 if contestID is invalid, non-zero if valid.
 int CliIsContestIDValid(int contestid)

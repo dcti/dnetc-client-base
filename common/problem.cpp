@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.71 2000/10/26 15:32:45 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.72 2000/10/27 17:58:43 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -212,6 +212,7 @@ static void __IncrementKey(u32 *keyhi, u32 *keylo, u32 iters, int contest)
 
 /* ------------------------------------------------------------- */
 
+#if 0
 u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%. */
 {
   u32 retpermille = 0;
@@ -252,6 +253,7 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
   }
   return retpermille;
 }
+#endif
 
 /* ------------------------------------------------------------------- */
 
@@ -1180,6 +1182,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
 
 /* ----------------------------------------------------------------------- */
 
+#if 0
 // Calculates elapsed wall clock time between loadtime and now/finishtime
 // Stores the result in *elapsed and returns last_resultcode or -1 if error
 int Problem::GetElapsedTime(struct timeval *elapsed) const
@@ -1239,5 +1242,448 @@ int Problem::GetElapsedTime(struct timeval *elapsed) const
 
   return last_resultcode;
 }
+#endif
 
 /* ----------------------------------------------------------------------- */
+
+// returns double as string such that the length of the result is never
+// greater than 19 (sizeof("9,999,999,999.99 X")) [will be less if 
+// max_int_digits is less than 10, fractional portion and comma-separators 
+// are optional). " X" will denote the 10**n magnitude if the integer 
+// portion was 'squeezed' to honor the max-length or max_int_digits limits.
+// The largest value thus representable is 9.NNe+27.
+//
+static char *__double_as_string( char * __buf, unsigned int __bufsz,
+                                 double rate, 
+                                 int max_int_digits, /* < 0 means 'any' */
+                                 int max_frac_digits, /* < 0 means 'if any' */
+                                 int with_num_sep, int pad_strings )
+{
+  char buffer[64];
+  if (!__buf || __bufsz < 2)
+  {
+    if (__buf && __bufsz)
+      *__buf = '\0';
+    return __buf;
+  }
+  if (rate<=((double)(0)))  // unfinished (-2) or error (-1) or impossible (0)
+    strcpy( buffer, "---.-- " );
+  else
+  {
+    /*kilo, Mega(10**6), Giga(10**9), Tera(10**12), Peta(10**15), Exa(10**18)*/
+    const char *magna[]={"","k","M","G","T","P","E"};
+    unsigned int idx; unsigned long limit;
+      
+    if (max_int_digits < 1 || max_int_digits > 10)
+      max_int_digits = 10; /* 9,999,999,999 even on 64bit cpus */
+    limit = 0;
+    while (max_int_digits && limit < ((ULONG_MAX-9)/10))
+    {
+      limit *= 10;
+      limit += 9;
+      max_int_digits--;
+    }  
+    idx = 0;
+    while (idx < (sizeof(magna)/sizeof(magna[0])) && rate > ((double)limit))
+    {
+      idx++;
+      rate = ((double)(rate)) / ((double)(1000));
+    }
+    if (idx >= (sizeof(magna)/sizeof(magna[0])))
+      strcpy( buffer, "***.** " ); //overflow
+    else
+    {
+      unsigned long rateint = (unsigned long)rate;
+      if (!with_num_sep || rateint <= 999ul)
+        sprintf(buffer,"%lu",rateint);
+      else  
+      {
+        char intbuf[60];
+        unsigned int numdigits = 0, pos = sizeof(intbuf);
+        unsigned long r = rateint;
+        intbuf[--pos] = '\0';
+        while (r)
+        {
+          if (numdigits && (numdigits % 3)==0)
+            intbuf[--pos] = ',';
+          intbuf[--pos] = (char)((r % 10)+'0');
+          numdigits++;
+          r /= 10;  
+        }
+        strcpy(buffer, &intbuf[pos] );
+      } 
+      if (idx != 0 || max_frac_digits > 0)
+      { /* misnomer, we always do two digits (if any at all) */
+        /* if max_frac_digits < 0 then only if we had to divide to fit */  
+        rateint = ((unsigned long)
+          ((((double)(rate-((double)(rateint)))))*((double)(100)))) ;
+        sprintf( &buffer[strlen(buffer)], ".%02lu", rateint );
+      }       
+      if (pad_strings)
+        strcat( buffer, " " );   
+      strcat( buffer, magna[idx] );
+    }
+  }
+  strncpy(__buf, buffer, __bufsz);
+  __buf[__bufsz-1] = '\0';
+  return __buf;
+}
+
+#ifdef HAVE_OGR_CORES
+static const char *__nodecount_as_string( char *buf, unsigned int bufsz,
+                                          u32 nodeshi, u32 nodeslo,
+                                          int pad_strings )
+{
+  /* stats unit is Gnodes, so if nodes <= 9,999,999 (<0.01 Gnodes), */
+  /* then "n,nnn,nnn\0", else "iii.ff X\0" */
+  if (nodeshi == 0 && nodeslo <= 9999999)
+  {
+    char nodecount[32]; 
+    int pos = sizeof(nodecount);
+    unsigned int numdigits=0;
+    nodecount[--pos] = '\0';
+    if (pad_strings)
+      nodecount[--pos] = ' ';
+    do
+    {
+      if (numdigits && (numdigits%3)==0)
+        nodecount[--pos]=',';
+      nodecount[--pos]=(char)((nodeslo % 10)+'0');
+      nodeslo/=10;
+    } while (nodeslo);
+    strncpy( buf, &nodecount[pos], bufsz );
+    buf[bufsz-1] = '\0';
+  }  
+  else 
+  {
+    __double_as_string( buf, bufsz, ((((double)nodeshi)*4294967296.0)+
+                            ((double)nodeslo)), 3, 2, !0, pad_strings );
+  }   
+  return buf;
+}  
+#endif
+
+/* ----------------------------------------------------------------------- */
+
+/* more info than you ever wanted. :) any/all params can be NULL/0 */
+/* tcount = totalnumberofiterationstodo. tcountbuf="nn*2^28" for crypto */
+/* ccount = numberofiterationdonethistime. ccountbuf="nnn,nnn,nnn" done ever */
+/* counts are unbiased (adjustment for DES etc already done) */
+int Problem::GetInfo(unsigned int *cont_id, const char **cont_name, 
+                     u32 *elapsed_secsP, u32 *elapsed_usecsP, 
+                     unsigned int *swucount, int pad_strings,
+                     const char **unit_name, unsigned int *permille_done,
+                     char *sigbuf, unsigned int sigbufsz,
+                     double *rate, char *ratebuf, unsigned int ratebufsz,
+                     u32 *ubtcounthi, u32 *ubtcountlo, 
+                     char *tcountbuf, unsigned int tcountbufsz,
+                     u32 *ubccounthi, u32 *ubccountlo, 
+                     char *ccountbuf, unsigned int ccountbufsz)
+{
+  int rescode = last_resultcode;
+  if (initialized && rescode >= 0)
+  {
+    u32 e_sec = 0, e_usec = 0;
+
+    if (cont_id)
+    {
+      *cont_id = contest;
+    }
+    if (cont_name)
+    {
+      switch (contest)
+      {
+        case RC5: *cont_name = "RC5"; break;
+        case DES: *cont_name = "DES"; break;
+        case OGR: *cont_name = "OGR"; break;
+        case CSC: *cont_name = "CSC"; break;
+        default:  *cont_name = "???"; break;
+      }
+    }
+    if (unit_name)
+    {
+      switch (contest)
+      {
+        case RC5:
+        case DES:
+        case CSC: *unit_name = "keys"; break; 
+        case OGR: *unit_name = "nodes"; break;
+        default:  *unit_name = "???"; break;
+      }
+    }
+    if (swucount) /* can be done separately since it doesn't change */
+    {             /* while the cruncher is active */
+      switch (contest)
+      {
+        case RC5:
+        case CSC:
+              *swucount = (unsigned int)
+                          ((contestwork.crypto.iterations.lo >> 28)+
+                          (contestwork.crypto.iterations.hi << 4));
+              break;
+        case DES:
+              *swucount = (unsigned int)
+                          (((contestwork.crypto.iterations.lo >> 28)+
+                           (contestwork.crypto.iterations.hi << 4))<<1);
+              break;
+        case OGR:
+              *swucount = (unsigned int)1;
+              break;
+        default:  
+              *swucount = 0;
+              break;
+      }
+    }
+    if (sigbuf)
+    {
+      if (sigbufsz)
+        *sigbuf = '\0';
+      if (sigbufsz < 2)
+        sigbuf = (char *)0;
+    }
+    if (ratebuf)
+    {
+      if (ratebufsz)
+        *ratebuf = '\0';
+      if (ratebufsz < 2)
+        ratebuf = (char *)0;
+    }
+    if (tcountbuf)
+    {
+      if (tcountbufsz)
+        *tcountbuf = '\0';
+      if (tcountbufsz < 2)
+        tcountbuf = (char *)0;
+    }
+    if (ccountbuf)
+    {
+      if (ccountbufsz)
+        *ccountbuf = '\0';
+      if (ccountbufsz < 2)
+        ccountbuf = (char *)0;
+    }
+    if (elapsed_secsP || elapsed_usecsP || rate || ratebuf)
+    {
+      if (elapsed_time_sec != 0xfffffffful)
+      {
+        /* problem finished, elapsed time has already calculated by Run() */
+        e_sec  = elapsed_time_sec;
+        e_usec = elapsed_time_usec;
+      }     
+      else /* compute elapsed wall clock time since loadtime */
+      {
+        u32 start_sec  = loadtime_sec;
+        u32 start_usec = loadtime_usec;
+
+        if (start_sec != 0xfffffffful) /* our start time was not invalid */
+        {
+          struct timeval clock_now;
+          if (CliGetMonotonicClock(&clock_now) != 0)
+          {
+            if (CliGetMonotonicClock(&clock_now) != 0)
+              start_sec = 0xfffffffful; /* no current time, so make start invalid */
+          }
+          if (start_sec != 0xfffffffful)
+          {
+            e_sec  = clock_now.tv_sec;
+            e_usec = clock_now.tv_usec;
+          }
+        }
+        if (start_sec == 0xfffffffful || /* start time is invalid */
+            e_sec <  start_sec || (e_sec == start_sec && e_usec < start_usec ))
+        {
+          /* either start time is invalid, or current-time < start-time */
+          /* both are BadThing(TM)s - have to use the per-run total */
+          e_sec  = runtime_sec;
+          e_usec = runtime_usec;
+        }
+        else /* start and 'now' time are ok */
+        {
+          if (e_usec < start_usec)
+          {
+            e_usec += 1000000UL;
+            e_sec  --;
+          }
+          e_sec  -= start_sec;
+          e_usec -= start_usec;
+        }
+      }
+      if (elapsed_secsP)
+        *elapsed_secsP = e_sec;
+      if (elapsed_usecsP)
+        *elapsed_usecsP = e_usec;
+    } /* if (elapsed || rate || ratebuf) */    
+    if ( sigbuf || rate || ratebuf || permille_done ||
+         ubtcounthi || ubtcountlo || tcountbuf ||
+         ubccounthi || ubccountlo || ccountbuf )
+    { 
+      ContestWork work;
+      unsigned int contestid = 0;
+      int rescode = RetrieveState( &work, &contestid, 0, 0 );
+
+      #define __u64_as_string(__buf,__bufsz,__hi,__lo,__mid,__mfd,__wns,__pad)\
+              __double_as_string(__buf,__bufsz, \
+                              ((((double)(__hi))*4294967296.0)+ \
+                              ((double)(__lo))), __mid, __mfd, __wns, __pad )
+
+      if (rescode >= 0) /* hmm! */
+      {
+        char scratch[64];
+        u32 retpermille = 0;
+        u32 tcounthi=0, tcountlo=0; /*total 'iter' (n/a if not finished)*/
+        u32 ccounthi=0, ccountlo=0; /*'iter' done (so far, all starts) */
+        u32 scounthi=0, scountlo=0; /* start pos */
+        switch (contestid)
+        {
+          case RC5:
+          case DES:
+          case CSC:
+          { 
+            unsigned int units, twoxx;
+            scounthi = startkeys.hi;
+            scountlo = startkeys.lo;
+            tcounthi = work.crypto.iterations.hi;
+            tcountlo = work.crypto.iterations.lo;
+            ccounthi = work.crypto.keysdone.hi;
+            ccountlo = work.crypto.keysdone.lo;
+            if (contestid == DES)
+            {
+              tcounthi <<= 1; tcounthi |= (tcountlo >> 30); tcountlo <<= 1; 
+              ccounthi <<= 1; ccounthi |= (ccountlo >> 30); ccountlo <<= 1; 
+              scounthi <<= 1; scounthi |= (scountlo >> 30); scountlo <<= 1;
+            }
+            units = ((tcountlo >> 28)+(tcounthi << 4)); 
+            twoxx = 28;
+            if (!units) /* less than 2^28 packet (eg test) */
+            {
+              units = tcountlo >> 20;
+              twoxx = 20;
+            }
+            if (rescode != RESULT_NOTHING && rescode != RESULT_FOUND)
+            {
+              tcounthi = 0;
+              tcountlo = 0;
+            }
+            if (sigbuf)
+            {
+              sprintf( scratch, "%08lX:%08lX %u*2^%u", 
+                       (unsigned long) ( work.crypto.key.hi ),
+                       (unsigned long) ( work.crypto.key.lo ),
+                       units, twoxx );
+              strncpy( sigbuf, scratch, sigbufsz );
+              sigbuf[sigbufsz-1] = '\0';
+            }
+            if (tcountbuf && (tcounthi || tcountlo)) /* only if finished */
+            {
+              __u64_as_string(tcountbuf,tcountbufsz,tcounthi,tcountlo,6,2,1,
+                              pad_strings );
+              //sprintf( scratch, "%u*2^%u", units, twoxx );               
+              //strncpy( tcountbuf, scratch, tcountbufsz );
+              //tcountbuf[tcountbufsz-1] = '\0';
+            }
+            if (ccountbuf)
+            {
+              __u64_as_string(ccountbuf,ccountbufsz,ccounthi,ccountlo,-1,0,1,
+                              pad_strings );
+            }
+            if (permille_done)
+            {
+              if (!started)
+                retpermille = startpermille;
+              else if (rescode != RESULT_WORKING)
+                retpermille = 1000;
+              else
+              {
+                retpermille = (u32)( ((double)(1000.0)) *
+                (((((double)(work.crypto.keysdone.hi))*((double)(4294967296.0)))+
+                            ((double)(work.crypto.keysdone.lo))) /
+                ((((double)(work.crypto.iterations.hi))*((double)(4294967296.0)))+
+                        ((double)(work.crypto.iterations.lo)))) );
+                if (retpermille > 1000)
+                  retpermille = 1000;
+              }
+            }
+          } /* case: crypto */
+          break;
+#ifdef HAVE_OGR_CORES
+          case OGR:
+          {
+            scounthi = startkeys.hi;
+            scountlo = startkeys.lo;
+            ccounthi = work.ogr.nodes.hi;
+            ccountlo = work.ogr.nodes.lo;
+            if (rescode == RESULT_NOTHING || rescode == RESULT_FOUND)
+            {
+              tcounthi = ccounthi;
+              tcountlo = ccountlo;
+            }
+            if (sigbuf)
+            {
+              ogr_stubstr_r( &work.ogr.workstub.stub, sigbuf, sigbufsz );
+            }
+            if (tcountbuf && (tcounthi || tcountlo)) /* only if finished */
+            {
+              __nodecount_as_string(tcountbuf,tcountbufsz,tcounthi,tcountlo,
+                                    pad_strings);
+            }
+            if (ccountbuf)
+            {
+              __nodecount_as_string(ccountbuf,ccountbufsz,ccounthi,ccountlo,
+                                    pad_strings);
+            }
+            if (permille_done)
+            {
+              if (!started)
+                retpermille = startpermille;
+              else if (rescode != RESULT_WORKING)
+                retpermille = 1000;
+              else
+              {
+                // This is just a quick&dirty calculation that resembles progress.
+                retpermille = work.ogr.workstub.stub.diffs[work.ogr.workstub.stub.length]*10
+                            + work.ogr.workstub.stub.diffs[work.ogr.workstub.stub.length+1]/10;
+                if (retpermille > 1000)
+                  retpermille = 1000;
+              }
+            } /* permille_done */
+          } /* OGR */      
+          break;
+#endif /* HAVE_OGR_CORES */
+          default:
+          break;  
+        } /* switch() */
+
+        /* donecount = currentpos - startpos */
+        scountlo = ccountlo - scountlo;
+        scounthi = ccounthi - scounthi;
+        if (scountlo > ccountlo)
+          scounthi++;
+        ccounthi = scounthi;
+        ccountlo = scountlo;
+
+        if (rate || ratebuf)
+        {
+          double r = (((double)ccounthi) * 4294967296.0)+((double)ccountlo);
+          if (e_sec || e_usec)
+            r /= (((double)(e_sec))+(((double)(e_usec))/((double)(1000000L))));
+          if (rate)
+            *rate = r;
+          if (ratebuf)
+            __double_as_string(ratebuf, ratebufsz, r, -1, 2, 1, pad_strings);
+        }
+        if (ubccounthi)
+          *ubccounthi = ccounthi;
+        if (ubccountlo)
+          *ubccountlo = ccountlo;
+        if (ubtcounthi)
+          *ubtcounthi = tcounthi;
+        if (ubtcountlo)
+          *ubtcountlo = tcountlo;
+        if (permille_done)
+          *permille_done = retpermille;
+      } /* if (rescode >= 0) */
+    } /* if (sigbuf || ... ) */
+  } /* if (initialized && last_resultcode >= 0) */
+  return rescode;
+}
+

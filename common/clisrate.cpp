@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.45.2.17 2000/10/26 15:32:44 cyp Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.45.2.18 2000/10/27 17:58:42 cyp Exp $"; }
 
 //#define TRACE
 
@@ -20,7 +20,6 @@ return "@(#)$Id: clisrate.cpp,v 1.45.2.17 2000/10/26 15:32:44 cyp Exp $"; }
 #include "util.h"      // trace
 #include "logstuff.h"  // Log()
 #include "clitime.h"   // CliTimer(), CliTimerDiff(), CliGetTimeString()
-#include "clirate.h"   // CliGetKeyrateFor[Problem|Contest]()
 #include "clicdata.h"  // CliGetContestInfo[Base|Summary]Data()
 #include "clisrate.h"  // keep prototypes in sync
 
@@ -103,278 +102,37 @@ static char *__double_as_string( char *buffer, double rate,
 
 /* ----------------------------------------------------------------------- */
 
-static void __unbias_iter_count(unsigned int contestid, u32 *hiP, u32 *loP)
-{
-  /* for DES (and maybe others) where the number of keys we show is a 
-     multiple of the number of iterations done. This has nothing to do
-     with pipeline count etc, but is used when each iteration implies
-     the check of another 'key', in DES' case, of the complement.
-  */     
-  unsigned int multiplier = 0;
-  if (CliGetContestInfoBaseData( contestid, NULL, &multiplier )==0) //clicdata
-  {
-    if (multiplier == 2) /* DES for example */
-    {
-      *hiP <<= 1;
-      *hiP |= (*loP >> 31);
-      *loP <<= 1;
-    }
-    else if (multiplier > 1) /* and <= 0xffff is implied */
-    {                   /* (the following will need to be changed if not) */
-      u32 hi = *hiP, lo = *loP;
-      *loP = (lo * multiplier);
-      *hiP = (hi * multiplier) + 
-          ((lo >> 16) * multiplier) + (((lo & 0xffff) * multiplier) >> 16);
-    }
-  }      
-  return;
-}  
-      
-/* ----------------------------------------------------------------------- */
-
-static const char *__iter_as_string( char *buf, u32 iterhi, u32 iterlo, 
-                                     int contestid )
-{
-  __unbias_iter_count(contestid, &iterhi, &iterlo);
-
-#if 1 /* we always show iter as an n*2^28 count nowadays */  
-  {
-    unsigned int units = (((iterlo) >> 28) +
-                          ((iterhi) <<  4));
-    unsigned int twoxx = 28;
-    if (!units) /* less than 2^28 packet (eg test) */
-    {
-      units = iterlo >> 10;
-      twoxx = 10;
-    }  
-    sprintf(buf,"%u*2^%u ", units, twoxx );
-  }
-#else /* unused - we print n*2^28 count nowadays */
-  #if (ULONG_MAX > 0xffffffff) /* 64 bit math */
-  sprintf(buf,"%lu", ((unsigned long)iterhi)<<32)+iterlo );
-  #else /* always do it the hard way, even if we have long long */
-  {
-    char str[sizeof("18,446,744,073,709,551,615  ")];
-    u32 carry = 0;
-    if (iterhi)
-    {
-      double d = (((double)iterhi)*4294967296.0)+iterlo;
-      iterhi = (u32)(d / 1000000000.0);
-      iterlo = (u32)(d - (((double)(iterhi))*1000000000.0));
-      d = d / 1000000000.0;
-      if (d > 0)
-      {
-        carry = (unsigned int)(d / 1000000000.0);
-        iterhi = (unsigned int)(d - (((double)(i))*1000000000.0));
-      }
-    }  
-    if (carry)        sprintf( buf, "%u%09u%09u ", (unsigned) i, (unsigned) iterhi, (unsigned) iterlo );
-    else if (iterhi)  sprintf( buf, "%u%09u ", (unsigned) iterhi, (unsigned) iterlo );
-    else              sprintf( buf, "%u ", (unsigned) iterlo );
-  }
-  #endif
-#endif
-  return buf;
-}
-
-/* ----------------------------------------------------------------------- */
-
-#ifdef HAVE_OGR_CORES
-static const char *__nodecount_as_string( char *buf, u32 nodeshi, u32 nodeslo )
-{
-  /* stats unit is Gnodes, so if nodes <= 9,999,999 (<0.01 Gnodes), */
-  /* then "n,nnn,nnn\0", else "iii.ff X\0" */
-  if (nodeshi == 0 && nodeslo <= 9999999)
-  {
-    char nodecount[32]; 
-    int pos = sizeof(nodecount);
-    unsigned int numdigits=0;
-    nodecount[--pos] = '\0';
-    nodecount[--pos] = ' ';
-    do
-    {
-      if (numdigits && (numdigits%3)==0)
-        nodecount[--pos]=',';
-      nodecount[--pos]=(char)((nodeslo % 10)+'0');
-      nodeslo/=10;
-    } while (nodeslo);
-    strcpy( buf, &nodecount[pos] );
-  }  
-  else 
-  {
-    __double_as_string( buf, ((((double)nodeshi)*4294967296.0)+
-                             ((double)nodeslo)), 3, 2, !0 );
-  }   
-  return buf;
-}  
-#endif
-
-/* ----------------------------------------------------------------------- */
-
 // "4 RC5 packets 12:34:56.78 - [234.56 Kkeys/s]" 
 int CliPostSummaryStringForContest( int contestid )
 {
-  char str[160];
-  char ratestrbuf[32];
-  double totaliter;
-  const char *ratestrP, *name;
+  double totaliter, rate;
   unsigned int packets, units;
   struct timeval ttime;
 
-  name = "???";
-  units = packets = 0;
-  ttime.tv_sec = 0;
-  ttime.tv_usec = 0;
-  ratestrP = "---.-- ";
-  str[0] = '\0';
+  if (CliGetContestInfoSummaryData( contestid, &packets, &totaliter,
+                                    &ttime, &units, &rate ) == 0)
+  {
+    char ratebuf[32], slicebuf[32];
+    const char *name = CliGetContestNameFromID(contestid);
+    const char *unitname = "nodes";
 
-  if ( CliIsContestIDValid( contestid ) ) //clicdata.cpp
-  {
-    CliGetContestInfoBaseData( contestid, &name, NULL ); //clicdata.cpp
-    CliGetContestInfoSummaryData( contestid, &packets, &totaliter, &ttime, &units ); //ditto
-    ratestrP = __double_as_string(ratestrbuf,
-          CliGetKeyrateForContest(contestid), 3, 2, !0);
-  }
-  switch (contestid)
-  {
-    case RC5:
-    case DES:
-    case CSC:
+    __double_as_string( ratebuf, rate, 3, 2, !0);
+    if (contestid == OGR)
     {
-      sprintf(str, "%d %s packet%s (%u*2^28 keys)\n"
-                   "%s%c- [%skeys/s]", 
-           packets, name, ((packets==1)?(""):("s")), units,
-           CliGetTimeString( &ttime, 2 ), ((!packets)?(0):(' ')), ratestrP );
-      break;
+      __double_as_string( slicebuf, totaliter, 3, 2, !0);
     }
-    case OGR:
+    else
     {
-      const char *nodestrP = ratestrP;
-      char nodestrbuf[32];
-      if (*nodestrP != '-') /* number is valid */
-        nodestrP = __double_as_string( nodestrbuf, totaliter, 3, 2, !0);
-      sprintf(str, "%d %s packet%s (%snodes)\n"
-                   "%s%c- [%snodes/s]", 
-           packets, name, ((packets==1)?(""):("s")), nodestrP,
-           CliGetTimeString( &ttime, 2 ), ((!packets)?(0):(' ')), ratestrP );
-      //printf("DEBUG: %.0f\n", totaliter);
-      break;
+      sprintf( slicebuf, "%u*2^28 ", units );
+      unitname = "keys";
     }
-    default:
-    {
-      str[0] = '\0';
-      break;
-    }
-  }
-  if (str[0])
-  {
-    Log("Summary: %s\n", str );
+
+    Log("Summary: %u %s packet%s (%s%s)\n%s%c- [%s%s/s]\n",
+        packets, name, ((packets==1)?(""):("s")), slicebuf, unitname,
+        CliGetTimeString(&ttime,2), ((packets)?(' '):(0)), ratebuf, unitname);
     return 0;
   }
   return -1;
-}
-
-/* ----------------------------------------------------------------------- */
-
-// adjust cumulative stats with or without "Completed" message
-// Completed RC5 packet 68E0D85A:A0000000 (123456789 keys)
-//          123:45:67:89 - [987654321 keys/s]
-// Completed OGR stub 22/1-3-5-7 (123456789 nodes)
-//          123:45:67:89 - [987654321 nodes/s]
-int CliRecordProblemCompleted( Problem *prob, int do_postmsg )
-{
-  int rc = -1;
-  ContestWork work;
-  unsigned int contestid = 0;
-  int resultcode = prob->RetrieveState( &work, &contestid, 0, 0 );
-
-  if (resultcode == RESULT_NOTHING || resultcode == RESULT_FOUND)
-  {
-    const char *name;
-    if (CliGetContestInfoBaseData(contestid,&name,0)==0) /*contestid is valid*/
-    { 
-      double rate; 
-      //if (!dosave)
-      //  rate = CliGetKeyrateForProblemNoSave( prob );
-      //else
-      rate = CliGetKeyrateForProblem( prob ); //add to totals
-      rc = 0; /* success */
-  
-      if (do_postmsg)
-      {
-        struct timeval tv;
-        char ratestrbuf[64];
-        char countstrbuf[64]; 
-
-        //tv.tv_sec = prob->runtime_sec;  //thread user time
-        //tv.tv_usec = prob->runtime_usec;
-        //tv.tv_sec  = prob->elapsed_time_sec;  //wall clock time
-        //tv.tv_usec = prob->elapsed_time_usec;
-        prob->GetElapsedTime(&tv);              // wall clock time
- 
-        switch (contestid) 
-        {
-          case RC5:
-          case DES:
-          case CSC:
-          {
-            //"Completed RC5 packet 00000000:00000000 (4*2^28 keys)\n"
-            //"%s - [%skeys/sec]\n"
-            __double_as_string( ratestrbuf, rate, -1, 2, !0 );
-            __iter_as_string( countstrbuf, work.crypto.iterations.hi,
-                                     work.crypto.iterations.lo, contestid );
-            Log( "Completed %s packet %08lX:%08lX (%skeys)\n"
-                 "%s - [%skeys/sec]\n",  
-                        name, 
-                        (unsigned long) ( work.crypto.key.hi ),
-                        (unsigned long) ( work.crypto.key.lo ),
-                        countstrbuf,
-                        CliGetTimeString( &tv, 2 ),
-                        ratestrbuf );
-            break;
-          }  
-          #ifdef HAVE_OGR_CORES
-          case OGR:
-          {
-            //Completed OGR stub 23/21-16-11-31 (17.63 Gnodes)
-            //"%s - [%snodes/sec]\n"
-            __double_as_string( ratestrbuf, rate, -1, 2, !0 );
-            __nodecount_as_string( countstrbuf, work.ogr.nodes.hi, 
-                                                work.ogr.nodes.lo );
-            LogTo(LOGTO_SCREEN,
-                     "Completed %s stub %s (%snodes)\n"
-                     "%s - [%snodes/sec]\n",  
-                     name, 
-                     ogr_stubstr( &work.ogr.workstub.stub ),
-                     countstrbuf,
-                     CliGetTimeString( &tv, 2 ),
-                     ratestrbuf );
-            //Completed OGR stub 23/21-16-11-31 (17,633,305,532 nodes)
-            //"%s - [%snodes/sec]\n"
-            __double_as_string( countstrbuf, 
-                              ((((double)work.ogr.nodes.hi)*4294967296.0)+
-                              ((double)work.ogr.nodes.lo)), 3, 2, !0 );
-            LogTo(LOGTO_FILE|LOGTO_MAIL,
-                     "Completed %s stub %s (%snodes)\n"
-                     "%s - [%snodes/sec]\n",  
-                     name, 
-                     ogr_stubstr( &work.ogr.workstub.stub ),
-                     countstrbuf,
-                     CliGetTimeString( &tv, 2 ),
-                     ratestrbuf );             
-            break;
-          }  
-          #endif /* OGR */
-          default:
-          {
-            //rate = 0.0;                    
-            break;
-          }
-        } /* switch (contestid) */
-      } /* if (postmsg) */
-    } /* name/contestid is valid */  
-  } /* (RESULT_NOTHING || RESULT_FOUND) */
-  return rc;
 }
 
 /* ----------------------------------------------------------------------- */

@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.42 2000/10/26 15:32:45 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.43 2000/10/27 17:58:43 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -23,7 +23,6 @@ return "@(#)$Id: probfill.cpp,v 1.58.2.42 2000/10/26 15:32:45 cyp Exp $"; }
 #include "selcore.h"   // selcoreSelectCore()
 #include "clisrate.h"  // CliGetMessageFor... et al.
 #include "clicdata.h"  // CliGetContestNameFromID()
-#include "clirate.h"   // CliGetKeyrateForProblem()
 #include "probman.h"   // GetProblemPointerFromIndex()
 #include "checkpt.h"   // CHECKPOINT_CLOSE define
 #include "triggers.h"  // RaiseExitRequestTrigger()
@@ -97,15 +96,11 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
                 int abortive_action )
 {                    
   unsigned int norm_key_count = 0;
-  *contest = 0;
-  *is_empty = 0;
+  prob_i = prob_i; /* shaddup compiler. we need this */
 
-  if ( thisprob->IsInitialized()==0 )  
-  {
-    *is_empty = 1; 
-    prob_i = prob_i; //get rid of warning
-  }
-  else 
+  *contest = 0;
+  *is_empty = 1; /* assume not initialized */
+  if ( thisprob->IsInitialized() )  
   {
     WorkRecord wrdata;
     int resultcode;
@@ -113,78 +108,27 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
     memset( (void *)&wrdata, 0, sizeof(WorkRecord));
     resultcode = thisprob->RetrieveState( &wrdata.work, &cont_i, 0, 0 );
 
-    if (resultcode == RESULT_FOUND || resultcode == RESULT_NOTHING )
-    {
-      long longcount;
+    *is_empty = 0; /* assume problem is in use */
+
+    if (resultcode == RESULT_FOUND || resultcode == RESULT_NOTHING ||
+       unconditional_unload || resultcode < 0 /* core error */ ||
+      (thisprob->loaderflags & (PROBLDR_DISCARD|PROBLDR_FORCEUNLOAD)) != 0) 
+    { 
+      int finito = (resultcode==RESULT_FOUND || resultcode==RESULT_NOTHING);
+      const char *msg = NULL;
+      const char *msg2 = NULL;
+      int discarded = 0;
+      unsigned int permille, swucount = 0;
+      const char *contname, *unitname;
+      char pktid[32], ratebuf[32], tcountbuf[32]; 
+      u32 secs, usecs, ccounthi, ccountlo; double rate;
+
       *contest = cont_i;
       *is_empty = 1; /* will soon be */
-
-      if (client->keyport == 3064)
-      {
-        LogScreen("Test success was %sdetected!\n",
-           (wrdata.resultcode == RESULT_NOTHING ? "not " : "") );
-      }
+      norm_key_count = 0; /* computed later if not discarded */
 
       wrdata.contest = (u8)(cont_i);
       wrdata.resultcode = resultcode;
-      wrdata.os      = CLIENT_OS;
-      #if (CLIENT_OS == OS_RISCOS)
-      if (prob_i == 1)
-        wrdata.cpu   = CPU_X86;
-      else
-      #endif
-      wrdata.cpu     = CLIENT_CPU;
-      wrdata.buildhi = CLIENT_CONTEST;
-      wrdata.buildlo = CLIENT_BUILD;
-      strncpy( wrdata.id, client->id , sizeof(wrdata.id));
-      wrdata.id[sizeof(wrdata.id)-1]=0;
-
-      switch (cont_i) 
-      {
-        case RC5:
-        case DES:
-        case CSC:
-        {
-          norm_key_count = 
-             (unsigned int)__iter2norm( (wrdata.work.crypto.iterations.lo),
-                                      (wrdata.work.crypto.iterations.hi) );
-          break;
-        }
-        case OGR:
-        {
-          norm_key_count = 1;
-          break;
-        }
-      }
-      
-      // send it back... error messages is printed by PutBufferRecord
-      if ( (longcount = PutBufferRecord( client, &wrdata )) >= 0)
-      {
-        //---------------------
-        // update the totals for this contest
-        //---------------------
-
-        CliRecordProblemCompleted( thisprob,
-            (load_problem_count<=COMBINEMSG_THRESHOLD) /* do_postmsg */);
-
-        /* adjust bufupd_pending if outthresh has been crossed */
-        if (__check_outbufthresh_limit( client, cont_i, -1, 0,bufupd_pending))
-        {
-          //Log("1. *bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
-        }       
-
-      }
-      ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, (long)prob_i );
-    }
-    else if (unconditional_unload || resultcode < 0 /* core error */ ||
-      (thisprob->loaderflags & (PROBLDR_DISCARD|PROBLDR_FORCEUNLOAD)) != 0) 
-    {                           
-      unsigned int permille = 0;
-      const char *msg = NULL;
-
-      *contest = cont_i;
-      *is_empty = 1; /* will soon be */
-
       wrdata.contest    = (u8)cont_i;
       wrdata.resultcode = resultcode;
       wrdata.cpu        = FILEENTRY_CPU(thisprob->client_cpu,
@@ -192,86 +136,117 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       wrdata.os         = FILEENTRY_OS;      //CLIENT_OS
       wrdata.buildhi    = FILEENTRY_BUILDHI; //(CLIENT_BUILDFRAC >> 8)
       wrdata.buildlo    = FILEENTRY_BUILDLO; //CLIENT_BUILDFRAC & 0xff
-      
+
+      if (finito)
+      {
+        wrdata.os      = CLIENT_OS;
+        #if (CLIENT_OS == OS_RISCOS)
+        if (prob_i == 1)
+          wrdata.cpu   = CPU_X86;
+        else
+        #endif
+        wrdata.cpu     = CLIENT_CPU;
+        wrdata.buildhi = CLIENT_CONTEST;
+        wrdata.buildlo = CLIENT_BUILD;
+        strncpy( wrdata.id, client->id , sizeof(wrdata.id));
+        wrdata.id[sizeof(wrdata.id)-1]=0;
+        ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, (long)prob_i );
+      }
+
       if ((thisprob->loaderflags & PROBLDR_DISCARD)!=0)
       {
-        msg = "Discarded (project disabled/closed)";
-        norm_key_count = 0;
+        msg = "Discarded";
+        msg2 = "\n(project disabled/closed)";
+        discarded = 1;
       }
       else if (resultcode < 0)
       {
-        msg = "Discarded (core error)";
-        norm_key_count = 0;
+        msg = "Discarded";
+        msg2 = " (core error)";
+        discarded = 1;
       }
-      else if (PutBufferRecord( client, &wrdata ) < 0)  // send it back...
+      else if (PutBufferRecord( client, &wrdata ) < 0)
       {
-        msg = "Unable to save";
+        msg = "Discarded";
+        msg2 = "\n(buffer error - unable to save)";
         norm_key_count = 0;
+        discarded = 1;
       }
       else
       {
-        switch (cont_i) 
-        {
-          case RC5:
-          case DES:
-          case CSC:
-                  norm_key_count = (unsigned int)__iter2norm( 
-                                      (wrdata.work.crypto.iterations.lo),
-                                      (wrdata.work.crypto.iterations.hi) );
-                  break;
-          case OGR:
-                  norm_key_count = 1;
-                  break;
-        }
-        permille = (unsigned int)thisprob->CalcPermille();
         if (client->nodiskbuffers)
-        {
-//Log("2. *bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
           *bufupd_pending |= BUFFERUPDATE_FLUSH;
-        }
+        if (__check_outbufthresh_limit( client, cont_i, -1, 0,bufupd_pending))
+        { /* adjust bufupd_pending if outthresh has been crossed */
+          //Log("1. *bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
+        }       
         if (load_problem_count <= COMBINEMSG_THRESHOLD)
           msg = "Saved";
       }
-      if (msg)
+
+      if (thisprob->GetInfo( 0, &contname, 
+                             &secs, &usecs,
+                             &swucount, 1, 
+                             &unitname, &permille,
+                             pktid, sizeof(pktid),
+                             &rate, ratebuf, sizeof(ratebuf),
+                             0, 0, 
+                             tcountbuf, sizeof(tcountbuf),
+                             &ccounthi, &ccountlo,
+                             0, 0 ) != -1)
       {
-        char workpacket[80];
-        workpacket[0] = '\0';
-        switch (cont_i) 
+        if (!discarded)
         {
-          case RC5:
-          case DES:
-          case CSC:
-          {
-            unsigned int packet_iter_size = // can't use norm_key_count: zero on error
-              (unsigned int) __iter2norm((wrdata.work.crypto.iterations.lo),
-                                         (wrdata.work.crypto.iterations.hi));
-            sprintf(workpacket, " %u*2^28 packet %08lX:%08lX", packet_iter_size,
-                    (unsigned long) ( wrdata.work.crypto.key.hi ),
-                    (unsigned long) ( wrdata.work.crypto.key.lo ) );
-            break;
-          }
-          #ifdef HAVE_OGR_CORES
-          case OGR:
-          {
-            sprintf(workpacket," stub %s", ogr_stubstr(&wrdata.work.ogr.workstub.stub) );
-            break;
-          }
-          #endif
+          norm_key_count = swucount;
         }
-        char perdone[48]; 
-        perdone[0]='\0';
-        if (permille!=0 && permille<=1000)
-          sprintf(perdone, " (%u.%u0%% done)", (permille/10), (permille%10));
-        Log("%s %s%s%s\n", msg, CliGetContestNameFromID(cont_i), workpacket, perdone);
-      }
-    } /* unconditional unload */
+        if (finito && !discarded)
+        {
+          if (swucount == 0) /* test packet (<1*2^28) */
+          {
+            LogScreen("Test success was %sdetected!\n",
+               (resultcode == RESULT_NOTHING ? "not " : "") );
+          }
+          else /* adjust cumulative stats */
+          {
+            struct timeval tv; tv.tv_sec = secs; tv.tv_usec = usecs;
+            CliAddContestInfoSummaryData(cont_i, ccounthi, ccountlo, &tv, swucount, rate);
+          }
+          if (msg)
+          {
+            struct timeval tv; tv.tv_sec = secs; tv.tv_usec = usecs;
+            //Log("Completed %s packet %s (%s%s)\n%s - [%s%s/sec]\n",
+            //     contname, pktid, tcountbuf, unitname,
+            //     CliGetTimeString( &tv, 2 ), ratebuf, unitname );           
+            // Completed RC5 68E0D85A:A0000000 4*2^28
+            // 123:45:67:89 - [987654321 keys/s]
+            // Completed OGR 22/1-3-5-7
+            //          123:45:67:89 - [987654321 nodes/s]
+            Log("Completed %s packet %s\n%s - [%s%s/sec]\n",
+              contname, pktid, CliGetTimeString( &tv, 2 ), ratebuf, unitname );
+          }
+        }
+        else if (msg)
+        {
+          char percbuf[20]; percbuf[0] = '\0';
+          if (!discarded) /* not discarded == don't have discard reason */
+          {
+            msg2 = percbuf;
+            if (permille > 0 && permille < 1000)
+              sprintf( percbuf, " (%u.%u0%% done)", permille/10, permille%10);
+          }  
+          //Saved RC5 12345678:ABCDEF00 4*2^28 (5.20%% done)
+          //Saved OGR 25/1-6-13-8-16-18 (5.30% done)
+          //Discarded CSC 12345678:ABCDEF00 4*2^28\n(project disabled/closed)\n"
+          Log("%s: %s %s%s\n", contname, msg, pktid, msg2 );
+        }
+      } /* if (thisprob->GetInfo( ... ) != -1) */
     
-    if (*is_empty) /* we can purge the object now */
-    {
+      /* we can purge the object now */
       /* we don't wait when aborting. thread might be hung */
       thisprob->RetrieveState( NULL, NULL, 1, abortive_action /*==dontwait*/ );
-    }
-  }
+
+    } /* unload needed */
+  } /* is initialized */
 
   return norm_key_count;
 }
@@ -474,7 +449,6 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     
   if (didload) /* success */
   {
-    char msgbuf[80]; 
     u32 timeslice = 0x10000;
     int expected_cpu = FILEENTRY_CPU_TO_CPUNUM( wrdata.cpu );
     int expected_core = FILEENTRY_CPU_TO_CORENUM( wrdata.cpu );
@@ -485,54 +459,52 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     timeslice = INIT_TIMESLICE;
     #endif
     
-    msgbuf[0] = '\0';
     *load_needed = 0;
     *loaded_for_contest = (unsigned int)(wrdata.contest);
 
-    thisprob->LoadState( &wrdata.work, *loaded_for_contest, timeslice, 
-         expected_cpu, expected_core, expected_os, expected_build );
-    thisprob->loaderflags = 0;
-
-    msgbuf[0] = '\0';
-    switch (wrdata.contest) 
+    if (thisprob->LoadState( &wrdata.work, *loaded_for_contest, timeslice, 
+         expected_cpu, expected_core, expected_os, expected_build ) != -1)
     {
-      case RC5:
-      case DES:
-      case CSC:
+      unsigned int permille, swucount = 0;
+      const char *contname; char pktid[32]; 
+
+      thisprob->loaderflags = 0;
+
+      if (thisprob->GetInfo( 0, &contname, 
+                             0, 0,
+                             &swucount, 1, 
+                             0, &permille,
+                             pktid, sizeof(pktid),
+                             0, 0, 0,
+                             0, 0, 
+                             0, 0,
+                             0, 0,
+                             0, 0 ) != -1)
       {
-        norm_key_count = (unsigned int)__iter2norm((wrdata.work.crypto.iterations.lo),
-                                                   (wrdata.work.crypto.iterations.hi));
-        sprintf(msgbuf, "%s %u*2^28 packet %08lX:%08lX", 
-                ((didrandom)?(" random"):("")), norm_key_count,
-                (unsigned long) ( wrdata.work.crypto.key.hi ),
-                (unsigned long) ( wrdata.work.crypto.key.lo ) );
-        break;
-      }
-      #ifdef HAVE_OGR_CORES
-      case OGR:
-      {
-        norm_key_count = 1;
-        sprintf(msgbuf," stub %s", ogr_stubstr(&wrdata.work.ogr.workstub.stub) );
-        break;
-      }
-      #endif
-    }
+        if (swucount < 1) /* test packet */
+          swucount = 1;
+        norm_key_count = swucount;
 
-    if (load_problem_count <= COMBINEMSG_THRESHOLD && msgbuf[0])
-    {
-      char perdone[48]; 
-      unsigned int permille = (unsigned int)(thisprob->startpermille);
-      perdone[0]='\0';
-      if (permille!=0 && permille<=1000)
-        sprintf(perdone, " (%u.%u0%% done)", (permille/10), (permille%10));
-      Log("Loaded %s%s%s\n%s",
-         CliGetContestNameFromID(*loaded_for_contest), msgbuf, perdone,
-           (thisprob->was_reset ? ("Packet was from a different core/"
-           "client cpu/os/build.\n"):("")) );
-    } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
+        if (load_problem_count <= COMBINEMSG_THRESHOLD)
+        {
+          const char *extramsg = ""; 
+          char perdone[20]; 
 
-    ClientEventSyncPost( CLIEVENT_PROBLEM_STARTED, (long)prob_i );
+          if (thisprob->was_reset)
+            extramsg="\nPacket was from a different core/client cpu/os/build.";
 
+          if (permille > 0 && permille < 1000)
+          {
+            sprintf(perdone, " (%u.%u0%% done)", (permille/10), (permille%10));
+            extramsg = perdone;
+          }
+          Log("Loaded %s %s%s%s\n",
+               contname, ((didrandom)?("random "):("")), pktid, extramsg );
+        }
+      } /* if (thisprob->GetInfo(...) != -1) */
+
+      ClientEventSyncPost( CLIEVENT_PROBLEM_STARTED, (long)prob_i );
+    } /* if (LoadState(...) != -1) */
   } /* if (didload) */
 
   return norm_key_count;
@@ -637,7 +609,7 @@ unsigned int LoadSaveProblems(Client *client,
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
     unsigned int blocksdone;
-    if (CliGetContestInfoSummaryData( cont_i, &blocksdone, NULL, NULL, NULL )==0)
+    if (CliGetContestInfoSummaryData( cont_i, &blocksdone, NULL, NULL, NULL, NULL )==0)
       totalBlocksDone += blocksdone;
    
     loaded_problems_count[cont_i]=loaded_normalized_key_count[cont_i]=0;

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.38 2000/10/26 15:32:44 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.39 2000/10/27 17:58:41 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -93,16 +93,12 @@ static double __calc_rate( unsigned int contestid,
     case DES:
     case CSC:
     {
-      unsigned int multiplier;
       if ( last_run_result == RESULT_WORKING )
         keysdone = keysdone +
         (double)contestwork->crypto.keysdone.lo + 
         (double)contestwork->crypto.keysdone.hi * 4294967296.0 /* 2^32 */;
-      if (CliGetContestInfoBaseData( contestid, NULL, &multiplier ) == 0)
-      {
-        if (multiplier > 1) //iteration-to-keycount multiplication-factor
-          keysdone = (keysdone)*((double)(multiplier));
-      }
+      if (contestid == DES)
+        keysdone = keysdone * 2.0;
       rateunit = "keys/sec";
       break;
     }

@@ -10,15 +10,10 @@
  * ----------------------------------------------------------------------
 */ 
 #ifndef __CLISRATE_H__
-#define __CLISRATE_H__ "@(#)$Id: clisrate.h,v 1.20.2.5 2000/09/21 18:07:37 cyp Exp $"
+#define __CLISRATE_H__ "@(#)$Id: clisrate.h,v 1.20.2.6 2000/10/27 17:58:42 cyp Exp $"
 
 /* Log("Summary: 4 RC5 Blocks 12:34:56.78 - [123456789 keys/s]");  */
 int CliPostSummaryStringForContest( int contestid );
-
-/* add problem to totals with or without printing */
-/* "Completed RC5 block 68E0D85A:A0000000 (123456789 keys) */
-/*            123:45:67:89 - [987654321 keys/s]" */
-int CliRecordProblemCompleted( Problem *problem, int do_postmsg );
 
 /* returns keyrate as string (maxlen=26) "nnnn.nn ['k'|'M'|'G'|'T']" */
 /* return value is a pointer to buffer.                           */
