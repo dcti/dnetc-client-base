@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.85.2.4 2003/12/13 12:57:14 kakace Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.85.2.5 2004/01/10 22:45:41 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -202,7 +202,55 @@ static const s32 ogr_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
   //{0, 28, 3, 12, 26, 25, 29, 2},
   //{0, 29, 3, 25, 5, 8, 54, 61},
 };
+
+#ifdef HAVE_OGR_PASS2
+// OGR-P2 test cases
+// [0] - expected number of nodes (~ if no solution expected to be found)
+// [1] - number of marks
+// [2] - Minimum starting position
+// [3..9] - first differences
+#ifdef OGROPT_NEW_CHOOSEDAT
+#error Need to change the node counts
 #endif
+static const s32 ogrp2_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
+  // Test cases borrowed from the standard OGR test suite
+  { 0x000D1B52, 21,  0,  2, 22, 32, 21,  5,  1},
+  {~0x0057102A, 21,  0,  1,  2,  4,  5,  8, 10},
+  {~0x0058E9DE, 21,  0,  2, 22, 32,  1,  3, 10},
+  {~0x007D1FD7, 22,  0,  1,  2,  4,  5,  8, 10},
+  { 0x0015ACEC, 22,  0,  1,  8,  5, 29, 27, 36},
+  {~0x001BE4B3, 22,  0,  1,  8,  5, 29, 27, 37},
+  {~0x00441720, 23,  0,  1,  2,  4,  5,  8, 10},
+  { 0x000EFA83, 23,  0,  3,  4, 10, 44,  5, 25},
+  {~0x0027C638, 23,  0,  3,  4, 10, 44,  5, 26},
+  { 0x000ADD64, 24,  0,  9, 24,  4,  1, 59, 25},
+  {~0x003C3A07, 24,  0,  9, 24,  4,  1, 59, 26},
+  {~0x0057102A, 21,  0,  1,  2,  4,  5,  8, 10},
+  // OGR-P2 specific test cases
+  {~0x02F4CB08, 24, 134, 44, 22, 23},
+  {~0x02E6C8AF, 24, 134, 50, 19, 14},
+  {~0x02D42454, 24, 120, 11, 57,  7,  1},
+  {~0x02961CEB, 24, 120, 31, 38,  3,  6},
+  {~0x029EF7C8, 24, 120, 41, 22,  2,  9},
+  {~0x021BC931, 24, 120, 52,  5, 11,  8},
+  {~0x023053BC, 25, 146, 27, 75, 17},
+  {~0x02EEF245, 25, 146, 24, 66, 33},
+  {~0x0328B048, 25, 145, 47, 48, 19,  1},
+  // Duplicates follow
+  { 0x000D1B52, 21,  0,  2, 22, 32, 21,  5,  1},
+  {~0x0057102A, 21,  0,  1,  2,  4,  5,  8, 10},
+  {~0x0058E9DE, 21,  0,  2, 22, 32,  1,  3, 10},
+  {~0x007D1FD7, 22,  0,  1,  2,  4,  5,  8, 10},
+  { 0x0015ACEC, 22,  0,  1,  8,  5, 29, 27, 36},
+  {~0x001BE4B3, 22,  0,  1,  8,  5, 29, 27, 37},
+  {~0x02F4CB08, 24, 134, 44, 22, 23},
+  {~0x02D42454, 24, 120, 11, 57,  7,  1},
+  {~0x02961CEB, 24, 120, 31, 38,  3,  6},
+  {~0x02EEF245, 25, 146, 24, 66, 33},
+  {~0x0328B048, 25, 145, 47, 48, 19,  1}
+};
+#endif  /* HAVE_OGR_PASS2 */
+#endif  /* HAVE_OGR_CORES */
 
 #ifdef HAVE_CSC_CORES
 #include "convcsc.h"   // convert_key_from_csc_to_inc
@@ -398,11 +446,18 @@ long SelfTest( unsigned int contest )
       }
 #endif
 #if defined(HAVE_OGR_CORES)
-      if (contest == OGR || contest == OGR_P2)
+      if (contest == OGR)
       {
         test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])ogr_test_cases;
         expectedsolution_lo = (*test_cases)[testnum][0];
       }
+  #if defined(HAVE_OGR_PASS2)
+      if (contest == OGR_P2)
+      {
+        test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])ogrp2_test_cases;
+        expectedsolution_lo = (*test_cases)[testnum][0];
+      }
+  #endif
 #endif
 #if defined(HAVE_CSC_CORES)
       if (contest == CSC) // CSC
@@ -461,7 +516,25 @@ long SelfTest( unsigned int contest )
         }
         #endif
         #if defined(HAVE_OGR_CORES)
+        #if defined(HAVE_OGR_PASS2)
         case OGR_P2:
+        {
+          int tcd;
+          contestwork.ogr.workstub.stub.marks = (u16)((*test_cases)[testnum][1]);
+          contestwork.ogr.workstub.minpos     = (u32)((*test_cases)[testnum][2]);
+          contestwork.ogr.workstub.stub.length = 0;
+          for (tcd = 0; tcd < TEST_CASE_DATA-3; tcd++) 
+          {
+            contestwork.ogr.workstub.stub.diffs[tcd] = (u16)((*test_cases)[testnum][3+tcd]);
+            if (contestwork.ogr.workstub.stub.diffs[tcd] == 0)
+              break;
+            contestwork.ogr.workstub.stub.length++;  
+          }
+          contestwork.ogr.workstub.worklength = 0;
+          contestwork.ogr.nodes.lo = contestwork.ogr.nodes.hi = 0;
+          break;
+        }  
+        #endif
         case OGR: 
         {
           int tcd;
@@ -474,6 +547,7 @@ long SelfTest( unsigned int contest )
               break;
             contestwork.ogr.workstub.stub.length++;  
           }
+          contestwork.ogr.workstub.minpos = 0;
           contestwork.ogr.workstub.worklength = 0;
           contestwork.ogr.nodes.lo = contestwork.ogr.nodes.hi = 0;
           break;
@@ -665,7 +739,9 @@ long SelfTest( unsigned int contest )
               }
               #endif
               #ifdef HAVE_OGR_CORES
+              #ifdef HAVE_OGR_PASS2
               case OGR_P2:
+              #endif
               case OGR:
               {
                 if (expectedsolution_lo & 0x80000000)  // no solution
