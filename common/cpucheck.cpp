@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.62 2001/01/02 20:11:50 patrick Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.63 2001/01/25 15:44:17 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -890,6 +890,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0680,  0x102, "Pentium III" },
           {  0x0690,  0x102, "Pentium III/Timna" }, /* 6547:0692 */
           {  0x06A0,  0x102, "Pentium III" }, //0.18 um w/ 1/2MB on-die L2
+          {  0x0700,  0x102, "Itanium" }, /* 6547:0701 */
           {  0x0F00,  0x102, "Pentium 4" },
           {  0x0000,     -1, NULL }
           }; internalxref = &intelxref[0];
