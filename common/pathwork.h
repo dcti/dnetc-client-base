@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: pathwork.h,v $
+// Revision 1.4  1998/08/19 17:00:25  cyruspatel
+// dos2unix'ified.
+//
 // Revision 1.3  1998/08/10 20:22:23  cyruspatel
 // Moved path related defines from client.h. Created macros so pathwork.cpp
 // functions are do-nothing functions if DONT_USE_PATHWORK is defined.
