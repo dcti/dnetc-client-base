@@ -5,7 +5,7 @@
  */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-ppc.cpp,v 1.1.2.1 2000/02/22 10:21:31 sampo Exp $"; }
+return "@(#)$Id: ogr-ppc.cpp,v 1.1.2.2 2000/06/14 08:50:51 oliver Exp $"; }
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -355,7 +355,12 @@ static void dump_ruler(struct State *oState, int depth)
 
 static inline int first_asm (register int i)
 {
-	return __cntlzw(~i)+1;
+  #if (CLIENT_OS == OS_MACOS)
+  return __cntlzw(~i)+1;
+  #else
+  asm ("not %0,%0;cntlzw %0,%0;addi %0,%0,1" : : "r" (i));
+  return i;
+  #endif
 }
 
 static int ogr_cycle(void *state, int *pnodes)
