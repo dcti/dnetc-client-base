@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.68 2000/11/17 07:21:50 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.69 2000/12/01 13:57:58 oliver Exp $
 ==========================================================================
 
 2.8000
@@ -62,6 +62,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.68 2000/11/17 07:21:50 cyp Exp $
                  for project independance (format doesn't have to be processed
                  differently for different projects). Inexact percentages 
                  (ie, for OGR) are no longer displayed at load/save time.
+            new: AmigaOS: fifo log file type now enabled
 
 2.8010.463  fix: linux/x86: resolved various dns lookup, lib and
                  portability issues by building against static libc5
