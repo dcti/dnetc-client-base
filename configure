@@ -5,6 +5,12 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.199  1999/03/01 20:17:16  patrick
+#
+# added aix32-ppc target (doesn't compile for me due to compiler error)
+# removed the pipe1 for power, no longer used, added delchar to all other
+# aix targets
+#
 # Revision 1.198  1999/03/01 09:44:40  snake
 #
 # fixed path to dworz DES asm core
@@ -1462,8 +1468,9 @@ case "$1" in
 	;;
 
   ### AIX PPC targets
-
+	# classes are buggy with AIX !
     *aix4-ppc-xlc)	 # This is the fastest build for AIX 4.x PPC machines
+	DELETECHARS="'/.\$\-'"
 	TARGET_CC="xlC"
 	TARGET_CCFLAGS="$OPTS_XLC_PPC -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN"
@@ -1473,6 +1480,7 @@ case "$1" in
 	;;
 
     *aix4-ppc601-xlc)      # AIX 4.x PPC, 601 chip
+	DELETECHARS="'/.\$\-'"
 	TARGET_CC="xlC"
 	TARGET_CCFLAGS="$OPTS_XLC_PPC601 -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN"
@@ -1482,25 +1490,28 @@ case "$1" in
 	;;
 
     *aix32-ppc-xlc)	# AIX 3.2.x PPC
+	DELETECHARS="'/.\$\-'"
 	TARGET_CC="xlC"
 	TARGET_CCFLAGS="$OPTS_XLC3_PPC601 -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN -DNO_STRCASECMP"
-	TARGET_ADDASMS="$XLC_LINTILLA_ASMS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
+		rc5/ppc/crunch_allitnil_552.ppc.s \
+		rc5/ppc/crunch_lintilla_296.ppc.s"
+
 	TARGET_LIBS="-lCns"
 	;;
 
-  ### AIX POWER targets
-	# classes are buggy with AIX !
-
-    *aix-power-gcc-pipe1)  # AIX POWER with PIPELINE_COUNT=1 (do not use)
-        DELETECHARS="'/.\$\-'"
-	RC5CORECOPY="rc5/ansi/rc5ansi1-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_POWER -D_AIX -DPIPELINE_COUNT=1 \
+    *ppc-gcc-aix32)	# AIX 3.2.x gcc
+	DELETECHARS="'/.\$\-'"
+	TARGET_CCFLAGS="$OPTS_GCC_PPC -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
+		rc5/crunch_allitnil_552.ppc.s \
+		rc5/crunch_lintilla_296.ppc.s"
 	;;
 
+  ### AIX POWER targets
+	# this one works for all platforms !
     *aix-power-gcc-pipe2)  # AIX POWER with PIPELINE_COUNT=2 (preferred)
         DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
