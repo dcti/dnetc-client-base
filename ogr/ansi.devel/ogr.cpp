@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.4 2000/08/14 22:17:48 oliver Exp $
+ * $Id: ogr.cpp,v 1.1.2.5 2000/08/18 16:38:02 cyp Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,31 +11,81 @@
 #define HAVE_STATIC_CHOOSEDAT /* choosedat table is static, pre-generated */
 /* #define CRC_CHOOSEDAT_ANYWAY */ /* you'll need to link crc32 if this is defd */
 
-/* optimization for machines where shift is faster than mem access */
-#if defined(ASM_68K)
-  #define BITOFLIST_OVER_MEMTABLE
+/* --- various optimization option overrides ----------------------------- */
+
+/* possible overrides are ...
+#define OGROPT_BITOFLIST_USES_MEMTABLE  0/1       (default is 0 ('no'))
+#define NO_FIND_FIRST_ZERO_BIT_ASM                (default is hw dependant)
+#define OGROPT_COPY_LIST_SET_BIT_JUMPS  0-2       (default is 1)
+#define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0-2 (default is 2)
+*/
+
+#if defined(ASM_68K) 
+  #define OGROPT_BITOFLIST_USES_MEMTABLE 1          /* we want 'yes' */
 #endif
-#ifdef BITOFLIST_OVER_MEMTABLE      /* if memlookup is faster than shift */
-#undef NO_BITOFLIST_OVER_MEMTABLE   /* the default is "no" */
+#if defined(ASM_PPC) || defined(__PPC__)
+  /* I'm not sure whether this is compiler or arch specific, */ 
+  /* it doesn't seem to make any difference for x86/gcc 2.7x  */
+  #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0    /* no optimization */
 #endif
 
-/* opt for machines that have a small data cache or invalidate it often */
-/* (mostly) no gain or loss for idle machines with big cache */
-#if (defined(__PPC__) || defined(ASM_PPC)) || \
-  (defined(__WATCOMC__) && defined(__386__)) || \
-  (defined(__GNUC__) && (defined(ASM_SPARC) || defined(ASM_ALPHA) \
-                         || defined(ASM_X86) \
-                         || (defined(ASM_68K) && (defined(mc68020) \
-                             || defined(mc68030) || defined(mc68040) \
-                             || defined(mc68060)))))
-  #define HAVE_REVERSE_FFS_INSN /* have 'ffs from highbit' instruction */
-  /* #define FIRSTBLANK_ASM_TEST */ /* define this to test */
-#endif  
-#ifndef HAVE_REVERSE_FFS_INSN    /* have hardware insn to find first blank */
-#define FIRSTBLANK_OVER_MEMTABLE /* the default is "no" */
+/* -- various optimization option defaults ------------------------------- */
+
+/* optimization for machines where mem access is faster than a shift+and.
+   Particularly effective with small data cache.
+*/
+#ifndef OGROPT_BITOFLIST_USES_MEMTABLE
+#define OGROPT_BITOFLIST_USES_MEMTABLE 0 /* the default is "no" */
 #endif
 
-/* ------------------------------------------------------------------ */
+
+/* optimization for available hardware insn(s) for 'find first zero bit',
+   counting from highest bit, ie 0xEFFFFFFF returns 1, and 0xFFFFFFFE => 32 
+   This is the second (or first) most effective speed optimization.
+*/
+#if !defined(NO_FIND_FIRST_ZERO_BIT_ASM)
+  #if (defined(__PPC__) || defined(ASM_PPC)) || \
+      (defined(__WATCOMC__) && defined(__386__)) || \
+      (defined(__GNUC__) && (defined(ASM_SPARC) || defined(ASM_ALPHA) \
+                           || defined(ASM_X86) \
+                           || (defined(ASM_68K) && (defined(mc68020) \
+                           || defined(mc68030) || defined(mc68040) \
+                           || defined(mc68060)))))
+    #define HAVE_FIND_FIRST_ZERO_BIT_ASM
+    /* #define FIRSTBLANK_ASM_TEST */ /* define this to test */
+  #endif  
+#endif
+
+
+/* optimize COPY_LIST_SET_BIT macro for when jumps are expensive. 
+   0=no reduction (6 'if'), 1=one 'if'+manual copy; 2=one 'if' plus memcpy; 
+   This is the most (or second most) effective speed optimization.
+   If your compiler has an intrinsic memcpy() AND optimizes that for size
+   and alignment (ie, doesn't just inline memcpy) AND/OR the target arch
+   is register-rich, then 2 is faster than 1.
+*/
+#ifndef OGROPT_COPY_LIST_SET_BIT_JUMPS
+#define OGROPT_COPY_LIST_SET_BIT_JUMPS 1        /* 0 (no opt) or 1 or 2 */
+#endif
+
+
+/* reduction of found_one maps by using single bits intead of whole chars
+   0=no reduction (upto 1024 octets); 1=1024 bits in 128 chars; 2=120 chars
+   opt 1 or 2 adds two shifts, two bitwise 'and's and one bitwise 'or'.
+   NOTE: that found_one() is not a speed critical function, and *should*
+   have no effect on -benchmark at all since it is never called for -bench,
+   Some compilers/archs show a negative impact on -benchmark because 
+   they optimize register usage in ogr_cycle while tracking those used in 
+   found_one and/or are size sensitive, and the increased size of found_one() 
+   skews -benchmark. [the latter can be compensated for by telling the 
+   compiler to align functions, the former by making found_one() non static]
+*/
+#ifndef OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE
+#define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2 /* 0 (no opt) or 1 or 2 */
+#endif
+
+/* ----------------------------------------------------------------------- */
+
 
 #if !defined(HAVE_STATIC_CHOOSEDAT) || defined(CRC_CHOOSEDAT_ANYWAY)
 #include "crc32.h" /* only need to crc choose_dat if its not static */
@@ -63,10 +113,10 @@ static const int OGR[] = {
   /* 11 */   72,  85, 106, 127, 151, 177, 199, 216, 246, 283,
   /* 21 */  333, 356, 372, 425, 480, 492, 553, 585, 623
 };
-#if defined(FIRSTBLANK_OVER_MEMTABLE) || defined(FIRSTBLANK_ASM_TEST)
+#if !defined(HAVE_FIND_FIRST_ZERO_BIT_ASM) || defined(FIRSTBLANK_ASM_TEST)
 static char ogr_first_blank[65537]; /* first blank in 16 bit COMP bitmap, range: 1..16 */
 #endif
-#if defined(BITOFLIST_OVER_MEMTABLE)
+#if (OGROPT_BITOFLIST_USES_MEMTABLE != 0)
 static U ogr_bit_of_LIST[200]; /* which bit of LIST to update */
 #endif
 
@@ -77,9 +127,11 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen);
 static int ogr_cycle(void *state, int *pnodes);
 static int ogr_getresult(void *state, void *result, int resultlen);
 static int ogr_destroy(void *state);
+#if defined(HAVE_OGR_COUNT_SAVE_LOAD_FUNCTIONS)
 static int ogr_count(void *state);
 static int ogr_save(void *state, void *buffer, int buflen);
 static int ogr_load(void *buffer, int buflen, void **state);
+#endif
 static int ogr_cleanup(void);
 
 #ifndef OGR_GET_DISPATCH_TABLE_FXN
@@ -120,14 +172,14 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
   lev->list[1] = lev->list[0];                    \
   lev->list[0] = 0;
 
-#if defined(BITOFLIST_OVER_MEMTABLE)
+#if (OGROPT_BITOFLIST_USES_MEMTABLE != 0)
   #define BITOFLIST(x) ogr_bit_of_LIST[x]
 #else
   #define BITOFLIST(x) 0x80000000>>((x-1)&0x1f) /*0x80000000 >> ((x-1) % 32)*/
 #endif
 
-#define OPTSTEP9_1
-#if defined(OPTSTEP9_1)
+
+#if (OGROPT_COPY_LIST_SET_BIT_JUMPS == 1)
 #define COPY_LIST_SET_BIT(lev2,lev,bitindex)      \
   {                                               \
     register int d = bitindex;                    \
@@ -139,7 +191,7 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
     if (d <= (32*5))                              \
       lev2->list[(d-1)>>5] |= BITOFLIST( d );     \
   }    
-#elif defined(OPTSTEP9_2)  
+#elif (OGROPT_COPY_LIST_SET_BIT_JUMPS == 2)
 #define COPY_LIST_SET_BIT(lev2,lev,bitindex)      \
   {                                               \
     register int d = bitindex;                    \
@@ -272,34 +324,43 @@ static int init_load_choose(void)
 /*  found_one() - print out golomb rulers  */
 /*-----------------------------------------*/
 
-#define HAVE_SMALL_DATA_CACHE
 static int found_one(struct State *oState)
 {
   /* confirm ruler is golomb */
   {
     register int i, j;
-    #ifdef HAVE_SMALL_DATA_CACHE
+    #if (OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE == 2)
     char diffs[((1024-64)+7)/8];
+    #elif (OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE == 1)
+    char diffs[((1024)+7)/8];
     #else
     char diffs[1024];
     #endif
     register int max = oState->max;
     register int maxdepth = oState->maxdepth;
+    #if 1 /* (OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE == 1) || \
+             (OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE == 2) */
     memset( diffs, 0, sizeof(diffs) );
-    /* for (i = 1; i <= oState->max/2; i++) diffs[i] = 0; */
+    #else
+    for (i = max>>1; i>=1; i--) diffs[i] = 0;
+    #endif
     for (i = 1; i < maxdepth; i++) {
       register int marks_i = oState->marks[i];
       for (j = 0; j < i; j++) {
         register int diff = marks_i - oState->marks[j];
         if (diff+diff <= max) {        /* Principle 1 */
           if (diff <= 64) break;      /* 2 bitmaps always tracked */
-	  #ifdef HAVE_SMALL_DATA_CACHE
+	  #if (OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE == 2) || \
+              (OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE == 1)
 	  {
-	    register int n1, n2;
+	    register int mask;
+            #if (OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE == 2)
             diff -= 64;
-            n1 = diff>>3; n2 = 1<<(diff&7);
-	    if ((diffs[n1] & n2)!=0) return 0;
-	    diffs[n1] |= n2;
+            #endif
+            mask = 1<<(diff&7);
+            diff >>= 3;   
+	    if ((diffs[diff] & mask)!=0) return 0;
+	    diffs[diff] |= (char)mask;
 	  }
 	  #else    
           if (diffs[diff]) return 0;
@@ -312,7 +373,7 @@ static int found_one(struct State *oState)
   return 1;
 }
 
-#if defined(FIRSTBLANK_OVER_MEMTABLE) /* 0 <= x < 0xfffffffe */
+#if !defined(HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
   #define LOOKUP_FIRSTBLANK(x) ((x < 0xffff0000) ? \
       (ogr_first_blank[x>>16]) : (16 + ogr_first_blank[x - 0xffff0000]))
 #elif defined(__PPC__) || defined(ASM_PPC) /* CouNT Leading Zeros Word */
@@ -354,7 +415,7 @@ static int found_one(struct State *oState)
                       "bsr  eax,eax" \
                       "jz   f0"      \
                       "sub  edx,eax" \
-                      "decl edx"     \
+                      "dec  edx"     \
                       "f0:"          \
 		      value [edx] parm [eax] modify exact [eax edx] nomemory;
   #endif
@@ -362,7 +423,7 @@ static int found_one(struct State *oState)
   static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
   { i = ~i; __asm__ ("bfffo %1,0,0,%0" : "=d" (i) : "d" (i)); return ++i; }  
 #else
-  #error FIRSTBLANK_OVER_MEMTABLE is not defined, and no code to match
+  #error HAVE_FIND_FIRST_ZERO_BIT_ASM is defined, and no code to match
 #endif
 	 
 /*
@@ -381,7 +442,7 @@ static int ogr_init(void)
     return r;
   }
 
-  #if defined(BITOFLIST_OVER_MEMTABLE)
+  #if (OGROPT_BITOFLIST_USES_MEMTABLE != 0)
   {
     int n;
     ogr_bit_of_LIST[0] = 0;
@@ -391,7 +452,7 @@ static int ogr_init(void)
   }    
   #endif
 
-  #if defined(FIRSTBLANK_OVER_MEMTABLE) || defined(FIRSTBLANK_ASM_TEST)
+  #if !defined(HAVE_FIND_FIRST_ZERO_BIT_ASM) || defined(FIRSTBLANK_ASM_TEST)
   {
     /* first zero bit in 16 bits */
     int i, j, k = 0, m = 0x8000;
@@ -419,11 +480,14 @@ static int ogr_init(void)
         int s2 = LOOKUP_FIRSTBLANK(q);
         if (s1 != s2)
         {
-          printf("\nfirstblank error %d != %d (q=%u)\n", s1, s2, q);
+          printf("\nfirstblank error %d != %d (q=%u/0x%08x)\n", s1, s2, q, q);
           err_count++;
         }  
-        else if ((q & 0xffff) == 0xffff)      
-          printf("\rfirstblank done 0x%08x-0x%08x ", q-0xffff, q);
+        else if (q == 0xfffffffe || (q & 0xfffff) == 0xfffff)      
+        {
+          printf("\rfirstblank done 0x%08x-0x%08x ", q & 0xfff00000, q);
+          fflush(stdout);
+        }
       }
       printf("\nend firstblank test (%u errors)\n", err_count);    
     }
@@ -629,7 +693,7 @@ stay:
 #endif
 
     if (comp0 < 0xfffffffe) {
-      #ifndef FIRSTBLANK_OVER_MEMTABLE /* 0 <= x < 0xfffffffe */
+      #if defined(HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
       s = LOOKUP_FIRSTBLANK( comp0 );
       #else
       if (comp0 < 0xffff0000) 
@@ -716,11 +780,15 @@ static int ogr_getresult(void *state, void *result, int resultlen)
 
 static int ogr_destroy(void *state)
 {
+  #if defined(HAVE_OGR_COUNT_SAVE_LOAD_FUNCTIONS)
+  if (state) free(state); 
+  #else
   state = state;
+  #endif
   return CORE_S_OK;
 }
 
-#if 0
+#if defined(HAVE_OGR_COUNT_SAVE_LOAD_FUNCTIONS)
 static int ogr_count(void *state)
 {
   return sizeof(struct State);
@@ -762,7 +830,7 @@ CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
   dispatch_table.cycle     = ogr_cycle;
   dispatch_table.getresult = ogr_getresult;
   dispatch_table.destroy   = ogr_destroy;
-#if 0
+#if defined(HAVE_OGR_COUNT_SAVE_LOAD_FUNCTIONS)
   dispatch_table.count     = ogr_count;
   dispatch_table.save      = ogr_save;
   dispatch_table.load      = ogr_load;
