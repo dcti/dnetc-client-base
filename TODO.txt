@@ -61,6 +61,10 @@ Perhaps someone else has what you don't. :)
 9. Make win32cli start hidden to tray instead of minimized to to taskbar
    when the client is started via a shortcut with minimized as default.
 
+10. Win32cli does not re-add its tray icon periodically.  If Explorer
+  restarts, the tray icon will no longer be visible, making it not
+  possible to re-show the client's window.
+
 
 
 
