@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.31 2003/01/24 05:06:21 snake Exp $
+# @(#)$Id: configure,v 1.288.2.32 2003/01/25 22:56:37 snake Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1611,7 +1611,7 @@ case "$1" in
         add_sources "irix" "mips"
         ;;
 
-    *mipsel-netbsd)                         # snake
+    *mipsel-netbsd)     # [snake] NetBSD on DECstation, PS2 etc.
         TARGET_CC="g++"
         generate_gcc_opts "mips" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC -DSINGLE_CRUNCHER_ONLY"
@@ -1622,7 +1622,7 @@ case "$1" in
         add_sources "netbsd" "mips"
         ;;
 
-    *mipseb-netbsd)
+    *mipseb-netbsd)     # NetBSD on SGI, ARC etc.
         TARGET_CC="g++"
         generate_gcc_opts "mips" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
