@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206 1999/05/08 19:05:30 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.207 1999/06/10 21:26:44 silby Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -90,7 +90,7 @@ static void __initialize_client_object(Client *client)
     client->httpport = 0;
     client->uuehttpmode = 0;
     client->httpid[0] = 0;
-  client->noupdatefromfile = 0;
+  client->noupdatefromfile = 1;
     client->remote_update_dir[0] = '\0';
   client->connectoften=0;
   client->preferred_blocksize=31;
