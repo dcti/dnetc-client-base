@@ -5,6 +5,12 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: client.h,v $
+// Revision 1.94.2.3  1998/12/28 16:42:41  remi
+// Synced with :
+//   Revision 1.100  1998/11/28 19:44:34  cyp
+//   InitializeLogging() and DeinitializeLogging() are no longer Client class
+//   methods.
+//
 // Revision 1.94.2.2  1998/11/08 11:50:31  remi
 // Lots of $Log tags.
 //
@@ -19,9 +25,6 @@ class Client
 public:
   s32  timeslice;
   s32  cputype;
-
-  void InitializeLogging(int spool_on);
-  void DeinitializeLogging(void); 
 
 protected:
   u32 totalBlocksDone[2];
