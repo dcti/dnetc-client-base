@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98 1999/05/08 01:49:44 dicamillo Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.1 1999/05/30 18:15:01 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -175,8 +175,8 @@ static void yield_pump( void *tv_p )
 
   #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
     thr_yield();
-  #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDI)
-    #if defined(__ELF__)
+  #elif (CLIENT_OS == OS_BSDI)
+    #if defined(__ELF__) /* actually, libc_r */
     sched_yield();
     #else // a.out
     NonPolledUSleep( 0 ); /* yield */
@@ -214,6 +214,8 @@ static void yield_pump( void *tv_p )
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_NETBSD)
     NonPolledUSleep( 0 ); /* yield */
+  #elif (CLIENT_OS == OS_FREEBSD)
+    NonPolledUSleep( 0 ); /* ->nanosleep() */
   #elif (CLIENT_OS == OS_QNX)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_AIX)
@@ -221,7 +223,7 @@ static void yield_pump( void *tv_p )
   #elif (CLIENT_OS == OS_ULTRIX)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_HPUX)
-    sched_yield();;
+    sched_yield();
   #elif (CLIENT_OS == OS_DEC_UNIX)
    #if defined(MULTITHREAD)
      sched_yield();
@@ -975,13 +977,44 @@ int Client::Run( void )
     force_no_realthreads = 0; /* this is a hint. it does not reflect capability */
     unsigned int numcrunchers = (unsigned int)numcpu;
 
-    #if (CLIENT_OS == OS_FREEBSD && CLIENT_OS_MINOR != 4)
-    if (numcrunchers > 1)
+    #if (CLIENT_OS == OS_FREEBSD) && defined(_POSIX_THREADS_SUPPORTED)
+    if (numcrunchers != 0 && GetNumberOfDetectedProcessors()>1 /*SMP kernel*/)
     {
-      LogScreen("FreeBSD threads are not SMP aware (do not automatically\n"
-                "migrate to distribute processor load). Please run one\n"
-                "client per processor.\n");
-      numcrunchers = 1;
+      /* running threaded is ok unless ... 
+           ... FreeBSD OS < 4 
+                           - show warning about non-SMP-threads
+                           - and disable threads since a) they are useless
+                             b) using static 4.0-release libc_r will make 
+                             the kernel bitch
+           ... FreeBSD OS == 4.0-pre
+                           - disable threading. kernel threads (rfork()) are
+                             already SMP aware but libc_r/uthreads is not
+      */
+      int ver = 0, nompthreads = 0;
+      char buffer[32];size_t len=sizeof(buffer),len2=sizeof(buffer);
+      if (sysctlbyname("kern.ostype",buffer,&len,NULL,0)!=0) 
+        nompthreads = 1;
+      else if (len!=7 || memcmp(buffer,"FreeBSD",7)!=0)      
+        nompthreads = 1;
+      else if (sysctlbyname("kern.osrelease",buffer,&len2,NULL,0)!=0)
+        nompthreads = 1;
+      else if ((ver = atoi(buffer))<4) /* eg "3.2-RELEASE" */
+        nompthreads = 1;
+      if (nompthreads)
+      {
+        if (numcrunchers > 1)
+        {
+          if (ver == 4)
+            LogScreen("FreeBSD 4.x pre-release libc_r is not SMP aware.\n"
+                      "(threads will not migrate to secondary processors).\n"
+                      "Please run one client per processor.\n");
+          else            
+            LogScreen("FreeBSD 1.x/2.x/3.x threads as well as 4.0 pre-release\n"
+                      "libc_r are not SMP aware (do not migrate to secondary\n"
+                      "processors). Please run one client per processor.\n");
+        }
+        numcrunchers = 0; /* disable threads or rfork() will bitch */
+      }
     }
     #endif
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_OS2) || (CLIENT_OS==OS_BEOS)
