@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-486-smc-rg.cpp,v $
+// Revision 1.5  1998/11/28 17:52:18  remi
+// Corrected BALIGN4 macro for *BSD.
+//
 // Revision 1.4  1998/11/28 17:37:52  remi
 // This one is a bit faster, as I removed an AGI stall in ROUND3. Does
 // 102.3 kkeys/s on my DX4/100.
@@ -54,7 +57,7 @@
 // build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.6  1998/07/08 22:59:33  remi
-// Lots of $Id: rc5-486-smc-rg.cpp,v 1.4 1998/11/28 17:37:52 remi Exp $ stuff.
+// Lots of $Id: rc5-486-smc-rg.cpp,v 1.5 1998/11/28 17:52:18 remi Exp $ stuff.
 //
 // Revision 1.5  1998/07/08 18:47:43  remi
 // $Id fun ...
@@ -94,7 +97,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5_486_smc_rg_cpp (void) {
-return "@(#)$Id: rc5-486-smc-rg.cpp,v 1.4 1998/11/28 17:37:52 remi Exp $"; }
+return "@(#)$Id: rc5-486-smc-rg.cpp,v 1.5 1998/11/28 17:52:18 remi Exp $"; }
 #endif
 
 #define CORE_INCREMENTS_KEY
@@ -119,7 +122,7 @@ return "@(#)$Id: rc5-486-smc-rg.cpp,v 1.4 1998/11/28 17:37:52 remi Exp $"; }
 #define __(s)   #s
 
 #if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__))
-#define BALIGN4 ".align 2"
+#define BALIGN4 ".align 2, 0x90"
 #else
 #define BALIGN4 ".balign 4"
 #endif
