@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.52  1999/02/23 22:26:41  remi
+// Added support for NetBSD/VAX. Anyone to compile the client ?
+//
 // Revision 1.51  1999/02/04 23:03:47  foxyloxy
 // Very small cosmetic change in comments.
 //
@@ -324,6 +327,8 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_CPU    CPU_ARM
   #elif defined(__alpha__) || defined(ASM_ALPHA)
     #define CLIENT_CPU    CPU_ALPHA
+  #elif defined(__vax__) || defined(ASM_VAX)
+    #define CLIENT_CPU    CPU_VAX
   #endif
 #elif defined(__OpenBSD__) || defined(openbsd)
   #define CLIENT_OS_NAME  "OpenBSD"
