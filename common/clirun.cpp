@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.5  1998/09/29 23:36:26  silby
+// Commented out call to pthreads_yield since it's not supported in all POSIX implementations (apparently.)
+//
 // Revision 1.4  1998/09/29 10:13:16  chrisb
 // Removed Remi's (CLIENT_OS == OS_NETWARE) stuff around yield_pump. Fixed a comparison bug in the checkpoint retrieval stuff (Client::Run). Miscellaneous RISC OS wibblings.
 //
@@ -21,7 +24,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.4 1998/09/29 10:13:16 chrisb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.5 1998/09/29 23:36:26 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -235,7 +238,7 @@ static void yield_pump( void *tv_p )
     SurrenderCPU();
   #elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING) || \
     defined(_POSIX_THREADS) || defined(_PTHREAD_H)
-    pthread_yield(NULL);
+    // pthread_yield(NULL);
   #elif (CLIENT_OS == OS_SOLARIS)
     thr_yield();
   #elif (CLIENT_OS == OS_OS2)
