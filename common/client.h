@@ -11,6 +11,10 @@
 // ----------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.120  1999/03/01 09:18:31  gregh
+// Fix CONTEST_COUNT so the config doesn't crash, yet the client won't try
+// to process OGR right now.
+//
 // Revision 1.119  1999/03/01 07:54:52  gregh
 // Change FileEntry to a union that contains crypto (RC5/DES) data and OGR
 // data overlaid on the same bytes.
@@ -315,7 +319,13 @@
 
 #define PACKET_VERSION      0x03
 #define MAXBLOCKSPERBUFFER  500
-#define CONTEST_COUNT       2 /* 3 contests, only 2 right now (no OGR) */
+
+// The following is a slight hack to allow us to release code that has
+// room for OGR in the config, but no actual OGR support. So clients
+// compiled like this won't be surprised when OGR suddenly appears from
+// the proxies.
+#define CONFIG_CONTEST_COUNT 3 /* leave room for 3 contests */
+#define CONTEST_COUNT       2 /* ... but only make 2 active (no OGR now) */
 
 // --------------------------------------------------------------------------
 
@@ -444,8 +454,8 @@ public:
   int  quietmode;
   char inifilename[128];
   char id[64];
-  volatile s32  inthreshold[CONTEST_COUNT];
-  volatile s32  outthreshold[CONTEST_COUNT];
+  volatile s32  inthreshold[CONFIG_CONTEST_COUNT];
+  volatile s32  outthreshold[CONFIG_CONTEST_COUNT];
   s32  blockcount;
   s32  minutes;
   s32  timeslice;
@@ -476,9 +486,9 @@ public:
   s32 connectoften;
 
   int nodiskbuffers;
-  struct { struct membuffstruct in, out; } membufftable[CONTEST_COUNT];
-  char in_buffer_file[CONTEST_COUNT][128];
-  char out_buffer_file[CONTEST_COUNT][128];
+  struct { struct membuffstruct in, out; } membufftable[CONFIG_CONTEST_COUNT];
+  char in_buffer_file[CONFIG_CONTEST_COUNT][128];
+  char out_buffer_file[CONFIG_CONTEST_COUNT][128];
   long PutBufferRecord(const FileEntry *data);
   long GetBufferRecord( FileEntry *data, unsigned int contest, int use_out_file);
   long GetBufferCount( unsigned int contest, int use_out_file, unsigned long *normcountP );
@@ -486,14 +496,14 @@ public:
   s32 nofallback;
   u32 randomprefix;
   int randomchanged;
-  s32 consecutivesolutions[CONTEST_COUNT];
+  s32 consecutivesolutions[CONFIG_CONTEST_COUNT];
   int autofindkeyserver;
   s32 nonewblocks;
   s32 nettimeout;
   s32 noexitfilecheck;
   s32 preferred_contest_id;  // 0 for RC564, 1 for DESII 
   s32 preferred_blocksize;
-  s32 contestdone[CONTEST_COUNT];
+  s32 contestdone[CONFIG_CONTEST_COUNT];
   u32 descontestclosed;
   s32 scheduledupdatetime;
 
