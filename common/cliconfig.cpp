@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.133  1998/07/07 23:03:47  jlawson
+// eliminated printf warning again
+//
 // Revision 1.132  1998/07/07 21:55:10  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -194,7 +197,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.132 1998/07/07 21:55:10 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.133 1998/07/07 23:03:47 jlawson Exp $";
 return id; }
 #endif
 
@@ -2997,7 +3000,7 @@ bool Client::CheckForcedKeyproxy(void)
           for (temp=&keyproxy[0];isalpha(*temp) > 0;temp++) {};
           *temp=0;
           strcpy(buffer,keyproxy);
-          sprintf(keyproxy,"%s%li.v27.distributed.net",buffer,(int)keyport);
+          sprintf(keyproxy,"%s%li.v27.distributed.net",buffer,(long)keyport);
           }
         else if (keyport == 2064)
           {
