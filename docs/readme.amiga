@@ -1,7 +1,7 @@
 
  distributed.net client for AmigaOS (68k/PPC)
  Released by Oliver Roberts <oliver@futaura.co.uk>
- Document revision $Id: readme.amiga,v 1.7.2.2 2000/06/23 13:38:13 oliver Exp $
+ Document revision $Id: readme.amiga,v 1.7.2.3 2000/07/14 22:48:01 oliver Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -14,7 +14,7 @@
     3.0  AmigaOS client specific notes
          3.1 Setting the time zone
          3.2 Myzar - GUI front-end for the client
-         3.3 Core selection (68k)
+         3.3 Packets and work units?
     4.0  Credits & thank yous
 
  1.0  System requirements --------------------------------------------
@@ -38,7 +38,7 @@
 
      The PowerUp PPC version requires:
      - A 603e or higher PPC processor. Tested on 603e and 604e.
-     - Phase5's ppc.library version 46.28 or higher.
+     - Phase5's ppc.library version 46.30 or higher.
      - Also works under WarpUp with PPCLibEmu 0.7e (although you
        should really use the native WarpOS version instead).
        
@@ -97,39 +97,23 @@
 
     If you're going to use this client, then I really do recommend that
     you install Myzar too: http://www.crosswinds.net/~myzar/ . Note that
-    the new clients aren't fully compatible with Myzar 2.0 - you'll need
-    2.1 or higher for full functionality with the current clients.
+    the new clients aren't fully compatible with older versions of Myzar.
+    You'll need Myzar 2.1 or higher for full functionality with the
+    v2.80xx clients.
 
-  3.3  Core selection (68k)
+  3.3  Packets and work units?
 
-    In most cases, you needn't worry about this section, as the 68k client
-    automatically selects the RC5 and OGR core code that is best to your
-    CPU.  For example, if your Amiga has an 060, the client will detect
-    this and use cores optimized for the 060.
-
-    However, it is possible that the 060 core may be faster on some 040
-    cards, than the auto-selected 040 optimized core.  So, 040 owners may
-    wish to try manually selecting the 060 core to see if it's any faster.
-    This can be done by firing the client up on configuration mode (use
-    the -config option) and selecting core #3 from the performance related
-    options menu.  If you do try this, please let me know (via the address
-    at the top of this readme) your conclusions and type of 040 card that
-    you are using.
-
-    For OGR, the auto-selected core is most likely going to be the fastest
-    for you machine.  However, if you wish to experiment by trying the
-    cores for other CPUs, you can do so by using the '-c' command line
-    option (the OGR core cannot be selected in the config menu).  For
-    example '-c ogr 0' will force the client to use the 68000 OGR core
-    Beware: do not attempt to use any of the cores that are meant for
-    higher CPUs, as this will cause a crash.  For example, if you own an
-    030, you can try the 68000 and 020 cores, but not the 040/060 cores.
+    If you are upgrading from the old 2.710x clients, you may not be
+    familiar with the new terminology that has replaced "blocks".  The
+    new clients refer to "packets" and "work units".  Descriptions of
+    their meanings can be found at
+    http://www.distributed.net/faq/cache/138.html
 
  4.0  Credits & thank yous--------------------------------------------
  
     -- Thanks to everybody involved in the development of the Amiga client
        and the beta testing process, who have helped make it what it is,
-       including (in random order):
+       including (in no particular order):
 
        - Kriton Kyrimis (multi-core 68k OGR cores, support and ideas)
        - Tony Preston (support, testing, views and overall managament)
@@ -137,10 +121,9 @@
        - Roberto Ragusa (PPC 604e optimized RC5 core)
        - Stefan Smietanowski (for porting previous clients to the Amiga -
          some crucial parts of his code are used in this version)
-
-    -- Roberto Patriarca - author of the Myzar GUI front-end.
-
-    -- Thomas Tavoly - coordinator of the Amiga RC5 Team.
+       - Roberto Patriarca (Myzar)
+       - Thomas Tavoly (coordinator of the Amiga RC5 Team)
+       - Jacek Rzeuski (keyrate chart class code for Myzar)
 
     -- The whole Amiga RC5 Team
        Without you there wouldn't be much of a point in doing the client, 
@@ -148,5 +131,5 @@
 
     -- Finally, thanks to everybody involved with the gcc and libnix ports
        for AmigaOS, especially for version for WarpUp.  Thanks also to
-       Sebastian Jedruszkiewicz for help with the PowerUp version of the
-       client.
+       Sebastian Jedruszkiewicz for help with stripping the PowerUp
+       version of the client, and Sam Jordan for his knowledge and support.
