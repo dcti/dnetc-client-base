@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version-conflict.h,v $
+// Revision 1.16  1998/09/28 12:46:26  cyp
+// removed checkifbetaexpired prototype
+//
 // Revision 1.15  1998/09/23 22:25:43  silby
 // There, now it's int. All better. :)
 //
@@ -31,16 +34,7 @@
 // Updated to 416, updated changelog
 //
 // Revision 1.7  1998/07/07 21:55:55  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
+// client.h has been split into client.h and baseincs.h 
 //
 // Revision 1.6  1998/07/07 03:10:22  silby
 // Updated to build 414
@@ -71,11 +65,7 @@
 #define CLIENT_VERSIONSTRING2   "2.7100.418-BETA2"        // no leading "v"
 
 #define BETA
-
-#if defined(BETA)
-  int checkifbetaexpired(void);
-#define EXPIRATIONTIME 907394806
-#endif
+#define BETA_EXPIRATION_TIME    907394806
 
 
 #endif // _VERSION_H
