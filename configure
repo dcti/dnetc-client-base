@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.135  1998/12/09 09:43:33  chrisb
+# Various mods to help RISC OS building. Changed definition of DELETECHARS.
+#
 # Revision 1.134  1998/12/09 02:55:32  foxyloxy
 # More irix tweaks/clean up. Nothing worth specifically noting here.
 #
@@ -634,7 +637,7 @@ EXENAME="rc5des"
 #
 # Define characters to delete to form a safe name
 #
-DELETECHARS="'/.\$\-'"
+DELETECHARS="'[:punct:]'"
 
 #
 # Determine the platform specific options for this target
@@ -1397,12 +1400,17 @@ done
 # Build the test program
 #
 echo "Building test program..."
+if [ $1 = riscos ]; then
+#tum-te-tum
+rsh starman "cd rc5/src/client; gcc common/testplat.cpp -o testplat"
+else
 sh -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
 if [ $? -ne 0 ]; then
    echo "Compilation failed.  Check your target options."
    exit
 fi
 ${TARGET_STRIP} testplat
+fi
 
 
 #
