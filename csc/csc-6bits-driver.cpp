@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-6bits-driver.cpp,v $
+// Revision 1.2.2.6  1999/10/24 23:54:54  remi
+// Use Problem::core_membuffer instead of stack for CSC cores.
+// Align frequently used memory to 16-byte boundary in CSC cores.
+//
 // Revision 1.2.2.5  1999/10/20 16:15:34  cyp
 // added cast where compiler was complaining about potential underflow when
 // assigning an int value to u8 var.
@@ -38,7 +42,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_6bits_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-6bits-driver.cpp,v 1.2.2.5 1999/10/20 16:15:34 cyp Exp $"; }
+return "@(#)$Id: csc-6bits-driver.cpp,v 1.2.2.6 1999/10/24 23:54:54 remi Exp $"; }
 #endif
 
 /*
@@ -57,17 +61,29 @@ static void printkey( ulong key[64], int n, bool tab )
 extern "C" {
 s32
 PASTE(csc_unit_func_,CSC_SUFFIX)
-( RC5UnitWork *unitwork, u32 *timeslice, void * /*membuff*/ );
+( RC5UnitWork *unitwork, u32 *timeslice, void *membuff );
 }
 #endif
 
 s32
 PASTE(csc_unit_func_,CSC_SUFFIX)
-( RC5UnitWork *unitwork, u32 *timeslice, void * /*membuff*/ )
+( RC5UnitWork *unitwork, u32 *timeslice, void *membuff )
 {
-  ulong key[2][64];
-  ulong plain[64];
-  ulong cipher[64];
+  // align buffer on a 16-byte boundary
+  assert(sizeof(void*) == sizeof(unsigned long));
+  char *membuffer = (char*)membuff;
+  if( (unsigned)membuffer & 15 != 0)
+    membuffer = (char*)(((unsigned long)(membuffer+15) & ~((unsigned long)15)));
+
+  //ulong key[2][64];
+  ulong (*key)[2][64] = (ulong(*)[2][64])membuffer;
+  membuffer += sizeof(*key);
+  //ulong plain[64];
+  ulong (*plain)[64] = (ulong(*)[64])membuffer;
+  membuffer += sizeof(*plain);
+  //ulong cipher[64];
+  ulong (*cipher)[64] = (ulong(*)[64])membuffer;
+  membuffer += sizeof(*cipher);
   u8 keyB[8];
 
 #ifdef CSC_BIT_32
@@ -89,9 +105,9 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   u32 mask = 1;
   {
   for (int i=0; i<64; i++) {
-    plain[i]  = (pp & mask) ? _1 : _0;
-    cipher[i] = (cc & mask) ? _1 : _0;
-    key[0][i] = (kk & mask) ? _1 : _0;
+    (*plain)[i]  = (pp & mask) ? _1 : _0;
+    (*cipher)[i] = (cc & mask) ? _1 : _0;
+    (*key)[0][i] = (kk & mask) ? _1 : _0;
     if ((u32)(mask <<= 1) == 0) {
       pp = unitwork->plain.hi;
       cc = unitwork->cypher.hi;
@@ -100,7 +116,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
     }
   }
   }
-  memset( &key[1], 0, sizeof(key[1]) );
+  memset( &((*key)[1]), 0, sizeof((*key)[1]) );
 
   // convert key to a stream of bytes
   keyB[0] = (u8)( (keyhi >> 24) & 0xFF );
@@ -113,19 +129,19 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   keyB[7] = 0; // should be, we're looking for a 56-bit key
 
 #if defined( CSC_BIT_32 )
-  key[0][csc_bit_order[0+6]] = 0xAAAAAAAAul;
-  key[0][csc_bit_order[1+6]] = 0xCCCCCCCCul;
-  key[0][csc_bit_order[2+6]] = 0xF0F0F0F0ul;
-  key[0][csc_bit_order[3+6]] = 0xFF00FF00ul;
-  key[0][csc_bit_order[4+6]] = 0xFFFF0000ul;
+  (*key)[0][csc_bit_order[0+6]] = 0xAAAAAAAAul;
+  (*key)[0][csc_bit_order[1+6]] = 0xCCCCCCCCul;
+  (*key)[0][csc_bit_order[2+6]] = 0xF0F0F0F0ul;
+  (*key)[0][csc_bit_order[3+6]] = 0xFF00FF00ul;
+  (*key)[0][csc_bit_order[4+6]] = 0xFFFF0000ul;
   #define CSC_BITSLICER_BITS 11
 #elif defined( CSC_BIT_64 )
-  key[0][csc_bit_order[0+6]] = CASTNUM64(0xAAAAAAAAAAAAAAAA);
-  key[0][csc_bit_order[1+6]] = CASTNUM64(0xCCCCCCCCCCCCCCCC);
-  key[0][csc_bit_order[2+6]] = CASTNUM64(0xF0F0F0F0F0F0F0F0);
-  key[0][csc_bit_order[3+6]] = CASTNUM64(0xFF00FF00FF00FF00);
-  key[0][csc_bit_order[4+6]] = CASTNUM64(0xFFFF0000FFFF0000);
-  key[0][csc_bit_order[5+6]] = CASTNUM64(0xFFFFFFFF00000000);
+  (*key)[0][csc_bit_order[0+6]] = CASTNUM64(0xAAAAAAAAAAAAAAAA);
+  (*key)[0][csc_bit_order[1+6]] = CASTNUM64(0xCCCCCCCCCCCCCCCC);
+  (*key)[0][csc_bit_order[2+6]] = CASTNUM64(0xF0F0F0F0F0F0F0F0);
+  (*key)[0][csc_bit_order[3+6]] = CASTNUM64(0xFF00FF00FF00FF00);
+  (*key)[0][csc_bit_order[4+6]] = CASTNUM64(0xFFFF0000FFFF0000);
+  (*key)[0][csc_bit_order[5+6]] = CASTNUM64(0xFFFFFFFF00000000);
   #define CSC_BITSLICER_BITS 12
 #endif
 
@@ -135,13 +151,13 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   // Zero out all the bits that are to be varied
   for( int i=0; i<6; i++ ) {
     int n = csc_bit_order[i];
-    key[0][n] = _0;
+    (*key)[0][n] = _0;
     keyB[7-n/8] &= (u8)(~(1 << (n%8)));
   }
   {
   for (u32 i=0; i<nbits-CSC_BITSLICER_BITS; i++) {
     int n = csc_bit_order[i+CSC_BITSLICER_BITS];
-    key[0][n] = _0;
+    (*key)[0][n] = _0;
     keyB[7-n/8] &= (u8)(~(1 << (n%8)));
   }
   }
@@ -152,7 +168,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   u32 bkey = 0;
   for( ;; ) {
     //printkey( key[0], 17, 0 );
-    result = PASTE(cscipher_bitslicer_,CSC_SUFFIX) ( key, keyB, plain, cipher );
+    result = PASTE(cscipher_bitslicer_,CSC_SUFFIX) ( *key, keyB, *plain, *cipher, membuffer );
     if( result )
       break;
     if( ++bkey >= (1ul << (nbits - CSC_BITSLICER_BITS) ) )
@@ -161,7 +177,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
     u32 i = 0;
     while( !(bkey & (1 << i)) ) i++;
     i = csc_bit_order[i+CSC_BITSLICER_BITS];
-    key[0][i] ^= _1;
+    (*key)[0][i] ^= _1;
     keyB[7-i/8] ^= (u8)(1 << (i%8));
   }
 
@@ -178,9 +194,9 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
     keylo = keyhi = 0;
     for( int j=8; j<64; j++ )
       if( j<32 )
-	keylo |= ((key[0][j] >> numkeyfound) & 1) << j;
+	keylo |= (((*key)[0][j] >> numkeyfound) & 1) << j;
       else
-	keyhi |= ((key[0][j] >> numkeyfound) & 1) << (j-32);
+	keyhi |= (((*key)[0][j] >> numkeyfound) & 1) << (j-32);
 
     // convert key from CSC format to incrementable format
     convert_key_from_csc_to_inc( &keyhi, &keylo );

@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-1key-bitslicer.cpp,v $
+// Revision 1.1.2.3  1999/10/24 23:54:53  remi
+// Use Problem::core_membuffer instead of stack for CSC cores.
+// Align frequently used memory to 16-byte boundary in CSC cores.
+//
 // Revision 1.1.2.2  1999/10/08 00:07:00  cyp
 // made (mostly) all extern "C" {}
 //
@@ -16,7 +20,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_1key_bitslicer_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-1key-bitslicer.cpp,v 1.1.2.2 1999/10/08 00:07:00 cyp Exp $"; }
+return "@(#)$Id: csc-1key-bitslicer.cpp,v 1.1.2.3 1999/10/24 23:54:53 remi Exp $"; }
 #endif
 
 // ------------------------------------------------------------------
@@ -33,15 +37,16 @@ return "@(#)$Id: csc-1key-bitslicer.cpp,v 1.1.2.2 1999/10/08 00:07:00 cyp Exp $"
 extern "C" {
 ulong 
 PASTE(cscipher_bitslicer_,CSC_SUFFIX) 
-( const ulong key[2][64], const ulong msg[64], const ulong cipher[64] );
+( const ulong key[2][64], const ulong msg[64], const ulong cipher[64], char *membuffer );
 }
 #endif
 
 ulong 
 PASTE(cscipher_bitslicer_,CSC_SUFFIX) 
-( const ulong key[2][64], const ulong msg[64], const ulong cipher[64] )
+( const ulong key[2][64], const ulong msg[64], const ulong cipher[64], char *membuffer )
 {
-  ulong subkey[9+2][64];
+  //ulong subkey[9+2][64];
+  ulong (*subkey)[9+2][64] = (ulong (*)[9+2][64])membuffer;
   ulong *skp;  // subkey[n]
   ulong *skp1; // subkey[n-1]
   const ulong *tcp; // pointer to tabc[] (bitslice values of c0..c8)
@@ -100,10 +105,10 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 
   // global initializations
   tcp = &csc_tabc[0][0];
-  memcpy( &subkey[0], &key[1], sizeof(subkey[0]) );
-  memcpy( &subkey[1], &key[0], sizeof(subkey[1]) );
-  skp  = &subkey[2][0];
-  skp1 = &subkey[1][0];
+  memcpy( &(*subkey)[0], &key[1], sizeof((*subkey)[0]) );
+  memcpy( &(*subkey)[1], &key[0], sizeof((*subkey)[1]) );
+  skp  = &(*subkey)[2][0];
+  skp1 = &(*subkey)[1][0];
   memcpy( cfr, msg, sizeof(cfr) );
 
   // the first 8 rounds

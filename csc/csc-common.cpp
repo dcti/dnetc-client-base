@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-common.cpp,v $
+// Revision 1.1.2.2  1999/10/24 23:54:54  remi
+// Use Problem::core_membuffer instead of stack for CSC cores.
+// Align frequently used memory to 16-byte boundary in CSC cores.
+//
 // Revision 1.1.2.1  1999/10/07 18:41:14  cyp
 // sync'd from head
 //
@@ -17,7 +21,11 @@
 
 // ------------------------------------------------------------------
 // bitslice version of c0..c8
-const ulong csc_tabc[9][64] = {
+const ulong csc_tabc[9][64]
+#if defined(__GNUC__)
+__attribute ((aligned (16)))
+#endif
+ = {
   { // c0 == 0x290d61409ceb9e8f
     _1, _1, _1, _1, _0, _0, _0, _1, _0, _1, _1, _1, _1, _0, _0, _1, 
     _1, _1, _0, _1, _0, _1, _1, _1, _0, _0, _1, _1, _1, _0, _0, _1, 
@@ -66,7 +74,11 @@ const ulong csc_tabc[9][64] = {
 };
 
 // bitslice version of e and e'
-const ulong csc_tabe[2][64] = {
+const ulong csc_tabe[2][64]
+#if defined(__GNUC__)
+__attribute ((aligned (16)))
+#endif
+ = {
   { // e == 0xb7e151628aed2a6a
     _0, _1, _0, _1, _0, _1, _1, _0, _0, _1, _0, _1, _0, _1, _0, _0, 
     _1, _0, _1, _1, _0, _1, _1, _1, _0, _1, _0, _1, _0, _0, _0, _1, 
@@ -80,7 +92,11 @@ const ulong csc_tabe[2][64] = {
 };
 
 // table-lookup implementation of transP()
-const u8 csc_tabp[256] = {
+const u8 csc_tabp[256]
+#if defined(__GNUC__)
+__attribute ((aligned (16)))
+#endif
+ = {
   0x29,0x0d,0x61,0x40,0x9c,0xeb,0x9e,0x8f, 0x1f,0x85,0x5f,0x58,0x5b,0x01,0x39,0x86,
   0x97,0x2e,0xd7,0xd6,0x35,0xae,0x17,0x16, 0x21,0xb6,0x69,0x4e,0xa5,0x72,0x87,0x08,
   0x3c,0x18,0xe6,0xe7,0xfa,0xad,0xb8,0x89, 0xb7,0x00,0xf7,0x6f,0x73,0x84,0x11,0x63,

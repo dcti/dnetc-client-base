@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.18 1999/10/23 07:01:33 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.19 1999/10/24 23:54:52 remi Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -971,7 +971,7 @@ int Problem::Run_CSC(u32 *timesliceP, int *resultcode)
   *resultcode = -1;
   return -1;
 #else  
-  s32 rescode = (*unit_func)( &rc5unitwork, timesliceP, (void *)0 );
+  s32 rescode = (*unit_func)( &rc5unitwork, timesliceP, core_membuffer );
 
   if (rescode < 0) /* "kiter" error */
   {
