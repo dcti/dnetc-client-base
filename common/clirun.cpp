@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.51 2000/04/17 21:11:15 michmarc Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.52 2000/05/04 21:47:10 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -48,7 +48,7 @@ static struct __dyn_timeslice_struct
 {
   {  RC5, 1000000, 0x80000000,  0x00100,  0x10000 },
   {  DES, 1000000, 0x80000000,  0x00100,  0x10000 },
-  {  OGR,  200000,   0x100000,  0x00100,  0x10000 },
+  {  OGR,  200000,   0x100000,  0x00010,  0x10000 },
   {  CSC, 1000000, 0x80000000,  0x00100,  0x10000 }
 }; 
 
@@ -308,24 +308,27 @@ void Go_mt( void * parm )
       //fprintf(stderr,"thisprob->Run() = %d\n", run);
       thrparams->is_suspended = 1;
 
-      if (thisprob->runtime_usec < elapsed_usec)
+      runtime_usec = 0xfffffffful; /* assume time was bad */
+      if (!thisprob->last_runtime_is_invalid)
       {
-        if (thisprob->runtime_sec <= elapsed_sec) /* clock is bad */
-          elapsed_sec = (0xfffffffful / 1000000ul) + 1; /* overflow it */
+        if (thisprob->runtime_usec < elapsed_usec)
+        {
+          if (thisprob->runtime_sec <= elapsed_sec) /* clock is bad */
+            elapsed_sec = (0xfffffffful / 1000000ul) + 1; /* overflow it */
+          else
+          {
+            elapsed_sec = (thisprob->runtime_sec-1) - elapsed_sec;
+            elapsed_usec = (thisprob->runtime_usec+1000000ul) - elapsed_usec;
+          }
+        }
         else
         {
-          elapsed_sec = (thisprob->runtime_sec-1) - elapsed_sec;
-          elapsed_usec = (thisprob->runtime_usec+1000000ul) - elapsed_usec;
+          elapsed_sec = thisprob->runtime_sec - elapsed_sec;
+          elapsed_usec = thisprob->runtime_usec - elapsed_usec;
         }
+        if (elapsed_sec <= (0xfffffffful / 1000000ul))
+          runtime_usec = (elapsed_sec * 1000000ul) + elapsed_usec;
       }
-      else
-      {
-        elapsed_sec = thisprob->runtime_sec - elapsed_sec;
-        elapsed_usec = thisprob->runtime_usec - elapsed_usec;
-      }
-      runtime_usec = 0xfffffffful;
-      if (elapsed_sec <= (0xfffffffful / 1000000ul))
-        runtime_usec = (elapsed_sec * 1000000ul) + elapsed_usec;
 
       didwork = (last_count != thisprob->core_run_count);
       if (run != RESULT_WORKING)
@@ -348,6 +351,7 @@ void Go_mt( void * parm )
         }
         optimal_timeslice = thisprob->tslice; /* get the number done back */
         #if defined(DYN_TIMESLICE_SHOWME)
+        if (runtime_usec != 0xfffffffful) /* time was valid */
         {
           static unsigned int ctr = UINT_MAX;
           static unsigned long totaltime = 0, totalts = 0;
@@ -370,21 +374,25 @@ void Go_mt( void * parm )
         #endif
         if (run == RESULT_WORKING) /* timeslice/time is invalid otherwise */
         {
-          unsigned int usec5perc = (thrparams->dyn_timeslice_table[contest_i].usec / 20);
-          if (runtime_usec < (thrparams->dyn_timeslice_table[contest_i].usec - usec5perc))
+          if (runtime_usec != 0xfffffffful) /* not negative time or other bad thing */
           {
-            optimal_timeslice <<= 1;
-            if (optimal_timeslice > thrparams->dyn_timeslice_table[contest_i].max)
-              optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].max;
+            unsigned int usec5perc = (thrparams->dyn_timeslice_table[contest_i].usec / 20);
+            if (runtime_usec < (thrparams->dyn_timeslice_table[contest_i].usec - usec5perc))
+            {
+              optimal_timeslice <<= 1;
+              if (optimal_timeslice > thrparams->dyn_timeslice_table[contest_i].max)
+                optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].max;
+            }
+            else if (runtime_usec > (thrparams->dyn_timeslice_table[contest_i].usec + usec5perc))
+            {
+              optimal_timeslice -= (optimal_timeslice>>2);
+              if (thrparams->is_non_preemptive_os)
+                optimal_timeslice >>= 2; /* fall fast, rise slow(er) */
+              if (optimal_timeslice < thrparams->dyn_timeslice_table[contest_i].min)
+                optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].min;
+            }
+            thisprob->tslice = optimal_timeslice; /* for the next round */
           }
-          else if (runtime_usec > (thrparams->dyn_timeslice_table[contest_i].usec + usec5perc))
-          {
-            optimal_timeslice -= (optimal_timeslice>>2);
-            //optimal_timeslice >>= 1;
-            if (optimal_timeslice < thrparams->dyn_timeslice_table[contest_i].min)
-              optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].min;
-          }
-          thisprob->tslice = optimal_timeslice; /* for the next round */
         }
         else /* ok, we've finished. so save it */
         {  

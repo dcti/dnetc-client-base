@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.56 2000/04/15 14:18:33 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.57 2000/05/04 21:47:09 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -672,7 +672,7 @@ int Problem::Run_DES(u32 *iterationsP, int *resultcode)
 #else
 
   //iterationsP == in: suggested iterations, out: effective iterations
-  u32 kiter = (*(unit_func.des))( &rc5unitwork, iterationsP, core_membuffer );
+  u32 kiter = (*(unit_func.des))( &rc5unitwork, iterationsP, (char *)core_membuffer );
 
   __IncrementKey ( &refL0.hi, &refL0.lo, *iterationsP, contest);
   // Increment reference key count
@@ -800,6 +800,8 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   struct timeval stop, start, pstart, clock_stop;
   int retcode, core_resultcode;
   u32 iterations;
+
+  last_runtime_is_invalid = 1; /* haven't changed runtime fields yet */
 
   if ( !initialized )
     return ( -1 );
@@ -949,6 +951,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   }
   else
   {
+    last_runtime_is_invalid = 0;
     if (stop.tv_usec < start.tv_usec)
     {
       stop.tv_sec--;

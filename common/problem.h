@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.26 2000/03/09 21:48:35 jlawson Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.27 2000/05/04 21:47:09 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -114,6 +114,7 @@ public: /* anything public must be thread safe */
   u32 completion_timehi, completion_timelo; /* wall clock time between start/finish */
   u32 runtime_sec, runtime_usec; /* ~total user time spent in core */
   u32 last_runtime_sec, last_runtime_usec; /* time spent in core in last run */
+  int last_runtime_is_invalid; /* last_runtime was bad (clock change etc) */
   u32 core_run_count; /* used by go_mt and other things */
 
   struct
