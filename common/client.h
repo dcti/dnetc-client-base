@@ -12,17 +12,8 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
-// Revision 1.108  1998/12/21 19:12:50  cyp
-// Undid the last couple of sil[lb]y changes. The client is already capable
-// (and has been for minimally six months now) of all these 'enhancements'.
-// Besides, implementing something that isn't used (yet!) or is not supported
-// (yet!) is much like putting the cart before the horse. How is anyone to
-// know whether something is going be applied (or more importantly *how*)
-// until it is actually used?
-//
-// Revision 1.107  1998/12/21 18:53:29  cyp
-// Removed 'unused'/'unimplemented' sil[l|b]yness added in recent version.
-// See client.h for full comment.
+// Revision 1.109  1998/12/23 00:30:24  silby
+// Stepped back to 1.106.
 //
 // Revision 1.106  1998/12/21 01:38:34  silby
 // scheduledtime should've been a signed integer, fixed.
@@ -165,19 +156,13 @@
 // constructor extended to take this as an argument.
 //
 // Revision 1.69  1998/07/25 06:31:44  silby
-// Added lurk functions to initiate a connection 
-// and hangup a connection.  win32 hangup is functional.
+// Added lurk functions to initiate a connection and hangup a connection.  win32 hangup is functional.
 //
 // Revision 1.68  1998/07/25 05:29:57  silby
-// Changed all lurk options to use a LURK define (automatically 
-// set in client.h) so that lurk integration of mac/amiga clients needs 
-// only touch client.h and two functions in client.cpp
+// Changed all lurk options to use a LURK define (automatically set in client.h) so that lurk integration of mac/amiga clients needs only touch client.h and two functions in client.cpp
 //
 // Revision 1.67  1998/07/15 06:58:12  silby
-// Changes to Flush, Fetch, and Update so that when the win32 gui sets 
-// connectoften to initiate one of the above more verbose feedback will be 
-// given.  Also, when force=1, a connect will be made regardless of 
-// offlinemode and lurk.
+// Changes to Flush, Fetch, and Update so that when the win32 gui sets connectoften to initiate one of the above more verbose feedback will be given.  Also, when force=1, a connect will be made regardless of offlinemode and lurk.
 //
 // Revision 1.66  1998/07/11 00:37:29  silby
 // Documented the connectrequested variable better.
@@ -207,7 +192,11 @@
 // Revision 1.59  1998/07/05 13:09:04  cyruspatel
 // Created new pathwork.cpp which contains functions for determining/setting
 // the "work directory" and pathifying a filename that has no dirspec.
-// Cleans up the existing (crappy) work directory rooting.
+// GetFullPathForFilename() is ideally suited for use in (or just prior to) a
+// call to fopen(). This obviates the neccessity to pre-parse filenames or
+// maintain separate filename buffers. In addition, each platform has its own
+// code section to avoid cross-platform assumptions. More doc in pathwork.cpp
+// #define DONT_USE_PATHWORK if you don't want to use these functions.
 //
 // Revision 1.58  1998/07/05 12:42:37  cyruspatel
 // Created cpucheck.h to support makefiles that rely on autodependancy info
@@ -381,8 +370,8 @@ typedef struct Packet
   u32  ip;            // IP Address (proxy filled)             |       |
   u32  iterationshi;  // number of iterations (the high 32bits)|       |
   char other[20];     // extra space                           |       |
-  u32  rc564contestdone; // ==htonl(0x1337F00D) when finished  |       |
-  u32  descontestdone;   // ==htonl(0xBEEFF00D) when finished  |       |
+  u32  rc564contestdone; //  set to htonl(0xBEEFF00D) by the proxies if the rc564 contest is finished
+  u32  descontestdone;   //   set to htonl(0xBEEFF00D) by the proxies if current des contest is over
   u32  contestid;     // contest identifier                    |       |
   u32  build;         // build number                          |       |
   u32  os;            // OS - see defines                      |       |
@@ -452,10 +441,8 @@ public:
   char in_buffer_file[CONTEST_COUNT][128];
   char out_buffer_file[CONTEST_COUNT][128];
   long PutBufferRecord(const FileEntry *data);
-  long GetBufferRecord( FileEntry *data, 
-                       unsigned int contest, int use_out_file);
-  long GetBufferCount( unsigned int contest, 
-                       int use_out_file, unsigned long *normcountP );
+  long GetBufferRecord( FileEntry *data, unsigned int contest, int use_out_file);
+  long GetBufferCount( unsigned int contest, int use_out_file, unsigned long *normcountP );
   
   //s32 membuffcount[2][2];
   //FileEntry *membuff[2][MAXBLOCKSPERBUFFER][2];
@@ -471,17 +458,11 @@ public:
   s32 preferred_contest_id;  // 0 for RC564, 1 for DESII 
   s32 preferred_blocksize;
   s32 contestdone[CONTEST_COUNT];
+  u32 descontestclosed;
+  s32 scheduledupdatetime;
 
 #if defined(MMX_BITSLICER) || defined(MMX_RC5)
   int usemmx;
-#endif
-
-#if (CLIENT_OS == OS_WIN32) && defined(NEEDVIRTUALMETHODS)
-  u32 connectrequested;       // used by win32gui to signal an update
-  // 1 = user requested update
-  // 2 = automaticly requested update (quiet mode)
-  // 3 = user requested flush
-  // 4 = user requested fetch
 #endif
 
 #if defined(NEEDVIRTUALMETHODS)
