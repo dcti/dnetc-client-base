@@ -1,7 +1,9 @@
 /*
- * Copyright distributed.net 1997 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ * Created by Cyrus Patel <cyp@fb14.uni-mainz.de> to be able to throw
+ * away some very ugly hackery in buffer open code. I apologize for Bovine.
  *
  * This module contains functions for setting the "working directory"
  * and pathifying a filename that has no dirspec. Functions need to be
@@ -21,7 +23,7 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.17 1999/11/08 02:02:43 cyp Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.18 2000/01/04 12:49:47 cyp Exp $"; }
 
 #include <stdio.h>
 #include <string.h>
@@ -64,8 +66,7 @@ unsigned int GetFilenameBaseOffset( const char *fullpath )
   #elif (CLIENT_OS == OS_RISCOS)
     slash = strrchr( fullpath, '.' );
   #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
-    (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || \
-    (CLIENT_OS == OS_OS2)
+    (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
     slash = strrchr( (char*) fullpath, '\\' );
     char *slash2 = strrchr( (char*) fullpath, '//' );
     if (slash2 > slash) slash = slash2;
@@ -148,8 +149,7 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
     if (slash != NULL) *(slash+1) = 0;
     else cwdBuffer[0] = 0;
   }
-  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || \
-        (CLIENT_OS == OS_WIN16)
+  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   {
     strcpy( cwdBuffer, inipath );
     char *slash = strrchr(cwdBuffer, '/');
@@ -341,8 +341,7 @@ const char *GetFullPathForFilenameAndDir( const char *fname, const char *dir )
     #elif (CLIENT_OS == OS_RISCOS)
       strcat( pathBuffer, "." );
     #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
-      (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || \
-      (CLIENT_OS == OS_OS2)
+      (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
       strcat( pathBuffer, "\\" );
     #else
       strcat( pathBuffer, "/" );

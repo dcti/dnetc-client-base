@@ -1,4 +1,4 @@
-/* Copyright distributed.net 1997-1999 - All Rights Reserved
+/* Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
@@ -11,7 +11,7 @@
  * ------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.42 2000/01/02 04:07:19 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.43 2000/01/04 12:49:46 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -49,7 +49,7 @@ return "@(#)$Id: logstuff.cpp,v 1.42 2000/01/02 04:07:19 cyp Exp $"; }
 
 #if (CLIENT_OS == OS_NETWARE || CLIENT_OS == OS_DOS || \
      CLIENT_OS == OS_OS2 || CLIENT_OS == OS_WIN16 || \
-     CLIENT_OS == OS_WIN32 || CLIENT_OS == OS_WIN32S )
+     CLIENT_OS == OS_WIN32 )
   #define ftruncate( fd, sz )  chsize( fd, sz )
 #elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_RISCOS || \
      CLIENT_OS == OS_AMIGAOS || CLIENT_OS == OS_MACOS)

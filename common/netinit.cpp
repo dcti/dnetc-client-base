@@ -1,7 +1,8 @@
 /*
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * -------------------------------------------------------------------
  * The Network constructor and destructor methods are encapsulated in
@@ -12,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.32 1999/12/05 15:34:50 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.33 2000/01/04 12:49:46 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -90,7 +91,7 @@ static int __netInitAndDeinit( int doWhat )
 
   //----------------------------
 
-  #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+  #if (CLIENT_OS == OS_WIN16)
   if (success)
   {
     if ( doWhat == 0 )                     //request to check online mode

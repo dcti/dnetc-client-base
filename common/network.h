@@ -1,12 +1,12 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 
 #ifndef __NETWORK_H__
-#define __NETWORK_H__ "@(#)$Id: network.h,v 1.73 1999/12/06 19:11:10 cyp Exp $"
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.74 2000/01/04 12:49:47 cyp Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
@@ -30,7 +30,7 @@ extern "C" {
 }
 #endif
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   #define WIN32_LEAN_AND_MEAN
   #ifndef STRICT
     #define STRICT

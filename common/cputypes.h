@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.76 1999/12/31 20:29:33 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.77 2000/01/04 12:49:46 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -70,7 +70,7 @@
 /* #define OS_UNUSED_8  33 */ /* never used. was os400 */
 #define OS_RISCOS       34
 #define OS_DGUX         35
-/* #define OS_WIN32S    36 */ /*obsolete (32-bit Win32s) w16 client is 32bit*/
+/* #define OS_UNUSED_9  36 */ /*obsolete: WIN32S; w32==w32s and w16==32bit */
 #define OS_SINIX        37
 #define OS_DYNIX        38
 #define OS_OS390        39
@@ -93,10 +93,6 @@
   #elif !defined(WIN32) && !defined(__WIN32__) && !defined(_WIN32) /* win16 */
     #define CLIENT_CPU    CPU_X86
     #define CLIENT_OS     OS_WIN16
-    #define CLIENT_OS_NAME "Win16"
-  #elif defined(__WIN32S__) /* win32s gui/may need to be defined in makefile*/
-    #define CLIENT_CPU    CPU_X86
-    #define CLIENT_OS     OS_WIN32S
     #define CLIENT_OS_NAME "Win16"
   #elif defined(__WINDOWS386__) /* standard 32bit client built for win16 */
     #define CLIENT_CPU    CPU_X86

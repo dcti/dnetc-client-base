@@ -10,9 +10,9 @@
 */ 
 
 #ifndef __CMPIDEFS_H__
-#define __CMPIDEFS_H__ "@(#)$Id: cmpidefs.h,v 1.24 1999/12/02 05:14:59 cyp Exp $"
+#define __CMPIDEFS_H__ "@(#)$Id: cmpidefs.h,v 1.25 2000/01/04 12:49:45 cyp Exp $"
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   #if defined(__TURBOC__)
   // Borland already knows strcmpi
   // Borland already knows strncmpi

@@ -1,4 +1,4 @@
-/* Copyright distributed.net 1997-1999 - All Rights Reserved
+/* Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -9,7 +9,7 @@
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.54 1999/12/31 20:29:37 cyp Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.55 2000/01/04 12:49:47 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -136,7 +136,7 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
       // nothing
     }
   }
-  #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+  #elif (CLIENT_OS == OS_WIN16)
   {
     if ( set_for_thread )
     {

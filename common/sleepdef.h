@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.30 1999/12/13 05:39:48 cyp Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.31 2000/01/04 12:49:48 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -42,7 +42,7 @@
   #endif
   #define sleep(x) Sleep(1000*(x))
   #define usleep(x) Sleep((x)/1000)
-#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+#elif (CLIENT_OS == OS_WIN16)
   // Win16 has Yield(), but we have a gui, so pump messages instead
   #include "w32cons.h"
   #define sleep(x)  w32Sleep((x)*1000)
