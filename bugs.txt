@@ -12,7 +12,9 @@ Bugs Listing
   If you know what CPU this machine has, then run 'rc5des -config', select
   option 17, and set it". It's not option 17 any more, and GUI builds
   shouldn't talk about rc5des -config.
-
+FIXED (sorta) - since x86ident gets almost all know processors, and
+  the selection based on speed was never accurate, I just removed it.
+  Now unidentified chips will get core 0 by default.
 06-11-98 - Mike Silbersack
 
   I just verified a report that x86ident on linux w/build 408
