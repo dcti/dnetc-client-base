@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.5 2003/01/19 22:49:49 snake Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.6 2003/02/24 23:09:49 snake Exp $"
 
 #include "cputypes.h"
 
@@ -241,7 +241,11 @@
   #include <sys/time.h>
   #include <unistd.h>
   #include <fcntl.h> /* O_RDWR etc */
-  #include <sys/param.h>
+  #if defined (__FreeBSD__) && (__FreeBSD__ < 5)
+    #include <sys/param.h>
+  #else 
+    #include <netinet/in.h> //ntohl/htonl/ntohs/htons
+  #endif
   #include <sys/sysctl.h>
   #if defined(__FreeBSD__) && (__FreeBSD__ < 3)
     #include <sys/unistd.h>
