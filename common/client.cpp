@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.58  1998/06/25 01:34:31  blast
+//
+// AmigaOS changes, also changed makefile so that there now is only ONE
+// AmigaOS makefile for both cpu's.
+//
 // Revision 1.57  1998/06/24 21:53:40  cyruspatel
 // Created CliGetMessageForProblemCompletedNoSave() in clisrate.cpp. It
 // is similar to its non-nosave pendant but doesn't affect cumulative
@@ -52,14 +57,18 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.57 1998/06/24 21:53:40 cyruspatel Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.58 1998/06/25 01:34:31 blast Exp $";
 #endif
 
 #include "client.h"
 
 #if (CLIENT_OS == OS_AMIGAOS)
 const char versionstring[] = "$VER: RC5DES v2.7021.405 (30.05.98)";
-#endif
+#if (CLIENT_CPU == CPU_68K)
+long __stack 65536L;	// AmigaOS has no automatic stack extension
+			// seems standard stack isn't enough
+#endif // (CLIENT_CPU == CPU_68K)
+#endif // (CLIENT_OS == OS_AMIGAOS)
 
 #if (CLIENT_OS == OS_WIN32)
 rasenumconnectionsT rasenumconnections = NULL;
