@@ -3,8 +3,9 @@
  * generation of S0[]
  *
  * $Log: rc5-ultra-crunch.cpp,v $
- * Revision 1.8  1998/11/28 18:06:00  remi
- * Fixed the key incrementation bug.
+ * Revision 1.9  1998/11/28 18:20:24  remi
+ * Fixed the key incrementation bug. Many thanks to Simon Fenney for
+ * finding it !
  *
  * Revision 1.7  1998/07/08 22:59:40  remi
  * Lots of $Id stuff.
@@ -29,7 +30,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5_ultra_crunch_cpp (void) {
-return "@(#)$Id: rc5-ultra-crunch.cpp,v 1.8 1998/11/28 18:06:00 remi Exp $"; }
+return "@(#)$Id: rc5-ultra-crunch.cpp,v 1.9 1998/11/28 18:20:24 remi Exp $"; }
 #endif
 
 #include <stdio.h>

@@ -6,8 +6,9 @@
  * Marco.Walther@mch.sni.de
  *
  * $Log: mips-crunch.cpp,v $
- * Revision 1.9  1998/11/28 18:07:20  remi
- * Fixed the key incrementation bug.
+ * Revision 1.10  1998/11/28 18:21:33  remi
+ * Fixed the key incrementation bug. Many thanks to Simon Fenney for
+ * finding it !
  *
  * Revision 1.8  1998/07/14 08:41:30  remi
  * Cleaned-up the extra $Log
@@ -35,7 +36,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mips_crunch_cpp(void) {
-return "@(#)$Id: mips-crunch.cpp,v 1.9 1998/11/28 18:07:20 remi Exp $"; }
+return "@(#)$Id: mips-crunch.cpp,v 1.10 1998/11/28 18:21:33 remi Exp $"; }
 #endif
 
 
