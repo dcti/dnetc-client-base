@@ -21,11 +21,18 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.122 2002/06/23 10:25:34 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.123 2002/07/21 22:33:54 andreasb Exp $
 ==========================================================================
 
 2.8000
 ------
+
+2.8019.473  fix: static: rebuilt all static clients to fix CA-2002-19:
+                    "Buffer Overflow in Multiple DNS Resolver Libraries"
+            chg: all: increased buff-in.* limit to 2000 packets
+            imp: x86: improved P4 RC5 core (ak-p7) (#2542)
+            chg: linux: enable /proc/apm support for non-x86 (#2643)
+            fix: all: processed RC5 random blocks even if RC5 was disabled
 
 2.8018.472  fix: macosx: fix crash in battery pause code from #2465 (#2615)
             fix: macosx: config menu displayed erroneous message that pause
