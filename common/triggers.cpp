@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.33 2000/05/01 08:31:56 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.34 2000/05/03 00:01:00 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -827,7 +827,7 @@ static void _init_cputemp( const char *p ) /* cpu temperature string */
     if (!*p)  
       break;
     if (*p == '-' || *p == '+')
-      neg = *p++;
+      neg = (*p++ == '-');
     while (isdigit(*p))
     {
       val = val*10;
