@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.80  1999/02/17 19:09:13  remi
+// Fix for non-x86 targets : an RC5 key should always be 'mangle-incremented',
+// whatever endianess we have. But htonl()/ntohl() does work for DES, so I
+// added a contest parameter to IncrementKey().
+//
 // Revision 1.79  1999/02/17 07:49:43  gregh
 // Added OGR placeholder.
 //
@@ -234,7 +239,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.79 1999/02/17 07:49:43 gregh Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.80 1999/02/17 19:09:13 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -593,7 +598,7 @@ ConInKey(-1);
      ((((contestwork.key.lo & 0xffff) + (contestwork.keysdone.lo & 0xffff)) + 
        ((contestwork.key.lo >> 16) + (contestwork.keysdone.lo >> 16))) >> 16);
   key.lo = contestwork.key.lo + contestwork.keysdone.lo;
-
+  
   // set up the unitwork structure
   rc5unitwork.plain.hi = contestwork.plain.hi ^ contestwork.iv.hi;
   rc5unitwork.plain.lo = contestwork.plain.lo ^ contestwork.iv.lo;
@@ -602,14 +607,16 @@ ConInKey(-1);
 
   if (contest == 0)
     {
-    rc5unitwork.L0.lo = ((key.hi >> 24) & 0x000000FFL) |
-        ((key.hi >>  8) & 0x0000FF00L) |
-        ((key.hi <<  8) & 0x00FF0000L) |
-        ((key.hi << 24) & 0xFF000000L);
-    rc5unitwork.L0.hi = ((key.lo >> 24) & 0x000000FFL) |
-        ((key.lo >>  8) & 0x0000FF00L) |
-        ((key.lo <<  8) & 0x00FF0000L) |
-        ((key.lo << 24) & 0xFF000000L);
+    rc5unitwork.L0.lo = 
+      ((key.hi >> 24) & 0x000000FFL) |
+      ((key.hi >>  8) & 0x0000FF00L) |
+      ((key.hi <<  8) & 0x00FF0000L) |
+      ((key.hi << 24) & 0xFF000000L);
+    rc5unitwork.L0.hi = 
+      ((key.lo >> 24) & 0x000000FFL) |
+      ((key.lo >>  8) & 0x0000FF00L) |
+      ((key.lo <<  8) & 0x00FF0000L) |
+      ((key.lo << 24) & 0xFF000000L);
     } 
   else 
     {
@@ -861,39 +868,40 @@ if (contest == 0) // RC5
         }
       if ( result )
         {
-        kiter+=result-1;
+        kiter += result-1;
         break;
         }
       else
         {
         // "mangle-increment" the key number by the number of pipelines
-        IncrementKey(rc5unitwork.L0, pipeline_count);
-        kiter+=pipeline_count;
+        IncrementKey (rc5unitwork.L0, pipeline_count, contest);
+        kiter += pipeline_count;
         };
       };
   #else
     int keycount=timeslice;
+    //LogScreenf ("rc5unitwork = %08X:%08X (%X)\n", rc5unitwork.L0.hi, rc5unitwork.L0.lo, keycount);
     while ( keycount-- ) // timeslice ignores the number of pipelines
       {
       u32 result = rc5_unit_func( &rc5unitwork );
       if ( result )
         {
-        kiter+=result-1;
+        kiter += result-1;
         break;
         }
       else
         {
         // "mangle-increment" the key number by the number of pipelines
-        IncrementKey(rc5unitwork.L0, pipeline_count);
-        kiter+=pipeline_count;
+        IncrementKey(rc5unitwork.L0, pipeline_count, contest);
+        kiter += pipeline_count;
         };
       };
   #endif
 
-  IncrementKey(refL0, timeslice*pipeline_count);
+  IncrementKey(refL0, timeslice*pipeline_count, contest);
     // Increment reference key count
 
-  contestwork.keysdone.lo+=kiter;
+  contestwork.keysdone.lo += kiter;
   if (contestwork.keysdone.lo < kiter)
     contestwork.keysdone.hi++;
     // Checks passed, increment keys done count.
@@ -1068,7 +1076,7 @@ else if (contest == 1) // DES
     kiter = des_unit_func ( &rc5unitwork, nbits );
   #endif
 
-  IncrementKey(refL0, timeslice*pipeline_count);
+  IncrementKey(refL0, timeslice*pipeline_count, contest);
     // Increment reference key count
 
 #if (CLIENT_CPU != CPU_X86) // x86 increments in little-endian
@@ -1326,16 +1334,51 @@ printf("DES: kiter is %d\n",kiter);
 #endif
 }
 
-void IncrementKey(u64 &key, u32 iters)
+void IncrementKey(u64 &key, u32 iters, int contest)
 {
-  u64 tempkey;
-  tempkey.hi=ntohl(key.lo); // Switch to host order
-  tempkey.lo=ntohl(key.hi);
+  if (contest == 1) // DES
+    {
+    u64 tempkey;
+    tempkey.hi=ntohl(key.lo); // Switch to host order
+    tempkey.lo=ntohl(key.hi);
 
-  tempkey.lo+=iters; // Add dword
-  if (tempkey.lo < iters) tempkey.hi++; // Account for carry
+    tempkey.lo+=iters; // Add dword
+    if (tempkey.lo < iters) tempkey.hi++; // Account for carry
   
-  key.hi=htonl(tempkey.lo); // Return to network order
-  key.lo=htonl(tempkey.hi);
-
+    key.hi=htonl(tempkey.lo); // Return to network order
+    key.lo=htonl(tempkey.hi);
+    }
+  else
+    {
+    key.hi = (key.hi + (iters << 24)) & 0xFFFFFFFF;
+    if (!(key.hi & 0xFF000000)) 
+      {
+      key.hi = (key.hi + 0x00010000) & 0x00FFFFFF;
+      if (!(key.hi & 0x00FF0000)) 
+	{
+	key.hi = (key.hi + 0x00000100) & 0x0000FFFF;
+	if (!(key.hi & 0x0000FF00)) 
+	  {
+	  key.hi = (key.hi + 0x00000001) & 0x000000FF;
+	  if (!(key.hi & 0x000000FF)) 
+	    {
+	    key.hi = 0x00000000;
+	    key.lo = key.lo + 0x01000000;
+	    if (!(key.lo & 0xFF000000)) 
+	      {
+	      key.lo = (key.lo + 0x00010000) & 0x00FFFFFF;
+	      if (!(key.lo & 0x00FF0000)) 
+		{
+		key.lo = (key.lo + 0x00000100) & 0x0000FFFF;
+		if (!(key.lo & 0x0000FF00)) 
+		  {
+		  key.lo = (key.lo + 0x00000001) & 0x000000FF;
+		  }
+		}
+	      }
+	    }
+	  }
+	}
+      }
+    }
 }

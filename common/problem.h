@@ -5,6 +5,11 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.38  1999/02/17 19:09:13  remi
+// Fix for non-x86 targets : an RC5 key should always be 'mangle-incremented',
+// whatever endianess we have. But htonl()/ntohl() does work for DES, so I
+// added a contest parameter to IncrementKey().
+//
 // Revision 1.37  1999/02/15 06:26:36  silby
 // Complete rewrite of Problem::Run to make it 64-bit
 // compliant and begin combination of all processor
@@ -275,7 +280,7 @@ public:
 
 };
 
-void IncrementKey(u64 &key, u32 iters);
+void IncrementKey(u64 &key, u32 iters, int contest);
    // Increments a key
 
 
