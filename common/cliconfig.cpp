@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.130  1998/07/06 01:28:37  cyruspatel
+// Modified DOS signal handling to also trap ctrl-break. Timeslice is now
+// fixed at 10 times value returned from GetTimesliceBaseline(). (a lot!)
+//
 // Revision 1.129  1998/07/05 22:03:14  silby
 // Someone forgot to #if some non-pathwork code out.
 //
@@ -179,7 +183,9 @@
 #endif
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.129 1998/07/05 22:03:14 silby Exp $";
+const char *cliconfig_cpp(void) {
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.130 1998/07/06 01:28:37 cyruspatel Exp $";
+return id; }
 #endif
 
 #if defined(WINNTSERVICE)
@@ -2323,69 +2329,47 @@ s32 Client::SelectCore(void)
 void Client::SetNiceness(void)
 {
   // renice maximally
-  switch ( niceness )
-  {
-    case 0:
-#if (CLIENT_OS == OS_IRIX)
-  schedctl( NDPRI, 0, 200 );
-#elif (CLIENT_OS == OS_OS2)
-  DosSetPriority( 2, PRTYC_IDLETIME, 0, 0 );
-#elif (CLIENT_OS == OS_WIN32)
-  SetPriorityClass( GetCurrentProcess(), IDLE_PRIORITY_CLASS );
-  SetThreadPriority(GetCurrentThread() ,THREAD_PRIORITY_IDLE );
-#elif (CLIENT_OS == OS_MACOS)
-  // nothing
-#elif (CLIENT_OS == OS_NETWARE)
-  // nothing - set dynamically
-#elif (CLIENT_OS == OS_VMS)
-  nice( 4 );  // Assumes base priority of 4, which is the default
-              //   configuration, thus nice to 0 priority (lowest)
-              // GO-VMS.COM also sets the priority, so this is only
-              //   really needed when GO-VMS.COM isn't used.
-#elif (CLIENT_OS == OS_AMIGAOS)
-  SetTaskPri(FindTask(NULL), -20);
-#elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-  // nothing
-#elif (CLIENT_OS == OS_BEOS)
-  // Main control thread runs at normal priority, since it does very little;
-  // priority of crunching threads is set when they are created.
-#elif (CLIENT_OS == OS_RISCOS)
-  // nothing
-#elif (CLIENT_OS == OS_QNX)
-  setprio( 0, getprio(0)-1 );
-#else
-  nice( 19 );
-#endif
-    break;
-    case 1:
-#if (CLIENT_OS == OS_OS2)
-  DosSetPriority( 2, PRTYC_IDLETIME, 31, 0 );
-#elif (CLIENT_OS == OS_WIN32)
-  SetPriorityClass( GetCurrentProcess(), IDLE_PRIORITY_CLASS );
-#elif (CLIENT_OS == OS_MACOS)
-  // nothing
-#elif (CLIENT_OS == OS_NETWARE)
-  // nothing - set dynamically
-#elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-  // nothing
-#elif (CLIENT_OS == OS_VMS)
-  nice( 2 );
-#elif (CLIENT_OS == OS_AMIGAOS)
-  SetTaskPri(FindTask(NULL), -10);
-#elif (CLIENT_OS == OS_BEOS)
-  // nothing
-#elif (CLIENT_OS == OS_RISCOS)
-  // nothing
-#elif (CLIENT_OS == OS_QNX)
-  setprio( 0, getprio(0)+1 );
-#else
-  nice( 10 );
-#endif
-    break;
-    case 2:
-      // don't do anything
-    break;
-  }
+  #if (CLIENT_OS == OS_IRIX)
+    if ( niceness == 0 )     schedctl( NDPRI, 0, 200 );
+    // else                  /* nothing */;  
+  #elif (CLIENT_OS == OS_OS2)
+    if ( niceness == 0 )      DosSetPriority( 2, PRTYC_IDLETIME, 0, 0 );
+    else if ( niceness == 1 ) DosSetPriority( 2, PRTYC_IDLETIME, 31, 0 );
+    // else                  /* nothing */; 
+  #elif (CLIENT_OS == OS_WIN32)
+    if ( niceness != 2 )      SetPriorityClass( GetCurrentProcess(), IDLE_PRIORITY_CLASS ); 
+    if ( niceness == 0 )      SetThreadPriority( GetCurrentThread() ,THREAD_PRIORITY_IDLE );
+    // else                  /* nothing */; 
+  #elif (CLIENT_OS == OS_MACOS)
+     // nothing
+  #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+     // nothing - could use the same setting as DOS though
+  #elif (CLIENT_OS == OS_NETWARE)
+     // nothing - netware sets timeslice dynamically
+  #elif (CLIENT_OS == OS_DOS)
+     timeslice = GetTimesliceBaseline() * 10; // thats a lot!
+  #elif (CLIENT_OS == OS_BEOS)
+     // Main control thread runs at normal priority, since it does very little;
+     // priority of crunching threads is set when they are created.
+  #elif (CLIENT_OS == OS_RISCOS)
+     // nothing
+  #elif (CLIENT_OS == OS_VMS)
+    if ( niceness == 0 )      nice( 4 ); // Assumes base priority of 4, (the
+    else if ( niceness == 1 ) nice( 2 ); // default). 0 is highest priority.
+    // else                  /* nothing */; // GO-VMS.COM can also be used
+  #elif (CLIENT_OS == OS_AMIGAOS)
+    if ( niceness == 0 )      SetTaskPri(FindTask(NULL), -20);
+    else if ( niceness == 1 ) SetTaskPri(FindTask(NULL), -10);
+    // else                  /* nothing */; 
+  #elif (CLIENT_OS == OS_QNX)
+    if ( niceness == 0 )      setprio( 0, getprio(0)-1 );
+    else if ( niceness == 1 ) setprio( 0, getprio(0)+1 );
+    // else                  /* nothing */; 
+  #else
+    if ( niceness == 0 )      nice( 19 );
+    else if ( niceness == 1 ) nice( 10 );
+    // else                  /* nothing */; 
+  #endif
 }
 
 // ---------------------------------------------------------------------------
@@ -2411,7 +2395,9 @@ bool CliSignalHandler(DWORD  dwCtrlType)
   }
   return FALSE;
 }
+
 #elif (CLIENT_OS == OS_NETWARE)
+
 void CliSignalHandler( int sig )
 {
   int itsAlive;
@@ -2436,47 +2422,39 @@ void CliSignalHandler( int sig )
     ConsolePrintf("RC5DES: Client has shut down.\r\n");
   return;
 }
-#elif (CLIENT_OS != OS_AMIGAOS) && (CLIENT_OS != OS_WIN16) && (CLIENT_OS != OS_WIN32S)
-  #if (CLIENT_OS == OS_OS390)
-    extern "C" void CliSignalHandler( int )
-  #else
-    void CliSignalHandler( int )
-  #endif
+
+#else
+
+#if (CLIENT_OS == OS_OS390)
+extern "C" void CliSignalHandler( int )
+#else
+void CliSignalHandler( int )
+#endif
 {
-  #if (CLIENT_OS == OS_OS2)
-    // Give priority boost quit works faster
-    DosSetPriority(PRTYS_THREAD, PRTYC_REGULAR, 0, 0);
-  #endif
-  #if (CLIENT_OS != OS_DOS)
-    #if (CLIENT_OS == OS_RISCOS)
-    if (!guiriscos)
-    #endif
-      fprintf(stderr, "*Break*\n");
-  #endif
   SignalTriggered = UserBreakTriggered = 1;
 
-  #if (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS)
-    signal( SIGINT, CliSignalHandler );
-    signal( SIGTERM, CliSignalHandler );
-  #elif (CLIENT_OS == OS_RISCOS)
+  #if (CLIENT_OS == OS_RISCOS)
+    if (!guiriscos) 
+      fprintf(stderr, "*Break*\n");
     _kernel_escape_seen(); // clear escape flag for polling check in Problem::Run
     signal( SIGINT, CliSignalHandler );
-  #elif (CLIENT_OS == OS_NETWARE)
-    /* see above. allow default handling otherwise may have infinite loop */
-  #elif (CLIENT_OS == OS_IRIX) && defined(__GNUC__)
-    signal( SIGHUP, (void(*)(...)) CliSignalHandler );
-    signal( SIGQUIT, (void(*)(...)) CliSignalHandler );
-    signal( SIGTERM, (void(*)(...)) CliSignalHandler );
-    signal( SIGINT, (void(*)(...)) CliSignalHandler );
-    signal( SIGSTOP, (void(*)(...)) CliSignalHandler );
-  #elif (CLIENT_OS != OS_MACOS)
-    signal( SIGHUP, CliSignalHandler );
-    signal( SIGQUIT, CliSignalHandler );
-    signal( SIGTERM, CliSignalHandler );
+  #elif (CLIENT_OS == OS_OS2)
+    // Give priority boost quit works faster
+    DosSetPriority(PRTYS_THREAD, PRTYC_REGULAR, 0, 0);
+    fprintf(stderr, "*Break*\n");
     signal( SIGINT, CliSignalHandler );
-    #if (CLIENT_OS != OS_VMS)
-      signal( SIGSTOP, CliSignalHandler );
-    #endif
+    signal( SIGTERM, CliSignalHandler );
+  #elif (CLIENT_OS == OS_DOS)
+    //don't do any console i/o
+    break_off(); //break only on screen i/o (different from setup signals)
+    signal( SIGINT, CliSignalHandler );  //The  break_o functions can be used 
+    signal( SIGTERM, CliSignalHandler ); // with DOS to restrict break checking
+    signal( SIGABRT, CliSignalHandler ); // break_off(): raise() on conio only
+    signal( SIGBREAK, CliSignalHandler ); //break_on(): raise() on any dos call
+  #else  
+    fprintf(stderr, "*Break*\n");
+    CliSetupSignals(); //reset the signal handlers
+    SignalTriggered = UserBreakTriggered = 1;
   #endif
 }
 #endif
@@ -2487,7 +2465,8 @@ void CliSetupSignals( void )
 {
   SignalTriggered = 0;
 
-  #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+  #if (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_AMIGAOS) || \
+      (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
     // nothing
   #elif (CLIENT_OS == OS_WIN32)
     SetConsoleCtrlHandler( (PHANDLER_ROUTINE) CliSignalHandler, TRUE );
@@ -2497,131 +2476,34 @@ void CliSetupSignals( void )
     signal( SIGABRT, CliSignalHandler ); //abort on floating point [...]printf
     signal( SIGINT, CliSignalHandler );  //       and mathlib.nlm isn't loaded
     signal( SIGTERM, CliSignalHandler );
-  #elif (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS)
+  #elif (CLIENT_OS == OS_OS2)
     signal( SIGINT, CliSignalHandler );
     signal( SIGTERM, CliSignalHandler );
+  #elif (CLIENT_OS == OS_DOS)
+    break_on(); //break on any dos call (different from signal handler)
+    signal( SIGINT, CliSignalHandler );  //The  break_o functions can be used 
+    signal( SIGTERM, CliSignalHandler ); // with DOS to restrict break checking
+    signal( SIGABRT, CliSignalHandler ); // break_off(): raise() on conio only
+    signal( SIGBREAK, CliSignalHandler ); //break_on(): raise() on any dos call
   #elif (CLIENT_OS == OS_IRIX) && defined(__GNUC__)
     signal( SIGHUP, (void(*)(...)) CliSignalHandler );
     signal( SIGQUIT, (void(*)(...)) CliSignalHandler );
     signal( SIGTERM, (void(*)(...)) CliSignalHandler );
     signal( SIGINT, (void(*)(...)) CliSignalHandler );
     signal( SIGSTOP, (void(*)(...)) CliSignalHandler );
-  #elif (CLIENT_OS != OS_MACOS)
+  #elif (CLIENT_OS == OS_VMS)
     signal( SIGHUP, CliSignalHandler );
     signal( SIGQUIT, CliSignalHandler );
     signal( SIGTERM, CliSignalHandler );
     signal( SIGINT, CliSignalHandler );
-    #if (CLIENT_OS != OS_VMS)
-      signal( SIGSTOP, CliSignalHandler );
-    #endif
+  #else
+    signal( SIGHUP, CliSignalHandler );
+    signal( SIGQUIT, CliSignalHandler );
+    signal( SIGTERM, CliSignalHandler );
+    signal( SIGINT, CliSignalHandler );
+    signal( SIGSTOP, CliSignalHandler );
   #endif
 }
-
-// --------------------------------------------------------------------------
-#ifndef NEW_STATS_AND_LOGMSG_STUFF
-
-#if (CLIENT_OS == OS_MACOS)
-//#include <Timer.h>
-int gettimeofday(struct timeval *tv, struct timezone *)
-{
-  unsigned long long t;
-  Microseconds( (UnsignedWide *)&t );
-  tv->tv_sec = t / 1000000U;
-  tv->tv_usec = t % 1000000U;
-  return 0;
-}
-#elif (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_DOS) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
-int gettimeofday(struct timeval *tv, struct timezone *)
-{
-  struct timeb tb;
-  ftime(&tb);
-  tv->tv_sec = tb.time;
-  tv->tv_usec = tb.millitm*1000;
-  return 0;
-}
-#elif (CLIENT_OS == OS_NETWARE)
-unsigned int rawclock(void);
-#pragma aux rawclock = "xor eax,eax" "out 0x43,al" "in al,0x40" \
-     "mov ah,al" "in al,0x40" "xchg ah,al" "not ax" modify [eax];
-#define PCLOCKS_PER_SEC (1193180) //often defined as UCLOCKS_PER_SEC
-int gettimeofday(struct timeval *tv, struct timezone *)
-{
-/*static unsigned int timebase=0;
-  unsigned int picsnow = rawclock();
-  unsigned int ticksnow = GetCurrentTime();
-  unsigned int secs, hsecs, ticks;
-
-  TicksToSeconds( ticksnow, &secs, &hsecs );
-  if (timebase==0) timebase = ((unsigned int)(time(NULL))) - secs;
-  SecondsToTicks( secs, 0, &ticks); // ticks = (secs*18.207)
-  ticksnow-=ticks;
-
-  tv->tv_sec = (time_t)(timebase + secs);
-  tv->tv_usec = ((picsnow + (ticksnow << 16))*1000)/(PCLOCKS_PER_SEC/1000);
-  if (tv->tv_usec > 1000000)
-  {
-    tv->tv_sec += (tv->tv_usec/1000000);
-    tv->tv_usec = (tv->tv_usec%1000000);
-  }
-  return 0;
-*/
-  unsigned int picsnow = rawclock();
-  unsigned int ticksnow = CliGetCurrentTicks();
-  double dblsecs = ((((double)(ticksnow))*65536.0)+(double)(picsnow))/((double)(PCLOCKS_PER_SEC));
-  unsigned int timenow = ((unsigned int)(dblsecs));
-  tv->tv_usec = (unsigned int)((dblsecs-(double)(timenow))*(double)(1000000));
-  tv->tv_sec  = (time_t)(timenow);
-  return 0;
-
-}
-#elif (CLIENT_OS == OS_AMIGAOS)
-int gettimeofday(struct timeval *tv, struct timezone *)
-{
-  return timer((unsigned int *)tv);
-}
-#endif
-
-// --------------------------------------------------------------------------
-
-const char * Client::Time( void )
-{
-  time_t timenow;
-  struct tm * gmt;
-  static char timestring[64];
-
-  // this may need to be tweaked on other platforms
-  timenow = time( NULL );
-#if (CLIENT_OS == OS_OS2)
-  gmt = gmtime( (const time_t *) &timenow);
-#else
-  gmt = gmtime(&timenow );
-#endif
-  if (gmt)
-  {
-    if (gmt->tm_year > 99) {
-    sprintf( timestring, "%02d/%02d/%02d %02d:%02d:%02d GMT", gmt->tm_mon + 1,
-        gmt->tm_mday, gmt->tm_year - 100, gmt->tm_hour, gmt->tm_min, gmt->tm_sec );
-    } else {
-    sprintf( timestring, "%02d/%02d/%02d %02d:%02d:%02d GMT", gmt->tm_mon + 1,
-        gmt->tm_mday, gmt->tm_year, gmt->tm_hour, gmt->tm_min, gmt->tm_sec );
-    }
-  } else {
-    gmt = localtime(&timenow);
-    if (gmt) {
-      if (gmt->tm_year > 99) {
-      sprintf( timestring, "%02d/%02d/%02d %02d:%02d:%02d local", gmt->tm_mon + 1,
-          gmt->tm_mday, gmt->tm_year - 100, gmt->tm_hour, gmt->tm_min, gmt->tm_sec );
-      } else {
-      sprintf( timestring, "%02d/%02d/%02d %02d:%02d:%02d local", gmt->tm_mon + 1,
-          gmt->tm_mday, gmt->tm_year, gmt->tm_hour, gmt->tm_min, gmt->tm_sec );
-      }
-    } else {
-      timestring[0] = 0;
-    }
-  }
-  return( timestring );
-}
-#endif //#ifndef NEW_STATS_AND_LOGMSG_STUFF
 
 // --------------------------------------------------------------------------
 
@@ -3059,7 +2941,7 @@ void Client::PrintBanner(const char * /*clname*/)
           "detailed client information.\n" :
           #endif
           "Execute with option '-help' for online help, or read rc5des" EXTN_SEP "txt for\n"
-          "client option information details.\n");
+          "for a list of command line options.\n");
 }
 
 // --------------------------------------------------------------------------
@@ -3105,7 +2987,7 @@ bool Client::CheckForcedKeyproxy(void)
           for (temp=&keyproxy[0];isalpha(*temp) > 0;temp++) {};
           *temp=0;
           strcpy(buffer,keyproxy);
-          sprintf(keyproxy,"%s%li.v27.distributed.net\0",buffer,keyport);
+          sprintf(keyproxy,"%s%li.v27.distributed.net",buffer,keyport);
           }
         else if (keyport == 2064)
           {
@@ -3113,7 +2995,7 @@ bool Client::CheckForcedKeyproxy(void)
           for (temp=&keyproxy[0];isalpha(*temp) > 0;temp++) {};
           *temp=0;
           strcpy(buffer,keyproxy);
-          sprintf(keyproxy,"%s.v27.distributed.net\0",buffer);
+          sprintf(keyproxy,"%s.v27.distributed.net",buffer);
           }
         else
           {
@@ -3156,7 +3038,7 @@ const char *Client::InternalGetLocalFilename(const char *filename)
       }
     #elif (CLIENT_OS == OS_RISCOS)
       return riscos_localise_filename(filename);
-    #else
+    #elif (defined( DONT_USE_PATHWORK ))
       {
       if ( (strrchr(filename,PATH_SEP_C) == NULL) && (strrchr(inifilename,PATH_SEP_C) != NULL) )
         //check that we need to add a path, and that we have a path to add
