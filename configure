@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.207 2000/11/21 00:46:02 teichp Exp $
+# @(#)$Id: configure,v 1.222.2.208 2000/11/23 16:19:19 teichp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1757,7 +1757,7 @@ case "$1" in
         for file in platforms/riscos/*.h; do
           cp $file dnetc_riscos/platforms/riscos/h/`basename $file | sed -e s/[.]h//`
         done
-        cp Makefile.riscos dnetc_riscos
+        cp Makefile.riscos dnetc_riscos/Makefile
         rm -f riscos.tar.gz
         tar cf - dnetc_riscos | gzip -rc - > riscos.tar.gz
         rm -rf dnetc_riscos
