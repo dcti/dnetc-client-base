@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.42  1998/11/06 18:50:39  cyp
+// Cleaned up tabs and macos cpu detection logic.
+//
 // Revision 1.41  1998/11/04 22:55:09  dicamillo
 // change Mac cpu_description text to be static
 //
@@ -147,7 +150,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.41 1998/11/04 22:55:09 dicamillo Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.42 1998/11/06 18:50:39 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -190,7 +193,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       GetSystemInfo(&systeminfo);
       cpucount = systeminfo.dwNumberOfProcessors;
       if (cpucount < 1)
-        cpucount = 1;
+        cpucount = -1;
       }
     #elif (CLIENT_OS == OS_NETWARE)
       {
@@ -200,7 +203,6 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       {
       int rc = (int) DosQuerySysInfo(QSV_NUMPROCESSORS, QSV_NUMPROCESSORS,
                   &cpucount, sizeof(cpucount));
-      // check if call is valid if not, default to -1
       if (rc!=0 || cpucount < 1)
         cpucount = -1;
       }
@@ -211,28 +213,32 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       if (FILE *cpuinfo = fopen("/proc/cpuinfo", "r"))
         {
         while(fgets(buffer, 256, cpuinfo))
-	  {
-	  #if (CLIENT_CPU == CPU_X86)
+          {
+          #if (CLIENT_CPU == CPU_X86)
           if (strstr(buffer, "processor") == buffer)
             cpucount++;
           #elif (CLIENT_CPU == CPU_SPARC)
-	  // 2.1.x kernels (at least 2.1.125)
-	  if (strstr( buffer, "ncpus active\t: " ) == buffer) 
-	      cpucount = atoi( buffer+15 ); 
-	  // 2.0.x non-smp kernels (at least 2.0.35)
-	  else if (strstr( buffer, "BogoMips\t: " ) == buffer)
-	      cpucount = 1;
-	  // 2.0.x smp kernels (at least 2.0.35)
-	  else if (strstr( buffer, "        CPU0\t\tCPU1\t\tCPU2\t\tCPU3\n" ) == buffer)
-	    {
-	      fgets( buffer, 256, cpuinfo );
-	      for (char *p = strtok( buffer+7, "\t \n" ); p; p = strtok( NULL, "\t \n" ))
-		if (strstr( p, "online" ) || strstr( p, "akp")) cpucount++;	      
-	    }
-	  #endif
-	  }
-	fclose(cpuinfo);
-	}
+          // 2.1.x kernels (at least 2.1.125)
+          if (strstr( buffer, "ncpus active\t: " ) == buffer) 
+            cpucount = atoi( buffer+15 ); 
+          // 2.0.x non-smp kernels (at least 2.0.35)
+          else if (strstr( buffer, "BogoMips\t: " ) == buffer)
+            cpucount = 1;
+          // 2.0.x smp kernels (at least 2.0.35)
+          else if (strstr( buffer, "        CPU0\t\tCPU1\t\tCPU2\t\tCPU3\n" ) == buffer)
+            {
+            fgets( buffer, 256, cpuinfo );
+            for (char *p = strtok( buffer+7, "\t \n" ); p; 
+                    p = strtok( NULL, "\t \n" ))
+               {
+               if (strstr( p, "online" ) || strstr( p, "akp")) 
+                 cpucount++;
+               }
+            }
+          #endif
+          }
+        fclose(cpuinfo);
+        }
       }
     #elif (CLIENT_OS == OS_IRIX)
       {
@@ -323,169 +329,124 @@ int GetProcessorType(int quietly)
 #if ((CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS))
 int GetProcessorType(int quietly)
 {    
-  static int detectedtype = -1;
-  long flags;
-  if (detectedtype == -1)
-    {
-    flags = (long)(SysBase->AttnFlags);
-    if ((flags & AFF_68060) && (flags & AFF_68040) && (flags & AFF_68030))
-        detectedtype = 5; // Phase5 060 boards at least report this...
-    else if ((flags & AFF_68040) && (flags & AFF_68030))
-        detectedtype = 4; // 68040
-    else if ((flags & AFF_68030) && (flags & AFF_68020))
-        detectedtype = 3; // 68030
-    else if ((flags & AFF_68020) && (flags & AFF_68010))
-        detectedtype = 2; // 68020
-    else if (flags & AFF_68010)
-        detectedtype = 1; // 68010
-    else
-        detectedtype = 0; // Assume a 68000
-    }
+  int detectedtype = -1;
+  long flags = (long)(SysBase->AttnFlags);
+
+  if ((flags & AFF_68060) && (flags & AFF_68040) && (flags & AFF_68030))
+    detectedtype = 5; // Phase5 060 boards at least report this...
+  else if ((flags & AFF_68040) && (flags & AFF_68030))
+    detectedtype = 4; // 68040
+  else if ((flags & AFF_68030) && (flags & AFF_68020))
+    detectedtype = 3; // 68030
+  else if ((flags & AFF_68020) && (flags & AFF_68010))
+    detectedtype = 2; // 68020
+  else if (flags & AFF_68010)
+    detectedtype = 1; // 68010
+  else
+    detectedtype = -1;
   if (!quietly)
     {
-    int x68k = detectedtype; if (x68k == 5) x68k = 6;
-    LogScreen("Automatic processor detection found a Motorola 680%d0\n",x68k);
+    if (detectedtype == -1)
+      LogScreen("Processor detection failed. A 68000 is assumed\n");
+    else
+      {
+      int x68k = detectedtype; if (x68k == 5) x68k = 6;
+      LogScreen("Automatic processor detection found a Motorola 680%d0\n",x68k);
+      }
     }
+  if (detectedtype == -1)
+    detectedtype = 0; // Assume a 68000
   return (detectedtype);
 }    
 #endif
 
 // --------------------------------------------------------------------------
 
-#if (CLIENT_OS == OS_MACOS)
-#if (CLIENT_CPU == CPU_POWERPC)
+#if ((CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC))
 int GetProcessorType(int quietly)
 {
-	long result;
-	static int detectedtype = -1;
-	static char cpu_description[6] = "";
+  // Note: need to use gestaltNativeCPUtype in order to get the correct value
+  // for G3 upgrade cards in a 601 machine.
+  // The value for detectedtype is the Gestalt result - 0x101 (gestaltCPU601).
 
-	if(detectedtype == -1)
-	{
-		// Note: need to use gestaltNativeCPUtype in order to get the correct value
-		// for G3 upgrade cards in a 601 machine.
-		// The value for detectedtype is the Gestalt result - 0x101 (gestaltCPU601).
-		if(Gestalt(gestaltNativeCPUtype, &result) == noErr)
-   		{
-			switch(result) 
-			{
-				case gestaltCPU601:						// IBM 601
-							detectedtype = 0;
-							strcpy(cpu_description, "601");
-							break;
-
-				case gestaltCPU603:
-							detectedtype = 2;
-							strcpy(cpu_description, "603");
-							break;
-
-				case gestaltCPU604:
-							detectedtype = 3;
-							strcpy(cpu_description, "604");
-							break
-
-				case gestaltCPU603e:
-							detectedtype = 5;
-							strcpy(cpu_description, "603e");
-							break;
-
-				case gestaltCPU603ev:
-							detectedtype = 6;
-							strcpy(cpu_description, "603ev");
-							break
-
-				case gestaltCPU750:						// Also 740 - "G3"
-							detectedtype = 7;
-							strcpy(cpu_description, "750");
-							break
-
-				case gestaltCPU604e:
-							detectedtype = 8;
-							strcpy(cpu_description, "604e");
-							break
-
-				case gestaltCPU604ev:					// Mach 5, 250Mhz and up
-							detectedtype = 9;
-							strcpy(cpu_description, "604ev");
-							break
-
-				default:
-							detectedtype = 2;	// assume 603 if unknown
-							strcpy(cpu_description, "603");
-							break;			
-			}
-		}
-		else
-		{
-			detectedtype = 2;		// assume 603 if Gestalt fails
-			strcpy(cpu_description, "603");
-		}
-		
-	}
-
-	if (!quietly)
-	{
-    	LogScreen("Automatic processor detection found a PowerPC %s\n", cpu_description);
-	}
-
-	return (detectedtype);
+  long result;
+  const char *cpu_description = NULL;
+  int detectedtype = -1;
+  
+  if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
+    {
+    switch(result) 
+      {
+      case gestaltCPU601:           
+             detectedtype = 0; cpu_description = "601"; break; // IBM 601
+      case gestaltCPU603:
+             detectedtype = 2; cpu_description = "603"; break;
+      case gestaltCPU604:
+             detectedtype = 3; cpu_description = "604"; break
+      case gestaltCPU603e:
+             detectedtype = 5; cpu_description = "603e"; break;
+      case gestaltCPU603ev:
+             detectedtype = 6; cpu_description = "603ev"; break;
+      case gestaltCPU750: 
+             detectedtype = 7; cpu_description = "740/750/\"G3\""; break;
+      case gestaltCPU604e:
+             detectedtype = 8; cpu_description = "604e"; break;
+      case gestaltCPU604ev:
+             detectedtype = 9; cpu_description = "604ev/Mach5";break
+      default:
+             detectedtype =-1; cpu_description = NULL; break;
+      }
+    }
+  if (!quietly)
+    {
+    if (detectedtype == -1)
+      LogScreen("Processor detection failed. A PPC603 is assumed.\n");
+    else
+      LogScreen("Automatic processor detection found a PowerPC %s\n", cpu_description);
+    }
+  if (detectedtype == -1)
+    detectedtype = 2;  // assume 603 if unknown
+  return (detectedtype);
 }
 #endif
-#if (CLIENT_CPU == CPU_68K)
+
+// --------------------------------------------------------------------------
+
+#if ((CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_68K))
 int GetProcessorType(int quietly)
 {
-	long result;
-	static int detectedtype = -1;
+  // Note: gestaltProcessorType is used so that if the 68K client is run on
+  // on PPC machine for test purposes, it will get the type of the 68K emulator.
+  // Also, gestaltNativeCPUType is not present in early versions of System 7.
+  // (For more info, see Gestalt.h)
 
-	if(detectedtype == -1)
-	{
-		// Note: gestaltProcessorType is used so that if the 68K client is run on
-		// on PPC machine for test purposes, it will get the type of the 68K emulator.
-		// Also, gestaltNativeCPUType is not present in early versions of System 7.
-		// (For more info, see Gestalt.h)
-		if(Gestalt(gestaltProcessorType, &result) == noErr)
-   		{
-			switch(result) 
-			{
-				case gestalt68000:
-							detectedtype = 0;
-							break;
+  long result;
+  int detectedtype = -1;
 
-				case gestalt68010:
-							detectedtype = 1;
-							break;
+  if (Gestalt(gestaltProcessorType, &result) == noErr)
+    {
+    switch(result) 
+      {
+      case gestalt68000: detectedtype = 0;  break;
+      case gestalt68010: detectedtype = 1;  break;
+      case gestalt68020: detectedtype = 2;  break;
+      case gestalt68030: detectedtype = 3;  break;
+      case gestalt68040: detectedtype = 4;  break;
+      default:           detectedtype =-1;  break; //(should never happen)
+      }
+    }
+  if (!quietly)
+    {
+    if (detectedtype<0)
+      LogScreen("Processor detection failed. A 68000 is assumed.\n");
+    else
+      LogScreen("Automatic processor detection found a Motorola 680%d0\n", detectedtype);
+    }
+  if (detectedtype < 0)
+    detectedtype = 0;  // assume 68000  
 
-				case gestalt68020:
-							detectedtype = 2;
-							break
-
-				case gestalt68030:
-							detectedtype = 3;
-							break;
-
-				case gestalt68040:
-							detectedtype = 4;
-							break
-
-				default:
-							detectedtype = 0;	// assume 68000  (should never happen)
-							break;			
-			}
-		}
-		else
-		{
-			detectedtype = 0;		// if Gestalt fails, also assume 68000
-		}
-	}
-
-	if (!quietly)
-	{
-    LogScreen("Automatic processor detection found a Motorola 680%d0\n", detectedtype);
-	}
-
-	return (detectedtype);
+  return (detectedtype);
 }
-#endif
 #endif
 
 // --------------------------------------------------------------------------
