@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.5  1998/07/13 00:37:25  silby
+// Changes to make MMX_BITSLICE client buildable on freebsd
+//
 // Revision 1.4  1998/07/12 13:05:11  cyruspatel
 // NetWare changes.
 //
@@ -153,7 +156,7 @@ extern "C" {
   #include <fcntl.h>
   extern "C" int nice(int);
   extern "C" int gethostname(char *, int);
-#elif (CLIENT_OS == OS_LINUX)
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)
   #include <sys/time.h>
   #include <unistd.h>
 #endif

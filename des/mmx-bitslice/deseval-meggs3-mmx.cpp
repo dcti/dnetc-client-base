@@ -18,6 +18,9 @@
 
 //
 // $Log: deseval-meggs3-mmx.cpp,v $
+// Revision 1.5  1998/07/13 00:37:29  silby
+// Changes to make MMX_BITSLICE client buildable on freebsd
+//
 // Revision 1.4  1998/07/12 05:29:14  fordbr
 // Replaced sboxes 1, 2 and 7 with Kwan versions
 // Now 1876 kkeys/s on a P5-200MMX
@@ -27,7 +30,7 @@
 //
 // Revision 1.2  1998/07/08 23:37:35  remi
 // Added support for aout targets (.align).
-// Tweaked $Id: deseval-meggs3-mmx.cpp,v 1.4 1998/07/12 05:29:14 fordbr Exp $.
+// Tweaked $Id: deseval-meggs3-mmx.cpp,v 1.5 1998/07/13 00:37:29 silby Exp $.
 //
 // Revision 1.1  1998/07/08 15:49:36  remi
 // MMX bitslicer integration.
@@ -36,7 +39,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_mmx_cpp(void) {
-return "@(#)$Id: deseval-meggs3-mmx.cpp,v 1.4 1998/07/12 05:29:14 fordbr Exp $"; }
+return "@(#)$Id: deseval-meggs3-mmx.cpp,v 1.5 1998/07/13 00:37:29 silby Exp $"; }
 #endif
 
 #include <stdlib.h>
@@ -179,7 +182,8 @@ do { \
 
 // CYGWIN32 because it's my debugging & benchmarking platform
 #if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_DOSWIN16) || (CLIENT_OS == OS_NETWARE) || \
-    ((CLIENT_OS == OS_LINUX) && !defined(__ELF__)) || defined(__CYGWIN32__))
+    ((CLIENT_OS == OS_LINUX) && !defined(__ELF__)) || defined(__CYGWIN32__) \
+    || (CLIENT_OS == OS_FREEBSD))
 #define CALL(sfunc) "call _"#sfunc
 #else
 #define CALL(sfunc) "call "#sfunc
