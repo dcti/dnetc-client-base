@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.95 2000/01/16 19:51:43 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.96 2000/01/16 20:59:33 ctate Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1517,20 +1517,20 @@ case "$1" in
         TARGET_DOCFILES="docs/readme.os390"   #platform specific docfile
         TARGET_TARBALL="os390-s390"
 	;;
-###### Be OS (x86, PPC)
+###### BeOS (x86, PPC)
     *x86-beos)
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
-			-DMULTITHREAD"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -fno-pic -O3 -Wno-multichar $OPTS_DES_MMX -DMMX_RC5 -DMMX_CSC \
+			-D__showids__ -DMULTITHREAD -DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4" #$OGR_ANSI_SRCS
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS $CSC_ASM_SRCS"
 	TARGET_LIBS=""
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
 	;;
 
 ####### OS/2 (x86, emx)

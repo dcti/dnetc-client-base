@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.21 2000/01/08 23:23:26 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.22 2000/01/16 20:59:36 ctate Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -1842,6 +1842,7 @@ int Network::LowLevelPut(const char *ccdata,int length)
       }
     }
     #elif defined(AF_INET) && defined(SOCK_STREAM)      //BSD 4.3 sockets
+    #if (CLIENT_OS != OS_BEOS)
     if (firsttime)
     {
       int ready;
@@ -1870,6 +1871,7 @@ int Network::LowLevelPut(const char *ccdata,int length)
       }
       firsttime = 0;
     }
+    #endif
     written = send(sock, (char*)data, towrite, 0 );
 
     /*

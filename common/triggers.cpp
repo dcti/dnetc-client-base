@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.14 1999/12/10 06:25:56 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.15 2000/01/16 20:59:37 ctate Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -439,7 +439,7 @@ void CliSetupSignals( void )
   signal( SIGHUP, CliSignalHandler );   //restart
   #endif
   #if defined(SIGCONT) && defined(SIGTSTP)
-  #if defined(__unix__)
+  #if defined(__unix__) && (CLIENT_OS != OS_BEOS)
   // stop the shell from seeing SIGTSTP and putting the client
   // into the background when we '-pause' it.
   // porters : those calls are POSIX.1, 
