@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.9 1999/11/23 05:48:23 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.10 1999/11/23 16:28:00 jlawson Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -1090,10 +1090,33 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
     client->httpid[0] = 0;
     if (strlen(userpass.username) || strlen(userpass.password))
     {
-      if (strlen(userpass.password))
-        strcat(strcat(userpass.username, ":"), userpass.password);
-      strncpy( client->httpid, userpass.username, sizeof( client->httpid ));
-      client->httpid[sizeof( client->httpid )-1] = 0;
+      if (client->uuehttpmode == UUEHTTPMODE_UUEHTTP ||
+          client->uuehttpmode == UUEHTTPMODE_HTTP)
+      {
+        int userpasslen = strlen(userpass.username) + 1 + strlen(userpass.password);
+        if ( ((userpasslen + 2) / 3) * 4 + 1 <= sizeof(client->httpid) ||
+            userpasslen + 1 <= sizeof(userpass.username) )
+        {
+          strcat(userpass.username, ":");
+          strcat(userpass.username, userpass.password);
+          base64_encode(client->httpid, userpass.username,
+              sizeof(client->httpid), strlen(userpass.username));
+        }
+      }
+      else if (client->uuehttpmode == UUEHTTPMODE_SOCKS4)
+      {
+        strcpy( client->httpid, userpass.username );
+      }
+      else if (client->uuehttpmode == UUEHTTPMODE_SOCKS5)
+      {
+        if (strlen(userpass.username) + 1 + strlen(userpass.password) + 1 <= sizeof(userpass.username)
+        {
+          strcat(userpass.username, ":");
+          strcat(userpass.username, userpass.password);
+          strncpy( client->httpid, userpass.username, sizeof( client->httpid ));
+          client->httpid[sizeof( client->httpid )-1] = 0;
+        }
+      }
     }
     TRACE_OUT((0,"postcomp: u:p=\"%s\"\n",client->httpid));
   }
