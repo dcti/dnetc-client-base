@@ -5,7 +5,7 @@
  */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.1.2.5 2000/02/20 08:18:23 sampo Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.1.2.6 2000/02/21 03:31:28 sampo Exp $"; }
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,29 +35,17 @@ static U bit[200];         /* which bit of LIST to update */
 
 #define COMP_LEFT_LIST_RIGHT(lev,s)                             \
   {                                                             \
-    int ss = s - 32;                                            \
-    vec vs,vss,comps,listss;                                    \
-    vec2 compss,lists;                                          \
-    vs.u[0] = s;			    							    \
-    vss.u[0] = s - 32;    									    \
-    vs.v = vec_splat(vs.v,0);							        \
-    vss.v = vec_splat(vss.v,0);						            \
-    comps.v = vec_sl(lev->comp.v[0],vs.v);                      \
-    compss.v[0] = vec_sr(lev->comp.v[0],vss.v);                 \
-    compss.v[1] = vec_sr(lev->comp.v[1],vss.v);                 \
-    lev->comp.u[0] = comps.u[0] | compss.u[1];                  \
-    lev->comp.u[1] = comps.u[1] | compss.u[2];                  \
-    lev->comp.u[2] = comps.u[2] | compss.u[3];                  \
-    lev->comp.u[3] = comps.u[3] | compss.u[4];                  \
-    lev->comp.u[4] <<= s;                                       \
-    lists.v[0] = vec_sr(lev->list.v[0],vs.v);                   \
-    lists.v[1] = vec_sr(lev->list.v[1],vs.v);                   \
-    listss.v = vec_sl(lev->list.v[0],vss.v);                    \
-    lev->list.u[4] = lists.u[4] | listss.u[3];                  \
-    lev->list.u[3] = lists.u[3] | listss.u[2];                  \
-    lev->list.u[2] = lists.u[2] | listss.u[1];                  \
-    lev->list.u[1] = lists.u[1] | listss.u[0];                  \
-    lev->list.u[0] >>= s;                                       \
+    int ss = 32 - s;                                            \
+    lev->comp[0] = (lev->comp[0] << s) | (lev->comp[1] >> ss);  \
+    lev->comp[1] = (lev->comp[1] << s) | (lev->comp[2] >> ss);  \
+    lev->comp[2] = (lev->comp[2] << s) | (lev->comp[3] >> ss);  \
+    lev->comp[3] = (lev->comp[3] << s) | (lev->comp[4] >> ss);  \
+    lev->comp[4] <<= s;                                         \
+    lev->list[4] = (lev->list[4] >> s) | (lev->list[3] << ss);  \
+    lev->list[3] = (lev->list[3] >> s) | (lev->list[2] << ss);  \
+    lev->list[2] = (lev->list[2] >> s) | (lev->list[1] << ss);  \
+    lev->list[1] = (lev->list[1] >> s) | (lev->list[0] << ss);  \
+    lev->list[0] >>= s;                                         \
   }
 
 #define COMP_LEFT_LIST_RIGHT_32(lev)                  \
