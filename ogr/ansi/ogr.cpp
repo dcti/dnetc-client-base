@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.6 2003/05/09 12:39:16 mfeiri Exp $
+ * $Id: ogr.cpp,v 1.2.4.7 2003/07/20 00:52:17 mfeiri Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -69,7 +69,7 @@
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* MrC is better    */
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
     #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* MrC is better    */
-  #elif (__APPLE_CC__)//GCC with exclusive ppc, mach-o and ObjC extensions
+  #elif (__APPLE_CC__ <= 1175)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
@@ -86,7 +86,9 @@
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* GCC is better    */
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
     #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 2 /* use switch_asm   */
-    #define OGROPT_CYCLE_CACHE_ALIGN              1
+    #if !defined(__APPLE_CC__)
+      #define OGROPT_CYCLE_CACHE_ALIGN              1
+    #endif
   #else
     #error play with the defines to find optimal settings for your compiler
   #endif
