@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.19 2003/11/28 00:43:31 snake Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.20 2003/12/08 17:44:01 snikkel Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -62,7 +62,7 @@
 #define OS_NEXTSTEP     19
 #define OS_SCO          20
 #define OS_QNX          21 /* includes QNX Neutrino */
-/* #define OS_UNUSED_3  22 */ /* was OSF1 (never used), was NTO2 (QNX) */
+/* #define OS_UNUSED_3  22 */ /* was OSF1, was NTO2 (QNX) */
 /* #define OS_UNUSED_4  23 */ /* was MINIX (never used) */
 /* #define OS_UNUSED_5  24 */ /* was MACH10 (never used) */
 #define OS_AIX          25
