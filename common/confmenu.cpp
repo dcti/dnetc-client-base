@@ -2,9 +2,14 @@
  * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * ---------------------------------------------------------------------
+ * Real programmers don't bring brown-bag lunches.  If the vending machine
+ * doesn't sell it, they don't eat it.  Vending machines don't sell quiche.
+ * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.4 1999/10/07 18:36:10 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.5 1999/10/10 23:24:44 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -15,39 +20,58 @@ return "@(#)$Id: confmenu.cpp,v 1.41.2.4 1999/10/07 18:36:10 cyp Exp $"; }
 #include "cmpidefs.h" // strcmpi()
 #include "logstuff.h" // LogScreenRaw()
 #include "selcore.h"  // GetCoreNameFromCoreType()
+#include "clicdata.h" // GetContestNameFromID()
 #include "util.h"     // projectmap_*()
 #include "base64.h"   // base64_[en|de]code()
 #include "lurk.h"     // lurk stuff
 #include "triggers.h" // CheckExitRequestTriggerNoIO()
-//#include "network.h"  // base64_encode()
 #include "confopt.h"  // the option table
 
 /* ----------------------------------------------------------------------- */
 static const char *CONFMENU_CAPTION="distributed.net client configuration: %s\n"
 "--------------------------------------------------------------------------\n";
 
-static int __enumcorenames(unsigned int contestid,
-                           const char *displayname,
-                           int index, void * /* unused */ )
+static int __enumcorenames(const char **corenames, int index, void */*unused*/)
 {
-  if (contestid == DES) /* same as RC5 */
-    return +1; /* keep going */
-  if (contestid == OGR) /* nothing */
-    return +1; /* keep going */
-  if (contestid == RC5)
+  unsigned int cont_i;
+  char linebuff[CONTEST_COUNT][32];
+  if (index == 0)
   {
-    if (index == 0)
-      LogScreenRaw("  RC5 and DES: -1) Auto-select\n");
-    LogScreenRaw(  "               %2d) %s\n", index, displayname );
+    const char *uline = "------------------------";
+    for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+    {
+      if (cont_i != OGR)
+      {
+        const char *contname = CliGetContestNameFromID(cont_i);
+        linebuff[cont_i][0] = '\0';
+        if (contname)
+        {
+          strncpy(&(linebuff[cont_i][0]),contname,sizeof(linebuff[cont_i]));
+          linebuff[cont_i][sizeof(linebuff[cont_i])-1] = '\0';
+        }
+      }
+    }
+    LogScreenRaw(" %-25.25s %-25.25s %-25.25s\n", &(linebuff[RC5][0]), 
+                  &(linebuff[DES][0]),   &(linebuff[CSC][0]) );
+    LogScreenRaw(" %-25.25s %-25.25s %-25.25s\n",uline,uline,uline);
+    uline = "-1) Auto-select";
+    LogScreenRaw(" %-25.25s %-25.25s %-25.25s\n",uline,uline,uline);
+    
   }
-  else if (contestid == CSC)
+  for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
-    if (index == 0)
-      LogScreenRaw("          CSC: -1) Auto-select\n");
-    LogScreenRaw(  "               %2d) %s\n", index, displayname );
-  }
+    linebuff[cont_i][0] = '\0';
+    if (cont_i != OGR && corenames[cont_i])
+    {
+      sprintf(&(linebuff[cont_i][0]),"%2d) ", index );
+      strncpy(&(linebuff[cont_i][4]),corenames[cont_i],sizeof(linebuff[cont_i])-4);
+      linebuff[cont_i][sizeof(linebuff[cont_i])-1] = '\0';
+    }  
+  } 
+  LogScreenRaw(" %-25.25s %-25.25s %-25.25s\n", &(linebuff[RC5][0]), 
+                &(linebuff[DES][0]),   &(linebuff[CSC][0]) );
   return +1; /* keep going */
-}
+}      
 
 int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
 {
@@ -736,7 +760,10 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
         }
 
         if (editthis == CONF_CPUTYPE) /* ugh! */
-           selcoreEnumerate( __enumcorenames, NULL ); 
+        {
+          selcoreEnumerateWide( __enumcorenames, NULL ); 
+          LogScreenRaw("\n");
+        }
 
         if ( conf_options[editthis].type == CONF_TYPE_ASCIIZ || 
              conf_options[editthis].type == CONF_TYPE_INT ||
