@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.88 2001/01/16 17:36:04 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.89 2001/01/16 18:53:37 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -25,6 +25,16 @@ return "@(#)$Id: selcore.cpp,v 1.47.2.88 2001/01/16 17:36:04 cyp Exp $"; }
 #if (CLIENT_OS == OS_AIX) // needs signal handler
   #include <sys/signal.h>
   #include <setjmp.h>
+#endif
+#if (CLIENT_CPU == CPU_X86) && defined(SMC)
+#include <sys/types.h>
+#include <sys/mman.h>
+extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
+#if (CLIENT_OS == OS_LINUX)
+  static int x86_smc_initialized = +1;
+#else  
+  static int x86_smc_initialized = -1;
+#endif  
 #endif
 
 /* ------------------------------------------------------------------------ */
@@ -197,7 +207,17 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     {
       long det = GetProcessorType(1);
       #ifdef SMC /* actually only for the first thread */
-      corenames_table[RC5][1] = "RG self-modifying";
+      if (x86_smc_initialized < 0)
+      {
+        char *addr = (char *)&rc5_unit_func_486_smc;
+        addr -= (((unsigned long)addr) & (4096-1));
+        if (mprotect( addr, 4096*3, PROT_READ|PROT_WRITE|PROT_EXEC )==0)
+          x86_smc_initialized = +1;
+        else  
+          x86_smc_initialized = 0;
+      }      
+      if (x86_smc_initialized > 0)
+        corenames_table[RC5][1] = "RG self-modifying";
       #endif
       if (det >= 0 && (det & 0x100)!=0) /* ismmx */
       {
@@ -691,13 +711,19 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             case 0x03: cindex = 3; break; // Cx6x86/MII ("RG re-pair I") (#1913)
             case 0x04: cindex = 4; break; // K5 ("RG RISC-rotate I")
             case 0x05: cindex = 5; break; // K6/K6-2/K6-3 ("RG RISC-rotate II")
-            #if defined(SMC)    
-            case 0x06: cindex = 1; break; // cx486 uses SMC if avail (bug #99)
-            #elif !defined(HAVE_NO_NASM)
-            case 0x06: cindex = 6; break; // cx486 uses "RG/HB re-pair II" if avail
-            #else 
-            case 0x06: cindex = 3; break; // cx486 else core 3. (bug #804)
-            #endif
+            case 0x06:                    // cx486
+            {
+              #if !defined(HAVE_NO_NASM)
+              cindex = 6; // cx486 uses "RG/HB re-pair II" if avail
+              #else 
+              cindex = 3; // cx486 else core 3. (bug #804)
+              #endif
+              #if defined(SMC)
+              if (x86_smc_initialized > 0)
+                cindex = 1; // cx486 uses SMC if avail (bug #99)
+              #endif
+              break;
+            }    
             case 0x07: cindex = 2; break; // Celeron
             case 0x08: cindex = 2; break; // PPro
             #if !defined(HAVE_NO_NASM)
@@ -897,7 +923,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   extern "C" u32 rc5_unit_func_k6( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_p5_mmx( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_k6_mmx( RC5UnitWork * , u32 iterations );
-  extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
+  //extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_k7( RC5UnitWork * , u32 iterations );
 #elif (CLIENT_CPU == CPU_ARM)
   extern "C" u32 rc5_unit_func_arm_1( RC5UnitWork * , u32 );
@@ -1307,7 +1333,8 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       case 1: // Intel 386/486
         unit_func.rc5 = rc5_unit_func_486;
         #if defined(SMC) 
-        if (threadindex == 0) /* first thread or benchmark/test */
+        if (x86_smc_initialized > 0 && 
+           threadindex == 0) /* first thread or benchmark/test */
           unit_func.rc5 =  rc5_unit_func_486_smc;
         #endif
         break;
