@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.16  1998/09/20 15:21:56  blast
+// AmigaOS changes (added lines somebody cut out before .. grrr)
+//
 // Revision 1.15  1998/09/07 18:22:51  blast
 // Added fcntl.h for AmigaOS
 //
@@ -108,6 +111,7 @@ extern "C" {
     #define QSV_NUMPROCESSORS     26
   #endif
 #elif (CLIENT_OS == OS_AMIGAOS)
+  #include <amiga/amiga.h>
   #include <fcntl.h>
 #elif (CLIENT_OS == OS_RISCOS)
   extern "C"
