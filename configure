@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.37 1999/11/14 20:09:50 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.38 1999/11/15 01:44:45 remi Exp $
 
 if [ -z "$1" ]; then
   echo "No platform specified on command line.";
@@ -925,7 +925,27 @@ case "$1" in
 
 ###### Intel X86 Linux platforms
 
-  ### ***RELEASE*** targets - always mt, _never_ static for libc5
+  ### ***RELEASE*** targets - mt for all but libc4, _never_ static for glibc2
+
+    *x86-linux-glibc2)	                   # glibc2
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
+			-DMULTITHREAD -DLURK \
+			$OGR_ANSI_CCOPTS $CSC_ANSI_CCOPTS"
+	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
+	TARGET_ADDSRCS="common/lurk.cpp \
+			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
+			$OGR_ANSI_SRCS "
+	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
+			platforms/x86ident.S \
+			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS $CSC_ASM_SRCS"
+	TARGET_NASM_FMT="elf"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-x86-glibc2"
+	;;
 
     *x86-linux-libc5)	                   # libc5
 	TARGET_AS="gcc -c"
@@ -933,7 +953,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
 			-DMULTITHREAD -DSMC -DLURK \
 			$OGR_ANSI_CCOPTS $CSC_ANSI_CCOPTS"
-	TARGET_LDFLAGS="-Xlinker -omagic"  #NEVER STATIC FOR GLIBC!!!
+	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
 			$OGR_ANSI_SRCS "
@@ -951,9 +971,9 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-D__showids__ -DSMC -DMULTITHREAD -DLURK \
+			-D__showids__ -DSMC -DLURK \
 			$OGR_ANSI_CCOPTS $CSC_ANSI_CCOPTS"
-	TARGET_LDFLAGS="-Xlinker -omagic"
+	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
 			$OGR_ANSI_SRCS "
@@ -962,7 +982,6 @@ case "$1" in
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS $CSC_ASM_SRCS"
         TARGET_NASM_FMT="aout"
-	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-x86-libc4"
 	;;
