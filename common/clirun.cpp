@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.75  1999/02/01 23:29:28  silby
+// Removed call to CloseHandle for win32 thread
+// destruction: Handle is already destroyed by
+// EndThread, which is called automatically when
+// the thread terminates.
+//
 // Revision 1.74  1999/01/31 20:19:08  cyp
 // Discarded all 'bool' type wierdness. See cputypes.h for explanation.
 //
@@ -282,7 +288,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.74 1999/01/31 20:19:08 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.75 1999/02/01 23:29:28 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -951,7 +957,6 @@ static int __StopThread( struct thread_param_block *thrparams )
         SetThreadPriority( (HANDLE)thrparams->threadID,
                            GetThreadPriority(GetCurrentThread()) );
         WaitForSingleObject((HANDLE)thrparams->threadID, INFINITE);
-        CloseHandle((HANDLE)thrparams->threadID);
         #elif (CLIENT_OS == OS_BEOS)
         static status_t be_exit_value;
         wait_for_thread(thrparams->threadID, &be_exit_value);
