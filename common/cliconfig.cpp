@@ -3,6 +3,15 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.162  1998/07/29 01:49:44  cyruspatel
+// Fixed email address from not being editable (the option to return to the
+// main menu is '0', and 0 is also the value of CONF_ID). Autofindkeyserver
+// changes: a) added a description that describes the new "(auto)" option.
+// b) when autofind is ON, the name of the keyproxy is no longer written to
+// the ini (was writing us.v27 which might be misleading). c) if the old
+// generic keyproxy name (rc5proxy.distributed.net) is read in from the ini,
+// autofind is automatically turned on.
+//
 // Revision 1.161  1998/07/26 21:18:48  cyruspatel
 // Modified Client::ConfigureGeneral() to work with 'autofindkeyserver'.
 //
@@ -316,7 +325,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.161 1998/07/26 21:18:48 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.162 1998/07/29 01:49:44 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -478,9 +487,7 @@ static optionstruct options[OPTION_COUNT]=
 { "hours", CFGTXT("Run for this many hours, then exit"), "0.00", CFGTXT("(0 = no limit)"),5,1,2,NULL},
 //7
 { "timeslice", CFGTXT("Keys per timeslice"),
-#if (CLIENT_OS == OS_WIN16)
-    "200",
-#elif (CLIENT_OS == OS_RISCOS)
+#if (CLIENT_OS == OS_RISCOS)
     "2048",
 #else
     "65536",
@@ -693,6 +700,19 @@ static void killwhitespace( char *string )
 }
 #endif
 
+static int _IsHostnameDNetHost( const char * hostname )
+{
+  if (!hostname || !*hostname) //shouldn't happen
+    return 1;
+  if (isdigit( *hostname )) //illegal
+    return 0;
+  const char *dot = (const char *)strchr( hostname, '.');
+  if ( dot == NULL || dot == hostname )
+    return 0;
+  return (strcmpi(dot, ".v27.distributed.net") == 0 ||
+      strcmpi(dot, ".distributed.net") == 0);
+}           
+
 // --------------------------------------------------------------------------
 
 #define CONF_ID 0
@@ -753,27 +773,28 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
   char str[3];
   char *p;
 
-  while ( choice != 0 ) //note: don't return or break from inside 
+  do                    //note: don't return or break from inside 
     {                   //the loop. Let it fall through instead. - cyp
     setupoptions();
 
     #ifndef OLDRESOLVE                   //This is an ugly, ugly, hack and
     char lkg_keyproxy[sizeof(keyproxy)]; //I'd appreciate any feedback re:
     strcpy( lkg_keyproxy, keyproxy );    //ways to improve it. - cyp
-    if ( autofindkeyserver )             //Note: There is a matching undo    
-      {                                  //after the fgets(parm, 128, stdin);
-      p = strchr( keyproxy, '.' );
-      if ( p != NULL && ( strcmpi( p, ".v27.distributed.net" ) == 0 ||
-                          strcmpi( p, ".distributed.net" ) == 0 ) )
-        strcpy( keyproxy, "(auto)" );
-      }
+    if ( autofindkeyserver && _IsHostnameDNetHost( keyproxy ) )
+      strcpy( keyproxy, "(auto)" );
     options[CONF_KEYPROXY].defaultsetting = "(auto)";
+    options[CONF_KEYPROXY].comments = 
+    "\nThis is the name or IP address of the machine that your client will\n"
+    "obtain keys from and send completed blocks to. If your client will be\n"
+    "connecting to a personal proxy, then enter the name or address of that\n"
+    "machine here. If your client will be connecting directly to one of the\n"
+    "distributed.net main key servers, then leave this setting at \"(auto)\".\n"
+    "The client will then automatically select a key server close to you.\n";
     #endif
 
     // display menu
 
-    choice = -1;
-    while ( choice < 0 ) //while invalid choice
+    do   //while invalid CONF_xxx option selected
       {
       clearscreen();
       printf("Distributed.Net RC5/DES Client build v2.%d.%d config menu\n",
@@ -819,13 +840,15 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
       fflush( stdin );
       fflush( stdout );
       choice = atoi( parm );
-      if ( choice > 0 )
-        choice=findmenuoption(currentmenu,choice); // returns <0 if !found
-      if (SignalTriggered)
-        choice = 0;
-      }
+      if ( choice == 0 || SignalTriggered)
+        choice = -2; //quit request
+      else if ( choice > 0 )
+        choice = findmenuoption(currentmenu,choice); // returns -1 if !found
+      else
+        choice = -1;
+      } while ( choice == -1 ); //while findmenuoption() says this is illegal
 
-    if ( choice > 0 ) //if !quit
+    if ( choice >= 0 ) //if valid CONF_xxx option
       {
       // prompt for new value
       if (options[choice].type==1)
@@ -868,7 +891,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
       fflush( stdin );
       fflush( stdout );
       if (SignalTriggered)
-        choice = 0;
+        choice = -2;
       else
         {
         for ( p = parm; *p; p++ )
@@ -893,7 +916,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           do { *q = *p++; } while (*q++);
           }
         } // if ( !SignalTriggered )
-      } //if ( choice > 0 ) //if !quit
+      } //if ( choice >= 0 ) //if valid CONF_xxx option
 
     #ifndef OLDRESOLVE
     if ( strcmpi( keyproxy, "(auto)" ) == 0 )
@@ -903,19 +926,20 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
       }
     if ( choice == CONF_KEYPROXY )
       {
-      autofindkeyserver = 0;  //assume something changed
+      autofindkeyserver = 1; //ON unless user manually entered a dnet host
       if (!parm[0] || strcmpi(parm,"(auto)")==0 || strcmpi(parm,"auto")==0)
         {
         strcpy( parm, keyproxy ); //copy back what was in there before
-        autofindkeyserver = 1;
         }
+      else if (_IsHostnameDNetHost( parm ))
+        autofindkeyserver = 0; //OFF because user manually entered a dnet host
       }
     #endif
     
-    if ( choice > 0 && (parm[0] || choice == CONF_LOGNAME ))
-    {
-      switch ( choice )
+    if ( choice >= 0 && (parm[0] || choice == CONF_LOGNAME ))
       {
+      switch ( choice )
+        {
         case CONF_ID:
           strncpy( id, parm, sizeof(id) - 1 );
           ValidateConfig();
@@ -951,14 +975,14 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           minutes = (s32) (60. * atol(parm));
           if ( minutes < 0 ) minutes = 0;
           sprintf(hours,"%u.%02u", (unsigned)(minutes/60),
-          (unsigned)(minutes%60)); //1.000000 hours looks silly          sprintf( hours, "%d", minutes/60);
+          (unsigned)(minutes%60)); //1.000000 hours looks silly
           break;
-        case CONF_TIMESLICE:
-          timeslice = atoi(parm);
-          if (timeslice < 1)
-#if (CLIENT_OS == OS_WIN16)
-            timeslice = 200;
-#elif (CLIENT_OS == OS_RISCOS)
+        case CONF_TIMESLICE:        
+          // *** To allows inis to be shared, don't use platform specific 
+          // *** timeslice limits. Scale the generic 0-65536 one instead.
+          timeslice = atoi(parm);   
+          if (timeslice < 1)        
+#if (CLIENT_OS == OS_RISCOS)
             timeslice = 2048;
 #else
             timeslice = 65536;
@@ -1248,9 +1272,10 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
         #endif
         default:
           break;
+        }
+      choice = 1; // continue with menu
       }
-    }
-  }
+    } while ( choice >= 0 ); //while we have a valid CONF_xxx to work with
   return 0;
 }
 #endif
@@ -1555,7 +1580,18 @@ s32 Client::ReadConfig(void)
   minutes = (s32) (atol(hours) * 60.);
   timeslice = INIGETKEY(CONF_TIMESLICE);
   niceness = INIGETKEY(CONF_NICENESS);
+
   INIGETKEY(CONF_KEYPROXY).copyto(keyproxy, sizeof(keyproxy));
+  tempconfig=ini.getkey("networking", "autofindkeyserver", "1")[0];
+  autofindkeyserver = (tempconfig)?(1):(0);
+  #ifndef OLDRESOLVE
+  if (strcmpi( keyproxy, "rc5proxy.distributed.net" )==0) //old generic name
+    {                                                  //now CNAME to us.v27
+    strcpy( keyproxy, "us.v27.distributed.net" ); 
+    autofindkeyserver = 1; //let Resolve() get a better hostname.
+    }
+  #endif
+
   keyport = INIGETKEY(CONF_KEYPORT);
   INIGETKEY(CONF_HTTPPROXY).copyto(httpproxy, sizeof(httpproxy));
   httpport = INIGETKEY(CONF_HTTPPORT);
@@ -1592,8 +1628,6 @@ s32 Client::ReadConfig(void)
   if (tempconfig) quietmode=1;
   tempconfig=ini.getkey(OPTION_SECTION, "nofallback", "0")[0];
   if (tempconfig) nofallback=1;
-  tempconfig=ini.getkey("networking", "autofindkeyserver", "1")[0];
-  autofindkeyserver = (tempconfig)?(1):(0);
   tempconfig=ini.getkey(OPTION_SECTION, "cktime", "0")[0];
   if (tempconfig) checkpoint_min=max(2,tempconfig);
   tempconfig=ini.getkey(OPTION_SECTION, "nettimeout", "60")[0];
@@ -1690,9 +1724,7 @@ void Client::ValidateConfig( void )
   if ( outthreshold[1] > 1000 ) outthreshold[1] = 1000;
   if ( outthreshold[1] > inthreshold[1] ) outthreshold[1]=inthreshold[1];
   if ( blockcount < 0 ) blockcount = 0;
-#if (CLIENT_OS == OS_WIN16)
-  if ( timeslice < 1 ) timeslice = 200;
-#elif (CLIENT_OS == OS_RISCOS)
+#if (CLIENT_OS == OS_RISCOS)
   if ( timeslice < 1 ) timeslice = 2048;
 #else
   if ( timeslice < 1 ) timeslice = 65536;
@@ -1860,11 +1892,26 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_HOURS, hours );
   INISETKEY( CONF_TIMESLICE, timeslice );
   INISETKEY( CONF_NICENESS, niceness );
-  INISETKEY( CONF_KEYPROXY, keyproxy );
+
+  #ifndef OLDRESOLVE
+  if (autofindkeyserver && _IsHostnameDNetHost( keyproxy ))
+    {
+    //INISETKEY( CONF_KEYPROXY, "rc5proxy.distributed.net" );
+    IniRecord *tempptr = ini.findfirst(OPTION_SECTION, "keyproxy");
+    if (tempptr) tempptr->values.Erase();
+    tempptr = ini.findfirst( "networking", "autofindkeyserver");
+    if (tempptr) tempptr->values.Erase();
+    }
+  else
+  #endif
+    {
+    INISETKEY( CONF_KEYPROXY, keyproxy );
+    ini.setrecord("networking", "autofindkeyserver", IniString(autofindkeyserver?"1":"0"));
+    }
+
   INISETKEY( CONF_KEYPORT, keyport );
   INISETKEY( CONF_HTTPPROXY, httpproxy );
   INISETKEY( CONF_HTTPPORT, httpport );
-  ini.setrecord("networking", "autofindkeyserver", IniString(autofindkeyserver?"1":"0"));
   INISETKEY( CONF_UUEHTTPMODE, uuehttpmode );
   INISETKEY( CONF_HTTPID, httpid);
 #if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM) || ((CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX)) )
