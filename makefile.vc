@@ -21,7 +21,6 @@ all: rc5des
 
 RC5_OBJS =                    \
 	$(OUTPUTPATH)/client.obj     \
-	$(OUTPUTPATH)/threadcd.obj   \
 	$(OUTPUTPATH)/disphelp.obj   \
 	$(OUTPUTPATH)/autobuff.obj   \
 	$(OUTPUTPATH)/iniread.obj    \
