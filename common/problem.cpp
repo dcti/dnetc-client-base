@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.109 2001/03/19 15:36:42 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.109.2.1 2001/05/03 11:14:23 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -672,6 +672,7 @@ static inline int __InternalLoadState( InternalProblem *thisprob,
   else if (thisprob->pub_data.contest == OGR)
   {
     int r;
+    int size, alignment;
     thisprob->priv_data.contestwork.ogr = work->ogr;
     if (thisprob->priv_data.contestwork.ogr.nodes.hi != 0 || thisprob->priv_data.contestwork.ogr.nodes.lo != 0)
     {
@@ -682,6 +683,17 @@ static inline int __InternalLoadState( InternalProblem *thisprob,
         thisprob->priv_data.contestwork.ogr.workstub.worklength = thisprob->priv_data.contestwork.ogr.workstub.stub.length;
         thisprob->priv_data.contestwork.ogr.nodes.hi = thisprob->priv_data.contestwork.ogr.nodes.lo = 0;
       }
+    }
+    
+    // check core memory size and alignment
+    size = (thisprob->pub_data.unit_func.ogr)->get_size(&alignment);
+    if (MAX_MEM_REQUIRED_BY_CORE < size) {
+      Log("Insufficient core memory for OGR, need at least %d bytes\n", size);
+      return -1;
+    }
+    if (CORE_MEM_ALIGNMENT < alignment) {
+      Log("Wrong memory alignment for OGR, need at least alignment %d\n", alignment);
+      return -1;
     }
 
     r = (thisprob->pub_data.unit_func.ogr)->init();
@@ -696,8 +708,9 @@ static inline int __InternalLoadState( InternalProblem *thisprob,
       ** it is ok to discard the stub (and let the network recycle it)
       */
       const char *msg = "Unknown error";
-      if      (r == CORE_E_MEMORY)  msg = "CORE_E_MEMORY: Insufficient memory";
-      else if (r == CORE_E_FORMAT)  msg = "CORE_E_FORMAT: Format or range error";
+      //if      (r == CORE_E_MEMORY) msg = "CORE_E_MEMORY: Insufficient memory";
+           if (r == CORE_E_FORMAT) msg = "CORE_E_FORMAT: Format or range error";
+      else if (r == CORE_E_LOWMEM) msg = "CORE_E_LOWMEM: Insufficient core memory";
       Log("OGR load failure: %s\nStub discarded.\n", msg );
       return -1;
     }

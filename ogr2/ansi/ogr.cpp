@@ -8,7 +8,7 @@
  * - it #includes all neccessary .cor (core functions/macros), 
  *   .mac (general macros), .inc (general stuff) files
  */
-#define __OGR_CPP__ "@(#)$Id: ogr.cpp,v 1.1.2.43.2.3 2001/04/01 22:02:15 andreasb Exp $"
+#define __OGR_CPP__ "@(#)$Id: ogr.cpp,v 1.1.2.43.2.4 2001/05/03 11:14:24 andreasb Exp $"
 
 #include <stdio.h>      /* printf for debugging */
 #include <stdlib.h>     /* malloc (if using non-static choose dat) */
@@ -226,8 +226,8 @@
 #include "crc32.h" /* only need to crc choose_dat if its not static */
 #endif
 
-#define OGR_CORE_INTERNAL_STRUCTURES
 #include "ogr.h"
+#include "state.h"
 
 // maximum number of marks supported by ogr_choose_dat
 #define CHOOSE_MAX_DEPTH   12
@@ -280,6 +280,7 @@ static int init_load_choose(void);
 static int ogr_init(void);
 static const char* ogr_name(void);
 static const char* ogr_core_id(void);
+static int ogr_get_size(int* alignment);
 static int ogr_create(void *input, int inputlen, void *state, int statelen);
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints);
 static int ogr_getresult(void *state, void *result, int resultlen);
@@ -452,7 +453,8 @@ static int ogr_init(void)
 }
 
 
-static const char* ogr_core_id() {
+static const char* ogr_core_id()
+{
   /* whats the most senseful format for this? char ** like argv ? */
   #define STRINGIFY2(x) #x
   #define STRINGIFY(x) STRINGIFY2(x)
@@ -462,6 +464,13 @@ static const char* ogr_core_id() {
   #undef STRINGIFY2
 }
 
+
+static int ogr_get_size(int *alignment)
+{
+  if (alignment)
+    *alignment = OGR_MEM_ALIGNMENT;
+  return sizeof(State);
+}
 
 
 #if 0 // old version
@@ -584,6 +593,7 @@ CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
   dispatch_table.init      = ogr_init;
   dispatch_table.name      = ogr_name;
   dispatch_table.core_id   = ogr_core_id;
+  dispatch_table.get_size  = ogr_get_size;
   dispatch_table.create    = ogr_create;
   dispatch_table.cycle     = ogr_cycle;
   dispatch_table.getresult = ogr_getresult;

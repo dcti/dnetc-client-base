@@ -1,9 +1,9 @@
-/* Copyright distributed.net 1997-1999 - All Rights Reserved
+/* Copyright distributed.net 1997-2001 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.18.2.4 2001/04/01 22:02:15 andreasb Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.18.2.5 2001/05/03 11:14:24 andreasb Exp $"
 
 // define this to use the new struct Stub
 //#define OGR_NEW_STUB_FORMAT
@@ -16,22 +16,6 @@
 #include "cputypes.h"
 #endif
 
-#include <limits.h>
-#if (UINT_MAX < 0xfffffffful)
-  #error "ogr needs an int thats not less than 32bits"
-#elif (UINT_MAX == 0xffffffff)
-  #define OGR_INT_SIZE 4
-#elif (UINT_MAX == 0xffffffffffffffff)
-  #define OGR_INT_SIZE 8
-#else
-  #error "What's up Doc?"
-#endif
-
-#ifdef __VEC__
-  #error  #define OGR_VEC_SIZE ???
-#else
-  #define OGR_VEC_SIZE 0
-#endif
 
 /* ===================================================================== */
 
@@ -43,10 +27,21 @@
 #define CORE_S_OK       0
 #define CORE_S_CONTINUE 1
 #define CORE_S_SUCCESS  2
-#define CORE_E_MEMORY    (-1)
+//#define CORE_E_MEMORY    (-1)
 //#define CORE_E_IO      (-2)
 #define CORE_E_FORMAT    (-3)
 //#define CORE_E_STOPPED (-4)
+
+// new error codes, old ones should be replaced someday
+// client allocated core memory block is too small for struct State:
+#define CORE_E_LOWMEM    (-5)
+#define CORE_E_NOMEM     (-6)
+
+/*
+CORE_E_MEMORY
+CORE_E_ALIGNMENT
+CORE_E_
+*/
 
 /* different STUB_E_ my be ORed together */
 #define STUB_OK          0
@@ -68,11 +63,16 @@
 //#undef OGR_ALTERNATE_TESTCASES
 #define OGR_ALTERNATE_TESTCASES 3
 
+// define this to enable LOGGING code
+//#undef OGR_DEBUG
+
 /* ===================================================================== */
 
 #ifndef MIPSpro
-#pragma pack(1)
+#pragma pack(4) 
+// FIXME: pack CoreDispatchTable on longwork boundaries - 4 or 8 ?
 #endif
+
 
 /*
  * Dispatch table structure. A pointer to one of these should be returned
@@ -97,6 +97,11 @@ typedef struct {
    * Returns the cores RCS Id list
    */
   const char* (*core_id)(void);
+
+  /*
+   * Returns sizeof(State) and required alignment.
+   */
+  int (*get_size)(int* alignment);
   
   /*
    * Create a new work unit, called once for each thread.
@@ -163,11 +168,10 @@ typedef struct {
 
 /* ===================================================================== */
 
-// define this to enable LOGGING code
-//#undef OGR_DEBUG
-//#define OGR_PROFILE
-// OGR_WINDOW is used to test register windowing in the core
-//#define OGR_WINDOW 10
+// These structures get saved to disk/sent through network
+#ifndef MIPSpro
+#pragma pack(1) 
+#endif
 
 #ifndef OGR_NEW_STUB_FORMAT
 // specifies the number of ruler diffs can be represented.
@@ -220,164 +224,10 @@ struct NewStub { /* size is 1+1+1+32+8 = 43 [+1 = 44] [+1+1 = 46] */
 
 #endif /* OGR_NEW_STUB_FORMAT */
 
-// Internal stuff that's not part of the interface but we need for
-// declaring the problem work area size.
-
-// I have to reserve memory for all possible OGR cruncher setups because
-// memory reservation happens inside problem.h/.c and I cannot know what
-// cruncher is going to get used :(
-
-#define BITMAPS     5       /* need to change macros when changing this */
-#define MAXDEPTH   40
-
-typedef u32 U;
-
-#ifdef OGR_CORE_INTERNAL_STRUCTURES
-struct Level {
-  /* If AltiVec is possible we must reserve memory, just in case */
-  #ifdef __VEC__   // unused if OGROPT_ALTERNATE_CYCLE == 0 || == 1
-  vector unsigned int listV0, listV1, compV0, compV1;
-  #endif
-  U list[BITMAPS]; // unused if OGROPT_ALTERNATE_CYCLE == 2
-  U dist[BITMAPS]; // unused if OGROPT_ALTERNATE_CYCLE == 1 || 2
-  U comp[BITMAPS]; // unused if OGROPT_ALTERNATE_CYCLE == 2
-  int cnt1;        // unused if OGROPT_ALTERNATE_CYCLE == 1 || == 2
-  int cnt2;        // always needed
-  int limit;       // always needed
-};
-#endif /* OGR_CORE_INTERNAL_STRUCTURES */
-
-#define OGR_LEVEL_SIZE ((128*4)+((4*BITMAPS)*3)+(OGR_INT_SIZE*3))
-
-#ifdef OGR_CORE_INTERNAL_STRUCTURES
-#if 0
-struct State {
-  #if 0 /* unused - see notes for ogr_cycle() above */
-  struct { U hi,lo; } Nodes;      /* counts "tree branches" */
-  //double Nodes;                 /* counts "tree branches" */  
-  #endif
-  int max;                        /* maximum length of ruler */
-  int maxdepth;                   /* maximum number of marks in ruler */
-  int maxdepthm1;                 /* maxdepth-1 */
-  int half_length;                /* half of max */
-  int half_depth;                 /* half of maxdepth */
-  int half_depth2;                /* half of maxdepth, adjusted for 2nd mark */
-  int marks[MAXDEPTH+1];          /* current length */
-  int startdepth;
-  int depth;
-  int limit; // unused
-  #ifdef OGR_DEBUG
-    int LOGGING;
-  #endif
-  #ifdef  OGR_WINDOW /* used by OGRtestbench */
-    int wind;                     /* depth window base */
-    int turn;                     /* window turn counter */
-  #endif
-  #ifdef OGR_PROFILE /* used by OGRtestbench */
-    struct {
-      long hd;                    /* Half depth */
-      long hd2;                   /* Half depth 2 */
-      long ghd;                   /* Greater than Half depth */
-      long lt16;                  /* shift <16 */
-      long lt32;                  /* shift < 32 */
-      long ge32;                  /* shift >= 32 */
-      long fo;                    /* found one? */
-      long push;                  /* Go deeper */
-   } prof;
-  #endif
-  /* If AltiVec is possible we must reserve memory, just in case */
-  #ifdef __VEC__     /* only used by OGROPT_ALTERNATE_CYCLE == 2 */
-    vector unsigned int distV0, distV1;
-  #endif
-  U dist[BITMAPS];   /* only used by OGROPT_ALTERNATE_CYCLE == 1 */
-  struct Level Levels[MAXDEPTH];
-#else
-struct State {
-  /* all variables will be initialized by ogr_create() */
-  /* State may not contain pointers pointing into State itself! */
-  
-  /* Part 1: variables that won't get changed after ogr_create() */
-  int stub_error;                 /* don't process stub if not zero */
-  int max;                        /* maximum length of ruler */
-  int maxmarks;                   /* was: maxdepth */ /* maximum number of marks in ruler */
-  int maxdepth;                   /* was: maxdepthm1 */ /* maximum number of first differences in ruler = marks - 1 */
-  int half_length;                /* maximum length of left segment */
-  int half_depth;                 /* depth of left/right segment */
-  int half_depth2;                /* depth of left+middle segment */
-  int startdepth;                 /* depth of the stub */
-  int stopdepth;                  /* ogr_cycle() stops if this level is reached; either startdepth or startdepth-1*/
-  
-  /* Part 2: variables that will be changed by ogr_cycle() and read by 
-             ogr_getresult(). Do not read these values while ogr_cycle() is running!
-             The state represented by parts 1&2 and returned by ogr_getresult
-             is safe to be saved to disk. */
-  int depth;                      /* depth of last placed mark */
-//int markpos[MAXDEPTH];          /* duplicates Levels[].cnt2 */ /* was: marks */ /* current positions of the marks */
-  u32 nodeshi, nodeslo;           /* our internal nodecounter */
-  
-  /* Part 3: Variables that may be used ONLY by ogr_cycle() */
-  #ifdef OGR_DEBUG
-    int LOGGING;
-  #endif
-  #ifdef  OGR_WINDOW /* used by OGRtestbench */
-    int wind;                     /* depth window base */
-    int turn;                     /* window turn counter */
-  #endif
-  #ifdef OGR_PROFILE /* used by OGRtestbench */
-    struct {
-      long hd;                    /* Half depth */
-      long hd2;                   /* Half depth 2 */
-      long ghd;                   /* Greater than Half depth */
-      long lt16;                  /* shift <16 */
-      long lt32;                  /* shift < 32 */
-      long ge32;                  /* shift >= 32 */
-      long fo;                    /* found one? */
-      long push;                  /* Go deeper */
-   } prof;
-  #endif
-  /* If AltiVec is possible we must reserve memory, just in case */
-  #ifdef __VEC__     /* only used by OGROPT_ALTERNATE_CYCLE == 2 */
-    vector unsigned int distV0, distV1;
-  #endif
-  U dist[BITMAPS];   /* only used by OGROPT_ALTERNATE_CYCLE == 1 */
-  struct Level Levels[MAXDEPTH];
-};
-#endif
-#endif /* OGR_CORE_INTERNAL_STRUCTURES */
-
 #ifndef MIPSpro
 #pragma pack()
 #endif
 
-#if 0
-#define OGR_PROBLEM_SIZE (/*16+*/(6*OGR_INT_SIZE)+(OGR_INT_SIZE*(MAXDEPTH+1))+ \
-                         (4*OGR_INT_SIZE)+(128*2)+(OGR_INT_SIZE*BITMAPS)+ \
-                         (OGR_LEVEL_SIZE*MAXDEPTH)+64)
-                         /* sizeof(struct State) */
-#else
-#ifdef OGR_DEBUG
-  #define OGR_STATE_SIZE_DEBUG (OGR_INT_SIZE)
-#else
-  #define OGR_STATE_SIZE_DEBUG 0
-#endif
-#ifdef OGR_WINDOW
-  #define OGR_STATE_SIZE_WINDOW (2*(OGR_INT_SIZE))
-#else
-  #define OGR_STATE_SIZE_WINDOW 0
-#endif
-#ifdef OGR_PROFILE
-  #define OGR_STATE_SIZE_PROFILE (8*(OGR_LONG_SIZE))
-#else
-  #define OGR_STATE_SIZE_PROFILE 0
-#endif
-#define OGR_PROBLEM_SIZE ((8*OGR_INT_SIZE)+ \
-                         (OGR_INT_SIZE)+((MAXDEPTH)*OGR_INT_SIZE)+(2*4)+ \
-                         (OGR_STATE_SIZE_DEBUG)+(OGR_STATE_SIZE_WINDOW)+ \
-                         (OGR_STATE_SIZE_PROFILE)+(2*OGR_VEC_SIZE)+ \
-                         (BITMAPS*4)+ \
-                         (MAXDEPTH*OGR_LEVEL_SIZE)+64)
-                         /* sizeof(struct State) */
-#endif
 
 #if defined(__cplusplus)
 extern "C" {
@@ -394,16 +244,14 @@ extern "C" {
 }
 #endif
 
-unsigned long ogr_nodecount(const struct Stub *);
+void ogr_reset_stub(struct Stub *stub);
+//unsigned long ogr_nodecount(const struct Stub *);
 const char *ogr_stubstr_r(const struct Stub *stub, 
                           char *buffer, unsigned int bufflen,
                           int worklength);
 const char *ogr_stubstr(const struct Stub *stub);
 
-
-/* some constraints */
-#if (STUB_MAX > MAXDEPTH)
-#error STUB_MAX > MAXDEPTH
-#endif
+// increase this value if the client reports "not enough core memory for OGR"
+#define OGR_PROBLEM_SIZE 2952
 
 #endif /* __OGR_H__ */

@@ -11,7 +11,7 @@
  * cores.
  * And it will be used in stubmap generation.
  */
-#define __OGR_CORE__ "@(#)$Id: ogr_ab.cor,v 1.1.2.8.2.4 2001/04/01 22:02:15 andreasb Exp $"
+#define __OGR_CORE__ "@(#)$Id: ogr_ab.cor,v 1.1.2.8.2.5 2001/05/03 11:14:24 andreasb Exp $"
 
 #warning This core needs revision by other coders
 
@@ -128,7 +128,7 @@ the needed memory, but reduces the amount of nodes to be visited.
 
 const char* ogr_name()
 {
-  return "AB 0.02 $Revision: 1.1.2.8.2.4 $";
+  return "AB 0.02 $Revision: 1.1.2.8.2.5 $";
 }
 
 
@@ -411,12 +411,13 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
     return CORE_E_FORMAT;
   }
 
+//  printf("OGR: sizeof(State) = %d, statelen = %d\n", sizeof(State), statelen);
   if (((unsigned int)statelen) < sizeof(struct State)) {
-    return CORE_E_FORMAT;
+    return CORE_E_LOWMEM;
   }
   oState = (struct State *)state;
   if (!oState) {
-    return CORE_E_MEMORY;
+    return CORE_E_NOMEM;
   }
 
   memset(oState, 0, sizeof(struct State));                                                                             
