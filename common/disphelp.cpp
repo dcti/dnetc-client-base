@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.28  1998/06/27 21:23:34  jlawson
+// fixed tabs
+//
 // Revision 1.27  1998/06/24 06:45:15  remi
 // The terminfo database can be located everywhere. Try some known locations
 // before falling back to a 25 lines screen.
@@ -83,7 +86,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: disphelp.cpp,v 1.27 1998/06/24 06:45:15 remi Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.28 1998/06/27 21:23:34 jlawson Exp $";
 #endif
 
 #include "client.h"
@@ -249,9 +252,9 @@ static int gettermheight() {
     int termerr;
     if (setupterm( NULL, 1, &termerr ) == ERR) {
       if ((termerr == 0 || termerr == -1) && *location != NULL)
-	setenv( "TERMINFO", *(location++), 1);
+        setenv( "TERMINFO", *(location++), 1);
       else 
-	return -1;
+        return -1;
     } else
       break;
   }
@@ -470,24 +473,24 @@ void Client::DisplayHelp( const char * unrecognized_option )
       {
       int i, l, n=maxpagesize-5; // -5 to see the 'invalid option' message
       for (i = 0; i < headerlines; i++)
-	fprintf( outstream, "%s\n", helpheader[i] );
+        fprintf( outstream, "%s\n", helpheader[i] );
       for (l = 0; l < bodylines; )
-	{
-	for (i = 0; (l < bodylines) && (i < n); i++ )
-	  fprintf( outstream, "%s\n", helpbody[l++] );
-	n = maxscreenlines-2; //use a two line overlap
-	if (l<bodylines && !nostdin && !foundhelprequest) 
-          {  //NOLESS mode: stdin is ok
-          #ifndef NOMORE // very obstinate people :)
-	  fprintf( outstream, "--More--" );
-	  fflush( outstream );
-	  readkeypress();
-	  if (SignalTriggered || UserBreakTriggered)
-	    break;
-	  fprintf( outstream, "\r" ); //overwrite the --More--
-          #endif
-	  }
-	}
+        {
+          for (i = 0; (l < bodylines) && (i < n); i++ )
+            fprintf( outstream, "%s\n", helpbody[l++] );
+          n = maxscreenlines-2; //use a two line overlap
+          if (l<bodylines && !nostdin && !foundhelprequest) 
+            {  //NOLESS mode: stdin is ok
+              #ifndef NOMORE // very obstinate people :)
+              fprintf( outstream, "--More--" );
+              fflush( outstream );
+              readkeypress();
+              if (SignalTriggered || UserBreakTriggered)
+                break;
+              fprintf( outstream, "\r" ); //overwrite the --More--
+              #endif
+            }
+        }
       }
     }
   else if (maxpagesize >= bodylines) { // enough lines in a single screen ?
