@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.187  1999/01/27 16:34:23  cyp
+// if one variable wasn't being initialized, there could have been others.
+// Consequently, added priority that had been missing as well.
+//
 // Revision 1.186  1999/01/27 02:47:30  silby
 // timeslice is now initialized during client creation.
 //
@@ -176,7 +180,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.186 1999/01/27 02:47:30 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.187 1999/01/27 16:34:23 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -215,8 +219,11 @@ static void __initialize_client_object(Client *client)
   client->outthreshold[0] = 10;
   client->inthreshold[1] = 10;
   client->outthreshold[1] = 10;
-  client->blockcount = 0;
   client->minutes = 0;
+  client->priority = 0;
+
+  client->blockcount = 0;
+  client->timeslice = 0x10000;
   client->stopiniio = 0;
   client->keyproxy[0] = 0;
   client->keyport = 0;
@@ -264,7 +271,6 @@ static void __initialize_client_object(Client *client)
   client->nonewblocks=0;
   client->nettimeout=60;
   client->noexitfilecheck=0;
-  client->timeslice=0x10000;
 #if defined(MMX_BITSLICER) || defined(MMX_RC5)
   client->usemmx = 1;
 #endif
@@ -272,11 +278,7 @@ static void __initialize_client_object(Client *client)
   dialup.lurkmode=0;
   dialup.dialwhenneeded=0;
 #endif
-#if (CLIENT_OS == OS_QNX)
-  srand( (unsigned) time(NULL)/*(unsigned) CliTimer( NULL )->tv_usec*/ );
-#else
-  srand( (unsigned) CliTimer( NULL )->tv_usec );
-#endif
+  srand( (unsigned) time(NULL) );
   InitRandom();
 }
 
@@ -353,19 +355,18 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
       #if (CLIENT_OS == OS_DOS)  
       LogScreenRaw( "PMODE DOS extender Copyright 1994-1998, Charles Scheffold and Thomas Pytel\n");
       #endif
-      LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n"
-                 "%s\n",
-              #if (CLIENT_OS == OS_RISCOS)
-              guiriscos ?
-              "Interactive help is available, or select 'Help contents' from the menu for\n"
-              "detailed client information.\n" :
-              #endif
-			  #if (CLIENT_OS == OS_MACOS)
-                "Select ""Help..."" from the Apple menu for detailed client information.\n"
-			  #else
-              "Start the client with '-help' for a list of valid command line options.\n"
-			  #endif
-              );
+      LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n");
+      LogScreenRaw( 
+        #if (CLIENT_OS == OS_RISCOS)
+        guiriscos ?
+        "Interactive help is available, or select 'Help contents' from the menu for\n"
+        "detailed client information.\n\n" :
+        #elif (CLIENT_OS == OS_MACOS)
+        "Select ""Help..."" from the Apple menu for detailed client information.\n\n"
+        #else
+        "Start the client with '-help' for a list of valid command line options.\n\n"
+        #endif
+        );
       }
     else if ( level == 1 )
       {  
