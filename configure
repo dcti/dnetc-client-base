@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.46 2003/02/27 17:57:47 teichp Exp $
+# @(#)$Id: configure,v 1.288.2.47 2003/02/28 22:31:26 snake Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1601,7 +1601,7 @@ case "$1" in
         TARGET_LDFLAGS="-static"
         TARGET_LIBS="-ltermcap"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="netbsd-mipsel"
+        TARGET_TARBALL="netbsd-mipsel-elf"
         add_sources "netbsd" "mips"
         ;;
 
@@ -2324,14 +2324,13 @@ case "$1" in
         ;;
 
     *m68k-netbsd) # NetBSD on NeXT, 68k Macs, 68k Amiga, sun3 etc, [snake]
-        # needs gas 2.9.1 to compile OGR
         TARGET_CC="g++"
         TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer \
                         -m68020-40 -DASM_68K -DLURK -DHAVE_OGR_CORES"
         TARGET_LDFLAGS="-static"
         TARGET_ASFLAGS="$OPTS_GAS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="netbsd-68k"
+        TARGET_TARBALL="netbsd-m68k-elf"
         add_sources "netbsd" "68k"
         ;;
 
