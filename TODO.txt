@@ -1,0 +1,54 @@
+
+This file contains a list of mini-projects. Submissions as well as 
+volunteers :) are welcome. 
+
+The list is maintained by Cyrus "cyp" Patel <cyp@fb14.uni-mainz.de>. 
+To avoid having the wheel reinvented, please holler if you wish
+to tackle a project.
+
+If you have the expertise but lack the time to handle a project, 
+please post your willingness to assist to coders@. Perhaps someone 
+else has what you don't. :)
+
+
+1. Fix HTTP encoding in the client.                          Priority: URGENT
+      
+2. Add support for GSSAPI authentication to the client's SOCKS5 handler.
+   GSSAPI support is *required* according to the SOCKS5 rfc. Priority: Medium
+
+3. Clean up the cores.                                       Priority: HIGH
+   a) The ideal prototype for any core, regardless of project,
+      s32 (*core_unit)( RC5unitWork *, u32 *timeslice, void *membuff );
+      1) it does its own pre- and post-incrementation, 
+      2) timeslice to 'nbits' ('nodes') conversion, 
+      3) store the effective timeslice back in *timeslice
+      4) return a rescode == RESULT_[FOUND|NOTHING|WORKING] or -1 if error
+      Also note that the call is to a function pointer that is selected
+      in Problem::LoadState() based on contest number and cputype. 
+   b) Clean up "ANSI" core(s) 
+      a) get rid of the RC5CORE stuff from ./configure
+      b) rename the cores from [rc5|des]_unit_func to 
+         [rc5|des]_ansi_[x]_unit_func 
+      c) fix the cores to use timeslice
+
+4. Devise and write a better filebuffer scheme.            Priority: Low
+   a) better "locking". The current method of writing 0x1 to tag
+      a file as 'locked' is not ideal. Using a specific value to 
+      identify the lock as the client's own would probably solve
+      all locking problems.
+   b) contain both in and completed blocks in a single file. Even 
+      better would be a format that accomodates blocks from all 
+      projects.
+   c) The buffer format must support FIFO. The current FIFO scheme 
+      uses a "find one more suitable than default" scheme. It works 
+      well and has a low overhead. 
+
+5. Write a routine to import/export uuencoded buffers for/from users
+   that can only update their buffers via mail.            Priority: Medium
+        
+6. Add FTP as a supported buffer exchange protocol. The client could
+   directly STOR buff-in.xx and requests to RETR rc5 would cause the
+   keyserver to return a rc5 block from its ready queue.   Priority: Low
+    
+7. Write a small routine to obtain a list of the local host's UP af_inet 
+   if's by using SNMP or ... Use ioctl() to do the same (for your port).                                                                   Priority: Low
