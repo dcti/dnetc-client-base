@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 
 # $Log: configure,v $
+# Revision 1.113.2.24  1999/02/04 23:03:40  remi
+# Fixed the previous merge.
+#
 # Revision 1.113.2.23  1999/02/04 23:01:09  remi
 # Synced with :
 #
@@ -1039,35 +1042,6 @@ case "$1" in
 	TARGET_LIBS="-lc_r"
 	;;
 
-<<<<<<< configure
-=======
-    *x86-freebsd-mt-elf)
-	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-DPIPELINE_COUNT=2 -DMULTITHREAD"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
-			platforms/x86ident.S \
-			des/p1bdespro.S des/p2bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_LIBS="-lc_r"
-	;;
-
-    *x86-freebsd4-mt-elf)
-        TARGET_AS="gcc -c"
-        TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-                        -DPIPELINE_COUNT=2 -DMULTITHREAD -DCLIENT_OS_MINOR=4"
-        TARGET_LDFLAGS="-static"
-        TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-        TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
-                        platforms/x86ident.S \
-                        des/p1bdespro.S des/p2bdespro.S"
-        TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-        TARGET_LIBS="-lc_r"
-        ;;
-
->>>>>>> 1.183
     *x86-netbsd)
 	TARGET_AS="g++ -c -DNO_BALIGN"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
@@ -1103,13 +1077,8 @@ case "$1" in
 
 ####### BSD/OS 4.0 with ELF format
     *x86-bsdi4)
-<<<<<<< configure
-	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-=======
 	TARGET_AS="g++ -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
->>>>>>> 1.183
 			-DPIPELINE_COUNT=2 -D__ELF__"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
@@ -1431,12 +1400,7 @@ echo "AS = ${TARGET_AS}" >> Makefile
 echo "ASFLAGS = ${TARGET_ASFLAGS}" >> Makefile
 echo "NASM = ${TARGET_NASM}" >> Makefile
 echo "NASMFLAGS = ${TARGET_NASMFLAGS}" >> Makefile
-<<<<<<< configure
 echo "ALLOBJS = ${TARGET_ALLCCOBJS} ${TARGET_ALLASOBJS} ${TARGET_ALLNASMOBJS}" >> Makefile
-=======
-echo "STRIP = ${TARGET_STRIP}" >> Makefile
-echo "ALLOBJS = ${TARGET_ALLCCOBJS} ${TARGET_ALLASOBJS} ${TARGET_ALLNASMOBJS} ${TARGET_DUEV5OBJS}" >> Makefile
->>>>>>> 1.183
 echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
 echo "BUILDNAME = $1" >> Makefile
 echo "" >> Makefile
