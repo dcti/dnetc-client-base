@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg3a.asm,v 1.2.2.3 2003/01/17 21:48:30 acidblood Exp $
+; $Id: r72-dg3a.asm,v 1.2.2.4 2003/01/18 21:51:07 acidblood Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -630,12 +630,15 @@ inc_key:
 
         mov     [RC5_72UnitWork_L0hi], edx
         mov     L1(2), edx
+        mov     L1backup(2), edx
         inc     edx
 
         mov     L2(2), edx
+        mov     L2backup(2), edx
         inc     edx
 
         mov     L3(2), edx
+        mov     L3backup(2), edx
         dec     dword [work_iterations]
 
         mov     L1(1), ecx
