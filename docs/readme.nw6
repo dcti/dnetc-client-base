@@ -1,0 +1,37 @@
+
+ distributed.net client for NetWare 5.1 and above
+                                                         
+This is a  port of the dnetc client to the Netware LibC platform.
+
+Requirements:
+	- Netware 5.1 or higher, with the latest support pack.  Note
+	that I have not tested on Netware 5.1, but I assume that if you have 
+	the latest libc.nlm on Netware 5.1, it should work the same.  My
+	development and testing was all done with Netware 6.5, with the latest
+	support pack.  Any feedback on earlier versions would be appreciated.
+
+	- The Netware TCPIP stack must be properly configured to do DNS lookups, 
+	meaning	you must be able to "ping www.distributed.net" at the console and get
+	responses back.
+
+Running:
+	Extract the zip file into a directory on the box, and "load <path>/dnetc"
+	at the console.  Then follow the regular steps for configuring and running 
+	the client as you would on any other platform.
+ 
+Notes:
+	- Netware is not a preemptive OS, nor does it have thread scheduling 
+	priorities.  This makes it difficult for the distributed.net client to 
+	"play nice" with other processes.  Running it on a production server can 
+	hinder other processes.  I have made it yield the processor regularly as 
+	a start, and plan on doing more	work in this area in the future.
+
+	- In the past, there was a client for Netware that was compatible with NW 
+	3.x and 4.x.  This is not the same client, and does not have the features 
+	the previous Netware porter	put into that client.  While I do not plan on 
+	reviving the old CLib-based client, if time permits, I may bring over some 
+	of the netware-specific features he put into that client. 
+
+
+
+

@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.26 2004/09/09 20:29:40 snake Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.27 2004/10/13 20:28:38 jbgill Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -87,6 +87,7 @@
 #define OS_PS2LINUX     44
 #define OS_MORPHOS      45
 #define OS_WIN64        46
+#define OS_NETWARE6     47
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 
 /* ----------------------------------------------------------------- */
@@ -140,6 +141,10 @@
     #define CLIENT_OS      OS_NETWARE
     #define CLIENT_CPU     CPU_ALPHA
   #endif
+#elif defined(_NETWARE6_)
+  #define CLIENT_OS     OS_NETWARE6
+  #define CLIENT_CPU    CPU_X86
+  #define CLIENT_OS_NAME "NetWare 6.x"  
 #elif defined(__EMX__) || defined(__OS2__)
   #define CLIENT_OS_NAME   "OS/2"
   #define CLIENT_OS        OS_OS2
@@ -507,6 +512,11 @@
 #elif (CLIENT_OS == OS_NETWARE)
   #include <process.h>
   typedef long THREADID;
+  #define OS_SUPPORTS_SMP
+#elif (CLIENT_OS == OS_NETWARE6)
+  #define HAVE_POSIX_THREADS
+  #include <pthread.h>
+  typedef pthread_t THREADID;
   #define OS_SUPPORTS_SMP
 #elif (CLIENT_OS == OS_BEOS)
   #include <OS.h>

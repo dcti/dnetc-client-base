@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.56.2.8 2004/06/27 21:52:04 jlawson Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.56.2.9 2004/10/13 20:28:38 jbgill Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
@@ -27,6 +27,9 @@ extern "C" void _ReleaseSpinLock(long *);
 #pragma intrinsic(_AcquireSpinLockCount, _ReleaseSpinLock)
 #endif
 
+#if (CLIENT_OS == OS_NETWARE6)
+#include <nks/time.h>
+#endif
 
 #if defined(__unix__)
  #if !((CLIENT_OS == OS_QNX ) && !(defined(__QNXNTO__)))
@@ -376,6 +379,19 @@ int CliGetMonotonicClock( struct timeval *tv )
       tv->tv_sec = (time_t)(now / 1000000LL); /* microseconds -> seconds */
       tv->tv_usec = (time_t)(now % 1000000LL); /* microseconds < 1 second */
     }
+	#elif (CLIENT_OS == OS_NETWARE6)
+    {
+		NXTime_t now;
+		static unsigned int ctr;
+		ctr++;
+		if ( ctr&0xc0000000 !=0 ) {
+			ctr=0;
+			usleep(1);
+		}
+		NXGetTime(NX_SINCE_1970, NX_USECONDS, &now);
+		tv->tv_sec = (time_t)(now / 1000000LL); /* microseconds -> seconds */
+		tv->tv_usec = (time_t)(now % 1000000LL); /* microseconds < 1 second */
+	}
     #elif (CLIENT_OS == OS_NETWARE)
     {
       /* atomic_xchg()/MPKYieldThread() are stubbed/emulated in nwmpk.c */

@@ -11,7 +11,7 @@
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.60.4.4 2004/06/27 21:48:07 jlawson Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.60.4.5 2004/10/13 20:28:38 jbgill Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -144,6 +144,17 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
     if ( set_for_thread )
     {
       MPKSetThreadPriority( MPKCurrentThread(), 1 );
+    }
+    else
+    {
+      // nothing
+    }
+  }
+  #elif (CLIENT_OS == OS_NETWARE6) //priorities don't work on NW
+  {
+    if ( set_for_thread )
+    {
+      // nothing
     }
     else
     {

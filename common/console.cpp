@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.75.2.12 2004/06/27 21:44:57 jlawson Exp $"; }
+return "@(#)$Id: console.cpp,v 1.75.2.13 2004/10/13 20:28:38 jbgill Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -26,6 +26,10 @@ return "@(#)$Id: console.cpp,v 1.75.2.12 2004/06/27 21:44:57 jlawson Exp $"; }
 #include "util.h"     //utilGetAppName(), DNETC_UNUSED_*
 #include "sleepdef.h" //usleep()
 #include "console.h"  //ourselves
+
+#if (CLIENT_OS == OS_NETWARE6)
+#include <screen.h>
+#endif
 
 #if !defined(NOTERMIOS) && ((CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) \
   || (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
@@ -328,6 +332,13 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
           ch = nwCliGetCh();
           if (!ch)
             ch = (nwCliGetCh()<<8);
+        }
+      }
+	  #elif (CLIENT_OS == OS_NETWARE6)
+      {
+        if (kbhit()==0)
+        {
+          ch = getcharacter();
         }
       }
       #elif (CLIENT_OS == OS_DOS)

@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.25 2004/06/27 21:46:53 jlawson Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.26 2004/10/13 20:28:38 jbgill Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -229,6 +229,8 @@
   static inline void fastlock_lock(fastlock_t *l) {
     while (fastlock_trylock(l) <= 0) {
 # if defined(__unix__)
+      NonPolledUSleep(1);
+# elif (CLIENT_OS == OS_NETWARE6)
       NonPolledUSleep(1);
 # elif (CLIENT_OS == OS_NETWARE)
       ThreadSwitchLowPriority();

@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.129.2.20 2004/06/27 21:46:53 jlawson Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.129.2.21 2004/10/13 20:28:38 jbgill Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -272,6 +272,8 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_VMS)
     NonPolledUSleep( 0 ); /* yield */
+  #elif (CLIENT_OS == OS_NETWARE6)
+    NonPolledUSleep( 1 ); /* yield */
   #else
     #error where is your yield function?
     NonPolledUSleep( 0 ); /* yield */

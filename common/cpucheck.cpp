@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.70 2004/09/05 11:29:35 piru Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.71 2004/10/13 20:28:38 jbgill Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -37,6 +37,8 @@ return "@(#)$Id: cpucheck.cpp,v 1.114.2.70 2004/09/05 11:29:35 piru Exp $"; }
 #  include <string.h>
 #  include <sys/types.h>
 #  include <sys/processor.h>
+#elif (CLIENT_OS == OS_NETWARE6)
+#include <nks/plat.h>
 #elif (CLIENT_OS == OS_MORPHOS)
 #  include <exec/resident.h>
 #  include <exec/system.h>
@@ -136,6 +138,10 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     #elif (CLIENT_OS == OS_NETWARE)
     {
       cpucount = GetNumberOfRegisteredProcessors();
+    }
+	#elif (CLIENT_OS == OS_NETWARE6)
+    {
+      cpucount = NXGetCpuCount();
     }
     #elif (CLIENT_OS == OS_OS2)
     {

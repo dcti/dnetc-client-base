@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.142 2004/09/09 20:25:48 snake Exp $
+# @(#)$Id: configure,v 1.288.2.143 2004/10/13 20:28:38 jbgill Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2304,6 +2304,24 @@ case "$1" in
           TARGET_LIBS="-L/usr/dnet/lib -Xlinker --whole-archive -lnss_files -lnss_dns -Xlinker --no-whole-archive -lresolv $TARGET_LIBS"
           ;;
         esac
+        ;;
+
+    *x86-netware6*)   # using LibC [jbgill]
+        TARGET_NASM_FMT="elf"
+        TARGET_CC="gcc"        #build on Linux with gcc cross compiler for netware       
+	TARGET_LD="gcc"
+	TARGET_AS="gcc -c"
+	TARGET_BINNAME_SUFFIX=".nlm"
+	TARGET_IS_CROSSCOMPILE=1
+	TARGET_STRIP="touch"
+	generate_gcc_opts "x86" "netware6"
+        TARGET_CCFLAGS="$OPTS_GCC -D_NETWARE6_ -D_POSIX_SOURCE -DNOTERMIOS"
+        TARGET_LIBS=""
+	TARGET_GENMAN=
+	TARGET_LDFLAGS="-Wl,--def-file,plat/netware/netware6.def"
+        TARGET_TARBALL="netware6-x86"
+        TARGET_DOCFILES="docs/readme.nw6"   #platform specific docfile
+        add_sources "netware6" "x86"
         ;;
 
     *x86-lx-uclibc*)                # using uClibc [pfeffi]

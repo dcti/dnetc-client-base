@@ -24,7 +24,7 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.21.4.9 2004/06/27 21:54:25 jlawson Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.21.4.10 2004/10/13 20:28:38 jbgill Exp $"; }
 
 // #define TRACE
 
@@ -67,7 +67,7 @@ unsigned int GetFilenameBaseOffset( const char *fullpath )
     if (slash2 > slash) slash = slash2;
     slash2 = strrchr( (char*) fullpath, ':' );
     if (slash2 > slash) slash = slash2;
-  #elif (CLIENT_OS == OS_NETWARE)
+  #elif (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_NETWARE6)
     slash = strrchr( fullpath, '\\' );
     char *slash2 = strrchr( fullpath, '//' );
     if (slash2 > slash) slash = slash2;
@@ -173,7 +173,7 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
     if (dirend != NULL) *(dirend+1) = 0;
     else __cwd_buffer[0] = 0;  //current directory is also always the apps dir
   }
-  #elif (CLIENT_OS == OS_NETWARE)
+  #elif (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_NETWARE6)
   {
     strcpy( __cwd_buffer, inipath );
     char *slash = strrchr(__cwd_buffer, '/');
@@ -339,7 +339,7 @@ static int __is_filename_absolute(const char *fname)
   #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
       (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_OS2)
   return (*fname == '\\' || *fname == '/' || (*fname && fname[1]==':'));
-  #elif (CLIENT_OS == OS_NETWARE)
+  #elif (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_NETWARE6)
   return (*fname == '\\' || *fname == '/' || (strchr(fname,':')));
   #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   return (strchr(fname,':') != NULL);
