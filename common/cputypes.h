@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.25 2000/02/12 04:46:57 andrewm Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.26 2000/02/25 20:24:40 patrick Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -316,6 +316,11 @@
   #elif (defined(_ARCH_PWR) || defined(_ARCH_PWR2) || defined(ASM_POWER))
     #define CLIENT_CPU    CPU_POWER
   #endif
+  /* make shure we are only using threads if the compiler suuports it */
+  /* for egcs, we have to use -mthreads, for xlc, use cc_r */
+  #if defined(_THREAD_SAFE)
+  #define MULTITHREAD
+  #endif
 #elif defined(macintosh)
   #define CLIENT_OS_NAME   "Mac OS"
   #define CLIENT_OS     OS_MACOS
@@ -434,7 +439,7 @@
   #define OS_SUPPORTS_SMP
 // can we just use if defined(_POSIX_THREADS), as this is often defined if POSIX
 // threads are supported ?? Patrick Hildenbrand (patrick@mail4you.de)
-#elif defined(MULTITHREAD) || (CLIENT_OS == OS_AIX)
+#elif defined(MULTITHREAD)
   #include <pthread.h>
   typedef pthread_t THREADID;
   #define OS_SUPPORTS_SMP
