@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.191 2000/10/16 13:37:30 oliver Exp $
+# @(#)$Id: configure,v 1.222.2.192 2000/10/16 16:09:57 oliver Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1936,7 +1936,7 @@ echo "Platform target for \"$1\" recognized."
 #
 # add things to all
 #
-TARGET_CCFLAGS="$TARGET_CCFLAGS -I./common -I./rc5 -I./des -I./ogr -I./csc"
+TARGET_CCFLAGS="$TARGET_CCFLAGS $TARGET_ADDCCFLAGS -I./common -I./rc5 -I./des -I./ogr -I./csc"
 ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
 ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
 ##ogr## TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
