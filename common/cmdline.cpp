@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.131 1999/05/04 13:40:08 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.132 1999/05/04 13:43:02 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // Client class
@@ -77,7 +77,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         len = strlen(argv[0]);
         if (len < scratchlen || len >= sizeof(oldname))
         {
-          ConOutErr("fatal: the total length of binary's filename (including "
+          ConOutErr("fatal: the total length of binary's filename (including\n"
 	            "\tpath) must be greater than 5 and less than 124");
           terminate_app = 1;
         }
