@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.54 2000/02/20 22:59:30 jlawson Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.55 2000/02/21 00:11:55 remi Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -42,13 +42,13 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       /* we should be using names that tell us how the cores are different
          (just like "bryd" and "movzx bryd")
       */
-      "RG/BRF class 5", /* P5/Am486 - may become P5MMX at runtime*/
-      "RG class 3/4",   /* 386/486 - may become SMC at runtime */
-      "RG class 6",     /* PPro/II/III */
-      "RG Cx re-pair",  /* Cyrix 486/6x86[MX]/M2, AMD K7 */
-      "RG RISC-rotate I", /* K5 */
+      "RG/BRF class 5",    /* P5/Am486 - may become P5MMX at runtime*/
+      "RG class 3/4",      /* 386/486 - may become SMC at runtime */
+      "RG class 6",        /* PPro/II/III */
+      "RG Cx re-pair",     /* Cyrix 486/6x86[MX]/M2 */
+      "RG RISC-rotate I",  /* K5 */
       "RG RISC-rotate II", /* K6 - may become mmx-k6-2 core at runtime */
-      "RG/SS ath",   /* K7 Athelon */
+      "RG/SS ath",         /* K7 Athelon */
       NULL
     },
     { /* DES */
@@ -1132,25 +1132,30 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
     #elif (CLIENT_CPU == CPU_X86)
     {
-      if (coresel < 0 || coresel > 5)
-        coresel = 0;
       pipeline_count = 2; /* most cases */
-      if (coresel == 1)   // Intel 386/486
+      switch( coresel )
       {
+      case 1: // Intel 386/486
         unit_func.rc5 = rc5_unit_func_486;
         #if defined(SMC) 
         if (threadindex == 0) /* first thread or benchmark/test */
           unit_func.rc5 =  rc5_unit_func_486_smc;
         #endif
-      }
-      else if (coresel == 2) // Ppro/PII
+	break;
+
+      case 2: // Ppro/PII
         unit_func.rc5 = rc5_unit_func_p6;
-      else if (coresel == 3) // 6x86(mx)
+	break;
+
+      case 3: // 6x86(mx)
         unit_func.rc5 = rc5_unit_func_6x86;
-      else if (coresel == 4) // K5
+	break;
+
+      case 4: // K5
         unit_func.rc5 = rc5_unit_func_k5;
-      else if (coresel == 5) // K6/K6-2/K7
-      {
+	break;
+
+      case 5: // K6/K6-2
         unit_func.rc5 = rc5_unit_func_k6;
         #if defined(MMX_RC5_AMD)
         if (ismmx)
@@ -1159,13 +1164,13 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
           pipeline_count = 4;
         }
         #endif
-      }
-      else if (coresel == 6) // K7
-      {
+	break;
+
+      case 6: // K7
         unit_func.rc5 = rc5_unit_func_k7;
-      }
-      else // Pentium (0/6) + others
-      {
+	break;
+
+      default: // Pentium (0) + others
         unit_func.rc5 = rc5_unit_func_p5;
         #if defined(MMX_RC5)
         if (ismmx)
