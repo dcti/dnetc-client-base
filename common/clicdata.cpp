@@ -12,10 +12,11 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.29 2002/09/02 00:35:41 andreasb Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.30 2002/09/14 23:32:39 andreasb Exp $"; }
 
-#include "baseincs.h" //for timeval
-#include "clitime.h" //required for CliTimerDiff() and CliClock()
+#include "baseincs.h" // for timeval
+#include "problem.h"  // for contest IDs
+#include "clitime.h"  // required for CliTimerDiff() and CliClock()
 #include "bench.h"    // for TBenchmark
 #include "selcore.h"  // for selcoreGetSelectedCoreForContest()
 
@@ -34,11 +35,16 @@ static struct contestInfo
   unsigned int UnitsDone;
   unsigned int BestTime;  /* in seconds */
   int BestTimeWasForced;
-} conStats[] = {  { "RC5", "keys",  0,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  { "DES", "keys",  1,  2, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  { "OGR", "nodes", 2,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  { "CSC", "keys",  3,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  {  NULL,   NULL, -1,  0, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 }  };
+} conStats[] = {  { "RC5",    "keys",  RC5,     1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { "DES",    "keys",  DES,     2, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { "OGR",    "nodes", OGR,     1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { "CSC",    "keys",  CSC,     1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { "OGR_NG", "nodes", OGR_NEXTGEN_SOMEDAY,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { "RC5-72", "keys",  RC5_72,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  {  NULL,    NULL,   -1,       0, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 }  };
+#if (CONTEST_COUNT != 6)
+  #error conStats[]: static initializer needs fixing (CONTEST_COUNT is not 6).
+#endif
 
 /* ----------------------------------------------------------------------- */
 
