@@ -217,7 +217,8 @@ void Client::DisplayHelp( const char * unrecognized_option )
       printf("\nPress '+' or '-' for the next/previous page, or any other key to quit... ");
 
     i = readkeypress();
-    if (i == '+' || i == ' ' || i == 'f' || i == '\r' || i == '\n')
+    if (i == '+' || i == '=' || i == ' ' || 
+        i == 'f' || i == '\r' || i == '\n')
     {
       startline += maxpagesize;
       if ( startline >= (bodylines-maxpagesize))
