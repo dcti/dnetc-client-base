@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __TRIGGERS_H__
-#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.6.2.9 2000/05/01 08:31:56 cyp Exp $"
+#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.6.2.10 2000/05/09 13:48:33 cyp Exp $"
 
 #if defined(__unix__) && !defined(__EMX__)
   /* These constants define symbolically the signal names used by the
@@ -63,5 +63,9 @@ extern int CheckRestartRequestTrigger(void); //should only be used from
 //same as above but without external I/O cycles, fast, and thread safe.
 extern int CheckExitRequestTriggerNoIO(void);
 extern int CheckPauseRequestTriggerNoIO(void);
+
+//don't fire the next restart cycle caused by config file change
+//won't prevent a restart if one has already been signalled
+int OverrideNextConffileChangeTrigger(void);
 
 #endif //__TRIGGERS_H__

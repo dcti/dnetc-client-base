@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.33 2000/05/04 23:36:46 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.34 2000/05/09 13:48:33 cyp Exp $"; }
 
 //#define TRACE
 
@@ -17,6 +17,7 @@ return "@(#)$Id: confrwv.cpp,v 1.60.2.33 2000/05/04 23:36:46 cyp Exp $"; }
 #include "util.h"      // projectmap_*() and trace
 #include "base64.h"    // base64_[en|de]code()
 #include "clicdata.h"  // CliGetContestNameFromID()
+#include "triggers.h"  // OverrideNextConffileChangeTrigger()
 #include "confrwv.h"   // Ourselves
 
 /* ------------------------------------------------------------------------ */
@@ -1222,6 +1223,9 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
   if ( !writefull && access( fn, 0 )!=0 )
     writefull = 1;
 
+  /* prevent our own writes from kicking off a restart */
+  OverrideNextConffileChangeTrigger();
+
   if (!WritePrivateProfileStringB( OPTION_SECTION, "id",
     ((strcmp( client->id,"rc5@distributed.net")==0)?(""):(client->id)), fn ))
     return -1; //failed
@@ -1343,6 +1347,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
 
   } /* if (writefull != 0) */
 
+  OverrideNextConffileChangeTrigger();
   TRACE_OUT((-1,"WriteConfig()\n"));
 
   return 0;
@@ -1376,6 +1381,8 @@ void RefreshRandomPrefix( Client *client )
     if (client->randomchanged)
     {
       client->randomchanged = 0;
+      /* prevent our own writes from kicking off a restart */
+      OverrideNextConffileChangeTrigger();
       if (client->randomprefix != 100 || GetPrivateProfileIntB(__getprojsectname(RC5), "randomprefix", 0, fn))
       {
         if (!WritePrivateProfileIntB(__getprojsectname(RC5),"randomprefix",client->randomprefix,fn))

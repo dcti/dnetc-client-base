@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.35 2000/05/04 21:50:09 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.36 2000/05/09 13:48:33 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -64,8 +64,9 @@ static struct
   struct trigstruct huptrig;
   char pausefilebuf[128]; /* includes path */
   char exitfilebuf[128];
+  int overrideinifiletime;
   time_t nextinifilecheck;
-  time_t currinifiletime;
+  unsigned long currinifiletime;
   char inifile[128];
   char pauseplistbuffer[128];
   const char *pauseplist[16];
@@ -183,30 +184,41 @@ static void __PollExternalTrigger(struct trigstruct *trig, int undoable)
 
 // -----------------------------------------------------------------------
 
+static unsigned long __get_file_time(const char *filename)
+{
+  unsigned long filetime = 0; /* returns zero on error */
+#if (CLIENT_OS == OS_RISCOS)
+  riscos_get_file_modified(filename,(unsigned long *)(&filetime));
+#else
+  struct stat statblk;
+  if (stat( filename, &statblk ) == 0)
+    filetime = (unsigned long)statblk.st_mtime;
+#endif
+  return filetime;
+}    
+
 static void __CheckIniFileChangeStuff(void)
 {
   __assert_statics(); 
-  if (trigstatics.inifile[0]) /* time_t */
+  if (trigstatics.inifile[0]) /* have an ini filename? */
   {
     time_t now = time(NULL);
     if (now > trigstatics.nextinifilecheck)
     {
-      time_t filetime = 0;
-#if (CLIENT_OS == OS_RISCOS)
-      riscos_get_file_modified(trigstatics.inifile,(unsigned long *)(&filetime));
-#else
-      struct stat statblk;
-      if (stat( trigstatics.inifile, &statblk ) == 0)
-        filetime = statblk.st_mtime;
-#endif
+      unsigned long filetime = __get_file_time(trigstatics.inifile);
       trigstatics.nextinifilecheck = now + ((time_t)5);
       if (filetime)
       {
-        if (!trigstatics.currinifiletime)                /* first time */
+        if (trigstatics.overrideinifiletime > 0)
+        {
+          trigstatics.currinifiletime = 0;
+          trigstatics.overrideinifiletime--;
+        }
+        else if (!trigstatics.currinifiletime)     /* first time */
         {
           trigstatics.currinifiletime = filetime;
         }  
-        else if (trigstatics.currinifiletime == ((time_t)1)) 
+        else if (trigstatics.currinifiletime == 1) 
         {                                   /* got change some time ago */
           RaiseRestartRequestTrigger();
           trigstatics.currinifiletime = 0;
@@ -214,7 +226,7 @@ static void __CheckIniFileChangeStuff(void)
         }
         else if (filetime != trigstatics.currinifiletime)
         {                                                /* mark change */
-          trigstatics.currinifiletime = ((time_t)1);
+          trigstatics.currinifiletime = 1;
         }
       }  
     }
@@ -369,6 +381,12 @@ static void __PollDrivenBreakCheck( void )
 }      
 
 // =======================================================================
+
+int OverrideNextConffileChangeTrigger(void)
+{
+  __assert_statics(); 
+  return (++trigstatics.overrideinifiletime);
+}
 
 int CheckExitRequestTrigger(void) 
 {
