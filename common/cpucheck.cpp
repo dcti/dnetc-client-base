@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.37 2004/01/06 19:56:46 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.38 2004/01/07 02:50:51 piru Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -36,6 +36,8 @@ return "@(#)$Id: cpucheck.cpp,v 1.114.2.37 2004/01/06 19:56:46 snikkel Exp $"; }
 #  include <string.h>
 #  include <sys/types.h>
 #  include <sys/processor.h>
+#elif (CLIENT_OS == OS_MORPHOS)
+#  include <exec/system.h>
 #endif
 
 /* ------------------------------------------------------------------------ */
@@ -243,7 +245,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       if (MPLibraryIsLoaded())
         cpucount = MPProcessors();
     }
-    #elif (CLIENT_OS == OS_AMIGAOS)
+    #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     {
       cpucount = 1;
     }
@@ -492,6 +494,7 @@ static long __GetRawProcessorID(const char **cpuname)
       {    0x8000, "7441/7450/7451 (G4)" },
       {    0x8001, "7445/7455 (G4)"      },
       {    0x8002, "7447/7457 (G4)"      },
+      {    0x8003, "7447A (G4)"        },
       {    0x800C, "7410 (G4)"           },
       { NONPVR(1), "620"                 }, //not PVR based
       { NONPVR(2), "630"                 }, //not PVR based
@@ -767,6 +770,7 @@ static long __GetRawProcessorID(const char **cpuname)
       case 0x8000:   // 7450 (G4)
       case 0x8001:   // 7455 (G4)
       case 0x8002:   // 7447/7457 (G4)
+      case 0x8003:   // 7447A (G4)
       case 0x800C:   // 7410 (G4)
       detectedtype = cpu; break;
       default: // some PPC processor that we don't know about
@@ -777,6 +781,47 @@ static long __GetRawProcessorID(const char **cpuname)
       break;
     }
     #endif
+  }
+  #elif (CLIENT_OS == OS_MORPHOS)  // MorphOS
+  if (detectedtype == -2L)
+  {
+    /* MorphOS */
+    ULONG cpu = 0;
+    NewGetSystemAttrsA(&cpu, sizeof(cpu), SYSTEMINFOTYPE_PPC_CPUVERSION, NULL);
+
+    /* Altivec support was added in 50.59 */
+    if ((SysBase->LibNode.lib_Version == 50 && SysBase->LibNode.lib_Revision >= 59) ||
+        SysBase->LibNode.lib_Version > 50)
+    {
+      ULONG avf = 0;
+      NewGetSystemAttrsA(&avf, sizeof(avf), SYSTEMINFOTYPE_PPC_ALTIVEC, NULL);
+      if (avf)
+      {
+        isaltivec = 1;
+      }
+    }
+    switch (cpu)
+    {
+      case CPU_603:  detectedtype = 0x0003; break;
+      case CPU_603e: detectedtype = 0x0006; break;
+      case CPU_603p: detectedtype = 0x0006; break;
+      case CPU_604:  detectedtype = 0x0004; break;
+      case CPU_604e: detectedtype = 0x0009; break;
+      case 0x0008:   // G3
+      case 0x000C:   // 7400 (G4)
+      case 0x8000:   // 7450 (G4)
+      case 0x8001:   // 7455 (G4)
+      case 0x8002:   // 7457/7447 (G4)
+      case 0x8003:   // 7447A (G4)
+      case 0x800C:   // 7410 (G4)
+      detectedtype = cpu; break;
+      default: // some PPC processor that we don't know about
+               // set the tag (so that the user can tell us), but return 0
+      sprintf(namebuf, "MOS:0x%lx", cpu );
+      detectedname = (const char *)&namebuf[0];
+      detectedtype = 0;
+      break;
+    }
   }
   #endif
   

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.16 2003/08/09 23:03:55 mweiser Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.17 2004/01/07 02:50:50 piru Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -124,6 +124,54 @@ static const char *GetBuildOrEnvDescription(void)
   #else
   sprintf(buffer,"OS %s, 68K",amigaGetOSVersion());
   #endif
+  return buffer;
+#elif (CLIENT_OS == OS_MORPHOS)
+  static char buffer[40];
+  #define __ALTIVEC__ 1 /* crude hack till we have real gcc-altivec */
+  #include <exec/resident.h>
+  char release[32];
+  int mosVer = 0;
+  struct Resident *m_res;
+  m_res = FindResident("MorphOS");
+  if (m_res)
+  {
+    mosVer = m_res->rt_Version;
+    if (m_res->rt_Flags & RTF_EXTENDED)
+    {
+      sprintf(release, "%d.%d", mosVer, m_res->rt_Revision);
+    }
+    else
+    {
+      /* Anchient MorphOS: parse string (example): MorphOS ID 0.4 (dd.mm.yyyy) */
+      const char *ps = (const char *) m_res->rt_IdString;
+      const char *p = ps;
+      char *d = release;
+      if (p && *p)
+      {
+        while (*p && *p != '.') p++;
+        if (*p)
+        {
+          while (p > ps && p[-1] != ' ') p--;
+
+          while (*p && *p != ' ')
+          {
+            *d++ = *p++;
+          }
+          *d = '\0';
+        }
+      }
+      if (d == release)
+      {
+        /* oops, no clue of revision */
+        sprintf(release, "%d.?", mosVer);
+      }
+    }
+  }
+  else
+  {
+    strcpy(release, "?.?");
+  }
+  sprintf(buffer,"MorphOS %s", release);
   return buffer;
 #elif defined(__unix__) /* uname -sr */
   struct utsname ut;
@@ -705,7 +753,7 @@ int main( int argc, char *argv[] )
   nwCliExitClient(); // destroys AES process, screen, polling procedure
   return rc;
 }
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
 int main( int argc, char *argv[] )
 {
   int rc = 20;

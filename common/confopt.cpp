@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.51.4.11 2003/11/11 02:42:39 kakace Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.51.4.12 2004/01/07 02:50:50 piru Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -139,7 +139,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   #elif (CLIENT_OS == OS_MACOS)
   "The name of a process must match its name in the application menu on the far\n"
   "right. For example 'QuickTime Player|Disk First Aid'.\n"
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   "The name of a process is case sensitive and must match the internal task name\n"
   "exactly. For example 'DiskSalv|Quake'.\n"
   #else
@@ -885,6 +885,8 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
    CFGTXT("Load/unload Winsock to initiate/hang-up net connections?"),
    #elif (CLIENT_OS == OS_AMIGAOS)
    CFGTXT("Automatically go online via Miami, MiamiDx or Genesis?"),
+   #elif (CLIENT_OS == OS_MORPHOS)
+   CFGTXT("Automatically go online via Genesis?"),
    #else
    CFGTXT("Use scripts to initiate/hang-up dialup connections?"),
    #endif
@@ -895,7 +897,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
 },
 { 
   CONF_CONNPROFILE             , /* CONF_MENU_NET */
-  #if (CLIENT_OS == OS_AMIGAOS)
+  #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   CFGTXT("Dial-up Interface Name"),
   #else
   CFGTXT("Dial-up Connection Profile"),
@@ -915,6 +917,12 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "necessary. This may be the actual interface name, or the alias that you\n"
   "have assigned to it. This option is only relevant to MiamiDx and Genesis\n"
   "users - Miami users should leave this setting blank.\n\n"
+  "If you specify no name, the default interface will be used.\n")
+  #elif (CLIENT_OS == OS_MORPHOS)
+  CFGTXT(
+  "Select which interface name to put online, when dial-up access is\n"
+  "necessary. This may be the actual interface name, or the alias that you\n"
+  "have assigned to it. This option is only relevant to Genesis users.\n\n"
   "If you specify no name, the default interface will be used.\n")
   #else
   CFGTXT("")

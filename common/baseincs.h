@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.13 2003/11/11 02:42:39 kakace Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.14 2004/01/07 02:50:50 piru Exp $"
 
 #include "cputypes.h"
 
@@ -71,7 +71,7 @@
   #ifndef QSV_NUMPROCESSORS       /* This is only defined in the SMP toolkit */
     #define QSV_NUMPROCESSORS     26
   #endif
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   #include "plat/amigaos/amiga.h"
   #include <sys/unistd.h>
   #include <fcntl.h>

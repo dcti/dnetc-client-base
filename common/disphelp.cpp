@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.72.4.4 2003/05/17 21:14:19 bdragon Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.72.4.5 2004/01/07 02:50:51 piru Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -58,7 +58,7 @@ static const char *helpbody[] =
   "                   all [...options...] that follow '-install' serve",
   "                   as parameters for the installed client.",
   "-uninstall         remove the client from /etc[/rc.d]/init.d/",
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   "-install           install the client in the WBStartup drawer",
   "-uninstall         remove the client from the WBStartup drawer",
 #elif (CLIENT_OS == OS_MACOSX)

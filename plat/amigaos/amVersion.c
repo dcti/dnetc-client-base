@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amVersion.c,v 1.2 2002/09/02 00:35:49 andreasb Exp $
+ * $Id: amVersion.c,v 1.2.4.1 2004/01/07 02:50:50 piru Exp $
  *
  * ----------------------------------------------------------------------
  * AmigaOS version string/tag
@@ -16,7 +16,7 @@
 #include "version.h"
 #include "common/cputypes.h"
 
-#if (CLIENT_OS == OS_AMIGAOS)
+#if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   #ifdef __SASC
     #if (CLIENT_CPU == CPU_68K)
     const char versionstring[] = "\0$VER: RC5DES_68K " CLIENT_VERSIONSTRING " " __AMIGADATE__;
@@ -34,6 +34,6 @@
     #error "An AmigaOS machine with a different CPU ? Can't be right!"
     #endif // (CLIENT_CPU == CPU_68K)
   #endif // __SASC
-#endif // (CLIENT_OS == OS_AMIGAOS)
+#endif // (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
 
 #endif // _AMIGA_VERSION_C

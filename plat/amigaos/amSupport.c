@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amSupport.c,v 1.2.4.2 2003/01/29 01:29:58 andreasb Exp $
+ * $Id: amSupport.c,v 1.2.4.3 2004/01/07 02:50:50 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -33,14 +33,26 @@
 #include <workbench/startup.h>
 #include <proto/locale.h>
 #include <proto/timer.h>
+#ifndef NOGUI
 #include "proto/dnetcgui.h"
+#endif
 
 #ifdef __PPC__
 #pragma pack()
 #endif
 
+#if (CLIENT_OS == OS_MORPHOS)
+/* use Amiga 68k code */
+#undef __PPC__
+#undef __POWERUP__
+#endif
+
 #ifndef __PPC__
+#if (CLIENT_OS == OS_MORPHOS)
+unsigned long __stack = 262144L;
+#else
 unsigned long __stack = 65536L;
+#endif
 static struct MsgPort *TriggerPort;
 #else
 #ifdef CHANGE_MIRROR_TASK_PRI
@@ -63,8 +75,10 @@ struct TriggerMessage
 extern BOOL GlobalTimerInit(VOID);
 extern VOID GlobalTimerDeinit(VOID);
 extern VOID CloseTimer(VOID);
-struct Device *OpenTimer(BOOL isthread);
+struct Library *OpenTimer(BOOL isthread);
 extern struct Library *SocketBase;
+
+#if (CLIENT_OS != OS_MORPHOS)
 
 const char *amigaGetOSVersion(void)
 {
@@ -82,11 +96,13 @@ const char *amigaGetOSVersion(void)
    return osver[ver];
 }
 
+#endif
+
 int amigaInit(int *argc, char **argv[])
 {
    int done = TRUE;
 
-   #ifndef __POWERUP__
+   #if !defined(__POWERUP__) && (CLIENT_OS != OS_MORPHOS)
    if (!MemInit()) return FALSE;
    #endif
 
@@ -145,6 +161,7 @@ int amigaInit(int *argc, char **argv[])
    /*
    ** WarpOs
    */
+   Forbid();
    if (!FindPortPPC("dnetc")) {
       if ((TriggerPort = CreateMsgPortPPC())) {
          TriggerPort->mp_Port.mp_Node.ln_Name = "dnetc";
@@ -155,6 +172,7 @@ int amigaInit(int *argc, char **argv[])
          done = FALSE;
       }
    }
+   Permit();
    #endif
 
    #else
@@ -164,10 +182,10 @@ int amigaInit(int *argc, char **argv[])
    //SetProgramName("dnetc_68k");
 
    struct MsgPort *portexists;
-   Forbid();
-   portexists = FindPort("dnetc");
-   Permit();
 
+   Forbid();
+
+   portexists = FindPort("dnetc");
    if (!portexists) {
       if ((TriggerPort = CreateMsgPort())) {
          TriggerPort->mp_Node.ln_Name = "dnetc";
@@ -178,6 +196,8 @@ int amigaInit(int *argc, char **argv[])
          done = FALSE;
       }
    }
+
+   Permit();
 
    /*if (done) {
       if ((SysInfoBase = OpenLibrary("SysInfo.library",0))) {
@@ -195,7 +215,8 @@ int amigaInit(int *argc, char **argv[])
    if (done && *argc == 0) {
       struct WBStartup *wbs = (struct WBStartup *)*argv;
       struct WBArg *arg = wbs->sm_ArgList;
-      static char /*cmdname[256],*/ *newargv[1] = { (char *)arg->wa_Name };
+      static char /*cmdname[256],*/ *newargv[1];
+      newargv[0] = (char *)arg->wa_Name;
 
       //NameFromLock(wbs->sm_ArgList->wa_Lock,cmdname,256);
       //AddPart(cmdname,wbs->sm_ArgList->wa_Name,256);
@@ -411,6 +432,9 @@ int amigaPutTriggerSigs(ULONG trigs)
 
    return(done);
 }
+
+
+#if (CLIENT_OS == OS_AMIGAOS)
 
 extern unsigned long *__stdfiledes;	// libnix internal
 
@@ -630,3 +654,56 @@ ADD2INIT(__nocommandline,-40);
 ADD2EXIT(__exitcommandline,-40);
 
 #endif /* defined(__PPC__) && defined(__POWERUP__) */
+
+#endif /* (CLIENT_OS == OS_AMIGAOS) */
+
+#if (CLIENT_OS == OS_MORPHOS)
+
+/*
+** libnix for MorphOS is missing ftruncate()
+*/
+
+extern unsigned long *__stdfiledes;	// libnix internal
+
+int ftruncate(int fd, int newsize)
+{
+   int result = SetFileSize(__stdfiledes[fd],newsize,OFFSET_BEGINNING);
+   if (result != -1) return 0;
+   return(result);
+}
+
+/*
+** libnix for MorphOS is missing chmod()
+*/
+#include <sys/types.h>
+#include <sys/stat.h>
+#pragma pack(2)
+#include <dos/dosextens.h>
+#pragma pack()
+
+__BEGIN_DECLS
+extern void __seterrno(void);
+extern char *__amigapath(const char *path);
+__END_DECLS
+
+int chmod(const char *name, mode_t mode)
+{ int ret;
+
+  if((name=__amigapath(name))==NULL)
+    return -1;
+
+  if ((ret=~(SetProtection((STRPTR)name,((mode&S_IRUSR?0:FIBF_READ)|
+                                         (mode&S_IWUSR?0:FIBF_WRITE|FIBF_DELETE)|
+                                         (mode&S_IXUSR?0:FIBF_EXECUTE)|
+                                         (mode&S_IRGRP?FIBF_GRP_READ:0)|
+                                         (mode&S_IWGRP?FIBF_GRP_WRITE|FIBF_GRP_DELETE:0)|
+                                         (mode&S_IXGRP?FIBF_GRP_EXECUTE:0)|
+                                         (mode&S_IROTH?FIBF_OTR_READ:0)|
+                                         (mode&S_IWOTH?FIBF_OTR_WRITE|FIBF_OTR_DELETE:0)|
+                                         (mode&S_IXOTH?FIBF_OTR_EXECUTE:0))))))
+    __seterrno();
+                              
+  return ret;
+}
+
+#endif /* (CLIENT_OS == OS_MORPHOS) */

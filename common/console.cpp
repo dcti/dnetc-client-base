@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.75.2.10 2003/11/11 02:42:39 kakace Exp $"; }
+return "@(#)$Id: console.cpp,v 1.75.2.11 2004/01/07 02:50:51 piru Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -49,7 +49,7 @@ return "@(#)$Id: console.cpp,v 1.75.2.10 2003/11/11 02:42:39 kakace Exp $"; }
 #endif
 
 #if defined(__unix__) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_OS390) \
-  || (CLIENT_OS == OS_AMIGAOS)
+  || (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
 #define HAVE_ANSICOMPLIANTTERM /* tty understands basic ansi sequences */
 #endif
 #if defined(__unix__)
@@ -125,7 +125,7 @@ int InitializeConsole(int *runhidden,int doingmodes)
      #if defined(__EMX__)
      v_init();
      #endif
-    #elif (CLIENT_OS == OS_AMIGAOS)
+    #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     retcode = amigaInitializeConsole(constatics.runhidden,doingmodes);
     #endif
 
@@ -139,7 +139,7 @@ int InitializeConsole(int *runhidden,int doingmodes)
         constatics.conisatty = w32ConIsScreen();
       #elif (CLIENT_OS == OS_RISCOS)
         constatics.conisatty = 1;
-      #elif (CLIENT_OS == OS_AMIGAOS)
+      #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
         constatics.conisatty = amigaConIsScreen();
       #else
         constatics.conisatty = (isatty(fileno(stdout)));
@@ -164,7 +164,7 @@ int ConIsGUI(void)
   return (guiriscos!=0);
   #elif (CLIENT_OS == OS_MACOS) && !defined(MAC_FBA)
   return 1;
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   return amigaConIsGUI();
   #else
   return 0;
@@ -212,7 +212,7 @@ int ConOut(const char *msg)
       os2conout(msg);
     #elif (CLIENT_OS == OS_MACOS)
       macosConOut(msg);
-    #elif (CLIENT_OS == OS_AMIGAOS)
+    #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
       amigaConOut(msg);
     #else
       fwrite( msg, sizeof(char), strlen(msg), stdout);
@@ -239,7 +239,7 @@ int ConOutModal(const char *msg)
        NULL, MB_OK | MB_INFORMATION | MB_MOVEABLE );
   #elif (CLIENT_OS == OS_NETWARE)
     ConsolePrintf( "%s\r\n", msg );
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     amigaConOutModal(msg);
   #else
     fprintf( stderr, "%s\n", msg );
@@ -265,7 +265,7 @@ int ConOutErr(const char *msg)
            NULL, MB_OK | MB_APPLMODAL | MB_ERROR | MB_MOVEABLE );
   #elif (CLIENT_OS == OS_NETWARE)
     ConsolePrintf( "%s: %s\r\n", utilGetAppName(), msg );
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     amigaConOutErr(msg);
   #else
     fprintf( stderr, "%s: %s\n", utilGetAppName(), msg );
@@ -356,7 +356,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
           if (!ch) ch = (getch() << 8);
         #endif
       }
-      #elif (CLIENT_OS == OS_AMIGAOS)
+      #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
       {
         fflush(stdout);
         ch = getch();
@@ -642,7 +642,7 @@ int ConGetPos( int *col, int *row )  /* zero-based */
       if (col) *col = (int)c;
       return 0;
     }
-    #elif (CLIENT_OS == OS_AMIGAOS)
+    #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     return amigaConGetPos(col,row);
     #else
     return ((row == NULL && col == NULL) ? (0) : (-1));
@@ -753,7 +753,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     }
   #elif (CLIENT_OS == OS_QNX) && defined(__QNXNTO__)
     tcgetsize(fileno(stdout), &height, &width);
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     amigaConGetSize( &width, &height);
   #elif defined(TIOCGWINSZ)
     #error please add support for TIOCGWINSZ to avoid the following stuff

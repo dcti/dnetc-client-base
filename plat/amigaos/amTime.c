@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amTime.c,v 1.2 2002/09/02 00:35:49 andreasb Exp $
+ * $Id: amTime.c,v 1.2.4.1 2004/01/07 02:50:50 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -54,12 +54,18 @@
 #pragma pack()
 #endif
 
-#if (defined(__PPC__)) && (defined(__POWERUP__))
+#if (CLIENT_OS == OS_MORPHOS)
+/* use Amiga 68k code */
+#undef __PPC__
+#undef __POWERUP__
+#endif
+
+#if defined(__PPC__) && defined(__POWERUP__)
 #include <powerup/ppclib/time.h>
 #endif
 
 static int GMTOffset = -9999;
-struct Device *TimerBase = NULL;
+struct Library *TimerBase = NULL;
 
 #ifdef __PPC__
 
@@ -88,8 +94,11 @@ struct TimerResources
 
 static int GetGMTOffset(void);
 
+#ifndef NOGUI
 extern struct Library *DnetcBase;
+#endif
 
+VOID CloseTimer(VOID);
 VOID CloseTimer(VOID)
 {
    struct TimerResources *res;
@@ -126,9 +135,10 @@ VOID CloseTimer(VOID)
    }
 }
 
-struct Device *OpenTimer(BOOL isthread)
+struct Library *OpenTimer(BOOL isthread);
+struct Library *OpenTimer(BOOL isthread)
 {
-   struct Device *timerbase = NULL;
+   struct Library *timerbase = NULL;
    struct TimerResources *res;
 
    if ((res = (struct TimerResources *)AllocVec(sizeof(struct TimerResources),MEMF_CLEAR|MEMF_PUBLIC))) {
@@ -142,9 +152,9 @@ struct Device *OpenTimer(BOOL isthread)
 
       if ((res->tr_TimePort = CreateMsgPort())) {
          if ((res->tr_TimeReq = (struct timerequest *)CreateIORequest(res->tr_TimePort,sizeof(struct timerequest)))) {
-            if (!OpenDevice((unsigned char *)"timer.device",UNIT_VBLANK,(struct IORequest *)res->tr_TimeReq,0)) {
+            if (!OpenDevice("timer.device",UNIT_VBLANK,(struct IORequest *)res->tr_TimeReq,0)) {
                res->tr_TimerDevOpen = TRUE;
-               timerbase = res->tr_TimeReq->tr_node.io_Device;
+               timerbase = (struct Library *) res->tr_TimeReq->tr_node.io_Device;
 	    }
          }
       }
@@ -165,6 +175,7 @@ struct Device *OpenTimer(BOOL isthread)
    return(timerbase);
 }
 
+VOID GlobalTimerDeinit(VOID);
 VOID GlobalTimerDeinit(VOID)
 {
    CloseTimer();
@@ -176,6 +187,7 @@ VOID GlobalTimerDeinit(VOID)
    #endif
 }
 
+BOOL GlobalTimerInit(VOID);
 BOOL GlobalTimerInit(VOID)
 {
    BOOL done;
@@ -233,8 +245,18 @@ BOOL GlobalTimerInit(VOID)
 #ifndef NOGUI
 #if !defined(__PPC__)
 /* 68K */
+struct timerequest *amigaSleepAsync(struct TimerResources *res, unsigned int secs, unsigned int usecs);
 struct timerequest *amigaSleepAsync(struct TimerResources *res, unsigned int secs, unsigned int usecs)
 {
+#if (CLIENT_OS == OS_MORPHOS)
+   /* this fix is not needed for AmigaOS? */
+   if (!CheckIO((struct IORequest *)res->tr_TimeReq))
+   {
+     AbortIO((struct IORequest *)res->tr_TimeReq);
+     WaitIO((struct IORequest *)res->tr_TimeReq);
+     SetSignal(0, 1L << res->tr_TimeReq->tr_node.io_Message.mn_ReplyPort->mp_SigBit);
+   }
+#endif
    res->tr_TimeReq->tr_node.io_Command = TR_ADDREQUEST;
    struct timeval *tv = &res->tr_TimeReq->tr_time;
    tv->tv_secs = secs + (usecs / 1000000);
@@ -355,7 +377,7 @@ static int GetGMTOffset(void)
    struct Locale *locale;
    int gmtoffset = 0;
 
-   if (!LocaleBase) LocaleBase = (struct LocaleBase *)OpenLibrary("locale.library",38L);
+   if (!LocaleBase) LocaleBase = (struct Library *)OpenLibrary("locale.library",38L);
 
    if (LocaleBase) {
       if ((locale = OpenLocale(NULL))) {

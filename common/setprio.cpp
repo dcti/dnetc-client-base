@@ -11,7 +11,7 @@
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.60.4.1 2003/01/19 22:49:51 snake Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.60.4.2 2004/01/07 02:50:51 piru Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -218,6 +218,14 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
        SetTaskPri(FindTask(NULL), pri );
     }
     #endif
+  }
+  #elif (CLIENT_OS == OS_MORPHOS)
+  {
+    if ( set_for_thread )
+    {
+       int pri = -(((133*(9-prio))+5)/10); /* scale from 0-9 to -120 to zero */
+       SetTaskPri(FindTask(NULL), pri );
+    }
   }
   #elif (CLIENT_OS == OS_QNX)
   {

@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.129.2.14 2003/12/13 12:57:14 kakace Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.129.2.15 2004/01/07 02:50:50 piru Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -265,7 +265,7 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
     #else
     NonPolledUSleep(0);
     #endif
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_SCO)
     NonPolledUSleep( 0 ); /* yield */
@@ -397,7 +397,7 @@ void Go_mt( void * parm )
       }
     }
   }
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   if (thrparams->realthread)
   {
     amigaThreadInit();
@@ -662,7 +662,21 @@ void Go_mt( void * parm )
 
   if (thrparams->realthread)
   {
+    #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
+    /*
+     * Avoid race condition.
+     *
+     * This is a separate process/task on AmigaOS/MorphOS, but the code
+     * it executes is from the parent. If the parent exits before the child
+     * does, it will unload the code while the child still executes it.
+     *
+     * To avoid this race, make sure rest of the child is run atomic.
+     *
+     */
+    Forbid();
+    #else
     SetThreadPriority( 9 ); /* 0-9 */
+    #endif
   }
 
   thrparams->hasexited = 1; //the thread is dead
@@ -670,7 +684,7 @@ void Go_mt( void * parm )
   #if ((CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS))
   if (thrparams->realthread)
     thr_exit((void *)0);
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   if (thrparams->realthread)
     amigaThreadExit();
   #endif
@@ -743,7 +757,7 @@ static int __StopThread( struct thread_param_block *thrparams )
       #elif (CLIENT_OS == OS_FREEBSD)
       while (!thrparams->hasexited)
         NonPolledUSleep(100000);
-      #elif (CLIENT_OS == OS_AMIGAOS)
+      #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
       while (!thrparams->hasexited)
         NonPolledUSleep(300000);
       #endif
@@ -1136,6 +1150,24 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         thrparams->threadID = (int)PPCCreateTask(NULL,&Go_mt,tags);
         #endif
         #endif
+        if (thrparams->threadID)
+        {
+          success = 1;
+        }
+      }
+      #elif (CLIENT_OS == OS_MORPHOS)
+      {
+        char threadname[64];
+        sprintf(threadname, "%s crunch #%d", utilGetAppName(),
+                                             thrparams->threadnum + 1 );
+        struct TagItem tags[6];
+        tags[0].ti_Tag = TASKTAG_PC; tags[0].ti_Data = (ULONG)Go_mt;
+        tags[1].ti_Tag = TASKTAG_CODETYPE; tags[1].ti_Data = CODETYPE_PPC;
+        tags[2].ti_Tag = TASKTAG_NAME; tags[2].ti_Data = (ULONG)threadname;
+        tags[3].ti_Tag = TASKTAG_STACKSIZE; tags[3].ti_Data = 8192;
+        tags[4].ti_Tag = TASKTAG_PPC_ARG1; tags[4].ti_Data = (ULONG)thrparams;
+        tags[5].ti_Tag = TAG_END;
+        thrparams->threadID = (int)NewCreateTaskA(tags);
         if (thrparams->threadID)
         {
           success = 1;

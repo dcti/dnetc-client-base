@@ -15,7 +15,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.53.4.5 2003/12/13 12:57:14 kakace Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.53.4.6 2004/01/07 02:50:51 piru Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -377,7 +377,7 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
         char *swapbuffer = (char *)malloc( maxswapsize );
         if (swapbuffer)
         {
-          #if (CLIENT_OS == OS_AMIGAOS)
+          #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
           // buggy fopen doesn't understand "r+b" (b ignored on AmigaOS anyway)
           file = __fopenlog( logname, "r+" );
           #else
@@ -601,7 +601,7 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
       {
         if (*buffptr == '\r')  /* curr print expects to overwrites previous */
         {                      /* so ensure the old line is clear */
-          #if (CLIENT_OS == OS_AMIGAOS)
+          #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
           memmove( msgbuffer+4, msgbuffer+1, msglen );
           msglen += 3;
           memcpy(msgbuffer+1,"\x9b" "K\r",3); // ANSI erase to end of line

@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amGUI.c,v 1.2.4.1 2003/04/03 21:14:32 oliver Exp $
+ * $Id: amGUI.c,v 1.2.4.2 2004/01/07 02:50:50 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -26,6 +26,12 @@
 #include "cliident.h"
 
 #include "proto/dnetcgui.h"
+
+#if (CLIENT_OS == OS_MORPHOS)
+/* use Amiga 68k code */
+#undef __PPC__
+#undef __POWERPC__
+#endif
 
 struct Library *DnetcBase;
 
@@ -230,7 +236,6 @@ void amigaHandleGUI(void *timer, ULONG timesig)
 
       #ifndef __PPC__
       sigr = Wait(waitsigs);
-
       if (sigr & timesig) {
          done = TRUE;
          GetMsg(tport);
@@ -335,7 +340,9 @@ void amigaGUIOut(char *msg)
       else {
          prevnewline = FALSE;
       }
-      dnetcguiConsoleOut(CLIENT_CPU,msg,overwrite);
+
+      dnetcguiConsoleOut(CLIENT_CPU,(UBYTE *)msg,overwrite);
+
       msg += len + (c ? 1 : 0);
       overwrite = FALSE;
    }
@@ -346,7 +353,7 @@ BOOL amigaGUIInit(char *programname, struct WBArg *iconname)
    BOOL guiopen = FALSE;
 
    if ((DnetcBase = OpenLibrary("dnetcgui.library",1))) {
-      if ((GUISigMask = dnetcguiOpen(((CLIENT_CPU == CPU_POWERPC) ? DNETCGUI_PPC : DNETCGUI_68K),programname,iconname,CliGetFullVersionDescriptor()))) {
+      if ((GUISigMask = dnetcguiOpen(((CLIENT_CPU == CPU_POWERPC) ? DNETCGUI_PPC : DNETCGUI_68K),(UBYTE *)programname,iconname,CliGetFullVersionDescriptor()))) {
          guiopen = TRUE;
       }
       else {

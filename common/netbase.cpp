@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.5.2.16 2003/10/30 21:58:08 pfeffi Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.5.2.17 2004/01/07 02:50:51 piru Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -105,7 +105,7 @@ return "@(#)$Id: netbase.cpp,v 1.5.2.16 2003/10/30 21:58:08 pfeffi Exp $"; }
     #include <types.h>
     #include <tcpustd.h>
   #endif
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   extern "C" {
   #include <assert.h>
   #define _KERNEL
@@ -115,6 +115,11 @@ return "@(#)$Id: netbase.cpp,v 1.5.2.16 2003/10/30 21:58:08 pfeffi Exp $"; }
   #include <sys/ioctl.h>
   #include <sys/time.h>
   #define inet_ntoa(addr) Inet_NtoA(addr.s_addr)
+  #if (CLIENT_OS == OS_MORPHOS)
+    #ifndef select
+      #define select(a,b,c,d,e) WaitSelect(a,b,c,d,e,NULL)
+    #endif
+  #endif
   }
 #elif (CLIENT_OS == OS_BEOS)
   #include <sys/socket.h>
@@ -184,7 +189,7 @@ return "@(#)$Id: netbase.cpp,v 1.5.2.16 2003/10/30 21:58:08 pfeffi Exp $"; }
 #elif (CLIENT_OS == OS_DYNIX)
   #define socklen_t size_t
   extern "C" int gethostname(char *, size_t);
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   #define socklen_t long
 #elif (CLIENT_OS == OS_VMS)
   #define socklen_t uint
@@ -422,7 +427,7 @@ static int net_init_check_deinit( int doWhat, int only_test_api_avail )
     else if ((--init_level)==0)  //don't deinitialize more than once
     {
       __dialupsupport_action(doWhat);
-      #if (CLIENT_OS == OS_AMIGAOS)
+      #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
       amigaNetworkingDeinit();
       #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
       if (winGetVersion() < 400) /* win16 and win32s only */
@@ -444,7 +449,7 @@ static int net_init_check_deinit( int doWhat, int only_test_api_avail )
       {
         #if (!defined(_TIUSER_) && !defined(SOCK_STREAM))
           rc = ps_ENOSYS;  /* no networking capabilities */
-        #elif (CLIENT_OS == OS_AMIGAOS)
+        #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
           int openalllibs = 1;
           #if defined(LURK)
           openalllibs = !LurkIsWatching(); /*some libs unneeded if lurking*/
@@ -487,7 +492,7 @@ static int net_init_check_deinit( int doWhat, int only_test_api_avail )
     {
       #if (!defined(_TIUSER_) && !defined(SOCK_STREAM))
         rc = ps_ENOSYS;  //no networking capabilities
-      #elif(CLIENT_OS == OS_AMIGAOS)
+      #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
       if (!amigaIsNetworkingActive())  // tcpip still available, if not lurking?
         rc = ps_ENETDOWN;
       #elif (CLIENT_OS == OS_NETWARE)
@@ -636,7 +641,7 @@ static int ___read_errnos(SOCKET fd, int ps_errnum,
       #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
       *neterr = WSAGetLastError();
       TRACE_ERRMGMT((0,"WSAGetLastError() => %d\n", *neterr ));
-      #elif (CLIENT_OS == OS_AMIGAOS)
+      #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
       *syserr = Errno();
       TRACE_ERRMGMT((0,"Errno() => %d\n", *syserr ));
       ps_errnum = ps_stdsyserr;
@@ -912,7 +917,7 @@ static int net_match_errno(register int which_ps_err)
   if (which_ps_err == ps_EINTR) return (WSAGetLastError() == WSAEINTR);
   #else
   {
-    #if (CLIENT_OS == OS_AMIGAOS)
+    #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     int err = Errno();
     #elif (CLIENT_OS == OS_OS2) && !defined(__EMX__)
     int err = sock_errno();
@@ -1568,7 +1573,7 @@ static int net_ioctl( SOCKET sock, unsigned long opt, int *i_optval )
       *i_optval = optval;
     #endif
     return 0;
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     if (IoctlSocket(sock, opt, (char *)i_optval)!=0) return ps_stdneterr;
     return 0;
   #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
@@ -1704,7 +1709,7 @@ int net_close(SOCKET fd)
     rc = (int)soclose( fd );
     #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     rc = (int)closesocket( fd );
-    #elif (CLIENT_OS == OS_AMIGAOS)
+    #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     rc = (int)CloseSocket( fd );
     #elif (CLIENT_OS == OS_BEOS)
     rc = (int)closesocket( fd );
@@ -2257,7 +2262,7 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
            * not a must-have feature.
            */
           that_address = 0; that_port = 0;
-          #elif (CLIENT_OS == OS_AMIGAOS)
+          #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
           /* The TermiteTCP implementation of getpeername() is buggy, causing
            * the system to bomb out.  So, don't use it if TermiteTCP is the stack
            * in use (getpeername() works fine with AmiTCP, Miami(Dx) and Genesis).

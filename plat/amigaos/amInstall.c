@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amInstall.c,v 1.2 2002/09/02 00:35:49 andreasb Exp $
+ * $Id: amInstall.c,v 1.2.4.1 2004/01/07 02:50:50 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -37,17 +37,17 @@ int amigaInstall(int quiet, const char *progname)
 {
    BPTR progdir, olddir;
    struct DiskObject *icon;
-   static const STRPTR ttypes[] = { "HIDE", "DONOTWAIT", NULL };
+   static const CONST_STRPTR ttypes[] = { "HIDE", "DONOTWAIT", NULL };
    UBYTE toolname[256];
    int rc = -1;
    struct Library *IconBase;
 
-   if ((IconBase = OpenLibrary((UBYTE *)"icon.library",37))) {
+   if ((IconBase = OpenLibrary("icon.library",37))) {
       if ((progdir = GetProgramDir())) {
          olddir = CurrentDir(progdir);
-         if ((icon = GetDiskObjectNew((UBYTE *)progname))) {
-            if (NameFromLock(progdir,toolname,256)) {
-               AddPart(toolname,(UBYTE *)progname,256);
+         if ((icon = GetDiskObjectNew((CONST STRPTR)progname))) {
+            if (NameFromLock(progdir,(STRPTR)toolname,256)) {
+               AddPart((STRPTR) toolname,(CONST_STRPTR)progname,256);
                icon->do_Type = WBPROJECT;
                icon->do_CurrentX = NO_ICON_POSITION;
                icon->do_CurrentY = NO_ICON_POSITION;
@@ -89,7 +89,7 @@ int amigaUninstall(int quiet, const char *progname)
    if ((lock = Lock(WBSTARTICONNAME ".info", ACCESS_READ))) {
       UnLock(lock);
 
-      if ((IconBase = OpenLibrary((UBYTE *)"icon.library",37))) {
+      if ((IconBase = OpenLibrary("icon.library",37))) {
          if (DeleteDiskObject(WBSTARTICONNAME)) {
             rc = 0;
             if (!quiet) {

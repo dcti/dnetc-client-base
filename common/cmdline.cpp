@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.160.2.13 2003/12/13 12:57:14 kakace Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.160.2.14 2004/01/07 02:50:50 piru Exp $"; }
 
 //#define TRACE
 
@@ -625,7 +625,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
             ConOutModal(scratch);
           }
         }
-        #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_OS2)
+        #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS) || (CLIENT_OS == OS_OS2)
         {
           int rc, cmd = DNETC_MSG_RESTART;
           const char *dowhat_descrip = "restarted";
@@ -648,7 +648,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
             dowhat_descrip = "unpaused";
           }
 
-          #if (CLIENT_OS == OS_AMIGAOS)
+          #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
           rc = amigaPutTriggerSigs(cmd); /* 0=notfound, 1=found+ok, -1=error */
           #elif (CLIENT_OS == OS_OS2)
           rc = os2CliSendSignal(cmd, argv[0]);
@@ -691,7 +691,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         retcode = 0;
         #elif (CLIENT_OS == OS_OS2)
         retcode = os2CliInstallClient(loop0_quiet, argv[0]) ? 3 : 0; /* os2inst.cpp */
-        #elif (CLIENT_OS == OS_AMIGAOS)
+        #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
         retcode = 0;  
         if (0!=amigaInstall(loop0_quiet, argv[0]))
           retcode = 3;           /* plat/amigaos/amigaInstall.c */
@@ -737,7 +737,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
         win32CliUninstallService(loop0_quiet); /*w32svc.cpp*/
         retcode = 0;
-        #elif (CLIENT_OS == OS_AMIGAOS)
+        #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
         retcode = 0;
         if (amigaUninstall(loop0_quiet, argv[0])!=0)
           retcode = 3;           /* plat/amigaos/amigaInstall.c */ 

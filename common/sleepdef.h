@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.37.2.3 2003/05/11 18:47:25 pfeffi Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.37.2.4 2004/01/07 02:50:50 piru Exp $"
 
 #include "cputypes.h"
 
@@ -86,7 +86,7 @@
     //CLK_TCK is defined as sysconf(_SC_CLK_TCK) in limits.h and 
     //is 100 (10ms) for non-realtime processes, machine dependant otherwise
   #endif /* _irix5_ */
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   extern "C" {
   #ifdef sleep
   #undef sleep

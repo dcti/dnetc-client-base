@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amConsole.c,v 1.2 2002/09/02 00:35:48 andreasb Exp $
+ * $Id: amConsole.c,v 1.2.4.1 2004/01/07 02:50:50 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -33,6 +33,12 @@
 #include "triggers.h"
 #include "util.h"
 #include "modereq.h"
+
+#if (CLIENT_OS == OS_MORPHOS)
+/* use Amiga 68k code */
+#undef __PPC__
+#undef __POWERUP__
+#endif
 
 #if defined(__PPC__) && defined(__POWERUP__)
 #undef Read
@@ -300,7 +306,12 @@ static int __ReadCtrlSeqResponse(char *cmd, int cmdlen, char matchchar1,
 
 int amigaConGetSize(int *width, int *height)
 {
-   if (amigaConIsGUI() && !ConStatics.NewConsole) {
+   #ifndef NOGUI
+   if (amigaConIsGUI() && !ConStatics.NewConsole)
+   #else
+   if (amigaConIsGUI())
+   #endif
+   {
       *width = 200;
       return 0;
    }

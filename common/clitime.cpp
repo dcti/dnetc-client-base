@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.56.2.6 2003/10/15 03:05:05 jr_brady Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.56.2.7 2004/01/07 02:50:50 piru Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
@@ -47,7 +47,7 @@ extern "C" void _ReleaseSpinLock(long *);
 
 int InitializeTimers(void)
 {
-  #if (CLIENT_OS != OS_AMIGAOS)
+  #if (CLIENT_OS != OS_AMIGAOS) && (CLIENT_OS != OS_MORPHOS)
   CliIsTimeZoneInvalid(); /* go assume TZ=GMT if invalid timezone */
   tzset();                /* set correct timezone for everyone else */
   #endif
@@ -661,7 +661,7 @@ int CliGetMonotonicClock( struct timeval *tv )
       } /* open */
       return rc;
     }
-    #elif (CLIENT_OS == OS_AMIGAOS)
+    #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     {
       if (amigaGetMonoClock(tv) != 0)
         return -1;

@@ -11,10 +11,15 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.13 2004/01/06 13:58:15 kakace Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.14 2004/01/07 02:50:51 piru Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
+
+#if (CLIENT_OS == OS_MORPHOS)
+#  include <exec/tasks.h>
+#  include <emul/emulinterface.h>
+#endif
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -1611,7 +1616,16 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
       //we _do_ need to care that the keystocheck and starting key are aligned.
 
       *keyscheckedP = keystocheck; /* Pass 'keystocheck', get back 'keyschecked'*/
+
+#if (CLIENT_OS == OS_MORPHOS)
+      APTR *ehptr = (APTR *) (((IPTR) FindTask(NULL)->tc_ETask) + 130);
+      *ehptr = MyEmulHandle;
+#endif
       rescode = (*(thisprob->pub_data.unit_func.gen_72))(&thisprob->priv_data.rc5_72unitwork,keyscheckedP,thisprob->priv_data.core_membuffer);
+
+#if (CLIENT_OS == OS_MORPHOS)
+      *ehptr = NULL;
+#endif
 
       if (rescode >= 0 && thisprob->pub_data.cruncher_is_asynchronous) /* co-processor or similar */
       {

@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.29.2.13 2003/12/13 12:57:14 kakace Exp $"; }
+return "@(#)$Id: util.cpp,v 1.29.2.14 2004/01/07 02:50:52 piru Exp $"; }
 
 //#define TRACE
 
@@ -1017,6 +1017,21 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
       taskptr = (long)PPCFindTask((char *)procname);
       #endif
       #endif
+
+      if (taskptr)
+      {
+         if (pidlist)
+            pidlist[num_found] = taskptr;
+         num_found++;
+      }
+    }
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    #elif (CLIENT_OS == OS_MORPHOS)
+    {
+      num_found = 0;
+      long taskptr;
+
+      taskptr = (long)FindTask(procname);
 
       if (taskptr)
       {

@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amiga.h,v 1.2 2002/09/02 00:35:49 andreasb Exp $
+ * $Id: amiga.h,v 1.2.4.1 2004/01/07 02:52:10 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -15,9 +15,9 @@
 #ifndef _AMIGA_H_
 #define _AMIGA_H_
 
+#ifdef __cplusplus
 extern "C" {
-   #define AFF_68060 (1L<<7)
-
+#endif
    #ifdef __PPC__
    #pragma pack(2)
    #endif
@@ -26,30 +26,41 @@ extern "C" {
    #include <exec/execbase.h>
    #include <exec/libraries.h>
 
+   #ifndef AFF_68060
+      #define AFF_68060 (1L<<7)
+   #endif
+
    #ifdef __PPC__
-      #ifndef __POWERUP__
-         #include <powerpc/powerpc.h>
-         #include <powerpc/powerpc_protos.h>
+      #if (CLIENT_OS == OS_MORPHOS)
+         #include <proto/ppc.h>
+         #include <ppclib/ppc.h>
+         #include <ppclib/tasks.h>
+         #include <ppclib/message.h>
       #else
-         #include <powerup/ppcinline/macros.h>
-         #include <powerup/ppclib/ppc.h>
-         #include <powerup/ppclib/tasks.h>
-         #include <powerup/ppclib/message.h>
+         #ifndef __POWERUP__
+            #include <powerpc/powerpc.h>
+            #include <powerpc/powerpc_protos.h>
+         #else
+            #include <powerup/ppcinline/macros.h>
+            #include <powerup/ppclib/ppc.h>
+            #include <powerup/ppclib/tasks.h>
+            #include <powerup/ppclib/message.h>
 
-         #ifndef PPC_BASE_NAME
-         #define PPC_BASE_NAME PPCLibBase
-         #endif /* !PPC_BASE_NAME */
+            #ifndef PPC_BASE_NAME
+            #define PPC_BASE_NAME PPCLibBase
+            #endif /* !PPC_BASE_NAME */
 
-         extern struct Library *PPCLibBase;
+            extern struct Library *PPCLibBase;
 
-         #define PPCSetTaskAttrs(TaskObject, Tags) \
-                 LP2(0xc0, ULONG, PPCSetTaskAttrs, void*, TaskObject, a0, struct TagItem*, Tags, a1, \
-                 , PPC_BASE_NAME, IF_CACHEFLUSHALL, NULL, 0, IF_CACHEFLUSHALL, NULL, 0)
+            #define PPCSetTaskAttrs(TaskObject, Tags) \
+                    LP2(0xc0, ULONG, PPCSetTaskAttrs, void*, TaskObject, a0, struct TagItem*, Tags, a1, \
+                    , PPC_BASE_NAME, IF_CACHEFLUSHALL, NULL, 0, IF_CACHEFLUSHALL, NULL, 0)
 
-         #ifndef NO_PPCINLINE_STDARG
-         #define PPCSetTaskAttrsTags(a0, tags...) \
-                 ({ULONG _tags[] = { tags }; PPCSetTaskAttrs((a0), (struct TagItem*)_tags);})
-         #endif /* !NO_PPCINLINE_STDARG */
+            #ifndef NO_PPCINLINE_STDARG
+            #define PPCSetTaskAttrsTags(a0, tags...) \
+                    ({ULONG _tags[] = { tags }; PPCSetTaskAttrs((a0), (struct TagItem*)_tags);})
+            #endif /* !NO_PPCINLINE_STDARG */
+         #endif
       #endif
    #endif
 
@@ -74,17 +85,19 @@ extern "C" {
    #include <assert.h>
 
    #ifdef __PPC__
-      #undef SetSignal
-      #undef AllocVec
-      #undef FreeVec
-      #ifdef __POWERUP__
-         #define SetSignal(x,y) PPCSetSignal(x,y)
-         #define AllocVec(a,b) PPCAllocVec(a,b)
-         #define FreeVec(a) PPCFreeVec(a)
-      #else
-         #define SetSignal(a,b) SetSignalPPC(a,b)
-         #define AllocVec(a,b) AllocVecPPC(a,b,0)
-         #define FreeVec(a) FreeVecPPC(a)
+      #if (CLIENT_OS != OS_MORPHOS)
+         #undef SetSignal
+         #undef AllocVec
+         #undef FreeVec
+         #ifdef __POWERUP__
+            #define SetSignal(x,y) PPCSetSignal(x,y)
+            #define AllocVec(a,b) PPCAllocVec(a,b)
+            #define FreeVec(a) PPCFreeVec(a)
+         #else
+            #define SetSignal(a,b) SetSignalPPC(a,b)
+            #define AllocVec(a,b) AllocVecPPC(a,b,0)
+            #define FreeVec(a) FreeVecPPC(a)
+         #endif
       #endif
    #endif
 
@@ -92,7 +105,9 @@ extern "C" {
    #define DNETC_MSG_SHUTDOWN	0x02
    #define DNETC_MSG_PAUSE	0x04
    #define DNETC_MSG_UNPAUSE	0x08
+#ifdef __cplusplus
 }
+#endif
 
 struct	hostent {
 	char	*h_name;	/* official name of host */
@@ -149,10 +164,11 @@ void amigaSleep(unsigned int secs, unsigned int usecs);
 int amigaGetMonoClock(struct timeval *tp);
 
 // gui.c
+struct WBArg;
 BOOL amigaGUIInit(char *programname, struct WBArg *iconname);
 void amigaGUIDeinit(void);
 void amigaGUIOut(char *msg);
-#if !defined(__PPC__)
+#if !defined(__PPC__) || (CLIENT_OS == OS_MORPHOS)
 void amigaHandleGUI(struct timerequest *tr);
 #elif !defined(__POWERUP__)
 void amigaHandleGUI(struct timeval *tr);

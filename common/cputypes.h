@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.20 2003/12/08 17:44:01 snikkel Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.21 2004/01/07 02:50:50 piru Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -85,6 +85,7 @@
 #define OS_DESCRACKER   42 /* eff des cracker */
 /* #define OS_MACOSX    43 */ /* obsolete, is now 27, was PS2LINUX */
 #define OS_PS2LINUX     44
+#define OS_MORPHOS      45
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 
 /* ----------------------------------------------------------------- */
@@ -403,6 +404,10 @@
   #elif defined(__INTEL__)
     #define CLIENT_CPU     CPU_X86
   #endif
+#elif defined(__MORPHOS__)
+  #define CLIENT_OS_NAME   "MorphOS"
+  #define CLIENT_OS        OS_MORPHOS
+  #define CLIENT_CPU       CPU_POWERPC
 #elif defined(AMIGA)
   #define CLIENT_OS_NAME   "Amiga OS"
   #define CLIENT_OS        OS_AMIGAOS
@@ -518,7 +523,7 @@
   /* ... but first thread is polled ... */
   #define OS_SUPPORTS_SMP
   typedef long THREADID;
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   typedef long THREADID;
   #define OS_SUPPORTS_SMP
 #elif defined(HAVE_POSIX_THREADS)

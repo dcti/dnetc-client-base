@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.115 2004/01/06 19:46:19 snikkel Exp $
+# @(#)$Id: configure,v 1.288.2.116 2004/01/07 02:50:50 piru Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -119,7 +119,7 @@ add_sources() # $1=os, $2=arch, $3=custom
   if [ "$1" = "freebsd" -o "$1" = "netbsd" -o "$1" = "openbsd" \
     -o "$1" = "bsdos"   -o "$1" = "os2"    -o "$1" = "amigaos" \
     -o "$1-$3" = "macosx-" -o "$1-$3" = "linux-" \
-    -o "$1" = "digital-unix" ]; then
+    -o "$1" = "digital-unix" -o "$1" = "morphos" ]; then
     COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DLURK"
   fi
@@ -128,7 +128,7 @@ add_sources() # $1=os, $2=arch, $3=custom
 
   # additions to COMMON_SRCS need to be before ${COMMON_SRCS}
   # so that speed sensitive stuff can remain together at the 'bottom'
-  if [ "$1" = "amigaos" ]; then
+  if [ "$1" = "amigaos" -o "$1" = "morphos" ]; then
     COMMON_SRCS="plat/amigaos/amVersion.c \
                  plat/amigaos/amSupport.c \
                  plat/amigaos/amMemory.c \
@@ -522,7 +522,7 @@ add_sources() # $1=os, $2=arch, $3=custom
                                         rc5-72/ppc/r72-KKS604e.gas.s"
 
         if [ "X$3" = "Xaltivec" ] ; then
-          TARGET_ADDSRCS="$TARGET_ADDSRCS rc5-72/ppc/r72-KKS7400.gas.s \
+          TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/ppc/r72-KKS7400.gas.s \
                                           rc5-72/ppc/r72-KKS7450.gas.s"
         fi
       fi
@@ -2703,6 +2703,27 @@ case "$1" in
         TARGET_ARCTYPE="amigaosgui"
         TARGET_MAKEARC="ppc ${TARGET_BINNAME}_pup"
         add_sources "amigaos" "ppc"
+        ;;
+
+    *ppc-morphos)               # [piru] <sintonen@iki.fi>
+        TARGET_AS="ppc-rom-as"
+        TARGET_CC="ppc-morphos-g++"
+        TARGET_ASFLAGS="-m603"
+        generate_gcc_opts "ppc603e" "morphos"
+        TARGET_CCFLAGS="-xc++ $OPTS_GCC -noixemul -DNOMIAMI -mmultiple -mstring \
+                        -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
+                        -I./ -I./plat/amigaos/guilib/morphos/ \
+                        -I./plat/amigaos/guilib/ -DDYN_TIMESLICE"
+        TARGET_LDFLAGS="-noixemul"
+        TARGET_TARBALL="morphos-ppc"
+        TARGET_DOCFILES="docs/readme.morphos"   #platform specific docfile
+        TARGET_STRIP="ppc-morphos-strip"
+        TARGET_BINNAME_SUFFIX="_ppc"
+        TARGET_GENMAN=
+        TARGET_ARCTYPE="amigaosgui"
+        TARGET_MAKEARC="ppc ${TARGET_BINNAME}_mos"
+        add_sources "morphos" "ppc" "altivec"
+        SHELL="/bin/sh" # workaround for pkdsh missing SHELL var
         ;;
 
 ###### Unknown

@@ -49,7 +49,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.61.4.10 2003/12/08 17:10:28 stream Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.61.4.11 2004/01/07 02:50:51 piru Exp $"; }
 
 //#define TRACE
 
@@ -253,6 +253,7 @@ int LurkCheckIfConnectRequested(void) //yes/no
   #if (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_VMS)
   #define _SOCKADDR_LEN
   #endif
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
@@ -347,13 +348,16 @@ struct ifact
 } DNETC_PACKED;
 #include "pack0.h"
 
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
 #include "baseincs.h"
 #include "sleepdef.h"
 #include "triggers.h"
+#include <sys/socket.h>
 #include <net/if.h>
 #include <fcntl.h>
+#ifndef NOMIAMI
 #include <proto/miami.h>
+#endif
 #include "plat/amigaos/amiga.h"
 #define _KERNEL
 #include <sys/socket.h>
@@ -472,7 +476,7 @@ int LurkGetCapabilityFlags(void)
       (CLIENT_OS == OS_MACOSX)   || (CLIENT_OS == OS_PS2LINUX) || \
       (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_VMS)
   what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYSCRIPT | CONNECT_IFACEMASK);
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYPROFILE | CONNECT_IFACEMASK);
 #endif
 
@@ -525,12 +529,15 @@ const char **LurkGetConnectionProfileList(void)
       configptrs[index] = NULL;
       return (const char **)(&configptrs[0]);
     }
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     static const char *firstentry = ""; //the first entry is blank, ie use default
     static char namestorage[8][IFNAMSIZ];
     static const char *configptrs[10];
+#ifndef NOMIAMI
     struct Library *MiamiBase;
+#endif
     configptrs[0] = NULL;
+#ifndef NOMIAMI
     if ((MiamiBase = OpenLibrary((unsigned char *)"miami.library",11)))
     {
       struct if_nameindex *name,*nameindex;
@@ -551,6 +558,7 @@ const char **LurkGetConnectionProfileList(void)
       }
       CloseLibrary(MiamiBase);
     }
+#endif
     return configptrs;
   #endif
   return ((const char **)0);
@@ -791,7 +799,7 @@ static int __MatchMask( const char *ifrname,  int is_dialup_dev_for_sure,
         (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_VMS)
       || strcmp(wildmask,"dun*")==0 
       || strcmp(wildmask,"tun*")==0
-      #elif (CLIENT_OS == OS_AMIGAOS)
+      #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
       || strcmp(wildmask,"mi*")==0  // required for Miami (not MiamiDx or Genesis)
       #endif
       || strcmp(wildmask,"sl*")==0);
@@ -1362,6 +1370,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
       (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
       (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_AMIGAOS) || \
+      (CLIENT_OS == OS_MORPHOS)|| \
       (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_VMS) || \
       ((CLIENT_OS == OS_OS2) && defined(__EMX__)) || \
       (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX)
@@ -1370,7 +1379,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
    int n, foundif = 0;
    char *p;
 
-   #if (CLIENT_OS == OS_AMIGAOS)
+   #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
    // not being able to access the socket lib means tcp/ip is unavailable,
    // implying that we must actually be offline
    if (!amigaOpenSocketLib()) {
@@ -1473,7 +1482,8 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
        #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
              (CLIENT_OS == OS_BSDOS)   || (CLIENT_OS == OS_NETBSD)  || \
              (CLIENT_OS == OS_MACOSX)  || (CLIENT_OS == OS_VMS)     || \
-             (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_DEC_UNIX)
+             (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS) || \
+             (CLIENT_OS == OS_DEC_UNIX)
        /* Calculate size of ifreq - _SIZEOF_ADDR_IFREQ used by FreeBSD */
        #ifdef _SIZEOF_ADDR_IFREQ
        #define SIZEOF_ADDR_IFREQ(sa,ifr) (_SIZEOF_ADDR_IFREQ(*ifr))
@@ -1504,7 +1514,8 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
              strncpy(devname,ifr->ifr_name,sizeof(devname));
              devname[sizeof(devname)-1] = '\0';
              ioctl (fd, SIOCGIFFLAGS, ifr); // get iface flags
-             #if (CLIENT_OS == OS_AMIGAOS)
+             #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
+             #ifndef NOMIAMI
              if (strcmp(ifr->ifr_name,"mi0") == 0) // IFF_UP is always set for mi0
              {
                struct Library *MiamiBase;
@@ -1514,7 +1525,9 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
                  CloseLibrary(MiamiBase);
                }
              }
-             else if ((ifr->ifr_flags & (IFF_UP | IFF_LOOPBACK)) == IFF_UP)
+             else
+             #endif
+             if ((ifr->ifr_flags & (IFF_UP | IFF_LOOPBACK)) == IFF_UP)
              #else
              if ((ifr->ifr_flags & (IFF_UP | IFF_RUNNING | IFF_LOOPBACK))
                  == (IFF_UP | IFF_RUNNING))
@@ -1556,7 +1569,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
      close (fd);
    }
 
-   #if (CLIENT_OS == OS_AMIGAOS)
+   #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
    amigaCloseSocketLib(foundif != 0);
    #endif
 
@@ -1757,7 +1770,7 @@ int LurkDialIfNeeded(int force /* !0== override lurk-only */ )
   TRACE_OUT((-1,"DialIfNeeded() => -1\n"));
   return -1;
 
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
 
   if (strlen(lurker.conf.connprofile) > 0)
     LogScreen("Attempting to put '%s' online...\n",lurker.conf.connprofile);
@@ -1936,7 +1949,7 @@ int LurkHangupIfNeeded(void) //returns 0 on success, -1 on fail
   lurker.dohangupcontrol = 0;
   return 0;
 
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
 
   if (isconnected)
   {

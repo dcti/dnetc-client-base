@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.13 2004/01/06 19:46:19 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.14 2004/01/07 02:50:51 piru Exp $"; }
 
 //#define TRACE
 
@@ -21,6 +21,10 @@ return "@(#)$Id: core_r72.cpp,v 1.1.2.13 2004/01/06 19:46:19 snikkel Exp $"; }
 #include "probman.h"   // GetManagedProblemCount()
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
 #include "util.h"      // TRACE_OUT, DNETC_UNUSED_*
+
+#if (CLIENT_OS == OS_MORPHOS)
+#define __ALTIVEC__ 1 /* crude hack till we have real gcc-altivec */
+#endif
 
 #if defined(HAVE_RC5_72_CORES)
 
@@ -194,6 +198,13 @@ int apply_selcore_substitution_rules_rc572(int cindex)
   /* PowerUp cannot use the KKS cores, since they modify gpr2 */
   if ((cindex >= 1) && (cindex <= 4))
     cindex = 5;			  /* MH 1-pipe */
+# elif (CLIENT_OS == OS_MORPHOS)
+  if (!have_vec && cindex == 3)   /* KKS 7400 */
+    cindex = 1;                   /* KKS 2pipes */
+  if (!have_vec && cindex == 4)   /* KKS 7450 */
+    cindex = 2;                   /* KKS 604e */
+  if (cindex == 7)                /* KKS 970 */
+    cindex = 1;                   /* KKS 2pipes, see micro-bench in #3310 */
 # else
   if (!have_vec && cindex == 3)   /* KKS 7400 */
     cindex = 1;                   /* KKS 2pipes */
@@ -286,6 +297,15 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 0x0008: cindex = 5; break; // 740/750 (G3)   == MH 1-pipe
         case 0x0009: cindex = 6; break; // 604e           == MH 1-pipe 604e
         case 0x000A: cindex = 6; break; // 604ev          == MH 1-pipe 604e
+        #if (CLIENT_OS == OS_MORPHOS)
+        /* non-altivec defaults, if no OS support */
+        case 0x8000: cindex = -1; break; // 7450 (G4+)    == ?
+        case 0x8001: cindex = -1; break; // 7455 (G4+)    == ?
+        case 0x8002: cindex = 2;  break; // 7457/7447 (G4+) == KKS 604e
+        case 0x8003: cindex = -1; break; // 7447A (G4+)   == ?
+        case 0x800C: cindex = -1; break; // 7410 (G4)     == ?
+        case 0x0039: cindex = -1; break; // 970 (G5)      == ?
+        #endif
         default:     cindex =-1; break; // no default
       }
 
@@ -297,6 +317,8 @@ int selcoreGetPreselectedCoreForProject_rc572()
             case 0x000C: cindex = 3; break; // 7400 (G4)   == KKS 7400
             case 0x8000: cindex = 4; break; // 7450 (G4+)  == KKS 7450
             case 0x8001: cindex = 4; break; // 7455 (G4+)  == KKS 7450
+            case 0x8002: cindex = 4; break; // 7457/7447 (G4+)  == KKS 7450
+            case 0x8003: cindex = 4; break; // 7447A (G4+)  == KKS 7450
             case 0x800C: cindex = 3; break; // 7410 (G4)   == KKS 7400
             #if 0       // Disabled (kakace)
             case 0x0039: cindex = 7; break; // 970 (G5)    == KKS 970

@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.14 2003/11/11 02:42:39 kakace Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.15 2004/01/07 02:50:51 piru Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -48,7 +48,7 @@ return "@(#)$Id: triggers.cpp,v 1.31.2.14 2003/11/11 02:42:39 kakace Exp $"; }
 #define TRIGPAUSEBY_SRCBATTERY 0x20 /* pause due to running on battery */
 #define TRIGPAUSEBY_CPUTEMP    0x40 /* cpu temperature guard */
 
-#if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS) || (CLIENT_OS == OS_WIN32)
 # define CLISIGHANDLER_IS_SPECIAL 1
 #endif
 
@@ -694,7 +694,7 @@ static void __PollDrivenBreakCheck(int io_cycle_allowed)
    necessary */
 //  if (_kernel_escape_seen())
 //      RaiseExitRequestTrigger();
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   ULONG trigs;
   if ( (trigs = amigaGetTriggerSigs()) )  // checks for ^C and other sigs
   {
@@ -980,7 +980,7 @@ int CheckPauseRequestTrigger(void)
 
 // =======================================================================
 
-#if (CLIENT_OS == OS_AMIGAOS)
+#if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
 extern "C" void __chkabort(void)
 {
   /* Disable SAS/C / GCC CTRL-C handing */

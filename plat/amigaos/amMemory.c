@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amMemory.c,v 1.2 2002/09/02 00:35:49 andreasb Exp $
+ * $Id: amMemory.c,v 1.2.4.1 2004/01/07 02:50:50 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -17,7 +17,7 @@
  * ----------------------------------------------------------------------
 */
 
-#ifndef __POWERUP__
+#if (CLIENT_OS != OS_MORPHOS) && !defined(__POWERUP__)
 /*
 ** Use libnix memory routines for PowerUp since there seems to be a bug
 ** in the PowerUp's semaphore routines (or the memory pool routines) which
@@ -157,4 +157,4 @@ VOID MemDeinit(VOID)
 
 ADD2EXIT(MemDeinit,-50);
 
-#endif /* __POWERUP__ */
+#endif /* (CLIENT_OS != OS_MORPHOS) && !defined(__POWERUP__) */
