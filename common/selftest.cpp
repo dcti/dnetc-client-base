@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.72 2002/09/24 12:05:22 acidblood Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.73 2002/09/24 16:34:25 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -97,7 +97,6 @@ static const u32 rc5_72_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = { // seed 
   {0x00000057,0x0BB73F45,0xFE91CB32,0x56E87F9A,0x2765218E,0x232559F2,0x646242EC,0xCEC1395A,0x5865BC96}
 };
 
-// OK!
 
 #ifdef HAVE_DES_CORES
 #include "convdes.h"   // convert_key_from_des_to_inc
@@ -371,7 +370,6 @@ long SelfTest( unsigned int contest )
         }
       }
 
-// TODO?: acidblood/trashover
 
 #if defined(HAVE_DES_CORES)
       if (contest == DES)
@@ -452,9 +450,6 @@ long SelfTest( unsigned int contest )
           contestwork.bigcrypto.keysdone.hi = ( 0 );
           contestwork.bigcrypto.iterations.lo = ( 0x00020000L ); // 17 bits instead of 16
           contestwork.bigcrypto.iterations.hi = ( 0 );
-//        PROJECT_NOT_HANDLED(contest);
-// TODO acidblood/trashover
-// OK!
           break;
         }
         #if defined(HAVE_OGR_CORES)
@@ -592,8 +587,6 @@ long SelfTest( unsigned int contest )
               #endif
               case RC5_72:
               {
-// TODO acidblood/trashover
-//                PROJECT_NOT_HANDLED(contest);
                 if ( resultcode != RESULT_FOUND )                /* no solution */
                 {
                   contestwork.bigcrypto.key.lo  =
