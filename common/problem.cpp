@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.100 2001/02/09 08:47:21 mfeiri Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.101 2001/02/23 00:30:11 sampo Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -1806,7 +1806,7 @@ static char *__u64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
       /* kilo(10**3), Mega(10**6), Giga(10**9), Tera(10**12), Peta(10**15), 
          Exa(10**18), Zetta(10**21), Yotta(10**24) 
       */
-      char magna_tab[]={0,'k','M','G','T','P','E','Z','Y'};
+      static char magna_tab[]={0,'k','M','G','T','P','E','Z','Y'};
       unsigned int magna = 0, len = 0;
 
       #if (ULONG_MAX > 0xfffffffful) /* 64+ bit */
