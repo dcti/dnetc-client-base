@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.164 2000/06/23 13:58:44 oliver Exp $
+# @(#)$Id: configure,v 1.222.2.165 2000/06/27 13:38:21 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -145,7 +145,7 @@ NASM_RC5X86_SRCS="rc5/x86/nasm/rg486.asm \
 		  rc5/x86/nasm/rc5-rgp6.asm \
 		  rc5/x86/nasm/rg6x86.asm \
 		  rc5/x86/nasm/rc5mmx.asm \
-                  rc5/x86/nasm/rc5-ssk7.asm"
+		  rc5/x86/nasm/rc5-hbk7.asm"
 
 RC5X86_SRCS="rc5/x86/rc5-486-rg.cpp \
 	     rc5/x86/rc5-6x86-rg.cpp \

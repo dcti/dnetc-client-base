@@ -6,7 +6,7 @@
 ##               [dos | netware | os2 | w32 | w16]
 ##               or anything else with a section at the end of this file
 ##
-## $Id: makefile.wat,v 1.27.2.12 2000/06/02 19:00:38 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.13 2000/06/27 13:38:22 cyp Exp $
 
 BASENAME = dnetc
 
@@ -62,7 +62,7 @@ BASENAME = dnetc
 #---
 %rc5std_LINKOBJS = output\rg486.obj output\rc5-rgk5.obj output\brfp5.obj &
                    output\rc5-rgk6.obj output\rc5-rgp6.obj output\rg6x86.obj &
-                   output\rc5-ssk7.obj
+                   output\rc5-hbk7.obj
 %rc5std_DEFALL   = /DHAVE_RC5_CORES
 %rc5std_SYMALIAS = #
 #---
@@ -239,7 +239,7 @@ output\rg6x86.obj : rc5\x86\nasm\rg6x86.asm $(%dependall)
   $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
   @set isused=1
 
-output\rc5-ssk7.obj : rc5\x86\nasm\rc5-ssk7.asm $(%dependall)
+output\rc5-hbk7.obj : rc5\x86\nasm\rc5-hbk7.asm $(%dependall)
   $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@
   @set isused=1
 

@@ -1,7 +1,7 @@
 # makefile distributed.net client (Borland C++ for Win32).
 # For information about distributed.net, see http://www.distributed.net/
 #
-# $Id: makefile.bcc,v 1.23.2.12 2000/06/02 06:41:48 andreasb Exp $
+# $Id: makefile.bcc,v 1.23.2.13 2000/06/27 13:38:22 cyp Exp $
 #
 # As of Feb 2000, Borland C++ 5.5 compiler is free for download.
 # http://www.borland.com/bcppbuilder/freecompiler/
@@ -166,7 +166,7 @@ RC5_OBJS =                           \
         $(OUTPUTPATH)/rc5mmx.obj     \
         $(OUTPUTPATH)/rg486.obj      \
         $(OUTPUTPATH)/rg6x86.obj     \
-        $(OUTPUTPATH)/rc5-ssk7.obj
+        $(OUTPUTPATH)/rc5-hbk7.obj
 BCCOPTS = $(BCCOPTS) -DMMX_RC5
 
 
