@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.55  1999/01/06 22:17:36  dicamillo
+// Support PPC prototype Macs  some developers still have.
+//
 // Revision 1.54  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -190,7 +193,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.54 1999/01/01 02:45:15 cramer Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.55 1999/01/06 22:17:36 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -477,7 +480,8 @@ static int __GetRawPPCIdentification(const char **cpuname)
     // value for G3 upgrade cards in a 601 machine.
     // The value for detectedtype is the Gestalt result - 0x101 (gestaltCPU601).
     long result;
-    if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
+	if (Mac_PPC_prototype) detectedtype = 0;  // old developer machines
+    else if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
       {
       switch(result) 
         {
@@ -490,8 +494,9 @@ static int __GetRawPPCIdentification(const char **cpuname)
         case gestaltCPU604e:  detectedtype = 8; break;
         case gestaltCPU604ev: detectedtype = 9; break;
         default:              detectedtype =-1; break;
-              }
+        }
       }
+	else detectedtype = -1;
     #elif (CLIENT_OS == OS_LINUX)
       // see cramer's comment above -- RGA
       char buffer[256];
