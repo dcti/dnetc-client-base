@@ -3,11 +3,8 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: checkpt.cpp,v $
-// Revision 1.6  1999/01/31 20:19:08  cyp
-// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
-//
-// Revision 1.5  1999/01/29 19:02:48  jlawson
-// fixed formatting.  changed some int vars to bool.
+// Revision 1.7  1999/02/03 05:41:40  cyp
+// fallback to rev 1.4
 //
 // Revision 1.4  1999/01/17 14:26:38  cyp
 // added leading/trailing whitespace stripping for checkpoint_file.
@@ -25,7 +22,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.6 1999/01/31 20:19:08 cyp Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.7 1999/02/03 05:41:40 cyp Exp $"; }
 #endif
 
 #include "client.h"   // FileHeader, Client class
@@ -51,19 +48,19 @@ int Client::CheckpointAction( int action, unsigned int load_problem_count )
 
   if (do_checkpoint)
     {
-    while (checkpoint_file[0] != 0 && isspace(checkpoint_file[0]))
+    while (checkpoint_file[0]!=0 && isspace(checkpoint_file[0]))
       strcpy( checkpoint_file, &checkpoint_file[1] );
-    recovered = strlen(checkpoint_file);
-    while (recovered > 0 && isspace(checkpoint_file[recovered-1]))
-      checkpoint_file[--recovered] = 0;
-    do_checkpoint = (nodiskbuffers == 0 && IsFilenameValid( checkpoint_file ));
+    recovered=strlen(checkpoint_file);
+    while (recovered>0 && isspace(checkpoint_file[recovered-1]))
+      checkpoint_file[--recovered]=0;
+    do_checkpoint = (nodiskbuffers==0 && IsFilenameValid( checkpoint_file ));
     }
 
   if ( action == CHECKPOINT_OPEN )
     {
     if (do_checkpoint)
       {
-      recovered = 1;
+      recovered = 0;
       if ( DoesFileExist( checkpoint_file ))
         {
         lastremaining = 0;
@@ -74,7 +71,7 @@ int Client::CheckpointAction( int action, unsigned int load_problem_count )
             {
             if (lastremaining <= remaining)
               {
-              recovered = 1;
+              recovered = 0;
               break;
               }
             }
@@ -92,7 +89,7 @@ int Client::CheckpointAction( int action, unsigned int load_problem_count )
         }
       action = CHECKPOINT_CLOSE;
       }
-    }
+    }  
 
   /* --------------------------------- */
 
@@ -146,6 +143,4 @@ int Client::CheckpointAction( int action, unsigned int load_problem_count )
     }
   
   return (do_checkpoint == 0); /* return !0 if don't do checkpoints */
-}
-
-
+}  
