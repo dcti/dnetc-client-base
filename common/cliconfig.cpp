@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.96  1998/06/18 12:28:37  remi
+// Fixed switch() statement for x86 in Client::SelectCore().
+//
 // Revision 1.95  1998/06/18 11:50:13  kbracey
 // Made ARM core selection match new x86 core selection.
 //
@@ -45,7 +48,7 @@
 #include "client.h"
 
 #if (!defined(lint) && !defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.95 1998/06/18 11:50:13 kbracey Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.96 1998/06/18 12:28:37 remi Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -2231,23 +2234,29 @@ LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
   switch(fastcore)
   {
     case 1:rc5_unit_func = rc5_unit_func_486;
-           des_unit_func = p1des_unit_func_p5;break;
-           des_unit_func2 = p2des_unit_func_p5;break;
+           des_unit_func = p1des_unit_func_p5;
+           des_unit_func2 = p2des_unit_func_p5;
+           break;
     case 2:rc5_unit_func = rc5_unit_func_p6;
-           des_unit_func = p1des_unit_func_pro;break;
-           des_unit_func2 = p2des_unit_func_pro;break;
+           des_unit_func = p1des_unit_func_pro;
+           des_unit_func2 = p2des_unit_func_pro;
+           break;
     case 3:rc5_unit_func = rc5_unit_func_6x86;
-           des_unit_func = p1des_unit_func_pro;break;
-           des_unit_func2 = p2des_unit_func_pro;break;
+           des_unit_func = p1des_unit_func_pro;
+           des_unit_func2 = p2des_unit_func_pro;
+           break;
     case 4:rc5_unit_func = rc5_unit_func_k5;
-           des_unit_func = p1des_unit_func_p5;break;
-           des_unit_func2 = p2des_unit_func_p5;break;
+           des_unit_func = p1des_unit_func_p5;
+           des_unit_func2 = p2des_unit_func_p5;
+           break;
     case 5:rc5_unit_func = rc5_unit_func_k6;
-           des_unit_func = p1des_unit_func_pro;break;
-           des_unit_func2 = p2des_unit_func_pro;break;
+           des_unit_func = p1des_unit_func_pro;
+           des_unit_func2 = p2des_unit_func_pro;
+           break;
     default:rc5_unit_func = rc5_unit_func_p5;
-            des_unit_func = p1des_unit_func_p5;break;
-            des_unit_func2 = p2des_unit_func_p5;break;
+            des_unit_func = p1des_unit_func_p5;
+            des_unit_func2 = p2des_unit_func_p5;
+            break;
   }
 #elif (CLIENT_CPU == CPU_ARM)
   int fastcore = cputype;
