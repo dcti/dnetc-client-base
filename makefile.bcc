@@ -3,33 +3,74 @@
 
 .autodepend
 
-.path.cpp = common;des
-.path.obj = output;platforms/win32-os2
-
-
-BCCOPTS = -d -w -Icommon -DPIPELINE_COUNT=2 -D_CPU_32BIT_ -O -tWM -DMULTITHREAD -RT-
-
-# --------------------------------------------
-
 EXENAME = rc5des.exe
+OUTPUTPATH = output
+COMMONPATH = common
+DESPATH = des
+RC5PATH = rc5
+PLATPATH = platforms
 
-BASESRCS = client.cpp problem.cpp autobuff.cpp iniread.cpp \
-  network.cpp scram.cpp mail.cpp cliconfig.cpp disphelp.cpp \
-  buffwork.cpp clicdata.cpp clirate.cpp clisrate.cpp \
-  clitime.cpp threadcd.cpp convdes.cpp des-x86.cpp cpucheck.obj
+BCCOPTS = -d -w -I$(COMMONPATH) -DPIPELINE_COUNT=2 -D_CPU_32BIT_ -O -tWM -DMULTITHREAD -RT-
 
-BASEOBJS = rg-486.obj rg-6x86.obj rg-k5.obj rg-k6.obj \
-  rc5p5brf.obj rg-p6.obj bdeslow.obj bbdeslow.obj x86ident.obj
+.path.asm = $(PLATPATH);$(RC5PATH);$(DESPATH)/brydmasm
+.path.cpp = $(COMMONPATH);$(DESPATH);$(RC5PATH);$(VWCL_PATH);$(WIN32GUI)
+.path.obj = $(OUTPUTPATH)
+
+all: rc5des
 
 # --------------------------------------------
+
+RC5_OBJS =                    \
+        $(OUTPUTPATH)/client.obj     \
+        $(OUTPUTPATH)/cpucheck.obj   \
+        $(OUTPUTPATH)/threadcd.obj   \
+        $(OUTPUTPATH)/disphelp.obj   \
+        $(OUTPUTPATH)/autobuff.obj   \
+        $(OUTPUTPATH)/iniread.obj    \
+        $(OUTPUTPATH)/network.obj    \
+        $(OUTPUTPATH)/scram.obj      \
+        $(OUTPUTPATH)/mail.obj       \
+        $(OUTPUTPATH)/cliconfig.obj  \
+        $(OUTPUTPATH)/clitime.obj    \
+        $(OUTPUTPATH)/clirate.obj    \
+        $(OUTPUTPATH)/clisrate.obj   \
+        $(OUTPUTPATH)/clicdata.obj   \
+        $(OUTPUTPATH)/buffwork.obj   \
+        $(OUTPUTPATH)/convdes.obj    \
+        $(OUTPUTPATH)/problem.obj    \
+        $(OUTPUTPATH)/des-x86.obj
+
+PREBUILT_OBJS =                   \
+        $(OUTPUTPATH)/rg-486.obj   \
+        $(OUTPUTPATH)/rg-6x86.obj  \
+        $(OUTPUTPATH)/rg-k5.obj    \
+        $(OUTPUTPATH)/rg-k6.obj    \
+        $(OUTPUTPATH)/rc5p5brf.obj \
+        $(OUTPUTPATH)/rg-p6.obj    \
+        $(OUTPUTPATH)/bdeslow.obj  \
+        $(OUTPUTPATH)/bbdeslow.obj \
+        $(OUTPUTPATH)/p1bdespro.obj \
+        $(OUTPUTPATH)/p2bdespro.obj \
+        $(OUTPUTPATH)/x86ident.obj
+
+# --------------------------------------------
+
+.asm.obj:
+  tasm32 /m /ml /dmodelnum=2 /i$(<D:/=\) $(<:/=\), $(@:/=\)
 
 .cpp.obj:
-  bcc32 -c -P $(BCCOPTS) -noutput $<
-
+  bcc32 -c @&&|
+-P $(BCCOPTS) -n$(OUTPUTPATH)
+| $< 
 
 # --------------------------------------------
 
-$(EXENAME):   $(BASESRCS:.cpp=.obj) $(BASEOBJS)
+$(OUTPUTPATH)/rc5p5brf.obj: $(RC5PATH)/rc5p5brf.asm
+  tasm32 /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
+
+# --------------------------------------------
+
+rc5des:   $(RC5_OBJS) $(PREBUILT_OBJS) 
 	bcc32 @&&|
 $(BCCOPTS) -e$(EXENAME) noeh32.lib $**
 |
