@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.207  1999/03/18 07:48:52  gregh
+# Add an x86-linux-mt-gcc-gregh target that contains OGR stuff for now.
+#
 # Revision 1.206  1999/03/18 04:56:20  cyp
 # new modules: util.cpp and base64.cpp
 #
@@ -991,10 +994,9 @@ DESULTRA_SRCS_ASM="des/ultrasparc/des-slice-ultrasparc.cpp \
 #
 # Source files making up the OGR core code
 #
-OGR_SRCS="ogr/ogr.c \
-	  ogr/choosedat.c \
-	  ogr/crc32.c \
-	  ogr/stubutil.c"
+OGR_SRCS="ogr/ogr.cpp \
+	  ogr/choosedat.cpp \
+	  ogr/crc32.cpp"
 
 #
 # Define the default compilation options
@@ -1729,6 +1731,23 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
 			-DMULTITHREAD -DSMC -DLURK"
+	TARGET_LDFLAGS="-static -Xlinker -omagic"
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
+			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
+			platforms/x86ident.S \
+			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ \
+			  -d__showids__ -d__ELF__ \
+			  -f elf"
+	TARGET_LIBS="-lpthread"
+	;;
+
+    *x86-linux-mt-gcc-gregh)		 # mt, static, gcc, ogr
+	TARGET_AS="gcc -c"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
+			-DMULTITHREAD -DSMC -DLURK -DGREGH"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
