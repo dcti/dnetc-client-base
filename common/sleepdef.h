@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.7 1999/11/28 06:10:31 lyndon Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.8 1999/11/29 22:47:36 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -70,9 +70,11 @@
   #define usleep(x) snooze((x))
 #elif (CLIENT_OS == OS_MACOS)
   #include <unistd.h>
-  void usleep(unsigned int usecs);
-  #define sleep(x) my_sleep(x)
-  unsigned int my_sleep(unsigned int seconds);
+  //gusi unistd prototypes both
+  //#undef sleep
+  //#undef usleep
+  //extern "C" void usleep(unsigned int usecs);
+  //extern "C" unsigned int sleep(unsigned int secs);
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
   #include <sys/types.h>

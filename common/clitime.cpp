@@ -21,7 +21,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.10 1999/11/16 22:43:20 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.11 1999/11/29 22:47:29 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -206,14 +206,6 @@ static int __GetMinutesWest(void) /* see CliTimeGetMinutesWest() for descr */
   if (GetTimeZoneInformation(&TZInfo) == 0xFFFFFFFFL)
     return 0;
   minwest = TZInfo.Bias; /* sdk doc is wrong. .Bias is always !dst */
-#elif (CLIENT_OS == OS_MACOS)
-  MachineLocation thisLocation;
-  ReadLocation(&thisLocation);
-  minwest = GetGmtDelta(thisLocation);
-  minwest = minwest/60;
-  minwest = -minwest;
-  if (IsDaylightSavingsOn())
-    minwest += 60;
 #elif (CLIENT_OS==OS_SCO) || (CLIENT_OS==OS_AMIGA) || \
   ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
   #error How does this OS natively deal with timezone? ANSI or Posix rule? (use native calls where possible)

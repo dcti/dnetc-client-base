@@ -5,13 +5,11 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.5 1999/11/02 17:11:43 ivo Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.6 1999/11/29 22:47:24 cyp Exp $"
 
 #include "cputypes.h"
 
-#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
 extern "C" {
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -19,21 +17,14 @@ extern "C" {
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
-#if (CLIENT_OS == OS_MACOS)
-#include <sys_types.h> /* in platforms/macos */
-#include <sys_stat.h>  /* in platforms/macos */
-#else
 #include <sys/types.h>
 #include <sys/stat.h>
-#endif
 #include <errno.h>
 #include <limits.h>
 #if defined(__unix__)
 #include <sys/utsname.h> /* uname() */
 #endif
-#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
 }
-#endif
 
 #if (CLIENT_OS == OS_IRIX)
   #include <unistd.h>
@@ -201,29 +192,11 @@ extern "C" {
   extern "C" int gethostname(char *, int);
   extern "C" int gettimeofday(struct timeval *, struct timezone *);
 #elif (CLIENT_OS == OS_MACOS)
-  #include <sys_time.h>
-  #include <stat.mac.h>
-  #include <machine_endian.h>
-  #include <unistd.h>
-  #define _UTIME
-  #include <unix.mac.h>
-  #include "mac_extras.h"
-  #include <console.h>
-  #include <Multiprocessing.h>
-  void macConOut(char *msg);
-  void YieldToMain(char force_events);
-  u32 GetTimesliceToUse(u32 contestid);
-  void tick_sleep(unsigned long tickcount);
-  extern Boolean Mac_PPC_prototype;
-  extern Boolean haveMP;
-  extern short MP_active;
-  extern "C" unsigned long mp_sleep(unsigned long seconds);
-  extern MPCriticalRegionID MP_count_region;
-  extern char useMP(void);
-  extern volatile s32 ThreadIsDone[2*MAC_MAXCPUS];
-  #if defined(MAC_GUI)
-    #include "gui_incs.h"
-  #endif
+  #include <sys/time.h> /* Mindmorph */
+  #include <unistd.h> /* Mindmorph */
+  #include <console.h> /* Mindmorph */
+  #include <Gestalt.h> /* Mindmorph */
+  #include "platforms/macos/client_defs.h" /* support stuff */
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
 #endif

@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.12 1999/11/23 22:48:30 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.13 1999/11/29 22:47:29 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -71,14 +71,12 @@ int DeinitializeConsole(int waitforuser)
   {
     if (constatics.runhidden || !constatics.conisatty)
       waitforuser = 0;
-    #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+    #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16)
     w32DeinitializeConsole(waitforuser);
     #elif (CLIENT_OS == OS_NETWARE)
     nwCliDeinitializeConsole(waitforuser);
     #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
     os2CliDeinitializeConsole(waitforuser);
-    #elif (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-    macosCliDeinitializeUI(waitforuser);
     #endif
   }
   constatics.initlevel--;
@@ -103,8 +101,6 @@ int InitializeConsole(int runhidden,int doingmodes)
     retcode = nwCliInitializeConsole(constatics.runhidden,doingmodes);
     #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
     retcode = os2CliInitializeConsole(constatics.runhidden,doingmodes);
-    #elif (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-    retcode = macosCliInitializeUI(constatics.runhidden,doingmodes);
     #endif
     
     if (retcode != 0)
@@ -132,8 +128,6 @@ int ConIsGUI(void)
 {
   #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
   return (!win32ConIsLiteUI()); /* do we have a light GUI or a full GUI? */
-  #elif (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-  return 1;
   #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
   return 1;
   #elif (CLIENT_OS == OS_RISCOS)
@@ -181,8 +175,6 @@ int ConOut(const char *msg)
   {
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
       w32ConOut(msg);
-    #elif (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-      macConOut(msg);
     #elif (CLIENT_OS == OS_OS2 && defined(OS2_PM))
       os2conout(msg);
     #else
@@ -319,7 +311,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         if (ch == EOF) ch = 0;
       }
       #elif (CLIENT_OS == OS_MACOS)
-      // Mac code never does console input
+       ch = getchar(); /* sometimes we do console input ;-) - Mindmorph */
       #else
       {
         setvbuf(stdin, (char *)NULL, _IONBF, 0);

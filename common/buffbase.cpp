@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.9 1999/11/23 22:48:24 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.10 1999/11/29 22:47:24 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -156,9 +156,6 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
   #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) 
     u32 result = filelength( fileno(file) );    
     if (result == 0xFFFFFFFFL) return -1;
-    *length = result;
-  #elif (CLIENT_OS == OS_MACOS)
-    u32 result = my_getopenfilelength(fileno(file));
     *length = result;
   #else
     struct stat statbuf;

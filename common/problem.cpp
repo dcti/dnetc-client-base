@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.29 1999/11/29 00:29:43 lyndon Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.30 1999/11/29 22:47:34 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -47,22 +47,22 @@ extern "C" void riscos_upcall_6(void);
   extern "C" u32 rc5_unit_func_p5_mmx( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_k6_mmx( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
-#elif (CLIENT_OS == OS_AIX)     // this has to stay BEFORE CPU_POWERPC
-  #if defined(_AIXALL) || (CLIENT_CPU == CPU_POWER)
-  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
-  #endif
-  #if defined(_AIXALL) || (CLIENT_CPU == CPU_POWERPC)
-  extern "C" s32 crunch_allitnil( RC5UnitWork *work, u32 iterations);
-  extern "C" s32 crunch_lintilla( RC5UnitWork *work, u32 iterations);
-  #endif
-#elif (CLIENT_CPU == CPU_POWERPC)
-  #if (CLIENT_OS == OS_WIN32) //NT PPC has poor assembly
+#elif (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
+  #if (CLIENT_OS == OS_AIX)
+    extern "C" s32 crunch_allitnil( RC5UnitWork *work, u32 iterations);
+    extern "C" s32 crunch_lintilla( RC5UnitWork *work, u32 iterations);
+    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
+  #elif (CLIENT_OS == OS_WIN32) //NT PPC has poor assembly
     #define HAVE_ANSI2RG_UNIT_FUNC
     extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
   #else
-    extern "C" s32 rc5_unit_func_g1( RC5UnitWork *work, u32 *iterations /* , void *scratch_area */);
-    extern "C" s32 rc5_unit_func_g2_g3( RC5UnitWork *work, u32 *iterations /* , void *scratch_area */);
+    extern "C" s32 rc5_unit_func_g1( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
+    extern "C" s32 rc5_unit_func_g2_g3( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
+    extern "C" s32 rc5_unit_func_vec( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
   #endif
+#elif (CLIENT_CPU == CPU_POWER) //CPU_POWER must always come _after_ CPU_POWERPC
+  #define HAVE_ANSI2RG_UNIT_FUNC
+  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
 #elif (CLIENT_CPU == CPU_68K)
   #if defined(__GCC__) || defined(__GNUC__) /* hpux, next, linux, sun3 */
     #define RC5_SINGLE_STEPPER
@@ -374,60 +374,72 @@ static int __core_picker(Problem *problem, unsigned int contestid)
     }
     #elif (CLIENT_CPU == CPU_68K)
     {
-      if (coresel < 0 || coresel > 5) /* just to be safe */
-        coresel = 0;
       if (coresel == 4 || coresel == 5 ) // there is no 68050, so type5=060
         problem->rc5_unit_func = rc5_unit_func_040_060;
       else //if (coresel == 0 || coresel == 1 || coresel == 2 || coresel == 3)
-        problem->rc5_unit_func = rc5_unit_func_000_030;
-      problem->pipeline_count = 2;
-    }
-    #elif (CLIENT_OS == OS_AIX)
-    {
-      static int detectedtype = -1;
-      if (detectedtype == -1)
-        detectedtype = GetProcessorType(1 /* quietly */);
-      #if defined(_AIXALL) || (CLIENT_CPU == CPU_POWERPC)
-      switch (detectedtype) 
       {
-         case 1:                  // PPC 601
-            coresel = 1;
-            problem->rc5_unit_func = crunch_allitnil;
-            problem->pipeline_count = 1;
-            break;
-         case 2:                  // other PPC
-            coresel = 2;
-            problem->rc5_unit_func = crunch_lintilla;
-            problem->pipeline_count = 1;
-            break;
-         case 0:                  // that's POWER
-         default:
-            coresel = 0;
-            #ifdef _AIXALL
-            problem->rc5_unit_func = rc5_ansi_2_rg_unit_func ;
-            problem->pipeline_count = 2;
-            #else                 // no POWER support
-            problem->rc5_unit_func = crunch_allitnil;
-            problem->pipeline_count = 1;
-            #endif
-            break;
-      } /* endswitch */
-      #elif (CLIENT_CPU == CPU_POWER)
-      problem->rc5_unit_func = rc5_ansi_2_rg_unit_func;
+        problem->rc5_unit_func = rc5_unit_func_000_030;
+        coresel = 0;
+      }
       problem->pipeline_count = 2;
-      coresel = 0;
-      #else
-      #error "Systemtype not supported"
-      #endif
     }
-    #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_AIX)
+    #elif (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
     {
-      problem->rc5_unit_func = rc5_unit_func_g2_g3;
-      problem->pipeline_count = 1;
-      #if ((CLIENT_OS != OS_BEOS) || (CLIENT_OS != OS_AMIGAOS))
-      if (coresel == 0)
-        problem->rc5_unit_func = rc5_unit_func_g1;
+      #if defined(_AIXALL) //ie POWER/POWERPC hybrid client
+      //our coresel numbers have different meanings, depending on what
+      //architecture we are running on. By default, the coresel values
+      //(ie, what selcore returns) are the same as "normal" PPC.
+      if (coresel == 0) //core #0 is "RG AIXALL" on POWER, and lintilla on PPC
+      {                 //there is no #1 core on POWER.
+        if (GetProcessorType(1) == 0) //this is POWER!
+          coresel = 2; //that was easy. Only one usable core.
+      }
       #endif
+      
+      if (coresel == 0) // G1 (PPC 601)
+      {  
+        #if (CLIENT_OS == OS_AIX)
+          problem->rc5_unit_func = crunch_allitnil;
+          problem->pipeline_count = 1;
+        #elif ((CLIENT_OS != OS_AMIGAOS) && (CLIENT_OS != OS_BEOS) && \
+           (CLIENT_OS != OS_WIN32))
+          problem->rc5_unit_func = rc5_unit_func_g1;  // G1 (PPC 601)
+          problem->pipeline_count = 1;
+        #else
+          coresel = 1; //fall through
+        #endif
+      }
+      if (coresel == 2) // POWER or G4
+      {
+        #if defined(_AIXALL)
+          problem->rc5_unit_func = rc5_ansi_2_rg_unit_func ; //POWER cpu
+          problem->pipeline_count = 2;
+        #elif (CLIENT_OS == OS_MACOS)
+          problem->rc5_unit_func = rc5_unit_func_vec; // G4
+          problem->pipeline_count = 1;
+        #else
+          coresel = 1; //fall through
+        #endif
+      }
+      if (coresel != 0 && coresel != 2)
+      {
+        #if (CLIENT_OS == OS_AIX)
+          problem->rc5_unit_func = crunch_lintilla;
+          problem->pipeline_count = 1;
+        #elif (CLIENT_OS == OS_WIN32) //win32 has poor assembly
+          problem->rc5_unit_func = rc5_ansi_2_rg_unit_func;
+          problem->pipeline_count = 2;
+        #else
+          problem->rc5_unit_func = rc5_unit_func_g2_g3; // G2-G3 (PPC 603-750)
+          problem->pipeline_count = 1;
+        #endif
+        coresel = 1;
+      }
+    }
+    #elif (CLIENT_CPU == CPU_POWER) //POWER must always come _after_ POWERPC
+    {
+      problem->rc5_unit_func = rc5_ansi_2_rg_unit_func ; //POWER cpu
+      problem->pipeline_count = 2;
     }
     #elif (CLIENT_CPU == CPU_X86)
     {
@@ -897,11 +909,17 @@ LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
     kiter = rc5_unit_func_ultrasparc_crunch( &rc5unitwork, iterations);
   #elif (CLIENT_CPU == CPU_68K)
     kiter = (*rc5_unit_func)( &rc5unitwork, iterations );
-  #elif (CLIENT_CPU == CPU_POWER) || (CLIENT_OS == OS_AIX)
+  #elif (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
+    #if (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_WIN32) \
+      || (CLIENT_OS == OS_BEOS) || (CLIENT_OS == AMIGAOS)
+    //lintilla or allitnill or ansi core  
     kiter = (*rc5_unit_func)( &rc5unitwork, iterations );
-  #elif (CLIENT_CPU == CPU_POWERPC)
+    #else //rc5_unit_func_g[*] wrappers around lintilla/allitnil
     kiter = iterations; 
-    *resultcode = (*rc5_unit_func)( &rc5unitwork, &kiter );
+    *resultcode = (*rc5_unit_func)( &rc5unitwork,&kiter);
+    #endif
+  #elif (CLIENT_CPU == CPU_POWER) //POWER must always come _after_ PPC
+    kiter = (*rc5_unit_func)( &rc5unitwork, iterations );
   #elif (CLIENT_CPU == CPU_ARM)
     kiter = rc5_unit_func(&rc5unitwork, iterations);
   #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)

@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.11 1999/11/29 00:29:40 lyndon Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.12 1999/11/29 22:47:31 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -1476,6 +1476,16 @@ int Network::LowLevelCloseSocket(void)
      #endif
      #if (CLIENT_OS == OS_OS2)
      int retcode = (int)soclose( sock );
+     #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+     int retcode = (int)closesocket( sock );
+     #elif (CLIENT_OS == OS_MACOS)
+     int retcode = (int)socket_close( sock );
+     #elif (CLIENT_OS == OS_AMIGAOS)
+     int retcode = (int)CloseSocket( sock );
+     #elif (CLIENT_OS == OS_BEOS)
+     int retcode = (int)closesocket( sock );
+     #elif (CLIENT_OS == OS_VMS) && defined(MULTINET)
+     int retcode = (int)socket_close( sock );
      #else
      int retcode = (int)close( sock );
      #endif
@@ -2170,7 +2180,7 @@ int Network::LowLevelSetSocketOption( int cond_type, int parm )
       return ((parm == 0 /* off */)?(0):(-1)); //always non-blocking
     #elif (CLIENT_OS == OS_MACOS)
       char flagon = ((parm == 0 /* off */) ? (1): (0));
-      return ioctl(sock, FIONBIO, &flagon);
+      return socket_ioctl(sock, FIONBIO, &flagon);
     #elif (defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK)))
     {
       int flag, res, arg;

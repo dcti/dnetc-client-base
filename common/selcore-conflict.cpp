@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.22 1999/11/22 00:45:00 elric Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.23 1999/11/29 22:47:35 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -102,15 +102,13 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
   #elif (CLIENT_CPU == CPU_POWERPC)
     { /* RC5 */
-      #if (CLIENT_OS == OS_WIN32)
-      "RG ansi2",
-      #else
-        #if (CLIENT_OS == OS_AIX)
-        "RG AIXALL (Power CPU)",
-        #endif
-        "allitnil", /* aka rc5_unit_func_g1() wrapper */
-        "lintilla", /* aka rc5_unit_func_g2_g3() wrapper */
-      #endif
+      /* on OS's that don't support the 601 (core #0), core #0 and #1 are 
+         equivalent.
+         on POWER/PowerPC hybrid clients ("_AIXALL"), running on a POWER
+         CPU, core #0 becomes "RG AIXALL", and core #1 disappears.
+       */
+      "allitnil", /* aka rc5_unit_func_g1() wrapper */
+      "lintilla", /* aka rc5_unit_func_g2_g3() wrapper */
       NULL
     },
     { /* DES */
@@ -160,6 +158,23 @@ static const char **__corenames_for_contest( unsigned int cont_i )
         corenames_table[DES][2] = "MMX bitslice"; 
         #endif
       }
+    }
+    #endif
+    #if (CLIENT_CPU == CPU_POWERPC)
+    {
+      #if defined(_AIXALL) //POWER/POWERPC hybrid client
+      if ( GetProcessorType(1) == 0) //this is a power CPU
+      {
+    	corenames_table[RC5][0] = "RG AIXALL (Power CPU)",
+    	corenames_table[RC5][1] = NULL;
+      }
+      #elif (CLIENT_OS == OS_MACOS) // vec-core is currently macos only
+      if ( GetProcessorType(1) == 2)
+      {
+    	corenames_table[RC5][2] = "crunch-vec"; /* aka rc5_unit_func_vec() wrapper */
+    	corenames_table[RC5][3] = NULL;
+      }
+      #endif
     }
     #endif
     fixed_up = 1;  
@@ -395,6 +410,14 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       }
       if (!quietly)
         GetProcessorType(0);
+      #if defined(_AIXALL)
+      //POWER/POWERPC hybrid client returns 0 for POWER cpu, and >0
+      //maps to '1 plus "normal" PPC cpu ident'.
+      if (detected_type == 0) //POWER
+        ; //nothing to do, will have been caught in selcoreInitialize()
+      else if (detected_type > 0) //PPC
+        detected_type--; //map into "normal" PPC detected_type range.
+      #endif
     }
   }
 
@@ -446,17 +469,43 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     corename_printed = 1;
   }
   #elif (CLIENT_CPU == CPU_POWERPC)
-  if (contestid == RC5 || contestid == DES) /* old style */
+  if (contestid == DES)
   {
     selcorestatics.corenum[DES] = 0; /* only one DES core */
-    #if ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_AMIGAOS))
-      // Be OS isn't supported on 601 machines
+  }
+  else if (contestid == RC5)
+  {
+    #if ((CLIENT_OS==OS_BEOS) || (CLIENT_OS==OS_AMIGAOS) || (CLIENT_OS==OS_WIN32))
+      // BeOS and Win32 aren't supported on 601 machines
       // There is no 601 PPC board for the Amiga
       selcorestatics.corenum[RC5] = 1; //"PowerPC 603/604/750"
-    #elif (CLIENT_OS == OS_WIN32)
-      //actually win32/ppc isn't supported, but just in case
-      selcorestatics.corenum[RC5] = 1;
+    #else
+      selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
+      if (selcorestatics.corenum[RC5] < 0 && detected_type >= 0)
+        selcorestatics.corenum[RC5] = (int)detected_type;
     #endif
+  }
+  else if (contestid == CSC)
+  {
+    selcorestatics.corenum[CSC] = selcorestatics.user_cputype[CSC];
+    if (selcorestatics.corenum[CSC] < 0)
+    {
+      if (detected_type >= 0)
+      {
+        int cindex = -1, det = ((int)detected_type);
+        #if defined(_AIXALL) //POWER/POWERPC hybrid
+        if (GetProcessorType(1) == 0) //POWER cpu
+          det = -1; //detected_type has a different meaning, so use micro_bench
+        #endif
+        switch (det)
+        {
+          case 0: cindex = 1; break; // G1: 16k L1 cache
+        //case 1: cindex = 1; break; // G2/G3: 16-64k L1 cache 
+          case 2: cindex = 0; break; // G4: L1 cache 64k
+        }
+        selcorestatics.corenum[CSC] = cindex;
+      }
+    }
   }
   #elif (CLIENT_CPU == CPU_X86)
   {

@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.10 1999/11/03 21:33:25 remi Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.11 1999/11/29 22:47:35 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -119,10 +119,16 @@ public: /* anything public must be thread safe */
   #elif (CLIENT_CPU == CPU_ALPHA)
   u32 (*rc5_unit_func)( RC5UnitWork * , unsigned long iterations );
   u32 (*des_unit_func)( RC5UnitWork * , u32 nbits );
-  #elif (CLIENT_OS == OS_AIX)
+  #elif (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
+    #if (CLIENT_OS == OS_AIX)     //straight lintilla (or even ansi for POWER)
+    s32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
+    #elif (CLIENT_OS == OS_WIN32) //ansi core
+    s32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
+    #else                         //lintilla wrappers
+    s32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 *timeslice );
+    #endif
+  #elif (CLIENT_CPU == CPU_POWER) //POWER must always be _after_ PPC
   s32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
-  #elif (CLIENT_CPU == CPU_POWERPC)
-  s32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 *timeslice );
   #endif
 
   int Run_RC5(u32 *timeslice,int *core_retcode); /* \  run for n timeslices.                */

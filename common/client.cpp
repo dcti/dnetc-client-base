@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.29 1999/11/24 19:11:07 chrisb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.30 1999/11/29 22:47:25 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -197,17 +197,8 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
       #endif
 
       LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n");
-      LogScreenRaw(
-        #if (CLIENT_OS == OS_RISCOS)
-        guiriscos ?
-        "Interactive help is available, or select 'Help contents' from the menu for\n"
-        "detailed client information.\n\n" :
-        #elif (CLIENT_OS == OS_MACOS)
-        "Select ""Help..."" from the Apple menu for detailed client information.\n\n"
-        #endif
-        "Start the client with '-help' for a list of valid command line options.\n\n"
-
-        );
+      LogScreenRaw( "Start the client with '-help' for a list of valid command line options.\n" );
+      LogScreenRaw( "\n" );
     }
     else if ( level == 1 )
     {
@@ -352,14 +343,12 @@ static int ClientMain( int argc, char *argv[] )
 /* ---------------------------------------------------------------------- */
 
 #if (CLIENT_OS == OS_MACOS)
-#ifdef CLIENT_17
-void main(void)
+int main( void )
 {
-  //extern void macosCliMain(int (*)(int,char **));
-  macosCliMain(ClientMain); /* sythesise a command line for ClientMain */
-  return;                 /* UI will be initialized later via console.cpp */
-}  
-#endif
+  extern int client_boot( int (*)(int argc, char *argv[] );
+  /* init toolbox etc, synthesise command line and callback */
+  return client_boot(ClientMain); 
+}
 #elif (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
 { /* parse the command line and call the bootstrap */
