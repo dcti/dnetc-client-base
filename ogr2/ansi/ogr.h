@@ -3,23 +3,12 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.18.2.6 2001/07/08 18:25:32 andreasb Exp $"
-
-//#define OGR_FORCE_OLD_STUB
-
-#ifndef OGR_FORCE_OLD_STUB
-// define this to use the new struct Stub
-#define OGR_NEW_STUB_FORMAT
-#endif
-
-// stubmap generation
-//#define OGR_CALLBACK
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.18.2.7 2001/07/10 13:42:22 andreasb Exp $"
 
 
 #ifndef u16
 #include "cputypes.h"
 #endif
-
 
 /* ===================================================================== */
 
@@ -179,18 +168,21 @@ typedef struct {
 #pragma pack(1) 
 #endif
 
-#ifndef OGR_NEW_STUB_FORMAT
-#define OGR_OLD_STUB
+#if 1 /* we keep the old stub structures for 
+           a) loading/saving/transmitting old stubs 
+           b) utils
+      */
+
 // specifies the number of ruler diffs can be represented.
 // Warning: increasing this will cause all structures based
 // on workunit_t in packets.h to change, possibly breaking
 // network and buffer structure operations.
-#define STUB_MAX 10
+#define STUB1_MAX 10
 
 struct Stub { /* size is 24 */
   u16 marks;           /* N-mark ruler to which this stub applies */
   u16 length;          /* number of valid elements in the diffs[] array */
-  u16 diffs[STUB_MAX]; /* first <length> differences in ruler */
+  u16 diffs[STUB1_MAX];/* first <length> differences in ruler */
 };
 
 struct WorkStub { /* size is 28 */
@@ -198,9 +190,9 @@ struct WorkStub { /* size is 28 */
   u32 worklength;      /* depth of current state */
 };
 
-#else /* OGR_NEW_STUB_FORMAT */
-#define STUB_MAX 32
+#endif
 
+#define STUB2_MAX 32
 /* we are safe to use bytes for the diffs up to OGR-29 at least, because
  * an upper limit for the length of a first difference is
  * max_first_diff_length = OGR_length[depth] - sum(i = 1 .. depth - 1, i)
@@ -216,7 +208,7 @@ struct Stub2 { /* size is 8+1+1+1+32+1+1+1 = 46 [+2 = 48] */
   u8 marks;            /* N-mark ruler to which this stub applies */
   u8 depth;            /* startdepth, can calculate stopdepth from depth,depththdiff */
   u8 workdepth;        /* depth of current state */
-  u8 diffs[STUB_MAX];  /* first <depth> differences in ruler */
+  u8 diffs[STUB2_MAX]; /* first <depth> differences in ruler */
   u8 depththdiff;      /* if 0: stopdepth = startdepth
                           else: stopdepth = startdepth - 1 ==> finish the remaining stubs on this branch 
                                 ==> depththdiff = diffs[depth-1] */
@@ -230,13 +222,13 @@ struct Stub2 { /* size is 8+1+1+1+32+1+1+1 = 46 [+2 = 48] */
 };
 
 /* maximum size is 36 */
-#define NET_STUB_MAX (36-8-1-1-1-(0)-1-1-1)
+#define NETSTUB2_MAX (36-8-1-1-1-(0)-1-1-1)
 struct NetStub2 { /* size is 36 */
   struct { u32 hi, lo; } nodes;
   u8 marks;            /* N-mark ruler to which this stub applies */
   u8 depth;            /* startdepth, can calculate stopdepth from depth,depththdiff */
   u8 workdepth;        /* depth of current state */
-  u8 diffs[NET_STUB_MAX];  /* first <depth> differences in ruler */
+  u8 diffs[NETSTUB2_MAX];  /* first <depth> differences in ruler */
   u8 depththdiff;      /* if 0: stopdepth = startdepth
                           else: stopdepth = startdepth - 1 ==> finish the remaining stubs on this branch 
                                 ==> depththdiff = diffs[depth-1] */
@@ -247,12 +239,12 @@ struct NetStub2 { /* size is 36 */
   u8 core;             /* save the core number */
   u8 cycle;            /* count recycles for fifo-buffers */
 };
-#endif /* OGR_NEW_STUB_FORMAT */
 
 #ifndef MIPSpro
 #pragma pack()
 #endif
 
+/* ===================================================================== */
 
 #if defined(__cplusplus)
 extern "C" {
@@ -269,15 +261,15 @@ extern "C" {
 }
 #endif
 
-#ifdef OGR_OLD_STUB
-//unsigned long ogr_nodecount(const struct Stub *);
+/* OGR1_OLD stubs: */
 const char *ogr_stubstr_r(const struct Stub *stub, 
                           char *buffer, unsigned int bufflen,
                           int worklength);
 const char *ogr_stubstr(const struct Stub *stub);
-#else
+
 int ogr_init_stub2_from_testcasedata(struct Stub2 *stub, u32 marks, u32 ndiffs, const u32 *diffs);
 
+/* OGR nextgen stubs: */
 /* hton(struct Stub2) / ntoh(struct Stub2) */
 int ogr_switch_byte_order(struct Stub2 *stub);
 
@@ -293,7 +285,6 @@ int ogr_netstub2_to_stub2(const NetStub2 *netstub, Stub2 *stub, int switch_byte_
 int ogr_stub2_to_netstub2(const Stub2 *stub, NetStub2 *netstub, int switch_byte_order);
 
 int ogr_benchmark_stub(struct Stub2* stub);
-#endif
 
 // increase this value if the client reports "not enough core memory for OGR"
 #define OGR_PROBLEM_SIZE 2960

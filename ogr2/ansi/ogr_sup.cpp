@@ -1,21 +1,15 @@
 /*
  * OGR support routines and data.
  *
- * $Id: ogr_sup.cpp,v 1.1.2.5.2.1 2001/07/08 18:25:32 andreasb Exp $
+ * $Id: ogr_sup.cpp,v 1.1.2.5.2.2 2001/07/10 13:42:22 andreasb Exp $
 */
 #include <baseincs.h>
 
 #include "ogr.h"
 
-#if 0
-unsigned long ogr_nodecount(const struct Stub *stub)
-{
-  stub = stub; /* shaddup compiler */
-  return 1;
-}
-#endif
+/* ********************************************************************** */
+/* OGR1_OLD stubs: */
 
-#ifdef OGR_OLD_STUB
 const char *ogr_stubstr_r(const struct Stub *stub,
                           char *buffer, unsigned int bufflen,
                           int worklength /* 0 or workstub.worklength */)
@@ -25,7 +19,7 @@ const char *ogr_stubstr_r(const struct Stub *stub,
     char buf[80];
     int i, len = (int)stub->length;
 
-    if (len > STUB_MAX) {
+    if (len > STUB1_MAX) {
       sprintf(buf, "(error:%d/%d)", (int)stub->marks, len);
     }
     else {
@@ -42,7 +36,7 @@ const char *ogr_stubstr_r(const struct Stub *stub,
         }
         if (worklength > len) {
           strcat(buf, "+");
-          for (i = len; i < worklength && i < STUB_MAX; i++) {
+          for (i = len; i < worklength && i < STUB1_MAX; i++) {
             if (i > len) {
               strcat(buf, "-");
             }
@@ -66,7 +60,9 @@ const char *ogr_stubstr(const struct Stub *stub)
   static char buf[80];
   return ogr_stubstr_r(stub, buf, sizeof(buf), 0);
 }
-#else
+
+/* ********************************************************************** */
+/* OGR nextgen stubs: */
 
 int ogr_init_stub2_from_testcasedata(struct Stub2 *stub, u32 marks, u32 ndiffs, const u32 *diffs)
 {
@@ -78,7 +74,7 @@ int ogr_init_stub2_from_testcasedata(struct Stub2 *stub, u32 marks, u32 ndiffs, 
   stub->depth = 0;
   for (unsigned int i = 0; i < ndiffs; ++i)
   {
-    if (i >= STUB_MAX)
+    if (i >= STUB2_MAX)
       return -1;
       stub->diffs[i] = (u8)(diffs[i]);
       if (stub->diffs[i] == 0)
@@ -112,7 +108,7 @@ int ogr_netstub2_to_stub2(const struct NetStub2 *netstub, struct Stub2 *stub, in
   stub->marks = netstub->marks;
   stub->depth = netstub->depth;
   stub->workdepth = netstub->workdepth;
-  for (int i = 0; i < STUB_MAX && i < NET_STUB_MAX; i++)
+  for (int i = 0; i < STUB2_MAX && i < NETSTUB2_MAX; i++)
     stub->diffs[i] = netstub->diffs[i];
   stub->depththdiff = netstub->depththdiff;
   stub->core = netstub->core;
@@ -138,11 +134,11 @@ int ogr_stub2_to_netstub2(const struct Stub2 *stub, struct NetStub2 *netstub, in
   netstub->marks = stub->marks;
   netstub->depth = stub->depth;
   netstub->workdepth = stub->workdepth;
-  if (netstub->workdepth > NET_STUB_MAX) {
+  if (netstub->workdepth > NETSTUB2_MAX) {
     /* WARNING: nodes.{hi|lo} will become incorrect if the stub gets processed after this step ... !!! */
-    netstub->workdepth = NET_STUB_MAX;
+    netstub->workdepth = NETSTUB2_MAX;
   }
-  for (int i = 0; i < STUB_MAX && i < NET_STUB_MAX; i++)
+  for (int i = 0; i < STUB2_MAX && i < NETSTUB2_MAX; i++)
     netstub->diffs[i] = stub->diffs[i];
   netstub->depththdiff = stub->depththdiff;
   netstub->core = stub->core;
@@ -165,7 +161,7 @@ int ogr_reset_stub(struct Stub2 *stub)
   stub->workdepth = 0;
   if (stub->depththdiff)
     stub->diffs[stub->depth-1] = stub->depththdiff;
-  for (int i = stub->depth; i < STUB_MAX; ++i)
+  for (int i = stub->depth; i < STUB2_MAX; ++i)
     stub->diffs[i] = 0;
   stub->core = 0;
   
@@ -214,7 +210,7 @@ const char *ogr_stubstr_r(const struct Stub2 *stub,
     int plus       = (format == 0) ? -1 : depth;
     int diff;
 
-    if (depth > STUB_MAX || wdepth > STUB_MAX) {
+    if (depth > STUB2_MAX || wdepth > STUB2_MAX) {
       sprintf(buf, "(error:%d/%d|%d)", (int)stub->marks, depth, wdepth);
     }
     else {
@@ -257,5 +253,3 @@ const char *ogr_stubstr(const struct Stub2 *stub)
   static char buf[80];
   return ogr_stubstr_r(stub, buf, sizeof(buf), 0);
 }
-
-#endif

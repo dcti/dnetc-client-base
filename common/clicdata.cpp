@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.18.2.12.4.2 2001/03/23 21:14:03 andreasb Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.18.2.12.4.3 2001/07/10 13:42:21 andreasb Exp $"; }
 
 #include "baseincs.h" // for timeval
 #include "clitime.h"  // required for CliTimerDiff() and CliClock()
@@ -24,8 +24,9 @@ return "@(#)$Id: clicdata.cpp,v 1.18.2.12.4.2 2001/03/23 21:14:03 andreasb Exp $
 
 static struct contestInfo
 {
-  const char *ContestName;
   int ContestID;
+  const char *ContestName;
+  const char *BufferSuffix;    /* if different from ContestName */
   unsigned int Iter2KeyFactor; /* by how much must iterations/keysdone
                         be multiplied to get the number of keys checked. */
   unsigned int BlocksDone;
@@ -34,13 +35,14 @@ static struct contestInfo
   unsigned int UnitsDone;
   unsigned int BestTime;  /* in seconds */
   int BestTimeWasForced;
+  int IsObsolete;
 } conStats[] = {  
-  /* Note: There are no entries for obsolete contests, e.g. OGR1_OLD */
-  { "RC5", RC5, 1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-  { "DES", DES, 2, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-  { "OGR", OGR, 1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-  { "CSC", CSC, 1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-  {  NULL, -1,  0, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 }
+  { RC5,      "RC5", NULL,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0, 0 },
+  { DES,      "DES", NULL,  2, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0, 0 },
+  { OGR1_OLD, "OG1", "ogr", 1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0, 1 },
+  { CSC,      "CSC", NULL,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0, 0 },
+  { OGR,      "OGR", "og2", 1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0, 0 },
+  { -1,       NULL,  NULL,  0, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0, 0 }
   #if (CONTEST_COUNT != 5)
     #error You might have to adjust conStats if CONTEST_COUNT changes
   #endif
@@ -239,7 +241,6 @@ int CliAddContestInfoSummaryData( int contestid,
 
 // ---------------------------------------------------------------------------
 
-
 // return 0 if contestID is invalid, non-zero if valid.
 int CliIsContestIDValid(int contestid)
 {
@@ -255,6 +256,22 @@ const char *CliGetContestNameFromID(int contestid)
                      __internalCliGetContestInfoVectorForID( contestid );
   if (conInfo)
     return conInfo->ContestName;
+  return ((const char *)("???"));
+}
+
+// ---------------------------------------------------------------------------
+
+// Return a usable contest name.
+const char *CliGetContestBufferSuffix(int contestid)
+{
+  struct contestInfo *conInfo =
+                     __internalCliGetContestInfoVectorForID( contestid );
+  if (conInfo)
+  {
+    if (conInfo->BufferSuffix)
+      return conInfo->BufferSuffix;
+    return conInfo->ContestName;
+  }
   return ((const char *)("???"));
 }
 

@@ -8,7 +8,7 @@
  * - it #includes all neccessary .cor (core functions/macros), 
  *   .mac (general macros), .inc (general stuff) files
  */
-#define __OGR_CPP__ "@(#)$Id: ogr.cpp,v 1.1.2.43.2.5 2001/07/08 18:25:29 andreasb Exp $"
+#define __OGR_CPP__ "@(#)$Id: ogr.cpp,v 1.1.2.43.2.6 2001/07/10 13:42:22 andreasb Exp $"
 
 #include <stdio.h>      /* printf for debugging */
 #include <stdlib.h>     /* malloc (if using non-static choose dat) */
@@ -288,11 +288,7 @@ static const char* ogr_core_id(void);
 static int ogr_core_number(void);
 static int ogr_get_size(int* alignment);
 static int ogr_create(void *input, int inputlen, void *state, int statelen);
-#ifdef OGR_OLD_STUB
-#error static int ogr_create_levels(struct State *state, const struct Stub2 *stub);
-#else
 static int ogr_create_levels(struct State *state, const struct Stub2 *stub);
-#endif
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints);
 static int ogr_getresult(void *state, void *result, int resultlen);
 static int ogr_destroy(void *state);
@@ -489,20 +485,12 @@ static int ogr_get_size(int *alignment)
 static int ogr_create(void *input, int inputlen, void *state, int statelen)
 {
   struct State *oState;
-  #ifdef OGR_OLD_STATE
-  struct WorkStub *workstub = (struct WorkStub *)input;
-  #else
   struct Stub2 *stub = (struct Stub2 *)input;
-  #endif
   int retval = CORE_S_OK;
   /* save STUB_E_ error codes into oState->stub_error and finish ogr_create() 
      to allow a graceful discard in case of a STUB_E_ */
 
-  #ifdef OGR_OLD_STATE
-  if (!input || inputlen != sizeof(struct WorkStub))
-  #else
   if (!input || inputlen != sizeof(struct Stub2))
-  #endif
   {
     return CORE_E_FORMAT;
   }
@@ -527,11 +515,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
   /* stub_error stores the STUB_E_ error codes. An oState with a non zero 
      stub_error will be rejected by ogr_cycle(), but returned to network */
 
-  #ifdef OGR_OLD_STATE
-  oState->maxmarks = workstub->stub.marks;
-  #else
   oState->maxmarks = stub->marks;
-  #endif
   oState->maxdepth = oState->maxmarks-1;
 
   if (((unsigned int)oState->maxmarks) > (sizeof(OGR_length)/sizeof(OGR_length[0]))) {
@@ -568,10 +552,6 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
   if (oState->maxdepth - oState->half_depth - 1 > CHOOSE_MAX_DEPTH)
     oState->stub_error |= STUB_E_MARKS;  
 
-  #ifdef OGR_OLD_STATE
-  oState->startdepth = workstub->stub.length;
-  oState->stopdepth = workstub->stub.length; // FIXME for NewStub
-  #else
   oState->startdepth = stub->depth;
   oState->stopdepth = stub->depth; 
   if (stub->depththdiff != 0) // type 2 stub
@@ -582,7 +562,6 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
   
   oState->nodes.hi = stub->nodes.hi;
   oState->nodes.lo = stub->nodes.lo;
-  #endif
 
   /* core dependent initialization of oState->Levels */
   retval = ogr_create_levels(oState, stub);
@@ -624,71 +603,6 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
 }
 
 
-#if 0 // old version
-static int ogr_getresult(void *state, void *result, int resultlen)
-{
-  struct State *oState = (struct State *)state;
-  struct WorkStub *workstub = (struct WorkStub *)result;
-  int i;
-
-  if (resultlen != sizeof(struct WorkStub)) {
-    return CORE_E_FORMAT;
-  }
-  workstub->stub.marks = (u16)oState->maxmarks;
-  workstub->stub.length = (u16)oState->startdepth;
-  for (i = 0; i < STUB_MAX; i++) {
-    #if (OGROPT_ALTERNATE_CYCLE == 0)
-    workstub->stub.diffs[i] = (u16)(oState->markpos[i+1] - oState->markpos[i]);
-    #else
-    workstub->stub.diffs[i] = (u16)(oState->Levels[i+1].cnt2 - oState->Levels[i].cnt2);
-    #endif
-  }
-  workstub->worklength = oState->depth;
-  if (workstub->worklength > STUB_MAX) {
-    workstub->worklength = STUB_MAX;
-  }
-  return CORE_S_OK;
-}
-#elif defined(OGR_OLD_STUB)
-static int ogr_getresult(void *state, void *result, int resultlen)
-/* DO NOT call ogr_getresult() for a state currently being processed 
-   by ogr_cycle() */
-{
-  struct State *oState = (struct State *)state;
-  struct WorkStub *workstub = (struct WorkStub *)result;
-  int i;
-
-  if (resultlen != sizeof(struct WorkStub)) {
-    return CORE_E_FORMAT;
-  }
-
-  workstub->stub.marks = (u16)oState->maxmarks;
-  workstub->stub.length = (u16)oState->startdepth;
-  for (i = 0; i < STUB_MAX; i++) {
-    workstub->stub.diffs[i] = (u16)(oState->Levels[i+1].cnt2 - oState->Levels[i].cnt2);
-  }
-  workstub->worklength = oState->depth;
-
-  /* This causes node count differences !!! */
-  /* the only senseful way to fix this is increasing STUB_MAX */
-  if (workstub->worklength > STUB_MAX) {
-    workstub->worklength = STUB_MAX;
-  }
-
-  /* will be needed later ... new struct Stub with nodecount
-  workstub->nodeshi = oState->nodeshi;
-  workstub->nodeslo = oState->nodeslo;
-  */
-  
-  if (oState->stub_error != STUB_OK) {
-    /* stub produced an error at load time */
-    workstub->worklength = oState->stub_error;
-    /* workstub->nodes.hi = workstub->nodes.lo = 0; */
-  }
-
-  return CORE_S_OK;
-}
-#else
 static int ogr_getresult(void *state, void *result, int resultlen)
 /* DO NOT call ogr_getresult() for a state currently being processed 
    by ogr_cycle() */
@@ -711,7 +625,7 @@ static int ogr_getresult(void *state, void *result, int resultlen)
   stub->depth = (u8)oState->startdepth;
   stub->workdepth = (u8)oState->depth;
   int i_end = (stub->workdepth < stub->depth) ? stub->depth : stub->workdepth;
-  for (i = 0; i < i_end && i < STUB_MAX && i < MAXDEPTH; ++i) {
+  for (i = 0; i < i_end && i < STUB2_MAX && i < MAXDEPTH; ++i) {
     int diff = oState->Levels[i+1].cnt2 - oState->Levels[i].cnt2;
     if (diff > 255)
       return CORE_E_8BIT;
@@ -723,8 +637,8 @@ static int ogr_getresult(void *state, void *result, int resultlen)
 
   /* This causes node count differences !!! */
   /* the only senseful way to fix this is increasing STUB_MAX */
-  if (stub->workdepth > STUB_MAX) {
-    stub->workdepth = STUB_MAX;
+  if (stub->workdepth > STUB2_MAX) {
+    stub->workdepth = STUB2_MAX;
   }
 
   
@@ -736,7 +650,6 @@ static int ogr_getresult(void *state, void *result, int resultlen)
 
   return CORE_S_OK;
 }
-#endif
 
 
 static int ogr_destroy(void *state)

@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.57.4.2 2001/03/23 21:14:05 andreasb Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.57.4.3 2001/07/10 13:42:20 andreasb Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -51,7 +51,7 @@ const char *BufferGetDefaultFilename( unsigned int project, int is_out_type,
                                                        const char *basename )
 {
   static char filename[128];
-  const char *suffix = CliGetContestNameFromID( project );
+  const char *suffix = CliGetContestBufferSuffix( project );
   unsigned int len, n;
 
   filename[0] = '\0';
@@ -352,7 +352,7 @@ long GetBufferRecord( Client *client, WorkRecord* data,
       {
         LogScreen("Discarded packet from unknown contest.\n");
       }
-      else if (tmp_contest == OGR1_OLD) // FIXME: use a contestinfo flag somewhere
+      else if (tmp_contest == OGR1_OLD && workstate == RESULT_WORKING) // FIXME: use a contestinfo flag somewhere
       {
         LogScreen("Discarded packet from closed contest.\n");
       }

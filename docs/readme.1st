@@ -1,5 +1,22 @@
 ---------- WARNING ------------
 
+v2.8100:
+
+Starting with the 2.8100 clients, distributed.net clients contain new OGR 
+cores that are incompatible with the previous OGR buffer format. The new
+buffers are called buff-in.og2 and buff-out.og2 by default. New clients are
+not able to fetch/flush buff-*.ogr files any longer!
+
+When updating your client from pre 2.8100 to 2.8100 or later it's recommended
+to stop the old client, flush all the buffers (using the old client) and 
+remove buff-*.ogr.
+
+Also client version 2.8100 and up require a proxyper of at least build ##### 
+because of the new OGR cores and stubs.
+
+
+v2.7110:
+
 starting with the 2.7110 clients , distributed.net clients now support
 packet sizes up to 2^33 -  because of this buffers CANNOT be shared with
 older version clients.  Also client version 2.7111 and up require a proxyper

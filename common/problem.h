@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.54.2.3 2001/07/08 18:25:28 andreasb Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.54.2.4 2001/07/10 13:42:21 andreasb Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -78,7 +78,7 @@ enum {
 
 typedef union
 {
-  struct {
+  struct {                              // RC5, DES, CSC
     struct {u32 hi,lo;} key;              // starting key
     struct {u32 hi,lo;} iv;               // initialization vector
     struct {u32 hi,lo;} plain;            // plaintext we're searching for
@@ -87,16 +87,14 @@ typedef union
     struct {u32 hi,lo;} iterations;       // iterations to do
   } crypto;
   #if defined(HAVE_OGR_CORES)
-  #ifdef OGR_OLD_STUB
-  // keep this for some tools ...
-  struct {
-    struct WorkStub workstub; // stub to work on (28 bytes)
+  struct Stub2 ogr2;                    // OGR (nextgen)
+  
+  // keep this for sending back completed old blocks, utils, ...
+  struct {                              // OGR1_OLD
+    struct WorkStub workstub;             // stub to work on (28 bytes)
     struct {u32 hi,lo;} nodes;            // nodes completed
     char unused[12];
   } ogr;
-  #else
-  struct Stub2 ogr2;
-  #endif
   #endif
 } ContestWork;
 

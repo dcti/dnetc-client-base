@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.3.2.11.4.1 2001/07/08 18:25:28 andreasb Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.3.2.11.4.2 2001/07/10 13:42:21 andreasb Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
@@ -26,11 +26,8 @@ typedef union
     u32 (*des)( RC5UnitWork * , u32 *iterations, char *membuf );
     #endif
     #if defined(HAVE_OGR_CORES)
-    #ifdef OGR_OLD_STUB
-    CoreDispatchTable *ogr;
-    #else
+    //CoreDispatchTable *ogr; // FIXME
     CoreDispatchTable *ogr2;
-    #endif
     #endif
 } unit_func_union;
 
