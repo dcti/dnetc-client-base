@@ -3,22 +3,32 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.8  1998/10/03 03:44:10  cyp
+// Removed pthread yield section completely. Changed win16 SurrenderCPU()
+// function to a straight win api Yield() call. Fixed a re-RegPollProc()
+// that specified a different delay from the initial reg...(). Wrapped
+// long comments (yet once more).
+//
 // Revision 1.7  1998/10/02 17:06:17  chrisb
 // removed a #define DEBUG I left in by mistake
 //
 // Revision 1.6  1998/10/02 16:59:01  chrisb
-// lots of fiddling in a vain attempt to get the NON_PREEMPTIVE_OS_PROFILING to be a bit sane under RISC OS
+// lots of fiddling in a vain attempt to get the NON_PREEMPTIVE_OS_PROFILING 
+// to be a bit sane under RISC OS
 //
 // Revision 1.5  1998/09/29 23:36:26  silby
-// Commented out call to pthreads_yield since it's not supported in all POSIX implementations (apparently.)
+// Commented out call to pthreads_yield since it's not supported in all 
+// POSIX implementations (apparently.)
 //
 // Revision 1.4  1998/09/29 10:13:16  chrisb
-// Removed Remi's (CLIENT_OS == OS_NETWARE) stuff around yield_pump. Fixed a comparison bug in the checkpoint retrieval stuff (Client::Run). Miscellaneous RISC OS wibblings.
+// Removed Remi's (CLIENT_OS == OS_NETWARE) stuff around yield_pump. Fixed a 
+// comparison bug in the checkpoint retrieval stuff (Client::Run). 
+// Miscellaneous RISC OS wibblings.
 //
 // Revision 1.3  1998/09/28 22:19:17  remi
 // Cleared 2 warnings, and noticed that yield_pump() seems to be Netware-only.
-// BTW, I've not found pthread_yield() in libpthread 0.7 & glibc2 (RH 5.1 Sparc
-// and Debian 2.0 x86), nor in libpthread 0.6 & libc5.
+// BTW, I've not found pthread_yield() in libpthread 0.7 & glibc2 (RH 5.1 
+// Sparc and Debian 2.0 x86), nor in libpthread 0.6 & libc5.
 //
 // Revision 1.2  1998/09/28 13:29:28  cyp
 // Removed checkifbetaexpired() declaration conflict.
@@ -30,7 +40,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.7 1998/10/02 17:06:17 chrisb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.8 1998/10/03 03:44:10 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -57,13 +67,6 @@ return "@(#)$Id: clirun.cpp,v 1.7 1998/10/02 17:06:17 chrisb Exp $"; }
 #include "cpucheck.h"  //GetTimesliceBaseline(), GetNumberOfSupportedProcessors()
 #include "probman.h"   //GetProblemPointerFromIndex()
 #include "probfill.h"  //LoadSaveProblems(), RandomWork(), FILEENTRY_xxx macros
-#if ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32))
-#include "lurk.h"      //lurk stuff
-#endif
-#if (CLIENT_OS == OS_RISCOS)
-extern "C" void riscos_upcall_6(void);
-extern void CliSignalHandler(int);
-#endif
 
 // --------------------------------------------------------------------------
 
@@ -134,7 +137,7 @@ struct thread_param_block
 
 #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS) || \
     (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_WIN32S) || \
-      (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_DOS)
+      (CLIENT_OS == OS_WIN16)
 
 #define NON_PREEMPTIVE_OS
 
@@ -217,10 +220,31 @@ static struct
 static void yield_pump( void *tv_p )
 {
   static int pumps_without_run = 0;
-
   runcounters.yield_run_count++;
 
-  if (tv_p)  // used in conjunction with go_nonmt
+  #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
+    thr_yield();
+  #elif (CLIENT_OS == OS_OS2)
+    DosSleep(0);
+  #elif (CLIENT_OS == OS_IRIX)
+    sginap(0);
+  #elif (CLIENT_OS == OS_WIN32)
+    Sleep(0);
+  #elif (CLIENT_OS == OS_DOS)
+    dosCliYield(); //dpmi yield
+  #elif (CLIENT_OS == OS_NETWARE)
+    nwCliThreadSwitchLowPriority();
+  #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+    Yield();
+  #elif (CLIENT_OS == OS_RISCOS)
+    if (riscos_in_taskwindow)
+    { riscos_upcall_6(); }
+  #else
+    NonPolledUSleep( 0 ); /* yield */
+  #endif
+
+  // used in conjunction with go_nonmt
+  if (tv_p)  
     {
     if (runcounters.nonmt_ran)
       pumps_without_run = 0;
@@ -233,37 +257,13 @@ static void yield_pump( void *tv_p )
       if (tv->tv_usec>1000000)
         { tv->tv_sec=tv->tv_usec/1000000; tv->tv_usec%=1000000; }
       }
-    if (RegPolledProcedure(yield_pump, tv_p, (struct timeval *)tv_p, 32 ) == -1)
+    if (RegPolledProcedure(yield_pump, tv_p, NULL, 32 ) == -1)
       {         //should never happen, but better safe than sorry...
       LogScreen("[%s] Panic! Unable to re-initialize yield pump\n", Time()); 
       RaiseExitRequestTrigger();
       }
     }
-  #if (CLIENT_OS == OS_DOS)
-    //nothing
-  #elif (CLIENT_OS == OS_NETWARE)
-    nwCliThreadSwitchLowPriority();
-  #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-    SurrenderCPU();
-  #elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING) || \
-    defined(_POSIX_THREADS) || defined(_PTHREAD_H)
-    // pthread_yield(NULL);
-  #elif (CLIENT_OS == OS_SOLARIS)
-    thr_yield();
-  #elif (CLIENT_OS == OS_OS2)
-    DosSleep(0);
-  #elif (CLIENT_OS == OS_IRIX)
-    sginap(0);
-  #elif (CLIENT_OS == OS_WIN32)
-    Sleep(0);
-  #elif (CLIENT_OS == OS_RISCOS)
-    if (riscos_in_taskwindow)
-    {
-        riscos_upcall_6();
-    }
-  #else
-    NonPolledUSleep( 0 ); /* yield */
-  #endif
+  return;
 }
 
 #ifdef NON_PREEMPTIVE_OS_PROFILING
@@ -662,6 +662,8 @@ static int __StopThread( struct thread_param_block *thrparams )
       {
       if (thrparams->realthread) //real thread
         {
+        yield_pump(NULL);   //give threads some air
+        
         #if (CLIENT_OS == OS_OS2)
         DosWaitThread( &(thrparams->threadID), DCWW_WAIT);
         #elif (CLIENT_OS == OS_WIN32)
@@ -720,8 +722,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         thrparams->threadID = _beginthread( Go_mt, 8192, (void *)thrparams );
         success = ( (thrparams->threadID) != 0);
       #elif (CLIENT_OS == OS_OS2) && defined(MULTITHREAD)
-        thrparams->threadID = _beginthread
-( Go_mt, NULL, 8192, (void *)thrparams );
+        thrparams->threadID = _beginthread( Go_mt, NULL, 8192, (void *)thrparams );
         success = ( thrparams->threadID != -1);
       #elif (CLIENT_OS == OS_NETWARE) && defined(MULTITHREAD)
         if (!nwCliIsSMPAvailable())
@@ -785,7 +786,9 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       success = (thrparams[thread_i].threadID != (THREADID)(-1));
       }
         
-    if (!success)
+    if (success)
+      yield_pump(NULL);   //let the thread start
+    else
       {
       delete thrparams;
       thrparams = NULL;
@@ -1062,45 +1065,44 @@ int Client::Run( void )
     //------------------------------------
   
     if (!TimeToQuit)
-    {
-	// add a yield pump to the polling loop
-	
-	static struct timeval tv = {0,10000}; /* 100/s */
-	
-#if (CLIENT_OS == OS_NETWARE)
-	tv.tv_usec = 500;
-#endif
-        if (RegPolledProcedure(yield_pump, (void *)&tv, NULL, 32 ) != -1)
-	{
-	    LogScreen("[%s] Yield pump has started... \n", Time() );
-	    if (!running_threaded /* load_problem_count == 1 */)
-	    {
-		
-		struct thread_param_block *thrparams =  __StartThread( 0 /*thread_i*/, 
-								       0 /*numthreads*/, timeslice, priority );
-		if (thrparams)
-		{
-		    LogScreen("[%s] Crunch handler has started...\n", Time() );
-		    thread_data_table = thrparams;
-		    running_threaded = 1;
-		    
-		    
-		}
-		else
-		{
-		    Log("[%s] Unable to initialize crunch handler\n", Time() );
-		    TimeToQuit = -1; 
-		    exitcode = -1;
-		}
-	    }
-	} 
-    }
-    else
-    {
-	Log("[%s] Unable to initialize yield pump\n", Time() );
-	TimeToQuit = -1; 
-	exitcode = -1;
-    }
+      {
+      // add a yield pump to the polling loop
+  
+      static struct timeval tv = {0,10000}; /* 100/s */
+   
+      #if (CLIENT_OS == OS_NETWARE)
+      tv.tv_usec = 500;
+      #endif
+    
+      if (RegPolledProcedure(yield_pump, (void *)&tv, NULL, 32 ) == -1)
+        {
+        Log("[%s] Unable to initialize yield pump\n", Time() );
+        TimeToQuit = -1; 
+        exitcode = -1;
+        }
+      else
+        {
+        LogScreen("[%s] Yield pump has started... \n", Time() );
+        }
+      }
+    
+    if (!TimeToQuit && !running_threaded /* load_problem_count == 1 */)
+      {
+      struct thread_param_block *thrparams = __StartThread( 
+                    0 /*thread_i*/, 0 /*numthreads*/, timeslice, priority );
+      if (thrparams)
+        {
+        LogScreen("[%s] Crunch handler has started...\n", Time() );
+        thread_data_table = thrparams;
+        running_threaded = 1;
+        }
+      else
+        {
+        Log("[%s] Unable to initialize crunch handler\n", Time() );
+        TimeToQuit = -1; 
+        exitcode = -1;
+        } 
+      }
     }
   #endif
 
@@ -1230,11 +1232,7 @@ int Client::Run( void )
       }
     else if (CheckPauseRequestTrigger())
       {
-      #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-        SurrenderCPU();
-      #elif (CLIENT_OS != OS_DOS)
-        sleep(1);
-      #endif
+      sleep(1);
       }
     else //only one problem and we are not paused
       {
@@ -1245,8 +1243,8 @@ int Client::Run( void )
         //Actually run a problem
         mainprob->Run( 0 ); //threadnum
           
-        #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-          SurrenderCPU();
+        #ifdef NON_PREEMPTIVE_OS
+          yield_pump(NULL);
         #endif
         }
       }
