@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.40 2001/01/03 23:20:20 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.41 2001/01/09 00:45:43 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -393,7 +393,7 @@ long SelfTest( unsigned int contest )
           tslice = 32768;
         #elif (CLIENT_OS == OS_MACOS)
         non_preemptive_env = 1;
-        tslice = 2048;
+        tslice = 65536;
         #endif
 
         if (ProblemLoadState( thisprob, &contestwork,
@@ -407,7 +407,7 @@ long SelfTest( unsigned int contest )
               #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) /* win32s */
               w32Yield(); /* pump waiting messages */
               #elif (CLIENT_OS == OS_MACOS)
-              macosSmartYield();
+              macosSmartYield(1);
               #elif (CLIENT_OS == OS_RISCOS)
               riscos_upcall_6();
               #elif (CLIENT_OS == OS_NETWARE)
