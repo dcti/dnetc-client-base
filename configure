@@ -5,6 +5,12 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.159  1999/01/10 11:00:53  cramer
+# Added targets for 601/604/860 linux-PPC builds (mt and non-mt.)  Only the
+# 604 build appears to work on my 7200/75 (601) machine.
+#
+# ${BUILDNAME} is no long striped, but ${EXENAME} (rc5des) is.
+#
 # Revision 1.158  1999/01/08 10:02:24  chrisb
 # removed OLDRESOLVE from riscos
 #
@@ -571,6 +577,9 @@ OPTS_XLC3='-O3 -qansialias -qlibansi'
 OPTS_EGCS='-O2 -fstrict-aliasing -fno-exceptions -fomit-frame-pointer \
 	   -Wall -Icommon -Irc5 -Ides -Iplatforms'
 
+#OPTS_EGCS='-O2 -fno-exceptions -fomit-frame-pointer \
+#	   -Wall -Icommon -Irc5 -Ides -Iplatforms'
+
 #
 # Common platform compiler options
 #
@@ -634,6 +643,11 @@ OPTS_GCC_PPC860="$OPTS_GCC -O6 -DASM_PPC -mcpu=860 -msoft-float"
 OPTS_GCC272_PPC="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=604"
 OPTS_GCC272_PPC860="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=860 -msoft-float"
 OPTS_GCC_POWER="$OPTS_GCC -O6 -DASM_POWER -mcpu=power"
+
+OPTS_EGCS_PPC601="$OPTS_EGCS -O6 -DASM_PPC -mcpu=601"
+OPTS_EGCS_PPC604="$OPTS_EGCS -O6 -DASM_PPC -mcpu=604"
+OPTS_EGCS_PPC860="$OPTS_EGCS -O6 -DASM_PPC -mcpu=860 -msoft-float"
+OPTS_EGCS_POWER="$OPTS_EGCS -O6 -DASM_POWER -mcpu=power"
 
 OPTS_XLC_PPC601="$OPTS_XLC -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC -Icommon"
 OPTS_XLC_PPC="$OPTS_XLC -qarch=ppc -qtune=604 -D_AIX -D_ARCH_PPC -Icommon"
@@ -1174,6 +1188,63 @@ case "$1" in
 ###### PowerPC/POWER
 
   ### generic targets
+
+    *ppc-601-linux-egcs)		# [cramer] PPC 601 target
+	TARGET_CC="gcc -pipe -g"
+	TARGET_CCFLAGS="$OPTS_EGCS_PPC601 -DPIPELINE_COUNT=1 \
+			-DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
+			rc5/crunch_allitnil_552.ppc.s \
+			rc5/crunch_lintilla_296.ppc.s"
+	;;
+
+    *ppc-601-linux-mt-egcs)		# [cramer] PPC 601-mt target
+	TARGET_CC="gcc -pipe -g"
+	TARGET_CCFLAGS="$OPTS_EGCS_PPC601 -DPIPELINE_COUNT=1 \
+			-DMULTITHREAD -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
+			rc5/crunch_allitnil_552.ppc.s \
+			rc5/crunch_lintilla_296.ppc.s"
+	TARGET_LIBS="-lpthread"
+	;;
+
+    *ppc-604-linux-egcs)		# [cramer] PPC 604 target
+	TARGET_CC="gcc -pipe -g"
+	TARGET_CCFLAGS="$OPTS_EGCS_PPC604 -DPIPELINE_COUNT=1 \
+			-DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
+			rc5/crunch_allitnil_552.ppc.s \
+			rc5/crunch_lintilla_296.ppc.s"
+	;;
+
+    *ppc-604-linux-mt-egcs)		# [cramer] PPC 604-mt target
+	TARGET_CC="gcc -pipe -g"
+	TARGET_CCFLAGS="$OPTS_EGCS_PPC604 -DPIPELINE_COUNT=1 \
+			-DMULTITHREAD -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
+			rc5/crunch_allitnil_552.ppc.s \
+			rc5/crunch_lintilla_296.ppc.s"
+	TARGET_LIBS="-lpthread"
+	;;
+
+    *ppc-860-linux-egcs)		# [cramer] PPC 860 target
+	TARGET_CC="gcc -pipe -g"
+	TARGET_CCFLAGS="$OPTS_EGCS_PPC860 -DPIPELINE_COUNT=1 \
+			-DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
+			rc5/crunch_allitnil_552.ppc.s \
+			rc5/crunch_lintilla_296.ppc.s"
+	;;
+
+    *ppc-860-linux-mt-egcs)		# [cramer] PPC 860-mt target
+	TARGET_CC="gcc -pipe -g"
+	TARGET_CCFLAGS="$OPTS_EGCS_PPC860 -DPIPELINE_COUNT=1 \
+			-DMULTITHREAD -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
+			rc5/crunch_allitnil_552.ppc.s \
+			rc5/crunch_lintilla_296.ppc.s"
+	TARGET_LIBS="-lpthread"
+	;;
 
     *ppc-gcc)		# generic PPC target
 	TARGET_CCFLAGS="$OPTS_GCC_PPC -DPIPELINE_COUNT=1 \
@@ -1853,11 +1924,11 @@ echo "# Regular targets follow" >> Makefile
 
 echo "${EXENAME}:	\${BUILDNAME}" >> Makefile
 echo "	\${CP} \${BUILDNAME} ${EXENAME}" >> Makefile
+echo "	\${STRIP} ${EXENAME}" >> Makefile
 echo "" >> Makefile
 
 echo "\${BUILDNAME}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
 echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o \${BUILDNAME}" >> Makefile
-echo "	\${STRIP} \${BUILDNAME}" >> Makefile
 echo "" >> Makefile
 
 echo "clean:" >> Makefile
