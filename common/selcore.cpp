@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.110 2002/10/24 02:19:29 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.111 2002/10/24 02:27:56 acidblood Exp $"; }
 
 //#define TRACE
 
@@ -1516,7 +1516,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       extern "C" s32 rc5_72_unit_func_ses_2( RC5_72UnitWork *, u32 *, void *);
       extern "C" s32 rc5_72_unit_func_dg_2( RC5_72UnitWork *, u32 *, void *);
       extern "C" s32 rc5_72_unit_func_dg_3( RC5_72UnitWork *, u32 *, void *);
-      extern "C" s32 rc5_72_unit_func_dg-3a( RC5_72UnitWork *, u32 *, void *);
+      extern "C" s32 rc5_72_unit_func_dg_3a( RC5_72UnitWork *, u32 *, void *);
   #endif
 #endif
 
