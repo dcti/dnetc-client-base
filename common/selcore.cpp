@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.112 2001/04/14 13:18:35 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.113 2001/04/14 15:58:23 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -1177,7 +1177,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   // rc5/ansi/rc5ansi_2-rg.cpp
   extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
 #elif (CLIENT_CPU == CPU_IA64)
-  // rc5/ansi/rc5ansi_2-rg.cpp
+  // rc5/ansi/rc5ansi_4-rg.cpp
   extern "C" u32 rc5_unit_func_ansi_4_rg( RC5UnitWork *, u32 iterations );
 #elif (CLIENT_CPU == CPU_PA_RISC)
   // rc5/parisc/parisc.cpp encapulates parisc.s, 2 pipelines
@@ -1612,8 +1612,8 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
          unit_func.rc5 = rc5_unit_func_486_smc;
       #endif
       #if !defined(HAVE_NO_NASM)
-      else if (coresel == 8) // RC5 P4 core is 4 pipelines
-        { unit_func.rc5 = rc5_unit_func_p7; pipeline_count = 4; }
+      else if (coresel == 8) // RC5 P4 core is 3 pipelines
+        { unit_func.rc5 = rc5_unit_func_p7; pipeline_count = 3; }
       #endif
       #if !defined(HAVE_NO_NASM)
       else if (coresel == 9)
