@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.113  1998/06/26 02:47:04  daa
+// fix core selection on ppc -- from goldbob
+//
 // Revision 1.112  1998/06/25 04:43:29  silby
 // Changes to Internalgetfilename for win32 (+ other platforms in the future) to make path handling better (now it won't miss / and : on win32)
 //
@@ -115,7 +118,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.112 1998/06/25 04:43:29 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.113 1998/06/26 02:47:04 daa Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -2124,16 +2127,20 @@ previouscputype=cputype;// Set this so we know next time this proc is run.
       #ifdef NEW_STATS_AND_LOGMSG_STUFF
         double elapsed = CliGetKeyrateForProblemNoSave( &problem );
         LogScreenf( "%.1f kkeys/sec\n", (elapsed / 1000.0) );
+
+        if (fastcore < 0 || elapsed > fasttime)
+            {fastcore = whichcrunch; fasttime = elapsed;}
+
       #else
       gettimeofday( &stop, &dummy );
 
       double elapsed = max(.001,(stop.tv_sec - start.tv_sec) +
                   (((double)stop.tv_usec - (double)start.tv_usec)/1000000.0));
         LogScreenf( "%.1f kkeys/sec\n", (benchsize / 1000.0) / elapsed );
-      #endif
 
       if (fastcore < 0 || elapsed < fasttime)
           {fastcore = whichcrunch; fasttime = elapsed;}
+      #endif
     }
   }
   whichcrunch = fastcore;
