@@ -14,7 +14,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mips_crunch_cpp(void) {
-return "@(#)$Id: mips-crunch.cpp,v 1.16 1999/11/30 12:59:49 cyp Exp $"; }
+return "@(#)$Id: mips-crunch.cpp,v 1.17 1999/12/02 01:52:46 cyp Exp $"; }
 #endif
 
 
@@ -1701,11 +1701,11 @@ u32 crunch(register RC5UnitWork * rc5unitwork, u32 iterations )
 /* -------------------------------------------------------------------- */
 
 #ifdef __cplusplus
-extern "C" u32 rc5_unit_func_mips_crunch( register RC5UnitWork *, u32 iterations );
+extern "C" u32 rc5_unit_func_mips_crunch( RC5UnitWork *, u32 iterations );
 #endif
 
-u32 rc5_unit_func_mips_crunch( register RC5UnitWork *rc5unitwork, u32 iterations )
-{                                   /* this should optimize out */
+u32 rc5_unit_func_mips_crunch( RC5UnitWork *rc5unitwork, u32 iterations )
+{
   return crunch( rc5unitwork, iterations );
 }  
 

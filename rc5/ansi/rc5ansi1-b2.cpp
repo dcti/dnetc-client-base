@@ -1,39 +1,24 @@
-// Copyright distributed.net 1997 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: rc5ansi1-b2.cpp,v $
-// Revision 1.6  1998/07/08 22:59:42  remi
-// Lots of $Id$ stuff.
-//
-// Revision 1.5  1998/06/14 08:27:26  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-//
-// Revision 1.4  1998/06/14 08:13:43  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-//
-
-/*  This file is included from rc5.cpp so we can use __inline__.  */
-
+/* Copyright distributed.net 1997 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * u32 rc5_ansi_1_b2_rg_unit_func ( RC5UnitWork * rc5unitwork, u32 iterations )
+ * a 32 bit processor is assumed
+ *
+*/
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi1_b2_cpp (void) {
-return "@(#)$Id: rc5ansi1-b2.cpp,v 1.6 1998/07/08 22:59:42 remi Exp $"; }
+return "@(#)$Id: rc5ansi1-b2.cpp,v 1.7 1999/12/02 01:52:46 cyp Exp $"; }
 #endif
 
 #include "problem.h"
+#include "cputypes.h"
 #include "rotate.h"
+#define PIPELINE_COUNT 1 /* this is how many the core works with */
 
-
-#if (PIPELINE_COUNT != 1)
-#error "Expecting pipeline count of 1"
-#endif
-
-#ifndef _CPU_32BIT_
-#error "everything assumes a 32bit CPU..."
-#endif
-
+//#ifndef _CPU_32BIT_
+//#error "everything assumes a 32bit CPU..."
+//#endif
 
 #define P      0xB7E15163
 #define Q      0x9E3779B9
@@ -62,10 +47,7 @@ return "@(#)$Id: rc5ansi1-b2.cpp,v 1.6 1998/07/08 22:59:42 remi Exp $"; }
   eB = ROTL(eB ^ eA, eA) + (A = ROTL3(SN + A + Llo)); \
   Lhi = ROTL(Lhi + A + Llo, A + Llo)
 
-
-
-static __inline__
-u32 rc5_unit_func ( RC5UnitWork * rc5unitwork )
+static __inline__ u32 rc5_unit_func ( RC5UnitWork * rc5unitwork )
 {
   register u32 S00,S01,S02,S03,S04,S05,S06,S07,S08,S09,S10,S11,S12,
     S13,S14,S15,S16,S17,S18,S19,S20,S21,S22,S23,S24,S25;
@@ -73,7 +55,6 @@ u32 rc5_unit_func ( RC5UnitWork * rc5unitwork )
   register u32 A, Llo, Lhi;
   Llo = rc5unitwork->L0.lo;
   Lhi = rc5unitwork->L0.hi;
-
 
   /* Begin round 1 of key expansion */
   A = S00 = ROTL3(S_not(0)); Llo = ROTL(Llo + A, A);
@@ -170,3 +151,60 @@ u32 rc5_unit_func ( RC5UnitWork * rc5unitwork )
 	      ROTL3(S25 + A + ROTL(Llo + A + Lhi, A + Lhi));
   }
 }
+
+/* -------------------------------------------------------------------- */
+
+#ifdef __cplusplus
+extern "C" u32 rc5_ansi_1_b2_rg_unit_func ( RC5UnitWork *, u32 );
+#endif
+
+u32 rc5_ansi_1_b2_rg_unit_func ( RC5UnitWork * rc5unitwork, u32 iterations )
+{                                
+  u32 kiter = 0;
+  int keycount = iterations;
+  int pipeline_count = PIPELINE_COUNT;
+  
+  //LogScreenf ("rc5unitwork = %08X:%08X (%X)\n", rc5unitwork.L0.hi, rc5unitwork.L0.lo, keycount);
+  while ( keycount-- ) // iterations ignores the number of pipelines
+  {
+    u32 result = rc5_unit_func( rc5unitwork );
+    if ( result )
+    {
+      kiter += result-1;
+      break;
+    }
+    else
+    {
+      /* note: we switch the order */  
+      register u32 tempkeylo = rc5unitwork->L0.hi; 
+      register u32 tempkeyhi = rc5unitwork->L0.lo;
+      rc5unitwork->L0.lo =
+        ((tempkeylo >> 24) & 0x000000FFL) |                               
+        ((tempkeylo >>  8) & 0x0000FF00L) |                               
+        ((tempkeylo <<  8) & 0x00FF0000L) |                               
+        ((tempkeylo << 24) & 0xFF000000L);                                
+      rc5unitwork->L0.hi = 
+        ((tempkeyhi >> 24) & 0x000000FFL) |                               
+        ((tempkeyhi >>  8) & 0x0000FF00L) |                               
+        ((tempkeyhi <<  8) & 0x00FF0000L) |                               
+        ((tempkeyhi << 24) & 0xFF000000L);                                
+      rc5unitwork->L0.lo += pipeline_count;
+      if (rc5unitwork->L0.lo < ((u32)pipeline_count))
+        rc5unitwork->L0.hi++;
+      tempkeylo = rc5unitwork->L0.hi; 
+      tempkeyhi = rc5unitwork->L0.lo;
+      rc5unitwork->L0.lo =
+        ((tempkeylo >> 24) & 0x000000FFL) |                               
+        ((tempkeylo >>  8) & 0x0000FF00L) |                               
+        ((tempkeylo <<  8) & 0x00FF0000L) |                               
+        ((tempkeylo << 24) & 0xFF000000L);                                
+      rc5unitwork->L0.hi = 
+        ((tempkeyhi >> 24) & 0x000000FFL) |                               
+        ((tempkeyhi >>  8) & 0x0000FF00L) |                               
+        ((tempkeyhi <<  8) & 0x00FF0000L) |                               
+        ((tempkeyhi << 24) & 0xFF000000L);                                
+      kiter += pipeline_count;
+    }
+  }
+  return kiter;
+}  
