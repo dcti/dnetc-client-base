@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.23  1998/10/31 22:55:10  silby
+// freebsd non-mt changes completed, working perfectly.
+//
 // Revision 1.22  1998/10/31 22:49:40  silby
 // Change for freebsd_nonmt.
 //
@@ -97,7 +100,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.22 1998/10/31 22:49:40 silby Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.23 1998/10/31 22:55:10 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -297,6 +300,8 @@ static void yield_pump( void *tv_p )
     thr_yield();
   #elif ((CLIENT_OS == OS_FREEBSD) && defined(MULTITHREAD))
     sched_yield();
+  #elif ((CLIENT_OS == OS_FREEBSD) && !defined(MULTITHREAD))
+    NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_OS2)
     DosSleep(0);
   #elif (CLIENT_OS == OS_IRIX)
