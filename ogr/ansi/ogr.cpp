@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.19 2004/01/12 23:45:23 kakace Exp $
+ * $Id: ogr.cpp,v 1.2.4.20 2004/01/24 07:20:31 bdragon Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -170,19 +170,23 @@
            (OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM == 0)
   #undef OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
 #else
-  #undef OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
-  #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__) || \
-      defined(ASM_POWER) || \
-      (defined(__WATCOMC__) && defined(__386__)) || \
-      (defined(__MWERKS__) && defined(__INTEL__)) || \
-      (defined(__ICC)) /* icc is Intel only (duh!) */ || \
-      defined(ALPHA_CIX) || \
-      (defined(__GNUC__) && (defined(ASM_X86) \
-                             || (defined(ASM_68K) && (defined(mc68020) \
-                             || defined(mc68030) || defined(mc68040) \
-                             || defined(mc68060)))))
-    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 1
-    /* #define OGR_TEST_FIRSTBLANK */ /* ... to test */
+  #if (!defined(OVERWRITE_DEFAULT_OPTIMIZATIONS) && \
+       defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM)) || \
+       !defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM)
+    #undef OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
+    #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__) || \
+        defined(ASM_POWER) || \
+        (defined(__WATCOMC__) && defined(__386__)) || \
+        (defined(__MWERKS__) && defined(__INTEL__)) || \
+        (defined(__ICC)) /* icc is Intel only (duh!) */ || \
+        defined(ALPHA_CIX) || \
+        (defined(__GNUC__) && (defined(ASM_X86) \
+                               || (defined(ASM_68K) && (defined(mc68020) \
+                               || defined(mc68030) || defined(mc68040) \
+                               || defined(mc68060)))))
+      #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 1
+      /* #define OGR_TEST_FIRSTBLANK */ /* ... to test */
+    #endif
   #endif
 #endif
 
