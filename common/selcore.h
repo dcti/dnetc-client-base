@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.16.2.8 2004/05/20 21:13:14 kakace Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.16.2.9 2004/06/16 18:32:04 kakace Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
@@ -83,6 +83,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid );
 const char *selcoreGetDisplayName( unsigned int cont_i, int index );
 const char **corenames_for_contest( unsigned int cont_i );
 unsigned int corecount_for_contest( unsigned int cont_i );
+unsigned int nominal_rate_for_contest( unsigned int cont_i);
 
 /* conf calls these */
 int selcoreValidateCoreIndex( unsigned int cont_i, int index );
@@ -137,6 +138,9 @@ int selcoreGetPreselectedCoreForProject_rc572();
 
 int selcoreSelectCore_rc572( unsigned int threadindex,
                              int *client_cpuP, struct selcore *selinfo );
+
+unsigned int estimate_nominal_rate_rc572();
+
 #endif
 #ifdef HAVE_CSC_CORES
 int InitializeCoreTable_csc(int first_time);
@@ -179,6 +183,9 @@ int selcoreGetPreselectedCoreForProject_ogr();
 
 int selcoreSelectCore_ogr( unsigned int threadindex,
                            int *client_cpuP, struct selcore *selinfo );
+
+unsigned int estimate_nominal_rate_ogr();
+
 #endif
 #ifdef HAVE_OGR_PASS2
 int InitializeCoreTable_ogr_p2(int first_time);
@@ -193,6 +200,9 @@ int selcoreGetPreselectedCoreForProject_ogr();
 
 int selcoreSelectCore_ogr_p2( unsigned int threadindex,
                            int *client_cpuP, struct selcore *selinfo );
+
+unsigned int estimate_nominal_rate_ogr();
+
 #endif
 
 
