@@ -3,8 +3,15 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.119  1998/08/07 18:01:38  cyruspatel
+// Modified Fetch()/Flush() and Benchmark() to display normalized blocksizes
+// (ie 4*2^28 versus 1*2^30). Also added some functionality to Benchmark()
+// to assist users in selecting a 'preferredblocksize' and hint at what
+// sensible max/min buffer thresholds might be.
+//
 // Revision 1.118  1998/08/07 10:59:11  cberry
-// Changed handling of -benchmarkXXX so it performs the benchmark rather than giving the menu.
+// Changed handling of -benchmarkXXX so it performs the benchmark rather 
+// than giving the menu.
 //
 // Revision 1.117  1998/08/05 18:28:40  cyruspatel
 // Converted more printf()s to LogScreen()s, changed some Log()/LogScreen()s
@@ -18,7 +25,15 @@
 // Lurk functionality is now fully encapsulated inside the Lurk Class, much less code floating inside client.cpp now.
 //
 // Revision 1.114  1998/08/02 03:16:31  silby
-// Major reorganization:  Log,LogScreen, and LogScreenf are now in logging.cpp, and are global functions - client.h #includes logging.h, which is all you need to use those functions.  Lurk handling has been added into the Lurk class, which resides in lurk.cpp, and is auto-included by client.h if lurk is defined as well. baseincs.h has had lurk-specific win32 includes moved to lurk.cpp, cliconfig.cpp has been modified to reflect the changes to log/logscreen/logscreenf, and mail.cpp uses logscreen now, instead of printf. client.cpp has had variable names changed as well, etc.
+// Major reorganization:  Log,LogScreen, and LogScreenf 
+// are now in logging.cpp, and are global functions - 
+// client.h #includes logging.h, which is all you need to use those
+// functions.  Lurk handling has been added into the Lurk class, which 
+// resides in lurk .cpp, and is auto-included by client.h if lurk is 
+// defined as well. baseincs.h has had lurk-specific win32 includes moved
+// to lurk.cpp, cliconfig.cpp has been modified to reflect the changes to 
+// log/logscreen/logscreenf, and mail.cpp uses logscreen now, instead of 
+// printf. client.cpp has had variable names changed as well, etc.
 //
 // Revision 1.113  1998/07/30 05:08:59  silby
 // Fixed DONT_USE_PATHWORK handling, ini_etc strings were still being included, now they are not. Also, added the logic for dialwhenneeded, which is a new lurk feature.
@@ -114,8 +129,7 @@
 // cleared integer cast warning.
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
-// Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.118 1998/08/07 10:59:11 cberry Exp $.
+// Cleared a GCC warning. Tweaked Id.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -291,7 +305,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.118 1998/08/07 10:59:11 cberry Exp $"; }
+return "@(#)$Id: client.cpp,v 1.119 1998/08/07 18:01:38 cyruspatel Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -627,20 +641,18 @@ s32 Client::Fetch( u8 contest, Network *netin, s32 quietness, s32 force )
   u32 scram2;
   s32 err;
   FileEntry data;
+  unsigned int temptimes28, times28 = 0; //count of 2^28 blocks
   s32 count = 0;
   s32 more;
   s32 retry;
   u32 thisrandomprefix;
   u8 tmpcontest;
 
-if (force == 0) // check to see if fetch should be done
-  {
-    if (offlinemode
-      #if (CLIENT_OS == OS_NETWARE)
-          || !nwCliIsNetworkAvailable(0)
-      #endif
-    ) return( -1 );
-  };
+  if ((offlinemode && (force == 0))  // check to see if fetch should be done
+    #if (CLIENT_OS == OS_NETWARE)
+       || !nwCliIsNetworkAvailable(0)
+    #endif
+  ) return( -1 );
 
   if (contestdone[contest]) return( -1 );
 
@@ -885,13 +897,15 @@ if (force == 0) // check to see if fetch should be done
     data.cypher.lo = packet.cypher.lo;
     data.keysdone.hi = 0;
     data.keysdone.lo = 0;
+
     if (packet.iterations == 0)
     {
       packet.iterations = (u32) 1<<31;
       LogScreen("\n[%s] Received 2^32 block.  Truncating to 2^31\n", Time());
     }
-    data.iterations.hi = (packet.iterations == 0 ? 1 : 0 );
+    data.iterations.hi = 0;
     data.iterations.lo = packet.iterations;
+
     data.op = packet.op;
     strcpy( data.id, "rc5@distributed.net" );
 #if (CLIENT_OS == OS_OS390)
@@ -911,6 +925,16 @@ if (force == 0) // check to see if fetch should be done
 //      ntohl( data.cypher.hi ) , ntohl( data.cypher.lo ),
 //      ntohl( data.key.hi ) , ntohl( data.key.lo ));
 
+    if (data.iterations.hi)
+      temptimes28 = 16;
+    else
+      {
+      unsigned int size =  0;
+      u32 iter = ntohl(data.iterations.lo);
+      while (iter>1 && size<28)
+        { size++; iter>>=1; }
+      temptimes28 = iter;
+      }
 
     data.checksum =
       htonl( Checksum( (u32 *) &data, ( sizeof(FileEntry) / 4 ) - 2 ) );
@@ -926,7 +950,10 @@ if (force == 0) // check to see if fetch should be done
       if (!netin) delete net;
       return( -1 );
     }
+
     count++;
+    times28+=temptimes28;
+
     if (proxymessage[0] != 0) {
       if (quietness <= 1) // if > 1, don't show proxy message
         {
@@ -941,7 +968,7 @@ if (force == 0) // check to see if fetch should be done
     }
 #if !defined(NOMAIN)
     if (!isatty(fileno(stdout))) 
-      Log( "<" );  // use simple output for redirected stdout
+      LogRaw( "<" );  // use simple output for redirected stdout
     else
 #endif
       {
@@ -975,7 +1002,9 @@ if (force == 0) // check to see if fetch should be done
   #endif
 
   LogScreen( "\n" );
-  Log( "[%s] Retrieved %d %s block%s from server              \n", Time(), (int) count, (contest == 1 ? "DES":"RC5"), count == 1 ? "" : "s" );
+  Log( "[%s] Retrieved %d %s block%s (%d*2^28 keys) from server.\n", 
+      Time(), (int) count, (contest == 1 ? "DES":"RC5"),
+      ((count==1)?(""):("s")), (int)(times28));
   return ( count );
 }
 
@@ -1023,6 +1052,7 @@ s32 Client::Flush( u8 contest , Network *netin, s32 quietness, s32 force )
   Packet packet;
   u32 scram;
   u32 scram2;
+  unsigned int temptimes28, times28 = 0; //count of 2^28 blocks
   s32 err;
   u32 oper;
   FileEntry data;
@@ -1030,14 +1060,11 @@ s32 Client::Flush( u8 contest , Network *netin, s32 quietness, s32 force )
   s32 more;
   u32 i, retry;
 
-if (force == 0) // Check if flush should be done
-  {
-    if (offlinemode
+  if ((offlinemode && (force == 0))  // check to see if flush should be done
     #if (CLIENT_OS == OS_NETWARE)
-          || !nwCliIsNetworkAvailable(0)
+       || !nwCliIsNetworkAvailable(0)
     #endif
-     ) return( -1 );
-  };
+  ) return( -1 );
 
   if (contestdone[contest]) return( -1 );
 
@@ -1208,6 +1235,17 @@ if (force == 0) // Check if flush should be done
     Descramble( ntohl( data.scramble ),
                 (u32 *) &data, ( sizeof(FileEntry) / 4 ) - 1 );
 
+    if (data.iterations.hi)
+      temptimes28 = 16;
+    else
+      {
+      unsigned int size =  0;
+      u32 iter = ntohl(data.iterations.lo);
+      while (iter>1 && size<28)
+        { size++; iter>>=1; }
+      temptimes28 = iter;
+      }
+
     // compose real packet...
     // data is in network byte order, and so are the packet strctures,
     // so we can just copy...
@@ -1340,7 +1378,10 @@ if (force == 0) // Check if flush should be done
         if (!netin) delete net;
         return( count ? count : -1 );
       }
+
       count++;
+      times28+=temptimes28;
+
       if (proxymessage[0] != 0)
       {
         if (quietness <= 1) // if > 1, don't show proxy message
@@ -1396,7 +1437,9 @@ if (force == 0) // Check if flush should be done
   #endif
 
   LogScreen( "\n" );
-  Log( "[%s] Sent %d %s block%s to server                \n", Time(), (int) count, (contest == 1 ? "DES":"RC5"), count == 1 ? "" : "s" );
+  Log( "[%s] Sent %d %s block%s (%d*2^28 keys) to server.\n", 
+      Time(), (int) count, (contest == 1 ? "DES":"RC5"),
+      ((count==1)?(""):("s")), (int)(times28));
   return( count );
 }
 
@@ -1415,16 +1458,14 @@ s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr, s32 force )
   s32 retcode,retcode1,retcode2;
   Network *net;
 
-if (force == 0) // We need to check if we're allowed to connect
+  // We need to check if we're allowed to connect
   // If force==1, we don't care about the offline mode
-  {
-    if (offlinemode
-      #if (CLIENT_OS == OS_NETWARE)
-        || !nwCliIsNetworkAvailable(0)
-      #endif
-    )
+  if ((offlinemode && (force == 0)) 
+    #if (CLIENT_OS == OS_NETWARE)
+      || !nwCliIsNetworkAvailable(0)
+    #endif
+  )
     return( -1 );
-  }
 
     LogFlush(0); //checktosend(x)
 
@@ -1520,17 +1561,45 @@ u32 Client::Benchmark( u8 contest, u32 numk )
 {
   ContestWork contestwork;
 
-  u32 numkeys = 10000000L;
+  unsigned int itersize;
+  unsigned int keycountshift;
+  const char *contestname;
+  unsigned int contestid;
   u32 tslice;
 
-  if (SelectCore() || SignalTriggered) return 0;
-  if (numk != 0) numkeys = max(numk,1000000L);
+  if (numk == 0)
+    itersize = 23;         //8388608 instead of 10000000L;
+  else if ( numk < (1<<20))   //max(numk,1000000L);
+    itersize = 20;         //1048576 instead of 1000000L
+  else 
+    {  
+    itersize = 31;
+    while (( numk & (1<<itersize) ) == 0)
+      itersize--;
+    }
 
-  if (contest == 1)
-    LogScreen( "Benchmarking RC5 with %d tests:\n", (int) numkeys );
-  else if (contest == 2)
-    LogScreen( "Benchmarking DES with %d tests:\n", (int) numkeys * 2 );
-  else return 0;
+  if (contest == 2 && itersize < 31) //Assumes that DES is (at least)
+    itersize++;                      //twice as fast as RC5.
+
+  if (contest == 2)
+    {
+    keycountshift = 1;
+    contestname = "DES";
+    contestid = 1;
+    }
+  else
+    {
+    keycountshift = 0;
+    contestname = "RC5";
+    contestid = 0;
+    }
+
+  if (SelectCore() || SignalTriggered) 
+    return 0;
+
+  LogScreenRaw( "\nBenchmarking %s with 1*2^%d tests (%u keys):\n", 
+                 contestname, itersize+keycountshift,
+                          (int)((1<<itersize+keycountshift)) );
 
   contestwork.key.lo = htonl( 0 );
   contestwork.key.hi = htonl( 0 );
@@ -1542,10 +1611,10 @@ u32 Client::Benchmark( u8 contest, u32 numk )
   contestwork.cypher.hi = htonl( 0 );
   contestwork.keysdone.lo = htonl( 0 );
   contestwork.keysdone.hi = htonl( 0 );
-  contestwork.iterations.lo = htonl( numkeys );
+  contestwork.iterations.lo = htonl( (1<<itersize) );
   contestwork.iterations.hi = htonl( 0 );
 
-  (problem[0]).LoadState( &contestwork , (u32) (contest - 1) );
+  (problem[0]).LoadState( &contestwork , (u32) (contestid) );
 
   (problem[0]).percent = 0;
   tslice = ( 100000L / PIPELINE_COUNT );
@@ -1572,21 +1641,47 @@ u32 Client::Benchmark( u8 contest, u32 numk )
     }
   LogScreenPercent( 1 ); //finish the percent bar
 
-  #if 0 //could use this, but it shows the block number ("00000000:00000000")
-    LogScreen("\n[%s] %s\n", CliGetTimeString( NULL, 1 ),
-                CliGetMessageForProblemCompletedNoSave( &(problem[0]) ) );
-    return (u32)0;  //unused, so we don't care
-  #else
-    struct timeval tv;
-    char ratestr[32];
-    double rate = CliGetKeyrateForProblemNoSave( &(problem[0]) );
-    tv.tv_sec = (problem[0]).timehi;  //read the time the problem:run started
-    tv.tv_usec = (problem[0]).timelo;
-    CliTimerDiff( &tv, &tv, NULL );    //get the elapsed time
-    LogScreen("\nCompleted in %s [%skeys/sec]\n", CliGetTimeString( &tv, 2 ),
+  struct timeval tv;
+  char ratestr[32];
+  double rate = CliGetKeyrateForProblemNoSave( &(problem[0]) );
+  tv.tv_sec = (problem[0]).timehi;  //read the time the problem:run started
+  tv.tv_usec = (problem[0]).timelo;
+  CliTimerDiff( &tv, &tv, NULL );    //get the elapsed time
+  LogScreenRaw("\nCompleted in %s [%skeys/sec]\n", CliGetTimeString( &tv, 2 ),
                              CliGetKeyrateAsString( ratestr, rate ) );
-    return (u32)(rate);
-  #endif
+
+  itersize+=keycountshift;
+  while (tv.tv_sec<(60*60) && itersize<31)
+    {
+    tv.tv_sec<<=1;
+    tv.tv_usec<<=1;
+    tv.tv_sec+=(tv.tv_usec/1000000L);
+    tv.tv_usec%=1000000L;
+    itersize++;
+    }
+
+  LogScreenRaw(
+  "The preferred %s blocksize for this machine should be set to %d (%d*2^28 keys).\n"
+  "At the benchmarked keyrate (ie, under ideal conditions) each processor\n"
+  "would finish a block of that size in approximately %s.\n", contestname, 
+   (unsigned int)itersize, (unsigned int)((((u32)(1<<itersize))/((u32)(1<<28)))),
+   CliGetTimeString( &tv, 2 ));  
+
+  #if 0 //for proof-of-concept testing plehzure...
+  //what follows is probably true for all processors, but oh well...
+  u32 krate = ((contest==2)?(451485):(127254)); //real numbers for a 90Mhz P5
+  u32 prate = 90;
+
+  LogScreenRaw( 
+  "If this client is running on a cooperative multitasking system, then a good\n"
+  "%s timeslice setting may be determined by dividing the benchmarked rate by\n"
+  "the processor clock rate in MHz. For example, if the %s keyrate is %d\n"
+  "and this is %dMHz machine, then an ideal %s timeslice would be about %u.\n", 
+  contestname, contestname, (int)(krate), (int)(prate), contestname, 
+                                         (int)(((krate)+(prate>>1))/prate) );
+  #endif  
+  
+  return (u32)(rate);
 }
 
 // ---------------------------------------------------------------------------
@@ -3129,7 +3224,12 @@ int Client::RunCommandlineModes( int argc, char *argv[], int *retcodeP )
       offlinemode=0;
       NetworkInitialize();
 
-      if ( dofetch )
+      if ( dofetch && doflush )
+        {
+        dofetch = Update (0, 1, 1, 0 );
+        doflush = Update (1, 1, 1, 0 );
+        }
+      else if ( dofetch )
         {
         int retcode2;
         if ( doforce )
@@ -3155,7 +3255,7 @@ int Client::RunCommandlineModes( int argc, char *argv[], int *retcodeP )
           dofetch = retcode;
           }
         }
-      if ( doflush )
+      else if ( doflush )
         {
         int retcode2;
         if (doforce)
@@ -3224,10 +3324,20 @@ int Client::RunCommandlineModes( int argc, char *argv[], int *retcodeP )
       else  //one of them failed
         retcode = 1; 
       }
-    else if (strcmp( argv[i], "-benchmark" ) == 0 )
+    else if (( strcmp( argv[i], "-benchmark2rc5" ) == 0 ) ||
+             ( strcmp( argv[i], "-benchmark2des" ) == 0 ) ||
+             ( strcmp( argv[i], "-benchmark2" ) == 0 ) ||
+             ( strcmp( argv[i], "-benchmarkrc5" ) == 0 ) ||
+             ( strcmp( argv[i], "-benchmarkdes" ) == 0 ) ||
+             ( strcmp( argv[i], "-benchmark" ) == 0 ))
       {
-      int dobench = '1'; 
-      if ( isatty(fileno(stdout)) )
+      int dobench = '1';  //default to benchmark2
+      if ( strcmp( argv[i], "-benchmark2rc5" ) == 0 )      dobench = '2';
+      else if ( strcmp( argv[i], "-benchmark2des" ) == 0 ) dobench = '3';
+      else if ( strcmp( argv[i], "-benchmarkrc5" ) == 0 )  dobench = '5';
+      else if ( strcmp( argv[i], "-benchmarkdes" ) == 0 )  dobench = '6';
+      else if ( strcmp( argv[i], "-benchmark2"   ) == 0 )  dobench = '1';
+      else if ( isatty(fileno(stdout)) ) // -benchmark
         {
         LogScreen( "Block type combinations to benchmark:\n" 
                    "\n1. Both a short RC5 block and a short DES block."
@@ -3260,52 +3370,18 @@ int Client::RunCommandlineModes( int argc, char *argv[], int *retcodeP )
         LogScreenRaw("%c\n", ((isprint(dobench))?(dobench):('\n')) );
         } 
       if ( !SignalTriggered && ( dobench == '1' || dobench == '2' ))
-        Benchmark(1, 1000000L);
+        Benchmark(1, 1<<20 ); //1048576 instead of 1000000
       if ( !SignalTriggered && ( dobench == '1' || dobench == '3' ))
-        Benchmark(2, 1000000L);
+        Benchmark(2, 1<<20 ); //1048576 instead of 1000000
       if ( !SignalTriggered && ( dobench == '4' || dobench == '5' ))
         Benchmark(1, 0 );
       if ( !SignalTriggered && ( dobench == '4' || dobench == '6' ))
         Benchmark(2, 0 );
       retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
       }
-    else if( strcmp( argv[i], "-benchmark2" ) == 0 )
-      {
-	  Benchmark(1, 1000000L);
-	  if (!SignalTriggered)
-	  {
-	      Benchmark(2, 1000000L);
-	  }
-	  retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
-      }
-    else if( strcmp( argv[i], "-benchmark2rc5" ) == 0 )
-      {
-	  Benchmark(1, 1000000L);
-	  retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
-      }
-    else if( strcmp( argv[i], "-benchmark2des" ) == 0 )
-      {
-	  Benchmark(2, 1000000L);
-	  retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
-      }
-    else if( strcmp( argv[i], "-benchmarkrc5" ) == 0 )
-      {
-	  Benchmark(1, 0);
-	  retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
-      }
-    else if( strcmp( argv[i], "-benchmarkdes" ) == 0 )
-      {
-	  Benchmark(2, 0);
-	  retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
-      }
     else if ( strcmp( argv[i], "-cpuinfo" ) == 0 )
       {
-      const char *scpuid, *smaxcpus, *sfoundcpus;  //cpucheck.cpp
-      GetProcessorInformationStrings( &scpuid, &smaxcpus, &sfoundcpus );
-      LogScreen("Automatic processor detection tag:\n\t%s\n"
-      "Number of processors detected by this client:\n\t%s\n"
-      "Number of processors supported by each instance of this client:\n\t%s\n",
-      scpuid, sfoundcpus, smaxcpus );
+      DisplayProcessorInformation(); //in cpucheck.cpp
       retcode = 0; //and break out of loop
       }
     else if ( strcmp( argv[i], "-config" ) == 0 )
