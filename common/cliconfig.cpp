@@ -438,14 +438,8 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
       switch ( choice )
       {
         case CONF_ID:
-          char *whitespacekiller;
           strncpy( id, parm, sizeof(id) - 1 );
-          while (strchr(id, ' ') != NULL)
-            {
-            whitespacekiller=strchr(id, ' ');
-            strncpy(whitespacekiller, whitespacekiller+1,
-                    sizeof(id)-(whitespacekiller+1-id));
-            };
+          killwhitespace(id);
           break;
         case CONF_THRESHOLDI:
           inthreshold[0]=atoi(parm);
@@ -505,13 +499,15 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
           break;
         case CONF_KEYPROXY:
           strncpy( keyproxy, parm, sizeof(keyproxy) - 1 );
+          killwhitespace(keyproxy);
           CheckForcedKeyport();
           break;
         case CONF_KEYPORT:
           keyport = atoi(parm); CheckForcedKeyport();
           break;
         case CONF_HTTPPROXY:
-          strncpy( httpproxy, parm, sizeof(httpproxy) - 1); break;
+          strncpy( httpproxy, parm, sizeof(httpproxy) - 1);
+          killwhitespace(httpproxy);break;
         case CONF_HTTPPORT:
           httpport = atoi(parm); break;
         case CONF_HTTPID:
@@ -619,12 +615,14 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
           break;
         case CONF_SMTPSRVR:
           strncpy( smtpsrvr, parm, sizeof(smtpsrvr) - 1 );
+          killwhitespace(smtpsrvr);
           break;
         case CONF_SMTPFROM:
           strncpy( smtpfrom, parm, sizeof(smtpfrom) - 1 );
           break;
         case CONF_SMTPDEST:
           strncpy( smtpdest, parm, sizeof(smtpdest) - 1 );
+          killwhitespace(smtpdest);
           break;
 #if defined(MULTITHREAD)
         case CONF_NUMCPU:
@@ -974,6 +972,24 @@ if (uuehttpmode > 1)
 
 //----------------------------------------------------------------------------
 
+void Client::killwhitespace( char *string )
+// Removes all spaces from a string
+{
+char *whitespaceptr;
+
+while (strchr(string, ' ') != NULL)
+  {
+  whitespaceptr=strchr(string, ' ');
+  strncpy(whitespaceptr, whitespaceptr+1,
+  strlen(string)+1-(whitespaceptr+1-string));
+  };
+
+
+}
+
+
+//----------------------------------------------------------------------------
+
 
 void Client::clearscreen( void )
 // Clears the screen. (Platform specific ifdefs go inside of it.)
@@ -1007,7 +1023,6 @@ s32 Client::ReadConfig(void)
   IniSection ini;
   s32 inierror, tempconfig;
   char *p, buffer[64];
-  char *whitespacekiller;
 
   inierror = ini.ReadIniFile( inifilename );
   if ( inierror )
@@ -1018,13 +1033,6 @@ s32 Client::ReadConfig(void)
 #define INIGETKEY(key) (ini.getkey(OPTION_SECTION, options[key].name, options[key].defaultsetting)[0])
 
   INIGETKEY(CONF_ID).copyto(id, sizeof(id));
-  while (strchr(id, ' ') != NULL)
-    {
-    whitespacekiller=strchr(id, ' ');
-    strncpy(whitespacekiller, whitespacekiller+1,
-    sizeof(id)-(whitespacekiller+1-id));
-    };// removes whitespace in the address
-
   INIGETKEY(CONF_THRESHOLDI).copyto(buffer, sizeof(buffer));
   p = strchr( buffer, ':' );
   if (p == NULL) {
@@ -1138,6 +1146,13 @@ void Client::ValidateConfig( void )
   system_info the_info;
   static bool did_detect_message = false;
 #endif
+
+  killwhitespace(id);
+  killwhitespace(keyproxy);
+  killwhitespace(httpproxy);
+  killwhitespace(smtpsrvr);
+  killwhitespace(smtpdest);
+
   if ( inthreshold[0] < 1   ) inthreshold[0] = 1;
   if ( inthreshold[0] > 1000 ) inthreshold[0] = 1000;
   if ( outthreshold[0] < 1   ) outthreshold[0] = 1;
