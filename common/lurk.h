@@ -1,9 +1,19 @@
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-
-
+//
+// $Log: lurk.h,v $
+// Revision 1.5  1998/10/03 03:24:36  cyp
+// Fixed a broken #endif (had trailing comment without //). Added
+// #ifndef __LURK_H__ /#define __LURK_H__ /#endif nesting.
+//
+//
+//
 #ifndef __LURK_H__
+#define __LURK_H__
+
+#include "cputypes.h"
+#if (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)
 
 #ifndef LURK
 #define LURK
@@ -86,4 +96,6 @@ s32 dialstatus;
 
 extern Lurk dialup;
 
-#endif __LURK_H__
+#endif //CLIENT_OS == ...
+#endif //__LURK_H__
+
