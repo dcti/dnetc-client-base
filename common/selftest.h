@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selftest.h,v $
+// Revision 1.3  1999/01/08 10:05:42  chrisb
+// Added 'threadindex' parameter (defaults to -1L, as with Problem::Problem) to SelfTest(). Allows RISC OS to self test the x86 core.
+//
 // Revision 1.2  1999/01/01 02:45:16  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -20,6 +23,6 @@
 
 /* returns number of tests if all passed or 
    negative number of the test that failed */
-int SelfTest( unsigned int contest, int cputype );
+int SelfTest( unsigned int contest, int cputype , int threadindex = -1L);
 
 #endif

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selftest.cpp,v $
+// Revision 1.37  1999/01/08 10:05:42  chrisb
+// Added 'threadindex' parameter (defaults to -1L, as with Problem::Problem) to SelfTest(). Allows RISC OS to self test the x86 core.
+//
 // Revision 1.36  1999/01/01 02:45:16  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -36,7 +39,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.36 1999/01/01 02:45:16 cramer Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.37 1999/01/08 10:05:42 chrisb Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -132,12 +135,12 @@ static const u32 des_test_cases[TEST_CASE_COUNT][8] = {
 
 // ---------------------------------------------------------------------------
 
-int SelfTest( unsigned int contest, int cputype )
+int SelfTest( unsigned int contest, int cputype, int threadindex /* defaults to -1L */ )
 {
   s32 run;
   unsigned int testnum;
   const u32 (*test_cases)[TEST_CASE_COUNT][8];
-  Problem problem;
+  Problem problem(threadindex);
   ContestWork contestwork;
   RC5Result rc5result;
   u64 expectedsolution, solutionfound;
@@ -146,7 +149,11 @@ int SelfTest( unsigned int contest, int cputype )
   if (contest == 0)
     {
     test_cases = (const u32 (*)[TEST_CASE_COUNT][8])&rc5_test_cases[0][0];
+#if (CLIENT_OS == OS_RISCOS)
+    LogScreen("Beginning %s RC5 Self-test.\n", (threadindex == 1)?"x86":"ARM");
+#else
     LogScreen("Beginning RC5 Self-test.\n");
+#endif
     }
   else if (contest == 1)
     {
@@ -190,53 +197,6 @@ int SelfTest( unsigned int contest, int cputype )
     contestwork.key.hi = expectedsolution.hi;
 
 
-/*
-   The ARM cores use a feature of the key expansion which relies on
-   the high word of the key not changing, so these tests break the
-   cores.
-
-   When we eventually start distributing blocks >32 bits, the ARM
-   clients will be limited to 32 bits or below. 32 bits will take
-   the fastest StrongARM about 4 hours to complete.
-*/
-#if (CLIENT_CPU == CPU_ARM)
-#error "IF THESE RC5 SELF TESTS FAILS, THEN YOUR CORES ARE LIKELY TO BE BUGGY !!!"
-/*
-  !!!!!!!!!!!!!!
-  VERY IMPORTANT
-  !!!!!!!!!!!!!!
-
-  These self-test blocks are 17 bits blocks !!
-  They are no where near 32 bits !
-  On my 486 DX4/100, the full rc5 test suite completes in about 17 seconds.
-
-  Please look carefully at my comments, starting from
-  "another way of explaining this algorithm"
-
-    6 the solution is :       47FC0000:000076B5
-      we're starting from :   47FBFFFF:FFFF0000
-
-  47FBFFFFF:FFFF0000 is a perfectly valid 17 bits block.
-
-  You're assuming that when the client gets an n-bit block, the n least
-  significant bits are all zero, but I don't know if this is true in all
-  situations (ie, full proxies on port 2064, personal proxies (all versions), 
-  the http cgi, the mail system, the telnet proxy).
-  In previous client versions, I've seen something like "3*28 bits blocks", and 
-  I'm wondering if such blocks have been fully checked by ARM cores...
-  
-  I think it's pretty dangerous to assume the proxies won't sent someday a
-  30-bit block starting from 47BFFFFF:E0000000 and ending with 47C00000:0FFFFFFF
-  for example.
-
-  In all cases, and even if the proxies are made like you assume,
-
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !! THE SELF-TESTS 2 AND 3 SHOULD NEVER FAIL !!
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-*/
-#endif
 
     if (contest == 0) { // RC5-64
       // test case 1 is the RSA pseudo-contest solution

@@ -8,6 +8,9 @@
 */    
 //
 // $Log: modereq.cpp,v $
+// Revision 1.18  1999/01/08 10:05:42  chrisb
+// Added 'threadindex' parameter (defaults to -1L, as with Problem::Problem) to SelfTest(). Allows RISC OS to self test the x86 core.
+//
 // Revision 1.17  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -68,7 +71,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.17 1999/01/01 02:45:15 cramer Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.18 1999/01/08 10:05:42 chrisb Exp $"; }
 #endif
 
 #include "client.h"   //client class
@@ -270,8 +273,27 @@ int ModeReqRun(Client *client)
         if (client)
           {
           client->SelectCore( 0 /* not quietly */ );
+#if (CLIENT_OS == OS_RISCOS)
+/*
+    we may have to test cores for 2 different CPU architectures
+*/
+	  if (client->numcpu == 2)
+	  {
+	      if ((SelfTest(0, client->cputype, 0) > 0 ) &&
+		  (SelfTest(1, client->cputype, 0) > 0 ))
+	      {
+		  SelfTest(0, client->cputype, 1);
+	      }
+	  }
+	  else
+	  {
+	      if ( SelfTest(0, client->cputype , 0) > 0 ) 
+		  SelfTest(1, client->cputype , 0);
+	  }
+#else
           if ( SelfTest(0, client->cputype ) > 0 ) 
             SelfTest(1, client->cputype );
+#endif
           }
         retval |= (MODEREQ_TEST);
         modereq.reqbits &= ~(MODEREQ_TEST);
