@@ -3,8 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.143  1998/10/04 16:54:05  remi
+// Moved a misplaced #endif.
+// Wrapped $Log comments.
+//
 // Revision 1.142  1998/10/04 03:22:14  silby
-// Changed startup logging code so that CLIENT_VERSIONSTRING was used so that it's obvious if a BETA is being used in logfiles (could not be determined otherwise)
+// Changed startup logging code so that CLIENT_VERSIONSTRING was used
+// so that it's obvious if a BETA is being used in logfiles (could not
+// be determined otherwise)
 //
 // Revision 1.141  1998/10/03 23:27:51  remi
 // Use 'usemmx' .ini setting if any MMX core is compiled in.
@@ -56,7 +62,8 @@
 // blocks are now also tagged with the core type and CLIENT_BUILD_FRAC
 //
 // Revision 1.130  1998/08/21 09:05:42  cberry
-// Fixed block size suggestion for CPUs so slow that they can't do a 2^28 block in an hour.
+// Fixed block size suggestion for CPUs so slow that they can't do a
+// 2^28 block in an hour.
 //
 // Revision 1.129  1998/08/20 19:34:34  cyruspatel
 // Removed that terrible PIPELINE_COUNT hack: Timeslice and pipeline count
@@ -187,7 +194,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.142 1998/10/04 03:22:14 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.143 1998/10/04 16:54:05 remi Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -340,7 +347,7 @@ static void PrintBanner(const char *dnet_id)
     #if defined(KWAN)
     #if defined(MEGGS)
     LogScreenRaw( "DES bitslice driver Copyright Andrew Meggs\n" 
-               "DES sboxes routines Copyright Matthew Kwan\n" );
+                  "DES sboxes routines Copyright Matthew Kwan\n" );
     #else
     LogScreenRaw( "DES search routines Copyright Matthew Kwan\n" );
     #endif
@@ -392,6 +399,8 @@ static void PrintBanner(const char *dnet_id)
       LogScreenRaw("Notice: This is beta release and expires on %s\n\n",
        CliGetTimeString(&expirationtime,1) );
       }
+
+    #endif // BETA
     }
 
   return;
@@ -439,7 +448,6 @@ int Client::Main( int argc, const char *argv[], int restarted )
     }
   return retcode;
 }  
-#endif
 
 // --------------------------------------------------------------------------
 
