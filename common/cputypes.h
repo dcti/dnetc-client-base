@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.42  1999/01/11 23:38:53  michmarc
+// Add SMP support for Alpha/Win32.  [Are Alpha/unix cores also SMP safe?]
+//
 // Revision 1.41  1999/01/06 06:04:02  cramer
 // cleaned up some of the solaris/sunos updates
 //
@@ -481,7 +484,8 @@ struct s128 { s64 hi, lo; };
 
 #if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_88K) || \
      (CLIENT_CPU == CPU_SPARC) || (CLIENT_CPU == CPU_POWERPC) || \
-     (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM))
+     (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM) || \
+     ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)))
    #define CORES_SUPPORT_SMP
 #endif   
 
