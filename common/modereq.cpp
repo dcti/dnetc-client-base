@@ -11,7 +11,7 @@
  * ---------------------------------------------------------------
 */    
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.28.2.1 1999/06/08 02:08:38 pice Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.28.2.2 1999/06/10 18:19:54 cyp Exp $"; }
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
@@ -36,36 +36,25 @@ static struct
 {
   int isrunning;
   int reqbits;
-  int size;
   const char *filetounlock;
   const char *filetoimport;
   const char *helpoption;
-} modereq = {0,0,0, (const char *)0,(const char *)0};
+} modereq = {0,0,(const char *)0,(const char *)0,(const char *)0};
 
 /* --------------------------------------------------------------- */
 
-int ModeReqSetArg(int mode, void *arg, int impsize )
+int ModeReqSetArg(int mode, void *arg)
 {
   if (mode == MODEREQ_UNLOCK)
-  {
-    ModeReqSet(MODEREQ_UNLOCK);
     modereq.filetounlock = (const char *)arg;
-    return 0;
-  }
-  if (mode == MODEREQ_IMPORT)
-  {
-    ModeReqSet(MODEREQ_IMPORT);
+  else if (mode == MODEREQ_IMPORT)
     modereq.filetoimport = (const char *)arg;
-	modereq.size = impsize;
-    return 0;
-  }
-  if (mode == MODEREQ_CMDLINE_HELP)
-  {
-    ModeReqSet(MODEREQ_CMDLINE_HELP);
+  else if (mode == MODEREQ_CMDLINE_HELP)
     modereq.helpoption = (const char *)arg;
-    return 0;
-  }
-  return -1;
+  else
+    return -1;
+  ModeReqSet(mode);
+  return 0;
 }  
   
 /* --------------------------------------------------------------- */
@@ -231,7 +220,7 @@ int ModeReqRun(Client *client)
       {
         if (modereq.filetoimport && client)
         {
-          BufferImportFileRecords(client, modereq.filetoimport, 1 /* interactive */, modereq.size);
+          BufferImportFileRecords(client, modereq.filetoimport, 1 /* interactive */);
           modereq.filetoimport = (const char *)0;
           retval |= (MODEREQ_IMPORT);
         }

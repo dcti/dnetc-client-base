@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.10 1999/06/08 02:08:37 pice Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.11 1999/06/10 18:19:53 cyp Exp $"; }
 
 //#define TRACE
 
@@ -45,7 +45,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
   int inimissing = 0;
   int terminate_app = 0, havemode = 0;
   int pos, skip_next;
-  const char *thisarg, *argvalue, *nextarg;
+  const char *thisarg, *argvalue;
 
   TRACE_OUT((+1,"ParseCommandline(%d,%d)\n",run_level,argc));
   
@@ -69,15 +69,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       thisarg = argv[pos];
       if (thisarg && *thisarg=='-' && thisarg[1]=='-')
         thisarg++;
-
       argvalue = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
       if (argvalue && *argvalue == '-')
         argvalue = NULL; 
-
-      nextarg = ((pos+1 < (argc-1))?(argv[pos+2]):((char *)NULL));
-      if (nextarg && *nextarg == '-')
-        nextarg = NULL; 
-
       skip_next = 0;
     
       if ( thisarg == NULL )
@@ -354,8 +348,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         }
         #elif ((CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S))
         {
-          int rc, cmd = 0;
-          const char *dowhat_descrip = NULL;
+          int rc, cmd = IDM_RESTART;
+          const char *dowhat_descrip = "restarted";
           
           if ( strcmp( thisarg, "-kill" ) == 0 ||
                strcmp( thisarg, "-shutdown") == 0 )
@@ -370,14 +364,10 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else if (strcmp( thisarg, "-unpause" ) == 0)
           {
-            cmd = IDM_RESTART;
-            dowhat_descrip = "unpaused (by restart)";
+            cmd = IDM_UNPAUSE;
+            dowhat_descrip = "unpaused";
           }
-          else
-          {
-            cmd = IDM_RESTART;
-            dowhat_descrip = "restarted";
-          }
+          
           rc = w32ConSendIDMCommand( cmd );
           terminate_app = 1;
           if (!loop0_quiet)
@@ -517,14 +507,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       thisarg = argv[pos];
       if (thisarg && *thisarg=='-' && thisarg[1]=='-')
         thisarg++;
-
       argvalue = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
       if (argvalue && *argvalue == '-')
         argvalue = NULL;
-
-      nextarg = ((pos+1 < (argc-1))?(argv[pos+2]):((char *)NULL));
-      if (nextarg && *nextarg == '-')
-        nextarg = NULL; 
 
       if ( thisarg == NULL )
         ; //nothing
@@ -1267,10 +1252,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         }
         else
         { 
-          if (strcmp( thisarg, "-import" ) == 0)
-			skip_next = nextarg ? 2 : 1;
-		  else
-            skip_next = 1;
+          skip_next = 1;
           havemode = 1; //f'd up "mode" - handled in next loop
         }
       }
@@ -1279,7 +1261,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         quietmode = 0;
         ModeReqClear(-1); /* clear all */
         ModeReqSet( MODEREQ_CMDLINE_HELP );
-        ModeReqSetArg(MODEREQ_CMDLINE_HELP,(void *)thisarg, 0);
+        ModeReqSetArg(MODEREQ_CMDLINE_HELP,(void *)thisarg);
         inimissing = 0; // don't need an .ini file if we just want help
         havemode = 0;
         break;
@@ -1389,7 +1371,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           skip_next = 1;
           ModeReqClear(-1); //clear all - only do -forceunlock
           ModeReqSet(MODEREQ_UNLOCK);
-          ModeReqSetArg(MODEREQ_UNLOCK,(void *)argvalue, 0);
+          ModeReqSetArg(MODEREQ_UNLOCK,(void *)argvalue);
           break;
         }
       }
@@ -1398,10 +1380,10 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         if (!inimissing && argvalue)
         {
           quietmode = 0;
-          skip_next = nextarg ? 2 : 1;
+          skip_next = 1;
           ModeReqClear(-1); //clear all - only do -import
           ModeReqSet(MODEREQ_IMPORT);
-          ModeReqSetArg(MODEREQ_IMPORT,(void *)argvalue, nextarg ? atoi(nextarg) : 0);
+          ModeReqSetArg(MODEREQ_IMPORT,(void *)argvalue);
           break;
         }
       }
@@ -1436,13 +1418,17 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         ConOutErr("fork() failed.  Unable to start quiet/hidden.");
     }
     else /* child */
-    {    /* don't/can't use these anymore */
-      if (isatty(fileno(stdin)))
-        fclose(stdin);   
+    { 
+      /* don't/can't use these anymore */
+      #ifndef _PATH_DEVNULL //paths.h
+      #define _PATH_DEVNULL "/dev/null"
+      #endif
+      //if (isatty(fileno(stdin)))
+        freopen(_PATH_DEVNULL,"r",stdin);
       if (isatty(fileno(stdout)))
-        fclose(stdout);
+        freopen(_PATH_DEVNULL,"w",stdout);
       if (isatty(fileno(stderr)))
-        fclose(stderr);
+        freopen(_PATH_DEVNULL,"w",stderr);
     }
   }
   #endif

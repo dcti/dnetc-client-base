@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.2 1999/06/09 12:56:40 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.3 1999/06/10 18:19:54 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -60,7 +60,8 @@ void DisplayHelp( const char * unrecognized_option )
     "-install           install the client in the startup folder",
     "-uninstall         remove the client from the startup folder",
   #endif
-    "-import <fn> [cnt] import [cnt] packets from file <fn> into client buffers",
+//  "-import <fn> [cnt] import [cnt] packets from file <fn> into client buffers",
+    "-import <fn>       import packets from file <fn> into client buffers",
     "-help              display this text",
     "",
 /*  "------------------------------------ max width == 77 ------------------------" */

@@ -10,11 +10,13 @@
  * clear/run the modes when appropriate.
  *
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
+ *
+ * This is a bridge module. Do not muck with the prototypes.
  * --------------------------------------------------------------------     
 */ 
 
 #ifndef __MODEREQ_H__
-#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.11.2.1 1999/06/08 02:08:38 pice Exp $"
+#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.11.2.2 1999/06/10 18:19:54 cyp Exp $"
 
 #define MODEREQ_IDENT              0x0001    
 #define MODEREQ_CPUINFO            0x0002
@@ -47,7 +49,7 @@ extern int ModeReqClear(int modemask);
 extern int ModeReqIsRunning(void);
 
 /* set an optional argument * for a mode. The mode must support it */
-extern int ModeReqSetArg( int mode, void *arg, int impsize );
+extern int ModeReqSetArg( int mode, void *arg );
 
 /* this is the mode runner. bits can be set/cleared while active.
    returns a mask of modebits that were cleared during the run. */

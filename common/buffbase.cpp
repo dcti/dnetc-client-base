@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.1 1999/06/08 02:07:37 pice Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.2 1999/06/10 18:19:52 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -884,7 +884,7 @@ long Client::GetBufferCount( unsigned int contest, int use_out_file, unsigned lo
 
 /* import records from source, return -1 if err, or number of recs imported. */
 /* On success, source is truncated/deleted. Used by checkpt and --import */
-long BufferImportFileRecords( Client *client, const char *source_file, int interactive, unsigned int maxsize )
+long BufferImportFileRecords( Client *client, const char *source_file, int interactive)
 {
   unsigned long remaining, lastremaining = 0;
   unsigned int recovered = 0; 
@@ -917,11 +917,9 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
     if ( client->PutBufferRecord( &data ) > 0 )
     {
       recovered++;
-	  if (recovered == maxsize)
-			break;
     }
   }
-  if (recovered > 0 && maxsize == 0)
+  if (recovered > 0)
   {
     BufferZapFileRecords( source_file );
   }
