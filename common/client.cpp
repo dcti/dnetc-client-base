@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.94  1998/07/12 09:05:59  silby
+// Fixed path handling code *again* so that the .ini name will follow the executible's name. This is how it's been done for hundreds of releases, now is a bad time to change.
+//
 // Revision 1.93  1998/07/11 07:26:26  silby
 // Fixed my fix for the exitrc5.now path problem.  Now the path is added on at each read instead of once at the beginning of the code (where it could be wrong depending on the os.)
 //
@@ -27,7 +30,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.93 1998/07/11 07:26:26 silby Exp $.
+// Tweaked $Id: client.cpp,v 1.94 1998/07/12 09:05:59 silby Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -203,7 +206,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.93 1998/07/11 07:26:26 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.94 1998/07/12 09:05:59 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -3042,7 +3045,6 @@ int main( int argc, char *argv[] )
   {
     strncpy( client.inifilename, getenv( "RC5INI" ), 127 );
   }
-#ifdef DONT_USE_PATHWORK
   else
   {
 #if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
@@ -3089,7 +3091,6 @@ int main( int argc, char *argv[] )
     strcat( client.inifilename, EXTN_SEP "ini" );
 #endif
   }
-#endif
 
   // See if there's a command line parameter to override the INI filename...
   for (i = 1; i < argc; i++)
