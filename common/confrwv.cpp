@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.13 1999/12/08 00:41:46 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.14 1999/12/08 05:04:12 cyp Exp $"; }
 
 //#define TRACE
 
@@ -334,7 +334,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
              "in3","out3","nodisk", "dialwhenneeded","connectionname",
              "cputype","threshold","threshold2","preferredblocksize",
              "logname", "keyproxy", "keyport", "numcpu",
-             "smtpsrvr", "smtpport", "messagelen", "smtpfrom", "smtpdest"
+             "smtpsrvr", "smtpport", "messagelen", "smtpfrom", "smtpdest",
              "lurk", "lurkonly" };
   char buffer[128];
   char *p;
