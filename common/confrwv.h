@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.h,v $
+// Revision 1.9  1999/04/01 03:12:04  cyp
+// RefreshRandomPrefix() no longer uses the notrigger argument.
+//
 // Revision 1.8  1999/03/23 09:37:30  silby
 // Removed win32gui specific code no longer present.
 //
@@ -40,6 +43,6 @@
 
 int ReadConfig(Client *client);
 int WriteConfig(Client *client, int writefull /* defaults to 0*/);
-void RefreshRandomPrefix( Client *client, int no_trigger = 0 );
+void RefreshRandomPrefix( Client *client );
 
 #endif // __CONFRWV_H__
