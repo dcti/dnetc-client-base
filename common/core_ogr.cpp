@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.7 2003/10/15 03:08:58 jr_brady Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.8 2003/10/16 21:49:42 jr_brady Exp $"; }
 
 //#define TRACE
 
@@ -38,8 +38,9 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.7 2003/10/15 03:08:58 jr_brady Exp $"; }
     #endif
 #elif (CLIENT_CPU == CPU_ALPHA)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
-    /* Where is this function located? */
-    /* extern "C" CoreDispatchTable *ogr_get_dispatch_table_cix(void); */
+  #if (CLIENT_OS != OS_VMS)    /* Include for other OSes */
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_cix(void);
+  #endif
 #elif (CLIENT_CPU == CPU_68K)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_000(void);
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_020(void);
@@ -84,8 +85,9 @@ int InitializeCoreTable_ogr(int first_time)
         ogr_get_dispatch_table_060();
       #elif (CLIENT_CPU == CPU_ALPHA)
         ogr_get_dispatch_table();
-        /* Where is this function located? */
-        /* ogr_get_dispatch_table_cix(); */
+        #if (CLIENT_OS != OS_VMS)         /* Include for other OSes */
+           ogr_get_dispatch_table_cix();
+        #endif
       #elif (CLIENT_CPU == CPU_VAX)
         ogr_get_dispatch_table();
       #elif (CLIENT_CPU == CPU_SPARC)
@@ -134,7 +136,9 @@ const char **corenames_for_contest_ogr()
       "GARSP 5.13 68060",
   #elif (CLIENT_CPU == CPU_ALPHA)
       "GARSP 5.13",
+    #if (CLIENT_OS != OS_VMS)  /* Include for other OSes */
       "GARSP 5.13-CIX",
+    #endif
   #elif (CLIENT_CPU == CPU_POWERPC)
       "GARSP 5.13 Scalar",
       "GARSP 5.13 Vector",   /* altivec only */
@@ -371,11 +375,12 @@ int selcoreSelectCore_ogr(unsigned int threadindex,
     coresel = 0;
   }
 #elif (CLIENT_CPU == CPU_ALPHA)
-  /* Where is the _cix function located? */
-  /* if (coresel == 1) */
-  /*  unit_func.ogr = ogr_get_dispatch_table_cix(); */
-  /* else */
-    unit_func.ogr = ogr_get_dispatch_table();
+  #if (CLIENT_OS != OS_VMS)       /* Include for other OSes */
+    if (coresel == 1)       
+      unit_func.ogr = ogr_get_dispatch_table_cix();
+    else
+  #endif 
+      unit_func.ogr = ogr_get_dispatch_table();
 #elif (CLIENT_CPU == CPU_X86)
   if (coresel == 0) //A
     unit_func.ogr = ogr_get_dispatch_table(); //A
