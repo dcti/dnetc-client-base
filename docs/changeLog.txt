@@ -1,20 +1,16 @@
 Dual mode (RC5DES) clients
 --------------------------
-v2.7100.416 98.12.06 Fixed problems with .ini name not following
-                     .exe's name (again).
-v2.7100.416 90.12.06 Even FASTER DES MMX cores added to x86 clients!
-v2.7100.415 98.10.06 Automatic processor count on Solaris and Linux
-                     have been added.
-v2.7100.415 98.10.06 Bugs with exitfile handling present in 414 have
-                     been fixed.
-v2.7100.415 98.09.06 Added DES MMX cores to x86 clients - thanks go out
-                     to Remi Guyomarch and Bruce Ford who made this
-                     possible.
-v2.7100.413 98.04.06 Fixed problems in 413 with .ini name not following
-                     .exe's name and also rc5 outbuffer being set
-                     incorrectly to buff-out.des
-v2.7100.413 98.04.04 Changed lurk code, now is more verbose and acts the same way in win32 and os2
-v2.7100.413 98.04.04 Fixed -runbuffers bug that caused invalid block info to be printed on screen after buffer exhaustion.
+v2.7100.416 98.07.12 win32gui will again only respect "runhidden" if it is auto-launched on startup (via -guistart)
+v2.7100.416 98.07.12 Fixed problems with .ini name not following .exe's name (again).
+v2.7100.416 98.07.12 Even FASTER DES MMX cores added to x86 clients!
+v2.7100.416 98.07.11 win32gui fetch/flush menu options can now occur without halting client operations.  fetch/flush/update options will now all work even if current connection mode is set to offline.
+v2.7100.415 98.07.10 win32gui thread priority of message thread increased to higher priority to try to increase responsiveness of the gui.
+v2.7100.415 98.07.10 Automatic processor count on Solaris and Linux have been added.
+v2.7100.415 98.07.10 Bugs with exitfile handling present in 414 have been fixed.
+v2.7100.415 98.07.09 Added DES MMX cores to x86 clients - thanks go out to Remi Guyomarch and Bruce Ford who made this possible.
+v2.7100.413 98.07.07 Fixed problems in 413 with .ini name not following .exe's name and also  rc5 outbuffer being set incorrectly to buff-out.des
+v2.7100.413 98.07.04 Changed lurk code, now is more verbose and acts the same way in win32 and os2
+v2.7100.413 98.07.04 Fixed -runbuffers bug that caused invalid block info to be printed on screen after buffer exhaustion.
 v2.7100.413 98.07.04 Fixed the pause file bug in non-mt clients
 v2.7100.413 98.07.01 Fixed the -lurkonly problem when buffers ran out, and not connected, the HD would just sit and grind in OS/2 and Win32
 v2.7100.413 98.07.01 Put -lurk/-lurkonly on the menu for OS/2
