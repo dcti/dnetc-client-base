@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.36 2000/10/28 15:41:10 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.37 2000/10/28 21:56:44 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -82,6 +82,7 @@ typedef union
 #pragma pack()
 #endif
 
+
 /* ---------------------------------------------------------------------- */
 
 typedef union
@@ -143,6 +144,8 @@ public: /* anything public must be thread safe */
   int client_cpu;                /*  | effective CLIENT_CPU              */
   u32 tslice;                    /* -' -- adjusted by non-preemptive OSs */
   int was_reset;                 /* set if loadstate reset the block     */
+  int is_random;                 /* set if problem was RC5 'random'      */
+  int is_benchmark;              /* set if problem is benchmark          */
 
 // unused:  u32 permille;    /* used by % bar */
   int loaderflags; /* used by problem loader (probfill.cpp) */
@@ -165,9 +168,11 @@ public: /* anything public must be thread safe */
   // LoadState() and RetrieveState() work in pairs. A LoadState() without
   // a previous RetrieveState(,,purge) will fail, and vice-versa.
 
-  int LoadState( ContestWork * work, unsigned int _contest, u32 _iterations,
-     int expected_cpunum, int expected_corenum,
-     int expected_os, int expected_buildfrac );
+  #define CONTESTWORK_MAGIC_RANDOM    ((const ContestWork *)0)
+  #define CONTESTWORK_MAGIC_BENCHMARK ((const ContestWork *)1)
+  int LoadState( const ContestWork * work, unsigned int _contest, 
+                 u32 _iterations, int expected_cpunum, int expected_corenum,
+                 int expected_os, int expected_buildfrac );
     // Load state into internal structures.
     // state is invalid (will generate errors) until this is called.
     // expected_[core|cpu|os|buildnum] are those loaded with the workunit

@@ -11,11 +11,9 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.73 2000/10/28 15:41:09 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.74 2000/10/28 21:56:43 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
-
-#include <assert.h>   //assert() macro
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -24,12 +22,15 @@ return "@(#)$Id: problem.cpp,v 1.108.2.73 2000/10/28 15:41:09 cyp Exp $"; }
 #include "clitime.h"  //CliClock()
 #include "logstuff.h" //LogScreen()
 #include "probman.h"  //GetProblemPointerFromIndex()
-#include "problem.h"  //ourselves
+#include "random.h"   //Random()
+#include "rsadata.h"  //Get cipher/etc for random blocks
+#include "clicdata.h" //CliSetContestWorkUnitSpeed()
 #include "selcore.h"  //selcoreGetSelectedCoreForContest()
 #include "cpucheck.h" //hardware detection
 #include "console.h"  //ConOutErr
 #include "triggers.h" //RaiseExitRequestTrigger()
 #include "sleepdef.h" //sleep()
+#include "problem.h"  //ourselves
 
 //#define STRESS_THREADS_AND_BUFFERS /* !be careful with this! */
 
@@ -212,14 +213,99 @@ static void __IncrementKey(u32 *keyhi, u32 *keylo, u32 iters, int contest)
 
 /* ------------------------------------------------------------------- */
 
+/* generate a contestwork for benchmarking (should be 
+   large enough to not complete in < 20 seconds)
+*/
+static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
+{
+  switch (contestid)  
+  {
+    case RC5:
+    case DES:
+    case CSC:
+    {
+      work->crypto.key.lo = ( 0 );
+      work->crypto.key.hi = ( 0 );
+      work->crypto.iv.lo = ( 0 );
+      work->crypto.iv.hi = ( 0 );
+      work->crypto.plain.lo = ( 0 );
+      work->crypto.plain.hi = ( 0 );
+      work->crypto.cypher.lo = ( 0 );
+      work->crypto.cypher.hi = ( 0 );
+      work->crypto.keysdone.lo = ( 0 );
+      work->crypto.keysdone.hi = ( 0 );
+      work->crypto.iterations.lo = ( 0 );
+      work->crypto.iterations.hi = ( 1 );
+      return contestid;
+    }
+    case OGR:
+    {
+      //24/2-22-32-21-5-1-12
+      //25/2-8-6-20-4-9
+      work->ogr.workstub.stub.marks = 25;    //24;
+      work->ogr.workstub.worklength = 6;     //7;
+      work->ogr.workstub.stub.length = 6;    //7;
+      work->ogr.workstub.stub.diffs[0] = 2;  //2;
+      work->ogr.workstub.stub.diffs[1] = 8;  //22;
+      work->ogr.workstub.stub.diffs[2] = 6;  //32;
+      work->ogr.workstub.stub.diffs[3] = 20; //21;
+      work->ogr.workstub.stub.diffs[4] = 4;  //5;
+      work->ogr.workstub.stub.diffs[5] = 9;  //1;
+      work->ogr.workstub.stub.diffs[6] = 0;  //12;
+      work->ogr.nodes.lo = 0;
+      work->ogr.nodes.hi = 0;
+      return contestid;
+    }
+    default:
+      break;
+  }
+  return -1;
+}
+
+/* ------------------------------------------------------------------- */
+
+static int last_rc5_prefix = -1;
+
+static int __gen_random_work(unsigned int contestid, ContestWork * work)
+{
+  // the random prefix is updated by LoadState() for every RC5 block loaded
+  // that is >= 2^28 (thus excludes test blocks)
+  // make one up in the event that no block was every loaded.
+
+  u32 rnd = Random(NULL,0);
+  u32 randomprefix = last_rc5_prefix;
+  if (last_rc5_prefix == -1) /* no random prefix determined yet */
+    last_rc5_prefix = randomprefix = 100+(rnd % (0xff-100));
+
+  contestid = RC5; 
+  work->crypto.key.lo   = (rnd & 0xF0000000L);
+  work->crypto.key.hi   = (rnd & 0x00FFFFFFL) + (last_rc5_prefix<<24);
+  //constants are in rsadata.h
+  work->crypto.iv.lo     = ( RC564_IVLO );     //( 0xD5D5CE79L );
+  work->crypto.iv.hi     = ( RC564_IVHI );     //( 0xFCEA7550L );
+  work->crypto.cypher.lo = ( RC564_CYPHERLO ); //( 0x550155BFL );
+  work->crypto.cypher.hi = ( RC564_CYPHERHI ); //( 0x4BF226DCL );
+  work->crypto.plain.lo  = ( RC564_PLAINLO );  //( 0x20656854L );
+  work->crypto.plain.hi  = ( RC564_PLAINHI );  //( 0x6E6B6E75L );
+  work->crypto.keysdone.lo = 0;
+  work->crypto.keysdone.hi = 0;
+  work->crypto.iterations.lo = 1L<<28;
+  work->crypto.iterations.hi = 0;
+  return contestid;
+}
+
+/* ------------------------------------------------------------------- */
+
 /* LoadState() and RetrieveState() work in pairs. A LoadState() without
    a previous RetrieveState(,,purge) will fail, and vice-versa.
 */
-int Problem::LoadState( ContestWork * work, unsigned int contestid,
+int Problem::LoadState( const ContestWork * work, unsigned int contestid,
               u32 _iterations, int expected_cputype,
               int expected_corenum, int expected_os,
               int expected_buildfrac )
 {
+  ContestWork for_magic;
+
   if (initialized)
   {
     /* This can only happen if RetrieveState(,,purge) was not called */
@@ -242,6 +328,22 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
   contest = contestid;
   tslice = _iterations;
   was_reset = 0;
+  is_random = 0;
+  is_benchmark = 0;
+
+  //has to be done before selcore 
+  if (work == CONTESTWORK_MAGIC_RANDOM) /* ((const ContestWork *)0) */
+  {
+    contestid = __gen_random_work(contestid, &for_magic);
+    work = &for_magic;
+    is_random = 1;
+  }
+  else if (work == CONTESTWORK_MAGIC_BENCHMARK) /* ((const ContestWork *)1) */
+  {
+    contestid = __gen_benchmark_work(contestid, &for_magic);
+    work = &for_magic;
+    is_benchmark = 1;
+  }
 
   if (!IsProblemLoadPermitted(threadindex, contestid))
     return -1;
@@ -259,6 +361,11 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
   switch (contest)
   {
     case RC5:
+    if (!is_random &&
+       (work->crypto.iterations.hi || work->crypto.iterations.lo >= (1L<<28)))
+    {
+      last_rc5_prefix = (int)(work->crypto.key.hi >> 24);
+    }    
     if ((MINIMUM_ITERATIONS % pipeline_count) != 0)
     {
       LogScreen("(MINIMUM_ITERATIONS %% pipeline_count) != 0)\n");
@@ -295,18 +402,6 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
           was_reset = 1;
         }
       }
-
-      #if 0
-      //this next if is from original TimC post-load-from-disk code, but it
-      //doesn't look valid anymore
-      if (((wrdata.work.crypto.iterations.lo) & 0x00000001L) == 1)
-      {
-        // If packet was finished with an 'odd' number of keys done,
-        // then make redo the last key
-        wrdata.work.crypto.iterations.lo = wrdata.work.crypto.iterations.lo & 0xFFFFFFFEL;
-        wrdata.work.crypto.key.lo = wrdata.work.crypto.key.lo & 0xFEFFFFFFL;
-      }
-      #endif
 
       //determine starting key number. accounts for carryover & highend of keysdone
       rc5unitwork.L0.hi = contestwork.crypto.key.hi + contestwork.crypto.keysdone.hi +
@@ -360,9 +455,11 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
         return -1;
       if (contestwork.ogr.workstub.worklength > (u32)contestwork.ogr.workstub.stub.length)
       {
+        #if 0 //OGR never does percentages
         // This is just a quick&dirty calculation that resembles progress.
         startpermille = contestwork.ogr.workstub.stub.diffs[contestwork.ogr.workstub.stub.length]*10
                       + contestwork.ogr.workstub.stub.diffs[contestwork.ogr.workstub.stub.length+1]/10;
+        #endif              
         startkeys.hi = contestwork.ogr.nodes.hi;
         startkeys.lo = contestwork.ogr.nodes.lo;
       }
@@ -724,7 +821,7 @@ int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
 #else
   int r, nodes;
 
-  if (*iterationsP > 0x100000UL)
+  if (*iterationsP > 0x100000UL && !is_benchmark)
     *iterationsP = 0x100000UL;
 
   nodes = (int)(*iterationsP);
@@ -1424,6 +1521,8 @@ int Problem::GetInfo(unsigned int *cont_id, const char **cont_name,
         u32 tcounthi=0, tcountlo=0; /*total 'iter' (n/a if not finished)*/
         u32 ccounthi=0, ccountlo=0; /*'iter' done (so far, all starts) */
         u32 scounthi=0, scountlo=0; /* start pos */
+        unsigned long rate2wuspeed = 0;
+
         switch (contestid)
         {
           case RC5:
@@ -1431,6 +1530,8 @@ int Problem::GetInfo(unsigned int *cont_id, const char **cont_name,
           case CSC:
           { 
             unsigned int units, twoxx;
+ 
+            rate2wuspeed = 1UL<<28;
             scounthi = startkeys.hi;
             scountlo = startkeys.lo;
             tcounthi = work.crypto.iterations.hi;
@@ -1522,6 +1623,7 @@ int Problem::GetInfo(unsigned int *cont_id, const char **cont_name,
               __nodecount_as_string(ccountbuf,ccountbufsz,ccounthi,ccountlo,
                                     pad_strings);
             }
+            #if 0 /* ogr is not linear, so percentages have no meaning */
             if (permille_done)
             {
               if (!started)
@@ -1537,6 +1639,7 @@ int Problem::GetInfo(unsigned int *cont_id, const char **cont_name,
                   retpermille = 1000;
               }
             } /* permille_done */
+            #endif
           } /* OGR */      
           break;
 #endif /* HAVE_OGR_CORES */
@@ -1559,6 +1662,9 @@ int Problem::GetInfo(unsigned int *cont_id, const char **cont_name,
             r /= (((double)(e_sec))+(((double)(e_usec))/((double)(1000000L))));
           if (rate)
             *rate = r;
+          if (rate2wuspeed)
+            CliSetContestWorkUnitSpeed( contestid, (unsigned int)
+                                       (((double)rate2wuspeed/r)+0.5) );
           if (ratebuf)
             __double_as_string(ratebuf, ratebufsz, r, -1, 2, 1, pad_strings);
         }

@@ -5,11 +5,8 @@
  * Any other distribution or use of this source violates copyright.
 */
 
-//#define STRESS_RANDOMGEN
-//#define STRESS_RANDOMGEN_ALL_KEYSPACE
-
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.43 2000/10/27 17:58:43 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.44 2000/10/28 21:56:43 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -19,8 +16,6 @@ return "@(#)$Id: probfill.cpp,v 1.58.2.43 2000/10/27 17:58:43 cyp Exp $"; }
 #include "logstuff.h"  // Log()/LogScreen()
 #include "clitime.h"   // CliGetTimeString()
 #include "cpucheck.h"  // GetNumberOfDetectedProcessors()
-#include "random.h"    // Random()
-#include "selcore.h"   // selcoreSelectCore()
 #include "clisrate.h"  // CliGetMessageFor... et al.
 #include "clicdata.h"  // CliGetContestNameFromID()
 #include "probman.h"   // GetProblemPointerFromIndex()
@@ -29,10 +24,8 @@ return "@(#)$Id: probfill.cpp,v 1.58.2.43 2000/10/27 17:58:43 cyp Exp $"; }
 #include "buffupd.h"   // BUFFERUPDATE_FETCH/_FLUSH define
 #include "buffbase.h"  // GetBufferCount,Get|PutBufferRecord,etc
 #include "modereq.h"   // ModeReqSet() and MODEREQ_[FETCH|FLUSH]
-#include "probfill.h"  // ourselves.
-#include "rsadata.h"   // Get cipher/etc for random blocks
-#include "confrwv.h"   // Needed to trigger .ini to be updated
 #include "clievent.h"  // ClientEventSyncPost( int event_id, long parm )
+#include "probfill.h"  // ourselves.
 
 // =======================================================================
 // each individual problem load+save generates 4 or more messages lines 
@@ -253,7 +246,6 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 
 /* ----------------------------------------------------------------------- */
 
-#ifndef STRESS_RANDOMGEN
 //     Internal function that loads 'wrdata' with a new workrecord
 //     from the next open contest with available blocks.
 // Return value:
@@ -263,7 +255,6 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 //     contests for the thread in question.
 //
 // Note that 'return_single_count' IS ALL IT TAKES TO DISABLE ROTATION.
-//
 static long __loadapacket( Client *client, 
                            WorkRecord *wrdata /*where to load*/, 
                            int /*ign_closed*/,  
@@ -278,10 +269,8 @@ static long __loadapacket( Client *client,
     unsigned int selproject = (unsigned int)client->loadorder_map[cont_i];
     if (selproject >= CONTEST_COUNT) /* user disabled */
       continue;
-//LogScreen("loadapacket 1: trying contest %u for problem %u\n", selproject, prob_i);
     if (!IsProblemLoadPermitted( (long)prob_i, selproject ))
     {
-//LogScreen("loadapacket 2: contest %u. load not permitted.\n", selproject );
       continue; /* problem.cpp - result depends on #defs, threadsafety etc */
     }
     bufcount = -1;
@@ -290,7 +279,6 @@ static long __loadapacket( Client *client,
     else         /* haven't got a packet yet */
     {
       bufcount = GetBufferRecord( client, wrdata, selproject, 0 );
-//LogScreen("loadapacket 2: contest %u count %ld\n", selproject, bufcount );
       if (bufcount >= 0) /* no error */
         wrdata = NULL;     /* don't load again */
     }
@@ -305,72 +293,12 @@ static long __loadapacket( Client *client,
   }
   return totalcount;
 }  
-#endif
 
 /* ---------------------------------------------------------------------- */
 
 #define NOLOAD_NONEWBLOCKS       -3
 #define NOLOAD_ALLCONTESTSCLOSED -2
 #define NOLOAD_NORANDOM          -1
-
-int __gen_random( Client *client, WorkRecord *wrdata )
-{
-  u32 randomprefix, rnd;
-  int norandom = 1;
-
-  if ((client->rc564closed == 0) && (client->blockcount >= 0))
-  {
-    unsigned int iii;
-    for (iii=0;norandom && iii<CONTEST_COUNT;iii++)
-    {
-      if (client->loadorder_map[iii] == 0 /* rc5 is enabled in map */)
-        norandom = 0;
-    }
-  }  
-  if (norandom)
-    return NOLOAD_NORANDOM; /* -1 */
-  if (client->nonewblocks)
-    return NOLOAD_NONEWBLOCKS; /* -3 */
-  /* else random blocks permitted */
-  
-  rnd = Random(NULL,0);
-  // the random prefix is updated by the buffer code on every read/write 
-  // to buffer. But in the event that no block was every read/written
-  // we have to make one up.
-  if (client->randomprefix == 0) /* no random prefix determined yet */
-    client->randomprefix = 100+(rnd % (0xff-100)); /* make a random one */
-
-  randomprefix = ( (u32)(client->randomprefix) + 1 ) & 0xFF;
-
-#if defined(STRESS_RANDOMGEN) && defined(STRESS_RANDOMGEN_ALL_KEYSPACE)
-  ++client->randomprefix;
-  if (client->randomprefix > 0xff)
-    client->randomprefix = 100
-#endif
-      
-  wrdata->id[0]                 = 0;
-  wrdata->resultcode            = RESULT_WORKING;
-  wrdata->os                    = 0;
-  wrdata->cpu                   = 0;
-  wrdata->buildhi               = 0;
-  wrdata->buildlo               = 0;
-  wrdata->contest               = RC5; // Random blocks are always RC5
-  wrdata->work.crypto.key.lo    = (rnd & 0xF0000000L);
-  wrdata->work.crypto.key.hi    = (rnd & 0x00FFFFFFL) + (randomprefix<<24);
-  //constants are in rsadata.h
-  wrdata->work.crypto.iv.lo     = ( RC564_IVLO );     //( 0xD5D5CE79L );
-  wrdata->work.crypto.iv.hi     = ( RC564_IVHI );     //( 0xFCEA7550L );
-  wrdata->work.crypto.cypher.lo = ( RC564_CYPHERLO ); //( 0x550155BFL );
-  wrdata->work.crypto.cypher.hi = ( RC564_CYPHERHI ); //( 0x4BF226DCL );
-  wrdata->work.crypto.plain.lo  = ( RC564_PLAINLO );  //( 0x20656854L );
-  wrdata->work.crypto.plain.hi  = ( RC564_PLAINHI );  //( 0x6E6B6E75L );
-  wrdata->work.crypto.keysdone.lo = 0;
-  wrdata->work.crypto.keysdone.hi = 0;
-  wrdata->work.crypto.iterations.lo = 1L<<28;
-  wrdata->work.crypto.iterations.hi = 0;
-
-  return 0;
-}
 
 /* ---------------------------------------------------------------------- */
 
@@ -382,16 +310,15 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
 {
   WorkRecord wrdata;
   unsigned int norm_key_count = 0;
-  int didload = 0, didrandom = 0;
   int update_on_current_contest_exhaust_flag = (client->connectoften & 4);
-  long bufcount = -1;
+  long bufcount;
   
-#ifndef STRESS_RANDOMGEN
   bufcount = __loadapacket( client, &wrdata, 1, prob_i, 
                             update_on_current_contest_exhaust_flag );
+
   if (bufcount < 0 && client->nonewblocks == 0)
   {
-//Log("3. BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0)\n");
+    //Log("3. BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0)\n");
     int didupdate = 
        BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0);
     if (!(didupdate < 0))
@@ -403,74 +330,61 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
                                   update_on_current_contest_exhaust_flag );
     }
   }
-#endif
   
-  if (bufcount >= 0) /* load from file succeeded */
-  {
-    int client_cpu = 0, coresel;
+  *load_needed = 0;
+  if (bufcount >= 0) /* load from file suceeded */
+    *load_needed = 0;
+  else if (client->rc564closed)
+    *load_needed = NOLOAD_NORANDOM; /* -1 */
+  else if (client->nonewblocks)
+    *load_needed = NOLOAD_NONEWBLOCKS;
+  else  /* using randoms is permitted */
+    *load_needed = 0;
 
-    /* if the total number of packets in buffers is less than the number 
-       of crunchers running then try to fetch *now*. This means that the
-       effective _total_ minimum threshold is always >= num crunchers
-    */   
-    if (((unsigned long)(bufcount)) < (load_problem_count - prob_i))
-    {
-//Log("4. *bufupd_pending |= BUFFERUPDATE_FETCH;\n"
-//    "   buffcount=%ld, loadproblemcount=%d, prob_i=%d\n",bufcount,load_problem_count,prob_i);
-      *bufupd_pending |= BUFFERUPDATE_FETCH;
-    }
-    coresel = selcoreSelectCore( wrdata.contest, prob_i, &client_cpu, NULL );
-    if (coresel < 0)
-    {
-      bufcount = -1; /* core select failed */
+  if (*load_needed == 0)
+  {
+    u32 timeslice = 0x10000;
+    int expected_cpu = 0, expected_core = 0;
+    int expected_os  = 0, expected_build = 0;
+    const ContestWork *work = &wrdata.work;
+    
+    #if (defined(INIT_TIMESLICE) && (INIT_TIMESLICE >= 64))
+    timeslice = INIT_TIMESLICE;
+    #endif
+
+    if (bufcount < 0) /* normal load from buffer failed */
+    {                 /* so generate random */
+      work = CONTESTWORK_MAGIC_RANDOM;       
+      *loaded_for_contest = 0; /* don't care. just to initialize */
     }
     else
     {
-      didload = 1;
-      *load_needed = 0;
+      *loaded_for_contest = (unsigned int)(wrdata.contest);
+      expected_cpu = FILEENTRY_CPU_TO_CPUNUM( wrdata.cpu );
+      expected_core = FILEENTRY_CPU_TO_CORENUM( wrdata.cpu );
+      expected_os  = FILEENTRY_OS_TO_OS( wrdata.os );
+      expected_build = FILEENTRY_BUILD_TO_BUILD(wrdata.buildhi,wrdata.buildlo);
+      work = &wrdata.work;
+
+      /* if the total number of packets in buffers is less than the number 
+         of crunchers running then try to fetch *now*. This means that the
+         effective _total_ minimum threshold is always >= num crunchers
+      */   
+      if (((unsigned long)(bufcount)) < (load_problem_count - prob_i))
+        *bufupd_pending |= BUFFERUPDATE_FETCH;
     }
-  } 
 
-  if (bufcount < 0) /* normal load from buffer failed */
-  {
-    *load_needed = __gen_random( client, &wrdata );
-    if (*load_needed == 0) /* no err */
-    {
-      didload = 1;
-      didrandom = 1;
-    }
-  }
+    /* loadstate can fail if it selcore fails or the previous problem
+    /* hadn't been purged, or the contest isn't available or ... */
 
-  #ifdef DEBUG
-  Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Success"):("Failed")) );
-  #endif
-
-  /* ------------------------------- */
-    
-  if (didload) /* success */
-  {
-    u32 timeslice = 0x10000;
-    int expected_cpu = FILEENTRY_CPU_TO_CPUNUM( wrdata.cpu );
-    int expected_core = FILEENTRY_CPU_TO_CORENUM( wrdata.cpu );
-    int expected_os  = FILEENTRY_OS_TO_OS( wrdata.os );
-    int expected_build=FILEENTRY_BUILD_TO_BUILD(wrdata.buildhi,wrdata.buildlo);
-    
-    #if (defined(INIT_TIMESLICE) && (INIT_TIMESLICE > 64))
-    timeslice = INIT_TIMESLICE;
-    #endif
-    
-    *load_needed = 0;
-    *loaded_for_contest = (unsigned int)(wrdata.contest);
-
-    if (thisprob->LoadState( &wrdata.work, *loaded_for_contest, timeslice, 
+    if (thisprob->LoadState( work, *loaded_for_contest, timeslice, 
          expected_cpu, expected_core, expected_os, expected_build ) != -1)
     {
       unsigned int permille, swucount = 0;
       const char *contname; char pktid[32]; 
+      *load_needed = 0;
 
-      thisprob->loaderflags = 0;
-
-      if (thisprob->GetInfo( 0, &contname, 
+      if (thisprob->GetInfo( loaded_for_contest, &contname, 
                              0, 0,
                              &swucount, 1, 
                              0, &permille,
@@ -499,7 +413,8 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
             extramsg = perdone;
           }
           Log("Loaded %s %s%s%s\n",
-               contname, ((didrandom)?("random "):("")), pktid, extramsg );
+               contname, ((thisprob->is_random)?("random "):("")), 
+               pktid, extramsg );
         }
       } /* if (thisprob->GetInfo(...) != -1) */
 
