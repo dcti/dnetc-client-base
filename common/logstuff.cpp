@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.35 2000/11/02 22:31:08 oliver Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.36 2000/11/04 16:23:41 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -535,7 +535,7 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
     buffptr = &msgbuffer[0];
     if ((loggingTo & LOGTO_RAWMODE)==0)
     {
-      if (logstatics.stableflag) /* previous print ended with '\n' */
+      if (logstatics.stableflag) /* previous print ended with '\n'|'\r' */
       {
         if (*buffptr=='\n') /* remove extraneous leading '\n' */
         {
@@ -564,7 +564,8 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
     if (msglen)
     {
       logstatics.lastwasperc = 0; //perc bar looks for this
-      logstatics.stableflag = ( buffptr[(msglen-1)] == '\n' );
+      logstatics.stableflag = ( buffptr[(msglen-1)] == '\n' || 
+                                buffptr[(msglen-1)] == '\r' );
       InternalLogScreen( buffptr, msglen, 0 );
     }
   }
