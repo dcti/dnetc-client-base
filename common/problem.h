@@ -1,14 +1,14 @@
-/* Hey, Emacs, this a -*-C++-*- file !
+/* -*-C++-*-
  *
  * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * ** header is included from cores, so guard against c++ constructs **
-*/
+ */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.88 2002/09/23 16:58:36 acidblood Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.89 2002/09/23 21:17:12 jlawson Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -18,7 +18,7 @@
 #endif
 
 enum {
-  RC5, // http://www.rsa.com/rsalabs/97challenge/
+  RC5, // RC5-64, http://www.rsa.com/rsalabs/97challenge/
   DES, // http://www.rsa.com/rsalabs/des3/index.html
   OGR, // http://members.aol.com/golomb20/
   CSC, // http://www.cie-signaux.fr/security/index.htm
@@ -100,7 +100,8 @@ typedef union
     struct {u32 hi,lo;} cypher;           // cyphertext
     struct {u32 hi,lo;} keysdone;         // iterations done (also current position in block)
     struct {u32 hi,lo;} iterations;       // iterations to do
-    struct {u32 count; u32 hi,mid,lo;} check;   // keyid of last found counter-measure check.
+    u16 randomsubspace;                   // subspace for random generation.
+    struct {u16 count; u32 hi,mid,lo;} check;   // keyid of last found counter-measure check.
   } bigcrypto;     /* 68 bytes */
 // OK!
   #if defined(HAVE_OGR_CORES)
