@@ -11,6 +11,9 @@
 */
 //
 // $Log: setprio.cpp,v $
+// Revision 1.2  1998/10/11 08:20:34  silby
+// win32 is now locked at max idle priority for cracking threads.
+//
 // Revision 1.1  1998/09/28 01:31:40  cyp
 // Created. Note: priority is now on a scale of 0-9 (9 being "normal").
 //
@@ -19,7 +22,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.1 1998/09/28 01:31:40 cyp Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.2 1998/10/11 08:20:34 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -68,9 +71,10 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
     else //between THREAD_PRIORITY_NORMAL (+0) and THREAD_PRIORITY_IDLE (-15)
       { 
       SetPriorityClass( GetCurrentProcess(), IDLE_PRIORITY_CLASS );
-      SetThreadPriority( GetCurrentThread(), 
-          ((((THREAD_PRIORITY_IDLE + THREAD_PRIORITY_NORMAL)+1)
-                                                           *(9-prio))/10) );
+      SetThreadPriority( GetCurrentThread(),THREAD_PRIORITY_IDLE);
+//      SetThreadPriority( GetCurrentThread(), 
+//          ((((THREAD_PRIORITY_IDLE + THREAD_PRIORITY_NORMAL)+1)
+//                                                           *(9-prio))/10) );
       }
     if (set_for_thread && main_thrid) //if we have threads,...
       SetThreadPriority( main_thrid, THREAD_PRIORITY_NORMAL );
