@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.56.2.37 2001/02/22 07:00:44 moose Exp $
+# $Id: makefile.vc,v 1.56.2.38 2001/03/20 10:03:33 cyp Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
@@ -110,6 +110,7 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/confrwv.obj    \
         $(OUTPUTPATH)/console.obj    \
         $(OUTPUTPATH)/convdes.obj    \
+        $(OUTPUTPATH)/coremem.obj    \
         $(OUTPUTPATH)/cpucheck.obj   \
         $(OUTPUTPATH)/disphelp.obj   \
         $(OUTPUTPATH)/iniread.obj    \

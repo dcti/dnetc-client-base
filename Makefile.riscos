@@ -16,7 +16,8 @@ ObjAsmflags = -throwback -NoCache -depend !Depend
 @.Dnetc:   @.o.base64 @.o.bench @.o.buffbase @.o.buffpriv @.o.scram @.o.buffupd \
         @.o.checkpt @.o.clicdata @.o.client @.o.clievent @.o.cliident @.o.clirun \
         @.o.clitime @.o.cmdline @.o.confmenu @.o.confopt @.o.confrwv @.o.console \
-        @.o.convdes @.o.cpucheck @.o.disphelp @.o.iniread @.o.logstuff @.o.mail @.o.modereq \
+        @.o.coremem @.o.convdes @.o.cpucheck @.o.disphelp @.o.iniread @.o.logstuff \
+        @.o.mail @.o.modereq \
         @.o.netconn @.o.netbase @.o.pathwork @.o.pollsys @.o.probfill @.o.problem \
         @.o.probman @.o.random @.o.selcore @.o.selftest @.o.setprio @.o.triggers @.o.util \
         @.o.ogr_dat @.o.ogr_sup @.o.ogr @.o.rc5-arm-1 @.o.rc5-arm-2 @.o.rc5-arm-3 @.o.riscos_sup \
@@ -73,6 +74,8 @@ ObjAsmflags = -throwback -NoCache -depend !Depend
         g++ $(gccflags) -o @.o.confrwv @.common.c++.confrwv 
 @.o.console:   @.common.c++.console
         g++ $(gccflags) -o @.o.console @.common.c++.console 
+@.o.coremem:   @.common.c++.coremem
+        g++ $(gccflags) -o @.o.coremem @.common.c++.coremem
 @.o.convdes:   @.common.c++.convdes
         g++ $(gccflags) -o @.o.convdes @.common.c++.convdes 
 @.o.cpucheck:   @.common.c++.cpucheck

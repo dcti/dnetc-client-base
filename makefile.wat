@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.27.2.23 2001/01/21 18:31:02 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.24 2001/03/20 10:03:33 cyp Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -50,6 +50,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
             output\netconn.obj  &
             output\mail.obj     &
             output\logstuff.obj &
+            output\coremem.obj  &
             output\cpucheck.obj &
             output\selcore.obj  &
             output\x86ident.obj &
@@ -365,6 +366,10 @@ output\setprio.obj : common\setprio.cpp $(%dependall) .AUTODEPEND
   @set isused=1
 
 output\console.obj : common\console.cpp $(%dependall) .AUTODEPEND
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\coremem.obj : common\coremem.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
