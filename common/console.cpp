@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.19 1999/12/19 10:05:26 mfeiri Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.20 1999/12/24 04:17:37 trevorh Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -44,7 +44,7 @@ return "@(#)$Id: console.cpp,v 1.48.2.19 1999/12/19 10:05:26 mfeiri Exp $"; }
 #define TERM_IS_ANSI_COMPLIANT
 #endif
 #if defined(__unix__)
-#include <sys/ioctl.h>  
+#include <sys/ioctl.h>
 #endif
 #if (CLIENT_OS == OS_RISCOS)
 extern "C" void riscos_backspace();
@@ -94,7 +94,7 @@ int InitializeConsole(int runhidden,int doingmodes)
     constatics.initlevel = 1;
     constatics.runhidden = runhidden;
     doingmodes = doingmodes; /* possibly unused */
-    
+
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
     retcode = w32InitializeConsole(constatics.runhidden,doingmodes);
     #elif (CLIENT_OS == OS_NETWARE)
@@ -102,7 +102,7 @@ int InitializeConsole(int runhidden,int doingmodes)
     #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
     retcode = os2CliInitializeConsole(constatics.runhidden,doingmodes);
     #endif
-    
+
     if (retcode != 0)
       --constatics.initlevel;
     else if (ConIsGUI())
@@ -285,8 +285,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
             ch = (nwCliGetCh()<<8);
         }
       }
-      #elif (CLIENT_OS == OS_DOS) || \
-         ( (CLIENT_OS == OS_OS2) && !defined(__EMX__)  )
+      #elif (CLIENT_OS == OS_DOS)
       {
         fflush(stdout);
         if (kbhit())
@@ -294,6 +293,17 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
           ch = getch();
           if (!ch)
             ch = (getch() << 8);
+        }
+      }
+      #elif (CLIENT_OS == OS_OS2)
+      {
+        KBDKEYINFO kbdkeyinfo = {0};
+        HKBD hkbd = 0;
+        KbdPeek(&kbdkeyinfo, hkbd);
+        if ((kbdkeyinfo.fbStatus & (0xffff - KBDTRF_FINAL_CHAR_IN)) != kbdkeyinfo.fbStatus)
+        {
+           KbdFlushBuffer(hkbd);
+           ch = kbdkeyinfo.chChar;
         }
       }
       #elif (defined(TERMIOS_IS_AVAILABLE))
@@ -314,7 +324,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         if (ch == EOF) ch = 0;
       }
       #elif (CLIENT_OS == OS_MACOS)
-      { 
+      {
         ch = getch();
         if (ch == 3) ch = 13; /* In MacOS its common that "enter" equals "return". */
       }
@@ -530,7 +540,7 @@ int ConGetPos( int *col, int *row )  /* zero-based */
     unsigned short r, c;
     if (GetPositionOfOutputCursor( &r, &c ) == 0)
     {
-      if (row) *row = (int)r; 
+      if (row) *row = (int)r;
       if (col) *col = (int)c;
     }
     return 0;
@@ -538,9 +548,10 @@ int ConGetPos( int *col, int *row )  /* zero-based */
     return dosCliConGetPos( col, row );
     #elif (CLIENT_OS == OS_OS2)
     USHORT r, c;
-    if (VioGetCurPos( &r, &c, 0 /*handle*/) == 0)
+    HVIO hvio = 0;
+    if (VioGetCurPos( &r, &c, hvio) == 0)
     {
-      if (row) *row = (int)r; 
+      if (row) *row = (int)r;
       if (col) *col = (int)c;
       return 0;
     }
@@ -568,8 +579,8 @@ int ConSetPos( int col, int row )  /* zero-based */
     #elif (CLIENT_OS == OS_DOS)
     return dosCliConSetPos( col, row );
     #elif (CLIENT_OS == OS_OS2)
-    return ((VioSetCurPos(row, col, 0 /*handle*/) != 0)?(-1):(0));
-    return 0;
+    HVIO hvio = 0;
+    return ((VioSetCurPos(row, col, hvio) != 0)?(-1):(0));
     #else
     return -1;
     #endif
@@ -602,6 +613,16 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
   #elif (CLIENT_OS == OS_DOS)
     if (dosCliConGetSize( &width, &height ) < 0)
       height = width = 0;
+  #elif (CLIENT_OS == OS_OS2)
+    VIOMODEINFO viomodeinfo = {0};
+    APIRET rc;
+    HVIO   hvio = 0;
+    viomodeinfo.cb = sizeof(VIOMODEINFO);
+    if(!VioGetMode(&viomodeinfo, hvio))
+       {
+       height = viomodeinfo.row;
+       width = viomodeinfo.col;
+       }
   #elif (CLIENT_OS == OS_WIN32)
     if ( w32ConGetSize(&width,&height) < 0 )
       height = width = 0;
@@ -621,7 +642,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
       height  = winsz.ws_row;
     }
   #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
-        (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) 
+        (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD)
     struct ttysize winsz;
     winsz.ts_lines = winsz.ts_cols = winsz.ts_xxx = winsz.ts_yyy = 0;
     ioctl (fileno(stdout), TIOCGWINSZ, &winsz);
@@ -631,7 +652,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     }
   #elif defined(TIOCGWINSZ)
     #error please add support for TIOCGWINSZ to avoid the following stuff
-  #else 
+  #else
   {
     char *envp = getenv( "LINES" );
     if (envp != NULL)
@@ -647,7 +668,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
       if (width <= 0 || width >= 300)
         width = 0;
     }
-    #if 0 
+    #if 0
     if (height == 0 && width == 0)
     {
       unsigned int loc = 0;
@@ -735,9 +756,11 @@ int ConClear(void)
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
       return w32ConClear();
     #elif (CLIENT_OS == OS_OS2)
-      USHORT attrib = 7;
-      VioScrollUp(0, 0, (USHORT)-1, (USHORT)-1, (USHORT)-1, (PCH)&attrib, 0);
-      VioSetCurPos(0, 0, 0);      /* move cursor to upper left */
+      CHAR attrib = 0007;
+      USHORT row = 0, col = 0;
+      HVIO hvio = 0;
+      VioScrollUp(0, 0, (USHORT)-1, (USHORT)-1, (USHORT)-1, &attrib, hvio);
+      VioSetCurPos(row, col, hvio);      /* move cursor to upper left */
       return 0;
     #elif (CLIENT_OS == OS_DOS)
       return dosCliConClear();
