@@ -17,7 +17,7 @@
 void Client::DisplayHelp( const char * unrecognized_option )
 {
   static const char *valid_help_requests[] =
-  { "-help", "help", "-h", "/h", "/?", "-?", "?", "/help" };
+  { "-help", "--help", "help", "-h", "/h", "/?", "-?", "?", "/help" };
 
   static const char *helpbody[] =
   {
