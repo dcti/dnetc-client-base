@@ -3,6 +3,13 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
+// $Log: cliconfig.cpp,v $
+// Revision 1.86  1998/06/13 09:19:35  remi
+// Fix for Intel 386 and 486 SX/DX/DX2 detection. x86ident does *not* return
+// 0x6849 ('hI') but 0x6e49 ('nI') for these processors.
+// Added $Log.
+//
+
 #include "client.h"
 
 
@@ -3160,7 +3167,7 @@ int Client::x86id()
       LogScreen("Detected an unknown AMD processor; ");
     }
   }
-  else if ((detectedvalue >> 16) == 0x6849 || (detectedvalue >> 16) == 0x6547) // Intel CPU
+  else if ((detectedvalue >> 16) == 0x6E49 || (detectedvalue >> 16) == 0x6547) // Intel CPU
   {
     detectedvalue &= 0xfff0; //strip last 4 bits, don't need stepping info
     if (detectedvalue == 0x30)
