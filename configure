@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.141 2000/03/06 20:27:22 patrick Exp $
+# @(#)$Id: configure,v 1.222.2.142 2000/03/10 03:06:18 jlawson Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -47,15 +47,14 @@ TARGET_BINNAME_SUFFIX=""
 BUILDNAME=$1
 
 #
-# Source C++ files making up the base client code
+# Source C++ files making up the base client code.
 #
 COMMON_SRCS="common/client.cpp \
 	     common/problem.cpp \
 	     common/autobuff.cpp \
 	     common/iniread.cpp \
 	     common/network.cpp \
-	     common/scram.cpp \
-	     common/buffwork.cpp \
+	     common/buffbase.cpp \
 	     common/mail.cpp \
 	     common/convdes.cpp \
 	     common/clicdata.cpp \
@@ -68,7 +67,6 @@ COMMON_SRCS="common/client.cpp \
 	     common/pathwork.cpp \
 	     common/cliident.cpp \
 	     common/logstuff.cpp \
-	     common/buffupd.cpp \
 	     common/triggers.cpp \
 	     common/selcore.cpp \
 	     common/netinit.cpp \
@@ -90,6 +88,21 @@ COMMON_SRCS="common/client.cpp \
 	     common/random.cpp \
 	     common/base64.cpp \
 	     common/netres.cpp"
+
+#
+# Include standard/public files source files too.
+#
+if [ -f "common/scram.cpp" -o -f "common/scram.h" -o \
+     -f "common/buffpriv.cpp" -o -f "common/buffupd.cpp" ]; then
+COMMON_SRCS="${COMMON_SRCS} \
+	     common/scram.cpp \
+	     common/buffpriv.cpp \
+	     common/buffupd.cpp"
+else
+COMMON_SRCS="${COMMON_SRCS} \
+	    common/buffpub.cpp"
+fi
+
 
 #
 # Source files making up the RC5 core code
