@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.94 1999/04/24 22:46:52 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.95 1999/04/26 01:17:18 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -909,6 +909,7 @@ int Client::Run( void )
   struct thread_param_block *thread_data_table = NULL;
 
   int TimeToQuit = 0, exitcode = 0;
+  int probmanIsInit = 0;
   int local_connectoften = 0;
   unsigned int load_problem_count = 0;
   unsigned int getbuff_errs = 0;
@@ -1018,6 +1019,21 @@ int Client::Run( void )
   }
 
   // -------------------------------------
+  // build a problem table
+  // -------------------------------------
+
+  probmanIsInit = InitializeProblemManager(load_problem_count);
+  if (probmanIsInit > 0)
+    load_problem_count = (unsigned int)probmanIsInit;
+  else
+  {
+    Log( "Unable to initialize problem manager. Quitting...\n" );
+    probmanIsInit = 0;
+    load_problem_count = 0;
+    TimeToQuit = 1;
+  }
+
+  // -------------------------------------
   // load (or rather, try to load) that many problems
   // -------------------------------------
 
@@ -1034,9 +1050,9 @@ int Client::Run( void )
     } 
     else if (load_problem_count == 0)
     {
-    Log("Unable to load any blocks. Quitting...\n");
-    TimeToQuit = 1;
-    exitcode = -2;
+      Log("Unable to load any blocks. Quitting...\n");
+      TimeToQuit = 1;
+      exitcode = -2;
     }
   }
 
@@ -1444,8 +1460,12 @@ int Client::Run( void )
   // Shutting down: save prob buffers, flush if nodiskbuffers, kill checkpts
   // ----------------
 
-   LoadSaveProblems(load_problem_count, PROBFILL_UNLOADALL );
-   CheckpointAction( CHECKPOINT_CLOSE, 0 ); /* also done by LoadSaveProb */
+  if (probmanIsInit)
+  {
+    LoadSaveProblems( load_problem_count, PROBFILL_UNLOADALL );
+    CheckpointAction( CHECKPOINT_CLOSE, 0 ); /* also done by LoadSaveProb */
+    DeinitializeProblemManager();
+  }
 
   ClientEventSyncPost( CLIEVENT_CLIENT_RUNFINISHED, 0 );
 

@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.54 1999/04/23 07:12:38 gregh Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.55 1999/04/26 01:17:18 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -588,14 +588,6 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
     ClientEventAddListener(-1, __event_test );
     #endif
 
-    i = InitializeProblemManager(load_problem_count);
-    if (i<=0)
-    {
-      --reentrant_count;
-      return 0;
-    }
-    load_problem_count = (unsigned int)i;
-
     for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
     {
       if ( ((unsigned long)(inthreshold[cont_i])) <
@@ -824,7 +816,6 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
     previous_load_problem_count = 0;
     if (nodiskbuffers == 0)
      CheckpointAction( CHECKPOINT_CLOSE, 0 );
-    DeinitializeProblemManager();
 
     return total_problems_saved;
   }
