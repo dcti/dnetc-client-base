@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: pclbench.cpp,v 1.1.2.3 2003/04/01 15:42:08 andreasb Exp $
+ * $Id: pclbench.cpp,v 1.1.2.4 2003/04/01 22:34:40 andreasb Exp $
  */
 
 #include "baseincs.h"
@@ -161,6 +161,103 @@ perfctr_set[] = {
   } },
   { { PCL_CYCLES,
       PCL_ELAPSED_CYCLES,
+      -1
+  } },
+  { { PCL_IPC,
+      -1
+  } },
+  { { PCL_L2DCACHE_MISSRATE,
+      -1
+  } },
+  #endif
+  { { -1 } } // terminate list
+}
+#elif defined(ULTRASPARC3)
+/* 2 counters, each may count only a subset of the events (from hpm -s)
+  0     PCL_L1DCACHE_READ
+  0     PCL_L1DCACHE_WRITE
+  0     PCL_L1ICACHE_READ
+  comp. PCL_L1ICACHE_HIT
+  1     PCL_L1ICACHE_MISS
+  0     PCL_L2CACHE_READWRITE
+  comp. PCL_L2CACHE_HIT
+  1     PCL_L2CACHE_MISS
+  1     PCL_ITLB_MISS
+  1     PCL_DTLB_MISS
+  0,1   PCL_CYCLES
+  TC    PCL_ELAPSED_CYCLES
+  comp. PCL_FP_INSTR
+  0,1   PCL_INSTR
+  comp. PCL_JUMP_UNSUCCESS
+  0     PCL_JUMP
+  0     PCL_STALL_STORE
+  comp. PCL_MFLOPS
+  comp. PCL_IPC
+  comp. PCL_L2DCACHE_MISSRATE
+*/
+perfctr_set[] = {
+  /* preload cache */
+  { { PCL_CYCLES,
+      PCL_INSTR,
+      -1
+  } },
+  /* calculate IPC */
+  { { PCL_CYCLES,
+      PCL_INSTR,
+      -1
+  } },
+  #if 1
+  /* all events */
+  { { PCL_L1DCACHE_READ,
+      -1
+  } },
+  { { 
+      PCL_L1DCACHE_WRITE,
+      -1
+  } },
+  { { PCL_L1ICACHE_READ,
+      PCL_L1ICACHE_MISS,
+      -1
+  } },
+  { { 
+      PCL_L1ICACHE_HIT,
+      -1
+  } },
+  { { PCL_L2CACHE_READWRITE,
+      PCL_L2CACHE_MISS,
+      -1
+  } },
+  { { 
+      PCL_L2CACHE_HIT,
+      -1
+  } },
+  { { 
+      PCL_ITLB_MISS,
+      -1
+  } },
+  { { 
+      PCL_DTLB_MISS,
+      PCL_STALL_STORE,
+      -1
+  } },
+  { { PCL_CYCLES,
+      PCL_ELAPSED_CYCLES,
+      -1
+  } },
+  { { 
+      PCL_FP_INSTR,
+      -1
+  } },
+  { { 
+      PCL_INSTR,
+      PCL_JUMP,
+      -1
+  } },
+  { { 
+      PCL_JUMP_UNSUCCESS,
+      -1
+  } },
+  { { PCL_MFLOPS,
       -1
   } },
   { { PCL_IPC,
