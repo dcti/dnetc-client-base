@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.60  1999/02/10 03:43:12  cyp
+// disphelp.cpp doesn't need lurk.h
+//
 // Revision 1.59  1999/02/10 03:42:03  cyp
 // --interfaces is no longer linux specific.
 //
@@ -194,7 +197,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.59 1999/02/10 03:42:03 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.60 1999/02/10 03:43:12 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -203,7 +206,6 @@ return "@(#)$Id: disphelp.cpp,v 1.59 1999/02/10 03:42:03 cyp Exp $"; }
 #include "triggers.h" //CheckExitRequestTriggerNoIO()
 #include "logstuff.h" //LogScreenRaw()
 #include "console.h"  //ConClear(), ConInkey()
-#include "lurk.h"     //define LURK if 'lurk' is supported
 
 // --------------------------------------------------------------------------
 
