@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.18 2000/01/23 14:33:09 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.19 2000/01/24 18:16:59 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -333,7 +333,7 @@ static void (*SETSIGNAL(int signo, void (*proc)(int)))(int)
   struct sigaction sa, osa;
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
-  sa.sa_handler = (sig_t)proc;
+  sa.sa_handler = proc;
   //if (!sigismember(&_sigintr, signo))
     sa.sa_flags |= SA_RESTART;
   if (sigaction(signo, &sa, &osa) < 0)
