@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.128 2002/03/23 23:11:04 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.129 2002/03/23 23:43:53 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -517,7 +517,7 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
     #elif (CLIENT_OS == OS_WIN32)
     if (x86_smc_initialized < 0) /* one shot */
     {
-      if (WinGetVersion < 2500) // SMC core doesn't run under WinXP/Win2K
+      if (winGetVersion() < 2500) // SMC core doesn't run under WinXP/Win2K
       {
         HANDLE h = OpenProcess(PROCESS_VM_OPERATION,
                                FALSE,GetCurrentProcessId());
