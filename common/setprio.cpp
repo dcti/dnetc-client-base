@@ -11,6 +11,9 @@
 */
 //
 // $Log: setprio.cpp,v $
+// Revision 1.36  1998/11/16 20:21:41  foxyloxy
+// Irix twiddling. No luck, but I thought I might as well sync up.
+//
 // Revision 1.35  1998/11/13 15:24:51  silby
 // win32 is back to 8,1
 //
@@ -38,7 +41,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.35 1998/11/13 15:24:51 silby Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.36 1998/11/16 20:21:41 foxyloxy Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -215,17 +218,17 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
   #elif (CLIENT_OS == OS_IRIX)
     if ( set_for_thread )
       {
-      //not threaded?
+      //nothing - priority is set when created.
       }
     else
       {
-      if (prio == 0){
-        schedctl( NDPRI, 0, NDPLOMIN );
-        schedctl( RENICE, 0, 39);
+	if (prio == 0){
+	  schedctl( NDPRI, 0, NDPLOMIN );
+	  schedctl( RENICE, 0, 39);
         } 
-      else{
-        if (prio < 9)
-          schedctl( NDPRI, 0, (NDPLOMIN - NDPNORMMIN)/prio);
+	else{
+	  if (prio < 9)
+	    schedctl( NDPRI, 0, (NDPLOMIN - NDPNORMMIN)/prio);
         }
       }
   #else
