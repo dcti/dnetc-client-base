@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.25  1998/10/06 15:08:27  blast
+// changed some AmigaOS includes...
+//
 // Revision 1.24  1998/10/04 01:30:54  silby
 // Removed direct references to platforms/win32cli (makefile handles them)
 //
@@ -145,6 +148,7 @@ extern "C" {
   #endif
 #elif (CLIENT_OS == OS_AMIGAOS)
   #include <amiga/amiga.h>
+  #include <unistd.h>
   #include <fcntl.h>
 #elif (CLIENT_OS == OS_RISCOS)
   extern "C"
