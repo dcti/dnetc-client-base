@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.8 2003/01/15 14:08:58 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.9 2003/01/16 09:26:41 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -658,6 +658,8 @@ static long __GetRawProcessorID(const char **cpuname)
       case CPUF_604:  detectedtype = 0x0004; break;
       case CPUF_604E: detectedtype = 0x0009; break;
       case CPUF_620:  detectedtype = 0x0004 + (1<<16); break;
+      case CPUF_G3:   detectedtype = 0x0008; break;
+      case CPUF_G4:   detectedtype = 0x8000; break;
       default: // some PPC processor that we don't know about
                // set the tag (so that the user can tell us), but return 0
       sprintf(namebuf, "WOS:0x%lx", cputags[0].ti_Data );
@@ -675,6 +677,12 @@ static long __GetRawProcessorID(const char **cpuname)
       case CPU_603p: detectedtype = 0x0006; break;
       case CPU_604:  detectedtype = 0x0004; break;
       case CPU_604e: detectedtype = 0x0009; break;
+      case 0x0008:   // G3
+      case 0x000C:   // 7400 (G4)
+      case 0x8000:   // 7450 (G4)
+      case 0x8001:   // 7455 (G4)
+      case 0x800C:   // 7410 (G4)
+      detectedtype = cpu; break;
       default: // some PPC processor that we don't know about
                // set the tag (so that the user can tell us), but return 0
       sprintf(namebuf, "PUP:0x%lx", cpu );
