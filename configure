@@ -5,11 +5,14 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.183  1999/02/04 22:44:22  remi
+# Replaced Meggs' bitslicer by DWorz's one in
+# alpha-{gcc,linux,openbsd,netbsd} targets.
+#
 # Revision 1.182  1999/02/03 18:20:12  cyp
 # Removed ./common/dctistrg.[cpp|h]
 #
 # Revision 1.181  1999/01/31 13:57:57  snake
-#
 # target bsdi4 with ELF and MMX support adapted, no mt yet
 #
 # Revision 1.180  1999/01/29 04:15:34  pct
@@ -20,14 +23,12 @@
 # NetBSD/i386 fixes.
 #
 # Revision 1.178  1999/01/27 20:13:16  patrick
-#
 # added lurk code to os2-emx
 #
 # Revision 1.177  1999/01/26 17:50:05  dbaker
 # changes for freebsd4 to allow smp threads or whatever
 #
 # Revision 1.176  1999/01/23 21:53:26  patrick
-#
 # target x86-os2-gcc: -i des/mmx-bitslice/ was missing
 #
 # Revision 1.175  1999/01/21 05:02:41  pct
@@ -59,7 +60,6 @@
 # new target for OS2: x86-os2-gcc
 #
 # Revision 1.169  1999/01/13 11:57:19  snake
-#
 # fixed sparc-openbsd target
 #
 # Revision 1.168  1999/01/12 21:48:23  remi
@@ -86,7 +86,7 @@
 # modified aix-pwer-gcc\nCHANGE of DELETECHARS broke AIX compile (only changed POWER targets)
 #
 # Revision 1.161  1999/01/11 11:44:13  cramer
-# *** empty log message ***
+# Added -pipe to sparc-solaris-gcc-crunch* targets
 #
 # Revision 1.160  1999/01/11 05:45:09  pct
 # Ultrix modifications for updated client.
@@ -873,6 +873,8 @@ KWAN_SLICE_SRCS4="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan4.cpp"
 MEGGS_SLICE_SRCS1="des/deseval-meggs2.cpp des/des-slice-meggs.cpp"
 MEGGS_SLICE_SRCS2="des/deseval-meggs3.cpp des/des-slice-meggs.cpp"
 
+DWORZ_SLICE_SRCS="des/deseval-dworz3.S des/des-slice-dworz.cpp"
+
 DESX86_SRCS="des/des-x86.cpp"
 
 DESMMX_SRCS="des/des-slice-meggs.cpp"
@@ -1249,8 +1251,8 @@ case "$1" in
 	RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 \
-			-DBIT_64 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+			-DBIT_64 -DKWAN -DDWORZ"
+	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS"
 	TARGET_LDFLAGS="-static"
 	TARGET_LIBS=""
 	;;
@@ -1260,8 +1262,8 @@ case "$1" in
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA \
 			-DMULTITHREAD -DPIPELINE_COUNT=1 \
-			-DBIT_64 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+			-DBIT_64 -DKWAN -DDWORZ"
+	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS"
 	TARGET_LDFLAGS="-static"
 	TARGET_LIBS="-lpthread"
 	;;
@@ -1270,8 +1272,8 @@ case "$1" in
 	RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 \
-			-DBIT_64 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+			-DBIT_64 -DKWAN -DDWORZ"
+	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS"
 	TARGET_LDFLAGS="-static"
 	TARGET_LIBS="-ltermcap"
 	;;
@@ -1281,8 +1283,8 @@ case "$1" in
 	TARGET_AS="g++ -c"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 \
-			-DBIT_64 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+			-DBIT_64 -DKWAN -DDWORZ"
+	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS"
 	TARGET_LDFLAGS="-static"
 	#TARGET_LIBS="-ltermcap"
 	;;
@@ -1290,10 +1292,9 @@ case "$1" in
     *alpha-linux)
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
-	TARGET_CCFLAGS="-O2 -fno-schedule-insns -fno-handle-exceptions -fno-rtti \
-	                -Wall -Icommon -Irc5 -Ides -Iplatforms -DASM_ALPHA -static \
-                        -DPIPELINE_COUNT=2 -DBIT_64 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="des/deseval-dworz2.c des/des-slice-dworz.cpp \
+	TARGET_CCFLAGS="OPTS_GCC_ALPHA -DPIPELINE_COUNT=2 \
+			-DBIT_64 -DKWAN -DDWORZ"
+	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS \
 			rc5/alphaasm/axp-bmeyer.cpp \
 			rc5/alphaasm/axp-bmeyer.s"
 	TARGET_LDFLAGS="-static"
