@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.71  1999/01/26 17:28:27  michmarc
+// Updated Alpha/Win32 driver for DWORZ DES engine
+//
 // Revision 1.70  1999/01/21 05:02:41  pct
 // Minor updates for Digital Unix clients.
 //
@@ -201,7 +204,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.70 1999/01/21 05:02:41 pct Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.71 1999/01/26 17:28:27 michmarc Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -1221,11 +1224,14 @@ printf("DES: kiter is %d\n",kiter);
   {
     unsigned long kiter = 0;
 
+/*
     timeslice *= 1;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
 
     if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
+*/
+    u32 nbits = 20;  // FROM des-slice-dworz.cpp
     timeslice = (1ul << nbits);
     kiter = des_unit_func ( &rc5unitwork, nbits );
     contestwork.keysdone.lo += kiter;
