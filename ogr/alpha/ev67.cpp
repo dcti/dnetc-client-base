@@ -6,7 +6,7 @@
  */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ev67.cpp,v 1.2.4.1 2003/02/25 12:30:23 snake Exp $"; }
+return "@(#)$Id: ev67.cpp,v 1.2.4.2 2003/12/07 23:03:25 kakace Exp $"; }
 
 #if defined(__GNUC__)
   #define OGROPT_BITOFLIST_DIRECT_BIT           1 /* seems to be a win */
@@ -25,6 +25,7 @@ return "@(#)$Id: ev67.cpp,v 1.2.4.1 2003/02/25 12:30:23 snake Exp $"; }
 
 #define ALPHA_CIX
 #define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table_cix
+#define OGR24_P2_GET_DISPATCH_TABLE_FXN ogr24_p2_get_dispatch_table_cix
 #define OVERWRITE_DEFAULT_OPTIMIZATIONS
 
 #include "ansi/ogr.cpp"

@@ -5,7 +5,7 @@
 */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.3.4.3 2003/04/04 14:31:52 gavin Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.3.4.4 2003/12/07 23:03:32 kakace Exp $"; }
 
 #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
   #if (__MWERKS__)
@@ -48,6 +48,7 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.3 2003/04/04 14:31:52 gavin Exp $"; }
     #error play with the settins to find out optimal settings for your compiler
   #endif
   #define OGR_GET_DISPATCH_TABLE_FXN vec_ogr_get_dispatch_table
+  #define OGR24_P2_GET_DISPATCH_TABLE_FXN vec_ogr24_p2_get_dispatch_table
   #define OVERWRITE_DEFAULT_OPTIMIZATIONS
   #include "ansi/ogr.cpp"
 #else //__VEC__

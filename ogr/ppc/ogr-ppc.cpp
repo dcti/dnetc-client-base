@@ -5,7 +5,7 @@
 */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-ppc.cpp,v 1.3.4.1 2003/02/25 12:30:23 snake Exp $"; }
+return "@(#)$Id: ogr-ppc.cpp,v 1.3.4.2 2003/12/07 23:03:32 kakace Exp $"; }
 
 #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
   #if (__MWERKS__)
@@ -44,6 +44,7 @@ return "@(#)$Id: ogr-ppc.cpp,v 1.3.4.1 2003/02/25 12:30:23 snake Exp $"; }
     #error play with the settins to find out optimal settings for your compiler
   #endif
   #define OGR_GET_DISPATCH_TABLE_FXN ppc_ogr_get_dispatch_table
+  #define OGR24_P2_GET_DISPATCH_TABLE_FXN ppc_ogr24_p2_get_dispatch_table
   #define OVERWRITE_DEFAULT_OPTIMIZATIONS
   #include "ansi/ogr.cpp"
 #else
