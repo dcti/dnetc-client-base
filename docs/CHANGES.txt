@@ -21,13 +21,14 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.53 2000/06/24 20:25:14 oliver Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.54 2000/06/27 13:47:27 cyp Exp $
 ==========================================================================
 
 2.8000
 ------
 
-2.8010.461  fix: x86: Athlon Thunderbird correctly detected now.
+2.8010.461  new: x86: RC5/K7 core from Holger Boehring <HBoehring@hboehring.de>
+            fix: x86: Athlon Thunderbird correctly detected now.
             fix: all: some pre-2.8000 .ini settings were not being upgraded.
             new: macosx: 2 separate builds for MacOSX and MacOSXServer
             new: macosx: the AltiVec cruncher is now available on MacOSX
