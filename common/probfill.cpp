@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.59 2001/01/12 04:34:15 andreasb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.60 2001/01/13 15:32:20 cyp Exp $"; }
 
 //#define TRACE
 
@@ -593,128 +593,143 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
                     unsigned int *loaded_for_contest,
                     int *bufupd_pending )
 {
-  WorkRecord wrdata;
   unsigned int did_load = 0;
-  int update_on_current_contest_exhaust_flag = (client->connectoften & 4);
-  long bufcount;
-  
-  bufcount = __loadapacket( client, &wrdata, 1, prob_i, 
-                            update_on_current_contest_exhaust_flag );
+  int retry_due_to_failed_loadstate = 0;
 
-  if (bufcount < 0 && client->nonewblocks == 0)
+  do /* while (retry_due_to_failed_loadstate) */
   {
-    //Log("3. BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0)\n");
-    int didupdate = 
-       BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0);
-    if (!(didupdate < 0))
+    WorkRecord wrdata;
+    int update_on_current_contest_exhaust_flag = (client->connectoften & 4);
+    long bufcount;
+
+    retry_due_to_failed_loadstate = 0;
+    bufcount = __loadapacket( client, &wrdata, 1, prob_i, 
+                              update_on_current_contest_exhaust_flag );
+
+    if (bufcount < 0 && client->nonewblocks == 0)
     {
-      if (didupdate!=0)
-        *bufupd_pending&=~(didupdate&(BUFFERUPDATE_FLUSH|BUFFERUPDATE_FETCH));
-      if ((didupdate & BUFFERUPDATE_FETCH) != 0) /* fetched successfully */
-        bufcount = __loadapacket( client, &wrdata, 0, prob_i,
-                                  update_on_current_contest_exhaust_flag );
-    }
-  }
-  
-  *load_needed = 0;
-  if (bufcount >= 0) /* load from file suceeded */
-    *load_needed = 0;
-  else if (client->rc564closed || client->blockcount < 0)
-    *load_needed = NOLOAD_NORANDOM; /* -1 */
-  else if (client->nonewblocks)
-    *load_needed = NOLOAD_NONEWBLOCKS;
-  else  /* using randoms is permitted */
-    *load_needed = 0;
-
-  if (*load_needed == 0)
-  {
-    u32 timeslice = 0x10000;
-    int expected_cpu = 0, expected_core = 0;
-    int expected_os  = 0, expected_build = 0;
-    const ContestWork *work = &wrdata.work;
-    
-    #if (defined(INIT_TIMESLICE) && (INIT_TIMESLICE >= 64))
-    timeslice = INIT_TIMESLICE;
-    #endif
-
-    if (bufcount < 0) /* normal load from buffer failed */
-    {                 /* so generate random */
-      work = CONTESTWORK_MAGIC_RANDOM;       
-      *loaded_for_contest = 0; /* don't care. just to initialize */
-    }
-    else
-    {
-      *loaded_for_contest = (unsigned int)(wrdata.contest);
-      expected_cpu = FILEENTRY_CPU_TO_CPUNUM( wrdata.cpu );
-      expected_core = FILEENTRY_CPU_TO_CORENUM( wrdata.cpu );
-      expected_os  = FILEENTRY_OS_TO_OS( wrdata.os );
-      expected_build = FILEENTRY_BUILD_TO_BUILD(wrdata.buildhi,wrdata.buildlo);
-      work = &wrdata.work;
-
-      /* if the total number of packets in buffers is less than the number 
-         of crunchers running then post a fetch request. This means that the
-         effective minimum threshold is always >= num crunchers
-      */   
-      if (bufcount <= 1 /* only one packet left */ ||
-         ((unsigned long)(bufcount)) < (load_problem_count - prob_i))
+      //Log("3. BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0)\n");
+      int didupdate = 
+         BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0);
+      if (!(didupdate < 0))
       {
-        *bufupd_pending |= BUFFERUPDATE_FETCH;
+        if (didupdate!=0)
+          *bufupd_pending&=~(didupdate&(BUFFERUPDATE_FLUSH|BUFFERUPDATE_FETCH));
+        if ((didupdate & BUFFERUPDATE_FETCH) != 0) /* fetched successfully */
+          bufcount = __loadapacket( client, &wrdata, 0, prob_i,
+                                    update_on_current_contest_exhaust_flag );
       }
     }
-
-    /* loadstate can fail if it selcore fails or the previous problem */
-    /* hadn't been purged, or the contest isn't available or ... */
-
-    if (ProblemLoadState( thisprob, work, *loaded_for_contest, timeslice, 
-         expected_cpu, expected_core, expected_os, expected_build ) != -1)
-    {
+  
+    *load_needed = 0;
+    if (bufcount >= 0) /* load from file suceeded */
       *load_needed = 0;
-      did_load = 1; 
+    else if (client->rc564closed || client->blockcount < 0)
+      *load_needed = NOLOAD_NORANDOM; /* -1 */
+    else if (client->nonewblocks)
+      *load_needed = NOLOAD_NONEWBLOCKS;
+    else  /* using randoms is permitted */
+      *load_needed = 0;
 
-      ClientEventSyncPost( CLIEVENT_PROBLEM_STARTED, (long)prob_i );
+    if (*load_needed == 0)
+    {
+      u32 timeslice = 0x10000;
+      int expected_cpu = 0, expected_core = 0;
+      int expected_os  = 0, expected_build = 0;
+      const ContestWork *work = &wrdata.work;
+        
+      #if (defined(INIT_TIMESLICE) && (INIT_TIMESLICE >= 64))
+      timeslice = INIT_TIMESLICE;
+      #endif
 
-      if (load_problem_count <= COMBINEMSG_THRESHOLD)
+      if (bufcount < 0) /* normal load from buffer failed */
+      {                 /* so generate random */
+        work = CONTESTWORK_MAGIC_RANDOM;       
+        *loaded_for_contest = 0; /* don't care. just to initialize */
+      }
+      else
       {
-        unsigned int permille; u32 ddonehi, ddonelo;
-        const char *contname; char pktid[32]; char ddonebuf[15];
-        if (ProblemGetInfo( thisprob, loaded_for_contest, &contname, 
-                                      0, 0,
-                                      0, 2, 
-                                      0, 
-                                      0, &permille, 1,
-                                      pktid, sizeof(pktid),
-                                      0, 0, 
-                                      0, 0, 0, 0,
-                                      0, 0, 
-                                      0, 0,
-                                      0, 0,
-                                      0, 0,
-                                      &ddonehi, &ddonelo,
-                                      ddonebuf, sizeof(ddonebuf) ) != -1)
+        *loaded_for_contest = (unsigned int)(wrdata.contest);
+        expected_cpu = FILEENTRY_CPU_TO_CPUNUM( wrdata.cpu );
+        expected_core = FILEENTRY_CPU_TO_CORENUM( wrdata.cpu );
+        expected_os  = FILEENTRY_OS_TO_OS( wrdata.os );
+        expected_build = FILEENTRY_BUILD_TO_BUILD(wrdata.buildhi,wrdata.buildlo);
+        work = &wrdata.work;
+        
+        /* if the total number of packets in buffers is less than the number 
+           of crunchers running then post a fetch request. This means that the
+           effective minimum threshold is always >= num crunchers
+        */   
+        if (bufcount <= 1 /* only one packet left */ ||
+           ((unsigned long)(bufcount)) < (load_problem_count - prob_i))
         {
-          const char *extramsg = ""; 
-          char perdone[32]; 
+          *bufupd_pending |= BUFFERUPDATE_FETCH;
+        } 
+      }
 
-          if (thisprob->pub_data.was_reset)
-            extramsg="\nPacket was from a different core/client cpu/os/build.";
-          else if (permille > 0 && permille < 1000)
+      /* loadstate can fail if it selcore fails or the previous problem */
+      /* hadn't been purged, or the contest isn't available or ... */
+
+      if (ProblemLoadState( thisprob, work, *loaded_for_contest, timeslice, 
+           expected_cpu, expected_core, expected_os, expected_build ) == -1)
+      {
+        /* The problem with LoadState() failing is that it implicitely
+        ** causes the block to be discarded, which means, that the 
+        ** keyserver network will reissue it - a senseless undertaking
+        ** if the data itself is invalid.
+        */
+        retry_due_to_failed_loadstate = 1;
+      }
+      else
+      {
+        *load_needed = 0;
+        did_load = 1; 
+
+        ClientEventSyncPost( CLIEVENT_PROBLEM_STARTED, (long)prob_i );
+    
+        if (load_problem_count <= COMBINEMSG_THRESHOLD)
+        {
+          unsigned int permille; u32 ddonehi, ddonelo;
+          const char *contname; char pktid[32]; char ddonebuf[15];
+          if (ProblemGetInfo( thisprob, loaded_for_contest, &contname, 
+                                        0, 0,
+                                        0, 2, 
+                                        0, 
+                                        0, &permille, 1,
+                                        pktid, sizeof(pktid),
+                                        0, 0, 
+                                        0, 0, 0, 0,
+                                        0, 0, 
+                                        0, 0,
+                                        0, 0,
+                                        0, 0,
+                                        &ddonehi, &ddonelo,
+                                        ddonebuf, sizeof(ddonebuf) ) != -1)
           {
-            sprintf(perdone, " (%u.%u0%% done)", (permille/10), (permille%10));
-            extramsg = perdone;
-          }
-          else if (ddonehi || ddonelo)
-          {
-            strcat( strcat( strcpy(perdone, " ("), ddonebuf)," done)");
-            extramsg = perdone;
-          }
-          
-          Log("%s: Loaded %s%s%s\n",
-               contname, ((thisprob->pub_data.is_random)?("random "):("")),
-               pktid, extramsg );
-        } /* if (thisprob->GetProblemInfo(...) != -1) */
-      } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
-    } /* if (LoadState(...) != -1) */
-  } /* if (*load_needed == 0) */
+            const char *extramsg = ""; 
+            char perdone[32]; 
+  
+            if (thisprob->pub_data.was_reset)
+              extramsg="\nPacket was from a different core/client cpu/os/build.";
+            else if (permille > 0 && permille < 1000)
+            {
+              sprintf(perdone, " (%u.%u0%% done)", (permille/10), (permille%10));
+              extramsg = perdone;
+            }
+            else if (ddonehi || ddonelo)
+            {
+              strcat( strcat( strcpy(perdone, " ("), ddonebuf)," done)");
+              extramsg = perdone;
+            }
+            
+            Log("%s: Loaded %s%s%s\n",
+                 contname, ((thisprob->pub_data.is_random)?("random "):("")),
+                 pktid, extramsg );
+          } /* if (thisprob->GetProblemInfo(...) != -1) */
+        } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
+      } /* if (LoadState(...) != -1) */
+    } /* if (*load_needed == 0) */
+  } while (retry_due_to_failed_loadstate);
 
   return did_load;
 }    
