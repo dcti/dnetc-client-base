@@ -15,7 +15,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.53.4.6 2004/01/07 02:50:51 piru Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.53.4.7 2004/06/19 23:30:16 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1055,10 +1055,16 @@ static int __do_crunchometer( int event_disp_format,
             disp_format = DISPFORMAT_PERC;
           else if (girc != -1)
           {
-            sprintf(buffer, "#%u: %s:%s [%s]", 
-                    prob_i+1, info.name, info.cwpbuf,
+            if (load_problem_count > 1) {
+              sprintf(buffer, "%s #%u:%s [%s]", info.name, prob_i+1, info.cwpbuf,
                     U64stringify(blkdone, sizeof(blkdone),
                                  info.dcounthi, info.dcountlo, 0, info.unit));
+            }
+            else {
+              sprintf(buffer, "%s:%s [%s]", info.name, info.cwpbuf,
+                    U64stringify(blkdone, sizeof(blkdone),
+                                 info.dcounthi, info.dcountlo, 0, info.unit));
+            }
             //there isn't enough space for percent so don't even think about it
           }
         }

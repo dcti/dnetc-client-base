@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.87.2.10 2004/05/26 22:11:44 kakace Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.87.2.11 2004/06/19 23:30:16 kakace Exp $"; }
 
 //#define TRACE
 
@@ -491,7 +491,13 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
                                            P_INFO_SIGBUF   | P_INFO_RATEBUF  | P_INFO_TCOUNT   |
                                            P_INFO_CCOUNT   | P_INFO_DCOUNT   | P_INFO_EXACT_PE ) != -1)
       {
+        char info_name[32];
         tv.tv_sec = info.elapsed_secs; tv.tv_usec = info.elapsed_usecs;
+
+        if (load_problem_count > 1)
+          sprintf(info_name, "%s #%u", info.name, prob_i+1);
+        else
+          strcpy(info_name, info.name);
 
         if (finito && !discarded && !info.is_test_packet)
           CliAddContestInfoSummaryData(cont_i,info.ccounthi,info.ccountlo,&tv,info.swucount);
@@ -502,9 +508,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
           {
             //[....] Discarded CSC 12345678:ABCDEF00 4*2^28
             //       (project disabled/closed)
-            Log("%s: %s %s%c(%s)\n", info.name, action_msg, info.sigbuf,
-                                     ((strlen(reason_msg)>10)?('\n'):(' ')),
-                                     reason_msg );
+            Log("%s: %s %s%c(%s)\n", info_name, action_msg, info.sigbuf,
+                       ((strlen(reason_msg)>10)?('\n'):(' ')), reason_msg );
           }
           else
           {
@@ -535,11 +540,11 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
             //       1.23:45:67:89 - [987,654,321 nodes/s]
             //[....] OGR: 25/1-2-4-5-8-10 [12,345,578,910 nodes]
             Log("%s: %s %s (%s)\n%s - [%s/s]\n",
-              info.name, action_msg, info.sigbuf, dcountbuf,
+              info_name, action_msg, info.sigbuf, dcountbuf,
               CliGetTimeString( &tv, 2 ), info.rate.ratebuf );
             if (finito && info.show_exact_iterations_done)
             {
-              Log("%s: %s [%s]\n", info.name, info.sigbuf,
+              Log("%s: %s [%s]\n", info_name, info.sigbuf,
                   ProblemComputeRate(cont_i, 0, 0, info.tcounthi, info.tcountlo,
                                      0, 0, dcountbuf, sizeof(dcountbuf)));
             }
@@ -787,9 +792,16 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
               extramsg = perdone;
             }
 
-            Log("%s: Loaded %s%s%s\n",
-                 info.name, ((thisprob->pub_data.is_random)?("random "):("")),
-                 info.sigbuf, extramsg );
+            if (load_problem_count > 1) {
+              Log("%s #%u: Loaded %s%s%s\n", info.name, prob_i+1,
+                      ((thisprob->pub_data.is_random)?("random "):("")),
+                      info.sigbuf, extramsg );
+            }
+            else {
+              Log("%s: Loaded %s%s%s\n", info.name,
+                      ((thisprob->pub_data.is_random)?("random "):("")),
+                      info.sigbuf, extramsg );
+            }
           } /* if (thisprob->GetProblemInfo(...) != -1) */
         } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
       } /* if (LoadState(...) != -1) */
