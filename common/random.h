@@ -1,14 +1,9 @@
-/* Hey, Emacs, this a -*-C++-*- file !
- *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
- * For use in distributed.net projects only.
- * Any other distribution or use of this source violates copyright.
- * 
- * $Log: random.h,v $
- * Revision 1.1  1999/03/20 07:04:46  cyp
- * Split random/randomizing functions to stand alone.
- *
-*/ 
+// Hey, Emacs, this a -*-C++-*- file !
+//
+// Copyright distributed.net 1997-1999 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+// 
 
 #ifndef __RANDOM_H__
 #define __RANDOM_H__

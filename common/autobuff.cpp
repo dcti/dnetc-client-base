@@ -8,47 +8,9 @@
 // Created by Jeff Lawson.
 // ----------------------------------------------------------------------
 //
-// $Log: autobuff.cpp,v $
-// Revision 1.13  1999/03/08 14:55:40  jlawson
-// eliminated stray cvs tag.
-//
-// Revision 1.12  1999/02/28 02:29:04  jlawson
-// merged stepline functionality from proxy codebase.
-//
-// Revision 1.11  1999/01/31 20:19:07  cyp
-// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
-//
-// Revision 1.10  1999/01/01 02:45:14  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.9  1998/07/08 23:30:33  remi
-// Cleared a GCC warning.
-//
-// Revision 1.8  1998/07/08 09:23:17  jlawson
-// eliminated integer type warnings on win16
-//
-// Revision 1.7  1998/07/07 21:54:57  cyruspatel
-// client.h has been split into client.h and baseincs.h 
-//
-// Revision 1.6  1998/07/06 09:21:19  jlawson
-// added lint tags around cvs id's to suppress unused variable warnings.
-//
-// Revision 1.5  1998/06/15 12:03:42  kbracey
-// Lots of consts.
-//
-// Revision 1.4  1998/06/14 08:26:34  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-//
-// Revision 1.3  1998/06/14 08:12:23  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-//
 
-#if (!defined(lint) && defined(__showids__))
 const char *autobuff_cpp(void) {
-return "@(#)$Id: autobuff.cpp,v 1.13 1999/03/08 14:55:40 jlawson Exp $"; }
-#endif
+return "@(#)$Id: autobuff.cpp,v 1.14 1999/04/05 01:30:36 jlawson Exp $"; }
 
 #include <string.h>
 #include "cputypes.h" //u32 

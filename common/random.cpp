@@ -1,23 +1,12 @@
-/* Copyright distributed.net 1997-1999 - All Rights Reserved
- * For use in distributed.net projects only.
- * Any other distribution or use of this source violates copyright.
- *
- * ****************** THIS IS WORLD-READABLE SOURCE *********************
- *
- * 
- * $Log: random.cpp,v $
- * Revision 1.1  1999/03/20 07:04:46  cyp
- * Split random/randomizing functions to stand alone.
- *
- *
- *
-*/
+// Copyright distributed.net 1997-1999 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+//
+// ****************** THIS IS WORLD-READABLE SOURCE *********************
+//
 
-
-#if (!defined(lint) && defined(__showids__))
 const char *random_cpp(void) {
-return "@(#)$Id: random.cpp,v 1.1 1999/03/20 07:04:46 cyp Exp $"; }
-#endif
+return "@(#)$Id: random.cpp,v 1.2 1999/04/05 01:31:56 jlawson Exp $"; }
 
 #include "cputypes.h" /* u32 */
 #include <time.h>     /* time() */

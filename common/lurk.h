@@ -2,50 +2,7 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-// $Log: lurk.h,v $
-// Revision 1.15  1999/04/01 02:59:12  cyp
-// made IsConnected() public so that we can *quietly* check the state.
-//
-// Revision 1.14  1999/02/09 23:41:39  cyp
-// Lurk iface mask changes: a) default iface mask no longer needs to be known
-// outside lurk; b) iface mask now supports wildcards; c) redid help text.
-//
-// Revision 1.13  1999/02/09 03:17:59  remi
-// Added Lurk::GetDefaultIFaceMask(void).
-//
-// Revision 1.12  1999/02/07 16:00:09  cyp
-// Lurk changes: genericified variable names, made less OS-centric.
-//
-// Revision 1.11  1999/02/06 10:42:55  remi
-// - the default for dialup.ifacestowatch is now 'ppp0:sl0'.
-// - #ifdef'ed dialup.ifacestowatch (only Linux at the moment)
-// - modified a bit the help text in confopt.cpp
-//
-// Revision 1.10  1999/02/06 09:08:08  remi
-// Enhanced the lurk fonctionnality on Linux. Now it use a list of interfaces
-// to watch for online/offline status. If this list is empty (the default), any
-// interface up and running (besides the lookback one) will trigger the online
-// status.
-//
-// Revision 1.9  1999/02/04 07:47:06  cyp
-// Re-import from proxy base. Cleaned up. Added linux and win16 support.
-//
-// Revision 1.3  1999/01/28 19:53:11  trevorh
-// Added lurkonly support for OS/2
-//
-// Revision 1.2  1999/01/24 23:14:58  dbaker
-// copyright 1999 changes
-//
-// Revision 1.1  1998/12/30 01:45:11  jlawson
-// added lurk code from client.
-//
-// Revision 1.6  1998/11/12 13:09:03  silby
-// Added a stop function, made start and stop public.
-//
-// Revision 1.5  1998/10/03 03:24:36  cyp
-// Fixed a broken #endif (had trailing comment without //). Added
-// #ifndef __LURK_H__ /#define __LURK_H__ /#endif nesting.
-//
+
 #ifndef __LURK_H__
 #define __LURK_H__
 
