@@ -8,6 +8,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: iniread.cpp,v $
+// Revision 1.25  1999/03/04 09:11:38  jlawson
+// WritePrivateProfileStringB properly handles return code from writeinifile
+//
 // Revision 1.24  1999/03/03 01:32:48  jlawson
 // ReadIniFile and WriteIniFile now return < 0 on error, for consistency.
 //
@@ -98,7 +101,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.24 1999/03/03 01:32:48 jlawson Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.25 1999/03/04 09:11:38 jlawson Exp $"; }
 #endif
 
 #define COMPILING_INIREAD
@@ -575,7 +578,7 @@ int WritePrivateProfileStringB( const char *sect, const char *key,
     }
   if (changed)
     {
-    if ( !inifile.WriteIniFile() )
+    if ( inifile.WriteIniFile() < 0)
       return 0;
     }
   return 1; //success
