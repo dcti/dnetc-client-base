@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.41 1999/12/07 16:31:55 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.42 1999/12/08 05:37:39 remi Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -102,7 +102,7 @@ static double __calc_rate( unsigned int contestid, ContestWork *contestwork,
                  (((double)(totalruntime->tv_usec))/((double)(1000000L))));
       if (print_it)
       {
-        LogScreen("Completed in %s [%skeys/sec]\n",  
+        LogScreen("\rCompleted in %s [%skeys/sec]\n",  
                  CliGetTimeString( totalruntime, 2 ),
                  CliGetKeyrateAsString( ratestr, rate ) );
       }
@@ -119,7 +119,7 @@ static double __calc_rate( unsigned int contestid, ContestWork *contestwork,
               (((double)(totalruntime->tv_usec))/((double)(1000000L))));
       if (print_it)
       {
-        LogScreen("Completed in %s [%snodes/sec]\n",
+        LogScreen("\rCompleted in %s [%snodes/sec]\n",
                  CliGetTimeString( totalruntime, 2 ),
                  CliGetKeyrateAsString( ratestr, rate ) );
       }
@@ -381,7 +381,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     run = -1; /* core error */
   else if (problem->RetrieveState(&contestwork, NULL, 0) < 0)
     run = -1; /* core error */
-  if (scropen > 0)
+  if (scropen > 0 && run < 0)
     LogScreen("\n");
   delete problem;
   
