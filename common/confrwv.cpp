@@ -3,8 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
-// Revision 1.32  1999/01/19 09:45:17  patrick
+// Revision 1.33  1999/01/21 21:49:02  cyp
+// completed toss of ValidateConfig().
 //
+// Revision 1.32  1999/01/19 09:45:17  patrick
 // LURK: changed to not copy connection name for OS2.
 //
 // Revision 1.31  1999/01/17 15:57:32  cyp
@@ -142,7 +144,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.32 1999/01/19 09:45:17 patrick Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.33 1999/01/21 21:49:02 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -345,14 +347,6 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   RefreshRandomPrefix( client, 1 /* don't trigger */ );
 
   return( inierror ? -1 : 0 );
-}
-
-// --------------------------------------------------------------------------
-
-void ValidateConfig(Client * /*client*/ ) //DO NOT PRINT TO SCREEN HERE!
-{
-  //poof! gone. - very little was being properly validated,
-  //and that which was is also validated in the individual subsystems.
 }
 
 // --------------------------------------------------------------------------

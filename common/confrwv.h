@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.h,v $
+// Revision 1.7  1999/01/21 21:49:02  cyp
+// completed toss of ValidateConfig().
+//
 // Revision 1.6  1999/01/04 02:47:30  cyp
 // Cleaned up menu options and handling.
 //
@@ -33,7 +36,6 @@
 #define __CONFRWV_H__
 
 int ReadConfig(Client *client);
-void ValidateConfig(Client *client);
 int WriteConfig(Client *client, int writefull /* defaults to 0*/);
 void RefreshRandomPrefix( Client *client, int no_trigger = 0 );
 
