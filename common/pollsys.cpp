@@ -39,7 +39,7 @@
  * --------------------------------------------------------------------
 */
 const char *pollsys_cpp(void) {
-return "@(#)$Id: pollsys.cpp,v 1.8 1999/04/05 17:56:52 cyp Exp $"; }
+return "@(#)$Id: pollsys.cpp,v 1.9 1999/04/06 07:50:39 cyp Exp $"; }
 
 #include "baseincs.h"  /* NULL, malloc */
 #include "clitime.h"   /* CliTimer() */
@@ -81,8 +81,11 @@ static struct
   struct polldata *nextrun[MAX_POLL_RUNLEVEL+1];
 } pollsysdata = { NULL, 0, {NULL}};
 
-// UnregPolledProcedure() unregisters a procedure previously registered with
-// RegPolledProcedure(). Procedures are auto unregistered when executed.
+
+/* ---------------------------------------------------------------------- */
+/*
+   RegPolledProcedure(). Procedures are auto unregistered when executed.
+*/   
 
 int UnregPolledProcedure( int fd )
 {
@@ -107,17 +110,19 @@ int UnregPolledProcedure( int fd )
   return rc;
 }  
 
-// RegPolledProcedure() adds a procedure to be called from the polling loop.
-// Procedures may *not* use sleep() or usleep() directly! (Its a stack issue, 
-// not a reentrancy problem). Procedures are automatically unregistered 
-// when called (they can re-register themselves). The 'interval' argument 
-// specifies how much time must elapse before the proc is scheduled to run - 
-// the default is {0,0}, ie schedule as soon as possible. Returns a non-zero 
-// handle on success or -1 if error. Care should be taken to ensure that
-// procedures registered with a high priority have an interval long enough
-// to allow procedures with a low(er) priority to run.
+/*
+  RegPolledProcedure() adds a procedure to be called from the polling loop.
+  Procedures may *not* use sleep() or usleep() directly! (Its a stack issue, 
+  not a reentrancy problem). Procedures are automatically unregistered 
+  when called (they can re-register themselves). The 'interval' argument 
+  specifies how much time must elapse before the proc is scheduled to run - 
+  the default is {0,0}, ie schedule as soon as possible. Returns a non-zero 
+  handle on success or -1 if error. Care should be taken to ensure that
+  procedures registered with a high priority have an interval long enough
+  to allow procedures with a low(er) priority to run.
+*/  
 
-int RegPolledProcedure( void (*proc)(void *), void *arg, 
+int RegPolledProcedure( auto void (*proc)(void *), void *arg, 
                         struct timeval *interval, unsigned int priority ) 
 {
   struct polldata *thatp, *thisp, *chaintail;
