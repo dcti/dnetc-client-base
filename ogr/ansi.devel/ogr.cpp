@@ -8,7 +8,7 @@
  * - it #includes all neccessary .cor (core functions/macros), 
  *   .mac (general macros), .inc (general stuff) files
  */
-#define __OGR_CPP__ "@(#)$Id: ogr.cpp,v 1.1.2.41 2001/02/09 03:16:03 sampo Exp $"
+#define __OGR_CPP__ "@(#)$Id: ogr.cpp,v 1.1.2.42 2001/02/14 21:12:51 andreasb Exp $"
 
 #include <stdio.h>      /* printf for debugging */
 #include <stdlib.h>     /* malloc (if using non-static choose dat) */
@@ -269,6 +269,19 @@
 #endif /* OGROPT_NEW_CHOOSEDAT */
 
 
+
+/* use the core as a stubmap generator ... */
+#ifdef OGR_CALLBACK
+  extern int ogr_callback_depth;
+
+  /* returns 0 while ogr_cycle() should continue */
+  int ogr_callback(const struct State *state);
+  
+  #define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table_callback
+#endif
+
+
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -343,15 +356,6 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 
 #if defined(__cplusplus)
 }
-#endif
-
-
-/* use the core as a stubmap generator ... */
-#ifdef OGR_CALLBACK
-  extern int ogr_callback_depth;
-
-  /* returns 0 while ogr_cycle() should continue */
-  int ogr_callback(const struct State *state);
 #endif
 
 
@@ -565,7 +569,12 @@ static int ogr_init(void)
 
 static const char* ogr_core_id() {
   /* whats the most senseful format for this? char ** like argv ? */
-  return __OGR_H__ "\n" __OGR_CPP__ "\n" __OGR_FB_MAC__ "\n" __OGR_CORE__ "\n";
+  #define STRINGIFY2(x) #x
+  #define STRINGIFY(x) STRINGIFY2(x)
+  return STRINGIFY(OGR_GET_DISPATCH_TABLE_FXN) "\n" 
+         __OGR_H__ "\n" __OGR_CPP__ "\n" __OGR_FB_MAC__ "\n" __OGR_CORE__ "\n";
+  #undef STRINGIFY
+  #undef STRINGIFY2
 }
 
 
