@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: threadcd.h,v $
+// Revision 1.12  1998/07/16 20:14:37  nordquist
+// DYNIX port changes.
+//
 // Revision 1.11  1998/07/14 00:45:31  cyruspatel
 // Added a second define to differenciate between OS_SUPPORTS_THREADING and
 // when special steps must be taken to support it, such as linking special
@@ -97,6 +100,9 @@
   typedef int THREADID ; //dummy
   #undef OS_SUPPORTS_THREADING
   #undef THREADING_IS_AVAILABLE
+#elif (CLIENT_OS == OS_DYNIX)
+  typedef int THREADID ; //dummy
+  #undef OS_SUPPORTS_THREADING
 #else
   #if !defined(MULTITHREAD)
     typedef int THREADID ; //dummy

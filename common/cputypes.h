@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.27  1998/07/16 20:18:52  nordquist
+// DYNIX port changes.
+//
 // Revision 1.26  1998/07/15 05:50:33  ziggyb
 // removed the need for a fake bool when I upgraded my version of Watcom to version 11
 //
@@ -339,6 +342,15 @@ struct s128 { s64 hi, lo; };
 #elif defined(__MVS__)
   #define CLIENT_OS     OS_OS390
   #define CLIENT_CPU    CPU_S390
+#elif defined(_SEQUENT_)
+  #if defined(ASM_X86)
+    #define CLIENT_OS     OS_DYNIX
+    #define CLIENT_CPU    CPU_X86
+  #else
+    #define CLIENT_OS     OS_DYNIX
+    #define CLIENT_CPU    CPU_UNKNOWN
+    #define IGNOREUNKNOWNCPUOS
+  #endif
 #endif
 
 #if !defined(CLIENT_OS) || !defined(CLIENT_CPU)
@@ -369,6 +381,8 @@ struct s128 { s64 hi, lo; };
 #elif (defined(__TURBOC__) && __TURBOC__ <= 0x400)
   #define NEED_FAKE_BOOL
 #elif (defined(_MSC_VER) && _MSC_VER < 1100)
+  #define NEED_FAKE_BOOL
+#elif (defined(_SEQUENT_) && !defined(__GNUC__))
   #define NEED_FAKE_BOOL
 #endif
 
