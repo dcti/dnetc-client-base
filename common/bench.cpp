@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.25 1999/04/09 13:31:59 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.26 1999/04/11 00:30:25 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -128,7 +128,7 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
   }
   else 
   {
-    LogScreen("Error: Contest %s cannot be benchmarked\n", contname );
+    //LogScreen("Error: Contest %s cannot be benchmarked\n", contname );
     return 0;
   }
 
