@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.24 2003/02/26 02:56:55 snake Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.25 2003/02/27 17:59:11 teichp Exp $"; }
 
 //#define TRACE
 
@@ -1470,6 +1470,27 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
     }
   }
   else if (projectid == RC5_72)
+  {
+    if (detected_type > 0)
+    {
+      if (detected_type == 0x200  || /* ARM 2 */
+          detected_type == 0x250  || /* ARM 250 */
+          detected_type == 0x300  || /* ARM 3 */
+          detected_type == 0x600  || /* ARM 600 */
+          detected_type == 0x610  || /* ARM 610 */
+          detected_type == 0x700  || /* ARM 700 */
+          detected_type == 0x710  || /* ARM 710 */
+          detected_type == 0x7500 || /* ARM 7500 */
+          detected_type == 0x7500FE) /* ARM 7500FE */
+        cindex = 1;
+      else if (detected_type == 0x810 || /* ARM 810 */
+               detected_type == 0xA10 || /* StrongARM 110 */
+               detected_type == 0xA11 || /* StrongARM 1100 */
+               detected_type == 0xB11)   /* StrongARM 1110 */
+        cindex = 0;
+    }
+  }
+  else if (projectid == OGR)
   {
     if (detected_type > 0)
     {
