@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.159  1998/07/25 05:29:43  silby
+// Changed all lurk options to use a LURK define (automatically set in client.h) so that lurk integration of mac/amiga clients needs only touch client.h and two functions in client.cpp
+//
 // Revision 1.158  1998/07/22 00:02:35  silby
 // Changes so that win32gui priorities will be more shutdown friendly.
 //
@@ -304,7 +307,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.158 1998/07/22 00:02:35 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.159 1998/07/25 05:29:43 silby Exp $";
 return id; }
 #endif
 
@@ -1109,7 +1112,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           if (choice > 2) choice=2;
           *(s32 *)options[CONF_OFFLINEMODE].thevariable=choice;
           break;
-#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+#if defined(LURK)
         case CONF_LURKMODE:
           choice=atoi(parm);
           if (choice < 0) choice=0;
@@ -1324,7 +1327,7 @@ options[CONF_NETTIMEOUT].thevariable=&nettimeout;
 options[CONF_EXITFILECHECKTIME].thevariable=&exitfilechecktime;
 options[CONF_OFFLINEMODE].thevariable=&offlinemode;
 
-#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+#if defined(LURK)
 options[CONF_LURKMODE].thevariable=&lurk;
 #else
 options[CONF_LURKMODE].optionscreen=0;
@@ -1522,7 +1525,7 @@ s32 Client::ReadConfig(void)
   tempconfig=ini.getkey(OPTION_SECTION, "win95hidden", "0")[0];
   if (tempconfig) win95hidden=1;
 #endif
-#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+#if defined(LURK)
   tempconfig=ini.getkey(OPTION_SECTION, "lurk", "0")[0];
   if (tempconfig) lurk=1;
   tempconfig=ini.getkey(OPTION_SECTION, "lurkonly", "0")[0];
@@ -1862,7 +1865,7 @@ s32 Client::WriteConfig(void)
   ini.setrecord(OPTION_SECTION, "contestdone",  IniString(contestdone[0]));
   ini.setrecord(OPTION_SECTION, "contestdone2", IniString(contestdone[1]));
 
-#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+#if defined(LURK)
 
   if (lurk==0)
     {
@@ -2215,7 +2218,7 @@ s32 Client::RunStartup(void)
 OSVERSIONINFO osver;
 #endif
 
-#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+#if defined(LURK)
 if (lurk > 0) StartLurk(); //only start lurk if it needs to be started
 #endif
 
@@ -2722,7 +2725,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
 #endif
 #endif
 
-#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+#if defined(LURK)
     else if ( strcmp( Argv[i], "-lurk" ) == 0 ) // Detect modem connections
     {
       lurk=1;

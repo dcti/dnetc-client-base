@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.68  1998/07/25 05:29:57  silby
+// Changed all lurk options to use a LURK define (automatically set in client.h) so that lurk integration of mac/amiga clients needs only touch client.h and two functions in client.cpp
+//
 // Revision 1.67  1998/07/15 06:58:12  silby
 // Changes to Flush, Fetch, and Update so that when the win32 gui sets connectoften to initiate one of the above more verbose feedback will be given.  Also, when force=1, a connect will be made regardless of offlinemode and lurk.
 //
@@ -313,9 +316,14 @@ public:
   s32 contestdone[2];
 
 #if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+#define LURK
+#endif
+
+#if defined(LURK)
   s32 lurk;
   s32 oldlurkstatus;
 #endif
+
 #if ( (CLIENT_OS==OS_WIN32) && (!defined(WINNTSERVICE)) )
   s32 win95hidden;
 #endif
@@ -385,11 +393,13 @@ protected:
   const char *InternalGetLocalFilename( const char *filename );
 #endif
 
+#if defined(LURK)
   s32 StartLurk(void);
     // Initializes Lurk Mode -> 0=success, -1 = failed
 
   s32 LurkStatus(void);
     // Checks status of connection -> !0 = connected
+#endif
 
 #if defined(NEEDVIRTUALMETHODS)
   // methods that can be overriden to provide additional functionality
