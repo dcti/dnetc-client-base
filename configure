@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.247 1999/11/25 13:27:12 chrisb Exp $
+# @(#)$Id: configure,v 1.248 1999/11/26 17:52:45 chrisb Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -710,8 +710,8 @@ case "$1" in
 	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $CSC_ASM_SRCS"
 	TARGET_LIBS="-lnsl -lsocket -ldl"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="x86-solaris26"
+        TARGET_DOCFILES="docs/readme._ix docs/readme.x86-solaris libstdc++.so.2.8.1"   #platform specific docfile
+        TARGET_TARBALL="x86-solaris"
 	;;
 
 ###### Alpha
