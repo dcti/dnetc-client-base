@@ -21,11 +21,16 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.13 1999/12/20 02:36:36 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.14 1999/12/25 13:55:09 cyp Exp $
 ==========================================================================
 
 2.8000
 ------
+
+2.8004.451  fix: OS/2: Fixed crash in -config by using different API calls
+            fix: OS/2: included the forgotten CSC-MMX core.
+            fix: solaris x86: multithreading works correctly now (uses
+                 native threads bound to LWPs instead of pthreads)
 
 2.8004.450  new: macos port including Altivec core support (twice as
                  fast as MMX on otherwise comparable hardware)
