@@ -22,8 +22,8 @@ Index:
     e.  MS-DOS client installation instructions
     f.  Amiga client installation instructions
     g.  RISC OS CLI installation instructions
-   (Windows, Macintosh, OS/2 and RISC OS GUI installation instructions
-   are included with their respective programs.)
+   (Amiga, Windows, Macintosh, NetWare, OS/2 and RISC OS GUI installation 
+   instructions are included with their respective programs.)
 4.  Upgrading from a previous version of the client
 5.  Configuration of the client via the client config menu
 6.  Client commands
@@ -165,9 +165,19 @@ unauthorized installations is help in uninstalling them.
 
 3e.  MS-DOS client installation instructions:
 
-The MS-DOS client is not a standalone client; it requires "feeding" of
-buffer files from a networkable client. Please see section 10b for more
-information on how to use it.
+     a.  Unzip the compressed file into the directory in which
+         you will be running the client, most likely "c:\rc5des\".
+     b.  Read the documentation (this file) through so that you
+         completely understand how to operate the client.
+     c.  Run rc5des.exe.  This will initiate the menu-driven
+         configuration (described below.)  Set the options for your
+         configuration.
+     d.  Start the client up again; it should now receive some
+         blocks, and begin working.
+     
+     Note: The MS-DOS client is not a standalone client; it requires 
+     "feeding" of buffer files from a networkable client. Please 
+     refer to section 10b for more information on how to use it.
 
 3f.  Amiga client installation instructions:
 
@@ -571,7 +581,7 @@ Choice -->
 
 Commands that can be invoked from the command line only:
 
--config	  Invokes the configuration menu
+-config   Invokes the configuration menu
 
 -test     Tests the client's integrity and ensures it contains no
           errors.
@@ -592,7 +602,7 @@ Commands that can be invoked from the command line only:
               -fetch frequently fails before getting the requested number
               of blocks.
 
--update	      Combination of flush/fetch
+-update       Combination of flush/fetch
 
 -benchmark    Benchmarks the client's speed on the system.
 
@@ -1253,34 +1263,28 @@ how you read them.  The averages
     10b.  MS-DOS client
 
           The MS-DOS client operates in the same manner as the other
-          non-GUI clients, with two major differences:
+          non-GUI clients, with three major differences:
 
           1. Due to the fact that MS-DOS is not a multitasking operating
-             system, this client has no way to run in the background.
-             The only two ways known to multitask it effectively are under
-             Desqview and windows 3.x; it is meant primarily for use on
-             systems which are running older operating systems, but can
-             be dedicated for periods of time (overnight, for example.)
+             system, this client has no way to run in the background 
+             unless it has been set up to run under the control of an
+             external multitasker such as Desqview, or Windows.
           2. Due to a lack of standards for TCP/IP stacks (and a lack
              of time), there is no TCP/IP support in the MS-DOS client.
              To use this client, you must use a file sharing method to
-             feed it buffer files (NFS, netware, SMB, etc are all
-             acceptable.) You may also transfer buffers to an offline
+             feed it buffer files (NFS, NetWare, SMB, etc are all
+             acceptable). You may also transfer buffers to an offline
              MS-DOS machine via a floppy disk if you so desire.
-
-          Also:
-
-          1. To run the DOS client, it is necessary to have dos4gw.exe
-             (which is distributed with the client) in your path.
-          2. The DOS client will not save it's partial work when it is
-             shutdown (DOS doesn't provide adequate signal handling).
-             For this reason, you should use checkpoint files.
-
+          3. For reasons of efficiency, the DOS client runs entirely
+             in protected mode, but requires the assistance of a
+             'DOS extender' to do so. One such 'extender' is dos4gw.exe
+             (so called because it makes upto 4 gigabytes of memory 
+             available to the client) and is distributed together with 
+             the client. 
+             
     10c.  Amiga client
 
-          The Amiga client requires:
-
-          Please read readme.amiga
+          Please refer to 'readme.amiga' for detailed notes.
 
           The original amiga port was made by `caw', and rewritten for
           RC5-64 and DES by Stefan Smietanowski (aka Blast).
