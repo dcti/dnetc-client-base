@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.42 1999/11/15 04:48:53 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.43 1999/11/15 12:47:04 remi Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -99,7 +99,7 @@ OPTS_GAS_ULTRA="-Av9a"
 OPTS_AS_ULTRA="-xarch=v8plusa"
 
 # (sparc/v8 [SS5+]     egcs)
-OPTS_EGCS_NONULTRA_SPARC="$OPTS_EGCS -O6 -mtune=supersparc -DASM_SPARC"
+OPTS_EGCS_NONULTRA_SPARC="$OPTS_EGCS -mtune=supersparc -DASM_SPARC"
 
 #-- SUN 68k
 
@@ -553,19 +553,18 @@ case "$1" in
 	;;
 
     *sparc-linux-mt-egcs)	# [remi]
-	TARGET_CC="gcc"
-	TARGET_AS="gcc -c"
+	TARGET_CC="egcc"
+	TARGET_AS="egcc -c"
 	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC -fno-inline-functions \
-			-D__showids__ -DLURK \
-			-DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS"
+	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC \
+			-D__showids__ -DLURK -DMULTITHREAD \
+			-DBIT_32 -DKWAN -DMEGGS $CSC_ANSI_CCOPTS"
 	TARGET_ADDSRCS="common/lurk.cpp \
-			des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
-	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
+			des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp \
+			$CSC_ANSI_SRCS"
 	TARGET_LIBS="-lpthread"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="linux-sparc-elf-mt-glibc20"
+	TARGET_TARBALL="linux-sparc-elf-mt-glibc2"
 	;;
 
     *sparc-cc)
