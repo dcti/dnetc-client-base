@@ -1,7 +1,7 @@
 
  distributed.net client for MorphOS (PPC)
  Released by Harry Sintonen <sintonen@iki.fi>
- Document revision $Id: readme.morphos,v 1.1.2.2 2004/01/09 22:43:27 piru Exp $
+ Document revision $Id: readme.morphos,v 1.1.2.3 2004/01/11 19:45:43 piru Exp $
 
  Welcome to the distributed.net client.
 
@@ -109,7 +109,7 @@
 
   4.1  Preferences and options ---------------------------------------
 
-    The GUI maybe be configured to your liking by using the MUI
+    The GUI may be configured to your liking by using the MUI
     settings.  To edit choose "Project/MUI settings..." from menu.
     To configure the listview, choose External from the left top
     cyclegadget, and select NListviews.  Additionally, the following
@@ -137,7 +137,7 @@
     FLUSH   - Flush the client(s) buffers
     RESTART - Restart the clients(s)
 
- 5.0  Credits & thank yous--------------------------------------------
+ 5.0  Credits & thank yous -------------------------------------------
 
     -- Ilkka Lehtoranta (MUI dnetcgui.library)
 
