@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.51 2003/05/21 22:08:47 bdragon Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.52 2003/05/26 16:51:27 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -1617,16 +1617,17 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
         case  8: cindex = 4; break; // microSPARC       == AnBe 1-pipe
         case  9: cindex = 4; break; // microSPARC II    == AnBe 1-pipe
         case 10: cindex =-1; break; // TurboSPARC       == ?
-        case 11: cindex =-1; break; // SuperSPARC       == AnBe 2-pipe
+        case 11: cindex = 5; break; // SuperSPARC       == AnBe 2-pipe
         case 12: cindex = 5; break; // SuperSPARC SC    == AnBe 2-pipe
-                                    // SuperSPARC-II is missing in this list !
-        case 13: cindex =-1; break; // hyperSPARC       == ?
-        case 14: cindex =-1; break; // hyperSPARC       == ?
-        case 15: cindex = 5; break; // UltraSPARC-I     == AnBe 2-pipe
-        case 16: cindex = 5; break; // UltraSPARC-II    == AnBe 2-pipe
-        case 17: cindex = 5; break; // UltraSPARC-IIi   == AnBe 2-pipe
-        case 18: cindex = 5; break; // UltraSPARC-IIe   == AnBe 2-pipe
-        case 19: cindex = 5; break; // UltraSPARC-III   == AnBe 2-pipe
+        case 13: cindex = 5; break; // SuperSPARC II    == AnBe 2-pipe
+        case 14: cindex = 5; break; // SuperSPARC II SC == AnBe 2-pipe 
+        case 15: cindex =-1; break; // hyperSPARC       == ?
+        case 16: cindex =-1; break; // hyperSPARC       == ?
+        case 17: cindex = 5; break; // UltraSPARC-I     == AnBe 2-pipe
+        case 18: cindex = 5; break; // UltraSPARC-II    == AnBe 2-pipe
+        case 19: cindex = 5; break; // UltraSPARC-IIi   == AnBe 2-pipe
+        case 20: cindex = 5; break; // UltraSPARC-IIe   == AnBe 2-pipe
+        case 21: cindex = 5; break; // UltraSPARC-III   == AnBe 2-pipe
         default: cindex =-1; break; // no default 
       }
     }

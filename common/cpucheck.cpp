@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.17 2003/04/19 11:37:10 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.18 2003/05/26 16:51:27 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -33,6 +33,8 @@ return "@(#)$Id: cpucheck.cpp,v 1.114.2.17 2003/04/19 11:37:10 andreasb Exp $"; 
 #  include <sys/tmp_ctl.h>
 #elif (CLIENT_OS == OS_SOLARIS)
 #  include <string.h>
+#  include <sys/types.h>
+#  include <sys/processor.h>
 #endif
 
 /* ------------------------------------------------------------------------ */
@@ -1531,7 +1533,10 @@ static long __GetRawProcessorID(const char **cpuname)
 #elif (CLIENT_OS == OS_SOLARIS)
   FILE *prtconf;
   char buf[256], name[256], *work_s, *work_t;
-  int i, foundcpu = 0;
+  int i, n, foundcpu = 0;
+  processor_info_t *infop;
+
+  /* DON'T RENUMBER */
   static struct { int rid; const char *raw_name, *name; } cpuridtable[] =
   {
   /* sun4 */
@@ -1549,16 +1554,18 @@ static long __GetRawProcessorID(const char **cpuname)
   {10, "MB86907", "TurboSPARC"},
   {11, "TMS390Z50", "SuperSPARC"},
   {12, "TMS390Z55", "SuperSPARC SC"},
-  {13, "RT620", "hyperSPARC"},  
-  {14, "RT625", "hyperSPARC"},
+  {13, "TMS390Z50", "SuperSPARC II"},
+  {14, "TMS390Z55", "SuperSPARC II SC"},
+  {15, "RT620", "hyperSPARC"},  
+  {16, "RT625", "hyperSPARC"},
   /* sun4d */
   /* sun4u */
-  {15, "UltraSPARC", "UltraSPARC-I"},
-  {16, "UltraSPARC-II", "UltraSPARC-II"},
-  {17, "UltraSPARC-IIi", "UltraSPARC-IIi"},
-  {18, "UltraSPARC-IIe", "UltraSPARC-IIe"},
-  {19, "UltraSPARC-III", "UltraSPARC-III"},
-  {19, "UltraSPARC-III+", "UltraSPARC-III"}
+  {17, "UltraSPARC", "UltraSPARC-I"},
+  {18, "UltraSPARC-II", "UltraSPARC-II"},
+  {19, "UltraSPARC-IIi", "UltraSPARC-IIi"},
+  {20, "UltraSPARC-IIe", "UltraSPARC-IIe"},
+  {21, "UltraSPARC-III", "UltraSPARC-III"},
+  {21, "UltraSPARC-III+", "UltraSPARC-III"}
   };
 
   detectedtype = -1L;  /* detection supported, but failed */
@@ -1603,6 +1610,24 @@ static long __GetRawProcessorID(const char **cpuname)
       }
     }
   }
+
+  /* Detected SuperSPARC, **special case** */
+  if ((detectedtype == 11) || (detectedtype == 12)) {
+    n = GetNumberOfDetectedProcessors ();
+    for (i = 0; i < n; i++) {
+      if (p_online (i, P_STATUS) == P_ONLINE) {
+        break;
+      }
+    }
+    if (processor_info (i, infop) == 0) {
+      if (infop->pi_clock >= 75) {  /* If cpu speed is 75Mhz or more, then
+                                       we have a SuperSPARC II */
+        detectedtype += 2;          /* table must not be renumbered */
+        detectedname = cpuridtable[detectedtype].name;
+      }
+    }
+  }
+
   if (detectedtype == 0) {  /* if we found an unknown cpu name, no ID */
     detectedname = name;
   }
