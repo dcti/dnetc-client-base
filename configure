@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.277 2002/07/31 02:42:03 snake Exp $
+# @(#)$Id: configure,v 1.222.2.278 2002/09/26 17:10:48 rick Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1024,13 +1024,13 @@ case "$1" in
     *arm-nto2)
         TARGET_AS="qcc -Vgcc_ntoarmle -c"
         TARGET_CC="qcc -Vgcc_ntoarmle"
-        TARGET_STRIP="/usr/gcc/bin/ntoarmle-strip"
         TARGET_ASFLAGS="-DNO_BALIGN"
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
                         -fno-exceptions -fno-rtti -DASM_ARM -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lsocket"
         TARGET_DOCFILES="docs/readme._ix"
-        TARGET_TARBALL="nto2-arm"
+ 
+       TARGET_TARBALL="nto2-arm"
         TARGET_GENMAN=
         TARGET_IS_CROSSCOMPILE=1
         add_sources "nto2" "arm"
@@ -1395,7 +1395,6 @@ case "$1" in
     *mipsle-nto2)
         TARGET_AS="qcc -Vgcc_ntomipsle -c"
         TARGET_CC="qcc -Vgcc_ntomipsle"
-        TARGET_STRIP="/usr/gcc/bin/ntomipsle-strip"
         TARGET_ASFLAGS="-DNO_BALIGN"
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
                         -fno-exceptions -fno-rtti \
@@ -1411,7 +1410,6 @@ case "$1" in
     *mipsbe-nto2)
         TARGET_AS="qcc -Vgcc_ntomipsbe -c"
         TARGET_CC="qcc -Vgcc_ntomipsbe"
-        TARGET_STRIP="/usr/gcc/bin/ntomipsbe-strip"
         TARGET_ASFLAGS="-DNO_BALIGN"
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
                         -fno-exceptions -fno-rtti \
@@ -1768,7 +1766,6 @@ case "$1" in
     *ppc-nto2)
         TARGET_AS="qcc -Vgcc_ntoppcbe -c"
         TARGET_CC="qcc -Vgcc_ntoppcbe"
-        TARGET_STRIP="/usr/gcc/bin/ntoppc-strip"
         TARGET_ASFLAGS="-DNO_BALIGN"
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
 	                -fno-exceptions -fno-rtti -DASM_PPC -DHAVE_POSIX_THREADS"
@@ -1786,8 +1783,7 @@ case "$1" in
 
     *sh4le-nto2)
         TARGET_AS="qcc -Vgcc_ntoshle -c"
-        TARGET_CC="qcc -Cgcc_ntoshle"
-        TARGET_STRIP="/usr/gcc/bin/ntoshle-strip"
+        TARGET_CC="qcc -Vgcc_ntoshle"
         TARGET_ASFLAGS="-DNO_BALIGN" 
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
                         -fno-exceptions -fno-rtti -DASM_SH4 -DHAVE_POSIX_THREADS"
@@ -1955,13 +1951,11 @@ case "$1" in
     *x86-nto2)
     	  TARGET_AS="qcc -Vgcc_ntox86 -c"
         TARGET_CC="qcc -Vgcc_ntox86"
-        TARGET_STRIP="/usr/gcc/bin/ntox86-strip"
-        TARGET_NASM="//55/home/jbaker/nasm.qnx4"
-        #TARGET_NASM="nasm"
+        TARGET_NASM="nasm"
         TARGET_ASFLAGS="-DNO_BALIGN"
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
                         -fno-exceptions -fno-rtti -DHAVE_POSIX_THREADS -DASM_X86"
-	      TARGET_LIBS="-lsocket"
+        TARGET_LIBS="-lsocket"
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-x86"
         TARGET_GENMAN=

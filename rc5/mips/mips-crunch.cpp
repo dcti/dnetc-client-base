@@ -14,7 +14,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mips_crunch_cpp(void) {
-return "@(#)$Id: mips-crunch.cpp,v 1.12.2.5 1999/12/02 01:50:06 cyp Exp $"; }
+return "@(#)$Id: mips-crunch.cpp,v 1.12.2.6 2002/09/26 17:10:49 rick Exp $"; }
 #endif
 
 
@@ -964,14 +964,14 @@ int RC5_KEY_CHECK_INNER_REMI (RC5_WORD L_0, RC5_WORD L_1,
          \
     ASM_SR (whole_sum2, whole_sum2, right_dist2); /* -5 */		\
     ASM_ADD (part_sum, pipelined_read, A);/* 7 */			\
-  pipelined_read = ((volatile*) S0_Source)[2];	/* 7 + */		\
+  pipelined_read = ((volatile u32 *) S0_Source)[2];	/* 7 + */		\
          \
     ASM_ADD (whole_sum, B, part_sum);	/* 8 */				\
     ASM_OR (B2, macro_tmp2, whole_sum2);/* -6 */			\
          \
     ASM_SL3 (macro_tmp, whole_sum);	/* 9 */				\
     ASM_ADD (part_sum2, pipelined_read2, A2);/* -7 */			\
-  pipelined_read2 = ((volatile *) S0_Source)[2]; /* -7 + */		\
+  pipelined_read2 = ((volatile u32 *) S0_Source)[2]; /* -7 + */		\
          \
     ASM_SR29 (whole_sum, whole_sum);	/* 10 */			\
     ASM_ADD (whole_sum2, B2, part_sum2);/* -8 */			\

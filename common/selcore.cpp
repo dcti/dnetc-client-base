@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.144 2002/08/25 12:15:03 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.145 2002/09/26 17:10:49 rick Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -1274,7 +1274,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD)
     // rc5/ansi/rc5ansi_2-rg.cpp
     extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
-  #elif (CLIENT_OS == OS_SINIX)
+  #elif (CLIENT_OS == OS_SINIX) || (CLIENT_OS == OS_QNX)
     //rc5/mips/mips-crunch.cpp or rc5/mips/mips-irix.S
     extern "C" u32 rc5_unit_func_mips_crunch( RC5UnitWork *, u32 );
   #elif (CLIENT_OS == OS_PS2LINUX)
@@ -1519,14 +1519,14 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     {
       #if (CLIENT_OS == OS_ULTRIX) || (CLIENT_OS == OS_IRIX) || \
           (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD)
-      {
+       {
         // rc5/ansi/rc5ansi_2-rg.cpp
         //xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 );
         unit_func.rc5 = rc5_unit_func_ansi_2_rg;
         pipeline_count = 2;
         coresel = 0;
       }
-      #elif (CLIENT_OS == OS_SINIX)
+      #elif (CLIENT_OS == OS_SINIX) || (CLIENT_OS == OS_QNX)
       {
         //rc5/mips/mips-crunch.cpp or rc5/mips/mips-irix.S
         //xtern "C" u32 rc5_unit_func_mips_crunch( RC5UnitWork *, u32 );

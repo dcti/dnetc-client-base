@@ -1,4 +1,5 @@
 	.global	_rc5_unit_func_arm_3
+	.global	rc5_unit_func_arm_3
 
 pqtable:
 	.word	0xB7E15163
@@ -29,6 +30,7 @@ pqtable:
 	.word	0x2B4C3474
 
 _rc5_unit_func_arm_3:
+rc5_unit_func_arm_3:
 	MOV	R12,R13
 	STMDB	R13!,{R4-R12,R14,PC}
 	SUB	R11,R12,#4
