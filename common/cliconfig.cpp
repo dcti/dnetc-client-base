@@ -352,7 +352,7 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
       choice=findmenuoption(currentmenu,temp2);
       if (choice >= 0)
           {
-          printf("%2d) %s ==> ",
+          printf("%2ld) %s ==> ",
                   options[choice].menuposition, options[choice].description);
 
           if (options[choice].type==1)
@@ -408,7 +408,7 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
            for ( temp = options[choice].choicemin;
                  temp < options[choice].choicemax+1; temp++)
              {
-             printf("  %2d) %s\n",temp,options[choice].choicelist+temp*60);
+             printf("  %2ld) %s\n",temp,options[choice].choicelist+temp*60);
              }
            printf("\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
                   options[choice].choicelist+atoi(options[choice].defaultsetting)*60,
