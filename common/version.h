@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version.h,v $
+// Revision 1.19  1998/10/10 18:26:19  silby
+// Updated version information in preparation of beta2 launch, added comments about versioning.
+//
 // Revision 1.18  1998/10/05 07:22:15  chrisb
 // Added 2 weeks to "BETA_EXPIRATION_TIME" since it expired this weekend.
 //
@@ -63,12 +66,22 @@
 #ifndef _VERSION_H
 #define _VERSION_H
 
+// Note regarding beta vs release versions. Since we can only see
+// CLIENT_CONTEST and CLIENT_BUILD in proxy logs for now, let's make
+// sure to keep all betas an ODD CLIENT_BUILD and all releases
+// an EVEN CLIENT_BUILD. (Naturally, incrementing the CLIENT_BUILD_FRAC
+// as well.
+
 #define CLIENT_CONTEST      71
-#define CLIENT_BUILD        00
+#define CLIENT_BUILD        01
 #define CLIENT_BUILD_FRAC   418
 
-#define CLIENT_VERSIONSTRING    "v2.7100.418-BETA2"
-#define CLIENT_VERSIONSTRING2   "2.7100.418-BETA2"        // no leading "v"
+#define CLIENT_VERSIONSTRING    "v2.7101.418-BETA2"
+#define CLIENT_VERSIONSTRING2   "2.7101.418-BETA2"        // no leading "v"
+
+// When releasing a beta client, please set the expiration time to
+// about two weeks into the future; that should be an adequate beta
+// time period.
 
 #define BETA
 #define BETA_EXPIRATION_TIME    908785600
