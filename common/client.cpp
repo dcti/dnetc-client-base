@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.14 2003/04/27 22:33:24 andreasb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.15 2003/08/09 12:43:54 mweiser Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -139,6 +139,31 @@ static const char *GetBuildOrEnvDescription(void)
 		       sizeof(ut.release)+1];
     return strcat(strcat(strcat(strcpy(buffer,ut.sysname)," "),
 			 ut.version),ut.release);;
+    #elif (CLIENT_OS == OS_NEXTSTEP)
+    kernel_version_t v;
+    static char buf[sizeof(ut.nodename)+ sizeof(ut.sysname) + sizeof(ut.version) +
+                    sizeof(ut.release) + sizeof(ut.machine) +sizeof(v) + 6];
+
+    strcpy(buf, ut.sysname);
+    strcat(buf, " ");
+    strcat(buf, ut.version);
+    strcat(buf, ".");
+    strcat(buf, ut.release);
+    strcat(buf, " ");
+    strcat(buf, ut.machine);
+    strcat(buf, "\n\t");
+
+    if (host_kernel_version(host_self(), v) != KERN_SUCCESS)
+      return "version inquiry failed";
+
+    if (v[strlen(v) - 1] == '\n')
+      v[strlen(v) - 1] = '\0';
+
+    if (strstr(v, "; root"))
+      *strstr(v, "; root") = '\0';
+
+    strcat(buf, v);
+    return buf;
     #else
     static char buffer[sizeof(ut.sysname)+1+sizeof(ut.release)+1];
     return strcat(strcat(strcpy(buffer,ut.sysname)," "),ut.release);
@@ -643,6 +668,8 @@ int main( int argc, char *argv[] )
 
 #if (CLIENT_OS == OS_QNX) && !defined(__QNXNTO__)
     if ( execvp( p, (char const * const *)&argv[0] ) == -1)
+#elif (CLIENT_OS == OS_NEXTSTEP)
+    if ( execvp( p, (const char **)&argv[0] ) == -1)
 #else
     if ( execvp( p, &argv[0] ) == -1)
 #endif
