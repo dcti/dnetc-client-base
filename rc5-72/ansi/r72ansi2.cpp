@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *rc5ansi2_cpp(void) {
-return "@(#)$Id: r72ansi2.cpp,v 1.7 2002/09/25 21:24:18 acidblood Exp $"; }
+return "@(#)$Id: r72ansi2.cpp,v 1.8 2002/10/03 22:06:58 andreasb Exp $"; }
 
 #include "problem.h"
 #define P 0xB7E15163
@@ -19,7 +19,8 @@ u32 rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
 {
   u32 i, j, k;
   u32 A1, A2, B1, B2;
-  u32 S1[26], S2[26], L1[3], L2[3];
+  u32 S1[26], S2[26];
+  u32 L1[3], L2[3];
   u32 kiter = 0;
   while (timeslice--)
   {
