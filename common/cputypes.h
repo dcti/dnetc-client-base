@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.30 2000/04/14 18:03:16 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.31 2000/04/23 12:55:02 jlawson Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -496,37 +496,39 @@
 
 /* ----------------------------------------------------------------- */
 
-#ifdef PROXYTYPE
-  /*
+/*
   Some compilers/platforms don't yet support bool internally.
+
   *** When creating new rules here, USE COMPILER-SPECIFIC TESTS ***
-  (since not all compilers on a specific platform or even
-  a newer version of your own compiler may require the hack).
-  */
-  /* *** When creating new rules here, USE COMPILER-SPECIFIC TESTS *** */
-  #if defined(__GNUC__) && (__GNUC__ < 2)
-    #define NEED_FAKE_BOOL
-  #elif defined(__WATCOMC__) && (__WATCOMC__ < 1100) 
-    #define NEED_FAKE_BOOL
-  #elif defined(__TURBOC__) && (__TURBOC__ <= 0x400)
-    #define NEED_FAKE_BOOL
-  #elif defined(_MSC_VER) && (_MSC_VER < 1100)
-    #define NEED_FAKE_BOOL
-  #elif defined(__SUNPRO_CC)   
-    #define NEED_FAKE_BOOL
-  #elif defined(__IBMCPP__)
-    #define NEED_FAKE_BOOL
-  #elif defined(__DECCXX)
-    #define NEED_FAKE_BOOL
-  #elif defined(__xlc) || defined(__xlC) || defined(__xlC__) || defined(__XLC121__)
-    #define NEED_FAKE_BOOL
-  #endif
-  /* *** When creating new rules here, USE COMPILER-SPECIFIC TESTS *** */
-  #if defined(NEED_FAKE_BOOL)
-    typedef int bool;
-    #define true 1
-    #define false 0
-  #endif
+
+  (Do not use operating system or cpu type comparisons, since not all
+  compilers on a specific platform or even a newer version of your
+  own compiler may require the hack).
+
+  *** When creating new rules here, USE COMPILER-SPECIFIC TESTS ***
+*/
+#if defined(__GNUC__) && (__GNUC__ < 2)
+  #define NEED_FAKE_BOOL
+#elif defined(__WATCOMC__) && (__WATCOMC__ < 1100) 
+  #define NEED_FAKE_BOOL
+#elif defined(__TURBOC__) && (__TURBOC__ <= 0x400)
+  #define NEED_FAKE_BOOL
+#elif defined(_MSC_VER) && (_MSC_VER < 1100)
+  #define NEED_FAKE_BOOL
+#elif defined(__SUNPRO_CC)   
+  #define NEED_FAKE_BOOL
+#elif defined(__IBMCPP__)
+  #define NEED_FAKE_BOOL
+#elif defined(__DECCXX)
+  #define NEED_FAKE_BOOL
+#elif defined(__xlc) || defined(__xlC) || defined(__xlC__) || defined(__XLC121__)
+  #define NEED_FAKE_BOOL
+#endif
+
+#ifdef NEED_FAKE_BOOL
+  typedef int bool;
+  #define true 1
+  #define false 0
 #endif
 
 /* ----------------------------------------------------------------- */
@@ -630,13 +632,13 @@ extern "C" {
       
 #if (defined(SIZEOF_SHORT) && (SIZEOF_SHORT == 2))
   typedef unsigned short u16;
-/* typedef signed short s16; */
+  typedef signed short s16;
 #elif (defined(SIZEOF_SHORT) && (SIZEOF_INT == 2))
   typedef unsigned int u16;
-/* typedef signed int s16; */
+  typedef signed int s16;
 #elif (defined(SIZEOF_LONG) && (SIZEOF_LONG == 2))
   typedef unsigned long u16;
-/* typedef signed long s16; */
+  typedef signed long s16;
 #else
   #error types u16 is undefined (try wchar_t)
 #endif
@@ -690,8 +692,7 @@ extern "C" {
 #endif  
 
 typedef unsigned char u8;
-#if 0 /* broken u_64 is no longer used */
-struct fake_u_64 { u32 hi, lo; };
-#endif
+
+/* ----------------------------------------------------------------- */
 
 #endif /* __CPUTYPES_H__ */
