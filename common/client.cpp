@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.134  1998/08/24 23:41:20  cyp
+// Saves and restores the state of 'offlinemode' around a -fetch/-flush to
+// prevent undesirable attempts to send mail when the client exits.
+//
 // Revision 1.133  1998/08/24 04:56:26  cyruspatel
 // enforced rc5 fileentry cpu/os/build checks for all platforms, not just x86.
 //
@@ -135,7 +139,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.133 1998/08/24 04:56:26 cyruspatel Exp $"; }
+return "@(#)$Id: client.cpp,v 1.134 1998/08/24 23:41:20 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -2098,17 +2102,10 @@ int Client::RunCommandlineModes( int argc, char *argv[], int *retcodeP )
              ( strcmp( cmdstr, "-forceflush" ) == 0 ) || 
              ( strcmp( cmdstr, "-update"     ) == 0 ))
       {
-      if (NetworkInitialize()<0)
-        {
-        LogScreenRaw( "TCP/IP services are not available. Without TCP/IP the "
-        "client cannot\nsupport the -flush, -forceflush, -fetch, "
-        "-forcefetch or -update options.\n");
-        retcode = -1;
-        }
-      else  
         {
         int dofetch = 0, doflush = 0, doforce = 0;
-
+        s32 oldofflinemode = offlinemode;
+	     
         if ( strcmp( cmdstr, "-fetch" ) == 0 )           dofetch=1;
         else if ( strcmp( cmdstr, "-flush" ) == 0 )      doflush=1;
         else if ( strcmp( cmdstr, "-forcefetch" ) == 0 ) dofetch=doforce=1;
@@ -2134,20 +2131,25 @@ int Client::RunCommandlineModes( int argc, char *argv[], int *retcodeP )
               retcode = runcode;
             }
           }
+	
         if (retcode < 0)
           {
+	  #if 0
+          LogScreenRaw( "TCP/IP services are not available. Without TCP/IP the "
+          "client cannot\nsupport the -flush, -forceflush, -fetch, "
+          "-forcefetch or -update options.\n");
+	  #endif
           LogScreenRaw( "An error occured trying to %s. "
                      "Please try again later\n", cmdstr+1 );
           retcode = -1;
           }
         else
           {
-          //LogFlush(1); //checktosend(1)
           cmdstr[1] = (char)toupper(cmdstr[1]);
           LogScreenRaw( "%s completed.\n", cmdstr+1 );
           retcode = 0;
           }
-        NetworkDeinitialize();
+	offlinemode = oldofflinemode;//stop any mail flushes beyond this point.
         }
       }
     else if ( strcmp(cmdstr, "-ident" ) == 0)
