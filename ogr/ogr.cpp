@@ -5,7 +5,7 @@
  */
 
 const char *ogr_cpp(void) {
-return "@(#)$Id: ogr.cpp,v 1.3.2.22 2000/07/01 13:32:43 cyp Exp $"; }
+return "@(#)$Id: ogr.cpp,v 1.3.2.23 2000/07/02 17:09:19 cyp Exp $"; }
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -552,30 +552,3 @@ CoreDispatchTable *ogr_get_dispatch_table()
   return &dispatch_table;
 }
 
-unsigned long ogr_nodecount(const struct Stub * /* stub */)
-{
-  return 1;
-}
-
-const char *ogr_stubstr(const struct Stub *stub)
-{
-  static char buf[80];
-  int i, len = (int)stub->length;
-
-  if (len > STUB_MAX) {
-    sprintf(buf, "(error:%d/%d)", (int)stub->marks, len);
-    return buf;
-  }
-  sprintf(buf, "%d/", (int)stub->marks);
-  if (len == 0) {
-    strcat(buf, "-");
-    return buf;
-  }
-  for (i = 0; i < len; i++) {
-    sprintf(&buf[strlen(buf)], "%d", (int)stub->diffs[i]);
-    if (i+1 < len) {
-      strcat(buf, "-");
-    }
-  }
-  return buf;
-}
