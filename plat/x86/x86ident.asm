@@ -7,7 +7,7 @@
 ; Written in a dark and stormy night (Jan 16, 1998) by
 ; Cyrus Patel <cyp@fb14.uni-mainz.de>
 ;
-; $Id: x86ident.asm,v 1.3.2.2 2002/11/25 18:03:56 stream Exp $
+; $Id: x86ident.asm,v 1.3.2.3 2005/03/07 21:18:10 snikkel Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:
@@ -238,11 +238,23 @@ _neTM:          xchg    edx,eax         ; make edx=maxlevel,eax=vendor id
                 pop     ecx             ; restore max level 
                                         ; edx has feature bits
 
+                ;For AMD K8 and above we need the brand bits
+                mov     ecx,eax         ; copy our combined id
+                shr     ecx,16          ; get vendor id in cx
+                cmp     cx, 7541h       ; AMD?   
+                jnz     _inEX           ; exit it not
+                mov     cx, ax          ; get family/model/stepping bits
+                and     cx,0f00h        ; mask only family
+                cmp     cx,0f00h        ; less than K8?
+                jnz     _inEX           ; neither brand nor cache bits needed
+                or      dl,dl           ; have brand bits?
+                jnz     _brand          ; continue if so
+
                 ;On a PII and above we take extra steps to differentiate
                 ;between a Celeron/Covington, PII, Celeron-A/Mendocino, Xeon.
                 ;we need to do this since cache size may be important
                 ;for some cores. On a P4, we have the 'Brand' bits
-                cmp     ecx,2           ; max cpuid level >= 2?
+_inEX:          cmp     ecx,2           ; max cpuid level >= 2?
                 jb      _end            ; can't be a PII+ if not
                 mov     ecx,eax         ; copy our combined id
                 shr     ecx,16          ; get vendor id in cx
