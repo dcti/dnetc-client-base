@@ -6,8 +6,14 @@
  * Marco.Walther@mch.sni.de
  *
  * $Log: mips-crunch.cpp,v $
- * Revision 1.14  1999/07/09 15:29:15  cyp
- * sync'd core fixes from release branch.
+ * Revision 1.15  1999/11/28 18:02:18  cyp
+ * sync
+ *
+ * Revision 1.12.2.3  1999/11/28 15:13:39  cyp
+ * standardized all protos to extern "C" rc5_unit_func_mips_crunch(...)
+ *
+ * Revision 1.12.2.2  1999/11/15 21:14:14  ivo
+ * removed #error everythomh assumes 32bit cpus
  *
  * Revision 1.12.2.1  1999/06/16 12:22:15  ivo
  * Fixed some stuff to let Irix compile once again
@@ -48,24 +54,15 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mips_crunch_cpp(void) {
-return "@(#)$Id: mips-crunch.cpp,v 1.14 1999/07/09 15:29:15 cyp Exp $"; }
+return "@(#)$Id: mips-crunch.cpp,v 1.15 1999/11/28 18:02:18 cyp Exp $"; }
 #endif
 
 
 #include <stdio.h>
 
-/* include files for version 1 code */
-/* #include "common-2.h" */
-/* #include "client-2.h" */
-
 /* include files for version 2 code */
 #include "problem.h"
 #include "rotate.h"
-
-#ifndef _CPU_32BIT_
-#error "everything assumes a 32bit CPU..."
-#endif
-
 
 #define _P_RC5     0xB7E15163
 #define _Q     0x9E3779B9
@@ -1741,4 +1738,14 @@ u32 crunch(register RC5UnitWork * rc5unitwork, u32 iterations )
  return (2 * iterations);
 }
 
+/* -------------------------------------------------------------------- */
+
+#ifdef __cplusplus
+extern "C" u32 rc5_unit_func_mips_crunch( register RC5UnitWork *, u32 iterations );
+#endif
+
+u32 rc5_unit_func_mips_crunch( register RC5UnitWork *rc5unitwork, u32 iterations )
+{                                   /* this should optimize out */
+  return crunch( rc5unitwork, iterations );
+}  
 

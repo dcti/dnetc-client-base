@@ -74,6 +74,12 @@
 #  RCS History
 #
 # $Log: mips-irix.S,v $
+# Revision 1.2  1999/11/28 18:02:19  cyp
+# sync
+#
+# Revision 1.1.2.1  1999/11/28 15:13:39  cyp
+# standardized all protos to extern "C" rc5_unit_func_mips_crunch(...)
+#
 # Revision 1.1  1998/12/01 00:19:57  foxyloxy
 # *** empty log message ***
 #
@@ -1348,7 +1354,7 @@
 # ##################################		
 # ##################################
 	
-# u32 crunch(register RC5UnitWork * rc5unitwork, u32 iterations )
+# u32 rc5_unit_func_mips_crunch(register RC5UnitWork * rc5unitwork, u32 iterations )
 
 # ##################################		
 # ##################################		
@@ -1363,11 +1369,11 @@ gcc2_compiled.:
 __gnu_compiled_cplusplus:
 	.text
 	.align	2
-	.globl	crunch__FP11RC5UnitWorkUl
-	.ent	crunch__FP11RC5UnitWorkUl
+	.globl	rc5_unit_func_mips_crunch
+	.ent	rc5_unit_func_mips_crunch
 
 
-crunch__FP11RC5UnitWorkUl:
+rc5_unit_func_mips_crunch:
 	#
 	# Reserve our stack space
 	#
