@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.4 1999/04/05 17:16:52 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.5 1999/04/09 17:34:47 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -429,6 +429,11 @@ int Client::BufferUpdate( int updatereq_flags, int interactive )
     if (contest_i == 2) 
       contest_i|=0x80;
 #endif
+#ifndef CSC_TEST
+    if (contest_i == 3) 
+      contest_i|=0x80;
+#endif      
+
     if (contest_i >= CONTEST_COUNT) /* disabled */
     {
       /* retrieve the original contest number from the load order */
