@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-common.h,v $
+// Revision 1.1.2.3  1999/10/08 14:20:24  remi
+// More extern "C" declarations
+//
 // Revision 1.1.2.2  1999/10/07 23:33:01  cyp
 // added some things to help test/force use of 64bit 'registers' on '32bit' cpus
 //
@@ -15,7 +18,7 @@
 //
 
 #ifndef __CSC_COMMON_H
-#define __CSC_COMMON_H "@(#)$Id: csc-common.h,v 1.1.2.2 1999/10/07 23:33:01 cyp Exp $"
+#define __CSC_COMMON_H "@(#)$Id: csc-common.h,v 1.1.2.3 1999/10/08 14:20:24 remi Exp $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -57,6 +60,9 @@
 #define PASTE1( xx, yy ) xx##yy
 
 // ------------------------------------------------------------------
+#ifdef __cplusplus
+extern "C" {
+#endif
 // bitslice version of c0..c8
 extern const ulong csc_tabc[9][64];
 
@@ -65,6 +71,9 @@ extern const ulong csc_tabe[2][64];
 
 // table-lookup implementation of transP()
 extern const u8 csc_tabp[256];
+#ifdef __cplusplus
+}
+#endif
 
 // ------------------------------------------------------------------
 inline void transF( ulong t00, ulong t01, ulong t02, ulong t03,
@@ -148,6 +157,9 @@ inline void transP( ulong in7, ulong in6, ulong in5, ulong in4,
   out3 = in3; out2 = in2; out1 = in1; out0 = in0;
 }
 #else
+#ifdef __cplusplus
+extern "C"
+#endif
 void transP( ulong in7, ulong in6, ulong in5, ulong in4, 
 	     ulong in3, ulong in2, ulong in1, ulong in0,
 	     ulong &out7, ulong &out6, ulong &out5, ulong &out4, 
