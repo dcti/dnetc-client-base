@@ -9,7 +9,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.83 2001/01/03 23:05:21 teichp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.84 2001/01/08 23:00:47 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1204,7 +1204,7 @@ int ClientRun( Client *client )
   time_t ignore_scheduledupdatetime_until = 0; /* ignore schedupdtime until */
 
   int checkpointsDisabled = (client->nodiskbuffers != 0);
-  int dontSleep=0, isPaused=0, wasPaused=0;
+  int dontSleep=0, isPaused=0, wasPaused=0, timeMonoError = 0;
 
   ClientEventSyncPost( CLIEVENT_CLIENT_RUNSTARTED, 0 );
 
@@ -1574,11 +1574,23 @@ int ClientRun( Client *client )
       {
         if ( ((unsigned long)tv.tv_sec) < ((unsigned long)timeRun) )
         {
-          Log("ERROR: monotonic time found to be going backwards!\n");
-          //TimeToQuit = 1;
+          if (timeMonoError == 0)
+          {
+            Log("ERROR: monotonic time found to be going backwards! (%lu < %lu)\n",
+                  ((unsigned long)tv.tv_sec), ((unsigned long)timeRun) );
+          }
+          timeRun = tv.tv_sec; /* assume its ok on the next round */
+          if ((++timeMonoError) > 12) /* 12 passes through here == 60 secs */
+          {
+            Log("Way too many timer adjustments within one minute. Quitting...\n");
+            TimeToQuit = 1;
+          }
         }
         else
+        {
           timeRun = tv.tv_sec;
+          timeMonoError = 0;
+        }
       }
     }
 
