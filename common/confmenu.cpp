@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.15  1999/01/07 02:20:35  cyp
+// Greatly improved "yes"/"no" editing with my rad ConInStr() bool mode. :)
+//
 // Revision 1.14  1999/01/04 19:02:25  chrisb
 // fixed an erroneous implicit cast
 //
@@ -69,7 +72,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.14 1999/01/04 19:02:25 chrisb Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.15 1999/01/07 02:20:35 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -766,7 +769,7 @@ int Client::Configure( void )
                          *(conf_options[userselection].defaultsetting)=='0'?"no":"yes", 
                          parm );
             parm[1]=0;
-            ConInStr( parm, 2, CONINSTR_BYEXAMPLE );
+            ConInStr( parm, 2, CONINSTR_BYEXAMPLE|CONINSTR_ASBOOLEAN );
             if (CheckExitRequestTriggerNoIO())
               userselection = -2;
             else if (parm[0]=='y' || parm[0]=='Y')
