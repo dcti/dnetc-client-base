@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.91 2003/07/16 00:35:52 mfeiri Exp $
+# @(#)$Id: configure,v 1.288.2.92 2003/07/21 00:48:20 mfeiri Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -156,7 +156,9 @@ add_sources() # $1=os, $2=arch, $3=custom
   elif [ "$1" = "os2" ]; then
     COMMON_SRCS="plat/os2/os2inst.cpp ${COMMON_SRCS}"
   elif [ "$1" = "macosx" ]; then
-    COMMON_SRCS="plat/macosx/c_install.c ${COMMON_SRCS}"
+    COMMON_SRCS="plat/macosx/c_install.c \
+                 plat/macosx/temperature.c \
+                 ${COMMON_SRCS}"
   fi
 
   # -------------------------------------------------------------------
