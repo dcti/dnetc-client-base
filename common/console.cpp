@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.54 2001/05/06 11:01:07 teichp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.55 2002/04/11 10:57:42 oliver Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -157,7 +157,7 @@ int ConIsGUI(void)
   #elif (CLIENT_OS == OS_MACOS) && !defined(MAC_FBA)
   return 1;
   #elif (CLIENT_OS == OS_AMIGAOS)
-  return MyzarIsRunning();
+  return amigaConIsGUI();
   #else
   return 0;
   #endif
@@ -204,6 +204,8 @@ int ConOut(const char *msg)
       os2conout(msg);
     #elif (CLIENT_OS == OS_MACOS)
       macosConOut(msg);
+    #elif (CLIENT_OS == OS_AMIGAOS)
+      amigaConOut(msg);
     #else
       fwrite( msg, sizeof(char), strlen(msg), stdout);
       fflush(stdout);
@@ -229,6 +231,8 @@ int ConOutModal(const char *msg)
        NULL, MB_OK | MB_INFORMATION | MB_MOVEABLE );
   #elif (CLIENT_OS == OS_NETWARE)
     ConsolePrintf( "%s\r\n", msg );
+  #elif (CLIENT_OS == OS_AMIGAOS)
+    amigaConOutModal(msg);
   #else
     fprintf( stderr, "%s\n", msg );
     fflush( stderr );
@@ -253,6 +257,8 @@ int ConOutErr(const char *msg)
            NULL, MB_OK | MB_APPLMODAL | MB_ERROR | MB_MOVEABLE );
   #elif (CLIENT_OS == OS_NETWARE)
     ConsolePrintf( "%s: %s\r\n", utilGetAppName(), msg );
+  #elif (CLIENT_OS == OS_AMIGAOS)
+    amigaConOutErr(msg);
   #else
     fprintf( stderr, "%s: %s\n", utilGetAppName(), msg );
     fflush( stderr );
