@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.177 2000/07/12 00:09:26 mfeiri Exp $
+# @(#)$Id: configure,v 1.222.2.178 2000/07/12 00:12:42 mfeiri Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1176,7 +1176,7 @@ case "$1" in
     *ppc-macosxserver) # [mfeiri] (MACH 2.x based: MXS 1.x, Darwin 0.x, Rhapsody)
 	TARGET_CC="cc"
         #generate_gcc_opts "ppc" "macosx"
-	TARGET_CCFLAGS="-O6 -DHAVE_OGR_CORES"
+	TARGET_CCFLAGS="-O6 -DHAVE_OGR_CORES -D__unix__"
 	TARGET_ADDSRCS="$RC5PPC_APPLE_SRCS $OGR_ANSI_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_TARBALL="macosxserver-ppc"
