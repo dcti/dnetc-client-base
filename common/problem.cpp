@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.98 1999/04/09 06:11:33 gregh Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.99 1999/04/09 13:46:48 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -158,9 +158,7 @@ Problem::Problem(long _threadindex /* defaults to -1L */)
 //LogScreen("Problem created. threadindex=%u\n",threadindex);
 
   initialized = 0;
-  finished = 0;
   started = 0;
-
   
 #ifdef STRESS_THREADS_AND_BUFFERS 
   static int runlevel = 0;
@@ -250,20 +248,47 @@ static void __IncrementKey(u64 *key, u32 iters, int contest)
 {                                                                   
   switch (contest)                                                  
   {                                                                 
-    case 0: /* RC5 */                                               
+    case 0: // RC5
       __SwitchRC5Format (key);                                      
       key->lo += iters;                                             
       if (key->lo < iters) key->hi++;                               
       __SwitchRC5Format (key);                                      
       break;                                                        
-    case 1: /* DES */                                               
+    case 1: // DES
+    case 3: // CSC
       key->lo += iters;                                             
       if (key->lo < iters) key->hi++; /* Account for carry */       
       break;                                                        
-    case 2: /* OGR */                                               
+    case 2: // OGR
       /* This should never be called for OGR */                     
       break;                                                        
   }                                                                 
+}
+
+/* ------------------------------------------------------------- */
+
+u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%. */
+{ 
+  if (!initialized)
+    return 0;
+  if (!started)
+    return startpermille;
+  if (last_resultcode != RESULT_WORKING)
+    return 100;
+  switch (contest)
+  {
+    case 0: //RC5
+    case 1: //DES
+    case 3: //CSC
+            return (u32)( ((double)(1000.0)) *
+            (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
+                             ((double)(contestwork.crypto.keysdone.lo))) /
+            ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
+                             ((double)(contestwork.crypto.iterations.lo)))) ); 
+    case 2: //OGR
+            return 0;
+  }
+  return 0;
 }
 
 /* ------------------------------------------------------------------- */
@@ -279,10 +304,12 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
     RaiseExitRequestTrigger();
     return -1;
   }
+  initialized = 0;
 
   loaderflags = 0;
   contest = _contest;
   cputype = _cputype;
+  tslice = _timeslice;
   runtime_sec = runtime_usec = 0;
     
   if (contest >= CONTEST_COUNT)
@@ -480,13 +507,13 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
 
   //----------------------------------------------------------------
 
-  startpercent = 0;
-  restart = 0;
-
+  startpermille = 0;
+  
   switch (contest) 
   {
     case 0: // RC5
     case 1: // DES
+    case 3: // CSC - CSC_TEST
 
       // copy over the state information
       contestwork.crypto.key.hi = ( work->crypto.key.hi );
@@ -522,13 +549,14 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
 
       refL0 = rc5unitwork.L0;
 
-      startpercent = (u32)( ((double)(100000.0)) *
-            (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
-                               ((double)(contestwork.crypto.keysdone.lo))) /
-            ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
-                            ((double)(contestwork.crypto.iterations.lo)))) );
-      restart = ( contestwork.crypto.keysdone.lo!=0 || contestwork.crypto.keysdone.hi!=0 );
-
+      if (contestwork.crypto.keysdone.lo!=0 || contestwork.crypto.keysdone.hi!=0 )
+      {
+        startpermille = (u32)( ((double)(1000.0)) *
+        (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
+                           ((double)(contestwork.crypto.keysdone.lo))) /
+        ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
+                        ((double)(contestwork.crypto.iterations.lo)))) );
+      }			
       break;
 
     case 2: // OGR
@@ -549,22 +577,8 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
       #endif
 
   }
-  resultcode = RESULT_WORKING;
 
   //---------------------------------------------------------------
-  
-  tslice = _timeslice;
-
-  //--------------------------------------------------------------- 
- 
-  percent = 0;
-  initialized = 1;
-  finished = 0;
-  started = 0;
-
-
-  //-------------------------------------------------------------------
-
 #if (CLIENT_OS == OS_RISCOS)
   if (threadindex == 1 /*x86 thread*/)
   {
@@ -601,7 +615,12 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   }
 #endif
 
-    return( 0 );
+  permille = 0;
+  started = 0;
+  last_resultcode = RESULT_WORKING;
+  initialized = 1;
+
+  return( 0 );
 }
 
 /* ------------------------------------------------------------------- */
@@ -615,14 +634,13 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dop
   if (contestid)
     *contestid = contest;
   if (dopurge)
-    initialized = finished = 0;
-  if (resultcode < 0)
+    initialized = 0;
+  if (last_resultcode < 0)
     return -1;
-  return ( resultcode );
+  return ( last_resultcode );
 }
 
 /* ------------------------------------------------------------- */
-
 
 u32 rc5_singlestep_core_wrapper( RC5UnitWork * rc5unitwork, u32 timeslice,
                 int pipeline_count, auto u32 (*unit_func)( RC5UnitWork *) )
@@ -650,7 +668,7 @@ u32 rc5_singlestep_core_wrapper( RC5UnitWork * rc5unitwork, u32 timeslice,
 
 /* ------------------------------------------------------------- */
 
-int Problem::Run_RC5(u32 *timesliceP)
+int Problem::Run_RC5(u32 *timesliceP, int *resultcode)
 {
   u32 kiter = 0;
   u32 timeslice = *timesliceP;
@@ -695,7 +713,7 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
     {
       if (runtime_sec == 0 && runtime_usec == 0) /* first time */
       {                          /* load the work onto the coprocessor */
-        return 0; /* ... or -1 if load failed */
+        return RESULT_WORKING; /* ... or -1 if load failed */
         /* runtime_* will remain 0 as long as -1 is returned */
       }
       /* otherwise copy the state of the copro back to contestwork */
@@ -729,6 +747,7 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
         "Debug Information: %08x:%08x - %08x:%08x\n",
         rc5unitwork.L0.hi, rc5unitwork.L0.lo, refL0.hi, refL0.lo);
     #endif
+    *resultcode = -1;
     return -1;
   };
 
@@ -745,9 +764,8 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
     contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
     if (contestwork.crypto.key.lo < keylo) 
       contestwork.crypto.key.hi++; // wrap occured ?
-    resultcode = RESULT_FOUND;
-    finished = 1;
-    return( 1 );
+    *resultcode = RESULT_FOUND;
+    return RESULT_FOUND;
   }
   else if (kiter != timeslice)
   {
@@ -757,6 +775,7 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
         "Debug Information: %08x:%08x - %08x:%08x\n", kiter, timeslice,
         rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
     #endif
+    *resultcode = -1;
     return -1;
   };
 
@@ -765,20 +784,75 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
        ( contestwork.crypto.keysdone.lo >= contestwork.crypto.iterations.lo ) ) )
   {
     // done with this block and nothing found
-    resultcode = RESULT_NOTHING;
-    finished = 1;
-    return 1;
+    *resultcode = RESULT_NOTHING;
+    return RESULT_NOTHING;
   }
 
   // more to do, come back later.
-  resultcode = RESULT_WORKING;
-  finished = 0;
-  return 0;            // Done with this round
+  *resultcode = RESULT_WORKING;
+  return RESULT_WORKING;    // Done with this round
 }  
 
 /* ------------------------------------------------------------- */
 
-int Problem::Run_DES(u32 *timesliceP)
+int Problem::Run_CSC(u32 *timesliceP, int *resultcode)
+{
+#ifndef CSC_TEST
+  timesliceP = timesliceP;
+  *resultcode = -1;
+  return -1;
+#else  
+  s32 rescode = scs_ansi_unit_func(&rc5unitwork, timesliceP, (void *)0 );
+  if (rescode < 0) /* "kiter" error */
+  {
+    *resultcode = -1;
+    return -1;
+  }
+  *resultcode = (int)rescode;
+
+  // Increment reference key count
+  __IncrementKey (&refL0, *timesliceP, contest);
+
+  // Compare ref to core key incrementation
+  if ((refL0.hi != rc5unitwork.L0.hi) || (refL0.lo != rc5unitwork.L0.lo))
+  { 
+    #ifdef DEBUG_CSC_CORE /* can you spell "thread safe"? */
+    Log("CSC incrementation mismatch:\n"
+        "expected %08x:%08x, got %08x:%08x\n"
+	refL0.lo, refL0.hi, rc5unitwork.L0.lo, rc5unitwork.L0.hi );
+    #endif
+    *resultcode = -1;
+    return -1;
+  }
+
+  // Checks passed, increment keys done count.
+  contestwork.crypto.keysdone.lo += *timesliceP;
+  if (contestwork.crypto.keysdone.lo < *timesliceP)
+    contestwork.crypto.keysdone.hi++;
+
+  // Update data returned to caller
+  if (*resultcode == RESULT_FOUND)
+  {
+    u32 keylo = contestwork.crypto.key.lo;
+    contestwork.crypto.key.lo += contestwork.crypto.keysdone.lo;
+    contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
+    if (contestwork.crypto.key.lo < keylo) 
+      contestwork.crypto.key.hi++; // wrap occured ?
+    return RESULT_FOUND;
+  }
+  if (*resultcode == RESULT_NOTHING) // done with this block and nothing found
+  {
+    return RESULT_NOTHING;
+  }
+  // more to do, come back later.
+  *resultcode = RESULT_WORKING;
+  return RESULT_WORKING; // Done with this round
+#endif  
+}
+
+/* ------------------------------------------------------------- */
+
+int Problem::Run_DES(u32 *timesliceP, int *resultcode)
 {
   u32 kiter = 0;
   u32 timeslice = *timesliceP;
@@ -838,6 +912,7 @@ int Problem::Run_DES(u32 *timesliceP)
         "Debug Information: %08x:%08x - %08x:%08x\n",
         rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
     #endif
+    *resultcode = -1;
     return -1;
   };
 
@@ -855,9 +930,8 @@ int Problem::Run_DES(u32 *timesliceP)
     contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
     if (contestwork.crypto.key.lo < keylo) 
       contestwork.crypto.key.hi++; // wrap occured ?
-    resultcode = RESULT_FOUND;
-    finished = 1;
-    return( 1 );
+    *resultcode = RESULT_FOUND;
+    return RESULT_FOUND;
   }
   else if (kiter != timeslice)
   {
@@ -867,6 +941,7 @@ int Problem::Run_DES(u32 *timesliceP)
         "Debug Information: %08x:%08x - %08x:%08x\n", kiter, timeslice,
         rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
     #endif
+    *resultcode = -1; /* core error */
     return -1;
   };
 
@@ -875,20 +950,18 @@ int Problem::Run_DES(u32 *timesliceP)
      ( contestwork.crypto.keysdone.lo >= contestwork.crypto.iterations.lo ) ) )
   {
     // done with this block and nothing found
-    resultcode = RESULT_NOTHING;
-    finished = 1;
-    return 1;
+    *resultcode = RESULT_NOTHING;
+    return RESULT_NOTHING;
   }
 
   // more to do, come back later.
-  resultcode = RESULT_WORKING;
-  finished = 0;
-  return 0; // Done with this round
+  *resultcode = RESULT_WORKING;
+  return RESULT_WORKING; // Done with this round
 }
 
 /* ------------------------------------------------------------- */
 
-int Problem::Run_OGR(u32 *timesliceP)
+int Problem::Run_OGR(u32 *timesliceP, int *resultcode)
 {
 #ifndef GREGH  
   timesliceP = timesliceP;
@@ -910,16 +983,15 @@ int Problem::Run_OGR(u32 *timesliceP)
       if (r == CORE_S_OK) 
       {
         ogrstate = NULL;
-        resultcode = RESULT_NOTHING;
-        finished = 1;
-        return 1;
+        *resultcode = RESULT_NOTHING;
+        return RESULT_NOTHING;
       }
       break;
     }
     case CORE_S_CONTINUE:
     {
-      resultcode = RESULT_WORKING;
-      return 0;
+      *resultcode = RESULT_WORKING;
+      return RESULT_WORKING;
     }
     case CORE_S_SUCCESS:
     {
@@ -927,74 +999,87 @@ int Problem::Run_OGR(u32 *timesliceP)
       if (ogr->getresult(ogrstate, &result, sizeof(result)) == CORE_S_OK)
       {
         Log("OGR Success!\n");
-        resultcode = RESULT_FOUND;
-        finished = 1;
-        return 1;
+        *resultcode = RESULT_FOUND;
+        return RESULT_FOUND;
       }
       break;
     }
   }
   /* Something bad happened */
 #endif
+ *resultcode = -1; /* this will cause the problem to be discarded */
  return -1;
 }
 
 /* ------------------------------------------------------------- */
 
-s32 Problem::Run( u32 /*unused*/ )
+int Problem::Run(void) /* returns RESULT_*  or -1 */
 {
   struct timeval stop, start;
-  int retcode;
+  int retcode, core_resultcode;
   u32 timeslice;
 
   if ( !initialized )
     return ( -1 );
 
-  if ( finished )
-    return ( 1 );
-
+  if ( last_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
+    return ( last_resultcode );
   CliTimer(&start);
   if (!started)
   {
-    timehi = start.tv_sec;
-    timelo = start.tv_usec;
     runtime_sec = runtime_usec = 0;
     started=1;
 
 #ifdef STRESS_THREADS_AND_BUFFERS 
+    contest = 0;
+    contestwork.crypto.key.hi = contestwork.crypto.key.lo = 0;
     contestwork.crypto.keysdone.hi = contestwork.crypto.iterations.hi;
     contestwork.crypto.keysdone.lo = contestwork.crypto.iterations.lo;
     runtime_usec = 1;
-    resultcode = RESULT_NOTHING;
-    finished = 1;
-    return 1;
+    last_resultcode = RESULT_NOTHING;
+    return RESULT_NOTHING;
 #endif    
   }
 
-  timeslice = tslice;
-  retcode = -1;
-
   /* 
     On return from the Run_XXX contestwork must be in a state that we
-    can put away to disk - that is, do not expect the loader to fiddle
-    with iterations or key or whatever.
+    can put away to disk - that is, do not expect the loader (probfill 
+    et al) to fiddle with iterations or key or whatever.
+    
+    The Run_XXX functions do *not* update problem.last_resultcode, they use
+    core_resultcode instead. This is so that members of the problem object
+    that are updated after the resultcode has been set will not be out of
+    sync when the main thread gets it with RetrieveState(). 
+    
+    note: although the value returned by Run_XXX is usually the same as 
+    the core_resultcode it is not always so. For instance, if 
+    post-LoadState() initialization  failed, but can be deferred, Run_XXX 
+    may choose to return -1, but keep core_resultcode at RESULT_WORKING.
   */
+
+  timeslice = tslice;
+  core_resultcode = last_resultcode;
+  retcode = -1;
 
   switch (contest)
   {
-    case 0: retcode = Run_RC5( &timeslice );
-            break;
-    case 1: retcode = Run_DES( &timeslice );
-            break;
-    case 2: retcode = Run_OGR( &timeslice );
-            break;
+    case 0:  retcode = Run_RC5( &timeslice, &core_resultcode );
+             break;
+    case 1:  retcode = Run_DES( &timeslice, &core_resultcode );
+             break;
+    case 2:  retcode = Run_OGR( &timeslice, &core_resultcode );
+             break;
+    case 3:  retcode = Run_CSC( &timeslice, &core_resultcode );
+             break;
+    default: retcode = core_resultcode = last_resultcode = -1;
+	     break;
   }
 
   
   if (retcode < 0) /* don't touch tslice or runtime as long as < 0!!! */
+  {
     return -1;
-  
-  tslice = timeslice;
+  }
   
   CliTimer(&stop);
   if (stop.tv_usec < start.tv_usec)
@@ -1009,24 +1094,10 @@ s32 Problem::Run( u32 /*unused*/ )
     runtime_usec-=1000000L;
   }
 
-  return retcode;
-}
+  tslice = timeslice;
 
-
-u32 Problem::CalcPercent()
-{
-  switch (contest) {
-    case 0: // RC5
-    case 1: // DES
-      return (u32)( ((double)(100.0)) *
-        (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
-                                 ((double)(contestwork.crypto.keysdone.lo))) /
-        ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
-                                 ((double)(contestwork.crypto.iterations.lo)))) );
-    case 2: // OGR
-      return 0; //!! need to compute this
-  }
-  return 0;
+  last_resultcode = core_resultcode;
+  return last_resultcode;
 }
 
 /* ======================================================================= */
@@ -1091,7 +1162,6 @@ u32 Problem::CalcPercent()
         if (contestwork.crypto.key.lo < keylo) 
           contestwork.crypto.key.hi++; // wrap occured ?
         resultcode = RESULT_FOUND;
-        finished = 1;
         return( 1 );
         }
 #if (CLIENT_OS == OS_RISCOS)
@@ -1139,7 +1209,6 @@ u32 Problem::CalcPercent()
               if (contestwork.crypto.key.lo < keylo) 
                 contestwork.crypto.key.hi++; // wrap occured ?
               resultcode = RESULT_FOUND;
-              finished = 1;
               return( 1 );
             }
             else

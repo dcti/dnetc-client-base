@@ -6,7 +6,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.56 1999/04/09 06:11:33 gregh Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.57 1999/04/09 13:46:48 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -50,36 +50,33 @@ typedef union
 
 class Problem
 {
-public:
-  int finished;
-  int resultcode; /* previously rc5result.result */
-  u32 startpercent;
-  u32 percent;
-  u32 runtime_sec, runtime_usec; /* ~time spent in core */
-  int restart;
-  u32 timehi, timelo;
+protected: /* these members *must* be protected for thread safety */
+  int last_resultcode; /* the rescode the last time contestwork was stable */
   int started;
-  unsigned int contest;
-  int cputype;
-
-  unsigned int pipeline_count;
-  u32 tslice; 
-  int loaderflags; /* used by problem loader (probfill.cpp) */
-
-  #ifdef MAX_MEM_REQUIRED_BY_CORE
-  char core_membuffer[MAX_MEM_REQUIRED_BY_CORE];
-  #endif
-
-  unsigned int threadindex; /* index of this problem in the problem table */
-  int threadindex_is_valid; /* 0 if the problem is not managed by probman*/
-  
-  u32 initialized;
+  int initialized;
   ContestWork contestwork;
   RC5UnitWork rc5unitwork;
   u64 refL0;
   CoreDispatchTable *ogr;
   void *ogrstate;
+  unsigned int pipeline_count;
+  #ifdef MAX_MEM_REQUIRED_BY_CORE
+  char core_membuffer[MAX_MEM_REQUIRED_BY_CORE];
+  #endif
+public: /* anything public must be thread safe */
+  u32 runtime_sec, runtime_usec; /* ~time spent in core */
 
+  u32 startpermille;              /* -,                                   */
+  unsigned int contest;          /*  |__ assigned in LoadState()         */
+  int cputype;                   /*  |                                   */
+  u32 tslice;                    /* -' -- adjusted by non-preemptive OSs */
+
+  u32 permille;    /* used by % bar */
+  int loaderflags; /* used by problem loader (probfill.cpp) */
+
+  unsigned int threadindex; /* index of this problem in the problem table */
+  int threadindex_is_valid; /* 0 if the problem is not managed by probman*/
+  
   #if (CLIENT_CPU == CPU_X86)
   u32 (*unit_func)( RC5UnitWork * , u32 timeslice );
   #elif (CLIENT_CPU == CPU_68K)
@@ -100,9 +97,10 @@ public:
   int (*rc5_unit_func)( RC5UnitWork * , unsigned long iterations );
   #endif
 
-  int Run_RC5(u32 *timeslice); /* \    run for n timeslices.                */
-  int Run_DES(u32 *timeslice); /*  > - set actual number of slices that ran */
-  int Run_OGR(u32 *timeslice); /* /    return same retcode as Run()         */
+  int Run_RC5(u32 *timeslice,int *core_retcode); /* \  run for n timeslices.                */
+  int Run_DES(u32 *timeslice,int *core_retcode); /*  > set actual number of slices that ran */
+  int Run_OGR(u32 *timeslice,int *core_retcode); /* /  returns RESULT_* or -1 if error      */
+  int Run_CSC(u32 *timeslice,int *core_retcode); /* /                                       */
 
   Problem(long _threadindex = -1L);
   ~Problem();
@@ -118,17 +116,14 @@ public:
   int RetrieveState( ContestWork * work, unsigned int *contestid, int dopurge );
     // Retrieve state from internal structures.
     // state is invalid (will generate errors) once the state is purged.
-    // returns: -1 on error, resultcode otherwise
+    // Returns RESULT_* or -1 if error.
 
-  s32 Run( u32 /* unused */ );
+  int Run(void);
     // Runs calling rc5_unit for timeslice times...
-    // Returns:
-    //   -1 if something goes wrong (state not loaded, already done etc...)
-    //   0 if more work to be done
-    //   1 if we're done, go get results
+    // Returns RESULT_* or -1 if error.
 
-  u32 CalcPercent();
-    /* Return the % completed in the current block, to nearest 1%. */
+  u32 CalcPermille();
+    /* Return the % completed in the current block, to nearest 0.1%. */
 
 #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
   u32 GetKeysDone() { return(contestwork.crypto.keysdone.lo); }
