@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.44  1998/12/24 05:19:55  dicamillo
+// Add socket_ioctl to Mac OS definitions.
+//
 // Revision 1.43  1998/12/22 15:58:24  jcmichot
 // *** empty log message ***
 //
@@ -207,6 +210,7 @@ extern "C" {
   #define write(sock, buff, len) socket_write(sock, buff, len)
   #define read(sock, buff, len) socket_read(sock, buff, len)
   #define close(sock) socket_close(sock)
+  #define ioctl(sock, request, arg) socket_ioctl(sock, request, arg)
   extern Boolean myNetInit(void);
 #elif (CLIENT_OS == OS_OS2)
   #include <process.h>
