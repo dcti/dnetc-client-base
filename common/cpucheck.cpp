@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.28 2003/10/28 17:11:58 teichp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.29 2003/10/28 22:01:52 teichp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1225,7 +1225,7 @@ static long __GetRawProcessorID(const char **cpuname )
 {
   static long detectedtype = -2L; /* -1 == failed, -2 == not supported */
   static const char *detectedname = NULL;
-  static char namebuf[17];
+  static char namebuf[65];
   static struct {
     unsigned int id, mask;
     signed int rc5, r72, ogr;
@@ -1276,31 +1276,33 @@ static long __GetRawProcessorID(const char **cpuname )
   if ( detectedtype == -2L )
   {
     detectedtype = ARMident();
+    sprintf(namebuf, "%0lX", detectedtype);
   }
   #elif (CLIENT_OS == OS_LINUX)
   if (detectedtype == -2)
   {
-    unsigned int n;
+    char buffer[256];
+    unsigned int i, n, o;
     FILE *cpuinfo;
-    detectedtype = -1L;
-    namebuf[0] = '\0';
+
+    namebuf[0]='\0';
+    o=0;
     if ((cpuinfo = fopen( "/proc/cpuinfo", "r")) != NULL)
     {
-      char buffer[256];
-      n = 0;
-      while(fgets(buffer, sizeof(buffer), cpuinfo))
+      while (fgets(buffer, sizeof(buffer), cpuinfo))
       {
-        if(memcmp(buffer, "Type\t\t: ", 8) == 0)
-          n = 8;
-        if(memcmp(buffer, "Processor\t: ", 12) == 0)
-          n = 12;
-
-        if(n != 0)
+        if (memcmp(buffer, "Type\t\t: ", 8) == 0)
+          o=8;
+        if (memcmp(buffer, "Processor\t: ", 12) == 0)
+          o=12;
+        if (o!=0)
         {
-          if (memcmp(&buffer[n], "Intel ", 6) == 0)
-            n += 6;
-          strncpy(namebuf, &buffer[n], sizeof(namebuf)-1);
-          namebuf[sizeof(namebuf)-1] = '\0';
+          n=strlen(buffer)-o-1;
+          if (n > (sizeof(namebuf)-1))
+            n=sizeof(namebuf)-1;
+          for (i=0; i<n; i++)
+            namebuf[i]=tolower(buffer[i+o]);
+          namebuf[n]='\0';
           break;
         }
       }
@@ -1309,40 +1311,45 @@ static long __GetRawProcessorID(const char **cpuname )
 
     if (namebuf[0])
     {
-      static struct { const char *sig;  int rid; } sigs[] ={
-                    { "unknown",    0x000}, /* <= from /proc/cpuinfo */
-                    { "arm2",       0x200},
-                    { "arm250",     0x250},
-                    { "arm3",       0x300},
-                    { "arm6",       0x600},
-                    { "arm610",     0x610},
-                    { "arm7",       0x700},
-                    { "arm710",     0x710},
-                    { "sa110",      0xA10},
-                    { "ARM/VLSI ARM 6",         0x600},
-                    { "ARM/VLSI ARM 610",       0x610},
-                    { "ARM/VLSI ARM 7",         0x700},
-                    { "ARM/VLSI ARM 710",       0x710},
-                    { "StrongARM-110",          0xA10},
-                    { "StrongARM-1100",         0xA11},
-                    { "StrongARM-1110",         0xB11}
+      static struct { const char *sig;  int id; } sigs[] ={
+                    { "arm2",           0x41560200},
+                    { "arm 2",          0x41560200},
+                    { "arm250",         0x41560250},
+                    { "arm 250",        0x41560250},
+                    { "arm3",           0x41560300},
+                    { "arm 3",          0x41560300},
+                    { "arm610",         0x41560610},
+                    { "arm 610",        0x41560610},
+                    { "arm6",           0x41560600},
+                    { "arm 6",          0x41560600},
+                    { "arm710",         0x41007100},
+                    { "arm 710",        0x41007100},
+                    { "arm720t",        0x41807200},
+                    { "arm7",           0x41007000},
+                    { "arm 7",          0x41007000},
+                    { "arm920t",        0x41129200},
+                    { "arm922t",        0x41029220},
+                    { "arm926",         0x41009260},
+                    { "arm915t",        0x54029150},
+                    { "arm925t",        0x54029150},
+                    { "arm1020",        0x4100a200},
+                    { "arm1026",        0x4100a260},
+                    { "sa110",          0x4401a100},
+                    { "strongarm-110",  0x4401a100},
+                    { "strongarm-1100", 0x4401a110},
+                    { "strongarm-1110", 0x6901b110},
+                    { "80200",          0x69052000},
+                    { "iop321",         0x69052c30},
+                    { "pxa210",         0x69052120},
+                    { "pxa250",         0x69052100},
+                    { "pxa255",         0x69052100},
+                    { "",               0x00000000}
                     };
-      /* assume unknown ID and unrecognized name in namebuf */
-      detectedtype = 0;
-      detectedname = ((const char *)&(namebuf[0]));
 
-      for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
+      for ( i=0; detectedtype==-2; i++ )
       {
-        int l = strlen(sigs[n].sig);
-
-        if ((strncmp(namebuf, sigs[n].sig, l) == 0) &&
-            ((namebuf[l] == '\0') || (namebuf[l] == ' ')))
-        {
-          /* known ID and recognized name */
-          detectedtype = (long)sigs[n].rid;
-          detectedname = NULL; /* fall through and use standard name */
-          break;
-        }
+        if (strstr(namebuf, sigs[i].sig) != NULL)
+          detectedtype=sigs[i].id;
       }
     }
   }
@@ -1407,7 +1414,6 @@ static long __GetRawProcessorID(const char **cpuname )
       {
         if (ids[n].id == 0)
         {
-          sprintf(namebuf, "%0lX", detectedtype);
 	  detectedname = namebuf;
 	  detectedtype = 0;
         }
