@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.27.2.28 2001/04/16 17:58:15 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.29 2001/05/14 21:49:35 cyp Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -147,6 +147,9 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 # -ou   forces the compiler to make sure that all function labels are unique
 # -ox   "/obiklmr" and "s" (no stack overflow checking) options are selected.
 
+# fastest OGR for PIII: /s /os /oa /oe=4096 /oi+ /ol+ 
+# old (<=1.27.2.27) OPT_SPEED: /s /oneatx /oh /oi+ (now used for OGR-core-B only)
+
 %CCPP     =wpp386
 %CC       =wcc386
 %CCASM    =wasm
@@ -161,7 +164,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %CFLAGS   =/6s /fp3 /ei /mf #may be defined in the platform specific section
 %CWARNLEV =/wx /we /wcd=604 /wcd=594
 %OPT_SIZE =/s /os         #may be redefined in the platform specific section
-%OPT_SPEED=/s /os /oa /oe=4096 /oi+ /ol+ #yes. this is really fastest.
+%OPT_SPEED=/s /os /oa /oe=4096 /oi+ /ol+  #see note above
 %LIBPATH  =               #may be defined in the platform specific section
 %DEBUG    =               #@%make debug to enable debugging
 %LIBFILES =               #may be defined in the platform specific section
@@ -669,16 +672,17 @@ output\csc-6b-i.obj : csc\x86\csc-6b-i.asm $(%dependall) .AUTODEPEND
 
 # ----------------------------------------------------------------
 
-FASTEST_OGR=/3s /s /os /oa /oe=4096 /oi+ /ol+
-#it took me 5 hours to determine this.
+FASTEST_OGR_A=/6s /s /os /oa /oe=4096 /oi+ /ol+ #for PPro+ (/6s or /3s)
+FASTEST_OGR_B=/5s /oneatx /oh /oi+ /ol+         #for the rest
+#it took me 5 hours to determine these.
 # #/ox /oa /oe=512 /oh /oi+ /ol+
 
 output\ogr-a.obj : ogr\x86\ogr-a.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(FASTEST_OGR) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(FASTEST_OGR_A) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\ogr-b.obj : ogr\x86\ogr-b.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(FASTEST_OGR) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(FASTEST_OGR_B) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 #output\ogr.obj : ogr\x86\ogr.asm $(%dependall) 
@@ -1009,17 +1013,25 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
                       /bt=dos /d__MSDOS__ &
                       /DDYN_TIMESLICE &
                       /DUSE_DPMI &
-                      /Iplat\dos /I$(%watcom)\h #;plat\dos\libtcp
+                      /Iplat\dos /I$(%watcom)\h
      @set OPT_SIZE  = /s /os 
      @set OPT_SPEED = /oneatx /oh /oi+ 
      @set LINKOBJS  = $(%LINKOBJS) output\cdostime.obj output\cdosidle.obj &
                       output\cdoscon.obj output\cdosemu.obj output\cdosinet.obj &
                       output\cdospmeh.obj output\cdoskeyb.obj
-     @set LIBFILES  = #plat\dos\libtcp\libtcp.a
+     @set LIBFILES  = 
      @set MODULES   =
      @set IMPORTS   =
      @set DOCFILES  = docs\readme.dos docs\$(BASENAME).txt docs\readme.txt
      @set BINNAME   = $(BASENAME).com
+
+     @set got_tcpnet=0
+     @if exist plat\dos\watt32\lib\wattcpwf.lib @set got_tcpnet=1#
+     @if $(%got_tcpnet).==1. @set LIBPATH=$(%LIBPATH) plat\dos\watt32\lib
+     @if $(%got_tcpnet).==1. @set LIBFILES=$(%LIBFILES) wattcpwf.lib
+     @if $(%got_tcpnet).==1. @set CFLAGS=$(%CFLAGS) -Iplat\dos\watt32\include
+     @if $(%got_tcpnet).==1. @set CFLAGS=$(%CFLAGS) -DHAVE_WATT32
+     @if $(%got_tcpnet).==1. @set STACKSIZE=210K
      
      @%make declare_for_rc5
      @%make declare_for_rc5smc
