@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.76 2001/01/17 03:11:44 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.77 2001/01/25 13:56:18 cyp Exp $
 ==========================================================================
 
 2.8000
@@ -38,6 +38,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.76 2001/01/17 03:11:44 cyp Exp $
             fix: riscos: time and timezone oddities.
             fix: win32: workaround for time bug on some win2k HALs.
             fix: all: suffices weren't lowercase for remote buffer filenames.
+            fix: win32: client -install'ed to run hidden appeared on desktop
 
 2.8012.465  imp: m68k-netbsd: faster OGR core
             fix: bsdos-aout client is finally working again with OGR

@@ -1,6 +1,6 @@
 
  distributed.net client for Win32 (Win9x/WinNT/Win32s)
- document revision $Id: readme.w32,v 1.1.2.11 2001/01/17 04:03:25 cyp Exp $
+ document revision $Id: readme.w32,v 1.1.2.12 2001/01/25 13:56:18 cyp Exp $
 
  Welcome to the distributed.net client.
 
@@ -310,6 +310,15 @@
        > runs a tray icon manager for their software(Norton System Doctor,
        > Norton Anti-Virus, etc etc).  I turned off the tray icon manager and
        > rebooted, and the client then minimizes to the systray with no lag.
+
+    Q: I have trouble using the client in conjunction with MS-proxy, and
+       keep getting HTTP error: '407 Proxy authentication required' 
+    A: From: Alexei Anatski (chatskiy@email.com)
+       > The problem is that MS Proxy is usually configured to requre NTLM 
+       > (NT Domain) authentication. So far only IE is capable of this. 
+       > Solution is to install "Winsock-proxy" client from MS Proxy Setup. 
+       > It works at socket level so any application can use it transparently. 
+       > You may need assistance from your system administrator. 
 
     Q: How do I completely remove the this client from my system?
     A: First run the client with the '-uninstall' switch to ensure that 
