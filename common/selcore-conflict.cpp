@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.38  1999/03/19 18:00:57  michmarc
+// Fix Alpha/NT builds
+//
 // Revision 1.37  1999/03/18 03:38:01  cyp
 // Removed ineffective/obsolete client::ismmx flag.
 //
@@ -142,7 +145,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.37 1999/03/18 03:38:01 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.38 1999/03/19 18:00:57 michmarc Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -191,6 +194,8 @@ static const char *cputypetable[]=
      "EV6 (21264)",
      "EV5.6 (21164PC)"
      };
+  #else
+    #define NO_CPUTYPE_TABLE
   #endif
 #elif (CLIENT_CPU == CPU_ARM)
 static const char *cputypetable[]=
