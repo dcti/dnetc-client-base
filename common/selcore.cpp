@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.113 2001/04/14 15:58:23 sampo Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.114 2001/04/16 21:00:44 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -147,7 +147,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "lintilla",
       "lintilla-604", /* Roberto Ragusa's core optimized for PPC 604e */
       "Power RS",     /* _AIXALL only */
-      "crunch-vec";   /* altivec only */
+      "crunch-vec",   /* altivec only */
       NULL
     },
     { /* DES */
