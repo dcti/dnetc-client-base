@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.13 2000/06/21 22:41:45 oliver Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.14 2000/08/25 09:04:56 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -44,10 +44,14 @@ static const char *helpbody[] =
   "-uninstall         uninstall the client previously -installed",
   "-svcstart          start a previously -installed client-as-service",
   "                   equivalent to NT's 'net start ...'",
-#endif
-#if (CLIENT_OS == OS_OS2)
+#elif (CLIENT_OS == OS_OS2)
   "-install           install the client in the startup folder",
   "-uninstall         remove the client from the startup folder",
+#elif (CLIENT_OS == OS_LINUX)
+  "-install [...]     install the client in /etc[/rc.d]/init.d/",
+  "                   all [...options...] that follow '-install' serve",
+  "                   as parameters for the installed client.",
+  "-uninstall         remove the client from /etc[/rc.d]/init.d/",
 #endif
 //"-import <fn> [cnt] import [cnt] packets from file <fn> into client buffers",
   "-import <fn>       import packets from file <fn> into client buffers",
