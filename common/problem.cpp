@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.92  1999/03/31 22:01:43  cyp
+// a) Created separate (internal) Run_RC5(), Run_DES() and Run_OGR() sub-
+// functions. b) Folded AlignTimeslice() method into Run_RC5() since its only
+// useful there. c) key+=keysdone on RESULT_FOUND is now done from Run_*
+// and not from SelfTest() and problem loader. c) Removed all pipeline_count
+// gunk from DES code.
+//
 // Revision 1.91  1999/03/22 02:45:11  gregh
 // Add a 'finished = 1;' into the OGR 'not found' handler.
 //
@@ -283,7 +290,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.91 1999/03/22 02:45:11 gregh Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.92 1999/03/31 22:01:43 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -298,7 +305,6 @@ return "@(#)$Id: problem.cpp,v 1.91 1999/03/22 02:45:11 gregh Exp $"; }
 #if (CLIENT_OS == OS_RISCOS)
 #include "../platforms/riscos/riscos_x86.h"
 extern "C" void riscos_upcall_6(void);
-extern void CliSignalHandler(int);
 #endif
 
 /* ------------------------------------------------------------- */
@@ -487,7 +493,7 @@ Problem::~Problem()
 //         key.hi   key.lo
 // ie key 01234567:89ABCDEF is sent to rc5_unit_func like that :
 //        EFCDAB89:67452301
-// This function switch from one format to the other.
+// This function switches from one format to the other.
 //
 // [Even if it looks like a little/big endian problem, it isn't. Whatever
 //  endianess the underlying system has, we must swap every byte in the key
@@ -496,24 +502,22 @@ Problem::~Problem()
 // Note that DES has a similiar but far more complex system, but everything
 // is handled by des_unit_func().
 
-static void __SwitchRC5Format (u64 &key)
-{
-    u64 tempkey;
-
-    tempkey.lo = 
-      ((key.hi >> 24) & 0x000000FFL) |
-      ((key.hi >>  8) & 0x0000FF00L) |
-      ((key.hi <<  8) & 0x00FF0000L) |
-      ((key.hi << 24) & 0xFF000000L);
-    tempkey.hi = 
-      ((key.lo >> 24) & 0x000000FFL) |
-      ((key.lo >>  8) & 0x0000FF00L) |
-      ((key.lo <<  8) & 0x00FF0000L) |
-      ((key.lo << 24) & 0xFF000000L);
-    
-    key.lo = tempkey.lo;
-    key.hi = tempkey.hi;
-}
+static void  __SwitchRC5Format(u64 *_key)                               
+{                                                                       
+    register u32 tempkeylo = _key->hi; /* note: we switch the order */  
+    register u32 tempkeyhi = _key->lo;                                  
+                                                                        
+    _key->lo =                                                          
+      ((tempkeylo >> 24) & 0x000000FFL) |                               
+      ((tempkeylo >>  8) & 0x0000FF00L) |                               
+      ((tempkeylo <<  8) & 0x00FF0000L) |                               
+      ((tempkeylo << 24) & 0xFF000000L);                                
+    _key->hi =                                                          
+      ((tempkeyhi >> 24) & 0x000000FFL) |                               
+      ((tempkeyhi >>  8) & 0x0000FF00L) |                               
+      ((tempkeyhi <<  8) & 0x00FF0000L) |                               
+      ((tempkeyhi << 24) & 0xFF000000L);                                
+}                                                                       
 
 /* ------------------------------------------------------------------- */
 
@@ -523,23 +527,24 @@ static void __SwitchRC5Format (u64 &key)
 //
 // Output: the key incremented
 
-static void __IncrementKey (u64 &key, u32 iters, int contest)
-{
-  switch (contest) {
-    case 0: // RC5
-      __SwitchRC5Format (key);    
-      key.lo += iters;
-      if (key.lo < iters) key.hi++;
-      __SwitchRC5Format (key);
-      break;
-    case 1: // DES
-      key.lo += iters;
-      if (key.lo < iters) key.hi++; // Account for carry
-      break;
-    case 2: // OGR
-      // This should never be called for OGR
-      break;
-  }
+static void __IncrementKey(u64 *key, u32 iters, int contest)        
+{                                                                   
+  switch (contest)                                                  
+  {                                                                 
+    case 0: /* RC5 */                                               
+      __SwitchRC5Format (key);                                      
+      key->lo += iters;                                             
+      if (key->lo < iters) key->hi++;                               
+      __SwitchRC5Format (key);                                      
+      break;                                                        
+    case 1: /* DES */                                               
+      key->lo += iters;                                             
+      if (key->lo < iters) key->hi++; /* Account for carry */       
+      break;                                                        
+    case 2: /* OGR */                                               
+      /* This should never be called for OGR */                     
+      break;                                                        
+  }                                                                 
 }
 
 /* ------------------------------------------------------------------- */
@@ -550,6 +555,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   loaderflags = 0;
   contest = _contest;
   cputype = _cputype;
+  runtime_sec = runtime_usec = 0;
 
   if (contest >= CONTEST_COUNT)
     return -1;
@@ -557,9 +563,8 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   pipeline_count = 2;
 
 #if (CLIENT_CPU == CPU_ARM)
-  pipeline_count = 2;
   switch(cputype)
-    {
+  {
     case 0: rc5_unit_func = rc5_unit_func_arm_1;
             des_unit_func = des_unit_func_arm;
             pipeline_count = 1;
@@ -577,7 +582,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
             des_unit_func = des_unit_func_arm;
             pipeline_count = 3;
             break;
-    }
+  }
 #endif
 
 #if (CLIENT_CPU == CPU_68K)
@@ -595,27 +600,27 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   pipeline_count = 2;
   if (cputype ==  EV5_CPU) || (cputype == EV56_CPU) ||
      (cputype ==  PCA56_CPU) || (cputype == EV6_CPU)
-    {
+  {
     rc5_unit_func = rc5_alpha_osf_ev5;
     des_unit_func = des_alpha_osf_ev5;
-    }    
+  }    
   else // EV3_CPU, EV4_CPU, LCA4_CPU, EV45_CPU and default
-    {
+  {
     rc5_unit_func = rc5_alpha_osf_ev4;
     des_unit_func = des_alpha_osf_ev4;
-    }
+  }
   #endif
 #endif
 
 #if (CLIENT_CPU == CPU_POWERPC)
   if (contest == 0)
-    {
+  {
     rc5_unit_func = crunch_lintilla;
     #if ((CLIENT_OS != OS_BEOS) || (CLIENT_OS != OS_AMIGAOS))
     if (cputype == 0)
       rc5_unit_func = crunch_allitnil;
     #endif
-    }
+  }
   pipeline_count = 1;
 #endif
 
@@ -629,15 +634,15 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
 
   pipeline_count = 2; /* most cases */
   if (contest == 1)
-    {
+  {
     #if defined(MMX_BITSLICER) 
     if ((detectedtype & 0x100) != 0) 
-      {
+    {
       unit_func = (u32 (*)(RC5UnitWork *,u32))des_unit_func_mmx;
-      }
+    }
     else
     #endif
-      {
+    {
       //
       // p1* and p2* are effectively the same core (as called from
       // des-x86.cpp) if client was not compiled for mt - cyp
@@ -648,44 +653,44 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
         unit_func = p1des_unit_func_p5;
       #if defined(CLIENT_SUPPORTS_SMP) 
       if (threadindex == 1)
-        {
+      {
         if (unit_func == p1des_unit_func_p5)
           unit_func = p2des_unit_func_p5;
         else 
           unit_func = p2des_unit_func_pro;
-        }
+      }
       else if (threadindex == 2)  
-        {
+      {
         if (unit_func == p1des_unit_func_p5) // use the other unused cores.
           unit_func = p1des_unit_func_pro;   // non-optimal but ...
         else                                 // ... still better than slice
           unit_func = p1des_unit_func_p5;
-        }
+      }
       else if (threadindex == 3)
-        {
+      {
         if (unit_func == p1des_unit_func_p5) // use the other unused cores.
           unit_func = p2des_unit_func_pro;   // non-optimal but ...
         else                                 // ... still better than slice
           unit_func = p2des_unit_func_p5;
-        }
-      else if (threadindex > 4)              // fall back to slice if 
-        {                                    // running with > 4 processors
-        unit_func = des_unit_func_slice;
-        }
-      #endif
       }
+      else if (threadindex > 4)              // fall back to slice if 
+      {                                      // running with > 4 processors
+        unit_func = des_unit_func_slice;
+      }
+      #endif
     }
+  }
   else if (contest == 0) 
-    {
+  {
     if (cputype == 1)   // Intel 386/486
-      {
+    {
       #if defined(SMC) 
       if (threadindex == 0)
         unit_func =  rc5_unit_func_486_smc;
       else
       #endif
         unit_func = rc5_unit_func_486;
-      }
+    }
     else if (cputype == 2) // Ppro/PII
       unit_func = rc5_unit_func_p6;
     else if (cputype == 3) // 6x86(mx)
@@ -695,24 +700,25 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
     else if (cputype == 5) // K6/K6-2
       unit_func = rc5_unit_func_k6;
     else // Pentium (0/6) + others
-      {
+    {
       unit_func = rc5_unit_func_p5;
       #if defined(MMX_RC5)
       if (detectedtype == 0x106)  /* Pentium MMX only! */
-        {
+      {
         unit_func = rc5_unit_func_p5_mmx;
         pipeline_count = 4; // RC5 MMX core is 4 pipelines
-        }
+      }
       #endif
       cputype = 0;
-      }
     }
+  }
 #endif    
 
 
   //----------------------------------------------------------------
 
-  switch (contest) {
+  switch (contest) 
+  {
     case 0: // RC5
     case 1: // DES
 
@@ -746,7 +752,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
       rc5unitwork.L0.lo = key.lo;
       rc5unitwork.L0.hi = key.hi;
       if (contest == 0)
-        __SwitchRC5Format (rc5unitwork.L0);
+        __SwitchRC5Format (&(rc5unitwork.L0));
 
       refL0 = rc5unitwork.L0;
       break;
@@ -774,7 +780,6 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   //---------------------------------------------------------------
   
   tslice = _timeslice;
-  AlignTimeslice(); /* requires a loaded ContestWork */
 
   //--------------------------------------------------------------- 
  
@@ -867,37 +872,6 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dop
 
 /* ------------------------------------------------------------- */
 
-u32 Problem::AlignTimeslice(void) // align the timeslice to an even 
-{                        // multiple of pipeline_count and 2 
-  u32 alignfact = pipeline_count + (pipeline_count & 1);
-  u32 timeslice = ((tslice + (alignfact - 1)) & ~(alignfact - 1));
-
-  // don't allow a too large of a timeslice be used
-  // (technically not necessary, but may save some wasted time)
-  if (contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi)
-    {
-    u32 todo = contestwork.crypto.iterations.lo-contestwork.crypto.keysdone.lo;
-    if (todo < timeslice)
-      {
-      timeslice = todo;
-      timeslice = ((timeslice + (alignfact - 1)) & ~(alignfact - 1));
-      }
-    }
-
-
-#if 0
-LogScreen("AlignTimeslice(): effective timeslice: %lu (0x%lx),\n"
-          "suggested timeslice: %lu (0x%lx)\n"
-          "pipeline_count = %lu, timeslice%%pipeline_count = %lu\n", 
-          (unsigned long)timeslice, (unsigned long)timeslice,
-          (unsigned long)tslice, (unsigned long)tslice,
-          pipeline_count, timeslice%pipeline_count );
-#endif
-
-  return timeslice;
-}
-
-/* ------------------------------------------------------------- */
 
 u32 rc5_singlestep_core_wrapper( RC5UnitWork * rc5unitwork, u32 timeslice,
                 int pipeline_count, auto u32 (*unit_func)( RC5UnitWork *) )
@@ -906,60 +880,57 @@ u32 rc5_singlestep_core_wrapper( RC5UnitWork * rc5unitwork, u32 timeslice,
   int keycount=timeslice;
   //LogScreenf ("rc5unitwork = %08X:%08X (%X)\n", rc5unitwork.L0.hi, rc5unitwork.L0.lo, keycount);
   while ( keycount-- ) // timeslice ignores the number of pipelines
-    {
+  {
     u32 result = (*unit_func)( rc5unitwork );
     if ( result )
-      {
+    {
       kiter += result-1;
       break;
-      }
-    else
-      {
-      // "mangle-increment" the key number by the number of pipelines
-      __IncrementKey (rc5unitwork->L0, pipeline_count, 0 );
-      kiter += pipeline_count;
-      }
     }
+    else
+    {
+      // "mangle-increment" the key number by the number of pipelines
+      __IncrementKey (&(rc5unitwork->L0), pipeline_count, 0 );
+      kiter += pipeline_count;
+    }
+  }
   return kiter;
 }  
 
 /* ------------------------------------------------------------- */
 
-s32 Problem::Run( u32 /*unused*/ )
+int Problem::Run_RC5(u32 *timesliceP)
 {
-  u32 timeslice;
   u32 kiter = 0;
+  u32 timeslice = *timesliceP;
 
-  if ( !initialized )
-    return ( -1 );
+  // align the timeslice to an even-multiple of pipeline_count and 2 
+  u32 alignfact = pipeline_count + (pipeline_count & 1);
+  timeslice = ((timeslice + (alignfact - 1)) & ~(alignfact - 1));
 
-  if ( finished )
-    return ( 1 );
-
-  if (!started)
-    {
-    struct timeval stop;
-    CliTimer(&stop);
-    timehi = stop.tv_sec;
-    timelo = stop.tv_usec;
-    started=1;
-
-#ifdef STRESS_THREADS_AND_BUFFERS 
-    contestwork.crypto.keysdone.hi = contestwork.crypto.iterations.hi;
-    contestwork.crypto.keysdone.lo = contestwork.crypto.iterations.lo;
-
-    resultcode = RESULT_NOTHING;
-    finished = 1;
-    return 1;
-#endif    
-    }
-
-  // align the timeslice to an even multiple of pipeline_count and 2
-  // after checking for an excessive timeslice (>(iter-keysdone)) 
-  timeslice = (AlignTimeslice() / pipeline_count);
-
-if (contest == 0) //************************ RC5 *********************
+  // don't allow a too large of a timeslice be used ie (>(iter-keysdone)) 
+  // (technically not necessary, but may save some wasted time)
+  if (contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi)
   {
+    u32 todo = contestwork.crypto.iterations.lo-contestwork.crypto.keysdone.lo;
+    if (todo < timeslice)
+    {
+      timeslice = todo;
+      timeslice = ((timeslice + (alignfact - 1)) & ~(alignfact - 1));
+    }
+  }
+
+#if 0
+LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
+          "suggested timeslice: %lu (0x%lx)\n"
+          "pipeline_count = %lu, timeslice%%pipeline_count = %lu\n", 
+          (unsigned long)timeslice, (unsigned long)timeslice,
+          (unsigned long)tslice, (unsigned long)tslice,
+          pipeline_count, timeslice%pipeline_count );
+#endif
+
+  timeslice /= pipeline_count;
+
   #if (CLIENT_CPU == CPU_X86)
     kiter = (*unit_func)( &rc5unitwork, timeslice );
   #elif ((CLIENT_CPU == CPU_SPARC) && (ULTRA_CRUNCH == 1)) || \
@@ -967,44 +938,65 @@ if (contest == 0) //************************ RC5 *********************
     kiter = crunch( &rc5unitwork, timeslice );
   #elif (CLIENT_CPU == CPU_68K) || (CLIENT_CPU == CPU_POWERPC)
     kiter = (*rc5_unit_func)( &rc5unitwork, timeslice );
+  #elif (CLIENT_CPU == CPU_ARM)
+    #if (CLIENT_OS == OS_RISCOS)
+    if (threadindex == 1) /* RISC OS specific x86 2nd thread magic. */
+    {
+      if (runtime_sec == 0 && runtime_usec == 0) /* first time */
+      {                          /* load the work onto the coprocessor */
+        return 0; /* ... or -1 if load failed */
+        /* runtime_* will remain 0 as long as -1 is returned */
+      }
+      /* otherwise copy the state of the copro back to contestwork */
+      /* fall through if copy-back succeeded or return -1 if it failed */
+    }
+    else
+    #endif
+    /* do other ARM goodstuff */
   #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
-    kiter = timeslice*pipeline_count;
-    kiter -= rc5_unit_func( &rc5unitwork, timeslice);
+    kiter = (timeslice*pipeline_count)-rc5_unit_func(&rc5unitwork,timeslice);
   #else
     kiter = rc5_singlestep_core_wrapper( &rc5unitwork, timeslice,
                 pipeline_count, rc5_unit_func );
   #endif
 
-  __IncrementKey (refL0, timeslice*pipeline_count, contest);
+  timeslice *= pipeline_count;
+  *timesliceP = timeslice;
+
+  __IncrementKey (&refL0, timeslice, contest);
     // Increment reference key count
 
   if (((refL0.hi != rc5unitwork.L0.hi) ||  // Compare ref to core
       (refL0.lo != rc5unitwork.L0.lo)) &&  // key incrementation
-      (kiter == timeslice*pipeline_count))
-    {
+      (kiter == timeslice))
+  {
     #if 0 /* can you spell "thread safe"? */
     Log("Internal Client Error #23: Please contact help@distributed.net\n"
         "Debug Information: %08x:%08x - %08x:%08x\n",
         rc5unitwork.L0.hi, rc5unitwork.L0.lo, refL0.hi, refL0.lo);
     #endif
     return -1;
-    };
+  };
 
   contestwork.crypto.keysdone.lo += kiter;
   if (contestwork.crypto.keysdone.lo < kiter)
     contestwork.crypto.keysdone.hi++;
     // Checks passed, increment keys done count.
 
-  if (kiter < timeslice*pipeline_count)
-    {
+  if (kiter < timeslice)
+  {
     // found it!
+    u32 keylo = contestwork.crypto.key.lo;
+    contestwork.crypto.key.lo += contestwork.crypto.keysdone.lo;
+    contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
+    if (contestwork.crypto.key.lo < keylo) 
+      contestwork.crypto.key.hi++; // wrap occured ?
     resultcode = RESULT_FOUND;
-    
     finished = 1;
     return( 1 );
-    }
-  else if (kiter != timeslice*pipeline_count)
-    {
+  }
+  else if (kiter != timeslice)
+  {
     #if 0 /* can you spell "thread safe"? */
     Log("Internal Client Error #24: Please contact help@distributed.net\n"
         "Debug Information: k: %x t: %x\n"
@@ -1012,116 +1004,109 @@ if (contest == 0) //************************ RC5 *********************
         rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
     #endif
     return -1;
-    };
+  };
 
   if ( ( contestwork.crypto.keysdone.hi > contestwork.crypto.iterations.hi ) ||
        ( ( contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi ) &&
        ( contestwork.crypto.keysdone.lo >= contestwork.crypto.iterations.lo ) ) )
-    {
+  {
     // done with this block and nothing found
     resultcode = RESULT_NOTHING;
     finished = 1;
-    }
-  else
-    {
-    // more to do, come back later.
-    resultcode = RESULT_WORKING;
-    finished = 0;
-    }
-
+    return 1;
   }
-else if (contest == 1) // *********************** DES *********************
+
+  // more to do, come back later.
+  resultcode = RESULT_WORKING;
+  finished = 0;
+  return 0;            // Done with this round
+}  
+
+/* ------------------------------------------------------------- */
+
+int Problem::Run_DES(u32 *timesliceP)
+{
+  u32 kiter = 0;
+  u32 timeslice = *timesliceP;
+  
+#if (CLIENT_CPU == CPU_X86)
+  u32 min_bits = 8;  /* bryd and kwan cores only need a min of 256 */
+  u32 max_bits = 24; /* these are the defaults if !MEGGS && !DES_ULTRA */
+
+  #if defined(MMX_BITSLICER)
+  if (((u32 (*)(RC5UnitWork *,u32, char *))(unit_func) == des_unit_func_mmx))
   {
-  #if (CLIENT_CPU == CPU_X86)
-    // protect the innocent
-    timeslice *= pipeline_count;
-
-    u32 min_bits = 8;  /* bryd and kwan cores only need a min of 256 */
-    u32 max_bits = 24; /* these are the defaults if !MEGGS && !DES_ULTRA */
-
-    #if defined(MMX_BITSLICER)
-    if (((u32 (*)(RC5UnitWork *,u32, char *))(unit_func) == des_unit_func_mmx))
-      {
-      #if defined(BITSLICER_WITH_LESS_BITS)
-      min_bits = 16;
-      #else
-      min_bits = 20;
-      #endif
-      max_bits = min_bits; /* meggs driver has equal MIN and MAX */
-      }
+    #if defined(BITSLICER_WITH_LESS_BITS)
+    min_bits = 16;
+    #else
+    min_bits = 20;
     #endif
-    u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
-
-    if (nbits < min_bits) nbits = min_bits;
-    else if (nbits > max_bits) nbits = max_bits;
-    timeslice = (1ul << nbits) / pipeline_count;
-
-    #if defined(MMX_BITSLICER)
-    if (((u32 (*)(RC5UnitWork *,u32, char *))(unit_func) == des_unit_func_mmx))
-      kiter = des_unit_func_mmx( &rc5unitwork, nbits, core_membuffer );
-    else
-    #endif
-    kiter = (*unit_func)( &rc5unitwork, nbits );
-  #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
-    u32 nbits = 20;  // FROM des-slice-dworz.cpp
-    timeslice = (1ul << nbits);
-    kiter = des_unit_func ( &rc5unitwork, nbits );
-  #else
-    #if (CLIENT_OS == OS_LINUX)
-      #error remi, if you compare a previous problem.cpp rev to this one,
-      #error you will see that logic in the old rev is the same as when pipeline_count==1
-      #error but incrementation is for two pipelines (as per PIPELINE_COUNT #def).
-      #error Are you sure about this? Is this only for LINUX or for any DWORZ core?
-    #endif
-
-    #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_LINUX)
-    pipeline_count = 1;
-    #endif
-    
-    timeslice *= pipeline_count;
-    u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
-
-    if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
-    else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
-    timeslice = (1ul << nbits) / pipeline_count;
-
-    kiter = des_unit_func ( &rc5unitwork, nbits );
-
-    #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_LINUX)
-    pipeline_count = 1; //at least thats what configure says
-    #endif
+    max_bits = min_bits; /* meggs driver has equal MIN and MAX */
+  }
   #endif
+  u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
 
-  __IncrementKey (refL0, timeslice*pipeline_count, contest);
-    // Increment reference key count
+  if (nbits < min_bits) nbits = min_bits;
+  else if (nbits > max_bits) nbits = max_bits;
+  timeslice = (1ul << nbits);
+
+  #if defined(MMX_BITSLICER)
+  if (((u32 (*)(RC5UnitWork *,u32, char *))(unit_func) == des_unit_func_mmx))
+    kiter = des_unit_func_mmx( &rc5unitwork, nbits, core_membuffer );
+  else
+  #endif
+  kiter = (*unit_func)( &rc5unitwork, nbits );
+#elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
+  u32 nbits = 20;  // FROM des-slice-dworz.cpp
+  timeslice = (1ul << nbits);
+  kiter = des_unit_func ( &rc5unitwork, nbits );
+#else
+  u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
+
+  if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
+  else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
+  timeslice = (1ul << nbits);
+
+  kiter = des_unit_func ( &rc5unitwork, nbits );
+#endif
+
+  *timesliceP = timeslice;
+
+  __IncrementKey (&refL0, timeslice, contest);
+  // Increment reference key count
 
   if (((refL0.hi != rc5unitwork.L0.hi) ||  // Compare ref to core
       (refL0.lo != rc5unitwork.L0.lo)) &&  // key incrementation
-      (kiter == timeslice*pipeline_count))
-    {
+      (kiter == timeslice))
+  {
     #if 0 /* can you spell "thread safe"? */
     Log("Internal Client Error #23: Please contact help@distributed.net\n"
         "Debug Information: %08x:%08x - %08x:%08x\n",
         rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
     #endif
     return -1;
-    };
+  };
 
-  contestwork.crypto.keysdone.lo+=kiter;
+  contestwork.crypto.keysdone.lo += kiter;
   if (contestwork.crypto.keysdone.lo < kiter)
     contestwork.crypto.keysdone.hi++;
     // Checks passed, increment keys done count.
 
   // Update data returned to caller
-  if (kiter < timeslice*pipeline_count)
-    {
+  if (kiter < timeslice)
+  {
     // found it!
+    u32 keylo = contestwork.crypto.key.lo;
+    contestwork.crypto.key.lo += contestwork.crypto.keysdone.lo;
+    contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
+    if (contestwork.crypto.key.lo < keylo) 
+      contestwork.crypto.key.hi++; // wrap occured ?
     resultcode = RESULT_FOUND;
     finished = 1;
     return( 1 );
-    }
-  else if (kiter != timeslice*pipeline_count)
-    {
+  }
+  else if (kiter != timeslice)
+  {
     #if 0 /* can you spell "thread safe"? */
     Log("Internal Client Error #24: Please contact help@distributed.net\n"
         "Debug Information: k: %x t: %x\n"
@@ -1129,87 +1114,164 @@ else if (contest == 1) // *********************** DES *********************
         rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
     #endif
     return -1;
-    };
+  };
 
   if ( ( contestwork.crypto.keysdone.hi > contestwork.crypto.iterations.hi ) ||
-       ( ( contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi ) &&
-       ( contestwork.crypto.keysdone.lo >= contestwork.crypto.iterations.lo ) ) )
-    {
+     ( ( contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi ) &&
+     ( contestwork.crypto.keysdone.lo >= contestwork.crypto.iterations.lo ) ) )
+  {
     // done with this block and nothing found
     resultcode = RESULT_NOTHING;
     finished = 1;
-    }
-  else
+    return 1;
+  }
+
+  // more to do, come back later.
+  resultcode = RESULT_WORKING;
+  finished = 0;
+  return 0; // Done with this round
+}
+
+/* ------------------------------------------------------------- */
+
+int Problem::Run_OGR(u32 *timesliceP)
+{
+#ifndef GREGH  
+  timesliceP = timesliceP;
+#else
+  int r, nodes;
+
+  if (*timesliceP > 0x100000UL)
+    *timesliceP = 0x100000UL;
+
+  nodes = (int)(*timesliceP);
+  r = ogr->cycle(ogrstate, &nodes);
+  *timesliceP = (u32)nodes;
+
+  switch (r) 
+  {
+    case CORE_S_OK:
     {
-    // more to do, come back later.
-    resultcode = RESULT_WORKING;
-    finished = 0;
+      r = ogr->destroy(ogrstate);
+      if (r == CORE_S_OK) 
+      {
+        ogrstate = NULL;
+        resultcode = RESULT_NOTHING;
+        finished = 1;
+        return 1;
+      }
+      break;
     }
-
-  }
-else if (contest == 2) // ******************************* OGR ***************
-  {
-    #ifndef GREGH
-    LogScreen("OGR not implemented yet in Problem::Run\n"); 
-    return -1;
-    #else
-    int nodes = 0x10000;
-    int r = ogr->cycle(ogrstate, &nodes);
-    switch (r) {
-      case CORE_S_OK:
-      {
-        r = ogr->destroy(ogrstate);
-        if (r == CORE_S_OK) 
-        {
-          ogrstate = NULL;
-          resultcode = RESULT_NOTHING;
-          finished = 1;
-          return 1;
-        }
-        break;
-      }
-      case CORE_S_CONTINUE:
-      {
-        resultcode = RESULT_WORKING;
-        return 0;
-      }
-      case CORE_S_SUCCESS:
-      {
-        Stub result;
-        if (ogr->getresult(ogrstate, &result, sizeof(result)) == CORE_S_OK)
-        {
-          Log("OGR Success!\n");
-          resultcode = RESULT_FOUND;
-          finished = 1;
-          return 1;
-        }
-        break;
-      }
+    case CORE_S_CONTINUE:
+    {
+      resultcode = RESULT_WORKING;
+      return 0;
     }
-    /* Something bad happened */
-    return -1;
-    #endif
+    case CORE_S_SUCCESS:
+    {
+      Stub result;
+      if (ogr->getresult(ogrstate, &result, sizeof(result)) == CORE_S_OK)
+      {
+        Log("OGR Success!\n");
+        resultcode = RESULT_FOUND;
+        finished = 1;
+        return 1;
+      }
+      break;
+    }
   }
-else
+  /* Something bad happened */
+#endif
+ return -1;
+}
+
+/* ------------------------------------------------------------- */
+
+s32 Problem::Run( u32 /*unused*/ )
+{
+  struct timeval stop, start;
+  int retcode;
+  u32 timeslice;
+
+  if ( !initialized )
+    return ( -1 );
+
+  if ( finished )
+    return ( 1 );
+
+  CliTimer(&start);
+  if (!started)
   {
-  //invalid contest 
-  return -1;
+    timehi = start.tv_sec;
+    timelo = start.tv_usec;
+    runtime_sec = runtime_usec = 0;
+    started=1;
+
+#ifdef STRESS_THREADS_AND_BUFFERS 
+    contestwork.crypto.keysdone.hi = contestwork.crypto.iterations.hi;
+    contestwork.crypto.keysdone.lo = contestwork.crypto.iterations.lo;
+    runtime_usec = 1;
+    resultcode = RESULT_NOTHING;
+    finished = 1;
+    return 1;
+#endif    
   }
 
-return finished; // Done with this round
+  timeslice = tslice;
+  retcode = -1;
 
+  /* 
+    On return from the Run_XXX contestwork must be in a state that we
+    can put away to disk - that is, do not expect the loader to fiddle
+    with iterations or key or whatever.
+  */
 
-// ARM looks like a mess, I'll wait for ARM porters to integrate it
-#if 0
+  switch (contest)
+  {
+    case 0: retcode = Run_RC5( &timeslice );
+            break;
+    case 1: retcode = Run_DES( &timeslice );
+            break;
+    case 2: retcode = Run_OGR( &timeslice );
+            break;
+  }
+
+  
+  if (retcode < 0) /* don't touch tslice or runtime as long as < 0!!! */
+    return -1;
+  
+  tslice = timeslice;
+  
+  CliTimer(&stop);
+  if (stop.tv_usec < start.tv_usec)
+  {
+    stop.tv_sec--;
+    stop.tv_usec+=1000000L;
+  }
+  runtime_sec += stop.tv_sec - start.tv_sec;
+  if ((runtime_usec += (stop.tv_usec - start.tv_usec)) > 1000000L )
+  {
+    runtime_sec++;
+    runtime_usec-=1000000L;
+  }
+
+  return retcode;
+}
+
+/* ======================================================================= */
+/*                                 FINIS                                   */
+/* ======================================================================= */
+
 #if (CLIENT_CPU == CPU_ARM)
+// ARM looks like a mess, I'll wait for ARM porters to integrate it
+#error Chris, (the comment above is someone else's remark) I have migrated 
+#error ARM/DES into Run_DES() and added comments in Run_RC5() suggesting how 
+#error the rest could be done. The _kernel_escape_seen() poll is now handled
+#error from triggers.cpp                                               - cyp
+
+#if 0
   {
   unsigned long kiter;
-#if (CLIENT_OS == OS_RISCOS)
-  if (_kernel_escape_seen())
-    {
-    CliSignalHandler(SIGINT);
-    }
-#endif
 //  timeslice *= pipeline_count;
 //  done in the cores.
 
@@ -1252,6 +1314,11 @@ return finished; // Done with this round
       if (kiter != (timeslice*pipeline_count))
         {
         // found it?
+        u32 keylo = contestwork.crypto.key.lo;
+        contestwork.crypto.key.lo += contestwork.crypto.keysdone.lo;
+        contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
+        if (contestwork.crypto.key.lo < keylo) 
+          contestwork.crypto.key.hi++; // wrap occured ?
         resultcode = RESULT_FOUND;
         finished = 1;
         return( 1 );
@@ -1295,7 +1362,11 @@ return finished; // Done with this round
               contestwork.keysdone.lo = rc5pcr->keysdone.lo;
               contestwork.keysdone.hi = rc5pcr->keysdone.hi;
 //printf("x86:FF Keysdone %08lx\n",contestwork.keysdone.lo);
-        
+              u32 keylo = contestwork.crypto.key.lo;
+              contestwork.crypto.key.lo += contestwork.crypto.keysdone.lo;
+              contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
+              if (contestwork.crypto.key.lo < keylo) 
+                contestwork.crypto.key.hi++; // wrap occured ?
               resultcode = RESULT_FOUND;
               finished = 1;
               return( 1 );
@@ -1318,36 +1389,7 @@ return finished; // Done with this round
     }
 #endif
     }
-  else
-    {
-    // protect the innocent
-    u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
-    //static unsigned long arse;
-
-    if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
-    else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
-    timeslice = (1ul << nbits);// / pipeline_count;
-    kiter = des_unit_func ( &rc5unitwork, nbits );
-    /*
-    if (arse != timeslice)
-    {
-     arse = timeslice;
-     printf("DES: timeslice is %d, nbits is %d\n",timeslice,nbits);
-     printf("DES: kiter is %d\n",kiter);
-     }
-    */
-    contestwork.keysdone.lo += kiter;
-    if (kiter < timeslice)
-      {
-      // found it?
-      resultcode = RESULT_FOUND;
-      finished = 1;
-      return( 1 );
-      }
-    }
   }
 #endif
-
-  return( finished );
 #endif
-}
+
