@@ -1,0 +1,91 @@
+# README
+#
+# sourcetree.patch v1.0
+#
+# this is a patch to use ogr/ansi.devel instead of ogr/ansi, 
+# do not release clients with these cores, yet
+#
+# 0. cd to your client root directory (where configure lies)
+# 1. make clean
+# 2. to install:   patch -p0    < ogr/ansi.devel/sourcetree.patch
+#    to uninstall: patch -p0 -R < ogr/ansi.devel/sourcetree.patch
+# 3. make dep
+#
+#######################################################################################
+Index: configure
+===================================================================
+RCS file: /usr/local/cvsroot/client/configure,v
+retrieving revision 1.222.2.228
+diff -u -r1.222.2.228 configure
+--- configure	2001/02/03 19:08:48	1.222.2.228
++++ configure	2001/02/05 18:20:55
+@@ -146,7 +146,7 @@
+   # -- CSC -- (needs -DHAVE_CSC_CORES)
+   CSC_ANSI_SRCS="csc/convcsc.cpp csc/csc-common.cpp csc/csc-1k-i.cpp csc/csc-1k.cpp csc/csc-6b-i.cpp csc/csc-6b.cpp"
+   # -- OGR -- (needs -DHAVE_OGR_CORES) -------------------------
+-  OGR_ANSI_SRCS="ogr/ansi/ogr.cpp ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
++  OGR_ANSI_SRCS="ogr/ansi.devel/ogr.cpp ogr/ansi.devel/ogr_sup.cpp ogr/ansi.devel/ogr_dat.cpp ogr/ansi.devel/ogr_dat2.cpp"
+ 
+   # -------------------------------------------------------------------
+ 
+@@ -203,15 +203,15 @@
+     # --------------- ogr ----------------
+     if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
+       # -- non-nasm/ogr --
+-      TARGET_ADDASMS="$TARGET_ADDASMS ogr/x86/ogr.S"
+-      TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
+-      ##TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
++#      TARGET_ADDASMS="$TARGET_ADDASMS ogr/x86/ogr.S"
++#      TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
++      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+       TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+     else
+       # -- nasm/ogr --
+-      TARGET_ADDNASMS="$TARGET_ADDNASMS ogr/x86/ogr.asm"
+-      TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
+-      ##TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
++#      TARGET_ADDNASMS="$TARGET_ADDNASMS ogr/x86/ogr.asm"
++#      TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
++      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+       TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+     fi  
+ 
+@@ -2411,7 +2411,7 @@
+           deplist="$deplist common/ccoreio.h"
+         fi  
+         if [ $has_ogr_h -eq 0 ]; then
+-          deplist="$deplist ogr/ansi/ogr.h"
++          deplist="$deplist ogr/ansi.devel/ogr.h"
+         fi
+       fi    
+       #----------------
+Index: common/testplat.cpp
+===================================================================
+RCS file: /usr/local/cvsroot/client/common/testplat.cpp,v
+retrieving revision 1.4.2.5
+diff -u -r1.4.2.5 testplat.cpp
+--- common/testplat.cpp	2001/01/28 14:31:55	1.4.2.5
++++ common/testplat.cpp	2001/02/05 18:20:56
+@@ -15,7 +15,7 @@
+ static const char *include_dirs[] = { "common", 
+                                       "rc5", 
+                                       "des", 
+-                                      "ogr/ansi"
++                                      "ogr/ansi.devel"
+                                      };
+ 
+ static int fileexists( const char *filename ) /* not all plats have unistd.h */
+Index: ogr/ogr.h
+===================================================================
+RCS file: /usr/local/cvsroot/client/ogr/ogr.h,v
+retrieving revision 1.3.2.15
+diff -u -r1.3.2.15 ogr.h
+--- ogr/ogr.h	2000/08/09 19:28:20	1.3.2.15
++++ ogr/ogr.h	2001/02/05 19:28:03
+@@ -5,5 +5,5 @@
+  *
+  * $Id: ogr.h,v 1.3.2.15 2000/08/09 19:28:20 cyp Exp $
+ */ 
+-#include "ansi/ogr.h"
++#include "ansi.devel/ogr.h"
+  
