@@ -1,18 +1,11 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: setprio.h,v $
-// Revision 1.2  1999/01/01 02:45:16  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.1  1998/09/28 01:31:40  cyp
-// Created. Note: priority is now on a scale of 0-9 (9 being "normal").
-//
-//
-
+/* Hey, Emacs, this a -*-C++-*- file !
+ *
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/ 
 #ifndef __SETPRIO_H__
-#define __SETPRIO_H__
+#define __SETPRIO_H__ "@(#)$Id: setprio.h,v 1.3 1999/04/06 10:20:48 cyp Exp $"
 
 // 'prio' is a value on the scale of 0 to 9, where 0 is the lowest
 // priority and 9 is the highest priority [9 is what the priority would 
@@ -24,4 +17,3 @@ extern int SetGlobalPriority(unsigned int prio);
 extern int SetThreadPriority(unsigned int prio);
 
 #endif /* __SETPRIO_H__ */
-

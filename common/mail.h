@@ -1,44 +1,13 @@
-// Hey, Emacs, this a -*-C++-*- file !
-
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-// 
-// $Log: mail.h,v $
-// Revision 1.15  1999/01/29 04:10:27  cyp
-// default nettimeout for mail is -1
-//
-// Revision 1.14  1999/01/01 02:45:15  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.13  1998/08/24 23:49:58  cyp
-// added mailmessage.clear() so logstuff can clear the spool if necessary.
-//
-// Revision 1.12  1998/08/21 00:05:50  cyruspatel
-// Added a sendpendingflag so that smtp_deinitialize() (or the MailMessage
-// destructor) will attempt a send() before the spool is destroyed/cleared.
-//
-// Revision 1.11  1998/08/20 19:24:58  cyruspatel
-// Restored spooling via static buffer until Autobuffer growth can be
-// limited.
-//
-// Revision 1.8  1998/08/10 20:29:36  cyruspatel
-// Call to gethostname() is now a call to Network::GetHostName(). Updated
-// send routine to reflect new NetworkInitialize()/NetworkDeinitialize()
-// requirements. Removed all references to NO!NETWORK.
-//
-// Revision 1.7  1998/07/07 21:55:44  cyruspatel
-// client.h has been split into client.h baseincs.h
-//
-// Revision 1.6  1998/06/14 08:12:59  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-// 
+/* Hey, Emacs, this a -*-C++-*- file !
+ *
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/ 
+#ifndef __MAIL_H__
+#define __MAIL_H__ "@(#)$Id: mail.h,v 1.16 1999/04/06 10:20:48 cyp Exp $"
 
 //#define MAILTEST
-
-#ifndef __MAIL_H__
-#define __MAIL_H__
 
 #include "logstuff.h"
 
@@ -53,8 +22,7 @@
     #undef MAILBUFFSIZE
     #define MAILBUFFSIZE 32000
   #endif
-#else //if defined(MAILSPOOL_IS_MALLOCBUFFER)
-  //
+#else
   #define MAILSPOOL_IS_MALLOCBUFFER
 #endif  
 
@@ -120,4 +88,4 @@ public:
   ~MailMessage(void)          { Deinitialize();                            }
 };
 
-#endif //__MAIL_H__
+#endif /* __MAIL_H__ */

@@ -1,3 +1,12 @@
+/* Hey, Emacs, this a -*-C++-*- file !
+ *
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/ 
+#ifndef RSADATA_H
+#define RSADATA_H "@(#)$Id: rsadata.h,v 1.6 1999/04/06 10:20:48 cyp Exp $"
+
 // RC5-56:
 // Contest identifier: RC5-32/12/7 
 // Cipher: RC5-32/12/7 (RC5 with 32-bit wordsize, 12 rounds, and
@@ -96,3 +105,4 @@
 #define RC5CLOSEDCODE 0x1337F00DL
 #define DESCLOSEDCODE 0xBEEFF00DL
 
+#endif /* RSADATA_H */

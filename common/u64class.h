@@ -1,26 +1,21 @@
-// Implementation of 64 bit unsigned integers using
-// 32 bit unsigned integers
-//
-// $Log: u64class.h,v $
-// Revision 1.2  1998/10/05 11:32:45  fordbr
-// Bitwise complement (~) implemented.  Missing from Revision 1.1
-//
-// Revision 1.1  1998/10/05 11:04:52  fordbr
-// A reasonably complete implementation of a 64 bit unsigned integer(u64) using
-// 32 bit unsigned integers(u32).
-//
-// All arithmetic (+ - * / %), bitwise logical (& | ^ ~ << >>) and their assignment
-// equivalents (+= -= *= /= %= &= |= ^= <<= >>=) are overloaded as well as the
-// comparison operators (< <= > >= == !=).
-//
-// Explicit constructors from one u32, two u32 (a high and a low part) and another u64
-// are provided.
-//
-// Meant to be portable rather than fast.
-//
-
+/* Hey, Emacs, this a -*-C++-*- file !
+ *
+ * -------------------------------------------------------------------------
+ * A reasonably complete implementation of a 64 bit unsigned integer(u64) 
+ * using 32 bit unsigned integers(u32) by Bruce Ford
+ *
+ * All arithmetic (+ - * / %), bitwise logical (& | ^ ~ << >>) and their 
+ * assignment equivalents (+= -= *= /= %= &= |= ^= <<= >>=) are overloaded 
+ * as well as the comparison operators (< <= > >= == !=).
+ *
+ * Explicit constructors from one u32, two u32 (a high and a low part) and 
+ * another u64 are provided.
+ *
+ * Meant to be portable rather than fast.
+ * -------------------------------------------------------------------------
+*/ 
 #ifndef _U64CLASS_H
-#define _U64CLASS_H
+#define _U64CLASS_H "@(#)$Id: u64class.h,v 1.3 1999/04/06 10:20:48 cyp Exp $"
 
 class u64
 {
@@ -298,4 +293,4 @@ operator <= (const u64 &a, const u64 &b)
    return a.hi < b.hi || (a.hi == b.hi && a.lo <= b.lo);
 }
 
-#endif
+#endif /* _U64CLASS_H */

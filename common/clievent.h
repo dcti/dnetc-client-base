@@ -1,45 +1,15 @@
-// Hey, Emacs, this a -*-C++-*- file !
-//
-// Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
-//
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-// ----------------------------------------------------------------------
-//
-// $Log: clievent.h,v $
-// Revision 1.8  1999/01/29 19:01:40  jlawson
-// fixed formatting.
-//
-// Revision 1.7  1999/01/01 02:45:14  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.6  1998/12/30 07:35:16  dicamillo
-// Added struct Fetch_Flush_Info as result for fetching and flushing.
-//
-// Revision 1.5  1998/12/29 06:57:49  cyp
-// Removed redundant percbar event. Its covered by TFILL_STARTED.
-//
-// Revision 1.4  1998/12/29 20:36:23  silby
-// Added new event to cause GUIs to update their percent bars.
-// (Assumes percent bar routines have their own logic
-// similar to logscreen_percent.)
-//
-// Revision 1.3  1998/12/29 19:18:24  cyp
-// Added ..._PROBLEM_TFILL[STARTED|FINISHED] for client.LoadSaveProblems()
-//
-// Revision 1.2  1998/12/28 21:06:54  cyp
-// Added event types for benchmark and selftest.
-//
-// Revision 1.1  1998/12/28 18:16:19  cyp
-// Created.
-//
+/* Hey, Emacs, this a -*-C++-*- file !
+ *
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ * 
+ * Event id's are composed of a subsystem id and a running number.
+ * If you add a new event id, _document_ it.                 -cyp
+*/
 
 #ifndef __CLIEVENT_H__
-#define __CLIEVENT_H__
-
-/* Event id's are composed of a subsystem id and a running number.
-   If you add a new event id, _document_ it. */
+#define __CLIEVENT_H__ "@(#)$Id: clievent.h,v 1.9 1999/04/06 10:20:47 cyp Exp $"
 
                                               /* parm is ... */
 #define CLIEVENT_CLIENT_STARTED        0x0001 /* ...client ptr */
