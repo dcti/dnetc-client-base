@@ -16,7 +16,7 @@
 */
 
 const char *ogr64_cpp(void) {
-return "@(#)$Id: ogr-64.cpp,v 1.1.2.3 2004/08/10 18:20:56 jlawson Exp $"; }
+return "@(#)$Id: ogr-64.cpp,v 1.1.2.4 2004/08/10 18:38:05 jlawson Exp $"; }
 
 #include <stddef.h>
 #include "cputypes.h"
@@ -69,7 +69,7 @@ return "@(#)$Id: ogr-64.cpp,v 1.1.2.3 2004/08/10 18:20:56 jlawson Exp $"; }
   #define OGROPT_NO_FUNCTION_INLINE             0 /* 0/1 - 'no'  (default) */
   #define OGROPT_HAVE_OGR_CYCLE_ASM             0 /* 0-2 - 'no'  (default) */
   #define OGROPT_CYCLE_CACHE_ALIGN              0 /* 0/1 - 'no'  (default) */
-  #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* 0/1 - 'std' (default) */
+  #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 1 /* 0/1 - register based */
 
   #if (OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM == 2) && !defined(__CNTLZ)
     #warning Macro __CNTLZ not defined. OGROPT_FFZ reset to 0.
