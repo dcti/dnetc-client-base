@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.6 1999/04/04 17:48:00 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.7 1999/04/09 14:04:02 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h */
 #include "client.h"   /* CONTEST_COUNT, stub definition */
@@ -93,7 +93,7 @@ const char *projectmap_expand( const char *map )
 
 const char *projectmap_build( char *buf, const char *strtomap )
 {
-  static char default_map[CONTEST_COUNT] = { 1,2,0 };
+  static char default_map[CONTEST_COUNT] = { 1,3,2,0 };
   static char map[CONTEST_COUNT];
   unsigned int map_pos, i;
   int contestid;
@@ -105,6 +105,8 @@ const char *projectmap_build( char *buf, const char *strtomap )
     return default_map;
   }
 
+//printf("\nreq order: %s\n", strtomap );
+  
   map_pos = 0;
   do
   {
@@ -164,9 +166,9 @@ const char *projectmap_build( char *buf, const char *strtomap )
       map[map_pos++]=(char)contestid;
     }
     
-  } while ((map_pos < sizeof(map)) && *strtomap );
-  
-  for (i=0;(map_pos < sizeof(map)) && (i < sizeof(default_map));i++)
+  } while ((map_pos < CONTEST_COUNT) && *strtomap );
+
+  for (i=0;(map_pos < CONTEST_COUNT) && (i < CONTEST_COUNT);i++)
   {
     unsigned int n;
     contestid = (int)default_map[i];
@@ -178,10 +180,38 @@ const char *projectmap_build( char *buf, const char *strtomap )
         break;
       }
     }
-    if (contestid != -1)
-      map[map_pos++] = (char)contestid;
+    if (contestid != -1) /* found contest not in map. i==its default prio */
+    { /* now search for a contest *in* the map that has a default prio < i */
+      /* that becomes the point at which we insert the missing contest */
+      int inspos = -1; /* the position we insert at */
+      for ( n = 0; (inspos == -1 && n < map_pos); n++ )
+      {
+        unsigned int thatprio;
+        contestid = (((int)map[n]) & 0x7f); /* the contest sitting at pos n */
+	/* find the default priority for the contest sitting at pos n */
+	for (thatprio = 0; thatprio < CONTEST_COUNT; thatprio++ )
+	{
+	  if (contestid == (int)default_map[thatprio] && thatprio > i)
+	  {                                 /* found it */
+	    inspos = (int)n;                /* this is the pos to insert at */
+	    break;
+	  }
+        }
+      }	    
+      if (inspos == -1) /* didn't find it */
+        map[map_pos++] = default_map[i]; /* so tack it on at the end */
+      else
+      {
+        for ( n = (CONTEST_COUNT-1); n>((unsigned int)inspos); n--)
+          map[n] = map[n-1];
+        map[inspos] = default_map[i];
+        map_pos++; 
+      }
+    }
   }
 
+//printf("\nresult order: %s\n", projectmap_expand( &map[0] ) );
+  
   if (buf)
     memcpy((void *)buf, (void *)&map[0], CONTEST_COUNT );
   return map;

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.29 1999/04/04 16:15:14 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.30 1999/04/09 14:04:02 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -190,11 +190,17 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   CFGTXT(""
   ),CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
 //14
-{ CFGTXT("Project Priority"), "DES,OGR,RC5",
+{ CFGTXT("Project Priority"), "DES,CSC,OGR,RC5",
   CFGTXT(
-  "Enter the order in which the client will search for active projects,\n"
-  "for instance \"DES,OGR,RC5\" specifies that DES packets (if available) will\n"
-  "be crunched before OGR or RC5 packets.\n"
+  "Enter the order in which the client will search for active projects, for\n"
+  "instance \"DES,RC5\" specifies that DES packets (if available) will be\n"
+  "crunched before RC5 packets. Leaving out a project name does *not* disable\n"
+  "it. To disable a project, append \"=0\" to project's name. For example,\n"
+  "\"DES,OGR=0,RC5\" will disable the client's OGR support. Project names not\n"
+  "found on the list when the client starts will be inserted automatically\n"
+  "according to their default priority. Thus, specifying \"DES,OGR\" is\n"
+  "equivalent to specifying \"DES,CSC,OGR,RC5\", and \"OGR,DES\" is equivalent\n"
+  "to \"CSC,OGR,DES,RC5\".\n"
   ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 
 /* ------------------------------------------------------------ */
