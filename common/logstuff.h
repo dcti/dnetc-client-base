@@ -5,13 +5,13 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __LOGSTUFF_H__
-#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.10 1999/04/20 02:03:28 cyp Exp $"
+#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.11 1999/04/22 01:53:57 cyp Exp $"
 
-#define LOGFILETYPE_NONE    0x00 //
-#define LOGFILETYPE_NOLIMIT 0x01 //unlimited (or limit == -1)
-#define LOGFILETYPE_ROTATE  0x02 //then logLimit is in days
-#define LOGFILETYPE_RESTART 0x04 //then logLimit is in KByte 
-#define LOGFILETYPE_FIFO    0x08 //then logLimit is in KByte (minimum 100K)
+#define LOGFILETYPE_NONE    0 //
+#define LOGFILETYPE_NOLIMIT 1 //unlimited (or limit == -1)
+#define LOGFILETYPE_RESTART 2 //then logLimit is in KByte 
+#define LOGFILETYPE_FIFO    3 //then logLimit is in KByte (minimum 100K)
+#define LOGFILETYPE_ROTATE  4 //then logLimit is in days
 
 #define LOGTO_NONE       0x00 
 #define LOGTO_SCREEN     0x01

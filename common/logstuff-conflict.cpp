@@ -10,7 +10,7 @@
  * ----------------------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.35 1999/04/20 05:03:32 cyp Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.36 1999/04/22 01:53:57 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -30,9 +30,9 @@ return "@(#)$Id: logstuff-conflict.cpp,v 1.35 1999/04/20 05:03:32 cyp Exp $"; }
 
 #define LOGFILETYPE_NONE    0 //
 #define LOGFILETYPE_NOLIMIT 1 //unlimited (or limit == -1)
-#define LOGFILETYPE_ROTATE  2 //then logLimit is in days
-#define LOGFILETYPE_RESTART 4 //then logLimit is in KByte 
-#define LOGFILETYPE_FIFO    8 //then logLimit is in KByte (minimum 100K)
+#define LOGFILETYPE_RESTART 2 //then logLimit is in KByte 
+#define LOGFILETYPE_FIFO    3 //then logLimit is in KByte (minimum 100K)
+#define LOGFILETYPE_ROTATE  4 //then logLimit is in days
 
 #define LOGTO_NONE       0x00 
 #define LOGTO_SCREEN     0x01
@@ -155,8 +155,8 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
   else if ( logfileType == LOGFILETYPE_RESTART ) 
   {
     long filelen = (long)(-1);
-    //if ( logfileLimit < 100 )
-    //  logfileLimit = 100;
+    if ( logfileLimit < 100 )
+      logfileLimit = 100;
     logstream = fopen( GetFullPathForFilename( logstatics.logfile ), "a" );
     if ( logstream )
     {
@@ -180,48 +180,105 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
   }
   else if ( logfileType == LOGFILETYPE_ROTATE )
   {
-    static logfilebaselen = 0;
     static unsigned int last_year = 0, last_mon = 0, last_day = 0;
-    static unsigned long last_jdn = 0;
-    unsigned int curr_year, curr_mon, curr_day;
-    unsigned long curr_jdn;
-    struct tm *currtmP;
-    time_t ttime;
+    static logfilebaselen = 0;
+    time_t ttime = time(NULL);
+    struct tm *currtmP = localtime( &ttime );
+    int abortwrite = 0;
 
     if (!logstatics.logfilestarted)
       logfilebaselen = strlen( logstatics.logfile );
 
-    ttime = time(NULL);
-    currtmP = localtime( &ttime );
-    if (currtmP != NULL ) 
+    if ( logfileLimit >= 28 && logfileLimit <= 31 ) /* monthly */
     {
-      curr_year = currtmP->tm_year+ 1900;
-      curr_mon  = currtmP->tm_mon + 1;
-      curr_day  = currtmP->tm_mday;
-      #define _jdn( y, m, d ) ( (long)((d) - 32076) + 1461L * \
-        ((y) + 4800L + ((m) - 14) / 12) / 4 + 367 * \
-        ((m) - 2 - ((m) - 14) / 12 * 12) / 12 - 3 * \
-        (((y) + 4900L + ((m) - 14) / 12) / 100) / 4 + 1 )
-      curr_jdn = _jdn( curr_year, curr_mon, curr_day );
-      #undef _jdn
-      if (( curr_jdn - last_jdn ) > logfileLimit )
+      if (currtmP != NULL)
       {
-        last_jdn  = curr_jdn;
-        last_year = curr_year;
-        last_mon  = curr_mon;
-        last_day  = curr_day;
+        last_year = currtmP->tm_year+ 1900;
+        last_mon  = currtmP->tm_mon + 1;
+      }
+      if (last_mon == 0)
+        abortwrite = 1;
+      else if (last_mon <= 12)
+      {
+        static const char *monnames[] = { "jan","feb","mar","apr","may","jun",
+                                          "jul","aug","sep","oct","nov","dec" };
+        sprintf( logstatics.logfile+logfilebaselen, 
+                 "%02d%s"EXTN_SEP"log", (int)(last_year%100), 
+                  monnames[last_mon-1] );
       }
     }
-    sprintf( logstatics.logfile+logfilebaselen, 
-             "%02d%02d%02d.log", (int)(last_year%100), 
-             (int)(last_mon), (int)(last_day) );
-    logstream = fopen( GetFullPathForFilename( logstatics.logfile ), "a" );
-    if ( logstream )
+    else if (logfileLimit == 365 ) /* annually */
     {
-      fwrite( msgbuffer, sizeof( char ), msglen, logstream );
-      fclose( logstream );
+      if (currtmP != NULL)
+        last_year = currtmP->tm_year+ 1900;
+      if (last_year == 0)
+        abortwrite = 1;
+      else
+      {
+        sprintf( logstatics.logfile+logfilebaselen, 
+                 "%04d"EXTN_SEP"log", (int)last_year );
+      }
     }
-    logstatics.logfilestarted = 1;
+    else if (logfileLimit == 7 ) /* weekly */
+    {
+      /* technically, week 1 is the first week with a monday in it.
+         But we don't care about that here.                 - cyp
+      */
+      if (currtmP != NULL)
+      {
+        last_year = currtmP->tm_year + 1900;
+        last_day  = currtmP->tm_yday + 1; /* note */
+      }
+      if (last_day == 0)
+        abortwrite = 1;
+      else
+      {
+        sprintf( logstatics.logfile+logfilebaselen, 
+                 "%02dw%02d"EXTN_SEP"log", (int)(last_year%100), 
+                  ((last_day+6)/7) );
+      }
+    }
+    else /* daily */
+    {
+      if (currtmP != NULL ) 
+      {
+        static unsigned long last_jdn = 0;
+        unsigned int curr_year = currtmP->tm_year+ 1900;
+        unsigned int curr_mon  = currtmP->tm_mon + 1;
+        unsigned int curr_day  = currtmP->tm_mday;
+        #define _jdn( y, m, d ) ( (long)((d) - 32076) + 1461L * \
+          ((y) + 4800L + ((m) - 14) / 12) / 4 + 367 * \
+          ((m) - 2 - ((m) - 14) / 12 * 12) / 12 - 3 * \
+          (((y) + 4900L + ((m) - 14) / 12) / 100) / 4 + 1 )
+        unsigned long curr_jdn = _jdn( curr_year, curr_mon, curr_day );
+        #undef _jdn
+        if (( curr_jdn - last_jdn ) > logfileLimit )
+        {
+          last_jdn  = curr_jdn;
+          last_year = curr_year;
+          last_mon  = curr_mon;
+          last_day  = curr_day;
+        }
+      }
+      if (last_day == 0)
+        abortwrite = 1;
+      else
+      {
+        sprintf( logstatics.logfile+logfilebaselen, 
+               "%02d%02d%02d"EXTN_SEP"log", (int)(last_year%100), 
+               (int)(last_mon), (int)(last_day) );
+      }
+    }
+    if (!abortwrite)
+    {
+      logstream = fopen( GetFullPathForFilename( logstatics.logfile ), "a" );
+      if ( logstream )
+      {
+        fwrite( msgbuffer, sizeof( char ), msglen, logstream );
+        fclose( logstream );
+      }
+      logstatics.logfilestarted = 1;
+    }
   }
   else if ( logfileType == LOGFILETYPE_FIFO ) 
   {
@@ -618,28 +675,33 @@ static int fixup_logfilevars( const char *stype, const char *slimit,
   char scratch[20];
   unsigned long l = 0;
 
-  *type = LOGFILETYPE_NONE;
+  *type = LOGFILETYPE_NOLIMIT;
   *limit = 0;
   *logname = 0;
   
-  if (!userslogname)
-    return 0;
-  while (*userslogname && isspace(*userslogname))
-    userslogname++;
-  strncpy( logname, userslogname, maxlognamelen );
-  logname[maxlognamelen-1]='\0';
-  len = strlen( logname );
-  while (len > 1 && isspace(logname[len-1]))
-    logname[--len]='\0';
-  if (!*logname || strcmp( logname, "none" )==0)
+  if (userslogname)
   {
-    *logname='\0';
-    return 0;
+    while (*userslogname && isspace(*userslogname))
+      userslogname++;
+    strncpy( logname, userslogname, maxlognamelen );
+    logname[maxlognamelen-1]='\0';
+    len = strlen( logname );
+    while (len > 1 && isspace(logname[len-1]))
+      logname[--len]='\0';
+    if (strcmp( logname, "none" )==0)
+    {
+      *logname='\0';
+      *type = LOGFILETYPE_NONE;
+      return 0;
+    }
   }
 
-  *type = LOGFILETYPE_NOLIMIT;
-
-  if (slimit)
+  if (!slimit)
+  {
+    slimit = "";
+    climit = 0;
+  }
+  else
   {
     while (*slimit && isspace(*slimit))
       slimit++;
@@ -647,7 +709,7 @@ static int fixup_logfilevars( const char *stype, const char *slimit,
       l=((l*10)+(*slimit++)-'0');
     while (*slimit && isspace(*slimit))
       slimit++;
-    climit = tolower(*slimit);
+    climit = tolower(*slimit++);
   }
   if (stype)
   {
@@ -677,29 +739,31 @@ static int fixup_logfilevars( const char *stype, const char *slimit,
     }
   }
 
-  if (*type == LOGFILETYPE_NONE)
+  if (*type == LOGFILETYPE_ROTATE)
   {
-    *limit = 0; /* limit is ignored */
-  }
-  else if (*type == LOGFILETYPE_NOLIMIT)
-  {
-    *limit = 0; /* limit is ignored */
-  }
-  else if (*type == LOGFILETYPE_ROTATE)
-  {
+//ConOutErr("type is LOGFILETYPE_ROTATE ");
+    if (l == 0)
+      l++;
     /* convert to days */
     if (climit == 'm')
       l *= 30;
     else if (climit == 'w')
       l *= 7;
-    else if (climit == 'y')
+    else if (climit == 'y' || (climit == 'a' && (*slimit=='n' || *slimit=='N')))
       l *= 365;
     if (l > INT_MAX)
       l = INT_MAX;
     *limit = (unsigned int)l;
   }
-  else //(*type == LOGFILETYPE_RESTART || *type == LOGFILETYPE_FIFO)
+  else if (*logname == '\0' || *type == LOGFILETYPE_NONE)
   {
+//ConOutErr("type is LOGFILETYPE_NONE ");
+    *type = LOGFILETYPE_NONE;
+    *limit = 0;
+  }
+  else if (*type == LOGFILETYPE_RESTART || *type == LOGFILETYPE_FIFO)
+  {
+//ConOutErr("type is LOGFILETYPE_RESTART/FIFO ");
     /* convert to Kb */
     if (climit == 'g') /* dickheads! */
     {
@@ -708,13 +772,24 @@ static int fixup_logfilevars( const char *stype, const char *slimit,
     }
     else 
     {
-      if (climit == 'm')
+      if (climit == 'b')
+        l /= 1024;
+      else if (climit == 'm')
         l *= 1024;
+      if (l == 0)
+        l++;
       if (l > INT_MAX)
         l = INT_MAX;
       *limit = (unsigned int)l;
     }
-  }  
+  }
+  else //if (*type == LOGFILETYPE_NOLIMIT)
+  {
+//ConOutErr("type is LOGFILETYPE_NOLIMIT ");
+    *limit = 0; /* limit is ignored */
+  }
+//sprintf(scratch,"limit: %u\n", *limit );
+//ConOutErr(scratch);
   return 0;
 }  
 
