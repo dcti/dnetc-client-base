@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.53 2000/03/06 03:00:15 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.54 2000/03/09 21:48:35 jlawson Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -280,6 +280,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
   last_runtime_sec = last_runtime_usec = 0;
   memset((void *)&profiling, 0, sizeof(profiling));
   startpermille = permille = 0;
+  startkeys.lo = startkeys.hi = 0;
   loaderflags = 0;
   contest = contestid;
   tslice = _iterations;
@@ -373,6 +374,8 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
                            ((double)(contestwork.crypto.keysdone.lo))) /
         ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
                         ((double)(contestwork.crypto.iterations.lo)))) );
+        startkeys.hi = contestwork.crypto.keysdone.hi;
+        startkeys.lo = contestwork.crypto.keysdone.lo;
       }     
       break;
     }
@@ -408,6 +411,8 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
         // This is just a quick&dirty calculation that resembles progress.
         startpermille = contestwork.ogr.workstub.stub.diffs[contestwork.ogr.workstub.stub.length]*10
                       + contestwork.ogr.workstub.stub.diffs[contestwork.ogr.workstub.stub.length+1]/10;
+        startkeys.hi = contestwork.ogr.nodes.hi;
+        startkeys.lo = contestwork.ogr.nodes.lo;
       }
       break;
     }  

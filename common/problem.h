@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.25 2000/03/06 03:00:17 andreasb Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.26 2000/03/09 21:48:35 jlawson Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -121,6 +121,7 @@ public: /* anything public must be thread safe */
   } profiling;                   /* -- managed by non-preemptive OSs     */
 
   u32 startpermille;             /* -,                                   */
+  struct {u32 hi,lo;} startkeys;
   unsigned int contest;          /*  |__ assigned in LoadState()         */
   int coresel;                   /*  |                                   */
   int client_cpu;                /*  | effective CLIENT_CPU              */

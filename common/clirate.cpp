@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clirate_cpp(void) {
-return "@(#)$Id: clirate.cpp,v 1.24.2.3 1999/12/16 19:24:27 cyp Exp $"; }
+return "@(#)$Id: clirate.cpp,v 1.24.2.4 2000/03/09 21:48:34 jlawson Exp $"; }
 
 #include "baseincs.h" //timeval
 #include "client.h"   //for project constants
@@ -86,8 +86,8 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
 
   if (count>1) //iteration-to-keycount-multiplication-factor
     keys = (keys)*((double)(count));
-  if (prob->startpermille) //0-1000
-    keys = (keys)*(((double)(1000L-(prob->startpermille)))/((double)(1000L)));
+  if (prob->startkeys.hi || prob->startkeys.lo) 
+    keys = (keys)-U64TODOUBLE(prob->startkeys.hi,prob->startkeys.lo);
   if (keys==((double)(0))) //no keys done? should never happen.
     return ((double)(0));
 
