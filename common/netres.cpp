@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.23  1999/03/09 21:33:10  silby
+// Timezone detection was reversed with last change.  Fixed.
+//
 // Revision 1.22  1999/03/03 04:33:27  cyp
 // a) limited japan proxy's zone of influence; b) now gets timezone offset
 // from CliTimeGetMinutesWest() (clitime.cpp)
@@ -80,7 +83,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.22 1999/03/03 04:33:27 cyp Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.23 1999/03/09 21:33:10 silby Exp $"; }
 #endif
 
 //---------------------------------------------------------------------
@@ -188,7 +191,7 @@ static int IsHostnameDNetKeyserver( const char *hostname, int *tzdiff )
 static int calc_tzmins(void)
 {
   #ifndef TEST
-  return -CliTimeGetMinutesWest();  /* clitime.cpp */
+  return CliTimeGetMinutesWest();  /* clitime.cpp */
   #else
   static int saved_tz = -12345; 
   time_t timenow;
