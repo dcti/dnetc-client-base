@@ -1,11 +1,10 @@
-//#define GREGH
 /*
  * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.38 1999/04/19 06:17:08 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.39 1999/04/19 21:28:24 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -24,14 +23,10 @@ return "@(#)$Id: confmenu.cpp,v 1.38 1999/04/19 06:17:08 cyp Exp $"; }
 #include "confopt.h"  // the option table
 
 /* ----------------------------------------------------------------------- */
-
-#define MAX_MENUENTRIESPERSCREEN 18 /* max menu entries per screen */
 static const char *CONFMENU_CAPTION="RC5DES Client Configuration: %s\n"
-"-----------------------------------------------------------------------\n";
+"--------------------------------------------------------------------------\n";
 
-int Client::Configure( void )
-//A return of 1 indicates to save the changed configuration
-//A return of -1 indicates to NOT save the changed configuration
+int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
 {
   if (!ConIsScreen())
   {
@@ -62,9 +57,6 @@ int Client::Configure( void )
   conf_options[CONF_NODISK].thevariable=&nodiskbuffers;
   conf_options[CONF_INBUFFERBASENAME].thevariable=(char *)(&in_buffer_basename[0]);
   conf_options[CONF_OUTBUFFERBASENAME].thevariable=(char *)(&out_buffer_basename[0]);
-//LogScreen("in:%s\n",conf_options[CONF_INBUFFERBASENAME].thevariable);
-//LogScreen("out:%s\n",conf_options[CONF_OUTBUFFERBASENAME].thevariable);
-//ConInKey(-1);
   conf_options[CONF_CHECKPOINT].thevariable=(char *)(&checkpoint_file[0]);
   conf_options[CONF_OFFLINEMODE].thevariable=&offlinemode;
   conf_options[CONF_REMOTEUPDATEDISABLED].thevariable=&noupdatefromfile;
@@ -383,75 +375,88 @@ int Client::Configure( void )
 
     if (editthis < 0) /* menu */
     {
+      int optionlist[18]; /*18==maxperpage*/
+      unsigned int optioncount = 0;
+      int menuoption;
+
       if (whichmenu == CONF_MENU_MAIN) /* top level */
       {
+        // we handle the main menu separately because of the ID prompt
+        // and because we want to enforce a definitive selection.
+        // Other than that, its a simplified version of a non-main menu.
+        
+        int id_menu = (int)conf_options[CONF_ID].optionscreen;
+        const char *id_menuname = NULL;
         menuname = "mainmenu";
-        while (whichmenu == CONF_MENU_MAIN)
+        optioncount = 0;
+          
+        for (menuoption=0; menuoption < CONF_OPTION_COUNT; menuoption++)
         {
-          static struct { int id; const char *name; } menutable[] =
+          if (conf_options[menuoption].disabledtext != NULL)
           {
-            { CONF_MENU_MISC, "General Client Options" },
-            { CONF_MENU_BUFF, "Buffer and Buffer Update Options" },
-            { CONF_MENU_LOG,  "Logging Options" },
-            { CONF_MENU_PERF, "Performance and Processor Options" },
-          };
-          int i, id_menu = -1;
+            /* ignore it */
+          }
+          else if (conf_options[menuoption].type==CONF_TYPE_MENU &&
+              ((int)conf_options[menuoption].optionscreen) == whichmenu)
+          {
+            optionlist[optioncount++] = menuoption;
+            if (id_menu == conf_options[menuoption].choicemin)
+              id_menuname = conf_options[menuoption].description;
+            if (optioncount == 8) /* max 8 submenus on main menu */
+              break;
+          }
+        }
+        
+        if (optioncount == 0)
+          returnvalue = -1;
+        
+        while (whichmenu == CONF_MENU_MAIN && returnvalue == 0)
+        {
+          char chbuf[6];
           ConClear();
           LogScreenRaw(CONFMENU_CAPTION, "");
-          for (i = 0; i < (int)(sizeof(menutable)/sizeof(menutable[0])); i++)
-          {
-            LogScreenRaw(" %u) %s\n",i+1, menutable[i].name);
-            if (conf_options[CONF_ID].optionscreen == menutable[i].id)
-              id_menu = i;
-          }
-  LogScreen("in:%s\n",conf_options[CONF_INBUFFERBASENAME].thevariable);
-  LogScreen("out:%s\n",conf_options[CONF_OUTBUFFERBASENAME].thevariable);
+         
+          for (menuoption=0; menuoption < ((int)(optioncount)); menuoption++)
+            LogScreenRaw(" %u) %s\n", menuoption+1,
+                       conf_options[optionlist[menuoption]].description);
           LogScreenRaw("\n 9) Discard settings and exit"
                        "\n 0) Save settings and exit\n\n");
-
-          if (id_menu >= 0)
-          {
-            if (id[0] == '\0')
-              LogScreenRaw("Note: You have not yet provided a distributed.net ID.\n"
-             "      Please go to the '%s' and set it.\n\n",menutable[id_menu].name);
-          }
-
-          LogScreenRaw("Choice --> ");
-          char chbuf[6];
+          if (id_menuname && id[0] == '\0')
+            LogScreenRaw("Note: You have not yet provided a distributed.net ID.\n"
+            "      Please go to the '%s' and set it.\n", id_menuname);
+          LogScreenRaw("\nChoice --> " );
           ConInStr(chbuf, 2, 0);
-          i = ((strlen(chbuf)==1 && isdigit(chbuf[0]))?(atoi(chbuf)):(-1));
-          whichmenu = CONF_MENU_MAIN; /* nothing - redo this menu */
-          if (CheckExitRequestTriggerNoIO() || i==9)
+          menuoption = ((strlen(chbuf)==1 && isdigit(chbuf[0]))?(atoi(chbuf)):(-1));
+          if (CheckExitRequestTriggerNoIO() || menuoption==9)
           {
             whichmenu = -1;
             returnvalue = -1; //Breaks and tells it NOT to save
           }
-          else if (i == 0)
+          else if (menuoption == 0)
           {
             whichmenu = -1;
             returnvalue = 1; //Breaks and tells it to save
           }
-          else if (i>0 && i<=(int)(sizeof(menutable)/sizeof(menutable[0])) )
+          else if (menuoption>0 && menuoption<=((int)(optioncount)))
           {
-            whichmenu = menutable[i-1].id;
-            menuname = menutable[i-1].name;
+            menuoption = optionlist[menuoption-1];
+            whichmenu = conf_options[menuoption].choicemin;
+            menuname = conf_options[menuoption].description;
           }
-        }
+          ConClear();
+        } 
       }
       else /* non-main menu */
       {
         editthis = -1;
         while (editthis == -1)
         {
-          int optionlist[18]; /*18==maxperpage*/
           int parentmenu = CONF_MENU_MAIN;
           const char *parentmenuname = "main menu";
-          int menuoption;
-          unsigned int optioncount = 0;
+          optioncount = 0;
           
           for (menuoption=0; menuoption < CONF_OPTION_COUNT; menuoption++)
           {
-            
             if (conf_options[menuoption].type==CONF_TYPE_MENU &&
                 ((int)conf_options[menuoption].choicemin) == whichmenu)
             {                     /* we are in the sub-menu of this menu */
@@ -562,19 +567,32 @@ int Client::Configure( void )
             char chbuf[sizeof(long)*3];
             menuoption = 0; //-1;
             LogScreenRaw("\n 0) Return to %s\n\nChoice --> ",parentmenuname);
-            if (ConInStr( chbuf, sprintf(chbuf,"%d",optioncount)+1, 0 ) != 0)
-              menuoption = atoi( chbuf );
+            if (ConInStr( chbuf, sprintf(chbuf,"%d",optioncount)+1, 0 )!=0)
+            {
+              if (!CheckExitRequestTriggerNoIO())
+              {
+                menuoption = atoi( chbuf );
+                if (menuoption<0 || menuoption>((int)(optioncount)))
+                  menuoption = -1;
+                else if (menuoption != 0)
+                {
+                  menuoption = optionlist[menuoption-1];
+                  if ((conf_options[menuoption].disabledtext != NULL) ||
+                    ((conf_options[menuoption].type != CONF_TYPE_MENU) &&
+                    conf_options[menuoption].thevariable == NULL))
+                  {
+                    menuoption = -1;
+                  }
+                }
+              }
+            } 
           }
-            
+          
           if (CheckExitRequestTriggerNoIO())
           {
             returnvalue = -1;
             editthis = -3;
             whichmenu = -2;
-          }
-          else if (menuoption<0 || menuoption>((int)(optioncount)))
-          {
-            editthis = -1;
           }
           else if (menuoption == 0)
           {
@@ -582,24 +600,23 @@ int Client::Configure( void )
             menuname = parentmenuname;
             editthis = ((parentmenu == CONF_MENU_MAIN)?(-2):(-1));
           }
-          else 
+          else if (menuoption > 0)
           {
-            editthis = optionlist[menuoption-1];
-            if (conf_options[editthis].disabledtext != NULL)
+            if (conf_options[menuoption].disabledtext != NULL)
             {
               editthis = -1;
             }
-            else if (conf_options[editthis].type == CONF_TYPE_MENU)
+            else if (conf_options[menuoption].type == CONF_TYPE_MENU)
             {
               parentmenu = whichmenu;
               parentmenuname = menuname;
-              whichmenu = (int)conf_options[editthis].choicemin;
-              menuname = conf_options[editthis].description;
+              whichmenu = (int)conf_options[menuoption].choicemin;
+              menuname = conf_options[menuoption].description;
               editthis = -2; //-1;
             }
-            else if (conf_options[editthis].thevariable == NULL)
+            else if (conf_options[menuoption].thevariable != NULL)
             {
-              editthis = -1;
+              editthis = menuoption;
             }
           }
         } /* while (editthis == -1) */
@@ -907,8 +924,6 @@ int Client::Configure( void )
     strcpy(dialup.connstartcmd, connstartcmd);
     strcpy(dialup.connstopcmd, connstopcmd);
     strcpy(dialup.connprofile, connprofile);
-    if (lurkmode != CONNECT_LURK)
-      connectoften=0;
     #endif
 
     projectmap_build(loadorder_map, loadorder );
