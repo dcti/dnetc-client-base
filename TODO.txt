@@ -1,10 +1,15 @@
 
+$Id: TODO.txt,v 1.5 1999/04/06 14:01:05 cyp Exp $"
+
 This file contains a list of mini-projects. Submissions as well as 
 volunteers :) are welcome. 
 
 The list is maintained by Cyrus "cyp" Patel <cyp@fb14.uni-mainz.de>. 
 To avoid having the wheel reinvented, please holler if you wish
-to tackle a project.
+to tackle a project. 
+
+*Do not* add bug reports or platform specific to-do (which are synonymous 
+with 'bug' or 'feature request) here. 
 
 If you have the expertise but lack the time to handle a project, 
 please post your willingness to assist to coders@lists.distributed.net.
@@ -42,7 +47,8 @@ Perhaps someone else has what you don't. :)
       well and has a low overhead. 
 
 4. Write a routine to import/export uuencoded buffers for/from users
-   that can only update their buffers via mail.            Priority: Medium
+   that can only update their buffers via mail. The functions to
+   import binary buffer records already exists.           Priority: Medium
         
 5. Add FTP as a supported buffer exchange protocol. The client could
    directly STOR buff-in.xx and requests to RETR rc5 would cause the
@@ -53,20 +59,8 @@ Perhaps someone else has what you don't. :)
                                                            Priority: Low
 
 7. Modify client to use an ini file format with more varied sections
-   to classify the option categories better.
+   to classify the option categories better.               Priority: Low
 
-8. Replace networking code in client with the DCTIConnServer classes
-   from the proxy codebase.
-
-9. Make win32cli start hidden to tray instead of minimized to to taskbar
-   when the client is started via a shortcut with minimized as default.
-
-10. Win32cli does not re-add its tray icon periodically.  If Explorer
-  restarts, the tray icon will no longer be visible, making it not
-  possible to re-show the client's window.
-
-
-
-
-
-
+8. Split network.cpp into netio primitives and high-level/wrapper handling
+   functions. Something along the lines of whats used in the proxy would
+   be nice, but without the bloat please.                  Priority: Low
