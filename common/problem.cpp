@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.24 1999/11/24 19:11:11 chrisb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.25 1999/11/28 13:58:52 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -82,21 +82,17 @@ extern "C" void riscos_upcall_6(void);
   extern u32 des_unit_func_slice( RC5UnitWork * , u32 nbbits );
 #elif (CLIENT_OS == OS_AIX)     // this has to stay BEFORE CPU_POWERPC
   #if defined(_AIXALL) || (CLIENT_CPU == CPU_POWER)
-  extern "C" s32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice );
+  #define HAVE_ANSI2RG_UNIT_FUNC
+  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice );
   #endif
   #if defined(_AIXALL) || (CLIENT_CPU == CPU_POWERPC)
   extern "C" s32 crunch_allitnil( RC5UnitWork *work, u32 iterations);
   extern "C" s32 crunch_lintilla( RC5UnitWork *work, u32 iterations);
   #endif
-
   extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
-#elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_AIX) 
-  #if (CLIENT_OS == OS_WIN32)   // NT PPC doesn't have good assembly
-  extern u32 rc5_unit_func( RC5UnitWork *  ); //rc5ansi2-rg.cpp
-  #else
+#elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_WIN32) //NT PPC has poor asm
   extern "C" s32 rc5_unit_func_g1( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
   extern "C" s32 rc5_unit_func_g2_g3( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
-  #endif
   extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
 #elif (CLIENT_CPU == CPU_68K)
   extern "C" __asm u32 rc5_unit_func_000_030
@@ -110,31 +106,35 @@ extern "C" void riscos_upcall_6(void);
   extern "C" u32 rc5_unit_func_arm_3( RC5UnitWork * , unsigned long t);
   extern "C" u32 des_unit_func_arm( RC5UnitWork * , unsigned long t);
   extern "C" u32 des_unit_func_strongarm( RC5UnitWork * , unsigned long t);
-#elif (CLIENT_CPU == CPU_PA_RISC)
-  extern u32 rc5_unit_func( RC5UnitWork *  );
-  extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
 #elif (CLIENT_CPU == CPU_SPARC)
-  #if (ULTRA_CRUNCH == 1)
+  #if (ULTRA_CRUNCH == 1) //(CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_SUNOS)
+  //rc5/ultra/rc5-ultra-crunch.cpp
   extern "C++" u32 crunch( register RC5UnitWork * , u32 timeslice);
   extern "C++" u32 des_unit_func( RC5UnitWork * , u32 timeslice );
   #else
-  extern "C++" u32 rc5_unit_func( RC5UnitWork *  );
+  #define HAVE_ANSI2RG_UNIT_FUNC
+  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice );
   extern "C++" u32 des_unit_func( RC5UnitWork * , u32 timeslice );
   #endif
-  // CRAMER // #error Please verify these core prototypes
+#elif (CLIENT_CPU == CPU_S390)
+  #define HAVE_ANSI2RG_UNIT_FUNC
+  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice );
+  extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
+#elif (CLIENT_CPU == CPU_88K) //OS_DGUX
+  #define HAVE_ANSI2RG_UNIT_FUNC
+  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice );
+  extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
 #elif (CLIENT_CPU == CPU_MIPS)
-  #if (CLIENT_OS != OS_ULTRIX)
-    #if (MIPS_CRUNCH == 1)
+  #if (CLIENT_OS == OS_ULTRIX)
+    #define HAVE_ANSI2RG_UNIT_FUNC
+    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice );
+    extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
+  #elif (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_SINIX) || (CLIENT_OS==OS_IRIX)
+    //rc5/mips/mips-crunch.cpp
     extern "C++" u32 crunch( register RC5UnitWork * , u32 timeslice);
     extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
-    #else
-    extern u32 rc5_unit_func( RC5UnitWork *  );
-    extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
-    #endif
-    //FOXYLOXY// #error Please verify these core prototypes
-  #else /* OS_ULTRIX */
-    extern u32 rc5_unit_func( RC5UnitWork *  );
-    extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
+  #else
+    #error "What's up, Doc?"
   #endif
 #elif (CLIENT_CPU == CPU_ALPHA)
   #if (CLIENT_OS == OS_WIN32)
@@ -143,6 +143,7 @@ extern "C" void riscos_upcall_6(void);
   #elif (CLIENT_OS == OS_DEC_UNIX)
      #if defined(DEC_UNIX_CPU_SELECT)
        #include <machine/cpuconf.h>
+       #error RC5CORECOPY and singlestepper is BAD!
        extern u32 rc5_alpha_osf_ev4( RC5UnitWork * );
        extern u32 rc5_alpha_osf_ev5( RC5UnitWork * );
        extern u32 des_alpha_osf_ev4( RC5UnitWork * , u32 timeslice );
@@ -157,9 +158,12 @@ extern "C" void riscos_upcall_6(void);
          ( RC5UnitWork * , u32 nbbits );
   #endif
 #else
-  extern u32 rc5_unit_func_ansi( RC5UnitWork * , u32 timeslice );
-  extern u32 des_unit_func_ansi( RC5UnitWork * , u32 timeslice );
-  #error RC5ANSICORE is disappearing. Please declare/prototype cores by CLIENT_CPU and assert PIPELINE_COUNT
+  #error RC5CORECOPY is BAD!
+  #error if RC5CORECOPY=rc5ansi2_rg, then use rc5_ansi_2_rg_unit_func()
+  #error which is in rc5/ansi/2-rg.c, otherwise you will need to construct
+  #error your own wrapper
+  extern u32 rc5_unit_func( RC5UnitWork *  );
+  extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
 #endif
 
 /* ------------------------------------------------------------------- */
@@ -887,9 +891,11 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
 
   #if (CLIENT_CPU == CPU_X86)
     kiter = (*x86_unit_func)( &rc5unitwork, timeslice );
-  #elif ((CLIENT_CPU == CPU_SPARC) && (ULTRA_CRUNCH == 1)) || \
-        ((CLIENT_CPU == CPU_MIPS) && (MIPS_CRUNCH == 1)) 
-    kiter = crunch( &rc5unitwork, timeslice );
+  #elif (CLIENT_CPU == CPU_MIPS) && \
+        (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_SINIX) || (CLIENT_OS==OS_IRIX)
+    kiter = crunch( &rc5unitwork, timeslice ); //rc5/mips/mips-crunch.cpp
+  #elif (CLIENT_CPU == CPU_SPARC) && (ULTRA_CRUNCH == 1)
+    kiter = crunch( &rc5unitwork, timeslice ); //rc5/ultra/rc5-ultra-crunch.cpp
   #elif (CLIENT_CPU == CPU_68K) || (CLIENT_OS == OS_AIX) || \
         (CLIENT_CPU == CPU_POWER)
     kiter = (*rc5_unit_func)( &rc5unitwork, timeslice );
@@ -903,15 +909,11 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
       rc5_unit_func(&rc5unitwork,timeslice);
   #elif (CLIENT_CPU == CPU_ALPHA)
     kiter = rc5_unit_func(&rc5unitwork, timeslice);
+  #elif defined(HAVE_ANSI2RG_UNIT_FUNC)
+    kiter = rc5_ansi_2_rg_unit_func( &rc5unitwork, timeslice );
   #else
     kiter = rc5_singlestep_core_wrapper( &rc5unitwork, timeslice,
                 pipeline_count, rc5_unit_func );
-  #endif
-
-  // Mac OS needs to yield here, since yielding works differently
-  // depending on the core
-  #if (CLIENT_OS == OS_MACOS)
-    if (MP_active == 0) YieldToMain(1);
   #endif
 
   timeslice *= pipeline_count;
