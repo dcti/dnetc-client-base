@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.42  1998/09/06 02:30:48  cyp
+// Added check 'if (t_errno < t_nerr)' before getting t_errlist[t_errno].
+//
 // Revision 1.41  1998/09/06 01:05:10  cyp
 // Fixed a missing underscore in an #ifdef _TIUSER[_]
 //
@@ -107,7 +110,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.41 1998/09/06 01:05:10 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.42 1998/09/06 02:30:48 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -528,16 +531,19 @@ int Network::Open( void )               // returns -1 on error, 0 on success
         else
           {
           #if defined(_TIUSER_)
+            char *errmsg = "undefined error";
+            if (t_errno < t_nerr)
+              errmsg = t_errlist[t_errno];
             LogScreen( " %s  Error %d (%s)\n",CliGetTimeString(NULL,0), 
-                                    t_errno, t_error("TLI") );
+                                    t_errno, errmsg );
           #else
           int my_errno = errno;
           if (verbose_level > 0 )
             LogScreen( " %s  Error %d (%s)\n",CliGetTimeString(NULL,0), 
                                     my_errno, strerror(my_errno) );
-          #ifdef EINTR
-          if (my_errno != EINTR) //should retry
-          #endif
+          //#ifdef EINTR
+          //if (my_errno != EINTR) //should retry
+          //#endif
           #endif
           lastaddress = 0; //or reset
           }
