@@ -1,0 +1,84 @@
+                                                    
+ distributed.net RC5-DES Client for *nix 
+                                                          
+ Welcome to the new RC5-DES (Project Bovine/Project Monarch) Client.
+
+    1.0  Getting started
+    2.0  *nix specific notes
+    3.0  Help! 
+   
+ 1.0  Getting started ------------------------------------------------
+ 
+    Just unpack/unzip/untar the client in a directory of your choice and 
+    fire it up with [path]rc5des
+
+    If you have never run the client before, it will initiate the
+    menu-driven configuration. Save and quit when done, the configuration
+    file will be saved in_the_same_directory_as_the_client. Then, simply 
+    restart the client. From that point on it will use the saved 
+    configuration.
+    
+    The configuration options are fairly self-explanatory and can be run
+    at any time by starting the client with the '-config' option.
+    A list of command line options is available by starting the client 
+    with '-help' or '--help'.
+
+    A "Complete Step-by-Step Guide to Running Your First Client" is 
+    available at http://distributed.net/FAQ/
+
+ 2.0  Notes: ---------------------------------------------------------
+
+    Beginning with v2.7101, the client's default directory is the 
+    one the configuration file is located in, which in turn is assumed to
+    be in the same directory the binary is in. To specify another 
+    configuration file use the -ini switch.
+    
+    Beginning with v2.7102, multi-threaded clients can be forced to run
+    single-threaded by setting the number of CPUs (the numcpu= option in
+    the configuration file or the -numcpu switch on the command line) to
+    zero.
+    
+    Also beginning with v2.7102, the restriction on the number of processors
+    has been lifted. The client will run with as many processors as are
+    available (the client will attempt autodetection if numcpu is -1). If
+    your client does not support processor or processor-count autodetection
+    and you know how to accomplish this on your platform send a code snippet 
+    to <coders@distributed.net>
+    
+    Much of the client source, including all the core crunch code is 
+    available online. A world-readable subset of the client's source will
+    soon be available on a public branch of the distributed.net CVS tree.
+
+ 3.0  Help: ----------------------------------------------------------
+
+    An immediate source of help is the IRC channel on EFnet. The 
+    #distibuted channel is open 24 hours a day, 7 days a week.
+
+    If you need further assistance with client use or operation, refer to 
+    the the list of "Frequently asked Questions" (FAQs) available online 
+    at http://www.distributed.net/FAQ/ Documents cover every aspect of 
+    running a client including "The Complete Step by Step Guide to 
+    Running Your First Client", "How To Join A Team", and the popular 
+    "Statistics Server FAQ".
+
+    If you prefer, you may also post a message to the mailing list at 
+    <rc5@lists.distributed.net> (To subscribe to the mailing list, send 
+    a message to <majordomo@lists.distributed.net> with "subscribe rc5" 
+    as the message text).
+
+    A public database of known problems and incompatibilities is available
+    at http://www.distributed.net/cgi/buglist.cgi
+
+    More user support is available from <rc5help@distributed.net> as well
+    as from our regional support representatives listed at 
+    http://www.distributed.net/regional/index.html
+    
+    If you believe you have found a bug in the client or would like to
+    make a suggestion, please send a message to the coders at 
+    <coders@lists.distributed.net>. Don't forget to specify which platform 
+    you are running the client on. 
+    
+    If you believe you have found a bug specific to this port, or would
+    like to make a suggestion specific to this port, send a message to the 
+    port maintainer as listed on http://www.distributed.net/credits.html
+    Don't fret if you don't get a response right away.
