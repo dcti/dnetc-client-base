@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.165  1998/11/19 08:34:43  silby
+// Removed win32gui specific winmain.
+//
 // Revision 1.164  1998/11/17 04:39:33  silby
 // Gave GetBuildOrEnvDescription the fixing it was pining for.
 //
@@ -101,7 +104,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.164 1998/11/17 04:39:33 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.165 1998/11/19 08:34:43 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -443,7 +446,6 @@ int realmain( int argc, char *argv[] )
 
 
 /* ----------------------------------------------------------------- */
-#if !((CLIENT_OS==OS_WIN32) && defined(NEEDVIRTUALMETHODS))
 
 #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, 
@@ -457,4 +459,4 @@ int main( int argc, char *argv[] )
   return realmain( argc, argv ); 
 }
 #endif
-#endif
+
