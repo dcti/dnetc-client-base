@@ -48,7 +48,6 @@ struct u128 { u64 hi, lo; };
 struct s128 { s64 hi, lo; };
 
 // Major CPU architectures, we don't need (or want) very fine resolution
-// do not just add numbers here email beberg@distributed.net for an assignment
 #define CPU_UNKNOWN     0
 #define CPU_X86         1
 #define CPU_POWERPC     2
@@ -65,11 +64,10 @@ struct s128 { s64 hi, lo; };
 #define CPU_KSR1        13
 #define CPU_S390        14
 
-// Major OS Architectures, we'll need a port for each
-// do not just add numbers here email beberg@distributed.net for an assignment
+// Major OS Architectures.
 #define OS_UNKNOWN      0
-#define OS_WIN32        1  // 95 + NT + win32
-#define OS_DOS          2  // dos (win31 now separate)
+#define OS_WIN32        1  // win95 + win98 + winnt
+#define OS_DOS          2  // ms-dos, pc-dos, dr-dos, etc.
 #define OS_FREEBSD      3
 #define OS_LINUX        4
 #define OS_BEOS         5
@@ -103,7 +101,7 @@ struct s128 { s64 hi, lo; };
 #define OS_NEWTON       33
 #define OS_RISCOS       34
 #define OS_DGUX         35
-#define OS_WIN16        36
+#define OS_WIN16        36    // windows 3.1, 3.11, wfw
 #define OS_SINIX        37
 #define OS_DYNIX        38
 #define OS_OS390        39
@@ -117,9 +115,11 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_OS     OS_WIN32
     #define CLIENT_CPU    CPU_POWERPC
   #elif !defined(WIN32) && !defined(__WIN32__) && !defined(_WIN32)
+    // win16 gui
     #define CLIENT_OS     OS_WIN16
     #define CLIENT_CPU    CPU_X86
-  #elif defined(WIN32s)
+  #elif defined(NOMAIN) && !defined(MULTITHREAD)
+    // win32s gui
     #define CLIENT_OS     OS_WIN16
     #define CLIENT_CPU    CPU_X86
   #elif defined(_M_IX86)
