@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.116 2001/05/14 20:56:19 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.117 2001/05/19 19:03:20 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -1188,8 +1188,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     #error "What's up, Doc?"
   #endif
 #elif (CLIENT_CPU == CPU_SPARC)
-  #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)) && \
-     (defined(__GCC__) || defined(__GNUC__)) /* doesn't build with sun cc */
+  #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))
     //rc5/ultra/rc5-ultra-crunch.cpp
     extern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
   #elif (CLIENT_OS == OS_LINUX)
@@ -1442,8 +1441,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
     #elif (CLIENT_CPU == CPU_SPARC)
     {
-      #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)) && \
-          (defined(__GCC__) || defined(__GNUC__)) /* doesn't build with sun cc */
+      #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))
       {
         //rc5/ultra/rc5-ultra-crunch.cpp
         //xtern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
