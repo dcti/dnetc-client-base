@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.18  1998/07/16 19:21:49  remi
+// Added a \n, just nicer.
+//
 // Revision 1.17  1998/07/13 23:39:33  cyruspatel
 // Added functions to format and display raw cpu info for better management
 // of the processor detection functions and tables. Well, not totally raw,
@@ -79,7 +82,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.17 1998/07/13 23:39:33 cyruspatel Exp $";
+return "@(#)$Id: cpucheck.cpp,v 1.18 1998/07/16 19:21:49 remi Exp $";
 }
 #endif
 
@@ -589,7 +592,7 @@ void DisplayProcessorInformation(void)
   
   printf("Automatic processor identification tag:\n\t%s\n"
    "Number of processors detected by this client:\n\t%s\n"
-   "Number of processors supported by each instance of this client:\n\t%s\n",
+   "Number of processors supported by each instance of this client:\n\t%s\n\n",
    scpuid, sfoundcpus, smaxcpus );
   return;
 }     
