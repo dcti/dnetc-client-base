@@ -1,4 +1,4 @@
-/* -*-C-*-
+/* Hey, Emacs, this a -*-C-*- file !
  *
  * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
@@ -25,7 +25,7 @@
  * ---------------------------------------------------------------------
 */
 #ifndef __VERSION_H__
-#define __VERSION_H__ "@(#)$Id: version.h,v 1.76 2002/11/07 23:57:14 jlawson Exp $"
+#define __VERSION_H__ "@(#)$Id: version.h,v 1.77 2002/11/10 21:32:07 andreasb Exp $"
 
 /* BETA etc is handled internally/at-runtime by cliident.cpp. */
 /* Do not adjust for BETA here, particularly CLIENT_VERSIONSTRING. */
@@ -36,11 +36,11 @@
 #define CLIENT_MAJOR_VER_HEX   0x02   /* needed for macos version resource */
 #define CLIENT_CONTEST         90
 #define CLIENT_CONTEST_HEX     0x5A   /* needed for macos version resource */
-#define CLIENT_BUILD           1
+#define CLIENT_BUILD           0
 #define CLIENT_BUILD_HEX       0x00   /* needed for macos version resource */
-#define CLIENT_BUILD_FRAC      477
-#define CLIENT_BUILD_FRAC_HEX  0x01DD /* needed for macos version resource */
-#define CLIENT_VERSIONSTRING   "2.9001-477"
+#define CLIENT_BUILD_FRAC      476
+#define CLIENT_BUILD_FRAC_HEX  0x01DC /* needed for macos version resource */
+#define CLIENT_VERSIONSTRING   "2.9000-476"
 
 /* combined version used in packets etc. ... */
 #define CLIENT_VERSION         ( (((u32)(CLIENT_CONTEST))    * 1000000UL) +  \
