@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.164  1999/01/12 08:31:00  silby
+# Added mmx-bitslice include path for nasm.
+#
 # Revision 1.163  1999/01/12 08:23:15  silby
 # Changes to use new des mmx core.
 #
@@ -829,7 +832,7 @@ TARGET_LDFLAGS=""
 TARGET_LIBS=""
 TARGET_AS="gas"
 TARGET_NASM="nasm"
-TARGET_NASMFLAGS="-i rc5/nasm/ -f elf"
+TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -f elf"
 TARGET_ASFLAGS=""
 TARGET_STRIP="strip"
 TARGET_CP="cp"
@@ -1368,7 +1371,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 \
 			-D__showids__ -DSMC"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -f aout"
+	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -f aout"
 	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
@@ -1563,7 +1566,7 @@ case "$1" in
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_LIBS="-lc_r"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -f aoutb"
+	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -f aoutb"
 	;;
 
     *x86-freebsd-mt)
@@ -1577,7 +1580,7 @@ case "$1" in
 			des/p1bdespro.S des/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_LIBS="-lc_r"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -f aoutb"
+	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -f aoutb"
 	;;
 
     *x86-freebsd-elf)
@@ -1588,7 +1591,7 @@ case "$1" in
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -f elf"
+	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -f elf"
 	TARGET_NASM="/usr/local/bin/nasm"
 	TARGET_LIBS="-lc_r"
 	;;
@@ -1604,7 +1607,7 @@ case "$1" in
 			des/p1bdespro.S des/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_LIBS="-lc_r"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -f elf"
+	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -f elf"
 	;;
 
     *x86-netbsd)
