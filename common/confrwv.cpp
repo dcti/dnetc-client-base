@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.32  1999/01/19 09:45:17  patrick
+//
+// LURK: changed to not copy connection name for OS2.
+//
 // Revision 1.31  1999/01/17 15:57:32  cyp
 // priority is now properly written to file. ValidateConfig() has poofed -
 // Very little was being /properly/ validated there. Individual subsystems
@@ -138,7 +142,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.31 1999/01/17 15:57:32 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.32 1999/01/19 09:45:17 patrick Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -327,9 +331,11 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   tempconfig=ini.getkey(OPTION_SECTION, "lurkonly", "0")[0];
   if (tempconfig) {dialup.lurkmode=2; client->connectoften=0;}
   tempconfig=ini.getkey(OPTION_SECTION, "dialwhenneeded", "0")[0];
+  #if (CLIENT_OS == OS_WIN32)
   if (tempconfig) dialup.dialwhenneeded=1;
   INIGETKEY(CONF_CONNECTNAME).copyto(dialup.connectionname,sizeof(dialup.connectionname));
-  #endif
+  #endif // (CLIENT_OS ...
+  #endif // defined LURK
 
   #if defined(WIN32GUI)
   InternalReadConfig(ini);
@@ -495,11 +501,13 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
       INISETKEY( CONF_DIALWHENNEEDED, dialup.dialwhenneeded);
     else if ((tempptr = ini.findfirst(OPTION_SECTION, "dialwhenneeded"))!=NULL)
       tempptr->values.Erase();
+    #if (CLIENT_OS == OS_WIN32)
     if (strcmp(dialup.connectionname,conf_options[CONF_CONNECTNAME].defaultsetting)!=0)
       INISETKEY( CONF_CONNECTNAME, dialup.connectionname);
     else if ((tempptr = ini.findfirst(OPTION_SECTION, "connectionname"))!=NULL)
       tempptr->values.Erase();
-    #endif
+    #endif // (CLIENT_OS
+    #endif // defined LURK
 
     /* --- CONF_MENU_LOG -- */
 
