@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.30  1999/01/15 05:18:15  cyp
+// disable ini i/o once we know that ini writes fail.
+//
 // Revision 1.29  1999/01/11 07:01:24  dicamillo
 // Fixed incorrect test in ValidateConfig for priority.  It can now exceed 0.
 //
@@ -130,7 +133,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.29 1999/01/11 07:01:24 dicamillo Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.30 1999/01/15 05:18:15 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -710,7 +713,10 @@ void RefreshRandomPrefix( Client *client, int no_trigger )
       }   
     
     if (inichanged)
-      ini.WriteIniFile( GetFullPathForFilename( client->inifilename ) );
+      {
+      if (ini.WriteIniFile( GetFullPathForFilename( client->inifilename ) ))
+        client->stopiniio = 1;
+      }
     }
   return;
 }
