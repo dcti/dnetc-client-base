@@ -6,7 +6,7 @@
 */
 
 const char *w32svc_cpp(void) {
-return "@(#)$Id: w32svc.cpp,v 1.1.2.2 2001/03/26 17:57:24 cyp Exp $"; }
+return "@(#)$Id: w32svc.cpp,v 1.1.2.3 2001/04/05 19:14:35 cyp Exp $"; }
 
 //#define TRACE
 
@@ -254,9 +254,8 @@ static void __print_message( const char *message, int iserror )
     if (file)
     {
       char buffer[64];
-      time_t t = time(NULL);
-      struct tm *lt = localtime( &t );
-      fprintf(file, "%02d:%02d:%02d: ", lt->tm_hour, lt->tm_min, lt->tm_sec);
+      DWORD ticks = GetTickCount(); 
+      fprintf(file,"%u.%03u: ", ticks/1000, ticks%1000 );
       if (indentlevel > 0)
       {
         size_t spcs = ((size_t)indentlevel) * 2;
@@ -814,6 +813,112 @@ static int IsShellRunning(void)
 
 /* ---------------------------------------------------------- */
 
+/* 
+** Guess if the application should attempt to try to initialize itself as 
+** a service.
+*/
+static int IsTryNTStartServiceWorthwhile(void) /* returns +1=yes, 0=no, -1=error */
+{
+  if (!IsShellRunning()) /* no shell, then must be service */
+    return +1;
+
+  #if defined(_WINNT_)
+  if (__winGetVersion() >= 2000) /* is windows NT */
+  {
+    int tryserv = -1; /* assume error */
+    HANDLE hToken = NULL;
+
+    if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
+    {
+      PTOKEN_GROUPS pGroupInfo = (PTOKEN_GROUPS)0; 
+      DWORD dwSize = 0;
+
+      if (!GetTokenInformation(hToken, TokenGroups, NULL, dwSize, &dwSize)) 
+      {
+        if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+        {
+          pGroupInfo = (PTOKEN_GROUPS)LocalAlloc(0, dwSize);
+          if (pGroupInfo)
+          {
+            if (!GetTokenInformation(hToken, TokenGroups,
+                                     pGroupInfo, dwSize, &dwSize)) 
+            {
+              LocalFree((HLOCAL)pGroupInfo);
+              pGroupInfo = (PTOKEN_GROUPS)0;
+            }
+          }
+        }
+      }
+
+      if (pGroupInfo) /* got valid token group info */
+      {
+        int isInteractive = -1, isService = -1;
+        SID_IDENTIFIER_AUTHORITY siaNt1 = SECURITY_NT_AUTHORITY;
+        SID_IDENTIFIER_AUTHORITY siaNt2 = SECURITY_NT_AUTHORITY;
+        PSID sid; DWORD nGrp;
+
+        /*
+        ** net start for svc under user=Administrator with wrong passwd.
+        **   SECURITY_SERVICE_RID=missing, SECURITY_INTERACTIVE_RID=avail
+        **   (StartService() fails of course)
+        **
+        ** net start for svc under user=Administrator with right passwd.
+        **   SECURITY_SERVICE_RID=avail, SECURITY_INTERACTIVE_RID=missing
+        **
+        ** net start for Local System (with or without "Interact with Desktop")
+        **   SECURITY_SERVICE_RID=missing, SECURITY_INTERACTIVE_RID=missing
+        ** 
+        ** SECURITY_LOCAL_SYSTEM_RID doesn't seem to be ever set, so the rule
+        ** I'm going with is...
+        ** isService = (SECURITY_SERVICE_RID || (!SECURITY_SERVICE_RID &&
+        **                                       !SECURITY_INTERACTIVE_RID))
+        */
+
+        if (AllocateAndInitializeSid(&siaNt1, 1,
+            SECURITY_INTERACTIVE_RID, 0, 0, 0, 0, 0, 0, 0, &sid)) 
+        {
+          isInteractive = 0;
+          for (nGrp = 0; isInteractive == 0 && 
+               nGrp < pGroupInfo->GroupCount; nGrp++) 
+          {
+            if (EqualSid(sid, pGroupInfo->Groups[nGrp].Sid))
+              isInteractive = +1;
+          }
+          FreeSid(sid);
+        }
+        if (AllocateAndInitializeSid(&siaNt2, 1,
+            SECURITY_SERVICE_RID, 0, 0, 0, 0, 0, 0, 0, &sid)) 
+        {
+          isService = 0;
+          for (nGrp = 0; isService == 0 && 
+               nGrp < pGroupInfo->GroupCount; nGrp++) 
+          {
+            if (EqualSid(sid, pGroupInfo->Groups[nGrp].Sid))
+              isService = +1;
+          }                           
+          FreeSid(sid);
+        }
+        TRACE_OUT((0,"isService=%d, isInteractive=%d\n",
+                      isService, isInteractive )); 
+
+        if (isService > 0 || (isService == 0 && isInteractive == 0))
+          tryserv = +1;
+        else if (isService >= 0 && isInteractive >= 0) /* no error */
+          tryserv = 0;
+
+        LocalFree(pGroupInfo);
+      } /* if (pGroupInfo) */
+      CloseHandle(hToken);
+    } /* if (OpenProcessToken(...)) */
+    return tryserv;
+  } /* if (__winGetVersion() >= 2000) */
+  #endif /* defined(__WINNT__) */
+
+  return 0;
+}
+
+/* ---------------------------------------------------------- */
+
 int win32CliInstallService(int quiet) 
 {                    /* quiet is used internally by the service itself */
   int retcode = -1;
@@ -890,7 +995,7 @@ int win32CliInstallService(int quiet)
         {
           int ras_detect_state = -1;
 
-          #if 0
+          #if 0 /* don't need this since we depend on TDI group */
           scm = OpenSCManager(NULL, NULL, GENERIC_READ);
           TRACE_OUT((+1,"begin: NT ras check. OpenSCManager()=>%08x\n",scm));
           if (scm)
@@ -936,13 +1041,14 @@ int win32CliInstallService(int quiet)
           }
           else
           {
-            const char *dependancies = "Tcpip\0\0";
+            /* TDI=DHCP client+DNS client (depend on PNP_TDI=tcpip etc) */
+            const char *dependancies = "+TDI\0+NetworkProvider\0\0";
             if (ras_detect_state > 0)
-              dependancies = "RasMan\0Tcpip\0\0";
+              dependancies = "RasMan\0+TDI\0+NetworkProvider\0\0";
 
             __GetMyModuleFilename( &buffer[1], sizeof(buffer)-1);
             buffer[0] = '\"';
-            strcat(buffer, "\" -svcrun");
+            strcat(buffer, "\""); /* "\" -svcrun" */
 
             TRACE_OUT((+1,"CreateService(,\"%s\",,,,\"%s\")\n", NTSERVICEIDS[0], buffer ));
   
@@ -1536,9 +1642,11 @@ int win32CliInitializeService(int argc, char *argv[],
     {
       TRACE_OUT((+1,"beginning winNT section.\n" ));
       int startable = -1; /* dunno */
-      if (IsShellRunning())
+      startable = IsTryNTStartServiceWorthwhile(); /* +1=yes, 0=no, -1=error */
+
+      if (startable == 0) /* don't try */
       {
-        TRACE_OUT((0,"found shell. Won't servicify\n"));
+        TRACE_OUT((0,"IsTryNTStartServiceWorthwhile()=>0. Won't servicify\n"));
         startable = 0;
       }
       else if (win32CliIsServiceInstalled() == 0) /* not inst, no error */
@@ -1546,25 +1654,6 @@ int win32CliInitializeService(int argc, char *argv[],
         TRACE_OUT((0,"svc not installed. won't servicify.\n" ));
         startable = 0;
       }
-      #if 0
-      else
-      {
-        HDESK hDesk = GetThreadDesktop( GetCurrentThreadId() );
-        if (hDesk)
-        {
-          USEROBJECTFLAGS uof; DWORD uofsz;
-          if (GetUserObjectInformation( hDesk, UOI_FLAGS, 
-                                        &uof, sizeof(uof), &uofsz ))
-          {
-            if (( uof.dwFlags & WSF_VISIBLE )!=0)
-            {
-              TRACE_OUT((0,"found visible desktop. Won't servicify\n"));
-              startable = 0; 
-            }
-          }
-        }
-      }
-      #endif
       if (startable != 0) /* either unknown or positive */
       {
         unsigned int inst;
