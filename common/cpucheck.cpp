@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.6 2002/12/30 00:52:17 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.7 2003/01/14 23:48:13 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -978,7 +978,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
          "AP-485 Intel Processor Identification and the CPUID Instruction"
          manual available at 
          http://www.intel.com/design/xeon/applnots/241618.htm
-         and several "Intel XYZ Processor Specification Update" documents */
+         and several "Intel XYZ Processor Specification Update" documents
+         available from http://www.intel.com/design/processor/index.htm */
       static struct cpuxref intelxref[]={
           {  0x0300, CPU_F_I386,       1, "386SX/DX" },
           {  0x0400, CPU_F_I486,       1, "486DX 25 or 33" },
@@ -1042,6 +1043,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x9F20, CPU_F_I686MMX, 0x0B, "Pentium 4 (Northwood)" },
           {  0xBF20, CPU_F_I686MMX, 0x0B, "Xeon" },
           {  0xEF20, CPU_F_I686MMX, 0x0B, "Mobile Pentium 4-M" },
+          {  0xFF20, CPU_F_I686MMX, 0x0B, "Mobile Celeron 4" },
           {  0x0000, 0,               -1, NULL }
           }; internalxref = &intelxref[0];
       vendorname = "Intel"; 
