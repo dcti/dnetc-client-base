@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __LOGSTUFF_H__
-#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.11.2.6 2001/03/07 00:20:22 sampo Exp $"
+#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.11.2.7 2001/03/12 00:00:58 sampo Exp $"
 
 /* this is shared with Configure() */
 #define LOGFILETYPE_NONE    0 //no logging to file
@@ -24,33 +24,29 @@
 /* ---------------------------------------------------- */
 
 //Flush mail and if last screen write didn't end with a LF then do that now. 
-void LogFlush( int forceflush );
+extern void LogFlush( int forceflush );
 
 //Log message to screen only. Make adjustments, like fixing a missing datestamp
-void LogScreen( const char *format, ... );
+extern void LogScreen( const char *format, ... );
 
 //Log to mail+file+screen. Make adjustments.
-void Log( const char *format, ... );
+extern void Log( const char *format, ... );
 
 //Log message in raw form (no adjustments) to screen only.
-void LogScreenRaw( const char *format, ... );
+extern void LogScreenRaw( const char *format, ... );
 
 //Log to mail+file+screen. No adjustments.
-void LogRaw( const char *format, ... );
+extern void LogRaw( const char *format, ... );
 
 //Log to LOGTO_* flags (RAW implies screen)
-void LogTo( int towhat, const char *format, ... );
+extern void LogTo( int towhat, const char *format, ... );
 
 //display percent bar. (bar is now always compound form)
-void LogScreenPercent( unsigned int load_problem_count );
+extern void LogScreenPercent( unsigned int load_problem_count );
 
 //Return name of current logfile, or NULL if not logging to file,
 //or "" if logfile hasn't been accessed yet.
-const char *LogGetCurrentLogFilename(char *buffer, unsigned int len);
-
-int LogGetContestLiveRate(unsigned int contest_i, u32 *rateloP,
-                          u32 *walltime_hiP, u32 *walltime_loP,
-                          u32 *coretime_hiP, u32 *coretime_loP);
+extern const char *LogGetCurrentLogFilename(char *buffer, unsigned int len);
 
 //init/deinit prototypes
 void DeinitializeLogging(void);

@@ -12,7 +12,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.65 2001/03/06 03:17:23 sampo Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.66 2001/03/12 00:00:58 sampo Exp $"; }
 
 //#define TRACE
 
@@ -285,14 +285,15 @@ unsigned int ClientGetInThreshold(Client *client,
       do randoms.
 */
 
-#if (!defined(NO_OUTBUFFER_THRESHOLDS))
 static unsigned int ClientGetOutThreshold(Client *client, 
                                    int contestid, int /* force */)
 {
   int outthresh = 0;  /* returns zero if outthresholds are not to be checked */
+  client = client; /* shaddup compiler. */
 
   if (contestid < CONTEST_COUNT)
   {
+#if (!defined(NO_OUTBUFFER_THRESHOLDS))
     outthresh = client->outthreshold[contestid]; /* never time driven */
     if (outthresh != 0) /* outthresh=0 => outthresh=inthresh => return 0 */
     {
@@ -331,17 +332,15 @@ static unsigned int ClientGetOutThreshold(Client *client,
         }
       }
     }
+#endif
   }
   return 100 * ((unsigned int)outthresh);      
 }
-#endif
 
 
 /* determine if out buffer threshold has been crossed, and if so, set 
    the flush_required flag
 */
-
-#if (!defined(NO_OUTBUFFER_THRESHOLDS))
 static int __check_outbufthresh_limit( Client *client, unsigned int cont_i, 
                                      long packet_count, unsigned long wu_count, 
                                      int *bufupd_pending )
@@ -367,7 +366,6 @@ static int __check_outbufthresh_limit( Client *client, unsigned int cont_i,
   }
   return ((*bufupd_pending & BUFFERUPDATE_FLUSH) != 0);
 }
-#endif
 
 /* ----------------------------------------------------------------------- */
 
@@ -459,12 +457,11 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         did_save = 1;
         if (client->nodiskbuffers)
           *bufupd_pending |= BUFFERUPDATE_FLUSH;
-#if (!defined(NO_OUTBUFFER_THRESHOLDS))
         if (__check_outbufthresh_limit( client, cont_i, -1, 0,bufupd_pending))
         { /* adjust bufupd_pending if outthresh has been crossed */
           //Log("1. *bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
         }       
-#endif
+
         if (load_problem_count > COMBINEMSG_THRESHOLD)
           ; /* nothing */
         else if (thisprob->pub_data.was_truncated)
@@ -479,20 +476,26 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
           action_msg = "Completed";
       }
 
-      if (ProblemGetResultCode(thisprob) != -1)
+      if (ProblemGetInfo( thisprob, 0, &contname, 
+                                    &secs, &usecs,
+                                    &swucount, 2, 
+                                    0, 
+                                    &permille, 0, 1,
+                                    pktid, sizeof(pktid),
+                                    0, 0, 
+                                    0, 0, 
+                                    ratebuf, sizeof(ratebuf),
+                                    0, 0, 
+                                    0, 0,
+                                    &ccounthi, &ccountlo,
+                                    0, 0,
+                                    0, 0, dcountbuf, 15 ) != -1)
       {
-        ProblemGetContestName(thisprob, &contname);
-        ProblemGetElapsedTime(thisprob, &secs, &usecs);
-        swucount = ProblemGetSWUCount(thisprob);
-        permille = ProblemGetCPermille(thisprob, 1);
-        ProblemGetWorkbuf(thisprob, pktid, sizeof(pktid), 0);
-        ProblemGetRate(thisprob, ratebuf, sizeof(ratebuf));
-        ProblemGetCCounts(thisprob, &ccounthi, &ccountlo);
-        ProblemGetDBuf(thisprob, 2, dcountbuf, 15);
         tv.tv_sec = secs; tv.tv_usec = usecs;
 
         if (finito && !discarded && swucount) /* swucount is zero for TEST */
           CliAddContestInfoSummaryData(cont_i,ccounthi,ccountlo,&tv,swucount);
+
         if (action_msg)
         {
           if (reason_msg) /* was discarded */
@@ -533,7 +536,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
               CliGetTimeString( &tv, 2 ), ratebuf );
           } /* if (reason_msg) else */
         } /* if (action_msg) */
-      } /* if (GetProblemResultCode() != -1) */
+      } /* if (thisprob->GetProblemInfo( ... ) != -1) */
     
       /* we can purge the object now */
       /* we don't wait when aborting. thread might be hung */
@@ -705,18 +708,23 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     
         if (load_problem_count <= COMBINEMSG_THRESHOLD)
         {
-          if (ProblemGetResultCode(thisprob) != 1)
+          unsigned int permille; u32 ddonehi, ddonelo;
+          const char *contname; char pktid[32]; char ddonebuf[15];
+          if (ProblemGetInfo( thisprob, loaded_for_contest, &contname, 
+                                        0, 0,
+                                        0, 2, 
+                                        0, 
+                                        0, &permille, 1,
+                                        pktid, sizeof(pktid),
+                                        0, 0, 
+                                        0, 0, 0, 0,
+                                        0, 0, 
+                                        0, 0,
+                                        0, 0,
+                                        0, 0,
+                                        &ddonehi, &ddonelo,
+                                        ddonebuf, sizeof(ddonebuf) ) != -1)
           {
-            u32 ddonehi, ddonelo;
-            const char *contname; char pktid[32]; char ddonebuf[15];
- 
-            *loaded_for_contest = ProblemGetContestID(thisprob);
-            ProblemGetContestName(thisprob, &contname);
-            ProblemGetWorkbuf(thisprob, pktid, sizeof(pktid), 0);
-            ProblemGetDCounts(thisprob, &ddonehi, &ddonelo);
-            ProblemGetDBuf(thisprob, 2, ddonebuf, sizeof(ddonebuf));
-            unsigned int permille = ProblemGetSPermille(thisprob, 1);
-
             const char *extramsg = ""; 
             char perdone[32]; 
   
@@ -736,7 +744,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
             Log("%s: Loaded %s%s%s\n",
                  contname, ((thisprob->pub_data.is_random)?("random "):("")),
                  pktid, extramsg );
-          } /* if (ProblemGetResultCode() != -1) */
+          } /* if (thisprob->GetProblemInfo(...) != -1) */
         } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
       } /* if (LoadState(...) != -1) */
     } /* if (*load_needed == 0) */
@@ -763,14 +771,13 @@ static int __post_summary_for_contest(unsigned int contestid)
       char ratebuf[15];
       TRACE_OUT((0,"pkts=%u, iter=%u:%u, time=%u:%u, swucount=%u\n", packets, 
                     iterhi, iterlo, ttime.tv_sec, ttime.tv_usec, swucount ));
-      ProblemComputeRate( contestid, ttime.tv_sec, ttime.tv_usec, iterhi,
-                          iterlo, 0, ratebuf, sizeof(ratebuf) );
       Log("%s: Summary: %u packet%s (%u.%02u stats units)\n%s%c- [%s/s]\n",
           CliGetContestNameFromID(contestid), 
           packets, ((packets==1)?(""):("s")), 
           swucount/100, swucount%100, 
           CliGetTimeString(&ttime,2), ((packets)?(' '):(0)), 
-          ratebuf );
+          ProblemComputeRate( contestid, ttime.tv_sec, ttime.tv_usec, 
+                            iterhi, iterlo, 0, 0, ratebuf, sizeof(ratebuf)) );
     }                            
     rc = 0;
   }
@@ -1136,13 +1143,11 @@ unsigned int LoadSaveProblems(Client *client,
           {
             /* adjust bufupd_pending if outthresh has been crossed */
             /* we don't check in-buffer here since we need cumulative count */
-#if (!defined(NO_OUTBUFFER_THRESHOLDS))
             if (__check_outbufthresh_limit( client, cont_i, block_count, 
                                             stats_count, &bufupd_pending ))
             {
               //Log("5. bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
             }
-#endif
           }
           else /*in*/ if (stats_count && (mode!=PROBFILL_UNLOADALL))
           {
