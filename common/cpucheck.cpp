@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.55 2004/05/29 00:33:10 piru Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.56 2004/06/08 18:39:31 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1208,7 +1208,13 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0680, CPU_F_I686,       9, "K7-8 (Athlon XP/MP or Duron)" }, // Thoroughbred or Applebred core
           {  0x06A0, CPU_F_I686,       9, "K7-10 (Athlon XP/MP/XP-M)" }, // Barton core
           {  0x0F40, CPU_F_I686,       9, "Athlon 64" },
-          {  0x0F50, CPU_F_I686,       9, "Opteron" },
+          {  0x0F50, CPU_F_I686,       9, "Opteron/Athlon 64 FX" },
+          {  0x0F70, CPU_F_I686,       9, "Athlon 64" },
+          {  0x0F80, CPU_F_I686,       9, "Athlon 64" },
+          {  0x0FB0, CPU_F_I686,       9, "Athlon 64" },
+          {  0x0FC0, CPU_F_I686,       9, "Athlon 64" },
+          {  0x0FE0, CPU_F_I686,       9, "Athlon 64" },
+          {  0x0FF0, CPU_F_I686,       9, "Athlon 64" },
           {  0x0000, 0,               -1, NULL       }
           }; internalxref = &amdxref[0];
       vendorname = "AMD";
