@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.90 2001/04/14 13:48:37 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.91 2001/05/01 19:16:00 andreasb Exp $
 ==========================================================================
 
 2.8000
@@ -32,6 +32,9 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.90 2001/04/14 13:48:37 cyp Exp $
             new: win32: RAS profile names are now supported in the
                       "Interfaces to Watch" list.
             new: *ix: support for shell-style tilde expansion for filenames.
+	    chg: all: The list of cores depends on the architecture only.
+	              Cores not applicable to a particular cpu/os will be 
+		      marked as 'n/a' and won't benchmark etc.
 
 2.8014.468  fix: all: bad results caused by build .466.
             fix: all: packets were saved and reloaded after buffer update.

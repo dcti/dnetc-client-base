@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.31 2001/03/31 18:52:19 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.32 2001/05/01 19:15:59 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -205,7 +205,7 @@ static int __enumcorenames(unsigned int cont_i, const char *corename,
         if (selcoreValidateCoreIndex(cont_i,idx) == idx)
           len = sprintf(label, "%2d) ", idx);
         else
-          len = strlen(strcpy(label, "*) "));
+          len = strlen(strcpy(label, "n/a "));
         strncpy( &label[len], corename, sizeof(label)-len );
         label[sizeof(label)-1] = '\0';
       }

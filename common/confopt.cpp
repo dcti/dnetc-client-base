@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.57 2001/04/17 18:06:52 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.58 2001/05/01 19:16:00 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -505,6 +505,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "it allows the client to pick other cores as they become available. Please\n"
   "let distributed.net know if you find the client auto-selecting a core that\n"
   "manual benchmarking shows to be less than optimal.\n"
+  "Cores marked as 'n/a' are not applicable to your particular cpu/os.\n"
   ),CONF_MENU_PERF,CONF_TYPE_IARRAY,NULL,NULL,0,0,NULL,NULL
 },
 { 
