@@ -7,7 +7,7 @@
  * Specify 'build_dependancies' as argument 
  * (which is all this needs to do anymore)
  *
- * $Id: testplat.cpp,v 1.8 2002/09/02 00:35:43 andreasb Exp $
+ * $Id: testplat.cpp,v 1.8.4.1 2003/01/16 13:57:35 oliver Exp $
 */ 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
@@ -33,6 +33,13 @@ static void __fixup_pathspec_for_locate(char *foundbuf)
     else if (foundbuf[n] == '.') /* suffix */
       foundbuf[n] = '/';  
   }
+  #elif defined(amigaos)
+  char *ptr;
+  if (foundbuf[0] == '.' && foundbuf[1] == '/')
+    memmove( foundbuf, &foundbuf[2], strlen(&foundbuf[2])+1 );
+  /* suppress "Insert volume" requesters from netbase.cpp */
+  if ((ptr = strstr(foundbuf,"multinet_root:")))
+     ptr[13] = '_';
   #endif
 }
 
