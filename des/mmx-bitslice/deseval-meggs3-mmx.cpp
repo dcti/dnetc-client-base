@@ -18,6 +18,9 @@
 
 //
 // $Log: deseval-meggs3-mmx.cpp,v $
+// Revision 1.7  1998/11/08 07:41:40  dbaker
+// Changes to make MMX_BITSLICE client buildable on freebsd
+//
 // Revision 1.6  1998/07/14 10:43:36  remi
 // Added support for a minimum timeslice value of 16 instead of 20 when
 // using BIT_64, which is needed by MMX_BITSLICER. Will help some platforms
@@ -41,7 +44,7 @@
 //
 // Revision 1.2  1998/07/08 23:37:35  remi
 // Added support for aout targets (.align).
-// Tweaked $Id: deseval-meggs3-mmx.cpp,v 1.6 1998/07/14 10:43:36 remi Exp $.
+// Tweaked $Id: deseval-meggs3-mmx.cpp,v 1.7 1998/11/08 07:41:40 dbaker Exp $.
 //
 // Revision 1.1  1998/07/08 15:49:36  remi
 // MMX bitslicer integration.
@@ -50,7 +53,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_mmx_cpp(void) {
-return "@(#)$Id: deseval-meggs3-mmx.cpp,v 1.6 1998/07/14 10:43:36 remi Exp $"; }
+return "@(#)$Id: deseval-meggs3-mmx.cpp,v 1.7 1998/11/08 07:41:40 dbaker Exp $"; }
 #endif
 
 #include <stdlib.h>
@@ -193,8 +196,7 @@ do { \
 
 // CYGWIN32 because it's my debugging & benchmarking platform
 #if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_DOSWIN16) || (CLIENT_OS == OS_NETWARE) || \
-    ((CLIENT_OS == OS_LINUX) && !defined(__ELF__)) || defined(__CYGWIN32__) \
-    || (CLIENT_OS == OS_FREEBSD))
+    ((CLIENT_OS == OS_LINUX) && !defined(__ELF__)) || defined(__CYGWIN32__))
 #define CALL(sfunc) "call _"#sfunc
 #else
 #define CALL(sfunc) "call "#sfunc
