@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.65  1998/06/30 05:57:33  jlawson
+// benchmark will exit before status message is printed if SignalTriggered
+// is already set on function entry.
+//
 // Revision 1.64  1998/06/30 03:11:46  fordbr
 // Fixed blockcount bug with 'x' to exit
 //
@@ -80,7 +84,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.64 1998/06/30 03:11:46 fordbr Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.65 1998/06/30 05:57:33 jlawson Exp $";
 #endif
 
 #include "client.h"
@@ -1202,8 +1206,8 @@ u32 Client::Benchmark( u8 contest, u32 numk )
   u32 numkeys = 10000000L;
   u32 percent2, tslice;
 
-  if (SelectCore()) return 0;
-  if (numk != 0) numkeys=max(numk,1000000L);
+  if (SelectCore() || SignalTriggered) return 0;
+  if (numk != 0) numkeys = max(numk,1000000L);
 
   if (contest == 1)
     LogScreenf( "Benchmarking RC5 with %d tests:\n", (int) numkeys );
