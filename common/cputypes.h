@@ -6,46 +6,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.59 1999/04/09 19:31:02 patrick Exp $"
-
-/* ----------------------------------------------------------------- */
-
-#if !defined(INTSIZES)
-#define INTSIZES 442
-#endif
-
-#if (INTSIZES == 422)       // (16-bit DOS/WIN):  long=32, int=16, short=16
-  typedef unsigned long u32;
-  typedef signed long s32;
-  typedef unsigned short u16;
-  typedef signed short s16;
-#elif (INTSIZES == 442)     // (typical):  long=32, int=32, short=16
-  typedef unsigned long u32;
-  typedef signed long s32;
-  typedef unsigned short u16;
-  typedef signed short s16;
-#elif (INTSIZES == 842)     // (Alphas and 64bit MIPS): long=64, int=32, short=16
-  typedef unsigned int u32;
-  typedef signed int s32;
-  typedef unsigned short u16;
-  typedef signed short s16;
-#else
-  #error "Invalid INTSIZES"
-#endif
-
-typedef unsigned char u8;
-typedef signed char s8;
-typedef double f64;
-typedef float f32;
-
-struct fake_u64 { u32 hi, lo; };
-struct fake_s64 { s32 hi, lo; };
-
-typedef struct fake_u64 u64;
-typedef struct fake_s64 s64;
-
-struct u128 { u64 hi, lo; };
-struct s128 { s64 hi, lo; };
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.60 1999/04/10 14:24:02 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -58,14 +19,14 @@ struct s128 { s64 hi, lo; };
 #define CPU_PA_RISC     5
 #define CPU_68K         6
 #define CPU_SPARC       7
-#define CPU_JAVA_VM     8
+//#define CPU_UNUSED_1  8
 #define CPU_POWER       9
 #define CPU_VAX         10
 #define CPU_ARM         11
 #define CPU_88K         12
 #define CPU_KSR1        13
 #define CPU_S390        14
-#define CPU_MASPAR      15
+//#define CPU_UNUSED_2  15
 #define CPU_DESCRACKER  16  // eff descracker
 
 // Major OS Architectures.
@@ -86,14 +47,14 @@ struct s128 { s64 hi, lo; };
 #define OS_SUNOS        14
 #define OS_SOLARIS      15
 #define OS_OS9          16
-#define OS_JAVA_VM      17
+//#define OS_UNUSED_1   17    // was java-vm
 #define OS_BSDI         18
 #define OS_NEXTSTEP     19
 #define OS_SCO          20
 #define OS_QNX          21
 #define OS_OSF1         22    // oldname for DEC UNIX
-#define OS_MINIX        23
-#define OS_MACH10       24
+//#define OS_UNUSED_2   23    // was minix
+//#define OS_UNUSED_3   24    // was mach10
 #define OS_AIX          25
 #define OS_AUX          26
 #define OS_RHAPSODY     27
@@ -102,14 +63,14 @@ struct s128 { s64 hi, lo; };
 #define OS_NETWARE      30
 #define OS_MVS          31
 #define OS_ULTRIX       32
-#define OS_NEWTON       33
+#define OS_OS400        33
 #define OS_RISCOS       34
 #define OS_DGUX         35
 #define OS_WIN32S       36    // windows 3.1, 3.11, wfw (32-bit Win32s)
 #define OS_SINIX        37
 #define OS_DYNIX        38
 #define OS_OS390        39
-#define OS_MASPAR       40
+//#define OS_UNUSED4    40    // os_maspar
 #define OS_WIN16        41    // windows 3.1, 3.11, wfw (16-bit)
 #define OS_DESCRACKER   42    // eff des cracker
 
@@ -117,7 +78,6 @@ struct s128 { s64 hi, lo; };
 
 // determine current compiling platform
 #if defined(WIN32) || defined(__WIN32__) || defined(_Windows) || defined(_WIN32)
-  
   #define CLIENT_OS_NAME "Win32"
   #if defined(NTALPHA)
     #define CLIENT_OS     OS_WIN32
@@ -266,13 +226,6 @@ struct s128 { s64 hi, lo; };
   #if defined(__ALPHA)
     #define CLIENT_CPU    CPU_ALPHA
   #endif
-
-  #error NONETWORK define is obsolete. (see top of [high up in] network.cpp)
-
-  #if !defined(__VMS_UCX__) && !defined(NONETWORK) && !defined(MULTINET)
-    #define MULTINET 1
-  #endif
-
 #elif defined(_HPUX) || defined(__hpux) || defined(__hpux__)
   #define CLIENT_OS_NAME  "HP/UX"
   #define CLIENT_OS       OS_HPUX
@@ -424,6 +377,7 @@ struct s128 { s64 hi, lo; };
 
 /* ----------------------------------------------------------------- */
 
+#ifdef PROXYTYPE
 // Some compilers/platforms don't yet support bool internally.
 // When creating new rules here, please try to use compiler-specific
 // macro tests since not all compilers on a specific platform (or even
@@ -435,7 +389,7 @@ struct s128 { s64 hi, lo; };
   #define NEED_FAKE_BOOL
 #elif defined(__IBMCPP__)
   #define NEED_FAKE_BOOL
-#elif defined(__WATCOMC__)
+#elif defined(__WATCOMC__) && (__WATCOMC__ < 1100)
   //nothing - bool is defined
 #elif defined(__xlc) || defined(__xlC) || defined(__xlC__) || defined(__XLC121__)
   #define NEED_FAKE_BOOL
@@ -448,14 +402,202 @@ struct s128 { s64 hi, lo; };
 #elif (defined(_SEQUENT_) && !defined(__GNUC__))
   #define NEED_FAKE_BOOL
 #endif
-
 #if defined(NEED_FAKE_BOOL)
     typedef int bool;
     #define true 1
     #define false 0
 #endif
+#endif
 
 /* ----------------------------------------------------------------- */
 
-#endif /* __CPUTYPES_H__ */
+#ifdef __cplusplus 
+extern "C" {
+#endif
+#include <limits.h>
+#ifdef __cplusplus
+}
+#endif
 
+#if !defined(SIZEOF_LONG) || !defined(SIZEOF_SHORT) || !defined(SIZEOF_INT)
+  #if (!defined(UINT_MAX) || !defined(ULONG_MAX))
+    #error your limits.h appears to be borked (UINT_MAX or ULONG_MAX are undefined)
+  #elif (ULONG_MAX < UINT_MAX)
+    #error your limits.h is borked. ULONG_MAX can never be less than UINT_MAX
+  #else
+    #if (defined(USHRT_MAX) && !defined(USHORT_MAX))
+      #define USHORT_MAX USHRT_MAX
+    #endif
+    #if !defined(SIZEOF_SHORT) && defined(USHORT_MAX)
+      #if (USHORT_MAX == 0xFFUL)
+        #define SIZEOF_SHORT 1
+      #elif (USHORT_MAX == 0xFFFFUL)
+        #define SIZEOF_SHORT 2
+      #elif (USHORT_MAX == 0xFFFFFFFFUL)    
+        #define SIZEOF_SHORT 4
+      #elif (USHORT_MAX == 0xFFFFFFFFFFFFFFFFUL)
+        #define SIZEOF_SHORT 8
+      #else
+        #fixme: sizeof(unsigned short) !=1 and !=2 and !=4 and !=8?
+      #endif	
+    #endif
+    #if defined(SIZEOF_INT)
+      #ifndef SIZEOF_SHORT
+        #if (SIZEOF_INT < 4)
+          #define SIZEOF_SHORT SIZEOF_INT
+        #elif (SIZEOF_INT > 4)
+          #define SIZEOF_SHORT (SIZEOF_INT>>1)
+        #else 
+          #define SIZEOF_SHORT 2
+        #endif
+      #endif
+      #ifndef SIZEOF_LONG
+        #define SIZEOF_LONG (SIZEOF_INT<<1)
+      #endif
+    #elif (UINT_MAX == 0xFFUL)
+      #ifndef SIZEOF_SHORT
+        #define SIZEOF_SHORT 1
+      #endif
+      #define SIZEOF_INT   1
+      #ifndef SIZEOF_LONG
+        #if (ULONG_MAX > UINT_MAX)
+          #define SIZEOF_LONG  2
+        #else
+          #define SIZEOF_LONG  1
+        #endif
+      #endif
+    #elif (UINT_MAX == 0xFFFFUL)
+      #ifndef SIZEOF_SHORT
+        #define SIZEOF_SHORT 2
+      #endif
+      #define SIZEOF_INT   2
+      #ifndef SIZEOF_LONG
+        #if (ULONG_MAX > UINT_MAX)
+          #define SIZEOF_LONG  4
+        #else
+          #define SIZEOF_LONG  2
+        #endif
+      #endif
+    #elif (UINT_MAX == 0xFFFFFFFFUL)
+      #ifndef SIZEOF_SHORT
+        #define SIZEOF_SHORT 2
+      #endif
+      #define SIZEOF_INT   4
+      #ifndef SIZEOF_LONG
+        #if (ULONG_MAX > UINT_MAX)
+          #define SIZEOF_LONG  8
+        #else
+          #define SIZEOF_LONG  4
+        #endif
+      #endif
+    #elif (UINT_MAX == 0xFFFFFFFFFFFFFFFFUL)
+      #ifndef SIZEOF_SHORT
+        #define SIZEOF_SHORT 4
+      #endif
+      #define SIZEOF_INT   8
+      #ifndef SIZEOF_LONG
+        #if (ULONG_MAX > UINT_MAX)
+          #define SIZEOF_LONG  16
+        #else
+          #define SIZEOF_LONG  8
+        #endif
+      #endif
+    #else
+      #error fixme: sizeof(int) > 8? what would sizeof(short) be?
+    #endif
+  #endif /* ULONG_MAX >= UINT_MAX */
+#endif
+      
+#if (defined(SIZEOF_SHORT) && (SIZEOF_SHORT == 2))
+  typedef unsigned short u16;
+//typedef signed short s16;
+#elif (defined(SIZEOF_SHORT) && (SIZEOF_INT == 2))
+  typedef unsigned int u16;
+//typedef signed int s16;
+#elif (defined(SIZEOF_LONG) && (SIZEOF_LONG == 2))
+  typedef unsigned long u16;
+//typedef signed long s16;
+#else
+  #error types u16 is undefined (try wchar_t)
+#endif
+#if (defined(SIZEOF_SHORT) && (SIZEOF_SHORT == 4))
+  typedef unsigned short u32;
+  typedef signed short s32;
+#elif (defined(SIZEOF_INT) && (SIZEOF_INT == 4))
+  typedef unsigned int u32;
+  typedef signed int s32;
+#elif (defined(SIZEOF_LONG) && (SIZEOF_LONG == 4))
+  typedef unsigned long u32;
+  typedef signed long s32;
+#else
+  #error types u32/s32 is undefined
+#endif
+#if (defined(SIZEOF_SHORT) && (SIZEOF_SHORT == 8))
+  #define HAVE_I64
+  #define SIZEOF_LONGLONG 8
+  typedef unsigned short ui64;
+  typedef signed short si64;
+#elif (defined(SIZEOF_INT) && (SIZEOF_INT == 8))
+  #define HAVE_I64
+  #define SIZEOF_LONGLONG 8
+  typedef unsigned int ui64;
+  typedef signed int si64;
+#elif (defined(SIZEOF_LONG) && (SIZEOF_LONG == 8))
+  #define HAVE_I64
+  #define SIZEOF_LONGLONG 8
+  typedef unsigned int ui64;
+  typedef signed int si64;
+#elif defined(__GCC__) || defined(__GNUC__)
+  #define HAVE_I64
+  #define SIZEOF_LONGLONG 8
+  typedef unsigned long long ui64;
+  typedef signed long long si64;
+#elif (defined(__WATCOMC__) && (__WATCOMC__ >= 11))
+  #define HAVE_I64
+  #define SIZEOF_LONGLONG 8
+  typedef unsigned __int64 ui64;
+  typedef __int64 si64;
+#elif (defined(_MSC_VER) && (_MSC_VER >= 11)) // VC++ >= 5.0  
+  #define HAVE_I64
+  #define SIZEOF_LONGLONG 8
+  typedef unsigned __int64 ui64;
+  typedef __int64 si64;
+#elif (CLIENT_OS == OS_MACOS)
+  #error to enable 64bit integer math, please typedef your 64 bit int by compiler
+#elif (CLIENT_OS == OS_AMIGAOS)
+  #error to enable 64bit integer math, please typedef your 64 bit int by compiler
+#endif  
+
+#if 0
+#if !defined(INTSIZES)
+    #define INTSIZES 442
+#endif
+#if (INTSIZES == 422)       // (16-bit DOS/WIN):  long=32, int=16, short=16
+  typedef unsigned long u32;
+  typedef signed long s32;
+  typedef unsigned short u16;
+  typedef signed short s16;
+#elif (INTSIZES == 442)     // (typical):  long=32, int=32, short=16
+  typedef unsigned long u32;
+  typedef signed long s32;
+  typedef unsigned short u16;
+  typedef signed short s16;
+#elif (INTSIZES == 842)     // (Alphas and 64bit MIPS): long=64, int=32, short=16
+  typedef unsigned int u32;
+  typedef signed int s32;
+  typedef unsigned short u16;
+  typedef signed short s16;
+#else
+  #error "Invalid INTSIZES"
+#endif
+#endif
+
+typedef unsigned char u8;
+typedef struct fake_u64 { u32 hi, lo; } u64;
+
+//typedef signed char s8;
+//typedef struct fake_u64 { s32 hi, lo; } s64;
+//struct u128 { u64 hi, lo; };
+//struct s128 { s64 hi, lo; };
+
+#endif /* __CPUTYPES_H__ */
