@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.36  1998/11/25 06:04:17  dicamillo
+// Update for BeOS R4 for Intel- defined constants changed.
+//
 // Revision 1.35  1998/11/17 01:34:12  cyp
 // Fixed a missing \"
 //
@@ -372,12 +375,15 @@ struct s128 { s64 hi, lo; };
   #endif
 #elif defined(__dest_os) && defined(__be_os) && (__dest_os == __be_os)
   #define CLIENT_OS_NAME   "BeOS"
+  #define CLIENT_OS     OS_BEOS
   #if defined(__POWERPC__)
-    #define CLIENT_OS     OS_BEOS
     #define CLIENT_CPU    CPU_POWERPC
-  #elif defined(__INTEL__)
-    #define CLIENT_OS     OS_BEOS
-    #define CLIENT_CPU    CPU_X86
+  #endif
+#elif defined(__BEOS__) && (__BEOS__ == 1)
+  #define CLIENT_OS_NAME   "BeOS"
+  #define CLIENT_OS     OS_BEOS
+  #if defined(__INTEL__) && (__INTEL__ == 1)
+    #define CLIENT_CPU CPU_X86
   #endif
 #elif defined(AMIGA)
   #define CLIENT_OS_NAME   "AmigaOS"
