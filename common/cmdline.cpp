@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.160.2.18 2004/06/22 20:33:57 kakace Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.160.2.19 2004/06/24 21:10:28 kakace Exp $"; }
 
 //#define TRACE
 
@@ -1734,8 +1734,18 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
               unsigned int corenum = atoi(argvalue2);
               if (corecount_for_contest(contest) > corenum)
               {
-                client->corenumtotestbench = corenum;
-                skip_next = 2;
+                if (selcoreValidateCoreIndex(contest, corenum) >= 0)
+                {
+                  client->corenumtotestbench = corenum;
+                  skip_next = 2;
+                }
+                else
+                {
+                  sprintf(scratch, "Core #%d is not available on this machine.\n",
+                        corenum);
+                  ConOutErr(scratch);
+                  retcode = 3;
+                }
               }
               else
               {
