@@ -44,10 +44,19 @@
     your client does not support processor or processor-count autodetection
     and you know how to accomplish this on your platform send a code snippet 
     to <coders@distributed.net>
+
+    Also (herewith officially) beginning with v2.7102, the client is always
+    nohup'able. Sensibly enough, -HUP causes a restart. Beginning with this 
+    release, *nix'ish clients also support -hide/-quiet mode. User level
+    '>/dev/null &' is deprecated, since it does not allow the client to warn
+    the user when it fails to start. With -hide/-quiet you can be sure that
+    the client has started successfully if you do not get a message to the
+    contrary. 
     
-    Much of the client source, including all the core crunch code is 
-    available online. A world-readable subset of the client's source will
-    soon be available on a public branch of the distributed.net CVS tree.
+    As of November 7th, 1998, much of the client source, including all the 
+    core crunch code that was previously scattered about, is available 
+    online at http://www.distributed.net/cores/  All the above mentioned 
+    changes in 2.7102 were submitted by Cyrus Patel <cyp@fb14.uni-mainz.de>
 
  3.0  Help: ----------------------------------------------------------
 
