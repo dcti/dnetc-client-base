@@ -4,8 +4,8 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff.cpp,v $
-// Revision 1.17  1998/10/26 03:23:08  cyp
-// More tags fun.
+// Revision 1.18  1998/10/26 04:14:35  cyp
+// Replaced IS_A_TTY() with ConIsScreen()
 //
 // Revision 1.16  1998/10/19 12:39:08  cyp
 // Percent bar code is ^C aware.
@@ -72,7 +72,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.17 1998/10/26 03:23:08 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.18 1998/10/26 04:14:35 cyp Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -85,7 +85,7 @@ return "@(#)$Id: logstuff.cpp,v 1.17 1998/10/26 03:23:08 cyp Exp $"; }
 #include "pathwork.h"  // GetFullPathForFilename( x )
 #include "problem.h"   // needed for logscreenpercent
 #include "cmpidefs.h"  // strcmpi()
-#include "console.h"   // for ConOut() and STDOUT_IS_A_TTY() macro
+#include "console.h"   // for ConOut() and ConIsScreen()
 #include "logstuff.h"  // keep the prototypes in sync
 #include "guistuff.h"  // Hooks for the GUIs
 
@@ -142,19 +142,19 @@ static struct
   char lastwasperc;          //last log screen was a percentbar
   
 } logstatics = { 
-  0, 			// initlevel
-  LOGTO_NONE,		// loggingTo
-  0,			// spoolson
-  0,			// percprint
-  NULL,			// *mailmessage
-  {0},			// logfile[]
-  0,			// logfilebaselen
-  LOGFILETYPE_NONE,	// logfileType
-  0,			// logfileLimit
-  0,			// logfilestarted
-  0,			// stdoutisatty
-  0,			// stableflag
-  0 };			// lastwasperc
+  0,      // initlevel
+  LOGTO_NONE,   // loggingTo
+  0,      // spoolson
+  0,      // percprint
+  NULL,     // *mailmessage
+  {0},      // logfile[]
+  0,      // logfilebaselen
+  LOGFILETYPE_NONE, // logfileType
+  0,      // logfileLimit
+  0,      // logfilestarted
+  0,      // stdoutisatty
+  0,      // stableflag
+  0 };      // lastwasperc
 
 // ========================================================================
 
@@ -162,7 +162,7 @@ static void InternalLogScreen( const char *msgbuffer, unsigned int msglen, int /
 {
   if ((logstatics.loggingTo & LOGTO_SCREEN) != 0)
     {
-    if ( msglen && (msgbuffer[msglen-1] == '\n' || IS_STDOUT_A_TTY() ) )
+    if ( msglen && (msgbuffer[msglen-1] == '\n' || ConIsScreen() ) )
       {
       if (strlen( msgbuffer ) == msglen) //we don't do binary data
         ConOut( msgbuffer );             //which shouldn't happen anyway.
@@ -423,10 +423,10 @@ void LogWithPointer( int loggingTo, const char *format, va_list arglist )
         buffptr++;
       if ((buffptr-obuffptr) > 79)
         {
-	obuffptr[75] = ' '; obuffptr[76] = obuffptr[77] = obuffptr[78] = '.';
-	memmove( obuffptr+79, buffptr, strlen(buffptr)+1 );
-	buffptr = obuffptr+79;
-	}    
+  obuffptr[75] = ' '; obuffptr[76] = obuffptr[77] = obuffptr[78] = '.';
+  memmove( obuffptr+79, buffptr, strlen(buffptr)+1 );
+  buffptr = obuffptr+79;
+  }    
       } while (*buffptr);
     msglen = strlen( msgbuffer );
     }      
@@ -622,7 +622,7 @@ void LogScreenPercent( unsigned int load_problem_count )
     if ( load_problem_count <= 2 )
       method = 0;  //old LogScreenPercentSingle()
     #if (defined(PERCBAR_ON_ONE_LINE)) /* max 13 threads */
-    else if (IS_STDOUT_A_TTY() && (numthreads*sizeof("A:00% "))<79 ) 
+    else if (ConIsScreen() && (numthreads*sizeof("A:00% "))<79 ) 
       method = 3; //"\rA:10% B:20% C:30% D:40% E:50% ... M:99%" on *one* line
     #elif (defined(FORCE_OLD_LOGSCREENPERCENTMULTI))
     else
@@ -680,7 +680,7 @@ void LogScreenPercent( unsigned int load_problem_count )
       else
         {
         restartperc = 0; //we don't bother with the restart flag
-        if ( IS_STDOUT_A_TTY() )
+        if ( ConIsScreen() )
           {
           *bufptr++ = '\r';
           lastperc = 0;  //always paint the whole bar
@@ -701,7 +701,7 @@ void LogScreenPercent( unsigned int load_problem_count )
           {
           ch = '.';
           if (numthreads > 1 && numthreads < sizeof(pbuf) && 
-                         IS_STDOUT_A_TTY() && specperc < 100)
+                         ConIsScreen() && specperc < 100)
             {
             equals = 0;
             for ( selthread=0; selthread<numthreads; selthread++ )
