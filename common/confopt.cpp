@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.33 2000/05/04 22:16:19 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.34 2000/05/06 17:01:44 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -308,11 +308,20 @@ struct optionstruct conf_options[] = {
   "any, to try RC5 next, and so on.\n"
   "\n"
   "You can turn off a project by setting \":0\" or \"=0\" after the project's\n"
-  "name - for instance, \"OGR:0\" tells your client not to work on, or request\n"
-  "work for, the OGR project.\n"
+  "name - for instance, \"XYZ:0\" tells your client not to work on, or request\n"
+  "work for, the XYZ project."
+  #if defined(HAVE_OGR_CORES) && ((CLIENT_OS == OS_MACOS) || \
+    (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS) || \
+    (CLIENT_OS == OS_WIN16))
+                             " OGR is automatically disabled for non-preemptive\n"
+  "operating environments running on low(er)-end hardware. For details, see\n"
+  "http://www.distributed.net/faq/cache/188.html"
+  #endif
+  #if 0
   "\n"
   "Projects not found in the list you enter here will be inserted in their\n"
   "default position.\n"
+  #endif
   "\n"
   "It is possible to have the client rotate through this list, updating\n"
   "its buffers only once for each pass. To do so, 'Dialup-link detection'\n"

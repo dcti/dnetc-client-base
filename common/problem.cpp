@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.57 2000/05/04 21:47:09 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.58 2000/05/06 17:01:45 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -990,6 +990,59 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
      GetNumberOfDetectedProcessors() > 1) /* have x86 card */
     return 0;
   #endif
+  #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS) || \
+      (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_RISCOS)
+  /* Cannot run (long-running) OGR on non-preemptive OSs on low end 
+     hardware. OGR has significant per-call overhead which ultimately 
+     prevents frequent yielding no matter how small the timeslice. 
+     Examples (486/66, NetWare, 3c5x9 polling NIC):
+     16 nodes per call: max achievable yield rate: 13-15/sec
+     Server is extremely laggy. 
+     256 nodes per call: max achievable yield rate ALSO 13-15/sec
+     For the fun of it, I then tried 1024 nodes per call: NetWare 
+     started dropping packets, clients disconnected, the profiler
+     froze - I couldn't switch back to the console to unload the
+     client and had to power-cycle.
+  */
+  if (contest_i == OGR /* && prob_index >= 0 */) /* crunchers only */
+  {
+    #if (CLIENT_CPU == CPU_68K)
+    return 0;
+    #elif (CLIENT_CPU == CPU_ARM)
+    if (riscos_check_taskwindow())    
+      return 0;
+    #else
+    static int should_not_do = -1;
+    if (should_not_do == -1)
+    {
+      long det = GetProcessorType(1);
+      if (det >= 0)
+      {
+        switch (det & 0xff)
+        {
+          #if (CLIENT_CPU == CPU_X86)
+          case 0x00:  // P5
+          case 0x01:  // 386/486
+          case 0x03:  // Cx6x86
+          case 0x04:  // K5
+          case 0x06:  // Cyrix 486
+          case 0x0A:  // Centaur C6
+          #elif (CLIENT_CPU == CPU_POWERPC)
+          case 0x01:  // PPC 601
+          #endif
+                    should_not_do = +1;
+                    break;
+          default:  should_not_do = 0;
+                    break;
+        }
+      }
+    }
+    if (should_not_do)
+      return 0;
+    #endif
+  }
+  #endif
+
   
   switch (contest_i)
   {
