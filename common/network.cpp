@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.3 1999/09/17 15:23:55 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.4 1999/10/05 16:41:33 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -437,7 +437,14 @@ int Network::Open( void )               // returns -1 on error, 0 on success
     if (!success)
     {
       if (verbose_level > 0)
+      {
+        #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+        LogScreen("Network::failed to create network socket. (err=%d)\n",
+                   WSAGetLastError());
+        #else
         LogScreen("Network::failed to create network socket.\n");
+        #endif
+      }
       break; /* return -1; */
     }
 
@@ -683,8 +690,18 @@ int Network::Open( void )               // returns -1 on error, 0 on success
         break; /* can't fallback further than a fullserver */
       server_name[0] = '\0'; /* fallback */
     }
+    if (CheckExitRequestTriggerNoIO())
+      break;
     LogScreen( "Network::Open Error - sleeping for 3 seconds\n" );
-    sleep( 3 );
+    sleep(1);
+    if (CheckExitRequestTriggerNoIO())
+      break;
+    sleep(1);
+    if (CheckExitRequestTriggerNoIO())
+      break;
+    sleep(1);
+    if (CheckExitRequestTriggerNoIO())
+      break;
   } while (triesleft > 0 /* forever true */);
 
   return -1;
@@ -1168,6 +1185,8 @@ int Network::Get( char * data, int length )
       #else
         usleep( 100000 );  // Prevent racing on error (1/10 second)
       #endif
+      if (CheckExitRequestTriggerNoIO())
+        break;
     }
   } // while (netbuffer.GetLength() < blah)
 
@@ -1626,6 +1645,8 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
     }
     sleep(1);
     rc = -1;
+    if (CheckExitRequestTriggerNoIO())
+      break;
   } while (isnonblocking); /* always 1 */
 
   return rc;
@@ -1988,7 +2009,7 @@ int Network::LowLevelGet(char *data,int length)
       sleep( sleepdur / 1000000UL );
     if ((sleepdur % 1000000UL) != 0)
       usleep( sleepdur % 1000000UL );
-  } while (length);
+  } while (length && !CheckExitRequestTriggerNoIO());
 
   #ifdef DEBUGTHIS
   Log("LLGet: got %u (requested %u) sockclosed:%s\n",
