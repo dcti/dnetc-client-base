@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79 1999/04/18 15:05:52 patrick Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.1 1999/05/28 03:08:18 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -28,31 +28,32 @@ return "@(#)$Id: cpucheck.cpp,v 1.79 1999/04/18 15:05:52 patrick Exp $"; }
 #include "logstuff.h"  //LogScreen()/LogScreenRaw()
 
 #if (CLIENT_OS == OS_SOLARIS)
-#include <unistd.h>    // cramer - sysconf()
+#  include <unistd.h>    // cramer - sysconf()
 #elif (CLIENT_OS == OS_IRIX)
-#include <sys/prctl.h>
+#  include <sys/prctl.h>
 #elif (CLIENT_OS == OS_DEC_UNIX)
-#include <unistd.h>
-#include <sys/sysinfo.h>
-#include <machine/hal_sysinfo.h>
-#include <machine/cpuconf.h>
+#  include <unistd.h>
+#  include <sys/sysinfo.h>
+#  include <machine/hal_sysinfo.h>
+#  include <machine/cpuconf.h>
 #elif (CLIENT_OS == OS_AIX)
-#include <sys/systemcfg.h>
+#  include <sys/systemcfg.h>
 /* if compiled on older versions of 4.x ... */
-#ifndef POWER_620
-#define POWER_620 0x0040
+#  ifndef POWER_620
+#    define POWER_620 0x0040
+#  endif
+#  ifndef POWER_630
+#    define POWER_630 0x0080
+#  endif
+#  ifndef POWER_A35
+#    define POWER_A35 0x0100
+#  endif
+#  ifndef POWER_RS64II
+#    define POWER_RS64II    0x0200          /* RS64-II class CPU */
+#  endif
+#elif (CLIENT_OS == OS_FREEBSD)
+#  include <sys/sysctl.h>
 #endif
-#ifndef POWER_630
-#define POWER_630 0x0080
-#endif
-#ifndef POWER_A35
-#define POWER_A35 0x0100
-#endif
-#ifndef POWER_RS64II
-#define POWER_RS64II    0x0200          /* RS64-II class CPU */
-#endif
-
-#endif /* (CLIENT_OS == OS_AIX) */
 
 /* ------------------------------------------------------------------------ */
 
@@ -78,7 +79,17 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
   if (cpucount == -2)
   {
     cpucount = -1;
-    #if (CLIENT_OS == OS_BEOS)
+    #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_NETBSD) || \
+        (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_OPENBSD)
+    { /* comment out if inappropriate for your *bsd - cyp (25/may/1999) */
+      int mib[2]; int ncpus;
+      size_t len = sizeof(ncpus);
+      mib[0] = CTL_HW;
+      mib[1] = HW_NCPU;
+      if (sysctl( &mib[0], 2, &ncpus, &len, NULL, 0 ) == 0)
+        cpucount = ncpus;
+    }
+    #elif (CLIENT_OS == OS_BEOS)
     {
       system_info the_info;
       get_system_info(&the_info);
