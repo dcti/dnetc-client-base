@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.73 1999/12/12 11:08:35 remi Exp $
+# @(#)$Id: configure,v 1.222.2.74 1999/12/13 05:20:09 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -205,7 +205,7 @@ TARGET_ARCTYPE="tgz"  # or "zip"
 OPTS_WARN="-Wall -Wtraditional -Wpointer-arith -Wcast-align \
 	  -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes \
 	  -Wconversion -Werror -Winline -Waggregate-return -Wcast-qual \
-	  -Woverloaded-virtual -Wnested-externs -Wredundant-decls"
+	  -Woverloaded-virtual -Wnested-externs"
 #
 # Common compiler options
 #
