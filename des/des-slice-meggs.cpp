@@ -3,14 +3,16 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-meggs.cpp,v $
+// Revision 1.18  1998/07/16 08:52:20  cyruspatel
+// The correct path to the #include files is now handled from the makefile,
+// and added an #if (CLIENT_OS == OS_OS2) inside the #if (__WATCOMC__) so
+// that _malloc and _free are not affected on other watcom platforms.
+//
 // Revision 1.17  1998/07/15 06:10:28  ziggyb
-// Did a couple of things to get things working under Watcom
-//
-// First, I had to add "..\common" in front of the local headers or else it won't
-// be able to read them.
-//
-// I've also added functions _free and _malloc which call the real versions so
-// they work with the precompiled mmx core by BRF and Remi.
+// Did a couple of things to get things working under Watcom - First, I had 
+// to add "..\common" in front of the local headers or else it won't be able 
+// to read them. Then I added functions _free and _malloc which call the 
+// real versions so they work with the precompiled mmx core by BRF and Remi.
 //
 // Revision 1.16  1998/07/14 10:43:39  remi
 // Added support for a minimum timeslice value of 16 instead of 20 when
@@ -62,21 +64,16 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_meggs_cpp(void) {
-return "@(#)$Id: des-slice-meggs.cpp,v 1.17 1998/07/15 06:10:28 ziggyb Exp $"; }
+return "@(#)$Id: des-slice-meggs.cpp,v 1.18 1998/07/16 08:52:20 cyruspatel Exp $"; }
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef __WATCOMC__
-#include "..\common\problem.h"
-#include "..\common\convdes.h"
-#else
 #include <assert.h>
 #include "problem.h"
 #include "convdes.h"
-#endif
+
 
 //#define DEBUG
 
@@ -118,14 +115,12 @@ extern BASIC_SLICE_TYPE whack16 (BASIC_SLICE_TYPE *plain,
             BASIC_SLICE_TYPE *key);
 #endif
 
-#if (__WATCOMC__)
+#if defined(__WATCOMC__) && (CLIENT_OS == OS_OS2)
 #pragma aux whack16 "_*";
-extern "C" void *_malloc (size_t size)
+extern "C" void *_malloc (size_t size) 
    { return malloc(size); }
-
 extern "C" void _free (void *ptr)
    { free(ptr); }
-   
 #endif
 
 #if defined(MMX_BITSLICER)
