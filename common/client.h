@@ -12,6 +12,11 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.97  1998/11/19 20:48:51  cyp
+// Rewrote -until/-h handling. Did away with useless client.hours (time-to-die
+// is handled by client.minutes anyway). -until/-h/hours all accept "hh:mm"
+// format now (although they do continue to support the asinine "hh.mm").
+//
 // Revision 1.96  1998/11/09 20:05:14  cyp
 // Did away with client.cktime altogether. Time-to-Checkpoint is calculated
 // dynamically based on problem completion state and is now the greater of 1
@@ -351,7 +356,6 @@ public:
   s32  inthreshold[2];
   s32  outthreshold[2];
   s32  blockcount;
-  char hours[64];
   s32  minutes;
   s32  timeslice;
   #ifdef OLDNICENESS
@@ -571,4 +575,3 @@ public:
 // --------------------------------------------------------------------------
 
 #endif // __CLIBASICS_H__
-

@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.166  1998/11/19 20:48:49  cyp
+// Rewrote -until/-h handling. Did away with useless client.hours (time-to-die
+// is handled by client.minutes anyway). -until/-h/hours all accept "hh:mm"
+// format now (although they do continue to support the asinine "hh.mm").
+//
 // Revision 1.165  1998/11/19 08:34:43  silby
 // Removed win32gui specific winmain.
 //
@@ -104,7 +109,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.165 1998/11/19 08:34:43 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.166 1998/11/19 20:48:49 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -145,7 +150,6 @@ Client::Client()
   outthreshold[1] = 10;
   blockcount = 0;
   minutes = 0;
-  hours[0] = 0;
   keyproxy[0] = 0;
   keyport = 2064;
   httpproxy[0] = 0;

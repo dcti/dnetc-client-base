@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.100  1998/11/19 20:48:53  cyp
+// Rewrote -until/-h handling. Did away with useless client.hours (time-to-die
+// is handled by client.minutes anyway). -until/-h/hours all accept "hh:mm"
+// format now (although they do continue to support the asinine "hh.mm").
+//
 // Revision 1.99  1998/11/15 11:49:42  cyp
 // ModeReq(-1) == 0 (not != 0) before the unix the system call.
 //
@@ -71,7 +76,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.99 1998/11/15 11:49:42 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.100 1998/11/19 20:48:53 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -81,6 +86,7 @@ return "@(#)$Id: cmdline.cpp,v 1.99 1998/11/15 11:49:42 cyp Exp $"; }
 #include "pathwork.h"  // InitWorkingDirectoryFromSamplePaths();
 #include "modereq.h"   // get/set/clear mode request bits
 #include "console.h"   // ConOutErr()
+#include "clitime.h"   // CliTimer() for -until setting
 #include "cmdline.h"   // ourselves
 
 /* -------------------------------------- */
@@ -702,20 +708,69 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             }
           }
         }
-      else if ( strcmp( thisarg, "-h" ) == 0 ) // Hours to run
+      else if ( strcmp( thisarg, "-h" ) == 0 || strcmp( thisarg, "-until" ) == 0)
         {
         if (nextarg)
           {
           skip_next = 1;
+          int isuntil = (strcmp( thisarg, "-until" ) == 0);
+          int h=0, m=0, pos, isok = 0, dotpos=0;
+          if (isdigit(*nextarg))
+            {
+            isok = 1;
+            for (pos = 0; nextarg[pos] != 0; pos++)
+              {
+              if (!isdigit(nextarg[pos]))
+                {
+                if (dotpos!=0 || (nextarg[pos]!=':' && nextarg[pos]!='.'))
+                  {
+                  isok = 0;
+                  break;
+                  }
+                dotpos=pos;
+                }
+              }
+            if (isok)
+              {
+              if ((h = atoi( nextarg )) < 0)
+                isok = 0;
+              else if (isuntil && h > 23)
+                isok = 0;
+              else if (dotpos == 0 && isuntil)
+                isok = 0;
+              else if (dotpos != 0 && strlen(nextarg+dotpos+1) != 2)
+                isok = 0;
+              else if (dotpos != 0 && ((m = atoi(nextarg+dotpos+1)) > 59))
+                isok = 0;
+              }
+            }
           if (run_level!=0)
             {
             if (logging_is_initialized)
-              LogScreenRaw("Setting time limit to %ul minutes\n",
-                                                    (unsigned long)(minutes));
+              {
+              if (!isok)
+                LogScreenRaw("%s option is invalid and was ignored.\n",thisarg);
+              else if (minutes == 0)
+                LogScreenRaw("Setting time limit to zero (no limit).\n");
+              else
+                {
+                struct timeval tv; CliTimer(&tv); tv.tv_sec+=(time_t)(minutes*60);
+                LogScreenRaw("Setting time limit to %u:%02u hours (stops at %s)\n",
+                             minutes/60, minutes%60, CliGetTimeString(&tv,1) );
+                }
+              }
             }
-          else
-            {
-            minutes = (s32) (60. * atol( nextarg ));
+          else if (isok)
+            {  
+            minutes = ((h*60)+m);
+            if (isuntil)
+              {
+              time_t timenow = CliTimer(NULL)->tv_sec;
+              struct tm *ltm = localtime( &timenow );
+              if (ltm->tm_hour > h || (ltm->tm_hour == h && ltm->tm_min >= m))
+                minutes+=(24*60);
+              minutes -= (((ltm->tm_hour)*60)+(ltm->tm_min));
+              }
             }
           }
         }
@@ -732,30 +787,6 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             }
           else if ( (blockcount = atoi( nextarg )) < 0)
             blockcount = 0;
-          }
-        }
-      else if ( strcmp( thisarg, "-until" ) == 0 ) // Exit time
-        {
-        if (nextarg)
-          {
-          skip_next = 1;
-          if (run_level!=0)
-            {
-            if (logging_is_initialized)
-              LogScreenRaw("Setting time limit to %d minutes\n",minutes);
-            }
-          else
-            {
-            time_t timenow = time( NULL );
-            struct tm *gmt = localtime(&timenow );
-            minutes = atoi( nextarg );
-            minutes = (int)( ( ((int)(minutes/100))*60 + (minutes%100) ) - 
-                                       ((60. * gmt->tm_hour) + gmt->tm_min));
-            if (minutes<0) minutes += 24*60;
-            if (minutes<0) minutes = 0;
-            sprintf(hours,"%u.%02u",(unsigned int)(minutes/60),
-                                    (unsigned int)(minutes%60));
-            }
           }
         }
       else if ( strcmp( thisarg, "-numcpu" ) == 0 ) // Override the number of cpus

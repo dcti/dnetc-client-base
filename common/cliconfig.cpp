@@ -3,8 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
-// Revision 1.196  1998/11/18 12:24:41  silby
-// Added check to see if cputype is out of range.  Lack of check was causing crashes if coretype was > allowed.
+// Revision 1.197  1998/11/19 20:48:54  cyp
+// Rewrote -until/-h handling. Did away with useless client.hours (time-to-die
+// is handled by client.minutes anyway). -until/-h/hours all accept "hh:mm"
+// format now (although they do continue to support the asinine "hh.mm").
 //
 // Revision 1.195  1998/11/15 10:55:42  remi
 // Bring back the cputype config screen.
@@ -275,7 +277,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.196 1998/11/18 12:24:41 silby Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.197 1998/11/19 20:48:54 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -301,7 +303,7 @@ return "@(#)$Id: cliconfig.cpp,v 1.196 1998/11/18 12:24:41 silby Exp $"; }
 #define CONF_THRESHOLDO2           4
 #define CONF_COUNT                 5
 #define CONF_HOURS                 6
-#define CONF_TIMESLICE             7
+#define CONF_TIMESLICE             7 /* obsolete */
 #define CONF_NICENESS              8
 #define CONF_LOGNAME               9
 #define CONF_UUEHTTPMODE          10
@@ -318,7 +320,7 @@ return "@(#)$Id: cliconfig.cpp,v 1.196 1998/11/18 12:24:41 silby Exp $"; }
 #define CONF_SMTPDEST             21
 #define CONF_NUMCPU               22
 #define CONF_CHECKPOINT           23
-#define CONF_CHECKPOINT2          24
+#define CONF_CHECKPOINT2          24 /* obsolete */
 #define CONF_RANDOMPREFIX         25
 #define CONF_PREFERREDBLOCKSIZE   26
 #define CONF_PROCESSDES           27
@@ -475,18 +477,14 @@ static optionstruct options[OPTION_COUNT]=
   "crunched a predefined number of blocks. Use 0 (zero) to apply 'no limit'.\n"
   ),5,2,1,NULL},
 //6
-{ "hours", CFGTXT("Run for this many hours, then exit"), "0.00", 
+{ "hours", CFGTXT("Run for this many hours, then exit"), "0:00", 
   CFGTXT(
   "This option specifies that you wish to have the client exit after it has\n"
   "crunched a predefined number of hours. Use 0 (zero) to apply 'no limit'.\n"
   ),5,1,2,NULL},
 //7
 { "timeslice", CFGTXT("Keys per timeslice"),
-#if (CLIENT_OS == OS_RISCOS)
-    "2048",
-#else
     "65536",
-#endif
     CFGTXT("The lower the value, the less impact the client will have on your system, but\n"
     "the slower it will go. Values from 256 to 65536 are good."),
     0 /*timeslice is obsolete. was menu 4 */,2,5,NULL},
@@ -641,18 +639,18 @@ static optionstruct options[OPTION_COUNT]=
   "setting this option to zero.\n"
   ),4,2,3,NULL},
 //23
-{ "checkpointfile", CFGTXT("RC5 Checkpoint Path/Name"),"",
+{ "checkpointfile", CFGTXT("Checkpoint Filename"),"",
   CFGTXT(
-  "This option sets the location of the RC5 checkpoint file. Checkpoints are\n"
+  "This option sets the location of the checkpoint file. Checkpoints are\n"
   "where the client writes its progress to disk so that it can recover partially\n"
   "completed work if there is a crash or power outage in the middle of a block.\n"
-  "DO NOT SHARE CHECKPOINTS BETWEEN CLIENTS OR BETWEEN CONTESTS. Avoid the use of\n"
-  "checkpoints unless your machine suffers from frequent crashes or you live in\n"
-  "an area with an unstable power supply.\n"
+  "DO NOT SHARE CHECKPOINTS BETWEEN CLIENTS. Avoid the use of checkpoints unless\n"
+  "your client is running in an environment where it might not be able to shutdown\n"
+  "properly.\n"
   ),1,1,13,NULL},
 //24
-{ "checkpointfile2", "DES Checkpoint Path/Name","",
-  "" /* option[CONF_CHECKPOINT].comments */,1,1,14,NULL},
+{ "checkpointfile2", "" /* "DES Checkpoint Path/Name" */,"",
+  "" /* option[CONF_CHECKPOINT].comments */,0 /*obsolete */,1,14,NULL},
 //25
 { "randomprefix", CFGTXT(""),"100",
   CFGTXT(""),/*not user changeable */0,2,0,NULL},
@@ -870,12 +868,16 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
     options[CONF_THRESHOLDO].comments=options[CONF_THRESHOLDI2].comments=
     options[CONF_THRESHOLDO2].comments=options[CONF_THRESHOLDI].comments;
     options[CONF_COUNT].thevariable=&blockcount;
-    options[CONF_HOURS].thevariable=(char *)(&hours[0]);
-    options[CONF_TIMESLICE].thevariable=&timeslice;
     
-    #if !((CLIENT_OS==OS_MACOS) || (CLIENT_OS==OS_RISCOS) || (CLIENT_OS==OS_WIN16))
+    char hours[64];
+    sprintf(hours,"%u:%02u", (unsigned)(minutes/60), (unsigned)(minutes%60)); 
+    options[CONF_HOURS].thevariable=(char *)(&hours[0]);
+    
+    #if 0 /* obsolete */
+    options[CONF_TIMESLICE].thevariable=&timeslice;
     options[CONF_TIMESLICE].optionscreen=0;
     #endif
+
     #ifdef OLDNICENESS
     options[CONF_NICENESS].thevariable=&niceness;
     #else
@@ -911,7 +913,11 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
     
     options[CONF_LOGNAME].thevariable=(char *)(&logname[0]);
     options[CONF_CHECKPOINT].thevariable=(char *)(&checkpoint_file[0][0]);
+    
+    #if 0 /* obsolete */
     options[CONF_CHECKPOINT2].thevariable=(char *)(&checkpoint_file[1][0]);
+    #endif
+    
     options[CONF_RC5IN].thevariable=(char *)(&in_buffer_file[0][0]);
     options[CONF_RC5OUT].thevariable=(char *)(&out_buffer_file[0][0]);
     options[CONF_DESIN].thevariable=(char *)(&in_buffer_file[1][0]);
@@ -1205,21 +1211,29 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
             blockcount = choice;
           break;
         case CONF_HOURS:
-          if (atoi(parm)>=0)
+          choice = atoi(parm);
+          if (choice>=0)
             {
-            minutes = (s32) (60. * atol(parm));
-            if ( minutes < 0 ) minutes = 0;
-            sprintf(hours,"%u.%02u", (unsigned)(minutes/60),
-            (unsigned)(minutes%60)); //1.000000 hours looks silly
+            minutes = choice * 60;
+            if (strchr( parm, ':') != NULL)
+              {
+              choice = atoi(strchr( parm, ':')+1);
+              if (choice < 0)
+                minutes = 0;
+              else
+                minutes += choice;
+              }
             }
           break;
         case CONF_TIMESLICE:        
+          #if 0 /* obsolete */
           // *** To allows inis to be shared, don't use platform specific 
           // *** timeslice limits. Scale the generic 0-65536 one instead.
           choice = atoi(parm);   
           if (choice >= 1)
             timeslice = choice;
           break;
+          #endif
         case CONF_NICENESS:
           choice = atoi(parm);
           if ( choice >= options[CONF_NICENESS].choicemin && 
@@ -1292,7 +1306,8 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           break;
         case CONF_CPUTYPE:
           choice = atoi(parm);
-          if (choice >= -1 && choice <= options[CONF_CPUTYPE].choicemax)
+          if (choice >= options[CONF_CPUTYPE].choicemin && 
+              choice <= options[CONF_CPUTYPE].choicemax)
             cputype = choice;
           break;
         case CONF_MESSAGELEN:
@@ -1303,23 +1318,30 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           break; //mail options are validated by mail.cpp 1998/08/20 cyrus
         case CONF_SMTPSRVR:
           strncpy( smtpsrvr, parm, sizeof(smtpsrvr) - 1 );
+          smtpsrvr[sizeof(smtpsrvr) - 1]=0;
           break; //mail options are validated by mail.cpp 1998/08/20 cyrus
         case CONF_SMTPFROM:
           strncpy( smtpfrom, parm, sizeof(smtpfrom) - 1 );
+          smtpfrom[sizeof(smtpfrom) - 1]=0;
           break; //mail options are validated by mail.cpp 1998/08/20 cyrus
         case CONF_SMTPDEST:
           strncpy( smtpdest, parm, sizeof(smtpdest) - 1 );
+          smtpdest[sizeof(smtpdest) - 1]=0;
           break; //mail options are validated by mail.cpp 1998/08/20 cyrus
         case CONF_NUMCPU:
           numcpu = atoi(parm);
           break; //validation is done in SelectCore() 1998/06/21 cyrus
         case CONF_CHECKPOINT:
           strncpy( checkpoint_file[0] , parm, sizeof(checkpoint_file[1]) -1 );
+          checkpoint_file[0][sizeof(checkpoint_file[0]) - 1]=0;
           ValidateConfig();
           break;
         case CONF_CHECKPOINT2:
+          #if 0
           strncpy( checkpoint_file[1] , parm, sizeof(checkpoint_file[1]) -1 );
+          checkpoint_file[1][sizeof(checkpoint_file[1]) - 1]=0;
           ValidateConfig();
+          #endif
           break;
         case CONF_PREFERREDBLOCKSIZE:
           choice = atoi(parm);
@@ -1367,22 +1389,27 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           break;
         case CONF_RC5IN:
           strncpy( in_buffer_file[0] , parm, sizeof(in_buffer_file[0]) -1 );
+          in_buffer_file[0][sizeof(in_buffer_file[0]) - 1]=0;
           ValidateConfig();
           break;
         case CONF_RC5OUT:
           strncpy( out_buffer_file[0] , parm, sizeof(out_buffer_file[0]) -1 );
+          out_buffer_file[0][sizeof(out_buffer_file[0]) - 1]=0;
           ValidateConfig();
           break;
         case CONF_DESIN:
           strncpy( in_buffer_file[1] , parm, sizeof(in_buffer_file[1]) -1 );
+          in_buffer_file[1][sizeof(in_buffer_file[1]) - 1]=0;
           ValidateConfig();
           break;
         case CONF_DESOUT:
           strncpy( out_buffer_file[1] , parm, sizeof(out_buffer_file[1]) -1 );
+          out_buffer_file[1][sizeof(out_buffer_file[1]) - 1]=0;
           ValidateConfig();
           break;
         case CONF_PAUSEFILE:
           strncpy( pausefile, parm, sizeof(pausefile) -1 );
+          pausefile[sizeof(pausefile) - 1]=0;
           if (isstringblank(pausefile)) 
             pausefile[0]=0;
           break;
@@ -1504,10 +1531,16 @@ int Client::ReadConfig(void)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
     inthreshold[1]=atoi(buffer);
   }
   blockcount = INIGETKEY(CONF_COUNT);
-  INIGETKEY(CONF_HOURS).copyto(hours, sizeof(hours));
-  minutes = (s32) (atol(hours) * 60.);
+  
+  INIGETKEY(CONF_HOURS).copyto(buffer, sizeof(buffer));
+  if ((p = strchr( buffer, ':' )) != NULL)
+    minutes = (s32)((atoi(buffer)*60)+atoi(p+1));
+  else if ((strchr( buffer, '.' )) != NULL)
+    minutes = (s32)(atol(buffer) * 60.);
+  if (minutes < 0)
+    minutes = 0;
 
-  #if 0
+  #if 0 /* obsolete */
   timeslice = INIGETKEY(CONF_TIMESLICE);
   #else
   timeslice = 65536;
@@ -1595,7 +1628,9 @@ int Client::ReadConfig(void)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
 
 INIGETKEY(CONF_LOGNAME).copyto(logname, sizeof(logname));
 INIGETKEY(CONF_CHECKPOINT).copyto(checkpoint_file[0], sizeof(checkpoint_file[0]));
+#if 0 /*obsolete */
 INIGETKEY(CONF_CHECKPOINT2).copyto(checkpoint_file[1], sizeof(checkpoint_file[1]));
+#endif
 
 ini.getkey(OPTION_SECTION,"in",in_buffer_file[0])[0].copyto(in_buffer_file[0],sizeof(in_buffer_file[0]));
 ini.getkey(OPTION_SECTION,"out",out_buffer_file[0])[0].copyto(out_buffer_file[0],sizeof(out_buffer_file[0]));
@@ -1647,8 +1682,10 @@ void Client::ValidateConfig( void ) //DO NOT PRINT TO SCREEN HERE!
     outthreshold[1]=inthreshold[1];
   if ( blockcount < 0 ) 
     blockcount = 0;
+  #if 0 /* obsolete */
   if ( timeslice < 1 ) 
     timeslice = atoi(options[CONF_TIMESLICE].defaultsetting);
+  #endif
   #ifdef OLDNICENESS
   if ( niceness < options[CONF_NICENESS].choicemin || 
        niceness > options[CONF_NICENESS].choicemax )
@@ -1658,9 +1695,6 @@ void Client::ValidateConfig( void ) //DO NOT PRINT TO SCREEN HERE!
        priority > options[CONF_NICENESS].choicemax )
     priority = options[CONF_NICENESS].choicemin;
   #endif
-
-  if (!GetCoreNameFromCoreType(cputype) || !*GetCoreNameFromCoreType(cputype))
-    cputype=-1;
 
   if ( uuehttpmode < 0 || uuehttpmode > 5 ) 
     uuehttpmode = 0;
@@ -1762,8 +1796,8 @@ int Client::WriteFullConfig(void) //construct a brand-spanking-new config
   sprintf(buffer,"%d:%d",(int)inthreshold[1],(int)outthreshold[1]);
   INISETKEY( CONF_THRESHOLDI2, buffer );
   INISETKEY( CONF_COUNT, blockcount );
-  sprintf(hours,"%u.%02u", (unsigned)(minutes/60), (unsigned)(minutes%60)); 
-  INISETKEY( CONF_HOURS, hours );
+  sprintf(buffer,"%u:%02u", (unsigned)(minutes/60), (unsigned)(minutes%60)); 
+  INISETKEY( CONF_HOURS, buffer );
 
   #if 0 /* timeslice is obsolete */
   INISETKEY( CONF_TIMESLICE, timeslice );
@@ -1811,7 +1845,9 @@ int Client::WriteFullConfig(void) //construct a brand-spanking-new config
   INISETKEY( CONF_NETTIMEOUT, nettimeout );
   INISETKEY( CONF_LOGNAME, logname );
   INISETKEY( CONF_CHECKPOINT, checkpoint_file[0] );
+  #if 0 /* obsolete */
   INISETKEY( CONF_CHECKPOINT2, checkpoint_file[1] );
+  #endif
   INISETKEY( CONF_RC5IN, in_buffer_file[0]);
   INISETKEY( CONF_RC5OUT, out_buffer_file[0]);
   INISETKEY( CONF_DESIN, in_buffer_file[1]);
