@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.11 1999/07/20 03:43:42 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.12 1999/07/25 22:57:28 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -23,20 +23,6 @@ return "@(#)$Id: client.cpp,v 1.206.2.11 1999/07/20 03:43:42 cyp Exp $"; }
 #include "logstuff.h"  // [De]InitializeLogging(),Log()/LogScreen()
 #include "console.h"   // [De]InitializeConsole(), ConOutErr()
 #include "network.h"   // [De]InitializeConnectivity()
-
-/* ------------------------------------------------------------------------ */
-
-#if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
-#error please put this in your ./platforms/amigaos/
-long __near __stack  = 65536L;  // AmigaOS has no automatic stack extension
-      // seems standard stack isn't enough
-#endif 
-
-#if (CLIENT_OS == OS_RISCOS)
-#error please put this in your ./platforms/riscos/ and make it
-#error riscosClientIsGui(). guirestart ought now to be obsolete.
-s32 guiriscos, guirestart;
-#endif
 
 /* ------------------------------------------------------------------------ */
 
@@ -144,17 +130,6 @@ static const char *GetBuildOrEnvDescription(void)
 #endif
 }
 
-int ClientIsGUI(void)
-{
-  #if defined(WIN32GUI) || defined(MAC_GUI) || defined(OS2_PM)
-  return 1;
-  #elif (CLIENT_OS == OS_RISCOS)
-  return (guiriscos!=0);
-  #else
-  return 0;
-  #endif
-}
-
 /* ---------------------------------------------------------------------- */
 
 static void PrintBanner(const char *dnet_id,int level,int restarted)
@@ -248,7 +223,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
                        #endif
                        "-%s " /* date is in bugzilla format yymmddhh */ 
                        "client for %s%s%s%s.\n",
-            ((ClientIsGUI())?('G'):('C')),  CliGetTimeString(&tv,4),
+            ((ConIsGUI())?('G'):('C')),  CliGetTimeString(&tv,4),
             CLIENT_OS_NAME, ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
       LogScreenRaw( "Please provide the *entire* version descriptor "
                     "when submitting bug reports.\n");
@@ -367,7 +342,12 @@ static int realmain( int argc, char *argv[] ) /* YES, *STATIC* */
 
   if ( init_success )
   {
-    init_success = (( clientP = new Client() ) != NULL);
+    void *mbuf = malloc(sizeof(Client)*2); //use this roundabout way
+    if (mbuf) //to ensure we have enough heap space to create the object
+    {
+      free(mbuf);
+      init_success = (( clientP = new Client() ) != NULL);
+    }
     if (!init_success)
       ConOutErr( "Unable to create client object. Out of memory." );
   }
@@ -375,7 +355,7 @@ static int realmain( int argc, char *argv[] ) /* YES, *STATIC* */
   //----------------------------
 
   #if (CLIENT_OS == OS_NETWARE)
-  //create stdout/screen, set cwd etc. save ptr to client for fnames/niceness
+  //set cwd etc. save ptr to client for fnames/niceness
   if ( init_success )
     init_success = ( nwCliInitClient( argc, argv, clientP ) == 0);
   #endif
@@ -386,6 +366,13 @@ static int realmain( int argc, char *argv[] ) /* YES, *STATIC* */
   if ( init_success )
     w32ConSetClientPointer( clientP ); // save the client * so we can bail out
   #endif                               // when we get a WM_ENDSESSION message
+
+  //----------------------------
+
+  #if (CLIENT_OS == OS_MACOS)
+  if ( init_success )                    // save the client * so we can 
+    macosCliSetClientPointer( clientP ); // load it when appropriate
+  #endif
 
   //----------------------------
 
@@ -415,6 +402,13 @@ static int realmain( int argc, char *argv[] ) /* YES, *STATIC* */
 
   //------------------------------
 
+  #if (CLIENT_OS == OS_MACOS)
+  if ( init_success )                    
+    macosCliSetClientPointer( NULL ); // clear the client *
+  #endif
+
+  //------------------------------
+
   if (clientP)
     delete clientP;
 
@@ -427,16 +421,15 @@ static int realmain( int argc, char *argv[] ) /* YES, *STATIC* */
 /* ----------------------------------------------------------------- */
 
 #if (CLIENT_OS == OS_MACOS)
-//
-// nothing - Mac framework provides main
-#error That may be so. But realmain is static and stays that way.
-#error example code follows (yes, wow, its vewwy komplikated!)
-#error extern void macCliMain(int (*)(int,char **));
-#error void main(void) { macCliMain(realmain); return; }
-//
+void main(void)
+{
+  //extern void macosCliMain(int (*)(int,char **));
+  macosCliMain(realmain); /* sythesise a command line for realmain */
+  return;                 /* UI will be initialized later via console.cpp */
+}  
 #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
-{ /* simply parses the command line and call the bootstrap */
+{ /* parse the command line and call the bootstrap */
   TRACE_OUT((+1,"WinMain()\n"));
   int rc=winClientPrelude( hInst, hPrevInst, lpszCmdLine, nCmdShow, realmain);
   TRACE_OUT((-1,"WinMain()\n"));

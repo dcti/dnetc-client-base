@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.5 1999/06/15 13:02:52 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.6 1999/07/25 22:57:28 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -31,8 +31,6 @@ return "@(#)$Id: console.cpp,v 1.48.2.5 1999/06/15 13:02:52 cyp Exp $"; }
 #include <sys/select.h>   // only needed if compiled on AIX 4.1
 #endif
 
-#define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
-
 #if !defined(NOTERMIOS) && ((CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) \
   || (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
   || (CLIENT_OS==OS_FREEBSD) || ((CLIENT_OS==OS_OS2) && defined(__EMX__)) \
@@ -47,7 +45,6 @@ return "@(#)$Id: console.cpp,v 1.48.2.5 1999/06/15 13:02:52 cyp Exp $"; }
 #if defined(__unix__)
 #include <sys/ioctl.h>  
 #endif
-
 #if (CLIENT_OS == OS_RISCOS)
 extern "C" void riscos_backspace();
 #endif
@@ -68,41 +65,17 @@ int DeinitializeConsole(void)
 {
   if (constatics.initlevel == 1)
   {
-    if (constatics.pauseonclose && !constatics.runhidden)
-    {
-      #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || \
-          ((CLIENT_OS == OS_WIN32) && (!defined(WIN32GUI))) || \
-          ((CLIENT_OS == OS_OS2) && !defined (__EMX__)) || \
-          (CLIENT_OS == OS_NETWARE)
-      {
-        int init = 0;
-        time_t endtime = (CliTimer(NULL)->tv_sec) + CONCLOSE_DELAY;
-        int row = -1, height = 0;
-        ConGetPos(NULL, &row);
-        ConGetSize(NULL, &height);
-        if (height > 2 && row != -1)
-          ConSetPos(0, height-((row<(height-2))?(3):(1)));
-        do
-        {
-          char buffer[80];
-          int remaining = (int)(endtime - (CliTimer(NULL)->tv_sec));
-          if (remaining <= 0)
-            break;
-          sprintf( buffer, "%sPress any key to continue... %d  ",
-                   ((!init)?("\n\n"):("\r")), remaining );
-          init = 1;
-          ConOut( buffer );
-        } while (ConInKey(1000) == 0);
-      }
-      #endif
-    }
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-    w32DeinitializeConsole();
+    #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+    w32DeinitializeConsole(constatics.pauseonclose);
+    #elif (CLIENT_OS == OS_NETWARE)
+    nwCliDeinitializeConsole(constatics.pauseonclose);
+    #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
+    os2CliDeinitializeConsole(constatics.pauseonclose);
+    #elif (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
+    macosCliDeinitializeUI(constatics.pauseonclose);
     #endif
   }
-
   constatics.initlevel--;
-
   return 0;
 }
 
@@ -116,26 +89,28 @@ int InitializeConsole(int runhidden,int doingmodes)
     memset( (void *)&constatics, 0, sizeof(constatics) );
     constatics.initlevel = 1;
     constatics.runhidden = runhidden;
-    constatics.pauseonclose = (doingmodes && ModeReqIsSet(MODEREQ_CONFIG)==0);
-
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-    retcode = w32InitializeConsole(runhidden,doingmodes);
-    #ifdef WIN32GUI
-    runhidden=0;
-    #endif
+    constatics.pauseonclose = (!runhidden && doingmodes && 
+                               ModeReqIsSet(MODEREQ_CONFIG)==0);
+    
+    #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+    retcode = w32InitializeConsole(constatics.runhidden,doingmodes);
+    #elif (CLIENT_OS == OS_NETWARE)
+    retcode = nwCliInitializeConsole(constatics.runhidden,doingmodes);
+    #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
+    retcode = os2CliInitializeConsole(constatics.runhidden,doingmodes);
+    #elif (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
+    retcode = macosCliInitializeUI(constatics.runhidden,doingmodes);
     #endif
     
     if (retcode != 0)
       --constatics.initlevel;
-    else if (!runhidden)
+    else if (ConIsGUI())
+      constatics.conisatty = 1;
+    else if (!constatics.runhidden)
     {
       #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
         constatics.conisatty = w32ConIsScreen();
       #elif (CLIENT_OS == OS_RISCOS)
-        constatics.conisatty = 1;
-      #elif (CLIENT_OS == OS_MACOS)
-        constatics.conisatty = 1;
-      #elif defined(OS2_PM)
         constatics.conisatty = 1;
       #else
         constatics.conisatty = (isatty(fileno(stdout)));
@@ -144,6 +119,24 @@ int InitializeConsole(int runhidden,int doingmodes)
   } /* constatics.initlevel == 1 */
 
   return retcode;
+}
+
+/* ---------------------------------------------------- */
+
+int ConIsGUI(void)
+{
+  #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+  return (!win32ConIsLiteUI()); /* do we have a light GUI or a full GUI? */
+  #elif (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
+  return 1;
+  #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
+  return 1;
+  #elif (CLIENT_OS == OS_RISCOS)
+  extern int guiriscos;
+  return (guiriscos!=0);
+  #else
+  return 0;
+  #endif
 }
 
 /* ---------------------------------------------------- */
@@ -179,7 +172,7 @@ int ConOut(const char *msg)
   {
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
       w32ConOut(msg);
-    #elif (CLIENT_OS == OS_MACOS)
+    #elif (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
       macConOut(msg);
     #elif (CLIENT_OS == OS_OS2 && defined(OS2_PM))
       os2conout(msg);
@@ -366,7 +359,7 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
 
   redraw = asbool = boolval = boolistf = 0;
   if ((flags & CONINSTR_ASBOOLEAN) != 0)
-    {
+  {
     asbool = 1;
     if ((flags & CONINSTR_BYEXAMPLE) != 0)
     {
