@@ -388,7 +388,7 @@ public:
   s32 nettimeout;
   s32 noexitfilecheck;
   s32 exitfilechecktime;
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
   s32 lurk;
 #if (!defined(WINNTSERVICE))
   s32 win95hidden;
@@ -396,6 +396,7 @@ public:
 #endif
 #if (CLIENT_OS == OS_OS2)
   s32 os2hidden;
+  s32 connectstatus;          // 0 is not connected, 1 is connected
 #endif
   char pausefile[128];
   s32 preferred_contest_id;  // 0 for RC564, 1 for DESII (unlike config)
