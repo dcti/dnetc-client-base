@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.cpp,v $
+// Revision 1.23  1999/02/09 23:41:39  cyp
+// Lurk iface mask changes: a) default iface mask no longer needs to be known
+// outside lurk; b) iface mask now supports wildcards; c) redid help text.
+//
 // Revision 1.22  1999/02/09 03:24:34  remi
 // Reverted the previous patch. connifacemask default is now set in confmenu.cpp.
 //
@@ -72,7 +76,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.22 1999/02/09 03:24:34 remi Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.23 1999/02/09 23:41:39 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -81,7 +85,6 @@ return "@(#)$Id: confopt.cpp,v 1.22 1999/02/09 03:24:34 remi Exp $"; }
 #include "client.h"   // only the MAXBLOCKSPERBUFFER define
 #include "confopt.h"  // ourselves
 #include "pathwork.h" // EXTN_SEP
-#include "lurk.h"     // DEFAULT_IFACES
 
 // --------------------------------------------------------------------------
 
@@ -436,7 +439,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "authentication before permitting communication through it.\n"
   ),CONF_MENU_NET,CONF_TYPE_PASSWORD,11,NULL,NULL,0,0},
 //36
-{ "lurk", CFGTXT("Modem detection options"),"0",
+{ "", CFGTXT("Modem detection options"),"0",
   CFGTXT(
   "Normal mode: the client will send/receive blocks only when it\n"
   "        empties the in buffer, hits the flush threshold, or the user\n"
@@ -453,27 +456,33 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "        on random blocks until a connection is detected.\n"
   ),CONF_MENU_NET,CONF_TYPE_INT,12,NULL,CFGTXT(&lurkmodetable[0]),0,2},
 //37
-{ "interfaces-to-watch", CFGTXT("Interfaces to watch"), "",
+{ "", CFGTXT("Interfaces to watch"), "",
   CFGTXT(
-  "Colon-separated list of interface names to monitor for a connection.\n"
-  "For example: \"ppp0:eth0:eth1\". An empty list implies any 'up' interface\n"
-  "except loopback.\n\n"
-  "1) If you access the Internet only through a modem, put in this list\n"
-  "'ppp0' for a PPP connection, 'sl0' for a SLIP connection, or 'ppp0:sl0'\n"
-  "for both.\n\n"
+  "Colon-separated list of interface names to monitor for a connection,\n"
+  "For example: \"ppp0:ppp1:eth1\". Wildcards are permitted, ie \"ppp*\".\n"
+  "1) An empty list implies all interfaces that are identifiable as dialup,\n"
+  "   ie \"ppp*:sl*:...\" (dialup interface names vary from platform to\n"
+  "   platform. FreeBSD for example, also includes 'dun*' interfaces).\n"
   "2) if you have an intermittent ethernet connection through which you can\n"
-  "access the Internet, put the corresponding interface name in this list,\n"
-  "typically 'eth0'.\n\n"
-  "3) if you don't put anything here, the client will consider any 'up'\n"
-  "interface as usable. This is OK for home users without a LAN and for\n"
-  "portable users who can access the Internet through the office LAN and\n"
-  "through a modem connection when they are at home.\n"
+  "   access the Internet, put the corresponding interface name in this list,\n"
+  "   typically 'eth0'\n"
+  "3) To include all devices, as might be preferrable for portable computers\n"
+  "   which access the Internet via a LAN in one location but via a modem\n"
+  "   in another, set this option to '*'.\n"
+  "The command line equivalent of this option is --interfaces-to-watch\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,13,NULL,NULL,0,0},
 //38
-{ "", CFGTXT("Dial the net as needed?"),"0",
-   CFGTXT(
-   "Select 'yes' to permit the client to initiate a network\n"
-   "connection if it needs one and none is active.\n"
+{ "" /*dialwhenneeded*/, 
+   #if (CLIENT_OS == OS_WIN32)
+   CFGTXT("Use a specific DUN profile for connecting to the net?"),
+   #elif ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32))
+   CFGTXT("Load/unload Winsock to initiate/hangup net connections?"),
+   #else
+   CFGTXT("Use scripts to initiate/hangup dialup connections?"),
+   #endif
+   "0",CFGTXT(
+   "Select 'yes' to have the client control how network connections\n"
+   "are initiatiated if none is active.\n"
    ),CONF_MENU_NET,CONF_TYPE_BOOL,14,NULL,NULL,0,1},
 //39
 { "", CFGTXT("Dial-up Connection Profile"),"",

@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk.h,v $
+// Revision 1.14  1999/02/09 23:41:39  cyp
+// Lurk iface mask changes: a) default iface mask no longer needs to be known
+// outside lurk; b) iface mask now supports wildcards; c) redid help text.
+//
 // Revision 1.13  1999/02/09 03:17:59  remi
 // Added Lurk::GetDefaultIFaceMask(void).
 //
@@ -59,41 +63,35 @@ int lurkmode;
   // 1 = CONNECT_LURK = fill buffers while online, try to connect when emptied
   // 2 = CONNECT_LURKONLY = fill buffers while online, never connect
 
-int dialwhenneeded;
-  // 0 = Don't dial, let autodial handle it or fail
-  // !0 = Have the client manually dial/hangup when a flush happens.
+int dialwhenneeded;      // 0 = we don't handle dial, !0 we dial/hangup
+char connprofile[64];    // Used by win32 for name of DUN connection to use.
+char connifacemask[64];  // a list of interfaces to monitor for online state
+char connstartcmd[64];   // name of script to call to start connection
+char connstopcmd[64];    // name of script to call to stop connection
 
-char connprofile[64];
-  // Used by win32 for name of DUN connection to use.
-  
-char connifacemask[64];  
-  // Used by some as a list of interfaces to watch for detecting online 
-  // status accept a ':' separated list of interface names, for example :
-  // "ppp0:eth0:eth1".  "\0" means any interface (besides the loopback one)
-
-char connstartcmd[64];
-  // used by linux and OS/2 as name of script to call to start connection
-
-char connstopcmd[64];
-  // used by linux and OS/2 as name of script to call to stop connection
-
-const char **GetConnectionProfileList(void);
-  // Gets the list of possible dial-up networking connections for the
-  // user to select. - called in cliconfig
-
-char *GetDefaultIFaceMask(void);   //return the default interface mask
+const char **GetConnectionProfileList(void); //get the list of conn profiles
 int GetCapabilityFlags(void);      //return supported CONNECT_* bits 
+
+  //methods used for lurk
 int CheckIfConnectRequested(void); // -> 0=no, !0=yes
 int CheckForStatusChange(void);    // -> 0 = nochange, !0 connection dropped
+
+  //methods used for dialup initiation/hangup
 int DialIfNeeded(int ignore_lurkonly_flag); // -> 0=success, !0 = failure
 int HangupIfNeeded(void);          // -> 0=success, !0 = failure
-int Start(void);                   // Start lurking -> 0=success, !0 = failure
-int Stop(void);                    // Stop lurking -> 0=success, !0 = failure
 
-Lurk();
-~Lurk();
+  //initialization/stop.
+int Start(void);                   // Start -> 0=success, !0 = failure
+int Stop(void);                    // Stop  -> 0=success, !0 = failure
+
+Lurk()  { Stop(); /* clear all variables */ }
+~Lurk() { Stop(); /* clear all variables */ }
 
 protected:
+
+int mask_include_all, mask_default_only; //what does the mask tell us?
+const char *ifacestowatch[(64/2)+1]; //(sizeof(connifacemask)/sizeof(char *))+1
+char ifacemaskcopy[64];            //sizeof(connifacemask)
 
 char conndevice[35];        //name of the device a connection was detected on
                             //informational use only
