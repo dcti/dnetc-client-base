@@ -14,6 +14,9 @@
 
 */
 // $Log: lurk.cpp,v $
+// Revision 1.37  1999/04/01 03:01:11  cyp
+// Did one-shot RAS init/deinit properly.
+//
 // Revision 1.36  1999/03/09 07:04:29  silby
 // Win32 RAS is only initted/deinitted once.  Initialization on the fly
 // is causing too many complaints.
@@ -120,7 +123,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.36 1999/03/09 07:04:29 silby Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.37 1999/04/01 03:01:11 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -137,10 +140,6 @@ Lurk dialup;
 
 int Lurk::Stop(void) // also called from constructor/destructor
 {
-  #if (CLIENT_OS == OS_WIN32)
-  int DeinitRasAPIProcs(void);
-  DeinitRasAPIProcs();
-  #endif
   islurkstarted = lastcheckshowedconnect = dohangupcontrol = 0;
   lurkmode = dialwhenneeded = 0;
   conndevice[0] = connprofile[0] = connifacemask[0] = 0;
@@ -274,6 +273,24 @@ struct ifact
 #endif
 
 /* ========================================================== */
+
+Lurk::Lurk()
+{
+  Stop(); /* clear all variables */
+  #if (CLIENT_OS == OS_WIN32)
+  InitRasAPIProcs();
+  #endif
+}
+
+Lurk::~Lurk()
+{
+  #if (CLIENT_OS == OS_WIN32)
+  DeinitRasAPIProcs();
+  #endif
+  Stop();  /* clear all variables */
+}
+
+/* ---------------------------------------------------------- */
 
 int Lurk::GetCapabilityFlags(void)
 {
