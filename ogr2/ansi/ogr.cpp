@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.22 2001/01/04 20:50:58 teichp Exp $
+ * $Id: ogr.cpp,v 1.1.2.23 2001/01/08 23:44:04 mfeiri Exp $
  */
 #include "baseincs.h"
 #include <stdio.h>  /* printf for debugging */
@@ -16,13 +16,14 @@
 
 /* baseline/reference == ogr.cpp without optimization == ~old ogr.cpp */
 #if defined(NO_OGR_OPTIMIZATION) || defined(GIMME_BASELINE_OGR_CPP)
-  #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 0/1 - default is 1 ('yes')) */
+  #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 0/1 - default is 1 ('yes') */
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* 0/1 - default is hw dependant */
   #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 0-2 - default is 1 */
   #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 0-2 - default is 2 */
-  #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* 0/1 - default is 1 */
-  #define OGROPT_ALTERNATE_CYCLE                0 /* 0/1 - default is 0 */
+  #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* 0/1 - default is 1 ('yes') */
+  #define OGROPT_ALTERNATE_CYCLE                0 /* 0/1 - default is 0 ('no') */
   #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* 0-2 - default is 0 */
+  #define OGROPT_EXACT_NODESLIMIT               0 /* 0/1 - default is 0 ('no') */
 #elif (defined(OVERWRITE_DEFAULT_OPTIMIZATIONS))  /* defines reside in an external file */
 #elif (defined(ASM_X86) || defined(__386__))
   #if defined(OGR_NOFFZ) /* the bsr insn is slooooow on anything less than a PPro */
@@ -78,7 +79,6 @@
   #else
     #error play with the defines to find optimal settings for your compiler
   #endif
-
 #elif defined(ASM_ARM)
   #if (__GNUC__)
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1
@@ -88,6 +88,11 @@
     #define OGROPT_ALTERNATE_CYCLE                0
     #define OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP 1
   #endif
+#endif
+
+/* OGROPT_EXACT_NODESLIMIT is not compiler but OS dependant */
+#if (CLIENT_OS == RISC_OS) || (CLIENT_OS == OS_MACOS)
+  #define OGROPT_EXACT_NODESLIMIT 1
 #endif
 
 /* -- various optimization option defaults ------------------------------- */
@@ -195,6 +200,19 @@
 */
 #ifndef OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT
 #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* 0 (no opt) or 1 or 2 */
+#endif
+
+
+/* By default the OGR cruncher uses the nodeslimit merely as a hint when to
+   leave the cruncher rather than adhering to it exactly. This gets you a 3%
+   speed increase but it may turn out to considerably slow down non-preemptive
+   systems because in extereme situations it can happen that you request a
+   nodeslimit of 1000 but end up with 32000 nodes done.
+   If you define this then the cruncher will adhere exactly to the requested
+   nodeslimit.
+*/
+#ifndef OGROPT_EXACT_NODESLIMIT
+#define OGROPT_EXACT_NODESLIMIT 0 /* the default is "no" */
 #endif
 
 /* ----------------------------------------------------------------------- */
@@ -2411,11 +2429,21 @@ static int ogr_cycle(void *state, int *pnodes)
 
       int maxMinusDepth = oStateMaxDepthM1 - depth;
 
+      #if (OGROPT_EXACT_NODESLIMIT == 1)
+      if (nodes >= nodeslimit) {
+         break;
+      }
+      #endif
+
       if (depth <= oStateHalfDepth2) {
          if (depth <= oStateHalfDepth) {
+         
+            #if (OGROPT_EXACT_NODESLIMIT == 0)
             if (nodes >= nodeslimit) {
                break;
             }
+            #endif
+            
             limit = oStateMax - OGR[maxMinusDepth];
             limit = (limit < oStateHalfLength) ? limit : oStateHalfLength;
          } else {
@@ -2502,7 +2530,6 @@ static int ogr_cycle(void *state, int *pnodes)
   int nodeslimit = *pnodes;
   int retval = CORE_S_CONTINUE;
   int limit;
-  int s;
   U comp0;
 
 #ifdef OGR_DEBUG
@@ -2511,150 +2538,22 @@ static int ogr_cycle(void *state, int *pnodes)
   for (;;) {
 
     oState->marks[depth-1] = lev->cnt2;
-#ifdef OGR_DEBUG
-    if (oState->LOGGING) dump_ruler(oState, depth);
-#endif
-    if (depth <= oState->half_depth2) {
-      if (depth <= oState->half_depth) {
-        //dump_ruler(oState, depth);
-        if (nodes >= nodeslimit) {
-          break;
-        }
-        limit = oState->max - OGR[oState->maxdepthm1 - depth];
-        limit = limit < oState->half_length ? limit : oState->half_length;
-      } else {
-        limit = oState->max - choose(lev->dist[0] >> ttmMAXBITS, oState->maxdepthm1 - depth);
-        limit = limit < oState->max - oState->marks[oState->half_depth]-1 ? limit : oState->max - oState->marks[oState->half_depth]-1;
-      }
-    } else {
-      limit = oState->max - choose(lev->dist[0] >> ttmMAXBITS, oState->maxdepthm1 - depth);
-    }
-
-#ifdef OGR_DEBUG
-    if (oState->LOGGING) dump(depth, lev, limit);
-#endif
-
-    nodes++;
-
-    /* Find the next available mark location for this level */
-stay:
-    comp0 = lev->comp[0];
-#ifdef OGR_DEBUG
-    if (oState->LOGGING) printf("comp0=%08x\n", comp0);
-#endif
-    if (comp0 < 0xfffffffe) {
-      #if defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
-      s = LOOKUP_FIRSTBLANK( comp0 );
-      #else
-      if (comp0 < 0xffff0000)
-        s = ogr_first_blank[comp0 >> 16];
-      else {
-        /* s = 16 + ogr_first_blank[comp0 & 0x0000ffff]; slow code */
-        s = 16 + ogr_first_blank[comp0 - 0xffff0000];
-      }
-      #endif
-#ifdef OGR_DEBUG
-  if (oState->LOGGING) printf("depth=%d s=%d len=%d limit=%d\n", depth, s+(lev->cnt2-lev->cnt1), lev->cnt2+s, limit);
-#endif
-      if ((lev->cnt2 += s) > limit) goto up; /* no spaces left */
-      COMP_LEFT_LIST_RIGHT(lev, s);
-    } else {
-      /* s>32 */
-      if ((lev->cnt2 += 32) > limit) goto up; /* no spaces left */
-      COMP_LEFT_LIST_RIGHT_32(lev);
-      if (comp0 == 0xffffffff) goto stay;
-    }
-
-
-    /* New ruler? */
-    if (depth == oState->maxdepthm1) {
-      oState->marks[oState->maxdepthm1] = lev->cnt2;       /* not placed yet into list arrays! */
-      if (found_one(oState)) {
-        retval = CORE_S_SUCCESS;
-        break;
-      }
-      goto stay;
-    }
-
-    /* Go Deeper */
-    lev2 = lev + 1;
-#if (OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP == 1)
-    COPY_LIST_SET_BIT_COPY_DIST_COMP(lev2, lev, lev->cnt2-lev->cnt1);
-#else
-    COPY_LIST_SET_BIT(lev2, lev, lev->cnt2-lev->cnt1);
-    COPY_DIST_COMP(lev2, lev);
-#endif
-    lev2->cnt1 = lev->cnt2;
-    lev2->cnt2 = lev->cnt2;
-    lev->limit = limit;
-    lev++;
-    depth++;
-    continue;
-
-up:
-    lev--;
-    depth--;
-    if (depth <= oState->startdepth) {
-      retval = CORE_S_OK;
-      break;
-    }
-    limit = lev->limit;
-
-    goto stay; /* repeat this level till done */
-  }
-
-  #if 0 /* oState->Nodes is unused (count is returned through *pnodes) */
-  // oState->Nodes += nodes;
-  {
-    U new_hi = oState->Nodes.hi;
-    U new_lo = oState->Nodes.lo;
-    new_lo += nodes;
-    if (new_lo < oState->Nodes.lo)
-    {
-      if ((++new_hi) < oState->Nodes.hi)
-        new_hi = new_lo = ((U)ULONG_MAX);
-    }
-    oState->Nodes.hi = new_hi;
-    oState->Nodes.lo = new_lo;
-  }
-  #endif
-  oState->depth = depth-1;
-
-  *pnodes = nodes;
-
-  return retval;
-}
-
-#if (CLIENT_OS == OS_RISCOS)
-static int ogr_cycle_non_preemptive(void *state, int *pnodes)
-{
-  struct State *oState = (struct State *)state;
-  int depth = oState->depth+1;      /* the depth of recursion */
-  struct Level *lev = &oState->Levels[depth];
-  struct Level *lev2;
-  int nodes = 0;
-  int nodeslimit = *pnodes;
-  int retval = CORE_S_CONTINUE;
-  int limit;
-  int s;
-  U comp0;
-
-#ifdef OGR_DEBUG
-  oState->LOGGING = 1;
-#endif
-  for (;;) {
-
-    oState->marks[depth-1] = lev->cnt2;
-
+#if (OGROPT_EXACT_NODESLIMIT == 1)
     if (nodes >= nodeslimit) {
       break;
     }
+#endif
 #ifdef OGR_DEBUG
     if (oState->LOGGING) dump_ruler(oState, depth);
 #endif
     if (depth <= oState->half_depth2) {
       if (depth <= oState->half_depth) {
         //dump_ruler(oState, depth);
+#if (OGROPT_EXACT_NODESLIMIT == 0)
+        if (nodes >= nodeslimit) {
+          break;
+        }
+#endif
         limit = oState->max - OGR[oState->maxdepthm1 - depth];
         limit = limit < oState->half_length ? limit : oState->half_length;
       } else {
@@ -2679,8 +2578,9 @@ stay:
 #endif
     if (comp0 < 0xfffffffe) {
       #if defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
-      s = LOOKUP_FIRSTBLANK( comp0 );
+      int s = LOOKUP_FIRSTBLANK( comp0 );
       #else
+      int s;
       if (comp0 < 0xffff0000)
         s = ogr_first_blank[comp0 >> 16];
       else {
@@ -2738,28 +2638,12 @@ up:
     goto stay; /* repeat this level till done */
   }
 
-  #if 0 /* oState->Nodes is unused (count is returned through *pnodes) */
-  // oState->Nodes += nodes;
-  {
-    U new_hi = oState->Nodes.hi;
-    U new_lo = oState->Nodes.lo;
-    new_lo += nodes;
-    if (new_lo < oState->Nodes.lo)
-    {
-      if ((++new_hi) < oState->Nodes.hi)
-        new_hi = new_lo = ((U)ULONG_MAX);
-    }
-    oState->Nodes.hi = new_hi;
-    oState->Nodes.lo = new_lo;
-  }
-  #endif
   oState->depth = depth-1;
 
   *pnodes = nodes;
 
   return retval;
 }
-#endif
 #endif
 
 static int ogr_getresult(void *state, void *result, int resultlen)
