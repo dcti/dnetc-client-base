@@ -1591,19 +1591,27 @@ Known working firewalls/proxies:
 (If you know of other working proxies/modes, please e-mail silby@execpc.com)
 
 Name: Wingate 2.x
+Operating System: Windows 95/NT
 Connection method: HTTP proxy, Direct port mapping
+Download Site: http://www.wingate.com
 
 Name: Internet Gate v1.30 for OS/2.
+Operating System: OS/2
 Connection method: Direct port mapping
 
 Name: Microsoft Proxy Server 2.0
+Operating System: Windows NT
 Connection method: HTTP proxy
 Notes: userid + password are the normal NT domain login and password
 
 Name: Novell BorderManager web proxy
+Operating System: Novell Netware
 Connection method: HTTP proxy
 
-
+Name: Squid
+Operating System: Unix
+Connection method: HTTP proxy
+Download Site: http://squid.nlanr.net
 
 13.  Flushing and fetching buffers via e-mail
 ---------------------------------------------
