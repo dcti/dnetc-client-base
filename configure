@@ -5,6 +5,17 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.171  1999/01/13 23:03:58  friedbait
+# fixed bug in OS2 conditional path. A syntax error caused OS2 specific
+# stuff being put in the Makefile even if there was no OS2 target selected.
+# The bug was an 'if' statement with the condition written like:
+#
+# if [ $target=OS2 ]; then
+#
+# the correct syntax is
+#
+# if [ $target = OS2 ]; then
+#
 # Revision 1.170  1999/01/13 21:28:29  patrick
 # new target for OS2: x86-os2-gcc
 #
@@ -2041,7 +2052,7 @@ echo "" >> Makefile
 echo "Generating Makefile production targets..."
 echo "# Regular targets follow" >> Makefile
 
-if [ $TARGET_OS=OS2 ]; then
+if [ $TARGET_OS = OS2 ]; then
 
 echo "${EXENAME}.exe:	\${BUILDNAME}.exe" >> Makefile
 echo "	\${CP} \${BUILDNAME}.exe ${EXENAME}.exe" >> Makefile
