@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.6 2003/09/12 13:25:16 mweiser Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.7 2003/10/15 03:08:58 jr_brady Exp $"; }
 
 //#define TRACE
 
@@ -38,7 +38,8 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.6 2003/09/12 13:25:16 mweiser Exp $"; }
     #endif
 #elif (CLIENT_CPU == CPU_ALPHA)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
-    extern "C" CoreDispatchTable *ogr_get_dispatch_table_cix(void);
+    /* Where is this function located? */
+    /* extern "C" CoreDispatchTable *ogr_get_dispatch_table_cix(void); */
 #elif (CLIENT_CPU == CPU_68K)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_000(void);
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_020(void);
@@ -83,7 +84,8 @@ int InitializeCoreTable_ogr(int first_time)
         ogr_get_dispatch_table_060();
       #elif (CLIENT_CPU == CPU_ALPHA)
         ogr_get_dispatch_table();
-        ogr_get_dispatch_table_cix();
+        /* Where is this function located? */
+        /* ogr_get_dispatch_table_cix(); */
       #elif (CLIENT_CPU == CPU_VAX)
         ogr_get_dispatch_table();
       #elif (CLIENT_CPU == CPU_SPARC)
@@ -369,9 +371,10 @@ int selcoreSelectCore_ogr(unsigned int threadindex,
     coresel = 0;
   }
 #elif (CLIENT_CPU == CPU_ALPHA)
-  if (coresel == 1)
-    unit_func.ogr = ogr_get_dispatch_table_cix();
-  else
+  /* Where is the _cix function located? */
+  /* if (coresel == 1) */
+  /*  unit_func.ogr = ogr_get_dispatch_table_cix(); */
+  /* else */
     unit_func.ogr = ogr_get_dispatch_table();
 #elif (CLIENT_CPU == CPU_X86)
   if (coresel == 0) //A
