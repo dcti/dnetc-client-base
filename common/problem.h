@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.47  1999/03/19 15:45:03  gregh
+// Pad ogr union members to be the same size as crypto members.
+//
 // Revision 1.46  1999/03/19 03:19:13  sampo
 // checkin fix for mac build bustage, make GetKeysDone() use new data structure.
 //
@@ -200,7 +203,8 @@ typedef union
     u64 iterations;       // iterations to do
   } crypto;
   struct {
-    Stub stub;
+    Stub stub;            // stub to work on (24 bytes)
+    char unused[24];
   } ogr;
 } ContestWork;
 

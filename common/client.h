@@ -11,6 +11,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.125  1999/03/19 15:45:03  gregh
+// Pad ogr union members to be the same size as crypto members.
+//
 // Revision 1.124  1999/03/18 07:38:02  gregh
 // Add #ifdef GREGH blocks so we can safely leave CONTEST_COUNT at 2 for
 // current builds (until OGR is ready).
@@ -407,7 +410,8 @@ typedef struct
       u64  iterations;    // iterations to do
     } crypto;             // RC5 and DES
     struct {
-      Stub stub;          // stub to work on
+      Stub stub;          // stub to work on (24 bytes)
+      char unused[24];
     } ogr;                // OGR
   } data;
   u32  op;                // (out)OP_SUCCESS, (out)OP_DONE, or (in)OP_DATA
