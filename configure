@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.62  1998/07/01 09:01:39  daa
+# add hpux-m68k
+#
 # Revision 1.61  1998/06/27 21:32:51  jlawson
 # added -lncurses to alpha-gcc and alpha-gcc-mt builds
 #
@@ -247,6 +250,7 @@ OPTS_GCC_ALPHA="$OPTS_GCC -O6 -DASM_ALPHA -static"
 
 OPTS_CC_HPUX='+A +a1 +O3 -D_HPUX -DCPU_ID=CPU_PA_RISC -DOS_ID=OS_HPUX'
 OPTS_GCC_HPUX="$OPTS_GCC -O6 -DASM_HPPA -static"
+OPTS_GCC_HPUX_M68K="$OPTS_GCC -D_HPUX_M68K -static"
 
 #--
 
@@ -278,6 +282,8 @@ OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentium -DASM_X86"
 
 OPTS_GCC_M68K="$OPTS_GCC -m68040 -DASM_68K"
 OPTS_GAS_M68K="-v -V --register-prefix-optional -m68040"
+OPTS_GCC_M68030K="$OPTS_GCC -m68030 -DASM_68K"
+OPTS_GAS_M68030K="-v -V --register-prefix-optional -m68030"
 
 OPTS_NEXT_M68K="$OPTS_GCC -O6 -m68040 -DASM_68K"
 OPTS_NEXT_SPARC="$OPTS_GCC -O6 -DASM_SPARC -D_OLD_NEXT_"
@@ -416,6 +422,16 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_HPUX -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="platforms/parisc.s $MEGGS_SLICE_SRCS"
 	;;
+
+
+    *hpux-gcc-m68k)
+	RC5CORECOPY="rc5ansi1-b2.cpp"
+	TARGET_CCFLAGS="$OPTS_GCC_HPUX_M68K -DPIPELINE_COUNT=1 -DBIT_32 -DKWAN"
+	TARGET_AFLAGS="$OPTS_GAS_M68030K"
+	TARGET_ADDASMS="rc5/crunch.68k.gcc.s"
+	TARGET_ADDSRCS="$SLICE_SRCS3"
+	TARGET_LIBS="-static"
+	echo $TARGET_CCFLAGS
 
 ###### DGUX (Data General Unix)
     *dgux-gcc)
