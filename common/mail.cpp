@@ -7,23 +7,62 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.32.2.9 2000/06/04 10:22:44 oliver Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.32.2.10 2000/06/05 18:01:07 cyp Exp $"; }
 
 //#define SHOWMAIL    // define showmail to see mail transcript on stdout
-#define __MAIL_CPP__    // used by AmigaOS, to leave out conflicting includes
 
 #include "baseincs.h"
 #include "network.h"
-#include "version.h"
-#include "logstuff.h"
-#include "triggers.h"
-#include "util.h"
-#include "mail.h"
+#include "version.h"  /* for mail header generation */
+#include "logstuff.h" /* LogScreen() */
+#include "triggers.h" /* CheckExitRequestTrigger() */
+#include "util.h"     /* TRACE_OUT */
+#include "mail.h"     /* keep prototypes in sync */
 
-#if !defined(MAILSPOOL_IS_MALLOCBUFFER) && !defined(MAILSPOOL_IS_MEMFILE) && \
-    !defined(MAILSPOOL_IS_AUTOBUFFER) && !defined(MAILSPOOL_IS_STATICBUFFER)
-#error MAIL_SPOOL type is undefined
-#endif
+/* --------------------------------------------------------------------- */
+
+#if (defined(MAILSPOOL_IS_AUTOBUFFER))
+  #include "autobuff.h"
+#elif defined(MAILSPOOL_IS_MEMFILE)
+  #include "memfile.h"
+#elif (defined(MAILSPOOL_IS_STATICBUFFER))
+  #include <limits.h>
+  #define MAILBUFFSIZE 150000L
+  #if (UINT_MAX < MAILBUFFSIZE)
+    #undef MAILBUFFSIZE
+    #define MAILBUFFSIZE 32000
+  #endif
+#else
+  #define MAILSPOOL_IS_MALLOCBUFFER
+#endif  
+
+#define MAILMESSAGE_SIGNATURE 0x4d4d5347ul  /* ('MMSG') */
+
+struct mailmessage
+{
+  unsigned long signature; /* 'MMSG' (0x4D4D5347) */
+  unsigned long sendthreshold; 
+  unsigned long maxspoolsize;
+  int send_reentrancy_guard;   /* \  Log()->Mail()->Net()->Log()->Mail->... */
+  int append_reentrancy_guard; /* /  condition guard */
+  int sendpendingflag; //0 after a send() (successful or not), 1 after append()
+    
+  #if (defined(MAILSPOOL_IS_AUTOBUFFER))
+    AutoBuffer *spoolbuff;
+  #elif defined(MAILSPOOL_IS_MEMFILE)
+    MEMFILE *spoolbuff;
+  #elif (defined(MAILSPOOL_IS_STATICBUFFER))
+    char spoolbuff[MAILBUFFSIZE];
+  #elif (defined(MAILSPOOL_IS_MALLOCBUFFER))
+    char *spoolbuff;
+  #endif
+
+  char fromid[256];
+  char destid[256];
+  char rc5id[256];
+  char smtphost[256];
+  unsigned int smtpport;
+};    
 
 //-------------------------------------------------------------------------
 
@@ -655,10 +694,25 @@ static int smtp_send_message_footer( Network *net )
 static int smtp_close_message_envelope(Network * net)
 { return (put_smtp_line( "QUIT\r\n", 6 , net)?(-1):(0)); }
 
+//=========================================================================
+
+struct mailmessage *__smpt_convert_handle_to_mailmessage( void *msghandle )
+{
+  if (msghandle)
+  {
+    if (((struct mailmessage *)msghandle)->signature == MAILMESSAGE_SIGNATURE)
+      return (struct mailmessage *)msghandle;
+  }
+  return (struct mailmessage *)0;
+}
+
 //-------------------------------------------------------------------------
 
-unsigned long smtp_countspooled( struct mailmessage *msg )
+unsigned long smtp_countspooled( void *msghandle )
 {
+  struct mailmessage *msg = __smpt_convert_handle_to_mailmessage( msghandle );
+  if (!msg)
+    return 0;
   if (((long)(msg->sendthreshold)) <= 0 ) //sanity check
     msg->sendthreshold = 0;
   if (msg->sendthreshold == 0)
@@ -693,90 +747,112 @@ unsigned long smtp_countspooled( struct mailmessage *msg )
 //int smtp_deinitialize_message( struct mailmessage *msg ); //fwd resolution
 
 //returns 0 if success, <0 if send error, >0 no network (should defer)
-int smtp_send_message( struct mailmessage *msg )
+int smtp_send_message( void *msghandle )
 {
-  Network *net;
-  const char *resmsg = NULL;
   int errcode, deferred;
-
-  if (msg->sendpendingflag == 0) //no changes since we last tried to send
-    return 0;
-  msg->sendpendingflag = 0; //protect against recursive calls
-
-  #ifdef SHOWMAIL
-  LogRaw("SHOWMAIL: beginning send(): spool length: %d bytes\n",
-                               (int)(smtp_countspooled(msg)) );
-  #endif
-
-  if (smtp_countspooled( msg ) == 0)
-    return 0;
+  struct mailmessage *msg = __smpt_convert_handle_to_mailmessage( msghandle );
+  if (!msg)
+    return -1;
 
   errcode = deferred = 0;
-  if ((net = smtp_open_net( msg->smtphost, msg->smtpport )) == NULL)
+  if ((++msg->send_reentrancy_guard) == 1)
   {
-    resmsg = "Unable to open connection.";
-    errcode = +1; //retry hint
-    deferred = 1;
-  }
-  else
-  {
-    errcode = smtp_open_message_envelope(net,msg->fromid,msg->destid,NULL);
-    if (errcode > 0) /* net error (retry later) */
+    if (msg->sendpendingflag != 0) //have changes since we last tried to send
     {
-      resmsg = "Failed to send envelope.";
-      deferred = 1;
-    }
-    else /* <0=no smtp ack, 0=success */
-    {
-      if (errcode == 0) /* success */
+      msg->sendpendingflag = 0;
+
+      #ifdef SHOWMAIL
+      LogRaw("SHOWMAIL: beginning send(): spool length: %d bytes\n",
+                                  (int)(smtp_countspooled(msg)) );
+      #endif
+
+      if (smtp_countspooled( msghandle ) != 0)
       {
-        errcode = smtp_send_message_header(net, msg->fromid,msg->destid,msg->rc5id);
-        if (errcode == 0) /* success */
+        Network *net;
+        const char *resmsg = NULL;
+        if ((net = smtp_open_net( msg->smtphost, msg->smtpport )) == NULL)
         {
-          int sendres = smtp_send_message_text( net, msg->spoolbuff );
-          //0=success, <0 neterror+sentsome, >0 neterror+sentnone (can retry)
-          if (sendres < 0)
+          resmsg = "Unable to open connection.";
+          errcode = +1; //retry hint
+          deferred = 1;
+        }
+        else
+        {
+          errcode = smtp_open_message_envelope(net,msg->fromid,msg->destid,NULL);
+          if (errcode > 0) /* net error (retry later) */
           {
-            errcode = +1; /* net error */
-            smtp_deinitialize_message( msg );
-            resmsg = "Network error. Message discarded.";
-          }
-          else if (sendres > 0)
-          {
-            errcode = +1; /* net error */
-            resmsg = "Network error.";
+            resmsg = "Failed to send envelope.";
             deferred = 1;
           }
-          else /* sendres == 0 */
+          else /* <0=no smtp ack, 0=success */
           {
-            smtp_deinitialize_message( msg );
-            resmsg = "Message has been sent.";
-          }
-          if (errcode <= 0) /* only if no net error */
-            errcode = smtp_send_message_footer( net ); /* close the message */
+            if (errcode == 0) /* success */
+            {
+              errcode = smtp_send_message_header(net, msg->fromid,msg->destid,msg->rc5id);
+              if (errcode == 0) /* success */
+              {
+                int sendres = smtp_send_message_text( net, msg->spoolbuff );
+                //0=success, <0 neterror+sentsome, >0 neterror+sentnone (can retry)
+                if (sendres < 0)
+                {
+                  errcode = +1; /* net error */
+                  smtp_deinitialize_message( msghandle );
+                  resmsg = "Network error. Message discarded.";
+                }
+                else if (sendres > 0)
+                {
+                  errcode = +1; /* net error */
+                  resmsg = "Network error.";
+                  deferred = 1;
+                }
+                else /* sendres == 0 */
+                {
+                  smtp_deinitialize_message( msg );
+                  resmsg = "Message has been sent.";
+                }
+                if (errcode <= 0) /* only if no net error */
+                  errcode = smtp_send_message_footer( net ); /* close the message */
+              }
+            }
+            if (errcode <= 0)  /* only if no net error */
+              smtp_close_message_envelope( net ); // QUIT unless net error
+          } 
+          smtp_close_net(net);
         }
-      }
-      if (errcode <= 0)  /* only if no net error */
-        smtp_close_message_envelope( net ); // QUIT unless net error
-    } 
-    smtp_close_net(net);
-  }
-  //---------------
-
-  if (resmsg)
-  {
-    LogScreen("Mail::%s%s\n", resmsg,
-     ((deferred && !CheckExitRequestTriggerNoIO())?(" Send deferred."):("")));
-  }  
+        if (resmsg)
+        {
+           LogScreen("Mail::%s%s\n", resmsg,
+           ((deferred && !CheckExitRequestTriggerNoIO())?(" Send deferred."):("")));
+        }  
+      }  /* if (smtp_countspooled( msghandle ) != 0) */
+    }  /* if (msg->sendpendingflag != 0) */
+  } /* if ((++msg->send_reentrancy_guard) == 1) */
+  msg->send_reentrancy_guard--;
+  
   return(errcode);
 }
 
 //-------------------------------------------------------------------------
 
-int smtp_append_message( struct mailmessage *msg, const char *txt )
+int smtp_send_if_needed( void *msghandle )
 {
+  struct mailmessage *msg = __smpt_convert_handle_to_mailmessage( msghandle );
+  if (!msg)
+    return -1;
+  if (smtp_countspooled( msghandle ) >= (( msg->sendthreshold / 10) * 9))
+    return smtp_send_message( msghandle );
+  return 0;  
+}
+
+//-------------------------------------------------------------------------
+
+int smtp_append_message( void *msghandle, const char *txt )
+{
+  int retcode = 0;
+  struct mailmessage *msg = __smpt_convert_handle_to_mailmessage( msghandle );
   if (!txt || !msg)
     return 0;
+
   if (((long)(msg->sendthreshold)) <= 0 ) //sanity check
     msg->sendthreshold = 0;
   if (msg->sendthreshold == 0)
@@ -784,226 +860,234 @@ int smtp_append_message( struct mailmessage *msg, const char *txt )
   if (msg->sendthreshold < 1024)  //max size before we force send
     msg->sendthreshold = 1024;
 
-  #if (defined(MAILSPOOL_IS_AUTOBUFFER))
+  if ((++msg->append_reentrancy_guard)==1)  
   {
-#error Untested
-    unsigned long txtlen = (unsigned long)strlen( txt );
-    msg->maxspoolsize = ((msg->sendthreshold/10)*11);
-    if (txtlen > 0)
+    #if (defined(MAILSPOOL_IS_AUTOBUFFER))
     {
-      if (msg->spoolbuff == NULL)
-        msg->spoolbuff = new Autobuffer();
-      if (msg->spoolbuff != NULL)
+#error Untested
+      unsigned long txtlen = (unsigned long)strlen( txt );
+      msg->maxspoolsize = ((msg->sendthreshold/10)*11);
+      if (txtlen > 0)
       {
-        register char *p;
-        unsigned long maxsize = msg->maxspoolsize;
-        unsigned long msglen = (unsigned long)(msg->spoolbuff->GetLength());
-        if (( txtlen + 2 ) > maxsize)
+        if (msg->spoolbuff == NULL)
+          msg->spoolbuff = new Autobuffer();
+        if (msg->spoolbuff != NULL)
         {
-          txt += ((txtlen+2)-maxsize);
-          while (*txt && (*txt != '\n' && *txt != '\r'))
-            txt++;
-          while (*txt == '\n' || *txt == '\r')
-            txt++;
-          txtlen = strlen(txt);
-          msg->spoolbuff->Clear();
-          msglen = 0;
-        }
-        else if ((msglen + txtlen + 2) > maxsize)
-        {
-          AutoBuffer linebuf;
-          while ((msglen + txtlen + 2) > maxsize && 
-                 msg->spoolbuff->RemoveLine(linebuf))
+          register char *p;
+          unsigned long maxsize = msg->maxspoolsize;
+          unsigned long msglen = (unsigned long)(msg->spoolbuff->GetLength());
+          if (( txtlen + 2 ) > maxsize)
           {
-            msglen = (unsigned long)(msg->spoolbuff->GetLength());
+            txt += ((txtlen+2)-maxsize);
+            while (*txt && (*txt != '\n' && *txt != '\r'))
+              txt++;
+            while (*txt == '\n' || *txt == '\r')
+              txt++;
+            txtlen = strlen(txt);
+            msg->spoolbuff->Clear();
+            msglen = 0;
           }
-        }  
-        if (txtlen && ( msglen + txtlen + 2 ) <= maxsize)
-        {
-          msg->spoolbuff->Reserve( txtlen + 2048 );
-          strncpy( msg->spoolbuff->GetTail(), txt, txtlen );
-          msg->spoolbuff->MarkUsed(txtlen);
-          msg->sendpendingflag = 1;
+          else if ((msglen + txtlen + 2) > maxsize)
+          {
+            AutoBuffer linebuf;
+            while ((msglen + txtlen + 2) > maxsize && 
+                   msg->spoolbuff->RemoveLine(linebuf))
+            {
+              msglen = (unsigned long)(msg->spoolbuff->GetLength());
+            }
+          }  
+          if (txtlen && ( msglen + txtlen + 2 ) <= maxsize)
+          {
+            msg->spoolbuff->Reserve( txtlen + 2048 );
+            strncpy( msg->spoolbuff->GetTail(), txt, txtlen );
+            msg->spoolbuff->MarkUsed(txtlen);
+            msg->sendpendingflag = 1;
+          }
         }
       }
     }
-  }
-  #elif defined(MAILSPOOL_IS_MEMFILE)
-  {
-#error Untested
-    unsigned long txtlen = (unsigned long)strlen( txt );
-    msg->maxspoolsize = ((msg->sendthreshold/10)*11);
-    if (txtlen > 0 )
+    #elif defined(MAILSPOOL_IS_MEMFILE)
     {
-      if (msg->spoolbuff == NULL)
-        msg->spoolbuff = mfopen( "mail spool", "w+b" );
-      if (msg->spoolbuff != NULL)
+#error Untested
+      unsigned long txtlen = (unsigned long)strlen( txt );
+      msg->maxspoolsize = ((msg->sendthreshold/10)*11);
+      if (txtlen > 0 )
       {
-        register char *p;
-        unsigned long maxsize = msg->maxspoolsize;
-        unsigned long msglen = mfilelength( mfileno( msg->spoolbuff ) );
-        if ((txtlen + 2) > maxsize)
+        if (msg->spoolbuff == NULL)
+          msg->spoolbuff = mfopen( "mail spool", "w+b" );
+        if (msg->spoolbuff != NULL)
         {
-          txt += ((txtlen+2)-maxsize);
-          while (*txt && (*txt != '\n' && *txt != '\r'))
-            txt++;
-          while (*txt == '\n' || *txt == '\r')
-            txt++;
-          txtlen = strlen(txt);
-          mftruncate( mfileno(msg->spoolbuff), 0 );
-          msglen = 0;
-        }
-        else if ((msglen + txtlen +2) > maxsize)
-        {
-          unsigned long woffset = 0, roffset = maxsize-(txtlen+2);
-          char cpybuff[128];
-          unsigned int readsize;
-          mfseek( msg->spoolbuff, roffset, SEEK_SET );
-          while ((readsize = mfread( cpybuff, sizeof(cpybuff), sizeof(char), 
-                 msg->spoolbuff)) != 0)
+          register char *p;
+          unsigned long maxsize = msg->maxspoolsize;
+          unsigned long msglen = mfilelength( mfileno( msg->spoolbuff ) );
+          if ((txtlen + 2) > maxsize)
           {
-            unsigned int pos;
-            for (pos = 0; pos < readsize; pos++)
+            txt += ((txtlen+2)-maxsize);
+            while (*txt && (*txt != '\n' && *txt != '\r'))
+              txt++;
+            while (*txt == '\n' || *txt == '\r')
+              txt++;
+            txtlen = strlen(txt);
+            mftruncate( mfileno(msg->spoolbuff), 0 );
+            msglen = 0;
+          }
+          else if ((msglen + txtlen +2) > maxsize)
+          {
+            unsigned long woffset = 0, roffset = maxsize-(txtlen+2);
+            char cpybuff[128];
+            unsigned int readsize;
+            mfseek( msg->spoolbuff, roffset, SEEK_SET );
+            while ((readsize = mfread( cpybuff, sizeof(cpybuff), sizeof(char), 
+                   msg->spoolbuff)) != 0)
             {
-              roffset++;
-              if (cpybuf[pos] == '\r' || cpybuf[pos] == '\n')
+              unsigned int pos;
+              for (pos = 0; pos < readsize; pos++)
               {
-                pos = 0; /* '\r' || '\n' */
-                while (readsize) /* dummy */
+                roffset++;
+                if (cpybuf[pos] == '\r' || cpybuf[pos] == '\n')
                 {
-                  mfseek( msg->spoolbuff, roffset, SEEK_SET );
-                  if ((readsize = mfread( cpybuff, sizeof(cpybuff), 
-                                 sizeof(char), msg->spoolbuff)) != 0)
+                  pos = 0; /* '\r' || '\n' */
+                  while (readsize) /* dummy */
                   {
-                    p = cpybuff;
-                    roffset += readsize;
-                    if (pos == 0)  /* still marking '\r' || '\n' */
+                    mfseek( msg->spoolbuff, roffset, SEEK_SET );
+                    if ((readsize = mfread( cpybuff, sizeof(cpybuff), 
+                                   sizeof(char), msg->spoolbuff)) != 0)
                     {
-                      while (readsize > 0 && (*p == '\r' || *p == '\n'))
+                      p = cpybuff;
+                      roffset += readsize;
+                      if (pos == 0)  /* still marking '\r' || '\n' */
                       {
-                        p++;
-                        readsize--;
+                        while (readsize > 0 && (*p == '\r' || *p == '\n'))
+                        {
+                          p++;
+                          readsize--;
+                        }
+                        pos = readsize; /* for next pass */
                       }
-                      pos = readsize; /* for next pass */
-                    }
-                    if (readsize)
-                    {
-                      mfseek( msg->spoolbuff, woffset, SEEK_SET );
-                      mfwrite( p, readsize, sizeof(char), msg->spoolbuff);
-                      woffset += readsize;
+                      if (readsize)
+                      {
+                        mfseek( msg->spoolbuff, woffset, SEEK_SET );
+                        mfwrite( p, readsize, sizeof(char), msg->spoolbuff);
+                        woffset += readsize;
+                      }
                     }
                   }
+                  break;
                 }
-                break;
               }
             }
+            mftruncate( mfileno(msg->spoolbuff), woffset );
+            msglen = woffset;
           }
-          mftruncate( mfileno(msg->spoolbuff), woffset );
-          msglen = woffset;
-        }
-        if (txtlen && (msglen + txtlen +2) <= maxsize)
-        {
-          mfseek( msg->spoolbuff, 0, SEEK_END );
-          if (mfwrite( txt, txtlen, sizeof(char), msg->spoolbuff) == txtlen )
-            msg->sendpendingflag = 1; /* buffer has changed */
-          else /* "write" failed - zap the buffer */
-            mftruncate( mfileno(msg->spoolbuff), 0 );
-        }
-      }
-    }
-  }
-  #else /* MAILSPOOL_IS_MALLOCBUFFER or MAILSPOOL_IS_STATICBUFFER */
-  {
-    unsigned long txtlen = (unsigned long)strlen( txt );
-    if (txtlen > 0)
-    {
-      register char *p;
-      unsigned long maxsize;
-      
-      #if defined(MAILSPOOL_IS_STATICBUFFER)
-      msg->maxspoolsize = sizeof(msg->spoolbuff); /*MAILBUFFSIZE;*/
-      if (msg->sendthreshold > ((msg->maxspoolsize/10)*9))
-        msg->sendthreshold = ((msg->maxspoolsize/10)*9);
-      #else /* defined(MAILSPOOL_IS_MALLOCBUFFER) */
-      if (msg->spoolbuff == NULL) /* msg->maxspoolsize is zero */
-      {
-        msg->maxspoolsize = 0;
-        maxsize = msg->sendthreshold;
-        if (maxsize > (UINT_MAX - (4096*2)))
-          maxsize = (UINT_MAX - (4096*2));
-        if (maxsize < 1024)
-          maxsize = 1024;
-        msg->sendthreshold = maxsize;
-        maxsize = msg->sendthreshold + 4096; /* a little padding */
-        do
-        {
-          unsigned int mallocsize = ((unsigned int)maxsize) - 16;
-          p = (char *)malloc( mallocsize );
-          if (p)
+          if (txtlen && (msglen + txtlen +2) <= maxsize)
           {
-            msg->maxspoolsize = mallocsize;
-            p[0] = 0;
-            msg->spoolbuff = p;
-            msg->sendthreshold = msg->maxspoolsize - 4096;
-            break;
+            mfseek( msg->spoolbuff, 0, SEEK_END );
+            if (mfwrite( txt, txtlen, sizeof(char), msg->spoolbuff) == txtlen )
+              msg->sendpendingflag = 1; /* buffer has changed */
+            else /* "write" failed - zap the buffer */
+              mftruncate( mfileno(msg->spoolbuff), 0 );
           }
-          maxsize -= 4096;
-        } while (maxsize >= (4096*2));
-      }  
-      #endif
-
-      if (msg->maxspoolsize) /* msg->spoolbuff is not NULL */
-      {
-        unsigned long msglen = (unsigned long)strlen(msg->spoolbuff);
-        maxsize = (unsigned long)msg->maxspoolsize;
-        
-        if ((txtlen + 2) > maxsize) 
-        {
-          txt += ((txtlen+2)-maxsize);
-          while (*txt && (*txt != '\n' && *txt != '\r'))
-            txt++;
-          while (*txt == '\n' || *txt == '\r')
-            txt++;
-          txtlen = strlen(txt);
-          msg->spoolbuff[0] = '\0';
-          msglen = 0;
-        }
-        else if ((msglen + txtlen + 2) > maxsize)
-        {
-          p = &msg->spoolbuff[maxsize-(txtlen+2)];
-          while (*p && *p != '\n' && *p != '\r')
-            p++;
-          while (*p == '\n' || *p == '\r')
-            p++;
-          msglen = strlen(p);
-          if (msglen)
-            memmove( msg->spoolbuff, p, msglen );
-          msg->spoolbuff[msglen] = '\0';
-        }
-
-        if (txtlen && (msglen + txtlen + 2) <= maxsize)
-        {
-          msg->sendpendingflag = 1; /* buffer has changed */
-          strcat( msg->spoolbuff, txt );
         }
       }
     }
-  }
-  #endif
+    #else /* MAILSPOOL_IS_MALLOCBUFFER or MAILSPOOL_IS_STATICBUFFER */
+    {
+      unsigned long txtlen = (unsigned long)strlen( txt );
+      if (txtlen > 0)
+      {
+        register char *p;
+        unsigned long maxsize;
+        
+        #if defined(MAILSPOOL_IS_STATICBUFFER)
+        msg->maxspoolsize = sizeof(msg->spoolbuff); /*MAILBUFFSIZE;*/
+        if (msg->sendthreshold > ((msg->maxspoolsize/10)*9))
+          msg->sendthreshold = ((msg->maxspoolsize/10)*9);
+        #else /* defined(MAILSPOOL_IS_MALLOCBUFFER) */
+        if (msg->spoolbuff == NULL) /* msg->maxspoolsize is zero */
+        {
+          msg->maxspoolsize = 0;
+          maxsize = msg->sendthreshold;
+          if (maxsize > (UINT_MAX - (4096*2)))
+            maxsize = (UINT_MAX - (4096*2));
+          if (maxsize < 1024)
+            maxsize = 1024;
+          msg->sendthreshold = maxsize;
+          maxsize = msg->sendthreshold + 4096; /* a little padding */
+          do
+          {
+            unsigned int mallocsize = ((unsigned int)maxsize) - 16;
+            p = (char *)malloc( mallocsize );
+            if (p)
+            {
+              msg->maxspoolsize = mallocsize;
+              p[0] = 0;
+              msg->spoolbuff = p;
+              msg->sendthreshold = msg->maxspoolsize - 4096;
+              break;
+            }
+            maxsize -= 4096;
+          } while (maxsize >= (4096*2));
+        }  
+        #endif
 
-  #ifdef SHOWMAIL
-  LogRaw("new spool length: %d bytes\n",  (int)(smtp_countspooled(msg)) );
-  #endif
+        if (msg->maxspoolsize) /* msg->spoolbuff is not NULL */
+        {
+          unsigned long msglen = (unsigned long)strlen(msg->spoolbuff);
+          maxsize = (unsigned long)msg->maxspoolsize;
+        
+          if ((txtlen + 2) > maxsize) 
+          {
+            txt += ((txtlen+2)-maxsize);
+            while (*txt && (*txt != '\n' && *txt != '\r'))
+              txt++;
+            while (*txt == '\n' || *txt == '\r')
+              txt++;
+            txtlen = strlen(txt);
+            msg->spoolbuff[0] = '\0';
+            msglen = 0;
+          }
+          else if ((msglen + txtlen + 2) > maxsize)
+          {
+            p = &msg->spoolbuff[maxsize-(txtlen+2)];
+            while (*p && *p != '\n' && *p != '\r')
+              p++;
+            while (*p == '\n' || *p == '\r')
+              p++;
+            msglen = strlen(p);
+            if (msglen)
+              memmove( msg->spoolbuff, p, msglen );
+            msg->spoolbuff[msglen] = '\0';
+          }
+  
+          if (txtlen && (msglen + txtlen + 2) <= maxsize)
+          {
+            msg->sendpendingflag = 1; /* buffer has changed */
+            strcat( msg->spoolbuff, txt );
+          }
+        }
+      }
+    }
+    #endif
+    #ifdef SHOWMAIL
+    LogRaw("new spool length: %d bytes\n",  (int)(smtp_countspooled(msg)) );
+    #endif
 
-  if (smtp_countspooled( msg ) > msg->sendthreshold ) //crossed the threshold?
-    return smtp_send_message( msg );
-  return 0;
+    if (smtp_countspooled( msg ) > msg->sendthreshold ) //crossed the threshold?
+      retcode = smtp_send_message( msg );
+
+  } /* if ((++msg->append_reentrancy_guard) == 1) */
+  msg->append_reentrancy_guard--;
+
+  return retcode;
 }
 
 //-------------------------------------------------------------------------
 
-int smtp_clear_message( struct mailmessage *msg )
+int smtp_clear_message( void *msghandle )
 {
+  struct mailmessage *msg = __smpt_convert_handle_to_mailmessage( msghandle );
+  if (!msg) 
+    return -1;
   #if (defined(MAILSPOOL_IS_AUTOBUFFER))
   {
     if (msg->spoolbuff)
@@ -1035,10 +1119,13 @@ int smtp_clear_message( struct mailmessage *msg )
   return 0;
 }
 
-int smtp_deinitialize_message( struct mailmessage *msg )
+int smtp_deinitialize_message( void *msghandle )
 {
-  smtp_send_message( msg );
-  smtp_clear_message( msg );
+  struct mailmessage *msg = __smpt_convert_handle_to_mailmessage( msghandle );
+  if (!msg) 
+    return -1;
+  smtp_send_message( msghandle );
+  smtp_clear_message( msghandle );
   return 0;
 }
 
@@ -1093,11 +1180,14 @@ static void cleanup_field( int atype, char *addr, const char *default_addr )
 }
 
 
-int smtp_initialize_message( struct mailmessage *msg, unsigned long sendthresh,
+int smtp_initialize_message( void *msghandle, unsigned long sendthresh,
                const char *smtphost, unsigned int smtpport, const char *fromid,
                                         const char *destid, const char *rc5id )
 {
-  if (!msg) return -1;
+  struct mailmessage *msg;
+  if (!msghandle) return -1;
+
+  msg = (struct mailmessage *)msghandle;
   memset( (void *)(msg), 0, sizeof( struct mailmessage ));
 
   if (smtphost)   strncpy( msg->smtphost, smtphost, sizeof(msg->smtphost)-1);
@@ -1125,6 +1215,40 @@ int smtp_initialize_message( struct mailmessage *msg, unsigned long sendthresh,
     sendthresh=0;
     return -1;
   }
+  msg->signature = MAILMESSAGE_SIGNATURE;
   return 0;
 }
+
+//-------------------------------------------------------------------------
+
+void *smtp_construct_message(unsigned long sendthresh,
+               const char *smtphost, unsigned int smtpport, const char *fromid,
+                                        const char *destid, const char *rc5id )
+{
+  void *msghandle = malloc(sizeof(struct mailmessage));
+  if (msghandle)
+  {
+    if (smtp_initialize_message( msghandle, sendthresh, smtphost, smtpport, 
+                                 fromid, destid, rc5id )!=0)
+    {
+      memset((void *)msghandle, 0, sizeof(struct mailmessage));
+      free((void *)msghandle);
+      msghandle = (void *)0;
+    }                                
+  }
+  return msghandle;
+}
+
+//-------------------------------------------------------------------------
+    
+int smtp_destruct_message(void *msghandle)
+{
+  struct mailmessage *msg = __smpt_convert_handle_to_mailmessage( msghandle );
+  if (!msg)
+    return -1;
+  smtp_deinitialize_message( msghandle );
+  memset((void *)msghandle, 0, sizeof(struct mailmessage));
+  free(msghandle);
+  return 0;
+}  
 

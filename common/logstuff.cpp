@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.22 2000/06/03 14:13:43 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.23 2000/06/05 18:01:07 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -57,7 +57,7 @@ static struct
   char spoolson;             // mail/file logging and time stamping is on/off.
   char percprint;            // percentprinting is enabled
 
-  MailMessage *mailmessage;  //note: pointer, not class struct.
+  void *mailmessage;         //handle returned from smtp_construct_message()
   char basedir[256];         //filled if user's 'logfile' is not qualified
   char logfile[128+20];      //fname when LOGFILETYPE_RESTART or _FIFO
                              //lastused fname when LOGFILETYPE_ROTATE
@@ -414,7 +414,7 @@ static void InternalLogMail( const char *msgbuffer, unsigned int msglen, int /*f
   {
     static int recursion_check = 0; //network stuff sometimes Log()s.
     if ((++recursion_check) == 1)
-      logstatics.mailmessage->append( msgbuffer );
+      smtp_append_message( logstatics.mailmessage, msgbuffer );
     --recursion_check;
   }
   return;
@@ -581,7 +581,10 @@ void LogFlush( int forceflush )
     if ( logstatics.mailmessage )
     {
       logstatics.loggingTo &= ~LOGTO_MAIL;
-      logstatics.mailmessage->checktosend(forceflush);
+      if (forceflush)
+        smtp_send_message( logstatics.mailmessage );
+      else   
+        smtp_send_if_needed( logstatics.mailmessage );
       logstatics.loggingTo |= LOGTO_MAIL;
     }
   }
@@ -769,13 +772,17 @@ void LogScreenPercent( unsigned int load_problem_count )
 
 void DeinitializeLogging(void)
 {
-  if (logstatics.mailmessage && (logstatics.loggingTo & LOGTO_MAIL)!=0)
+  if (logstatics.mailmessage)
   {
-    MailMessage *mmsg = logstatics.mailmessage;
+    void *mailmessage = logstatics.mailmessage;
     logstatics.mailmessage = NULL;
-    logstatics.loggingTo &= ~LOGTO_MAIL;
-    mmsg->Deinitialize(); //forces a send
-    delete mmsg;
+    if ((logstatics.loggingTo & LOGTO_MAIL)!=0)
+    {
+      logstatics.loggingTo &= ~LOGTO_MAIL;
+      smtp_send_message( mailmessage );
+      smtp_clear_message( mailmessage );
+    }  
+    smtp_destruct_message( mailmessage );
   }
   if ( logstatics.logstream )
   {
@@ -955,21 +962,14 @@ void InitializeLogging( int noscreen, int nopercent, const char *logfilename,
   }
   if (mailmsglen > 0)
   {
-    logstatics.mailmessage = new MailMessage();
-  }
-  if (logstatics.mailmessage)
-  {
-    if (logstatics.mailmessage->Initialize( mailmsglen, smtpsrvr, smtpport,
-                                           smtpfrom, smtpdest, id ) == 0)
+    logstatics.mailmessage = smtp_construct_message( mailmsglen, 
+                                                     smtpsrvr, smtpport,
+                                                     smtpfrom, smtpdest, id );
+    if (logstatics.mailmessage) /* initialized ok */
     {
       logstatics.loggingTo |= LOGTO_MAIL;
     }
-    else
-    {
-      delete logstatics.mailmessage;
-      logstatics.mailmessage = NULL;
-    }
-  }
+  }  
   return;
 }
 
