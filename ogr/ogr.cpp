@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * @(#)$Id: ogr.cpp,v 1.3.2.9 1999/12/04 13:04:50 cyp Exp $
+ * @(#)$Id: ogr.cpp,v 1.3.2.10 2000/01/23 18:15:32 remi Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -171,17 +171,17 @@ static int init_load_choose()
 /*-----------------------------------------*/
 /*  found_one() - print out golomb rulers  */
 /*-----------------------------------------*/
-static int found_one(struct State *State)
+static int found_one(struct State *oState)
 {
   /* confirm ruler is golomb */
   {
     int diff, i, j;
     char diffs[1024];
-    for (i = 1; i <= State->max/2; i++) diffs[i] = 0;
-    for (i = 1; i < State->maxdepth; i++) {
+    for (i = 1; i <= oState->max/2; i++) diffs[i] = 0;
+    for (i = 1; i < oState->maxdepth; i++) {
       for (j = 0; j < i; j++) {
-        diff = State->marks[i] - State->marks[j];
-        if (diff+diff <= State->max) {        /* Principle 1 */
+        diff = oState->marks[i] - oState->marks[j];
+        if (diff+diff <= oState->max) {        /* Principle 1 */
           if (diff <= 64) break;      /* 2 bitmaps always tracked */
           if (diffs[diff]) return 0;
           diffs[diff] = 1;
@@ -229,7 +229,7 @@ static void dump(int depth, struct Level *lev, int limit)
 
 static int ogr_create(void *input, int inputlen, void *state, int statelen)
 {
-  struct State *State;
+  struct State *oState;
   struct WorkStub *workstub = (struct WorkStub *)input;
 
   if (input == NULL || inputlen != sizeof(struct WorkStub)) {
@@ -239,39 +239,39 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
   if (((unsigned int)statelen) < sizeof(struct State)) {
     return CORE_E_FORMAT;
   }
-  State = (struct State *)state;
-  if (State == NULL) {
+  oState = (struct State *)state;
+  if (oState == NULL) {
     return CORE_E_MEMORY;
   }
 
-  memset(State, 0, sizeof(struct State));
+  memset(oState, 0, sizeof(struct State));
 
-  State->maxdepth = workstub->stub.marks;
-  State->maxdepthm1 = State->maxdepth-1;
+  oState->maxdepth = workstub->stub.marks;
+  oState->maxdepthm1 = oState->maxdepth-1;
 
-  if (((unsigned int)State->maxdepth) > (sizeof(OGR)/sizeof(OGR[0]))) {
+  if (((unsigned int)oState->maxdepth) > (sizeof(OGR)/sizeof(OGR[0]))) {
     return CORE_E_FORMAT;
   }
 
-  State->max = OGR[State->maxdepth-1];
+  oState->max = OGR[oState->maxdepth-1];
 
   /* Note, marks are labled 0, 1...  so mark @ depth=1 is 2nd mark */
-  State->half_depth2 = State->half_depth = ((State->maxdepth+1) >> 1) - 1;
-  if (!(State->maxdepth % 2)) State->half_depth2++;  /* if even, use 2 marks */
+  oState->half_depth2 = oState->half_depth = ((oState->maxdepth+1) >> 1) - 1;
+  if (!(oState->maxdepth % 2)) oState->half_depth2++;  /* if even, use 2 marks */
 
   /* Simulate GVANT's "KTEST=1" */
-  State->half_depth--;
-  State->half_depth2++;
+  oState->half_depth--;
+  oState->half_depth2++;
   /*------------------
   Since:  half_depth2 = half_depth+2 (or 3 if maxdepth even) ...
   We get: half_length2 >= half_length + 3 (or 6 if maxdepth even)
   But:    half_length2 + half_length <= max-1    (our midpoint reduction)
   So:     half_length + 3 (6 if maxdepth even) + half_length <= max-1
   ------------------*/
-                              State->half_length = (State->max-4) >> 1;
-  if ( !(State->maxdepth%2) ) State->half_length = (State->max-7) >> 1;
+                               oState->half_length = (oState->max-4) >> 1;
+  if ( !(oState->maxdepth%2) ) oState->half_length = (oState->max-7) >> 1;
 
-  State->depth = 1;
+  oState->depth = 1;
 
   {
     int i, n;
@@ -284,24 +284,24 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
     if (n > STUB_MAX) {
       return CORE_E_FORMAT;
     }
-    lev = &State->Levels[1];
+    lev = &oState->Levels[1];
     for (i = 0; i < n; i++) {
       int limit;
-      if (State->depth <= State->half_depth2) {
-        if (State->depth <= State->half_depth) {
-          limit = State->max - OGR[State->maxdepthm1 - State->depth];
-          limit = limit < State->half_length ? limit : State->half_length;
+      if (oState->depth <= oState->half_depth2) {
+        if (oState->depth <= oState->half_depth) {
+          limit = oState->max - OGR[oState->maxdepthm1 - oState->depth];
+          limit = limit < oState->half_length ? limit : oState->half_length;
         } else {
-          limit = State->max - choose(lev->dist[0] >> ttmMAXBITS, State->maxdepthm1 - State->depth);
-          limit = limit < State->max - State->marks[State->half_depth]-1 ? limit : State->max - State->marks[State->half_depth]-1;
+          limit = oState->max - choose(lev->dist[0] >> ttmMAXBITS, oState->maxdepthm1 - oState->depth);
+          limit = limit < oState->max - oState->marks[oState->half_depth]-1 ? limit : oState->max - oState->marks[oState->half_depth]-1;
         }
       } else {
-        limit = State->max - choose(lev->dist[0] >> ttmMAXBITS, State->maxdepthm1 - State->depth);
+        limit = oState->max - choose(lev->dist[0] >> ttmMAXBITS, oState->maxdepthm1 - oState->depth);
       }
       lev->limit = limit;
       int s = workstub->stub.diffs[i];
-      //dump(State->depth, lev, 0);
-      State->marks[i+1] = State->marks[i] + s;
+      //dump(oState->depth, lev, 0);
+      oState->marks[i+1] = oState->marks[i] + s;
       lev->cnt2 += s;
       int t = s;
       while (t >= 32) {
@@ -317,25 +317,25 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
       lev2->cnt1 = lev->cnt2;
       lev2->cnt2 = lev->cnt2;
       lev++;
-      State->depth++;
+      oState->depth++;
     }
   }
 
-  State->startdepth = workstub->stub.length;
+  oState->startdepth = workstub->stub.length;
 
 /*
   printf("sizeof      = %d\n", sizeof(struct State));
-  printf("max         = %d\n", State->max);
-  printf("maxdepth    = %d\n", State->maxdepth);
-  printf("maxdepthm1  = %d\n", State->maxdepthm1);
-  printf("half_length = %d\n", State->half_length);
-  printf("half_depth  = %d\n", State->half_depth);
-  printf("half_depth2 = %d\n", State->half_depth2);
+  printf("max         = %d\n", oState->max);
+  printf("maxdepth    = %d\n", oState->maxdepth);
+  printf("maxdepthm1  = %d\n", oState->maxdepthm1);
+  printf("half_length = %d\n", oState->half_length);
+  printf("half_depth  = %d\n", oState->half_depth);
+  printf("half_depth2 = %d\n", oState->half_depth2);
   {
     int i;
     printf("marks       = ");
-    for (i = 1; i < State->depth; i++) {
-      printf("%d ", State->marks[i]-State->marks[i-1]);
+    for (i = 1; i < oState->depth; i++) {
+      printf("%d ", oState->marks[i]-oState->marks[i-1]);
     }
     printf("\n");
   }
@@ -344,21 +344,21 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
   return CORE_S_OK;
 }
 
-static void dump_ruler(struct State *State, int depth)
+static void dump_ruler(struct State *oState, int depth)
 {
   int i;
-  printf("max %d ruler ", State->max);
+  printf("max %d ruler ", oState->max);
   for (i = 1; i < depth; i++) {
-    printf("%d ", State->marks[i] - State->marks[i-1]);
+    printf("%d ", oState->marks[i] - oState->marks[i-1]);
   }
   printf("\n");
 }
 
 static int ogr_cycle(void *state, int *pnodes)
 {
-  struct State *State = (struct State *)state;
-  int depth = State->depth;      /* the depth of recursion */
-  struct Level *lev = &State->Levels[depth];
+  struct State *oState = (struct State *)state;
+  int depth = oState->depth;      /* the depth of recursion */
+  struct Level *lev = &oState->Levels[depth];
   struct Level *lev2;
   int nodes = 0;
   int nodeslimit = *pnodes;
@@ -367,35 +367,35 @@ static int ogr_cycle(void *state, int *pnodes)
   int s;
   U comp0;
 
-  //State->LOGGING = 1;
+  //oState->LOGGING = 1;
   for (;;) {
 
-    State->marks[depth-1] = lev->cnt2;
-    if (State->LOGGING) dump_ruler(State, depth);
-    if (depth <= State->half_depth2) {
-      if (depth <= State->half_depth) {
-        //dump_ruler(State, depth);
+    oState->marks[depth-1] = lev->cnt2;
+    if (oState->LOGGING) dump_ruler(oState, depth);
+    if (depth <= oState->half_depth2) {
+      if (depth <= oState->half_depth) {
+        //dump_ruler(oState, depth);
         if (nodes >= nodeslimit) {
           break;
         }
-        limit = State->max - OGR[State->maxdepthm1 - depth];
-        limit = limit < State->half_length ? limit : State->half_length;
+        limit = oState->max - OGR[oState->maxdepthm1 - depth];
+        limit = limit < oState->half_length ? limit : oState->half_length;
       } else {
-        limit = State->max - choose(lev->dist[0] >> ttmMAXBITS, State->maxdepthm1 - depth);
-        limit = limit < State->max - State->marks[State->half_depth]-1 ? limit : State->max - State->marks[State->half_depth]-1;
+        limit = oState->max - choose(lev->dist[0] >> ttmMAXBITS, oState->maxdepthm1 - depth);
+        limit = limit < oState->max - oState->marks[oState->half_depth]-1 ? limit : oState->max - oState->marks[oState->half_depth]-1;
       }
     } else {
-      limit = State->max - choose(lev->dist[0] >> ttmMAXBITS, State->maxdepthm1 - depth);
+      limit = oState->max - choose(lev->dist[0] >> ttmMAXBITS, oState->maxdepthm1 - depth);
     }
 
-    if (State->LOGGING) dump(depth, lev, limit);
+    if (oState->LOGGING) dump(depth, lev, limit);
 
     nodes++;
 
     /* Find the next available mark location for this level */
 stay:
     comp0 = lev->comp[0];
-    if (State->LOGGING) printf("comp0=%08x\n", comp0);
+    if (oState->LOGGING) printf("comp0=%08x\n", comp0);
     if (comp0 < 0xffff0000) {
       s = first[comp0 >> 16];
     } else {
@@ -410,16 +410,16 @@ stay:
         goto skip_out;
       }
     }
-    if (State->LOGGING) printf("depth=%d s=%d len=%d limit=%d\n", depth, s+(lev->cnt2-lev->cnt1), lev->cnt2+s, limit);
+    if (oState->LOGGING) printf("depth=%d s=%d len=%d limit=%d\n", depth, s+(lev->cnt2-lev->cnt1), lev->cnt2+s, limit);
     if ((lev->cnt2 += s) > limit) goto up; /* no spaces left */
 
     COMP_LEFT_LIST_RIGHT(lev, s);
 skip_out:
 
     /* New ruler? */
-    if (depth == State->maxdepthm1) {
-      State->marks[State->maxdepthm1] = lev->cnt2;       /* not placed yet into list arrays! */
-      if (found_one(State)) {
+    if (depth == oState->maxdepthm1) {
+      oState->marks[oState->maxdepthm1] = lev->cnt2;       /* not placed yet into list arrays! */
+      if (found_one(oState)) {
         retval = CORE_S_SUCCESS;
         break;
       }
@@ -440,7 +440,7 @@ skip_out:
 up:
     lev--;
     depth--;
-    if (depth <= State->startdepth) {
+    if (depth <= oState->startdepth) {
       retval = CORE_S_OK;
       break;
     }
@@ -449,8 +449,8 @@ up:
     goto stay; /* repeat this level till done */
   }
 
-  State->Nodes += nodes;
-  State->depth = depth;
+  oState->Nodes += nodes;
+  oState->depth = depth;
 
   *pnodes = nodes;
 
@@ -459,19 +459,19 @@ up:
 
 static int ogr_getresult(void *state, void *result, int resultlen)
 {
-  struct State *State = (struct State *)state;
+  struct State *oState = (struct State *)state;
   struct WorkStub *workstub = (struct WorkStub *)result;
   int i;
 
   if (resultlen != sizeof(struct WorkStub)) {
     return CORE_E_FORMAT;
   }
-  workstub->stub.marks = (u16)State->maxdepth;
-  workstub->stub.length = (u16)State->startdepth;
+  workstub->stub.marks = (u16)oState->maxdepth;
+  workstub->stub.length = (u16)oState->startdepth;
   for (i = 0; i < STUB_MAX; i++) {
-    workstub->stub.diffs[i] = (u16)(State->marks[i+1] - State->marks[i]);
+    workstub->stub.diffs[i] = (u16)(oState->marks[i+1] - oState->marks[i]);
   }
-  workstub->worklength = State->depth;
+  workstub->worklength = oState->depth;
   if (workstub->worklength > STUB_MAX) {
     workstub->worklength = STUB_MAX;
   }
