@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.93 2002/09/25 17:38:08 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.94 2002/09/25 17:42:10 acidblood Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -1446,6 +1446,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 
   extern "C" u32 rc5_72_unit_func_ansi_4( RC5_72UnitWork *, u32 );
   extern "C" u32 rc5_72_unit_func_ansi_2( RC5_72UnitWork *, u32 );
+  extern "C" u32 rc5_72_unit_func_ansi_1( RC5_72UnitWork *, u32 );
 
 // OK!
 
@@ -1994,16 +1995,20 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
 // OK!
   if (contestid == RC5_72)
   {
-    if (coresel == 0)
-    {
+    switch (coresel)
+    case 0:
       unit_func.rc5_72 = rc5_72_unit_func_ansi_4;
       pipeline_count = 4;
-    }
-    else
-    {
+      break;
+    case 1:
       unit_func.rc5_72 = rc5_72_unit_func_ansi_2;
       pipeline_count = 2;
-      coresel = 1;
+      break;
+    case 2:
+    default:
+      unit_func.rc5_72 = rc5_72_unit_func_ansi_1;
+      pipeline_count = 1;
+      break;
     }
   }
 
