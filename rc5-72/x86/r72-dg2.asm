@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg2.asm,v 1.12 2002/10/23 05:59:49 acidblood Exp $
+; $Id: r72-dg2.asm,v 1.13 2002/10/23 06:39:07 acidblood Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -118,17 +118,17 @@ defwork save_ebp
 ;       L1[j]   S2[i]
 ;       S1[i+1] L2[j]
 
-%macro KEYSETUP_BLOCK_CONSTANTS_j0 1
+%macro KEYSETUP_BLOCK_CONSTANTS 2
         lea     shiftreg, [A1 + B1]
         add     B1, A1
         lea     A2, [A2 + B2 + S_not(%1)]
 
-        add     B1, L1(0)
+        add     B1, L1(%2)
 
         rol     B1, shiftcount
         rol     A2, 3
 
-        mov     L1(0), B1
+        mov     L1(%2), B1
         mov     S2(%1), A2
 
 
@@ -136,79 +136,25 @@ defwork save_ebp
         add     B2, A2
         lea     A1, [A1 + B1 + S_not(%1+1)]
 
-        add     B2, L2(0)
+        add     B2, L2(%2)
 
         rol     B2, shiftcount
         rol     A1, 3
 
-        mov     L2(0), B2
-        mov     S1(%1+1), A1
-%endmacro
-
-%macro KEYSETUP_BLOCK_CONSTANTS_j1 1
-        lea     shiftreg, [A1 + B1]
-        add     B1, A1
-        lea     A2, [A2 + B2 + S_not(%1)]
-
-        add     B1, L1(1)
-
-        rol     B1, shiftcount
-        rol     A2, 3
-
-        mov     L1(1), B1
-        mov     S2(%1), A2
-
-
-        lea     shiftreg, [A2 + B2]
-        add     B2, A2
-        lea     A1, [A1 + B1 + S_not(%1+1)]
-
-        add     B2, L2(1)
-
-        rol     B2, shiftcount
-        rol     A1, 3
-
-        mov     L2(1), B2
-        mov     S1(%1+1), A1
-%endmacro
-
-%macro KEYSETUP_BLOCK_CONSTANTS_j2 1
-        lea     shiftreg, [A1 + B1]
-        add     B1, A1
-        lea     A2, [A2 + B2 + S_not(%1)]
-
-        add     B1, L1(2)
-
-        rol     B1, shiftcount
-        rol     A2, 3
-
-        mov     L1(2), B1
-        mov     S2(%1), A2
-
-
-        lea     shiftreg, [A2 + B2]
-        add     B2, A2
-        lea     A1, [A1 + B1 + S_not(%1+1)]
-
-        add     B2, L2(2)
-
-        rol     B2, shiftcount
-        rol     A1, 3
-
-        mov     L2(2), B2
+        mov     L2(%2), B2
         mov     S1(%1+1), A1
 %endmacro
 
 ;       L1[j]   S2[i]
 ;       S1[i+1] L2[j]
 
-%macro KEYSETUP_BLOCK_j0 1
+%macro KEYSETUP_BLOCK 2
         add     B1, A1
         add     A2, B2
         add     A1, S1(%1+1)
 
         mov     shiftreg, B1
-        add     B1, L1(0)
+        add     B1, L1(%2)
         rol     A2, 3
 
         rol     B1, shiftcount
@@ -219,68 +165,14 @@ defwork save_ebp
         add     A2, S2(%1+1)
 
         mov     shiftreg, B2
-        add     B2, L2(0)
+        add     B2, L2(%2)
         rol     A1, 3
 
         rol     B2, shiftcount
         mov     S1(%1+1), A1
 
-        mov     L1(0), B1
-        mov     L2(0), B2
-%endmacro
-
-%macro KEYSETUP_BLOCK_j1 1
-        add     B1, A1
-        add     A2, B2
-        add     A1, S1(%1+1)
-
-        mov     shiftreg, B1
-        add     B1, L1(1)
-        rol     A2, 3
-
-        rol     B1, shiftcount
-        mov     S2(%1), A2
-
-        add     B2, A2
-        add     A1, B1
-        add     A2, S2(%1+1)
-
-        mov     shiftreg, B2
-        add     B2, L2(1)
-        rol     A1, 3
-
-        rol     B2, shiftcount
-        mov     S1(%1+1), A1
-
-        mov     L1(1), B1
-        mov     L2(1), B2
-%endmacro
-
-%macro KEYSETUP_BLOCK_j2 1
-        add     B1, A1
-        add     A2, B2
-        add     A1, S1(%1+1)
-
-        mov     shiftreg, B1
-        add     B1, L1(2)
-        rol     A2, 3
-
-        rol     B1, shiftcount
-        mov     S2(%1), A2
-
-        add     B2, A2
-        add     A1, B1
-        add     A2, S2(%1+1)
-
-        mov     shiftreg, B2
-        add     B2, L2(2)
-        rol     A1, 3
-
-        rol     B2, shiftcount
-        mov     S1(%1+1), A1
-
-        mov     L1(2), B1
-        mov     L2(2), B2
+        mov     L1(%2), B1
+        mov     L2(%2), B2
 %endmacro
 
 %macro ENCRYPTION_BLOCK 1
@@ -383,30 +275,30 @@ key_setup_1:
 ;       L1[1]   S2[1]
 ;       S1[2]   L2[1]
 ;       ...
-        KEYSETUP_BLOCK_CONSTANTS_j1 1
-        KEYSETUP_BLOCK_CONSTANTS_j2 2
-        KEYSETUP_BLOCK_CONSTANTS_j0 3
-        KEYSETUP_BLOCK_CONSTANTS_j1 4
-        KEYSETUP_BLOCK_CONSTANTS_j2 5
-        KEYSETUP_BLOCK_CONSTANTS_j0 6
-        KEYSETUP_BLOCK_CONSTANTS_j1 7
-        KEYSETUP_BLOCK_CONSTANTS_j2 8
-        KEYSETUP_BLOCK_CONSTANTS_j0 9
-        KEYSETUP_BLOCK_CONSTANTS_j1 10
-        KEYSETUP_BLOCK_CONSTANTS_j2 11
-        KEYSETUP_BLOCK_CONSTANTS_j0 12
-        KEYSETUP_BLOCK_CONSTANTS_j1 13
-        KEYSETUP_BLOCK_CONSTANTS_j2 14
-        KEYSETUP_BLOCK_CONSTANTS_j0 15
-        KEYSETUP_BLOCK_CONSTANTS_j1 16
-        KEYSETUP_BLOCK_CONSTANTS_j2 17
-        KEYSETUP_BLOCK_CONSTANTS_j0 18
-        KEYSETUP_BLOCK_CONSTANTS_j1 19
-        KEYSETUP_BLOCK_CONSTANTS_j2 20
-        KEYSETUP_BLOCK_CONSTANTS_j0 21
-        KEYSETUP_BLOCK_CONSTANTS_j1 22
-        KEYSETUP_BLOCK_CONSTANTS_j2 23
-        KEYSETUP_BLOCK_CONSTANTS_j0 24
+        KEYSETUP_BLOCK_CONSTANTS 1,1
+        KEYSETUP_BLOCK_CONSTANTS 2,2
+        KEYSETUP_BLOCK_CONSTANTS 3,0
+        KEYSETUP_BLOCK_CONSTANTS 4,1
+        KEYSETUP_BLOCK_CONSTANTS 5,2
+        KEYSETUP_BLOCK_CONSTANTS 6,0
+        KEYSETUP_BLOCK_CONSTANTS 7,1
+        KEYSETUP_BLOCK_CONSTANTS 8,2
+        KEYSETUP_BLOCK_CONSTANTS 9,0
+        KEYSETUP_BLOCK_CONSTANTS 10,1
+        KEYSETUP_BLOCK_CONSTANTS 11,2
+        KEYSETUP_BLOCK_CONSTANTS 12,0
+        KEYSETUP_BLOCK_CONSTANTS 13,1
+        KEYSETUP_BLOCK_CONSTANTS 14,2
+        KEYSETUP_BLOCK_CONSTANTS 15,0
+        KEYSETUP_BLOCK_CONSTANTS 16,1
+        KEYSETUP_BLOCK_CONSTANTS 17,2
+        KEYSETUP_BLOCK_CONSTANTS 18,0
+        KEYSETUP_BLOCK_CONSTANTS 19,1
+        KEYSETUP_BLOCK_CONSTANTS 20,2
+        KEYSETUP_BLOCK_CONSTANTS 21,0
+        KEYSETUP_BLOCK_CONSTANTS 22,1
+        KEYSETUP_BLOCK_CONSTANTS 23,2
+        KEYSETUP_BLOCK_CONSTANTS 24,0
 ;       ...
 ;       L1[0]  S2[24]
 ;       S1[25] L2[0]
@@ -446,31 +338,31 @@ key_setup_2:
 ;       L1[2]   S2[0]
 ;       S1[1]   L2[2]
 ;       ...
-        KEYSETUP_BLOCK_j2 0
-        KEYSETUP_BLOCK_j0 1
-        KEYSETUP_BLOCK_j1 2
-        KEYSETUP_BLOCK_j2 3
-        KEYSETUP_BLOCK_j0 4
-        KEYSETUP_BLOCK_j1 5
-        KEYSETUP_BLOCK_j2 6
-        KEYSETUP_BLOCK_j0 7
-        KEYSETUP_BLOCK_j1 8
-        KEYSETUP_BLOCK_j2 9
-        KEYSETUP_BLOCK_j0 10
-        KEYSETUP_BLOCK_j1 11
-        KEYSETUP_BLOCK_j2 12
-        KEYSETUP_BLOCK_j0 13
-        KEYSETUP_BLOCK_j1 14
-        KEYSETUP_BLOCK_j2 15
-        KEYSETUP_BLOCK_j0 16
-        KEYSETUP_BLOCK_j1 17
-        KEYSETUP_BLOCK_j2 18
-        KEYSETUP_BLOCK_j0 19
-        KEYSETUP_BLOCK_j1 20
-        KEYSETUP_BLOCK_j2 21
-        KEYSETUP_BLOCK_j0 22
-        KEYSETUP_BLOCK_j1 23
-        KEYSETUP_BLOCK_j2 24
+        KEYSETUP_BLOCK 0,2
+        KEYSETUP_BLOCK 1,0
+        KEYSETUP_BLOCK 2,1
+        KEYSETUP_BLOCK 3,2
+        KEYSETUP_BLOCK 4,0
+        KEYSETUP_BLOCK 5,1
+        KEYSETUP_BLOCK 6,2
+        KEYSETUP_BLOCK 7,0
+        KEYSETUP_BLOCK 8,1
+        KEYSETUP_BLOCK 9,2
+        KEYSETUP_BLOCK 10,0
+        KEYSETUP_BLOCK 11,1
+        KEYSETUP_BLOCK 12,2
+        KEYSETUP_BLOCK 13,0
+        KEYSETUP_BLOCK 14,1
+        KEYSETUP_BLOCK 15,2
+        KEYSETUP_BLOCK 16,0
+        KEYSETUP_BLOCK 17,1
+        KEYSETUP_BLOCK 18,2
+        KEYSETUP_BLOCK 19,0
+        KEYSETUP_BLOCK 20,1
+        KEYSETUP_BLOCK 21,2
+        KEYSETUP_BLOCK 22,0
+        KEYSETUP_BLOCK 23,1
+        KEYSETUP_BLOCK 24,2
 ;       ...
 ;       L1[2]   S2[24]
 ;       S1[25]  L1[2]
@@ -507,31 +399,31 @@ key_setup_3:
 ;       L1[1]   S2[0]
 ;       S1[1]   L2[1]
 ;       ...
-        KEYSETUP_BLOCK_j1 0
-        KEYSETUP_BLOCK_j2 1
-        KEYSETUP_BLOCK_j0 2
-        KEYSETUP_BLOCK_j1 3
-        KEYSETUP_BLOCK_j2 4
-        KEYSETUP_BLOCK_j0 5
-        KEYSETUP_BLOCK_j1 6
-        KEYSETUP_BLOCK_j2 7
-        KEYSETUP_BLOCK_j0 8
-        KEYSETUP_BLOCK_j1 9
-        KEYSETUP_BLOCK_j2 10
-        KEYSETUP_BLOCK_j0 11
-        KEYSETUP_BLOCK_j1 12
-        KEYSETUP_BLOCK_j2 13
-        KEYSETUP_BLOCK_j0 14
-        KEYSETUP_BLOCK_j1 15
-        KEYSETUP_BLOCK_j2 16
-        KEYSETUP_BLOCK_j0 17
-        KEYSETUP_BLOCK_j1 18
-        KEYSETUP_BLOCK_j2 19
-        KEYSETUP_BLOCK_j0 20
-        KEYSETUP_BLOCK_j1 21
-        KEYSETUP_BLOCK_j2 22
-        KEYSETUP_BLOCK_j0 23
-        KEYSETUP_BLOCK_j1 24
+        KEYSETUP_BLOCK 0,1
+        KEYSETUP_BLOCK 1,2
+        KEYSETUP_BLOCK 2,0
+        KEYSETUP_BLOCK 3,1
+        KEYSETUP_BLOCK 4,2
+        KEYSETUP_BLOCK 5,0
+        KEYSETUP_BLOCK 6,1
+        KEYSETUP_BLOCK 7,2
+        KEYSETUP_BLOCK 8,0
+        KEYSETUP_BLOCK 9,1
+        KEYSETUP_BLOCK 10,2
+        KEYSETUP_BLOCK 11,0
+        KEYSETUP_BLOCK 12,1
+        KEYSETUP_BLOCK 13,2
+        KEYSETUP_BLOCK 14,0
+        KEYSETUP_BLOCK 15,1
+        KEYSETUP_BLOCK 16,2
+        KEYSETUP_BLOCK 17,0
+        KEYSETUP_BLOCK 18,1
+        KEYSETUP_BLOCK 19,2
+        KEYSETUP_BLOCK 20,0
+        KEYSETUP_BLOCK 21,1
+        KEYSETUP_BLOCK 22,2
+        KEYSETUP_BLOCK 23,0
+        KEYSETUP_BLOCK 24,1
 ;       ...
 ;       L[1]    S2[24]
 ;       S1[25]  L2[1]
