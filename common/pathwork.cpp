@@ -24,7 +24,7 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.15.2.10 2002/04/12 23:56:38 andreasb Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.15.2.11 2002/05/05 22:43:26 andreasb Exp $"; }
 
 #include <stdio.h>
 #include <string.h>
@@ -74,7 +74,7 @@ unsigned int GetFilenameBaseOffset( const char *fullpath )
   #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
     (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
     slash = strrchr( (char*) fullpath, '\\' );
-    char *slash2 = strrchr( (char*) fullpath, '//' );
+    char *slash2 = strrchr( (char*) fullpath, '/' );
     if (slash2 > slash) slash = slash2;
     slash2 = strrchr( (char*) fullpath, ':' );
     if (slash2 > slash) slash = slash2;

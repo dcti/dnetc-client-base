@@ -15,7 +15,7 @@
  *
 */
 const char *cdosemu_cpp(void) {
-return "@(#)$Id: cdosemu.cpp,v 1.1.2.2 2002/04/12 23:56:47 andreasb Exp $"; }
+return "@(#)$Id: cdosemu.cpp,v 1.1.2.3 2002/05/05 22:43:26 andreasb Exp $"; }
 
 #include <stdlib.h>   /* getenv() */
 #include <stdio.h>    /* sprintf() */
@@ -189,10 +189,10 @@ const char *dosCliGetEmulationDescription(void)
     _asm mov  dx, es:[bx+2]
     _asm mov  cx, es:[bx+4]
     _asm mov  bx, es:[bx+6]
-    _asm xor  ax, 'D$'
-    _asm xor  dx, 'SO'
-    _asm xor  cx, 'ME'
-    _asm xor  bx, '$U'
+    _asm xor  ax, 4424h /*'D$'*/
+    _asm xor  dx, 534fh /*'SO'*/
+    _asm xor  cx, 4d45h /*'ME'*/
+    _asm xor  bx, 2455h /*'$U'*/
     _asm or   ax, dx
     _asm or   ax, cx
     _asm or   ax, bx
@@ -450,7 +450,7 @@ const char *dosCliGetEmulationDescription(void)
         return emudesc;
       }
     }
-    sprintf(emudesc,"???-DOS %d.%02d (oem=0x%02x)", dosmajor, dosminor, oemid);
+    sprintf(emudesc,"?""?""?-DOS %d.%02d (oem=0x%02x)", dosmajor, dosminor, oemid);
     return emudesc;
   }
 
