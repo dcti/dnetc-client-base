@@ -3,6 +3,9 @@
  * generation of S0[]
  *
  * $Log: rc5-ultra-crunch.cpp,v $
+ * Revision 1.12  1999/11/28 15:37:35  cyp
+ * made global rc5_unit_func_ultrasparc_cruch(...)
+ *
  * Revision 1.11  1999/07/20 04:26:37  cyp
  * sync'd from release branch
  *
@@ -40,7 +43,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5_ultra_crunch_cpp (void) {
-return "@(#)$Id: rc5-ultra-crunch.cpp,v 1.11 1999/07/20 04:26:37 cyp Exp $"; }
+return "@(#)$Id: rc5-ultra-crunch.cpp,v 1.12 1999/11/28 15:37:35 cyp Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -1730,3 +1733,11 @@ u32 crunch(register RC5UnitWork * rc5unitwork, u32 iterations )
 	return (2 * iterations);
 }
 
+#ifdef __cplusplus
+extern "C" u32 rc5_unit_func_ultrasparc_crunch( register RC5UnitWork * rc5unitwork, u32 iterations );
+#endif
+
+u32 rc5_unit_func_ultrasparc_crunch( register RC5UnitWork * rc5unitwork, u32 iterations )
+{                                             /* this should optimize out */
+  return crunch( rc5unitwork, iterations );
+}
