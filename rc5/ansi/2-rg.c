@@ -6,6 +6,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: 2-rg.c,v $
+// Revision 1.3  1999/04/08 18:48:58  patrick
+//
+// removed def of struct RC5UnitWork and used ccoreio.h instead
+//
 // Revision 1.2  1999/04/05 21:48:04  patrick
 //
 // changed due to compiler problems (mangleing/demangling)
@@ -43,10 +47,11 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi2_rg_cpp (void) {
-return "@(#)$Id: 2-rg.c,v 1.2 1999/04/05 21:48:04 patrick Exp $"; }
+return "@(#)$Id: 2-rg.c,v 1.3 1999/04/08 18:48:58 patrick Exp $"; }
 #endif
 
 #include "cputypes.h"
+#include "ccoreio.h"
 #include "rotate.h"
 
 #define _P_RC5       0xB7E15163
@@ -200,15 +205,6 @@ u32 lo, hi;
 // assembly gurus encouraged.
 // Returns: 0 - nothing found, 1 - found on pipeline 1,
 //   2 - found pipeline 2, 3 - ... etc ...
-
-//from problem.h:
-typedef struct
-{
-  u64 plain;            // plaintext (already mixed with iv!)
-  u64 cypher;           // cyphertext
-  u64 L0;               // key, changes with every unit * PIPELINE_COUNT.
-                        // Note: data is now in RC5/platform useful form
-} RC5UnitWork;
 
 s32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice )
 {
