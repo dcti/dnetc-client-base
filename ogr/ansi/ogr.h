@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.h,v 1.1.2.4 2000/11/02 11:16:17 mfeiri Exp $
+ * $Id: ogr.h,v 1.1.2.5 2001/01/10 02:20:58 andreasb Exp $
 */
 #ifndef __OGR_H__
 #define __OGR_H__ 
@@ -214,7 +214,9 @@ struct State {
                          /* sizeof(struct State) */
 
 unsigned long ogr_nodecount(const struct Stub *);
-const char *ogr_stubstr_r(const struct Stub *stub, char *buffer, unsigned int bufflen);
+const char *ogr_stubstr_r(const struct Stub *stub, 
+                          char *buffer, unsigned int bufflen,
+                          int worklength);
 const char *ogr_stubstr(const struct Stub *stub);
 
 #endif /* __OGR_H__ */

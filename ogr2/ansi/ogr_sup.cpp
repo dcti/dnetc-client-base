@@ -1,7 +1,7 @@
 /*
  * OGR support routines and data.
  *
- * "@(#)$Id: ogr_sup.cpp,v 1.1.2.1 2000/08/09 13:16:01 cyp Exp $"
+ * "@(#)$Id: ogr_sup.cpp,v 1.1.2.2 2001/01/10 02:20:58 andreasb Exp $"
 */
 
 #include <stdio.h>
@@ -16,7 +16,8 @@ unsigned long ogr_nodecount(const struct Stub *stub)
 }
 
 const char *ogr_stubstr_r(const struct Stub *stub,
-                          char *buffer, unsigned int bufflen)
+                          char *buffer, unsigned int bufflen,
+                          int worklength /* 0 or workstub.worklength */)
 {
   if (buffer && stub && bufflen)
   {
@@ -38,6 +39,15 @@ const char *ogr_stubstr_r(const struct Stub *stub,
             strcat(buf, "-");
           }
         }
+        if (worklength > len) {
+          strcat(buf, "+");
+          for (i = len; i < worklength && i < STUB_MAX; i++) {
+            if (i > len) {
+              strcat(buf, "-");
+            }
+            sprintf(&buf[strlen(buf)], "%d", (int)stub->diffs[i]);
+	  }
+        }
       }  
     }  
     buffer[0] = '\0';
@@ -53,5 +63,5 @@ const char *ogr_stubstr_r(const struct Stub *stub,
 const char *ogr_stubstr(const struct Stub *stub)
 {
   static char buf[80];
-  return ogr_stubstr_r(stub, buf, sizeof(buf));
+  return ogr_stubstr_r(stub, buf, sizeof(buf), 0);
 }

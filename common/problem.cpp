@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.88 2001/01/09 00:51:07 mfeiri Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.89 2001/01/10 02:20:58 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -2036,7 +2036,7 @@ int ProblemGetInfo(void *__thisprob,
 
             if (sigbuf)
             {
-              ogr_stubstr_r( &work.ogr.workstub.stub, sigbuf, sigbufsz );
+              ogr_stubstr_r( &work.ogr.workstub.stub, sigbuf, sigbufsz, 0);
             }
             if (swucount && (tcounthi || tcountlo)) /* only if finished */
             {
