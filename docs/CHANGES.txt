@@ -21,23 +21,29 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.20 2000/01/11 23:26:36 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.21 2000/01/16 20:16:47 cyp Exp $
 ==========================================================================
 
 2.8000
 ------
+
+2.8005.455  fix: all: client not rotating to next project
+            fix: win32/16: all font issues resolved
+            fix: all: fix for cosmetic 'Retrieved n of 4billion' message 
+            fix: all: duplicate 'nettimeout' setting in .ini
+            chg: many: CSC cores removed from (some) clients
 
 2.8005.454  fix: all: infinite fetching from 'nowhere'.
             fix: all: undid that persistant log open change made in .451
 
 2.8005.453  chg: client supports thresholds either as a time-factor, or
                  as a workunit-factor. -config documentation has more info.
-		             A review of your settings is *strongly* advised.
+                 A review of your settings is *strongly* advised.
 
 2.8004.452  chg: all: .ini option spin off from the generic [parameters] 
                  section into subsections is now complete. phew! Nothing
-		             left except "id".
-           	     chg: reverted log file opening on win/dos/netware/os2 to 
+                 left except "id".
+            chg: reverted log file opening on win/dos/netware/os2 to 
                  non-shared.
 
 2.8004.451  fix: OS/2: Fixed crash in -config by using different API calls
@@ -47,7 +53,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.20 2000/01/11 23:26:36 cyp Exp $
             fix: solaris x86: multithreading works correctly now (uses
                  native threads bound to LWPs instead of pthreads)
             chg: log file is opened shared on win/dos/netware/os2
-	          chg: log file is opened with persistant handles on *nix
+            chg: log file is opened with persistant handles on *nix
 
 2.8004.450  new: Mac OS port including Altivec core support (twice as
                  fast as MMX on otherwise comparable hardware)
