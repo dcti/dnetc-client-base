@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.100 1999/12/08 00:30:25 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.101 1999/12/10 04:28:58 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -427,7 +427,7 @@ static long __GetRawProcessorID(const char **cpuname)
     long result;
     detectedtype = -1;
     if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
-      detectedtype = result >> 16; // PVR!!
+      detectedtype = result - 0x100L; // PVR!!
   }
   #elif (CLIENT_OS == OS_LINUX)
   if (detectedtype == -2L)
