@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.7 2003/03/22 17:26:34 snikkel Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.8 2003/03/31 20:41:48 snikkel Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -495,6 +495,7 @@
   #define OS_SUPPORTS_SMP
 #elif  ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))
   /* Uses LWP instead of pthreads */
+  #include <sched.h>
   #include <thread.h>
   typedef thread_t THREADID;
   #define OS_SUPPORTS_SMP
