@@ -1,10 +1,14 @@
 //
 // $Log: deseval-meggs3.cpp,v $
-// Revision 1.9  1998/12/14 05:57:57  pct
-// Sorry guys.  This is a quick hack.  Unfortunately the #ifs for CLIENT_OS
-// made by someone also requires #include <cputypes> which was left out.
-// Including that multiply defined s8.  So all s? functions have been renamed
-// to f_s?.
+// Revision 1.10  1998/12/14 06:08:26  pct
+// Sorry.  Uploaded the wrong file on previous CVS.  Don't use previous
+// version.
+//
+// Revision 1.8  1998/12/14 01:56:43  dicamillo
+// MacOS: allow use of extern "C" for whack16.
+//
+// Revision 1.7  1998/12/13 21:53:33  dicamillo
+// Mac OS change for compilation and Mac client scheduling.
 //
 // Revision 1.6  1998/07/14 10:43:40  remi
 // Added support for a minimum timeslice value of 16 instead of 20 when
@@ -34,12 +38,16 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_cpp(void) {
-return "@(#)$Id: deseval-meggs3.cpp,v 1.9 1998/12/14 05:57:57 pct Exp $"; }
+return "@(#)$Id: deseval-meggs3.cpp,v 1.10 1998/12/14 06:08:26 pct Exp $"; }
 #endif
 
+#include <cputypes.h>		/* Isn't this needed for using CLIENT_OS defines? */
+
+#if (CLIENT_OS != OS_MACOS)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#endif
 
 /* Bitslice driver copyright (C) 1998 Andrew Meggs / casa de la cabeza explosiva */
 /* All rights reserved. A non-transferrable, royalty free license to this code   */
@@ -52,8 +60,15 @@ return "@(#)$Id: deseval-meggs3.cpp,v 1.9 1998/12/14 05:57:57 pct Exp $"; }
 #include "kwan-sboxes.h"
 #define WORD_TYPE unsigned long
 
+#if (CLIENT_OS == OS_MACOS)
+#define TICKS ((unsigned long *)0x16a)
+extern void YieldToMain(char force_events);
+extern unsigned long DES_ticks_to_use;
+extern unsigned long DES_yield_ticks;
+#endif
+
 static void
-s1 (
+f_s1 (
  unsigned long	in0,
  unsigned long	in1,
  unsigned long	in2,
@@ -73,7 +88,7 @@ s1 (
 }
 
 static void
-s2 (
+f_s2 (
  unsigned long	in0,
  unsigned long	in1,
  unsigned long	in2,
@@ -93,7 +108,7 @@ s2 (
 }
 
 static void
-s3 (
+f_s3 (
  unsigned long	in0,
  unsigned long	in1,
  unsigned long	in2,
@@ -113,7 +128,7 @@ s3 (
 }
 
 static void
-s4 (
+f_s4 (
  unsigned long	in0,
  unsigned long	in1,
  unsigned long	in2,
@@ -133,7 +148,7 @@ s4 (
 }
 
 static void
-s5 (
+f_s5 (
  unsigned long	in0,
  unsigned long	in1,
  unsigned long	in2,
@@ -153,7 +168,7 @@ s5 (
 }
 
 static void
-s6 (
+f_s6 (
  unsigned long	in0,
  unsigned long	in1,
  unsigned long	in2,
@@ -173,7 +188,7 @@ s6 (
 }
 
 static void
-s7 (
+f_s7 (
  unsigned long	in0,
  unsigned long	in1,
  unsigned long	in2,
@@ -193,7 +208,7 @@ s7 (
 }
 
 static void
-s8 (
+f_s8 (
  unsigned long	in0,
  unsigned long	in1,
  unsigned long	in2,
@@ -479,7 +494,11 @@ void multiround( unsigned long S[32], unsigned long N[32], unsigned long M[32], 
 
 
 typedef unsigned long slice;
+#if ((CLIENT_OS == OS_MACOS) && defined(MRCPP_FOR_DES))
+extern "C" slice whack16(slice *P, slice *C, slice *K);
+#else
 extern slice whack16(slice *P, slice *C, slice *K);
+#endif
 
 #define DEBUGPRINT 0
 
@@ -665,14 +684,14 @@ slice whack16(slice *P, slice *C, slice *K)
 				R12_16[i] = R14[i][16];
 				R12_22[i] = R14[i][22];
 				R12_30[i] = R14[i][30];
-				s1( L13[i][31]^K[19], L13[i][ 0]^K[40], L13[i][ 1]^K[55], L13[i][ 2]^K[32], L13[i][ 3]^K[10], L13[i][ 4]^K[13],
+				f_s1( L13[i][31]^K[19], L13[i][ 0]^K[40], L13[i][ 1]^K[55], L13[i][ 2]^K[32], L13[i][ 3]^K[10], L13[i][ 4]^K[13],
 					R12__8[i], R12_16[i], R12_22[i], R12_30[i] );
 				
 				R12_23[i] = R14[i][23];
 				R12_15[i] = R14[i][15];
 				R12_29[i] = R14[i][29];
 				R12__5[i] = R14[i][ 5];
-				s3( L13[i][ 7]^K[25], L13[i][ 8]^K[54], L13[i][ 9]^K[ 5], L13[i][10]^K[ 6], L13[i][11]^K[46], L13[i][12]^K[34],
+				f_s3( L13[i][ 7]^K[25], L13[i][ 8]^K[54], L13[i][ 9]^K[ 5], L13[i][10]^K[ 6], L13[i][11]^K[46], L13[i][12]^K[34],
 					R12_23[i], R12_15[i], R12_29[i], R12__5[i] );
 				
 				++i;
@@ -703,7 +722,7 @@ slice whack16(slice *P, slice *C, slice *K)
 				R2[16] = P[ 3];
 				R2[22] = P[51];
 				R2[30] = P[49];
-				s1( L1[31]^K[54], L1[ 0]^K[18], L1[ 1]^K[33], L1[ 2]^K[10], L1[ 3]^K[20], L1[ 4]^K[48],
+				f_s1( L1[31]^K[54], L1[ 0]^K[18], L1[ 1]^K[33], L1[ 2]^K[10], L1[ 3]^K[20], L1[ 4]^K[48],
 					R2[ 8], R2[16], R2[22], R2[30] );
 			}
 			if (regen23 & 0x4000) {
@@ -711,7 +730,7 @@ slice whack16(slice *P, slice *C, slice *K)
 				R2[27] = P[25];
 				R2[ 1] = P[15];
 				R2[17] = P[11];
-				s2( L1[ 3]^K[34], L1[ 4]^K[13], L1[ 5]^K[ 4], L1[ 6]^K[55], L1[ 7]^K[46], L1[ 8]^K[26],
+				f_s2( L1[ 3]^K[34], L1[ 4]^K[13], L1[ 5]^K[ 4], L1[ 6]^K[55], L1[ 7]^K[46], L1[ 8]^K[26],
 					R2[12], R2[27], R2[ 1], R2[17] );
 			}
 			if (regen23 & 0x2000) {
@@ -719,7 +738,7 @@ slice whack16(slice *P, slice *C, slice *K)
 				R2[15] = P[61];
 				R2[29] = P[41];
 				R2[ 5] = P[47];
-				s3( L1[ 7]^K[ 3], L1[ 8]^K[32], L1[ 9]^K[40], L1[10]^K[41], L1[11]^K[24], L1[12]^K[12],
+				f_s3( L1[ 7]^K[ 3], L1[ 8]^K[32], L1[ 9]^K[40], L1[10]^K[41], L1[11]^K[24], L1[12]^K[12],
 					R2[23], R2[15], R2[29], R2[ 5] );
 			}
 		//	if (regen23 & 0x1000) { // box 4 is *always* regenerated
@@ -727,7 +746,7 @@ slice whack16(slice *P, slice *C, slice *K)
 				R2[19] = P[27];
 				R2[ 9] = P[13];
 				R2[ 0] = P[ 7];
-				s4( L1[11]^K[11], L1[12]^K[ 5], L1[13]^K[ 6], L1[14]^K[39], L1[15]^K[47], L1[16]^K[27],
+				f_s4( L1[11]^K[11], L1[12]^K[ 5], L1[13]^K[ 6], L1[14]^K[39], L1[15]^K[47], L1[16]^K[27],
 					R2[25], R2[19], R2[ 9], R2[ 0] );
 		//	}
 			if (regen23 & 0x0800) {
@@ -735,7 +754,7 @@ slice whack16(slice *P, slice *C, slice *K)
 				R2[13] = P[45];
 				R2[24] = P[ 1];
 				R2[ 2] = P[23];
-				s5( L1[15]^K[43], L1[16]^K[38], L1[17]^K[28], L1[18]^K[15], L1[19]^K[30], L1[20]^K[ 0],
+				f_s5( L1[15]^K[43], L1[16]^K[38], L1[17]^K[28], L1[18]^K[15], L1[19]^K[30], L1[20]^K[ 0],
 					R2[ 7], R2[13], R2[24], R2[ 2] );
 			}
 			if (regen23 & 0x0400) {
@@ -743,7 +762,7 @@ slice whack16(slice *P, slice *C, slice *K)
 				R2[28] = P[33];
 				R2[10] = P[21];
 				R2[18] = P[19];
-				s6( L1[19]^K[21], L1[20]^K[36], L1[21]^K[31], L1[22]^K[16], L1[23]^K[42], L1[24]^K[37],
+				f_s6( L1[19]^K[21], L1[20]^K[36], L1[21]^K[31], L1[22]^K[16], L1[23]^K[42], L1[24]^K[37],
 					R2[ 3], R2[28], R2[10], R2[18] );
 			}
 		//	if (regen23 & 0x0200) { // always, due to resetting of K[49]
@@ -751,7 +770,7 @@ slice whack16(slice *P, slice *C, slice *K)
 				R2[11] = P[29];
 				R2[21] = P[43];
 				R2[ 6] = P[55];
-				s7( L1[23]^K[ 9], L1[24]^K[44], L1[25]^K[29], L1[26]^K[ 7], L1[27]^K[49], L1[28]^K[45],
+				f_s7( L1[23]^K[ 9], L1[24]^K[44], L1[25]^K[29], L1[26]^K[ 7], L1[27]^K[49], L1[28]^K[45],
 					R2[31], R2[11], R2[21], R2[ 6] );
 		//	}
 			if (regen23 & 0x0100) { // -- // always, due to resetting of K[50]
@@ -759,7 +778,7 @@ slice whack16(slice *P, slice *C, slice *K)
 				R2[26] = P[17];
 				R2[14] = P[53];
 				R2[20] = P[35];
-				s8( L1[27]^K[23], L1[28]^K[50], L1[29]^K[51], L1[30]^K[ 8], L1[31]^K[14], L1[ 0]^K[35],
+				f_s8( L1[27]^K[23], L1[28]^K[50], L1[29]^K[51], L1[30]^K[ 8], L1[31]^K[14], L1[ 0]^K[35],
 					R2[ 4], R2[26], R2[14], R2[20] );
 			} */
 			for (;;) {
@@ -788,7 +807,7 @@ slice whack16(slice *P, slice *C, slice *K)
 						result &= ~(out ^ R12__5[hs]);
 						if (!result) goto stepper;
 					}
-					// s3( L[ 7]^K[54], L[ 8]^K[26], L[ 9]^K[34], L[10]^K[ 3], L[11]^K[18], L[12]^K[ 6],    R[23], R[15], R[29], R[ 5] );
+					// f_s3( L[ 7]^K[54], L[ 8]^K[26], L[ 9]^K[34], L[10]^K[ 3], L[11]^K[18], L[12]^K[ 6],    R[23], R[15], R[29], R[ 5] );
 					// result  = ~(R[23] ^ R12_23[hs]) & ~(R[15] ^ R12_15[hs]) & ~(R[29] ^ R12_29[hs]) & ~(R[ 5] ^ R12__5[hs]);
 					// if (!result) goto stepper;
 					
@@ -801,7 +820,7 @@ slice whack16(slice *P, slice *C, slice *K)
 							SBOX_7_BIT_2( L[14], L[14] );
 							SBOX_7_BIT_3( L[20], L[20] );
 						}
-						//s8( R[27]^K[ 1], R[28]^K[28], save^K[29], R[30]^K[45], R[31]^K[23], R[ 0]^K[44],    L[ 4], L[26], L[14], L[20] );
+						//f_s8( R[27]^K[ 1], R[28]^K[28], save^K[29], R[30]^K[45], R[31]^K[23], R[ 0]^K[44],    L[ 4], L[26], L[14], L[20] );
 					save = R[ 8];
 					{
 						SBOX_0_INIT( L[31]^K[48], L[ 0]^K[12], L[ 1]^K[27], L[ 2]^K[ 4], L[ 3]^K[39], L[ 4]^K[10] );
@@ -816,13 +835,13 @@ slice whack16(slice *P, slice *C, slice *K)
 						result &= ~(out ^ R12_30[hs]);
 						if (!result) goto stepper;
 					}
-					//s1( L[31]^K[48], L[ 0]^K[12], L[ 1]^K[27], L[ 2]^K[ 4], L[ 3]^K[39], L[ 4]^K[10],    R[ 8], R[16], R[22], R[30] );
+					//f_s1( L[31]^K[48], L[ 0]^K[12], L[ 1]^K[27], L[ 2]^K[ 4], L[ 3]^K[39], L[ 4]^K[10],    R[ 8], R[16], R[22], R[30] );
 					//result &= ~(R[ 8] ^ R12__8[hs]) & ~(R[16] ^ R12_16[hs]) & ~(R[22] ^ R12_22[hs]) & ~(R[30] ^ R12_30[hs]);
 					//if (!result) goto stepper;
 					
 					// get here 11.8% of the time for 32, 22.2% for 64
 					// last of round 11:
-					s3( R[ 7]^K[40], save^K[12], R[ 9]^K[20], R[10]^K[46], R[11]^K[ 4], R[12]^K[17],    L[23], L[15], L[29], L[ 5] );
+					f_s3( R[ 7]^K[40], save^K[12], R[ 9]^K[20], R[10]^K[46], R[11]^K[ 4], R[12]^K[17],    L[23], L[15], L[29], L[ 5] );
 					
 					// no more cleverness, just finish inv-14 and 12 piece by piece and compare as we go
 					slice t1, t2, t3, t4;
@@ -831,10 +850,10 @@ slice whack16(slice *P, slice *C, slice *K)
 					t2 = R14[hs][27];
 					t3 = R14[hs][ 1];
 					t4 = R14[hs][17];
-					s2( L13[hs][ 3] ^ K[24], L13[hs][ 4] ^ K[ 3], L13[hs][ 5] ^ K[26],
+					f_s2( L13[hs][ 3] ^ K[24], L13[hs][ 4] ^ K[ 3], L13[hs][ 5] ^ K[26],
 						L13[hs][ 6] ^ K[20], L13[hs][ 7] ^ K[11], L13[hs][ 8] ^ K[48],
 						t1, t2, t3, t4 );
-					s2( L[ 3]^K[53], L[ 4]^K[32], L[ 5]^K[55], L[ 6]^K[17], L[ 7]^K[40], L[ 8]^K[20],
+					f_s2( L[ 3]^K[53], L[ 4]^K[32], L[ 5]^K[55], L[ 6]^K[17], L[ 7]^K[40], L[ 8]^K[20],
 						R[12], R[27], R[ 1], R[17] );
 					result &= ~(R[12] ^ t1) & ~(R[27] ^ t2) & ~(R[ 1] ^ t3) & ~(R[17] ^ t4);
 					if (!result) goto stepper;
@@ -844,10 +863,10 @@ slice whack16(slice *P, slice *C, slice *K)
 					t2 = R14[hs][19];
 					t3 = R14[hs][ 9];
 					t4 = R14[hs][ 0];
-					s4( L13[hs][11]^K[33], L13[hs][12]^K[27], L13[hs][13]^K[53],
+					f_s4( L13[hs][11]^K[33], L13[hs][12]^K[27], L13[hs][13]^K[53],
 						L13[hs][14]^K[ 4], L13[hs][15]^K[12], L13[hs][16]^K[17],
 						t1, t2, t3, t4 );
-					s4( L[11]^K[ 5], L[12]^K[24], L[13]^K[25], L[14]^K[33], L[15]^K[41], L[16]^K[46],
+					f_s4( L[11]^K[ 5], L[12]^K[24], L[13]^K[25], L[14]^K[33], L[15]^K[41], L[16]^K[46],
 						R[25], R[19], R[ 9], R[ 0] );
 					result &= ~(R[25] ^ t1) & ~(R[19] ^ t2) & ~(R[ 9] ^ t3) & ~(R[ 0] ^ t4);
 					if (!result) goto stepper;
@@ -857,10 +876,10 @@ slice whack16(slice *P, slice *C, slice *K)
 					t2 = R14[hs][13];
 					t3 = R14[hs][24];
 					t4 = R14[hs][ 2];
-					s5( L13[hs][15]^K[ 8], L13[hs][16]^K[30], L13[hs][17]^K[52],
+					f_s5( L13[hs][15]^K[ 8], L13[hs][16]^K[30], L13[hs][17]^K[52],
 						L13[hs][18]^K[35], L13[hs][19]^K[50], L13[hs][20]^K[51],
 						t1, t2, t3, t4 );
-					s5( L[15]^K[35], L[16]^K[ 2], L[17]^K[51], L[18]^K[ 7], L[19]^K[22], L[20]^K[23],
+					f_s5( L[15]^K[35], L[16]^K[ 2], L[17]^K[51], L[18]^K[ 7], L[19]^K[22], L[20]^K[23],
 						R[ 7], R[13], R[24], R[ 2] );
 					result &= ~(R[ 7] ^ t1) & ~(R[13] ^ t2) & ~(R[24] ^ t3) & ~(R[ 2] ^ t4);
 					if (!result) goto stepper;
@@ -870,10 +889,10 @@ slice whack16(slice *P, slice *C, slice *K)
 					t2 = R14[hs][28];
 					t3 = R14[hs][10];
 					t4 = R14[hs][18];
-					s6( L13[hs][19]^K[45], L13[hs][20]^K[ 1], L13[hs][21]^K[23],
+					f_s6( L13[hs][19]^K[45], L13[hs][20]^K[ 1], L13[hs][21]^K[23],
 						L13[hs][22]^K[36], L13[hs][23]^K[ 7], L13[hs][24]^K[ 2],
 						t1, t2, t3, t4 );
-					s6( L[19]^K[44], L[20]^K[28], L[21]^K[50], L[22]^K[ 8], L[23]^K[38], L[24]^K[29],
+					f_s6( L[19]^K[44], L[20]^K[28], L[21]^K[50], L[22]^K[ 8], L[23]^K[38], L[24]^K[29],
 						R[ 3], R[28], R[10], R[18] );
 					result &= ~(R[ 3] ^ t1) & ~(R[28] ^ t2) & ~(R[10] ^ t3) & ~(R[18] ^ t4);
 					if (!result) goto stepper;
@@ -883,10 +902,10 @@ slice whack16(slice *P, slice *C, slice *K)
 					t2 = R14[hs][11];
 					t3 = R14[hs][21];
 					t4 = R14[hs][ 6];
-					s7( L13[hs][23]^K[29], L13[hs][24]^K[ 9], L13[hs][25]^K[49],
+					f_s7( L13[hs][23]^K[29], L13[hs][24]^K[ 9], L13[hs][25]^K[49],
 						L13[hs][26]^K[31], L13[hs][27]^K[14], L13[hs][28]^K[37],
 						t1, t2, t3, t4 );
-					s7( L[23]^K[ 1], L[24]^K[36], L[25]^K[21], L[26]^K[30], L[27]^K[45], L[28]^K[ 9],
+					f_s7( L[23]^K[ 1], L[24]^K[36], L[25]^K[21], L[26]^K[30], L[27]^K[45], L[28]^K[ 9],
 						R[31], R[11], R[21], R[ 6] );
 					result &= ~(R[31] ^ t1) & ~(R[11] ^ t2) & ~(R[21] ^ t3) & ~(R[ 6] ^ t4);
 					if (!result) goto stepper;
@@ -896,10 +915,10 @@ slice whack16(slice *P, slice *C, slice *K)
 					t2 = R14[hs][26];
 					t3 = R14[hs][14];
 					t4 = R14[hs][20];
-					s8( L13[hs][27]^K[43], L13[hs][28]^K[15], L13[hs][29]^K[16],
+					f_s8( L13[hs][27]^K[43], L13[hs][28]^K[15], L13[hs][29]^K[16],
 						L13[hs][30]^K[28], L13[hs][31]^K[38], L13[hs][ 0]^K[ 0],
 						t1, t2, t3, t4 );
-					s8( L[27]^K[15], L[28]^K[42], L[29]^K[43], L[30]^K[ 0], L[31]^K[37], L[ 0]^K[31],
+					f_s8( L[27]^K[15], L[28]^K[42], L[29]^K[43], L[30]^K[ 0], L[31]^K[37], L[ 0]^K[31],
 						R[ 4], R[26], R[14], R[20] );
 					result &= ~(R[ 4] ^ t1) & ~(R[26] ^ t2) & ~(R[14] ^ t3) & ~(R[20] ^ t4);
 					if (!result) goto stepper;
@@ -911,35 +930,35 @@ slice whack16(slice *P, slice *C, slice *K)
 					// already know what outputs we're looking for because we had to have that
 					// on hand to compute the target outputs for round 12.
 					
-					s1( R[31]^K[ 5], R[ 0]^K[26], R[ 1]^K[41], R[ 2]^K[18], R[ 3]^K[53], R[ 4]^K[24],    L[ 8], L[16], L[22], L[30] );
+					f_s1( R[31]^K[ 5], R[ 0]^K[26], R[ 1]^K[41], R[ 2]^K[18], R[ 3]^K[53], R[ 4]^K[24],    L[ 8], L[16], L[22], L[30] );
 					result &= ~(L[ 8] ^ L13[hs][ 8]) & ~(L[16] ^ L13[hs][16]) & ~(L[22] ^ L13[hs][22]) & ~(L[30] ^ L13[hs][30]);
 					if (!result) goto stepper;
 					
-					s2( R[ 3]^K[10], R[ 4]^K[46], R[ 5]^K[12], R[ 6]^K[ 6], R[ 7]^K[54], R[ 8]^K[34],    L[12], L[27], L[ 1], L[17] );
+					f_s2( R[ 3]^K[10], R[ 4]^K[46], R[ 5]^K[12], R[ 6]^K[ 6], R[ 7]^K[54], R[ 8]^K[34],    L[12], L[27], L[ 1], L[17] );
 					result &= ~(L[12] ^ L13[hs][12]) & ~(L[27] ^ L13[hs][27]) & ~(L[ 1] ^ L13[hs][ 1]) & ~(L[17] ^ L13[hs][17]);
 					if (!result) goto stepper;
 					
-					s3( R[ 7]^K[11], R[ 8]^K[40], R[ 9]^K[48], R[10]^K[17], R[11]^K[32], R[12]^K[20],    L[23], L[15], L[29], L[ 5] );
+					f_s3( R[ 7]^K[11], R[ 8]^K[40], R[ 9]^K[48], R[10]^K[17], R[11]^K[32], R[12]^K[20],    L[23], L[15], L[29], L[ 5] );
 					result &= ~(L[23] ^ L13[hs][23]) & ~(L[15] ^ L13[hs][15]) & ~(L[29] ^ L13[hs][29]) & ~(L[ 5] ^ L13[hs][ 5]);
 					if (!result) goto stepper;
 					
-					s4( R[11]^K[19], R[12]^K[13], R[13]^K[39], R[14]^K[47], R[15]^K[55], R[16]^K[ 3],    L[25], L[19], L[ 9], L[ 0] );
+					f_s4( R[11]^K[19], R[12]^K[13], R[13]^K[39], R[14]^K[47], R[15]^K[55], R[16]^K[ 3],    L[25], L[19], L[ 9], L[ 0] );
 					result &= ~(L[25] ^ L13[hs][25]) & ~(L[19] ^ L13[hs][19]) & ~(L[ 9] ^ L13[hs][ 9]) & ~(L[ 0] ^ L13[hs][ 0]);
 					if (!result) goto stepper;
 					
-					s5( R[15]^K[49], R[16]^K[16], R[17]^K[38], R[18]^K[21], R[19]^K[36], R[20]^K[37],    L[ 7], L[13], L[24], L[ 2] );
+					f_s5( R[15]^K[49], R[16]^K[16], R[17]^K[38], R[18]^K[21], R[19]^K[36], R[20]^K[37],    L[ 7], L[13], L[24], L[ 2] );
 					result &= ~(L[ 7] ^ L13[hs][ 7]) & ~(L[13] ^ L13[hs][13]) & ~(L[24] ^ L13[hs][24]) & ~(L[ 2] ^ L13[hs][ 2]);
 					if (!result) goto stepper;
 					
-					s6( R[19]^K[31], R[20]^K[42], R[21]^K[ 9], R[22]^K[22], R[23]^K[52], R[24]^K[43],    L[ 3], L[28], L[10], L[18] );
+					f_s6( R[19]^K[31], R[20]^K[42], R[21]^K[ 9], R[22]^K[22], R[23]^K[52], R[24]^K[43],    L[ 3], L[28], L[10], L[18] );
 					result &= ~(L[ 3] ^ L13[hs][ 3]) & ~(L[28] ^ L13[hs][28]) & ~(L[10] ^ L13[hs][10]) & ~(L[18] ^ L13[hs][18]);
 					if (!result) goto stepper;
 					
-					s7( R[23]^K[15], R[24]^K[50], R[25]^K[35], R[26]^K[44], R[27]^K[ 0], R[28]^K[23],    L[31], L[11], L[21], L[ 6] );
+					f_s7( R[23]^K[15], R[24]^K[50], R[25]^K[35], R[26]^K[44], R[27]^K[ 0], R[28]^K[23],    L[31], L[11], L[21], L[ 6] );
 					result &= ~(L[31] ^ L13[hs][31]) & ~(L[11] ^ L13[hs][11]) & ~(L[21] ^ L13[hs][21]) & ~(L[ 6] ^ L13[hs][ 6]);
 					if (!result) goto stepper;
 					
-					s8( R[27]^K[29], R[28]^K[ 1], R[29]^K[ 2], R[30]^K[14], R[31]^K[51], R[ 0]^K[45],    L[ 4], L[26], L[14], L[20] );
+					f_s8( R[27]^K[29], R[28]^K[ 1], R[29]^K[ 2], R[30]^K[14], R[31]^K[51], R[ 0]^K[45],    L[ 4], L[26], L[14], L[20] );
 					result &= ~(L[ 4] ^ L13[hs][ 4]) & ~(L[26] ^ L13[hs][26]) & ~(L[14] ^ L13[hs][14]) & ~(L[20] ^ L13[hs][20]);
 					if (!result) goto stepper;
 					
@@ -964,7 +983,7 @@ slice whack16(slice *P, slice *C, slice *K)
 					R2[16] = P[ 3];
 					R2[22] = P[51];
 					R2[30] = P[49];
-					s1( L1[31]^K[54], L1[ 0]^K[18], L1[ 1]^K[33], L1[ 2]^K[10], L1[ 3]^K[20], L1[ 4]^K[48],
+					f_s1( L1[31]^K[54], L1[ 0]^K[18], L1[ 1]^K[33], L1[ 2]^K[10], L1[ 3]^K[20], L1[ 4]^K[48],
 						R2[ 8], R2[16], R2[22], R2[30] ); */
 					
 					// and dependent boxes in round 3
@@ -983,7 +1002,7 @@ slice whack16(slice *P, slice *C, slice *K)
 					R2[27] = P[25];
 					R2[ 1] = P[15];
 					R2[17] = P[11];
-					s2( L1[ 3]^K[34], L1[ 4]^K[13], L1[ 5]^K[ 4], L1[ 6]^K[55], L1[ 7]^K[46], L1[ 8]^K[26],
+					f_s2( L1[ 3]^K[34], L1[ 4]^K[13], L1[ 5]^K[ 4], L1[ 6]^K[55], L1[ 7]^K[46], L1[ 8]^K[26],
 						R2[12], R2[27], R2[ 1], R2[17] );
 					
 					
@@ -999,7 +1018,7 @@ slice whack16(slice *P, slice *C, slice *K)
 					R2[11] = P[29];
 					R2[21] = P[43];
 					R2[ 6] = P[55];
-					s7( L1[23]^K[ 9], L1[24]^K[44], L1[25]^K[29], L1[26]^K[ 7], L1[27]^K[49], L1[28]^K[45],
+					f_s7( L1[23]^K[ 9], L1[24]^K[44], L1[25]^K[29], L1[26]^K[ 7], L1[27]^K[49], L1[28]^K[45],
 						R2[31], R2[11], R2[21], R2[ 6] );
 					
 					
@@ -1010,6 +1029,13 @@ slice whack16(slice *P, slice *C, slice *K)
 				break;
 			}
 			// now step the tail
+            #if (CLIENT_OS == OS_MACOS)
+		      if (DES_yield_ticks < *TICKS) {
+	            DES_yield_ticks = *TICKS + DES_ticks_to_use;
+			    YieldToMain(1);
+			  }
+            #endif
+
 			hs = 0;
 			K[49] = ~K[49];
 			++ts;
@@ -1022,7 +1048,7 @@ slice whack16(slice *P, slice *C, slice *K)
 				L1[16] = P[ 2];
 				L1[22] = P[50];
 				L1[30] = P[48];
-				s1( P[57]^K[47], P[ 7]^K[11], P[15]^K[26], P[23]^K[ 3], P[31]^K[13], P[39]^K[41],
+				f_s1( P[57]^K[47], P[ 7]^K[11], P[15]^K[26], P[23]^K[ 3], P[31]^K[13], P[39]^K[41],
 					L1[ 8], L1[16], L1[22], L1[30] );
 				
 				// and dependent boxes in round 2
@@ -1044,7 +1070,7 @@ slice whack16(slice *P, slice *C, slice *K)
 					L13[i][15] = C[61];
 					L13[i][29] = C[41];
 					L13[i][ 5] = C[47];
-					s3( R14[i][ 7]^K[39], R14[i][ 8]^K[11], R14[i][ 9]^K[19],
+					f_s3( R14[i][ 7]^K[39], R14[i][ 8]^K[11], R14[i][ 9]^K[19],
 						R14[i][10]^K[20], R14[i][11]^K[ 3], R14[i][12]^K[48],
 						L13[i][23], L13[i][15], L13[i][29], L13[i][ 5] ); */
 					
@@ -1071,7 +1097,7 @@ slice whack16(slice *P, slice *C, slice *K)
 				L1[27] = P[24];
 				L1[ 1] = P[14];
 				L1[17] = P[10];
-				s2( P[31]^K[27], P[39]^K[ 6], P[47]^K[54], P[55]^K[48], P[63]^K[39], P[ 5]^K[19],
+				f_s2( P[31]^K[27], P[39]^K[ 6], P[47]^K[54], P[55]^K[48], P[63]^K[39], P[ 5]^K[19],
 					L1[12], L1[27], L1[ 1], L1[17] );
 				
 				// and dependent boxes in round 2
@@ -1086,7 +1112,7 @@ slice whack16(slice *P, slice *C, slice *K)
 				L1[11] = P[28];
 				L1[21] = P[42];
 				L1[ 6] = P[54];
-				s7( P[59]^K[ 2], P[ 1]^K[37], P[ 9]^K[22], P[17]^K[ 0], P[25]^K[42], P[33]^K[38],
+				f_s7( P[59]^K[ 2], P[ 1]^K[37], P[ 9]^K[22], P[17]^K[ 0], P[25]^K[42], P[33]^K[38],
 					L1[31], L1[11], L1[21], L1[ 6] );
 				
 				// and dependent boxes in round 2
@@ -1098,7 +1124,7 @@ slice whack16(slice *P, slice *C, slice *K)
 					L13[i][26] = C[17];
 					L13[i][14] = C[53];
 					L13[i][20] = C[35];
-					s8( R14[i][27]^K[ 2], R14[i][28]^K[29], R14[i][29]^K[30], R14[i][30]^K[42], R14[i][31]^K[52], R14[i][ 0]^K[14],
+					f_s8( R14[i][27]^K[ 2], R14[i][28]^K[29], R14[i][29]^K[30], R14[i][30]^K[42], R14[i][31]^K[52], R14[i][ 0]^K[14],
 						L13[i][ 4], L13[i][26], L13[i][14], L13[i][20] );
 					
 					// fix s1 and/or s3 in round 14, if necessary
@@ -1106,7 +1132,7 @@ slice whack16(slice *P, slice *C, slice *K)
 					R12_16[i] = R14[i][16];
 					R12_22[i] = R14[i][22];
 					R12_30[i] = R14[i][30];
-					s1( L13[i][31]^K[19], L13[i][ 0]^K[40], L13[i][ 1]^K[55], L13[i][ 2]^K[32], L13[i][ 3]^K[10], L13[i][ 4]^K[13],
+					f_s1( L13[i][31]^K[19], L13[i][ 0]^K[40], L13[i][ 1]^K[55], L13[i][ 2]^K[32], L13[i][ 3]^K[10], L13[i][ 4]^K[13],
 						R12__8[i], R12_16[i], R12_22[i], R12_30[i] );
 					
 					// and step
@@ -1125,7 +1151,7 @@ slice whack16(slice *P, slice *C, slice *K)
 				L1[15] = P[60];
 				L1[29] = P[40];
 				L1[ 5] = P[46];
-				s3( P[63]^K[53], P[ 5]^K[25], P[13]^K[33], P[21]^K[34], P[29]^K[17], P[37]^K[ 5],
+				f_s3( P[63]^K[53], P[ 5]^K[25], P[13]^K[33], P[21]^K[34], P[29]^K[17], P[37]^K[ 5],
 					L1[23], L1[15], L1[29], L1[ 5] );
 				
 				// and dependent boxes in round 2
@@ -1137,7 +1163,7 @@ slice whack16(slice *P, slice *C, slice *K)
 					L13[i][27] = C[25];
 					L13[i][ 1] = C[15];
 					L13[i][17] = C[11];
-					s2( R14[i][ 3]^K[13], R14[i][ 4]^K[17], R14[i][ 5]^K[40], R14[i][ 6]^K[34], R14[i][ 7]^K[25], R14[i][ 8]^K[ 5],
+					f_s2( R14[i][ 3]^K[13], R14[i][ 4]^K[17], R14[i][ 5]^K[40], R14[i][ 6]^K[34], R14[i][ 7]^K[25], R14[i][ 8]^K[ 5],
 						L13[i][12], L13[i][27], L13[i][ 1], L13[i][17] );
 					
 					// fix s1 and/or s3 in round 14, if necessary
@@ -1145,14 +1171,14 @@ slice whack16(slice *P, slice *C, slice *K)
 					R12_16[i] = R14[i][16];
 					R12_22[i] = R14[i][22];
 					R12_30[i] = R14[i][30];
-					s1( L13[i][31]^K[19], L13[i][ 0]^K[40], L13[i][ 1]^K[55], L13[i][ 2]^K[32], L13[i][ 3]^K[10], L13[i][ 4]^K[13],
+					f_s1( L13[i][31]^K[19], L13[i][ 0]^K[40], L13[i][ 1]^K[55], L13[i][ 2]^K[32], L13[i][ 3]^K[10], L13[i][ 4]^K[13],
 						R12__8[i], R12_16[i], R12_22[i], R12_30[i] );
 					
 					R12_23[i] = R14[i][23];
 					R12_15[i] = R14[i][15];
 					R12_29[i] = R14[i][29];
 					R12__5[i] = R14[i][ 5];
-					s3( L13[i][ 7]^K[25], L13[i][ 8]^K[54], L13[i][ 9]^K[ 5], L13[i][10]^K[ 6], L13[i][11]^K[46], L13[i][12]^K[34],
+					f_s3( L13[i][ 7]^K[25], L13[i][ 8]^K[54], L13[i][ 9]^K[ 5], L13[i][10]^K[ 6], L13[i][11]^K[46], L13[i][12]^K[34],
 						R12_23[i], R12_15[i], R12_29[i], R12__5[i] );
 					
 					// and step
@@ -1171,7 +1197,7 @@ slice whack16(slice *P, slice *C, slice *K)
 				L1[26] = P[16];
 				L1[14] = P[52];
 				L1[20] = P[34];
-				s8( P[25]^K[16], P[33]^K[43], P[41]^K[44], P[49]^K[ 1], P[57]^K[ 7], P[ 7]^K[28],
+				f_s8( P[25]^K[16], P[33]^K[43], P[41]^K[44], P[49]^K[ 1], P[57]^K[ 7], P[ 7]^K[28],
 					L1[ 4], L1[26], L1[14], L1[20] );
 				
 				// and dependent boxes in round 2
@@ -1183,7 +1209,7 @@ slice whack16(slice *P, slice *C, slice *K)
 					L13[i][11] = C[29];
 					L13[i][21] = C[43];
 					L13[i][ 6] = C[55];
-					s7( R14[i][23]^K[43], R14[i][24]^K[23], R14[i][25]^K[ 8], R14[i][26]^K[45], R14[i][27]^K[28], R14[i][28]^K[51],
+					f_s7( R14[i][23]^K[43], R14[i][24]^K[23], R14[i][25]^K[ 8], R14[i][26]^K[45], R14[i][27]^K[28], R14[i][28]^K[51],
 						L13[i][31], L13[i][11], L13[i][21], L13[i][ 6] );
 					
 					// fix s1 and/or s3 in round 14, if necessary
@@ -1191,14 +1217,14 @@ slice whack16(slice *P, slice *C, slice *K)
 					R12_16[i] = R14[i][16];
 					R12_22[i] = R14[i][22];
 					R12_30[i] = R14[i][30];
-					s1( L13[i][31]^K[19], L13[i][ 0]^K[40], L13[i][ 1]^K[55], L13[i][ 2]^K[32], L13[i][ 3]^K[10], L13[i][ 4]^K[13],
+					f_s1( L13[i][31]^K[19], L13[i][ 0]^K[40], L13[i][ 1]^K[55], L13[i][ 2]^K[32], L13[i][ 3]^K[10], L13[i][ 4]^K[13],
 						R12__8[i], R12_16[i], R12_22[i], R12_30[i] );
 					
 					R12_23[i] = R14[i][23];
 					R12_15[i] = R14[i][15];
 					R12_29[i] = R14[i][29];
 					R12__5[i] = R14[i][ 5];
-					s3( L13[i][ 7]^K[25], L13[i][ 8]^K[54], L13[i][ 9]^K[ 5], L13[i][10]^K[ 6], L13[i][11]^K[46], L13[i][12]^K[34],
+					f_s3( L13[i][ 7]^K[25], L13[i][ 8]^K[54], L13[i][ 9]^K[ 5], L13[i][10]^K[ 6], L13[i][11]^K[46], L13[i][12]^K[34],
 						R12_23[i], R12_15[i], R12_29[i], R12__5[i] );
 					
 					// and step
@@ -1217,7 +1243,7 @@ slice whack16(slice *P, slice *C, slice *K)
 				L1[13] = P[44];
 				L1[24] = P[ 0];
 				L1[ 2] = P[22];
-				s5( P[61]^K[36], P[ 3]^K[31], P[11]^K[21], P[19]^K[ 8], P[27]^K[23], P[35]^K[52],
+				f_s5( P[61]^K[36], P[ 3]^K[31], P[11]^K[21], P[19]^K[ 8], P[27]^K[23], P[35]^K[52],
 					L1[ 7], L1[13], L1[24], L1[ 2] );
 				
 				// and dependent boxes in round 2
@@ -1232,7 +1258,7 @@ slice whack16(slice *P, slice *C, slice *K)
 				L1[11] = P[28];
 				L1[21] = P[42];
 				L1[ 6] = P[54];
-				s7( P[59]^K[ 2], P[ 1]^K[37], P[ 9]^K[22], P[17]^K[ 0], P[25]^K[42], P[33]^K[38],
+				f_s7( P[59]^K[ 2], P[ 1]^K[37], P[ 9]^K[22], P[17]^K[ 0], P[25]^K[42], P[33]^K[38],
 					L1[31], L1[11], L1[21], L1[ 6] );
 				
 				// and dependent boxes in round 2
@@ -1244,7 +1270,7 @@ slice whack16(slice *P, slice *C, slice *K)
 					L13[i][13] = C[45];
 					L13[i][24] = C[ 1];
 					L13[i][ 2] = C[23];
-					s5( R14[i][15]^K[22], R14[i][16]^K[44], R14[i][17]^K[ 7], R14[i][18]^K[49], R14[i][19]^K[ 9], R14[i][20]^K[38],
+					f_s5( R14[i][15]^K[22], R14[i][16]^K[44], R14[i][17]^K[ 7], R14[i][18]^K[49], R14[i][19]^K[ 9], R14[i][20]^K[38],
 						L13[i][ 7], L13[i][13], L13[i][24], L13[i][ 2] );
 					
 					// fix s1 and/or s3 in round 14, if necessary
@@ -1252,14 +1278,14 @@ slice whack16(slice *P, slice *C, slice *K)
 					R12_16[i] = R14[i][16];
 					R12_22[i] = R14[i][22];
 					R12_30[i] = R14[i][30];
-					s1( L13[i][31]^K[19], L13[i][ 0]^K[40], L13[i][ 1]^K[55], L13[i][ 2]^K[32], L13[i][ 3]^K[10], L13[i][ 4]^K[13],
+					f_s1( L13[i][31]^K[19], L13[i][ 0]^K[40], L13[i][ 1]^K[55], L13[i][ 2]^K[32], L13[i][ 3]^K[10], L13[i][ 4]^K[13],
 						R12__8[i], R12_16[i], R12_22[i], R12_30[i] );
 					
 					R12_23[i] = R14[i][23];
 					R12_15[i] = R14[i][15];
 					R12_29[i] = R14[i][29];
 					R12__5[i] = R14[i][ 5];
-					s3( L13[i][ 7]^K[25], L13[i][ 8]^K[54], L13[i][ 9]^K[ 5], L13[i][10]^K[ 6], L13[i][11]^K[46], L13[i][12]^K[34],
+					f_s3( L13[i][ 7]^K[25], L13[i][ 8]^K[54], L13[i][ 9]^K[ 5], L13[i][10]^K[ 6], L13[i][11]^K[46], L13[i][12]^K[34],
 						R12_23[i], R12_15[i], R12_29[i], R12__5[i] );
 					
 					// and step
