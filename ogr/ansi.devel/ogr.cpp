@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.1 2000/08/09 13:16:00 cyp Exp $
+ * $Id: ogr.cpp,v 1.1.2.2 2000/08/11 15:44:07 oliver Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -310,9 +310,8 @@ static int found_one(struct State *oState)
       (ogr_first_blank[x>>16]) : (16 + ogr_first_blank[x - 0xffff0000]))
 #elif defined(__PPC__) || defined(ASM_PPC) /* CouNT Leading Zeros Word */
   #if defined(__GNUC__)
-    #error "Please check this (define FIRSTBLANK_ASM_TEST to test)"
     static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
-    { __asm__ ("not %0,%0;cntlzw %0,%0;addi %0,%0,1" : : "r" (i)); return i; }
+    { i = ~i; __asm__ ("cntlzw %0,%1" : "=r" (i) : "r" (i)); return i+1; }
   #else /* macos */
     #error "Please check this (define FIRSTBLANK_ASM_TEST to test)"
     #define LOOKUP_FIRSTBLANK(x) (__cntlzw(~((unsigned int)(x)))+1)
