@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.216 2001/01/01 22:48:56 trevorh Exp $
+# @(#)$Id: configure,v 1.222.2.217 2001/01/02 20:11:03 patrick Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -357,10 +357,11 @@ add_sources() # $1=os, $2=arch, $3=custom
     ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+
     if [ "${1}" = "macosx" ]; then  #... and macosxserver (apple cc)
-      if [ "X$3" = "X" ]; then #mach3+
-        TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ppc/ogr-vec.cpp"  
-      fi
+     if [ "X$3" = "X" ]; then #mach3+
+       TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ppc/ogr-vec.cpp"  
+     fi
     fi
   #-----------------------------------------------------------------  
   elif [ "$2" = "arm" ]; then
@@ -1403,11 +1404,14 @@ case "$1" in
         generate_gcc_opts "power" "aix"
         AIXPOWERFLAGS="$OPTS_GCC -mthreads -D_AIX"
         generate_gcc_opts "ppc" "aix"
-        AIXPPC601FLAGS="$OPTS_GCC -mthreads -D_AIX"
+        AIXPPC601FLAGS="$OPTS_GCC -mthreads -mcpu=601 -D_AIX"
         generate_gcc_opts "ppc604" "aix"
         AIXPPC604FLAGS="$OPTS_GCC -mthreads -D_AIX"
         generate_gcc_opts "aixcommon" "aix"
-        TARGET_CCFLAGS="$OPTS_GCC -mthreads -D_AIX -mcpu=common -D_AIXALL"
+        TARGET_CCFLAGS="$OPTS_GCC -mthreads -D_AIX -D_AIXALL"
+	# ogr_power.o uses the same source as ogr.o, 
+	# only different compiler seetings
+	TARGET_ADDOBJS="output/ogr_power.o $TARGET_ADDOBJS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_LIBS=$TARGET_LIBS
         TARGET_LDFLAGS="$TARGET_LDFLAGS -mthreads"
@@ -2378,11 +2382,18 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       elif [ "${BUILDNAME}" = "aix-all" ]; then
         if [ "$target" = "output/rc5ansi_2-rg.o" ]; then
           CCFLAGS_SELECT="\${POWERFLAGS}"
-        elif [ "$target" = "output/allitnil_552.ppc.o" ]; then
+        elif [ "$target" != "${target%%allitnil*}" ]; then
           CCFLAGS_SELECT="\${PPC601FLAGS}"
-        elif [ "$target" = "output/lintilla_296.ppc.o" \
-            -o "$target" = "output/lintilla_296-604.ppc.o" ]; then
+        elif [ "$target" != "${target%%lintilla*}" ]; then
           CCFLAGS_SELECT="\${PPC604FLAGS}"
+        fi
+        if [ "$target" = "output/ogr.o" ]; then
+          # default is to compile for a POWERPC based CPU, 
+	  # we have to add POWER here 
+	  echo "output/ogr_power.o:    ${TARGETSRC} ${deplist}" >> Makefile
+          echo "	\${CC} -c \${POWERFLAGS} -D_AIXALL ${TARGETSRC} -o output/ogr_power.o" >> Makefile
+	  echo "" >> Makefile
+	  CCFLAGS_SELECT="\${PPC601FLAGS}"
         fi
       fi    
       echo "$target:	${TARGETSRC} ${deplist}" >> Makefile
