@@ -10,10 +10,10 @@ int stub_split(struct stub *stub, stub_callback callback, void *userdata)
 {
   struct stub newstub = *stub;
   int used[1000];
-  int i, j, k, t, tmax, limit;
+  int i, j, t, tmax, limit;
 
   for (i = 0; i < 1000; i++) {
-    used[0] = 0;
+    used[i] = 0;
   }
 
   /*
