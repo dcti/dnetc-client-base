@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.37 2000/05/10 04:41:17 mfeiri Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.38 2000/05/14 08:37:51 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -162,7 +162,7 @@ void *RegisterPollDrivenBreakCheck( register void (*proc)(void) )
 static void __PollExternalTrigger(struct trigstruct *trig, int undoable)
 {
   __assert_statics(); 
-  if ((undoable || (trig->trigger & TRIGSETBY_FLAGFILE)==TRIGSETBY_FLAGFILE) && trig->flagfile)
+  if ((undoable || (trig->trigger & TRIGSETBY_FLAGFILE) == 0) && trig->flagfile)
   {
     time_t now;
     if ((now = time(NULL)) >= trig->nextcheck) 
@@ -994,6 +994,7 @@ int InitializeTriggers(int doingmodes,
                        int watchcputempthresh, const char *cputempthresh,
                        int pauseifnomainspower )
 {
+  TRACE_OUT( (+1, "InitializeTriggers\n") );
   __assert_statics(); 
   memset( (void *)(&trigstatics), 0, sizeof(trigstatics) );
   trigstatics.exittrig.pollinterval.whenon = 0;
@@ -1007,10 +1008,13 @@ int InitializeTriggers(int doingmodes,
   {
     trigstatics.exittrig.flagfile = _init_trigfile(exitfile, 
                  trigstatics.exitfilebuf, sizeof(trigstatics.exitfilebuf) );
+    TRACE_OUT((0, "exitfile: %s\n", trigstatics.exittrig.flagfile));
     trigstatics.pausetrig.flagfile = _init_trigfile(pausefile, 
                  trigstatics.pausefilebuf, sizeof(trigstatics.pausefilebuf) );
+    TRACE_OUT((0, "pausefile: %s\n", trigstatics.pausetrig.flagfile));
     if (restartoninichange && inifile)
       _init_trigfile(inifile,trigstatics.inifile,sizeof(trigstatics.inifile));
+    TRACE_OUT((0, "restartfile: %s\n", trigstatics.inifile));
     _init_pauseplist( pauseplist );
     if (watchcputempthresh && cputempthresh)
       _init_cputemp( cputempthresh ); /* cpu temp string */
@@ -1018,6 +1022,7 @@ int InitializeTriggers(int doingmodes,
     if (doingmodes) /* dummy if, always false */
       __PollDrivenBreakCheck(); /* shaddup compiler */
   }
+  TRACE_OUT( (-1, "InitializeTriggers\n") );
   return 0;
 }  
 
