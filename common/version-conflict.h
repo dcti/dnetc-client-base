@@ -5,8 +5,16 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version-conflict.h,v $
+// Revision 1.21  1998/10/26 03:39:29  cyp
+// Enough changes to warrant a bump to beta 3. No date change.
+//
+// Revision 1.20  1998/10/19 07:43:51  chrisb
+// Bumped BETA_EXPIRATION_TIME by another 2 weeks. Now buys the farm 
+// at ~10:00 GMT on November 2nd.
+//
 // Revision 1.19  1998/10/10 18:26:19  silby
-// Updated version information in preparation of beta2 launch, added comments about versioning.
+// Updated version information in preparation of beta2 launch, added 
+// comments about versioning.
 //
 // Revision 1.18  1998/10/05 07:22:15  chrisb
 // Added 2 weeks to "BETA_EXPIRATION_TIME" since it expired this weekend.
@@ -28,10 +36,12 @@
 // Added #if 0 around the whole BETA client thing
 //
 // Revision 1.12  1998/09/19 08:50:22  silby
-// Added in beta test client timeouts.  Enabled/controlled from version.h by defining BETA, and setting the expiration time.
+// Added in beta test client timeouts.  Enabled/controlled from version.h 
+// by defining BETA, and setting the expiration time.
 //
 // Revision 1.11  1998/08/20 02:40:41  silby
-// Kicked version to 2.7100.418-BETA1, ensured that clients report the string ver (which has beta1 in it) in the startup.
+// Kicked version to 2.7100.418-BETA1, ensured that clients report the 
+// string ver (which has beta1 in it) in the startup.
 //
 // Revision 1.10  1998/07/22 04:28:49  jlawson
 // updated version to 417
@@ -76,15 +86,16 @@
 #define CLIENT_BUILD        01
 #define CLIENT_BUILD_FRAC   418
 
-#define CLIENT_VERSIONSTRING    "v2.7101.418-BETA2"
-#define CLIENT_VERSIONSTRING2   "2.7101.418-BETA2"        // no leading "v"
+#define CLIENT_VERSIONSTRING    "v2.7101.418-BETA3"
+#define CLIENT_VERSIONSTRING2   "2.7101.418-BETA3"        // no leading "v"
 
 // When releasing a beta client, please set the expiration time to
 // about two weeks into the future; that should be an adequate beta
 // time period.
 
 #define BETA
-#define BETA_EXPIRATION_TIME    908785600
+#define BETA_EXPIRATION_TIME    910000000  /* Nov 02 09:46:40 GMT */
+
 
 
 #endif // _VERSION_H
