@@ -2,7 +2,9 @@
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
 ;
-; @(#)$Id: csc-mac.inc,v 1.1.2.3 1999/11/07 19:48:55 cyp Exp $
+; macros to simplify conversion issues.
+;
+; @(#)$Id: csc-mac.inc,v 1.1.2.4 1999/11/07 23:23:05 cyp Exp $
 ;
 
 %ifdef __OMF__
@@ -21,24 +23,16 @@
 %endif
 
 %macro lje 1
-       jne %%skipne
-       jmp %1
-%%skipne:
+       je near %1
 %endmacro       
 %macro ljne 1
-       je %%skipe
-       jmp %1
-%%skipe:       
+       jne near %1
 %endmacro       
 %macro ljl 1
-       jge %%skipl
-       jmp %1
-%%skipl:
+       jl near %1
 %endmacro       
 %macro ljge 1
-       jl %%skipge
-       jmp %1
-%%skipge:
+       jge near %1
 %endmacro       
 
 %define offset
