@@ -36,17 +36,17 @@
    #error threadcd.h needs an include //replace this with appropriate includes
    typedef thread_id THREADID;
 #elif (CLIENT_OS == OS_DOS) 
-   typedef THREADID int; //dummy
+   typedef int THREADID ; //dummy
    #undef OS_SUPPORTS_THREADING
 #elif (CLIENT_OS == OS_MACOS)
-   typedef THREADID int; //dummy
+   typedef int THREADID ; //dummy
    #undef OS_SUPPORTS_THREADING
 #elif (CLIENT_OS == OS_WIN16)
-   typedef THREADID int; //dummy
+   typedef int THREADID ; //dummy
    #undef OS_SUPPORTS_THREADING
 #else
    #if !defined(MULTITHREAD)
-     typedef THREADID int;
+     typedef int THREADID ;
      #undef OS_SUPPORTS_THREADING
    #else
      #include <pthread.h> 
