@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.34 2000/06/18 15:02:02 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.35 2000/06/27 01:48:14 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -127,8 +127,9 @@ static int __GetTimeOfDay( struct timeval *tv )
 
 /* --------------------------------------------------------------------- */
 
-// timezone offset after compensating for dst (west of utc > 0, east < 0)
-// such that the number returned is constant for any time of year
+// timezone offset such that the number returned is constant for any 
+// time of year (ie, dst unadjusted, just as if the date was always Jan 1)
+// "minuteswest" means west of utc > 0, east < 0, ie utctime-localtime
 // CliGetMinutesWest() caches the value returned from __GetMinutesWest()
 
 static int __GetMinutesWest(void)
@@ -136,11 +137,9 @@ static int __GetMinutesWest(void)
   int minwest;
 #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN16) || \
   ((CLIENT_OS == OS_OS2) && !defined(__EMX__))
-  /* ANSI rules :) */
-  minwest = ((int)timezone)/60;
-  if (daylight)
-    minwest += 60;
-  minwest = -minwest;      /* UTC = localtime + (timezone/60) */
+  /* ANSI rules :) - 'timezone' doesn't reflect 'daylight' state. */
+  /* ie utctime-localtime == timezone-(daylight*3600) */
+  minwest = (int)(((long)timezone)/60L); 
 #elif (CLIENT_OS == OS_WIN32)
   TIME_ZONE_INFORMATION TZInfo;
   if (GetTimeZoneInformation(&TZInfo) == 0xFFFFFFFFL)
@@ -177,11 +176,11 @@ static int __GetMinutesWest(void)
   tzdiff =  ((loctime.tm_min  - utctime.tm_min) )
           +((loctime.tm_hour - utctime.tm_hour)*60 );
   /* last two are when the time is on a year boundary */
-  if      (loctime.tm_yday == utctime.tm_yday) { ;/* no change */ }
+  if      (loctime.tm_yday == utctime.tm_yday)     { ;/* no change */}
   else if (loctime.tm_yday == utctime.tm_yday + 1) { tzdiff += 1440; }
   else if (loctime.tm_yday == utctime.tm_yday - 1) { tzdiff -= 1440; }
-  else if (loctime.tm_yday <  utctime.tm_yday) { tzdiff += 1440; }
-  else { tzdiff -= 1440; }
+  else if (loctime.tm_yday <  utctime.tm_yday)     { tzdiff += 1440; }
+  else                                             { tzdiff -= 1440; }
 
   if (utctime.tm_isdst > 0)
     tzdiff -= 60;
@@ -197,8 +196,8 @@ static int __GetMinutesWest(void)
   if ( gettimeofday(&tv, &tz) )
     return 0;
   minwest = tz.tz_minuteswest;
-  if (tz.tz_dsttime)
-    minwest += 60;
+  if (tz.tz_dsttime) /* is this correct? does minuteswest really change when */
+    minwest += 60;   /* dst comes into effect/is no longer effective? */
 #endif
   return minwest;
 }
