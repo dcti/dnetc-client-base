@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.168  1999/01/12 21:48:23  remi
+# Little fix for linux-aout.
+#
 # Revision 1.167  1999/01/12 21:03:00  remi
 # - Added conditional $Id tags in NASM files
 # - Added -d __showids__ to NASM_FLAGS in targets where __showids_ was
@@ -1394,7 +1397,7 @@ case "$1" in
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
-			  -d__showids__ -d__ELF__ \
+			  -d__showids__ \
 			  -f aout"
 	TARGET_LIBS=""
 	;;
