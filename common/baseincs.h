@@ -5,20 +5,13 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.82 2000/06/02 06:24:52 jlawson Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.83 2000/07/11 05:05:14 mfeiri Exp $"
 
 #include "cputypes.h"
 
-// ------------------
-
-#if (CLIENT_OS == OS_RISCOS) || defined(UNSAFEHEADERS)
-  // Some environments include old system headers that are not safe for direct
-  // inclusion within C++ programs and need to be explicitly wrapped with extern.
-  #define UNSAFEHEADERS
-  extern "C" {
+#if (CLIENT_OS == OS_RISCOS)
+ extern "C" { /* headers are unsafe for c++ */
 #endif
-
-// ------------------
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,18 +20,19 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
-#if (CLIENT_OS != OS_MACOS)
 #include <sys/types.h>
 #include <sys/stat.h>
-#endif
 #include <errno.h>
 #include <limits.h>
-#include <assert.h>
 #if defined(__unix__)
   #include <sys/utsname.h> /* uname() */
 #endif
 
-// ------------------
+#if (CLIENT_OS == OS_RISCOS)
+} /* End the extern needed to handle unsafe standard headers. */
+#endif
+
+/* ------------------------------------------------------------------ */
 
 #if (CLIENT_OS == OS_IRIX)
   #include <unistd.h>
@@ -80,10 +74,11 @@
     #define QSV_NUMPROCESSORS     26
   #endif
 #elif (CLIENT_OS == OS_AMIGAOS)
-  #include <amiga/amiga.h>
-  #include <unistd.h>
+  #include "platforms/amiga/amiga.h"
+  #include <sys/unistd.h>
   #include <fcntl.h>
 #elif (CLIENT_OS == OS_RISCOS)
+  extern "C" {
   #include <sys/fcntl.h>
   #include <unistd.h>
   #include <stdarg.h>
@@ -104,6 +99,8 @@
   extern int getch();
   #define fileno(f) ((f)->__file)
   #define isatty(f) ((f) == 0)
+  #define tzset() /* nothing */
+  } /* extern "C" */
   extern s32 guiriscos, guirestart;
   extern int riscos_in_taskwindow;
 #elif (CLIENT_OS == OS_VMS)
@@ -186,7 +183,7 @@
   #include <nwfile.h> //sopen()
   #include <fcntl.h> //O_... constants
   #include "platforms/netware/netware.h" //for stuff in netware.cpp
-#elif (CLIENT_OS == OS_SUNOS) 
+#elif (CLIENT_OS == OS_SUNOS)
   #include <fcntl.h>
   #include <unistd.h>
   #include <stdlib.h>
@@ -207,10 +204,10 @@
   extern "C" int nice(int);
   extern "C" int gethostname(char *, int);
 #elif (CLIENT_OS == OS_AIX)
-  #include <unistd.h>		// nice()
-  #include <strings.h>		// bzero(), strcase...,
-  #include <sys/select.h>	// fd_set on AIX 4.1
-// clock_gettime is called getclock (used in clitime.cpp)
+  #include <unistd.h>   // nice()
+  #include <strings.h>    // bzero(), strcase...,
+  #include <sys/select.h> // fd_set on AIX 4.1
+  // clock_gettime is called getclock (used in clitime.cpp)
   #define clock_gettime(a,b) (getclock(a,b))
 #elif (CLIENT_OS == OS_LINUX)
   #include <sys/time.h>
@@ -219,32 +216,45 @@
   #if defined(__ELF__)
     #include <sched.h>
   #endif
-#elif (CLIENT_OS == OS_MACOS)  
-  #include <unix.h>
-  #include <Gestalt.h>
+#elif (CLIENT_OS == OS_MACOS)
   #include "client_defs.h"
-  struct timezone { int tz_minuteswest, tz_dsttime; };
-  extern "C" int gethostname(char *, int);
-  extern "C" int gettimeofday(struct timeval *, struct timezone *);
+  #include <Gestalt.h>
+  #define CLOCK_MONOTONIC 3
+  extern "C" void tzset(void);
+  extern "C" int clock_gettime(int clktype, struct timespec *tsp);
+  #include <unistd.h>
   #define fileno(f) ((f)->handle)
-#elif (CLIENT_OS == OS_FREEBSD)  
+#elif (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_RHAPSODY)
+  //rhapsody is mach 2.x based and altivec unsafe
+  #include <sys/time.h>
+  #include <sys/sysctl.h>
+  #include <unistd.h>
+#elif (CLIENT_OS == OS_FREEBSD)
   #include <sys/time.h>
   #include <unistd.h>
+  #include <sys/param.h>
+  #include <sys/sysctl.h>
   #if defined(__FreeBSD__) && (__FreeBSD__ < 3)
     #include <sys/unistd.h>
   #else
     #include <sched.h>
+    #include <sys/rtprio.h>
   #endif
 #elif (CLIENT_OS == OS_OPENBSD)
   #include <sys/time.h>
+  #include <sys/param.h>
+  #include <sys/sysctl.h>
   #include <unistd.h>
 #elif (CLIENT_OS == OS_BSDOS)
-  #include <sys/param.h>
   #include <sys/time.h>
+  #include <sys/param.h>
+  #include <sys/sysctl.h>
   #include <unistd.h>
   #include <sched.h>
 #elif (CLIENT_OS == OS_NETBSD)
   #include <sys/time.h>
+  #include <sys/param.h>
+  #include <sys/sysctl.h>
   #include <unistd.h>
 #elif (CLIENT_OS == OS_QNX)
   #include <sys/time.h>
@@ -278,14 +288,5 @@
   extern "C" int sleep(unsigned int seconds);
   extern "C" int usleep(unsigned int useconds);
 #endif
-
-// ------------------
-
-#ifdef UNSAFEHEADERS
-  // End the extern needed to handle unsafe system headers.
-  }
-#endif
-
-// ------------------
 
 #endif /* __BASEINCS_H__ */
