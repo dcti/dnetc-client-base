@@ -10,7 +10,8 @@
 #define OPTION_COUNT    44
 #define MAXMENUENTRIES  15
 
-char *menutable[5]=
+#if !defined(NOCONFIG)
+static char *menutable[5]=
   {
   "Required Options",
   "Logging Options",
@@ -19,7 +20,7 @@ char *menutable[5]=
   "Miscellaneous Options"
   };
 
-char nicenesstable[3][60]=
+static char nicenesstable[3][60]=
   {
   "Extremely Nice",
   "Nice",
@@ -27,7 +28,7 @@ char nicenesstable[3][60]=
   };
 
 #if (CLIENT_CPU == CPU_X86)
-char cputypetable[7][60]=
+static char cputypetable[7][60]=
   {
   "Autodetect",
   "Intel Pentium, Intel Pentium MMX, Cyrix 486/5x86/MediaGX",
@@ -38,14 +39,14 @@ char cputypetable[7][60]=
   "AMD K6",
   };
 #elif (CLIENT_CPU == CPU_ARM)
-char cputypetable[3][60]=
+static char cputypetable[3][60]=
   {
   "Autodetect",
   "ARM",
   "StrongARM",
   };
 #elif (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX))
-char cputypetable[3][60]=
+static char cputypetable[3][60]=
   {
   "Autodetect",
   "PowerPC 601",
@@ -53,7 +54,7 @@ char cputypetable[3][60]=
   };
 #endif
 
-char uuehttptable[6][60]=
+static char uuehttptable[6][60]=
   {
   "No special encoding",
   "UUE encoding (telnet proxies)",
@@ -63,26 +64,30 @@ char uuehttptable[6][60]=
   "SOCKS5 proxy"
   };
 
-char contesttable[3][60]=
+static char contesttable[3][60]=
   {
   "",//need a null placeholder since this is 1/2 based
   "RC5 only",
   "DES when possible, RC5 otherwise"
   };
 
-char offlinemodetable[3][60]=
+static char offlinemodetable[3][60]=
   {
   "Normal Operation",
   "Offline Always (no communication)",
   "Finish Buffers and exit"
   };
 
-char lurkmodetable[3][60]=
+static char lurkmodetable[3][60]=
   {
   "Normal mode",
   "Dial-up detection mode",
   "Dial-up detection ONLY mode"
   };
+  
+#endif  // !NOCONFIG
+
+// --------------------------------------------------------------------------
 
 struct optionstruct
   {
@@ -100,26 +105,32 @@ struct optionstruct
   s32 choicemax;//maximum choice number
   };
 
-optionstruct options[OPTION_COUNT]=
+#if defined(NOCONFIG)
+  #define CFGTXT(x) NULL
+#else
+  #define CFGTXT(x) x
+#endif
+
+static optionstruct options[OPTION_COUNT]=
 {
 //0
-{ "id", "Your E-mail address", "rc5@distributed.net", "(64 characters max)",1,1,1,NULL},
+{ "id", CFGTXT("Your E-mail address"), "rc5@distributed.net", CFGTXT("(64 characters max)"),1,1,1,NULL},
 //1
-{ "threshold", "RC5 Blocks to Buffer", "10", "(max 1000)",1,2,2,NULL},
+{ "threshold", CFGTXT("RC5 Blocks to Buffer"), "10", CFGTXT("(max 1000)"),1,2,2,NULL},
 //2
-{ "threshold", "RC5 block flush threshold", "10",
-    "\nSet this equal to RC5 Blocks to Buffer except in rare cases.",5,2,3,NULL},
+{ "threshold", CFGTXT("RC5 block flush threshold"), "10",
+    CFGTXT("\nSet this equal to RC5 Blocks to Buffer except in rare cases."),5,2,3,NULL},
 //3
-{ "threshold2", "DES Blocks to Buffer", "10", "(max 1000)",1,2,3,NULL},
+{ "threshold2", CFGTXT("DES Blocks to Buffer"), "10", CFGTXT("(max 1000)"),1,2,3,NULL},
 //4
-{ "threshold2", "DES block flush threshold", "10",
-    "\nSet this equal to DES Blocks to Buffer except in rare cases.",5,2,4,NULL},
+{ "threshold2", CFGTXT("DES block flush threshold"), "10",
+    CFGTXT("\nSet this equal to DES Blocks to Buffer except in rare cases."),5,2,4,NULL},
 //5
-{ "count", "Complete this many blocks, then exit", "0", "(0 = no limit)",5,2,1,NULL},
+{ "count", CFGTXT("Complete this many blocks, then exit"), "0", CFGTXT("(0 = no limit)"),5,2,1,NULL},
 //6
-{ "hours", "Run for this many hours, then exit", "0.00", "(0 = no limit)",5,1,2,NULL},
+{ "hours", CFGTXT("Run for this many hours, then exit"), "0.00", CFGTXT("(0 = no limit)"),5,1,2,NULL},
 //7
-{ "timeslice", "Keys per timeslice",
+{ "timeslice", CFGTXT("Keys per timeslice"),
 #if (CLIENT_OS == OS_WIN16)
     "200",
 #elif (CLIENT_OS == OS_RISCOS)
@@ -127,129 +138,129 @@ optionstruct options[OPTION_COUNT]=
 #else
     "65536",
 #endif
-    "\nThe lower the value, the less impact the client will have on your system, but\n"
-    "the slower it will go. Values from 200 to 65536 are good.",4,2,4,NULL},
+    CFGTXT("\nThe lower the value, the less impact the client will have on your system, but\n"
+    "the slower it will go. Values from 200 to 65536 are good."),4,2,4,NULL},
 //8
-{ "niceness", "Level of niceness to run at", "0",
-  "\n\nExtremely Nice will not slow down other running programs.\n"
+{ "niceness", CFGTXT("Level of niceness to run at"), "0",
+  CFGTXT("\n\nExtremely Nice will not slow down other running programs.\n"
   "Nice may slow down other idle-mode processes.\n"
   "Nasty will cause the client to run at regular user level priority.\n\n"
   "On a completely idle system, all options will result in the same\n"
-  "keyrate. For this reason, Extremely Nice is recommended.\n",4,2,1,NULL,
+  "keyrate. For this reason, Extremely Nice is recommended.\n"),4,2,1,NULL,
   &nicenesstable[0][0],0,2},
 //9
-{ "logname", "File to log to", "", "(128 characters max, blank = no log)\n",2,1,1,NULL},
+{ "logname", CFGTXT("File to log to"), "", CFGTXT("(128 characters max, blank = no log)\n"),2,1,1,NULL},
 //10
-{ "uuehttpmode", "Firewall Communications mode (UUE/HTTP/SOCKS)", "0",
-  "",3,2,1,NULL,&uuehttptable[0][0],0,5},
+{ "uuehttpmode", CFGTXT("Firewall Communications mode (UUE/HTTP/SOCKS)"), "0",
+  CFGTXT(""),3,2,1,NULL,&uuehttptable[0][0],0,5},
 //11
-{ "keyproxy", "Preferred KeyServer Proxy", "us.v27.distributed.net",
-   "\nThis specifies the DNS or IP address of the keyserver your client will\n"
+{ "keyproxy", CFGTXT("Preferred KeyServer Proxy"), "us.v27.distributed.net",
+   CFGTXT("\nThis specifies the DNS or IP address of the keyserver your client will\n"
    "communicate with. Unless you have a special configuration, use the setting\n"
-   "automatically set by the client.",3,1,2,NULL},
+   "automatically set by the client."),3,1,2,NULL},
 //12
-{ "keyport", "Preferred KeyServer Port", "2064", "(TCP/IP port on preferred proxy)",3,2,3,NULL},
+{ "keyport", CFGTXT("Preferred KeyServer Port"), "2064", CFGTXT("(TCP/IP port on preferred proxy)"),3,2,3,NULL},
 //13
-{ "httpproxy", "Local HTTP/SOCKS proxy address",
-       "wwwproxy.corporate.com", "(DNS or IP address)\n",3,1,4,NULL},
+{ "httpproxy", CFGTXT("Local HTTP/SOCKS proxy address"),
+       "wwwproxy.corporate.com", CFGTXT("(DNS or IP address)\n"),3,1,4,NULL},
 //14
-{ "httpport", "Local HTTP/SOCKS proxy port", "80", "(TCP/IP port on HTTP proxy)",3,2,5,NULL},
+{ "httpport", CFGTXT("Local HTTP/SOCKS proxy port"), "80", CFGTXT("(TCP/IP port on HTTP proxy)"),3,2,5,NULL},
 //15
-{ "httpid", "HTTP/SOCKS proxy userid/password", "", "(Enter userid (. to reset it to empty) )",3,1,6,NULL},
+{ "httpid", CFGTXT("HTTP/SOCKS proxy userid/password"), "", CFGTXT("(Enter userid (. to reset it to empty) )"),3,1,6,NULL},
 #if (CLIENT_CPU == CPU_X86)
 //16
-{ "cputype", "Optimize performance for CPU type", "-1",
-      "\n",4,2,3,NULL,&cputypetable[1][0],-1,5},
+{ "cputype", CFGTXT("Optimize performance for CPU type"), "-1",
+      CFGTXT("\n"),4,2,3,NULL,&cputypetable[1][0],-1,5},
 #elif (CLIENT_CPU == CPU_ARM)
-{ "cputype", "Optimize performance for CPU type", "-1",
-      "\n",4,2,3,NULL,&cputypetable[1][0],-1,1},
+{ "cputype", CFGTXT("Optimize performance for CPU type"), "-1",
+      CFGTXT("\n"),4,2,3,NULL,&cputypetable[1][0],-1,1},
 #elif (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX))
 //16
-{ "cputype", "Optimize performance for CPU type", "-1",
-      "\n",4,2,3,NULL,&cputypetable[1][0],-1,1},
+{ "cputype", CFGTXT("Optimize performance for CPU type"), "-1",
+      CFGTXT("\n"),4,2,3,NULL,&cputypetable[1][0],-1,1},
 #else
 //16
-{ "cputype", "CPU type...not applicable in this client", "-1", "(default -1)",0,2,0,
+{ "cputype", CFGTXT("CPU type...not applicable in this client"), "-1", CFGTXT("(default -1)"),0,2,0,
   NULL,NULL,0,0},
 #endif
 //17
-{ "messagelen", "Message Mailing (bytes)", "0", "(0=no messages mailed.  10000 recommended.  125000 max.)\n",2,2,2,NULL},
+{ "messagelen", CFGTXT("Message Mailing (bytes)"), "0", CFGTXT("(0=no messages mailed.  10000 recommended.  125000 max.)\n"),2,2,2,NULL},
 //18
-{ "smtpsrvr", "SMTP Server to use", "your.smtp.server", "(128 characters max)",2,1,3,NULL},
+{ "smtpsrvr", CFGTXT("SMTP Server to use"), "your.smtp.server", CFGTXT("(128 characters max)"),2,1,3,NULL},
 //19
-{ "smtpport", "SMTP Port", "25", "(SMTP port on mail server -- default 25)",2,2,4,NULL},
+{ "smtpport", CFGTXT("SMTP Port"), "25", CFGTXT("(SMTP port on mail server -- default 25)"),2,2,4,NULL},
 //20
-{ "smtpfrom", "E-mail address that logs will be mailed from", "RC5notify", "\n(Some servers require this to be a real address)\n",2,1,5,NULL},
+{ "smtpfrom", CFGTXT("E-mail address that logs will be mailed from"), "RC5notify", CFGTXT("\n(Some servers require this to be a real address)\n"),2,1,5,NULL},
 //21
-{ "smtpdest", "E-mail address to send logs to", "you@your.site", "\n(Full name and site eg: you@your.site.  Comma delimited list permitted)\n",2,1,6,NULL},
+{ "smtpdest", CFGTXT("E-mail address to send logs to"), "you@your.site", CFGTXT("\n(Full name and site eg: you@your.site.  Comma delimited list permitted)\n"),2,1,6,NULL},
 //22
 #if ((CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_BEOS))
-  { "numcpu", "Number of CPUs in this machine", "-1 (autodetect)", "\n"
+  { "numcpu", CFGTXT("Number of CPUs in this machine"), "-1 (autodetect)", "\n"
 #else
-  { "numcpu", "Number of CPUs in this machine", "1", "\n"
+  { "numcpu", CFGTXT("Number of CPUs in this machine"), "1", "\n"
 #endif
 ,4,2,2,NULL},
 //23
-{ "checkpointfile", "RC5 Checkpoint filename","none","\n(Non-shared file required.  "
+{ "checkpointfile", CFGTXT("RC5 Checkpoint filename"),"none",
 #if (CLIENT_OS == OS_RISCOS)
-  "ckpoint/rc5"
+  CFGTXT("\n(Non-shared file required.  ckpoint/rc5 recommended.  'none' to disable)\n")
 #else
-  "ckpoint.rc5"
+  CFGTXT("\n(Non-shared file required.  ckpoint.rc5 recommended.  'none' to disable)\n")
 #endif
-  " recommended.  'none' to disable)\n",1,1,4,NULL},
+  ,1,1,4,NULL},
 //24
-{ "checkpointfile2", "DES Checkpoint filename","none","\n(Non-shared file required.  "
+{ "checkpointfile2", "DES Checkpoint filename","none",
 #if (CLIENT_OS == OS_RISCOS)
-  "ckpoint/des"
+  CFGTXT("\n(Non-shared file required.  ckpoint/des recommended.  'none' to disable)\n")
 #else
-  "ckpoint.des"
+  CFGTXT("\n(Non-shared file required.  ckpoint.des recommended.  'none' to disable)\n")
 #endif
-  " recommended.  'none' to disable)\n",1,1,5,NULL},
+  ,1,1,5,NULL},
 //25
-{ "randomprefix", "High order byte of random blocks","100","Do not change this",0,2,0,NULL},
+{ "randomprefix", CFGTXT("High order byte of random blocks"),"100",CFGTXT("Do not change this"),0,2,0,NULL},
 //26
-{ "preferredblocksize", "Preferred Block Size (2^X keys/block)","30",
-  "(2^28 -> 2^31)",5,2,5,NULL},
+{ "preferredblocksize", CFGTXT("Preferred Block Size (2^X keys/block)"),"30",
+  CFGTXT("(2^28 -> 2^31)"),5,2,5,NULL},
 //27
-{ "preferredcontest", "Contest to process","2","",5,2,6,
+{ "preferredcontest", CFGTXT("Contest to process"),"2",CFGTXT(""),5,2,6,
   NULL,&contesttable[0][0],1,2},
 //28
-{ "quiet", "Disable all screen output? (quiet mode)","no","",5,3,7,NULL},
+{ "quiet", CFGTXT("Disable all screen output? (quiet mode)"),"no",CFGTXT(""),5,3,7,NULL},
 //29
-{ "noexitfilecheck", "Disable exit file checking?","no","",5,3,8,NULL},
+{ "noexitfilecheck", CFGTXT("Disable exit file checking?"),"no",(""),5,3,8,NULL},
 //30
-{ "percentoff", "Disable block percent completion indicators?","no","",5,3,9,NULL},
+{ "percentoff", CFGTXT("Disable block percent completion indicators?"),"no",CFGTXT(""),5,3,9,NULL},
 //31
-{ "frequent", "Attempt keyserver connections frequently?","no","",3,3,6,NULL},
+{ "frequent", CFGTXT("Attempt keyserver connections frequently?"),"no",CFGTXT(""),3,3,6,NULL},
 //32
-{ "nodisk", "Buffer blocks in RAM only? (no disk I/O)","no",
-    "\nNote: This option will cause all buffered, unflushable blocks to be lost\n"
-    "during client shutdown!",5,3,10,NULL},
+{ "nodisk", CFGTXT("Buffer blocks in RAM only? (no disk I/O)"),"no",
+    CFGTXT("\nNote: This option will cause all buffered, unflushable blocks to be lost\n"
+    "during client shutdown!"),5,3,10,NULL},
 //33
-{ "nofallback", "Disable fallback to US Round-Robin?","no",
-  "\nIf your specified proxy is down, the client normally falls back\n"
+{ "nofallback", CFGTXT("Disable fallback to US Round-Robin?"),"no",
+  CFGTXT("\nIf your specified proxy is down, the client normally falls back\n"
   "to the US Round-Robin (us.v27.distributed.net) - this option causes\n"
-  "the client to NEVER attempt a fallback if the local proxy is down.",
+  "the client to NEVER attempt a fallback if the local proxy is down."),
   3,3,7,NULL},
 //34
-{ "cktime", "Interval between saving of checkpoints (minutes):","5",
-  "",5,2,11,NULL},
+{ "cktime", CFGTXT("Interval between saving of checkpoints (minutes):"),"5",
+  CFGTXT(""),5,2,11,NULL},
 //35
-{ "nettimeout", "Network Timeout (seconds)", "60"," ",3,2,8,NULL},
+{ "nettimeout", CFGTXT("Network Timeout (seconds)"), "60",CFGTXT(" "),3,2,8,NULL},
 //36
-{ "exitfilechecktime", "Exit file check time (seconds)","30","",5,2,12,NULL},
+{ "exitfilechecktime", CFGTXT("Exit file check time (seconds)"),"30",CFGTXT(""),5,2,12,NULL},
 //37
-{ "runbuffers", "Offline operation mode","0",
-  "\nNormal Operation: The client will connect to a keyserver as needed,\n"
+{ "runbuffers", CFGTXT("Offline operation mode"),"0",
+  CFGTXT("\nNormal Operation: The client will connect to a keyserver as needed,\n"
   "        and use random blocks if a keyserver connection cannot be made.\n"
   "Offline Always: The client will never connect to a keyserver, and will\n"
   "        generate random blocks if the block buffers empty.)\n"
   "Finish Buffers and exit: The client will never connect\n"
   "        to a keyserver, and when the block buffers empty, it will\n"
-  "        terminate.\n",3,2,9,NULL,&offlinemodetable[0][0],0,2},
+  "        terminate.\n"),3,2,9,NULL,&offlinemodetable[0][0],0,2},
 //38
-{ "lurk", "Modem detection options","0",
-  "\nNormal mode: the client will send/receive blocks only when it\n"
+{ "lurk", CFGTXT("Modem detection options"),"0",
+  CFGTXT("\nNormal mode: the client will send/receive blocks only when it\n"
   "        empties the in buffer, hits the flush threshold, or the user\n"
   "        specifically requests a flush/fetch.\n"
   "Dial-up detection mode: This acts like mode 0, with the addition\n"
@@ -261,13 +272,13 @@ optionstruct options[OPTION_COUNT]=
   "        the client to automatically send/receive blocks when\n"
   "        connected. HOWEVER, if the client runs out of blocks,\n"
   "        it will NOT trigger auto-dial, and will instead work\n"
-  "        on random blocks until a connection is detected.\n",
+  "        on random blocks until a connection is detected.\n"),
   3,2,10,NULL,&lurkmodetable[0][0],0,2},
-{ "in",  "RC5 In-Buffer Path/Name", "[Current Path]\\buff-in.rc5","",0,1,14,NULL},
-{ "out", "RC5 Out-Buffer Path/Name", "[Current Path]\\buff-out.rc5","",0,1,15,NULL},
-{ "in2", "DES In-Buffer Path/Name", "[Current Path]\\buff-in.des","",0,1,16,NULL},
-{ "out2","DES Out-Buffer Path/Name","[Current Path]\\buff-out.des","",0,1,17,NULL},
-{ "pausefile","Pausefile name","none","(blank = no pausefile)",5,1,13,NULL}
+{ "in",  CFGTXT("RC5 In-Buffer Path/Name"), "[Current Path]\\buff-in.rc5",CFGTXT(""),0,1,14,NULL},
+{ "out", CFGTXT("RC5 Out-Buffer Path/Name"), "[Current Path]\\buff-out.rc5",CFGTXT(""),0,1,15,NULL},
+{ "in2", CFGTXT("DES In-Buffer Path/Name"), "[Current Path]\\buff-in.des",CFGTXT(""),0,1,16,NULL},
+{ "out2",CFGTXT("DES Out-Buffer Path/Name"),"[Current Path]\\buff-out.des",CFGTXT(""),0,1,17,NULL},
+{ "pausefile",CFGTXT("Pausefile name"),"none",CFGTXT("(blank = no pausefile)"),5,1,13,NULL}
 };
 
 #define CONF_ID 0
@@ -317,6 +328,7 @@ optionstruct options[OPTION_COUNT]=
 
 // --------------------------------------------------------------------------
 
+#if !defined(NOCONFIG)
 s32 Client::ConfigureGeneral( s32 currentmenu )
 {
   char parm[128],parm2[128];
@@ -787,9 +799,11 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
     }
   }
 }
+#endif
 
 //----------------------------------------------------------------------------
 
+#if !defined(NOCONFIG)
 s32 Client::Configure( void )
 //A return of 1 indicates to save the changed configuration
 //A return of -1 indicates to NOT save the changed configuration
@@ -835,9 +849,11 @@ while (returnvalue == 0)
 
   return returnvalue;
 }
+#endif
 
 //----------------------------------------------------------------------------
 
+#if !defined(NOCONFIG)
 s32 Client::yesno(char *str)
 // checks for user to type yes or no.
 // Returns 1=yes, 0=no, -1=unknown
@@ -851,9 +867,11 @@ s32 Client::yesno(char *str)
   fflush( stdin );
   return returnvalue;
 }
+#endif
 
 //----------------------------------------------------------------------------
 
+#if !defined(NOCONFIG)
 s32 Client::findmenuoption( s32 menu, s32 option)
     // Returns the id of the option that matches the menu and option
     // requested. Will return -1 if not found.
@@ -871,9 +889,11 @@ for (temp=0; temp < OPTION_COUNT; temp++)
 
 return returnvalue;
 }
+#endif
 
 //----------------------------------------------------------------------------
 
+#if !defined(NOCONFIG)
 void Client::setupoptions( void )
 // Sets all the pointers/etc for optionstruct options
 {
@@ -969,9 +989,11 @@ if (uuehttpmode > 1)
 
 
 }
+#endif
 
 //----------------------------------------------------------------------------
 
+#if !defined(NOCONFIG)
 void Client::killwhitespace( char *string )
 // Removes all spaces from a string
 {
@@ -986,11 +1008,12 @@ while (strchr(string, ' ') != NULL)
 
 
 }
-
+#endif
 
 //----------------------------------------------------------------------------
 
 
+#if !defined(NOCONFIG)
 void Client::clearscreen( void )
 // Clears the screen. (Platform specific ifdefs go inside of it.)
 
@@ -1015,6 +1038,7 @@ void Client::clearscreen( void )
 #endif
 
 }
+#endif
 
 //----------------------------------------------------------------------------
 
