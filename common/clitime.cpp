@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.24 2000/05/27 11:07:39 trevorh Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.25 2000/05/30 22:44:08 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -53,7 +53,7 @@ static int __GetTimeOfDay( struct timeval *tv )
   if (tv)
   {
     #if (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_OS2) || \
-        (CLIENT_OS == OS_VMS)
+        (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_WIN16)
     {
       struct timeb tb;
       ftime(&tb);
@@ -80,19 +80,6 @@ static int __GetTimeOfDay( struct timeval *tv )
       tv->tv_usec = ell;
       ell = (unsigned long)(now / 1000000ul);
       tv->tv_sec = ell;
-    }
-    #elif (CLIENT_OS==OS_WIN16)
-    {
-      static DWORD lastcheck = 0;
-      static time_t basetime = 0;
-      DWORD ticks = GetTickCount(); /* millisecs elapsed since OS start */
-      if (lastcheck == 0 || (ticks < lastcheck))
-      {
-        lastcheck = ticks;
-        basetime = time(NULL) - (time_t)(ticks/1000);
-      }
-      tv->tv_usec = (ticks%1000)*1000;
-      tv->tv_sec = basetime + (time_t)(ticks/1000);
     }
     #elif (CLIENT_OS == OS_NETWARE)
     {
@@ -319,6 +306,30 @@ int CliClock(struct timeval *tv)
 
 /* --------------------------------------------------------------------- */
 
+// __clks2tv() is called/inline'd from CliGetMonotonicClock() and converts 
+// 'ticks' (ticks/clks/whatever: whatever it is that your time-since-whenever 
+// function returns) to secs/usecs. 'hz' is that function's equivalent of 
+// CLOCKS_PER_SECOND. 'wrap_ctr' is the number of times 'ticks' wrapped.
+// Caveat emptor: 'hz' cannot be greater than 1000000ul
+
+inline void __clks2tv( unsigned long hz, register unsigned long ticks, 
+                       unsigned long wrap_ctr, struct timeval *tv )
+{ 
+  register unsigned long sadj = 0, wadj = 0;
+  if (wrap_ctr) /* number of times 'ticks' wrapped */
+  { 
+    sadj = (hz/10); /* intermediate temp to suppress optimization */
+    wadj = wrap_ctr * (6UL+(10*((ULONG_MAX/10UL)%(hz/10)))); /* ((1<<ws)%hz) */
+    sadj = wrap_ctr * ((ULONG_MAX/10UL)/sadj);               /* ((1<<ws)/hz) */
+    sadj += wadj / hz; wadj %= hz;
+  }
+  tv->tv_sec = (time_t) ( (ticks / hz) + sadj);
+  tv->tv_usec = (long)( ( (ticks % hz) + wadj) * ((1000000ul+(hz>>1))/hz) );
+  return;
+}
+
+/* --------------------------------------------------------------------- */
+
 // CliGetMonotonicClock() should return a ...
 // real (not virtual per process, but secs that increment as a wall clock
 // would), monotonic (won't speed up/slow down), linear time (won't go
@@ -341,19 +352,11 @@ int CliGetMonotonicClock( struct timeval *tv )
 {
   if (tv)
   {
-    #if defined(CLOCK_REALTIME) /* POSIX 1003.1b-1993 but not 1003.1-1990 */
-    {
-      struct timespec ts;
-      if (clock_gettime(CLOCK_REALTIME, &ts))
-        return -1;
-      tv->tv_sec = ts.tv_sec;
-      tv->tv_usec = ts.tv_nsec / 1000;
-    }
-	#elif (CLIENT_OS == OS_BEOS)
+    #if (CLIENT_OS == OS_BEOS)
     {
       bigtime_t now = system_time();
-      tv->tv_sec = (time_t)(now / 1000000LL);    /* microseconds -> seconds */
-      tv->tv_usec = (time_t)(now % 1000000LL);    /* microseconds < 1 second */
+      tv->tv_sec = (time_t)(now / 1000000LL); /* microseconds -> seconds */
+      tv->tv_usec = (time_t)(now % 1000000LL); /* microseconds < 1 second */
     }
     #elif (CLIENT_OS == OS_NETWARE)
     {
@@ -363,53 +366,123 @@ int CliGetMonotonicClock( struct timeval *tv )
     }
     #elif (CLIENT_OS == OS_RISCOS)
     {
-      static unsigned long last_ctr = 0, wrap_hi = 0, wrap_lo = 0;
-      unsigned long usecs, ctr = read_monotonic_time(); /* hsecs since boot */
-      if (ctr < last_ctr)
-      {
-        wrap_hi += 42949672UL;
-        wrap_lo += 960000UL;
-      }
+      static unsigned long last_ctr = 0, wrap_ctr = 0;
+      unsigned long ctr = read_monotonic_time(); /* hsecs since boot */
+      if (ctr < last_ctr) wrap_ctr++;
       last_ctr = ctr;
-      usecs = ((ctr%100UL)*10000UL) + wrap_lo;
-      tv->tv_sec = (time_t)((ctr/100UL) + wrap_hi + (usecs / 1000000UL);
-      tv->tv_usec = usecs % 1000000UL;
+      __clks2tv( 100, ctr, wrap_ctr, tv );
+      //adj = (wrap_ctr * 96UL);
+      //tv->tv_usec = 100000UL * ((ticks%100) + (adj % 100));
+      //tv->tv_sec = (time_t)((ticks/100)+(adj/100)+(wrap_ctr*42949672UL));
     }
-    #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS == OS_OS2)
+    #elif (CLIENT_OS == OS_WIN16)
     {
-      #if (CLIENT_OS == OS_OS2)
-        #define myULONG ULONG
-      #else
-        #define myULONG DWORD
-      #endif
-      static int sguard = -1;
-      static myULONG lastcheck = 0, wrap_count = 0;
-      unsigned long usecs;
-      myULONG ticks, l_wrap_count;
-
-      while ((++sguard)!=0)
-        sguard--;
-      l_wrap_count = wrap_count;
-      #if (CLIENT_OS == OS_OS2)
-      if (DosQuerySysInfo(QSV_MS_COUNT, QSV_MS_COUNT, &ticks, sizeof(ticks)))
-        {sguard--; return -1; }
-      #else
+      static DWORD last_ctr = 0, wrap_ctr = 0;
+      DWORD ctr = GetTickCount(); /*millisec since boot*/
+      if (ctr < last_ctr) wrap_ctr++;
+      last_ctr = ctr;
+      __clks2tv( 1000, ctr, wrap_ctr, tv );
+      //adj = (wrap_ctr * 296UL);
+      //tv->tv_usec = ((ticks % 1000) + (adj % 1000)) * 1000UL;
+      //tv->tv_sec = (time_t)((ticks/1000)+(adj/1000)+(wrap_ctr*4294967UL));
+    }
+    #elif (CLIENT_OS == OS_WIN32)
+    {
+      /* '-benchmark rc5' in keys/sec with disabled ThreadUserTime(): */
+      /* using spinlocks: 1,386,849.10 | using critical section: 994,861.48 */
+      static long splbuf[4] = {0,0,0,0}; /* 64bit*2 */
+      static DWORD lastticks = 0, wrap_count = 0;
+      DWORD ticks, l_wrap_count; long *spllp;
+      char *splcp = (char *)&splbuf[0];
+      
+      int lacquired = 0, locktries = 0;
+      splcp += ((64/8) - (((unsigned long)splcp) & ((64/8)-1)));
+      spllp = (long *)splcp; /* long * to 64bit-aligned spinlock space */
+      while (!lacquired)
+      {
+        #if (CLIENT_CPU == CPU_ALPHA)
+        lacquired = _AcquireSpinLockCount(spllp, 0x0f); /* VC6 intrinsic */
+        locktries += 0x0f;
+        #else
+        if (InterlockedExchange(spllp,1)==0) /* spl must be 32bit-aligned */
+          lacquired = 1;
+        #endif
+        if (!lacquired && ((++locktries)&0x0f)==0)
+          Sleep(0);
+      }
       ticks = GetTickCount(); /* millisecs elapsed since OS start */
-      #endif
-      if (ticks < lastcheck)
+      l_wrap_count = wrap_count;
+      if (ticks < lastticks)
         wrap_count = ++l_wrap_count;
-      lastcheck = ticks;
-      sguard--;
+      lastticks = ticks;
+      #if (CLIENT_CPU == CPU_ALPHA)
+      _ReleaseSpinLock(spllp);  /* VC6 intrinsic */
+      #else
+      *spllp = 0;
+      #endif
+      __clks2tv( 1000, ticks, l_wrap_count, tv );
+    }
+    #elif (CLIENT_OS == OS_OS2)
+    {
+      static long splbuf[2] = {0,0}; /* space for 32bit alignment */
+      char *splptr = (char *)&splbuf[0];
+      ULONG ticks, l_wrap_count = 0;
+      int gotit = 0, lacquired = 0;
 
-      usecs = ((ticks%1000UL)*1000UL) + (l_wrap_count * 296000UL);
-      tv->tv_usec = usecs % 1000000ul;
-      tv->tv_sec = (time_t)((ticks/1000UL) + (l_wrap_count * 4294967UL)) +
-                               (usecs / 1000000ul);
+      splptr += (sizeof(long)-(((unsigned long)splptr) & (sizeof(long)-1)));
+      while (!lacquired)
+      {
+        #if defined(__GNUC__)
+        __asm__ __volatile__ ("movl $1, %%eax;\n"
+                              "lock; xchgl %%eax, %0;\n"
+                              "xorl $1,%%eax;\n" : 
+                              "=g"(*(splptr)), "=r" (lacquired);
+        #else /* watcom et al */
+        _asm mov eax,1        /* the new value */
+        _asm mov ecx, splptr  /* load the offset (done by =g above) */  
+        _asm lock xchgl [ecx], eax /* 'lock' is superfluous */
+        _asm xor eax,1 /* if oldval was 1, make it 0, and vice versa*/
+        _asm mov lacquired, eax  /* do "=r" (lacquired) */
+        #endif
+        if (!lacquired)
+          DosSleep(0);
+      }
+      if (!DosQuerySysInfo(QSV_MS_COUNT, QSV_MS_COUNT, &ticks, sizeof(ticks)))
+      {
+        static ULONG wrap_count = 0, lastticks = 0;
+        l_wrap_count = wrap_count;
+        if (ticks < lastticks)
+          wrap_count = ++l_wrap_count;
+        lastticks = ticks;
+        gotit = 1;
+      }
+      *((long *)splptr) = 0;
+      if (!gotit)
+        return -1;
+      __clks2tv( 1000, ticks, l_wrap_count, tv );
+    }
+    #elif defined(CTL_KERN) && defined(KERN_BOOTTIME) /* *BSD */
+    {
+      struct timeval boot, now;
+      int mib[2]; size_t argsize = sizeof(boot); 
+      mib[0] = CTL_KERN; mib[1] = KERN_BOOTTIME;
+      if (gettimeofday(&now, 0))
+        return -1;
+      if (sysctl(&mib[0], 2, &boot, &argsize, NULL, 0) == -1)
+        return -1;
+      if (now.tv_sec < boot.tv_sec || /* should never happen */
+          (now.tv_sec == boot.tv_sec && now.tv_usec < boot.tv_sec))
+        return -1;
+      if (now.tv_usec < boot.tv_usec) {
+        now.tv_usec += 1000000;
+        now.tv_sec--;
+      }  
+      tv->tv_sec = now.tv_sec - boot.tv_sec;
+      tv->tv_usec = now.tv_usec - boot.tv_usec;
     }
     #elif (CLIENT_OS == OS_DOS)
     {
       /* in platforms/dos/dostime.cpp */
-      /* resolution (granularity) is 54925us */
       if (getmicrotime(tv)!=0)
         return -1;
     }
@@ -435,67 +508,55 @@ int CliGetMonotonicClock( struct timeval *tv )
         tv->tv_sec++;
       }
     }
+    #elif defined(CLOCK_MONOTONIC) /* POSIX 1003.1c */
+    {                           /* defined doesn't always mean supported :( */
+      struct timespec ts;
+      if (clock_gettime(CLOCK_MONOTONIC, &ts))
+        return -1;
+      tv->tv_sec = ts.tv_sec;
+      tv->tv_usec = ts.tv_nsec / 1000;
+    }
+    #elif defined(CLOCK_REALTIME) /* POSIX 1003.1b-1993 but not 1003.1-1990 */
+    {
+      struct timespec ts;
+      if (clock_gettime(CLOCK_REALTIME, &ts))
+        return -1;
+      tv->tv_sec = ts.tv_sec;
+      tv->tv_usec = ts.tv_nsec / 1000;
+    }
     #elif 0
     {
-      /* DO NOT USE THIS WITHOUT ENSURING ...
-         a) that clock() does *not* return virtual time.
-            (under unix clock() is often implemented via
-            times() is thus virtual. posix 1b compatible OSs
-            should have clock_gettime())
-         b) that clock() is not dependant on system time
-            (all watcom clibs have this bug)
-         c) that the value from clock() does indeed count up to
-            Uxxx_MAX (whatever size clock_t is) before wrapping.
-            At least one implementation (EMX 0.9) is known to
-            wrap at (0xfffffffful/10).
+      /* ***** this code is not thread-safe! ******
+         AND DO NOT USE THIS WITHOUT ENSURING ...
+         a) that clock() is not dependant on system time (all watcom clibs 
+            have this bug). Otherwise you may as well use __GetTimeOfDay()
+         b) that clock() does not return virtual time. Under unix clock() 
+            is often implemented via times() is thus virtual. Look at 
+            'top' source [get_system_info() in machine.c] to see what 
+            you might be able to use instead.
+         c) clock_t is at least an unsigned long
+         d) that the value from clock() does indeed count up to ULONG_MAX 
+            before wrapping. At least one implementation (EMX <=0.9) is 
+            known to wrap at (0xfffffffful/10).
+         e) CLOCKS_PER_SECOND is not > 1000000
+         ***** this code is not thread-safe! ******
       */
-      static int sguard = -1;
-      static clock_t lastcheck = 0;
+      static unsigned long lastcheck = 0;
       static unsigned long wrap_count = 0;
-      clock_t cps, counter, wrap_hi, wrap_lo;
-      unsigned long l_wrap_count;
+      unsigned long l_wrap_count, counter;
+      clock_t raw_counter;
 
-      while ((++sguard)!=0)
-        --sguard;
+      raw_counter = clock();
+      if (raw_counter == ((clock_t)-1))
+        return -1;
+      counter = (unsigned long)raw_counter;
+      /* this code is not thread-safe! */
       l_wrap_count = wrap_count;
-      counter = clock();
-      if (counter == ((clock_t)-1))
-        {--sguard; return -1;}
       if (counter < lastcheck)
         wrap_count = ++l_wrap_count;
       lastcheck = counter;
-      sguard--;
 
-      cps = CLOCKS_PER_SEC;
-      tv->tv_usec = ((counter%cps)*(1000000ul/cps));
-      tv->tv_sec = (time_t)(basetime + (counter / cps);
-
-      if (cps > 1000000)
-      {
-        #if defined(HAVE_I64)
-        ui64 usecs = (ui64)(counter%cps))
-        usecs *= 1000000ul;
-        usecs /= cps;
-        tv->tv_usec = (unsigned long)usecs;
-        #else
-        tv->tv_usec = (unsigned long)((((double)(counter%cps))
-                                     * 1000000.0)/((double)cps));
-        #endif
-      }
-      if (l_wrap_count)
-      {
-        double x = (((double)l_wrap_count)*(((double)((clock_t)-1))+1.0) /
-                    ((double)cps));
-        unsigned long secs = (unsigned long)x;
-        unsigned long usecs = (unsigned long)(1000000.0 * (x-((double)secs)));
-        tv->tv_secs += secs;
-        tv->tv_usecs += usecs;
-      }
-      if (tv->tv_usec > 1000000)
-      {
-        tv->tv_sec += tv->tv_usec / 1000000ul;
-        tv->tv_usec %= 1000000ul;
-      }
+      __tick2tv( CLOCKS_PER_SEC, counter, l_wrap_count, tv );
     }
     #else
     // this is a bad thing because time-of-day is user modifyable.
@@ -533,13 +594,6 @@ int CliGetThreadUserTime( struct timeval *tv )
     #elif (CLIENT_OS == OS_WIN32)
     {
       static int isnt = -1;
-      #if 0
-      if (isnt == -1)
-      {
-        if ( winGetVersion() < 2000)
-          isnt = 0;
-      }
-      #endif
       if ( isnt != 0 )
       {
         FILETIME ct,et,kt,ut;
