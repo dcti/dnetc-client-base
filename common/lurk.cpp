@@ -48,7 +48,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.25 2000/10/24 19:36:13 oliver Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.26 2000/10/31 15:23:47 cyp Exp $"; }
 
 //#define TRACE
 
@@ -511,7 +511,7 @@ const char **Lurk::GetConnectionProfileList(void)
     }
     return configptrs;
   #endif
-  return NULL;
+  return ((const char **)0);
 }
 
 /* ---------------------------------------------------------- */
@@ -576,7 +576,8 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
     }
 
     mask_include_all = mask_default_only = 0;
-    conf.connifacemask[0] = ifacemaskcopy[0]=0; ifacestowatch[0]=NULL;
+    conf.connifacemask[0] = ifacemaskcopy[0]=0; 
+    ifacestowatch[0] = (const char *)0;
     if ((conf.lurkmode || conf.dialwhenneeded) && params->connifacemask[0])
     {
       int n=0, pos=0;
@@ -633,7 +634,7 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
       } while (*c);
       if (ptrindex == 0 && !mask_include_all) //nothing in list
         mask_default_only = 1;
-      ifacestowatch[ptrindex] = NULL;
+      ifacestowatch[ptrindex] = (const char *)0;
 
       #ifdef TRACE
       TRACE_OUT((0,"mask flags: include_all=%d, defaults_only=%d\niface list:\n",
@@ -716,13 +717,19 @@ static int __MatchMask( const char *ifrname, int mask_include_all,
       || strcmp(wildmask,"mi*")==0  // required for Miami (not MiamiDx or Genesis)
       #endif
       || strcmp(wildmask,"sl*")==0);
-      matchedname = ((!ismatched)?(NULL):((const char *)(&wildmask[0])));
+      matchedname = ((const char *)(&wildmask[0]));
+      if (!ismatched)
+        matchedname = ((const char *)0);  
     }
     else //user specified a mask. must match ifrname, or (if the mask is
     {    //a wildcard version) the wildcard version of ifrname
-      for (maskpos=0;!ismatched && (matchedname=ifacestowatch[maskpos])!=NULL;maskpos++)
-        ismatched = (strcmp(ifacestowatch[maskpos],ifrname)==0 ||
-                     strcmp(ifacestowatch[maskpos],wildmask)==0);
+      maskpos = 0;
+      do { 
+        matchedname = ifacestowatch[maskpos++];
+        if (matchedname)
+          ismatched = (strcmp( matchedname, ifrname )==0 ||
+                       strcmp( matchedname, wildmask )==0);
+      } while (!ismatched && matchedname);
     }
   }
   TRACE_OUT((-1,"__Maskmatch: matched?=%s ifrname=='%s' matchname=='%s'\n",
