@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.25  1998/12/22 23:03:22  silby
+// Moved rc5 cipher/iv/etc back into rsadata.h - should be in there
+// because the file is shared with the proxy source.
+//
 // Revision 1.24  1998/12/22 21:14:50  cyp
 // Change hardcoded date to Jan 18 for DES-III
 //
@@ -103,7 +107,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.24 1998/12/22 21:14:50 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.25 1998/12/22 23:03:22 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -124,6 +128,7 @@ return "@(#)$Id: probfill.cpp,v 1.24 1998/12/22 21:14:50 cyp Exp $"; }
 #include "triggers.h"  // RaiseExitRequestTrigger()
 #include "buffupd.h"   // BUFFERUPDATE_FETCH/_FLUSH define
 #include "probfill.h"  // ourselves.
+#include "rsadata.h"   // Get cipher/etc for random blocks
 
 // =======================================================================
 // each individual problem load+save generates 4 or more messages lines 

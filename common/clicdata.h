@@ -12,6 +12,10 @@
    integrity and ease maintenance. 
 */
 // $Log: clicdata.h,v $
+// Revision 1.13  1998/12/22 23:03:22  silby
+// Moved rc5 cipher/iv/etc back into rsadata.h - should be in there
+// because the file is shared with the proxy source.
+//
 // Revision 1.12  1998/12/21 18:52:53  cyp
 // Added RC5 iv/cypher/plain *here*. Read the 'what this is' at the top of
 // the file to see why. Also, this file has an 8.3 filename.
@@ -41,13 +45,6 @@
 
 #ifndef _CLICDATA_H_
 #define _CLICDATA_H_
-
-#define RC564_IVLO     0xD5D5CE79L /* these constants are in net byte order */
-#define RC564_IVHI     0xFCEA7550L
-#define RC564_CYPHERLO 0x550155BFL
-#define RC564_CYPHERHI 0x4BF226DCL
-#define RC564_PLAINLO  0x20656854L
-#define RC564_PLAINHI  0x6E6B6E75L
 
 // return 0 if contestID is invalid, non-zero if valid.
 int CliIsContestIDValid(int contestID);
