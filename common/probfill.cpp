@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.63 1999/10/12 17:05:00 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.64 1999/10/16 16:48:11 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -116,12 +116,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
     WorkRecord wrdata;
     int resultcode;
     unsigned int cont_i;
-    s32 cputype = CLIENT_CPU; /* needed for FILEENTRY_CPU macro */
     memset( (void *)&wrdata, 0, sizeof(WorkRecord));
     resultcode = thisprob->RetrieveState( &wrdata.work, &cont_i, 0 );
-    #if (CLIENT_OS == OS_RISCOS)
-    if (prob_i == 1) cputype = CPU_X86; 
-    #endif
 
     if (resultcode == RESULT_FOUND || resultcode == RESULT_NOTHING )
     {
@@ -138,7 +134,12 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       wrdata.contest = (u8)(cont_i);
       wrdata.resultcode = resultcode;
       wrdata.os      = CLIENT_OS;
-      wrdata.cpu     = (u8)cputype;
+      #if (CLIENT_OS == OS_RISCOS)
+      if (prob_i == 1)
+        wrdata.cpu   = CPU_X86;
+      else
+      #endif
+      wrdata.cpu     = CLIENT_CPU;
       wrdata.buildhi = CLIENT_CONTEST;
       wrdata.buildlo = CLIENT_BUILD;
       strncpy( wrdata.id, client->id , sizeof(wrdata.id));
@@ -193,7 +194,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       *contest = cont_i;
       *is_empty = 1; /* will soon be */
 
-      cputype           = client->cputype; /* uh, "coretype" */
+      int cputype       = thisprob->coresel; /* uh, "coretype" */
       wrdata.contest    = (u8)cont_i;
       wrdata.resultcode = resultcode;
       wrdata.cpu        = FILEENTRY_CPU; /* combines CLIENT_CPU and coretype */
@@ -345,7 +346,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
         if ( ((wrdata.work.crypto.keysdone.lo)!=0) || 
              ((wrdata.work.crypto.keysdone.hi)!=0) )
         {
-          s32 cputype = client->cputype; /* needed for FILEENTRY_CPU macro */
+          //cputype = client->cputype; /* needed for FILEENTRY_CPU macro */
 
           #if (CLIENT_OS == OS_RISCOS) /* second thread is x86 */
           if (wrdata.contest == RC5 && prob_i == 1) cputype = CPU_X86;
@@ -355,7 +356,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
           // cpu/os/build, then reset the keysdone to 0...
           if ((wrdata.os      != FILEENTRY_OS) ||
               (wrdata.buildhi != FILEENTRY_BUILDHI) || 
-              (wrdata.cpu     != FILEENTRY_CPU) || /*CLIENT_CPU+coretype */
+           /* (wrdata.cpu     != FILEENTRY_CPU) || */ /*CLIENT_CPU+coretype */
               (wrdata.buildlo != FILEENTRY_BUILDLO))
           {
              wrdata.work.crypto.keysdone.lo = 0;
@@ -446,7 +447,7 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
     *load_needed = 0;
     *contest = (unsigned int)(wrdata.contest);
 
-    thisprob->LoadState( &wrdata.work, *contest, timeslice, client->cputype );
+    thisprob->LoadState( &wrdata.work, *contest, timeslice, 0 /*unused*/ );
     thisprob->loaderflags = 0;
 
     switch (wrdata.contest) 
@@ -792,7 +793,7 @@ unsigned int LoadSaveProblems(Client *client,
   {
     previous_load_problem_count = 0;
     if (client->nodiskbuffers == 0)
-      client->CheckpointAction( CHECKPOINT_CLOSE, 0 );
+      CheckpointAction( client, CHECKPOINT_CLOSE, 0 );
     else
       BufferUpdate(client,BUFFERUPDATE_FLUSH,0);
     retval = total_problems_saved;

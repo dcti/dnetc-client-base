@@ -5,17 +5,17 @@
  *
  * -----------------------------------------------------------------
  * Rewritten from scratch by Cyrus Patel <cyp@fb14.uni-mainz.de>
- * Client::CheckpointAction( int action, unsigned int load_problem_count )
+ * CheckpointAction( int action, unsigned int load_problem_count )
  * is called with action == CHECKPOINT_[OPEN|REFRESH|CLOSE]. It uses the
  * Problem manager table 'load_problem_count' times to walk the problem
  * list when refreshing the checkpoint file. CheckpointAction() returns 
  * non-zero if the client should not use checkpointing. The checkpoint 
- * interval is controlled from Client::Run()
+ * interval is controlled from Run()
  * -----------------------------------------------------------------
  *
 */
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.14 1999/10/11 17:06:22 cyp Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.15 1999/10/16 16:48:09 cyp Exp $"; }
 
 #include "client.h"   // FileHeader, Client class
 #include "baseincs.h" // memset(), strlen()
@@ -30,30 +30,32 @@ return "@(#)$Id: checkpt.cpp,v 1.14 1999/10/11 17:06:22 cyp Exp $"; }
 
 /* ----------------------------------------------------------------- */
 
-int Client::CheckpointAction( int action, unsigned int load_problem_count )
+int CheckpointAction( Client *client, int action, unsigned int load_problem_count )
 {
-  int do_checkpoint = (nodiskbuffers==0);
+  int do_checkpoint = (client->nodiskbuffers==0);
 
   if (do_checkpoint)
   {
     unsigned int len = 0;
-    while (checkpoint_file[len]!=0 && isspace(checkpoint_file[len]))
+    while (client->checkpoint_file[len]!=0 && 
+           isspace(client->checkpoint_file[len]))
       len++;
     if (len)
-      strcpy( checkpoint_file, &checkpoint_file[len] );
-    len = strlen(checkpoint_file);
-    while (len>0 && isspace(checkpoint_file[len-1]))
-      checkpoint_file[--len]=0;
-    do_checkpoint = (nodiskbuffers==0 && IsFilenameValid( checkpoint_file ));
+      strcpy( client->checkpoint_file, &client->checkpoint_file[len] );
+    len = strlen(client->checkpoint_file);
+    while (len>0 && isspace(client->checkpoint_file[len-1]))
+      client->checkpoint_file[--len]=0;
+    do_checkpoint = (client->nodiskbuffers==0 && 
+                     IsFilenameValid( client->checkpoint_file ));
   }
 
   if ( action == CHECKPOINT_OPEN )
   {
     if (do_checkpoint)
     {
-      if ( DoesFileExist( checkpoint_file ))
+      if ( DoesFileExist( client->checkpoint_file ))
       {
-        long recovered = BufferImportFileRecords( this, checkpoint_file, 0 );
+        long recovered = BufferImportFileRecords( client, client->checkpoint_file, 0 );
         if (recovered > 0)  
         {
           LogScreen("Recovered %d checkpoint packet%s\n", recovered, 
@@ -69,7 +71,7 @@ int Client::CheckpointAction( int action, unsigned int load_problem_count )
   if ( action == CHECKPOINT_CLOSE || action == CHECKPOINT_REFRESH )
   {
     if (do_checkpoint)
-      BufferZapFileRecords( checkpoint_file ); 
+      BufferZapFileRecords( client->checkpoint_file ); 
   }
 
   /* --------------------------------- */
@@ -92,6 +94,7 @@ int Client::CheckpointAction( int action, unsigned int load_problem_count )
             thisprob->RetrieveState((ContestWork *)&work, &cont_i, 0);
             if (cont_i < CONTEST_COUNT /* 0,1,2...*/ )
             {
+              int cputype = thisprob->coresel;
               work.resultcode = RESULT_WORKING;
               work.contest = (u8)cont_i;
               work.cpu     = FILEENTRY_CPU;
@@ -99,18 +102,19 @@ int Client::CheckpointAction( int action, unsigned int load_problem_count )
               work.buildhi = FILEENTRY_BUILDHI; 
               work.buildlo = FILEENTRY_BUILDLO;
 
-              if (BufferPutFileRecord( checkpoint_file, &work, NULL ) < 0) 
+              if (BufferPutFileRecord( client->checkpoint_file, &work, NULL ) < 0) 
               {                        /* returns <0 on ioerr */
                 //Log( "Checkpoint %u, Buffer Error \"%s\"\n", 
-                //                     prob_i+1, checkpoint_file );
+                //                     prob_i+1, client->checkpoint_file );
                 //break;
               }
             }
           } 
         } 
       }  // for ( prob_i = 0 ; prob_i < load_problem_count ; prob_i++)
-    } // if ( !nodiskbuffers )
+    } // if ( !client->nodiskbuffers )
   }
   
   return (do_checkpoint == 0); /* return !0 if don't do checkpoints */
 }  
+

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.37 1999/10/11 17:06:24 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.38 1999/10/16 16:48:11 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -236,10 +236,10 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
 /* ------------------------------------------------------------ */
 
 //21
-{ CFGTXT("Performance and Processor Options"),"",
+{ CFGTXT("Performance related options"),"",
   CFGTXT(""),CONF_MENU_MAIN,CONF_TYPE_MENU,NULL,NULL,CONF_MENU_PERF,0,NULL},
 //22
-{ CFGTXT("Processor type"), "" /* "-1 (autodetect)" */,
+{ CFGTXT("Core selection"), "" /* "-1 (autodetect)" */,
   CFGTXT(
   "This option determines core selection. Auto-select is usually best since\n"
   "it allows the client to pick other cores as they become available. Please\n"

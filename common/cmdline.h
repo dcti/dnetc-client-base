@@ -5,7 +5,12 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CMDLINE_H__
-#define __CMDLINE_H__ "@(#)$Id: cmdline.h,v 1.3 1999/04/06 10:20:48 cyp Exp $"
+#define __CMDLINE_H__ "@(#)$Id: cmdline.h,v 1.4 1999/10/16 16:48:11 cyp Exp $"
 
+// runlevel=0 = parse cmdline, >0==exec modes && print messages
+// for init'd cmdline options. returns !0 if app should be terminated
+int ParseCommandline( Client *client, 
+                      int run_level, int argc, const char *argv[], 
+                      int *retcodeP, int logging_is_initialized );
 
 #endif /* __CMDLINE_H__ */

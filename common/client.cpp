@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.217 1999/10/13 15:20:12 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.218 1999/10/16 16:48:10 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -20,6 +20,7 @@ return "@(#)$Id: client.cpp,v 1.217 1999/10/13 15:20:12 cyp Exp $"; }
 #include "clitime.h"   // CliTimer()
 #include "util.h"      // projectmap_build() and trace
 #include "modereq.h"   // ModeReqIsSet()/ModeReqRun()
+#include "cmdline.h"   // ParseCommandLine() and load config
 #include "triggers.h"  // [De]InitializeTriggers(),RestartRequestTrigger()
 #include "logstuff.h"  // [De]InitializeLogging(),Log()/LogScreen()
 #include "console.h"   // [De]InitializeConsole(), ConOutErr()
@@ -28,7 +29,7 @@ return "@(#)$Id: client.cpp,v 1.217 1999/10/13 15:20:12 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
-static void __initialize_client_object(Client *client)
+void ResetClientData(Client *client)
 {
   /* everything here should also be validated in the appropriate subsystem, 
      so if zeroing here causes something to break elsewhere, the subsystem 
@@ -87,7 +88,6 @@ static void __initialize_client_object(Client *client)
 
   /* -- perf -- */
   client->numcpu = -1;
-  client->cputype = -1;
   client->priority = 0;
   for (contest=0; contest<CONTEST_COUNT; contest++)
     client->coretypes[contest] = -1;
@@ -105,7 +105,7 @@ static void __initialize_client_object(Client *client)
 
 Client::Client()
 {
-  __initialize_client_object(this);
+  ResetClientData(this);
 }
 
 // --------------------------------------------------------------------------
@@ -247,11 +247,11 @@ static int ClientMain( Client *client, int argc, const char *argv[] )
     int restarted = restart;
     restart = 0;
 
-    __initialize_client_object(client); /* reset everything in the object */
+    ResetClientData(client); /* reset everything in the object */
     //ReadConfig() and parse command line - returns !0 if shouldn't continue
 
     TRACE_OUT((0,"Client.parsecmdline restarted?: %d\n", restarted));
-    if (client->ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0)
+    if (ParseCommandline( client, 0, argc, argv, &retcode, 0 ) == 0)
     {
       int domodes = (ModeReqIsSet(-1) != 0);
       TRACE_OUT((0,"initializetriggers\n"));
@@ -280,7 +280,7 @@ static int ClientMain( Client *client, int argc, const char *argv[] )
             TRACE_OUT((-1,"initializelogging\n"));
             PrintBanner(client->id,0,restarted);
             TRACE_OUT((+1,"parsecmdline(1)\n"));
-            client->ParseCommandline( 1, argc, argv, NULL, 
+            ParseCommandline( client, 1, argc, argv, NULL, 
                                     (client->quietmode==0)); //show overrides
             TRACE_OUT((-1,"parsecmdline(1)\n"));
             InitRandom2( client->id );

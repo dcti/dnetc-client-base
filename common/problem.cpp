@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.117 1999/10/14 18:37:17 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.118 1999/10/16 16:48:12 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -349,7 +349,7 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
 /* ------------------------------------------------------------------- */
 
 static int __core_picker(Problem *problem, unsigned int contestid)
-{
+{                               /* must return a valid core selection # */
   int coresel;
   problem->pipeline_count = 2; /* most cases */
 
@@ -372,6 +372,7 @@ static int __core_picker(Problem *problem, unsigned int contestid)
     }
     else /* (coresel == 2, default) */
     {
+      coresel = 2;
       problem->rc5_unit_func = rc5_unit_func_arm_3;
       problem->pipeline_count = 3;
     }
@@ -408,15 +409,18 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       switch (detectedtype) 
       {
          case 1:                  // PPC 601
+            coresel = 1;
             problem->rc5_unit_func = crunch_allitnil;
             problem->pipeline_count = 1;
             break;
          case 2:                  // other PPC
+            coresel = 2;
             problem->rc5_unit_func = crunch_lintilla;
             problem->pipeline_count = 1;
             break;
          case 0:                  // that's POWER
          default:
+            coresel = 0;
             #ifdef _AIXALL
             problem->rc5_unit_func = rc5_ansi_2_rg_unit_func ;
             problem->pipeline_count = 2;
@@ -429,6 +433,7 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       #elif (CLIENT_CPU == CPU_POWER)
       problem->rc5_unit_func = rc5_ansi_2_rg_unit_func;
       problem->pipeline_count = 2;
+      coresel = 0;
       #else
       #error "Systemtype not supported"
       #endif
@@ -489,7 +494,7 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       }
     }
     #endif
-    return 0;
+    return coresel;
   }
   
   #ifdef HAVE_DES_CORES
@@ -500,7 +505,10 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       if (coresel == 0)
         problem->des_unit_func = des_unit_func_arm;
       else /* (coresel == 1, default) */
+      {
         problem->des_unit_func = des_unit_func_strongarm;
+        coresel = 1;
+      }
     }
     #elif (CLIENT_CPU == CPU_ALPHA) 
     {
@@ -586,7 +594,7 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       }
     }
     #endif
-    return 0;
+    return coresel;
   }
   #endif /* #ifdef HAVE_DES_CORES */
 
@@ -608,12 +616,13 @@ static int __core_picker(Problem *problem, unsigned int contestid)
                break;
       case 1 : problem->unit_func = csc_unit_func_6b;
                break;
+      default: coresel = 2;
       case 2 : problem->unit_func = csc_unit_func_1k_i;
                break;
       case 3 : problem->unit_func = csc_unit_func_1k;
                break;
     }
-    return 0;
+    return coresel;
   }
   #endif /* #ifdef HAVE_CSC_CORES */
 
@@ -647,8 +656,8 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
   loaderflags = 0;
   contest = contestid;
   tslice = _timeslice;
-
-  if ( __core_picker(this, contestid ) != 0)
+  coresel = __core_picker(this, contestid );
+  if (coresel < 0 || coresel != selcoreValidateCoreIndex( contestid, coresel ))
     return -1;
 
   //----------------------------------------------------------------

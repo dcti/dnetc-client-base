@@ -1,3 +1,4 @@
+
 /* Hey, Emacs, this a -*-C++-*- file !
  *
  * Copyright distributed.net 1997-1998 - All Rights Reserved
@@ -5,7 +6,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.135 1999/10/11 17:06:22 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.136 1999/10/16 16:48:10 cyp Exp $"
 
 
 enum {
@@ -91,7 +92,6 @@ public:
 
   /* -- perf -- */
   s32  numcpu;
-  s32  cputype; /* old stuff, unused */
   s32  priority;
   int  coretypes[CONTEST_COUNT];
 
@@ -114,21 +114,11 @@ public:
   Client();
   ~Client() {};
 
-  int ParseCommandline( int runlevel, int argc, const char *argv[], 
-                        int *retcodeP, int logging_is_initialized );
-    // runlevel=0 = parse cmdline, >0==exec modes && print messages for init'd cmdline options
-    // returns !0 if app should be terminated
-
-  int CheckpointAction(int action, unsigned int load_problem_count );
-    // CHECKPOINT_OPEN (copy from checkpoint to in-buffer), *_REFRESH, *_CLOSE
-    // returns !0 if checkpointing is disabled
-
-  int  Configure( void );
-    // runs the interactive configuration setup
-
   int Run( void );
     // run the loop, do the work
 
 };
+
+void ResetClientData(Client *client); /* reset everything */
 
 #endif /* __CLIENT_H__ */
