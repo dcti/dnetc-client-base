@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.50 2000/04/16 19:28:55 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.51 2000/04/17 21:11:15 michmarc Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1428,7 +1428,7 @@ int ClientRun( Client *client )
     {
       client->connectoften = 0;
       if (!TimeToQuit && !ModeReqIsSet(MODEREQ_FETCH|MODEREQ_FLUSH) &&
-                         dialup.CheckIfConnectRequested());
+                         dialup.CheckIfConnectRequested())
       {                   
         local_connectoften = 3; /* both fetch and flush */
       }         
