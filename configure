@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.63  1998/07/02 05:04:40  daa
+# add ;; for hpux m68k entry
+#
 # Revision 1.62  1998/07/01 09:01:39  daa
 # add hpux-m68k
 #
@@ -432,6 +435,7 @@ case "$1" in
 	TARGET_ADDSRCS="$SLICE_SRCS3"
 	TARGET_LIBS="-static"
 	echo $TARGET_CCFLAGS
+	;;
 
 ###### DGUX (Data General Unix)
     *dgux-gcc)
