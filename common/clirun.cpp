@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.58 2000/06/02 16:21:09 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.59 2000/06/04 09:50:41 oliver Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -185,6 +185,8 @@ static void __cruncher_yield__(int is_non_preemptive_cruncher)
     NonPolledUSleep(0);
   #elif (CLIENT_OS == OS_NTO2)
     sched_yield();
+  #elif (CLIENT_OS == OS_AMIGAOS)
+    NonPolledUSleep( 0 ); /* yield */
   #else
     #error where is your yield function?
     NonPolledUSleep( 0 ); /* yield */
