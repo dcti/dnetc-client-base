@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.57  1999/01/12 16:36:13  cyp
+// Made failed cpu count detection message sound, uh, less severe.
+//
 // Revision 1.56  1999/01/11 20:55:04  patrick
 // numCPU support for AIX enabled
 //
@@ -17,7 +20,7 @@
 // Added *ppc-gcc272 entry to configure (until I successfully upgrade to egcs).
 //
 // Revision 1.52  1998/12/22 15:58:24  jcmichot
-// *** empty log message ***
+// QNX change: _x86ident vs x86ident.
 //
 // Revision 1.51  1998/12/14 05:15:08  dicamillo
 // Mac OS updates to eliminate use of MULTITHREAD and have a singe client
@@ -196,7 +199,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.56 1999/01/11 20:55:04 patrick Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.57 1999/01/12 16:36:13 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -219,12 +222,9 @@ unsigned int GetNumberOfSupportedProcessors( void )
 #if (CLIENT_OS == OS_RISCOS)
   return ( 2 ); /* not just some arbitrary number */
 #elif (CLIENT_OS == OS_MACOS)
-  if (haveMP) {
+  if (haveMP) 
     return( MAC_MAXCPUS );
-  }
-  else {
-    return(1);
-  }
+  return(1);
 #else
   return ( 128 ); /* just some arbitrary number */
 #endif
@@ -314,20 +314,16 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       {
       cpucount = riscos_count_cpus();
       }
-	#elif (CLIENT_OS == OS_QNX)
+	  #elif (CLIENT_OS == OS_QNX)
       {
       cpucount = 1;
       }
-	#elif (CLIENT_OS == OS_MACOS)
-	  {
-	  if (haveMP) {
+	  #elif (CLIENT_OS == OS_MACOS)
+ 	    {
+		  cpucount = 1;
+  	  if (haveMP) 
         cpucount = MPProcessors();
-	  	}
-	  else {
-		cpucount = 1;
-	  	}
-	  }
-
+      }
     #endif
     if (cpucount < 1)  //not supported
       cpucount = -1;
@@ -360,7 +356,9 @@ unsigned int ValidateProcessorCount( int numcpu, int quietly )
       if ( detected_count < 1 )
         {
         if (!quietly)
-          LogScreen("Automatic processor count detection failed.\n"
+          LogScreen( CLIENT_OS_NAME " does not support SMP or\n"
+                    "does not support processor count detection.\n"
+                    /* "Automatic processor count detection failed.\n" */
                     "A single processor machine is assumed.\n");
         detected_count = 1;
         }
