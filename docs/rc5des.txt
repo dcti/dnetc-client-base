@@ -1,6 +1,6 @@
 
-  distributed.net's RC5DES client documentation
-  document revision $Id: rc5des.txt,v 1.36.2.1 1999/06/07 00:34:44 cyp Exp $
+  distributed.net client documentation
+  document revision $Id: rc5des.txt,v 1.36.2.2 1999/10/11 18:44:23 cyp Exp $
 
   Copyright distributed.net 1997-1999 - All Rights Reserved
   For use in distributed.net projects only.
@@ -116,7 +116,7 @@
                                                                           
  5.0  Fetching and flushing work -------------------------------------
  
-     The RC5DES client can fetch/flush work using 3 methods:
+     The distributed.net client can fetch/flush work using 3 methods:
      1) over a TCP/IP network connection
      2) via e-mail
      3) to/from "remote" buffers that are serviced by another client 
@@ -124,7 +124,7 @@
  
   5.1  Fetching and flushing work over a TCP/IP connection ---
 
-     The RC5DES client uses normal TCP/IP to communicate with keyservers.
+     The client uses normal TCP/IP to communicate with keyservers.
      It connects to port TCP port 2064 by default. 
 
      distributed.net keyserver hostnames follow the following naming
@@ -287,7 +287,7 @@
        the popular "Statistics Server FAQ".
 
      - If you don't mind your mailbox receiving a few messages a day, 
-       you may consider subscribing to the general RC5DES mailing list
+       you may consider subscribing to the general client mailing list
        at <rc5@lists.distributed.net> (To subscribe to the mailing list, 
        send a message to <majordomo@lists.distributed.net> with 
        "subscribe rc5" as the message text).

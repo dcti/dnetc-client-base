@@ -1,12 +1,12 @@
 
- distributed.net RC5-DES Client for RISC OS v3.10 or later.
+ distributed.net client for RISC OS v3.10 or later.
  Released by Chris "chrisb" Berry <chrisb@distributed.net>
- Document revision $Id: readme.riscos,v 1.1 1999/05/06 18:35:51 cyp Exp $
+ Document revision $Id: readme.riscos,v 1.1.2.1 1999/10/11 18:44:24 cyp Exp $
                                                           
- Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
+ Welcome to the distributed.net client.
 
  This document covers information specific to the client for RISCOS.
- Refer to the enclosed rc5des.txt or browse the online FAQ at
+ Refer to other enclosed documentation or browse the online FAQ at
  http://www.distributed.net/FAQ for non-platform-specific documentation.
 
     1.0  Getting started
@@ -15,7 +15,7 @@
  1.0  Getting started ------------------------------------------------
  
     Just unpack the client in a directory of your choice and fire it up
-    in a task window with [path]rc5des
+    in a task window.
 
     If you have never run the client before, it will initiate the
     menu-driven configuration. Save and quit when done, the 
@@ -41,10 +41,10 @@
     compatible TCP/IP stack (eg FreeNet). 
 
     The client can be run in a task window at boot time by adding 
-      TaskWindow "Run {path to client}.rc5des" -wimpslot 352K
-           -name "RC5DES client"
+      TaskWindow "Run {path to client}.binname" -wimpslot 352K
+           -name "d.net client"
     to your desktop boot file. Changing the quoted command to
-    "Run {path to client}.rc5des { > null: }" will make the client
+    "Run {path to client}.binname { > null: }" will make the client
     invisible. Stop it by killing it via the task manager or by
     creating a file "exitrc5/now" in the client's directory.
  

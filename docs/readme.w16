@@ -1,12 +1,12 @@
 
- RC5-DES Client for Win16 (MS-Windows 3.1,WINE or whatever) and above
+ distributed.net client for Win16 (MS-Windows 3.1,WINE or whatever) and above
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
- Document revision $Id: readme.w16,v 1.6.2.1 1999/06/03 15:07:47 cyp Exp $
+ Document revision $Id: readme.w16,v 1.6.2.2 1999/10/11 18:44:24 cyp Exp $
 
- Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
+ Welcome to the distributed.net client.
 
  This document covers information specific to the client for Win16.
- Refer to the enclosed rc5des.txt or browse the online FAQ at
+ Refer to other enclosed documentation or browse the online FAQ at
  http://www.distributed.net/FAQ for non-platform-specific documentation.
 
     1.0  Getting started
@@ -14,8 +14,7 @@
 
  1.0  Getting started ------------------------------------------------
  
-    Just unpack the client in a directory of your choice and fire it up
-    with [path]RC5DES.EXE
+    Just unpack the client in a directory of your choice and fire it up.
 
     If you have never run the client before, it will initiate the
     menu-driven configuration. Save and quit when done, the 
@@ -28,14 +27,20 @@
     A list of command line options is available by starting the client 
     with '-help'.
 
-    A detailed guide to the various configuration options as well as 
-    applicable command line switches is in the enclosed rc5des.txt.
     FAQs are available online at http://www.distributed.net/FAQ/
 
  2.0  Notes: ---------------------------------------------------------
 
     The Win16 client is a true 32-bit protected mode application and 
     therefore requires Windows to be running in "386 extended" mode.
+
+    Beginning with v2.7112.444, the client can be configured to run
+    as a screen saver. That is, the client has a split personality:
+    it can be installed as a screen saver by simply copying it to 
+    the windows directory and renaming it "*.scr". When installed
+    as a screen saver (and when the screen saver becomes active) it 
+    will lauch *another* client in the background and launch *another* 
+    screen saver in the foreground. 
 
     The Win16 client will use any WinSock sockets implementation if 
     available, and will otherwise not use the network layer. A "lurk"
