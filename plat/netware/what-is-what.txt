@@ -1,0 +1,30 @@
+
+$Id: what-is-what.txt,v 1.1.2.1 2001/01/21 15:10:30 cyp Exp $
+
+The platforms/NetWare directory consists of...
+
+ client.xdc The 'bagfile'. Created with mpkxdc -n
+            (all threads are MT safe, and can run on any available CPU)
+
+ obsolete.cpp This is the client for NetWare code July/1998
+
+ ./inet/    stubs for functions in TCPIP.NLM and NETDB.NLM
+            gethostname, inet_addr/network/aton/etc, 
+            gethostby[name|addr]
+
+ ./misc/    custom prelude and Watcom static clib avoidance stubs
+            nwpre3x.c    The coolest replacement for prelude.c :)
+            nwwatemu.c   Avoid gunk, er, I mean "Watcom CLIB3S.LIB"
+
+ ./nwl*.*   library stubs/replacements   
+            nwlemu.c     NetWare specific kernel/CLIB calls not
+                         available on all NetWare versions
+            nwmpk.c      stubs/emulation for MPK* API first introduced
+                         with NetWare 5.x
+            nwlcomp.c    misc ANSI/POSIX functions not available (or
+                         poorly implemented). ftime(), usleep(), etc.
+ 
+  ./nwc*.*  functions called from the client's common code
+            nwccons.c    Console management stuff
+            nwcconf.c    Read-in client-for-netware specific settings
+            nwcmisc.c    Everything else (mostly short)
