@@ -1,10 +1,12 @@
-/* 
+/* Written by Cyrus Patel <cyp@fb14.uni-mainz.de> 
+ *
  * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
 */ 
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.25 1999/04/05 17:56:52 cyp Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.26 1999/10/15 23:35:43 cyp Exp $"; }
 
 //#define TEST  //standalone test
 //#define RESDEBUG //to show what network::resolve() is resolving
@@ -12,30 +14,33 @@ return "@(#)$Id: netres.cpp,v 1.25 1999/04/05 17:56:52 cyp Exp $"; }
   //#define RESDEBUGZONE +12  //the timezone we want to appear to be in 
 #endif
 
-#if defined(TEST)
+#if defined(TEST) || defined(PROXYTYPE)
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#else
-#include "cputypes.h"
-#include "network.h"
-#include "clitime.h" /* CliTimeGetMinutesWest() */
-#include <ctype.h> //tolower()
+#endif
+
+#if !defined(TEST)
+  #include "cputypes.h"
+  #if defined(PROXYTYPE)
+    #include "netio.h"
+  #else
+    #include "network.h"
+    #include "clitime.h" /* CliTimeGetMinutesWest() */
+    #include <ctype.h> //tolower()
+  #endif
+#endif
+
+#undef NETRES_STUBS_ONLY
+#if !defined(AF_INET) && !defined(SOCK_STREAM)
+  #define NETRES_STUBS_ONLY
 #endif
 
 //------------------------------------------------------------------------
 
-#ifdef STUBIFY_ME    //ooookay. do what it asks
-#define OLDRESOLVE   //and don't drag in the statics
-#elif defined(OLDRESOLVE)
-#error clients >=424 will not work with OLDRESOLVE
-#endif
-
-//------------------------------------------------------------------------
-
-#ifndef OLDRESOLVE
+#ifndef NETRES_STUBS_ONLY
 static const struct        // this structure defines which proxies are 
 {                          // 'responsible' for which time zone. The 
   const char *name;        // timezones overlap, and users in an overlapped
@@ -55,7 +60,7 @@ static const char DNET_PROXY_DOMAINNAME[]="v27.distributed.net"; // NOT char*
 
 //-------------------------------------------------------------------------
 
-#ifndef OLDRESOLVE
+#ifndef NETRES_STUBS_ONLY
 static int IsHostnameDNetKeyserver( const char *hostname, int *tzdiff ) 
 {
   char *p; 
@@ -63,48 +68,48 @@ static int IsHostnameDNetKeyserver( const char *hostname, int *tzdiff )
   unsigned int pos, i = strlen( hostname );
 
   if ( i < sizeof( buffer ) )
-    {
+  {
     strcpy( buffer, hostname );
 
     for ( pos = 0; pos < i; pos++ )
       buffer[pos] = (char)tolower( hostname[pos] );
 
     if ( strcmp( buffer, "rc5proxy.distributed.net" )==0 ) //old name
-      {
+    {
       if ( tzdiff ) *tzdiff = 0;
       return 1;
-      }
+    }
     p = strchr( buffer, '.' );
     if (p != NULL && strcmp( p+1, DNET_PROXY_DOMAINNAME ) == 0)
-      {
+    {
       for (pos=0;pos<(sizeof(proxyzoi)/sizeof(proxyzoi[0]));pos++)
-        {
+      {
         for (i=0;;i++)
-          {
+        {
           int xport = ((isdigit(buffer[i]))?(atoi(buffer+i)):(-1));
           if ((proxyzoi[pos].name[i] == 0) && ((buffer[i]=='.') || 
                  xport==80 || xport==23 || xport==2064 || 
                  xport==3064 || xport==110 ))
-            {
+          {
             if (tzdiff) *tzdiff = proxyzoi[pos].midzone * 60;
             return 1;
-            }
+          }
           if ( buffer[i] != proxyzoi[pos].name[i])
             break;
-          }
         }
-      }      
-    }
+      }
+    }      
+  }
   return 0;
 }  
 #endif
 
 //------------------------------------------------------------------------
 
-#ifndef OLDRESOLVE
+#if (!defined(NETRES_STUBS_ONLY) || defined(TEST))
 static int calc_tzmins(void)
 {
-  #ifndef TEST
+  #if !defined(TEST) && !defined(PROXYTPE)
   return -CliTimeGetMinutesWest();  /* clitime.cpp */
   #else
   static int saved_tz = -12345; 
@@ -166,8 +171,8 @@ struct proxylist
 
 //-----------------------------------------------------------------------
 
-#ifndef OLDRESOLVE
-struct proxylist *GetApplicableProxyList(int port, int tzdiff) /*host order*/
+#ifndef NETRES_STUBS_ONLY
+static struct proxylist *GetApplicableProxyList(int port, int tzdiff) /*host order*/
 {
   static char *proxies[sizeof(proxyzoi)/sizeof(proxyzoi[1])];
   static char proxynames[sizeof(proxyzoi)/sizeof(proxyzoi[1])][30];
@@ -185,7 +190,7 @@ struct proxylist *GetApplicableProxyList(int port, int tzdiff) /*host order*/
   tzdiff /= 60; 
       
   for (pos = 0; pos < (sizeof(proxyzoi)/sizeof(proxyzoi[1])); pos++ )
-    {
+  {
     tz_min = proxyzoi[pos].minzone;
     tz_max = proxyzoi[pos].maxzone;
     if ( (tz_min > 0) && (tz_max < 0) ) //straddles dateline
@@ -193,197 +198,210 @@ struct proxylist *GetApplicableProxyList(int port, int tzdiff) /*host order*/
     else             
       inrange = (( tzdiff >= tz_min && tzdiff <= tz_max) ? 1 : 0);
     if ( inrange )
-      {
+    {
       sprintf( proxynames[retlist.numproxies], 
          "%s%s.%s", proxyzoi[pos].name, cport, DNET_PROXY_DOMAINNAME );
       proxies[retlist.numproxies] = proxynames[retlist.numproxies];
       retlist.numproxies++;
-      }
-    } 
+    }
+  } 
   if (retlist.numproxies == 0) /* should never happen! */
-    {
+  {
     sprintf( proxynames[0], 
          "us%s.%s", cport, DNET_PROXY_DOMAINNAME );
     proxies[0] = proxynames[0];
     retlist.numproxies = 1;
-    }
+  }
   return (struct proxylist *)&retlist;
 }
 #endif
 
 //-----------------------------------------------------------------------
 
-#ifdef TEST
-
-   //nothing
-
-#elif defined(STUBIFY_ME) //ooookay...
-
-int Network::Resolve(const char * , u32 *, int )
-{ 
-  resolve_hostname[0]=0; //last used name we tried to lookup (used by socks5)
-  return -1; 
-}
-
-#elif defined(OLDRESOLVE)  //***** OLD ****
-
-// returns -1 on error, 0 on success
-int Network::Resolve(const char *host, u32 *hostaddress, int )
+int NetResolve( const char *host, int resport, int resauto,
+                u32 *addrlist, unsigned int addrlistcount,
+                char *resolve_hostname, unsigned int resolve_hostname_sz )
 {
-  resolve_hostname[0]=0; //last used name we tried to lookup (used by socks5)
+  unsigned int foundaddrcount = 0;
 
-  if (!host)
-    return -1;
-  
-  int i=0;
-  char hostname[64];
-  while (*host && isspace(*host))
-    host++;
-  while (*host && !isspace(*host) && isprint(*host) && *host!='\r' && *host!='\n')
-    hostname[i++]=(char)tolower(*host++);
-  hostname[i]=0;
-  host = hostname;
-    
-  #if (CLIENT_OS == OS_MACOS)
-    *hostaddress = inet_addr(hostname).s_addr;
-  #else
-    *hostaddress = inet_addr(hostname);
-  #endif
-  if (*hostaddress != 0xFFFFFFFFL)
-    {
-    char *p = (char *)(hostaddress);
-    sprintf(resolve_hostname, "%d.%d.%d.%d.in-addr.arpa", 
-                  (p[3]&255),(p[2]&255),(p[1]&255),(p[0]&255) );
-    return 0;
-    }
+  if (!resolve_hostname)
+    resolve_hostname_sz = 0;
+  else if (resolve_hostname_sz)
+    resolve_hostname[0] = '\0';
 
-  strcpy(resolve_hostname,host);
-
-  struct hostent *hp;
-  if ((hp = gethostbyname((char*)host)) == NULL) 
-    return -1;
-  if (!(hp->h_addr_list[0]))
-    return -1;
-  memcpy((void*) hostaddress, (void*) hp->h_addr_list[0], sizeof(u32));
-
-  return 0;
-}
-
-#else
-
-int Network::Resolve(const char *host, u32 *hostaddress, int resport )
-{
-  struct proxylist *plist;
-  struct proxylist dummylist;
-  u32 addrlist[64]; /* should be more than enough */
-  unsigned int proxypos, addrpos, addrcount;
-  struct hostent *hp;
-  int resauto = autofindkeyserver;
-  char hostname[64];
-
-  resolve_hostname[0]=0; //last used name we tried to lookup (used by socks5)
-
-  if (!host)
-    return -1;
-  
-  int i=0;
-  while (*host && isspace(*host))
-    host++;
-  while (*host && !isspace(*host) && isprint(*host) && *host!='\r' && *host!='\n')
-    hostname[i++]=(char)tolower(*host++);
-  hostname[i]=0;
-  host = hostname;
-    
-  #if (CLIENT_OS == OS_MACOS)
-    *hostaddress = inet_addr(hostname).s_addr;
-  #else
-    *hostaddress = inet_addr(hostname);
-  #endif
-  if (*hostaddress != 0xFFFFFFFFL)
-    {
-    char *p = (char *)(hostaddress);
-    sprintf(resolve_hostname, "%d.%d.%d.%d.in-addr.arpa", 
-                  (p[3]&255),(p[2]&255),(p[1]&255),(p[0]&255) );
-    return 0;
-    }
-
-  #ifdef RESDEBUG
-    printf("host:=%s:%d autofindkeyserver=%d\n", hostname, (int)resport, (int)resauto );
-  #endif
-
-  if ( resauto && !resport )
+  if (!host || !addrlist || !addrlistcount)
     return -1;
 
-  if ( resauto && (!hostname[0] || IsHostnameDNetKeyserver( hostname, NULL )))
-    {
-    #ifdef RESDEBUGZONE
-    plist = GetApplicableProxyList( resport, RESDEBUGZONE*60 ); 
-    #else
-    plist = GetApplicableProxyList( resport, calc_tzmins() ); 
-    #endif
-    }
-  else
-    {
-    dummylist.numproxies = 1;
-    dummylist.proxies = &host;
-    plist = &dummylist;
-    }
+  resport = resport; //shaddup compiler
+  resauto = resauto; 
 
-  #ifdef RESDEBUG
+  #if (!defined(TEST) && !defined(NETRES_STUBS_ONLY))
   {
-  unsigned int i;
-  for (i=0;i<plist->numproxies;i++)
-    printf("%s resolved to %s\n", host, plist->proxies[i]);
-  }
-  #endif        
-
-  addrcount = 0;
-  for (proxypos = 0; (proxypos < (plist->numproxies)) &&
-         (addrcount < (sizeof(addrlist)/sizeof(addrlist[0]))); proxypos++ )
+    int whichpass, maxpass;
+    unsigned int pos;
+    char hostname[64];
+  
+    while (*host && isspace(*host))
+      host++;
+    pos = 0;
+    while (*host && !isspace(*host) && 
+                    isprint(*host) && *host!='\r' && *host!='\n')
     {
-    #ifdef RESDEBUG
-      printf(" => %d:\"%s\"\n", proxypos+1, plist->proxies[proxypos] );
-    #endif
+      if (pos == (sizeof(hostname)-1))
+        return -1;
+      hostname[pos++]=(char)tolower(*host++);
+    }
+    hostname[pos]=0;
+    host = hostname;
 
-    if ((hp = gethostbyname((char*)(plist->proxies[proxypos]))) != NULL) 
+    if (!hostname[0])
+      resauto = 1;
+    else
+    {
+      #if (CLIENT_OS == OS_MACOS)
+      addrlist[0] = (u32)(inet_addr(hostname).s_addr);
+      #else
+      addrlist[0] = (u32)(inet_addr(hostname));
+      #endif
+      if (addrlist[0] != 0xFFFFFFFFL)
       {
-      if (resolve_hostname[0]==0)
-        strcpy( resolve_hostname, plist->proxies[proxypos] );
-      
-      for ( addrpos = 0; hp->h_addr_list[addrpos] && 
-           (addrcount < (sizeof(addrlist)/sizeof(addrlist[0]))); addrpos++ )
-        {      
-        memcpy((void*) &addrlist[addrcount], 
-               (void*) hp->h_addr_list[addrpos], sizeof(u32));
-        addrcount++;
+        if (resolve_hostname_sz)
+        {
+          host = (const char *)(addrlist);
+          sprintf(hostname, "%d.%d.%d.%d.in-addr.arpa", 
+                    (host[3]&255),(host[2]&255),(host[1]&255),(host[0]&255) );
+          strncpy(resolve_hostname,hostname,resolve_hostname_sz);
+          resolve_hostname[resolve_hostname_sz-1] = '\0';
+        }
+        return 1; /* only one address */
+      }
+    }
+  
+    if ( resauto && !resport )
+      return -1;
+  
+    #ifdef RESDEBUG
+      printf("host:=%s:%d autofindkeyserver=%d\n", hostname, (int)resport, (int)resauto );
+    #endif
+  
+    if (resauto && (!hostname[0] || IsHostnameDNetKeyserver(hostname,NULL)))
+    {
+      resauto = 1;
+      maxpass = 2;
+    }
+    else
+    {
+      resauto = 0;
+      maxpass = 1;
+    }
+  
+    foundaddrcount = 0;
+    for (whichpass = 0; (foundaddrcount==0 && whichpass<maxpass); whichpass++)
+    {
+      struct proxylist *plist;
+      struct proxylist dummylist;
+  
+      if (resauto)
+      {
+        int tzmin = -6*60; /* middle of us.d.net */
+        if (whichpass == 0) /* first pass */
+        {
+          #ifdef RESDEBUGZONE
+          tzmin = RESDEBUGZONE*60;
+          #else
+          tzmin = calc_tzmins();
+          #endif
+        }
+        plist = GetApplicableProxyList( resport, tzmin ); 
+  
+        #ifdef RESDEBUG
+        for (pos=0;pos<plist->numproxies;pos++)
+          printf("%s resolved to %s\n", hostname, plist->proxies[pos]);
+        #endif        
+      }
+      else
+      {
+        host = (const char *)&hostname[0];
+        dummylist.proxies = &host;
+        dummylist.numproxies = 1;
+        plist = &dummylist;
+      }
+  
+      for (pos = 0; ((pos < (plist->numproxies)) &&
+                         (foundaddrcount < addrlistcount)); pos++ )
+      {
+        struct hostent *hp;
+        #ifdef RESDEBUG
+        printf(" => %d:\"%s\"\n", pos+1, plist->proxies[pos] );
+        #endif
+  
+        if ((hp = gethostbyname((char*)(plist->proxies[pos]))) != NULL) 
+        {
+          unsigned int addrpos;
+          if (resolve_hostname_sz)
+          {
+            if (resolve_hostname[0] == '\0')
+            {
+              strncpy( resolve_hostname, plist->proxies[pos], 
+                                          resolve_hostname_sz);
+              resolve_hostname[resolve_hostname_sz-1]='\0';
+            }
+          }
+          for ( addrpos = 0; (hp->h_addr_list[addrpos] && 
+               (foundaddrcount < addrlistcount)); addrpos++ )
+          { 
+            unsigned int dupcheck = 0;
+            addrlist[foundaddrcount] = *((u32 *)(hp->h_addr_list[addrpos]));
+            while (dupcheck < foundaddrcount)
+            {
+              if (addrlist[foundaddrcount] == addrlist[dupcheck])
+                break;
+              dupcheck++;
+            }
+            if (!(dupcheck < foundaddrcount)) /* no dupes */
+              foundaddrcount++;
+          }
+        }
+      }
+  
+      if (resolve_hostname_sz)
+      {
+        if (resolve_hostname[0] == '\0')
+        {
+          if ( plist->numproxies >=1 )
+            strncpy( resolve_hostname, plist->proxies[0], resolve_hostname_sz );
+          else
+            strncpy( resolve_hostname, hostname, resolve_hostname_sz );
+          resolve_hostname[resolve_hostname_sz-1]='\0';
         }
       }
     }
+  }
+  #endif /* (!defined(TEST) && !defined(NETRES_STUBS_ONLY)) */
 
-  if (resolve_hostname[0]==0)
-    {
-    if ( plist->numproxies >=1 )
-      strcpy( resolve_hostname, plist->proxies[0] );
-    else
-      strcpy( resolve_hostname, hostname );
-    }
-
-  if (addrcount < 1)
+  if (foundaddrcount < 1)
     return -1;
-  if (addrcount == 1)  
-    *hostaddress = addrlist[0];
-  else
-    *hostaddress = addrlist[rand() % addrcount];
-
-  #ifdef RESDEBUG                                           
-  printf(" total adds==%d  Selected add=%d.%d.%d.%d\n", //screw inet_ntoa()
-               addrcount, (int)(*hostaddress & 0xff), (int)((*hostaddress >> 8) & 0xff),
-               (int)((*hostaddress >> 16) & 0xff), (int)((*hostaddress >> 24) & 0xff) );
-  #endif
-  return 0;
+  return (int)foundaddrcount;
 }
 
-#endif //OLDRESOLVE | stub | TEST
+#if 0
+int Network::Resolve(const char *host, u32 *hostaddress, int resport )
+{
+  u32 addrlist[64]; /* should be more than enough */
+  int acount;
+  
+  acount = NetResolve( host, resport, autofindkeyserver,
+                       &addrlist[0], (sizeof(addrlist)/sizeof(addrlist[0])),
+                       resolve_hostname, sizeof(resolve_hostname) );
+  if (acount < 1) /* failed */
+    return -1;
+
+  *hostaddress = addrlist[0]; //let the nameserver handle rotation
+  //*hostaddress = addrlist[rand() % acount];
+  
+  return 0;
+}  
+#endif
 
 //-----------------------------------------------------------------------
 
@@ -398,28 +416,28 @@ int main(void)
 
   tzdiff = calc_tzmins();
   while (proceed)
-    {
+  {
     abstzdiff = ((tzdiff<0)?(-tzdiff):(tzdiff));
     printf("  Result for timezone %c%02d%02d %s:\n", 
                ((tzdiff<0)?('-'):('+')), abstzdiff/60, abstzdiff%60, p );
     for (pos = 0;pos<3;pos++)
-      {
+    {
       port = ((pos==0)?(23):((pos==1)?(80):(0)));
       plist = GetApplicableProxyList( port, tzdiff );
    
       printf("  Port %-10.10s:",((pos==0)?("23"):((pos==1)?("80"):("(other)"))));
    
       for (pos2=0;pos2<plist->numproxies;pos2++)
-       {
-       if ((p=strchr(plist->proxies[pos2],'.'))!=NULL)
-         *p=0;
-       printf(" %-10.10s  ",plist->proxies[pos2]);
-       }
-      printf("\n");
+      {
+        if ((p=strchr(plist->proxies[pos2],'.'))!=NULL)
+          *p=0;
+        printf(" %-10.10s  ",plist->proxies[pos2]);
       }
+      printf("\n");
+    }
     proceed = -1;
     while (proceed == -1)
-      {
+    {
       getbuffer[0]=0;
       printf( "\nEnter TZ (-1200 to +1200) or "
               "name (\"euro\", \"jp\" etc) to test : " );
@@ -429,39 +447,39 @@ int main(void)
         proceed = 0;
       else if (getbuffer[0] == '-' || getbuffer[0]=='+' 
                  || (getbuffer[0]>='0' && getbuffer[0]<='9'))
-        {
+      {
         tzdiff = atoi( getbuffer );
         if (tzdiff > -60 && tzdiff < +60)
           tzdiff = tzdiff*100;
         if ( tzdiff < -1200 || tzdiff > +1200 )
           printf( "That timezone doesn't appear to be valid\n" );
         else
-          {
+        {
           tzdiff = ((tzdiff/100)*60)+(tzdiff%100);
           p = "(assumes DST was pre-compensated)";
           proceed = 1;
-          }
         }
+      }
       else 
-        {
+      {
         if ( strchr( getbuffer, '.' ) == NULL )
           sprintf( hostname, "%s.%s", getbuffer, DNET_PROXY_DOMAINNAME );
         else
           strcpy( hostname, getbuffer );
         if ( IsHostnameDNetKeyserver( hostname, &tzdiff ) )
-          {
+        {
           proceed = 1;
           if ( strchr( getbuffer, '.' ) == NULL )
             sprintf( hostname, "(proxy %s.%s)", getbuffer, DNET_PROXY_DOMAINNAME );
           else
             sprintf( hostname, "(%s)", getbuffer );
           p = hostname;
-          }
+        }
         else 
           printf( "That proxyname doesn't appear to be valid\n" );
-        }
       }
     }
+  }
   return 0;
 }  
 #endif
