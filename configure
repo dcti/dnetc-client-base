@@ -5,6 +5,11 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.28  1998/06/10 22:50:12  timc
+# Robert Au added for PPC targets
+# CVS:
+# CVS:
+#
 # Revision 1.27  1998/06/09 22:21:56  remi
 # Added testplat to the 'superclean' list
 #
@@ -159,7 +164,7 @@ OPTS_GCC_ARM="$OPTS_GCC $OPT_FLAGS -DARM"
 #--
 
 #-D__STRING_CODE_SET__="ISO8859-1"
-OPTS_OS390="-D_ALL_SOURCE -I./common -I./rc5 -I./des"  
+OPTS_OS390="-D_ALL_SOURCE -I./common -I./rc5 -I./des"
 
 
 
@@ -169,7 +174,7 @@ OPTS_OS390="-D_ALL_SOURCE -I./common -I./rc5 -I./des"
 COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
     common/autobuff.cpp common/iniread.cpp common/network.cpp
     common/scram.cpp common/buffwork.cpp common/mail.cpp
-    common/convdes.cpp common/clicdata.cpp common/clirate.cpp 
+    common/convdes.cpp common/clicdata.cpp common/clirate.cpp
     common/clisrate.cpp common/clitime.cpp common/disphelp.cpp
     common/threadcd.cpp"
 #KWAN_SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
@@ -388,7 +393,7 @@ case "$1" in
 
     *ppc-gcc)
 	TARGET_CCFLAGS="$OPTS_GCC_PPC -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS rc5/crunch_noload_c64.ppc.s rc5/crunch_lintilla.ppc.s"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS rc5/crunch_allitnil_552.ppc.s rc5/crunch_lintilla_296.ppc.s"
 	;;
 
     *power-gcc)
