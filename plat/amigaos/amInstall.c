@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amInstall.c,v 1.2.4.3 2004/01/10 02:49:14 piru Exp $
+ * $Id: amInstall.c,v 1.2.4.4 2004/01/22 18:21:35 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -27,7 +27,7 @@
 
 #ifdef __MORPHOS__
 #define WBSTARTICONNAME "SYS:WBStartup/dnetc"
-#define CLIENTSTACKSIZE 200000
+#define CLIENTSTACKSIZE 4096
 #else
 #ifdef __PPC__
 #define WBSTARTICONNAME "SYS:WBStartup/dnetc_ppc"
