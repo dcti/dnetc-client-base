@@ -63,7 +63,8 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/console.obj    \
 	$(OUTPUTPATH)/setprio.obj    \
 	$(OUTPUTPATH)/modereq.obj    \
-	$(OUTPUTPATH)/checkpt.obj
+	$(OUTPUTPATH)/checkpt.obj    \
+        $(OUTPUTPATH)/clievent.obj
 
 PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/rg486.obj   \
