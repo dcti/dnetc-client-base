@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.2  1998/07/26 13:20:51  cyruspatel
+// Fixed a signed vs unsigned comparison.
+//
 // Revision 1.1  1998/07/26 12:34:46  cyruspatel
 // Created.
 //
@@ -14,14 +17,15 @@
 #endif
 
 const char *netres_cpp(void) {
-static const char *id="@(#)$Id: netres.cpp,v 1.1 1998/07/26 12:34:46 cyruspatel Exp $";
-return id; }
+return "@(#)$Id: netres.cpp,v 1.2 1998/07/26 13:20:51 cyruspatel Exp $";
+}
 
 //---------------------------------------------------------------------
-
 //#define TEST  //standalone test
-#ifdef DEBUG
-  #define DEBUGZONE +12     //the timezone we want to appear to come from
+
+//#define RESDEBUG //to show what network::resolve() is resolving
+#ifdef RESDEBUG
+  //#define RESDEBUGZONE +12  //the timezone we want to appear to be in 
 #endif
 
 #if defined(TEST)
@@ -33,12 +37,7 @@ return id; }
 #else
 #include "cputypes.h"
 #include "network.h"
-#include <ctype.h>
-#endif
-
-
-#ifndef OLDRESOLVE
-static const char DNET_PROXY_DOMAINNAME[]="v27.distributed.net"; // NOT char* 
+#include <ctype.h> //tolower()
 #endif
 
 //------------------------------------------------------------------------
@@ -57,6 +56,7 @@ const static struct        // this structure defines which proxies are
                 { "aussie", +9, -9 , +12 }, //jp and aussie cross the dateline
                 { "jp",    +10, -8 , -11 }   
                };
+static const char DNET_PROXY_DOMAINNAME[]="v27.distributed.net"; // NOT char* 
 #endif
 
 //-------------------------------------------------------------------------
@@ -66,7 +66,7 @@ static int IsHostnameDNetKeyserver( const char *hostname, int *tzdiff )
 {
   char *p; 
   char buffer[ sizeof( DNET_PROXY_DOMAINNAME )+15 ];
-  int pos, i = strlen( hostname );
+  unsigned int pos, i = strlen( hostname );
 
   if ( i < sizeof( buffer ) )
     {
@@ -169,7 +169,8 @@ struct proxylist *GetApplicableProxyList(int port, int tzdiff) /*host order*/
   static char proxynames[sizeof(proxyzoi)/sizeof(proxyzoi[1])][30];
   static struct proxylist retlist = { 0xFFFF, (const char **)&proxies[0] };
   
-  int pos, inrange, tz_min, tz_max;
+  int inrange, tz_min, tz_max;
+  unsigned int pos;
   char cport[6];
   
   retlist.numproxies = 0;
@@ -184,9 +185,9 @@ struct proxylist *GetApplicableProxyList(int port, int tzdiff) /*host order*/
     tz_min = proxyzoi[pos].minzone;
     tz_max = proxyzoi[pos].maxzone;
     if ( (tz_min > 0) && (tz_max < 0) ) //straddles dateline
-      inrange = ( tzdiff >= tz_min || tzdiff <= tz_max);
+      inrange = (( tzdiff >= tz_min || tzdiff <= tz_max) ? 1 : 0);
     else             
-      inrange = ( tzdiff >= tz_min && tzdiff <= tz_max);
+      inrange = (( tzdiff >= tz_min && tzdiff <= tz_max) ? 1 : 0);
     if ( inrange )
       {
       sprintf( proxynames[retlist.numproxies], 
@@ -271,13 +272,13 @@ s32 Network::Resolve(const char *host, u32 &hostaddress )
   else if ( *host && ((hostaddress = inet_addr((char*)host)) != 0xFFFFFFFFL))
     return 0;
 
-  #ifdef DEBUG
-    printf("host:=%s:%d autofindkeyserver=%d\n", host, lastport, resauto );
+  #ifdef RESDEBUG
+    printf("host:=%s:%d autofindkeyserver=%d\n", host, (int)lastport, (int)resauto );
   #endif
 
   if ( resauto && (!*host || IsHostnameDNetKeyserver( host, NULL )))
-    #ifdef DEBUGZONE
-    plist = GetApplicableProxyList( resport, DEBUGZONE*60 ); 
+    #ifdef RESDEBUGZONE
+    plist = GetApplicableProxyList( resport, RESDEBUGZONE*60 ); 
     #else
     plist = GetApplicableProxyList( resport, calc_tzmins() ); 
     #endif
@@ -292,7 +293,7 @@ s32 Network::Resolve(const char *host, u32 &hostaddress )
   for (proxypos = 0; (proxypos < (plist->numproxies)) &&
          (addrcount < (sizeof(addrlist)/sizeof(addrlist[0]))); proxypos++ )
     {
-    #ifdef DEBUG
+    #ifdef RESDEBUG
       printf(" => %d:\"%s\"\n", proxypos+1, plist->proxies[proxypos] );
     #endif
 
@@ -324,10 +325,10 @@ s32 Network::Resolve(const char *host, u32 &hostaddress )
   else
     hostaddress = addrlist[rand() % addrcount];
 
-  #ifdef DEBUG                                           
+  #ifdef RESDEBUG                                           
   printf(" total adds==%d  Selected add=%d.%d.%d.%d\n", //screw inet_ntoa()
-               addrcount, hostaddress & 0xff, (hostaddress >> 8) & 0xff,
-               (hostaddress >> 16) & 0xff, (hostaddress >> 24) & 0xff );
+               addrcount, (int)(hostaddress & 0xff), (int)((hostaddress >> 8) & 0xff),
+               (int)((hostaddress >> 16) & 0xff), (int)((hostaddress >> 24) & 0xff) );
   #endif
   return 0;
 }
