@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.2  1998/07/07 23:05:20  jlawson
+// added time includes for Linux (probably will be needed for others)
+//
 // Revision 1.1  1998/07/07 21:55:01  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -59,7 +62,7 @@ extern "C" {
   #include <direct.h>
   #include <fcntl.h>
   #include "platforms/os2cli/os2defs.h"
-  #include "platforms\os2cli\dod.h"   // needs to be included after Client
+  #include "platforms/os2cli/dod.h"   // needs to be included after Client
   #ifndef QSV_NUMPROCESSORS       /* This is only defined in the SMP toolkit */
     #define QSV_NUMPROCESSORS     26
   #endif
@@ -105,7 +108,7 @@ extern "C" {
   #include <conio.h>
   #include <share.h>
   #include <fcntl.h>
-  #ifdef __TURBOC__
+  #if defined(__TURBOC__)
     #include <dir.h>
   #endif
   #if (CLIENT_OS == OS_WIN32)
@@ -142,6 +145,9 @@ extern "C" {
   #include <fcntl.h>
   extern "C" int nice(int);
   extern "C" int gethostname(char *, int); // Keep g++ happy.
+#elif (CLIENT_OS == OS_LINUX)
+  #include <sys/time.h>
+  #include <unistd.h>
 #endif
 
 // --------------------------------------------------------------------------
