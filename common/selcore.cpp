@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.40 2003/03/31 20:40:42 snikkel Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.41 2003/04/03 21:46:47 oliver Exp $"; }
 
 //#define TRACE
 
@@ -125,7 +125,7 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.40 2003/03/31 20:40:42 snikkel Exp $"; }
       extern "C" u32 rc5_unit_func_allitnil_compat( RC5UnitWork *, u32 );
       extern "C" u32 rc5_unit_func_lintilla_compat( RC5UnitWork *, u32 );
       extern "C" u32 rc5_unit_func_lintilla_604_compat( RC5UnitWork *, u32 );
-      #if defined(__VEC__) /* OS+compiler support altivec */
+      #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
         extern "C" u32 rc5_unit_func_vec_compat( RC5UnitWork *, u32 );
         extern "C" u32 rc5_unit_func_vec_7450_compat( RC5UnitWork *, u32 );
       #endif
@@ -201,7 +201,7 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.40 2003/03/31 20:40:42 snikkel Exp $"; }
     #if defined(_AIXALL)      /* AIX hybrid client */
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_power(void);
     #endif
-    #if defined(__VEC__)      /* compiler supports AltiVec */
+    #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
     extern "C" CoreDispatchTable *vec_ogr_get_dispatch_table(void);
     #endif
   #elif (CLIENT_CPU == CPU_ALPHA)
@@ -244,14 +244,17 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.40 2003/03/31 20:40:42 snikkel Exp $"; }
   #elif (CLIENT_CPU == CPU_ARM)
     extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
     extern "C" s32 rc5_72_unit_func_arm2( RC5_72UnitWork *, u32 *, void *);
-  #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
-    extern "C" s32 CDECL rc5_72_unit_func_020_030_mh_2( RC5_72UnitWork *, u32 *, void *);
+  #elif (CLIENT_CPU == CPU_68K) && (defined(__GCC__) || defined(__GNUC__))
     extern "C" s32 CDECL rc5_72_unit_func_060_mh_2( RC5_72UnitWork *, u32 *, void *);
+    extern "C" s32 CDECL rc5_72_unit_func_030_mh_1( RC5_72UnitWork *, u32 *, void *);
+    extern "C" s32 CDECL rc5_72_unit_func_040_mh_1( RC5_72UnitWork *, u32 *, void *);
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
     extern "C" s32 CDECL rc5_72_unit_func_ppc_mh_2( RC5_72UnitWork *, u32 *, void *);
+    extern "C" s32 CDECL rc5_72_unit_func_mh603e_addi( RC5_72UnitWork *, u32 *, void *);
+    extern "C" s32 CDECL rc5_72_unit_func_mh604e_addi( RC5_72UnitWork *, u32 *, void *);
     extern "C" s32 CDECL rc5_72_unit_func_KKS2pipes( RC5_72UnitWork *, u32 *, void *);
     extern "C" s32 CDECL rc5_72_unit_func_KKS604e( RC5_72UnitWork *, u32 *, void *);
-    #if defined(__VEC__) /* OS+compiler support altivec */
+    #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
       extern "C" s32 CDECL rc5_72_unit_func_KKS7400( RC5_72UnitWork *, u32 *, void *);
       extern "C" s32 CDECL rc5_72_unit_func_KKS7450( RC5_72UnitWork *, u32 *, void *);
     #endif
@@ -472,10 +475,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ARM 1-pipe B",
       NULL
     },
-  #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_CPU == CPU_68K) && (defined(__GCC__) || defined(__GNUC__))
     { /* RC5-72 */
-      "MH 2-pipe 68020/030",
-      "MH 2-pipe 68000/040/060",
+      "MH 1-pipe 68020/030",
+      "MH 1-pipe 68000/040",
+      "MH 2-pipe 68060",
       NULL
     },
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
@@ -488,6 +492,8 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "KKS 604e",      /* gas and OSX format */
       "KKS 7400",      /* gas and OSX format, AltiVec only */
       "KKS 7450",      /* gas and OSX format, AltiVec only */
+      "MH 1-pipe",     /* gas format */
+      "MH 1-pipe 604e",/* gas format */
       NULL
     },
   #elif (CLIENT_CPU == CPU_SPARC) && (CLIENT_OS == OS_SOLARIS)
@@ -568,7 +574,7 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
     int have_vec = 0;
     int have_pwr = 0;
 
-    #if defined(_AIXALL) || defined(__VEC__) /* only these two need detection*/
+    #if defined(_AIXALL) || defined(__VEC__) || defined(__ALTIVEC__) /* only these two need detection*/
     long det = GetProcessorType(1);
     #endif
     #if defined(_AIXALL)                /* is a power/PPC hybrid client */
@@ -576,7 +582,7 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
     #elif (CLIENT_CPU == CPU_POWER)     /* power only */
     have_pwr = 1;                       /* see note above */
     #endif
-    #if defined(__VEC__)                /* OS+compiler support altivec */
+    #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
     have_vec = (det >= 0 && (det & 1L<<25)!=0); /* have altivec */
     #endif
     if (contestid == RC5)
@@ -601,6 +607,11 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
     }
     else if (contestid == RC5_72)
     {
+      #if (CLIENT_OS == OS_AMIGAOS) && defined(__POWERUP__)
+      /* PowerUp cannot use the KKS cores, since they modify gpr2 */
+      if ((cindex >= 4) && (cindex <= 7))
+        cindex = 8;			/* "MH 1-pipe" */
+      #endif
       if (!have_vec && cindex == 6)     /* "KKS 7400" */
         cindex = 4;                     /* "KKS 2pipes" */
       if (!have_vec && cindex == 7)     /* "KKS 7450" */
@@ -902,7 +913,7 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
         ogr_get_dispatch_table_nobsr();
       #elif CLIENT_CPU == CPU_POWERPC
         ogr_get_dispatch_table();
-        #if defined(__VEC__)      /* compiler supports AltiVec */
+        #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
           vec_ogr_get_dispatch_table();
         #endif
       #elif (CLIENT_CPU == CPU_68K)
@@ -1165,11 +1176,23 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
   {
     if (detected_type > 0)
     {
-      #if (CLIENT_OS == OS_AMIGAOS)
-      if (detected_type >= 68020 && detected_type <= 68030)
-        cindex = 0; /* 020/030 optimized */
-      else
-        cindex = 1; /* 060 optimized (best for 68000/040 too) */
+      #if defined(__GCC__) || defined(__GNUC__)
+      switch (detected_type)
+      {
+        case 68020:
+        case 68030:
+          cindex = 0; /* 030 optimized (best for 68020 too) */
+          break;
+        case 68000:
+        case 68040:
+          cindex = 1; /* 040 optimized (best for 68000 too) */
+          break;
+        case 68060:
+          cindex = 2; /* 060 optimized */
+          break;
+      }
+      #else
+      cindex = 2; /* ANSI 1-pipe */
       #endif
     }
   }
@@ -1202,7 +1225,7 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
       #elif (CLIENT_CPU == CPU_POWER)  /* Power only */
         cindex = 3;                    /* "PowerRS" */
       #endif
-      #if defined(__VEC__)             /* OS+compiler support altivec */
+      #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
       if (( detected_type & (1L<<25) ) != 0) //altivec?
         {
           switch ( detected_type & 0xffff) // only compare the low PVR bits
@@ -1229,7 +1252,7 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
       #elif (CLIENT_CPU == CPU_POWER)   /* Power only */
         cindex = 1;                     /* "PowerRS" */
       #endif
-      #if defined(__VEC__)             /* OS+compiler support altivec */
+      #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
       if (( detected_type & (1L<<25) ) != 0) //altivec?
       {
         switch ( detected_type & 0xffff) // only compare the low PVR bits
@@ -1250,16 +1273,16 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
     {
       switch ( detected_type & 0xffff) // only compare the low PVR bits
       {
-        case 0x0003: cindex = 4; break; // 603            == KKS 2pipes
-        case 0x0004: cindex = 4; break; // 604            == KKS 2pipes
-        case 0x0006: cindex = 4; break; // 603e           == KKS 2pipes
-        case 0x0007: cindex = 4; break; // 603r/603ev     == KKS 2pipes
-        case 0x0008: cindex = 4; break; // 740/750 (G3)   == KKS 2pipes
-        case 0x0009: cindex = 4; break; // 604e           == KKS 2pipes
-        case 0x000A: cindex = 4; break; // 604ev          == KKS 2pipes
+        case 0x0003: cindex = 8; break; // 603            == MH 1-pipe
+        case 0x0004: cindex = 9; break; // 604            == MH 1-pipe 604e
+        case 0x0006: cindex = 8; break; // 603e           == MH 1-pipe
+        case 0x0007: cindex = 8; break; // 603r/603ev     == MH 1-pipe
+        case 0x0008: cindex = 8; break; // 740/750 (G3)   == MH 1-pipe
+        case 0x0009: cindex = 9; break; // 604e           == MH 1-pipe 604e
+        case 0x000A: cindex = 9; break; // 604ev          == MH 1-pipe 604e
         default:     cindex =-1; break; // no default
       }
-      #if defined(__VEC__)  /* OS+compiler support altivec */
+      #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
       if (( detected_type & (1L<<25) ) != 0) //altivec?
       {
         switch ( detected_type & 0xffff) // only compare the low PVR bits
@@ -1963,7 +1986,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
           pipeline_count = 2;
         }
         #endif
-        #if defined(__VEC__)
+        #if defined(__VEC__) || defined(__ALTIVEC__)
         else if (coresel == 4)    // G4 (PPC 7400/7410)
         {
           unit_func.rc5 = rc5_unit_func_vec_compat;
@@ -2166,7 +2189,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       if (coresel == 1)                          /* "PowerRS" */
         unit_func.ogr = ogr_get_dispatch_table_power();
       #endif
-      #if defined(__VEC__)          /* compiler+OS supports AltiVec */
+      #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler+OS supports AltiVec */
       if (coresel == 2)                           /* "PPC-vector" */
         unit_func.ogr = vec_ogr_get_dispatch_table();
       #endif
@@ -2280,16 +2303,20 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         unit_func.gen_72 = rc5_72_unit_func_arm2;
         pipeline_count = 1;
         break;
-     #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
+     #elif (CLIENT_CPU == CPU_68K) && (defined(__GCC__) || defined(__GNUC__))
       case 0:
-        unit_func.gen_72 = rc5_72_unit_func_020_030_mh_2;
-        pipeline_count = 2;
+        unit_func.gen_72 = rc5_72_unit_func_030_mh_1;
+        pipeline_count = 1;
         break;
       case 1:
       default:
+        unit_func.gen_72 = rc5_72_unit_func_040_mh_1;
+        pipeline_count = 1;
+        coresel = 1;
+        break;
+      case 2:
         unit_func.gen_72 = rc5_72_unit_func_060_mh_2;
         pipeline_count = 2;
-        coresel = 1;
         break;
      #elif (CLIENT_CPU == CPU_X86) && !defined(HAVE_NO_NASM)
       case 0:
@@ -2350,7 +2377,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
           unit_func.gen_72 = rc5_72_unit_func_KKS604e;
           pipeline_count = 2;
           break;
-      #if defined(__VEC__)
+      #if defined(__VEC__) || defined(__ALTIVEC__)
       case 6:
           unit_func.gen_72 = rc5_72_unit_func_KKS7400;
           pipeline_count = 4;
@@ -2360,6 +2387,14 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
           pipeline_count = 4;
           break;
       #endif
+      case 8:
+        unit_func.gen_72 = rc5_72_unit_func_mh603e_addi;
+        pipeline_count = 1;
+        break;
+      case 9:
+        unit_func.gen_72 = rc5_72_unit_func_mh604e_addi;
+        pipeline_count = 1;
+        break;
      #elif (CLIENT_CPU == CPU_SPARC) && (CLIENT_OS == OS_SOLARIS)
        case 3:
          unit_func.gen_72 = rc5_72_unit_func_KKS_2;
