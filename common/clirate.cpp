@@ -94,7 +94,7 @@ double CliGetKeyrateForProblem( Problem *prob )
   {
     addedqueue[addedqpos].key.hi = rc5result.key.hi;
     addedqueue[addedqpos].key.lo = rc5result.key.lo;
-    addedqueue[addedqpos].contest = contestid;
+    addedqueue[addedqpos].contest = (u8) contestid;
     if ((++addedqpos) >= (MAXCPUS*2))
       addedqpos=0;
 
