@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.110 2000/01/26 02:06:16 snake Exp $
+# @(#)$Id: configure,v 1.222.2.111 2000/01/26 02:59:07 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -780,10 +780,9 @@ case "$1" in
 ###### Sparc/UltraSparc or Sun/SunOS/Solaris
 
     *sparc-openbsd)                   # snake, now without DES
-	TARGET_CCFLAGS="$OPTS_GCC272_SPARC1 -DLURK"
-                    # $CSC_ANSI_CCOPTS -DHAVE_CSC_CORES
+	TARGET_CCFLAGS="$OPTS_GCC272_SPARC1 -DLURK -DHAVE_OGR_CORES"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c common/lurk.cpp" # $CSC_ANSI_SRCS"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c common/lurk.cpp $OGR_ANSI_SRCS"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_TARBALL="openbsd-sparc-aout"
 	;;
@@ -1445,10 +1444,10 @@ case "$1" in
 	*m68k-netbsd)
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer \
-			-m68020-40 -DASM_68K -DLURK" #-DHAVE_CSC_CORES
+			-m68020-40 -DASM_68K -DLURK -DHAVE_OGR_CORES"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="rc5/68k/rc5_68k_gcc_crunch.c common/lurk.cpp"
-			# ${CSC_ANSI_SRCS}"
+	TARGET_ADDSRCS="rc5/68k/rc5_68k_gcc_crunch.c common/lurk.cpp \
+		${OGR_ANSI_SRCS}"
 	TARGET_ADDASMS="rc5/68k/crunch.68k.gcc.s"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_TARBALL="netbsd-68k"
