@@ -4,14 +4,19 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-// This file contains the basic types used in a lot of places: Client class;
-// Operation, contest_id_t enums; Packet, FileHeader and FileEntry structs; 
-// none of them depend on anything other than cputypes.h, and network.h
-// (which stands alone too) for Client::Fetch() and Client::Flush())
-// 
+/*
+   This file contains the basic types used in a lot of places: Client class;
+   Operation, contest_id_t enums; Packet, FileHeader and FileEntry structs; 
+   none of them depend on anything other than cputypes.h, and network.h
+*/
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.81  1998/10/03 03:52:24  cyp
+// Removed ::Install() and ::Uninstall() [os specific functions needed to be
+// called directly from ParseCommandLine()], changed ::runhidden to an 'int',
+// removed win16 specific SurrenderCPU() [uses win api function instead]
+//
 // Revision 1.80  1998/09/28 02:36:13  cyp
 // new method LoadSaveProblems() [probfill.cpp]; removed MAXCPUS [obsolete];
 // removed SetNiceness() [SetPriority() setprio.cpp]; removed DisplayBanner()
@@ -351,7 +356,7 @@ public:
   s32 preferred_blocksize;
   s32 contestdone[2];
 
-  s32 runhidden;      // previously win95hidden, os2hidden, netwarehidden...
+  int runhidden;      // previously win95hidden, os2hidden, netwarehidden...
   
 #if defined(MMX_BITSLICER)
   s32 usemmx;
@@ -373,11 +378,6 @@ protected:
   // 4 = user requested fetch
 #endif
 
-
-#if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-  virtual void SurrenderCPU( void ) {};
-    // pause for other tasks
-#endif
 
   // these put/get data blocks to the file buffers
   // and trigger Fetch/Flush when needed
@@ -536,14 +536,6 @@ public:
     // If force > 0, a update will be attempted no matter the offline
     // mode/etc. - -update and GUIs should call with this 1. Automated
     // fetches by the client will all use 0 of course.
-
-  int Install();
-    // installs the clients into autolaunch configuration
-    // returns: non-zero on failure
-
-  int Uninstall(void);
-    // removes the client from autolaunch configuration
-    // returns: non-zero on failure
 
   int GetProcessorType();  //was x86id(); and ARMid(); nullfunction otherwise
   // Identify CPU type by hardware check - in cpucheck.cpp
