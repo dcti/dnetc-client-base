@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.131  1998/08/21 16:05:51  cyruspatel
+// Extended the DES mmx define wrapper from #if MMX_BITSLICER to
+// #if (defined(MMX_BITSLICER) && defined(KWAN) && defined(MEGGS)) to
+// differentiate between DES and RC5 MMX cores. Partially completed
+// blocks are now also tagged with the core type and CLIENT_BUILD_FRAC
+//
 // Revision 1.130  1998/08/21 09:05:42  cberry
 // Fixed block size suggestion for CPUs so slow that they can't do a 2^28 block in an hour.
 //
@@ -119,7 +125,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.130 1998/08/21 09:05:42 cberry Exp $"; }
+return "@(#)$Id: client.cpp,v 1.131 1998/08/21 16:05:51 cyruspatel Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -151,6 +157,20 @@ return "@(#)$Id: client.cpp,v 1.130 1998/08/21 09:05:42 cberry Exp $"; }
 #endif
 
 #define Time() (CliGetTimeString(NULL,1))
+
+// --------------------------------------------------------------------------
+#if ((CLIENT_CPU > 0x01F /* 0-31 */) || ((CLIENT_CONTEST-64) > 0x0F /* 64-79 */) || \
+     (CLIENT_BUILD > 0x07 /* 0-7 */) || (CLIENT_BUILD_FRAC > 0x01FF /* 0-1023 */) || \
+     (CLIENT_OS  > 0x7F /* 0-127 */))
+#error CLIENT_CPU/_OS/_CONTEST/_BUILD are out of range for FileEntry check tags
+#endif    
+
+#define FILEENTRY_CPU     (((cputype & 0x0F)<<4) | (CLIENT_CPU & 0x0F))
+#define FILEENTRY_OS      ((CLIENT_OS & 0x7F) | ((CLIENT_CPU & 0x10) << 3))
+#define FILEENTRY_BUILDHI ((((CLIENT_CONTEST-64)&0x0F)<<4) | \
+                            ((CLIENT_BUILD & 0x07)<<1) | \
+			    ((CLIENT_BUILD_FRAC>>8)&1)) 
+#define FILEENTRY_BUILDLO ((CLIENT_BUILD_FRAC) & 0xff)  
 
 // --------------------------------------------------------------------------
 
@@ -908,20 +928,20 @@ s32 Client::Run( void )
 
   for (cpu_i = 0; cpu_i < load_problem_count; cpu_i++ )
   {
-#if (CLIENT_CPU == CPU_X86)
-    if ((cpu_i != 0) && (cpu_i != numcputemp) 
-#if defined(MMX_BITSLICER)
-       && (des_unit_func!=des_unit_func_mmx) // we're not using the mmx cores
+#if ((CLIENT_CPU == CPU_X86) || (CLIENT_OS == OS_BEOS))
+    if (((cpu_i%numcputemp)>=2)
+#if ((CLIENT_CPU == CPU_X86) && defined(MMX_BITSLICER) && defined(KWAN) && defined(MEGGS))
+      && (des_unit_func!=des_unit_func_mmx) // we're not using the mmx cores
 #endif
-       && (cpu_i != 1) && (cpu_i != 1 + numcputemp))
-      {
+      )
+    {
       // Not the 1st or 2nd cracking thread...
-      // Must do RC5.  DES x86 cores aren't multithread safe.  There are 2 separate cores.
+      // Must do RC5.  DES x86 cores aren't multithread safe.
       // Note that if rc5 contest is over, this will return -2...
       count = GetBufferInput( &fileentry , 0);
       if (contestdone[0])
-        count=-2; // means that this thread won't actually start.
-      }
+        count = -2; //means that this thread won't actually start
+    }
     else
 #endif
     {
@@ -979,12 +999,16 @@ PreferredIsDone1:
 
       // If this is a partial DES block, and completed by a different cpu/os/build, then
       // reset the keysdone to 0...
+      #if (CLIENT_CPU != CPU_X86)
       if (fileentry.contest == 1)
+      #endif
       {
         if ( (ntohl(fileentry.keysdone.lo)!=0) || (ntohl(fileentry.keysdone.hi)!=0) )
         {
-          if ((fileentry.cpu != CLIENT_CPU) || (fileentry.os != CLIENT_OS) ||
-              (fileentry.buildhi != CLIENT_CONTEST) || (fileentry.buildlo != CLIENT_BUILD))
+         if ((fileentry.cpu     != FILEENTRY_CPU) ||
+             (fileentry.os      != FILEENTRY_OS) ||
+             (fileentry.buildhi != FILEENTRY_BUILDHI) || 
+             (fileentry.buildlo != FILEENTRY_BUILDLO))
           {
             fileentry.keysdone.lo = fileentry.keysdone.hi = htonl(0);
             LogScreen("Read partial DES block from another cpu/os/build.\n");
@@ -1409,7 +1433,11 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
           // Get another block...
 
 #if ((CLIENT_CPU == CPU_X86) || (CLIENT_OS == OS_BEOS))
-          if ((cpu_i%numcputemp)>=2)
+          if (((cpu_i%numcputemp)>=2)
+#if ((CLIENT_CPU == CPU_X86) && defined(MMX_BITSLICER) && defined(KWAN) && defined(MEGGS))
+       && (des_unit_func!=des_unit_func_mmx) // we're not using the mmx cores
+#endif
+          )
           {
               // Not the 1st or 2nd cracking thread...
               // Must do RC5.  DES x86 cores aren't multithread safe.
@@ -1487,12 +1515,16 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
 
             // If this is a partial DES block, and completed by a different
             // cpu/os/build, then reset the keysdone to 0...
+            #if (CLIENT_CPU != CPU_X86)
             if (fileentry.contest == 1)
+            #endif
             {
               if ( (ntohl(fileentry.keysdone.lo)!=0) || (ntohl(fileentry.keysdone.hi)!=0) )
               {
-                if ((fileentry.cpu != CLIENT_CPU) || (fileentry.os != CLIENT_OS) ||
-                    (fileentry.buildhi != CLIENT_CONTEST) || (fileentry.buildlo != CLIENT_BUILD))
+                if ((fileentry.cpu     != FILEENTRY_CPU) ||
+                    (fileentry.os      != FILEENTRY_OS) ||
+                    (fileentry.buildhi != FILEENTRY_BUILDHI) || 
+                    (fileentry.buildlo != FILEENTRY_BUILDLO))
                 {
                   fileentry.keysdone.lo = fileentry.keysdone.hi = htonl(0);
                   LogScreen("Read partial DES block from another cpu/os/build.\n");
@@ -1668,10 +1700,10 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
           fileentry.contest = (u8) (problem[(int)cpu_i]).RetrieveState( (ContestWork *) &fileentry , 1 );
           fileentry.op = htonl( OP_DATA );
 
-          fileentry.os = CLIENT_OS;
-          fileentry.cpu = CLIENT_CPU;
-          fileentry.buildhi = CLIENT_CONTEST;
-          fileentry.buildlo = CLIENT_BUILD;
+          fileentry.cpu     = FILEENTRY_CPU;
+          fileentry.os      = FILEENTRY_OS;
+          fileentry.buildhi = FILEENTRY_BUILDHI; 
+          fileentry.buildlo = FILEENTRY_BUILDLO;
 
           fileentry.checksum =
                  htonl( Checksum( (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 2 ) );
@@ -1770,13 +1802,11 @@ void Client::DoCheckpoint( int load_problem_count )
         if (fileentry.contest == j)
         {
           fileentry.op = htonl( OP_DATA );
-
-          fileentry.os = CLIENT_OS;
-          fileentry.cpu = CLIENT_CPU;
-          fileentry.buildhi = CLIENT_CONTEST;
-          fileentry.buildlo = CLIENT_BUILD;
-
-          fileentry.checksum =
+          fileentry.cpu     = FILEENTRY_CPU;
+          fileentry.os      = FILEENTRY_OS;
+          fileentry.buildhi = FILEENTRY_BUILDHI; 
+          fileentry.buildlo = FILEENTRY_BUILDLO;
+          fileentry.checksum=
               htonl( Checksum( (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 2 ) );
           Scramble( ntohl( fileentry.scramble ),
                       (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
