@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.60 2000/08/22 13:22:20 oliver Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.61 2000/08/25 06:09:54 cyp Exp $"; }
 
 //#define TRACE
 
@@ -604,7 +604,10 @@ int ParseCommandline( Client *client,
       }
       else if ( strcmp(thisarg, "-install" ) == 0)
       {
-        #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16)
+        #if (CLIENT_OS==OS_LINUX) /* argv[1..(argc-1)] as start options */
+	linux_install(utilGetAppName(), (argc-pos), &argv[pos], loop0_quiet);
+        terminate_app = 1;           /* li_inst.c */
+        #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16)
         win32CliInstallService(loop0_quiet); /*w32svc.cpp*/
         terminate_app = 1;
         #elif (CLIENT_OS == OS_OS2)
@@ -644,6 +647,9 @@ int ParseCommandline( Client *client,
         #if (CLIENT_OS == OS_OS2)
         extern int os2CliUninstallClient(int /*do it without feedback*/);
         os2CliUninstallClient(loop0_quiet); /* os2inst.cpp */
+        terminate_app = 1;                  
+	#elif (CLIENT_OS == OS_LINUX)
+        linux_uninstall(utilGetAppName(), loop0_quiet); /* li_inst.c */
         terminate_app = 1;
         #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16)
         win32CliUninstallService(loop0_quiet); /*w32svc.cpp*/

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.40 2000/07/13 21:44:02 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.41 2000/08/25 06:09:54 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -220,6 +220,9 @@
   #elif defined(__ELF__) && !defined(_LINUX_SCHED_H)
     #include <sched.h>
   #endif
+  extern "C" int linux_uninstall(const char *basename, int quietly);
+  extern "C" int linux_install(const char *basename, int argc, 
+    const char *argv[], int quietly); /* argv[1..(argc-1)] as start options */
 #elif (CLIENT_OS == OS_MACOS)
   #include "client_defs.h"
   #include <Gestalt.h>
@@ -294,3 +297,4 @@
 #endif
 
 #endif /* __BASEINCS_H__ */
+
