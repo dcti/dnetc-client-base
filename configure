@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.94  1998/09/03 15:30:46  cyp
+# configure now appends the appropriate .h filenames to .cpp dependancies.
+# 'make clean' now also builds a new Makefile.
+#
 # Revision 1.93  1998/08/30 11:54:15  remi
 # Another tweaking in the x86-linux entries : deleted desultra entries,
 # added some libc5 specific entries to compile a libc5 binary on a glibc2
@@ -136,7 +140,6 @@
 # didn't compile anymore and didn't have time to figure out why.
 #
 # Revision 1.58  1998/06/26 07:20:26  myshkin
-#
 # Added -lncurses for the ppc-gcc target, per remi's recommendation.
 #
 # Revision 1.57  1998/06/25 21:29:34  remi
@@ -327,7 +330,8 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
     -fexpensive-optimizations -fomit-frame-pointer \
     -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
     -funroll-loops -Wall -Icommon -Irc5 -Ides -Iplatforms \
-    -fno-inline-functions -fno-handle-exceptions'
+    -fno-inline-functions -fno-handle-exceptions \
+    '
 
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
@@ -1197,8 +1201,8 @@ echo "NASMFLAGS = ${TARGET_NASMFLAGS}" >> Makefile
 echo "STRIP = ${TARGET_STRIP}" >> Makefile
 echo "ALLOBJS = ${TARGET_ALLCCOBJS} ${TARGET_ALLASOBJS} ${TARGET_ALLNASMOBJS}" >> Makefile
 echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
+echo "BUILDNAME = $1" >> Makefile
 echo "" >> Makefile
-
 
 
 #
@@ -1214,9 +1218,11 @@ echo "" >> Makefile
 
 echo "clean:" >> Makefile
 echo "	rm -f \${ALLOBJS} ${EXENAME}" >> Makefile
+echo "	sh $0 \${BUILDNAME}" >> Makefile
 echo "" >> Makefile
-echo "superclean:	clean" >> Makefile
-echo "	rm -f Makefile buff-in.* buff-out.* *.ini testplat" >> Makefile
+
+echo "superclean:" >> Makefile
+echo "	rm -f \${ALLOBJS} ${EXENAME} Makefile buff-in.* buff-out.* *.ini testplat" >> Makefile
 echo "	find . -name '*~' -exec rm {} \\;" >> Makefile
 echo "" >> Makefile
 
@@ -1239,7 +1245,8 @@ for target in ${TARGET_ALLCCOBJS}; do
     echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
     echo "	rm -f rc5/rc5stub.cpp" >> Makefile
   else
-    echo "$target:	${TARGETSRC}" >> Makefile
+    TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
+    echo "$target:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
     echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
   fi
   echo "" >> Makefile
