@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.12 2003/12/13 12:57:14 kakace Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.13 2004/01/06 13:58:15 kakace Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -943,6 +943,48 @@ static int __InternalLoadState( InternalProblem *thisprob,
   #if defined(HAVE_OGR_CORES)
   #if defined(HAVE_OGR_PASS2)
   case OGR_P2:
+  {
+    int r;
+    thisprob->priv_data.contestwork.ogr = work->ogr;
+    if (thisprob->priv_data.contestwork.ogr.nodes.hi != 0 || thisprob->priv_data.contestwork.ogr.nodes.lo != 0)
+    {
+      if (thisprob->pub_data.client_cpu != expected_cputype || thisprob->pub_data.coresel != expected_corenum ||
+          CLIENT_OS != expected_os || CLIENT_VERSION != expected_build)
+      {
+        /* Once an OGR-P2 stub has been initialized (by a call to ogr_create()),
+        ** there is no way to recover the minimum position which is needed to
+        ** process sub-normal stubs.
+        */
+        Log("OGR-P2 stub discarded\nCannot resume from a different CPU/OS/build core/client\n");
+        return -1;
+      }
+    }
+
+    r = (thisprob->pub_data.unit_func.ogr)->init();
+    if (r == CORE_S_OK)
+    {
+      r = (thisprob->pub_data.unit_func.ogr)->create(&thisprob->priv_data.contestwork.ogr.workstub,
+                      sizeof(WorkStub), thisprob->priv_data.core_membuffer, MAX_MEM_REQUIRED_BY_CORE);
+    }
+    if (r != CORE_S_OK)
+    {
+      /* if it got here, then the stub is truly bad or init failed and
+      ** it is ok to discard the stub (and let the network recycle it)
+      */
+      const char *msg = "Unknown error";
+      if      (r == CORE_E_MEMORY)  msg = "CORE_E_MEMORY: Insufficient memory";
+      else if (r == CORE_E_FORMAT)  msg = "CORE_E_FORMAT: Format or range error";
+      Log("OGR load failure: %s\nStub discarded.\n", msg );
+      return -1;
+    }
+    if (thisprob->priv_data.contestwork.ogr.workstub.worklength > (u32)thisprob->priv_data.contestwork.ogr.workstub.stub.length)
+    {
+      thisprob->pub_data.startkeys.hi = thisprob->priv_data.contestwork.ogr.nodes.hi;
+      thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.ogr.nodes.lo;
+      thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
+    }
+    break;
+  }
   #endif
   case OGR:
   {
