@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.77 2000/01/04 12:12:34 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.78 2000/01/08 23:36:07 cyp Exp $"; }
 
 //#define TRACE
 
@@ -385,34 +385,11 @@ static int confopt_IsHostnameDNetHost( const char * hostname )
 
 /* ------------------------------------------------------------------------ */
 
-static int __p2wu_multiplier( Client *client, unsigned int contest_i )
-{
-  int multiplier = 1;
-  switch (contest_i)
-  {
-    case RC5:
-    case DES:
-    case CSC:
-         multiplier = client->preferred_blocksize[contest_i] - 27;
-         if ( multiplier < (PREFERREDBLOCKSIZE_MIN-28))
-           multiplier = 1;
-         else if (multiplier > (PREFERREDBLOCKSIZE_MAX-28))
-           multiplier = 4; /* default */
-         break;
-    case OGR:
-         multiplier = 1;
-         break;
-  }
-  return multiplier;
-}
-
-/* ------------------------------------------------------------------------ */
-
 static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if failed */
 {
   char buffer[128];
   char *p;
-  unsigned int ui;
+  unsigned int ui, cont_i;
   int i, modfail = 0;
 
   TRACE_OUT((+1,"__remapObsoleteParameters()\n"));
@@ -504,77 +481,88 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
 
   {
     int thresholdsdone = 0;
-    for (ui=0; ui < CONTEST_COUNT; ui++)
+    for (cont_i=0; cont_i < CONTEST_COUNT; cont_i++)
     {
       /* if we have _any_ key already in the new format, then we're done */
-      if (GetPrivateProfileStringB( __getprojsectname(ui), "fetch-workunit-threshold", "", buffer, sizeof(buffer), fn )
-       || GetPrivateProfileStringB( __getprojsectname(ui), "flush-workunit-threshold", "", buffer, sizeof(buffer), fn ))
+      if (GetPrivateProfileStringB( __getprojsectname(cont_i), "fetch-workunit-threshold", "", buffer, sizeof(buffer), fn )
+       || GetPrivateProfileStringB( __getprojsectname(cont_i), "flush-workunit-threshold", "", buffer, sizeof(buffer), fn )
+       || GetPrivateProfileStringB( __getprojsectname(cont_i), "flush-time-threshold", "", buffer, sizeof(buffer), fn ))
       {
         thresholdsdone = 1;
         break;
       }
-      else
-      {
-        /* convert packet-style to workunit-style. then delete old */
-        if (GetPrivateProfileStringB( __getprojsectname(ui), "fetch-threshold", "", buffer, sizeof(buffer), fn ))
-        {
-          if ((i = atoi( buffer )) >= 1)
-          {
-            i *= __p2wu_multiplier(client,ui);
-            if (i > BUFTHRESHOLD_MAX)
-              i = BUFTHRESHOLD_MAX;
-            client->inthreshold[ui] = i;
-            modfail += (!WritePrivateProfileIntB( __getprojsectname(ui), "fetch-workunit-threshold", i, fn));
-          }
-          WritePrivateProfileStringB( __getprojsectname(ui), "fetch-threshold", NULL, fn );
-        }
-        if (GetPrivateProfileStringB( __getprojsectname(ui), "flush-threshold", "", buffer, sizeof(buffer), fn ))
-        {
-          if ((i = atoi( buffer )) >= 1)
-          {
-            i *= __p2wu_multiplier(client,ui);
-            if (i > BUFTHRESHOLD_MAX)
-              i = BUFTHRESHOLD_MAX;
-            client->inthreshold[ui] = i;
-            modfail += (!WritePrivateProfileIntB( __getprojsectname(ui), "flush-workunit-threshold", i, fn));
-          }
-          WritePrivateProfileStringB( __getprojsectname(ui), "flush-threshold", NULL, fn );
-        }
-      }
-    }
-    for (ui=0; !thresholdsdone && ui<2; ui++)
+    }  
+    if (!thresholdsdone)
     {
-      const char *p = (const char*)((ui)?("threshold"):("threshold2"));
-      i = ((ui)?(RC5):(DES));
-      if (!GetPrivateProfileStringB( __getprojsectname(i), "fetch-workunit-threshold", "", buffer, sizeof(buffer), fn )
-       && !GetPrivateProfileStringB( __getprojsectname(i), "flush-workunit-threshold", "", buffer, sizeof(buffer), fn ))
+      /* convert post-2.8000 and pre-2.8000 format simultaneously */
+      for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++ )
       {
-        if (GetPrivateProfileStringB( OPTION_SECTION, p, "", buffer, sizeof(buffer), fn ))
-        {
-          if ((i = atoi(buffer))>0)
-          {                                    
-            int oldstyle_inout[2];
-            oldstyle_inout[0] = oldstyle_inout[1] = i;
-            if ((p = strchr( buffer, ':' )) != ((char *)0))
-            {
-              if ((i = atoi( p+1 ))>0)
-                oldstyle_inout[1] = i;
-            }
-            i = ((ui)?(RC5):(DES));
-            if (oldstyle_inout[0] != BUFTHRESHOLD_DEFAULT)
-            {
-              client->inthreshold[i] = oldstyle_inout[0] * __p2wu_multiplier(client,i);
-              modfail += (!WritePrivateProfileIntB( __getprojsectname(i), "fetch-workunit-threshold", client->inthreshold[i], fn));
-            }
-            if (oldstyle_inout[1] != BUFTHRESHOLD_DEFAULT)
-            {
-              client->outthreshold[i] = oldstyle_inout[1] * __p2wu_multiplier(client,i);
-              modfail += (!WritePrivateProfileIntB( __getprojsectname(i), "flush-workunit-threshold", client->outthreshold[i], fn));
-            }
-          }          
-        }
-      }
-    }
+        const char *cont_sect = __getprojsectname(cont_i);
+        int oldstyle_inout[2];
+        oldstyle_inout[0] = GetPrivateProfileIntB( cont_sect, "fetch-threshold", -123, fn );
+	oldstyle_inout[1] = GetPrivateProfileIntB( cont_sect, "flush-threshold", -123, fn );
+	if (oldstyle_inout[0] != -123 || oldstyle_inout[1] != -123)
+        {                             /* post 2.8000. */
+	  /* delete them here */
+	  WritePrivateProfileStringB( cont_sect, "fetch-threshold", NULL, fn );
+	  WritePrivateProfileStringB( cont_sect, "flush-threshold", NULL, fn );
+	}
+	else if ((cont_i == RC5) && /* pre-2.8000 */
+	  GetPrivateProfileStringB( OPTION_SECTION, "threshold", "", buffer, sizeof(buffer), fn ))
+	{
+          if ((i = atoi( buffer )) > 0)
+	  {
+            oldstyle_inout[0] = i;
+	    if ((p = strchr( buffer, ':' )) != NULL)
+	      oldstyle_inout[1] = atoi( p+1 );
+	  }
+	  /* deleted at end of function */
+	}  
+        if (oldstyle_inout[0] > 0)
+	{
+          int multiplier = 1;
+          switch (cont_i)
+          {
+             case RC5:
+             case DES:
+             case CSC:
+               multiplier = GetPrivateProfileIntB( cont_sect, 
+	                    "preferred-blocksize", PREFERREDBLOCKSIZE_DEFAULT, fn );
+	       if ( multiplier < 1)
+ 	         multiplier = PREFERREDBLOCKSIZE_DEFAULT;
+               else if ( multiplier < PREFERREDBLOCKSIZE_MIN)
+                 multiplier = PREFERREDBLOCKSIZE_MIN;
+               else if (multiplier > PREFERREDBLOCKSIZE_MAX)
+                 multiplier = PREFERREDBLOCKSIZE_DEFAULT;
+	       multiplier -= (PREFERREDBLOCKSIZE_MIN-1); 
+               break;
+             case OGR:
+               multiplier = 1;
+               break;
+          }
+	  if (oldstyle_inout[0] > 500) /* our old limit */
+	    oldstyle_inout[0] = 500;
+	  if (oldstyle_inout[0] != 10) /* oldstyle default */
+	  {
+ 	    /* convert using preferred blocksize */
+	    client->inthreshold[cont_i] = 
+	        oldstyle_inout[0] * multiplier;
+            modfail += (!WritePrivateProfileIntB( cont_sect, "fetch-workunit-threshold", client->inthreshold[cont_i], fn));
+	  }    	
+	  if (oldstyle_inout[1] > 0)
+	  {
+	    /* outthreshold >= inthreshold implied 'inthreshold decides' */
+	    if (oldstyle_inout[1] < oldstyle_inout[0]) /* old meaning */
+  	    {   
+ 	      /* convert using preferred blocksize */
+	      client->outthreshold[cont_i] = 
+	        oldstyle_inout[1] * multiplier;
+              modfail += (!WritePrivateProfileIntB( cont_sect, "flush-workunit-threshold", client->outthreshold[cont_i], fn));
+	    }    	
+	  }       
+	}
+      }	/* for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++ ) */
+    } /* if !donethresholds */  
   }
 
   /* ----------------- OPTSECT_BUFFERS ----------------- */
@@ -1006,6 +994,7 @@ int ReadConfig(Client *client)
         client->coretypes[cont_i] = 
            GetPrivateProfileIntB(cont_name, "core",
                          client->coretypes[cont_i],fn);
+        /* note that the default preferred_blocksize is now <=0 (auto) */
         client->preferred_blocksize[cont_i] = 
            GetPrivateProfileIntB(cont_name, "preferred-blocksize",
                          client->preferred_blocksize[cont_i], fn );
@@ -1199,15 +1188,19 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     {
       if ((p =  __getprojsectname(cont_i)) != ((const char *)0))
       {
-        __XSetProfileInt( p, "fetch-workunit-threshold", client->inthreshold[cont_i], fn,  -1, 0 );
-        __XSetProfileInt( p, "flush-workunit-threshold", client->outthreshold[cont_i], fn, -1, 0 );
+        __XSetProfileInt( p, "fetch-workunit-threshold", client->inthreshold[cont_i], fn,  0, 0 );
+        __XSetProfileInt( p, "flush-workunit-threshold", client->outthreshold[cont_i], fn, 0, 0 );
         __XSetProfileInt( p, "fetch-time-threshold", client->timethreshold[cont_i], fn, 0, 0 );
 //      __XSetProfileInt( p, "flush-time-threshold", client->timethreshold[cont_i], fn, 0, 0 );
         if (cont_i != OGR)
         {
           __XSetProfileInt( p, "core", client->coretypes[cont_i], fn, -1, 0 );
-          __XSetProfileInt( p, "preferred-blocksize", 
-            client->preferred_blocksize[cont_i], fn, PREFERREDBLOCKSIZE_DEFAULT, 0 );
+          if (client->preferred_blocksize > 0 ||
+	      GetPrivateProfileStringB(p,"preferred-blocksize","",buffer,2,fn))
+	  {      
+            __XSetProfileInt( p, "preferred-blocksize", 
+              client->preferred_blocksize[cont_i], fn, 0, 0 );
+	  }      
         }
       }
     }

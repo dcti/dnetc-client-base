@@ -6,7 +6,7 @@
 */ 
 
 #ifndef __CONFOPT_H__
-#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.20 2000/01/04 12:30:48 cyp Exp $"
+#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.21 2000/01/08 23:36:07 cyp Exp $"
 
 #define CONF_MENU_MISC_PLACEHOLDER  0
 #define CONF_ID                     1 /* CONF_MENU_MISC */

@@ -10,8 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.72 2000/01/04 12:12:35 cyp Exp $"; }
-
+return "@(#)$Id: selcore-conflict.cpp,v 1.73 2000/01/08 23:36:10 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -72,8 +71,14 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
   #elif (CLIENT_CPU == CPU_68K)
     { /* RC5 */
+    #if (CLIENT_OS == OS_AMIGAOS)
       "loopy",    /* 68000/10/20/30 */
       "unrolled", /* 40/60 */
+    #elif defined(__GCC__) || defined(__GNUC__)
+      "68k asm cruncher",
+    #else
+      "Generic RC5 core",
+    #endif
       NULL
     },
     { /* DES */
@@ -799,8 +804,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     //rc5/ultra/rc5-ultra-crunch.cpp
     extern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
   #else
-    // rc5/ansi/rc5ansi_2-rg.cpp
-    extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
+    // rc5/ansi/2-rg.cpp
+    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 iterations );
   #endif
 #elif (CLIENT_CPU == CPU_68K)
   #if (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_AMIGAOS)
@@ -1022,9 +1027,9 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       }
       #else
       {
-        // rc5/ansi/rc5ansi_2-rg.cpp
-        //xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
-        unit_func.rc5 = rc5_unit_func_ansi_2_rg;
+        // rc5/ansi/2-rg.cpp
+        //xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 iterations );
+        unit_func.rc5 = rc5_ansi_2_rg_unit_func;
         pipeline_count = 2;
         coresel = 0;
       }

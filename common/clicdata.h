@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */ 
 #ifndef __CLICDATA_H__
-#define __CLICDATA_H__ "@(#)$Id: clicdata.h,v 1.22 2000/01/04 12:12:33 cyp Exp $"
+#define __CLICDATA_H__ "@(#)$Id: clicdata.h,v 1.23 2000/01/08 23:36:04 cyp Exp $"
 
 // return 0 if contestID is invalid, non-zero if valid.
 int CliIsContestIDValid(int contestID);

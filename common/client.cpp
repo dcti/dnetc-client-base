@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.240 2000/01/04 12:12:33 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.241 2000/01/08 23:36:04 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -85,17 +85,16 @@ void ResetClientData(Client *client)
     client->remote_update_dir[0] = '\0';
   client->connectoften=0;
   //memset(&(client->lurk_conf),0,sizeof(client->lurk_conf));
-  for (contest=0; contest<CONTEST_COUNT; contest++)
-  {
-    // If in/out threshold is -1, then use time exclusively.
-    // If time threshold is 0, then use in/out exclusively.
-    // If in/out is -1, and time is 0, then use BUFTHRESHOLD_DEFAULT
-    client->inthreshold[contest] = -1 /*BUFTHRESHOLD_DEFAULT*/;
-    client->outthreshold[contest] = -1 /*BUFTHRESHOLD_DEFAULT*/;
-    client->timethreshold[contest] = 0; // Disabled
-
-    client->preferred_blocksize[contest] = PREFERREDBLOCKSIZE_DEFAULT;
-  }
+  // If inthreshold is <=0, then use time exclusively.
+  // If time threshold is 0, then use inthreshold exclusively.
+  // If inthreshold is <=0, AND time is 0, then use BUFTHRESHOLD_DEFAULT
+  // If out is <=0, don't do outbuffer threshold checking, regardless of time
+  // If out is >0, then use outthreshold, regardless of time
+  //memset(&(client->inthreshold),0,sizeof(client->inthreshold));
+  //memset(&(client->outhreshold),0,sizeof(client->outhreshold));
+  //memset(&(client->timethreshold),0,sizeof(client->timethreshold));
+  //if preferred_blocksize is <=0, then "auto"
+  //memset(&(client->preferred_blocksize),0,sizeof(client->preferred_blocksize));
 
   /* -- perf -- */
   client->numcpu = -1;
@@ -116,56 +115,68 @@ void ResetClientData(Client *client)
 
 // --------------------------------------------------------------------------
 
-static int __getinoutthreshold( Client *client, int contestid, 
-                                int get_in, int force)
+int ClientGetInThreshold(Client *client, int contestid, int force)
 {
-  unsigned int sec; int proc, thresh;
-  
-  if (client->timethreshold[contestid] < 0)
-    client->timethreshold[contestid] = 0;
-  else if (client->timethreshold[contestid] > BUFTHRESHOLD_MAX)
-    return BUFTHRESHOLD_MAX; /* its going to be over this anyway */
-  
-  if (client->timethreshold[contestid] == 0)
+  int thresh = BUFTHRESHOLD_DEFAULT;
+
+  // OGR time threshold NYI
+  client->timethreshold[OGR] = 0; 
+
+  if (contestid < CONTEST_COUNT)
   {
     thresh = client->inthreshold[contestid];
-    if (!get_in) /* get_out */
-      thresh = client->outthreshold[contestid];
-    if (thresh < 1)
-      return BUFTHRESHOLD_DEFAULT;
-    if (thresh > BUFTHRESHOLD_MAX)
-      return BUFTHRESHOLD_MAX;  
-    return thresh;
-  }
+    if (thresh <= 0) 
+    {
+      /* use time limit */
+      thresh = BUFTHRESHOLD_DEFAULT; /* default (if time is also zero) */
+      if (client->timethreshold[contestid] > 0) /* use time */
+      {	
+        unsigned int sec; int proc;
+        /* - note that we do not use client->numcpu here: If MP isn't supported */
+        /* then numcpu is 1 anyway. And, yes, the client _does_ assume that */
+        /* GetNumberOfDetectedProcessors() works for clients that support MP */
+        proc = GetNumberOfDetectedProcessors();
+        if (proc <= 0)
+          proc = 1;
+	thresh = proc; /* Just make sure we have one unit for each CPU */
+	               /* for outthresh we'd set it to _MAX (don't connect) */
 
-  // We have a time limit
-
-  /* - note that we do not use client->numcpu here: If MP isn't supported */
-  /* then numcpu is 1 anyway. And, yes, the client _does_ assume that */
-  /* GetNumberOfDetectedProcessors() is valid for clients that support MP */
-  proc = GetNumberOfDetectedProcessors();
-  if (proc <= 0)
-    proc = 1;
-
-  // get the speed
-  sec = CliGetContestWorkUnitSpeed(contestid, force);
-  if (sec == 0)
-  {
-    if (!get_in) /* get_out */
-      return BUFTHRESHOLD_MAX;  /* Don't connect unncessesarily */
-    return proc;  /* Just make sure we have one unit for each CPU */
+        // get the speed
+        sec = CliGetContestWorkUnitSpeed(contestid, force);
+        if (sec != 0) /* we have a rate */
+          thresh = 1 + (client->timethreshold[contestid] * 3600 * proc/sec);
+      }  
+    }  
   }    
-  
-  thresh = 1 + (client->timethreshold[contestid] * 3600 * proc/sec);
   if (thresh > BUFTHRESHOLD_MAX)
     thresh = BUFTHRESHOLD_MAX;
   return thresh;
 }      
     
-int ClientGetInThreshold(Client *client, int contestid, int force)
-{ return __getinoutthreshold( client, contestid, 1, force ); }
-int ClientGetOutThreshold(Client *client, int contestid, int force)
-{ return __getinoutthreshold( client, contestid, 0, force ); }
+int ClientGetOutThreshold(Client *client, int contestid, int /* force */)
+{                                  /* out threshold is never time driven */
+  int outthresh = 0; 
+  if (contestid < CONTEST_COUNT)
+  {
+    outthresh = client->outthreshold[contestid];
+    /*if outthresh is 0, don't do outthresh checking, (let load_order kick in)*/
+    if (outthresh <= 0)
+      outthresh = 0;
+    else  
+    {
+      int inthresh = client->inthreshold[contestid];
+      /* if both thresholds are non-zero, make sure outthresh <= inthresh */
+      /* but if inthreshold is zero (use time), just return outthresh */
+      /* (allow split personality: intresh=time,outthres=workunits) */
+      if (inthresh > 0 && outthresh > inthresh)
+        outthresh = inthresh;
+    }	
+  }    
+  /* if outthreshold is greater than max, cap it */
+  if (outthresh > BUFTHRESHOLD_MAX)
+    outthresh = BUFTHRESHOLD_MAX;
+  return outthresh;
+}
 
 // --------------------------------------------------------------------------
 

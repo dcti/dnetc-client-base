@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.46 2000/01/04 12:12:34 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.47 2000/01/08 23:36:06 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -90,10 +90,11 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
 //8
 { CFGTXT("Project order"/*"Load-work precedence"*/), "DES,CSC,OGR,RC5", 
   /* CFGTXT( */
-  "The client cycles through work on various projects in an order specified\n"
-  "here. For example, \"OGR,RC5\" instructs the client to work on OGR until\n"
-  "those buffers are exhausted; afterwards, it works on RC5. The client will\n" 
-  "obtain more work from the network only when all buffers are empty.\n"
+  "The client looks for work in the order specified here. For example, \"OGR,\n"
+  "RC5\" instructs the client to work on OGR until those buffers are exhausted;\n"
+  "afterwards, it works on RC5. If *all* 'flush thresholds' are at -1 (default)\n"
+  "then the client will obtain new work from the network only when all buffers\n"
+  "are empty; ie it will rotate through the list.\n"
   "\n"
   "You can turn off a project by setting \":0\" or \"=0\" after the project's\n"
   "name - for instance, \"OGR:0\" tells your client not to work on, or request\n"
@@ -206,12 +207,13 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "be updated frequently while a connection is detected.\n" 
   ),CONF_MENU_BUFF,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL},
 //19
-{ CFGTXT("Preferred packet size (2^X keys/packet)"), _TEXTIFY(PREFERREDBLOCKSIZE_DEFAULT) " (default)",
+{ CFGTXT("Preferred packet size (2^X keys/packet)"), "-1 (auto)",
   /* CFGTXT( */
   "When fetching key-based packets from a server, the client will request\n"
   "packets with the size you specify in this option. Packet sizes are\n"
   "specified as powers of 2.\n"
-  "The minimum and maximum packet sizes are " _TEXTIFY(PREFERREDBLOCKSIZE_MIN) " and " _TEXTIFY(PREFERREDBLOCKSIZE_MAX) " respectively.\n"
+  "The minimum and maximum packet sizes are " _TEXTIFY(PREFERREDBLOCKSIZE_MIN) " and " _TEXTIFY(PREFERREDBLOCKSIZE_MAX) " respectively,\n"
+  "and specifying '-1' permits the client to use internal defaults.\n"
   "Note: the number you specify is the *preferred* size. Although the\n"
   "keyserver will do its best to serve that size, there is no guarantee that\n"
   "it will always do so.\n"
@@ -230,16 +232,15 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "fill the input buffer to the threshold, and send in all completed work\n"
   "units. Keep the number of workunits to buffer low if you have a fixed\n"
   "connection to the internet, or the cost of your dialup connection is\n"
-  "negligible.  Thresholds as displayed here are in the form \"fetch:flush\",\n"
-  "and the 'flush setting' defaults to the 'fetch setting' if not\n"
-  "explicitely set.\n"
+  "negligible.\n"
   "\n"
-  "A value of -1 indicates that a time threshold will be used instead. If the\n"
-  "time threshold is also disabled, the client will use work unit thresholds\n"
-  "with default values.\n"
-  "\n"
-  "You may also force a buffer exchange by starting the client with -update.\n"
-  ),CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,-1,BUFTHRESHOLD_MAX,NULL,NULL},
+  "Thresholds as displayed here are in the form \"fetch:flush\":\n"
+  "A value of -1 for the 'fetch setting' indicates that a time threshold should\n"
+  "be used instead. If that too is unspecified, then the client will use defaults.\n"
+  "A value of -1 for the 'flush setting' indicates that the client is not to\n"
+  "monitor the level of the output buffer. If all flush settings are -1, the\n"
+  "client will update buffers only when all input buffers are empty.\n"
+  ),CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,1,BUFTHRESHOLD_MAX,NULL,NULL},
 //21
 { CFGTXT("Fetch:flush time threshold (in hours)"), "0 (disabled)",
   "This option specifies that instead of fetching a specific number of\n"

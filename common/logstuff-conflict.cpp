@@ -1,4 +1,4 @@
-/* Copyright distributed.net 1997-1999 - All Rights Reserved
+/* Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
@@ -11,7 +11,7 @@
  * ------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.44 2000/01/08 16:41:19 cyp Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.45 2000/01/08 23:36:08 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc

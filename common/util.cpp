@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.19 2000/01/04 12:12:35 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.20 2000/01/08 23:36:11 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */

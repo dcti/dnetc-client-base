@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.150 2000/01/04 12:30:47 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.151 2000/01/08 23:36:05 cyp Exp $"; }
 
 //#define TRACE
 

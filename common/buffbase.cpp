@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.23 2000/01/04 12:12:32 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.24 2000/01/08 23:36:03 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -659,26 +659,7 @@ static void __FixupRandomPrefix( const WorkRecord * data, Client *client )
 
 static int __CheckBuffLimits( Client *client )
 {
-  // OGR time threshold NYI
-  client->timethreshold[OGR] = 0;
-
-  for (unsigned int i=0;i<CONTEST_COUNT;i++)
-  {
-    if ( ((int)(client->inthreshold[i])) < 1 )
-      client->inthreshold[i] = -1;
-    else if ( ((int)(client->inthreshold[i])) > (int)BUFTHRESHOLD_MAX)
-      client->inthreshold[i] = BUFTHRESHOLD_MAX;
-    if ( ((int)(client->outthreshold[i])) < 1 )
-      client->outthreshold[i] = -1;
-    else if ( client->inthreshold[i] == -1)
-       {
-       if ( client->outthreshold[i] > BUFTHRESHOLD_MAX )
-         client->outthreshold[i] = BUFTHRESHOLD_MAX;
-       }
-    else if ( client->outthreshold[i] > client->inthreshold[i])
-      client->outthreshold[i] = client->inthreshold[i];
-  }
-
+  /* thresholds are managed in ClientGet[In|Out]Threshold() [client.cpp] */
   if (client->nodiskbuffers == 0 && 
       client->out_buffer_basename[0] && client->in_buffer_basename[0])
   {

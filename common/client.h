@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.143 2000/01/04 12:12:33 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.144 2000/01/08 23:36:04 cyp Exp $"
 
 
 enum {

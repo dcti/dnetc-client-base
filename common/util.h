@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------
 */ 
 #ifndef __UTIL_H__ 
-#define __UTIL_H__ "@(#)$Id: util.h,v 1.11 2000/01/04 12:12:35 cyp Exp $"
+#define __UTIL_H__ "@(#)$Id: util.h,v 1.12 2000/01/08 23:36:11 cyp Exp $"
 
 void trace_out( int indlevel, const char *fmt, ... );
 #ifdef TRACE

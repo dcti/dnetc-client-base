@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.71 2000/01/04 12:12:34 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.72 2000/01/08 23:36:10 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -185,13 +185,18 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         }
 
         {
-          unsigned long count;
-          if (GetBufferCount( client, cont_i, 1, &count ) < 0)
-	    count = 0;
-          if ((unsigned long)(count) >= 
-	      (unsigned long)(client->outthreshold[*contest]))
-            *bufupd_pending |= BUFFERUPDATE_FLUSH;
+	  unsigned int thresh = ClientGetOutThreshold( client, cont_i, 0 );
+	  if (thresh > 0) /* zero means ignore output buffer threshold */
+	  {
+            unsigned long count;
+            if (GetBufferCount( client, cont_i, 1, &count ) > 0)
+	    {
+              if ((unsigned long)(count) >= ((unsigned long)thresh))
+                *bufupd_pending |= BUFFERUPDATE_FLUSH;
+	    }
+	  }    	
         }
+	
       }
       ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, (long)prob_i );
     }
@@ -418,7 +423,11 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   if (bufcount >= 0) /* load from file succeeded */
   {
     int client_cpu = 0, coresel;
-    
+
+    /* if the total number of packets in buffers is less than the number 
+       of crunchers running then try to fetch *now*. This means that the
+       effective _total_ minimum threshold is always >= num crunchers
+    */   
     if (((unsigned long)(bufcount)) < (load_problem_count - prob_i))
       *bufupd_pending |= BUFFERUPDATE_FETCH;
 
@@ -755,7 +764,9 @@ unsigned int LoadSaveProblems(Client *pass_client,
           char buffer[200+128 /*sizeof(client->in_buffer_basename)*/];
           if (inout != 0)                              /* out-buffer */
           {
-            if (norm_count > (unsigned int)ClientGetOutThreshold(client, cont_i))
+	    unsigned int thresh = ClientGetOutThreshold(client, cont_i, 0);
+	    /* a zero outbuffer threshold means 'don't check it' */
+	    if (thresh > 0 && norm_count > thresh)
               bufupd_pending |= BUFFERUPDATE_FLUSH;
           }
           else                                         /* in-buffer */
