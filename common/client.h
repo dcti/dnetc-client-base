@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: client.h,v $
+// Revision 1.49  1998/06/25 03:02:32  blast
+// Moved the version #defines from client.h to version.h and added a version
+// string called CLIENT_VERSIONSTRING...
+//
 // Revision 1.48  1998/06/25 02:30:38  jlawson
 // put back public Client::connectrequested for use by win32gui
 //
@@ -57,12 +61,9 @@
 
 // --------------------------------------------------------------------------
 
-#define CLIENT_CONTEST      70
-#define CLIENT_BUILD        25
-#define CLIENT_BUILD_FRAC   410
-
 // all revision comments moved to the changeLog.txt
 
+#include "version.h"
 #include "cputypes.h"
 #include "problem.h"
 #include "iniread.h"
