@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.103 2001/02/26 00:54:25 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.104 2001/03/03 03:57:47 sampo Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -309,14 +309,6 @@ static inline void __release_lock( void *__thisprob )
 static inline void __copy_internal_problem( InternalProblem *dest,
                                             const InternalProblem *source )
 {
-    // XXX
-    // do we *really* want to not copy the core_membuffer address?  For example...
-    // dest.membuffer and source.membuffer don't change after a call to this.
-    // you copy(dest, source);  then you load dest with an OGR problem, which
-    // sets up the membuffer in a certain way.  Then you copy(source, dest) on the
-    // second call, except that source still has it's original membuffer, when the
-    // one we want is in dest.  Is this heinously bad, or am I smoking crack? -- sampo
-
     // core_membuffer is a pointer into __core_membuffer_space. This space is 
     // not a malloc()ed memblock, but another member (char[]) of 
     // InternalProblem.
