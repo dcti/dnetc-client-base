@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.122  1998/07/01 09:15:23  ziggyb
+// Cleaned up the OS/2 clearscreen a bit
+//
 // Revision 1.121  1998/07/01 03:30:35  silby
 // Added/uses CheckForcedKeyproxy to help make config make more sense.
 //
@@ -148,7 +151,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.121 1998/07/01 03:30:35 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.122 1998/07/01 09:15:23 ziggyb Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -1130,6 +1133,7 @@ void Client::clearscreen( void )
 #elif (CLIENT_OS == OS_OS2)
   BYTE space[] = " ";
   VioScrollUp(0, 0, -1, -1, -1, space, 0);
+  VioSetCurPos(0, 0, 0);      // move cursor to upper left
 #elif (CLIENT_OS == OS_DOS)
   __clearscreen();  //in platform/dos/clearscr.asm
 #elif (CLIENT_OS == OS_NETWARE)
