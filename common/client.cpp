@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.184  1999/01/17 15:59:25  cyp
+// Do an InitRandom2() before any work starts.
+//
 // Revision 1.183  1999/01/15 00:32:44  cyp
 // changed phrasing of 'distributed.net ID' at Nugget's request.
 //
@@ -167,7 +170,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.183 1999/01/15 00:32:44 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.184 1999/01/17 15:59:25 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -201,7 +204,7 @@ s32 guiriscos, guirestart;
 
 static void __initialize_client_object(Client *client)
 {
-  client->id[0] = 0;
+  strcpy(client->id, "rc5@distributed.net" );
   client->inthreshold[0] = 10;
   client->outthreshold[0] = 10;
   client->inthreshold[1] = 10;
@@ -453,6 +456,7 @@ int Client::Main( int argc, const char *argv[] )
                                smtpsrvr, smtpport, smtpfrom, smtpdest, id );
             PrintBanner(id,0,restarted);
             ParseCommandline( 1, argc, argv, NULL, (quietmode==0)); //show overrides
+            InitRandom2( id );
           
             if (domodes)
               {
