@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.84 2000/06/23 13:29:57 oliver Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.85 2000/06/30 19:26:24 mfeiri Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -370,7 +370,8 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
       LogScreenRaw( "RC5 68K assembly by John Girvin\n");
       #endif
       #if (CLIENT_CPU == CPU_POWERPC)
-      LogScreenRaw( "RC5 PowerPC and AltiVec assembly by Dan Oetting and Roberto Ragusa\n");
+      LogScreenRaw( "RC5 PowerPC and AltiVec assembly by Dan Oetting\n"
+                    "Enhancements for 604e CPUs by Roberto Ragusa\n");
       #endif
       #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
       LogScreenRaw( "RC5 Alpha assembly by Mike Marcelais\n");
