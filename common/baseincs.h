@@ -4,6 +4,10 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
+// $Log: baseincs.h,v $
+// Revision 1.30.2.2  1998/11/08 11:38:38  remi
+// Added $Log tag
+//
 // Synchronized with official 1.30
 
 #ifndef __BASEINCS_H__
