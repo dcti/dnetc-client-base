@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.39 2000/09/17 11:46:32 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.40 2000/09/20 18:23:58 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -361,6 +361,8 @@ Network::Network( const char * servname, int servport, int _nofallback,
 
 Network::~Network(void)
 {
+  if (verbose_level > 0 && shown_connection)
+    LogScreen("Connection closed.\n");
   CloseConnection();
 }
 
@@ -427,12 +429,12 @@ void Network::ShowConnection(void)
 
     if ((startmode & MODE_PROXIED) == 0 || fwall_hostname[0] == 0 /*http*/)
     {
-      LogScreen("Connected to %s:%u...\n", targethost,
+      LogScreen("\rConnected to %s:%u...\n", targethost,
                ((unsigned int)(svc_hostport)) );
     }
     else
     {
-      LogScreen( "Connected to %s:%u\nvia %s proxy %s:%u\n",
+      LogScreen( "\rConnected to %s:%u\nvia %s proxy %s:%u\n",
                  ( autofindkeyserver ? "distributed.net" : server_name ),
                  ((unsigned int)(svc_hostport)),
                  ((startmode & MODE_SOCKS5)?("SOCKS5"):
@@ -486,7 +488,7 @@ int Network::OpenConnection( void )
     {
       if (CheckExitRequestTriggerNoIO())
         break;
-      LogScreen( "Network::Open Error - sleeping for 3 seconds\n" );
+      LogScreen( "Network::Open Error - will retry in a few seconds.\n" );
       sleep(1);
       if (CheckExitRequestTriggerNoIO())
         break;
@@ -532,8 +534,6 @@ int Network::OpenConnection( void )
         if (!didfallback && !nofallback && whichtry == (maxtries-1) &&
            ((startmode & MODE_PROXIED) == 0 || fwall_hostname[0] == 0))
         {                                              /* last chance */
-
-//BUGBUG: didn't __fixup_dnethostname already check for these?
           if (autofindkeyserver || server_name[0]=='\0' ||
               strstr(server_name,".distributed.net"))
             ; /* can't fallback further than a fullserver */
@@ -551,7 +551,6 @@ int Network::OpenConnection( void )
 
         if (svc_hostname[0] == 0)
         {
-//BUGBUG: didn't __fixup_dnethostname already check for these?
           svc_hostaddr = 0;
           svc_hostname = "rc5proxy.distributed.net"; /* special name for resolve */
           if (svc_hostport != 80 && svc_hostport != 23 &&
@@ -710,6 +709,12 @@ int Network::OpenConnection( void )
       }
       #endif
 
+      if (!reconnected)
+      {
+        LogScreen( "Network::Connecting to %s:%u...",
+             ((conn_hostaddr)?(__inet_ntoa__(conn_hostaddr)):(conn_hostname)),
+             (unsigned int)(conn_hostport) );
+      }
       success = ( LowLevelConnectSocket( conn_hostaddr, conn_hostport ) == 0 );
 
       #ifdef ENSURE_CONNECT_WITH_BLOCKING_SOCKET
@@ -727,6 +732,9 @@ int Network::OpenConnection( void )
       {
         success = 0;
         maxtries = 0;
+        if (!reconnected)
+          LogScreen("\n");
+        CheckExitRequestTrigger();
       }
       else if (!success)   /* connect failed */
       {
@@ -804,9 +812,10 @@ int Network::OpenConnection( void )
             errreasonbuf[sizeof(errreasonbuf)-1] = '\0';
             strcat(errreasonbuf,")\n");
           }
-          LogScreen( "Connect to host %s:%u failed.\n%s",
-             __inet_ntoa__(conn_hostaddr), (unsigned int)(conn_hostport),
-             errreasonbuf );
+          LogScreen( "\n%sonnect to host %s:%u failed.\n%s",
+             ((reconnected)?("Rec"):("C")),
+             ((conn_hostaddr)?(__inet_ntoa__(conn_hostaddr)):(conn_hostname)),
+             (unsigned int)(conn_hostport), errreasonbuf );
         }
       } //connect failed
     } // resolve succeeded
@@ -826,6 +835,7 @@ int Network::OpenConnection( void )
 
     if (success)
     {
+      ShowConnection();
       reconnected = 1;
       return 0;
     }
@@ -1798,6 +1808,9 @@ int Network::LowLevelConnectSocket( u32 that_address, int that_port )
   do
   {
     int retval;
+    if (!NetCheckIsOK())
+      return -1;
+
     if ( (retval = connect(sock, (struct sockaddr *)&saddr, sizeof(saddr))) >= 0 )
     {
       rc = 0;
@@ -1923,6 +1936,9 @@ int Network::LowLevelPut(const char *ccdata, int length)
   {
     int towrite = (int)((((u32)length)>((u32)sendquota))?(sendquota):(length));
     int written;
+
+    if (!NetCheckIsOK())
+      break;
 
     #if defined(_TIUSER_)                              //TLI/XTI
     int noiocount = 0;
