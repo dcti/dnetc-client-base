@@ -3,11 +3,15 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selftest.cpp,v $
+// Revision 1.35  1998/12/28 21:23:09  cyp
+// Added event support.
+//
 // Revision 1.34  1998/12/23 11:33:42  remi
-// Expressend doubts on the ARM cores, please look at the comments.
+// Expressed doubts on the ARM cores, please look at the comments.
 //
 // Revision 1.33  1998/12/22 19:34:07  chrisb
-// ARM cores don't handle high-word increments, so the tests for this are modified on ARM.
+// ARM cores don't handle high-word increments, so the tests for this 
+// are modified on ARM.
 //
 // Revision 1.32  1998/11/30 00:57:03  remi
 // Added key incrementation system check.
@@ -29,7 +33,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.34 1998/12/23 11:33:42 remi Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.35 1998/12/28 21:23:09 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -42,6 +46,7 @@ return "@(#)$Id: selftest.cpp,v 1.34 1998/12/23 11:33:42 remi Exp $"; }
 #include "network.h"   // ntohl()/htonl()
 #include "logstuff.h"  // LogScreen()
 #include "clicdata.h"  // CliGetContestNameFromID() 
+#include "clievent.h"  // ClientEventSyncPost()
 
 // --------------------------------------------------------------------------
 
@@ -148,8 +153,13 @@ int SelfTest( unsigned int contest, int cputype )
   else
     return 0;
 
+  ClientEventSyncPost( CLIEVENT_SELFTEST_STARTED, (long)contest );
+
   for ( testnum = 0 ; testnum < TEST_CASE_COUNT ; testnum++ )
     {
+    if (CheckExitRequestTriggerNoIO())
+      break;
+
     // load test case
     if (contest == 0) 
       {
@@ -193,34 +203,34 @@ int SelfTest( unsigned int contest, int cputype )
   VERY IMPORTANT
   !!!!!!!!!!!!!!
 
-	These self-test blocks are 17 bits blocks !!
-	They are no where near 32 bits !
-	On my 486 DX4/100, the full rc5 test suite completes in about 17 seconds.
+  These self-test blocks are 17 bits blocks !!
+  They are no where near 32 bits !
+  On my 486 DX4/100, the full rc5 test suite completes in about 17 seconds.
 
-	Please look carefully at my comments, starting from
-	"another way of explaining this algorithm"
+  Please look carefully at my comments, starting from
+  "another way of explaining this algorithm"
 
-		6	the solution is :       47FC0000:000076B5
-			we're starting from :   47FBFFFF:FFFF0000
+    6 the solution is :       47FC0000:000076B5
+      we're starting from :   47FBFFFF:FFFF0000
 
-	47FBFFFFF:FFFF0000 is a perfectly valid 17 bits block.
+  47FBFFFFF:FFFF0000 is a perfectly valid 17 bits block.
 
-	You're assuming that when the client gets an n-bit block, the n least
-	significant bits are all zero, but I don't know if this is true in all
-	situations (ie, full proxies on port 2064, personal proxies (all versions), 
-	the http cgi, the mail system, the telnet proxy).
-	In previous client versions, I've seen something like "3*28 bits blocks", and 
-	I'm wondering if such blocks have been fully checked by ARM cores...
-	
-	I think it's pretty dangerous to assume the proxies won't sent someday a
-	30-bit block starting from 47BFFFFF:E0000000 and ending with 47C00000:0FFFFFFF
-	for example.
+  You're assuming that when the client gets an n-bit block, the n least
+  significant bits are all zero, but I don't know if this is true in all
+  situations (ie, full proxies on port 2064, personal proxies (all versions), 
+  the http cgi, the mail system, the telnet proxy).
+  In previous client versions, I've seen something like "3*28 bits blocks", and 
+  I'm wondering if such blocks have been fully checked by ARM cores...
+  
+  I think it's pretty dangerous to assume the proxies won't sent someday a
+  30-bit block starting from 47BFFFFF:E0000000 and ending with 47C00000:0FFFFFFF
+  for example.
 
-	In all cases, and even if the proxies are made like you assume,
+  In all cases, and even if the proxies are made like you assume,
 
-		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		!! THE SELF-TESTS 2 AND 3 SHOULD NEVER FAIL !!
-		!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !! THE SELF-TESTS 2 AND 3 SHOULD NEVER FAIL !!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 */
 #endif
@@ -231,52 +241,55 @@ int SelfTest( unsigned int contest, int cputype )
       // stress the key incrementation system
       // the other test cases are generic (random)
 
-/*	if test case N fails, then key & K insn't properly incremented when key & W wrap :
+/*  if test case N fails, then key & K insn't properly incremented when key & W wrap :
 
-		N		K			W
-			     (hi:lo)		     (hi:lo)
+    N   K     W
+           (hi:lo)         (hi:lo)
 
-		2	00000000:00FF0000	00000000:0000FFFF
-		3	00000000:FF000000	00000000:00FF0000
-		4	000000FF:00000000	00000000:FF000000
-		5	0000FF00:00000000	000000FF:00000000
-		6	00FF0000:00000000	0000FF00:00000000
-		7	FF000000:00000000	00FF0000:00000000
+    2 00000000:00FF0000 00000000:0000FFFF
+    3 00000000:FF000000 00000000:00FF0000
+    4 000000FF:00000000 00000000:FF000000
+    5 0000FF00:00000000 000000FF:00000000
+    6 00FF0000:00000000 0000FF00:00000000
+    7 FF000000:00000000 00FF0000:00000000
 
-	another way of explaining this algorithm :
-							   __
-		2	the solution is :       7602EDDB:C3A303DB
-			we're starting from :   7602EDDB:C3A20000
-							 __
-		3	the solution is :       59DA3369:8A00EAE3
-			we're starting from :   59DA3369:89FF0000
-						      __
-		4	the solution is :       A2098FD6:0000348F
-			we're starting from :   A2098FD5:FFFF0000
-						    __
-		5	the solution is :       28A00B00:0000E77F
-			we're starting from :   28A00AFF:FFFF0000
-						  __
-		6	the solution is :       47FC0000:000076B5
-			we're starting from :   47FBFFFF:FFFF0000
-						__
-		7	the solution is :       AE000000:0000ECBB
-			we're starting from :   ADFFFFFF:FFFF0000
+  another way of explaining this algorithm :
+                 __
+    2 the solution is :       7602EDDB:C3A303DB
+      we're starting from :   7602EDDB:C3A20000
+               __
+    3 the solution is :       59DA3369:8A00EAE3
+      we're starting from :   59DA3369:89FF0000
+                  __
+    4 the solution is :       A2098FD6:0000348F
+      we're starting from :   A2098FD5:FFFF0000
+                __
+    5 the solution is :       28A00B00:0000E77F
+      we're starting from :   28A00AFF:FFFF0000
+              __
+    6 the solution is :       47FC0000:000076B5
+      we're starting from :   47FBFFFF:FFFF0000
+            __
+    7 the solution is :       AE000000:0000ECBB
+      we're starting from :   ADFFFFFF:FFFF0000
 
-	(remember, in cores the running key is reversed, ie:
-	 keybyte_inside_core[0] == keybyte_outside_core[7] == key.hi & 0xFF000000,
-	 keybyte_inside_core[1] == keybyte_outside_core[6] == key.hi & 0x00FF0000,
-	 keybyte_inside_core[2] == keybyte_outside_core[5], etc...)
+  (remember, in cores the running key is reversed, ie:
+   keybyte_inside_core[0] == keybyte_outside_core[7] == key.hi & 0xFF000000,
+   keybyte_inside_core[1] == keybyte_outside_core[6] == key.hi & 0x00FF0000,
+   keybyte_inside_core[2] == keybyte_outside_core[5], etc...)
 
 */
-      if (testnum>1 && testnum<=6) {
-	  if (!(contestwork.key.lo & 0xFFFF0000)) {
-	      contestwork.key.lo -= 0x00010000;
-	      contestwork.key.hi--;
-	  } else
-	      contestwork.key.lo -= 0x00010000;
+      if (testnum>1 && testnum<=6) 
+        {
+        if (!(contestwork.key.lo & 0xFFFF0000)) 
+          {
+          contestwork.key.lo -= 0x00010000;
+          contestwork.key.hi--;
+          } 
+        else
+          contestwork.key.lo -= 0x00010000;
+        }
       }
-    }
 
     contestwork.key.lo = htonl( contestwork.key.lo );
     contestwork.key.hi = htonl( contestwork.key.hi );
@@ -292,6 +305,9 @@ int SelfTest( unsigned int contest, int cputype )
     contestwork.iterations.hi = htonl( 0 );
 
     problem.LoadState( &contestwork, contest, 0x1000, cputype);
+
+    ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (long)((Problem *)(&problem)) );
+
     while ( ( run = problem.Run( 0 ) ) == 0 ) //threadnum
       {
       #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
@@ -299,68 +315,69 @@ int SelfTest( unsigned int contest, int cputype )
       #elif (CLIENT_OS == OS_NETWARE)
       nwCliThreadSwitchLowPriority();
       #endif
-
-      problem.GetResult( &rc5result );
       }
 
-    if ( CheckExitRequestTriggerNoIO() ) return 0;
-
-    if ( run == 1 )  // switch on value of run
+    problem.GetResult( &rc5result );
+    successes++;
+    
+    if ( rc5result.result == RESULT_FOUND )
       {
-      s32 tmpcontest = (u32) problem.GetResult( &rc5result );
-      successes++;
-
-      if ( rc5result.result == RESULT_FOUND )
+      solutionfound.lo = ntohl( rc5result.key.lo ) + ntohl( rc5result.keysdone.lo );
+      solutionfound.hi = ntohl( rc5result.key.hi ) + ntohl( rc5result.keysdone.hi );
+      if (solutionfound.lo < ntohl( rc5result.key.lo )) 
+        solutionfound.hi++; // wrap occured ?
+      if (solutionfound.lo != expectedsolution.lo || solutionfound.hi != expectedsolution.hi)
         {
-	solutionfound.lo = ntohl( rc5result.key.lo ) + ntohl( rc5result.keysdone.lo );
-	solutionfound.hi = ntohl( rc5result.key.hi ) + ntohl( rc5result.keysdone.hi );
-	if (solutionfound.lo < ntohl( rc5result.key.lo )) solutionfound.hi++; // wrap occured ?
-	if (solutionfound.lo != expectedsolution.lo || solutionfound.hi != expectedsolution.hi)
+        // failure occurred (wrong key)
+        LogScreen( "Test %d FAILED: %08X:%08X - %08X:%08X\n", successes,
+          solutionfound.hi, solutionfound.lo, 
+          expectedsolution.hi, expectedsolution.lo );
+        successes = -successes;
+        } 
+      else  // match found
+        {
+        if (contest == 1) // DES...
           {
-          // failure occurred (wrong key)
-          LogScreen( "Test %d FAILED: %08X:%08X - %08X:%08X\n", successes,
-            solutionfound.hi, solutionfound.lo, 
-	    expectedsolution.hi, expectedsolution.lo );
-          return ( -successes );
+          u32 hi = (*test_cases)[testnum][1];
+          u32 lo = (*test_cases)[testnum][0];
+
+          u32 hi2 = ntohl( rc5result.key.hi ) + 
+              (u32) ntohl( rc5result.keysdone.hi );
+          u32 lo2 = ntohl( rc5result.key.lo ) + 
+              (u32) ntohl( rc5result.keysdone.lo );
+          convert_key_from_inc_to_des (&hi2, &lo2);
+           LogScreen("Test %02d Passed: %08X:%08X - %08X:%08X\n",successes,
+            (u32) hi2, (u32) lo2, (u32) hi, (u32) lo);
           } 
         else 
           {
-          // match found
-          if (tmpcontest == 1)
-            {
-            // DES...
-            u32 hi = (*test_cases)[testnum][1];
-            u32 lo = (*test_cases)[testnum][0];
-
-            u32 hi2 = ntohl( rc5result.key.hi ) + 
-                (u32) ntohl( rc5result.keysdone.hi );
-            u32 lo2 = ntohl( rc5result.key.lo ) + 
-                (u32) ntohl( rc5result.keysdone.lo );
-            convert_key_from_inc_to_des (&hi2, &lo2);
-
-            LogScreen("Test %02d Passed: %08X:%08X - %08X:%08X\n",successes,
-              (u32) hi2, (u32) lo2, (u32) hi, (u32) lo);
-            } 
-          else 
-            {
-            // RC5...
-            LogScreen( "Test %02d Passed: %08X:%08X\n", successes,
-              solutionfound.hi, solutionfound.lo);
-            }
+          // RC5...
+          LogScreen( "Test %02d Passed: %08X:%08X\n", successes,
+            solutionfound.hi, solutionfound.lo);
           }
         }
-      else
-        {
-        // failure occurred (no solution)
-        LogScreen( "Test %d FAILED: %08X:%08X - %08X:%08X\n", successes,
-              0, 0, expectedsolution.hi, expectedsolution.lo );
-        return( -successes );
-        }
       }
+    else
+      {
+      // failure occurred (no solution)
+      LogScreen( "Test %d FAILED: %08X:%08X - %08X:%08X\n", successes,
+            0, 0, expectedsolution.hi, expectedsolution.lo );
+      successes = -successes;
+      }
+  
+    ClientEventSyncPost( CLIEVENT_SELFTEST_TESTEND, (successes>0) );
+    if (successes < 0)
+      break;
     }
-  LogScreen( "\n%d/%d %s Tests Passed\n", 
+
+  ClientEventSyncPost( CLIEVENT_SELFTEST_FINISHED, (long)(successes) );
+
+  if (successes > 0)
+    {
+    LogScreen( "\n%d/%d %s Tests Passed\n", 
       (int) successes, (int) TEST_CASE_COUNT, 
       CliGetContestNameFromID( contest ) );
+    }
 
   return (successes);
 }

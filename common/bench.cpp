@@ -3,9 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: bench.cpp,v $
+// Revision 1.10  1998/12/28 21:23:09  cyp
+// Added event support.
+//
 // Revision 1.9  1998/12/15 14:11:56  cyp
-// x86 change: Tell the user if his/her client does not support the fastest core
-// that is 'available' for contest X.
+// x86 change: Tell the user if his/her client does not support the 
+// fastest core that is 'available' for contest X.
 //
 // Revision 1.8  1998/12/15 13:28:22  cyp
 // Prettified: reformatted long log messages, converted LogScreenRaw() to 
@@ -40,7 +43,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.9 1998/12/15 14:11:56 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.10 1998/12/28 21:23:09 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -55,6 +58,7 @@ return "@(#)$Id: bench.cpp,v 1.9 1998/12/15 14:11:56 cyp Exp $"; }
 #include "cpucheck.h"  // GetTimesliceBaseline()
 #include "logstuff.h"  // LogScreen()
 #include "console.h"   // ConIsScreen()
+#include "clievent.h"  // event post etc.
 #include "bench.h"     // ourselves
 
 // --------------------------------------------------------------------------
@@ -66,7 +70,7 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
   Problem problem;
 
   u32 run;
-  const char *sm0, *sm4;
+  const char *sm4;
   char cm1, cm2, cm3;
 
   unsigned int itersize;
@@ -128,23 +132,11 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
   problem.LoadState( &contestwork, contestid, tslice, cputype );
 
   problem.percent = 0;
-  sm0 = "%cBenchmarking %s with 1*2^%d tests (%u keys):%s%c%u%%";
   cm1 = '\n'; 
   cm2 = ((ConIsScreen())?(' '):(0));
   cm3 = ((cm2)?('\r'):(0)); //console.h
   sm4 = ((cm3)?(""):("\n"));
   run = 0;
-
-  #if (CLIENT_OS == OS_MACOS)
-    // fixup log window display
-    LogScreen( "\n" );
-    cm1 = cm3;
-    // start rate timing from now
-    #if defined(MAC_GUI)    
-    UpdateThreadProgress(0, 0, 0, true );
-    UpdateClientInfo(&client_info);
-  #endif
-  #endif
 
   #if (CLIENT_CPU == CPU_X86) && \
       (!defined(SMC) || !defined(MMX_RC5) || !defined(MMX_BITSLICER))
@@ -163,12 +155,14 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
     }
   else 
     {
-    #if (!defined(MMX_BITSLICER))             /* all watcom platforms */
+    #if (!defined(MMX_BITSLICER))
     if ((detectedtype & 0x100) != 0) /* mmx */
       LogScreen(not_supported, "DES/MMX");
     #endif
     }
   #endif
+
+  ClientEventSyncPost( CLIEVENT_BENCHMARK_STARTED, (long)((Problem *)(&problem)));
 
   do{
     if ( CheckExitRequestTriggerNoIO() )
@@ -183,12 +177,10 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
         sm4 = ((problem.percent == 101)?("    \n*Break*\n"):("    \n"));
         cm2 = 0;
         }
-      #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-      UpdateThreadProgress(0, problem.percent, problem.GetKeysDone(), true );
-      UpdateClientInfo(&client_info);
-      #endif
+      ClientEventSyncPost( CLIEVENT_BENCHMARK_BENCHING, (long)((Problem *)(&problem)));
 
-      LogScreen( sm0, cm1, contestname, itersize+keycountshift,
+      LogScreen( "%cBenchmarking %s with 1*2^%d tests (%u keys):%s%c%u%%",
+          cm1, contestname, itersize+keycountshift,
           (unsigned int)(1<<(itersize+keycountshift)), sm4, cm2, 
           (unsigned int)(problem.percent) );
       }
@@ -197,6 +189,8 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
 
     if ( run == 0 )
       {
+      ClientEventSyncPost( CLIEVENT_BENCHMARK_BENCHING, (long)((Problem *)(&problem)));
+
       run = problem.Run( 0 );  //threadnum
       if ( run )
         {
@@ -217,7 +211,10 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
     } while (problem.percent != 0);
 
   if ( CheckExitRequestTriggerNoIO() )
+    {
+    ClientEventSyncPost( CLIEVENT_BENCHMARK_FINISHED, 0 /* NULL */ );
     return 0;
+    }
 
   struct timeval tv;
   char ratestr[32];
@@ -225,16 +222,10 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
   tv.tv_sec = problem.timehi;  //read the time the problem:run started
   tv.tv_usec = problem.timelo;
   CliTimerDiff( &tv, &tv, NULL );    //get the elapsed time
+  ClientEventSyncPost( CLIEVENT_BENCHMARK_FINISHED, (long)((double *)(&rate)));
+
   LogScreen("Completed in %s [%skeys/sec]\n",  CliGetTimeString( &tv, 2 ),
                     CliGetKeyrateAsString( ratestr, rate ) );
-
-  #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-    {
-    char smsg[128];
-    sprintf(smsg, "%s benchmark: %.0fKkeys/sec", contestname, rate/1000.0);
-    SetStatusMessage(smsg);
-    }
-  #endif
 
   itersize+=keycountshift;
   while ((tv.tv_sec<(60*60) && itersize<31) || (itersize < 28))
