@@ -1,8 +1,11 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
 // $Log: cliconfig.cpp,v $
+// Revision 1.192.2.5  1999/01/04 02:47:37  remi
+// Updated copyright date.
+//
 // Revision 1.192.2.4  1998/11/08 11:50:06  remi
 // Lots of $Log tags.
 //
