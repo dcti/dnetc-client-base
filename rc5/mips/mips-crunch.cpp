@@ -6,6 +6,9 @@
  * Marco.Walther@mch.sni.de
  *
  * $Log: mips-crunch.cpp,v $
+ * Revision 1.12.2.2  1999/11/15 21:14:14  ivo
+ * removed #error everythomh assumes 32bit cpus
+ *
  * Revision 1.12.2.1  1999/06/16 12:22:15  ivo
  * Fixed some stuff to let Irix compile once again
  *
@@ -45,7 +48,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mips_crunch_cpp(void) {
-return "@(#)$Id: mips-crunch.cpp,v 1.12.2.1 1999/06/16 12:22:15 ivo Exp $"; }
+return "@(#)$Id: mips-crunch.cpp,v 1.12.2.2 1999/11/15 21:14:14 ivo Exp $"; }
 #endif
 
 
@@ -59,9 +62,9 @@ return "@(#)$Id: mips-crunch.cpp,v 1.12.2.1 1999/06/16 12:22:15 ivo Exp $"; }
 #include "problem.h"
 #include "rotate.h"
 
-#ifndef _CPU_32BIT_
-#error "everything assumes a 32bit CPU..."
-#endif
+//#ifndef _CPU_32BIT_
+//#error "everything assumes a 32bit CPU..."
+//#endif
 
 
 #define _P_RC5     0xB7E15163
