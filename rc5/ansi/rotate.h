@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: rotate.h,v $
+// Revision 1.5.2.2  2000/01/08 01:16:38  snake
+// Makes ansi cores usable for 68k NetBSDs (maybe faster than crunch core)
+//
 // Revision 1.5.2.1  1999/12/31 20:05:04  patrick
 //
 //
@@ -166,7 +169,7 @@ static __inline__ u32 ROTL3(u32 x)
 
 #elif (CLIENT_CPU == CPU_68K) && defined(__GNUC__)
 
-#if (CLIENT_OS == OS_SUNOS)
+#if (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_NETBSD)
   #define RC5_WORD u32
 #endif
 
