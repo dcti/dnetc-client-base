@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.28 2004/07/13 22:26:07 kakace Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.29 2004/07/14 22:05:13 kakace Exp $"; }
 
 //#define TRACE
 
@@ -366,7 +366,7 @@ int selcoreGetPreselectedCoreForProject_ogr()
           case 0x003C: // PPC 970FX (XServe G5)
             #ifdef HAVE_KOGE_PPC_CORES
               // Temporary setup for the new KOGE cores.
-              cindex = -1; break;     // Unknown rate yet : micro-bench
+              cindex = 1; break;      // PPC-vector
             #else
               cindex = 0; break;      // PPC-scalar
             #endif
