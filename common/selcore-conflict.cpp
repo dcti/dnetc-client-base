@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.9 1999/10/14 18:35:58 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.10 1999/10/16 22:47:28 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -294,18 +294,13 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
   }
   if (coretypes)
   {
-    int verbosedetect = 0;
     for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
     {
-      int gotchange = 0, index = 0;
+      int index = 0;
       if (__corecount_for_contest( cont_i ) > 1)
         index = selcoreValidateCoreIndex( cont_i, coretypes[cont_i] );
-      gotchange = (!initialized ||
-                   index != selcorestatics.user_cputype[cont_i]);
-      if (gotchange)
-        selcorestatics.corenum[cont_i] = -1;
-      if (!verbosedetect)
-        verbosedetect = (index == -1);
+      if (!initialized || index != selcorestatics.user_cputype[cont_i])
+        selcorestatics.corenum[cont_i] = -1; /* got change */
       selcorestatics.user_cputype[cont_i] = index;
     }
     initialized = 1;
