@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.13 1999/08/09 16:49:50 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.14 1999/09/07 02:49:01 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -119,6 +119,22 @@ static const char *GetBuildOrEnvDescription(void)
   static char buffer[32]; long ver = winGetVersion(); /* w32pre.cpp */
   sprintf(buffer,"Windows%s %u.%u", (ver>=2000)?("NT"):(""), (ver/100)%20, ver%100 );
   return buffer;
+#elif (CLIENT_OS == OS_NETWARE)
+  static char buffer[40];
+  const char *speshul = "";
+  int major, minor, servType, loaderType;
+  major = GetFileServerMajorVersionNumber();
+  if ((minor = GetFileServerMinorVersionNumber()) < 10) /* .02 => .20 */
+    minor *= 10;
+  GetServerConfigurationInfo(&servType, &loaderType);
+  if (servType == 0 && loaderType > 1)
+    speshul = " (nondedicated)";
+  else if (servType == 1)
+    speshul = " (SFT III IOE)";
+  else if (servType == 2)
+    speshul = " (SFT III MSE)";
+  sprintf(buffer, "NetWare%s %u.%u", speshul, major, minor );
+  return buffer;                  
 #elif defined(__unix__) /* uname -sr */
   struct utsname ut;
   if (uname(&ut)==0) {
@@ -317,6 +333,7 @@ static int _realmain( int argc, char *argv[] ) /* YES, *STATIC* */
   }
   #endif
 
+  TRACE_OUT((+0,"realmain: 1 (%d)\n",init_success));
   //-----------------------------
 
   if ( init_success )
@@ -331,14 +348,15 @@ static int _realmain( int argc, char *argv[] ) /* YES, *STATIC* */
       ConOutErr( "Unable to create client object. Out of memory." );
   }
 
+  TRACE_OUT((+0,"realmain: 2 (%d)\n",init_success));
   //----------------------------
 
-  #if (CLIENT_OS == OS_NETWARE)
-  //set cwd etc. save ptr to client for fnames/niceness
+  #if (CLIENT_OS == OS_NETWARE) //set cwd etc.
   if ( init_success )
-    init_success = ( nwCliInitClient( argc, argv, clientP ) == 0);
+    init_success = ( nwCliInitClient( argc, argv ) == 0);
   #endif
 
+  TRACE_OUT((+0,"realmain: 3 (%d)\n",init_success));
   //----------------------------
 
   #if (CLIENT_OS==OS_WIN16 || CLIENT_OS==OS_WIN32S || CLIENT_OS==OS_WIN32)
@@ -346,6 +364,7 @@ static int _realmain( int argc, char *argv[] ) /* YES, *STATIC* */
     w32ConSetClientPointer( clientP ); // save the client * so we can bail out
   #endif                               // when we get a WM_ENDSESSION message
 
+  TRACE_OUT((+0,"realmain: 4 (%d)\n",init_success));
   //----------------------------
 
   #if (CLIENT_OS == OS_MACOS)
@@ -353,6 +372,7 @@ static int _realmain( int argc, char *argv[] ) /* YES, *STATIC* */
     macCliSetClientPointer( clientP ); // load it when appropriate
   #endif
 
+  TRACE_OUT((+0,"realmain: 5 (%d)\n",init_success));
   //----------------------------
 
   if ( init_success )
@@ -360,12 +380,14 @@ static int _realmain( int argc, char *argv[] ) /* YES, *STATIC* */
     retcode = clientP->Main( argc, (const char **)argv );
   }
 
+  TRACE_OUT((+0,"realmain: 6 (%d)\n",init_success));
   //------------------------------
 
   #if (CLIENT_OS == OS_AMIGAOS)
   if (retcode) retcode = 5; // 5 = Warning
   #endif // (CLIENT_OS == OS_AMIGAOS)
 
+  TRACE_OUT((+0,"realmain: 7 (%d)\n",init_success));
   //------------------------------
 
   #if (CLIENT_OS == OS_NETWARE)
@@ -373,12 +395,14 @@ static int _realmain( int argc, char *argv[] ) /* YES, *STATIC* */
     nwCliExitClient(); // destroys AES process, screen, polling procedure
   #endif
 
+  TRACE_OUT((+0,"realmain: 8 (%d)\n",init_success));
   //------------------------------
 
   #if (CLIENT_OS==OS_WIN16 || CLIENT_OS==OS_WIN32S || CLIENT_OS==OS_WIN32)
   w32ConSetClientPointer( NULL ); // clear the client *
   #endif
 
+  TRACE_OUT((+0,"realmain: 9 (%d)\n",init_success));
   //------------------------------
 
   #if (CLIENT_OS == OS_MACOS)
@@ -386,6 +410,7 @@ static int _realmain( int argc, char *argv[] ) /* YES, *STATIC* */
     macCliSetClientPointer( NULL ); // clear the client *
   #endif
 
+  TRACE_OUT((+0,"realmain: 10 (%d)\n",init_success));
   //------------------------------
 
   if (clientP)
@@ -408,7 +433,7 @@ void main(void)
   return;                 /* UI will be initialized later via console.cpp */
 }  
 #endif
-#elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+#elif (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_WIN16) //|| (CLIENT_OS==OS_WIN32)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
 { /* parse the command line and call the bootstrap */
   TRACE_OUT((+1,"WinMain()\n"));
@@ -567,6 +592,50 @@ int main( int argc, char *argv[] )
   #endif
   return _realmain( argc, argv );
 }      
+#elif (CLIENT_OS == OS_WIN32)
+int main( int /*argc*/, char */*argv[]*/ )
+{
+  char *cmdline = (char *)GetCommandLine();
+  char appName[20+MAX_PATH+1];
+  int nameLen, evarLen;
+  STARTUPINFO su;
+ 
+  nameLen = evarLen = strlen(strcpy( appName, "dnetc.exe=" ));
+
+  if (!cmdline)  /* should never happen */
+    cmdline = "";
+  else
+  {
+    while (*cmdline == ' ' || *cmdline == '\t')
+      cmdline++;
+    if (*cmdline == '\"' || *cmdline == '\'')
+    {
+      char c = *cmdline++;
+      while (*cmdline && *cmdline != c)
+        appName[nameLen++] = *cmdline++;
+      if (*cmdline)
+        cmdline++;
+    }  
+    else 
+    {
+      while (*cmdline && *cmdline!=' ' && *cmdline != '\t')
+        appName[nameLen++] = *cmdline++;
+    }
+    while (*cmdline == ' ' || *cmdline == '\t')
+      cmdline++;
+  }
+  appName[nameLen] = '\0';
+  if (nameLen == evarLen)
+    GetModuleFileName(NULL, &appName[evarLen], (sizeof(appName)-evarLen));
+  putenv( appName );
+
+  su.cb = sizeof(STARTUPINFO);
+  GetStartupInfo(&su);
+  if ((su.dwFlags & STARTF_USESHOWWINDOW) == 0)
+    su.wShowWindow = SW_SHOWDEFAULT;
+  return winClientPrelude( GetModuleHandle(NULL), 0, 
+                           cmdline, su.wShowWindow, _realmain );
+}
 #else
 int main( int argc, char *argv[] )
 {
