@@ -1,7 +1,7 @@
 
  distributed.net client for AmigaOS (68k/PPC)
  Released by Oliver Roberts <oliver@futaura.co.uk>
- Document revision $Id: readme.amiga,v 1.10.4.1 2003/01/07 15:07:33 oliver Exp $
+ Document revision $Id: readme.amiga,v 1.10.4.2 2003/04/05 09:58:05 oliver Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -195,7 +195,7 @@
        - Kriton Kyrimis (multi-core 68k OGR cores, support and ideas)
        - Roberto Patriarca (Myzar)
        - Tony Preston (support, testing, views and overall managament)
-       - Roberto Ragusa (PPC 604e optimized RC5-64 core)
+       - Roberto Ragusa (PPC 604e optimized RC5 cores)
        - Jacek Rzeuski (keyrate chart class code for Myzar)
        - Stefan Smietanowski (for porting previous clients to the Amiga -
          some crucial parts of his code are used in this version)
