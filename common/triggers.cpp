@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.24 2000/02/13 06:42:01 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.25 2000/02/13 21:44:10 lyndon Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -458,7 +458,12 @@ static void (*SETSIGNAL(int signo, void (*proc)(int)))(int)
   struct sigaction sa, osa;
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
+#ifdef MIPSpro
+  /* XXX gross hack to get around g++ non-portability */
+  sa.sa_handler = proc;
+#else
   sa.sa_handler = (void (*)())proc;
+#endif
   //if (!sigismember(&_sigintr, signo))
     sa.sa_flags |= SA_RESTART;
   if (sigaction(signo, &sa, &osa) < 0)
