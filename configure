@@ -5,6 +5,11 @@
 # Any other distribution or use of this source violates copyright.
 
 # $Log: configure,v $
+# Revision 1.113.2.9  1998/11/16 23:34:43  remi
+# Synced with :
+#  Revision 1.128  1998/11/16 20:09:49  foxyloxy
+#  egcs now allows the existence of a mips-gcc-64 target! Whee!
+#
 # Revision 1.113.2.8  1998/11/16 16:36:34  remi
 # Synced with :
 #  Revision 1.127  1998/11/16 16:21:48  remi
@@ -269,8 +274,10 @@ case "$1" in
         #  mips-crunch.cpp doesn't compile with CC
 	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_LDFLAGS="-n32"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -n32 -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	TARGET_LIBS="-lpthread"
 	;;
 
     *mips-gcc-irix5-crunch)        # faster than mips-gcc for IRIX
@@ -279,11 +286,18 @@ case "$1" in
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
         ;;
 
+    *mips-gcc-crunch-64)     #needs very recent egcs
+	RC5CORECOPY="rc5/mips-crunch.cpp"
+	TARGET_CCFLAGS="$OPTS_GCC_MIPS -mabi=64 -DPIPELINE_COUNT=2 -DMIPS_CRUNCH=1 -DBIT_64 -DKWAN -DMEGGS -DMULTITHREAD"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	TARGET_LIBS="-lpthread"
+	;;
 
     *mips-gcc-crunch)        # faster than mips-gcc for IRIX
         RC5CORECOPY="rc5/mips-crunch.cpp"
-        TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 -DMIPS_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
+        TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 -DMIPS_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS -DMULTITHREAD"
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	TARGET_LIBS="-lpthread"
         ;;
 
     *mips-gcc)               # faster than mips-cc for IRIX
