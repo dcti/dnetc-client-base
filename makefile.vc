@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.56.2.28 2000/09/20 17:53:11 jlawson Exp $
+# $Id: makefile.vc,v 1.56.2.29 2000/10/20 21:44:00 cyp Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
@@ -116,8 +116,8 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/lurk.obj       \
         $(OUTPUTPATH)/mail.obj       \
         $(OUTPUTPATH)/modereq.obj    \
-        $(OUTPUTPATH)/netinit.obj    \
-        $(OUTPUTPATH)/netres.obj     \
+        $(OUTPUTPATH)/netbase.obj    \
+        $(OUTPUTPATH)/netconn.obj    \
         $(OUTPUTPATH)/network.obj    \
         $(OUTPUTPATH)/pathwork.obj   \
         $(OUTPUTPATH)/pollsys.obj    \

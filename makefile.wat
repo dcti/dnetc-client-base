@@ -1,14 +1,34 @@
-## Compiler, linker, and lib stuff
 ## Makefile for use with all Watcom platforms.
 ##
 ##   Run as WMAKE <platform>
 ##   where <platform> is one of 
-##               [dos | netware | os2 | w32 | w16]
+##               [dos | netware | os2 | win32 | win16]
 ##               or anything else with a section at the end of this file
+##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.27.2.15 2000/08/09 19:28:19 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.16 2000/10/20 21:44:00 cyp Exp $
+##
+## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
+## - if building a DES-capable client, then it also requires either
+##   a) the Microsoft Assembler (masm) OR b) Borland Turbo Assembler (tasm32)
+##   OR c) pre-assembled object files to be located in the same directory
+##   as the .asm source. If using masm, the makefile has to be adjusted.
+## - There are some non-critical hard coded paths used for utilitities 
+##   that are not part of the standard watcom distribution (for example,
+##   pmodew, as used by the DOS build, or upx as used by the win32 build)
+##   Search for "\develop" to see which filenames/paths are affected.
+##   Since those paths/filenames are canonical, the makefile can
+##   automatically detect if those utilities are available, and not use
+##   them if they are not.
+## - This makefile expects the standard watcom utilities to be in 
+##   the search path, and, (for many targets) requires the WATCOM= 
+##   environment variable to point to the base of the watcom distribution,
+##   (as is required for wlink anyway), so that the INCLUDE= and library 
+##   paths can be adjusted for each target individually.
+##
 
-BASENAME = dnetc
+BASENAME  =dnetc
+known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 
 %EXTOBJS  = #extra objs (made elsewhere) but need linking here
 %DEFALL   = /DDYN_TIMESLICE /D__showids__ /IOGR #defines used everywhere
@@ -17,22 +37,22 @@ BASENAME = dnetc
 %LINKOBJS = output\problem.obj  &
             output\confrwv.obj   output\autobuff.obj  output\buffbase.obj &
             output\mail.obj      output\client.obj    output\disphelp.obj &
-            output\iniread.obj   output\network.obj   output\netres.obj   &
+            output\iniread.obj   output\network.obj   output\netconn.obj  &
             output\clitime.obj   output\clicdata.obj  output\clirate.obj  &
             output\clisrate.obj  output\cpucheck.obj  output\pathwork.obj &
             output\cliident.obj  output\checkpt.obj   output\x86ident.obj &
             output\logstuff.obj  output\triggers.obj  output\random.obj   &
-            output\selcore.obj   output\netinit.obj   output\cmdline.obj  &
+            output\selcore.obj   output\netbase.obj   output\cmdline.obj  &
             output\selftest.obj  output\pollsys.obj   output\probman.obj  &
             output\probfill.obj  output\clievent.obj  output\bench.obj    &
             output\clirun.obj    output\setprio.obj   output\console.obj  &
             output\modereq.obj   output\confmenu.obj  output\confopt.obj  &
-            output\util.obj      output\base64.obj    
+            output\util.obj      output\base64.obj
 %PRIVMODS = common\buffpriv.cpp  common\buffupd.cpp   common\scram.cpp
 %PRIVOBJS = output\buffpriv.obj  output\buffupd.obj   output\scram.obj
 %PUBOBJS =  output\buffpub.obj
             # this list can be added to in the platform specific section
-            # 49 std OBJ's (+3 desmmx, +1 rc5mmx, +2 mt, +x plat specific)
+            # (+3 desmmx, +1 rc5mmx, +2 mt, +x plat specific)
 
 %PRELINKDEPS = # dependancies that need 'compiling' but not linking (eg .RC's)
 %POSTLINKTGTS= # targets to make after linking (bind etc)
@@ -85,69 +105,111 @@ BASENAME = dnetc
 
 #-----------------------------------------------------------------------
 
-%CCPP=wpp386
-%CC=wcc386
-%CCASM=wasm
-%LINK=wlink #\develop\watcom\binnt\wlink.exe
-
-%NASMEXE  = nasm           #point this to nasm (don't call the envvar 'NASM'!)
-%NASMFLAGS= -f win32 -s #-f obj -D__OMF__ -DOS2 -s
+%CCPP     =wpp386
+%CC       =wcc386
+%CCASM    =wasm
+%LINK     =wlink
+%NASMEXE  =nasm           #point this to nasm (don't call the envvar 'NASM'!)
+%NASMFLAGS=-f obj -D__OMF__ -DOS2 -s
 %TASMEXE  =                #point this to tasm in your section if you have it
-%TFLAGS   = /ml /m9 /q /t  #if TASMEXE.==. then wasm will be executed
-%STACKSIZE= 32K            #may be redefined in the platform specific section
-%AFLAGS   = /5s /fp3 /mf   #may be defined in the platform specific section
-%LFLAGS   =                #may be defined in the platform specific section
-%CFLAGS   = /6s /fp3 /ei /mf #may be defined in the platform specific section
-%OPT_SIZE = /s /os         #may be redefined in the platform specific section
-%OPT_SPEED= /oneatx /oh /oi+ #redefine in platform specific section
-%LIBPATH  =                #may be defined in the platform specific section
-%DEBUG    =                #@%make debug to enable debugging
-%LIBFILES =                #may be defined in the platform specific section
-%MODULES  =                #may be defined in the platform specific section
-%IMPORTS  =                #may be defined in the platform specific section
-%BINNAME  =                #must be defined in the platform specific section
-%COPYRIGHT=                #may be defined in the platform specific section
-%FORMAT   =                #may be defined in the platform specific section
-%WLINKOPS = map            #one word wlink OP-tions. no spaces but '=' is ok
-%ERRDIROP = /fr=$$[:       #Puts the .err files in the right directories
-%dependall= # makefile.wat common/version.h  # remake everything if these change
-
-%ZIPFILE  = # eg -dos-x86-cli or blank for auto
-%DOCFILES =                #list of files in ./docs to include in the zip
-%ZIPPER   = zip.exe        # a zip file won't be made if not defined
-%ZIPOPTS  = #-u -9 -o -i -v 
-                           
+%TFLAGS   =/ml /m9 /q /t  #if TASMEXE.==. then wasm will be executed
+%STACKSIZE=48K            #may be redefined in the platform specific section
+%AFLAGS   =/5s /fp3 /mf   #may be defined in the platform specific section
+%LFLAGS   =               #may be defined in the platform specific section
+%CFLAGS   =/6s /fp3 /ei /mf #may be defined in the platform specific section
+%OPT_SIZE =/s /os         #may be redefined in the platform specific section
+%OPT_SPEED=/oneatx /oh /oi+ #redefine in platform specific section
+%LIBPATH  =               #may be defined in the platform specific section
+%DEBUG    =               #@%make debug to enable debugging
+%LIBFILES =               #may be defined in the platform specific section
+%MODULES  =               #may be defined in the platform specific section
+%IMPORTS  =               #may be defined in the platform specific section
+%BINNAME  =               #must be defined in the platform specific section
+%COPYRIGHT=               #may be defined in the platform specific section
+%FORMAT   =               #may be defined in the platform specific section
+%WLINKOPS =map            #one word wlink OP-tions. no spaces but '=' is ok
+%ERRDIROP =               #Puts the .err files in the right directories
+!ifeq __VERSION__ 11      #actually greater than or equal to 11
+%ERRDIROP = /fr=$$[:
+!endif
+%dependall=# makefile.wat common/version.h  # remake everything if these change
+%ZIPFILE  =# blank for auto
+%DOCFILES =               #list of files in ./docs to include in the zip
+%ZIPPER   =zip.exe        # a zip file won't be made if not defined
+%ZIPOPTS  =#-u -9 -o -i -v 
+ 
 #.silent
 #.nocheck
 .ERASE
 
+!ifdef __LOADDLL__
+!  loaddll wcc      wccd
+!  loaddll wccaxp   wccdaxp
+!  loaddll wcc386   wccd386
+!  loaddll wpp      wppdi86
+!  loaddll wppaxp   wppdaxp
+!  loaddll wpp386   wppd386
+!  loaddll wlink    wlink
+!  loaddll wlib     wlibd
+!endif
+
 #-----------------------------------------------------------------------
 
-noplatform: .symbolic
+default : .symbolic
+  @set autosel=#
+  @for %i in ($(known_tgts)) do @if exist output\%i.out @set autosel=%i#
+  @if not $(%autosel).==. @%make $(%autosel)
+  @if not $(%autosel).==. @%quit
+  #
+  @if $(%autosel).==. @if exist output\w32cuis.obj @set autosel=win32#
+  @if $(%autosel).==. @if exist output\w32*.obj @set autosel=win16#
+  @if $(%autosel).==. @if exist output\netware.obj @set autosel=netware#
+  @if $(%autosel).==. @if exist output\cdos*.obj @set autosel=dos#
+  @if $(%autosel).==. @if exist output\os2*.obj @set autosel=os2#
+  @if not $(%autosel).==. @%make $(%autosel)
+  @if not $(%autosel).==. @%quit
+  #
+  @set possibles=#
+  @if exist $(%watcom)\lib386\netware\clib3s.lib @set possibles=netware#  
+  @if exist $(%watcom)\lib386\dos\clib3s.lib @set possibles=$(%possibles)dos#
+  @if exist $(%watcom)\lib386\nt\clib3s.lib @set possibles=$(%possibles)win32#
+  @if exist $(%watcom)\lib386\win\clib3s.lib @set possibles=$(%possibles)win16#
+  @if exist $(%watcom)\lib386\os2\clib3s.lib @set possibles=$(%possibles)os2#
+  @for %i in ($(known_tgts)) do @if $(%possibles).==%i. @set autosel=%i
+  @set possibles=#
+!ifdef __OS2__  # we can default for OS/2 since its extremely unlikely that
+  @if $(%autosel).==. @set autosel=os2# 
+!endif          # a make under OS/2 wants a target that won't run under OS/2
+  @if not $(%autosel).==. @%make $(%autosel)
+  @if not $(%autosel).==. @%quit
+  #
   @%write con 
-  @%write con   Platform has to be specified. 
-  @%write con      eg: WMAKE [-f makefile] os2 
-  @%write con          WMAKE [-f makefile] netware 
-  @%write con  
+  @%write con Unable to automatically select target build.
+  @%write con Please specify target manually.
+  @%write con   eg: WMAKE [-f makefile] {target}
+  @%write con   where {target} is one of: $(known_tgts)
   @%quit
 
 #-----------------------------------------------------------------------
 
 clean :  .symbolic
-  @set dirlist = output common des rc5
-  @for %i in ($(%dirlist)) do @if exist %i\*.obj @del %i\*.obj 
-  @for %i in ($(%dirlist)) do @if exist %i\*.bak @del %i\*.bak 
-  @for %i in ($(%dirlist)) do @if exist %i\*.~?? @del %i\*.~??
-  @for %i in ($(%dirlist)) do @if exist %i\*.err @del %i\*.err 
-  @if not exist .\$(BASENAME)*.* @%quit
-  @for %i in (.\$(BASENAME)*.*) do @del %i
+  @set alist = output . common
+  @for %i in ($(%alist)) do @if exist %i\*.obj del %i\*.obj
+  @for %i in ($(%alist)) do @if exist %i\*.res del %i\*.res
+  #@for %i in ($(%alist)) do @if exist %i\*.bak del %i\*.bak
+  #@for %i in ($(%alist)) do @if exist %i\*.~?? del %i\*.~??
+  @for %i in ($(%alist)) do @if exist %i\*.err del %i\*.err 
+  @set alist = exe com scr nlm lnk map err res
+  @for %i in ($(%alist)) do @if exist $(BASENAME).%i del $(BASENAME).%i
+  @for %i in ($(known_tgts)) do @if exist $(BASENAME)???-%i-x86.zip del $(BASENAME)???-%i-x86.zip
+  @for %i in ($(known_tgts)) do @if exist $(BASENAME)-%i-x86.zip del $(BASENAME)-%i-x86.zip
+  @%quit
 
-zip: .symbolic  
+zip : .symbolic  
   #that $(%ZIPPER) is not "" should already have been done
   @if $(%ZIPPER).==.  @echo Error(E02): ZIPPER is not defined
   @if $(%ZIPPER).==.  @%quit
-  @if $(%ZIPFILE).==. @set ZIPFILE=$(BASENAME)-$(%OSNAME)-x86-cli
-  
+  @if $(%ZIPFILE).==. @set ZIPFILE=$(BASENAME)-$(%OSNAME)-x86
   @if exist $(%ZIPFILE).zip @del $(%ZIPFILE).zip >nul:
   @%write con 
   @echo Generating $(%ZIPFILE).zip...
@@ -373,15 +435,15 @@ output\autobuff.obj : common\autobuff.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
+output\netconn.obj : common\netconn.cpp $(%dependall) .AUTODEPEND
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\netbase.obj : common\netbase.cpp $(%dependall) .AUTODEPEND
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
 output\network.obj : common\network.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\netres.obj : common\netres.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\netinit.obj : common\netinit.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
@@ -576,6 +638,10 @@ output\ogr.obj : ogr\ansi\ogr.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
+#output\ogr.obj : ogr\x86\ogr.asm $(%dependall) 
+#  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
+#  @set isused=1
+
 output\ogr_dat.obj : ogr\ansi\ogr_dat.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
@@ -667,21 +733,22 @@ output\w32ss.obj : platforms\win32cli\w32ss.cpp $(%dependall) .AUTODEPEND
   @set isused=1
 
 output\w32snapp.obj : platforms\win32cli\w32snapp.c $(%LINKOBJS) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  #*$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\w32cuis.obj : platforms\win32cli\w32cuis.c $(%LINKOBJS) .AUTODEPEND
-   @set include=$(%WATCOM)\h;$(%WATCOM)\h\nt
-   @wcl386 /zl /s /3s /os /mf /l=nt /fe=$(BASENAME).com &
+output\w32cuis.obj $(BASENAME).com : platforms\win32cli\w32cuis.c
+   @set include=$(%include);$(%WATCOM)\h;$(%WATCOM)\h\nt
+   wcl386 /zl /s /3s /os /mf /l=nt /fe=$(BASENAME).com &
            /fo=$^@ /"lib $(%LIBFILES) op start=main" $[@
-   @if not $(%EXECOMPRESSOR).==. @$(%EXECOMPRESSOR) $(BASENAME).com
+   #win32_binpack will have been validated in make platform
+   @if not $(%WIN32_BINPACK).==. @-$(%WIN32_BINPACK) $(BASENAME).com
 
-
-
-output\w32ssb.obj : platforms\win32cli\w32ssb.cpp platforms\win32cli\w32cons.rc &
-                    output\w32util.obj output\w32ss.obj output\w32ini.obj &
-                    output\w32exe.obj
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) platforms\win32cli\w32ssb.cpp $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+output\w32ssb.obj $(BASENAME).scr : platforms\win32cli\w32ssb.cpp &
+     platforms\win32cli\w32cons.rc output\w32util.obj output\w32ss.obj &
+     output\w32ini.obj output\w32exe.obj $(%LINKOBJS)
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) platforms\win32cli\w32ssb.cpp &
+                                    $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
   @if $(%OSNAME).==win16. @wlink $(%LFLAGS) name $(BASENAME).scr &
                 file output\w32ssb.obj,output\w32ss.obj,output\w32util.obj &
@@ -700,10 +767,11 @@ output\w32ssb.obj : platforms\win32cli\w32ssb.cpp platforms\win32cli\w32cons.rc 
                 lib $(%LIBFILES) &
                 file output\w32ssb.obj,output\w32ss.obj,output\w32util.obj &
                 file output\w32ini.obj,output\w32exe.obj
-  @if $(%OSNAME).==win32. @wrc -31 -bt=nt &
+  @if $(%OSNAME).==win32. @wrc -31 -bt=nt -q &
                 -i$(%WATCOM)\h;$(%WATCOM)\h\win -fo=output\$(BASENAME).res &
                 platforms\win32cli\w32cons.rc $(BASENAME).scr
-  @if not $(%EXECOMPRESSOR).==. @$(%EXECOMPRESSOR) $(BASENAME).scr
+  #win32_binpack will have been validated in make platforms
+  @if not $(%WIN32_BINPACK).==. @-$(%WIN32_BINPACK) $(BASENAME).scr
 
 # ----------------------------------------------------------------
 
@@ -713,10 +781,100 @@ output\os2inst.obj : platforms\os2cli\os2inst.cpp $(%dependall) .AUTODEPEND
 
 #-----------------------------------------------------------------------
 
+cleanup_critical_names : .symbolic  #cleanup/validate some critical names
+  @set cleanup=#
+  @for %i in ($(%OSNAME)) do @set cleanup=%i#
+  @set OSNAME=$(%cleanup)#
+  @if $(%OSNAME).==. echo OSNAME not defined
+  @if $(%OSNAME).==. %@quit
+  @set cleanup=#
+  #
+  #
+  @set cleanup=#
+  @for %i in ($(%NASMEXE)) do @set cleanup=%i#
+  @set NASMEXE=$(%cleanup)
+!ifdef __NT__ #make running under winnt
+  @if "$(%NASMEXE)"=="nasm" @set NASMEXE=nasmw.exe
+!else         #make running under os/2 or dos
+  @if "$(%NASMEXE)"=="nasm" @set NASMEXE=nasm.exe  
+!endif
+  @set cleanup=#
+  #
+  #
+  @for %i in ($(%WIN32_BINPACK)) do @if exist %i @set cleanup=%i#
+  @if $(%cleanup).==. @set WIN32_BINPACK=#
+  @set cleanup=#
+
+#-----------------------------------------------------------------------
+
+resolve_target_conflicts : .symbolic
+   #
+   # remove conflicts in two things:
+   # 1) executable file conflicts 
+   #              between win32 and dos builds (both have xxx.com)
+   #              and between win32 and win16 builds (both have xxx.scr)
+   #              by ensuring all and only the expected targets exist. 
+   #              This is so that make for different platforms will have the 
+   #              correct targets in the end, and not, say, a win32 build 
+   #              with a .com from from a previous dos build.
+   # 2) obj conflicts
+   #              that the output directory contains the link set
+   #              for the target in question and not something left over.
+   #
+   ### ++++ first resolution +++
+   @set explist=#
+   #** caution: ** order must be com, then exe, then scr (note leading '_')
+   @if $(%OSNAME).==win32. @set explist=_com_exe_scr
+   @if $(%OSNAME).==win16. @set explist=_exe_scr
+   @if $(%OSNAME).==dos.   @set explist=_com
+   @set dellist=#
+   #** caution: ** order must be com, then exe, then scr
+   #we need two lists, one for == test, and one for del
+   @if not $(%explist).==. @if exist $(BASENAME).com @set dellist=$(%dellist) com
+   @if not $(%explist).==. @if exist $(BASENAME).com @set cmplist=$(%cmplist)_com
+   @if not $(%explist).==. @if exist $(BASENAME).exe @set dellist=$(%dellist) exe
+   @if not $(%explist).==. @if exist $(BASENAME).exe @set cmplist=$(%cmplist)_exe
+   @if not $(%explist).==. @if exist $(BASENAME).scr @set dellist=$(%dellist) scr
+   @if not $(%explist).==. @if exist $(BASENAME).scr @set cmplist=$(%cmplist)_scr
+   @if $(%explist).==$(%cmplist). @set dellist=#
+   @for %i in ($(%dellist)) do @del $(BASENAME).%i
+   @if not $(%dellist).==. @set dellist=$(%PRELINKDEPS)
+   @for %i in ($(%dellist)) do @if exist %i @del %i
+   @set explist=#
+   @set dellist=#
+   @set cmplist=#
+   ### ++++ second resolution ++++
+   @set dellist=#
+   @set cmplist=output\$(%OSNAME).out
+   @if not exist $(%cmplist) @set dellist=out obj res
+   @for %i in ($(%dellist)) do @if exist output\*.%i @del output\*.%i
+   @%create $(%cmplist)
+   @set dellist=#
+
+#-----------------------------------------------------------------------
+
+#.ERROR
+#  @if $(%BINNAME).==. @%quit #make hasn't done anything yet
+#  @set dellist=#
+#  @if not $(%BINNAME).==. @if exist $(%BINNAME) @set dellist=$(%BINNAME)#
+#  @if $(%OSNAME).==win32. @if exist $(BASENAME).com @set dellist=$(%BINNAME) $(%dellist)
+#  @if $(%OSNAME).==win32. @if exist $(BASENAME).scr @set dellist=$(BASENAME).com $(%dellist)
+#  @if $(%OSNAME).==win16. @if exist $(BASENAME).scr @set dellist=$(BASENAME).scr $(%dellist)
+#  @if not $(%dellist).==. @del $(%dellist)
+#  @if not $(%dellist).==. @echo Target(s) '$(%dellist)' deleted.
+#  @set dellist=#
+#  @%quit
+
+#-----------------------------------------------------------------------
+
 platform: .symbolic
   @set CFLAGS    = $(%CFLAGS) /zq #-DBETA      ## compile quietly
   @set AFLAGS    = $(%AFLAGS) /q              ## assemble quietly
   @set CFLAGS    = $(%CFLAGS) $(%DEFALL)      ## tack on global defines
+
+  @%make cleanup_critical_names
+  @%make resolve_target_conflicts
+
   @set isused=0
   @for %i in ($(%PRIVMODS)) do @if not exist %i @set isused=1
   @if not $(%isused).==0. @set LINKOBJS=$(%LINKOBJS) $(%PUBOBJS)
@@ -726,9 +884,9 @@ platform: .symbolic
   @if not exist $(%BINNAME) @set isused=1
   @for %i in ($(%LINKOBJS)) do @%make %i
   @for %i in ($(%PRELINKDEPS)) do @%make %i
-  @if $(%isused).==0. @%write con All targets are up to date
+  @if $(%isused).==0. @echo All objects are up to date
+  @if $(%isused).==0. @%quit
   @if not $(%isused).==0. @%make dolink
-  @for %i in ($(%POSTLINKTGTS)) do @%make %i
 
 dolink : .symbolic
   @if exist  $(%BINNAME) @del $(%BINNAME)
@@ -745,6 +903,8 @@ dolink : .symbolic
   @if not $(%DEBUG).==. @%append $(BASENAME).lnk debug all
   @if not $(%DEBUG).==. @%append $(BASENAME).lnk Op map
   @if not $(%DEBUG).==. @%append $(BASENAME).lnk Op verbose
+  @if not $(%DEBUG).==. @%append $(BASENAME).lnk Op statics
+  @if $(%DEBUG).==. @%append $(BASENAME).lnk Op quiet
   @set isused=
   @for %i in ($(%LIBFILES))  do @set isused=1
   @if not $(%isused).==. @%append $(BASENAME).lnk Library $(%LIBFILES)
@@ -760,31 +920,38 @@ dolink : .symbolic
   @if exist $(%BINNAME) @del $(BASENAME).err
   @if exist $(BASENAME).err @type $(BASENAME).err
   @if exist $(BASENAME).err @%quit
-  
-.ERROR
-  @if $(%BINNAME).==. @%quit
-  @if not exist $(%BINNAME) @%quit
-# @del $(%BINNAME)
-  @echo Target '$(%BINNAME)' deleted.
+  @for %i in ($(%EXTRATGTS)) do @%make %i
 
 # =======================================================================
 #---------------------- platform specific settings come here ----------
 
 dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
-     @if not $(%OSNAME).==dos4g. @set OSNAME=dos
-     @set AFLAGS    = /5s /fp3 /bt=dos /mf # no such thing as /bt=dos4g
-     @set TASMEXE   = \develop\tasm32\tasm32.exe
-     @set NASMEXE   = \develop\nasm\nasmw.exe
+     #one of the following must be valid or the make will stop
+     @set DOS4GW_STUB=$(%watcom)\binw\wstubq.exe
+     @if exist platforms\dos\d4GwStUb.CoM @set DOS4GW_STUB=platforms\dos\d4GwStUb.CoM
+     @set PMODEW_PATH=\develop\pmodew
+
+     #automatically select dos/4gw or pmode/w build
+     @set OSNAME=
+     @if exist $(%DOS4GW_STUB) @set OSNAME=dos4g
+     @if exist $(%PMODEW_PATH)\pmodew.exe @set OSNAME=dos
+     @if $(%OSNAME).==. @echo Unable to find either the dos4gw stub or pmode/w
+     @if $(%OSNAME).==. @%quit
+     @if $(%OSNAME).==dos4g. @set PMODEW_PATH=#
+     @if $(%OSNAME).==dos. @set DOS4GW_STUB=#
+     @set OSNAME=dos
+
+     @set AFLAGS    = /5s /fp3 /bt=dos /mf
+     @set TASMEXE   = tasm32.exe
      @set LIBPATH   = $(%watcom)\lib386 $(%watcom)\lib386\dos 
      @set WLINKOPS  = map dosseg
-     @if $(%OSNAME).==dos4g. @set WLINKOPS=$(%WLINKOPS) stub=platforms/dos/d4GwStUb.CoM
-                                                      # stub=\develop\pmodew\pmodew.exe
+     @if not $(%DOS4GW_STUB).==. @set WLINKOPS=$(%WLINKOPS) stub=$(%DOS4GW_STUB)
      @set LFLAGS    = symtrace usleep  #symtrace printf symtrace whack16 
      @set FORMAT    = os2 le
      @set CFLAGS    = /zp8 /wx /we /6s /fp3 /fpc /zm /ei /mf &
                       /bt=dos /d__MSDOS__ /wcd=604 /wcd=594 /wcd=7 &
                       /DINIT_TIMESLICE=0x40000 /DDYN_TIMESLICE &
-                      /iplatforms\dos /I$(%watcom)\h #/Iplatforms\dos\libtcp
+                      /Iplatforms\dos /I$(%watcom)\h #;platforms\dos\libtcp
      @set OPT_SIZE  = /s /os 
      @set OPT_SPEED = /oneatx /oh /oi+ 
      @set LINKOBJS  = $(%LINKOBJS) output\cdostime.obj output\cdosidle.obj &
@@ -793,11 +960,11 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      @set LIBFILES  = #platforms\dos\libtcp\libtcp.a
      @set MODULES   =
      @set IMPORTS   =
-     @set ZIPPER    = #c:\util\pkzip
-     @set ZIPOPTS   = -exo
+     @set ZIPPER    = 
+     @set ZIPOPTS   = 
      @set DOCFILES  = docs\readme.dos docs\$(BASENAME).txt docs\readme.txt
-     @set ZIPFILE   = $(BASENAME)-dos-x86-cli
      @set BINNAME   = $(BASENAME).com
+     
      @%make declare_for_rc5
 ##   @%make declare_for_des
 ##   @%make declare_for_desmt
@@ -808,33 +975,28 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
 #    @%make declare_for_csc
      @%make platform
      #-------------------------
-     @\develop\pmodew\pmwlite.exe /C4 /S\develop\pmodew\pmodew.exe $(%BINNAME)
-     @\develop\pmodew\pmwsetup.exe /b0 /q $(%BINNAME)
+     @if not $(%PMODEW_PATH).==. @$(%PMODEW_PATH)\pmwlite.exe /C4 /S$(%PMODEW_PATH)\pmodew.exe $(%BINNAME)
+     @if not $(%PMODEW_PATH).==. @$(%PMODEW_PATH)\pmwsetup.exe /b0 /q $(%BINNAME)
 
-dos4g: .symbolic
-     @set OSNAME    = dos4g
-     @%make dos
 
 os2: .symbolic                                       # OS/2
      @set OSNAME    = os2
      @set AFLAGS    = /5s /fp5 /bt=OS2 /mf
-     @set TASMEXE   = tasm32.exe
-     @set NASMEXE   = nasm.exe
+     @set TASMEXE   = 
      @set LFLAGS    = sys os2v2
-     @set CFLAGS    = /zp8 /5s /fp5 /bm /mf /bt=os2 
-                      /DOS2 /DLURK /DMULTITHREAD
+     @set CFLAGS    = /zp8 /5s /fp5 /bm /mf /zm /bt=os2 /DOS2 /DLURK &
+                      /iplatforms\os2cli
      @set OPT_SIZE  = /s /os
      @set OPT_SPEED = /oantrlexi 
      @set LIBFILES  = so32dll.lib,tcp32dll.lib
      @set MODULES   =
      @set IMPORTS   =
      @set DOCFILES  = docs\readme.os2 docs\$(BASENAME).txt docs\readme.txt
-     @set ZIPFILE   = $(BASENAME)-os2-x86-cli
      @set BINNAME   = $(BASENAME).exe
-     @set STACKSIZE = 32K  # 16384        #Will slow down client if it's 32k
-     @set LINKOBJS  = output\os2inst.obj  output\lurk.obj
-     @set OBJDIROP  = /fo=output\
-     @set ERRDIROP  =                      # no /fr= option for Watcom 10.0
+     @set STACKSIZE = 48K  # 16384        #Will slow down client if it's 32k
+     @set LINKOBJS  = output\os2inst.obj output\lurk.obj $(%LINKOBJS)
+     @if not $(%watcom).==. @set include=$(%include);$(%WATCOM)\h;$(%WATCOM)\os2
+     #@if not $(%watcom).==. @set LIBPATH=$(%watcom)\lib386 $(%watcom)\lib386\os2
      @%make declare_for_rc5
 ##   @%make declare_for_des
 ##   @%make declare_for_desmt
@@ -845,11 +1007,13 @@ os2: .symbolic                                       # OS/2
 #    @%make declare_for_csc
      @%make platform
 
-w16: .symbolic                                       # Windows/16
+w16: .symbolic
+     @%make win16
+
+win16: .symbolic                                       # Windows/16
      @set OSNAME    = win16
-     @set AFLAGS    = /5s /fp3 /bt=dos /mf # no such thing as /bt=dos4g
-     @set NASMEXE   = \develop\nasm\nasmw.exe
-     @set TASMEXE   = \develop\tasm32\tasm32.exe
+     @set AFLAGS    = /5s /fp3 /bt=dos /mf
+     @set TASMEXE   = tasm32.exe
      @set LFLAGS    = system win386 symtrace open #debug all op de 'SCRSAVE : distributed.net client for Windows'
      @set CFLAGS    = /3s /w4 /zW /bt=windows /d_Windows &
                       /i$(%watcom)\h;$(%watcom)\h\win /iplatforms\win32cli &
@@ -863,18 +1027,15 @@ w16: .symbolic                                       # Windows/16
      @set LINKOBJS  = output\w32pre.obj output\w32ss.obj output\w32cons.obj &
                       output\w32sock.obj output\w32svc.obj output\w32x86.obj &
                       output\w32util.obj output\w32exe.obj output\w32ini.obj &
-                      $(%LINKOBJS)
+                      $(%LINKOBJS)                      
      @set PRELINKDEPS = output\w32ssb.obj
-     @set POSTLINKTGTS = 
      @set LIBFILES  =
      @set MODULES   =
      @set IMPORTS   =
-     @set ZIPPER    = #c:\util\pkzip
+     @set ZIPPER    = 
      @set ZIPOPTS   = -exo
      @set DOCFILES  = docs\$(BASENAME).txt docs\readme.txt
-     @set ZIPFILE   = $(BASENAME)-win16-x86-cli
      @set BINNAME   = $(BASENAME).exe
-     @if exist $(BASENAME).rex @del $(BASENAME).rex
      @%make declare_for_rc5
 ##   @%make declare_for_des
 ##   @%make declare_for_desmt
@@ -893,34 +1054,37 @@ w16: .symbolic                                       # Windows/16
                    -fo=output\$(BASENAME).res &
                    platforms\win32cli\w32cons.rc $(BASENAME).exe
      @if exist $(BASENAME).rex @del $(BASENAME).rex
+
+w32: .symbolic
+     @%make win32
               
-w32: .symbolic                               # win32
+win32: .symbolic                               # win32
+     #if WIN32_BINPACK exists, then win32 targets will be compressed
+     @set WIN32_BINPACK=\develop\upx\upxw.exe -qq -9 --compress-resources=0
+
      @set OSNAME    = win32
-     @set AFLAGS    = /5s /fp5 /mf
-     @set TASMEXE   = \develop\tasm32\tasm32.exe
-     @set NASMEXE   = \develop\nasm\nasmw.exe
+     @set AFLAGS    = /5s /fp6 /mf
+     @set TASMEXE   = tasm32.exe
+     @set NASMEXE   = nasmw.exe
      @set WLINKOPS  = alignment=64 map
      @set LFLAGS    = sys nt_win op de 'distributed.net client for Windows' #nt
-     @set CFLAGS    = /zp8 /s /fpd /6s /bm /fp3 /mf /bt=nt /DWIN32 /DLURK &
+     @set CFLAGS    = /zp8 /s /fpi87 /fp6 /6s /bm /mf /zmf /zc /bt=nt /DWIN32 /DLURK &
                       /iplatforms\win32cli /i$(%watcom)\h;$(%watcom)\h\nt &
                       /DINIT_TIMESLICE=0x40000 /DDYN_TIMESLICE
-     @set OPT_SIZE  = /s /os
-     @set OPT_SPEED = /oneatx /oh /oi+ /ei #/oneatx /oh /oi+ 
+     @set OPT_SPEED = /oneatx /ok /ol+ /oh /oi+ /ei # ox=obiklmr
+     @set OPT_SIZE  = /s /os #$(%OPT_SPEED) #
      @set LINKOBJS  = output\w32pre.obj output\w32ss.obj output\w32svc.obj &
                       output\w32cons.obj output\w32sock.obj output\w32ras.obj &
                       output\w32util.obj output\w32exe.obj output\w32ini.obj &
                       output\w32snapp.obj output\lurk.obj $(%LINKOBJS)
-     @set PRELINKDEPS = output\w32ssb.obj output\w32cuis.obj
-     @set POSTLINKTGTS = 
+     @set PRELINKDEPS = output\w32cuis.obj output\w32ssb.obj
      @set LIBFILES  = user32,kernel32,advapi32,gdi32
      @set MODULES   =
      @set IMPORTS   =
      @set DOCFILES  = docs\$(BASENAME).txt docs\readme.txt
-     @set ZIPPER    = #c:\util\pkzip
+     @set ZIPPER    = 
      @set ZIPOPTS   = -exo
-     @set ZIPFILE   = #$(BASENAME)-win32-x86-cli
      @set BINNAME   = $(BASENAME).exe
-#    @set EXECOMPRESSOR=\develop\upx\upxw.exe -9 --compress-resources=0
      @%make declare_for_rc5
 ##   @%make declare_for_des
 ##   @%make declare_for_desmt
@@ -931,69 +1095,20 @@ w32: .symbolic                               # win32
 #    @%make declare_for_csc
      @%make platform
      #---------------------------------
-     @wrc -31 -bt=nt &
+     @wrc -31 -bt=nt -q &
           -i$(%WATCOM)\h;$(%WATCOM)\h\win -fo=output\$(BASENAME).res &
           platforms\win32cli\w32cons.rc $(BASENAME).exe
-     @if not $(%EXECOMPRESSOR).==. @$(%EXECOMPRESSOR) $(BASENAME).exe
-
-w32ss: .symbolic                               # win32 screen saver
-     @set OSNAME    = win32
-     @set AFLAGS    = /5s /fp5 /bt=DOS4GW /mf
-     @set TASMEXE   = \develop\tasm32\tasm32.exe
-     @set NASMEXE   = \develop\nasm\nasmw.exe
-     @set WLINKOPS  = map #alignment=16 objalign=16
-     @set LFLAGS    = sys nt_win op de 'distributed.net client for Windows' #nt
-     @set CFLAGS    = /zp8 /s /fpd /6s /fp3 /bm /mf /bt=nt /DWIN32 /DLURK &
-                      /iplatforms\win32cli /i$(%watcom)\h;$(%watcom)\h\nt &
-                      /DSSSTANDALONE
-     @set OPT_SIZE  = /s /os
-     @set OPT_SPEED = /oneatx /oh /oi+ /ei #/oneatx /oh /oi+ 
-     @set LINKOBJS  = output\w32ssb.obj output\w32ss.obj output\w32util.obj &
-                      output\w32exe.obj output\w32ini.obj
-     @set COREOBJS  =
-     @set LIBFILES  = user32,kernel32,advapi32,gdi32
-     @set MODULES   =
-     @set IMPORTS   =
-     @set DOCFILES  = docs\$(BASENAME).txt docs\readme.txt
-     @set ZIPPER    = #c:\util\pkzip
-     @set ZIPOPTS   = -exo
-     @set ZIPFILE   = 
-     @set BINSUFFIX = scr
-     @set BINNAME   = $(BASENAME).scr
-     @%make platform
-
-w16ss: .symbolic                    # Windows/16 screen saver
-     @set OSNAME    = win16
-     @set AFLAGS    = /5s /fp3 /bt=dos /mf
-     @set NASMEXE   = \develop\nasm\nasmw.exe
-     @set TASMEXE   = \develop\tasm32\tasm32.exe
-     @set LFLAGS    = system win386 #symtrace open #debug all
-     @set CFLAGS    = /3s /w4 /zW /bt=windows /d_Windows /DSSSTANDALONE &
-                      /i$(%watcom)\h;$(%watcom)\h\win;platforms/win32cli
-     @set OPT_SIZE  = /s /os 
-     @set OPT_SPEED = /oaxt 
-     @set LINKOBJS  = output\w32ss.obj output\w32util.obj &
-                      output\w32exe.obj output\w32ini.obj
-     @set DEFALL    =
-     @set COREOBJS  =
-     @set LIBFILES  =
-     @set MODULES   =
-     @set IMPORTS   =
-     @set ZIPPER    = #c:\util\pkzip
-     @set ZIPOPTS   = -exo
-     @set DOCFILES  = docs\$(BASENAME).txt docs\readme.txt
-     @set ZIPFILE   = $(BASENAME)-win16-x86-cli
-     @set BINSUFFIX = scr
-     @set BINNAME   = $(BASENAME).scr
-     @if exist $(BASENAME).rex @del $(BASENAME).rex
-     @%make platform
+     #win32_binpack will have been validated in make platform
+     @if not $(%WIN32_BINPACK).==. @-$(%WIN32_BINPACK) $(BASENAME).exe
 
 netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24 '98)
+     @set NLMDUMPEXE=\develop\sdkcdall\nlmdump\nlm_w32.exe
+
      @set OSNAME    = netware
-     @set STACKSIZE = 32K #16384
+     @set STACKSIZE = 48K #16384
      @set AFLAGS    = /5s /fp3 /bt=netware /ms
-     @set TASMEXE   = \develop\tasm32\tasm32.exe
-     @set NASMEXE   = \develop\nasm\nasmw.exe
+     @set TASMEXE   = tasm32.exe
+     @set NASMEXE   = nasmw.exe
      @set WLINKOPS  = version=0.0 multiload nod map &
                       xdcdata=platforms/netware/client.xdc #osdomain
      @set LFLAGS    = op scr 'none' op osname='NetWare NLM' symtrace spawnlp #sys netware
@@ -1002,7 +1117,6 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
      @set CFLAGS    = /zp1 /wx /we /6s /fp3 /fpc /zm /ei /ms &
                       /bt=dos /d__NETWARE__ /wcd=604 /wcd=594 /wcd=7 &
                       /DBITSLICER_WITH_LESS_BITS /bt=netware &
-                      /DMULTITHREAD &
                       /i$(inc_386) #/fpc /bt=netware /i$(%watcom)\novh #/bm
                       #/zp1 /zm /6s /fp3 /ei /ms /d__NETWARE__ &
      @set LIBFILES  = nwwatemu,inetlib,plib3s #plibmt3s,clib3s,math387s,emu387
@@ -1016,8 +1130,7 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
                       # @$(%watcom)\novi\mathlib.imp
      @set LIBPATH   = platforms\netware\misc platforms\netware\inet &
                       $(%watcom)\lib386 #$(%watcom)\lib386\netware
-     @set ZIPFILE   = $(BASENAME)-netware-x86-cli
-     @set ZIPPER    = #c:\util\pkzip
+     @set ZIPPER    = 
      @set DOCFILES  = docs\readme.nw docs\$(BASENAME).txt docs\readme.txt
      @set BINNAME   = $(BASENAME).nlm
      @set COPYRIGHT = 'Copyright 1997-2000 Distributed Computing Technologies, Inc.\r\n  Visit http://www.distibuted.net/ for more information'
@@ -1033,9 +1146,8 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
 #    @%make declare_for_csc
      @%make platform
      #
-     echo got here 1
-     @\develop\sdkcdall\nlmdump\nlm_w32.exe *$(BASENAME).nlm /b:$(BASENAME).map 
-     echo got here 2
+     @if exist $(NLMDUMPEXE) @$(NLMDUMPEXE) *$(BASENAME).nlm /b:$(BASENAME).map 
      #@\develop\sdkcd13\nwsdk\tools\nlmpackx $(BASENAME).nlm $(BASENAME).nlx
      #@del $(BASENAME).nlm
      #@ren $(BASENAME).nlx $(BASENAME).nlm
+

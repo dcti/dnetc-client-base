@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.193 2000/10/16 17:06:25 oliver Exp $
+# @(#)$Id: configure,v 1.222.2.194 2000/10/20 21:44:01 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -730,7 +730,6 @@ COMMON_SRCS="common/autobuff.cpp \
 	     common/logstuff.cpp \
 	     common/triggers.cpp \
 	     common/selcore.cpp  \
-	     common/netinit.cpp  \
 	     common/cmdline.cpp  \
 	     common/selftest.cpp \
 	     common/bench.cpp    \
@@ -746,7 +745,8 @@ COMMON_SRCS="common/autobuff.cpp \
 	     common/util.cpp     \
 	     common/random.cpp   \
 	     common/base64.cpp   \
-	     common/netres.cpp   \
+	     common/netbase.cpp  \
+	     common/netconn.cpp  \
 	                         \
 	     common/probman.cpp  \
 	     common/probfill.cpp \

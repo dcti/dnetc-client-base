@@ -1,7 +1,7 @@
 # makefile distributed.net client (Borland C++ for Win32).
 # For information about distributed.net, see http://www.distributed.net/
 #
-# $Id: makefile.bcc,v 1.23.2.16 2000/09/24 13:45:50 andreasb Exp $
+# $Id: makefile.bcc,v 1.23.2.17 2000/10/20 21:44:00 cyp Exp $
 #
 # As of Feb 2000, Borland C++ 5.5 compiler is free for download.
 # http://www.borland.com/bcppbuilder/freecompiler/
@@ -113,8 +113,8 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/lurk.obj       \
         $(OUTPUTPATH)/mail.obj       \
         $(OUTPUTPATH)/modereq.obj    \
-        $(OUTPUTPATH)/netinit.obj    \
-        $(OUTPUTPATH)/netres.obj     \
+        $(OUTPUTPATH)/netbase.obj    \
+        $(OUTPUTPATH)/netconn.obj    \
         $(OUTPUTPATH)/network.obj    \
         $(OUTPUTPATH)/pathwork.obj   \
         $(OUTPUTPATH)/pollsys.obj    \
