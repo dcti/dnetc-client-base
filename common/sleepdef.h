@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.6 1999/11/25 12:14:13 cyp Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.7 1999/11/28 06:10:31 lyndon Exp $"
 
 #include "cputypes.h"
 
@@ -81,11 +81,13 @@
   extern "C" int usleep(useconds_t);
 #elif (CLIENT_OS == OS_IRIX)
   #include <unistd.h>
+#ifdef _irix5_
   #undef usleep
   #define usleep(x) poll(NULL, 0, (x)/1000);
   //#define usleep(x) sginap((((x)*CLK_TCK)+500000)/1000000L)
   //CLK_TCK is defined as sysconf(_SC_CLK_TCK) in limits.h and 
   //is 100 (10ms) for non-realtime processes, machine dependant otherwise
+#endif /* _irix5_ */
 #elif (CLIENT_OS == OS_AMIGAOS)
   extern "C" {
   #ifdef sleep
