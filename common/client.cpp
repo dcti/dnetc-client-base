@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.20 2004/05/20 21:13:14 kakace Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.21 2004/06/16 18:09:16 kakace Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -275,7 +275,11 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
       LogScreenRaw( "RC5-72 PowerPC assembly by Malcolm Howell and Didier Levet\n"
                     "Enhancements for 604e CPUs by Roberto Ragusa\n");
         #if defined(__VEC__) || defined(__ALTIVEC__)
-        LogScreenRaw( "RC5-72 Altivec assembly by Didier Levet\n");
+          #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
+            LogScreenRaw( "RC7-72 Altivec assembly and GARSP Vector by Didier Levet\n");
+          #else
+            LogScreenRaw( "RC5-72 Altivec assembly by Didier Levet\n");
+          #endif
         #endif
       #endif
       #if (CLIENT_CPU == CPU_SPARC)
