@@ -11,6 +11,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.121  1999/03/05 04:59:46  gregh
+// struct Packet now has a union to hold crypto and OGR data.
+//
 // Revision 1.120  1999/03/01 09:18:31  gregh
 // Fix CONTEST_COUNT so the config doesn't crash, yet the client won't try
 // to process OGR right now.
@@ -387,16 +390,16 @@ typedef struct
 {
   union {
     struct {
-      u64  key;               // starting key
-      u64  iv;                // initialization vector
-      u64  plain;             // plaintext we're searching for
-      u64  cypher;            // cyphertext
-      u64  keysdone;          // iterations done (also current position in block)
-      u64  iterations;        // iterations to do
-    } crypto;
-   struct {
-     Stub stub;
-   } ogr;
+      u64  key;           // starting key
+      u64  iv;            // initialization vector
+      u64  plain;         // plaintext we're searching for
+      u64  cypher;        // cyphertext
+      u64  keysdone;      // iterations done (also current position in block)
+      u64  iterations;    // iterations to do
+    } crypto;             // RC5 and DES
+    struct {
+      Stub stub;          // stub to work on
+    } ogr;                // OGR
   } data;
   u32  op;                // (out)OP_SUCCESS, (out)OP_DONE, or (in)OP_DATA
   char id[59];            // email address of original worker...
@@ -416,10 +419,17 @@ typedef struct
 typedef struct Packet
 {
   u32  op;            // operation code                     }--|    }--|
-  u64  key;           // the Key starting point                |       |
-  u64  iv;            // the IV                                |       |
-  u64  plain;         // the Plaintext                         |       |
-  u64  cypher;        // the Cyphertext                        |       |
+  union {             //                                       |       |
+    struct {          //                                       |       |
+      u64  key;       // the Key starting point                |       |
+      u64  iv;        // the IV                                |       |
+      u64  plain;     // the Plaintext                         |       |
+      u64  cypher;    // the Cyphertext                        |       |
+    } crypto;         // RC5 and DES                           |       |
+    struct {          //                                       |       |
+      Stub stub;      // stub to work on                       |       |
+    } ogr;            // OGR                                   |       |
+  } data;             //                                       |       |
   u32  iterations;    // number of iterations (the low 32bits) |       |
   char id[64];        // identifier (email address)            |       |
   u32  ip;            // IP Address (proxy filled)             |       |
