@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.29 2000/06/01 19:01:11 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.30 2000/06/04 09:57:07 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -34,7 +34,7 @@ return "@(#)$Id: clitime.cpp,v 1.37.2.29 2000/06/01 19:01:11 cyp Exp $"; }
 
 int InitializeTimers(void)
 {
-  #if ((CLIENT_OS != OS_MACOS) && (CLIENT_OS != OS_RISCOS))  
+  #if ((CLIENT_OS != OS_MACOS) && (CLIENT_OS != OS_RISCOS) && (CLIENT_OS != OS_AMIGAOS))
   CliIsTimeZoneInvalid(); /* go assume TZ=GMT if invalid timezone */
   tzset();                /* set correct timezone for everyone else */
   #endif
@@ -115,10 +115,6 @@ static int __GetTimeOfDay( struct timeval *tv )
       tv->tv_sec = (time_t)secs;
       tv->tv_usec = (long)fsec;
     }
-    #elif (CLIENT_OS == OS_AMIGAOS)
-    {
-      return timer((unsigned int *)tv );
-    }
     #else
     {
       //struct timezone tz;
@@ -151,7 +147,7 @@ static int __GetMinutesWest(void)
     return 0;
   minwest = TZInfo.Bias; /* sdk doc is wrong. .Bias is always !dst */
 #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_SCO) || \
-      (CLIENT_OS == OS_AMIGA) || (CLIENT_OS == OS_VMS)
+      (CLIENT_OS == OS_VMS)
   time_t timenow;
   struct tm * tmP;
   struct tm loctime, utctime;
@@ -525,6 +521,8 @@ int CliGetMonotonicClock( struct timeval *tv )
         tv->tv_sec++;
       }
     }
+    #elif (CLIENT_OS == OS_AMIGAOS)
+      return amigaGetMonoClock(tv);
     #elif defined(CLOCK_MONOTONIC) /* POSIX 1003.1c */
     {                           /* defined doesn't always mean supported :( */
       struct timespec ts;
