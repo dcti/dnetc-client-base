@@ -1,7 +1,7 @@
 # makefile distributed.net client (Borland C++ for Win32).
 # For information about distributed.net, see http://www.distributed.net/
 #
-# $Id: makefile.bcc,v 1.23.2.10 2000/05/03 00:03:14 andreasb Exp $
+# $Id: makefile.bcc,v 1.23.2.11 2000/05/14 12:38:14 andreasb Exp $
 #
 # As of Feb 2000, Borland C++ 5.5 compiler is free for download.
 # http://www.borland.com/bcppbuilder/freecompiler/
@@ -33,6 +33,7 @@ PLATSRCPATH = platforms\win32cli
 # define to control which additional contests are included.
 #HAVE_DES_CORES=1
 #HAVE_CSC_CORES=1
+# WARNING: OGR cores don't pass dnetc -test !!! :(((
 HAVE_OGR_CORES=1
 
 
@@ -221,6 +222,7 @@ BCCOPTS = $(BCCOPTS) -DHAVE_CSC_CORES -DMMX_CSC
 !ifndef HAVE_OGR_CORES
 OGR_OBJS =
 !else
+!message WARNING! OGR currently fails 2 selftests (dnetc -test) if compiled with BCC! :(
 OGR_OBJS =                           \
         $(OUTPUTPATH)/choosedat.obj  \
         $(OUTPUTPATH)/crc32.obj      \
