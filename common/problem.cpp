@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.50  1998/12/09 07:36:34  dicamillo
+// Added support for MacOS client scheduling, andinfo needed by MacOS GUI.
+//
 // Revision 1.49  1998/12/07 15:21:23  chrisb
 // more riscos/x86 changes
 //
@@ -128,7 +131,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.49 1998/12/07 15:21:23 chrisb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.50 1998/12/09 07:36:34 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -497,6 +500,21 @@ s32 Problem::Run( u32 threadnum )
     timeslice = (1ul << nbits) / pipeline_count;
     kiter = des_unit_func ( &rc5unitwork, nbits );
     }
+
+  // Mac code yields here because it needs to know the contest
+  // DES code yields in the core itself because it can run for a
+  // long time (with respect to good user response time) before returning
+  #if (CLIENT_OS == OS_MACOS)
+    if (contest == 0) {
+      #if defined(MULTITHREAD)
+	  if (MP_active == 0) {
+		YieldToMain(1);		// cannot do this in real thread!
+		}
+      #else
+  	  YieldToMain(1);
+      #endif
+  	}
+  #endif
 
   contestwork.keysdone.lo += kiter;
 
@@ -880,6 +898,15 @@ s32 Problem::Run( u32 threadnum )
         contestwork.keysdone.lo += pipeline_count;
         }
       }
+	  #ifdef MAC_GUI
+	  #if defined(MULTITHREAD)
+		  if (MP_Active == 0) {			
+			  YieldToMain(1);
+			  }
+	  #else
+	  	   YieldToMain(1);
+	  #endif
+	  #endif
     }
   else
     {
@@ -969,4 +996,11 @@ u32 Problem::CalcPercent()
                   ( ((double) rc5result.keysdone.lo) /
                     ((double) rc5result.iterations.lo) ) );
 }
+
+#if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
+u32 Problem::GetKeysDone()
+{
+  return(rc5result.keysdone.lo);
+}
+#endif
 
