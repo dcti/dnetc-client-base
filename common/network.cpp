@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.28 2000/03/09 01:54:58 jlawson Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.29 2000/03/09 10:50:42 jlawson Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -1838,14 +1838,14 @@ int Network::LowLevelPut(const char *ccdata, int length)
   u32 totalwritten = 0;
   u32 sendquota = 1500; /* how much to send per send() call */
   int firsttime = 1;
-  time_t timenow = 0, stoptime = 0;
+  time_t timenow = 0, starttime = 0, stoptime = 0;
   int sleptcount = 0; /* ... in a row */
   int sleepms = 250; /* sleep time in millisecs. adjust here if needed */
   char *data;
   *((const char **)&data) = ccdata; /* get around const being used for send */
 
   if (isnonblocking)
-    stoptime = (time(NULL))+(time_t)iotimeout;
+    stoptime = time(&starttime) + (time_t)iotimeout;
 
   #if defined(_TIUSER_)
   sendquota = 512;
@@ -1976,7 +1976,9 @@ int Network::LowLevelPut(const char *ccdata, int length)
     }
     else //if (isnonblocking)
     {
-      if (time(&timenow) > stoptime)
+      if (time(&timenow) < starttime)
+        break;
+      else if (timenow > stoptime)
       {
         if (written <= 0 && sleptcount > 10)
           break;
@@ -2020,7 +2022,7 @@ int Network::LowLevelGet(char *data,int length)
 
   u32 totalread = 0;
   u32 rcvquota = 1500;
-  time_t timenow = 0, stoptime = 0;
+  time_t timenow = 0, starttime = 0, stoptime = 0;
   int sleptcount = 0; /* ... in a row */
   int sleepms = 250; /* sleep time in millisecs. adjust here if needed */
   int sockclosed = 0;
@@ -2047,7 +2049,7 @@ int Network::LowLevelGet(char *data,int length)
   #endif
 
   if (isnonblocking)
-    stoptime = (time(NULL))+(time_t)iotimeout;
+    stoptime = time(&starttime) + (time_t)iotimeout;
 
   #ifdef DEBUGTHIS
   Log("LLGet: total to recv=%d, quota:%d\n", length, rcvquota );
@@ -2125,7 +2127,7 @@ int Network::LowLevelGet(char *data,int length)
     {
       if (totalread != 0)
         break;
-      if (time(&timenow) > stoptime)
+      if (time(&timenow) > stoptime || timenow < starttime)
         break;
       if (!isnonblocking && CheckExitRequestTrigger())
         break;
