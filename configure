@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.97 2000/01/18 19:59:24 ctate Exp $
+# @(#)$Id: configure,v 1.222.2.98 2000/01/18 20:08:10 lyndon Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -274,7 +274,7 @@ OPTS_LD_MIPSPRO_64="${OPTS_LD_MIPSPRO} -64"
 
 # Common across all MIPSpro compiles:
 OPTS_MIPSPRO_CCFLAGS="${OPTS_CC_MIPSPRO} -DHAVE_DES_CORES -DHAVE_CSC_CORES -DMULTITHREAD -DKWAN -DMEGGS"
-OPTS_MIPSPRO_SRCS="rc5/ansi/2-rg.c ${MEGGS_SLICE_SRCS2} ${CSC_ANSI_SRCS}"
+OPTS_MIPSPRO_SRCS="rc5/ansi/rc5ansi_2-rg.cpp ${MEGGS_SLICE_SRCS2} ${CSC_ANSI_SRCS}"
 OPTS_MIPSPRO_DOCS="docs/readme._ix docs/readme.irix"
 
 # Common to a specific ABI:
