@@ -5,9 +5,9 @@
 */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.3.4.2 2003/03/07 17:20:49 oliver Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.3.4.3 2003/04/04 14:31:52 gavin Exp $"; }
 
-#ifdef __VEC__ /* compiler supports AltiVec */
+#if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
   #if (__MWERKS__)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
