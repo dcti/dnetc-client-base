@@ -3,17 +3,18 @@ Dual mode (RC5DES) clients
 
 2.7100
 ------
-2.7105.432 98.01.21 OS2-EMX and lurk mode changes. -(un)install honors -quiet
+2.7106.435 99.02.06 Added lurk fonctionnality in x86-Linux clients.
+2.7105.432 99.01.21 OS2-EMX and lurk mode changes. -(un)install honors -quiet
                     Network send errors fixed
-2.7105.432 98.01.19 Connection error message support added for win16/32
-2.7105.432 98.01.12 -1 for nettimeout forces blocking network I/O
-2.7105.432 98.01.18 IDT WinChip 2 added to CPU list. 4% faster MMX DES core 
+2.7105.432 99.01.19 Connection error message support added for win16/32
+2.7105.432 99.01.12 -1 for nettimeout forces blocking network I/O
+2.7105.432 99.01.18 IDT WinChip 2 added to CPU list. 4% faster MMX DES core 
                      added.
-2.7103.430 98.01.15 revert back from old "distributed.net ID" phrasing.
+2.7103.430 99.01.15 revert back from old "distributed.net ID" phrasing.
                      50% faster DES MMX core added.
-2.7103.427 98.01.13 SMP support added for Alpha/Win32. RISC OS processor
+2.7103.427 99.01.13 SMP support added for Alpha/Win32. RISC OS processor
                      detection and scheduling improved.
-2.7103.425 98.01.06 Menu/options cleanups. Single checkpoint used for all
+2.7103.425 99.01.06 Menu/options cleanups. Single checkpoint used for all
                      contests.
 2.7102.422 98.12.21 Stripped one instruction in all x86 rc5 cores
 2.7102.422 98.12.20 Improved menu and ini file handling of uuehttpmode,
