@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.113 2002/04/11 12:01:42 oliver Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.114 2002/04/12 10:22:57 zebe Exp $
 ==========================================================================
 
 2.8000
@@ -30,19 +30,19 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.113 2002/04/11 12:01:42 oliver Exp 
 2.8017.471  new: x86: P4 RC5 core (ak-p7)
             imp: x86: better intel and AMD chip identification. (#2448, #2424)
             fix: x86: Win2K, WinXP: disabled crashing RC5 SMC core. (#2399)
+            new: alpha: OGR core for processors supporting the CIX extension.
             imp: sparc: improved OGR core. (#2480)
+            fix: ppc: linux kernel cpu string additions. (#2407)
+            new: all: configurable frequent update failure retry interval.
             fix: all: client ignores "--" on command line by itself. (#2474)
             fix: all: Errors in generated man page (#2451)
-            new: all: configurable frequent update failure retry interval.
             fix: hpux: threading, timing fixes (#2371)
             fix: fbsd: occasionally not responding to SIG(INT/TERM) (#1985)
-            fix: decunix: also not responding ot SIG(INT/TERM) (#1613)
+            fix: decunix: also not responding to SIG(INT/TERM) (#1613)
             fix: linux: no alpha SMP support (#2142)
-            new: alpha: OGR core for processors supporting the CIX extension.
-            fix: ppc: linux kernel cpu string additions. (#2407)
             new: macosx: platform-specific read me doc (#2580)
             new: macosx: now supports -[un]install for /Library/StartupItems/
-            fix: macosx: leaks in pause-if-on-battery code. (#2465)
+            fix: macosx: Mach/mem leaks in pause-if-on-battery code. (#2465)
             new: amigaos: can now be installed and/or run via Workbench
             new: amigaos: built-in ReAction GUI added
             new: amigaos: now supports -[un]install for WBStartup
