@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.44 2000/11/21 18:26:52 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.45 2000/11/22 19:33:50 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -699,6 +699,7 @@ int CliGetThreadUserTime( struct timeval *tv )
   is_supp = 1;
   return 0;
 #else
+  tv = tv; /* shaddup compiler */
   return -1;
 #endif
 }
