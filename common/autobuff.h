@@ -12,7 +12,9 @@
 //
 
 #ifndef __AUTOBUFF_H__
-#define __AUTOBUFF_H__ "@(#)$Id: autobuff.h,v 1.14.2.3 2000/03/09 11:39:25 jlawson Exp $"
+#define __AUTOBUFF_H__ "@(#)$Id: autobuff.h,v 1.14.2.4 2000/05/01 05:13:58 jlawson Exp $"
+
+#include "cputypes.h"         // bool
 
 #ifndef AUTOBUFFER_INCREMENT
 #define AUTOBUFFER_INCREMENT 100
