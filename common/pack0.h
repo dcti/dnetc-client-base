@@ -6,14 +6,18 @@
 */
 
 #ifndef __PACK0_H__
-# define __PACK0_H__ "@(#)$Id: pack0.h,v 1.1.2.2 2003/08/25 09:34:21 mweiser Exp $"
+# define __PACK0_H__ "@(#)$Id: pack0.h,v 1.1.2.3 2003/09/12 13:20:34 mweiser Exp $"
 #endif
 
 #if !defined(__PACK_H__)
 # error "you must include pack{,1,4,8}.h first!"
 #endif
 
-#ifdef DNETC_USE_PACK
+#if defined(DNETC_USE_PACK_POP)
+# pragma pack(pop)
+#elif defined(DNETC_USE_PACK0)
+# pragma pack(0)
+#elif defined(DNETC_USE_PACK)
 # pragma pack()
 #endif
 
