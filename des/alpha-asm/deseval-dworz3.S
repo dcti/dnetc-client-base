@@ -15,6 +15,11 @@ The s-boxes are based on the work of Matthew Kwan.
 Version 3 (7.8MKey/s on PC164@500MHz)
 
 
+$Log: deseval-dworz3.S,v $
+Revision 1.3  1999/01/28 22:38:48  remi
+Added $Log tag.
+
+
 */
 
 	.set noat
