@@ -11,7 +11,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.4.2.2 2003/09/02 00:48:54 mweiser Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.4.2.3 2004/06/27 22:03:40 jlawson Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE
@@ -57,8 +57,8 @@ return "@(#)$Id: w32cons.cpp,v 1.4.2.2 2003/09/02 00:48:54 mweiser Exp $"; }
 #include "w32ini.h"   // [Write|Get]DCTIProfile[String|Int]()
 #include "w32cons.h"  // ourselves
 
-#if (CLIENT_OS == OS_WIN32) /* for _open_osfhandle as used with pipes */
-  #include <io.h>
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
+  #include <io.h>		 /* for _open_osfhandle as used with pipes */
   #include <fcntl.h>
 #else
   #define SetForegroundWindow BringWindowToTop
@@ -66,13 +66,14 @@ return "@(#)$Id: w32cons.cpp,v 1.4.2.2 2003/09/02 00:48:54 mweiser Exp $"; }
   #define MAKEWORD(a, b) \
     ((WORD) (((BYTE) (a)) | ((WORD) ((BYTE) (b))) << 8))
 #endif
+
 #if defined(__BORLANDC__) /* BC5 windows.h needs whacking */
-#undef MAKEWORD
-#define MAKEWORD(low, high) \
-  ((WORD) (((BYTE) (low)) | (((WORD) ((BYTE) (high))) << 8)))
-#undef MAKELONG
-#define MAKELONG(low, high) \
-  ((LONG)(((WORD)(low)) | (((DWORD)((WORD)(high))) << 16)))
+  #undef MAKEWORD
+  #define MAKEWORD(low, high) \
+    ((WORD) (((BYTE) (low)) | (((WORD) ((BYTE) (high))) << 8)))
+  #undef MAKELONG
+  #define MAKELONG(low, high) \
+    ((LONG)(((WORD)(low)) | (((DWORD)((WORD)(high))) << 16)))
 #endif
 
 
@@ -237,7 +238,7 @@ void __w16writelog( const char *format, ... )
   return;
 }
 
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 void __w16showerror(const char *caption)
 {
   LPVOID lpMsgBuf;
@@ -256,7 +257,9 @@ void __w16showerror(const char *caption)
 
 static W16CONP __win16GetHwndConsole( HWND hwnd )
 {
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN64)
+  return (W16CONP)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+  #elif (CLIENT_OS == OS_WIN32)
   return (W16CONP)GetWindowLong(hwnd, GWL_USERDATA);
   #else
   return (W16CONP)GetWindowLong(hwnd, 0);
@@ -265,7 +268,9 @@ static W16CONP __win16GetHwndConsole( HWND hwnd )
 
 static W16CONP __win16SetHwndConsole( HWND hwnd, W16CONP console )
 {
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN64)
+  return (W16CONP)SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)console);
+  #elif (CLIENT_OS == OS_WIN32)
   return (W16CONP)SetWindowLong(hwnd, GWL_USERDATA, (LONG)console);
   #else
   return (W16CONP)SetWindowLong(hwnd, 0, (LONG)console);
@@ -385,8 +390,9 @@ static HINSTANCE my_ShellExecute( HWND hParent, const char *lpOper,
                                   const char *lpDir, UINT nShowCmd)
 {
   HINSTANCE hInst = NULL;
-  #if (CLIENT_OS == OS_WIN32) /* avoid loading shell32 if not needed (4MB+) */
-  int weloaded = 0;           /* shell32 postloads SHLWAPI.DLL COMCTL32.DL */
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
+  /* avoid loading shell32 if not needed (4MB+) shell32 postloads SHLWAPI.DLL COMCTL32.DLL */
+  int weloaded = 0;
   HMODULE hShell32 = GetModuleHandle("shell32.dll");
   if (!hShell32)
   {
@@ -410,7 +416,7 @@ static HINSTANCE my_ShellExecute( HWND hParent, const char *lpOper,
   return hInst;
 }
 
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 /* our tray handler does some optimization if it knows it has shell 4.71 */
 /* or greater (ie which supprts the TaskbarCreated message) */
 static int GetShell32Version(void)
@@ -453,7 +459,7 @@ static int GetShell32Version(void)
 }
 #endif
 
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 
 #if 0 //!defined(NOTIFYICONDATA_V1_SIZE)
 #pragma pack(1)
@@ -567,7 +573,7 @@ static int __DoTrayStuff( HWND hwnd, int action, const char *tip,
   DNETC_UNUSED_PARAM(tip);
   DNETC_UNUSED_PARAM(calledfrom);
 
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if ((winGetVersion() % 2000) >= 400)          // Win95+, NT4+
   {
     static int recursive = 0;
@@ -617,8 +623,13 @@ static int __DoTrayStuff( HWND hwnd, int action, const char *tip,
           hIcon = (HICON)SendMessage( hwnd, WM_GETICON, 0 /* small */, 0 );
           if (!hIcon)
             hIcon = (HICON)SendMessage( hwnd, WM_GETICON, 1 /* large */, 0 );
-          if (!hIcon)
+          if (!hIcon) {
+            #ifdef GCLP_HICON
+            hIcon = (HICON)GetClassLongPtr(hwnd,GCLP_HICON);
+            #else
             hIcon = (HICON)GetClassLong(hwnd,GCL_HICON);
+            #endif
+          }
           TRACE_TRAY(( 0, "got icon? =%x\n", hIcon ));
 
           /* construct a default structure */
@@ -1337,7 +1348,7 @@ static BOOL __w16FixupRect( W16CONP console, HWND hwnd,
     BOOL grow = (rect->top < oldrect->top || rect->bottom > oldrect->bottom ||
                  rect->left < oldrect->left || rect->right > oldrect->right);
 
-    message = message;
+    DNETC_UNUSED_PARAM(message);
     #if defined(WM_SIZING)
     if (message == WM_SIZING)
     {
@@ -1435,7 +1446,7 @@ static LRESULT __w16Handle_NCLBUTTONDOWN(W16CONP console, HWND hwnd,
         MSG msg;
         while (!PeekMessage(&msg,hwnd,WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE))
           WaitMessage();
-        #if (CLIENT_OS == OS_WIN32)
+        #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
         if (GetForegroundWindow() != hwnd)
           break;
         #endif
@@ -1459,7 +1470,7 @@ static LRESULT __w16Handle_NCLBUTTONDOWN(W16CONP console, HWND hwnd,
           lastpos.x = pos.x;
           lastpos.y = pos.y;
 
-          if (__w16FixupRect(console, hwnd, message, wParam, &rect, &framerect))
+          if (__w16FixupRect(console, hwnd, message, (UINT) wParam, &rect, &framerect))
           {
             if (memcmp(&rect, &framerect, sizeof(RECT))!=0)
             {
@@ -1553,7 +1564,7 @@ static int __have_uri_support(int uri_type) /* 'h'==http, 'm'==mailto */
     const char *lookfor;
 
     lookfor = "\\.html\\ShellEx";
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     res = RegOpenKeyEx(HKEY_CLASSES_ROOT, lookfor, 0, KEY_EXECUTE, &hKey);
     #else
     res = RegOpenKey(HKEY_CLASSES_ROOT, lookfor, &hKey);
@@ -1563,7 +1574,7 @@ static int __have_uri_support(int uri_type) /* 'h'==http, 'm'==mailto */
     http = ((res == ERROR_SUCCESS || res == ERROR_ACCESS_DENIED)?(1):(0));
 
     lookfor = "\\mailto\\shell\\open\\command";
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     res = RegOpenKeyEx(HKEY_CLASSES_ROOT, lookfor, 0, KEY_EXECUTE, &hKey);
     #else
     res = RegOpenKey(HKEY_CLASSES_ROOT, lookfor, &hKey);
@@ -1660,7 +1671,7 @@ static HMENU __w16WindowConstructMenu(W16CONP console, HWND hwnd,
                               WMCMD_CONFIG, "Con&figure" );
 
 
-        #if 0 //(CLIENT_OS == OS_WIN32)
+        #if 0 //(CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
         if (win32CliIsServiceInstalled()==0) /* <0=err,0==no,>0=yes */
         {
           char buff[64];
@@ -1852,7 +1863,7 @@ static void __w16Set_BS_OWNERDRAW(HWND button_hwnd)
 }
 
 
-DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
+LRESULT CALLBACK __w16AboutBox( HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam )
 {
   struct dlgdata
   {
@@ -1875,8 +1886,13 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
       dd = (struct dlgdata *)malloc(sizeof(struct dlgdata));
       if (dd)
       {
+#ifdef DWLP_USER
+        SetWindowLongPtr(dialog, DWLP_USER, (LONG_PTR)dd);
+        if (dd != ((struct dlgdata *)GetWindowLongPtr(dialog, DWLP_USER)))
+#else
         SetWindowLong(dialog, DWL_USER, (LONG)dd);
         if (dd != ((struct dlgdata *)GetWindowLong(dialog, DWL_USER)))
+#endif
         {
           free((void *)dd);
           dd = (struct dlgdata *)0;
@@ -1884,7 +1900,11 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
       }
       if (!dd)
       {
+#ifdef DWLP_USER
+        SetWindowLongPtr(dialog,DWLP_USER,0);
+#else
         SetWindowLong(dialog,DWL_USER,0);
+#endif
         EndDialog( dialog, TRUE );
         return( TRUE );
       }
@@ -1939,10 +1959,14 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
     }
     case WM_DRAWITEM:
     {
+#ifdef DWLP_USER
+      dd = (struct dlgdata *)GetWindowLongPtr(dialog, DWLP_USER);
+#else
       dd = (struct dlgdata *)GetWindowLong(dialog, DWL_USER);
+#endif
       if (dd)
       {
-        int id = wParam; //lpdis.CtlID;
+        int id = (int) wParam; //lpdis.CtlID;
         DWORD len = GetDlgItemText(dialog,id,buffer,sizeof(buffer));
         if (len)
         {
@@ -2003,7 +2027,11 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
             SetFocus(GetDlgItem(dialog,IDOK));
         }
       } /* if (dd) */
+      #ifdef DWLP_MSGRESULT
+      SetWindowLongPtr(dialog, DWLP_MSGRESULT, TRUE);
+      #else
       SetWindowLong(dialog, DWL_MSGRESULT, TRUE);
+      #endif
       return TRUE;
     }
     #if defined(WM_CTLCOLOREDIT) /* win32 and win32s */
@@ -2019,7 +2047,11 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
     #endif
     case WM_CTLCOLOR:
     {
+      #ifdef DWLP_USER
+      dd = (struct dlgdata *)GetWindowLongPtr(dialog, DWLP_USER);
+      #else
       dd = (struct dlgdata *)GetWindowLong(dialog, DWL_USER);
+      #endif
       if (dd)
       {
         hDC = (HDC) wParam;
@@ -2030,7 +2062,11 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
         if (msg != WM_CTLCOLOR)
         {
           SelectObject( hDC, dd->hBGBrush );
+#ifdef DWLP_MSGRESULT
+          SetWindowLongPtr(dialog, DWLP_MSGRESULT, (LONG)dd->hBGBrush );
+#else
           SetWindowLong(dialog, DWL_MSGRESULT, (LONG)dd->hBGBrush );
+#endif
         }
         return (LRESULT)dd->hBGBrush;
       }
@@ -2042,7 +2078,11 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
         PostMessage(dialog, WM_CLOSE, 0, 0 );
       else
       {
+        #ifdef DWLP_USER
+        dd = (struct dlgdata *)GetWindowLongPtr(dialog, DWLP_USER);
+        #else
         dd = (struct dlgdata *)GetWindowLong(dialog, DWL_USER);
+        #endif
         if (dd)
         {
           if (!dd->hOwner)
@@ -2064,7 +2104,11 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
     }
     case WM_CLOSE:
     {
+#ifdef DWLP_USER
+      dd = (struct dlgdata *)GetWindowLongPtr(dialog, DWLP_USER);
+#else
       dd = (struct dlgdata *)GetWindowLong(dialog, DWL_USER);
+#endif
       if (dd)
       {
         if (dd->hBGBrush)
@@ -2078,7 +2122,11 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
           dd->hFont = NULL;
         }
         free((void *)dd);
+#ifdef DWLP_USER
+        SetWindowLongPtr(dialog,DWLP_USER,0);
+#else
         SetWindowLong(dialog,DWL_USER,0);
+#endif
       }
       EndDialog( dialog, TRUE );
       return( TRUE );
@@ -2150,7 +2198,7 @@ static void __w16DrawList( HWND hwnd, W16CONP console,
   {
     const char *linep;
     char buffer[W16CONS_WIDTH+1];
-    unsigned int linelen = 0;
+    size_t linelen = 0;
 
     TRACE_DLG((0,"lpdis->itemData = %p, &buff[lpdis->itemID][0] = %p\n",
              lpdis->itemData, &(console->buff[lpdis->itemID][0]) ));
@@ -2314,7 +2362,7 @@ extern int LogGetContestLiveRate(unsigned int contest_i,
                                  u32 *walltime_hiP, u32 *walltime_loP,
                                  u32 *coretime_hiP, u32 *coretime_loP);
 
-DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
+LRESULT CALLBACK __w16GraphView( HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam )
 {
   struct dlgdata
   {
@@ -2351,7 +2399,11 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
     DWORD last_rate_disp;
     int last_in_tray;
     int timer_cont_sel;
+#if (CLIENT_OS == OS_WIN64)
+    UINT_PTR timer;
+#else
     UINT timer;
+#endif
     struct      /* for positional accuracy, 'scale' members are always */
     {           /* in the range 0..100 inclusive. */
       int amp;  /* 'amp' eval range: 0.00...1.00 */
@@ -2379,7 +2431,11 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
     struct WMCMD_EVENT_DATA *evdata = (struct WMCMD_EVENT_DATA *)lParam;
     if (!lParam)
       return 0;
+#ifdef DWLP_USER
+    dd = (struct dlgdata *)GetWindowLongPtr(dialog, DWLP_USER);
+#else
     dd = (struct dlgdata *)GetWindowLong(dialog, DWL_USER);
+#endif
     if (!dd)
       return 0;
     if (evdata->id == CLIEVENT_BUFFER_UPDATEBEGIN ||
@@ -2387,7 +2443,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
     {
       /* clients running on Win16 won't be getting WM_TIMER while */
       /* networking is in progress, so gray the graph in that period. */
-      #if (CLIENT_OS == OS_WIN32)
+      #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       if (winGetVersion() < 400)
       #endif
       {
@@ -2410,8 +2466,13 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
       dd = (struct dlgdata *)malloc(sizeof(struct dlgdata));
       if (dd)
       {
+#ifdef DWLP_USER
+        SetWindowLongPtr(dialog, DWLP_USER, (LONG)dd);
+        if (dd != ((struct dlgdata *)GetWindowLongPtr(dialog, DWLP_USER)))
+#else
         SetWindowLong(dialog, DWL_USER, (LONG)dd);
         if (dd != ((struct dlgdata *)GetWindowLong(dialog, DWL_USER)))
+#endif
         {
           free((void *)dd);
           dd = (struct dlgdata *)0;
@@ -2419,7 +2480,11 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
       }
       if (!dd)
       {
+#ifdef DWLP_USER
+        SetWindowLongPtr(dialog,DWLP_USER,0);
+#else
         SetWindowLong(dialog,DWL_USER,0);
+#endif
         EndDialog( dialog, TRUE );
         return( TRUE );
       }
@@ -2581,7 +2646,11 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
     {
       if (HIWORD(lParam) != CTLCOLOR_BTN) /* includes BS_GROUPBOX */
       {
+#ifdef DWLP_USER
+        dd = (struct dlgdata *)GetWindowLongPtr(dialog, DWLP_USER);
+#else
         dd = (struct dlgdata *)GetWindowLong(dialog, DWL_USER);
+#endif
         if (dd)
         {
           hDC = (HDC) wParam;
@@ -2597,7 +2666,11 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
     }
     case WM_TIMER:
     {
+#ifdef DWLP_USER
+      dd = (struct dlgdata *)GetWindowLongPtr(dialog, DWLP_USER);
+#else
       dd = (struct dlgdata *)GetWindowLong(dialog, DWL_USER);
+#endif
       TRACE_DLG((+1,"WM_TIMER dd=%p\n",dd));
       if (dd)
       {
@@ -2747,7 +2820,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
               }
               else
               {
-                ll = dd->cdata[cont_i].buffers[0].till_completion;
+                ll = (long) dd->cdata[cont_i].buffers[0].till_completion;
                 if (!ll && ratehi == 0 && ratelo != 0 &&
                    ((dd->cdata[cont_i].buffers[0].swu_count)%100) == 0)
                 {
@@ -2989,7 +3062,11 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
     case WM_MOUSEMOVE: /* use MOUSEMOVE instead of SETCURSOR+MOUSEMOVE because */
                        /* MOUSEMOVE is cumulative (not called so often) */
     {
+#ifdef DWLP_USER
+      dd = (struct dlgdata *)GetWindowLongPtr(dialog, DWLP_USER);
+#else
       dd = (struct dlgdata *)GetWindowLong(dialog, DWL_USER);
+#endif
       TRACE_DLG((+1,"WM_MOUSEMOVE+MK_LBUTTON, dd=%p\n",dd));
       if (dd)
       {
@@ -3105,7 +3182,11 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
     }
     case WM_DRAWITEM:
     {
+#ifdef DWLP_USER
+      dd = (struct dlgdata *)GetWindowLongPtr(dialog, DWLP_USER);
+#else
       dd = (struct dlgdata *)GetWindowLong(dialog, DWL_USER);
+#endif
       TRACE_DLG((+1,"WM_DRAWITEM, dd=%p\n",dd));
       if (dd)
       {
@@ -3114,7 +3195,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
         #else
         LPDRAWITEMSTRUCT lpdis = (LPDRAWITEMSTRUCT)lParam;
         #endif
-        int id = wParam;
+        int id = (int) wParam;
         hwnd = NULL;
         cont_i = 0;
 
@@ -3407,13 +3488,21 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
             SetFocus(GetDlgItem(dialog, IDC_PROJLIST));
         }
       } /* if (dd) */
+#ifdef DWLP_MSGRESULT
+      SetWindowLongPtr(dialog, DWLP_MSGRESULT, TRUE);
+#else
       SetWindowLong(dialog, DWL_MSGRESULT, TRUE);
+#endif
       TRACE_DLG((-1,"WM_DRAWITEM\n"));
       return TRUE;
     }
     case WM_CLOSE:
     {
+      #ifdef DWLP_USER
+      dd = (struct dlgdata *)GetWindowLongPtr(dialog, DWLP_USER);
+      #else
       dd = (struct dlgdata *)GetWindowLong(dialog, DWL_USER);
+      #endif
       TRACE_DLG((+1,"WM_CLOSE dd=%p\n",dd));
       if (dd)
       {
@@ -3424,18 +3513,30 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
     }
     case WM_COMMAND:
     {
+      #ifdef DWLP_USER
+      dd = (struct dlgdata *)GetWindowLongPtr(dialog, DWLP_USER);
+      #else
       dd = (struct dlgdata *)GetWindowLong(dialog, DWL_USER);
+      #endif
       TRACE_DLG((+1,"WM_COMMAND dd=%p\n",dd));
       if (dd)
       {
-        WORD id = (WORD)LOWORD(wParam);   /* control or menu item identifier */
-        #if (CLIENT_OS == OS_WIN32)       /*,-------------------------------,*/
-        HWND hwnd = (HWND)lParam;         /*|         | cmd          | hwnd |*/
-        WORD cmd  = (WORD)HIWORD(wParam); /*|---------+--------------+------|*/
-        #else                             /*|menu opt | 0            | NULL |*/
-        HWND hwnd = (HWND)LOWORD(lParam); /*|accel    | 1            | NULL |*/
-        WORD cmd  = (WORD)HIWORD(lParam); /*|control  | notification | hwnd |*/
-        #endif                            /*'---------'--------------'------'*/
+        /* control or menu item identifier */
+        /*,-------------------------------,*/
+        /*|         | cmd          | hwnd |*/
+        /*|---------+--------------+------|*/
+        /*|menu opt | 0            | NULL |*/
+        /*|accel    | 1            | NULL |*/
+        /*|control  | notification | hwnd |*/
+        /*'---------'--------------'------'*/
+        WORD id = (WORD)LOWORD(wParam);
+        #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
+        HWND hwnd = (HWND)lParam;         
+        WORD cmd  = (WORD)HIWORD(wParam);
+        #else
+        HWND hwnd = (HWND)LOWORD(lParam);
+        WORD cmd  = (WORD)HIWORD(lParam);
+        #endif                            
 
         if (id == WMCMD_CLOSEVIEW) /* internal between views */
         {
@@ -3475,7 +3576,11 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
             dd->hMemDC = NULL;
           }
           free((void *)dd);
+#ifdef DWLP_USER
+          SetWindowLongPtr(dialog, DWLP_USER, 0);
+#else
           SetWindowLong(dialog, DWL_USER, 0);
+#endif
           if (!GetParent(dialog))
           {
             hmenu = GetMenu(dialog);
@@ -4518,7 +4623,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
       console->indentx = console->indenty = 4;
 
       console->nCmdShow = conscreate_data->nCmdShow;
-      #if (CLIENT_OS == OS_WIN32)
+      #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       if (console->nCmdShow == SW_SHOWDEFAULT)
       {
         STARTUPINFO si;
@@ -4625,7 +4730,11 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
           }
           FreeLibrary(hInst);
         }
+#ifdef GCLP_HICON
+        hIcon = (HICON)GetClassLongPtr(hwnd, GCLP_HICON);
+#else
         hIcon = (HICON)GetClassLong(hwnd, GCL_HICON);
+#endif
         if (hIcon)
           SendMessage( hwnd, WM_SETICON, 1 /*ICON_LARGE*/, (LPARAM)hIcon );
       }
@@ -4681,7 +4790,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
          Waiting on a child will thus result in a 'hang' (win will kill
          the process after 10 seconds or so).
       */
-      #if (CLIENT_OS == OS_WIN32)
+      #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       if (win32CliServiceRunning())
       {
         if (((lParam & ENDSESSION_LOGOFF)!=0))
@@ -4982,7 +5091,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
       else if (lParam == WM_LBUTTONDBLCLK)
       {
         TRACE_TRAY((+1,"WM_USER_SHELLNOTIFYICON: WM_LBUTTONDBLCLK\n"));
-        #if (CLIENT_OS == OS_WIN32)
+        #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
         UINT t = GetDoubleClickTime()>>1; //was 300
         TRACE_TRAY((+1,"Sleep(%d)\n", t));
         Sleep(t); //was 300 //absorb "extra-" click
@@ -5055,7 +5164,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
       {
         if (console)
           __clear_marked(console);
-        #if (CLIENT_OS == OS_WIN32)
+        #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
         win32CliInstallService(0); // == 0) /* no err */
         {
         /*
@@ -5101,8 +5210,10 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
         if (console)
           __clear_marked(console);
         ModeReqSet(do_mode);
-        if (wParam >= (WMCMD_BENCHMARK+2))
-          ModeReqLimitProject(do_mode, (wParam-(WMCMD_BENCHMARK+2))>>1);
+        if (wParam >= (WMCMD_BENCHMARK+2)) {
+          int do_project = (int) ((wParam-(WMCMD_BENCHMARK+2))>>1);
+          ModeReqLimitProject(do_mode, do_project);
+        }
         postmenuchange = 1;
       }
       else if (wParam == WMCMD_REFRESHVIEW)
@@ -5647,7 +5758,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
     }
     default:
     {
-      #if (CLIENT_OS == OS_WIN32)
+      #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       static UINT taskbarCreatedMsg = WM_USER;
       if (taskbarCreatedMsg == WM_USER)
       {
@@ -5753,7 +5864,7 @@ static BOOL my_IsDialogMessage(HWND hwnd, MSG *msg)
 static void w16Yield(void)
 {
   MSG msg;
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (constatics.asthread || constatics.devpipe || constatics.nativecons)
   {
     Sleep(1);
@@ -5776,7 +5887,7 @@ static void w16Yield(void)
 static void w16Sleep(unsigned int millisecs)
 {
   DWORD last = 0; MSG msg;
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (constatics.asthread || constatics.devpipe || constatics.nativecons)
   {
     Sleep(millisecs);
@@ -5841,7 +5952,7 @@ static void w16Sleep(unsigned int millisecs)
       break;
     if (gotmsg == 0)
     {
-      #if (CLIENT_OS == OS_WIN32)
+      #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       if (winGetVersion() >= 400) /* not win32s */
       {
         Sleep(50);
@@ -5857,7 +5968,7 @@ static void w16Sleep(unsigned int millisecs)
           now = GetTickCount();
           if (now < last || now > (last+50))
             break;
-          #if (CLIENT_OS == OS_WIN32)
+          #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
           Sleep(0); /* win32s */
           #else
           Yield();Yield();Yield();Yield();Yield();
@@ -5924,7 +6035,7 @@ static void __win16WinCreateHelper( void *xarg )
 
   while (createdata.create_pending)
   {
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     Sleep(1);
     #else
     Yield();
@@ -5982,6 +6093,7 @@ static HWND w16ConsoleCreate(int nCmdShow)
     return 0;
   }
 
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   if ((winGetVersion()%2000)<400)
   {
     UINT olderrmode = SetErrorMode(SEM_NOOPENFILEERRORBOX);
@@ -6017,6 +6129,7 @@ static HWND w16ConsoleCreate(int nCmdShow)
       }
     }
   }
+#endif
 
   TRACE_INITEXIT((0,"begin register class\n"));
 
@@ -6068,7 +6181,7 @@ static HWND w16ConsoleCreate(int nCmdShow)
   arg.nCmdShow = nCmdShow;
   arg.asthread = 0;
 
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   constatics.asthread = arg.asthread = 1;
   if (_beginthread( __win16WinCreateHelper, 0/*(1024*32)*/, (void *)&arg  ) == NULL)
   {
@@ -6178,7 +6291,7 @@ static int w16ConsoleClear(void)
 
 static int w16ConsolePrint(const char *text)
 {
-  unsigned int len;
+  size_t len;
   w16Yield();
   if (constatics.hwndList[0] == NULL)
     return -1;
@@ -6187,7 +6300,7 @@ static int w16ConsolePrint(const char *text)
   if ((len = strlen(text)) == 0)
     return 0;
   SendMessage( constatics.hwndList[0], WM_USER_W16CONS, W16CONS_CMD_PRINTSTR, (LPARAM)(text) );
-  return len;
+  return (int)len;
 }
 
 /* ------------------------------------------------ */
@@ -6230,12 +6343,12 @@ static int w16ConGetSize( int *width, int *height)
 
 /* ------------------------------------------------ */
 
-static int w16ConsoleKbhit(void)
+static bool w16ConsoleKbhit(void)
 {
   w16Yield();
   if (constatics.hwndList[0] == NULL)
-    return 0;
-  return SendMessage( constatics.hwndList[0], WM_USER_W16CONS, W16CONS_CMD_ISKBHIT, 0 );
+    return false;
+  return (SendMessage( constatics.hwndList[0], WM_USER_W16CONS, W16CONS_CMD_ISKBHIT, 0 ) != 0);
 }
 
 /* ------------------------------------------------ */
@@ -6261,7 +6374,7 @@ static int w16ConsoleGetch(void)
 /* ************* END OF GUI PRIMITIVES ***************** */
 /* ===================================================== */
 
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 static HANDLE __pipe_gethandle(int which)
 {
   if (which == STD_INPUT_HANDLE)
@@ -6614,7 +6727,7 @@ static void __ClientEventCallback(int event_id, const void *parm, int isize)
 int w32DeinitializeConsole(int pauseonclose)
 {
   pauseonclose = pauseonclose;
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (constatics.hmutex != NULL)
   {
     ReleaseMutex( constatics.hmutex );
@@ -6700,7 +6813,7 @@ int w32DeinitializeConsole(int pauseonclose)
 
 /* ---------------------------------------------------- */
 
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 #if defined(__WATCOMC__)
 static void __w32SigTriggerControl(int sig)
 {
@@ -6954,7 +7067,7 @@ int w32InitializeConsole(int runhidden, int runmodes)
   //quickly change to a normal cursor
   SetCursor(LoadCursor(NULL, MAKEINTRESOURCE(IDC_ARROW)));
 
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (!constatics.hidden && retcode == 0)
   {
     if (win32CliServiceRunning())
@@ -6983,7 +7096,7 @@ int w32InitializeConsole(int runhidden, int runmodes)
       retcode = -1;
   }
 
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (!runmodes && retcode == 0)
   {
     SECURITY_ATTRIBUTES sa;
@@ -7001,7 +7114,7 @@ int w32InitializeConsole(int runhidden, int runmodes)
   // console as CUI or pipe?
   // ----------------------------
 
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (retcode == 0)
   {
     #if defined(USE_NATIVE_CONSOLEIO)
@@ -7254,7 +7367,7 @@ int w32InitializeConsole(int runhidden, int runmodes)
         FreeConsole(); //fork() :)
     }
   }
-  #endif /* (CLIENT_OS == OS_WIN32) */
+  #endif /* (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) */
 
   // ---------------------------
   // console as GUI?
@@ -7306,7 +7419,7 @@ int w32InitializeConsole(int runhidden, int runmodes)
     //watch for ClientRun() start/stop/sleep(1) events
     ClientEventAddListener(-1,__ClientEventCallback);
 
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     if (constatics.devpipe || constatics.nativecons)
     {
       int havethread = 0;
@@ -7328,7 +7441,7 @@ int w32InitializeConsole(int runhidden, int runmodes)
     }
     #endif
   }
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   else if (constatics.hmutex)
   {
     ReleaseMutex( constatics.hmutex );
@@ -7347,7 +7460,7 @@ int w32InitializeConsole(int runhidden, int runmodes)
 
 int w32ConKbhit(void)
 {
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (constatics.devpipe)
   {
     if (__pipe_kbhit() <= 0)
@@ -7364,7 +7477,7 @@ int w32ConKbhit(void)
 
 int w32ConGetch(void)
 {
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (constatics.devpipe)
   {
     static int hibyte = 0;
@@ -7418,7 +7531,7 @@ static int __w32ConOutX(const char *text, int iserr)
     }
     return -1;
   }
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (!handled)
   {
     if (constatics.nativecons)
@@ -7520,7 +7633,7 @@ int w32ConOutModal(const char *text)
 int w32ConOut(const char *text)
 {
   int len = (int)strlen(text);
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (constatics.devpipe)
   {
     //char buf[16]; sprintf(buf,"%08x:",GetTickCount());
@@ -7533,7 +7646,7 @@ int w32ConOut(const char *text)
   else if (constatics.nativecons)
   {
     if (len)
-      len = fwrite( text, sizeof(char), len, stdout);
+      len = (int)fwrite( text, sizeof(char), len, stdout);
     fflush(stdout);
     return len;
   }
@@ -7549,7 +7662,7 @@ int w32ConIsScreen(void)
 {
   if (!constatics.hidden)
   {
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     if (constatics.devpipe)
     {
 TRACE_PIPE((+1,"w32ConIsScreen()\n"));
@@ -7571,7 +7684,7 @@ TRACE_PIPE((-1,"w32ConIsScreen() =>%d\n",istty));
 
 void w32Sleep(unsigned int millisecs)
 {
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (constatics.devpipe)
   {
     __pipe_sleep(millisecs);
@@ -7591,7 +7704,7 @@ void w32Sleep(unsigned int millisecs)
 
 void w32Yield(void)
 {
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (constatics.nativecons || constatics.devpipe)
   {
     w32Sleep(1); /* millisecs */
@@ -7608,7 +7721,7 @@ int w32ConGetSize( int *width, int *height) /* one based */
 {
   if (!constatics.hidden)
   {
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     if (constatics.devpipe)
     {
       static int _cache_height = -1, _cache_width = -1;
@@ -7649,7 +7762,7 @@ int w32ConClear(void)
 {
   if (!constatics.hidden)
   {
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     if (constatics.devpipe)
     {
       if (__pipe_puts(("\x1B""[2J""\x1B""[1;1H"), 10 ) < 0)
@@ -7684,7 +7797,7 @@ int w32ConSetPos(int col, int row) /* zero based */
 {
   if (!constatics.hidden)
   {
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     if (constatics.devpipe)
     {
       char buffer[64];
@@ -7715,7 +7828,7 @@ int w32ConGetPos(int *col, int *row) /* zero based */
 {
   if (!constatics.hidden)
   {
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     if (constatics.devpipe)
     {
       return __pipe_getxy(col, row);
@@ -7746,7 +7859,7 @@ int w32ConGetType(void)
 {
   if (constatics.hidden)
     return 0;
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (constatics.nativecons)
     return 'C';
   if (constatics.devpipe)
@@ -7863,7 +7976,7 @@ static BOOL CALLBACK __SendCmdEnumFunc(HWND hwnd,LPARAM lParam)
             cbsc->ackcount++;
         }
       }
-      #if (CLIENT_OS == OS_WIN32)
+      #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       else if (cbsc->msg == WM_COMMAND &&
                 (cbsc->wParam == DNETC_WCMD_RESTART ||
                 cbsc->wParam == DNETC_WCMD_SHUTDOWN))
@@ -7893,7 +8006,7 @@ static int __findOtherClient(void) /* 0=none,0x1=bywindow,2=bymux,4=ntsvc*/
   else if (FindWindow( NULL, W32CLI_OLD_CONSOLE_NAME ))
     rc |= 0x01;
 
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   {
     HANDLE hmutex;
     SECURITY_ATTRIBUTES sa;
@@ -7940,14 +8053,14 @@ int w32PostRemoteWCMD( int cmd ) /* returns <0 if not found, or */
   {
     rc = +1; /* assume msgfailed */
 
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     /* take away focus from all windows - this is particularly critical
        for win9x console sessions since they hog cputime when in foreground */
     //SetForegroundWindow(GetDesktopWindow());
     //SetActiveWindow(GetDesktopWindow());
     #endif
 
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     if (winGetVersion()>=2000)  /* NT Only */
     {
       int svccmd = -1;
@@ -8005,7 +8118,7 @@ int w32PostRemoteWCMD( int cmd ) /* returns <0 if not found, or */
               rc = 0; /* success! */
             else
             {
-              #if (CLIENT_OS == OS_WIN32)
+              #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
               Sleep(500);
               #else
               Yield();
