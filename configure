@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.245 2001/04/06 16:18:44 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.246 2001/04/07 16:17:25 cyp Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -53,6 +53,7 @@ TARGET_CCFLAGS=""
 TARGET_LD=""          # blank implies TARGET_CC
 TARGET_LDFLAGS=""
 TARGET_LIBS=""
+TARGET_HDIRS="./common" # the rest are added as needed
 TARGET_AS="as"
 TARGET_NASM="nasm"     #<- set this to "" if you have no nasm
 TARGET_NASM_FMT="elf"  #<- set this to "" if you have no nasm
@@ -171,6 +172,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi
     if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
       # -- non-nasm/rc5 --
+      TARGET_HDIRS="$TARGET_HDIRS ./rc5"
       TARGET_ADDSRCS="$TARGET_ADDSRCS \
                       rc5/x86/rg-486.cpp     rc5/x86/rg-smc.cpp \
                       rc5/x86/rg-k5.cpp      rc5/x86/brf-p5.cpp \
@@ -207,11 +209,13 @@ add_sources() # $1=os, $2=arch, $3=custom
     if [ "$OGR" = "ogr2" ]; then 
       # -- no special versions yet --
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+      TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
       TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     elif [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
       # -- non-nasm/ogr --
       #TARGET_ADDASMS="$TARGET_ADDASMS $OGR/x86/ogr.S"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/x86/ogr-a.cpp $OGR/x86/ogr-b.cpp"
+      TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogr_sup.cpp $OGR/ansi/ogr_dat.cpp"
       ##TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
       TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
@@ -219,6 +223,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       # -- nasm/ogr --
       #TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogr.asm"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/x86/ogr-a.cpp $OGR/x86/ogr-b.cpp"
+      TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogr_sup.cpp $OGR/ansi/ogr_dat.cpp"
       ##TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
       TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
@@ -227,6 +232,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     # --------------- csc ----------------
     #if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
     #  TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
+    #  TARGET_HDIRS="$TARGET_HDIRS ./csc"
     #  TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
     #else
     #  TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
@@ -283,7 +289,8 @@ add_sources() # $1=os, $2=arch, $3=custom
     #-- ogr --
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
-	  ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
+    TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
+    ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
     ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
   #-----------------------------------------------------------------  
   elif [ "$2" = "hppa" ]; then
@@ -292,6 +299,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     else
       TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS $OGR_ANSI_SRCS"
       TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+      TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
     fi
     ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
     ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
@@ -310,6 +318,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ASFLAGS="$TARGET_ASFLAGS -I./rc5/68k"
     fi
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+    TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogr_sup.cpp $OGR/ansi/ogr_dat.cpp"
     TARGET_ADDOBJS="$TARGET_ADDOBJS output/ogr000.o output/ogr020.o \
                                     output/ogr030.o output/ogr040.o \
@@ -340,6 +349,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+    TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
   #-----------------------------------------------------------------  
   elif [ "$2" = "ppc" -o "$2" = "power" ]; then
     XLC_LINTILLA_ASMS="rc5/ppc/crunch_lintilla.ppcxlc.s \
@@ -394,11 +404,12 @@ add_sources() # $1=os, $2=arch, $3=custom
     ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+    TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
 
     if [ "${1}" = "macosx" ]; then  #... and macosxserver (apple cc)
-     if [ "X$3" = "X" ]; then #mach3+
-       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"  
-     fi
+      if [ "X$3" = "X" ]; then #mach3+
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"  
+      fi
     fi
   #-----------------------------------------------------------------  
   elif [ "$2" = "arm" ]; then
@@ -423,6 +434,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+    TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
   #-----------------------------------------------------------------  
   elif [ "$2" = "88k" -o "$2" = "sh4" -o "$2" = "ia64" \
       -o "$2" = "vax" -o "$2" = "s390" -o "$2" = "generic" ]; then
@@ -434,6 +446,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+    TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
   #-----------------------------------------------------------------  
   elif [ "$2" = "ia64" ]; then
     # pure ansi target. (4 pipeline RC5 core)
@@ -444,6 +457,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+    TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
   #-----------------------------------------------------------------  
   else
     echo "Warning. Unknown arch '$2' to add_sources. Using all-ANSI cores."
@@ -454,6 +468,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+    TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
   fi  
 }
 
@@ -2169,8 +2184,8 @@ fi
 #
 if [ -z "${TARGET_IS_CROSSCOMPILE}" ]; then
   echo "Building test program..."
-  echo "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -DOGRDIR=${OGR} -o testplat"
-  ${SHELL} -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -DOGRDIR=${OGR} -o testplat"
+  echo "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
+  ${SHELL} -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
   if [ $? -ne 0 ]; then
     echo "Compilation failed.  Check your target options."
     echo " ---------------------------------------------"
@@ -2193,7 +2208,7 @@ fi
 if [ -z "$TARGET_NASM_FMT" ]; then
   TARGET_NASM_FMT="elf"
 fi
-TARGET_NASMFLAGS="-f $TARGET_NASM_FMT -i rc5/x86/ -i des/x86/ -i csc/x86/"
+TARGET_NASMFLAGS="-f $TARGET_NASM_FMT" # -i rc5/x86/ -i des/x86/ -i csc/x86/"
 if [ "$TARGET_NASM_FMT" = "elf" ]; then
   TARGET_NASMFLAGS="$TARGET_NASMFLAGS -d__ELF__"
 else
@@ -2222,11 +2237,17 @@ elif [ -n "$TARGET_GENMAN" ]; then
   TARGET_DOCFILES="${TARGET_DOCFILES} ${TARGET_BINNAME}.1"
 fi
 
+#
+# Construct include paths
+#
+TARGET_INCSWITCHES=""
+for incdir in ${TARGET_HDIRS}; do
+  TARGET_INCSWITCHES="${TARGET_INCSWITCHES} -I${incdir}"
+done  
 
 #
 # Generate the list of output objects
 #
-
 TARGET_ALLOBJS=""        # obj, obj, obj, obj, ...
 TARGET_SRCOBJLIST="none" # type1, src, obj, src, obj, ... type2, src, obj ... 
                          # the "none" in there initially is a dummy to squelch
@@ -2301,7 +2322,7 @@ echo "" >> Makefile
 
 echo "CC = ${TARGET_CC}" >> Makefile
 echo "CP = ${TARGET_CP}" >> Makefile
-echo "HPATHS = -I./common -I./rc5 -I./des -I./$OGR -I./csc" >> Makefile
+echo "HPATHS = ${TARGET_INCSWITCHES}" >> Makefile
 echo "CCFLAGS = ${TARGET_CCFLAGS} \${HPATHS}" >> Makefile
 if [ "${BUILDNAME}" = "aix-all" ]; then
   echo "PPC601FLAGS = ${AIXPPC601FLAGS} \${HPATHS}" >> Makefile
@@ -2461,7 +2482,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       TARGETSRC="$target"
     # ------------------------------------  
     elif [ "${TARGETTYP}" = "cc" -o "${TARGETTYP}" = "cc-decunix" ]; then
-      TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
+      TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
       has_problem_h=0
       has_client_h=0
       has_ogr_h=0
@@ -2538,8 +2559,20 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       TARGETSRC=""
     # ------------------------------------  
     elif [ "${TARGETTYP}" = "nasm" ]; then
+      dirlist=`echo "${TARGETSRC}"|tr '/' ' '`
+      incswitch=""
+      prevdir=""
+      for subdir in $dirlist; do
+        if [ -n "$prevdir" ]; then
+          incswitch="$incswitch$prevdir/"
+        fi          
+        prevdir="$subdir"
+      done  
+      if [ -d "$incswitch" ]; then
+        incswitch="-i $incswitch"
+      fi  
       echo "$target:	${TARGETSRC}" >> Makefile
-      echo "	\${NASM} \${NASMFLAGS} ${TARGETSRC} -o $target" >> Makefile
+      echo "	\${NASM} \${NASMFLAGS} ${incswitch} ${TARGETSRC} -o $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------  
@@ -2553,7 +2586,7 @@ fi
 if [ "$TARGET_OGR_MULTI" = "68k" ]; then
   echo "Generating Makefile 68k multi-core OGR dependency targets..."
   TARGETSRC="$OGR/ansi/ogr.cpp"
-  TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
+  TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
   OGR68K="000 020 030 040 060"
   for targetext in ${OGR68K}; do
     echo "output/ogr${targetext}.o:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
