@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.189 2000/09/21 16:36:09 oliver Exp $
+# @(#)$Id: configure,v 1.222.2.190 2000/10/07 17:53:37 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -56,8 +56,8 @@ TARGET_LD=""          # blank implies TARGET_CC
 TARGET_LDFLAGS=""
 TARGET_LIBS=""
 TARGET_AS="as"
-TARGET_NASM="nasm"
-TARGET_NASM_FMT="elf"
+TARGET_NASM="nasm"     #<- set this to "" if you have no nasm
+TARGET_NASM_FMT="elf"  #<- set this to "" if you have no nasm
 TARGET_ASFLAGS=""
 TARGET_STRIP="strip"
 TARGET_CP="cp"
@@ -65,6 +65,8 @@ TARGET_CP="cp"
 CLIENTCPU=""     # non-blank implies a hardcoded value
 CLIENTOS=""      # non-blank implies a hardcoded value
 
+TARGET_ADDCCFLAGS=""
+TARGET_ADDASFLAGS=""
 TARGET_ADDSRCS=""
 TARGET_ADDASMS=""
 TARGET_ADDNASMS=""
@@ -88,6 +90,317 @@ TARGET_GENMAN=1        # non-blank generate a man page, or not (blank)
 TARGET_TARBALL=""     # 'binnameNNN-' is auto prepended, ".tar.gz" is appended
 TARGET_TARBALL_COMMENT="" # special comments for tarball.readme (if needed)
 TARGET_ARCTYPE="tgz"  # or "zip", "lha" or "tgzdir"
+
+# -----------------------------------------------------------------------
+
+add_sources() # $1=os, $2=arch, $3=custom
+{
+  # additions to COMMON_SRCS need to be before ${COMMON_SRCS}
+  # so that speed sensitive stuff can remain together at the 'bottom'
+  if [ "$1" = "freebsd" -o "$1" = "netbsd" -o "$1" = "openbsd" \
+    -o "$1" = "bsdos"   -o "$1" = "os2"    -o "$1" = "amigaos" \
+    -o "$1-$3" = "macosx-" -o "$1-$3" = "linux-" ]; then
+    COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
+    TARGET_ADDCCFLAGS="$TARGET_ADDCCFLAGS -DLURK"
+  fi  
+  
+  # -------------------------------------------------------------------
+
+  # additions to COMMON_SRCS need to be before ${COMMON_SRCS}
+  # so that speed sensitive stuff can remain together at the 'bottom'
+  if [ "$1" = "amigaos" ]; then 
+    COMMON_SRCS="platforms/amiga/amVersion.c \
+                 platforms/amiga/amSupport.c \
+                 platforms/amiga/amTime.c \
+                 platforms/amiga/amNetwork.c \
+                 platforms/amiga/amConsole.c \
+                 ${COMMON_SRCS}"
+  elif [ "$1" = "linux" ]; then 
+    COMMON_SRCS="platforms/linux/resolv.c \
+    	           platforms/linux/li_inst.c
+                 ${COMMON_SRCS}"
+    #(unneeded) TARGET_ADDCCFLAGS="$TARGET_ADDCCFLAGS -DUNIVERSALRESOLVER"
+  elif [ "$1" = "riscos" ]; then
+    COMMON_SRCS="platforms/riscos/riscos_sup.cpp \
+                 platforms/riscos/riscos_x86.cpp \
+                 ${COMMON_SRCS}"
+    TARGET_ADDASMS="$TARGET_ADDASMS platforms/riscos/riscos_asm.s"
+  elif [ "$1" = "os2" ]; then
+    COMMON_SRCS="platforms/os2cli/os2inst.cpp ${COMMON_SRCS}"
+  fi  
+
+  # -------------------------------------------------------------------
+
+  # only generic/ansi cores are declared here. 
+  # arch specific ones are declared in each arch specific section.
+  #-- RC5 -- --------------------------------------------------
+  RC5_ANSI2_SRCS="rc5/ansi/rc5ansi_2-rg.cpp" # 2 pipeline ("rc5/ansi/2-rg.c")
+  RC5_ANSI1_SRCS="rc5/ansi/rc5ansi_1-rg.cpp" # 1 pipeline
+  # -- DES -- (needs -DHAVE_DES_CORES) -------------------------
+  KWAN_SLICE_SRCS1="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
+  KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
+  KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"
+  KWAN_SLICE_SRCS4="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan4.cpp"
+  MEGGS_SLICE_SRCS1="des/deseval-meggs2.cpp des/des-slice-meggs.cpp"
+  MEGGS_SLICE_SRCS2="des/deseval-meggs3.cpp des/des-slice-meggs.cpp"
+  # -- CSC -- (needs -DHAVE_CSC_CORES)
+  CSC_ANSI_SRCS="csc/convcsc.cpp csc/csc-common.cpp csc/csc-1k-i.cpp csc/csc-1k.cpp csc/csc-6b-i.cpp csc/csc-6b.cpp"
+  # -- OGR -- (needs -DHAVE_OGR_CORES) -------------------------
+  OGR_ANSI_SRCS="ogr/ansi/ogr.cpp ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
+
+  # -------------------------------------------------------------------
+
+  if [ "$2" = "x86" ]; then
+    RC5X86_SRCS="rc5/x86/rc5-486-rg.cpp \
+	     rc5/x86/rc5-6x86-rg.cpp \
+	     rc5/x86/rc5p5brf.cpp \
+	     rc5/x86/rc5-p6-rg.cpp \
+	     rc5/x86/rc5-k5-rg.cpp \
+	     rc5/x86/rc5-k6-rg.cpp"
+    NASM_RC5X86_SRCS="rc5/x86/nasm/rg486.asm \
+		   rc5/x86/nasm/rc5-rgk5.asm \
+	     rc5/x86/nasm/brfp5.asm \
+		   rc5/x86/nasm/rc5-rgk6.asm \
+		   rc5/x86/nasm/rc5-rgp6.asm \
+		   rc5/x86/nasm/rg6x86.asm \
+		   rc5/x86/nasm/rc5mmx.asm \
+		   rc5/x86/nasm/rc5-hbk7.asm"
+    CSC_ASM_SRCS="csc/x86/convcsc.asm \ #if adding x86 asm CSC, also -DMMX_CSC
+	     csc/x86/csc-1k-i.asm \
+	     csc/x86/csc-1k.asm \
+	     csc/x86/csc-6b-i.asm \
+	     csc/x86/csc-6b.asm \
+	     csc/x86/csc-comm.asm \
+       csc/x86/mmx/csc-mmx.asm"
+    DESX86_SRCS="des/des-x86.cpp"
+    DESMMX_SRCS="des/des-slice-meggs.cpp"
+    NASM_DESMMX_SRCS="des/mmx-bitslice/deseval-mmx.asm"
+
+    #-- ogr --
+    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+    if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
+      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_NO_NASM"
+      TARGET_ADDASMS="$TARGET_ADDASMS platforms/x86ident.S"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5X86_SRCS"
+      ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
+      ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
+    else
+      TARGET_ADDNASMS="$TARGET_ADDNASMS platforms/x86ident.asm"
+      TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_RC5X86_SRCS"
+      TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_RC5"
+      if [ "$1-$3" = "linux-" ]; then # linux-elf has SMC
+        TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/x86/rc5-486-smc-rg.cpp"
+        TARGET_CCFLAGS="$TARGET_CCFLAGS -DSMC"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -static -Xlinker -omagic"
+        #-Xlinker -omagic implies -static
+      fi
+      ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_BITSLICER -DKWAN -DMEGGS -DHAVE_DES_CORES"
+      ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+      ##des## TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
+      ##des## TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_DESMMX_SRCS"
+      ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_CSC -DHAVE_CSC_CORES"
+      ##csc## TARGET_ADDNASMS="$TARGET_ADDNASMS $CSC_ASM_SRCS"
+    fi  
+  #-----------------------------------------------------------------  
+  elif [ "$2" = "sparc" ]; then
+    if [ "$1" = "solaris" -o "$1" = "sunos" ]; then
+      TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/ultra/rc5-ultra-crunch.cpp"
+    else  
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+    fi  
+    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+    if [ "X$3" = "Xultra" ]; then
+      DESULTRA_SRCS_C="des/ultrasparc/des-slice-ultrasparc.cpp \
+                       des/ultrasparc/simple.c \
+                       des/ultrasparc/des_ultra_crunch.c \
+                       des/ultrasparc/kwan_from_to.c \
+                       des/ultrasparc/do_all.c \
+                       des/ultrasparc/do_all_fancy.c \
+                       des/ultrasparc/do_s1.c \
+                       des/ultrasparc/do_s1_s3.c \
+                       des/ultrasparc/do_s2.c \
+                       des/ultrasparc/do_s3.c \
+                       des/ultrasparc/do_s4.c \
+                       des/ultrasparc/do_s5.c \
+                       des/ultrasparc/do_s6.c \
+                       des/ultrasparc/do_s7.c \
+                       des/ultrasparc/do_s8.c"
+      DESULTRA_SRCS_ASM="des/ultrasparc/des-slice-ultrasparc.cpp \
+                       des/ultrasparc/des_ultra_crunch.c"
+      ##des## TARGET_ADDASMS="des/ultrasparc/simple.handopt.s"
+      ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES"
+      ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DESULTRA_SRCS_ASM"
+    else
+      DESSPARC_SRCS_C="des/des-slice.cpp des/deseval.cpp"
+      ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES"
+      ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DESSPARC_SRCS_C"
+    fi
+  #-----------------------------------------------------------------  
+  elif [ "$2" = "mips" ]; then
+    #-- rc5 --
+    if [ "$TARGET_CC" = "CC" ]; then # mips-crunch doesn't compile with IRIX CC
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+    else                             # gcc targets. mips-crunch.cpp is faster
+      TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/mips/mips-crunch.cpp"
+    fi
+    #-- ogr --
+    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+	  ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
+    ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
+  #-----------------------------------------------------------------  
+  elif [ "$2" = "hppa" ]; then
+    if [ "$TARGET_CC" = "CC" ]; then
+      TARGET_ADDASMS="$TARGET_ADDASMS rc5/parisc/parisc.s"
+    else
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+    fi
+	  ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
+    ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
+    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+  #-----------------------------------------------------------------  
+  elif [ "$2" = "68k" ]; then
+    if [ "$1" = "amigaos" ]; then
+      TARGET_ADDASMS="$TARGET_ADDASMS rc5/68k/rc5-000_010-jg.s \
+                                      rc5/68k/rc5-020_030-jg.s \
+                                      rc5/68k/rc5-040_060-jg.s"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp \
+                                      ogr/ansi/ogr_dat.cpp"
+      TARGET_ADDOBJS="$TARGET_ADDOBJS output/ogr000.o output/ogr020.o \
+                                      output/ogr030.o output/ogr040.o \
+                                      output/ogr060.o"
+      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+    else
+      TARGET_ADDASMS="$TARGET_ADDASMS rc5/68k/crunch.68k.gcc.s"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/68k/rc5_68k_gcc_crunch.cpp"
+      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+    fi  
+    ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN"
+    ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $SLICE_SRCS3"
+  #-----------------------------------------------------------------  
+  elif [ "$2" = "alpha" ]; then
+    if [ "${1}-${3}" = "digital-unix-ev4" ]; then
+      TARGET_ADDSRCS="rc5/alphaasm/rc5-digital-unix-alpha-ev4.cpp"
+      ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMEGGS -DKWAN"
+      ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
+    else
+      TARGET_ADDSRCS="rc5/alpha/axp-bmeyer.cpp"
+      if [ "${1}" = "digital-unix" ]; then
+        TARGET_ADDASMS="rc5/alpha/axp-bmeyer-osf.s"
+      else  
+        TARGET_ADDASMS="rc5/alpha/axp-bmeyer.s"
+      fi  
+      #DWORZ_SLICE_SRCS="des/alpha-asm/deseval-dworz3.S des/alpha-asm/des-slice-dworz.cpp"
+      ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DDWORZ -DHAVE_DES_CORES"
+      ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DWORZ_SLICE_SRCS"
+    fi  
+    ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
+    ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
+    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+  #-----------------------------------------------------------------  
+  elif [ "$2" = "ppc" -o "$2" = "power" ]; then
+    XLC_LINTILLA_ASMS="rc5/ppc/crunch_lintilla.ppcxlc.s \
+		   rc5/ppc/crunch_allitnil_552.ppcxlc.s"
+    RC5PPC_SRCS="rc5/ppc/crunch_lintilla_296.ppc.s \
+       rc5/ppc/crunch_lintilla_296-604.ppc.s \
+	     rc5/ppc/crunch_allitnil_552.ppc.s \
+	     rc5/ppc/rc5_unit_func_lintilla.cpp \
+	     rc5/ppc/rc5_unit_func_lintilla-604.cpp \
+	     rc5/ppc/rc5_unit_func_allitnil.cpp"
+    RC5PPC_MWCC_SRCS="rc5/ppc/crunch_lintilla_296.ppc.c \
+       rc5/ppc/crunch_lintilla_296-604.ppc.c \
+	     rc5/ppc/crunch_allitnil_552.ppc.c \
+	     rc5/ppc/rc5_unit_func_lintilla.cpp \
+	     rc5/ppc/rc5_unit_func_lintilla-604.cpp \
+	     rc5/ppc/rc5_unit_func_allitnil.cpp"
+    RC5PPC_APPLE_SRCS="rc5/ppc/crunch_lintilla_296_apple.ppc.s \
+       rc5/ppc/crunch_lintilla_296-604_a.ppc.s \
+	     rc5/ppc/crunch_allitnil_552_apple.ppc.s \
+	     rc5/ppc/rc5_unit_func_lintilla.cpp \
+	     rc5/ppc/rc5_unit_func_lintilla-604.cpp \
+	     rc5/ppc/rc5_unit_func_allitnil.cpp"
+    RC5ALTIVEC_SRCS="rc5/ppc/rc5loopX.s \
+		   rc5/ppc/rc5_unit_func_vec.cpp"
+       
+    if [ "$2" = "power" ]; then
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+      if [ "$1-$3" = "aix-aixall" ]; then
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_SRCS"  
+      fi  
+    elif [ "$TARGET_CC" = "mwcc" ]; then
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_MWCC_SRCS"
+    elif [ "$TARGET_CC" = "xlC" ]; then
+      if [ "X$3" = "aix32" ]; then
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5/ppc/crunch_allitnil_552.ppc.s \
+                                        rc5/ppc/crunch_lintilla_296.ppc.s \
+                                        rc5/ppc/crunch_lintilla_296-604.ppc.s"
+      else # aix4
+        TARGET_ADDASMS="$TARGET_ADDASMS $XLC_LINTILLA_ASMS"
+      fi  
+    elif [ "${1}" = "macosx" ]; then  #... and macosxserver (apple cc)
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_APPLE_SRCS"
+      if [ "X$3" = "X" ]; then #mach3+
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5ALTIVEC_SRCS"  
+      fi
+    else
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_SRCS"  
+    fi
+    ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMEGGS -DKWAN -DHAVE_DES_CORES"
+    ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
+    ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
+    ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
+    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+  #-----------------------------------------------------------------  
+  elif [ "$2" = "arm" ]; then
+    if [ "$1" = "riscos" ]; then
+      TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1.s rc5/arm/rc5-arm-2.s rc5/arm/rc5-arm-3.s"
+      ##des## TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-arm.s des/arm/des-slice-sa.s"
+      ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES"
+    elif [ "$1-$3" = "linux-" ]; then  #linux-elf
+      TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1-gnu-elf.s \
+                                      rc5/arm/rc5-arm-2-gnu-elf.s \
+                                      rc5/arm/rc5-arm-3-gnu-elf.s"
+      ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -HAVE_DES_CORES -DKWAN"
+      ##des## TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-sa-gnu-elf.s des/arm/des-slice-arm-gnu-elf.s"
+    else      
+      TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1-gnu.s \
+                                      rc5/arm/rc5-arm-2-gnu.s \
+                                      rc5/arm/rc5-arm-3-gnu.s "
+      ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -HAVE_DES_CORES -DKWAN"
+      ##des## TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-sa-gnu.s des/arm/des-slice-arm-gnu.s"
+    fi
+    ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
+    ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
+    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+  #-----------------------------------------------------------------  
+  elif [ "$2" = "88k" -o "$2" = "sh4" -o "$2" = "vax" -o "$2" = "s390" ]; then
+    # pure ansi targets. (2 pipeline RC5 core)
+    TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+    ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES -DMEGGS -DKWAN"
+    ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
+    ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
+    ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
+    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+  #-----------------------------------------------------------------  
+  else
+    echo "Warning. Unknown arch '$2' to add_sources. Using all-ANSI cores."
+    TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+    ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
+    ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
+    ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
+    ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
+    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+  fi  
+}
 
 # -------------------------------------------------------------------
 
@@ -461,126 +774,9 @@ COMMON_SRCS="common/minihttp.cpp \
 	     ${COMMON_SRCS}"
 fi
 
-# -----------------------------------------------------------------------
+# **********************************************************************
 
-#
-# Source files making up the RC5 core code
-#
-XLC_LINTILLA_ASMS="rc5/ppc/crunch_lintilla.ppcxlc.s \
-		   rc5/ppc/crunch_allitnil_552.ppcxlc.s"
-
-RC5PPC_SRCS="rc5/ppc/crunch_lintilla_296.ppc.s \
-        rc5/ppc/crunch_lintilla_296-604.ppc.s \
-	     rc5/ppc/crunch_allitnil_552.ppc.s \
-	     rc5/ppc/rc5_unit_func_lintilla.cpp \
-	     rc5/ppc/rc5_unit_func_lintilla-604.cpp \
-	     rc5/ppc/rc5_unit_func_allitnil.cpp"
-             
-RC5PPC_MWCC_SRCS="rc5/ppc/crunch_lintilla_296.ppc.c \
-        rc5/ppc/crunch_lintilla_296-604.ppc.c \
-	     rc5/ppc/crunch_allitnil_552.ppc.c \
-	     rc5/ppc/rc5_unit_func_lintilla.cpp \
-	     rc5/ppc/rc5_unit_func_lintilla-604.cpp \
-	     rc5/ppc/rc5_unit_func_allitnil.cpp"
-
-RC5PPC_APPLE_SRCS="rc5/ppc/crunch_lintilla_296_apple.ppc.s \
-        rc5/ppc/crunch_lintilla_296-604_a.ppc.s \
-	     rc5/ppc/crunch_allitnil_552_apple.ppc.s \
-	     rc5/ppc/rc5_unit_func_lintilla.cpp \
-	     rc5/ppc/rc5_unit_func_lintilla-604.cpp \
-	     rc5/ppc/rc5_unit_func_allitnil.cpp"
-
-RC5ALTIVEC_SRCS="rc5/ppc/rc5loopX.s \
-		 rc5/ppc/rc5_unit_func_vec.cpp"
-
-NASM_RC5X86_SRCS="rc5/x86/nasm/rg486.asm \
-		  rc5/x86/nasm/rc5-rgk5.asm \
-		  rc5/x86/nasm/brfp5.asm \
-		  rc5/x86/nasm/rc5-rgk6.asm \
-		  rc5/x86/nasm/rc5-rgp6.asm \
-		  rc5/x86/nasm/rg6x86.asm \
-		  rc5/x86/nasm/rc5mmx.asm \
-		  rc5/x86/nasm/rc5-hbk7.asm"
-
-RC5X86_SRCS="rc5/x86/rc5-486-rg.cpp \
-	     rc5/x86/rc5-6x86-rg.cpp \
-	     rc5/x86/rc5p5brf.cpp \
-	     rc5/x86/rc5-p6-rg.cpp \
-	     rc5/x86/rc5-k5-rg.cpp \
-	     rc5/x86/rc5-k6-rg.cpp"
-
-#
-# Source files making up the DES core code
-#
-KWAN_SLICE_SRCS1="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
-KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
-KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"
-KWAN_SLICE_SRCS4="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan4.cpp"
-
-MEGGS_SLICE_SRCS1="des/deseval-meggs2.cpp des/des-slice-meggs.cpp"
-MEGGS_SLICE_SRCS2="des/deseval-meggs3.cpp des/des-slice-meggs.cpp"
-
-DWORZ_SLICE_SRCS="des/alpha-asm/deseval-dworz3.S des/alpha-asm/des-slice-dworz.cpp"
-
-DESX86_SRCS="des/des-x86.cpp"
-
-DESMMX_SRCS="des/des-slice-meggs.cpp"
-NASM_DESMMX_SRCS="des/mmx-bitslice/deseval-mmx.asm"
-
-
-DESULTRA_SRCS_C="des/ultrasparc/des-slice-ultrasparc.cpp \
-		 des/ultrasparc/simple.c \
-		 des/ultrasparc/des_ultra_crunch.c \
-		 des/ultrasparc/kwan_from_to.c \
-		 des/ultrasparc/do_all.c \
-		 des/ultrasparc/do_all_fancy.c \
-		 des/ultrasparc/do_s1.c \
-		 des/ultrasparc/do_s1_s3.c \
-		 des/ultrasparc/do_s2.c \
-		 des/ultrasparc/do_s3.c \
-		 des/ultrasparc/do_s4.c \
-		 des/ultrasparc/do_s5.c \
-		 des/ultrasparc/do_s6.c \
-		 des/ultrasparc/do_s7.c \
-		 des/ultrasparc/do_s8.c"
-DESULTRA_SRCS_ASM="des/ultrasparc/des-slice-ultrasparc.cpp \
-		   des/ultrasparc/des_ultra_crunch.c"
-
-#
-# Source files making up the OGR core code
-#
-OGR_ANSI_SRCS="ogr/ansi/ogr.cpp ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
-#if adding OGR, also -DHAVE_OGR_CORES
-
-OGR_PPC_SRCS="ogr/ppc/ogr-ppc.cpp ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
-OGR_ALTIVEC_SRCS="ogr/ppc/ogr-vec.cpp"
-
-#
-# Source files making up the CSC core code.
-#
-CSC_ANSI_SRCS="csc/convcsc.cpp csc/csc-common.cpp \
-               csc/csc-1k-i.cpp csc/csc-1k.cpp \
-               csc/csc-6b-i.cpp csc/csc-6b.cpp"
-#if adding CSC, also -DHAVE_CSC_CORES
-
-#if adding x86 asm CSC, also -DMMX_CSC
-CSC_ASM_SRCS="csc/x86/convcsc.asm \
-	      csc/x86/csc-1k-i.asm \
-	      csc/x86/csc-1k.asm \
-	      csc/x86/csc-6b-i.asm \
-	      csc/x86/csc-6b.asm \
-	      csc/x86/csc-comm.asm \
-              csc/x86/mmx/csc-mmx.asm"
-
-# ----------------------------------------------------------------------
-
-
-#
-# Determine the platform specific options for this target
-#
 case "$1" in
-
-###### MIPS based platforms
 
     # IRIX w/MIPSpro compilers.
     #
@@ -610,297 +806,251 @@ case "$1" in
     # lyndon@orthanc.ab.ca (Nov 28, 1999)
 
     *mips-cc-n32)	# [lyndon]	Generic 32 bit client
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} \
-			-DCLIENT_OS_NAME=\"\\\"Irix (generic-n32)\\\"\""
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
-	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_32}"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="${OPTS_MIPSPRO_DOCS} readme.irix"
-	TARGET_TARBALL="irix6.5-mips-n32"
-	;;
+       TARGET_CC="CC"
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} \
+			         -DCLIENT_OS_NAME=\"\\\"Irix (generic-n32)\\\"\""
+       TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_32}"
+       TARGET_LIBS="-lpthread"
+       TARGET_DOCFILES="${OPTS_MIPSPRO_DOCS} readme.irix"
+       TARGET_TARBALL="irix6.5-mips-n32"
+       add_sources "irix" "mips"
+	     ;;
 
     *mips-cc-64)	# [lyndon]	Generic 64 bit client
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} \
-			-DCLIENT_OS_NAME=\"\\\"Irix (generic-64)\\\"\""
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
-	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_64}"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="${OPTS_MIPSPRO_DOCS} readme.irix"
-	TARGET_TARBALL="irix6.5-mips-64"
-	;;
+       TARGET_CC="CC"
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} \
+			    -DCLIENT_OS_NAME=\"\\\"Irix (generic-64)\\\"\""
+       TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_64}"
+       TARGET_LIBS="-lpthread"
+       TARGET_DOCFILES="${OPTS_MIPSPRO_DOCS} readme.irix"
+       TARGET_TARBALL="irix6.5-mips-64"
+       add_sources "irix" "mips"
+       ;;
 
     *mips-cc-ip19)	# [lyndon]
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip19 \
-			-DCLIENT_OS_NAME=\"\\\"Irix IP19\\\"\""
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
-	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
-	TARGET_TARBALL="irix6-mips-ip19"
-	;;
+       TARGET_CC="CC"
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip19 \
+            -DCLIENT_OS_NAME=\"\\\"Irix IP19\\\"\""
+       TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
+       TARGET_LIBS="-lpthread"
+       TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
+       TARGET_TARBALL="irix6-mips-ip19"
+       add_sources "irix" "mips"
+	     ;;
 
     *mips-cc-ip20)	# [lyndon]
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip20 \
-			-DCLIENT_OS_NAME=\"\\\"Irix IP20\\\"\""
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
-	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
-	TARGET_TARBALL="irix6-mips-ip20"
-	;;
+       TARGET_CC="CC"
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip20 \
+			    -DCLIENT_OS_NAME=\"\\\"Irix IP20\\\"\""
+       TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
+       TARGET_LIBS="-lpthread"
+       TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
+       TARGET_TARBALL="irix6-mips-ip20"
+       add_sources "irix" "mips"
+       ;;
 
     *mips-cc-ip21)	# [lyndon]
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip21 \
-			-DCLIENT_OS_NAME=\"\\\"Irix IP21\\\"\""
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
-	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
-	TARGET_TARBALL="irix6-mips-ip21"
-	;;
+       TARGET_CC="CC"
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip21 \
+			         -DCLIENT_OS_NAME=\"\\\"Irix IP21\\\"\""
+       TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
+       TARGET_LIBS="-lpthread"
+       TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
+       TARGET_TARBALL="irix6-mips-ip21"
+       add_sources "irix" "mips"
+	     ;;
 
     *mips-cc-ip22_4k)	# [lyndon]
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip22_4k \
-			-DCLIENT_OS_NAME=\"\\\"Irix IP22/R4K\\\"\""
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
-	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
-	TARGET_TARBALL="irix6-mips-ip22_4k"
-	;;
+       TARGET_CC="CC"
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip22_4k \
+			         -DCLIENT_OS_NAME=\"\\\"Irix IP22/R4K\\\"\""
+       TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
+       TARGET_LIBS="-lpthread"
+       TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
+       TARGET_TARBALL="irix6-mips-ip22_4k"
+       add_sources "irix" "mips"
+       ;;
 
     *mips-cc-ip22_5k)	# [lyndon]
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip22_5k \
-			-DCLIENT_OS_NAME=\"\\\"Irix IP22/R5K\\\"\""
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
-	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
-	TARGET_TARBALL="irix6-mips-ip22_5k"
-	;;
+       TARGET_CC="CC"
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip22_5k \
+			       -DCLIENT_OS_NAME=\"\\\"Irix IP22/R5K\\\"\""
+       TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
+       TARGET_LIBS="-lpthread"
+       TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
+       TARGET_TARBALL="irix6-mips-ip22_5k"
+       add_sources "irix" "mips"
+	     ;;
 
     *mips-cc-ip24)	# [lyndon]
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip24 \
-			-DCLIENT_OS_NAME=\"\\\"Irix IP24\\\"\""
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
-	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
-	TARGET_TARBALL="irix6-mips-ip24"
-	;;
+       TARGET_CC="CC"
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip24 \
+			            -DCLIENT_OS_NAME=\"\\\"Irix IP24\\\"\""
+       TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
+       TARGET_LIBS="-lpthread"
+       TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
+       TARGET_TARBALL="irix6-mips-ip24"
+       add_sources "irix" "mips"
+       ;;
 
     *mips-cc-ip25)	# [lyndon]
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip25 \
-			-DCLIENT_OS_NAME=\"\\\"Irix IP25\\\"\""
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
-	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
-	TARGET_TARBALL="irix6-mips-ip25"
-	;;
+       TARGET_CC="CC"
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip25 \
+			    -DCLIENT_OS_NAME=\"\\\"Irix IP25\\\"\""
+       TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
+       TARGET_LIBS="-lpthread"
+       TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
+       TARGET_TARBALL="irix6-mips-ip25"
+       add_sources "irix" "mips"
+	     ;;
 
     *mips-cc-ip26)	# [lyndon]
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip26 \
-			-DCLIENT_OS_NAME=\"\\\"Irix IP26\\\"\""
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
-	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
-	TARGET_TARBALL="irix6-mips-ip26"
-	;;
+       TARGET_CC="CC"
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip26 \
+			    -DCLIENT_OS_NAME=\"\\\"Irix IP26\\\"\""
+       TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
+       TARGET_LIBS="-lpthread"
+       TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
+       TARGET_TARBALL="irix6-mips-ip26"
+       add_sources "irix" "mips"
+	     ;;
 
     *mips-cc-ip27)	# [lyndon]
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip27 \
-			-DCLIENT_OS_NAME=\"\\\"Irix IP27\\\"\""
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
-	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
-	TARGET_TARBALL="irix6-mips-ip27"
-	;;
+       TARGET_CC="CC"
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip27 \
+			     -DCLIENT_OS_NAME=\"\\\"Irix IP27\\\"\""
+       TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
+       TARGET_LIBS="-lpthread"
+       TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
+       TARGET_TARBALL="irix6-mips-ip27"
+       add_sources "irix" "mips"
+	     ;;
 
     *mips-cc-ip27-64)	# [lyndon]
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} -TARG:platform=ip27 \
-			-DCLIENT_OS_NAME=\"\\\"Irix IP27-64\\\"\""
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
-	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_64}"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
-	TARGET_TARBALL="irix6-mips-ip27-64"
-	;;
+       TARGET_CC="CC"
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} -TARG:platform=ip27 \
+			     -DCLIENT_OS_NAME=\"\\\"Irix IP27-64\\\"\""
+       TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_64}"
+       TARGET_LIBS="-lpthread"
+       TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
+       TARGET_TARBALL="irix6-mips-ip27-64"
+       add_sources "irix" "mips"
+       ;;
 
     *mips-cc-ip28)	# [lyndon]
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip28 \
-			-DCLIENT_OS_NAME=\"\\\"Irix IP28\\\"\""
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
-	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
-	TARGET_TARBALL="irix6-mips-ip28"
-	;;
+       TARGET_CC="CC"
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip28 \
+			    -DCLIENT_OS_NAME=\"\\\"Irix IP28\\\"\""
+       TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
+       TARGET_LIBS="-lpthread"
+       TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
+       TARGET_TARBALL="irix6-mips-ip28"
+       add_sources "irix" "mips"
+       ;;
 
     *mips-cc-ip30)	# [lyndon]
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip30 \
-			-DCLIENT_OS_NAME=\"\\\"Irix IP30\\\"\""
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
-	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
-	TARGET_TARBALL="irix6-mips-ip30"
-	;;
+       TARGET_CC="CC"
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip30 \
+			         -DCLIENT_OS_NAME=\"\\\"Irix IP30\\\"\""
+       TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
+       TARGET_LIBS="-lpthread"
+       TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
+       TARGET_TARBALL="irix6-mips-ip30"
+       add_sources "irix" "mips"
+       ;;
 
     *mips-cc-ip32_5k)	# [lyndon]
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip32_5k \
-			-DCLIENT_OS_NAME=\"\\\"Irix IP32/R10K\\\"\""
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
-	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
-	TARGET_TARBALL="irix6-mips-ip32_5k"
-	;;
+       TARGET_CC="CC"
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip32_5k \
+               -DCLIENT_OS_NAME=\"\\\"Irix IP32/R10K\\\"\""
+       TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
+       TARGET_LIBS="-lpthread"
+       TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
+       TARGET_TARBALL="irix6-mips-ip32_5k"
+       add_sources "irix" "mips"
+       ;;
 
     *mips-cc-ip32_10k)	# [lyndon]
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="-ISA -LNO ${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip32_10k \
-			-DCLIENT_OS_NAME=\"\\\"Irix IP32/R10K\\\"\""
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
-	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
-	TARGET_TARBALL="irix6-mips-ip32_10k"
-	;;
+       TARGET_CC="CC"
+       TARGET_CCFLAGS="-ISA -LNO ${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip32_10k \
+			        -DCLIENT_OS_NAME=\"\\\"Irix IP32/R10K\\\"\""
+       TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
+       TARGET_LIBS="-lpthread"
+       TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
+       TARGET_TARBALL="irix6-mips-ip32_10k"
+       add_sources "irix" "mips"
+       ;;
 
     *mips-cc-ip32_10k-64)	# [lyndon]
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} -TARG:platform=ip32_10k \
-			-DCLIENT_OS_NAME=\"\\\"Irix IP32/R10K-64\\\"\""
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
-	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_64}"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
-	TARGET_TARBALL="irix6-mips-ip32_10k-64"
-	;;
+       TARGET_CC="CC"
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} -TARG:platform=ip32_10k \
+			        -DCLIENT_OS_NAME=\"\\\"Irix IP32/R10K-64\\\"\""
+       TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_64}"
+       TARGET_LIBS="-lpthread"
+       TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
+       TARGET_TARBALL="irix6-mips-ip32_10k-64"
+       add_sources "irix" "mips"
+       ;;
 
 # END of MIPSpro targets.
 
-    # If compiling on Irix 5 you must -D_irix5_ now to get the usleep()
-    # replacement.
-
     *mips-linux)	#
-	TARGET_CC="gcc"
-        generate_gcc_opts "mipx" "linux"
-	TARGET_CCFLAGS="$OPTS_GCC -mcpu=r3000 -DMULTITHREAD \
-			-DLURK -DHAVE_OGR_CORES"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp $OGR_ANSI_SRCS"
-	TARGET_LDFLAGS=""
-	TARGET_LIBS="-lpthread"
+        TARGET_CC="gcc"
+        generate_gcc_opts "mips" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -mcpu=r3000 -DMULTITHREAD"
+        TARGET_LDFLAGS=""
+        TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-mips"
-	;;
+        add_sources "linux" "mips"
+	      ;;
 
-    *mips-sni-gcc)	   #For MIPS SINIX
-	TARGET_CC="g++"
+    *mips-sni)	   #For MIPS SINIX
+        TARGET_CC="g++"
         generate_gcc_opts "mips" "sinix"
-	TARGET_CCFLAGS="$OPTS_GCC -Dsinix"
-	TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-	TARGET_LIBS="-lsocket -lnsl -lc -L/usr/ucblib -lucb"
+        TARGET_CCFLAGS="$OPTS_GCC -Dsinix"
+        TARGET_LIBS="-lsocket -lnsl -lc -L/usr/ucblib -lucb"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        add_sources "sni" "mips"
+	      ;;
 
-    *mips5-cc)		# IRIX CC is slower than mips-gcc targets
-	#  mips-crunch.cpp doesn't compile with CC
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPSPRO -D_irix5_"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *mips-gcc-irix5-crunch)	# faster than mips-gcc for IRIX
-	TARGET_CC="g++"
+    *mips-irix5-gcc)	# gcc is faster because it can use mips-crunch.cpp
+        # If compiling on Irix 5 you must -D_irix5_ now to get the usleep()
+        # replacement.
+        TARGET_CC="g++"
         generate_gcc_opts "mips" "irix" 
-	TARGET_CCFLAGS="$OPTS_GCC -D_irix5_ "
-	TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
+        TARGET_CCFLAGS="$OPTS_GCC -D_irix5_"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        add_sources "irix" "mips"
+	      ;;
 
-    *mips-egcs-crunch-64)     #needs very recent egcs
-	TARGET_CC="g++"
+    *mips-irix64-gcc)     #needs "very recent" egcs
+        TARGET_CC="g++"
         generate_gcc_opts "mips" "irix"
-	TARGET_CCFLAGS="$OPTS_GCC -mabi=64 -DMULTITHREAD"
-	TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-	TARGET_LIBS="-lpthread"
-	TARGET_LDFLAGS="-mabi=64"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *mips-egcs-crunch)	# faster than mips-gcc for IRIX
-	TARGET_CC="g++"
-        generate_gcc_opts "mips" "irix"
-	TARGET_CCFLAGS="$OPTS_GCC -mabi=n32 -DMULTITHREAD "
-	TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *mips-irix-nomt)     # [ivo] generic mips-irix5 target (note: Ivo no longer porter!)
-        TARGET_CC="gcc"
-        generate_gcc_opts "mips" "irix"
-        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_OGR_CORES "
-        TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $OGR_ANSI_SRCS "
-        #TARGET_LIBS="-lpthread"
-        #TARGET_LDFLAGS="-mips3"
-        TARGET_STRIP="touch"
-        TARGET_TARBALL="mips-irix5-nomt"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        ;;
-
-    *mips-gcc)	# [lyndon] Irix 6, gcc, threaded (assumes n32 ABI)
-        TARGET_CC="gcc"
-        generate_gcc_opts "mips" "irix"
-        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_OGR_CORES -DMULTITHREAD"
-        TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $OGR_ANSI_CORES"
+        TARGET_CCFLAGS="$OPTS_GCC -mabi=64 -DMULTITHREAD"
+        TARGET_LDFLAGS="-mabi=64"
         TARGET_LIBS="-lpthread"
-	TARGET_TARBALL="irix6-mips-n32"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        add_sources "irix" "mips"
         ;;
 
-    *mips-gcc-ultrix)	# For mips based DEC Ultrix machines
-	TARGET_CC="g++"
+    *mips-irix32-gcc)	   # [lyndon] Irix 6, gcc, threaded (assumes n32 ABI)
+        TARGET_CC="gcc"
         generate_gcc_opts "mips" "irix"
-	TARGET_CCFLAGS="$OPTS_GCC"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
+        TARGET_CCFLAGS="$OPTS_GCC -mabi=n32 -DMULTITHREAD"
+        TARGET_LIBS="-lpthread"
+        TARGET_TARBALL="irix6-mips-n32"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        add_sources "irix" "mips"
+        ;;
 
-  ### QNX MIPS targets
+    #*mips-ultrix-gcc)	# For mips based DEC Ultrix machines
+    #    TARGET_CC="g++"
+    #    generate_gcc_opts "mips" "irix"
+    #    TARGET_CCFLAGS="$OPTS_GCC"
+    #    TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+    #    add_sources "ultrix" "mips"
+    #    ;;
 
     *mipsle-nto2)
         TARGET_AS="qcc -Vgcc_ntomipsle -c"
@@ -909,15 +1059,14 @@ case "$1" in
         TARGET_ASFLAGS="-DNO_BALIGN"
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
                         -fno-exceptions -fno-rtti \
-                        -DHAVEOGR_CORES -DASM_MIPS\
-                        -DMULTITHREAD"
+                        -DASM_MIPS -DMULTITHREAD"
         TARGET_LIBS="-lsocket"
-        TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $OGR_ANSI_SRCS"
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-mipsle"
         TARGET_GENMAN=
         CLIENTCPU="3"        # cross-compilation
         CLIENTOS="22"
+        add_sources "nto2" "mips"
         ;;
 
     *mipsbe-nto2)
@@ -927,448 +1076,329 @@ case "$1" in
         TARGET_ASFLAGS="-DNO_BALIGN"
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
                         -fno-exceptions -fno-rtti \
-                        -DHAVEOGR_CORES -DASM_MIPS\
-                        -DMULTITHREAD"
+                        -DASM_MIPS -DMULTITHREAD"
         TARGET_LIBS="-lsocket"
-        TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2 $OGR_ANSI_SRCS"
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-mipsbe"
         TARGET_GENMAN=
         CLIENTCPU="3"        # cross-compilation
         CLIENTOS="22"
+        add_sources "nto2" "mips"
         ;;
 
-###### HPUX
-
     *hpux-hppa-CC) # obsolete? Not used by Ivo...
-	TARGET_CC="CC"
-	TARGET_CCFLAGS="+a1 +O3 -D_HPUX -DASM_HPPA"
+        TARGET_CC="CC"
+        TARGET_CCFLAGS="+a1 +O3 -D_HPUX -DASM_HPPA"
         TARGET_LDFLAGS='+A +DA2.0'
-	TARGET_ADDSRCS="rc5/parisc/parisc.s"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        add_sources "hpux" "hppa"
+        ;;
 
-    *hpux-hppa-gcc-nomt)  # [ivo]
-	TARGET_CC="g++"
+    *hpux-hppa-gcc)  # [ivo]
+        TARGET_CC="g++"
         generate_gcc_opts "hppa" "hpux"
-        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_OGR_CORES"
-        TARGET_ADDSRCS="$OGR_ANSI_SRCS rc5/ansi/rc5ansi_2-rg.cpp"
-        #TARGET_ADDASMS="rc5/parisc/parisc.s"
-        #TARGET_LDFLAGS="-lpthread"
+        TARGET_CCFLAGS="$OPTS_GCC" #-DMULTITHREAD
+        TARGET_LDFLAGS="" #-lpthread"
         TARGET_TARBALL="hpux1020-hppa11-nomt"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        add_sources "hpux" "hppa"
         ;;
 
     *hpux-m68k-gcc)
-	TARGET_CC="g++"
+        TARGET_CC="g++"
         generate_gcc_opts "68k" "hpux"
-	TARGET_CCFLAGS="$OPTS_GCC -m68030 -D_HPUX_M68K -static"
-	TARGET_LDFLAGS="-static"
-	TARGET_AFLAGS="$OPTS_GAS -m68030"
-	TARGET_ADDASMS="rc5/68k/crunch.68k.gcc.s"
-        ## des ## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN"
-	## des ## TARGET_ADDSRCS="$SLICE_SRCS3"
+        TARGET_CCFLAGS="$OPTS_GCC -m68030 -D_HPUX_M68K -static"
+        TARGET_LDFLAGS="-static"
+        TARGET_AFLAGS="$OPTS_GAS -m68030"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        add_sources "hpux" "68k"
+        ;;
 
-###### DGUX (Data General Unix)
-
-    *dgux-gcc)
-	TARGET_CC="/usr/local/bin/g++"
+    *dgux-gcc)     # DGUX (Data General Unix)
+        TARGET_CC="/usr/local/bin/g++"
         generate_gcc_opts "88k" "dgux"
-	TARGET_CCFLAGS="$OPTS_GCC -D_POSIX4A_DRAFT6_SOURCE \
-			 -D_DGUX -DOS_ID=OS_DGUX -DMULTITHREAD"
-        TARGET_ADDSRCS="rc5/ansi/2-rg.c"
-	TARGET_LIBS="-lthread"
+        TARGET_CCFLAGS="$OPTS_GCC -D_POSIX4A_DRAFT6_SOURCE \
+			                -D_DGUX -DOS_ID=OS_DGUX -DMULTITHREAD"
+        TARGET_LIBS="-lthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        add_sources "hpux" "88k"
+        ;;
 
 ###### Sparc/UltraSparc or Sun/SunOS/Solaris
 
     *sparc-openbsd)                   # snake, now without DES
-	TARGET_CC="g++"
+        TARGET_CC="g++"
         generate_gcc_opts "sparc" "openbsd"
-	TARGET_CCFLAGS="$OPTS_GCC -DLURK -DHAVE_OGR_CORES"
-	TARGET_LDFLAGS="-static"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $OGR_ANSI_SRCS"
-	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="openbsd-sparc-aout"
-	;;
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="openbsd-sparc-aout"
+        add_sources "openbsd" "sparc"
+        ;;
 
     *sparc-linux)	# [remi]
-	TARGET_CC="gcc295"
-	TARGET_AS="gcc295 -c"
+        TARGET_CC="gcc295"
+        TARGET_AS="gcc295 -c"
         generate_gcc_opts "supersparc" "linux"
-	TARGET_CCFLAGS="$OPTS_GCC -g \
-			-DLURK -DMULTITHREAD \
-			-DHAVE_OGR_CORES"
-	TARGET_LDFLAGS="-g -static"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c $OGR_ANSI_SRCS"
-	TARGET_LIBS="-lpthread"
-	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="linux-sparc-elf-glibc2"
-	;;
-
-    #####
+        TARGET_CCFLAGS="$OPTS_GCC -g -DMULTITHREAD"
+	      TARGET_LDFLAGS="-g -static"
+	      TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-sparc"
+        add_sources "linux" "sparc"
+        ;;
 
     *sparc-sunos-gcc-nomt)   # [ivo sunos413/nomt]
         TARGET_CC="gcc"
         generate_gcc_opts "sparc" "sunos"
-        TARGET_CCFLAGS="$OPTS_GCC -Dsunos -DHAVE_OGR_CORES"
-        TARGET_ADDSRCS="rc5/ultra/rc5-ultra-crunch.cpp \
-			$OGR_ANSI_SRCS"
+        TARGET_CCFLAGS="$OPTS_GCC -Dsunos"
         TARGET_LIBS="-lnsl -ldl"
         TARGET_LDFLAGS=""
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TRAGET_TARBALL="sunos413-sparc-nomt"
+        add_sources "sunos" "sparc"
         ;;
 
     *sparc-solaris-gcc-nomt)   # [ivo solaris/nomt]
         TARGET_CC="gcc"
         generate_gcc_opts "supersparc" "solaris"
-        TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris -DHAVE_OGR_CORES"
-        TARGET_ADDSRCS="rc5/ultra/rc5-ultra-crunch.cpp \
-                        $OGR_ANSI_SRCS"
+        TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris"
         TARGET_LIBS="-lnsl -lsocket -ldl"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TRAGET_TARBALL="solaris26-sparc-nomt"
+        add_sources "solaris" "sparc"
         ;;
 
     *sparc-solaris-gcc)   # [ivo solaris/mt] fastest rc5 <- production target
         TARGET_CC="gcc"
         generate_gcc_opts "supersparc" "solaris"
-        TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris -DMULTITHREAD -DHAVE_OGR_CORES"
-        TARGET_ADDSRCS="rc5/ultra/rc5-ultra-crunch.cpp \
-                        $OGR_ANSI_SRCS"
+        TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris -DMULTITHREAD"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="solaris26-sparc"
+        add_sources "sunos" "sparc"
         ;;
 
     *sparc-solaris-gcc-ultra)   # [ivo ultra] very fast DES -> hence obsolete
         TARGET_CC="gcc"
         # See Also: platforms/ultrasparc/s_paramaters.h
         #OPTS_DES_ULTRA_C="-DDES_ULTRA -DINLINE=' ' -DIN_DCTI_CLIENT \
-	#	  -DLOW_WORD_VALID -DMANUAL_REGISTER_ALLOCATION  \
-	#	  -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc"
+        #	  -DLOW_WORD_VALID -DMANUAL_REGISTER_ALLOCATION  \
+        #	  -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc"
         generate_gcc_opts "generic" "solaris"
-        OPTS_DES_ULTRA_ASM="-DASM_SPARC -DIN_DCTI_CLIENT \
-		    -DDES_ULTRA -DINLINE=inline -DFULL_64_BIT_VALID -DASM \
-		    -DMANUAL_REGISTER_ALLOCATION -DDO_FLOAT_PIPE  \
-		    -DUSE_IDENTICAL_FLOAT_REGISTERS -DUSE_64_BIT_SENTINEL \
-		    -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc \
-		    -mtune=ultrasparc -fforce-mem -fstrict-aliasing\
-		    ${OPTS_GCC} \
-		    -mv8plus -mvis -mepilogue -Wa,-xarch=v8plusa -mflat \
-		    -Os -fcall-used-g4 -fcall-used-g5 -fcall-used-g6"
-        TARGET_CCFLAGS="-pipe $OPTS_DES_ULTRA_ASM -Dsolaris \
-                        -DMULTITHREAD -DHAVE_OGR_CORES"
-        TARGET_ADDSRCS="rc5/ultra/rc5-ultra-crunch.cpp $OGR_ANSI_SRCS"
-        TARGET_ADDASMS="des/ultrasparc/simple.handopt.s"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DESULTRA_SRCS_ASM"
+        OPTS_DES_ULTRA_ASM="-DIN_DCTI_CLIENT -DDES_ULTRA -DINLINE=inline \
+                            -DFULL_64_BIT_VALID -DASM \
+		                        -DMANUAL_REGISTER_ALLOCATION -DDO_FLOAT_PIPE  \
+		                        -DUSE_IDENTICAL_FLOAT_REGISTERS \
+                            -DUSE_64_BIT_SENTINEL \
+                            -DKWAN_LOOP_SLICE='unsigned long' \
+                            -Iplatforms/ultrasparc \
+		                        -mtune=ultrasparc -fforce-mem -fstrict-aliasing\
+		                        -mv8plus -mvis -mepilogue -Wa,-xarch=v8plusa \
+                            -mflat -Os -fcall-used-g4 -fcall-used-g5 \
+                            -fcall-used-g6"
+        TARGET_CCFLAGS="${OPTS_GCC} -pipe $OPTS_DES_ULTRA_ASM -Dsolaris \
+                        -DMULTITHREAD"
         TARGET_ASFLAGS="$OPTS_AS_ULTRA"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="solaris26-ultrasparc"
+        add_sources "solaris" "sparc" "ultra"
         ;;
 
     #####
 
     *x86-solaris)    # gcc, mt, dynamic
-	TARGET_CC="g++"
+        TARGET_CC="g++"
         generate_gcc_opts "x86" "solaris"
-	TARGET_CCFLAGS="$OPTS_GCC -Dsolaris -DMULTITHREAD -D_REENTRANT -DMMX_RC5 -DHAVE_OGR_CORES"
-	TARGET_ADDNASMS="platforms/x86ident.asm $NASM_RC5X86_SRCS"
-	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
-	TARGET_LIBS="-lnsl -lsocket -ldl -lthread"
-        TARGET_DOCFILES="docs/readme._ix docs/readme.x86-solaris libstdc++.so.2.8.1"   #platform specific docfile
+        TARGET_CCFLAGS="$OPTS_GCC -Dsolaris -DMULTITHREAD -D_REENTRANT"
+        TARGET_LIBS="-lnsl -lsocket -ldl -lthread"
+        TARGET_DOCFILES="docs/readme._ix docs/readme.x86-solaris libstdc++.so.2.8.1"
         TARGET_TARBALL="x86-solaris"
-	;;
+        add_sources "solaris" "x86"
+        ;;
 
 ###### Alpha
 
+
     *alpha-gcc-digital_unix-mt)
-	TARGET_CC="g++"
+        TARGET_CC="g++"
         generate_gcc_opts "alpha" "decunix"
-	TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DDEC_UNIX_CPU_SELECT \
-                            -DMULTITHREAD -D_THREAD_SAFE -D_REENTRANT \
-                            -DCORES_SUPPORT_SMP \
-                            -Ddes_alpha_osf_ev5=des_alpha_osf_ev4"
-	TARGET_ADDSRCS="rc5/alphaasm/rc5-digital-unix-alpha-ev4.cpp"
-	TARGET_DIGITAL_UNIX_EV5_SRCS="rc5/alphaasm/rc5-digital-unix-alpha-ev5.cpp"
-	##des## TARGET_BASE_CCFLAGS="$TARGET_BASE_CCFLAGS -DMEGGS -DKWAN"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-	TARGET_CCFLAGS="-mcpu=ev4 $TARGET_BASE_CCFLAGS"
-	TARGET_EV5_CCFLAGS="-mcpu=ev5 $TARGET_BASE_CCFLAGS"
-	TARGET_LIBS="-lpthread -lexc"
-	TARGET_OS=DIGITAL_UNIX
+        TARGET_DIGITAL_UNIX_EV5_SRCS="rc5/alphaasm/rc5-digital-unix-alpha-ev5.cpp"
+        TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DDEC_UNIX_CPU_SELECT \
+                             -DMULTITHREAD -D_THREAD_SAFE -D_REENTRANT \
+                             -Ddes_alpha_osf_ev5=des_alpha_osf_ev4"
+        TARGET_CCFLAGS="-mcpu=ev4 $TARGET_BASE_CCFLAGS"
+        TARGET_EV5_CCFLAGS="-mcpu=ev5 $TARGET_BASE_CCFLAGS"
+        TARGET_LIBS="-lpthread -lexc"
+        TARGET_OS=DIGITAL_UNIX
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        add_sources "digital-unix" "alpha" "ev4"
+        ;;
 
     *alpha-digital_unix)
-	TARGET_CC="g++"
-	TARGET_AS="as"
+        TARGET_CC="g++"
+        TARGET_AS="as"
         generate_gcc_opts "alpha" "decunix"
-	TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DDEC_UNIX_CPU_SELECT -DHAVE_OGR_CORES"
-	TARGET_ADDSRCS="rc5/alpha/axp-bmeyer.cpp $OGR_ANSI_SRCS "
-	TARGET_ADDASMS="rc5/alpha/axp-bmeyer-osf.s"
-	##csc## TARGET_BASE_CCFLAGS="$TARGET_BASE_CCFLAGS -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
-	##des## TARGET_BASE_CCFLAGS="$TARGET_BASE_CCFLAGS -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DWORZ_SLICE_SRCS"
-	TARGET_CCFLAGS="-mcpu=ev4 $TARGET_BASE_CCFLAGS"
-	TARGET_EV5_CCFLAGS="-mcpu=ev5 $TARGET_BASE_CCFLAGS"
-	TARGET_LIBS="-static"
+        TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DDEC_UNIX_CPU_SELECT"
+        TARGET_CCFLAGS="-mcpu=ev4 $TARGET_BASE_CCFLAGS"
+        TARGET_EV5_CCFLAGS="-mcpu=ev5 $TARGET_BASE_CCFLAGS"
+        TARGET_LIBS="-static"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_OS=DIGITAL_UNIX
-	TARGET_TARBALL="alpha-digital_unix"
-	;;
+        TARGET_OS=DIGITAL_UNIX
+        TARGET_TARBALL="digital_unix-alpha"
+        add_sources "digital-unix" "alpha"
+        ;;
 
     *alpha-netbsd)
-	TARGET_CC="g++"
+        TARGET_CC="g++"
         generate_gcc_opts "alpha" "netbsd"
-	TARGET_CCFLAGS="$OPTS_GCC -DLURK"
-	TARGET_TARBALL="netbsd-alpha"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="rc5/alpha/axp-bmeyer.cpp"
-	TARGET_ADDASMS="rc5/alpha/axp-bmeyer.s"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DDWORZ -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DWORZ_SLICE_SRCS"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS ${CSC_ANSI_SRCS}"
-	TARGET_LDFLAGS="-static"
-	TARGET_LIBS="-ltermcap"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-ltermcap"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        TARGET_TARBALL="netbsd-alpha"
+        add_sources "netbsd" "alpha"
+        ;;
 
     *alpha-openbsd)                  # snake
-	TARGET_AS="g++ -c"
-	TARGET_CC="g++"
+        TARGET_AS="g++ -c"
+        TARGET_CC="g++"
         generate_gcc_opts "alpha" "openbsd"
-	TARGET_CCFLAGS="$OPTS_GCC -DLURK"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="rc5/alpha/axp-bmeyer.cpp"
-	TARGET_ADDASMS="rc5/alpha/axp-bmeyer.s"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DDWORZ -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DWORZ_SLICE_SRCS"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS ${CSC_ANSI_SRCS}"
-	TARGET_LDFLAGS="-static"
-	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="openbsd-alpha"
-	;;
-
-    *alpha-linux-elf)               # [dworz/jlawson]
-	TARGET_AS="as"
-	TARGET_CC="g++"
-        generate_gcc_opts "alpha" "linux"
-	TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD -DLURK -DHAVE_OGR_CORES -DUNIVERSALRESOLVER"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="rc5/alpha/axp-bmeyer.cpp $OGR_ANSI_SRCS"
-	TARGET_ADDASMS="rc5/alpha/axp-bmeyer.s"
-	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
-	TARGET_LIBS="-lpthread -ldl"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-alpha-elf"
-	;;
+        TARGET_TARBALL="openbsd-alpha"
+        add_sources "openbsd" "alpha"
+        ;;
+
+    *alpha-linux)               # [dworz/jlawson]
+        TARGET_AS="as"
+        TARGET_CC="g++"
+        generate_gcc_opts "alpha" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD"
+        TARGET_LDFLAGS=""
+        TARGET_LIBS="-lpthread -ldl"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-alpha"
+        add_sources "linux" "alpha"
+	      ;;
 
 ###### PowerPC/POWER
 
-  ### generic targets
-    *ppc-linux-glibc21-static)		# [myshkin] linux-ppc
-	TARGET_CC="g++"
+    *ppc-linux)		             # [myshkin] linux-ppc
+        TARGET_CC="g++"
         generate_gcc_opts "ppc" "linux"
-	TARGET_CCFLAGS="$OPTS_GCC -DLURK \
-			-DNO_ALTIVEC -DMULTITHREAD \
-			-DHAVE_OGR_CORES"
-	TARGET_LDFLAGS="-static"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="$RC5PPC_SRCS $OGR_ANSI_SRCS"
-	TARGET_LIBS="-lpthread"
+        TARGET_CCFLAGS="$OPTS_GCC -DNO_ALTIVEC -DMULTITHREAD"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="linux-ppc-static-mt"
-	OPTS_NOOPT="-O0"
-	;;
-
-    *ppc-gcc)		# [myshkin] generic PPC target
-	TARGET_CC="g++"
-        generate_gcc_opts "ppc" "generic"
-	TARGET_CCFLAGS="$OPTS_GCC -DNO_ALTIVEC -DMULTITHREAD \
-			-DHAVE_OGR_CORES"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5PPC_SRCS $OGR_ANSI_SRCS"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-
-  ### MacOSX PPC targets
-
-
+        TARGET_TARBALL="linux-ppc"
+        OPTS_NOOPT="-O0"
+        add_sources "linux" "ppc"
+	      ;;
 
     *ppc-macosxserver) # [mfeiri] (MACH 2.x based: MXS 1.x, Darwin 0.x, Rhapsody)
-	TARGET_CC="cc"
+	      TARGET_CC="cc"
         #generate_gcc_opts "ppc" "macosx"
-	TARGET_CCFLAGS="-O6 -DHAVE_OGR_CORES -D__unix__"
-	TARGET_ADDSRCS="$RC5PPC_APPLE_SRCS $OGR_ANSI_SRCS"
+        TARGET_CCFLAGS="-O6 -D__unix__"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="macosxserver-ppc"
-	;;
+        TARGET_TARBALL="macosxserver-ppc"
+        add_sources "macosx" "ppc" "mach2"
+        ;;
 
     *ppc-macosx)       # [mfeiri] (MACH 3.x based: MacOSXDP, Darwin 1.0)
-	TARGET_CC="cc"
+        TARGET_CC="cc"
         generate_gcc_opts "ppc" "macosx"
-	TARGET_CCFLAGS="$OPTS_GCC -DHAVE_OGR_CORES -DMULTITHREAD -D__unix__ -faltivec -DLURK" # -DXMLSERVE
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="$RC5PPC_APPLE_SRCS $OGR_ANSI_SRCS $RC5ALTIVEC_SRCS"
+        TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD -D__unix__ -faltivec" # -DXMLSERVE
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="macosx-ppc"
-	;;
+        TARGET_TARBALL="macosx-ppc"
+        add_sources "macosx" "ppc"
+        ;;
 
   ### AIX PPC targets
 	# classes are buggy with AIX !
 
-    *aix4-ppc-xlc)	 # This is the fastest build for AIX 4.x PPC machines
-	TARGET_CC="xlC"
-	TARGET_CCFLAGS="$OPTS_XLC_PPC"
-	TARGET_ADDASMS="$XLC_LINTILLA_ASMS"
-	TARGET_ADDSRCS=""
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMEGGS -DKWAN -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
-	TARGET_LIBS="-lCns"
+    *ppc-aix4-xlc)	 # This is the fastest build for AIX 4.x PPC machines
+        TARGET_CC="xlC"
+        TARGET_CCFLAGS="$OPTS_XLC_PPC"
+        TARGET_LIBS="-lCns"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        add_sources "aix" "ppc" "aix4"
+	      ;;
 
-    *aix4-ppc601-xlc)      # AIX 4.x PPC, 601 chip
-	TARGET_CC="xlC"
-	TARGET_CCFLAGS="$OPTS_XLC_PPC601"
-	TARGET_ADDASMS="$XLC_LINTILLA_ASMS"
-	TARGET_ADDSRCS=""
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMEGGS -DKWAN -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
-	TARGET_LIBS="-lCns"
+    *ppc601-aix4-xlc)      # AIX 4.x PPC, 601 chip
+        TARGET_CC="xlC"
+        TARGET_CCFLAGS="$OPTS_XLC_PPC601"
+        TARGET_LIBS="-lCns"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        add_sources "aix" "ppc" "aix4"
+	      ;;
 
-    *aix32-ppc-xlc)	# AIX 3.2.x PPC
-	TARGET_CC="xlC"
+    *ppc-aix32-xlc)	   # AIX 3.2.x PPC
+        TARGET_CC="xlC"
         TARGET_CCFLAGS="$OPTS_XLC3_PPC601"
-        TARGET_ADDSRCS="rc5/ppc/crunch_allitnil_552.ppc.s \
-                rc5/ppc/crunch_lintilla_296.ppc.s \
-                rc5/ppc/crunch_lintilla_296-604.ppc.s"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES -DMEGGS -DKWAN"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
-	TARGET_LIBS="-lCns"
+        TARGET_LIBS="-lCns"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *ppc-gcc-aix32)	# AIX 3.2.x gcc [patrick] <patrick@mail4you.de>
-	TARGET_CC="g++"
-        generate_gcc_opts "ppc" "aix"
-	TARGET_CCFLAGS="$OPTS_GCC -D_AIX"
-	TARGET_ADDSRCS="$RC5PPC_SRCS"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES -DMEGGS -DKWAN"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *aix4-ppc-egcs)			# [patrick] <patrick@mail4you.de>
-	TARGET_CC="g++"
-        generate_gcc_opts "ppc" "aix"
-        TARGET_CCFLAGS="$OPTS_GCC -D_AIX"
-        TARGET_ADDSRCS="$RC5PPC_SRCS"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES -DMEGGS -DKWAN"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        add_sources "aix" "ppc" "aix32"
         ;;
 
+    *ppc-aix32-gcc)	   # AIX 3.2.x gcc/egcs [patrick] <patrick@mail4you.de>
+        TARGET_CC="g++"
+        generate_gcc_opts "ppc" "aix"
+        TARGET_CCFLAGS="$OPTS_GCC -D_AIX"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        add_sources "ppc" "aix" "aix32"
+        ;;
 
   ### AIX POWER targets
         # AIX POWER this one works for all platforms (AIX 3.x, 4.[1-3])!
 
-    *power-aix-gcc)                     # [patrick] <patrick@mail4you.de>
-	TARGET_CC="g++"
-        generate_gcc_opts "power" "aix"
-	TARGET_CCFLAGS="$OPTS_GCC -D_AIX"
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES -DMEGGS -DKWAN"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *power-aix-egcs)                     # [patrick] <patrick@mail4you.de>
-	TARGET_CC="g++"
+    *power-aix)           # gcc/egcs [patrick] <patrick@mail4you.de>
+        TARGET_CC="g++"
         generate_gcc_opts "power" "aix"
         TARGET_CCFLAGS="$OPTS_GCC -D_AIX"
-        TARGET_ADDSRCS="rc5/ansi/rc5ansi-2-rg.cpp"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES -DMEGGS -DKWAN"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        add_sources "aix" "power"
         ;;
 
-    *aixall-egcs)                       # [patrick] new all in one AIX target
+    *aix-all)                       # [patrick] new all in one AIX target
         # WARNING: the code will show a PPC CPU even though also POWER
         # CPUs are supported !
-	TARGET_CC="g++"
-	AIXALL=TRUE
-        ALLCORES="-I./common -I./rc5 -I./des -I./ogr -I./csc -mthreads -D_AIX -DBIT32 -DMEGGS -DKWAN"
+        TARGET_CC="g++"
+        AIXALL=TRUE
+        ALLCORES="-I./common -I./rc5 -I./des -I./ogr -I./csc -mthreads -D_AIX -DBIT32"
         generate_gcc_opts "power" "aix"
         AIXPOWERFLAGS="$OPTS_GCC $ALLCORES"
         generate_gcc_opts "ppc" "aix"
         AIXPPC601FLAGS="$OPTS_GCC $ALLCORES"
-	generate_gcc_opts "ppc604" "aix"
+        generate_gcc_opts "ppc604" "aix"
         AIXPPC604FLAGS="$OPTS_GCC $ALLCORES"
-	generate_gcc_opts "aixcommon" "aix"
-        TARGET_CCFLAGS="$OPTS_GCC -mthreads -mcpu=common -D_AIX -D_AIXALL \
-                        -DHAVE_OGR_CORES"
-        TARGET_ADDSRCS="$RC5PPC_SRCS rc5/ansi/rc5ansi_2-rg.cpp $OGR_ANSI_SRCS"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES -DMEGGS -DKWAN"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
+        generate_gcc_opts "aixcommon" "aix"
+        TARGET_CCFLAGS="$OPTS_GCC -mthreads -mcpu=common -D_AIX -D_AIXALL"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_LIBS=$TARGET_LIBS
-	TARGET_LDFLAGS="$TARGET_LDFLAGS -mthreads"
-	TARGET_TARBALL="aix-all-aix4.1"
+        TARGET_LIBS=$TARGET_LIBS
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -mthreads"
+        TARGET_TARBALL="aix-all-aix4.1"
+        add_sources "aix" "power" "aixall" #easier to do under power than ppc
         ;;
 
   ### QNX PPC targets
     *ppc-nto2)
-	TARGET_AS="qcc -Vgcc_ntoppcbe -c"
-	TARGET_CC="qcc -Vgcc_ntoppcbe"
-	TARGET_STRIP="/usr/gcc/bin/ntoppc-strip"
+        TARGET_AS="qcc -Vgcc_ntoppcbe -c"
+        TARGET_CC="qcc -Vgcc_ntoppcbe"
+        TARGET_STRIP="/usr/gcc/bin/ntoppc-strip"
         TARGET_ASFLAGS="-DNO_BALIGN"
-	TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
-	                -fno-exceptions -fno-rtti \
-	                -DHAVEOGR_CORES -DASM_PPC\
-	                -DMULTITHREAD"
-	TARGET_LIBS="-lsocket"
-	TARGET_ADDSRCS="$RC5PPC_SRCS $OGR_ANSI_SRCS"
-	TARGET_DOCFILES="docs/readme._ix"
-	TARGET_TARBALL="nto2-ppcbe"
-	TARGET_GENMAN=
+        TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
+	                -fno-exceptions -fno-rtti -DASM_PPC -DMULTITHREAD"
+        TARGET_LIBS="-lsocket"
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="nto2-ppcbe"
+        TARGET_GENMAN=
         CLIENTCPU="2"        # cross-compilation
         CLIENTOS="22"
-	;;
+        add_sources "nto2" "ppc"
+        ;;
 
 ###### SH4 platforms
 
@@ -1380,16 +1410,14 @@ case "$1" in
         TARGET_STRIP="/usr/gcc/bin/ntoshle-strip"
         TARGET_ASFLAGS="-DNO_BALIGN" 
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
-                        -fno-exceptions -fno-rtti \
-                        -DHAVEOGR_CORES -DASM_SH4 \
-                        -DMULTITHREAD"
+                        -fno-exceptions -fno-rtti -DASM_SH4 -DMULTITHREAD"
         TARGET_LIBS="-lsocket"
-        TARGET_ADDSRCS="$OGR_ANSI_SRCS"
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-sh4le"
         TARGET_GENMAN=
         CLIENTCPU="8"        # cross-compilation
         CLIENTOS="22"
+        add_sources "nto2" "sh4" 
         ;;
 
     *sh4be-nto2)
@@ -1398,19 +1426,17 @@ case "$1" in
         TARGET_STRIP="/usr/gcc/bin/ntoshbe-strip"
         TARGET_ASFLAGS="-DNO_BALIGN" 
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
-                        -fno-exceptions -fno-rtti \
-                        -DHAVEOGR_CORES -DASM_SH4 \
-                        -DMULTITHREAD"
+                        -fno-exceptions -fno-rtti -DASM_SH4 -DMULTITHREAD"
         TARGET_LIBS="-lsocket"
-        TARGET_ADDSRCS="$OGR_ANSI_SRCS"
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-sh4be"
         TARGET_GENMAN=
         CLIENTCPU="8"        # cross-compilation
         CLIENTOS="22"
+        add_sources "nto2" "sh4"
         ;;
 
-###### Intel X86 Linux platforms
+###### Intel X86
 
     ### ***RELEASE*** targets - mt for all
     ### use of -Xlinker -omagic (for the SMC core) forces -static
@@ -1421,495 +1447,322 @@ case "$1" in
     ### The rest of the client is unaffected by the choice of libc.
 
     *x86-linux-elf)	 # universal elf <- production target
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc"
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
         generate_gcc_opts "x86" "linux"
-	TARGET_CCFLAGS="$OPTS_GCC -DMMX_RC5 \
-			-DMULTITHREAD -DLURK -DSMC -DHAVE_OGR_CORES"
-	TARGET_LDFLAGS="-Xlinker -omagic"
-	COMMON_SRCS="platforms/linux/resolv.c common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp $OGR_ANSI_SRCS"
-	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_BITSLICER -DKWAN -DMEGGS  -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	##des## TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	##des## TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_DESMMX_SRCS"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_CSC -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDNASMS="$TARGET_ADDNASMS $CSC_ASM_SRCS"
-	TARGET_NASM_FMT="elf"
-	TARGET_LIBS="-lpthread"
+        TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD" #-D_MIT_POSIX_THREADS=1
+        TARGET_NASM_FMT="elf"
+        TARGET_LIBS="-lpthread"                  #<-mit pthread
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-x86-elf"
-	;;
-
-    *x86-linux-mit)               # mit pthreads. same as above but needs
-        TARGET_AS="gcc -c"        # -D_MIT_POSIX_THREADS=1 (linuxthreads
-        TARGET_CC="gcc"           # is no longer libc4/5 compatible)
-        generate_gcc_opts "x86" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -DMMX_RC5 \
-                        -DMULTITHREAD -DLURK -DSMC -DHAVE_OGR_CORES \
-                        -D_MIT_POSIX_THREADS=1" 
-        TARGET_LDFLAGS="-Xlinker -omagic"
-	COMMON_SRCS="platforms/linux/resolv.c common/lurk.cpp ${COMMON_SRCS}"
-        TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp $OGR_ANSI_SRCS"
-        TARGET_ADDASMS="platforms/x86ident.S"
-        TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-        TARGET_NASM_FMT="elf"
-        TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"
-        TARGET_TARBALL="linux-x86-elf"
-        ;;
+        add_sources "linux" "x86" 
+	      ;;
 
     *x86-linux)	                    # generic. clone() for threads and thus
-	TARGET_AS="gcc -c"          # avoids mitthreads/linuxthreads issue
-	TARGET_CC="gcc"             # can make aout if TARGET_CCFLAGS.=-aout
+        TARGET_AS="gcc -c"          # avoids mitthreads/linuxthreads issue
+        TARGET_CC="gcc"             # can make aout if TARGET_CCFLAGS.=-aout
         generate_gcc_opts "x86" "linux"
-	TARGET_CCFLAGS="$OPTS_GCC -DMMX_RC5 \
-			-DSMC -DLURK -DHAVE_OGR_CORES"
-	TARGET_LDFLAGS="-Xlinker -omagic"
-	COMMON_SRCS="platforms/linux/resolv.c common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp $OGR_ANSI_SRCS"
-	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_BITSLICER -DKWAN -DMEGGS  -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	##des## TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	##des## TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_DESMMX_SRCS"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_CSC -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDNASMS="$TARGET_ADDNASMS $CSC_ASM_SRCS"
+        TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_NASM_FMT="elf"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-x86-elf"
-	;;
+        add_sources "linux" "x86" 
+	      ;;
 
     *x86-linux-aout)	              # [jlawson] aout, no threads/smc/lurk
-	TARGET_CC="gcc"               # old gcc doesn't know .cpp
-	TARGET_CCFLAGS="-x c++ -O2 -fomit-frame-pointer -DNEED_FAKE_BOOL \
-                        -DMMX_RC5 -DHAVE_OGR_CORES"
+        TARGET_CC="gcc"               # old gcc doesn't know .cpp
+        TARGET_CCFLAGS="-x c++ -O2 -fomit-frame-pointer -DHAVE_OGR_CORES"
         TARGET_LD="gcc"
-	TARGET_LDFLAGS=""
-	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
-	TARGET_ADDNASMS="platforms/x86ident.asm $NASM_RC5X86_SRCS"
-	TARGET_NASM_FMT="aout"
-	TARGET_LIBS=""
+        TARGET_NASM_FMT="aout"
+        TARGET_LIBS=""
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-x86-aout"
-	;;
+        add_sources "linux" "x86" "aout"
+	      ;;
 
-
-
-    ## *** TEST/DEBUG *** target
-
-    *x86-linux-debug)	              # debug
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc"
+    *x86-linux-debug)	              # test/debug target
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
         generate_gcc_opts "x86" "linux"  # -g for debug
-	TARGET_CCFLAGS="-g $OPTS_GCC -DMMX_RC5 \
-			-DSMC -DMULTITHREAD -DLURK -DHAVE_OGR_CORES"
-	TARGET_LDFLAGS="-Xlinker -omagic"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp $OGR_ANSI_SRCS"
-	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_BITSLICER -DKWAN -DMEGGS  -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	##des## TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	##des## TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_DESMMX_SRCS"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_CSC -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDNASMS="$TARGET_ADDNASMS $CSC_ASM_SRCS"
-	TARGET_NASM_FMT="elf"
-	TARGET_STRIP="touch"      # do not strip
-	TARGET_LIBS="-lpthread"
+        TARGET_CCFLAGS="-g $OPTS_GCC -DMULTITHREAD"
+        TARGET_NASM_FMT="elf"
+        TARGET_STRIP="touch"      # do not strip
+        TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-x86-debug"
-	;;
-
-###### Intel X86 FreeBSD
+        add_sources "linux" "x86" 
+	      ;;
 
     *x86-freebsd-aout)             # FreeBSD 2.x experimental, snake
-	TARGET_AS="gcc -c"
-	TARGET_CC="g++"
+        TARGET_AS="gcc -c"
+        TARGET_CC="g++"
         generate_gcc_opts "x86" "freebsd"
-	TARGET_CCFLAGS="$OPTS_GCC -Werror -DMMX_RC5 -DLURK -DHAVE_OGR_CORES"
-	TARGET_LDFLAGS="-static"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
-	TARGET_ADDASMS="" #des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
-	TARGET_NASM_FMT="aoutb"
-	TARGET_ADDNASMS="platforms/x86ident.asm $NASM_RC5X86_SRCS"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_BITSLICER -DKWAN -DMEGGS  -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	##des## TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	##des## TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_DESMMX_SRCS"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_CSC -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDNASMS="$TARGET_ADDNASMS $CSC_ASM_SRCS"
-	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="freebsd-x86-aout"
+        TARGET_CCFLAGS="$OPTS_GCC -Werror"
+        TARGET_LDFLAGS="-static"
+        TARGET_NASM_FMT="aoutb"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="freebsd-x86-aout"
+        add_sources "freebsd" "x86" 
         ;;
 
     *x86-freebsd-elf)       # FreeBSD >=3.x, elf, "threaded", cyp
         # note: although this client supports SMP (and is thus threaded),
         # we NEED to link against libc, and NOT libc_r because the libc_r
-	# in 3.4 and above is incompatible with the pre-3.4 (specifically,
-	# the >=3.4 libc_r versions of select() and nanosleep() syscalls
-	# have their own new syscall numbers; they were emulated before).
+        # in 3.4 and above is incompatible with the pre-3.4 (specifically,
+        # the >=3.4 libc_r versions of select() and nanosleep() syscalls
+        # have their own new syscall numbers; they were emulated before).
         # We don't really need the libc_r stuff anyway because the "threads"
-	# are really rfork()'d children.    -cyp Feb/13/2000
-	TARGET_AS="gcc -c"
-	TARGET_CC="g++"
+        # are really rfork()'d children.    -cyp Feb/13/2000
+        TARGET_AS="gcc -c"
+        TARGET_CC="g++"
         generate_gcc_opts "x86" "freebsd"
-	TARGET_CCFLAGS="$OPTS_GCC -Werror -DMMX_RC5 -DLURK -DHAVE_OGR_CORES"
-	TARGET_LDFLAGS="-static"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
-	TARGET_ADDASMS="" #des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
-	TARGET_ADDNASMS="platforms/x86ident.asm $NASM_RC5X86_SRCS"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_BITSLICER -DKWAN -DMEGGS  -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	##des## TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	##des## TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_DESMMX_SRCS"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_CSC -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDNASMS="$TARGET_ADDNASMS $CSC_ASM_SRCS"
-	TARGET_LIBS="-lc" # NOT libc_r
+        TARGET_CCFLAGS="$OPTS_GCC -Werror"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-lc" # NOT libc_r
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="freebsd-x86-elf"
-	;;
+        add_sources "freebsd" "x86" 
+	      ;;
 
-###### Intel X86 NetBSD
-
-    *x86-netbsd-aout)	# NetBSD 1.4.x, aout, no OGR, [bernd]
-	# The OGR test doesn't pass all tests with the supplied compiler,
-	# so you need to build the static elf one on a pre-1.5 or 1.5
-	# system to get OGR support.
-	TARGET_AS="gcc -c -DNO_BALIGN"
-	TARGET_CC="g++"
-	TARGET_TARBALL="netbsd-i386-aout"
+    *x86-netbsd-aout)	# NetBSD 1.4.x, aout [bernd]
+        TARGET_AS="gcc -c"
+        TARGET_CC="g++"
         generate_gcc_opts "x86" "netbsd"
-	TARGET_CCFLAGS="$OPTS_GCC -m486 -DASM_X86 -DLURK" # -DHAVE_OGR_CORES
-	TARGET_LDFLAGS="-static"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="" #$OGR_ANSI_SRCS
-	TARGET_ADDASMS=""
-	TARGET_ADDNASMS="platforms/x86ident.asm $NASM_RC5X86_SRCS"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_BITSLICER -DKWAN -DMEGGS  -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	##des## TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	##des## TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_DESMMX_SRCS"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_CSC -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDNASMS="$TARGET_ADDNASMS $CSC_ASM_SRCS"
-	TARGET_NASM_FMT="aoutb"
+        TARGET_CCFLAGS="$OPTS_GCC -Werror"
+        TARGET_LDFLAGS="-static"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        TARGET_NASM_FMT="aoutb"
+        TARGET_TARBALL="netbsd-i386-aout"
+        add_sources "netbsd" "x86" 
+	      ;;
 
     *x86-netbsd-elf)       # NetBSD > 1.4.x, elf, [bernd]
-	TARGET_AS="gcc -c -DNO_BALIGN"
-	TARGET_CC="g++"
+        TARGET_AS="gcc -c"
+        TARGET_CC="g++"
         generate_gcc_opts "x86" "netbsd"
-	TARGET_CCFLAGS="$OPTS_GCC -Werror -DMMX_RC5 -DLURK -DHAVE_OGR_CORES"
-	TARGET_LDFLAGS="-static"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
-	TARGET_ADDASMS="" #des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
-	TARGET_ADDNASMS="platforms/x86ident.asm $NASM_RC5X86_SRCS"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_BITSLICER -DKWAN -DMEGGS  -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	##des## TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	##des## TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_DESMMX_SRCS"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_CSC -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDNASMS="$TARGET_ADDNASMS $CSC_ASM_SRCS"
-	TARGET_LIBS="-lc"
-	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="netbsd-i386-elf"
-	;;
-
-###### Intel X86 OpenBSD
+        TARGET_CCFLAGS="$OPTS_GCC -Werror"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-lc"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="netbsd-i386-elf"
+        add_sources "netbsd" "x86" 
+	      ;;
 
     *x86-openbsd)	# snake
-	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CC="g++"
+        TARGET_AS="g++ -c -DNO_BALIGN"
+        TARGET_CC="g++"
         generate_gcc_opts "x86" "openbsd"
-	TARGET_CCFLAGS="$OPTS_GCC -DMMX_RC5 -DLURK -DHAVE_OGR_CORES"
-	TARGET_LDFLAGS="-static"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
-	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_BITSLICER -DKWAN -DMEGGS  -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	##des## TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bdeslow.S des/brydgnu/p1bdespro.S"
-	##des## TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_DESMMX_SRCS"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_CSC -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDNASMS="$TARGET_ADDNASMS $CSC_ASM_SRCS"
-	TARGET_NASM_FMT="aoutb"
-    TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="openbsd-x86-aout"
-	;;
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_NASM_FMT="aoutb"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="openbsd-x86-aout"
+        add_sources "openbsd" "x86" 
+	      ;;
 
-###### x86 BSD/OS
-
-	# somebody is again and again trying to change this to use nasm, but
-	# nasm doesn't support BSD/OS aout format, so please don't do it again!!
-    *x86-bsdos)                        # snake
-	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CC="g++"
+    *x86-bsdos-aout)                        # BSD/OS 2.x,3.x (aout) -snake
+        TARGET_AS="g++ -c -DNO_BALIGN"
+        TARGET_CC="g++"
         generate_gcc_opts "x86" "bsdos"
-	TARGET_CCFLAGS="-DLURK -DHAVE_OGR_CORES"
-	TARGET_LDFLAGS="-static"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="$RC5X86_SRCS $OGR_ANSI_SRCS"
-	TARGET_ADDASMS="platforms/x86ident.S"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
-	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="bsdos2-x86-aout"
-	;;
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_NASM_FMT="" #<- no nasm support
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="bsdos2-x86-aout"
+        add_sources "bsdos" "x86" 
+	      ;;
 
-	# bsdos-4 client is still experimental, found a severe bug with PentiumII
-	# now under BSD/OS 4.1 it seems to run and compile correctly
-    *x86-bsdos4)      # BSD/OS 4.0 with ELF format, now without DES -snake
-	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CC="g++"
+    *x86-bsdos-elf)                        # BSD/OS 4.x+ (ELF) -snake
+        # bsdos-4 client is still experimental, found a severe bug with 
+        # PentiumII now under BSD/OS 4.1 it seems to run and compile correctly
+        TARGET_AS="g++ -c -DNO_BALIGN"
+        TARGET_CC="g++"
         generate_gcc_opts "x86" "bsdos"
-	TARGET_CCFLAGS="-g $OPTS_GCC -DHAVE_OGR_CORES -DLURK"
-	TARGET_LDFLAGS="-static"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="$OGR_ANSI_SRCS $RC5X86_SRCS"
-	TARGET_ADDASMS="platforms/x86ident.S"
-	##rc5mmx## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_RC5"
-	##rc5mmx## TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_RC5X86_SRCS"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES -DMMX_CSC"
-	##csc## TARGET_ADDNASMS="$TARGET_ADDNASMS $CSC_ASM_SRCS"
-	TARGET_NASM_FMT="elf"
-	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="bsdos4-x86-elf"
-	;;
-
-####### Intel X86 QNX
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_NASM_FMT="elf"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="bsdos4-x86-elf"
+        add_sources "bsdos" "x86" 
+	      ;;
 
     *x86-qnx4)
-	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CC="g++"
+        TARGET_AS="g++ -c -DNO_BALIGN"
+        TARGET_CC="g++"
         generate_gcc_opts "x86" "qnx"
-        TARGET_CCFLAGS="$OPTS_GCC -DMMX_RC5 -DHAVE_OGR_CORES"
-  	TARGET_NASM="/home/jbaker/nasm.qnx4"
-	#TARGET_NASM="nasm"
-	TARGET_LIBS="-lsocket"
-        TARGET_ADDSRCS="$OGR_ANSI_SRCS"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_DOCFILES="docs/readme._ix"
-	TARGET_TARBALL="qnx4-x86"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_NASM="/home/jbaker/nasm.qnx4"
+        #TARGET_NASM="nasm"
+        TARGET_LIBS="-lsocket"
+        TARGET_ADDASMS=""
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="qnx4-x86"
+        add_sources "qnx" "x86" 
         ;;
 
     *x86-nto2)
-    	TARGET_AS="qcc -Vgcc_ntox86 -c"
-	TARGET_CC="qcc -Vgcc_ntox86"
-	TARGET_STRIP="/usr/gcc/bin/ntox86-strip"
-	TARGET_NASM="//55/home/jbaker/nasm.qnx4"
-	#TARGET_NASM="nasm"
+    	  TARGET_AS="qcc -Vgcc_ntox86 -c"
+        TARGET_CC="qcc -Vgcc_ntox86"
+        TARGET_STRIP="/usr/gcc/bin/ntox86-strip"
+        TARGET_NASM="//55/home/jbaker/nasm.qnx4"
+        #TARGET_NASM="nasm"
         TARGET_ASFLAGS="-DNO_BALIGN"
-	TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
-			-fno-exceptions -fno-rtti \
-			-DMMX_RC5 -DHAVE_OGR_CORES \
-			-DMULTITHREAD -DASM_X86"
-	TARGET_LIBS="-lsocket"
-	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
-	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-	TARGET_DOCFILES="docs/readme._ix"
-	TARGET_TARBALL="nto2-x86"
-	TARGET_GENMAN=
+        TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
+                        -fno-exceptions -fno-rtti -DMULTITHREAD -DASM_X86"
+	      TARGET_LIBS="-lsocket"
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="nto2-x86"
+        TARGET_GENMAN=
         CLIENTCPU="1"         # cross-compilation
         CLIENTOS="22"
-	;;
-
-####### Intel X86 SCO5
+        add_sources "nto2" "x86" 
+	      ;;
 
     *x86-sco5)
-	TARGET_AS="g++ -c"
-	TARGET_CC="g++"
+        TARGET_AS="g++ -c"
+        TARGET_CC="g++"
         generate_gcc_opts "x86" "sco"
-	TARGET_CCFLAGS="$OPTS_GCC -DMMX_RC5 -belf -Dsco5"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS=""
-	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_BITSLICER -DKWAN -DMEGGS  -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	##des## TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bdeslow.S des/brydgnu/p1bdespro.S"
-	##des## TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_DESMMX_SRCS"
-	TARGET_LIBS="-lsocket"
+        TARGET_CCFLAGS="$OPTS_GCC -belf -Dsco5"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-lsocket"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        add_sources "sco" "x86" 
+	      ;;
 
     *x86-dynix4)
-	TARGET_CC="ec++"
-	TARGET_CCFLAGS="-relax -D_SEQUENT_ -DMMX_RC5"
-	TARGET_ADDSRCS=""
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_BITSLICER -DKWAN -DMEGGS  -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS1"
-	##des## TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_DESMMX_SRCS"
-	TARGET_LIBS="-lsocket -lnsl -lseq -L/opt/epc/ec++/lib -lec++"
+        TARGET_CC="ec++"
+        TARGET_CCFLAGS="-relax -D_SEQUENT_"
+        TARGET_LIBS="-lsocket -lnsl -lseq -L/opt/epc/ec++/lib -lec++"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        add_sources "dynix" "x86" 
+	      ;;
 
     *x86-dynix2)
-	TARGET_CC="g++"
+        TARGET_CC="g++"
         generate_gcc_opts "x86" "dynix" 
-	TARGET_CCFLAGS="$OPTS_GCC -D_SEQUENT_ -DMMX_RC5"
-	TARGET_ADDSRCS=""
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_BITSLICER -DKWAN -DMEGGS  -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-	##des## TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_DESMMX_SRCS"
-	TARGET_LDFLAGS="-L."
-	# Don't panic; -lXbsd is for gettimeofday()
-	TARGET_LIBS="-lsocket -linet -lnsl -lXbsd -lseq"
+        TARGET_CCFLAGS="$OPTS_GCC -D_SEQUENT_"
+        TARGET_LDFLAGS="-L."
+        # Don't panic; -lXbsd is for gettimeofday()
+        TARGET_LIBS="-lsocket -linet -lnsl -lXbsd -lseq"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        add_sources "dynix" "x86" 
+	      ;;
 
 ###### NeXT (x86, m68k, sparc, hppa)
 
     *x86-next)
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc"
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
         generate_gcc_opts "x86" "next"
-        TARGET_ASFLAGS="-DNO_BALIGN" 
-	TARGET_CCFLAGS="-static $OPTS_GCC -m68040 -D_NeXT_ -DNO_BALIGN -DHAVE_OGR_CORES"
-	TARGET_ADDSRCS="$RC5X86_SRCS $OGR_ANSI_SRCS"
-	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="next-x86"
-	;;
+        TARGET_CCFLAGS="-static $OPTS_GCC -D_NeXT_"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="next-x86"
+        add_sources "next" "x86" 
+	      ;;
 
     *x86-macosx)
-	# this one's for X86-Rhapsody which is quite similar to NeXTstep
-	# but not completely identical     - snake
-	TARGET_AS="cc -c"
-	TARGET_CC="cc"
+        # this one's for X86-Rhapsody which is quite similar to NeXTstep
+        # but not completely identical     - snake
+        TARGET_AS="cc -c"
+        TARGET_CC="cc"
         TARGET_ASFLAGS="-DNO_BALIGN"
-	TARGET_CCFLAGS="-DNO_BALIGN -DHAVE_OGR_CORES"
-	TARGET_ADDSRCS="$RC5X86_SRCS $OGR_ANSI_SRCS"
-	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="rhapsody-x86"
-	;;
+        TARGET_CCFLAGS="-DNO_BALIGN"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="rhapsody-x86"
+        add_sources "macosx" "x86" 
+	      ;;
 
     *m68k-next)
-	TARGET_CC="gcc"
+        TARGET_CC="gcc"
         generate_gcc_opts "68k" "next"
-	TARGET_CCFLAGS="-static $OPTS_GCC -m68040 -D_NeXT_ -DHAVE_OGR_CORES"
-	TARGET_ADDSRCS="rc5/68k/crunch.68k.gcc.s rc5/68k/rc5_68k_gcc_crunch.cpp $OGR_ANSI_SRCS"
+        TARGET_CCFLAGS="-static $OPTS_GCC -m68040 -D_NeXT_"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="next-m68k"
-	;;
+        TARGET_TARBALL="next-m68k"
+        add_sources "next" "68k" 
+	      ;;
 
     *sparc-next)
-	TARGET_CC="cc++"
+        TARGET_CC="cc++"
         generate_gcc_opts "generic" "next"
-	TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_SPARC -arch sparc -D_NeXT_ -D_OLD_NEXT_"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS des/des-slice.cpp des/deseval.cpp"
+        TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_SPARC -arch sparc -D_NeXT_ -D_OLD_NEXT_"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        add_sources "next" "sparc" 
+	      ;;
 
     *hppa-next)
-	TARGET_CC="cc++"
+        TARGET_CC="cc++"
         generate_gcc_opts "generic" "next"
-	TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_HPPA -arch hppa -D_NeXT_ -D_OLD_NEXT_"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS des/des-slice.cpp des/deseval.cpp"
+        TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_HPPA -arch hppa -D_NeXT_ -D_OLD_NEXT_"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        add_sources "next" "hppa" 
+	      ;;
 
-# NetBSD on NeXT, 68k Macs, 68k Amiga, sun3 etc, -snake
-	*m68k-netbsd)
-	TARGET_CC="g++"
-	TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer \
-			-m68020-40 -DASM_68K -DLURK -DHAVE_OGR_CORES"
-	TARGET_LDFLAGS="-static"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="rc5/68k/rc5_68k_gcc_crunch.c ${OGR_ANSI_SRCS}"
-	TARGET_ADDASMS="rc5/68k/crunch.68k.gcc.s"
-	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="netbsd-68k"
-	;;
+	  *m68k-netbsd) # NetBSD on NeXT, 68k Macs, 68k Amiga, sun3 etc, -snake
+        TARGET_CC="g++"
+        TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer \
+                        -m68020-40 -DASM_68K -DLURK -DHAVE_OGR_CORES"
+        TARGET_LDFLAGS="-static"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="netbsd-68k"
+        add_sources "netbsd" "68k" 
+        ;;
 
-###### ARM
-
-    *riscos)
-	TARGET_CC="armcpp -aif -nodebug -littleend -apcs 3/26bit/swst/hardfp/fpe2 -zps1 -nounusedareas -l/home/cberry/play/riscoslib/CLib/stubs.o"
-	TARGET_AS="armasm"
+    *arm-riscos)
+        TARGET_CC="armcpp -aif -nodebug -littleend -apcs 3/26bit/swst/hardfp/fpe2 -zps1 -nounusedareas -l/home/cberry/play/riscoslib/CLib/stubs.o"
+        TARGET_AS="armasm"
         TARGET_ASFLAGS="-apcs 3/26bit"
-	TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -Iogr -Iplatforms -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -J/home/cberry/play/riscoslib/CLib -DCOMPAT_INET4 -D__riscos -DBIT_32 -DHAVE_OGR_CORES"
-	TARGET_ADDSRCS="platforms/riscos/riscos_sup.cpp platforms/riscos/riscos_x86.cpp $OGR_ANSI_SRCS"
-	TARGET_ADDASMS="platforms/riscos/riscos_asm.s rc5/arm/rc5-arm-1.s rc5/arm/rc5-arm-2.s rc5/arm/rc5-arm-3.s des/arm/des-slice-arm.s des/arm/des-slice-sa.s"
-	TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
+        TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -Iogr -Iplatforms -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -J/home/cberry/play/riscoslib/CLib -DCOMPAT_INET4 -D__riscos -DBIT_32 -DHAVE_OGR_CORES"
+        TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
         TARGET_DOCFILES="docs/readme.riscos"   #platform specific docfile
-	TARGET_STRIP=touch
-	TARGET_BINNAME_SUFFIX=",ff8"
+        TARGET_STRIP=touch
+        TARGET_BINNAME_SUFFIX=",ff8"
         CLIENTCPU="11"        # cross-compilation
         CLIENTOS="34"
-	;;
+        add_sources "riscos" "arm"
+	      ;;
 
     *arm-linux-aout)					# chrisb
-	TARGET_CC="gcc"
-	TARGET_AS="as"
+        TARGET_CC="gcc"
+        TARGET_AS="as"
         generate_gcc_opts "arm" "linux"
-	TARGET_CCFLAGS="$OPTS_GCC -Dlinux -DHAVE_OGR_CORES"
-	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
-	TARGET_ADDASMS="rc5/arm/rc5-arm-1-gnu.s rc5/arm/rc5-arm-2-gnu.s \
-			rc5/arm/rc5-arm-3-gnu.s "
-	##des## TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-sa-gnu.s des/arm/des-slice-arm-gnu.s"
-	TARGET_LIBS="-lm"
+        TARGET_CCFLAGS="$OPTS_GCC -Dlinux"
+        TARGET_LIBS="-lm"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="linux-arm-aout"
-	;;
+        TARGET_TARBALL="linux-arm-aout"
+        add_sources "linux" "arm" "aout"
+	      ;;
 
-    *arm-linuxelf)				# andrewm
-	TARGET_CC="gcc"
-	TARGET_AS="as"
+    *arm-linux-elf)				# andrewm
+        TARGET_CC="gcc"
+        TARGET_AS="as"
         generate_gcc_opts "arm" "linux"
-	TARGET_CCFLAGS="$OPTS_GCC -Dlinux -DLURK -DHAVE_OGR_CORES"
-	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
-        TARGET_ADDASMS="rc5/arm/rc5-arm-1-gnu-elf.s \
-			rc5/arm/rc5-arm-2-gnu-elf.s \
-                        rc5/arm/rc5-arm-3-gnu-elf.s"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN"
-	##des## TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-sa-gnu-elf.s des/arm/des-slice-arm-gnu-elf.s"
+        TARGET_CCFLAGS="$OPTS_GCC -Dlinux"
         TARGET_LIBS=""
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="linux-arm-elf"
-	rm -f $TARGET_ADDASMS
-	echo 'Converting GNU a.out cores to ELF'
-	for file in $TARGET_ADDASMS ; do
-		BASENAME=`basename $file`
-		echo "  $file -> `basename $file -elf.s`.s"
-		DIR=`echo $file | sed -e s/$BASENAME//`
-		( cd $DIR ; sed -e 's/_\([a-zA-Z0-9_]\{1,\}\)/\1/g' \
-			< `basename $file -elf.s`.s > $BASENAME )
-	done
+        TARGET_TARBALL="linux-arm-elf"
+        add_sources "linux" "arm"
+
+        rm -f $TARGET_ADDASMS
+        echo 'Converting GNU a.out cores to ELF'
+        for file in $TARGET_ADDASMS ; do
+          BASENAME=`basename $file`
+          echo "  $file -> `basename $file -elf.s`.s"
+          DIR=`echo $file | sed -e s/$BASENAME//`
+          ( cd $DIR ; sed -e 's/_\([a-zA-Z0-9_]\{1,\}\)/\1/g' \
+               < `basename $file -elf.s`.s > $BASENAME )
+        done
         ;;
 
     *arm-netbsd)				# chrisb
-	TARGET_CC="gcc"
-	TARGET_AS="as"
-	TARGET_TARBALL="netbsd-arm32"
+        TARGET_CC="gcc"
+        TARGET_AS="as"
         generate_gcc_opts "arm" "netbsd"
-	TARGET_CCFLAGS="$OPTS_GCC"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS=""
-	TARGET_ADDASMS="rc5/arm/rc5-arm-1-gnu.s rc5/arm/rc5-arm-2-gnu.s \
-			rc5/arm/rc5-arm-3-gnu.s"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DHAVE_DES_CORES"
-	##des## TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-sa-gnu.s des/arm/des-slice-arm-gnu.s"
-	TARGET_LIBS="-lm"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LIBS="-lm"
+        TARGET_TARBALL="netbsd-arm32"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        add_sources "netbsd" "arm"
+	      ;;
 
     *arm-nto2)
         TARGET_AS="qcc -Vgcc_ntoarmle -c"
@@ -1917,192 +1770,123 @@ case "$1" in
         TARGET_STRIP="/usr/gcc/bin/ntoarmle-strip"
         TARGET_ASFLAGS="-DNO_BALIGN"
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
-                        -fno-exceptions -fno-rtti -DASM_ARM -DMULTITHREAD \
-			-DHAVE_OGR_CORES"
+                        -fno-exceptions -fno-rtti -DASM_ARM -DMULTITHREAD"
         TARGET_LIBS="-lsocket"
-        TARGET_ADDSRCS="$OGR_ANSI_SRCS"
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-arm"
         TARGET_GENMAN=
         CLIENTCPU="11"        # cross-compilation
         CLIENTOS="22"
+        add_sources "nto2" "arm"
         ;;
 
-###### NetBSD/vax
-    *vax-netbsd-gcc)
+    *vax-netbsd)
         TARGET_CC="g++"
         generate_gcc_opts "vax" "netbsd"
-        TARGET_CCFLAGS="$OPTS_GCC -DRC5ANSICORE -DLURK"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-        TARGET_ADDSRCS=""
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMEGGS -DKWAN -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
+        TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LIBS="-ltermcap"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        add_sources "netbsd" "vax" 
         ;;
 
-###### s390-linux
-    *s390-linux-glibc2)	        # [friedbait]  fb@baiti.net
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc"
+    *s390-linux)	        # [friedbait]  fb@baiti.net
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
         generate_gcc_opts "s390" "linux"
-	TARGET_CCFLAGS="$OPTS_GCC \
-			-DMULTITHREAD -DLURK -HAVE_OGR_CORES"
-	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp $OGR_ANSI_SRCS"
-	TARGET_ADDASMS=""
-	TARGET_ADDNASMS=""
-        ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-        ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
-	TARGET_NASM_FMT="elf"
-	TARGET_LIBS="-lpthread"
+        TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD"
+        TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-s390-glibc2"
-	;;
+        TARGET_TARBALL="linux-s390"
+        add_sources "linux" "s390" 
+        ;;
 
-###### s390-os390
-    *os390)                     # [friedbait]  fb@baiti.net
-	TARGET_CC="gcc"
-	TARGET_AS=""
+    *s390-os390)                     # [friedbait]  fb@baiti.net
+        TARGET_CC="gcc"
+        TARGET_AS=""
         generate_gcc_opts "s390" "os390"
-	TARGET_CCFLAGS="$OPTS_GCC -D_ALL_SOURCE \
-                        -DHAVE_OGR_CORES" #-D__STRING_CODE_SET__="ISO8859-1"
-	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.c \
-                        $OGR_ANSI_SRCS"
-	TARGET_ADDASMS=""
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-	TARGET_LIBS="$SOCKS_LIBS"
+        TARGET_CCFLAGS="$OPTS_GCC -D_ALL_SOURCE \
+                        " #-D__STRING_CODE_SET__="ISO8859-1"
+        TARGET_ADDASMS=""
+        TARGET_LIBS="$SOCKS_LIBS"
         TARGET_DOCFILES="docs/readme.os390"   #platform specific docfile
         TARGET_TARBALL="os390-s390"
-	;;
+        add_sources "os390" "s390" 
+	      ;;
 
-###### BeOS (x86, PPC)
     *x86-beos)
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc"
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
         generate_gcc_opts "x86" "beos"
-	TARGET_CCFLAGS="$OPTS_GCC -fno-pic -O3 -Wno-multichar -DMMX_RC5 \
-			-DMULTITHREAD -DHAVE_OGR_CORES"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
-	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-	TARGET_LIBS=""
+        TARGET_CCFLAGS="$OPTS_GCC -fno-pic -O3 -Wno-multichar -DMULTITHREAD"
+        TARGET_LDFLAGS="-static"
         TARGET_TARBALL="beos-x86"
         TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
-	;;
+        add_sources "beos" "x86" 
+	      ;;
 
     *ppc-beos)
-	TARGET_AS="mwcc -c"
-	TARGET_CC="mwcc"
-	TARGET_CCFLAGS="$OPTS_MWCC_PPC604 -DMULTITHREAD -DHAVE_OGR_CORES"
-	TARGET_LDFLAGS=""
-	TARGET_ADDSRCS="$RC5PPC_MWCC_SRCS $OGR_ANSI_SRCS"
-	TARGET_LIBS=""
-	TARGET_STRIP="touch"
+        TARGET_AS="mwcc -c"
+        TARGET_CC="mwcc"
+        TARGET_CCFLAGS="$OPTS_MWCC_PPC604 -DMULTITHREAD"
+        TARGET_STRIP="touch"
         TARGET_TARBALL="beos-ppc"
         TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
-	;;
-
-####### OS/2 (x86, emx)
-    # requires EMX, gcc 2.72
-
-    *x86-os2-gcc)               # [patrick] <patrick@skarabeus.de> (no ogr)
-        basename ()
-        {
-        export parm=$1
-        ksh -c 'echo ${parm##*/}'
-        }
-	TARGET_AS="gcc -c"
-        TARGET_CC="gcc"
-        generate_gcc_opts "x86" "os2"
-	TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC -DMMX_RC5 -I. -I${C_INCLUDE_PATH} -DMULTITHREAD"
-	TARGET_LDFLAGS="-Zmt"
-	COMMON_SRCS="common/lurk.cpp platforms/os2cli/os2inst.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp $RC5X86_SRCS"
-	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_ADDNASMS="rc5/x86/nasm/rc5mmx.asm"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_BITSLICER -DKWAN -DMEGGS "
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	##des## TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	##des## TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_DESMMX_SRCS"
-	TARGET_NASM_FMT="aout"
-        TARGET_LIBS="-lsocket"
-        TARGET_DOCFILES="docs/readme.os2"   #platform specific docfile
-        TARGET_OS=OS2
-        TARGET_BINNAME_SUFFIX="exe"
+        add_sources "beos" "ppc" 
         ;;
 
-    *x86-os2-nasm-gcc)          # [patrick] <patrick@skarabeus.de> (with ogr)
+####### OS/2 (x86, emx)
+
+    *x86-os2)          # [patrick] <patrick@skarabeus.de>
         basename ()
         {
         export parm=$1
         ksh -c 'echo ${parm##*/}'
         }
-	TARGET_AS="gcc -c"
+        TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "x86" "os2"
-	TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC -Os -O6 -fexceptions -funroll-loops -DMMX_RC5 -I. -I${C_INCLUDE_PATH} -DMULTITHREAD -DLURK -DHAVE_OGR_CORES"
-	TARGET_LDFLAGS="-Zmt"
-	COMMON_SRCS="common/lurk.cpp platforms/os2cli/os2inst.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
-	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-	TARGET_NASM_FMT="aout"
-	TARGET_STRIP="touch"
-	TARGET_ARCTYPE=zip
+        TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC -Os -O6 -fexceptions -funroll-loops -I. -I${C_INCLUDE_PATH} -DMULTITHREAD"
+        TARGET_LDFLAGS="-Zmt"
+        TARGET_NASM_FMT="aout"
+        TARGET_STRIP="touch"
+        TARGET_ARCTYPE=zip
         TARGET_NASM="nasm097.exe"
         TARGET_LIBS="-lsocket -lvideo"
         TARGET_DOCFILES="docs/readme.os2"   #platform specific docfile
         TARGET_OS=OS2
         TARGET_TARBALL="os2-x86"
         TARGET_BINNAME_SUFFIX=".exe"
+        add_sources "os2" "x86"
         ;;
 
 ###### AmigaOS (m68k, PPC)
     *m68k-amigaos)              # [oliver] <oliver@futaura.co.uk>
-	TARGET_AS="platforms/amiga/tools/genam_wrapper"
-	TARGET_CC="g++ -V 2.95.2"
+        TARGET_AS="platforms/amiga/tools/genam_wrapper"
+        TARGET_CC="g++ -V 2.95.2"
         generate_gcc_opts "68k" "amigaos"
-	TARGET_CCFLAGS="$OPTS_GCC -m68000 -fpermissive -O6 -I./ -noixemul \
+        TARGET_CCFLAGS="$OPTS_GCC -m68000 -fpermissive -O6 -I./ -noixemul \
                         -D__AMIGADATE__=\`platforms/amiga/tools/amigadate\` \
-                        -DDYN_TIMESLICE -DHAVE_OGR_CORES -DLURK"
-	TARGET_LDFLAGS="-noixemul"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="platforms/amiga/amVersion.c platforms/amiga/amSupport.c \
-                        platforms/amiga/amTime.c platforms/amiga/amNetwork.c \
-                        platforms/amiga/amConsole.c ogr/ansi/ogr_sup.cpp \
-                        ogr/ansi/ogr_dat.cpp"
-	TARGET_ADDASMS="rc5/68k/rc5-000_010-jg.s rc5/68k/rc5-020_030-jg.s \
-                        rc5/68k/rc5-040_060-jg.s"
-        TARGET_ADDOBJS="output/ogr000.o output/ogr020.o output/ogr030.o \
-                        output/ogr040.o output/ogr060.o /gg/lib/libnix/swapstack.o"
+                        -DDYN_TIMESLICE"
+        TARGET_LDFLAGS="-noixemul"
+        TARGET_ADDOBJS="/gg/lib/libnix/swapstack.o"
         TARGET_TARBALL="amigaos-68k"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
         TARGET_BINNAME_SUFFIX="_68k"
         TARGET_OS="AMIGAOS_68K"
         TARGET_GENMAN=
         TARGET_ARCTYPE="lha"
-	;;
+        add_sources "amigaos" "68k"
+	      ;;
+
 
     *ppc-amigaos-wos)           # [oliver] <oliver@futaura.co.uk>
-	TARGET_AS="ppc-amigaos-gas"
-	TARGET_CC="ppc-amigaos-g++ -V 2.95.2"
+        TARGET_AS="ppc-amigaos-gas"
+        TARGET_CC="ppc-amigaos-g++ -V 2.95.2"
         TARGET_ASFLAGS="-m603"
         generate_gcc_opts "ppc603e" "amigaos"
-	TARGET_CCFLAGS="$OPTS_GCC -O6 -mmultiple -mstring -I./ \
+        TARGET_CCFLAGS="$OPTS_GCC -O6 -mmultiple -mstring -I./ \
                         -D__AMIGADATE__=\`platforms/amiga/tools/amigadate\` \
-                        -DDYN_TIMESLICE -DHAVE_OGR_CORES -DLURK"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="platforms/amiga/amVersion.c platforms/amiga/amSupport.c \
-                        platforms/amiga/amTime.c platforms/amiga/amNetwork.c \
-                        platforms/amiga/amConsole.c $RC5PPC_SRCS $OGR_ANSI_SRCS"
+                        -DDYN_TIMESLICE"
         TARGET_TARBALL="amigaos-ppc-wos"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
         TARGET_STRIP="platforms/amiga/tools/strip_wos"
@@ -2110,22 +1894,18 @@ case "$1" in
         TARGET_OS="AMIGAOS_PPC"
         TARGET_GENMAN=
         TARGET_ARCTYPE="lha"
-	;;
+        add_sources "amigaos" "ppc"
+	      ;;
 
     *ppc-amigaos-pup)           # [oliver] <oliver@futaura.co.uk>
-	TARGET_AS="ppc-amigaos-gas"
-	TARGET_CC="ppc-amigaos-g++ -V 2.95.2" 
+        TARGET_AS="ppc-amigaos-gas"
+        TARGET_CC="ppc-amigaos-g++ -V 2.95.2" 
         TARGET_ASFLAGS="-m603"
         generate_gcc_opts "ppc603e" "amigaos"
-	TARGET_CCFLAGS="$OPTS_GCC -pup -D__POWERUP__ -O6 -mmultiple -mstring \
+        TARGET_CCFLAGS="$OPTS_GCC -pup -D__POWERUP__ -O6 -mmultiple -mstring \
                         -D__AMIGADATE__=\`platforms/amiga/tools/amigadate\` \
-                        -mstrict-align -I./ -DDYN_TIMESLICE \
-                        -DHAVE_OGR_CORES -DLURK"
-	TARGET_LDFLAGS="-pup"
-	COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-	TARGET_ADDSRCS="platforms/amiga/amVersion.c platforms/amiga/amSupport.c \
-                        platforms/amiga/amTime.c platforms/amiga/amNetwork.c \
-                        platforms/amiga/amConsole.c $RC5PPC_SRCS $OGR_ANSI_SRCS"
+                        -mstrict-align -I./ -DDYN_TIMESLICE"
+        TARGET_LDFLAGS="-pup"
         TARGET_TARBALL="amigaos-ppc-pup"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
         TARGET_STRIP="platforms/amiga/tools/strip_pup"
@@ -2133,7 +1913,8 @@ case "$1" in
         TARGET_OS="AMIGAOS_PPC"
         TARGET_GENMAN=
         TARGET_ARCTYPE="lha"
-	;;
+        add_sources "amigaos" "ppc"
+        ;;
 
 
 ###### Unknown
@@ -2270,7 +2051,8 @@ if [ -n "${TARGET_ADDASMS}" ]; then
   echo "Scanning output AS dependencies..."
   TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} as"
   for target in ${TARGET_ADDASMS}; do
-      TARGETOBJECT=output/`basename $target`.o
+      TARGETOBJECT=`basename $target .s`
+      TARGETOBJECT=output/`basename $TARGETOBJECT .S`.o
       echo "  $target -> $TARGETOBJECT"
       TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
       TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
@@ -2280,7 +2062,7 @@ if [ -n "${TARGET_ADDNASMS}" ]; then
   echo "Scanning output NASM dependencies..."
   TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} nasm"
   for target in ${TARGET_ADDNASMS}; do
-      TARGETOBJECT=output/`basename $target`.o
+      TARGETOBJECT=output/`basename $target .asm`.o
       echo "  $target -> $TARGETOBJECT"
       TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
       TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
