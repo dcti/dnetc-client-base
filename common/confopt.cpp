@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.cpp,v $
+// Revision 1.27  1999/03/18 05:40:43  cyp
+// oops. "Project priority" was in the wrong menu.
+//
 // Revision 1.26  1999/03/18 03:59:09  cyp
 // new "Project priority" option.
 //
@@ -85,7 +88,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.26 1999/03/18 03:59:09 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.27 1999/03/18 05:40:43 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -263,7 +266,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "Enter the order in which the client will search for active projects,\n"
   "for instance \"DES,OGR,RC5\" specifies that DES packets (if available) will\n"
   "be crunched before OGR or RC5 packets.\n"
-  ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,5,NULL,NULL,0,0},
+  ),CONF_MENU_MISC,CONF_TYPE_ASCIIZ,7,NULL,NULL,0,0},
 
 /* ------------------------------------------------------------ */
 
