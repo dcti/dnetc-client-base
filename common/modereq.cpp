@@ -8,6 +8,9 @@
 */    
 //
 // $Log: modereq.cpp,v $
+// Revision 1.12  1998/11/26 22:13:06  cyp
+// client::WriteFullConfig() is now client::WriteConfig(1)
+//
 // Revision 1.11  1998/11/26 07:20:36  cyp
 // Changed Fetch()/Flush()/Update() to use new BufferUpdate() method.
 //
@@ -45,7 +48,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.11 1998/11/26 07:20:36 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.12 1998/11/26 22:13:06 cyp Exp $"; }
 #endif
 
 #include "client.h"   //client class
@@ -196,7 +199,7 @@ int ModeReqRun(Client *client)
             nodestroy = 1;
             }
           if ( newclient->Configure() == 1 )
-            newclient->WriteFullConfig(); //full new build
+            newclient->WriteConfig(1); //full new build
           if (!nodestroy)
             delete newclient;
           if ((bits & MODEREQ_CONFRESTART) != 0)
