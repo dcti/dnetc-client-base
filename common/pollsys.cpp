@@ -39,7 +39,7 @@
  * --------------------------------------------------------------------
 */
 const char *pollsys_cpp(void) {
-return "@(#)$Id: pollsys.cpp,v 1.9.2.6 2000/06/26 19:11:25 oliver Exp $"; }
+return "@(#)$Id: pollsys.cpp,v 1.9.2.7 2000/07/02 20:57:57 oliver Exp $"; }
 
 #include "baseincs.h"  /* NULL, malloc */
 #include "clitime.h"   /* CliTimer() */
@@ -270,7 +270,7 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
     until.tv_usec %= 1000000;
 
     /* substract extra time used by previous call */
-    CliTimerDiff( &until, &overflow, &until );
+    CliTimerDiff( &until, &until, &overflow );
 
     runprio = MAX_POLL_RUNLEVEL;
     
@@ -347,7 +347,7 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
       {
         if (CliGetMonotonicClock( &now ) != 0)
         {
-          CliTimerDiff( &now, &until, &overflow );
+          CliTimerDiff( &overflow, &now, &until );
           usleep( overflow.tv_sec * 1000000 + overflow.tv_usec );
           now = until; /* exit loop and ensure overflow gets set to zero */
         }
@@ -357,8 +357,8 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
                ( now.tv_usec < until.tv_usec )));
 
     /* store extra time spent, ready for next call */
-    CliTimerDiff( &now, &until, &overflow );
-//printf("overflow = %ld,%06ld\n",overflow.tv_sec,overflow.tv_usec);
+    CliTimerDiff( &overflow, &now, &until );
+//printf("overflow = %lu,%06lu\n",overflow.tv_sec,overflow.tv_usec);
   }
     
   --isrunning;
