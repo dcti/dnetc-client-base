@@ -11,6 +11,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.117  1999/02/20 02:56:59  gregh
+// Added IDCONTEST_OGR
+//
 // Revision 1.116  1999/02/09 10:55:55  silby
 // Updated OPs from proxy tree.
 //
@@ -302,7 +305,7 @@
 
 #define PACKET_VERSION      0x03
 #define MAXBLOCKSPERBUFFER  500
-#define CONTEST_COUNT       2 /* 2 contests */
+#define CONTEST_COUNT       3 /* 3 contests */
 
 // --------------------------------------------------------------------------
 
@@ -343,7 +346,8 @@ typedef enum
   IDCONTEST_DES = 1,       /* obsolete */
   IDCONTEST_RC556,         /* obsolete */
   IDCONTEST_RC564,
-  IDCONTEST_DESII
+  IDCONTEST_DESII,
+  IDCONTEST_OGR
 } contest_id_t;
 
 // --------------------------------------------------------------------------
