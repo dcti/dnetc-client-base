@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: client.h,v $
+// Revision 1.94.2.7  1999/01/23 14:03:44  remi
+// In sync with 1.113
+//
 // Revision 1.94.2.6  1999/01/17 12:25:59  remi
 // In sync with 1.112
 //
@@ -25,7 +28,6 @@
 //
 // Revision 1.94.2.2  1998/11/08 11:50:31  remi
 // Lots of $Log tags.
-//
 
 
 #ifndef __CLIBASICS_H__
