@@ -12,7 +12,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.69 2001/04/06 00:44:12 sampo Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.70 2001/04/09 01:33:03 sampo Exp $"; }
 
 //#define TRACE
 
@@ -398,9 +398,11 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       const char *action_msg = 0;
       const char *reason_msg = 0;
       int discarded = 0;
-      char dcountbuf[64]; /* we use this as scratch space too */
+      char ratebuf[32], dcountbuf[64]; /* we use this as scratch space too */
       struct timeval tv;
       ProblemInfo info;
+      info.rate.ratebuf = ratebuf;
+      info.rate.size = sizeof(ratebuf);
 
       *contest = cont_i;
       *is_empty = 1; /* will soon be */
@@ -472,11 +474,9 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         else
           action_msg = "Completed";
       }
-      info.permille_only_if_exact = 1;
-      
       if (ProblemGetInfo( thisprob, &info, P_INFO_E_TIME   | P_INFO_SWUCOUNT | P_INFO_C_PERMIL |
-                                           P_INFO_SIGBUF   | P_INFO_RATEBUF  | P_INFO_CCOUNT   |
-                                           P_INFO_TCOUNT   | P_INFO_DCOUNT) != -1)
+                                           P_INFO_SIGBUF   | P_INFO_RATEBUF  | P_INFO_TCOUNT   |
+                                           P_INFO_CCOUNT   | P_INFO_DCOUNT   | P_INFO_EXACT_PE ) != -1)
       {
         tv.tv_sec = info.elapsed_secs; tv.tv_usec = info.elapsed_usecs;
 
@@ -489,12 +489,13 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
           {
             //[....] Discarded CSC 12345678:ABCDEF00 4*2^28
             //       (project disabled/closed)
-            Log("%s: %s %s%c(%s)\n", CliGetContestNameFromID(cont_i), action_msg,
-                                     info.sigbuf, ((strlen(reason_msg)>10)?('\n'):(' ')), reason_msg );
+            Log("%s: %s %s%c(%s)\n", info.name, action_msg, info.sigbuf,
+                                     ((strlen(reason_msg)>10)?('\n'):(' ')),
+                                     reason_msg );
           }
           else
           {
-            U64stringify(dcountbuf, sizeof(dcountbuf), info.dcounthi, info.dcountlo, 2, CliGetContestUnitFromID(cont_i));
+            U64stringify(dcountbuf, sizeof(dcountbuf), info.dcounthi, info.dcountlo, 2, info.unit);
             if (finito && info.is_test_packet) /* finished test packet */
               strcat( strcpy( dcountbuf,"Test: RESULT_"),
                      ((resultcode==RESULT_NOTHING)?("NOTHING"):("FOUND")) );
@@ -502,7 +503,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
             {
               char *p = strrchr(info.sigbuf,':'); /* HACK! to supress too long */
               if (p) *p = '\0';            /* crypto "Completed" lines */
-              sprintf( dcountbuf, "%u.%02u stats units", info.swucount/100, info.swucount%100);
+              sprintf( dcountbuf, "%u.%02u stats units",
+                                  info.swucount/100, info.swucount%100);
             }
             else if (info.c_permille > 0)
               sprintf( dcountbuf, "%u.%u0%% done", info.c_permille/10, info.c_permille%10);
@@ -518,11 +520,11 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
             //[....] OGR: Completed 22/1-3-5-7 (12.30 stats units)
             //       1.23:45:67:89 - [987,654,321 nodes/s]
             Log("%s: %s %s (%s)\n%s - [%s/s]\n", 
-              CliGetContestNameFromID(cont_i), action_msg, info.sigbuf, dcountbuf,
-              CliGetTimeString( &tv, 2 ), info.ratebuf );
+              info.name, action_msg, info.sigbuf, dcountbuf,
+              CliGetTimeString( &tv, 2 ), info.rate.ratebuf );
             if (finito && info.show_exact_iterations_done)
             {
-              Log("%s: %s [%s]\n", CliGetContestNameFromID(cont_i), info.sigbuf,
+              Log("%s: %s [%s]\n", info.name, info.sigbuf,
               ProblemComputeRate(cont_i, 0, 0, info.tcounthi, info.tcountlo, 0, 0, dcountbuf, sizeof(dcountbuf)));
             }
           } /* if (reason_msg) else */
@@ -699,14 +701,15 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     
         if (load_problem_count <= COMBINEMSG_THRESHOLD)
         {
-          char ddonebuf[15];
           ProblemInfo info;
-          info.permille_only_if_exact = 1;
-          if (ProblemGetInfo( thisprob, &info, P_INFO_S_PERMIL | P_INFO_SIGBUF | P_INFO_DCOUNT) != -1)
+          if (ProblemGetInfo( thisprob, &info, P_INFO_S_PERMIL | P_INFO_SIGBUF   |
+                                               P_INFO_DCOUNT   | P_INFO_EXACT_PE ) != -1)
           {
             const char *extramsg = ""; 
+            char ddonebuf[15];
             char perdone[32]; 
   
+            *loaded_for_contest = thisprob->pub_data.contest;
             if (thisprob->pub_data.was_reset)
               extramsg="\nPacket was from a different core/client cpu/os/build.";
             else if (info.s_permille > 0 && info.s_permille < 1000)
@@ -717,15 +720,15 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
             else if (info.dcounthi || info.dcountlo)
             {
               strcat( strcat( strcpy(perdone, " ("), U64stringify(ddonebuf, sizeof(ddonebuf), 
-                                                                  info.dcounthi, info.dcountlo, 2,
-                                                                  CliGetContestUnitFromID(thisprob->pub_data.contest))),
+                                                                  info.dcounthi, info.dcountlo,
+                                                                  2, info.unit)),
                                                      " done)"); 
               extramsg = perdone;
             }
             
             Log("%s: Loaded %s%s%s\n",
-                 CliGetContestNameFromID(thisprob->pub_data.contest),
-                 ((thisprob->pub_data.is_random)?("random "):("")), info.sigbuf, extramsg );
+                 info.name, ((thisprob->pub_data.is_random)?("random "):("")),
+                 info.sigbuf, extramsg );
           } /* if (thisprob->GetProblemInfo(...) != -1) */
         } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
       } /* if (LoadState(...) != -1) */

@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.55 2001/04/05 23:28:26 sampo Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.56 2001/04/09 01:33:04 sampo Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -203,12 +203,13 @@ int ProblemIsInitialized(void *__thisprob);
 int ProblemRun(void *__thisprob);
 
 typedef struct ProblemInfo {
+  const char *name;                 // name for current contest
+  const char *unit;                 // unit name for current contest
   u32 elapsed_secs;                 // elapsed core runtime so far.
   u32 elapsed_usecs;
   u32 swucount;                     // no. of work units problem has loaded
   u32 c_permille;                   // current permille
   u32 s_permille;                   // start   permille
-  int permille_only_if_exact;
   int is_test_packet;               // RC5: iterations == 0x001000000
   int show_exact_iterations_done;   // OGR: log exact nodecount
   int stats_units_are_integer;
@@ -216,9 +217,13 @@ typedef struct ProblemInfo {
   u32 tcounthi, tcountlo;           // total number of iterations (n/a if not finished)
   u32 ccounthi, ccountlo;           // number of iterations done this time
   u32 dcounthi, dcountlo;           // number of iterations done ever
-  char ratebuf[32];
   char sigbuf[32];                  // packet identifier
   char cwpbuf[32];                  // current working position
+  struct
+  {
+    char *ratebuf;
+    unsigned int size;
+  } rate;
 } ProblemInfo;
 
 #define P_INFO_E_TIME      0x00000001
@@ -232,6 +237,7 @@ typedef struct ProblemInfo {
 #define P_INFO_RATEBUF     0x00000100
 #define P_INFO_SIGBUF      0x00000200
 #define P_INFO_CWPBUF      0x00000400
+#define P_INFO_EXACT_PE    0x00000800
 
 // returns RESULT_* or -1 if bad state
 int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags);

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.114 2001/04/05 23:28:25 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.115 2001/04/09 01:33:03 sampo Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -2086,7 +2086,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
 {
   int rescode = -1;
   ContestWork work;
-  u32 contestid;
+  unsigned int contestid;
   InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
   
   if (thisprob)
@@ -2096,11 +2096,9 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
   if (rescode >= 0)
   {
     u32 e_sec = 0, e_usec = 0;
-    
-    ContestWork work;
-    unsigned int contestid;
-    int rescode = ProblemRetrieveState( thisprob, &work, &contestid, 0, 0 );
 
+    info->name = CliGetContestNameFromID(contestid);
+    info->unit = CliGetContestUnitFromID(contestid);
     info->is_test_packet = contestid == RC5 && 
                            work.crypto.iterations.lo == 0x00100000 &&
                            work.crypto.iterations.hi == 0;
@@ -2255,11 +2253,11 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
 
             if (flags & P_INFO_SIGBUF)
             {
-              ogr_stubstr_r( &work.ogr.workstub.stub, info->sigbuf, 32, 0);
+              ogr_stubstr_r( &work.ogr.workstub.stub, info->sigbuf, sizeof(info->sigbuf), 0);
             }
             if (flags & P_INFO_CWPBUF)
             {
-              ogr_stubstr_r( &work.ogr.workstub.stub, info->cwpbuf, 32, work.ogr.workstub.worklength);
+              ogr_stubstr_r( &work.ogr.workstub.stub, info->cwpbuf, sizeof(info->sigbuf), work.ogr.workstub.worklength);
             }
             if ((flags & P_INFO_SWUCOUNT) && (tcounthi || tcountlo)) /* only if finished */
             {
@@ -2267,7 +2265,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
               __u64div( tcounthi, tcountlo, 0, 1000000000ul, 0, &hi, 0, &lo);
               info->swucount = (hi * 100)+(lo / 10000000ul);
             }
-            if (info->permille_only_if_exact)
+            if (flags & P_INFO_EXACT_PE)
             {
               if (flags & P_INFO_C_PERMIL)
                 info->c_permille = 0;
@@ -2283,8 +2281,13 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
 
         if (flags & (P_INFO_RATE | P_INFO_RATEBUF))
         {
+          if (!(flags & P_INFO_RATEBUF))
+          {
+            info->rate.ratebuf = 0;
+            info->rate.size = 0;
+          }
           ProblemComputeRate( contestid, e_sec, e_usec, ccounthi, ccountlo,
-                              &hi, &lo, info->ratebuf, 32 );
+                              &hi, &lo, info->rate.ratebuf, info->rate.size );
           if (rate2wuspeed && lo)
           {
             CliSetContestWorkUnitSpeed( contestid, (unsigned int)

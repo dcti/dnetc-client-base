@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.56 2001/04/05 23:28:24 sampo Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.57 2001/04/09 01:33:02 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1039,7 +1039,6 @@ void LogScreenPercent( unsigned int load_problem_count )
         {
           char blkdone[32];
           ProblemInfo info;
-          info.permille_only_if_exact = 0;
           
           girc = ProblemGetInfo(selprob, &info, P_INFO_S_PERMIL | P_INFO_C_PERMIL  |
                                                 P_INFO_CWPBUF   | P_INFO_DCOUNT);
@@ -1051,16 +1050,15 @@ void LogScreenPercent( unsigned int load_problem_count )
           else if (girc != -1)
           {
             sprintf(buffer, "#%u: %s:%s [%s]", 
-                    prob_i+1, CliGetContestNameFromID(cont_i), info.cwpbuf,
-                    U64stringify(blkdone, sizeof(blkdone), info.dcounthi,
-                    info.dcountlo, 2, CliGetContestUnitFromID(cont_i)));
+                    prob_i+1, info.name, info.cwpbuf,
+                    U64stringify(blkdone, sizeof(blkdone),
+                                 info.dcounthi, info.dcountlo, 0, info.unit));
             //there isn't enough space for percent so don't even think about it
           }
         }
         else
         {
           ProblemInfo info;
-          info.permille_only_if_exact = 0;
           girc = ProblemGetInfo(selprob, &info, P_INFO_C_PERMIL | P_INFO_S_PERMIL);
           permille = info.c_permille;
           startpermille = info.s_permille;
