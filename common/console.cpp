@@ -11,6 +11,9 @@
    to functions in modules in your own platform area.   - cyp
 */
 // $Log: console.cpp,v $
+// Revision 1.34  1999/01/24 23:27:43  silby
+// Change so conisatty even when win32gui is run in hidden mode.
+//
 // Revision 1.33  1999/01/19 15:37:25  patrick
 //
 // had to add sys/select.h for AIX 4.1 compiles. AIX 4.2 and later has the
@@ -127,7 +130,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.33 1999/01/19 15:37:25 patrick Exp $"; }
+return "@(#)$Id: console.cpp,v 1.34 1999/01/24 23:27:43 silby Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -238,6 +241,9 @@ int InitializeConsole(int runhidden,int doingmodes)
 
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
     retcode = w32InitializeConsole(runhidden,doingmodes);
+    #ifdef WIN32GUI
+    runhidden=0;
+    #endif
     #endif
 
     if (retcode != 0)
