@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.32  1998/11/25 05:59:36  dicamillo
+// Header changes for BeOS R4.
+//
 // Revision 1.31  1998/11/09 01:17:46  remi
 // Linux/aout doesn't have <sched.h>
 //
@@ -232,8 +235,10 @@ extern "C" {
     #include <dir.h>
   #endif
 #elif (CLIENT_OS == OS_BEOS)
-// nothing  #include <share.h>
+  #include <OS.h>
+  #include <unistd.h>
   #include <fcntl.h>
+  #include <sched.h>
 #elif (CLIENT_OS == OS_NETWARE)
   #include <sys/time.h> //timeval
   #include <unistd.h> //isatty, chdir, getcwd, access, unlink, chsize, O_...
