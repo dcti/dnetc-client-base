@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.38  1998/11/03 22:26:46  remi
+// Attempt to auto-detect the number of cpus on Linux/Sparc machines.
+//
 // Revision 1.37  1998/11/01 01:12:54  sampo
 // Added MacOS 68k detection stuff
 //
@@ -135,7 +138,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.37 1998/11/01 01:12:54 sampo Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.38 1998/11/03 22:26:46 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -200,8 +203,24 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
         {
         while(fgets(buffer, 256, cpuinfo))
 	  {
+	  #if (CLIENT_CPU == CPU_X86)
           if (strstr(buffer, "processor") == buffer)
             cpucount++;
+          #elif (CLIENT_CPU == CPU_SPARC)
+	  // 2.1.x kernels (at least 2.1.125)
+	  if (strstr( buffer, "ncpus active\t: " ) == buffer) 
+	      cpucount = atoi( buffer+15 ); 
+	  // 2.0.x non-smp kernels (at least 2.0.35)
+	  else if (strstr( buffer, "BogoMips\t: " ) == buffer)
+	      cpucount = 1;
+	  // 2.0.x smp kernels (at least 2.0.35)
+	  else if (strstr( buffer, "        CPU0\t\tCPU1\t\tCPU2\t\tCPU3\n" ) == buffer)
+	    {
+	      fgets( buffer, 256, cpuinfo );
+	      for (char *p = strtok( buffer+7, "\t \n" ); p; p = strtok( NULL, "\t \n" ))
+		if (strstr( p, "online" ) || strstr( p, "akp")) cpucount++;	      
+	    }
+	  #endif
 	  }
 	fclose(cpuinfo);
 	}
