@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 
 # $Log: configure,v $
+# Revision 1.113.2.12  1998/12/28 16:53:19  remi
+# Added common/pollsys.cpp to COMMON_SRCS (needed by logstuff.cpp).
+#
 # Revision 1.113.2.11  1998/12/28 16:00:24  remi
 # Synced with :
 #
@@ -265,7 +268,7 @@ OPTS_DES_MMX="-DMMX_BITSLICER -DKWAN -DMEGGS -DBIT_64"
 COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
     common/convdes.cpp common/clicdata.cpp common/clirate.cpp
     common/clisrate.cpp common/clitime.cpp
-    common/cpucheck.cpp
+    common/cpucheck.cpp common/pollsys.cpp
     common/logstuff.cpp common/disphelp.cpp
     common/triggers.cpp common/selcore.cpp
     common/cmdline.cpp common/selftest.cpp
