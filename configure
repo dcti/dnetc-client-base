@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.143 2004/10/13 20:28:38 jbgill Exp $
+# @(#)$Id: configure,v 1.288.2.144 2005/01/24 12:59:23 myob Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2753,6 +2753,7 @@ case "$1" in
         generate_gcc_opts "x86" "beos"
         TARGET_CCFLAGS="$OPTS_GCC -fno-pic -O3 -Wno-multichar"
         TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-lnet"
         TARGET_TARBALL="beos-x86"
         TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
         add_sources "beos" "x86"
@@ -2763,6 +2764,7 @@ case "$1" in
         TARGET_CC="mwcc"
         TARGET_CCFLAGS="$OPTS_MWCC_PPC604"
         TARGET_STRIP="touch"
+        TARGET_LIBS="-lnet"
         TARGET_TARBALL="beos-ppc"
         TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
         add_sources "beos" "ppc"
