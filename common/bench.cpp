@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.10 1999/11/27 20:27:11 remi Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.11 1999/11/27 20:36:53 remi Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -261,7 +261,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
       run = problem->Run();
       if ( run < 0 )
         break;
-      else if ((flags & TBENCHMARK_IGNBRK)!=0 && 
+      else if ((flags & TBENCHMARK_IGNBRK)==0 && 
                 CheckExitRequestTriggerNoIO())
       {
         run = -1; /* error */
