@@ -1,6 +1,6 @@
 
   distributed.net client documentation
-  document revision $Id: dnetc.txt,v 1.4.4.2 2005/03/09 22:18:11 jlawson Exp $
+  document revision $Id: dnetc.txt,v 1.4.4.3 2005/03/09 22:45:53 jlawson Exp $
 
   Copyright distributed.net 1997-2005 - All Rights Reserved
   For use in distributed.net projects only.
@@ -68,12 +68,12 @@
     like to have a client for the platform, you can request it at
     http://www.distributed.net/porting/
 
-                                                                     
+
  3.0  Getting and starting the client --------------------------------
 
-    Clients are (barring a few exceptions) *only* available from 
-    http://www.distributed.net/download/ or from ftp servers linked from 
-    that page. FreeBSD clients are also available on FreeBSD CD-ROMs. 
+    Official clients are generally *only* available from
+    http://www.distributed.net/download/ or from FTP servers linked
+    from that page.
 
     Once you have downloaded the client, starting it is easy. Simply
     unpack/unzip/unarc the archive you downloaded and fire it up. 
@@ -113,7 +113,7 @@
      version 2.9xxx or later will only work with personal proxy builds
      of at least build 330 or later.
 
-                                                                          
+
  5.0  Fetching and flushing work -------------------------------------
  
      The distributed.net client can fetch/flush work using 3 methods:
@@ -260,7 +260,7 @@
      client has its own files. Lock contention is thus minimized and
      they can work without the user having to worry about the network
      (if one exists) between them failing.
-                                                                     
+
  6.0  Help! ----------------------------------------------------------
 
      If you've having a problem with the client, the first place you 
@@ -271,20 +271,20 @@
      If you are still having problems, here are a few places you can 
      find help (in order of responsiveness).
 
-     - The quickest way to get question(s) answered about the operation 
-       and setup of the client is to connect to the distributed.net IRC
-       network and join the channel #distributed. To connect, point your
-       IRC client at the server irc.distributed.net. This is an alias
-       for all the public IRC servers on the network. For more info on
-       using IRC and distributed.net, see the IRC Tutorial:
-       http://www.distributed.net/docs/tutor_irc.php
-
      - If you need further assistance with client use or operation, refer 
        to the distributed.net FAQ-O-Matic (Frequently Asked Questions)
        available online at: http://faq.distributed.net/
        Documents there include every aspect of running the client,
        common questions about distributed.net projects, and the ever-
        popular statistics questions.
+
+     - Another way to get question(s) answered about the operation and
+       setup of the client is to connect to the distributed.net IRC
+       network and join the channel #distributed. To connect, point
+       your IRC client at the server irc.distributed.net, port 6667.
+       If your IRC client supports SSL, you may also use port 994.
+       For more info on using IRC and distributed.net, see the IRC
+       Tutorial:  http://www.distributed.net/docs/tutor_irc.php
 
      - If you don't mind your mailbox receiving a few messages a day, 
        you may consider subscribing to the general client mailing list
@@ -304,3 +304,9 @@
        usually very busy and it may take weeks before they get around to 
        answering your message.
        
+
+     We thank you for running out client and contributing your idle
+     computing power to our projects.  If you are feeling especially
+     generous, we also appreciate other types of contributions in
+     order to support our equipment and networking costs:
+     http://www.distributed.net/donation.php
