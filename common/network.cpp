@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97 1999/05/08 19:05:31 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.98 1999/07/09 14:09:39 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -371,7 +371,8 @@ void Network::ShowConnection(void)
     else
     {
       LogScreen( "Connected to %s:%u\nvia %s proxy %s:%u\n",
-                 targethost, ((unsigned int)(svc_hostport)),
+                 ( autofindkeyserver ? "distributed.net" : server_name ),
+                 ((unsigned int)(svc_hostport)),
                  ((startmode & MODE_SOCKS5)?("SOCKS5"):
                  ((startmode & MODE_SOCKS4)?("SOCKS4"):("HTTP"))),
             fwall_hostname, (unsigned int)fwall_hostport );

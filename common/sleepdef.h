@@ -26,7 +26,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22 1999/04/09 13:55:17 cyp Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.23 1999/07/09 14:09:40 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -76,31 +76,26 @@
 #elif (CLIENT_OS == OS_HPUX)
   #include <unistd.h>
   #include <sys/time.h>
-  #ifdef _STRUCT_TIMESPEC
+  #if 1 //good for all HP-UX's (according to select(2) manpage)
+  #undef usleep
+  #define usleep(x) {struct timeval tv={0,(x)};select(0,NULL,NULL,NULL,&tv);}
+  #elif defined(_STRUCT_TIMESPEC)
      // HP-UX 10.x has nanosleep() rather than usleep()
      #define usleep(x) { \
        struct timespec interval, remainder; \
        interval.tv_sec = 0; interval.tv_nsec = (x)*100; \
        nanosleep(&interval, &remainder); }
   #else // HP-UX 9.x doesn't have nanosleep() or usleep()
-    //#define usleep(x) sleep(1)
-    #error FIXME - is this correct?
     #undef usleep
     #define usleep(x) {struct timeval tv={0,(x)};select(0,NULL,NULL,NULL,&tv);}
   #endif
 #elif (CLIENT_OS == OS_IRIX)
   #include <unistd.h>
-  #if 1
-    #ifndef usleep
-      #include <limits.h>
-      #define usleep(x) sginap((x)*(CLK_TCK/1000000L))
-    #endif
-  #else
-    #ifdef _irix5_
-      #define usleep(x) sleep(1) //will use nanosleep() in next revision
-      #error please fix "next revision" (see hpux above)
-    #endif
-  #endif
+  #undef usleep
+  #define usleep(x) poll(NULL, 0, (x)/1000);
+  //#define usleep(x) sginap((((x)*CLK_TCK)+500000)/1000000L)
+  //CLK_TCK is defined as sysconf(_SC_CLK_TCK) in limits.h and 
+  //is 100 (10ms) for non-realtime processes, machine dependant otherwise
 #elif (CLIENT_OS == OS_AMIGAOS)
   extern "C" {
   #ifdef sleep
@@ -111,7 +106,7 @@
   #endif
   #define sleep(n) Delay(n*TICKS_PER_SECOND);
   #define usleep(n) Delay(n*TICKS_PER_SECOND/1000000);
-  #error Intentionally left unfixed. *Read* the documentation about using parens!
+  #error Intentionally left unfixed. (hint: use parenthesis)
   }
 #elif (CLIENT_OS == OS_RISCOS)
   extern "C" {
@@ -124,10 +119,9 @@
   #undef usleep
   #define usleep(x) {struct timeval tv={0,(x)};select(0,NULL,NULL,NULL,&tv);}
 #elif (CLIENT_OS == OS_ULTRIX)
-  #define usleep(x) { struct timeval tv = {0,(x)}; \
-                      select(0,NULL,NULL,NULL,&tv); }
+  #define usleep(x) {struct timeval tv={0,(x)};select(0,NULL,NULL,NULL,&tv);}
 #else
-  #include <unistd.h> //gcc has both sleep() and usleep()
+  #include <unistd.h> //has both sleep() and usleep()
 #endif
 
 #ifndef __SLEEP_FOR_POLLING__

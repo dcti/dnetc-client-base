@@ -9,7 +9,7 @@
 //
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.28 1999/05/23 09:21:16 jlawson Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.29 1999/07/09 14:09:38 cyp Exp $"; }
 
 #define COMPILING_INIREAD
 #include "iniread.h"
@@ -120,7 +120,7 @@ int IniString::instr(int offset, const IniString &match) const
 IniString IniString::ucase(void) const
 {
   IniString output = *this;
-  for (char *p = (char*) c_str(); *p; p++)
+  for (char *p = (char*) c_str(); *p; p++) 
     *p = (char) toupper(*p);
   return output;
 }
@@ -128,7 +128,7 @@ IniString IniString::ucase(void) const
 IniString IniString::lcase(void) const
 {
   IniString output = *this;
-  for (char *p = (char*) c_str(); *p; p++)
+  for (char *p = (char*) c_str(); *p; p++) 
     *p = (char) tolower(*p);
   return output;
 }
@@ -139,7 +139,7 @@ void IniStringList::fwrite(FILE *out)
   for (int i = 0; i < GetCount(); i++)
   {
     if (i) fprintf(out, ",");
-
+    
     if ((*this)[i].need_quotes())
       fprintf(out, "\"%s\"", (*this)[i].c_str());
     else
@@ -155,7 +155,7 @@ void IniRecord::fwrite(FILE *out)
     // this is a comment
 #ifdef INIREAD_SINGLEVALUE
     fprintf(out, ";%s\n", values.c_str());
-#else
+#else    
     fprintf(out, ";%s\n", values[0].c_str());
 #endif
   }
@@ -178,7 +178,7 @@ void IniRecord::fwrite(FILE *out)
 }
 /////////////////////////////////////////////////////////////////////////////
 void IniSection::fwrite(FILE *out)
-{
+{  
   fprintf(out, "[%s]\n", section.c_str());
   for (int i = 0; i < records.GetCount(); i++)
     records[i].fwrite(out);
@@ -272,7 +272,7 @@ int IniFile::ReadIniFile(const char *Filename, const char *Section)
       IniString key;
       if (peekch != EOF && peekch != '\n' && peekch != '=' &&
         isprint(peekch)) key.append((char)peekch);
-      while ((peekch = fgetc(inf)) != EOF &&
+      while ((peekch = fgetc(inf)) != EOF &&      
         peekch != '\n' && peekch != '=' && peekch != ';')
       {
         if (isprint(peekch)) key.append((char)peekch);
@@ -285,7 +285,7 @@ int IniFile::ReadIniFile(const char *Filename, const char *Section)
         *p = 0;
         strcpy((char*) key.c_str(), key.c_str() + 1);
         p = strchr((char*)key.c_str(), 0) - 1;
-      }
+      }        
       while (isspace(*p) && p >= key.c_str()) *p-- = 0;
 
       // separate out all of the values
@@ -321,7 +321,7 @@ int IniFile::ReadIniFile(const char *Filename, const char *Section)
           while ((peekch = fgetc(inf)) != EOF &&
               peekch != '\n' && isspace(peekch)) {};
           if (peekch == EOF || peekch == '\n') break;
-
+        
 
           if (peekch == '"')
           {
@@ -384,7 +384,7 @@ int IniFile::WriteIniFile(const char *Filename)
 {
   if (Filename) lastfilename = Filename;
   FILE *outf = fopen(lastfilename.c_str(), "w");
-  if (outf == NULL)
+  if (outf == NULL) 
     return -1;
   fwrite(outf);
   fclose(outf);
@@ -393,8 +393,8 @@ int IniFile::WriteIniFile(const char *Filename)
 /////////////////////////////////////////////////////////////////////////////
 
 #ifdef INIREAD_WIN32_LIKE
-unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
-                      const char *defval, char *buffer,
+unsigned long GetPrivateProfileStringB( const char *sect, const char *key, 
+                      const char *defval, char *buffer, 
                       unsigned long buffsize, const char *filename )
 {
   int foundentry = 0;
@@ -422,7 +422,7 @@ unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
         buffer[0] = 0;
 #ifdef INIREAD_SINGLEVALUE
         inirec->values.copyto(buffer, buffsize );
-// printf("foundkey [%s]%s=%s\n",sect,key,buffer);
+// printf("foundkey [%s]%s=%s\n",sect,key,buffer); 
         foundentry = strlen( buffer );
         if (buffer[0]=='"' || buffer[0]=='\'')
           {
@@ -440,17 +440,17 @@ unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
 //else printf("find sect %s failed\n", sect );
     }
 //else printf("openini for write failed\n");
-
+  
   if (!foundentry && *defval && defval != buffer)
     {
-//printf("using default for [%s]%s\n",sect,key);
+//printf("using default for [%s]%s\n",sect,key); 
     strncpy( buffer, defval, buffsize-1 );
     buffer[buffsize-1] = 0;
     }
   return strlen(buffer);
 }
 
-int WritePrivateProfileStringB( const char *sect, const char *key,
+int WritePrivateProfileStringB( const char *sect, const char *key, 
                         const char *value, const char *filename )
 {
   IniFile inifile;
@@ -460,6 +460,8 @@ int WritePrivateProfileStringB( const char *sect, const char *key,
   int changed = 0;
   if (sect == NULL)
     return 0;
+  if (key == NULL)                 //we do not support section functions
+    return 0;                      //ie delete section if key is NULL
   inifile.ReadIniFile( filename );
   if ((inisect = inifile.findsection( sect )) == NULL)
     {
@@ -468,39 +470,29 @@ int WritePrivateProfileStringB( const char *sect, const char *key,
     if ((inisect = inifile.addsection( sect )) == NULL)
       return 0;
     }
-  if (key == NULL)
+  if (value == NULL)
     {
-      // entire section should be deleted.
-      inifile.deletesection(inisect);
+    if ((inirec = inisect->findfirst( key ))!=NULL)
+      {
+      inisect->deleterecord( inirec );
       changed = 1;
-    }
-  else if (value == NULL && key != NULL)
-    {
-      // specific key should be deleted.
-      if ((inirec = inisect->findfirst( key ))!=NULL)
-        {
-          inisect->deleterecord( inirec );
-          changed = 1;
-        }
+      }
     }
   else
     {
-      // otherwise the specific key should be set.
-      inisect->setkey(key, value);
-      changed = 1;
+    inisect->setkey(key, value);
+    changed = 1;
     }
-
   if (changed)
     {
-      // if any changes were made, write the ini file back out.
-      if ( inifile.WriteIniFile() < 0)
-        return 0;
+    if ( inifile.WriteIniFile() < 0)
+      return 0;
     }
   return 1; //success
 }
 
 
-unsigned int GetPrivateProfileIntB( const char *sect, const char *key,
+unsigned int GetPrivateProfileIntB( const char *sect, const char *key, 
                           int defvalue, const char *filename )
 {
   char buf[(sizeof(long)+1)*3];
@@ -521,7 +513,7 @@ unsigned int GetPrivateProfileIntB( const char *sect, const char *key,
   return 0;
 }
 
-int WritePrivateProfileIntB( const char *sect, const char *key,
+int WritePrivateProfileIntB( const char *sect, const char *key, 
                             int value, const char *filename )
 {
   char buf[(sizeof(long)+1)*3];

@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.52 1999/06/09 12:47:02 ivo Exp $"; }
+return "@(#)$Id: console.cpp,v 1.53 1999/07/09 14:09:37 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -293,16 +293,17 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       {
         struct termios stored;
         struct termios newios;
-
+        int fd = fileno(stdin);
         fflush(stdout);
-        tcgetattr(0,&stored); /* Get the original termios configuration */
+        tcgetattr(fd,&stored); /* Get the original termios configuration */
         memcpy(&newios,&stored,sizeof(struct termios));
-        newios.c_lflag &= ~(ICANON|ECHO|ECHONL); /* disable canonical mode */
-        newios.c_cc[VTIME] = 0;                  /* ... and echo */
-        newios.c_cc[VMIN] = 1;         /* set buffer size to 1 byte */
-        tcsetattr(0,TCSANOW,&newios);  /* Activate the new settings */
-        ch = getchar();                /* Read the single character */
-        tcsetattr(0,TCSANOW,&stored);  /* Restore the original settings */
+        newios.c_lflag &= ~(ECHO|ECHONL|ECHOPRT|ECHOCTL); /* no echo at all */
+        newios.c_lflag &= ~(ICANON);     /* not linemode and no translation */
+        newios.c_cc[VTIME] = 0;          /* tsecs inter-char gap */
+        newios.c_cc[VMIN] = 1;           /* number of chars to block for */
+        tcsetattr(0,TCSANOW,&newios);    /* Activate the new settings */
+        ch = getchar();                  /* Read a single character */
+        tcsetattr(fd,TCSAFLUSH,&stored); /* Restore the original settings */
         if (ch == EOF) ch = 0;
       }
       #elif (CLIENT_OS == OS_MACOS)
@@ -338,7 +339,6 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
               (( timenow.tv_sec == timestop.tv_sec ) &&
               ( timenow.tv_usec < timestop.tv_usec ))));
   }
-
   return ch;
 }
 
@@ -594,7 +594,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     height = ht; width = wt;
   #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_SOLARIS) || \
         (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_IRIX) || \
-	(CLIENT_OS == OS_HPUX)
+        (CLIENT_OS == OS_HPUX)  || (CLIENT_OS == OS_AIX)
     /* good for any non-sco flavour? */
     struct winsize winsz;
     winsz.ws_col = winsz.ws_row = 0;
@@ -613,7 +613,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
       height  = winsz.ts_lines;
     }
   #elif defined(TIOCGWINSZ)
-    #error please add support for TIOCGWINSZ (will be used by graph stuff)
+    #error please add support for TIOCGWINSZ to avoid the following stuff
   #else 
   {
     char *envp = getenv( "LINES" );
@@ -630,7 +630,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
       if (width <= 0 || width >= 300)
         width = 0;
     }
-    #if 0 //-- no longer needed since paging is disabled on unix targets
+    #if 0 
     if (height == 0 && width == 0)
     {
       unsigned int loc = 0;
@@ -641,7 +641,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
         "/usr/share/terminfo",       // ncurses 1.9.9g defaults
         "/usr/local/share/terminfo", //
         "/usr/lib/terminfo",         // Debian 1.3x use this one
-        "/usr/share/lib/terminfo",   // ex. AIX (has a link to /usr/lib)
+        "/usr/share/lib/terminfo",   // ex. AIX (link to /usr/lib)
         "/usr/local/lib/terminfo",   // linux variation
         "/etc/terminfo",             // another linux variation
         "~/.terminfo",               // last resort
@@ -651,31 +651,40 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
       do
       {
         int termerr;
+        char ebuf[128];
         if ( envp )
+        {
+          #if (CLIENT_OS == OS_IRIX)
+          putenv(strcat(strcpy(ebuf,"TERMINFO="),envp));
+          #else
           setenv( "TERMINFO", envp, 1);
+          #endif
+        }
         if (setupterm( NULL, 1, &termerr ) != ERR)
         {
           if (termerr == 1)
           {
-            char buf[sizeof(int)*3];
             height = tigetnum( "lines" );
             if (height <= 0 || height >= 300)
               height = 0;
-            else
-            {
-              sprintf( buf, "%d", height );
-              setenv( "LINES", buf , 1);
-            }
             width = tigetnum( "columns" );
             if (width <= 0 || width >= 300)
               width = 0;
-            else
-            {
-              sprintf( buf, "%d", width );
-              setenv( "COLUMNS", buf , 1);
-            }
             if (width != 0 && height != 0)
-              break;
+            {
+              #if (CLIENT_OS == OS_IRIX)
+              sprintf( ebuf, "LINES=%d", height );
+              putenv( ebuf );
+              sprintf( ebuf, "COLUMNS=%d", width );
+              putenv( ebuf );
+              #else
+              sprintf( ebuf, "%d", height );
+              setenv( "LINES", ebuf, 1);
+              sprintf( ebuf, "%d", width );
+              setenv( "COLUMNS", ebuf , 1);
+              #endif
+              break; /* get out of do{}while loop */
+            }
           }
         }
         envp = terminfo_locations[loc++];

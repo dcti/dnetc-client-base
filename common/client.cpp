@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.207 1999/06/10 21:26:44 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.208 1999/07/09 14:09:36 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -90,7 +90,7 @@ static void __initialize_client_object(Client *client)
     client->httpport = 0;
     client->uuehttpmode = 0;
     client->httpid[0] = 0;
-  client->noupdatefromfile = 1;
+  client->noupdatefromfile = 0;
     client->remote_update_dir[0] = '\0';
   client->connectoften=0;
   client->preferred_blocksize=31;
@@ -128,18 +128,22 @@ static const char *GetBuildOrEnvDescription(void)
   send us log extracts but don't mention the OS they are running on.
   Only useful for win-weenies I suppose.
   */
-
-  #if (CLIENT_OS == OS_DOS)
+#if (CLIENT_OS == OS_DOS)
   return dosCliGetEmulationDescription(); //if in win/os2 VM
-  #elif ((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S))
+#elif ((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S))
   static char buffer[32]; long ver = winGetVersion(); /* w32pre.cpp */
-  sprintf(buffer,"under Windows%s %u.%u", (ver>=2000)?(" NT"):(""), (ver/100)%20, ver%100 );
+  sprintf(buffer,"Windows%s %u.%u", (ver>=2000)?("NT"):(""), (ver/100)%20, ver%100 );
   return buffer;
-  #elif defined(BDESCRIP)
-  return BDESCRIP;
-  #else
+#elif defined(__unix__) /* uname -sr */
+  struct utsname ut;
+  if (uname(&ut)==0) {
+    static char buffer[sizeof(ut.sysname)+1+sizeof(ut.release)+1];
+    return strcat(strcat(strcpy(buffer,ut.sysname)," "),ut.release);
+  }
   return "";
-  #endif
+#else
+  return "";
+#endif
 }
 
 int ClientIsGUI(void)
@@ -245,7 +249,7 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
                        "R" /* public release */
                        #endif
                        "-%s " /* date is in bugzilla format yymmddhh */ 
-                       "client for %s%s%s%s started.\n",
+                       "client for %s%s%s%s.\n",
             ((ClientIsGUI())?('G'):('C')),  CliGetTimeString(&tv,4),
             CLIENT_OS_NAME, ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
       LogScreenRaw( "Please provide the *entire* version descriptor "
@@ -442,9 +446,169 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int 
 }
 #elif ((CLIENT_OS == OS_OS2) && defined(OS2_PM))
 // nothing
+#elif defined(__unix__)
+int main( int argc, char *argv[] )
+{
+  // stop the shell from seeing SIGTSTP and putting the client
+  // into the background when we '-pause' it.
+  // porters : those calls are POSIX.1, 
+  // - on BSD you might need to change setpgid(0,0) to setpgrp()
+  // - on SYSV you might need to change getpgrp() to getpgid(0)
+  if( getpgrp() != getpid() )
+    setpgid( 0, 0 );
+
+  /* the SPT_* constants refer to sendmail source (conf.[c|h]) */
+  char defname[]={('r'),('c'),('5'),('d'),('e'),('s'),0};
+  int needchange = 0;
+  if (argv && argv[0])
+  {
+    char *p = strrchr( argv[0], '/' );
+    needchange = (strcmp( ((p)?(p+1):(argv[0])), defname )!=0);
+  }
+  #if (CLIENT_OS == OS_HPUX)                         //SPT_TYPE == SPT_PSTAT
+  if (needchange)
+  {
+    union pstun pst;
+    pst.pst_command = &defname[0];
+    pstat(PSTAT_SETCMD,pst,strlen(defname),0,0);
+  }
+  #elif (CLIENT_OS == OS_SCO)                        //SPT_TYPE == SPT_SCO
+  if (needchange)
+  {
+    #ifndef _PATH_KMEM /* should have been defined in <paths.h> */
+    # define _PATH_KMEM "/dev/kmem"
+    #endif
+    int kmem = open(_PATH_KMEM, O_RDWR, 0);
+    if (kmem >= 0)
+    {  
+      //pid_t kmempid = getpid();
+      struct user u;
+      off_t seek_off;
+      char buf[PSARGSZ];
+      (void) fcntl(kmem, F_SETFD, 1);
+      memset( buf, 0, PSARGSZ );
+      strncpy( buf, defname, PSARGSZ );
+      buf[PSARGSZ - 1] = '\0';
+      seek_off = UVUBLK + (off_t) u.u_psargs - (off_t) &u;
+      if (lseek(kmem, (off_t) seek_off, SEEK_SET) == seek_off)
+        (void) write(kmem, buf, PSARGSZ);
+      /* yes, it stays open */
+    }
+  }
+  #elif 0 /* eg, Rhapsody */                  /* SPT_TYPE==SPT_PSSTRINGS */
+  if (needchange)
+  {
+    PS_STRINGS->ps_nargvstr = 1;
+    PS_STRINGS->ps_argvstr = defname;
+  }
+  #elif 0                                     /*  SPT_TYPE == SPT_SYSMIPS */
+  if (needchange)
+  {
+    sysmips(SONY_SYSNEWS, NEWS_SETPSARGS, buf);
+  }
+  #else //SPT_TYPE == SPT_CHANGEARGV (mach) || SPT_NONE (OS_DGUX|OS_DYNIX)
+        //|| SPT_REUSEARGV (the rest)
+  /* [Net|Free|Open|BSD[i]] are of type SPT_BUILTIN, ie use setproctitle() 
+     which is a stupid smart-wrapper for SPT_PSSTRINGS (see above). The result
+     is exactly the same as when we reexec(): ps will show "rc5des (filename)"
+     so we gain nothing other than avoiding the exec() call, but the way /we/ 
+     would use it is non-standard, so we'd better leave it be:
+     __progname = defname; setproctitle(NULL); //uses default, ie __progname
+  */
+  #if (CLIENT_OS != OS_FREEBSD) && (CLIENT_OS != OS_NETBSD) && \
+      (CLIENT_OS != OS_BSDOS) && (CLIENT_OS != OS_OPENBSD) && \
+      (CLIENT_OS != OS_DGUX) && (CLIENT_OS != OS_DYNIX)
+  /* ... all the SPT_REUSEARGV types */
+  if (needchange && strlen(argv[0]) >= strlen(defname))
+  {
+    char *q = "RC5PROG";
+    int didset = 0;
+    #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX)
+    char *m = (char *)malloc( strlen(q)+1+strlen(argv[0])+1 );
+    if (m) {
+      didset=(0==putenv(strcat(strcat(strcpy(m,q),"="),argv[0]))); //BSD4.3
+      free((void *)m); 
+    }
+    #else
+    didset = (setenv( q, argv[0], 1 ) == 0); //SYSV7 and posix
+    #endif
+    if (didset)
+    {
+      if ((q = (char *)getenv(q)) != ((char *)0))
+      {
+        int padchar = 0; /* non-linux/qnx/aix may need ' ' here */
+        memset(argv[0],padchar,strlen(argv[0]));
+        memcpy(argv[0],defname,strlen(defname));
+        argv[0] = q;
+        needchange = 0;
+      }
+    }
+  }
+  #endif
+  if (needchange)
+  {
+    char buffer[512];
+    unsigned int len;  char *p;
+    if (getenv("RC5INI") == NULL)
+    {
+      int have_ini = 0;
+      for (len=1;len<((unsigned int)argc);len++)
+      {
+        p = argv[len];
+        if (*p == '-')
+        {
+          if (p[1]=='-') 
+            p++;
+          if (strcmp(p,"-ini")==0)
+          {
+            have_ini++;
+            break;
+          }
+        }
+      }
+      if (!have_ini)
+      {
+        strcpy( buffer, "RC5INI=" );
+        strncpy( &buffer[7], argv[0], sizeof(buffer)-7 );
+        buffer[sizeof(buffer)-5]='\0';
+        strcat( buffer, ".ini" );
+        #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX)
+        putenv( buffer );                 //BSD4.3
+        #else
+        setenv("RC5INI", &buffer[7], 1 ); //SYSV7 and posix
+        #endif
+      }
+    }
+      
+    p = argv[0];
+    argv[0] = defname;
+    if ((strlen(p) + 5) < sizeof(buffer))
+    {
+      char *s;
+      strcpy( buffer, p );
+      s = strrchr( buffer, '/' );
+      if (s != NULL)
+      {
+        s[1]='\0';
+        strcat( buffer, defname );
+        argv[0] = buffer;
+      }
+    }
+
+    if ( execvp( p, &argv[0] ) == -1)
+    {
+      ConOutErr("Unable to restart self");
+      return -1;
+    }
+    return 0;
+  }
+  #endif
+  return realmain( argc, argv );
+}      
 #else
 int main( int argc, char *argv[] )
 {
   return realmain( argc, argv );
 }
 #endif
+

@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58 1999/05/08 19:57:28 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.59 1999/07/09 14:09:39 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -708,21 +708,22 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
                 BufferGetDefaultFilename( cont_i, 1, out_buffer_basename )) );
       }
 
-      // To suppress "odd" problem completion count summaries (and not be
-      // quite so verbose) we only display summaries if the number of
-      // completed problems is even divisible by the number of processors.
-      // Requires a working GetNumberOfDetectedProcessors() [cpucheck.cpp]
-      // also check randomchanged in case a contest was closed/opened and
-      // statistics haven't been reset
-
-      if (totalBlocksDone > 0 && randomchanged == 0)
+      if (totalBlocksDone > 0 /* && randomchanged == 0 */)
       {
+        // To suppress "odd" problem completion count summaries (and not be
+        // quite so verbose) we only display summaries if the number of
+        // completed problems is even divisible by the number of processors.
+        // Requires a working GetNumberOfDetectedProcessors() [cpucheck.cpp]
+        // also check randomchanged in case a contest was closed/opened and
+        // statistics haven't been reset
+        #if 0
         int cpustmp; unsigned int cpus = 1;
         if ((cpustmp = GetNumberOfDetectedProcessors()) > 1)
           cpus = (unsigned int)cpustmp;
         if (load_problem_count > cpus)
           cpus = load_problem_count;
         if ((totalBlocksDone%cpus) == 0 )
+        #endif
         {
           Log( "Summary: %s\n", CliGetSummaryStringForContest(cont_i) );
         }

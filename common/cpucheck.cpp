@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.81 1999/06/28 17:44:06 chrisb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.82 1999/07/09 14:09:37 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -28,31 +28,35 @@ return "@(#)$Id: cpucheck.cpp,v 1.81 1999/06/28 17:44:06 chrisb Exp $"; }
 #include "logstuff.h"  //LogScreen()/LogScreenRaw()
 
 #if (CLIENT_OS == OS_SOLARIS)
-#include <unistd.h>    // cramer - sysconf()
+#  include <unistd.h>    // cramer - sysconf()
 #elif (CLIENT_OS == OS_IRIX)
-#include <sys/prctl.h>
+#  include <sys/prctl.h>
 #elif (CLIENT_OS == OS_DEC_UNIX)
-#include <unistd.h>
-#include <sys/sysinfo.h>
-#include <machine/hal_sysinfo.h>
-#include <machine/cpuconf.h>
+#  include <unistd.h>
+#  include <sys/sysinfo.h>
+#  include <machine/hal_sysinfo.h>
+#  include <machine/cpuconf.h>
 #elif (CLIENT_OS == OS_AIX)
-#include <sys/systemcfg.h>
+#  include <sys/systemcfg.h>
 /* if compiled on older versions of 4.x ... */
-#ifndef POWER_620
-#define POWER_620 0x0040
+#  ifndef POWER_620
+#    define POWER_620 0x0040
+#  endif
+#  ifndef POWER_630
+#    define POWER_630 0x0080
+#  endif
+#  ifndef POWER_A35
+#    define POWER_A35 0x0100
+#  endif
+#  ifndef POWER_RS64II
+#    define POWER_RS64II    0x0200          /* RS64-II class CPU */
+#  endif
+#elif (CLIENT_OS == OS_FREEBSD)
+#  include <sys/sysctl.h>
+#elif (CLIENT_OS == OS_NETBSD)
+#  include <sys/param.h>
+#  include <sys/sysctl.h>
 #endif
-#ifndef POWER_630
-#define POWER_630 0x0080
-#endif
-#ifndef POWER_A35
-#define POWER_A35 0x0100
-#endif
-#ifndef POWER_RS64II
-#define POWER_RS64II    0x0200          /* RS64-II class CPU */
-#endif
-
-#endif /* (CLIENT_OS == OS_AIX) */
 
 /* ------------------------------------------------------------------------ */
 
@@ -78,7 +82,24 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
   if (cpucount == -2)
   {
     cpucount = -1;
-    #if (CLIENT_OS == OS_BEOS)
+    #if (CLIENT_OS == OS_FREEBSD) ||  \
+        (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_OPENBSD)
+    { /* comment out if inappropriate for your *bsd - cyp (25/may/1999) */
+      int ncpus; size_t len = sizeof(ncpus);
+      //int mib[2]; mib[0] = CTL_HW; mib[1] = HW_NCPU;
+      //if (sysctl( &mib[0], 2, &ncpus, &len, NULL, 0 ) == 0)
+      if (sysctlbyname("hw.ncpu", &ncpus, &len, NULL, 0 ) == 0)
+        cpucount = ncpus;
+    }
+    #elif (CLIENT_OS == OS_NETBSD) // may only be relevant t ARM
+    {
+      int ncpus; size_t len = sizeof(ncpus);
+      int mib[2]; mib[0] = CTL_HW; mib[1] = HW_NCPU;
+      if (sysctl( &mib[0], 2, &ncpus, &len, NULL, 0 ) == 0)
+        cpucount = ncpus;
+
+    }
+    #elif (CLIENT_OS == OS_BEOS)
     {
       system_info the_info;
       get_system_info(&the_info);
@@ -579,7 +600,7 @@ static long __GetRawProcessorID(const char **cpuname)
   extern "C" u32 x86ident( void );
 #endif
 
-static long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
+long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
 {
   static long detectedtype = -2L;
   static const char *detectedname = NULL;
@@ -605,7 +626,7 @@ static long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     {
       static struct cpuxref cyrixxref[]={
           {    0x40, 0512,     0, "486"       }, // use Pentium core
-          {  0x0440, 0512,     0, "MediaGX" },
+          {  0x0440, 0512,     0, "MediaGX"   },
           {  0x0490, 1185,     0, "5x86"      },
           {  0x0520, 2090,     3, "6x86"      }, // "Cyrix 6x86/6x86MX/M2"
           {  0x0540, 1200,     0, "GXm"       }, // use Pentium core here too
@@ -613,6 +634,9 @@ static long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0000, 2115,     3, NULL        } //default core == 6x86
           }; internalxref = &cyrixxref[0];
       vendorname = "Cyrix ";
+      #if defined(SMC)            //self modifying core
+      cyrixxref[0].coretouse = 1; // /bugs/ #99  pentium -> 486smc
+      #endif                      // des is unaffected. both 0/1 use p5 core
       cpuidbmask = 0xfff0; //strip last 4 bits, don't need stepping info
     }
     else if ( vendorid == 0x6543 ) //centaur/IDT cpu
@@ -855,6 +879,57 @@ static long __GetRawProcessorID(const char **cpuname )
   #elif (CLIENT_OS == OS_NETBSD)
   if (detectedtype == -2)
   {
+      char buffer[256];
+      int len = 255;
+      int mib[2];
+      mib[0]=CTL_HW; mib[1]=HW_MODEL;
+      if (sysctl(mib, 2,&buffer[0], &len, NULL, 0 ) == 0)
+      {
+	  int n = 0;
+	  char *p;
+          static struct 
+	  { const char *sig;  int rid; } sigs[] ={
+	      { "ARM2",       0X200},
+	      { "ARM250",     0X250},
+	      { "ARM3",       0X3},
+	      { "ARM6",       0X600},
+	      { "ARM610",     0X610},
+	      { "ARM7",       0X700},
+	      { "ARM710",     0X710},
+	      { "SA-110",     0XA10}
+           };
+          p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
+          for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
+          {
+	      unsigned int l = strlen( sigs[n].sig );
+	      if ((!p[l] || isspace(p[l])) && memcmp( p, sigs[n].sig, l)==0)
+	      {
+		  detectedtype = (long)sigs[n].rid;
+		  break;
+	      }
+          }
+	  
+	  detectedname = ((const char *)&(namebuf[0]));
+	  switch (detectedtype)
+	  {
+	  case 0x200: strcpy( namebuf, "ARM 2 or 250" ); 
+	      break;
+	  case 0xA10: strcpy( namebuf, "StrongARM 110" ); 
+	      break;
+	  case 0x3:
+	  case 0x600:
+	  case 0x610:
+	  case 0x700:
+	  case 0x7500:
+	  case 0x7500FEL:
+	  case 0x710:
+	  case 0x810: sprintf( namebuf, "ARM %lX", detectedtype );
+	      break;
+	  default:    sprintf( namebuf, "%lX (unknown)", detectedtype );
+	      detectedtype = 0;
+	      break;
+	  }
+      }
   }
   #endif
   
@@ -872,7 +947,7 @@ static long __GetRawProcessorID(const char **cpuname)
   static int detectedtype = -2L; /* -1 == failed, -2 == not supported */
   static const char *detectedname = NULL;
   static char namebuf[30];
-  static struct { const char *name; int rid; } mips_chips[] = {
+  static struct { const char *name; int rid; } cpuridtable[] = {
                 { "R2000"         ,       1  },
                 { "R3000"         ,       2  },
                 { "R3000A"        ,       3  },
@@ -939,12 +1014,12 @@ static long __GetRawProcessorID(const char **cpuname)
   {
     unsigned int n;
     detectedname = "";
-    for ( n = 0; n < (sizeof(mips_chips)/sizeof(mips_chips[0])); n++ )
+    for ( n = 0; n < (sizeof(cpuridtable)/sizeof(cpuridtable[0])); n++ )
     {
-      if (detectedtype == mips_chips[n].rid )
+      if (detectedtype == cpuridtable[n].rid )
       {
         strcpy( namebuf, "MIPS " );
-        strcat( namebuf, mips_chips[n].name );
+        strcat( namebuf, cpuridtable[n].name );
         detectedname = (const char *)&namebuf[0];
         break;
       }
@@ -1335,4 +1410,3 @@ void DisplayProcessorInformation(void)
 }
 
 /* ---------------------------------------------------------------------- */
-

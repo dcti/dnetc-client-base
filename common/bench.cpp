@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27 1999/04/17 07:38:33 gregh Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.28 1999/07/09 14:09:35 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -167,25 +167,33 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
   #if (CLIENT_CPU == CPU_X86) && \
       (!defined(SMC) || !defined(MMX_RC5) || !defined(MMX_BITSLICER))
   unsigned int detectedtype = GetProcessorType(1);
-  const char *not_supported = "Note: this client does not support the %s core.\n";
+  const char *not_supported = NULL;
   if (contestid == RC5)
   {
-    #if (!defined(SMC))            /* all non-gcc platforms except netware */
     if (cputype == 1) /* 486 */
-      LogScreen(not_supported, "RC5/486/SMC");
+    {
+    #if (!defined(SMC))            /* currently only linux */
+      not_supported = "RC5/486/SMC";
     #endif
+    }
+    else if (cputype == 0 && (detectedtype & 0x100)!=0) /* P5 + mmx */
+    {
     #if (!defined(MMX_RC5))        /* all non-nasm platforms (bsdi etc) */
-    if (cputype == 0 && (detectedtype & 0x100)!=0) /* P5 + mmx */
-      LogScreen(not_supported, "RC5/P5/MMX");
+      not_supported = "RC5/P5/MMX";
     #endif
+    }
   }
   else 
   {
-    #if (!defined(MMX_BITSLICER))
     if ((detectedtype & 0x100) != 0) /* mmx */
-      LogScreen(not_supported, "DES/MMX");
+    {
+    #if (!defined(MMX_BITSLICER))
+      not_supported = "DES/MMX";
     #endif
+    }
   }
+  if (not_supported)
+    LogScreen( "Note: this client does not support the %s core.\n", not_supported );
   #endif
 
   ClientEventSyncPost( CLIEVENT_BENCHMARK_STARTED, (long)((Problem *)(&problem)));

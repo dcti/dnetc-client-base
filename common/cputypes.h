@@ -6,7 +6,7 @@
 // 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.63 1999/05/11 03:23:04 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.64 1999/07/09 14:09:38 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -315,7 +315,7 @@
   #endif
 #elif defined(__BEOS__) || defined(__be_os)
   #ifndef __unix__ /* 4.4bsd compatible or not? */
-  #define __unix__ 
+  #define __unix__ /* it ain't that special! */
   #endif
   #define CLIENT_OS_NAME   "BeOS"
   #define CLIENT_OS     OS_BEOS
@@ -410,6 +410,9 @@
 #elif (CLIENT_OS == OS_MACOS)
   #include <Multiprocessing.h>
   typedef MPTaskID THREADID;
+  #define OS_SUPPORTS_SMP
+#elif (CLIENT_OS == OS_FREEBSD)
+  typedef int /*pid_t*/ THREADID;
   #define OS_SUPPORTS_SMP
 #elif defined(MULTITHREAD)
   #include <pthread.h>

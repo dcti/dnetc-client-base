@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98 1999/05/08 01:49:44 dicamillo Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.99 1999/07/09 14:09:36 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -26,6 +26,15 @@ return "@(#)$Id: clirun.cpp,v 1.98 1999/05/08 01:49:44 dicamillo Exp $"; }
 #include "probfill.h"  // LoadSaveProblems(), FILEENTRY_xxx macros
 #include "modereq.h"   // ModeReq[Set|IsSet|Run]()
 #include "clievent.h"  // ClientEventSyncPost() and constants
+
+#if (CLIENT_OS == OS_FREEBSD)
+#include <sys/mman.h>     /* minherit() */
+#include <sys/wait.h>     /* wait() */
+#include <sys/resource.h> /* WIF*() macros */
+#include <sys/sysctl.h>   /* sysctl()/sysctlbyname() */
+//#define USE_THREADCODE_ONLY_WHEN_SMP_KERNEL_FOUND /* otherwise its for >=3.0 */
+#define FIRST_THREAD_UNDER_MAIN_CONTROL /* otherwise main is separate */
+#endif
 
 // --------------------------------------------------------------------------
 
@@ -70,7 +79,9 @@ static int checkifbetaexpired(void)
 
 struct thread_param_block
 {
-  #if (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)
+  #if (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
+    pthread_t threadID;
+  #elif (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)
     unsigned long threadID;
   #elif (CLIENT_OS == OS_NETWARE)
     int threadID;
@@ -78,8 +89,6 @@ struct thread_param_block
     thread_id threadID;
   #elif (CLIENT_OS == OS_MACOS)
     MPTaskID threadID;
-  #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
-    pthread_t threadID;
   #else
     int threadID;
   #endif
@@ -175,7 +184,7 @@ static void yield_pump( void *tv_p )
 
   #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
     thr_yield();
-  #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDI)
+  #elif (CLIENT_OS == OS_BSDI)
     #if defined(__ELF__)
     sched_yield();
     #else // a.out
@@ -214,6 +223,8 @@ static void yield_pump( void *tv_p )
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_NETBSD)
     NonPolledUSleep( 0 ); /* yield */
+  #elif (CLIENT_OS == OS_FREEBSD)
+    NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_QNX)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_AIX)
@@ -223,6 +234,7 @@ static void yield_pump( void *tv_p )
   #elif (CLIENT_OS == OS_HPUX)
     sched_yield();;
   #elif (CLIENT_OS == OS_DEC_UNIX)
+   #error if you have "MULTITHREAD" defined something is broken. grep for multithread.
    #if defined(MULTITHREAD)
      sched_yield();
    #else
@@ -590,6 +602,10 @@ if (targ->realthread)
            NonPolledSleep(1); // don't race in this loop
         #endif
       }
+      #if 0 //not needed now. main changes from sleep() to NonPolledSleep()
+      else
+        NonPolledUSleep(500000); // don't race in this loop
+      #endif
     }
     else if (!thisprob->IsInitialized())
     {
@@ -713,7 +729,6 @@ if (targ->realthread)
   if (targ->realthread)
     exit(0);
   #endif
-
   #if (CLIENT_OS == OS_MACOS)
   if (targ->realthread)
   {
@@ -737,7 +752,9 @@ static int __StopThread( struct thread_param_block *thrparams )
     {
       if (thrparams->realthread) //real thread
       {
-        #if (CLIENT_OS == OS_OS2)
+        #if (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
+        pthread_join( thrparams->threadID, (void **)NULL);
+        #elif (CLIENT_OS == OS_OS2)
         DosSetPriority( 2, PRTYC_REGULAR, 0, 0); /* thread to normal prio */
         DosWaitThread( &(thrparams->threadID), DCWW_WAIT);
         #elif (CLIENT_OS == OS_WIN32)
@@ -749,8 +766,8 @@ static int __StopThread( struct thread_param_block *thrparams )
         while (thrparams->threadID) delay(100);
         #elif (CLIENT_OS == OS_MACOS)
         while (thrparams->threadID) tick_sleep(60);
-        #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
-        pthread_join( thrparams->threadID, (void **)NULL);
+        #elif (CLIENT_OS == OS_FREEBSD)
+        while (thrparams->threadID) NonPolledUSleep(1000);
         #endif
       }
     }
@@ -796,6 +813,169 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     {
       #if (!defined(CLIENT_SUPPORTS_SMP)) //defined in cputypes.h
         use_poll_process = 1; //no thread support or cores are not thread safe
+      #elif (CLIENT_OS == OS_FREEBSD)
+      static int ok2thread = 0; /* <0 = no, >0 = yes, 0 = unknown */
+      #ifdef USE_THREADCODE_ONLY_WHEN_SMP_KERNEL_FOUND
+      if (ok2thread == 0)
+      {
+        if (GetNumberOfDetectedProcessors()<2)
+          ok2thread = -1;
+        else
+        { 
+          int issmp = 0; size_t len = sizeof(issmp);
+          if (sysctlbyname("machdep.smp_active", &issmp, &len, NULL, 0)!=0)
+          {
+            issmp = 0; len = sizeof(issmp);
+            if (sysctlbyname("smp.smp_active", &issmp, &len, NULL, 0)!=0)
+              issmp = 0;
+          }
+          if (issmp)
+            issmp = (len == sizeof(issmp));
+          if (!issmp)
+            ok2thread = -1;
+        }
+      }
+      #endif
+      if (ok2thread == 0)
+      {
+        char buffer[64];size_t len=sizeof(buffer),len2=sizeof(buffer);
+        if (sysctlbyname("kern.ostype",buffer,&len,NULL,0)!=0) 
+          ok2thread = -2;
+        else if (len<7 || memcmp(buffer,"FreeBSD",7)!=0)      
+          ok2thread = -3;
+        else if (sysctlbyname("kern.osrelease",buffer,&len2,NULL,0)!=0)
+          ok2thread = -4;
+        else if (len<3 || !isdigit(buffer[0]) || buffer[1]!='.' || !isdigit(buffer[2]))
+          ok2thread = -5;
+        else
+        {
+          ok2thread = ((buffer[0]-'0')*100)+((buffer[2]-'0')*10);
+          //printf("found fbsd ver %d\n", ok2thread );
+          if (ok2thread < 300) /* FreeBSD < 3.0 */
+            ok2thread = -6;
+        }
+      }
+      if (ok2thread<1) /* not FreeBSD or not >=3.0 (or non-SMP kernel) */
+      { 
+        use_poll_process = 1; /* can't use this stuff */
+      }
+      else 
+      { 
+        static int assertedvms = 0;
+        if (thrparams->threadnum == 0) /* the first to spin up */
+        { 
+	  #define ONLY_NEEDED_VMPAGES_INHERITABLE         //children faster
+	  //#define ALL_DATA_VMPAGES_INHERITABLE          //parent faster
+          //#define ALL_TEXT_AND_DATA_VMPAGES_INHERITABLE //like linux threads
+
+          assertedvms = -1; //assume failed
+	  #if defined(ONLY_NEEDED_VMPAGES_INHERITABLE)
+          {
+	    //children are faster, main is slower
+            extern int TBF_MakeTriggersVMInheritable(void); /* probman.cpp */
+            extern int TBF_MakeProblemsVMInheritable(void); /* triggers.cpp */
+            if (TBF_MakeTriggersVMInheritable()!=0 ||
+                TBF_MakeProblemsVMInheritable()!=0 ||
+                minherit((void *)&runstatics, sizeof(runstatics), 0)==0)
+              assertedvms = +1; //success
+          }
+	  #else
+          {
+ 	    extern _start; //iffy since crt0 is at the top only by default
+	    extern etext;
+	    extern edata;
+	    extern end;
+            //printf(".text==(start=0x%p - etext=0x%p) .rodata+.data==(etext - edata=0x%p) "
+	    //  ".bss==(edata - end=0x%p) heap==(end - sbrk(0)=0x%p)\n", 
+	    //  &_start, &etext,&edata,&end,sbrk(0));
+	    #if defined(ALL_TEXT_AND_DATA_VMPAGES_INHERITABLE)
+	    //.text+.rodata+.data+.bss+heap (so far)
+	    if (minherit((void *)&_start,(sbrk(0)-((char *)&_start)),0)==0)
+              assertedvms = +1; //success
+ 	    #else
+	    //main is faster, children are slower
+	    //.rodata+.data+.bss+heap (so far)
+	    if (minherit((void *)&etext,(sbrk(0)-((char *)&etext)),0)==0)
+              assertedvms = +1; //success
+	    #endif
+          }
+	  #endif
+
+          #ifdef FIRST_THREAD_UNDER_MAIN_CONTROL
+          use_poll_process = 1; /* the first thread is always non-real */ 
+          #endif
+        }
+        if (assertedvms != +1)
+          use_poll_process = 1; /* can't use this stuff */ 
+      }
+      if (use_poll_process == 0)
+      {
+        thrparams->threadID = 0;
+        success = 0;
+        if (minherit((void *)thrparams, sizeof(struct thread_param_block), 
+                                  0 /* undocumented VM_INHERIT_SHARE*/)==0)
+        {
+          int rforkflags=RFPROC|RFTHREAD|RFSIGSHARE|RFNOWAIT/*|RFMEM*/;
+          pid_t new_threadID = rfork(rforkflags);
+          if (new_threadID == -1) /* failed */
+            success = 0;
+          else if (new_threadID == 0) /* child */
+          { 
+            int newprio=((22*(9-thrparams->priority))+5)/10;/*scale 0-9 to 20-0*/
+            thrparams->threadID = getpid(); /* may have gotten here first */
+            setpriority(PRIO_PROCESS,thrparams->threadID,newprio);
+            //nice(newprio); 
+            if ((rforkflags & RFNOWAIT) != 0) /* running under init (pid 1) */
+             { seteuid(65534); setegid(65534); } /* so become nobody */
+            Go_mt( (void *)thrparams );
+            _exit(0);
+          }  
+          else if ((rforkflags & RFNOWAIT) != 0) 
+          {    /* thread is detached (a child of init), so we can't wait() */
+            int count = 0;
+            while (count<100 && thrparams->threadID==0) /* set by child */
+              NonPolledUSleep(1000);
+            if (thrparams->threadID) /* child started ok */
+              success = 1;
+            else
+              kill(new_threadID, SIGKILL); /* its hung. kill it */
+          }
+          else /* "normal" parent, so we can wait() for spinup */
+          {  
+            int status, res;
+            NonPolledUSleep(3000); /* wait for fork1() */
+            res = waitpid(new_threadID,&status,WNOHANG|WUNTRACED);
+            success = 0;
+            if (res == 0) 
+            {
+              //printf("waitpid() returns 0\n");          
+              thrparams->threadID = new_threadID; /* may have gotten here first */
+              success = 1;
+            }
+            #if 0 /* debug stuff */
+            else if (res == -1)
+              printf("waitpid() returns -1, err=%s\n", strerror(errno));
+            else if (res != new_threadID)
+              printf("strange. waitpid() returns something wierd\n");
+            else if (WIFEXITED(status))
+              printf("child %d called exit(%d) or _exit(%d)\n",new_threadID,
+                WEXITSTATUS(status), WEXITSTATUS(status));
+            else if (WIFSIGNALED(status))
+            {
+              int sig = WTERMSIG(status);
+              printf("child %d caught %s signal %d\n",new_threadID,
+                     (sig < NSIG ? sys_signame[sig] : "unknown"), sig );
+            }
+            else if (WIFSTOPPED(status))
+              printf("child %d stopped on %d signal\n",new_threadID,WSTOPSIG(status));
+            else
+              printf("unkown cause for stop\n");
+            #endif
+            if (!success)
+              kill(new_threadID, SIGKILL); /* its hung. kill it */
+          } /* if parent or child */
+        } /* thrparam inheritance ok */
+      } /* FreeBSD >= 3.0 (+ SMP kernel optional) + global inheritance ok */
       #elif (CLIENT_OS == OS_WIN32)
         thrparams->threadID = _beginthread( Go_mt, 8192, (void *)thrparams );
         success = ( (thrparams->threadID) != 0);
@@ -975,15 +1155,6 @@ int Client::Run( void )
     force_no_realthreads = 0; /* this is a hint. it does not reflect capability */
     unsigned int numcrunchers = (unsigned int)numcpu;
 
-    #if (CLIENT_OS == OS_FREEBSD && CLIENT_OS_MINOR != 4)
-    if (numcrunchers > 1)
-    {
-      LogScreen("FreeBSD threads are not SMP aware (do not automatically\n"
-                "migrate to distribute processor load). Please run one\n"
-                "client per processor.\n");
-      numcrunchers = 1;
-    }
-    #endif
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_OS2) || (CLIENT_OS==OS_BEOS)
     if (numcrunchers == 0) // must run with real threads because the
       numcrunchers = 1;    // main thread runs at normal priority
@@ -1029,7 +1200,7 @@ int Client::Run( void )
   if (!TimeToQuit)
   {
     if (load_problem_count > 1)
-      Log( "Loading one block per cruncher...\n" );
+      Log( "Loading crunchers with work...\n" );
     load_problem_count = LoadSaveProblems( load_problem_count, 0 );
 
     if (CheckExitRequestTrigger())
@@ -1039,7 +1210,7 @@ int Client::Run( void )
     } 
     else if (load_problem_count == 0)
     {
-      Log("Unable to load any blocks. Quitting...\n");
+      Log("Unable to load any work. Quitting...\n");
       TimeToQuit = 1;
       exitcode = -2;
     }
@@ -1170,7 +1341,7 @@ int Client::Run( void )
     {             
       SetGlobalPriority( priority );
       if (isPaused)
-        sleep(3);
+        NonPolledSleep(3); //sleep(3);
       else
       {
         int i = 0;
@@ -1239,12 +1410,12 @@ int Client::Run( void )
       if (isPaused)
       {
         if (!wasPaused)
-          LogScreen("Paused...\n");
+          Log("Paused...\n");
         wasPaused = 1;
       }
       else if (wasPaused)
       {
-        LogScreen("Running again after pause...\n");
+        Log("Running again after pause...\n");
         wasPaused = 0;
       }
     }
@@ -1434,7 +1605,7 @@ int Client::Run( void )
 
   if (thread_data_table)  //we have threads running
   {
-    LogScreen("Waiting for threads to end...\n");
+    LogScreen("Waiting for crunchers to stop...\n");
     while (thread_data_table)
     {
       struct thread_param_block *thrdatap = thread_data_table;

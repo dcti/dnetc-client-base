@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.62 1999/06/10 21:26:44 silby Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.63 1999/07/09 14:09:37 cyp Exp $"; }
 
 //#define TRACE
 
@@ -441,7 +441,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     __XSetProfileStr( OPTSECT_BUFFERS, "buffer-file-basename", client->in_buffer_basename, fn, NULL );
     __XSetProfileStr( OPTSECT_BUFFERS, "output-file-basename", client->out_buffer_basename, fn, NULL );
 
-    __XSetProfileInt( OPTSECT_BUFFERS, "allow-update-from-altbuffer", !(client->noupdatefromfile), fn, 0, 1 );
+    __XSetProfileInt( OPTSECT_BUFFERS, "allow-update-from-altbuffer", !(client->noupdatefromfile), fn, 1, 1 );
     __XSetProfileStr( OPTSECT_BUFFERS, "alternate-buffer-directory", client->remote_update_dir, fn, NULL );
 
     strcpy(buffer,projectmap_expand(NULL));
@@ -525,7 +525,9 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     /* --- CONF_MENU_LOG -- */
 
     __XSetProfileStr( sect, "logname", client->logname, fn, NULL );
-    __XSetProfileStr( OPTSECT_LOG, "log-file-type", client->logfiletype, fn, NULL );
+    if ((client->logfiletype[0] && strcmpi(client->logfiletype,"none")!=0) || 
+      GetPrivateProfileStringB(OPTSECT_LOG,"log-file-type","",buffer,2,fn))
+      WritePrivateProfileStringB( OPTSECT_LOG,"log-file-type", client->logfiletype, fn );
     __XSetProfileStr( OPTSECT_LOG, "log-file-limit", client->logfilelimit, fn, NULL );
     __XSetProfileInt( sect, "messagelen", client->messagelen, fn, 0, 0);
     __XSetProfileStr( sect, "smtpsrvr", client->smtpsrvr, fn, NULL);

@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.135 1999/06/11 19:47:24 patrick Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.136 1999/07/09 14:09:36 cyp Exp $"; }
 
 //#define TRACE
 
@@ -25,12 +25,13 @@ return "@(#)$Id: cmdline.cpp,v 1.135 1999/06/11 19:47:24 patrick Exp $"; }
 #include "pathwork.h"  // InitWorkingDirectoryFromSamplePaths();
 #include "lurk.h"      // dialup object
 #include "util.h"      // trace
+#include "sleepdef.h"  // usleep()
 #include "modereq.h"   // get/set/clear mode request bits
 #include "console.h"   // ConOutErr()
 #include "clitime.h"   // CliTimer() for -until setting
-#include "cmdline.h"   // ourselves
 #include "confrwv.h"   // ValidateConfig()
 #include "clicdata.h"  // CliGetContestNameFromID()
+#include "cmdline.h"   // ourselves
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
     (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD)
@@ -45,7 +46,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
   int inimissing = 0;
   int terminate_app = 0, havemode = 0;
   int pos, skip_next;
-  const char *thisarg, *argvalue, *nextarg;
+  const char *thisarg, *argvalue;
 
   TRACE_OUT((+1,"ParseCommandline(%d,%d)\n",run_level,argc));
   
@@ -69,15 +70,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       thisarg = argv[pos];
       if (thisarg && *thisarg=='-' && thisarg[1]=='-')
         thisarg++;
-
       argvalue = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
       if (argvalue && *argvalue == '-')
         argvalue = NULL; 
-
-      nextarg = ((pos+1 < (argc-1))?(argv[pos+2]):((char *)NULL));
-      if (nextarg && *nextarg == '-')
-        nextarg = NULL; 
-
       skip_next = 0;
     
       if ( thisarg == NULL )
@@ -223,7 +218,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           //fbsd: "ps ax -o pid -o command 2>/dev/null";  /* bsd + -o ext */
           //lnux: "ps ax --format pid,comm 2>/dev/null";  /* bsd + gnu -o */
           #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || \
-                (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX)
+                (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX) || \
+		(CLIENT_OS == OS_IRIX)
           pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
           #else
           #error fixme: select an appropriate ps syntax
@@ -513,14 +509,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       thisarg = argv[pos];
       if (thisarg && *thisarg=='-' && thisarg[1]=='-')
         thisarg++;
-
       argvalue = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
       if (argvalue && *argvalue == '-')
         argvalue = NULL;
-
-      nextarg = ((pos+1 < (argc-1))?(argv[pos+2]):((char *)NULL));
-      if (nextarg && *nextarg == '-')
-        nextarg = NULL; 
 
       if ( thisarg == NULL )
         ; //nothing
@@ -1251,8 +1242,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       {
         havemode = 1; //nothing - handled in next loop
       }
-      else if ( strcmp( thisarg, "-import" ) == 0 ||
-                strcmp( thisarg, "-forceunlock" ) == 0 )
+      else if (( strcmp( thisarg, "-forceunlock" ) == 0 ) ||
+               ( strcmp( thisarg, "-import" ) == 0 ))
       {
         if (!argvalue)
         {
@@ -1261,12 +1252,10 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           if (run_level!=0)
             terminate_app = 1;
         }
-        else 
+        else
         { 
           skip_next = 1;
           havemode = 1; //f'd up "mode" - handled in next loop
-          if (nextarg && isdigit(*nextarg) && strcmp(thisarg,"-import")==0) 
-            skip_next++;
         }
       }
       else if (run_level==0)
@@ -1300,9 +1289,6 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       argvalue = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
       if (argvalue && *argvalue == '-')
         argvalue = NULL;
-      nextarg = ((pos+1 < (argc-1))?(argv[pos+2]):((char *)NULL));
-      if (nextarg && *nextarg == '-')
-        nextarg = NULL; 
       skip_next = 0;
   
       if ( thisarg == NULL )
@@ -1395,16 +1381,11 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       {
         if (!inimissing && argvalue)
         {
-          static struct { const char *fn, *count; } argstack;
           quietmode = 0;
           skip_next = 1;
           ModeReqClear(-1); //clear all - only do -import
           ModeReqSet(MODEREQ_IMPORT);
-          argstack.fn = argvalue;
-          argstack.count = nextarg;
-          if (nextarg && isdigit(*nextarg)) 
-            skip_next++;
-          ModeReqSetArg(MODEREQ_IMPORT, (void *)&argstack );
+          ModeReqSetArg(MODEREQ_IMPORT,(void *)argvalue);
           break;
         }
       }

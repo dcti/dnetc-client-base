@@ -1,8 +1,8 @@
-/* Copyright distributed.net 1997-1999 - All Rights Reserved
+/* Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * 
  * This module contains functions for raising/checking flags normally set
  * (asynchronously) by user request. Encapsulating the flags in 
  * functions has two benefits: (1) Transparency: the caller doesn't 
@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16 1999/05/07 04:27:14 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.17 1999/07/09 14:09:40 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -316,22 +316,22 @@ void CliSetupSignals( void ) {}
 #ifndef CLISIGHANDLER_IS_SPECIAL
 extern "C" void CliSignalHandler( int sig )
 {
-  #if defined(SIGUSR1) && defined(SIGUSR2)
-  if (sig == SIGUSR1)
+  #if defined(SIGTSTP) && defined(SIGCONT) //&& defined(__unix__)
+  if (sig == SIGTSTP)
   {
     signal(sig,CliSignalHandler);
     RaisePauseRequestTrigger();
     return;
   }
-  if (sig == SIGUSR2)
+  if (sig == SIGCONT)
   {
     signal(sig,CliSignalHandler);
     ClearPauseRequestTrigger();
     return;
   }
   #endif  
-  #if defined(SIGHUP) && (CLIENT_OS != OS_BEOS)
-  // according to peter dicamillo, BeOS' shell's sends _only_ a sighup. Uh, huh.
+  #if defined(SIGHUP) //&& (CLIENT_OS != OS_BEOS)
+  // according to peter dicamillo, BeOS' bash sends _only_ a sighup. Uh, huh.
   if (sig == SIGHUP)
   {
     signal(sig,CliSignalHandler);
@@ -359,7 +359,6 @@ extern "C" void CliSignalHandler( int sig )
 void CliSetupSignals( void )
 {
   #if (CLIENT_OS == OS_SOLARIS)
-  // SIGPIPE is a fatal error in Solaris?
   signal( SIGPIPE, SIG_IGN );
   #endif
   #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS)
@@ -369,17 +368,17 @@ void CliSetupSignals( void )
   break_on(); //break on any dos call, not just term i/o
   #endif
   #if defined(SIGHUP)
-  signal( SIGHUP, CliSignalHandler );   //restart (or for beos==shutdown)
+  signal( SIGHUP, CliSignalHandler );   //restart
   #endif
-  #if defined(SIGUSR1) && defined(SIGUSR2)
-  signal( SIGUSR1, CliSignalHandler );  //pause
-  signal( SIGUSR2, CliSignalHandler );  //unpause
+  #if defined(SIGCONT) && defined(SIGTSTP)
+  signal( SIGTSTP, CliSignalHandler );  //pause
+  signal( SIGCONT, CliSignalHandler );  //continue
   #endif
   #if defined(SIGQUIT)
   signal( SIGQUIT, CliSignalHandler );  //shutdown
   #endif
   #if defined(SIGSTOP)
-  signal( SIGSTOP, CliSignalHandler );  //shutdown
+  signal( SIGSTOP, CliSignalHandler );  //shutdown, may not be maskable
   #endif
   #if defined(SIGABRT)
   signal( SIGABRT, CliSignalHandler );  //shutdown
@@ -394,3 +393,13 @@ void CliSetupSignals( void )
 
 // -----------------------------------------------------------------------
 
+#if (CLIENT_OS == OS_FREEBSD)
+#include <sys/mman.h>
+int TBF_MakeTriggersVMInheritable(void)
+{
+  int mflag = 0; /*VM_INHERIT_SHARE*/ /*MAP_SHARED|MAP_INHERIT*/;
+  if (minherit((void*)&trigstatics,sizeof(trigstatics),mflag)!=0)
+    return -1;
+  return 0;
+}  
+#endif

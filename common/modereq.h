@@ -10,11 +10,13 @@
  * clear/run the modes when appropriate.
  *
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
+ *
+ * This is a bridge module. Do not muck with the prototypes.
  * --------------------------------------------------------------------     
 */ 
 
 #ifndef __MODEREQ_H__
-#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.11 1999/04/09 14:07:16 cyp Exp $"
+#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.12 1999/07/09 14:09:38 cyp Exp $"
 
 #define MODEREQ_IDENT              0x0001    
 #define MODEREQ_CPUINFO            0x0002

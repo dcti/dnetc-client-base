@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.111 1999/06/28 17:45:58 chrisb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.112 1999/07/09 14:09:39 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -159,6 +159,22 @@ Problem::Problem(long _threadindex /* defaults to -1L */)
   threadindex_is_valid = (_threadindex!=-1L);
   threadindex = ((threadindex_is_valid)?((unsigned int)_threadindex):(0));
 
+  /* this next part is essential for alpha, but is probably beneficial to
+     all platforms. If it fails for your os/cpu, we may need to redesign 
+     how objects are allocated/how rc5unitwork is addressed, so let me know.
+                                                       -cyp Jun 14 1999
+  */
+#if ((CLIENT_CPU != CPU_ARM) && \
+      ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD)))
+  RC5UnitWork *w = &rc5unitwork;
+  unsigned long ww = ((unsigned long)w);
+  if ((ww & 0x7)!=0) 
+  {
+    Log("rc5unitwork for problem %d is not 64bit aligned!\n", threadindex);
+    RaiseExitRequestTrigger();
+    return;
+  }  
+#endif
 //LogScreen("Problem created. threadindex=%u\n",threadindex);
 
   initialized = 0;
