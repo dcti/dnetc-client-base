@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.42 2000/03/04 12:59:04 jlawson Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.43 2000/03/05 21:40:59 patrick Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -780,7 +780,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       thrparams->realthread = 0;            /* int */
       thrparams->dyn_timeslice_table = &(default_dyn_timeslice_table[0]);
       //fprintf(stderr,"scheduling poll-process\n");
-      thrparams->threadID = RegPolledProcedure(Go_mt,
+      thrparams->threadID = (THREADID)RegPolledProcedure(Go_mt,
                                 (void *)thrparams , NULL, 0 );
       success = (((int)thrparams->threadID) != -1);
     }
