@@ -96,6 +96,7 @@ BASE_OBJS =                    \
 	$(OUTPUTPATH)/rg6x86.obj  \
 	$(OUTPUTPATH)/rc5-rgk6.obj \
 	$(OUTPUTPATH)/rc5mmx.obj   \
+        $(OUTPUTPATH)/deseval-mmx.obj \
 	$(OUTPUTPATH)/deseval.obj \
 	$(OUTPUTPATH)/des-slice.obj \
 	$(OUTPUTPATH)/sboxes-kwan4.obj \
@@ -108,9 +109,7 @@ BASE_OBJS =                    \
 	$(OUTPUTPATH)/convdes.obj    \
 	$(OUTPUTPATH)/des-x86.obj    \
 	$(OUTPUTPATH)/bdeslow.obj  \
-	$(OUTPUTPATH)/sboxes-mmx.obj \
 	$(OUTPUTPATH)/des-slice-meggs.obj \
-	$(OUTPUTPATH)/deseval-meggs3-mmx.obj \
 	$(OUTPUTPATH)/p1bdespro.obj
 
 GUI_LIBS = wsock32.lib advapi32.lib user32.lib shell32.lib gdi32.lib comdlg32.lib winmm.lib
@@ -120,8 +119,8 @@ GUI_LIBS = wsock32.lib advapi32.lib user32.lib shell32.lib gdi32.lib comdlg32.li
 {$(DESPATH)/brydmasm}.asm{$(OUTPUTPATH)}.obj:
 	tasm32 /t /m /ml /i$(DESPATH:/=\)\brydmasm $(**:/=\), $(@:/=\)
 
-{$(DESPATH)/mmx-bitslice}.obj{$(OUTPUTPATH)}.obj:
-	copy $(**:/=\), $(@:/=\)
+{$(DESPATH)/mmx-bitslice}.asm{$(OUTPUTPATH)}.obj:
+	nasm -o $(@:/=\) -f win32 -i $(DESPATH:/=\)\mmx-bitslice\ $(**:/=\)
 
 {$(PLATPATH)}.asm{$(OUTPUTPATH)}.obj:
 	tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
