@@ -7,6 +7,7 @@
 ; Version 1.0    2003/09/08  23:53
 ;
 ; Based on dg-3 by Décio Luiz Gazzoni Filho <acidblood@distributed.net>
+; $Id: r72-ma4.asm,v 1.1.2.2 2003/09/23 10:26:32 andreasb Exp $
 
 ; SIMD Core Idea
 ; The only areas of the CPU that former cores have not utilized are the
@@ -26,7 +27,7 @@
 ; xmm0 -- L4(0)
 ; xmm1 -- L4(1)
 ; xmm2 -- L4(2)
-; xmm3 -- B4 
+; xmm3 -- B4
 ; xmm4 -- A4
 ; xmm5 -- temp data
 ; xmm6 -- shiftcount
@@ -58,7 +59,7 @@
 defwork work_l,3*3
 defwork work_s,4*26
 defwork work_backup_l,4*3
-defwork	temp, 4
+defwork temp, 4
 defwork work_P_0
 defwork work_P_1
 defwork work_C_0
@@ -68,7 +69,7 @@ defwork save_ebx
 defwork save_esi
 defwork save_edi
 defwork save_ebp
-defwork	save_esp
+defwork save_esp
 
 %define RC5_72UnitWork_plainhi  eax+0
 %define RC5_72UnitWork_plainlo  eax+4
@@ -88,7 +89,7 @@ defwork	save_esp
 %define S1(N)                   [work_s+((N)*4*4)]
 %define S2(N)                   [work_s+((N)*4*4)+4]
 %define S3(N)                   [work_s+((N)*4*4)+8]
-%define	S4(N)					[work_s+((N)*4*4)+12]
+%define S4(N)                   [work_s+((N)*4*4)+12]
 %define L1(N)                   [work_l+((N)*3*4)]
 %define L2(N)                   [work_l+((N)*3*4)+4]
 %define L3(N)                   [work_l+((N)*3*4)+8]
@@ -140,7 +141,7 @@ defwork	save_esp
               dd 0xeedd4102, 0xeedd4102
               dd 0x8d14babb, 0x8d14babb
               dd 0x2b4c3474, 0x2b4c3474
-              
+
 
 %macro k7nop 1
     %if %1>3
@@ -178,101 +179,101 @@ defwork	save_esp
 %endmacro
 
 %macro KEYSETUP_BLOCK 3
-		movdqa	xmm6, xmm3
-		
-		mov		S1(%2), A1
-		movd	S4(%2), xmm4		; KEY 4
-		mov		S2(%2), A2
-		mov		S3(%2), A3
-		
-		lea		shiftreg, [A1+B1]	; KEY 1
-		paddd	xmm6, xmm4			; KEY 4
-		add		B1, L1(%3)			; KEY 1
-		pand	xmm6, xmm7			; KEY 4
-		add		B1, A1				; KEY 1
-		rol		B1, shiftcount		; KEY 1
-		paddd	xmm3, xmm%3			; KEY 4
-		
+        movdqa  xmm6, xmm3
+
+        mov     S1(%2), A1
+        movd    S4(%2), xmm4        ; KEY 4
+        mov     S2(%2), A2
+        mov     S3(%2), A3
+
+        lea     shiftreg, [A1+B1]   ; KEY 1
+        paddd   xmm6, xmm4          ; KEY 4
+        add     B1, L1(%3)          ; KEY 1
+        pand    xmm6, xmm7          ; KEY 4
+        add     B1, A1              ; KEY 1
+        rol     B1, shiftcount      ; KEY 1
+        paddd   xmm3, xmm%3         ; KEY 4
+
 %ifidn %1,S
-	movd	xmm5, S4(%2+1)			; KEY 4
+    movd    xmm5, S4(%2+1)          ; KEY 4
 %else
-	movq	xmm5, [InitTable + (%2 + 1) * 8]	; KEY 4
+    movq    xmm5, [InitTable + (%2 + 1) * 8]    ; KEY 4
 %endif
 
-		lea		shiftreg, [A2+B2]	; KEY 2
-		paddd	xmm3, xmm4			; KEY 4
-		add		B2, L2(%3)			; KEY 2
-		psllq	xmm3, xmm6			; KEY 4
-		add		B2, A2				; KEY 2
+        lea     shiftreg, [A2+B2]   ; KEY 2
+        paddd   xmm3, xmm4          ; KEY 4
+        add     B2, L2(%3)          ; KEY 2
+        psllq   xmm3, xmm6          ; KEY 4
+        add     B2, A2              ; KEY 2
 
-%ifidn %1,S						
-		add		A1, S1(%2+1)		; KEY 1
+%ifidn %1,S
+        add     A1, S1(%2+1)        ; KEY 1
 %else
-		add		A1, S_not(%2+1)		; KEY 1
+        add     A1, S_not(%2+1)     ; KEY 1
 %endif
 
-		rol		B2, shiftcount		; KEY 2
-		
-		lea		shiftreg, [A3+B3]	; KEY 3
-		add		B3, L3(%3)			; KEY 3
-		pshuflw	xmm3, xmm3, 0xEE	; KEY 4
-		add		B3, A3				; KEY 3
-		
-%ifidn %1,S							
-		add		A2, S2(%2+1)		; KEY 2
+        rol     B2, shiftcount      ; KEY 2
+
+        lea     shiftreg, [A3+B3]   ; KEY 3
+        add     B3, L3(%3)          ; KEY 3
+        pshuflw xmm3, xmm3, 0xEE    ; KEY 4
+        add     B3, A3              ; KEY 3
+
+%ifidn %1,S
+        add     A2, S2(%2+1)        ; KEY 2
 %else
-		add		A2, S_not(%2+1)		; KEY 2
+        add     A2, S_not(%2+1)     ; KEY 2
 %endif
 
-		rol		B3, shiftcount		; KEY 3
+        rol     B3, shiftcount      ; KEY 3
 
-		
-		add		A1, B1
-		mov		L1(%3), B1
-		rol		A1, 3
 
-		paddd	xmm4, xmm5
+        add     A1, B1
+        mov     L1(%3), B1
+        rol     A1, 3
 
-		add		A2, B2
-		
+        paddd   xmm4, xmm5
+
+        add     A2, B2
+
 %ifid %1, S
-		pshuflw	xmm4, xmm4, 0x44
+        pshuflw xmm4, xmm4, 0x44
 %endif
 
-		mov		L2(%3), B2
+        mov     L2(%3), B2
 
-		paddd	xmm4, xmm3
-		
-		rol		A2, 3				; rol1   (2)
+        paddd   xmm4, xmm3
 
-		movdqa	xmm%3, xmm3
-		
-%ifidn %1,S							; count2 (3)
-		add		A3, S3(%2+1)
+        rol     A2, 3               ; rol1   (2)
+
+        movdqa  xmm%3, xmm3
+
+%ifidn %1,S                         ; count2 (3)
+        add     A3, S3(%2+1)
 %else
-		add		A3, S_not(%2+1)
+        add     A3, S_not(%2+1)
 %endif
-		add		A3, B3
-		psllq	xmm4, 3
-		mov		L3(%3), B3
+        add     A3, B3
+        psllq   xmm4, 3
+        mov     L3(%3), B3
 
-		rol		A3, 3				; rol1   (3)
+        rol     A3, 3               ; rol1   (3)
 
-		pshuflw	xmm4, xmm4, 0xEE
+        pshuflw xmm4, xmm4, 0xEE
 %endmacro
 
 %macro KEYSETUP_BLOCK_PRE 1
-		psllq	xmm4, 3
-		rol     A1, 3
-		rol     A2, 3
-		pshuflw	xmm4, xmm4, 0xEE
-		rol     A3, 3
-		
+        psllq   xmm4, 3
+        rol     A1, 3
+        rol     A2, 3
+        pshuflw xmm4, xmm4, 0xEE
+        rol     A3, 3
+
 %ifnidn %1,-1
-		mov     L1(%1), B1
-		mov     L2(%1), B2
-		mov     L3(%1), B3
-		movdqa	xmm%1, xmm3
+        mov     L1(%1), B1
+        mov     L2(%1), B2
+        mov     L3(%1), B3
+        movdqa  xmm%1, xmm3
 %endif
 %endmacro
 
@@ -281,67 +282,67 @@ defwork	save_esp
 
 
 %macro ENCRYPTION_BLOCK 1
-	    mov     shiftreg, B1
+        mov     shiftreg, B1
         xor     A1, B1
-        movdqa	xmm6, xmm3
+        movdqa  xmm6, xmm3
         xor     A2, B2
         rol     A1, shiftcount
 
-		movd	xmm5, S4(2*%1)
+        movd    xmm5, S4(2*%1)
         mov     shiftreg, B2
         xor     A3, B3
         rol     A2, shiftcount
 
-		pand	xmm6, xmm7
+        pand    xmm6, xmm7
         mov     shiftreg, B3
-		pxor	xmm4, xmm3
+        pxor    xmm4, xmm3
         rol     A3, shiftcount
-	
-		psllq	xmm4, xmm6
+
+        psllq   xmm4, xmm6
         add     A1, S1(2*%1)
         add     A2, S2(2*%1)
-        pshuflw	xmm4, xmm4, 0xEE
+        pshuflw xmm4, xmm4, 0xEE
         add     A3, S3(2*%1)
-        paddd	xmm4, xmm5
-        pshufd	xmm4, xmm4, 0xE0
+        paddd   xmm4, xmm5
+        pshufd  xmm4, xmm4, 0xE0
 
-		mov     shiftreg, A1
+        mov     shiftreg, A1
         xor     B1, A1
-        movdqa	xmm6, xmm4
+        movdqa  xmm6, xmm4
         xor     B2, A2
         rol     B1, shiftcount
-        pand	xmm6, xmm7
+        pand    xmm6, xmm7
 
         mov     shiftreg, A2
-        pxor	xmm3, xmm4
+        pxor    xmm3, xmm4
         xor     B3, A3
-        psllq	xmm3, xmm6
+        psllq   xmm3, xmm6
         rol     B2, shiftcount
-        
+
         ; We could move S3(2*%1 + 1) quadword here, and then we wouldn't need the
         ; pshuflw xmm3, xmm3, 0xEE below.  However, this will only improve time if
         ; the entire quadword happens to be in cache, which from testing doesn't
         ; appear to often be the case.
-        movd	xmm5, S4(2*%1 + 1)
+        movd    xmm5, S4(2*%1 + 1)
 
         mov     shiftreg, A3
         add     B1, S1(2*%1+1)
         rol     B3, shiftcount
 
-        pshuflw	xmm3, xmm3, 0xEE
-	    add     B2, S2(2*%1+1)
-        paddd	xmm3, xmm5
+        pshuflw xmm3, xmm3, 0xEE
+        add     B2, S2(2*%1+1)
+        paddd   xmm3, xmm5
 
         add     B3, S3(2*%1+1)
-        pshuflw	xmm3, xmm3, 0x44
+        pshuflw xmm3, xmm3, 0x44
 %endmacro
 
-%macro	DEBUG_CHECK_AB 0
-		movd	A1, xmm4
-		movd	A2, xmm3
-		cmp		A3, A1
-		cmp		B3, A2
-		int 3
+%macro  DEBUG_CHECK_AB 0
+        movd    A1, xmm4
+        movd    A2, xmm3
+        cmp     A3, A1
+        cmp     B3, A2
+        int 3
 %endmacro
 
 align 16
@@ -353,12 +354,12 @@ _rc5_72_unit_func_ma_4:
 
         sub     esp, work_size
 
-		mov     eax, [RC5_72UnitWork]
-		mov     [save_ebp], ebp
+        mov     eax, [RC5_72UnitWork]
+        mov     [save_ebp], ebp
         mov     [save_ebx], ebx
         mov     [save_esi], esi
         mov     [save_edi], edi
-          
+
         mov     esi, [RC5_72UnitWork_plainlo]
         mov     edi, [RC5_72UnitWork_plainhi]
 
@@ -391,63 +392,63 @@ _rc5_72_unit_func_ma_4:
 
         mov     L3(2), esi
         mov     L3backup(2), esi
-        
-        add		esi, 1
-        movd	xmm2, esi
-        mov		L4backup(2), esi
-        pshuflw	xmm2, xmm2, 0x44
+
+        add     esi, 1
+        movd    xmm2, esi
+        mov     L4backup(2), esi
+        pshuflw xmm2, xmm2, 0x44
 
         mov     L1(1), ecx
         mov     L2(1), ecx
         mov     L3(1), ecx
-        movd	xmm1, ecx
+        movd    xmm1, ecx
         mov     L1backup(1), ecx
         mov     L2backup(1), ecx
         mov     L3backup(1), ecx
-        mov		L4backup(1), ecx
-        pshuflw	xmm1, xmm1, 0x44
+        mov     L4backup(1), ecx
+        pshuflw xmm1, xmm1, 0x44
 
         mov     L1(0), ebx
         mov     L2(0), ebx
         mov     L3(0), ebx
-        movd	xmm0, ebx
+        movd    xmm0, ebx
         mov     L1backup(0), ebx
         mov     L2backup(0), ebx
         mov     L3backup(0), ebx
-        mov		L4backup(0), ebx
-        pshuflw	xmm0, xmm0, 0x44
+        mov     L4backup(0), ebx
+        pshuflw xmm0, xmm0, 0x44
 
-		mov		dword [temp], 0x0000001F
-		movd	xmm7, [temp]
-k7align 16		
+        mov     dword [temp], 0x0000001F
+        movd    xmm7, [temp]
+k7align 16
 key_setup_1:
         mov     B1, L1(0)
         mov     A1, 0xBF0A8B1D ; 0xBF0A8B1D is S[0]
-        add		B1, 0xBF0A8B1D
+        add     B1, 0xBF0A8B1D
         mov     A2, A1
-        ror		B1, 3
-        mov		B2, B1
-        mov		B3, B1
-        movd	xmm3, B1
-        
-	    mov     A3, A1
-        movd	xmm4, A1
-        
+        ror     B1, 3
+        mov     B2, B1
+        mov     B3, B1
+        movd    xmm3, B1
+
+        mov     A3, A1
+        movd    xmm4, A1
+
         mov     S1(0), A1
         mov     S2(0), A1
-        pshuflw	xmm3, xmm3, 0x44
+        pshuflw xmm3, xmm3, 0x44
         mov     S3(0), A1
-        mov		S4(0), A1
+        mov     S4(0), A1
 
-		;mov		dword [temp], S_not(1)
-		;movd	xmm5, [temp]
-		movq	xmm5, [InitTable + 8]
-		lea     A1, [A1 + B1 + S_not(1)]
-		paddd	xmm4, xmm3
-		lea     A2, [A2 + B2 + S_not(1)]
-		paddd	xmm4, xmm5
+        ;mov        dword [temp], S_not(1)
+        ;movd   xmm5, [temp]
+        movq    xmm5, [InitTable + 8]
+        lea     A1, [A1 + B1 + S_not(1)]
+        paddd   xmm4, xmm3
+        lea     A2, [A2 + B2 + S_not(1)]
+        paddd   xmm4, xmm5
         lea     A3, [A3 + B3 + S_not(1)]
-        pshufd	xmm4, xmm4, 0xE0
+        pshufd  xmm4, xmm4, 0xE0
 
         KEYSETUP_BLOCK_PRE 0
         KEYSETUP_BLOCK S_not,1,1
@@ -475,47 +476,47 @@ key_setup_1:
         KEYSETUP_BLOCK S_not,23,2
         KEYSETUP_BLOCK S_not,24,0
         KEYSETUP_BLOCK_POST 0
-        
+
         add     B1, A1
 
         mov     S1(25), A1
         mov     S2(25), A2
         mov     S3(25), A3
-        movd	S4(25), xmm4
-	
-		paddd	xmm3, xmm4
-		
+        movd    S4(25), xmm4
+
+        paddd   xmm3, xmm4
+
         mov     shiftreg, B1
-        movdqa	xmm6, xmm3
+        movdqa  xmm6, xmm3
         add     B1, L1(1)
 
         add     A1, S1(0)
         rol     B1, shiftcount
 
         add     B2, A2
-        pand	xmm6, xmm7
-		paddd	xmm3, xmm1
-		movd	xmm5, S4(0)
+        pand    xmm6, xmm7
+        paddd   xmm3, xmm1
+        movd    xmm5, S4(0)
         mov     shiftreg, B2
-        
-		
-		paddd	xmm4, xmm5
-		
+
+
+        paddd   xmm4, xmm5
+
         add     B2, L2(1)
-        pshuflw	xmm4, xmm4, 0x44
+        pshuflw xmm4, xmm4, 0x44
         add     B3, A3
 
         rol     B2, shiftcount
-  
-		
+
+
         mov     shiftreg, B3
-        psllq	xmm3, xmm6
-        add     B3, L3(1)		
-		pshuflw	xmm3, xmm3, 0xEE
+        psllq   xmm3, xmm6
+        add     B3, L3(1)
+        pshuflw xmm3, xmm3, 0xEE
         rol     B3, shiftcount
-			
-		paddd	xmm4, xmm3
-	    add     A2, S2(0)
+
+        paddd   xmm4, xmm3
+        add     A2, S2(0)
         add     A3, S3(0)
         add     A1, B1
         mov     L1(1), B1
@@ -523,8 +524,8 @@ key_setup_1:
         mov     L2(1), B2
         add     A3, B3
         mov     L3(1), B3
-        
-        movdqa	xmm1, xmm3
+
+        movdqa  xmm1, xmm3
 
 key_setup_2:
 
@@ -561,47 +562,47 @@ key_setup_2:
         mov     S1(25), A1
         mov     S2(25), A2
         mov     S3(25), A3
-        movd	S4(25), xmm4
-		
-		movd	xmm5, S4(0)
+        movd    S4(25), xmm4
+
+        movd    xmm5, S4(0)
         mov     shiftreg, B1
-        paddd	xmm3, xmm4
-		movdqa	xmm6, xmm3
-		paddd	xmm3, xmm0
+        paddd   xmm3, xmm4
+        movdqa  xmm6, xmm3
+        paddd   xmm3, xmm0
         add     B1, L1(0)
 
         add     A1, S1(0)
-        pand	xmm6, xmm7
-		paddd	xmm4, xmm5
+        pand    xmm6, xmm7
+        paddd   xmm4, xmm5
         rol     B1, shiftcount
 
         add     B2, A2
-		pshufd	xmm4, xmm4, 0xE0
+        pshufd  xmm4, xmm4, 0xE0
         mov     shiftreg, B2
 
         add     B2, L2(0)
-   
-		psllq	xmm3, xmm6
+
+        psllq   xmm3, xmm6
         add     B3, A3
 
         rol     B2, shiftcount
         mov     shiftreg, B3
-        pshufd	xmm3, xmm3, 0xE5
+        pshufd  xmm3, xmm3, 0xE5
         add     B3, L3(0)
 
         rol     B3, shiftcount
 
         add     A2, S2(0)
         add     A3, S3(0)
-        
-        paddd	xmm4, xmm3
+
+        paddd   xmm4, xmm3
         add     A1, B1
         mov     L1(0), B1
         add     A2, B2
         mov     L2(0), B2
         add     A3, B3
         mov     L3(0), B3
-        movdqa	xmm0, xmm3
+        movdqa  xmm0, xmm3
 
 key_setup_3:
 
@@ -636,7 +637,7 @@ key_setup_3:
         mov     S1(25), A1
         mov     S2(25), A2
         mov     S3(25), A3
-        movd	S4(25), xmm4
+        movd    S4(25), xmm4
 
 ;    A1 = rc5_72unitwork->plain.lo + S1[0];
 ;    A2 = rc5_72unitwork->plain.lo + S2[0];
@@ -647,29 +648,29 @@ encryption:
 
         mov     A1, [work_P_0]
         mov     B1, [work_P_1]
-        movd	xmm4, A1
+        movd    xmm4, A1
         mov     A2, A1
         mov     A3, A1
-        
-        movd	xmm3, B1
+
+        movd    xmm3, B1
         mov     B2, B1
-        movd	xmm5, S4(0)
+        movd    xmm5, S4(0)
         mov     B3, B1
 
-		paddd	xmm4, xmm5
+        paddd   xmm4, xmm5
         add     A1, S1(0)
         add     A2, S2(0)
-        pshuflw	xmm4, xmm4, 0x44
+        pshuflw xmm4, xmm4, 0x44
         add     A3, S3(0)
-        
-        movd	xmm5, S4(1)
-        add     B1, S1(1)
-        paddd	xmm3, xmm5
-        add     B2, S2(1)
-        pshuflw	xmm3, xmm3, 0x44
-        add		B3, S3(1)
 
-		ENCRYPTION_BLOCK 1
+        movd    xmm5, S4(1)
+        add     B1, S1(1)
+        paddd   xmm3, xmm5
+        add     B2, S2(1)
+        pshuflw xmm3, xmm3, 0x44
+        add     B3, S3(1)
+
+        ENCRYPTION_BLOCK 1
         ENCRYPTION_BLOCK 2
         ENCRYPTION_BLOCK 3
         ENCRYPTION_BLOCK 4
@@ -681,87 +682,87 @@ encryption:
         ENCRYPTION_BLOCK 10
         ENCRYPTION_BLOCK 11
         ENCRYPTION_BLOCK 12
-        
+
         ;DEBUG_CHECK_AB
 
 test_key:
-		cmp		A1, [work_C_0]
+        cmp     A1, [work_C_0]
         mov     eax, [RC5_72UnitWork]
-		je		near test_key_1
+        je      near test_key_1
 back_after_key_1:
-		cmp		A2, [work_C_0]
-		je		near test_key_2
+        cmp     A2, [work_C_0]
+        je      near test_key_2
 back_after_key_2:
-		cmp		A3, [work_C_0]
-		je		near test_key_3
+        cmp     A3, [work_C_0]
+        je      near test_key_3
 back_after_key_3:
-		movd	A2, xmm4
-		cmp		A2, [work_C_0]
-		je		near test_key_4
+        movd    A2, xmm4
+        cmp     A2, [work_C_0]
+        je      near test_key_4
 back_after_key_4:
         mov     edx, [RC5_72UnitWork_L0hi]
 
 inc_key:
-		xor edi, edi
-		movzx esi, dl
-		mov ecx, 1
-		and edx, 0xFFFFFF00
-		add esi, 4
-		and esi, 0xFF
-		cmove edi, ecx
-		or edx, esi
-		mov [RC5_72UnitWork_L0hi], edx
-	
-		mov ebx, [RC5_72UnitWork_L0mid]
-		mov ecx, [RC5_72UnitWork_L0lo]
-		bswap ebx
-		bswap ecx
-		add ebx, edi
-		adc ecx, 0
-		bswap ebx
-		bswap ecx
-		mov [RC5_72UnitWork_L0mid], ebx
-		mov [RC5_72UnitWork_L0lo], ecx
-		
-		mov		L1(2), edx
-		mov		L1backup(2), edx
-		add		edx, 1
-		mov		L2(2), edx
-		mov		L2backup(2), edx
-		add		edx, 1
-		mov		L3(2), edx
-		mov		L3backup(2), edx
-		add		edx, 1
-		movd	xmm2, edx
-		mov		L4backup(2), edx
-		pshuflw	xmm2, xmm2, 0x44
-		
-		mov		L1(1), ebx
-		mov		L2(1), ebx
-		mov		L3(1), ebx
-		movd	xmm1, ebx
-		mov		L1backup(1), ebx
-		mov		L2backup(1), ebx
-		mov		L3backup(1), ebx
-		mov		L4backup(1), ebx
-		pshuflw	xmm1, xmm1, 0x44
-		
-		mov		L1(0), ecx
-		mov		L2(0), ecx
-		mov		L3(0), ecx
-		movd	xmm0, ecx
-		mov		L1backup(0), ecx
-		mov		L2backup(0), ecx
-		mov		L3backup(0), ecx
-		mov		L4backup(0), ecx
-		pshuflw	xmm0, xmm0, 0x44
-		
-		sub	dword [work_iterations], 4
+        xor edi, edi
+        movzx esi, dl
+        mov ecx, 1
+        and edx, 0xFFFFFF00
+        add esi, 4
+        and esi, 0xFF
+        cmove edi, ecx
+        or edx, esi
+        mov [RC5_72UnitWork_L0hi], edx
 
-		ja		key_setup_1
+        mov ebx, [RC5_72UnitWork_L0mid]
+        mov ecx, [RC5_72UnitWork_L0lo]
+        bswap ebx
+        bswap ecx
+        add ebx, edi
+        adc ecx, 0
+        bswap ebx
+        bswap ecx
+        mov [RC5_72UnitWork_L0mid], ebx
+        mov [RC5_72UnitWork_L0lo], ecx
+
+        mov     L1(2), edx
+        mov     L1backup(2), edx
+        add     edx, 1
+        mov     L2(2), edx
+        mov     L2backup(2), edx
+        add     edx, 1
+        mov     L3(2), edx
+        mov     L3backup(2), edx
+        add     edx, 1
+        movd    xmm2, edx
+        mov     L4backup(2), edx
+        pshuflw xmm2, xmm2, 0x44
+
+        mov     L1(1), ebx
+        mov     L2(1), ebx
+        mov     L3(1), ebx
+        movd    xmm1, ebx
+        mov     L1backup(1), ebx
+        mov     L2backup(1), ebx
+        mov     L3backup(1), ebx
+        mov     L4backup(1), ebx
+        pshuflw xmm1, xmm1, 0x44
+
+        mov     L1(0), ecx
+        mov     L2(0), ecx
+        mov     L3(0), ecx
+        movd    xmm0, ecx
+        mov     L1backup(0), ecx
+        mov     L2backup(0), ecx
+        mov     L3backup(0), ecx
+        mov     L4backup(0), ecx
+        pshuflw xmm0, xmm0, 0x44
+
+        sub dword [work_iterations], 4
+
+        ja      key_setup_1
 
         mov     eax, RESULT_NOTHING
-finished:        
+finished:
         mov     ebx, [save_ebx]
         mov     esi, [save_esi]
 
@@ -804,7 +805,7 @@ test_key_2:
         mov     ecx, [work_iterations]
         mov     esi, [iterations]
 
-		sub		ecx, 1
+        sub     ecx, 1
         sub     [esi], ecx
         mov     eax, RESULT_FOUND
         jmp     finished
@@ -824,12 +825,12 @@ test_key_3:
         mov     ecx, [work_iterations]
         mov     esi, [iterations]
 
-		sub		ecx, 2
+        sub     ecx, 2
         sub     [esi], ecx
         mov     eax, RESULT_FOUND
         jmp     finished
 test_key_4:
-		movd	B3, xmm3
+        movd    B3, xmm3
         mov     esi, L4backup(2)
         mov     ecx, L4backup(1)
         mov     ebx, L4backup(0)
@@ -844,7 +845,7 @@ test_key_4:
         mov     ecx, [work_iterations]
         mov     esi, [iterations]
 
-		sub		ecx, 3
+        sub     ecx, 3
         sub     [esi], ecx
         mov     eax, RESULT_FOUND
         jmp     finished
