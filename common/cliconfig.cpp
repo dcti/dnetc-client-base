@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.161  1998/07/26 21:18:48  cyruspatel
+// Modified Client::ConfigureGeneral() to work with 'autofindkeyserver'.
+//
 // Revision 1.160  1998/07/26 12:45:42  cyruspatel
 // new inifile option: 'autofindkeyserver', ie if keyproxy= points to a
 // xx.v27.distributed.net then that will be interpreted by Network::Resolve()
@@ -313,7 +316,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.160 1998/07/26 12:45:42 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.161 1998/07/26 21:18:48 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -750,110 +753,166 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
   char str[3];
   char *p;
 
-  while ( 1 )
-  {
+  while ( choice != 0 ) //note: don't return or break from inside 
+    {                   //the loop. Let it fall through instead. - cyp
     setupoptions();
+
+    #ifndef OLDRESOLVE                   //This is an ugly, ugly, hack and
+    char lkg_keyproxy[sizeof(keyproxy)]; //I'd appreciate any feedback re:
+    strcpy( lkg_keyproxy, keyproxy );    //ways to improve it. - cyp
+    if ( autofindkeyserver )             //Note: There is a matching undo    
+      {                                  //after the fgets(parm, 128, stdin);
+      p = strchr( keyproxy, '.' );
+      if ( p != NULL && ( strcmpi( p, ".v27.distributed.net" ) == 0 ||
+                          strcmpi( p, ".distributed.net" ) == 0 ) )
+        strcpy( keyproxy, "(auto)" );
+      }
+    options[CONF_KEYPROXY].defaultsetting = "(auto)";
+    #endif
 
     // display menu
 
-    clearscreen();
-    printf("Distributed.Net RC5/DES Client build v2.%d.%d config menu\n",
-           CLIENT_CONTEST*100+CLIENT_BUILD,CLIENT_BUILD_FRAC);
-    printf("%s\n",menutable[currentmenu-1]);
-    printf("------------------------------------------------------------\n\n");
-
-    for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
-    {
-      choice=findmenuoption(currentmenu,temp2);
-      if (choice >= 0)
+    choice = -1;
+    while ( choice < 0 ) //while invalid choice
       {
-        printf("%2d) %s ==> ",
-               (int)options[choice].menuposition,
-               options[choice].description);
+      clearscreen();
+      printf("Distributed.Net RC5/DES Client build v2.%d.%d config menu\n",
+             CLIENT_CONTEST*100+CLIENT_BUILD,CLIENT_BUILD_FRAC);
+      printf("%s\n",menutable[currentmenu-1]);
+      printf("------------------------------------------------------------\n\n");
 
-        if (options[choice].type==1)
+      for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
         {
-          if (options[choice].thevariable != NULL)
-            printf("%s\n",(char *)options[choice].thevariable);
+        choice=findmenuoption(currentmenu,temp2);
+        if (choice >= 0)
+          {
+          printf("%2d) %s ==> ",
+                 (int)options[choice].menuposition,
+                 options[choice].description);
+ 
+          if (options[choice].type==1)
+            {
+            if (options[choice].thevariable != NULL)
+              printf("%s\n",(char *)options[choice].thevariable);
+            }
+          else if (options[choice].type==2)
+            {
+            if (options[choice].choicelist == NULL)
+              printf("%li\n",(long)*(s32 *)options[choice].thevariable);
+            else printf("%s\n",options[choice].choicelist+
+              ((long)*(s32 *)options[choice].thevariable*60));
+            }
+          else if (options[choice].type==3)
+            {
+            sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
+            printf("%s\n",str);
+            }
+          }
         }
-        else if (options[choice].type==2)
-          if (options[choice].choicelist == NULL)
-            printf("%li\n",(long)*(s32 *)options[choice].thevariable);
-          else printf("%s\n",options[choice].choicelist+
-            ((long)*(s32 *)options[choice].thevariable*60));
-        else if (options[choice].type==3)
-        {
-          sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
-          printf("%s\n",str);
-        };
-      };
-    }
-    printf("\n 0) Return to main menu\n");
+      printf("\n 0) Return to main menu\n");
 
-
-    // get choice from user
-    while(1)
-    {
+      // get choice from user
       printf("\nChoice --> ");
       fflush( stdout );
-      fgets(parm, 128, stdin);
-      choice = atoi(parm);
+      fflush( stdin );
+      fgets(parm, sizeof(parm), stdin);
+      fflush( stdin );
+      fflush( stdout );
+      choice = atoi( parm );
+      if ( choice > 0 )
+        choice=findmenuoption(currentmenu,choice); // returns <0 if !found
+      if (SignalTriggered)
+        choice = 0;
+      }
 
-      if (choice == 0) return 1;
-
-      choice=findmenuoption(currentmenu,choice);
-
-      if (choice >= 0)
-        break;
-    }
-
-
-
-    // prompt for new value
-    if (options[choice].type==1)
-      printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
+    if ( choice > 0 ) //if !quit
+      {
+      // prompt for new value
+      if (options[choice].type==1)
+        {
+        printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
               options[choice].description, options[choice].comments,
               options[choice].defaultsetting,(char *)options[choice].thevariable);
-    else if (options[choice].type==2)
-      if (options[choice].choicelist == NULL)
-        printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: %li\nNew Setting --> ",
+        }
+      else if (options[choice].type==2)
+        {
+        if (options[choice].choicelist == NULL)
+          {
+          printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: %li\nNew Setting --> ",
                 options[choice].description, options[choice].comments,
                 options[choice].defaultsetting, (long)*(s32 *)options[choice].thevariable);
-      else {
-        printf("\n%s %s\n",options[choice].description,options[choice].comments);
-           for ( temp = options[choice].choicemin;
-                 temp < options[choice].choicemax+1; temp++)
-           {
-             printf("  %2d) %s\n", (int)temp,
-                   options[choice].choicelist+temp*60);
-           }
-           printf("\nDefault Setting: %s\n"
-                  "Current Setting: %s\nNew Setting --> ",
-                  options[choice].choicelist+atoi(options[choice].defaultsetting)*60,
-                  options[choice].choicelist+
-                  ((long)*(s32 *)options[choice].thevariable*60));
-           }
-    else if (options[choice].type==3)
-    {
-      sprintf(str, "%s", atoi(options[choice].defaultsetting)?"yes":"no");
-      printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: ",
-              options[choice].description, options[choice].comments,
-              str);
-      sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
-      printf("%s\nNew Setting --> ",str);
-    };
+          }
+        else 
+          {
+          printf("\n%s %s\n",options[choice].description,options[choice].comments);
+          for ( temp = options[choice].choicemin; temp < options[choice].choicemax+1; temp++)
+            printf("  %2d) %s\n", (int)temp, options[choice].choicelist+temp*60);
+          printf("\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
+            options[choice].choicelist+atoi(options[choice].defaultsetting)*60,
+            options[choice].choicelist+((long)*(s32 *)options[choice].thevariable*60));
+          }
+        }
+      else if (options[choice].type==3)
+        {
+        sprintf(str, "%s", atoi(options[choice].defaultsetting)?"yes":"no");
+        printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: ",
+               options[choice].description, options[choice].comments,
+               str);
+        sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
+        printf("%s\nNew Setting --> ",str);
+        }
 
-    fflush( stdout );
-    fgets(parm, sizeof(parm), stdin);
-    for ( p = parm; *p; p++ )
-    {
-      if ( !isprint(*p) )
+      fflush( stdin );
+      fflush( stdout );
+      fgets(parm, sizeof(parm), stdin);
+      fflush( stdin );
+      fflush( stdout );
+      if (SignalTriggered)
+        choice = 0;
+      else
+        {
+        for ( p = parm; *p; p++ )
+          {
+          if ( !isprint(*p) )
+            {
+            *p = 0;
+            break;
+            }
+          }
+        for (unsigned int i=strlen(parm);i>0;i--) //strip trailing whitespace
+          {
+          if (isspace(parm[i]))
+            parm[i]=0;
+          }
+        p=parm;                                   //strip leading white space
+        while (*p && isspace(*p))
+          p++;
+        if (p!=parm)
+          {
+          char *q = parm;
+          do { *q = *p++; } while (*q++);
+          }
+        } // if ( !SignalTriggered )
+      } //if ( choice > 0 ) //if !quit
+
+    #ifndef OLDRESOLVE
+    if ( strcmpi( keyproxy, "(auto)" ) == 0 )
       {
-        *p = 0;
-        break;
+      strcpy( keyproxy, lkg_keyproxy ); //copy whatever they had back
+      autofindkeyserver = 1;
       }
-    }
-    if ( parm[0] || choice == CONF_LOGNAME )
+    if ( choice == CONF_KEYPROXY )
+      {
+      autofindkeyserver = 0;  //assume something changed
+      if (!parm[0] || strcmpi(parm,"(auto)")==0 || strcmpi(parm,"auto")==0)
+        {
+        strcpy( parm, keyproxy ); //copy back what was in there before
+        autofindkeyserver = 1;
+        }
+      }
+    #endif
+    
+    if ( choice > 0 && (parm[0] || choice == CONF_LOGNAME ))
     {
       switch ( choice )
       {
@@ -946,8 +1005,11 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           else
             {             // http & socks5
             printf("Enter password--> ");
+            fflush( stdin );
             fflush( stdout );
             fgets(parm2, sizeof(parm2), stdin);
+            fflush( stdin );
+            fflush( stdout );
             for ( p = parm2; *p; p++ )
               {
               if ( !isprint(*p) )
@@ -966,6 +1028,9 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           uuehttpmode = atoi(parm);
           if ( uuehttpmode < 0 || uuehttpmode > 5 )
             uuehttpmode = 0;
+          #ifndef OLDRESOLVE
+          autofindkeyserver=1;
+          #endif
           switch (uuehttpmode)
             {
             case 0:strcpy( keyproxy, "us.v27.distributed.net");//normal communications
@@ -1186,6 +1251,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
       }
     }
   }
+  return 0;
 }
 #endif
 
@@ -1221,9 +1287,14 @@ s32 Client::Configure( void )
             "       Please go to %s and configure it.\n",menutable[0]);
     printf("Choice --> ");
 
+    fflush( stdin );
     fflush( stdout );
-    fgets(parm, 128, stdin);
+    fgets(parm, sizeof(parm), stdin);
+    fflush( stdin );
+    fflush( stdout );
     choice = atoi(parm);
+    if (SignalTriggered)
+      choice = 9;
 
     switch (choice)
     {
@@ -1236,6 +1307,8 @@ s32 Client::Configure( void )
       case 0: returnvalue=1;break; //Breaks and tells it to save
       case 9: returnvalue=-1;break; //Breaks and tells it NOT to save
     };
+  if (SignalTriggered)
+    returnvalue=-1;
   }
 
   return returnvalue;
