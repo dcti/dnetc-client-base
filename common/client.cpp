@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.104  1998/07/16 16:58:58  silby
+// x86 clients in MMX mode will now permit des on > 2 processors.  Bryddes is still set at two, however.
+//
 // Revision 1.103  1998/07/16 08:25:07  cyruspatel
 // Added more NONETWORK wrappers around calls to Update/Fetch/Flush. Balanced
 // the '{' and '}' in Fetch and Flush. Also, Flush/Fetch will now end with
@@ -65,7 +68,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.103 1998/07/16 08:25:07 cyruspatel Exp $.
+// Tweaked $Id: client.cpp,v 1.104 1998/07/16 16:58:58 silby Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -241,7 +244,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.103 1998/07/16 08:25:07 cyruspatel Exp $"; }
+return "@(#)$Id: client.cpp,v 1.104 1998/07/16 16:58:58 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -1925,9 +1928,12 @@ s32 Client::Run( void )
   for (cpu_i = 0; cpu_i < load_problem_count; cpu_i++ )
   {
 #if (CLIENT_CPU == CPU_X86)
-    if ((cpu_i != 0) && (cpu_i != numcputemp) &&
-        (cpu_i != 1) && (cpu_i != 1 + numcputemp))
-    {
+    if ((cpu_i != 0) && (cpu_i != numcputemp) 
+#if defined(MMX_BITSLICER)
+       && (des_unit_func!=des_unit_func_mmx) // we're not using the mmx cores
+#endif
+       && (cpu_i != 1) && (cpu_i != 1 + numcputemp))
+      {
       // Not the 1st or 2nd cracking thread...
       // Must do RC5.  DES x86 cores aren't multithread safe.  There are 2 separate cores.
       // Note that if rc5 contest is over, this will return -2...
