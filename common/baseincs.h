@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.33 2000/05/27 20:47:49 patrick Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.34 2000/06/04 09:44:48 oliver Exp $"
 
 #include "cputypes.h"
 
@@ -80,8 +80,8 @@
     #define QSV_NUMPROCESSORS     26
   #endif
 #elif (CLIENT_OS == OS_AMIGAOS)
-  #include <amiga/amiga.h>
-  #include <unistd.h>
+  #include "platforms/amiga/amiga.h"
+  #include <sys/unistd.h>
   #include <fcntl.h>
 #elif (CLIENT_OS == OS_RISCOS)
   #include <sys/fcntl.h>
