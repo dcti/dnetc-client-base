@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.44 2004/01/09 12:08:39 piru Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.45 2004/01/10 23:06:17 kakace Exp $
 ==========================================================================
 
 2.9000
@@ -32,6 +32,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.44 2004/01/09 12:08:39 piru Exp $
             new: MorphOS port
             new: morphos: added resethandler, client will quit before reset
             fix: amigaos: fixed timer.device exit crash
+            fix: all: fixed a busy loop that could occur with OGR (#2726)
 
 2.9007-486  imp: nextstep: include assembler cores on x86
             imp: nextstep: fix console handling for config menu
