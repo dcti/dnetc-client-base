@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.136 2002/03/30 06:12:38 sampo Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.137 2002/03/31 00:49:21 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -858,8 +858,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         case 0x0008: cindex = 1; break; // 740/750 (G3)   == lintilla
         case 0x0009: cindex = 2; break; // 604e           == lintilla-604
         case 0x000A: cindex = 2; break; // 604ev          == lintilla-604
-        case 0x000C: cindex = 1; break; // 7400/7410 (G4) == lintilla
-        case 0x8000: cindex = 1; break; // 7450 (G4+)     == lintilla
+// 		  Let G4s do a minibench if AltiVec is unavailable
+//        case 0x000C: cindex = 1; break; // 7400 (G4)      == lintilla
         default:     cindex =-1; break; // no default (used to be lintilla)
       }
       #if defined(_AIXALL)             /* Power/PPC hybrid */
@@ -873,8 +873,10 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         {
           switch ( detected_type & 0xffff) // only compare the low PVR bits
           {
-            case 0x000C: cindex = 4; break; // 7400/7410 (G4) == crunch-vec
-            case 0x8000: cindex = 5; break; // 7450 (G4+)     == crunch-vec-7450
+            case 0x000C: cindex = 4; break; // 7400 (G4)   == crunch-vec
+            case 0x8000: cindex = 5; break; // 7450 (G4+)  == crunch-vec-7450
+            case 0x8001: cindex = 5; break; // 7455 (G4++) == crunch-vec-7450
+            case 0x800C: cindex = 4; break; // 7410 (G4)   == crunch-vec
             default:     cindex =-1; break; // no default
           }
         }

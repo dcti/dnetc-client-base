@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.85 2002/03/29 20:34:51 sampo Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.86 2002/03/31 00:49:00 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -381,13 +381,15 @@ static long __GetRawProcessorID(const char **cpuname)
                 {    0x0008,   "740/750 (G3)"          },
                 {    0x0009,   "604e"                  },
                 {    0x000A,   "604ev"                 },
-                {    0x000C,   "7400/7410 (G4)"        }, //7400=0x000C, 7410=0x800C
+                {    0x000C,   "7400 (G4)"             },
                 {    0x0020,   "403G/403GC/403GCX"     },
                 {    0x0050,   "821"                   },
                 {    0x0080,   "860"                   },
                 {    0x0081,   "8240"                  },
                 {    0x4011,   "405GP"                 },
                 {    0x8000,   "7450 (G4)"             },
+                {    0x8001,   "7455 (G4)"             },
+                {    0x800C,   "7410 (G4)"             },
                 {(1L<<16)+1,   "Power RS"              }, //not PVR based
                 {(1L<<16)+2,   "Power RS2 Superchip"   }, //not PVR based
                 {(1L<<16)+3,   "Power RS2"             }, //not PVR based
@@ -447,10 +449,14 @@ static long __GetRawProcessorID(const char **cpuname)
     detectedtype = -1;
     if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
     {
+      /* Fix Gestalt IDs to match pure PVR values */
       if (result == gestaltCPUG47450) /* gestaltCPUG47450 = 0x0110 */
         result = 0x8100L; /* Apples ID makes sense but we prefer pure PVR */
-    
+      if (result == 0x0111) /* gestaltCPUG47455 = 0x0111 */
+        result = 0x08101L; /* Apples ID makes sense but we prefer pure PVR */
       detectedtype = result - 0x100L; // PVR!!
+
+      /* AltiVec software support and hardware support/exsitence */
       if (Gestalt( gestaltSystemVersion, &result ) == noErr)
       {   
         if (result >= 860) /* Mac OS 8.6 and above? */
@@ -476,6 +482,7 @@ static long __GetRawProcessorID(const char **cpuname)
     if (kr == KERN_SUCCESS)
     {
       // host_info() doesnt use PVR values, so I map them as in mach/machine.h
+      // http://www.opensource.apple.com/cgi-bin/registered/cvs/System/xnu/osfmk/mach/
       switch (info.cpu_subtype)
       {
         case CPU_SUBTYPE_POWERPC_601:  detectedtype = 0x0001; break;
