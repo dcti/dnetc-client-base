@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.146  1998/07/11 01:12:16  silby
+// Added code so that the win32 cli will change its title on start.
+//
 // Revision 1.145  1998/07/10 06:24:30  cramer
 // Augmented the domain name requirements for logging.  If no domain is
 // specified, then the smtpsrvr will be appended -- for both user, and user@
@@ -255,7 +258,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.145 1998/07/10 06:24:30 cramer Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.146 1998/07/11 01:12:16 silby Exp $";
 return id; }
 #endif
 
@@ -2169,6 +2172,7 @@ if (lurk > 0) StartLurk(); //only start lurk if it needs to be started
 
 #if ((!defined(WINNTSERVICE)) && (CLIENT_OS == OS_WIN32))
   // register ourself as a Win95 service
+  SetConsoleTitle("Distributed.Net RC5/DES Client "CLIENT_VERSIONSTRING);
   if (win95hidden)
   {
     HMODULE kernl = GetModuleHandle("KERNEL32");
