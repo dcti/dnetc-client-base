@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.104 1999/12/31 20:29:33 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.105 2000/01/07 04:02:13 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -427,12 +427,29 @@ static long __GetRawProcessorID(const char **cpuname)
     // Some Mac people are idiots, so I'll spell it out again:
     // ******* detected type reference is (PVR value >> 16) ***********
     // PVR is a hardware value from the cpu and is available on every 
-    // PPC CPU on every PPC Based OS. So, dimwits, don't just make up 
+    // PPC CPU on every PPC Based OS. So, don't just make up 
     // cpu numbers!
     long result;
     detectedtype = -1;
     if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
       detectedtype = result - 0x100L; // PVR!!
+  }
+  #elif (CLIENT_OS == OS_WIN32)
+  if (detectedtype == -2L)
+  {
+    SYSTEM_INFO si;
+    si.wProcessorArchitecture = 0;
+    si.wProcessorRevision = si.wProcessorLevel = 0;
+    detectedtype = -1L;
+    GetSystemInfo( &si );
+    if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_PPC)
+    {
+      detectedtype = si.wProcessorRevision;
+      if (detectedtype == 0)
+        detectedtype = si.wProcessorLevel; 
+      if (detectedtype == 0)
+        detectedtype = -1;
+    }
   }
   #elif (CLIENT_OS == OS_LINUX)
   if (detectedtype == -2L)
@@ -457,7 +474,9 @@ static long __GetRawProcessorID(const char **cpuname)
            { "603ev",                7  },
            { "750",                  8  },
            { "604e",                 9  },
-           { "604ev",               10  }
+           { "604ev",               10  }, /* < 2.3.34 */
+           { "604ev5",              10  }, /* >= 2.3.34 */
+           { "7400",                12  },
            { "821",                 50  },
            { "860",                 80  }
            };
@@ -1141,6 +1160,37 @@ static long __GetRawProcessorID(const char **cpuname)
     if (detectedtype <= 0)
       detectedtype = -1;
   }
+  #elif (CLIENT_OS == OS_WIN32)
+  if (detectedtype == -2L)
+  {
+    SYSTEM_INFO si;
+    si.wProcessorLevel = si.wProcessorArchitecture = 0;
+    detectedtype = -1L;
+    GetSystemInfo( &si );
+    if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ALPHA &&
+        si.wProcessorLevel != 0)
+    {
+      unsigned int ref;
+      for (ref = 0; (ref < sizeof(cpuridtable)/sizeof(cpuridtable[0])); ref++)
+      {
+        char *q = strchr(cpuridtable,'(');
+        if (q) 
+        {
+          if (si.wProcessorLevel == atoi(q+1))
+          {
+            detectedtype = cpuridtable[ref].rid;
+            break;
+          }
+        }  
+      }
+      if (detectedtype == -1)
+      {
+        sprintf( namebuf, "%u", si.wProcessorLevel );
+        detectedname = namebuf;
+        detectedtype = 0;
+      }
+    }    
+  }
   #elif (CLIENT_OS == OS_LINUX)
   if (detectedtype == -2L)
   {
@@ -1290,7 +1340,7 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
     if (rawid != 0) /* if rawid == 0, then cpuid_s == "%lX" */
       sprintf( namebuf, "%lX\n\tname: ", rawid );
     strcat( namebuf, cpuid_s ); /* always valid */
-    #if (CLIENT_OS == OS_RISCOS)
+    #if (CLIENT_OS == OS_RISCOS && defined(HAVE_X86_CARD_SUPPORT))
     if (riscos_count_cpus() == 2)
       strcat(strcat(namebuf,"\n\t+ "),riscos_x86_determine_name());
     #endif
