@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.15 2000/01/08 23:18:04 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.16 2000/01/09 05:01:02 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -180,14 +180,11 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
 /* --------------------------------------------------------------------- */
 
 //Do it the way I originally intended...
-#if ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_NEXTSTEP))
+#if ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_NEXTSTEP) || \
+     (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_RISCOS))
   #define BUFFEROPEN( fn )  fopen( fn, "r+b" )
   #define BUFFERCREATE( fn )   fopen( fn, "wb" )
-#elif (CLIENT_OS == OS_MACOS)
-  #define BUFFEROPEN( fn )  fopen( fn, "r+b" )
-  #define BUFFERCREATE( fn )   fopen( fn, "wb" )
-  #define ftruncate(h,sz) //nothing. ftruncate not supported.
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_VMS)
   #define BUFFEROPEN( fn )  fopen( fn, "r+" )
   #define BUFFERCREATE( fn )   fopen( fn, "w" )
   #define ftruncate(h,sz) //nothing. ftruncate not supported.
@@ -195,13 +192,6 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
   #define BUFFEROPEN( fn )  fopen( fn, "r+" )
   #define BUFFERCREATE( fn )   fopen( fn, "w" )
   extern "C" int ftruncate(int, off_t); // Keep g++ happy.
-#elif (CLIENT_OS == OS_VMS)
-  #define BUFFEROPEN( fn )  fopen( fn, "r+" )
-  #define BUFFERCREATE( fn )   fopen( fn, "w" )
-  #define ftruncate(h,sz) //nothing. ftruncate not supported.
-#elif (CLIENT_OS == OS_RISCOS)
-  #define BUFFEROPEN( fn )  fopen( fn, "r+b" )
-  #define BUFFERCREATE( fn )   fopen( fn, "wb" )
 #elif ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32) || \
        (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_OS2) || \
        (CLIENT_OS == OS_WIN16))
