@@ -18,7 +18,7 @@
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.27.2.11 2000/06/19 13:43:24 cyp Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.27.2.12 2000/09/17 11:46:31 cyp Exp $"; }
 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
@@ -482,7 +482,6 @@ static unsigned long ini_doit( int dowrite, const char *sect,
         }
         else if (!changed) /* no old key in section */
         {
-          long i;
           if (sectoffend == 0)
             sectoffend = filelen;
           /*can't use isspace(data[sectoffend-1])*/

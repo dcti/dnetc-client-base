@@ -2,9 +2,10 @@
  * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.36 2000/08/22 13:35:57 oliver Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.37 2000/09/17 11:46:34 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -430,60 +431,6 @@ const char *projectmap_build( char *buf, const char *strtomap )
   if (buf)
     memcpy((void *)buf, (void *)&map[0], CONTEST_COUNT );
   return map;
-}
-
-/* ------------------------------------------------------------------ */
-
-int IsFilenameValid( const char *filename )
-{
-  if (!filename)
-    return 0;
-  while (*filename && isspace(*filename))
-    filename++;
-  return (*filename && strcmp( filename, "none" ) != 0); /* case sensitive */
-}
-
-int DoesFileExist( const char *filename )
-{
-  if ( !IsFilenameValid( filename ) )
-    return 0;
-  return ( access( GetFullPathForFilename( filename ), 0 ) == 0 );
-}
-
-int GetFileLengthFromStream( FILE *file, unsigned long *length )
-{
-  #if (CLIENT_OS == OS_WIN32)
-    DWORD result = GetFileSize((HANDLE)_get_osfhandle(fileno(file)),NULL);
-    if (result == ((DWORD)-1)) return -1;
-    *length = (unsigned long)result;
-  #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16)
-    unsigned long result = filelength( fileno(file) );
-    if (result == ((unsigned long)-1L)) return -1;
-    *length = result;
-  #elif (CLIENT_OS == OS_RISCOS)
-    if (riscos_get_filelength(fileno(file),(unsigned long *)length) != 0)
-      return -1;
-  #else
-    struct stat statbuf;
-    #if (CLIENT_OS == OS_NETWARE)
-    unsigned long inode;
-    int vno;
-    if (FEMapHandleToVolumeAndDirectory( fileno(file), &vno, &inode )!=0)
-      { vno = 0; inode = 0; }
-    if ( vno == 0 && inode == 0 )
-    {                                       /* file on DOS partition */
-      unsigned long result = filelength( fileno(file) );  // ugh! uses seek
-      if (result == ((unsigned long)-1L)) return -1;
-      *length = result;
-      return 0;
-    }
-    #endif
-    if ( fstat( fileno( file ), &statbuf ) != 0) return -1;
-    *length = (unsigned long)statbuf.st_size;
-    //if (*length != statbuf.st_size) /* overflow */
-    //  return -1;
-  #endif
-  return 0;
 }
 
 /* --------------------------------------------------------------------- */
@@ -967,7 +914,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
       }
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    #elif (defined(__unix__)) && (CLIENT_OS != OS_NEXTSTEP) && !defined(__EMX__)
+    #elif defined(__unix__)
     {
       char *p, *foundname;
       pid_t thatpid, ourpid = getpid();
@@ -983,7 +930,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           while ((dp = readdir(dirp)) != ((struct dirent *)0))
           {
             FILE *file;
-            pid_t thatpid = (pid_t)atoi(dp->d_name);
+            thatpid = (pid_t)atoi(dp->d_name);
             if (num_found < 0)
               num_found = 0;
             if (thatpid == 0 /* .,..,curproc,etc */ || thatpid == ourpid)

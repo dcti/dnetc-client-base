@@ -6,14 +6,14 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.34 2000/07/01 13:43:27 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.35 2000/09/17 11:46:26 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
 #include "client.h"   //client class
 #include "baseincs.h" //basic #includes
 #include "network.h"  //ntohl(), htonl()
-#include "util.h"     //IsFilenameValid(), DoesFileExist()
+#include "util.h"     //trace
 #include "clievent.h" //event stuff
 #include "clicdata.h" //GetContestNameFromID()
 #include "logstuff.h" //Log()/LogScreen()/LogScreenPercent()/LogFlush()
@@ -481,10 +481,10 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
   int errs = 0;
   WorkRecord data;
 
-  if ( !DoesFileExist( source_file ) )
+  if ( access( GetFullPathForFilename(source_file), 0 )!=0 )
   {
     if (interactive)
-      LogScreen("Import error: Source '%s' doesn't exist\n", source_file );
+      LogScreen("Import error: '%s' not found.\n", source_file );
     return -1L;
   }
 
@@ -617,8 +617,6 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
 
     strncpy( remote_file, BufferGetDefaultFilename(contest,1,basename), sizeof(remote_file));
     remote_file[sizeof(remote_file)-1] = '\0';
-    if (!DoesFileExist(remote_file))
-      continue; /* Skip to next contest if remote buffer file doesn't exist */
 
     totrans_wu = 1;
     while (totrans_wu > 0 )
@@ -638,6 +636,7 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
         {
           //totrans_wu = 0; /* move to next contest on file error */
           break; /* move to next contest - error msg has been printed */
+          /* if file doesn't exist, no error will be printed. move on as well. */
         }
         else if (((unsigned int)wrdata.contest) != contest)
         {

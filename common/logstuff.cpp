@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.25 2000/06/15 23:02:18 mfeiri Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.26 2000/09/17 11:46:32 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -652,7 +652,7 @@ void LogScreenPercent( unsigned int load_problem_count )
 {
   static unsigned int displevel = 0, lastperc = 0;
   unsigned int percent, restartperc, endperc, equals, prob_i;
-  int isatty, multiperc;
+  int istty, multiperc;
   char ch; char buffer[88];
   char *bufptr = &buffer[0];
   unsigned char pbuf[30]; /* 'a'-'z' */
@@ -660,7 +660,7 @@ void LogScreenPercent( unsigned int load_problem_count )
   if (!logstatics.percprint || ( logstatics.loggingTo & LOGTO_SCREEN ) == 0 )
     return;
 
-  isatty  = ConIsScreen();
+  istty  = ConIsScreen();
   endperc = restartperc = 0;
 
   for (prob_i = 0; prob_i < load_problem_count; prob_i++)
@@ -692,11 +692,11 @@ void LogScreenPercent( unsigned int load_problem_count )
       pbuf[prob_i] = (unsigned char)(percent);
   }
 
-  if (!logstatics.lastwasperc || isatty)
+  if (!logstatics.lastwasperc || istty)
     lastperc = 0;
   multiperc = (load_problem_count > 1 && load_problem_count <= 26 /*a-z*/
-                 && lastperc == 0 && isatty && endperc < 100);
-  if (lastperc == 0 && endperc > 0 && isatty )
+                 && lastperc == 0 && istty && endperc < 100);
+  if (lastperc == 0 && endperc > 0 && istty )
     *bufptr++ = '\r';
 
   for (percent = lastperc+1; percent <= endperc; percent++)

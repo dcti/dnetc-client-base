@@ -2,9 +2,10 @@
  * Copyright distributed.net 1997 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.14 2000/08/25 09:04:56 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.15 2000/09/17 11:46:31 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -15,9 +16,10 @@ return "@(#)$Id: disphelp.cpp,v 1.64.2.14 2000/08/25 09:04:56 cyp Exp $"; }
 #include "logstuff.h" //LogScreenRaw()
 #include "util.h"     //UtilGetAppName()
 #include "console.h"  //ConClear(), ConInkey()
+#include "cliident.h" //CliGetNewestModuleTime(),CliGetFullVersionDescriptor()
 #include "client.h"   //various #defines
 
-#if defined(__unix__) && !defined(__EMX__)
+#if defined(__unix__)
   #define NO_INTERNAL_PAGING  //internal paging is very un-unix-ish
 #endif
 
@@ -26,7 +28,7 @@ return "@(#)$Id: disphelp.cpp,v 1.64.2.14 2000/08/25 09:04:56 cyp Exp $"; }
 static const char *helpbody[] =
 {
 /*"------------------------------------ max width == 77 ------------------------" */
-  "Special Options: (the client will execute the option and then exit)",
+  "Mode commands: (the client will execute the option and then exit)",
   "-config            start the configuration menu",
   "-flush             flush all output buffers",
   "-fetch             fill all input buffers",
@@ -35,7 +37,7 @@ static const char *helpbody[] =
   "-benchmark2 [pn]   half (8-10 sec) and slightly inaccurate -benchmark",
   "-bench [pn]        -benchmark all cores [optional: only project pn]",
   "-test [pn]         tests for core errors [optional: only project pn]",
-  "-restart           restart all active clients (equivalent to -hup)",
+  "-restart           restart all active clients",
   "-shutdown          gracefully shut down all active clients",
   "-pause             pause all active clients",
   "-unpause           unpause all active clients",
@@ -54,7 +56,7 @@ static const char *helpbody[] =
   "-uninstall         remove the client from /etc[/rc.d]/init.d/",
 #endif
 //"-import <fn> [cnt] import [cnt] packets from file <fn> into client buffers",
-  "-import <fn>       import packets from file <fn> into client buffers",
+  "-import <filename> import packets from file <filename> into client buffers",
   "-forceunlock <fn>  unlock buffer file <fn>",
   "-help              display this text",
   "",
@@ -70,13 +72,13 @@ static const char *helpbody[] =
   "-inbase <fname>    input buffer basename (ie without 'extension'/suffix)",
   "-outbase <fname>   output buffer basename (ie without 'extension'/suffix)",
   "-ckpoint <fname>   set the name of the checkpoint file",
-  "-blsize <pn> <n>   set preferred packet size (2^n keys/packet)",
+  "-blsize [pn] <n>   set preferred packet size (2^n keys/packet)",
   "-bin <pn> <n>      set fetch buffer threshold to <n> work units",
   #if !defined(NO_OUTBUFFER_THRESHOLDS)
-  "-bout <pn> <n>     set flush buffer threshold to <n> work units",
-  "-b <pn> <n>        set both buffer thresholds to <n> work units",
+  "-bout [pn] <n>     set flush buffer threshold to <n> work units",
+  "-b [pn] <n>        set both buffer thresholds to <n> work units",
   #endif
-  "-btime <pn> <n>    set fetch time threshold to <n> hours",
+  "-btime [pn] <n>    set fetch time threshold to <n> hours",
   "                   If not specified, project name <pn> defaults to RC5",
   "",
 /*"------------------------------------ max width == 77 ------------------------" */
@@ -100,7 +102,7 @@ static const char *helpbody[] =
 /*"------------------------------------ max width == 77 ------------------------" */
   "Performance related options:",
   "",
-  "-c <pn> <n>        core number (run -config for a list of valid core numbers)",
+  "-c [pn] <n>        core number (run -config for a list of valid core numbers)",
   "                   project name \"pn\" defaults to RC5",
   "-numcpu <n>        run <n> threads/run on <n> cpus. 0 forces single-threading.",
   "-priority <0-9>    scheduling priority from 0 (lowest/idle) to 9 (normal/user)",
@@ -117,10 +119,13 @@ static const char *helpbody[] =
 /*"------------------------------------ max width == 77 ------------------------" */
   "Miscellaneous runtime options:",
   "",
-  "-h <hours>         time limit in hours",
+  "-h <hours[:min]>   time limit in hours",
   "-until <HH:MM>     quit at HH:MM (eg 07:30)",
   "-noexitfilecheck   override .ini exit flagfile setting",
   "-pausefile <fn>    name of file that causes the client to pause",
+  "-exitfile <fn>     name of file that causes the client to exit",
+  "-multiok[=|:][0|1] allow/disallow multiple instances of the client to run",
+  "                   The default is 'allow' for all platforms but Windows.",
   "-percentoff        don't display work completion as a running percentage",
   "-quiet/-hide       suppress screen output (== detach for some clients)",
   "-noquiet           don't suppress screen output (override ini quiet setting)"
@@ -132,7 +137,7 @@ static const char *helpbody[] =
 
 void GenerateManPage( void )
 {
-  #if defined(__unix__) || defined(__GNUC__)
+  #if defined(__unix__)
   char buffer[80];
   const char *appname = utilGetAppName();
   FILE *manp;
@@ -149,14 +154,15 @@ void GenerateManPage( void )
   {
     unsigned int linelen, pos;
     char *p; const char *cp;
-    time_t t = time(NULL);
+    time_t t = CliGetNewestModuleTime();
     struct tm *gmt = gmtime(&t);
 
+    fprintf(manp, ".\\\"\n");
+    fprintf(manp, ".\\\" %s\n", CliGetFullVersionDescriptor() );
     fprintf(manp, ".\\\" Copyright (c) 1996-%d\n", gmt->tm_year+1900 );
     fprintf(manp, ".\\\"         distributed.net. All rights reserved.\n" );
     fprintf(manp, ".\\\"\n");
-    fprintf(manp, ".\\\" %s\n",disphelp_cpp());
-    fprintf(manp, ".\\\"\n");
+    fprintf(manp, ".Id %cId: %s.1%s\n", '$', appname, strchr(disphelp_cpp(),','));
     fprintf(manp, ".Dd %s", ctime(&t));
     strncpy(buffer, appname,sizeof(buffer));
     buffer[sizeof(buffer)-1] = '\0';
@@ -206,44 +212,56 @@ void GenerateManPage( void )
     fprintf(manp,"\n");
     fprintf(manp, ".Sh DESCRIPTION\n");
     fprintf(manp,
-      ".Ar %s\nis a distributed computing client that coordinates with servers\n"
-      "operated by\n.Ar distributed.net\nto cooperate with other network-connected\n"
-      "computers to work on a common task.  It communicates over public networks\n"
-      "and processes work assigned by the\n.Ar distributed.net\nkeyservers.\n"
-      "It is designed to run in idle time so as to not impact the normal operation\n"
+      ".Ar %s\nis a distributed computing client that coordinates with servers "
+      "operated by\n.Ar distributed.net\nto cooperate with other network-connected "
+      "computers to work on a common task.  It communicates over public networks "
+      "and processes work assigned by the\n.Ar distributed.net\nkeyservers. "
+      "It is designed to run in idle time so as to not impact the normal operation "
       "of the computer.\n", appname);
 
     fprintf(manp,"\n");
     fprintf(manp, ".Sh INSTALLATION\n");
     fprintf(manp,
-      "Since you are already reading this, I assume you know how to\n"
-      "unpack an archive (don't laugh!) into a directory of your\n"
-      "choice.\n"
+      "Since you are already reading this, I assume you know how to "
+      "unpack an archive into a directory of your choice. :)\n"
       ".sp 1\n"
       "Now, simply fire up the client...\n"
       ".sp 1\n"
-      "If you have never run the client before, it will initiate the\n"
-      "menu-driven configuration. Save and quit when done, the configuration\n"
-      "file will be saved \\fBin the same directory as the client.\\fP \n"
-      "Now, simply restart the client. From that point on it will use the\n"
+      "If you have never run the client before, it will initiate the "
+      "menu-driven configuration. Save and quit when done, the configuration "
+      "file will be saved \\fBin the same directory as the client\\fP. "
+      "Now, simply restart the client. From that point on it will use the "
       "saved configuration.\n"
       ".sp 1\n"
-      "The configuration options are fairly self-explanatory and can be run\n"
-      "at any time by starting the client with the '-config' option.\n"
-      "A list of command line options is listed below.\n"
+      "The configuration options are fairly self-explanatory and can be run "
+      "at any time by starting the client with the '-config' option. "
+      "A list of command line options is listed below. "
       );
 
     fprintf(manp,"\n");
-    fprintf(manp, ".Sh COMMAND LINE OPTIONS\n");
+    fprintf(manp, ".Sh OPTIONS\n"
+      "In addition to the conventional command line passed to the client from "
+      "a shell, options may also be passed to the client using either or both "
+      "of the following methods:\n"
+      ".sp 0\n\\-\tusing the \\fB%s_opt\\fP= environment variable.\n"
+      ".sp 0\n\tIf set, this is parsed before the normal command line.\n"
+      ".sp 0\n\\-\tusing the \\fB/usr/local/etc/%s.opt\\fP and/or \\fB/etc/%s.opt\\fP\n"
+      ".sp 0\n\tcommand files. If found, these are parsed after the normal\n"
+      ".sp 0\n\tcommand line.\n"
+      ".sp 0\n\"Mode commands\" (see below) cannot be executed using these "
+      "methods, and there is no run-time display of modified settings (unless "
+      "the settings are also modified using the conventional command line, in "
+      "which case the last effective change is displayed).\n",
+      appname, appname, appname );
 
     for (pos=0;pos<(sizeof(helpbody)/sizeof(helpbody[0]));pos++)
     {
       cp = helpbody[pos];
-      if (*cp=='-')
+      if (*cp=='-') /* switch */
       {
         fprintf(manp,".It Fl ");
         cp++;
-        while (*cp && *cp != ' ')
+        while (*cp && *cp != ' ') /* while in keyword */
         {
           if (*cp == '\"')
           {
@@ -259,12 +277,25 @@ void GenerateManPage( void )
         }
         while (*cp == ' ')
           cp++;
-        while (*cp == '<' || *cp == '[')
+        while (*cp == '<' || *cp == '[') /* while arguments */
         {
           const char closure = ((*cp == '<')?('>'):(']'));
-          fprintf(manp, (*cp == '<')?(" Ar "):(" Op "));
-          cp++;
-          while (*cp && *cp!=closure)
+          fprintf(manp, (*cp++ == '<')?(" Ar <"):(" Op "));
+          while (*cp && *cp != closure)
+            fputc(*cp++,manp);
+          if (closure == '>')
+            fputc('>',manp);
+          while (*cp == ' ' || *cp == '>' || *cp == ']')
+            cp++;
+        }     
+        fputc('\n',manp);
+        if (!*cp) /* keyword description */
+        {
+          fprintf(manp,"(no description available)\n");
+        }
+        else
+        {
+          while (*cp)
           {
             if (*cp == '\"')
             {
@@ -276,61 +307,26 @@ void GenerateManPage( void )
               if (_istrofspecial(*cp))
                 fputc('\\', manp);
               fputc(*cp++,manp);
-            }
-          }
-          if (*cp == closure)
-            cp++;
-          while (*cp == ' ')
-            cp++;
+            }  
+            if (!*cp && (pos+1)<(sizeof(helpbody)/sizeof(helpbody[0])))
+            {
+              if (*helpbody[pos+1] == ' ') /* continuation */
+              {
+                cp = helpbody[++pos];
+                fprintf(manp,"\n.sp 0\n");
+                while (*cp == ' ')
+                  cp++;
+              }
+            }  
+          }    
         }
         fprintf(manp,"\n");
-        if (*cp)
-        {
-          while (*cp)
-          {
-            if (*cp == '\"')
-            {
-              cp++;
-              fputc('\'', manp);
-            }
-            else
-            {
-              if (_istrofspecial(*cp))
-                fputc('\\', manp);
-              fputc(*cp++,manp);
-            }
-          }
-          fprintf(manp,"\n");
-        }
-      }
-      else if (*cp == ' ') /* continuation */
-      {
-        while (*cp && *cp==' ')
-          cp++;
-        if (*cp)
-        {
-          while (*cp)
-          {
-            if (*cp == '\"')
-            {
-              cp++;
-              fputc('\'', manp);
-            }
-            else
-            {
-              if (_istrofspecial(*cp))
-                fputc('\\', manp);
-              fputc(*cp++,manp);
-            }
-          }
-          fprintf(manp,"\n");
-        }
       }
       else if (*cp) /* new section */
       {
         if (pos)
           fprintf(manp,".El\n");
-        fprintf(manp, ".sp 2\n");
+        /* fprintf(manp, ".sp 2\n"); */
         fprintf(manp,".Ss \"");
         while (*cp)
         {
@@ -351,15 +347,39 @@ void GenerateManPage( void )
       }
     }
 
-    #if 0
+    fprintf(manp,"\n");
+    fprintf(manp,".Sh BUGS\n"
+                 ".Pp\n"
+                 "No client, irrespective of platform, has ever been released "
+                 "with any known bugs.\n"
+                 ".Sp\n"
+                 "If you believe you have found one, please submit it to the "
+                 "distributed.net bug reporting pages at "
+                 "http://www.distributed.net/bugs/\n"
+                 "\n"
+                 "Please provide the entire version descriptor as displayed on client start "
+                 "when doing so. For example, the client version this manpage was "
+                 "generated for was \"%s\".\n", CliGetFullVersionDescriptor() );
+
     fprintf(manp,"\n");
     fprintf(manp,".Sh ENVIRONMENT\n"
-                 ".Pp\N"
-                 ".Ip \\\"RC5INI\\\"\n"
-                 "Full path to alternate .ini file\n");
+                 ".Pp\n"
+    #if 0
+                 "\\fBRC5INI\\fP\n"
+                 "Full path to alternate .ini file\n"
     #endif
+                 "\\fB%s_opt\\fP (or the upper\\-case version thereof)\n"
+                 ".sp 0\nAdditional source of command line options (parsed first)\n", 
+                 appname );
     fprintf(manp,"\n");
-    fprintf(manp,".Sh SEE ALSO\n"
+    fprintf(manp,".Sh FILES\n"
+                 ".Pp\n"
+                 "\\fB/usr/local/etc/%s.opt\\fP\n"
+                 ".sp 0\n\\fB/etc/%s.opt\\fP\n"
+                 ".sp 0\nAdditional sources of command line options (parsed last)\n", appname, appname );
+
+    fprintf(manp,"\n");
+    fprintf(manp,".Sh \"SEE ALSO\"\n"
                  ".Pp\n"
                  "Client documentation: %s.txt and http://www.distributed.net/FAQ/\n",
                  appname);

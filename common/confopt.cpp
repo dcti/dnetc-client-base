@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.40 2000/08/22 13:27:13 oliver Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.41 2000/09/17 11:46:29 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -15,7 +15,6 @@ return "@(#)$Id: confopt.cpp,v 1.34.2.40 2000/08/22 13:27:13 oliver Exp $"; }
 #include "confopt.h"  // ourselves
 
 /* ----------------------------------------------------------------------- */
-
 
 static const char *lurkmodetable[] =
 {
@@ -29,11 +28,12 @@ static const char *lurkmodetable[] =
 #define CFGTXT(x) (x)
 #define ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME "Additional buffer-level checking"
 
-struct optionstruct conf_options[] = {
+struct optionstruct conf_options[/*CONF_OPTION_COUNT*/] = {
 { 
   CONF_MENU_MISC_PLACEHOLDER   , /* */
   CFGTXT("General Client Options"),"",
-  CFGTXT(""),CONF_MENU_MAIN,CONF_TYPE_MENU,NULL,NULL,CONF_MENU_MISC,0,NULL,NULL
+  CFGTXT(""),
+  CONF_MENU_MAIN,CONF_TYPE_MENU,NULL,NULL,CONF_MENU_MISC,0,NULL,NULL
 },
 { 
   CONF_ID                      , /* CONF_MENU_MISC */
@@ -104,10 +104,13 @@ struct optionstruct conf_options[] = {
   "listed here are found to be running. Multiple filenames/process names\n"
   "may be specified by separating them with a '|'.\n"
   "\n"
-  #if (defined(__unix__) && (CLIENT_OS != OS_NEXTSTEP) && !defined(__EMX__))
+  #if defined(__unix__)
   "For example, \"backup|restore\". Providing a path is not advisable\n"
   "since the process list is obtained from 'ps' and/or the programmatic\n"
-  "equivalent therof.\n"
+  "equivalent thereof.\n"
+    #if (CLIENT_OS == OS_HPUX) && (ULONG_MAX == 0xfffffffful) /* 32bit client */
+    "\nThis option is not supported by 32bit clients for 64bit HP/UX.\n"
+    #endif
   #elif (CLIENT_OS == OS_NETWARE)
   "For example, \"backup.nlm|restore.nlm|\". An extension (.DLL|.NLM etc) is\n"
   "optional and defaults to 'NLM'. Path specifiers, if provided, have no\n"
@@ -115,7 +118,7 @@ struct optionstruct conf_options[] = {
   #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   "For example, \"backup.exe|restore.exe\".\n"
   "Win9x: path and extension are optional (that is, they won't influence\n"
-  "       the outcome of a search if not explicitely specified).\n"
+  "       the outcome of a search if not explicitly specified).\n"
   "WinNT: path and extension are accepted, but ignored (ie, they have no\n"
   "       influence on the outcome of a search).\n"
   "       32bit clients cannot 'see' 16bit applications and vice-versa.\n"
@@ -128,8 +131,8 @@ struct optionstruct conf_options[] = {
   "The name of a process must match its name in the application menu on the far\n"
   "right. For example 'QuickTime Player|Disk First Aid'.\n"
   #elif (CLIENT_OS == OS_AMIGAOS)
-  "The name of a process must match the internal task name exactly, and note\n"
-  "that it's also case-sensistive.  For example 'DiskSalv|Quake'.\n"
+  "The name of a process is case sensitive and must match the internal task name\n"
+  "exactly. For example 'DiskSalv|Quake'.\n"
   #else
   "This option is not supported on all platforms\n"
   #endif
@@ -156,7 +159,7 @@ struct optionstruct conf_options[] = {
   "   90 percent of the K equivalent of 'high'.\n"
   "\n"
   "As noted above, temperatures may be specified in Kelvin (K, the default),\n"
-  "Rankine (R), degrees Farenheit (F) or degrees Celsius/Centrigrade (C).\n"
+  "Rankine (R), degrees Fahrenheit (F) or degrees Celsius/Centigrade (C).\n"
   "\n"
   "Illegal values, for instance a 'low' that is not less than 'high', will\n"
   "render the pair invalid and cause temperature threshold checking to be\n"
@@ -187,15 +190,24 @@ struct optionstruct conf_options[] = {
 },
 { 
   CONF_QUIETMODE               , /* CONF_MENU_MISC */
-  CFGTXT("Disable all screen output? (quiet mode)"),"no",
-  CFGTXT(
+  CFGTXT("Run detached/disable all screen output? (quiet mode)"),"no",
+  /*CFGTXT(*/
   "When enabled, this option will cause the client to suppress all screen\n"
   "output and detach itself (run in the background). Because the client is\n"
   "essentially invisible, distributed.net strongly encourages the use of\n"
   "logging to file if you choose to run the client with disabled screen\n"
   "output. This option is synonymous with the -hide and -quiet command line\n"
   "switches and can be overridden with the -noquiet switch.\n"
-  ),CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
+  "\n"
+  #if (CLIENT_OS == OS_DOS)
+  "The distributed.net client for DOS cannot detach itself from the console.\n"
+  #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+  "A client that was started as a win32 service has no screen output.\n"
+  #else
+  "Clients 'installed' with the -install option, are always configured\n"
+  "to start detached.\n"
+  #endif
+  /*)*/,CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
 },
 { 
   CONF_PERCENTOFF              , /* CONF_MENU_MISC */
@@ -204,11 +216,6 @@ struct optionstruct conf_options[] = {
   "When left enabled, the client will display an indicator that reflects the\n"
   "approximate position of each of the first 26 crunchers (a...z) relative\n"
   "to the packet each cruncher is processing.\n"
-  #if 0
-  "When left enabled, the client will display an indicator that reflects\n"
-  "the approximate position the first 26 crunchers are at when working on\n"
-  "a packet.\n"
-  #endif
   "\n"
   "For linear crunching, for instance RC5, the indicator is fairly accurate,\n"
   "but for non-linear crunching, such as OGR, the indicator is only a crude\n"
@@ -219,8 +226,13 @@ struct optionstruct conf_options[] = {
 { 
   CONF_COMPLETIONSOUNDON       , /* CONF_MENU_MISC */
   CFGTXT("Play sound on packet completion?"),"no",
-  ""
-  ,CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
+  CFGTXT(
+  "If enabled, the client will play a sound after each packet is\n"
+  "completed.\n"
+  "\n"
+  "This option requires OS and hardware support and is not supported on\n"
+  "all platforms.\n"
+  ),CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
 },
 
 /* ------------------------------------------------------------ */
@@ -228,7 +240,8 @@ struct optionstruct conf_options[] = {
 { 
   CONF_MENU_BUFF_PLACEHOLDER   , /* 15 */
   CFGTXT("Buffer and Buffer Update Options"),"",
-  CFGTXT(""),CONF_MENU_MAIN,CONF_TYPE_MENU,NULL,NULL,CONF_MENU_BUFF,0,NULL
+  CFGTXT(""),
+  CONF_MENU_MAIN,CONF_TYPE_MENU,NULL,NULL,CONF_MENU_BUFF,0,NULL,NULL
 },
 {  
   CONF_NODISK                  , /* CONF_MENU_BUFF */
@@ -389,8 +402,8 @@ struct optionstruct conf_options[] = {
   "buffer-level checks)\n" 
   "\n"
   "This setting is meaningful only if one of the extensions to normal threshold\n"
-  "management is enabled: either implicitely when 'Dialup detection options' are\n"
-  "active or explicitely with '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'.\n"
+  "management is enabled: either implicitly when 'Dialup detection options' are\n"
+  "active or explicitly with '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'.\n"
   "\n"
   "The interval specified here is in hours and minutes, and the default denotes\n"
   "that the client should check buffer-levels whenever it detects a change (by any\n"
@@ -423,8 +436,8 @@ struct optionstruct conf_options[] = {
   "communications with a keyserver. When the number of work units in the\n"
   "input buffer reaches 0, the client will attempt to connect to a keyserver,\n"
   "fill the input buffer to the threshold, and send in all completed work\n"
-  "units. Keep the number of workunits to buffer low if you have a fixed\n"
-  "connection to the internet, or the cost of your dialup connection is\n"
+  "units. Keep the number of work-units to buffer low if you have a fixed\n"
+  "connection to the Internet, or the cost of your dialup connection is\n"
   "negligible. While you could theoretically enter any number in the fields\n"
   "here, the client has internal limits on the number of packets that it can\n"
   "safely deal with.\n"
@@ -454,7 +467,7 @@ struct optionstruct conf_options[] = {
 #endif
   "\n"
   "* See also: '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'\n"
-  ,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,0,336,NULL,NULL
+  ,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,0,(14*24),NULL,NULL
 },
 
 /* ------------------------------------------------------------ */
@@ -462,11 +475,12 @@ struct optionstruct conf_options[] = {
 { 
   CONF_MENU_PERF_PLACEHOLDER   , /* 28 */
   CFGTXT("Performance related options"),"",
-  CFGTXT(""),CONF_MENU_MAIN,CONF_TYPE_MENU,NULL,NULL,CONF_MENU_PERF,0,NULL
+  CFGTXT(""),
+  CONF_MENU_MAIN,CONF_TYPE_MENU,NULL,NULL,CONF_MENU_PERF,0,NULL,NULL
 },
 { 
   CONF_CPUTYPE                 , /* CONF_MENU_PERF */
-  CFGTXT("Core selection"), "-1 (autodetect)",
+  CFGTXT("Core selection"), "-1 (auto-detect)",
   CFGTXT(
   "This option determines core selection. Auto-select is usually best since\n"
   "it allows the client to pick other cores as they become available. Please\n"
@@ -476,7 +490,7 @@ struct optionstruct conf_options[] = {
 },
 { 
   CONF_NUMCPU                  , /* CONF_MENU_PERF 0 ... */
-  CFGTXT("Number of crunchers to run simultaneously"), "-1 (autodetect)",
+  CFGTXT("Number of crunchers to run simultaneously"), "-1 (auto-detect)",
   /* CFGTXT( */
   "This option specifies the number of threads you want the client to work on.\n"
   "On multi-processor machines this should be set to the number of processors\n"
@@ -501,13 +515,12 @@ struct optionstruct conf_options[] = {
   "for "CLIENT_OS_NAME" always run at lowest ('idle') priority.\n"
 #elif (CLIENT_OS == OS_NETWARE)
   "The priority option for the distributed.net client for NetWare is directly\n"
-  "proportionate to the rate at which the client yields. While the formula\n"
-  "itself is simple, (priority+1)*500 microseconds (ie priority 0 == 0.5\n"
-  "milliseconds), which translates to a nominal rate of 1000 yields per\n"
-  "millisecond, the actual yield rate is far higher and varies from environment\n"
-  "to environment. Thus, it is a really a matter of experimentation to find the\n"
-  "best \"priority\" for your machine, and while \"priority\" zero will probably\n"
-  "give you a less-than-ideal crunch rate, it will never be \"wrong\".\n" 
+  "proportionate to the rate at which the client yields.\n"
+  "It is a really a matter of experimentation to find the best \"priority\" for\n"
+  "your machine, and while \"priority\" zero will probably give you a\n"
+  "less-than-ideal crunch rate, it will never be \"wrong\".\n\n"   
+  "If you do decide to change this setting, carefully monitor the server's\n"
+  "responsiveness under heavy load.\n"
 #else
   "The higher the client's priority, the greater will be its demand for\n"
   "processor time. The operating system will fulfill this demand only after\n"
@@ -537,7 +550,8 @@ struct optionstruct conf_options[] = {
 { 
   CONF_MENU_LOG_PLACEHOLDER    , /* 32 */
   CFGTXT("Logging Options"),"",
-  CFGTXT(""),CONF_MENU_MAIN,CONF_TYPE_MENU,NULL,NULL,CONF_MENU_LOG,0,NULL
+  CFGTXT(""),
+  CONF_MENU_MAIN,CONF_TYPE_MENU,NULL,NULL,CONF_MENU_LOG,0,NULL,NULL
 },
 { 
   CONF_LOGTYPE                 , /* CONF_MENU_LOG */
@@ -566,7 +580,8 @@ struct optionstruct conf_options[] = {
   "constructed from a unique identifier for the period (time limit) concatenated\n"
   "to whatever you specify here. Thus, if the interval is weekly, the name of the\n"
   "log file used will be [file_to_log_to]yearweek"EXTN_SEP"log.\n"
-  ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
+  ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
+},
 { 
   CONF_LOGLIMIT                , /* CONF_MENU_LOG */
   CFGTXT("Log file limit/interval"), "",
@@ -575,7 +590,7 @@ struct optionstruct conf_options[] = {
   "a new file will be opened. The interval may be specified as a number of days,\n"
   "or as \"daily\",\"weekly\",\"monthly\" etc.\n"
   "For other log types, this option determines the maximum file size in kilobytes.\n"
-  "The \"fifo\" log type will enforce a minimum of 100KB to avoid excessive\n"
+  "The \"fifo\" log type will enforce a minimum of 100kB to avoid excessive\n"
   "file I/O.\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
@@ -594,7 +609,7 @@ struct optionstruct conf_options[] = {
   CFGTXT("SMTP Server to use"), "",
   CFGTXT(
   "Specify the name or DNS address of the SMTP host via which the client should\n"
-  "relay mail logs. The default is the hostname component of the email address from\n"
+  "relay mail logs. The default is the host-name component of the email address from\n"
   "which logs will be mailed.\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
 { 
@@ -651,7 +666,7 @@ struct optionstruct conf_options[] = {
 },
 { 
   CONF_KEYSERVNAME             , /* CONF_MENU_NET */
-  CFGTXT("Keyserver hostname"), "",
+  CFGTXT("Keyserver host name"), "",
   CFGTXT(
   "This is the name or IP address of the machine that your client will\n"
   "obtain keys from and send completed packets to. Avoid IP addresses\n"
@@ -682,7 +697,7 @@ struct optionstruct conf_options[] = {
   "If the keyserver that your client will be connecting to is a personal\n"
   "proxy inside a protected LAN (inside a firewall), set this option to 'yes'.\n"
   "Otherwise leave it at 'No'.\n\n\n"
-  "(This option controls whether the client will 'fallback' to an official\n"
+  "(This option controls whether the client will 'fall-back' to an official\n"
   "distributed.net keyserver after connection failures to the server address\n"
   "you have manually specified.)\n"
   ),CONF_MENU_NET,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
@@ -697,9 +712,9 @@ struct optionstruct conf_options[] = {
 },
 { 
   CONF_FWALLHOSTNAME           , /* CONF_MENU_NET */
-  CFGTXT("Firewall hostname"), "",
+  CFGTXT("Firewall host name"), "",
   CFGTXT(
-  "This field determines the hostname or IP address of the firewall proxy\n"
+  "This field determines the host name or IP address of the firewall proxy\n"
   "through which the client should communicate. The proxy is expected to be\n"
   "on a local network.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
@@ -714,9 +729,9 @@ struct optionstruct conf_options[] = {
 },
 { 
   CONF_FWALLUSERNAME           , /* CONF_MENU_NET */
-  CFGTXT("Firewall username"), "",
+  CFGTXT("Firewall user name"), "",
   CFGTXT(
-  "Specify a username in this field if your SOCKS host requires\n"
+  "Specify a user name in this field if your SOCKS host requires\n"
   "authentication before permitting communication through it.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
@@ -765,7 +780,7 @@ struct optionstruct conf_options[] = {
   CFGTXT("Interfaces to watch"), "",
   /* CFGTXT( */
   "Colon-separated list of interface names to monitor for a connection,\n"
-  "For example: \"ppp0:ppp1:eth1\". Wildcards are permitted, ie \"ppp*\".\n"
+  "For example: \"ppp0:ppp1:eth1\". Wild cards are permitted, ie \"ppp*\".\n"
   "a) An empty list implies all interfaces that are identifiable as dialup,\n"
   "   ie \"ppp*:sl*:...\" (dialup interface names vary from platform to\n"
   "   platform. FreeBSD for example, also includes 'tun*' interfaces. Win32\n"
@@ -791,15 +806,15 @@ struct optionstruct conf_options[] = {
    #if (CLIENT_OS == OS_WIN32)
    CFGTXT("Use a specific DUN profile to connect with?"),
    #elif ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32))
-   CFGTXT("Load/unload Winsock to initiate/hangup net connections?"),
+   CFGTXT("Load/unload Winsock to initiate/hang-up net connections?"),
    #elif (CLIENT_OS == OS_AMIGAOS)
    CFGTXT("Automatically go online via Miami, MiamiDx or Genesis?"),
    #else
-   CFGTXT("Use scripts to initiate/hangup dialup connections?"),
+   CFGTXT("Use scripts to initiate/hang-up dialup connections?"),
    #endif
    "no",CFGTXT(
    "Select 'yes' to have the client control how network connections\n"
-   "are initiatiated if none is active.\n"
+   "are initiated if none is active.\n"
    ),CONF_MENU_NET,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
 },
 { 
@@ -842,8 +857,6 @@ struct optionstruct conf_options[] = {
   "in the \"Command/script to start dialup\" option.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 }
-
 /* ================================================================== */
 
 };
-

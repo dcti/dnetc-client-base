@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.38 2000/07/17 01:18:45 snake Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.39 2000/09/17 11:46:32 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -1786,11 +1786,11 @@ int Network::LowLevelConnectSocket( u32 that_address, int that_port )
 #elif defined(AF_INET) //BSD sox
 
   // set up the address structure
-  struct sockaddr_in sin;
-  memset((void *) &sin, 0, sizeof(sin));
-  sin.sin_family = AF_INET;
-  sin.sin_port = htons(((u16)that_port));
-  sin.sin_addr.s_addr = that_address;
+  struct sockaddr_in saddr;
+  memset((void *) &saddr, 0, sizeof(saddr));
+  saddr.sin_family = AF_INET;
+  saddr.sin_port = htons(((u16)that_port));
+  saddr.sin_addr.s_addr = that_address;
 
   int rc = -1;
   time_t starttime = time(NULL);
@@ -1798,7 +1798,7 @@ int Network::LowLevelConnectSocket( u32 that_address, int that_port )
   do
   {
     int retval;
-    if ( (retval = connect(sock, (struct sockaddr *)&sin, sizeof(sin))) >= 0 )
+    if ( (retval = connect(sock, (struct sockaddr *)&saddr, sizeof(saddr))) >= 0 )
     {
       rc = 0;
       break;

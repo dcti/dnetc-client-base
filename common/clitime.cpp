@@ -13,13 +13,13 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.40 2000/09/04 14:58:48 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.41 2000/09/17 11:46:28 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
 #include "clitime.h"  // keep the prototypes in sync
 
-#if defined(__unix__) && !defined(__EMX__)
+#if defined(__unix__)
   #define HAVE_GETRUSAGE
   #include <sys/resource.h>
   #undef THREADS_HAVE_OWN_ACCOUNTING
@@ -255,8 +255,6 @@ struct timeval *CliTimer( struct timeval *tv )
 // CliClock() is a wrapper around CliGetMonotonicClock() and returns the
 // time since the first call (assumed to be the time the client started).
 // Please don't be tempted to merge this functionality into GetMonotonicClock
-//
-// This function is used only for generation of "Summary" stats.
 
 int CliClock(struct timeval *tv)
 {

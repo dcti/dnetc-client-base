@@ -5,9 +5,9 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __TRIGGERS_H__
-#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.6.2.10 2000/05/09 13:48:33 cyp Exp $"
+#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.6.2.11 2000/09/17 11:46:34 cyp Exp $"
 
-#if defined(__unix__) && !defined(__EMX__)
+#if defined(SIGCONT) && defined(SIGTSTP)
   /* These constants define symbolically the signal names used by the
    * dnetc -pause / -unpause mechanism.  The idea is that the "usual"
    * alternatives, SIGTSTP and SIGCONT, aren't as portable as one

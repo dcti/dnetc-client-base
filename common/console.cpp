@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.41 2000/06/21 22:23:09 oliver Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.42 2000/09/17 11:46:30 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -39,11 +39,12 @@ return "@(#)$Id: console.cpp,v 1.48.2.41 2000/06/21 22:23:09 oliver Exp $"; }
   || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_HPUX) || (CLIENT_OS==OS_SUNOS) \
   || (CLIENT_OS==OS_NTO2) || (CLIENT_OS==OS_MACOSX) || (CLIENT_OS==OS_RHAPSODY))
 #include <termios.h>
-#define TERMIOS_IS_AVAILABLE
+#define HAVE_TERMIOS
 #endif
-#if (defined(__unix__) && !defined(__EMX__)) || (CLIENT_OS == OS_VMS) || \
-    (CLIENT_OS == OS_OS390) || (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RHAPSODY)
-#define TERM_IS_ANSI_COMPLIANT
+#if defined(__unix__) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_OS390) || \
+                  (CLIENT_OS == OS_NEXTSTEP) || (CLIENT_OS == OS_AMIGAOS) || \
+                  (CLIENT_OS == OS_RHAPSODY)
+#define HAVE_ANSICOMPLIANTTERM /* tty understands basic ansi sequences */
 #endif
 #if defined(__unix__)
 #include <sys/ioctl.h>
@@ -332,7 +333,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         fflush(stdout);
         ch = getch();
       }
-      #elif (defined(TERMIOS_IS_AVAILABLE))
+      #elif (defined(HAVE_TERMIOS))
       {
         struct termios stored;
         struct termios newios;
@@ -474,7 +475,7 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
 
       for (ch = 0; scratch[ch] != 0; ch++)
       {
-        #ifdef TERM_IS_ANSI_COMPLIANT
+        #ifdef HAVE_ANSICOMPLIANTTERM
         ConOut("\033" "[1D" );
         #elif (CLIENT_OS == OS_RISCOS)
         if (scratch[ch+1]!=0) /* not the first char */
@@ -529,7 +530,7 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
       {
         if (pos > 0)
         {
-          #ifdef TERM_IS_ANSI_COMPLIANT
+          #ifdef HAVE_ANSICOMPLIANTTERM
           ConOut("\033" "[1D" " " "\033" "[1D");
           #elif (CLIENT_OS == OS_RISCOS)
           riscos_backspace();
@@ -602,7 +603,7 @@ int ConSetPos( int col, int row )  /* zero-based */
 {
   if (constatics.initlevel > 0 && constatics.conisatty)
   {
-    #if defined(TERM_IS_ANSI_COMPLIANT)
+    #if defined(HAVE_ANSICOMPLIANTTERM)
     printf("\033" "[%d;%dH", row+1, col+1 );
     return 0;
     #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
@@ -821,7 +822,7 @@ int ConClear(void)
     #elif (CLIENT_OS == OS_RISCOS)
       riscos_clear_screen();
       return 0;
-    #elif defined(TERM_IS_ANSI_COMPLIANT)
+    #elif defined(HAVE_ANSICOMPLIANTTERM)
       printf("\033" "[2J" "\033" "[H" "\r       \r" );
       /* ANSI cls  '\r space \r' is in case ansi is not supported */
       return 0;

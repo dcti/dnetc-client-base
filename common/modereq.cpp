@@ -11,16 +11,12 @@
  * ---------------------------------------------------------------
 */    
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.28.2.8 1999/11/23 22:48:32 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.28.2.9 2000/09/17 11:46:32 cyp Exp $"; }
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
-#include "triggers.h" //CheckExitRequestTrigger() [used by bench stuff]
-#include "logstuff.h" //LogScreen() [used by update/fetch/flush stuff]
-#include "modereq.h"  //our constants
 #include "triggers.h" //RaiseRestartRequestTrigger/CheckExitRequestTriggerNoIO
-#include "console.h"  //Clear the screen after config if restarting
-#include "confrwv.h"  //load/save after successful Configure()
+#include "modereq.h"  //our constants
 
 #include "disphelp.h" //"mode" DisplayHelp()
 #include "cpucheck.h" //"mode" DisplayProcessorInformation()
@@ -205,42 +201,15 @@ int ModeReqRun(Client *client)
       }
       if ((bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART)) != 0)
       {
-        /* <BovineMoo> okay, so if -config is 
-        //   explicitly specified, then do not check isatty().
-        */
-        int ttycheckok = 1;
-        if (!modereq.cmdline_config) /* not started by cmdline --config */
-        {
-          if (!ConIsScreen())
-          {
-            ConOutErr("Screen output is redirected/not available. Please use --config\n");
-            ttycheckok = 0;
-          }
-        }
-        if (ttycheckok && client)
-        {
-          Client *newclient = (Client *)malloc(sizeof(Client));
-          if (!newclient)
-            LogScreen("Unable to configure. (Insufficient memory)");
-          else
-          {
-	    ResetClientData(newclient);
-            strcpy(newclient->inifilename, client->inifilename );
-            if ( ReadConfig(newclient) >= 0 ) /* no or non-fatal error */
-            {
-              if ( Configure(newclient) > 0 ) /* success */
-              {
-                WriteConfig(newclient,1);
-                retval |= (bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART));
-              }
-              if ((bits & MODEREQ_CONFRESTART) != 0)
-                restart = 1;
-            }
-            free((void *)newclient);
-          }
+	/* cmdline_config is set if there is an explicit --config on the cmdline */
+	if (Configure(client,(!(!modereq.cmdline_config))/* nottycheck */)>0)
+	{ /* Configure() returns <0=error,0=exit+nosave,>0=exit+save */
+          if ((bits & MODEREQ_CONFRESTART) != 0)
+            restart = 1;
         }
         modereq.cmdline_config = 0;
         modereq.reqbits &= ~(MODEREQ_CONFIG | MODEREQ_CONFRESTART);
+        retval |= (bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART));
       }
       if ((bits & (MODEREQ_FETCH | MODEREQ_FLUSH)) != 0)
       {

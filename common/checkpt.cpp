@@ -15,7 +15,7 @@
  *
 */
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.11.2.8 2000/06/18 16:23:12 andreasb Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.11.2.9 2000/09/17 11:46:27 cyp Exp $"; }
 
 #include "client.h"   // FileHeader, Client class
 #include "baseincs.h" // memset(), strlen()
@@ -50,21 +50,20 @@ int CheckpointAction( Client *client, int action, unsigned int load_problem_coun
     while (len>0 && isspace(client->checkpoint_file[len-1]))
       client->checkpoint_file[--len]=0;
     do_checkpoint = (client->nodiskbuffers==0 && 
-                     IsFilenameValid( client->checkpoint_file ));
+                     client->checkpoint_file[0] &&
+                     strcmp(client->checkpoint_file,"none")!=0);
+    /* old ini's and command line support for 'ckpoint=none' */
   }
 
   if ( action == CHECKPOINT_OPEN )
   {
     if (do_checkpoint)
     {
-      if ( DoesFileExist( client->checkpoint_file ))
+      long recovered = BufferImportFileRecords( client, client->checkpoint_file, 0 );
+      if (recovered > 0)  
       {
-        long recovered = BufferImportFileRecords( client, client->checkpoint_file, 0 );
-        if (recovered > 0)  
-        {
-          Log("Recovered %d checkpoint packet%s\n", recovered, 
+        Log("Recovered %d checkpoint packet%s\n", recovered, 
             ((recovered == 1)?(""):("s")) );
-        }
       }
       action = CHECKPOINT_CLOSE;
     }

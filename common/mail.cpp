@@ -7,7 +7,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.32.2.10 2000/06/05 18:01:07 cyp Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.32.2.11 2000/09/17 11:46:32 cyp Exp $"; }
 
 //#define SHOWMAIL    // define showmail to see mail transcript on stdout
 
@@ -69,24 +69,24 @@ struct mailmessage
 static int get_smtp_result( Network * net )
 {
   char in_data[10];
-  int index = 0;
+  int idx = 0;
   in_data[3] = 0;
 
-  while (index>=0) //ie, while(1)
+  while (idx>=0) //ie, while(1)
   {
-    if ( net->Get( &in_data[index], 1 ) != 1)
+    if ( net->Get( &in_data[idx], 1 ) != 1)
       return(-1);
     #ifdef SHOWMAIL
-    LogRaw( "%c", in_data[index] );
+    LogRaw( "%c", in_data[idx] );
     #endif
-    if (in_data[index] == '\n')
+    if (in_data[idx] == '\n')
     {
       if ( in_data[3] != '-') //if not an ESMPT multi-line reply
         break;
-      index = 0;
+      idx = 0;
     }
-    else if (index < 5)
-      index++;
+    else if (idx < 5)
+      idx++;
   }
   if (isdigit(in_data[0]))
     return ( atoi( in_data ) );
@@ -596,7 +596,7 @@ static int smtp_send_message_text(Network * net, const char *txt)
 #endif
 {
   char netbuf[512];
-  unsigned int index=0;
+  unsigned int idx=0;
   int eotext = 0, errcode = 0, sentsome = 0;
   char thischar, prevchar = 0;
   unsigned long txtlen, txtpos;
@@ -628,8 +628,8 @@ static int smtp_send_message_text(Network * net, const char *txt)
 
     if ((thischar == '.') && (prevchar == '\n'))  // '.' on a new line?
     {
-      netbuf[index++]='.'; //convert to two dots (ie nextchar won't be a CR)
-      netbuf[index++]='.';
+      netbuf[idx++]='.'; //convert to two dots (ie nextchar won't be a CR)
+      netbuf[idx++]='.';
     }
     else if (thischar == '\r')
     {
@@ -637,31 +637,31 @@ static int smtp_send_message_text(Network * net, const char *txt)
       {
         txt+=2;
         if (prevchar!=' ' && prevchar!='\t' && prevchar!='-')
-          netbuf[index++]=' ';
+          netbuf[idx++]=' ';
       }
       else if (txt[1] != '\n')
       {
-        netbuf[index++]='\r';
-        netbuf[index++]='\n';
+        netbuf[idx++]='\r';
+        netbuf[idx++]='\n';
       }
     }
     else if (thischar == '\n')
     {
       if (prevchar != '\r') // all \n's should be preceeded by \r's...
-        netbuf[index++]='\r';
-      netbuf[index++]='\n';
+        netbuf[idx++]='\r';
+      netbuf[idx++]='\n';
     }
     else
-      netbuf[index++] = thischar;
-    prevchar = (char)((index)?(netbuf[index-1]):(0));
+      netbuf[idx++] = thischar;
+    prevchar = (char)((idx)?(netbuf[idx-1]):(0));
 
-    if ( eotext || (index >= (sizeof(netbuf)-10))) //little safety margin
+    if ( eotext || (idx >= (sizeof(netbuf)-10))) //little safety margin
     {
-      if ( put_smtp_line( netbuf, index, net ) )
+      if ( put_smtp_line( netbuf, idx, net ) )
         errcode = -1;
       else 
         sentsome = 1;
-      index = 0;
+      idx = 0;
     }
   }
   if (errcode != 0)

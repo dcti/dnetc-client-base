@@ -5,8 +5,9 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CONFMENU_H__
-#define __CONFMENU_H__ "@(#)$Id: confmenu.h,v 1.1.2.1 1999/10/16 16:43:03 cyp Exp $"
+#define __CONFMENU_H__ "@(#)$Id: confmenu.h,v 1.1.2.2 2000/09/17 11:46:29 cyp Exp $"
 
-int Configure( Client *client ); /* returns >0==success, <0==cancelled */
+/* returns <0=error, 0=exit+nosave, >0=exit+save */
+int Configure( Client *sample_client, int nottycheck ); 
 
 #endif /* __CONFMENU_H__ */

@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.53 2000/09/07 23:54:55 oliver Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.54 2000/09/17 11:46:30 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -759,7 +759,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
       cpuidbmask = 0x0ff0;
     }
     else if ( vendorid == 0x7943 /* 'yC' */ ) /* CyrixInstead */
-    {                                  /* The VIA Cyrix III is CentaurHauls */
+    {                                  
       static struct cpuxref cyrixxref[]={
           {  0x0400,      6, "486SLC/DLC/SR/DR" },
           {  0x0410,      6, "486S/Se/S2/DX/DX2" },
@@ -767,11 +767,25 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0490,      0, "5x86"      },
           {  0x0520,      3, "6x86/MI"   },
           {  0x0540,      0, "GXm"       },
-          {  0x0600,  0x103, "6x86MX/MII"},
+          {  0x0600,  0x109, "6x86MX/MII"},
+          /* The VIA Cyrix III is CentaurHauls */
           {  0x0000,     -1, NULL        }
           }; internalxref = &cyrixxref[0];
       vendorname = "Cyrix ";
       cpuidbmask = 0x0ff0;
+    }
+    else if ( vendorid == 0x6543 /* 'eC' */ ) /* "CentaurHauls" */
+    {
+      static struct cpuxref centaurxref[]={
+          {  0x0540,  0x10A, "C6"          }, /* has its own id */
+          {  0x0585,  0x10A, "WinChip 2"   }, /* uses RG Cx re-pair */
+          {  0x0660,  0x109, "Samuel (Cyrix III)" }, /* THIS IS NOT A P6 !!! */
+          {  0x0000,     -1, NULL          }
+          }; internalxref = &centaurxref[0];
+      vendorname = "Centaur/IDT ";
+      if (cpuid >= 0x0600)
+        vendorname = "VIA ";
+      cpuidbmask = 0xfff0;
     }
     else if ( vendorid == 0x6952 /* 'iR' */  ) /* "RiseRiseRiseRise" */
     {
@@ -781,19 +795,6 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0000,     -1, NULL  }
           }; internalxref = &risexref[0];
       vendorname = "Rise ";
-      cpuidbmask = 0xfff0;
-    }
-    else if ( vendorid == 0x6543 /* 'eC' */ ) /* "CentaurHauls" */
-    {
-      static struct cpuxref centaurxref[]={
-          {  0x0540,  0x10A, "C6"          }, /* has its own id */
-          {  0x0585,  0x10A, "WinChip 2"   }, /* uses RG Cx re-pair */
-          {  0x0660,  0x10A, "Samuel (Cyrix III)" }, /* THIS IS NOT A P6 !!! */
-          {  0x0000,     -1, NULL          }
-          }; internalxref = &centaurxref[0];
-      vendorname = "Centaur/IDT ";
-      if (cpuid >= 0x0600)
-        vendorname = "VIA ";
       cpuidbmask = 0xfff0;
     }
     else if ( vendorid == 0x654E /* 'eN' */  ) //"NexGenDriven"
@@ -965,22 +966,22 @@ static long __GetRawProcessorID(const char **cpuname )
        ARMident() will throw SIGILL on an ARM 2 or ARM 250, because they 
        don't have the system control coprocessor. (We ignore the ARM 1 
        because I'm not aware of any existing C++ compiler that targets it...)
-     */
+    */
     signal(SIGILL, ARMident_catcher);
     if (setjmp(ARMident_jmpbuf))
-      detectedtype = 0x2000;
+    {
+      /* we can't differentiate between ARM 2 and 250 */
+      detectedtype = 0x2000;  /* fake up value from ARMident() */
+      detectedname = "ARM 2 or 250"; /* set the name here too */
+    }
     else
       detectedtype = ARMident();
     signal(SIGILL, SIG_DFL);
-    detectedtype = (detectedtype >> 4) & 0xfff; // extract part number field
 
+    detectedtype = (detectedtype >> 4) & 0xfff; // extract part number field
     if ((detectedtype & 0xf00) == 0) //old-style ID (ARM 3 or prototype ARM 600)
       detectedtype <<= 4;            // - shift it into the new form
-    if (detectedtype == 0x300)
-    {
-      detectedtype = 3;
-    }
-    else if (detectedtype == 0x710)
+    if (detectedtype == 0x710)
     {
       // the ARM 7500 returns an ARM 710 ID - need to look at its
       // integral IOMD unit to spot the difference
@@ -991,14 +992,124 @@ static long __GetRawProcessorID(const char **cpuname )
       else if (detectediomd == 0xaa00)
         detectedtype = 0x7500FEL;
     }
+  }
+  #elif (CLIENT_OS == OS_LINUX)
+  if (detectedtype == -2)
+  {
+    unsigned int n;  
+    FILE *cpuinfo;
+    detectedtype = -1L;
+    namebuf[0] = '\0';
+    if ((cpuinfo = fopen( "/proc/cpuinfo", "r")) != NULL)
+    {
+      char buffer[256];
+      while(fgets(buffer, sizeof(buffer), cpuinfo)) 
+      {
+        n = 8; 
+        if ( memcmp( buffer, "Type\t\t: ", n ) == 0 )
+        {
+          unsigned int w = 0;
+          while (w < (sizeof(namebuf)-1) &&
+                 (isalpha(buffer[n]) || isdigit(buffer[n])))
+          {
+            namebuf[w++] = buffer[n++];
+          }  
+          namebuf[w++] = '\0';  
+          break;
+        }
+      }
+      fclose(cpuinfo);
+    }
+    if (namebuf[0])
+    {
+      static struct { const char *sig;  int rid; } sigs[] ={
+                    { "unknown",    0x000}, /* <= from /proc/cpuinfo */
+                    { "arm2",       0x200},
+                    { "arm250",     0x250},
+                    { "arm3",       0x300},
+                    { "arm6",       0x600},
+                    { "arm610",     0x610},
+                    { "arm7",       0x700},
+                    { "arm710",     0x710},
+                    { "sa110",      0xA10}
+                    };
+      /* assume unknown ID and unrecognized name in namebuf */
+      detectedtype = 0; 
+      detectedname = ((const char *)&(namebuf[0])); 
+      for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
+      {
+        if (strcmp(namebuf,sigs[n].sig)==0)
+        {
+          /* known ID and recognized name */
+          detectedtype = (long)sigs[n].rid;
+          detectedname = NULL; /* fall through and use standard name */
+          break;
+        }
+      }
+    }
+  }
+  #elif (CLIENT_OS == OS_NETBSD)
+  if (detectedtype == -2)
+  {
+    char buffer[256]; int mib[2];
+    int len = (int)(sizeof(buffer)-1);
+    mib[0]=CTL_HW; mib[1]=HW_MODEL;
+    detectedtype = -1;
+
+    if (sysctl(mib, 2, &buffer[0], &len, NULL, 0 ) != 0)
+    {
+      buffer[0] = '\0';
+    }
+    else if (len > 0)
+    {
+      buffer[len] = '\0';
+      len = 0;
+      while (buffer[len]=='-' || isalpha(buffer[len]) || isdigit(buffer[len]))
+        len++;
+      buffer[len] = '\0';
+    }
+    if (buffer[0]) /* sysctl() succeeded and name if clean */
+    {
+      static struct 
+        { const char *sig;  int rid; } sigs[] ={
+        { "ARM2",       0X200},
+        { "ARM250",     0X250},
+        { "ARM3",       0X300},
+        { "ARM6",       0X600},
+        { "ARM610",     0X610},
+        { "ARM7",       0X700},
+        { "ARM710",     0X710},
+        { "SA-110",     0XA10}
+        };
+      unsigned int n;
+      detectedtype = 0; 
+      for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
+      {
+        if (strcmp(buffer,sigs[n].sig)==0)
+        {
+          detectedtype = (long)sigs[n].rid;
+          break;
+        }
+      }
+      if (detectedtype == 0) /* unrecognized name */
+      { 
+        strncpy( namebuf, buffer, sizeof(namebuf) );
+        namebuf[sizeof(namebuf)-1] = '\0';
+        detectedname = ((const char *)&(namebuf[0])); 
+      }
+    } /* if (len > 0) */
+  } /* if (detectedtype == -2) */
+  #endif
+
+  if (detectedtype > 0 && detectedname == NULL)
+  {
     detectedname = ((const char *)&(namebuf[0]));
     switch (detectedtype)
     {
-      case 0x200: strcpy( namebuf, "ARM 2 or 250" ); 
-                  break;
-      case 0xA10: strcpy( namebuf, "StrongARM 110" ); 
-                  break;
-      case 0x3:
+      case 0x200: strcpy( namebuf, "ARM 2" ); break;
+      case 0x300: strcpy( namebuf, "ARM 3" ); break; 
+      case 0xA10: strcpy( namebuf, "StrongARM 110" ); break;
+      case 0x250:
       case 0x600:
       case 0x610:
       case 0x700:
@@ -1012,124 +1123,6 @@ static long __GetRawProcessorID(const char **cpuname )
                   break;
     }
   }
-  #elif (CLIENT_OS == OS_LINUX)
-  if (detectedtype == -2)
-  {
-    FILE *cpuinfo;
-    detectedtype = -1L;
-    if ((cpuinfo = fopen( "/proc/cpuinfo", "r")) != NULL)
-    {
-      char buffer[256];
-      while(fgets(buffer, sizeof(buffer), cpuinfo)) 
-      {
-        const char *p = "Type\t\t: ";
-        unsigned int n = strlen( p );
-        if ( memcmp( buffer, p, n ) == 0 )
-        {
-          static struct 
-           { const char *sig;  int rid; } sigs[] ={
-               { "arm2",       0x200},
-               { "arm250",     0x250},
-               { "arm3",       0x3},
-               { "arm6",       0x600},
-               { "arm610",     0x610},
-               { "arm7",       0x700},
-               { "arm710",     0x710},
-               { "sa110",      0xA10}
-           };
-          p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
-          for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
-          {
-            unsigned int l = strlen( sigs[n].sig );
-            if ((!p[l] || isspace(p[l])) && memcmp( p, sigs[n].sig, l)==0)
-            {
-              detectedtype = (long)sigs[n].rid;
-              break;
-            }
-          }
-
-          detectedname = ((const char *)&(namebuf[0]));
-          switch (detectedtype)
-          {
-          case 0x200: strcpy( namebuf, "ARM 2 or 250" ); 
-              break;
-          case 0xA10: strcpy( namebuf, "StrongARM 110" ); 
-              break;
-          case 0x3:
-          case 0x600:
-          case 0x610:
-          case 0x700:
-          case 0x7500:
-          case 0x7500FEL:
-          case 0x710:
-          case 0x810: sprintf( namebuf, "ARM %lX", detectedtype );
-              break;
-          default:    sprintf( namebuf, "%lX (unknown)", detectedtype );
-              detectedtype = 0;
-              break;
-          }
-          break;
-        }
-      }
-      fclose(cpuinfo);
-    }
-  }
-  #elif (CLIENT_OS == OS_NETBSD)
-  if (detectedtype == -2)
-  {
-      char buffer[256];
-      int len = 255;
-      int mib[2];
-      mib[0]=CTL_HW; mib[1]=HW_MODEL;
-      if (sysctl(mib, 2,&buffer[0], &len, NULL, 0 ) == 0)
-      {
-          int n = 0;
-          char *p;
-          static struct 
-          { const char *sig;  int rid; } sigs[] ={
-              { "ARM2",       0X200},
-              { "ARM250",     0X250},
-              { "ARM3",       0X3},
-              { "ARM6",       0X600},
-              { "ARM610",     0X610},
-              { "ARM7",       0X700},
-              { "ARM710",     0X710},
-              { "SA-110",     0XA10}
-           };
-          p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
-          for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
-          {
-              unsigned int l = strlen( sigs[n].sig );
-              if ((!p[l] || isspace(p[l])) && memcmp( p, sigs[n].sig, l)==0)
-              {
-                  detectedtype = (long)sigs[n].rid;
-                  break;
-              }
-          }
-          
-          detectedname = ((const char *)&(namebuf[0]));
-          switch (detectedtype)
-          {
-          case 0x200: strcpy( namebuf, "ARM 2 or 250" ); 
-              break;
-          case 0xA10: strcpy( namebuf, "StrongARM 110" ); 
-              break;
-          case 0x3:
-          case 0x600:
-          case 0x610:
-          case 0x700:
-          case 0x7500:
-          case 0x7500FEL:
-          case 0x710:
-          case 0x810: sprintf( namebuf, "ARM %lX", detectedtype );
-              break;
-          default:    sprintf( namebuf, "%lX (unknown)", detectedtype );
-              detectedtype = 0;
-              break;
-          }
-      }
-  }
-  #endif
   
   if ( cpuname )
     *cpuname = detectedname;

@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.37 2000/07/01 13:43:28 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.38 2000/09/17 11:46:33 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -165,7 +165,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 
         if (load_problem_count <= COMBINEMSG_THRESHOLD)
         {
-          Log( CliGetMessageForProblemCompleted( thisprob ) );
+          CliPostMessageForProblemCompleted( thisprob );
         }
         else /* stop the log file from being cluttered with load/save msgs */
         {
@@ -365,15 +365,16 @@ int __gen_random( Client *client, WorkRecord *wrdata )
     return NOLOAD_NORANDOM; /* -1 */
   if (client->nonewblocks)
     return NOLOAD_NONEWBLOCKS; /* -3 */
-
-  /* random blocks permitted */
-  RefreshRandomPrefix(client); //get/put an up-to-date prefix 
-
-  if (client->randomprefix == 0)
-    client->randomprefix = 100;
+  /* else random blocks permitted */
+  
+  rnd = Random(NULL,0);
+  // the random prefix is updated by the buffer code on every read/write 
+  // to buffer. But in the event that no block was every read/written
+  // we have to make one up.
+  if (client->randomprefix == 0) /* no random prefix determined yet */
+    client->randomprefix = 100+(rnd % (0xff-100)); /* make a random one */
 
   randomprefix = ( (u32)(client->randomprefix) + 1 ) & 0xFF;
-  rnd = Random(NULL,0);
 
 #if defined(STRESS_RANDOMGEN) && defined(STRESS_RANDOMGEN_ALL_KEYSPACE)
   ++client->randomprefix;
@@ -441,9 +442,6 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   if (bufcount >= 0) /* load from file succeeded */
   {
     int client_cpu = 0, coresel;
-
-    if (client->randomchanged)        
-      RefreshRandomPrefix( client );
 
     /* if the total number of packets in buffers is less than the number 
        of crunchers running then try to fetch *now*. This means that the
@@ -758,14 +756,12 @@ unsigned int LoadSaveProblems(Client *pass_client,
                                           client->out_buffer_basename )) );
       }
 
-      if (totalBlocksDone > 0 /* && client->randomchanged == 0 */)
+      if (totalBlocksDone > 0)
       {
         // To suppress "odd" problem completion count summaries (and not be
         // quite so verbose) we only display summaries if the number of
         // completed problems is even divisible by the number of processors.
         // Requires a working GetNumberOfDetectedProcessors() [cpucheck.cpp]
-        // also check randomchanged in case a contest was closed/opened and
-        // statistics haven't been reset
         #if 0
         int cpustmp; unsigned int cpus = 1;
         if ((cpustmp = GetNumberOfDetectedProcessors()) > 1)
@@ -775,7 +771,7 @@ unsigned int LoadSaveProblems(Client *pass_client,
         if ((totalBlocksDone%cpus) == 0 )
         #endif
         {
-          Log( "Summary: %s\n", CliGetSummaryStringForContest(cont_i) );
+          CliPostSummaryStringForContest(cont_i);
         }
       }
 

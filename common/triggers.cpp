@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.50 2000/08/22 13:40:53 oliver Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.51 2000/09/17 11:46:34 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -657,7 +657,7 @@ int CheckPauseRequestTrigger(void)
 
     if (trigstatics.pauseplist[0] != NULL)
     {
-      int index, nowcleared = -1;
+      int idx, nowcleared = -1;
       const char **pp = &trigstatics.pauseplist[0];
 
       /* the use of "nowcleared" is a hack for the sake of optimization
@@ -667,45 +667,45 @@ int CheckPauseRequestTrigger(void)
       */
       if ((trigstatics.pausetrig.trigger & TRIGPAUSEBY_APPACTIVE) != 0)
       {
-        index = trigstatics.lastactivep;
-        TRACE_OUT((+1,"y1: index=%d,'%s'\n", index, pp[index]));
-        if (utilGetPIDList( pp[index], NULL, 0 ) <= 0)
+        idx = trigstatics.lastactivep;
+        TRACE_OUT((+1,"y1: idx=%d,'%s'\n", idx, pp[idx]));
+        if (utilGetPIDList( pp[idx], NULL, 0 ) <= 0)
         {
           /* program is no longer running. */
           Log("%s... ('%s' inactive)\n",
               (((trigstatics.pausetrig.laststate 
                    & ~TRIGPAUSEBY_APPACTIVE)!=0)?("Pause level lowered"):
               ("Running again after pause")), 
-              __mangle_pauseapp_name(pp[index],1 /* unmangle */) );
+              __mangle_pauseapp_name(pp[idx],1 /* unmangle */) );
           trigstatics.pausetrig.laststate &= ~TRIGPAUSEBY_APPACTIVE;
           trigstatics.pausetrig.trigger &= ~TRIGPAUSEBY_APPACTIVE;
           trigstatics.lastactivep = 0;
-          nowcleared = index;
+          nowcleared = idx;
         }
         TRACE_OUT((-1,"y2: nowcleared=%d\n", nowcleared));
       }
       if ((trigstatics.pausetrig.trigger & TRIGPAUSEBY_APPACTIVE) == 0)
       {
-        index = 0;
-        while (pp[index] != NULL)
+        idx = 0;
+        while (pp[idx] != NULL)
         {
-          TRACE_OUT((+1,"z1: %d, '%s'\n",index, pp[index]));
-          if (index == nowcleared)
+          TRACE_OUT((+1,"z1: %d, '%s'\n",idx, pp[idx]));
+          if (idx == nowcleared)
           {
             /* if this matched, then we came from the transition
                above and know that this is definitely not running.
             */   
           }
-          else if (utilGetPIDList( pp[index], NULL, 0 ) > 0)
+          else if (utilGetPIDList( pp[idx], NULL, 0 ) > 0)
           {
             /* Triggered program is now running. */
             trigstatics.pausetrig.trigger |= TRIGPAUSEBY_APPACTIVE;
-            trigstatics.lastactivep = index;
-            app_now_active = __mangle_pauseapp_name(pp[index],1 /* unmangle */);
+            trigstatics.lastactivep = idx;
+            app_now_active = __mangle_pauseapp_name(pp[idx],1 /* unmangle */);
             break;
           }
           TRACE_OUT((-1,"z2\n"));
-          index++;
+          idx++;
         }
       }
     }
@@ -953,24 +953,22 @@ static void __init_signal_handlers( int doingmodes )
   #if defined(SIGHUP)
   SETSIGNAL( SIGHUP, CliSignalHandler );   //restart
   #endif
-  #if defined(TRIGGER_PAUSE_SIGNAL)  // signal-based pause/unpause mechanism?
-  if (!doingmodes)
+  #if defined(__unix__) && defined(TRIGGER_PAUSE_SIGNAL)
+  if (!doingmodes)                  // signal-based pause/unpause mechanism?
   {
-    #if defined(__unix__) && (CLIENT_OS != OS_BEOS) && (CLIENT_OS != OS_NEXTSTEP)
-    // stop the shell from seeing SIGTSTP and putting the client
-    // into the background when we '-pause' it.
+    #if (CLIENT_OS != OS_NTO2) && (CLIENT_OS != OS_BEOS)
+    // stop the shell from seeing SIGTSTP and putting the client into 
+    // the background when we '-pause' it.
+    if( getpgrp() != getpid() ) 
+      setpgid( 0, 0 );  // 
     // porters : those calls are POSIX.1, 
     // - on BSD you might need to change setpgid(0,0) to setpgrp()
     // - on SYSV you might need to change getpgrp() to getpgid(0)
-  #if (CLIENT_OS != OS_NTO2)
-    if( getpgrp() != getpid() )
-      setpgid( 0, 0 );
-  #endif
     #endif
     SETSIGNAL( TRIGGER_PAUSE_SIGNAL, CliSignalHandler );  //pause
     SETSIGNAL( TRIGGER_UNPAUSE_SIGNAL, CliSignalHandler );  //continue
   }
-  #endif
+  #endif /* defined(__unix__) && defined(TRIGGER_PAUSE_SIGNAL) */
   #if defined(SIGQUIT)
   SETSIGNAL( SIGQUIT, CliSignalHandler );  //shutdown
   #endif
@@ -1115,7 +1113,7 @@ static void _init_cputemp( const char *p ) /* cpu temperature string */
 static void _init_pauseplist( const char *plist )
 {
   const char *p = plist;
-  unsigned int wpos = 0, index = 0, len;
+  unsigned int wpos = 0, idx = 0, len;
   while (*p)
   {
     while (*p && (isspace(*p) || *p == '|'))
@@ -1141,8 +1139,8 @@ static void _init_pauseplist( const char *plist )
         memcpy( &(trigstatics.pauseplistbuffer[wpos]), plist, len );
         wpos += len;
         trigstatics.pauseplistbuffer[wpos++] = '\0';
-        trigstatics.pauseplist[index++] = __mangle_pauseapp_name(appname,0);
-        if (index == ((sizeof(trigstatics.pauseplist)/
+        trigstatics.pauseplist[idx++] = __mangle_pauseapp_name(appname,0);
+        if (idx == ((sizeof(trigstatics.pauseplist)/
                        sizeof(trigstatics.pauseplist[0]))-1) )
         {
           break;
@@ -1166,11 +1164,11 @@ static void _init_pauseplist( const char *plist )
     for (len = 0; len < 2; len++)
     {
       const char *clist;
-      if (index == ((sizeof(trigstatics.pauseplist)/
+      if (idx == ((sizeof(trigstatics.pauseplist)/
                    sizeof(trigstatics.pauseplist[0]))-1) )
         break;
       clist = __mangle_pauseapp_name( ((len==0)?("defrag"):("scandisk")),0);
-      for (wpos = 0; wpos < index; wpos++)
+      for (wpos = 0; wpos < idx; wpos++)
       {
         if ( strcmp( trigstatics.pauseplist[wpos], clist ) == 0 )
         {
@@ -1179,11 +1177,11 @@ static void _init_pauseplist( const char *plist )
         }
       }
       if (clist)
-        trigstatics.pauseplist[index++] = clist;
+        trigstatics.pauseplist[idx++] = clist;
     }
   }
   #endif
-  trigstatics.pauseplist[index] = (const char *)0;
+  trigstatics.pauseplist[idx] = (const char *)0;
 }
 
 /* ---------------------------------------------------------------- */

@@ -5,9 +5,9 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.40 2000/06/19 16:38:43 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.41 2000/09/17 11:46:29 cyp Exp $"; }
 
-//#define TRACE
+#define TRACE
 
 #include "cputypes.h"
 #include "client.h"    // Client class
@@ -17,6 +17,7 @@ return "@(#)$Id: confrwv.cpp,v 1.60.2.40 2000/06/19 16:38:43 cyp Exp $"; }
 #include "util.h"      // projectmap_*() and trace
 #include "base64.h"    // base64_[en|de]code()
 #include "clicdata.h"  // CliGetContestNameFromID()
+#include "clitime.h"   // CliClock()
 #include "triggers.h"  // OverrideNextConffileChangeTrigger()
 #include "confrwv.h"   // Ourselves
 
@@ -60,6 +61,65 @@ static const char *__getprojsectname( unsigned int ci )
     #endif
   }
   return ((const char *)0);
+}
+
+/* ------------------------------------------------------------------------ */
+
+// these options are special and reflect "authoritative" information from
+// a proxy. They are in separate functions to "protect" them.
+static void ConfigReadUniversalNews( Client *client, const char *fn )
+{
+  if (!fn) fn = GetFullPathForFilename( client->inifilename );
+  //client->rc564closed is necessary to supress generation of randoms
+  client->rc564closed = GetPrivateProfileIntB(__getprojsectname(RC5), "closed", 0, fn );
+  client->scheduledupdatetime = GetPrivateProfileIntB(OPTSECT_NET,"scheduledupdatetime", 0, fn);
+  return;  
+}
+//ConfigWriteServerNews() may *only* be called from buffer update 
+//(otherwise the ini will end up with data that is not authoritative)
+void ConfigWriteUniversalNews( Client *client )
+{
+  if (client->stopiniio == 0 && client->nodiskbuffers == 0)
+  {
+    const char *fn = GetFullPathForFilename( client->inifilename );
+    if ( access( fn, 0 ) == 0 ) /* we also do not write these settings */
+    {                           /* if the .ini doesn't already exist */
+      int did_write = 0;
+
+      /* rc5 closed? */
+      {
+        const char *rc5_sect = __getprojsectname(RC5);
+        int rc564closed = 0;
+        if (GetPrivateProfileIntB(rc5_sect, "closed", 0, fn ))
+          rc564closed = 1;
+        if (client->rc564closed)
+          client->rc564closed = 1;
+        if (rc564closed != client->rc564closed)
+        {
+          WritePrivateProfileStringB(rc5_sect,"closed",(client->rc564closed)?("yes"):(NULL), fn );
+          did_write = 1;
+        }
+      }            
+
+      /* got a new scheduled update time? */
+      if (client->scheduledupdatetime != GetPrivateProfileIntB(OPTSECT_NET,"scheduledupdatetime", 0, fn))
+      {
+        if (client->scheduledupdatetime == 0)
+          WritePrivateProfileStringB(OPTSECT_NET, "scheduledupdatetime", NULL, fn );
+        else
+          WritePrivateProfileIntB(OPTSECT_NET, "scheduledupdatetime", client->scheduledupdatetime, fn );
+        did_write = 1;
+      }
+
+      if (did_write)
+      {
+        /* prevent our own writes from kicking off a restart */
+        OverrideNextConffileChangeTrigger();
+      }  
+
+    } /* if ( access( fn, 0 ) == 0 ) */
+  } /* if (client->stopiniio == 0 && client->nodiskbuffers == 0) */
+  return;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -392,7 +452,7 @@ static int __parse_timestring(const char *source, int oldstyle_hours_compat )
 
 static int __readwrite_minutes(const char *sect, const char *keyname,
                                const int *write_value, int defaultval,
-                               const char *fn )
+                               const char *fn, int apply_elapsed_bias )
 {
   char buffer[64];
   if (write_value)
@@ -412,7 +472,20 @@ static int __readwrite_minutes(const char *sect, const char *keyname,
   {
     int seconds = __parse_timestring( buffer, 0 );
     if (seconds >= 0)
-      return (seconds / 60); /* we only want minutes */
+    {
+      if (apply_elapsed_bias && seconds > 0) /* subtract time already elapsed */
+      {
+        struct timeval tv;
+        if (CliClock(&tv)==0) 
+        {
+          if (((unsigned int)tv.tv_sec) >= ((unsigned int)seconds))
+            seconds = 1;
+          else
+            seconds -= tv.tv_sec;
+        }
+      }
+      return ((seconds+59) / 60); /* we only want minutes */
+    }  
   }
   return defaultval;
 }      
@@ -454,9 +527,20 @@ static int __getautofinddefault(const char *hostname)
 
 /* ------------------------------------------------------------------------ */
 
+/* WritePrivateProfileInt() writes unsigned "numbers", so this widget is 
+   to stop -1 from appearing as 18446744073709551615 (the client doesn't 
+   care of course since it gets read back correctly, but it worries users. 
+   See bug #1601). Only used from __remapObsoleteParameters.
+*/   
+static int _WritePrivateProfile_sINT( const char *sect, const char *key,
+                                      int val, const char *filename )
+{
+  char buffer[(sizeof(int)+2)*3]; sprintf(buffer,"%d",val);
+  return WritePrivateProfileStringB( sect, key, buffer, filename );
+}                                     
+
 // Convert old ini settings to new (if new doesn't already exist/is not empty).
 // Returns 0 on succes, or negative if any failures occurred.
-
 static int __remapObsoleteParameters( Client *client, const char *fn )
 {
   char buffer[128];
@@ -526,6 +610,9 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
 
   /* ----------------- project options ----------------- */
 
+  /* we no longer save the random prefix in the .ini (all done elsewhere) */
+  WritePrivateProfileStringB( __getprojsectname(RC5), "randomprefix", NULL, fn );
+
   #if (CLIENT_CPU != CPU_ALPHA) && (CLIENT_CPU != CPU_68K) && (CLIENT_CPU != CPU_ARM)
   /* don't have RC5 cputype->coretype mapping for Alpha or m68k or arm */
   if (!GetPrivateProfileStringB( __getprojsectname(RC5), "core", "", buffer, sizeof(buffer), fn ))
@@ -533,7 +620,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
     if ((i = GetPrivateProfileIntB(OPTION_SECTION, "cputype", -1, fn ))!=-1)
     {
       client->coretypes[RC5] = i;
-      modfail += (!WritePrivateProfileIntB( __getprojsectname(RC5), "core", i, fn));
+      modfail += (!_WritePrivateProfile_sINT( __getprojsectname(RC5), "core", i, fn));
       TRACE_OUT((0,"remapped rc5 core (%d)\n", modfail));
     }
   }
@@ -551,8 +638,8 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
       {
         client->preferred_blocksize[RC5] = i;
         client->preferred_blocksize[DES] = i;
-        modfail += (!WritePrivateProfileIntB( __getprojsectname(RC5), "preferred-blocksize", i, fn));
-        modfail += (!WritePrivateProfileIntB( __getprojsectname(DES), "preferred-blocksize", i, fn));
+        modfail += (!_WritePrivateProfile_sINT( __getprojsectname(RC5), "preferred-blocksize", i, fn));
+        modfail += (!_WritePrivateProfile_sINT( __getprojsectname(DES), "preferred-blocksize", i, fn));
       }
     }
   }
@@ -627,7 +714,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
             /* convert using preferred blocksize */
             client->inthreshold[cont_i] =
                 oldstyle_inout[0] * multiplier;
-            modfail += (!WritePrivateProfileIntB( cont_sect, "fetch-workunit-threshold", client->inthreshold[cont_i], fn));
+            modfail += (!_WritePrivateProfile_sINT( cont_sect, "fetch-workunit-threshold", client->inthreshold[cont_i], fn));
           }
           #if !defined(NO_OUTBUFFER_THRESHOLDS)          
           if (oldstyle_inout[1] > 0)
@@ -638,7 +725,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
               /* convert using preferred blocksize */
               client->outthreshold[cont_i] =
                 oldstyle_inout[1] * multiplier;
-              modfail += (!WritePrivateProfileIntB( cont_sect, "flush-workunit-threshold", client->outthreshold[cont_i], fn));
+              modfail += (!_WritePrivateProfile_sINT( cont_sect, "flush-workunit-threshold", client->outthreshold[cont_i], fn));
             }
           }
           #endif
@@ -737,7 +824,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
       else if (i > 180)
         i = 180;
       client->nettimeout = i;
-      modfail += (!WritePrivateProfileIntB( OPTSECT_NET, "nettimeout", i, fn));
+      modfail += (!_WritePrivateProfile_sINT( OPTSECT_NET, "nettimeout", i, fn));
       TRACE_OUT((0,"remapped nettimeout (%d)\n", modfail));
     }
   }
@@ -846,7 +933,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
     if ((i = GetPrivateProfileIntB( OPTION_SECTION, "numcpu", -12345, fn ))>=0)
     {
       client->numcpu = i;
-      modfail += (!WritePrivateProfileIntB( OPTSECT_CPU, "max-threads", client->numcpu, fn));
+      modfail += (!_WritePrivateProfile_sINT( OPTSECT_CPU, "max-threads", client->numcpu, fn));
     }
   }
   if ((i=GetPrivateProfileIntB( OPTSECT_CPU, "priority", -12345, fn ))!=-12345)
@@ -855,7 +942,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
     if (i>=0 && i<=2)
     {
       client->priority = i * 4; /* ((i==2)?(8):((i==1)?(4):(0))) */
-      modfail += (!WritePrivateProfileIntB( OPTSECT_CPU, "priority", client->priority, fn));
+      modfail += (!_WritePrivateProfile_sINT( OPTSECT_CPU, "priority", client->priority, fn));
     }
   }
 
@@ -871,7 +958,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
         client->minutes = i / 60; /* we only want minutes */
         if (client->minutes)
           modfail += __readwrite_minutes(OPTSECT_MISC, "run-time-limit",
-                                                   &(client->minutes), 0, fn );
+                                             &(client->minutes), 0, fn, 0 );
       }
     }
   }
@@ -884,7 +971,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
     if (i == -1 || i > 0)
     {
       client->blockcount = i;
-      modfail += (!WritePrivateProfileIntB( OPTSECT_MISC, "run-work-limit", i, fn));
+      modfail += (!_WritePrivateProfile_sINT( OPTSECT_MISC, "run-work-limit", i, fn));
     }
   }
   if (!GetPrivateProfileStringB( OPTSECT_MISC, "project-priority", "", buffer, sizeof(buffer), fn ))
@@ -978,7 +1065,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
     #else
     static const char *obskeys[]={ /* all in "parameters" section */
              "runhidden", "os2hidden", "win95hidden", "checkpoint2",
-             "firemode", "checkpointfile2", "randomprefix", /*now in rc5*/
+             "firemode", "checkpointfile2", "randomprefix",
              "preferredcontest", "cktime", "exitfilechecktime",
              "niceness", "processdes", "timeslice", "runbuffers",
              "contestdone" /* now in "rc564" */, "contestdone2",
@@ -1011,34 +1098,34 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
 // 1. never printf()/logscreen()/conout() from here
 // 2. never force an option based on the value of some other valid option
 
-int ReadConfig(Client *client)
+int ConfigRead(Client *client)
 {
   int foundinifile = 1;
   char buffer[64];
   const char *cont_name;
   unsigned int cont_i;
-  const char *fn = client->inifilename;
+  const char *fn;
 
-  fn = GetFullPathForFilename( fn );
-
+  /* must actually go through settings even if file doesn't exist */
+  /* in order to load client with default values. */
+  fn = GetFullPathForFilename( client->inifilename );
   if ( access( fn, 0 ) != 0 )
   {
     fn = GetFullPathForFilename( "rc5des" EXTN_SEP "ini" );
     if ( access( fn, 0 ) != 0 )
       foundinifile = 0;
   }
-  /* must actually go through settings even if file doesn't exist */
-  /* in order to load client with default values. */
 
-  client->randomchanged = 0;
-  RefreshRandomPrefix( client );
-
-  TRACE_OUT((+1,"ReadConfig()\n"));
+  TRACE_OUT((+1,"ReadConfig() [%s] (was: '%s')\n", fn, client->inifilename));
 
   if (foundinifile)
   {
     __remapObsoleteParameters( client, fn ); /* load obsolete options */
   }  
+
+  /* intialize the "authoritative" variables set during proxy chitchat */
+  /* eg, scheduledupdatetime et al */
+  ConfigReadUniversalNews( client, fn );
 
   if (GetPrivateProfileStringB( OPTION_SECTION, "id", "", client->id, sizeof(client->id), fn ))
   {
@@ -1109,7 +1196,7 @@ int ReadConfig(Client *client)
 
   TRACE_OUT((0,"ReadConfig() [2 begin]\n"));
 
-  client->minutes = __readwrite_minutes( OPTSECT_MISC,"run-time-limit", NULL, client->minutes, fn );
+  client->minutes = __readwrite_minutes( OPTSECT_MISC,"run-time-limit", NULL, client->minutes, fn, 1 );
   client->blockcount = GetPrivateProfileIntB( OPTSECT_MISC, "run-work-limit", client->blockcount, fn );
 
   TRACE_OUT((0,"ReadConfig() [2 end]\n"));
@@ -1135,7 +1222,7 @@ int ReadConfig(Client *client)
   GetPrivateProfileStringB( OPTSECT_BUFFERS, "alternate-buffer-directory", client->remote_update_dir, client->remote_update_dir, sizeof(client->remote_update_dir), fn );
   GetPrivateProfileStringB( OPTSECT_BUFFERS, "checkpoint-filename", client->checkpoint_file, client->checkpoint_file, sizeof(client->checkpoint_file), fn );
   client->connectoften = GetPrivateProfileIntB( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften , fn );
-  client->max_buffupd_interval = __readwrite_minutes( OPTSECT_BUFFERS,"threshold-check-interval", NULL, client->max_buffupd_interval, fn );
+  client->max_buffupd_interval = __readwrite_minutes( OPTSECT_BUFFERS,"threshold-check-interval", NULL, client->max_buffupd_interval, fn, 0 );
   GetPrivateProfileStringB( OPTSECT_MISC, "project-priority", "", buffer, sizeof(buffer), fn );
   projectmap_build(client->loadorder_map, buffer);
 
@@ -1168,7 +1255,7 @@ int ReadConfig(Client *client)
         else if (ot > 0 && ot < client->inthreshold[cont_i])
           client->connectoften = 4; /* sticky contests */
         if (client->connectoften != 0) /* changed */ 
-          WritePrivateProfileIntB( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften, fn );
+          _WritePrivateProfile_sINT( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften, fn );
       }
       WritePrivateProfileStringB( cont_name,"flush-workunit-threshold",NULL,fn);
       #else
@@ -1253,34 +1340,22 @@ static void __XSetProfileInt( const char *sect, const char *key,
 
 // --------------------------------------------------------------------------
 
-//Some OS's write run-time stuff to the .ini, so we protect
-//the ini by only allowing that client's internal settings to change.
-
-int WriteConfig(Client *client, int writefull /* defaults to 0*/)
+int ConfigWrite(Client *client)
 {
-  char buffer[64]; int i;
+  char buffer[64]; int i, rc = -1;
   unsigned int cont_i;
   const char *p;
-  const char *fn = client->inifilename;
-
-  fn = GetFullPathForFilename( fn );
-  if ( !writefull && access( fn, 0 )!=0 )
-    writefull = 1;
+  const char *fn = GetFullPathForFilename( client->inifilename );
+  TRACE_OUT((+1,"WriteConfig() [%s] (originally '%s')\n", fn, client->inifilename ));
 
   /* prevent our own writes from kicking off a restart */
   OverrideNextConffileChangeTrigger();
 
-  if (!WritePrivateProfileStringB( OPTION_SECTION, "id",
+  if (WritePrivateProfileStringB( OPTION_SECTION, "id",
     ((strcmp( client->id,"rc5@distributed.net")==0)?(""):(client->id)), fn ))
-    return -1; //failed
-
-  TRACE_OUT((+1,"WriteConfig()\n"));
-
-  client->randomchanged = 1;
-  RefreshRandomPrefix( client ); /* must come after writing something else */
-
-  if (writefull != 0)
-  {
+  {    
+    rc = 0; /* assume success */
+  
     /* --- CONF_MENU_BUFF -- */
     __XSetProfileInt( OPTSECT_BUFFERS, "buffer-only-in-memory", (client->nodiskbuffers)?(1):(0), fn, 0, 'y' );
     __XSetProfileStr( OPTSECT_BUFFERS, "buffer-file-basename", client->in_buffer_basename, fn, NULL );
@@ -1289,13 +1364,13 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     __XSetProfileInt( OPTSECT_BUFFERS, "allow-update-from-altbuffer", !(client->noupdatefromfile), fn, 1, 'y' );
     __XSetProfileStr( OPTSECT_BUFFERS, "alternate-buffer-directory", client->remote_update_dir, fn, NULL );
     __XSetProfileInt( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften, fn, 0, 0 );
-    __readwrite_minutes( OPTSECT_BUFFERS,"threshold-check-interval", &(client->max_buffupd_interval), 0, fn );
+    __readwrite_minutes( OPTSECT_BUFFERS,"threshold-check-interval", &(client->max_buffupd_interval), 0, fn, 0 );
 
     /* --- CONF_MENU_MISC __ */
 
     strcpy(buffer,projectmap_expand(NULL));
     __XSetProfileStr( OPTSECT_MISC, "project-priority", projectmap_expand(client->loadorder_map), fn, buffer );
-    __readwrite_minutes( OPTSECT_MISC,"run-time-limit", &(client->minutes), 0, fn );
+    __readwrite_minutes( OPTSECT_MISC,"run-time-limit", &(client->minutes), 0, fn, 0 );
     __XSetProfileInt( OPTSECT_MISC, "run-work-limit", client->blockcount, fn, 0, 0 );
 
     __XSetProfileInt( OPTSECT_TRIGGERS, "restart-on-config-file-change", client->restartoninichange, fn, 0, 'n' );
@@ -1386,61 +1461,10 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
       GetPrivateProfileStringB(OPTSECT_LOG,"log-file-type","",buffer,2,fn))
       WritePrivateProfileStringB( OPTSECT_LOG,"log-file-type", client->logfiletype, fn );
 
-  } /* if (writefull != 0) */
+  } /* if (Write(id)) */
 
-  OverrideNextConffileChangeTrigger();
-  TRACE_OUT((-1,"WriteConfig()\n"));
+  TRACE_OUT((-1,"WriteConfig() =>%d\n", rc));
 
-  return 0;
+  return rc;
 }
 
-// --------------------------------------------------------------------------
-
-// update contestdone and randomprefix .ini entries
-void RefreshRandomPrefix( Client *client )
-{
-  if (client->stopiniio == 0 && client->nodiskbuffers == 0)
-  {
-    const char *fn = client->inifilename;
-    const char *rc5_sect = __getprojsectname(RC5);
-    fn = GetFullPathForFilename( fn );
-
-    if ( access( fn, 0 )!=0 ) /* we also do not *write* if the .ini */
-      return;                 /* doesn't already exist */
-
-    if ( client->randomchanged == 0 ) /* load */
-    {
-      client->randomprefix = GetPrivateProfileIntB(rc5_sect, "randomprefix",
-                                                 client->randomprefix, fn);
-      if (client->randomprefix < 100 || client->randomprefix > 255)
-        client->randomprefix = 100;
-
-      client->rc564closed = (GetPrivateProfileIntB(rc5_sect, "closed", 0, fn )!=0);
-
-      client->scheduledupdatetime = GetPrivateProfileIntB(OPTSECT_NET,
-                      "scheduledupdatetime", client->scheduledupdatetime, fn);
-    }
-
-    if (client->randomchanged)
-    {
-      client->randomchanged = 0;
-      /* prevent our own writes from kicking off a restart */
-      OverrideNextConffileChangeTrigger();
-
-      if (client->randomprefix == 100)
-        WritePrivateProfileStringB(rc5_sect,"randomprefix",NULL,fn);
-      else
-        WritePrivateProfileIntB(rc5_sect,"randomprefix",client->randomprefix,fn);
-
-      WritePrivateProfileStringB(rc5_sect,"closed",(client->rc564closed)?("yes"):(NULL), fn );
-
-      if (client->scheduledupdatetime == 0)
-        WritePrivateProfileStringB(OPTSECT_NET, "scheduledupdatetime", NULL, fn );
-      else
-        WritePrivateProfileIntB(OPTSECT_NET, "scheduledupdatetime", client->scheduledupdatetime, fn );
-    }
-  }
-  return;
-}
-
-// --------------------------------------------------------------------------

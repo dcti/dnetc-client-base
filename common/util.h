@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------
 */ 
 #ifndef __UTIL_H__ 
-#define __UTIL_H__ "@(#)$Id: util.h,v 1.6.2.8 2000/07/01 13:43:29 cyp Exp $"
+#define __UTIL_H__ "@(#)$Id: util.h,v 1.6.2.9 2000/09/17 11:46:35 cyp Exp $"
 
 void trace_out( int indlevel, const char *fmt, ... );
 #ifdef TRACE
@@ -33,19 +33,12 @@ int utilScatterOptionListToArrays( const char *oplist,
                                   int *table1, int *table2, 
                                   int defaultval );
 
-/* Filename and file operations. */
-int IsFilenameValid( const char *filename );
-int DoesFileExist( const char *filename );
-int GetFileLengthFromStream( FILE *file, unsigned long *length );
-
 /* Whats the name of this application? Used for thread-name, banners etc */
 const char *utilGetAppName(void); /* "rc5 des" or "dnetc" or whatever */
 const char *utilSetAppName(const char *newname); /* shouldn't be needed */
 
-
 /* prints message if appropriate */
 int utilCheckIfBetaExpired(int print_msg);
-
 
 /* get list of pid's for procname. if procname has a path, then search 
    for exactly that, else search for basename. if pidlist or maxnumpids

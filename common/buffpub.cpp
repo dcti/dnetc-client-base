@@ -8,14 +8,14 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.1.2.5 2000/07/01 13:43:28 cyp Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.1.2.6 2000/09/17 11:46:26 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
 #include "client.h"   //client class
 #include "baseincs.h" //basic #includes
 #include "network.h"  //ntohl(), htonl()
-#include "util.h"     //IsFilenameValid(), DoesFileExist(), __iter2norm()
+#include "util.h"     //trace
 #include "clievent.h" //event stuff
 #include "clicdata.h" //GetContestNameFromID()
 #include "logstuff.h" //Log()/LogScreen()/LogScreenPercent()/LogFlush()
@@ -39,10 +39,8 @@ int BufferZapFileRecords( const char *filename )
   /* disk fragmentation (on some systems) and is better on systems with a */
   /* "trash can" that saves deleted files. */
 
-  if (!IsFilenameValid( filename ))
-    return 0;
   filename = GetFullPathForFilename( filename );
-  if (!DoesFileExist( filename )) //file doesn't exist, which is ok
+  if (access( filename, 0 )!=0) //file doesn't exist, which is ok
     return 0;
   file = fopen( filename, "w" ); //truncate the file to zero length
   if (!file)
@@ -71,11 +69,11 @@ static FILE *BufferOpenFile( const char *filename, unsigned long *countP )
   #endif
 
   FILE *file = NULL;
-  unsigned long filelen;
+  long filelen;
   int failed = 0;
   const char *qfname = GetFullPathForFilename( filename );
 
-  if (!DoesFileExist( qfname )) // file doesn't exist, so create it
+  if (access(qfname, 0)!=0) // file doesn't exist, so create it
   {
     file = fopen( qfname, "w+" BUFFOPEN_MODE );
     if (file == NULL)
@@ -85,7 +83,7 @@ static FILE *BufferOpenFile( const char *filename, unsigned long *countP )
   }
   if (failed == 0)
   {
-    if (!DoesFileExist( qfname )) // file still doesn't exist
+    if (access(qfname, 0)!=0) // file still doesn't exist
     {
       Log("Error opening buffer file... Access was denied.\n" );
       return NULL;
@@ -100,9 +98,15 @@ static FILE *BufferOpenFile( const char *filename, unsigned long *countP )
     return NULL;
   }
 
-  if (fflush( file ) != 0 || GetFileLengthFromStream( file, &filelen ) != 0)
+  if (fflush( file ) != 0 || fseek( file, 0, SEEK_END )!=0)
   {
     Log("Open failed. Unable to obtain directory information.\n");
+    fclose( file );
+    return NULL;
+  }
+  if ((filelen = ftell(file)) == -1L)
+  {
+    Log("Open failed. Unable to determine file length.\n");
     fclose( file );
     return NULL;
   }

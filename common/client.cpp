@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.87 2000/07/12 14:01:34 oliver Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.88 2000/09/17 11:46:27 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -49,7 +49,7 @@ void ResetClientData(Client *client)
   /* non-user-configurable variables */
   client->nonewblocks=0;
   client->randomchanged=0;
-  client->randomprefix=100;
+  client->randomprefix=0;
   client->rc564closed=0;
   client->stopiniio=0;
   client->scheduledupdatetime = 0;
@@ -231,7 +231,7 @@ unsigned int ClientGetOutThreshold(Client *client,
           a) if the outthreshold (as per .ini) is <=0, then outthreshold is 
           to be interpreted as a value relative to the (computed) inthreshold.
           ie, computed_outthreshold = computed_intthreshold + ini_outthreshold.
-          [thus an ini_threshold equal to zero implies rule c)]
+          [thus an ini_threshold equal to zero implies rule c) below]
           */
           outthresh = inthresh + outthresh;
         }
@@ -317,8 +317,6 @@ static const char *GetBuildOrEnvDescription(void)
     return buffer;
   }
   return "";
-#elif (CLIENT_OS == OS_NEXTSTEP)
-  return "";
 #elif (CLIENT_OS == OS_AMIGAOS)
   static char buffer[40];
   #ifdef __PPC__
@@ -379,7 +377,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
       LogScreenRaw( "RC5 Alpha assembly by Mike Marcelais\n");
       #endif
       #if (CLIENT_CPU == CPU_ARM)
-      LogScreenRaw( "ARM assembly by Steve Lee\n");
+      LogScreenRaw( "RC5 ARM assembly by Steve Lee\n");
       #if (CLIENT_OS == OS_RISCOS)
       LogScreenRaw( "RISCOS/PC Card support by Dominic Plunkett\n");
       #endif
@@ -436,9 +434,9 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
        * machine and we try to use more than one CPU.
        */
       if (geteuid() == 0) {
-	LogScreenRaw("* Cannot run as the superuser on Irix.\n"
-		     "* Please run the client under a non-zero uid.\n\n");
-	exit(1);
+	       LogScreenRaw("* Cannot run as the superuser on Irix.\n"
+		                  "* Please run the client under a non-zero uid.\n\n");
+         exit(1);
       }
       #endif /* CLIENT_OS == OS_IRIX */
 
@@ -489,8 +487,8 @@ static int ClientMain( int argc, char *argv[] )
     //ReadConfig() and parse command line - returns !0 if shouldn't continue
 
     TRACE_OUT((0,"Client.parsecmdline restarted?: %d\n", restarted));
-    if (ParseCommandline(client,0,argc,(const char **)argv,&retcode,0)==0)
-    {
+    if (!ParseCommandline(client,0,argc,(const char **)argv,&retcode,restarted))
+    {                               
       int domodes = ModeReqIsSet(-1); /* get current flags */
       TRACE_OUT((0,"initializetriggers\n"));
       if (InitializeTriggers(domodes, 
@@ -539,8 +537,11 @@ static int ClientMain( int argc, char *argv[] )
                 PrintBanner(client->id,0,restarted,0);
 
                 TRACE_OUT((+1,"parsecmdline(1)\n"));
-                ParseCommandline( client, 1, argc, (const char **)argv, NULL,
-                                      (client->quietmode==0)); //show overrides
+                if (!client->quietmode) 
+                {                 //show overrides
+                  ParseCommandline( client, 1, argc, (const char **)argv,
+                                    &retcode, restarted ); 
+                }                      
                 TRACE_OUT((-1,"parsecmdline(1)\n"));
               }
               InitRandom2( client->id );
@@ -623,7 +624,7 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int 
   TRACE_OUT((-1,"WinMain()\n"));
   return rc;
 }
-#elif defined(__unix__) && !defined(__EMX__)
+#elif defined(__unix__)
 int main( int argc, char *argv[] )
 {
   /* the SPT_* constants refer to sendmail source (conf.[c|h]) */
@@ -699,7 +700,7 @@ int main( int argc, char *argv[] )
       didset=(0==putenv(strcat(strcat(strcpy(m,q),"="),argv[0]))); //BSD4.3
       free((void *)m);
     }
-    #elif (CLIENT_OS != OS_NEXTSTEP)
+    #else
     didset = (setenv( q, argv[0], 1 ) == 0); //SYSV7 and posix
     #endif
     if (didset)
@@ -745,7 +746,7 @@ int main( int argc, char *argv[] )
         #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX) || \
             (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_BEOS)
         putenv( buffer );                 //BSD4.3
-        #elif (CLIENT_OS != OS_NEXTSTEP)
+        #else
         setenv("RC5INI", &buffer[7], 1 ); //SYSV7 and posix
         #endif
       }

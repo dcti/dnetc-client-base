@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.34 2000/08/25 19:49:40 patrick Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.35 2000/09/17 11:46:31 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -124,9 +124,6 @@
   #define CLIENT_OS_NAME "OS/2"
   #define CLIENT_OS     OS_OS2
   #define CLIENT_CPU    CPU_X86
-  #if defined(__EMX__) && !defined(__unix__) 
-  #define __unix__  /* should already be defined */
-  #endif
 #elif defined(linux)
   #ifndef __unix__ /* should already be defined */
   #define __unix__
@@ -376,6 +373,7 @@
   #define CLIENT_OS     OS_RISCOS
   #define CLIENT_CPU    CPU_ARM
 #elif defined(_NeXT_)
+  #undef __unix__ /* just in case */
   #define CLIENT_OS_NAME   "NextStep"
   #define CLIENT_OS     OS_NEXTSTEP
   #if defined(ASM_X86)
@@ -517,39 +515,35 @@
 
 /* ----------------------------------------------------------------- */
 
-/*
-  Some compilers/platforms don't yet support bool internally.
-
-  *** When creating new rules here, USE COMPILER-SPECIFIC TESTS ***
-
-  (Do not use operating system or cpu type comparisons, since not all
-  compilers on a specific platform or even a newer version of your
-  own compiler may require the hack).
-
-  *** When creating new rules here, USE COMPILER-SPECIFIC TESTS ***
-*/
-#if defined(__GNUC__) && (__GNUC__ < 2)
-  #define NEED_FAKE_BOOL
-#elif defined(__WATCOMC__) && (__WATCOMC__ < 1100) 
-  #define NEED_FAKE_BOOL
-#elif defined(__TURBOC__) && (__TURBOC__ <= 0x400)
-  #define NEED_FAKE_BOOL
-#elif defined(_MSC_VER) && (_MSC_VER < 1100)
-  #define NEED_FAKE_BOOL
-#elif defined(__SUNPRO_CC)   
-  #define NEED_FAKE_BOOL
-#elif defined(__IBMCPP__)
-  #define NEED_FAKE_BOOL
-#elif defined(__DECCXX)
-  #define NEED_FAKE_BOOL
-#elif defined(__xlc) || defined(__xlC) || defined(__xlC__) || defined(__XLC121__)
-  #define NEED_FAKE_BOOL
-#endif
-
-#ifdef NEED_FAKE_BOOL
-  typedef int bool;
-  #define true 1
-  #define false 0
+#if defined(PROXY_TYPE) /* only for proxy */
+  /*
+  ** This is only required for proxy builds since the client source is
+  ** designed for maximum portability and don't need/use 'bool'
+  ** IT IS NOT SUFFICIENT TO 'typedef int bool'!!
+  */
+  #if (defined(__GNUC__)     && (__GNUC__ < 2)         ) || \
+      (defined(__WATCOMC__)  && (__WATCOMC__ < 1100)   ) || \
+      (defined(_MSC_VER)     && (_MSC_VER < 1100)      ) || \
+      ((defined(__xlc) || defined(__xlC) || \
+        defined(__xlC__) || defined(__XLC121__))       ) || \
+      (defined(__SUNPRO_CC)                            ) || \
+      (defined(__IBMCPP__)                             ) || \
+      (defined(__DECCXX)                               ) || \
+      (defined(__TURBOC__)   && (__TURBOC__ <= 0x400)  )
+    /*
+     Some compilers don't yet support bool internally.
+     *** When creating new rules here, USE COMPILER-SPECIFIC TESTS ***
+     (Do not use operating system or cpu type comparisons, since not all
+     compilers on a specific platform or even a newer version of your
+     own compiler may require the hack).
+     *** When creating new rules here, USE COMPILER-SPECIFIC TESTS ***
+    */
+    #error "To build a proxy you must use a compiler that has intrinsic support for 'bool'"
+    /* IT IS NOT SUFFICIENT TO 'typedef int bool'!! */
+  #elif !defined(true)
+    #define false ((bool)0)
+    #define true  (!false)
+  #endif
 #endif
 
 /* ----------------------------------------------------------------- */

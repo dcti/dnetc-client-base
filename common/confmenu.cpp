@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.22 2000/06/19 16:38:43 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.23 2000/09/17 11:46:29 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -24,6 +24,7 @@ return "@(#)$Id: confmenu.cpp,v 1.41.2.22 2000/06/19 16:38:43 cyp Exp $"; }
 #include "clicdata.h" // GetContestNameFromID()
 #include "util.h"     // projectmap_*()
 #include "triggers.h" // CheckExitRequestTriggerNoIO()
+#include "confrwv.h"  // ConfigRead()/ConfigWrite()
 #include "confopt.h"  // the option table
 #include "confmenu.h" // ourselves
 
@@ -33,8 +34,13 @@ return "@(#)$Id: confmenu.cpp,v 1.41.2.22 2000/06/19 16:38:43 cyp Exp $"; }
 static const char *CONFMENU_CAPTION="distributed.net client configuration: %s\n"
 "--------------------------------------------------------------------------\n";
 
-static int __have_xxx_cores(unsigned int cont_i)
+static int __is_opt_available_for_project(unsigned int cont_i, int menuoption)
 {
+  if (menuoption == CONF_CPUTYPE)
+  {
+    if (selcoreValidateCoreIndex(cont_i,1) < 0) /* second core doesn't exist */
+      return 0;    /* ie only one core, so disable CONF_CPUTYPE opt */
+  }
   switch (cont_i)
   {
     case RC5: return 1;
@@ -42,17 +48,19 @@ static int __have_xxx_cores(unsigned int cont_i)
     case DES: return 1;
     #endif
     #if defined(HAVE_OGR_CORES)
-    case OGR: return 1;
+    case OGR: return (menuoption != CONF_THRESHOLDT &&
+                      menuoption != CONF_PREFERREDBLOCKSIZE);
     #endif
     #if defined(HAVE_CSC_CORES)
     case CSC: return 1;
     #endif
+    default: break;
   }
   return 0;
 }
 
 
-static int __enumcorenames(const char **corenames, int index, void * /*unused*/)
+static int __enumcorenames(const char **corenames, int idx, void * /*unused*/)
 {
   char scrline[80];
   unsigned int cont_i, i, colwidth, nextpos;
@@ -62,15 +70,17 @@ static int __enumcorenames(const char **corenames, int index, void * /*unused*/)
   have_xxx_table[0] = 0; /* shaddup "perhaps unused" */
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
-    have_xxx_table[cont_i] = (cont_i != OGR /* only one core */
-                  &&  __have_xxx_cores(cont_i)); /* HAVE_XXX_CORES define */
-    if (have_xxx_table[cont_i])
+    have_xxx_table[cont_i] = 0;
+    if (__is_opt_available_for_project(cont_i,CONF_CPUTYPE)) 
+    {             /* HAVE_XXX_CORES defined and more than 1 core */
+      have_xxx_table[cont_i] = 1;
       colcount++;
+    }  
   }
   
   colwidth = (sizeof(scrline)-2)/(colcount);
 
-  if (index == 0)
+  if (idx == 0)
   {
     nextpos = 0;
     for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
@@ -136,10 +146,10 @@ static int __enumcorenames(const char **corenames, int index, void * /*unused*/)
     if (have_xxx_table[cont_i])
     {
       i = 0;
-      if (corenames[cont_i]) /* have a corename at this index */
+      if (corenames[cont_i]) /* have a corename at this idx */
       {
         char xxx[4+32];
-        i = sprintf(xxx,"%2d) %-30.30s", index, corenames[cont_i] );
+        i = sprintf(xxx,"%2d) %-30.30s", idx, corenames[cont_i] );
         if (i > colwidth)
           i = colwidth;
         strncpy( &scrline[nextpos], xxx, i );
@@ -232,10 +242,7 @@ static void __strip_inappropriates_from_alist( char *alist, int menuoption )
   unsigned int cont_i;
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
-    if ((cont_i == OGR && ( menuoption == CONF_THRESHOLDT ||
-                            menuoption == CONF_PREFERREDBLOCKSIZE ||
-                            menuoption == CONF_CPUTYPE ))
-       || !__have_xxx_cores(cont_i))
+    if (!__is_opt_available_for_project(cont_i,menuoption))
     {
       __strip_project_from_alist( alist, cont_i  );
     }
@@ -245,7 +252,7 @@ static void __strip_inappropriates_from_alist( char *alist, int menuoption )
 
 /* ----------------------------------------------------------------------- */
 
-int Configure( Client *client ) /* returns >0==success, <0==cancelled */
+static int __configure( Client *client ) /* returns >0==success, <0==cancelled */
 {
   struct __userpass { 
     char username[MINCLIENTOPTSTRLEN*2]; 
@@ -297,9 +304,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
     preferred_blocksize[cont_i] = client->preferred_blocksize[cont_i];
-    if (cont_i == OGR) /* always (for now?) */
-      preferred_blocksize[cont_i] = -1; /* (auto) */
-    else if (preferred_blocksize[cont_i] < 1)  
+    if (preferred_blocksize[cont_i] < 1)  
       preferred_blocksize[cont_i] = -1; /* (auto) */
     else if (preferred_blocksize[cont_i] < PREFERREDBLOCKSIZE_MIN)
       preferred_blocksize[cont_i] = PREFERREDBLOCKSIZE_MIN;
@@ -459,9 +464,13 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
 
   /* ------------------- CONF_MENU_PERF ------------------ */  
 
+  conf_options[CONF_CPUTYPE].thevariable=NULL; /* assume not avail */
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-     client->coretypes[cont_i] = selcoreValidateCoreIndex(cont_i,client->coretypes[cont_i]);
-  conf_options[CONF_CPUTYPE].thevariable = &(client->coretypes[0]);
+  {
+    client->coretypes[cont_i] = selcoreValidateCoreIndex(cont_i,client->coretypes[cont_i]);
+    if (__is_opt_available_for_project(cont_i, CONF_CPUTYPE))
+      conf_options[CONF_CPUTYPE].thevariable = &(client->coretypes[0]);
+  }
   conf_options[CONF_NICENESS].thevariable = &(client->priority);
   conf_options[CONF_NUMCPU].thevariable = &(client->numcpu);
 
@@ -1206,7 +1215,6 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
         {
           int *vecta = (int *)conf_options[editthis].thevariable;
           int *vectb = NULL;
-          unsigned int cont_i;
           #if !defined(NO_OUTBUFFER_THRESHOLDS)
           if ( editthis == CONF_THRESHOLDI )  // don't have a
             vectb = &(outthreshold[0]); // THRESHOLDO any more
@@ -1332,5 +1340,47 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
 
   //fini
     
-  return returnvalue;
+  return returnvalue; /* <0=exit+nosave, >0=exit+save */
 }
+
+
+/* returns <0=error, 0=success+nosave, >0=success+save */
+int Configure( Client *sample_client, int nottycheck ) 
+{                                   
+  int rc = -1; /* assume error */
+  if (!nottycheck && !ConIsScreen())
+  {
+    ConOutErr("Screen output is redirected/not available. Please use --config\n");
+  }
+  else
+  {  
+    Client *newclient = (Client *)malloc(sizeof(Client));
+    if (!newclient)
+    {
+      ConOutErr("Unable to configure. (Insufficient memory)");  
+    }
+    else
+    {
+      ResetClientData(newclient);
+      strcpy(newclient->inifilename, sample_client->inifilename );
+      if (ConfigRead(newclient) < 0) /* <0=fatalerror, 0=no error, >0=inimissing */
+      {
+        ConOutErr("Unable to configure. (Fatal error reading/parsing .ini)");
+      }	
+      else if ( __configure(newclient) < 0 ) /* nosave */
+      {
+        rc = 0; /* success+nosave */
+      }	
+      else if (ConfigWrite(newclient) < 0)
+      {
+        ConOutErr("Unable to save one or more settings to the .ini");
+      }	
+      else  
+      {
+        rc = +1; /* success+saved */
+      }	
+      free((void *)newclient);
+    }  	  
+  }    
+  return rc;
+}  

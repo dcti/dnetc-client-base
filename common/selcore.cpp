@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.73 2000/08/09 19:28:19 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.74 2000/09/17 11:46:33 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -45,11 +45,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "RG/BRF class 5",    /* P5/Am486 - may become P5MMX at runtime*/
       "RG class 3/4",      /* 386/486 - may become SMC at runtime */
       "RG class 6",        /* PPro/II/III */
-      "RG Cx re-pair",     /* Cyrix 486/6x86[MX]/M2 */
+      "RG re-pair I",      /* Cyrix 486/6x86[MX]/MI */
       "RG RISC-rotate I",  /* K5 */
       "RG RISC-rotate II", /* K6 - may become mmx-k6-2 core at runtime */
       #ifdef MMX_RC5
-      "RG/HB ath",         /* K7 Athlon */
+      "RG/HB re-pair II",  /* K7 Athlon and Cx-MII, based on Cx re-pair */
       #endif
       NULL
     },
@@ -321,21 +321,21 @@ void selcoreEnumerate( int (*enumcoresproc)(unsigned int cont,
 
 /* --------------------------------------------------------------------- */
 
-int selcoreValidateCoreIndex( unsigned int cont_i, int index )
+int selcoreValidateCoreIndex( unsigned int cont_i, int idx )
 {
-  if (index >= 0 && index < ((int)__corecount_for_contest( cont_i )))
-    return index;
+  if (idx >= 0 && idx < ((int)__corecount_for_contest( cont_i )))
+    return idx;
   return -1;
 }
 
 /* --------------------------------------------------------------------- */
 
-const char *selcoreGetDisplayName( unsigned int cont_i, int index )
+const char *selcoreGetDisplayName( unsigned int cont_i, int idx )
 {
-  if (index >= 0 && index < ((int)__corecount_for_contest( cont_i )))
+  if (idx >= 0 && idx < ((int)__corecount_for_contest( cont_i )))
   {
      const char **names = __corenames_for_contest( cont_i );
-     return names[index];
+     return names[idx];
   }
   return "";
 }
@@ -369,12 +369,12 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
   {
     for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
     {
-      int index = 0;
+      int idx = 0;
       if (__corecount_for_contest( cont_i ) > 1)
-        index = selcoreValidateCoreIndex( cont_i, coretypes[cont_i] );
-      if (!initialized || index != selcorestatics.user_cputype[cont_i])
+        idx = selcoreValidateCoreIndex( cont_i, coretypes[cont_i] );
+      if (!initialized || idx != selcorestatics.user_cputype[cont_i])
         selcorestatics.corenum[cont_i] = -1; /* got change */
-      selcorestatics.user_cputype[cont_i] = index;
+      selcorestatics.user_cputype[cont_i] = idx;
     }
     initialized = 1;
   }
@@ -640,7 +640,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             case 0x00: cindex = 0; break; // P5 ("RG/BRF class 5")
             case 0x01: cindex = 1; break; // 386/486 ("RG class 3/4")
             case 0x02: cindex = 2; break; // PII/PIII ("RG class 6")
-            case 0x03: cindex = 3; break; // Cx6x86 ("RG Cx re-pair")
+            case 0x03: cindex = 3; break; // Cx6x86 ("RG re-pair I")
             case 0x04: cindex = 4; break; // K5 ("RG RISC-rotate I")
             case 0x05: cindex = 5; break; // K6/K6-2/K6-3 ("RG RISC-rotate II")
             #if defined(SMC)    
@@ -651,9 +651,9 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             case 0x07: cindex = 2; break; // Celeron
             case 0x08: cindex = 2; break; // PPro
             #ifdef MMX_RC5
-            case 0x09: cindex = 6; break; // AMD K7 ("athlon")
+            case 0x09: cindex = 6; break; // AMD>=K7/Cx>=MII ("RG/HB re-pair II")
             #else
-            case 0x09: cindex = 3; break; // AMD K7 ("RG Cx re-pair")
+            case 0x09: cindex = 3; break; // AMD>=K7/Cx>=MII ("RG re-pair I")
             #endif
             case 0x0A: cindex = 3; break; // Centaur C6
             //no default
@@ -739,7 +739,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     if (selcorestatics.corenum[RC5] < 0 && detected_type > 0)
     {
       int cindex = -1;
-      if (detected_type == 0x3    || /* ARM 3 */ 
+      if (detected_type == 0x300  || /* ARM 3 */ 
           detected_type == 0x600  || /* ARM 600 */
           detected_type == 0x610  || /* ARM 610 */
           detected_type == 0x700  || /* ARM 700 */
@@ -748,9 +748,10 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
           detected_type == 0x7500FE) /* ARM 7500FE */
         cindex = 0;
       else if (detected_type == 0x810 || /* ARM 810 */
-          detected_type == 0xA10)    /* StrongARM 110 */
+               detected_type == 0xA10)   /* StrongARM 110 */
         cindex = 1;
-      else if (detected_type == 0x200) /* ARM 2, 250 */
+      else if (detected_type == 0x200 || /* ARM 2 */
+               detected_type == 0x250)   /* ARM 250 */
         cindex = 2;
       selcorestatics.corenum[RC5] = cindex;
     }
@@ -763,7 +764,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       int cindex = -1;
       if (detected_type == 0x810 ||  /* ARM 810 */
           detected_type == 0xA10 ||  /* StrongARM 110 */
-          detected_type == 0x200)    /* ARM 2, 250 */
+          detected_type == 0x200 ||  /* ARM 2 */
+	  detected_type == 0x250)    /* ARM 250 */
         cindex = 1;
       else /* "ARM 3, 610, 700, 7500, 7500FE" or  "ARM 710" */
         cindex = 0;
