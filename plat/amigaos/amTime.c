@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amTime.c,v 1.2.4.3 2004/01/09 01:23:32 piru Exp $
+ * $Id: amTime.c,v 1.2.4.4 2004/01/09 12:08:39 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -278,15 +278,6 @@ BOOL GlobalTimerInit(VOID)
 /* 68K / OS4 / MorphOS */
 static struct timerequest *amigaSleepAsync(struct TimerResources *res, unsigned int secs, unsigned int usecs)
 {
-   #ifdef __MORPHOS__
-   /* this fix is not needed for AmigaOS? */
-   if (!CheckIO((struct IORequest *)res->tr_TimeReq))
-   {
-     AbortIO((struct IORequest *)res->tr_TimeReq);
-     WaitIO((struct IORequest *)res->tr_TimeReq);
-     SetSignal(0, 1L << res->tr_TimeReq->tr_node.io_Message.mn_ReplyPort->mp_SigBit);
-   }
-   #endif
    res->tr_TimeReq->tr_node.io_Command = TR_ADDREQUEST;
    struct timeval *tv = &res->tr_TimeReq->tr_time;
    tv->tv_secs = secs + (usecs / 1000000);
@@ -487,7 +478,15 @@ int gettimeofday(struct timeval *tp, struct timezone *tzp)
 int amigaGetMonoClock(struct timeval *tp)
 {
    if (tp) {
-#if !defined(__OS3PPC__) || !defined(USE_PPCTIMER)
+#ifdef __MORPHOS__
+      /*
+      ** MorphOS
+      */
+      UQUAD cpuclock;
+      ULONG cpufreq = ReadCPUClock(&cpuclock);
+      tp->tv_sec  = cpuclock / cpufreq;
+      tp->tv_usec = (cpuclock % cpufreq) * 1000000 / cpufreq;
+#elif !defined(__OS3PPC__) || !defined(USE_PPCTIMER)
       /*
       ** 68K / OS4
       */

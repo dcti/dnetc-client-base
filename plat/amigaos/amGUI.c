@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amGUI.c,v 1.2.4.3 2004/01/08 21:00:48 oliver Exp $
+ * $Id: amGUI.c,v 1.2.4.4 2004/01/09 12:08:39 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -235,7 +235,7 @@ void amigaHandleGUI(void *timer, ULONG timesig)
       sigr = Wait(waitsigs);
       if (sigr & timesig) {
          done = TRUE;
-         GetMsg(tport);
+         WaitIO((struct IORequest *)tr);
       }
       #elif defined(__POWERUP__)
       PPCWait(timesig);
@@ -274,6 +274,22 @@ void amigaHandleGUI(void *timer, ULONG timesig)
          if (cmds && !done && tr) {
             AbortIO((struct IORequest *)tr);
             WaitIO((struct IORequest *)tr);
+            /*
+             * Important: WaitIO() might not clear the signal, so do it manually.
+             * Previously with this missing and with GetMsg() used to clear the
+             * message from the port, it could easily lead into not clearing up
+             * timereq (message not yet in port, but signal set -> GetMsg() doing
+             * nothing). This again lead into sending the same timereq again, while
+             * it was already active. And this is deadly.
+             *
+             * Relevant quote from the exec.doc/WaitIO:
+             *"   WARNING
+             *       If this IORequest was "Quick" or otherwise finished BEFORE this
+             *       call, this function drops though immediately, with no call to
+             *       Wait(). A side effect is that the signal bit related the port may
+             *       remain set. Expect this."
+             */
+            SetSignal(0, timesig);
             done = TRUE;
 	 }
          #elif defined(__POWERUP__)

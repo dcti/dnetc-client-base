@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amSupport.c,v 1.2.4.6 2004/01/09 02:25:01 piru Exp $
+ * $Id: amSupport.c,v 1.2.4.7 2004/01/09 12:08:39 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -174,7 +174,7 @@ static int add_resethandler(void)
       if (OpenDevice("keyboard.device", 0, (struct IORequest *) rhdata->ioreq, 0) == 0)
       {
         rhdata->is.is_Node.ln_Type = NT_INTERRUPT;
-        rhdata->is.is_Node.ln_Pri  = -128;
+        rhdata->is.is_Node.ln_Pri  = 64;
         rhdata->is.is_Node.ln_Name = "distributed.net client";
         rhdata->is.is_Data         = (APTR) rhdata;
         rhdata->is.is_Code         = (void (*)(void)) resethandler_code;
