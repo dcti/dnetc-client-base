@@ -1,9 +1,5 @@
 /*
- * Copyright distributed.net 1997-2000 - All Rights Reserved
- * For use in distributed.net projects only.
- * Any other distribution or use of this source violates copyright.
- *
- * this module contains netconn_xxx() and support routines which are
+ * This module contains netconn_xxx() and support routines which are
  * high level connection open/close/read/write/reset with optional
  * on-the-fly http/uue tunneling and http/socks proxy support.
  *
@@ -12,12 +8,12 @@
  * are verbose (print error messages), take care of ^C checking and
  * are (from the caller's perspective) fully blocking.
  *
- * Significant rewrite October 2000 by Cyrus Patel <cyp@fb14.uni-mainz.de>
+ * Written October 2000 by Cyrus Patel <cyp@fb14.uni-mainz.de>
  * based on lessons learned from the old Network class methods
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.1.2.7 2000/11/21 19:25:33 teichp Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.1.2.8 2001/01/03 19:06:32 cyp Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET
@@ -768,9 +764,10 @@ static int __open_connection(void *cookie)
         if (netstate->verbose_level > 0 && !__break_check(netstate))
         {
           LogScreen( "%sonnect to host %s:%u failed.\n%s\n",
-             ((netstate->reconnected)?("Rec"):("\rC")),
-             ((netstate->conn_hostaddr)?(net_ntoa(netstate->conn_hostaddr)):(netstate->conn_hostname)),
-             (unsigned int)(netstate->conn_hostport), net_strerror(rc, netstate->sock) );
+                     ((netstate->reconnected)?("Rec"):("\rC")),
+                     net_ntoa(netstate->conn_hostaddr),
+                     (unsigned int)(netstate->conn_hostport), 
+                     net_strerror(rc, netstate->sock) );
         }
         success = 0; 
       }
@@ -1733,15 +1730,15 @@ void *netconn_open( const char * _servname, int _servport,
   {
     /* Set and validate the connection timeout value. */
     /* argument is in seconds, netstate->iotimeout is in millisecs */
-    if (_iotimeout < 0)
-      _iotimeout = -1;      /* blocking mode */
-    else if (_iotimeout < 5)
-      _iotimeout = 5;       /* 5 seconds minimum. */
-    else if (_iotimeout > 300)
-      _iotimeout = 300;     /* 5 minutes maximum. */
-    netstate->iotimeout = -1;
-    if (_iotimeout > 0)     /* secs->millisecs */
-      netstate->iotimeout = _iotimeout * 1000;
+    netstate->iotimeout = -1; /* assume blocking mode */
+    if (_iotimeout >= 0)      /* not blocking mode */
+    {
+      if (_iotimeout < 5)
+        _iotimeout = 5;       /* 5 seconds minimum. */
+      else if (_iotimeout > 300)
+        _iotimeout = 300;     /* 5 minutes maximum. */
+      netstate->iotimeout = _iotimeout * 1000; /* secs->millisecs */
+    }
   }
 
   /* -------------------------------------------------- */
