@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.30 2003/03/16 18:21:16 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.31 2003/03/26 15:18:02 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -240,6 +240,7 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.30 2003/03/16 18:21:16 andreasb Exp $"; }
     extern "C" s32 CDECL rc5_72_unit_func_dg_2( RC5_72UnitWork *, u32 *, void *);
     extern "C" s32 CDECL rc5_72_unit_func_dg_3( RC5_72UnitWork *, u32 *, void *);
     extern "C" s32 CDECL rc5_72_unit_func_dg_3a( RC5_72UnitWork *, u32 *, void *);
+    extern "C" s32 CDECL rc5_72_unit_func_ss_2( RC5_72UnitWork *, u32 *, void *);
   #elif (CLIENT_CPU == CPU_ARM)
     extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
     extern "C" s32 rc5_72_unit_func_arm2( RC5_72UnitWork *, u32 *, void *);
@@ -456,6 +457,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "DG 2-pipe",
       "DG 3-pipe",
       "DG 3-pipe alt",
+      "SS 2-pipe",
       NULL
     },
   #elif (CLIENT_CPU == CPU_ARM)
@@ -1392,7 +1394,7 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
       {
         switch (detected_type & 0xff) // FIXME remove &0xff
         {
-          case 0x00: cindex = 2; break; // P5             == DG 2-pipe
+          case 0x00: cindex = 5; break; // P5             == SS 2-pipe
           case 0x01: cindex = 0; break; // 386/486        == SES 1-pipe
           case 0x02: cindex = 1; break; // PII/PIII       == SES 2-pipe
           case 0x03: cindex = 2; break; // Cx6x86         == DG 2-pipe
@@ -1401,7 +1403,7 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
           case 0x06: cindex = 0; break; // Cx486          == SES 1-pipe
           case 0x07: cindex =-1; break; // orig Celeron   == unused?
           case 0x08: cindex =-1; break; // PPro           == ?
-          case 0x09: cindex = 2; break; // K7             == DG 2-pipe
+          case 0x09: cindex = 5; break; // K7             == SS 2-pipe
           case 0x0A: cindex =-1; break; // Centaur C6     == ?
           case 0x0B: cindex = 3; break; // Pentium 4      == DG 3-pipe
           default:   cindex =-1; break; // no default
@@ -2254,6 +2256,10 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       case 4:
         unit_func.gen_72 = rc5_72_unit_func_dg_3a;
         pipeline_count = 3;
+        break;
+      case 5:
+        unit_func.gen_72 = rc5_72_unit_func_ss_2;
+        pipeline_count = 2;
         break;
 
      #else /* the ansi cores */
