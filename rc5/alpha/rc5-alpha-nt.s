@@ -2,6 +2,8 @@
 //	Copyright (c) Mike Marcelais, 1998
 //	All Commercial Rights Reserved.
 //	Uses NT Calling conventions
+//
+// @(#)$Id: rc5-alpha-nt.s,v 1.3 1999/12/09 12:29:01 cyp Exp $
 
 // define NT register names
 #define v0    $0
@@ -40,12 +42,12 @@
 
 
      .text
-     .globl rc5_unit_func
-     .ent   rc5_unit_func
+     .globl rc5_unit_func_ntalpha_michmarc
+     .ent   rc5_unit_func_ntalpha_michmarc
      .frame sp,272,ra
      .set   noat
 
-rc5_unit_func:
+rc5_unit_func_ntalpha_michmarc:
 //   On entry:
 //      a0 --> RC5UnitWork
 //             0(a0)  = plaintext
@@ -621,4 +623,4 @@ Possible2:
      lda    v0,-1(v0)      // Offset keyvalue by one, b/c found on second pipe
      br     EndSearch
 
-     .end   rc5_unit_func
+     .end   rc5_unit_func_ntalpha_michmarc
