@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.20  1999/01/13 08:50:26  cramer
+// changed maxaddr to a #define
+//
 // Revision 1.19  1999/01/11 23:39:11  michmarc
 // Fix compile error when DEBUG is defined
 //
@@ -70,11 +73,13 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.19 1999/01/11 23:39:11 michmarc Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.20 1999/01/13 08:50:26 cramer Exp $"; }
 #endif
 
 //---------------------------------------------------------------------
 //#define TEST  //standalone test
+
+#define MAXADDR 64 /* should be more than enough */
 
 //#define RESDEBUG //to show what network::resolve() is resolving
 #ifdef RESDEBUG
@@ -342,8 +347,8 @@ int Network::Resolve(const char *host, u32 *hostaddress, int resport )
 {
   struct proxylist *plist;
   struct proxylist dummylist;
-  u32 addrlist[64]; /* should be more than enough */
-  unsigned int proxypos, maxaddr, addrpos, addrcount;
+  u32 addrlist[MAXADDR];
+  unsigned int proxypos, addrpos, addrcount;
   struct hostent *hp;
   int resauto = autofindkeyserver;
   char hostname[64];
@@ -417,12 +422,8 @@ int Network::Resolve(const char *host, u32 *hostaddress, int resport )
       if (resolve_hostname[0]==0)
         strcpy( resolve_hostname, plist->proxies[proxypos] );
       
-      //maxaddr = addrcount + 1;
-      //#ifdef NAMESERVERS_DONT_ROTATE
-      maxaddr = (sizeof(addrlist)/sizeof(addrlist[0]));
-      //#endif
       for ( addrpos = 0; hp->h_addr_list[addrpos] && 
-                                  (addrcount < maxaddr ); addrpos++ )
+                                  (addrcount < MAXADDR ); addrpos++ )
         {      
         memcpy((void*) &addrlist[addrcount], 
                (void*) hp->h_addr_list[addrpos], sizeof(u32));
