@@ -10,25 +10,21 @@
  * Formed of the sand, and fit to shift and break.
  * ------------------------------------------------------
 */
+#define TRACE
+
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.18 2000/05/06 20:38:40 mfeiri Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.19 2000/05/08 18:22:39 cyp Exp $"; }
 
 #include "cputypes.h"
-#include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "mail.h"      // MailMessage
 #include "clitime.h"   // CliGetTimeString(NULL,1)
-#include "pathwork.h"  // GetFullPathForFilename( x )
-#include "problem.h"   // needed for logscreenpercent
+#include "pathwork.h"  // GetFullPathForFilename(), GetWorkingDirectory()
+#include "problem.h"   // Problem object for logscreenpercent
+#include "probman.h"   // GetProblemPointerFromIndex() for LogScreenPercent 
 #include "console.h"   // for ConOut() and ConIsScreen()
-#include "triggers.h"  // don't print percbar if pause/exit/restart triggered
+#include "util.h"      // TRACE
 #include "logstuff.h"  // keep the prototypes in sync
-
-#ifndef PERSISTANT_OPENLOG
-  #if defined(__unix__)
-  //#define PERSISTANT_OPENLOG //NO!! DON'T DO THIS!
-  #endif
-#endif  
 
 //-------------------------------------------------------------------------
 
@@ -52,26 +48,6 @@ return "@(#)$Id: logstuff.cpp,v 1.37.2.18 2000/05/06 20:38:40 mfeiri Exp $"; }
 
 #endif /* logstuff.h defines */
 
-#if (CLIENT_OS == OS_NETWARE || CLIENT_OS == OS_DOS || \
-     CLIENT_OS == OS_OS2 || CLIENT_OS == OS_WIN16 || \
-     CLIENT_OS == OS_WIN32 || CLIENT_OS == OS_WIN32S )
-  #define ftruncate( fd, sz )  chsize( fd, sz )
-#elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_AMIGAOS) || \
-      (CLIENT_OS == OS_MACOS)
-  #define ftruncate( fd, sz ) //nada, not supported
-  #define FTRUNCATE_NOT_SUPPORTED
-#endif  
-#if defined(PERSISTANT_OPENLOG) && defined(FTRUNCATE_NOT_SUPPORTED)
-  #undef PERSISTANT_OPENLOG
-#endif
-
-#if ((!defined(MAX_LOGENTRY_LEN)) || (MAX_LOGENTRY_LEN < 1024))
-  #ifdef MAX_LOGENTRY_LEN
-  #undef MAX_LOGENTRY_LEN
-  #endif
-  #define MAX_LOGENTRY_LEN 1024
-#endif   
-
 // ========================================================================
 
 static struct 
@@ -82,6 +58,7 @@ static struct
   char percprint;            // percentprinting is enabled
   
   MailMessage *mailmessage;  //note: pointer, not class struct.
+  char basedir[256];         //filled if user's 'logfile' is not qualified
   char logfile[128+20];      //fname when LOGFILETYPE_RESTART or _FIFO
                              //lastused fname when LOGFILETYPE_ROTATE
   FILE *logstream;           //open logfile 
@@ -101,6 +78,7 @@ static struct
   0,      // spoolson
   0,      // percprint
   NULL,   // *mailmessage
+  {0},    // basedir[]
   {0},    // logfile[]
   NULL,   // logstream
   0,      // logfilebaselen
@@ -130,76 +108,39 @@ static void InternalLogScreen( const char *msgbuffer, unsigned int msglen, int /
 
 // ------------------------------------------------------------------------
 
-#if 0 /*(CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || \
-        (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_NETWARE) || \
-        (CLIENT_OS == OS_OS2) */
 static FILE *__fopenlog( const char *fn, const char *mode )
 {
-  FILE *file;
-  int fd, amode, xmode, tmode;
-  char cmode[3]; const char *p = mode;
-  
-  cmode[0] = cmode[1] = cmode[2] = 0;
-  while (*p)
+  FILE *file = (FILE *)0;
+  unsigned int len = strlen(logstatics.basedir);
+  if ((len + strlen(fn) +1) < sizeof(logstatics.basedir))
   {
-    int pos = 0;
-    if (*p == 'a' || *p == 'w' || *p == 'r')
-      pos = 0;
-    else if (*p == '+')
-      pos = 1;
-    else if (*p == 't' || *p == 'b')
-      pos = 2;
-    else
-      return (FILE *)0;
-    if (cmode[pos] != 0)
-      return (FILE *)0;
-    cmode[pos] = ((char)(*p++));
-  }  
-
-  xmode = 0;
-  amode = O_WRONLY;
-  tmode = O_TEXT;  
-  if (cmode[0] == 'r')
-    amode = O_RDONLY;
-  else if (cmode[0] == 'w')
-    xmode = O_CREAT | O_TRUNC;
-  else if (cmode[0] == 'a')
-    xmode = O_CREAT | O_APPEND;
-  else
-    return (FILE *)0;
-  if (cmode[1] == '+')
-    amode = O_RDWR;
-  if (cmode[2] == 'b')
-    tmode = O_BINARY;
-
-  fd = sopen( GetFullPathForFilename(fn), xmode|amode|tmode, SH_DENYNO, 0 );
-  if (fd == -1)
-    return (FILE *)0;
-  file = fdopen( fd, mode );
-  if (file)
-    return file;
-  close(fd);
-  return (FILE *)0;
+    #if (CLIENT_OS == OS_MACOS)
+    OSType old_ftype = __gettype(0);
+    _ftype = 'RC5L';
+    #endif
+    strcat( logstatics.basedir, fn ); 
+    file = fopen( logstatics.basedir, mode );
+    logstatics.basedir[len] = '\0';
+    #if (CLIENT_OS == OS_MACOS)
+    _ftype = old_ftype;
+    #endif
+  }
+  return file;
 }
-#elif (CLIENT_OS == OS_MACOS)
-static FILE *__fopenlog( const char *fn, const char *mode )
-{
-   FILE *file;
-   OSType temp;
-   temp = __gettype(0);
-   _ftype = 'RC5L';
-   file = fopen( GetFullPathForFilename( fn ), mode );
-   _ftype = temp;
-   return file;
-}
-#else
-#define __fopenlog( _fn, _mode ) fopen( GetFullPathForFilename( _fn ), _mode )
-#endif
-
 
 //this can ONLY be called from LogWithPointer.
 static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*flags*/ )
 {
+  #if (CLIENT_OS == OS_NETWARE || CLIENT_OS == OS_DOS || \
+       CLIENT_OS == OS_OS2 || CLIENT_OS == OS_WIN16 || \
+       CLIENT_OS == OS_WIN32 || CLIENT_OS == OS_WIN32S )
+    #define ftruncate( fd, sz )  chsize( fd, sz )
+  #elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_AMIGAOS) || \
+        (CLIENT_OS == OS_MACOS)
+    #define ftruncate( fd, sz ) //nada, not supported
+    #define FTRUNCATE_NOT_SUPPORTED
+  #endif
+
   int logfileType = logstatics.logfileType;
   unsigned int logfileLimit = logstatics.logfileLimit;
   
@@ -217,12 +158,7 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
       return;
     if (!logstatics.logstream)
     {
-      #ifndef PERSISTANT_OPENLOG
       logstatics.logstream = __fopenlog( logstatics.logfile, "a" );
-      #else
-      if ((logstatics.logstream = __fopenlog( logstatics.logfile, "r+" )) == NULL)
-        logstatics.logstream = __fopenlog( logstatics.logfile, "w" );
-      #endif
     }
     if ( logstatics.logstream )
     {
@@ -235,13 +171,8 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
         if ( ((unsigned int)(filelen >> 10)) > logfileLimit )
         {
           int truncated = 1;
-          #ifndef PERSISTANT_OPENLOG
           fclose( logstatics.logstream );
           logstatics.logstream = __fopenlog( logstatics.logfile, "w" );
-          #else
-          if (ftruncate(fileno(logstatics.logstream),0) == -1)
-            truncated = 0;
-          #endif
           if (logstatics.logstream && truncated)
           {
             fprintf( logstatics.logstream, 
@@ -255,12 +186,8 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
       {
         logstatics.logfilestarted = 1;
         fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
-        #ifndef PERSISTANT_OPENLOG
         fclose( logstatics.logstream );
         logstatics.logstream = NULL;
-        #else
-        fflush( logstatics.logstream );
-        #endif
       }
     }
   }
@@ -374,12 +301,8 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
       if ( logstatics.logstream )
       {
         fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
-        #ifndef PERSISTANT_OPENLOG
         fclose( logstatics.logstream );
         logstatics.logstream = NULL;
-        #else
-        fflush( logstatics.logstream );
-        #endif
       }
       logstatics.logfilestarted = 1;
     }
@@ -395,25 +318,15 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
       
     if (!logstatics.logstream)
     {
-      #ifndef PERSISTANT_OPENLOG
       logstatics.logstream = __fopenlog( logstatics.logfile, "a" );
-      #else
-      logstatics.logstream = __fopenlog( logstatics.logfile, "r+" );
-      if (logstatics.logstream)
-        fseek( logstatics.logstream, 0, SEEK_END );
-      else
-        logstatics.logstream = __fopenlog( logstatics.logfile, "w+" );
-      #endif        
     }  
     if ( logstatics.logstream )
     {
       fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
       if (((long)(filelen = ftell( logstatics.logstream ))) == ((long)(-1)))
         filelen = 0;
-      #ifndef PERSISTANT_OPENLOG
       fclose( logstatics.logstream );
       logstatics.logstream = NULL;
-      #endif
     }
     if ( filelen > (((unsigned long)(logfileLimit))<<10) )
     {    /* careful: file must be read/written without translation - cyp */
@@ -421,7 +334,7 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
       char *swapbuffer = (char *)malloc( maxswapsize );
       if (swapbuffer)
       {
-        if (!logstatics.logstream) /* always false for PERSISTANT_OPENLOG */
+        if (!logstatics.logstream)
           logstatics.logstream = __fopenlog( logstatics.logfile, "r+b" );
         if ( logstatics.logstream )
         {
@@ -459,10 +372,8 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
             }
             ftruncate( fileno( logstatics.logstream ), filelen );
           }
-          #ifndef PERSISTANT_OPENLOG
           fclose( logstatics.logstream );
           logstatics.logstream = NULL;
-          #endif
         }
         free((void *)swapbuffer);
       }  
@@ -479,12 +390,15 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
     if (logstatics.logstream)
     {
       fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
-      #ifndef PERSISTANT_OPENLOG
-      fclose( logstatics.logstream );
-      logstatics.logstream = NULL;
-      #else
-      fflush( logstatics.logstream );
+      #if defined(__unix__) /* don't close it if /dev/tty* */
+      if (isatty(fileno(logstatics.logstream)))
+        fflush( logstatics.logstream );
+      else
       #endif
+      {
+        fclose( logstatics.logstream );
+        logstatics.logstream = NULL;
+      }
     }
     logstatics.logfilestarted = 1;
   }
@@ -513,6 +427,12 @@ static void InternalLogMail( const char *msgbuffer, unsigned int msglen, int /*f
 // a (va_list *) instead to avoid this problem
 void LogWithPointer( int loggingTo, const char *format, va_list *arglist ) 
 {
+  #if ((!defined(MAX_LOGENTRY_LEN)) || (MAX_LOGENTRY_LEN < 1024))
+    #ifdef MAX_LOGENTRY_LEN
+    #undef MAX_LOGENTRY_LEN
+    #endif
+    #define MAX_LOGENTRY_LEN 1024
+  #endif
   char msgbuffer[MAX_LOGENTRY_LEN];
   unsigned int msglen = 0, sel;
   char *buffptr, *obuffptr;
@@ -544,7 +464,8 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
   {
     buffptr = &msgbuffer[0];
     sel = 1;
-    do{
+    do
+    {
       while (*buffptr == '\r' || *buffptr=='\n' )
           buffptr++;
       if (*buffptr == ' ' || *buffptr == '\t')
@@ -726,8 +647,6 @@ const char *LogGetCurrentLogFilename( void )
 
 // ---------------------------------------------------------------------------
 
-#include "probman.h"
-
 void LogScreenPercent( unsigned int load_problem_count )
 {
   static unsigned int displevel = 0, lastperc = 0;
@@ -737,8 +656,7 @@ void LogScreenPercent( unsigned int load_problem_count )
   char *bufptr = &buffer[0];
   unsigned char pbuf[30]; /* 'a'-'z' */
 
-  if (CheckExitRequestTrigger() || CheckPauseRequestTrigger() || 
-    !logstatics.percprint || ( logstatics.loggingTo & LOGTO_SCREEN ) == 0 )
+  if (!logstatics.percprint || ( logstatics.loggingTo & LOGTO_SCREEN ) == 0 )
     return;
 
   isatty  = ConIsScreen();
@@ -862,7 +780,8 @@ void DeinitializeLogging(void)
 static int fixup_logfilevars( const char *stype, const char *slimit,
                               int *type, unsigned int *limit,
                               const char *userslogname, char *logname,
-                              unsigned int maxlognamelen )
+                              unsigned int maxlognamelen,
+                              char *logbasedir, unsigned int maxlogdirlen )
 {
   unsigned int len;
   int climit = 0;
@@ -872,6 +791,7 @@ static int fixup_logfilevars( const char *stype, const char *slimit,
   *type = LOGFILETYPE_NOLIMIT;
   *limit = 0;
   *logname = 0;
+  *logbasedir = 0;
   
   if (userslogname)
   {
@@ -889,6 +809,15 @@ static int fixup_logfilevars( const char *stype, const char *slimit,
       return 0;
     }
   }
+
+  /* generate a basedir if we're going to be needing it */
+  if (!*logname || strcmp(GetFullPathForFilename(logname),logname)!=0)
+  {
+    /* get dir with trailing dir separator. returns NULL if buf is too small*/
+    if (!GetWorkingDirectory( logbasedir, maxlogdirlen ))
+      logbasedir[0] = '\0';
+  }
+  TRACE_OUT((0,"log file = '%s', basedir='%s'\n", logname, logbasedir));
 
   if (!slimit)
   {
@@ -935,7 +864,7 @@ static int fixup_logfilevars( const char *stype, const char *slimit,
 
   if (*type == LOGFILETYPE_ROTATE)
   {
-//ConOutErr("type is LOGFILETYPE_ROTATE ");
+    TRACE_OUT((0,"log type: LOGFILETYPE_ROTATE\n"));
     if (l == 0)
       l++;
     /* convert to days */
@@ -951,13 +880,13 @@ static int fixup_logfilevars( const char *stype, const char *slimit,
   }
   else if (*logname == '\0' || *type == LOGFILETYPE_NONE)
   {
-//ConOutErr("type is LOGFILETYPE_NONE ");
+    TRACE_OUT((0,"log type: LOGFILETYPE_NONE\n"));
     *type = LOGFILETYPE_NONE;
     *limit = 0;
   }
   else if (*type == LOGFILETYPE_RESTART || *type == LOGFILETYPE_FIFO)
   {
-//ConOutErr("type is LOGFILETYPE_RESTART/FIFO ");
+    TRACE_OUT((0,"log type: LOGFILETYPE_RESTART/FIFO\n"));
     /* convert to Kb */
     if (climit == 'g') /* dickheads! */
     {
@@ -979,11 +908,10 @@ static int fixup_logfilevars( const char *stype, const char *slimit,
   }
   else //if (*type == LOGFILETYPE_NOLIMIT)
   {
-//ConOutErr("type is LOGFILETYPE_NOLIMIT ");
+    TRACE_OUT((0,"log type: LOGFILETYPE_NOLIMIT\n"));
     *limit = 0; /* limit is ignored */
   }
-//sprintf(scratch,"limit: %u\n", *limit );
-//ConOutErr(scratch);
+  TRACE_OUT((0,"logfile limit = %u\n", *limit));
   return 0;
 }  
 
@@ -1006,12 +934,16 @@ void InitializeLogging( int noscreen, int nopercent, const char *logfilename,
   fixup_logfilevars( logfiletype, logfilelimit,
                      &logstatics.logfileType, &logstatics.logfileLimit,
                      logfilename, logstatics.logfile, 
-                     (sizeof(logstatics.logfile)-10));
+                     (sizeof(logstatics.logfile)-10),
+                     logstatics.basedir, sizeof(logstatics.basedir));
   if (logstatics.logfileType != LOGFILETYPE_NONE)
+  {
     logstatics.loggingTo |= LOGTO_FILE;
-
+  }
   if (mailmsglen > 0)
+  {
     logstatics.mailmessage = new MailMessage();
+  }
   if (logstatics.mailmessage)
   {
     if (logstatics.mailmessage->Initialize( mailmsglen, smtpsrvr, smtpport,
