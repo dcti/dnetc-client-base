@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.156 2000/06/06 12:26:23 oliver Exp $
+# @(#)$Id: configure,v 1.222.2.157 2000/06/07 23:28:37 oliver Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -111,13 +111,17 @@ XLC_LINTILLA_ASMS="rc5/ppc/crunch_lintilla.ppcxlc.s \
 		   rc5/ppc/crunch_allitnil_552.ppcxlc.s"
 
 RC5PPC_SRCS="rc5/ppc/crunch_lintilla_296.ppc.s \
+             rc5/ppc/crunch_lintilla_296-604.ppc.s \
 	     rc5/ppc/crunch_allitnil_552.ppc.s \
 	     rc5/ppc/rc5_unit_func_lintilla.cpp \
+	     rc5/ppc/rc5_unit_func_lintilla-604.cpp \
 	     rc5/ppc/rc5_unit_func_allitnil.cpp"
-
+             
 RC5PPC_MWCC_SRCS="rc5/ppc/crunch_lintilla_296.ppc.c \
+             rc5/ppc/crunch_lintilla_296-604.ppc.c \
 	     rc5/ppc/crunch_allitnil_552.ppc.c \
 	     rc5/ppc/rc5_unit_func_lintilla.cpp \
+	     rc5/ppc/rc5_unit_func_lintilla-604.cpp \
 	     rc5/ppc/rc5_unit_func_allitnil.cpp"
 
 RC5ALTIVEC_SRCS="rc5/ppc/crunch-vec.s \
@@ -1104,7 +1108,8 @@ case "$1" in
 	TARGET_CC="xlC"
         TARGET_CCFLAGS="$OPTS_XLC3_PPC601"
         TARGET_ADDSRCS="rc5/ppc/crunch_allitnil_552.ppc.s \
-                rc5/ppc/crunch_lintilla_296.ppc.s"
+                rc5/ppc/crunch_lintilla_296.ppc.s \
+                rc5/ppc/crunch_lintilla_296-604.ppc.s"
 	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES -DMEGGS -DKWAN"
 	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
 	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
@@ -1877,7 +1882,7 @@ case "$1" in
     *ppc-amigaos-wos)           # [oliver] <oliver@futaura.co.uk>
 	TARGET_AS="ppc-amigaos-gas -m603"
 	TARGET_CC="ppc-amigaos-g++ -V 2.95.2"
-	TARGET_CCFLAGS="$OPTS_GCC295_PPC -mcpu=603e -I./ -DHAVE_OGR_CORES"
+	TARGET_CCFLAGS="$OPTS_GCC295_PPC -mcpu=603e -mmultiple -mstring -I./ -DHAVE_OGR_CORES"
 	TARGET_ADDSRCS="platforms/amiga/amVersion.c platforms/amiga/amSupport.c \
                         platforms/amiga/amConsole.c platforms/amiga/amNetwork.c \
                         $RC5PPC_SRCS $OGR_ANSI_SRCS"
@@ -1893,7 +1898,7 @@ case "$1" in
     *ppc-amigaos-pup)           # [oliver] <oliver@futaura.co.uk>
 	TARGET_AS="ppc-amigaos-gas -m603"
 	TARGET_CC="ppc-amigaos-g++ -V 2.95.2"
-	TARGET_CCFLAGS="-pup -D__POWERUP__ $OPTS_GCC295_PPC -mcpu=603e -I./ -DHAVE_OGR_CORES"
+	TARGET_CCFLAGS="-pup -D__POWERUP__ $OPTS_GCC295_PPC -mcpu=603e -mmultiple -mstring -I./ -DHAVE_OGR_CORES"
 	TARGET_ADDSRCS="platforms/amiga/amVersion.c platforms/amiga/amSupport.c \
                         platforms/amiga/amConsole.c platforms/amiga/amNetwork.c \
                         $RC5PPC_SRCS $OGR_ANSI_SRCS"
@@ -2323,6 +2328,7 @@ if [ -n "$AIXALL" ]; then
   awk '
 /allitnil_552.ppc.s -o/ { print "\t\${CC} -c ${PPC601FLAGS} " $4 " " $5 " " $6 ; next }
 /lintilla_296.ppc.s -o/ { print "\t\${CC} -c ${PPC604FLAGS} " $4 " " $5 " " $6 ; next }
+/lintilla_296-604.ppc.s -o/ { print "\t\${CC} -c ${PPC604FLAGS} " $4 " " $5 " " $6 ; next }
 /rc5ansi_2-rg.cpp -o/ { print "\t\${CC} -c ${POWERFLAGS} " $4 " " $5 " " $6 ; next }
 { print $0 }' Makefile.tmp > Makefile
   rm Makefile.tmp
@@ -2335,6 +2341,7 @@ if [ -n "$OPTS_NOOPT" ]; then
 /problem.cpp -o/ { print "\t${CC} -c ${CCFLAGS} ${OPTS_NOOPT} common/problem.cpp -o output/problem.o"; next }
 /confmenu.cpp -o/ { print "\t${CC} -c ${CCFLAGS} ${OPTS_NOOPT} common/confmenu.cpp -o output/confmenu.o"; next }
 /rc5_unit_func_lintilla.cpp -o/ { print "\t\${CC} -c \${CCFLAGS} ${OPTS_NOOPT} rc5/ppc/rc5_unit_func_lintilla.cpp -o output/rc5_unit_func_lintilla.o"; next }
+/rc5_unit_func_lintilla-604.cpp -o/ { print "\t\${CC} -c \${CCFLAGS} ${OPTS_NOOPT} rc5/ppc/rc5_unit_func_lintilla-604.cpp -o output/rc5_unit_func_lintilla-604.o"; next }
 /rc5_unit_func_allitnil.cpp -o/ { print "\t\${CC} -c \${CCFLAGS} ${OPTS_NOOPT} rc5/ppc/rc5_unit_func_allitnil.cpp -o output/rc5_unit_func_allitnil.o"; next }
 { print $0 }' Makefile.tmp > Makefile
   rm Makefile.tmp
