@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.10  1998/10/06 21:10:38  cyp
+// Removed call to LogSetTimeStampMode(). Function is obsolete.
+//
 // Revision 1.9  1998/10/05 02:12:12  cyp
 // Removed explicit time stamping ([%s],Time()). This is now done automatically
 // by Log...(). Added LogSetTimeStampingMode(1); at the top of Client::Run().
@@ -44,7 +47,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.9 1998/10/05 02:12:12 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.10 1998/10/06 21:10:38 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -259,7 +262,7 @@ static void yield_pump( void *tv_p )
       if (tv->tv_usec>1000000)
         { tv->tv_sec=tv->tv_usec/1000000; tv->tv_usec%=1000000; }
       }
-    if (RegPolledProcedure(yield_pump, tv_p, NULL, 32 ) == -1)
+    if (RegPolledProcedure(yield_pump, tv_p, (struct timeval *)tv_p, 32 )==-1)
       {         //should never happen, but better safe than sorry...
       LogScreen("Panic! Unable to re-initialize yield pump\n"); 
       RaiseExitRequestTrigger();
@@ -835,8 +838,6 @@ int Client::Run( void )
     u32 connectrequested = 0;
   #endif
 
-  LogSetTimeStampingMode(1); /* turn on automatic timestamps */
-
   // =======================================
   // Notes:
   //
@@ -1073,11 +1074,11 @@ int Client::Run( void )
   
       static struct timeval tv = {0,10000}; /* 100/s */
    
-      #if (CLIENT_OS == OS_NETWARE)
+      #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS)
       tv.tv_usec = 500;
       #endif
     
-      if (RegPolledProcedure(yield_pump, (void *)&tv, NULL, 32 ) == -1)
+      if (RegPolledProcedure(yield_pump, (void *)&tv, tv, 32 ) == -1)
         {
         Log("Unable to initialize yield pump\n" );
         TimeToQuit = -1; 
