@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.14 1999/12/16 19:24:28 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.15 1999/12/29 22:24:21 snake Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -52,8 +52,8 @@
 #define OS_SOLARIS      15
 /* #define OS_UNUSED_1  16 */ /* never used. was os9 */
 /* #define OS_UNUSED_2  17 */ /* never used. was java-vm */
-#define OS_BSDI         18
-#define OS_BSDOS        OS_BSDI /* for migration to BSD/OS, the real name */
+#define OS_BSDOS        18
+#define OS_BSDI         OS_BSDOS /* for migration to BSD/OS, the real name */
 #define OS_NEXTSTEP     19
 #define OS_SCO          20
 #define OS_QNX          21
