@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.125  1998/11/13 06:13:46  silby
+# Made freebsd targets static
+#
 # Revision 1.124  1998/11/12 22:58:34  remi
 # Reworked a bit AIX ppc & power defines, based on Patrick Hildenbrand
 # <patrick@de.ibm.com> advices.
@@ -1097,6 +1100,7 @@ case "$1" in
     *x86-freebsd)
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -DPIPELINE_COUNT=2"
+	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_LIBS="-lc_r"
@@ -1107,6 +1111,7 @@ case "$1" in
     *x86-freebsd-mt)
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
+        TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
@@ -1117,6 +1122,7 @@ case "$1" in
     *x86-freebsd-elf)
         TARGET_AS="gcc -c"
         TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -DPIPELINE_COUNT=2 -D__ELF__"
+	TARGET_LDFLAGS="-static"
         TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
         TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
@@ -1128,6 +1134,7 @@ case "$1" in
     *x86-freebsd-mt-elf)
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
+        TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
