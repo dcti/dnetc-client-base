@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.60 2000/11/21 00:14:43 teichp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.61 2000/12/14 19:27:41 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -886,6 +886,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           /* Cely: 660: Mendocino A80523 (0.25um, 128 KB On-Die L2 Cache) */
           {  0x0670,  0x102, "Pentium III" }, /* Katmai (0.25um/0.18um), 512KB, KNI */
           {  0x0680,  0x102, "Pentium III" },
+          {  0x0690,  0x102, "Pentium III/Timna" }, /* 6547:0692 */
           {  0x06A0,  0x102, "Pentium III" }, //0.18 um w/ 1/2MB on-die L2
           {  0x0F00,  0x102, "Pentium 4" },
           {  0x0000,     -1, NULL }
