@@ -3090,11 +3090,11 @@ int main( int argc, char *argv[] )
       client.ValidateConfig();
 
       // RC5 We care about both the fetch & flush errors.
-      int retcode2 = client.Update(1,1,1);
+      retcode = client.contestdone[0] ? 0 : client.Update(0,1,1);
       if (client.randomchanged) client.WriteConfig();
 
       // DES We care about both the fetch & flush errors.
-      retcode = client.Update(0,1,1);
+      int retcode2 = client.contestdone[1] ? 0 : client.Update(1,1,1);
 
       client.mailmessage.quietmode = client.quietmode;
       client.mailmessage.checktosend(1);
