@@ -3,10 +3,16 @@
  * Copyright distributed.net 1997-2001 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * -----------------------------------------------------------------
+ * NOTE: this file (the problem loader/saver) knows nothing about
+ *       individual contests. It is problem.cpp's job to provide 
+ *       all the information it needs to load/save a problem.
+ *       KEEP IT THAT WAY!
+ * -----------------------------------------------------------------
 */
-
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.62 2001/01/25 00:43:35 andreasb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.63 2001/02/03 18:18:57 cyp Exp $"; }
 
 //#define TRACE
 
@@ -431,19 +437,19 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       if ((thisprob->pub_data.loaderflags & PROBLDR_DISCARD)!=0)
       {
         action_msg = "Discarded";
-        reason_msg = "\n(project disabled/closed)";
+        reason_msg = "project disabled/closed";
         discarded = 1;
       }
       else if (resultcode < 0)
       {
         action_msg = "Discarded";
-        reason_msg = " (core error)";
+        reason_msg = "core error";
         discarded = 1;
       }
       else if (PutBufferRecord( client, &wrdata ) < 0)
       {
         action_msg = "Discarded";
-        reason_msg = "\n(buffer error - unable to save)";
+        reason_msg = "buffer error - unable to save";
         discarded = 1;
       }
       else
@@ -455,24 +461,19 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         { /* adjust bufupd_pending if outthresh has been crossed */
           //Log("1. *bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
         }       
-        #if defined(HAVE_OGR_CORES)
-        /* did we save an invalid stub? */
-        if (wrdata.contest == OGR && wrdata.resultcode == RESULT_NOTHING &&
-            (wrdata.work.ogr.nodes.hi | wrdata.work.ogr.nodes.lo) == 0)
+
+        if (load_problem_count > COMBINEMSG_THRESHOLD)
+          ; /* nothing */
+        else if (thisprob->pub_data.was_truncated)
         {
-          unsigned int r = wrdata.work.ogr.workstub.worklength;
           action_msg = "Skipped";
-          reason_msg = "STUB_E_ Unknown error";
-               if (r & STUB_E_MARKS)  reason_msg = "\nSTUB_E_MARKS: Stub is not supported by this client";
-          else if (r & STUB_E_GOLOMB) reason_msg = "\nSTUB_E_GOLOMB: Stub is not golomb";
-          else if (r & STUB_E_LIMIT)  reason_msg = "\nSTUB_E_LIMIT: Stub has been obsoleted by a better core";
-        } 
-        else
-        #endif
-        {
-          if (load_problem_count <= COMBINEMSG_THRESHOLD)
-            action_msg = ((finito)?("Completed"):("Saved"));
+          discarded  = 1;
+          reason_msg = thisprob->pub_data.was_truncated;
         }
+        else if (!finito)
+          action_msg = "Saved";
+        else
+          action_msg = "Completed";
       }
 
       if (ProblemGetInfo( thisprob, 0, &contname, 
@@ -501,7 +502,9 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
           {
             //[....] Discarded CSC 12345678:ABCDEF00 4*2^28
             //       (project disabled/closed)
-            Log("%s: %s %s%s\n", contname, action_msg, pktid, reason_msg );
+            Log("%s: %s %s%c(%s)\n", contname, action_msg, pktid, 
+                                   ((strlen(reason_msg)>10)?('\n'):(' ')),
+                                   reason_msg );
           }
           else
           {
