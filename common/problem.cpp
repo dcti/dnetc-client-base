@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.162 2002/09/24 16:35:33 jlawson Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.163 2002/09/24 20:50:38 jlawson Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -781,7 +781,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
           ((thisprob->priv_data.contestwork.crypto.key.lo >> 16) + (thisprob->priv_data.contestwork.crypto.keysdone.lo >> 16))) >> 16);
       thisprob->priv_data.rc5unitwork.L0.lo = thisprob->priv_data.contestwork.crypto.key.lo + thisprob->priv_data.contestwork.crypto.keysdone.lo;
       if (thisprob->pub_data.contest == RC5)
-        __SwitchRC5Format(&(thisprob->priv_data.rc5unitwork.L0.hi), &(thisprob->priv_data.rc5unitwork.L0.lo));
+        __SwitchRC564Format(&(thisprob->priv_data.rc5unitwork.L0.hi), &(thisprob->priv_data.rc5unitwork.L0.lo));
       thisprob->priv_data.refL0.lo = thisprob->priv_data.rc5unitwork.L0.lo;
       thisprob->priv_data.refL0.hi = thisprob->priv_data.rc5unitwork.L0.hi;
       // set up the unitwork structure
