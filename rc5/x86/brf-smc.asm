@@ -2,7 +2,7 @@
 ; by Bruce Ford, based in part on Remi's smc core.
 ; Slight improvement over RG smc core. 104 kkeys/s on a 486/DX4-100
 ;
-; $Id: brf-smc.asm,v 1.1.2.2 2001/04/14 13:41:39 cyp Exp $
+; $Id: brf-smc.asm,v 1.1.2.3 2002/01/16 12:24:42 fordbr Exp $
 
 %macro calign 1  ; code align macro (arg = 'align to')
                  ; [nasm's integral 'align' statement blindly inserts 'nop']
@@ -694,7 +694,7 @@ _next_inc_486:
         jmp     _full_exit_486
 
         ; Test of second half of ciphertext for key 1
-        calign 4 ; No alignment needed.  Just lucky.
+        ; No alignment needed.  Just lucky.
 test_C_1_1:
         mov     ecx, ebp                        ; 1
         add     ecx, edx                        ; 1     L0 = ROTL(L0 + A + L1, A + L1);
@@ -734,8 +734,6 @@ _modif486_work_C_1_2:
         cmp     edi, 0x12345678                 ; 1
         jne near __exit_2_486
         mov     dword [work_add_iter], 1
-
-        lea     esi, [esi+1]                    ; Alignment
 
 calign 4
 _full_exit_486:
