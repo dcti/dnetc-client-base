@@ -1,0 +1,96 @@
+
+ RC5-DES CLI Client for Win32 (Win9x/WinNT) and WinNT service.
+
+ Welcome to the RC5DES (Project Bovine/Project Monarch) Client for Win32.
+
+    1.0  Getting started
+         1.1 Installing the client as a Win9x/WinNT service.
+    2.0  Win32 CLI specific notes
+    3.0  Help! 
+
+ 1.0  Getting started ------------------------------------------------
+
+    Just unpack the client in a directory of your choice and fire it up
+    with [path]RC5DES.EXE
+
+    If you have never run the client before, it will initiate the
+    menu-driven configuration. Save and quit when done, the 
+    configuration file will be saved in the same directory as the 
+    client. Then, simply restart the client. From that point on it will 
+    use the saved configuration.
+    
+    The configuration options are fairly self-explanatory and can be run
+    at any time by starting the client with the '-config' option.
+    A list of command line options is available by starting the client 
+    with '-help'.
+
+    A detailed guide to the various configuration options is available
+    online at http://www.distributed.net/FAQ/
+
+
+    1.1   Running the client as a Win9x/WinNT Service ----------------
+
+    A Win9x/WinNT service is a process that starts running when the 
+    computer is powered up, and does not stop until the computer is powered
+    down. Unlike normal processes, services will continue to run even when
+    a user logs out.
+
+    To install the client as a service, run the client with the -install
+    switch. This will cause it to register itself with the service handler,
+    which will in turn automatically start the client the next time the
+    computer is powered up. To deinstall a client previously installed as
+    a service, start it with the -uninstall switch.
+    
+ 2.0  Notes: ---------------------------------------------------------
+
+    Beginning with v2.2702.419, the win32 CLI client no longer runs
+    as a console session, but emulates a "console" in a GUI window.
+    The advantages are numerous: (a) the client can be started "hidden";
+    (b) conagent is not loaded which cuts down the overhead; (c) the
+    client is more efficient. (d) the client can be shutdown with "close";
+    (e) the client will shutdown automatically (if not running as a service)
+    when Windows ends; (f) it gets rid of the "DOS box" and start bar.
+    
+    Most importantly, the client uses exactly the same source code base 
+    as all the other clients on all the other platforms. This enhances 
+    the client's stability since the chances that a bug will remain 
+    undetected for long are greatly reduced.
+    
+    The new CLI client is also capable of asyncronously executing client
+    "modes", ie -fetch, -flush, -update and so on. Clicking with right 
+    mouse button on the client window will bring up a "mode" menu.
+
+ 3.0  Help: ----------------------------------------------------------
+
+    An immediate source of help is the IRC channel on EFnet. The 
+    #distibuted channel is open 24 hours a day, 7 days a week.
+
+    If you need further assistance with client use or operation, refer to 
+    the the list of "Frequently asked Questions" (FAQs) available online 
+    at http://www.distributed.net/FAQ/ Documents cover every aspect of 
+    running a client including "The Complete Step by Step Guide to 
+    Running Your First Client", "How To Join A Team", and the popular 
+    "Statistics Server FAQ".
+
+    If you prefer, you may also post a message to the mailing list at 
+    <rc5@lists.distributed.net> (To subscribe to the mailing list, send 
+    a message to <majordomo@lists.distributed.net> with "subscribe rc5" 
+    as the message text).
+
+    A public database of known problems and incompatibilities is available
+    at http://www.distributed.net/cgi/buglist.cgi
+
+    More user support is available from <rc5help@distributed.net> as well
+    as from our regional support representatives listed at 
+    http://www.distributed.net/regional/index.html
+    
+    If you believe you have found a bug in the client or would like to
+    make a suggestion, please send a message to the coders at 
+    <coders@lists.distributed.net>. Don't forget to specify which platform 
+    you are running the client on. 
+    
+    If you believe you have found a bug specific to this port, or would
+    like to make a suggestion specific to this port, send a message to the 
+    port maintainer as listed on http://www.distributed.net/credits.html
+    Don't fret if you don't get a response, right away.
+    
