@@ -4,15 +4,20 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *rc5ansi2_cpp(void) {
-return "@(#)$Id: r72ansi2.cpp,v 1.10 2002/10/15 20:47:27 acidblood Exp $"; }
+return "@(#)$Id: r72ansi2.cpp,v 1.11 2002/10/16 20:56:56 jlawson Exp $"; }
 
 #include "problem.h"
+#include "rotate.h"
+
 #define P 0xB7E15163
 #define Q 0x9E3779B9
-#define ROTL(x,y) (((x)<<(y&(0x1F))) | ((x)>>(32-(y&(0x1F)))))
 
 #ifdef __cplusplus
 extern "C" u32 rc5_72_unit_func_ansi_2 ( RC5_72UnitWork *, u32 );
+#endif
+
+#ifdef _MSC_VER
+#pragma warning(disable:4307)   // integral constant overflow
 #endif
 
 u32 rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
