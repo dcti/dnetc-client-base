@@ -9,6 +9,9 @@
 */
 //
 // $Log: setprio.cpp,v $
+// Revision 1.40  1998/12/04 16:48:11  silby
+// Diversifying freebsd prio setting.
+//
 // Revision 1.39  1998/12/04 11:04:12  cyp
 // erp. Fixed a #if defined(_POSIX_THREADS_SUPPORTED) I misplaced.
 //
@@ -49,7 +52,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.39 1998/12/04 11:04:12 cyp Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.40 1998/12/04 16:48:11 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -238,6 +241,46 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
           if (prio < 9)
             schedctl( NDPRI, 0, (NDPLOMIN - NDPNORMMIN)/prio);
         }
+      }
+  #elf (CLIENT_OS == OS_FREEBSD)
+    #define PRI_OTHER_MAX=10;
+    #define PRI_OTHER_MIN=20;
+    if ( set_for_thread )
+      {
+      #if defined(_POSIX_THREADS_SUPPORTED) //defined in cputypes.h
+        #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
+          //nothing - priority is set when created
+        #else
+          //SCHED_OTHER policy
+          int newprio;
+          if ( prio == 9 )
+            newprio = PRI_OTHER_MAX;
+          else
+            newprio = (PRI_OTHER_MIN + PRI_OTHER_MAX + 1) / 10;
+          if (pthread_setprio(pthread_self(), newprio ) < 0)
+            return -1;
+        #endif
+      #endif
+      }
+    else 
+      {
+      static int oldnice = -1;
+      int newnice = ((22*(9-prio))+5)/10;  /* scale from 0-9 to 20-0 */
+      if (oldnice != -1)
+        {
+        errno = 0;
+        nice( -oldnice );   // note: assumes nice() handles the 
+        if ( errno )        // (-20 to 20) range and not 0-40 
+          return -1;
+        }
+      if ( newnice != 0 )
+        {
+        errno = 0;
+        nice( newnice );
+        if ( errno )
+          return -1;
+        }
+      oldnice = newnice;
       }
   #else
     if ( set_for_thread )
