@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.93 2001/06/17 17:23:53 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.94 2001/06/30 09:10:20 andreasb Exp $
 ==========================================================================
 
 2.8000
@@ -38,6 +38,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.93 2001/06/17 17:23:53 andreasb Exp
             imp: some: faster 68k and PPC OGR cores.
             
             fix: all: flushes when 1 packet is left in in-buffer (#2209).
+            fix: all: time threshold ignored on command line -update (#2286).
 
 2.8014.468  fix: all: bad results caused by build .466.
             fix: all: packets were saved and reloaded after buffer update.

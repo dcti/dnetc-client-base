@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.62 2001/06/23 17:59:03 andreasb Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.63 2001/06/30 09:08:18 andreasb Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -1146,8 +1146,6 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
   if (!check_fetch && !check_flush)
     return 0;    
 
-  TRACE_OUT((+1,"BufferCheckIfUpdateNeeded(client, contestid=%d, check_fetch=%d/check_flush=%d)\n", contestid, check_fetch, check_flush));
-
   /* normally an fetch_needed check will be true only if the in-buff is
      completely empty. With BUFFUPDCHECK_TOPOFF, the fetch_needed check
      will be also be true if below threshold. Used with connect_often etc.
@@ -1164,6 +1162,9 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
   if (check_fetch && check_flush && (buffupd_flags & BUFFUPDCHECK_EITHER)!=0)
     either_or = 1; /* either criterion filled fulfills both criteria */
                    
+  TRACE_OUT((+1, "BufferCheckIfUpdateNeeded(contestid=%d, check_fetch=%d/check_flush=%d, forcefetch=%d, either_or=%d)\n", 
+                 contestid, check_fetch, check_flush, fill_even_if_not_totally_empty, either_or));
+
   ignore_closed_flags = 0;
   cont_start = 0; cont_count = CONTEST_COUNT;
   if (contestid >= 0 && contestid < CONTEST_COUNT)
@@ -1271,7 +1272,7 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
           {
             if (swucount == 0) /* count not supported */
               swucount = pktcount * 100; /* >= 1.00 SWU's per packet */
-            if (swucount < ClientGetInThreshold( client, cont_i, 0 ))
+            if (swucount < ClientGetInThreshold( client, cont_i, 1 /*force*/ ))
             {     
               need_fetch = 1;
             }  
