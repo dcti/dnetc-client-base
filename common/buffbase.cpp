@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.59 2001/04/09 01:33:02 sampo Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.60 2001/04/20 16:11:46 cyp Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -542,7 +542,7 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
     BufferZapFileRecords( source_file );
   }
   if (recovered > 0 && interactive)
-    Log("Import: %ld records successfully imported.\n", recovered);
+    Log("Import: %u records successfully imported.\n", recovered);
   else if (errs == 0 && recovered == 0 && interactive)
     Log("Import: No buffer records could be imported.\n");
   return (long)recovered;
@@ -771,7 +771,7 @@ long BufferFetchFile( Client *client, int break_pending,
         }
         percent = ((donesofar*10000)/totrans);
 
-        LogScreen( "\r%s: Retrieved %s %lu of %lu (%u.%02u%%) ",
+        LogScreen( "\r%s: Retrieved %s %lu of %lu (%lu.%02lu%%) ",
             contname, unittype, donesofar, totrans, percent/100, percent%100 );
       }
     }  /* while ( lefttotrans_su > 0  ) */

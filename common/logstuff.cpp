@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.58 2001/04/17 18:06:52 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.59 2001/04/20 16:11:47 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1098,7 +1098,7 @@ void LogScreenPercent( unsigned int load_problem_count )
     ClientEventSyncPost( CLIEVENT_CLIENT_CRUNCHOMETER, buffer, -1 );
     if (!event_only)
     {
-      LogScreen( "\r%s", buffer, NULL );
+      LogScreen( "\r%s", buffer );
       logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0
       logstatics.lastwasperc = 1; //(endperc != 0); //percbar requires reset
       /* simple, eh? :) */

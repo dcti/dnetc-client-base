@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __LOGSTUFF_H__
-#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.11.2.7 2001/03/12 00:00:58 sampo Exp $"
+#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.11.2.8 2001/04/20 16:11:48 cyp Exp $"
 
 /* this is shared with Configure() */
 #define LOGFILETYPE_NONE    0 //no logging to file
@@ -23,23 +23,31 @@
 
 /* ---------------------------------------------------- */
 
+#if defined(__GNUC__)
+#define __CHKFMT_PRINTF __attribute__((format(printf,1,2)))
+#define __CHKFMT_LOGTO  __attribute__((format(printf,2,3)))
+#else
+#define __CHKFMT_PRINTF 
+#define __CHKFMT_LOGTO 
+#endif
+
 //Flush mail and if last screen write didn't end with a LF then do that now. 
 extern void LogFlush( int forceflush );
 
 //Log message to screen only. Make adjustments, like fixing a missing datestamp
-extern void LogScreen( const char *format, ... );
+extern void LogScreen( const char *format, ... ) __CHKFMT_PRINTF;
 
 //Log to mail+file+screen. Make adjustments.
-extern void Log( const char *format, ... );
+extern void Log( const char *format, ... ) __CHKFMT_PRINTF;
 
 //Log message in raw form (no adjustments) to screen only.
-extern void LogScreenRaw( const char *format, ... );
+extern void LogScreenRaw( const char *format, ... ) __CHKFMT_PRINTF;
 
 //Log to mail+file+screen. No adjustments.
-extern void LogRaw( const char *format, ... );
+extern void LogRaw( const char *format, ... ) __CHKFMT_PRINTF;
 
 //Log to LOGTO_* flags (RAW implies screen)
-extern void LogTo( int towhat, const char *format, ... );
+extern void LogTo( int towhat, const char *format, ... ) __CHKFMT_LOGTO;
 
 //display percent bar. (bar is now always compound form)
 extern void LogScreenPercent( unsigned int load_problem_count );
