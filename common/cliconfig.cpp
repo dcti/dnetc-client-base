@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.128  1998/07/05 15:53:54  cyruspatel
+// Implemented EraseCheckpointFile() and TruncateBufferFile() in buffwork.cpp;
+// substituted unlink() with EraseCheckpointFile() in client.cpp; modified
+// client.h to #include buffwork.h; moved InternalGetLocalFilename() to
+// cliconfig.cpp; cleaned up some.
+//
 // Revision 1.127  1998/07/05 13:44:02  cyruspatel
 // Fixed an inadvertent wrap of one of the long single-line revision headers.
 //
@@ -170,7 +176,7 @@
 #endif
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.127 1998/07/05 13:44:02 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.128 1998/07/05 15:53:54 cyruspatel Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -1439,7 +1445,8 @@ void Client::ValidateConfig( void )
     else if (exitfilechecktime > 600) exitfilechecktime=600;
   nettimeout=min(300,max(30,nettimeout));
 
-#ifndef DONT_USE_PATHWORK
+#ifndef DONT_USE_PATHWORK  //ie use it
+
   if (isstringblank(in_buffer_file[0]))
     strcpy(in_buffer_file[0],"buff-in" EXTN_SEP "rc5");
   if (isstringblank(out_buffer_file[0]))
@@ -1457,8 +1464,8 @@ void Client::ValidateConfig( void )
   if (isstringblank(logname)) 
     strcpy (logname,"none");
 
+#else //ie don't use pathwork
 
-#else //use pathwork
   if (isstringblank(ini_in_buffer_file[0]))
     strcpy(ini_in_buffer_file[0],"buff-in" EXTN_SEP "rc5");
   if (isstringblank(ini_out_buffer_file[0]))
@@ -3116,5 +3123,56 @@ bool Client::CheckForcedKeyproxy(void)
   return Forced;
 }
 
+// --------------------------------------------------------------------------
+
+//#ifdef DONT_USE_PATHWORK
+const char *Client::InternalGetLocalFilename(const char *filename)
+//If there is no path given, add on the path of the client's executAble
+{
+  if (strcmpi(filename,"none") != 0)
+    {
+    #if (CLIENT_OS == OS_NETWARE)           //thanks, but no thanks.
+    #elif (CLIENT_OS == OS_DOS)   //nothin' - this code doesn't work for DOS
+    #elif (CLIENT_OS == OS_OS2) //doesn't work for OS/2 either
+    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16)
+      {
+      char drive[_MAX_DRIVE];
+      char fname[_MAX_FNAME];
+      char dir[_MAX_DIR];
+      char ext[_MAX_EXT];
+      _splitpath( filename, drive, dir, fname, ext );
+      if ((strlen(drive)==0) && (strlen(dir)==0))
+        {
+        static char buffer[200];
+        ::GetModuleFileName(NULL, buffer, sizeof(buffer));
+        char *slash = strrchr(buffer, '\\');
+        if (slash == NULL) strcpy(buffer, filename);
+        else strcpy(slash + 1, filename);
+        return buffer;
+        }
+      }
+    #elif (CLIENT_OS == OS_RISCOS)
+      return riscos_localise_filename(filename);
+    #else
+      {
+      if ( (strrchr(filename,PATH_SEP_C) == NULL) && (strrchr(inifilename,PATH_SEP_C) != NULL) )
+        //check that we need to add a path, and that we have a path to add
+        {
+        char buffer[200];
+        strcpy( buffer,inifilename );
+        char *slash = strrchr(buffer, PATH_SEP_C);
+        *(slash+1) = 0; // we have to add path info in!
+
+        // no path already here, add it
+        strcat(buffer,filename);
+        return buffer;
+        }
+      }
+    #endif
+    } //if (strcmpi(filename,"none") != 0)
+  return filename;
+}
+//endif
 
 // --------------------------------------------------------------------------
+

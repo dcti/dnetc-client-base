@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.77  1998/07/05 15:53:58  cyruspatel
+// Implemented EraseCheckpointFile() and TruncateBufferFile() in buffwork.cpp;
+// substituted unlink() with EraseCheckpointFile() in client.cpp; modified
+// client.h to #include buffwork.h; moved InternalGetLocalFilename() to
+// cliconfig.cpp; cleaned up some.
+//
 // Revision 1.76  1998/07/05 13:44:07  cyruspatel
 // Fixed an inadvertent wrap of one of the long single-line revision headers.
 //
@@ -128,7 +134,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.76 1998/07/05 13:44:07 cyruspatel Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.77 1998/07/05 15:53:58 cyruspatel Exp $";
 #endif
 
 #include "client.h"
@@ -142,11 +148,6 @@ long __stack  = 65536L; // AmigaOS has no automatic stack extension
       // seems standard stack isn't enough
 #endif // (CLIENT_CPU == CPU_68K)
 #endif // (CLIENT_OS == OS_AMIGAOS)
-
-#if (CLIENT_OS == OS_WIN32)
-rasenumconnectionsT rasenumconnections = NULL;
-rasgetconnectstatusT rasgetconnectstatus = NULL;
-#endif
 
 #if (CLIENT_OS == OS_RISCOS)
 s32 guiriscos, guirestart;
@@ -2472,9 +2473,9 @@ PreferredIsDone1:
           // Checkpoint info just became outdated...
 
           if ((checkpoint_file[0][0])!=0 && strcmp(checkpoint_file[0],"none") != 0)
-            unlink(checkpoint_file[0]);
+            EraseCheckpointFile(checkpoint_file[0]); //buffwork.cpp
           if ((checkpoint_file[1][0])!=0 && strcmp(checkpoint_file[1],"none") != 0)
-            unlink(checkpoint_file[1]);
+            EraseCheckpointFile(checkpoint_file[1]); //buffwork.cpp
 
 
           //---------------------
@@ -2830,9 +2831,9 @@ PreferredIsDone1:
       // ----------------
 
       if ((checkpoint_file[0][0])!=0 && strcmp(checkpoint_file[0],"none") != 0)
-        unlink(checkpoint_file[0]);
+        EraseCheckpointFile(checkpoint_file[0]);
       if ((checkpoint_file[1][0])!=0 && strcmp(checkpoint_file[1],"none") != 0)
-        unlink(checkpoint_file[1]);
+        EraseCheckpointFile(checkpoint_file[1]);
 
       // ----------------
       // Shutting down: do a net flush if we don't have diskbuffers
@@ -2892,7 +2893,7 @@ void Client::DoCheckpoint( int load_problem_count )
   {
     if ((checkpoint_file[j][0])!=0 && strcmp(checkpoint_file[j],"none") != 0)
     {
-      unlink(checkpoint_file[j]); // Remove prior checkpoint information (if any).
+      EraseCheckpointFile(checkpoint_file[j]); // Remove prior checkpoint information (if any).
 
       for (s32 cpu_i=0 ; cpu_i < load_problem_count ; cpu_i++)
       {
@@ -3468,13 +3469,18 @@ int main( int argc, char *argv[] )
 }
 #endif
 
-#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+// ---------------------------------------------------------------------------
+
+#if (CLIENT_OS == OS_WIN32)
+rasenumconnectionsT rasenumconnections = NULL;
+rasgetconnectstatusT rasgetconnectstatus = NULL;
+#endif
 
 s32 Client::StartLurk(void)// Initializes Lurk Mode
   // 0 == Successfully started lurk mode
   // -1 == Start of lurk mode failed
 {
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) && defined(MULTITHREAD)
   LPVOID lpMsgBuf;
 
   if (!rasenumconnections || !rasgetconnectstatus)
@@ -3513,7 +3519,6 @@ s32 Client::StartLurk(void)// Initializes Lurk Mode
     }
   }
 #endif
-
 return 0;
 }
 
@@ -3521,7 +3526,7 @@ s32 Client::LurkStatus(void)// Checks status of connection
   // 0 == not currently connected
   // 1 == currently connected 
 {
-#if (CLIENT_OS==OS_WIN32)
+#if (CLIENT_OS==OS_WIN32) && defined(MULTITHREAD)
 if (lurk && rasenumconnections && rasgetconnectstatus)
   {
   RASCONN rasconn[8];
@@ -3544,7 +3549,7 @@ if (lurk && rasenumconnections && rasgetconnectstatus)
       }
     }
   }
-#elif (CLIENT_OS==OS_OS2)
+#elif (CLIENT_OS == OS_OS2) && defined(MULTITHREAD)
   DialOnDemand dod;       // just used to check online status for lurk
   return dod.rweonline();
 #endif
@@ -3554,6 +3559,3 @@ return 0;// Not connected
 
 // ---------------------------------------------------------------------------
 
-#endif
-
-// ---------------------------------------------------------------------------

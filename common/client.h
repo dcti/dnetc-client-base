@@ -5,6 +5,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.h,v $
+// Revision 1.61  1998/07/05 15:54:02  cyruspatel
+// Implemented EraseCheckpointFile() and TruncateBufferFile() in buffwork.cpp;
+// substituted unlink() with EraseCheckpointFile() in client.cpp; modified
+// client.h to #include buffwork.h; moved InternalGetLocalFilename() to
+// cliconfig.cpp; cleaned up some.
+//
 // Revision 1.60  1998/07/05 13:44:10  cyruspatel
 // Fixed an inadvertent wrap of one of the long single-line revision headers.
 //
@@ -115,6 +121,7 @@
 #include "sleepdef.h"
 #include "threadcd.h"
 #include "cpucheck.h"
+#include "buffwork.h"
 
 #define OPTION_SECTION "parameters"
 
@@ -280,21 +287,10 @@ extern "C" {
   #define EXTN_SEP_C '.'
   #endif
 #else
-  #if (CLIENT_OS == OS_NETWARE)
-  #define EXTN_SEP   "."
-  #define EXTN_SEP_C '.'
-  #elif ((CLIENT_OS == OS_DOS) || CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)
-  #define EXTN_SEP   "."
-  #define EXTN_SEP_C '.'
-  #elif (CLIENT_OS == OS_MACOS)
-  #define EXTN_SEP   "."
-  #define EXTN_SEP_C '.'
-  #elif (CLIENT_OS == OS_RISCOS)
-  #define EXTN_SEP   "/"
-  #define EXTN_SEP_C '/'
+  #if (CLIENT_OS == OS_RISCOS)
+    #define EXTN_SEP   "/"
   #else
-  #define EXTN_SEP   "."
-  #define EXTN_SEP_C '.'
+    #define EXTN_SEP   "."
   #endif
 #endif
 
@@ -535,16 +531,10 @@ protected:
   s32 InternalGetBuffer( const char *filename, FileEntry * data, u32 *optype , u8 contest);
   s32 InternalCountBuffer( const char *filename , u8 contest);
   const char *InternalGetLocalFilename( const char *filename );
-  s32 EnsureBufferConsistency( const char *filename );
+  //s32 EnsureBufferConsistency( const char *filename ); //obsolete
 
-#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
-s32 StartLurk(void);// Initializes Lurk Mode
-  // 0 == Successfully started lurk mode
-  // -1 == Start of lurk mode failed
-s32 LurkStatus(void);// Checks status of connection
-  // 0 == not currently connected
-  // 1 == currently connected 
-#endif
+  s32 StartLurk(void);// Initializes Lurk Mode -> 0=success, -1 = failed
+  s32 LurkStatus(void);// Checks status of connection -> !0 = connected
 
 #if defined(NEEDVIRTUALMETHODS)
   // methods that can be overriden to provide additional functionality
