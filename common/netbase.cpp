@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.5.2.6 2003/04/26 15:16:48 pfeffi Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.5.2.7 2003/04/28 09:44:24 andreasb Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -235,6 +235,7 @@ extern "C" {
     || (CLIENT_OS == OS_NETBSD) \
     || ((CLIENT_OS == OS_QNX) && (defined(__QNXNTO__))) \
     || ((CLIENT_OS == OS_FREEBSD) && (__FreeBSD__ >= 4)) \
+    || (CLIENT_OS == OS_SOLARIS) \
     || (CLIENT_OS == OS_RISCOS)
   /* nothing - socklen_t already defined */
 #elif ((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION < 199701))
