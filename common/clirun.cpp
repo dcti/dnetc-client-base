@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.13  1998/10/11 05:26:47  cyp
+// Fixes for new-and-improved win32/win16 "console" message pumping.
+//
 // Revision 1.12  1998/10/11 00:37:50  cyp
 // Removed call to SelectCore() [now done from main()] and
 // added support for ModeReq
@@ -55,7 +58,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.12 1998/10/11 00:37:50 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.13 1998/10/11 05:26:47 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -246,7 +249,7 @@ static void yield_pump( void *tv_p )
   #elif (CLIENT_OS == OS_IRIX)
     sginap(0);
   #elif (CLIENT_OS == OS_WIN32)
-    Sleep(0);
+    w32Yield(); //Sleep(0);
   #elif (CLIENT_OS == OS_DOS)
     dosCliYield(); //dpmi yield
   #elif (CLIENT_OS == OS_NETWARE)
@@ -268,6 +271,7 @@ static void yield_pump( void *tv_p )
     {
     if (runcounters.nonmt_ran)
       pumps_without_run = 0;
+    #ifdef NON_PREEMPTIVE_OS_PROFILING
     else if ((++pumps_without_run) > 5)
       {
       pumps_without_run = 0;
@@ -277,6 +281,7 @@ static void yield_pump( void *tv_p )
       if (tv->tv_usec>1000000)
         { tv->tv_sec+=tv->tv_usec/1000000; tv->tv_usec%=1000000; }
       }
+    #endif
     if (RegPolledProcedure(yield_pump, tv_p, (struct timeval *)tv_p, 32 )==-1)
       {         //should never happen, but better safe than sorry...
       LogScreen("Panic! Unable to re-initialize yield pump\n"); 
@@ -1066,54 +1071,54 @@ int Client::Run( void )
     }
 
   // -------------------------------
-  // special for non-preemptive OSs
+  // create a yield pump for OSs that need one 
+  // -------------------------------
+  
+  #if defined(NON_PREEMPTIVE_OS) || (CLIENT_OS == OS_WIN32)
+  if (!TimeToQuit)
+    {
+    static struct timeval tv = {0,10000}; /* 100/s */
+   
+    #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS)
+    tv.tv_usec = 500;
+    #endif
+    
+    if (RegPolledProcedure(yield_pump, (void *)&tv, (timeval *)&tv, 32 ) == -1)
+      {
+      Log("Unable to initialize yield pump\n" );
+      TimeToQuit = -1; 
+      exitcode = -1;
+      }
+    #if 0
+    else
+      LogScreen("Yield pump has started... \n" );
+    #endif
+    }
+  #endif
+
+  // -------------------------------
+  // create a problem runner for non-preemptive OSs that are not threaded
   // -------------------------------
 
   #ifdef NON_PREEMPTIVE_OS
+  if (!TimeToQuit && !running_threaded /* load_problem_count == 1 */)
     {
-    //------------------------------------
-    //run inside the polling loop
-    //------------------------------------
-  
-    if (!TimeToQuit)
+    struct thread_param_block *thrparams = __StartThread( 
+                  0 /*thread_i*/, 0 /*numthreads*/, timeslice, priority );
+    if (thrparams)
       {
-      // add a yield pump to the polling loop
-  
-      static struct timeval tv = {0,10000}; /* 100/s */
-   
-      #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS)
-      tv.tv_usec = 500;
+      #if 0
+      LogScreen("Crunch handler has started...\n" );
       #endif
-    
-      if (RegPolledProcedure(yield_pump, (void *)&tv, (timeval *)&tv, 32 ) == -1)
-        {
-        Log("Unable to initialize yield pump\n" );
-        TimeToQuit = -1; 
-        exitcode = -1;
-        }
-      else
-        {
-        LogScreen("Yield pump has started... \n" );
-        }
+      thread_data_table = thrparams;
+      running_threaded = 1;
       }
-    
-    if (!TimeToQuit && !running_threaded /* load_problem_count == 1 */)
+    else
       {
-      struct thread_param_block *thrparams = __StartThread( 
-                    0 /*thread_i*/, 0 /*numthreads*/, timeslice, priority );
-      if (thrparams)
-        {
-        LogScreen("Crunch handler has started...\n" );
-        thread_data_table = thrparams;
-        running_threaded = 1;
-        }
-      else
-        {
-        Log("Unable to initialize crunch handler\n" );
-        TimeToQuit = -1; 
-        exitcode = -1;
-        } 
-      }
+      Log("Unable to initialize crunch handler\n" );
+      TimeToQuit = -1; 
+      exitcode = -1;
+      } 
     }
   #endif
 
@@ -1164,7 +1169,7 @@ int Client::Run( void )
         //Actually run a problem
         mainprob->Run( 0 ); //threadnum
           
-        #ifdef NON_PREEMPTIVE_OS
+        #if (defined(NON_PREEMPTIVE_OS) || (CLIENT_OS == OS_WIN32))
           yield_pump(NULL);
         #endif
         }
@@ -1385,7 +1390,7 @@ int Client::Run( void )
 int Client::UndoCheckpoint( void )
 {
   FileEntry fileentry;
-  unsigned int cont_i, recovered;
+  unsigned int outcont_i, cont_i, recovered;
   int remaining, lastremaining;
   int breakreq = 0;
   u32 optype;
@@ -1403,8 +1408,14 @@ int Client::UndoCheckpoint( void )
         while ((remaining = (int)InternalGetBuffer( 
           checkpoint_file[cont_i], &fileentry, &optype, cont_i )) != -1)
           {
+          Descramble( ntohl( fileentry.scramble ),
+                    (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
+          outcont_i = (unsigned int)fileentry.contest;
+          Scramble( ntohl( fileentry.scramble ),
+                    (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
+          
           if (((lastremaining!=-1) && (lastremaining!=(remaining + 1))) ||
-            ( InternalPutBuffer( in_buffer_file[cont_i], &fileentry ) == -1)
+            ( InternalPutBuffer( in_buffer_file[outcont_i], &fileentry )==-1)
             || ((breakreq = ( CheckExitRequestTrigger() != 0 ))!=0) )
             {
             recovered = 0;
