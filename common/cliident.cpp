@@ -11,6 +11,9 @@
 */ 
 //
 // $Log: cliident.cpp,v $
+// Revision 1.7  1998/10/04 20:46:11  remi
+// LogScreen -> LogScreenRaw
+//
 // Revision 1.6  1998/10/04 19:44:41  remi
 // Added guistuff, console and probman.
 //
@@ -33,7 +36,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.6 1998/10/04 19:44:41 remi Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.7 1998/10/04 20:46:11 remi Exp $"; } 
 #endif
 
 //-----------------------------------------------------------------------
@@ -123,7 +126,7 @@ probman_cpp,
 console_cpp
 };
 
-//"@(#)$Id: cliident.cpp,v 1.6 1998/10/04 19:44:41 remi Exp $"
+//"@(#)$Id: cliident.cpp,v 1.7 1998/10/04 20:46:11 remi Exp $"
 
 void CliIdentifyModules(void)
 {
@@ -154,7 +157,7 @@ void CliIdentifyModules(void)
         }
       *p2 = 0;
       if ( p2 != &buffer[0] )
-        LogScreen( "%s\n", buffer );
+        LogScreenRaw( "%s\n", buffer );
       }  
     }
   return;
@@ -164,7 +167,7 @@ void CliIdentifyModules(void)
 
 void CliIdentifyModules(void)
 {
-  LogScreen( "No support for -ident in this client.\n" );
+  LogScreenRaw( "No support for -ident in this client.\n" );
 }
   
 #endif //#if defined(__showids__)
