@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.29 2003/01/23 18:38:36 snake Exp $
+# @(#)$Id: configure,v 1.288.2.30 2003/01/23 18:40:09 snake Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1937,7 +1937,7 @@ case "$1" in
         add_sources "linux" "ppc"
         ;;
 
-    *ppc-netbsd)
+    *ppc-netbsd)                 # snake
         TARGET_CC="g++"
         generate_gcc_opts "ppc" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
