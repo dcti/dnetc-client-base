@@ -3,6 +3,12 @@ Dual mode (RC5DES) clients
 
 2.7100
 ------
+v2.7100.420 98.11.15 Fixed -hide/-quiet for unix'sh clients
+v2.7100.420 98.11.15 Bring back the cputype config screen
+v2.7100.420 98.11.13 Changed default blocksize to 31.
+v2.7100.420 98.11.13 Default encoding set to 'no special encoding' instead
+                     of 'uue encoding'
+v2.7100.419 98.11.12 Added -hide/-quiet support for unix'ish clients
 v2.7100.418 98.11.07 Randomprefix is now changed from buffer
                      files; offline clients will now generate
                      from the "correct" randomprefix.
@@ -24,37 +30,63 @@ v2.7100.418 98.08.19 Problem with client rewriting .ini file while in
 v2.7100.418 98.08.19 Win32 Clients have Dial On Demand support.
 v2.7100.418 98.08.19 Clients now auto-detect the roundrobin to connect to.
 v2.7100.417 98.08.07 New ARM/StrongARM RC5 cores.
-v2.7100.416 98.07.20 work around added for Win95/98 combo-box bug that created system
-                     pausing after opening the config dialog at least once.
+v2.7100.416 98.07.20 work around added for Win95/98 combo-box bug that created
+                     system pausing after opening the config dialog at least
+                     once.
 v2.7100.416 98.07.18 win32 gui logging fixed
 v2.7100.416 98.07.18 Clients updated so that des-ii-2 blocks will be
                      ignored in future des contests.
 v2.7100.416 98.07.15 Change to fetch, flush, and update in the win32 GUI
                      so that they're more verbose and will ignore
                      offline/lurk settings.
-v2.7100.416 98.07.14 Got new version of Watcom for OS/2, now able to compile MMX core and build the new version without a major speed decrease in both the rc5 and des cores.
-v2.7100.416 98.07.14 fixed -runbuffers behaviour.  it now completely exhausts the buffer file(s) and then exits as it should.
-v2.7100.416 98.07.12 patched a possible divide by zero race condition that could occur when two or more clients attempt to flush a shared buffer where file locking cannot be enforced (eg. NFS)
-v2.7100.416 98.07.12 win32gui will again only respect "runhidden" if it is auto-launched on startup (via -guistart)
-v2.7100.416 98.07.12 Fixed problems with .ini name not following .exe's name (again).
+v2.7100.416 98.07.14 Got new version of Watcom for OS/2, now able to compile
+                     MMX core and build the new version without a major speed
+                     decrease in both the rc5 and des cores.
+v2.7100.416 98.07.14 fixed -runbuffers behaviour.  it now completely exhausts
+                     the buffer file(s) and then exits as it should.
+v2.7100.416 98.07.12 patched a possible divide by zero race condition that
+                     could occur when two or more clients attempt to flush a
+                     shared buffer where file locking cannot be enforced (eg.
+                     NFS)
+v2.7100.416 98.07.12 win32gui will again only respect "runhidden" if it is
+                     auto-launched on startup (via -guistart)
+v2.7100.416 98.07.12 Fixed problems with .ini name not following .exe's name
+                     (again).
 v2.7100.416 98.07.12 Even FASTER DES MMX cores added to x86 clients!
-v2.7100.416 98.07.11 win32gui fetch/flush menu options can now occur without halting client operations.  fetch/flush/update options will now all work even if current connection mode is set to offline.
-v2.7100.415 98.07.10 win32gui thread priority of message thread increased to higher priority to try to increase responsiveness of the gui.
-v2.7100.415 98.07.10 Automatic processor count on Solaris and Linux have been added.
-v2.7100.415 98.07.10 Bugs with exitfile handling present in 414 have been fixed.
-v2.7100.415 98.07.09 Added DES MMX cores to x86 clients - thanks go out to Remi Guyomarch and Bruce Ford who made this possible.
-v2.7100.413 98.07.07 Fixed problems in 413 with .ini name not following .exe's name and also  rc5 outbuffer being set incorrectly to buff-out.des
-v2.7100.413 98.07.04 Changed lurk code, now is more verbose and acts the same way in win32 and os2
-v2.7100.413 98.07.04 Fixed -runbuffers bug that caused invalid block info to be printed on screen after buffer exhaustion.
+v2.7100.416 98.07.11 win32gui fetch/flush menu options can now occur without
+                     halting client operations.  fetch/flush/update options
+                     will now all work even if current connection mode is set
+                     to offline.
+v2.7100.415 98.07.10 win32gui thread priority of message thread increased to
+                     higher priority to try to increase responsiveness of the
+                     gui.
+v2.7100.415 98.07.10 Automatic processor count on Solaris and Linux have been
+                     added.
+v2.7100.415 98.07.10 Bugs with exitfile handling present in 414 have been
+                     fixed.
+v2.7100.415 98.07.09 Added DES MMX cores to x86 clients - thanks go out to
+                     Remi Guyomarch and Bruce Ford who made this possible.
+v2.7100.413 98.07.07 Fixed problems in 413 with .ini name not following .exe's
+                     name and also  rc5 outbuffer being set incorrectly to
+                     buff-out.des
+v2.7100.413 98.07.04 Changed lurk code, now is more verbose and acts the same
+                     way in win32 and os2
+v2.7100.413 98.07.04 Fixed -runbuffers bug that caused invalid block info to
+                     be printed on screen after buffer exhaustion.
 v2.7100.413 98.07.04 Fixed the pause file bug in non-mt clients
-v2.7100.413 98.07.01 Fixed the -lurkonly problem when buffers ran out, and not connected, the HD would just sit and grind in OS/2 and Win32
+v2.7100.413 98.07.01 Fixed the -lurkonly problem when buffers ran out, and not
+                     connected, the HD would just sit and grind in OS/2 and
+                     Win32
 v2.7100.413 98.07.01 Put -lurk/-lurkonly on the menu for OS/2
 v2.7100.413 98.06.29 Client Version # reporting in -config fixed
 v2.7100.413 98.06.29 Extra disk access caused by lurk mode reduced greatly
-v2.7100.412 98.06.29 Put a check on the mailmessage so it won't mail when offline or lurk
+v2.7100.412 98.06.29 Put a check on the mailmessage so it won't mail when
+                     offline or lurk
 v2.7100.412 98.06.29 Put validateconfig() in the ParseCommandLineOptions()
-v2.7100.412 98.06.29 Gave text output and exit a priority boost, so it's faster in OS/2
-v2.7100.412 98.06.29 Redid the lurk mode to only detect slip/ppp connections in OS/2
+v2.7100.412 98.06.29 Gave text output and exit a priority boost, so it's
+                     faster in OS/2
+v2.7100.412 98.06.29 Redid the lurk mode to only detect slip/ppp connections
+                     in OS/2
 v2.7100.412 98.06.28 Lots of internal changes to prepare for Win16 client
 v2.7100.412 98.06.28 Invalid cpu type value now ignored.
 v2.7100.412 98.06.28 Buffer path problem and buffer truncation issue addressed
@@ -67,17 +99,23 @@ v2.7100.412 98.06.26 Finally reached 2.7100!
 v2.7025.410 98.06.24 New ARM DES cores from Steve Lee
 v2.7025.410 98.06.23 Fixed various things in the help pager
 v2.7024.409 98.06.14 Finalized lurk modes for OS/2
-v2.7024.409 98.05.13 Fixed CPU identification crash under *nix with 486 SX/DX/DX2.
-v2.7024.409 98.06.18 Users can now tell us exactly what we need to add to the CPU identification code to stop their cpu from being mis-ident'd.
+v2.7024.409 98.06.18 Users can now tell us exactly what we need to add to the
+                     CPU identification code to stop their cpu from being
+                     mis-ident'd.
 v2.7024.409 98.06.17 Added a new PPro/PII/6x86/K6 *DES* core
 v2.7024.409 98.06.15 New 64-bit UltraSparc DES core - super fast !
 v2.7024.409 98.06.15 ARM version of Kwan's latest sboxes - 30% faster
-v2.7024.409 98.06.14 Fixed the OS/2 lurk mode so that it updates less freqently.
-v2.7024.409 98.06.13 Fixed CPU identification crash under *nix with 486 SX/DX/DX2.
-v2.7021.405 98.05.23 Resolved a number of signal handling problems from Cyrus Patel
-v2.7021.405 98.05.23 Mail doesn't clear buffers on mail send failure from Cyrus Patel
+v2.7024.409 98.06.14 Fixed the OS/2 lurk mode so that it updates less
+                     freqently.
+v2.7024.409 98.05.13 Fixed CPU identification crash under *nix with
+                     486 SX/DX/DX2.
+v2.7021.405 98.05.23 Resolved a number of signal handling problems from
+                     Cyrus Patel
+v2.7021.405 98.05.23 Mail doesn't clear buffers on mail send failure from
+                     Cyrus Patel
 v2.7021.405 98.05.23 Cleaned up Client::Run from Cyrus Patel
-v2.7021.405 98.05.23 Improved client display, block transfer progress, and keyrate computation from Cyrus Patel
+v2.7021.405 98.05.23 Improved client display, block transfer progress, and
+                     keyrate computation from Cyrus Patel
 v2.7021.405 98.05.23 NetWare changes from Cyrus Patel
 v2.7021.405 98.05.21 New cpu/os codes added OS_OS390=39, CPU_S390=14
 v2.7021.405 98.05.21 OS/2 changes from Oscar Chang
@@ -85,23 +123,28 @@ v2.7021.405 98.05.21 New parisc rc5 core from Katsuomi Hamajima
 v2.7021.405 98.05.21 Added Banner message crediting Matthew Kwan
 v2.7021.405 98.05.21 OS390 changes from Friedemann Baitinger
 v2.7021.405 98.05.21 ARM/riscos changes from Chris Berry
-v2.7021.405 98.05.21 Rebuilt bdeslow.aout.o/bbdeslow.aout.o and updated des-x86.cpp
+v2.7021.405 98.05.21 Rebuilt bdeslow.aout.o/bbdeslow.aout.o and updated
+                     des-x86.cpp
 v2.7021.404 98.05.19 Increased temp space allocated for headers in http mode
 v2.7021.404 98.05.17 "-n" setting now forces a minimum of 1 block
-v2.7021.404 98.05.04 ForcedKeyPort changes for euro23.v27.distributed.net/jp.v27.distributed.net/port 3064
+v2.7021.404 98.05.04 ForcedKeyPort changes for euro23.v27.distributed.net /
+                     jp.v27.distributed.net/port 3064
 v2.7021.404 98.05.04 New directory structure, configure script
 v2.7020.403 98.04.28 Fixed starting of NT service from command line
 v2.7020.403 98.04.28 Fixed DOS buffer problems
-v2.7020.403 98.04.28 Fixed bug in -offlinemode, when ini file doesn't know that DES is over.
+v2.7020.403 98.04.28 Fixed bug in -offlinemode, when ini file doesn't know
+                     that DES is over.
 v2.7020.403 98.04.23 Improved x86 chip identification
 v2.7020.403 98.04.23 Faster generic des core
 v2.7020.403 98.04.21 Fixed final buffer flush when using "nodisk" mode.
 v2.7020.403 98.04.21 stricmp references changed to strcmpi in cliconfig.cpp
 v2.7020.403 98.04.21 Change to ansi rc5 core rc5ansi2-rg.cpp (4 macros).
 v2.7020.403 98.04.21 Very minor change to p5 core (not even a cycle, really).
-v2.7020.403 98.04.21 Added "-forcefetch"/"-forceflush".  These deal with corrupted buffer entries much better.
+v2.7020.403 98.04.21 Added "-forcefetch"/"-forceflush".  These deal with
+                     corrupted buffer entries much better.
 v2.7020.403 98.04.21 RISCOS changes
-v2.7020.403 98.04.21 Updated strongARM core (in source -- it was used in last compile already)
+v2.7020.403 98.04.21 Updated strongARM core (in source -- it was used in last
+                     compile already)
 v2.7019.402 98.04.14 Fixed CPU detection for K6/6x86
 v2.7019.402 98.04.14 Win16 changes
 v2.7019.402 98.04.13 Renamed problem.H to problem.h
@@ -117,16 +160,19 @@ v2.7018.401 98.04.02 Renamed rc5.* to problem.*
 v2.7018.401 98.04.02 Removed OS2_PM #defines
 v2.7018.401 98.04.02 Fixed dates in mail messages
 v2.7018.401 98.04.02 SUNOS changes
-v2.7018.401 98.04.02 adjusted the #defines in des-x86.cpp to link successfully under linux
-v2.7018.401 98.04.02 Fixed sopen() problem in buffwork.cpp which affected many OSes
-v2.7018.401 98.04.02 New HP-PA RC5 core from Katsuomi Hamajima <hamajima@ydc.co.jp>
+v2.7018.401 98.04.02 adjusted the #defines in des-x86.cpp to link
+                     successfully under linux
+v2.7018.401 98.04.02 Fixed sopen() problem in buffwork.cpp which affected
+                     many OSes
+v2.7018.401 98.04.02 New HP-PA RC5 core from Katsuomi Hamajima
+                     <hamajima@ydc.co.jp>
 v2.7018.401 98.04.02 Lurk mode 'sticks' now in win32gui client.
-
 v2.7017.400 98.03.15 New K6 core
 v2.7017.400 98.03.15 Updated Alpha RC5 core (by Pedro Miguel Teixeira)
 v2.7016.399 98.03.13 Fixed buffer flushing problem
 v2.7015.398 98.03.08 Memory buffers are now allocated only as they're needed.
-v2.7015.398 98.03.07 Added 'contestdone' flags to ini to smooth contest transitions
+v2.7015.398 98.03.07 Added 'contestdone' flags to ini to smooth contest
+                     transitions
 v2.7015.398 98.03.06 Fixed problem with "-2" sized buffers
 v2.7015.398 98.03.06 Changed default exitfilecheck time to 30 seconds
 v2.7015.398 98.03.06 Fixed shared buffer open problem
@@ -141,7 +187,8 @@ v2.7014.397 98.02.12 AIX Changes, OSF changes
 v2.7013.396c 98.02.09 Older slice routines moved to oldslice.zip
 v2.7013.396c 98.02.09 HTTP modes no longer force port keyport=2064.
 v2.7013.396b 98.02.13 Made "-quiet" even quieter
-v2.7013.396b 98.02.13 Fixed fault when missing final parameter of 2-param option
+v2.7013.396b 98.02.13 Fixed fault when missing final parameter of 2-param
+                      option
 v2.7013.396b 98.02.08 Digital Unix patches
 v2.7013.396 98.02.08 AIX / SPARC changes
 v2.7013.396 98.02.08 BDESLOW.S/BDESLW1.S cores from Sven Mikkelsen (AT&T syntax)
@@ -155,31 +202,37 @@ v2.7011.394 98.02.01 Netware changes
 v2.7010.393 98.01.30 New, much faster bitslice driver and s-boxes.
 v2.7010.393 98.01.30 Got RC5 assembly running on AIX/PowerPC client.
 v2.7010.393 98.01.30 Fixed mailing to multiple destinations
-v2.7010.392 98.01.30 NT Service version default startup option changed to auto-start
-v2.7010.392 98.01.30 Warning message about "-hide" when running win32 client on NT
+v2.7010.392 98.01.30 NT Service version default startup option changed to
+                     auto-start
+v2.7010.392 98.01.30 Warning message about "-hide" when running win32 client
+                     on NT
 v2.7010.392 98.01.28 BEOS, HP, Netware changes
 v2.7009.391 98.01.25 Added duplicate x86 core to allow 2 DES threads.
 v2.7008.390 98.01.24 New non-x86 DES core routines
 v2.7008.390 98.01.25 Netware changes
-v2.7008.390 98.01.24 -runbuffers/-runoffline ignored when doing fetch/flush/update
-v2.7007.389 98.01.21 "sent to server"/"received from server" messages include DES/RC5 type
+v2.7008.390 98.01.24 -runbuffers/-runoffline ignored when doing
+                     fetch/flush/update
+v2.7007.389 98.01.21 "sent to server"/"received from server" messages include
+                     DES/RC5 type
 v2.7007.389 98.01.20 CPU identification for non-unix X86 from Cyrus Patel
 v2.7006.388 98.01.20 Newer x86 DES core -- 8% faster on PPros
-v2.7005.387 98.01.19 Added 2nd method for proxies to notify clients about contest status.
+v2.7005.387 98.01.19 Added 2nd method for proxies to notify clients about
+                     contest status.
 v2.7005.387 98.01.18 DES Bitslice cores from Remi
 v2.7004.386 98.01.17 Client will properly identify a 3*2^28 block now
 v2.7004.386 98.01.17 Fixed negative block sizes
 v2.7004.386 98.01.17 Added ansi core des routine
 v2.7004.386 98.01.17 632 byte memory leak on some failed network Open()s
-v2.7003.385 98.01.15 Don't process a partial block started on another cpu/os/build
+v2.7003.385 98.01.15 Don't process a partial block started on another
+                     cpu/os/build
 v2.7002.384 98.01.13 RISCOS changes
 v2.7002.383 98.01.13 Banner problem
 v2.7002.382 98.01.13 Client shows size of block being processed
-v2.7002.382 98.01.13 Win32 clients no longer set  processor affinity when only 1
-                     cpu is configured.
+v2.7002.382 98.01.13 Win32 clients no longer set  processor affinity when                           only 1 cpu is configured.
 v2.7002.382 98.01.13 Fixed RC5 blocks being sent to server with wrong contestid
                      when they were downloaded by older non-dual clients.
-                     This also caused various other buffer problems, and faults.
+                     This also caused various other buffer problems, and
+                     faults.
 v2.7002.382 98.01.13 "Block ready" message now identifies what kind of block.
 v2.7001.381 98.01.12 New RC5 cores (cpp wasn't updated before)
 v2.7001.380 98.01.12 Fixed up code to detect end of DES contest (again.  Ugh.)
@@ -199,24 +252,34 @@ v2.7001.365 98.01.06 Initial Changes to incorporate DESII contest
 98.01.05 v2.6403.355 BEOS changes
 98.01.05 v2.6403.355 K6 core removed (486 core used in this case as it's actually faster)
 98.01.04 v2.6403.350 New p5/k5/486/6x86 cores
-98.01.03 v2.6403.345 Limited checking of exitrc5.now file to once every 3 seconds
-98.01.03 v2.6403.340 Checkpoint files re-written immediately after blocks finished
-98.01.03 v2.6403.340 keyserver port can now be explictly specified when using http
-98.01.03 v2.6403.340 PutBufferOutput() no longer returns error if Update() fails.  Only
-                     actual buffer updating problems result in a returned error.
-97.12.31 v2.6403.340 Random prefix changes cause ini file to be rewritten sooner
+98.01.03 v2.6403.345 Limited checking of exitrc5.now file to once every
+                     3 seconds
+98.01.03 v2.6403.340 Checkpoint files re-written immediately after blocks
+                     finished
+98.01.03 v2.6403.340 keyserver port can now be explictly specified when using
+                     http
+98.01.03 v2.6403.340 PutBufferOutput() no longer returns error if Update()
+                     fails. Only actual buffer updating problems result in a
+                     returned error.
+97.12.31 v2.6403.340 Random prefix changes cause ini file to be rewritten
+                     sooner
 97.12.31 v2.6403.340 Firemodes 2/3 now default to rc5proxy23.distributed.net
-97.12.31 v2.6403.340 Fixed exit problem that occasionally caused blocks to be lost
-97.12.25 v2.6403.335 Fixed issue that some clients don't read their checkpoint files
+97.12.31 v2.6403.340 Fixed exit problem that occasionally caused blocks to be
+                     lost
+97.12.25 v2.6403.335 Fixed issue that some clients don't read their checkpoint
+                     files
 97.12.19 v2.6403.330 StrongArm/RiscOS changes
 97.12.17 v2.6403.325 PPC/Linux changes for core selection
 97.12.16 v2.6403.320 Fixed date field in mail messages
 97.12.15 v2.6403.310 Fixed "-ini" command line option not working
-97.12.15 v2.6403.305 New Random number generator added (with much longer periodicity)
-97.12.15 v2.6403.305 Fixed problem with sharing 6401 buffers (lost email/cpu/ver info)
+97.12.15 v2.6403.305 New Random number generator added (with much longer
+                     periodicity)
+97.12.15 v2.6403.305 Fixed problem with sharing 6401 buffers (lost
+                     email/cpu/ver info)
 97.12.08 v2.6403.290 Fixed problems caused by buffers of size 0
 97.12.08 v2.6403.285 Increased network pause for Solaris clients
-97.12.08 v2.6403.280 Fixed issue with blocks being re-retrieved from buff-in.rc5
+97.12.08 v2.6403.280 Fixed issue with blocks being re-retrieved from
+                     buff-in.rc5
 
 2.6402
 ------
