@@ -5,6 +5,19 @@
 # Any other distribution or use of this source violates copyright.
 
 # $Log: configure,v $
+# Revision 1.113.2.4  1998/11/11 19:16:48  remi
+# Synced with :
+#   Revision 1.122  1998/11/11 19:08:19  remi
+#   Simplified $OPTS_GCC272
+#
+#   Revision 1.121  1998/11/11 16:39:02  remi
+#   Sorted out x86-linux entries.
+#   Created new $OPTS_GCC272 as I don't think -fno-exceptions is a gcc
+#   2.7.2.x valid option.
+#
+#   Revision 1.120  1998/11/11 05:26:55  cramer
+#   Various minor fixes...
+#
 # Revision 1.113.2.3  1998/11/11 03:03:44  remi
 # Oops, forget a " and a # !
 #
@@ -50,8 +63,10 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
     -fexpensive-optimizations -fomit-frame-pointer \
     -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
     -funroll-loops -Wall -Icommon -Irc5 -Ides -Iplatforms \
-    -fno-inline-functions -fno-exceptions \
-    '
+    -fno-inline-functions -fno-exceptions '
+
+OPTS_GCC272='-fomit-frame-pointer -fno-inline-functions -fno-handle-exceptions \
+    -fno-rtti -Wall -Icommon -Irc5 -Ides -Iplatforms '
 
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
@@ -115,6 +130,7 @@ OPTS_GCC_AIX="$OPTS_GCC -O6 -D_ARCH_PPC -D_AIX"
 #--
 
 OPTS_GCC_X86="$OPTS_GCC -O6 -m486 -DASM_X86 -DPIPELINE_COUNT=2"
+OPTS_GCC272_X86="$OPTS_GCC272 -O6 -m486 -DASM_X86 -DPIPELINE_COUNT=2"
 OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentium -DASM_X86 -DPIPELINE_COUNT=2"
 
 #--
@@ -494,7 +510,7 @@ case "$1" in
 
     *x86-linux-gcc)               # uses standard GCC options plus '-pipe'
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5"
+	TARGET_CCFLAGS="-pipe $OPTS_GCC272_X86 $OPTS_DES_MMX -DMMX_RC5"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
@@ -692,8 +708,8 @@ echo "Scanning output C++ dependencies..."
 for target in ${COMMON_SRCS} ${TARGET_ADDSRCS}; do
     TARGETOBJECT=output/`basename $target .cpp`.o
     SAFENAME=`echo ${TARGETOBJECT} | tr -d '/.\$\-'`
-    echo "  $target -> $TARGETOBJECT ($SAFENAME)"
-    eval "DEPEND_${SAFENAME}=$target"
+    echo "  ${target} -> ${TARGETOBJECT} (${SAFENAME})"
+    eval "DEPEND_${SAFENAME}=${target}"
     TARGET_ALLCCOBJS="${TARGET_ALLCCOBJS} ${TARGETOBJECT}"
 done
 
