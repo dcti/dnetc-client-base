@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.87 2001/01/03 19:38:27 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.88 2001/01/09 00:51:07 mfeiri Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -936,9 +936,6 @@ static int Run_OGR( InternalProblem *thisprob, /* already validated */
   iterationsP = iterationsP;
 #else
   int r, nodes;
-
-  if (*iterationsP > 0x100000UL && !thisprob->pub_data.is_benchmark)
-    *iterationsP = 0x100000UL;
 
   nodes = (int)(*iterationsP);
   r = (thisprob->pub_data.unit_func.ogr)->cycle(thisprob->priv_data.core_membuffer, &nodes);
