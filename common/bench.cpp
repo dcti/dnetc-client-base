@@ -4,176 +4,25 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.3 1999/09/17 17:13:23 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.4 1999/09/19 15:58:49 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
+#include "client.h"    // contest enum
 #include "problem.h"   // Problem class
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
-#include "clitime.h"   // CliTimerDiff(), CliGetTimeString()
-#include "clirate.h"   // CliGetKeyrateForProblemNoSave()
-#include "client.h"    // needed for fileentry which is needed by clisrate.h
+#include "clitime.h"   // CliGetTimeString()
 #include "clisrate.h"  // CliGetKeyrateAsString()
 #include "clicdata.h"  // GetContestNameFromID()
-#include "cpucheck.h"  // GetNumberOfSupportedProcessors()
+#include "cpucheck.h"  // GetProcessorType()
 #include "logstuff.h"  // LogScreen()
-#include "console.h"   // ConIsScreen()
 #include "clievent.h"  // event post etc.
 #include "bench.h"     // ourselves
-#include "confrwv.h"   // Read/Validate/WriteConfig()
-#define FAKE_MULTI_CPU_BENCHMARK /* fake it, or not... */
-
-// --------------------------------------------------------------------------
-
-#if 0
-//Sets buffer thresholds
-void AutoSetThreshold( Client *clientp, unsigned int contestid,
-                       unsigned int /*inbuffer*/, unsigned int /*outbuffer*/ )
-{
-  int blockstobuffer;
-  Client *configclient;
-  int configchanged;
-
-  if (clientp && contestid < CONTEST_COUNT ) 
-  {
-    if (clientp->stopiniio == 0 && clientp->nodiskbuffers == 0)
-    {
-      configclient = new Client;
-      if (configclient)
-      {
-        configchanged = 1;
-        strcpy(configclient->inifilename,clientp->inifilename);
-        ReadConfig(configclient);
-
-        //for (contestid == 0; contestid < CONTEST_COUNT; contestid++)
-        {
-          blockstobuffer=0;
-          if (Benchmark(contestid,1L<<20,clientp->cputype,&blockstobuffer)!=0)
-          {
-            if (blockstobuffer != 0)
-            {
-              LogScreen("Setting %s buffer threshold to %i block%s.\n",
-                   CliGetContestNameFromID(contestid),blockstobuffer,
-                   (blockstobuffer == 1 ? "s" : ""));
-  
-              if ((clientp->inthreshold[contestid] != blockstobuffer ||
-                  configclient->inthreshold[contestid] != blockstobuffer) 
-                  /* && inbuffer */ )
-              {
-                configchanged = 1;
-                configclient->inthreshold[contestid]=blockstobuffer;
-                clientp->inthreshold[contestid]=blockstobuffer;
-              }
-              if ((clientp->outthreshold[contestid] != blockstobuffer ||
-                  configclient->outthreshold[contestid] != blockstobuffer)
-                  /* && outbuffer */ )
-              {
-                configchanged = 1;
-                configclient->outthreshold[contestid] = blockstobuffer;
-                clientp->outthreshold[contestid] = blockstobuffer;
-              }
-            }
-          }
-        }
-        if (configchanged)
-          WriteConfig(configclient, 1);
-        delete configclient;
-      }
-    }
-  }
-  return;
-}
-#endif
 
 /* ----------------------------------------------------------------- */
 
-//returns preferred block size or 0 if break
-u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
+static void __show_notbest_msg(unsigned int contestid, int cputype)
 {
-  ContestWork contestwork;
-  Problem *problem = new Problem();
-
-  int run;
-  u32 tslice;
-  const char *sm4;
-  char cm1, cm2, cm3;
-  int cpucount = 1;
-  unsigned int itersize;
-  unsigned int keycountshift;
-  unsigned int percent;
-  unsigned int recommendedblockcount=0;
-  unsigned int hourstobuffer = 0;
-  const char *contname = CliGetContestNameFromID(contestid);
-
-  #ifdef FAKE_MULTI_CPU_BENCHMARK
-  cpucount = GetNumberOfDetectedProcessors();
-  if (cpucount < 1)
-    cpucount = 1;
-  #endif
-
-  if (numkeys == 0)
-    itersize = 23;            //8388608 instead of 10000000L;
-  else if ( numkeys < (1 << 20))   //max(numkeys,1000000L);
-    itersize = 20;            //1048576 instead of 1000000L
-  else 
-  {
-    itersize = 31;
-    while (( numkeys & (1<<itersize) ) == 0)
-      itersize--;
-  }
-
-  if (contestid == DES)
-  {
-    keycountshift = 1;
-    if (itersize < 31) //Assumes that DES is (at least)
-      itersize++;      //twice as fast as RC5.
-    hourstobuffer = 3; // 3 Hours for DES
-  }
-  else if (contestid == RC5)
-  {
-    keycountshift = 0;
-    contestid = RC5;
-    hourstobuffer = (3*24); // 3 Days for RC5
-  }
-  else 
-  {
-    //LogScreen("Error: Contest %s cannot be benchmarked\n", contname );
-    return 0;
-  }
-
-  tslice = 0x10000;
-
-  #if (CLIENT_OS == OS_NETWARE)
-  if (GetFileServerMajorVersionNumber() < 5)
-    tslice = GetTimesliceBaseline(); //in cpucheck.cpp
-  #endif
-
-  #if (CLIENT_OS == OS_MACOS)
-    tslice = GetTimesliceToUse(contestid);
-  #endif
-  
-  contestwork.crypto.key.lo = ( 0 );
-  contestwork.crypto.key.hi = ( 0 );
-  contestwork.crypto.iv.lo = ( 0 );
-  contestwork.crypto.iv.hi = ( 0 );
-  contestwork.crypto.plain.lo = ( 0 );
-  contestwork.crypto.plain.hi = ( 0 );
-  contestwork.crypto.cypher.lo = ( 0 );
-  contestwork.crypto.cypher.hi = ( 0 );
-  contestwork.crypto.keysdone.lo = ( 0 );
-  contestwork.crypto.keysdone.hi = ( 0 );
-  contestwork.crypto.iterations.lo = ( (1<<itersize) );
-  contestwork.crypto.iterations.hi = ( 0 );
-
-  problem->LoadState( &contestwork, contestid, tslice, cputype );
-
-  percent = 0;
-  cm1 = '\n'; 
-  cm2 = ((ConIsScreen())?(' '):(0));
-  cm3 = ((cm2)?('\r'):(0)); //console.h
-  sm4 = ((cm3)?(""):("\n"));
-  run = RESULT_WORKING;
-
   #if (CLIENT_CPU == CPU_X86) && \
       (!defined(SMC) || !defined(MMX_RC5) || !defined(MMX_BITSLICER))
   unsigned int detectedtype = GetProcessorType(1);
@@ -205,96 +54,211 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
   if (not_supported)
     LogScreen( "Note: this client does not support the %s core.\n", not_supported );
   #endif
+  
+  cputype = cputype;
+  return;
+}
 
-  ClientEventSyncPost( CLIEVENT_BENCHMARK_STARTED, (long)(problem));
 
-  do
+/* ----------------------------------------------------------------- */
+
+#ifndef TBENCHMARK_QUIET
+#define TBENCHMARK_QUIET  0x01
+#define TBENCHMARK_IGNBRK 0x02
+#endif
+
+long TBenchmark( unsigned int contestid, unsigned int numsecs, 
+                 int cputype, int flags )
+{
+  long retvalue = 0;
+  int run, scropen; u32 tslice; 
+  Problem *problem;
+  ContestWork contestwork;
+  const char *contname;
+  struct timeval totalruntime;
+  unsigned long timesrun;
+  
+  contname = CliGetContestNameFromID(contestid);
+  if (!contname)
+    return 0;
+
+  tslice = 0x10000;
+  #if (CLIENT_OS == OS_NETWARE)
+  if (GetFileServerMajorVersionNumber() < 5)
+  tslice = GetTimesliceBaseline(); //in cpucheck.cpp
+  #elif (CLIENT_OS == OS_MACOS)
+  tslice = GetTimesliceToUse(contestid);
+  #endif
+  totalruntime.tv_sec = 0;
+  totalruntime.tv_usec = 0;
+  timesrun = 0;
+  scropen = run = -1;
+  problem = new Problem();
+  retvalue = 0;
+
+  switch (contestid)
   {
-    if ( CheckExitRequestTriggerNoIO() )
+    case RC5:
+    case DES:
+    case CSC:
     {
-      percent = 101;
-      run = -1; /* error */
+      contestwork.crypto.key.lo = ( 0 );
+      contestwork.crypto.key.hi = ( 0 );
+      contestwork.crypto.iv.lo = ( 0 );
+      contestwork.crypto.iv.hi = ( 0 );
+      contestwork.crypto.plain.lo = ( 0 );
+      contestwork.crypto.plain.hi = ( 0 );
+      contestwork.crypto.cypher.lo = ( 0 );
+      contestwork.crypto.cypher.hi = ( 0 );
+      contestwork.crypto.keysdone.lo = ( 0 );
+      contestwork.crypto.keysdone.hi = ( 0 );
+      contestwork.crypto.iterations.lo = ( (1<<20) );
+      contestwork.crypto.iterations.hi = ( 0 );
+      break;
     }
-    if (cm1)
+    case OGR:
     {
-      if (percent >= 100)
-      {
-        sm4 = ((percent == 101)?("    \n*Break*\n"):("    \n"));
-        cm2 = 0;
-      }
-      ClientEventSyncPost( CLIEVENT_BENCHMARK_BENCHING, (long)(problem));
-
-      LogScreen( "%cBenchmarking %s with %d*2^%d tests (%u keys):%s%c%u%%",
-          cm1, contname, itersize+keycountshift, cpucount /* LIE! */,
-          (unsigned int)(1<<(itersize+keycountshift)), sm4, cm2, 
-          (unsigned int)(percent) );
+      contestwork.ogr.workstub.stub.marks = 24;
+      contestwork.ogr.workstub.worklength = 
+      contestwork.ogr.workstub.stub.length = 7;
+      contestwork.ogr.workstub.stub.diffs[0] = 2;
+      contestwork.ogr.workstub.stub.diffs[1] = 22;
+      contestwork.ogr.workstub.stub.diffs[2] = 32;
+      contestwork.ogr.workstub.stub.diffs[3] = 21;
+      contestwork.ogr.workstub.stub.diffs[4] = 5;
+      contestwork.ogr.workstub.stub.diffs[5] = 1;
+      contestwork.ogr.workstub.stub.diffs[6] = 12;
+      contestwork.ogr.nodes.lo = 0;
+      contestwork.ogr.nodes.hi = 0;
+      break;
     }
-    cm1 = cm3;
-    percent = 0;
+  }
 
-    if ( run == RESULT_WORKING )
+  while (((unsigned int)totalruntime.tv_sec) < numsecs)
+  {
+    run = RESULT_WORKING;
+    if ( problem->LoadState( &contestwork, contestid, tslice, cputype ) != 0)
+      run = -1;
+    else if ((flags & TBENCHMARK_QUIET) == 0 && scropen < 0)
     {
-      ClientEventSyncPost( CLIEVENT_BENCHMARK_BENCHING, (long)(problem));
-
+      scropen = 1;
+      __show_notbest_msg(contestid, cputype);
+      LogScreen("Benchmarking %s ... ", contname );
+    }
+    while ( run == RESULT_WORKING )
+    {
       run = problem->Run();
-      percent = (problem->CalcPermille() + 5)/10;
-      if (percent == 0)
-        percent = 1;
-
       #if (CLIENT_OS == OS_NETWARE)   //yield
         nwCliThreadSwitchLowPriority();
       #endif
+      if ( run < 0 )
+      {
+        retvalue = -1; /* core error */
+        break;
+      }
+      else if ((flags & TBENCHMARK_IGNBRK)!=0 && 
+                CheckExitRequestTriggerNoIO())
+      {
+        retvalue = -1; /* core error */
+        run = -1; /* error */
+        if (scropen > 0)
+          LogScreen("\rBenchmarking %s ... *Break*       ", contname );
+      }
+      else
+      {
+        unsigned long permille;
+        struct timeval runtime;
+        runtime.tv_sec = totalruntime.tv_sec  + problem->runtime_sec;
+        runtime.tv_usec = totalruntime.tv_usec + problem->runtime_usec;
+        if (runtime.tv_usec >= 1000000)
+        {
+          runtime.tv_usec -= 1000000;
+          runtime.tv_sec++;
+        }
+        if ( run != RESULT_WORKING) /* finished this block */
+        {
+          timesrun++;
+          totalruntime.tv_sec = runtime.tv_sec;
+          totalruntime.tv_usec = runtime.tv_usec;
+        }
+        permille = (((runtime.tv_sec * 1000) + 
+                     (runtime.tv_usec / 1000)) ) / numsecs;
+        if (permille > 1000)
+          permille = 1000;
+        if (scropen > 0)
+          LogScreen("\rBenchmarking %s ... %u.%02u%% done", 
+                                 contname, permille/10, (permille%10)*10 );
+      }
+    } 
+    if ( run < 0 )
+      break;
+  }
+
+  if (scropen > 0)
+    LogScreen("\n");
+  
+  if (!(run < 0))  /* no errors, no ^C */
+  {
+    switch (contestid)
+    {
+      case RC5:
+      case DES:
+      case CSC:
+      {
+        unsigned int count;
+        if (!CliGetContestInfoBaseData( contestid, NULL, &count ))
+        {
+          char ratestr[32];
+          double rate;
+          double keysdone = ((double)contestwork.crypto.iterations.lo)
+                          * ((double)timesrun);
+          if (count>1) //iteration-to-keycount-multiplication-factor
+            keysdone = (keysdone)*((double)(count));
+          rate = ((double)(keysdone))/ (((double)(totalruntime.tv_sec))+
+                   (((double)(totalruntime.tv_usec))/((double)(1000000L))));
+          LogScreen("Completed in %s [%skeys/sec]\n",  
+                 CliGetTimeString( &totalruntime, 2 ),
+                 CliGetKeyrateAsString( ratestr, rate ) );
+          retvalue = (long)rate;
+        }
+        break;
+      }
+      case OGR:
+      {
+        if (problem->RetrieveState(&contestwork, NULL, 0) < 0)
+          retvalue = -1; /* core error */
+        else 
+        {
+          char ratestr[32];
+          double nodesdone = ((double)contestwork.ogr.nodes.lo)
+                           * ((double)timesrun);
+          double rate = ((double)(nodesdone))/ (((double)(totalruntime.tv_sec))+
+                  (((double)(totalruntime.tv_usec))/((double)(1000000L))));
+          LogScreen("Completed in %s [%snodes/sec]\n",
+                 CliGetTimeString( &totalruntime, 2 ),
+                 CliGetKeyrateAsString( ratestr, rate ) );
+          retvalue = (long)rate;
+        }
+        break;
+      }
     }
-  } while (percent != 0);
-
-  if ( CheckExitRequestTriggerNoIO() )
-  {
-    ClientEventSyncPost( CLIEVENT_BENCHMARK_FINISHED, 0 /* NULL */ );
-    return 0;
   }
-
-  struct timeval tv;
-  char ratestr[32];
-  double rate = CliGetKeyrateForProblemNoSave( problem );
-  tv.tv_sec = problem->runtime_sec;  //read the real core time
-  tv.tv_usec = problem->runtime_usec;
-  ClientEventSyncPost( CLIEVENT_BENCHMARK_FINISHED, (long)((double *)(&rate)));
-
-  rate *= cpucount; /* effective only if FAKE_MULTI_CPU_BENCHMARK */
-  LogScreen("Completed in %s [%skeys/sec]\n",  CliGetTimeString( &tv, 2 ),
-                    CliGetKeyrateAsString( ratestr, rate ) );
-  rate /= cpucount; /* undo the lie! */
-
-  itersize += keycountshift;
-  while ((tv.tv_sec < (60*60) && itersize < 33) || (itersize < 28))
-  {
-    tv.tv_sec <<= 1;
-    tv.tv_usec <<= 1;
-    tv.tv_sec += (tv.tv_usec/1000000L);
-    tv.tv_usec %= 1000000L;
-    itersize++;
-  }
-
-  recommendedblockcount = (hourstobuffer*(60*60))/tv.tv_sec;
-  if (numblocks) 
-    *numblocks = recommendedblockcount;
-
-  LogScreen( "The preferred %s blocksize for this machine should be\n"
-             "set to %d (%d*2^28 keys). At the benchmarked keyrate\n"
-             "(ie, under ideal conditions) each processor would finish\n"
-             "a work unit of that size in approximately %s.\n"
-             "Your buffer thresholds should be set to %u work units\n"
-             "per processor, enough for approximately %u %s.\n",
-             CliGetContestNameFromID(contestid),  
-             (unsigned int)itersize, (1<<(itersize-28)),  
-             CliGetTimeString( &tv, 2 ),
-             recommendedblockcount,
-             ((hourstobuffer > 24)?(hourstobuffer/24):(hourstobuffer)),
-             ((hourstobuffer > 24)?("days"):("hours"))  );
-
   delete problem;
-  return (u32)(itersize);
-}
+
+  return retvalue;
+}  
 
 // ---------------------------------------------------------------------------
+
+//old style
+u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int */*numblocks*/)
+{                                                        
+  unsigned int numsecs = 8;
+  if (numkeys == 0)
+    numsecs = 32;  
+  else if ( numkeys >= (1 << 23)) /* 1<<23 used to be our "long" bench */
+    numsecs = 16;                 /* our "short" bench used to be 1<<20 */
+  TBenchmark( contestid, numsecs, cputype, 0 );
+  return 0;
+}
 
