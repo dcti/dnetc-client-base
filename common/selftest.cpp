@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selftest.cpp,v $
+// Revision 1.2  1998/10/11 00:45:31  cyp
+// SelfTest() is now standalone. Modified to use the same contest numbering
+// conventions used everywhere else, ie 0==RC5, 1==DES.
+//
 // Revision 1.1  1998/08/28 21:28:59  cyp
 // Spun off from client.cpp - this code very rarely changes.
 //
@@ -10,19 +14,19 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.1 1998/08/28 21:28:59 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.2 1998/10/11 00:45:31 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
 
 #include "cputypes.h"
-#include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
-#include "baseincs.h"  // basic (even if port-specific) #includes
+#include "baseincs.h"  // standard #includes
 #include "problem.h"   // Problem class
 #include "convdes.h"   // convert_key_from_des_to_inc 
-#include "triggers.h"  // [Check|Raise][Pause|Exit]RequestTrigger()
+#include "triggers.h"  // CheckExitRequestTriggerNoIO()
 #include "network.h"   // ntohl()/htonl()
-#include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
+#include "logstuff.h"  // LogScreen()
+#include "clicdata.h"  // CliGetContestNameFromID() 
 
 // --------------------------------------------------------------------------
 
@@ -105,42 +109,40 @@ static const u32 des_test_cases[TEST_CASE_COUNT][8] = {
 
 // ---------------------------------------------------------------------------
 
-s32 Client::SelfTest( u8 contest )
+int SelfTest( unsigned int contest, int cputype )
 {
   s32 run;
-  s32 successes = 0;
   unsigned int testnum;
   const u32 (*test_cases)[TEST_CASE_COUNT][8];
   Problem problem;
   ContestWork contestwork;
   RC5Result rc5result;
   u64 expectedsolution;
-
-  if (SelectCore()) 
-    return 0;
-  if (contest == 1)
+  unsigned int successes = 0;
+  
+  if (contest == 0)
     {
     test_cases = (const u32 (*)[TEST_CASE_COUNT][8])&rc5_test_cases[0][0];
     LogScreen("Beginning RC5 Self-test.\n");
     }
-  else if (contest == 2)
+  else if (contest == 1)
     {
     test_cases = (const u32 (*)[TEST_CASE_COUNT][8])&des_test_cases[0][0];
     LogScreen("Beginning DES Self-test.\n");
     }
-  else 
+  else
     return 0;
 
   for ( testnum = 0 ; testnum < TEST_CASE_COUNT ; testnum++ )
     {
     // load test case
-    if (contest == 1) 
+    if (contest == 0) 
       {
       // RC5-64
       expectedsolution.lo = (*test_cases)[testnum][0];
       expectedsolution.hi = (*test_cases)[testnum][1];
       } 
-    else 
+    else //if (contest == 1) 
       {
       // DES
       expectedsolution.lo = (*test_cases)[testnum][0];
@@ -169,11 +171,11 @@ s32 Client::SelfTest( u8 contest )
     contestwork.iterations.lo = htonl( 0x00010000L );  // only need xDEEO
     contestwork.iterations.hi = htonl( 0 );
 
-    problem.LoadState( &contestwork, (u32) (contest-1), 0x1000, cputype);
+    problem.LoadState( &contestwork, contest, 0x1000, cputype);
     while ( ( run = problem.Run( 0 ) ) == 0 ) //threadnum
       {
       #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-      SurrenderCPU();
+      Yield();
       #elif (CLIENT_OS == OS_NETWARE)
       nwCliThreadSwitchLowPriority();
       #endif
@@ -181,14 +183,13 @@ s32 Client::SelfTest( u8 contest )
       problem.GetResult( &rc5result );
       }
 
-    if ( CheckExitRequestTrigger() ) return 0;
+    if ( CheckExitRequestTriggerNoIO() ) return 0;
 
-    // switch on value of run
-    if ( run == 1 )
+    if ( run == 1 )  // switch on value of run
       {
-      s32 tmpcontest=problem.GetResult( &rc5result );
-
+      s32 tmpcontest = (u32) problem.GetResult( &rc5result );
       successes++;
+
       if ( rc5result.result == RESULT_FOUND )
         {
         if ( (ntohl( rc5result.key.hi ) + 
@@ -201,8 +202,7 @@ s32 Client::SelfTest( u8 contest )
               (ntohl( rc5result.key.hi ) + ntohl( rc5result.keysdone.hi ) ),
               (ntohl( rc5result.key.lo ) + ntohl( rc5result.keysdone.lo ) ),
               expectedsolution.hi, expectedsolution.lo );
-          successes *= -1;
-          return( successes );
+          return ( -successes );
           } 
         else 
           {
@@ -221,7 +221,6 @@ s32 Client::SelfTest( u8 contest )
 
             LogScreen("Test %02d Passed: %08X:%08X - %08X:%08X\n",successes,
               (u32) hi2, (u32) lo2, (u32) hi, (u32) lo);
-
             } 
           else 
             {
@@ -239,14 +238,15 @@ s32 Client::SelfTest( u8 contest )
         // failure occurred (no solution)
         LogScreen( "Test %d FAILED: %08X:%08X - %08X:%08X\n", successes,
               0, 0, expectedsolution.hi, expectedsolution.lo );
-        successes *= -1;
-        return( successes );
+        return( -successes );
         }
       }
     }
   LogScreen( "\n%d/%d %s Tests Passed\n", 
-      (int) successes, (int) TEST_CASE_COUNT, ((contest == 1)?"RC5":"DES") );
-  return( successes );
+      (int) successes, (int) TEST_CASE_COUNT, 
+      CliGetContestNameFromID( contest ) );
+
+  return (successes);
 }
 
 // ---------------------------------------------------------------------------
