@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.48 2001/02/08 22:45:51 sampo Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.49 2001/02/22 07:55:33 mfeiri Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -465,7 +465,7 @@
   #include <OS.h>
   typedef thread_id THREADID;
   #define OS_SUPPORTS_SMP
-#elif (CLIENT_OS == OS_MACOS)
+#elif (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
   #include <Multiprocessing.h>
   typedef MPTaskID THREADID;
   #define OS_SUPPORTS_SMP
