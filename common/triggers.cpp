@@ -16,6 +16,9 @@
 // -----------------------------------------------------------------------
 //
 // $Log: triggers.cpp,v $
+// Revision 1.13  1999/01/17 14:11:43  cyp
+// use copies of exitfile and pausfile.
+//
 // Revision 1.12  1999/01/05 01:35:57  cramer
 // Fixed the "Broken Pipe" exits under solaris.
 //
@@ -54,7 +57,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.12 1999/01/05 01:35:57 cramer Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.13 1999/01/17 14:11:43 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -87,6 +90,8 @@ static struct
   struct trigstruct exittrig;
   struct trigstruct pausetrig;
   struct trigstruct huptrig;
+  char pausefilebuf[64];
+  char exitfilebuf[64];
 } trigstatics = {0};
 
 // -----------------------------------------------------------------------
@@ -251,11 +256,32 @@ int InitializeTriggers( const char *exitfile, const char *pausefile )
     trigstatics.pausetrig.pollinterval.whenoff = PAUSEFILE_CHECKTIME_WHENOFF;
     CliSetupSignals();
     }
-  if (exitfile && *exitfile && strcmp(exitfile,"none")!=0)
-    trigstatics.exittrig.flagfile = exitfile;
-  if (pausefile && *pausefile && strcmp(pausefile,"none")!=0)
-    trigstatics.pausetrig.flagfile = pausefile;
-
+  if (exitfile)
+    {
+    trigstatics.exittrig.flagfile = NULL;
+    while (*exitfile && isspace(*exitfile))
+      exitfile++;
+    strncpy(trigstatics.exitfilebuf,exitfile,sizeof(trigstatics.exitfilebuf)-1);
+    trigstatics.exitfilebuf[sizeof(trigstatics.exitfilebuf)-1]=0;
+    unsigned int len=strlen(trigstatics.exitfilebuf);
+    while (len > 0 && isspace(trigstatics.exitfilebuf[len-1]))
+      trigstatics.exitfilebuf[--len]=0;
+    if (len > 0 && strcmp(trigstatics.exitfilebuf,"none")!=0)
+      trigstatics.exittrig.flagfile = trigstatics.exitfilebuf;
+    }
+  if (pausefile)
+    {
+    trigstatics.pausetrig.flagfile = NULL;
+    while (*pausefile && isspace(*pausefile))
+      pausefile++;
+    strncpy(trigstatics.pausefilebuf,pausefile,sizeof(trigstatics.pausefilebuf)-1);
+    trigstatics.pausefilebuf[sizeof(trigstatics.pausefilebuf)-1]=0;
+    unsigned int len=strlen(trigstatics.pausefilebuf);
+    while (len > 0 && isspace(trigstatics.pausefilebuf[len-1]))
+      trigstatics.pausefilebuf[--len]=0;
+    if (len > 0 && strcmp(trigstatics.pausefilebuf,"none")!=0)
+      trigstatics.pausetrig.flagfile = trigstatics.pausefilebuf;
+    }
   return (CheckExitRequestTrigger());
 }  
 
