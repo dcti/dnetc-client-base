@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.79  1999/02/17 07:49:43  gregh
+// Added OGR placeholder.
+//
 // Revision 1.78  1999/02/16 08:45:41  silby
 // Fix for .cpp cores.
 //
@@ -231,7 +234,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.78 1999/02/16 08:45:41 silby Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.79 1999/02/17 07:49:43 gregh Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -1125,6 +1128,19 @@ else if (contest == 1) // DES
     finished = 0;
     }
 
+  }
+else if (contest == 2) // OGR
+/*
+  _,'   ___
+ <__\__/   \
+    \_  /  _\
+      \,\ / \\
+        //   \\
+      ,/'     `\_,
+*/
+  {
+    Log("OGR not implemented yet in Problem::Run!\n");
+    return -1;
   }
 else
   {
