@@ -2649,7 +2649,9 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
     {
       nodiskbuffers=1;
       strcpy(checkpoint_file[0],"none");
+      strcpy(ini_checkpoint_file[0],"none");
       strcpy(checkpoint_file[1],"none");
+      strcpy(ini_checkpoint_file[1],"none");
       Argv[i][0] = 0;
     }
     else if ( strcmp(Argv[i], "-frequent" ) == 0)
@@ -2661,56 +2663,69 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
     else if ((i+1) < Argc) {
       if ( strcmp( Argv[i], "-b" ) == 0 ) // Buffer threshold size
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting rc5 buffer size to %s\n",Argv[i+1]);
-        outthreshold[0] = inthreshold[0]  = (s32) atoi( Argv[i+1] );
+        if ( (s32) atoi( Argv[i+1] ) > 0)
+           outthreshold[0] = inthreshold[0]  = (s32) atoi( Argv[i+1] );
+        ValidateConfig();
+        LogScreenf("Setting rc5 buffer size to %d\n",outthreshold[0]);
         inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
       else if ( strcmp( Argv[i], "-b2" ) == 0 ) // Buffer threshold size
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting des buffer size to %s\n",Argv[i+1]);
-        outthreshold[1] = inthreshold[1]  = (s32) atoi( Argv[i+1] );
+        if ( (s32) atoi( Argv[i+1] ) > 0)
+           outthreshold[1] = inthreshold[1]  = (s32) atoi( Argv[i+1] );
+        ValidateConfig();
+        LogScreenf("Setting des buffer size to %d\n",outthreshold[0]);
         inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
       else if ( strcmp( Argv[i], "-bin" ) == 0 ) // Buffer input threshold size
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting rc5 input buffer size to %s\n",Argv[i+1]);
-        inthreshold[0]  = (s32) atoi( Argv[i+1] );
+        if ( (s32) atoi( Argv[i+1] ) > 0)
+           inthreshold[0]  = (s32) atoi( Argv[i+1] );
+        ValidateConfig();
+        LogScreenf("Setting rc5 input buffer size to %d\n",inthreshold[0]);
         inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
       else if ( strcmp( Argv[i], "-bin2" ) == 0 ) // Buffer input threshold size
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting des input buffer size to %s\n",Argv[i+1]);
-        inthreshold[1]  = (s32) atoi( Argv[i+1] );
+        if ( (s32) atoi( Argv[i+1] ) > 0)
+           inthreshold[1]  = (s32) atoi( Argv[i+1] );
+        ValidateConfig();
+        LogScreenf("Setting des input buffer size to %d\n",inthreshold[1]);
         inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
       else if ( strcmp( Argv[i], "-bout" ) == 0 ) // Buffer output threshold size
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting rc5 output buffer size to %s\n",Argv[i+1]);
-        outthreshold[0]  = (s32) atoi( Argv[i+1] );
+        if ( (s32) atoi( Argv[i+1] ) > 0)
+           outthreshold[0]  = (s32) atoi( Argv[i+1] );
+        ValidateConfig();
+        LogScreenf("Setting rc5 output buffer size to %d\n",outthreshold[0]);
         inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
       else if ( strcmp( Argv[i], "-bout2" ) == 0 ) // Buffer output threshold size
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting des output buffer size to %s\n",Argv[i+1]);
-        outthreshold[1]  = (s32) atoi( Argv[i+1] );
+        if ( (s32) atoi( Argv[i+1] ) > 0)
+           outthreshold[1]  = (s32) atoi( Argv[i+1] );
+        ValidateConfig();
+        LogScreenf("Setting des output buffer size to %d\n",outthreshold[1]);
         inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
       else if ( strcmp( Argv[i], "-u" ) == 0 ) // UUE/HTTP Mode
       {                                           // Here in case its with a fetch/flush/update
-        LogScreenf("Setting uue/http mode to %s\n",Argv[i+1]);
         uuehttpmode = (s32) atoi( Argv[i+1] );
+        ValidateConfig();
+        LogScreenf("Setting uue/http mode to %d\n",uuehttpmode);
         inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
@@ -2757,8 +2772,9 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       }
       else if ( strcmp( Argv[i], "-p" ) == 0 ) // Override the keyserver port
       {
-        LogScreenf("Setting keyserver port to %s\n",Argv[i+1]);
         keyport = (s32) atoi(Argv[i+1]);
+        ValidateConfig();
+        LogScreenf("Setting keyserver port to %d\n",keyport);
         inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
@@ -2954,6 +2970,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       else if ( strcmp(Argv[i], "-processdes" ) == 0)
       {
         preferred_contest_id = (s32) atoi(Argv[i+1]);
+        ValidateConfig();
         if (preferred_contest_id == 0)
           {
           LogScreen("Client will now NOT compete in DES contest(s).\n");
