@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-common.cpp,v $
+// Revision 1.1.2.3  1999/11/01 17:23:23  cyp
+// renamed transX(...) to csc_transX(...) to avoid potential (future) symbol
+// collisions.
+//
 // Revision 1.1.2.2  1999/10/24 23:54:54  remi
 // Use Problem::core_membuffer instead of stack for CSC cores.
 // Align frequently used memory to 16-byte boundary in CSC cores.
@@ -91,7 +95,7 @@ __attribute ((aligned (16)))
     _1, _0, _0, _0, _1, _1, _1, _0, _1, _1, _1, _1, _1, _1, _0, _1  },
 };
 
-// table-lookup implementation of transP()
+// table-lookup implementation of csc_transP()
 const u8 csc_tabp[256]
 #if defined(__GNUC__)
 __attribute ((aligned (16)))
@@ -115,22 +119,3 @@ __attribute ((aligned (16)))
   0xaa,0xf1,0x99,0xa8,0x59,0x50,0x3b,0x2a, 0xfe,0xf9,0x24,0xb0,0xba,0xfd,0xf8,0x55,
 };
 
-// ------------------------------------------------------------------
-void transP( ulong in7, ulong in6, ulong in5, ulong in4, 
-	     ulong in3, ulong in2, ulong in1, ulong in0,
-	     ulong &out7, ulong &out6, ulong &out5, ulong &out4, 
-	     ulong &out3, ulong &out2, ulong &out1, ulong &out0 ) 
-{
-  // y = f(xr) ^ xl
-  transF( in3, in2, in1, in0,	// in
-	  in7, in6, in5, in4 );	// xor-out
-  // zr = g(y) ^ xr
-  transG( in7, in6, in5, in4,	// in
-	  in3, in2, in1, in0 );	// xor-out  
-  // zl = f(zr) ^ y
-  transF( in3, in2, in1, in0,	// in
-	  in7, in6, in5, in4 );	// xor-out
-  // output
-  out7 = in7; out6 = in6; out5 = in5; out4 = in4;
-  out3 = in3; out2 = in2; out1 = in1; out0 = in0;
-}
