@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.7 2000/09/17 10:33:54 cyp Exp $
+ * $Id: ogr.cpp,v 1.1.2.8 2000/10/05 22:34:22 cyp Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,13 +58,14 @@
   #undef OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
   #if (defined(__PPC__) || defined(ASM_PPC)) || \
       (defined(__WATCOMC__) && defined(__386__)) || \
+      (defined(__ICC)) /* icc is Intel only (duh!) */ || \
       (defined(__GNUC__) && (defined(ASM_SPARC) || defined(ASM_ALPHA) \
                            || defined(ASM_X86) \
                            || (defined(ASM_68K) && (defined(mc68020) \
                            || defined(mc68030) || defined(mc68040) \
                            || defined(mc68060)))))
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 1
-    /* #define FIRSTBLANK_ASM_TEST */ /* define this to test */
+    /* #define FIRSTBLANK_ASM_TEST *//* define this to test */
   #endif
 #endif
 
@@ -171,7 +172,6 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
     lev->list[1] = (lev->list[1] >> s) | (lev->list[0] << ss);  \
     lev->list[0] >>= s;                                         \
   }
-
 #define COMP_LEFT_LIST_RIGHT_32(lev)              \
   lev->comp[0] = lev->comp[1];                    \
   lev->comp[1] = lev->comp[2];                    \
@@ -406,30 +406,56 @@ static int found_one(struct State *oState)
   { register int count; __asm__ ("scan %1,0,%0" : "r=" (count)
     : "r" ((unsigned int)(~i)) );  return count+1; }
 #elif defined(ASM_X86) && defined(__GNUC__) || \
-      defined(__386__) && defined(__WATCOMC__)
+      defined(__386__) && defined(__WATCOMC__) || \
+      defined(__ICC)
+  /* If we were to cover the whole range of 0x00000000 ... 0xffffffff
+     we would need ...
+     static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int input) 
+     {
+        register unsigned int result;        
+        __asm__("notl %1\n\t"     \
+                "movl $33,%0\n\t" \
+                "bsrl %1,%1\n\t"  \
+                "jz   0f\n\t"     \
+                "subl %1,%0\n\t"  \
+                "decl %0\n\t"     \
+                "0:"              \
+                :"=r"(result), "=r"(input) : "1"(input) : "cc" );
+        return result;
+     }
+     but since the function is only executed for (comp0 < 0xfffffffe),
+     we can optimize it to...
+  */
   #if defined(__GNUC__)      
-    #define asm_lookup_first_0(result,input) \
-              __asm__("notl %1\n\t"     \
-		      "movl $33,%0\n\t" \
-		      "bsrl %1,%1\n\t"  \
-		      "jz   0f\n\t"     \
-		      "subl %1,%0\n\t"  \
-		      "decl %0\n\t"     \
-		      "0:"              \
-		      :"=r"(result), "=r"(input) : "1"(input) : "cc" );
-    static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i) 
-    { register unsigned int s; asm_lookup_first_0(s,i); return s; }
-  #else /* WATCOMC */
+    static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int input) 
+    {
+       register unsigned int result;        
+       __asm__("notl %1\n\t"     \
+               "movl $32,%0\n\t" \
+               "bsrl %1,%1\n\t"  \
+               "subl %1,%0\n\t"  \
+               :"=r"(result), "=r"(input) : "1"(input) : "cc" );
+       return result;
+    }
+  #elif defined(__WATCOMC__)
     int LOOKUP_FIRSTBLANK(unsigned int);
     #pragma aux LOOKUP_FIRSTBLANK =  \
                       "not  eax"     \
-		      "mov  edx,21h" \
+                      "mov  edx,20h" \
                       "bsr  eax,eax" \
-                      "jz   f0"      \
                       "sub  edx,eax" \
-                      "dec  edx"     \
-                      "f0:"          \
 		      value [edx] parm [eax] modify exact [eax edx] nomemory;
+  #else /* if defined(__ICC) */
+    static inline int LOOKUP_FIRSTBLANK(register unsigned int i)
+    {
+      _asm mov eax,i
+      _asm not eax
+      _asm mov edx,20h
+      _asm bsr eax,eax
+      _asm sub edx,eax
+      _asm mov i,edx
+      return i;
+    }
   #endif
 #elif defined(ASM_68K) && defined(__GNUC__) /* Bit field find first one set (020+) */
   static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
@@ -703,7 +729,6 @@ stay:
 #ifdef OGR_DEBUG
     if (oState->LOGGING) printf("comp0=%08x\n", comp0);
 #endif
-
     if (comp0 < 0xfffffffe) {
       #if defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
       s = LOOKUP_FIRSTBLANK( comp0 );
