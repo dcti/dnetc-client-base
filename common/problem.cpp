@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.37  1998/10/02 16:59:03  chrisb
+// lots of fiddling in a vain attempt to get the NON_PREEMPTIVE_OS_PROFILING to be a bit sane under RISC OS
+//
 // Revision 1.36  1998/09/29 22:03:00  blast
 // Fixed a bug I introduced with generic core usage, and removed
 // a few old comments that weren't valid anymore (for 68k)
@@ -85,7 +88,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.36 1998/09/29 22:03:00 blast Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.37 1998/10/02 16:59:03 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -495,10 +498,6 @@ s32 Problem::Run( u32 threadnum )
   if (_kernel_escape_seen())
   {
       CliSignalHandler(SIGINT);
-  }
-  if (riscos_in_taskwindow)
-  {
-      riscos_upcall_6();
   }
 #endif
 //  timeslice *= pipeline_count;

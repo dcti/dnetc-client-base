@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.6  1998/10/02 16:59:01  chrisb
+// lots of fiddling in a vain attempt to get the NON_PREEMPTIVE_OS_PROFILING to be a bit sane under RISC OS
+//
 // Revision 1.5  1998/09/29 23:36:26  silby
 // Commented out call to pthreads_yield since it's not supported in all POSIX implementations (apparently.)
 //
@@ -24,7 +27,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.5 1998/09/29 23:36:26 silby Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.6 1998/10/02 16:59:01 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -53,6 +56,10 @@ return "@(#)$Id: clirun.cpp,v 1.5 1998/09/29 23:36:26 silby Exp $"; }
 #include "probfill.h"  //LoadSaveProblems(), RandomWork(), FILEENTRY_xxx macros
 #if ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32))
 #include "lurk.h"      //lurk stuff
+#endif
+#if (CLIENT_OS == OS_RISCOS)
+extern "C" void riscos_upcall_6(void);
+extern void CliSignalHandler(int);
 #endif
 
 // --------------------------------------------------------------------------
@@ -166,18 +173,17 @@ struct thread_param_block
   #define MAX_SANE_TIMESLICE_RC5   16384
   #define MAX_SANE_TIMESLICE_DES   16384
 #elif (CLIENT_OS == OS_RISCOS)
-  #define TIMER_GRANULARITY       125000
-  #define MIN_RUNS_PER_TIME_GRAIN    175
-  #define MAX_RUNS_PER_TIME_GRAIN    300
-  #define INITIAL_TIMESLICE_RC5     2048
-  #define INITIAL_TIMESLICE_DES     2048
-  #define MIN_SANE_TIMESLICE_RC5    2048
-  #define MIN_SANE_TIMESLICE_DES    2048
-  #define MAX_SANE_TIMESLICE_RC5   262144
-  #define MAX_SANE_TIMESLICE_DES   262144
+  #define TIMER_GRANULARITY       1000000
+  #define MIN_RUNS_PER_TIME_GRAIN     2
+  #define MAX_RUNS_PER_TIME_GRAIN     100
+  #define INITIAL_TIMESLICE_RC5    512
+  #define INITIAL_TIMESLICE_DES    512
+  #define MIN_SANE_TIMESLICE_RC5    256
+  #define MIN_SANE_TIMESLICE_DES    256
+  #define MAX_SANE_TIMESLICE_RC5   1048576
+  #define MAX_SANE_TIMESLICE_DES   1048576
 //  #error "Please check timer granularity and timeslice constants"
-// we'll stick with no profiling for now...
-  #undef NON_PREEMPTIVE_OS_PROFILING  //or undef to do your own profiling
+//  #undef NON_PREEMPTIVE_OS_PROFILING  //or undef to do your own profiling
 #elif (CLIENT_OS == OS_MACOS)
   #define TIMER_GRANULARITY       125000
   #define MIN_RUNS_PER_TIME_GRAIN     12
@@ -247,6 +253,11 @@ static void yield_pump( void *tv_p )
     sginap(0);
   #elif (CLIENT_OS == OS_WIN32)
     Sleep(0);
+  #elif (CLIENT_OS == OS_RISCOS)
+    if (riscos_in_taskwindow)
+    {
+        riscos_upcall_6();
+    }
   #else
     NonPolledUSleep( 0 ); /* yield */
   #endif
@@ -330,7 +341,7 @@ unsigned long do_ts_profiling( unsigned long tslice, int contest, int threadnum 
       perc = (((unsigned long)(TIMER_GRANULARITY))*100) / usecs;
     if (perc)  /* yield count in one hundred timer units */
       hgrain_run_count = (runcounters.yield_run_count * 10000) / perc; 
-
+#define DEBUG
 #ifdef DEBUG
 printf("%d. oldslice = %lu, y_real = %lu/%lu, y_adj (%lu%%) = %lu/%lu ",
           threadnum, tslice_table[contest], runcounters.yield_run_count, usecs,
@@ -360,7 +371,6 @@ fflush(stdout);
       if (under_par)  /* change is large enough to warrant adjustement */
         {
         underrun_count++;
-
         ts = (totalslice_table[0]/runcounters.yield_run_count)/
                                     (MIN_RUNS_PER_TIME_GRAIN-under_par);
         if (tslice_table[0] > ts)
@@ -1049,41 +1059,47 @@ int Client::Run( void )
     //run inside the polling loop
     //------------------------------------
   
-    if (!TimeToQuit && !running_threaded /* load_problem_count == 1 */)
-      {
-      struct thread_param_block *thrparams =  __StartThread( 0 /*thread_i*/, 
-                            0 /*numthreads*/, timeslice, priority );
-      if (thrparams)
-        {
-        LogScreen("[%s] Crunch handler has started...\n", Time() );
-        thread_data_table = thrparams;
-        running_threaded = 1;
-
-        // add a yield pump to the polling loop
-      
-        static struct timeval tv = {0,10000}; /* 100/s */
-
-        #if (CLIENT_OS == OS_NETWARE)
-        tv.tv_usec = 500;
-        #endif
-      
-        if (RegPolledProcedure(yield_pump, (void *)&tv, &tv, 32 ) != -1)
-          LogScreen("[%s] Yield pump has started... \n", Time() );
-        else
-          {
-          Log("[%s] Unable to initialize yield pump\n", Time() );
-          TimeToQuit = -1; 
-          exitcode = -1;
-          }
-        }
-      else
-        {
-        Log("[%s] Unable to initialize crunch handler\n", Time() );
-        TimeToQuit = -1; 
-        exitcode = -1;
-        }
-      }
-    } 
+    if (!TimeToQuit)
+    {
+	// add a yield pump to the polling loop
+	
+	static struct timeval tv = {0,10000}; /* 100/s */
+	
+#if (CLIENT_OS == OS_NETWARE)
+	tv.tv_usec = 500;
+#endif
+        if (RegPolledProcedure(yield_pump, (void *)&tv, NULL, 32 ) != -1)
+	{
+	    LogScreen("[%s] Yield pump has started... \n", Time() );
+	    if (!running_threaded /* load_problem_count == 1 */)
+	    {
+		
+		struct thread_param_block *thrparams =  __StartThread( 0 /*thread_i*/, 
+								       0 /*numthreads*/, timeslice, priority );
+		if (thrparams)
+		{
+		    LogScreen("[%s] Crunch handler has started...\n", Time() );
+		    thread_data_table = thrparams;
+		    running_threaded = 1;
+		    
+		    
+		}
+		else
+		{
+		    Log("[%s] Unable to initialize crunch handler\n", Time() );
+		    TimeToQuit = -1; 
+		    exitcode = -1;
+		}
+	    }
+	} 
+    }
+    else
+    {
+	Log("[%s] Unable to initialize yield pump\n", Time() );
+	TimeToQuit = -1; 
+	exitcode = -1;
+    }
+    }
   #endif
 
   //------------------------------------
