@@ -20,6 +20,9 @@
     `----------- Denotes a client rewrite.
 */
 // $Log: version-conflict.h,v $
+// Revision 1.42  1999/02/14 04:37:14  silby
+// 2.7106.436
+//
 // Revision 1.41  1999/02/03 17:56:16  cyp
 // 2.7106.435 for new alpha core; discarded/merged VERSIONSTRING (was with "v",
 // now without) and VERSIONSTRING2 (was without "v", now gone); added doc.
@@ -156,9 +159,9 @@
 #define CLIENT_MAJOR_VER     2
 #define CLIENT_CONTEST      71
 #define CLIENT_BUILD        06
-#define CLIENT_BUILD_FRAC   435
+#define CLIENT_BUILD_FRAC   436
 
-#define CLIENT_VERSIONSTRING    "2.7106.435"
+#define CLIENT_VERSIONSTRING    "2.7106.436"
 
 // When releasing a beta client, please set the expiration time to
 // about two weeks into the future; that should be an adequate beta
