@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.71 1999/12/11 11:39:37 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.72 1999/12/12 06:46:04 jlawson Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1034,9 +1034,9 @@ case "$1" in
     *aix4-ppc-xlc)	 # This is the fastest build for AIX 4.x PPC machines
 	DELETECHARS="'/.\$\-'"
 	TARGET_CC="xlC"
-	TARGET_CCFLAGS="$OPTS_XLC_PPC  -DMEGGS -DKWAN"
+	TARGET_CCFLAGS="$OPTS_XLC_PPC -DMEGGS -DKWAN -DHAVE_CSC_CORES"
 	TARGET_ADDASMS="$XLC_LINTILLA_ASMS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
 	TARGET_LIBS="-lCns"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
@@ -1044,9 +1044,9 @@ case "$1" in
     *aix4-ppc601-xlc)      # AIX 4.x PPC, 601 chip
 	DELETECHARS="'/.\$\-'"
 	TARGET_CC="xlC"
-	TARGET_CCFLAGS="$OPTS_XLC_PPC601  -DMEGGS -DKWAN"
+	TARGET_CCFLAGS="$OPTS_XLC_PPC601 -DMEGGS -DKWAN -DHAVE_CSC_CORES"
 	TARGET_ADDASMS="$XLC_LINTILLA_ASMS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
 	TARGET_LIBS="-lCns"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
@@ -1054,25 +1054,26 @@ case "$1" in
     *aix32-ppc-xlc)	# AIX 3.2.x PPC
 	DELETECHARS="'/.\$\-'"
 	TARGET_CC="xlC"
-	TARGET_CCFLAGS="$OPTS_XLC3_PPC601  -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-		rc5/ppc/crunch_allitnil_552.ppc.s \
-		rc5/ppc/crunch_lintilla_296.ppc.s"
+        TARGET_CCFLAGS="$OPTS_XLC3_PPC601 -DMEGGS -DKWAN -DHAVE_CSC_CORES"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS \
+                rc5/ppc/crunch_allitnil_552.ppc.s \
+                rc5/ppc/crunch_lintilla_296.ppc.s"
 	TARGET_LIBS="-lCns"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *ppc-gcc-aix32)	# AIX 3.2.x gcc [patrick] <patrick@mail4you.de>
 	DELETECHARS="'/.\$\-'"
-	TARGET_CCFLAGS="$OPTS_GCC_PPC  -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $RC5PPC_SRCS"
+	TARGET_CCFLAGS="$OPTS_GCC_PPC -DMEGGS -DKWAN -DHAVE_CSC_CORES"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS $RC5PPC_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *aix4-ppc-egcs)			# [patrick] <patrick@mail4you.de>
         DELETECHARS="'/.\$\-'"
-        TARGET_CCFLAGS="$OPTS_EGCS -D_AIX -mcpu=ppc601 -DASM_PPC  -DMEGGS -DKWAN"
-        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $RC5PPC_SRCS"
+        TARGET_CCFLAGS="$OPTS_EGCS -D_AIX -mcpu=ppc601 -DASM_PPC \
+                -DMEGGS -DKWAN -DHAVE_CSC_CORES"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS $RC5PPC_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         ;;
 
@@ -1083,16 +1084,16 @@ case "$1" in
     *power-aix-gcc)                     # [patrick] <patrick@mail4you.de>
         DELETECHARS="'/.\$\-'"
 	TARGET_CCFLAGS="$OPTS_GCC_POWER -D_AIX \
-		 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/ansi/rc5ansi_2-rg.cpp"
+		-DMEGGS -DKWAN -DHAVE_CSC_CORES"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS rc5/ansi/rc5ansi_2-rg.cpp"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *power-aix-egcs)                     # [patrick] <patrick@mail4you.de>
         DELETECHARS="'/.\$\-'"
         TARGET_CCFLAGS="$OPTS_EGCS -DASM_POWER -mcpu=power -D_AIX \
-		 -DMEGGS -DKWAN"
-        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/ansi/rc5ansi-2-rg.cpp"
+		-DMEGGS -DKWAN -DHAVE_CSC_CORES"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS rc5/ansi/rc5ansi-2-rg.cpp"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         ;;
 
@@ -1103,8 +1104,8 @@ case "$1" in
         DELETECHARS="'/.\$\-'"
 	AIXALL=TRUE
         TARGET_CCFLAGS="$OPTS_EGCS -mcpu=common -D_AIX -D_AIXALL \
-                         -DMEGGS -DKWAN"
-        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $RC5PPC_SRCS \
+                        -DMEGGS -DKWAN -DHAVE_CSC_CORES"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS $RC5PPC_SRCS \
                 rc5/ansi/rc5ansi_2-rg.cpp "
         AIXPPC601FLAGS="$OPTS_EGCS_PPC601 -D_AIX -DBIT32 -DMEGGS -DKWAN"
         AIXPPC604FLAGS="$OPTS_EGCS_PPC601 -D_AIX -DBIT32 -DMEGGS -DKWAN"
