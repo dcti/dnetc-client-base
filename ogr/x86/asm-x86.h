@@ -5,7 +5,7 @@
 */
 
 #ifndef __ASM_X86_H__
-#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.1.2.2 2004/08/09 06:12:46 jlawson Exp $"
+#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.1.2.3 2004/08/09 06:32:44 jlawson Exp $"
 
 /* If we were to cover the whole range of 0x00000000 ... 0xffffffff
    we would need ...
