@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.187 2000/08/31 16:48:35 lyndon Exp $
+# @(#)$Id: configure,v 1.222.2.188 2000/09/18 03:25:11 lyndon Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -609,25 +609,25 @@ case "$1" in
     #
     # lyndon@orthanc.ab.ca (Nov 28, 1999)
 
-    *mips-cc-n32)	# [lyndon]
+    *mips-cc-n32)	# [lyndon]	Generic 32 bit client
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} \
 			-DCLIENT_OS_NAME=\"\\\"Irix (generic-n32)\\\"\""
 	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_32}"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}
+        TARGET_DOCFILES="${OPTS_MIPSPRO_DOCS} readme.irix"
 	TARGET_TARBALL="irix6.5-mips-n32"
 	;;
 
-    *mips-cc-64)	# [lyndon]
+    *mips-cc-64)	# [lyndon]	Generic 64 bit client
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} \
 			-DCLIENT_OS_NAME=\"\\\"Irix (generic-64)\\\"\""
 	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_64}"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}
+        TARGET_DOCFILES="${OPTS_MIPSPRO_DOCS} readme.irix"
 	TARGET_TARBALL="irix6.5-mips-64"
 	;;
 
