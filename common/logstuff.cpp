@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff.cpp,v $
+// Revision 1.26  1999/01/08 02:56:26  michmarc
+// Fix a trailing ; typo; plus change va_arg for those platforms
+// (like Alpha/NT) where va_arg is a structure, not a pointer
+//
 // Revision 1.25  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -95,7 +99,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.25 1999/01/01 02:45:15 cramer Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.26 1999/01/08 02:56:26 michmarc Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -290,7 +294,7 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
         (((y) + 4900L + ((m) - 14) / 12) / 100) / 4 + 1 )
       curr_jdn = _jdn( curr_year, curr_mon, curr_day );
       #undef _jdn
-      if (( curr_jdn - last_jdn ) > logfileLimit );
+      if (( curr_jdn - last_jdn ) > logfileLimit )
         {
         last_jdn  = curr_jdn;
         last_year = curr_year;
@@ -378,7 +382,10 @@ static void InternalLogMail( const char *msgbuffer, unsigned int msglen, int /*f
 
 // ------------------------------------------------------------------------
 
-void LogWithPointer( int loggingTo, const char *format, va_list arglist ) 
+// On NT/Alpha (and maybe some other platforms) the va_list type is a struct,
+// not an int or a pointer-type.  Hence, NULL is not a valid va_list.  Pass
+// a (va_list *) instead to avoid this problem
+void LogWithPointer( int loggingTo, const char *format, va_list *arglist ) 
 {
   char msgbuffer[MAX_LOGENTRY_LEN];
   unsigned int msglen = 0;
@@ -405,7 +412,7 @@ void LogWithPointer( int loggingTo, const char *format, va_list arglist )
     if ( arglist == NULL )
       strcat( msgbuffer, format );
     else 
-      vsprintf( msgbuffer, format, arglist );
+      vsprintf( msgbuffer, format, *arglist );
     msglen = strlen( msgbuffer );
 
     if ( msglen == 0 )
@@ -525,7 +532,7 @@ void LogScreen( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_SCREEN, format, argptr );
+  LogWithPointer( LOGTO_SCREEN, format, &argptr );
   va_end(argptr);
   return;
 }    
@@ -534,7 +541,7 @@ void LogScreenRaw( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN, format, argptr );
+  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN, format, &argptr );
   va_end(argptr);
   return;
 }  
@@ -543,7 +550,7 @@ void Log( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL, format, argptr );
+  LogWithPointer( LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL, format, &argptr );
   va_end(argptr);
   return;
 }  
@@ -552,7 +559,7 @@ void LogRaw( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL, format, argptr );
+  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL, format, &argptr );
   va_end(argptr);
   return;
 }  
