@@ -3,6 +3,15 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.66  1999/01/19 12:13:17  patrick
+//
+// changes to the #ifdef around GetProcessorType broke the link setp on some
+// platforms. Changed therefore
+// ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS != CPU_DIGITAL_UNIX))
+// to
+// ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_DEC_UNIX))
+// I hope this was the intention of the one who originally introduced this.
+//
 // Revision 1.65  1999/01/19 09:54:35  patrick
 //
 // move AIX include <unistd.h> to basincs.h
@@ -230,7 +239,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.65 1999/01/19 09:54:35 patrick Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.66 1999/01/19 12:13:17 patrick Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -440,7 +449,7 @@ unsigned int ValidateProcessorCount( int numcpu, int quietly )
     (CLIENT_CPU != CPU_68K) && \
     (CLIENT_CPU != CPU_POWERPC) && \
     (CLIENT_CPU != CPU_ARM) && \
-    ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS != CPU_DIGITAL_UNIX))
+    ((CLIENT_CPU != CPU_ALPHA) && (CLIENT_OS != OS_DEC_UNIX))
 int GetProcessorType(int quietly)
 {
   if (!quietly)
