@@ -10,7 +10,7 @@
  * ------------------------------------------------------------------
 */
 #ifndef __BUFFBASE_H__
-#define __BUFFBASE_H__ "@(#)$Id: buffbase.h,v 1.1.2.3 2000/03/10 03:05:49 jlawson Exp $"
+#define __BUFFBASE_H__ "@(#)$Id: buffbase.h,v 1.1.2.4 2000/06/17 21:36:01 cyp Exp $"
 
 /* ..Put() returns <0 on ioerr, else 0 on success */
 int BufferPutFileRecord( const char *filename, const WorkRecord * data, 
@@ -34,6 +34,10 @@ int BufferZapFileRecords( const char *filename );
 /* used by -forceunlock */
 int UnlockBuffer( const char *filename ); 
 
+/* determine how many (more) work units to fetch. */
+/* MUST BE CALLED FOR EACH PASS THROUGH A FETCH LOOP */
+unsigned long BufferReComputeWorkUnitsToFetch(Client *client, unsigned int contest);
+
 /* import records from source, return -1 if err, or number of recs imported. */
 /* On success, source is truncated/deleted. Used by checkpt and --import */
 long BufferImportFileRecords( Client *client, const char *source_file, int interactive);
@@ -53,3 +57,4 @@ long GetBufferCount(Client *client, unsigned int contest,
 int BufferAssertIsBufferFull( Client *client, unsigned int contest );
 
 #endif /* __BUFFBASE_H__ */
+

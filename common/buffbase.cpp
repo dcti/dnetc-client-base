@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.31 2000/03/10 05:30:06 jlawson Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.32 2000/06/17 21:36:00 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
@@ -483,199 +483,57 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
 
 /* --------------------------------------------------------------------- */
 
-// Flush blocks to a remote buffer fie.
+// determine whether fetch should proceed/continue or not.
+// ******** MUST BE CALLED FOR EACH PASS THROUGH A FETCH LOOP *************
 
-long BufferFlushFile( Client *client, const char *loadermap_flags )
+unsigned long BufferReComputeWorkUnitsToFetch(Client *client, unsigned int contest)
 {
-  long combinedtrans = 0, combinedworkunits = 0;
-  char basename[sizeof(client->remote_update_dir)  +
-                sizeof(client->out_buffer_basename) + 10 ];
-  unsigned int contest;
-  int failed = 0;
+  unsigned long lefttotrans;
 
-
-  //
-  // If we aren't configured to do remote buffer updating, then quit.
-  //
-  if (client->noupdatefromfile || client->remote_update_dir[0] == '\0')
-    return 0;
-
-
-  //
-  // Generate the full path of the remote buffer.
-  //
-  if (client->out_buffer_basename[0] == '\0')
+  lefttotrans = 0;
+  if (!BufferAssertIsBufferFull( client, contest ))
   {
-    strcpy( basename,
-            GetFullPathForFilenameAndDir( BUFFER_DEFAULT_OUT_BASENAME,
-                                          client->remote_update_dir ));
-  }
-  else
-  {
-    strcpy( basename,
-           GetFullPathForFilenameAndDir(
-             &(client->out_buffer_basename[
-                        GetFilenameBaseOffset(client->out_buffer_basename)]),
-             client->remote_update_dir ) );
-  }
-  basename[sizeof(basename)-1] = '\0';
-
-
-  //
-  // Loop through each contest and perform the fetching activity.
-  //
-  for (contest = 0; failed == 0  && contest < CONTEST_COUNT; contest++)
-  {
-    WorkRecord wrdata;
-    unsigned long projtrans = 0;
-    long lefttotrans;
-    char remote_file[128];
-
-    if (CheckExitRequestTriggerNoIO())
-      break;
-
-    if (loadermap_flags[contest] != 0) /* contest is closed or disabled */
-      continue;
-
-    strncpy( remote_file, BufferGetDefaultFilename(contest,1,basename), sizeof(remote_file));
-    remote_file[sizeof(remote_file)-1] = '\0';
-
-    while ((lefttotrans = GetBufferRecord( client, &wrdata, contest, 1 )) >= 0)
+    int packets;
+    if ((packets = GetBufferCount( client, contest, 0, &lefttotrans )) < 0)
+      lefttotrans = 0;
+    else
     {
-      long workunits = 0;
-
-      //
-      // Perform a quick verification of the packet op codes.
-      //
-      if (( wrdata.resultcode != RESULT_NOTHING &&
-            wrdata.resultcode != RESULT_FOUND ) ||
-            ((unsigned int)wrdata.contest) != contest)
-      {
-        /* buffer code should have handled this */
-        //Log( "%sError - Bad Data - packet discarded.\n",exchname );
-        continue;
+      /* get threshold in *work units */
+      int threshold = ClientGetInThreshold( client, contest, 1 /* force */ );
+      if (lefttotrans < ((unsigned long)threshold))
+        lefttotrans = threshold - lefttotrans;
+      else /* determine if we have at least one packet per cruncher */
+      {    /* (remember that GetInThreshold() returns *work-units*) */
+        int numcrunchers = client->numcpu;
+        if (numcrunchers < 0)
+          numcrunchers = GetNumberOfDetectedProcessors();
+        if (numcrunchers < 1) /* force non-threaded or getnumprocs() failed */
+          numcrunchers = 1;
+        if (packets < numcrunchers)  /* Have at least one packet per cruncher? */
+          lefttotrans = numcrunchers - packets;
+        else
+          lefttotrans = 0;
       }
-
-      //
-      // Save the new work record into the output file.
-      //
-      if ( BufferPutFileRecord( remote_file, &wrdata, NULL ) != 0 )
-      {
-        PutBufferRecord( client, &wrdata );
-        failed = -1;
-        break;
-      }
-
-      //
-      // Normalize the number of work units within this block.
-      //
-      switch (contest)
-      {
-        case RC5:
-        case DES:
-        case CSC:
-          workunits =  __iter2norm(wrdata.work.crypto.iterations.lo,
-                                   wrdata.work.crypto.iterations.hi);
-          break;
-        case OGR:
-          workunits = 1;
-          break;
-      }
-
-      //
-      // Update the total transfer counts.
-      //
-      projtrans++;
-      combinedtrans++;
-      combinedworkunits += workunits;
-
-      //
-      // Signal the block transfer event and log screen activity.
-      //
-      {
-        struct Fetch_Flush_Info ffinfo = {contest, projtrans, combinedtrans};
-        unsigned long totrans = (projtrans + (unsigned long)(lefttotrans));
-
-        ClientEventSyncPost(CLIEVENT_BUFFER_FLUSHFLUSHED, (long)(&ffinfo));
-
-        unsigned int percent;
-        if (totrans < projtrans)
-          totrans = projtrans;
-        percent = ((projtrans*10000)/totrans);
-
-        LogScreen( "\rSent %s packet %lu of %lu (%u.%02u%% transferred)     ",
-            CliGetContestNameFromID(contest),
-            projtrans, totrans,  percent/100, percent%100 );
-      }
-
-      //
-      // Check for user abort signal.
-      //
-      if (CheckExitRequestTriggerNoIO())
-        break;
-
-    } /* while (lefttotrans >=0 ) */
-
-  } /* for (contest = 0; contest < CONTEST_COUNT; contest++) */
-
-
-  //
-  // Print out a final summary of how many blocks were transferred.
-  //
-  if (combinedtrans > 0)
-  {
-    ClientEventSyncPost( CLIEVENT_BUFFER_FLUSHEND, (long)(combinedtrans) );
-    Log( "Moved %lu packet%s (%lu work units) to remote file.\n",
-      combinedtrans, ((combinedtrans==1)?(""):("s")), combinedworkunits );
+    }
   }
-
-
-  //
-  // Return the result code.
-  //
-  if (failed)
-    return -((long)(combinedtrans+1));
-  return combinedtrans;
-}
+  return lefttotrans;
+}  
 
 /* --------------------------------------------------------------------- */
 
-// Fetch blocks from a remote buffer file
-
 long BufferFetchFile( Client *client, const char *loaderflags_map )
 {
-  unsigned long combinedtrans = 0, combinedworkunits = 0;
+  unsigned long donetrans_total_wu = 0, donetrans_total_pkts = 0;
   char basename[sizeof(client->remote_update_dir)  +
                 sizeof(client->in_buffer_basename) + 10 ];
   unsigned int contest;
   int failed = 0;
 
-
-  //
-  // If we aren't configured to do remote buffer updating, then quit.
-  //
+  // quit if we aren't configured to do remote buffer updates
   if (client->noupdatefromfile || client->remote_update_dir[0] == '\0')
     return 0;
 
-
-  //
-  // we need the correct number of cpus _used_ for time estimates
-  // but need the correct number of _crunchers_ for thresh.
-  //
-  int proc, numcrunchers;
-  proc = GetNumberOfDetectedProcessors();
-  if (proc < 1)
-    proc = 1;
-  numcrunchers = client->numcpu;
-  if (numcrunchers < 0)
-    numcrunchers = proc;
-  else if (numcrunchers == 0) /* force non-threaded */
-    numcrunchers = 1;
-
-
-  //
   // Generate the full path of the remote buffer.
-  //
   if (client->in_buffer_basename[0] == '\0')
   {
     strcpy( basename,
@@ -694,91 +552,186 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
   basename[sizeof(basename)-1] = '\0';
 //printf("basename: %s\n",basename);
 
-
-  //
-  // Loop through each contest and perform the fetching activity.
-  //
   for (contest = 0; !failed && contest < CONTEST_COUNT; contest++)
   {
-    unsigned long projtrans = 0, projworkunits = 0;
-    unsigned long lefttotrans;
-    int packets;
-    char remote_file[128];
+    const char *contname; char remote_file[sizeof(basename)+10];
+    unsigned long totrans_wu, donetrans_pkts = 0, donetrans_wu = 0;
 
-    //
-    // Check for user abort signal.
-    //
     if (CheckExitRequestTriggerNoIO())
       break;
 
-    //
-    // Skip to next contest if this one is closed or disabled.
-    //
     if (loaderflags_map[contest] != 0)
+      continue; /* Skip to next contest if this one is closed or disabled. */
+    contname = CliGetContestNameFromID(contest);
+    if (!contname)
+      continue;  
+
+    strncpy( remote_file, BufferGetDefaultFilename(contest,1,basename), sizeof(remote_file));
+    remote_file[sizeof(remote_file)-1] = '\0';
+    if (!DoesFileExist(remote_file))
+      continue; /* Skip to next contest if remote buffer file doesn't exist */
+
+    totrans_wu = 1;
+    while (totrans_wu > 0 )
+    {
+      if (CheckExitRequestTriggerNoIO())
+        break;
+
+      /* update the count to fetch - NEVER do this outside the loop */
+      totrans_wu = BufferReComputeWorkUnitsToFetch( client, contest);
+      if (totrans_wu > 0)
+      {
+        WorkRecord wrdata;
+        unsigned long remaining;
+
+        // Retrieve a packet from the remote buffer.
+        if ( BufferGetFileRecordNoOpt( remote_file, &wrdata, &remaining ) != 0 )
+        {
+          //totrans_wu = 0; /* move to next contest on file error */
+          break; /* move to next contest - error msg has been printed */
+        }
+        else if (((unsigned int)wrdata.contest) != contest)
+        {
+          Log("Remote buffer %s\ncontains non-%s packets. Stopped fetch for %s.\n",
+                       remote_file, contname, contname, contname );
+          BufferPutFileRecord( remote_file, &wrdata, NULL );
+          //totrans_wu = 0; /* move to next contest on file error */
+          break; /* move to next contest - error msg has been printed */
+        }
+        else if (PutBufferRecord( client, &wrdata ) < 0) /* can't save here? */
+        {                             /* then put it back there */
+          failed = -1; /* stop further local buffer I/O */
+          //totrans_wu = 0; /* move to next contest on file error */
+          break; /* move to next contest - error msg has been printed */
+        }  
+        else
+        {
+          int workunits = 0;
+          /* normalize to workunits for display */
+          switch (contest)
+          {
+            case RC5:
+            case DES:
+            case CSC:
+              workunits =  __iter2norm(wrdata.work.crypto.iterations.lo,
+                                     wrdata.work.crypto.iterations.hi);
+              if (workunits < 1)
+                workunits = 1;                                     
+              break;
+            case OGR:
+              workunits = 1;
+              break;
+          }
+
+          donetrans_pkts++;
+          donetrans_wu += workunits;
+
+          if (donetrans_pkts == 1) /* first pass? */
+            ClientEventSyncPost( CLIEVENT_BUFFER_FETCHBEGIN, 0 );
+
+          if (remaining == 0) /* if no more available, then we've done 100% */
+            totrans_wu = 0;
+          if (((unsigned long)workunits) > totrans_wu) /* done >= 100%? */
+            totrans_wu = workunits; /* then the # we wanted is the # we got */
+          totrans_wu -= workunits; /* how many to get for the next while() */
+        }  /* if BufferGetRecord/BufferPutRecord */
+      }  /* if if (totrans_wu > 0) */
+
+      if (donetrans_wu)
+      {
+        unsigned long totrans = (donetrans_wu + (unsigned long)(totrans_wu));
+        unsigned int percent = ((donetrans_wu*10000)/totrans);
+
+        LogScreen( "\rRetrieved %s work unit %lu of %lu (%u.%02u%% transferred) ",
+                    contname, donetrans_wu, totrans, percent/100, percent%100 );
+      }             
+    }  /* while ( totrans_wu > 0  ) */
+
+    if (donetrans_wu)
+    {
+      donetrans_total_wu   += donetrans_wu;
+      donetrans_total_pkts += donetrans_pkts;
+
+      LogScreen("\n");
+      LogTo(LOGTO_FILE|LOGTO_MAIL,
+            "Retrieved %lu %s work units (%lu packets) from file.\n",
+                         donetrans_wu, contname, donetrans_pkts );
+    }
+  } /* for (contest = 0; contest < CONTEST_COUNT; contest++) */
+
+  if (failed)
+    return -((long)(donetrans_total_pkts+1));
+  return donetrans_total_pkts;
+}
+
+/* --------------------------------------------------------------------- */
+
+long BufferFlushFile( Client *client, const char *loadermap_flags )
+{
+  long totaltrans_pkts = 0, totaltrans_wu = 0;
+  char basename[sizeof(client->remote_update_dir)  +
+                sizeof(client->out_buffer_basename) + 10 ];
+  unsigned int contest;
+  int failed = 0;
+
+  // If we aren't configured to do remote buffer updating, then quit.
+  if (client->noupdatefromfile || client->remote_update_dir[0] == '\0')
+    return 0;
+
+  // Generate the full path of the remote buffer.
+  if (client->out_buffer_basename[0] == '\0')
+  {
+    strcpy( basename,
+            GetFullPathForFilenameAndDir( BUFFER_DEFAULT_OUT_BASENAME,
+                                          client->remote_update_dir ));
+  }
+  else
+  {
+    strcpy( basename,
+           GetFullPathForFilenameAndDir(
+             &(client->out_buffer_basename[
+                        GetFilenameBaseOffset(client->out_buffer_basename)]),
+             client->remote_update_dir ) );
+  }
+  basename[sizeof(basename)-1] = '\0';
+
+  for (contest = 0; !failed && contest < CONTEST_COUNT; contest++)
+  {
+    const char *contname; char remote_file[sizeof(basename)+10];
+    unsigned long projtrans_wu = 0, projtrans_pkts = 0; 
+    WorkRecord wrdata; long totrans_pkts;
+
+    if (CheckExitRequestTriggerNoIO())
+      break;
+    if (loadermap_flags[contest] != 0) /* contest is closed or disabled */
+      continue; /* proceed to next contest */
+    contname = CliGetContestNameFromID(contest);
+    if (!contname)
       continue;
 
+    strncpy( remote_file, BufferGetDefaultFilename(contest,1,basename), sizeof(remote_file));
+    remote_file[sizeof(remote_file)-1] = '\0';
 
-    //
-    // Determine how many packets we should transfer from the remote buffer.
-    //
-    if ((packets = GetBufferCount( client, contest, 0, &lefttotrans)) < 0)
-      lefttotrans = 0;
-    else
+    totrans_pkts = 1;
+    while (totrans_pkts > 0)
     {
-      unsigned long threshold = ClientGetInThreshold( client, contest, 1 /* force */ );
-      if (lefttotrans >= threshold) /* buffers full? */
-        if (packets < numcrunchers)  /* Have at least one packet per cruncher? */
-          lefttotrans = numcrunchers - packets;
-        else
-          lefttotrans = 0;
-      else
-        lefttotrans = threshold - lefttotrans;
-    }
+      long workunits;
 
-
-    //
-    // Verify that the remote buffer file exists.
-    //
-    if (lefttotrans != 0)
-    {
-      strncpy( remote_file, BufferGetDefaultFilename(contest,1,basename), sizeof(remote_file));
-      remote_file[sizeof(remote_file)-1] = '\0';
-      if (!DoesFileExist(remote_file))
-        lefttotrans = 0;
-//printf("remotefile: %s %ld\n",remote_file,lefttotrans);
-    }
-
-    while (lefttotrans > 0 )
-    {
-      WorkRecord wrdata;
-      unsigned long remaining;
-      int workunits = 0;
-
-      if (CheckExitRequestTriggerNoIO() != 0 )
+      if (CheckExitRequestTriggerNoIO())
         break;
 
-      //
-      // Retrieve a packet from the remote buffer.
-      //
-      if ( BufferGetFileRecordNoOpt( remote_file, &wrdata, &remaining ) != 0 )
+      totrans_pkts = GetBufferRecord( client, &wrdata, contest, 1 );
+      if (totrans_pkts < 0)
         break;
-      if (remaining == 0)
-         lefttotrans = 0;
 
-      //
-      // Save the packet into our local buffers.
-      //
-      if (PutBufferRecord( client, &wrdata ) < 0)
+      if ( BufferPutFileRecord( remote_file, &wrdata, NULL ) != 0 )
       {
-        BufferPutFileRecord( remote_file, &wrdata, NULL );
+        PutBufferRecord( client, &wrdata );
         failed = -1;
-        lefttotrans = 0;
         break;
       }
 
-      //
-      // Normalize the work units contained within the packet.
-      //
+      workunits = 1;
       switch (contest)
       {
         case RC5:
@@ -786,69 +739,45 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
         case CSC:
           workunits =  __iter2norm(wrdata.work.crypto.iterations.lo,
                                    wrdata.work.crypto.iterations.hi);
+          if (workunits < 1)
+            workunits = 1;
           break;
         case OGR:
           workunits = 1;
           break;
       }
 
-      //
-      // Update the count of work units transferred.
-      //
-      projtrans++;
-      projworkunits += workunits;
-      combinedtrans++;
-      combinedworkunits += workunits;
-      if (((unsigned long)workunits) > lefttotrans)
-        lefttotrans = 0;
-      else
-        lefttotrans -= workunits;
-
-      //
-      // Signal the transfer event and update the screen activity.
-      //
-      if (combinedtrans == 1)
-        ClientEventSyncPost( CLIEVENT_BUFFER_FETCHBEGIN, 0 );
-
+      projtrans_pkts++;
+      projtrans_wu += workunits;
+      
+      if (totrans_pkts == 0) /* no more to do, can show count in work units */
       {
-        struct Fetch_Flush_Info ffinfo = {contest, projtrans, combinedtrans};
-        unsigned long totrans = (projworkunits + (unsigned long)(lefttotrans));
-
-        ClientEventSyncPost(CLIEVENT_BUFFER_FLUSHFLUSHED, (long)(&ffinfo));
-
-        unsigned int percent;
-        if (totrans < projworkunits)
-          totrans = projworkunits;
-        percent = ((projworkunits*10000)/totrans);
-
-        LogScreen( "\rRetrieved %s work unit %lu of %lu (%u.%02u%% transferred) ",
-            CliGetContestNameFromID(contest),
-            projworkunits, totrans,  percent/100, percent%100 );
+        LogScreen( "\rSent %s work unit %lu of %lu (100.00%% transferred)   ",
+            contname, projtrans_wu, projtrans_wu  );
       }
-    }  /* while ( lefttotrans > 0  ) */
+      else /* count in packets */
+      {
+        unsigned long totrans = (projtrans_pkts + (unsigned long)(totrans_pkts));
+        unsigned int percent = ((projtrans_pkts*10000)/totrans);
+        LogScreen( "\rSent %s packet %lu of %lu (%u.%02u%% transferred)     ",
+          contname, projtrans_pkts, totrans,  percent/100, percent%100 );
+      }
+    } /* while (totrans_pkts >=0 ) */
 
+    if (projtrans_pkts != 0) /* transferred anything? */
+    {
+      totaltrans_pkts += projtrans_pkts;
+      totaltrans_wu += projtrans_wu;
+
+      LogScreen("\n");
+      LogTo(LOGTO_FILE|LOGTO_MAIL,
+            "Transferred %lu %s work unit%s (%lu packet%s) to file.\n",
+                totaltrans_wu, ((totaltrans_wu==1)?(""):("s")),  contname, 
+                totaltrans_pkts, ((totaltrans_pkts==1)?(""):("s")) );
+    }
   } /* for (contest = 0; contest < CONTEST_COUNT; contest++) */
 
-
-  //
-  // Print out a final summary of how many blocks were transferred.
-  //
-  if (combinedtrans > 0)
-  {
-    ClientEventSyncPost( CLIEVENT_BUFFER_FETCHEND, (long)(combinedtrans) );
-    Log( "Retrieved %lu work unit%s (%lu packet%s) from remote file.\n",
-      combinedworkunits, ((combinedworkunits==1)?(""):("s")),
-      combinedtrans, ((combinedtrans==1)?(""):("s")) );
-  }
-
-
-  //
-  // Return the result code.
-  //
   if (failed)
-    return -((long)(combinedtrans+1));
-  return combinedtrans;
+    return -((long)(totaltrans_pkts+1));
+  return totaltrans_pkts;
 }
-
-/* --------------------------------------------------------------------- */
-
