@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.102 2001/02/23 03:47:49 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.103 2001/02/26 00:54:25 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -317,9 +317,24 @@ static inline void __copy_internal_problem( InternalProblem *dest,
     // second call, except that source still has it's original membuffer, when the
     // one we want is in dest.  Is this heinously bad, or am I smoking crack? -- sampo
 
+    // core_membuffer is a pointer into __core_membuffer_space. This space is 
+    // not a malloc()ed memblock, but another member (char[]) of 
+    // InternalProblem.
+    // So core_membuffer must not be copied, otherwise it would point outside 
+    // of it's own InternalProblem.
+    // But when copying one InternalProblem into another we must take care of 
+    // the content of __core_membuffer_space. It must be aligned in the copy, 
+    // too. The alignment is defined by core_membuffer and the padding may 
+    // differ from source. -- andreasb
+
   void *p = dest->priv_data.core_membuffer;
   memcpy( dest, source, sizeof(InternalProblem));
   dest->priv_data.core_membuffer = p;
+  
+  // inefficient, because this is the second copy of that area, but we need 
+  // the core memory aligned and core_membuffer pointing to it.
+  memcpy( dest->priv_data.core_membuffer, source->priv_data.core_membuffer, 
+          MAX_MEM_REQUIRED_BY_CORE );
 }
 
 /* ======================================================================= */
@@ -748,21 +763,17 @@ int ProblemLoadState( void *__thisprob,
 
   __assert_lock(__thisprob);
   __copy_internal_problem( temp_prob, main_prob ); /* copy main->temp */
-  
-  // hold the lock for __InternalLoadState().  If we release the lock before the 
-  // State is loaded, theoretically another thread could preempt us and overwrite
-  // our data between the two __copy_internal_problem() calls;
-  
+  __release_lock(__thisprob);
+
   if (__InternalLoadState( temp_prob, work, contestid, _iterations, 
                            expected_cputype, expected_corenum, expected_os,
                            expected_buildfrac ) != 0)
   {
-    __release_lock(__thisprob);
     return -1;
   }                             
 
-  /* success - we still hold the lock at this point */
-
+  /* success */
+  __assert_lock(__thisprob);
   __copy_internal_problem( main_prob, temp_prob ); /* copy temp->main */
   __release_lock(__thisprob);
   return 0;
@@ -1400,7 +1411,7 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
 {
   int last_resultcode;
   InternalProblem *main_prob = __pick_probptr(__thisprob, PICKPROB_MAIN);
-  InternalProblem *core_prob = main_prob; //__pick_probptr(__thisprob, PICKPROB_CORE);
+  InternalProblem *core_prob = __pick_probptr(__thisprob, PICKPROB_CORE);
 
   if (!main_prob || !core_prob)
   {
@@ -2221,8 +2232,8 @@ int ProblemGetInfo(void *__thisprob,
       }
     } /* if (elapsed || rate || ratebuf) */    
     if ( sigbuf     || cwpbuf     || 
-         c_permille || s_permille ||
-         ratehi     || ratelo     || ratebuf   ||  
+         c_permille || s_permille || swucount  ||
+         ratehi     || ratelo     || ratebuf   ||
          ubtcounthi || ubtcountlo || tcountbuf ||
          ubccounthi || ubccountlo || ccountbuf ||
          ubdcounthi || ubdcountlo || dcountbuf )
