@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.196  1999/03/18 03:56:07  cyp
+// Minor adjustments to reflect changed client class variables.
+//
 // Revision 1.195  1999/03/04 00:04:38  trevorh
 // Add support for OS/2 GUI client
 //
@@ -206,7 +209,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.195 1999/03/04 00:04:38 trevorh Exp $"; }
+return "@(#)$Id: client.cpp,v 1.196 1999/03/18 03:56:07 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -218,6 +221,7 @@ return "@(#)$Id: client.cpp,v 1.195 1999/03/04 00:04:38 trevorh Exp $"; }
 #include "scram.h"     // InitRandom()
 #include "pathwork.h"  // EXTN_SEP
 #include "clitime.h"   // CliTimer()
+#include "util.h"      // projectmap_build()
 #include "modereq.h"   // ModeReqIsSet()/ModeReqRun()
 #include "triggers.h"  // [De]InitializeTriggers(),RestartRequestTrigger()
 #include "logstuff.h"  // [De]InitializeLogging(),Log()/LogScreen()
@@ -241,70 +245,73 @@ s32 guiriscos, guirestart;
 
 static void __initialize_client_object(Client *client)
 {
-  strcpy(client->id, "rc5@distributed.net" );
-  client->inthreshold[0] = 10;
-  client->outthreshold[0] = 10;
-  client->inthreshold[1] = 10;
-  client->outthreshold[1] = 10;
-  client->minutes = 0;
-  client->priority = 0;
+  /* everything here should also be validated in the appropriate subsystem, 
+     so if zeroing here causes something to break elsewhere, the subsystem 
+     init needs fixing. 
+     Variables are initialized in the same order that they are declared in
+     the client object. Keep it that way to ensure we don't miss something.
+   */
 
-  client->blockcount = 0;
-  client->timeslice = 0x10000;
-  client->stopiniio = 0;
+  int contest;
+
+  /* non-user-configurable variables */
+  client->nonewblocks=0;
+  client->randomchanged=0;
+  client->randomprefix=100;
+  client->rc564closed=0;
+  client->stopiniio=0;
+  client->scheduledupdatetime = 0;
+  client->inifilename[0]=0;
+
+  /* -- block/buffer -- */
+  strcpy(client->id, "rc5@distributed.net" );
+  client->checkpoint_file[0]=0;
+  client->nodiskbuffers=0;
+  client->connectoften=0;
+  client->preferred_blocksize=31;
+  for (contest=0; contest<CONTEST_COUNT; contest++)
+  {
+    client->inthreshold[contest] = 10;
+    client->outthreshold[contest] = 10;
+    client->in_buffer_file[contest][0] = '\0';
+    client->out_buffer_file[contest][0] = '\0';
+    client->membufftable[contest].in.count=0;
+    client->membufftable[contest].out.count=0;
+  }
+
+  /* -- net -- */
+  client->offlinemode = 0;
+  client->nettimeout=60;
+  client->nofallback=0;
+  client->autofindkeyserver=1;
   client->keyproxy[0] = 0;
   client->keyport = 0;
   client->httpproxy[0] = 0;
   client->httpport = 0;
   client->uuehttpmode = 0;
   client->httpid[0] = 0;
-  client->cputype=-1;
-  client->offlinemode = 0;
-  client->autofindkeyserver = 1;  //implies 'only if keyproxy==dnetkeyserver'
 
-  client->pausefile[0]=
-  client->logname[0]=
-  client->checkpoint_file[0]=0;
-  strcpy(client->inifilename, "rc5des" EXTN_SEP "ini");
-  strcpy(client->in_buffer_file[0], "buff-in" EXTN_SEP "rc5");
-  strcpy(client->out_buffer_file[0], "buff-out" EXTN_SEP "rc5");
-  strcpy(client->in_buffer_file[1], "buff-in" EXTN_SEP "des");
-  strcpy(client->out_buffer_file[1], "buff-out" EXTN_SEP "des");
-  strcpy(client->in_buffer_file[2], "buff-in" EXTN_SEP "ogr");
-  strcpy(client->out_buffer_file[2], "buff-out" EXTN_SEP "ogr");
-  strcpy(client->exit_flag_file,     "exitrc5" EXTN_SEP "now" );
-
+  /* -- log -- */
+  client->logname[0]= 0;
   client->messagelen = 0;
   client->smtpport = 25;
-  client->smtpsrvr[0]=
-  client->smtpfrom[0]=
+  client->smtpsrvr[0]=0;
+  client->smtpfrom[0]=0;
   client->smtpdest[0]=0;
-  client->contestdone[0]=
-  client->contestdone[1]=0;
+
+  /* -- perf -- */
   client->numcpu = -1;
-  client->percentprintingoff=0;
-  client->connectoften=0;
-  client->nodiskbuffers=0;
-  client->membufftable[0].in.count=
-  client->membufftable[0].out.count=
-  client->membufftable[1].in.count=
-  client->membufftable[1].out.count=0;
-  client->nofallback=0;
-  client->randomprefix=100;
-  client->preferred_contest_id = 1;
-  client->preferred_blocksize=31;
-  client->randomchanged=0;
-  client->consecutivesolutions[0]=0;
-  client->consecutivesolutions[1]=0;
+  client->cputype = -1;
+  client->priority = 0;
+
+  /* -- misc -- */
   client->quietmode=0;
-  client->nonewblocks=0;
-  client->nettimeout=60;
+  client->blockcount = 0;
+  client->minutes = 0;
   client->noexitfilecheck=0;
-#if defined(MMX_BITSLICER) || defined(MMX_RC5)
-  client->usemmx = 1;
-#endif
-  srand( (unsigned) time(NULL) );
-  InitRandom();
+  client->percentprintingoff=0;
+  projectmap_build(client->loadorder_map,"");
+  client->pausefile[0]=0;
 }
 
 Client::Client()
@@ -355,9 +362,9 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
     {
     if (level == 0)
       {
-      LogScreenRaw( "\nRC5DES v" CLIENT_VERSIONSTRING
-                 " client - a project of distributed.net\n"
-                 "Copyright 1997-1999 distributed.net\n" );
+      LogScreenRaw( "\nRC5DES v" CLIENT_VERSIONSTRING " client (Build: " 
+                    __DATE__") - a project of distributed.net\n"
+                    "Copyright 1997-1999 distributed.net\n" );
 
       #if (CLIENT_CPU == CPU_68K)
       LogScreenRaw( "RC5 68K assembly by John Girvin\n");
@@ -408,7 +415,7 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
       {
       #if ((CLIENT_OS==OS_DOS) || (CLIENT_OS==OS_WIN16) || \
            (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_OS2) || \
-           ((CLIENT_OS==OS_WIN32) && !defined(NEEDVIRTUALMETHODS)))
+           (CLIENT_OS==OS_WIN32))
       #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
       if ((winGetVersion()%2000) < 400) /* w32pre.cpp. +2000==NT */
       #endif
@@ -417,7 +424,7 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
         LogScreenRaw("Warning: The TZ= variable is not set in the environment. "
          "The client will\nprobably display the wrong time and/or select the "
          "wrong keyserver.\n");
-        putenv("TZ=GMT+0"); //use local time.
+        putenv("TZ=GMT+0"); //use local, not redmond or armonk, time
         }
       #endif
 
@@ -474,7 +481,7 @@ int Client::Main( int argc, const char *argv[] )
       {
       domodes = (ModeReqIsSet(-1) != 0);
       if (InitializeTriggers(((noexitfilecheck ||
-                              domodes)?(NULL):(exit_flag_file)),
+                              domodes)?(NULL):("exitrc5" EXTN_SEP "now")),
                               ((domodes)?(NULL):(pausefile)) )==0)
         {
         if (InitializeConnectivity() == 0) //do global initialization
@@ -521,6 +528,8 @@ int realmain( int argc, char *argv[] )
   // The if (success) thing is for nesting without {} nesting.
   Client *clientP = NULL;
   int retcode = -1, init_success = 1;
+  srand( (unsigned) time(NULL) );
+  InitRandom();
 
   //------------------------------
 
