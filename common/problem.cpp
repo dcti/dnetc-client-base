@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.109 2001/03/19 15:36:42 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.110 2001/03/20 09:50:24 cyp Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -32,6 +32,7 @@ return "@(#)$Id: problem.cpp,v 1.108.2.109 2001/03/19 15:36:42 andreasb Exp $"; 
 #include "console.h"  //ConOutErr
 #include "triggers.h" //RaiseExitRequestTrigger()
 #include "clisync.h"  //synchronisation primitives
+#include "coremem.h"  //cmem_alloc() and cmem_free()
 #include "problem.h"  //ourselves
 
 //#define STRESS_THREADS_AND_BUFFERS /* !be careful with this! */
@@ -168,7 +169,7 @@ void ProblemFree(void *__thisprob)
     
     memset( thisprob, 0, sizeof(SuperProblem) );
     __problem_counter--;
-    free((void *)thisprob);
+    cmem_free((void *)thisprob);
   }
   return;
 }
@@ -203,7 +204,7 @@ Problem *ProblemAlloc(void)
 
   if (!err)
   {
-    thisprob = (SuperProblem *)malloc(sizeof(SuperProblem));
+    thisprob = (SuperProblem *)cmem_alloc(sizeof(SuperProblem));
     if (!thisprob)
     {
       Log("Insufficient memory to allocate problem data\n");
@@ -269,7 +270,7 @@ Problem *ProblemAlloc(void)
   
   if (thisprob && err)
   {
-    free((void *)thisprob);
+    cmem_free((void *)thisprob);
     thisprob = (SuperProblem *)0;
   }
   return (Problem *)thisprob;

@@ -10,7 +10,7 @@
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.50.2.18 2001/03/19 18:06:57 cyp Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.50.2.19 2001/03/20 09:50:27 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -259,6 +259,9 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
         rtp.prio = RTP_PRIO_MAX - ((RTP_PRIO_MAX * prio) / 9); //0 is highest
         if ( rtprio( RTP_SET, 0, &rtp ) != 0 )
           return -1;
+      #elif defined(HAVE_MULTICRUNCH_VIA_FORK)
+      int newnice = ((22*(9-prio))+5)/10;  /* scale from 0-9 to 20-0 */
+      nice( newnice );
       #elif (!defined(_POSIX_THREADS_SUPPORTED)) //defined in cputypes.h
         /* nothing - native threads, inherit */
       #elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING)

@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.61 2001/03/19 18:06:57 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.62 2001/03/20 09:50:28 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -1000,7 +1000,8 @@ int TriggersSetThreadSigMask(void)
 {
 #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) \
     || ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS)) \
-    || defined(_POSIX_THREADS_SUPPORTED)
+    || defined(_POSIX_THREADS_SUPPORTED) \
+    || defined(HAVE_MULTICRUNCH_VIA_FORK)
   sigset_t signals_to_block;
   sigemptyset(&signals_to_block);
   sigaddset(&signals_to_block, SIGINT);
@@ -1022,7 +1023,8 @@ int TriggersSetThreadSigMask(void)
     #endif
   #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
   thr_sigsetmask(SIG_BLOCK, &signals_to_block, NULL);
-  #elif ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS))
+  #elif defined(HAVE_MULTICRUNCH_VIA_FORK) || \
+        ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS))
   sigprocmask(SIG_BLOCK, &signals_to_block, NULL);
   #endif
 #endif

@@ -9,7 +9,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.90 2001/03/19 18:06:55 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.91 2001/03/20 09:50:15 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -32,6 +32,7 @@ return "@(#)$Id: clirun.cpp,v 1.98.2.90 2001/03/19 18:06:55 cyp Exp $"; }
 #include "probfill.h"  // LoadSaveProblems(), FILEENTRY_xxx macros
 #include "modereq.h"   // ModeReq[Set|IsSet|Run]()
 #include "clievent.h"  // ClientEventSyncPost() and constants
+#include "coremem.h"   // cmem_alloc(), cmem_free()
 
 // --------------------------------------------------------------------------
 
@@ -624,8 +625,7 @@ static int __StopThread( struct thread_param_block *thrparams )
     {
       NonPolledUSleep(100);   // give the thread some air
       #if ((CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS))
-      if (!thrparams->hasexited) //thread did not exit by itself
-        thr_join(0, 0, NULL); //all at once
+      thr_join(0, 0, NULL); //all at once
       #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
       if (!thrparams->hasexited)
         pthread_join( thrparams->threadID, (void **)NULL);
@@ -648,6 +648,25 @@ static int __StopThread( struct thread_param_block *thrparams )
         delay(100);
       #elif (CLIENT_OS==OS_LINUX) && defined(HAVE_KTHREADS) /*kernel threads*/
       kthread_join( thrparams->threadID );
+      #elif defined(HAVE_MULTICRUNCH_VIA_FORK)
+      int timeout = 5*1000000; /* 5 secs */
+      int res = -1;
+      int status;
+      while (timeout > 0)
+      {
+        if (waitpid(thrparams->threadID,&status,WNOHANG|WUNTRACED) != -1)
+        {
+          res = 0;
+          break;
+        }
+        NonPolledUSleep(100000);
+        timeout -= 100000;
+      }
+      if (res != 0)
+      {
+        kill(thrparams->threadID, SIGKILL); /* its hung. kill it */
+        waitpid(thrparams->threadID,&status,WUNTRACED);
+      }
       #elif (CLIENT_OS == OS_FREEBSD)
       while (!thrparams->hasexited)
         NonPolledUSleep(100000);
@@ -658,7 +677,7 @@ static int __StopThread( struct thread_param_block *thrparams )
     }
     ClientEventSyncPost( CLIEVENT_CLIENT_THREADSTOPPED, 
                          &(thrparams->threadnum), sizeof(thrparams->threadnum) );
-    free( thrparams );
+    cmem_free( thrparams );
   }
   return 0;
 }
@@ -672,7 +691,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
   int success = 1, use_poll_process = 0;
 
   struct thread_param_block *thrparams = (struct thread_param_block *)
-                         malloc( sizeof(struct thread_param_block) );
+                 cmem_alloc( sizeof(struct thread_param_block) );
   if (thrparams)
   {
     // Start the thread for this cpu
@@ -715,6 +734,35 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       //defined in cputypes.h
       #if !defined(CLIENT_SUPPORTS_SMP)
         use_poll_process = 1; //no thread support or cores are not thread safe
+      #elif defined(HAVE_MULTICRUNCH_VIA_FORK)
+      use_poll_process = 1;
+      if (thrparams->threadnum != 0) /* second...nth thread */
+      {
+        pid_t pid = fork();
+        if (pid == 0) /* child */
+        {
+          int fd;
+          setsid();
+          if ((fd = open("/dev/null", O_RDWR, 0)) != -1)
+          {
+            (void) dup2(fd, 0);
+            (void) dup2(fd, 1);
+            (void) dup2(fd, 2);
+            if (fd > 2)
+              (void) close(fd);
+          }
+          thrparams->threadID = getpid();
+          Go_mt((void *)thrparams);
+          _exit(0);
+        }
+        success = 0;
+        if (pid != -1)
+        {
+          thrparams->threadID = pid;
+          success = 1;
+        }
+        use_poll_process = 0;
+      }
       #elif (CLIENT_OS == OS_FREEBSD)
       //#define USE_THREADCODE_ONLY_WHEN_SMP_KERNEL_FOUND /* otherwise its for >=3.0 */
       #define FIRST_THREAD_UNDER_MAIN_CONTROL /* otherwise main is separate */
@@ -1082,7 +1130,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     }
     else
     {
-      free( thrparams );
+      cmem_free( thrparams );
       thrparams = NULL;
     }
   }

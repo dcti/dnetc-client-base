@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.52 2001/03/19 18:06:57 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.53 2001/03/20 09:50:17 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -524,6 +524,14 @@
         /* no use under AIX 4.1.5, all threads have same prio */
     #undef _POSIX_THREAD_PRIORITY_SCHEDULING
   #endif
+#elif defined(__unix__)
+  typedef int /*pid_t*/ THREADID;
+  #define OS_SUPPORTS_SMP
+  #define HAVE_MULTICRUNCH_VIA_FORK
+  #include <sys/wait.h>     /* wait() */
+  #include <sys/time.h>     /* required for resource.h */
+  #include <sys/resource.h> /* WIF*() macros */
+  #include <sys/mman.h>     /* minherit() */
 #else
   typedef int THREADID;
 #endif
