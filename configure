@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.127 2000/02/13 19:03:51 lyndon Exp $
+# @(#)$Id: configure,v 1.222.2.128 2000/02/13 21:43:03 lyndon Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -267,18 +267,23 @@ OPTS_GCC_SUN68K="$OPTS_GCC -O2 -DASM_68K -D_SUN68K_"
 #-- MIPS
 
 ## Irix with MIPSpro compilers
-OPTS_CC_MIPSPRO="-O3 -INLINE:all -LNO:opt=1 -IPA -OPT:Olimit=0 -xansi -DMIPSpro"
-OPTS_LD_MIPSPRO="-IPA"
-OPTS_LD_MIPSPRO_64="${OPTS_LD_MIPSPRO} -64"
+
+# ABI specific options
+OPTS_MIPSPRO_ABI_32="-n32 -mips3 -r4000"
+OPTS_MIPSPRO_ABI_64="-64 -mips4 -r10000"
+
+OPTS_CC_MIPSPRO="-O3 -IPA -LNO:opt=1 -xansi -DMIPSpro"
 
 # Common across all MIPSpro compiles:
 OPTS_MIPSPRO_CCFLAGS="${OPTS_CC_MIPSPRO} -DMULTITHREAD -DHAVE_OGR_CORES"
 OPTS_MIPSPRO_SRCS="rc5/ansi/rc5ansi_2-rg.cpp ${OGR_ANSI_SRCS}"
-OPTS_MIPSPRO_DOCS="docs/readme._ix docs/readme.irix"
+OPTS_MIPSPRO_DOCS="docs/readme._ix"
 
 # Common to a specific ABI:
-OPTS_MIPSPRO_CCFLAGS_32="${OPTS_MIPSPRO_CCFLAGS} -n32 -mips3 -r4000"
-OPTS_MIPSPRO_CCFLAGS_64="${OPTS_MIPSPRO_CCFLAGS}  -64 -mips4 -r10000"
+OPTS_MIPSPRO_CCFLAGS_32="${OPTS_MIPSPRO_CCFLAGS} ${OPTS_MIPSPRO_ABI_32}"
+OPTS_MIPSPRO_CCFLAGS_64="${OPTS_MIPSPRO_CCFLAGS} ${OPTS_MIPSPRO_ABI_64}"
+OPTS_LD_MIPSPRO_32="${OPTS_MIPSPRO_CCFLAGS} ${OPTS_MIPSPRO_ABI_32}"
+OPTS_LD_MIPSPRO_64="${OPTS_MIPSPRO_CCFLAGS} ${OPTS_MIPSPRO_ABI_64}"
 
 ## GNU
 
@@ -462,9 +467,9 @@ case "$1" in
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} \
 			-DCLIENT_OS_NAME=\"\\\"Irix (generic-n32)\\\"\""
 	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
-	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO}"
+	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_32}"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}
 	TARGET_TARBALL="irix6.5-mips-n32"
 	;;
 
@@ -475,7 +480,7 @@ case "$1" in
 	TARGET_ADDSRCS="${OPTS_MIPSPRO_SRCS}"
 	TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_64}"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}
 	TARGET_TARBALL="irix6.5-mips-64"
 	;;
 
