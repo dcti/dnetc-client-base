@@ -8,6 +8,9 @@
 // the time. 'time' is always stored/passed/returned in timeval format.
 // 
 // $Log: clitime.h,v $
+// Revision 1.10  1998/11/25 06:02:46  dicamillo
+// Update because BeOS also needs "sys/time.h".
+//
 // Revision 1.9  1998/07/28 11:44:54  blast
 // Amiga specific changes
 //
@@ -36,7 +39,7 @@
 
 #ifndef _CLITIME_H_
 #define _CLITIME_H_
-#if (CLIENT_OS == OS_AMIGAOS)
+#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_BEOS))
 #include <sys/time.h> // To make it compile, deine from this file needed..
 #endif
 
