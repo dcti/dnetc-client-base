@@ -8,11 +8,20 @@
 //#define STRESS_RANDOMGEN
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
-#define ROTATE_BETWEEN_PROJECTS // yes, we rotate between projects
-//people who don't want to rotate can turn it off with -config
+// no, we don't rotate by default.  DO NOT REVERT, CYP!
+//#define ROTATE_BETWEEN_PROJECTS
+// People who do not want to "do RC5 all their lives" will place other
+// contests (shorter-lived ones) before RC5.  With rotation enabled,
+// if they want to only participate in a single contest at a time, they
+// must explicitly modify their contest priority to disable all others
+// each time that contest starts or stops (on all of their machines)!
+// Although this is a nice experimental development, contest rotation
+// should not be forcefully enabled until a boolean enable/disable
+// option exists in the config to specifically allow rotation (default
+// enable, if you must insist).
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.30 2000/04/10 14:49:06 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.31 2000/04/11 13:24:16 jlawson Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
