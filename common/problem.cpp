@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.95 2001/01/25 00:53:36 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.96 2001/01/26 17:04:04 cyp Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -92,9 +92,6 @@ typedef struct
     int started;
     int initialized;
     unsigned int threadindex; /* 0-n (globally unique identifier) */
-    mutex_t coredata_lock; /* half-lock: locked when accessing this structure */
-    mutex_t corecode_lock; /* full-lock: locked when in core */
-                           /* implies hung/crashed core == hung client */
   } priv_data;
 } InternalProblem;
 
@@ -102,57 +99,53 @@ typedef struct
 #pragma pack()
 #endif
 
-static InternalProblem *__validate_probptr(void *thisprob)
-{
-   /* nothing yet */
-  return (InternalProblem *)thisprob;
-}
+/* ======================================================================= */
 
-/* ------------------------------------------------------------------- */
+#ifndef MIPSpro
+#pragma pack(1)
+#endif
+
+/* SuperProblem() is an InternalInternal problem struct                */
+/* One Problem for LoadState/RetrieveState()/mainthread and            */
+/* one problem for the core. The core's copy is updated on entry       */
+/* into Run(), and the mainthread copy is syncronized on exit from Run */
+/*                                                                     */
+/* SuperProblem members are never accessed by any functions other than */
+/* those listed immediately below (ProblemAlloc and friends)           */
+
+typedef struct 
+{
+  InternalProblem twist_and_shout[2]; 
+  #define PICKPROB_MAIN 0 /* MAIN must be first */
+  #define PICKPROB_CORE 1
+  mutex_t copy_lock; /* locked when a sync is in progress */
+} SuperProblem;  
+
+#ifndef MIPSpro
+#pragma pack()
+#endif
+
+unsigned int ProblemGetSize(void)
+{ /* needed by IPC/shmem */
+  return sizeof(SuperProblem);
+}  
 
 void ProblemFree(void *__thisprob)
 {
-  InternalProblem *thisprob = __validate_probptr(__thisprob);
+  SuperProblem *thisprob = (SuperProblem *)__thisprob;
   if (thisprob)
   {
-    memset( thisprob, 0, sizeof(InternalProblem) );
+    memset( thisprob, 0, sizeof(SuperProblem) );
     __problem_counter--;
     free((void *)thisprob);
   }
   return;
 }
 
-int ProblemIsInitialized(void *__thisprob)
-{ 
-  int rescode = -1;
-  InternalProblem *thisprob = __validate_probptr(__thisprob);
-  if (thisprob)
-  {
-    int init;
-    mutex_lock(&(thisprob->priv_data.coredata_lock));
-    init = thisprob->priv_data.initialized;
-    rescode = 0;
-    if (init)
-    {
-      rescode = thisprob->priv_data.last_resultcode;
-      if (rescode <= 0) /* <0 = error, 0 = RESULT_WORKING */
-        rescode = -1;
-      /* otherwise 1==RESULT_NOTHING, 2==RESULT_FOUND */
-    } 
-    mutex_unlock(&(thisprob->priv_data.coredata_lock));
-  }
-  return rescode;
-}
-
-unsigned int ProblemGetSize(void)
-{ /* needed by IPC/shmem */
-  return sizeof(InternalProblem);
-}  
-
 Problem *ProblemAlloc(void)
 {
   char *p;
-  InternalProblem *thisprob = (InternalProblem *)0;
+  SuperProblem *thisprob = (SuperProblem *)0;
   int err = 0;
 
   #ifdef STRESS_THREADS_AND_BUFFERS
@@ -179,7 +172,7 @@ Problem *ProblemAlloc(void)
 
   if (!err)
   {
-    thisprob = (InternalProblem *)malloc(sizeof(InternalProblem));
+    thisprob = (SuperProblem *)malloc(sizeof(SuperProblem));
     if (!thisprob)
     {
       Log("Insufficient memory to allocate problem data\n");
@@ -189,38 +182,99 @@ Problem *ProblemAlloc(void)
     
   if (thisprob && !err)
   {
-    p = (char *)&(thisprob->priv_data.rc5unitwork);
+    p = (char *)&(thisprob->twist_and_shout[PICKPROB_CORE].priv_data.rc5unitwork);
     if ((((unsigned long)p) & (sizeof(void *)-1)) != 0)
     {
+      /* Ensure that the core data is going to be aligned */
       Log("priv_data.rc5unitwork for problem %d is misaligned!\n", __problem_counter);
       err = 1;
+    }
+    else 
+    {
+      /* Ensure that what we return as 'Problem *' is valid */
+      if ( ((Problem *)thisprob) != 
+        ((Problem *)&(thisprob->twist_and_shout[PICKPROB_MAIN].pub_data)) )
+      {
+        Log("Ack! Phui! Problem != Problem\n");
+        err = 1;
+      }  
     }
   }      
 
   if (thisprob && !err)
   {
     mutex_t initmux = DEFAULTMUTEX; /* {0} or whatever */
-    memset( thisprob, 0, sizeof(InternalProblem) );
-    thisprob->priv_data.threadindex = __problem_counter++;
-    memcpy( &(thisprob->priv_data.coredata_lock), &initmux, sizeof(mutex_t) );
-    memcpy( &(thisprob->priv_data.corecode_lock), &initmux, sizeof(mutex_t) );
 
+    memset( thisprob, 0, sizeof(SuperProblem) );
+    memcpy( &(thisprob->copy_lock), &initmux, sizeof(mutex_t));
+    
+    thisprob->twist_and_shout[PICKPROB_CORE].priv_data.threadindex = 
+    thisprob->twist_and_shout[PICKPROB_MAIN].priv_data.threadindex = 
+                                              __problem_counter++;
     //align core_membuffer to 16byte boundary
-    p = &(thisprob->priv_data.__core_membuffer_space[0]);
+    p = &(thisprob->twist_and_shout[PICKPROB_CORE].priv_data.__core_membuffer_space[0]);
     while ((((unsigned long)p) & ((1UL << CORE_MEM_ALIGNMENT) - 1)) != 0)
       p++;
-    thisprob->priv_data.core_membuffer = p;
+    thisprob->twist_and_shout[PICKPROB_CORE].priv_data.core_membuffer = p;
+
+    p = &(thisprob->twist_and_shout[PICKPROB_MAIN].priv_data.__core_membuffer_space[0]);
+    while ((((unsigned long)p) & ((1UL << CORE_MEM_ALIGNMENT) - 1)) != 0)
+      p++;
+    thisprob->twist_and_shout[PICKPROB_MAIN].priv_data.core_membuffer = p;
   }
   
   if (thisprob && err)
   {
     free((void *)thisprob);
-    thisprob = (InternalProblem *)0;
+    thisprob = (SuperProblem *)0;
   }
   return (Problem *)thisprob;
 }
 
-/* ------------------------------------------------------------------- */
+static InternalProblem *__pick_probptr(void *__thisprob, int which)
+{
+  if (__thisprob)
+  {
+    SuperProblem *p = (SuperProblem *)__thisprob;
+    if (which == PICKPROB_CORE)
+      return &(p->twist_and_shout[PICKPROB_CORE]);
+    return &(p->twist_and_shout[PICKPROB_MAIN]);
+  }    
+  return (InternalProblem *)0;
+}
+
+static void __synchronize_problems( void *__thisprob, int which_source )
+{
+  if (__thisprob)
+  {
+    SuperProblem *p = (SuperProblem *)__thisprob;
+    void *bufptr;
+
+    mutex_lock(&(p->copy_lock));
+    if (which_source == PICKPROB_CORE)
+    {
+      bufptr = p->twist_and_shout[PICKPROB_MAIN].priv_data.core_membuffer;
+      memcpy( &(p->twist_and_shout[PICKPROB_MAIN]),
+              &(p->twist_and_shout[PICKPROB_CORE]),
+              sizeof(InternalProblem));
+      p->twist_and_shout[PICKPROB_MAIN].priv_data.core_membuffer = bufptr;
+    }              
+    else
+    {
+      bufptr = p->twist_and_shout[PICKPROB_CORE].priv_data.core_membuffer;
+      memcpy( &(p->twist_and_shout[PICKPROB_CORE]),
+              &(p->twist_and_shout[PICKPROB_MAIN]),
+              sizeof(InternalProblem));
+      p->twist_and_shout[PICKPROB_CORE].priv_data.core_membuffer = bufptr;
+    }          
+    mutex_unlock(&(p->copy_lock));
+  }    
+  return;
+}                                   
+
+#undef SuperProblem /* so references beyond this point */
+
+/* ======================================================================= */
 
 // for some odd reasons, the RC5 algorithm requires keys in reversed order
 //         key.hi   key.lo
@@ -379,6 +433,28 @@ unsigned int ProblemCountLoaded(int contestid) /* -1=all contests */
   return loaded_problems[contestid];
 }
 
+/* ======================================================================= */
+
+int ProblemIsInitialized(void *__thisprob)
+{ 
+  int rescode = -1;
+  InternalProblem *thisprob = __pick_probptr(__thisprob,PICKPROB_MAIN);
+  if (thisprob)
+  {
+    rescode = 0;
+    if (thisprob->priv_data.initialized)
+    {
+      rescode = thisprob->priv_data.last_resultcode;
+      if (rescode <= 0) /* <0 = error, 0 = RESULT_WORKING */
+        rescode = -1;
+      /* otherwise 1==RESULT_NOTHING, 2==RESULT_FOUND */
+    } 
+  }
+  return rescode;
+}
+
+/* ------------------------------------------------------------------- */
+
 /* forward reference */
 static unsigned int __compute_permille(unsigned int cont_i, const ContestWork *work);
 
@@ -393,7 +469,7 @@ int ProblemLoadState( void *__thisprob,
 {
   ContestWork for_magic;
   int genned_random = 0, genned_benchmark = 0;
-  InternalProblem *thisprob = __validate_probptr(__thisprob);
+  InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
   struct selcore selinfo; int coresel;
 
   if (!thisprob)
@@ -622,12 +698,11 @@ int ProblemRetrieveState( void *__thisprob,
                           int dopurge, int dontwait )
 {
   int ret_code = 0;
-  InternalProblem *thisprob = __validate_probptr(__thisprob);
+  InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
   if (!thisprob)
   {
     return -1;
   }    
-  mutex_lock(&(thisprob->priv_data.coredata_lock));
   if (!thisprob->priv_data.initialized)
   {
     //LogScreen("ProblemRetrieveState() without preceding LoadState()\n");
@@ -656,17 +731,8 @@ int ProblemRetrieveState( void *__thisprob,
     if (dopurge)
     {
       thisprob->priv_data.initialized = 0;
-      /* wait for the core to see the changed .initialized state */
-      if (!dontwait) /* normal state is to wait. But we can't wait when aborting */
-      {
-        mutex_lock(&(thisprob->priv_data.corecode_lock));
-      }
       loaded_problems[thisprob->pub_data.contest]--;       /* per contest */  
       loaded_problems[CONTEST_COUNT]--; /* total */
-      if (!dontwait)
-      {
-        mutex_unlock(&(thisprob->priv_data.corecode_lock));
-      }
     }
     ret_code = thisprob->priv_data.last_resultcode;
     if (ret_code < 0)
@@ -675,7 +741,7 @@ int ProblemRetrieveState( void *__thisprob,
       ret_code = -1;
     }    
   }
-  mutex_unlock(&(thisprob->priv_data.coredata_lock));
+  dontwait = dontwait; /* no longer neccesary since we have full locks now */
   return ret_code;
 }
 
@@ -1164,36 +1230,35 @@ static void __compute_run_times(InternalProblem *thisprob,
 int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
 {
   int retcode;
-  InternalProblem *thisprob = __validate_probptr(__thisprob);
+  InternalProblem *main_prob = __pick_probptr(__thisprob, PICKPROB_MAIN);
+  InternalProblem *core_prob = __pick_probptr(__thisprob, PICKPROB_CORE);
 
-  if (!thisprob)
+  if (!main_prob || !core_prob)
   {
     return -1;
   }
-
-  thisprob->pub_data.last_runtime_is_invalid = 1; /* haven't changed runtime fields yet */
-
-  if ( !thisprob->priv_data.initialized )
+  main_prob->pub_data.last_runtime_is_invalid = 1; /* haven't changed runtime fields yet */
+  if ( !main_prob->priv_data.initialized )
   {
     return ( -1 );
   }
-
-  mutex_lock(&(thisprob->priv_data.corecode_lock));
+  __synchronize_problems(__thisprob, PICKPROB_MAIN); /* copy from main->core */
 
 #ifdef STRESS_THREADS_AND_BUFFERS
-  if (thisprob->pub_data.contest == RC5 && !thisprob->priv_data.started)
+  if (core_prob->pub_data.contest == RC5)
   {
-    thisprob->priv_data.contestwork.crypto.key.hi = thisprob->priv_data.contestwork.crypto.key.lo = 0;
-    thisprob->priv_data.contestwork.crypto.keysdone.hi = thisprob->priv_data.contestwork.crypto.iterations.hi;
-    thisprob->priv_data.contestwork.crypto.keysdone.lo = thisprob->priv_data.contestwork.crypto.iterations.lo;
-    thisprob->pub_data.runtime_usec = 1; /* ~1Tkeys for a 2^20 packet */
-    thisprob->pub_data.elapsed_time_usec = 1;
-    thisprob->priv_data.last_resultcode = RESULT_NOTHING;
-    thisprob->priv_data.started = 1;
+    core_prob->priv_data.contestwork.crypto.key.hi = core_prob->priv_data.contestwork.crypto.key.lo = 0;
+    core_prob->priv_data.contestwork.crypto.keysdone.hi = core_prob->priv_data.contestwork.crypto.iterations.hi;
+    core_prob->priv_data.contestwork.crypto.keysdone.lo = core_prob->priv_data.contestwork.crypto.iterations.lo;
+    core_prob->pub_data.runtime_usec = 1; /* ~1Tkeys for a 2^20 packet */
+    core_prob->pub_data.elapsed_time_usec = 1;
+    core_prob->priv_data.last_resultcode = RESULT_NOTHING;
+    core_prob->priv_data.started = 1;
   }
 #endif
 
-  if ( thisprob->priv_data.last_resultcode == RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
+  retcode = core_prob->priv_data.last_resultcode;
+  if ( core_prob->priv_data.last_resultcode == RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
   {
     static volatile int s_using_ptime = -1;
     struct timeval tv;
@@ -1201,11 +1266,11 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
     u32 iterations, runstart_secs, runstart_usecs;
 
     /*
-      On return from the Run_XXX thisprob->priv_data.contestwork must be in a state that we
+      On return from the Run_XXX core_prob->priv_data.contestwork must be in a state that we
       can put away to disk - that is, do not expect the loader (probfill
       et al) to fiddle with iterations or key or whatever.
 
-      The Run_XXX functions do *not* update problem.thisprob->priv_data.last_resultcode, they use
+      The Run_XXX functions do *not* update problem.core_prob->priv_data.last_resultcode, they use
       core_resultcode instead. This is so that members of the problem object
       that are updated after the resultcode has been set will not be out of
       sync when the main thread gets it with RetrieveState().
@@ -1216,8 +1281,8 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
       may choose to return -1, but keep core_resultcode at RESULT_WORKING.
     */
 
-    thisprob->priv_data.started = 1;
-    thisprob->pub_data.last_runtime_usec = thisprob->pub_data.last_runtime_sec = 0;
+    core_prob->priv_data.started = 1;
+    core_prob->pub_data.last_runtime_usec = core_prob->pub_data.last_runtime_sec = 0;
     runstart_secs = 0xfffffffful;
     using_ptime = s_using_ptime;
     if (using_ptime)
@@ -1242,44 +1307,47 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
       runstart_secs = tv.tv_sec;
       runstart_usecs = tv.tv_usec;
     }
-    iterations = thisprob->pub_data.tslice;
-    core_resultcode = thisprob->priv_data.last_resultcode;
-    retcode = -1;
 
-    switch (thisprob->pub_data.contest)
+    iterations = core_prob->pub_data.tslice;
+    core_resultcode = core_prob->priv_data.last_resultcode;
+
+    switch (core_prob->pub_data.contest)
     {
-      case RC5: retcode = Run_RC5( thisprob, &iterations, &core_resultcode );
+      case RC5: retcode = Run_RC5( core_prob, &iterations, &core_resultcode );
                 break;
-      case DES: retcode = Run_DES( thisprob, &iterations, &core_resultcode );
+      case DES: retcode = Run_DES( core_prob, &iterations, &core_resultcode );
                 break;
-      case OGR: retcode = Run_OGR( thisprob, &iterations, &core_resultcode );
+      case OGR: retcode = Run_OGR( core_prob, &iterations, &core_resultcode );
                 break;
-      case CSC: retcode = Run_CSC( thisprob, &iterations, &core_resultcode );
+      case CSC: retcode = Run_CSC( core_prob, &iterations, &core_resultcode );
                 break;
-      default: retcode = core_resultcode = thisprob->priv_data.last_resultcode = -1;
+      default: retcode = core_resultcode = core_prob->priv_data.last_resultcode = -1;
                 break;
     }
 
-    /* don't touch thisprob->pub_data.tslice or runtime as long as retcode < 0!!! */
-    if (retcode >= 0)
+    if (retcode < 0)
     {
-      if (!thisprob->priv_data.started || !thisprob->priv_data.initialized)
-      {
-        /* RetrieveState(,,purge) has been called */
-        core_resultcode = -1; // discard the purged block
-      }
-      thisprob->pub_data.core_run_count++;
-      __compute_run_times( thisprob, runstart_secs, runstart_usecs, 
-                           &thisprob->priv_data.loadtime_sec, &thisprob->priv_data.loadtime_usec,
+      /* don't touch core_prob->pub_data.tslice or runtime as long as retcode < 0!!! */
+    }
+    else if (!main_prob->priv_data.initialized)
+    {
+      /* whoops! RetrieveState(,,purge) was called while we in core */
+      retcode = -1; // discard the purged block
+    }
+    else /* update the remaining core related things, and synchronize */
+    {
+      core_prob->pub_data.core_run_count++;
+      __compute_run_times( core_prob, runstart_secs, runstart_usecs, 
+                           &core_prob->priv_data.loadtime_sec, &core_prob->priv_data.loadtime_usec,
                            using_ptime, &s_using_ptime, core_resultcode );
-      thisprob->pub_data.tslice = iterations;
-      thisprob->priv_data.last_resultcode = core_resultcode;
+      core_prob->pub_data.tslice = iterations;
+      core_prob->priv_data.last_resultcode = core_resultcode;
+      __synchronize_problems(__thisprob, PICKPROB_CORE); /* copy from core->main */
+      retcode = core_resultcode;
     }    
-  }
+    
+  } /* if (core_prob->priv_data.last_resultcode == RESULT_WORKING) */
 
-  retcode = thisprob->priv_data.last_resultcode;
-
-  mutex_unlock(&(thisprob->priv_data.corecode_lock));
   return retcode;
 }
 
@@ -1858,7 +1926,7 @@ int ProblemGetInfo(void *__thisprob,
                    char *dcountbuf, unsigned int dcountbufsz)
 {
   int rescode = -1;
-  InternalProblem *thisprob = __validate_probptr(__thisprob);
+  InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
   permille_only_if_exact = permille_only_if_exact; /* possibly unused */
 
   if (thisprob)
