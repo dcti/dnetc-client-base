@@ -3,6 +3,25 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.47  1998/12/04 16:56:27  cyp
+// Enforced crunching on threads for OS/2. Also added priority boosting when
+// shutting threads down.
+//
+// Revision 1.46  1998/12/01 19:49:14  cyp
+// Cleaned up MULT1THREAD #define. See cputypes.h log entry for details.
+//
+// Revision 1.45  1998/12/01 07:11:50  foxyloxy
+// Fixed IRIX MT finally! Woohoo! (Embarrasingly trivial and stupid fix...
+// doh)
+//
+// Revision 1.44  1998/12/01 02:18:27  cyp
+// win32 change: __StopThread() boosts a cruncher's priority to its own
+// priority level when waiting for the thread to die. This is primarily
+// for win9x that appears to allow idle threads to starve.
+//
+// Revision 1.43  1998/12/01 00:14:47  cyp
+// Cleared an unused variable warning.
+//
 // Revision 1.42  1998/12/01 23:25:31  cyp
 // Fixed count bug when one or more threads failed to start, but more than
 // one succeeded. blockcount limit is now checked by probfill (which bumps
@@ -12,8 +31,7 @@
 // Restore BeOS priority ranging from 1 to 10.
 //
 // Revision 1.40  1998/11/26 07:31:03  cyp
-// Updated to reflect changed checkpoint and buffwork methods. Corrected BeOS
-// priority scaling.
+// Updated to reflect changed checkpoint and buffwork methods. 
 //
 // Revision 1.39  1998/11/25 09:23:30  chrisb
 // various changes to support x86 coprocessor under RISC OS
@@ -56,7 +74,7 @@
 // be the cause for the FreeBSD crashes.
 //
 // Revision 1.27  1998/11/03 04:23:54  cyp
-// Added missing #if ... defined(MULTITHREAD) to def out pthread_sigmask
+// Added missing #if ... defined(MULT1THREAD) to def out pthread_sigmask
 //
 // Revision 1.26  1998/11/03 01:46:51  cyp
 // Commit to overwrite corrupted clirun in the tree.
@@ -100,7 +118,7 @@
 // Promoted u8 contestids in Fetch/Flush/Update to unsigned ints.
 //
 // Revision 1.142 1998/10/20 17:26:43  remi
-// Added 3 missing #ifdef(MULTITHREAD) to allow compilation of a non-mt client
+// Added 3 missing #ifdef(MULT1THREAD) to allow compilation of a non-mt client
 // on glibc-based systems.
 //
 // Revision 1.141 1998/10/18 21:51:26  dbaker
@@ -162,7 +180,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.42 1998/12/01 23:25:31 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.47 1998/12/04 16:56:27 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -236,8 +254,7 @@ struct thread_param_block
     int threadID;
   #elif (CLIENT_OS == OS_BEOS)
     thread_id threadID;
-  #elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H) || \
-    defined(_POSIX_THREAD_PRIORITY_SCHEDULING)) && defined(MULTITHREAD)
+  #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
     pthread_t threadID;
   #else
     int threadID;
@@ -696,7 +713,7 @@ if (targ->realthread)
   }
 #elif (CLIENT_OS == OS_OS2)
 #elif (CLIENT_OS == OS_BEOS)
-#elif ((defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && defined(MULTITHREAD))
+#elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
 if (targ->realthread)
   {
   sigset_t signals_to_block;
@@ -764,9 +781,6 @@ if (targ->realthread)
   
   targ->threadID = 0; //the thread is dead
   
-  if (targ->realthread)
-    SetThreadPriority( 9 ); /* for OSs that need to "exit faster" (OS2) */
-
   #if (CLIENT_OS == OS_BEOS)
   if (targ->realthread)
     exit(0);
@@ -779,15 +793,17 @@ static int __StopThread( struct thread_param_block *thrparams )
 {
   if (thrparams)
     {
+    yield_pump(NULL);   //give threads some air
     if (thrparams->threadID) //thread did not exit by itself
       {
       if (thrparams->realthread) //real thread
         {
-        yield_pump(NULL);   //give threads some air
-        
         #if (CLIENT_OS == OS_OS2)
+        DosSetPriority( 2, PRTYC_REGULAR, 0, 0); /* thread to normal prio */
         DosWaitThread( &(thrparams->threadID), DCWW_WAIT);
         #elif (CLIENT_OS == OS_WIN32)
+        SetThreadPriority( (HANDLE)thrparams->threadID, 
+           GetThreadPriority(GetCurrentThread()) );
         WaitForSingleObject((HANDLE)thrparams->threadID, INFINITE);
         CloseHandle((HANDLE)thrparams->threadID);
         #elif (CLIENT_OS == OS_BEOS)
@@ -795,9 +811,7 @@ static int __StopThread( struct thread_param_block *thrparams )
         wait_for_thread(thrparams->threadID, &be_exit_value);
         #elif (CLIENT_OS == OS_NETWARE)
         nwCliWaitForThreadExit( thrparams->threadID ); //in netware.cpp
-        #elif (defined(_POSIX_THREAD_PRIORITY_SCHEDULING) || \
-              defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && \
-        defined(MULTITHREAD)
+        #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
         pthread_join( thrparams->threadID, (void **)NULL);
         #endif
         }
@@ -839,13 +853,14 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     thrparams->next = NULL;
   
     use_poll_process = 0;
+
+    
     if ( no_realthreads )
       use_poll_process = 1;
     else
       {
-      #if ((CLIENT_CPU != CPU_X86) && (CLIENT_CPU != CPU_88K) && \
-         (CLIENT_CPU != CPU_SPARC) && (CLIENT_CPU != CPU_POWERPC))
-         use_poll_process = 1; //core routines are not thread safe
+      #if (!defined(CLIENT_SUPPORTS_SMP)) //defined in cputypes.h 
+        use_poll_process = 1; //no thread support or cores are not thread safe
       #elif (CLIENT_OS == OS_WIN32) 
         unsigned int thraddr;
         thrparams->threadID = _beginthread( Go_mt, 8192, (void *)thrparams );
@@ -853,7 +868,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       #elif (CLIENT_OS == OS_OS2)
         thrparams->threadID = _beginthread( Go_mt, NULL, 8192, (void *)thrparams );
         success = ( thrparams->threadID != -1);
-      #elif (CLIENT_OS == OS_NETWARE) && defined(MULTITHREAD)
+      #elif (CLIENT_OS == OS_NETWARE)
         if (!nwCliIsSMPAvailable())
           use_poll_process = 1;
         else 
@@ -862,33 +877,33 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       #elif (CLIENT_OS == OS_BEOS)
         char thread_name[32];
         long be_priority = thrparams->priority+1; 
-  // Be OS priority for rc5des should be adjustable from 1 to 10
-  // 1 is lowest, 10 is higest for non-realtime and non-system tasks
+        // Be OS priority for rc5des should be adjustable from 1 to 10
+        // 1 is lowest, 10 is higest for non-realtime and non-system tasks
         sprintf(thread_name, "RC5DES crunch#%d", thread_i + 1);
         thrparams->threadID = spawn_thread((long (*)(void *)) Go_mt, 
                thread_name, be_priority, (void *)thrparams );
         if ( ((thrparams->threadID) >= B_NO_ERROR) &&
              (resume_thread(thrparams->threadID) == B_NO_ERROR) )
           success = 1;
-      #elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && defined(MULTITHREAD)
-        SetGlobalPriority( thrparams->priority );  
-        pthread_attr_t thread_sched;
-        pthread_attr_init(&thread_sched);
-        pthread_attr_setscope(&thread_sched,PTHREAD_SCOPE_SYSTEM);
-        pthread_attr_setinheritsched(&thread_sched,PTHREAD_INHERIT_SCHED);
-        if (pthread_create( &(thrparams->threadID), &thread_sched, 
-              (void *(*)(void*)) Go_mt, (void *)thrparams ) == 0)
-          success = 1;
-        SetGlobalPriority( 9 ); //back to normal
-      #elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && defined(MULTITHREAD)
-        if (pthread_create( &(thrparams->threadID), NULL, 
-           (void *(*)(void*)) Go_mt, (void *)thrparams ) == 0 )
-          success = 1;
+      #elif defined(_POSIX_THREADS_SUPPORTED) //defined in cputypes.h
+        #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
+          SetGlobalPriority( thrparams->priority );  
+          pthread_attr_t thread_sched;
+          pthread_attr_init(&thread_sched);
+          pthread_attr_setscope(&thread_sched,PTHREAD_SCOPE_SYSTEM);
+          pthread_attr_setinheritsched(&thread_sched,PTHREAD_INHERIT_SCHED);
+          if (pthread_create( &(thrparams->threadID), &thread_sched, 
+                (void *(*)(void*)) Go_mt, (void *)thrparams ) == 0)
+            success = 1;
+          SetGlobalPriority( 9 ); //back to normal
+        #else
+          if (pthread_create( &(thrparams->threadID), NULL, 
+             (void *(*)(void*)) Go_mt, (void *)thrparams ) == 0 )
+            success = 1;
+        #endif
       #else
         use_poll_process = 1;
       #endif
-      //everything from this point on shouldn't need MULTITHREAD so ...
-      #undef MULTITHREAD 
       }
 
     if (use_poll_process)
@@ -927,7 +942,6 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
 //     4 = exit by block count expiration
 int Client::Run( void )
 {
-  FileEntry fileentry;
   unsigned int cont_i, prob_i;
   int force_no_realthreads = 0;
   struct thread_param_block *thread_data_table = NULL;
@@ -1015,9 +1029,9 @@ int Client::Run( void )
       numcrunchers = 1;
       }
     #endif
-    #if (CLIENT_OS == OS_WIN32)
-    if (numcrunchers == 0) // win32 must run with real threads because the
-      numcrunchers = 1;    // main thread must run at normal priority
+    #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_OS2) || (CLIENT_OS==OS_BEOS)
+    if (numcrunchers == 0) // must run with real threads because the
+      numcrunchers = 1;    // main thread runs at normal priority
     #endif
     #if (CLIENT_OS == OS_NETWARE)
     if (numcrunchers == 1) // NetWare client prefers non-threading  
