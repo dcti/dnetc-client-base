@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: console.h,v $
+// Revision 1.27  1999/01/28 00:21:26  trevorh
+// Added #include for conio.h
+//
 // Revision 1.26  1999/01/12 15:01:41  cyp
 // Created an itty-bitty ConBeep(). (used by Client::Configure())
 //
@@ -40,24 +43,28 @@
 #define CLICONS_SHORTNAME  "RC5DES"
 #define CLICONS_LONGNAME "Distributed.Net RC5/DES Client " CLIENT_VERSIONSTRING ""
 
-// ConIsScreen() returns true (!0) if console (both stdin and stdout) 
+#if ((CLIENT_OS == OS_OS2) && defined(__WATCOMC__))
+  #include <conio.h>
+#endif
+
+// ConIsScreen() returns true (!0) if console (both stdin and stdout)
 // represents the screen. also returns 0 if the console is not initialized.
 int ConIsScreen(void);
 
-// ConOut() does what printf("%s",str) would do 
+// ConOut() does what printf("%s",str) would do
 // writes only if stdout is a tty. (or equivalent)
 int ConOut(const char *str);
 
 // ConOutErr() does what fprintf(stderr "\nRC5DES: %s\n",msg) would do.
-// Can be blocking. Note the leading and trailing newlines. 
+// Can be blocking. Note the leading and trailing newlines.
 int ConOutErr(const char *msg); //Can be used at any time. Always succeeds.
 
-// ConOutModal() should only be used when the console is known to be 
+// ConOutModal() should only be used when the console is known to be
 // uninitialized. Can be blocking. Not affected by -hidden/-quiet mode
 int ConOutModal(const char *str); //currently no use for it.
 
-// ConInKey() does what a (non-blocking and polling) DOS-ish getch() would 
-// do key is not echoed. timeout ==> 0 == don't wait, -1 == wait forever. 
+// ConInKey() does what a (non-blocking and polling) DOS-ish getch() would
+// do key is not echoed. timeout ==> 0 == don't wait, -1 == wait forever.
 int ConInKey(int timeout_millisecs); // Returns -1 if err. 0 if timed out.
 
 // ConInStr() does what gets() would do (without the trailing '\n') and the
@@ -67,7 +74,7 @@ int ConInStr(char *buffer, unsigned int len, int flags );
 #define CONINSTR_ASPASSWORD 0x02  /* print '*' for each character typed */
 #define CONINSTR_ASBOOLEAN  0x04  /* get 'y' or 'n' */
 
-// ConClear() clears the screen. 
+// ConClear() clears the screen.
 // returns -1 if console is not a tty;
 int ConClear(void);
 
@@ -81,13 +88,13 @@ int ConGetPos( int *row, int *col );
 
 // Set the cursor position (zero-based)
 // returns -1 if console is not a tty
-int ConSetPos( int row, int col );  
+int ConSetPos( int row, int col );
 
 // Get screen size (one-based)
-// returns -1 if console is not a tty 
+// returns -1 if console is not a tty
 int ConGetSize( int *width, int *height );
 
-// Deinitialize console functionality. 
+// Deinitialize console functionality.
 int DeinitializeConsole(void);
 
 // Initialize console functionality. Returns !0 on failure.
