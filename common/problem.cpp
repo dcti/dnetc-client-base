@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.33  1998/08/24 04:43:26  cyruspatel
+// timeslice is now rounded up to be multiple of PIPELINE_COUNT and even.
+//
 // Revision 1.32  1998/08/22 08:00:40  silby
 // added in pipeline_count=2 "just in case" for x86
 //
@@ -68,7 +71,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.32 1998/08/22 08:00:40 silby Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.33 1998/08/24 04:43:26 cyruspatel Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -220,14 +223,12 @@ s32 Problem::LoadState( ContestWork * work, u32 contesttype, u32 _timeslice, u32
   #if (CLIENT_CPU == CPU_X86)
     if (_cputype == 6 && contest == 0) //RC5 MMX cores
       pipeline_count = 4;
-    else pipeline_count = 2;
   #endif
 
-  if ( _timeslice < pipeline_count )
-    tslice = pipeline_count;
-  else
-    tslice = _timeslice;
-  
+  tslice = (( pipeline_count + 1 ) & ( ~1L ));
+  if ( _timeslice > tslice )
+    tslice = ((_timeslice + (tslice - 1)) & ~(tslice - 1));
+          
   //--------------------------------------------------------------- 
 
   startpercent = (u32) ( (double) 100000.0 *
@@ -294,16 +295,15 @@ s32 Problem::Run( u32 threadnum )
   // (technically not necessary, but may save some wasted time)
   // note: doesn't account for high end or carry over
   if ( ( contestwork.keysdone.lo + tslice ) > contestwork.iterations.lo )
-    {
     timeslice = ( contestwork.iterations.lo - contestwork.keysdone.lo +
                 pipeline_count - 1 ) / pipeline_count + 1;
-    }
   else
-    {
     timeslice = tslice / pipeline_count; //from the problem object
-    }
-
   
+  if (timeslice <= tslice)
+    timeslice = tslice;
+  else
+    timeslice = (( timeslice + (tslice - 1)) & ~(tslice - 1));
 
 #if (CLIENT_CPU == CPU_POWERPC)
 {
