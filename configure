@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.153 2000/05/01 09:25:43 jlawson Exp $
+# @(#)$Id: configure,v 1.222.2.154 2000/05/12 17:17:50 jbaker Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1950,6 +1950,10 @@ if [ -z "$CLIENTOS" -o -z "$CLIENTCPU" ]; then
   fi
   CLIENTCPU=`./testplat cpu`
   CLIENTOS=`./testplat os`
+else
+  if [ $CLIENTOS = 22 ]; then
+	gcc common/testplat.cpp -o testplat
+  fi
 fi
 
 
@@ -2184,7 +2188,9 @@ if [ -n "${TARGET_ALLCCOBJS}" ]; then
   for target in ${TARGET_ALLCCOBJS}; do
     SAFENAME=`echo $target | tr -d ${DELETECHARS}`
     eval TARGETSRC=$`echo DEPEND_$SAFENAME`
+#broken
     TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
+#broken
     echo "$target:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
     echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
     echo "" >> Makefile
