@@ -10,6 +10,12 @@
  */ 
 //
 // $Log: clievent.h,v $
+// Revision 1.6  1998/12/30 07:35:16  dicamillo
+// Added struct Fetch_Flush_Info as result for fetching and flushing.
+//
+// Revision 1.5  1998/12/29 06:57:49  cyp
+// Removed redundant percbar event. Its covered by TFILL_STARTED.
+//
 // Revision 1.4  1998/12/29 20:36:23  silby
 // Added new event to cause GUIs to update their percent bars.
 // (Assumes percent bar routines have their own logic
@@ -40,12 +46,11 @@
 #define CLIEVENT_PROBLEM_FINISHED      0x0102 /* ...problem id */
 #define CLIEVENT_PROBLEM_TFILLSTARTED  0x0103 /* ...# of problems to check */
 #define CLIEVENT_PROBLEM_TFILLFINISHED 0x0104 /* ...# of problems changed */
-#define CLIEVENT_PROBLEM_CONTINUED     0x0105 /* ...0 (update % bar)*/
 #define CLIEVENT_BUFFER_FETCHBEGIN     0x0201 /* ...(long)(&proxymsg) */
-#define CLIEVENT_BUFFER_FETCHFETCHED   0x0202 /* ...sequence # */
+#define CLIEVENT_BUFFER_FETCHFETCHED   0x0202 /* ...(long)(&Fetch_Flush_Info) */
 #define CLIEVENT_BUFFER_FETCHEND       0x0203 /* ...total fetched */
 #define CLIEVENT_BUFFER_FLUSHBEGIN     0x0204 /* ...(long)(&proxymsg) */
-#define CLIEVENT_BUFFER_FLUSHFLUSHED   0x0205 /* ...sequence # */
+#define CLIEVENT_BUFFER_FLUSHFLUSHED   0x0205 /* ...(long)(&Fetch_Flush_Info) */
 #define CLIEVENT_BUFFER_FLUSHEND       0x0206 /* ...total fetched */
 #define CLIEVENT_SELFTEST_STARTED      0x0301 /* ...contest id */
 #define CLIEVENT_SELFTEST_TESTBEGIN    0x0302 /* ...problem ptr */
@@ -55,7 +60,16 @@
 #define CLIEVENT_BENCHMARK_BENCHING    0x0402 /* ...problem ptr */
 #define CLIEVENT_BENCHMARK_FINISHED    0x0403 /* ...rate (double ptr) or NULL*/
 
+/* 
+  Structures defined for used as parameters
+*/
 
+struct Fetch_Flush_Info {
+  unsigned long contest;
+  unsigned long contesttrans;	// blocks transferred for specified contest
+  unsigned long combinedtrans;	// blocks transferred for all contests
+};
+  
 /*
   #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
         NewProxyMessage(proxymessage);
