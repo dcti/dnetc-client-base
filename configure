@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.39  1998/06/15 04:38:32  remi
+# Added -fno-exceptions to EGCS options : ~200 KB less on the final executable.
+#
 # Revision 1.38  1998/06/15 02:44:26  djones
 # First build of UltraSPARC 64-bit/VIS DES client:
 # - many configure file tweaks: split up C++, ASM and C files; make "gcc" the
@@ -131,7 +134,7 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
 
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
-OPTS_EGCS='-O2 -fomit-frame-pointer -Wall -Icommon -Ides -Irc5 -Iplatforms'
+OPTS_EGCS='-Os -fno-exceptions -fomit-frame-pointer -Wall -Icommon -Ides -Irc5 -Iplatforms'
 
 
 #
