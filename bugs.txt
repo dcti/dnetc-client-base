@@ -96,6 +96,11 @@ Fixed (Silby)  6/14/1998
   made into a fully qualified local file by using the above function.
 Addendum (silby):  Logfiles appear to be this way too.
 Addendum (silby):  I'll fix this soon, working on it now.
+Addendum (silby):  Ok, here's how it works now.  All files are fully
+  qualified now, in ValidateConfig().  Some platforms do it via 
+  InternalGetLocalFilename, others by using the path of the .ini.
+  Either way, it seems to work fine, and much better than before. :)
+  (June 10th, 1998)
 
 6-03-98 - Kevin Bracey
   New Bug: Some parts of the program (mail.cpp in particular) print stuff
