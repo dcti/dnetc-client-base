@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dgp4.asm,v 1.2 2002/10/23 01:31:56 sampo Exp $
+; $Id: r72-dgp4.asm,v 1.3 2002/10/23 02:24:09 acidblood Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -11,9 +11,9 @@
 [SECTION .text]
 %endif
 
-[GLOBAL rc5_72_unit_func_dg_2_]
-[GLOBAL _rc5_72_unit_func_dg_2]
-[GLOBAL rc5_72_unit_func_dg_2]
+[GLOBAL rc5_72_unit_func_dg_p4_]
+[GLOBAL _rc5_72_unit_func_dg_p4]
+[GLOBAL rc5_72_unit_func_dg_p4]
 
 %define P         0xB7E15163
 %define Q         0x9E3779B9
@@ -301,9 +301,9 @@ defwork work_s,52
 
 align 16
 startseg:
-rc5_72_unit_func_dg_2:
-rc5_72_unit_func_dg_2_:
-_rc5_72_unit_func_dg_2:
+rc5_72_unit_func_dg_p4:
+rc5_72_unit_func_dg_p4_:
+_rc5_72_unit_func_dg_p4:
 
 ;	mov     ecx, esp
 ;      page 91, opt manual 64-byte align esp
