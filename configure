@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.56 1999/11/28 06:11:37 lyndon Exp $
+# @(#)$Id: configure,v 1.222.2.57 1999/11/28 13:34:39 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -26,6 +26,7 @@
 #   (from the client's perspective), and the user can always force non-MT
 #   by setting numcpu=0
 #
+# - RC5CORECOPY is obsolete! 
 
 #####################################################################
 # Note to people making changes..  Do not put spaces around the '=' #
@@ -406,34 +407,31 @@ case "$1" in
 
     *mips-cc-64)	     # For 64bit MIPS processors
 	#  mips-crunch.cpp doesn't yet compile with CC
-	RC5CORECOPY="rc5/ansi/rc5ansi2-rg2.cpp"
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -O3 -r5000 -IPA -64 -mips4 \
-			-DPIPELINE_COUNT=2 -DBIT_64 -DKWAN -DMEGGS"
+			-DBIT_64 -DKWAN -DMEGGS"
 	TARGET_LDFLAGS="-static -64 -IPA -mips4"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *mips5-cc)		# IRIX CC is slower than mips-gcc targets
 	#  mips-crunch.cpp doesn't compile with CC
-	RC5CORECOPY="rc5/ansi/rc5ansi2-rg2.cpp"
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -D_irix5_ \
-			-DPIPELINE_COUNT=2 -DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+			-DBIT_32 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *mips-cc)		# IRIX CC is slower than mips-gcc targets
 	#  mips-crunch.cpp doesn't compile with CC
-	RC5CORECOPY="rc5/ansi/rc5ansi2-rg2.cpp"
 	TARGET_CC="CC"
 	TARGET_LDFLAGS="-n32"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -n32 \
-			-DMULTITHREAD -DPIPELINE_COUNT=2 \
+			-DMULTITHREAD \
 			-DBIT_32 -DKWAN -DMEGGS "
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
@@ -500,10 +498,9 @@ case "$1" in
 
     *mips-gcc-ultrix)	# For mips based DEC Ultrix machines
 	DELETECHARS="'/.\$\-'"
-	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 \
+	TARGET_CCFLAGS="$OPTS_GCC_MIPS \
 			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
@@ -546,18 +543,11 @@ case "$1" in
 	;;
 
 ###### DGUX (Data General Unix)
-    *dgux-gcc)
-	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
-	TARGET_CC="/usr/local/bin/g++"
-	TARGET_CCFLAGS="$OPTS_GCC_DGUX"
-	TARGET_LDFLAGS="-static"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
 
-    *dgux-gcc-mt)
-	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
+    *dgux-gcc)
 	TARGET_CC="/usr/local/bin/g++"
 	TARGET_CCFLAGS="$OPTS_GCC_DGUX -D_POSIX4A_DRAFT6_SOURCE -DMULTITHREAD"
+        TARGET_ADDSRCS="rc5/ansi/2-rg.c"
 	TARGET_LIBS="-lthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
@@ -565,50 +555,25 @@ case "$1" in
 ###### Sparc/UltraSparc or Sun/SunOS/Solaris
 
     *sparc-openbsd)                   # snake
-	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC272_SPARC1 -DBIT_32 -DKWAN -DMEGGS"
 	TARGET_LDFLAGS="-static"
 	#TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
-	TARGET_ADDSRCS="des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
-    *sparc-linux)
-	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_SPARC -D__showids__ \
-			-DPIPELINE_COUNT=2 -DLURK \
-			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="common/lurk.cpp \
-			des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
-	TARGET_LDFLAGS="" #NEVER STATIC FOR GLIBC!!!
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *sparc-linux-mt)
-	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_SPARC -D__showids__ \
-			-DMULTITHREAD -DPIPELINE_COUNT=2 -DLURK \
-			-DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="common/lurk.cpp \
-			des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
-	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *sparc-linux-mt-egcs)	# [remi]
+    *sparc-linux)	# [remi]
 	TARGET_CC="egcc"
 	TARGET_AS="egcc -c"
-	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC -DHAVE_CSC_CORES \
 			-D__showids__ -DLURK -DMULTITHREAD \
 			-DBIT_32 -DKWAN -DMEGGS $CSC_ANSI_CCOPTS"
-	TARGET_ADDSRCS="common/lurk.cpp \
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c common/lurk.cpp \
 			des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp \
 			$CSC_ANSI_SRCS"
 	TARGET_LIBS="-lpthread"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="linux-sparc-elf-mt-glibc2"
+	TARGET_TARBALL="linux-sparc-elf-glibc2"
 	;;
 
     *sparc-cc)
@@ -617,15 +582,6 @@ case "$1" in
 	TARGET_CC="cc"
 	TARGET_CCFLAGS="$OPTS_CC_SPARC -DPIPELINE_COUNT=1"
 	TARGET_LIBS="-lnsl -lsocket"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *sunos-gcc-static)	
-	# FIX THIS
-        DELETECHARS="'/.\$\-'"
-	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_SPARC -DPIPELINE_COUNT=2"
-	TARGET_LIBS="-static"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
@@ -654,18 +610,6 @@ case "$1" in
 	;;
 
     #####
-
-    *sparc-solaris-gcc-mt-old)	# slower rc5, slower des
-        DELETECHARS="'/.\$\-'"
-	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
-	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
-			-DMULTITHREAD \
-			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN"
-	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
-	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
 
     *sparc-solaris-gcc-crunch-mt-old)    # fastest rc5, slower des
         DELETECHARS="'/.\$\-'"
@@ -1253,7 +1197,6 @@ case "$1" in
 ####### Intel x86 DYNIX
 
     *x86-dynix4)
-	RC5CORECOPY="rc5/ansi/rc5ansi2-rg2.cpp"
 	TARGET_CC="ec++"
 	TARGET_CCFLAGS="$OPTS_EPC_DYNIX -DMMX_RC5 -DPIPELINE_COUNT=2 \
 			-DBIT_32 -DMEGGS -DKWAN"
@@ -1264,7 +1207,6 @@ case "$1" in
 	;;
 
     *x86-dynix2)
-	RC5CORECOPY="rc5/ansi/rc5ansi2-rg2.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_DYNIX -DMMX_RC5 -DPIPELINE_COUNT=2 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
@@ -1304,20 +1246,18 @@ case "$1" in
 	;;
 
     *sparc-next)
-	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CC="cc++"
 	TARGET_CCFLAGS="$OPTS_NEXT_SPARC -arch sparc -D_NeXT_  \
-			-DPIPELINE_COUNT=2 -DBIT_32"
-	TARGET_ADDSRCS="des/des-slice.cpp des/deseval.cpp"
+			-DBIT_32"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c des/des-slice.cpp des/deseval.cpp"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *hppa-next)
- 	RC5CORECOPY="rc5/ansi/rc5ansi2-b2.cpp"
 	TARGET_CC="cc++"
 	TARGET_CCFLAGS="$OPTS_NEXT_HPPA -arch hppa -D_NeXT_ \
-			-DPIPELINE_COUNT=2 -DBIT_32"
-	TARGET_ADDSRCS="des/des-slice.cpp des/deseval.cpp"
+			-DBIT_32"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c des/des-slice.cpp des/deseval.cpp"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
@@ -1386,12 +1326,11 @@ case "$1" in
 
 ###### OS390
     *os390)
-	RC5CORECOPY="rc5/ansi/rc5ansi2-rg2.cpp"
 	TARGET_CC="gcc"
 	TARGET_AS=""
 	TARGET_CCFLAGS="$OPTS_OS390 -D__showids__ \
-			-DPIPELINE_COUNT=2 -DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+			-DBIT_32 -DKWAN -DMEGGS -DHAVE_DES_CORES"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
 	TARGET_ADDASMS=""
 	TARGET_LIBS="$SOCKS_LIBS"
         TARGET_DOCFILES="docs/readme.os390"   #platform specific docfile
