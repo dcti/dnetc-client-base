@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.39 1999/04/19 21:28:24 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.40 1999/04/20 23:02:57 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -498,6 +498,8 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
               else if (conf_options[menuoption].type==CONF_TYPE_ASCIIZ)
               {
                 descr = (char *)conf_options[menuoption].thevariable;
+                if (!*descr)
+                  descr = (char *)conf_options[menuoption].defaultsetting;
               }
               else if (conf_options[menuoption].type==CONF_TYPE_PASSWORD)
               {
