@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.59  1999/03/18 04:01:35  cyp
+// new network class method: Reset()
+//
 // Revision 1.58  1999/02/03 03:41:56  cyp
 // InitializeConnectivity()/DeinitializeConnectivity() are now in netinit.cpp
 //
@@ -160,7 +163,7 @@ extern "C" {
     #include <i86.h>
   #endif
   // All the OS/2 specific headers are here
-  // This is nessessary since the order of the OS/2 defines are important
+  // This is neccessary since the order of the OS/2 defines are important
   #include "platforms/os2cli/os2defs.h"
   typedef int SOCKET;
   #if !defined(__EMX__)
@@ -263,10 +266,10 @@ extern "C" {
 #define MODE_SOCKS5     8
 #define DEFAULT_RRDNS   ""
 #define DEFAULT_PORT    2064
-#define CONDSOCK_BLOCKING_ON     0x00000011L
-#define CONDSOCK_BLOCKING_OFF    0x00000010L
-#define CONDSOCK_NONBLOCKING_ON  CONDSOCK_BLOCKING_OFF
-#define CONDSOCK_NONBLOCKING_OFF CONDSOCK_BLOCKING_ON
+#define CONDSOCK_BLOCKING_ON     0x0011
+#define CONDSOCK_BLOCKING_OFF    0x0010
+#define CONDSOCK_KEEPALIVE_ON    0x0021
+#define CONDSOCK_KEEPALIVE_OFF   0x0020
 #ifndef INVALID_SOCKET
 #define INVALID_SOCKET  ((SOCKET)(-1))
 #endif
@@ -348,10 +351,6 @@ protected:
   int MakeNonBlocking(void) //the other shortcut
       { return LowLevelConditionSocket( CONDSOCK_BLOCKING_OFF ); };
 
-  int  Open( SOCKET insock );
-    // takes over a preconnected socket to a client.
-    // returns -1 on error, 0 on success
-
   int  Open( void );
     // [re]open the connection using the current settings.
     // returns -1 on error, 0 on success
@@ -389,6 +388,11 @@ public:
   int SetPeerAddress( u32 addr ) 
     { if (svc_hostaddr == 0) svc_hostaddr = addr; return 0; }
     // used by buffupd when proxies return an address in the scram packet
+    
+  int Reset( int fallbacknow );
+    // reset the connection (hard!), with optional immediate fallback
+    // the old connection is invalid on return (even if reset fails). 
+    
 };
 
 ///////////////////////////////////////////////////////////////////////////
