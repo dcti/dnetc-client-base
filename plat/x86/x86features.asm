@@ -178,7 +178,7 @@ HT_test:
   jz Return
   and ebx, 00FF0000h
   cmp ebx, 00010000h    ; Check if Hyper-Threading enabled
-  jne Return
+  je Return
   or esi, CPU_F_HYPERTHREAD ; Hyper-Threading supported and enabled
   jmp Return
 
