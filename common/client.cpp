@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: client.cpp,v $
+// Revision 1.152.2.14  1999/01/23 14:02:13  remi
+// Added $Id tag.
+// Synced with :
+//
+//  Revision 1.184  1999/01/17 15:59:25  cyp
+//  Do an InitRandom2() before any work starts.
+//
 // Revision 1.152.2.13  1999/01/17 12:23:15  remi
 // Inc sync with 1.183
 //
@@ -91,6 +98,11 @@
 //   Buncha hacks to get win32gui to compile, lots of cleanup to do.
 //
 // Synchronized with official 1.151
+
+#if (!defined(lint) && defined(__showids__))
+const char *client_cpp(void) {
+return "@(#)$Id: client.cpp,v 1.152.2.14 1999/01/23 14:02:13 remi Exp $"; }
+#endif
 
 // --------------------------------------------------------------------------
 
@@ -260,6 +272,7 @@ int Client::Main( int argc, const char *argv[], int restarted )
       
         if (domodes)
           {
+          InitRandom2( id );
           ModeReqRun( this );     
           }
         DeinitializeLogging();
