@@ -15,7 +15,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.16 1999/04/09 12:08:32 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.17 1999/05/06 17:49:46 cyp Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -275,13 +275,17 @@ time_t CliGetNewestModuleTime(void)
         if (bd.tm_mon >= 0  && bd.tm_mon  <= 11 && 
            bd.tm_mday >= 1  && bd.tm_mday <= 31 &&
            bd.tm_year >= 99 && bd.tm_year <= 132 &&
-	   bd.tm_hour >= 0  && bd.tm_hour <= 23 &&
-	   bd.tm_min  >= 0  && bd.tm_min  <= 59 &&
-	   bd.tm_sec  >= 0  && bd.tm_sec  <= 61 )
+           bd.tm_hour >= 0  && bd.tm_hour <= 23 &&
+           bd.tm_min  >= 0  && bd.tm_min  <= 59 &&
+           bd.tm_sec  >= 0  && bd.tm_sec  <= 61 )
         {
           time_t bdtime = mktime( &bd );
-	  if (bdtime != ((time_t)-1) && bdtime > newest)
-	    newest = bdtime;
+          if (bdtime != ((time_t)-1))
+          {
+            bdtime -= (CliTimeGetMinutesWest() * 60);
+            if (bdtime > newest)
+              newest = bdtime;
+          }
         }
       }
     }
