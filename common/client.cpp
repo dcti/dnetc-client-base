@@ -1183,7 +1183,7 @@ s32 Client::SelfTest( u8 contest )
   u64 expectedsolution;
 
   if (SelectCore()) return 0;
-  if (contest == 1) 
+  if (contest == 1)
     {
     test_cases = &rc5_test_cases;
     LogScreen("Beginning RC5 Self-test.\n");
@@ -2477,26 +2477,25 @@ PreferredIsDone1:
       // ----------------
 
       SignalTriggered = 1; // will make other threads exit
+
+#if defined(MULTITHREAD)
+
       LogScreen("Quitting...\n");
 
-      #if defined(MULTITHREAD)
+      // Wait for all threads to end...
+      for (cpu_i = 0; cpu_i < numcputemp; cpu_i++)
       {
-
-        // Wait for all threads to end...
-        for (cpu_i = 0; cpu_i < numcputemp; cpu_i++)
-        {
 #if (CLIENT_OS == OS_OS2)
-          DosWaitThread(&threadid[cpu_i], DCWW_WAIT);
+        DosWaitThread(&threadid[cpu_i], DCWW_WAIT);
 #elif (CLIENT_OS == OS_WIN32)
-          WaitForSingleObject((HANDLE)threadid[cpu_i], INFINITE);
+        WaitForSingleObject((HANDLE)threadid[cpu_i], INFINITE);
 #elif (CLIENT_OS == OS_BEOS)
-          wait_for_thread(the_threads[cpu_i], &be_exit_value);
+        wait_for_thread(the_threads[cpu_i], &be_exit_value);
 #elif (CLIENT_OS == OS_NETWARE)
-          CliWaitForThreadExit( threadid[cpu_i] );
+        CliWaitForThreadExit( threadid[cpu_i] );
 #else
-          pthread_join(threadid[cpu_i], NULL);
+        pthread_join(threadid[cpu_i], NULL);
 #endif
-        }
       }
 #endif
 

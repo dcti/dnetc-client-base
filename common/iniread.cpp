@@ -41,7 +41,7 @@ IniString::IniString(s32 value) : buffer(NULL)
 }
 /////////////////////////////////////////////////////////////////////////////
 
-IniString::operator s32 (void) {return (s32) (buffer ? atoi(buffer) : 0);}
+IniString::operator s32 (void) const {return (s32) (buffer ? atoi(buffer) : 0);}
 
 /////////////////////////////////////////////////////////////////////////////
 IniString &IniString::operator= (const IniString &that)

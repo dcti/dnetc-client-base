@@ -306,7 +306,7 @@ public:
   s32  Close( void );
     // close the connection
 
-  s32 Resolve( const char *host, u32 &hostaddress );
+  static s32 Resolve( const char *host, u32 &hostaddress );
     // perform a DNS lookup, handling random selection of DNS lists
     // returns -1 on error, 0 on success
 
@@ -321,7 +321,7 @@ public:
   void MakeBlocking();
     // makes the socket operate in blocking mode.
 
-  void LogScreen( const char * txt);
+  void LogScreen( const char * txt) const;
 
 };
 

@@ -1817,7 +1817,7 @@ s32 Client::Install()
   DWORD dwDisp=NULL;
   char mypath[200];
   GetModuleFileName(NULL, mypath, sizeof(mypath));
-  
+
   strcat( mypath, " -hide" );
 
   // register a Win95 "RunService" item
@@ -3322,8 +3322,6 @@ int Client::ARMid()
   u32 detectedvalue; // value ARMident returns, must be interpreted
   int coretouse; // the core the client should use
 
-  LogScreen("Beginning CPU identification...\n");
-
   // ARMident() will throw SIGILL on an ARM 2 or ARM 250, because
   // they don't have the system control coprocessor. (We ignore the
   // ARM 1 because I'm not aware of any existing C++ compiler that
@@ -3367,12 +3365,10 @@ int Client::ARMid()
       detectedvalue = 0x7500FE;
   }
 
-  LogScreen("Completed CPU identification. ");
-
   switch (detectedvalue)
   {
     case 0x200:
-      LogScreen("Detected an ARM 2 or ARM 250\n");
+      LogScreen("Detected an ARM 2 or ARM 250; ");
       coretouse=0;
       break;
     case 0x3:
@@ -3382,19 +3378,19 @@ int Client::ARMid()
     case 0x710:
     case 0x7500:
     case 0x7500FE:
-      LogScreenf("Detected an ARM %X\n", detectedvalue);
+      LogScreenf("Detected an ARM %X; ", detectedvalue);
       coretouse=0;
       break;
     case 0x810:
-      LogScreenf("Detected an ARM %X\n", detectedvalue);
+      LogScreenf("Detected an ARM %X; ", detectedvalue);
       coretouse=1;
       break;
     case 0xA10:
-      LogScreen("Detected a StrongARM 110\n");
+      LogScreen("Detected a StrongARM 110; ");
       coretouse=1;
       break;
     default:
-      LogScreen("Detected an unknown processor\n");
+      LogScreen("Detected an unknown processor; ");
       coretouse=-1;
       break;
   }

@@ -270,54 +270,26 @@ void Network::SetModeSOCKS5(const char *sockshost, s16 socksport,
 // returns -1 on error, 0 on success
 s32 Network::Resolve(const char *host, u32 &hostaddress)
 {
-#if !defined(NONETWORK)
 
-#if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_POWERPC)
-  if ((hostaddress = inet_addr((unsigned char*)host)) == 0xFFFFFFFFL)
-#else
   if ((hostaddress = inet_addr((char*)host)) == 0xFFFFFFFFL)
-#endif
   {
     struct hostent *hp;
-#if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_POWERPC)
-    if ((hp = gethostbyname((unsigned char*)host)) == NULL) return -1;
-#else
     if ((hp = gethostbyname((char*)host)) == NULL) return -1;
-#endif
 
-#if defined(_SUNOS3_)
-    // gethostbyname() returns only one address.
-    memcpy((void*) &hostaddress, hp->h_addr, sizeof(u32));
-#else
     int addrcount;
-  #if ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K))
-    // struct hostent is seriously broken when returned from gethostbyname()
-    // on sun3/SunOS 4.1.1. The h_addr_list member does NOT point to an array
-    // of pointers to IP addresses, it points to an array of the IP addresses
-    // themselves, and *then* pointers to them! Work around this problem by
-    // searching through the array for an entry that points to the start of
-    // the array, and fixing up h_addr_list.
-    for (addrcount = 0;
-         hp->h_addr_list[addrcount] &&
-                        (hp->h_addr_list[addrcount] != (char *)hp->h_addr_list);
-         addrcount++) ;
-    hp->h_addr_list += addrcount;
-  #endif
 
     // randomly select one
     for (addrcount = 0; hp->h_addr_list[addrcount]; addrcount++);
     int index = rand() % addrcount;
     memcpy((void*) &hostaddress, hp->h_addr_list[index], sizeof(u32));
-#endif
   }
-#endif
 
   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Network::LogScreen ( const char * text)
+void Network::LogScreen ( const char * text) const
 {
 #if (CLIENT_OS == OS_NETWARE)
   if (!quietmode) printf("%s", text );

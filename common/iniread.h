@@ -89,7 +89,7 @@ public:
     {return (*this = that);}
   const char *c_str(void) const
     {return (buffer ? buffer : "");}
-  operator s32 (void);
+  operator s32 (void) const;
   bool is_null(void) const
     {return (!buffer || !buffer[0] || strcmp(buffer, "0") == 0);}
   friend bool operator== (const IniString &s1, const IniString &s2);
