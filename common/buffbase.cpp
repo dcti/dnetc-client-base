@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.26 2000/03/09 09:24:13 jlawson Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.27 2000/03/09 12:20:53 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
@@ -191,18 +191,20 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
 
 #if ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_NEXTSTEP) || \
      (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_RISCOS))
+  // These operating systems distinguish "binary" files.
   #define BUFFEROPEN( fn )  fopen( fn, "r+b" )
-  #define BUFFEROPENCREATE( fn )  fopen( fn, "a+b" )
-  #define BUFFERCREATE( fn )   fopen( fn, "wb" )
+  #undef BUFFEROPENCREATE
+  #define BUFFERCREATE( fn )   fopen( fn, "w+b" )
 #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_VMS)
+  // These operating systems don't have an ftruncate equivalent.
   #define BUFFEROPEN( fn )  fopen( fn, "r+" )
-  #define BUFFEROPENCREATE( fn )  fopen( fn, "a+" )
-  #define BUFFERCREATE( fn )   fopen( fn, "w" )
-  #define ftruncate(h,sz) //nothing. ftruncate not supported.
+  #undef BUFFEROPENCREATE
+  #define BUFFERCREATE( fn )   fopen( fn, "w+" )
+  #define ftruncate(h,sz)
 #elif (CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K) //Sun3
   #define BUFFEROPEN( fn )  fopen( fn, "r+" )
-  #define BUFFEROPENCREATE( fn )  fopen( fn, "a+" )
-  #define BUFFERCREATE( fn )   fopen( fn, "w" )
+  #undef BUFFEROPENCREATE
+  #define BUFFERCREATE( fn )   fopen( fn, "w+" )
   extern "C" int ftruncate(int, off_t); // Keep g++ happy.
 #elif ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32) || \
        (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_OS2) || \
@@ -245,26 +247,35 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
   #define ftruncate(h,sz) chsize(h,sz)
   #define BUFFEROPEN( fn )  __bufferopenlock( fn, 0 )
   #define BUFFEROPENCREATE( fn )  __bufferopenlock( fn, 1 )
-  #define BUFFERCREATE( fn ) fopen( fn, "wb" )
+  #define BUFFERCREATE( fn ) fopen( fn, "w+b" )
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)
-  static FILE *__bufferopenlock(const char *fn, const char *mode)
+  static FILE *__bufferopenlock(const char *fn, int bCreate)
   {
-    FILE *fp = fopen(fn, mode);
-    if (fp != NULL) {
-      if (flock(fileno(fp), LOCK_EX | LOCK_NB) < 0) {
-        fclose(fp);
-        fp = NULL;
+    int handle;
+    if (bCreate)
+      handle = open(fn, O_RDWR|O_NONBLOCK|O_CREAT|O_EXLOCK,
+                    S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
+    else
+      handle = open(fn, O_RDWR|O_NONBLOCK|O_EXLOCK);
+
+    if (handle != -1)
+    {
+      if (flock(handle, LOCK_EX | LOCK_NB) >= 0)
+      {
+        FILE *fp = fdopen(handle, "r+");
+        if (fp != NULL) return fp;
       }
+      close(handle);
     }
-    return fp;
+    return (FILE*) 0;
   }
-  #define BUFFEROPEN( fn )   __bufferopenlock( fn, "r+" )
-  #define BUFFEROPENCREATE( fn )   __bufferopenlock( fn, "a+" )
-  #define BUFFERCREATE( fn )   fopen( fn, "w" )
+  #define BUFFEROPEN( fn )   __bufferopenlock( fn, 0 )
+  #define BUFFEROPENCREATE( fn )   __bufferopenlock( fn, 1 )
+  #define BUFFERCREATE( fn )   fopen( fn, "w+" )
 #else
   #define BUFFEROPEN( fn )  fopen( fn, "r+" )
-  #define BUFFEROPENCREATE( fn )  fopen( fn, "a+" )
-  #define BUFFERCREATE( fn )   fopen( fn, "w" )
+  #undef BUFFEROPENCREATE
+  #define BUFFERCREATE( fn )   fopen( fn, "w+" )
 #endif
 
 /* --------------------------------------------------------------------- */
