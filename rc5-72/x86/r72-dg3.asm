@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg3.asm,v 1.3.2.8 2003/03/19 02:42:29 acidblood Exp $
+; $Id: r72-dg3.asm,v 1.3.2.9 2003/03/26 03:28:27 andreasb Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -691,7 +691,7 @@ complex_incr:
         jnz     key_setup_1
 
         xor     eax, eax
-        jmp     finished
+        jmp     short finished
 finished_found:
         mov     esi, [iterations]
         add     ecx, [work_iterations]
