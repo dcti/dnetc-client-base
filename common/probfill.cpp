@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.53 2000/11/12 23:02:19 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.54 2000/11/13 13:26:02 oliver Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -64,7 +64,7 @@ static void __get_num_c_and_p(Client *client, int contestid,
     numcrunchers = numprocs;
   if (numcrunchersP)
     *numcrunchersP = numcrunchers;
-  if (numprocs)
+  if (numprocsP)
     *numprocsP = numprocs;
 }
 
