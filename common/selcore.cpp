@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.61 1999/12/04 15:33:32 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.62 1999/12/04 18:16:09 sampo Exp $"; }
 
 
 #include "cputypes.h"
@@ -525,7 +525,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   else if (contestid == CSC)
   {
     selcorestatics.corenum[CSC] = selcorestatics.user_cputype[CSC];
-    if (selcorestatics.corenum[CSC] < 0 detected_type > 0)
+    if (selcorestatics.corenum[CSC] < 0 && detected_type > 0)
     {
       int cindex = -1;
       if ((detected_type & 0x02000000L) != 0) //ARCH_IS_POWER
@@ -535,7 +535,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         long det = (detected_type & 0x00ffffffL);
         if (det == 1)       //PPC 601
           cindex = 1;       // G1: 16k L1 cache
-        else if (det == 12) //PPC 7500
+        else if (det == 12) //PPC 7400
           cindex = 0;       // G4: L1 cache 64k
         //don't know about the rest
       }
