@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.22 2000/05/26 02:38:44 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.23 2000/05/26 20:57:29 ctate Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -349,6 +349,12 @@ int CliGetMonotonicClock( struct timeval *tv )
       tv->tv_sec = ts.tv_sec;
       tv->tv_usec = ts.tv_nsec / 1000;
     }
+	#elif (CLIENT_OS == OS_BEOS)
+    {
+      bigtime_t now = system_time();    
+      tv->tv_sec = (time_t)(now / 1000000LL);    /* microseconds -> seconds */
+      tv->tv_usec = (time_t)(now % 1000000LL);    /* microseconds < 1 second */
+    }
     #elif (CLIENT_OS == OS_NETWARE)
     {
       /* wrapper (for scaling/emu) around GetHighResolutionTimer() */
@@ -369,7 +375,18 @@ int CliGetMonotonicClock( struct timeval *tv )
       tv->tv_sec = (time_t)((ctr/100UL) + wrap_hi + (usecs / 1000000UL);
       tv->tv_usec = usecs % 1000000UL;
     }
-    #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_OS2)
+    #elif (CLIENT_OS == OS_OS2)
+    {
+        ULONG counters[2]; /* uptime in millisecs and secs */
+        if (DosQuerySysInfo(QSV_MS_COUNT, QSV_TIME_LOW,
+            (void *)&counters[0], sizeof(counters)))
+            return -1;
+        counters[1] /= 86400; /* use only day count of secs */
+        /* and use the millisecs counter for the rest of secs */
+        tv->tv_sec =  (counters[1]*86400)+(counters[0]/86400000UL);
+        tv->tv_usec = (counters[0]%1000) * 1000;
+    }
+    #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16)
     {
       #if (CLIENT_OS == OS_OS2)
         #define myULONG ULONG
