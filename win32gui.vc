@@ -99,7 +99,7 @@ BASE_OBJS =                    \
 	$(OUTPUTPATH)/deseval.obj \
 	$(OUTPUTPATH)/des-slice.obj \
 	$(OUTPUTPATH)/sboxes-kwan4.obj \
-#        $(OUTPUTPATH)/w32pre.obj   \
+	$(OUTPUTPATH)/dctistrg.obj \
 	$(OUTPUTPATH)/guicons.obj \
 !ifndef WIN32S
 	$(OUTPUTPATH)/p2bdespro.obj \

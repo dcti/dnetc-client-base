@@ -62,7 +62,8 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/setprio.obj    \
 	$(OUTPUTPATH)/modereq.obj    \
 	$(OUTPUTPATH)/checkpt.obj    \
-	$(OUTPUTPATH)/clievent.obj
+	$(OUTPUTPATH)/clievent.obj   \
+	$(OUTPUTPATH)/dctistrg.obj
 
 PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/rg486.obj   \
