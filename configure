@@ -5,6 +5,11 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.17  1998/06/01 21:49:05  friedbait
+# added '-DKWAN' for OS/390,
+# changed the copy command for the RC5CORECOPY platforms such that
+# the stub no longer goes to './rc5' but to './common' instead
+#
 # Revision 1.16  1998/06/01 20:29:48  remi
 #
 # cleanup : changed ASM_P6, ASM_P6, ASM_6x86, etc ... to ASM_X86
@@ -561,7 +566,7 @@ case "$1" in
 	RC5CORECOPY="rc5ansi2-rg2.cpp"
 	TARGET_CC="cxx"
 	TARGET_AS=""
-	TARGET_CCFLAGS="$OPTS_OS390 -DPIPELINE_COUNT=2 -DBIT_32"
+	TARGET_CCFLAGS="$OPTS_OS390 -DPIPELINE_COUNT=2 -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS="$SLICE_SRCS4"
 	TARGET_ADDASMS=""
 	TARGET_LIBS="$SOCKS_LIBS"
@@ -690,9 +695,9 @@ for target in ${TARGET_ALLCCOBJS}; do
   eval TARGETSRC=$`echo DEPEND_$SAFENAME`
   if [ -n "${RC5CORECOPY}" -a `basename ${TARGETSRC}` = problem.cpp ]; then
     echo "$target:	${TARGETSRC} rc5/${RC5CORECOPY}" >> Makefile
-    echo "	cp -f rc5/${RC5CORECOPY} rc5/rc5stub.cpp" >> Makefile
+    echo "	cp -f rc5/${RC5CORECOPY} common/rc5stub.cpp" >> Makefile
     echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
-    echo "	rm -f rc5/rc5stub.cpp" >> Makefile
+    echo "	rm -f common/rc5stub.cpp" >> Makefile
   else
     echo "$target:	${TARGETSRC}" >> Makefile
     echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
