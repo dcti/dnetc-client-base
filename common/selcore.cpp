@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.26 2003/03/12 12:44:38 snake Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.27 2003/03/12 12:57:54 snake Exp $"; }
 
 //#define TRACE
 
@@ -594,9 +594,6 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
         if (cindex == 3)
             cindex = -1;
         #endif
-        // #elif defined(__GCC__) || defined(__GNUC__)
-        // if ((cindex == 4) || (cindex == 5))
-        //     cindex = 3;
         if (!have_vec && cindex == 6)     /* "KKS 7400" */
             cindex = -1;                  /* minibench */
         if (!have_vec && cindex == 7)     /* "KKS 7450" */
@@ -1237,7 +1234,6 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
     {
       switch ( detected_type & 0xffff) // only compare the low PVR bits
       {
-        // #if (CLIENT_OS == OS_MACOSX)
         case 0x0003: cindex = 4; break; // 603            == KKS 2pipes
         case 0x0004: cindex = 5; break; // 604            == KKS 604e
         case 0x0006: cindex = 4; break; // 603e           == KKS 2pipes
@@ -1245,15 +1241,6 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
         case 0x0008: cindex = 4; break; // 740/750 (G3)   == KKS 2pipes
         case 0x0009: cindex = 5; break; // 604e           == KKS 604e
         case 0x000A: cindex = 5; break; // 604ev          == KKS 604e
-        // #elif defined(__GCC__) || defined(__GNUC__)
-        // case 0x0003: cindex = 3; break; // 603            == MH 2-pipe
-        // case 0x0004: cindex = 3; break; // 604            == MH 2-pipe
-        // case 0x0006: cindex = 3; break; // 603e           == MH 2-pipe
-        // case 0x0007: cindex = 3; break; // 603r/603ev     == MH 2-pipe
-        // case 0x0008: cindex = 3; break; // 740/750 (G3)   == MH 2-pipe
-        // case 0x0009: cindex = 3; break; // 604e           == MH 2-pipe
-        // case 0x000A: cindex = 3; break; // 604ev          == MH 2-pipe
-        // #endif
         default:     cindex =-1; break; // no default
       }
       #if defined(__VEC__)  /* OS+compiler support altivec */
@@ -2290,7 +2277,6 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
      #endif
 
      #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-      // #if (CLIENT_OS == OS_MACOSX)
       case 4:
           unit_func.gen_72 = rc5_72_unit_func_KKS2pipes;
           pipeline_count = 2;
@@ -2308,7 +2294,6 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
           unit_func.gen_72 = rc5_72_unit_func_KKS7450;
           pipeline_count = 4;
           break;
-      // #endif
       #elif defined(__GCC__) || defined(__GNUC__)
       case 3:
         unit_func.gen_72 = rc5_72_unit_func_ppc_mh_2;
