@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.39 2000/05/14 11:34:39 andreasb Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.40 2000/05/29 14:06:01 friedbait Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -325,6 +325,71 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
       }
     }
     #endif
+#if (CLIENT_OS == OS_LINUX)
+
+    /* 
+     * following code fragment added by:
+     *    Friedemann Baitinger (aka 'friedbait'), fb@baiti.net
+     */
+
+    #define PROC_APM "/proc/apm"
+
+    unsigned int kmaj      = 0;
+    unsigned int kmin      = 0;
+    unsigned int amaj      = 0;
+    unsigned int amin      = 0;
+    unsigned int apm_flags = 0;
+    unsigned int line_stat = 0;
+    unsigned int bat_stat  = 0;
+    unsigned int bat_flags = 0;
+    FILE *fd = NULL;
+
+    /*
+     * first check the /proc filesystem to see whether the kernel
+     * supports apm. If not, there is nothing we can do at all
+     */
+
+    if (access(PROC_APM, R_OK) == 0) {
+        if ((fd = fopen(PROC_APM, "r")) != NULL) {
+
+            /*
+             * Ok, kernel supports apm, and we have successfully
+             * opened the /proc/apm. Let's parse the variables there
+             */
+
+            fscanf(fd, "%u.%u %u.%u 0x%02x 0x%02x 0x%02x 0x%02x",
+                   &kmaj, &kmin,
+                   &amaj, &amin,
+                   &apm_flags,
+                   &line_stat,
+                   &bat_stat,
+                   &bat_flags
+            );
+
+            /*
+             * /proc layout is kernel version dependent. Layout may
+             * change but it always starts with a major version number
+             * as long as that is '1' the format we have parsed is valid
+             * in all other cases we don't really know what we have got.
+             * Of course if major goes to '2' we will add a switch/case
+             * support the new layout too.
+             */
+
+            if (kmaj != 1) return -1;     /* proc layout may have changed */
+
+            TRACE_OUT((0,"sps: ACLineStatus = 0x%02x, BatteryFlag = 0x%02x\n",
+                       line_stat, bat_stat));
+
+            if (line_stat == 1)           /* we have AC power */
+                return 0;
+            if (line_stat == 0) {         /* we are running on battery */
+                if ((bat_flags & 8) != 0) /* but charging */
+                    return 0;             /* return not-on-battery */
+                return 1;                 /* yes, we are on battery */
+            }
+        }
+    }
+#endif
   }  
   return -1; /* unknown */
 }
