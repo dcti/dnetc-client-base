@@ -1,13 +1,17 @@
-// Hey, Emacs, this a -*-C++-*- file !
-//
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// ----------------------------------------------------------------------
-// Generic strcmpi and strncmpi macros
-// ----------------------------------------------------------------------
-//
+/* 
+ * Hey, Emacs, this a -*-C++-*- file !
+ *
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * ----------------------------------------------------------------------
+ * Generic strcmpi() and strncmpi() macros
+ * ----------------------------------------------------------------------
+*/ 
+#ifndef __CMPIDEFS_H__
+#define __CMPIDEFS_H__ "@(#)$Id: cmpidefs.h,v 1.20 1999/04/05 13:22:30 cyp Exp $"
+
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16)
   #if defined(__TURBOC__)
@@ -88,4 +92,6 @@
     extern "C" int strcasecmp(const char *s1, const char *s2);
     extern "C" int strncasecmp(const char *s1, const char *s2, int);
   #endif
-#endif
+#endif 
+
+#endif /* __CMPIDEFS_H__ */
