@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.65  1999/01/02 01:04:19  silby
+// Changed scheduled update to MODEREQ_FQUIET.
+//
 // Revision 1.64  1999/01/01 11:23:38  silby
 // Modifyed scheduledupdatetime handling:
 // 1) Now checks buffercount to determine if it needs
@@ -251,7 +254,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.64 1999/01/01 11:23:38 silby Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.65 1999/01/02 01:04:19 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -1471,7 +1474,7 @@ int Client::Run( void )
           // Check if contest is opened yet and if we have blocks.
           {
           contestdone[1]=0;          //open the contest so we can get past the 
-          ModeReqSet(MODEREQ_FETCH); // contestdone check in ::BufferUpdate()
+          ModeReqSet(MODEREQ_FETCH|MODEREQ_FQUIET); // contestdone check in ::BufferUpdate()
           }
         }
       }
