@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.21  1998/08/05 16:40:53  cberry
+// fixed typo in ARM part of GetProcessorInformationStrings()
+//
 // Revision 1.20  1998/08/02 16:17:53  cyruspatel
 // Completed support for logging.
 //
@@ -86,7 +89,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.20 1998/08/02 16:17:53 cyruspatel Exp $";
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.21 1998/08/05 16:40:53 cberry Exp $";
 }
 #endif
 
@@ -537,7 +540,7 @@ unsigned int GetTimesliceBaseline(void)
 
 void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxcpus, const char ** sfoundcpus )
 {
-  const char *maxcpu_s, *foundcpu_s, *cpuid_s; 
+  const char *maxcpu_s, *foundcpu_s, *cpuid_s;
 #if (CLIENT_CPU == CPU_X86)    
   static char cpuid_b[12];
   int vendorid, cpuidb;                     
@@ -550,7 +553,7 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxcpu
   if (cpuidb == 0x0200)
     cpuid_s = "ARM 2 or ARM 250";
   else if (cpuidb == 0x0A10)
-    cpuidb_s = "StrongARM 110";
+    cpuid_s = "StrongARM 110";
   else
     {
     sprintf( cpuid_b, "%X", cpuidb );
