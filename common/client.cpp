@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.167  1998/11/19 23:11:52  cyp
+// Logging is now initialized with time stamping and logfile/mail logs
+// enabled. This will probably break stuff, but logging -update etc to file
+// seems to be a priority for some people.
+//
 // Revision 1.166  1998/11/19 20:48:49  cyp
 // Rewrote -until/-h handling. Did away with useless client.hours (time-to-die
 // is handled by client.minutes anyway). -until/-h/hours all accept "hh:mm"
@@ -109,7 +114,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.166 1998/11/19 20:48:49 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.167 1998/11/19 23:11:52 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -333,6 +338,27 @@ static void PrintBanner(const char *dnet_id)
 
 //------------------------------------------------------------------------
 
+int InitializeConnectivity(void)
+{
+  #ifdef LURK
+  dialup.Start();
+  #endif
+  return 0;
+}
+
+//------------------------------------------------------------------------
+
+int DeinitializeConnectivity(void)
+{
+  #ifdef LURK
+  dialup.Stop();
+  #endif
+  return 0;
+}
+
+//------------------------------------------------------------------------
+
+
 int Client::Main( int argc, const char *argv[], int /* restarted */ )
 {
   int retcode = 0;
@@ -344,32 +370,28 @@ int Client::Main( int argc, const char *argv[], int /* restarted */ )
     domodes = (ModeReqIsSet(-1) != 0);
     if (InitializeTriggers(((noexitfilecheck)?(NULL):(exit_flag_file)),pausefile)==0)
       {
-      if (InitializeConsole(quietmode,domodes) == 0)
+      if (InitializeConnectivity() == 0)
         {
-        InitializeLogging(0); //enable only screen logging for now
-        PrintBanner(id); //tracks restart state itself
-        #ifdef LURK
-        dialup.Start();
-        #endif
-        if (!quietmode)
-          ParseCommandline( 1, argc, argv, NULL, 1 ); //show cmdline overrides
-      
-        if (domodes)
+        if (InitializeConsole(quietmode,domodes) == 0)
           {
-          ModeReqRun( this );     
+          InitializeLogging(1);
+          PrintBanner(id); //tracks restart state itself
+          ParseCommandline( 1, argc, argv, NULL, (quietmode==0)); //show overrides
+        
+          if (domodes)
+            {
+            ModeReqRun( this );     
+            }
+          else
+            {
+            PrintBanner( id );
+            SelectCore( 0 );
+            retcode = Run();
+            }
+          DeinitializeLogging();
+          DeinitializeConsole();
           }
-        else
-          {
-          InitializeLogging(1);   //enable timestamps and file/mail logging
-          PrintBanner( id );
-          SelectCore( 0 );
-          retcode = Run();
-          }
-        #ifdef LURK
-        dialup.Stop();
-        #endif
-        DeinitializeLogging();
-        DeinitializeConsole();
+        DeinitializeConnectivity();
         }
       DeinitializeTriggers();
       }
@@ -379,7 +401,7 @@ int Client::Main( int argc, const char *argv[], int /* restarted */ )
 
 // --------------------------------------------------------------------------
 
-int realmain( int argc, char *argv[] )
+static int realmain( int argc, char *argv[] )
 {
   // This is the main client object.  we 'new'/malloc it, rather than make 
   // it static in the hope that people will think twice about using exit()
