@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.12  1998/10/11 00:37:50  cyp
+// Removed call to SelectCore() [now done from main()] and
+// added support for ModeReq
+//
 // Revision 1.11  1998/10/07 08:10:48  chrisb
 // Fixed parameter cast error in call to RegPolledProcedure(yield_pump,...)
 // in Client::Run()
@@ -51,7 +55,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.11 1998/10/07 08:10:48 chrisb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.12 1998/10/11 00:37:50 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -77,6 +81,7 @@ return "@(#)$Id: clirun.cpp,v 1.11 1998/10/07 08:10:48 chrisb Exp $"; }
 #include "cpucheck.h"  //GetTimesliceBaseline(), GetNumberOfSupportedProcessors()
 #include "probman.h"   //GetProblemPointerFromIndex()
 #include "probfill.h"  //LoadSaveProblems(), RandomWork(), FILEENTRY_xxx macros
+#include "modereq.h"   //ModeReq[Set|IsSet|Run]()
 
 // --------------------------------------------------------------------------
 
@@ -137,6 +142,9 @@ struct thread_param_block
   int realthread;
   s32 timeslice;
   unsigned int priority;
+  int do_suspend;
+  int do_refresh;
+  int is_suspended;
   unsigned long thread_data1;
   unsigned long thread_data2;
   struct thread_param_block *next;
@@ -177,7 +185,7 @@ struct thread_param_block
   #define MIN_SANE_TIMESLICE_DES     (GetTimesliceBaseline())
   #define MAX_SANE_TIMESLICE_RC5   16384
   #define MAX_SANE_TIMESLICE_DES   16384
-#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_DOS)
+#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_DOS)
   #define TIMER_GRANULARITY       500000 /* has horrible timer resolution */
   #define MIN_RUNS_PER_TIME_GRAIN     3 // 9 /* 18 times/sec */
   #define MAX_RUNS_PER_TIME_GRAIN     5 //18
@@ -244,11 +252,14 @@ static void yield_pump( void *tv_p )
   #elif (CLIENT_OS == OS_NETWARE)
     nwCliThreadSwitchLowPriority();
   #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-    Yield();
+    w32Yield();
   #elif (CLIENT_OS == OS_RISCOS)
     if (riscos_in_taskwindow)
     { riscos_upcall_6(); }
+  #elif (CLIENT_OS == OS_LINUX)
+    sched_yield();
   #else
+    #error where is your yield function?
     NonPolledUSleep( 0 ); /* yield */
   #endif
 
@@ -382,13 +393,13 @@ fflush(stdout);
       if (under_par)  /* change is large enough to warrant adjustement */
         {
         underrun_count++;
-	if (under_par == MIN_RUNS_PER_TIME_GRAIN)
-	{
+        if (under_par == MIN_RUNS_PER_TIME_GRAIN)
+          {
 #ifdef DEBUG
-	    printf("under_par: divide by 0!\n");
+      printf("under_par: divide by 0!\n");
 #endif
-	    under_par--;
-	}
+          under_par--;
+          }
         ts = (totalslice_table[0]/runcounters.yield_run_count)/
                                     (MIN_RUNS_PER_TIME_GRAIN-under_par);
         if (tslice_table[0] > ts)
@@ -427,14 +438,14 @@ printf("-%lu=> ", ts );
       
       if (over_par) /* don't do micro adjustments */
       {
-	  ts = tslice_table[0];
-	  if (over_par ==  MAX_RUNS_PER_TIME_GRAIN)
-	  {
+        ts = tslice_table[0];
+        if (over_par ==  MAX_RUNS_PER_TIME_GRAIN)
+          {
 #ifdef DEBUG
-	      printf("over_par: divide by 0!\n"); 
+          printf("over_par: divide by 0!\n"); 
 #endif
-	      over_par++;
-	  }
+          over_par++;
+          }
         tslice_table[0] += (totalslice_table[0]/runcounters.yield_run_count)/
                                      (over_par-MAX_RUNS_PER_TIME_GRAIN);
 #ifdef DEBUG
@@ -592,9 +603,6 @@ void Go_mt( void * parm )
   unsigned int threadnum = targ->threadnum;
   u32 run;
 
-  thrprob[0] = GetProblemPointerFromIndex((threadnum<<1)+0);
-  thrprob[1] = GetProblemPointerFromIndex((threadnum<<1)+1);
-
 #if (CLIENT_OS == OS_WIN32)
   {
   DWORD LAffinity, LProcessAffinity, LSystemAffinity;
@@ -632,6 +640,8 @@ void Go_mt( void * parm )
 #endif
 
   SetThreadPriority( targ->priority ); /* 0-9 */
+  targ->is_suspended = 1;
+  targ->do_refresh = 1;
 
   while (!CheckExitRequestTriggerNoIO())
     {
@@ -640,13 +650,21 @@ void Go_mt( void * parm )
       run = 0;
       while (!CheckExitRequestTriggerNoIO() && (run == 0))
         {
-        if (CheckPauseRequestTriggerNoIO()) 
+        if (CheckPauseRequestTriggerNoIO() || targ->do_suspend) 
           {
           run = 0;
-          NonPolledSleep( 1 ); // don't race in this loop
+          yield_pump(NULL); // don't race in this loop
+          }
+        else if (targ->do_refresh)
+          {
+          run = 0;
+          thrprob[0] = GetProblemPointerFromIndex((threadnum<<1)+0);
+          thrprob[1] = GetProblemPointerFromIndex((threadnum<<1)+1);
+          targ->do_refresh = 0;
           }
         else if (thrprob[probnum])
           {
+          targ->is_suspended = 0;
           // This will return without doing anything if uninitialized...
           #if (CLIENT_OS == OS_NETWARE)
           (thrprob[probnum])->tslice = (GetTimesliceBaseline() >> 1);
@@ -655,12 +673,13 @@ void Go_mt( void * parm )
           #else
           run = (thrprob[probnum])->Run( threadnum ); 
           #endif
+          targ->is_suspended = 1;
           } 
         else
-          run = (u32)(-1);
+          run = 1;
         }
       }
-    NonPolledSleep( 1 ); 
+    yield_pump(NULL);
     }
   
   //the thread is dead
@@ -809,12 +828,12 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       }
         
     if (success)
-    {
+      {
       yield_pump(NULL);   //let the thread start
-    }
+      }
     else
       {
-      delete thrparams;
+      free( thrparams );
       thrparams = NULL;
       }
     }
@@ -843,19 +862,12 @@ int Client::Run( void )
 
   //priority is a temporary hack
   unsigned int priority = ((niceness==2)?(9):((niceness==1)?(4):(0)));
-  int running_threaded = 0;
-  unsigned int load_problem_count = 0;
-  unsigned int planned_problem_count = 0;
-  s32 nextcheckpointtime = 0;
-  s32 TimeToQuit = 0, getbuff_errs = 0;
-  s32 exitchecktime, exitcode = 0;
-  u32 connectloops = 0;
-
-  #if (CLIENT_OS == OS_WIN32) && defined(NEEDVIRTUALMETHODS)
-    connectrequested = 0;         // uses public class member
-  #else
-    u32 connectrequested = 0;
-  #endif
+  int TimeToQuit = 0, exitcode = 0, running_threaded = 0;
+  unsigned int load_problem_count = 0, planned_problem_count = 0;
+  unsigned int getbuff_errs = 0;
+  
+  time_t timeNow;
+  time_t timeRun=0, timeLast=0, timeNextCheckpoint=0, timeNextConnect=0;
 
   // =======================================
   // Notes:
@@ -866,55 +878,31 @@ int Client::Run( void )
   // Code order:
   //
   // Initialization: (order is important, 'F' symbolizes code that can fail)
-  // 1. F  SelectCore()
-  // 2.    CkpointToBufferInput() (it is not affected by TimeToQuit)
-  // 3.    Determine number of problems (needs select core)
-  // 4. F  Load (or try to load) that many problems (needs number of problems)
-  // 5. F  Initialize polling process (needed by threads)
-  // 6. F  Spin up threads
-  // 7.    Unload over-loaded problems (problems for which we have no worker)
-  // 9.    Initialize percent bar (needs final problem table size)
-  // 8.    Initialize timers
+  // 1.    UndoCheckpoint() (it is not affected by TimeToQuit)
+  // 2.    Determine number of problems
+  // 3. F  Load (or try to load) that many problems (needs number of problems)
+  // 4. F  Initialize polling process (needed by threads)
+  // 5. F  Spin up threads
+  // 6.    Unload over-loaded problems (problems for which we have no worker)
+  // 7.    Initialize percent bar (needs final problem table size)
   //
   // Run... 
   //
   // Deinitialization:
-  // 10. Shut down threads
-  // 11. Deinitialize polling process
-  // 12. Unload problems
-  // 13. Throw away checkpoints
+  // 8. Shut down threads
+  // 9. Deinitialize polling process
+  // 10. Unload problems
+  // 11. Throw away checkpoints
   // =======================================
-
-  // --------------------------------------
-  // Select an appropriate core and process priority
-  // should come before anything else because messages are not timestamped
-  // --------------------------------------
-  
-  if (!TimeToQuit)        
-    {
-    if (SelectCore())
-      {
-      TimeToQuit = 1;
-      exitcode = -1;
-      }
-    }
 
   // --------------------------------------
   // Recover blocks from checkpoint files before anything else
   // --------------------------------------
 
-  // we always recover, irrespective of the TimeToQuit flag
-  for ( cont_i = 0; cont_i < 2; cont_i++ )
-    {
-    // Recover checkpoint info in case we had previously quit abnormally.
-    if ( DoesFileExist( checkpoint_file[cont_i] ) )
-      {
-      s32 recovered = CkpointToBufferInput( (u8)cont_i ); 
-      if (recovered != 0) 
-        Log( "Recovered %d block%s from %s checkpoint file\n",
-             recovered, ((recovered==1)?(""):("s")), 
-             CliGetContestNameFromID( cont_i ) ); //clicdata.cpp
-      }
+  if (UndoCheckpoint()) // we always recover irrespective of TimeToQuit
+    {                   // returns !0 if we have a break request
+    TimeToQuit = 1;
+    exitcode = -1;
     }
 
   // --------------------------------------
@@ -1136,13 +1124,6 @@ int Client::Run( void )
   if (!TimeToQuit && !percentprintingoff)
     LogScreenPercent( load_problem_count ); //logstuff.cpp
 
-  // --------------------------------------
-  // Initialize the timers
-  // --------------------------------------
-
-  timeStarted = CliTimer( NULL )->tv_usec;
-  exitchecktime = timeStarted + 5;
-
   //============================= MAIN LOOP =====================
   //now begin looping until we have a reason to quit
   //------------------------------------
@@ -1160,89 +1141,6 @@ int Client::Run( void )
   // Start of MAIN LOOP
   while (TimeToQuit == 0)
     {
-    //------------------------------------
-    //Do keyboard stuff for clients that allow user interaction during the run
-    //------------------------------------
-
-    #if ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)) && !defined(NEEDVIRTUALMETHODS)
-      { 
-      while ( kbhit() )
-        {
-        int hitchar = getch();
-        if (hitchar == 0) //extended keystroke
-          getch();
-        else
-          {
-          if (hitchar == 3 || hitchar == 'X' || hitchar == 'x' || hitchar == '!')
-            {
-            // exit after current blocks
-            if (blockcount > 0)
-              blockcount = min(blockcount, (s32) (totalBlocksDone[0] + totalBlocksDone[1] + numcputemp));
-            else 
-              blockcount = (s32) (totalBlocksDone[0] + totalBlocksDone[1] + numcputemp);
-            Log("Exiting after current block\n");
-              exitcode = 1;
-            }
-          if ((load_problem_count > 1) && (hitchar == 'u' || hitchar == 'U'))
-            {
-            Log("Keyblock Update forced\n");
-            connectrequested = 1;
-            }
-          }
-        }
-      }
-    #endif
-
-    //------------------------------------
-    // Lurking
-    //------------------------------------
-
-    #if defined(LURK)
-    if (!connectrequested && dialup.lurkmode)
-      connectrequested=dialup.CheckIfConnectRequested();
-    #endif
-
-    //------------------------------------
-    //special update request (by keyboard or by lurking) handling
-    //------------------------------------
-
-    if (load_problem_count > 1)
-      {
-      if ((connectoften && ((connectloops++)==19)) || (connectrequested > 0) )
-        {
-        // Connect every 20*3=60 seconds
-        // Non-MT 60 + (time for a client.run())
-        connectloops=0;
-        if (connectrequested == 1) // forced update by a user
-          {
-          Update(0 ,1,1,1);  // RC5 We care about the errors, force update.
-          Update(1 ,1,1,1);  // DES We care about the errors, force update.
-          LogScreen("Keyblock Update completed.\n");
-          connectrequested=0;
-          }
-        else if (connectrequested == 2) // automatic update
-          {
-          Update(0 ,0,0);  // RC5 We don't care about any of the errors.
-          Update(1 ,0,0);  // DES 
-          connectrequested=0;
-          }
-        else if (connectrequested == 3) // forced flush
-          {
-          Flush(0,NULL,1,1); // Show errors, force flush
-          Flush(1,NULL,1,1);
-          LogScreen("Flush request completed.\n");
-          connectrequested=0;
-          }
-        else if (connectrequested == 4) // forced fetch
-          {
-          Fetch(0,NULL,1,1); // Show errors, force fetch
-          Fetch(1,NULL,1,1);
-          LogScreen("Fetch request completed.\n");
-          connectrequested=0;
-          };
-        }
-      }
-
     //------------------------------------
     //sleep, run or pause...
     //------------------------------------
@@ -1273,6 +1171,26 @@ int Client::Run( void )
       }
     SetGlobalPriority( 9 );
 
+    //------------------------------------
+    // Fixup timers
+    //------------------------------------
+
+    timeNow = CliTimer(NULL)->tv_sec;
+    if (timeLast!=0 && (timeNow < (timeLast+(600))) && (timeNow > timeLast))
+      timeRun += timeLast - timeNow; //make sure time is monotonic
+    timeLast = timeNow;
+
+    //------------------------------------
+    //update the status bar, check all problems for change, do reloading etc
+    //------------------------------------
+
+    if (!TimeToQuit && !CheckPauseRequestTrigger())
+      {
+      if (!percentprintingoff)
+        LogScreenPercent( load_problem_count ); //logstuff.cpp
+      getbuff_errs += LoadSaveProblems(load_problem_count, PROBFILL_GETBUFFERRS);
+      }
+
     //----------------------------------------
     // Check for user break
     //----------------------------------------
@@ -1293,22 +1211,32 @@ int Client::Run( void )
       }
 
     //------------------------------------
-    //update the status bar, check all problems for change, do reloading etc
+    // Lurking
     //------------------------------------
 
-    if (!TimeToQuit && !CheckPauseRequestTrigger())
+    #if defined(LURK)
+    if (!TimeToQuit && !ModeReqIsSet(MODEREQ_FETCH|MODEREQ_FLUSH) && 
+        dialup.lurkmode && dialup.CheckIfConnectRequested())
       {
-      if (!percentprintingoff)
-        LogScreenPercent( load_problem_count ); //logstuff.cpp
-      getbuff_errs += LoadSaveProblems(load_problem_count, PROBFILL_GETBUFFERRS);
+      ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH);
+      }
+    #endif
+
+    //------------------------------------
+    //handle 'connectoften' requests
+    //------------------------------------
+
+    if (!TimeToQuit && connectoften && timeRun > timeNextConnect)
+      {
+      timeNextConnect = timeRun + 60;
+      ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH);
       }
 
     //----------------------------------------
     // Check for time limit...
     //----------------------------------------
 
-    if ( !TimeToQuit && (minutes > 0) && ( ( CliTimer( NULL )->tv_usec ) > 
-                            ( time_t )( timeStarted + ( 60 * minutes ) ) ) )
+    if ( !TimeToQuit && (minutes > 0) && (timeRun > (time_t)( minutes*60 )))
       {
       Log( "Shutdown - %u.%02u hours expired\n", minutes/60, (minutes%60) );
       TimeToQuit = 1;
@@ -1372,9 +1300,9 @@ int Client::Run( void )
     // If not quitting, then write checkpoints
     //----------------------------------------
 
-    if (!TimeToQuit && !nodiskbuffers && ((CliTimer(NULL)->tv_sec) > (time_t)nextcheckpointtime ))
+    if (!TimeToQuit && !nodiskbuffers && (timeRun > timeNextCheckpoint))
       {
-      nextcheckpointtime = (CliTimer(NULL)->tv_sec) + (checkpoint_min * 60);
+      timeNextCheckpoint = timeRun + (time_t)(checkpoint_min*60);
       if (!CheckPauseRequestTrigger())
         {
         //Checkpoints may be slightly late (a few seconds). However,
@@ -1383,6 +1311,20 @@ int Client::Run( void )
         DoCheckpoint(load_problem_count);
         }
       } 
+      
+    //----------------------------------------
+    // If not quitting, then handle mode requests
+    //----------------------------------------
+    
+    if (!TimeToQuit && ModeReqIsSet(-1))
+      {
+      //Assume that we have "normal priority" at this point and 
+      //threads are running at lower priority. If this is not the case, 
+      //then benchmarks are going to return wrong results. The messy
+      //way around this is to suspend the threads.
+      ModeReqRun(this);
+      }
+      
     }  // End of MAIN LOOP
 
   //======================END OF MAIN LOOP =====================
@@ -1417,7 +1359,7 @@ int Client::Run( void )
    LoadSaveProblems(load_problem_count, PROBFILL_UNLOADALL );
 
    // ----------------
-   // Shutting down: delete checkpoint files, do a net flush if nodiskbuffers
+   // Shutting down: discard checkpoint files, do a net flush if nodiskbuffers
    // ----------------
 
    for (cont_i = 0; cont_i < 2; cont_i++ )
@@ -1440,7 +1382,51 @@ int Client::Run( void )
 
 // ---------------------------------------------------------------------------
 
-void Client::DoCheckpoint( unsigned int load_problem_count )
+int Client::UndoCheckpoint( void )
+{
+  FileEntry fileentry;
+  unsigned int cont_i, recovered;
+  int remaining, lastremaining;
+  int breakreq = 0;
+  u32 optype;
+
+  if (!nodiskbuffers)
+    {
+    for ( cont_i = 0; cont_i < 2; cont_i++ )
+      {
+      if ( IsFilenameValid( checkpoint_file[cont_i] ) &&
+           IsFilenameValid( in_buffer_file[cont_i] ) && 
+           DoesFileExist( checkpoint_file[cont_i] ) )
+        {
+        recovered = 0;
+        lastremaining = -1;
+        while ((remaining = (int)InternalGetBuffer( 
+          checkpoint_file[cont_i], &fileentry, &optype, cont_i )) != -1)
+          {
+          if (((lastremaining!=-1) && (lastremaining!=(remaining + 1))) ||
+            ( InternalPutBuffer( in_buffer_file[cont_i], &fileentry ) == -1)
+            || ((breakreq = ( CheckExitRequestTrigger() != 0 ))!=0) )
+            {
+            recovered = 0;
+            break;
+            }
+          recovered++;
+          lastremaining = remaining;
+          }
+        if (recovered)  
+          {
+          LogScreen("Recovered %u block%s from %s\n", recovered, 
+            ((recovered == 1)?(""):("s")), checkpoint_file[cont_i] );
+          }
+        }
+      }
+    }
+  return ((breakreq)?(-1):(0));
+}  
+
+// ---------------------------------------------------------------------------
+
+int Client::DoCheckpoint( unsigned int load_problem_count )
 {
   FileEntry fileentry;
   unsigned int cont_i, prob_i;
@@ -1490,7 +1476,7 @@ void Client::DoCheckpoint( unsigned int load_problem_count )
       }  // for ( prob_i = 0 ; prob_i < load_problem_count ; prob_i++)
     } // if ( !nodiskbuffers )
 
-  return;
+  return 0;
 }
 
 // ---------------------------------------------------------------------------
