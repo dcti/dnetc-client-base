@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.22 2003/02/24 12:18:59 teichp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.23 2003/02/25 12:50:26 snake Exp $"; }
 
 //#define TRACE
 
@@ -904,6 +904,8 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
       #elif (CLIENT_CPU == CPU_ALPHA)
         ogr_get_dispatch_table();
         vec_ogr_get_dispatch_table_cix();
+      #elif (CLIENT_CPU == CPU_VAX)
+        ogr_get_dispatch_table();
       #else
         #error FIXME! call all your *ogr_get_dispatch_table* functions here once
       #endif
