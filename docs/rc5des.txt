@@ -1,14 +1,12 @@
 
   distributed.net's RC5DES client
 
-  Copyright distributed.net 1997-1998 - All Rights Reserved
+  Copyright distributed.net 1997-1999 - All Rights Reserved
   For use in distributed.net projects only.
   Any other distribution violates copyright.
 
   Use of the distributed.net client implies agreement with
-  the prize terms listed on http://www.distributed.net/rc5/ and
-  http://www.distributed.net/des/
-
+  the prize terms listed on http://www.distributed.net/
 
  Index ---------------------------------------------------------------
 
@@ -44,6 +42,7 @@
                  great deal with references to documentation available
                  online or built-in to the client, cleaned up and
                  reorganized the file.
+
                                                                      
  1.0  Introduction ---------------------------------------------------
 
@@ -57,15 +56,6 @@
     documentation for details). As a result, this client will work on DES 
     during DES contests, and switch back to RC5-64 when no DES contest is 
     running. No user intervention is required for this switchover.
-
-    If you'd like more information on our current project status, you 
-    should visit the RC5-64 and DES homepages.  RC5-64 may be found at
-    http://www.distributed.net/rc5/ , and DES may be found at
-    http://www.distributed.net/des/. In the next few months, 
-    distributed.net will begin working on other (non-encryption related) 
-    projects. For information on other projects, please look at
-    http://www.distributed.net/projects/.
-
 
  2.0  General system requirements ------------------------------------
 
@@ -162,7 +152,7 @@
         them, and then communicate with the main proxy network to send/
         receive blocks. The setup of this is simple and reliable; all 
         you must do is download a personal proxy available at 
-        http://www.distributed.net/rc5/proxies.html and set it up to run 
+        http://www.distributed.net/proxies.html and set it up to run 
         on the machine that functions as the firewall. Then set up all 
         clients behind the firewall to connect to that machine to receive 
         blocks. (The name/address of the proxy may be entered in the 
@@ -228,8 +218,8 @@
      send in the completed blocks via e-mail as follows:
 
      1. Create a message to flush@distributed.net with the file 
-        "buff-out.rc5" attached as a MIME64 encoded file. You will 
-        be send a "receipt" of the proper flushing within a few 
+        "buff-out.rc5" attached as a MIME/base64 or UUencoded (UUE) file. 
+        You will be send a "receipt" of the proper flushing within a few 
         minutes.
      2. Delete the buff-out.rc5 file so that you do not accidently 
         send part of its contents twice.
@@ -238,7 +228,7 @@
  6.0  Help! ----------------------------------------------------------
 
      If you've having a problem with the client, the first place you 
-     should visit is http://www.distributed.net/des/clients.html to 
+     should visit is http://www.distributed.net/clients.html to 
      see if a newer version is available. It is likely that a given 
      bug you have been experiencing will be fixed by the new version.
 
@@ -266,7 +256,7 @@
        send a message to <majordomo@lists.distributed.net> with 
        "subscribe rc5" as the message text).
 
-     - The distributed.net bug tracking system is at
+     - The distributed.net bug tracking pages are at
        http://www.distributed.net/bugs/
 
      - More user support is available from <rc5help@distributed.net> 
@@ -286,5 +276,3 @@
        usually very busy and it may take weeks before they get around 
        to answering your message.
        
-
-Revision $Id: rc5des.txt,v 1.32 1999/04/11 19:27:25 cyp Exp $
