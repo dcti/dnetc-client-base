@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.113  1998/07/30 05:08:59  silby
+// Fixed DONT_USE_PATHWORK handling, ini_etc strings were still being included, now they are not. Also, added the logic for dialwhenneeded, which is a new lurk feature.
+//
 // Revision 1.112  1998/07/30 02:18:18  blast
 // AmigaOS update
 //
@@ -95,7 +98,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.112 1998/07/30 02:18:18 blast Exp $.
+// Tweaked $Id: client.cpp,v 1.113 1998/07/30 05:08:59 silby Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -271,7 +274,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.112 1998/07/30 02:18:18 blast Exp $"; }
+return "@(#)$Id: client.cpp,v 1.113 1998/07/30 05:08:59 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -640,6 +643,16 @@ if (force == 0) // check to see if fetch should be done
     return 0;
     };
 
+  #if defined(LURK)
+  // Check if we need to dial, and if update started this connect or not
+  if (dialwhenneeded=1 && !netin)
+    {
+    if (LurkInitiateConnection() < 0) return -1; // We need to dial, but
+      // if the connect fails, error back
+    };
+  #endif
+
+
   // ready the net
   if (!netin)
   {
@@ -949,6 +962,17 @@ if (force == 0) // check to see if fetch should be done
 
   // close this connection
   if (!netin) delete net;
+
+  #if defined(LURK)
+  // Check if we need to hangup (unless update started this connect)
+  if (dialwhenneeded=1 && !netin)
+    {
+    if (oldlurkstatus == 0) // We weren't previously connected,
+                            // but are now
+      LurkTerminateConnection();     
+    };
+  #endif
+
   LogScreen( "\n" );
   Log( "[%s] Retrieved %d %s block%s from server              \n", Time(), (int) count, (contest == 1 ? "DES":"RC5"), count == 1 ? "" : "s" );
   return ( count );
@@ -1031,6 +1055,16 @@ if (force == 0) // Check if flush should be done
     if (force == 1) LogScreenf("%s out buffer is already empty, no connect needed.\n",(contest == 1 ? "DES":"RC5"));
     return 0;
     };
+
+  #if defined(LURK)
+  // Check if we need to dial, and if update started this connect or not
+  if (dialwhenneeded=1 && !netin)
+    {
+    if (LurkInitiateConnection() < 0) return -1; // We need to dial, but
+      // if the connect fails, error back
+    };
+  #endif
+
   // ready the net
   if (!netin)
   {
@@ -1365,6 +1399,17 @@ if (force == 0) // Check if flush should be done
 
   // close this connection
   if (!netin) delete net;
+
+  #if defined(LURK)
+  // Check if we need to hangup (unless update started this connect)
+  if (dialwhenneeded=1 && !netin)
+    {
+    if (oldlurkstatus == 0) // We weren't previously connected,
+                            // but are now
+      LurkTerminateConnection();     
+    };
+  #endif
+
   LogScreen( "\n" );
   Log( "[%s] Sent %d %s block%s to server                \n", Time(), (int) count, (contest == 1 ? "DES":"RC5"), count == 1 ? "" : "s" );
   return( count );
@@ -1408,10 +1453,16 @@ if (force == 0) // We need to check if we're allowed to connect
        mailmessage.checktosend(0);
 
   // Ready the net
-#if (CLIENT_OS == OS_OS2)
-//  DialOnDemand dod;
-//  dod.ensureonline();
-#endif
+  #if defined(LURK)
+
+  // Check if we need to dial
+  if (dialwhenneeded=1)
+    {
+    if (LurkInitiateConnection() < 0) return -1; // We need to dial, but
+      // if the connect fails, error back
+    };
+  #endif
+
   net = new Network( (const char *) (keyproxy[0] ? keyproxy : NULL ),
       (const char *) (nofallback ? (keyproxy[0] ? keyproxy : NULL) : DEFAULT_RRDNS),
       (s16) keyport, autofindkeyserver );
@@ -1465,9 +1516,16 @@ if (force == 0) // We need to check if we're allowed to connect
 
   // delete the net
   delete net;
-#if (CLIENT_OS == OS_OS2)
-//  dod.checkoffline();
-#endif
+
+  #if defined(LURK)
+  // Check if we need to hangup
+  if (dialwhenneeded=1)
+    {
+    if (oldlurkstatus == 0) // We weren't previously connected,
+                            // but are now
+      LurkTerminateConnection();     
+    };
+  #endif
 
   if (fetcherr && flusherr) {
      // This is an explicit call to update() by the user.
@@ -3686,7 +3744,7 @@ if (islurkstarted != 1) StartLurk();
 if (islurkstarted != 1) return 0; // Lurk can't be started, evidently
 
 #if (CLIENT_OS == OS_WIN32) && defined(MULTITHREAD)
-if (lurk && rasenumconnections && rasgetconnectstatus)
+if (rasenumconnections && rasgetconnectstatus)
   {
   RASCONN rasconn[8];
   DWORD cb;
@@ -3722,6 +3780,8 @@ s32 Client::LurkInitiateConnection(void)
 {
 if (islurkstarted != 1) StartLurk();
 if (islurkstarted != 1) return -1; // Lurk can't be started, evidently
+
+if (LurkStatus() == 1) return 0; // We're already connected!
 
 #if (CLIENT_OS == OS_WIN32)
 
@@ -3769,7 +3829,7 @@ if (returnvalue != 0)
   LogScreenf("There was an error initiating a connection: %s\n",errorstring);
   return -1;
   };
-return 0; // If we got here, connection successful.
+return 1; // If we got here, connection successful.
 
 #endif
 

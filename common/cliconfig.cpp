@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.165  1998/07/30 05:08:52  silby
+// Fixed DONT_USE_PATHWORK handling, ini_etc strings were still being included, now they are not. Also, added the logic for dialwhenneeded, which is a new lurk feature.
+//
 // Revision 1.164  1998/07/30 02:33:20  blast
 // Lowered minimum network timeout from 30 to 5 ...
 //
@@ -153,7 +156,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.164 1998/07/30 02:33:20 blast Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.165 1998/07/30 05:08:52 silby Exp $";
 return id; }
 #endif
 
@@ -186,7 +189,7 @@ return id; }
 
 // --------------------------------------------------------------------------
 
-#define OPTION_COUNT    46
+#define OPTION_COUNT    47
 #define MAXMENUENTRIES  18
 static const char *OPTION_SECTION="parameters"; //#define OPTION_SECTION "parameters"
 
@@ -464,8 +467,10 @@ static optionstruct options[OPTION_COUNT]=
 { "usemmx", CFGTXT("Use MMX...not applicable in this client"), "-1", CFGTXT("(default -1)"),0,2,0,
   NULL,NULL,0,0},
 #endif
-{ "connectionname", CFGTXT("Dial-up Connection Name"),"Your Internet Connection",
-  CFGTXT(""),3,1,11,NULL}
+{ "dialwhenneeded", CFGTXT("Dial the Internet when needed?"),"0",
+  CFGTXT(""),3,3,11,NULL},
+{ "connectionname", CFGTXT("Dial-up Connection Name"),
+  "Your Internet Connection",CFGTXT(""),3,1,12,NULL}
 };
 
 // --------------------------------------------------------------------------
@@ -590,7 +595,8 @@ static int _IsHostnameDNetHost( const char * hostname )
 #define CONF_DESOUT 42
 #define CONF_PAUSEFILE 43
 #define CONF_MMX 44
-#define CONF_CONNECTNAME 45
+#define CONF_DIALWHENNEEDED 45
+#define CONF_CONNECTNAME 46
 
 // --------------------------------------------------------------------------
 
@@ -1102,6 +1108,10 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           break;
         #endif
         #ifdef LURK
+        case CONF_DIALWHENNEEDED:
+          choice=yesno(parm);
+          if (choice >= 0) *(s32 *)options[CONF_DIALWHENNEEDED].thevariable=choice;
+          break;
         case CONF_CONNECTNAME:
           strncpy( connectionname, parm, sizeof(connectionname));
           break;
@@ -1297,8 +1307,10 @@ options[CONF_PAUSEFILE].thevariable=(char *)(&pausefile[0]);
 options[CONF_MMX].thevariable=&usemmx;
 #endif
 #ifdef LURK
+options[CONF_DIALWHENNEEDED].thevariable=&dialwhenneeded;
 options[CONF_CONNECTNAME].thevariable=&connectionname;
 #else
+options[CONF_DIALWHENNEEDED].optionscreen=0;
 options[CONF_CONNECTNAME].optionscreen=0;
 #endif
 
@@ -1486,6 +1498,8 @@ s32 Client::ReadConfig(void)
   if (tempconfig) lurk=1;
   tempconfig=ini.getkey(OPTION_SECTION, "lurkonly", "0")[0];
   if (tempconfig) {lurk=2; connectoften=0;}
+  tempconfig=ini.getkey(OPTION_SECTION, "dialwhenneeded", "0")[0];
+  if (tempconfig) dialwhenneeded=1;
   INIGETKEY(CONF_CONNECTNAME).copyto(connectionname,sizeof(connectionname));
 #endif
 
@@ -1499,7 +1513,7 @@ s32 Client::ReadConfig(void)
   ini.getkey(OPTION_SECTION,"out2",ini_out_buffer_file[1])[0].copyto(ini_out_buffer_file[1],sizeof(ini_out_buffer_file)/2);
   ini.getkey(OPTION_SECTION,"pausefile",ini_pausefile)[0].copyto(ini_pausefile,sizeof(ini_pausefile));
 #else
-  INIGETKEY(CONF_LOGNAME).copyto(logname, sizeof(ini_logname));
+  INIGETKEY(CONF_LOGNAME).copyto(logname, sizeof(logname));
   INIGETKEY(CONF_CHECKPOINT).copyto(checkpoint_file[0], sizeof(checkpoint_file[0]));
   INIGETKEY(CONF_CHECKPOINT2).copyto(checkpoint_file[1], sizeof(checkpoint_file[1]));
   ini.getkey(OPTION_SECTION,"in",in_buffer_file[0])[0].copyto(in_buffer_file[0],sizeof(in_buffer_file[0]));
@@ -1779,6 +1793,7 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_EXITFILECHECKTIME, exitfilechecktime );
 
 #ifdef LURK
+  INISETKEY( CONF_DIALWHENNEEDED, dialwhenneeded);
   INISETKEY( CONF_CONNECTNAME, connectionname);
 #endif
 
@@ -2731,9 +2746,11 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
     {
       nodiskbuffers=1;
       strcpy(checkpoint_file[0],"none");
-      strcpy(ini_checkpoint_file[0],"none");
       strcpy(checkpoint_file[1],"none");
+#ifdef DONT_USE_PATHWORK
+      strcpy(ini_checkpoint_file[0],"none");
       strcpy(ini_checkpoint_file[1],"none");
+#endif
       Argv[i][0] = 0;
     }
     else if ( strcmp(Argv[i], "-frequent" ) == 0)
@@ -2830,7 +2847,9 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       {                                           // Here in case its with a fetch/flush/update
         LogScreenf("Setting RC5 buffer input file to %s\n",Argv[i+1]);
         strcpy(in_buffer_file[0], Argv[i+1]);
+#ifdef DONT_USE_PATHWORK
         strcpy(ini_in_buffer_file[0], Argv[i+1]);
+#endif
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2838,7 +2857,9 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       {                                           // Here in case its with a fetch/flush/update
         LogScreenf("Setting DES buffer input file to %s\n",Argv[i+1]);
         strcpy(in_buffer_file[1], Argv[i+1]);
+#ifdef DONT_USE_PATHWORK
         strcpy(ini_in_buffer_file[1], Argv[i+1]);
+#endif
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2846,7 +2867,9 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       {                                           // Here in case its with a fetch/flush/update
         LogScreenf("Setting RC5 buffer output file to %s\n",Argv[i+1]);
         strcpy(out_buffer_file[0], Argv[i+1]);
+#ifdef DONT_USE_PATHWORK
         strcpy(ini_out_buffer_file[0], Argv[i+1]);
+#endif
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2854,7 +2877,9 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       {                                           // Here in case its with a fetch/flush/update
         LogScreenf("Setting DES buffer output file to %s\n",Argv[i+1]);
         strcpy(out_buffer_file[1], Argv[i+1]);
+#ifdef DONT_USE_PATHWORK
         strcpy(ini_out_buffer_file[1], Argv[i+1]);
+#endif
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2895,7 +2920,9 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       {
         LogScreenf("Setting log file to %s\n",Argv[i+1]);
         strcpy( logname, Argv[i+1] );
+#ifdef DONT_USE_PATHWORK
         strcpy( ini_logname, Argv[i+1] );
+#endif
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
@@ -3024,7 +3051,9 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       {
         LogScreenf("Setting RC5 checkpoint file to %s\n",Argv[i+1]);
         strcpy(checkpoint_file[0], Argv[i+1]);
+#ifdef DONT_USE_PATHWORK
         strcpy(ini_checkpoint_file[0], Argv[i+1]);
+#endif
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -3032,7 +3061,9 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       {
         LogScreenf("Setting DES checkpoint file to %s\n",Argv[i+1]);
         strcpy(checkpoint_file[1], Argv[i+1]);
+#ifdef DONT_USE_PATHWORK
         strcpy(ini_checkpoint_file[1], Argv[i+1]);
+#endif
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -3048,7 +3079,9 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       {
         LogScreenf("Setting pause file to %s\n",Argv[i+1]);
         strcpy(pausefile, Argv[i+1]);
+#ifdef DONT_USE_PATHWORK
         strcpy(ini_pausefile, Argv[i+1]);
+#endif
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }

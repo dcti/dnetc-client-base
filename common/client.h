@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.72  1998/07/30 05:09:08  silby
+// Fixed DONT_USE_PATHWORK handling, ini_etc strings were still being included, now they are not. Also, added the logic for dialwhenneeded, which is a new lurk feature.
+//
 // Revision 1.71  1998/07/29 05:14:49  silby
 // Changes to win32 so that LurkInitiateConnection now works - required the addition of a new .ini key connectionname=.  Username and password are automatically retrieved based on the connectionname.
 //
@@ -292,7 +295,7 @@ public:
   void MailInitialize(void); //copy the mail specific settings over
   void MailDeinitialize(void); //checktosend(1) if not offline mode
 
-#ifndef DONT_USE_PATHWORK
+#ifdef DONT_USE_PATHWORK
   char ini_logname[128];// Logfile name as is in the .ini
   char ini_in_buffer_file[2][128];
   char ini_out_buffer_file[2][128];
@@ -334,8 +337,18 @@ public:
 
 #if defined(LURK)
   s32 lurk;
+    // Mode of operation
+    // 0 = disabled
+    // 1 = fill buffers while online, try to connect when emptied
+    // 2 = fill buffers while online, never connect
+  s32 dialwhenneeded;
+    // 0 = Don't dial, let autodial handle it or fail
+    // 1 = Have the client manually dial/hangup when a flush happens.
   s32 oldlurkstatus;
+    // Status of LurkStatus as of the last check.
   s32 islurkstarted;
+    // 0 = lurk functionality has not been initialized
+    // 1 = lurk functionality has been initialized
   char connectionname[100];
     // For win32, name of connection to use, perhaps useful for other lurkers.
 #endif
