@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.3 1999/06/06 13:37:31 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.4 1999/06/08 18:45:16 nsayer Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -359,7 +359,6 @@ extern "C" void CliSignalHandler( int sig )
 void CliSetupSignals( void )
 {
   #if (CLIENT_OS == OS_SOLARIS)
-  #error why/where is the client getting SIGPIPE?
   signal( SIGPIPE, SIG_IGN );
   #endif
   #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS)
