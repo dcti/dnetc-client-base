@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.65 2000/07/12 14:33:12 oliver Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.66 2000/07/13 20:51:44 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -81,6 +81,7 @@ struct thread_param_block
   #endif
   unsigned int threadnum;
   unsigned int numthreads;
+  int hasexited;
   int realthread;
   unsigned int priority;
   int refillneeded;
@@ -94,6 +95,9 @@ struct thread_param_block
   struct __dyn_timeslice_struct *dyn_timeslice_table;  
   struct __dyn_timeslice_struct rt_dyn_timeslice_table[CONTEST_COUNT];
   struct thread_param_block *next;
+  #if (CLIENT_OS == OS_LINUX) && defined(THREAD_BY_CLONE)
+  char clone_stack[8192];
+  #endif
 };
 
 // ----------------------------------------------------------------------
@@ -144,7 +148,7 @@ static void __cruncher_yield__(int is_non_preemptive_cruncher)
     if (riscos_in_taskwindow)
       riscos_upcall_6();
   #elif (CLIENT_OS == OS_LINUX)
-    #if defined(__ELF__)
+    #if defined(__ELF__) && !defined(THREAD_BY_CLONE)
     sched_yield();
     #else // a.out libc4
     NonPolledUSleep( 0 ); /* yield */
@@ -339,6 +343,7 @@ void Go_mt( void * parm )
   if (thrparams->realthread)
     SetThreadPriority( thrparams->priority ); /* 0-9 */
 
+  thrparams->hasexited = 0;
   thrparams->is_suspended = 1;
   thrparams->do_refresh = 1;
 
@@ -428,7 +433,8 @@ void Go_mt( void * parm )
       {
         optimal_timeslice = thisprob->tslice; /* get the number done back */
         #if defined(DYN_TIMESLICE_SHOWME)
-        if (runtime_usec != 0xfffffffful) /* time was valid */
+        if (/*!thrparams->realthread &&*/ 
+            runtime_usec != 0xfffffffful) /* time was valid */
         {
           static unsigned int ctr = UINT_MAX;
           static unsigned long totaltime = 0, totalts = 0;
@@ -496,7 +502,7 @@ void Go_mt( void * parm )
   if (thrparams->realthread)
     SetThreadPriority( 9 ); /* 0-9 */
 
-  thrparams->threadID = 0; //the thread is dead
+  thrparams->hasexited = 1; //the thread is dead
 
   #if ((CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS))
   if (thrparams->realthread)
@@ -513,36 +519,41 @@ static int __StopThread( struct thread_param_block *thrparams )
 {
   if (thrparams)
   {
-    if (thrparams->realthread) // give the threads some air
-    {                          // (main thread may be running at a higher prio)
-      NonPolledUSleep(100);
-    }
-    if (thrparams->threadID) //thread did not exit by itself
+    if (thrparams->realthread) //real thread
     {
-      if (thrparams->realthread) //real thread
-      {
-        #if ((CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS))
+      NonPolledUSleep(100);   // give the thread some air
+      #if ((CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS))
+      if (!thrparams->hasexited) //thread did not exit by itself
         thr_join(0, 0, NULL); //all at once
-        #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
+      #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
+      if (!thrparams->hasexited)
         pthread_join( thrparams->threadID, (void **)NULL);
-        #elif (CLIENT_OS == OS_OS2)
-        DosSetPriority( 2, PRTYC_REGULAR, 0, 0); /* thread to normal prio */
+      #elif (CLIENT_OS == OS_OS2)
+      DosSetPriority( 2, PRTYC_REGULAR, 0, 0); /* thread to normal prio */
+      if (!thrparams->hasexited)
         DosWaitThread( &(thrparams->threadID), DCWW_WAIT);
-        #elif (CLIENT_OS == OS_WIN32)
-        while (thrparams->threadID) Sleep(100);
-        #elif (CLIENT_OS == OS_BEOS)
-        static status_t be_exit_value;
+      #elif (CLIENT_OS == OS_WIN32)
+      while (!thrparams->hasexited) 
+        Sleep(100);
+      #elif (CLIENT_OS == OS_BEOS)
+      static status_t be_exit_value;
+      if (!thrparams->hasexited)
         wait_for_thread(thrparams->threadID, &be_exit_value);
-        #elif (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
-        while (thrparams->threadID) MPYield();//MPTerminateTask((thrparams->threadID),nil);
-        #elif (CLIENT_OS == OS_NETWARE)
-        while (thrparams->threadID) delay(100);
-        #elif (CLIENT_OS == OS_FREEBSD)
-        while (thrparams->threadID) NonPolledUSleep(100000);
-        #elif (CLIENT_OS == OS_AMIGAOS)
-        while (thrparams->threadID) NonPolledUSleep(300000);
-        #endif
-      }
+      #elif (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
+      while (!thrparams->hasexited) MPYield();
+      //if (!thrparams->hasexited) MPTerminateTask((thrparams->threadID),nil);
+      #elif (CLIENT_OS == OS_NETWARE)
+      while (!thrparams->hasexited)
+        delay(100);
+      #elif (CLIENT_OS == OS_LINUX) && defined(THREAD_BY_CLONE)
+      waitpid( thrparams->threadID, NULL, 0 );
+      #elif (CLIENT_OS == OS_FREEBSD)
+      while (!thrparams->hasexited) 
+        NonPolledUSleep(100000);
+      #elif (CLIENT_OS == OS_AMIGAOS)
+      while (!thrparams->hasexited) 
+        NonPolledUSleep(300000);
+      #endif
     }
     ClientEventSyncPost( CLIEVENT_CLIENT_THREADSTOPPED, (long)thrparams->threadnum );
     free( thrparams );
@@ -568,6 +579,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     thrparams->numthreads = numthreads;   /* unsigned int */
     thrparams->threadnum = thread_i;      /* unsigned int */
     thrparams->realthread = 1;            /* int */
+    thrparams->hasexited = 1;             /* not running yet */ 
     thrparams->priority = priority;       /* unsigned int */
     thrparams->is_non_preemptive_cruncher = is_non_preemptive_os; /* int */
     thrparams->do_exit = 0;
@@ -776,6 +788,40 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
           } /* if parent or child */
         } /* thrparam inheritance ok */
       } /* FreeBSD >= 3.0 (+ SMP kernel optional) + global inheritance ok */
+      #elif (CLIENT_OS == OS_LINUX) && defined(THREAD_BY_CLONE)
+      {
+        if (thrparams->threadnum == 0) /* first thread */
+          use_poll_process = 1;
+        else
+        {
+          pid_t pid;
+          void (*fn)(void *) = (void (*)(void *))Go_mt;
+          void **newstack; char *stacktop = thrparams->clone_stack;
+          stacktop = (stacktop-16)+sizeof(thrparams->clone_stack); 
+          stacktop -= (((unsigned long)stacktop) & (sizeof(long)-1));
+          newstack = (void **)stacktop;
+          *--newstack = (void *)thrparams;
+          SetGlobalPriority(thrparams->priority);
+          __asm__ __volatile__(
+                "int $0x80\n\t"   /* pid = clone( newstack, flags ); */
+                "testl %0,%0\n\t" /* if (pid == 0)       */
+                "jne 1f\n\t"      /* {                   */  
+                "call *%3\n\t"    /*   rc = (*fn)(*esp); */ 
+                "movl %2,%0\n\t"  /*                     */
+                "int $0x80\n\t"   /*   exit(rc);         */
+                "1:\t"            /* }                   */
+                :"=a" (pid)       /* return pid;         */
+                :"0" (__NR_clone), "i" (__NR_exit), "r" (fn), 
+                 "b" (CLONE_VM|CLONE_FS/*|CLONE_FILES*/|CLONE_SIGHAND|0),
+                 "c" (newstack) );
+          success = 0;
+          if (pid > 0)
+          {
+            thrparams->threadID = pid;
+            success = 1;
+          }
+        }
+      }
       #elif (CLIENT_OS == OS_WIN32)
       {
         if (winGetVersion() < 400) /* win32s */
