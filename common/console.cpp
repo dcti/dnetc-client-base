@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.75.2.5 2003/08/09 12:54:11 mweiser Exp $"; }
+return "@(#)$Id: console.cpp,v 1.75.2.6 2003/08/14 00:32:27 mweiser Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -46,6 +46,12 @@ return "@(#)$Id: console.cpp,v 1.75.2.5 2003/08/09 12:54:11 mweiser Exp $"; }
 #include <termios.h>
 #define HAVE_TERMIOS
 #endif
+
+#if !defined(NOSGTTY) && (CLIENT_OS == OS_NEXTSTEP)
+#include <sgtty.h>
+#define HAVE_SGTTY 1
+#endif
+
 #if defined(__unix__) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_OS390) \
   || (CLIENT_OS == OS_AMIGAOS)
 #define HAVE_ANSICOMPLIANTTERM /* tty understands basic ansi sequences */
@@ -382,6 +388,29 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         tcsetattr(fd,TCSAFLUSH,&stored); /* Restore the original settings */
         if (ch == EOF) ch = 0;
       }
+      #elif (defined(HAVE_SGTTY))
+      {
+        struct sgttyb stored;
+        int fd = fileno(stdin);
+
+        fflush(stdout);
+        if (gtty(fd, &stored) == 0) {
+          struct sgttyb newsg;
+          memcpy(&newsg, &stored, sizeof(newsg));
+
+          /* it's in the bits we don't set: no echo, delay or cooking
+          ** actually we might want CBREAK here since that leaves most
+          ** control sequences intact but it sometimes still buffers
+          ** whole lines (on NeXTstep at least) */
+          newsg.sg_flags = RAW;
+
+          stty(fd, &newsg);
+          ch = getchar();
+          stty(fd, &stored);
+
+          if (ch == EOF) ch = 0;
+        }
+      }
       #else
       {
         setvbuf(stdin, (char *)NULL, _IONBF, 0);
@@ -434,10 +463,6 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
 
   if (!buffer || !buflen)
     return 0;
-
-#if (CLIENT_OS == OS_NEXTSTEP)
-  flags &= ~CONINSTR_BYEXAMPLE;
-#endif
 
   //if ((flags & CONINSTR_ASPASSWORD) != 0)
   //  flags = CONINSTR_ASPASSWORD;
