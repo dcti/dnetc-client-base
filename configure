@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.16  1998/06/01 20:29:48  remi
+#
+# cleanup : changed ASM_P6, ASM_P6, ASM_6x86, etc ... to ASM_X86
+#
 # Revision 1.15  1998/06/01 17:39:26  friedbait
 # changed the 'find' command insertion into the superclean target.
 # The backquotes needed to be escaped with backslashes. Also, find's
@@ -97,8 +101,8 @@ OPTS_GCC_AIX="$OPTS_GCC -O6 -D_ARCH_PPC -D_AIX"
 
 #--
 
-OPTS_GCC_X86="$OPTS_GCC -O6 -m486 -DASM_P5"
-OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentium -DASM_P5"
+OPTS_GCC_X86="$OPTS_GCC -O6 -m486 -DASM_X86"
+OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentium -DASM_X86"
 
 #--
 

@@ -139,7 +139,7 @@ struct s128 { s64 hi, lo; };
   #if defined(ASM_ALPHA)
     #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_ALPHA
-  #elif defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
+  #elif defined(ASM_X86)
     #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_X86
   #elif defined(ARM)
@@ -156,12 +156,12 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_CPU    CPU_68K
   #endif
 #elif defined(__FreeBSD__)
-  #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
+  #if defined(ASM_X86)
     #define CLIENT_OS     OS_FREEBSD
     #define CLIENT_CPU    CPU_X86
   #endif
 #elif defined(__NetBSD__)
-  #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
+  #if defined(ASM_X86)
     #define CLIENT_OS     OS_NETBSD
     #define CLIENT_CPU    CPU_X86
   #elif defined(ARM)
@@ -169,7 +169,7 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_CPU    CPU_ARM
   #endif
 #elif defined(__OpenBSD__) || defined(openbsd)
-  #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
+  #if defined(ASM_X86)
     #define CLIENT_OS     OS_OPENBSD
     #define CLIENT_CPU    CPU_X86
   #elif defined(ASM_ALPHA)
@@ -177,12 +177,12 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_CPU    CPU_ALPHA
   #endif
 #elif defined(__QNX__)
-  #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
+  #if defined(ASM_X86)
     #define CLIENT_OS     OS_QNX
     #define CLIENT_CPU    CPU_X86
   #endif
 #elif defined(solaris)
-  #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
+  #if defined(ASM_X86)
     #define CLIENT_OS     OS_SOLARIS
     #define CLIENT_CPU    CPU_X86
   #elif defined(ASM_SPARC)
@@ -193,12 +193,12 @@ struct s128 { s64 hi, lo; };
   #define CLIENT_OS         OS_SUNOS
   #define CLIENT_CPU        CPU_68K
 #elif defined(bsdi)
-  #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
+  #if defined(ASM_X86)
     #define CLIENT_OS     OS_BSDI
     #define CLIENT_CPU    CPU_X86
   #endif
 #elif defined(sco5)
-  #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
+  #if defined(ASM_X86)
     #define CLIENT_OS     OS_SCO
     #define CLIENT_CPU    CPU_X86
   #endif
@@ -265,7 +265,7 @@ struct s128 { s64 hi, lo; };
   #define CLIENT_OS     OS_RISCOS
   #define CLIENT_CPU    CPU_ARM
 #elif defined(_NeXT_)
-  #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
+  #if defined(ASM_X86)
     #define CLIENT_OS     OS_NEXTSTEP
     #define CLIENT_CPU    CPU_X86
   #elif defined(ASM_68K)
