@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.63 2001/01/25 15:44:17 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.64 2001/02/03 20:51:28 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -153,6 +153,17 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
               p += 6; while (*p && !isdigit(*p)) p++;
               cpucount = atoi(p);
               break;
+            }
+          }
+          else if (memcmp(buffer, "cpus detected\t",14)==0) /* 2.4.1 */
+          {                          /* "cpus detected\t\t: 4" */
+            char *p = &buffer[14];
+            while (*p == '\t' || *p == ':' || *p == ' ')
+              p++;
+            if ((p > &buffer[14]) && isdigit(*p))
+            {
+              cpucount = atoi(p);
+              break; 
             }
           }
           #else
