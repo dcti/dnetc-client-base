@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.58  1998/06/26 07:20:26  myshkin
+#
+# Added -lncurses for the ppc-gcc target, per remi's recommendation.
+#
 # Revision 1.57  1998/06/25 21:29:34  remi
 # Switched to -lncurses for x86 Linux targets.
 # Fixed CFLAGS for the Ultra.
@@ -562,6 +566,7 @@ case "$1" in
     *ppc-gcc)
 	TARGET_CCFLAGS="$OPTS_GCC_PPC -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS rc5/crunch_allitnil_552.ppc.s rc5/crunch_lintilla_296.ppc.s"
+	TARGET_LIBS="-lncurses"
 	;;
 
     *power-gcc)
