@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.86 2000/01/08 03:48:30 snake Exp $
+# @(#)$Id: configure,v 1.222.2.87 2000/01/08 13:11:43 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1405,14 +1405,17 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
-# NetBSD on NeXT, 68k Macs, 68k Amiga, sun3 etc, experimental, rc5 only - snake
+# NetBSD on NeXT, 68k Macs, 68k Amiga, sun3 etc, -snake
 	*m68k-netbsd)
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer -m68020-40 -DASM_68K"
-	TARGET_ADDSRCS="rc5/68k/rc5_68k_gcc_crunch.c"
+	TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer -m68020-40 -DASM_68K -DHAVE_CSC_CORES"
+	TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="rc5/68k/rc5_68k_gcc_crunch.c ${CSC_ANSI_SRCS}"
 	TARGET_ADDASMS="rc5/68k/crunch.68k.gcc.s"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="netbsd-68k"
 	;;
+
 ###### ARM
 
     *riscos)
