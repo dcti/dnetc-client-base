@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.49  1999/01/27 00:40:01  jlawson
+// some cleanup and additions of more cpu detection macros commonly
+// defined automatically by some compilers.
+//
 // Revision 1.48  1999/01/20 20:25:10  patrick
 //
 // OS2 EMX has threadid in stdlib
@@ -126,6 +130,7 @@
 #ifndef _CPUTYPES_H_
 #define _CPUTYPES_H_
 
+/* ----------------------------------------------------------------- */
 
 #if !defined(INTSIZES)
 #define INTSIZES 442
@@ -164,6 +169,8 @@ typedef struct fake_s64 s64;
 struct u128 { u64 hi, lo; };
 struct s128 { s64 hi, lo; };
 
+/* ----------------------------------------------------------------- */
+
 // Major CPU architectures, we don't need (or want) very fine resolution
 #define CPU_UNKNOWN     0
 #define CPU_X86         1
@@ -181,7 +188,7 @@ struct s128 { s64 hi, lo; };
 #define CPU_KSR1        13
 #define CPU_S390        14
 #define CPU_MASPAR      15
-#define CPU_DESCRACKER  16
+#define CPU_DESCRACKER  16  // eff descracker
 
 // Major OS Architectures.
 #define OS_UNKNOWN      0
@@ -226,7 +233,9 @@ struct s128 { s64 hi, lo; };
 #define OS_OS390        39
 #define OS_MASPAR       40
 #define OS_WIN16        41    // windows 3.1, 3.11, wfw (16-bit)
-#define OS_DESCRACKER   42
+#define OS_DESCRACKER   42    // eff des cracker
+
+/* ----------------------------------------------------------------- */
 
 // determine current compiling platform
 #if defined(WIN32) || defined(__WIN32__) || defined(_Windows) || defined(_WIN32)
@@ -274,7 +283,7 @@ struct s128 { s64 hi, lo; };
   #define CLIENT_CPU    CPU_X86
 #elif defined(linux)
   #define CLIENT_OS_NAME "Linux"
-  #if defined(ASM_ALPHA)
+  #if defined(__alpha__) || defined(ASM_ALPHA)
     #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_ALPHA
   #elif defined(__i386__) || defined(ASM_X86)
@@ -283,7 +292,7 @@ struct s128 { s64 hi, lo; };
   #elif defined(ARM)
     #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_ARM
-  #elif defined(ASM_SPARC)
+  #elif defined(__sparc__) || defined(ASM_SPARC)
     #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_SPARC
   #elif defined(ASM_PPC)
@@ -295,90 +304,86 @@ struct s128 { s64 hi, lo; };
   #endif
 #elif defined(__FreeBSD__)
   #define CLIENT_OS_NAME "FreeBSD"
-  #if defined(ASM_X86)
+  #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_OS     OS_FREEBSD
     #define CLIENT_CPU    CPU_X86
   #endif
 #elif defined(__NetBSD__)
-  #define CLIENT_OS_NAME "NetBSD"
-  #if defined(ASM_X86)
-    #define CLIENT_OS     OS_NETBSD
+  #define CLIENT_OS_NAME  "NetBSD"
+  #define CLIENT_OS       OS_NETBSD
+  #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
   #elif defined(ARM)
-    #define CLIENT_OS     OS_NETBSD
     #define CLIENT_CPU    CPU_ARM
-  #elif defined(ASM_ALPHA)
-    #define CLIENT_OS     OS_NETBSD
+  #elif defined(__alpha__) || defined(ASM_ALPHA)
     #define CLIENT_CPU    CPU_ALPHA
   #endif
 #elif defined(__OpenBSD__) || defined(openbsd)
-  #define CLIENT_OS_NAME "OpenBSD"
-  #if defined(ASM_X86)
-    #define CLIENT_OS     OS_OPENBSD
+  #define CLIENT_OS_NAME  "OpenBSD"
+  #define CLIENT_OS       OS_OPENBSD
+  #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
-  #elif defined(ASM_ALPHA)
-    #define CLIENT_OS     OS_OPENBSD
+  #elif defined(__alpha__) || defined(ASM_ALPHA)
     #define CLIENT_CPU    CPU_ALPHA
   #elif defined(__sparc__)
-    #define CLIENT_OS     OS_OPENBSD
     #define CLIENT_CPU    CPU_SPARC
   #endif
 #elif defined(__QNX__)
-  #define CLIENT_OS_NAME "QNX"
-  #if defined(ASM_X86)
-    #define CLIENT_OS     OS_QNX
+  #define CLIENT_OS_NAME  "QNX"
+  #define CLIENT_OS       OS_QNX
+  #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
   #endif
-#elif defined(solaris)
-  #define CLIENT_OS_NAME "Solaris"
-  #if defined(ASM_X86)
-    #define CLIENT_OS     OS_SOLARIS
+#elif defined(solaris) || defined(sun)
+  #define CLIENT_OS_NAME  "Solaris"
+  #define CLIENT_OS       OS_SOLARIS
+  #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
-  #elif defined(ASM_SPARC)
-    #define CLIENT_OS     OS_SOLARIS
+  #elif defined(__sparc__) || defined(ASM_SPARC)
     #define CLIENT_CPU    CPU_SPARC
   #endif
 #elif defined(_SUN68K_)
-  #define CLIENT_OS_NAME   "SunOS"
-  #define CLIENT_OS         OS_SUNOS
-  #define CLIENT_CPU        CPU_68K
+  #define CLIENT_OS_NAME  "SunOS"
+  #define CLIENT_OS       OS_SUNOS
+  #define CLIENT_CPU      CPU_68K
 #elif defined(bsdi)
-  #define CLIENT_OS_NAME   "BSD/OS"
-  #if defined(ASM_X86)
-    #define CLIENT_OS     OS_BSDI
+  #define CLIENT_OS_NAME  "BSD/OS"
+  #define CLIENT_OS       OS_BSDI
+  #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
   #endif
 #elif defined(sco5)
-  #define CLIENT_OS_NAME   "SCO Unix"
-  #if defined(ASM_X86)
-    #define CLIENT_OS     OS_SCO
+  #define CLIENT_OS_NAME  "SCO Unix"
+  #define CLIENT_OS       OS_SCO
+  #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
   #endif
 #elif defined(__osf__)
-  #define CLIENT_OS_NAME   "DEC Unix"
+  #define CLIENT_OS_NAME  "DEC Unix"
+  #define CLIENT_OS       OS_DEC_UNIX
   #if defined(__alpha)
-    #define CLIENT_OS     OS_DEC_UNIX
     #define CLIENT_CPU    CPU_ALPHA
   #endif
 #elif defined(sinix)
-  #define CLIENT_OS_NAME   "Sinix"
+  #define CLIENT_OS_NAME  "Sinix"
+  #define CLIENT_OS       OS_SINIX
   #if defined(ASM_MIPS) || defined(__mips)
-    #define CLIENT_OS     OS_SINIX
     #define CLIENT_CPU    CPU_MIPS
   #endif
-#elif (defined(ASM_MIPS) || defined(__mips)) && !defined(sinix)
-  #if defined(ultrix)
-    #define CLIENT_OS_NAME   "Ultrix"
-    #define CLIENT_OS OS_ULTRIX
-  #else
-    #define CLIENT_OS_NAME   "Irix"
-    #define CLIENT_OS     OS_IRIX
+#elif defined(ultrix)
+  #define CLIENT_OS_NAME  "Ultrix"
+  #define CLIENT_OS       OS_ULTRIX
+  #if defined(ASM_MIPS) || defined(__mips)
+    #define CLIENT_CPU    CPU_MIPS
   #endif
+#elif (defined(ASM_MIPS) || defined(__mips))
+  #define CLIENT_OS_NAME  "Irix"
+  #define CLIENT_OS       OS_IRIX
   #define CLIENT_CPU    CPU_MIPS
 #elif defined(__VMS)
-  #define CLIENT_OS_NAME   "VMS"
+  #define CLIENT_OS_NAME  "VMS"
+  #define CLIENT_OS       OS_VMS
   #if defined(__ALPHA)
-    #define CLIENT_OS     OS_VMS
     #define CLIENT_CPU    CPU_ALPHA
   #endif
 
@@ -388,22 +393,18 @@ struct s128 { s64 hi, lo; };
     #define MULTINET 1
   #endif
 
-#elif defined(_HPUX)
-  #define CLIENT_OS_NAME   "HP/UX"
-  #if defined(ASM_HPPA)
-    #define CLIENT_OS     OS_HPUX
+#elif defined(_HPUX) || defined(__hpux) || defined(__hpux__)
+  #define CLIENT_OS_NAME  "HP/UX"
+  #define CLIENT_OS       OS_HPUX
+  #if defined(__hppa) || defined(__hppa__) || defined(ASM_HPPA)
     #define CLIENT_CPU    CPU_PA_RISC
+  #elif defined(_HPUX_M68K)
+    #define CLIENT_CPU    CPU_68K
   #endif
-#elif defined(_HPUX_M68K)
-  #define CLIENT_OS_NAME   "HP/UX"
-  #define CLIENT_OS     OS_HPUX
-  #define CLIENT_CPU    CPU_68K
 #elif defined(_DGUX)
-  #define CLIENT_OS_NAME   "DG/UX"
-  #define CLIENT_OS     OS_DGUX
-  #define CLIENT_CPU    CPU_88K
-  #define PTHREAD_SCOPE_SYSTEM PTHREAD_SCOPE_GLOBAL
-  #define pthread_sigmask(a,b,c)
+  #define CLIENT_OS_NAME  "DG/UX"
+  #define CLIENT_OS       OS_DGUX
+  #define CLIENT_CPU      CPU_88K
 #elif defined(_AIX)
   #define CLIENT_OS_NAME   "AIX"
   #if (defined(_ARCH_PPC) || defined(ASM_PPC))
@@ -509,7 +510,7 @@ struct s128 { s64 hi, lo; };
   #if defined(__EMX__)
     #include <stdlib.h>
   #else
-        //Headers defined elsewhere in a separate file.
+    //Headers defined elsewhere in a separate file.
     typedef long THREADID;
   #endif
   #define OS_SUPPORTS_SMP
@@ -522,15 +523,20 @@ struct s128 { s64 hi, lo; };
   typedef thread_id THREADID;
   #define OS_SUPPORTS_SMP
 #elif (CLIENT_OS == OS_MACOS)
-   #include <Multiprocessing.h>
-   typedef MPTaskID THREADID;
-   #define OS_SUPPORTS_SMP
+  #include <Multiprocessing.h>
+  typedef MPTaskID THREADID;
+  #define OS_SUPPORTS_SMP
 #elif defined(MULTITHREAD)
   #include <pthread.h>
   typedef pthread_t THREADID;
   #define OS_SUPPORTS_SMP
   //egcs always includes pthreads.h, so use something other than PTHREAD_H 
   #define _POSIX_THREADS_SUPPORTED
+
+  #if (CLIENT_OS == OS_DGUX)
+    #define PTHREAD_SCOPE_SYSTEM PTHREAD_SCOPE_GLOBAL
+    #define pthread_sigmask(a,b,c)
+  #endif
 #else 
   typedef int THREADID;
 #endif
@@ -572,6 +578,7 @@ struct s128 { s64 hi, lo; };
     #define false (0)
 #endif
 
+/* ----------------------------------------------------------------- */
 
 #endif
 
