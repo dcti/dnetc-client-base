@@ -2,44 +2,35 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-// The file contains CliIdentifyModules() which lists the cvs id strings
-// to stdout. Users can assist us (when making bug reports) by telling us 
-// exactly which modules were actually in effect when the binary was made. 
-// Currently, starting the client with the '-ident' switch will exec the 
-// function.
+/*
+   The file contains CliIdentifyModules() which lists the cvs id strings
+   to stdout. Users can assist us (when making bug reports) by telling us 
+   exactly which modules were actually in effect when the binary was made. 
+   Currently, starting the client with the '-ident' switch will exec the 
+   function.
+*/ 
 //
 // $Log: cliident.cpp,v $
+// Revision 1.5  1998/09/28 12:52:11  cyp
+// updated. woo-hoo.
+//
 // Revision 1.4  1998/08/02 16:17:52  cyruspatel
 // Completed support for logging.
 //
 // Revision 1.3  1998/07/13 23:39:32  cyruspatel
-// Added functions to format and display raw cpu info for better management
-// of the processor detection functions and tables. Well, not totally raw,
-// but still less cooked than SelectCore(). All platforms are supported, but
-// the data may not be meaningful on all. The info is accessible to the user
-// though the -cpuinfo switch.
+// Added cpucheck.cpp
 //
 // Revision 1.2  1998/07/09 09:43:31  remi
 // Give an error message when the user ask for '-ident' and there is no support
 // for it in the client.
 //
 // Revision 1.1  1998/07/07 21:55:20  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
-//
+// Created.
 //
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.4 1998/08/02 16:17:52 cyruspatel Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.5 1998/09/28 12:52:11 cyp Exp $"; } 
 #endif
 
 //-----------------------------------------------------------------------
@@ -51,34 +42,83 @@ return "@(#)$Id: cliident.cpp,v 1.4 1998/08/02 16:17:52 cyruspatel Exp $"; }
 
 #if defined(__showids__) //not needed if we're not showing ids anyway
 
-extern const char *disphelp_cpp(void);
-extern const char *cliconfig_cpp(void);
-extern const char *buffwork_cpp(void);
-extern const char *clitime_cpp(void);
-extern const char *cpucheck_cpp(void);
-extern const char *scram_cpp(void);
-extern const char *cliident_cpp(void);
-extern const char *problem_cpp(void);
-extern const char *client_cpp(void);
-extern const char *pathwork_cpp(void);
-extern const char *threadcd_cpp(void);
-extern const char *iniread_cpp(void);
-extern const char *autobuff_cpp(void);
-extern const char *network_cpp(void);
-extern const char *convdes_cpp(void);
-extern const char *clirate_cpp(void);
+extern const char *buffupd_cpp(void);
 extern const char *clicdata_cpp(void);
+extern const char *clirate_cpp(void);
+extern const char *convdes_cpp(void);
+extern const char *autobuff_cpp(void);
+extern const char *buffwork_cpp(void);
+extern const char *iniread_cpp(void);
+extern const char *scram_cpp(void);
+extern const char *threadcd_cpp(void);
+extern const char *clitime_cpp(void);
+extern const char *cliident_cpp(void);
+extern const char *cliconfig_cpp(void);
+extern const char *client_cpp(void);
+extern const char *disphelp_cpp(void);
+extern const char *netinit_cpp(void);
 extern const char *mail_cpp(void);
-extern const char *clisrate_cpp(void);
+extern const char *pathwork_cpp(void);
+extern const char *problem_cpp(void);
 extern const char *logstuff_cpp(void);
+//extern const char *lurk_cpp(void);
+extern const char *clisrate_cpp(void);
+extern const char *netres_cpp(void);
+extern const char *triggers_cpp(void);
+//extern const char *memfile_cpp(void);
+extern const char *selcore_cpp(void);
+extern const char *selftest_cpp(void);
+extern const char *cpucheck_cpp(void);
+extern const char *cmdline_cpp(void);
+//extern const char *guistuff_cpp(void);
+extern const char *probfill_cpp(void);
+extern const char *pollsys_cpp(void);
+extern const char *clirun_cpp(void);
+extern const char *setprio_cpp(void);
+extern const char *bench_cpp(void);
+extern const char *network_cpp(void);
+extern const char *probman_cpp(void);
 
-static const char * (*ident_table[])() = { 
-   disphelp_cpp, cliconfig_cpp, buffwork_cpp, clitime_cpp, cpucheck_cpp,
-   scram_cpp, cliident_cpp, problem_cpp, client_cpp, pathwork_cpp,
-   threadcd_cpp, iniread_cpp, autobuff_cpp, network_cpp, convdes_cpp,
-   clirate_cpp, clicdata_cpp, mail_cpp, clisrate_cpp, logstuff_cpp };
+static const char * (*ident_table[])() = {
+buffupd_cpp,
+clicdata_cpp,
+clirate_cpp,
+convdes_cpp,
+autobuff_cpp,
+buffwork_cpp,
+iniread_cpp,
+scram_cpp,
+threadcd_cpp,
+clitime_cpp,
+cliident_cpp,
+cliconfig_cpp,
+client_cpp,
+disphelp_cpp,
+netinit_cpp,
+mail_cpp,
+pathwork_cpp,
+problem_cpp,
+logstuff_cpp,
+//lurk_cpp,
+clisrate_cpp,
+netres_cpp,
+triggers_cpp,
+//memfile_cpp,
+selcore_cpp,
+selftest_cpp,
+cpucheck_cpp,
+cmdline_cpp,
+//guistuff_cpp,
+probfill_cpp,
+pollsys_cpp,
+clirun_cpp,
+setprio_cpp,
+bench_cpp,
+network_cpp,
+probman_cpp
+};
 
-//"@(#)$Id: cliident.cpp,v 1.4 1998/08/02 16:17:52 cyruspatel Exp $"
+//"@(#)$Id: cliident.cpp,v 1.5 1998/09/28 12:52:11 cyp Exp $"
 
 void CliIdentifyModules(void)
 {
@@ -123,3 +163,5 @@ void CliIdentifyModules(void)
 }
   
 #endif //#if defined(__showids__)
+
+
