@@ -44,6 +44,10 @@
 #define FETCH_RETRY         10
 #define NETTIMEOUT          60
 
+#if ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)) && defined(NOMAIN)
+  #define NEEDVIRTUALMETHODS
+#endif
+
 // --------------------------------------------------------------------------
 
 #if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
@@ -194,9 +198,10 @@ extern "C" {
   #define stat( _fn, _statblk )  sizonly_stat( _fn, _statblk )
   #define unlink( _fn )          purged_unlink( _fn )
 
-#elif (CLIENT_OS == OS_SUNOS) && (CLIENT_CPU==CPU_68K)
+#elif (CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K)
   extern "C" int nice(int); // Keep g++ happy.
 #endif
+
 
 #if defined(MULTITHREAD) && (CLIENT_OS != OS_WIN32) && (CLIENT_OS != OS_OS2) && (CLIENT_OS != OS_NETWARE) && (CLIENT_OS != OS_BEOS)
 #include <pthread.h>
@@ -262,6 +267,7 @@ typedef enum
 } Operation;
 
 // --------------------------------------------------------------------------
+
 typedef enum
 {
   IDCONTEST_ANY = 0,
@@ -270,6 +276,7 @@ typedef enum
   IDCONTEST_RC564,
   IDCONTEST_DESII
 } contest_id_t;
+
 // --------------------------------------------------------------------------
 
 // remember that for now, the u64's come from the server in the "wrong" order
@@ -319,13 +326,12 @@ typedef struct
   u64  keysdone;          // iterations done (also current position in block)
   u64  iterations;        // iterations to do
   u32  op;                // (out)OP_SUCCESS, (out)OP_DONE, or (in)OP_DATA
-//  char id[64];            // email address of original worker...
   char id[59];            // email address of original worker...
-  u8   contest;
-  u8   cpu;        // added 97.11.25
-  u8   os;         // added 97.11.25
-  u8   buildhi;    // added 97.11.25
-  u8   buildlo;    // added 97.11.25
+  u8   contest;           // 
+  u8   cpu;               // added 97.11.25
+  u8   os;                // added 97.11.25
+  u8   buildhi;           // added 97.11.25
+  u8   buildlo;           // added 97.11.25
   u32  checksum;          // checksum for file curruption
   u32  scramble;          // scramble key for this entry (NOT! the same as OP_KEY)
 } FileEntry;
@@ -454,7 +460,7 @@ protected:
   char *InternalGetLocalFilename( char *filename );
   s32 EnsureBufferConsistency( const char *filename );
 
-#if ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)) && defined(NOMAIN)
+#if defined(NEEDVIRTUALMETHODS)
   // methods that can be overriden to provide additional functionality
   // virtuals required for OS2 & win GUI clients...
   virtual void InternalReadConfig( IniSection &ini ) {};
@@ -483,13 +489,15 @@ public:
   void DoCheckpoint(void);
     // Make the checkpoint file represent current blocks being worked on
 
-#if ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)) && defined(NOMAIN)
-  // virtuals required for OS2 & win GUI clients...
+
+#if defined(NEEDVIRTUALMETHODS)
   virtual s32  Configure( void );
+    // runs the interactive configuration setup
 #else
   s32  Configure( void );
-#endif
     // runs the interactive configuration setup
+#endif
+
 
   s32  ConfigureGeneral( s32 currentmenu );
     // part of the interactive setup
@@ -560,32 +568,25 @@ public:
   void LogScreenf( const char *format, ... );
     // logs message to screen only
 
-#if ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)) && defined(NOMAIN)
-  // virtuals required for OS2 & win GUI clients...
+#if define(NEEDVIRTUALMETHODS)
   virtual void LogScreen ( const char *text );
+    // logs preformated message to screen only.  can be overriden.
 #else
   void LogScreen ( const char *text );
-#endif
     // logs preformated message to screen only.  can be overriden.
+#endif
 
-#ifdef SMART_COMPLETION_CHECKING
-  int GetProblemState(void);
-  #if ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)) && defined(NOMAIN)
-  virtual void LogScreenPercent( u32 percent, u32 lastpercent, u32 restarted );
-  #else
-  virtual void LogScreenPercent( u32 percent, u32 lastpercent, u32 restarted );
-  #endif
-#else
-  #if ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)) && defined(NOMAIN)
-  // virtual required for OS2 and win GUI clients...
+
+#if defined(NEEDVIRTUALMETHODS)
   virtual void LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted);
   virtual void LogScreenPercentMulti(u32 cpu, u32 percent, u32 lastpercent, bool restarted);
-  #else
+    // progress percentage printing to screen only.
+#else
   void LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted);
   void LogScreenPercentMulti(u32 cpu, u32 percent, u32 lastpercent, bool restarted);
-  #endif
     // progress percentage printing to screen only.
-#endif // SMART_COMPLETION_CHECKING
+#endif
+
 
   s32 Install();
     // installs the clients into autolaunch configuration
@@ -614,30 +615,34 @@ public:
     // Identify CPU type
 #endif
 
-  s32 Client::SetContestDoneState( Packet * packet);
+  s32 SetContestDoneState( Packet * packet);
     // Set the contest state appropriately based on packet information
     // Returns 1 if a change to contest state was detected
 
 };
 
 // --------------------------------------------------------------------------
+
 #if (CLIENT_CPU == CPU_X86)
-//#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_OS2)
   #ifdef __WATCOMC__
     #define x86ident _x86ident
 //    #define checklocks _checklocks
   #endif
   #if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
-  extern "C" u32 x86ident( void ) asm ("x86ident");
+    extern "C" u32 x86ident( void ) asm ("x86ident");
   #else
-  extern "C" u32 x86ident( void );
+    extern "C" u32 x86ident( void );
   #endif
 //  extern "C" u16 checklocks( void );
-//#endif
 #endif
 
-#ifndef NEW_STATS_AND_LOGMSG_STUFF
-#if (((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K)) ||   \
+#ifdef NEW_STATS_AND_LOGMSG_STUFF
+  #include "clitime.h" //CliTimer, CliGetTimeString
+  #include "clirate.h"  //CliGetKeyrateForProblem
+  #include "clisrate.h" //CliGetSummaryStringForContest, CliGetMessageForFileentryLoaded, CliGetMessageForProblemCompleted
+  #define Time() (CliGetTimeString(NULL,1))
+#else
+  #if (((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K)) ||   \
      (CLIENT_OS == OS_MACOS) ||                              \
      (CLIENT_OS == OS_SCO) ||                                \
      (CLIENT_OS == OS_OS2) ||                                \
@@ -648,13 +653,11 @@ public:
      (CLIENT_OS == OS_DOS) ||                                \
      ((CLIENT_OS == OS_VMS) && !defined(MULTINET)))
   extern "C" gettimeofday(struct timeval *tv, struct timezone *);
-#endif
+  #endif
 #endif //#ifdef NEW_STATS_AND_LOGMSG_STUFF
 
+
 extern Problem problem[2*MAXCPUS];
-#if defined(MULTITHREAD)
-extern volatile s32 ThreadIsDone[2*MAXCPUS];
-#endif
 
 extern volatile u32 SignalTriggered, UserBreakTriggered;
 extern volatile s32 pausefilefound;
@@ -673,17 +676,5 @@ extern rasgetconnectstatusT rasgetconnectstatus;
 
 // --------------------------------------------------------------------------
 
-#ifdef NEW_STATS_AND_LOGMSG_STUFF
-  #include "clitime.h" //CliTimer, CliGetTimeString
-  #include "clirate.h"  //CliGetKeyrateForProblem
-  #include "clisrate.h" //CliGetSummaryStringForContest, CliGetMessageForFileentryLoaded, CliGetMessageForProblemCompleted
-  #define Time() (CliGetTimeString(NULL,1))
-  /*
-  int gettimeofday(struct timeval *tv, struct timezone *tz)
-    { tz=tz; CliTimer( tv ); return 0; }
-  const char * Client::Time( void )
-    { return CliGetTimeString(NULL,1); }
-  */
-#endif
 
 #endif
