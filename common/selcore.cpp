@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.59 2003/09/01 06:28:40 jlawson Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.60 2003/09/01 19:27:36 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -31,16 +31,6 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.59 2003/09/01 06:28:40 jlawson Exp $"; }
 #if (CLIENT_OS == OS_AIX) // needs signal handler
   #include <sys/signal.h>
   #include <setjmp.h>
-#endif
-#if (CLIENT_CPU == CPU_X86) && defined(SMC)
-  #if defined(__unix__)
-    #include <sys/types.h>
-    #include <sys/mman.h>
-  #elif defined(USE_DPMI)
-    extern "C" smc_dpmi_ds_alias_alloc(void);
-    extern "C" smc_dpmi_ds_alias_free(void);
-  #endif
-  int x86_smc_initialized = -1;
 #endif
 
 /* ======================================================================== */
@@ -240,27 +230,29 @@ int DeinitializeCoreTable( void )  /* ClientMain calls this */
     return -1;
   }
 
-  #if (CLIENT_CPU == CPU_X86) && defined(SMC)
-  {          /* self-modifying code may need deinitialization */
-    #if defined(USE_DPMI) && ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16))
-    if (x86_smc_initialized > 0)
-    {
-      smc_dpmi_ds_alias_free();
-      x86_smc_initialized = -1;
-    }
-    #endif
-  }
-  #endif /* ifdef SMC */
+
+  #ifdef HAVE_RC5_64_CORES
+  DeinitializeCoreTable_rc564();
+  #endif
+  #ifdef HAVE_RC5_72_CORES
+  DeinitializeCoreTable_rc572();
+  #endif
+  #ifdef HAVE_OGR_CORES
+  DeinitializeCoreTable_ogr();
+  #endif
+  #ifdef HAVE_DES_CORES
+  DeinitializeCoreTable_des();
+  #endif
+  #ifdef HAVE_CSC_CORES
+  DeinitializeCoreTable_csc();
+  #endif
+
 
   selcore_initlev--;
   return 0;
 }
 
 /* ---------------------------------------------------------------------- */
-
-#if (CLIENT_CPU == CPU_X86) && defined(SMC) && defined(HAVE_RC5_64_CORES)
-extern "C" char rc5_unit_func_486_smc[];      // only needed to obtain address
-#endif
 
 int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
 {
@@ -278,59 +270,6 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
     selcore_initlev = 0;
   }
 
-  #if (CLIENT_CPU == CPU_X86) && defined(SMC)
-  {                      /* self-modifying code needs initialization */
- 
-    #if defined(USE_DPMI) && ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16))
-    /*
-    ** Unlike all other targets, the dpmi based ones need to initialize on
-    ** InitializeCoreTable(), and deinitialize on DeinitializeCoreTable()
-    */
-    if (x86_smc_initialized < 0) /* didn't fail before */
-    {
-      if (smc_dpmi_ds_alias_alloc() > 0)
-        x86_smc_initialized = +1;
-    }
-    #elif defined(__unix__)
-    if (x86_smc_initialized < 0) /* one shot */
-    {
-      #ifdef HAVE_RC5_64_CORES
-      char *addr = (char *)&rc5_unit_func_486_smc;
-      addr -= (((unsigned long)addr) & (4096-1));
-      if (mprotect( addr, 4096*3, PROT_READ|PROT_WRITE|PROT_EXEC )==0)
-        x86_smc_initialized = +1;
-      #endif
-    }
-    #elif (CLIENT_OS == OS_NETWARE)
-    if (x86_smc_initialized < 0) /* one shot */
-    {
-      if (GetFileServerMajorVersionNumber() <= 4)
-        x86_smc_initialized = +1; /* kernel module, all pages are xrw */
-    }
-    #elif (CLIENT_OS == OS_WIN32)
-    if (x86_smc_initialized < 0) /* one shot */
-    {
-      if (winGetVersion() < 2500) // SMC core doesn't run under WinXP/Win2K
-      {
-        HANDLE h = OpenProcess(PROCESS_VM_OPERATION,
-                               FALSE,GetCurrentProcessId());
-        if (h)
-        {
-          #ifdef HAVE_RC5_64_CORES
-          DWORD old = 0;
-          if (VirtualProtectEx(h, rc5_unit_func_486_smc, 4096*3,
-                                   PAGE_EXECUTE_READWRITE, &old))
-            x86_smc_initialized = +1;
-          #endif
-          CloseHandle(h);
-        }
-      }
-    }
-    #endif
-    if (x86_smc_initialized < 0)
-      x86_smc_initialized = 0;
-  }
-  #endif /* ifdef SMC */
 
   #if (CLIENT_OS == OS_AIX) && (!defined(_AIXALL)) //not a PPC/POWER hybrid client?
   if (first_time) /* we only want to do this once */
@@ -355,6 +294,26 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
   }
   #endif
 
+
+
+  #ifdef HAVE_RC5_64_CORES
+  if (InitializeCoreTable_rc564(first_time) < 0) return -1;
+  #endif
+  #ifdef HAVE_RC5_72_CORES
+  if (InitializeCoreTable_rc572(first_time) < 0) return -1;
+  #endif
+  #ifdef HAVE_OGR_CORES
+  if (InitializeCoreTable_ogr(first_time) < 0) return -1;
+  #endif
+  #ifdef HAVE_DES_CORES
+  if (InitializeCoreTable_des(first_time) < 0) return -1;
+  #endif
+  #ifdef HAVE_CSC_CORES
+  if (InitializeCoreTable_csc(first_time) < 0) return -1;
+  #endif
+
+
+
   if (first_time) /* we only want to do this once */
   {
     for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
@@ -362,36 +321,6 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
       selcorestatics.user_cputype[cont_i] = -1;
       selcorestatics.corenum[cont_i] = -1;
     }
-    #if defined(HAVE_OGR_CORES) && defined(HAVE_MULTICRUNCH_VIA_FORK)
-    // HACK! for bug #3006
-    // call the functions once to initialize the static tables before the client forks
-      #if CLIENT_CPU == CPU_X86
-        ogr_get_dispatch_table();
-        ogr_get_dispatch_table_nobsr();
-      #elif CLIENT_CPU == CPU_POWERPC
-        ogr_get_dispatch_table();
-        #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
-          vec_ogr_get_dispatch_table();
-        #endif
-      #elif (CLIENT_CPU == CPU_68K)
-        ogr_get_dispatch_table_000();
-        ogr_get_dispatch_table_020();
-        ogr_get_dispatch_table_030();
-        ogr_get_dispatch_table_040();
-        ogr_get_dispatch_table_060();
-      #elif (CLIENT_CPU == CPU_ALPHA)
-        ogr_get_dispatch_table();
-        ogr_get_dispatch_table_cix();
-      #elif (CLIENT_CPU == CPU_VAX)
-        ogr_get_dispatch_table();
-      #elif (CLIENT_CPU == CPU_SPARC)
-        ogr_get_dispatch_table();
-      #elif (CLIENT_CPU == CPU_X86_64)
-        ogr_get_dispatch_table();
-      #else
-        #error FIXME! call all your *ogr_get_dispatch_table* functions here once
-      #endif
-    #endif
   }
   if (coretypes)
   {

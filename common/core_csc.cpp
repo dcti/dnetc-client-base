@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_csc_cpp(void) {
-return "@(#)$Id: core_csc.cpp,v 1.1.2.1 2003/09/01 06:28:40 jlawson Exp $"; }
+return "@(#)$Id: core_csc.cpp,v 1.1.2.2 2003/09/01 19:27:36 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -41,6 +41,19 @@ extern "C" s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *iterations, void *membuff
 extern "C" s32 csc_unit_func_6b_mmx ( RC5UnitWork *, u32 *iterations, void *membuff );
 #endif
 
+
+/* ======================================================================== */
+
+int InitializeCoreTable_csc(int /*first_time*/)
+{
+  /* csc does not require any initialization */
+  return 0;
+}
+
+void DeinitializeCoreTable_csc()
+{
+  /* csc does not require any deinitialization */
+}
 
 /* ======================================================================== */
 

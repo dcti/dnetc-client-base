@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.16.2.4 2003/09/01 06:28:40 jlawson Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.16.2.5 2003/09/01 19:27:36 jlawson Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
@@ -111,6 +111,10 @@ int DeinitializeCoreTable( void );
  */
 
 #ifdef HAVE_RC5_64_CORES
+int InitializeCoreTable_rc564(int first_time);
+
+void DeinitializeCoreTable_rc564();
+
 const char **corenames_for_contest_rc564();
 
 int apply_selcore_substitution_rules_rc564(int cindex);
@@ -121,8 +125,11 @@ int selcoreSelectCore_rc564( unsigned int threadindex,
                              int *client_cpuP, struct selcore *selinfo );
 #endif
 #ifdef HAVE_RC5_72_CORES
-const char **corenames_for_contest_rc572();
+int InitializeCoreTable_rc572(int first_time);
 
+void DeinitializeCoreTable_rc572();
+
+const char **corenames_for_contest_rc572();
 
 int apply_selcore_substitution_rules_rc572(int cindex);
 
@@ -132,6 +139,10 @@ int selcoreSelectCore_rc572( unsigned int threadindex,
                              int *client_cpuP, struct selcore *selinfo );
 #endif
 #ifdef HAVE_CSC_CORES
+int InitializeCoreTable_csc(int first_time);
+
+void DeinitializeCoreTable_csc();
+
 const char **corenames_for_contest_csc();
 
 int apply_selcore_substitution_rules_csc(int cindex);
@@ -142,6 +153,10 @@ int selcoreSelectCore_csc( unsigned int threadindex,
                            int *client_cpuP, struct selcore *selinfo );
 #endif
 #ifdef HAVE_DES_CORES
+int InitializeCoreTable_des(int first_time);
+
+void DeinitializeCoreTable_des();
+
 const char **corenames_for_contest_des();
 
 int apply_selcore_substitution_rules_des(int cindex);
@@ -152,6 +167,10 @@ int selcoreSelectCore_des(unsigned int threadindex,
                           int *client_cpuP, struct selcore *selinfo );
 #endif
 #ifdef HAVE_OGR_CORES
+int InitializeCoreTable_ogr(int first_time);
+
+void DeinitializeCoreTable_ogr();
+
 const char **corenames_for_contest_ogr();
 
 int apply_selcore_substitution_rules_ogr(int cindex);
@@ -162,12 +181,6 @@ int selcoreSelectCore_ogr( unsigned int threadindex,
                            int *client_cpuP, struct selcore *selinfo );
 #endif
 
-
-
-#if (CLIENT_CPU == CPU_X86) && defined(SMC)
-// Shared between selcore.cpp and core_*.cpp
-extern int x86_smc_initialized;
-#endif
 
 
 /* ---------------------------------------------------------------------- */

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_des_cpp(void) {
-return "@(#)$Id: core_des.cpp,v 1.1.2.1 2003/09/01 06:28:40 jlawson Exp $"; }
+return "@(#)$Id: core_des.cpp,v 1.1.2.2 2003/09/01 19:27:36 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -55,6 +55,22 @@ return "@(#)$Id: core_des.cpp,v 1.1.2.1 2003/09/01 06:28:40 jlawson Exp $"; }
   //all rvs based drivers (eg des/ultrasparc/des-slice-ultrasparc.cpp)
   extern u32 des_unit_func_slice( RC5UnitWork * , u32 *iter, char *coremem );
 #endif
+
+/* ======================================================================== */
+
+int InitializeCoreTable_des(int /*first_time*/)
+{
+  /* des does not require any initialization */
+  return 0;
+}
+
+/* ======================================================================== */
+
+void DeinitializeCoreTable_des()
+{
+  /* des does not require any initialization */
+}
+
 
 /* ======================================================================== */
 
@@ -124,16 +140,6 @@ int apply_selcore_substitution_rules_des(int cindex)
   #if (CLIENT_CPU == CPU_X86)
     long det = GetProcessorType(1);
     int have_mmx = (det >= 0 && (det & 0x100)!=0);
-    //int have_3486 = (det >= 0 && (det & 0xff)==1);
-    int have_smc = 0;
-    int have_nasm = 0;
-
-    #if !defined(HAVE_NO_NASM)
-    have_nasm = 1;
-    #endif
-    #if defined(SMC)
-    have_smc = (x86_smc_initialized > 0);
-    #endif
 
     #if !defined(CLIENT_SUPPORTS_SMP)
       if (cindex == 2)                /* "Kwan/Bitslice" */

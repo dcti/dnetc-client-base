@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.2 2003/09/01 18:30:20 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.3 2003/09/01 19:27:36 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -73,6 +73,19 @@ extern "C" s32 CDECL rc5_72_unit_func_anbe_2( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_MIPS_2 ( RC5_72UnitWork *, u32 *, void * );
 #endif
 
+
+/* ======================================================================== */
+
+int InitializeCoreTable_rc572(int /*first_time*/)
+{
+  /* rc5-72 does not require any initialization */
+  return 0;
+}
+
+void DeinitializeCoreTable_rc572()
+{
+  /* rc5-72 does not require any initialization */
+}
 
 /* ======================================================================== */
 
@@ -216,26 +229,14 @@ int apply_selcore_substitution_rules_rc572(int cindex)
   #elif (CLIENT_CPU == CPU_X86)
   {
     long det = GetProcessorType(1);
-    int have_mmx = (det >= 0 && (det & 0x100)!=0);
+    //int have_mmx = (det >= 0 && (det & 0x100)!=0);
     int have_3486 = (det >= 0 && (det & 0xff)==1);
-    int have_smc = 0;
-    int have_nasm = 0;
-
-    #if !defined(HAVE_NO_NASM)
-    have_nasm = 1;
-    #endif
-    #if defined(SMC)
-    have_smc = (x86_smc_initialized > 0);
-    #endif
 
     #if !defined(HAVE_NO_NASM)
       if (have_3486 && cindex >= 2)     /* dg-* cores use the bswap instr that's not available on 386 */
         cindex = 0;                     /* "SES 1-pipe" */
     #endif
 
-    have_smc = have_smc;   // possibly unused
-    have_mmx = have_mmx;   // possibly unused
-    have_nasm = have_nasm;   // possibly unused
   }
   #endif
   return cindex;

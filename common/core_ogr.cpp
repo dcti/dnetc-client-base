@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.1 2003/09/01 06:28:40 jlawson Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.2 2003/09/01 19:27:36 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -61,6 +61,52 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.1 2003/09/01 06:28:40 jlawson Exp $"; }
 
 /* ======================================================================== */
 
+
+int InitializeCoreTable_ogr(int first_time)
+{
+#if defined(HAVE_MULTICRUNCH_VIA_FORK)
+  if (first_time) {
+    // HACK! for bug #3006
+    // call the functions once to initialize the static tables before the client forks
+      #if CLIENT_CPU == CPU_X86
+        ogr_get_dispatch_table();
+        ogr_get_dispatch_table_nobsr();
+      #elif CLIENT_CPU == CPU_POWERPC
+        ogr_get_dispatch_table();
+        #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
+          vec_ogr_get_dispatch_table();
+        #endif
+      #elif (CLIENT_CPU == CPU_68K)
+        ogr_get_dispatch_table_000();
+        ogr_get_dispatch_table_020();
+        ogr_get_dispatch_table_030();
+        ogr_get_dispatch_table_040();
+        ogr_get_dispatch_table_060();
+      #elif (CLIENT_CPU == CPU_ALPHA)
+        ogr_get_dispatch_table();
+        ogr_get_dispatch_table_cix();
+      #elif (CLIENT_CPU == CPU_VAX)
+        ogr_get_dispatch_table();
+      #elif (CLIENT_CPU == CPU_SPARC)
+        ogr_get_dispatch_table();
+      #elif (CLIENT_CPU == CPU_X86_64)
+        ogr_get_dispatch_table();
+      #else
+        #error FIXME! call all your *ogr_get_dispatch_table* functions here once
+      #endif
+  }
+#endif
+  first_time = first_time;     /* possibly unused */
+  return 0;
+}
+
+
+void DeinitializeCoreTable_ogr()
+{
+  /* ogr does not require any deinitialization */
+}
+
+/* ======================================================================== */
 
 const char **corenames_for_contest_ogr()
 {

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_rc5_cpp(void) {
-return "@(#)$Id: core_rc5.cpp,v 1.1.2.1 2003/09/01 06:28:40 jlawson Exp $"; }
+return "@(#)$Id: core_rc5.cpp,v 1.1.2.2 2003/09/01 19:27:36 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -21,6 +21,16 @@ return "@(#)$Id: core_rc5.cpp,v 1.1.2.1 2003/09/01 06:28:40 jlawson Exp $"; }
 #include "probman.h"   // GetManagedProblemCount()
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
 #include "util.h"      // TRACE_OUT
+#if (CLIENT_CPU == CPU_X86) && defined(SMC)
+  #if defined(__unix__)
+    #include <sys/types.h>
+    #include <sys/mman.h>
+  #elif defined(USE_DPMI)
+    extern "C" smc_dpmi_ds_alias_alloc(void);
+    extern "C" smc_dpmi_ds_alias_free(void);
+  #endif
+  static int x86_smc_initialized = -1;
+#endif
 
 #if defined(HAVE_RC5_64_CORES)
 
@@ -125,6 +135,81 @@ return "@(#)$Id: core_rc5.cpp,v 1.1.2.1 2003/09/01 06:28:40 jlawson Exp $"; }
 #else
   #error "How did you get here?"
 #endif
+
+
+/* ======================================================================== */
+
+int InitializeCoreTable_rc564(int first_time)
+{
+  #if (CLIENT_CPU == CPU_X86) && defined(SMC)
+  {                      /* self-modifying code needs initialization */
+ 
+    #if defined(USE_DPMI) && ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16))
+    /*
+    ** Unlike all other targets, the dpmi based ones need to initialize on
+    ** InitializeCoreTable(), and deinitialize on DeinitializeCoreTable()
+    */
+    if (x86_smc_initialized < 0) /* didn't fail before */
+    {
+      if (smc_dpmi_ds_alias_alloc() > 0)
+        x86_smc_initialized = +1;
+    }
+    #elif defined(__unix__)
+    if (x86_smc_initialized < 0) /* one shot */
+    {
+      char *addr = (char *)&rc5_unit_func_486_smc;
+      addr -= (((unsigned long)addr) & (4096-1));
+      if (mprotect( addr, 4096*3, PROT_READ|PROT_WRITE|PROT_EXEC )==0)
+        x86_smc_initialized = +1;
+    }
+    #elif (CLIENT_OS == OS_NETWARE)
+    if (x86_smc_initialized < 0) /* one shot */
+    {
+      if (GetFileServerMajorVersionNumber() <= 4)
+        x86_smc_initialized = +1; /* kernel module, all pages are xrw */
+    }
+    #elif (CLIENT_OS == OS_WIN32)
+    if (x86_smc_initialized < 0) /* one shot */
+    {
+      if (winGetVersion() < 2500) // SMC core doesn't run under WinXP/Win2K
+      {
+        HANDLE h = OpenProcess(PROCESS_VM_OPERATION,
+                               FALSE,GetCurrentProcessId());
+        if (h)
+        {
+          DWORD old = 0;
+          if (VirtualProtectEx(h, rc5_unit_func_486_smc, 4096*3,
+                                   PAGE_EXECUTE_READWRITE, &old))
+            x86_smc_initialized = +1;
+          CloseHandle(h);
+        }
+      }
+    }
+    #endif
+    if (x86_smc_initialized < 0)
+      x86_smc_initialized = 0;
+  }
+  #endif /* ifdef SMC */
+
+  first_time = first_time;    /* possibly unused. */
+  return 0;
+}
+
+
+void DeinitializeCoreTable_rc564()
+{
+  #if (CLIENT_CPU == CPU_X86) && defined(SMC)
+  {          /* self-modifying code may need deinitialization */
+    #if defined(USE_DPMI) && ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16))
+    if (x86_smc_initialized > 0)
+    {
+      smc_dpmi_ds_alias_free();
+      x86_smc_initialized = -1;
+    }
+    #endif
+  }
+  #endif /* ifdef SMC */
+}
 
 
 /* ======================================================================== */
