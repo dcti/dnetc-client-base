@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.64  1999/01/04 21:47:58  cyp
+// SOCKS4 works fine. SOCKS5 says "address type not supported". Looking into it.
+//
 // Revision 1.63  1999/01/04 16:05:06  silby
 // Fixed byte ordering problem with socks code; Still does not work, however.
 //
@@ -184,7 +187,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.63 1999/01/04 16:05:06 silby Exp $"; }
+return "@(#)$Id: network.cpp,v 1.64 1999/01/04 21:47:58 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -772,118 +775,144 @@ int Network::InitializeConnection(void)
 
     len = 2 + psocks5mreq->nMethods;
     if (LowLevelPut(len, socksreq) < 0)
-      goto Socks5InitEnd;
-
-    if ((u32)LowLevelGet(2, socksreq) != 2)
-      goto Socks5InitEnd;
-
-    if (psocks5mreply->ver != 5)
       {
       if (verbose_level > 0)
-      LogScreen("SOCKS5 authentication has wrong version, %d should be 5\n", 
+        LogScreen("SOCKS5: error sending negotiation request\n");
+      //goto Socks5InitEnd;
+      }
+    else if ((u32)LowLevelGet(2, socksreq) != 2)
+      {
+      if (verbose_level > 0)
+        LogScreen("SOCKS5: failed to get negotiation request ack.\n");
+      //goto Socks5InitEnd;
+      }
+    else if (psocks5mreply->ver != 5)
+      {
+      if (verbose_level > 0)
+        LogScreen("SOCKS5: authentication has wrong version, %d should be 5\n", 
                             psocks5mreply->ver);
-      goto Socks5InitEnd;
-      }
-
-    if (psocks5mreply->Method == 0)       // no authentication
-      {
-      // nothing to do for no authentication method
-      }
-    else if (psocks5mreply->Method == 2)  // username and pw
-      {
-      char username[255];
-      char password[255];
-      char *pchSrc, *pchDest;
-      int userlen, pwlen;
-
-      pchSrc = fwall_userpass;
-      pchDest = username;
-      while (*pchSrc && *pchSrc != ':')
-        *pchDest++ = *pchSrc++;
-      *pchDest = 0;
-      userlen = pchDest - username;
-      if (*pchSrc == ':')
-        pchSrc++;
-      strcpy(password, pchSrc);
-      pwlen = strlen(password);
-
-      //   username/password request looks like
-      // +----+------+----------+------+----------+
-      // |VER | ULEN |  UNAME   | PLEN |  PASSWD  |
-      // +----+------+----------+------+----------+
-      // | 1  |  1   | 1 to 255 |  1   | 1 to 255 |
-      // +----+------+----------+------+----------+
-
-      len = 0;
-      socksreq[len++] = 1;    // username/pw subnegotiation version
-      socksreq[len++] = (char) userlen;
-      memcpy(socksreq + len, username, (int) userlen);
-      len += userlen;
-      socksreq[len++] = (char) pwlen;
-      memcpy(socksreq + len, password, (int) pwlen);
-      len += pwlen;
-
-      if (LowLevelPut(len, socksreq) < 0)
-        goto Socks5InitEnd;
-
-      if ((u32)LowLevelGet(2, socksreq) != 2)
-        goto Socks5InitEnd;
-
-      if (psocks5userpwreply->ver != 1 ||
-          psocks5userpwreply->status != 0)
-        {
-        if (verbose_level > 0)
-          {
-          LogScreen("SOCKS5 user %s rejected by server.\n", username);
-          }       
-        goto Socks5InitEnd;
-        }
+      //goto Socks5InitEnd;
       }
     else 
       {
-      if (verbose_level > 0)
-        LogScreen("SOCKS5 authentication method rejected.\n");
-      goto Socks5InitEnd;
-      }
+      int authaccepted = 0;
+      if (psocks5mreply->Method == 0)       // no authentication
+        {
+        // nothing to do for no authentication method
+        authaccepted = 1;
+        }
+      else if (psocks5mreply->Method == 2)  // username and pw
+        {
+        char username[255];
+        char password[255];
+        char *pchSrc, *pchDest;
+        int userlen, pwlen;
 
-    // after subnegotiation, send connect request
-    psocks5->ver = 5;
-    psocks5->cmdORrep = 1;   // connnect
-    psocks5->rsv = 0;   // must be zero
-    psocks5->atyp = 1;  // IPv4
-    psocks5->addr = svc_hostaddr;
-    psocks5->port = (u16)htons(svc_hostport);
+        pchSrc = fwall_userpass;
+        pchDest = username;
+        while (*pchSrc && *pchSrc != ':')
+          *pchDest++ = *pchSrc++;
+        *pchDest = 0;
+        userlen = pchDest - username;
+        if (*pchSrc == ':')
+          pchSrc++;
+        strcpy(password, pchSrc);
+        pwlen = strlen(password);
 
-    if (LowLevelPut(10, socksreq) < 0)
-      goto Socks5InitEnd;
+        //   username/password request looks like
+        // +----+------+----------+------+----------+
+        // |VER | ULEN |  UNAME   | PLEN |  PASSWD  |
+        // +----+------+----------+------+----------+
+        // | 1  |  1   | 1 to 255 |  1   | 1 to 255 |
+        // +----+------+----------+------+----------+
 
-    if ((u32)LowLevelGet(10, socksreq) != 10)
-      goto Socks5InitEnd;
+        len = 0;
+        socksreq[len++] = 1;    // username/pw subnegotiation version
+        socksreq[len++] = (char) userlen;
+        memcpy(socksreq + len, username, (int) userlen);
+        len += userlen;
+        socksreq[len++] = (char) pwlen;
+        memcpy(socksreq + len, password, (int) pwlen);
+        len += pwlen;
 
-    if (psocks5->ver != 5)
-      {
-      if (verbose_level > 0)
-        LogScreen("SOCKS5 reply has wrong version, %d should be 5\n", 
+        if (LowLevelPut(len, socksreq) < 0)
+          {
+          if (verbose_level > 0)
+            LogScreen("SOCKS5: failed to send sub-negotiation request.\n");
+          //goto Socks5InitEnd;
+          }
+        else if ((u32)LowLevelGet(2, socksreq) != 2)
+          {
+          if (verbose_level > 0)
+            LogScreen("SOCKS5: failed to get sub-negotiation response.\n");
+          //goto Socks5InitEnd;
+          }
+        else if (psocks5userpwreply->ver != 1 ||
+             psocks5userpwreply->status != 0)
+          {
+          if (verbose_level > 0)
+            LogScreen("SOCKS5: user %s rejected by server.\n", username);
+          //goto Socks5InitEnd;
+          }       
+        else
+          {
+          authaccepted = 1;
+          }
+        } //if (psocks5mreply->Method == 2)  // username and pw
+      else
+        {
+        if (verbose_level > 0)
+          LogScreen("SOCKS5 authentication method rejected.\n");
+        //goto Socks5InitEnd;
+        }
+      
+      if (authaccepted)
+        {
+        // after subnegotiation, send connect request
+        psocks5->ver = 5;
+        psocks5->cmdORrep = 1;   // connnect
+        psocks5->rsv = 0;   // must be zero
+        psocks5->atyp = 1;  // IPv4
+        psocks5->addr = svc_hostaddr;
+        psocks5->port = (u16)htons(svc_hostport); //(u16)(htons((server_name[0]!=0)?((u16)port):((u16)(DEFAULT_PORT))));
+
+        if (LowLevelPut(10, socksreq) < 0)
+          {
+          if (verbose_level > 0)
+            LogScreen("SOCKS5: failed to send connect request.\n");
+          //goto Socks5InitEnd;
+          }
+        else if ((u32)LowLevelGet(10, socksreq) != 10)
+          {
+          if (verbose_level > 0)
+            LogScreen("SOCKS5: failed to get connect request ack.\n");
+          //goto Socks5InitEnd;
+          }
+        else if (psocks5->ver != 5)
+          {
+          if (verbose_level > 0)
+             LogScreen("SOCKS5: reply has wrong version, %d should be 5\n", 
                            psocks5->ver);
-      goto Socks5InitEnd;
-      }
-
-    if (psocks5->cmdORrep == 0)          // 0 is successful connect
-      {
-      success = 1; 
-      }
-    else if (verbose_level > 0)
-      {
-      LogScreen("SOCKS5 server error connecting to keyproxy:\n%s", 
+          //goto Socks5InitEnd;
+          }
+        else if (psocks5->cmdORrep == 0)  // 0 is successful connect
+          {
+          success = 1; 
+          }
+        else if (verbose_level > 0)
+          {
+          LogScreen("SOCKS5: server error connecting to keyserver:\n%s", 
                 (psocks5->cmdORrep >=
                 (sizeof Socks5ErrorText / sizeof Socks5ErrorText[0]))
                 ? "unrecognized SOCKS5 error"
                 : Socks5ErrorText[ psocks5->cmdORrep ] );
+          }
+        } //if (authaccepted)
       }
       
-Socks5InitEnd: 
+//Socks5InitEnd: 
     return ((success)?(0):(-1));
-    }    
+    } //if (startmode & MODE_SOCKS5)
 
   if (startmode & MODE_SOCKS4)
     {
@@ -897,15 +926,27 @@ Socks5InitEnd:
 
     psocks4->VN = 4;
     psocks4->CD = 1;  // CONNECT
-    psocks4->DSTPORT = (u16)htons(svc_hostport);
+    psocks4->DSTPORT = (u16)htons(svc_hostport); //(u16)htons((server_name[0]!=0)?((u16)port):((u16)DEFAULT_PORT));
     psocks4->DSTIP = svc_hostaddr;   //lasthttpaddress;
     strncpy(psocks4->USERID, fwall_userpass, sizeof(fwall_userpass));
 
     len = sizeof(*psocks4) - 1 + strlen(fwall_userpass) + 1;
-    if (!(LowLevelPut(len, socksreq) < 0))
+    if (LowLevelPut(len, socksreq) < 0)
+      {
+      if (verbose_level > 0)
+        LogScreen("SOCKS4: Error sending connect request\n");
+      }
+    else
       {
       len = sizeof(*psocks4) - 1;  // - 1 for the USERID[1]
-      if ((u32)LowLevelGet(len, socksreq) == len)
+      s32 gotlen = LowLevelGet(len, socksreq);
+      if (((u32)(gotlen)) != len )
+        {
+        if (verbose_level > 0)
+          LogScreen("SOCKS4:%s response from server.\n",
+                                     ((gotlen<=0)?("No"):("Invalid")));
+        }
+      else //if ( (u32)(gotlen)) == len)
         {
         if (psocks4->VN == 0 && psocks4->CD == 90) // 90 is successful return
           {
@@ -913,7 +954,7 @@ Socks5InitEnd:
           }
         else if (verbose_level > 0)
           {
-          LogScreen("SOCKS4 request rejected%s.\n", 
+          LogScreen("SOCKS4: request rejected%s.\n", 
             (psocks4->CD == 91)
              ? ""
              :
@@ -926,10 +967,6 @@ Socks5InitEnd:
              ", unexpected response");
           }
         }
-      else
-        {
-        LogScreen("SOCKS4: No response recieved from SOCKS server.\n");
-        };
       }
     return ((success)?(0):(-1));
     }
