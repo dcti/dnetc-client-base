@@ -1,10 +1,19 @@
 // Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
 //
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
 // $Log: logstuff-conflict.cpp,v $
+// Revision 1.21.2.5  1999/01/04 02:19:18  remi
+// Synced with :
+//
+//  Revision 1.25  1999/01/01 02:45:15  cramer
+//  Part 1 of 1999 Copyright updates...
+//
+//  Revision 1.24  1998/12/29 20:59:41  silby
+//  Removed guistuff.h.
+//
 // Revision 1.21.2.4  1998/12/28 16:44:06  remi
 // Fixed the merge.
 //
@@ -21,6 +30,13 @@
 // Lots of $Log tags.
 //
 // Synchronized with official 1.21
+
+//-------------------------------------------------------------------------
+
+#if (!defined(lint) && defined(__showids__))
+const char *logstuff_cpp(void) {
+return "@(#)$Id: logstuff-conflict.cpp,v 1.21.2.5 1999/01/04 02:19:18 remi Exp $"; }
+#endif
 
 //-------------------------------------------------------------------------
 
