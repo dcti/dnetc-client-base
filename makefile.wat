@@ -6,6 +6,9 @@
 ##                       or anything else defined at the end of this makefile
 ##
 ## $Log: makefile.wat,v $
+## Revision 1.17  1998/07/12 08:29:25  ziggyb
+## Added cliident.cpp to the path and MMX core changes
+##
 ## Revision 1.16  1998/07/09 05:45:37  silby
 ## This neato file can build the nt service!
 ##
@@ -78,7 +81,7 @@
 ## Import 5/23/98 client tree
 ## 
 
-## $Id: makefile.wat,v 1.16 1998/07/09 05:45:37 silby Exp $
+## $Id: makefile.wat,v 1.17 1998/07/12 08:29:25 ziggyb Exp $
 
 CC=wpp386
 CCASM=wasm
@@ -101,7 +104,7 @@ LINK=wlink
             output\scram.obj output\des-x86.obj output\convdes.obj &
             output\clitime.obj output\clicdata.obj output\clirate.obj &
             output\clisrate.obj output\cpucheck.obj output\pathwork.obj &
-            output\des-slice-meggs.obj
+            output\des-slice-meggs.obj output\des-slice-meggs.obj 
  
             # this list can be added to in the platform specific section
 
@@ -245,6 +248,10 @@ output\buffwork.obj : common\buffwork.cpp makefile.wat .autodepend
   *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[: 
   @set isused=1
 
+output\cliident.obj : common\cliident.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
+  @set isused=1
+
 output\rg-486.obj : rc5\rg-486.asm makefile.wat
   *$(CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
@@ -372,8 +379,9 @@ os2: .symbolic                                       # OS/2
      @set MODULES   =
      @set IMPORTS   =
      @set BINNAME   = $(LNKbasename).exe
-     @set STACKSIZE = 16384                 #Will slow down client if it's 32k
+#     @set STACKSIZE = 16384                 #Will slow down client if it's 32k
      @set LINKOBJS  = $(%LINKOBJS) output\dod.obj
+     @set OBJDIROP  = /fo=output\
      @set ERRDIROP  =                       # no /fr= option for Watcom 10.0
      @%make platform
 
