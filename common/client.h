@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.98  1998/11/26 07:27:34  cyp
+// Updated to reflect deleted/new buffwork and buffupd methods.
+//
 // Revision 1.97  1998/11/19 20:48:51  cyp
 // Rewrote -until/-h handling. Did away with useless client.hours (time-to-die
 // is handled by client.minutes anyway). -until/-h/hours all accept "hh:mm"
@@ -244,6 +247,7 @@
 
 #define PACKET_VERSION      0x03
 #define FETCH_RETRY         10
+#define MAXBLOCKSPERBUFFER  500
 
 // --------------------------------------------------------------------------
 
@@ -345,6 +349,13 @@ typedef struct Packet
 class Network;            // prototype for referenced classes
 class IniSection;
 
+struct membuffstruct 
+{ 
+  unsigned long count; 
+  FileEntry *buff[MAXBLOCKSPERBUFFER];
+};
+
+
 class Client
 {
 public:
@@ -371,6 +382,7 @@ public:
   char httpid[128];
   s32  cputype;
   s32  offlinemode;
+  int  stopiniio;
 
   s32  messagelen;
   char smtpsrvr[128];
@@ -382,8 +394,6 @@ public:
   void DeinitializeLogging(void); 
 
   char logname[128];
-  char in_buffer_file[2][128];
-  char out_buffer_file[2][128];
   char exit_flag_file[128];
   char checkpoint_file[2][128];
   char pausefile[128];
@@ -391,12 +401,21 @@ public:
   s32 numcpu;
   s32 percentprintingoff;
   s32 connectoften;
-  s32 nodiskbuffers;
-  s32 membuffcount[2][2];
-  FileEntry *membuff[2][500][2];
+
+  int nodiskbuffers;
+  struct { struct membuffstruct in, out; } membufftable[2];
+  char in_buffer_file[2][128];
+  char out_buffer_file[2][128];
+  long PutBufferRecord(const FileEntry *data);
+  long GetBufferRecord( FileEntry *data, unsigned int contest, int use_out_file);
+  unsigned long GetBufferCount( unsigned int contest, int use_out_file, unsigned long *normcountP );
+  
+  //s32 membuffcount[2][2];
+  //FileEntry *membuff[2][MAXBLOCKSPERBUFFER][2];
+
   s32 nofallback;
-  s32 randomprefix;
-  s32 randomchanged;
+  u32 randomprefix;
+  int randomchanged;
   s32 consecutivesolutions[2];
   int autofindkeyserver;
   s32 nonewblocks;
@@ -410,8 +429,6 @@ public:
   int usemmx;
 #endif
 
-  char proxymessage[64];
-
   u32 totalBlocksDone[2];
   u32 old_totalBlocksDone[2];
 
@@ -422,36 +439,6 @@ public:
   // 3 = user requested flush
   // 4 = user requested fetch
 #endif
-
-
-  // these put/get data blocks to the file buffers
-  // and trigger Fetch/Flush when needed
-  s32  PutBufferInput( const FileEntry * data );  // hidden
-    // dump an entry into in buffer
-    // Returns: -1 on error, otherwise number of entries now in file.
-
-  s32  GetBufferInput( FileEntry * data, unsigned int contest );  // "user"
-    // get work from in buffer
-    // Returns: -1 on error, otherwise number of blocks now in file.
-
-  s32  CountBufferInput(unsigned int contest);
-    // returns number of blocks currently in input buffer
-
-  s32  PutBufferOutput( const FileEntry * data );  // "user"
-    // dump an entry into output buffer
-    // Returns: -1 on error, otherwise number of entries now in file.
-
-  s32  GetBufferOutput( FileEntry * data , unsigned int contest);
-    // get work from output buffer
-    // Returns: -1 on error, otherwise number of blocks now in file.
-
-  s32  CountBufferOutput(unsigned int contest);
-    // returns number of blocks currently in output buffer
-
-  s32 InternalPutBuffer( const char *filename, const FileEntry * data );
-  s32 InternalGetBuffer( const char *filename, FileEntry * data, u32 *optype , unsigned int contest);
-  unsigned int InternalCountBuffer( unsigned int contest,
-                            int use_out_file,  unsigned int *norm_count );
 
 #if defined(NEEDVIRTUALMETHODS)
   // methods that can be overriden to provide additional functionality
@@ -478,11 +465,9 @@ public:
   //         >= 1 = post-readconfig (override ini options)
   //         == 2 = run "modes"
 
-  int UndoCheckpoint(void);
-    // Copy blocks from checkpint files back to input buffers
-
-  int DoCheckpoint( unsigned int load_problem_count );
-    // Make the checkpoint file represent current blocks being worked on
+  int CheckpointAction(int action, unsigned int load_problem_count );
+    // CHECKPOINT_OPEN (copy from checkpoint to in-buffer), *_REFRESH, *_CLOSE
+    // returns !0 if checkpointing is disabled
 
 #if defined(NEEDVIRTUALMETHODS)
   virtual s32  Configure( void );
@@ -507,9 +492,6 @@ public:
   int  WriteFullConfig( void ); 
     // returns -1 on error, 0 otherwise
 
-  s32  WriteContestandPrefixConfig( void );
-    // returns -1 on error, 0 otherwise
-    // only writes contestdone and randomprefix .ini entries
 
   int Run( void );
     // run the loop, do the work
@@ -522,54 +504,21 @@ public:
     //     3 = exit by time limit expiration
     //     4 = exit by block count expiration
 
-  s32  Fetch( unsigned int contest, Network *netin = 0, s32 quietness = 0, s32 force = 0 );
-    // fills up all of the input buffers
-    // this is for sneakernet support amung other things
-    // Returns: number of buffers received, negative if some error occured
-    // If quietness > 1, it will not display the proxymessage.
-    // in the future, 1 could make it not show # of blocks transferred
-    // If force > 0, a fetch will be attempted no matter the offline
-    // mode/etc. - -fetch and GUIs should call with this 1. Automated
-    // fetches by the client will all use 0 of course.
-
-  s32  ForceFetch( unsigned int contest, Network *netin = 0 );
-    // Like fetch, but keeps trying until done or until buffer size doesn't get bigger
-    // Basically, ignores premature disconnection.
-
-  s32  Flush( unsigned int contest, Network *netin = 0, s32 quietness = 0, s32 force = 0 );
-    // flushes out result buffers, useful when a SUCCESS happens
-    // Returns: number of buffers sent, negative if some error occured
-    // If quietness > 1, it will not display the proxymessage.
-    // If force > 0, a flush will be attempted no matter the offline
-    // mode/etc. - -flush and GUIs should call with this 1. Automated
-    // fetches by the client will all use 0 of course.
-
-  s32  ForceFlush( unsigned int contest, Network *netin = 0 );
-    // Like flush, but keeps trying until done or until buffer size doesn't get smaller
-    // Basically, ignores '31' and '32' type errors -- bad buffer file entry problems.
-
-  s32 Update( unsigned int contest, s32 fetcherr, s32 flusherr, s32 force = 0);
-    // flushes out buffer, and fills input buffers
-    // returns: number of buffers sent, negative if some error occurred
-    // Return value is the return from fetch*fetcherr +
-    //                      value from flush*flusherr
-    // If force > 0, a update will be attempted no matter the offline
-    // mode/etc. - -update and GUIs should call with this 1. Automated
-    // fetches by the client will all use 0 of course.
-
-  s32 SetContestDoneState( Packet * packet);
-    // Set the contest state appropriately based on packet information
-    // Returns 1 if a change to contest state was detected
+  int BufferUpdate( int updatereq_flags, int verbose );
+  // pass flags ORd with BUFFERUPDATE_FETCH/*_FLUSH. 
+  // if verbose!=0 prints "Input buffer full. No fetch required" etc.
+  // returns updated flags or < 0 if offlinemode!=0 or NetOpen() failed.
 
   int SelectCore(int quietly); //always returns zero.
     // to configure for cpu. called before Run() from main(), or for 
     // "modes" (Benchmark()/Test()) from ParseCommandLine().
 
-   void RandomWork( FileEntry * data );
-    // returns a random block.
-
   unsigned int LoadSaveProblems(unsigned int load_problem_count, int retmode);
     // returns actually loaded problems 
+    
+  void RefreshRandomPrefix(void);
+    // write .ini randomprefix/contestdone if randomchanged!=0, else read.
+    
 };
 
 // --------------------------------------------------------------------------
