@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.59 2000/07/12 00:11:46 mfeiri Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.60 2000/08/22 13:22:20 oliver Exp $"; }
 
 //#define TRACE
 
@@ -550,6 +550,46 @@ int ParseCommandline( Client *client,
               sprintf(scratch,"No distributed.net clients are currently running. "
                               "None were %s.", dowhat_descrip);
             else if (rc > 0)
+              sprintf(scratch,"One or more distributed.net clients were found "
+                              "but one or more could not be %s.\n", dowhat_descrip);
+            else
+              sprintf(scratch,"One or more distributed.net clients were found "
+                              "and have been requested to %s.", thisarg+1 );
+            ConOutModal(scratch);
+          }
+        }
+        #elif (CLIENT_OS == OS_AMIGAOS)
+        {
+          int rc, cmd = DNETC_MSG_RESTART;
+          const char *dowhat_descrip = "restarted";
+
+          if ( strcmp( thisarg, "-kill" ) == 0 ||
+               strcmp( thisarg, "-shutdown") == 0 )
+          {
+            cmd = DNETC_MSG_SHUTDOWN;
+            thisarg = "-shutdown";
+            dowhat_descrip = "shutdown";
+          }
+          else if (strcmp( thisarg, "-pause" ) == 0)
+          {
+            cmd = DNETC_MSG_PAUSE;
+            dowhat_descrip = "paused";
+          }
+          else if (strcmp( thisarg, "-unpause" ) == 0)
+          {
+            cmd = DNETC_MSG_UNPAUSE;
+            dowhat_descrip = "unpaused";
+          }
+
+          rc = amigaPutTriggerSigs(cmd); /* 0=notfound, 1=found+ok, -1=error */
+          terminate_app = 1;
+          if (!loop0_quiet)
+          {
+            char scratch[128];
+            if (rc == 0)
+              sprintf(scratch,"No distributed.net clients are currently running. "
+                              "None were %s.", dowhat_descrip);
+            else if (rc < 0)
               sprintf(scratch,"One or more distributed.net clients were found "
                               "but one or more could not be %s.\n", dowhat_descrip);
             else
