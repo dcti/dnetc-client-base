@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.36 2000/05/17 17:46:59 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.37 2000/06/06 12:09:15 cyp Exp $"; }
 
 //#define TRACE
 
@@ -512,12 +512,12 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
         break;
       }
     }
-    if (!thresholdsdone)
+    /* convert post-2.8000 and pre-2.8000 format simultaneously */
+    for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++ )
     {
-      /* convert post-2.8000 and pre-2.8000 format simultaneously */
-      for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++ )
+      const char *cont_sect = __getprojsectname(cont_i);
+      if (!thresholdsdone)
       {
-        const char *cont_sect = __getprojsectname(cont_i);
         int oldstyle_inout[2];
         oldstyle_inout[0] = GetPrivateProfileIntB( cont_sect, "fetch-threshold", -123, fn );
         oldstyle_inout[1] = GetPrivateProfileIntB( cont_sect, "flush-threshold", -123, fn );
@@ -583,8 +583,10 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
           }
           #endif
         }
-      } /* for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++ ) */
-    } /* if !donethresholds */
+      } /* if !donethresholds */
+      WritePrivateProfileStringB( cont_sect, "fetch-threshold", NULL, fn );
+      WritePrivateProfileStringB( cont_sect, "flush-threshold", NULL, fn );
+    } /* for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++ ) */
   }
 
   /* ----------------- OPTSECT_BUFFERS ----------------- */
