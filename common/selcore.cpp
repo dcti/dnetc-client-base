@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.93 2001/02/07 16:15:04 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.94 2001/02/07 19:25:42 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -92,12 +92,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
   #elif (CLIENT_CPU == CPU_68K)
     { /* RC5 */
-      #if (CLIENT_OS == OS_AMIGAOS)
-      "unrolled 68000/010", /* 68000/010 */
-      "loopy 68020/030",    /* 68020/030 */
-      "unrolled 68040/060", /* 68040/060 */
-      #elif defined(__GCC__) || defined(__GNUC__) || (CLIENT_OS == OS_MACOS)
-      "68k asm cruncher",
+      #if defined(__GCC__) || defined(__GNUC__) || \
+          (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MACOS)
+      "68000/010", /* 68000/010 */
+      "68020/030", /* 68020/030 */
+      "68040/060", /* 68040/060 */
       #else
       "Generic",
       #endif
@@ -643,9 +642,10 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     if (selcorestatics.corenum[RC5] < 0 && detected_type >= 0)
     {
       selcorestatics.corenum[RC5] = 0;
-      #if (CLIENT_OS == OS_AMIGAOS)
+      #if defined(__GCC__) || defined(__GNUC__) || \
+          (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MACOS)
       if (detected_type >= 68040)
-        selcorestatics.corenum[RC5] = 2; /* rc5-040_060-jg.s */
+        selcorestatics.corenum[RC5] = 2; /* rc5-060-re-jg.s */
       else if (detected_type >= 68020)
         selcorestatics.corenum[RC5] = 1; /* rc5-020_030-jg.s */
       #endif
@@ -1055,14 +1055,11 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
   #endif
 #elif (CLIENT_CPU == CPU_68K)
-  #if (CLIENT_OS == OS_AMIGAOS)
-    // rc5/68k/rc5_68k_crunch.c around rc5/68k/rc5-0x0_0y0-jg.s
-    extern "C" u32 rc5_unit_func_000_010( RC5UnitWork *, u32 );
+  #if defined(__GCC__) || defined(__GNUC__) || \
+      (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MACOS)
+    extern "C" u32 rc5_unit_func_000_010re( RC5UnitWork *, u32 );
     extern "C" u32 rc5_unit_func_020_030( RC5UnitWork *, u32 );
-    extern "C" u32 rc5_unit_func_040_060( RC5UnitWork *, u32 );
-  #elif defined(__GCC__) || defined(__GNUC__) || (CLIENT_OS == OS_MACOS)
-    // rc5/68k/rc5_68k_gcc_crunch.c around rc5/68k/crunch.68k.gcc.s
-    extern "C" u32 rc5_68k_crunch_unit_func( RC5UnitWork *, u32 );
+    extern "C" u32 rc5_unit_func_060re( RC5UnitWork *, u32 );
   #else
     // rc5/ansi/rc5ansi1-b2.cpp
     extern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 );
@@ -1305,32 +1302,23 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
     #elif (CLIENT_CPU == CPU_68K)
     {
-      #if (CLIENT_OS == OS_AMIGAOS)
+      #if defined(__GCC__) || defined(__GNUC__) || \
+          (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MACOS)
       {
-        // rc5/68k/rc5_68k_crunch.c around rc5/68k/rc5-0x0_0y0-jg.s
-        //xtern "C" u32 rc5_unit_func_000_010( RC5UnitWork *, u32 );
+        //xtern "C" u32 rc5_unit_func_000_010re( RC5UnitWork *, u32 );
         //xtern "C" u32 rc5_unit_func_020_030( RC5UnitWork *, u32 );
-        //xtern "C" u32 rc5_unit_func_040( RC5UnitWork *, u32 );
-        //xtern "C" u32 rc5_unit_func_060( RC5UnitWork *, u32 );
+        //xtern "C" u32 rc5_unit_func_060re( RC5UnitWork *, u32 );
         pipeline_count = 2;
         if (coresel == 2)
-          unit_func.rc5 = rc5_unit_func_040_060;
+          unit_func.rc5 = rc5_unit_func_060re;  // used for 040 too (faster)
         else if (coresel == 1)
           unit_func.rc5 = rc5_unit_func_020_030;
         else
         {
           pipeline_count = 2;
-          unit_func.rc5 = rc5_unit_func_000_010;
+          unit_func.rc5 = rc5_unit_func_000_010re;
           coresel = 0;
         }
-      }
-      #elif defined(__GCC__) || defined(__GNUC__) || (CLIENT_OS == OS_MACOS)
-      {
-        // rc5/68k/rc5_68k_gcc_crunch.c around rc5/68k/crunch.68k.gcc.s
-        //xtern "C" u32 rc5_68k_crunch_unit_func( RC5UnitWork *, u32 );
-        unit_func.rc5 = rc5_68k_crunch_unit_func;
-        pipeline_count = 1; //the default is 2
-        coresel = 0;
       }
       #else 
       {

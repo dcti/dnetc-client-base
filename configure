@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.230 2001/02/07 18:49:52 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.231 2001/02/07 19:25:41 oliver Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -279,13 +279,17 @@ add_sources() # $1=os, $2=arch, $3=custom
   #-----------------------------------------------------------------  
   elif [ "$2" = "68k" ]; then
     if [ "$1" = "amigaos" ]; then
-      TARGET_ADDASMS="$TARGET_ADDASMS rc5/68k/rc5-000_010-jg.s \
+      TARGET_ADDASMS="$TARGET_ADDASMS rc5/68k/rc5-000_010-re-jg.s \
                                       rc5/68k/rc5-020_030-jg.s \
-                                      rc5/68k/rc5-040_060-jg.s"
+                                      rc5/68k/rc5-060-re-jg.s \
+                                      rc5/68k/rc5-0x0-common-jg.s"
     else
-      TARGET_ADDASMS="$TARGET_ADDASMS rc5/68k/crunch.68k.gcc.s"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/68k/rc5_68k_gcc_crunch.c"
-    fi  
+      TARGET_ADDASMS="$TARGET_ADDASMS rc5/68k/rc5-000_010-re-jg.gcc.s \
+                                      rc5/68k/rc5-020_030-jg.gcc.s \
+                                      rc5/68k/rc5-060-re-jg.gcc.s \
+                                      rc5/68k/rc5-0x0-common-jg.gcc.s"
+      TARGET_ASFLAGS="$TARGET_ASFLAGS -I./rc5/68k"
+    fi
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
     TARGET_ADDOBJS="$TARGET_ADDOBJS output/ogr000.o output/ogr020.o \
@@ -615,7 +619,6 @@ generate_gcc_opts() {
     *internal-68k) #the 68k targets all have different -m68xxx switches
         opts272="$OPTS_GCC272 -O6 -DASM_68K -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -DASM_68K -funroll-loops"
-        OPTS_GAS="-v -V --register-prefix-optional" #only used by HPUX
         ;;
 
     *internal-ppc)
@@ -1179,7 +1182,7 @@ case "$1" in
         generate_gcc_opts "68k" "hpux"
         TARGET_CCFLAGS="$OPTS_GCC -m68030 -D_HPUX_M68K -static"
         TARGET_LDFLAGS="-static"
-        TARGET_AFLAGS="$OPTS_GAS -m68030"
+        TARGET_ASFLAGS="$OPTS_GAS -v -V --register-prefix-optional -m68030"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "hpux" "68k"
         ;;
@@ -1783,6 +1786,7 @@ case "$1" in
         TARGET_CC="gcc"
         generate_gcc_opts "68k" "next"
         TARGET_CCFLAGS="-static $OPTS_GCC -m68040 -D_NeXT_"
+        TARGET_ASFLAGS="$OPTS_GAS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="next-m68k"
         add_sources "next" "68k" 
@@ -1810,6 +1814,7 @@ case "$1" in
         TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer \
                         -m68020-40 -DASM_68K -DLURK -DHAVE_OGR_CORES"
         TARGET_LDFLAGS="-static"
+        TARGET_ASFLAGS="$OPTS_GAS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="netbsd-68k"
         add_sources "netbsd" "68k" 
@@ -2056,6 +2061,7 @@ case "$1" in
                         -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
                         -DDYN_TIMESLICE"
         TARGET_LDFLAGS="-noixemul"
+        TARGET_ASFLAGS="$OPTS_GAS"
         TARGET_ADDOBJS="/gg/lib/libnix/swapstack.o"
         TARGET_TARBALL="amigaos-68k"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
@@ -2521,12 +2527,7 @@ if [ "$TARGET_OGR_MULTI" = "68k" ]; then
   for targetext in ${OGR68K}; do
     echo "output/ogr${targetext}.o:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
     echo "	\$(CC) \$(CCFLAGS) -m68${targetext} -c -o output/ogr${targetext}.o ogr/ansi/ogr.cpp \\" >> Makefile
-    if [ "$targetext" = "000" ]; then
-      echo "	-DOGR_GET_DISPATCH_TABLE_FXN=ogr_get_dispatch_table_${targetext}" >> Makefile
-    else
-      echo "	-DOGR_GET_DISPATCH_TABLE_FXN=ogr_get_dispatch_table_${targetext} \\" >> Makefile
-      echo "	-DNO_OGR_IDENT" >> Makefile
-    fi
+    echo "	-DOGR_GET_DISPATCH_TABLE_FXN=ogr_get_dispatch_table_${targetext}" >> Makefile
     echo "" >> Makefile
   done
 fi

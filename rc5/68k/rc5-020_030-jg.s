@@ -1,17 +1,26 @@
 
-	SECTION	rc5core,CODE
+	SECTION	rc5core_020_030,CODE
 	OPT	O+,W-
 
+	; $VER: MC68020/030 RC5 core 04-Feb-2001
+
+	;
+	; MC680x0 RC5 key checking function
+	; for distributed.net RC5-64 clients.
+	;
+	; Dual key, rolled loops, MC68020/MC68030 optimised
+	;
+	; Written by John Girvin <girv@girvnet.org.uk>
+	;
+
 ;--------------------
+
+	INCLUDE	rc5-0x0-common-jg.i
 
 	XDEF	_rc5_unit_func_020_030
 
-	INCLUDE	rc5-0x0-jg.i
-
 ;--------------------
-;@(#)$Id: rc5-020_030-jg.s,v 1.1.2.1 2000/06/05 15:19:58 oliver Exp $
 
-	; $VER: MC68020/68030 RC5 core 24-Jan-2000
 	;
 	; MC680x0 RC5 key checking function
 	; for distributed.net RC5-64 clients.
@@ -28,6 +37,8 @@
 	;	16(a0) = L0.hi	- key
 	;	20(a0) = L0.lo
 	;        d0=number of iterations to run for
+	;
+	; Exit:  d0=return code
 	;
 
 _rc5_unit_func_020_030:
@@ -51,8 +62,8 @@ _rc5_unit_func_020_030:
 	rol.l	#3,d0
 	move.l	d0,(a7)	;Ax
 
-	RUF_ALIGN	_rc5_unit_func_020_030,d1
-ruf020_mainloop:
+	RUF_ALIGN	d1,_rc5_unit_func_020_030
+.ruf_mainloop:
  	;---- Round 1 of key expansion ----
 	;A : d0 d4
 	;L0: d1 d5
@@ -80,8 +91,8 @@ ruf020_mainloop:
 	rol.l	d3,d2	;L1a=L1a<<<(Aa+L0a)
 	rol.l	d3,d6	;L1b=L1b<<<(Ab+L0b)
 
-	RUF_ALIGN	_rc5_unit_func_020_030,d3
-ruf020_r1loop:	add.l	a5,d0	;d0=Aa=Aa+P+nQ
+	RUF_ALIGN	d3,_rc5_unit_func_020_030
+.ruf_r1loop:	add.l	a5,d0	;d0=Aa=Aa+P+nQ
 	add.l	a5,d4	;d4=Ab=Ab+P+nQ
 	add.l	d2,d0	;d0=Aa=Aa+P+nQ+L1a
 	add.l	d6,d4	;d4=Ab=Ab+P+nQ+L1b
@@ -116,7 +127,7 @@ ruf020_r1loop:	add.l	a5,d0	;d0=Aa=Aa+P+nQ
 	add.l	d3,d6	;d6=L1b=L1b+Ab+L0b
 	rol.l	d3,d6	;d6=L1b=L1b<<<(Ab+L0b)
 
-	dbf	d7,ruf020_r1loop
+	dbf	d7,.ruf_r1loop
 
 	;---- Round 2 of key expansion ----
 
@@ -124,8 +135,8 @@ ruf020_r1loop:	add.l	a5,d0	;d0=Aa=Aa+P+nQ
 	moveq	#13-1,d7	;d7=loop counter
 	lea	104(a1),a3	;a3=Sb[] array
 
-	RUF_ALIGN	_rc5_unit_func_020_030,d3
-ruf020_r2loop:	add.l	(a2),d0	;Aa=Aa+Sa[n]
+	RUF_ALIGN	d3,_rc5_unit_func_020_030
+.ruf_r2loop:	add.l	(a2),d0	;Aa=Aa+Sa[n]
 	add.l	d6,d4	;Ab=Ab+L1b
 	add.l	d2,d0	;Aa=Aa+Sa[n]+L1a
 	add.l	(a3),d4	;Ab=Ab+Sb[n]+L1b
@@ -160,49 +171,49 @@ ruf020_r2loop:	add.l	(a2),d0	;Aa=Aa+Sa[n]
 	add.l	d3,d6	;L1b=L1b+Ab+L0b
 	rol.l	d3,d6	;L1b=L1b<<<(Ab+L0b)
 
-	dbf	d7,ruf020_r2loop
+	dbf	d7,.ruf_r2loop
 
 	;---- Combined round 3 of key expansion and encryption round ----
 
 	move.l	d4,a2	;a2=Ab
 	move.l	d5,a3	;a3=L0b
 
-	bsr.s	ruf020_round3	;Do round 3 for 'a' key
+	bsr.s	.ruf_round3	;Do round 3 for 'a' key
 
 	move.l	a2,d0	;d0=Ab
 	move.l	a3,d1	;d1=L0b
 	move.l	d6,d2	;d2=L1b
 	addq.l	#8,a1	;a1=Sb[]
 
-	bsr.s	ruf020_round3	;Do round 3 for 'b' key
+	bsr.s	.ruf_round3	;Do round 3 for 'b' key
 
 	;---- Mangle-increment current key by PIPELINE_COUNT ----
 
 	addq.b	#2,16(a0)	;L1=L1+PIPELINE_COUNT
-	bcs.s	ruf020_l1_lsbcarry	;Skip if carry (every 256 keys)
+	bcs.s	.ruf_l1_lsbcarry	;Skip if carry (every 256 keys)
 
-ruf020_midone: move.l	16(a0),d2	;d2=updated L1
+.ruf_midone: move.l	16(a0),d2	;d2=updated L1
 	subq.l	#1,a6	;Update loop counter
 	lea	8(a7),a1	;a1=Sx[] storage for next iteration
 
 	move.l	a6,d0	;Loop back for next key
-	bne	ruf020_mainloop
+	bne	.ruf_mainloop
 
-	bra	ruf020_didntgetit	;Didnt find key :(
+	bra	.ruf_didntgetit	;Didnt find key :(
 
 ;--------------------
 
 	CNOP	0,8
-ruf020_l1_lsbcarry:
+.ruf_l1_lsbcarry:
 	; LSB of L1 has wrapped, so increment other bytes as well
 	; Reached every 256 keys
 
 	addq.b	#1,17(a0)
-	bcc.s	ruf020_midone
+	bcc.s	.ruf_midone
 	addq.b	#1,18(a0)	;Every 256^2 = 2^16
-	bcc.s	ruf020_midone
+	bcc.s	.ruf_midone
 	addq.b	#1,19(a0)	;Every 256^3 = 2^24
-	bcc.s	ruf020_midone
+	bcc.s	.ruf_midone
 
 	;L1 wrapped, so increment L0 as well
 	;Reached every 2^32 keys
@@ -229,12 +240,12 @@ ruf020_l1_lsbcarry:
 	rol.l	#3,d0
 	move.l	d0,(a7)	;Ax
 
-	bra	ruf020_midone
+	bra	.ruf_midone
 
 ;--------------------
 
 	CNOP	0,8
-ruf020_round3:	;RC5-64 keycheck round 3
+.ruf_round3:	;RC5-64 keycheck round 3
 	;Entry:	a0=RC5UnitWork structure
 	;	a1=S array to use
 	;	d0=A
@@ -268,8 +279,8 @@ ruf020_round3:	;RC5-64 keycheck round 3
 
 	rol.l	d3,d2	;d2=L1=(L1+A+L0)<<<(A+L0)
 
-	RUF_ALIGN	_rc5_unit_func_020_030,d3
-ruf020_r3_r3loop:
+	RUF_ALIGN	d3,_rc5_unit_func_020_030
+.ruf_r3_r3loop:
 	add.l	(a1)+,d0	;d0=A=A+Sn
 	eor.l	d5,d4	;d4=eA=eA^eB
 	add.l	d2,d0	;d0=A=A+Sn+L1
@@ -294,7 +305,7 @@ ruf020_r3_r3loop:
 	add.l	d3,d2	;d2=L1=L1+A+L0
 	rol.l	d3,d2	;d2=L1=L1<<<(A+L0)
 
-	dbf	d7,ruf020_r3_r3loop
+	dbf	d7,.ruf_r3_r3loop
 
 	add.l	(a1),d0	;d0=A=A+S[24]
 	eor.l	d5,d4	;d4=eA=eA^eB
@@ -304,11 +315,11 @@ ruf020_r3_r3loop:
 	move.l	12(a0),d3	;d3=cypher.lo
 	add.l	d0,d4	;d4=eA=((eA^eB)<<<eB)+A
 	cmp.l	d3,d4	;d4=eA=cypher.lo?
-	beq.s	ruf020_r3_checkhi	;Skip if yes (low 32 bits match)
+	beq.s	.ruf_r3_checkhi	;Skip if yes (low 32 bits match)
 
 	rts		 ;Not the right key, return NE
 
-ruf020_r3_checkhi:
+.ruf_r3_checkhi:
 	; Low 32 bits match, so generate & check high 32 bits
 	; Reached every 2^32 keys
 
@@ -324,11 +335,11 @@ ruf020_r3_checkhi:
 	move.l	8(a0),d3	;d3=cypher.hi
 	add.l	d0,d5	;d5=eB=((eB^eA)<<<eA)+A
 	cmp.l	d3,d5	;eB=cypher.hi?
-	beq.s	ruf020_r3_found_key	;Skip if yes (key found!)
+	beq.s	.ruf_r3_found_key	;Skip if yes (key found!)
 
 	rts		 ;Not the right key
 
-ruf020_r3_found_key:
+.ruf_r3_found_key:
 	; We found a key!
 	; a0=RC5UnitWork structure
 	; a1=Sx[] array + 96
@@ -336,24 +347,24 @@ ruf020_r3_found_key:
 	sub.l	a7,a1	;a1<->a7 difference used to determine which pipeline the key was found on
 			;-96(a1) = &Sa[00] or &Sb[00] depending on pipeline
 
-	lea	4+220(a7),a7	;Discard ruf020_round3 return address and temporary storage
+	lea	4+220(a7),a7	;Discard .ruf_round3 return address and temporary storage
 	move.l	(a7)+,d0	;d0=initial iteration count
 	sub.l	a6,d0	;d0=number of iterations performed
 	add.l	d0,d0	;d0=number of keys checked
 
 	cmp.l	#12+96+104,a1	;12+96+104 = &Sb[00]
-	bcs.s	ruf020_r3_notpipe2
+	bcs.s	.ruf_r3_notpipe2
 
 	addq.b	#1,16(a0)	;Adjust L0.hi and nkeys for pipeline 2
 	addq.l	#1,d0
-ruf020_r3_notpipe2:
+.ruf_r3_notpipe2:
 
 	movem.l	(a7)+,d2-7/a2-6
 	rts
 
 ;--------------------
 
-ruf020_didntgetit:	;Didn't find a key this time
+.ruf_didntgetit:	;Didn't find a key this time
 	lea	220(a7),a7	;Discard temporary storage
 	move.l	(a7)+,d0	;Return number of keys checked
 	add.l	d0,d0	; = loops*pipeline_count
