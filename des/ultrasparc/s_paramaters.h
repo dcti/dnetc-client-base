@@ -6,6 +6,14 @@
 
 /*
  * $Log: s_paramaters.h,v $
+ * Revision 1.3  1998/06/15 02:44:29  djones
+ * First build of UltraSPARC 64-bit/VIS DES client:
+ * - many configure file tweaks: split up C++, ASM and C files; make "gcc" the
+ *   compiler.
+ * - "tr" on SunOS 4.1.4 goes into endless loop when faced with "..-"; change
+ *   to "..\-".
+ * - Enable generation of whack16()
+ *
  * Revision 1.2  1998/06/14 15:19:31  remi
  * Avoid tons of warnings due to a brain-dead CVS.
  *
@@ -27,7 +35,7 @@
 
 /* define this to test code.  No define produces whack16 routine for contest */
 
-#define DEBUG_MAIN		/* define to create main() for testing */
+/*#define DEBUG_MAIN*/		/* define to create main() for testing */
 
 
 /* define only ONE of these next defines at once with DEBUG_MAIN to test contest code */

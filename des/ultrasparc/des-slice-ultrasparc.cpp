@@ -5,8 +5,16 @@
 // encapsulate UltraSparc bitslice code
 
 // $Log: des-slice-ultrasparc.cpp,v $
-// Revision 1.1  1998/06/14 14:23:52  remi
-// Initial revision
+// Revision 1.2  1998/06/15 02:44:28  djones
+// First build of UltraSPARC 64-bit/VIS DES client:
+// - many configure file tweaks: split up C++, ASM and C files; make "gcc" the
+//   compiler.
+// - "tr" on SunOS 4.1.4 goes into endless loop when faced with "..-"; change
+//   to "..\-".
+// - Enable generation of whack16()
+//
+// Revision 1.1.1.1  1998/06/14 14:23:52  remi
+// Initial integration.
 //
 
 #include <stdio.h>
@@ -21,7 +29,7 @@
 #error "everything assumes a 32bit CPU..."
 #endif
 
-static char *id="@(#)$Id: des-slice-ultrasparc.cpp,v 1.1 1998/06/14 14:23:52 remi Exp $";
+static char *id="@(#)$Id: des-slice-ultrasparc.cpp,v 1.2 1998/06/15 02:44:28 djones Exp $";
 
 typedef unsigned long long base_slice_type;
 
@@ -31,7 +39,7 @@ typedef unsigned long long base_slice_type;
 #define BITS_PER_SLICE 64
 #endif
 
-extern "C" unsigned long whack16 (
+extern "C" base_slice_type whack16 (
     base_slice_type *plain, base_slice_type *cypher, base_slice_type *key);
 
 // ------------------------------------------------------------------

@@ -3,6 +3,14 @@
  * generation of S0[]
  *
  * $Log: rc5-ultra-crunch.cpp,v $
+ * Revision 1.6  1998/06/15 02:44:32  djones
+ * First build of UltraSPARC 64-bit/VIS DES client:
+ * - many configure file tweaks: split up C++, ASM and C files; make "gcc" the
+ *   compiler.
+ * - "tr" on SunOS 4.1.4 goes into endless loop when faced with "..-"; change
+ *   to "..\-".
+ * - Enable generation of whack16()
+ *
  * Revision 1.5  1998/06/14 08:27:23  friedbait
  * 'Id' tags added in order to support 'ident' command to display a bill of
  * material of the binary executable
@@ -13,7 +21,8 @@
  *
  */
 
-static char *id="@(#)$Id: rc5-ultra-crunch.cpp,v 1.5 1998/06/14 08:27:23 friedbait Exp $";
+/* Can't define id here - it's defined in problem.cpp, which includes this */
+/*static char *id="@(#)$Id: rc5-ultra-crunch.cpp,v 1.6 1998/06/15 02:44:32 djones Exp $";*/
 
 #include <stdio.h>
 

@@ -5,6 +5,14 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.38  1998/06/15 02:44:26  djones
+# First build of UltraSPARC 64-bit/VIS DES client:
+# - many configure file tweaks: split up C++, ASM and C files; make "gcc" the
+#   compiler.
+# - "tr" on SunOS 4.1.4 goes into endless loop when faced with "..-"; change
+#   to "..\-".
+# - Enable generation of whack16()
+#
 # Revision 1.37  1998/06/15 00:42:03  skand
 # link NetBSD/alpha statically
 #
@@ -131,6 +139,8 @@ OPTS_EGCS='-O2 -fomit-frame-pointer -Wall -Icommon -Ides -Irc5 -Iplatforms'
 #
 OPTS_CC_SPARC='-fast -xO4 -xtarget=ultra1/140 -DASM_SPARC'
 OPTS_GCC_SPARC="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
+OPTS_GCC_ULTRA="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
+OPTS_GAS_ULTRA=-Av9a
 OPTS_GCC_NONULTRA_SPARC="$OPTS_GCC -O6 -DASM_SPARC"
 
 #--
@@ -223,7 +233,7 @@ XLC_LINTILLA_ASMS="rc5/crunch_lintilla.ppcxlc.s rc5/crunch_allitnil.ppcxlc.s"
 RC5X86_SRCS="rc5/rc5-486-rg.cpp rc5/rc5-6x86-rg.cpp rc5/rc5p5brf.cpp rc5/rc5-p6-rg.cpp rc5/rc5-k5-rg.cpp rc5/rc5-k6-rg.cpp"
 DESX86_SRCS="des/des-x86.cpp"
 DESULTRA_SRCS_C="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/simple.c platforms/ultrasparc/des_ultra_crunch.c platforms/ultrasparc/kwan_from_to.c platforms/ultrasparc/do_all.c platforms/ultrasparc/do_all_fancy.c platforms/ultrasparc/do_s1.c platforms/ultrasparc/do_s1_s3.c platforms/ultrasparc/do_s2.c platforms/ultrasparc/do_s3.c platforms/ultrasparc/do_s4.c platforms/ultrasparc/do_s5.c platforms/ultrasparc/do_s6.c platforms/ultrasparc/do_s7.c platforms/ultrasparc/do_s8.c"
-DESULTRA_SRCS_ASM="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/simple.handopt.s platforms/ultrasparc/des_ultra_crunch.c platforms/ultrasparc/kwan_from_to.c platforms/ultrasparc/do_all.c platforms/ultrasparc/do_all_fancy.c platforms/ultrasparc/do_s1.c platforms/ultrasparc/do_s1_s3.c platforms/ultrasparc/do_s2.c platforms/ultrasparc/do_s3.c platforms/ultrasparc/do_s4.c platforms/ultrasparc/do_s5.c platforms/ultrasparc/do_s6.c platforms/ultrasparc/do_s7.c platforms/ultrasparc/do_s8.c"
+DESULTRA_SRCS_ASM="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/des_ultra_crunch.c"
 
 
 #
@@ -374,8 +384,11 @@ case "$1" in
 
     *sparc-solaris-gcc-crunch-asmslice-mt)   # fastest rc5 & VIS DES
 	RC5CORECOPY="rc5-ultra-crunch.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris -DPIPELINE_COUNT=2 -DMULTITHREAD -DULTRA_CRUNCH=1 $OPTS_DES_ULTRA_ASM"
+	TARGET_CCFLAGS="$OPTS_GCC_ULTRA -Dsolaris -DPIPELINE_COUNT=2 -DMULTITHREAD -DULTRA_CRUNCH=1 $OPTS_DES_ULTRA_ASM"
 	TARGET_ADDSRCS="$DESULTRA_SRCS_ASM"
+ 	TARGET_ADDASMS="platforms/ultrasparc/simple.handopt.s"
+	TARGET_ASFLAGS="$OPTS_GAS_ULTRA"
+	TARGET_CC="gcc"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
 	;;
 
@@ -712,7 +725,7 @@ TARGET_ALLASOBJS=
 echo "Scanning output C++ dependencies..."
 for target in ${COMMON_SRCS} ${TARGET_ADDSRCS}; do
     TARGETOBJECT=output/`basename $target .cpp`.o
-    SAFENAME=`echo ${TARGETOBJECT} | tr -d '/.\$-'`
+    SAFENAME=`echo ${TARGETOBJECT} | tr -d '/.\$\-'`
     echo "  $target -> $TARGETOBJECT ($SAFENAME)"
     eval "DEPEND_${SAFENAME}=$target"
     TARGET_ALLCCOBJS="${TARGET_ALLCCOBJS} ${TARGETOBJECT}"
@@ -720,7 +733,7 @@ done
 echo "Scanning output AS dependencies..."
 for target in ${TARGET_ADDASMS}; do
     TARGETOBJECT=output/`basename $target`.o
-    SAFENAME=`echo ${TARGETOBJECT} | tr -d '/.\$-'`
+    SAFENAME=`echo ${TARGETOBJECT} | tr -d '/.\$\-'`
     echo "  $target -> $TARGETOBJECT ($SAFENAME)"
     eval "DEPEND_${SAFENAME}=$target"
     TARGET_ALLASOBJS="${TARGET_ALLASOBJS} ${TARGETOBJECT}"
@@ -814,7 +827,7 @@ echo "" >> Makefile
 echo "Generating Makefile C++ dependency targets..."
 echo "# Dependency targets follow" >> Makefile
 for target in ${TARGET_ALLCCOBJS}; do
-  SAFENAME=`echo $target | tr -d '/.\$-'`
+  SAFENAME=`echo $target | tr -d '/.\$\-'`
   eval TARGETSRC=$`echo DEPEND_$SAFENAME`
   if [ -n "${RC5CORECOPY}" -a `basename ${TARGETSRC}` = problem.cpp ]; then
     echo "$target:	${TARGETSRC} rc5/${RC5CORECOPY}" >> Makefile
@@ -829,7 +842,7 @@ for target in ${TARGET_ALLCCOBJS}; do
 done
 echo "Generating Makefile AS dependency targets..."
 for target in ${TARGET_ALLASOBJS}; do
-  SAFENAME=`echo $target | tr -d '/.\$-'`
+  SAFENAME=`echo $target | tr -d '/.\$\-'`
   eval TARGETSRC=$`echo DEPEND_$SAFENAME`
   echo "$target:	${TARGETSRC}" >> Makefile
   echo "	\${AS} \${ASFLAGS} ${TARGETSRC} -o $target" >> Makefile

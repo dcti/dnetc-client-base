@@ -1,15 +1,23 @@
 # $Log: simple.handopt.s,v $
-# Revision 1.1  1998/06/14 14:23:52  remi
-# Initial revision
+# Revision 1.2  1998/06/15 02:44:30  djones
+# First build of UltraSPARC 64-bit/VIS DES client:
+# - many configure file tweaks: split up C++, ASM and C files; make "gcc" the
+#   compiler.
+# - "tr" on SunOS 4.1.4 goes into endless loop when faced with "..-"; change
+#   to "..\-".
+# - Enable generation of whack16()
+#
+# Revision 1.1.1.1  1998/06/14 14:23:52  remi
+# Initial integration.
 #
 
 	.file	"simple.c"
 gcc2_compiled.:
-.section	".data"
-id:	.ascii "@(#)$Id: simple.handopt.s,v 1.1 1998/06/14 14:23:52 remi Exp $"
+	.data
+id:	.ascii "@(#)$Id: simple.handopt.s,v 1.2 1998/06/15 02:44:30 djones Exp $"
 	.byte 0
 
-.section	".text"
+	.text
 	.align 4
 	.global asm_do_s1
 	.type	 asm_do_s1,#function
