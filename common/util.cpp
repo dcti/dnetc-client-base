@@ -4,9 +4,9 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11 1999/05/08 19:07:51 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.1 1999/09/07 02:51:51 cyp Exp $"; }
 
-#include "baseincs.h" /* string.h */
+#include "baseincs.h" /* string.h, time.h */
 #include "client.h"   /* CONTEST_COUNT, stub definition */
 #include "clicdata.h" /* CliGetContestNameFromID() */
 #include "pathwork.h" /* GetFullPathForFilename() */
@@ -14,40 +14,45 @@ return "@(#)$Id: util.cpp,v 1.11 1999/05/08 19:07:51 cyp Exp $"; }
 
 /* ------------------------------------------------------------------- */
 
-void trace_out( int indlevel, const char *fmt, ... )
+void trace_out( int indlevel, const char *format, ... )
 {
-  static int indentlevel = 0;
+  static int indentlevel = -1; /* uninitialized */
+  const char *tracefile = "trace"EXTN_SEP"out";
+  FILE *file;
   va_list arglist; 
-  FILE *file = fopen("trace"EXTN_SEP"out","a");
-  va_start (arglist, fmt); 
-  if (indlevel < 0 && indentlevel > 0)
-    indentlevel-=2;
+  va_start (arglist, format);
+
+  if (indentlevel == -1) /* uninitialized */
+  {
+    remove(tracefile);
+    indentlevel = 0;
+  }
+  
+  if (indlevel < 0)
+    indentlevel -= 2;
+  file = fopen( tracefile, "a" );
   if (file)
   {
-    int spaces = indentlevel - 2;
-    if (spaces > 0)
+    char buffer[64];
+    time_t t = time(NULL);
+    struct tm *lt = localtime( &t );
+    fprintf(file, "%02d:%02d:%02d: ", lt->tm_hour, lt->tm_min, lt->tm_sec);
+    if (indentlevel > 0)
     {
-      char scratch[128];
-      memset( scratch, ' ', sizeof(scratch));
-      do
-      { int spaces2 = (((int)sizeof(scratch))-1);
-        if (spaces < spaces2)
-          spaces2 = spaces;
-        spaces -= spaces;
-        scratch[spaces2] = '\0';
-        fprintf(file, scratch ); 
-      } while (spaces);
+      size_t spcs = ((size_t)indentlevel);
+      memset((void *)(&buffer[0]),' ',sizeof(buffer));
+      while (sizeof(buffer) == fwrite( buffer, 1, 
+         ((spcs>sizeof(buffer))?(sizeof(buffer)):(spcs)), file ))
+        spcs -= sizeof(buffer);
     }
-    if (indlevel > 0)
-      fprintf(file,"beg: ");
-    else if (indlevel < 0)
-      fprintf(file,"end: ");
-    vfprintf(file, fmt, arglist); 
-    fclose(file);
+    if (indlevel != 0)
+      fwrite((void *)((indlevel < 0)?("end: "):("beg: ")), 1, 5, file );
+    vfprintf(file, format, arglist);
+    fflush( file );
+    fclose( file );
   }
-  va_end( arglist ); 
   if (indlevel > 0)
-    indentlevel+=2;
+    indentlevel += 2;
   return;
 }  
 
