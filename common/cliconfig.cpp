@@ -2491,7 +2491,7 @@ void Client::ParseCommandlineOptions(int argc, char *argv[], s32 &inimissing)
       else if ( strcmp( argv[i], "-n" ) == 0 ) // Blocks to complete in a run
       {
         blockcount = min(1, (s32) atoi( argv[i+1] ));
-        LogScreenf("Setting block completion limit to %s\n",blockcount);
+        LogScreenf("Setting block completion limit to %d\n",blockcount);
         inimissing=0; // Don't complain if the inifile is missing
         argv[i][0] = argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
