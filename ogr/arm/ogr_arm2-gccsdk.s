@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Peter Teichmann <dnet@peter-teichmann.de>
-; $Id: ogr_arm2-gccsdk.s,v 1.1.2.2 2004/06/02 19:26:12 teichp Exp $
+; $Id: ogr_arm2-gccsdk.s,v 1.1.2.3 2004/06/16 21:39:42 teichp Exp $
 ;
 ; Stack:
 ; int *pnodes
@@ -180,18 +180,6 @@ stay
 
 	rsb	r9, r7, #32
 
-	ldmia	r1, {r2-r6}
-	mov	r6, r6, lsr r7
-	orr	r6, r6, r5, lsl r9
-	mov	r5, r5, lsr r7
-	orr	r5, r5, r4, lsl r9
-	mov	r4, r4, lsr r7
-	orr	r4, r4, r3, lsl r9
-	mov	r3, r3, lsr r7
-	orr	r3, r3, r2, lsl r9
-	mov	r2, r2, lsr r7
-	stmia	r1, {r2-r6}
-
 	add	r1, r1, #40
 	ldmia	r1, {r2-r6}
 	mov	r2, r2, lsl r7
@@ -206,17 +194,28 @@ stay
 	stmia	r1, {r2-r6}
 	sub	r1, r1, #40
 
+	ldmia	r1, {r2-r6}
+	mov	r6, r6, lsr r7
+	orr	r6, r6, r5, lsl r9
+	mov	r5, r5, lsr r7
+	orr	r5, r5, r4, lsl r9
+	mov	r4, r4, lsr r7
+	orr	r4, r4, r3, lsl r9
+	mov	r3, r3, lsr r7
+	orr	r3, r3, r2, lsl r9
+	mov	r2, r2, lsr r7
+	stmia	r1, {r2-r6}
+
 firstblank_31_32_back
 	cmp	r14, r11
 	beq	new_ruler
-	
+
 	ldr	r9, [r1, #15*4]
+	mov	r7, #1
 	sub	r9, r8, r9		; bitindex=lev->cnt2-lev->cnt1
 
 	; Start COPY_LIST_SET_BIT_COPY_DIST_COMP
-	mov	r7, #1
-
-	ldmia	r1, {r2-r6}		; lev->list
+;	ldmia	r1, {r2-r6}		; lev->list
 	cmp	r9, #32
 	bgt	bitoflist_notfirstword
 	orr	r2, r2, r7, ror r9
@@ -282,19 +281,20 @@ firstblank_31_32
 	cmp	r8, r10
 	bgt	up			; if ((lev->cnt2+=32)>limit) goto up
 
-	ldmia	r1, {r3-r6}
-	str	r7, [r1]
-	add	r2, r1, #4
-	stmia	r2!, {r3-r6}
-
 	add	r2, r1, #44
 	ldmia	r2, {r3-r6}
 	add	r2, r1, #40
-	stmia	r2, {r3-r7}		; COMP_LEFT_LIST_RIGHT_32(lev)
+	stmia	r2, {r3-r7}
+
+	ldmia	r1, {r3-r6}
+	str	r7, [r1]
+	add	r2, r1, #4
+	stmia	r2, {r3-r6}		; COMP_LEFT_LIST_RIGHT_32(lev)
 
 	cmp	r9, #0xffffffff
 	beq	stay			; if (comp0==0xffffffff) goto stay
-	
+
+	mov	r2, #0			; r3-r6 are already ok
 	b	firstblank_31_32_back
 
 up

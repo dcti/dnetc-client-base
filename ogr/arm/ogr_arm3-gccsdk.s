@@ -3,8 +3,24 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Peter Teichmann <dnet@peter-teichmann.de>
-; $Id: ogr_arm1-gccsdk.s,v 1.1.2.3 2004/06/16 21:39:42 teichp Exp $
+; $Id: ogr_arm3-gccsdk.s,v 1.1.2.1 2004/06/16 21:39:42 teichp Exp $
 ;
+; XScale optimized core:
+; * Intel really did a extremly bad job. They had better just taken the
+;   StrongARM core and scaled to 0.18u. Consequences are:
+; * 3 cycle more for ldm/stm than sequence of ldr/str (SA 0)
+; * 5 cycle delay for mispredicted branches and data
+;   processing with pc destination. Even unconditional branches need to
+;   be predicted! Jesus! (SA 2/3)
+; * 8 cycle delay for load to pc (SA 4)
+; * predicted branch 1 cycle, mispredicted branch 5 cycles (SA taken 2/not
+;   taken 1)
+; * avoid branch target buffer conflicts! The branch target buffer is direct
+;   mapped and contains 128 entries. (problem does not exist on SA)
+; * 3 cycle result delay for ldr (SA 2)
+; * 2 cycle delay for data processing if result is used for shift-by-immediate
+;   in next instruction (SA 1, as normal)
+
 ; Stack:
 ; int *pnodes
 ; struct State *oState
@@ -59,27 +75,16 @@ CORE_S_SUCCESS	EQU	2
 
 	AREA	|C$$CODE|, CODE, READONLY
 	ALIGN	32
-firstblank
-	DCB	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-	DCB	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-	DCB	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-	DCB	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-	DCB	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-	DCB	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-	DCB	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-	DCB	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-	DCB	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2
-	DCB	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2
-	DCB	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2
-	DCB	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2
-	DCB	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
-	DCB	3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
-	DCB	4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4
-	DCB	5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 8, 9
+OGR
+	DCD	  0,   1,   3,   6,  11,  17,  25,  34,  44,  55
+	DCD	 72,  85, 106, 127, 151, 177, 199, 216, 246, 283
+	DCD	333, 356, 372, 425, 480, 492, 553, 585, 623
+choose
+	DCD	ogr_choose_dat+3
 
 	ALIGN	32
-	EXPORT	ogr_cycle_arm1
-ogr_cycle_arm1
+	EXPORT	ogr_cycle_arm3
+ogr_cycle_arm3
 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, r10, r11, r12, r14}
 	sub	sp, sp, #10*4
 
@@ -109,27 +114,28 @@ loop_start
 	bgt	depth_gt_halfdepth
 
 	adr	r5, OGR
-	ldr	r4, [r0, #0*4]		; oState->max
 	sub	r3, r11, r14
+	ldr	r4, [r0, #0*4]		; oState->max
 	ldr	r5, [r5, r3, lsl#2]	; OGR[oState->maxdepthm1-depth]
 	ldr	r3, [r0, #3*4]		; oState->half_length
 	sub	r10, r4, r5		; limit=oState->max-...
 	cmp	r10, r3			; 
 	movgt	r10, r3			; limit=limit<oState->half_length ? ...
+
 	b	increment_nodes
 
 depth_gt_halfdepth
 	ldr	r7, [r1, #5*4]		; lev->dist[0]
+	ldr	r9, choose
 	sub	r5, r11, r14		; y=oState->maxdepthm1-depth
 	mov	r7, r7, lsr#32-12	; x=lev->dist[0]>>ttmDISTBITS
+	ldr	r4, [r0, #0*4]		; oState->max
 	add	r5, r5, r7, lsl#3
 	add	r5, r5, r7, lsl#2	; 12*y+x
-	ldr	r7, choose
-	ldr	r4, [r0, #0*4]		; oState->max
-	ldrb	r5, [r7, r5]		; choose(x,y)
+	ldrb	r5, [r9, r5]		; choose(x,y)
 	add	r3, r0, #6*4
-	sub	r10, r4, r5		; limit=oState->max-choose(x,y)
 	ldr	r7, [r3, r6, lsl#2]	; oState->marks[halfdepth]
+	sub	r10, r4, r5		; limit=oState->max-choose(x,y)
 	sub	r4, r4, #1
 	sub	r4, r4, r7		; oState->max-oState->marks[halfdepth]-1
 	cmp	r10, r4
@@ -138,56 +144,77 @@ depth_gt_halfdepth
 
 depth_gt_halfdepth2
 	ldr	r7, [r1, #5*4]		; lev->dist[0]
+	ldr	r9, choose
 	sub	r5, r11, r14		; y=oState->maxdepthm1-depth
 	mov	r7, r7, lsr#32-12	; x=lev->dist[0]>>ttmDISTBITS
+	ldr	r4, [r0, #0*4]		; oState->max
 	add	r5, r5, r7, lsl#3
 	add	r5, r5, r7, lsl#2	; 12*y+x
-	ldr	r7, choose
-	ldr	r4, [r0, #0*4]		; oState->max
-	ldrb	r5, [r7, r5]		; choose(x,y)
+	ldrb	r5, [r9, r5]		; choose(x,y)
 	sub	r10, r4, r5		; limit=oState->max-choose(x,y)
 
 increment_nodes
 	add	r12, r12, #1
 
 stay
-	ldr	r9, [r1, #10*4]		; comp0=lev->comp0
-	mov	r2, #0
+	ldr	r9, [r1, #40]		; comp0=lev->comp0
+	ldr	r3, [r1, #44]
+	mov	r7, #0xffffffff
 	cmp	r9, #0xfffffffe
-	bcs	firstblank_31_32
+	bcs	firstblank_31_32	
 
-	adr	r6, firstblank
-	cmp	r9, #0xffff0000
-	movcs	r9, r9, lsl#16
-	addcs	r2, r2, #16
-	cmp	r9, #0xff000000
-	movcs	r9, r9, lsl#8
-	ldrb	r9, [r6, r9, lsr#24]
-	addcs	r2, r2, #8
-	add	r2, r2, r9		; s=LOOKUP_FIRSTBLANK(comp0)
+	eor	r7,r7,r9
+	DCD	0xe16f7f17		; clz	r7, r7
+	add	r7, r7, #1		; s=LOOKUP_FIRSTBLANK(comp0)
 
-	add	r8, r8, r2
+	add	r8, r8, r7
 	str	r8, [r1, #16*4]
 	cmp	r8, r10
 	bgt	up			; if ((lev->cnt2+=s)>limit) goto up
 
-	add	pc, pc, r2, lsl#7
-	%	1*4
-
-; COMP_LEFT_LIST_RIGHT macro, must be always 32 instructions=128 bytes
-; because of the method to jump to them!
-
-	MACRO
-	COMP_LEFT_LIST_RIGHT $N
-	ldr	r2, [r1, #40]
-	ldr	r3, [r1, #44]
 	ldr	r4, [r1, #48]
 	ldr	r5, [r1, #52]
 	ldr	r6, [r1, #56]
+	ldr	r2, [r1]
 
-	mov	r2, r2, lsl #$N
-	orr	r2, r2, r3, lsr #32-$N
-	str	r2, [r1, #40]		; lev->comp[0]
+	add	pc, pc, r7, lsl#2	; this is better for XScale because
+	%	2*4			; it avoids the BTB conflict for
+	b	firstblank_0		; b firstblank_32_back
+	b	firstblank_1
+	b	firstblank_2
+	b	firstblank_3
+	b	firstblank_4
+	b	firstblank_5
+	b	firstblank_6
+	b	firstblank_7
+	b	firstblank_8
+	b	firstblank_9
+	b	firstblank_10
+	b	firstblank_11
+	b	firstblank_12
+	b	firstblank_13
+	b	firstblank_14
+	b	firstblank_15
+	b	firstblank_16
+	b	firstblank_17
+	b	firstblank_18
+	b	firstblank_19
+	b	firstblank_20
+	b	firstblank_21
+	b	firstblank_22
+	b	firstblank_23
+	b	firstblank_24
+	b	firstblank_25
+	b	firstblank_26
+	b	firstblank_27
+	b	firstblank_28
+	b	firstblank_29
+	
+	MACRO
+	COMP_LEFT_LIST_RIGHT $N
+	mov	r9, r9, lsl #$N
+	orr	r9, r9, r3, lsr #32-$N
+	str	r9, [r1, #40]		; lev->comp[0]
 
 	mov	r3, r3, lsl #$N
 	orr	r3, r3, r4, lsr #32-$N
@@ -204,7 +231,10 @@ stay
 	mov	r6, r6, lsl #$N
 	str	r6, [r1, #56]		; lev->comp[4]
 
-	ldmia	r1, {r2-r6}
+	ldr	r3, [r1, #4]
+	ldr	r4, [r1, #8]
+	ldr	r5, [r1, #12]
+	ldr	r6, [r1, #16]
 	mov	r6, r6, lsr #$N
 	orr	r6, r6, r5, lsl #32-$N
 
@@ -218,58 +248,116 @@ stay
 	orr	r3, r3, r2, lsl #32-$N
 
 	mov	r2, r2, lsr #$N		; lev->list[0]
-	stmia	r1, {r2-r6}
+	str	r2, [r1]
+	str	r3, [r1, #4]
+	str	r4, [r1, #8]
+	str	r5, [r1, #12]
+	str	r6, [r1, #16]
 
 	b	firstblank_32_back
-	%	1*4
 	MEND
 
-OGR
-	DCD	  0,   1,   3,   6,  11,  17,  25,  34,  44,  55
-	DCD	 72,  85, 106, 127, 151, 177, 199, 216, 246, 283
-	DCD	333, 356, 372, 425, 480, 492, 553, 585, 623
-choose
-	DCD	ogr_choose_dat+3
-	%	2*4
-
-	COMP_LEFT_LIST_RIGHT 1
-	COMP_LEFT_LIST_RIGHT 2
-	COMP_LEFT_LIST_RIGHT 3
-	COMP_LEFT_LIST_RIGHT 4
-	COMP_LEFT_LIST_RIGHT 5
-	COMP_LEFT_LIST_RIGHT 6
-	COMP_LEFT_LIST_RIGHT 7
-	COMP_LEFT_LIST_RIGHT 8
-	COMP_LEFT_LIST_RIGHT 9
-	COMP_LEFT_LIST_RIGHT 10
-	COMP_LEFT_LIST_RIGHT 11
-	COMP_LEFT_LIST_RIGHT 12
-	COMP_LEFT_LIST_RIGHT 13
-	COMP_LEFT_LIST_RIGHT 14
-	COMP_LEFT_LIST_RIGHT 15
-	COMP_LEFT_LIST_RIGHT 16
-	COMP_LEFT_LIST_RIGHT 17
-	COMP_LEFT_LIST_RIGHT 18
-	COMP_LEFT_LIST_RIGHT 19
-	COMP_LEFT_LIST_RIGHT 20
-	COMP_LEFT_LIST_RIGHT 21
-	COMP_LEFT_LIST_RIGHT 22
-	COMP_LEFT_LIST_RIGHT 23
-	COMP_LEFT_LIST_RIGHT 24
-	COMP_LEFT_LIST_RIGHT 25
-	COMP_LEFT_LIST_RIGHT 26
-	COMP_LEFT_LIST_RIGHT 27
-	COMP_LEFT_LIST_RIGHT 28
-	COMP_LEFT_LIST_RIGHT 29
-	COMP_LEFT_LIST_RIGHT 30
+firstblank_30
 	COMP_LEFT_LIST_RIGHT 31
-
+	%	94*4
+firstblank_0
+	COMP_LEFT_LIST_RIGHT 1
+	%	94*4
+firstblank_1
+	COMP_LEFT_LIST_RIGHT 2
+	%	94*4
+firstblank_2
+	COMP_LEFT_LIST_RIGHT 3
+	%	94*4
+firstblank_3
+	COMP_LEFT_LIST_RIGHT 4
+	%	94*4
+firstblank_4
+	COMP_LEFT_LIST_RIGHT 5
+	%	94*4
+firstblank_5
+	COMP_LEFT_LIST_RIGHT 6
+	%	94*4
+firstblank_6
+	COMP_LEFT_LIST_RIGHT 7
+	%	94*4
+firstblank_7
+	COMP_LEFT_LIST_RIGHT 8
+	%	94*4
+firstblank_8
+	COMP_LEFT_LIST_RIGHT 9
+	%	94*4
+firstblank_9
+	COMP_LEFT_LIST_RIGHT 10
+	%	94*4
+firstblank_10
+	COMP_LEFT_LIST_RIGHT 11
+	%	94*4
+firstblank_11
+	COMP_LEFT_LIST_RIGHT 12
+	%	94*4
+firstblank_12
+	COMP_LEFT_LIST_RIGHT 13
+	%	94*4
+firstblank_13
+	COMP_LEFT_LIST_RIGHT 14
+	%	94*4
+firstblank_14
+	COMP_LEFT_LIST_RIGHT 15
+	%	94*4
+firstblank_15
+	COMP_LEFT_LIST_RIGHT 16
+	%	94*4
+firstblank_16
+	COMP_LEFT_LIST_RIGHT 17
+	%	94*4
+firstblank_17
+	COMP_LEFT_LIST_RIGHT 18
+	%	94*4
+firstblank_18
+	COMP_LEFT_LIST_RIGHT 19
+	%	94*4
+firstblank_19
+	COMP_LEFT_LIST_RIGHT 20
+	%	94*4
+firstblank_20
+	COMP_LEFT_LIST_RIGHT 21
+	%	94*4
+firstblank_21
+	COMP_LEFT_LIST_RIGHT 22
+	%	94*4
+firstblank_22
+	COMP_LEFT_LIST_RIGHT 23
+	%	94*4
+firstblank_23
+	COMP_LEFT_LIST_RIGHT 24
+	%	94*4
+firstblank_24
+	COMP_LEFT_LIST_RIGHT 25
+	%	94*4
+firstblank_25
+	COMP_LEFT_LIST_RIGHT 26
+	%	94*4
+firstblank_26
+	COMP_LEFT_LIST_RIGHT 27
+	%	94*4
+firstblank_27
+	COMP_LEFT_LIST_RIGHT 28
+	%	94*4
+firstblank_28
+	COMP_LEFT_LIST_RIGHT 29
+	%	94*4
+firstblank_29
+	COMP_LEFT_LIST_RIGHT 30
+	%	50*4
+	
 firstblank_31_32
 	add	r8, r8, #32
 	str	r8, [r1, #16*4]
 	cmp	r8, r10
 	bgt	up			; if ((lev->cnt2+=32)>limit) goto up
 
+	mov	r2, #0
 	ldr	r6, [r1, #44]
 	ldr	r5, [r1, #48]
 	ldr	r4, [r1, #52]
@@ -279,12 +367,19 @@ firstblank_31_32
 	str	r4, [r1, #48]
 	str	r3, [r1, #52]
 	str	r2, [r1, #56]
-	ldmia	r1, {r3-r6}
-	stmia	r1, {r2-r6}		; COMP_LEFT_LIST_RIGHT_32(lev)
+	ldr	r3, [r1, #0]
+	ldr	r4, [r1, #4]
+	ldr	r5, [r1, #8]
+	ldr	r6, [r1, #12]
+	str	r2, [r1, #0]
+	str	r3, [r1, #4]
+	str	r4, [r1, #8]
+	str	r5, [r1, #12]
+	str	r6, [r1, #16]		; COMP_LEFT_LIST_RIGHT_32(lev)
 
 	cmp	r9, #0xffffffff
 	beq	stay			; if (comp0==0xffffffff) goto stay
-	
+
 firstblank_32_back
 	cmp	r14, r11
 	beq	new_ruler
@@ -294,7 +389,11 @@ firstblank_32_back
 	sub	r9, r8, r9		; bitindex=lev->cnt2-lev->cnt1
 
 	; Start COPY_LIST_SET_BIT_COPY_DIST_COMP
-;	ldmia	r1, {r2, r3, r4, r5, r6}
+;	ldr	r2, [r1]
+;	ldr	r3, [r1, #4]
+;	ldr	r4, [r1, #8]
+;	ldr	r5, [r1, #12]
+;	ldr	r6, [r1, #16]
 	cmp	r9, #32
 	bgt	bitoflist_notfirstword
 	orr	r2, r2, r7, ror r9
@@ -354,9 +453,10 @@ bit_is_set
 	str	r14, [r0, #48*4]	; oState->depth=depth
 	add	r1, r1, #72		; lev++
 	add	r14, r14, #1		; depth++
-
+	
 	b	loop_start		; continue
-
+	%	4*40
+	
 bitoflist_notfirstword
 	cmp	r9, #64
 	orrle	r3, r3, r7, ror r9
@@ -374,8 +474,8 @@ bitoflist_notfirstword
 up
 	sub	r1, r1, #72		; lev--
 	sub	r14, r14, #1		; depth--
-	sub	r9, r14, #1
 	ldr	r7, [r0, #47*4]		; oState->startdepth
+	sub	r9, r14, #1
 	str	r9, [r0, #48*4]		; oState->depth=depth-1
 	cmp	r14, r7
 	ble	finished_block
@@ -388,7 +488,7 @@ finished_block
 	mov	r9, #CORE_S_OK
 	str	r9, [r13, #7*4]		; retval=CORE_S_OK
 	b	loop_break		; break
-
+	
 new_ruler
 	add	r9, r0, #6*4		; oState->marks
 	str	r8, [r9, r11, lsl#2]	; oState->marks[oState->maxdepthm1]=lev->cnt2
@@ -411,8 +511,8 @@ loop_break
 
 ;-----------------------------------------------------------------------------
 
-	EXPORT	ogr_get_dispatch_table_arm1
-ogr_get_dispatch_table_arm1
+	EXPORT	ogr_get_dispatch_table_arm3
+ogr_get_dispatch_table_arm3
 	stmdb	r13!, {r4, r14}
 	bl	ogr_get_dispatch_table
 	ldr	r4, pdispatch_table
@@ -426,8 +526,8 @@ ogr_get_dispatch_table_arm1
 
 ;-----------------------------------------------------------------------------
 
-	EXPORT	ogr_p2_get_dispatch_table_arm1
-ogr_p2_get_dispatch_table_arm1
+	EXPORT	ogr_p2_get_dispatch_table_arm3
+ogr_p2_get_dispatch_table_arm3
 	stmdb	r13!, {r4, r14}
 	bl	ogr_p2_get_dispatch_table
 	ldr	r4, pdispatch_table
@@ -444,7 +544,7 @@ ogr_p2_get_dispatch_table_arm1
 pdispatch_table
 	DCD	dispatch_table
 pogr_cycle
-	DCD	ogr_cycle_arm1
+	DCD	ogr_cycle_arm3
 
 ;-----------------------------------------------------------------------------
 

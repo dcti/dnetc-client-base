@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.131 2004/05/20 21:12:38 kakace Exp $
+# @(#)$Id: configure,v 1.288.2.132 2004/06/16 21:39:42 teichp Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -596,40 +596,48 @@ add_sources() # $1=os, $2=arch, $3=custom
       if [ "$1" = "riscos" ]; then
         if [ "$3" = "gccsdk" ]; then
           TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1-gccsdk.S \
-                                          rc5-72/arm/r72arm2-gccsdk.S"
+                                          rc5-72/arm/r72arm2-gccsdk.S \
+                                          rc5-72/arm/r72arm3-gccsdk.S"
         else
           echo Add rc5-72 asm cores for arm-riscos!
           exit 1
         fi
       elif [ "$1-$3" = "linux-elf" ]; then
         TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1-gnu-elf.S \
-                                        rc5-72/arm/r72arm2-gnu-elf.S"
+                                        rc5-72/arm/r72arm2-gnu-elf.S \
+                                        rc5-72/arm/r72arm3-gnu-elf.S"
       elif [ "$1" = "nto2" ]; then
         TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1-gnu-elf.S \
-                                        rc5-72/arm/r72arm2-gnu-elf.S"
+                                        rc5-72/arm/r72arm2-gnu-elf.S \
+                                        rc5-72/arm/r72arm3-gnu-elf.S"
       else
         TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1-gnu.S \
-                                        rc5-72/arm/r72arm2-gnu.S"
+                                        rc5-72/arm/r72arm2-gnu.S \
+                                        rc5-72/arm/r72arm3-gnu.S"
       fi
     fi # HAVE_RC5_72
     if [ "$HAVE_OGR" = 1 -o "$HAVE_OGR_P2" = "1" ]; then
       if [ "$1" = "riscos" ]; then
         if [ "$3" = "gccsdk" ]; then
           TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gccsdk.s \
-                                          ogr/arm/ogr_arm2-gccsdk.s"
+                                          ogr/arm/ogr_arm2-gccsdk.s \
+                                          ogr/arm/ogr_arm3-gccsdk.s"
         else
           echo Add ogr asm cores for arm-riscos!
           exit 1
         fi
       elif [ "$1-$3" = "linux-elf" ]; then
         TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gnu-elf.S \
-                                        ogr/arm/ogr_arm2-gnu-elf.S"
+                                        ogr/arm/ogr_arm2-gnu-elf.S \
+                                        ogr/arm/ogr_arm3-gnu-elf.S"
       elif [ "$1" = "nto2" ]; then
         TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gnu-elf.S \
-                                        ogr/arm/ogr_arm2-gnu-elf.S"
+                                        ogr/arm/ogr_arm2-gnu-elf.S \
+                                        ogr/arm/ogr_arm3-gnu-elf.S"
       else
         TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gnu.S \
-                                        ogr/arm/ogr_arm2-gnu.S"
+                                        ogr/arm/ogr_arm2-gnu.S \
+                                        ogr/arm/ogr_arm3-gnu.S"
       fi
     fi # HAVE_OGR
   #-----------------------------------------------------------------

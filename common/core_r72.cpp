@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.26 2004/06/16 18:20:25 kakace Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.27 2004/06/16 21:39:42 teichp Exp $"; }
 
 //#define TRACE
 
@@ -54,6 +54,7 @@ extern "C" s32 CDECL rc5_72_unit_func_snjl( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_ARM)
 extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 rc5_72_unit_func_arm2( RC5_72UnitWork *, u32 *, void *);
+extern "C" s32 rc5_72_unit_func_arm3( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_68K) && (defined(__GCC__) || defined(__GNUC__))
 extern "C" s32 CDECL rc5_72_unit_func_060_mh_2( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_030_mh_1( RC5_72UnitWork *, u32 *, void *);
@@ -126,8 +127,9 @@ const char **corenames_for_contest_rc572()
       "ANSI 2-pipe",
       "ANSI 1-pipe",
   #elif (CLIENT_CPU == CPU_ARM)
-      "ARM 1-pipe A",
-      "ARM 1-pipe B",
+      "StrongARM 1-pipe",
+      "ARM 2/3/6/7 1-pipe",
+      "XScale 1-pipe",
   #elif (CLIENT_CPU == CPU_68K) && (defined(__GCC__) || defined(__GNUC__))
       "MH 1-pipe 68020/030",
       "MH 1-pipe 68000/040",
@@ -504,6 +506,10 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         break;
       case 1:
         unit_func.gen_72 = rc5_72_unit_func_arm2;
+        pipeline_count = 1;
+        break;
+      case 2:
+        unit_func.gen_72 = rc5_72_unit_func_arm3;
         pipeline_count = 1;
         break;
      // -----------
