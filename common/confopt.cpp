@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.64 2002/03/28 01:07:43 andreasb Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.65 2002/04/13 12:56:04 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -846,7 +846,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "   the first non-dialup interface is eth0, the second is eth1 and so on.\n"
   "** RAS profiles may be specified here too (note: names are case sensitive)\n"
   #else
-  "** The command line equivalent of this option is --interfaces-to-watch\n"
+  "** The command line equivalent of this option is -interfaces\n"
   #endif
   /* ) */,CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
