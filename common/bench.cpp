@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.45 2000/11/07 12:44:10 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.46 2000/11/07 20:55:54 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -237,7 +237,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
       if (run < 0) /* error */
       {
         LogScreen("\r");
-        Log("%s: Benchmark failed (error: %d). Unable to determine rate.", run, contname );
+        Log("%s: Benchmark failed (error: %d). Unable to determine rate.", contname, run );
       }
     }
     problem->RetrieveState(NULL, NULL, 1, 0); //purge the problem
