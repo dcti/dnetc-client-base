@@ -1,84 +1,168 @@
 
+
  distributed.net client for x86 DOS (PC-,MS-,DR- or whatever) 5.0 and above
+
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
- document revision $Id: readme.dos,v 1.8 1999/10/11 18:41:41 cyp Exp $
+
+ document revision $Id: readme.dos,v 1.9 2000/07/11 02:38:43 mfeiri Exp $
+
+
 
  Welcome to the distributed.net client.
 
+
+
  This document covers information specific to the client for DOS.
+
  Refer to other enclosed documentation or browse the online FAQ at
+
  http://www.distributed.net/FAQ for non-platform-specific documentation.
 
+
+
     1.0  Getting started
+
     2.0  DOS specific notes
+
    
+
  1.0  Getting started ------------------------------------------------
+
  
-    Just unpack the client in a directory of your choice and fire it up.
+
+    Just unpack the client in a directory of your choice and fire it up
+.
+
 
     If you have never run the client before, it will initiate the
+
     menu-driven configuration. Save and quit when done, the 
+
     configuration file will be saved in the same directory as the 
+
     client. Then, simply restart the client. From that point on it will 
+
     use the saved configuration.
+
     
+
     The configuration options are fairly self-explanatory and can be run
+
     at any time by starting the client with the '-config' option.
+
     A list of command line options is available by starting the client 
+
     with '-help'.
+
+
 
     FAQs are available online at http://www.distributed.net/FAQ/
 
+
+
  2.0  Notes: ---------------------------------------------------------
 
+
+
     The DOS client is still unable to communicate over a network link
+
     (I'm working on it though) due principally to the lack of a 
+
     standardized network programming interface. 
+
     
+
     It can however share buffers with any other client, across shared
+
     network disks if need be. Checkpoint files however *cannot* be shared.
 
+
+
     Beginning with v2.7109.440, the client is capable of treating buffers
+
     located somewhere else as a source/destination to fetch/flush from.
+
     That is to say, it can use a set of 'remote' buffer files when the
+
     'local' buffers run out.
 
+
+
     Beginning with v2.7100.416, the DOS client no longer requires the 
+
     external DOS4GW.EXE DOS extender. The far superior (as can expected 
+
     from free software) DOS extender, PMODE/W is now built directly into 
+
     the client.
 
+
+
     Beginning with v2.7100.416, the DOS client no longer assumes that the 
+
     buffer files are in the current directory. The default path is now
+
     the client's directory.
 
+
+
     Note: DOS, Win16 and OS/2 ports may squawk about a missing TZ= variable
+
     in the environment. Set it in your autoexec (or wherever). For example:
+
     "SET TZ=EST+5" for eastern standard time or "SET TZ=EST+5DST" when 
+
     daylight savings time is in effect (ie in the summer). If you live on
+
     the other side of the zero meridian, ie east of Greenwich, England,
+
     your TZ will have a negative offset. For example CET-1[DST] for Central 
+
     European Time, or NZT-12[DST] if you live in New Zealand.
+
     
+
     TZ (TimeZone) is used by all (not only by the client) software that is 
+
     sensitive to time to properly compute the computer clock's offset to 
+
     UTC (aka GMT). If you have used the DOS client before, (and you do not 
+
     live in Great Britain or in West Africa) you probably also noticed that 
+
     the time was wrong. Well, now you know why: On MS-DOS, TZ is by default 
+
     set to PST+9 (Pacific Standard Time). Other DOSs have different defaults.
+
     Note that the timezone offsets are inverted from ones used in the Unix
+
     world - DOS adds the number of hours to local time to determine what
+
     GMT/UTC time is. Unix adds the offset to GMT/UTC to determine what 
+
     local time is.
 
+
+
     A question that occasionally comes up is whether it is possible to 
+
     run the DOS client as a TSR (terminate and stay resident utility). 
+
     No, it is not for two reasons: a) For all practical purposes, 
+
     only real mode executables can be resident. The client runs in 
+
     protected mode. b) the client is not designed to run as a callback 
+
     which is what it would be if it were a TSR (terminated but resident 
+
     - ie providing a point of entry which is called from outside the client). 
+
     Furthermore, the only way the client would ever be called would be 
+
     if it trapped the timer or idle interrupt, which would make it impossible 
+
     to use DOS calls (buffer I/O etc), since the DOS kernel is not reentrant 
+
     and the timer interrupt can fire from within the kernel.
+

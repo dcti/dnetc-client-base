@@ -22,6 +22,9 @@
   #error "What's up Doc?"
 #endif  
 
+// define this to enable LOGGING code
+#undef OGR_DEBUG
+
 #define STUB_MAX 10 /* change ogr_packet_t in packets.h when changing this */
 
 struct Stub { /* size is 24 */
@@ -44,45 +47,16 @@ struct WorkStub { /* size is 28 */
 #define MAXDEPTH   40
 
 typedef u32 U;
+
 typedef union {
-	vector unsigned int vec;
-	unsigned int sca[4];
-} v_u32;
+	U u[5];
+    struct{U ui1,ui2,ui3,ui4,ui5;};
+} vec2;
 
 struct Level {
-  union {
-  	struct {
-  		U pad;
-  		vector unsigned int vec;
-  	} offset_list_vec;
-  	struct {
-  		vector unsigned int vec;
-  		U pad;
-  	} zeroed_list_vec;
-	U list[BITMAPS];
-  };
-  union {
-  	struct {
-  		U pad;
-  		vector unsigned int vec;
-  	} offset_dist_vec;
-  	struct {
-  		vector unsigned int vec;
-  		U pad;
-  	} zeroed_dist_vec;
-	U dist[BITMAPS];
-  };
-  union {
-  	struct {
-  		U pad;
-	  	vector unsigned int vec;
-	} offset_comp_vec;
-  	struct {
-  		vector unsigned int vec;
-  		U pad;
-  	} zeroed_comp_vec;
-	U comp[BITMAPS];
-  };
+  vec2 list;
+  vec2 dist;
+  vec2 comp;
   int cnt1;
   int cnt2;
   int limit;
@@ -102,7 +76,9 @@ struct State {
   int startdepth;
   int depth;
   int limit;
+#ifdef OGR_DEBUG
   int LOGGING;
+#endif
   struct Level Levels[MAXDEPTH];
 };
 

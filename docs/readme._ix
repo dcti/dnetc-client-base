@@ -1,11 +1,13 @@
 
  distributed.net client for the unix family
- document revision $Id: readme._ix,v 1.7 1999/10/11 18:41:41 cyp Exp $
+ document revision $Id: readme._ix,v 1.8 2000/07/11 02:38:36 mfeiri Exp $
+
                                                           
  Welcome to the distributed.net client.
 
  This document covers information specific to the client for *ix.
  Refer to other enclosed documentation or browse the online FAQ at
+
  http://www.distributed.net/FAQ for non-platform-specific documentation.
 
     1.0  Getting started

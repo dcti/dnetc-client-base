@@ -1,18 +1,22 @@
 
  distributed.net client for IBM S/390 servers running OS/390.
  Released by Friedemann Baitinger <fb@baiti.net>
- Document revision $Id: readme.os390,v 1.6 1999/10/11 18:41:41 cyp Exp $
+ Document revision $Id: readme.os390,v 1.7 2000/07/11 02:38:50 mfeiri Exp $
+
 
  Welcome to the distributed.net client.
 
  This document covers information specific to the client for OS/390.
  Refer to other enclosed documentation or browse the online FAQ at
+
  http://www.distributed.net/FAQ for non-platform-specific documentation.
 
     1.0  port specific notes
     2.0  Getting started
  
+
  1.0  Notes: ---------------------------------------------------------
+
     
   The client code has been ported and tested on an IBM 9672 System
   running OS/390 V2R5. 
@@ -25,6 +29,7 @@
   keyserver proxy.
 
  2.0  Getting started ------------------------------------------------
+
 
    There are 2 installation procedures:
 
@@ -57,13 +62,24 @@
 	    one call to 'pax'.
 
     If you have never run the client before, it will initiate the
+
     menu-driven configuration. Save and quit when done, the 
+
     configuration file will be saved in the same directory as the 
+
     client. Then, simply restart the client. From that point on it will 
+
     use the saved configuration.
+
     
+
     The configuration options are fairly self-explanatory and can be run
+
     at any time by starting the client with the '-config' option.
+
     A list of command line options is available by starting the client 
+
     with '-help'.
+
+
 

@@ -1,84 +1,249 @@
 
+
  distributed.net client for Win16 (MS-Windows 3.1,WINE or whatever) and above
+
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
- Document revision $Id: readme.w16,v 1.9 1999/10/11 18:41:41 cyp Exp $
+
+ Document revision $Id: readme.w16,v 1.10 2000/07/11 02:38:56 mfeiri Exp $
+
+
 
  Welcome to the distributed.net client.
 
+
+
  This document covers information specific to the client for Win16.
+
  Refer to other enclosed documentation or browse the online FAQ at
+
  http://www.distributed.net/FAQ for non-platform-specific documentation.
 
+
+
     1.0  Getting started
+
+         1.1 Using the screensaver multiplexor
+
     2.0  Win16 specific notes
 
+
+
  1.0  Getting started ------------------------------------------------
+
  
-    Just unpack the client in a directory of your choice and fire it up.
+
+    Just unpack the client in a directory of your choice and fire it up.
+
 
     If you have never run the client before, it will initiate the
+
     menu-driven configuration. Save and quit when done, the 
+
     configuration file will be saved in the same directory as the 
+
     client. Then, simply restart the client. From that point on it will 
+
     use the saved configuration.
+
     
+
     The configuration options are fairly self-explanatory and can be run
+
     at any time by starting the client with the '-config' option.
+
     A list of command line options is available by starting the client 
+
     with '-help'.
+
+
 
     FAQs are available online at http://www.distributed.net/FAQ/
 
+
+
+    1.1  The screensaver multiplexor ---------------------------------
+
+
+
+    Beginning with v2.7112.444, the client release archive includes a
+
+    screensaver multiplexor.
+
+
+
+    Note that the screen saver and the client are different executables.
+
+    The screen saver multiplexor (*.scr) is of little use without a
+
+    client (*.exe).
+
+
+
+    Under normal circumstances, having a client running continuously in
+
+    the background is usually preferred since it continues to use
+
+    the idle processor cycles even when a machine is actively in use.
+
+    For instance, when typing a letter, the machine is really mostly
+
+    idle, waiting for keystrokes, and the client can use that time.
+
+
+
+    However, in some environments, utilizing *any* cpu time while a
+
+    user is actively trying to use the machine may be a problem. The
+
+    distributed.net screen saver multiplexor addresses that issue.
+
+    When activated by the system, it will launch a client in the
+
+    background and _another_ screen saver of your choice in the
+
+    foreground. If a client is already found to be running when the
+
+    screen saver is activated by the system, it will not be started
+
+    a second time.
+
+
+
+    Not only does this permit an installation where use of any cpu time
+
+    is a problem, it also resolves two other issues that a
+
+    client-as-a-screensaver cannot: a) it does not requires
+
+    storage of client buffers and/or configuration file in the windows
+
+    (or windows/system) directory and b) it allows a user to continue
+
+    to use his/her preferred screensaver.
+
+
+
+    Installation involves...
+
+    a) simply copying the *.scr file included with the client
+
+       distribution to one of the following locations:
+
+       on Win95:  your \WINDOWS\ or \WINDOWS\SYSTEM\ directory
+
+       on WinNT:  your \WINNT\ or \WINNT\SYSTEM32\ directory
+
+    b) Once you have copied it, go to the Display properties in the Control
+
+       Panel and select the distributed.net screen saver as the active
+
+       screen saver.
+
+    c) Clicking on the "Settings..." button opens the multiplexors
+
+       configuration dialog. Select the client you wish the multiplexor to
+
+       run in the background and select the screensaver you wish to run
+
+       in the foreground.
+
+    d) If the client had been previously configured, there is nothing else
+
+       you need do. Otherwise click on the "Configure" button to configure
+
+       the client.
+
+
+
  2.0  Notes: ---------------------------------------------------------
 
+
+
     The Win16 client is a true 32-bit protected mode application and 
+
     therefore requires Windows to be running in "386 extended" mode.
 
-    Beginning with v2.7112.444, the client can be configured to run
-    as a screen saver. That is, the client has a split personality:
-    it can be installed as a screen saver by simply copying it to 
-    the windows directory and renaming it "*.scr". When installed
-    as a screen saver (and when the screen saver becomes active) it 
-    will lauch *another* client in the background and launch *another* 
-    screen saver in the foreground. 
+
 
     The Win16 client will use any WinSock sockets implementation if 
+
     available, and will otherwise not use the network layer. A "lurk"
+
     feature may be made available in the future if the demand for it 
+
     is sufficiently high. Novell's WinSock implementation (TCPIP stack) 
+
     prior to version 5.00.207 (November 06, 1997) contains a bug that
+
     will manifest itself when attempting to resolve a hostname. Either
+
     use only IP addresses, or install the fix. (tcp1607.exe available
+
     from Novell support sites).
 
-    The Win16 client will search for winsock.dll in the following order:
-    The windows directory, then in the system directory, then the client's
-    directory and then along the search path as determined by the PATH= or 
-    SET PATH= statement active at the time Windows starts. Check you 
-    autoexec.bat as that is usually where it is set.
+
+
+    If winsock.dll is not already in memory when the client needs it,
+
+    it will be searched for in the following order: The windows directory, 
+
+    then in the system directory, then the client's directory and then 
+
+    along the search path as determined by the PATH= or SET PATH= 
+
+    statement active at the time Windows starts. Check your autoexec.bat 
+
+    as that is usually where it is set.
+
+
 
     "Mode" (eg -fetch, -flush, -benchmark etc) that are generally only 
+
     available as command-line options are accessable by right-clicking 
+
     the client window.
+
+
 
     This client is not optimized for speed but for "niceness".
 
+
+
     Note: DOS, Win16 and OS/2 ports may squawk about a missing TZ= variable
+
     in the environment. Set it in your autoexec (or wherever). For example:
+
     "SET TZ=EST+5" for eastern standard time or "SET TZ=EST+5DST" when 
+
     daylight savings time is in effect (ie in the summer). If you live on
+
     the other side of the zero meridian, ie east of Greenwich, England,
+
     your TZ will have a negative offset. For example CET-1 for Central 
+
     European Time, or NZT-12 if you live in New Zealand.
+
     
+
     TZ (TimeZone) is used by all (not only by the client) software that is 
+
     sensitive to time to properly compute the computer clock's offset to 
+
     UTC (aka GMT). If you have used the DOS client before, (and you do not 
+
     live in Great Britain or in East Africa) you probably also noticed that 
+
     the time was wrong. Well, now you know why: On MS-DOS, TZ is by default 
+
     set to PST+9 (Pacific Standard Time). Other DOSs have different defaults.
+
     Note that the timezone offsets are inverted from ones used in the Unix
+
     world - DOS adds the number of hours to local time to determine what
+
     GMT/UTC time is. Unix adds the offset to GMT/UTC to determine what 
+
     local time is.
+
+
 

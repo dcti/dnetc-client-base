@@ -1,41 +1,50 @@
 
- distributed.net client for AmigaOS or later.
- Released by Stefan `Blast' Smietanowski <blast@amiganet.org>
- Document revision $Id: readme.amiga,v 1.8 1999/10/11 18:41:41 cyp Exp $
+ distributed.net client for AmigaOS (68k/PPC)
+ Released by Oliver Roberts <oliver@futaura.co.uk>
+ Document revision $Id: readme.amiga,v 1.9 2000/07/11 02:38:38 mfeiri Exp $
                                                           
  Welcome to the distributed.net client.
 
  This document covers information specific to the client for AmigaOS.
- Refer to other enclosed documentatio or browse the online FAQ at
+ Refer to other enclosed documentation or browse the online FAQ at
  http://www.distributed.net/FAQ for non-platform-specific documentation.
 
-    0.0  System Requirements
-    1.0  Getting started
-    2.0  Platform/port specific notes
-    3.0  Thank you...
+    1.0  System requirements
+    2.0  Getting started
+    3.0  AmigaOS client specific notes
+         3.1 Setting the time zone
+         3.2 Myzar - GUI front-end for the client
+         3.3 Core selection (68k)
+    4.0  Credits & thank yous
 
- 0.0  System Requirements --------------------------------------------
+ 1.0  System requirements --------------------------------------------
 
      - AmigaOS 2.04 or greater (3.0 if you're running the PPC client)
-     - A TCP stack compatible with AmiTCP 3.0 or newer..
-       There are several. Miami for example.
+     - A TCP stack compatible with AmiTCP 3.0 or newer.
+       There are several, such as Miami, for example.
        Also AS225R2 with a special emulation library, look on the Amiga 
        effort homepage/misc section for the archive link (address below).
 
-  There are two versions of the client: One 68k version and one PPC version.
+    There are three versions of the client: a 68k version (with cores
+    optimized for each CPU) and two PPC versions (WarpOS and PowerUp).
+    Choose the PPC version according to your preferred PPC kernel.
 
      The 68k version requires:
-     - An 020 or higher. An 040 or preferably 060 is HIGHLY recommended.
+     - An 68000 or higher. An 040 or preferably 060 is HIGHLY recommended.
 
-     The PPC version requires:
+     The WarpOS PPC version requires:
      - A 603e or higher PPC processor. Tested on 603e and 604e.
-     - Phase5's ppc.library version 45.15 or higher.
-       Recommended you use at least 45.20 as that's what I use and it 
-       works fine for me.
+     - WarpUp Release 4.0 / powerpc.library 15.0 or higher.
 
- 1.0  Getting started ------------------------------------------------
+     The PowerUp PPC version requires:
+     - A 603e or higher PPC processor. Tested on 603e and 604e.
+     - Phase5's ppc.library version 46.28 or higher.
+     - Also works under WarpUp with PPCLibEmu 0.7e (although you
+       should really use the native WarpOS version instead).
+       
+ 2.0  Getting started ------------------------------------------------
 
-    Just unpack the client in a directory of your choice and fire it up.
+    Just copy the client into a directory of your choice and fire it up.
 
     If you have never run the client before, it will initiate the
     menu-driven configuration. Save and quit when done, the 
@@ -48,53 +57,96 @@
     A list of command line options is available by starting the client 
     with '-help'.
 
-    If you prefer to have the client start automatically when the computer
-    is powered up, run the client with the -install switch. To remove the
-    client from the startup folder, run the client with -uninstall.
+    A detailed guide to the various configuration options is available
+    online at http://www.distributed.net/FAQ/
 
-    A "Complete Step-by-Step Guide to Running Your First Client" is 
-    available at http://distributed.net/FAQ/
-
- 2.0  client for AmigaOS specific notes ------------------------------------
+ 3.0  Notes ----------------------------------------------------------
 
     If you want to contribute to the Amiga RC5 Team Effort, visit the effort
-    homepage at http://homepage.cistron.nl/~ttavoly/rc5, it contains all the
-    necessary info along with extensive information on usage, configuration,
-    trouble shooting etc. 
+    homepage at http://distributed.amiga.org/, it contains all the necessary
+    info along with extensive information on usage, configuration, trouble
+    shooting etc. 
     
     IMPORTANT: the client's default distributed.net ID is rc5@distributed.net.
     Unless you change this your work is wasted effort.
     The usage section on the Amiga effort pages contains all you need to
     know to change this.
 
- 3.0  THANK YOU -----------------------------------------------------------
+  3.1  Setting the time zone -----------------------------------------
+
+    The client always displays the current time in UTC - not your local
+    time!  For this to work correctly, you need to ensure your timezone
+    is set correctly. This can be done through the Workbench Locale
+    preferences program.  Of course, the drawback with using Locale is
+    that daylight savings are not accounted for. Ideally, I'd recommend
+    installing SetDST (util/time/SetDST.lha on Aminet) which will
+    handle it for you automatically - you need to use the SETLOCALE
+    feature. Alternatively, you can manually adjust the timezone in
+    Locale prefs whenever you start/end dst.  For example, if you are
+    in the UK, you would set the timezone to GMT when not in dst, and
+    to 1 hour from GMT (a zone to the right) when in dst.
+
+  3.2  Myzar - GUI front-end for the client --------------------------
+
+    Myzar is a GUI front-end for the Amiga port of client. It is not a
+    simple interface to start/stop the shell-based client, but a complex
+    and full-featured front-end. No more ugly-looking shells floating
+    around your WB, filled with unreadable data, and no more fiddling with
+    CLI parameters. And, more importantly, it makes using and running the
+    client so much easier.
+
+    If you're going to use this client, then I really do recommend that
+    you install Myzar too: http://www.crosswinds.net/~myzar/ . Note that
+    the new clients aren't fully compatible with Myzar 2.0 - you'll need
+    2.1 or higher for full functionality with the current clients.
+
+  3.3  Core selection (68k)
+
+    In most cases, you needn't worry about this section, as the 68k client
+    automatically selects the RC5 and OGR core code that is best to your
+    CPU.  For example, if your Amiga has an 060, the client will detect
+    this and use cores optimized for the 060.
+
+    However, it is possible that the 060 core may be faster on some 040
+    cards, than the auto-selected 040 optimized core.  So, 040 owners may
+    wish to try manually selecting the 060 core to see if it's any faster.
+    This can be done by firing the client up on configuration mode (use
+    the -config option) and selecting core #3 from the performance related
+    options menu.  If you do try this, please let me know (via the address
+    at the top of this readme) your conclusions and type of 040 card that
+    you are using.
+
+    For OGR, the auto-selected core is most likely going to be the fastest
+    for you machine.  However, if you wish to experiment by trying the
+    cores for other CPUs, you can do so by using the '-c' command line
+    option (the OGR core cannot be selected in the config menu).  For
+    example '-c ogr 0' will force the client to use the 68000 OGR core
+    Beware: do not attempt to use any of the cores that are meant for
+    higher CPUs, as this will cause a crash.  For example, if you own an
+    030, you can try the 68000 and 020 cores, but not the 040/060 cores.
+
+ 4.0  Credits & thank yous--------------------------------------------
  
-    I just have to say Thank You to:
+    -- Thanks to everybody involved in the development of the Amiga client
+       and the beta testing process, who have helped make it what it is,
+       including (in random order):
 
-    -- Steve Krueger - The man behind SAS/C and SAS/C for PPC.
-       You helped a lot with the client from the compiler's point of view.
-       Also, you were right. A big THANK YOU.
+       - Kriton Kyrimis (multi-core 68k OGR cores, support and ideas)
+       - Tony Preston (support, testing, views and overall managament)
+       - John Girvin (68k optimized RC5 cores)
+       - Roberto Ragusa (PPC 604e optimized RC5 core)
+       - Stefan Smietanowski (for porting previous clients to the Amiga -
+         some crucial parts of his code are used in this version)
 
-    -- My whole betatesting team - Oliver Wagner.
-       You've tested more unstable clients than anyone would dare to. You've
-       crashed, you've had system problems due to the PPC client and you 
-       never said "I don't want to test the client anymore". 
-       Another THANK YOU.
+    -- Roberto Patriarca - author of the Myzar GUI front-end.
 
     -- Thomas Tavoly - coordinator of the Amiga RC5 Team.
-       How many members are there now? Slightly over 1000 members? Well, 
-       without you there wouldn't be. Even when I scared them away with my 
-       unstable releases :). Keep up the good work!
-
-    -- Various people emailing about the client.
-       There are generally three kinds of people:
-       1. The "There's a bug in there, I think it could be related to ..." 
-          or "maybe you should try .." person. - You know you're appreciated.
-       2. The "Good work! Keep it up!" person - Can't say much except it's 
-          higly appreciated, makes me feel I've got somebody behind me.
-       3. The "You suck! Fix the client! It doesn't work!" - for you I can 
-          only say: GET A LIFE. I'm doing my best.
 
     -- The whole Amiga RC5 Team
        Without you there wouldn't be much of a point in doing the client, 
        so keep on cracking! Maybe YOU can find the key with the client.
+
+    -- Finally, thanks to everybody involved with the gcc and libnix ports
+       for AmigaOS, especially for version for WarpUp.  Thanks also to
+       Sebastian Jedruszkiewicz for help with the PowerUp version of the
+       client.

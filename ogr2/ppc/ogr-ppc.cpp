@@ -4,8 +4,8 @@
  *
  */
 
-const char *ogr_cpp(void) {
-return "@(#)$Id: ogr.cpp,v 1.7 2000/07/11 02:33:45 mfeiri Exp $"; }
+const char *ogr_vec_cpp(void) {
+return "@(#)$Id: ogr-ppc.cpp,v 1.2 2000/07/11 02:34:42 mfeiri Exp $"; }
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,7 +30,7 @@ static int OGR[] = {
   /* 11 */   72,  85, 106, 127, 151, 177, 199, 216, 246, 283,
   /* 21 */  333, 356, 372, 425, 480, 492, 553, 585, 623
 };
-static char first[65537];  /* first blank in 16 bit COMP bitmap, range: 1..16 */
+//static char first[65537];  /* first blank in 16 bit COMP bitmap, range: 1..16 */
 static U bit[200];         /* which bit of LIST to update */
 
 #define COMP_LEFT_LIST_RIGHT(lev,s)                             \
@@ -197,7 +197,7 @@ static int found_one(struct State *oState)
 
 static int ogr_init()
 {
-  int r, i, j, k, m;
+  int r, i;
   
   r = init_load_choose();
   if (r != CORE_S_OK) {
@@ -207,15 +207,6 @@ static int ogr_init()
   for( i=1; i < 200; i++) {
      bit[i] = 0x80000000 >> ((i-1) % 32);
   }
-
-  /* first zero bit in 16 bits */
-  k = 0; m = 0x8000;
-  for (i = 1; i <= 16; i++) {
-    for (j = k; j < k+m; j++) first[j] = (char)i;
-    k += m;
-    m >>= 1;
-  }
-  first[0xffff] = 17;     /* just in case we use it */
 
   return CORE_S_OK;
 }
@@ -362,6 +353,16 @@ static void dump_ruler(struct State *oState, int depth)
 }
 #endif
 
+static inline int first_asm (register int i)
+{
+  #if (CLIENT_OS == OS_MACOS)
+  return __cntlzw(~i)+1;
+  #else
+  asm ("not %0,%0;cntlzw %0,%0;addi %0,%0,1" : : "r" (i));
+  return i;
+  #endif
+}
+
 static int ogr_cycle(void *state, int *pnodes)
 {
   struct State *oState = (struct State *)state;
@@ -412,27 +413,20 @@ stay:
 #ifdef OGR_DEBUG
     if (oState->LOGGING) printf("comp0=%08x\n", comp0);
 #endif
-    if (comp0 < 0xffff0000) {
-      s = first[comp0 >> 16];
-    } else {
       if (comp0 < 0xfffffffe) {
         /* s = 16 + first[comp0 & 0x0000ffff]; slow code */
-        s = 16 + first[comp0 - 0xffff0000];
+        s = first_asm(comp0);
+        if ((lev->cnt2 += s) > limit) goto up; /* no spaces left */
+        COMP_LEFT_LIST_RIGHT(lev, s);
       } else {
         /* s>32 */
         if ((lev->cnt2 += 32) > limit) goto up; /* no spaces left */
         COMP_LEFT_LIST_RIGHT_32(lev);
         if (comp0 == 0xffffffff) goto stay;
-        goto skip_out;
       }
-    }
 #ifdef OGR_DEBUG
     if (oState->LOGGING) printf("depth=%d s=%d len=%d limit=%d\n", depth, s+(lev->cnt2-lev->cnt1), lev->cnt2+s, limit);
 #endif
-    if ((lev->cnt2 += s) > limit) goto up; /* no spaces left */
-
-    COMP_LEFT_LIST_RIGHT(lev, s);
-skip_out:
 
     /* New ruler? */
     if (depth == oState->maxdepthm1) {
@@ -538,17 +532,16 @@ static int ogr_cleanup()
 
 CoreDispatchTable *ogr_get_dispatch_table()
 {
-  dispatch_table.init      = ogr_init;
-  dispatch_table.create    = ogr_create;
-  dispatch_table.cycle     = ogr_cycle;
-  dispatch_table.getresult = ogr_getresult;
-  dispatch_table.destroy   = ogr_destroy;
+  dispatch_table.init      = &ogr_init;
+  dispatch_table.create    = &ogr_create;
+  dispatch_table.cycle     = &ogr_cycle;
+  dispatch_table.getresult = &ogr_getresult;
+  dispatch_table.destroy   = &ogr_destroy;
 #if 0
-  dispatch_table.count     = ogr_count;
-  dispatch_table.save      = ogr_save;
-  dispatch_table.load      = ogr_load;
+  dispatch_table.count     = &ogr_count;
+  dispatch_table.save      = &ogr_save;
+  dispatch_table.load      = &ogr_load;
 #endif
-  dispatch_table.cleanup   = ogr_cleanup;
+  dispatch_table.cleanup   = &ogr_cleanup;
   return &dispatch_table;
 }
-

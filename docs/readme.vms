@@ -1,12 +1,14 @@
 
  distributed.net client for VMS/OpenVMS.
  Released by David Sowder <davids@cosmic.swau.edu>
- Document revision $Id: readme.vms,v 1.3 1999/10/11 18:41:41 cyp Exp $
+ Document revision $Id: readme.vms,v 1.4 2000/07/11 02:38:54 mfeiri Exp $
+
                                                           
  Welcome to the distributed.net client.
 
  This document covers information specific to the client for VMS/OpenVMS.
  Refer to other enclosed documentation or browse the online FAQ at
+
  http://www.distributed.net/FAQ for non-platform-specific documentation.
 
     1.0  Getting started
@@ -16,10 +18,13 @@
   only runs on the Alpha architecture.
 
  1.0  Getting started ------------------------------------------------
+
  
+
     Just unzip the client's archive preferrably with UNZIP running on 
     your VMS machine as transferring from a non-VMS machine may be 
     problematic.
+
 
     Type 
     @GO-VMS
@@ -31,23 +36,36 @@
     options, try a different set of options by typing @GO-VMS RECHOOSE
 
     If you have never run the client before, it will initiate the
+
     menu-driven configuration. Save and quit when done, the 
+
     configuration file will be saved in the same directory as the 
+
     client. Then, simply restart the client. From that point on it will 
+
     use the saved configuration.
+
     
+
     The configuration options are fairly self-explanatory and can be run
+
     at any time by starting the client with the '-config' option.
+
     A list of command line options is available by starting the client 
+
     with '-help'.
 
+
+
  2.0  Notes: ---------------------------------------------------------
+
 
     Changes:
     12/22/97 - Added UCX and nonet support
     12/22/97 - Added linking to local shared libraries
     12/22/97 - Reworked go-vms.com for menu driven executable selection
     12/24/97 - Added forgotten multinet.opt file and cleaned up go-vms.com
+
 
   If you have any problems or questions, Email me at the address above.
   I'm working on a VAX port, but it's a very much a "when I get the time

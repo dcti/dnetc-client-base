@@ -1,0 +1,104 @@
+ distributed.net client for MacOS (7/8/9)
+
+ Welcome to the distributed.net client.
+
+ This document covers information specific to the client for MacOS.
+ Refer to other enclosed documentation or browse the online FAQ at
+ http://www.distributed.net/FAQ or http://www.distributed.net/docs/.
+
+    1.0  Getting started
+    2.0  The faceless client
+    3.0  MacOS client specific FAQ
+   
+ 1.0  Getting started ------------------------------------------------
+
+    Just unstuff the client and fire it up.
+
+    If you have never run the client before, it will initiate the
+    text-driven configuration. Save and quit when done, the 
+    configuration file will be saved in the same directory as the 
+    client. Then, simply restart the client. From that point on it will 
+    use the saved configuration.
+
+    The configuration options are fairly self-explanatory and can be run
+    at any time by starting the client with the "Configure" menu item.
+
+    Additional guides to the various configuration options is available
+    online at http://www.distributed.net/docs/
+
+
+ 2.0  The faceless client --------------------------------------------
+
+    The faceless version of the client works exactly the same way as
+    the regular client, but it does it without showing up anywhere on
+    the users screen which some users found to be annoying.
+    
+    Since the faceless version of the client does not draw anything on
+    the screen you are not able to set any preferences. For this
+    reason you need to leave the faceless client in the same directory
+    as the regular client. The preferences file "dnetc.ini" of the
+    regular client will then be used by the faceless version too.
+
+    As of now, the only way to control the faceless client is using
+    AppleScript. Some sample scripts are included in this distribution
+    to illustrate this feature.
+
+    To maximize the nondisturbing userexpirience we recommend to
+    create an alias to the faceless client and place it in your
+    "Startup Items" folder inside your "System Folder". Do not move
+    the faceless client itself out of the folder that contains the
+    regular client, since the facless client needs to use the regular
+    clients "dnetc.ini" preference file!
+
+
+ 3.0  MacOS client specific FAQ --------------------------------------
+
+    Q: What are the changes in this version of the client?
+    A: Read CHANGES.txt as included with this distribution!
+
+    Q: Where is the (what-used-to-be-) GUI version of the client?
+    A: The "GUI" features not in the non-"GUI" client, are/will be
+       release as portable, separate utilities. The code will be 
+       "Open Source". As always, user contributions are very welcome.
+       See http://www.distributed.net/download/addons.html
+
+    Q: How do I check that the faceless client is running?
+    A: You will need a third party utility such as "Peek-a-Book" to see
+       faceless background applications such as the faceless dnetc.
+       
+    Q: How do I quit the faceless client?
+    A: Since the faceless client obviously doesnt provide any interface
+       you have to use one of the provided sample AppleScripts to quit
+       the client or to trigger any other events. 
+
+    Q: How can I setup the client that it starts up automatically when
+       I boot up my computer?
+    A: Create an alias to the client and place it in the "Startup Items"
+       inside your "System Folder".
+         
+    Q: I want to run the client and XYZ simultaneously, but XYZ
+       destroys my crunch rate. What can I do?
+    A: Uninstall XYZ :)
+         
+    Q: The client seems to slow down my application XYZ. What can I do?
+    A: Set the client to a lower priority setting. Or include that other
+       application XYZ in the list of "pause-if-running" settings.
+    
+    Q: I want to run the client as a screen saver. How do I do this?
+    A: Right now the only way to install the client as a screensaver is
+       to use "MacDim" or other screensavers that support execution of
+       any generic application as a screensaver module.
+
+    Q: The Edit menu and all the copy&paste commands are missing.
+    A: Yes, you are right. All you can do right now is to select some
+       text and drag&drop it outside the window.
+
+    Q: Can I share my client's buffers with other (non-macos) clients?
+       ["sharing" is simultaneous access via file-sharing, but also 
+       manual transfer of the buffer files from one machine to another]
+    A: Theoretically, yes. However this is not recommended.
+
+    Q: How do I completely remove the this client from my system?
+    A: Just delete the folder that contains the client and remove any
+       aliases to the client that you might have created.
+

@@ -1,0 +1,13 @@
+
+The Solaris/x86 image is built with GCC 2.8.1, and must be dynamically
+linked against GNU's libstdc++.so.2.8.1 in order to work. We've
+included the library in this tarball, and you should ensure that
+either:
+
+ - the library is in the same directory as the client, or
+ - you set the environment variable LD_LIBRARY_PATH to include the
+   directory containing the library
+
+
+chrisb@distributed.net
+

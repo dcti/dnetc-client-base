@@ -1,18 +1,18 @@
-==========================================================================  
-Version bump guide: 
-==========================================================================  
+==========================================================================
+Version bump guide:
+==========================================================================
 
  "2.7100.123-XXX-YYMMDDHH"
   | | |   |   |  `------'
   | | |   |   |     |
   | | |   |   |  bugzilla format build time stamp (time of newest module)
   | | |   |   |  Please report this when making bug reports.
-  | | |   |   `- Build flags: GUI/CLI, SMP-aware, etc. 
+  | | |   |   `- Build flags: GUI/CLI, SMP-aware, etc.
   | | |   |      Please report this when making bug reports.
-  | | |   `----- Changes in /common/ code, or simply a significant number 
+  | | |   `----- Changes in /common/ code, or simply a significant number
   | | |          of bug fixes, gets a "build fraction" change.
-  | | `--------- New cores, for any platform, will be accompanied by a 
-  | |            "build version" change, ie 2.7103.x to 2.7104.x. 
+  | | `--------- New cores, for any platform, will be accompanied by a
+  | |            "build version" change, ie 2.7103.x to 2.7104.x.
   | |            New significant feature(s) also increment build version.
   | `----------- A "client contest" change follows a code freeze at which
   |              point the client is assumed to be stable. Code that
@@ -21,21 +21,123 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.10 2000/01/08 23:54:27 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.11 2000/07/11 02:38:28 mfeiri Exp $
 ==========================================================================
 
 2.8000
 ------
 
+2.8010.463  imp: all: client always fetches the largest packet possible
+                 and then splits it locally into sub-packets. Greatly
+                 improves network throughput and reduces server load.
+            fix: win32: .462 client was taking long to shutdown.
+
+2.8010.462  fix: many: removed os-level file locking introduced in .459,
+                 didn't work reliably on some file systems, and was not
+                 really necessary anyway.
+            chg: some: smoother ^C and break handling for win16/dos/amigaos
+
+2.8010.461  new: x86: RC5/K7 core from Holger Boehring <HBoehring@hboehring.de>
+            fix: x86: Athlon Thunderbird correctly detected now.
+            fix: all: some pre-2.8000 .ini settings were not being upgraded.
+            new: macosx: 2 separate builds for MacOSX and MacOSXServer
+            new: macosx: the AltiVec cruncher is now available on MacOSX
+            new: macosx: MP support is now available under MacOSX
+            new: macosx: full LURK support under MacOSX
+            chg: macos: GUSI is in again but this time with OT support
+            new: x86-NetBSD/x86-FreeBSD/Linux support battery-power checking
+                 (hint to *BSD kernel teams: add sysctl support to apm)
+            chg: AmigaOS: now using the PowerPC OGR core
+            chg: AmigaOS: lots more general changes and fixes
+
+2.8009.460  new: ppc: new OGR PowerPC core by nate is about 12% faster
+            chg: 68k: modified glue code results in up to 4% more speed
+            chg: macos: support for all macs ever built (even 68000 based)
+            new: macos: the macos client can now run "detached"
+            fix: macos: a different networking library delivers many benefits
+            chg: macos: priority adjustment works fine now
+            new: macos: the client is now controlable through AppleScript
+            new: macos: FBA/daemon version
+            chg: macos: process detection for "pause-if-running" now works
+            new: "pause-if-CPU-temperature-exceeds" (not on all platforms)
+            new: "pause-if-running-on-batterypower" (not on all platforms)
+            new: macosx: a native (BSD subsystem) client for Server and DPs
+            chg: some: OGR is auto-disabled for non-preemptive OSs running on 
+                 low-end cpus. http://www.distributed.net/faq/cache/188.html
+            fix: NetWare: all MP (migration) issues resolved.     
+            fix: most: user changes to time-of-day won't affect "Summary:"
+            chg: AmigaOS: updated 68k cores and many changes made to bring
+                 the Amiga version up to date
+            chg: AmigaOS: switched from the sas/c compiler to gcc
+            new: AmigaOS: native WarpUp/WarpOS client for PowerPC
+            new: ppc: additional rc5 core optimized specifically for 604
+                 series PowerPCs - about 2% faster, thanks to
+                 Roberto Ragusa <robertoragusa@technologist.com>
+
+2.8008.459  new: x86: new rc5 K7 core thanks to
+                 Sean Stanek <vulture@iastate.edu>
+            new: all: the "update frequently (-frequent)" has been superceded
+                 by "additional buffer-level checking". The new option
+                 provides better control and supports one new mode
+                 "update on per-project buffer exhaustion" which enables
+                 old-style single-contest crunching (disables rotation).
+                 See also: http://www.distributed.net/faq/cache/176.html
+            new: all: out-buffer thresholds have been removed entirely;
+                 use the "additional buffer-level checking" to support
+                 updating/flushing more frequently than buffer exhaustion.
+            chg: all: time threshold uses fetch work threshold > 0 as minimum
+                 number of workunits to be fetched.
+            new: all: -btime <pn> <n> complements time-driven threshold
+            chg: all: -b[in] <pn> <n> now clears time threshold for <pn>.
+            new: all: exit flagfile filename is now configurable.
+            chg: macos: now supports all variants of System 7
+            fix: Linux: dynamic import of dns resolution functions for better
+                 glibc/libc cross compatibility (one shoe fits all again).
+            fix: winnt: pause on process handling optimized and rewritten.
+            chg: all: checkpointing now done at 10% or 10 minute intervals,
+                 instead of 10% with 10 minute minimum.
+            fix: all: project switchover no longer 'hangs'.
+            fix: all: OGR nodecount network packet ordering fixed.
+            fix: all: reported OGR noderate is no longer unacceptably high.
+            fix: all: partially complete OGR stubs are now loaded first. 
+            fix: all: will now flush to a proxy/server that is empty.
+            fix: all: setting clock back during network ops could hang.
+            fix: all: block counts during fetching do not fluctuate anymore.
+            fix: FreeBsd: timezone use for automatic keyserver pick works.
+            chg: many: file system locking on buffers where supported.
+
+2.8007.458  fix: all: the annoying OGR 1 node bug finally fixed
+            new: all: client can be configured a) to restart itself
+                 on .ini change; b) (on most platforms) to pause itself as
+                 long as process/executable x|y|z|... is running.
+            fix: win32: use NULL DACLs for CreateMutex.
+            chg: macos: numerous minor interface improvements
+            new: macos: multiprocessor support (MP 2.x enhanced)
+
+2.8006.457  fix: BeOS: work not being saved on exit
+            fix: *nix: -config hangs client
+
+2.8006.456  chg: all: OGR cores reactivated.
+            upd: BeOS: x86/ppc clients brought up to date
+
+2.8005.455  fix: all: client not rotating to next project
+            fix: win32/16: all font issues resolved
+            fix: all: fix for cosmetic 'Retrieved n of 4billion' message
+            fix: all: duplicate 'nettimeout' setting in .ini
+            chg: many: CSC cores removed from (some) clients
+
+2.8005.454  fix: all: infinite fetching from 'nowhere'.
+            fix: all: undid that persistant log open change made in .451
+
 2.8005.453  chg: client supports thresholds either as a time-factor, or
                  as a workunit-factor. -config documentation has more info.
-		 A review of your settings is *strongly* advised.
+                 A review of your settings is *strongly* advised.
 
-2.8004.452  chg: all: .ini option spin off from the generic [parameters] 
+2.8004.452  chg: all: .ini option spin off from the generic [parameters]
                  section into subsections is now complete. phew! Nothing
-		 left except "id".
-	    chg: reverted log file opening on win/dos/netware/os2 to 
-	         non-shared.
+                 left except "id".
+            chg: reverted log file opening on win/dos/netware/os2 to
+                 non-shared.
 
 2.8004.451  fix: OS/2: Fixed crash in -config by using different API calls
             fix: OS/2: included the forgotten CSC-MMX core.
@@ -44,7 +146,7 @@ Version change log: $Id: CHANGES.txt,v 1.10 2000/01/08 23:54:27 cyp Exp $
             fix: solaris x86: multithreading works correctly now (uses
                  native threads bound to LWPs instead of pthreads)
             chg: log file is opened shared on win/dos/netware/os2
-	    chg: log file is opened with persistant handles on *nix
+            chg: log file is opened with persistant handles on *nix
 
 2.8004.450  new: Mac OS port including Altivec core support (twice as
                  fast as MMX on otherwise comparable hardware)
@@ -53,11 +155,11 @@ Version change log: $Id: CHANGES.txt,v 1.10 2000/01/08 23:54:27 cyp Exp $
                  as service to allow the rest of the system to fire up first
             fix: all: not being able to -update if offlinemode
             fix: solaris: time stamps/elapsed time on MP boxes
-            fix: all: clients will again reset work if the core # changes 
+            fix: all: clients will again reset work if the core # changes
                  (functionality was lost in 2.8002.446 - reset if client
                  version or platform changes was unaffected).
 
-2.8003.448  new: x86: 50% faster CSC MMX core added. '6bit - bitslice' 
+2.8003.448  new: x86: 50% faster CSC MMX core added. '6bit - bitslice'
                  replaces '6bit - called'
             fix: all: lines in mail/logfile are no longer truncated
             fix: all: pause by signal (by user) and pause by filename
@@ -67,7 +169,7 @@ Version change log: $Id: CHANGES.txt,v 1.10 2000/01/08 23:54:27 cyp Exp $
                  time again
             fix: x86: Cyrix 6x86 auto-selects CSC core #3 now.
             imp: all: threads no longer check external flags for shutdown/
-                 pause state. Flags are 'pushed' instead, which reduces 
+                 pause state. Flags are 'pushed' instead, which reduces
                  cache footprint.
             fix: win32: win95B doesn't have a 'Lucinda Console' TrueType
                  font, so client avoids it now.
@@ -76,9 +178,9 @@ Version change log: $Id: CHANGES.txt,v 1.10 2000/01/08 23:54:27 cyp Exp $
                  overshoot the end of the bench period)
             chg: *nix: client setsid()s and dups std handles to /dev/null
                  when started with -quiet/-hide
-            fix: dun config collision with no-networking resolved 
+            fix: dun config collision with no-networking resolved
                  (dun was still active even if the networking was disabled)
-            
+
 2.8002.447  chg: all: firewall settings in the .ini have moved to the network
                  section. socks user:pass is now saved encoded
             chg: if appropriate, 'Summary:' now also shows # of work units
@@ -88,12 +190,12 @@ Version change log: $Id: CHANGES.txt,v 1.10 2000/01/08 23:54:27 cyp Exp $
 2.8002.446  new: all: client is now called 'dnetc'
             new: all: OGR capability
             new: all: CSC capability
-            chg: all: more .ini options have been spun off from the 
+            chg: all: more .ini options have been spun off from the
                  generic [parameters] section into subsections
             chg: all: each project has its own buffer settings (threshold etc)
-            chg: all: cputype option has been phased out in favor of core 
+            chg: all: cputype option has been phased out in favor of core
                  names/ids and each project can have its own core type
-            chg: all: -benchmark and -benchmark2 can now be limited to a 
+            chg: all: -benchmark and -benchmark2 can now be limited to a
                  single project, eg '-benchmark csc' to bench only csc
             new: all: '-bench [project]' benches all cores for a given
                  project (or all projects if no project is specified)
@@ -103,9 +205,9 @@ Version change log: $Id: CHANGES.txt,v 1.10 2000/01/08 23:54:27 cyp Exp $
             chg: win32: service ID is 'dnetc' for client, 'dnetd' for pproxy
             new: netware: complete rewrite of netware specific code
             new: *nix: client distribution includes a man page
-            chg: all: auto keyserver name resolution now allows as many 
+            chg: all: auto keyserver name resolution now allows as many
                  retries as there are addresses for a name.
-            rel: Mon, 15 Nov 1999 18:19:51 -0600 
+            rel: Mon, 15 Nov 1999 18:19:51 -0600
                  http://lists.distributed.net/hypermail/announce/0075.html
 
 2.7100
@@ -117,7 +219,7 @@ Version change log: $Id: CHANGES.txt,v 1.10 2000/01/08 23:54:27 cyp Exp $
             imp: win16: scheduling and idle detection has been rewritten
             new: win16/win32: client archive includes a screen saver. When
                  run some _other_ screen saver in the foreground and start
-                 start client in the background. It stops the client when 
+                 start client in the background. It stops the client when
                  deactivated.
             new: win32: client will pause itself while it sees defrag running.
             new: FreeBSD: crunchers are now SMP aware (FBSD 3.0 and greater)
@@ -134,7 +236,7 @@ Version change log: $Id: CHANGES.txt,v 1.10 2000/01/08 23:54:27 cyp Exp $
 2.7109.441  fix: win32cli shutdown if not hidden and not service :)
 2.7109.440  fix: win32cli shutdown for win95 if hidden or service
             fix: all: proxified HTTP works again
-            new: all: Big packet (>8*2^28) support (requires proxy 306 or 
+            new: all: Big packet (>8*2^28) support (requires proxy 306 or
                  newer). Support is enabled only if the 'preferred-
                  packet-size' is greater than 31.
                  *Warning*: do not share buffers between clients that have
@@ -152,7 +254,7 @@ Version change log: $Id: CHANGES.txt,v 1.10 2000/01/08 23:54:27 cyp Exp $
             new: all: --import option to merge buffer files
             chg: all: checkpt interval is now the greater of 10min/10% change
             chg: all: coalescing flush is no longer supported
-            imp: all: socket buffer size is increased if necessary which 
+            imp: all: socket buffer size is increased if necessary which
                  improves network throughput on non-unix platforms
 2.7106.436  fix: win32gui:Percent bar in hidden mode reenabled
             fix: win32gui:Log Grapher now allows end date to be set
@@ -161,15 +263,15 @@ Version change log: $Id: CHANGES.txt,v 1.10 2000/01/08 23:54:27 cyp Exp $
 2.7106.436  fix: all: Randomprefix incrementation problem fixed.
 2.7106.435  new: Linux/FreeBSD: Added lurk functionality
                  Includes device (eth*,ppp*,sl*) masking support
-2.7105.432  fix: OS2: EMX & lurk mode changes. 
+2.7105.432  fix: OS2: EMX & lurk mode changes.
             fix: OS2: -(un)install honors -quiet
-2.7105.432  new: win16/32: Connection error message support added for 
+2.7105.432  new: win16/32: Connection error message support added for
 2.7105.432  new: all: -1 for nettimeout forces blocking network I/O
-2.7105.432  new: x86: IDT WinChip 2 added to CPU list. 
+2.7105.432  new: x86: IDT WinChip 2 added to CPU list.
             new: x86: 4% faster MMX DES core added.
 2.7103.430  chg: all: revert back from old "distributed.net ID" phrasing.
             new: x86: 50% faster DES MMX core added.
-2.7103.427  new: Win32/Alpha: SMP support added for Alpha/Win32. 
+2.7103.427  new: Win32/Alpha: SMP support added for Alpha/Win32.
             imp: RISCOS: processor detection and scheduling improved.
 2.7103.425  new: all: Single checkpoint used for all contests.
 2.7102.422  imp: x86: Stripped one instruction in all x86 rc5 cores
@@ -179,9 +281,9 @@ Version change log: $Id: CHANGES.txt,v 1.10 2000/01/08 23:54:27 cyp Exp $
 2.7102.421  imp: MacOS: Many, many changes to merge MT and non-MT clients.
 2.7102.421  imp: FreeBSD, RISC OS x86 fixes.
 2.7102.421  new: all: "Coalescing" flush added, with notable speed increase.
-            new: win32/win16/*nix: -kill/-shutdown, -hup/-restart 
-2.7102.421  fix: IRIX: MT fixed. 
-            imp: RISC OS: Many x86 coprocessor changes. 
+            new: win32/win16/*nix: -kill/-shutdown, -hup/-restart
+2.7102.421  fix: IRIX: MT fixed.
+            imp: RISC OS: Many x86 coprocessor changes.
             fix: MacOS: Block count and processor id bug fixed.
 2.7102.421  new: x86: Added a new self-modifying 386/486 core
 2.7102.420  fix: *nix: Fixed -hide/-quiet for unix'sh clients
@@ -194,7 +296,7 @@ Version change log: $Id: CHANGES.txt,v 1.10 2000/01/08 23:54:27 cyp Exp $
             new: all: the number of threads is now unlimited
             new: all: "non-threaded" clients are now threaded :)
                  non-threaded clients use an internal round-robin
-                 mechanism but are obviously not SMP-aware. 
+                 mechanism but are obviously not SMP-aware.
 2.7100.418  fix: all: Randomprefix is now changed from buffer
                  files; offline clients will now generate
                  from the "correct" randomprefix.
@@ -210,12 +312,12 @@ Version change log: $Id: CHANGES.txt,v 1.10 2000/01/08 23:54:27 cyp Exp $
                  specified *key* proxy
 2.7100.418  chg: Priority scale changed to 0-9. Old OS/2 priority code
                  removed. Win32gui option checking fixes.
-2.7100.418  chg: Ultrix changes. 
+2.7100.418  chg: Ultrix changes.
             new: ARM clients now support 3 cores.
-2.7100.418  new: Multi-core support added for all 68k platforms. 
+2.7100.418  new: Multi-core support added for all 68k platforms.
                  2 new 68k cores implemented.
-2.7100.418  new: SIGHUP handling implemented. 
-            chg: Beta client timeout implemented. 
+2.7100.418  new: SIGHUP handling implemented.
+            chg: Beta client timeout implemented.
             chg: AmigaOS changes.
 2.7100.418  chg: Block size selection changed to support slow CPUs.
 2.7100.418  new: RC5 MMX cores are now in place. 50% speed
@@ -239,33 +341,33 @@ Version change log: $Id: CHANGES.txt,v 1.10 2000/01/08 23:54:27 cyp Exp $
 2.7100.416  chg: des-ii-2 will be ignored in future des contests.
 2.7100.416  chg: Many DYNIX fixes.
 2.7100.416  fix: win32gui: Change to fetch, flush, and update to be verbose
-2.7100.416  fix: OS/2: Got new version of Watcom for OS/2, now able to 
-                 compile MMX core and build the new version without a 
+2.7100.416  fix: OS/2: Got new version of Watcom for OS/2, now able to
+                 compile MMX core and build the new version without a
                  major speed decrease in both the rc5 and des cores.
 2.7100.416  fix: fixed -runbuffers behaviour.
-2.7100.416  chg: RISC OS Updates. 
+2.7100.416  chg: RISC OS Updates.
             new: -cpuinfo added.
 2.7100.416  fix: patched a possible divide by zero race condition that
-                 could occur when two or more clients attempt to flush 
-                 a shared buffer where file locking cannot be enforced 
+                 could occur when two or more clients attempt to flush
+                 a shared buffer where file locking cannot be enforced
 2.7100.416  fix: win32gui will again only respect "runhidden" if it is
                  auto-launched on startup (via -guistart)
 2.7100.416  fix: Fixed with .ini name not following .exe's name (again).
 2.7100.416  new: Even FASTER DES MMX cores added to x86 clients!
-2.7100.416  new: win32gui fetch/flush menu options can now occur 
+2.7100.416  new: win32gui fetch/flush menu options can now occur
                  without halting client operations.
-2.7100.415  fix: win32gui thread priority of message thread increased 
+2.7100.415  fix: win32gui thread priority of message thread increased
                  to higher priority.
 2.7100.415  new: Automatic processor count on Solaris & Linux added.
 2.7100.415  fix: Bugs with exitfile handling present in 414 have been fixed.
 2.7100.415  new: Added DES MMX cores to x86 clients - thanks go out to
                  Remi Guyomarch and Bruce Ford who made this possible.
-2.7100.413  fix: Fixed problems in 413 with .ini name not following .exe name 
+2.7100.413  fix: Fixed problems in 413 with .ini name not following .exe name
             fix: rc5 outbuffer being set incorrectly to buff-out.des
 2.7100.413  fix: More SMTP log mailing overriding offline mode fixes.
             fix: Secondary intel CPUs now identified correctly.
 2.7100.413  fix: lurk is now more verbose and acts the same way in win32/os2
-2.7100.413  fix: Fixed -runbuffers bug that caused invalid block info 
+2.7100.413  fix: Fixed -runbuffers bug that caused invalid block info
                  to be printed on screen after buffer exhaustion.
 2.7100.413  fix: Fixed the pause file bug in non-mt clients
 2.7100.413  fix: Fixed the -lurkonly problem when buffers ran out, and not
@@ -274,20 +376,20 @@ Version change log: $Id: CHANGES.txt,v 1.10 2000/01/08 23:54:27 cyp Exp $
 2.7100.413  chg: RISC OS and AmigaOS changes/fixes...
 2.7100.413  fix: Client Version # reporting in -config fixed
 2.7100.413  fix: Extra disk access caused by lurk mode reduced greatly
-2.7100.412  fix: win32gui Put a check on the mailmessage so it won't mail 
+2.7100.412  fix: win32gui Put a check on the mailmessage so it won't mail
                  when offline or lurk
 2.7100.412  fix: CommandLine options are now validated
 2.7100.412  fix: OS/2: Gave text output and exit a priority boost
-2.7100.412  fix: OS/2: Redid the lurk mode to only detect slip/ppp 
-2.7100.412  chg: Numerous win16 updates. 
-            new: Default AMD 486 core now Pentium core. 
+2.7100.412  fix: OS/2: Redid the lurk mode to only detect slip/ppp
+2.7100.412  chg: Numerous win16 updates.
+            new: Default AMD 486 core now Pentium core.
             chg: No longer attempts SMTP connections for mailing
                  logs if the client is in offline mode.
 2.7100.412  chg: Lots of internal changes to prepare for Win16 client
 2.7100.412  fix: Invalid cpu type value now ignored.
 2.7100.412  chg: Buffer path problem and buffer truncation issue addressed
 2.7100.412  fix: win32GUI autolaunches in minimized state correctly now
-2.7100.412  rel: Sat, 27 Jun 1998 17:09:24 -0500 (CDT) 
+2.7100.412  rel: Sat, 27 Jun 1998 17:09:24 -0500 (CDT)
                  http://lists.distributed.net/hypermail/announce/0049.html
 
 2.7000
@@ -305,13 +407,13 @@ Version change log: $Id: CHANGES.txt,v 1.10 2000/01/08 23:54:27 cyp Exp $
                      freqently.
 2.7024.409 98.05.13 Fixed CPU identification crash under *nix with
                      486 SX/DX/DX2.
-2.7024.409 98.06.08 More aesthetic fixes, SparcBSD fixes, fetch/flush  
+2.7024.409 98.06.08 More aesthetic fixes, SparcBSD fixes, fetch/flush
                      quietmode added to suppress proxy message.
 2.7023.408 98.06.08 General aesthetic fixes.
 2.7023.408 98.06.08 SOCKS5 authentication fixed.
 2.7022.407 98.06.01 -update bug is now cleaned up.
 2.7022.407 98.06.01 Lurk now works in OS/2
-2.7021.405 98.05.29 Improved RISC OS multitasking, as well as RISC OS GUI 
+2.7021.405 98.05.29 Improved RISC OS multitasking, as well as RISC OS GUI
                      support. Improved ARM CPU detection. Many AmigaOS changes.
 v2.7021.405 98.05.23 Resolved a number of signal handling problems from
                      Cyrus Patel
@@ -432,7 +534,7 @@ v2.7003.385 98.01.15 Don't process a partial block started on another
 v2.7002.384 98.01.13 RISCOS changes
 v2.7002.383 98.01.13 Banner problem
 v2.7002.382 98.01.13 Client shows size of block being processed
-v2.7002.382 98.01.13 Win32 clients no longer set processor affinity when 
+v2.7002.382 98.01.13 Win32 clients no longer set processor affinity when
                      when only 1 cpu is configured.
 v2.7002.382 98.01.13 Fixed RC5 blocks being sent to server with wrong contestid
                      when they were downloaded by older non-dual clients.
