@@ -25,14 +25,14 @@
 
 global          x86features,_x86features
 
-%define CPU_F_MMX             00000001h
-%define CPU_F_CYRIX_MMX_PLUS  00000002h
-%define CPU_F_AMD_MMX_PLUS    00000004h
-%define CPU_F_3DNOW           00000008h
-%define CPU_F_3DNOW_PLUS      00000010h
-%define CPU_F_SSE             00000020h
-%define CPU_F_SSE2            00000040h
-%define CPU_F_SSE3            00000080h
+%define CPU_F_MMX             00000100h
+%define CPU_F_CYRIX_MMX_PLUS  00000200h
+%define CPU_F_AMD_MMX_PLUS    00000400h
+%define CPU_F_3DNOW           00000800h
+%define CPU_F_3DNOW_PLUS      00001000h
+%define CPU_F_SSE             00002000h
+%define CPU_F_SSE2            00004000h
+%define CPU_F_SSE3            00008000h
 
 __CODESECT__
 _x86features:            
