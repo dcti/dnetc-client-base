@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.36 2003/08/23 19:05:48 mweiser Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.37 2003/09/07 18:26:02 kakace Exp $
 ==========================================================================
 
 2.9000
@@ -29,6 +29,10 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.36 2003/08/23 19:05:48 mweiser Exp
 
 2.9007-486  imp: nextstep: include assembler cores on x86
             imp: nextstep: fix console handling for config menu
+            fix: macosx: no longer reference _kIOMasterPortDefault (#3338)
+            fix: macosx: fix temperature monitoring (#3343)
+            new: macosx: use IOHWSensor to read CPU temperature (#3334)
+            imp: some: allow for fractional temperature thresholds (#3315)
 
 2.9006-485  new: decunix: cpu temperature detection
             new: macosx: use AppleCPUthermo to read CPU temperature (#3315)
