@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.3 1999/06/07 00:01:33 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.4 1999/06/10 23:43:52 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -881,12 +881,12 @@ static long __GetRawProcessorID(const char **cpuname)
   {
     unsigned int n;
     detectedname = "";
-    for ( n = 0; n < (sizeof(mips_chips)/sizeof(mips_chips[0])); n++ )
+    for ( n = 0; n < (sizeof(cpuridtable)/sizeof(cpuridtable[0])); n++ )
     {
-      if (detectedtype == mips_chips[n].rid )
+      if (detectedtype == cpuridtable[n].rid )
       {
         strcpy( namebuf, "MIPS " );
-        strcat( namebuf, mips_chips[n].name );
+        strcat( namebuf, cpuridtable[n].name );
         detectedname = (const char *)&namebuf[0];
         break;
       }
