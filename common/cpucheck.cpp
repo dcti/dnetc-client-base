@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.80 2002/03/21 18:52:21 sampo Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.81 2002/03/22 14:34:58 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -935,12 +935,12 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0580,  0x105, "K6-2"     },
           {  0x0590,  0x105, "K6-3"     },
           {  0x05D0,  0x105, "K6-2+/K6-3+" },
-          {  0x0610,  0x109, "K7"       }, 
-          {  0x0620,  0x109, "K7-2"     },
-          {  0x0630,  0x109, "K7-3" }, //spitfire, socket+128K on-die 
-          {  0x0640,  0x109, "K7-4" }, //thunderbird, 256K on-die cache
-          {  0x0660,  0x109, "K7-6" }, //athlon
-          {  0x0670,  0x109, "K7-7" }, //duron 
+          {  0x0610,  0x109, "K7 (Athlon)"            }, // slot A
+          {  0x0620,  0x109, "K7-2 (Athlon)"          }, // slot A
+          {  0x0630,  0x109, "K7-3 (Duron)"           }, // 64K L2
+          {  0x0640,  0x109, "K7-4 (Athlon)"          }, // Thunderbird, 256K L2
+          {  0x0660,  0x109, "K7-6 (Athlon XP/MP/-4)" }, // Palomino core, 256K L2
+          {  0x0670,  0x109, "K7-7 (Duron)"           }, // Morgan core = Palomino core w/ 64K L2
           {  0x0000,     -1, NULL       }
           }; internalxref = &amdxref[0];
       vendorname = "AMD";
