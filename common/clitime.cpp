@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.56 2002/04/12 23:56:32 andreasb Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.57 2002/05/31 18:22:34 jt Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -602,7 +602,7 @@ int CliGetMonotonicClock( struct timeval *tv )
       tv->tv_sec = (time_t)(hirestime / 1000000);
       tv->tv_usec = (unsigned long)(hirestime % 1000000);
     }
-    #elif (CLIENT_OS == OS_LINUX) /*only RTlinux has clock_gettime/gethrtime*/
+    #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) /*only RTlinux has clock_gettime/gethrtime*/
     {
       /* this is computationally expensive, but we don't have a choice.
          /proc/uptime is buggy even in the newest kernel (2.4-test2):

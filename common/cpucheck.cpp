@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.88 2002/05/05 15:12:50 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.89 2002/05/31 18:22:34 jt Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -107,7 +107,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       if (rc != 0 || cpucount < 1)
         cpucount = -1;
     }
-    #elif (CLIENT_OS == OS_LINUX)
+    #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
     {
       #if (CLIENT_CPU == CPU_ARM) || (CLIENT_CPU == CPU_MIPS)
         cpucount = 1;
@@ -1316,6 +1316,8 @@ static long __GetRawProcessorID(const char **cpuname )
 #if (CLIENT_CPU == CPU_MIPS)
 static long __GetRawProcessorID(const char **cpuname)
 {
+  static const ridPS2 = 99;      /* Please set a same rid of R5900 */
+
   static int detectedtype = -2L; /* -1 == failed, -2 == not supported */
   static const char *detectedname = NULL;
   static char namebuf[30];
@@ -1336,13 +1338,20 @@ static long __GetRawProcessorID(const char **cpuname)
                 { "R4400SC"       ,      14  },
                 { "R4400MC"       ,      15  },
                 { "R4600"         ,      16  },
+                { "R5900"         ,      99  },   /* ridPS2 */
                 { "R6000"         ,      17  },
                 { "R6000A"        ,      18  },
                 { "R8000"         ,      19  },
                 { "R10000"        ,      20  }
                 };
   
-  #if (CLIENT_OS == OS_LINUX)
+  #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
+
+  /*  CPU detect algorithm was changed:  2002-05-31 by jt@distributed.net  /
+  /   to suport R5900MM variants(PlayStation 2)                            /
+  /   SCPH-10000: R5900 V1.4   laters: R5900 V2.0                          /
+  /   Then I changed to detect space or null code.                        */
+
   if (detectedtype == -2L)
   {
     FILE *cpuinfo;
@@ -1390,8 +1399,13 @@ static long __GetRawProcessorID(const char **cpuname)
     {
       if (detectedtype == cpuridtable[n].rid )
       {
-        strcpy( namebuf, "MIPS " );
-        strcat( namebuf, cpuridtable[n].name );
+        if (detectedtype == ridPS2)
+          strcpy( namebuf, "MIPS R5900MM(PS2 Emotion Engine)" );
+        else
+        {
+          strcpy( namebuf, "MIPS " );
+          strcat( namebuf, cpuridtable[n].name );
+        }
         detectedname = (const char *)&namebuf[0];
         break;
       }

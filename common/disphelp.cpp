@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.23 2002/04/12 23:56:35 andreasb Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.24 2002/05/31 18:22:35 jt Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -52,7 +52,7 @@ static const char *helpbody[] =
 #elif (CLIENT_OS == OS_OS2)
   "-install           install the client in the startup folder",
   "-uninstall         remove the client from the startup folder",
-#elif (CLIENT_OS == OS_LINUX)
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
   "-install [...]     install the client in /etc[/rc.d]/init.d/",
   "                   all [...options...] that follow '-install' serve",
   "                   as parameters for the installed client.",

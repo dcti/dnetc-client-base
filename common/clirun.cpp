@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.100 2002/04/12 23:56:30 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.101 2002/05/31 18:22:33 jt Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -73,7 +73,7 @@ struct thread_param_block
     unsigned long threadID;
   #elif (CLIENT_OS == OS_NETWARE)
     long threadID;
-  #elif (CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS)
+  #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)) && defined(HAVE_KTHREADS)
     long threadID;
   #elif (CLIENT_OS == OS_BEOS)
     thread_id threadID;
@@ -197,7 +197,7 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
       riscos_upcall_6();
       return (read_monotonic_time()-t)*10000;
     }
-  #elif (CLIENT_OS == OS_LINUX)
+  #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
     #if defined(HAVE_KTHREADS) /* kernel threads */
     kthread_yield();
     #elif defined(__ELF__)
@@ -671,7 +671,7 @@ static int __StopThread( struct thread_param_block *thrparams )
       #elif (CLIENT_OS == OS_NETWARE)
       while (!thrparams->hasexited)
         delay(100);
-      #elif (CLIENT_OS==OS_LINUX) && defined(HAVE_KTHREADS) /*kernel threads*/
+      #elif ((CLIENT_OS==OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)) && defined(HAVE_KTHREADS) /*kernel threads*/
       kthread_join( thrparams->threadID );
       #elif defined(HAVE_MULTICRUNCH_VIA_FORK)
       int status = 0, elapsed = 0;
@@ -974,7 +974,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
           } /* if parent or child */
         } /* thrparam inheritance ok */
       } /* FreeBSD >= 3.0 (+ SMP kernel optional) + global inheritance ok */
-      #elif (CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS)
+      #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)) && defined(HAVE_KTHREADS)
       {
         if (thrparams->threadnum == 0) /* first thread */
           use_poll_process = 1;

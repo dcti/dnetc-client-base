@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.26 2002/04/16 12:41:54 snake Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.27 2002/05/31 18:22:35 jt Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -1623,7 +1623,8 @@ static int net_ioctl( SOCKET sock, unsigned long opt, int *i_optval )
   #elif (CLIENT_OS == OS_AMIGAOS)
     if (IoctlSocket(sock, opt, (char *)i_optval)!=0) return ps_stdneterr;
     return 0;
-  #elif (CLIENT_OS == OS_LINUX) /*use ioctl to avoid 2.0+2.1 vs 2.2+ trouble*/
+  #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
+  	   /*use ioctl to avoid 2.0+2.1 vs 2.2+ trouble*/
     unsigned int optval = (unsigned int)*i_optval;
     if (ioctl(sock, opt, &optval )!=0) return ps_stdneterr;
     *i_optval = (int)optval;

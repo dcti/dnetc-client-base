@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.141 2002/04/12 23:56:39 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.142 2002/05/31 18:22:35 jt Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -172,6 +172,20 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       #else
         "Generic RC5 core",
       #endif
+      NULL
+    },
+    { /* DES */
+      "Generic DES core",
+      NULL
+    },
+    { /* OGR */
+      "GARSP 5.13",
+      NULL
+    },
+  #elif (CLIENT_OS == OS_PS2LINUX)
+    { /* RC5 */
+      "Generic RC5 core",
+      "mips-crunch RC5 core",
       NULL
     },
     { /* DES */
@@ -1107,6 +1121,13 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     // run micro benchmark
     #endif
   }
+  #elif (CLIENT_OS == OS_PS2LINUX)
+  if (contestid == RC5)
+  {
+    selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
+    if (selcorestatics.corenum[RC5] < 0)
+      selcorestatics.corenum[RC5] = 1; // now we use mips-cruch.cpp
+  }
   #endif
 
   if (selcorestatics.corenum[contestid] < 0)
@@ -1242,6 +1263,11 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     // rc5/ansi/rc5ansi_2-rg.cpp
     extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
   #elif (CLIENT_OS == OS_SINIX)
+    //rc5/mips/mips-crunch.cpp or rc5/mips/mips-irix.S
+    extern "C" u32 rc5_unit_func_mips_crunch( RC5UnitWork *, u32 );
+  #elif (CLIENT_OS == OS_PS2LINUX)
+    // rc5/ansi/rc5ansi_2-rg.cpp
+    extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
     //rc5/mips/mips-crunch.cpp or rc5/mips/mips-irix.S
     extern "C" u32 rc5_unit_func_mips_crunch( RC5UnitWork *, u32 );
   #else
@@ -1495,6 +1521,22 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         unit_func.rc5 = rc5_unit_func_mips_crunch;
         pipeline_count = 2;
         coresel = 0;
+      }  
+      #elif (CLIENT_OS == OS_PS2LINUX)
+      if (coresel == 0)
+      {
+        // rc5/ansi/rc5ansi_2-rg.cpp
+        //xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 );
+        unit_func.rc5 = rc5_unit_func_ansi_2_rg;
+        pipeline_count = 2;
+      }
+      else  /* coresel=1 (now default, using mips-crunch) */
+      {
+        //rc5/mips/mips-crunch.cpp or rc5/mips/mips-irix.S
+        //xtern "C" u32 rc5_unit_func_mips_crunch( RC5UnitWork *, u32 );
+        unit_func.rc5 = rc5_unit_func_mips_crunch;
+        pipeline_count = 2;
+        coresel = 1;
       }  
       #else
         #error "What's up, Doc?"

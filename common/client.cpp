@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.108 2002/04/11 10:38:42 oliver Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.109 2002/05/31 18:22:33 jt Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -432,7 +432,7 @@ int main( int argc, char *argv[] )
     char *p = strrchr( argv[0], '/' );
     needchange = (strcmp( ((p)?(p+1):(argv[0])), defname )!=0);
 
-    #if (CLIENT_OS == OS_LINUX)
+    #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
     /* discard dir component from argv[0] when started from init.d */
     if (!needchange && *argv[0] == '/' && strlen(argv[0]) > (strlen(defname)+10))
     {

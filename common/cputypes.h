@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.59 2002/03/28 01:07:44 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.60 2002/05/31 18:22:35 jt Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -77,6 +77,7 @@
 /* #define OS_UNUSED4   40 */ /* never used. was os_maspar */
 #define OS_WIN16        41 /* windows 3.1, 3.11, wfw (was 16bit, now 32bit) */
 #define OS_DESCRACKER   42 /* eff des cracker */
+#define OS_PS2LINUX     43
 
 /* ----------------------------------------------------------------- */
 
@@ -127,8 +128,13 @@
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
-  #define CLIENT_OS_NAME "Linux"
-  #define CLIENT_OS     OS_LINUX
+  #if defined(__ps2linux__)
+    #define CLIENT_OS_NAME "PS2 Linux"
+    #define CLIENT_OS     OS_PS2LINUX
+  #else
+    #define CLIENT_OS_NAME "Linux"
+    #define CLIENT_OS     OS_LINUX
+  #endif
   #if defined(ASM_HPPA) /* cross compile, ergo don't use __hppa/__hppa__ */
     #define CLIENT_CPU    CPU_PA_RISC
   #elif defined(ASM_SH4) /* cross compile, ergo don't use __sh__ */

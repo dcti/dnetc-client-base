@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.82 2002/04/13 13:20:25 andreasb Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.83 2002/05/31 18:22:34 jt Exp $"; }
 
 //#define TRACE
 
@@ -36,10 +36,11 @@ return "@(#)$Id: cmdline.cpp,v 1.133.2.82 2002/04/13 13:20:25 andreasb Exp $"; }
 #include "cmdline.h"   // ourselves
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
-    (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD)
+    (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD) || \
+    (CLIENT_OS == OS_PS2LINUX)
 #include <dirent.h> /* for direct read of /proc/ */
 #endif
-#if (CLIENT_OS == OS_LINUX)
+#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
   extern "C" int linux_uninstall(const char *basename, int quietly);
   extern "C" int linux_install(const char *basename, int argc,
     const char *argv[], int quietly); /* argv[1..(argc-1)] as start options */
@@ -210,7 +211,8 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
 
           pid_t already_sigd[128]; unsigned int sigd_count = 0;
           #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
-              (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD)
+              (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
+              (CLIENT_OS == OS_PS2LINUX)
           DIR *dirp = opendir("/proc");
           if (!dirp)
             kill_found = -1;
@@ -288,7 +290,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
                     if (file)
                     {
                       pid_t ppid = 0;
-                      #if (CLIENT_OS == OS_LINUX)
+                      #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
                       while (fgets(buffer, sizeof(buffer), file))
                       {
                         buffer[sizeof(buffer)-1] = '\0';
@@ -416,14 +418,16 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
             #endif
           }
           #endif
-          #if (CLIENT_OS != OS_LINUX) && (CLIENT_OS != OS_HPUX)
+          #if (CLIENT_OS != OS_LINUX) && (CLIENT_OS != OS_HPUX) || \
+          	  (CLIENT_OS == OS_PS2LINUX)
           // this part is only needed for OSs that do not read /proc OR
           // do not have a reliable method to set the name as read from /proc
           // (as opposed to reading it from ps output)
           const char *pscmd = NULL;
           #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
               (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_LINUX) || \
-              (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOSX)
+              (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOSX) || \
+              (CLIENT_OS == OS_PS2LINUX)
           pscmd = "ps ax|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
           //fbsd: "ps ax -o pid -o command 2>/dev/null";  /* bsd + -o ext */
           //lnux: "ps ax --format pid,comm 2>/dev/null";  /* bsd + gnu -o */
@@ -660,7 +664,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
       {
         if (misc_call)
           continue;
-        #if (CLIENT_OS==OS_LINUX) /* argv[1..(argc-1)] as start options */
+        #if (CLIENT_OS==OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) /* argv[1..(argc-1)] as start options */
         retcode = 0;  
         if (0!=linux_install(utilGetAppName(), (argc-pos), &argv[pos], loop0_quiet))
           retcode = 3;           /* plat/linux/li_inst.c */
@@ -712,7 +716,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         extern int os2CliUninstallClient(int /*do it without feedback*/);
         os2CliUninstallClient(loop0_quiet); /* os2inst.cpp */
         retcode = 0;                  
-        #elif (CLIENT_OS == OS_LINUX)
+        #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
         retcode = 0;
         if (linux_uninstall(utilGetAppName(), loop0_quiet)!=0)
           retcode = 3;           /* plat/linux/li_inst.c */ 

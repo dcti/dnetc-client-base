@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.274 2002/04/12 23:56:25 andreasb Exp $
+# @(#)$Id: configure,v 1.222.2.275 2002/05/31 18:22:31 jt Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -296,6 +296,9 @@ add_sources() # $1=os, $2=arch, $3=custom
     #-- rc5 --
     if [ "$TARGET_CC" = "CC" -o "$1" = "netbsd" ]; then # mips-crunch doesn't compile with IRIX CC
       TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+    elif [ "$3" = "ps2" ]; then      #For PS2 Linux [jt(jt@distributed.net)]
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/mips/mips-crunch.cpp"
     else                             # gcc targets. mips-crunch.cpp is faster
                                      # except for NetBSD, ansi is 2% faster
       TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/mips/mips-crunch.cpp"
@@ -1307,6 +1310,17 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-mips"
         add_sources "linux" "mips"
+        ;;
+
+    *mips-linux-ps2)    #For PS2 Linux [jt(jt@distributed.net)]
+        TARGET_CC="gcc"
+        generate_gcc_opts "mips" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -mcpu=r5900 -pedantic -DSINGLE_CRUNCHER_ONLY -D__ps2linux__"
+        TARGET_LDFLAGS=""
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="ps2linux-mips"
+        add_sources "linux" "mips" "ps2"
         ;;
 
     *mips-sni)	        #For MIPS SINIX

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.56 2002/03/28 01:07:37 andreasb Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.57 2002/05/31 18:22:33 jt Exp $"
 
 #include "cputypes.h"
 
@@ -199,7 +199,7 @@
   // clock_gettime is called getclock (used in clitime.cpp)
   #define clock_gettime(a,b) (getclock(a,b))
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
-#elif (CLIENT_OS == OS_LINUX)
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
   #include <sys/time.h>
   #include <sys/file.h>
   #include <unistd.h>
