@@ -11,6 +11,9 @@
    to functions in modules in your own platform area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.28  1999/01/07 02:15:57  cyp
+// ConInStr() now has a special 'boolean' mode. woohoo!
+//
 // Revision 1.27  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -100,7 +103,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.27 1999/01/01 02:45:15 cramer Exp $"; }
+return "@(#)$Id: console.cpp,v 1.28 1999/01/07 02:15:57 cyp Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -120,15 +123,19 @@ return "@(#)$Id: console.cpp,v 1.27 1999/01/01 02:45:15 cramer Exp $"; }
 #define TERMIOS_IS_AVAILABLE
 #endif
 
-#if (CLIENT_OS==OS_VMS) || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==OS_OS9) || \
-    (CLIENT_OS==OS_HPUX) || (CLIENT_OS==OS_QNX) || (CLIENT_OS==OS_OSF1) || \
-    (CLIENT_OS==OS_BSDI) || (CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) || \
-    (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) || \
-    (CLIENT_OS==OS_SCO) || (CLIENT_OS==OS_UNIXWARE) || (CLIENT_OS==OS_MVS) || \
-    (CLIENT_OS==OS_MINIX) || (CLIENT_OS==OS_MACH10) || (CLIENT_OS==OS_AIX) || \
-    (CLIENT_OS==OS_AUX) || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_SUNOS) || \
-    (CLIENT_OS==OS_ULTRIX) || (CLIENT_OS==OS_DGUX) || (CLIENT_OS==OS_DYNIX) || \
-    (CLIENT_OS==OS_OS390)
+#if (CLIENT_OS == OS_DEC_UNIX)    || (CLIENT_OS == OS_HPUX)    || \
+    (CLIENT_OS == OS_QNX)         || (CLIENT_OS == OS_OSF1)    || \
+    (CLIENT_OS == OS_BSDI)        || (CLIENT_OS == OS_SOLARIS) || \
+    (CLIENT_OS == OS_IRIX)        || (CLIENT_OS == OS_SCO)     || \
+    (CLIENT_OS == OS_LINUX)       || (CLIENT_OS == OS_NETBSD)  || \
+    (CLIENT_OS == OS_UNIXWARE)    || (CLIENT_OS == OS_DYNIX)   || \
+    (CLIENT_OS == OS_MINIX)       || (CLIENT_OS == OS_MACH10)  || \
+    (CLIENT_OS == OS_AIX)         || (CLIENT_OS == OS_AUX)     || \
+    (CLIENT_OS == OS_OPENBSD)     || (CLIENT_OS == OS_SUNOS)   || \
+    (CLIENT_OS == OS_ULTRIX)      || (CLIENT_OS == OS_DGUX)    || \
+    (CLIENT_OS == OS_VMS)         || (CLIENT_OS == OS_OS390)   || \
+    (CLIENT_OS == OS_OS9)         || (CLIENT_OS == OS_BEOS)    || \
+    (CLIENT_OS == OS_MVS)         || (CLIENT_OS == OS_MACH10)
 #define TERM_IS_ANSI_COMPLIANT
 #endif    
 
@@ -412,6 +419,7 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
 {
   int ch, exitreq;
   unsigned int pos;
+  int asbool, boolistf, boolval, redraw;
 
   if (constatics.initlevel < 1 || !constatics.conisatty)
     return -1;
@@ -419,13 +427,45 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
   if (!buffer || !buflen)
     return 0;
 
-  if ((flags & CONINSTR_ASPASSWORD)!=0)
-    flags = CONINSTR_ASPASSWORD;
+  //if ((flags & CONINSTR_ASPASSWORD)!=0)
+  //  flags = CONINSTR_ASPASSWORD;
+
+  redraw = asbool = boolval = boolistf = 0;
+  if ((flags & CONINSTR_ASBOOLEAN)!=0)
+    {
+    asbool = 1;
+    if ((flags & CONINSTR_BYEXAMPLE) != 0)
+      {
+      if (buffer[0] =='t' || buffer[0]=='T')
+        boolistf = boolval = 1;
+      else if (buffer[0] =='f' || buffer[0]=='F')
+        boolistf = 1;
+      else if (buffer[0] =='y' || buffer[0]=='Y')
+        boolval = 1;
+      else if (buffer[0] =='n' || buffer[0]=='N') /* default */
+        boolval = 0;
+      }
+    flags = CONINSTR_ASBOOLEAN; /* strip by_example */
+    if (buflen > 1) /* we only return a single char */
+      buffer[1]=0;
+    redraw = -1;
+    }
+   
 
   if ((flags & CONINSTR_BYEXAMPLE) != 0)
     {
-    ConOut(buffer);
     pos = strlen( buffer );
+    if ((flags & CONINSTR_ASPASSWORD)!=0)
+      {
+      char scratch[2];
+      scratch[1]=0; scratch[0]='*';
+      for (ch=0;ch<((int)(pos));ch++)
+        ConOut(scratch);
+      }
+    else 
+      {
+      ConOut(buffer);
+      }
     }
   else
     {
@@ -434,12 +474,39 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
     }
 
   do {
+     if (asbool && redraw)
+       {
+       char scratch[8];
+       strcpy(scratch, ((boolval)?((boolistf)?("true "):("yes  ")):
+                                  ((boolistf)?("false"):("no   "))) );
+       #if (CLIENT_OS == OS_RISCOS)
+       if (redraw > 0) /* not the first round */
+         riscos_backspace();
+       #endif
+
+       ConOut(scratch);
+
+       for (ch = 0; scratch[ch]!= 0; ch++)
+         {
+         #ifdef TERM_IS_ANSI_COMPLIANT
+         ConOut("\x1B" "[1D" );
+         #elif (CLIENT_OS == OS_RISCOS)
+         if (scratch[ch+1]!=0) /* not the first char */
+           riscos_backspace();
+         #else
+         ConOut("\b");
+         #endif
+         }
+       buffer[0] = ((boolval)?('y'):('n'));
+       pos = 1;
+       redraw = 0;
+       }
+  
      ch = ConInKey(-1);
      exitreq = CheckExitRequestTriggerNoIO();
 
      if (!exitreq)
        {
-//printf("***%d***\n",ch);
        if (ch == 0x08 || ch == '\177') /* backspace */
          {
          if (pos > 0)  
@@ -458,6 +525,29 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
          {
          ConOut("\n");
          exitreq = 1;
+         }
+       else if (asbool)
+         {
+         if (ch == 'y' || ch == 'Y')
+           {
+           redraw = (boolistf || !boolval);
+           boolistf = 0; boolval = 1;
+           }
+         else if (ch == 't' || ch == 'T')
+           {
+           redraw = (!boolistf || !boolval);
+           boolistf = boolval = 1;
+           }
+         else if (ch == 'n' || ch == 'N')
+           {
+           redraw = (boolistf || boolval);
+           boolistf = boolval = 0;
+           }
+         else if (ch == 'f' || ch == 'F')
+           {
+           redraw = (!boolistf || boolval);
+           boolistf = 1; boolval = 0;
+           }
          }
        else if (pos < (buflen-1)) 
          {
@@ -478,8 +568,7 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
 
    ConOut(""); /* flush */
    buffer[pos] = 0;
-
-   return strlen(buffer);
+   return pos; /* length */
 }
 
 #if 0

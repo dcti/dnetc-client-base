@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: console.h,v $
+// Revision 1.25  1999/01/07 02:15:57  cyp
+// ConInStr() now has a special 'boolean' mode. woohoo!
+//
 // Revision 1.24  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -57,8 +60,9 @@ int ConInKey(int timeout_millisecs); // Returns -1 if err. 0 if timed out.
 // ConInStr() does what gets() would do (without the trailing '\n') and the
 // buffer is always '\0' terminated. Returns -1 if console is not a tty
 int ConInStr(char *buffer, unsigned int len, int flags );
-#define CONINSTR_BYEXAMPLE  1  /* the buffer contains a 'live' example */
-#define CONINSTR_ASPASSWORD 2  /* print '*' for each character typed */
+#define CONINSTR_BYEXAMPLE  0x01  /* the buffer contains a 'live' example */
+#define CONINSTR_ASPASSWORD 0x02  /* print '*' for each character typed */
+#define CONINSTR_ASBOOLEAN  0x04  /* get 'y' or 'n' */
 
 // ConClear() clears the screen. 
 // returns -1 if console is not a tty;
