@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.9 1999/06/16 12:22:12 ivo Exp $
+# @(#)$Id: configure,v 1.222.2.10 1999/06/16 13:10:48 ivo Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -377,7 +377,7 @@ case "$1" in
 	TARGET_LIBS="-lpthread"
 	;;
 
-    *mips-gcc-irix5-crunch)	# faster than mips-gcc for IRIX
+    *mips-gcc-irix5-crunch)	# [ivo] faster than mips-gcc for IRIX
         DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/mips/mips-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -D_irix5_ \
@@ -424,7 +424,7 @@ case "$1" in
 	TARGET_LDFLAGS="$LDFLAGS_CC_HPUX"
 	;;
 
-    *hpux-hppa-gcc)
+    *hpux-hppa-gcc)  # [ivo]
         DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/parisc/parisc.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_HPUX \
@@ -1680,6 +1680,30 @@ echo "" >> Makefile
 echo "ident:	${EXENAME}" >> Makefile
 echo "	ident ${EXENAME} | awk '{ printf(\"%-30s %10s %s %s %s %s%c\", \$\$2,\$\$3,\$\$4,\$\$5,\$\$6,\$\$7,10)}'" >> Makefile
 echo "" >> Makefile
+
+# add binary-tarball targets
+echo "internal-tarpackit:     ${TARGETFILE} ${TAREXTRAS}
+echo "        strip ${STRIPFLAGS} ${TARGETFILE}
+echo "        -rm -rf ${TARBASENAME}${BUILDNUM}-${TARNAME}
+echo "        mkdir ${TARBASENAME}${BUILDNUM}-${TARNAME}
+echo "        cp -f ${TARGETFILE} ${TAREXTRAS} \
+echo "                ${TARBASENAME}${BUILDNUM}-${TARNAME}
+echo "        tar cvf ${TARBASENAME}${BUILDNUM}-${TARNAME}.tar \
+echo "                ${TARBASENAME}${BUILDNUM}-${TARNAME}
+echo "        rm -rf ${TARBASENAME}${BUILDNUM}-${TARNAME}
+echo "        -rm -f ${TARBASENAME}${BUILDNUM}-${TARNAME}.tar.gz
+echo "        ${TARCOMPRESS} ${TARBASENAME}${BUILDNUM}-${TARNAME}.tar
+echo "        @echo Type \'make ftp\' to upload the tarball to the ftp site.
+echo "" >> Makefile
+
+# make rule to transfer the packaged tarball
+echo "ftp:
+echo "        echo "user anonymous -luser@distributed.net#cd /incoming#\
+echo "        binary#mput ${TARBASENAME}*.tar*#bye#" | \
+echo "        tr "#" "\n" | ftp -n -i -v upload.distributed.net
+echo "" >> Makefile
+
+
 
 #
 # Generate the dependency targets in the makefile
