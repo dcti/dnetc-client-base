@@ -1,8 +1,13 @@
 #!/bin/sh
 
+# Copyright distributed.net 1998 - All Rights Reserved
+# For use in distributed.net projects only.
+# Any other distribution or use of this source violates copyright.
+
+
 echo ""
 echo "RC5DES client makefile generator"
-echo "by Jeff Lawson for distributed.net"
+echo "originally by Jeff Lawson for distributed.net"
 echo "see http://www.distributed.net/"
 echo ""
 
@@ -12,6 +17,10 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
+
+# Note to people making changes..  Do not put spaces around the '='
+# signs in the variable definitions below.  Some sh implementations
+# will interpret such lines as statements rather than assignments.
 
 
 #
@@ -90,7 +99,10 @@ OPTS_NEXT_M68K="$OPTS_GCC -O6 -m68040 -DASM_68K"
 OPTS_NEXT_SPARC="$OPTS_GCC -O6 -DASM_SPARC -D_OLD_NEXT_"
 OPTS_NEXT_HPPA="$OPTS_GCC -O6 -DASM_HPPA -D_OLD_NEXT_"
 
-OPTS_OS390 = -D_ALL_SOURCE  #-D__STRING_CODE_SET__="ISO8859-1"
+#--
+
+#-D__STRING_CODE_SET__="ISO8859-1"
+OPTS_OS390='-D_ALL_SOURCE'
 
 
 
