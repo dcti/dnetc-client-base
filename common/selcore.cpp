@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.9 2003/01/18 00:44:37 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.10 2003/01/19 14:33:56 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -105,7 +105,7 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.9 2003/01/18 00:44:37 andreasb Exp $"; }
     extern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
   #endif
 #elif (CLIENT_CPU == CPU_68K)
-  #if defined(__GCC__) || defined(__GNUC__) || \
+  #if (CLIENT_OS != OS_NEXTSTEP) && (defined(__GCC__) || defined(__GNUC__)) || \
       (CLIENT_OS == OS_AMIGAOS)// || (CLIENT_OS == OS_MACOS)
     extern "C" u32 CDECL rc5_unit_func_000_010re( RC5UnitWork *, u32 );
     extern "C" u32 CDECL rc5_unit_func_020_030( RC5UnitWork *, u32 );
@@ -1719,7 +1719,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
     #elif (CLIENT_CPU == CPU_68K)
     {
-      #if defined(__GCC__) || defined(__GNUC__) || \
+      #if (CLIENT_OS != OS_NEXTSTEP) && (defined(__GCC__) || defined(__GNUC__)) || \
           (CLIENT_OS == OS_AMIGAOS)// || (CLIENT_OS == OS_MACOS)
       {
         //xtern "C" u32 rc5_unit_func_000_010re( RC5UnitWork *, u32 );

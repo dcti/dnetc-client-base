@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.3 2003/01/03 19:39:02 teichp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.4 2003/01/19 14:33:56 andreasb Exp $"
 
 #include "cputypes.h"
 
@@ -297,13 +297,20 @@
   #include <bsd/sys/time.h>
   #include <sys/types.h>
   #include <fcntl.h>
+  #include <libc.h>
+  #include <next_sup.h>                         /* strdup() etc. */
   #define       S_IRUSR         0x400           /* read permission, */
   #define       S_IWUSR         0x200           /* write permission, */
   #define       S_IRGRP         0x040           /* read permission, group */
   #define       S_IWGRP         0x020           /* write permission, group */
-  #define       CLOCKS_PER_SEC          CLK_TCK
+  #define       CLOCKS_PER_SEC  CLK_TCK
+  #undef        SIG_DFL
+  #undef        SIG_IGN
+  #define       SIG_DFL         (void (*)(int))0
+  #define       SIG_IGN         (void (*)(int))1
   extern "C" int sleep(unsigned int seconds);
   extern "C" int usleep(unsigned int useconds);
+  extern "C" void tzset(void);
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #endif
 

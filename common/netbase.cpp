@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.5.2.2 2003/01/03 19:39:02 teichp Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.5.2.3 2003/01/19 14:33:56 andreasb Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -210,6 +210,8 @@ extern "C" {
       int setsockopt(int, int, int, char *, int);
       int connect(int, struct sockaddr *, int);
     }
+  #elif (CLIENT_OS == OS_NEXTSTEP)
+    #include <libc.h>
   #elif (CLIENT_OS == OS_NETWARE)
     extern "C" {
     #pragma pack(1)

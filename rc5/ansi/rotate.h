@@ -2,9 +2,14 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 // 
-// $Id: rotate.h,v 1.7 2002/09/02 00:35:55 andreasb Exp $
+// $Id: rotate.h,v 1.7.4.1 2003/01/19 14:33:56 andreasb Exp $
 //
 // $Log: rotate.h,v $
+// Revision 1.7.4.1  2003/01/19 14:33:56  andreasb
+// Applied NeXTstep patch (bug #1451, attachment #211) from
+// Michael Weiser <mweiser@fachschaft.imn.htwk-leipzig.de>,
+// patch was against pubsource 20010416, needed minor fixes.
+//
 // Revision 1.7  2002/09/02 00:35:55  andreasb
 // sync: merged changes from release-2-7111 branch between
 //       2000-07-11 and release-2-7111_20020901 into trunk
@@ -186,7 +191,8 @@ static __inline__ u32 ROTL3(u32 x)
 
 #elif (CLIENT_CPU == CPU_68K) && defined(__GNUC__)
 
-#if (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_NETBSD)
+#if (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_NETBSD) || \
+    (CLIENT_OS == OS_NEXTSTEP)
   #define RC5_WORD u32
 #endif
 

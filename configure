@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.25 2003/01/15 02:43:40 chandleg Exp $
+# @(#)$Id: configure,v 1.288.2.26 2003/01/19 14:33:56 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -149,6 +149,9 @@ add_sources() # $1=os, $2=arch, $3=custom
     else
       TARGET_ADDASMS="$TARGET_ADDASMS plat/riscos/riscos_asm.s"
     fi
+  elif [ "$1" = "next" ]; then
+    COMMON_SRCS="plat/next/next_sup.cpp \
+                 ${COMMON_SRCS}"
   elif [ "$1" = "os2" ]; then
     COMMON_SRCS="plat/os2/os2inst.cpp ${COMMON_SRCS}"
   elif [ "$1" = "macosx" ]; then
@@ -366,6 +369,8 @@ add_sources() # $1=os, $2=arch, $3=custom
                                         rc5/68k/rc5-020_030-jg.s \
                                         rc5/68k/rc5-060-re-jg.s \
                                         rc5/68k/rc5-0x0-common-jg.s"
+      elif [ "$1" = "next" ]; then
+        TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/ansi/rc5ansi1-b2.cpp"
       else
         TARGET_ADDASMS="$TARGET_ADDASMS rc5/68k/rc5-000_010-re-jg.gcc.s \
                                         rc5/68k/rc5-020_030-jg.gcc.s \
@@ -2276,7 +2281,7 @@ case "$1" in
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "x86" "next"
-        TARGET_CCFLAGS="-static $OPTS_GCC -D_NeXT_"
+        TARGET_CCFLAGS="-static $OPTS_GCC -D_NeXT_ -Iplat/next"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="next-x86"
         add_sources "next" "x86"
@@ -2297,7 +2302,7 @@ case "$1" in
     *m68k-next)
         TARGET_CC="gcc"
         generate_gcc_opts "68k" "next"
-        TARGET_CCFLAGS="-static $OPTS_GCC -m68040 -D_NeXT_"
+        TARGET_CCFLAGS="-static $OPTS_GCC -m68040 -D_NeXT_ -Iplat/next"
         TARGET_ASFLAGS="$OPTS_GAS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="next-m68k"
@@ -2307,7 +2312,7 @@ case "$1" in
     *sparc-next)
         TARGET_CC="cc++"
         generate_gcc_opts "generic" "next"
-        TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_SPARC -arch sparc -D_NeXT_ -D_OLD_NEXT_"
+        TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_SPARC -arch sparc -D_NeXT_ -D_OLD_NEXT_ -Iplat/next"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "next" "sparc"
         ;;
@@ -2315,7 +2320,7 @@ case "$1" in
     *hppa-next)
         TARGET_CC="cc++"
         generate_gcc_opts "generic" "next"
-        TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_HPPA -arch hppa -D_NeXT_ -D_OLD_NEXT_"
+        TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_HPPA -arch hppa -D_NeXT_ -D_OLD_NEXT_ -Iplat/next"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "next" "hppa"
         ;;
