@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.52 2001/01/16 18:20:48 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.53 2001/02/05 18:27:49 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -14,6 +14,7 @@ return "@(#)$Id: bench.cpp,v 1.27.2.52 2001/01/16 18:20:48 cyp Exp $"; }
 #include "clitime.h"   // CliGetTimeString()
 #include "clicdata.h"  // GetContestNameFromID()
 #include "selcore.h"   // selcoreGet[SelectedCoreForContest|DisplayName]()
+#include "pollsys.h"   // NonPolledUSleep()
 #include "logstuff.h"  // LogScreen()
 #include "clievent.h"  // event post etc.
 #include "bench.h"     // ourselves
@@ -162,6 +163,13 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         silent = 0;
         LogScreen("%s: Benchmarking ... ", contname );
       }
+
+      /* Sleep a bit to a) try to begin the while loop at the top of a 
+      ** scheduling quantum, b) Also, per-contest bench can be very stressful 
+      ** if there are a lot of cores per contest.
+      */
+      NonPolledUSleep(50000); /* 50 millisecs */
+
       while ( run == RESULT_WORKING )
       {
         unsigned long permille; u32 ratehi, ratelo;
