@@ -8,6 +8,9 @@
 ;
 ;
 ; $Log: deseval-mmx.asm,v $
+; Revision 1.10  1999/01/28 00:34:30  trevorh
+; Made the data section 32 bit for OS/2.
+;
 ; Revision 1.9  1999/01/25 23:54:12  trevorh
 ; Added [section text use32] for OS/2 to allow nasm to generate 32 bit code
 ;
@@ -1409,9 +1412,13 @@ global _whack16
 %ifdef BCC
 SECTION DATA USE32 ALIGN=16
 %else
+%ifdef OS2
+[SECTION _DATA USE32 align=16]
+%else
 [SECTION .data]
 %endif
-idtag:    db "@(#)$Id: deseval-mmx.asm,v 1.9 1999/01/25 23:54:12 trevorh Exp $\0"
+%endif
+idtag:    db "@(#)$Id: deseval-mmx.asm,v 1.10 1999/01/28 00:34:30 trevorh Exp $\0"
 %endif
 
 ; PLATFORM  text segment definition
@@ -1419,7 +1426,7 @@ idtag:    db "@(#)$Id: deseval-mmx.asm,v 1.9 1999/01/25 23:54:12 trevorh Exp $\0
 SECTION TEXT USE32 ALIGN=16
 %else
 %ifdef OS2
- SEGMENT _TEXT USE32 FLAT PUBLIC ASSUME SS:FLAT,DS:FLAT,ES:FLAT,CS:FLAT
+[SECTION _TEXT USE32 align=16]
 %else
 [SECTION .text]
 %endif
