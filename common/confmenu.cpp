@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41 1999/04/22 01:51:44 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.1 1999/06/10 23:12:21 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -948,7 +948,10 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
   } /* while (returnvalue == 0) */
 
   if (CheckExitRequestTriggerNoIO())
+  {
+    LogScreenRaw("\n"); 
     returnvalue = -1;
+  }
 
   /* -- massage mapped options and dependancies back into place -- */
 
