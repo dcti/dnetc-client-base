@@ -6,6 +6,9 @@
  * Marco.Walther@mch.sni.de
  *
  * $Log: mips-crunch.cpp,v $
+ * Revision 1.9  1998/11/28 18:07:20  remi
+ * Fixed the key incrementation bug.
+ *
  * Revision 1.8  1998/07/14 08:41:30  remi
  * Cleaned-up the extra $Log
  *
@@ -32,7 +35,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mips_crunch_cpp(void) {
-return "@(#)$Id: mips-crunch.cpp,v 1.8 1998/07/14 08:41:30 remi Exp $"; }
+return "@(#)$Id: mips-crunch.cpp,v 1.9 1998/11/28 18:07:20 remi Exp $"; }
 #endif
 
 
@@ -1699,7 +1702,7 @@ u32 crunch(register RC5UnitWork * rc5unitwork, u32 iterations )
         if (!(enc_word22 & 0x00FF0000)) {
 
            enc_word22 = (enc_word22 + 0x00000100) & 0x0000FFFF;
-           if (!(enc_word22 & 0x0000FFFF)) {
+           if (!(enc_word22 & 0x0000FF00)) {
 
               enc_word22 = (enc_word22 + 0x00000001) & 0x000000FF;
               if (!(enc_word22 & 0x000000FF)) {

@@ -3,8 +3,11 @@
  * generation of S0[]
  *
  * $Log: rc5-ultra-crunch.cpp,v $
+ * Revision 1.8  1998/11/28 18:06:00  remi
+ * Fixed the key incrementation bug.
+ *
  * Revision 1.7  1998/07/08 22:59:40  remi
- * Lots of $Id$ stuff.
+ * Lots of $Id stuff.
  *
  * Revision 1.6  1998/06/15 02:44:32  djones
  * First build of UltraSPARC 64-bit/VIS DES client:
@@ -26,7 +29,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5_ultra_crunch_cpp (void) {
-return "@(#)$Id: rc5-ultra-crunch.cpp,v 1.7 1998/07/08 22:59:40 remi Exp $"; }
+return "@(#)$Id: rc5-ultra-crunch.cpp,v 1.8 1998/11/28 18:06:00 remi Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -1692,7 +1695,7 @@ u32 crunch(register RC5UnitWork * rc5unitwork, u32 iterations )
         if (!(enc_word22 & 0x00FF0000)) {
 
            enc_word22 = (enc_word22 + 0x00000100) & 0x0000FFFF;
-           if (!(enc_word22 & 0x0000FFFF)) {
+           if (!(enc_word22 & 0x0000FF00)) {
 
               enc_word22 = (enc_word22 + 0x00000001) & 0x000000FF;
               if (!(enc_word22 & 0x000000FF)) {
