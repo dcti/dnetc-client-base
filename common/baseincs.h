@@ -11,6 +11,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.58  1999/04/05 21:08:18  silby
+// Added win32 file access equivs to unix rights.
+//
 // Revision 1.57  1999/04/05 19:42:36  patrick
 //
 // AIX: fd_set is defined in sys/select.h and was missing
@@ -311,6 +314,13 @@ extern "C" {
   #include "w32svc.h"       // service
   #include "w32cons.h"      // console
   #include "w32pre.h"       // prelude
+  // UNIX file attribute win32 equivalents
+  #define R_OK 04
+  #define W_OK 02
+  #define S_IRUSR _S_IREAD
+  #define S_IWUSR _S_IWRITE
+  #define S_IRGRP _S_IREAD
+  #define S_IWGRP _S_IWRITE
 #elif (CLIENT_OS == OS_DOS)
   #include <sys/timeb.h>
   #include <io.h>
