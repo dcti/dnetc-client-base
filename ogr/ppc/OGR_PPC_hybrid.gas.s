@@ -16,7 +16,7 @@
 ;# - LR register not used nor saved in caller's stack.
 ;# - CTR, CR0, CR1, GPR0 and GPR3-GPR12 are volatile (not preserved).
 ;#
-;# $Id: OGR_PPC_hybrid.gas.s,v 1.1.2.4 2004/08/14 23:32:37 kakace Exp $
+;# $Id: OGR_PPC_hybrid.gas.s,v 1.1.2.5 2004/08/15 14:43:26 kakace Exp $
 ;#
 ;#============================================================================
 
@@ -84,6 +84,7 @@
 
 ;.set         r0,0
 ;.set         r1,1
+;.set         RTOC,2                    ;# Alias for AIX/COFF
 ;.set         r3,3
 ;.set         r4,4
 ;.set         r5,5
@@ -376,7 +377,7 @@ L_check_Golomb:
     li        r3,aDiffs                 ;# diffs array
     addi      r8,r8,1
     mtctr     r8
-    lwz       r0,STATE_MAXDEPTHM1(r13)  ;# oState->maxdepthm1
+    lwz       r23,STATE_MAXDEPTHM1(r13) ;# oState->maxdepthm1
 
 L_clrloop:    
     stvx      v0,r3,r1
@@ -414,7 +415,7 @@ L_next_j:
 L_next_i:     
     addi      r9,r9,1                   ;# ++i
     addi      r10,r10,SIZEOF_LEVEL
-    cmpw      r9,r0                     ;# i <= maxdepthm1 ?
+    cmpw      r9,r23                    ;# i <= maxdepthm1 ?
     ble       L_iLoop
 
     li        r3,CORE_S_SUCCESS         ;# Ruler is Golomb
