@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.45.2.10 2000/02/04 08:25:22 cyp Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.45.2.11 2000/02/04 20:26:57 ivo Exp $"; }
 
 #include "cputypes.h"  // u32
 #include "problem.h"   // Problem class
@@ -213,7 +213,7 @@ const char *CliGetSummaryStringForContest( int contestid )
           CliGetKeyrateForContest(contestid),((double)(1000)), 1);
     if (contestid == OGR) {
       //totalnodesP=CliGetKeyrateAsString(iterstr, totaliter);
-      totalnodesP=num_sep(__CliGetKeyrateAsString(iterstr, totaliter, ((double)(1000000)), 1));
+      totalnodesP=num_sep(__CliGetKeyrateAsString(iterstr, totaliter, ((double)(1000)), 1));
       //totalnodesP=num_sep(CliGetDoubleAsString(totaliter, 0, -1));
     }
   }
