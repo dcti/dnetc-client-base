@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.26.2.6 2000/05/06 20:36:19 mfeiri Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.26.2.7 2000/06/04 10:57:34 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -24,9 +24,6 @@ return "@(#)$Id: netinit.cpp,v 1.26.2.6 2000/05/06 20:36:19 mfeiri Exp $"; }
 #include "triggers.h" //for break checks
 #include "lurk.h"
 
-#if (CLIENT_OS == OS_AMIGAOS)
-static struct Library *SocketBase;
-#endif
 
 //--------------------------------------------------------------------------
 
@@ -120,42 +117,22 @@ static int __netInitAndDeinit( int doWhat )
   #if (CLIENT_OS == OS_AMIGAOS)
   if (success)
   {
-    //static struct Library *SocketBase;
     if ( doWhat == 0 )     //request to check online mode
     {
-      return 1;            //assume always online once initialized
+      return amigaIsOnline();  //test if tcpip is still online
     }
     else if (doWhat > 0)   //request to initialize
     {
       if ((++net_init_level)!=1) //don't initialize more than once
         success = 1;
-      else
-      {
-        #define SOCK_LIB_NAME "bsdsocket.library"
-        SocketBase = OpenLibrary((unsigned char *)SOCK_LIB_NAME, 4UL);
-        if (SocketBase)
-          success = 1;
-        else
-        {
-          LogScreen("Network::Failed to open " SOCK_LIB_NAME "\n");
-          success = 0;
-          net_init_level--;
-        }
-      }
+      else if ((success = amigaSocketInit()) == 0)
+        --net_init_level;
     }
     else //if (doWhat < 0) //request to de-initialize
     {
-      if ((--net_init_level)!=0) //don't deinitialize more than once
-        success = 1;
-      else
-      {
-        if (SocketBase)
-        {
-          CloseLibrary(SocketBase);
-          SocketBase = NULL;
-        }
-        success = 1;
-      }
+      if ((--net_init_level)==0) //don't deinitialize more than once
+        amigaSocketDeinit();
+      success = 1;
     }
   }
   #define DOWHAT_WAS_HANDLED
