@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.100  1998/07/15 06:10:54  silby
+// Fixed an improper #ifdef
+//
 // Revision 1.99  1998/07/14 04:37:33  cramer
 // -runbuffers now works (as far as I've been able to tell)  It will process
 // blocks from the buffer files until all blocks have been exhausted and then
@@ -54,7 +57,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.99 1998/07/14 04:37:33 cramer Exp $.
+// Tweaked $Id: client.cpp,v 1.100 1998/07/15 06:10:54 silby Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -230,7 +233,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.99 1998/07/14 04:37:33 cramer Exp $"; }
+return "@(#)$Id: client.cpp,v 1.100 1998/07/15 06:10:54 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -3113,7 +3116,7 @@ int main( int argc, char *argv[] )
     strcat(client.exepath, fndir);     // append dir for fully qualified path
     strcpy(client.exename, fname);     // exe filename
     strcat(client.exename, fext);      // tack on extention
-  #endif
+  #else
     #if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
         (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN32) || \
         (CLIENT_OS == OS_OS2)
@@ -3148,8 +3151,8 @@ int main( int argc, char *argv[] )
       strcpy( client.inifilename, argv[0] );
       strcat( client.inifilename, EXTN_SEP "ini" );
     #endif
+  #endif
   }
-
   // See if there's a command line parameter to override the INI filename...
   for (i = 1; i < argc; i++)
   {
