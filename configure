@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.154 2000/05/12 17:17:50 jbaker Exp $
+# @(#)$Id: configure,v 1.222.2.155 2000/05/12 23:38:13 trevorh Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -367,8 +367,8 @@ OPTS_MWCC_PPC603="$OPTS_MWCC -proc 603e"
 OPTS_MWCC_PPC604="$OPTS_MWCC -proc 604e"
 
 # XXX HACK XXX
-# Certain source files need to be compiled without optimization 
-# to get a working client. *sigh* This flag will get set in the 
+# Certain source files need to be compiled without optimization
+# to get a working client. *sigh* This flag will get set in the
 # target to -O0. -- myshkin
 OPTS_NOOPT=""
 
@@ -1009,7 +1009,7 @@ case "$1" in
 	TARGET_AS="g++ -c"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DLURK"
-	TARGET_ADDSRCS="rc5/alpha/axp-bmeyer.cpp common/lurk.cpp" 
+	TARGET_ADDSRCS="rc5/alpha/axp-bmeyer.cpp common/lurk.cpp"
 	TARGET_ADDASMS="rc5/alpha/axp-bmeyer.s"
 	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DDWORZ -DHAVE_DES_CORES"
 	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DWORZ_SLICE_SRCS"
@@ -1725,7 +1725,7 @@ case "$1" in
         CLIENTCPU="11"        # cross-compilation
         CLIENTOS="22"
         ;;
- 
+
 ###### NetBSD/vax
     *vax-netbsd-gcc)
         TARGET_CC="g++"
@@ -1843,12 +1843,14 @@ case "$1" in
 	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
 	TARGET_NASM_FMT="aout"
+	TARGET_STRIP="touch"
+	TARGET_ARCTYPE=zip
         TARGET_NASM="nasm097.exe"
         TARGET_LIBS="-lsocket -lvideo"
         TARGET_DOCFILES="docs/readme.os2"   #platform specific docfile
         TARGET_OS=OS2
         TARGET_TARBALL="os2-x86"
-        TARGET_BINNAME_SUFFIX="exe"
+        TARGET_BINNAME_SUFFIX=".exe"
         ;;
 
 
@@ -2052,7 +2054,11 @@ echo "ALLOBJS = ${TARGET_ALLCCOBJS} ${TARGET_ALLASOBJS} ${TARGET_ALLNASMOBJS} ${
 echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
 echo "BUILDNAME = $1" >> Makefile
 echo "DOCFILES = ${TARGET_DOCFILES}" >>Makefile
-echo "BUILDNUM:= \`grep \" CLIENT_BUILD_FRAC \" common/version.h|tr -dc 0-9\`" >>Makefile
+if [ "$TARGET_OS" = "OS2" ]; then
+  echo "BUILDNUM:=\$(shell grep \" CLIENT_BUILD_FRAC \" common/version.h|tr -dc 0-9)" >>Makefile
+else
+  echo "BUILDNUM:= \`grep \" CLIENT_BUILD_FRAC \" common/version.h|tr -dc 0-9\`" >>Makefile
+fi
 echo "" >> Makefile
 
 
@@ -2074,7 +2080,7 @@ fi
 echo "${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}:	\${ALLOBJS} \${ADDOBJS} ${TARGET_RES}" >> Makefile
 echo "	\${LD} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
 if [ -n "$TARGET_RESBIND_CMD" ]; then
-  echo "	$TARGET_RESBIND_CMD"
+  echo "	$TARGET_RESBIND_CMD" >> Makefile
 fi
 echo "	\${STRIP} ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
 
@@ -2094,7 +2100,11 @@ if [ -n "$TARGET_TARBALL" ]; then
   FULLTARNAME="${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}"
   if [ "$TARGET_ARCTYPE" = "zip" ]; then
     # zip file with flat directory structure.
-    echo "	zip -9 $FULLTARNAME.zip ${TARGET_BINNAME} \${DOCFILES}" >> Makefile
+    if [ "$TARGET_OS" = "OS2" ]; then
+      echo "	zip -9 -j $FULLTARNAME.zip ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} \${DOCFILES}" >> Makefile
+    else
+      echo "	zip -9 $FULLTARNAME.zip ${TARGET_BINNAME} \${DOCFILES}" >> Makefile
+    fi
   elif [ "$TARGET_ARCTYPE" = "tgz" ]; then
     # tar.gz, with flat directory structure.
     echo "	tar -cvf - ${TARGET_BINNAME} \${DOCFILES} | gzip -9 > $FULLTARNAME.tar.gz" >> Makefile
@@ -2253,8 +2263,8 @@ if [ -n "$OPTS_NOOPT" ]; then
   awk '
 /problem.cpp -o/ { print "\t${CC} -c ${CCFLAGS} ${OPTS_NOOPT} common/problem.cpp -o output/problem.o"; next }
 /confmenu.cpp -o/ { print "\t${CC} -c ${CCFLAGS} ${OPTS_NOOPT} common/confmenu.cpp -o output/confmenu.o"; next }
-/rc5_unit_func_lintilla.cpp -o/ { print "\t\${CC} -c \${CCFLAGS} ${OPTS_NOOPT} rc5/ppc/rc5_unit_func_lintilla.cpp -o output/rc5_unit_func_lintilla.o"; next } 
-/rc5_unit_func_allitnil.cpp -o/ { print "\t\${CC} -c \${CCFLAGS} ${OPTS_NOOPT} rc5/ppc/rc5_unit_func_allitnil.cpp -o output/rc5_unit_func_allitnil.o"; next } 
+/rc5_unit_func_lintilla.cpp -o/ { print "\t\${CC} -c \${CCFLAGS} ${OPTS_NOOPT} rc5/ppc/rc5_unit_func_lintilla.cpp -o output/rc5_unit_func_lintilla.o"; next }
+/rc5_unit_func_allitnil.cpp -o/ { print "\t\${CC} -c \${CCFLAGS} ${OPTS_NOOPT} rc5/ppc/rc5_unit_func_allitnil.cpp -o output/rc5_unit_func_allitnil.o"; next }
 { print $0 }' Makefile.tmp > Makefile
   rm Makefile.tmp
 fi
