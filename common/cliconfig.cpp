@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.95  1998/06/18 11:50:13  kbracey
+// Made ARM core selection match new x86 core selection.
+//
 // Revision 1.94  1998/06/18 05:16:54  remi
 // Avoid gcc warnings.
 //
@@ -15,7 +18,7 @@
 // Capitalised RC5 and DES wherever printed.
 //
 // Revision 1.91  1998/06/16 21:52:39  silby
-// Added x86 des core selection routines.  They're set based off of how 
+// Added x86 des core selection routines.  They're set based off of how
 // the rc5 core is set.
 //
 // Revision 1.90  1998/06/15 12:03:47  kbracey
@@ -42,7 +45,7 @@
 #include "client.h"
 
 #if (!defined(lint) && !defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.94 1998/06/18 05:16:54 remi Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.95 1998/06/18 11:50:13 kbracey Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -2304,23 +2307,19 @@ LogScreenf("Selecting %s code.\n",cputypetable[fastcore+1]);
   // select the correct core engine
   switch(fastcore)
   {
-    case 0:
-      rc5_unit_func = rc5_unit_func_arm;
-      des_unit_func = des_unit_func_arm;
-      break;
-    case 1:
+    case 0:rc5_unit_func = rc5_unit_func_arm;
+           des_unit_func = des_unit_func_arm;
+           break;
     default:
-      rc5_unit_func = rc5_unit_func_strongarm;
-      des_unit_func = des_unit_func_strongarm;
-      break;
-    case 2:
-      rc5_unit_func = rc5_unit_func_arm;
-      des_unit_func = des_unit_func_strongarm;
-      break;
-    case 3:
-      rc5_unit_func = rc5_unit_func_strongarm;
-      des_unit_func = des_unit_func_arm;
-      break;
+    case 1:rc5_unit_func = rc5_unit_func_strongarm;
+           des_unit_func = des_unit_func_strongarm;
+           break;
+    case 2:rc5_unit_func = rc5_unit_func_arm;
+           des_unit_func = des_unit_func_strongarm;
+           break;
+    case 3:rc5_unit_func = rc5_unit_func_strongarm;
+           des_unit_func = des_unit_func_arm;
+           break;
   }
 
 #endif
@@ -3137,13 +3136,13 @@ int Client::x86id()
   else if (vendorid == 0x6E49 || vendorid == 0x6547) // Intel CPU
     {
     pronoun = "an";
-    vendorname = " Intel"; 
+    vendorname = " Intel";
     if ((cpuidb == 0x30) || (cpuidb == 0x40))
       vendorname = ""; //generic 386/486
     cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
     struct _cpuxref __cpuxref[]={
       {  0x0030,   1, "80386"    },   // generic 386/486 core
-      {  0x0040,   1, "80486"    },   
+      {  0x0040,   1, "80486"    },
       {  0x0400,   1, "486DX 25 or 33" },
       {  0x0410,   1, "486DX 50" },
       {  0x0420,   1, "486SX" },
@@ -3166,7 +3165,7 @@ int Client::x86id()
       {  0x0650,   2, "Pentium II" },
       {  0x0000,   2, NULL         }  // default core = PPro/PII
       }; cpuxref = &__cpuxref[0];
-    } 
+    }
 
   LogScreen( "Automatic processor detection " );
   if ( cpuxref == NULL ) // fell through
@@ -3189,7 +3188,7 @@ int Client::x86id()
       if ( cpuidb == (cpuxref[pos].cpuidb))
         {
         coretouse = (cpuxref[pos].coretouse);  //show the name
-        LogScreenf( "found %s%s %s.\n", pronoun, 
+        LogScreenf( "found %s%s %s.\n", pronoun,
                                      vendorname, (cpuxref[pos].cpuname));
         break;
         }
@@ -3216,7 +3215,7 @@ static void ARMident_catcher(int)
 int Client::ARMid()
 #if (CLIENT_OS == OS_RISCOS)
 {
-  u32 detectedvalue; // value ARMident returns, must be interpreted
+  u32 realid, detectedvalue; // value ARMident returns, must be interpreted
   int coretouse; // the core the client should use
 
   // ARMident() will throw SIGILL on an ARM 2 or ARM 250, because
@@ -3262,10 +3261,12 @@ int Client::ARMid()
       detectedvalue = 0x7500FE;
   }
 
+  LogScreen("Automatic processor detection ");
+
   switch (detectedvalue)
   {
     case 0x200:
-      LogScreen("Detected an ARM 2 or ARM 250. ");
+      LogScreen("found an ARM 2 or ARM 250.\n");
       coretouse=2;
       break;
     case 0x3:
@@ -3274,23 +3275,23 @@ int Client::ARMid()
     case 0x700:
     case 0x7500:
     case 0x7500FE:
-      LogScreenf("Detected an ARM %X. ", detectedvalue);
+      LogScreenf("found an ARM %X.\n", detectedvalue);
       coretouse=0;
       break;
     case 0x710:
-      LogScreenf("Detected an ARM %X. ", detectedvalue);
+      LogScreenf("found an ARM %X.\n", detectedvalue);
       coretouse=3;
       break;
     case 0x810:
-      LogScreenf("Detected an ARM %X. ", detectedvalue);
+      LogScreenf("found an ARM %X.\n", detectedvalue);
       coretouse=1;
       break;
     case 0xA10:
-      LogScreen("Detected a StrongARM 110. ");
+      LogScreen("found a StrongARM 110.\n");
       coretouse=1;
       break;
     default:
-      LogScreen("Detected an unknown processor. ");
+      LogScreenf("failed. (id: %08X)\n", realid);
       coretouse=-1;
       break;
   }
