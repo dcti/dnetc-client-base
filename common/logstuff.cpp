@@ -4,6 +4,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff.cpp,v $
+// Revision 1.12  1998/10/05 02:18:34  cyp
+// Resolved a "computed value is not used" warning.
+//
 // Revision 1.11  1998/10/05 01:58:05  cyp
 // Implemented automatic time stamping. Added LogSetTimeStampingMode(int) to
 // enable timestamps once the ::Run has started.
@@ -51,7 +54,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.11 1998/10/05 01:58:05 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.12 1998/10/05 02:18:34 cyp Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -361,7 +364,7 @@ void LogWithPointer( int loggingTo, const char *format, va_list argptr )
           }
         sel = 0;
         while (*buffptr && *buffptr != '\n' && *buffptr != '\r')
-           *buffptr++;
+           buffptr++;
         } while (*buffptr);
       msglen = strlen( msgbuffer );
       }
