@@ -18,7 +18,7 @@
 //#define TRACE
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk-conflict.cpp,v 1.43.2.12 2000/01/10 19:51:46 snake Exp $"; }
+return "@(#)$Id: lurk-conflict.cpp,v 1.43.2.13 2000/01/11 00:51:57 jlawson Exp $"; }
 
 /* ---------------------------------------------------------- */
 
@@ -442,7 +442,7 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
       #ifdef TRACE
       TRACE_OUT((0,"mask flags: include_all=%d, defaults_only=%d\niface list:\n",
                    mask_include_all, mask_default_only ));
-      for (int ptrindex=0;ifacestowatch[ptrindex];ptrindex++)
+      for (ptrindex=0;ifacestowatch[ptrindex];ptrindex++)
         TRACE_OUT((0,"  %d) '%s'\n",ptrindex+1,ifacestowatch[ptrindex]));
       #endif
     }
