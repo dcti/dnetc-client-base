@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.6 1999/11/09 18:33:45 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.7 1999/11/28 15:15:23 remi Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -49,7 +49,7 @@ void trace_out( int indlevel, const char *format, ... )
         spcs -= sizeof(buffer);
     }
     if (indlevel != 0)
-      fwrite((void *)((indlevel < 0)?("end: "):("beg: ")), 1, 5, file );
+      fwrite((const char *)((indlevel < 0)?("end: "):("beg: ")), 1, 5, file );
     vfprintf(file, format, arglist);
     fflush( file );
     fclose( file );
