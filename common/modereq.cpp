@@ -8,16 +8,19 @@
 */    
 //
 // $Log: modereq.cpp,v $
+// Revision 1.16  1998/12/28 21:05:55  cyp
+// Removed CLIENT_OS specific stuff. MacOS! Get in line!
+//
 // Revision 1.15  1998/12/25 02:32:11  silby
-// ini writing functions are now not part of client object.
+// ini writing functions are now not part of the client object.
 // This allows the win32 (and other) guis to have
 // configure modules that act on a dummy client object.
 // (Client::Configure should be seperated as well.)
 // Also fixed bug with spaces being taken out of pathnames.
 //
 // Revision 1.14  1998/12/16 05:55:53  cyp
-// MODEREQ_FFORCE doesn't do anything different from normal force/flush, so I
-// recycled it as MODEREQ_FQUIET for use with non-interactive BufferUpdate()
+// MODEREQ_FFORCE doesn't do anything different from normal force/flush.
+// Recycled it as MODEREQ_FQUIET for use with non-interactive BufferUpdate()
 //
 // Revision 1.13  1998/12/08 05:48:59  dicamillo
 // For MacOS GUI client, add calls to create and destroy benchmark display.
@@ -62,7 +65,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.15 1998/12/25 02:32:11 silby Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.16 1998/12/28 21:05:55 cyp Exp $"; }
 #endif
 
 #include "client.h"   //client class
@@ -79,10 +82,7 @@ return "@(#)$Id: modereq.cpp,v 1.15 1998/12/25 02:32:11 silby Exp $"; }
 #include "bench.h"    //"mode" Benchmark()
 #include "buffwork.h" //"mode" UnlockBuffer()
 #include "buffupd.h"  //"mode" BufferUpdate() flags
-#include "confrwv.h"  // Needed to update config
-#if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-  #include "baseincs.h" // client-specific includes
-#endif
+#include "confrwv.h"  //"mode" (actually needed to update config)
 
 /* --------------------------------------------------------------- */
 
@@ -180,28 +180,10 @@ int ModeReqRun(Client *client)
           u32 benchsize = (1L<<23); /* long bench: 8388608 instead of 100000000 */
           if ((bits & (MODEREQ_BENCHMARK_QUICK))!=0)
             benchsize = (1L<<20); /* short bench: 1048576 instead of 10000000 */
-          if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_RC5)!=0) {
-          	#if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-         	  MakeGUIThread(0, 0);
-          	#endif
-
+          if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_RC5)!=0) 
             Benchmark( 0, benchsize, client->cputype );
-
-          	#if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-         	  DestroyGUIThread(0);
-          	#endif
-            }
-          if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_DES)!=0) {
-          	#if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-         	  MakeGUIThread(1, 0);
-          	#endif
-
+          if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_DES)!=0) 
             Benchmark( 1, benchsize, client->cputype );
-
-          	#if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-         	  DestroyGUIThread(0);
-          	#endif
-            }
           }
         retval |= (modereq.reqbits & (MODEREQ_BENCHMARK_DES | 
                  MODEREQ_BENCHMARK_RC5 | MODEREQ_BENCHMARK_QUICK ));
@@ -217,7 +199,6 @@ int ModeReqRun(Client *client)
         }
       if ((bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART)) != 0)
         {
-#if !((CLIENT_OS==OS_WIN32) && defined(NEEDVIRTUALMETHODS))
         // configure is awkward with the GUI at the moment
         Client *newclient = new Client;
         if (!newclient)
@@ -242,7 +223,6 @@ int ModeReqRun(Client *client)
             restart = 1;
           retval |= (bits & (MODEREQ_CONFIG|MODEREQ_CONFRESTART));
           }
-#endif
         modereq.reqbits &= ~(MODEREQ_CONFIG|MODEREQ_CONFRESTART);
         }
       if ((bits & (MODEREQ_FETCH | MODEREQ_FLUSH))!=0)
