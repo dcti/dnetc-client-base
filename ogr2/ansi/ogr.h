@@ -3,7 +3,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.18 2001/03/19 16:51:08 andreasb Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.18.2.1 2001/04/01 19:05:37 andreasb Exp $"
 
 // define this to use the new struct Stub
 //#define OGR_NEW_STUB_FORMAT
@@ -265,6 +265,7 @@ struct State {
   int half_depth2;                /* half of maxdepth, adjusted for 2nd mark */
   int marks[MAXDEPTH+1];          /* current length */
   int startdepth;
+  int stopdepth;
   int depth;
   int limit; // unused
   #ifdef OGR_DEBUG

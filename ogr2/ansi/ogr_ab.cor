@@ -11,7 +11,7 @@
  * cores.
  * And it will be used in stubmap generation.
  */
-#define __OGR_CORE__ "@(#)$Id: ogr_ab.cor,v 1.1.2.8 2001/03/19 16:51:08 andreasb Exp $"
+#define __OGR_CORE__ "@(#)$Id: ogr_ab.cor,v 1.1.2.8.2.1 2001/04/01 19:05:37 andreasb Exp $"
 
 #warning This core needs revision by other coders
 
@@ -128,7 +128,7 @@ the needed memory, but reduces the amount of nodes to be visited.
 
 const char* ogr_name()
 {
-  return "AB 0.02 $Revision: 1.1.2.8 $";
+  return "AB 0.02 $Revision: 1.1.2.8.2.1 $";
 }
 
 
@@ -573,6 +573,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
 #endif
 
   oState->startdepth = workstub->stub.length;
+  oState->stopdepth = workstub->stub.length; // FIXME for NewStub
 
 #ifdef OGR_WINDOW
    oState->wind = oState->depth;
@@ -631,7 +632,7 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
   /* this saves typing ... and cycles */
   register const int max = oState->max;
   register const int maxdepth = oState->maxdepth;
-  register const int startdepth = oState->startdepth;
+  register const int stopdepth = oState->stopdepth;
   register const int half_depth = oState->half_depth;
   register const int half_depth2 = oState->half_depth2;
 
@@ -790,7 +791,7 @@ up:
     lev--;
     depth--;
     //oState->depth = depth-1;
-    if (depth <= startdepth) {
+    if (depth <= stopdepth) {
       retval = CORE_S_OK;
       break;
     }

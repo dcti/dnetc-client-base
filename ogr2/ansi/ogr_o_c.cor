@@ -8,7 +8,7 @@
  * - use the processor cache better when many registers are available
  * - support altivec
  */
-#define __OGR_CORE__ "@(#)$Id: ogr_o_c.cor,v 1.1.2.8 2001/03/19 16:51:09 andreasb Exp $"
+#define __OGR_CORE__ "@(#)$Id: ogr_o_c.cor,v 1.1.2.8.2.1 2001/04/01 19:05:37 andreasb Exp $"
 
 #if ( (OGROPT_ALTERNATE_CYCLE == 1) || (OGROPT_ALTERNATE_CYCLE == 2))
 
@@ -1513,6 +1513,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
 #endif
 
   oState->startdepth = workstub->stub.length;
+  oState->stopdepth = workstub->stub.length; // FIXME for NewStub
 
 #ifdef OGR_WINDOW
    oState->wind = oState->depth;
@@ -1645,7 +1646,7 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
       lev--;
       depth--;
       POP_LEVEL(lev);
-      if (depth <= oState->startdepth) {
+      if (depth <= oState->stopdepth) {
          retval = CORE_S_OK;
          break;
       }
@@ -1653,7 +1654,6 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
    }
 
    SAVE_FINAL_STATE(oState,lev);
-   /* oState->Nodes += nodes; (unused, count is returned through *pnodes) */
    oState->depth = depth-1;
 
    *pnodes = nodes;
