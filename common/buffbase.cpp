@@ -6,8 +6,9 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.40 2000/10/25 00:57:21 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.41 2000/10/26 10:33:05 cyp Exp $"; }
 
+//#define TRACE
 //#define PROFILE_DISK_HITS
 
 #include "cputypes.h"
@@ -945,6 +946,8 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
   if (!check_fetch && !check_flush)
     return 0;    
 
+  TRACE_OUT((+1,"BufferCheckIfUpdateNeeded(client, contestid=%d, check_fetch=%d/check_flush=%d)\n", contestid, check_fetch, check_flush));
+
   /* normally an fetch_needed check will be true only if the in-buff is
      completely empty. With BUFFUPDCHECK_TOPOFF, the fetch_needed check
      will be also be true if below threshold. Used with connect_often etc.
@@ -974,6 +977,8 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
     cont_count = contestid+1;
   }    
 
+  TRACE_OUT((0,"ignore_closed_flags=%d\n", ignore_closed_flags));
+
   need_flush = need_fetch = 0; 
   closed_expired = -1;
   for (pos = cont_start; pos < cont_count; pos++)
@@ -982,8 +987,9 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
     if (cont_i < CONTEST_COUNT) /* not disabled */
     {
       int isclosed = 0;
-      if (!ignore_closed_flags && 
-          (client->project_flags[cont_i] & PROJECTFLAGS_CLOSED) != 0)
+      char proj_flags = client->project_flags[cont_i];
+      TRACE_OUT((0,"proj_flags[cont_i=%d] = 0x%x\n", cont_i, proj_flags));
+      if (!ignore_closed_flags && (proj_flags & PROJECTFLAGS_CLOSED) != 0)
       {
         /* this next bit is not a good candidate for a code hoist */
         if (closed_expired < 0) /* undetermined */
@@ -1013,9 +1019,11 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
           }      
           #endif
         } /* if (closed_expired < 0) (undetermined) */
+        TRACE_OUT((0,"closed_expired = %d\n", closed_expired));
         if (!closed_expired)
           isclosed = 1;
       }	  
+      TRACE_OUT((0,"contest %d, closed=%d\n", cont_i, isclosed));
       if (!isclosed)
       {
         if (check_flush && !need_flush)
@@ -1026,6 +1034,7 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
             if (either_or)    /* either criterion satisfied ... */
               need_fetch = 1; /* ... fullfills both criteria */
           }    
+          TRACE_OUT((0,"1. contest %d, need_flush = %d need_fetch = %d\n", cont_i, need_flush, need_fetch));
         }      
         if (check_fetch && !need_fetch)
         {
@@ -1042,6 +1051,7 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
           }      
           if (need_fetch && either_or) /* either criterion satisfied ... */
             need_flush = 1;            /* ... fulfills both criteria */
+          TRACE_OUT((0,"2. contest %d, need_flush = %d need_fetch = %d\n", cont_i, need_flush, need_fetch));
         }
         if (need_flush && need_fetch)
           break;
@@ -1055,5 +1065,6 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
   if (need_flush)
     buffupd_flags |= BUFFERUPDATE_FLUSH;
   
+  TRACE_OUT((-1,"BufferCheckIfUpdateNeeded() => 0x%x\n", buffupd_flags ));
   return buffupd_flags;
 }  
