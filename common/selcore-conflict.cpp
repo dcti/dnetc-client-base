@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.68 1999/12/31 20:29:36 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.69 1999/12/31 21:15:40 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -85,7 +85,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ev3 and ev4 optimized",
       "ev5 and ev6 optimized",
       #elif (CLIENT_OS == OS_WIN32)
-      "michmarch series A",  /* :) */
+      "Marcelais",
       #else
       "axp bmeyer",
       #endif
@@ -925,16 +925,9 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     ismmx = (det >= 0) ? (det & 0x100) : 0;
   }    
   #endif
-
-  union
-  {
-    /* this is our generic prototype */
-    s32 (*gen)( RC5UnitWork *, u32 *iterations, void *memblk );
-    u32 (*rc5)( RC5UnitWork * , u32 iterations );
-    #if defined(HAVE_DES_CORES)
-    u32 (*des)( RC5UnitWork * , u32 *iterations, char *membuf );
-    #endif
-  } unit_func;
+  int use_generic_proto = 0; /* if rc5/des unit_func proto is generic */
+  unit_func_union unit_func; /* declared in problem.h */
+  int cruncher_is_asynchronous = 0; /* on a co-processor or similar */
   int pipeline_count = 2; /* most cases */
   int client_cpu = CLIENT_CPU; /* usual case */
   int coresel = selcoreGetSelectedCoreForContest( contestid );
@@ -968,7 +961,9 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
           GetNumberOfDetectedProcessors() > 1) /* have x86 card */
       {
         client_cpu = CPU_X86;
-        unit_func.rc5 = rc5_unit_func_x86;
+        unit_func.gen = rc5_unit_func_x86;
+        use_generic_proto = 1; /* unit_func proto is generic */
+        cruncher_is_asynchronous = 1; /* on a co-processor or similar */
         pipeline_count = 1;
         coresel = 0;
       }  
@@ -1371,7 +1366,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     coresel = 0;
     unit_func.gen = csc_unit_func_1k;
    #else
-
+    use_generic_proto = 1; /* all CSC cores use generic form */
     switch( coresel ) 
     {
       case 0 : unit_func.gen = csc_unit_func_6b_i;
@@ -1402,11 +1397,9 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     {
       problem->client_cpu = client_cpu;
       problem->pipeline_count = pipeline_count;
-      problem->unit_func.gen = unit_func.gen;
-      problem->unit_func.rc5 = unit_func.rc5;
-      #if defined(HAVE_DES_CORES)
-      problem->unit_func.des = unit_func.des;
-      #endif
+      problem->use_generic_proto = use_generic_proto;
+      problem->cruncher_is_asynchronous = cruncher_is_asynchronous;
+      memcpy( (void *)&(problem->unit_func), &unit_func, sizeof(unit_func));
     }
     return coresel;
   }
