@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.59 2001/01/03 19:01:28 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.60 2001/02/03 20:03:48 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -940,7 +940,7 @@ static void __init_signal_handlers( int doingmodes )
 // -----------------------------------------------------------------------
 
 #ifndef CLISIGHANDLER_IS_SPECIAL
-#if (CLIENT_OS == OS_IRIX) //or #if defined(SA_NOCLDSTOP) for posix compat
+#if defined(SA_NOCLDSTOP)
 static void (*SETSIGNAL(int signo, void (*proc)(int)))(int)
 {
   struct sigaction sa, osa;
