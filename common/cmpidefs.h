@@ -9,6 +9,10 @@
 */
 //  
 // $Log: cmpidefs.h,v $
+// Revision 1.15  1999/01/19 12:49:28  patrick
+//
+// forgot to change define re: strings.h
+//
 // Revision 1.14  1999/01/19 09:41:32  patrick
 //
 // added OS2-EMX defines for strcmpi...
@@ -117,7 +121,7 @@
   #define strcmpi(x,y)  stricmp(x,y)
   #define strncmpi(x,y,n)  strnicmp(x,y,n)
 #else
-  #if (CLIENT_OS == OS_AIX) || defined(__MVS__)
+  #if defined(__MVS__)
     #include <strings.h>
   #endif
   #include <unistd.h>
