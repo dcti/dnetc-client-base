@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.40 2000/05/29 14:06:01 friedbait Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.41 2000/05/29 14:56:10 friedbait Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -334,6 +334,7 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 
     #define PROC_APM "/proc/apm"
 
+    unsigned int args      = 0;
     unsigned int kmaj      = 0;
     unsigned int kmin      = 0;
     unsigned int amaj      = 0;
@@ -354,17 +355,22 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 
             /*
              * Ok, kernel supports apm, and we have successfully
-             * opened the /proc/apm. Let's parse the variables there
+             * opened the /proc/apm. Let's parse the variables
              */
 
-            fscanf(fd, "%u.%u %u.%u 0x%02x 0x%02x 0x%02x 0x%02x",
-                   &kmaj, &kmin,
-                   &amaj, &amin,
-                   &apm_flags,
-                   &line_stat,
-                   &bat_stat,
-                   &bat_flags
-            );
+            args = fscanf(fd, "%u.%u %u.%u 0x%02x 0x%02x 0x%02x 0x%02x",
+                   &kmaj, &kmin, &amaj, &amin, &apm_flags,
+                   &line_stat, &bat_stat, &bat_flags);
+
+            fclose(fd);
+
+            /*
+             * make sure we've got all variables we want (thanx cyp!)
+             * We want 8 and if we get less, make major version into
+             * something we don't process any further.
+             */
+
+            if (args < 8) kmaj = 0;
 
             /*
              * /proc layout is kernel version dependent. Layout may
