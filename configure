@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.249 2001/04/21 09:51:19 teichp Exp $
+# @(#)$Id: configure,v 1.222.2.250 2001/04/25 00:11:10 oliver Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2090,7 +2090,7 @@ case "$1" in
         TARGET_AS="plat/amigaos/tools/genam_wrapper"
         TARGET_CC="g++"
         generate_gcc_opts "68k" "amigaos"
-        TARGET_CCFLAGS="$OPTS_GCC -m68000 -fpermissive -O6 -I./ -noixemul \
+        TARGET_CCFLAGS="$OPTS_GCC -m68000 -fpermissive -I./ -noixemul \
                         -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
                         -DDYN_TIMESLICE -Wno-unknown-pragmas"
         TARGET_LDFLAGS="-noixemul"
@@ -2107,10 +2107,10 @@ case "$1" in
 
     *ppc-amigaos-wos)           # [oliver] <oliver@futaura.co.uk>
         TARGET_AS="ppc-amigaos-gas"
-        TARGET_CC="ppc-amigaos-g++ -V 2.95.2"
+        TARGET_CC="ppc-amigaos-g++"
         TARGET_ASFLAGS="-m603"
         generate_gcc_opts "ppc603e" "amigaos"
-        TARGET_CCFLAGS="$OPTS_GCC -O6 -mmultiple -mstring -I./ \
+        TARGET_CCFLAGS="$OPTS_GCC -mmultiple -mstring -I./ \
                         -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
                         -DDYN_TIMESLICE"
         TARGET_TARBALL="amigaos-ppc-wos"
@@ -2124,10 +2124,10 @@ case "$1" in
 
     *ppc-amigaos-pup)           # [oliver] <oliver@futaura.co.uk>
         TARGET_AS="ppc-amigaos-gas"
-        TARGET_CC="ppc-amigaos-g++ -V 2.95.2" 
+        TARGET_CC="ppc-amigaos-g++" 
         TARGET_ASFLAGS="-m603"
         generate_gcc_opts "ppc603e" "amigaos"
-        TARGET_CCFLAGS="$OPTS_GCC -pup -D__POWERUP__ -O6 -mmultiple -mstring \
+        TARGET_CCFLAGS="$OPTS_GCC -pup -D__POWERUP__ -mmultiple -mstring \
                         -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
                         -I./ -DDYN_TIMESLICE"
         TARGET_LDFLAGS="-pup"
@@ -2593,7 +2593,11 @@ if [ "$TARGET_OGR_MULTI" = "68k" ]; then
   OGR68K="000 020 030 040 060"
   for targetext in ${OGR68K}; do
     echo "output/ogr${targetext}.o:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
-    echo "	\$(CC) \$(CCFLAGS) -m68${targetext} -c -o output/ogr${targetext}.o $OGR/ansi/ogr.cpp \\" >> Makefile
+    if [ "$targetext" = "020" -o "$targetext" = "030" ]; then
+      echo "	\$(CC) \$(CCFLAGS) -m68${targetext} -fno-unroll-loops -c -o output/ogr${targetext}.o $OGR/ansi/ogr.cpp \\" >> Makefile
+    else
+      echo "	\$(CC) \$(CCFLAGS) -m68${targetext} -c -o output/ogr${targetext}.o $OGR/ansi/ogr.cpp \\" >> Makefile
+    fi
     echo "	-DOGR_GET_DISPATCH_TABLE_FXN=ogr_get_dispatch_table_${targetext}" >> Makefile
     echo "" >> Makefile
   done
