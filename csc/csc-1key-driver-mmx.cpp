@@ -1,44 +1,6 @@
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-//
-// $Log: csc-1key-driver-mmx.cpp,v $
-// Revision 1.1.2.1  1999/11/22 18:58:11  remi
-// Initial commit of MMX'fied CSC cores.
-//
-// Revision 1.3.2.7  1999/11/08 01:48:57  cyp
-// rewound last change
-//
-// Revision 1.5  1999/11/01 17:25:51  cyp
-// sync from release
-//
-// Revision 1.3.2.5  1999/10/24 23:54:53  remi
-// Use Problem::core_membuffer instead of stack for CSC cores.
-// Align frequently used memory to 16-byte boundary in CSC cores.
-//
-// Revision 1.3.2.4  1999/10/08 00:07:01  cyp
-// made (mostly) all extern "C" {}
-//
-// Revision 1.3.2.3  1999/10/07 23:37:40  cyp
-// changed '#elif CSC_BIT_64' to '#elif defined(CSC_BIT_64)' and changed an
-// 'unsigned long' to 'ulong'
-//
-// Revision 1.3.2.2  1999/10/07 19:08:59  remi
-// CSC_64_BITS patch
-//
-// Revision 1.3.2.1  1999/10/07 18:41:14  cyp
-// sync'd from head
-//
-// Revision 1.3  1999/07/28 23:15:29  trevorh
-// Fixed compilation error on Watcom OS/2
-//
-// Revision 1.2  1999/07/25 13:28:51  remi
-// Fix for 64-bit processors.
-//
-// Revision 1.1  1999/07/23 02:43:05  fordbr
-// CSC cores added
-//
-//
 
 #include <stdio.h>
 #include <assert.h>
@@ -50,7 +12,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_1key_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-1key-driver-mmx.cpp,v 1.1.2.1 1999/11/22 18:58:11 remi Exp $"; }
+return "@(#)$Id: csc-1key-driver-mmx.cpp,v 1.1.2.2 1999/11/28 20:19:14 remi Exp $"; }
 #endif
 
 // ------------------------------------------------------------------
@@ -99,6 +61,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   u32 cc = unitwork->cypher.lo;
   u32 kk = keylo;
   u32 mask = 1;
+  {
   for (int i=0; i<64; i++) {
     (*plain)[i]  = (pp & mask) ? _1 : _0;
     (*cipher)[i] = (cc & mask) ? _1 : _0;
@@ -109,6 +72,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
       kk = keyhi;
       mask = 1;
     }
+  }
   }
   memset( &(*key)[1], 0, sizeof((*key)[1]) );
 

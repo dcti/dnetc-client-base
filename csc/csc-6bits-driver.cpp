@@ -1,43 +1,6 @@
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-//
-// $Log: csc-6bits-driver.cpp,v $
-// Revision 1.2.2.7  1999/10/30 15:02:27  remi
-// Hrmm, I can't program in C :(
-// if (blah & 15 != 0)
-// 	slap(remi);
-// if ((blah & 15) != 0)
-// 	pets(remi);
-//
-// Revision 1.2.2.6  1999/10/24 23:54:54  remi
-// Use Problem::core_membuffer instead of stack for CSC cores.
-// Align frequently used memory to 16-byte boundary in CSC cores.
-//
-// Revision 1.2.2.5  1999/10/20 16:15:34  cyp
-// added cast where compiler was complaining about potential underflow when
-// assigning an int value to u8 var.
-//
-// Revision 1.2.2.4  1999/10/08 00:07:01  cyp
-// made (mostly) all extern "C" {}
-//
-// Revision 1.2.2.3  1999/10/07 23:37:40  cyp
-// changed '#elif CSC_BIT_64' to '#elif defined(CSC_BIT_64)' and changed an
-// 'unsigned long' to 'ulong'
-//
-// Revision 1.2.2.2  1999/10/07 19:08:59  remi
-// CSC_64_BITS patch
-//
-// Revision 1.2.2.1  1999/10/07 18:41:14  cyp
-// sync'd from head
-//
-// Revision 1.2  1999/07/25 13:28:51  remi
-// Fix for 64-bit processors.
-//
-// Revision 1.1  1999/07/23 02:43:06  fordbr
-// CSC cores added
-//
-//
 
 #include <stdio.h>
 #include <assert.h>
@@ -49,7 +12,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_6bits_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-6bits-driver.cpp,v 1.2.2.7 1999/10/30 15:02:27 remi Exp $"; }
+return "@(#)$Id: csc-6bits-driver.cpp,v 1.2.2.8 1999/11/28 20:18:20 remi Exp $"; }
 #endif
 
 /*
@@ -156,10 +119,12 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   while (*timeslice > (1ul << nbits)) nbits++;
 
   // Zero out all the bits that are to be varied
+  {
   for( int i=0; i<6; i++ ) {
     int n = csc_bit_order[i];
     (*key)[0][n] = _0;
     keyB[7-n/8] &= (u8)(~(1 << (n%8)));
+  }
   }
   {
   for (u32 i=0; i<nbits-CSC_BITSLICER_BITS; i++) {
