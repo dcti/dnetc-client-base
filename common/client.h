@@ -5,11 +5,11 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- *
- * ****************** THIS IS WORLD-READABLE SOURCE *********************
- *
- *
  * $Log: client.h,v $
+ * Revision 1.127  1999/04/01 03:38:29  cyp
+ * Combined half-a-dozen [in|out]_buffer_file vars in in|out_buffer_basename.
+ * Created remote_update_dir var - serves as an alternate buffer directory.
+ *
  * Revision 1.126  1999/03/20 07:45:01  cyp
  * Modified for/to use new WorkRecord structure.
  *
@@ -39,11 +39,10 @@
  *
  * Revision 1.118  1999/02/21 21:44:58  cyp
  * tossed all redundant byte order changing. all host<->net order conversion
- * as well as scram/descram/checksumming is done at [get|put][net|disk] points
- * and nowhere else.
+ * is done at [get|put][net|disk] points and nowhere else.
  *
  * Revision 1.117  1999/02/20 02:56:59  gregh
- * Added IDCONTEST_OGR
+ * Added OGR
  *
  * Revision 1.116  1999/02/09 10:55:55  silby
  * Updated OPs from proxy tree.
@@ -245,13 +244,7 @@
  * Fixed an inadvertent wrap of one of the long single-line revision headers.
  *
  * Revision 1.59  1998/07/05 13:09:04  cyruspatel
- * Created new pathwork.cpp which contains functions for determining/setting
- * the "work directory" and pathifying a filename that has no dirspec.
- * GetFullPathForFilename() is ideally suited for use in (or just prior to) a
- * call to fopen(). This obviates the neccessity to pre-parse filenames or
- * maintain separate filename buffers. In addition, each platform has its own
- * code section to avoid cross-platform assumptions. More doc in pathwork.cpp
- * #define DONT_USE_PATHWORK if you don't want to use these functions.
+ * Created new pathwork.cpp. Threw away icky client methods.
  *
  * Revision 1.58  1998/07/05 12:42:37  cyruspatel
  * Created cpucheck.h to support makefiles that rely on autodependancy info
@@ -330,7 +323,6 @@
 #ifndef __CLIENT_H__
 #define __CLIENT_H__
 
-#define PACKET_VERSION      0x03
 #define MAXBLOCKSPERBUFFER  500
 #define CONTEST_COUNT       3 /* RC5,DES,OGR */
 
@@ -376,8 +368,10 @@ public:
   s32  connectoften;
   s32  preferred_blocksize;
   struct { struct membuffstruct in, out; } membufftable[CONTEST_COUNT];
-  char in_buffer_file[CONTEST_COUNT][128];
-  char out_buffer_file[CONTEST_COUNT][128];
+  char in_buffer_basename[128];
+  char out_buffer_basename[128];
+  char remote_update_dir[128];
+  char loadorder_map[CONTEST_COUNT];
   volatile s32 inthreshold[CONTEST_COUNT];
   volatile s32 outthreshold[CONTEST_COUNT];
 
@@ -412,7 +406,6 @@ public:
   s32  minutes;
   s32  percentprintingoff;
   s32  noexitfilecheck;
-  char loadorder_map[CONTEST_COUNT];
   char pausefile[128];
 
 
@@ -442,14 +435,6 @@ public:
 
   int Run( void );
     // run the loop, do the work
-    // returns:
-    //    -2 = exit by error (all contests closed)
-    //    -1 = exit by error (critical)
-    //     0 = exit for unknown reason
-    //     1 = exit by user request
-    //     2 = exit by exit file check
-    //     3 = exit by time limit expiration
-    //     4 = exit by block count expiration
 
   int BufferUpdate( int updatereq_flags, int interactive );
     // pass flags ORd with BUFFERUPDATE_FETCH/*_FLUSH. 
@@ -464,10 +449,6 @@ public:
   unsigned int LoadSaveProblems(unsigned int load_problem_count, int retmode);
     // returns number of actually loaded problems 
 
-  int BufferImportRecords( const char *source_file );
-    // import records from source, return -1 if err, or number of recs 
-    // imported (source is then truncated/deleted). Used by checkpointer 
-    // and command line -import option.
 };
 
 /* -------------------------------------------------------------------------- */
