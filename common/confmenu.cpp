@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.40 1999/04/20 23:02:57 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41 1999/04/22 01:51:44 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -63,12 +63,36 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
   conf_options[CONF_REMOTEUPDATEDIR].thevariable=(char *)(&remote_update_dir[0]);
   conf_options[CONF_FREQUENT].thevariable=&connectoften;
   conf_options[CONF_PREFERREDBLOCKSIZE].thevariable=&preferred_blocksize;
-  s32 threshold = (s32)inthreshold[0];
-  conf_options[CONF_THRESHOLDI].thevariable=&threshold;
+  conf_options[CONF_THRESHOLDI].thevariable=(s32 *)&inthreshold[0];
 
   /* ------------------- CONF_MENU_LOG  ------------------ */  
+
+  static const char *logtypes[] = {"none","no limit","restart","fifo","rotate"};
+  char logkblimit[sizeof(logfilelimit)], logrotlimit[sizeof(logfilelimit)];
+  s32 logtype = LOGFILETYPE_NOLIMIT;
+  logkblimit[0] = logrotlimit[0] = '\0';
   
+  if ( strcmp( logfiletype, "rotate" ) == 0)
+  {
+    logtype = LOGFILETYPE_ROTATE;
+    strcpy( logrotlimit, logfilelimit );
+  }
+  else 
+  {
+    strcpy( logkblimit, logfilelimit );
+    if ( logname[0] == '\0' || strcmp( logfiletype, "none" ) == 0 )
+      logtype = LOGFILETYPE_NONE;
+    else if (strcmp( logfiletype, "restart" ) == 0)
+      logtype = LOGFILETYPE_RESTART;
+    else if (strcmp( logfiletype, "fifo" ) == 0)
+      logtype = LOGFILETYPE_FIFO;
+  }
+  
+  conf_options[CONF_LOGTYPE].thevariable=&logtype;
+  conf_options[CONF_LOGTYPE].choicelist=&logtypes[0];
+  conf_options[CONF_LOGTYPE].choicemax=(s32)((sizeof(logtypes)/sizeof(logtypes[0]))-1);
   conf_options[CONF_LOGNAME].thevariable=(char *)(&logname[0]);
+  conf_options[CONF_LOGLIMIT].thevariable=(char *)(&logkblimit[0]);
   conf_options[CONF_MESSAGELEN].thevariable=&messagelen;
   conf_options[CONF_SMTPSRVR].thevariable=(char *)(&smtpsrvr[0]);
   conf_options[CONF_SMTPPORT].thevariable=&smtpport;
@@ -300,6 +324,16 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
     }
     else if (whichmenu == CONF_MENU_LOG)
     {
+      conf_options[CONF_LOGLIMIT].thevariable=(char *)(&logkblimit[0]);
+      if (logtype == LOGFILETYPE_ROTATE)
+        conf_options[CONF_LOGLIMIT].thevariable=(char *)(&logrotlimit[0]);
+      conf_options[CONF_LOGNAME].disabledtext=
+                  ((logtype != LOGFILETYPE_NONE) ? (NULL) : 
+                  ("n/a [file log disabled]"));
+      conf_options[CONF_LOGLIMIT].disabledtext=
+                  ((logtype != LOGFILETYPE_NONE && 
+                    logtype != LOGFILETYPE_NOLIMIT) ? (NULL) : 
+                  ("n/a [inappropriate for log type]"));
       conf_options[CONF_SMTPSRVR].disabledtext=
       conf_options[CONF_SMTPPORT].disabledtext=
       conf_options[CONF_SMTPDEST].disabledtext=
@@ -662,12 +696,23 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
           
           if (conf_options[editthis].choicelist !=NULL)
           {
-            long selmin = conf_options[editthis].choicemin;
-            long selmax = conf_options[editthis].choicemax;
-            long listpos;
-            for ( listpos = selmin; listpos <= selmax; listpos++)
-              LogScreenRaw("  %2ld) %s\n", listpos, 
-                    conf_options[editthis].choicelist[listpos]);
+            const char *ppp;
+            long selmin = (long)(conf_options[editthis].choicemin);
+            long selmax = (long)(conf_options[editthis].choicemax);
+            sprintf(defaultbuff,"%ld) ", selmax );
+            ppp = strstr( conf_options[editthis].comments, defaultbuff );
+            if (ppp != NULL)
+            {
+              sprintf(defaultbuff,"%ld) ", selmin );
+              ppp = strstr( conf_options[editthis].comments, defaultbuff );
+            }
+            if (ppp == NULL)
+            {
+              long listpos;
+              for ( listpos = selmin; listpos <= selmax; listpos++)
+                LogScreenRaw("  %2ld) %s\n", listpos, 
+                      conf_options[editthis].choicelist[listpos]);
+            }
           }
           if (conf_options[editthis].type==CONF_TYPE_PASSWORD)
           {
@@ -911,6 +956,19 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
   {
     if (id[0] == 0)
       strcpy(id, "rc5@distributed.net");
+
+    if (logtype >=0 && logtype < (s32)(sizeof(logtypes)/sizeof(logtypes[0])))
+    {
+      if (logtype == LOGFILETYPE_ROTATE)
+        strcpy( logfilelimit, logrotlimit );
+      else 
+      {
+        if (logname[0] == '\0')
+          logtype = LOGFILETYPE_NONE;
+        strcpy( logfilelimit, logkblimit );
+      }
+      strcpy( logfiletype, logtypes[logtype] );
+    }
 
     autofindkeyserver = (autofindks!=0);
 

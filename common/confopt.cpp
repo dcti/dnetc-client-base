@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.31 1999/04/19 06:17:08 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.32 1999/04/22 01:53:09 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -307,13 +307,38 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
 { CFGTXT("Logging Options"),"",
   CFGTXT(""),CONF_MENU_MAIN,CONF_TYPE_MENU,NULL,NULL,CONF_MENU_LOG,0,NULL},
 //26
+{ CFGTXT("Log file type"), "0",
+  CFGTXT(
+  "This option determines what kind of file-based logging is preferred:\n"
+  "\n"
+  "0) none      altogether disables logging to file.\n"
+  "1) no limit  the size of the file is not limited. This is the default if\n"
+  "             a limit is not specified in the \"Log file limit\" option.\n"
+  "2) restart   the log will deleted/recreated when the file size specified\n"
+  "             in the \"Log file limit\" option is reached.\n"
+  "3) fifo      the oldest lines in the file will be discarded when the size\n"
+  "             of the file exceeds the limit in the \"Log file limit\" option.\n"
+  "4) rotate    a new file will be created when the rotation interval specified\n"
+  "             in the \"Log file limit\" option is exceeded.\n"
+  ),CONF_MENU_LOG,CONF_TYPE_INT,NULL,NULL /*logtypes[]*/,0,0,NULL},
+//27
 { CFGTXT("File to log to"), "",
   CFGTXT(
-  "To enable logging to file you must specify the name of a logfile. The filename\n"
-  "is limited a length of 128 characters and may not contain spaces. The file\n"
-  "will be created to be in the client's directory unless a path is specified.\n"
+  "The log file name is required for all log types except \"rotate\", for which it\n"
+  "is optional. The effective file name used for the \"rotate\" log file type is\n"
+  "constructed from a unique identifier for the period (time limit) concatenated\n"
+  "to whatever you specify here. Thus, if the interval is weekly, the name of the\n"
+  "log file used will be [to log to]yearweek"EXTN_SEP"log.\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
-//27
+//28
+{ CFGTXT("Log file limit/interval"), "",
+  CFGTXT(
+  "For the \"rotate\" log type, this option determines the interval with which\n"
+  "a new file will be opened. The interval may be specified as a number of days,\n"
+  "or as \"daily\",\"weekly\",\"monthly\" etc.\n"
+  "For other log types, this option determines the maximum file size in kilobytes.\n"
+  ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
+//29
 { CFGTXT("Log by mail spool size (bytes)"), "0 (mail disabled)",
   CFGTXT(
   "The client is capable of sending you a log of the client's progress by mail.\n"
@@ -321,26 +346,26 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "before sending. The minimum is 2048 bytes, the maximum is approximately 130000\n"
   "bytes. Specify 0 (zero) to disable logging by mail.\n"
   ),CONF_MENU_LOG,CONF_TYPE_INT,NULL,NULL,0,125000,NULL},
-//28
+//30
 { CFGTXT("SMTP Server to use"), "",
   CFGTXT(
   "Specify the name or DNS address of the SMTP host via which the client should\n"
   "relay mail logs. The default is the hostname component of the email address from\n"
   "which logs will be mailed.\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
-//29
+//31
 { CFGTXT("SMTP Port"), "25 (default)",
   CFGTXT(
   "Specify the port on the SMTP host to which the client's mail subsystem should\n"
   "connect when sending mail logs. The default is port 25.\n"
   ),CONF_MENU_LOG,CONF_TYPE_INT,NULL,NULL,0,0xFFFF,NULL},
-//30
+//32
 { CFGTXT("E-mail address that logs will be mailed from"),
   "" /* *((const char *)(options[CONF_ID].thevariable)) */,
   CFGTXT(
   "(Some servers require this to be a real address)\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
-//31
+//33
 { CFGTXT("E-mail address to send logs to"),
   "" /* *((const char *)(options[CONF_ID].thevariable)) */,
   CFGTXT(
@@ -349,7 +374,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
 
 /* ------------------------------------------------------------ */
 
-//32
+//34
 { CFGTXT("Network Timeout (seconds)"), "60 (default)",
   CFGTXT(
   "This option determines the amount of time the client will wait for a network\n"
@@ -357,7 +382,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "broken. Any value between 5 and 300 seconds is valid and setting the timeout\n"
   "to -1 forces a blocking connection.\n"
   ),CONF_MENU_NET,CONF_TYPE_INT,NULL,NULL,-1,300,NULL},
-//33
+//35
 { CFGTXT("Automatically select a distributed.net keyserver?"), "1",
   CFGTXT(
   "Set this option to 'Yes' UNLESS your client will not be communicating\n"
@@ -366,7 +391,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "(firewall) and you have been explicitely advised by distributed.net\n"
   "staff to use a specific IP address.\n"
   ),CONF_MENU_NET,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
-//34
+//36
 { CFGTXT("Keyserver hostname"), "",
   CFGTXT(
   "This is the name or IP address of the machine that your client will\n"
@@ -374,7 +399,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "if possible unless your client will be communicating through a HTTP\n"
   "proxy (firewall) and you have trouble fetching or flushing packets.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
-//35
+//37
 { CFGTXT("Keyserver port"), "", /* atoi("") is zero too. */
   CFGTXT(
   "This field determines which keyserver port the client should connect to.\n"
@@ -388,56 +413,56 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "All keyservers (personal proxy as well as distributed.net hosts) accept\n"
   "all encoding methods (UUE, HTTP, raw) on any/all ports the listen on.\n"
   ),CONF_MENU_NET,CONF_TYPE_INT,NULL,NULL,0,0xFFFF,NULL},
-//36
+//38
 { CFGTXT("Keyserver is a personal proxy on a protected LAN?"),"0",
   CFGTXT(
   "If the keyserver that your client will be connecting to is a personal\n"
   "proxy inside a protected LAN (inside a firewall), set this option to 'yes'.\n"
   "Otherwise leave it at 'No'.\n"
   ),CONF_MENU_NET,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
-//37
+//39
 { CFGTXT("Firewall/proxy protocol"), "none/transparent/mapped" /* note: atol("")==0 */,
   CFGTXT(
   "This field determines what protocol to use when communicating via a\n"
   "SOCKS or HTTP proxy.\n"
   ),CONF_MENU_NET,CONF_TYPE_INT,NULL,NULL,0,20,NULL},
-//38
+//40
 { CFGTXT("Firewall hostname"), "",
   CFGTXT(
   "This field determines the hostname or IP address of the firewall proxy\n"
   "through which the client should communicate. The proxy is expected to be\n"
   "on a local network.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
-//39
+//41
 { CFGTXT("Firewall port"), "" /* note: atol("")==0 */,
   CFGTXT(
   "This field determines the port number on the firewall proxy to which the\n"
   "the client should connect. The port number must be valid.\n"
   ),CONF_MENU_NET,CONF_TYPE_INT,NULL,NULL,0,0xFFFF,NULL},
-//40
+//42
 { CFGTXT("Firewall username"), "",
   CFGTXT(
   "Specify a username in this field if your SOCKS host requires\n"
   "authentication before permitting communication through it.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
-//41
+//43
 { CFGTXT("Firewall password"), "",
   CFGTXT(
   "Specify the password in this field if your SOCKS host requires\n"
   "authentication before permitting communication through it.\n"
   ),CONF_MENU_NET,CONF_TYPE_PASSWORD,NULL,NULL,0,0,NULL},
-//42
+//44
 { CFGTXT("Use HTTP encapsulation even if not using an HTTP proxy?"),"0",
   CFGTXT(
   "Enable this option if you have an HTTP port-mapped proxy or other\n"
   "configuration that allows HTTP packets but not unencoded packets.\n"
   ),CONF_MENU_NET,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
-//43
+//45
 { CFGTXT("Always use UUEncoding?"),"0",
   CFGTXT(
   "Enable this option if your network environment only supports 7bit traffic.\n"
   ),CONF_MENU_NET,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
-//44
+//46
 { CFGTXT("Modem detection options"),"0",
   CFGTXT(
   "Normal mode: the client will send/receive packets only when it\n"
@@ -453,8 +478,8 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "        connected. HOWEVER, if the client runs out of packets,\n"
   "        it will NOT trigger auto-dial, and will instead work\n"
   "        on random packets until a connection is detected.\n"
-  ),CONF_MENU_NET,CONF_TYPE_INT,NULL,CFGTXT(&lurkmodetable[0]),0,2,NULL},
-//45
+  ),CONF_MENU_NET,CONF_TYPE_INT,NULL,&lurkmodetable[0],0,2,NULL},
+//47
 { CFGTXT("Interfaces to watch"), "",
   CFGTXT(
   "Colon-separated list of interface names to monitor for a connection,\n"
@@ -470,7 +495,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "   in another, set this option to '*'.\n"
   "The command line equivalent of this option is --interfaces-to-watch\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
-//46
+//48
 { /*dialwhenneeded*/ 
    #if (CLIENT_OS == OS_WIN32)
    CFGTXT("Use a specific DUN profile to connect with?"),
@@ -483,7 +508,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
    "Select 'yes' to have the client control how network connections\n"
    "are initiatiated if none is active.\n"
    ),CONF_MENU_NET,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
-//47
+//49
 { CFGTXT("Dial-up Connection Profile"),"",
   #if (CLIENT_OS == OS_WIN32)
   CFGTXT("Select the DUN profile to use when dialing-as-needed.\n")
@@ -491,14 +516,14 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   CFGTXT("")
   #endif
   ,CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
-//48
+//50
 { CFGTXT("Command/script to start dialup"),"",
   CFGTXT(
   "Enter any valid shell command or script name to use to initiate a\n"
   "network connection. \"Dial the Internet as needed?\" must be enabled for\n"
   "this to be of any use.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
-//49
+//51
 { CFGTXT("Command/script to stop dialup"),"",
   CFGTXT(
   "Enter any valid shell command or script name to use to shutdown a\n"

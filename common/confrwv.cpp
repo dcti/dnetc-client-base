@@ -1,13 +1,10 @@
-
-#define SHOW_FUBARED_INIREAD /* **LEAVE THIS IN** till it is fixed. - cyp */
-
 /*
  * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.56 1999/04/19 06:14:28 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.57 1999/04/22 01:51:44 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // Client class
@@ -21,8 +18,6 @@ return "@(#)$Id: confrwv.cpp,v 1.56 1999/04/19 06:14:28 cyp Exp $"; }
 #include "cmpidefs.h"  // strcmpi()
 #include "confrwv.h"   // Ourselves
 
-#include "logstuff.h"
-#include "console.h"
 /* ------------------------------------------------------------------------ */
 
 static const char *OPTION_SECTION  = "parameters";
@@ -30,6 +25,7 @@ static const char *OPTSECT_NET     = "networking";
 static const char *OPTSECT_BUFFERS = "buffers";
 static const char *OPTSECT_MISC    = "misc";
 static const char *OPTSECT_RC5     = "rc5";
+static const char *OPTSECT_LOG     = "logging";
 
 /* ------------------------------------------------------------------------ */
 
@@ -300,23 +296,15 @@ int ReadConfig(Client *client)
   client->noexitfilecheck = GetPrivateProfileIntB( sect, "noexitfilecheck", client->noexitfilecheck, fn );
 
   GetPrivateProfileStringB( sect, "logname", client->logname, client->logname, sizeof(client->logname), fn );
+  GetPrivateProfileStringB( OPTSECT_LOG, "log-file-type", client->logfiletype, client->logfiletype, sizeof(client->logfiletype), fn );
+  GetPrivateProfileStringB( OPTSECT_LOG, "log-file-limit", client->logfilelimit, client->logfilelimit, sizeof(client->logfilelimit), fn );
+
   GetPrivateProfileStringB( sect, "pausefile", client->pausefile, client->pausefile, sizeof(client->pausefile), fn );
   GetPrivateProfileStringB( sect, "checkpointfile", client->checkpoint_file, client->checkpoint_file, sizeof(client->checkpoint_file), fn );
 
   client->nodiskbuffers = GetPrivateProfileIntB( OPTSECT_BUFFERS, "buffer-only-in-memory", client->nodiskbuffers , fn );
-#ifdef SHOW_FUBARED_INIREAD
-LogScreen("before get(in-file) = \"%s\"\n", client->in_buffer_basename );
-#endif  
   GetPrivateProfileStringB( OPTSECT_BUFFERS, "buffer-file-basename", client->in_buffer_basename, client->in_buffer_basename, sizeof(client->in_buffer_basename), fn );
-#ifdef SHOW_FUBARED_INIREAD
-LogScreen("after get(in-file) = \"%s\"\n", client->in_buffer_basename );
-LogScreen("before get(out-file) = \"%s\"\n", client->out_buffer_basename );
-#endif  
-  GetPrivateProfileStringB( OPTSECT_BUFFERS, "output-file-basename", client->in_buffer_basename, client->out_buffer_basename, sizeof(client->out_buffer_basename), fn );
-#ifdef SHOW_FUBARED_INIREAD
-LogScreen("after get(out-file) = \"%s\"\n", client->out_buffer_basename );
-LogScreenRaw("press a key...");ConInKey(-1);
-#endif
+  GetPrivateProfileStringB( OPTSECT_BUFFERS, "output-file-basename", client->out_buffer_basename, client->out_buffer_basename, sizeof(client->out_buffer_basename), fn );
 
   #if defined(LURK)
   i = dialup.GetCapabilityFlags();
@@ -436,12 +424,6 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     __XSetProfileStr( OPTSECT_BUFFERS, "buffer-file-basename", client->in_buffer_basename, fn, NULL );
     __XSetProfileStr( OPTSECT_BUFFERS, "output-file-basename", client->out_buffer_basename, fn, NULL );
 
-#ifdef SHOW_FUBARED_INIREAD
-LogScreen("did put(in-file) = \"%s\"\n", client->in_buffer_basename );
-LogScreen("did put(out-file) = \"%s\"\n", client->out_buffer_basename );
-LogScreenRaw("press a key...");ConInKey(-1);
-#endif
-
     __XSetProfileInt( OPTSECT_BUFFERS, "allow-update-from-altbuffer", !(client->noupdatefromfile), fn, 1, 1 );
     __XSetProfileStr( OPTSECT_BUFFERS, "alternate-buffer-directory", client->remote_update_dir, fn, NULL );
 
@@ -526,6 +508,8 @@ LogScreenRaw("press a key...");ConInKey(-1);
     /* --- CONF_MENU_LOG -- */
 
     __XSetProfileStr( sect, "logname", client->logname, fn, NULL );
+    __XSetProfileStr( OPTSECT_LOG, "log-file-type", client->logfiletype, fn, NULL );
+    __XSetProfileStr( OPTSECT_LOG, "log-file-limit", client->logfilelimit, fn, NULL );
     __XSetProfileInt( sect, "messagelen", client->messagelen, fn, 0, 0);
     __XSetProfileStr( sect, "smtpsrvr", client->smtpsrvr, fn, NULL);
     __XSetProfileStr( sect, "smtpfrom", client->smtpfrom, fn, NULL);
