@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version-conflict.h,v $
+// Revision 1.36  1999/01/13 19:48:18  cyp
+// blah. 2.7105.430
+//
 // Revision 1.35  1999/01/12 09:13:40  silby
 // Moved to 2.7104.428 in honor of new des mmx core.
 //
@@ -126,11 +129,11 @@
 // as well.
 
 #define CLIENT_CONTEST      71
-#define CLIENT_BUILD        04
-#define CLIENT_BUILD_FRAC   428
+#define CLIENT_BUILD        05
+#define CLIENT_BUILD_FRAC   430
 
-#define CLIENT_VERSIONSTRING    "v2.7104.428"
-#define CLIENT_VERSIONSTRING2   "2.7104.428"        // no leading "v"
+#define CLIENT_VERSIONSTRING    "v2.7105.430"
+#define CLIENT_VERSIONSTRING2   "2.7105.430"        // no leading "v"
 
 // When releasing a beta client, please set the expiration time to
 // about two weeks into the future; that should be an adequate beta
