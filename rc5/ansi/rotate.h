@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: rotate.h,v $
+// Revision 1.4  1998/11/15 07:50:55  remi
+// It seems that the POWER architecture doesn't have any 'roll'
+// instructions, rlimi and rlmi are just macros which get expanded by the
+// POWER assembler. I commented out the relevant inline functions since
+// the compiler can probably better optimized the needed shifts, or, etc ...
+//
 // Revision 1.3  1998/06/14 08:13:55  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -79,6 +85,7 @@ static __inline__ u32 ROTL3(u32 x)
         return res;
 }
 
+/*
 #elif (CLIENT_CPU == CPU_POWER) && defined(__GNUC__)
 
 static __inline__ int ROTL(u32 x, u32 y)
@@ -102,6 +109,7 @@ static __inline__ u32 ROTL3(u32 x)
         :"r" (x));
   return res;
 }
+*/
 
 #elif (CLIENT_CPU == CPU_68K) && defined(__GNUC__)
 
