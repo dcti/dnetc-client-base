@@ -1,23 +1,16 @@
 #!/bin/sh
-
+#
 # Copyright distributed.net 1998-1999 - All Rights Reserved
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.34 1999/11/08 00:01:49 cyp Exp $
-
-echo ""
-echo "RC5DES client makefile generator"
-echo "originally by Jeff Lawson for distributed.net"
-echo "see http://www.distributed.net/"
-echo ""
+# @(#)$Id: configure,v 1.222.2.35 1999/11/08 02:59:48 cyp Exp $
 
 if [ -z "$1" ]; then
   echo "No platform specified on command line.";
   echo "Run with 'list' as an argument to see available platforms."
   exit 1
 fi
-
 
 #####################################################################
 # Note to people making changes..  Do not put spaces around the '=' #
@@ -29,6 +22,8 @@ fi
 # Binary's name
 #
 TARGET_BINNAME="rc5des"
+TARGET_BINNAME_SUFFIX=""
+BUILDNAME=$1
 
 #
 # Platform specific docfiles to be included in the tarball. You only need
@@ -880,18 +875,14 @@ case "$1" in
     *ppc-gcc-aix32)	# AIX 3.2.x gcc [patrick] <patrick@mail4you.de>
 	DELETECHARS="'/.\$\-'"
 	TARGET_CCFLAGS="$OPTS_GCC_PPC -DBIT_32 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-		rc5/ppc/crunch_allitnil_552.ppc.s \
-		rc5/ppc/crunch_lintilla_296.ppc.s"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $RC5PPC_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *aix4-ppc-egcs)			# [patrick] <patrick@mail4you.de>
         DELETECHARS="'/.\$\-'"
         TARGET_CCFLAGS="$OPTS_EGCS -D_AIX -mcpu=ppc601 -DASM_PPC -DBIT_32 -DMEGGS -DKWAN"
-        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2\
-			rc5/ppc/crunch_allitnil_552.ppc.s \
-                        rc5/ppc/crunch_lintilla_296.ppc.s"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $RC5PPC_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         ;;
 
@@ -903,7 +894,7 @@ case "$1" in
         DELETECHARS="'/.\$\-'"
 	TARGET_CCFLAGS="$OPTS_GCC_POWER -D_AIX \
 		-DBIT_32 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/ansi/2-rg.c"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/ansi/rc5ansi_2-rg.cpp"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
@@ -911,7 +902,7 @@ case "$1" in
         DELETECHARS="'/.\$\-'"
         TARGET_CCFLAGS="$OPTS_EGCS -DASM_POWER -mcpu=power -D_AIX \
 		-DBIT_32 -DMEGGS -DKWAN"
-        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/ansi/2-rg.c"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/ansi/rc5ansi-2-rg.cpp"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         ;;
 
@@ -923,10 +914,8 @@ case "$1" in
 	AIXALL=TRUE
         TARGET_CCFLAGS="$OPTS_EGCS -mcpu=common -D_AIX -D_AIXALL \
                         -DBIT_32 -DMEGGS -DKWAN"
-        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-                rc5/ansi/2-rg.c \
-                rc5/ppc/crunch_allitnil_552.ppc.s \
-                rc5/ppc/crunch_lintilla_296.ppc.s"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $RC5PPC_SRCS \
+                rc5/ansi/rc5ansi_2-rg.cpp "
         AIXPPC601FLAGS="$OPTS_EGCS_PPC601 -D_AIX -DBIT32 -DMEGGS -DKWAN"
         AIXPPC604FLAGS="$OPTS_EGCS_PPC601 -D_AIX -DBIT32 -DMEGGS -DKWAN"
         AIXPOWERFLAGS="$OPTS_EGCS_POWER -D_AIX -DBIT32 -DMEGGS -DKWAN"
@@ -1432,7 +1421,7 @@ case "$1" in
 		     /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
         TARGET_DOCFILES="docs/readme.riscos"   #platform specific docfile
 	TARGET_STRIP=touch
-	TARGET_BINNAME=${TARGET_BINNAME},ff8
+	TARGET_BINNAME_SUFFIX=",ff8"
 	;;
 
     *arm-linux)					# chrisb
@@ -1750,34 +1739,34 @@ echo "	 platforms\\os2cli\\gcc_rc.cmd \${BUILDNAME}.res" >> Makefile
 echo "" >> Makefile
 
 echo "clean:" >> Makefile
-echo "	rm -f \${ALLOBJS}  ${TARGET_BINNAME}" >> Makefile
+echo "	rm -f \${ALLOBJS}  ${TARGET_BINNAME}.exe" >> Makefile
 echo "	rm -f output/\${BUILDNAME}.res" >> Makefile
 echo "" >> Makefile
 
 else
 
-echo "${TARGET_BINNAME}:	\${BUILDNAME}" >> Makefile
-echo "	\${CP} \${BUILDNAME} ${TARGET_BINNAME}" >> Makefile
-echo "	\${STRIP} ${TARGET_BINNAME}" >> Makefile
+echo "${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}:	\${BUILDNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
+echo "	\${CP} \${BUILDNAME} ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
+echo "	\${STRIP} ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
 if [ "X$TARGET_GENMAN" != "X" ]; then
-    echo "	./${TARGET_BINNAME} -genman" >> Makefile
+    echo "	./${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} -genman" >> Makefile
 fi  
 if [ "X$TARGET_TARBALL" != "X" ]; then
   if  [ "$TARGET_ARCTYPE" = "zip" ]; then
     echo "Zip support is not in place"  
   else     # tgz
-    echo "	tar -cvzf rc5des\${BUILDNUM}-${TARGET_TARBALL}.tar.gz ${TARGET_BINNAME} \${DOCFILES}" >>Makefile
+    echo "	tar -cvzf ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.tar.gz ${TARGET_BINNAME} \${DOCFILES}" >>Makefile
   fi
   echo "" >> Makefile  
 
   # make rule to transfer the packaged tarball
   echo "ftp:" >> Makefile
   if [ "X$TARGET_TARBALL_COMMENT" != "X" ]; then
-    echo "	echo \"${TARGET_TARBALL_COMMENT}\">rc5des\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
+    echo "	echo \"${TARGET_TARBALL_COMMENT}\">${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
   fi
   echo "	sh ./upload.sh rc5des\${BUILDNUM}-${TARGET_TARBALL}" >>Makefile
   if [ "X$TARGET_TARBALL_COMMENT" != "X" ]; then
-    echo "	rm -f rc5des\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
+    echo "	rm -f ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
   fi
 fi  
 echo "" >> Makefile
@@ -1792,7 +1781,7 @@ echo "" >> Makefile
 echo "reconfigure: dep" >> Makefile
 echo "" >> Makefile
 echo "clean:" >> Makefile
-echo "	rm -f \${ALLOBJS}  ${TARGET_BINNAME}" >> Makefile
+echo "	rm -f \${ALLOBJS}  ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
 echo "" >> Makefile
 
 
@@ -1809,8 +1798,8 @@ echo "	find . -name '.#*' -exec rm {} \\;" >> Makefile
 echo "	rm -f \`egrep \"^[ ]*\\*\" $0 | sed -e 's/\(^.*\*\)\(.*\)\().*\$\$\)/\2/'\`" >> Makefile
 echo "" >> Makefile
 
-echo "ident:	${TARGET_BINNAME}" >> Makefile
-echo "	ident ${TARGET_BINNAME} | awk '{ printf(\"%-30s %10s %s %s %s %s%c\", \$\$2,\$\$3,\$\$4,\$\$5,\$\$6,\$\$7,10)}'" >> Makefile
+echo "ident:	${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
+echo "	ident ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} | awk '{ printf(\"%-30s %10s %s %s %s %s%c\", \$\$2,\$\$3,\$\$4,\$\$5,\$\$6,\$\$7,10)}'" >> Makefile
 echo "" >> Makefile
 
 ## add binary-tarball targets
@@ -1901,7 +1890,7 @@ if [ "$AIXALL" = "TRUE" ]; then
   awk '
 /allitnil_552.ppc.s -o/ { print "\t\${CC} -c ${PPC601FLAGS} " $4 " " $5 " " $6 ; next }
 /lintilla_296.ppc.s -o/ { print "\t\${CC} -c ${PPC604FLAGS} " $4 " " $5 " " $6 ; next }
-/2-rg.c -o/ { print "\t\gcc -c ${POWERFLAGS} " $4 " " $5 " " $6 ; next }
+/rc5ansi_2-rg.cpp -o/ { print "\t\${CC} -c ${POWERFLAGS} " $4 " " $5 " " $6 ; next }
 { print $0 }' Makefile.tmp > Makefile
 rm Makefile.tmp
 fi
