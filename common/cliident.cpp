@@ -22,7 +22,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.27.2.5 2003/08/25 09:32:45 mweiser Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.27.2.6 2003/09/01 22:26:20 mweiser Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -71,6 +71,7 @@ return "@(#)$Id: cliident.cpp,v 1.27.2.5 2003/08/25 09:32:45 mweiser Exp $"; }
 #include "setprio.h"
 #include "sleepdef.h"
 #include "triggers.h"
+#include "unused.h"
 #include "util.h"
 #include "version.h"
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
@@ -133,6 +134,7 @@ static const char *h_ident_table[] =
   (const char *)__SETPRIO_H__,
   (const char *)__SLEEPDEF_H__,
   (const char *)__TRIGGERS_H__,
+  (const char *)__UNUSED_H__,
   (const char *)__UTIL_H__,
   (const char *)__VERSION_H__,
   #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)

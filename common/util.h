@@ -12,7 +12,11 @@
  * ----------------------------------------------------------------
 */
 #ifndef __UTIL_H__
-#define __UTIL_H__ "@(#)$Id: util.h,v 1.18.2.5 2003/09/01 21:33:53 mweiser Exp $"
+#define __UTIL_H__ "@(#)$Id: util.h,v 1.18.2.6 2003/09/01 22:26:20 mweiser Exp $"
+
+/* drag in DNETC_UNUSED_* defines so we don't have to do so in all the
+** source files explicitly */
+#include "unused.h"
 
 #if defined(__GNUC__)
 #define __CHKFMT_TRACE_OUT __attribute__((__format__(__printf__,2,3)))
