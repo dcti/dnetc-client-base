@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.6 2003/09/12 13:25:16 mweiser Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.6.2.1 2003/10/02 09:17:09 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -43,6 +43,9 @@ extern "C" s32 CDECL rc5_72_unit_func_dg_2( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_dg_3( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_dg_3a( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_ss_2( RC5_72UnitWork *, u32 *, void *);
+extern "C" s32 CDECL rc5_72_unit_func_go_2( RC5_72UnitWork *, u32 *, void *);
+extern "C" s32 CDECL rc5_72_unit_func_sgp_3( RC5_72UnitWork *, u32 *, void *);
+extern "C" s32 CDECL rc5_72_unit_func_ma_4( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_ARM)
 extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 rc5_72_unit_func_arm2( RC5_72UnitWork *, u32 *, void *);
@@ -105,6 +108,9 @@ const char **corenames_for_contest_rc572()
       "DG 3-pipe",
       "DG 3-pipe alt",
       "SS 2-pipe",
+      "GO 2-pipe",
+      "SGP 3-pipe",
+      "MA 4-pipe",
       #else /* no nasm -> only ansi cores */
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -492,6 +498,18 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
       case 5:
         unit_func.gen_72 = rc5_72_unit_func_ss_2;
         pipeline_count = 2;
+        break;
+      case 6:
+        unit_func.gen_72 = rc5_72_unit_func_go_2;
+        pipeline_count = 2;
+        break;
+      case 7:
+        unit_func.gen_72 = rc5_72_unit_func_sgp_3;
+        pipeline_count = 3;
+        break;
+      case 8:
+        unit_func.gen_72 = rc5_72_unit_func_ma_4;
+        pipeline_count = 4;
         break;
     #elif (CLIENT_CPU == CPU_POWERPC) && \
           (CLIENT_OS != OS_WIN32) && (CLIENT_OS != OS_MACOS)

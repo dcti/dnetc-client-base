@@ -21,11 +21,16 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.39 2003/09/30 21:19:58 sod75 Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.39.2.1 2003/10/02 09:17:08 andreasb Exp $
 ==========================================================================
 
 2.9000
 ------
+
+2.9008-487  new: x86: three new rc5-72 assembly cores:
+                 - GO-2 for Athlon by Vyacheslav Chupyatov (#3265)
+                 - SGP-3 for Pentium 4 by Slawek Piotrowski (#3398)
+                 - MA-4 for Pentium 4 (SSE2) by Matt Andrews (#3415)
 
 2.9007-486  imp: nextstep: include assembler cores on x86
             imp: nextstep: fix console handling for config menu
