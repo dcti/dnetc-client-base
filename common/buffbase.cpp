@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.36.2.5 2004/06/19 23:33:23 kakace Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.36.2.6 2004/06/24 20:59:59 kakace Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -989,6 +989,7 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
   int dofetch, doflush, didfetch, didflush, dontfetch, dontflush, didnews;
   unsigned int i; 
   char loaderflags_map[CONTEST_COUNT];
+  struct timeval tv;
   const char *ffmsg = "--fetch and --flush services are not available.\n";
   int check_flags, updatefailflags, updatemodeflags, net_state_shown = 0;
   int fill_even_if_not_totally_empty = (client->connectoften || interactive);
@@ -999,6 +1000,13 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
 
   TRACE_BUFFUPD((+1, "BufferUpdate: req_flags = %d, interactive = %d\n", req_flags, interactive));
   
+  if (client->last_buffupd_failed_time != 0 && CliClock(&tv) == 0) {
+    if (!tv.tv_sec)
+      tv.tv_sec++;
+    if (client->last_buffupd_failed_time + client->buffupd_retry_delay > tv.tv_sec)
+      return 0;   /* Retry delay not elapsed : did nothing */
+  }  
+
   /* -------------------------------------- */
 
   updatefailflags = updatemodeflags = 0;
@@ -1175,18 +1183,26 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
     req_flags |= BUFFERUPDATE_FLUSH;
   if (didfetch)
     req_flags |= BUFFERUPDATE_FETCH;
-  {
-    struct timeval tv;
-    if (CliClock(&tv) == 0)
-    {
-      if (!tv.tv_sec) tv.tv_sec++;
-      if (didfetch || didflush || didnews)
-        client->last_buffupd_time = tv.tv_sec;
-      else
-        client->last_buffupd_failed_time = tv.tv_sec;
-    }  
+
+  if (CliClock(&tv) == 0) {
+    if (!tv.tv_sec)
+      tv.tv_sec++;
     if (didfetch || didflush || didnews)
-      client->last_buffupd_failed_time = 0; /* forget previous failures */
+      client->last_buffupd_time = tv.tv_sec;
+    else {
+      client->last_buffupd_failed_time = tv.tv_sec;
+      // Setup the retry delay (exponential backoff, see bug #3648)
+      if (client->buffupd_retry_delay < 30)
+        client->buffupd_retry_delay = 30;     /* start with a 30s delay */
+      else if (client->buffupd_retry_delay <= 1800)
+        client->buffupd_retry_delay *= 2;
+      else
+        client->buffupd_retry_delay = 3600;   /* Max : 1 hour */
+    }
+  }  
+  if (didfetch || didflush || didnews) {
+    client->last_buffupd_failed_time = 0; /* forget previous failures */
+    client->buffupd_retry_delay = 0;
   }
 
   /* -------------------------------------- */
