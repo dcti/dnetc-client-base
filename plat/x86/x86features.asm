@@ -1,3 +1,10 @@
+;
+; Copyright distributed.net 2003-2004 - All Rights Reserved
+; For use in distributed.net projects only.
+; Any other distribution or use of this source violates copyright.
+;
+; x86 Processor feature identification for distributed.net effort
+;
 ; Taken from Loki_Utils
 ; http://www.icculus.org
 ;
@@ -5,6 +12,9 @@
 ; Bug fixes and SSE detection by Sam Lantinga
 ;
 ; Modified for distributed.net by Steven Nikkel, Nov 2003
+;
+; $Id: x86features.asm,v 1.1.2.13 2004/01/06 18:17:29 snikkel Exp $
+;
 ; return u32
 
 %ifndef __OMF__
