@@ -1304,7 +1304,7 @@
 # ##################################		
 # ##################################
 	
-# u32 rc5_unit_func_mips_crunch(register RC5UnitWork * rc5unitwork, u32 iterations )
+# u32 rc5_unit_func_mips_crunch_asm(register RC5UnitWork * rc5unitwork, u32 iterations )
 
 # ##################################		
 # ##################################		
@@ -1319,11 +1319,11 @@ gcc2_compiled.:
 __gnu_compiled_cplusplus:
 	.text
 	.align	2
-	.globl	rc5_unit_func_mips_crunch
-	.ent	rc5_unit_func_mips_crunch
+	.globl	rc5_unit_func_mips_crunch_asm
+	.ent	rc5_unit_func_mips_crunch_asm
 
 
-rc5_unit_func_mips_crunch:
+rc5_unit_func_mips_crunch_asm:
 	#
 	# Reserve our stack space
 	#
