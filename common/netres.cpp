@@ -6,7 +6,7 @@
  *
 */
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.32 2000/06/02 06:24:57 jlawson Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.33 2000/07/05 21:09:55 mfeiri Exp $"; }
 
 //#define TEST  //standalone test
 //#define RESDEBUG //to show what network::resolve() is resolving
@@ -408,22 +408,14 @@ int NetResolve( const char *host, int resport, int resauto,
       if (pos > 13 && strcmp(&hostname[pos-13],".in-addr.arpa")==0)
       {
         hostname[pos-=13]='\0';
-        #if (CLIENT_OS == OS_MACOS)
-        addrlist[0] = (u32)(inet_addr(hostname).s_addr);
-        #else
         addrlist[0] = (u32)(inet_addr(hostname));
-        #endif
         if (addrlist[0] != 0xFFFFFFFFL)
           addrlist[0] = ((addrlist[0]>>24)&0xff)|((addrlist[0]>>8)&0xff00)|
                         ((addrlist[0]&0xff)<<24)|((addrlist[0]&0xff00)<<8);
       }
       else
       {
-        #if (CLIENT_OS == OS_MACOS)
-        addrlist[0] = (u32)(inet_addr(hostname).s_addr);
-        #else
         addrlist[0] = (u32)(inet_addr(hostname));
-        #endif
       }  
       if (addrlist[0] != 0xFFFFFFFFL)
       {

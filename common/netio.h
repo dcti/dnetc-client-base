@@ -6,7 +6,7 @@
 //
 
 #ifndef __NETIO_H__
-#define __NETIO_H__ "@(#)$Id: netio.h,v 1.4 2000/07/03 07:13:14 jlawson Exp $"
+#define __NETIO_H__ "@(#)$Id: netio.h,v 1.5 2000/07/05 21:10:19 mfeiri Exp $"
 
 #include "cputypes.h"
 
@@ -94,13 +94,6 @@
       extern "C" char *inet_ntoa(struct in_addr in);
     #endif
   #endif
-  typedef int SOCKET;
-#elif (CLIENT_OS == OS_MACOS)
-  #include "socket_glue.h" // includes ntohl()/htonl() etc.
-  #define write(sock, buff, len) socket_write(sock, buff, len)
-  #define read(sock, buff, len) socket_read(sock, buff, len)
-  #define close(sock) socket_close(sock)
-  #define ioctl(sock, request, arg) socket_ioctl(sock, request, arg)
   typedef int SOCKET;
 #elif (CLIENT_OS == OS_AMIGAOS)
   #include "platforms/amiga/amiga.h"
