@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amConsole.c,v 1.2.4.2 2004/01/08 21:00:48 oliver Exp $
+ * $Id: amConsole.c,v 1.2.4.3 2004/04/17 18:44:33 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -85,7 +85,7 @@ int amigaInitializeConsole(int runhidden, int runmodes)
 
    // Workbench "Execute Command" output windows refuse to close without this!
    #ifndef NO_GUI
-   if (!DnetcBase) {
+   if (!DnetcBase && !ConStatics.NewConsole) {
       printf("\r");
       fflush(stdout);
    }
@@ -122,8 +122,8 @@ void amigaCloseNewConsole(void)
       SelectOutput(ConStatics.OldOutput);
       STDFILEDES(STDIN_FILENO) = ConStatics.OldInput;
       STDFILEDES(STDOUT_FILENO) = ConStatics.OldOutput;
-      ConStatics.NewConsole = NULL;
       amigaInitializeConsole(0,0);
+      ConStatics.NewConsole = NULL;
    }
 }
 #endif
