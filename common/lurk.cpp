@@ -48,7 +48,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.31 2000/12/21 16:50:09 oliver Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.32 2001/01/05 15:19:29 oliver Exp $"; }
 
 //#define TRACE
 
@@ -1236,6 +1236,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
       __insdel_devname(NULL,1,lurker.conndevices,sizeof(lurker.conndevices));
       __insdel_devname(NULL,0,lurker.conndevices,sizeof(lurker.conndevices));
       #endif
+      TRACE_OUT((-1,"Lurk::InternalIsConnected() => 0 (no tcp/ip stack available)\n"));
       return 0;
    }
    #endif
