@@ -11,7 +11,7 @@
  * ---------------------------------------------------------------
 */    
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.28.2.6 1999/10/16 16:42:10 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.28.2.7 1999/11/02 14:11:27 cyp Exp $"; }
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
@@ -28,7 +28,7 @@ return "@(#)$Id: modereq.cpp,v 1.28.2.6 1999/10/16 16:42:10 cyp Exp $"; }
 #include "selcore.h"  //"mode" selcoreSelftest(), selcoreBenchmark()
 #include "selftest.h" //"mode" SelfTest()
 #include "bench.h"    //"mode" Benchmark()
-#include "buffwork.h" //"mode" UnlockBuffer(), ImportBuffer()
+#include "buffbase.h" //"mode" UnlockBuffer(), ImportBuffer()
 #include "buffupd.h"  //"mode" BufferUpdate()
 #include "confmenu.h" //"mode" Configure()
 
@@ -219,11 +219,12 @@ int ModeReqRun(Client *client)
         }
         if (ttycheckok && client)
         {
-          Client *newclient = new Client;
+          Client *newclient = (Client *)malloc(sizeof(Client));
           if (!newclient)
             LogScreen("Unable to configure. (Insufficient memory)");
           else
           {
+	    ResetClientData(newclient);
             strcpy(newclient->inifilename, client->inifilename );
             if ( ReadConfig(newclient) >= 0 ) /* no or non-fatal error */
             {
@@ -235,7 +236,7 @@ int ModeReqRun(Client *client)
               if ((bits & MODEREQ_CONFRESTART) != 0)
                 restart = 1;
             }
-            delete newclient;
+            free((void *)newclient);
           }
         }
         modereq.cmdline_config = 0;
