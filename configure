@@ -5,6 +5,27 @@
 # Any other distribution or use of this source violates copyright.
 
 # $Log: configure,v $
+# Revision 1.113.2.19  1999/01/17 12:14:00  remi
+# Synced with :
+#
+#  Revision 1.173  1999/01/14 23:02:11  pct
+#  Updates for Digital Unix alpha client and ev5 related code.  This also
+#  includes inital code for autodetection of CPU type and SMP.
+#
+#  Revision 1.172  1999/01/14 19:30:21  patrick
+#  If caluses still buggy because of missing quotes (some shells might work without them)
+#
+#  Revision 1.171  1999/01/13 23:03:58  friedbait
+#  fixed bug in OS2 conditional path. A syntax error caused OS2 specific
+#  stuff being put in the Makefile even if there was no OS2 target selected.
+#  The bug was an 'if' statement with the condition written like:
+#
+#  if [ $target=OS2 ]; then
+#
+#  the correct syntax is
+#
+#  if [ $target = OS2 ]; then
+#
 # Revision 1.113.2.18  1999/01/17 12:11:13  remi
 # Synced with :
 #
@@ -755,6 +776,24 @@ case "$1" in
 	TARGET_LIBS="-non_shared"
 	;;
 
+    *alpha-gcc-ev5-digital_unix-mt)
+	RC5CORECOPY="rc5/rc5-alpha-osf.cpp"
+	TARGET_CC="g++"
+	TARGET_CCFLAGS="-Wa,-02 -mcpu=ev5 $OPTS_GCC -O6 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN -DMULTITHREAD -D_THREAD_SAFE -D_REENTRANT"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+	TARGET_LDFLAGS=""
+	TARGET_LIBS="-lpthread -lexc"
+	;;
+
+    *alpha-gcc-ev5-digital_unix-static)
+	RC5CORECOPY="rc5/rc5-alpha-osf.cpp"
+	TARGET_CC="g++"
+	TARGET_CCFLAGS="-Wa,-02 -mcpu=ev5 $OPTS_GCC -O6 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+	TARGET_LDFLAGS="-static"
+	TARGET_LIBS=""
+	;;
+
     *alpha-cc)
 	RC5CORECOPY="rc5/rc5ansi2-bo2.cpp"
 	TARGET_CC="cxx"
@@ -1270,7 +1309,7 @@ else
     echo " ---------------------------------------------"
     exit
   fi
-  if [ $TARGET_OS = OS2 ]; then
+  if [ "$TARGET_OS" = "OS2" ]; then
      emxbind testplat
   else
      ${TARGET_STRIP} testplat
@@ -1332,7 +1371,7 @@ echo "" >> Makefile
 echo "Generating Makefile production targets..."
 echo "# Regular targets follow" >> Makefile
 
-if [ $TARGET_OS=OS2 ]; then
+if [ "$TARGET_OS" = "OS2" ]; then
 
 echo "${EXENAME}.exe:	\${BUILDNAME}.exe" >> Makefile
 echo "	\${CP} \${BUILDNAME}.exe ${EXENAME}.exe" >> Makefile
@@ -1362,7 +1401,7 @@ fi
 
 echo "clean:" >> Makefile
 echo "	rm -f \${ALLOBJS}  ${EXENAME}" >> Makefile
-if [ $TARGET_OS=OS2 ]; then
+if [ "$TARGET_OS" = "OS2" ]; then
 echo "	rm -f output/\${BUILDNAME}.res" >> Makefile
 fi
 echo "" >> Makefile
