@@ -6,6 +6,10 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.26  1998/07/11 02:10:15  cyruspatel
+// Umm, fixed call to __CliGetKeyrateAsString() - third argument is now a
+// double not an unsigned int (caused a compiler warning)
+//
 // Revision 1.25  1998/07/11 01:53:19  silby
 // Change in logging statements - all have full timestamps now so they look correct in the win32gui.
 //
@@ -111,7 +115,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clisrate_cpp(void) {
-static const char *id="@(#)$Id: clisrate.cpp,v 1.25 1998/07/11 01:53:19 silby Exp $";
+static const char *id="@(#)$Id: clisrate.cpp,v 1.26 1998/07/11 02:10:15 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -191,7 +195,7 @@ static char *num_sep(char *number)
 
 // returns keyrate as string (len<=26) "nnnn.nn ['K'|'M'|'G'|'T']"
 // return value is a pointer to buffer.
-static char *__CliGetKeyrateAsString( char *buffer, double rate, u32 limit )
+static char *__CliGetKeyrateAsString( char *buffer, double rate, double limit )
 {
   if (rate<=((double)(0)))  // unfinished (-2) or error (-1) or impossible (0)
     strcpy( buffer, "---.-- " );
@@ -240,7 +244,7 @@ const char *CliGetSummaryStringForContest( int contestid )
     CliGetContestInfoBaseData( contestid, &name, NULL ); //clicdata.cpp
     CliGetContestInfoSummaryData( contestid, &blocks, NULL, &ttime ); //ditto
     keyrateP=__CliGetKeyrateAsString(keyrate,
-          CliGetKeyrateForContest(contestid),1000);
+          CliGetKeyrateForContest(contestid),((double)(1000)));
   }
   else
   {
@@ -322,11 +326,7 @@ const char *CliGetMessageForFileentryLoaded( FileEntry *fileentry )
     name = "???";
 
   sprintf( str, "%s %s %d*2^%d block %08lX:%08lX%c(%u.%02u%% done)",
-  #ifdef MULTITHREAD
            "Loaded",
-  #else
-           "Started",
-  #endif
            name, (int) count, (int)size,
            (unsigned long) ntohl( fileentry->key.hi ),
            (unsigned long) ntohl( fileentry->key.lo ),
