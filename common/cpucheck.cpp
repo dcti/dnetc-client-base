@@ -3,6 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.31  1998/10/09 01:39:27  blast
+// Added selcore.h to list of includes
+//
+// Changed 68k print to use GetCoreNameFromCoreType()
+//
+// Added Celeron-A to the CPU list so that it finally uses the right cores .. :)
+// Instead of being unknown :)
+//
 // Revision 1.30  1998/10/08 21:23:04  blast
 // Fixed Automatic CPU detection that cyp had written a little strangely
 // for 68K CPU's under AmigaOS.
@@ -112,7 +120,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.30 1998/10/08 21:23:04 blast Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.31 1998/10/09 01:39:27 blast Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -121,6 +129,7 @@ return "@(#)$Id: cpucheck.cpp,v 1.30 1998/10/08 21:23:04 blast Exp $"; }
 #include "cpucheck.h"  //just to keep the prototypes in sync.
 #include "threadcd.h"  //for the OS_SUPPORTS_THREADING define
 #include "logstuff.h"  //LogScreen()/LogScreenRaw()
+#include "selcore.h"   //GetCoreNameFromCoreType()
 
 #if (CLIENT_OS == OS_SOLARIS)
 #include <unistd.h>    // cramer - sysconf()
@@ -284,7 +293,7 @@ int GetProcessorType(int quietly)
   if (detectedtype == -1)
     {
     flags = (long)(SysBase->AttnFlags);
-    if ((flags & AFF_68060) && (flags & AFF_68040) && (flags & AFF_68030)
+    if ((flags & AFF_68060) && (flags & AFF_68040) && (flags & AFF_68030))
 	detectedtype = 5; // Phase5 060 boards at least report this...
     else if ((flags & AFF_68040) && (flags & AFF_68030))
 	detectedtype = 4; // 68040
@@ -292,13 +301,13 @@ int GetProcessorType(int quietly)
 	detectedtype = 3; // 68030
     else if ((flags & AFF_68020) && (flags & AFF_68010))
 	detectedtype = 2; // 68020
-    else if ((flags & AFF_68010)
+    else if (flags & AFF_68010)
 	detectedtype = 1; // 68010
     else
 	detectedtype = 0; // Assume a 68000
     }
   if (!quietly)
-    LogScreen("Automatic processor detection found a 680%u0\n", detectedtype);
+    LogScreen("Automatic processor detection found a %s\n", GetCoreNameFromCoreType(detectedtype));
   return (detectedtype);
 }    
 #endif
@@ -414,6 +423,7 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
       {  0x0610, 2785,     2, "Pentium Pro" },
       {  0x0630, 2785, 0x102, "Pentium II" },
       {  0x0650, 2785, 0x102, "Pentium II" },
+      {  0x0660, 2785, 0x102, "Celeron-A" },
       {  0x0000, 2785,     2, NULL         }  // default core = PPro/PII
       }; cpuxref = &__cpuxref[0];
     }
