@@ -6,15 +6,15 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.53 1999/04/06 11:55:44 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.54 1999/04/06 19:23:28 cyp Exp $"
 
 #include "cputypes.h"
-#include "ogr.h"
+#include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
+#include "ogr.h"     /* OGR core stuff */
 
 #if (CLIENT_CPU == CPU_X86)
   #define MAX_MEM_REQUIRED_BY_CORE (17*1024)
 #endif
-
 
 #if !defined(MEGGS) && !defined(DES_ULTRA) && !defined(DWORZ)
   #define MIN_DES_BITS  8
@@ -32,15 +32,6 @@
   #endif
 #endif
 
-
-typedef struct
-{
-  u64 plain;            // plaintext (already mixed with iv!)
-  u64 cypher;           // cyphertext
-  u64 L0;               // key, changes with every unit * PIPELINE_COUNT.
-                        // Note: data is now in RC5/platform useful form
-} RC5UnitWork;
-
 typedef union
 {
   struct {
@@ -56,23 +47,6 @@ typedef union
     char unused[24];
   } ogr;
 } ContestWork;
-
-typedef struct
-{
-  u32 result;           // result code
-  u64 key;              // starting key
-  u64 keysdone;         // iterations done (also current position in block)
-                        // this is also the "answer" for a RESULT_FOUND
-  u64 iterations;       // iterations to do
-} RC5Result;
-
-typedef enum
-{
-  RESULT_WORKING = 0,   /* do not change RESULT_* code order/init value */
-  RESULT_NOTHING = 1,
-  RESULT_FOUND   = 2
-} Resultcode;
-
 
 class Problem
 {
@@ -151,17 +125,12 @@ public:
     //   0 if more work to be done
     //   1 if we're done, go get results
 
-  s32 GetResult( RC5Result * result );
-    // fetch the results... act based on result code...
-    // returns: contest=0 (RC5), contest=1 (DES), or -1 = invalid data (state not loaded).
-
   u32 CalcPercent() { return (u32)( ((double)(100.0)) *
     /* Return the % completed in the current block, to nearest 1%. */
         (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
                                  ((double)(contestwork.crypto.keysdone.lo))) /
         ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
                                  ((double)(contestwork.crypto.iterations.lo)))) ); }
-
 
 #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
   u32 GetKeysDone() { return(contestwork.crypto.keysdone.lo); }
