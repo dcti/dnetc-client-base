@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.85.2.12 2004/06/27 21:55:08 jlawson Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.85.2.13 2004/07/16 13:18:30 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -226,7 +226,9 @@ static const s32 ogrp2_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
   {~0x0027C638, 23,  0,  3,  4, 10, 44,  5, 26},
   { 0x000ADD64, 24,  0,  9, 24,  4,  1, 59, 25},
   {~0x003C3A07, 24,  0,  9, 24,  4,  1, 59, 26},
-  {~0x0057102A, 21,  0,  1,  2,  4,  5,  8, 10},
+  {~0x01298F41, 24,  0,  1,  2,  4,  5,  8, 10, 14},
+  { 0x0018EE3D, 25,  0, 12, 17, 10, 33, 19, 55, 11},
+  {~0x00BE2768, 25,  0, 12, 17, 10, 33, 19, 55, 23},
   // OGR-P2 specific test cases
   {~0x02F4CB08, 24, 134, 44, 22, 23},
   {~0x02E6C8AF, 24, 134, 50, 19, 14},
@@ -237,18 +239,16 @@ static const s32 ogrp2_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
   {~0x023053BC, 25, 146, 27, 75, 17},
   {~0x02EEF245, 25, 146, 24, 66, 33},
   {~0x0328B048, 25, 145, 47, 48, 19,  1},
-  // Duplicates follow
+ // Duplicates follow
   { 0x000D1B52, 21,  0,  2, 22, 32, 21,  5,  1},
   {~0x0057102A, 21,  0,  1,  2,  4,  5,  8, 10},
   {~0x0058E9DE, 21,  0,  2, 22, 32,  1,  3, 10},
   {~0x007D1FD7, 22,  0,  1,  2,  4,  5,  8, 10},
   { 0x0015ACEC, 22,  0,  1,  8,  5, 29, 27, 36},
   {~0x001BE4B3, 22,  0,  1,  8,  5, 29, 27, 37},
-  {~0x02F4CB08, 24, 134, 44, 22, 23},
   {~0x02D42454, 24, 120, 11, 57,  7,  1},
   {~0x02961CEB, 24, 120, 31, 38,  3,  6},
-  {~0x02EEF245, 25, 146, 24, 66, 33},
-  {~0x0328B048, 25, 145, 47, 48, 19,  1}
+  {~0x02EEF245, 25, 146, 24, 66, 33}
 };
 #endif  /* HAVE_OGR_PASS2 */
 
