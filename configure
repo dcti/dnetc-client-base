@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.89 2000/01/10 14:37:57 snake Exp $
+# @(#)$Id: configure,v 1.222.2.90 2000/01/10 19:55:14 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -877,11 +877,12 @@ case "$1" in
     *alpha-netbsd)
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_EGCS_ALPHA  -DKWAN -DDWORZ \
-			-DHAVE_CSC_CORES -DHAVE_DES_CORES"
+			-DHAVE_CSC_CORES -DHAVE_DES_CORES -DLURK"
 	TARGET_TARBALL="netbsd-alpha"
 	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS \
 			rc5/alpha/axp-bmeyer.cpp \
-			rc5/alpha/axp-bmeyer.s ${CSC_ANSI_SRCS}"
+			rc5/alpha/axp-bmeyer.s ${CSC_ANSI_SRCS} \
+			common/lurk.cpp"
 	TARGET_LDFLAGS="-static"
 	TARGET_LIBS="-ltermcap"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -1256,10 +1257,11 @@ case "$1" in
 	TARGET_AS="g++ -c -DNO_BALIGN"
 	TARGET_TARBALL="netbsd-i386"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DMMX_CSC \
-	                -DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
+	                -DHAVE_CSC_CORES -DHAVE_DES_CORES \
+					-DLURK" #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
-	                ${CSC_ANSI_CORES} " #$OGR_ANSI_SRCS
+	                ${CSC_ANSI_CORES} common/lurk.cpp" #$OGR_ANSI_SRCS
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S \
 	                des/brydgnu/p1bdespro.S"
 	TARGET_NASM_FMT="aoutb"
@@ -1408,9 +1410,11 @@ case "$1" in
 # NetBSD on NeXT, 68k Macs, 68k Amiga, sun3 etc, -snake
 	*m68k-netbsd)
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer -m68020-40 -DASM_68K -DHAVE_CSC_CORES"
+	TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer \
+			-m68020-40 -DASM_68K -DHAVE_CSC_CORES -DLURK"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="rc5/68k/rc5_68k_gcc_crunch.c ${CSC_ANSI_SRCS}"
+	TARGET_ADDSRCS="rc5/68k/rc5_68k_gcc_crunch.c common/lurk.cpp \
+			${CSC_ANSI_SRCS}"
 	TARGET_ADDASMS="rc5/68k/crunch.68k.gcc.s"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_TARBALL="netbsd-68k"
@@ -1447,8 +1451,8 @@ case "$1" in
 	TARGET_AS="as"
 	TARGET_TARBALL="netbsd-arm32"
 	TARGET_CCFLAGS="$OPTS_GCC_ARM  -DKWAN -DHAVE_CSC_CORES \
-			-DHAVE_DES_CORES"
-	TARGET_ADDSRCS="${CSC_ANSI_SRCS}"
+			-DHAVE_DES_CORES -DLURK"
+	TARGET_ADDSRCS="${CSC_ANSI_SRCS} common/lurk.cpp"
 	TARGET_ADDASMS="rc5/arm/rc5-arm-1-gnu.s rc5/arm/rc5-arm-2-gnu.s \
 			rc5/arm/rc5-arm-3-gnu.s \
 			des/arm/des-slice-sa-gnu.s des/arm/des-slice-arm-gnu.s"
@@ -1460,8 +1464,8 @@ case "$1" in
     *vax-netbsd-gcc)
         TARGET_CC="g++"
         TARGET_CCFLAGS="$OPTS_GCC_VAX  \
-                        -DMEGGS -DKWAN -DRC5ANSICORE"
-        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+                        -DMEGGS -DKWAN -DRC5ANSICORE -DLURK"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 common/lurk.cpp"
         TARGET_LIBS="-ltermcap"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         ;;
