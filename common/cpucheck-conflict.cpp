@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.56  1999/01/11 20:55:04  patrick
+// numCPU support for AIX enabled
+//
 // Revision 1.55  1999/01/06 22:17:36  dicamillo
 // Support PPC prototype Macs  some developers still have.
 //
@@ -193,7 +196,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.55 1999/01/06 22:17:36 dicamillo Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.56 1999/01/11 20:55:04 patrick Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -203,6 +206,8 @@ return "@(#)$Id: cpucheck-conflict.cpp,v 1.55 1999/01/06 22:17:36 dicamillo Exp 
 
 #if (CLIENT_OS == OS_SOLARIS)
 #include <unistd.h>    // cramer - sysconf()
+#elif (CLIENT_OS == OS_AIX)
+#include <unistd.h>    // P.Hildenbrand - sysconf()
 #elif (CLIENT_OS == OS_IRIX)
 #include <sys/prctl.h>
 #endif
@@ -298,6 +303,10 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       cpucount = (int)prctl( PR_MAXPPROCS, 0, 0);
       }
     #elif (CLIENT_OS == OS_SOLARIS)
+      {
+      cpucount = sysconf(_SC_NPROCESSORS_ONLN);
+      }
+    #elif (CLIENT_OS == OS_AIX)
       {
       cpucount = sysconf(_SC_NPROCESSORS_ONLN);
       }
