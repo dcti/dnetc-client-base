@@ -21,7 +21,8 @@ Bugs Listing
 FIXED (?) - Remi
   Does the patch on x86ident.s work ? Can't test myself now,
   but the line replaced was wrong.
-
+NOPE - Silby
+  I just tried it again, and it still coredumps. (6/11/98)
 06-08-98 - Jeff Lawson
   Should a -detach option be made to make forked executions easier?
   It would probably set quiet mode, fork, close fd's 0,1,2, and reattach
