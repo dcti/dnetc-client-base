@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.18.2.10 2000/10/31 03:07:28 cyp Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.18.2.11 2000/11/04 18:50:37 cyp Exp $"; }
 
 #include "baseincs.h" //for timeval
 #include "clitime.h" //required for CliTimerDiff() and CliClock()
@@ -32,11 +32,12 @@ static struct contestInfo
   struct timeval TimeDone;
   unsigned int UnitsDone;
   unsigned int BestTime;  /* in seconds */
-} conStats[] = {  { "RC5", 0,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0 },
-                  { "DES", 1,  2, 0, {0,0}, {0,0}, {0,0}, 0, 0 },
-                  { "OGR", 2,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0 },
-                  { "CSC", 3,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0 },
-                  {  NULL,-1,  0, 0, {0,0}, {0,0}, {0,0}, 0, 0 }  };
+  int BestTimeWasForced;
+} conStats[] = {  { "RC5", 0,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { "DES", 1,  2, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { "OGR", 2,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { "CSC", 3,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  {  NULL,-1,  0, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 }  };
 
 /* ----------------------------------------------------------------------- */
 
@@ -75,7 +76,7 @@ int CliGetContestIDFromName( char *name )
 // returns the expected time to complete a work unit, in seconds
 // if force is true, then a microbenchmark will be done to get the
 // rate if no work on this contest has been completed yet.
-int CliGetContestWorkUnitSpeed( int contestid, int force)
+int CliGetContestWorkUnitSpeed( int contestid, int force, int *was_forced)
 {
   struct contestInfo *conInfo =
                        __internalCliGetContestInfoVectorForID( contestid );
@@ -89,7 +90,11 @@ int CliGetContestWorkUnitSpeed( int contestid, int force)
 
       if (conInfo->BestTime == 0)
         TBenchmark(contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK);
+      if (conInfo->BestTime)
+        conInfo->BestTimeWasForced = 1;
     }
+    if (was_forced) /* ever (besttime was via benchmark) */
+      *was_forced = conInfo->BestTimeWasForced;
     return conInfo->BestTime;
   }
   return 0;  
@@ -143,6 +148,7 @@ int CliClearContestInfoSummaryData( int contestid )
   conInfo->TimeDone.tv_sec = conInfo->TimeDone.tv_usec = 0;
   conInfo->UnitsDone = 0;
   conInfo->BestTime = 0;
+  conInfo->BestTimeWasForced = 0;
   return 0;
 }  
 
