@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.41  1998/09/06 01:05:10  cyp
+// Fixed a missing underscore in an #ifdef _TIUSER[_]
+//
 // Revision 1.40  1998/09/04 10:35:09  chrisb
 // RISCOSism for the #include <errno.h>
 //
@@ -104,7 +107,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.40 1998/09/04 10:35:09 chrisb Exp $"; }
+return "@(#)$Id: network.cpp,v 1.41 1998/09/06 01:05:10 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -524,7 +527,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
           lastaddress = 0; //reset
         else
           {
-          #if defined(_TIUSER)
+          #if defined(_TIUSER_)
             LogScreen( " %s  Error %d (%s)\n",CliGetTimeString(NULL,0), 
                                     t_errno, t_error("TLI") );
           #else
