@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-meggs.cpp,v $
+// Revision 1.13  1998/07/10 20:08:25  cyruspatel
+// Added support for Watcom compilers (__int64) to mmx bitslice stuff
+//
 // Revision 1.12  1998/07/08 23:42:05  remi
 // Added support for CliIdentifyModules().
 //
@@ -31,7 +34,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_meggs_cpp(void) {
-return "@(#)$Id: des-slice-meggs.cpp,v 1.12 1998/07/08 23:42:05 remi Exp $"; }
+return "@(#)$Id: des-slice-meggs.cpp,v 1.13 1998/07/10 20:08:25 cyruspatel Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -50,7 +53,7 @@ return "@(#)$Id: des-slice-meggs.cpp,v 1.12 1998/07/08 23:42:05 remi Exp $"; }
   #if defined(__GNUC__)
     #define BASIC_SLICE_TYPE unsigned long long
     #define NOTZERO ~(0ull)
-  #elif (_MSC_VER >= 11) // VC++ 5.0
+  #elif defined(__WATCOMC__) || (_MSC_VER >= 11) // VC++ 5.0
     #define BASIC_SLICE_TYPE __int64
     #define NOTZERO ~((__int64)0)
   #elif
@@ -72,12 +75,12 @@ return "@(#)$Id: des-slice-meggs.cpp,v 1.12 1998/07/08 23:42:05 remi Exp $"; }
 
 #if (CLIENT_OS == OS_BEOS) || defined(MMX_BITSLICER)
 extern "C" BASIC_SLICE_TYPE whack16 (BASIC_SLICE_TYPE *plain,
-			      BASIC_SLICE_TYPE *cypher,
-			      BASIC_SLICE_TYPE *key);
+            BASIC_SLICE_TYPE *cypher,
+            BASIC_SLICE_TYPE *key);
 #else
 extern BASIC_SLICE_TYPE whack16 (BASIC_SLICE_TYPE *plain,
-			      BASIC_SLICE_TYPE *cypher,
-			      BASIC_SLICE_TYPE *key);
+            BASIC_SLICE_TYPE *cypher,
+            BASIC_SLICE_TYPE *key);
 #endif
 
 #if defined(MMX_BITSLICER)
@@ -106,20 +109,20 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
     // if the right BIT_xx is defined
 #ifdef BIT_32
     if (sizeof(BASIC_SLICE_TYPE) != 4) {
-	printf ("Bad BIT_32 define !\n");
-	exit (-1);
+  printf ("Bad BIT_32 define !\n");
+  exit (-1);
     }
 #elif BIT_64
     if (sizeof(BASIC_SLICE_TYPE) != 8) {
-	printf ("Bad BIT_64 define !\n");
-	exit (-1);
+  printf ("Bad BIT_64 define !\n");
+  exit (-1);
     }
 #endif
 
     // check nbbits
     if (nbbits != MIN_DES_BITS) {
-	printf ("Bad nbbits ! (%d)\n", (int)nbbits);
-	exit (-1);
+  printf ("Bad nbbits ! (%d)\n", (int)nbbits);
+  exit (-1);
     }
 
     // convert the starting key from incrementable format
@@ -133,13 +136,13 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
     u32 cc = rc5unitwork->cypher.lo;
     u32 mask = 1;
     for (i=0; i<64; i++) {
-	plain[i] = (pp & mask) ? NOTZERO : 0;
-	cypher[i] = (cc & mask) ? NOTZERO : 0;
-	if ((u32)(mask <<= 1) == 0) {
-	    pp = rc5unitwork->plain.hi;
-	    cc = rc5unitwork->cypher.hi;
-	    mask = 1;
-	}
+  plain[i] = (pp & mask) ? NOTZERO : 0;
+  cypher[i] = (cc & mask) ? NOTZERO : 0;
+  if ((u32)(mask <<= 1) == 0) {
+      pp = rc5unitwork->plain.hi;
+      cc = rc5unitwork->cypher.hi;
+      mask = 1;
+  }
     }
 
     // are we testing complementary keys ?
@@ -153,12 +156,12 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
     u32 kk = keylo;
     mask = 1;
     for (i=0; i<56; i++) {
-	if ((i % 7) == 0) mask <<= 1;
-	key[i] = (kk & mask) ? NOTZERO : 0;
-	if ((mask <<= 1) == 0) {
-	    kk = keyhi;
-	    mask = 1;
-	}
+  if ((i % 7) == 0) mask <<= 1;
+  key[i] = (kk & mask) ? NOTZERO : 0;
+  if ((mask <<= 1) == 0) {
+      kk = keyhi;
+      mask = 1;
+  }
     }
 
     // now we must generate 32/64 different keys with
@@ -176,7 +179,9 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
     key[ 1] = 0xFF00FF00FF00FF00ull;
     key[ 2] = 0xFFFF0000FFFF0000ull;
     key[ 4] = 0xFFFFFFFF00000000ull;
-#elif (defined(MMX_BITSLICER) && (_MSC_VER>=11)) || (defined(BIT_64) && !defined(MMX_BITSLICER))
+#elif (defined(MMX_BITSLICER) && defined(__WATCOMC__)) || \
+    (defined(MMX_BITSLICER) && (_MSC_VER>=11)) || \
+    (defined(BIT_64) && !defined(MMX_BITSLICER))
     key[40] = 0xAAAAAAAAAAAAAAAAul;
     key[41] = 0xCCCCCCCCCCCCCCCCul;
     key[ 0] = 0x0F0F0F0FF0F0F0F0ul;
@@ -186,7 +191,7 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
 #else
     #error "Write this section for your compiler"
 #endif
-	
+  
 #if defined(DEBUG) && defined(BIT_32)
     for (i=0; i<64; i++) printf ("bit %02d of plain  = %08X\n", i, plain[i]);
     for (i=0; i<64; i++) printf ("bit %02d of cypher = %08X\n", i, cypher[i]);
@@ -209,78 +214,78 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
     BASIC_SLICE_TYPE result = whack16( plain, cypher, key);
     // Test also the complementary key
     if (result == 0 && complement == false) {
-	keyhi = ~keyhi;
-	keylo = ~keylo;
-	complement = true;
-	goto redo;
+  keyhi = ~keyhi;
+  keylo = ~keylo;
+  complement = true;
+  goto redo;
     }
 
     // have we found something ?
     if (result != 0) {
 
 #ifdef DEBUG
-	// print all keys in binary format
-	for (i=0; i<56; i++) {
-	    printf ("key[%02ld] = ", i);
-	    for (int j=0; j<32; j++)
-		printf ((key[i] & ((BASIC_SLICE_TYPE)1 << (BITS_PER_SLICE-1-j))) ? "1":"0");
-	    printf ("\n");
-	}
+  // print all keys in binary format
+  for (i=0; i<56; i++) {
+      printf ("key[%02ld] = ", i);
+      for (int j=0; j<32; j++)
+    printf ((key[i] & ((BASIC_SLICE_TYPE)1 << (BITS_PER_SLICE-1-j))) ? "1":"0");
+      printf ("\n");
+  }
 #endif
 
-	// which one is the good key ?
-	// search the first bit set to 1 in result
-	int numkeyfound = -1;
-	for (i=0; i<BITS_PER_SLICE; i++)
-	    if ((result & ((BASIC_SLICE_TYPE)1 << i)) != 0) numkeyfound = i;
+  // which one is the good key ?
+  // search the first bit set to 1 in result
+  int numkeyfound = -1;
+  for (i=0; i<BITS_PER_SLICE; i++)
+      if ((result & ((BASIC_SLICE_TYPE)1 << i)) != 0) numkeyfound = i;
 #ifdef DEBUG
-	printf ("result = ");
-	for (i=0; i<BITS_PER_SLICE; i++)
-	    printf (result & ((BASIC_SLICE_TYPE)1 << (BITS_PER_SLICE-1-i)) ? "1":"0");
-	printf ("\n");
+  printf ("result = ");
+  for (i=0; i<BITS_PER_SLICE; i++)
+      printf (result & ((BASIC_SLICE_TYPE)1 << (BITS_PER_SLICE-1-i)) ? "1":"0");
+  printf ("\n");
 #endif
 
-	// convert winning key from slice mode to DES format (with parity)
-	keylo = keyhi = 0;
-	for (int j=55; j>0; j-=7) {
-	    u32 byte = odd_parity [
-		(((key[j-0] >> numkeyfound) & 1) << 7) |
-		(((key[j-1] >> numkeyfound) & 1) << 6) |
-		(((key[j-2] >> numkeyfound) & 1) << 5) |
-		(((key[j-3] >> numkeyfound) & 1) << 4) |
-		(((key[j-4] >> numkeyfound) & 1) << 3) |
-		(((key[j-5] >> numkeyfound) & 1) << 2) |
-		(((key[j-6] >> numkeyfound) & 1) << 1)];
-	    int numbyte = (j+1) / 7 - 1;
-	    if (numbyte >= 4)
-		keyhi |= byte << ((numbyte-4)*8);
-	    else
-		keylo |= byte << (numbyte*8);
-	}
+  // convert winning key from slice mode to DES format (with parity)
+  keylo = keyhi = 0;
+  for (int j=55; j>0; j-=7) {
+      u32 byte = odd_parity [
+    (((key[j-0] >> numkeyfound) & 1) << 7) |
+    (((key[j-1] >> numkeyfound) & 1) << 6) |
+    (((key[j-2] >> numkeyfound) & 1) << 5) |
+    (((key[j-3] >> numkeyfound) & 1) << 4) |
+    (((key[j-4] >> numkeyfound) & 1) << 3) |
+    (((key[j-5] >> numkeyfound) & 1) << 2) |
+    (((key[j-6] >> numkeyfound) & 1) << 1)];
+      int numbyte = (j+1) / 7 - 1;
+      if (numbyte >= 4)
+    keyhi |= byte << ((numbyte-4)*8);
+      else
+    keylo |= byte << (numbyte*8);
+  }
 
-	// have we found the complementary key ?
-	if (complement) {
-	    keyhi = ~keyhi;
-	    keylo = ~keylo;
-	}
+  // have we found the complementary key ?
+  if (complement) {
+      keyhi = ~keyhi;
+      keylo = ~keylo;
+  }
 #ifdef DEBUG
-	printf (complement ?
-		"  key %02d = %08X:%08X (C) " : "  key %02d = %08X:%08X (n) ",
-		numkeyfound, keyhi, keylo);
+  printf (complement ?
+    "  key %02d = %08X:%08X (C) " : "  key %02d = %08X:%08X (n) ",
+    numkeyfound, keyhi, keylo);
 #endif
-	// convert key from 64 bits DES ordering with parity
-	// to incrementable format
-	convert_key_from_des_to_inc (&keyhi, &keylo);
-	
-	u32 nbkeys = keylo - rc5unitwork->L0.lo;
-	rc5unitwork->L0.lo = keylo;
-	rc5unitwork->L0.hi = keyhi;
+  // convert key from 64 bits DES ordering with parity
+  // to incrementable format
+  convert_key_from_des_to_inc (&keyhi, &keylo);
+  
+  u32 nbkeys = keylo - rc5unitwork->L0.lo;
+  rc5unitwork->L0.lo = keylo;
+  rc5unitwork->L0.hi = keyhi;
 
-	return nbkeys;
+  return nbkeys;
 
     } else {
-	rc5unitwork->L0.lo += 1 << nbbits;
-	return 1 << nbbits;
+  rc5unitwork->L0.lo += 1 << nbbits;
+  return 1 << nbbits;
     }
 }
 
