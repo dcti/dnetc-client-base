@@ -3,12 +3,15 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; $Log: csc-6b-i.asm,v $
+; Revision 1.1.2.2  1999/11/06 05:21:04  daa
+; fix typo in global declatation of _csc_unit_func_6b_i
+;
 ; Revision 1.1.2.1  1999/11/06 00:26:14  cyp
 ; they're here! (see also bench.res for 'ideal' combination)
 ;
 ;
 
-global          csc_unit_func_6b_i,csc_unit_func_6b_i
+global          csc_unit_func_6b_i,_csc_unit_func_6b_i
 
 extern          csc_tabc, csc_tabp, csc_tabe, csc_bit_order
 extern          convert_key_from_inc_to_csc, convert_key_from_csc_to_inc
@@ -16,7 +19,7 @@ extern          convert_key_from_inc_to_csc, convert_key_from_csc_to_inc
 %include "csc-mac.inc"
 
 __DATASECT__
-    db  "@(#)$Id: csc-6b-i.asm,v 1.1.2.1 1999/11/06 00:26:14 cyp Exp $",0
+    db  "@(#)$Id: csc-6b-i.asm,v 1.1.2.2 1999/11/06 05:21:04 daa Exp $",0
 
 __CODESECT__
     align 16
