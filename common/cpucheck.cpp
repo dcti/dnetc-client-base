@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.14 1999/11/19 00:07:40 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.15 1999/11/24 19:11:09 chrisb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -792,7 +792,7 @@ static long __GetRawProcessorID(const char **cpuname )
   static char namebuf[60];
 
   #if (CLIENT_OS == OS_RISCOS)
-  if ( detectedvalue == -2L )
+  if ( detectedtype == -2L )
   {
     /*
        ARMident() will throw SIGILL on an ARM 2 or ARM 250, because they 

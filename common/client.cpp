@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.28 1999/11/23 22:48:26 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.29 1999/11/24 19:11:07 chrisb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -204,9 +204,9 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
         "detailed client information.\n\n" :
         #elif (CLIENT_OS == OS_MACOS)
         "Select ""Help..."" from the Apple menu for detailed client information.\n\n"
-        #else
-        "Start the client with '-help' for a list of valid command line options.\n\n"
         #endif
+        "Start the client with '-help' for a list of valid command line options.\n\n"
+
         );
     }
     else if ( level == 1 )

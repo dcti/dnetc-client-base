@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.23 1999/11/19 00:06:34 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.24 1999/11/24 19:11:11 chrisb Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -753,6 +753,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
 
   //---------------------------------------------------------------
 #if (CLIENT_OS == OS_RISCOS)
+#if 0
   if (threadindex == 1 /*x86 thread*/)
   {
     RC5PCstruct rc5pc;
@@ -786,6 +787,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
       }
     }
   }
+#endif
 #endif
 
   last_resultcode = RESULT_WORKING;
