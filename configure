@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.26  1998/06/09 20:44:18  friedbait
+# -Icommon -Irc5 -Ides added to OS/390 options
+#
 # Revision 1.25  1998/06/09 18:52:40  jlawson
 # renamed SLICE_SRCS to KWAN_SLICE_SRCS.  clarified naming of some
 # linux-x86 build targets.
@@ -153,7 +156,7 @@ OPTS_GCC_ARM="$OPTS_GCC $OPT_FLAGS -DARM"
 #--
 
 #-D__STRING_CODE_SET__="ISO8859-1"
-OPTS_OS390="-D_ALL_SOURCE"  
+OPTS_OS390="-D_ALL_SOURCE -I./common -I./rc5 -I./des"  
 
 
 
