@@ -4,7 +4,7 @@
 //
 
 const char *minihttp_cpp(void) {
-return "@(#)$Id: minihttp.cpp,v 1.1 2000/06/03 03:24:39 jlawson Exp $"; }
+return "@(#)$Id: minihttp.cpp,v 1.2 2000/07/03 07:17:04 jlawson Exp $"; }
 
 
 #include "cputypes.h"
@@ -195,7 +195,7 @@ bool MiniHttpRequest::GetFormVariable(const char *variablename, AutoBuffer *valu
     if (GetHeader("Content-Type", &ContentType) &&
         strcmp(ContentType.GetHead(),
             "application/x-www-form-urlencoded") == 0)
-    {    
+    {
       return __FindFormVariable(ContentBody.GetHead(), ContentBody.GetLength(),
           variablename, value);
     }
@@ -206,7 +206,7 @@ bool MiniHttpRequest::GetFormVariable(const char *variablename, AutoBuffer *valu
 // --------------------------------------------------------------------------
 
 // Copies the "document URI" portion of the URI (everything before the first
-// question mark) into the specified buffer.  
+// question mark) into the specified buffer.
 
 bool MiniHttpRequest::GetDocumentUri(AutoBuffer *value)
 {
@@ -264,8 +264,8 @@ bool MiniHttpDaemonConnection::FetchIncoming(void)
   {
     // Read as much as we can into the autobuffer.
     inwaiting.Reserve(READAMOUNT);
-    int result = netio_recv(fd, inwaiting.GetTail(),
-                            inwaiting.GetTailSlack());
+    int result = netio_lrecv(fd, inwaiting.GetTail(),
+                            inwaiting.GetTailSlack(), false);
     if (result > 0)
     {
       // The read was successful, so mark that data as present.
@@ -373,7 +373,7 @@ bool MiniHttpDaemonConnection::ReparseIncoming(void)
           steplinepos = 0;    // next ReparseIncoming will start over.
           return false;       // Bad request
         }
-        
+
         haveStatusLine = true;
         continue;
       }
@@ -411,7 +411,7 @@ bool MiniHttpDaemonConnection::FlushOutgoing(void)
   {
     if (HavePendingData())
     {
-      int result = netio_send(fd, outwaiting.GetHead(),
+      int result = netio_lsend(fd, outwaiting.GetHead(),
                               outwaiting.GetLength());
       if (result > 0)
       {
@@ -619,7 +619,7 @@ bool MiniHttpDaemonConnection::QueueResponse(MiniHttpResponse *response)
   // Store the HTTP headers and the body.
   unsigned long headerlen = response->Headers.GetLength();
   outwaiting.Reserve(headerlen + 2 + bodylen + 2);
-  memcpy(outwaiting.GetTail(), response->Headers.GetHead(), headerlen);  
+  memcpy(outwaiting.GetTail(), response->Headers.GetHead(), headerlen);
   memcpy(outwaiting.GetTail() + headerlen, "\r\n", 2);
   outwaiting.MarkUsed(headerlen + 2);
   memcpy(outwaiting.GetTail(), response->ContentBody.GetHead(), bodylen);
