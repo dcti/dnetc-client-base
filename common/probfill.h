@@ -5,9 +5,6 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.h,v $
-// Revision 1.4  1998/12/01 00:34:04  cyp
-// hah! gcc doesn't savvy trailing space in multi-line directives.
-//
 // Revision 1.3  1998/12/01 15:00:00  cyp
 // New 'resize mode' for probfill.
 //
@@ -28,11 +25,11 @@
 #define PROBFILL_RESIZETABLE 4
 
 // --------------------------------------------------------------------------
-#if (( CLIENT_CPU         > 0x01F  /* 0-31 */  ) || \
+#if (((CLIENT_CPU)        > 0x01F  /* 0-31 */  ) || \  
      ((CLIENT_CONTEST-64) > 0x0F   /* 64-79 */ ) || \
-     ( CLIENT_BUILD       > 0x07   /* 0-7 */   ) || \
-     ( CLIENT_BUILD_FRAC  > 0x03FF /* 0-1023 */) || \
-     ( CLIENT_OS          > 0x3F   /* 0-63 */  ))      /* + cputype 0-15 */
+     ((CLIENT_BUILD)      > 0x07   /* 0-7 */   ) || \
+     ((CLIENT_BUILD_FRAC) > 0x03FF /* 0-1023 */) || \
+     ((CLIENT_OS)         > 0x3F   /* 0-63 */  ))      /* + cputype 0-15 */
 #error CLIENT_CPU/_OS/_CONTEST/_BUILD are out of range for FileEntry check tags
 #endif    
 
