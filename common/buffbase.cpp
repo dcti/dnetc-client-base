@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.12 2000/01/02 07:12:01 mfeiri Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.13 2000/01/03 02:59:43 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -149,7 +149,7 @@ static int BufferCountMemRecords( struct membuffstruct *membuff,
 
 int GetFileLengthFromStream( FILE *file, u32 *length )
 {
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S)
+  #if (CLIENT_OS == OS_WIN32)
     u32 result = (u32) GetFileSize((HANDLE)_get_osfhandle(fileno(file)),NULL);
     if (result == 0xFFFFFFFFL) return -1;
     *length = result;
@@ -209,7 +209,7 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
   #define BUFFERCREATE( fn )   fopen( fn, "wb" )
 #elif ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32) || \
        (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_OS2) || \
-       (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S))
+       (CLIENT_OS == OS_WIN16))
   #define ftruncate(h,sz) chsize(h,sz)
   #define BUFFERCREATE( fn ) fopen( fn, "wb" )
   static FILE *BUFFEROPEN(const char *fn) 

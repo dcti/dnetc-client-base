@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.18 2000/01/01 13:11:35 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.19 2000/01/03 02:59:52 jlawson Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -1675,7 +1675,7 @@ int Network::LowLevelConnectSocket( u32 that_address, int that_port )
       rc = -1;
       break;
     }
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     errno = WSAGetLastError();
     #undef  EISCONN
     #define EISCONN WSAEISCONN
@@ -1767,7 +1767,7 @@ int Network::LowLevelPut(const char *ccdata,int length)
     else //if (info.tsdu == -2) /* normal send not supp'd (ever happens?)*/
       return -1;
   }
-  #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32S)
+  #elif (CLIENT_OS == OS_WIN16)
   if (sendquota > 0x7FFF)  /* 16 bit OS but int is 32 bits */
     sendquota = 0x7FFF;
   #else
@@ -2101,7 +2101,7 @@ int Network::LowLevelSetSocketOption( int cond_type, int parm )
         return ( t_nonblocking( sock ) );
     #elif (!defined(FIONBIO) && !(defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK))))
       return -1;
-    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
       unsigned long flagon = ((parm == 0/* off */)?(1):(0));
       return ioctlsocket(sock, FIONBIO, &flagon);
     #elif ((CLIENT_OS == OS_VMS) && defined(__VMS_UCX__))

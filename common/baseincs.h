@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.14 1999/12/20 00:01:51 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.15 2000/01/03 02:59:42 jlawson Exp $"
 
 #include "cputypes.h"
 
@@ -100,7 +100,7 @@ extern "C" {
 #elif (CLIENT_OS == OS_SCO)
   #include <fcntl.h>
   #include <sys/time.h>
-#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   #if (CLIENT_OS == OS_WIN32) || !defined(__WINDOWS_386__)
     #define WIN32_LEAN_AND_MEAN
     #include <windows.h>

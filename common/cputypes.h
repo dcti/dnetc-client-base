@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.17 1999/12/31 20:25:54 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.18 2000/01/03 02:59:51 jlawson Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -93,10 +93,6 @@
   #elif !defined(WIN32) && !defined(__WIN32__) && !defined(_WIN32) /* win16 */
     #define CLIENT_CPU    CPU_X86
     #define CLIENT_OS     OS_WIN16
-    #define CLIENT_OS_NAME "Win16"
-  #elif defined(__WIN32S__) /* win32s gui/may need to be defined in makefile*/
-    #define CLIENT_CPU    CPU_X86
-    #define CLIENT_OS     OS_WIN32S
     #define CLIENT_OS_NAME "Win16"
   #elif defined(__WINDOWS386__) /* standard 32bit client built for win16 */
     #define CLIENT_CPU    CPU_X86

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.45 2000/01/02 07:10:18 mfeiri Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.46 2000/01/03 02:59:43 jlawson Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -119,7 +119,7 @@ static const char *GetBuildOrEnvDescription(void)
   */
 #if (CLIENT_OS == OS_DOS)
   return dosCliGetEmulationDescription(); //if in win/os2 VM
-#elif ((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S))
+#elif ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16))
   static char buffer[32]; long ver = winGetVersion(); /* w32pre.cpp */
   sprintf(buffer,"Windows%s %u.%u", (ver>=2000)?("NT"):(""), (ver/100)%20, ver%100 );
   return buffer;
@@ -381,7 +381,7 @@ int main( void )
   ClientMain(1,argv);
   return 0;
 }
-#elif (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32)
+#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
 { /* parse the command line and call the bootstrap */
   TRACE_OUT((+1,"WinMain()\n"));

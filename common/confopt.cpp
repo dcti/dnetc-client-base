@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.13 1999/12/08 03:43:14 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.14 2000/01/03 02:59:49 jlawson Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -278,7 +278,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "The priority option is ignored on this machine. The distributed.net client\n"
   "for "CLIENT_OS_NAME" dynamically adjusts its process priority.\n"
   )
-#elif (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S) //||(CLIENT_OS==OS_WIN32)
+#elif (CLIENT_OS == OS_WIN16) //||(CLIENT_OS == OS_WIN32)
   CFGTXT(
   "The priority option is ignored on this machine. distributed.net clients\n"
   "for Windows always run at lowest ('idle') priority.\n"

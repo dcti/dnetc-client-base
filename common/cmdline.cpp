@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.36 1999/12/13 15:03:56 snake Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.37 2000/01/03 02:59:48 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -455,7 +455,7 @@ int ParseCommandline( Client *client,
           }
           terminate_app = 1;
         }
-        #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S)
+        #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32)
         {
           int rc, cmd = DNETC_WCMD_RESTART;
           const char *dowhat_descrip = "restarted";
@@ -501,7 +501,7 @@ int ParseCommandline( Client *client,
       }
       else if ( strcmp(thisarg, "-install" ) == 0)
       {
-        #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+        #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
         win32CliInstallService(loop0_quiet); /*w32svc.cpp*/
         terminate_app = 1;
         #elif (CLIENT_OS == OS_OS2)
@@ -542,7 +542,7 @@ int ParseCommandline( Client *client,
         extern int os2CliUninstallClient(int /*do it without feedback*/);
         os2CliUninstallClient(loop0_quiet); /* os2inst.cpp */
         terminate_app = 1;
-        #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+        #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
         win32CliUninstallService(loop0_quiet); /*w32svc.cpp*/
         terminate_app = 1;
         #else
@@ -578,8 +578,8 @@ int ParseCommandline( Client *client,
       else
       {
         #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS) || \
-            (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || \
-            (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
+            (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || \
+            (CLIENT_OS == OS_OS2)
         //not really needed for netware (appname in argv[0] won't be anything 
         //except what I tell it to be at link time.)
         client->inifilename[0] = 0;
@@ -795,7 +795,7 @@ int ParseCommandline( Client *client,
       {
         /* allow multiple instances - keep this undocumented */
         #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || \
-            (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_OS2)
+            (CLIENT_OS == OS_OS2)
         putenv("dnetc_multiok=1");
         #endif
       }

@@ -12,7 +12,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.26.2.3 1999/12/08 00:41:51 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.26.2.4 2000/01/03 02:59:52 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -90,7 +90,7 @@ static int __netInitAndDeinit( int doWhat )
 
   //----------------------------
 
-  #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+  #if (CLIENT_OS == OS_WIN16)
   if (success)
   {
     if ( doWhat == 0 )                     //request to check online mode

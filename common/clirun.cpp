@@ -5,7 +5,7 @@
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.28 2000/01/02 07:16:00 mfeiri Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.29 2000/01/03 02:59:44 jlawson Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -125,7 +125,7 @@ static void __thread_yield__(void)
     dosCliYield(); //dpmi yield
   #elif (CLIENT_OS == OS_NETWARE)
     nwCliThreadSwitchLowPriority();
-  #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+  #elif (CLIENT_OS == OS_WIN16)
     w32Yield();
   #elif (CLIENT_OS == OS_RISCOS)
     if (riscos_in_taskwindow)

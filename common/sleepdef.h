@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.11 1999/12/12 01:22:08 mfeiri Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.12 2000/01/03 02:59:54 jlawson Exp $"
 
 #include "cputypes.h"
 
@@ -42,7 +42,7 @@
   #endif
   #define sleep(x) Sleep(1000*(x))
   #define usleep(x) Sleep((x)/1000)
-#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+#elif (CLIENT_OS == OS_WIN16)
   // Win16 has Yield(), but we have a gui, so pump messages instead
   #include "w32cons.h"
   #define sleep(x)  w32Sleep((x)*1000)

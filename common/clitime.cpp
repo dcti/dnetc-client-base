@@ -21,7 +21,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.13 1999/12/16 17:21:52 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.14 2000/01/03 02:59:46 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -54,7 +54,7 @@ static int __GetTimeOfDay( struct timeval *tv )
     #elif (CLIENT_OS==OS_SOLARIS)
         //struct timezone tz;
       return gettimeofday(tv, 0);
-    #elif (CLIENT_OS == OS_WIN32)  || (CLIENT_OS==OS_WIN32S)
+    #elif (CLIENT_OS == OS_WIN32)
     {
       unsigned __int64 now, epoch;
       unsigned long ell;
@@ -120,7 +120,7 @@ static int __GetMonotonicClock( struct timeval *tv )
    * is quite visible if we were to use it for "displayable time". 
   */  
   return nwCliGetHardwareClock(tv); /* hires but not sync'd with time() */
-  #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   /* with win16 this is not soooo critical since its a single user system */
   static DWORD lastcheck = 0;
   static unsigned long basetime = 0;
@@ -153,7 +153,7 @@ static int __GetProcessTime( struct timeval *tv )
     tv->tv_usec = rus.ru_utime.tv_usec;
     return 0;
   }
-  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S)
+  #elif (CLIENT_OS == OS_WIN32)
   static int isnt = -1;
   #if 0
   if (isnt == -1)
@@ -195,8 +195,8 @@ static int __GetProcessTime( struct timeval *tv )
 static int __GetMinutesWest(void) /* see CliTimeGetMinutesWest() for descr */
 {
   int minwest;
-#if (CLIENT_OS == OS_NETWARE) || ((CLIENT_OS == OS_OS2) && !defined(EMX)) || \
-    (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+#if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN16) || \
+  ((CLIENT_OS == OS_OS2) && !defined(EMX))
   /* ANSI rules :) */
   minwest = ((int)timezone)/60;
   if (daylight)
@@ -207,7 +207,7 @@ static int __GetMinutesWest(void) /* see CliTimeGetMinutesWest() for descr */
   if (GetTimeZoneInformation(&TZInfo) == 0xFFFFFFFFL)
     return 0;
   minwest = TZInfo.Bias; /* sdk doc is wrong. .Bias is always !dst */
-#elif (CLIENT_OS==OS_SCO) || (CLIENT_OS==OS_AMIGA) || \
+#elif (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_AMIGA) || \
   ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
   #error How does this OS natively deal with timezone? ANSI or Posix rule? (use native calls where possible)
 #else
@@ -392,14 +392,13 @@ int CliTimerDiff( struct timeval *result, const struct timeval *tv1, const struc
 
 int CliIsTimeZoneInvalid(void)
 {
-  #if ((CLIENT_OS==OS_DOS) || (CLIENT_OS==OS_WIN16) || \
-       (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_OS2) || \
-       (CLIENT_OS==OS_WIN32))
+  #if ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
+       (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32))
   static int needfixup = -1;       
   if (needfixup == -1)
   {
     needfixup = 0;
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     if (winGetVersion() < 400)
     #endif
     if (!getenv("TZ"))
