@@ -3,8 +3,17 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.179  1998/08/21 06:07:57  cyruspatel
+// Extended the DES mmx define wrapper in SelectCore from #if MMX_BITSLICER
+// to #if (defined(MMX_BITSLICER) && defined(KWAN) && defined(MEGGS)) to
+// differentiate between DES and RC5 MMX cores. (Can't use the DES MMX core
+// with NetWare). Also made all the option table strings const char *[]
+// instead of char [][60]. Also, most options in the config menu now revert
+// to the last-known-good value rather than the default when an invalid value
+// is entered.
+//
 // Revision 1.178  1998/08/20 20:38:27  cyruspatel
-// Mail specific option validation removed. Mail.cpp is RFC aware and can
+// Mail specific option validation removed. Mail.cpp is RFC822 aware and can
 // recognize/deal with invalid addresses better than ValidateConfig() can.
 //
 // Revision 1.177  1998/08/20 19:34:21  cyruspatel
@@ -188,7 +197,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.178 1998/08/20 20:38:27 cyruspatel Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.179 1998/08/21 06:07:57 cyruspatel Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -206,7 +215,7 @@ return "@(#)$Id: cliconfig.cpp,v 1.178 1998/08/20 20:38:27 cyruspatel Exp $"; }
 #include "logstuff.h"  //Log()/LogScreen()/LogScreenPercent()/LogFlush()
 
 
-#if (((CLIENT_OS == OS_OS2) || (CLIENT_OS==OS_WIN32)) && defined(MULTITHREAD))
+#if ((CLIENT_OS == OS_OS2) || (CLIENT_OS==OS_WIN32))
 #include "lurk.h"      //lurk stuff
 #endif
 
@@ -240,7 +249,7 @@ static const char *OPTION_SECTION="parameters"; //#define OPTION_SECTION "parame
 // --------------------------------------------------------------------------
 
 #if (CLIENT_CPU == CPU_X86)
-static char *cputypetable[]=
+static const char *cputypetable[]=
   {
   "Autodetect",
   "Pentium Classic, Cyrix 486/5x86/MediaGX, AMD 486",
@@ -252,7 +261,7 @@ static char *cputypetable[]=
   "Pentium MMX"
   };
 #elif (CLIENT_CPU == CPU_ARM)
-static char *cputypetable[]=
+static const char *cputypetable[]=
   {
   "Autodetect",
   "ARM 3, 610, 700, 7500, 7500FE",
@@ -261,7 +270,7 @@ static char *cputypetable[]=
   "ARM 710"
   };
 #elif (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX))
-static char *cputypetable[]=
+static const char *cputypetable[]=
   {
   "Autodetect",
   "PowerPC 601",
@@ -284,14 +293,14 @@ static const char *menutable[6]=
   "Filenames & Path Options"
   };
 
-static char nicenesstable[3][60]=
+static const char *nicenesstable[]=
   {
   "Extremely Nice",
   "Nice",
   "Nasty"
   };
 
-static char uuehttptable[6][60]=
+static const char *uuehttptable[]= 
   {
   "No special encoding",
   "UUE encoding (telnet proxies)",
@@ -301,14 +310,14 @@ static char uuehttptable[6][60]=
   "SOCKS5 proxy"
   };
 
-static char offlinemodetable[3][60]=
+static const char *offlinemodetable[]=
   {
   "Normal Operation",
   "Offline Always (no communication)",
   "Finish Buffers and exit"
   };
 
-static char lurkmodetable[3][60]=
+static const char *lurkmodetable[]=
   {
   "Normal mode",
   "Dial-up detection mode",
@@ -329,7 +338,7 @@ struct optionstruct
   s32 type;//type: 0=other, 1=string, 2=integer, 3=boolean (yes/no)
   s32 menuposition;//number on that menu to appear as
   void *thevariable;//pointer to the variable
-  char *choicelist;//pointer to the char* array of choices
+  const char **choicelist;//pointer to the char* array of choices
                          //(used for numeric responses)
   s32 choicemin;//minimum choice number
   s32 choicemax;//maximum choice number
@@ -371,12 +380,12 @@ static optionstruct options[OPTION_COUNT]=
   "Nasty will cause the client to run at regular user level priority.\n\n"
   "On a completely idle system, all options will result in the same\n"
   "keyrate. For this reason, Extremely Nice is recommended.\n"),4,2,1,NULL,
-  CFGTXT(&nicenesstable[0][0]),0,2},
+  CFGTXT(&nicenesstable[0]),0,2},
 //9
 { "logname", CFGTXT("File to log to"), "none", CFGTXT("(128 characters max, none = no log)\n"),2,1,1,NULL},
 //10
 { "uuehttpmode", CFGTXT("Firewall Communications mode (UUE/HTTP/SOCKS)"), "0",
-  CFGTXT(""),3,2,1,NULL,CFGTXT(&uuehttptable[0][0]),0,5},
+  CFGTXT(""),3,2,1,NULL,CFGTXT(&uuehttptable[0]),0,5},
 //11
 { "keyproxy", CFGTXT("Preferred KeyServer Proxy"), "us.v27.distributed.net",
    CFGTXT("\nThis specifies the DNS or IP address of the keyserver your client will\n"
@@ -397,8 +406,8 @@ static optionstruct options[OPTION_COUNT]=
   NULL,NULL,0,0},
 #else
 //16
-{ "cputype", CFGTXT("Optimize performance for CPU type"), "-1",
-      CFGTXT("\n"),4,2,2,NULL,CFGTXT(cputypetable[0]),-1,((sizeof(cputypetable)/sizeof(cputypetable[0]))-2)},
+{ "cputype", CFGTXT("Processor type"), "-1",
+      CFGTXT("\n"),4,2,2,NULL,CFGTXT(&cputypetable[1]),-1,((sizeof(cputypetable)/sizeof(cputypetable[0]))-2)},
 #endif
 //17
 { "messagelen", CFGTXT("Message Mailing (bytes)"), "0", CFGTXT("(0=no messages mailed.  10000 recommended.  125000 max.)\n"),2,2,2,NULL},
@@ -465,7 +474,7 @@ static optionstruct options[OPTION_COUNT]=
   "        generate random blocks if the block buffers empty.)\n"
   "Finish Buffers and exit: The client will never connect\n"
   "        to a keyserver, and when the block buffers empty, it will\n"
-  "        terminate.\n"),3,2,9,NULL,CFGTXT(&offlinemodetable[0][0]),0,2},
+  "        terminate.\n"),3,2,9,NULL,CFGTXT(&offlinemodetable[0]),0,2},
 //38
 { "lurk", CFGTXT("Modem detection options"),"0",
   CFGTXT("\nNormal mode: the client will send/receive blocks only when it\n"
@@ -481,7 +490,7 @@ static optionstruct options[OPTION_COUNT]=
   "        connected. HOWEVER, if the client runs out of blocks,\n"
   "        it will NOT trigger auto-dial, and will instead work\n"
   "        on random blocks until a connection is detected.\n"),
-  3,2,10,NULL,CFGTXT(&lurkmodetable[0][0]),0,2},
+  3,2,10,NULL,CFGTXT(&lurkmodetable[0]),0,2},
 //39
 { "in",  CFGTXT("RC5 In-Buffer Path/Name"),  "buff-in"  EXTN_SEP "rc5",CFGTXT(""),6,1,4,NULL},
 //40
@@ -667,8 +676,8 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
             if (options[choice].choicelist == NULL)
               LogScreenRaw("%li\n",(long)*(s32 *)options[choice].thevariable);
             else 
-              LogScreenRaw("%s\n",options[choice].choicelist+
-                ((long)*(s32 *)options[choice].thevariable*60));
+              LogScreenRaw("%s\n",options[choice].choicelist[
+                ((long)*(s32 *)options[choice].thevariable)]);
             }
           else if (options[choice].type==3)
             {
@@ -710,7 +719,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           {
           LogScreenRaw("\n%s %s\n",options[choice].description,options[choice].comments);
           for ( temp = options[choice].choicemin; temp < options[choice].choicemax+1; temp++)
-            LogScreenRaw("  %2d) %s\n", (int) temp,options[choice].choicelist+temp*60);
+            LogScreenRaw("  %2d) %s\n", (int) temp,options[choice].choicelist[temp]);
           LogScreen("\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
             options[choice].defaultsetting,
             (char *)options[choice].thevariable);
@@ -728,10 +737,10 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           {
           LogScreenRaw("\n%s %s\n",options[choice].description,options[choice].comments);
           for ( temp = options[choice].choicemin; temp < options[choice].choicemax+1; temp++)
-            LogScreenRaw("  %2d) %s\n", (int)temp, options[choice].choicelist+temp*60);
+            LogScreenRaw("  %2d) %s\n", (int) temp,options[choice].choicelist[temp]);
           LogScreenRaw("\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
-            options[choice].choicelist+atoi(options[choice].defaultsetting)*60,
-            options[choice].choicelist+((long)*(s32 *)options[choice].thevariable*60));
+            options[choice].choicelist[atoi(options[choice].defaultsetting)],
+            options[choice].choicelist[((long)*(s32 *)options[choice].thevariable)]);
           }
         }
       else if (options[choice].type==3)
@@ -794,61 +803,65 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           break;
         case CONF_THRESHOLDI:
           choice=atoi(parm);
-          if (choice > 0) inthreshold[0]=choice;
-          ValidateConfig();
-          outthreshold[0]=inthreshold[0];
+          if (choice > 0) 
+	    {
+	    outthreshold[0]=inthreshold[0]=choice;
+            ValidateConfig();
+	    }
           break;
         case CONF_THRESHOLDO:
           choice=atoi(parm);
-          if (choice > 0) outthreshold[0]=choice;
-          ValidateConfig();
+          if (choice > 0)
+	    { 
+	    outthreshold[0]=choice;
+            ValidateConfig();
+	    }
           break;
         case CONF_THRESHOLDI2:
           choice=atoi(parm);
-          if (choice > 0) inthreshold[1]=choice;
-          ValidateConfig();
-          outthreshold[1]=inthreshold[1];
+          if (choice > 0)
+	    { 
+	    outthreshold[1]=inthreshold[1]=choice;
+            ValidateConfig();
+	    }
           break;
         case CONF_THRESHOLDO2:
           choice=atoi(parm);
-          if (choice > 0) outthreshold[1]=choice;
-          ValidateConfig();
+          if (choice > 0)
+	    { 
+	    outthreshold[1]=choice;
+            ValidateConfig();
+	    }
           break;
         case CONF_COUNT:
-          blockcount = atoi(parm);
-          if (blockcount < 0)
-            blockcount = 0;
+          choice = atoi(parm);
+          if (choice >= 0)
+            blockcount = choice;
           break;
         case CONF_HOURS:
-          minutes = (s32) (60. * atol(parm));
-          if ( minutes < 0 ) minutes = 0;
-          sprintf(hours,"%u.%02u", (unsigned)(minutes/60),
-          (unsigned)(minutes%60)); //1.000000 hours looks silly
+	  if (atoi(parm)>=0)
+	    {
+            minutes = (s32) (60. * atol(parm));
+            if ( minutes < 0 ) minutes = 0;
+            sprintf(hours,"%u.%02u", (unsigned)(minutes/60),
+            (unsigned)(minutes%60)); //1.000000 hours looks silly
+	    }
           break;
         case CONF_TIMESLICE:        
           // *** To allows inis to be shared, don't use platform specific 
           // *** timeslice limits. Scale the generic 0-65536 one instead.
-          timeslice = atoi(parm);   
-          if (timeslice < 1)        
-#if (CLIENT_OS == OS_RISCOS)
-            timeslice = 2048;
-#else
-            timeslice = 65536;
-#endif
+          choice = atoi(parm);   
+          if (choice >= 1)
+	    timeslice = choice;
           break;
         case CONF_NICENESS:
-          niceness = atoi(parm);
-          if ( niceness < 0 || niceness > 2 )
-            niceness = 0;
+          choice = atoi(parm);
+          if ( choice >= 0 && choice <= 2 )
+            niceness = choice;
           break;
         case CONF_LOGNAME:
-          #ifdef DONT_USE_PATHWORK
-          strncpy( ini_logname, parm, sizeof(ini_logname) - 1 );
-          if (isstringblank(ini_logname)) strcpy (ini_logname,"none");
-          #else
           strncpy( logname, parm, sizeof(logname) - 1 );
           if (isstringblank(logname)) strcpy (logname,"none");
-          #endif
           break;
         case CONF_KEYPROXY:
           strncpy( keyproxy, parm, sizeof(keyproxy) - 1 );
@@ -897,9 +910,10 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
             }
           break;
         case CONF_UUEHTTPMODE:
-          uuehttpmode = atoi(parm);
-          if ( uuehttpmode < 0 || uuehttpmode > 5 )
-            uuehttpmode = 0;
+          choice = atoi(parm);
+          if ( choice < 0 || choice > 5 )
+	    break;
+          uuehttpmode = choice;
           #ifndef OLDRESOLVE
           autofindkeyserver=1;
           #endif
@@ -939,10 +953,9 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           break;
         #ifndef NO_CPUTYPE_TABLE
         case CONF_CPUTYPE:
-          cputype = atoi(parm);
-          if (cputype < -1 ||
-              cputype > options[CONF_CPUTYPE].choicemax)
-            cputype = -1;
+          choice = atoi(parm);
+          if (choice >= -1 && choice <= options[CONF_CPUTYPE].choicemax)
+            cputype = choice;
           break;
         #endif
         case CONF_MESSAGELEN:
@@ -980,14 +993,14 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           ValidateConfig();
           break;
         case CONF_PREFERREDBLOCKSIZE:
-          choice=atoi(parm);
-          if (choice > 0) preferred_blocksize = choice;
-          ValidateConfig();
+          choice = atoi(parm);
+          if (choice > 0 && choice <=1000) 
+	    preferred_blocksize = choice;
           break;
         case CONF_PROCESSDES:
-          preferred_contest_id = yesno(parm);
-          if ((preferred_contest_id < 0) || (preferred_contest_id > 1))
-             preferred_contest_id = 1;
+          choice = yesno(parm);
+          if ((choice >= 0) && (choice <= 1))
+             preferred_contest_id = choice;
           break;
         case CONF_QUIETMODE:
           choice=yesno(parm);
@@ -1030,27 +1043,9 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           break;
         case CONF_OFFLINEMODE:
           choice=atoi(parm);
-          if (choice < 0) choice=0;
-          if (choice > 2) choice=2;
-          *(s32 *)options[CONF_OFFLINEMODE].thevariable=choice;
+          if (choice >= 0 && choice <=2) 
+	    *(s32 *)options[CONF_OFFLINEMODE].thevariable=choice;
           break;
-#if defined(LURK)
-        case CONF_LURKMODE:
-          choice=atoi(parm);
-          if (choice < 0) choice=0;
-          if (choice > 2) choice=0;
-          if (choice==0)
-            {
-            choice=0;dialup.lurkmode=0;connectoften=0;
-            }
-          else if (choice==1) dialup.lurkmode=1;
-          else if (choice==2)
-            {
-            dialup.lurkmode=2;
-            connectoften=0;
-            }
-          break;
-#endif
         case CONF_RC5IN:
           #ifdef DONT_USE_PATHWORK
           strncpy( ini_in_buffer_file[0] , parm, sizeof(ini_in_buffer_file)/2 -1 );
@@ -1094,10 +1089,21 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           break;
         #ifdef MMX_BITSLICER
         case CONF_MMX:
-          usemmx = yesno(parm);
+          choice = yesno(parm);
+	  if (choice>=0) 
+	    usemmx = choice;
           break;
         #endif
         #ifdef LURK
+        case CONF_LURKMODE:
+          choice=atoi(parm);
+          if (choice>=0 && choice<=2)
+            {
+            dialup.lurkmode=choice;
+	    if (choice!=1)
+	      connectoften=0;
+            }
+          break;
         case CONF_DIALWHENNEEDED:
           choice=yesno(parm);
           if (choice >= 0) *(s32 *)options[CONF_DIALWHENNEEDED].thevariable=choice;
@@ -1108,7 +1114,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
                (choice <= options[CONF_CONNECTNAME].choicemax) )
             {
             strcpy( (char *)options[CONF_CONNECTNAME].thevariable,
-                     options[CONF_CONNECTNAME].choicelist+choice*60);
+                     options[CONF_CONNECTNAME].choicelist[choice]);
             }
           else strncpy( (char *)options[CONF_CONNECTNAME].thevariable,
                         parm, sizeof(dialup.connectionname)-1);
@@ -1257,14 +1263,8 @@ options[CONF_NETTIMEOUT].thevariable=&nettimeout;
 options[CONF_EXITFILECHECKTIME].thevariable=&exitfilechecktime;
 options[CONF_OFFLINEMODE].thevariable=&offlinemode;
 
-#if defined(LURK)
-options[CONF_LURKMODE].thevariable=&dialup.lurkmode;
-#else
-options[CONF_LURKMODE].optionscreen=0;
-#endif
-
+options[CONF_LOGNAME].thevariable=(char *)(&logname[0]);
 #ifdef DONT_USE_PATHWORK
-options[CONF_LOGNAME].thevariable=&ini_logname;
 options[CONF_CHECKPOINT].thevariable=&ini_checkpoint_file[0];
 options[CONF_CHECKPOINT2].thevariable=&ini_checkpoint_file[1];
 options[CONF_RC5IN].thevariable=&ini_in_buffer_file[0];
@@ -1273,7 +1273,6 @@ options[CONF_DESIN].thevariable=&ini_in_buffer_file[1];
 options[CONF_DESOUT].thevariable=&ini_out_buffer_file[1];
 options[CONF_PAUSEFILE].thevariable=&ini_pausefile;
 #else
-options[CONF_LOGNAME].thevariable=(char *)(&logname[0]);
 options[CONF_CHECKPOINT].thevariable=(char *)(&checkpoint_file[0][0]);
 options[CONF_CHECKPOINT2].thevariable=(char *)(&checkpoint_file[1][0]);
 options[CONF_RC5IN].thevariable=(char *)(&in_buffer_file[0][0]);
@@ -1286,11 +1285,17 @@ options[CONF_PAUSEFILE].thevariable=(char *)(&pausefile[0]);
 #ifdef MMX_BITSLICER
 options[CONF_MMX].thevariable=&usemmx;
 #endif
-#ifdef LURK
+
+#if (!defined(LURK))
+options[CONF_LURKMODE].optionscreen=0;
+options[CONF_DIALWHENNEEDED].optionscreen=0;
+options[CONF_CONNECTNAME].optionscreen=0;
+#else
+options[CONF_LURKMODE].thevariable=&dialup.lurkmode;
 options[CONF_DIALWHENNEEDED].thevariable=&dialup.dialwhenneeded;
 options[CONF_CONNECTNAME].thevariable=&dialup.connectionname;
 
-options[CONF_CONNECTNAME].choicelist=dialup.GetEntryList(&options[CONF_CONNECTNAME].choicemax);
+char *connectnames = dialup.GetEntryList(&options[CONF_CONNECTNAME].choicemax);
 
 if (options[CONF_CONNECTNAME].choicemax < 1)
   {
@@ -1299,13 +1304,15 @@ if (options[CONF_CONNECTNAME].choicemax < 1)
   }
 else
   {
+  static char *connectnamelist[10];
+  if (options[CONF_CONNECTNAME].choicemax>10)
+    options[CONF_CONNECTNAME].choicemax=10;
+  for (int i=0;i<((int)(options[CONF_CONNECTNAME].choicemax));i++)
+    connectnamelist[i]=&(connectnames[i*60]);
+  options[CONF_CONNECTNAME].choicelist=(const char **)(&connectnamelist[0]);
   options[CONF_CONNECTNAME].choicemin=0;
   options[CONF_CONNECTNAME].choicemax--;
   };
-
-#else
-options[CONF_DIALWHENNEEDED].optionscreen=0;
-options[CONF_CONNECTNAME].optionscreen=0;
 #endif
 
 if (messagelen != 0)
@@ -1456,8 +1463,8 @@ s32 Client::ReadConfig(void)
   INIGETKEY(CONF_CONNECTNAME).copyto(dialup.connectionname,sizeof(dialup.connectionname));
 #endif
 
+INIGETKEY(CONF_LOGNAME).copyto(logname, sizeof(logname));
 #ifdef DONT_USE_PATHWORK
-  INIGETKEY(CONF_LOGNAME).copyto(ini_logname, sizeof(ini_logname));
   INIGETKEY(CONF_CHECKPOINT).copyto(ini_checkpoint_file[0], sizeof(ini_checkpoint_file)/2);
   INIGETKEY(CONF_CHECKPOINT2).copyto(ini_checkpoint_file[1], sizeof(ini_checkpoint_file)/2);
   ini.getkey(OPTION_SECTION,"in",ini_in_buffer_file[0])[0].copyto(ini_in_buffer_file[0],sizeof(ini_in_buffer_file)/2);
@@ -1466,7 +1473,6 @@ s32 Client::ReadConfig(void)
   ini.getkey(OPTION_SECTION,"out2",ini_out_buffer_file[1])[0].copyto(ini_out_buffer_file[1],sizeof(ini_out_buffer_file)/2);
   ini.getkey(OPTION_SECTION,"pausefile",ini_pausefile)[0].copyto(ini_pausefile,sizeof(ini_pausefile));
 #else
-  INIGETKEY(CONF_LOGNAME).copyto(logname, sizeof(logname));
   INIGETKEY(CONF_CHECKPOINT).copyto(checkpoint_file[0], sizeof(checkpoint_file[0]));
   INIGETKEY(CONF_CHECKPOINT2).copyto(checkpoint_file[1], sizeof(checkpoint_file[1]));
   ini.getkey(OPTION_SECTION,"in",in_buffer_file[0])[0].copyto(in_buffer_file[0],sizeof(in_buffer_file[0]));
@@ -1540,6 +1546,9 @@ void Client::ValidateConfig( void )
     else if (exitfilechecktime > 600) exitfilechecktime=600;
   nettimeout=min(300,max(5,nettimeout));
 
+if (isstringblank(logname))
+  strcpy (logname,"none");
+
 #ifndef DONT_USE_PATHWORK  //ie use it
 
   if (isstringblank(in_buffer_file[0]))
@@ -1556,8 +1565,6 @@ void Client::ValidateConfig( void )
     strcpy(checkpoint_file[0],"none");
   if (isstringblank(checkpoint_file[1]))
     strcpy(checkpoint_file[1],"none");
-  if (isstringblank(logname))
-    strcpy (logname,"none");
 
 #else //ie don't use pathwork
 
@@ -1572,64 +1579,18 @@ void Client::ValidateConfig( void )
   if (isstringblank(ini_pausefile)) strcpy(ini_pausefile,"none");
   if (isstringblank(ini_checkpoint_file[0])) strcpy(ini_checkpoint_file[0],"none");
   if (isstringblank(ini_checkpoint_file[1])) strcpy(ini_checkpoint_file[1],"none");
-  if (isstringblank(ini_logname)) strcpy (ini_logname,"none");
 
-#if (CLIENT_OS == OS_NETWARE)
-  {
-    strcpy(exit_flag_file,ini_exit_flag_file);
-    strcpy(in_buffer_file[0],ini_in_buffer_file[0]);
-    strcpy(out_buffer_file[0],ini_out_buffer_file[0]);
-    strcpy(in_buffer_file[1],ini_in_buffer_file[1]);
-    strcpy(out_buffer_file[1],ini_out_buffer_file[1]);
-    strcpy(pausefile,ini_pausefile);
-    strcpy(checkpoint_file[0],ini_checkpoint_file[0]);
-    strcpy(checkpoint_file[1],ini_checkpoint_file[1]);
-    strcpy(logname,ini_logname);
-
-    //    (destbuff, destsize, defaultvalue, changetoNONEifempty, source)
-
-    CliValidateSinglePath( inifilename, sizeof(inifilename),
-                             "rc5des" EXTN_SEP "ini", 0, inifilename );
-    if (!nodiskbuffers)
-    {
-      CliValidateSinglePath( in_buffer_file[0], sizeof(in_buffer_file[0]),
-                                       "buff-in" EXTN_SEP "rc5", 0, in_buffer_file[0] );
-      CliValidateSinglePath( out_buffer_file[0], sizeof(out_buffer_file[0]),
-                                       "buff-out" EXTN_SEP "rc5", 0, out_buffer_file[0] );
-      CliValidateSinglePath( in_buffer_file[1], sizeof(in_buffer_file[1]),
-                                       "buff-out" EXTN_SEP "des", 0, in_buffer_file[1] );
-      CliValidateSinglePath( out_buffer_file[1], sizeof(out_buffer_file[1]),
-                                       "buff-out" EXTN_SEP "des", 0, out_buffer_file[1] );
-    }
-    if (strcmp(exit_flag_file,"none")!=0)
-      CliValidateSinglePath( exit_flag_file, sizeof(exit_flag_file),
-                                     "exitrc5" EXTN_SEP "now", 1, exit_flag_file);
-    if (strcmp(pausefile,"none")!=0)
-      CliValidateSinglePath( pausefile, sizeof(pausefile),
-                                     "none", 1, pausefile);
-    if (strcmp(checkpoint_file[0],"none")!=0)
-      CliValidateSinglePath( checkpoint_file[0], sizeof(checkpoint_file[0]),
-                                       "ckpoint" EXTN_SEP "rc5", 1, checkpoint_file[0]);
-    if (strcmp(checkpoint_file[1],"none")!=0)
-      CliValidateSinglePath( checkpoint_file[1], sizeof(checkpoint_file[1]),
-                                       "ckpoint" EXTN_SEP "des", 1, checkpoint_file[1]);
-    if (strlen(logname)!=0)
-      CliValidateSinglePath( logname, sizeof(logname), "", 0, logname);
-  }
-#else
   // now, add path of exe to filenames if path isn't specified
 
-    strcpy(exit_flag_file,InternalGetLocalFilename(ini_exit_flag_file));
-    strcpy(in_buffer_file[0],InternalGetLocalFilename(ini_in_buffer_file[0]));
-    strcpy(out_buffer_file[0],InternalGetLocalFilename(ini_out_buffer_file[0]));
-    strcpy(in_buffer_file[1],InternalGetLocalFilename(ini_in_buffer_file[1]));
-    strcpy(out_buffer_file[1],InternalGetLocalFilename(ini_out_buffer_file[1]));
-    strcpy(pausefile,InternalGetLocalFilename(ini_pausefile));
-    strcpy(checkpoint_file[0],InternalGetLocalFilename(ini_checkpoint_file[0]));
-    strcpy(checkpoint_file[1],InternalGetLocalFilename(ini_checkpoint_file[1]));
-    strcpy(logname,InternalGetLocalFilename(ini_logname));
+  strcpy(exit_flag_file,InternalGetLocalFilename(ini_exit_flag_file));
+  strcpy(in_buffer_file[0],InternalGetLocalFilename(ini_in_buffer_file[0]));
+  strcpy(out_buffer_file[0],InternalGetLocalFilename(ini_out_buffer_file[0]));
+  strcpy(in_buffer_file[1],InternalGetLocalFilename(ini_in_buffer_file[1]));
+  strcpy(out_buffer_file[1],InternalGetLocalFilename(ini_out_buffer_file[1]));
+  strcpy(pausefile,InternalGetLocalFilename(ini_pausefile));
+  strcpy(checkpoint_file[0],InternalGetLocalFilename(ini_checkpoint_file[0]));
+  strcpy(checkpoint_file[1],InternalGetLocalFilename(ini_checkpoint_file[1]));
 
-#endif
 #endif //DONT_USE_PATHWORK
 
   CheckForcedKeyport();
@@ -1723,8 +1684,8 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_CONNECTNAME, dialup.connectionname);
 #endif
 
+INISETKEY( CONF_LOGNAME, logname );
 #ifdef DONT_USE_PATHWORK
-  INISETKEY( CONF_LOGNAME, ini_logname );
   INISETKEY( CONF_CHECKPOINT, ini_checkpoint_file[0] );
   INISETKEY( CONF_CHECKPOINT2, ini_checkpoint_file[1] );
   INISETKEY( CONF_RC5IN, ini_in_buffer_file[0]);
@@ -1733,7 +1694,6 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_DESOUT, ini_out_buffer_file[1]);
   INISETKEY( CONF_PAUSEFILE, ini_pausefile);
 #else
-  INISETKEY( CONF_LOGNAME, logname );
   INISETKEY( CONF_CHECKPOINT, checkpoint_file[0] );
   INISETKEY( CONF_CHECKPOINT2, checkpoint_file[1] );
   INISETKEY( CONF_RC5IN, in_buffer_file[0]);
@@ -2334,7 +2294,7 @@ s32 Client::SelectCore(void)
     #undef DESUNITFUNC52
     }
 
-  #ifdef MMX_BITSLICER
+  #if (defined(MMX_BITSLICER) && defined(KWAN) && defined(MEGGS))
   if ((detectedtype & 0x100) && usemmx)   // use the MMX DES core ?
     { // MMX core doesn't care about selected Rc5 core at all
     des_unit_func = des_unit_func2 = des_unit_func_mmx;
@@ -2727,9 +2687,6 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       {
         LogScreenRaw("Setting log file to %s\n",Argv[i+1]);
         strcpy( logname, Argv[i+1] );
-#ifdef DONT_USE_PATHWORK
-        strcpy( ini_logname, Argv[i+1] );
-#endif
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
