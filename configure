@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.116 2004/01/07 02:50:50 piru Exp $
+# @(#)$Id: configure,v 1.288.2.117 2004/01/08 20:43:32 oliver Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -523,7 +523,8 @@ add_sources() # $1=os, $2=arch, $3=custom
 
         if [ "X$3" = "Xaltivec" ] ; then
           TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/ppc/r72-KKS7400.gas.s \
-                                          rc5-72/ppc/r72-KKS7450.gas.s"
+                                          rc5-72/ppc/r72-KKS7450.gas.s \
+                                          rc5-72/ppc/r72-KKS970.osx.s"
         fi
       fi
     fi # HAVE_RC5_72
@@ -2667,6 +2668,23 @@ case "$1" in
         add_sources "amigaos" "68k"
         ;;
 
+    *ppc-amigaos)               # [oliver] <oliver@futaura.co.uk>
+        TARGET_AS="ppc-amigaos-gas"
+        TARGET_CC="ppc-amigaos-g++"
+        TARGET_ASFLAGS=""
+        generate_gcc_opts "ppc" "amigaos"
+        TARGET_CCFLAGS="$OPTS_GCC -mmultiple -mstring -I./ -I./plat/amigaos/guilib \
+                        -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
+                        -DDYN_TIMESLICE -maltivec -D__USE_INLINE__"
+        TARGET_TARBALL="amigaos-ppc"
+        TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
+        TARGET_STRIP="ppc-amigaos-strip -R.comment"
+        TARGET_BINNAME_SUFFIX="_ppc"
+        TARGET_GENMAN=
+        TARGET_ARCTYPE="amigaosgui"
+        TARGET_MAKEARC="ppc ${TARGET_BINNAME}_OS4"
+        add_sources "amigaos" "ppc" "altivec"
+        ;;
 
     *ppc-amigaos-wos)           # [oliver] <oliver@futaura.co.uk>
         TARGET_AS="ppc-amigaos-gas"
@@ -2710,7 +2728,7 @@ case "$1" in
         TARGET_CC="ppc-morphos-g++"
         TARGET_ASFLAGS="-m603"
         generate_gcc_opts "ppc603e" "morphos"
-        TARGET_CCFLAGS="-xc++ $OPTS_GCC -noixemul -DNOMIAMI -mmultiple -mstring \
+        TARGET_CCFLAGS="-xc++ $OPTS_GCC -noixemul -DNO_MIAMI -mmultiple -mstring \
                         -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
                         -I./ -I./plat/amigaos/guilib/morphos/ \
                         -I./plat/amigaos/guilib/ -DDYN_TIMESLICE"
