@@ -21,7 +21,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.32 1999/04/04 17:48:00 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.33 1999/04/08 00:41:54 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -73,6 +73,15 @@ int CliTimeGetMinutesWest(void)
   if (GetTimeZoneInformation(&TZInfo) == 0xFFFFFFFFL)
     return 0;
   minwest = TZInfo.Bias; /* sdk doc is wrong. .Bias is always !dst */
+  precalced_minuteswest = minwest;
+#elif (CLIENT_OS == OS_MACOS)
+  MachineLocation thisLocation;
+  ReadLocation(&thisLocation);
+  minwest = GetGmtDelta(thisLocation);
+  minwest = minwest/60;
+  minwest = -minwest;
+  if(IsDaylightSavingsOn())
+  	minwest += 60;
   precalced_minuteswest = minwest;
 #elif (CLIENT_OS==OS_SCO) || (CLIENT_OS==OS_AMIGA) || \
   (CLIENT_OS==OS_MACOS) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
