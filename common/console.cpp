@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.37 2000/05/27 17:40:09 trevorh Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.38 2000/06/04 10:13:39 oliver Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -41,7 +41,7 @@ return "@(#)$Id: console.cpp,v 1.48.2.37 2000/05/27 17:40:09 trevorh Exp $"; }
 #include <termios.h>
 #define TERMIOS_IS_AVAILABLE
 #endif
-#if (defined(__unix__) && !defined(__EMX__)) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_OS390)
+#if (defined(__unix__) && !defined(__EMX__)) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_OS390) || (CLIENT_OS == OS_AMIGAOS)
 #define TERM_IS_ANSI_COMPLIANT
 #endif
 #if defined(__unix__)
@@ -324,6 +324,11 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
            ch = kbdkeyinfo.chChar;
         }
       }
+      #elif (CLIENT_OS == OS_AMIGAOS)
+      {
+        fflush(stdout);
+        ch = getch();
+      }
       #elif (defined(TERMIOS_IS_AVAILABLE))
       {
         struct termios stored;
@@ -580,6 +585,8 @@ int ConGetPos( int *col, int *row )  /* zero-based */
       if (col) *col = (int)c;
       return 0;
     }
+    #elif (CLIENT_OS == OS_AMIGAOS)
+    return amigaConGetPos(col,row);
     #else
     return ((row == NULL && col == NULL) ? (0) : (-1));
     #endif
@@ -683,6 +690,8 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     }
   #elif (CLIENT_OS == OS_NTO2)
     tcgetsize(fileno(stdout), &height, &width);
+  #elif (CLIENT_OS == OS_AMIGAOS)
+    amigaConGetSize( &width, &height);
   #elif defined(TIOCGWINSZ)
     #error please add support for TIOCGWINSZ to avoid the following stuff
   #else
