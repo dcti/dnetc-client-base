@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.37 2002/10/09 22:22:15 andreasb Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.38 2003/09/12 22:29:26 mweiser Exp $"
 
 #include "cputypes.h"
 
@@ -76,7 +76,7 @@
   #include <sys/types.h>
   // found in <unistd.h>, but requires _XOPEN_SOURCE_EXTENDED,
   // which causes more trouble...
-//  extern "C" int usleep(useconds_t);
+  extern "C" int usleep(useconds_t);
 #elif (CLIENT_OS == OS_IRIX)
   #include <unistd.h>
   #ifdef _irix5_
@@ -139,6 +139,11 @@
   #define usleep(x) { struct timespec interval, remainder; \
                       interval.tv_sec = 0; interval.tv_nsec = (x)*100;\
                       nanosleep(&interval, &remainder); }
+#elif ( CLIENT_OS == OS_SCO )
+  /* usleep in SCO uses setitimer */
+  #include <poll.h>
+  #undef usleep
+  #define usleep(x) poll(NULL, 0, (x)/1000);
 #else
   #include <unistd.h> //has both sleep() and usleep()
 #endif

@@ -7,7 +7,7 @@
 ; Written in a dark and stormy night (Jan 16, 1998) by
 ; Cyrus Patel <cyp@fb14.uni-mainz.de>
 ;
-; $Id: x86ident.asm,v 1.3 2002/10/09 22:22:15 andreasb Exp $
+; $Id: x86ident.asm,v 1.4 2003/09/12 22:29:27 mweiser Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:
@@ -46,16 +46,16 @@
 %endif
 
 %ifdef __OMF__   ; Watcom+OS/2 or Borland+Win32
-[SECTION DATA CLASS=DATA USE32 PUBLIC ALIGN=16]
-[SECTION TEXT CLASS=CODE USE32 PUBLIC ALIGN=16]
-%define __DATASECT__ [SECTION DATA]
-%define __CODESECT__ [SECTION TEXT]
+[SECTION _DATA CLASS=DATA USE32 PUBLIC ALIGN=16]
+[SECTION _TEXT CLASS=CODE USE32 PUBLIC ALIGN=16]
+%define __DATASECT__ [SECTION _DATA]
+%define __CODESECT__ [SECTION _TEXT]
 %else
 %define __DATASECT__ [SECTION .data]
 %define __CODESECT__ [SECTION .text]
 %endif
 
-global          x86ident,_x86ident,x86ident_
+global          x86ident,_x86ident
 global          x86ident_haveioperm, _x86ident_haveioperm
 
 __DATASECT__
@@ -65,7 +65,6 @@ x86ident_haveioperm dd 0          ; we do on win9x (not NT), win16, dos
 
 __CODESECT__
 _x86ident:
-x86ident_:
 x86ident:       mov     eax,[__savident]
                 or      eax, eax
                 jz      _ge386

@@ -1,10 +1,10 @@
 /* 
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.51 2002/09/02 00:35:41 andreasb Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.52 2003/09/12 22:29:25 mweiser Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -12,6 +12,7 @@ return "@(#)$Id: confopt.cpp,v 1.51 2002/09/02 00:35:41 andreasb Exp $"; }
 #include "pathwork.h" // EXTN_SEP
 #include "baseincs.h" // NULL
 #include "client.h"   // PREFERREDBLOCKSIZE_MIN etc
+#include "util.h"     // projectmap_expand()
 #include "confopt.h"  // ourselves
 
 /* ----------------------------------------------------------------------- */
@@ -22,6 +23,14 @@ static const char *lurkmodetable[] =
   "Dial-up detection mode",
   "Dial-up detection ONLY mode"
 };
+
+static const char *__default_loadorder()
+{
+  static char buf[64];
+  strncpy(buf, projectmap_expand(NULL, NULL), sizeof(buf));
+  buf[sizeof(buf)-1] = '\0';
+  return buf;
+}
 
 // --------------------------------------------------------------------------
 
@@ -144,9 +153,18 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "If this option is enabled, the client will pause itself if it finds that\n"
   "the temperature of a processor exceeds the threshold specified in the\n"
   "\"Processor temperature thresholds\" option.\n"
+  #if ((CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_MACOSX))
   "\n"
-  "Processor temperature checking is only supported under Mac OS with a PPC G3\n"
-  "or some early PPC G4 processors.\n"
+  "Processor temperature checking is only supported under Mac OS with certain\n"
+  "PowerPC G3 or G4 processors (those featuring a Thermal Assist Unit, TAU),\n"
+  "or on machines that have dedicated temperature sensors.\n"
+  #elif (CLIENT_OS == OS_DEC_UNIX)
+  "\n"
+  "Processor temperature checking is only supported under OSF/1 with certain\n"
+  "Alpha systems, and the envmon subsystem must be loaded.\n"
+  "\n"
+  "\"/sbin/sysconfig -c envmon\" as a privileged user will load the system.\n"
+  #endif
   ,CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
 },
 { 
@@ -155,19 +173,29 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "Processor temperature threshold(s) may be specified either as\n"
   " - a low:high pair: The client will pause when temperature exceeds 'high',\n" 
   "   and remain paused until temperature has fallen below 'low'.\n"
-  "   Examples: \"318K:333K\", \"573R:599R\", \"113F:140F\", \"45C:60C\".\n"
+  "   Examples: \"318K:333K\", \"573R:599R\", \"113F:140F\", \"45.6C:50.2C\".\n"
   " - a single value: The client will treat this as a 'high', with 'low' being\n"
   "   90 percent of the K equivalent of 'high'.\n"
   "\n"
   "As noted above, temperatures may be specified in Kelvin (K, the default),\n"
   "Rankine (R), degrees Fahrenheit (F) or degrees Celsius/Centigrade (C).\n"
+  "The precision allowed is two digits after the decimal point.\n"
   "\n"
-  "Illegal values, for instance a 'low' that is not less than 'high', will\n"
-  "render the pair invalid and cause temperature threshold checking to be\n"
-  "silently disabled.\n"
+  "Illegal values, for instance a 'low' that is not less or equal than 'high',\n"
+  "will render the pair invalid and cause temperature threshold checking to\n"
+  "be silently disabled.\n"
+  #if ((CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_MACOSX))
   "\n"
-  "Processor temperature checking is only supported under Mac OS with a PPC G3\n"
-  "or some early PPC G4 processors.\n"
+  "Processor temperature checking is only supported under Mac OS with certain\n"
+  "PowerPC G3 or G4 processors (those featuring a Thermal Assist Unit, TAU),\n"
+  "or on machines that have dedicated temperature sensors.\n"
+  #elif (CLIENT_OS == OS_DEC_UNIX)
+  "\n"
+  "Processor temperature checking is only supported under OSF/1 with certain\n"
+  "Alpha systems, and the envmon subsystem must be loaded.\n"
+  "\n"
+  "\"/sbin/sysconfig -c envmon\" as a privileged user will load the system.\n"
+  #endif
   ,CONF_MENU_MISC,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
 { 
@@ -351,7 +379,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
 },
 { 
   CONF_LOADORDER               , /* CONF_MENU_BUFF "DES,OGR,RC5" */
-  CFGTXT("Load-work precedence"), "DES,CSC,OGR,RC5", 
+  CFGTXT("Load-work precedence"), __default_loadorder(), 
   /* CFGTXT( */
   "The order specified here determines the order the client will look for work\n"
   "each time it needs to load a packet from a buffer. For example, \"OGR,RC5,...\"\n"

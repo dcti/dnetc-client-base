@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: main.c,v 1.2 2002/09/02 00:35:50 andreasb Exp $
+ * $Id: main.c,v 1.3 2003/09/12 22:29:26 mweiser Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -139,7 +139,7 @@ struct NewMenu ClientMenus[] = {
 
 const char AboutText[] =
    "distributed.net client - a product of distributed.net\n"
-   "%s\nCopyright 1997-2002 distributed.net\n\n"
+   "%s\nCopyright 1997-2003 distributed.net\n\n"
    "\33cAmigaOS clients maintained by\n"
    "Oliver Roberts <oliver@futaura.co.uk>\n\n"
    "ClassAct/ReAction GUI module (v%ld.%ld) maintained by\n"

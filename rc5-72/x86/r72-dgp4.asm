@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dgp4.asm,v 1.4 2002/10/23 02:49:18 sampo Exp $
+; $Id: r72-dgp4.asm,v 1.5 2003/09/12 22:29:27 mweiser Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -11,7 +11,6 @@
 [SECTION .text]
 %endif
 
-[GLOBAL rc5_72_unit_func_dg_p4_]
 [GLOBAL _rc5_72_unit_func_dg_p4]
 [GLOBAL rc5_72_unit_func_dg_p4]
 

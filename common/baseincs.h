@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.86 2002/12/21 00:40:27 andreasb Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.87 2003/09/12 22:29:25 mweiser Exp $"
 
 #include "cputypes.h"
 
@@ -22,6 +22,7 @@
 #include <limits.h>
 #if defined(__unix__)
   #include <sys/utsname.h> /* uname() */
+  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #endif
 
 /* ------------------------------------------------------------------ */
@@ -32,7 +33,6 @@
   #include <sys/prctl.h>
   #include <sys/schedctl.h>
   #include <fcntl.h>
-  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_HPUX)
   #include <unistd.h>
   #include <sys/types.h>
@@ -40,14 +40,15 @@
   #include <sys/param.h>
   #include <sys/pstat.h>
   #include <sched.h>
-  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_OS2)
   #if defined(__WATCOMC__)
     #include "os2defs.h"
-    #include <conio.h>            /* for console functions */
     #include <direct.h>
-    #include <process.h>
+  #else
+    #include "plat/os2/os2defs.h"
   #endif
+  #include <conio.h>            /* for console functions */
+  #include <process.h>
   #define INCL_DOSPROCESS         /* For Disk functions */
   #define INCL_DOSFILEMGR         /* For Dos_Delete */
   #define INCL_ERRORS             /* DOS error values */
@@ -83,8 +84,8 @@
   #include <sys/time.h>
   #include <sys/ioctl.h>
   #include <netdb.h>
-  #include <sys/swis.h>
   #include <kernel.h>
+  #include <swis.h>
   #include <riscos_sup.h>
   extern s32 guiriscos, guirestart;
   extern int riscos_in_taskwindow;
@@ -98,9 +99,9 @@
     #include "multinet_root:[multinet.include.netinet]in.h"
   #endif
 #elif (CLIENT_OS == OS_SCO)
+  #include <unistd.h>
   #include <fcntl.h>
   #include <sys/time.h>
-  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   #include <windows.h>
   #include <sys/timeb.h>
@@ -160,7 +161,6 @@
   #include <unistd.h>
   #include <fcntl.h>
   #include <sys/time.h>  // timeval
-  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_NETWARE)
   #include <sys/time.h> //timeval
   #include <unistd.h> //isatty, chdir, getcwd, access, unlink, chsize, O_...
@@ -189,8 +189,7 @@
   #include <poll.h>
   #include <thread.h>
   extern "C" int nice(int);
-  extern "C" int gethostname(char *, int);
-  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
+  //extern "C" int gethostname(char *, int);
 #elif (CLIENT_OS == OS_AIX)
   #include <unistd.h>   // nice()
   #include <fcntl.h> /* O_RDWR etc */
@@ -199,13 +198,11 @@
   // clock_gettime is called getclock (used in clitime.cpp)
   #include <sys/timers.h> /* int getclock */ 
   #define clock_gettime(a,b) (getclock(a,b))
-  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
   #include <sys/time.h>
   #include <sys/file.h>
   #include <unistd.h>
   #include <fcntl.h> /* O_RDWR etc */
-  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
   #undef NULL    /* some broken header unconditionally */
   #define NULL 0 /* defines NULL to be ((void *)0) */
   #if defined(_MIT_POSIX_THREADS)
@@ -225,7 +222,6 @@
   extern "C" int clock_gettime(int clktype, struct timespec *tsp);
   #include <unistd.h>
   #define fileno(f) ((f)->handle)
-  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_MACOSX)
   //rhapsody is mach 2.x based and altivec unsafe
   #include <sys/time.h>
@@ -234,12 +230,13 @@
   #include <sys/sysctl.h>
   #include <unistd.h>
   #include <fcntl.h> /* O_RDWR etc */
-  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_FREEBSD)
   #include <sys/time.h>
   #include <unistd.h>
   #include <fcntl.h> /* O_RDWR etc */
-  #include <sys/param.h>
+  #if defined (__FreeBSD__) && (__FreeBSD__ < 5)
+    #include <sys/param.h>
+  #endif
   #include <sys/sysctl.h>
   #if defined(__FreeBSD__) && (__FreeBSD__ < 3)
     #include <sys/unistd.h>
@@ -268,7 +265,6 @@
   #include <fcntl.h> /* O_RDWR etc */
 #elif (CLIENT_OS == OS_QNX)
   #include <sys/time.h>
-  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
   #if defined(__QNXNTO__) /* neutrino */
   #include <sched.h>
   #include <sys/syspage.h>
@@ -284,25 +280,49 @@
 #elif (CLIENT_OS == OS_DYNIX)
   #include <unistd.h> // sleep(3c)
   #include <fcntl.h> /* O_RDWR etc */
-  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
   #include <machine/cpuconf.h>
   #include <sys/time.h>
   #include <fcntl.h> /* O_RDWR etc */
-  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_NEXTSTEP)
-  #include <bsd/sys/time.h>
-  #include <sys/types.h>
-  #include <fcntl.h>
+  #include <mach/mach.h>  /* host_self, host_kernel_version */
+  #include <libc.h>       /* access, geteuid, ... */
+  #include <next_sup.h>   /* strdup */
+
+  /* defaults in header are (void (*)())0/1 which make gcc complain */
+  #undef  SIG_DFL
+  #undef  SIG_IGN
+  #define SIG_DFL (void (*)(int))0
+  #define SIG_IGN (void (*)(int))1
+
+  #define setsid() setpgrp(0, getpid())         /* cmdline.cpp */
+
+  /* the following are present in NeXTstep but not defined in system
+  ** headers or for some reason marked as POSIX-subsystem only */
   #define       S_IRUSR         0x400           /* read permission, */
   #define       S_IWUSR         0x200           /* write permission, */
   #define       S_IRGRP         0x040           /* read permission, group */
   #define       S_IWGRP         0x020           /* write permission, group */
-  #define       CLOCKS_PER_SEC          CLK_TCK
+
+  typedef int pid_t;
+
   extern "C" int sleep(unsigned int seconds);
-  extern "C" int usleep(unsigned int useconds);
-  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
+  extern "C" void tzset(void);
+  extern "C" int getppid(void);            /* triggers.cpp */
+  extern "C" int syscall(int number, ...); /* for uname */
+
+  #define SYS_uname       182
+  #define _SYS_NAMELEN    32
+  struct utsname {
+    char sysname[_SYS_NAMELEN];  /* Name of OS */
+    char nodename[_SYS_NAMELEN]; /* Name of this node */
+    char release[_SYS_NAMELEN];  /* Release level of */
+    char version[_SYS_NAMELEN];  /* Version level of */
+    char machine[_SYS_NAMELEN];  /* Hardware name */
+  };
+
+  #define uname(x) syscall(SYS_uname, x)   /* client.cpp */
 #endif
 
 #endif /* __BASEINCS_H__ */

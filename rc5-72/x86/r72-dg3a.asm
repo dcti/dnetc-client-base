@@ -1,9 +1,9 @@
-; Copyright distributed.net 1997-2002 - All Rights Reserved
+; Copyright distributed.net 1997-2003 - All Rights Reserved
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg3a.asm,v 1.2 2002/10/24 02:29:34 acidblood Exp $
+; $Id: r72-dg3a.asm,v 1.3 2003/09/12 22:29:27 mweiser Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -11,7 +11,6 @@
 [SECTION .text]
 %endif
 
-[GLOBAL rc5_72_unit_func_dg_3a_]
 [GLOBAL _rc5_72_unit_func_dg_3a]
 [GLOBAL rc5_72_unit_func_dg_3a]
 
@@ -73,9 +72,9 @@ defwork save_ebp
 %define L1(N)                   [work_L1+((N)*4)]
 %define L2(N)                   [work_L2+((N)*4)]
 %define L3(N)                   [work_L3+((N)*4)]
-%define L1backup(N)             [work_L1+((N)*4)]
-%define L2backup(N)             [work_L2+((N)*4)]
-%define L3backup(N)             [work_L3+((N)*4)]
+%define L1backup(N)             [work_backup_L1+((N)*4)]
+%define L2backup(N)             [work_backup_L2+((N)*4)]
+%define L3backup(N)             [work_backup_L3+((N)*4)]
 
 %macro k7nop 1
     %if %1>3
@@ -107,9 +106,9 @@ defwork save_ebp
         %else
             jmp short %%alend
             align %1
-            %%alend:
         %endif
     %endif
+    %%alend:
 %endmacro
 
 %define A1         eax
@@ -270,22 +269,31 @@ _rc5_72_unit_func_dg_3a:
 
         mov     [work_iterations], edi
         mov     L1(2), esi
+        mov     L1backup(2), esi
 
         inc     esi
 
         mov     L2(2), esi
+        mov     L2backup(2), esi
 
         inc     esi
 
         mov     L3(2), esi
+        mov     L3backup(2), esi
 
         mov     L1(1), ecx
         mov     L2(1), ecx
         mov     L3(1), ecx
+        mov     L1backup(1), ecx
+        mov     L2backup(1), ecx
+        mov     L3backup(1), ecx
 
         mov     L1(0), ebx
         mov     L2(0), ebx
         mov     L3(0), ebx
+        mov     L1backup(0), ebx
+        mov     L2backup(0), ebx
+        mov     L3backup(0), ebx
 
 k7align 16
 key_setup_1:
@@ -555,6 +563,7 @@ test_key_1:
         jmp     finished
 
 k7align 16
+k7align 16
 test_key_2:
         cmp     A2, [work_C_0]
 
@@ -586,6 +595,7 @@ test_key_2:
         jmp     finished
 
 k7align 16
+k7align 16
 test_key_3:
         cmp     A3, [work_C_0]
         mov     edx, [RC5_72UnitWork_L0hi]
@@ -611,7 +621,7 @@ test_key_3:
 
         lea     ecx, [ecx + 2*ecx]
 
-        sub     ecx, 2
+        sub     ecx, BYTE 2
 
         sub     [esi], ecx
         mov     eax, RESULT_FOUND
@@ -619,6 +629,7 @@ test_key_3:
         jmp     finished
 
 
+k7align 16
 k7align 16
 inc_key:
         cmp     dl, 0xFB
@@ -631,12 +642,15 @@ inc_key:
 
         mov     [RC5_72UnitWork_L0hi], edx
         mov     L1(2), edx
+        mov     L1backup(2), edx
         inc     edx
 
         mov     L2(2), edx
+        mov     L2backup(2), edx
         inc     edx
 
         mov     L3(2), edx
+        mov     L3backup(2), edx
         dec     dword [work_iterations]
 
         mov     L1(1), ecx
@@ -658,8 +672,8 @@ complex_incr:
         bswap   ecx
         bswap   ebx
 
-        adc     ecx, 0
-        adc     ebx, 0
+        adc     ecx, BYTE 0
+        adc     ebx, BYTE 0
 
         bswap   ecx
         bswap   ebx
@@ -680,8 +694,8 @@ complex_incr:
         bswap   ecx
         bswap   ebx
 
-        adc     ecx, 0
-        adc     ebx, 0
+        adc     ecx, BYTE 0
+        adc     ebx, BYTE 0
 
         bswap   ecx
         bswap   ebx
@@ -698,8 +712,8 @@ complex_incr:
         bswap   ecx
         bswap   ebx
 
-        adc     ecx, 0
-        adc     ebx, 0
+        adc     ecx, BYTE 0
+        adc     ebx, BYTE 0
         dec     dword [work_iterations]
 
         bswap   ecx

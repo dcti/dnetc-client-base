@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2 2002/09/02 00:35:47 andreasb Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.3 2003/09/12 22:29:26 mweiser Exp $"
 
 #ifndef u16
 #include "cputypes.h"
@@ -20,6 +20,11 @@
   #define OGR_INT_SIZE 8
 #else
   #error "What's up Doc?"
+#endif
+
+#if (CLIENT_CPU == CPU_POWERPC) && (defined(__GCC__) || defined(__GNUC__)) && \
+    (defined(__VEC__) || defined(__ALTIVEC__)) && (!defined(__APPLE_CC__))
+  #include <altivec.h>
 #endif
 
 /* ===================================================================== */
@@ -38,9 +43,7 @@
 #define CORE_E_STOPPED  (-4)
 #define CORE_E_STUB     (-5)
 
-#if !defined(MIPSpro) && !defined(__SUNPRO_CC)
-#pragma pack(1)
-#endif
+#include "pack1.h"
 
 /*
  * Dispatch table structure. A pointer to one of these should be returned
@@ -117,11 +120,7 @@ typedef struct {
    */
   int (*cleanup)(void);
 
-} CoreDispatchTable;
-
-#if !defined(MIPSpro) && !defined(__SUNPRO_CC)
-#pragma pack()
-#endif
+} DNETC_PACKED CoreDispatchTable;
 
 /* ===================================================================== */
 
@@ -137,24 +136,18 @@ typedef struct {
 // network and buffer structure operations.
 #define STUB_MAX 10
 
-#ifndef MIPSpro
-#pragma pack(1)
-#endif
-
 struct Stub { /* size is 24 */
   u16 marks;           /* N-mark ruler to which this stub applies */
   u16 length;          /* number of valid elements in the stub[] array */
   u16 diffs[STUB_MAX]; /* first <length> differences in ruler */
-};
+} DNETC_PACKED;
 
 struct WorkStub { /* size is 28 */
   Stub stub;           /* stub we're working on */
   u32 worklength;      /* depth of current state */
-};
+} DNETC_PACKED;
 
-#ifndef MIPSpro
-#pragma pack()
-#endif
+#include "pack0.h"
 
 // Internal stuff that's not part of the interface but we need for
 // declaring the problem work area size.

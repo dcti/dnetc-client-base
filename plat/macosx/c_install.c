@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 2002 - All Rights Reserved
+ * Copyright distributed.net 2002-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -7,14 +7,17 @@
  * a test main() is at the end of this file.
  *
  * int macosx_uninstall(const char *argv0, int quietly);
- * int macosx_install(const char *argv0, int argc, const char *argv[], 
+ * int macosx_install(const char *argv0, int argc, const char *argv[],
  *                      int quietly); // argv[1..(argc-1)] are boot options
  * Both functions return 0 on success, else -1.
  *
  * For more information about Mac OS X StartupItems go to http://www.opensource
  * .apple.com/projects/documentation/howto/html/SystemStarter_HOWTO.html
  *
- * $Id: c_install.c,v 1.2 2002/09/02 00:35:51 andreasb Exp $
+ * But http://developer.apple.com/techpubs/macosx/Essentials/SystemOverview/
+ * BootingLogin/Creating_Cu_artup_Items.html seems to have more recent info.
+ *
+ * $Id: c_install.c,v 1.3 2003/09/12 22:29:27 mweiser Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,6 +28,8 @@
 #include <dirent.h>
 #include <errno.h>
 
+#include "unused.h"     /* DNETC_UNUSED_* */
+
 #define STARTUPITEMS_HOST "/Library/StartupItems"
 #define STARTUPITEMS_DIR (STARTUPITEMS_HOST"/dnetc")
 #define START_SCRIPT_PATH (STARTUPITEMS_HOST"/dnetc/dnetc")
@@ -34,7 +39,7 @@
 extern "C" {
 #endif
 int macosx_uninstall(const char *argv0, int quietly);
-int macosx_install(const char *argv0, int argc, const char *argv[], 
+int macosx_install(const char *argv0, int argc, const char *argv[],
                   int quietly); /* argv[1..(argc-1)] are boot options */
 #ifdef __cplusplus
 }
@@ -77,23 +82,23 @@ static int create_start_script(const char *script_name,
     "# Don't forget to change buffer/.ini file perms if you wish to run suid'd.\n"
     "\n"
     "CLIENT_DIR=\"", basename, basename );
-  p = strrchr(appname,'/');    
-  if (!p) 
+  p = strrchr(appname,'/');
+  if (!p)
     fprintf(file,"./");
   else
   {
     while (appname < p)
       fputc(*appname++, file);
     appname = p+1;
-  }  
-  fprintf(file,"\"\n"  
+  }
+  fprintf(file,"\"\n"
     "CLIENT_FNAME=\"%s\"\n"
     "CLIENT_OPTS=\"", appname );
   n = 0;
   for (i=1;i<argc;i++)
   {
     const char *p = argv[i];
-    if (*p == '-' && p[1] == '-') p++; 
+    if (*p == '-' && p[1] == '-') p++;
     if (strcmp(p,"-quiet")==0 || strcmp(p,"-hide")==0)
       continue;
     if (strcmp(p,"-ini")==0)
@@ -105,9 +110,9 @@ static int create_start_script(const char *script_name,
     }
     if (strchr(argv[i],' ') || strchr(argv[i],'\t'))
       fprintf(file,"%s\'%s\'",(((++n)==1)?(""):(" ")), argv[i]);
-    else  
+    else
       fprintf(file,"%s%s",(((++n)==1)?(""):(" ")), argv[i]);
-  }    
+  }
 //  if (!got_ini_opt)
 //    fprintf(file,"%s-ini '${CLIENT_DIR}/${CLIENT_FNAME}.ini'",(((++n)==1)?(""):(" ")) );
 
@@ -122,10 +127,10 @@ static int create_start_script(const char *script_name,
     "  \"${CLIENT_DIR}/${CLIENT_FNAME}\" -quiet -shutdown\n"
     "  # change directory so we get nicer ps listings.\n"
     "  wd=`pwd`\n"
-    "  chdir \"${CLIENT_DIR}\"\n"
+    "  cd \"${CLIENT_DIR}\"\n"
     "  # now launch the client (with -quiet so it fork()s into the background)\n"
     "  sudo -u ${CLIENT_RUNAS} ./${CLIENT_FNAME} -quiet ${CLIENT_OPTS}\n"
-    "  chdir \"$wd\"\n"
+    "  cd \"$wd\"\n"
     "else\n"
     "  # announce what happened.\n"
     "  ConsoleMessage \"distributed.net client disabled\"\n"
@@ -155,14 +160,9 @@ static int create_startup_params_file(const char *stparams_filename,
   "{\n"
   "  Description     = \"distributed.net client\";\n"
   "  Provides        = (\"dnetc\");\n"
-  "  Requires        = (\"Disks\", \"Resolver\");\n"
-  "  Uses            = (\"NFS\", \"Network Time\");\n"
+  "  Requires        = (\"Disks\", \"NetInfo\", \"Resolver\");\n"
+  "  Uses            = (\"Network\", \"Network Time\");\n"
   "  OrderPreference = \"None\";\n"
-  "  Messages =\n"
-  "  {\n"
-  "    start = \"Starting distributed.net client\";\n"
-  "    stop  = \"Stopping distributed.net client\";\n"
-  "  };\n"
   "}\n" );
 
   my_fchmod(fileno(file),0664); /* -rw-rw-r-- */
@@ -211,7 +211,7 @@ static const char *get_basename(const char *argv0)
 }
 
 
-int macosx_install(const char *argv0, int argc, const char *argv[], 
+int macosx_install(const char *argv0, int argc, const char *argv[],
                   int quietly) /* argv[1..(argc-1)] are boot options */
 {
   int rc = -1;
@@ -252,11 +252,11 @@ int macosx_install(const char *argv0, int argc, const char *argv[],
       fprintf(stderr,"%s:\tUnable to create directory '%s'\n\t%s\n",
                      basename, basepath, strerror(errno) );
     }
-    
+
     if (rc == 0)
     {
       rc = -1;
-      if (create_start_script(START_SCRIPT_PATH, 
+      if (create_start_script(START_SCRIPT_PATH,
                               basename, appname, argc, argv, quietly) == 0)
       {
         int reinstalled = (access(START_PARAM_PATH,0)==0);
@@ -265,20 +265,20 @@ int macosx_install(const char *argv0, int argc, const char *argv[],
           rc = create_startup_params_file(START_PARAM_PATH, basename, quietly);
         if (rc != 0)
           unlink(START_SCRIPT_PATH);
-   
+
         if (rc == 0 &&!quietly)
         {
           fprintf(stderr,
           "%s:\tThe client has been sucessfully %sinstalled\n"
           "\tand will be automatically started on system boot.\n"
-          "\t*** Please ensure that the client is configured ***\n", 
+          "\t*** Please ensure that the client is configured ***\n",
            basename, ((!reinstalled)?(""):("re-")) );
         }
       }
     }
     if (rc != 0 && dir_created)
       rmdir(basepath);
-  }        
+  }
   return rc;
 }
 
@@ -289,7 +289,7 @@ static int get_ftype(const char *fname)
   {
     if (stat(fname, &statblk) != 0)
       return -1;
-  }    
+  }
   if ((statblk.st_mode & S_IFMT) == S_IFLNK)
     return 'l';
   if ((statblk.st_mode & S_IFMT) == S_IFDIR)
@@ -297,12 +297,14 @@ static int get_ftype(const char *fname)
   return 'f';
 }
 
-static int recursive_delete(const char *basename, 
+static int recursive_delete(const char *basename,
                             const char *basepath, int quietly)
 {
   int rc = 0;
   struct dirent *dp;
   DIR *dir;
+
+  DNETC_UNUSED_PARAM(basepath);
 
   dir = opendir(".");
   if (!dir)
@@ -311,7 +313,7 @@ static int recursive_delete(const char *basename,
       fprintf(stderr,
        "%s:\tUnable to list directory entries\n\t%s\n",
             basename, strerror(errno) );
-    rc = -1;    
+    rc = -1;
   }
   else
   {
@@ -325,7 +327,7 @@ static int recursive_delete(const char *basename,
         {
           if (!quietly)
             fprintf(stderr,
-             "%s:\tUnable to stat %s\n\t%s\n", basename, 
+             "%s:\tUnable to stat %s\n\t%s\n", basename,
                   dp->d_name, strerror(errno) );
         }
         else if (typ == 'f' || typ == 'l')
@@ -333,7 +335,7 @@ static int recursive_delete(const char *basename,
           rc = unlink(dp->d_name);
           if (rc != 0 && !quietly)
             fprintf(stderr,
-             "%s:\tUnable to unlink %s\n\t%s\n", basename, 
+             "%s:\tUnable to unlink %s\n\t%s\n", basename,
                   dp->d_name, strerror(errno) );
         }
         else if (typ == 'd')
@@ -341,9 +343,9 @@ static int recursive_delete(const char *basename,
           rc = chdir(dp->d_name);
           if (rc != 0 && !quietly)
              fprintf(stderr,
-             "%s:\tUnable to enumerate %s\n\t%s\n", basename, 
+             "%s:\tUnable to enumerate %s\n\t%s\n", basename,
                   dp->d_name, strerror(errno) );
-          if (rc == 0)        
+          if (rc == 0)
           {
             rc = recursive_delete(basename,dp->d_name,quietly);
           }
@@ -352,7 +354,7 @@ static int recursive_delete(const char *basename,
             rc = chdir("..");
             if (rc != 0 && !quietly)
               fprintf(stderr,
-               "%s:\tUnable to chdir ..\n\t%s\n", basename, 
+               "%s:\tUnable to chdir ..\n\t%s\n", basename,
                     strerror(errno) );
           }
           if (rc == 0)
@@ -360,7 +362,7 @@ static int recursive_delete(const char *basename,
             rc = rmdir(dp->d_name);
             if (rc != 0 && !quietly)
               fprintf(stderr,
-               "%s:\tUnable to rmdir %s\n\t%s\n", basename, 
+               "%s:\tUnable to rmdir %s\n\t%s\n", basename,
                     dp->d_name, strerror(errno) );
           }
         }
@@ -370,10 +372,10 @@ static int recursive_delete(const char *basename,
     } /* while (readdir) */
     closedir(dir);
   }
-  basepath = basepath; /* may be unused */
-  return rc;    
+
+  return rc;
 }
-       
+
 int macosx_uninstall(const char *argv0, int quietly)
 {
   int rc = -1;
@@ -423,14 +425,14 @@ int macosx_uninstall(const char *argv0, int quietly)
     }
   }
   return rc;
-}   
+}
 
 #if 0
 int main(int argc,char *argv[])
 {
   if (argc > 1 && strcmp(argv[1],"-uninstall")==0)
     return macosx_uninstall(argv[0],0);
-  else if (argc == 1)    
+  else if (argc == 1)
     return macosx_install(argv[0], argc, (const char **)argv, 0);
   return 0;
 }

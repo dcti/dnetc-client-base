@@ -1,18 +1,29 @@
 ---------- WARNING ------------
 Backwards-compatibility advisories
 
-* v2.8012.465
-  v2.8012.466
+* v2.9001.477+ (Dec 3, 2002)
+  Client version v2.9001.477 will be the minimum build from which RC5-72
+  results will be accepted. These versions also utilize a new buffer
+  file format that is incompatible with earlier v2.8 clients. If you are
+  upgrading your clients from an earlier version, be sure to first flush
+  your completed buffers and then manually delete those buffers prior
+  to starting the new v2.9 client. The minimum upstream proxyper version
+  supported by v2.9 clients is build 330.
+
+* v2.8012.465 and v2.8012.466
   Due to a bug in these builds, they are no longer available from
   distributed.net and work submitted from clients of these versions will
-  be rejected. Please visit the distributed.net download page to download
-  replacement clients: http://www.distributed.net/download/
+  be rejected.
+
+* v2.8010.461 through v2.8010.463
+  These builds have bugs shutting down when they are configured to
+  only run RC5 and that RC5 project has ended. This causes them to
+  wastefully reconnect to the keyserver very rapidly.
 
 * v2.8009.460+ (July 7, 2000)
   Client version v2.8009.460 will be the minimum build from which OGR
   results will be accepted, even though earlier builds on some platforms
-  included preliminary beta OGR support. Please be sure to verify all of
-  your installed client versions.
+  included preliminary beta OGR support.
 
 * v2.8000+ (Dec 14, 1999)
   All personal proxies for use with client version v2.8000 or later

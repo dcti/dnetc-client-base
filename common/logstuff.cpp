@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -15,7 +15,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.53 2002/09/02 00:35:42 andreasb Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.54 2003/09/12 22:29:25 mweiser Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -887,6 +887,9 @@ int LogGetContestLiveRate(unsigned int contest_i,
 // ---------------------------------------------------------------------------
 
 //#define NO_PERCENTOMATIC_BATON
+#ifndef NO_PERCENTOMATIC_BATON
+static const char batonchars[] = {'|','/','-','\\'};
+#endif
 
 static int __do_crunchometer( int event_disp_format, 
                               unsigned int load_problem_count )
@@ -1165,7 +1168,6 @@ static int __do_crunchometer( int event_disp_format,
     #ifndef NO_PERCENTOMATIC_BATON
     if (endperc < 100 && logstatics.percbaton)
     { /* implies conistty and !gui (window repaints are _expensive_) */
-      static const char batonchars[] = {'|','/','-','\\'};
       if (bufptr == &buffer[0]) /* didn't prepend '\r' */
         *bufptr++ = '\r';       /* so do it now */
       *bufptr++=(char)batonchars[logstatics.perc_callcount%sizeof(batonchars)];

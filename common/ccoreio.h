@@ -1,6 +1,6 @@
 /* Hey, Emacs, this is *not* a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -21,9 +21,22 @@
  *   of the problem object (ie created when the object is new'd) 
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.13 2002/10/08 09:30:11 andreasb Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.14 2003/09/12 22:29:25 mweiser Exp $"
 
 #include "cputypes.h"   /* u32 etc. used here and in the cores */
+
+
+#if (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__ )
+  #define CDECL cdecl
+#elif  (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
+  #define CDECL __regargs
+#elif (CLIENT_OS == OS_WIN16) && defined(__WATCOMC__)
+  #define CDECL __cdecl
+#endif
+#ifndef CDECL
+  #define CDECL /* nothing */
+#endif
+
 
 typedef enum
 {
@@ -32,16 +45,14 @@ typedef enum
   RESULT_FOUND   = 2
 } Resultcode;
 
-#ifndef MIPSpro
-#pragma pack(1)
-#endif
+#include "pack1.h"
 
 typedef struct
 {
   struct {u32 hi,lo;} plain;  /* plaintext (already mixed with iv!) */
   struct {u32 hi,lo;} cypher; /* cyphertext */
   struct {u32 hi,lo;} L0;     /* key, changes with every unit * PIPELINE_COUNT. */
-} RC5UnitWork;
+} DNETC_PACKED RC5UnitWork;
 
 typedef struct
 {
@@ -49,10 +60,8 @@ typedef struct
   struct {u32 hi,lo;} cypher; /* cyphertext */
   struct {u32 hi,mid,lo;} L0; /* key, changes with every unit * PIPELINE_COUNT. */
   struct {u32 count; u32 hi,mid,lo;} check; /* counter-measure check */
-} RC5_72UnitWork;
+} DNETC_PACKED RC5_72UnitWork;
 
-#ifndef MIPSpro
-#pragma pack()
-#endif
+#include "pack0.h"
 
 #endif /* __CCOREIO_H__ */

@@ -1,12 +1,12 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.29 2002/10/09 22:22:15 andreasb Exp $"; }
+return "@(#)$Id: util.cpp,v 1.30 2003/09/12 22:29:26 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -29,7 +29,7 @@ return "@(#)$Id: util.cpp,v 1.29 2002/10/09 22:22:15 andreasb Exp $"; }
 
 static char __trace_tracing_filename[10] = {0};
 void trace_setsrc( const char *filename )
-{ 
+{
   unsigned int i;
   register const char *q = (const char *)0;
   register const char *p = "";
@@ -49,9 +49,9 @@ void trace_setsrc( const char *filename )
         break;
       }
       if (*p == '.')
-        q = p;      
+        q = p;
     }
-  }      
+  }
   strncpy(__trace_tracing_filename,p,sizeof(__trace_tracing_filename));
   i = ((q)?(q-p):(sizeof(__trace_tracing_filename)-1));
   __trace_tracing_filename[i] = '\0';
@@ -60,7 +60,7 @@ void trace_setsrc( const char *filename )
     __trace_tracing_filename[i++] = ' ';
   __trace_tracing_filename[sizeof(__trace_tracing_filename)-1] = '\0';
   return;
-}  
+}
 
 void trace_out( int indlevel, const char *format, ... )
 {
@@ -142,7 +142,7 @@ int utilCheckIfBetaExpired(int print_msg)
       {
         if (last_seen == ((time_t)-1)) //let it through once
           last_seen = 0;
-        else if (last_seen == 0 || tv.tv_sec < last_seen || 
+        else if (last_seen == 0 || tv.tv_sec < last_seen ||
                  (tv.tv_sec - last_seen) > 10*60)
         {
           expirationtime.tv_sec -= now;
@@ -380,7 +380,7 @@ const int* projectmap_build( int* buf, int* state, const char *strtomap )
   static int map[PROJECT_COUNT];
   unsigned int map_pos, i;
   int projectid;
-  
+
   if (default_map_checked == -1)
   {
     int i, p;
@@ -545,7 +545,7 @@ const char *utilSetAppName(const char *newname)
    What is the official distributed.net name for this client?
    Used for argv[0] stuffing, banners, etc, etc.
    Intentionally obscure to thwart attempts to patch the binary.
-   May be called with an override, but that functionality is AFAIK 
+   May be called with an override, but that functionality is AFAIK
    no longer (as of Nov/2000) used.
   */
   static int initialized = -1;
@@ -614,8 +614,8 @@ const char *utilGetAppName(void)
 #endif /* __unix__ */
 
 /*
-    get list of pid's for procname. if pidlist is NULL or maxnumpids is 0, 
-    then return found count, else return number of pids now in list. 
+    get list of pid's for procname. if pidlist is NULL or maxnumpids is 0,
+    then return found count, else return number of pids now in list.
     On error return < 0.
 */
 int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
@@ -736,6 +736,11 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
       }
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    #elif (CLIENT_OS == OS_OS2)
+    {
+      num_found = os2GetPIDList(procname, pidlist, maxnumpids);
+    }
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     {
       if (*procname == '*' || *procname == '#')
@@ -787,15 +792,15 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
             }
           }
         }
-      } /* find by window or window class */ 
+      } /* find by window or window class */
       #if (CLIENT_OS == OS_WIN32)
       else if (winGetVersion() >= 400) /* not win32s please */
       {
-        /* calls to CreateToolhelp32Snapshot(), Process32First() and 
-           Process32Next() go to platforms/win32cli/w32snapp.c which 
-           has stubs into toolhlp32.dll and emulation for toolhelp 
+        /* calls to CreateToolhelp32Snapshot(), Process32First() and
+           Process32Next() go to platforms/win32cli/w32snapp.c which
+           has stubs into toolhlp32.dll and emulation for toolhelp
            when running on NT3/4.
-        */   
+        */
         HANDLE hSnapshot;
 
         hSnapshot = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 );
@@ -803,14 +808,14 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         {
           PROCESSENTRY32 pe;
           pe.dwSize = sizeof(pe);
-      
+
           if (Process32First(hSnapshot, &pe))
           {
             DWORD ourownpid = GetCurrentProcessId();
             unsigned int basenamepos, basenamelen, suffixlen;
 
-            /* Name matching: if any component (path,name,extension) of 
-              the found name or the template is not available, then those 
+            /* Name matching: if any component (path,name,extension) of
+              the found name or the template is not available, then those
               components are treated as lexical wildcards (match anything).
             */
 
@@ -837,7 +842,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                 basenamelen -=4;
               }
             }
-    
+
             do
             {
 //LogScreen("ps: %p => '%s'\n", pe.th32ProcessID, pe.szExeFile);
@@ -855,7 +860,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                   const char *templname = procname;
                   unsigned int len = strlen( foundname );
                   unsigned int fbasenamelen = len;
-      
+
                   while (len > 0)
                   {
                     len--;
@@ -868,49 +873,49 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                       break;
                     }
                   }
-    
+
                   /*if no path is available on one side then skip
                     the path (if it exists) on the other side
                   */
                   if (basenamepos == 0) /* no path in template */
                   {
                     foundname += len; /* then skip dir in foundname */
-                  }  
+                  }
                   else if (len == 0) /*dir in templ, but no dir in foundname */
                   {
                     templname += basenamepos; /* then skip dir in template */
-                  } 
+                  }
                   cmpresult = strcmpi( templname, foundname );
-      
+
                   if ( cmpresult )
                   {
                     /* if either template OR foundname have no suffix, (but
                        not both, which will have been checked above) then
                        allow a match if the basenames (sans-suffix) are equal.
-                    */  
+                    */
                     unsigned int fsuffixlen = 0;
                     if (fbasenamelen > 3)
                     {
-                      /* Don't be tempted to try to optimize away 
+                      /* Don't be tempted to try to optimize away
                          extension checks even when the data is from
-                         performance counters- although it might 
-                         *APPEAR* that pe.szExeFile never has an extension 
+                         performance counters- although it might
+                         *APPEAR* that pe.szExeFile never has an extension
                          (when using performance counters), that is not
                          always so. -cyp
                       */
                       if ( strcmpi( &foundname[fbasenamelen-4], ".exe" ) == 0
                         || strcmpi( &foundname[fbasenamelen-4], ".com" ) == 0 )
-                      { 
+                      {
                         fsuffixlen = 3;
                         fbasenamelen -= 4;
-                      }  
-                    }  
+                      }
+                    }
                     if (suffixlen != fsuffixlen && basenamelen == fbasenamelen)
                     {
                       cmpresult = memicmp( foundname, templname, basenamelen );
                     }
                   }
-                  
+
                   if (cmpresult == 0)
                   {
                     if (pidlist)
@@ -954,7 +959,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
       int need_suffix;
 
       blen = bpos = strlen(procname);
-      while (bpos > 0 && procname[bpos-1]!='/' && 
+      while (bpos > 0 && procname[bpos-1]!='/' &&
              procname[bpos-1]!='\\' && procname[bpos-1]!=':')
         bpos--;
       blen -= bpos;
@@ -967,11 +972,11 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           procname += bpos;
         else if ((blen+5) >= sizeof(namebuf))
           procname = NULL;
-        else 
+        else
           procname = strcat(strcpy(namebuf,&procname[bpos]),".nlm");
       }
       if (procname)
-      {      
+      {
         int nlmHandle = FindNLMHandle( (char *)procname );
         num_found = 0;
         if (nlmHandle)
@@ -1023,20 +1028,22 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #elif defined(__unix__)
     {
-      char *p, *foundname;
-      pid_t thatpid, ourpid = getpid();
+      char *foundname;
+      pid_t ourpid = getpid();
       size_t linelen; char buffer[1024];
       int usefullpathcmp = (strchr( procname, '/' ) != ((char *)0));
+
       #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
           (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
           (CLIENT_OS == OS_PS2LINUX)
       {
         DIR *dirp = opendir("/proc");
-        if (dirp)
-        {
+
+        if (dirp) {
+          pid_t thatpid;
           struct dirent *dp;
-          while ((dp = readdir(dirp)) != ((struct dirent *)0))
-          {
+
+          while ((dp = readdir(dirp)) != ((struct dirent *)0)) {
             FILE *file;
             thatpid = (pid_t)atoi(dp->d_name);
             if (num_found < 0)
@@ -1050,6 +1057,8 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
             fclose( file );
             if (linelen != 0)
             {
+              char *p;
+
               if (linelen == sizeof(buffer))
                 linelen--;
               buffer[linelen] = '\0';
@@ -1100,9 +1109,14 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
             (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_LINUX) || \
             (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOSX) || \
             (CLIENT_OS == OS_PS2LINUX)
-        pscmd = "ps ax|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
+        pscmd = "ps axw|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
         /* fbsd: "ps ax -o pid -o command 2>/dev/null"; */ /* bsd + -o ext */
         /* lnux: "ps ax --format pid,comm 2>/dev/null"; */ /* bsd + gnu -o */
+        #elif (CLIENT_OS == OS_NEXTSTEP)
+        /* NeXTstep porduces spaces in process status columns like
+         * 26513 p1 SW    0:01 -bash (bash)
+         * 26542 p1 R N  32:52 ./dnetc */
+        pscmd = "ps axw|sed \"s/ [RUSITHPD][W >][N< ]//\"|awk '{print$1\" \"$4}' 2>/dev/null";
         #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || \
               (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX)
         pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
@@ -1116,6 +1130,8 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           #else
           pscmd = "ps -A -F\"%p %c\" 2>/dev/null";
           #endif
+        #elif (CLIENT_OS == OS_SCO)
+          pscmd = "/bin/ps -A -o pid,comm 2>/dev/null";
         #else
         #error fixme: select an appropriate ps syntax (or use another method to get pidlist)
         #error "this part is only needed for OSs that do not have another way"
@@ -1150,13 +1166,18 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
               if (linelen < (sizeof(buffer)-1)) /* otherwise line is unusable */
               {
                 char *p;
+
                 buffer[linelen]='\0';
                 foundname = &buffer[0];
+
                 while (*foundname && isspace(*foundname))
                   foundname++;
+
                 p = foundname;
+
                 while (isdigit(*foundname))
                   foundname++;
+
                 if (p == foundname) /* no digits found. can't be pid */
                 {
                   /* both linelen and buffer are about to be reset,
@@ -1165,10 +1186,14 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                 }
                 else /* got a pid */
                 {
+                  pid_t thatpid;
+
                   *foundname++ = '\0';
                   thatpid = (pid_t)atol(p);
+
                   if (num_found < 0)
                     num_found = 0;
+
                   #if (CLIENT_OS == OS_BEOS)
                   if (fullpath[0])
                   {
@@ -1237,12 +1262,167 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         } /* if (file != ((FILE *)NULL)) */
       }
       #endif /* spawn ps */
-      thatpid = thatpid; /* shaddup compiler */
-      p=p;
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #endif /* #if (defined(__unix__)) */
   } /* if (procname) */
 
   return num_found;
+}
+
+/* ------------------------------------------------------------------------ */
+
+static int __utilIsUserIDAValidEmailAddress(const char *userid)
+{
+  const char *c = userid, *domain = NULL;
+  int username_length = 0;
+  int domain_length = 0, domain_has_non_digits = 0, subdomains = 0;
+  int last_was_dash = 0, last_was_dot = 0;
+  int rfc_violation = 0;
+
+  if (!c || !*c)
+    return 0;
+
+  // username part
+  // ToDo: check for '\' escaped characters, if someone complains :)
+  for (; *c; ++c)
+  {
+    if (*c == '@')
+    {
+      break;
+    }
+    if (*c <= 32) // control or space
+      return 0;
+
+    if (*c == '\"' || *c == ',' || *c == '\\' ||
+        *c == '<' || *c == '>' || *c == ';' ||
+        *c == '{' || *c == '}' ||
+        !isprint((unsigned char)*c))
+      {
+        // although some of these characters are allowed by RFC, we
+        // enforce restrictions on these to reduce problems with log
+        // file delimiters and unprintable characters.
+        return 0;
+      }
+
+    // for now, every other char is allowed in the username part
+    ++username_length;
+  }
+
+  if (*c == '@')
+  {
+    domain = ++c;
+    last_was_dot = 1; // the '@' is a separator, too
+    subdomains = 1;
+  }
+
+  // domain part
+  for (; *c; ++c)
+  {
+    if (*c == '.')
+    {
+      if (last_was_dot)
+        return 0;
+      if (last_was_dash)
+        ++rfc_violation;
+      ++subdomains;
+    }
+    else if (*c == '-')
+    {
+      if (last_was_dot)
+        ++rfc_violation;
+      domain_has_non_digits = 1;
+    }
+    else if ('0' <= *c && *c <= '9')
+    {
+      // digits are ok
+    }
+    else if (('a' <= *c && *c <= 'z') || ('A' <= *c && *c <= 'Z'))
+    {
+      // letters too
+      domain_has_non_digits = 1;
+    }
+    else
+    {
+      return 0; // unexpected character
+    }
+
+    ++domain_length;
+    last_was_dot  = (*c == '.');
+    last_was_dash = (*c == '-');
+  }
+  if (last_was_dash || last_was_dot || rfc_violation)
+    return 0;
+
+  if (!domain_has_non_digits)
+  {
+    // use of IP addresses is discouraged
+    if (subdomains != 4)
+      return 0;
+  }
+
+  if (username_length == 0 || domain_length == 0 || subdomains < 2)
+    return 0;
+
+  return 1;
+}
+
+/* XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX where X is a hex digit,
+   may be enclosed in braces */
+static int __utilIsUserIDAValidGUID(const char *userid)
+{
+  int has_braces = 0;
+  int i;
+  const char *c = userid;
+
+  if (!c || !*c)
+    return 0;
+
+  if (*c == '{')
+  {
+    has_braces = 1;
+    ++c;
+  }
+
+  for (i = 0; i < 32 && *c; ++i, ++c)
+  {
+    if (i == 8 || i == 12 || i == 16 || i == 20) // there is a dash before this digit
+    {
+      if (*c++ != '-')
+        return 0; // no dash here ?
+    }
+    if (!*c || !(('0' <= *c && *c <= '9') || ('a' <= *c && *c <= 'f') || ('A' <= *c && *c <= 'F')))
+      return 0; // it's not a hexdigit
+  }
+  if (i != 32)
+    return 0; // found less than 32 digits
+
+  if (has_braces)
+  {
+    if (*c != '}')
+      return 0; // there was an opening brace but no closing one
+    ++c;
+  }
+
+  if (*c) // still more characters?
+    return 0;
+
+  return 1; // all tests passed :)
+}
+
+/* returns 1 = valid, 0 = invalid */
+int utilIsUserIDValid(const char *userid)
+{
+  return __utilIsUserIDAValidEmailAddress(userid) ||
+         __utilIsUserIDAValidGUID(userid);
+}
+
+/* ------------------------------------------------------------------------ */
+
+char * strncpyz(char *dest, const char *src, int n)
+{
+  strncpy(dest, src, n);
+  if (dest && n>0)
+    dest[n - 1] = '\0';
+  return dest;
 }

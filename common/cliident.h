@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CLIIDENT_H__
-#define __CLIIDENT_H__ "@(#)$Id: cliident.h,v 1.10 2002/09/02 01:15:45 andreasb Exp $"
+#define __CLIIDENT_H__ "@(#)$Id: cliident.h,v 1.11 2003/09/12 22:29:25 mweiser Exp $"
 
 extern void CliIdentifyModules(void);
 extern time_t CliGetNewestModuleTime(void);

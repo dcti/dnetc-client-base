@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -24,26 +24,15 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.21 2002/09/02 00:35:43 andreasb Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.22 2003/09/12 22:29:26 mweiser Exp $"; }
 
-#include <stdio.h>
-#include <string.h>
-#include "cputypes.h"
+// #define TRACE
+
+#include "baseincs.h"
 #include "pathwork.h"
+#include "util.h"      /* trace, DNETC_UNUSED_* */
 
-#if (CLIENT_OS == OS_DOS) ||  ( (CLIENT_OS == OS_OS2) && !defined(__EMX__) )
-  #include <dos.h>  //drive functions
-  #include <ctype.h> //toupper
-  #if defined(__WATCOMC__)
-    #include <direct.h> //getcwd
-  #elif defined(__TURBOC__)
-    #include <dir.h>
-  #endif
-#elif (CLIENT_OS == OS_RISCOS)
-  #include <sys/swis.h>
-  #include <kernel.h>
-#elif defined(__unix__)
-  #include <unistd.h>    /* geteuid() */
+#if defined(__unix__)
   #include <pwd.h>       /* getpwnam(), getpwuid(), struct passwd */
   #define HAVE_UNIX_TILDE_EXPANSION
 #endif
@@ -98,7 +87,8 @@ unsigned int GetFilenameBaseOffset( const char *fullpath )
 
 static const char *__finalize_fixup(char *path, unsigned int maxlen)
 {
-  maxlen = maxlen;  /* shaddup compiler */
+  DNETC_UNUSED_PARAM(maxlen);
+
 #if defined(HAVE_UNIX_TILDE_EXPANSION)
   if (*path == '~')
   {
@@ -106,18 +96,18 @@ static const char *__finalize_fixup(char *path, unsigned int maxlen)
     unsigned int usernamelen = 0;
     const char *homedir = (const char *)0;
     char *rempath = &path[1];
-    while (*rempath && *rempath != '/' && 
+    while (*rempath && *rempath != '/' &&
            usernamelen < (sizeof(username)-1))
     {
       username[usernamelen++] = *rempath++;
-    } 
+    }
     if (usernamelen < (sizeof(username)-1))
     {
       struct passwd *pw = (struct passwd *)0;
       username[usernamelen] = '\0';
       if (usernamelen == 0)
         pw = getpwuid(geteuid());
-      else 
+      else
         pw = getpwnam(username);
       if (pw)
         homedir = pw->pw_dir;
@@ -128,15 +118,15 @@ static const char *__finalize_fixup(char *path, unsigned int maxlen)
       unsigned int remlen = strlen(rempath);
       if (*rempath == '/' && dirlen > 0 && homedir[dirlen-1] == '/')
       {
-        rempath++; 
-        remlen--;  
-      }  
+        rempath++;
+        remlen--;
+      }
       if ((remlen+1+dirlen+1) < maxlen)
       {
         memmove( &path[dirlen], rempath, remlen+1 );
         memcpy( &path[0], homedir, dirlen);
       }
-    }   
+    }
   }
 #endif
   return path;
@@ -153,6 +143,8 @@ static int __cwd_buffer_len = -1; /* not initialized */
 
 int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppath )
 {
+  TRACE_OUT((0,"ini: %s app: %s \n",inipath,apppath));
+
   if ( inipath == NULL ) inipath = "";
   if ( apppath == NULL ) apppath = "";
 
@@ -202,7 +194,7 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
     if (slash != NULL) *(slash+1) = 0;
     else __cwd_buffer[0] = 0;
   }
-  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || ( (CLIENT_OS == OS_OS2) && defined(__EMX__) )
   {
     strcpy( __cwd_buffer, inipath );
     char *slash = strrchr(__cwd_buffer, '/');
@@ -291,7 +283,7 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
     regs.r[4]=NULL;
     regs.r[5]=sizeof __cwd_buffer;
     _kernel_swi(OS_FSControl, &regs, &regs);
- 
+
     char *slash = strrchr( __cwd_buffer, '.' );
     if ( slash != NULL )
       *(slash+1) = 0;
@@ -329,6 +321,7 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
   #endif
   __cwd_buffer_len = strlen( __cwd_buffer );
 
+  TRACE_OUT((0,"GetFullPathForFilename: Working directory is \"%s\"\n", __cwd_buffer));
   #ifdef DEBUG_PATHWORK
   printf( "Working directory is \"%s\"\n", __cwd_buffer );
   #endif
@@ -345,11 +338,11 @@ static int __is_filename_absolute(const char *fname)
   return (*fname == '.');
   #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
       (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
-  return (*fname == '\\' || *fname == '/' || (*fname && fname[1]==':'));       
+  return (*fname == '\\' || *fname == '/' || (*fname && fname[1]==':'));
   #elif (CLIENT_OS == OS_NETWARE)
-  return (*fname == '\\' || *fname == '/' || (strchr(fname,':')));       
+  return (*fname == '\\' || *fname == '/' || (strchr(fname,':')));
   #elif (CLIENT_OS == OS_AMIGAOS)
-  return (strchr(fname,':') != NULL);       
+  return (strchr(fname,':') != NULL);
   #else
   return (*fname == '/');
   #endif
@@ -388,14 +381,14 @@ static char __path_buffer[MAX_FULLPATH_BUFFER_LENGTH+2];
 ** otherwise returns <X> + <fname>
 **   where <X> is "" if <fname> is not just a plain basename (has a dir spec)
 **   where <X> is __cwd_buffer + <dirsep> if <fname> is just a plain basename
-*/   
+*/
 const char *GetFullPathForFilename( const char *filename )
 {
   const char *outpath;
 
   if ( filename == NULL )
     outpath = "";
-  else if (filename >= &__path_buffer[0] && 
+  else if (filename >= &__path_buffer[0] &&
            filename <= &__path_buffer[sizeof(__path_buffer)-1])
     outpath = filename; /* consider already parsed */
   else if (*filename == '\0' || __is_filename_absolute(filename))
@@ -411,6 +404,7 @@ const char *GetFullPathForFilename( const char *filename )
   else
     outpath = __finalize_fixup(strcat(__path_buffer, filename),sizeof(__path_buffer));
 
+  TRACE_OUT((0,"GetFullPathForFilename: got \"%s\" returning \"%s\"\n", filename, outpath));
   #ifdef DEBUG_PATHWORK
   printf( "got \"%s\" returning \"%s\"\n", filename, outpath );
   #endif
@@ -423,10 +417,10 @@ const char *GetFullPathForFilename( const char *filename )
 /* GetFullPathForFilenameAndDir( const char *fname, const char *dir )
 ** returns <fname> if <fname> is absolute
 ** otherwise returns <dir> + <dirsep> + <fname>
-**      if <dir> is NULL, use __cwd_buffer as <dir>; 
+**      if <dir> is NULL, use __cwd_buffer as <dir>;
 **      if <dir> is "", use ""
 **      if <fname> is NULL, use "" as <fname>
-*/   
+*/
 const char *GetFullPathForFilenameAndDir( const char *fname, const char *dir )
 {
   if (!fname)
@@ -455,5 +449,5 @@ const char *GetFullPathForFilenameAndDir( const char *fname, const char *dir )
   }
   strcat( __path_buffer, fname );
   return __finalize_fixup(__path_buffer, sizeof(__path_buffer));
-}  
+}
 

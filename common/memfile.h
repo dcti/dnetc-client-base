@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
 **
-** Copyright distributed.net 1998-2002 - All Rights Reserved
+** Copyright distributed.net 1998-2003 - All Rights Reserved
 ** For use in distributed.net projects only.
 ** Any other distribution or use of this source violates copyright.
 **
@@ -17,7 +17,7 @@
 **
 */
 #ifndef __MEMFILE_H__
-#define __MEMFILE_H__ "@(#)$Id: memfile.h,v 1.3 2002/09/02 00:35:42 andreasb Exp $"
+#define __MEMFILE_H__ "@(#)$Id: memfile.h,v 1.4 2003/09/12 22:29:25 mweiser Exp $"
 
 #include <stdio.h>   /* required for the size_t typedef */
 

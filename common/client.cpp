@@ -1,10 +1,10 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251 2002/10/09 22:22:14 andreasb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.252 2003/09/12 22:29:25 mweiser Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -139,12 +139,39 @@ static const char *GetBuildOrEnvDescription(void)
 		       sizeof(ut.release)+1];
     return strcat(strcat(strcat(strcpy(buffer,ut.sysname)," "),
 			 ut.version),ut.release);;
+    #elif (CLIENT_OS == OS_NEXTSTEP)
+    kernel_version_t v;
+    static char buf[sizeof(ut.nodename)+ sizeof(ut.sysname) + sizeof(ut.version) +
+                    sizeof(ut.release) + sizeof(ut.machine) +sizeof(v) + 6];
+
+    strcpy(buf, ut.sysname);
+    strcat(buf, " ");
+    strcat(buf, ut.version);
+    strcat(buf, ".");
+    strcat(buf, ut.release);
+    strcat(buf, " ");
+    strcat(buf, ut.machine);
+    strcat(buf, "\n\t");
+
+    if (host_kernel_version(host_self(), v) != KERN_SUCCESS)
+      return "version inquiry failed";
+
+    if (v[strlen(v) - 1] == '\n')
+      v[strlen(v) - 1] = '\0';
+
+    if (strstr(v, "; root"))
+      *strstr(v, "; root") = '\0';
+
+    strcat(buf, v);
+    return buf;
     #else
     static char buffer[sizeof(ut.sysname)+1+sizeof(ut.release)+1];
     return strcat(strcat(strcpy(buffer,ut.sysname)," "),ut.release);
     #endif
   }
   return "";
+#elif (CLIENT_OS == OS_RISCOS)
+  return riscos_version();
 #else
   return "";
 #endif
@@ -164,7 +191,8 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
     if (level == 0)
     {
       LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME " "
-                    "Copyright 1997-2002, distributed.net\n");
+                    "Copyright 1997-2003, distributed.net\n");
+#if defined HAVE_RC5_64_CORES
       #if (CLIENT_CPU == CPU_68K)
       LogScreenRaw( "RC5 68K assembly by John Girvin\n");
       #endif
@@ -181,7 +209,37 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
       LogScreenRaw( "RISCOS/PC Card support by Dominic Plunkett\n");
       #endif
       #endif
-      #if defined(HAVE_DES_CORES)
+#endif
+#if defined HAVE_RC5_72_CORES
+      #if (CLIENT_CPU == CPU_ARM)
+        #if defined HAVE_OGR_CORES
+        LogScreenRaw( "RC5-72 and OGR ARM assembly by Peter Teichmann\n");
+        #else
+        LogScreenRaw( "RC5-72 ARM assembly by Peter Teichmann\n");
+        #endif
+      #endif
+      #if (CLIENT_CPU == CPU_68K)
+      LogScreenRaw( "RC5-72 68K assembly by Malcolm Howell and John Girvin\n");
+      #endif
+      #if (CLIENT_CPU == CPU_POWERPC)
+      LogScreenRaw( "RC5-72 PowerPC assembly by Malcolm Howell and Didier Levet\n"
+                    "Enhancements for 604e CPUs by Roberto Ragusa\n");
+        #if defined(__VEC__) || defined(__ALTIVEC__)
+        LogScreenRaw( "RC5-72 Altivec assembly by Didier Levet\n");
+        #endif
+      #endif
+      #if (CLIENT_CPU == CPU_SPARC)
+      LogScreenRaw( "RC5-72 SPARC assembly by Didier Levet and Andreas Beckmann\n");
+      #endif
+#endif
+#if defined HAVE_OGR_CORES
+      #if (CLIENT_CPU == CPU_ARM)
+        #if !defined HAVE_RC5_72_CORES
+        LogScreenRaw( "OGR ARM assembly by Peter Teichmann\n");
+        #endif
+      #endif
+#endif
+#if defined(HAVE_DES_CORES)
       #if defined(KWAN) && defined(MEGGS)
       LogScreenRaw( "DES bitslice driver Copyright 1997-1998, Andrew Meggs\n"
                     "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
@@ -194,7 +252,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
       #if (CLIENT_CPU == CPU_X86)
       LogScreenRaw( "DES search routines Copyright 1997-1998, Svend Olaf Mikkelsen\n");
       #endif
-      #endif
+#endif
       #if (CLIENT_OS == OS_DOS)
       LogScreenRaw( "PMODE DOS extender Copyright 1994-1998, Charles Scheffold and Thomas Pytel\n");
       #endif
@@ -217,7 +275,8 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
                     "when submitting bug reports.\n");
       LogScreenRaw( "The distributed.net bug report pages are at "
                     "http://www.distributed.net/bugs/\n");
-      if (dnet_id[0] != '\0' && strcmp(dnet_id,"rc5@distributed.net") !=0 )
+      if (dnet_id[0] != '\0' && strcmp(dnet_id,"rc5@distributed.net") !=0 &&
+          utilIsUserIDValid(dnet_id) )
         LogTo( logto, "Using email address (distributed.net ID) \'%s\'\n",dnet_id);
       else if (level == 2)
         LogTo( logto, "\n* =========================================================================="
@@ -258,6 +317,21 @@ static int ClientMain( int argc, char *argv[] )
   int restart = 0;
 
   TRACE_OUT((+1,"Client.Main()\n"));
+
+  {
+    // sanity check for forgetful people :)
+    char buf[32];
+    const char *ver = CliGetFullVersionDescriptor();
+    while (*ver && !isdigit(*ver))
+      ++ver;
+    sprintf(buf, "%d.%d%02d-%d-", CLIENT_MAJOR_VER, CLIENT_CONTEST,
+                                 CLIENT_BUILD, CLIENT_BUILD_FRAC);
+    if (strncmp(buf, ver, strlen(buf)) != 0)
+    {
+      ConOutErr( "Version mismatch." );
+      return -1;
+    }
+  }
 
   if (InitializeTimers()!=0)
   {
@@ -464,6 +538,8 @@ int main( int argc, char *argv[] )
     pstat(PSTAT_SETCMD,pst,strlen(defname),0,0);
   }
   #elif (CLIENT_OS == OS_SCO)                        //SPT_TYPE == SPT_SCO
+  #include <sys/user.h>                      // PSARGSZ
+  #include <sys/immu.h>                      // UVUBLK
   if (needchange)
   {
     #ifndef _PATH_KMEM /* should have been defined in <paths.h> */
@@ -508,7 +584,8 @@ int main( int argc, char *argv[] )
   */
   #if (CLIENT_OS != OS_FREEBSD) && (CLIENT_OS != OS_NETBSD) && \
       (CLIENT_OS != OS_BSDOS) && (CLIENT_OS != OS_OPENBSD) && \
-      (CLIENT_OS != OS_DGUX) && (CLIENT_OS != OS_DYNIX)
+      (CLIENT_OS != OS_DGUX) && (CLIENT_OS != OS_DYNIX) && \
+      (CLIENT_OS != OS_NEXTSTEP)
   /* ... all the SPT_REUSEARGV types */
   if (needchange && strlen(argv[0]) >= strlen(defname))
   {
@@ -592,6 +669,8 @@ int main( int argc, char *argv[] )
 
 #if (CLIENT_OS == OS_QNX) && !defined(__QNXNTO__)
     if ( execvp( p, (char const * const *)&argv[0] ) == -1)
+#elif (CLIENT_OS == OS_NEXTSTEP)
+    if ( execvp( p, (const char **)&argv[0] ) == -1)
 #else
     if ( execvp( p, &argv[0] ) == -1)
 #endif

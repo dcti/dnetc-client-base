@@ -1,10 +1,10 @@
 /* 
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.56 2002/10/17 15:17:47 andreasb Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.57 2003/09/12 22:29:25 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -48,7 +48,7 @@ unsigned long BenchGetBestRate(unsigned int contestid)
       TBenchmark(contestid, 2, 
                  TBENCHMARK_CALIBRATION|TBENCHMARK_QUIET|TBENCHMARK_IGNBRK);
     }
-    TRACE_OUT((-1, "BenchGetBestRate(%d) => %d\n", contestid, bestrate_tab[contestid]));
+    TRACE_OUT((-1, "BenchGetBestRate(%d) => %ld\n", contestid, bestrate_tab[contestid]));
     return bestrate_tab[contestid];
   }
   TRACE_OUT((-1, "BenchGetBestRate(%d) => 0\n", contestid));
@@ -345,6 +345,6 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     ProblemFree(thisprob);
   }
 
-  TRACE_OUT((-1,"TBenchmark()=%d\n", retvalue));
+  TRACE_OUT((-1,"TBenchmark()=%ld\n", retvalue));
   return retvalue;
 }  

@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.16 2002/10/28 16:40:22 rick Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.17 2003/09/12 22:29:26 mweiser Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
@@ -14,9 +14,22 @@
 #endif
 
 
+
+/* ---------------------------------------------------------------------- */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// Definitions of core prototypes for each project.
+typedef s32 gen_func( RC5UnitWork *, u32 *, void * );
+typedef u32 CDECL rc5_func( RC5UnitWork *, u32 );
+typedef u32 des_func( RC5UnitWork *, u32 *, char * );
+#if defined(HAVE_OGR_CORES)
+typedef CoreDispatchTable *ogr_func;
+#endif
+typedef s32 CDECL gen_72_func( RC5_72UnitWork *, u32 *, void * );
+
 
 typedef union
 {
@@ -24,13 +37,7 @@ typedef union
   s32 (*gen)( RC5UnitWork *, u32 *iterations, void *memblk );
 
   /* old style: RC5-64, DES */
-  #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
-  u32 __regargs (*rc5)( RC5UnitWork *, u32 iterations );
-  #elif (CLIENT_OS == OS_QNX ) && !defined( __QNXNTO__ )
-  u32 cdecl (*rc5)( RC5UnitWork *, u32 iterations );
-  #else
-  u32 (*rc5)( RC5UnitWork *, u32 iterations );
-  #endif
+  u32 CDECL (*rc5)( RC5UnitWork *, u32 iterations );
   #if defined(HAVE_DES_CORES)
   u32 (*des)( RC5UnitWork *, u32 *iterations, char *membuf );
   #endif
@@ -41,11 +48,8 @@ typedef union
   #endif
 
   /* generic prototype: RC5-72 */
-  #if (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__)
-  s32 cdecl (*gen_72)( RC5_72UnitWork *, u32 *iterations, void *memblk );
-  #else
-  s32 (*gen_72)( RC5_72UnitWork *, u32 *iterations, void *memblk );
-  #endif
+  s32 CDECL (*gen_72)( RC5_72UnitWork *, u32 *iterations, void *memblk );
+
   #if 0
   PROJECT_NOT_HANDLED("in unit_func_union");
   #endif
@@ -65,6 +69,8 @@ struct selcore
   unit_func_union unit_func;
 };
 
+
+
 /* ---------------------------------------------------------------------- */
 
 /* Set the xx_unit_func vectors/cputype/coresel in the problem. */
@@ -75,8 +81,10 @@ int selcoreSelectCore( unsigned int cont_id, unsigned int thrindex,
 /* Get the core # for a contest. Informational use only. */
 int selcoreGetSelectedCoreForContest( unsigned int contestid );
 const char *selcoreGetDisplayName( unsigned int cont_i, int index );
+const char **corenames_for_contest( unsigned int cont_i );
+unsigned int corecount_for_contest( unsigned int cont_i );
 
-/* conf calles these */
+/* conf calls these */
 int selcoreValidateCoreIndex( unsigned int cont_i, int index );
 void selcoreEnumerate( int (*enumcoresproc)(unsigned int cont, 
                               const char *corename, int idx, void *udata ),
@@ -92,5 +100,89 @@ long selcoreSelfTest( unsigned int cont_i, int corenum );
 /* ClientMain() calls these */
 int InitializeCoreTable( int *coretypes );
 int DeinitializeCoreTable( void );
+
+/* ---------------------------------------------------------------------- */
+
+/* The following are all for internal use by selcore.cpp functions,
+ * but are the basic functions defined by each of the project core
+ * files.  All of these functions are available generically through
+ * via one of the functions above that take a projectid as an
+ * argument.
+ */
+
+#ifdef HAVE_RC5_64_CORES
+int InitializeCoreTable_rc564(int first_time);
+
+void DeinitializeCoreTable_rc564();
+
+const char **corenames_for_contest_rc564();
+
+int apply_selcore_substitution_rules_rc564(int cindex);
+
+int selcoreGetPreselectedCoreForProject_rc564();
+
+int selcoreSelectCore_rc564( unsigned int threadindex,
+                             int *client_cpuP, struct selcore *selinfo );
+#endif
+#ifdef HAVE_RC5_72_CORES
+int InitializeCoreTable_rc572(int first_time);
+
+void DeinitializeCoreTable_rc572();
+
+const char **corenames_for_contest_rc572();
+
+int apply_selcore_substitution_rules_rc572(int cindex);
+
+int selcoreGetPreselectedCoreForProject_rc572();
+
+int selcoreSelectCore_rc572( unsigned int threadindex,
+                             int *client_cpuP, struct selcore *selinfo );
+#endif
+#ifdef HAVE_CSC_CORES
+int InitializeCoreTable_csc(int first_time);
+
+void DeinitializeCoreTable_csc();
+
+const char **corenames_for_contest_csc();
+
+int apply_selcore_substitution_rules_csc(int cindex);
+
+int selcoreGetPreselectedCoreForProject_csc();
+
+int selcoreSelectCore_csc( unsigned int threadindex,
+                           int *client_cpuP, struct selcore *selinfo );
+#endif
+#ifdef HAVE_DES_CORES
+int InitializeCoreTable_des(int first_time);
+
+void DeinitializeCoreTable_des();
+
+const char **corenames_for_contest_des();
+
+int apply_selcore_substitution_rules_des(int cindex);
+
+int selcoreGetPreselectedCoreForProject_des();
+
+int selcoreSelectCore_des(unsigned int threadindex,
+                          int *client_cpuP, struct selcore *selinfo );
+#endif
+#ifdef HAVE_OGR_CORES
+int InitializeCoreTable_ogr(int first_time);
+
+void DeinitializeCoreTable_ogr();
+
+const char **corenames_for_contest_ogr();
+
+int apply_selcore_substitution_rules_ogr(int cindex);
+
+int selcoreGetPreselectedCoreForProject_ogr();
+
+int selcoreSelectCore_ogr( unsigned int threadindex,
+                           int *client_cpuP, struct selcore *selinfo );
+#endif
+
+
+
+/* ---------------------------------------------------------------------- */
 
 #endif /* __SELCORE_H__ */

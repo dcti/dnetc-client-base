@@ -1,11 +1,11 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * By Kevin Bracey <kbracey@acorn.com> and Chris Berry <cberry@acorn.com>
  *
- * $Id: riscos_sup.h,v 1.2 2002/09/02 00:35:53 andreasb Exp $
+ * $Id: riscos_sup.h,v 1.3 2003/09/12 22:29:27 mweiser Exp $
 */
 #ifndef __RISCOS_SUP_H__
 #define __RISCOS_SUP_H__
@@ -27,10 +27,11 @@ void riscos_backspace(void);
 static const char *riscos_get_local_directory(const char *appname);
 const char *riscos_localise_filename(const char *filename);
 int riscos_find_local_directory(const char *progname);
+char *riscos_version(void);
 
-unsigned int sleep(unsigned int s); /* unistd replacement */
-void usleep(unsigned int us);  /* unistd replacement */
-void sched_yield(void); /* if (riscos_check_taskwindow()) riscos_upcall_6(); */
+//unsigned int sleep(unsigned int s); /* unistd replacement */
+//void usleep(unsigned int us);  /* unistd replacement */
+//void sched_yield(void); /* if (riscos_check_taskwindow()) riscos_upcall_6(); */
 
 #ifdef __cplusplus
 }

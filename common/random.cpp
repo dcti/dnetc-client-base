@@ -1,4 +1,4 @@
-// Copyright distributed.net 1997-2002 - All Rights Reserved
+// Copyright distributed.net 1997-2003 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
@@ -14,7 +14,7 @@
 // -----------------------------------------------------------------
 
 const char *random_cpp(void) {
-return "@(#)$Id: random.cpp,v 1.5 2002/09/02 00:35:43 andreasb Exp $"; }
+return "@(#)$Id: random.cpp,v 1.6 2003/09/12 22:29:26 mweiser Exp $"; }
 
 #include "cputypes.h" /* u32 */
 #include <time.h>     /* time() */

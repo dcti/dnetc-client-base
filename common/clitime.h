@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,7 +10,7 @@
  * ----------------------------------------------------------------------
 */ 
 #ifndef __CLITIME_H__
-#define __CLITIME_H__ "@(#)$Id: clitime.h,v 1.27 2002/12/21 00:40:27 andreasb Exp $"
+#define __CLITIME_H__ "@(#)$Id: clitime.h,v 1.28 2003/09/12 22:29:25 mweiser Exp $"
 
 #include "baseincs.h" /* struct timeval */
 

@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# Copyright distributed.net 1998-2002 - All Rights Reserved
+# Copyright distributed.net 1998-2003 - All Rights Reserved
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.290 2003/03/05 03:36:32 andreasb Exp $
+# @(#)$Id: configure,v 1.291 2003/09/12 22:29:25 mweiser Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -114,7 +114,8 @@ add_sources() # $1=os, $2=arch, $3=custom
   # so that speed sensitive stuff can remain together at the 'bottom'
   if [ "$1" = "freebsd" -o "$1" = "netbsd" -o "$1" = "openbsd" \
     -o "$1" = "bsdos"   -o "$1" = "os2"    -o "$1" = "amigaos" \
-    -o "$1-$3" = "macosx-" -o "$1-$3" = "linux-" ]; then
+    -o "$1-$3" = "macosx-" -o "$1-$3" = "linux-" \
+    -o "$1" = "digital-unix" ]; then
     COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DLURK"
   fi
@@ -135,7 +136,7 @@ add_sources() # $1=os, $2=arch, $3=custom
                  ${COMMON_SRCS}"
   elif [ "$1" = "linux" ]; then
     COMMON_SRCS="plat/linux/li_inst.c ${COMMON_SRCS}"
-    if [ "$2" = "x86" ]; then #maybe others as well
+    if [ "$2" = "x86" -o "$2" = "ppc" ]; then #maybe others as well
       #COMMON_SRCS="plat/linux/li_kthread.c ${COMMON_SRCS}"
       #(obsolete) TARGET_CCFLAGS="$TARGET_CCFLAGS -DUNIVERSALRESOLVER"
       COMMON_SRCS="plat/linux/resolv.c ${COMMON_SRCS}"
@@ -149,10 +150,18 @@ add_sources() # $1=os, $2=arch, $3=custom
     else
       TARGET_ADDASMS="$TARGET_ADDASMS plat/riscos/riscos_asm.s"
     fi
+  elif [ "$1" = "next" ]; then
+    COMMON_SRCS="plat/next/next_sup.cpp \
+                 ${COMMON_SRCS}"
   elif [ "$1" = "os2" ]; then
     COMMON_SRCS="plat/os2/os2inst.cpp ${COMMON_SRCS}"
   elif [ "$1" = "macosx" ]; then
-    COMMON_SRCS="plat/macosx/c_install.c ${COMMON_SRCS}"
+    COMMON_SRCS="plat/macosx/c_install.c \
+                 plat/macosx/temperature.c \
+                 ${COMMON_SRCS}"
+  elif [ "$1" = "digital-unix" ]; then
+    COMMON_SRCS="plat/dunix/temperature.c \
+                 ${COMMON_SRCS}"
   fi
 
   # -------------------------------------------------------------------
@@ -164,9 +173,9 @@ add_sources() # $1=os, $2=arch, $3=custom
   # only generic/ansi cores are declared here. 
   # arch specific ones are declared in each arch specific section.
   #-- RC5-64 -- (needs -DHAVE_RC5_64_CORES) ----------------------
-  RC5_ANSI4_SRCS="rc5/ansi/rc5ansi_4-rg.cpp" # 4 pipeline
-  RC5_ANSI2_SRCS="rc5/ansi/rc5ansi_2-rg.cpp" # 2 pipeline
-  RC5_ANSI1_SRCS="rc5/ansi/rc5ansi_1-rg.cpp" # 1 pipeline
+  RC5_64_ANSI4_SRCS="rc5/ansi/rc5ansi_4-rg.cpp" # 4 pipeline
+  RC5_64_ANSI2_SRCS="rc5/ansi/rc5ansi_2-rg.cpp" # 2 pipeline
+  RC5_64_ANSI1_SRCS="rc5/ansi/rc5ansi_1-rg.cpp" # 1 pipeline
   #-- RC5-72 -- (needs -DHAVE_RC5_72_CORES) ----------------------
   RC5_72_ANSI1_SRCS="rc5-72/ansi/r72ansi1.cpp" # 1 pipeline
   RC5_72_ANSI2_SRCS="rc5-72/ansi/r72ansi2.cpp" # 2 pipeline
@@ -228,14 +237,14 @@ add_sources() # $1=os, $2=arch, $3=custom
     if [ "$HAVE_RC5_72" = "1" ]; then
       if [ "X$TARGET_NASM" != "X" -a "X$TARGET_NASM_FMT" != "X" ]; then
         # -- nasm/rc5 --
-        #DEFAULT_RC5_72="0"     # allow the ANSI C cores still
-        TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_RC5_72_ASM_CORES"
+        DEFAULT_RC5_72="0"     # don't add the ansi cores
         TARGET_ADDNASMS="$TARGET_ADDNASMS \
                          rc5-72/x86/r72-ses1.asm \
                          rc5-72/x86/r72-ses2.asm \
                          rc5-72/x86/r72-dg2.asm \
                          rc5-72/x86/r72-dg3.asm \
-                         rc5-72/x86/r72-dg3a.asm"
+                         rc5-72/x86/r72-dg3a.asm \
+                         rc5-72/x86/r72-ss2.asm"
       fi
     fi # HAVE_RC5_72
 
@@ -294,7 +303,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
     fi # HAVE_CSC
   #-----------------------------------------------------------------
-  elif [ "$2" = "sparc" ]; then
+  elif [ "$2" = "sparc" -o "$2" = "sparc64" ]; then
     if [ "$HAVE_RC5_64" = "1" ]; then
       if [ "$1" = "solaris" -o "$1" = "sunos" -o "$1" = "linux" ]; then
         # DEFAULT_RC5_64="1" # just an addition to the default ansi core
@@ -306,6 +315,13 @@ add_sources() # $1=os, $2=arch, $3=custom
         fi
       fi
     fi # HAVE_RC5_64
+
+    if [ "$HAVE_RC5_72" = "1" ]; then
+      # DEFAULT_RC5_72="1" # just an addition to the default ansi cores
+      TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/sparc/r72-kks2.s \
+                      rc5-72/sparc/r72-anbe1.s rc5-72/sparc/r72-anbe2.s"
+    fi # HAVE_RC5_72
+
     if [ "$HAVE_DES" = "1" ]; then
       DEFAULT_DES="0"
       if [ "X$3" = "Xultra" ]; then
@@ -338,15 +354,18 @@ add_sources() # $1=os, $2=arch, $3=custom
     if [ "$HAVE_RC5_64" = "1" ]; then
       DEFAULT_RC5_64="0"
       if [ "$TARGET_CC" = "CC" -o "$1" = "netbsd" ]; then # mips-crunch doesn't compile with IRIX CC
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_64_ANSI2_SRCS"
       elif [ "$3" = "ps2" ]; then      #For PS2 Linux [jt(jt@distributed.net)]
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_64_ANSI2_SRCS"
         TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/mips/mips-crunch.cpp"
       else                             # gcc targets. mips-crunch.cpp is faster
                                        # except for NetBSD, ansi is 2% faster
         TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/mips/mips-crunch.cpp"
       fi
     fi # HAVE_RC5_64
+    if [ "$HAVE_RC5_72" = "1" ]; then
+      TARGET_ADDSRCS="$TARGET_ADDSRCS rc5-72/mips/r72mips2.cpp"
+    fi # HAVE_RC5_72
   #-----------------------------------------------------------------
   elif [ "$2" = "hppa" ]; then
     if [ "$HAVE_RC5_64" = "1" ]; then
@@ -366,6 +385,8 @@ add_sources() # $1=os, $2=arch, $3=custom
                                         rc5/68k/rc5-020_030-jg.s \
                                         rc5/68k/rc5-060-re-jg.s \
                                         rc5/68k/rc5-0x0-common-jg.s"
+      elif [ "$1" = "next" ]; then
+        TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/ansi/rc5ansi1-b2.cpp"
       else
         TARGET_ADDASMS="$TARGET_ADDASMS rc5/68k/rc5-000_010-re-jg.gcc.s \
                                         rc5/68k/rc5-020_030-jg.gcc.s \
@@ -374,6 +395,27 @@ add_sources() # $1=os, $2=arch, $3=custom
         TARGET_ASFLAGS="$TARGET_ASFLAGS -I./rc5/68k"
       fi
     fi # HAVE_RC5_64
+    if [ "$HAVE_RC5_72" = "1" ]; then
+      DEFAULT_RC5_72="0"
+      if [ "$1" = "amigaos" ]; then
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/68k/r72-030-mh.s \
+                                        rc5-72/68k/r72-040-mh.s \
+                                        rc5-72/68k/r72-060-mh.s \
+                                        rc5-72/68k/r72-0x0-common-mh.s"
+      elif [ "$1" = "next" ]; then
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/68k/r72-030-mh.ns.s \
+                                        rc5-72/68k/r72-040-mh.ns.s \
+                                        rc5-72/68k/r72-060-mh.ns.s \
+                                        rc5-72/68k/r72-0x0-common-mh.ns.s"
+        TARGET_ASFLAGS="$TARGET_ASFLAGS -Irc5-72/68k"
+      else
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/68k/r72-030-mh.gas.s \
+                                        rc5-72/68k/r72-040-mh.gas.s \
+                                        rc5-72/68k/r72-060-mh.gas.s \
+                                        rc5-72/68k/r72-0x0-common-mh.gas.s"
+        TARGET_ASFLAGS="$TARGET_ASFLAGS -I./rc5-72/68k"
+      fi
+    fi # HAVE_RC5_72
     if [ "$HAVE_OGR" = "1" ]; then
       DEFAULT_OGR="0"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS"
@@ -400,12 +442,13 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi # HAVE_RC5_64
     if [ "$HAVE_OGR" = "1" ]; then
       # this is just an addition to the default ansi core
+      # maybe this should be moved in to specific targets ?
       TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev67.cpp"
     fi # HAVE_OGR
   #-----------------------------------------------------------------
-  elif [ "$2" = "ppc" -o "$2" = "power" ]; then
+  elif [ "$2" = "ppc" ]; then
     XLC_LINTILLA_ASMS="rc5/ppc/crunch_lintilla.ppcxlc.s \
-     rc5/ppc/crunch_allitnil.ppcxlc.s"
+        rc5/ppc/crunch_allitnil.ppcxlc.s"
     RC5PPC_SRCS="rc5/ppc/crunch_lintilla.ppcgas.s \
         rc5/ppc/crunch_lintilla_604e.ppcgas.s \
         rc5/ppc/crunch_allitnil.ppcgas.s \
@@ -431,21 +474,10 @@ add_sources() # $1=os, $2=arch, $3=custom
 
     if [ "$HAVE_RC5_64" = "1" ]; then
       DEFAULT_RC5_64="0"
-      if [ "$2" = "power" ]; then
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
-        if [ "$1-$3" = "aix-aixall" ]; then
-          TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_SRCS"
-        fi
-      elif [ "$TARGET_CC" = "mwcc" ]; then
+      if [ "$TARGET_CC" = "mwcc" ]; then
         TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_MWCC_SRCS"
       elif [ "$TARGET_CC" = "xlC" ]; then
-        if [ "X$3" = "aix32" ]; then
-          TARGET_ADDASMS="$TARGET_ADDASMS rc5/ppc/crunch_allitnil.ppcgas.s \
-                                          rc5/ppc/crunch_lintilla.ppcgas.s \
-                                          rc5/ppc/crunch_lintilla_604e.ppcgas.s"
-        else # aix4
-          TARGET_ADDASMS="$TARGET_ADDASMS $XLC_LINTILLA_ASMS"
-        fi
+        TARGET_ADDASMS="$TARGET_ADDASMS $XLC_LINTILLA_ASMS"
       elif [ "${1}" = "macosx" ]; then  #... and macosxserver (apple cc)
         TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_APPLE_SRCS"
         if [ "X$3" = "X" ]; then #mach3+
@@ -456,12 +488,54 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
     fi # HAVE_RC5_64
 
+    # Metrowerks doesn't have assembler cores, so we leave the defaults
+    if [ "$HAVE_RC5_72" = "1" -a "$TARGET_CC" != "mwcc" ]; then
+      DEFAULT_RC5_72="0"
+
+      if [ "$1" = "aix" ]; then
+        # aix on powerpc uses the TOC cores
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/ppc/r72-ppc-mh-2.toc.s \
+                                        rc5-72/ppc/r72-603e-mh-1-addi.toc.s \
+                                        rc5-72/ppc/r72-604e-mh-1-addi.toc.s \
+                                        rc5-72/ppc/r72-KKS2pipes.toc.s \
+                                        rc5-72/ppc/r72-KKS604e.toc.s"
+      elif [ "${1}" = "macosx" ]; then
+        # macosx and macosxserver (apple cc) have their own asm cores
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/ppc/r72-ppc-mh-2.osx.s \
+                                        rc5-72/ppc/r72-603e-mh-1-addi.osx.s \
+                                        rc5-72/ppc/r72-604e-mh-1-addi.osx.s \
+                                        rc5-72/ppc/r72-KKS2pipes.osx.s \
+                                        rc5-72/ppc/r72-KKS604e.osx.s"
+
+        # mach3+ ?
+        if [ "X$3" = "X" ]; then
+          TARGET_ADDSRCS="$TARGET_ADDSRCS rc5-72/ppc/r72-KKS7400.osx.s \
+                                          rc5-72/ppc/r72-KKS7450.osx.s \
+                                          rc5-72/ppc/r72-KKS970.osx.s"
+	fi
+      else
+        # generic gas targets
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/ppc/r72-ppc-mh-2.gas.s \
+                                        rc5-72/ppc/r72-603e-mh-1-addi.gas.s \
+                                        rc5-72/ppc/r72-604e-mh-1-addi.gas.s \
+                                        rc5-72/ppc/r72-KKS2pipes.gas.s \
+                                        rc5-72/ppc/r72-KKS604e.gas.s"
+
+        if [ "X$3" = "Xaltivec" ] ; then
+          TARGET_ADDSRCS="$TARGET_ADDSRCS rc5-72/ppc/r72-KKS7400.gas.s \
+                                          rc5-72/ppc/r72-KKS7450.gas.s"
+        fi
+      fi
+    fi # HAVE_RC5_72
+
     if [ "$HAVE_OGR" = "1" ]; then
       #DEFAULT_OGR="1" # this is just an addition to default core
       if [ "${1}" = "macosx" ]; then  #... and macosxserver (apple cc)
         if [ "X$3" = "X" ]; then #mach3+
           TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"
         fi
+      elif [ "X$3" = "Xaltivec" ] ; then
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"
       fi
     fi # HAVE_OGR
   #-----------------------------------------------------------------
@@ -478,7 +552,7 @@ add_sources() # $1=os, $2=arch, $3=custom
                                           rc5/arm/rc5-arm-2.s \
                                           rc5/arm/rc5-arm-3.s"
         fi
-      elif [ "$1-$3" = "linux-" ]; then  #linux-elf
+      elif [ "$1-$3" = "linux-elf" ]; then
         TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1-gnu-elf.s \
                                         rc5/arm/rc5-arm-2-gnu-elf.s \
                                         rc5/arm/rc5-arm-3-gnu-elf.s"
@@ -491,9 +565,14 @@ add_sources() # $1=os, $2=arch, $3=custom
     if [ "$HAVE_DES" = 1 ]; then
       DEFAULT_DES="0"
       if [ "$1" = "riscos" ]; then
-        TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-arm.s \
-                                        des/arm/des-slice-sa.s"
-      elif [ "$1-$3" = "linux-" ]; then  #linux-elf
+        if [ "$3" = "gccsdk" ]; then
+          echo Add des asm cores for arm-riscos-gccsdk!
+          exit 1
+        else
+          TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-arm.s \
+                                          des/arm/des-slice-sa.s"
+        fi
+      elif [ "$1-$3" = "linux-elf" ]; then
         TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN"
         TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-sa-gnu-elf.s \
                                         des/arm/des-slice-arm-gnu-elf.s"
@@ -503,17 +582,62 @@ add_sources() # $1=os, $2=arch, $3=custom
                                         des/arm/des-slice-arm-gnu.s"
       fi
     fi # HAVE_DES
+    if [ "$HAVE_RC5_72" = 1 ]; then
+      DEFAULT_RC5_72="0"
+      if [ "$1" = "riscos" ]; then
+        if [ "$3" = "gccsdk" ]; then
+          TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1-gccsdk.S \
+                                          rc5-72/arm/r72arm2-gccsdk.S"
+        else
+          echo Add rc5-72 asm cores for arm-riscos!
+          exit 1
+        fi
+      elif [ "$1-$3" = "linux-elf" ]; then
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1-gnu-elf.S \
+                                        rc5-72/arm/r72arm2-gnu-elf.S"
+      elif [ "$1" = "nto2" ]; then
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1-gnu-elf.S \
+                                        rc5-72/arm/r72arm2-gnu-elf.S"
+      else
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1-gnu.S \
+                                        rc5-72/arm/r72arm2-gnu.S"
+      fi
+    fi # HAVE_RC5_72
+    if [ "$HAVE_OGR" = 1 ]; then
+      if [ "$1" = "riscos" ]; then
+        if [ "$3" = "gccsdk" ]; then
+          TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gccsdk.s \
+                                          ogr/arm/ogr_arm2-gccsdk.s"
+        else
+          echo Add ogr asm cores for arm-riscos!
+          exit 1
+        fi
+      elif [ "$1-$3" = "linux-elf" ]; then
+        TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gnu-elf.S \
+                                        ogr/arm/ogr_arm2-gnu-elf.S"
+      elif [ "$1" = "nto2" ]; then
+        TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gnu-elf.S \
+                                        ogr/arm/ogr_arm2-gnu-elf.S"
+      else
+        TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gnu.S \
+                                        ogr/arm/ogr_arm2-gnu.S"
+      fi
+    fi # HAVE_OGR
   #-----------------------------------------------------------------
-  elif [ "$2" = "88k" -o "$2" = "sh4" \
-      -o "$2" = "vax" -o "$2" = "s390" -o "$2" = "generic" ]; then
+  elif [ "$2" = "88k" -o "$2" = "sh4" -o "$2" = "vax" \
+      -o "$2" = "s390" -o "$2" = "s390x" -o "$2" = "generic" \
+      -o "$2" = "power" ]; then
     : # pure ansi targets. (2 pipeline RC5 core) ==> DEFAULT
   #-----------------------------------------------------------------
   elif [ "$2" = "ia64" ]; then
     if [ "$HAVE_RC5_64" = "1" ]; then
       DEFAULT_RC5_64="0"
       # pure ansi target. (4 pipeline RC5 core)
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI4_SRCS"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_64_ANSI4_SRCS"
     fi # HAVE_RC5_64
+  #-----------------------------------------------------------------
+  elif [ "$2" = "x86_64" ]; then
+    : # pure ansi targets for now.
   #-----------------------------------------------------------------
   else
     echo "Warning. Unknown arch '$2' to add_sources. Using all-ANSI cores."
@@ -524,7 +648,7 @@ add_sources() # $1=os, $2=arch, $3=custom
   if [ "$HAVE_RC5_64" = "1" ]; then
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_RC5_64_CORES"
     if [ "$DEFAULT_RC5_64" = "1" ]; then
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_64_ANSI2_SRCS"
     fi
   fi
 
@@ -610,6 +734,8 @@ gcc_get_ver() {
     #gcc_v="Reading specs from blah\ngcc version 2.9-hppa-991112"
     #gcc_v="Apple Computer, Inc. version gcc-926, based on gcc version 2.95.2 19991024 (release)"
     #gcc_v="Reading specs from blah\nConfigured with: blah\nThread model: blah\ngcc version 3.2"
+    #gcc_v="NeXT Computer, Inc. version cc-437.2.6, gcc version 2.5.8"
+    #gcc_v="Apple Computer, Inc. GCC version 1175, based on gcc version 3.1 20020420 (prerelease)"
 
     gccver_line=`echo $gcc_v|tail -1|tr '-' ' '`
     #echo "gccver_line=#$gccver_line#"
@@ -621,13 +747,17 @@ gcc_get_ver() {
         if [ "$lastwas" = "version" ]; then
           if [ "$ver_word" = "egcs" -o "$ver_word" = "pgcc" ]; then
             lastwas="version"
-          elif [ "$ver_word" = "gcc" ]; then
+          elif [ "$ver_word" = "gcc" -o "$ver_word" = "cc" ]; then
+            lastwas="ignoreme"
+          elif [ "$ver_word" = "specific" ]; then # --enable-version-specific-runtime-libs
             lastwas="ignoreme"
           else
             ver_num="$ver_word"
           fi
         elif [ "$ver_word" = "version" -a "$lastwas" = "driver" ]; then
           lastwas="driver"
+        elif [ "$ver_word" = "version" -a "$lastwas" = "GCC" ]; then
+          lastwas="AppleGCC" # captialized GCC indicates the Apple version
         else
           lastwas="$ver_word"
         fi
@@ -658,6 +788,7 @@ gcc_get_ver() {
     if [ -z "$a4" ]; then
       a4=0
     fi
+    #2.5.8   = 2000000 +  50000 +  800 + 1 = 2050800
     #2.7.2.1 = 2000000 +  70000 +  200 + 1 = 2070201
     #2.95.1  = 2000000 + 950000 +  100     = 2950100
     #2.91.66 = 2000000 + 910000 + 6600     = 2916600
@@ -670,17 +801,21 @@ gcc_get_ver() {
 generate_gcc_opts() {
 
 # GCC: warn as much as we can for maximum portability
-  OPTS_GCC_WARN="-W -Wall -Wtraditional -Wpointer-arith -Wcast-align \
-                 -Wmissing-declarations -Wmissing-prototypes \
+  OPTS_GCC258_WARN="-W -Wall -Wtraditional -Wpointer-arith -Wcast-align \
+                 -Wmissing-prototypes \
                  -Wstrict-prototypes -Wconversion -Winline \
                  -Waggregate-return -Wcast-qual -Woverloaded-virtual \
                  -Wnested-externs" #-Wshadow shows std header errors
-  OPTS_GCC310_WARN="-W -Wall -Wtraditional -Wpointer-arith -Wcast-align \
+  OPTS_GCC272_WARN="$OPTS_GCC258_WARN -Wmissing-declarations"
+  OPTS_GCC310_WARN="-W -Wall -Wpointer-arith -Wcast-align \
                  -Wmissing-prototypes \
                  -Wstrict-prototypes -Wconversion -Winline \
                  -Waggregate-return -Wcast-qual -Woverloaded-virtual"
   OPTS_GCC_BASE="-fcaller-saves -fomit-frame-pointer \
                  -fno-inline-functions"
+  # g++-2.5.8 has -fno-rtti and -fno-handle-exceptions is on by default but
+  # the gcc/cc-wrapper doesn't recognise them and will complain
+  OPTS_258_PLUS=""
   OPTS_272_PLUS="-fno-handle-exceptions -fno-rtti"
   #WARNING WARNING: 2.95.x (at least x<=.3) will cause problem.cpp to mis-
   # compile if using -fno-exceptions and/or -fno-rtti. On x86 selftest will
@@ -688,10 +823,10 @@ generate_gcc_opts() {
   #WARNING WARNING: don't use 2.8.x at all.
   OPTS_295_PLUS="-fstrict-aliasing" #-fno-exceptions -fno-rtti
   OPTS_310_PLUS="-fstrict-aliasing -fno-exceptions -fno-rtti"
-  OPTS_GCC272="${OPTS_GCC_WARN} ${OPTS_GCC_BASE} ${OPTS_272_PLUS}"
-  OPTS_GCC295="${OPTS_GCC_WARN} ${OPTS_GCC_BASE} ${OPTS_295_PLUS}"
+  OPTS_GCC258="${OPTS_GCC258_WARN} ${OPTS_GCC_BASE} ${OPTS_258_PLUS}"
+  OPTS_GCC272="${OPTS_GCC272_WARN} ${OPTS_GCC_BASE} ${OPTS_272_PLUS}"
+  OPTS_GCC295="${OPTS_GCC272_WARN} ${OPTS_GCC_BASE} ${OPTS_295_PLUS}"
   OPTS_GCC310="${OPTS_GCC310_WARN} ${OPTS_GCC_BASE} ${OPTS_310_PLUS}"
-
 
   #this is a list of which -O does what for 2.72.x - 2.95.2
   #(see <gccsrc>/gcc/toplev.c; grep for "optimize ")
@@ -726,6 +861,7 @@ generate_gcc_opts() {
 
   # ------
 
+  opts258=""
   opts272=""
   opts295=""
   opts310=""
@@ -763,10 +899,18 @@ generate_gcc_opts() {
         ;;
 
     *internal-s390)
-        opts272="$OPTS_GCC272 -O6 -D__S390__ -U__i386__ -funroll-loops"
-        opts295="$OPTS_GCC295 -O2 -D__S390__ -U__i386__ -funroll-loops \
+        opts272="$OPTS_GCC272 -O3 -D__S390__ -U__i386__ -funroll-loops"
+        opts295="$OPTS_GCC295 -O3 -D__S390__ -U__i386__ -funroll-loops \
                  -fno-caller-saves"
-        opts310="$OPTS_GCC310 -O2 -D__S390__ -U__i386__ -funroll-loops \
+        opts310="$OPTS_GCC310 -O3 -D__S390__ -U__i386__ -funroll-loops \
+                 -fno-caller-saves"
+        ;;
+
+    *internal-s390x)
+        opts272="$OPTS_GCC272 -O3 -D__S390X__ -U__i386__ -funroll-loops"
+        opts295="$OPTS_GCC295 -O3 -D__S390X__ -U__i386__ -funroll-loops \
+                 -fno-caller-saves"
+        opts310="$OPTS_GCC310 -O3 -D__S390X__ -U__i386__ -funroll-loops \
                  -fno-caller-saves"
         ;;
 
@@ -783,14 +927,16 @@ generate_gcc_opts() {
 
     *internal-arm)
         opts272="$OPTS_GCC272 -DARM -DASM_ARM -funroll-loops"
-        opts295="$OPTS_GCC295 -O2 -mtune=strongarm -DARM -DASM_ARM -funroll-loops"
-        opts310="$OPTS_GCC310 -O2 -mtune=strongarm -DARM -DASM_ARM -funroll-loops"
+        opts295="$OPTS_GCC295 -O2 -march=armv3 -mtune=strongarm -DARM -DASM_ARM \
+                 -fschedule-insns -fschedule-insns2"
+        opts310="$OPTS_GCC310 -O2 -march=armv3 -mtune=strongarm -DARM -DASM_ARM \
+                 -fschedule-insns -fschedule-insns2"
         ;;
 
     *internal-sparc)  # (sparc/v7 [SS1/2/IPX]) (v8 [supersparc] is below)
         opts272="$OPTS_GCC272 -O6 -mcypress -DASM_SPARC -funroll-loops"
-        opts295="$OPTS_GCC295 -O2 -mcpu=cypress -DASM_SPARC -funroll-loops"
-        opts310="$OPTS_GCC310 -O2 -mcpu=cypress -DASM_SPARC -funroll-loops"
+        opts295="$OPTS_GCC295 -O2 -mcpu=cypress -mtune=supersparc -DASM_SPARC -funroll-loops"
+        opts310="$OPTS_GCC310 -O2 -mcpu=cypress -mtune=supersparc -DASM_SPARC -funroll-loops"
         ;;
 
     *internal-supersparc)  # (sparc/v8 [SS5+])
@@ -799,7 +945,7 @@ generate_gcc_opts() {
         opts310="$OPTS_GCC310 -O2 -mcpu=supersparc -DASM_SPARC -funroll-loops"
         ;;
 
-    *internal-ultrasparc)  # (sparc/v9 [Ultra])
+    *internal-ultrasparc|*internal-sparc64)  # (sparc/v9 [Ultra])
         opts272="$OPTS_GCC272 -O6 FIXME-msupersparc -DASM_SPARC -funroll-loops"
         opts295="$OPTS_GCC295 -Os -mcpu=ultrasparc -fforce-mem -mvis \
                 -fcall-used-g4 -fcall-used-g5 -fcall-used-g6 \
@@ -810,6 +956,7 @@ generate_gcc_opts() {
         ;;
 
     *internal-68k) #the 68k targets all have different -m68xxx switches
+        opts258="$OPTS_GCC258 -O6 -DASM_68K -funroll-loops"
         opts272="$OPTS_GCC272 -O6 -DASM_68K -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -DASM_68K -funroll-loops"
         opts310="$OPTS_GCC310 -O2 -DASM_68K -funroll-loops"
@@ -835,23 +982,29 @@ generate_gcc_opts() {
 
     *internal-power)
         opts272="$OPTS_GCC272 -O6 -DASM_POWER -mcpu=power -funroll-loops"
-        opts295="$OPTS_GCC295 -O6 -DASM_POWER -mcpu=power -funroll-loops"
-        opts310="$OPTS_GCC310 -O6 -DASM_POWER -mcpu=power -funroll-loops"
+        opts295="$OPTS_GCC295 -O3 -DASM_POWER -mcpu=power -funroll-loops"
+        opts310="$OPTS_GCC310 -O3 -DASM_POWER -mcpu=power -funroll-loops"
         ;;
 
-    *internal-aixcommon)
-        opts272="$OPTS_GCC272 -O6 -DASM_COM -mcpu=common -funroll-loops"
-        opts295="$OPTS_GCC295 -O6 -DASM_COM -mcpu=common -funroll-loops"
-        opts310="$OPTS_GCC310 -O6 -DASM_COM -mcpu=common -funroll-loops"
-        ;;
-
-    *internal-alpha)
+    *internal-alpha*)
         opts272="$OPTS_GCC272 -O6 -DASM_ALPHA -static -funroll-loops"
-        opts295="$OPTS_GCC295 -O3 -DASM_ALPHA -funroll-loops"
+	if [ "$2" = "freebsd" ]; then
+	  # 2.95 optimizer is broken on FreeBSD/alpha :-(
+          opts295="$OPTS_GCC295 -O1 -DASM_ALPHA -funroll-loops"
+	else
+          opts295="$OPTS_GCC295 -O3 -DASM_ALPHA -funroll-loops"
+	fi
         opts310="$OPTS_GCC310 -O3 -DASM_ALPHA -funroll-loops"
+        optarch=`echo "$1" | sed 's/.*alpha/ev/'`
+        if [ "$optarch" != "ev" ]; then
+            opts272="$opts272 -march=""$optarch"
+            opts295="$opts295 -march=""$optarch"
+            opts310="$opts310 -mcpu=""$optarch"
+        fi
         ;;
 
     *internal-x86)
+        opts258="$OPTS_GCC258 -O6 -DASM_X86 -funroll-loops"
         opts272="$OPTS_GCC272 -O6 -DASM_X86 -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -DASM_X86 -mcpu=pentiumpro -fforce-addr \
                  -malign-functions=5 -malign-loops=4 -funroll-loops"
@@ -859,13 +1012,20 @@ generate_gcc_opts() {
                  -falign-functions=5 -falign-loops=4 -funroll-loops"
         ;;
 
+    *internal-x86_64)
+        opts310="$OPTS_GCC310 -O2 -DASM_X86_64 \
+	    -m64 -mfpmath=sse -mno-3dnow -mno-mmx -fforce-addr \
+	    -falign-functions=5 -falign-loops=4 -funroll-loops"
+	;;
+
     *) # no default needed
         ;;
 
   esac
 
   # undefine everything we used locally
-  OPTS_GCC_WARN=
+  OPTS_GCC258_WARN=
+  OPTS_GCC272_WARN=
   OPTS_GCC310_WARN=
   OPTS_GCC_BASE=
   OPTS_272_PLUS=
@@ -877,7 +1037,7 @@ generate_gcc_opts() {
 
   # ------
 
-  gccopts="$opts295" # 3.0
+  gccopts="$opts295" # 2.96 and 3.0 are not recommended
   if [ $gccver -ge 3010000 ]; then
     gccopts="$opts310" # 3.1 and above
   fi
@@ -885,6 +1045,9 @@ generate_gcc_opts() {
     gccopts="$opts295"
     if [ $gccver -lt 2900000 ]; then
       gccopts="$opts272"
+      if [ $gccver -lt 2070200 ]; then
+        gccopts="$opts258"
+      fi
     fi
   fi
   OPTS_GCC="$gccopts"
@@ -930,14 +1093,13 @@ OPTS_CC_ALPHA='-O4 -fast -arch ev56 -tune ev56 -inline all'
 
 #-- PPC, IBM xlC
 
-#OPTS_XLC is being referred to but was nowhere to be found.
-OPTS_XLC_PPC601="$OPTS_XLC -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC"
-OPTS_XLC_PPC="$OPTS_XLC -qarch=ppc -qtune=604 -D_AIX -D_ARCH_PPC"
-OPTS_XLC_POWER="$OPTS_XLC -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
-OPTS_XLC_POWER2="$OPTS_XLC -qarch=pwr2 -qtune=pwr2 -D_AIX -D_ARCH_PWR2"
-OPTS_XLC3="-O3 -qansialias -qlibansi"
-OPTS_XLC3_PPC601="$OPTS_XLC3 -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC"
-OPTS_XLC3_POWER="$OPTS_XLC3 -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
+# O4 and O5 would include IPA but don't gain a lot (if you switch IPA on
+# be sure to add TARGET_LDFLAGS="-qipa" to the compile target)
+# qflag=i:i switches on maximum messages
+# ASM_* is needed to correctly switch on optimisation in ogr.cpp
+OPTS_XLC="-O3 -qflag=i:i"
+OPTS_XLC_PPC="$OPTS_XLC -qarch=ppc -qtune=604 -DASM_PPC"
+OPTS_XLC_POWER="$OPTS_XLC -qarch=pwr -qtune=pwr -DASM_POWER"
 
 #-- PPC, MetroWerks
 
@@ -947,8 +1109,8 @@ OPTS_MWCC_PPC604="$OPTS_MWCC -proc 604e"
 
 #-- Watcom 10.6 QNX 4.2x
 
-#OPTS_WATCOMCC="-DASM_X86 -Otax"
-OPTS_WATCOMCC="-DASM_X86 -g"
+OPTS_WATCOMCC="-DASM_X86 -Osax -4 -mf"
+#OPTS_WATCOMCC="-DASM_X86 -g"
 
 # -------------------------------------------------------------------------
 
@@ -972,6 +1134,11 @@ COMMON_SRCS="\
 	     common/triggers.cpp \
 	     common/coremem.cpp  \
 	     common/selcore.cpp  \
+	     common/core_rc5.cpp  \
+	     common/core_des.cpp  \
+	     common/core_csc.cpp  \
+	     common/core_ogr.cpp  \
+	     common/core_r72.cpp  \
 	     common/cmdline.cpp  \
 	     common/selftest.cpp \
 	     common/pollsys.cpp  \
@@ -1053,14 +1220,30 @@ case "$1" in
 
 # Alpha ****************************************************************
 
-    *alpha-digital_unix)
-        TARGET_CC="cxx"
+    *alpha*-digital_unix*) #takes alpha[4|5|67|]-digital_unix[-nonmt|]
+        archname=`echo "$1" | sed 's/^.*alpha/alpha/'| sed 's/-.*$//'`
+        TARGET_CC="g++"
         TARGET_AS="as"
-        TARGET_CCFLAGS="-O3 -pthread -DHAVE_POSIX_THREADS"
+        generate_gcc_opts "$archname" "digital-unix"
+        TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_ASFLAGS=""
-        TARGET_LIBS="-lpthread -lrt"
+        TARGET_LDFLAGS=""
+        TARGET_LIBS="-Wl,-no_so -lrt"
+        TARGET_TARBALL="digital_unix-""$archname"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "digital-unix" "alpha"
+        case "internal-$1" in
+        *internal-*nonmt*)
+            TARGET_CCFLAGS="$TARGET_CCFLAGS -DSINGLE_CRUNCHER_ONLY"
+            TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
+            TARGET_TARBALL="$TARGET_TARBALL""-nonmt"
+            ;;
+        *internal-*)
+            TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_POSIX_THREADS -D_REENTRANT"
+            TARGET_LDFLAGS="$TARGET_LDFLAGS -static-libgcc"
+            TARGET_LIBS="$TARGET_LIBS -Wl,-so_archive -lpthread -Wl,-no_so"
+            ;;
+        esac
         ;;
 
     *alpha-linux)       # dworz / jlawson
@@ -1075,6 +1258,18 @@ case "$1" in
         add_sources "linux" "alpha"
         ;;
 
+    *alpha-linux-static)       # dworz / jlawson / kamy
+        TARGET_CC="g++"
+        TARGET_AS="as"
+        generate_gcc_opts "alpha" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-alpha-static"
+        add_sources "linux" "alpha"
+        ;;
+
     *alpha-netbsd)
         TARGET_CC="g++"
         generate_gcc_opts "alpha" "netbsd"
@@ -1082,7 +1277,7 @@ case "$1" in
         TARGET_LDFLAGS="-static"
         TARGET_LIBS="-ltermcap"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="netbsd-alpha"
+        TARGET_TARBALL="netbsd-alpha-elf"
         add_sources "netbsd" "alpha"
         ;;
 
@@ -1110,30 +1305,31 @@ case "$1" in
         add_sources "linux" "arm" "aout"
         ;;
 
-    *arm-linux-elf)     # andrewm
+    *arm-linux-elf)     # teichp
         TARGET_CC="gcc"
-        TARGET_AS="as"
+        TARGET_AS="gcc -c"
         generate_gcc_opts "arm" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -Dlinux"
-        TARGET_LIBS=""
+        TARGET_CCFLAGS="$OPTS_GCC -Dlinux -DHAVE_POSIX_THREADS"
+        TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-arm-elf"
-        add_sources "linux" "arm"
-
-        rm -f $TARGET_ADDASMS
-        echo 'Converting GNU a.out cores to ELF'
-        for file in $TARGET_ADDASMS ; do
-          BASENAME=`basename $file`
-          echo "  $file -> `basename $file -elf.s`.s"
-          DIR=`echo $file | sed -e s/$BASENAME//`
-          ( cd $DIR ; sed -e 's/_\([a-zA-Z0-9_]\{1,\}\)/\1/g' \
-               < `basename $file -elf.s`.s > $BASENAME )
-        done
+        add_sources "linux" "arm" "elf"
         ;;
 
-    *arm-netbsd)        # chrisb
+    *arm-linux-elf_single)     # teichp
         TARGET_CC="gcc"
-        TARGET_AS="as"
+        TARGET_AS="gcc -c"
+        generate_gcc_opts "arm" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -Dlinux -DSINGLE_CRUNCHER_ONLY"
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-arm-elf_single"
+        add_sources "linux" "arm" "elf"
+        ;;
+
+    *arm-netbsd)        # teichp
+        TARGET_CC="gcc"
+        TARGET_AS="gcc -c"
         generate_gcc_opts "arm" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LIBS="-lm"
@@ -1178,14 +1374,16 @@ case "$1" in
 
     *arm-riscos-gccsdk) # RiscOS client crosscompiled under Unix using GCCSDK
                         # and Unixlib (http://hard-mofo.dsvr.net/)
-        TARGET_CC="/home/peter/gccsdk/cross/bin/gcc"
+        TARGET_CC="/home/peter/gccsdk-2.95.4-v3/cross/bin/gcc"
         generate_gcc_opts "arm" "riscos"
         TARGET_CCFLAGS="$OPTS_GCC -Iplat/riscos -D__riscos"
-        TARGET_AS="/home/peter/gccsdk/cross/bin/gcc"
+        TARGET_AS="/home/peter/gccsdk-2.95.4-v3/cross/bin/gcc"
         TARGET_ASFLAGS="-c"
         TARGET_DOCFILES="docs/readme.riscos"   #platform specific docfile
+        TARGET_TARBALL="riscos-arm"
         TARGET_STRIP=touch
         TARGET_BINNAME_SUFFIX=",ff8"
+        TARGET_ARCTYPE="riscoszip"
         TARGET_IS_CROSSCOMPILE=1
         add_sources "riscos" "arm" "gccsdk"
         ;;
@@ -1432,14 +1630,14 @@ case "$1" in
         add_sources "linux" "mips"
         ;;
 
-    *mips-linux-ps2)    #For PS2 Linux [jt(jt@distributed.net)]
+    *mipsel-linux-ps2)  #For PS2 Linux [jt(jt@distributed.net)]
         TARGET_CC="gcc"
         generate_gcc_opts "mips" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -mcpu=r5900 -pedantic -DSINGLE_CRUNCHER_ONLY -D__ps2linux__"
+        TARGET_CCFLAGS="$OPTS_GCC -mcpu=r5900 -DSINGLE_CRUNCHER_ONLY -D__ps2linux__"
         TARGET_LDFLAGS=""
         TARGET_LIBS=""
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="ps2linux-mips"
+        TARGET_TARBALL="ps2linux-mipsel"
         add_sources "linux" "mips" "ps2"
         ;;
 
@@ -1482,18 +1680,18 @@ case "$1" in
         add_sources "irix" "mips"
         ;;
 
-    *mipsel-netbsd)                         # snake
+    *mipsel-netbsd)     # [snake] NetBSD on DECstation, PS2, ARC etc.
         TARGET_CC="g++"
         generate_gcc_opts "mips" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC -DSINGLE_CRUNCHER_ONLY"
         TARGET_LDFLAGS="-static"
         TARGET_LIBS="-ltermcap"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="netbsd-mipsel"
+        TARGET_TARBALL="netbsd-mipsel-elf"
         add_sources "netbsd" "mips"
         ;;
 
-    *mipseb-netbsd)
+    *mipseb-netbsd)     # NetBSD on SGI, Sony NEWS etc.
         TARGET_CC="g++"
         generate_gcc_opts "mips" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -1586,6 +1784,16 @@ case "$1" in
         add_sources "hpux" "hppa"
         ;;
 
+    *hpux-hppa-nonmt-gcc) 
+        TARGET_CC="g++"
+        generate_gcc_opts "hppa" "hpux"
+        TARGET_CCFLAGS="$OPTS_GCC -DMIPSpro -DSINGLE_CRUNCHER_ONLYA"
+        TARGET_LDFLAGS="" #-lpthread"
+        TARGET_TARBALL="hpux1020-hppa11-nonmt"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        add_sources "hpux" "hppa"
+        ;;
+
     *hpux-m68k-gcc)
         TARGET_CC="g++"
         generate_gcc_opts "68k" "hpux"
@@ -1598,7 +1806,7 @@ case "$1" in
 
 ###### Sparc/UltraSparc
 
-    *sparc-openbsd)                   # snake, now without DES
+    *sparc-openbsd)                   # [snake]
         TARGET_CC="g++"
         generate_gcc_opts "sparc" "openbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -1608,7 +1816,7 @@ case "$1" in
         add_sources "openbsd" "sparc"
         ;;
 
-    *sparc-netbsd)                    # snake, for sun4[cdm]
+    *sparc-netbsd)                    # [snake], for sun4[cdm]
         TARGET_CC="g++"
         generate_gcc_opts "sparc" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -1618,10 +1826,20 @@ case "$1" in
         add_sources "netbsd" "sparc"
         ;;
 
-    *sparc-linux)	# [remi]
+    *sparc64-netbsd)                    # [snake], for sun4u
+        TARGET_CC="g++"
+        generate_gcc_opts "sparc64" "netbsd"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="netbsd-sparc64-elf"
+        add_sources "netbsd" "sparc"
+        ;;
+
+    *sparc-linux)       # teichp
         TARGET_CC="gcc"
         TARGET_AS="gcc -c"
-        generate_gcc_opts "supersparc" "linux"
+        generate_gcc_opts "sparc" "linux"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="-static"
         TARGET_LIBS=""
@@ -1654,7 +1872,6 @@ case "$1" in
 
     *sparc-solaris-gcc)   # [andreasb sparc/v7]
         TARGET_CC="gcc"
-        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
         generate_gcc_opts "sparc" "solaris"
         TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
@@ -1665,7 +1882,6 @@ case "$1" in
 
     *sparc-solaris-gcc-super)   # [andreasb sparc/v8]
         TARGET_CC="gcc"
-        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
         generate_gcc_opts "supersparc" "solaris"
         TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
@@ -1677,7 +1893,6 @@ case "$1" in
     *sparc-solaris-gcc-ultra)   # [andreasb sparc/v9 32 bit] ERROR
         echo "ERROR: gcc can't do this right, check ULONG_MAX vs. sizeof(long)"
         TARGET_CC="gcc"
-        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
         generate_gcc_opts "ultrasparc" "solaris"
         TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
@@ -1689,7 +1904,6 @@ case "$1" in
 
     *sparc-solaris-cc-v7)   # [andreasb sparc/v7]
         TARGET_CC="CC"
-        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
         OPTS_CC_SOLARIS="-fast -xO4 -xarch=v7 -DASM_SPARC"
         TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
@@ -1700,7 +1914,6 @@ case "$1" in
 
     *sparc-solaris-cc-v8a)   # [andreasb sparc/v8a]
         TARGET_CC="CC"
-        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
         OPTS_CC_SOLARIS="-fast -xO4 -xarch=v8a -DASM_SPARC"
         TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
@@ -1711,7 +1924,6 @@ case "$1" in
 
     *sparc-solaris-cc-v8)   # [andreasb sparc/v8]
         TARGET_CC="CC"
-        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
         OPTS_CC_SOLARIS="-fast -xO4 -xarch=v8 -DASM_SPARC"
         TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
@@ -1722,7 +1934,6 @@ case "$1" in
 
     *sparc-solaris-cc-ultra)   # [andreasb sparc/v9 32 bit]
         TARGET_CC="CC"
-        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
         OPTS_CC_SOLARIS="-fast -xO4 -xtarget=ultra -DASM_SPARC"
         TARGET_ASFLAGS="$TARGET_ASFLAGS -xarch=v8plus"
         TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS"
@@ -1732,6 +1943,17 @@ case "$1" in
         add_sources "solaris" "sparc" "cc"
         ;;
 
+    *sparc-solaris-cc-universal)   # [snikkel sparc 32/64 bit, sun cc]
+        TARGET_CC="CC"
+        TARGET_LD="cc"
+        TARGET_LDFLAGS="-mt"      
+        OPTS_CC_SOLARIS="-fast -xtarget=generic -xarch=generic -DASM_SPARC"
+        TARGET_CCFLAGS="$OPTS_CC_SOLARIS -mt -Dsolaris"
+        TARGET_LIBS="-ldl -lc -lnsl -lsocket -lthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="solaris26-sparc"
+        add_sources "solaris" "sparc" "cc"   
+        ;;
 
     *sparc-solaris-gcc-ultra-des)   # [ivo ultra] very fast DES -> hence obsolete
         TARGET_CC="gcc"
@@ -1764,10 +1986,9 @@ case "$1" in
 
     *x86-solaris)    # gcc, mt, dynamic
         TARGET_CC="gcc"
-        TARGET_TR="/usr/xpg4/bin/tr"    # Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
         generate_gcc_opts "x86" "solaris"
         TARGET_CCFLAGS="$OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS -D_REENTRANT"
-        TARGET_LIBS="-lnsl -lsocket -ldl -lthread"
+        TARGET_LIBS="-ldl -lc -lmp -lnsl -lsocket -lpthread"
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="solaris-x86"
         add_sources "solaris" "x86"
@@ -1778,22 +1999,25 @@ case "$1" in
     *ppc-linux)		             # [myshkin] linux-ppc
         TARGET_CC="g++"
         generate_gcc_opts "ppc" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_CCFLAGS="$OPTS_GCC -maltivec -mabi=altivec"
         TARGET_LDFLAGS="-static"
         TARGET_LIBS=""
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-ppc"
-        add_sources "linux" "ppc"
+        add_sources "linux" "ppc" "altivec"
         ;;
 
-    *ppc-netbsd)
+    *ppc-netbsd)                 # [snake]
         TARGET_CC="g++"
         generate_gcc_opts "ppc" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
+        #TARGET_CCFLAGS="$OPTS_GCC -maltivec -mabi=altivec"
         TARGET_LDFLAGS="-static"
         TARGET_LIBS="-ltermcap"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="netbsd-ppc"
         add_sources "netbsd" "ppc"
+        #add_sources "netbsd" "ppc" "altivec" # not yet AltiVec
         ;;
 
     *ppc-macosxserver) # [mfeiri] (MACH 2.x based: MXS 1.x, Darwin 0.x, Rhapsody)
@@ -1806,81 +2030,70 @@ case "$1" in
         ;;
 
     *ppc-macosx)       # [mfeiri] (MACH 3.x based: MacOSXDP, Darwin 1.0)
-        TARGET_CC="c++"
+        #TARGET_CC="c++"
         generate_gcc_opts "ppc" "macosx"
-        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -force_cpusubtype_ALL -faltivec"
+        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -faltivec -mdynamic-no-pic" # -force_cpusubtype_ALL 
         TARGET_LDFLAGS="-framework IOKit -framework CoreFoundation"
         TARGET_DOCFILES="docs/readme.macosx.rtf"   #platform specific docfile
         TARGET_TARBALL="macosx-ppc"
         add_sources "macosx" "ppc"
         ;;
 
-  ### AIX PPC targets
-        # classes are buggy with AIX !
+    *ppc-aix-xlc)
+        # AIX's system as doesn't support macros, so we have to use gas for cores
+        TARGET_AS="gas"
+        TARGET_CC="xlC_r"
 
-    *ppc-aix4-xlc)	 # This is the fastest build for AIX 4.x PPC machines
-        TARGET_CC="xlC"
         TARGET_CCFLAGS="$OPTS_XLC_PPC"
-        TARGET_LIBS="-lCns"
+        TARGET_ASFLAGS="-mppc"
+
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        add_sources "aix" "ppc" "aix4"
+        add_sources "aix" "ppc"
         ;;
 
-    *ppc601-aix4-xlc)      # AIX 4.x PPC, 601 chip
-        TARGET_CC="xlC"
-        TARGET_CCFLAGS="$OPTS_XLC_PPC601"
-        TARGET_LIBS="-lCns"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        add_sources "aix" "ppc" "aix4"
-        ;;
-
-    *ppc-aix32-xlc)	   # AIX 3.2.x PPC
-        TARGET_CC="xlC"
-        TARGET_CCFLAGS="$OPTS_XLC3_PPC601"
-        TARGET_LIBS="-lCns"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        add_sources "aix" "ppc" "aix32"
-        ;;
-
-    *ppc-aix32-gcc)	   # AIX 3.2.x gcc/egcs [patrick] <patrick@mail4you.de>
+    *ppc-aix-gcc)
+        # system as is recommended for gcc but doesn't support macros,
+        # so we have to use gas for cores
+        TARGET_AS="gas"
         TARGET_CC="g++"
         generate_gcc_opts "ppc" "aix"
-        TARGET_CCFLAGS="$OPTS_GCC -D_AIX"
+
+        # gcc's < 3.2 used -mthreads
+        TARGET_CCFLAGS="$OPTS_GCC -mpowerpc -mtune=604 -pthread"
+        #TARGET_CCFLAGS="$OPTS_GCC -mpowerpc -mtune=604 -mthreads"
+        TARGET_ASFLAGS="-mppc"
+        TARGET_LIBS="-lpthread"
+
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        add_sources "ppc" "aix" "aix32"
+        add_sources "aix" "ppc"
         ;;
 
-  ### AIX POWER targets
-        # AIX POWER this one works for all platforms (AIX 3.x, 4.[1-3])!
-
-    *power-aix)           # gcc/egcs [patrick] <patrick@mail4you.de>
+    *power-aix-gcc)
+        # system as is recommended for gcc but doesn't support macros, so use gas for cores
+        TARGET_AS="gas"
         TARGET_CC="g++"
         generate_gcc_opts "power" "aix"
-        TARGET_CCFLAGS="$OPTS_GCC -D_AIX"
+ 
+        # gcc's < 3.2 used -mthreads
+        TARGET_CCFLAGS="$OPTS_GCC -pthread"
+        #TARGET_CCFLAGS="$OPTS_GCC -mthreads"
+        TARGET_ASFLAGS="-mpower"
+        TARGET_LIBS="-lpthread"
+
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "aix" "power"
         ;;
 
-    *aix-all)                       # [patrick] new all in one AIX target
-        # WARNING: the code will show a PPC CPU even though also POWER
-        # CPUs are supported !
-        TARGET_CC="g++"
-        generate_gcc_opts "power" "aix"
-        AIXPOWERFLAGS="$OPTS_GCC -mthreads -D_AIX"
-        generate_gcc_opts "ppc" "aix"
-        AIXPPC601FLAGS="$OPTS_GCC -mthreads -mcpu=601 -D_AIX"
-        generate_gcc_opts "ppc604" "aix"
-        AIXPPC604FLAGS="$OPTS_GCC -mthreads -D_AIX"
-        generate_gcc_opts "aixcommon" "aix"
-        TARGET_CCFLAGS="$OPTS_GCC -mthreads -D_AIX -D_AIXALL"
-        # ogr_power.o uses the same source as ogr.o, 
-        # only different compiler seetings
-        TARGET_ADDOBJS="output/ogr_power.o $TARGET_ADDOBJS"
+    *power-aix-xlc)
+        # AIX's system as doesn't support macros, so we have to use gas for cores
+        TARGET_AS="gas"
+        TARGET_CC="xlC_r"
+
+        TARGET_CCFLAGS="$OPTS_XLC_POWER"
+        TARGET_ASFLAGS="-mpwr"
+
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_LIBS=$TARGET_LIBS
-        TARGET_LDFLAGS="$TARGET_LDFLAGS -mthreads"
-        TARGET_TARBALL="aix-all-aix4.1"
-        add_sources "aix" "power" "aixall" #easier to do under power than ppc
+        add_sources "aix" "power"
         ;;
 
   ### QNX PPC targets
@@ -1963,13 +2176,28 @@ case "$1" in
         TARGET_LIBS=""
         TARGET_TARBALL="linux-${inferred_arch}-${TARGET_NASM_FMT}"
         TARGET_DOCFILES="docs/readme.linux"   #platform specific docfile
+        TARGET_USES_GNUMAKE="yes"
         add_sources "linux" "x86" $isaout
+        case "internal-$1" in
+          internal-*pthread*)
+            TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_POSIX_THREADS"
+            TARGET_LIBS="$TARGET_LIBS -lpthread"
+            TARGET_TARBALL="${TARGET_TARBALL}-pthreads"
+          ;;
+        esac
+        case "internal-$1" in
+          internal-*static-nss*)                [andreasb] release clients are built with static-nss
+          # the glibc in /usr/dnet has been compiled with --with-static-nss
+          TARGET_LIBS="-L/usr/dnet/lib -Xlinker --whole-archive -lnss_files -lnss_dns -Xlinker --no-whole-archive -lresolv $TARGET_LIBS"
+          ;;
+        esac
         ;;
 
     *freebsd*)              # FreeBSD (autoselect Alpha/x86 and aout/elf)
                             # FreeBSD x86-elf >=2.2.4, cyp
                             # FreeBSD x86-aout 2.x, snake (experimental)
-                            # FreeBSD Alpha
+                            # FreeBSD sparc-elf 5.0, snake (experimental)
+                            # FreeBSD alpha-elf 4.x, snake (experimental)
         infer_arch_and_version "FreeBSD"
         inferred_bf="elf"
         if [ $inferred_ver_major -lt 3 ]; then
@@ -2001,11 +2229,11 @@ case "$1" in
         TARGET_LDFLAGS="-static"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_NASM_FMT="aoutb"
-        TARGET_TARBALL="netbsd-i386-aout"
+        TARGET_TARBALL="netbsd-x86-aout"
         add_sources "netbsd" "x86"
         ;;
 
-    *x86-netbsd-elf)       # NetBSD > 1.4.x, elf, [bernd]
+    *x86-netbsd-elf)       # NetBSD > 1.4.x, elf, [bernd], snake
         TARGET_AS="gcc -c"
         TARGET_CC="g++"
         generate_gcc_opts "x86" "netbsd"
@@ -2013,12 +2241,12 @@ case "$1" in
         TARGET_LDFLAGS="-static"
         TARGET_LIBS="-lc"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="netbsd-i386-elf"
+        TARGET_TARBALL="netbsd-x86-elf"
         add_sources "netbsd" "x86"
         ;;
 
     *x86-openbsd)	# snake
-        TARGET_CC="g++"
+        TARGET_CC="gcc"
         generate_gcc_opts "x86" "openbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="-static"
@@ -2055,6 +2283,20 @@ case "$1" in
         add_sources "bsdos" "x86"
         ;;
 
+    *x86-macosx)
+        generate_gcc_opts "x86" "macosx"
+        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
+        TARGET_LDFLAGS="-framework IOKit -framework CoreFoundation"
+
+        # set empty to use ANSI cores and x86ident.S with Apple as
+        # doesn't need -force_cpusubtype_ALL like NeXT
+        TARGET_NASM_FMT="macho"
+
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="darwin-x86"
+        add_sources "macosx" "x86"
+        ;;
+
     *x86-qnx4)
         TARGET_AS="cc -c"
         TARGET_CC="cc"
@@ -2078,21 +2320,26 @@ case "$1" in
         TARGET_NASM="nasm"
         TARGET_ASFLAGS="-DNO_BALIGN"
         TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
-                        -fno-exceptions -fno-rtti -DHAVE_POSIX_THREADS -DASM_X86"
+                        -fcaller-saves -fstrict-aliasing -O2 \
+                        -Wc,-mpentiumpro \
+                        -fforce-addr -Wc,-malign-functions=5 \
+                        -Wc,-malign-loops=4 -funroll-loops \
+                        -fno-exceptions -fno-rtti -DHAVE_POSIX_THREADS \
+                        -DASM_X86"
         TARGET_LIBS="-lsocket"
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-x86"
         TARGET_GENMAN=
-//        TARGET_IS_CROSSCOMPILE=1
         add_sources "nto2" "x86"
         ;;
 
-    *x86-sco5)
-        TARGET_AS="g++ -c"
-        TARGET_CC="g++"
+    *x86-sco5)			# SCO OpenServer 5.0.x pfeffi, ELF binaries
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
         generate_gcc_opts "x86" "sco"
-        TARGET_CCFLAGS="$OPTS_GCC -belf -Dsco5"
+        TARGET_CCFLAGS="$OPTS_GCC -Dsco5"
         TARGET_LDFLAGS="-static"
+        TARGET_TARBALL="sco5-x86-elf"
         TARGET_LIBS="-lsocket"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "sco" "x86"
@@ -2117,35 +2364,47 @@ case "$1" in
         add_sources "dynix" "x86"
         ;;
 
+###### AMD X86-64
+
+
+    *x86_64-linux*)                # generic. works everywhere
+        infer_arch_and_version "Linux"
+        TARGET_NASM_FMT="elf"
+        TARGET_AS="gcc -c"          # can make aout if TARGET_CCFLAGS+=-aout
+        TARGET_CC="gcc"
+        generate_gcc_opts "${inferred_arch}" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
+        TARGET_LIBS="-lstdc++"
+        TARGET_TARBALL="linux-${inferred_arch}-${TARGET_NASM_FMT}"
+        TARGET_DOCFILES="docs/readme.linux"   #platform specific docfile
+        TARGET_USES_GNUMAKE="yes"
+        add_sources "linux" "x86_64" ""
+
+        #TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_POSIX_THREADS"
+        #TARGET_LIBS="$TARGET_LIBS -lpthread"
+        #TARGET_TARBALL="${TARGET_TARBALL}-pthreads"
+
+        ;;
+
 ###### NeXT (x86, m68k, sparc, hppa)
 
     *x86-next)
-        TARGET_AS="gcc -c"
-        TARGET_CC="gcc"
         generate_gcc_opts "x86" "next"
-        TARGET_CCFLAGS="-static $OPTS_GCC -D_NeXT_"
+        TARGET_CCFLAGS="-static $OPTS_GCC -arch i386 -Iplat/next"
+
+        # either nasm or NeXT as, latter needs forcecputype for x86ident.S
+        # TARGET_ASFLAGS="-force_cpusubtype_ALL"
+        TARGET_NASM_FMT="macho"
+
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="next-x86"
         add_sources "next" "x86"
         ;;
 
-    *x86-macosx)
-        # this one's for X86-Rhapsody which is quite similar to NeXTstep
-        # but not completely identical     - snake
-        TARGET_AS="cc -c"
-        TARGET_CC="cc"
-        TARGET_ASFLAGS="-DNO_BALIGN"
-        TARGET_CCFLAGS="-DNO_BALIGN"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="rhapsody-x86"
-        add_sources "macosx" "x86"
-        ;;
-
     *m68k-next)
-        TARGET_CC="gcc"
         generate_gcc_opts "68k" "next"
-        TARGET_CCFLAGS="-static $OPTS_GCC -m68040 -D_NeXT_"
-        TARGET_ASFLAGS="$OPTS_GAS"
+        TARGET_CCFLAGS="-static $OPTS_GCC -arch m68k -Iplat/next"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="next-m68k"
         add_sources "next" "68k"
@@ -2154,7 +2413,7 @@ case "$1" in
     *sparc-next)
         TARGET_CC="cc++"
         generate_gcc_opts "generic" "next"
-        TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_SPARC -arch sparc -D_NeXT_ -D_OLD_NEXT_"
+        TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_SPARC -arch sparc -Iplat/next"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "next" "sparc"
         ;;
@@ -2162,29 +2421,45 @@ case "$1" in
     *hppa-next)
         TARGET_CC="cc++"
         generate_gcc_opts "generic" "next"
-        TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_HPPA -arch hppa -D_NeXT_ -D_OLD_NEXT_"
+        TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_HPPA -arch hppa -Iplat/next"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "next" "hppa"
         ;;
 
-    *m68k-netbsd) # NetBSD on NeXT, 68k Macs, 68k Amiga, sun3 etc, -snake
-        # needs gas 2.9.1 to compile OGR
+    *m68k-openbsd)     # snake
+        # this target does probably not work with a default system, you
+        # will need to update gas and ld to > 2.0
+        TARGET_CC="g++"
+        #TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer \
+        #                -m68020-40 -DASM_68K -DLURK -DHAVE_OGR_CORES"
+        generate_gcc_opts "68k" "openbsd"
+        TARGET_CCFLAGS="$OPTS_GCC -m68020-40"
+        TARGET_LDFLAGS="-static"
+        TARGET_ASFLAGS="$OPTS_GAS"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="openbsd-m68k"
+        add_sources "openbsd" "68k"
+        ;;
+
+    *m68k-netbsd) # NetBSD on NeXT, 68k Macs, 68k Amiga, sun3 etc, [snake]
         TARGET_CC="g++"
         TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer \
                         -m68020-40 -DASM_68K -DLURK -DHAVE_OGR_CORES"
         TARGET_LDFLAGS="-static"
         TARGET_ASFLAGS="$OPTS_GAS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="netbsd-68k"
+        TARGET_TARBALL="netbsd-m68k-elf"
         add_sources "netbsd" "68k"
         ;;
 
-    *vax-netbsd)
+    *vax-netbsd)  # [snake]
         TARGET_CC="g++"
         generate_gcc_opts "vax" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
         TARGET_LIBS="-ltermcap"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="netbsd-vax"
         add_sources "netbsd" "vax"
         ;;
 
@@ -2210,7 +2485,7 @@ case "$1" in
         add_sources "linux" "hppa"
         ;;
 
-    *s390-linux)	        # [friedbait]  fb@baiti.net
+    *s390-linux)	        # [pstadt] 31 Bit Linux on G5/G6 or older
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390" "linux"
@@ -2221,7 +2496,7 @@ case "$1" in
         add_sources "linux" "s390"
         ;;
 
-    *s390-linux-static)	        # [friedbait]  fb@baiti.net
+    *s390-linux-static)	        # [pstadt] 31 Bit Linux on G5/G6 or older
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390" "linux"
@@ -2231,6 +2506,52 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-s390-static"
         add_sources "linux" "s390"
+        ;;
+
+    *s390-linux-z)		# [pstadt] 31 Bit Linux on z/Architecture
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "s390" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -DS390_Z_ARCH -Wa,-Aesame"
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-s390-z"
+        add_sources "linux" "s390"
+        ;;
+
+    *s390-linux-z-static)	# [pstadt] 31 Bit Linux on z/Architecture
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "s390" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -DS390_Z_ARCH -Wa,-Aesame"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-s390-z-static"
+        add_sources "linux" "s390"
+        ;;
+
+    *s390x-linux)	        # [pstadt] 64 Bit Linux on z/Architecture
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "s390x" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-s390x"
+        add_sources "linux" "s390x"
+        ;;
+
+    *s390x-linux-static)        # [pstadt] 64 Bit Linux on z/Architecture
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "s390x" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-s390x-static"
+        add_sources "linux" "s390x"
         ;;
 
     *s390-os390)                     # [friedbait]  fb@baiti.net
@@ -2285,9 +2606,10 @@ case "$1" in
         TARGET_NASM="nasm.exe"
         TARGET_LIBS="-lsocket -lvideo"
         TARGET_DOCFILES="docs/readme.os2"   #platform specific docfile
-        TARGET_TARBALL="os2-x86"
+        TARGET_TARBALL="os2-x86-emx"
         TARGET_BINNAME_SUFFIX=".exe"
         TARGET_GENMAN=                               #no manpage
+        TARGET_USES_GNUMAKE="yes"
         add_sources "os2" "x86"
         ;;
 
@@ -2307,7 +2629,7 @@ case "$1" in
         TARGET_BINNAME_SUFFIX="_68k"
         TARGET_GENMAN=
         TARGET_ARCTYPE="amigaosgui"
-        TARGET_MAKEARC="68k ($TARGET_BINNAME)_68k"
+        TARGET_MAKEARC="68k ${TARGET_BINNAME}_68k"
         add_sources "amigaos" "68k"
         ;;
 
@@ -2394,11 +2716,7 @@ if [ -z "${TARGET_IS_CROSSCOMPILE}" ]; then
     echo " ---------------------------------------------"
     exit 1
   fi
-  if [ "$BUILDNAME" = "x86-os2" ]; then
-     emxbind testplat
-  else
-     ${TARGET_STRIP} testplat
-  fi
+  ${TARGET_STRIP} testplat
 else
   cc common/testplat.cpp -o testplat
 fi
@@ -2535,6 +2853,9 @@ if [ "${BUILDNAME}" = "aix-all" ]; then
   echo "PPC604FLAGS = ${AIXPPC604FLAGS} \${HPATHS}" >> Makefile
   echo "POWERFLAGS = ${AIXPOWERFLAGS} \${HPATHS}" >> Makefile
 fi
+if [ "${BUILDNAME}" = "aix-powerandppc" ]; then
+  echo "POWERFLAGS = ${AIXPOWERFLAGS} \${HPATHS}" >> Makefile
+fi
 echo "LD = ${TARGET_LD}" >> Makefile
 echo "LDFLAGS = ${TARGET_LDFLAGS}" >> Makefile
 echo "LIBS = ${TARGET_LIBS}" >> Makefile
@@ -2547,9 +2868,13 @@ echo "ALLOBJS = ${TARGET_ALLOBJS}" >> Makefile
 echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
 echo "BUILDNAME = $1" >> Makefile
 echo "DOCFILES = ${TARGET_DOCFILES}" >>Makefile
-#echo "BUILDNUM:= \`grep \" CLIENT_BUILD_FRAC \" common/version.h|$TARGET_TR -dc 0-9\`" >>Makefile
-# only $(shell ) evaluates only once -- 2002-09-27 anbe x86/linux make 3.79.1
-echo "BUILDNUM:= \$(shell grep \" CLIENT_BUILD_FRAC \" common/version.h|$TARGET_TR -dc 0-9)" >>Makefile
+if [ "$TARGET_USES_GNUMAKE" = "yes" ]; then
+  # GNUMake $(shell ) evaluates only once - but this isn't supported by BSD make etc ...
+  echo "BUILDNUM:= \$(shell grep \" CLIENT_BUILD_FRAC \" common/version.h|$TARGET_TR -dc 0123456789)" >>Makefile
+else
+  # this should work with every make ... hmm, except gnumake under os/2
+  echo "BUILDNUM = \`grep \" CLIENT_BUILD_FRAC \" common/version.h|$TARGET_TR -dc 0123456789\`" >>Makefile
+fi
 echo "" >> Makefile
 
 
@@ -2581,6 +2906,10 @@ if [ -n "$TARGET_TARBALL" ]; then
     FULLTARNAME="${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}\${ARCHIVENAME_APPEND}"
     if [ "$TARGET_ARCTYPE" = "zip" ]; then
       echo "	zip -9 $FULLTARNAME.zip ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} \${DOCFILES}" >> Makefile
+      if [ "$BUILDNAME" = "x86-os2" ]; then
+        # add icon to zipfile
+        echo "	zip -9j $FULLTARNAME.zip plat\\os2\\dnetc.ico" >> Makefile
+      fi
     elif [ "$TARGET_ARCTYPE" = "zipflat" ]; then
       # zip file with flat directory structure.
       echo "	zip -9 -j $FULLTARNAME.zip ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} \${DOCFILES}" >> Makefile
@@ -2591,7 +2920,8 @@ if [ -n "$TARGET_TARBALL" ]; then
       # tar.gz, with buildname(base+doc) directory structure.
       echo "	-rm -rf $FULLTARNAME" >> Makefile
       echo "	mkdir $FULLTARNAME" >> Makefile
-      echo "	cp ${TARGET_BINNAME} \${DOCFILES} $FULLTARNAME" >> Makefile
+      echo "	mkdir $FULLTARNAME/docs" >> Makefile
+      echo "	for file in ${TARGET_BINNAME} \${DOCFILES} ; do cp \$\$file $FULLTARNAME/\$\$file ; done" >> Makefile
       echo "	tar -cvf - $FULLTARNAME | gzip -9 > $FULLTARNAME.tar.gz" >> Makefile
       echo "	rm -rf $FULLTARNAME" >> Makefile
     elif [ "$TARGET_ARCTYPE" = "lha" ]; then
@@ -2600,6 +2930,17 @@ if [ -n "$TARGET_TARBALL" ]; then
     elif [ "$TARGET_ARCTYPE" = "amigaosgui" ]; then
       echo "	rm -f $FULLTARNAME.lha" >> Makefile
       echo "	sh plat/amigaos/tools/makearchive $FULLTARNAME.lha $TARGET_MAKEARC \${DOCFILES}" >> Makefile
+    elif [ "$TARGET_ARCTYPE" = "riscoszip" ]; then
+      echo "	rm -rf $FULLTARNAME" >> Makefile
+      echo "	rm -f $FULLTARNAME.zip" >> Makefile
+      echo "	mkdir $FULLTARNAME" >> Makefile
+      echo "	cp $TARGET_BINNAME$TARGET_BINNAME_SUFFIX $FULLTARNAME" >> Makefile
+      echo "	\$(foreach DOCFILE,\${DOCFILES},cp \${DOCFILE} $FULLTARNAME/\`basename \${DOCFILE}\`,fff;)" >> Makefile
+      echo "	cp plat/riscos/package/*,??? $FULLTARNAME" >> Makefile
+      echo "	mkdir -p $FULLTARNAME/!System/310/Modules" >> Makefile
+      echo "	cp plat/riscos/package/!System/310/Modules/*,??? $FULLTARNAME/!System/310/Modules" >> Makefile
+      echo "	/home/peter/gccsdk-2.95.4-v2/cross/bin/zip -r -, $FULLTARNAME.zip $FULLTARNAME" >> Makefile
+      echo "	rm -rf $FULLTARNAME" >> Makefile
     else
       echo "Warning: Unknown TARGET_ARCTYPE ${TARGET_ARCTYPE}"
     fi
@@ -2612,7 +2953,9 @@ echo "" >> Makefile
 #
 if [ -n "$TARGET_TARBALL" ]; then
   echo "ftp:" >> Makefile
-  if [ -f ./upload.sh ]; then
+  if [ "$BUILDNAME" = "x86-os2" -a -f upload.cmd ] ; then
+    echo "	\$(SHELL) /C .\\upload.cmd ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}" >>Makefile
+  elif [ -f ./upload.sh ]; then
     if [ -n "$TARGET_TARBALL_COMMENT" ]; then
       echo "	echo \"${TARGET_TARBALL_COMMENT}\">${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
     fi
@@ -2640,7 +2983,10 @@ echo "" >> Makefile
 #  Clean, Superclean, Distclean, and Ident targets.
 #
 echo "clean:" >> Makefile
-echo "	rm -f \${ALLOBJS}" >> Makefile
+echo "	rm -f \${ALLOBJS} \${ADDOBJS}" >> Makefile
+if [ "$BUILDNAME" = "x86-os2" ]; then
+  echo "	rm -f output/dnetc.res" >> Makefile
+fi
 echo "	rm -f ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
 if [ -n "$TARGET_GENMAN" ]; then
   echo "	rm -f ${TARGET_BINNAME}.1" >> Makefile
@@ -2736,11 +3082,27 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       #----------------
       CCFLAGS_SELECT="\${CCFLAGS}"
       if [ "$target" = "output/ev67.o" ]; then
-          if [ "$TARGET_CC" = "g++" ]; then
-            CCFLAGS_SELECT="-mcpu=ev67 ${CCFLAGS_SELECT}"
+        if [ $gccver -ge 3000000 ]; then # works only for gcc > 3 
+          if [ "$TARGET_CC" = "g++" ] ; then
+            CCFLAGS_SELECT="${CCFLAGS_SELECT} -mcpu=ev67"
           else
-            CCFLAGS_SELECT="-march=ev67 ${CCFLAGS_SELECT}"
+            CCFLAGS_SELECT="${CCFLAGS_SELECT} -march=ev67"
           fi
+        else
+          # works for NetBSD/FreeBSD and probably also OpenBSD
+          CCFLAGS_SELECT="-Wa,-mev6 ${CCFLAGS_SELECT}"
+        fi
+      elif [ "${BUILDNAME}" = "aix-powerandppc" ]; then
+        if [ "$target" = "output/problem.o" ]; then 
+          CCFLAGS_SELECT="\${POWERFLAGS}" 
+        fi
+        if [ "$target" = "output/ogr.o" ]; then
+          # default is to compile for a POWERPC based CPU,
+          # we have to add POWER here
+          echo "output/ogr_power.o:    ${TARGETSRC} ${deplist}" >> Makefile
+          echo "	\${CC} -c \${POWERFLAGS} -D_AIXALL ${TARGETSRC} -o output/ogr_power.o" >> Makefile
+          echo "" >> Makefile
+        fi
       elif [ "${BUILDNAME}" = "aix-all" ]; then
         if [ "$target" = "output/rc5ansi_2-rg.o" ]; then
           CCFLAGS_SELECT="\${POWERFLAGS}"
@@ -2801,19 +3163,33 @@ if [ "$TARGET_OGR_MULTI" = "68k" ]; then
   OGR68K="000 020 030 040 060"
   for targetext in ${OGR68K}; do
     echo "output/ogr${targetext}.o:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
-    if [ "$targetext" = "020" -o "$targetext" = "030" ]; then
-      echo "	\$(CC) \$(CCFLAGS) -m68${targetext} -fno-unroll-loops -c -o output/ogr${targetext}.o $OGR/ansi/ogr.cpp \\" >> Makefile
+    echo "	\$(CC) \$(CCFLAGS) -DOGR_GET_DISPATCH_TABLE_FXN=ogr_get_dispatch_table_${targetext} \\" >>Makefile
+
+    # fake 68060 optimisation with gcc < 2.95 - easiest way for now
+    # still defines mc68060 (see below) so that some optimisation will still be done
+    if [ "$gccver" -ne "0" -a "$gccver" -lt "2950000" -a "$targetext" = "060" ]; then
+      echo "		-m68040 \\" >> Makefile
     else
-      echo "	\$(CC) \$(CCFLAGS) -m68${targetext} -c -o output/ogr${targetext}.o $OGR/ansi/ogr.cpp \\" >> Makefile
+      echo "		-m68${targetext} \\" >> Makefile
     fi
-    echo "	-DOGR_GET_DISPATCH_TABLE_FXN=ogr_get_dispatch_table_${targetext}" >> Makefile
+
+    if [ "$targetext" = "020" -o "$targetext" = "030" ]; then
+      echo "		-fno-unroll-loops \\" >> Makefile
+    fi
+
+    # gcc on NeXTstep doesn't define mc680x0 so we've got to do it ourselves
+    if [ "$BUILDNAME" = "m68k-next" ]; then
+      echo "		-Dmc68${targetext} \\" >> Makefile
+    fi
+
+    echo "		-c -o output/ogr${targetext}.o $OGR/ansi/ogr.cpp" >> Makefile
     echo "" >> Makefile
   done
 fi
 
 if [ "$BUILDNAME" = "x86-os2" ]; then
  echo "Generating rules for .res and .rc"
- echo "output/${TARGET_BINNAME}.res:"         >>Makefile
+ echo "output/${TARGET_BINNAME}.res:	plat/os2/dnetc.rc"         >>Makefile
  echo "	rc -r plat\os2\dnetc.rc output\\${TARGET_BINNAME}.res" >>Makefile
  echo "" >> Makefile
 fi

@@ -8,17 +8,19 @@
 */
 
 const char *w32ss_cpp(void) {
-return "@(#)$Id: w32ss.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $"; }
+return "@(#)$Id: w32ss.cpp,v 1.3 2003/09/12 22:29:27 mweiser Exp $"; }
 
 #include "cputypes.h"
+#include "unused.h"     /* DNETC_UNUSED_* */
 #define INCLUDE_COMMDLG_H
 #define INCLUDE_SHELLAPI_H
 #define INCLUDE_VER_H
 #include <windows.h>
 #include <commdlg.h>
-#include "w32util.h" /* int (PASCAL *__SSMAIN)(HINSTANCE,HINSTANCE,LPSTR,int);*/
-#include "w32ini.h"  /* [Get|Write]DCTIProfile[String|Int]() */
-#include "w32cons.h" /* W32CLI_CONSOLE_NAME, W32CLI_MUTEX_NAME */
+#include "w32util.h"    /* int (PASCAL *__SSMAIN)
+                        **  (HINSTANCE,HINSTANCE,LPSTR,int); */
+#include "w32ini.h"     /* [Get|Write]DCTIProfile[String|Int]() */
+#include "w32cons.h"    /* W32CLI_CONSOLE_NAME, W32CLI_MUTEX_NAME */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -40,7 +42,7 @@ return "@(#)$Id: w32ss.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $"; }
 #endif
 
 /* ---------------------------------------------------- */
-    
+
 static const char *szSSIniSect = "ScreenSaver";
 static const char *szAppName = "distributed.net client launcher";
 static char szAlternateAppName[64] = {0};
@@ -58,7 +60,7 @@ static int SSIsTransparencyAvailable(void)
   if (iswin95 == -1)
     iswin95 = (winGetVersion()>=400 && winGetVersion()<2000)?(+1):(0);
   return iswin95;
-}  
+}
 
 /* ---------------------------------------------------- */
 
@@ -69,7 +71,7 @@ static int SSChangePassword(HINSTANCE hInst, HWND hwnd)
   hwnd = hwnd;
   #else
   HINSTANCE hmpr = LoadLibrary("MPR.DLL");
-  if (hmpr != NULL) 
+  if (hmpr != NULL)
   {
     typedef VOID (WINAPI *PWDCHANGEPASSWORD)
           (LPCSTR lpcRegkeyname,HWND hwnd,UINT uiReserved1,UINT uiReserved2);
@@ -81,13 +83,13 @@ static int SSChangePassword(HINSTANCE hInst, HWND hwnd)
   }
   #endif
   return 0;
-}                                
+}
 
 /* ---------------------------------------------------- */
 
 static LRESULT CALLBACK SaverWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
-{ 
-  static struct 
+{
+  static struct
   {
     HWND hParentWnd;
     POINT initCursorPos;
@@ -98,13 +100,13 @@ static LRESULT CALLBACK SaverWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
     UINT top, left, height, width;
     int mmthreshX, mmthreshY;
   } ss = {0,{0,0},0,0,0,0,0,0,0,0};
-  
+
   switch (msg)
-  { 
+  {
     case WM_CREATE:
-    { 
+    {
       RECT rc;
-      GetCursorPos(&(ss.initCursorPos)); 
+      GetCursorPos(&(ss.initCursorPos));
       ss.initTime = GetTickCount();
       GetWindowRect(hwnd, &rc);
       ss.top = rc.top;
@@ -134,7 +136,7 @@ static LRESULT CALLBACK SaverWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
         MoveWindow( hwnd, ss.left,ss.top, ss.width, ss.height, 0 );
       }
       break;
-    } 
+    }
     case WM_ERASEBKGND:
     {
       if (ss.sstype == -1)
@@ -171,8 +173,8 @@ static LRESULT CALLBACK SaverWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
               #if defined(STRETCH_HALFTONE)
               SetBrushOrgEx(hDC, 0, 0, NULL);
               #endif
-              StretchBlt(hDC, 0, 0, ss.width, ss.height, 
-                         hDesktopDC, 0, 0, 
+              StretchBlt(hDC, 0, 0, ss.width, ss.height,
+                         hDesktopDC, 0, 0,
                          GetSystemMetrics(SM_CXSCREEN),
                          GetSystemMetrics(SM_CYSCREEN),
                          SRCCOPY);
@@ -180,7 +182,7 @@ static LRESULT CALLBACK SaverWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
             }
             else /* fullscreen mode + transparent */
             {
-              BitBlt(hDC, 0, 0, ss.width, ss.height, 
+              BitBlt(hDC, 0, 0, ss.width, ss.height,
                 hDesktopDC, 0, 0, SRCCOPY);
             }
             ReleaseDC( hDesktop, hDesktopDC );
@@ -191,10 +193,10 @@ static LRESULT CALLBACK SaverWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
       break;
     }
     #if 0 /* can't use this otherwise broadcast messages will destroy us */
-    case WM_ACTIVATE: 
-    case WM_ACTIVATEAPP: 
+    case WM_ACTIVATE:
+    case WM_ACTIVATEAPP:
     case WM_NCACTIVATE:
-    { 
+    {
       if (LOWORD(wParam)==WA_INACTIVE && !ss.hParentWnd && !ss.isDialogActive)
       {
         ss.reallyClose = 1;
@@ -204,38 +206,38 @@ static LRESULT CALLBACK SaverWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
     }
     #endif
     case WM_SETCURSOR:
-    { 
+    {
       if (ss.hParentWnd==NULL && !ss.isDialogActive && ss.sstype != -1)
         SetCursor(NULL);
       else
         SetCursor(LoadCursor(NULL,IDC_ARROW));
       break;
     }
-    case WM_LBUTTONDOWN: 
-    case WM_MBUTTONDOWN: 
-    case WM_RBUTTONDOWN: 
+    case WM_LBUTTONDOWN:
+    case WM_MBUTTONDOWN:
+    case WM_RBUTTONDOWN:
     case WM_KEYDOWN:
-    { 
+    {
       if (ss.hParentWnd==NULL && !ss.isDialogActive)
       {
         ss.reallyClose = 1;
         PostMessage(hwnd,WM_CLOSE,0,0);
-      }  
+      }
       break;
     }
     case WM_MOUSEMOVE:
-    { 
+    {
       if (ss.hParentWnd==NULL && !ss.isDialogActive)
       {
         POINT pt; int dx, dy;
-        GetCursorPos(&pt); 
-        dx= pt.x - ss.initCursorPos.x; if (dx<0) dx=-dx; 
+        GetCursorPos(&pt);
+        dx= pt.x - ss.initCursorPos.x; if (dx<0) dx=-dx;
         dy= pt.y - ss.initCursorPos.y; if (dy<0) dy=-dy;
         if (dy > ss.mmthreshY || dx > ss.mmthreshX)
         {
           ss.reallyClose = 1;
           PostMessage(hwnd,WM_CLOSE,0,0);
-        }  
+        }
         else /* adjust for a mouse on an uneven surface */
         {
           ss.initCursorPos.x = pt.x;
@@ -245,14 +247,14 @@ static LRESULT CALLBACK SaverWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
       break;
     }
     case WM_SYSCOMMAND:
-    { 
+    {
       if (ss.hParentWnd==NULL && (wParam==SC_SCREENSAVE || wParam==SC_CLOSE))
         return 0;
       break;
     }
     case (WM_CLOSE):
-    { 
-      if (ss.hParentWnd==NULL) 
+    {
+      if (ss.hParentWnd==NULL)
       {
         if (ss.reallyClose && !ss.isDialogActive)
         {
@@ -268,7 +270,7 @@ static LRESULT CALLBACK SaverWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
           {
             HINSTANCE hpwdcpl = LoadLibrary("PASSWORD.CPL");
             canClose = TRUE;
-            if (hpwdcpl != NULL) 
+            if (hpwdcpl != NULL)
             {
               typedef BOOL (WINAPI *VERIFYSCREENSAVEPWD)(HWND hwnd);
               VERIFYSCREENSAVEPWD VerifyScreenSavePwd;
@@ -276,10 +278,10 @@ static LRESULT CALLBACK SaverWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
                        GetProcAddress(hpwdcpl,"VerifyScreenSavePwd");
               if (VerifyScreenSavePwd)
               {
-                ss.isDialogActive = 1; 
+                ss.isDialogActive = 1;
                 SendMessage( hwnd, WM_SETCURSOR, 0, 0 );
                 canClose = VerifyScreenSavePwd(hwnd);
-                ss.isDialogActive = 0; 
+                ss.isDialogActive = 0;
                 SendMessage( hwnd, WM_SETCURSOR, 0, 0 );
               }
               FreeLibrary( hpwdcpl );
@@ -290,7 +292,7 @@ static LRESULT CALLBACK SaverWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
             DestroyWindow(hwnd);
         }
         return 0;
-      }  
+      }
       break;
     }
     case WM_DESTROY:
@@ -356,7 +358,7 @@ struct _ofh /* size 224 */
 struct _ish /* size 40 */
 {
   BYTE    Name[8];
-  union 
+  union
   { DWORD   PhysicalAddress;
     DWORD   VirtualSize;
   } Misc;
@@ -370,10 +372,10 @@ struct _ish /* size 40 */
   DWORD   Characteristics;
 };
 /* end of fixed headers */
-struct _irde 
+struct _irde
 {
   union __dummy1 {
-    struct __dummy2 
+    struct __dummy2
     { DWORD NameOffset:31;
       DWORD NameIsString:1;
     };
@@ -396,7 +398,7 @@ struct _ird
   WORD    MinorVersion;
   WORD    NumberOfNamedEntries;
   WORD    NumberOfIdEntries;
-  // followed by struct _irde 
+  // followed by struct _irde
   // ImageResourceDirectoryEntries[NumberOfNamedEntries+NumberOfIdEntries]
 };
 #pragma pack()
@@ -407,10 +409,10 @@ static int SSGetFileData(const char *filename, int *verp, int *isguip,
   int ver = -1;
   int isgui = 0;
   HFILE handle = _lopen( filename, OF_READ|OF_SHARE_DENY_NONE);
-  
+
   if (ssnbuf && ssnbuflen)
     ssnbuf[0] = 0;
-  
+
   if (handle != HFILE_ERROR)
   {
     char rbuf[0x100]; char *p;
@@ -426,17 +428,17 @@ static int SSGetFileData(const char *filename, int *verp, int *isguip,
           {
             if (_lread( handle, rbuf, sizeof(rbuf) ) != sizeof(rbuf))
             { /* overwrite in case read was partial */
-              rbuf[0] = 'M'; rbuf[1] = 'Z'; 
+              rbuf[0] = 'M'; rbuf[1] = 'Z';
             }
           }
         }
       }
-      if ((rbuf[0]=='N' && rbuf[1]=='E' && 
+      if ((rbuf[0]=='N' && rbuf[1]=='E' &&
            rbuf[0x36] == 0x02 /* win */ || rbuf[0x36]==0x04 /* win386 */))
       {
         ver = (rbuf[0x3F]*100)+rbuf[0x3E];
         isgui = 1;
-      
+
         if (ssnbuf && ssnbuflen>1)
         {
           p = &rbuf[0x2C]; /*off from start of *file* to nonres names */
@@ -479,13 +481,13 @@ static int SSGetFileData(const char *filename, int *verp, int *isguip,
                 (ofh->MinorSubsystemVersion);
           ver+= 2000; /* 32bit */
           isgui = (ofh->Subsystem == 2); /* IMAGE_SUBSYSTEM_WINDOWS_GUI */
-          
+
           #if (CLIENT_OS == OS_WIN32)
           if (ssnbuf && ssnbuflen>1)
           {
             HINSTANCE hInst = LoadLibraryEx(filename, NULL,
                 LOAD_LIBRARY_AS_DATAFILE | DONT_RESOLVE_DLL_REFERENCES);
-            if (hInst) 
+            if (hInst)
             {
               LoadString( hInst, (UINT)1, ssnbuf, (UINT)ssnbuflen);
               FreeLibrary( hInst );
@@ -519,7 +521,7 @@ static BOOL CALLBACK __SSFreeProcessEnumWinProcNT(HWND hwnd,LPARAM lParam)
 }
 #endif
 static BOOL CALLBACK __SSFreeProcessEnumWinProc(HWND hwnd,LPARAM lParam)
-{   
+{
    HINSTANCE thatpid, searchpid = (HINSTANCE)lParam;
    thatpid = (HINSTANCE)GetWindowLong(hwnd,GWL_HINSTANCE);
    if (thatpid == searchpid)
@@ -528,9 +530,10 @@ static BOOL CALLBACK __SSFreeProcessEnumWinProc(HWND hwnd,LPARAM lParam)
 }
 
 /* only valid if we didn't wait for exit */
-int SSFreeProcess( void *handle, int withShutdown ) 
+int SSFreeProcess( void *handle, int withShutdown )
 {
-  withShutdown = withShutdown; /* shaddup compiler */
+  DNETC_UNUSED_PARAM(withShutdown);
+
   if (handle && handle != ((void *)ULONG_MAX))
   {
     #if (CLIENT_OS == OS_WIN32)
@@ -550,7 +553,7 @@ int SSFreeProcess( void *handle, int withShutdown )
             if (WaitForSingleObject(pidp->hProcess,0) != WAIT_TIMEOUT)
               break;
           }
-          EnumWindows((WNDENUMPROC)__SSFreeProcessEnumWinProcNT, 
+          EnumWindows((WNDENUMPROC)__SSFreeProcessEnumWinProcNT,
                       ((LPARAM)(pidp->dwProcessId)) );
         }
       }
@@ -590,22 +593,22 @@ int SSFreeProcess( void *handle, int withShutdown )
             break;
           if (i < 0)
             break;
-          EnumWindows((WNDENUMPROC)__SSFreeProcessEnumWinProc, 
+          EnumWindows((WNDENUMPROC)__SSFreeProcessEnumWinProc,
                       ((LPARAM)(pidtrack->hInst)) );
-        }   
+        }
         if (hTimer)
           KillTimer(NULL,hTimer);
       }
     }
     free(handle);
-    return 0;      
+    return 0;
   }
   return -1;
 }
 
 /* ---------------------------------------------------- */
 
-void *SSLaunchProcess( const char *filename, const char *args, 
+void *SSLaunchProcess( const char *filename, const char *args,
                        int waitMode, int prio )
 {
   MSG msg;
@@ -638,7 +641,7 @@ void *SSLaunchProcess( const char *filename, const char *args,
       if (args)
         strncpy(&cmdline[strlen(strcat(cmdline," "))], args, 80);
       cmdline[sizeof(cmdline)-1] = '\0';
-   
+
       if (nCmdShow != 0)
       {
         su.dwFlags |= STARTF_USESHOWWINDOW;
@@ -650,7 +653,7 @@ void *SSLaunchProcess( const char *filename, const char *args,
         prio = HIGH_PRIORITY_CLASS;
       else
         prio = NORMAL_PRIORITY_CLASS;
-  
+
       if (waitMode < 0)
       {
         waitMode = +1;
@@ -659,7 +662,7 @@ void *SSLaunchProcess( const char *filename, const char *args,
         waitMode = -1;
         if (filever < 100)
           filever = SSGetFileData(filename, 0, 0, 0, 0);
-        if (filever < 2000) 
+        if (filever < 2000)
         {
           waitMode = +1;
           #if 0
@@ -738,14 +741,14 @@ void *SSLaunchProcess( const char *filename, const char *args,
         strcat(strcat(strcpy(cmdline, "\""),filename),"\"");
       else
         strcpy(cmdline, filename );
-      if (args) 
+      if (args)
         strncpy(&cmdline[strlen(strcat(cmdline," "))], args, 80);
       cmdline[sizeof(cmdline)-1] = '\0';
 
       ((struct w16ProcessTrack *)pidp)->hInst = 0;
       if ((that = ((HINSTANCE)WinExec( cmdline, nCmdShow ))) >= ((HINSTANCE)32))
       {
-        HMODULE hModule; 
+        HMODULE hModule;
         GetModuleFileName(that, cmdline, sizeof(cmdline));
         hModule = GetModuleHandle(cmdline);
         ((struct w16ProcessTrack *)pidp)->hInst = that;
@@ -795,12 +798,12 @@ void *SSLaunchProcess( const char *filename, const char *args,
             }
             else /* hope this never gets executed */
             {
-              DWORD nowms = 0, endms = 0; 
+              DWORD nowms = 0, endms = 0;
               do
               {
-                Yield();                           
+                Yield();
                 nowms = GetTickCount(); /* has real msec resolution */
-                if (endms == 0)         /* see w32in16.cpp */  
+                if (endms == 0)         /* see w32in16.cpp */
                   endms = nowms + 500;
               } while (nowms <= endms);
             }
@@ -809,7 +812,7 @@ void *SSLaunchProcess( const char *filename, const char *args,
             KillTimer(NULL,hTimer);
         }
       } /* WinExec()'d ok */
-      
+
       if (((struct w16ProcessTrack *)pidp)->hInst)
       {
         if (waitMode)
@@ -821,9 +824,9 @@ void *SSLaunchProcess( const char *filename, const char *args,
       }
       free(pidp);
     }
-    
+
   }
-  return 0;      
+  return 0;
 }
 
 
@@ -836,7 +839,7 @@ static HWND SSGetPreviewWindow(void)
   if ((winGetVersion()%2000) >= 400)
   {
     HINSTANCE hInst = LoadLibrary("USER32");
-    if (hInst != NULL) 
+    if (hInst != NULL)
     {
       typedef HWND (WINAPI *FINDPARENTEX)(HWND,HWND,LPSTR,LPSTR);
       FINDPARENTEX FindWndEx = (FINDPARENTEX)
@@ -881,7 +884,7 @@ static HWND SSGetPreviewWindow(void)
   }
   #endif
   return hPreview;
-}      
+}
 
 /* ---------------------------------------------------- */
 
@@ -906,7 +909,7 @@ static int IsDCTIClientRunning(void)
   }
   #endif
   return found;
-}  
+}
 
 /* ---------------------------------------------------- */
 
@@ -918,7 +921,7 @@ static int SSVerifyFileExists( const char *filename )
   #define OF_SEARCH 0x0400
   #endif
   return (OpenFile( filename, &ofstruct, OF_EXIST|OF_SEARCH) != HFILE_ERROR );
-}  
+}
 
 /* ---------------------------------------------------- */
 
@@ -932,7 +935,7 @@ static UINT SSRunMessageLoop(void)
   while (PeekMessage(&msg, NULL, 0, 0, (/*PM_NOYIELD|*/PM_NOREMOVE)))
   {
     GetMessage(&msg,NULL,0,0);
-    rc = msg.message; 
+    rc = msg.message;
     if (msg.message == WM_QUIT)
       break;
     TranslateMessage(&msg);
@@ -943,21 +946,21 @@ static UINT SSRunMessageLoop(void)
 
 /* ---------------------------------------------------- */
 
-static int SSSetiControl(const char *ssname) 
-{ 
+static int SSSetiControl(const char *ssname)
+{
   /* I wish, oh, I wish this wasn't needed.
      a) if we're about to launch a screensaver...
-        1) if the ss _is_ seti, then make sure the seticlient is already 
+        1) if the ss _is_ seti, then make sure the seticlient is already
            running otherwise the screensaver will exit right away. Duh!
         2) if the ss _is_not_ seti, then ensure the seti client is _not_
            running otherwise the seti client will intercept the ss
            WM_SYSCOMMANDs and everything goes all to hell. Double-Duh!
      b) the screensaver has returned control to us...
-        ensure the seti client is no longer running otherwise the seticlient 
+        ensure the seti client is no longer running otherwise the seticlient
         client will intercept the next ss WM_SYSCOMMANDs and nothing works.
      Whoever wrote that piece of shit software needs to learn that although
      it aint rocket science, one still needs to play by the rules.
-  */        
+  */
   //static char seti[]={'S'|0x80,'E'|0x80,'T'|0x80,'I'|0x80,'@'|0x80,'H'|0x80,'o'|0x80,'m'|0x80,'e'|0x80,' '|0x80,
   //                    'C'|0x80,'l'|0x80,'i'|0x80,'e'|0x80,'n'|0x80,'t'|0x80,'\0'};
   #ifdef _MSC_VER
@@ -972,7 +975,7 @@ static int SSSetiControl(const char *ssname)
     int i;
     for (i=0;seticlass[i];i++)
       seticlass[i]^=0x80;
-  }  
+  }
   if (ssname) /* start */
   {
     char path[MAX_PATH+2];
@@ -996,13 +999,13 @@ static int SSSetiControl(const char *ssname)
         {
           started = 0;
           strcat( path, ".ini" );
-          if (GetPrivateProfileString("boot", "ClientPath", 
+          if (GetPrivateProfileString("boot", "ClientPath",
                    "", &path[1], sizeof(path)-1, path) != 0)
           {
             p = &path[1];
             if (strchr( p,' ' ))
             {
-              *--p = '\"'; 
+              *--p = '\"';
               strcat( p, "\"" );
             }
             strcat( p, " -min" );
@@ -1024,10 +1027,10 @@ static int SSSetiControl(const char *ssname)
                 #else
                 Yield();
                 #endif
-              }  
+              }
             }
           }
-        } 
+        }
         if (started)
           return +1; /* Seti client started */
         return -1; /* Seti client failed to start */
@@ -1041,13 +1044,13 @@ static int SSSetiControl(const char *ssname)
     /* grr. SETIclient does not respond to WM_CLOSE. Only WM_DESTROY works */
     HWND hwnd; int which, found = 0;
     char childclass[20]; /* "SetiClientParent" and "SetiClientChild" */
-    strcpy(childclass,seticlass); 
+    strcpy(childclass,seticlass);
     strcpy(&childclass[10],"Child");
     for (which = 0;found < 100 && which < 2; which++)
     {
       char *classname = ((which==0)?(seticlass):(childclass));
       found = 0;
-      while ((++found)<100 && (hwnd = FindWindow( classname, NULL ))!=NULL) 
+      while ((++found)<100 && (hwnd = FindWindow( classname, NULL ))!=NULL)
       {
         SendMessage(hwnd,WM_DESTROY,0,0);
         if (SSRunMessageLoop() == WM_QUIT)
@@ -1064,7 +1067,7 @@ static int SSSetiControl(const char *ssname)
     }
   }
   return 0;
-}    
+}
 #endif
 
 /* ---------------------------------------------------- */
@@ -1091,10 +1094,10 @@ static LRESULT CALLBACK ExternalPreviewProc(HWND hwnd,UINT msg,
             hwndChild = 0;
             PostMessage(hwnd,WM_DESTROY,0,0);
           }
-        }  
+        }
       }
       return 0;
-    }    
+    }
     default:
     {
       if (hwndChild)
@@ -1114,24 +1117,24 @@ static LRESULT CALLBACK ExternalPreviewProc(HWND hwnd,UINT msg,
 /* ---------------------------------------------------- */
 
 static int SSDoSaver(HINSTANCE hInstance, HWND hParentWnd )
-{ 
+{
   char path[MAX_PATH+2];
   int sstype = SSGetProfileInt("type",0);
   int inPreview = 0;
   void *clientHandle = 0;
   ATOM syncAtom = 0;
-  
+
   if (hParentWnd)
   {
     inPreview = 1;
     if (hParentWnd == GetDesktopWindow()) //internal preview
       hParentWnd = NULL;
   }
-  
+
   if (!inPreview && !IsDCTIClientRunning())
   {
     if (SSGetProfileString("launch","",path,sizeof(path))!=0)
-    { 
+    {
       if (GlobalFindAtom( W32CLI_SSATOM_NAME ) == 0)
         syncAtom = GlobalAddAtom( W32CLI_SSATOM_NAME );
       if (syncAtom)
@@ -1160,14 +1163,14 @@ static int SSDoSaver(HINSTANCE hInstance, HWND hParentWnd )
         void *handle;
         sprintf( cmdline, "/p %lu", (long)hParentWnd );
         handle = SSLaunchProcess( path, cmdline, 0 /*-filever*/, 0 );
-        if (handle) 
+        if (handle)
           SSFreeProcess( handle, 0 ); /* free, but don't kill it */
       }
     }
-  } 
+  }
 
   SSSetiControl(NULL); /* stop seti (if running) */
-  
+
   if (sstype <= 0)
   {
     char classname[64];
@@ -1192,10 +1195,10 @@ static int SSDoSaver(HINSTANCE hInstance, HWND hParentWnd )
     {
       if (!SSIsTransparencyAvailable())
         sstype = 0;
-      else     
+      else
         wc.hbrBackground = NULL;   /* transparent */
     }
-              
+
     if ( RegisterClass(&wc) )
     {
       //in preview mode, hwnd is the parent window, in runmode, hwnd is null
@@ -1205,24 +1208,24 @@ static int SSDoSaver(HINSTANCE hInstance, HWND hParentWnd )
       int cx = 0, cy = 0, ox = 0, oy = 0;
 
       if (hParentWnd)
-      { 
+      {
         RECT rc; GetWindowRect(hParentWnd, &rc);
-        cx = rc.right-rc.left; 
-        cy = rc.bottom-rc.top;  
+        cx = rc.right-rc.left;
+        cy = rc.bottom-rc.top;
         wsbits = WS_CHILD|WS_VISIBLE;
       }
       else
       {
-        cx=GetSystemMetrics(SM_CXSCREEN); 
+        cx=GetSystemMetrics(SM_CXSCREEN);
         cy=GetSystemMetrics(SM_CYSCREEN);
 #ifdef WITH_MULTIMON_SUPPORT
         if (((winGetVersion()>=410 && winGetVersion()<2000) ||
             winGetVersion()>=2500) && GetSystemMetrics(SM_CMONITORS)>1)
         {
-          cx=GetSystemMetrics(SM_CXVIRTUALSCREEN); 
+          cx=GetSystemMetrics(SM_CXVIRTUALSCREEN);
           cy=GetSystemMetrics(SM_CYVIRTUALSCREEN);
-          ox=GetSystemMetrics(SM_XVIRTUALSCREEN); 
-          oy=GetSystemMetrics(SM_XVIRTUALSCREEN); 
+          ox=GetSystemMetrics(SM_XVIRTUALSCREEN);
+          oy=GetSystemMetrics(SM_XVIRTUALSCREEN);
         }
 #endif
         exbits = WS_EX_TOPMOST;
@@ -1237,7 +1240,7 @@ static int SSDoSaver(HINSTANCE hInstance, HWND hParentWnd )
         }
       }
       hScrWindow = CreateWindowEx(exbits, wc.lpszClassName, "",
-                   wsbits, (UINT)ox, (UINT)oy, (UINT)cx, (UINT)cy, 
+                   wsbits, (UINT)ox, (UINT)oy, (UINT)cx, (UINT)cy,
                    hParentWnd, NULL, hInstance, NULL );
       if (hScrWindow)
       {
@@ -1252,7 +1255,7 @@ static int SSDoSaver(HINSTANCE hInstance, HWND hParentWnd )
         }
         #endif
         while ( GetMessage( &msg, NULL, 0, 0 ) )
-        { 
+        {
           TranslateMessage( &msg );
           DispatchMessage( &msg );
         }
@@ -1281,16 +1284,16 @@ static int SSDoSaver(HINSTANCE hInstance, HWND hParentWnd )
     syncAtom = 0;
   }
   return 0;
-}  
+}
 
 /* ---------------------------------------------------- */
 
 #if defined(__WINDOWS_386__)
-BOOL PASCAL VerQueryValue(const void * lpvBlock, LPCSTR lpszSubBlock, 
+BOOL PASCAL VerQueryValue(const void * lpvBlock, LPCSTR lpszSubBlock,
                           VOID ** lplpBuf, UINT * lpcb)
 {
   int rc = 0;
-  if (lpcb) 
+  if (lpcb)
     *lpcb = 0;
   if (lpszSubBlock && lpvBlock)
   {
@@ -1306,14 +1309,14 @@ BOOL PASCAL VerQueryValue(const void * lpvBlock, LPCSTR lpszSubBlock,
         DWORD tgt = 0, alias = (DWORD)AllocAlias16( (void *)lpvBlock );
         rc = 0xffff & _Call16(lpfn,"dppp",alias,lpszSubBlock,&tgt,&len);
         if (rc)
-        { 
+        {
           if (lplpBuf)
             *lplpBuf = MapAliasToFlat( tgt );
           if (lpcb)
             *lpcb = len;
         }
         FreeAlias16(alias);
-      }        
+      }
       FreeLibrary(hLib);
     }
   }
@@ -1323,7 +1326,7 @@ BOOL PASCAL VerQueryValue(const void * lpvBlock, LPCSTR lpszSubBlock,
 
 /* ---------------------------------------------------- */
 
-static int SSGetFileVersionInfo(const char *filename, 
+static int SSGetFileVersionInfo(const char *filename,
                      char *filedescr, unsigned int filedescrlen,
                      char *companyname, unsigned int companynamelen,
                      char *versionstr, unsigned int versionstrlen )
@@ -1381,12 +1384,12 @@ static int SSGetFileVersionInfo(const char *filename,
         tgtarray[0].buf = filedescr;
         tgtarray[0].buflen = filedescrlen;
         tgtarray[1].label = "CompanyName";
-        tgtarray[1].buf = companyname; 
+        tgtarray[1].buf = companyname;
         tgtarray[1].buflen = companynamelen;
         tgtarray[2].label = "FileVersion";
         tgtarray[2].buf = versionstr;
         tgtarray[2].buflen = versionstrlen;
-        
+
         for (tgtpos = 0;tgtpos < 3; tgtpos++ )
         {
           if (tgtarray[tgtpos].buf && tgtarray[tgtpos].buflen)
@@ -1409,8 +1412,8 @@ static int SSGetFileVersionInfo(const char *filename,
                     buf[cpypos++] = *cpyptr++;
                   buf[cpypos] = '\0';
                 }
-              }    
-            }  
+              }
+            }
           }
         }
       }
@@ -1426,7 +1429,7 @@ static int SSGetFileVersionInfo(const char *filename,
 
 /* ---------------------------------------------------- */
 
-static const char *SSGetDCTIFileVersion(const char *filename, 
+static const char *SSGetDCTIFileVersion(const char *filename,
                                         int dctionly, int withtype)
 {
   char companyBuf[25]; char versionBuf[40]; char filedescrBuf[128];
@@ -1454,7 +1457,7 @@ static const char *SSGetDCTIFileVersion(const char *filename,
         {
           verstring[wpos++]=' ';
           verstring[wpos++]='v';
-        }  
+        }
         while (wpos<(sizeof(verstring)-1) && versionBuf[rpos])
           verstring[wpos++] = versionBuf[rpos++];
         verstring[wpos] = '\0';
@@ -1471,22 +1474,22 @@ static const char *SSGetDCTIFileVersion(const char *filename,
     }
   }
   return NULL;
-}      
+}
 
 /* ---------------------------------------------------- */
 
-static int SSExtractScreennameFromFile( const char *filename, 
+static int SSExtractScreennameFromFile( const char *filename,
                       char *screenname, unsigned int buflen)
 {
   /* what this function _should_ do is extract the app description
      for win16 apps and extract #1 from the string table for 32 bit apps.
-     and return the filebasename only when those fail. 
+     and return the filebasename only when those fail.
      We're ignorant and just do it the win95 way (use filebasename).
-  */ 
+  */
   unsigned int len = 0; int ver;
 
   if (SSGetFileData(filename, &ver, 0, screenname, buflen) >= 0)
-    len = strlen(screenname);  
+    len = strlen(screenname);
 
   if (len == 0 && SSVerifyFileExists( filename ))
   {
@@ -1511,7 +1514,7 @@ static int SSExtractScreennameFromFile( const char *filename,
       else if (ch >= 'A' && ch <= 'Z')
         locnt--;
       screenname[len++] = prevchar = ch;
-    } 
+    }
     screenname[len]='\0';
     if (len && ((upcnt == len) || (locnt == len)))
     {
@@ -1528,13 +1531,13 @@ static int SSExtractScreennameFromFile( const char *filename,
           screenname[len] &= ~(' ');
         len++;
         prevchar = ch;
-      }  
-    }    
+      }
+    }
   }
   memset((char *)&screenname[len],' ',buflen-len);
   screenname[buflen-1] = '\0';
   return len;
-}  
+}
 
 /* ---------------------------------------------------- */
 
@@ -1549,7 +1552,7 @@ static const char *SSFindNext(void *dirbase, char *buf, unsigned int bufsize)
     #if (CLIENT_OS == OS_WIN32)
     WIN32_FIND_DATA fdata;
     if (!FindNextFile( (HANDLE)dirbase, &fdata))
-      return (const char *)0;  
+      return (const char *)0;
     strncpy( buf, fdata.cFileName, bufsize );
     #else
     DIR *dir;
@@ -1560,7 +1563,7 @@ static const char *SSFindNext(void *dirbase, char *buf, unsigned int bufsize)
     buf[bufsize-1] = '\0';
     return buf;
   }
-  return (const char *)0;  
+  return (const char *)0;
 }
 
 /* ---------------------------------------------------- */
@@ -1609,11 +1612,11 @@ static int SSCB_FINDSTRINGEXACT(HWND hwnd,const char *screenname)
   rc = _16SendMessage( hwnd, CB_FINDSTRINGEXACT, -1, (LPARAM)alias);
   FreeAlias16(alias);
   return rc;
-}  
+}
 #else
 #define SSCB_FINDSTRINGEXACT(_hwnd,_sname) \
    ((int)SendMessage(_hwnd,CB_FINDSTRINGEXACT,((WPARAM)-1),(LPARAM)(_sname)))
-#endif     
+#endif
 
 /* ---------------------------------------------------- */
 
@@ -1623,7 +1626,7 @@ static struct sslstruct
   char screenname[32];
   char filename[MAX_PATH+2];
   int type;
-} *ssl = NULL; 
+} *ssl = NULL;
 
 static struct sslstruct ssl_blank={NULL,"Blank Screen",{0},0};
 static struct sslstruct ssl_trans={NULL,"(None::transparent)",{0},-1};
@@ -1633,7 +1636,7 @@ static int _ConstructSSList(HWND hwnd, int *oseltype, const char *selname)
   struct sslstruct *tail = ssl = NULL;
   int pos, addcount = 0, seltype = *oseltype;
   const char *selstring = NULL;
-  
+
   pos = strlen(ssl_blank.screenname);
   memset((char *)&ssl_blank.screenname[pos],' ',sizeof(ssl_blank.screenname)-pos);
   ssl_blank.screenname[sizeof(ssl_blank.screenname)-1]='\0';
@@ -1641,12 +1644,12 @@ static int _ConstructSSList(HWND hwnd, int *oseltype, const char *selname)
   memset((void *)&ssl_trans.screenname[pos],' ',sizeof(ssl_trans.screenname)-pos);
   ssl_trans.screenname[sizeof(ssl_trans.screenname)-1]='\0';
 
-  pos = (int)SendMessage( hwnd, CB_ADDSTRING, 0, 
+  pos = (int)SendMessage( hwnd, CB_ADDSTRING, 0,
                           (LPARAM)(&ssl_blank.screenname[0]) );
 
   if (pos != CB_ERR && pos != CB_ERRSPACE)
   {
-    tail = ssl = &ssl_blank; 
+    tail = ssl = &ssl_blank;
     tail->type = 0; //blank screen
     tail->next = NULL;
     addcount++;
@@ -1655,7 +1658,7 @@ static int _ConstructSSList(HWND hwnd, int *oseltype, const char *selname)
 
     if (SSIsTransparencyAvailable())
     {
-      pos = (int)SendMessage( hwnd, CB_ADDSTRING, 0, 
+      pos = (int)SendMessage( hwnd, CB_ADDSTRING, 0,
                               (LPARAM)(&ssl_trans.screenname[0]) );
       if (pos != CB_ERR && pos != CB_ERRSPACE)
       {
@@ -1669,12 +1672,12 @@ static int _ConstructSSList(HWND hwnd, int *oseltype, const char *selname)
       }
     }
   }
-        
+
   if (pos != CB_ERR && pos != CB_ERRSPACE)
   {
     int curtype; char *basename;
     char ourfile[MAX_PATH+2];
-    
+
     if (GetModuleFileName((HINSTANCE)GetWindowLong(hwnd,GWL_HINSTANCE),
                           ourfile,sizeof(ourfile)) == 0)
       ourfile[0] = '\0';
@@ -1688,7 +1691,7 @@ static int _ConstructSSList(HWND hwnd, int *oseltype, const char *selname)
     {
       char searchpath[MAX_PATH+2];
       unsigned int len;
-      void *dirhandle = (void *)0; 
+      void *dirhandle = (void *)0;
       char dirbuf[MAX_PATH+2];
 
       if (curtype == 1)
@@ -1705,12 +1708,12 @@ static int _ConstructSSList(HWND hwnd, int *oseltype, const char *selname)
         searchpath[len++] = '\\';
         searchpath[len] = '\0';
       }
-    
+
       if (dirhandle)
       {
         do
         {
-          struct sslstruct *next = 
+          struct sslstruct *next =
              (struct sslstruct *)malloc(sizeof(struct sslstruct));
           if (!next)
             break;
@@ -1740,7 +1743,7 @@ static int _ConstructSSList(HWND hwnd, int *oseltype, const char *selname)
             pos = CB_ERR;
           else if (SSCB_FINDSTRINGEXACT( hwnd, next->screenname ) != CB_ERR)
             pos = CB_ERR;
-          else 
+          else
             pos = (int)SendMessage( hwnd, CB_ADDSTRING, 0,
                       (LPARAM)(next->screenname) );
 
@@ -1758,7 +1761,7 @@ static int _ConstructSSList(HWND hwnd, int *oseltype, const char *selname)
             tail->next = next;
             tail = next;
             addcount++;
-            if (seltype > 0 && selstring == NULL && 
+            if (seltype > 0 && selstring == NULL &&
                 strcmp( selname, next->filename ) == 0 )
               selstring = tail->screenname;
           }
@@ -1773,14 +1776,14 @@ static int _ConstructSSList(HWND hwnd, int *oseltype, const char *selname)
     seltype = 0;
     selstring = ssl_blank.screenname;
   }
-  
+
   if (addcount != 0)
     SendMessage( hwnd, CB_SELECTSTRING, ((WPARAM)-1), (LPARAM)((LPCSTR)selstring));
-  
+
   *oseltype = seltype;
   EnableWindow( hwnd, (addcount>1) );
   return addcount;
-}  
+}
 
 /* ---------------------------------------------------- */
 
@@ -1789,7 +1792,7 @@ static int _MapSSList(HWND hwnd, int *seltype, char *selname)
   if (hwnd && IsWindowEnabled(hwnd))
   {
     char buf[sizeof(ssl->screenname)+1];
-    int sel = (int)SendMessage( hwnd, CB_GETCURSEL, 0, 0 );  
+    int sel = (int)SendMessage( hwnd, CB_GETCURSEL, 0, 0 );
     if (sel != CB_ERR)
     {
       sel = (int)SendMessage( hwnd, CB_GETLBTEXT, (UINT)sel, (LPARAM)&buf[0] );
@@ -1808,13 +1811,13 @@ static int _MapSSList(HWND hwnd, int *seltype, char *selname)
           return sel;
         }
         tail = tail->next;
-      }  
+      }
     }
   }
   *seltype = 0;
   *selname = '\0';
   return CB_ERR;
-}  
+}
 
 /* ---------------------------------------------------- */
 
@@ -1840,7 +1843,7 @@ static LRESULT CALLBACK SSGenChildWndProc(HWND hwnd,UINT msg,
                                           WPARAM wParam,LPARAM lParam)
 {
   //if (msg == WM_CREATE)
-  //  ShowWindow(hwnd,SW_HIDE); 
+  //  ShowWindow(hwnd,SW_HIDE);
   return DefWindowProc(hwnd,msg,wParam,lParam);
 }
 
@@ -1864,11 +1867,11 @@ static HWND SSGenChild(HWND hParentWnd)
       HWND hScrWindow;
       RECT rc; GetClientRect(hParentWnd, &rc);
       hScrWindow = CreateWindow(wc.lpszClassName, "blah", WS_CHILD,
-                   0,0, rc.right-rc.left, rc.bottom-rc.top, hParentWnd, 
+                   0,0, rc.right-rc.left, rc.bottom-rc.top, hParentWnd,
                    NULL, wc.hInstance, NULL );
       if (hScrWindow)
         return hScrWindow;
-//MessageBox(NULL,"childwin not created","blah",MB_OK);        
+//MessageBox(NULL,"childwin not created","blah",MB_OK);
       UnregisterClass( wc.lpszClassName, wc.hInstance );
     }
   }
@@ -1893,7 +1896,7 @@ static void SSUnGenChild(HWND hChildWnd)
 #if (CLIENT_OS == OS_WIN32)
 //<BovineMoo> comdlg32.dll has a very huge memory footprint
 //<BovineMoo> pulls in like 20 dlls or so
-//<BovineMoo> well, comdlg32 pulls in winspool, which pulls in activeds, 
+//<BovineMoo> well, comdlg32 pulls in winspool, which pulls in activeds,
 //<BovineMoo> which pulls in tons of network and crypto things
 //<BovineMoo> (on win2k)
 //<BovineMoo> actuall winspool is delay loaded
@@ -1911,8 +1914,8 @@ BOOL __GetOpenFileName(LPOPENFILENAME lpofn)
   }
   return rc;
 }
-#else   
-#define __GetOpenFileName(__ofnp) GetOpenFileName(__ofnp) 
+#else
+#define __GetOpenFileName(__ofnp) GetOpenFileName(__ofnp)
 #endif
 
 
@@ -1934,10 +1937,10 @@ static BOOL CALLBACK SSConfigDialogProc( HWND dialog,
       SetWindowText( dialog, szAlternateAppName );
       if (hwnd)
         ShowWindow( hwnd, SW_HIDE );
-      hwnd = GetDlgItem( dialog, 402 /* SSCONFIG_FNCAPTION */ ); 
+      hwnd = GetDlgItem( dialog, 402 /* SSCONFIG_FNCAPTION */ );
       if (hwnd)
         SetWindowText(hwnd, "Application to launch in the background:");
-      hwnd = GetDlgItem( dialog, 405 /* SSCONFIG_FNCONFIG */ ); 
+      hwnd = GetDlgItem( dialog, 405 /* SSCONFIG_FNCONFIG */ );
       if (hwnd)
         ShowWindow( hwnd, SW_HIDE );
     }
@@ -1949,7 +1952,7 @@ static BOOL CALLBACK SSConfigDialogProc( HWND dialog,
 
     dlghlpWnd = GetDlgItem( dialog, 450 /* dialog help text */);
     dlghelptext[0]='\0';
-    
+
     sslistWnd = GetDlgItem( dialog, 408 /* SSCONFIG_SSLIST */ );
     if (sslistWnd)
     {
@@ -2047,7 +2050,7 @@ static BOOL CALLBACK SSConfigDialogProc( HWND dialog,
             SSGetProfileString("launch","",origpath,sizeof(origpath));
             EnableWindow( dialog, 0 );
             SSLaunchProcess( fullpath, "-config", +1, 0 ); /* soft block */
-            EnableWindow( dialog, 1 ); 
+            EnableWindow( dialog, 1 );
             SSWriteProfileString("launch",origpath);
             SetWindowPos( dialog, HWND_TOP, 0,0,0,0, SWP_SHOWWINDOW|SWP_NOMOVE|SWP_NOSIZE);
             SetActiveWindow(dialog);
@@ -2073,7 +2076,7 @@ static BOOL CALLBACK SSConfigDialogProc( HWND dialog,
           ofn.lStructSize = sizeof(ofn);
           ofn.hwndOwner = dialog;
           //ofn.hInstance = (HINSTANCE)GetWindowLong(dialog,GWL_HINSTANCE);
-          ofn.lpstrFilter = 
+          ofn.lpstrFilter =
                         "distributed.net clients\0dnetc.exe;rc5des*.exe;\0"
                         "All Executable Files\0*.EXE;*.COM\0\0";
           if (szAlternateAppName[0])
@@ -2105,7 +2108,7 @@ static BOOL CALLBACK SSConfigDialogProc( HWND dialog,
           {
             SetWindowText(hwnd, ofn.lpstrFile );
             cmd = EN_CHANGE;
-          } 
+          }
         }
         //fallthrough
       }
@@ -2149,7 +2152,7 @@ static BOOL CALLBACK SSConfigDialogProc( HWND dialog,
                 ((szAlternateAppName[0])?("No version information available")
                 :("Path does not point to a distributed.net client for Windows")));
               }
-              else 
+              else
               {
                 SSGetFileData(fullpath, 0, &found /* isgui */, 0, 0);
                 if (!found)
@@ -2187,7 +2190,7 @@ static BOOL CALLBACK SSConfigDialogProc( HWND dialog,
         if (sslistWnd)
         {
           char lastname[sizeof(fullpath)];
-          int newtype, lasttype; 
+          int newtype, lasttype;
 
           EnableWindow( dialog, 0 ); //ShowWindow(dialog,SW_HIDE);
 
@@ -2196,7 +2199,7 @@ static BOOL CALLBACK SSConfigDialogProc( HWND dialog,
           _MapSSList(sslistWnd, &newtype, fullpath );
            SSWriteProfileInt( "type", newtype );
           SSWriteProfileString( "file", fullpath );
-          SSDoSaver( (HINSTANCE)GetWindowLong(dialog,GWL_HINSTANCE), 
+          SSDoSaver( (HINSTANCE)GetWindowLong(dialog,GWL_HINSTANCE),
                           GetDesktopWindow() );
           SSWriteProfileInt( "type", lasttype );
           SSWriteProfileString( "file", lastname );
@@ -2243,7 +2246,7 @@ static BOOL CALLBACK SSConfigDialogProc( HWND dialog,
             }
             else if (filever >= 0)
             {
-              EnableWindow( dialog, 0 ); 
+              EnableWindow( dialog, 0 );
               SSLaunchProcess( fullpath, "/c", +1, +1 ); /* soft block + higher prio */
               EnableWindow( dialog, 1 );
             }
@@ -2265,23 +2268,23 @@ static int SSConfigure(HINSTANCE hInstance, HWND hwnd)
   FARPROC func = MakeProcInstance( (FARPROC)SSConfigDialogProc, hInstance );
   if (func)
   {
-    if (!hwnd) 
+    if (!hwnd)
     {
       #if (CLIENT_OS == OS_WIN32)
-      hwnd = GetForegroundWindow(); 
-      #else 
+      hwnd = GetForegroundWindow();
+      #else
       if ((winGetVersion()%2000)>=400)
         hwnd = GetFocus(); //GetDesktopWindow()
       #endif
     }
-    DialogBox( hInstance, MAKEINTRESOURCE(2003 /* DLG_SCRNSAVECONFIGURE*/), 
+    DialogBox( hInstance, MAKEINTRESOURCE(2003 /* DLG_SCRNSAVECONFIGURE*/),
                hwnd, (DLGPROC)func );
     (void)FreeProcInstance( func );
     if (hwnd)
       EnableWindow(hwnd,1);
   }
   return 0;
-}  
+}
 
 /* ---------------------------------------------------- */
 
@@ -2292,7 +2295,7 @@ static void SSAssertConfiguration(HINSTANCE hInst)
 
   if (SSGetProfileString("launch","",pathbuffer,sizeof(pathbuffer))==0)
   {
-    if (GetDCTIProfileString(0, "MRUClient", "", pathbuffer, 
+    if (GetDCTIProfileString(0, "MRUClient", "", pathbuffer,
         sizeof(pathbuffer))!=0)
     {
       SSWriteProfileString("launch",pathbuffer);
@@ -2301,12 +2304,12 @@ static void SSAssertConfiguration(HINSTANCE hInst)
 
   if (GetModuleFileName( hInst, pathbuffer, sizeof(pathbuffer)))
   {
-    if (SSGetFileVersionInfo( pathbuffer, 
+    if (SSGetFileVersionInfo( pathbuffer,
                               szAlternateAppName, sizeof(szAlternateAppName),
                               pathbuffer, sizeof(pathbuffer),
                               NULL, 0 ))
     {
-      if (strstr(szAlternateAppName,"RC5DES") || 
+      if (strstr(szAlternateAppName,"RC5DES") ||
           strstr(szAlternateAppName,"distributed.net"))
         szAlternateAppName[0] = '\0';
       else
@@ -2322,12 +2325,14 @@ static void SSAssertConfiguration(HINSTANCE hInst)
 
 /* ---------------------------------------------------- */
 
-int PASCAL SSMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
+int PASCAL SSMain(HINSTANCE hInst, HINSTANCE hPrevInst,
+                  LPSTR lpszCmdLine, int nCmdShow)
 {
+  DNETC_UNUSED_PARAM(nCmdShow);
+
   szAlternateAppName[0] = '\0';
   SSAssertConfiguration( hInst );
 
-  nCmdShow = nCmdShow; /* shaddup compiler */
   if (!hPrevInst && winGetVersion()<400)
   {
     #if (CLIENT_OS == OS_WIN32)
@@ -2354,8 +2359,8 @@ int PASCAL SSMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int n
 
       if (lpszCmdLine)
       {
-        while (*lpszCmdLine == ' ' || *lpszCmdLine == '\t' || 
-               *lpszCmdLine == '\"' || *lpszCmdLine == '\'' || 
+        while (*lpszCmdLine == ' ' || *lpszCmdLine == '\t' ||
+               *lpszCmdLine == '\"' || *lpszCmdLine == '\'' ||
                *lpszCmdLine == '/' || *lpszCmdLine == '-')
           lpszCmdLine++;
         if (*lpszCmdLine =='s' || *lpszCmdLine == 'S') //don't need hwnd
@@ -2367,22 +2372,22 @@ int PASCAL SSMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int n
         else //need hwnd
         {
           mode = *lpszCmdLine++;
-          if (mode=='p' || mode=='P' || mode=='l' || mode=='L')  
+          if (mode=='p' || mode=='P' || mode=='l' || mode=='L')
             mode = 'p';
           else if (mode=='c' || mode=='C')
             mode = 'c';
           else if (mode=='a' || mode=='A')
             mode = 'a';
-          else 
+          else
             mode = 0;
           if (mode)
           {
             while (*lpszCmdLine==' ' || *lpszCmdLine=='\t' || *lpszCmdLine==':')
-              lpszCmdLine++; 
+              lpszCmdLine++;
             hwndParent = (HWND)atoi(lpszCmdLine);
           }
         }
-      }      
+      }
       if (mode == 0 || mode == 'c') //configure
       {
         if (!hPrevInst)
@@ -2407,11 +2412,11 @@ int PASCAL SSMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int n
         SSDoSaver(hInst, hwndParent );
       else if (mode == 'a') //change auth
         SSChangePassword(hInst, hwndParent);
-    }  
+    }
   }
   return 0;
-}  
-    
+}
+
 #if defined(SSSTANDALONE)
   int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpszCmdLine, int nCmdShow)
   { return SSMain(hInst, hPrev, lpszCmdLine, nCmdShow); }
@@ -2428,6 +2433,5 @@ int PASCAL SSMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int n
 #elif defined(__cplusplus)
   static class ssboot {public: ssboot(){__SSMAIN = SSMain;} } _ssboot_;
 #else
-  #error foo  
+  #error foo
 #endif
-

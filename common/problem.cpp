@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.178 2002/11/10 20:49:35 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.179 2003/09/12 22:29:26 mweiser Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -28,7 +28,7 @@ return "@(#)$Id: problem.cpp,v 1.178 2002/11/10 20:49:35 andreasb Exp $"; }
 #include "rsadata.h"  //Get cipher/etc for random blocks
 #include "clicdata.h" //CliSetContestWorkUnitSpeed()
 #include "selcore.h"  //selcoreGetSelectedCoreForContest()
-#include "util.h"     //trace
+#include "util.h"     //trace, DNETC_UNUSED_*
 #include "cpucheck.h" //hardware detection
 #include "console.h"  //ConOutErr
 #include "triggers.h" //RaiseExitRequestTrigger()
@@ -76,12 +76,10 @@ static unsigned int __problem_counter = 0;
 
 /* ------------------------------------------------------------------- */
 
-#if !defined(MIPSpro) 
-  #if (SIZEOF_LONG == 8)  /* SIZEOF_LONG is defined in cputypes.h */
-    #pragma pack(8)
-  #else    
-    #pragma pack(4)
-  #endif    
+#if (SIZEOF_LONG == 8)  /* SIZEOF_LONG is defined in cputypes.h */
+# include "pack8.h"
+#else
+# include "pack4.h"
 #endif
 
 typedef struct
@@ -109,18 +107,14 @@ typedef struct
     int started;
     int initialized;
     unsigned int threadindex; /* 0-n (globally unique identifier) */
-  } priv_data;
-} InternalProblem;
+  } DNETC_PACKED priv_data;
+} DNETC_PACKED InternalProblem;
 
-#ifndef MIPSpro
-#pragma pack()
-#endif
+#include "pack0.h"
 
 /* ======================================================================= */
 
-#ifndef MIPSpro
-#pragma pack(1)
-#endif
+#include "pack1.h"
 
 /* SuperProblem() is an InternalInternal problem struct                */
 /* SuperProblem members are never accessed by any functions other than */
@@ -141,7 +135,7 @@ typedef struct
 /*     modifies: PICKPROB_CORE                                         */
 /*     on success and if the PICKPROB_MAIN initialized/started state   */
 /*     hasn't changed (that is, RetrieveState() hasn't purged it in    */
-/*     meantime), locked copy from PICKPROB_CORE -> PICKPROB_MAIN      */       
+/*     meantime), locked copy from PICKPROB_CORE -> PICKPROB_MAIN      */
 /*                                                                     */
 /*  **NOTE**: this scheme implies that the cores may NOT have          */
 /*  absolute pointers in their mem buffers that point to other         */
@@ -152,25 +146,23 @@ typedef struct
 /*    to do a benchmark. If that happens, and Run() starts, it will    */
 /*    spin in the lock and (minimally) skew the results.               */
 /* b) LoadState() can fail at anytime during the intitalization,       */
-/*    which could leave the problem in an inconsistant state.          */  
+/*    which could leave the problem in an inconsistant state.          */
 
-typedef struct 
+typedef struct
 {
-  InternalProblem iprobs[3]; 
+  InternalProblem iprobs[3];
   #define PICKPROB_MAIN 0 /* MAIN must be first */
   #define PICKPROB_CORE 1
   #define PICKPROB_TEMP 2 /* temporary copy used by load */
   fastlock_t copy_lock; /* locked when a sync is in progress */
-} SuperProblem;  
+} DNETC_PACKED SuperProblem;
 
-#ifndef MIPSpro
-#pragma pack()
-#endif
+#include "pack0.h"
 
 unsigned int ProblemGetSize(void)
 { /* needed by IPC/shmem */
   return sizeof(SuperProblem);
-}  
+}
 
 void ProblemFree(void *__thisprob)
 {
@@ -245,8 +237,8 @@ Problem *ProblemAlloc(void)
       #endif
       err = 1;
     }
-  }    
-    
+  }
+
   if (thisprob && !err)
   {
 // TODO: acidblood/trashover
@@ -268,18 +260,16 @@ Problem *ProblemAlloc(void)
       err = 1;
     }
 #endif
-  }      
+  }
 
   if (thisprob && !err)
   {
-    fastlock_t initmux = FASTLOCK_INITIALIZER_UNLOCKED; /* {0} or whatever */
-
     memset( thisprob, 0, sizeof(SuperProblem) );
-    memcpy( &(thisprob->copy_lock), &initmux, sizeof(fastlock_t));
-    
-    thisprob->iprobs[PICKPROB_CORE].priv_data.threadindex = 
-    thisprob->iprobs[PICKPROB_MAIN].priv_data.threadindex = 
-    thisprob->iprobs[PICKPROB_TEMP].priv_data.threadindex = 
+    fastlock_init(&(thisprob->copy_lock));
+
+    thisprob->iprobs[PICKPROB_CORE].priv_data.threadindex =
+    thisprob->iprobs[PICKPROB_MAIN].priv_data.threadindex =
+    thisprob->iprobs[PICKPROB_TEMP].priv_data.threadindex =
                                               __problem_counter++;
 
     //align core_membuffer to 16byte boundary
@@ -298,7 +288,7 @@ Problem *ProblemAlloc(void)
       p++;
     thisprob->iprobs[PICKPROB_TEMP].priv_data.core_membuffer = p;
   }
-  
+
   if (thisprob && err)
   {
     cmem_free((void *)thisprob);
@@ -306,7 +296,7 @@ Problem *ProblemAlloc(void)
   }
   /* the first member of thisprob is InternalProblem[PICKPROB_MAIN], and
      the first member of an InternalProblem is a Problem.
-  */     
+  */
   return (Problem *)((void *)thisprob);
 }
 
@@ -315,15 +305,15 @@ static InternalProblem *__pick_probptr(void *__thisprob, unsigned int which)
   if (__thisprob)
   {
     SuperProblem *p = (SuperProblem *)__thisprob;
-    
+
     // XXX
     // which may be one of the three PICKPROB_* types
     // if we want to, we can put an assert(which < NUM_PICKPROB_TYPES)
     // or something. note that this is only called with #defined
     // positive constants, so changing prototype to unsigned.  - sampo
-    
+
     return &(p->iprobs[which]);
-  }    
+  }
   return (InternalProblem *)0;
 }
 
@@ -344,23 +334,23 @@ static inline void __release_lock( void *__thisprob )
 static inline void __copy_internal_problem( InternalProblem *dest,
                                             const InternalProblem *source )
 {
-    // core_membuffer is a pointer into __core_membuffer_space. This space is 
-    // not a malloc()ed memblock, but another member (char[]) of 
+    // core_membuffer is a pointer into __core_membuffer_space. This space is
+    // not a malloc()ed memblock, but another member (char[]) of
     // InternalProblem.
-    // So core_membuffer must not be copied, otherwise it would point outside 
+    // So core_membuffer must not be copied, otherwise it would point outside
     // of it's own InternalProblem.
-    // But when copying one InternalProblem into another we must take care of 
-    // the content of __core_membuffer_space. It must be aligned in the copy, 
-    // too. The alignment is defined by core_membuffer and the padding may 
+    // But when copying one InternalProblem into another we must take care of
+    // the content of __core_membuffer_space. It must be aligned in the copy,
+    // too. The alignment is defined by core_membuffer and the padding may
     // differ from source. -- andreasb
 
   void *p = dest->priv_data.core_membuffer;
   memcpy( dest, source, sizeof(InternalProblem));
   dest->priv_data.core_membuffer = p;
-  
-  // inefficient, because this is the second copy of that area, but we need 
+
+  // inefficient, because this is the second copy of that area, but we need
   // the core memory aligned and core_membuffer pointing to it.
-  memcpy( dest->priv_data.core_membuffer, source->priv_data.core_membuffer, 
+  memcpy( dest->priv_data.core_membuffer, source->priv_data.core_membuffer,
           MAX_MEM_REQUIRED_BY_CORE );
 }
 
@@ -476,12 +466,12 @@ static void __IncrementKey(u32 *keyhi, u32 *keymid, u32 *keylo, u32 iters, int c
 
 /* ------------------------------------------------------------------- */
 
-/* generate a priv_data.contestwork for benchmarking (should be 
+/* generate a priv_data.contestwork for benchmarking (should be
    large enough to not complete in < 20 seconds)
 */
 static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
 {
-  switch (contestid)  
+  switch (contestid)
   {
     #if defined(HAVE_CRYPTO_V1)
     case RC5:
@@ -567,7 +557,7 @@ static int __gen_random_work(unsigned int contestid, ContestWork * work)
   // make one up in the event that no block was every loaded.
 
   u32 rnd = Random(NULL,0);
-  
+
   memset((void*)work, 0, sizeof(ContestWork));
 
   switch (contestid)
@@ -620,7 +610,7 @@ static int __gen_random_work(unsigned int contestid, ContestWork * work)
   #endif
   default:
     //PROJECT_NOT_HANDLED(contestid);
-    return -1;  
+    return -1;
   }
   return contestid;
 }
@@ -641,7 +631,7 @@ unsigned int ProblemCountLoaded(int contestid) /* -1=all contests */
 /* ======================================================================= */
 
 int ProblemIsInitialized(void *__thisprob)
-{ 
+{
   int rescode = -1;
   InternalProblem *thisprob = __pick_probptr(__thisprob,PICKPROB_MAIN);
   if (thisprob)
@@ -654,7 +644,7 @@ int ProblemIsInitialized(void *__thisprob)
       if (rescode <= 0) /* <0 = error, 0 = RESULT_WORKING */
         rescode = -1;
       /* otherwise 1==RESULT_NOTHING, 2==RESULT_FOUND */
-    } 
+    }
     __release_lock(__thisprob);
   }
   return rescode;
@@ -666,7 +656,7 @@ int ProblemIsInitialized(void *__thisprob)
 static unsigned int __compute_permille(unsigned int cont_i, const ContestWork *work);
 
 /*
-** the guts of LoadState().  
+** the guts of LoadState().
 **
 ** 'thisprob' is a scratch area to work in, and on entry
 ** is a copy of the main InternalProblem. On successful return
@@ -692,7 +682,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
     memset (&for_magic, 0, sizeof(for_magic));
     if ((int)contestid != __gen_random_work(contestid, &for_magic))
       return -2; /* ouch! random generation shouldn't fail if random block
-                    availability has been checked before requesting 
+                    availability has been checked before requesting
                     CONTESTWORK_MAGIC_RANDOM */
     work = &for_magic;
     genned_random = 1;
@@ -746,13 +736,13 @@ static int __InternalLoadState( InternalProblem *thisprob,
   thisprob->pub_data.was_truncated = 0;
   thisprob->pub_data.is_random = genned_random;
   thisprob->pub_data.is_benchmark = genned_benchmark;
-  
+
   thisprob->pub_data.coresel = coresel;
   thisprob->pub_data.client_cpu = selinfo.client_cpu;
   thisprob->pub_data.pipeline_count = selinfo.pipeline_count;
   thisprob->pub_data.use_generic_proto = selinfo.use_generic_proto;
   thisprob->pub_data.cruncher_is_asynchronous = selinfo.cruncher_is_asynchronous;
-  memcpy( (void *)&(thisprob->pub_data.unit_func), 
+  memcpy( (void *)&(thisprob->pub_data.unit_func),
           &selinfo.unit_func, sizeof(thisprob->pub_data.unit_func));
 
   thisprob->pub_data.cruncher_is_time_constrained = 0;
@@ -761,15 +751,15 @@ static int __InternalLoadState( InternalProblem *thisprob,
     /* may also be overridden in go_mt */
     #if (CLIENT_OS == OS_RISCOS)
     if (riscos_check_taskwindow() && thisprob->pub_data.client_cpu!=CPU_X86)
-      thisprob->pub_data.cruncher_is_time_constrained = 1;  
-    #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)  
+      thisprob->pub_data.cruncher_is_time_constrained = 1;
+    #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
     if (winGetVersion() < 400)
-      thisprob->pub_data.cruncher_is_time_constrained = 1;  
+      thisprob->pub_data.cruncher_is_time_constrained = 1;
     #elif (CLIENT_OS == OS_MACOS)
       thisprob->pub_data.cruncher_is_time_constrained = 1;
-    #elif (CLIENT_OS == OS_NETWARE)  
+    #elif (CLIENT_OS == OS_NETWARE)
       thisprob->pub_data.cruncher_is_time_constrained = 1;
-    #endif  
+    #endif
   }
 
   //----------------------------------------------------------------
@@ -786,10 +776,10 @@ static int __InternalLoadState( InternalProblem *thisprob,
         if (!thisprob->pub_data.is_random &&
             (work->crypto.iterations.hi || work->crypto.iterations.lo >= (1L<<28))) {
           last_rc5_prefix = (int)(work->crypto.key.hi >> 24);
-        }    
+        }
       }
       #endif
-    
+
       // copy over the state information
       thisprob->priv_data.contestwork.crypto.key.hi = ( work->crypto.key.hi );
       thisprob->priv_data.contestwork.crypto.key.lo = ( work->crypto.key.lo );
@@ -803,7 +793,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
       thisprob->priv_data.contestwork.crypto.keysdone.lo = ( work->crypto.keysdone.lo );
       thisprob->priv_data.contestwork.crypto.iterations.hi = ( work->crypto.iterations.hi );
       thisprob->priv_data.contestwork.crypto.iterations.lo = ( work->crypto.iterations.lo );
-      
+
       if (thisprob->priv_data.contestwork.crypto.keysdone.lo || thisprob->priv_data.contestwork.crypto.keysdone.hi)
         {
           if (thisprob->pub_data.client_cpu != expected_cputype || thisprob->pub_data.coresel != expected_corenum ||
@@ -834,7 +824,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
       thisprob->priv_data.rc5unitwork.plain.lo = thisprob->priv_data.contestwork.crypto.plain.lo ^ thisprob->priv_data.contestwork.crypto.iv.lo;
       thisprob->priv_data.rc5unitwork.cypher.hi = thisprob->priv_data.contestwork.crypto.cypher.hi;
       thisprob->priv_data.rc5unitwork.cypher.lo = thisprob->priv_data.contestwork.crypto.cypher.lo;
-      
+
       thisprob->pub_data.startkeys.hi = thisprob->priv_data.contestwork.crypto.keysdone.hi;
       thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.crypto.keysdone.lo;
       thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
@@ -850,7 +840,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
       {
         rc5_72_random_subspace = work->bigcrypto.randomsubspace;
         // FIXME: permanently store this in client->... and dnetc.ini
-      }    
+      }
 
       // copy over the state information
       thisprob->priv_data.contestwork.bigcrypto.key.hi = ( work->bigcrypto.key.hi );
@@ -888,13 +878,13 @@ static int __InternalLoadState( InternalProblem *thisprob,
         }
 
       thisprob->priv_data.rc5_72unitwork.L0.hi  = thisprob->priv_data.contestwork.bigcrypto.key.hi;
-      thisprob->priv_data.rc5_72unitwork.L0.mid = 
+      thisprob->priv_data.rc5_72unitwork.L0.mid =
           thisprob->priv_data.contestwork.bigcrypto.key.mid +
           thisprob->priv_data.contestwork.bigcrypto.keysdone.hi;
       if (thisprob->priv_data.rc5_72unitwork.L0.mid < thisprob->priv_data.contestwork.bigcrypto.keysdone.hi)
         ++thisprob->priv_data.rc5_72unitwork.L0.hi;
-      thisprob->priv_data.rc5_72unitwork.L0.lo = 
-          thisprob->priv_data.contestwork.bigcrypto.key.lo + 
+      thisprob->priv_data.rc5_72unitwork.L0.lo =
+          thisprob->priv_data.contestwork.bigcrypto.key.lo +
           thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
       if (thisprob->priv_data.rc5_72unitwork.L0.lo < thisprob->priv_data.contestwork.bigcrypto.keysdone.lo)
       {
@@ -997,11 +987,11 @@ static int __InternalLoadState( InternalProblem *thisprob,
     thisprob->pub_data.elapsed_time_sec = 0xfffffffful; // invalid while RESULT_WORKING
   }
 
-  loaded_problems[thisprob->pub_data.contest]++;       /* per contest */  
+  loaded_problems[thisprob->pub_data.contest]++;       /* per contest */
   loaded_problems[CONTEST_COUNT]++; /* total */
   thisprob->priv_data.last_resultcode = RESULT_WORKING;
   thisprob->priv_data.initialized = 1;
-  
+
   return( 0 );
 }
 
@@ -1031,20 +1021,20 @@ int ProblemLoadState( void *__thisprob,
   __copy_internal_problem( temp_prob, main_prob ); /* copy main->temp */
   __release_lock(__thisprob);
 
-  res = __InternalLoadState( temp_prob, work, contestid, _iterations, 
+  res = __InternalLoadState( temp_prob, work, contestid, _iterations,
                              expected_cputype, expected_corenum, expected_os,
                              expected_build );
   if (res != 0)
   {
     return (res<0)?(res):(-1);
-  }                             
+  }
 
   /* success */
   __assert_lock(__thisprob);
   __copy_internal_problem( main_prob, temp_prob ); /* copy temp->main */
   __release_lock(__thisprob);
   return 0;
-}                      
+}
 
 /* ------------------------------------------------------------------- */
 
@@ -1053,7 +1043,7 @@ int ProblemLoadState( void *__thisprob,
 */
 
 int ProblemRetrieveState( void *__thisprob,
-                          ContestWork * work, unsigned int *contestid, 
+                          ContestWork * work, unsigned int *contestid,
                           int dopurge, int dontwait )
 {
   int ret_code = 0;
@@ -1068,20 +1058,20 @@ int ProblemRetrieveState( void *__thisprob,
   {
     //LogScreen("ProblemRetrieveState() without preceding LoadState()\n");
     ret_code = -1;
-  }   
+  }
   else
-  { 
+  {
     if (work) // store back the state information
     {
-      switch (thisprob->pub_data.contest) 
+      switch (thisprob->pub_data.contest)
       {
         case RC5_72:
         case RC5:
         case DES:
         case CSC:
         {
-          memcpy( (void *)work, 
-                  (void *)&thisprob->priv_data.contestwork, 
+          memcpy( (void *)work,
+                  (void *)&thisprob->priv_data.contestwork,
                   sizeof(ContestWork));
           break;
         }
@@ -1089,11 +1079,11 @@ int ProblemRetrieveState( void *__thisprob,
         case OGR:
         {
           (thisprob->pub_data.unit_func.ogr)->getresult(
-                       thisprob->priv_data.core_membuffer, 
-                       &thisprob->priv_data.contestwork.ogr.workstub, 
+                       thisprob->priv_data.core_membuffer,
+                       &thisprob->priv_data.contestwork.ogr.workstub,
                        sizeof(WorkStub));
-          memcpy( (void *)work, 
-                  (void *)&thisprob->priv_data.contestwork, 
+          memcpy( (void *)work,
+                  (void *)&thisprob->priv_data.contestwork,
                   sizeof(ContestWork));
 
           /* is the stub invalid? */
@@ -1111,14 +1101,14 @@ int ProblemRetrieveState( void *__thisprob,
               thisprob->pub_data.was_truncated = reason;
             }
             #endif
-          }    
+          }
           break;
-        } 
+        }
         #endif
-        default: /* cannot happen */  
+        default: /* cannot happen */
         {
           PROJECT_NOT_HANDLED(thisprob->pub_data.contest);
-          break;  
+          break;
         }
       } /* switch */
     }
@@ -1127,7 +1117,7 @@ int ProblemRetrieveState( void *__thisprob,
     if (dopurge)
     {
       thisprob->priv_data.initialized = 0;
-      loaded_problems[thisprob->pub_data.contest]--;       /* per contest */  
+      loaded_problems[thisprob->pub_data.contest]--;       /* per contest */
       loaded_problems[CONTEST_COUNT]--; /* total */
     }
     ret_code = thisprob->priv_data.last_resultcode;
@@ -1135,7 +1125,7 @@ int ProblemRetrieveState( void *__thisprob,
     {
       //LogScreen("last resultcode = %d\n",ret_code);
       ret_code = -1;
-    }    
+    }
   }
   __release_lock(__thisprob);
   dontwait = dontwait; /* no longer neccesary since we have full locks now */
@@ -1291,9 +1281,9 @@ static int Run_RC5_64(InternalProblem *thisprob, /* already validated */
   {
     core_prob->priv_data.contestwork.crypto.key.hi = 0;
     core_prob->priv_data.contestwork.crypto.key.lo = 0;
-    core_prob->priv_data.contestwork.crypto.keysdone.hi = 
+    core_prob->priv_data.contestwork.crypto.keysdone.hi =
       core_prob->priv_data.contestwork.crypto.iterations.hi;
-    core_prob->priv_data.contestwork.crypto.keysdone.lo = 
+    core_prob->priv_data.contestwork.crypto.keysdone.lo =
       core_prob->priv_data.contestwork.crypto.iterations.lo;
     *resultcode = RESULT_NOTHING;
   }
@@ -1316,8 +1306,8 @@ static int Run_CSC(InternalProblem *thisprob, /* already validated */
   *resultcode = -1;
   return -1;
 #else
-  s32 rescode = (*(thisprob->pub_data.unit_func.gen))( 
-                   &(thisprob->priv_data.rc5unitwork), 
+  s32 rescode = (*(thisprob->pub_data.unit_func.gen))(
+                   &(thisprob->priv_data.rc5unitwork),
                    iterationsP, thisprob->priv_data.core_membuffer );
 
   if (rescode < 0) /* "kiter" error */
@@ -1461,7 +1451,7 @@ static int Run_OGR( InternalProblem *thisprob, /* already validated */
 
   nodes = (int)(*iterationsP);
   r = (thisprob->pub_data.unit_func.ogr)->cycle(
-                          thisprob->priv_data.core_membuffer, 
+                          thisprob->priv_data.core_membuffer,
                           &nodes,
                           thisprob->pub_data.cruncher_is_time_constrained);
   *iterationsP = (u32)nodes;
@@ -1612,7 +1602,7 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
     if (thisprob->priv_data.contestwork.bigcrypto.iterations.hi == 0 &&
         thisprob->priv_data.contestwork.bigcrypto.iterations.lo == 0x20000) /* test case */
     {
-      Log("RC5 incrementation mismatch:\n"
+      Log("RC5-72 incrementation mismatch:\n"
           "Debug Information: %02x:%08x:%08x - %02x:%08x:%08x\n",
           thisprob->priv_data.rc5_72unitwork.L0.hi, thisprob->priv_data.rc5_72unitwork.L0.mid, thisprob->priv_data.rc5_72unitwork.L0.lo,
           thisprob->priv_data.refL0.hi, thisprob->priv_data.refL0.mid, thisprob->priv_data.refL0.lo);
@@ -1627,13 +1617,13 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
       thisprob->priv_data.contestwork.bigcrypto.keysdone.hi++;
 
   // update counter measure checks (core stores mangled key)
-  thisprob->priv_data.contestwork.bigcrypto.check.count = 
+  thisprob->priv_data.contestwork.bigcrypto.check.count =
       thisprob->priv_data.rc5_72unitwork.check.count;
-  thisprob->priv_data.contestwork.bigcrypto.check.hi = 
+  thisprob->priv_data.contestwork.bigcrypto.check.hi =
       thisprob->priv_data.rc5_72unitwork.check.hi;
-  thisprob->priv_data.contestwork.bigcrypto.check.mid = 
+  thisprob->priv_data.contestwork.bigcrypto.check.mid =
       thisprob->priv_data.rc5_72unitwork.check.mid;
-  thisprob->priv_data.contestwork.bigcrypto.check.lo = 
+  thisprob->priv_data.contestwork.bigcrypto.check.lo =
       thisprob->priv_data.rc5_72unitwork.check.lo;
   __SwitchRC572Format(&(thisprob->priv_data.contestwork.bigcrypto.check.hi),
                       &(thisprob->priv_data.contestwork.bigcrypto.check.mid),
@@ -1677,9 +1667,9 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
     core_prob->priv_data.contestwork.bigcrypto.key.hi = 0;
     core_prob->priv_data.contestwork.bigcrypto.key.mid = 0;
     core_prob->priv_data.contestwork.bigcrypto.key.lo = 0;
-    core_prob->priv_data.contestwork.bigcrypto.keysdone.hi = 
+    core_prob->priv_data.contestwork.bigcrypto.keysdone.hi =
       core_prob->priv_data.contestwork.bigcrypto.iterations.hi;
-    core_prob->priv_data.contestwork.bigcrypto.keysdone.lo = 
+    core_prob->priv_data.contestwork.bigcrypto.keysdone.lo =
       core_prob->priv_data.contestwork.bigcrypto.iterations.lo;
     *resultcode = RESULT_NOTHING;
   }
@@ -1890,7 +1880,7 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
   main_prob->pub_data.last_runtime_sec = 0;
   __copy_internal_problem( core_prob, main_prob ); /* copy main->core */
   __release_lock(__thisprob);
-  
+
   last_resultcode = core_prob->priv_data.last_resultcode;
   if ( last_resultcode == RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
   {
@@ -1902,11 +1892,11 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
     /* +++++++++++++++++ */
 
     /*
-      On return from the Run_XXX core_prob->priv_data.contestwork must be in a 
-      state that we can put away to disk - that is, do not expect the loader 
+      On return from the Run_XXX core_prob->priv_data.contestwork must be in a
+      state that we can put away to disk - that is, do not expect the loader
       (probfill et al) to fiddle with iterations or key or whatever.
 
-      The Run_XXX functions do *not* update 
+      The Run_XXX functions do *not* update
       problem.core_prob->priv_data.last_resultcode, they use the local
       last_resultcode instead. This is so that members of the problem object
       that are updated after the resultcode has been set will not be out of
@@ -1915,9 +1905,9 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
 
     /* Run_XXX retcode:
     ** although the value returned by Run_XXX is usually the same as
-    ** the priv_data.last_resultcode it is not always the case. For instance, 
+    ** the priv_data.last_resultcode it is not always the case. For instance,
     ** if post-LoadState() initialization failed, but can be deferred, Run_XXX
-    ** may choose to return -1, but keep priv_data.last_resultcode at 
+    ** may choose to return -1, but keep priv_data.last_resultcode at
     ** RESULT_WORKING.
     */
 
@@ -1952,30 +1942,30 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
       /* don't touch core_prob->pub_data.tslice or runtime as long as retcode < 0!!! */
       last_resultcode = core_prob->priv_data.last_resultcode;
     }
-    else 
+    else
     {
       __assert_lock(__thisprob);
       if (!main_prob->priv_data.started ||  /* LoadState() clears this */
           !main_prob->priv_data.initialized) /* RetrieveState() clears this */
       {
-        /* whoops! RetrieveState(,,purge) [with or without a subsequent 
+        /* whoops! RetrieveState(,,purge) [with or without a subsequent
         ** LoadState()] was called while we in core.
         */
         last_resultcode = -1;
       }
       else /* update the remaining Run() related things, and synchronize */
-      { 
-        /* update the core's copy of the public area. It might have 
+      {
+        /* update the core's copy of the public area. It might have
         ** changed while we in core.
         */
-        memcpy( &(core_prob->pub_data), &(main_prob->pub_data), 
+        memcpy( &(core_prob->pub_data), &(main_prob->pub_data),
                                          sizeof(core_prob->pub_data) );
 
         /*
-        ** make the necessary modifications to the public area 
-        */  
-        __compute_run_times( core_prob, runstart_secs, runstart_usecs, 
-                             &core_prob->priv_data.loadtime_sec, 
+        ** make the necessary modifications to the public area
+        */
+        __compute_run_times( core_prob, runstart_secs, runstart_usecs,
+                             &core_prob->priv_data.loadtime_sec,
                              &core_prob->priv_data.loadtime_usec,
                              using_ptime, &s_using_ptime, last_resultcode );
         core_prob->pub_data.core_run_count++;
@@ -1990,9 +1980,9 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
         ** now blast the whole (public AND private) core_prob into main_prob.
         */
         __copy_internal_problem( main_prob, core_prob ); /* copy core->main */
-      }  
+      }
       __release_lock(__thisprob);
-    }    
+    }
   } /* if (last_resultcode == RESULT_WORKING) */
 
   return last_resultcode;
@@ -2007,7 +1997,7 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
 
 int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
 {
-  prob_index = prob_index; /* possibly unused */
+  DNETC_UNUSED_PARAM(prob_index);
 
   #if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
   if (prob_index == 1 && /* thread number reserved for x86 card */
@@ -2028,7 +2018,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
      started dropping packets, clients disconnected, the profiler
      froze - I couldn't switch back to the console to unload the
      client and had to power-cycle.
-     
+
      But that has nothing to do with RiscOS in a taskwindow, as a
      process in a taskwindow is preemptively scheduled. At least as
      fas as I know and observed.
@@ -2143,11 +2133,11 @@ static void __u64mul( u32 _ahi, u32 _alo, u32 _bhi, u32 _blo,
     r *= d;
     if (reshi) *reshi = (u32)(r >> 32);
     if (reslo) *reslo = (u32)(r & 0xfffffffful);
-    #elif 0 /* 32bit - using mul+polinomial add (Karatsiba/Knuth) */ 
+    #elif 0 /* 32bit - using mul+polinomial add (Karatsiba/Knuth) */
     u32 rhi, rlo, ahi = _ahi, alo = _alo, bhi = _bhi, blo = _blo;
-    rlo = ((alo >> 16) * (blo & 0xffff)) + 
+    rlo = ((alo >> 16) * (blo & 0xffff)) +
           (((alo & 0xffff) * (blo & 0xffff)) >> 16);
-    rhi = (ahi * blo) + (alo * bhi) + ((rlo >> 16) + ((alo >> 16) * (blo >> 16)) 
+    rhi = (ahi * blo) + (alo * bhi) + ((rlo >> 16) + ((alo >> 16) * (blo >> 16))
           + (((rlo & 0xffff) + ((blo >> 16) * (alo & 0xffff))) >> 16));
     rlo = (alo * blo);
     if (reshi) *reshi = rhi;
@@ -2173,13 +2163,13 @@ static void __u64mul( u32 _ahi, u32 _alo, u32 _bhi, u32 _blo,
     #endif
   }
   return;
-} 
+}
 
 /* ----------------------------------------------------------------------- */
 
 static void __u64div( u32 numerhi, u32 numerlo, u32 denomhi, u32 denomlo,
                       u32 *quothi, u32 *quotlo, u32 *remahi, u32 *remalo )
-{ 
+{
   /* when modifying this keep in mind that input parameters and result
      may overlap
   */
@@ -2222,15 +2212,15 @@ static void __u64div( u32 numerhi, u32 numerlo, u32 denomhi, u32 denomlo,
     if (quotlo) *quotlo = n / d;
     if (quothi) *quothi = 0;
     TRACE_U64OPS((-1,"__u64div()=>0:%u [rem=0:%u]\n",n/d,n%d));
-  } 
-  else 
+  }
+  else
   {
     u32 qhi = 0, qlo = 0;
     u32 nhi = numerhi, nlo = numerlo;
     u32 dhi = denomhi, dlo = denomlo;
     int count = 0;
     TRACE_U64OPS((+1,"__u64div(%u:%u, %u:%u)\n",numerhi,numerlo,denomhi,denomlo));
-    while ((dhi & 0x80000000ul) == 0) 
+    while ((dhi & 0x80000000ul) == 0)
     {
       if ((nhi < dhi) || ((nhi == dhi) && (nlo <= dlo)))
         break;
@@ -2238,7 +2228,7 @@ static void __u64div( u32 numerhi, u32 numerlo, u32 denomhi, u32 denomlo,
       dlo <<= 1;
       count++;
     }
-    while (count >= 0) 
+    while (count >= 0)
     {
       qhi <<= 1; qhi |= (qlo >> 31);
       qlo <<= 1;
@@ -2248,7 +2238,7 @@ static void __u64div( u32 numerhi, u32 numerlo, u32 denomhi, u32 denomlo,
         nhi -= dhi;
         if (t > nlo)
           nhi--;
-        nlo = t;  
+        nlo = t;
         #if 0
         u32 t = ~dlo + 1;
         nhi += ~dhi;
@@ -2263,7 +2253,7 @@ static void __u64div( u32 numerhi, u32 numerlo, u32 denomhi, u32 denomlo,
       dlo >>= 1; dlo |= (dhi << 31);
       dhi >>= 1;
       count--;
-    } 
+    }
     if (remahi) *remahi = nhi;
     if (remalo) *remalo = nlo;
     if (quothi) *quothi = qhi;
@@ -2278,8 +2268,8 @@ static void __u64div( u32 numerhi, u32 numerlo, u32 denomhi, u32 denomlo,
 char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
                             int numstr_style, const char *numstr_suffix )
 {
-  /* numstring_style: 
-   * -1=unformatted, 
+  /* numstring_style:
+   * -1=unformatted,
    *  0=commas, magna
    *  1=0+space between magna and number (or at end if no magnitude char)
    *  2=1+numstr_suffix
@@ -2291,14 +2281,14 @@ char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
     unsigned int suffixstr_len;
     unsigned int suffix_len = 0;
     /* buffer = [buflen:digits,comma,dot][suffix_len:space,magna][suffixstr_len:keys/nodes/...][\0] */
-    
+
     --buflen; // buffer[buflen] = '\0'
     if (numstr_style != 2 || !numstr_suffix)
-      numstr_suffix = ""; 
+      numstr_suffix = "";
     suffixstr_len = strlen( numstr_suffix );
     if (numstr_style == 2 && suffixstr_len == 0)
       numstr_style = 1;
-    if (numstr_style == 1 || numstr_style == 2) 
+    if (buflen && (numstr_style == 1 || numstr_style == 2))
     {
       ++suffix_len; /* space after number */
       --buflen;
@@ -2316,8 +2306,8 @@ char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
     }
     else
     {
-      /* kilo(10**3), Mega(10**6), Giga(10**9), Tera(10**12), Peta(10**15), 
-         Exa(10**18), Zetta(10**21), Yotta(10**24) 
+      /* kilo(10**3), Mega(10**6), Giga(10**9), Tera(10**12), Peta(10**15),
+         Exa(10**18), Zetta(10**21), Yotta(10**24)
       */
       static char magna_tab[]={0,'k','M','G','T','P','E','Z','Y'};
       unsigned int magna = 0, len = 0;
@@ -2329,7 +2319,7 @@ char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
       #else
       {
         u32 h = 0, m = 0, l = lo;
-        if (hi) 
+        if (hi)
         {
           __u64div( hi, lo, 0, 1000000000ul, &h, &m, 0, &l );
         }
@@ -2340,7 +2330,7 @@ char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
         else
         {
           __u64div( h, m, 0, 1000000000ul, 0,  &h, 0, &m );
-          len = sprintf( numbuf, "%lu%09lu%09lu", 
+          len = sprintf( numbuf, "%lu%09lu%09lu",
                          (unsigned long)h, (unsigned long)m, (unsigned long)l );
         }
       }
@@ -2361,7 +2351,7 @@ char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
           if (((++len) % 3)==0)
             *--w = ',';
         }
-        len = strlen(strcpy( numbuf, w )); 
+        len = strlen(strcpy( numbuf, w ));
         //printf("commal = %2d  ", len);
         if (len > buflen)
         {
@@ -2382,11 +2372,37 @@ char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
             {
               magna++;
               pos += 4;
-            }  
+            }
             numbuf[len] = '.';
             len += 3;
+            /* round the resulting number */
+            if (numbuf[len] >= '5')
+            {
+              int carry = 1;
+              r = &numbuf[len];
+              w = &fmtbuf[sizeof(fmtbuf)];
+              *--w = '\0';
+              for (;;)
+              {
+                *--w = *--r;
+                if (carry && '0' <= *w && *w <= '9')
+                {
+                  ++(*w);
+                  if (*w > '9')
+                    *w = '0';
+                  else
+                    carry = 0;
+                }
+                if (r == &numbuf[0])
+                  break;
+              }
+              if (carry)
+                *--w = '1';
+              if (!carry) /* do not round if string length changes */
+                len = strlen(strcpy( numbuf, w ));
+            }
             numbuf[len] = '\0';
-          } 
+          }
         }
       } /* len > 3 */
       //printf("truncl = %2d  ", len);
@@ -2399,7 +2415,7 @@ char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
     } /* buflen >= 5 */
     if (strlen(numbuf) > (buflen + suffix_len))
       strcpy( numbuf, "***" );
-    strncpy( buffer, numbuf, (buflen + suffix_len) ); 
+    strncpy( buffer, numbuf, (buflen + suffix_len) );
     buffer[buflen+suffix_len] = '\0';
     if (numstr_style == 2) /* buflen has already been checked to ensure */
       strcat(buffer, numstr_suffix); /* this strcat() is ok */
@@ -2410,12 +2426,12 @@ char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
 
 /* ----------------------------------------------------------------------- */
 
-/* if secs:usecs is zero, ProblemComputeRate() just returns 
+/* if secs:usecs is zero, ProblemComputeRate() just returns
    a formatted iterhi:lo
 */
-const char *ProblemComputeRate( unsigned int contestid, 
+const char *ProblemComputeRate( unsigned int contestid,
                                 u32 secs, u32 usecs, u32 iterhi, u32 iterlo,
-                                u32 *ratehi, u32 *ratelo, 
+                                u32 *ratehi, u32 *ratelo,
                                 char *ratebuf, unsigned int ratebufsz )
 {
   u32 hi = iterhi, lo = iterlo;
@@ -2444,7 +2460,7 @@ const char *ProblemComputeRate( unsigned int contestid,
   return ratebuf;
 }
 
-static unsigned int __compute_permille(unsigned int cont_i, 
+static unsigned int __compute_permille(unsigned int cont_i,
                                        const ContestWork *work)
 {
   unsigned int permille = 0;
@@ -2465,12 +2481,12 @@ static unsigned int __compute_permille(unsigned int cont_i,
         {
           u32 hi,lo;
           __u64mul( work->crypto.keysdone.hi, work->crypto.keysdone.lo,
-                    0, 1000, &hi, &lo );   
+                    0, 1000, &hi, &lo );
           __u64div( hi, lo, work->crypto.iterations.hi,
                             work->crypto.iterations.lo, &hi, &lo, 0, 0);
           if (lo > 1000)
             lo = 1000;
-          permille = lo;   
+          permille = lo;
         }
       }
     }
@@ -2498,12 +2514,12 @@ static unsigned int __compute_permille(unsigned int cont_i,
         {
           u32 hi,lo;
           __u64mul( work->bigcrypto.keysdone.hi, work->bigcrypto.keysdone.lo,
-                    0, 1000, &hi, &lo );   
+                    0, 1000, &hi, &lo );
           __u64div( hi, lo, work->bigcrypto.iterations.hi,
                             work->bigcrypto.iterations.lo, &hi, &lo, 0, 0);
           if (lo > 1000)
             lo = 1000;
-          permille = lo;   
+          permille = lo;
         }
       }
     }
@@ -2522,13 +2538,13 @@ int WorkGetSWUCount( const ContestWork *work,
                      int rescode, unsigned int contestid,
                      unsigned int *swucount )
 {
-  if (rescode != RESULT_WORKING && rescode != RESULT_FOUND && 
+  if (rescode != RESULT_WORKING && rescode != RESULT_FOUND &&
       rescode != RESULT_NOTHING)
   {
     rescode = -1;
   }
   else
-  { 
+  {
     unsigned int units = 0;
     switch (contestid)
     {
@@ -2537,22 +2553,22 @@ int WorkGetSWUCount( const ContestWork *work,
       case RC5:
       case DES:
       case CSC:
-      { 
+      {
         u32 tcounthi = work->crypto.iterations.hi;
         u32 tcountlo = work->crypto.iterations.lo;
         if (contestid == DES)
         {
-          tcounthi <<= 1; tcounthi |= (tcountlo >> 31); tcountlo <<= 1; 
+          tcounthi <<= 1; tcounthi |= (tcountlo >> 31); tcountlo <<= 1;
         }
         /* note that we return zero for test packets */
-        units = 100 * ((tcountlo >> 28)+(tcounthi << 4)); 
+        units = 100 * ((tcountlo >> 28)+(tcounthi << 4));
 
         #ifdef HAVE_RC5_64_CORES
         // if this is a completed packet and not a test one (other random
         // packets are ok), then remember its prefix for random prefix.
         if (contestid == RC5 && rescode != RESULT_WORKING &&
             ((tcounthi != 0) || (tcounthi == 0 && tcountlo != 0x00100000UL)))
-        {   
+        {
           last_rc5_prefix = ((work->crypto.key.hi >> 24) & 0xFF);
         }
         #endif
@@ -2564,28 +2580,28 @@ int WorkGetSWUCount( const ContestWork *work,
       {
         if (swucount && rescode != RESULT_WORKING)
         {
-          u32 hi, tcounthi = work->ogr.nodes.hi;
-          u32 lo, tcountlo = work->ogr.nodes.lo;
+          u32 lo, tcountlo = work->ogr.nodes.lo + 5000000ul;
+          u32 hi, tcounthi = work->ogr.nodes.hi + (tcountlo<work->ogr.nodes.lo ? 1 : 0);
           /* ogr stats unit is Gnodes */
           __u64div( tcounthi, tcountlo, 0, 1000000000ul, 0, &hi, 0, &lo);
           units = (unsigned int)(hi * 100)+(lo / 10000000ul);
         }
-      } /* OGR */      
+      } /* OGR */
       break;
 #endif /* HAVE_OGR_CORES */
 #ifdef HAVE_CRYPTO_V2
       case RC5_72:
-      { 
+      {
         u32 tcounthi = work->bigcrypto.iterations.hi;
         /* note that we return zero for test packets */
-        units = 100 * tcounthi; 
+        units = 100 * tcounthi;
       }
       break;
 #endif
 
       default:
         PROJECT_NOT_HANDLED(contestid);
-        break;  
+        break;
     } /* switch() */
 
     if (swucount)
@@ -2604,26 +2620,26 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
   ContestWork work;
   unsigned int contestid;
   InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
-  
+
   if (thisprob)
-  {  
+  {
     rescode = ProblemRetrieveState( thisprob, &work, &contestid, 0, 0 );
 
     if (rescode >= 0)
     {
       u32 e_sec = 0, e_usec = 0;
-  
+
       info->name = CliGetContestNameFromID(contestid);
       info->unit = CliGetContestUnitFromID(contestid);
 #ifdef HAVE_RC5_72_CORES
-      info->is_test_packet = contestid == RC5_72 && 
+      info->is_test_packet = contestid == RC5_72 &&
                              work.bigcrypto.iterations.lo == 0x00100000 &&
                              work.bigcrypto.iterations.hi == 0;
 #endif
 // FIXME: hmmm is this correct ??????
       info->stats_units_are_integer = (contestid != OGR);
       info->show_exact_iterations_done = (contestid == OGR);
-  
+
       if (flags & (P_INFO_E_TIME | P_INFO_RATE | P_INFO_RATEBUF))
       {
         if (thisprob->pub_data.elapsed_time_sec != 0xfffffffful)
@@ -2631,12 +2647,12 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
           // problem finished, elapsed time has already calculated by Run()
           e_sec  = thisprob->pub_data.elapsed_time_sec;
           e_usec = thisprob->pub_data.elapsed_time_usec;
-        }     
+        }
         else /* compute elapsed wall clock time since loadtime */
         {
           u32 start_sec  = thisprob->priv_data.loadtime_sec;
           u32 start_usec = thisprob->priv_data.loadtime_usec;
-  
+
           if (start_sec != 0xfffffffful) /* our start time was not invalid */
           {
             struct timeval clock_now;
@@ -2690,7 +2706,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
           u32 tcounthi=0, tcountlo=0; /*total 'iter' (n/a if not finished)*/
           u32 ccounthi=0, ccountlo=0; /*'iter' done (so far, this start) */
           u32 dcounthi=0, dcountlo=0; /*'iter' done (so far, all starts) */
-  
+
           switch (contestid)
           {
 // TODO: acidblood/trashover
@@ -2698,9 +2714,9 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
             case RC5:
             case DES:
             case CSC:
-            { 
+            {
               unsigned int units, twoxx;
-  
+
               ccounthi = thisprob->pub_data.startkeys.hi;
               ccountlo = thisprob->pub_data.startkeys.lo;
               tcounthi = work.crypto.iterations.hi;
@@ -2709,8 +2725,8 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
               dcountlo = work.crypto.keysdone.lo;
               if (contestid == DES)
               {
-                tcounthi <<= 1; tcounthi |= (tcountlo >> 31); tcountlo <<= 1; 
-                dcounthi <<= 1; dcounthi |= (dcountlo >> 31); dcountlo <<= 1; 
+                tcounthi <<= 1; tcounthi |= (tcountlo >> 31); tcountlo <<= 1;
+                dcounthi <<= 1; dcounthi |= (dcountlo >> 31); dcountlo <<= 1;
                 ccounthi <<= 1; ccounthi |= (ccountlo >> 31); ccountlo <<= 1;
               }
               /* current = donecount - startpos */
@@ -2718,8 +2734,8 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
               ccounthi = dcounthi - ccounthi;
               if (ccountlo > dcountlo)
                 ccounthi--;
-  
-              units = ((tcountlo >> 28)+(tcounthi << 4)); 
+
+              units = ((tcountlo >> 28)+(tcounthi << 4));
               twoxx = 28;
               if (!units) /* less than 2^28 packet (eg test) */
               {
@@ -2733,7 +2749,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
               }
               if (flags & P_INFO_SIGBUF)
               {
-                sprintf( info->sigbuf, "%08lX:%08lX:%u*2^%u", 
+                sprintf( info->sigbuf, "%08lX:%08lX:%u*2^%u",
                          (unsigned long) ( work.crypto.key.hi ),
                          (unsigned long) ( work.crypto.key.lo ),
                          units, twoxx );
@@ -2741,7 +2757,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
               if (flags & P_INFO_CWPBUF)
               {
                 // ToDo: do something different here - any ideas for a cwp for crypto packets?
-                sprintf( info->cwpbuf, "%08lX:%08lX:%u*2^%u", 
+                sprintf( info->cwpbuf, "%08lX:%08lX:%u*2^%u",
                          (unsigned long) ( work.crypto.key.hi ),
                          (unsigned long) ( work.crypto.key.lo ),
                          units, twoxx );
@@ -2769,7 +2785,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
               ccounthi = dcounthi - thisprob->pub_data.startkeys.hi;
               if (ccountlo > dcountlo)
                 ccounthi--;
-  
+
               if (flags & P_INFO_SIGBUF)
               {
                 ogr_stubstr_r( &work.ogr.workstub.stub, info->sigbuf, sizeof(info->sigbuf), 0);
@@ -2780,8 +2796,11 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
               }
               if ((flags & P_INFO_SWUCOUNT) && (tcounthi || tcountlo)) /* only if finished */
               {
-                /* ogr stats unit is Gnodes */
-                __u64div( tcounthi, tcountlo, 0, 1000000000ul, 0, &hi, 0, &lo);
+                u32 nodeshi, nodeslo;
+                /* ogr stats unit is Gnodes, rounded to 0.01 Gnodes */
+                nodeslo = tcountlo + 5000000ul;
+                nodeshi = tcounthi + (nodeslo<tcountlo ? 1 : 0);
+                __u64div( nodeshi, nodeslo, 0, 1000000000ul, 0, &hi, 0, &lo);
                 info->swucount = (hi * 100)+(lo / 10000000ul);
               }
               if (flags & P_INFO_EXACT_PE)
@@ -2793,14 +2812,14 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
                 /* do not do inexact permille calculation for OGR */
                 flags &= ~(P_INFO_C_PERMIL | P_INFO_S_PERMIL);
               }
-            } /* OGR */      
+            } /* OGR */
             break;
   #endif /* HAVE_OGR_CORES */
   #ifdef HAVE_CRYPTO_V2
             case RC5_72:
-            { 
+            {
               unsigned int units, twoxx;
-  
+
               ccounthi = thisprob->pub_data.startkeys.hi;
               ccountlo = thisprob->pub_data.startkeys.lo;
               tcounthi = work.bigcrypto.iterations.hi;
@@ -2812,8 +2831,8 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
               ccounthi = dcounthi - ccounthi;
               if (ccountlo > dcountlo)
                 ccounthi--;
-  
-              units = tcounthi; 
+
+              units = tcounthi;
               twoxx = 32;
               if (!units) /* less than 2^32 packet (eg test) */
               {
@@ -2827,7 +2846,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
               }
               if (flags & P_INFO_SIGBUF)
               {
-                sprintf( info->sigbuf, "%02lX:%08lX:%08lX:%u*2^%u", 
+                sprintf( info->sigbuf, "%02lX:%08lX:%08lX:%u*2^%u",
                          (unsigned long) ( work.bigcrypto.key.hi ),
                          (unsigned long) ( work.bigcrypto.key.mid ),
                          (unsigned long) ( work.bigcrypto.key.lo ),
@@ -2836,7 +2855,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
               if (flags & P_INFO_CWPBUF)
               {
                 // ToDo: do something different here - any ideas for a cwp for crypto packets?
-                sprintf( info->cwpbuf, "%02lX:%08lX:%08lX:%u*2^%u", 
+                sprintf( info->cwpbuf, "%02lX:%08lX:%08lX:%u*2^%u",
                          (unsigned long) ( work.bigcrypto.key.hi ),
                          (unsigned long) ( work.bigcrypto.key.mid ),
                          (unsigned long) ( work.bigcrypto.key.lo ),
@@ -2853,9 +2872,9 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
 
             default:
             PROJECT_NOT_HANDLED(contestid);
-            break;  
+            break;
           } /* switch() */
-  
+
           if (flags & (P_INFO_RATE | P_INFO_RATEBUF))
           {
             if (!(flags & P_INFO_RATEBUF))
@@ -2876,7 +2895,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
             else if (rescode != RESULT_WORKING) /* _FOUND or _NOTHING */
               info->c_permille = 1000;
             else
-              info->c_permille = __compute_permille(contestid, &work); 
+              info->c_permille = __compute_permille(contestid, &work);
           }
           if (flags & P_INFO_S_PERMIL)
             info->s_permille = thisprob->pub_data.startpermille;

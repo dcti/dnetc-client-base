@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.75 2002/10/09 22:22:15 andreasb Exp $"; }
+return "@(#)$Id: console.cpp,v 1.76 2003/09/12 22:29:25 mweiser Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -23,13 +23,9 @@ return "@(#)$Id: console.cpp,v 1.75 2002/10/09 22:22:15 andreasb Exp $"; }
 #include "version.h"  //CLIENT_VERSIONSTRING
 #include "clitime.h"
 #include "triggers.h"
-#include "util.h"     //utilGetAppName()
+#include "util.h"     //utilGetAppName(), DNETC_UNUSED_*
 #include "sleepdef.h" //usleep()
 #include "console.h"  //ourselves
-
-#if (CLIENT_OS == OS_AIX)
-#include <sys/select.h>   // only needed if compiled on AIX 4.1
-#endif
 
 #if !defined(NOTERMIOS) && ((CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) \
   || (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
@@ -41,9 +37,19 @@ return "@(#)$Id: console.cpp,v 1.75 2002/10/09 22:22:15 andreasb Exp $"; }
   || (CLIENT_OS==OS_DYNIX)) || (CLIENT_OS == OS_PS2LINUX)
 #include <termios.h>
 #define HAVE_TERMIOS
+#elif (CLIENT_OS == OS_SCO)
+#define _SVID3 /* need it for ECHOPRT and ECHOCTL */
+#include <termios.h>
+#define HAVE_TERMIOS
 #endif
-#if defined(__unix__) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_OS390) || \
-                  (CLIENT_OS == OS_NEXTSTEP) || (CLIENT_OS == OS_AMIGAOS)
+
+#if !defined(NOSGTTY) && (CLIENT_OS == OS_NEXTSTEP)
+#include <sgtty.h>
+#define HAVE_SGTTY 1
+#endif
+
+#if defined(__unix__) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_OS390) \
+  || (CLIENT_OS == OS_AMIGAOS)
 #define HAVE_ANSICOMPLIANTTERM /* tty understands basic ansi sequences */
 #endif
 #if defined(__unix__)
@@ -93,12 +99,14 @@ int DeinitializeConsole(int waitforuser)
 int InitializeConsole(int *runhidden,int doingmodes)
 {
   int retcode = 0;
+
+  DNETC_UNUSED_PARAM(doingmodes);
+
   if ((++constatics.initlevel) == 1)
   {
     memset( (void *)&constatics, 0, sizeof(constatics) );
     constatics.initlevel = 1;
     constatics.runhidden = *runhidden;
-    doingmodes = doingmodes; /* possibly unused */
 
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     retcode = w32InitializeConsole(constatics.runhidden,doingmodes);
@@ -334,14 +342,19 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       }
       #elif (CLIENT_OS == OS_OS2)
       {
-        KBDKEYINFO kbdkeyinfo = {0};
-        HKBD hkbd = 0;
-        KbdPeek(&kbdkeyinfo, hkbd);
-        if ((kbdkeyinfo.fbStatus & (0xffff - KBDTRF_FINAL_CHAR_IN)) != kbdkeyinfo.fbStatus)
+        #ifdef __WATCOMC__
+        /* Cannot use KbdPeek due to strange default KBD mode. Simple getch()
+           work fine */
+        if (kbhit())
         {
-           KbdFlushBuffer(hkbd);
-           ch = kbdkeyinfo.chChar;
+          ch = getch();
+          if (!ch)
+            ch = (getch() << 8);
         }
+        #else
+          ch = getch();
+          if (!ch) ch = (getch() << 8);
+        #endif
       }
       #elif (CLIENT_OS == OS_AMIGAOS)
       {
@@ -372,6 +385,29 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         ch = getchar();                  /* Read a single character */
         tcsetattr(fd,TCSAFLUSH,&stored); /* Restore the original settings */
         if (ch == EOF) ch = 0;
+      }
+      #elif (defined(HAVE_SGTTY))
+      {
+        struct sgttyb stored;
+        int fd = fileno(stdin);
+
+        fflush(stdout);
+        if (gtty(fd, &stored) == 0) {
+          struct sgttyb newsg;
+          memcpy(&newsg, &stored, sizeof(newsg));
+
+          /* it's in the bits we don't set: no echo, delay or cooking
+          ** actually we might want CBREAK here since that leaves most
+          ** control sequences intact but it sometimes still buffers
+          ** whole lines (on NeXTstep at least) */
+          newsg.sg_flags = RAW;
+
+          stty(fd, &newsg);
+          ch = getchar();
+          stty(fd, &stored);
+
+          if (ch == EOF) ch = 0;
+        }
       }
       #else
       {
@@ -425,10 +461,6 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
 
   if (!buffer || !buflen)
     return 0;
-
-#if (CLIENT_OS == OS_NEXTSTEP)
-  flags &= ~CONINSTR_BYEXAMPLE;
-#endif
 
   //if ((flags & CONINSTR_ASPASSWORD) != 0)
   //  flags = CONINSTR_ASPASSWORD;
@@ -652,7 +684,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     static const int var[3] = { 133, 135, -1 };
     int value[3];
     _kernel_swi_regs regs;
-    
+
     if (!riscos_in_taskwindow)
     {
       regs.r[0]=(int)var;
@@ -693,8 +725,9 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
         (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_NEXTSTEP) || \
         (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_MACOSX) || \
         (CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_PS2LINUX) || \
-        ( (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__ ) )
-    /* good for any non-sco flavour? */
+        ( (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__ ) ) || \
+	(CLIENT_OS == OS_SCO)
+    /* good for any flavour? */
     struct winsize winsz;
     winsz.ws_col = winsz.ws_row = 0;
     ioctl (fileno(stdout), TIOCGWINSZ, &winsz);
@@ -822,11 +855,11 @@ int ConClear(void)
       return w32ConClear();
     #elif (CLIENT_OS == OS_OS2)
       #ifndef __EMX__
-      UCHAR attrib = ' ';
+      USHORT attrib = 0x0720; /* white space on black background */
       USHORT row = 0, col = 0;
       HVIO hvio = 0;
 
-      VioScrollUp(0, 0, (USHORT)-1, (USHORT)-1, (USHORT)-1, (char __far16 *)&attrib, hvio);
+      VioScrollUp(0, 0, (USHORT)-1, (USHORT)-1, (USHORT)-1, (PBYTE)&attrib, hvio);
       VioSetCurPos(row, col, hvio);      /* move cursor to upper left */
       return 0;
       #else

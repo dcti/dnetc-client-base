@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C-*- file !
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -12,11 +12,14 @@
 */
 
 #ifndef __COREMEM_H__
-#define __COREMEM_H__ "@(#)$Id: coremem.h,v 1.2 2002/09/02 00:35:42 andreasb Exp $"
+#define __COREMEM_H__ "@(#)$Id: coremem.h,v 1.3 2003/09/12 22:29:25 mweiser Exp $"
 
 #ifdef __cplusplus /* header may be included by cores */
 extern "C" {
 #endif
+
+/* only for HAVE_MULTICRUNCH_VIA_FORK */
+void cmem_select_allocator(int which);
 
 void *cmem_alloc(unsigned int sz);
 int cmem_free(void *mem);

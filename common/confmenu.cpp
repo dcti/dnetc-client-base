@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.62 2002/10/06 19:57:12 andreasb Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.63 2003/09/12 22:29:25 mweiser Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -23,7 +23,7 @@ return "@(#)$Id: confmenu.cpp,v 1.62 2002/10/06 19:57:12 andreasb Exp $"; }
 #include "logstuff.h" // LogScreenRaw()
 #include "selcore.h"  // GetCoreNameFromCoreType()
 #include "clicdata.h" // GetContestNameFromID()
-#include "util.h"     // projectmap_*()
+#include "util.h"     // projectmap_*(), DNETC_UNUSED_*
 #include "triggers.h" // CheckExitRequestTriggerNoIO()
 #include "confrwv.h"  // ConfigRead()/ConfigWrite()
 #include "confopt.h"  // the option table
@@ -42,17 +42,11 @@ static int __is_opt_available_for_project(unsigned int projectid, int menuoption
   if ((flags & PROJECT_OK) == 0)
     return 0;     /* projectid not supported */
 
-  if (menuoption == CONF_CPUTYPE)
-  {
-    if (selcoreValidateCoreIndex(projectid,1) < 0) /* second core doesn't exist */
-      return 0;   /* ie only one core, so disable CONF_CPUTYPE opt */
-  }
-
-  if (menuoption == CONF_THRESHOLDT && 
+  if (menuoption == CONF_THRESHOLDT &&
       (flags & PROJECTFLAG_TIME_THRESHOLD) == 0)
     return 0;     /* project has no time thresholds */
 
-  if (menuoption == CONF_PREFERREDBLOCKSIZE && 
+  if (menuoption == CONF_PREFERREDBLOCKSIZE &&
       (flags & PROJECTFLAG_PREFERRED_BLOCKSIZE) == 0)
     return 0;     /* project has no preferred blocksize */
 
@@ -72,27 +66,29 @@ static int __count_projects_having_flag (u32 flag)
 }
 
 
-#if 0 
+#if 0
 /* one column per contest, max 3 contests */
-static int __enumcorenames_wide(const char **corenames, 
-                                int idx, void * /*unused*/)
+static int __enumcorenames_wide(const char **corenames,
+                                int idx, void *)
 {
   char scrline[80];
   unsigned int cont_i, i, colwidth, nextpos;
   int have_xxx_table[CONTEST_COUNT];
   unsigned int colcount = 0;
 
-  have_xxx_table[0] = 0; /* shaddup "perhaps unused" */
+  /* if you get warnings, uncomment
+  ** DNETC_UNUSED(have_xxx_table); */
+
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
     have_xxx_table[cont_i] = 0;
-    if (__is_opt_available_for_project(cont_i,CONF_CPUTYPE)) 
+    if (__is_opt_available_for_project(cont_i,CONF_CPUTYPE))
     {             /* HAVE_XXX_CORES defined and more than 1 core */
       have_xxx_table[cont_i] = 1;
       colcount++;
-    }  
+    }
   }
-  
+
   colwidth = (sizeof(scrline)-2)/(colcount);
 
   if (idx == 0)
@@ -102,7 +98,7 @@ static int __enumcorenames_wide(const char **corenames,
     {
       if (have_xxx_table[cont_i])
       {
-        const char *xxx = CliGetContestNameFromID(cont_i);        
+        const char *xxx = CliGetContestNameFromID(cont_i);
         if (!xxx) xxx = "";
         if ((i = strlen( xxx )) > colwidth)
           i = colwidth;
@@ -127,7 +123,7 @@ static int __enumcorenames_wide(const char **corenames,
           scrline[nextpos+(colwidth-1)] = scrline[nextpos+(colwidth-2)] = ' ';
         nextpos+=colwidth;
       }
-    }        
+    }
     if (nextpos)
     {
       scrline[nextpos] = '\0';
@@ -155,7 +151,7 @@ static int __enumcorenames_wide(const char **corenames,
     nextpos = 0;
   }
 
-  nextpos = 0;  
+  nextpos = 0;
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
     if (have_xxx_table[cont_i])
@@ -163,8 +159,8 @@ static int __enumcorenames_wide(const char **corenames,
       i = 0;
       if (corenames[cont_i]) /* have a corename at this idx */
       {
-        char xxx[4+32]; char iname[8]; 
-        strcpy(iname,"n/a"); 
+        char xxx[4+32]; char iname[8];
+        strcpy(iname,"n/a");
         if (selcoreValidateCoreIndex(cont_i,idx) == idx)
           sprintf(iname, "%3d", idx);
         i = sprintf(xxx,"%s) %-29.29s", iname, corenames[cont_i] );
@@ -183,7 +179,7 @@ static int __enumcorenames_wide(const char **corenames,
   }
 
   return +1; /* keep going */
-}      
+}
 #endif
 
 struct enumcoredata
@@ -194,7 +190,7 @@ struct enumcoredata
 
 
 /* N rows per contest, upto 3 corenames per row */
-static int __enumcorenames(unsigned int cont_i, const char *corename, 
+static int __enumcorenames(unsigned int cont_i, const char *corename,
                            int idx, void *arg)
 {
   if (__is_opt_available_for_project(cont_i, CONF_CPUTYPE))
@@ -204,13 +200,13 @@ static int __enumcorenames(unsigned int cont_i, const char *corename,
 
     for (; which < 2; which++)
     {
-      char label[80]; 
-      char contnamepad[32]; 
+      char label[80];
+      char contnamepad[32];
       unsigned int len;
       int need_pre_lf;
-      
+
       if (which == 0)
-        strcpy( label, "-1) Auto select" ); 
+        strcpy( label, "-1) Auto select" );
       else
       {
         len = 0;
@@ -230,7 +226,7 @@ static int __enumcorenames(unsigned int cont_i, const char *corename,
         else if (maxlen > 50)
           maxlen = 75;
         else if (maxlen > 25)
-          maxlen = 50;        
+          maxlen = 50;
         else
           maxlen = 25;
         for (;len < maxlen; len++)
@@ -258,9 +254,9 @@ static int __enumcorenames(unsigned int cont_i, const char *corename,
         else
           strcpy(contnamepad,"    ");
       }
-    
-      LogScreenRaw( "%s%s%s", ((need_pre_lf)?("\n"):("")), 
-                                contnamepad, label );     
+
+      LogScreenRaw( "%s%s%s", ((need_pre_lf)?("\n"):("")),
+                                contnamepad, label );
       ecd->linepos += len;
       ecd->cont_i = cont_i;
     } /* for for (; which < 2; which++) */
@@ -315,12 +311,12 @@ static void __strip_project_from_alist(char *alist, unsigned int cont_i)
         {
           alist++;
           pos++;
-        } 
-        if (pos == namelen && 
-           (!*alist || *alist == ':' || *alist == '=' || *alist == ',' || 
+        }
+        if (pos == namelen &&
+           (!*alist || *alist == ':' || *alist == '=' || *alist == ',' ||
             *alist == ';' || isspace(*alist)))
         {
-          memmove( alist-namelen, nextpos, strlen(nextpos)+1 ); 
+          memmove( alist-namelen, nextpos, strlen(nextpos)+1 );
           alist = startpos;
           pos = strlen(alist);
           while (pos > 0)
@@ -330,14 +326,14 @@ static void __strip_project_from_alist(char *alist, unsigned int cont_i)
                 alist[pos]!=';' && !isspace(alist[pos]))
               break;
             alist[pos] = '\0';
-          } 
+          }
           break;
         }
       }
     }
-  }  
+  }
   return;
-}  
+}
 
 static void __strip_inappropriates_from_alist( char *alist, int menuoption )
 {
@@ -356,9 +352,9 @@ static void __strip_inappropriates_from_alist( char *alist, int menuoption )
 
 static int __configure( Client *client ) /* returns >0==success, <0==cancelled */
 {
-  struct __userpass { 
-    char username[MINCLIENTOPTSTRLEN*2]; 
-    char password[MINCLIENTOPTSTRLEN*2]; 
+  struct __userpass {
+    char username[MINCLIENTOPTSTRLEN*2];
+    char password[MINCLIENTOPTSTRLEN*2];
   } userpass;
   unsigned int cont_i;
   char loadorder[MINCLIENTOPTSTRLEN];
@@ -369,10 +365,10 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   int preferred_blocksize[CONTEST_COUNT];
   int pauseifbattery;
 
-  // ---- Set all stuff that doesn't change during config ----   
+  // ---- Set all stuff that doesn't change during config ----
   // note that some options rely on others, so watch the init order
 
-  /* ------------------- CONF_MENU_MISC ------------------ */  
+  /* ------------------- CONF_MENU_MISC ------------------ */
 
   conf_options[CONF_ID].thevariable=&(client->id[0]);
   conf_options[CONF_COUNT].thevariable=&(client->blockcount);
@@ -390,10 +386,10 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   conf_options[CONF_QUIETMODE].thevariable=&(client->quietmode);
   conf_options[CONF_COMPLETIONSOUNDON].thevariable=NULL; /* not available yet */
 
-  /* ------------------- CONF_MENU_BUFF ------------------ */  
+  /* ------------------- CONF_MENU_BUFF ------------------ */
 
   conf_options[CONF_NODISK].thevariable=&(client->nodiskbuffers);
-  conf_options[CONF_LOADORDER].thevariable = 
+  conf_options[CONF_LOADORDER].thevariable =
        strcpy(loadorder, projectmap_expand( client->project_order_map, client->project_state ) );
   conf_options[CONF_INBUFFERBASENAME].thevariable=&(client->in_buffer_basename[0]);
   conf_options[CONF_OUTBUFFERBASENAME].thevariable=&(client->out_buffer_basename[0]);
@@ -407,7 +403,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
     preferred_blocksize[cont_i] = client->preferred_blocksize[cont_i];
-    if (preferred_blocksize[cont_i] < 1)  
+    if (preferred_blocksize[cont_i] < 1)
       preferred_blocksize[cont_i] = -1; /* (auto) */
     else if (preferred_blocksize[cont_i] < PREFERREDBLOCKSIZE_MIN)
       preferred_blocksize[cont_i] = PREFERREDBLOCKSIZE_MIN;
@@ -418,25 +414,25 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
       inthreshold[cont_i] = 0;
     #if !defined(NO_OUTBUFFER_THRESHOLDS)
     outthreshold[cont_i] = client->outthreshold[cont_i];
-    #endif  
+    #endif
   }
   conf_options[CONF_PREFERREDBLOCKSIZE].thevariable=&(preferred_blocksize[0]);
   conf_options[CONF_THRESHOLDI].thevariable=&(inthreshold[0]);
   conf_options[CONF_THRESHOLDT].thevariable=&(client->timethreshold[0]);
 
-  /* ------------------- CONF_MENU_LOG  ------------------ */  
+  /* ------------------- CONF_MENU_LOG  ------------------ */
 
   static const char *logtypes[] = {"none","no limit","restart","fifo","rotate"};
   char logkblimit[sizeof(client->logfilelimit)], logrotlimit[sizeof(client->logfilelimit)];
   int logtype = LOGFILETYPE_NOLIMIT;
   logkblimit[0] = logrotlimit[0] = '\0';
-  
+
   if ( strcmp( client->logfiletype, "rotate" ) == 0)
   {
     logtype = LOGFILETYPE_ROTATE;
     strcpy( logrotlimit, (client->logfilelimit) );
   }
-  else 
+  else
   {
     strcpy( logkblimit, client->logfilelimit );
     if ( client->logname[0] == '\0' || strcmp( client->logfiletype, "none" ) == 0 )
@@ -446,7 +442,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
     else if (strcmp( client->logfiletype, "fifo" ) == 0)
       logtype = LOGFILETYPE_FIFO;
   }
-  
+
   conf_options[CONF_LOGTYPE].thevariable=&logtype;
   conf_options[CONF_LOGTYPE].choicelist=&logtypes[0];
   conf_options[CONF_LOGTYPE].choicemax=(int)((sizeof(logtypes)/sizeof(logtypes[0]))-1);
@@ -459,7 +455,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   conf_options[CONF_SMTPFROM].defaultsetting=(char *)conf_options[CONF_ID].thevariable;
   conf_options[CONF_SMTPDEST].defaultsetting=(char *)conf_options[CONF_ID].thevariable;
 
-  /* ------------------- CONF_MENU_NET  ------------------ */  
+  /* ------------------- CONF_MENU_NET  ------------------ */
 
   conf_options[CONF_NETTIMEOUT].thevariable=&(client->nettimeout);
   conf_options[CONF_AUTOFINDKS].thevariable=&(client->autofindkeyserver);
@@ -482,15 +478,15 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   int use_http_regardless = (( client->uuehttpmode == UUEHTTPMODE_HTTP
                             || client->uuehttpmode == UUEHTTPMODE_UUEHTTP)
                             && client->httpproxy[0] == '\0');
-  int use_uue_regardless =  (  client->uuehttpmode == UUEHTTPMODE_UUE 
+  int use_uue_regardless =  (  client->uuehttpmode == UUEHTTPMODE_UUE
                             || client->uuehttpmode == UUEHTTPMODE_UUEHTTP);
   if (client->httpproxy[0])
-  {                           
-    if (client->uuehttpmode == UUEHTTPMODE_SOCKS4) 
+  {
+    if (client->uuehttpmode == UUEHTTPMODE_SOCKS4)
       fwall_type = FWALL_TYPE_SOCKS4;
-    else if (client->uuehttpmode == UUEHTTPMODE_SOCKS5) 
+    else if (client->uuehttpmode == UUEHTTPMODE_SOCKS5)
       fwall_type = FWALL_TYPE_SOCKS5;
-    else if (client->uuehttpmode==UUEHTTPMODE_HTTP || 
+    else if (client->uuehttpmode==UUEHTTPMODE_HTTP ||
              client->uuehttpmode==UUEHTTPMODE_UUEHTTP)
       fwall_type = FWALL_TYPE_HTTP;
   }
@@ -499,15 +495,15 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   conf_options[CONF_FWALLTYPE].thevariable=&fwall_type;
   conf_options[CONF_FWALLTYPE].choicelist=&fwall_types[0];
   conf_options[CONF_FWALLTYPE].choicemax=(int)((sizeof(fwall_types)/sizeof(fwall_types[0]))-1);
-  
+
   conf_options[CONF_FWALLHOSTNAME].thevariable=&(client->httpproxy[0]);
   userpass.username[0] = userpass.password[0] = 0;
-  
+
   if (client->httpid[0])
   {
     strcpy( userpass.username, client->httpid );
     char *p = strchr( userpass.username,':');
-    if (p) 
+    if (p)
     {
       *p++ = 0;
       strcpy( userpass.password, p );
@@ -545,9 +541,9 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
     {
       const char **connectnames = LurkGetConnectionProfileList();
       conf_options[CONF_CONNPROFILE].thevariable=&(client->lurk_conf.connprofile[0]);
-      conf_options[CONF_CONNPROFILE].choicemin = 
+      conf_options[CONF_CONNPROFILE].choicemin =
       conf_options[CONF_CONNPROFILE].choicemax = 0;
-      if (connectnames) 
+      if (connectnames)
       {
         unsigned int maxconn = 0;
         while (connectnames[maxconn])
@@ -563,7 +559,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   }
   #endif // if(LURK)
 
-  /* ------------------- CONF_MENU_PERF ------------------ */  
+  /* ------------------- CONF_MENU_PERF ------------------ */
 
   conf_options[CONF_CPUTYPE].thevariable=NULL; /* assume not avail */
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
@@ -572,7 +568,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
     {
       client->coretypes[cont_i] = selcoreValidateCoreIndex(cont_i,client->coretypes[cont_i]);
       conf_options[CONF_CPUTYPE].thevariable = &(client->coretypes[0]);
-    }  
+    }
   }
   conf_options[CONF_NICENESS].thevariable = &(client->priority);
   conf_options[CONF_NUMCPU].thevariable = &(client->numcpu);
@@ -587,23 +583,23 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   {
     // there are two ways to deal with the keyport validation "problematik".
     // (Port redirection/mapping per datapipe or whatever is dealt with
-    //  by the client as if the target host were a personal proxy, 
+    //  by the client as if the target host were a personal proxy,
     //  so they are NOT an issue from the client's perspective.)
     //
     // - either we totally uncouple firewall and keyserver parameters
-    //   and don't do any validation of the keyport based on the 
+    //   and don't do any validation of the keyport based on the
     //   firewall method,
     // - or we bind them tightly under the assumption that anyone using
     //   behind a firewall is not going to be connecting to a personal
     //   proxy outside the firewall, ie keyproxy is _always_ a dnet host.
     //
     // I opted for the former:
-    //   a) The network layer will use a default port # if the port # is 
-    //      zero.  So.... why not leave it at zero? 
+    //   a) The network layer will use a default port # if the port # is
+    //      zero.  So.... why not leave it at zero?
     //   b) Validation should not be a config issue. Anything can be
-    //      modified in the ini itself and subsystems do their own 
+    //      modified in the ini itself and subsystems do their own
     //      validation anyway. If users want to play, let them.
-    //   c) If implementing a forced d.net host is preferred, it should 
+    //   c) If implementing a forced d.net host is preferred, it should
     //      not be done here. Network::Open is better suited for that.
     //                                                            - cyp
 
@@ -613,7 +609,8 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
     {
       conf_options[CONF_CPUTEMPTHRESHOLDS].disabledtext=
                   ((client->watchcputempthresh)?(NULL):("n/a"));
-      #if (CLIENT_OS != OS_MACOS)
+      #if (CLIENT_OS != OS_MACOS) && (CLIENT_OS != OS_MACOSX) && \
+          (CLIENT_OS != OS_DEC_UNIX)
       conf_options[CONF_PAUSEIFCPUTEMPHIGH].disabledtext=
       conf_options[CONF_CPUTEMPTHRESHOLDS].disabledtext=
                   "n/a [only supported on MacOS/PPC]";
@@ -630,24 +627,24 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
                   ((!client->nodiskbuffers)?(NULL):
                   ("n/a [disk buffers are disabled]"));
 
-      noremotedir = (client->noupdatefromfile || 
+      noremotedir = (client->noupdatefromfile ||
                      client->remote_update_dir[0]=='\0');
 
-      conf_options[CONF_MENU_NET_PLACEHOLDER].disabledtext = 
+      conf_options[CONF_MENU_NET_PLACEHOLDER].disabledtext =
                   (client->offlinemode ? " ==> n/a [no net & no remote dir]" : NULL );
-      conf_options[CONF_REMOTEUPDATEDIR].disabledtext = 
+      conf_options[CONF_REMOTEUPDATEDIR].disabledtext =
                   (client->noupdatefromfile ? na : NULL );
-      conf_options[CONF_FREQUENT].disabledtext= 
+      conf_options[CONF_FREQUENT].disabledtext=
                   (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_FREQUENT_FREQUENCY].disabledtext=
                   ((client->offlinemode && noremotedir) ? na : NULL );
       conf_options[CONF_FREQUENT_RETRY_FREQUENCY].disabledtext=
                   ((client->offlinemode && noremotedir) ? na : NULL );
-      conf_options[CONF_PREFERREDBLOCKSIZE].disabledtext= 
+      conf_options[CONF_PREFERREDBLOCKSIZE].disabledtext=
                   (client->offlinemode && noremotedir ? na : NULL );
-      conf_options[CONF_THRESHOLDI].disabledtext= 
+      conf_options[CONF_THRESHOLDI].disabledtext=
                   (client->offlinemode && noremotedir ? na : NULL );
-      conf_options[CONF_THRESHOLDT].disabledtext= 
+      conf_options[CONF_THRESHOLDT].disabledtext=
                   (client->offlinemode && noremotedir ? na : NULL );
 
       if (client->max_buffupd_interval == 0)
@@ -657,10 +654,10 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
         conf_options[CONF_FREQUENT_RETRY_FREQUENCY].disabledtext=
                     "n/a [need additional buffer level checking]";
       if (__count_projects_having_flag(PROJECTFLAG_PREFERRED_BLOCKSIZE) == 0)
-        conf_options[CONF_PREFERREDBLOCKSIZE].disabledtext= 
+        conf_options[CONF_PREFERREDBLOCKSIZE].disabledtext=
                      "n/a [not needed by a supported project]";
       if (__count_projects_having_flag(PROJECTFLAG_TIME_THRESHOLD) == 0)
-        conf_options[CONF_THRESHOLDT].disabledtext= 
+        conf_options[CONF_THRESHOLDT].disabledtext=
                      "n/a [not needed by a supported project]";
     }
     else if (whichmenu == CONF_MENU_LOG)
@@ -669,11 +666,11 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
       if (logtype == LOGFILETYPE_ROTATE)
         conf_options[CONF_LOGLIMIT].thevariable=(&logrotlimit[0]);
       conf_options[CONF_LOGNAME].disabledtext=
-                  ((logtype != LOGFILETYPE_NONE) ? (NULL) : 
+                  ((logtype != LOGFILETYPE_NONE) ? (NULL) :
                   ("n/a [file log disabled]"));
       conf_options[CONF_LOGLIMIT].disabledtext=
-                  ((logtype != LOGFILETYPE_NONE && 
-                    logtype != LOGFILETYPE_NOLIMIT) ? (NULL) : 
+                  ((logtype != LOGFILETYPE_NONE &&
+                    logtype != LOGFILETYPE_NOLIMIT) ? (NULL) :
                   ("n/a [inappropriate for log type]"));
       conf_options[CONF_SMTPSRVR].disabledtext=
       conf_options[CONF_SMTPDEST].disabledtext=
@@ -715,8 +712,8 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
           conf_options[CONF_FWALLPASSWORD].disabledtext=
                 "n/a [proxy method does not support passwords]";
         }
-      }     
-      
+      }
+
       if (client->autofindkeyserver)
       {
         conf_options[CONF_NOFALLBACK].disabledtext= "n/a"; //can't fallback to self
@@ -728,14 +725,14 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
                                          "n/a [Requires Lurk|lurkony or DOD]";
         if ((client->lurk_conf.lurkmode)==CONNECT_LURK || (client->lurk_conf.lurkmode)==CONNECT_LURKONLY)
           conf_options[CONF_CONNIFACEMASK].disabledtext= NULL;
-        #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)  
+        #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
         else //win16 and win32 dialwhenneeded depends on lurk being available
-          conf_options[CONF_DIALWHENNEEDED].disabledtext= 
+          conf_options[CONF_DIALWHENNEEDED].disabledtext=
                              "n/a [Dialup detection is off]";
         #endif
-        if (client->lurk_conf.dialwhenneeded && 
+        if (client->lurk_conf.dialwhenneeded &&
             conf_options[CONF_DIALWHENNEEDED].thevariable &&
-            conf_options[CONF_DIALWHENNEEDED].disabledtext==NULL) 
+            conf_options[CONF_DIALWHENNEEDED].disabledtext==NULL)
           conf_options[CONF_CONNIFACEMASK].disabledtext= NULL;
         else
         {
@@ -747,6 +744,14 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
       }
       #endif
     }
+    #if defined(SINGLE_CRUNCHER_ONLY) // prevent "empty if statement" warnings
+    else if (whichmenu == CONF_MENU_PERF)
+    {
+      #if defined(SINGLE_CRUNCHER_ONLY)
+      conf_options[CONF_NUMCPU].disabledtext = "n/a [SINGLE_CRUNCHER_ONLY]";
+      #endif
+    }
+    #endif
 
     /* -------------------- display menu -------------------------- */
 
@@ -761,12 +766,12 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
         // we handle the main menu separately because of the ID prompt
         // and because we want to enforce a definitive selection.
         // Other than that, its a simplified version of a non-main menu.
-        
+
         int id_menu = (int)conf_options[CONF_ID].optionscreen;
         const char *id_menuname = NULL;
         menuname = "mainmenu";
         optioncount = 0;
-          
+
         for (menuoption=0; menuoption < CONF_OPTION_COUNT; menuoption++)
         {
           if (conf_options[menuoption].disabledtext != NULL)
@@ -783,16 +788,16 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
               break;
           }
         }
-        
+
         if (optioncount == 0)
           returnvalue = -1;
-        
+
         while (whichmenu == CONF_MENU_MAIN && returnvalue == 0)
         {
           char chbuf[6];
           ConClear();
           LogScreenRaw(CONFMENU_CAPTION, "");
-         
+
           for (menuoption=0; menuoption < ((int)(optioncount)); menuoption++)
             LogScreenRaw(" %u) %s\n", menuoption+1,
                        conf_options[optionlist[menuoption]].description);
@@ -800,7 +805,10 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
                        "\n 0) Save settings and exit\n\n");
           if (id_menuname && client->id[0] == '\0')
             LogScreenRaw("Note: You have not yet provided a distributed.net ID.\n"
-            "      Please go to the '%s' and set it.\n", id_menuname);
+                         "      Please go to the '%s' and set it.\n", id_menuname);
+          else if (id_menuname && !utilIsUserIDValid(client->id))
+            LogScreenRaw("Note: The distributed.net ID you provided is invalid.\n"
+                         "      Please go to the '%s' and correct it.\n", id_menuname);
           LogScreenRaw("\nChoice --> " );
           ConInStr(chbuf, 2, 0);
           menuoption = ((strlen(chbuf)==1 && isdigit(chbuf[0]))?(atoi(chbuf)):(-1));
@@ -821,7 +829,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
             menuname = conf_options[menuoption].description;
           }
           ConClear();
-        } 
+        }
       }
       else /* non-main menu */
       {
@@ -831,7 +839,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
           int parentmenu = CONF_MENU_MAIN;
           const char *parentmenuname = "main menu";
           optioncount = 0;
-          
+
           for (menuoption=0; menuoption < CONF_OPTION_COUNT; menuoption++)
           {
             if (conf_options[menuoption].type==CONF_TYPE_MENU &&
@@ -855,7 +863,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
             {
               char parm[128];
               const char *descr = NULL;
-              
+
               if (conf_options[menuoption].disabledtext != NULL)
               {
                 #ifdef REVEAL_DISABLED /* this is only for greg! :) */
@@ -878,7 +886,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
                 #if !defined(NO_OUTBUFFER_THRESHOLDS)
                 if ( menuoption == CONF_THRESHOLDI )  // don't have a
                   vectb = &(outthreshold[0]); // THRESHOLDO any more
-                #endif  
+                #endif
                 utilGatherOptionArraysToList( parm, sizeof(parm),
                     (int *)conf_options[menuoption].thevariable, vectb );
                 __strip_inappropriates_from_alist( parm, menuoption );
@@ -887,7 +895,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
               else if (conf_options[menuoption].type==CONF_TYPE_ASCIIZ
 #ifdef PLAINTEXT_PW
                 || conf_options[menuoption].type==CONF_TYPE_PASSWORD
-#endif                
+#endif
               )
               {
                 descr = (const char *)conf_options[menuoption].thevariable;
@@ -904,20 +912,20 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
               else if (conf_options[menuoption].type==CONF_TYPE_TIMESTR)
               {
                 int t = *((int *)conf_options[menuoption].thevariable);
-                sprintf(parm, "%d:%02u", (t/60), 
+                sprintf(parm, "%d:%02u", (t/60),
                                (unsigned int)(((t<0)?(-t):(t))%60) );
                 descr = parm;
                 if (*conf_options[menuoption].defaultsetting)
                 {
                   t = strlen(parm);
-                  if (((unsigned int)t) < 
-                      strlen(conf_options[menuoption].defaultsetting) && 
+                  if (((unsigned int)t) <
+                      strlen(conf_options[menuoption].defaultsetting) &&
                       conf_options[menuoption].defaultsetting[t]==' ' &&
                       memcmp(parm,conf_options[menuoption].defaultsetting,t)==0)
                   {
                     descr = conf_options[menuoption].defaultsetting;
                   }
-                }  
+                }
               }
               else if (conf_options[menuoption].type==CONF_TYPE_INT)
               {
@@ -950,7 +958,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
                 char parm2[128];
                 unsigned int optlen;
                 optionlist[optioncount++] = menuoption;
-                optlen = sprintf(parm2, "%2u) %s%s", optioncount, 
+                optlen = sprintf(parm2, "%2u) %s%s", optioncount,
                      conf_options[menuoption].description,
                      (conf_options[menuoption].type == CONF_TYPE_MENU ? "" :
                                                        " ==> " ));
@@ -971,7 +979,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
 
           menuoption = 0;
           if (optioncount > 0)
-          { 
+          {
             char chbuf[sizeof(long)*3];
             menuoption = 0; //-1;
             LogScreenRaw("\n 0) Return to %s\n\nChoice --> ",parentmenuname);
@@ -993,9 +1001,9 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
                   }
                 }
               }
-            } 
+            }
           }
-          
+
           if (CheckExitRequestTriggerNoIO())
           {
             returnvalue = -1;
@@ -1037,11 +1045,11 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
       char parm[128];
 
       /* -- display user selection in detail and get new value --- */
-      while ( editthis >= 0 && !newval_isok) 
+      while ( editthis >= 0 && !newval_isok)
       {
         const char *p;
 
-        ConClear(); 
+        ConClear();
         LogScreenRaw(CONFMENU_CAPTION, menuname);
         LogScreenRaw("\n%s:\n\n", conf_options[editthis].description );
 
@@ -1059,7 +1067,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
         }
 
 
-        if ( conf_options[editthis].type == CONF_TYPE_ASCIIZ || 
+        if ( conf_options[editthis].type == CONF_TYPE_ASCIIZ ||
              conf_options[editthis].type == CONF_TYPE_INT ||
              conf_options[editthis].type == CONF_TYPE_PASSWORD ||
              conf_options[editthis].type == CONF_TYPE_IARRAY )
@@ -1067,17 +1075,17 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
           p = "";
           char defaultbuff[30];
           int coninstrmode = CONINSTR_BYEXAMPLE;
-          
+
           if (editthis == CONF_CPUTYPE) /* ugh! */
           {
             #if 1 /* N rows per contest */
             struct enumcoredata ecd;
             ecd.linepos = 0;
             ecd.cont_i = ((unsigned int)-1);
-            selcoreEnumerate( __enumcorenames, &ecd ); 
+            selcoreEnumerate( __enumcorenames, &ecd );
             LogScreenRaw("\n\n");
             #else /* one column per contest */
-            selcoreEnumerateWide( __enumcorenames_wide, NULL ); 
+            selcoreEnumerateWide( __enumcorenames_wide, NULL );
             LogScreenRaw("\n");
             #endif
           }
@@ -1097,15 +1105,15 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
             {
               long listpos;
               for ( listpos = selmin; listpos <= selmax; listpos++)
-                LogScreenRaw("  %2ld) %s\n", listpos, 
+                LogScreenRaw("  %2ld) %s\n", listpos,
                       conf_options[editthis].choicelist[listpos]);
             }
           }
-          
+
           if (conf_options[editthis].type==CONF_TYPE_ASCIIZ
 #ifdef PLAINTEXT_PW
            || conf_options[editthis].type==CONF_TYPE_PASSWORD
-#endif           
+#endif
           )
           {
             strcpy(parm, (char *)conf_options[editthis].thevariable);
@@ -1124,9 +1132,9 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
             #if !defined(NO_OUTBUFFER_THRESHOLDS)
             if ( editthis == CONF_THRESHOLDI )  // don't have a
               vectb = &(outthreshold[0]); // THRESHOLDO any more
-            #endif  
+            #endif
             utilGatherOptionArraysToList( parm, sizeof(parm),
-                    (int *)conf_options[editthis].thevariable, vectb ); 
+                    (int *)conf_options[editthis].thevariable, vectb );
             __strip_inappropriates_from_alist( parm, editthis );
             p = (const char *)(conf_options[editthis].defaultsetting);
           }
@@ -1169,7 +1177,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
               newval_d = atol(parm);
               long selmin = (long)conf_options[editthis].choicemin;
               long selmax = (long)conf_options[editthis].choicemax;
-              if ((selmin != 0 || selmax != 0) && 
+              if ((selmin != 0 || selmax != 0) &&
                 (newval_d < selmin || newval_d > selmax))
               newval_isok = 0;
             }
@@ -1177,7 +1185,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
           else if (conf_options[editthis].type == CONF_TYPE_IARRAY)
           {
             newval_isok = 1;
-            if (editthis == CONF_CPUTYPE) 
+            if (editthis == CONF_CPUTYPE)
             {
               /* merge with previous is done later - this is just to check
               ** that the numbers that the user _does_ provide are ok.
@@ -1194,8 +1202,8 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
                 {
                   newval_isok = 0; /* reject it */
                   break;
-                }  
-              }    
+                }
+              }
             }
           }
           else //if (conf_options[editthis].type==CONF_TYPE_ASCIIZ)
@@ -1213,7 +1221,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
             }
             newval_isok = 1;
 
-            if (parm[0] != 0 && conf_options[editthis].choicemax != 0 && 
+            if (parm[0] != 0 && conf_options[editthis].choicemax != 0 &&
                 conf_options[editthis].choicelist) /* int *and* asciiz */
             {
               newval_d = atol(parm);
@@ -1221,31 +1229,37 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
                  (newval_d <= ((long)conf_options[editthis].choicemax)) )
               {
                 strncpy(parm, conf_options[editthis].choicelist[newval_d], sizeof(parm));
-                parm[sizeof(parm)-1]=0; 
+                parm[sizeof(parm)-1]=0;
                 if (newval_d == 0 && editthis == CONF_CONNPROFILE)
                   parm[0]=0;
               }
+            }
+
+            if (editthis == CONF_ID)
+            {
+              if (newval_isok)
+                newval_isok = utilIsUserIDValid(parm);
             }
           }
         }
         else if (conf_options[editthis].type == CONF_TYPE_TIMESTR)
         {
           int t = *((int *)conf_options[editthis].thevariable);
-          sprintf(parm,"%d:%02u", (t/60), 
+          sprintf(parm,"%d:%02u", (t/60),
                            (unsigned int)(((t<0)?(-t):(t))%60) );
           LogScreenRaw("Default Setting: %s\n"
                        "Current Setting: %s\n"
                        "New Setting --> ",
                        conf_options[editthis].defaultsetting, parm );
-          
+
           ConInStr( parm, 10, CONINSTR_BYEXAMPLE );
-          
+
           if (CheckExitRequestTriggerNoIO())
           {
             editthis = -2;
             returnvalue = -1;
           }
-          else 
+          else
           {
             if (parm[0]!=0)
             {
@@ -1313,7 +1327,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
           }
           else if (parm[0]=='y' || parm[0]=='Y')
             newval_d = 1;
-          else if (parm[0]=='n' || parm[0]=='N') 
+          else if (parm[0]=='n' || parm[0]=='N')
             newval_d = 0;
           else
             newval_isok = 0;
@@ -1327,7 +1341,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
           ConBeep();
         }
       }
-        
+
       /* --------------- have modified value, so assign -------------- */
 
       if (editthis >= 0 && newval_isok)
@@ -1335,7 +1349,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
         // DO NOT TOUCH ANY VARIABLE EXCEPT THE SELECTED ONE
         // (unless those variables are not menu options)
         // DO IT AFTER ALL MENU DRIVEN CONFIG IS FINISHED (see end)
-        
+
         if (editthis == CONF_ID || editthis == CONF_KEYSERVNAME ||
           editthis == CONF_SMTPFROM || editthis == CONF_SMTPSRVR ||
           editthis == CONF_FWALLHOSTNAME)
@@ -1355,13 +1369,13 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
         if (conf_options[editthis].type==CONF_TYPE_ASCIIZ ||
             conf_options[editthis].type==CONF_TYPE_PASSWORD)
         {
-          strncpy( (char *)conf_options[editthis].thevariable, parm, 
+          strncpy( (char *)conf_options[editthis].thevariable, parm,
                    MINCLIENTOPTSTRLEN );
           ((char *)conf_options[editthis].thevariable)[MINCLIENTOPTSTRLEN-1]=0;
           if (editthis == CONF_LOADORDER)
           {
             projectmap_build(client->project_order_map, client->project_state, loadorder );
-            conf_options[CONF_LOADORDER].thevariable = 
+            conf_options[CONF_LOADORDER].thevariable =
               strcpy(loadorder, projectmap_expand( client->project_order_map, client->project_state ) );
           }
         }
@@ -1374,32 +1388,32 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
           #if !defined(NO_OUTBUFFER_THRESHOLDS)
           if ( editthis == CONF_THRESHOLDI )  // don't have a
             vectb = &(outthreshold[0]); // THRESHOLDO any more
-          #endif  
+          #endif
           for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
           {
             iarray_a[cont_i] = vecta[cont_i];
             if (vectb)
              iarray_b[cont_i] = vectb[cont_i];
-          }   
+          }
           vecta = &iarray_a[0];
-          if (vectb) 
+          if (vectb)
             vectb = &iarray_b[0];
           utilScatterOptionListToArraysEx(parm,vecta, vectb,NULL, NULL );
           vecta = (int *)conf_options[editthis].thevariable;
           #if !defined(NO_OUTBUFFER_THRESHOLDS)
           if ( editthis == CONF_THRESHOLDI )  // don't have a
             vectb = &(outthreshold[0]); // THRESHOLDO any more
-          #endif  
-          if (editthis == CONF_CPUTYPE) 
+          #endif
+          if (editthis == CONF_CPUTYPE)
           {
             for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
             {
               vecta[cont_i] = -1; /* autosel */
               if (__is_opt_available_for_project(cont_i, editthis))
                 vecta[cont_i] = selcoreValidateCoreIndex(cont_i,iarray_a[cont_i]);
-            }    
+            }
           }
-          else 
+          else
           {
             int mmin = conf_options[editthis].choicemin;
             int mmax = conf_options[editthis].choicemax;
@@ -1420,21 +1434,21 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
                     v = iarray_b[cont_i];
                     if (v == mdef)    v = mdef;
                     else if (editthis == CONF_THRESHOLDI)
-                    { 
+                    {
                       /* outthresh must only be < inthresh and can be <=0 */
                       if (v > iarray_a[cont_i])
                         v = iarray_a[cont_i];
                       else if (v < 0)
-                        v = -1;  
+                        v = -1;
                     }
                     else if (v < mmin) v = mmin;
                     else if (v > mmax) v = mmax;
                     vectb[cont_i] = v;
-                  } 
-                }  
+                  }
+                }
               }
             }
-          } 
+          }
         }
         else //bool or int types
         {
@@ -1451,7 +1465,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
 
   if (CheckExitRequestTriggerNoIO())
   {
-    LogScreenRaw("\n"); 
+    LogScreenRaw("\n");
     returnvalue = -1;
   }
 
@@ -1463,7 +1477,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
     for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
     {
       if (preferred_blocksize[cont_i] < 1) /* "auto" */
-        preferred_blocksize[cont_i] = 0; 
+        preferred_blocksize[cont_i] = 0;
       client->preferred_blocksize[cont_i] = preferred_blocksize[cont_i];
       if (inthreshold[cont_i] < 1) /* "auto" */
         inthreshold[cont_i] = 0;
@@ -1478,7 +1492,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
     {
       if (logtype == LOGFILETYPE_ROTATE)
         strcpy( client->logfilelimit, logrotlimit );
-      else 
+      else
       {
         if (client->logname[0] == '\0')
           logtype = LOGFILETYPE_NONE;
@@ -1501,7 +1515,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
       client->uuehttpmode = (use_uue_regardless?UUEHTTPMODE_UUEHTTP:UUEHTTPMODE_HTTP);
     else if (use_uue_regardless)
       client->uuehttpmode = UUEHTTPMODE_UUE;
-    
+
     TRACE_OUT((0,"precomp: u:p=\"%s:%s\"\n",userpass.username,userpass.password));
     client->httpid[0] = 0;
     if (strlen(userpass.username) || strlen(userpass.password))
@@ -1515,25 +1529,25 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   }
 
   //fini
-    
+
   return returnvalue; /* <0=exit+nosave, >0=exit+save */
 }
 
 
 /* returns <0=error, 0=success+nosave, >0=success+save */
-int Configure( Client *sample_client, int nottycheck ) 
-{                                   
+int Configure( Client *sample_client, int nottycheck )
+{
   int rc = -1; /* assume error */
   if (!nottycheck && !ConIsScreen())
   {
     ConOutErr("Screen output is redirected/not available. Please use --config\n");
   }
   else
-  {  
+  {
     Client *newclient = (Client *)malloc(sizeof(Client));
     if (!newclient)
     {
-      ConOutErr("Unable to configure. (Insufficient memory)");  
+      ConOutErr("Unable to configure. (Insufficient memory)");
     }
     else
     {
@@ -1542,21 +1556,21 @@ int Configure( Client *sample_client, int nottycheck )
       if (ConfigRead(newclient) < 0) /* <0=fatalerror, 0=no error, >0=inimissing */
       {
         ConOutErr("Unable to configure. (Fatal error reading/parsing .ini)");
-      }	
+      }
       else if ( __configure(newclient) < 0 ) /* nosave */
       {
         rc = 0; /* success+nosave */
-      }	
+      }
       else if (ConfigWrite(newclient) < 0)
       {
         ConOutErr("Unable to save one or more settings to the .ini");
-      }	
-      else  
+      }
+      else
       {
         rc = +1; /* success+saved */
-      }	
+      }
       free((void *)newclient);
-    }  	  
-  }    
+    }
+  }
   return rc;
-}  
+}

@@ -1,16 +1,16 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * By Kevin Bracey <kbracey@acorn.com> and Chris Berry <cberry@acorn.com>
  *
- * $Id: riscos_sup.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $
+ * $Id: riscos_sup.cpp,v 1.3 2003/09/12 22:29:27 mweiser Exp $
 */
 
 #include <stdio.h> /* printf() for debugging */
 #include <kernel.h>
-#include <sys/swis.h>
+#include <swis.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -115,7 +115,7 @@ void riscos_backspace(void)
   _kernel_swi(XOS_Bit|(OS_WriteI + 8), &regs, &regs);
 }
 
-
+#if 0
 unsigned int sleep(unsigned int s)
 {
   return riscos_hsleep(s * 100);
@@ -130,7 +130,7 @@ void sched_yield(void)
 {
   riscos_hsleep(0);
 }
-
+#endif
 
 static const char *riscos_get_local_directory(const char *appname)
 {
@@ -213,4 +213,49 @@ int riscos_find_local_directory(const char *progname)
   if (riscos_get_local_directory(progname))
     return 0;
   return -1;
+}
+
+char *riscos_version(void)
+{
+  _kernel_swi_regs regs;
+  _kernel_oserror *e;
+
+  regs.r[0]=129;
+  regs.r[1]=0;
+  regs.r[2]=255;
+  e = _kernel_swi(XOS_Bit|OS_Byte, &regs, &regs);
+  if (!e)
+  {
+    switch (regs.r[1])
+    {
+      case 0xa0:
+        return "Arthur 1.2";
+      case 0xa1:
+        return "RISC OS 2.00";
+      case 0xa2:
+        return "RISC OS 2.01";
+      case 0xa3:
+        return "RISC OS 3.00";
+      case 0xa4:
+        return "RISC OS 3.1X";
+      case 0xa5:
+        return "RISC OS 3.5";
+      case 0xa6:
+        return "RISC OS 3.6";
+      case 0xa7:
+        return "RISC OS 3.7";
+      default:
+        if (regs.r[1]>=0xa8)
+        {
+          regs.r[0]=9;
+          regs.r[1]=0;
+          _kernel_swi(XOS_Bit|OS_ReadSysInfo, &regs, &regs);
+          return (char *)regs.r[0];
+        }
+        else
+          return "";
+    }
+  }
+  else
+    return "";
 }

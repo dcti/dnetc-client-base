@@ -11,7 +11,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.4 2002/10/14 14:49:11 jlawson Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.5 2003/09/12 22:29:27 mweiser Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE
@@ -41,7 +41,7 @@ return "@(#)$Id: w32cons.cpp,v 1.4 2002/10/14 14:49:11 jlawson Exp $"; }
 #include "triggers.h" // for clisetupsignals
 #include "logstuff.h" // Log()
 #include "setprio.h"  // SetGlobalPriority();
-#include "util.h"     // utilGetAppName()/TRACE
+#include "util.h"     // utilGetAppName()/TRACE, DNETC_UNUSED_*
 #include "cpucheck.h" // GetNumberOfProcessors()
 #include "client.h"   // modereq needs client
 #include "probfill.h" //LoadSaveProblems(), PROBFILL_UNLOADALL
@@ -561,7 +561,11 @@ static int __DoTrayStuff( HWND hwnd, int action, const char *tip,
                           const char *calledfrom )
 {
   int retcode = -1; /* assume failed */
-  hwnd = hwnd; action = action; tip = tip; calledfrom = calledfrom; /* shaddup compiler */
+
+  DNETC_UNUSED_PARAM(hwnd);
+  DNETC_UNUSED_PARAM(action);
+  DNETC_UNUSED_PARAM(tip);
+  DNETC_UNUSED_PARAM(calledfrom);
 
   #if (CLIENT_OS == OS_WIN32)
   if ((winGetVersion() % 2000) >= 400)          // Win95+, NT4+
@@ -1283,7 +1287,8 @@ static void __DrawResizeRect(HWND hwnd, const RECT *rect)
     HBRUSH hb, oldbrush;
     BITMAP bm;
     HBITMAP hbm;
-    hwnd = hwnd; /* shaddup compiler */
+
+    DNETC_UNUSED_PARAM(hwnd);
 
     // See the KB Article Q68569 for information about how to draw the
     // resizing rectangle.  That's where this pattern comes from.
@@ -1595,7 +1600,8 @@ static HMENU __w16WindowConstructMenu(W16CONP console, HWND hwnd,
   HMENU hretmenu = NULL;
   int exiting = CheckExitRequestTrigger();
   int aspopup = (message == 0); /* else WM_CREATE/WM_INITMENU etc */
-  hwnd = hwnd; /* shaddup compiler */
+
+  DNETC_UNUSED_PARAM(hwnd);
 
   TRACE_MENU((+1,"__w16WindowConstructMenu(aspopup=%d, exiting=%d)\n",aspopup,exiting));
   if (!(aspopup && exiting)) /* popup+exiting => no popup menu */
@@ -3607,7 +3613,9 @@ static int __w16WindowHandle_DNETC_WCMD(HWND hwnd, UINT message,
                         WPARAM wParam, LPARAM lParam, LRESULT *lResultP )
 {
   int handled = 0;
-  hwnd = hwnd; lParam = lParam; // shaddup compiler
+
+  DNETC_UNUSED_PARAM(hwnd);
+  DNETC_UNUSED_PARAM(lParam);
 
   /* the reason we have two forms is
   ** a) the DNETC_WCMD_* forms are constant between all versions of the
@@ -4395,7 +4403,8 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
                                 UINT message, WPARAM wParam, LPARAM lParam)
 {
   W16CONP console = __win16GetHwndConsole( hwnd );
-  nestinglevel = nestinglevel; /* shaddup compiler */
+
+  DNETC_UNUSED_PARAM(nestinglevel);
 
   if (console != NULL)
   {
@@ -5190,16 +5199,11 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
       }
       else if (wParam == WMCMD_HELP_FAQ)
       {
-        URL = "http://www.distributed.net/faq/cache/1.html";
+        URL = "http://www.distributed.net/faq/";
       }
       else if (wParam == WMCMD_HELP_BUG)
       {
         URL = "http://www.distributed.net/bugs/";
-        if (winGetVersion()>=400) /* exceeds cmdline len otherwise */
-        {
-          URL = "http://www.distributed.net/bugs/buglist.cgi?product=Client&bug_status=UNCONFIRMED&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&order=Bug+Number";
-          //URL = "http://www.distributed.net/bugs/buglist.cgi?product=Client&bug_status=UNCONFIRMED&bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&order=Bug+Number&component=Beta-Test&component=config&component=&Configuration&component=Core-Selection&component=Core-Speed&component=Crashes%2FHangs&component=display+and+UI&component=Network%2FCommunications";
-        }
       }
       else if (wParam == WMCMD_HELP_MAILTO)
       {

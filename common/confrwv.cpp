@@ -1,12 +1,12 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.92 2002/10/20 22:54:07 andreasb Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.93 2003/09/12 22:29:25 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -309,7 +309,7 @@ static int _readwrite_fwallstuff(int aswrite, const char *fn, Client *client)
       }
       TRACE_OUT((0,"new uuehttpmode=%d\n",client->uuehttpmode));
       TRACE_OUT((0,"new httpproxy=\"%s\"\n",client->httpproxy));
-      TRACE_OUT((0,"new httpport=%d\n",client->httpport));
+      //TRACE_OUT((0,"new httpport=%d\n",client->httpport));
       TRACE_OUT((0,"new httpid=\"%s\"\n",client->httpid));
 
       TRACE_OUT((-1,"newform: _readwrite_fwallstuff(asread)\n"));
@@ -974,8 +974,10 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
   {
     if ((i = GetPrivateProfileIntB( OPTION_SECTION, "numcpu", -12345, fn ))>=0)
     {
+      #if !defined(SINGLE_CRUNCHER_ONLY)
       client->numcpu = i;
-      modfail += (!_WritePrivateProfile_sINT( OPTSECT_CPU, "max-threads", client->numcpu, fn));
+      #endif /* SINGLE_CRUNCHER_ONLY */
+      modfail += (!_WritePrivateProfile_sINT( OPTSECT_CPU, "max-threads", i, fn));
     }
   }
   if ((i=GetPrivateProfileIntB( OPTSECT_CPU, "priority", -12345, fn ))!=-12345)
@@ -1240,7 +1242,9 @@ int ConfigRead(Client *client)
   /* --------------------- */
 
   client->priority = GetPrivateProfileIntB( OPTSECT_CPU, "priority", client->priority, fn );
+  #if !defined(SINGLE_CRUNCHER_ONLY)
   client->numcpu = GetPrivateProfileIntB( OPTSECT_CPU, "max-threads", client->numcpu, fn );
+  #endif /* SINGLE_CRUNCHER_ONLY */
 
   /* --------------------- */
 
@@ -1452,7 +1456,9 @@ int ConfigWrite(Client *client)
 
     /* --- CONF_MENU_PERF -- */
 
+    #if !defined(SINGLE_CRUNCHER_ONLY)
     __XSetProfileInt( OPTSECT_CPU, "max-threads", client->numcpu, fn, -1, 0 );
+    #endif /* SINGLE_CRUNCHER_ONLY */
     __XSetProfileInt( OPTSECT_CPU, "priority", client->priority, fn, 0, 0);
 
     /* more buffer stuff */

@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -14,11 +14,12 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.56 2002/10/09 22:22:14 andreasb Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.57 2003/09/12 22:29:25 mweiser Exp $"; }
 
 #include "cputypes.h"
-#include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
-#include "clitime.h"  // keep the prototypes in sync
+#include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
+#include "clitime.h"    /* keep the prototypes in sync */
+#include "unused.h"     /* DNETC_UNUSED_* */
 
 #if (CLIENT_OS == OS_WIN32) && (CLIENT_CPU == CPU_ALPHA)
 extern "C" int _AcquireSpinLockCount(long *, int);
@@ -556,7 +557,7 @@ int CliGetMonotonicClock( struct timeval *tv )
         #error whats up doc?
         #endif
         if (!lacquired)
-          DosSleep(0);
+          DosSleep(1);
       }
       if (!DosQuerySysInfo(QSV_MS_COUNT, QSV_MS_COUNT, &ticks, sizeof(ticks)))
       {
@@ -665,6 +666,18 @@ int CliGetMonotonicClock( struct timeval *tv )
       if (amigaGetMonoClock(tv) != 0)
         return -1;
     }
+    #elif (CLIENT_OS == OS_NEXTSTEP)
+    {
+      struct tsval ts;
+
+      /* gives the uptime in microseconds in ts */
+      if (kern_timestamp(&ts) != KERN_SUCCESS)
+        return -1;
+
+      /* the actual timestamp is 64bit but comes in 32bit low and high
+      ** parts so that the latter can be treated as the wrap count */
+      __clks2tv( 1000000, ts.low_val, ts.high_val, tv );
+    }
     #elif defined(CLOCK_MONOTONIC) /* POSIX 1003.1c */
     {                           /* defined doesn't always mean supported :( */
       struct timespec ts;
@@ -719,6 +732,9 @@ int CliGetMonotonicClock( struct timeval *tv )
     }
     #elif (CLIENT_OS == OS_DYNIX)
     // This is bad, but I at a loss to find something better.
+    return __GetTimeOfDay( tv );
+    #elif (CLIENT_OS == OS_SCO)
+    // @TODO: fix this
     return __GetTimeOfDay( tv );
     #else
     // this is a bad thing because time-of-day is user modifiable.
@@ -788,7 +804,7 @@ int CliGetThreadUserTime( struct timeval *tv )
   is_supp = 1;
   return 0;
 #else
-  tv = tv; /* shaddup compiler */
+  DNETC_UNUSED_PARAM(tv);
   return -1;
 #endif
 }

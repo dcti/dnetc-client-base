@@ -1,8 +1,8 @@
-// Copyright distributed.net 1997-2002 - All Rights Reserved
+// Copyright distributed.net 1997-2003 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 // 
-// $Id: rotate.h,v 1.4 2002/10/17 12:04:36 andreasb Exp $
+// $Id: rotate.h,v 1.5 2003/09/12 22:29:27 mweiser Exp $
 //
 
 #ifndef __ROTATE_H__
@@ -14,7 +14,7 @@
 
 //-------------------------------------------------------------------
 
-#if (CLIENT_CPU == CPU_SPARC) && !defined(__SUNPRO_CC)
+#if ((CLIENT_CPU == CPU_SPARC) && !defined(__SUNPRO_CC)) || (CLIENT_CPU == CPU_ARM)
 
 #define SHL(x, s) ((u32) ((x) << (s) ))
 #define SHR(x, s) ((u32) ((x) >> (32 - (s)) ))
@@ -154,6 +154,35 @@ static __inline__ u32 ROTL3(u32 x)
   register u32 res;
   __asm(
         "rol %0, %1, 3"
+       :"=r" (res)
+       :"r" (x));
+  return res;
+}
+
+#elif (CLIENT_CPU == CPU_S390) && defined(S390_Z_ARCH) && defined(__GNUC__)
+   /* In contrast to gcc 2.95.3 the gcc 3.2 does produces faster code    */
+   /* with the standard defines for ROTL and ROTL3 on Linux for zSeries. */
+   /* There is only a reasonable optimization for 31 bit linux on        */
+   /* z/Architecture at the moment.                                      */
+   /* z/Architecture has the RLL Operation for 31 Bit OSses as well      */
+   /* gcc only translates this with '-Wa,-Aesame' and adequate binutils  */
+   /* Looking forward for a -march=z900 which recognizes the rotation    */
+
+static __inline__ u32 ROTL(u32 x, u32 y)
+{
+  register u32 res;
+  __asm__ (
+        "rll	%0,%1,0(%2)"
+       :"=r" (res)
+       :"r" (x), "a" (y));
+  return res;
+}
+
+static __inline__ u32 ROTL3(u32 x)
+{
+  register u32 res;
+  __asm__ (
+        "rll	%0,%1,3"
        :"=r" (res)
        :"r" (x));
   return res;

@@ -1,6 +1,6 @@
 /* Hey, Emacs, this is *not* a -*-C++-*- file !
  *
- * Copyright distributed.net 2000-2002 - All Rights Reserved
+ * Copyright distributed.net 2000-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -13,7 +13,7 @@
  * module.
 */
 #ifndef __NETBASE_H__
-#define __NETBASE_H__ "@(#)$Id: netbase.h,v 1.2 2002/09/02 00:35:42 andreasb Exp $"
+#define __NETBASE_H__ "@(#)$Id: netbase.h,v 1.3 2003/09/12 22:29:26 mweiser Exp $"
 
 #include "cputypes.h" /* u32 */
 
@@ -37,7 +37,8 @@
 #define ps_ENODATA     -12 /* Valid name, no data record of requested type */
 #define ps_ENOENT      -13 /* no entry for requested name */
 #define ps_EINPROGRESS -14 
-#define ps_ELASTERR ps_EINPROGRESS
+#define ps_ENOENT_host_cmd  -15 /* "Perhaps the 'host' command was not found?" */
+#define ps_ELASTERR ps_ENOENT_host_cmd
 
 /* all functions that return int, return zero on success or an error code 
    on failure. The error code can then be translated with net_strerror().

@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.160 2002/10/13 08:11:32 jlawson Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.161 2003/09/12 22:29:25 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -33,6 +33,7 @@ return "@(#)$Id: cmdline.cpp,v 1.160 2002/10/13 08:11:32 jlawson Exp $"; }
 #include "confrwv.h"   // ConfigRead()
 #include "clicdata.h"  // CliGetContestNameFromID()
 #include "triggers.h"  // TRIGGER_PAUSE_SIGNAL
+#include "coremem.h"   // cmem_select_allocator()
 #include "cmdline.h"   // ourselves
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
@@ -49,7 +50,6 @@ return "@(#)$Id: cmdline.cpp,v 1.160 2002/10/13 08:11:32 jlawson Exp $"; }
   extern "C" int macosx_install(const char *argv0, int argc,
     const char *argv[], int quietly); /* argv[1..(argc-1)] as start options */
 #endif
-
 /* -------------------------------------- */
 
 static int __arg2cname(const char *arg,int def_on_fail)
@@ -428,9 +428,14 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
               (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_LINUX) || \
               (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOSX) || \
               (CLIENT_OS == OS_PS2LINUX)
-          pscmd = "ps ax|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
+          pscmd = "ps axw|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
           //fbsd: "ps ax -o pid -o command 2>/dev/null";  /* bsd + -o ext */
           //lnux: "ps ax --format pid,comm 2>/dev/null";  /* bsd + gnu -o */
+	  #elif (CLIENT_OS == OS_NEXTSTEP)
+	  /* NeXTstep porduces spaces in process status columns like
+	   * 26513 p1 SW    0:01 -bash (bash)
+	   * 26542 p1 R N  32:52 ./dnetc */
+          pscmd = "ps axw|sed \"s/ [RUSITHPD][W >][N< ]//\"|awk '{print$1\" \"$4}' 2>/dev/null";
           #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || \
                 (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX)
           pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
@@ -446,6 +451,8 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
             #else
             pscmd = "ps -A -F\"%p %c\" 2>/dev/null";
             #endif
+          #elif (CLIENT_OS == OS_SCO)
+             pscmd = "/bin/ps -A -o pid,comm 2>/dev/null";
           #else
           #error fixme: select an appropriate ps syntax
           #endif
@@ -618,7 +625,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
             ConOutModal(scratch);
           }
         }
-        #elif (CLIENT_OS == OS_AMIGAOS)
+        #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_OS2)
         {
           int rc, cmd = DNETC_MSG_RESTART;
           const char *dowhat_descrip = "restarted";
@@ -641,7 +648,13 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
             dowhat_descrip = "unpaused";
           }
 
+          #if (CLIENT_OS == OS_AMIGAOS)
           rc = amigaPutTriggerSigs(cmd); /* 0=notfound, 1=found+ok, -1=error */
+          #elif (CLIENT_OS == OS_OS2)
+          rc = os2CliSendSignal(cmd, argv[0]);
+          #else
+          #error
+          #endif
           retcode = ((rc < 0) ? 3 : 0);
           if (!loop0_quiet)
           {
@@ -677,9 +690,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         win32CliInstallService(loop0_quiet); /*w32svc.cpp*/
         retcode = 0;
         #elif (CLIENT_OS == OS_OS2)
-        extern int os2CliInstallClient(int quiet, const char *exename);
-        os2CliInstallClient(loop0_quiet, argv[0]); /* os2inst.cpp */
-        retcode = 0;
+        retcode = os2CliInstallClient(loop0_quiet, argv[0]) ? 3 : 0; /* os2inst.cpp */
         #elif (CLIENT_OS == OS_AMIGAOS)
         retcode = 0;  
         if (0!=amigaInstall(loop0_quiet, argv[0]))
@@ -714,9 +725,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         if (misc_call)
           continue;
         #if (CLIENT_OS == OS_OS2)
-        extern int os2CliUninstallClient(int /*do it without feedback*/);
-        os2CliUninstallClient(loop0_quiet); /* os2inst.cpp */
-        retcode = 0;                  
+        retcode = os2CliUninstallClient(loop0_quiet) ? 3 : 0; /* os2inst.cpp */
         #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
         retcode = 0;
         if (linux_uninstall(utilGetAppName(), loop0_quiet)!=0)
@@ -750,7 +759,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
   // and load the config from file
   //-----------------------------------
 
-  TRACE_OUT((0,"a) run_level=%d, retcode=%d, misc_call=%d, got_ini_switch=%d\n", 
+  TRACE_OUT((0,"a) run_level=%d, retcode=%d, havemode=%d, misc_call=%d, got_ini_switch=%d\n", 
                run_level, retcode, havemode, misc_call, got_ini_switch));
 
   if (retcode == -12345 && run_level == 0 && (!misc_call || got_ini_switch))
@@ -834,7 +843,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
   // In the next loop we parse the other options
   //-----------------------------------
 
-  TRACE_OUT((0,"b) run_level=%d, retcode=%d, misc_call=%d, *inimissing=%d\n", 
+  TRACE_OUT((0,"b) run_level=%d, retcode=%d, havemode=%d, misc_call=%d, *inimissing=%d\n", 
                run_level, retcode, havemode, misc_call, *inimissing));
 
   if (retcode == -12345)
@@ -1256,8 +1265,9 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
             unsigned int len;
             *inimissing = 0; // Don't complain if the inifile is missing
             client->autofindkeyserver = 0;
-            for (len = 0; len < sizeof(client->keyproxy) && argvalue[len]; ++len)
+            for (len = 0; len < sizeof(client->keyproxy)-1 && argvalue[len]; ++len)
               client->keyproxy[len] = (char) tolower(argvalue[len]);
+            client->keyproxy[len] = 0;
             /* update .v27. proxy names to .v29. */
             if (len > 20 && strcmp(&client->keyproxy[len-20], ".v27.distributed.net") == 0)
               client->keyproxy[len-17] = '9';
@@ -1459,11 +1469,15 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           else if (run_level != 0)
           {
             /* if (logging_is_initialized) */
+            if (utilIsUserIDValid(argvalue))
               LogScreenRaw("Setting distributed.net ID to %s\n", client->id );
+            else
+              LogScreenRaw("Ignored invalid distributed.net ID '%s'\n", argvalue );
           }
           else
           {
-            strcpy( client->id, argvalue );
+            if (utilIsUserIDValid(argvalue))
+              strcpy( client->id, argvalue );
             *inimissing = 0; // Don't complain if the inifile is missing
           }
         }
@@ -1613,6 +1627,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
             client->blockcount = -1;
         }
       }
+      #if !defined(SINGLE_CRUNCHER_ONLY)
       else if ( strcmp( thisarg, "-numcpu" ) == 0 ) // Override the number of cpus
       {
         if (!argvalue)
@@ -1621,14 +1636,25 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         {
           skip_next = 1;
           if (run_level != 0)
-            ;
+          {
+            #if defined(HAVE_MULTICRUNCH_VIA_FORK)
+            if (atoi(argvalue) == 0)
+              LogScreenRaw("Use of shared memory has been disabled.\n");
+            #endif
+          }
           else
           {
             client->numcpu = atoi(argvalue);
+            #if defined(HAVE_MULTICRUNCH_VIA_FORK)
+            if (client->numcpu == 0)
+              cmem_select_allocator(1); /* use plain malloc()/free() instead of
+                                           shared memory */
+            #endif
             *inimissing = 0; // Don't complain if the inifile is missing
           }
         }
       }
+      #endif
       else if ( strcmp( thisarg, "-cktime" ) == 0 || /* obsolete */
                 strcmp( thisarg, "-ckpoint2" ) == 0 || /* obsolete */
                 strcmp( thisarg, "-exitfilechecktime" ) == 0 ) /* obsolete */
@@ -1677,7 +1703,8 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           ( strcmp( thisarg, "-update"      ) == 0 ) ||
           ( strcmp( thisarg, "-ident"       ) == 0 ) ||
           ( strcmp( thisarg, "-cpuinfo"     ) == 0 ) ||
-          ( strcmp( thisarg, "-config"      ) == 0 ) )
+          ( strcmp( thisarg, "-config"      ) == 0 ) ||
+          ( strcmp( thisarg, "-version"     ) == 0 ) )
       {
         havemode = 1; //nothing - handled in next loop
       }
@@ -1858,6 +1885,14 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         ModeReqClear(-1); //clear all - only do -config
         ModeReqSet( MODEREQ_CONFIG );
         ModeReqSetArg( MODEREQ_CONFIG, (const void *)thisarg /* anything */);
+        break;
+      }
+      else if ( strcmp( thisarg, "-version" ) == 0 )
+      {
+        client->quietmode = 0;
+        *inimissing = 0; // Don't complain if the inifile is missing
+        ModeReqClear(-1); //clear all - only do -version
+        ModeReqSet( MODEREQ_VERSION );
         break;
       }
     }

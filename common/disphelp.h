@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __DISPHELP_H__
-#define __DISPHELP_H__ "@(#)$Id: disphelp.h,v 1.3 1999/04/06 10:20:48 cyp Exp $"
+#define __DISPHELP_H__ "@(#)$Id: disphelp.h,v 1.4 2003/09/12 22:29:25 mweiser Exp $"
 
 /*
   full-screen, interactive (except for unix-ish platforms) help for 

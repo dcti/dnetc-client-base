@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -49,7 +49,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.61 2002/09/02 00:35:42 andreasb Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.62 2003/09/12 22:29:25 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -248,8 +248,11 @@ int LurkCheckIfConnectRequested(void) //yes/no
     (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
     (CLIENT_OS == OS_BSDOS) || \
     ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
-    (CLIENT_OS == OS_PS2LINUX)
+    (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX)
 #include <sys/types.h>
+  #if (CLIENT_OS == OS_DEC_UNIX)
+  #define _SOCKADDR_LEN
+  #endif
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
@@ -325,7 +328,7 @@ extern "C" {
 #ifndef ULONG
   typedef unsigned long ULONG;
 #endif
-#pragma pack(2)
+#include "pack2.h"
 struct ifact
 {
   short ifNumber;
@@ -335,9 +338,9 @@ struct ifact
     short  ifIndex;
     ULONG ifa_netm;
     ULONG ifa_brdcast;
-  } iftable[IFMIB_ENTRIES];
-};
-#pragma pack()
+  } DNETC_PACKED iftable[IFMIB_ENTRIES];
+} DNETC_PACKED;
+#include "pack0.h"
 
 #elif (CLIENT_OS == OS_AMIGAOS)
 #include "baseincs.h"
@@ -462,7 +465,7 @@ int LurkGetCapabilityFlags(void)
       (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
       (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_OS2) || \
       ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
-      (CLIENT_OS == OS_PS2LINUX)
+      (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX)
   what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYSCRIPT | CONNECT_IFACEMASK);
 #elif (CLIENT_OS == OS_AMIGAOS)
   what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYPROFILE | CONNECT_IFACEMASK);
@@ -976,26 +979,28 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
 
             TRACE_OUT((0,"ioctl InternalIsConnected() [4]\n"));
 
-            #pragma pack(1)
+            #include "pack1.h"
             struct if_info_v4 /* 4+(3*16) */
             {
               u_long   iiFlags;
-              struct { short   sin_family; /* AF_INET */
-                       u_short sin_port;
-                       u_long  sin_addr;
-                       char    sin_zero[8];
-                     } iiAddress, iiBroadcastaddress, iiNetmask;
-            };
+              struct DNETC_PACKED {
+                short   sin_family; /* AF_INET */
+                u_short sin_port;
+                u_long  sin_addr;
+                char    sin_zero[8];
+              } iiAddress, iiBroadcastaddress, iiNetmask;
+            } DNETC_PACKED;
             struct if_info_v6  /* 4+(3*24) */
             {
               u_long   iiFlags;
-              struct { short   sin6_family; /* AF_INET6 */
-                       u_short sin6_port;
-                       u_long  sin6_flowinfo;
-                       u_char  sin6_addr[16];
-                     } iiAddress, iiBroadcastaddress, iiNetmask;
-            };
-            #pragma pack()
+              struct DNETC_PACKED {
+                short   sin6_family; /* AF_INET6 */
+                u_short sin6_port;
+                u_long  sin6_flowinfo;
+                u_char  sin6_addr[16];
+              } iiAddress, iiBroadcastaddress, iiNetmask;
+            } DNETC_PACKED;
+            #include "pack0.h"
             char if_info[sizeof(struct if_info_v6)*10]; // Assume no more than 10 IP interfaces
             memset((void *)(&if_info[0]),0,sizeof(if_info));
 
@@ -1354,7 +1359,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
       (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_AMIGAOS) || \
       ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
       ((CLIENT_OS == OS_OS2) && defined(__EMX__)) || \
-      (CLIENT_OS == OS_PS2LINUX)
+      (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX)
    struct ifconf ifc;
    struct ifreq *ifr;
    int n, foundif = 0;
@@ -1429,18 +1434,31 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
            #else
            if (((ifr->ifr_flags & (IFF_UP | IFF_POINTOPOINT))            == (IFF_UP | IFF_POINTOPOINT)) || \
                ((ifr->ifr_flags & (IFF_UP | IFF_RUNNING | IFF_LOOPBACK)) ==     (IFF_UP | IFF_RUNNING)))
-           #endif
            {
-             foundif = (n / sizeof(struct ifreq)) + 1;
+             /* when using "slattach" or "Dial Other Internet Providers" IFF_UP is already set while dialing,
+                so we need more tests. address family seems to be a good choice, it is set to AF_INET only
+                while connected. */
+             ioctl (fd, SIOCGIFADDR, ifr); // get address
+             if (ifr->ifr_addr.sa_family == AF_INET)
+           #endif
+             {
+               foundif = (n / sizeof(struct ifreq)) + 1;
+               #ifdef LURK_MULTIDEV_TRACK
+               if (__insdel_devname(devname,1,lurker.conndevices,sizeof(lurker.conndevices))!=0)
+                 break; /* table is full */
+               #else
+               strncpy( lurker.conndevice, devname, sizeof(lurker.conndevice) );
+               lurker.conndevice[sizeof(lurker.conndevice)-1]=0;
+               break;
+               #endif
+             }
+           #ifdef __EMX__
              #ifdef LURK_MULTIDEV_TRACK
-             if (__insdel_devname(devname,1,lurker.conndevices,sizeof(lurker.conndevices))!=0)
-               break; /* table is full */
-             #else
-             strncpy( lurker.conndevice, devname, sizeof(lurker.conndevice) );
-             lurker.conndevice[sizeof(lurker.conndevice)-1]=0;
-             break;
+             else
+               __insdel_devname(devname,0,lurker.conndevices,sizeof(lurker.conndevices));
              #endif
-           }  
+           } /* AF_INET */
+           #endif
            #ifdef LURK_MULTIDEV_TRACK
            else
              __insdel_devname(devname,0,lurker.conndevices,sizeof(lurker.conndevices));
@@ -1450,7 +1468,13 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
        #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
              (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_NETBSD) || \
              ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
-             (CLIENT_OS == OS_AMIGAOS)
+             (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_DEC_UNIX)
+       /* Calculate size of ifreq - _SIZEOF_ADDR_IFREQ used by FreeBSD */
+       #ifdef _SIZEOF_ADDR_IFREQ
+       #define SIZEOF_ADDR_IFREQ(sa,ifr) (_SIZEOF_ADDR_IFREQ(*ifr))
+       #else
+       #define SIZEOF_ADDR_IFREQ(sa,ifr) (IFNAMSIZ*sizeof(char) + sa->sa_len)
+       #endif
        for (n = ifc.ifc_len, ifr = ifc.ifc_req; n >= (int)sizeof(struct ifreq); )
        {
          /*
@@ -1462,7 +1486,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
           * 17 bytes while sizeof(struct ifreq) is 32.
           */
          struct sockaddr *sa = &(ifr->ifr_addr);
-         int sa_len = sa->sa_len;
+         int ifrsize = SIZEOF_ADDR_IFREQ(sa,ifr);
          if (sa->sa_family == AF_INET)  // filter-out anything other than AF_INET
          {                            // (in fact this filter-out AF_LINK)
            if (__MatchMask(ifr->ifr_name, 0 /*dunno if its a dialup dev or not*/,
@@ -1512,7 +1536,6 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
            } /* if matchmask */
          } /* if (sa->sa_family == AF_INET) */
          // calculate the length of this entry and jump to the next
-         int ifrsize = IFNAMSIZ + sa_len;
          ifr = (struct ifreq *)((caddr_t)ifr + ifrsize);
          n -= ifrsize;
        } /* for (n = 0, ... ) */
@@ -1759,7 +1782,7 @@ int LurkDialIfNeeded(int force /* !0== override lurk-only */ )
      (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
      (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
      ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
-     (CLIENT_OS == OS_PS2LINUX)
+     (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX)
   lurker.dohangupcontrol = 0;
   if (lurker.conf.connstartcmd[0] == 0)  /* we don't do dialup */
   {
@@ -1937,7 +1960,7 @@ int LurkHangupIfNeeded(void) //returns 0 on success, -1 on fail
       (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
       (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
       ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
-      (CLIENT_OS == OS_PS2LINUX)
+      (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX)
 
   if (isconnected)
   {

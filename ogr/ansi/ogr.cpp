@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 1999-2002 - All Rights Reserved
+ * Copyright distributed.net 1999-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2 2002/09/02 00:35:47 andreasb Exp $
+ * $Id: ogr.cpp,v 1.3 2003/09/12 22:29:26 mweiser Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -45,11 +45,13 @@
     #define OGROPT_STRENGTH_REDUCE_CHOOSE 0      /* GCC is better */
     #define OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP 1
   #endif
-  #if defined(mc68020) || defined(mc68030) || defined(mc68040) || defined(mc68060)
+  /* as on NeXT doesn't know .balignw */
+  #if !defined(__NeXT__) && \
+      (defined(mc68020) || defined(mc68030) || defined(mc68040) || defined(mc68060))
     #define OGROPT_CYCLE_CACHE_ALIGN 1
   #endif
 #elif defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
-  #if (__MWERKS__)
+  #if defined(__MWERKS__)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
@@ -61,7 +63,7 @@
     #endif
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
     #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 2 /* use switch_asm   */
-  #elif (__MRC__)
+  #elif defined(__MRC__)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
@@ -69,7 +71,7 @@
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* MrC is better    */
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
     #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* MrC is better    */
-  #elif (__APPLE_CC__)//GCC with exclusive ppc, mach-o and ObjC extensions
+  #elif defined(__APPLE_CC__) && (__APPLE_CC__ <= 1175)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
@@ -78,7 +80,7 @@
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
     #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* ACC is better    */
     #define OGROPT_CYCLE_CACHE_ALIGN              0 /* no balignl       */
-  #elif (__GNUC__)
+  #elif defined(__GNUC__)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
@@ -86,12 +88,27 @@
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* GCC is better    */
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
     #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 2 /* use switch_asm   */
-    #define OGROPT_CYCLE_CACHE_ALIGN              1
+    #if !defined(_AIX)                              /* no balignl       */
+      #define OGROPT_CYCLE_CACHE_ALIGN              1
+    #endif
+  #elif defined(__xlC__)
+    #include <builtins.h>                           /* __cntlz4()       */
+
+    #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
+    #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
+    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
+    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
+    #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* xlC does benefit */
+    #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
+
+    /* xlC has __rlwimi but lacks __rlwinm */
+    #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0
+    #define OGROPT_CYCLE_CACHE_ALIGN              0 /* no balignl       */
   #else
     #error play with the defines to find optimal settings for your compiler
   #endif
 #elif defined(ASM_POWER)
-  #if (__GNUC__)
+  #if defined (__GNUC__)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
@@ -99,21 +116,39 @@
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* GCC does benefit */
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
     #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 2 /* use switch_asm   */
+    #define OGROPT_CYCLE_CACHE_ALIGN              0 /* no balignl       */
+  #elif defined(__xlC__)
+    #include <builtins.h>                           /* __cntlz4()       */
+
+    #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
+    #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
+    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
+    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
+    #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* xlC does benefit */
+    #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
+
+    /* xlC has __rlwimi but lacks __rlwinm */
+    #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0
+    #define OGROPT_CYCLE_CACHE_ALIGN              0 /* no balignl       */
   #else
     #error play with the defines to find optimal settings for your compiler
   #endif
 #elif defined(ASM_ARM)
-  #if (__GNUC__)
-    #define OGROPT_BITOFLIST_DIRECT_BIT           0
-    #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2
-    #define OGROPT_STRENGTH_REDUCE_CHOOSE         1
-    #define OGROPT_ALTERNATE_CYCLE                0
-    #define OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP 1
-  #endif
+  #define OGROPT_BITOFLIST_DIRECT_BIT           0
+  #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2
+  #define OGROPT_STRENGTH_REDUCE_CHOOSE         1
+  #define OGROPT_ALTERNATE_CYCLE                0
+  #define OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP 1
+  #define OGR_NON_STATIC_FOUND_ONE
 #elif defined(ASM_SPARC)
-    #define OGROPT_BITOFLIST_DIRECT_BIT           0
-    #define OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP 1
-    #define OGROPT_COPY_LIST_SET_BIT_JUMPS 0
+  #define OGROPT_BITOFLIST_DIRECT_BIT           1  /* default */
+  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0  /* default */
+  #define OGROPT_COPY_LIST_SET_BIT_JUMPS        1  /* default */
+  #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2  /* default */
+  #define OGROPT_STRENGTH_REDUCE_CHOOSE         1  /* default */
+  #define OGROPT_ALTERNATE_CYCLE                0  /* default */
+  #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0  /* irrelevant */    
+  #define OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP 1
 #endif
 
 /* -- various optimization option defaults ------------------------------- */
@@ -136,11 +171,12 @@
   #undef OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
 #else
   #undef OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
-  #if (defined(__PPC__) || defined(ASM_PPC)) || defined(__POWERPC__) ||\
+  #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__) || \
+      defined(ASM_POWER) || \
       (defined(__WATCOMC__) && defined(__386__)) || \
       (defined(__MWERKS__) && defined(__INTEL__)) || \
       (defined(__ICC)) /* icc is Intel only (duh!) */ || \
-      (defined(ALPHA_CIX)) || \
+      defined(ALPHA_CIX) || \
       (defined(__GNUC__) && (defined(ASM_X86) \
                              || (defined(ASM_68K) && (defined(mc68020) \
                              || defined(mc68030) || defined(mc68040) \
@@ -323,7 +359,11 @@ static const int OGR[] = {
 };
 #ifndef __MRC__
 static int init_load_choose(void);
+#if defined(OGR_NON_STATIC_FOUND_ONE)
+int found_one(const struct State *oState);
+#else
 static int found_one(const struct State *oState);
+#endif
 static int ogr_init(void);
 static int ogr_create(void *input, int inputlen, void *state, int statelen);
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints);
@@ -337,13 +377,9 @@ static int ogr_load(void *buffer, int buflen, void **state);
 static int ogr_cleanup(void);
 #endif
 
-#if defined(_AIXALL) && defined(ASM_POWER)
-  #define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table_power
-#else
-  #ifndef OGR_GET_DISPATCH_TABLE_FXN
-    #define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table
-  #endif
-#endif  
+#ifndef OGR_GET_DISPATCH_TABLE_FXN
+  #define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table
+#endif
 
 extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 
@@ -360,6 +396,14 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 
 #if (OGROPT_ALTERNATE_CYCLE == 2) /* support macros for the vectorized ogr_cycle() routine */
 
+#if (defined(__GNUC__) && !defined(__APPLE_CC__))
+  #define ZEROBIT_DECL {0, 0, 1, 0}
+  #define ZEROS_DECL {0}
+#else
+  #define ZEROBIT_DECL (0, 0, 1, 0)
+  #define ZEROS_DECL (0)
+#endif
+
  /* define the local variables used for the top recursion state */
 #define SETUP_TOP_STATE(state,lev)                                  \
    vector unsigned int  compV0;                                     \
@@ -369,8 +413,8 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
    vector unsigned int  distV0;                                     \
    vector unsigned int  distV1;                                     \
    int cnt2 = lev->cnt2;                                            \
-   vector unsigned int ZEROBIT = (vector unsigned int)(0, 0, 1, 0); \
-   vector unsigned int ZEROS = (vector unsigned int)(0);            \
+   vector unsigned int ZEROBIT = (vector unsigned int)ZEROBIT_DECL; \
+   vector unsigned int ZEROS = (vector unsigned int)ZEROS_DECL;     \
    vector unsigned int ONES = vec_nor(ZEROS,ZEROS);                 \
    int limit;                                                       \
    union {                                                          \
@@ -456,14 +500,32 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 /* shift the list to add or extend the first mark */
 #if (OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 2)
 
-  #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__) || \
-      defined(ASM_POWER)
-  #if defined(__GNUC__)
-     #define __rlwinm(Rs,SH,MB,ME) \
-     ({ int Ra; __asm__ ("rlwinm %0,%1,%2,%3,%4" : "=r" (Ra) : "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
-     #define __rlwimi(Ra,Rs,SH,MB,ME) \
-     ({ __asm__ ("rlwimi %0,%2,%3,%4,%5" : "=r" (Ra) : "0" (Ra), "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
-  #endif /* __GNUC__ */
+/* gcc lacks builtin functions for rlwinm and rlwimi but has
+** inline assembly to call them directly */
+#if defined(__GNUC__) && defined(ASM_POWER)
+# define __rlwinm(Rs,SH,MB,ME) ({ \
+   int Ra; \
+   __asm__ ("rlinm %0,%1,%2,%3,%4" : \
+   "=r" (Ra) : "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
+
+# define __rlwimi(Ra,Rs,SH,MB,ME) ({ \
+   __asm__ ("rlimi %0,%2,%3,%4,%5" : \
+   "=r" (Ra) : "0" (Ra), "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
+
+#elif defined(__GNUC__) && (defined(ASM_PPC) || \
+       defined(__PPC__) || defined(__POWERPC__))
+# define __rlwinm(Rs,SH,MB,ME) ({ \
+   int Ra; \
+   __asm__ ("rlwinm %0,%1,%2,%3,%4" : \
+   "=r" (Ra) : "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
+
+# define __rlwimi(Ra,Rs,SH,MB,ME) ({ \
+   __asm__ ("rlwimi %0,%2,%3,%4,%5" : \
+   "=r" (Ra) : "0" (Ra), "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
+#endif
+
+#if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__) || \
+    defined(ASM_POWER)
   #define COMP_LEFT_LIST_RIGHT(lev, s)             \
   {                                                \
     switch (s)                                     \
@@ -2009,7 +2071,11 @@ static int init_load_choose(void)
 /*  found_one() - print out golomb rulers  */
 /*-----------------------------------------*/
 #if (OGROPT_ALTERNATE_CYCLE == 0)
+#if defined(OGR_NON_STATIC_FOUND_ONE)
+int found_one(const struct State *oState)
+#else
 static int found_one(const struct State *oState)
+#endif
 {
   /* confirm ruler is golomb */
   {
@@ -2058,7 +2124,11 @@ static int found_one(const struct State *oState)
   return 1;
 }
 #else
+#if defined(OGR_NON_STATIC_FOUND_ONE)
+int found_one(const struct State *oState)
+#else
 static int found_one(const struct State *oState)
+#endif
 {
    /* confirm ruler is golomb */
    int i, j;
@@ -2099,11 +2169,6 @@ static int found_one(const struct State *oState)
 }
 #endif
 
-
-#if defined(__SUNPRO_CC)
-  #define __inline inline
-#endif
-
 #if !defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
   static const char ogr_first_blank_8bit[256] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -2139,6 +2204,30 @@ static int found_one(const struct State *oState)
                :"=r" (result), "=r" (temp) : "1" (input), "r" ((unsigned int)ogr_first_blank_8bit));
       return result;
     }
+  #elif defined(ASM_68K) && defined(__GNUC__) && (__NeXT__)
+    static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int input)
+    {
+      register int result;
+
+      /* gcc-2.5.8 on NeXT needs (&ogr_first_blank_8bit[0]) for
+       * address register parameters. Otherweise it will give:
+       * ogr/ansi/ogr.cpp:2172: inconsistent operand constraints in an `asm'
+       */
+      __asm__ ("   cmpl    #0xffff0000,%1\n"
+               "   bcs     0f\n"
+               "   moveq   #16,%0\n"
+               "   bra     1f\n"
+               "0: swap    %1\n"
+               "   moveq   #0,%0\n"
+               "1: cmpw    #0xff00,%1\n"
+               "   bcs     2f\n"
+               "   lslw    #8,%1\n"
+               "   addql   #8,%0\n"
+               "2: lsrw    #8,%1\n"
+               "   addb    %3@(0,%1:w),%0"
+               :"=d" (result), "=d" (input) : "1" (input), "a" (&ogr_first_blank_8bit[0]));
+      return result;
+    }
   #elif defined(ASM_68K) && defined(__GNUC__)
     static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int input)
     {
@@ -2158,8 +2247,22 @@ static int found_one(const struct State *oState)
                :"=d" (result), "=d" (input) : "1" (input), "a" (ogr_first_blank_8bit));
       return result;
     }
+  #elif defined(FP_CLZ_LITTLEEND) /* using the exponent in floating point double format */
+  static inline int LOOKUP_FIRSTBLANK(register unsigned int input)
+  {
+    unsigned int i;
+    union {
+      double d;
+      int i[2];
+    } u;
+    
+    i=~input;
+    u.d=i;
+    
+    return i == 0 ? 33 : 1055 - (u.i[1] >> 20);
+  }
   #else /* C code, no asm */
-  static __inline int LOOKUP_FIRSTBLANK(register unsigned int input)
+  static inline int LOOKUP_FIRSTBLANK(register unsigned int input)
   {
     register int result = 0;
     if (input >= 0xffff0000) {
@@ -2174,12 +2277,23 @@ static int found_one(const struct State *oState)
     return result;
   }
   #endif
-#elif defined(__PPC__) || defined(ASM_PPC) || defined (__POWERPC__)/* CouNT Leading Zeros Word */
+#elif defined(ASM_PPC) || defined(__PPC__) || defined (__POWERPC__) /* CouNT Leading Zeros Word */
   #if defined(__GNUC__)
     static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
     { i = ~i; __asm__ ("cntlzw %0,%0" : "=r" (i) : "0" (i)); return ++i; }
-  #elif (__MWERKS__) || (__MRC__)
+  #elif defined(__MWERKS__) || defined(__MRC__)
     #define LOOKUP_FIRSTBLANK(x) (__cntlzw(~((unsigned int)(x)))+1)
+  #elif defined(__xlC__)
+    #define LOOKUP_FIRSTBLANK(x) (__cntlz4(~((unsigned int)(x)))+1)
+  #else
+    #error "Please check this (define OGR_TEST_FIRSTBLANK to test)"
+  #endif
+#elif defined(ASM_POWER) /* CouNT Leading Zeros */
+  #if defined(__GNUC__)
+    static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
+    { i = ~i; __asm__ ("cntlz %0,%0" : "=r" (i) : "0" (i)); return ++i; }
+  #elif defined(__xlC__)
+    #define LOOKUP_FIRSTBLANK(x) (__cntlz4(~((unsigned int)(x)))+1)
   #else
     #error "Please check this (define OGR_TEST_FIRSTBLANK to test)"
   #endif
@@ -2253,7 +2367,11 @@ static int found_one(const struct State *oState)
   #endif
 #elif defined(ASM_68K) && defined(__GNUC__) /* Bit field find first one set (020+) */
   static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
+#if defined(__NeXT__)
+  { i = ~i; __asm__ ("bfffo %0{#0:#0},%0" : "=d" (i) : "0" (i)); return ++i; }
+#else
   { i = ~i; __asm__ ("bfffo %0,0,0,%0" : "=d" (i) : "0" (i)); return ++i; }
+#endif
 #else
   #error OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM is defined, and no code to match
 #endif
@@ -2939,9 +3057,21 @@ static int ogr_cleanup(void)
   return CORE_S_OK;
 }
 
+/* dispatch_table has to be strictly aligned for SPARC Solaris,
+** otherwise it'll throw SIGBUS, gcc seems to do it automatically
+** but SUNPRO has to be told and only does it if dispatch_table
+** is global */
+#ifdef _SUNPRO_CC
+# pragma align 16 (dispatch_table)
+#endif
+
+/* this should not break reentrancy as opposed to having the
+** variable declared inside the function because a static buffer
+** inside a function isn't reentrant either */
+static CoreDispatchTable dispatch_table;
+
 CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
 {
-  static CoreDispatchTable dispatch_table;
   dispatch_table.init      = ogr_init;
   dispatch_table.create    = ogr_create;
   dispatch_table.cycle     = ogr_cycle;

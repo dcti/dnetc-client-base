@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.38 2002/10/24 02:40:08 lightning Exp $
+## $Id: makefile.wat,v 1.39 2003/09/12 22:29:25 mweiser Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -45,6 +45,11 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
             output\probfill.obj &
             output\checkpt.obj  &
             output\coremem.obj  &
+            output\core_rc5.obj &
+            output\core_r72.obj &
+            output\core_des.obj &
+            output\core_csc.obj &
+            output\core_ogr.obj &
             output\random.obj   &
             output\clicdata.obj &
             output\base64.obj   &
@@ -111,10 +116,9 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 #%rc564mmxamd_DEFALL   = /DMMX_RC5_AMD
 #%rc564mmxamd_SYMALIAS = #
 #---
-%rc572std_LINKOBJS = output\r72ansi1.obj output\r72ansi2.obj output\r72ansi4.obj &
-                   output\r72-ses1.obj output\r72-ses2.obj output\r72-dg2.obj &
-                   output\r72-dg3.obj output\r73-dg3a.obj output\r72-dgp4.obj
-%rc572std_DEFALL   = /DHAVE_RC5_72_CORES /DHAVE_RC5_72_ASM_CORES
+%rc572std_LINKOBJS = output\r72-ses1.obj output\r72-ses2.obj output\r72-dg2.obj &
+                   output\r72-dg3.obj output\r72-dg3a.obj output\r72-ss2.obj
+%rc572std_DEFALL   = /DHAVE_RC5_72_CORES
 %rc572std_SYMALIAS = #
 #---
 %desmmx_LINKOBJS = output\des-slice-meggs.obj output\deseval-mmx.obj
@@ -162,7 +166,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %CCASM    =wasm
 %LINK     =wlink
 %NASMEXE  =nasm           #point this to nasm (don't call the envvar 'NASM'!)
-%NASMFLAGS=-f obj -D__OMF__ -s -O2
+%NASMFLAGS=-f obj -D__OMF__ -s
 %TASMEXE  =               #point this to tasm in your section if you have it
 %TFLAGS   =/ml /m9 /q /t  #if TASMEXE.==. then wasm will be executed
 %STACKSIZE=48K            #may be redefined in the platform specific section
@@ -730,18 +734,6 @@ output\ogr_sup.obj : ogr\ansi\ogr_sup.cpp $(%dependall) .AUTODEPEND
 
 # ----------------------------------------------------------------
 
-output\r72ansi1.obj : rc5-72\ansi\r72ansi1.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
-  @set isused=1
-
-output\r72ansi2.obj : rc5-72\ansi\r72ansi2.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
-  @set isused=1
-
-output\r72ansi4.obj : rc5-72\ansi\r72ansi4.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
-  @set isused=1
-
 output\r72-ses1.obj : rc5-72\x86\r72-ses1.asm $(%dependall)
   $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@
   @set isused=1
@@ -762,7 +754,7 @@ output\r72-dg3a.obj : rc5-72\x86\r72-dg3a.asm $(%dependall)
   $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@
   @set isused=1
 
-output\r72-dgp4.obj : rc5-72\x86\r72-dgp4.asm $(%dependall)
+output\r72-ss2.obj : rc5-72\x86\r72-ss2.asm $(%dependall)
   $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@
   @set isused=1
 

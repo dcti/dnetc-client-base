@@ -1,12 +1,12 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.72 2002/09/02 00:35:42 andreasb Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.73 2003/09/12 22:29:25 mweiser Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -34,12 +34,13 @@ static const char *helpbody[] =
   "-flush             flush all output buffers",
   "-fetch             fill all input buffers",
   "-update            fetch + flush",
-  "-benchmark [pn]    16-20 sec speed check [optional: only project pn]",
-  "-benchmark2 [pn]   half (8-10 sec) and slightly inaccurate -benchmark",
-  "-bench [pn] [cn]   -benchmark all cores [optional: only project pn]",
-  "                   [optional: only core cn, must be used with pn]",
-  "-test [pn] [cn]    tests for core errors [optional: only project pn]",
-  "                   [optional: only core cn, must be used with pn]",
+  "-benchmark [prj]   16-20 sec speed check [optional: only project prj]",
+  "-benchmark2 [prj]  half (8-10 sec) and slightly inaccurate -benchmark",
+  "-bench [prj [cn]]  -benchmark all cores [optional: only project prj]",
+  "                   [optional: only core cn, must be used with prj]",
+  "-test [prj [cn]]   tests for core errors [optional: only project prj]",
+  "                   [optional: only core cn, must be used with prj]",
+  "-cpuinfo           print information about the detected cpu(s)",
   "-restart           restart all active clients",
   "-shutdown          gracefully shut down all active clients",
   "-pause             pause all active clients",
@@ -60,11 +61,15 @@ static const char *helpbody[] =
 #elif (CLIENT_OS == OS_AMIGAOS)
   "-install           install the client in the WBStartup drawer",
   "-uninstall         remove the client from the WBStartup drawer",
+#elif (CLIENT_OS == OS_MACOSX)
+  "-install           install the client in the StartupItems folder",
+  "-uninstall         remove the client from the StartupItems folder",
 #endif
 //"-import <fn> [cnt] import [cnt] packets from file <fn> into client buffers",
   "-import <filename> import packets from file <filename> into client buffers",
   "-forceunlock <fn>  unlock buffer file <fn>",
   "-help              display this text",
+  "-version           print version information",
   "",
 /*"------------------------------------ max width == 77 ------------------------" */
   "Project and buffer related options:",
@@ -78,14 +83,14 @@ static const char *helpbody[] =
   "-inbase <fname>    input buffer basename (ie without 'extension'/suffix)",
   "-outbase <fname>   output buffer basename (ie without 'extension'/suffix)",
   "-ckpoint <fname>   set the name of the checkpoint file",
-  "-blsize [pn] <n>   set preferred packet size (2^n keys/packet)",
-  "-bin <pn> <n>      set fetch buffer threshold to <n> work units",
+  "-blsize [prj] <n>  set preferred packet size (2^n keys/packet)",
+  "-bin <prj> <n>     set fetch buffer threshold to <n> work units",
   #if !defined(NO_OUTBUFFER_THRESHOLDS)
-  "-bout [pn] <n>     set flush buffer threshold to <n> work units",
-  "-b [pn] <n>        set both buffer thresholds to <n> work units",
+  "-bout [prj] <n>    set flush buffer threshold to <n> work units",
+  "-b [prj] <n>       set both buffer thresholds to <n> work units",
   #endif
-  "-btime [pn] <n>    set fetch time threshold to <n> hours",
-  "                   If not specified, project name <pn> defaults to RC5",
+  "-btime [prj] <n>   set fetch time threshold to <n> hours",
+  "                   If not specified, project name <prj> defaults to RC5",
   "",
 /*"------------------------------------ max width == 77 ------------------------" */
   "Network update related options:",
@@ -108,9 +113,11 @@ static const char *helpbody[] =
 /*"------------------------------------ max width == 77 ------------------------" */
   "Performance related options:",
   "",
-  "-c [pn] <n>        core number (run -config for a list of valid core numbers)",
-  "                   project name \"pn\" defaults to RC5",
+  "-c [prj] <n>       core number (run -config for a list of valid core numbers)",
+  "                   project name \"prj\" defaults to RC5",
+#if !defined(SINGLE_CRUNCHER_ONLY)
   "-numcpu <n>        run <n> threads/run on <n> cpus. 0 forces single-threading.",
+#endif
   "-priority <0-9>    scheduling priority from 0 (lowest/idle) to 9 (normal/user)",
   "",
   "Logging options:",

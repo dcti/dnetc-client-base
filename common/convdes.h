@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,7 +10,7 @@
  * ---------------------------------------------------------------
 */ 
 #ifndef __CONVDES_H__
-#define __CONVDES_H__ "@(#)$Id: convdes.h,v 1.9 1999/04/06 11:55:44 cyp Exp $"
+#define __CONVDES_H__ "@(#)$Id: convdes.h,v 1.10 2003/09/12 22:29:25 mweiser Exp $"
 
 // odd_parity[n] = (n & 0xFE) | b
 // b set so that odd_parity[n] has an odd number of bits

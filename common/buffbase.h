@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1999-2002 - All Rights Reserved
+ * Copyright distributed.net 1999-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,7 +10,7 @@
  * ------------------------------------------------------------------
 */
 #ifndef __BUFFBASE_H__
-#define __BUFFBASE_H__ "@(#)$Id: buffbase.h,v 1.5 2002/09/02 00:35:41 andreasb Exp $"
+#define __BUFFBASE_H__ "@(#)$Id: buffbase.h,v 1.6 2003/09/12 22:29:25 mweiser Exp $"
 
 //efficiency hints/open mode modifiers
 #define BUFFER_FLAGS_NONE           (0x00) //regular local buffer

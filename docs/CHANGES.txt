@@ -21,13 +21,88 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14 2002/11/03 15:04:00 pfeffi Exp $
+Version change log: $Id: CHANGES.txt,v 1.15 2003/09/12 22:29:26 mweiser Exp $
 ==========================================================================
 
 2.9000
 ------
 
-2.9000.475  new: all: contest rc5-72
+2.9007-486  imp: nextstep: include assembler cores on x86
+            imp: nextstep: fix console handling for config menu
+            fix: macosx: no longer reference _kIOMasterPortDefault (#3338)
+            fix: macosx: fix temperature monitoring (#3343)
+            new: macosx: use IOHWSensor to read CPU temperature (#3334)
+            imp: some: allow for fractional temperature thresholds (#3315)
+
+2.9006-485  new: decunix: cpu temperature detection
+            new: macosx: use AppleCPUthermo to read CPU temperature (#3315)
+            imp: macosx: use latest gcc 3.3 to compile client and OGR cores
+            new: macosx: properly recongize the PowerPC 970 (G5) (#3310)
+            new: ppc: new rc5-72 core for PowerPC 970 (G5) by Didier Levet
+            new: nextstep: revived port with OGR and RC5-72 support
+
+2.9005-484  new: x86: detect Athlon with Barton core (#3227)
+            new: x86: detect Celeron with Tualatin core / brand id 1 (#3246)
+            new: x86: detect Pentium M (#3304)
+            imp: x86: changed some preselected cores (#3233, #3293)
+            new: sparc: rc5-72 assembly cores by Andreas Beckmann
+            new: decunix: initial Lurk support
+            chg: all: single-threaded clients now ignore numcpu/max-threads
+            imp: alpha: preselect ansi 4-pipe for EV56 and higher
+            imp: alpha: preselect ansi 1-pipe for EV45 and lower
+            imp: all: remote buffer error reporting
+            imp: linux: print "'host' command not found" on resolve failure
+
+2.9005-483  fix: x86: re-added SS-2 core - new version fixes bug #3187
+            fix: ppc: no longer coredumps while resolving under Linux (#3213)
+            new: ppc: support for Altivec under linux (#1349)
+            new: sparc: optimized rc5-72 core by Didier Levet
+            new: sparc/solaris: cpu detection
+            new: ppc: faster non-Altivec rc5-72 core by Malcolm Howell
+            new: 68k: optimized rc5-72 cores, now not only for AmigaOS
+            fix: some: network cleanup failed during rare error condition
+            new: ppc: two new rc5-72 non-Altivec cores by Malcolm Howell
+            chg: ppc: more optimizations to rc5-72 cores by Didier Levet
+            chg: ppc: ansi cores removed, asm cores are faster
+
+2.9004-482  undo: x86: rc5-72 SS-2 core (Athlon optimized) removed due to 
+                       reentrancy and stack problems (#3187)
+            chg: some: rc5-72 ansi cores removed in favor of faster asm cores
+            chg: x86: disabled dg-* cores (bswap instr) on i386/i486 (#2878)
+
+2.9003-481  fix: smp via fork: 2nd process died after switching to project
+                               ogr (added workaround for #3006)
+            chg: ppc: use OGR-scalar cruncher for PowerPC 7450  (#3035)
+            fix: ppc: manual selection of OGR cores is now possible
+            new: macosx: CPU temperature reading by Karakoussis Apostolos
+            new: ppc: two additional rc5-72 cores for ppc by Didier Levet
+            new: arm: ogr assembly cores by Peter Teichmann
+
+2.9003-480  new: x86: rc5-72 SS-2 core by Ianos Gnatiuc (Athlon optimized)
+            chg: all: -numcpu 0 disables use of shared memory (if any)
+            fix: macosx: changed -install to work on Mac OS X 10.2 (#1618)
+
+2.9002-479  new: ppc: rc5-72 core by Malcolm Howell (603e optimized)
+            new: ppc: two rc5-72 cores by Didier Levet (AltiVec optimized)
+            new: amigaos: optimized 68k rc5-72 cores by Malcolm Howell
+            fix: amigaos: PowerUp compiler linklib no longer trashes memory
+            imp: amigaos: added G3/G4 cpu detection
+
+2.9001-478  new: os2: enabled command line options: -pause, -unpause, -restart
+            imp: all: write checkpoint files before client suspends
+            fix: all: correctly round summary rate and OGR stats units (#3041)
+            new: s390: support Linux on s390/s390x platforms
+            new: arm: rc5-72 assembly cores by Peter Teichmann
+
+2.9001-477  fix: os2: installation complete rewritten (#2061)
+            fix: os2: keyboard hangs, random colors after -config or -help
+                      in OS/2 fullscreen session
+            new: os2: "pause-when-running" enabled
+            new: os2: more command line options (-shutdown, ...)
+            new: x86: rc5-72 assembly cores by Samuel Seay
+            new: x86: rc5-72 assembly cores by Décio Luiz Gazzoni Filho
+
+2.9000-475  new: all: contest rc5-72
             chg: all: new buffer format (incompatible with previous 
                       clients and proxies)
             fix: all: "pause-when-running": whitespaces between program
@@ -47,6 +122,7 @@ Version change log: $Id: CHANGES.txt,v 1.14 2002/11/03 15:04:00 pfeffi Exp $
             fix: amigaos: fixed problems with font requester opening in
                           GUI prefs window when clicking other gadgets
             imp: amigaos: can be shutdown by pressing escape key in GUI
+            fix: some: lurking now works again regarding multiple interfaces
 
 2.8018.472  fix: macosx: fix crash in battery pause code from #2465 (#2615)
             fix: macosx: config menu displayed erroneous message that pause

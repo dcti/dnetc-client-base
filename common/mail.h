@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __MAIL_H__
-#define __MAIL_H__ "@(#)$Id: mail.h,v 1.18 2002/09/02 00:35:42 andreasb Exp $"
+#define __MAIL_H__ "@(#)$Id: mail.h,v 1.19 2003/09/12 22:29:25 mweiser Exp $"
 
 extern void * smtp_construct_message( unsigned long sendthresh, 
                                    const char *smtphost, unsigned int smtpport,

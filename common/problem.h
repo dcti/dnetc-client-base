@@ -1,6 +1,6 @@
 /* -*-C++-*-
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.94 2002/10/17 15:17:48 andreasb Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.95 2003/09/12 22:29:26 mweiser Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -72,7 +72,7 @@ enum {
   #endif
   // OGR membuffer should be aligned to a 8-byte boundary
   // (essential for non-x86 CPUs)
-  #if __VEC__ /* We might use AltiVec */
+  #if defined(__VEC__) || defined(__ALTIVEC__) /* We might use AltiVec */
      #if CORE_MEM_ALIGNMENT < 4
        #undef CORE_MEM_ALIGNMENT
        #define CORE_MEM_ALIGNMENT 4
@@ -90,9 +90,7 @@ enum {
 
 /* ---------------------------------------------------------------------- */
 
-#ifndef MIPSpro
-#pragma pack(1)
-#endif
+#include "pack1.h"
 
 typedef union
 {
@@ -104,7 +102,7 @@ typedef union
     struct {u32 hi,lo;} cypher;           // cyphertext
     struct {u32 hi,lo;} keysdone;         // iterations done (also current position in block)
     struct {u32 hi,lo;} iterations;       // iterations to do
-  } crypto;        /* 48 bytes */
+  } DNETC_PACKED crypto;                  /* 48 bytes */
   #endif
   #if defined(HAVE_CRYPTO_V2)
   struct {
@@ -116,21 +114,21 @@ typedef union
     struct {u32 hi,lo;} iterations;       // iterations to do
     u32 randomsubspace;                   // subspace for random generation.
     struct {u32 count; u32 hi,mid,lo;} check;   // keyid of last found counter-measure check.
-  } bigcrypto;     /* 68 bytes */
+  } DNETC_PACKED bigcrypto;               /* 68 bytes */
   #endif
   #if defined(HAVE_OGR_CORES)
   struct {
     struct WorkStub workstub;             // stub to work on (28 bytes)
     struct {u32 hi,lo;} nodes;            // nodes completed
-  } ogr;           /* 36 bytes */
+  } DNETC_PACKED ogr;                     /* 36 bytes */
   #endif
   struct {
     char unused[80];
-  } unused;
+  } DNETC_PACKED unused;
 //  #if 0
 //    PROJECT_NOT_HANDLED("in ContestWork");
 //  #endif
-} ContestWork;
+} DNETC_PACKED ContestWork;
 
 typedef struct
 {
@@ -142,11 +140,9 @@ typedef struct
   u32  os;         /* CLIENT_OS */
   u32  build;      /* CLIENT_VERSION - combined build identifier */
   u32  core;       /* core used to process the packet */
-} WorkRecord;
+} DNETC_PACKED WorkRecord;
 
-#ifndef MIPSpro
-# pragma pack()
-#endif /* ! MIPSpro */
+#include "pack1.h"
 
 /* ---------------------------------------------------------------------- */
 

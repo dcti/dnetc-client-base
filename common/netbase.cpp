@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 2000-2002 - All Rights Reserved
+ * Copyright distributed.net 2000-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.5 2002/11/03 15:07:16 pfeffi Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.6 2003/09/12 22:29:25 mweiser Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -78,44 +78,24 @@ return "@(#)$Id: netbase.cpp,v 1.5 2002/11/03 15:07:16 pfeffi Exp $"; }
 #define TRACE_WRITE(x)    //TRACE_OUT(x) /* net_write() */
 #define TRACE_NETDB(x)    //TRACE_OUT(x) /* net_resolve() */
 
-#include "cputypes.h"
-#if (CLIENT_OS == OS_AMIGAOS)
-extern "C" {
-#endif
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <time.h>
-#include <errno.h>
-#if (CLIENT_OS == OS_AMIGAOS)
-}
-#endif
-
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   #define WIN32_LEAN_AND_MEAN /* don't want winsock.h included here */
   #ifndef STRICT
     #define STRICT
   #endif
-  #include <windows.h>
-  #include "w32sock.h" //winsock wrappers
-  #include "w32util.h" //winGetVersion()
   #if defined(_MSC_VER)
   #pragma warning(disable:4127) /* 'conditional expression is constant' */
   #endif              /* caused by do{}while(0) in winsock.h fd_set ops */
-#elif (CLIENT_OS == OS_DOS)
-  //ntohl()/htonl() defines are in...
-  #include "plat/dos/clidos.h"
-#elif (CLIENT_OS == OS_VMS)
-  #include <signal.h>
+#endif
+
+#include "baseincs.h"
+
+#if (CLIENT_OS == OS_VMS)
   #ifdef __VMS_UCX__ // define for UCX instead of Multinet on VMS
-    #include <sys/types.h>
     #include <sys/socket.h>
-    #include <netinet/in.h>
     #include <arpa/inet.h>
     #include <sys/time.h>
     #include <unistd.h>
-    #include <fcntl.h>
     #include <netdb.h>
     #include <unixio.h>
   #elif defined(MULTINET)
@@ -125,7 +105,6 @@ extern "C" {
     #include "multinet_root:[multinet.include.sys]time.h"
     #include "multinet_root:[multinet.include.sys]socket.h"
     #include "multinet_root:[multinet.include]netdb.h"
-    #include "multinet_root:[multinet.include.netinet]in.h"
     #include "multinet_root:[multinet.include.netinet]in_systm.h"
     #ifndef multinet_inet_addr
       extern "C" unsigned long int inet_addr(const char *cp);
@@ -136,21 +115,12 @@ extern "C" {
   #endif
 #elif (CLIENT_OS == OS_OS2)
   #define BSD_SELECT
-  #include <sys/types.h>
-  #include <fcntl.h>
   #include <netdb.h>
-  #include <netinet/in.h>
   #include <sys/socket.h>
-  #include <sys/time.h>
   #include <sys/select.h>
   #include <sys/ioctl.h>
-  #if defined(__EMX__)
-    // this has to stay as long as the define below is needed
-    #include <io.h>
-  #endif
 #elif (CLIENT_OS == OS_AMIGAOS)
   extern "C" {
-  #include "plat/amigaos/amiga.h"
   #include <assert.h>
   #define _KERNEL
   #include <sys/socket.h>
@@ -161,31 +131,20 @@ extern "C" {
   #define inet_ntoa(addr) Inet_NtoA(addr.s_addr)
   }
 #elif (CLIENT_OS == OS_BEOS)
-  #include <sys/types.h>
   #include <sys/socket.h>
-  #include <netinet/in.h>
   #include <sys/ioctl.h>
-  #include <sys/time.h>
-  #include <unistd.h>
-  #include <fcntl.h>
   #include <netdb.h>
+  #define MSG_PEEK 0
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  /* nothing else needed */
 #else
-  #include <sys/types.h>
   #include <sys/socket.h>
-  #include <netinet/in.h>
   #include <arpa/inet.h>
   #include <sys/ioctl.h>
   #include <sys/time.h>
-  #include <unistd.h>
-  #include <fcntl.h>
   #include <netdb.h>
   #if (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_ALPHA)
     #include <asm/byteorder.h>
-  #elif (CLIENT_OS == OS_QNX)
-    #include <sys/select.h>
-    #if !defined(__QNXNTO__)
-      #include <unix.h>
-    #endif
   #elif (CLIENT_OS == OS_DYNIX) && defined(NTOHL)
     #define ntohl(x)  NTOHL(x)
     #define htonl(x)  HTONL(x)
@@ -201,9 +160,6 @@ extern "C" {
     int setsockopt(int, int, int, char *, int);
     int connect(int, struct sockaddr *, int);
     }
-  #elif (CLIENT_OS == OS_AIX)
-    #include <sys/select.h>
-    #include <strings.h>
   #elif (CLIENT_OS == OS_ULTRIX)
     extern "C" {
       int socket(int, int, int);
@@ -212,13 +168,13 @@ extern "C" {
     }
   #elif (CLIENT_OS == OS_NETWARE)
     extern "C" {
-    #pragma pack(1)
+    #include "pack1.h"
     #include <tiuser.h> //using TLI
     #include <poll.h>
     #define HAVE_POLL_SYSCALL
-    #pragma pack()
+    #include "pack0.h"
     }
-  #elif (CLIENT_OS == OS_RISCOS)    
+  #elif (CLIENT_OS == OS_RISCOS)
     #include <sys/select.h>
     #undef FIONREAD
     #undef HOST_NOT_FOUND
@@ -232,7 +188,9 @@ extern "C" {
     || (CLIENT_OS == OS_OPENBSD) \
     || (CLIENT_OS == OS_NETBSD) \
     || ((CLIENT_OS == OS_QNX) && (defined(__QNXNTO__))) \
-    || ((CLIENT_OS == OS_FREEBSD) && (__FreeBSD__ >= 4))
+    || ((CLIENT_OS == OS_FREEBSD) && (__FreeBSD__ >= 4)) \
+    || (CLIENT_OS == OS_SOLARIS) \
+    || (CLIENT_OS == OS_RISCOS)
   /* nothing - socklen_t already defined */
 #elif ((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION < 199701))
   #define socklen_t size_t
@@ -250,7 +208,7 @@ extern "C" {
 
 #include "cputypes.h"
 #include "triggers.h" // CheckExitRequestTriggerNoIO()
-#include "util.h"     // trace
+#include "util.h"     // trace, DNETC_UNUSED_*
 #include "lurk.h"     // #ifdef LURK
 #include "netbase.h"  // ourselves
 
@@ -274,7 +232,8 @@ extern "C" {
 #define ps_ENODATA     -12 /* Valid name, no data record of requested type */
 #define ps_ENOENT      -13 /* no entry for requested name */
 #define ps_EINPROGRESS -14
-#define ps_ELASTERR ps_EINPROGRESS
+#define ps_ENOENT_host_cmd  -15 /* "Perhaps the 'host' command was not found?" */
+#define ps_ELASTERR ps_ENOENT_host_cmd
 
 #endif
 
@@ -392,6 +351,9 @@ int net_deinitialize(int final_call)
 static int __dialupsupport_action(int doWhat)
 {
   int rc = 0;
+
+  DNETC_UNUSED_PARAM(doWhat);
+
   #if defined(LURK)
   {
     //'redial_if_needed' is used here as follows:
@@ -439,7 +401,6 @@ static int __dialupsupport_action(int doWhat)
     } /* if LurkIsWatching() */
   } /* if defined(LURK) */
   #endif /* LURK */
-  doWhat = doWhat; /* possible unused */
   return rc;
 }
 
@@ -610,8 +571,9 @@ static struct
 static int ___read_errnos(SOCKET fd, int ps_errnum,
                           int *syserr, int *neterr, int *extra )
 {
+  DNETC_UNUSED_PARAM(fd);
+
   *syserr = *neterr = *extra = 0;
-  fd = fd; /* possibly unused */
 
   /* don't make this a switch() or an if ... else ... */
 
@@ -633,7 +595,7 @@ static int ___read_errnos(SOCKET fd, int ps_errnum,
     if (is_netapi_callable())
     {
       int rc, so_err = 0;
-      #if ((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION >= 199701))
+      #if (((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION >= 199701)) || (CLIENT_OS == OS_AIX ))
         size_t szint = (size_t) sizeof(so_err);
       #else
         socklen_t szint = (socklen_t) sizeof(so_err);
@@ -757,6 +719,8 @@ static const char *internal_net_strerror(const char *ctx, int ps_errnum, SOCKET 
       case ps_ENOSYS: msg = "ENOSYS: unsupported system call"; break;
       case ps_ENODATA: msg = "ENODATA: no data of requested type"; break;
       case ps_ENOENT: msg = "ENOENT: no entry for requested name"; break;
+      case ps_ENOENT_host_cmd: msg = "ENOENT: No such file or directory\n"
+                           "Perhaps the 'host' command was not found?"; break;
       default: break;
     }
   }
@@ -1829,7 +1793,7 @@ static int bsd_condition_new_socket(SOCKET fd, int as_listener)
     for (which = 0; which < 2; which++ )
     {
       int sz = 0, type = ((which == 0)?(SO_RCVBUF):(SO_SNDBUF));
-      #if ((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION >= 199701))
+      #if (((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION >= 199701)) || (CLIENT_OS == OS_AIX ))
         size_t szint = (size_t) sizeof(int);
       #else
         socklen_t szint = (socklen_t) sizeof(int);
@@ -1872,7 +1836,7 @@ int net_open(SOCKET *sockP, u32 local_addr, int local_port)
   }
   else if ((rc = net_init_check_deinit(0,0)) != 0)
   {
-    ; /* rc = ps_ENETDOWN|ps_ENOSYS; above */
+    open_endpoint_count--; /* rc = ps_ENETDOWN|ps_ENOSYS; above */
   }
 
   if (rc == 0)
@@ -1985,11 +1949,13 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
                               int iotimeout /* millisecs */ )
 {
   int rc = ps_ENETDOWN;
-  this_address = this_address; this_port = this_port; /* shaddup compiler */
+
+  DNETC_UNUSED_PARAM(this_address);
+  DNETC_UNUSED_PARAM(this_port);
 
   TRACE_CONNECT((+1, "net_connect(s, %s:%d, %d)\n",
-                     net_ntoa((that_address)?(*that_address):(0)),
-                     ((that_port)?(*that_port):(0)), iotimeout ));
+                 net_ntoa((that_address)?(*that_address):(0)),
+                 ((that_port)?(*that_port):(0)), iotimeout ));
 
   if ( sock == INVALID_SOCKET )
   {
@@ -2274,7 +2240,11 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
         if (rc == 0)
         {
           int rc2;
+          #if ( CLIENT_OS == OS_AIX )
+          size_t addrsz;
+          #else
           socklen_t addrsz;
+          #endif
           if (this_address || this_port)
           {
             addrsz = sizeof(saddr);
@@ -2441,7 +2411,11 @@ int net_accept( SOCKET listen_fd, SOCKET *conn_fdP,
       {
         SOCKET conn_fd;
         struct sockaddr_in saddr;
+        #if ( CLIENT_OS == OS_AIX )
+        size_t addrlen = sizeof(saddr);
+        #else
         socklen_t addrlen = sizeof(saddr);
+        #endif
 
         memset((void *) &saddr, 0, sizeof(saddr));
         saddr.sin_family = AF_INET;
@@ -3121,6 +3095,10 @@ int net_gethostname(char *buffer, unsigned int len)
 int net_resolve( const char *hostname, u32 *addr_list, unsigned int *max_addrs)
 {
   int rc;
+#if (CLIENT_OS == OS_SCO)
+  /* SCO Openserver < 5.0.5 is missing h_errno in netdb.h */
+  extern int h_errno;
+#endif
 
   TRACE_NETDB((+1,"net_resolve('%s', ...)\n", ((hostname)?(hostname):("(null)")) ));
 
@@ -3234,7 +3212,9 @@ int net_resolve( const char *hostname, u32 *addr_list, unsigned int *max_addrs)
           {
             #if !defined(_TIUSER_) && defined(HOST_NOT_FOUND) && defined(NO_ADDRESS)
             int i = h_errno;
-            if (i < 0) /* NETDB_INTERNAL (see errno). Not always defined */
+            if (i == -2 && errno == ENOENT) /* plat/linux/resolv.c may set h_errno = -2 */
+              rc = ps_ENOENT_host_cmd; /* "Perhaps the 'host' command was not found?" */
+            else if (i < 0) /* NETDB_INTERNAL (see errno). Not always defined */
               rc = ps_stdsyserr;
             else if (i == HOST_NOT_FOUND) /* Authoritative Answer Host not found */
               rc = ps_ENOENT;

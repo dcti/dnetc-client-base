@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -17,7 +17,7 @@
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.3 2002/10/11 00:02:27 andreasb Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.4 2003/09/12 22:29:26 mweiser Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET
@@ -212,9 +212,8 @@ static int __close_connection(void *cookie)
 
 /* ====================================================================== */
 
-#ifndef MIPSpro
-# pragma pack(1)               // no padding allowed
-#endif /* ! MIPSpro */
+#include "pack1.h"
+
 // SOCKS4 protocol spec:  http://www.socks.nec.com/protocol/socks4.protocol
 typedef struct _socks4 {
     unsigned char VN;           // version == 4
@@ -222,24 +221,24 @@ typedef struct _socks4 {
     u16 DSTPORT;                // destination port, network order
     u32 DSTIP;                  // destination IP, network order
     char USERID[1];             // variable size, null terminated
-} SOCKS4;
+} DNETC_PACKED SOCKS4;
 // SOCKS5 protocol RFC:  http://www.socks.nec.com/rfc/rfc1928.txt
 // SOCKS5 authentication RFC:  http://www.socks.nec.com/rfc/rfc1929.txt
 typedef struct _socks5methodreq {
     unsigned char ver;          // version == 5
     unsigned char nMethods;     // number of allowable methods following
     unsigned char Methods[2];   // this program will request at most two
-} SOCKS5METHODREQ;
+} DNETC_PACKED SOCKS5METHODREQ;
 typedef struct _socks5methodreply {
     unsigned char ver;          // version == 1
     unsigned char Method;       // server chose method ...
     char end;
-} SOCKS5METHODREPLY;
+} DNETC_PACKED SOCKS5METHODREPLY;
 typedef struct _socks5userpwreply {
     unsigned char ver;          // version == 1
     unsigned char status;       // 0 == success
     char end;
-} SOCKS5USERPWREPLY;
+} DNETC_PACKED SOCKS5USERPWREPLY;
 typedef struct _socks5 {
     unsigned char ver;          // version == 5
     unsigned char cmdORrep;     // cmd: 1 == connect, rep: 0 == success
@@ -248,10 +247,10 @@ typedef struct _socks5 {
     u32 addr;                   // network order
     u16 port;                   // network order
     char end;
-} SOCKS5;
-#ifndef MIPSpro
-# pragma pack()
-#endif /* ! MIPSpro */
+} DNETC_PACKED SOCKS5;
+
+#include "pack0.h"
+
 const char *Socks5ErrorText[9] =
 {
    /* 0 */ "" /* success */,
@@ -1983,8 +1982,8 @@ void *netconn_open( const char * _servname, int _servport,
               netstate->servername_buffer[buf_used+namelen] = (char)tolower(*p);
               namelen++;
             }
-            p++;
           } /* if (!badname) */
+          p++;
         } /* while (*p && !(*p == ',' || *p == ';' || isspace(*p))) */
         netstate->servername_buffer[buf_used+namelen] = '\0';
         if (!badname && namelen)

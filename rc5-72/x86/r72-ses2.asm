@@ -4,7 +4,7 @@
 ; For use by distributed.net. I do request that any
 ; changes to this core are also emailed to Samuel@Lightspeed.cx
 
-; $Id: r72-ses2.asm,v 1.3 2002/10/20 20:52:10 andreasb Exp $
+; $Id: r72-ses2.asm,v 1.4 2003/09/12 22:29:27 mweiser Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -301,7 +301,7 @@ timesliceloop:
 
 	;if (A1 == rc5_72unitwork->cypher.lo)
 	cmp eax, workunitcypher(1)
-	jne near continuechecks1
+	jne continuechecks1
 
 	inc dword workunitcount
 
@@ -317,13 +317,13 @@ timesliceloop:
 
 	;if (B1 == rc5_72unitwork->cypher.hi) return;
 	cmp ebx, workunitcypher(0)
-	je near foundsuccess
+	je foundsuccess
 
 
 continuechecks1:
 	;if (A2	 == rc5_72unitwork->cypher.lo)
 	cmp edi, workunitcypher(1)
-	jne near continuechecks2
+	jne continuechecks2
 
 	inc dword workunitcount
 
@@ -339,14 +339,14 @@ continuechecks1:
 
 	;if (B2 == rc5_72unitwork->cypher.hi) return;
 	cmp esi, workunitcypher(0)
-	jne near continuechecks2
+	jne continuechecks2
 
 	inc dword [counter]
-	jmp near foundsuccess
+ 	jmp short foundsuccess
 
 continuechecks2:
 	;now a massive if statement
-	add dword [counter], 2
+	add dword [counter], BYTE 2
 
 	;key.hi = (key.hi + 0x02) & 0x000000FF;
 	;if (!key.hi)

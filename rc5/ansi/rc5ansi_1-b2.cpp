@@ -6,19 +6,20 @@
  * ---------------------------------------------------------------
  *
  * extern "C" s32 rc5_unit_func_ansi_1_b2( RC5UnitWork *work,
- *			u32 *timeslice, void *scratch_area  );
+ *                      u32 *timeslice, void *scratch_area  );
  *             //returns RESULT_FOUND,RESULT_WORKING or -1,
  * ---------------------------------------------------------------
 */
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi_1_b2_cpp (void) {
-return "@(#)$Id: rc5ansi_1-b2.cpp,v 1.3 2002/09/02 00:35:55 andreasb Exp $"; }
+return "@(#)$Id: rc5ansi_1-b2.cpp,v 1.4 2003/09/12 22:29:27 mweiser Exp $"; }
 #endif
 
 #define PIPELINE_COUNT = 1
 #define USE_ANSI_INCREMENT
 
+#include "unused.h"     /* DNETC_UNUSED_* */
 #include "problem.h"
 #include "rotate.h"
 
@@ -49,8 +50,8 @@ return "@(#)$Id: rc5ansi_1-b2.cpp,v 1.3 2002/09/02 00:35:55 andreasb Exp $"; }
   Lhi = ROTL(Lhi + A + Llo, A + Llo)
 
 #if defined(__cplusplus)
-extern "C" s32 rc5_unit_func_ansi_1_b2( RC5UnitWork *work, 
-				u32 *timeslice, void *scratch_area );
+extern "C" s32 rc5_unit_func_ansi_1_b2( RC5UnitWork *work,
+                                u32 *timeslice, void *scratch_area );
 #endif
 
 
@@ -61,8 +62,8 @@ extern "C" s32 rc5_unit_func_ansi_1_b2( RC5UnitWork *work,
 //   2 - found pipeline 2, 3 - ... etc ...
 // since this core is for a single pipeline only, iterations == keystocheck !
 
-s32 rc5_unit_func_ansi_1_b2( RC5UnitWork *work, u32 *timeslice, 
-						void *scratch_area )
+s32 rc5_unit_func_ansi_1_b2( RC5UnitWork *work, u32 *timeslice,
+                                                void *scratch_area )
 {
   register u32 S00,S01,S02,S03,S04,S05,S06,S07,S08,S09,S10,S11,S12,
     S13,S14,S15,S16,S17,S18,S19,S20,S21,S22,S23,S24,S25;
@@ -72,10 +73,12 @@ s32 rc5_unit_func_ansi_1_b2( RC5UnitWork *work, u32 *timeslice,
   u32 kiter = 0;
   u32 keycount = *timeslice;
 
+  DNETC_UNUSED_PARAM(scratch_area);
+
   while ( keycount-- ) {// timeslice ignores the number of pipelines
      Llo = rc5unitwork->L0.lo;
      Lhi = rc5unitwork->L0.hi;
-    
+
      /* Begin round 1 of key expansion */
      A = S00 = ROTL3(S_not(0)); Llo = ROTL(Llo + A, A);
      ROUND1_ODD (S01, 1);
@@ -103,7 +106,7 @@ s32 rc5_unit_func_ansi_1_b2( RC5UnitWork *work, u32 *timeslice,
      ROUND1_ODD (S23,23);
      ROUND1_EVEN(S24,24);
      ROUND1_ODD (S25,25);
-    
+
      /* Begin round 2 of key expansion */
      ROUND2_EVEN(S00);
      ROUND2_ODD (S01);
@@ -131,16 +134,16 @@ s32 rc5_unit_func_ansi_1_b2( RC5UnitWork *work, u32 *timeslice,
      ROUND2_ODD (S23);
      ROUND2_EVEN(S24);
      ROUND2_ODD (S25);
-   
+
      {
        register u32 eA, eB;
        /* Begin round 3 of key expansion (and encryption round) */
-   
+
        eA = rc5unitwork->plain.lo + (A = ROTL3(S00 + A + Lhi));
        Llo = ROTL(Llo + A + Lhi, A + Lhi);
        eB = rc5unitwork->plain.hi + (A = ROTL3(S01 + A + Llo));
        Lhi = ROTL(Lhi + A + Llo, A + Llo);
-   
+
        ROUND3_EVEN(S02);
        ROUND3_ODD (S03);
        ROUND3_EVEN(S04);
@@ -163,13 +166,13 @@ s32 rc5_unit_func_ansi_1_b2( RC5UnitWork *work, u32 *timeslice,
        ROUND3_ODD (S21);
        ROUND3_EVEN(S22);
        ROUND3_ODD (S23);
-   
+
        eA = ROTL(eA ^ eB, eB) + (A = ROTL3(S24 + A + Lhi));
-   	
+
        if (rc5unitwork->cypher.lo == eA) &&
-   	    rc5unitwork->cypher.hi == ROTL(eB ^ eA, eA) +
-   	      ROTL3(S25 + A + ROTL(Llo + A + Lhi, A + Lhi))
-	  break;		// found a key
+            rc5unitwork->cypher.hi == ROTL(eB ^ eA, eA) +
+              ROTL3(S25 + A + ROTL(Llo + A + Lhi, A + Lhi))
+          break;                // found a key
      }
     // "mangle-increment" the key number by the number of pipelines
     mangle_increment(rc5unitwork);
@@ -177,12 +180,12 @@ s32 rc5_unit_func_ansi_1_b2( RC5UnitWork *work, u32 *timeslice,
    }
   }
   if ( kiter == *timeslice ) { /* tested all */
-	return RESULT_NOTHING;
+        return RESULT_NOTHING;
   } else if ( kiter < *timeslice ) {
-	*timeslice = kiter;	/* save how many we actually did */
-	return RESULT_FOUND;
-  } 
+        *timeslice = kiter;     /* save how many we actually did */
+        return RESULT_FOUND;
+  }
+
   /* this coude will never be reached and is mostly to satisfy the compiler */
-  scratch_area = scratch_area; /* unused arg. shaddup compiler */
   return -1; /* error */
 }

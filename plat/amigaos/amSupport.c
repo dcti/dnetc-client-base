@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amSupport.c,v 1.2 2002/09/02 00:35:49 andreasb Exp $
+ * $Id: amSupport.c,v 1.3 2003/09/12 22:29:26 mweiser Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -474,6 +474,15 @@ int chmod(const char *name, mode_t mode)
     __seterrno();
                               
   return ret;
+}
+
+/*
+** libnix for PowerUp has a broken isatty() - writes to 0x100000!
+*/
+asm(".section	\".text\"\n\t.align 2\n\t.globl __isatty\n\t.type\t __isatty,@function\n__isatty:\n");
+int __isatty(int d)
+{
+   return IsInteractive(__stdfiledes[d]);
 }
 
 /*

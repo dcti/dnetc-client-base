@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -7,12 +7,12 @@
  *
  * ----------------------------------------------------------------------
  * The file contains:
- * - CliIdentifyModules() which lists the cvs id strings to stdout. 
- *   Users can assist us (when making bug reports) by telling us 
- *   exactly which modules were actually in effect when the binary was made. 
- *   Currently, starting the client with the '-ident' switch will exec the 
+ * - CliIdentifyModules() which lists the cvs id strings to stdout.
+ *   Users can assist us (when making bug reports) by telling us
+ *   exactly which modules were actually in effect when the binary was made.
+ *   Currently, starting the client with the '-ident' switch will exec the
  *   function.
- * - CliGetNewestModuleTime() returns time_t of the newest module 
+ * - CliGetNewestModuleTime() returns time_t of the newest module
  *   in the list - useful for asserting beta expiry, that the
  *   time obtained from proxies is sane etc.
  * - CliGetFullVersionDescriptor() returns the unique build descriptor
@@ -20,9 +20,9 @@
  * - CliIsDevelVersion() returns non-zero if the client was built from
  *   the devel branch or BETA or BETA_PERIOD is defined
  * ----------------------------------------------------------------------
-*/ 
-const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.27 2002/10/06 19:26:50 andreasb Exp $"; } 
+*/
+const char *cliident_cpp(void) {
+return "@(#)$Id: cliident.cpp,v 1.28 2003/09/12 22:29:25 mweiser Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -53,6 +53,11 @@ return "@(#)$Id: cliident.cpp,v 1.27 2002/10/06 19:26:50 andreasb Exp $"; }
 #include "modereq.h"
 #include "netbase.h"
 #include "netconn.h"
+#include "pack.h"       /* careful: order is important here */
+#include "pack1.h"      /* switches on packing */
+#include "pack4.h"
+#include "pack8.h"
+#include "pack0.h"      /* switch packing off again */
 #include "pathwork.h"
 #include "pollsys.h"
 #include "probfill.h"
@@ -66,6 +71,7 @@ return "@(#)$Id: cliident.cpp,v 1.27 2002/10/06 19:26:50 andreasb Exp $"; }
 #include "setprio.h"
 #include "sleepdef.h"
 #include "triggers.h"
+#include "unused.h"
 #include "util.h"
 #include "version.h"
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
@@ -75,8 +81,11 @@ return "@(#)$Id: cliident.cpp,v 1.27 2002/10/06 19:26:50 andreasb Exp $"; }
 #include "w32util.h"
 #include "w32svc.h"
 #endif
+#if (CLIENT_OS == OS_NEXTSTEP)
+#include "next_sup.h"
+#endif
 
-static const char *h_ident_table[] = 
+static const char *h_ident_table[] =
 {
   (const char *)__BASE64_H__,
   (const char *)__BASEINCS_H__,
@@ -107,6 +116,11 @@ static const char *h_ident_table[] =
   (const char *)__MODEREQ_H__,
   (const char *)__NETBASE_H__,
   (const char *)__NETCONN_H__,
+  (const char *)__PACK_H__,
+  (const char *)__PACK1_H__,
+  (const char *)__PACK4_H__,
+  (const char *)__PACK8_H__,
+  (const char *)__PACK0_H__,
   (const char *)__PATHWORK_H__,
   (const char *)__POLLSYS_H__,
   (const char *)__PROBFILL_H__,
@@ -120,6 +134,7 @@ static const char *h_ident_table[] =
   (const char *)__SETPRIO_H__,
   (const char *)__SLEEPDEF_H__,
   (const char *)__TRIGGERS_H__,
+  (const char *)__UNUSED_H__,
   (const char *)__UTIL_H__,
   (const char *)__VERSION_H__,
   #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
@@ -128,6 +143,12 @@ static const char *h_ident_table[] =
   (const char *)__W32PRE_H__,
   (const char *)__W32UTIL_H__,
   (const char *)__W32SVC_H__,
+  #endif
+  #if (CLIENT_OS == OS_OS2)
+  (const char *)__OS2DEFS_H__,
+  #endif
+  #if (CLIENT_OS == OS_NEXTSTEP)
+  (const char *)__NEXT_SUP_H__,
   #endif
   (const char *)0
 };
@@ -177,8 +198,14 @@ extern const char *w32pre_cpp(void);
 extern const char *w32util_cpp(void);
 extern const char *w32svc_cpp(void);
 #endif
+#if (CLIENT_OS == OS_OS2)
+extern const char *os2inst_cpp(void);
+#endif
+#if (CLIENT_OS == OS_NEXTSTEP)
+extern const char *next_sup_cpp(void);
+#endif
 
-static const char * (*ident_table[])(void) = 
+static const char * (*ident_table[])(void) =
 {
   base64_cpp,
   bench_cpp,
@@ -227,7 +254,13 @@ static const char * (*ident_table[])(void) =
   w32util_cpp,
   w32svc_cpp,
   #endif
-  ((const char * (*)(void))0)  
+  #if (CLIENT_OS == OS_OS2)
+  os2inst_cpp,
+  #endif
+  #if (CLIENT_OS == OS_NEXTSTEP)
+  next_sup_cpp,
+  #endif
+  ((const char * (*)(void))0)
 };
 
 
@@ -250,7 +283,7 @@ static const char *split_line( char *buffer, const char *p1, unsigned int bufsiz
         p3 = p1;
         while ( *p3 && *p3 != ' ' )
         { p3++; len++; }
-        if (!*p3) 
+        if (!*p3)
           break;
         if (pos == 0 && len>2 && *(p3-1)=='v' && *(p3-2)==',')
           len-=2;
@@ -268,7 +301,7 @@ static const char *split_line( char *buffer, const char *p1, unsigned int bufsiz
     }
   }
   return (const char *)0;
-}  
+}
 
 
 
@@ -285,12 +318,12 @@ void CliIdentifyModules(void)
     }
   }
   return;
-}  
+}
 
 
 
 /*
- *  Get Date/Time the newest module was committed. Used, for instance, to 
+ *  Get Date/Time the newest module was committed. Used, for instance, to
  *  'ensure' that time from the .ini or recvd from a proxy is sane.
  */
 time_t CliGetNewestModuleTime(void)
@@ -302,7 +335,7 @@ time_t CliGetNewestModuleTime(void)
     const char *p; struct tm bd; unsigned int pos; time_t bdtime;
     unsigned int cppidcount = (sizeof(ident_table)/sizeof(ident_table[0]));
     unsigned int hidcount = (sizeof(h_ident_table)/sizeof(h_ident_table[0]));
-   
+
     for (pos = 0; pos < (cppidcount + hidcount); pos++)
     {
       p = ((const char *)0);
@@ -319,8 +352,8 @@ time_t CliGetNewestModuleTime(void)
         #define BD_TIMEPOS (BD_DATEPOS+15)
         // 0         1         2         3         4         5
         // 012345678901234567890123456789012345678901234567890123456789
-        // cliident.cpp,v      1.14           1999/04/05     17:56:51  
-        // cliident.h,v        1.4            1999/04/06     10:20:47  
+        // cliident.cpp,v      1.14           1999/04/05     17:56:51
+        // cliident.h,v        1.4            1999/04/06     10:20:47
         memset((void *)&bd,-1,sizeof(bd));
         bd.tm_year = atoi(&buffer[BD_DATEPOS+0])-1900;
         bd.tm_mon  = atoi(&buffer[BD_DATEPOS+5])-1;
@@ -330,7 +363,7 @@ time_t CliGetNewestModuleTime(void)
         bd.tm_sec  = atoi(&buffer[BD_TIMEPOS+6]);
         #undef BD_DATEPOS
         #undef BD_TIMEPOS
-        if (bd.tm_mon >= 0  && bd.tm_mon  <= 11 && 
+        if (bd.tm_mon >= 0  && bd.tm_mon  <= 11 &&
            bd.tm_mday >= 1  && bd.tm_mday <= 31 &&
            bd.tm_year >= 99 && bd.tm_year <= 132 &&
            bd.tm_hour >= 0  && bd.tm_hour <= 23 &&
@@ -370,7 +403,7 @@ time_t CliGetNewestModuleTime(void)
           else if (bd.tm_sec < 0 || bd.tm_sec > 61)
             bd.tm_sec = 0;
           #endif
-          if (bd.tm_mon >= 0 && bd.tm_mon <= 11 && 
+          if (bd.tm_mon >= 0 && bd.tm_mon <= 11 &&
               bd.tm_mday >= 1 && bd.tm_mday <= 31 &&
               bd.tm_year >= 99 && bd.tm_year <= 132 )
           {
@@ -410,8 +443,22 @@ time_t CliGetNewestModuleTime(void)
     }
   }
   return newest;
-}  
+}
 
+
+//! Determines whether the current build is a "development" or
+//! "stable" build.
+/*!
+ * Development builds typically have a timebomb that causes them to
+ * expire after a few days/weeks.
+ *
+ * The build is determined to be a development build if either BETA or
+ * BETA_PERIOD is defined, or if the RCS/CVS file version has only one
+ * period ('.') in the version number (indicating that it is on the
+ * HEAD branch).
+ *
+ * \return Returns zero if stable, non-zero if development.
+ */
 int CliIsDevelVersion(void)
 {
   #if (defined(BETA) || defined(BETA_PERIOD))
@@ -425,8 +472,8 @@ int CliIsDevelVersion(void)
     if (p)
     {
       if (p[1] == 'v')
-      { 
-        char scratch[80]; 
+      {
+        char scratch[80];
         unsigned int len = 0;
         p+=2;
         while (*p && *p==' ')
@@ -446,23 +493,27 @@ int CliIsDevelVersion(void)
 const char *CliGetFullVersionDescriptor(void)
 {
   static char buffer[10+32+sizeof("v"CLIENT_VERSIONSTRING"-XXX-99071523-*dev* client for "CLIENT_OS_NAME)];
-  struct timeval tv; tv.tv_usec = 0; 
+  struct timeval tv; tv.tv_usec = 0;
   tv.tv_sec = CliGetNewestModuleTime();
   sprintf( buffer, "%s v" CLIENT_VERSIONSTRING "-"
          "%c"  /* GUI == "G", CLI == "C" */
          #ifdef CLIENT_SUPPORTS_SMP
-         "T"   /* threads */
+	   #ifdef HAVE_MULTICRUNCH_VIA_FORK
+	   "F" /* fork() */
+           #else
+           "T" /* threads */
+           #endif
          #else
          "P"   /* polling */
          #endif
          "%c"  /* limited release or dev branch or public release */
-         "-%s" /* date is in bugzilla format yymmddhh */ 
+         "-%s" /* date is in bugzilla format yymmddhh */
          "%s"  /* "-*dev*" or "" */
          " for "CLIENT_OS_NAME,
          utilGetAppName(),
-         ((ConIsGUI())?('G'):('C')),  
+         ((ConIsGUI())?('G'):('C')),
          ((CliIsDevelVersion())?('L'):('R')),
          CliGetTimeString(&tv,4),
          ((CliIsDevelVersion())?("-*dev*"):("")) );
   return buffer;
-}  
+}

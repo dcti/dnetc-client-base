@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1998-2002 - All Rights Reserved
+ * Copyright distributed.net 1998-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -9,7 +9,7 @@
  *
 */
 const char *threadcd_cpp(void) {
-return "@(#)$Id: threadcd.cpp,v 1.17 2002/09/02 00:35:43 andreasb Exp $"; }
+return "@(#)$Id: threadcd.cpp,v 1.18 2003/09/12 22:29:26 mweiser Exp $"; }
 
 #include <stdio.h>      //NULL
 #include "threadcd.h"   //includes implementation and porting notes.

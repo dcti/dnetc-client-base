@@ -1,5 +1,5 @@
 /*
-** Copyright distributed.net 1998-2002 - All Rights Reserved
+** Copyright distributed.net 1998-2003 - All Rights Reserved
 ** For use in distributed.net projects only.
 ** Any other distribution or use of this source violates copyright.
 **
@@ -15,7 +15,7 @@
 ** mdup(). The stream object used/created by these functions is a MEMFILE *. 
 */
 const char *memfile_cpp(void) {
-return "@(#)$Id: memfile.cpp,v 1.5 2002/09/02 00:35:42 andreasb Exp $"; }
+return "@(#)$Id: memfile.cpp,v 1.6 2003/09/12 22:29:25 mweiser Exp $"; }
 
 #include <stdio.h>
 #include <string.h>

@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.129 2002/09/23 01:54:06 acidblood Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.130 2003/09/12 22:29:25 mweiser Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -26,7 +26,7 @@ return "@(#)$Id: clirun.cpp,v 1.129 2002/09/23 01:54:06 acidblood Exp $"; }
 #include "clitime.h"   // CliTimer(), Time()/(CliGetTimeString(NULL,1))
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "clicdata.h"  // CliGetContestNameFromID()
-#include "util.h"      // utilCheckIfBetaExpired()
+#include "util.h"      // utilCheckIfBetaExpired(), DNETC_UNUSED_*
 #include "checkpt.h"   // CHECKPOINT_[OPEN|CLOSE|REFRESH|_FREQ_[SECS|PERC]DIFF]
 #include "cpucheck.h"  // GetNumberOfDetectedProcessors()
 #include "probman.h"   // GetProblemPointerFromIndex()
@@ -80,7 +80,7 @@ struct thread_param_block
     thread_t threadID;
   #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
     pthread_t threadID;
-  #elif (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)
+  #elif (CLIENT_OS == OS_WIN32)
     unsigned long threadID;
   #elif (CLIENT_OS == OS_NETWARE)
     long threadID;
@@ -90,6 +90,12 @@ struct thread_param_block
     thread_id threadID;
   #elif (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
     MPTaskID threadID;
+  #elif (CLIENT_OS == OS_OS2)
+    #if defined(__EMX__)
+      int threadID;
+    #else
+      unsigned long threadID;
+    #endif
   #else
     int threadID;
   #endif
@@ -141,7 +147,8 @@ static void __cruncher_sleep__(struct thread_param_block * /*thrparams*/)
 
 static int __cruncher_yield__(struct thread_param_block *thrparams)
 {
-  thrparams = thrparams;  /* shaddup compiler */
+  DNETC_UNUSED_PARAM(thrparams);
+
   /* thrparams is needed for some OSs like MacOS that have different
   ** yield calls depending on how the cruncher was created.
   */
@@ -154,7 +161,7 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
     NonPolledUSleep( 0 ); /* yield */
     #endif
   #elif (CLIENT_OS == OS_OS2)
-    DosSleep(0);
+    DosSleep(1); /* yes, 1 not 0 */
   #elif (CLIENT_OS == OS_IRIX)
     #ifdef _irix5_
     sginap(0);
@@ -261,6 +268,8 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
     NonPolledUSleep(0);
     #endif
   #elif (CLIENT_OS == OS_AMIGAOS)
+    NonPolledUSleep( 0 ); /* yield */
+  #elif (CLIENT_OS == OS_SCO)
     NonPolledUSleep( 0 ); /* yield */
   #else
     #error where is your yield function?
@@ -394,8 +403,23 @@ void Go_mt( void * parm )
     amigaThreadInit();
     #if (CLIENT_CPU == CPU_POWERPC)
     /* Only necessary when using 68k for time measurement */
-    thrparams->dyn_timeslice_table[0].usec = 8000000;  // RC5 // FIXME THIS INDEXING IS DANGEROUS !!!
-    thrparams->dyn_timeslice_table[2].usec = 4000000;  // OGR // FIXME THIS INDEXING IS DANGEROUS !!!
+    for (int tsinitd=0;tsinitd<CONTEST_COUNT;tsinitd++)
+    {
+      switch(thrparams->dyn_timeslice_table[tsinitd].contest)
+      {
+        #if defined(HAVE_RC5_64_CORES)
+        case RC5:
+          thrparams->dyn_timeslice_table[tsinitd].usec = 8000000;
+          break;
+        #endif
+        case RC5_72:
+          thrparams->dyn_timeslice_table[tsinitd].usec = 8000000;
+          break;
+        case OGR:
+          thrparams->dyn_timeslice_table[tsinitd].usec = 4000000;
+          break;
+      }
+    }
     #endif
   }
 #endif
@@ -527,11 +551,11 @@ void Go_mt( void * parm )
           if (runtime_usec != 0xfffffffful) /* not negative time or other bad thing */
           {
             #ifdef HAVE_I64
-            if (contest_i == OGR)    
+            if (contest_i == OGR)
             {
-              /* This calculates the optimal timeslice based on a sliding 
-              ** average of the reached rate. It reacts slower than the 
-              ** normal algorithm below, but has the advantage that it reaches 
+              /* This calculates the optimal timeslice based on a sliding
+              ** average of the reached rate. It reacts slower than the
+              ** normal algorithm below, but has the advantage that it reaches
               ** a stable point.
               */
               int ixes = thrparams->dyn_timeslice_slide[contest_i].ixes;
@@ -580,7 +604,7 @@ void Go_mt( void * parm )
                 if (optimal_timeslice < thrparams->dyn_timeslice_table[contest_i].min)
                   optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].min;
               }
-            } 
+            }
             thisprob->pub_data.tslice = optimal_timeslice; /* for the next round */
           }
         }
@@ -666,9 +690,9 @@ static int __StopThread( struct thread_param_block *thrparams )
       if (!thrparams->hasexited)
         pthread_join( thrparams->threadID, (void **)NULL);
       #elif (CLIENT_OS == OS_OS2)
-      DosSetPriority( 2, PRTYC_REGULAR, 0, 0); /* thread to normal prio */
+      DosSetPriority( 2, PRTYC_REGULAR, 0, (ULONG)thrparams->threadID); /* thread to normal prio */
       if (!thrparams->hasexited)
-        DosWaitThread( &(thrparams->threadID), DCWW_WAIT);
+        DosWaitThread( (PTID)&(thrparams->threadID), DCWW_WAIT);
       #elif (CLIENT_OS == OS_WIN32)
       while (!thrparams->hasexited)
         Sleep(100);
@@ -714,7 +738,7 @@ static int __StopThread( struct thread_param_block *thrparams )
         else
           printf("unknown cause for stop\n");
       }
-      #endif  
+      #endif
       #elif (CLIENT_OS == OS_FREEBSD)
       while (!thrparams->hasexited)
         NonPolledUSleep(100000);
@@ -723,7 +747,7 @@ static int __StopThread( struct thread_param_block *thrparams )
         NonPolledUSleep(300000);
       #endif
     }
-    ClientEventSyncPost( CLIEVENT_CLIENT_THREADSTOPPED, 
+    ClientEventSyncPost( CLIEVENT_CLIENT_THREADSTOPPED,
                          &(thrparams->threadnum), sizeof(thrparams->threadnum) );
     cmem_free( thrparams );
   }
@@ -1009,7 +1033,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       }
       #elif (CLIENT_OS == OS_OS2)
       {
-        thrparams->threadID = _beginthread( Go_mt, NULL, 8192, (void *)thrparams );
+        thrparams->threadID = _beginthread( Go_mt, NULL, 32768, (void *)thrparams );
         success = ( thrparams->threadID != -1);
       }
       #elif (CLIENT_OS == OS_NETWARE)
@@ -1481,7 +1505,7 @@ int ClientRun( Client *client )
           #if (CLIENT_OS == OS_RISCOS)
           if (riscos_in_taskwindow)
           {
-            non_preemptive_dyn_timeslice_table[tsinitd].usec = 30000;
+            non_preemptive_dyn_timeslice_table[tsinitd].usec = 40000;
             non_preemptive_dyn_timeslice_table[tsinitd].optimal = 32768;
           }
           else
@@ -1696,7 +1720,7 @@ int ClientRun( Client *client )
             }
           }
           timeRun = tv.tv_sec; /* assume its ok on the next round */
-          if ((++timeMonoError) > (60/MAIN_LOOP_RUN_INTERVAL)) 
+          if ((++timeMonoError) > (60/MAIN_LOOP_RUN_INTERVAL))
           {
             Log("Monotonic time found to be going backwards more than\n"
                 "%d times within the space off one minute. Quitting...\n",
@@ -1756,7 +1780,10 @@ int ClientRun( Client *client )
       if (isPaused)
       {
         if (!wasPaused)
+        {
           __gsc_flag_allthreads(thread_data_table, 's'); //suspend 'em
+          timeNextCheckpoint = 0; // write checkpoint file now
+        }
         wasPaused = 1;
       }
       else if (wasPaused)
@@ -1784,7 +1811,8 @@ int ClientRun( Client *client )
     // If not quitting, then write checkpoints
     //----------------------------------------
 
-    if (!TimeToQuit && !checkpointsDisabled && !isPaused
+    if (!TimeToQuit && !checkpointsDisabled
+        && (!isPaused || timeNextCheckpoint == 0)
         && !CheckExitRequestTriggerNoIO())
     {
       /* Checkpoints are done when CHECKPOINT_FREQ_SECSDIFF secs
@@ -1908,7 +1936,7 @@ int ClientRun( Client *client )
                       :((time_t)(client->last_buffupd_failed_time +
                                  client->max_buffupd_retry_interval * 60))) ) )
     {
-      TRACE_OUT((0, "FREQ timeRun=%d  timeNextConnect=%d  local_connectoften=%d\n", timeRun, timeNextConnect, local_connectoften));
+      TRACE_OUT((0, "FREQ timeRun=%lu  timeNextConnect=%lu  local_connectoften=%d\n", timeRun, timeNextConnect, local_connectoften));
       TRACE_OUT((0, "FREQ last_buffupd_time=%d  last_buffupd_time+interval=%d\n", client->last_buffupd_time, client->last_buffupd_time+ client->max_buffupd_interval * 60));
       TRACE_OUT((0, "FREQ last_buffupd_failed_time=%d  last_buffupd_failed_time+interval=%d\n", client->last_buffupd_failed_time, client->last_buffupd_failed_time+ client->max_buffupd_retry_interval * 60));
       timeNextConnect = timeRun + 30; /* never more often than 30 seconds */

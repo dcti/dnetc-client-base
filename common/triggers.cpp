@@ -1,24 +1,24 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * This module contains functions for raising/checking flags normally set
- * (asynchronously) by user request. Encapsulating the flags in 
- * functions has two benefits: (1) Transparency: the caller doesn't 
+ * (asynchronously) by user request. Encapsulating the flags in
+ * functions has two benefits: (1) Transparency: the caller doesn't
  * (_shouldn't_) need to care whether the triggers are async from signals
- * or polled. (2) Portability: we don't need a bunch of #if (CLIENT_OS...) 
- * sections preceding every signal variable check. As such, someone writing 
- * new code doesn't need to ensure that someone else's signal handling isn't 
- * affected, and inversely, that coder doesn't need to check if his platform 
+ * or polled. (2) Portability: we don't need a bunch of #if (CLIENT_OS...)
+ * sections preceding every signal variable check. As such, someone writing
+ * new code doesn't need to ensure that someone else's signal handling isn't
+ * affected, and inversely, that coder doesn't need to check if his platform
  * is affected by every itty-bitty change. (3) Modularity: gawd knows we need
  * some of this. (4) Extensibility: hup, two, three, four...  - cyp
-*/   
+*/
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31 2002/11/03 15:06:31 pfeffi Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.32 2003/09/12 22:29:26 mweiser Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -39,7 +39,7 @@ return "@(#)$Id: triggers.cpp,v 1.31 2002/11/03 15:06:31 pfeffi Exp $"; }
 
 /* note that all flags are single bits */
 #if !defined(TRIGSETBY_SIGNAL) /* defined like this in triggers.h */
-#define TRIGSETBY_SIGNAL       0x01 /* signal or explicit call to raise */ 
+#define TRIGSETBY_SIGNAL       0x01 /* signal or explicit call to raise */
 #define TRIGSETBY_FLAGFILE     0x02 /* flag file */
 #define TRIGSETBY_CUSTOM       0x04 /* something other than the above */
 #endif
@@ -48,18 +48,22 @@ return "@(#)$Id: triggers.cpp,v 1.31 2002/11/03 15:06:31 pfeffi Exp $"; }
 #define TRIGPAUSEBY_SRCBATTERY 0x20 /* pause due to running on battery */
 #define TRIGPAUSEBY_CPUTEMP    0x40 /* cpu temperature guard */
 
-struct trigstruct 
+#if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_WIN32)
+# define CLISIGHANDLER_IS_SPECIAL 1
+#endif
+
+struct trigstruct
 {
-  const char *flagfile; 
+  const char *flagfile;
   struct { unsigned int whenon, whenoff; } pollinterval;
   unsigned int incheck; //recursion check
   void (*pollproc)(int io_cycle_allowed);
-  volatile int trigger; 
+  volatile int trigger;
   int laststate;
   time_t nextcheck;
 };
 
-static struct 
+static struct
 {
   int doingmodes;
   struct trigstruct exittrig;
@@ -77,9 +81,9 @@ static struct
   int pause_if_no_mains_power;
   struct
   {
-    unsigned int lothresh, hithresh; /* in Kelvin */
+    u32 lothresh, hithresh; /* in Kelvin */
     int marking_high; /* we were >= high, waiting for < lowthresh */
-  } cputemp;  
+  } cputemp;
 } trigstatics;
 
 // -----------------------------------------------------------------------
@@ -103,7 +107,7 @@ static int __trig_raise(struct trigstruct *trig )
   oldstate = trig->trigger;
   trig->trigger |= TRIGSETBY_SIGNAL;
   return oldstate;
-}  
+}
 
 static int __trig_clear(struct trigstruct *trig )
 {
@@ -114,19 +118,27 @@ static int __trig_clear(struct trigstruct *trig )
   return oldstate;
 }
 
-int RaiseExitRequestTrigger(void) 
+int RaiseExitRequestTrigger(void)
 { return __trig_raise( &trigstatics.exittrig ); }
-int RaiseRestartRequestTrigger(void) 
+int RaiseRestartRequestTrigger(void)
 { RaiseExitRequestTrigger(); return __trig_raise( &trigstatics.huptrig ); }
-static int ClearRestartRequestTrigger(void) /* used internally */
-{ return __trig_clear( &trigstatics.huptrig ); }
-int RaisePauseRequestTrigger(void) 
+
+#ifndef CLISIGHANDLER_IS_SPECIAL
+
+/* used internally */
+static int ClearRestartRequestTrigger(void) {
+  return __trig_clear( &trigstatics.huptrig );
+}
+
+#endif /* !CLISIGHANDLER_IS_SPECIAL */
+
+int RaisePauseRequestTrigger(void)
 { return __trig_raise( &trigstatics.pausetrig ); }
 int ClearPauseRequestTrigger(void)
-{ 
+{
   int oldstate = __trig_clear( &trigstatics.pausetrig );
   #if 0
-  if ((trigstatics.pausetrig.trigger & TRIGSETBY_FLAGFILE)!=TRIGSETBY_FLAGFILE 
+  if ((trigstatics.pausetrig.trigger & TRIGSETBY_FLAGFILE)!=TRIGSETBY_FLAGFILE
      && trigstatics.pausetrig.flagfile)
   {
     if (access( trigstatics.pausetrig.flagfile, 0 ) == 0)
@@ -135,27 +147,27 @@ int ClearPauseRequestTrigger(void)
       trigstatics.pausetrig.trigger &= ~TRIGSETBY_FLAGFILE;
     }
   }
-  #endif  
+  #endif
   return oldstate;
-}  
-int CheckExitRequestTriggerNoIO(void) 
-{ 
-  __assert_statics(); 
+}
+int CheckExitRequestTriggerNoIO(void)
+{
+  __assert_statics();
   if (trigstatics.exittrig.pollproc)
 #ifdef CRUNCHERS_CALL_THIS_DIRECTLY
     (*trigstatics.exittrig.pollproc)(0 /* io_cycle_NOT_allowed */);
 #else
     (*trigstatics.exittrig.pollproc)(1 /* io_cycle_IS_allowed */);
-#endif     
-  return (trigstatics.exittrig.trigger); 
-} 
-int CheckPauseRequestTriggerNoIO(void) 
-{ __assert_statics(); 
+#endif
+  return (trigstatics.exittrig.trigger);
+}
+int CheckPauseRequestTriggerNoIO(void)
+{ __assert_statics();
   return ((trigstatics.pausetrig.trigger&(TRIGSETBY_SIGNAL|TRIGSETBY_FLAGFILE))
          |((trigstatics.pausetrig.trigger&
            (~(TRIGSETBY_SIGNAL|TRIGSETBY_FLAGFILE)))?(TRIGSETBY_CUSTOM):(0)));
-}           
-int CheckRestartRequestTriggerNoIO(void) 
+}
+int CheckRestartRequestTriggerNoIO(void)
 { __assert_statics(); return (trigstatics.huptrig.trigger); }
 
 // -----------------------------------------------------------------------
@@ -163,7 +175,7 @@ int CheckRestartRequestTriggerNoIO(void)
 void *RegisterPollDrivenBreakCheck( register void (*proc)(int) )
 {
   register void (*oldproc)(int);
-  __assert_statics(); 
+  __assert_statics();
   oldproc = trigstatics.exittrig.pollproc;
   trigstatics.exittrig.pollproc = proc;
   return (void *)oldproc;
@@ -173,14 +185,14 @@ void *RegisterPollDrivenBreakCheck( register void (*proc)(int) )
 
 static void __PollExternalTrigger(struct trigstruct *trig, int undoable)
 {
-  __assert_statics(); 
+  __assert_statics();
   if ((undoable || (trig->trigger & TRIGSETBY_FLAGFILE) == 0) && trig->flagfile)
   {
     struct timeval tv;
     if (CliClock(&tv) == 0)
     {
       time_t now = tv.tv_sec;
-      if (now >= trig->nextcheck) 
+      if (now >= trig->nextcheck)
       {
         if ( access( trig->flagfile, 0 ) == 0 )
         {
@@ -207,11 +219,11 @@ static unsigned long __get_file_time(const char *filename)
   if (stat( filename, &statblk ) == 0)
     filetime = (unsigned long)statblk.st_mtime;
   return filetime;
-}    
+}
 
 static void __CheckIniFileChangeStuff(void)
 {
-  __assert_statics(); 
+  __assert_statics();
   if (trigstatics.inifile[0]) /* have an ini filename? */
   {
     struct timeval tv;
@@ -232,8 +244,8 @@ static void __CheckIniFileChangeStuff(void)
           else if (!trigstatics.currinifiletime)     /* first time */
           {
             trigstatics.currinifiletime = filetime;
-          }  
-          else if (trigstatics.currinifiletime == 1) 
+          }
+          else if (trigstatics.currinifiletime == 1)
           {                                   /* got change some time ago */
             RaiseRestartRequestTrigger();
             trigstatics.currinifiletime = 0;
@@ -243,24 +255,26 @@ static void __CheckIniFileChangeStuff(void)
           {                                                /* mark change */
             trigstatics.currinifiletime = 1;
           }
-        } 
-      }  
+        }
+      }
     }
   }
   return;
-}  
+}
 
 // -----------------------------------------------------------------------
 
 static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
 {
+  DNETC_UNUSED_PARAM(unmangle_it);
+
   #if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16))
-  /* these two are frequently used 16bit apps that aren't visible (?) 
-     to utilGetPIDList so they are searched for by window class name, 
-     which is a unique identifier so we can find/tack them on to the 
+  /* these two are frequently used 16bit apps that aren't visible (?)
+     to utilGetPIDList so they are searched for by window class name,
+     which is a unique identifier so we can find/tack them on to the
      end of the pauseplist in __init. (They used to be hardcoded in
      the days before utilGetPIDList)
-  */   
+  */
   if (winGetVersion() >= 400 && winGetVersion() <2000) /* win9x only */
   {
     static const char *app2wclass[] = { "scandisk",  "#ScanDskWDlgClass",
@@ -297,13 +311,12 @@ static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
           name = app2wclass[app+1];
           break;
         }
-      }    
+      }
       TRACE_OUT((-1,"x2: mangle: '%s'\n",name));
-    }                                
-  } /* win9x? */  
+    }
+  } /* win9x? */
   #endif /* ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)) */
 
-  unmangle_it = unmangle_it; /* shaddup compiler */
   return name;
 }
 
@@ -343,8 +356,8 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
     }
     if (!getsps)
       trigstatics.pause_if_no_mains_power = 0;
-    else  
-    {    
+    else
+    {
       SYSTEM_POWER_STATUS sps;
       sps.ACLineStatus = 255;
       if ((*((BOOL (WINAPI *)(LPSYSTEM_POWER_STATUS))getsps))(&sps))
@@ -357,7 +370,7 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
         /* third condition is 0xff ("unknown"), so fall through */
       }
     }
-    #elif (CLIENT_OS == OS_LINUX)
+    #elif (CLIENT_OS == OS_LINUX) && (CLIENT_CPU != CPU_POWERPC)
     {
       static long time_last = 0;
       long time_now = (time(0)/60); /* not more than once per minute */
@@ -376,49 +389,49 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
         {
           if (errno == ENOMEM || errno == EAGAIN) /*ENOENT,ENXIO,EIO,EPERM */
             disableme = 0;  /* ENOMEM because apm kmallocs a struct per open */
-            
+
           TRACE_OUT((0,"sps: open(\"/proc/apm\",O_RDONLY) => %s, disableme=%d\n", strerror(errno), disableme));
           #if defined(TRACE) /* real-life example (1.2 is similar) */
           readsz = strlen(strcpy(buffer, "1.13 1.2 0x07 0xff 0xff 0xff -1% -1 ?"));
           #endif
         }
-        else 
+        else
         {
           readsz = read( fd, buffer, sizeof(buffer));
           close(fd);
         }
 
-        /* read should never fail for /proc/apm, and the size must be less 
+        /* read should never fail for /proc/apm, and the size must be less
            than sizeof(buffer) otherwise its some /proc/apm that we
            don't know how to parse.
-        */   
+        */
         if (readsz > 0 && ((unsigned int)readsz) < sizeof(buffer))
         {
           unsigned int drv_maj, drv_min; /* "1.2","1.9","1.10","1.12,"1.13" etc*/
           int bios_maj, bios_min; /* %d.%d */
           int bios_flags, ac_line_status, batt_status, batt_flag; /* 0x%02x */
           /* remaining fields are percentage, time_units, units. (%d %d %s) */
-  
+
           buffer[readsz-1] = '\0';
           if (sscanf( buffer, "%u.%u %d.%d 0x%02x 0x%02x 0x%02x 0x%02x",
                               &drv_maj, &drv_min, &bios_maj, &bios_min,
-                              &bios_flags, &ac_line_status, 
+                              &bios_flags, &ac_line_status,
                               &batt_status, &batt_flag ) == 8 )
-          {			      
+          {
             TRACE_OUT((0,"sps: drvver:%u.%u biosver:%d.%d biosflags:0x%02x "
                          "ac_line_status=0x%02x, batt_status=0x%02x\n",
                          drv_maj, drv_min, bios_maj, bios_min, bios_flags,
-                         ac_line_status, batt_status ));      
+                         ac_line_status, batt_status ));
             if (drv_maj == 1)
             {
               #define _APM_16_BIT_SUPPORT   (1<<0)
               #define _APM_32_BIT_SUPPORT   (1<<1)
               //      _APM_IDLE_SLOWS_CLOCK (1<<2)
               #define _APM_BIOS_DISABLED    (1<<3)
-              //      _APM_BIOS_DISENGAGED  (1<<4)	      
+              //      _APM_BIOS_DISENGAGED  (1<<4)
               if ((bios_flags & (_APM_16_BIT_SUPPORT | _APM_32_BIT_SUPPORT))!=0
                 && (bios_flags & _APM_BIOS_DISABLED) == 0)
-              { 
+              {
                 disableme = 0;
                 ac_line_status &= 0xff; /* its a char */
                 /* From /usr/src/[]/arch/i386/apm.c for (1.2)1996-(1.13)2/2000
@@ -427,24 +440,66 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
                       0x01: On-line
                       0x02: On backup-power (APM BIOS 1.1+ only)
                       0xff: Unknown
-                */      
+                */
                 if (ac_line_status == 1)
                   return 0; /* we are not on battery */
                 if (ac_line_status != 0xff) /* 0x00, 0x02 */
                   return 1; /* yes we are on battery */
-                /* fallthrough, return -1 */    
+                /* fallthrough, return -1 */
               }
             } /* drv_maj == 1 */
-          } /* sscanf() == 8 */ 
+          } /* sscanf() == 8 */
         } /* readsz */
-    
+
         if (disableme) /* disable further checks */
         {
           TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
           trigstatics.pause_if_no_mains_power = 0;
         }
-      }  
-    } /* #if (linux) */
+      }
+    } /* #if (linux & !cpu_ppc) */
+    #elif (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_POWERPC)
+    {
+      static long time_last = 0;
+      long time_now = (time(0)/60); /* not more than once per minute */
+      if (time_now != time_last)
+      {
+        int disableme = 1; // if this is still set when we get to the end
+                           // then disable further apm checking
+        FILE *fd = fopen("/proc/pmu/info", "r" );
+        if ( fd > 0)
+        {
+          char buffer[256];
+          int ac_status = -1;
+          while(fgets(buffer, sizeof(buffer), fd))
+          {
+            buffer[sizeof(buffer) - 1] = '\0';
+            if (strstr(buffer, "AC Power") == buffer)
+            {
+              if (sscanf(buffer, "AC Power               : %d",
+			 &ac_status) == 1)
+              {
+                disableme = 0;
+                break;
+              }
+            }
+          } /* while */
+          fclose (fd);
+          if (ac_status == 1)
+            return 0; /* not running from battery */
+          if (ac_status == 0)
+            return 1; /* are running on battery */
+          /* fallthrough, return -1 */
+        } /* if (fd) */
+
+        if (disableme) /* disable further checks */
+        {
+          TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
+          trigstatics.pause_if_no_mains_power = 0;
+        }
+      } /* if time */
+    } /* #if (linux & cpu_ppc) */
+
     #elif (CLIENT_OS == OS_FREEBSD) && (CLIENT_CPU == CPU_X86)
     {
       /* This is sick and sooo un-BSD like! Tatsumi Hokosawa must have
@@ -462,13 +517,13 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
         int whichioctl = APMIO_GETINFO;
         #endif
         disableme = 0;
-        
+
         memset( &info, 0, sizeof(info));
         if (ioctl(fd, whichioctl, (caddr_t)&info, 0 )!=0)
         {
           disableme = 1;
           info.ai_acline = 255; /* what apm returns for "unknown" */
-        }  
+        }
         else
         {
           TRACE_OUT((+1,"APM check\n"));
@@ -482,24 +537,24 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
                  ("offline"):((info.ai_acline==1)?("online"):("unknown"))) ));
         }
         close(fd);
-        
+
         if (info.ai_acline == 1)
           return 0; /* We have AC power */
         if (info.ai_acline == 0)
-          return 1; /* no AC power */  
-      }  
+          return 1; /* no AC power */
+      }
       if (disableme)
       {
         /* possible causes for a disable are
-	         EPERM: no permission to open /dev/apm) or 
-  	       ENXIO: apm device not configured, or disabled [kern default],
-                  or (for ioctl()) real<->pmode transition or bios error.
-       	*/   
+	** EPERM: no permission to open /dev/apm) or
+	** ENXIO: apm device not configured, or disabled [kern default],
+	** or (for ioctl()) real<->pmode transition or bios error.
+       	*/
         TRACE_OUT((0,"pause_if_no_mains_power check error: %s\n", strerror(errno)));
         TRACE_OUT((0,"disabling further pause_if_no_mains_power checks\n"));
         trigstatics.pause_if_no_mains_power = 0;
       }
-    } /* freebsd */     
+    } /* freebsd */
     #elif (CLIENT_OS == OS_NETBSD) && (CLIENT_CPU == CPU_X86)
     {
       struct apm_power_info buff;
@@ -571,31 +626,49 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
     /* We dont seem to have a PowerManager, disable battery checking. */
     trigstatics.pause_if_no_mains_power = 0;
     #endif
-  }  
+  }
   return -1; /* unknown */
 }
 
 // -----------------------------------------------------------------------
 
-static int __CPUTemperaturePoll(void)
+#if (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY)
+extern "C" s32 macosx_cputemp();
+#elif (CLIENT_OS == OS_DEC_UNIX)
+extern "C" int dunix_cputemp();
+#endif
+
+static int __CPUTemperaturePoll(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 {
-  int lowthresh = (int)trigstatics.cputemp.lothresh;
-  int highthresh = (int)trigstatics.cputemp.hithresh;
-  if (highthresh > lowthresh) /* otherwise values are invalid */
+  s32 lowthresh = (s32)trigstatics.cputemp.lothresh;
+  s32 highthresh = (s32)trigstatics.cputemp.hithresh;
+  if (lowthresh > 0 && highthresh >= lowthresh) /* otherwise values are invalid */
   {
-    /* read the cpu temp in Kelvin. For multiple cpus, gets one 
+    /* read the cpu temp in Kelvin. For multiple cpus, gets one
        with highest temp. On error, returns < 0.
        Note that cputemp is in Kelvin, if your OS returns a value in
        Farenheit or Celsius, see _init_cputemp for conversion functions.
+       The temperature is encoded in fixed-point format to allow two
+       digits after the decimal point.
     */
-    int cputemp = -1;
+    s32 cputemp = -1;
     #if (CLIENT_OS == OS_MACOS)
       cputemp = macosCPUTemp();
+      cputemp = cputemp * 100 + 15;     // Convert to fixed-point format
+    #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+      cputemp = macosx_cputemp();
+    #elif (CLIENT_OS == OS_DEC_UNIX)
+      if ((cputemp = dunix_cputemp()) < 0) {
+        trigstatics.cputemp.hithresh=0; // disable checking on failure
+      }
+      else {
+        cputemp = cputemp * 100 + 15;   // Convert to fixed-point format
+      }
     #elif 0 /* other client_os */
-    cputemp = fooyaddablahblahbar();
+      cputemp = fooyaddablahblahbar();
     #endif
     if (cputemp < 0) /* error */
-      ; 
+      return -1;
     else if (cputemp >= highthresh)
       trigstatics.cputemp.marking_high = 1;
     else if (cputemp < lowthresh)
@@ -606,15 +679,19 @@ static int __CPUTemperaturePoll(void)
 
 // -----------------------------------------------------------------------
 
+#if defined(CLISIGHANDLER_IS_SPECIAL) || \
+    (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS) || \
+    (CLIENT_OS == OS_DOS)
+
 static void __PollDrivenBreakCheck(int io_cycle_allowed)
 {
   /* io_cycle_allowed is non-zero when called through CheckExitRequestTrigger
-     and is zero when called through CheckExitRequestTriggerNoIO()
-  */
-  io_cycle_allowed = io_cycle_allowed; /* shaddup compiler */
+  ** and is zero when called through CheckExitRequestTriggerNoIO() */
+  DNETC_UNUSED_PARAM(io_cycle_allowed)
+
   #if (CLIENT_OS == OS_RISCOS)
 /* This hs no equivalent in Unixlib but strange as it is, it seems to be not
-   necessary */  
+   necessary */
 //  if (_kernel_escape_seen())
 //      RaiseExitRequestTrigger();
   #elif (CLIENT_OS == OS_AMIGAOS)
@@ -642,20 +719,21 @@ static void __PollDrivenBreakCheck(int io_cycle_allowed)
     _asm mov ah,0x0b  /* benign dos call (kbhit()) */
     _asm int 0x21     /* to keep int23h (^C) handling alive */
   #endif
-  return;  
-}      
+  return;
+}
+#endif
 
 // =======================================================================
 
 int OverrideNextConffileChangeTrigger(void)
 {
-  __assert_statics(); 
+  __assert_statics();
   return (++trigstatics.overrideinifiletime);
 }
 
-int CheckExitRequestTrigger(void) 
+int CheckExitRequestTrigger(void)
 {
-  __assert_statics(); 
+  __assert_statics();
   if (!trigstatics.exittrig.laststate && !trigstatics.exittrig.incheck)
   {
     ++trigstatics.exittrig.incheck;
@@ -670,12 +748,12 @@ int CheckExitRequestTrigger(void)
       __CheckIniFileChangeStuff();
     if ( trigstatics.exittrig.trigger )
     {
-      trigstatics.exittrig.laststate = 1;             
+      trigstatics.exittrig.laststate = 1;
       if (!trigstatics.doingmodes)
       {
         Log("*Break* %s\n",
           ( ((trigstatics.exittrig.trigger & TRIGSETBY_FLAGFILE)!=0)?
-               ("(found exit flag file)"): 
+               ("(found exit flag file)"):
            ((trigstatics.huptrig.trigger)?("Restarting..."):("Shutting down..."))
             ) );
       }
@@ -684,21 +762,21 @@ int CheckExitRequestTrigger(void)
   }
   TRACE_OUT((0, "CheckExitRequestTrigger() = %d\n", trigstatics.exittrig.trigger));
   return( trigstatics.exittrig.trigger );
-}  
-
-// -----------------------------------------------------------------------
-
-int CheckRestartRequestTrigger(void) 
-{ 
-  CheckExitRequestTrigger(); /* does both */
-  return (trigstatics.huptrig.trigger); 
 }
 
 // -----------------------------------------------------------------------
 
-int CheckPauseRequestTrigger(void) 
+int CheckRestartRequestTrigger(void)
 {
-  __assert_statics(); 
+  CheckExitRequestTrigger(); /* does both */
+  return (trigstatics.huptrig.trigger);
+}
+
+// -----------------------------------------------------------------------
+
+int CheckPauseRequestTrigger(void)
+{
+  __assert_statics();
   if ( CheckExitRequestTrigger() )   //only check if not exiting
     return 0;
   if (trigstatics.doingmodes)
@@ -708,7 +786,7 @@ int CheckPauseRequestTrigger(void)
     const char *custom_now_active = "";
     const char *custom_now_inactive = "";
     const char *app_now_active = "";
-  
+
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16)
     {
       custom_now_active = "(defrag running)";
@@ -738,9 +816,9 @@ int CheckPauseRequestTrigger(void)
         {
           /* program is no longer running. */
           Log("%s... ('%s' inactive)\n",
-              (((trigstatics.pausetrig.laststate 
+              (((trigstatics.pausetrig.laststate
                    & ~TRIGPAUSEBY_APPACTIVE)!=0)?("Pause level lowered"):
-              ("Running again after pause")), 
+              ("Running again after pause")),
               __mangle_pauseapp_name(pp[idx],1 /* unmangle */) );
           trigstatics.pausetrig.laststate &= ~TRIGPAUSEBY_APPACTIVE;
           trigstatics.pausetrig.trigger &= ~TRIGPAUSEBY_APPACTIVE;
@@ -759,7 +837,7 @@ int CheckPauseRequestTrigger(void)
           {
             /* if this matched, then we came from the transition
                above and know that this is definitely not running.
-            */   
+            */
           }
           else if (utilGetPIDList( pp[idx], NULL, 0 ) > 0)
           {
@@ -780,18 +858,22 @@ int CheckPauseRequestTrigger(void)
       if (isbat > 0)
         trigstatics.pausetrig.trigger |= TRIGPAUSEBY_SRCBATTERY;
       else if (isbat == 0)
-        trigstatics.pausetrig.trigger &= ~TRIGPAUSEBY_SRCBATTERY;  
-      /* otherwise error/unknown, so don't change anything */  
-    }    
-    if (__CPUTemperaturePoll())
-      trigstatics.pausetrig.trigger |= TRIGPAUSEBY_CPUTEMP;
-    else
-      trigstatics.pausetrig.trigger &= ~TRIGPAUSEBY_CPUTEMP;  
+        trigstatics.pausetrig.trigger &= ~TRIGPAUSEBY_SRCBATTERY;
+      /* otherwise error/unknown, so don't change anything */
+    }
+    {
+        int cputemp = __CPUTemperaturePoll(); /* <0=unknown/err, 0=no, >0=yes */
+        if (cputemp > 0)
+            trigstatics.pausetrig.trigger |= TRIGPAUSEBY_CPUTEMP;
+        else if (cputemp == 0)
+            trigstatics.pausetrig.trigger &= ~TRIGPAUSEBY_CPUTEMP;
+        /* otherwise error/unknown, so don't change anything */
+    }
 
     __PollExternalTrigger( &trigstatics.pausetrig, 1 );
-    
+
     /* +++ */
-    
+
     if (trigstatics.pausetrig.laststate != trigstatics.pausetrig.trigger)
     {
       if ((trigstatics.pausetrig.trigger & TRIGSETBY_SIGNAL)!=0 &&
@@ -867,7 +949,7 @@ int CheckPauseRequestTrigger(void)
       }
       else if ((trigstatics.pausetrig.trigger & TRIGPAUSEBY_SRCBATTERY)==0 &&
           (trigstatics.pausetrig.laststate & TRIGPAUSEBY_SRCBATTERY)!=0)
-      {          
+      {
         trigstatics.pausetrig.laststate &= ~TRIGPAUSEBY_SRCBATTERY;
         Log("%s... (Mains power restored)\n",
           ((trigstatics.pausetrig.laststate)?("Pause level lowered"):
@@ -876,41 +958,43 @@ int CheckPauseRequestTrigger(void)
       if ((trigstatics.pausetrig.trigger & TRIGPAUSEBY_CPUTEMP)!=0 &&
           (trigstatics.pausetrig.laststate & TRIGPAUSEBY_CPUTEMP)==0)
       {
-        Log("Pause%sd... (CPU temperature exceeds %uK)\n",
+        Log("Pause%sd... (CPU temperature exceeds %u.%02uK)\n",
              ((trigstatics.pausetrig.laststate)?(" level raise"):("")),
-               trigstatics.cputemp.hithresh );
+               trigstatics.cputemp.hithresh / 100, trigstatics.cputemp.hithresh % 100);
         trigstatics.pausetrig.laststate |= TRIGPAUSEBY_CPUTEMP;
       }
       else if ((trigstatics.pausetrig.trigger & TRIGPAUSEBY_CPUTEMP)==0 &&
           (trigstatics.pausetrig.laststate & TRIGPAUSEBY_CPUTEMP)!=0)
-      {          
+      {
         trigstatics.pausetrig.laststate &= ~TRIGPAUSEBY_CPUTEMP;
-        Log("%s... (CPU temperature below %uK)\n",
-          ((trigstatics.pausetrig.laststate)?("Pause level lowered"):
-          ("Running again after pause")), trigstatics.cputemp.lothresh );
+        Log("%s... (CPU temperature below %u.%02uK)\n",
+            ((trigstatics.pausetrig.laststate)?("Pause level lowered"):
+            ("Running again after pause")), trigstatics.cputemp.lothresh / 100, 
+            trigstatics.cputemp.lothresh % 100);
       }
     }
   }
   --trigstatics.pausetrig.incheck;
   return CheckPauseRequestTriggerNoIO(); /* return public mask */
-}   
+}
 
 // =======================================================================
 
 #if (CLIENT_OS == OS_AMIGAOS)
-extern "C" void __chkabort(void) 
-{ 
+extern "C" void __chkabort(void)
+{
   /* Disable SAS/C / GCC CTRL-C handing */
   return;
 }
-#define CLISIGHANDLER_IS_SPECIAL
+
 static void __init_signal_handlers( int doingmodes )
 {
-  __assert_statics(); 
-  doingmodes = doingmodes; /* unused */
+  DNETC_UNUSED_PARAM(doingmodes);
+
+  __assert_statics();
   SetSignal(0L, SIGBREAKF_CTRL_C); // Clear the signal triggers
   RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
-}    
+}
 #endif
 
 // -----------------------------------------------------------------------
@@ -918,7 +1002,7 @@ static void __init_signal_handlers( int doingmodes )
 #if (CLIENT_OS == OS_WIN32)
 BOOL WINAPI CliSignalHandler(DWORD dwCtrlType)
 {
-  if ( dwCtrlType == CTRL_C_EVENT || dwCtrlType == CTRL_CLOSE_EVENT || 
+  if ( dwCtrlType == CTRL_C_EVENT || dwCtrlType == CTRL_CLOSE_EVENT ||
        dwCtrlType == CTRL_SHUTDOWN_EVENT)
   {
     RaiseExitRequestTrigger();
@@ -931,11 +1015,12 @@ BOOL WINAPI CliSignalHandler(DWORD dwCtrlType)
   }
   return FALSE;
 }
-#define CLISIGHANDLER_IS_SPECIAL
-static void __init_signal_handlers( int doingmodes ) 
+
+static void __init_signal_handlers( int doingmodes )
 {
-  __assert_statics(); 
-  doingmodes = doingmodes; /* unused */
+  DNETC_UNUSED_PARAM(doingmodes);
+
+  __assert_statics();
   SetConsoleCtrlHandler( /*(PHANDLER_ROUTINE)*/CliSignalHandler, FALSE );
   SetConsoleCtrlHandler( /*(PHANDLER_ROUTINE)*/CliSignalHandler, TRUE );
   RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
@@ -982,14 +1067,14 @@ extern "C" void CliSignalHandler( int sig )
     ClearPauseRequestTrigger();
     return;
   }
-  #endif  
+  #endif
   #if defined(SIGHUP)
   if (sig == SIGHUP)
   {
     SETSIGNAL(sig,CliSignalHandler);
     RaiseRestartRequestTrigger();
     return;
-  }  
+  }
   #endif
   ClearRestartRequestTrigger();
 //printf("\ngot sig %d\n", sig);
@@ -998,7 +1083,7 @@ extern "C" void CliSignalHandler( int sig )
 #if (CLIENT_OS != OS_FREEBSD) && (CLIENT_OS != OS_DEC_UNIX)
   SETSIGNAL(sig,SIG_IGN);
 #endif
-}  
+}
 #endif //ifndef CLISIGHANDLER_IS_SPECIAL
 
 // -----------------------------------------------------------------------
@@ -1006,9 +1091,9 @@ extern "C" void CliSignalHandler( int sig )
 #if ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS)) || \
    defined(HAVE_MULTICRUNCH_VIA_FORK)
 /* forward all signals to the parent process */
-static void sig_forward_to_parent( int nsig ) 
-{ 
-  kill(getppid(), nsig); 
+static void sig_forward_to_parent( int nsig )
+{
+  kill(getppid(), nsig);
 }
 #endif
 
@@ -1042,12 +1127,10 @@ int TriggersSetThreadSigMask(void)
   }
 
   #if defined(_POSIX_THREADS_SUPPORTED) /* must be first */
-    #if (CLIENT_OS == OS_AIX)
-    sigthreadmask(SIG_BLOCK, &signals_to_block, NULL);
-    #elif ((CLIENT_OS == OS_LINUX) && defined(_MIT_POSIX_THREADS)) \
+    #if ((CLIENT_OS == OS_LINUX) && defined(_MIT_POSIX_THREADS)) \
        || (CLIENT_OS == OS_DGUX) || (CLIENT_OS == OS_MACOSX)
     /* nothing - no pthread_sigmask() and no alternative */
-    #else  
+    #else
     pthread_sigmask(SIG_BLOCK, &signals_to_block, NULL);
     #endif
   #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
@@ -1058,17 +1141,19 @@ int TriggersSetThreadSigMask(void)
   #endif
 #endif
   return 0;
-}  
+}
 
 // -----------------------------------------------------------------------
 
 #ifndef CLISIGHANDLER_IS_SPECIAL
 static void __init_signal_handlers( int doingmodes )
 {
-  __assert_statics(); 
-  doingmodes = doingmodes; /* possibly unused */
+  DNETC_UNUSED_PARAM(doingmodes);
+
+  __assert_statics();
+
   #if defined(SIGPIPE) //needed by at least solaris and fbsd
-  SETSIGNAL( SIGPIPE, SIG_IGN ); 
+  SETSIGNAL( SIGPIPE, SIG_IGN );
   #endif
   #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS)
   RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
@@ -1085,19 +1170,29 @@ static void __init_signal_handlers( int doingmodes )
   {
     #if ((CLIENT_OS == OS_QNX) && defined(__QNXNTO__)) || \
          (CLIENT_OS == OS_BEOS)
-       /* nothing */          
-    #else          
-    // stop the shell from seeing SIGTSTP and putting the client into 
+       /* nothing */
+    #else
+    // stop the shell from seeing SIGTSTP and putting the client into
     // the background when we '-pause' it.
-    if( getpgrp() != getpid() ) 
-      setpgid( 0, 0 );  // 
-    // porters : those calls are POSIX.1, 
+      #if (CLIENT_OS == OS_NEXTSTEP)
+    if( getpgrp( 0 ) != getpid() )
+      setpgrp( 0, 0 );
+      #else
+    // porters : those calls are POSIX.1,
     // - on BSD you might need to change setpgid(0,0) to setpgrp()
     // - on SYSV you might need to change getpgrp() to getpgid(0)
-    #endif
+    if( getpgrp() != getpid() )
+      setpgid( 0, 0 );
+      #endif /* CLIENT_OS == OS_NEXTSTEP */
+    #endif /* CLIENT_OS == OS_QNX ... */
     SETSIGNAL( TRIGGER_PAUSE_SIGNAL, CliSignalHandler );  //pause
     SETSIGNAL( TRIGGER_UNPAUSE_SIGNAL, CliSignalHandler );  //continue
   }
+  #else /* defined(__unix__) && defined(TRIGGER_PAUSE_SIGNAL) */
+    #if (CLIENT_OS == OS_OS2)
+      SETSIGNAL( TRIGGER_PAUSE_SIGNAL, CliSignalHandler );  //pause
+      SETSIGNAL( TRIGGER_UNPAUSE_SIGNAL, CliSignalHandler );  //continue
+    #endif
   #endif /* defined(__unix__) && defined(TRIGGER_PAUSE_SIGNAL) */
   #if defined(SIGQUIT)
   SETSIGNAL( SIGQUIT, CliSignalHandler );  //shutdown
@@ -1126,7 +1221,7 @@ static const char *_init_trigfile(const char *fn, char *buffer, unsigned int buf
     {
       while (*fn && isspace(*fn))
         fn++;
-      if (*fn)  
+      if (*fn)
       {
         unsigned int len = strlen(fn);
         while (len > 0 && isspace(fn[len-1]))
@@ -1159,7 +1254,7 @@ static const char *_init_trigfile(const char *fn, char *buffer, unsigned int buf
 
 static void _init_cputemp( const char *p ) /* cpu temperature string */
 {
-  int K[2];
+  s32 K[2];
   int which;
 
   trigstatics.cputemp.hithresh = trigstatics.cputemp.lothresh = 0;
@@ -1168,10 +1263,11 @@ static void _init_cputemp( const char *p ) /* cpu temperature string */
   K[0] = K[1] = -1;
   for (which=0;which<2;which++)
   {
-    int val = 0, len = 0, neg = 0;
+    s32 val = 0;
+    int len = 0, frac = 0, neg = 0;
     while (*p && isspace(*p))
       p++;
-    if (!*p)  
+    if (!*p)
       break;
     if (*p == '-' || *p == '+')
       neg = (*p++ == '-');
@@ -1184,35 +1280,56 @@ static void _init_cputemp( const char *p ) /* cpu temperature string */
     }
     if (len == 0) /* bad number */
       return;
-    if (*p == '.') /* hmm, decimal pt */
+    
+    if (*p == '.') /* hmm, decimal pt. Allow for two digits after the decimal point */
     {
       p++;
       if (!isdigit(*p))
         return;
-      if (*p >= '5')
-        val++;  
-      while (isdigit(*p))  
+
+      while (frac < 2) 
+      {
+        val = val*10;
+        if (isdigit(*p)) 
+        {
+          val += (*p - '0');
+          p++;
+        }
+        frac++;
+      }
+      if (isdigit(*p) && *p >= '5') 
+      {
+        val++;
         p++;
-    }  
+      }
+      while (isdigit(*p))
+        p++;
+    }
+    else 
+    {
+      val = val*100;
+    }
+    
     if (neg)
       val = -val;
     while (*p && isspace(*p))
-      p++;  
+      p++;
+
     if (*p=='F' || *p=='f' || *p=='R' || *p=='r') /* farenheit or rankine */
     {
       if (*p == 'R' || *p == 'r') /* convert rankine to farenheit first */
-        val -= 459; /* 459.67 */
-      val = (((val - 32) * 5)/9) + 273/*.15*/;  /* F -> K */
+        val -= 45967; /* 459.67 */
+      val = (((val - 3200) * 5)/9) + 27315 /*273.15*/;  /* F -> K */
       p++;
     }
-    else if (*p == 'C' || *p == 'c') /* celcius/centigrade */    
-    {   
-      val += 273/*.15*/; /* C -> K */
+    else if (*p == 'C' || *p == 'c') /* celcius/centigrade */
+    {
+      val += 27315 /*273.15*/; /* C -> K */
       p++;
     }
     else if (*p == 'K' || *p == 'k') /* Kelvin */
     {
-      p++; 
+      p++;
     }
     if (val < 0) /* below absolute zero, uh, huh */
       return;
@@ -1222,15 +1339,15 @@ static void _init_cputemp( const char *p ) /* cpu temperature string */
     if (*p != ':')
       break;
     p++;
-  }  
+  }
   if (K[0] > 1) /* be gracious :) */
   {
     if (K[1] < 0) /* only single temp provided */
     {
-      K[1] = K[0]; /* then make that the high water mark */
+      K[1] = K[0];       /* then make that the high water mark */
       K[0] -= (K[0]/10); /* low water mark is 90% of high water mark */
     }
-    TRACE_OUT((0,"cputemp: %dK:%dK\n", K[0], K[1]));
+    TRACE_OUT((0,"cputemp: %d.%02dK:%d.%02dK\n", K[0]/100, K[0]%100, K[1]/100, K[1]%100));
 
     trigstatics.cputemp.lothresh = K[0];
     trigstatics.cputemp.hithresh = K[1];
@@ -1279,12 +1396,12 @@ static void _init_pauseplist( const char *plist )
     }
   }
   #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
-  /* 
+  /*
   sorry about this piece of OS-specific uglyness. These were
-  pause triggers before the days of utilGetPidlist(), and are now 
-  tacked on at the end of the guard list for compatibility's sake. 
+  pause triggers before the days of utilGetPidlist(), and are now
+  tacked on at the end of the guard list for compatibility's sake.
   Yes, they really are needed - I've seen people curse these two
-  till they were blue in the face, not realizing what the heck it 
+  till they were blue in the face, not realizing what the heck it
   was that so crippled their machines. Yeah, yeah. win9x stinks. :)
   The mangling done above will already have given us unique identifiers,
   so we at least don't have to parse the whole lot again.
@@ -1324,7 +1441,7 @@ int InitializeTriggers(int doingmodes,
                        int pauseifnomainspower )
 {
   TRACE_OUT( (+1, "InitializeTriggers\n") );
-  __assert_statics(); 
+  __assert_statics();
   memset( (void *)(&trigstatics), 0, sizeof(trigstatics) );
   trigstatics.exittrig.pollinterval.whenon = 0;
   trigstatics.exittrig.pollinterval.whenoff = EXITFILE_CHECKTIME;
@@ -1335,10 +1452,10 @@ int InitializeTriggers(int doingmodes,
   trigstatics.doingmodes = doingmodes;
   if (!doingmodes)
   {
-    trigstatics.exittrig.flagfile = _init_trigfile(exitfile, 
+    trigstatics.exittrig.flagfile = _init_trigfile(exitfile,
                  trigstatics.exitfilebuf, sizeof(trigstatics.exitfilebuf) );
     TRACE_OUT((0, "exitfile: %s\n", trigstatics.exittrig.flagfile));
-    trigstatics.pausetrig.flagfile = _init_trigfile(pausefile, 
+    trigstatics.pausetrig.flagfile = _init_trigfile(pausefile,
                  trigstatics.pausefilebuf, sizeof(trigstatics.pausefilebuf) );
     TRACE_OUT((0, "pausefile: %s\n", trigstatics.pausetrig.flagfile));
     if (restartoninichange && inifile)
@@ -1348,25 +1465,25 @@ int InitializeTriggers(int doingmodes,
     if (watchcputempthresh && cputempthresh)
       _init_cputemp( cputempthresh ); /* cpu temp string */
     trigstatics.pause_if_no_mains_power = pauseifnomainspower;
-    if (doingmodes) /* dummy if, always false */
-      __PollDrivenBreakCheck(1); /* shaddup compiler */
   }
   TRACE_OUT( (-1, "InitializeTriggers\n") );
   return 0;
-}  
+}
 
 /* ---------------------------------------------------------------- */
 
 int DeinitializeTriggers(void)
 {
   int huptrig;
-  __assert_statics(); 
+
+  __assert_statics();
   huptrig = trigstatics.huptrig.trigger;
+
   /* clear everything to ensure we don't use IO after DeInit */
   memset( (void *)(&trigstatics), 0, sizeof(trigstatics) );
-  ClearRestartRequestTrigger(); /* consume possibly unused static function */
+
   return huptrig;
-}  
+}
 
 /* ---------------------------------------------------------------- */
 

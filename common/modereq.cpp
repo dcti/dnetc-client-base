@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -12,7 +12,7 @@
  * ---------------------------------------------------------------
 */
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.38 2002/09/02 00:35:42 andreasb Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.39 2003/09/12 22:29:25 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -310,6 +310,12 @@ int ModeReqRun(Client *client)
         } while (!testfailed && modereq.test_projbits);
         retval |= (MODEREQ_TEST|MODEREQ_TEST_ALLCORE);
         modereq.reqbits &= ~(MODEREQ_TEST|MODEREQ_TEST_ALLCORE);
+      }
+      if ((bits & MODEREQ_VERSION)!=0)
+      {
+        /* the requested information already has been printed */
+        modereq.reqbits &= ~(MODEREQ_VERSION);
+        retval |= (MODEREQ_VERSION);
       }
       if (CheckExitRequestTriggerNoIO())
       {

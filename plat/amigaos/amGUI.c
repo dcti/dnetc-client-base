@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amGUI.c,v 1.2 2002/09/02 00:35:48 andreasb Exp $
+ * $Id: amGUI.c,v 1.3 2003/09/12 22:29:26 mweiser Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -266,7 +266,7 @@ void amigaHandleGUI(void *timer, ULONG timesig)
          if ( cmds & DNETC_MSG_TEST )
             ModeReqSet(MODEREQ_TEST);
          if ( cmds & DNETC_MSG_CONFIG )
-            ModeReqSet(MODEREQ_CONFRESTART);
+            ModeReqSet(MODEREQ_CONFIG | MODEREQ_CONFRESTART);
 
          #ifndef __PPC__
          if (cmds && !done && tr) {

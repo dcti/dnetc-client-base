@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.83 2002/10/24 02:40:08 lightning Exp $
+# $Id: makefile.vc,v 1.84 2003/09/12 22:29:25 mweiser Exp $
 #
 
 BASENAME = dnetc
@@ -114,6 +114,11 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/confrwv.obj    \
         $(OUTPUTPATH)/console.obj    \
         $(OUTPUTPATH)/coremem.obj    \
+        $(OUTPUTPATH)/core_rc5.obj   \
+        $(OUTPUTPATH)/core_des.obj   \
+        $(OUTPUTPATH)/core_r72.obj   \
+        $(OUTPUTPATH)/core_csc.obj   \
+        $(OUTPUTPATH)/core_ogr.obj   \
         $(OUTPUTPATH)/cpucheck.obj   \
         $(OUTPUTPATH)/disphelp.obj   \
         $(OUTPUTPATH)/iniread.obj    \
@@ -212,17 +217,14 @@ OPTS_MSVC = $(OPTS_MSVC) -DSMC -DHAVE_RC5_64_CORES
 RC5_72_OBJS =
 !else
 RC5_72_OBJS =                        \
-        $(OUTPUTPATH)/r72ansi1.obj   \
-        $(OUTPUTPATH)/r72ansi2.obj   \
-        $(OUTPUTPATH)/r72ansi4.obj   \
         $(OUTPUTPATH)/r72-ses1.obj   \
         $(OUTPUTPATH)/r72-ses2.obj   \
         $(OUTPUTPATH)/r72-dg2.obj    \
         $(OUTPUTPATH)/r72-dg3.obj    \
         $(OUTPUTPATH)/r72-dg3a.obj   \
-        $(OUTPUTPATH)/r72-dgp4.obj
+        $(OUTPUTPATH)/r72-ss2.obj
 
-OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DHAVE_RC5_72_ASM_CORES
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
 !endif
 
 # --------------------------------- DES ----------------------------

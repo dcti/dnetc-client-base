@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.149 2002/10/11 23:52:05 andreasb Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.150 2003/09/12 22:29:25 mweiser Exp $"
 
 #include "projdata.h" /* PROJECT_COUNT */
 #include "problem.h"  /* WorkRecord, CONTEST_COUNT */
@@ -40,6 +40,8 @@ typedef struct
   char inifilename[MINCLIENTOPTSTRLEN*2];
   u32  last_buffupd_time; /* monotonic. goes with max_buffupd_[retry_]interval */
   int  last_buffupd_failed_time;
+  int  net_update_status;
+  int  remote_update_status;
   int project_state[PROJECT_COUNT]; /* do NOT save states received from proxy to disk! */
 
   /* -- general -- */

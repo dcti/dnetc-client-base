@@ -1,12 +1,12 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.36 2002/10/17 02:29:08 andreasb Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.37 2003/09/12 22:29:25 mweiser Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -669,8 +669,10 @@ long BufferFetchFile( Client *client, int break_pending,
                       const char *loaderflags_map )
 {
   unsigned long totaltrans_wu = 0, totaltrans_pkts = 0;
-  unsigned int contest; int failed = 0;
+  unsigned int contest;
+  int failed = 0, errors = 0;
 
+  TRACE_BUFFUPD((+1, "BufferFetchFile()\n"));
   for (contest = 0; !failed && contest < CONTEST_COUNT; contest++)
   {
     const char *contname;
@@ -680,6 +682,8 @@ long BufferFetchFile( Client *client, int break_pending,
     long inbuffer_count = 0, inbuffer_count_last = -1;
     long inbuffer_count_warnings = 0;
 
+    if (ProjectGetFlags(contest) == PROJECT_UNSUPPORTED)
+      continue;
     if (!break_pending && CheckExitRequestTriggerNoIO())
       break;
     if (loaderflags_map[contest] != 0)
@@ -703,17 +707,24 @@ long BufferFetchFile( Client *client, int break_pending,
       {
         WorkRecord wrdata;
         unsigned long remaining;
+        int res;
 
         // Retrieve a packet from the remote buffer.
         #ifdef PROFILE_DISK_HITS
         LogScreen("Diskhit: BufferGetFileRecordNoOpt() <- BufferFetchFile()\n");
         #endif
-        if ( BufferGetFileRecord( remote_file, &wrdata, 
-                                  &remaining, BUFFER_FLAGS_REMOTEBUF ) != 0 )
+        res = BufferGetFileRecord( remote_file, &wrdata, 
+                                   &remaining, BUFFER_FLAGS_REMOTEBUF );
+        if ( res < 0 ) /* remote buffer i/o error */
         {
-          //lefttotrans_su = 0; /* move to next contest on file error */
+          ++errors;
           break; /* move to next contest - error msg has been printed */
+          /* NO ERROR HAS BEEN PRINTED !!! remote buffer errore are silenced */
           /* if file doesn't exist, no error will be printed. move on as well. */
+        }
+        else if ( res > 0 ) /* remote buffer empty or does not exist */
+        {
+          break; /* move to next contest */
         }
         else if (((unsigned int)wrdata.contest) != contest)
         {
@@ -823,7 +834,9 @@ long BufferFetchFile( Client *client, int break_pending,
     }
   } /* for (contest = 0; contest < CONTEST_COUNT; contest++) */
 
-  if (failed)
+  TRACE_BUFFUPD((-1, "BufferFetchFile() => failed=%d, errors=%d, totaltrans_pkts=%lu\n",
+                failed, errors, totaltrans_pkts));
+  if (failed || errors)
     return -((long)(totaltrans_pkts+1));
   return totaltrans_pkts;
 }
@@ -846,6 +859,8 @@ long BufferFlushFile( Client *client, int break_pending,
     WorkRecord wrdata;
     long totrans_pkts, totrans_pkts_last, totrans_pkts_warnings;
 
+    if (ProjectGetFlags(contest) == PROJECT_UNSUPPORTED)
+      continue;
     if (!break_pending && CheckExitRequestTriggerNoIO())
       break;
     if (loadermap_flags[contest] != 0) /* contest is closed or disabled */
@@ -1059,6 +1074,7 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
   {
     if ((updatemodeflags & BUFFERUPDATE_MODE_NET)!=0)
     {
+      int transerror;
       check_flags = 0;
       if (doflush)
         check_flags |= BUFFERUPDATE_FLUSH;
@@ -1076,8 +1092,13 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
         didnews = 1;
       if ((check_flags & BUFFERUPDATE_STATE_MSGPOSTED)!=0)
         net_state_shown = 1;
-      if ((check_flags & BUFFERUPDATE_STATE_TRANSERR)!=0)
+      if ((transerror = (check_flags & BUFFERUPDATE_STATE_TRANSERR))!=0)
         updatefailflags |= BUFFERUPDATE_MODE_NET;
+      if (client->net_update_status == 0 && transerror != 0)
+        Log("Network update is currently not available.\n");
+      if (client->net_update_status != 0 && transerror == 0)
+        Log("Network update is available again.\n");
+      client->net_update_status = transerror;
     }
 
     if ((updatemodeflags & BUFFERUPDATE_MODE_FILE)!=0)
@@ -1111,6 +1132,11 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
       }
       if (transerror != 0)
         updatefailflags |= BUFFERUPDATE_MODE_FILE;
+      if (client->remote_update_status == 0 && transerror != 0)
+        Log("Remote buffers are currently not available.\n");
+      if (client->remote_update_status != 0 && transerror == 0)
+        Log("Remote buffers are available again.\n");
+      client->remote_update_status = transerror;
     }
   }
 
@@ -1142,6 +1168,8 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
   if (updatefailflags == updatemodeflags && !didfetch && !didflush)
   {                             /* all methods failed completely */
     TRACE_BUFFUPD((-1, "BufferUpdate = -1: failed\n"));
+    if (interactive)
+      LogScreen("Buffer %s failed.\n", dontfetch?"flush":dontflush?"fetch":"update");
     return -1;
   }
   if (interactive && (break_pending || !CheckExitRequestTrigger()))

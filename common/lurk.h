@@ -1,12 +1,12 @@
 // Hey, Emacs, this a -*-C++-*- file !
 //
-// Copyright distributed.net 1997-2002 - All Rights Reserved
+// Copyright distributed.net 1997-2003 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 
 #ifndef __LURK_H__
-#define __LURK_H__ "@(#)$Id: lurk.h,v 1.25 2002/09/02 00:35:42 andreasb Exp $"
+#define __LURK_H__ "@(#)$Id: lurk.h,v 1.26 2003/09/12 22:29:25 mweiser Exp $"
 
 /* lurk: fetch/flush if modem goes online but also go online if fetch/flush needed */
 #define CONNECT_LURK         0x01 
