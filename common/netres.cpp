@@ -6,7 +6,7 @@
  *
 */
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.25.2.9 2000/04/22 16:20:57 cyp Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.25.2.10 2000/04/22 16:27:47 cyp Exp $"; }
 
 //#define TEST  //standalone test
 //#define RESDEBUG //to show what network::resolve() is resolving
@@ -50,8 +50,8 @@ static const struct        // this structure defines which proxies are
   int midzone;
 } proxyzoi[] = {
                 { "us",    -10, -1 ,  -5 },
-                { "euro",   -2, +6 ,  +2 }, //euro crosses 0 degrees longitude
-                { "asia",   +5, +10,  +9 },
+                { "euro",   -2, +4 ,  +2 }, //euro crosses 0 degrees longitude
+                { "asia",   +3, +10,  +9 },
                 { "aussie", +9, -9 , +12 }, //jp and aussie cross the dateline
                 { "jp",    +10, -10, -11 }
                };
