@@ -59,7 +59,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.5 2000/10/25 18:58:09 cyp Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.6 2000/10/31 23:19:52 cyp Exp $"; }
 
 //#define TRACE /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -356,6 +356,8 @@ static int __global_init_deinit_check(int doWhat, int final_call)
       rc = -1;
   }
   TRACE_STACKIDC((-1,"__global_init_deinit_check() => %d\n", rc));
+  if (rc != 0)
+    rc = ps_ENETDOWN;
   return rc;
 }
 
@@ -402,7 +404,7 @@ static int __dialupsupport_action(int doWhat)
       // a link is up. Otherwise it returns zero.
       else if (!dialup.IsConnected()) /* not online/no longer online? */
       {
-        rc = -1; /* conn dropped and assume not (re)startable */
+        rc = ps_ENETDOWN; /* conn dropped and assume not (re)startable */
         if (doWhat > 0 || redial_if_needed) /* request to initialize? */
         {
           if ((confbits & CONNECT_DOD)!=0) /* configured for dial-on-demand?*/
@@ -452,7 +454,7 @@ static int net_init_check_deinit( int doWhat, int only_test_api_avail )
     if (init_level == 0) /* ACK! */
     {
       printf("Beep! Beep! Unbalanced Network Init/Deinit!\n");
-      rc = -1;
+      rc = ps_ENETDOWN;
     }
     else if ((--init_level)==0)  //don't deinitialize more than once
     {
@@ -470,7 +472,7 @@ static int net_init_check_deinit( int doWhat, int only_test_api_avail )
 
   if (rc == 0 && doWhat > 0)  //request to initialize
   {
-    rc = -1;
+    rc = ps_ENOSYS;
     if (__global_init_deinit_check(0,0) == 0) /* if global init was ok */
     {
       int plat_init_done = 0;
@@ -478,20 +480,20 @@ static int net_init_check_deinit( int doWhat, int only_test_api_avail )
       if ((++init_level)==1) //don't initialize more than once
       {
         #if (!defined(_TIUSER_) && !defined(SOCK_STREAM))
-          rc = -1;  /* no networking capabilities */
+          rc = ps_ENOSYS;  /* no networking capabilities */
         #elif (CLIENT_OS == OS_AMIGAOS)
           int openalllibs = 1;
           #if defined(LURK)
           openalllibs = !dialup.IsWatching(); /*some libs unneeded if lurking*/
           #endif
           if (!amigaNetworkingInit(openalllibs))
-            rc = -1;
+            rc = ps_ENOSYS;
         #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
         if (winGetVersion() < 400) /* win16 and win32s only */
         {                          /* win9x and winnt do it as a one-shot */
           WSADATA wsaData;
           if ( WSAStartup( 0x0101, &wsaData ) != 0 )
-            rc = -1;
+            rc = ps_ENOSYS;
         }
         #endif
         if (rc == 0)
@@ -517,17 +519,17 @@ static int net_init_check_deinit( int doWhat, int only_test_api_avail )
   if ( rc == 0 && doWhat == 0 )     //request to check online mode
   {
     if (init_level == 0) /* ACK! haven't been initialized yet */
-      rc = -1;
+      rc = ps_ENOSYS;
     else  
     {  
       #if (!defined(_TIUSER_) && !defined(SOCK_STREAM))
-        rc = -1;  //no networking capabilities
+        rc = ps_ENOSYS;  //no networking capabilities
       #elif(CLIENT_OS == OS_AMIGAOS)
       if (!amigaIsNetworkingActive())  // tcpip still available, if not lurking?
-        rc = -1;
+        rc = ps_ENETDOWN;
       #elif (CLIENT_OS == OS_NETWARE)  
       if (!FindNLMHandle("TCPIP.NLM")) /* tcpip is still loaded? */
-        rc = -1;
+        rc = ps_ENOSYS;
       #endif    
     }	  
     if (rc == 0 && !only_test_api_avail)
@@ -1326,7 +1328,7 @@ static int net_poll1( SOCKET fd, int events, int *revents, int mstimeout )
   {
     rc = ps_EBADF;
   }
-  else if (net_init_check_deinit(0,0) == 0) /* check */
+  else if ((rc = net_init_check_deinit(0,0)) == 0) /* check */
   {
 #if defined(_TIUSER_) || defined(HAVE_POLL_SYSCALL)
     int retry_count = 0;
@@ -1811,15 +1813,14 @@ int net_open(SOCKET *sockP, u32 local_addr, int local_port)
   }
   if ((++open_endpoint_count) == 1)
   {
-    if (net_init_check_deinit(+1,0) != 0)
+    if ((rc = net_init_check_deinit(+1,0)) != 0)
     {
       open_endpoint_count--;
-      rc = ps_ENETDOWN;
     }
   } 
-  else if (net_init_check_deinit(0,0) != 0)
+  else if ((rc = net_init_check_deinit(0,0)) != 0)
   {
-    rc = ps_ENETDOWN;
+    ; /* rc = ps_ENETDOWN|ps_ENOSYS; above */
   }
 
   if (rc == 0)
@@ -1932,6 +1933,7 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
                               int iotimeout /* millisecs */ )
 {
   int rc = ps_ENETDOWN;
+  this_address = this_address; this_port = this_port; /* shaddup compiler */
 
   TRACE_CONNECT((+1, "net_connect(s, %s:%d, %d)\n", 
                      net_ntoa((that_address)?(*that_address):(0)), 
@@ -1949,7 +1951,7 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
   {
     rc = ps_EINVAL;
   }
-  else if (net_init_check_deinit(0,0) == 0)  /* check */
+  else if ((rc = net_init_check_deinit(0,0)) == 0)  /* check */
   {
     int break_pending = CheckExitRequestTriggerNoIO();
     int loopcount = 0, maxloops = 0, mssleep = 0;
@@ -2448,7 +2450,7 @@ int net_read( SOCKET sock, char *data, unsigned int *bufsz,
   {
     rc = ps_EINVAL;
   }
-  else if (net_init_check_deinit(0,0) == 0) /* check */
+  else if ((rc = net_init_check_deinit(0,0)) == 0) /* check */
   {
     int break_pending = CheckExitRequestTriggerNoIO();
     int tryloops = 0, maxloops = 0, mssleep = 0;
@@ -2658,7 +2660,7 @@ int net_write( SOCKET sock, const char *__data, unsigned int *bufsz,
     rc = ps_EBADF;
   else if (!data || !bufsz || !that_address || that_port<=0 || that_port>0xffff)
     rc = ps_EINVAL;
-  else if (net_init_check_deinit(0,0) == 0) /* check */
+  else if ((rc = net_init_check_deinit(0,0)) == 0) /* check */
   {
     rc = 0;
     if (totaltodo)
