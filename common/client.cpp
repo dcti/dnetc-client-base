@@ -1,10 +1,10 @@
 /*
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2001 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.95 2000/11/22 19:04:53 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.96 2001/01/01 20:38:24 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -424,6 +424,22 @@ int main( int argc, char *argv[] )
   {
     char *p = strrchr( argv[0], '/' );
     needchange = (strcmp( ((p)?(p+1):(argv[0])), defname )!=0);
+
+    #if (CLIENT_OS == OS_LINUX)
+    /* discard dir component from argv[0] when started from init.d */
+    if (!needchange && *argv[0] == '/' && strlen(argv[0]) > (strlen(defname)+10))
+    {
+      int i;
+      for (i = 1; i < (argc-1); i++)
+      {
+        if (strcmp(argv[i],"-ini")==0 || strcmp(argv[i],"--ini")==0)
+        {
+          needchange = 1;
+          break;
+        }
+      } 
+    }   
+    #endif  
   }
   #if (CLIENT_OS == OS_HPUX)                         //SPT_TYPE == SPT_PSTAT
   if (needchange)
