@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.34 2002/10/06 19:26:50 andreasb Exp $
+## $Id: makefile.wat,v 1.35 2002/10/20 21:15:44 andreasb Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -111,8 +111,9 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 #%rc564mmxamd_DEFALL   = /DMMX_RC5_AMD
 #%rc564mmxamd_SYMALIAS = #
 #---
-%rc572std_LINKOBJS = output\rc5ansi1.obj output\rc5ansi2.obj output\rc5ansi4.obj
-%rc572std_DEFALL   = /DHAVE_RC5_72_CORES
+%rc572std_LINKOBJS = output\rc5ansi1.obj output\rc5ansi2.obj output\rc5ansi4.obj &
+                   output\rc5-ses.obj output\rc5-ses-2.obj
+%rc572std_DEFALL   = /DHAVE_RC5_72_CORES /DHAVE_RC5_72_ASM_CORES
 %rc572std_SYMALIAS = #
 #---
 %desmmx_LINKOBJS = output\des-slice-meggs.obj output\deseval-mmx.obj
@@ -738,6 +739,14 @@ output\rc5ansi2.obj : rc5-72\ansi\rc5ansi2.cpp $(%dependall) .AUTODEPEND
 
 output\rc5ansi4.obj : rc5-72\ansi\rc5ansi4.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\rc5-ses.obj : rc5-72\x86\rc5-ses.asm $(%dependall)
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@
+  @set isused=1
+
+output\rc5-ses-2.obj : rc5-72\x86\rc5-ses-2.asm $(%dependall)
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@
   @set isused=1
 
 # ----------------------------------------------------------------
