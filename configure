@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.141  1998/12/14 23:24:39  remi
+# Minor fixes in the x86 linux entries.
+#
 # Revision 1.140  1998/12/14 12:55:36  cyp
 # Added kwan4/slice to serve as the third integer DES core on x86 platforms
 # to take up the slack for >2 threads. Slice is slower than Bryd, but better
@@ -43,7 +46,7 @@
 # Integration of the 386/486 self-modifying core.
 # To use this core on your platform :
 # * add -DSMC to TARGET_CFLAGS
-# * change TARGET_LDFLAGS to let the program write to his own text
+# * change TARGET_LDFLAGS to let the program write to its own text
 #   segment.
 # * add rc5/rc5-486-smc-rg.cpp to TARGET_ADDSRCS
 #
@@ -999,11 +1002,11 @@ case "$1" in
 
   ### Remi's targets
 
-    *x86-linux-libc5-nomt-gcc)         # [remi] nomt, libc5, static, gcc
-	TARGET_AS="i486-linuxlibc1-gcc -c"
-	TARGET_CC="i486-linuxlibc1-gcc"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC272_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DSMC"
-	TARGET_LDFLAGS="-Xlinker -omagic -static"
+    *x86-linux-libc5-nomt-egcs)         # [remi] nomt, libc5, static, egcs
+	TARGET_AS="i486-pc-linux-gnulibc1-gcc -c"
+	TARGET_CC="i486-pc-linux-gnulibc1-gcc"
+	TARGET_CCFLAGS="-pipe $OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DSMC"
+	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
@@ -1014,7 +1017,7 @@ case "$1" in
 	TARGET_AS="i486-pc-linux-gnuaout-gcc -c"
 	TARGET_CC="i486-pc-linux-gnuaout-gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DSMC"
-	TARGET_LDFLAGS="-Xlinker -omagic -static"
+	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_NASMFLAGS="-i rc5/nasm/ -f aout"
 	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
@@ -1022,27 +1025,27 @@ case "$1" in
 	TARGET_LIBS=""
 	;;
 
-    *x86-linux-libc5-mt-gcc)           # [remi] mt, libc5, static, gcc
-	TARGET_AS="i486-linuxlibc1-gcc -c"
-	TARGET_CC="i486-linuxlibc1-gcc"
-	TARGET_CCFLAGS="$OPTS_GCC272_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DMULTITHREAD -DSMC"
-	TARGET_LDFLAGS="-Xlinker -omagic -static"
+    *x86-linux-libc5-mt-egcs)           # [remi] mt, libc5, static, egcs
+	TARGET_AS="i486-pc-linux-gnulibc1-gcc -c"
+	TARGET_CC="i486-pc-linux-gnulibc1-gcc"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DMULTITHREAD -DSMC"
+	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
         TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
 	TARGET_LIBS="-lpthread"
 	;;
 
-    *x86-linux-glibc2-mt-egcs)         # [remi] mt, glibc2, dynamic, egcs
+    *x86-linux-glibc2-mt-egcs)         # [remi] mt, glibc2, static, egcs
 	TARGET_AS="g++ -c"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ -DMULTITHREAD -DSMC"
-	TARGET_LDFLAGS="-Xlinker -omagic -static"
+	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-	TARGET_LIBS="-lgcc -lc -lm -lpthread"
-	;; # avoid dynamic linking with libstdc++.so
+	TARGET_LIBS="-lpthread"
+	;;
 
 
 
