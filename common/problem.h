@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.31  1998/12/08 05:59:40  dicamillo
+// Define new method, GetKeysDone, needed for MacOS GUI.
+//
 // Revision 1.30  1998/12/01 19:49:14  cyp
 // Cleaned up MULT1THREAD #define: The define is used only in cputypes.h (and
 // then undefined). New #define based on MULT1THREAD, CLIENT_CPU and CLIENT_OS
@@ -280,6 +283,11 @@ public:
 
   u32 CalcPercent();
     // Return the % completed in the current block, to nearest 1%.
+
+#if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
+  u32 GetKeysDone();
+    // Returns keys completed for Mac GUI display.
+#endif
 
 };
 
