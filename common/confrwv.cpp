@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.27  1999/01/09 00:52:12  silby
+// descontestclosed and scheduledupdate time back
+// to network byte order.
+//
 // Revision 1.26  1999/01/08 20:27:44  silby
 // Fixed scheduledupdatetime and descontestclosed not being
 // read from the ini.
@@ -120,7 +124,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.26 1999/01/08 20:27:44 silby Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.27 1999/01/09 00:52:12 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -646,9 +650,9 @@ void RefreshRandomPrefix( Client *client, int no_trigger )
         }
       ini.setrecord(OPTION_SECTION, "contestdoneflags", IniString(flagbits));
       ini.setrecord(OPTION_SECTION, "descontestclosed",
-                    IniString((s32)client->descontestclosed));
+                    IniString((s32)htonl(client->descontestclosed)));
       ini.setrecord(OPTION_SECTION, "scheduledupdatetime",
-                    IniString((s32)client->scheduledupdatetime));
+                    IniString((s32)htonl(client->scheduledupdatetime)));
       client->randomchanged = 0;
       inichanged = 1;
       }
@@ -658,11 +662,11 @@ void RefreshRandomPrefix( Client *client, int no_trigger )
       if (randomprefix) client->randomprefix = randomprefix;
       descontestclosed=ini.getkey(OPTION_SECTION,
                                              "descontestclosed","0")[0];
-      if (descontestclosed) client->descontestclosed=descontestclosed;
+      if (descontestclosed) client->descontestclosed=ntohl(descontestclosed);
       scheduledupdatetime=ini.getkey(OPTION_SECTION,
                                      "scheduledupdatetime","0")[0];
       if (scheduledupdatetime)
-        client->scheduledupdatetime=scheduledupdatetime;
+        client->scheduledupdatetime=ntohl(scheduledupdatetime);
 
       u32 oldflags=0, newflags=0;
 
