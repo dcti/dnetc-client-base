@@ -49,7 +49,7 @@ extern "C" s32 CDECL rc5_72_unit_func_KKS_2 ( RC5_72UnitWork *, u32 *, void * );
   #define ASM_ADD(res, op1, op2) \
     __asm__ volatile ("add %1, %2, %0" : "=r" (res) : "r" (op1), "r" (op2));
   #define ASM_SUB(res, wsize, op) \
-    __asm__ volatile ("sub %1, %2, %0" : "=r" (res) : "rc" (wzise), "rc" (op));
+    __asm__ volatile ("sub %1, %2, %0" : "=r" (res) : "rc" (wsize), "rc" (op));
   #define ASM_OR(res, op1, op2) \
     __asm__ volatile ("or %1, %2, %0" : "=r" (res) : "r" (op1), "r" (op2));
   #define ASM_XOR(res, op1, op2) \
@@ -69,8 +69,8 @@ extern "C" s32 CDECL rc5_72_unit_func_KKS_2 ( RC5_72UnitWork *, u32 *, void * );
   #define ASM_SUB(res, wsize, op) (res) = (wsize) - (op);
   #define ASM_OR(res, op1, op2) (res) = (op1) | (op2);
   #define ASM_XOR(res, op1, op2) (res) = (op1) ^ (op2);
-  #define ASM_SL(res, op, dist) (res) = SHL((op), (dist));
-  #define ASM_SR(res, op, dist) (res) = SHR((op), (dist));
+  #define ASM_SL(res, op, dist) (res) = (op) << (dist & 31);
+  #define ASM_SR(res, op, dist) (res) = (op) >> (dist & 31);
   #define ASM_SL3(res, op) (res) = (op) << 3u;
   #define ASM_SR29(res, op) (res) = (op) >> 29u;
 
