@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.30  1999/01/29 18:54:30  jlawson
+// fixed formatting.  changed some int vars to bool.
+//
 // Revision 1.29  1999/01/29 04:15:35  pct
 // Updates for the initial attempt at a multithreaded/multicored Digital
 // Unix Alpha client.  Sorry if these changes cause anyone any grief.
@@ -115,7 +118,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.29 1999/01/29 04:15:35 pct Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.30 1999/01/29 18:54:30 jlawson Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -218,7 +221,7 @@ const char *GetCoreNameFromCoreType( unsigned int coretype )
 
 // ---------------------------------------------------------------------------
 
-int Client::SelectCore(int quietly)
+int Client::SelectCore(bool quietly)
 {
   static s32 last_cputype = -123;
   static s32 detectedtype = -2;
@@ -236,11 +239,11 @@ int Client::SelectCore(int quietly)
   #endif
   
   if (cputype == -1)
-    {
+  {
     if (detectedtype == -2) 
       detectedtype = GetProcessorType(quietly);//returns -1 if unable to detect
     cputype = detectedtype & 0xFF;
-    }
+  }
     
 #if (CLIENT_CPU == CPU_POWERPC)
   #if ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_AMIGAOS))
@@ -252,9 +255,9 @@ int Client::SelectCore(int quietly)
     cputype = 1;
   #elif (CLIENT_OS == OS_MACOS)
   #else
-    {
+  {
     if (cputype == -1)
-      {
+    {
       if (!quietly)
         LogScreen("Manually selecting fastest core...\n"
                 "This is a guess based on a small test of each core.\n"
@@ -264,7 +267,7 @@ int Client::SelectCore(int quietly)
       double fasttime = 0;
       int whichcrunch;      
       for (whichcrunch = 0; whichcrunch < 2; whichcrunch++)
-        {
+      {
         const s32 benchsize = 500000L;
         Problem problem;
         ContestWork contestwork;
@@ -283,10 +286,10 @@ int Client::SelectCore(int quietly)
 
         if (cputype < 0 || elapsed < fasttime)
           {cputype = whichcrunch; fasttime = elapsed;}
-        }
-      detectedtype = cputype;
       }
+      detectedtype = cputype;
     }
+  }
   #endif
   
   if (!quietly)
@@ -312,61 +315,61 @@ int Client::SelectCore(int quietly)
   if (cputype == 6) /* Pentium MMX */
     cputype = 0;    /* but we need backwards compatability */
   else if (cputype == -1)
-    {
+  {
     if (detectedtype == -1)
       detectedtype = GetProcessorType(quietly);
     cputype = (detectedtype & 0xFF);
-    }
+  }
   if ((detectedtype == -1) || (detectedtype == -2))
     /* we need detection for mmx cores */
     detectedtype = GetProcessorType(1); /* but do it quietly */
 
   if (cputype == 1) // Intel 386/486
-    {
+  {
     //rc5_unit_func = rc5_unit_func_486;
     #if defined(SMC) 
-      {
+    {
       #if defined(CLIENT_SUPPORTS_SMP)
       if (numcpu < 2)
       #endif
-        {
+      {
         //rc5_unit_func =  rc5_unit_func_486_smc;
         selmsg_rc5 = "80386 & 80486 self modifying";
-        }
       }
+    }
     #endif
     //des_unit_func = DESUNITFUNC51;  //p1des_unit_func_p5;
     //des_unit_func2 = DESUNITFUNC52; //p2des_unit_func_p5;
-    }
+  }
   else if (cputype == 2) // Ppro/PII
-    {
+  {
     //rc5_unit_func = rc5_unit_func_p6;
     //des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
     //des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
     selppro_des = 1;
-    }
+  }
   else if (cputype == 3) // 6x86(mx)
-    {
+  {
     //rc5_unit_func = rc5_unit_func_6x86;
     //des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
     //des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
     selppro_des = 1;
-    }
+  }
   else if (cputype == 4) // K5
-    {
+  {
     //rc5_unit_func = rc5_unit_func_k5;
     //des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
     //des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
-    }
+  }
   else if (cputype == 5) // K6/K6-2
-    {
+  {
     //rc5_unit_func = rc5_unit_func_k6;
     //des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
     //des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
     selppro_des = 1;
-    }
+  }
   else // Pentium (0/6) + others
-    {
+  {
     //rc5_unit_func = rc5_unit_func_p5;
     //des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
     //des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
@@ -374,19 +377,19 @@ int Client::SelectCore(int quietly)
     
     #if defined(MMX_RC5)
     if (detectedtype == 0x106 && usemmx) /* Pentium MMX only! */
-      {
+    {
       //rc5_unit_func = rc5_unit_func_p5_mmx;
       selmsg_rc5 = "Pentium MMX";
-      }
-    #endif
     }
+    #endif
+  }
 
   #if defined(MMX_BITSLICER)
   if (((detectedtype & 0x100) != 0) && usemmx)   // use the MMX DES core ?
-    { 
+  {
     //des_unit_func = des_unit_func2 = des_unit_func_mmx;
     selmsg_des = "MMX bitslice";
-    }
+  }
   #endif
 
   if (!selmsg_des)
@@ -400,7 +403,7 @@ int Client::SelectCore(int quietly)
       
 #elif (CLIENT_CPU == CPU_ARM)
   if (cputype == -1)
-    {
+  {
     const s32 benchsize = 50000*2; // pipeline count is 2
     double fasttime[2] = { 0, 0 };
     s32 fastcoretest[2] = { -1, -1 };
@@ -412,9 +415,9 @@ int Client::SelectCore(int quietly)
                 "please set it in the client's configuration.\n");
 
     for (int contestid = 0; contestid < 2; contestid++)
-      {
+    {
       for (int whichcrunch = 0; whichcrunch < 3; whichcrunch++)
-        {
+      {
         Problem problem;
         ContestWork contestwork;
         contestwork.key.lo = contestwork.key.hi = htonl( 0 );
@@ -427,59 +430,60 @@ int Client::SelectCore(int quietly)
         problem.LoadState( &contestwork , contestid, benchsize, whichcrunch ); 
 
         if (contestid == 0)
-          {
+        {
           // there are now 3 RC5 cores from which to choose
           // probably be a 4th one soon
           switch(whichcrunch)
-            {
+          {
             case 1: rc5_unit_func = rc5_unit_func_arm_2;
                     break;
             case 2: rc5_unit_func = rc5_unit_func_arm_3;
                     break;
             default:rc5_unit_func = rc5_unit_func_arm_1;
                     break;
-            }
           }
+        }
         else
-          {
+        {
           // select the correct DES core engine
           switch(whichcrunch)
-            {
+          {
             case 1:des_unit_func = des_unit_func_strongarm;
                    break;
             default:des_unit_func = des_unit_func_arm;
                    break;
-            }
           }
+        }
         problem.Run( 0 ); //threadnum
     
         double elapsed = CliGetKeyrateForProblemNoSave( &problem );
         //printf("%s Core %d: %f\n",contestid ? "DES" : "RC5",whichcrunch,elapsed);
     
         if (fastcoretest[contestid] < 0 || elapsed < fasttime[contestid])
-          {
+        {
           fastcoretest[contestid] = whichcrunch; fasttime[contestid] = elapsed;
-          }
         }
       }
+    }
     cputype = (fastcoretest[0] + ((fastcoretest[1]&1)<<2));
     if (cputype == 6)
-	cputype = 1;
+      cputype = 1;
     else if (cputype == 5)
-	cputype = 2;
+      cputype = 2;
     else if (cputype == 2)
-	cputype = 3;
+      cputype = 3;
     else
-	cputype = 0;
+      cputype = 0;
 
     detectedtype = cputype;
-    }
+  }
   if (!quietly)
-    LogScreen("Selecting %s code.\n",GetCoreNameFromCoreType(cputype));
+    LogScreen("Selecting %s code.\n",
+              GetCoreNameFromCoreType(cputype));
     
   // select the correct core engine
   switch(cputype)
-    {
+  {
     case 0: rc5_unit_func = rc5_unit_func_arm_1;
             des_unit_func = des_unit_func_arm;
             break;
@@ -493,14 +497,16 @@ int Client::SelectCore(int quietly)
     case 3: rc5_unit_func = rc5_unit_func_arm_3;
             des_unit_func = des_unit_func_arm;
             break;
-    }
+  }
 #elif ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_DEC_UNIX))
   if (!quietly)
   {
     if (detectedtype != -2)
-      LogScreen("Alpha CPU %s detected.\n",GetCoreNameFromCoreType(cputype));
+      LogScreen("Alpha CPU %s detected.\n",
+                GetCoreNameFromCoreType(cputype));
     else
-      LogScreen("Alpha CPU %s set in configuration.\n",GetCoreNameFromCoreType(cputype));
+      LogScreen("Alpha CPU %s set in configuration.\n",
+                GetCoreNameFromCoreType(cputype));
   }
 #else
   cputype = 0;
@@ -511,3 +517,4 @@ int Client::SelectCore(int quietly)
 }
 
 // ---------------------------------------------------------------------------
+

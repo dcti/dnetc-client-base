@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.54  1999/01/29 18:57:10  jlawson
+// fixed formatting.  changed some int vars to bool.
+//
 // Revision 1.53  1999/01/29 04:12:37  cyp
 // NetOpen() no longer needs the autofind setting to be passed from the client.
 //
@@ -40,115 +43,6 @@
 // Revision 1.44  1998/12/24 05:19:55  dicamillo
 // Add socket_ioctl to Mac OS definitions.
 //
-// Revision 1.43  1998/12/22 15:58:24  jcmichot
-// *** empty log message ***
-//
-// Revision 1.42  1998/12/21 17:54:23  cyp
-// (a) Network connect is now non-blocking. (b) timeout param moved from
-// network::Get() to object scope.
-//
-// Revision 1.41  1998/12/08 05:57:03  dicamillo
-// Add defines for MacOS.
-//
-// Revision 1.40  1998/10/26 03:21:53  cyp
-// More tags fun.
-//
-// Revision 1.39  1998/10/19 12:42:06  cyp
-// win16 changes
-//
-// Revision 1.38  1998/09/25 11:31:15  chrisb
-// Added stuff to support 3 cores in the ARM clients.
-//
-// Revision 1.37  1998/09/25 04:32:12  pct
-// DEC Ultrix port changes
-//
-// Revision 1.36  1998/09/03 16:01:35  cyp
-// Added TLI support. Any other SYSV (-type) takers?
-//
-// Revision 1.34  1998/08/28 22:05:49  cyp
-// Added prototypes for new/extended "low level" methods.
-//
-// Revision 1.33  1998/08/25 00:06:57  cyp
-// Merged (a) the Network destructor and DeinitializeNetwork() into NetClose()
-// (b) the Network constructor and InitializeNetwork() into NetOpen().
-// These two new functions (in netinit.cpp) are essentially what the static
-// FetchFlushNetwork[Open|Close]() functions in buffupd.cpp used to be.
-//
-// Revision 1.32  1998/08/10 21:53:59  cyruspatel
-// Changes: (a) now have a method to determine if net availability state has 
-// changed (or existed to begin with) and (b) also protect against any 
-// re-definition of client.offlinemode (c) The NO!NETWORK define is
-// now obsolete. Whether a platform has networking capabilities or not is now
-// a purely network.cpp thing. ** Documentation ** is in netinit.cpp
-//
-// Revision 1.31  1998/08/02 16:18:22  cyruspatel
-// Completed support for logging.
-//
-// Revision 1.30  1998/07/29 21:34:33  blast
-// AmigaOS specific change due to change from platforms/ to platforms/amiga
-// for AmigaOS specific files ...
-//
-// Revision 1.29  1998/07/26 12:46:16  cyruspatel
-// new inifile option: 'autofindkeyserver', ie if keyproxy= points to a
-// xx.v27.distributed.net then that will be interpreted by Network::Resolve()
-// to mean 'find a keyserver that covers the timezone I am in'. Network
-// constructor extended to take this as an argument.
-//
-// Revision 1.28  1998/07/16 21:23:04  nordquist
-// More DYNIX port changes.
-//
-// Revision 1.27  1998/07/08 09:24:58  jlawson
-// eliminated integer size warnings on win16
-//
-// Revision 1.26  1998/07/08 05:19:34  jlawson
-// updates to get Borland C++ to compile under Win32.
-//
-// Revision 1.25  1998/07/07 21:55:48  cyruspatel
-// client.h has been split into client.h and baseincs.h 
-//
-// Revision 1.24  1998/06/29 08:01:13  ziggyb
-// DOD defines
-//
-// Revision 1.23  1998/06/29 06:58:10  jlawson
-// added new platform OS_WIN32S to make code handling easier.
-//
-// Revision 1.22  1998/06/26 09:19:40  jlawson
-// removed inclusion of dos.h for win32
-//
-// Revision 1.21  1998/06/26 07:13:56  daa
-// move strcmpi and strncmpi defs to cmpidefs.h
-//
-// Revision 1.20  1998/06/26 06:48:51  daa
-// add macro defination for strncmpi
-//
-// Revision 1.19  1998/06/22 01:05:01  cyruspatel
-// DOS changes. Fixes various compile-time errors: removed extraneous ')' in
-// sleepdef.h, resolved htonl()/ntohl() conflict with same def in client.h
-// (is now inline asm), added NO!NETWORK wrapper around Network::Resolve()
-//
-// Revision 1.18  1998/06/15 09:12:54  jlawson
-// moved more sleep defines into sleepdef.h
-//
-// Revision 1.17  1998/06/15 08:28:39  jlawson
-// moved win32 sleep macros out of network.h
-//
-// Revision 1.16  1998/06/14 13:07:23  ziggyb
-// Took out all OS/2 DOD stuff, being moved to platforms\os2cli\dod.h
-//
-// Revision 1.15  1998/06/14 11:24:14  ziggyb
-// Added os2defs.h and adjusted for the sleep defines. Now compile without
-// errors. Woohoo!
-//
-// Revision 1.14  1998/06/14 10:14:36  ziggyb
-// There are ^M's everywhere, got rid of them and some OS/2 header changes
-//
-// Revision 1.13  1998/06/14 08:13:02  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-// Revision 1.12 1998/06/13 23:33:20  cyruspatel 
-// Fixed NetWare stuff and added #include "sleepdef.h" (which should now 
-// warn if macros are not the same)
-//
 
 //#define SELECT_FIRST      // define to perform select() before reading
 //#define __VMS_UCX__       // define for UCX instead of Multinet on VMS
@@ -179,7 +73,7 @@ extern "C" {
 }
 #endif
 
-#if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
   #define WIN32_LEAN_AND_MEAN
   #ifndef STRICT
     #define STRICT
@@ -365,43 +259,24 @@ extern "C" {
 #define INVALID_SOCKET  ((SOCKET)(-1))
 #endif
 
-//-------------------------------------------------------------------------
-
-class Network; //for forward resolution
-
-// two functions that combine the functionality of NetworkInitialize()+
-// Network::Network() and NetworkDeinitialize()+Network::~Network() 
-// must be called instead of the Network constructor or destructor.
-// **** if you change defaults, change comments in netinit.cpp and below ***
-extern Network *NetOpen( const char *servname, int servport, 
-           int _nofallback = 1, int _iotimeout = -1, int _enctype = 0, 
-           const char *_fwallhost = NULL, int _fwallport = 0, 
-           const char *_fwalluid = NULL );
-extern int NetClose( Network *net );
-
-///////////////////////////////////////////////////////////////////////////
-
-//----------------------------------------------------------------
-// Only the "LowLevel..()" methods (and Resolve()) use BSD socket functions.
-// Protected functions do not (should not) display error messages.
-//----------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
 
 class Network
 {
 protected:
   char server_name[64];   // used only by ::Open
-  int  server_port;       // used only by ::Open
-  int  nofallback;        // used only by ::Open
+  s16  server_port;       // used only by ::Open
+  bool nofallback;        // used only by ::Open
 
   int  startmode;
-  int  autofindkeyserver; // implies 'only if hostname is a dnet keyserver'
+  bool autofindkeyserver; // implies 'only if hostname is a dnet keyserver'
   int  verbose_level;     // 0 == no messages, 1 == user, 2 = diagnostic/debug
   int  iotimeout;         // use blocking calls if iotimeout is <0
 
   int  mode;              // startmode as modified at runtime
   SOCKET sock;            // socket file handle
-  int  isnonblocking;     // whether the socket could be set non-blocking
-  int  reconnected;       // set to 1 once a connect succeeds 
+  bool isnonblocking;     // whether the socket could be set non-blocking
+  bool reconnected;       // set to 1 once a connect succeeds 
 
   char fwall_hostname[64]; //intermediate
   int  fwall_hostport;
@@ -420,7 +295,7 @@ protected:
 
   // communications and decoding buffers
   AutoBuffer netbuffer, uubuffer;
-  int gotuubegin, gothttpend, puthttpdone, gethttpdone;
+  bool gotuubegin, gothttpend, puthttpdone, gethttpdone;
   u32 httplength;
 
   int LowLevelCreateSocket(void);
@@ -470,16 +345,17 @@ protected:
     // guess. 
  
   Network( const char *servname, int servport, 
-           int _nofallback = 1, int _iotimeout = -1, int _enctype = 0, 
+           bool _nofallback = true, int _iotimeout = -1, int _enctype = 0, 
            const char *_fwallhost = NULL, int _fwallport = 0, 
            const char *_fwalluid = NULL );
     // protected!: used by friend NetOpen() below.
 
 public:
+
   friend Network *NetOpen( const char *servname, int servport, 
-           int _nofallback/*= 1*/, int _iotimeout/*= -1*/, int _enctype/*=0*/, 
-           const char *_fwallhost /*= NULL*/, int _fwallport /*= 0*/, 
-           const char *_fwalluid /*= NULL*/ );
+           bool _nofallback = true, int _iotimeout = -1, int _enctype = 0, 
+           const char *_fwallhost = NULL, int _fwallport = 0, 
+           const char *_fwalluid = NULL );
 
   friend int NetClose( Network *net );
 
@@ -491,14 +367,16 @@ public:
     // send data over the open connection, handle uue/http translation,
     // Returns length of sent buffer
 
-  int GetHostName( char *buffer, unsigned int len ); //used by mail.
+  int GetHostName( char *buffer, unsigned int len );
+    // used by mail.
     // like gethostname(). returns !0 on error
 
   int SetPeerAddress( u32 addr ) 
     { if (svc_hostaddr == 0) svc_hostaddr = addr; return 0; }
-  //used by buffupd when proxies return an address in the scram packet
+    // used by buffupd when proxies return an address in the scram packet
 };
 
 ///////////////////////////////////////////////////////////////////////////
 
 #endif //NETWORK_H
+

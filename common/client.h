@@ -4,14 +4,16 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-/*
-   This file contains the basic types used in a lot of places: Client class;
-   Operation, contest_id_t enums; Packet, FileHeader and FileEntry structs; 
-   none of them depend on anything other than cputypes.h, and network.h
-*/
-// ------------------------------------------------------------------
+// ----------------------------------------------------------------------
+// This file contains the basic types used in a lot of places: Client class;
+// Operation, contest_id_t enums; Packet, FileHeader and FileEntry structs; 
+// none of them depend on anything other than cputypes.h, and network.h
+// ----------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.114  1999/01/29 19:03:14  jlawson
+// fixed formatting.  changed some int vars to bool.
+//
 // Revision 1.113  1999/01/17 13:50:11  cyp
 // buffer thresholds must be volatile.
 //
@@ -482,14 +484,14 @@ public:
 
 
   int Main( int argc, const char *argv[] );
-  //encapsulated main().  client.Main() may restart itself
+    // encapsulated main().  client.Main() may restart itself
 
   int ParseCommandline( int runlevel, int argc, const char *argv[], 
-                        int *retcodeP, int logging_is_initialized );
+                        int *retcodeP, bool logging_is_initialized );
                         
-  //runlevel == 0 = ReadConfig() (-quiet, -ini, -guistart etc done here too)
-  //         >= 1 = post-readconfig (override ini options)
-  //         == 2 = run "modes"
+  // runlevel == 0: ReadConfig() (-quiet, -ini, -guistart etc done here too)
+  //          >= 1: post-readconfig (override ini options)
+  //          == 2: run "modes"
 
   int CheckpointAction(int action, unsigned int load_problem_count );
     // CHECKPOINT_OPEN (copy from checkpoint to in-buffer), *_REFRESH, *_CLOSE
@@ -503,19 +505,6 @@ public:
     // runs the interactive configuration setup
 #endif
 
-// Now a seperate module
-//  int ReadConfig( void );
-//    // returns -1 if no ini exits, 0 otherwise
-//
-// Now a seperate module
-//  void ValidateConfig( void );
-//    // verifies configuration and forces valid values
-//
-// Now a seperate module
-//  int  WriteConfig( int writeeverything = 0 );
-//    // if 'writeeverything' is !=0, *all* options are overwritten
-//    // returns -1 on error, 0 otherwise
-
   int Run( void );
     // run the loop, do the work
     // returns:
@@ -527,12 +516,13 @@ public:
     //     3 = exit by time limit expiration
     //     4 = exit by block count expiration
 
-  int BufferUpdate( int updatereq_flags, int verbose );
-  // pass flags ORd with BUFFERUPDATE_FETCH/*_FLUSH. 
-  // if verbose!=0 prints "Input buffer full. No fetch required" etc.
-  // returns updated flags or < 0 if offlinemode!=0 or NetOpen() failed.
+  int BufferUpdate( int updatereq_flags, bool interactive );
+    // pass flags ORd with BUFFERUPDATE_FETCH/*_FLUSH. 
+    // if interactive, prints "Input buffer full. No fetch required" etc.
+    // returns updated flags or < 0 if offlinemode!=0 or NetOpen() failed.
 
-  int SelectCore(int quietly); //always returns zero.
+  int SelectCore(bool quietly);
+    // always returns zero.
     // to configure for cpu. called before Run() from main(), or for 
     // "modes" (Benchmark()/Test()) from ParseCommandLine().
 
@@ -544,3 +534,4 @@ public:
 // --------------------------------------------------------------------------
 
 #endif // __CLIBASICS_H__
+
