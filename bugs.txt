@@ -65,7 +65,16 @@ Partially Fixed (Silby + Kevin Bracey)
   The "retrieved block 1 of 1" message is now overwritten by the
   "Retrieved 1 block" message (same applies to send.)
   Duplicate proxy messages have not yet been fixed.
-  
+Fixed (Silby)  6/14/1998
+  I fixed the duplicate display of proxy messages.  The output now looks
+  like this:
+  [Jun 14 06:06:18 GMT] The proxy says: "Cuidado, hay llamas!
+                        (rc5proxy.llamas.net)"
+  [Jun 14 06:06:18 GMT] Retrieved 1 RC5 block from server
+  [Jun 14 06:06:19 GMT] Sent 1 RC5 block to server
+  [Jun 14 06:06:19 GMT] Loaded RC5 1*2^30 block 6AC49B00:80000000
+
+
 06-08-98 - Kevin Bracey
   New Bug: Run the client offline, with contestdone2 set to 1, and
            nothing in the input buffer. Instead of generating a random
