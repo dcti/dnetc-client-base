@@ -1,13 +1,20 @@
 PROGNAME = rc5des
 
-DEBUG = symbol
+DEBUG = debug=symbol
+OPTIMIZE = optimize optsched
 
-CFLAGS = debug=$(DEBUG) nostkchk strmerge parms=reg optimize define=PIPELINE_COUNT=1 define=_CPU_32BIT_ includedir=netinclude: utillib NOLINK
+
+CFLAGS = $(DEBUG) $(OPTIMIZE) nostkchk strmerge parms=reg define=PIPELINE_COUNT=1 define=_CPU_32BIT_ define=BIT_32 define=KWAN define=MEGGS includedir=netinclude: utillib NOLINK
 DISASM =
 
 LFLAGS = #farcode fardata
 
-OBJS = cliconfig.o client.o problem.o autobuff.o iniread.o network.o scram.o buffwork.o mail.o keycheck_opt.o desansi.o libdes.o
+COMMON_OBJS = platforms/_tzset.o common/cliconfig.o common/client.o common/autobuff.o common/iniread.o common/network.o common/scram.o common/buffwork.o common/mail.o common/convdes.o
+RC5_OBJS = rc5/problem.o rc5/keycheck_opt.o
+DES_OBJS = des/des-slice-meggs.o des/deseval-meggs3.o
+
+OBJS= $(COMMON_OBJS) $(RC5_OBJS) $(DES_OBJS)
+
 LIBS = LIB:scm.lib LIB:sc.lib LIB:amiga.lib LIB:debug.lib
 
 .cpp.o:
