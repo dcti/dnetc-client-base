@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.4  1998/09/29 10:13:16  chrisb
+// Removed Remi's (CLIENT_OS == OS_NETWARE) stuff around yield_pump. Fixed a comparison bug in the checkpoint retrieval stuff (Client::Run). Miscellaneous RISC OS wibblings.
+//
 // Revision 1.3  1998/09/28 22:19:17  remi
 // Cleared 2 warnings, and noticed that yield_pump() seems to be Netware-only.
 // BTW, I've not found pthread_yield() in libpthread 0.7 & glibc2 (RH 5.1 Sparc
@@ -18,7 +21,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.3 1998/09/28 22:19:17 remi Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.4 1998/09/29 10:13:16 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -167,9 +170,10 @@ struct thread_param_block
   #define INITIAL_TIMESLICE_DES     2048
   #define MIN_SANE_TIMESLICE_RC5    2048
   #define MIN_SANE_TIMESLICE_DES    2048
-  #define MAX_SANE_TIMESLICE_RC5   16384
-  #define MAX_SANE_TIMESLICE_DES   16384
-  #error "Please check timer granularity and timeslice constants"
+  #define MAX_SANE_TIMESLICE_RC5   262144
+  #define MAX_SANE_TIMESLICE_DES   262144
+//  #error "Please check timer granularity and timeslice constants"
+// we'll stick with no profiling for now...
   #undef NON_PREEMPTIVE_OS_PROFILING  //or undef to do your own profiling
 #elif (CLIENT_OS == OS_MACOS)
   #define TIMER_GRANULARITY       125000
@@ -198,8 +202,6 @@ static struct
   unsigned long yield_run_count;
 } runcounters = {0,0};  
 
-// ----------------------------------------------------------------------
-#if (CLIENT_OS == OS_NETWARE)
 static void yield_pump( void *tv_p )
 {
   static int pumps_without_run = 0;
@@ -246,8 +248,6 @@ static void yield_pump( void *tv_p )
     NonPolledUSleep( 0 ); /* yield */
   #endif
 }
-#endif // CLIENT_OS == OS_NETWARE
-// ----------------------------------------------------------------------
 
 #ifdef NON_PREEMPTIVE_OS_PROFILING
 int reset_profiling_flag = 1;
@@ -705,7 +705,8 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         thrparams->threadID = _beginthread( Go_mt, 8192, (void *)thrparams );
         success = ( (thrparams->threadID) != 0);
       #elif (CLIENT_OS == OS_OS2) && defined(MULTITHREAD)
-        thrparams->threadID = _beginthread( Go_mt, NULL, 8192, (void *)thrparams );
+        thrparams->threadID = _beginthread
+( Go_mt, NULL, 8192, (void *)thrparams );
         success = ( thrparams->threadID != -1);
       #elif (CLIENT_OS == OS_NETWARE) && defined(MULTITHREAD)
         if (!nwCliIsSMPAvailable())
@@ -863,14 +864,14 @@ int Client::Run( void )
   // we always recover, irrespective of the TimeToQuit flag
   for ( cont_i = 0; cont_i < 2; cont_i++ )
     {
-    // Recover checkpoint infor in case we had previously quit abnormally.
+    // Recover checkpoint info in case we had previously quit abnormally.
     if ( DoesFileExist( checkpoint_file[cont_i] ) )
       {
       s32 recovered = CkpointToBufferInput( (u8)cont_i ); 
       if (recovered != 0) 
         Log( "[%s] Recovered %d block%s from %s checkpoint file\n", Time(),
              recovered, ((recovered==1)?(""):("s")), 
-             ((cont_i=0)?("RC5"):("DES")) );
+             ((cont_i==0)?("RC5"):("DES")) );
       }
     }
 
