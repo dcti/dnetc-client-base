@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.35  1998/10/30 19:43:39  sampo
+// Added MacOS PowerPC detection stuff
+//
 // Revision 1.34  1998/10/30 00:07:19  foxyloxy
 //
 // Rectify some deviations from the standard of "-1" means detection
@@ -126,7 +129,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.34 1998/10/30 00:07:19 foxyloxy Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.35 1998/10/30 19:43:39 sampo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -271,6 +274,7 @@ unsigned int ValidateProcessorCount( int numcpu, int quietly )
 
 #if (!((CLIENT_CPU == CPU_X86) || \
       ((CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)) || \
+      ((CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS == OS_MACOS) || \
       ((CLIENT_CPU == CPU_ARM) && (CLIENT_OS == OS_RISCOS)) ))
 int GetProcessorType(int quietly)
 { 
@@ -310,6 +314,35 @@ int GetProcessorType(int quietly)
     }
   return (detectedtype);
 }    
+#endif
+
+// --------------------------------------------------------------------------
+
+#if ((CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS == OS_MACOS))
+int GetProcessorType(int quietly)
+{
+	long result;
+	static int detectedtype = -1;
+	if(detectedtype == -1)
+	{
+		if(Gestalt(gestaltNativeCPUtype, &result) == noErr)
+   		{
+			if(result == gestaltCPU601) // PowerPC 601 detected
+				detectedtype = 0;
+			else
+				detectedtype = 1; // Any other PowerPC chip
+		}
+	if(!quietly)
+	{
+		if(detectedtype)
+    		LogScreen("Automatic processor detection found a PowerPC 603/604/750\n");
+    	else
+    		LogScreen("Automatic processor detection found a PowerPC 601\n");
+
+	}
+	}
+	return (detectedtype);
+}
 #endif
 
 // --------------------------------------------------------------------------
