@@ -18,7 +18,7 @@
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.3 2003/01/19 22:49:50 snake Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.4 2003/01/24 05:09:24 snake Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -561,7 +561,7 @@
     __asm__ __volatile ("movl $0,%0;bbssi $0,%1,1f;incl %0;1:"
                 : "=&r"(ret)
                 : "m"(*alp));
-    return ((ret) ? (+1) : (0))
+    return ((ret) ? (+1) : (0));
   }  
   static __inline__ void fastlock_lock(fastlock_t *m)
   {
