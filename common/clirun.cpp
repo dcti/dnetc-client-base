@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.9 1999/09/18 18:02:30 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.10 1999/09/19 16:07:28 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -841,7 +841,7 @@ int Client::Run( void )
   unsigned int checkpointsPercent = 0;
   int dontSleep=0, isPaused=0, wasPaused=0;
   
-
+  numcpu = ValidateProcessorCount( numcpu, 0 /* notquietly */ ); //cpucheck.cpp
   ClientEventSyncPost( CLIEVENT_CLIENT_RUNSTARTED, 0 );
 
   // =======================================
