@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.96 1999/04/06 19:24:04 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.97 1999/04/08 20:04:11 patrick Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -70,7 +70,13 @@ extern "C" void riscos_upcall_6(void);
   extern u32 p2des_unit_func_pro( RC5UnitWork * , u32 nbbits );
   extern u32 des_unit_func_mmx( RC5UnitWork * , u32 nbbits, char *coremem );
   extern u32 des_unit_func_slice( RC5UnitWork * , u32 nbbits );
-#elif (CLIENT_CPU == CPU_POWERPC)
+#elif (CLIENT_OS == OS_AIX)     // this has to stay BEFORE CPU_POWERPC
+  extern "C" s32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 timeslice );
+  extern "C" s32 crunch_allitnil( RC5UnitWork *work, u32 iterations);
+  extern "C" s32 crunch_lintilla( RC5UnitWork *work, u32 iterations);
+
+  extern u32 des_unit_func( RC5UnitWork * , u32 timeslice );
+#elif (CLIENT_CPU == CPU_POWERPC) 
   #if (CLIENT_OS == OS_WIN32)   // NT PPC doesn't have good assembly
   extern u32 rc5_unit_func( RC5UnitWork *  ); //rc5ansi2-rg.cpp
   #else
@@ -337,8 +343,39 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   des_unit_func = des_unit_func_alpha_dworz;
   #endif
 #endif
+#if (CLIENT_OS == OS_AIX)
+  #ifdef _AIXALL
+  static int detectedtype = -1;
+  if (detectedtype == -1)
+    detectedtype = GetProcessorType(1 /* quietly */);
 
-#if (CLIENT_CPU == CPU_POWERPC)
+  switch (detectedtype) {
+  case 0:                  // PPC 601
+    rc5_unit_func = crunch_allitnil;
+    pipeline_count = 1;
+    break;
+  case 1:                  // other PPC
+    rc5_unit_func = crunch_lintilla;
+    pipeline_count = 1;
+    break;
+  case 2:                  // that's POWER
+  default:
+    rc5_unit_func = rc5_ansi_2_rg_unit_func ;
+    pipeline_count = 2;
+    break;
+  } /* endswitch */
+  #elif (CLIENT_CPU == CPU_POWER)
+    rc5_unit_func = rc5_ansi_2_rg_unit_func;
+    pipeline_count = 2;
+  #elif (CLIENT_CPU == CPU_POWERPC)
+    pipeline_count = 1;
+    if (cputype == 0)
+      rc5_unit_func = crunch_allitnil;
+    else
+      rc5_unit_func = crunch_lintilla;
+  #endif
+// keep the next an ELIF !!!!
+#elif (CLIENT_CPU == CPU_POWERPC)
   if (contest == 0)
   {
     rc5_unit_func = crunch_lintilla;
