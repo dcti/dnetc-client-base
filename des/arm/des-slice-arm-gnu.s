@@ -1,9 +1,9 @@
 
 
 	.text
-	.global _convert_key_from_des_to_inc
-	.global _convert_key_from_inc_to_des
-	.global _des_unit_func_strongarm
+	.global _convert_key_from_des_to_inc__FPUlT0
+	.global _convert_key_from_inc_to_des__FPUlT0
+	.global _des_unit_func__FP11RC5UnitWorkUl
 
 	
 s0:
@@ -893,7 +893,7 @@ s7:
 	STR     R9,[R14,#0]
 	LDR     PC,[R13],#4
 
-_convert_key_from_des_to_inc:
+_convert_key_from_des_to_inc__FPUlT0:
 	STMDB   R13!,{R4,R14}
 	LDR     R2,[R0,#0]
 	AND     R3,R2,#0xFE
@@ -970,7 +970,7 @@ _convert_key_from_des_to_inc:
 	STR     R1,[R0,#0]
 	LDMIA   R13!,{R4,PC}^
 
-_convert_key_from_inc_to_des:
+_convert_key_from_inc_to_des__FPUlT0:
 	STMDB   R13!,{R4,R14}
 	LDR     R2,[R1,#0]
 	MOV     R2,R2,LSR #28
@@ -1139,7 +1139,8 @@ L000388:
         .word      0xf0f0f0f0
 
 
-_des_unit_func_strongarm:	
+_des_unit_func__FP11RC5UnitWorkUl:	
+
 	MOV     R12,R13
 	STMDB   R13!,{R0,R1,R4-R9,R11,R12,R14,PC}
 	SUB     R11,R12,#4
@@ -1157,7 +1158,7 @@ _des_unit_func_strongarm:
 	STR     R0,[R13,#0]
 	MOV     R1,R13
 	ADD     R0,R13,#4
-	BL      _convert_key_from_inc_to_des
+	BL      _convert_key_from_inc_to_des__FPUlT0
 	MOV     R5,#1
 	MOV     R6,#0
 	LDMIA   R13,{R7,R8}
@@ -3441,7 +3442,7 @@ L000310J60:
 L00033cJ62:
 	MOV     R1,R13
 	ADD     R0,R13,#4
-	BL      _convert_key_from_des_to_inc
+	BL      _convert_key_from_des_to_inc__FPUlT0
 	LDR     R0,[R4,#0x014]
 	LDR     R1,[R13,#0]
 	SUB     R0,R1,R0
