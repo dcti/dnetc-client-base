@@ -12,7 +12,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.70 2001/04/09 01:33:03 sampo Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.71 2001/04/12 11:09:46 cyp Exp $"; }
 
 //#define TRACE
 
@@ -398,7 +398,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       const char *action_msg = 0;
       const char *reason_msg = 0;
       int discarded = 0;
-      char ratebuf[32], dcountbuf[64]; /* we use this as scratch space too */
+      char ratebuf[32];
+      char dcountbuf[64]; /* we use this as scratch space too */
       struct timeval tv;
       ProblemInfo info;
       info.rate.ratebuf = ratebuf;
