@@ -1,15 +1,14 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.56.2.38 2001/03/20 10:03:33 cyp Exp $
+# $Id: makefile.vc,v 1.56.2.39 2001/03/26 18:21:17 cyp Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
 PROCESSOR_ARCHITECTURE = x86
-!endif # default to x86
-!if "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
-ALPHA=1
-!endif
+!endif # default to x86 (assume building on win9x)
+
+# --------------------------------------------
 
 BASENAME = dnetc
 OUTPUTPATH = output
@@ -18,7 +17,6 @@ RC5SRCPATH = rc5
 DESSRCPATH = des
 OGRSRCPATH = ogr
 CSCSRCPATH = csc
-CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 PLATSRCPATH = plat/win
 #EXECOMPRESSOR = upxw.exe -9 --compress-resources=0
 
@@ -28,13 +26,17 @@ HAVE_OGR_CORES=1
 
 # --------------------------------------------
 
-!ifdef ALPHA
+!if "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 OPTS_CC_CPU = -DNTALPHA 
 OPTS_M_PLAT = ALPHA
 OPTS_AS = -Gy -Zi -O1
-!else
+CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 OPTS_CC_CPU = 
 OPTS_M_PLAT = IX86
+CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
+!else
+!error unrecognized PROCESSOR_ARCHITECTURE found in the environment
 !endif
 
 !ifdef DEBUG
@@ -44,6 +46,8 @@ OPTS_LINK_DEBUG = /debug /pdb:none /pdbtype:consolidate
 OPTS_CC_DEBUG = -DNDEBUG
 OPTS_LINK_DEBUG = /release
 !endif
+
+# --------------------------------------------
 
 # a little blurb about options
 #
@@ -71,7 +75,7 @@ OPTS_LINK_DEBUG = /release
 
 OPTS_MSVC = -nologo -I$(COMMONPATH) -I$(PLATSRCPATH) -I$(OGRSRCPATH) \
             -I$(CSCSRCPATH) -DMULTITHREAD -D__WIN32__ -DLURK \
-            -W3 -MT -GR- -GX- -GA -GF \
+            -W4 -WX -MT -GR- -GX- -GA -GF -GM -Gy \
             -D_M_$(OPTS_M_PLAT) $(OPTS_CC_CPU) $(OPTS_CC_DEBUG) 
 	    ## *** +++++++++++++++++++++++++++++++++++++++++
 OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib
@@ -80,7 +84,7 @@ OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib
 	    ## *** +++++++++++++++++++++++++++++++++++++++++
 OPTS_LINK = /nologo /incremental:no /version:3.10 \
             /machine:$(OPTS_M_PLAT) $(OPTS_LINK_DEBUG)
-OPTS_RC   = -d_Windows -d_M_{$(OPTS_M_PLAT)}
+OPTS_RC   = -d_Windows -d_M_$(OPTS_M_PLAT)
 
 # --------------------------------------------
 
@@ -94,9 +98,7 @@ RC_FILE = $(PLATSRCPATH)/w32cons.rc
 COMMON_OBJS =                        \
         $(OUTPUTPATH)/base64.obj     \
         $(OUTPUTPATH)/bench.obj      \
-        $(OUTPUTPATH)/buffupd.obj    \
         $(OUTPUTPATH)/buffbase.obj   \
-        $(OUTPUTPATH)/buffpriv.obj   \
         $(OUTPUTPATH)/checkpt.obj    \
         $(OUTPUTPATH)/clicdata.obj   \
         $(OUTPUTPATH)/client.obj     \
@@ -126,12 +128,22 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/problem.obj    \
         $(OUTPUTPATH)/probman.obj    \
         $(OUTPUTPATH)/random.obj     \
-        $(OUTPUTPATH)/scram.obj      \
         $(OUTPUTPATH)/selcore.obj    \
         $(OUTPUTPATH)/selftest.obj   \
         $(OUTPUTPATH)/setprio.obj    \
         $(OUTPUTPATH)/triggers.obj   \
         $(OUTPUTPATH)/util.obj
+!if exist( "$(COMMONPATH:/=\)\buffpriv.cpp" )
+COMMON_OBJS = $(COMMON_OBJS)         \
+        $(OUTPUTPATH)/buffupd.obj    \
+        $(OUTPUTPATH)/buffpriv.obj   \
+        $(OUTPUTPATH)/scram.obj
+!else
+COMMON_OBJS = $(COMMON_OBJS)         \
+        $(OUTPUTPATH)/buffpub.obj
+!endif
+
+# --------------------------------------------
 
 PLAT_OBJS =                          \
         $(OUTPUTPATH)/w32cons.obj    \
@@ -144,6 +156,12 @@ PLAT_OBJS =                          \
         $(OUTPUTPATH)/w32ini.obj     \
         $(OUTPUTPATH)/w32snapp.obj   \
         $(OUTPUTPATH)/w32util.obj
+!if "$(PROCESSOR_ARCHITECTURE)" == "x86"
+# PLAT_OBJS = $(PLAT_OBJS) $(OUTPUTPATH)/w32x86.obj
+OPTS_LINK = $(OPTS_LINK) /LINK50COMPAT
+!endif
+
+# --------------------------------------------
 
 SCR_OBJS =                           \
         $(OUTPUTPATH)/w32ss.obj      \
@@ -155,20 +173,20 @@ SCR_OBJS =                           \
 CUI_OBJS =                           \
         $(OUTPUTPATH)/w32cuis.obj
 
-# -------
+# --------------------------------------------
 
-!ifdef ALPHA
+!if "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 CHIP_OBJS =
-!else
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj
 !endif
 
 # --------------------------------- RC5 ----------------------------
 
-!ifdef ALPHA
+!if "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 RC5_OBJS =                           \
         $(OUTPUTPATH)/rc5-alpha-nt.obj
-!else
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 RC5_OBJS =                           \
         $(OUTPUTPATH)/brf-p5.obj     \
         $(OUTPUTPATH)/rg-k5.obj      \
@@ -186,13 +204,12 @@ OPTS_MSVC = $(OPTS_MSVC)
 
 !ifndef HAVE_DES_CORES
 DES_OBJS =
-!else
-!ifdef ALPHA
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 DES_OBJS =                                   \
         $(OUTPUTPATH)/des-slice-dworz.obj    \
         $(OUTPUTPATH)/deseval-dworz3.obj
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_DES_CORES -DKWAN -DDWORZ
-!else                                
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 DES_OBJS =                                   \
         $(OUTPUTPATH)/bbdeslow.obj           \
         $(OUTPUTPATH)/bdeslow.obj            \
@@ -208,14 +225,12 @@ DES_OBJS =                                   \
 #       $(OUTPUTPATH)/sboxes-mmx.obj
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_DES_CORES -DMMX_BITSLICER -DMEGGS -DKWAN 
 !endif
-!endif
 
 # --------------------------------- CSC ----------------------------
 
 !ifndef HAVE_CSC_CORES
 CSC_OBJS =
-!else
-!ifdef ALPHA
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 CSC_OBJS =                           \
         $(OUTPUTPATH)/convcsc.obj    \
         $(OUTPUTPATH)/csc-1k.obj     \
@@ -224,7 +239,7 @@ CSC_OBJS =                           \
         $(OUTPUTPATH)/csc-6b-i.obj   \
         $(OUTPUTPATH)/csc-common.obj
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_CSC_CORES
-!else
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 CSC_OBJS =                           \
          $(OUTPUTPATH)/convcsc.obj   \
          $(OUTPUTPATH)/csc-1k.obj    \
@@ -234,7 +249,6 @@ CSC_OBJS =                           \
          $(OUTPUTPATH)/csc-comm.obj  \
          $(OUTPUTPATH)/csc-mmx.obj
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_CSC_CORES
-!endif
 !endif
 
 # --------------------------------- OGR ----------------------------
@@ -251,7 +265,16 @@ OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_CORES
 
 # --------------------------------------------
 
-!ifdef ALPHA
+VC_CHECK = $(OUTPUTPATH)/bltwith.vc
+#ensure that vc, watcom and bcc objs don't collide
+
+$(VC_CHECK):
+        @-del $(OUTPUTPATH:/=\)\*.o?? $(RES_FILE:/=\)
+        @echo moo > $(VC_CHECK:/=\)
+
+# --------------------------------------------
+
+!if "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 {$(RC5SRCPATH)/alpha}.s{$(OUTPUTPATH)}.obj:
         asaxp $(OPTS_AS) -Fo$@ $<
 
@@ -263,7 +286,9 @@ OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_CORES
 
 {$(CSCSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
-!else
+
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
+
 {$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
 
@@ -297,7 +322,7 @@ OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_CORES
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 {$(PLATSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c $(OPTS_MSVC) -O1 -Fo$(OUTPUTPATH)\ $<
+        cl -c $(OPTS_MSVC) -Os -Fo$(OUTPUTPATH)\ $<
 
 {$(PLATSRCPATH)}.c{$(OUTPUTPATH)}.obj::
         cl -c -Zl -O1 -Fo$(OUTPUTPATH)\ $<
@@ -310,10 +335,10 @@ $(RES_FILE):    $(RC_FILE)
 
 # --------------------------------------------
 
-$(BASENAME): $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(SCR_OBJS) $(CUI_OBJS) $(RES_FILE)
+$(BASENAME): $(VC_CHECK) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(SCR_OBJS) $(CUI_OBJS) $(RES_FILE)
 # the screensaver's 4.0 tag will be adjusted to 3.10 by the _client_ if running on a 3.x platform
         link $(OPTS_LINK) /SUBSYSTEM:WINDOWS /OUT:$(BASENAME).scr /version:4.00 $(OPTS_LIBS) $(SCR_OBJS) $(RES_FILE) 
-        link $(OPTS_LINK) /SUBSYSTEM:CONSOLE /OUT:$(BASENAME).com /version:3.10 $(OPTS_LIBS) $(CUI_OBJS)
+        link $(OPTS_LINK) /SUBSYSTEM:CONSOLE /OUT:$(BASENAME).com /version:3.10 /NODEFAULTLIB $(OPTS_LIBS) $(CUI_OBJS)
         link $(OPTS_LINK) /SUBSYSTEM:WINDOWS /OUT:$(BASENAME).exe /version:3.10 /MAP:$(BASENAME).map $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
 !ifdef EXECOMPRESSOR
         $(EXECOMPRESSOR) $(BASENAME).scr
@@ -322,7 +347,7 @@ $(BASENAME): $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_OBJS) $(DES_OBJS) $(
 !endif
 
 clean:
-        -del $(OUTPUTPATH:/=\)\*.obj $(RES_FILE:/=\)
+        -del $(OUTPUTPATH:/=\)\*.o?? $(RES_FILE:/=\)
 
 superclean: clean
         -del $(BASENAME).map $(BASENAME).exe $(BASENAME).scr $(BASENAME).com $(BASENAME).ini buff-in.* buff-out.*
