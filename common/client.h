@@ -11,6 +11,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.116  1999/02/09 10:55:55  silby
+// Updated OPs from proxy tree.
+//
 // Revision 1.115  1999/01/31 20:19:08  cyp
 // Discarded all 'bool' type wierdness. See cputypes.h for explanation.
 //
@@ -305,28 +308,31 @@
 
 typedef enum
 {
-  OP_REQUEST,
-  OP_DATA,
-  OP_SUCCESS,
-  OP_DONE,
-  OP_FAIL,
-  OP_MAX,
-  OP_PERMISSION = 42,
-  OP_DONE_NOCLOSE,
-  OP_DONE_NOCLOSE_ACK,
-  OP_PROXYCHANGE,
-  OP_PERREQUEST = 50,
-  OP_PERDATA,
-  OP_SCRAMREQUEST = 69,
-  OP_SCRAM = 96,
-  OP_SUCCESS_ACK,
-  OP_COMPRESSED_FOLLOWS = 100,
-  OP_REQUEST_MULTI,
-  OP_SUCCESS_MULTI,
-  OP_DONE_MULTI,
-  OP_PERREQUEST_MULTI,
-  OP_BIGREQUEST_MULTI,
-  OP_BIGDATA
+  OP_REQUEST,                     //     obsolete (use OP_REQUEST_MULTI)
+  OP_DATA,                        //     transition (use OP_BIGDATA)
+  OP_SUCCESS,                     //     obsolete (use OP_SUCCESS_MULTI)
+  OP_DONE,                        //     obsolete (use OP_DONE_MULTI)
+  OP_FAIL,                        //     never used
+  OP_MAX,                         //     never used
+  OP_PERMISSION = 42,             // ==> current: full<>master only
+  OP_DONE_NOCLOSE,                //     obsolete (use OP_DONE_MULTI)
+  OP_DONE_NOCLOSE_ACK,            //     transition (use OP_BIGDONE_ACK)
+  OP_PROXYCHANGE,                 // ==> current: full<>master only
+  OP_PERREQUEST = 50,             //     obsolete (use OP_PERREQUEST_MULTI)
+  OP_PERDATA,                     //     transition (use OP_BIGDATA)
+  OP_SCRAMREQUEST = 69,           // ==> current: client->full only
+  OP_SCRAM = 96,                  // ==> current: client<-full only
+  OP_SUCCESS_ACK,                 // ==> current
+  OP_COMPRESSED_FOLLOWS = 100,    //     never used
+  OP_REQUEST_MULTI,               //     obsolete (use OP_BIGREQUEST_MULTI)
+  OP_SUCCESS_MULTI,               // ==> current
+  OP_DONE_MULTI,                  //     transition (use OP_BIGDONE_MULTI)
+  OP_PERREQUEST_MULTI,            //     transition (use OP_BIGPERREQUEST_MULTI)
+  OP_BIGREQUEST_MULTI,            // ==> current
+  OP_BIGDATA,                     // ==> current
+  OP_BIGDONE_MULTI,               // ==> current
+  OP_BIGDONE_ACK,                 // ==> current
+  OP_BIGPERREQUEST_MULTI          // ==> current
 } Operation;
 
 // --------------------------------------------------------------------------
