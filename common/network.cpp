@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.52  1998/12/08 05:56:18  dicamillo
+// Add MacOS code for LowLevelConditionSocket.
+//
 // Revision 1.51  1998/11/16 19:07:01  cyp
 // Fixed integer truncation warnings.
 //
@@ -142,7 +145,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.51 1998/11/16 19:07:01 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.52 1998/12/08 05:56:18 dicamillo Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -1426,6 +1429,9 @@ int Network::LowLevelConditionSocket( unsigned long cond_type )
     #elif (CLIENT_OS == OS_AMIGAOS)
       char flagon = ((cond_type == CONDSOCK_BLOCKING_OFF) ? (1): (0));
       return IoctlSocket(sock, FIONBIO, &flagon);
+	#elif (CLIENT_OS == OS_MACOS)
+      char flagon = ((cond_type == CONDSOCK_BLOCKING_OFF) ? (1): (0));
+	  return(0);	// need to check this	
     #elif (defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK)))
       {
       int flag, res, arg;
