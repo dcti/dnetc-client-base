@@ -1,10 +1,21 @@
 // Hey, Emacs, this a -*-C++-*- file !
 
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
 // $Log: version.h,v $
+// Revision 1.22.2.7  1999/01/04 02:35:08  remi
+// Synced with :
+//  Revision 1.32  1999/01/02 06:12:13  silby
+//  Er, now we're at 2.7103.425
+//
+//  Revision 1.31  1999/01/02 06:11:01  silby
+//  2.7103.425, happy new year.
+//
+//  Revision 1.30  1999/01/01 02:45:16  cramer
+//  Part 1 of 1999 Copyright updates...
+//
 // Revision 1.22.2.6  1998/12/29 20:05:04  remi
 // Synced with :
 //  Revision 1.29  1998/12/28 23:12:43  cyp
@@ -41,10 +52,10 @@
 
 #define CLIENT_CONTEST      71
 #define CLIENT_BUILD        02
-#define CLIENT_BUILD_FRAC   424
+#define CLIENT_BUILD_FRAC   425
 
-#define CLIENT_VERSIONSTRING    "v2.7102.424-TEST"
-#define CLIENT_VERSIONSTRING2   "2.7102.424-TEST"        // no leading "v"
+#define CLIENT_VERSIONSTRING    "v2.7102.425-TEST"
+#define CLIENT_VERSIONSTRING2   "2.7102.425-TEST"        // no leading "v"
 
 #endif // _VERSION_H
 
