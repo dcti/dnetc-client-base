@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.89 2002/10/11 00:02:27 andreasb Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.90 2002/10/13 08:10:08 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -166,8 +166,8 @@ static int _readwrite_hostname_and_port( int aswrite, const char *fn,
         len = 0;
         while (*p && (isspace(*p) || *p == ';' || *p == ','))
           p++;
-        while (*p && !isspace(*p) && *p!=';' && *p!=',')
-          hostbuf[len++] = tolower(*p++);
+        while (*p && !isspace(*p) && *p != ';' && *p != ',')
+          hostbuf[len++] = (char) tolower(*p++);
         hostbuf[len] = '\0';
         if (len)
         {
@@ -177,7 +177,7 @@ static int _readwrite_hostname_and_port( int aswrite, const char *fn,
           if (hostbuf[pos] == ':')
           {
             portnum = atoi(&hostbuf[pos+1]);
-            hostbuf[pos]='\0';
+            hostbuf[pos] = '\0';
             if (portnum <= 0 || portnum >= 0xffff)
               portnum = 0;
             len = pos;  
@@ -192,7 +192,7 @@ static int _readwrite_hostname_and_port( int aswrite, const char *fn,
             hostbuf[len-17] = '9';
           if (portnum)
           {
-            sprintf(&hostbuf[len],":%d", portnum);
+            sprintf(&hostbuf[len], ":%d", portnum);
             len = strlen(hostbuf);
           }    
           if ((len + 3) >= hnamelen)
@@ -255,7 +255,7 @@ static int _readwrite_hostname_and_port( int aswrite, const char *fn,
       len = 0; 
       while (*p && (isspace(*p) || *p == ';' || *p == ','))
         p++;
-      while (*p && !isspace(*p) && *p!=';' && *p!=',')
+      while (*p && !isspace(*p) && *p != ';' && *p != ',')
         hostbuf[len++] = *p++;
       hostbuf[len] = '\0';
       if (!len)
@@ -273,7 +273,7 @@ static int _readwrite_hostname_and_port( int aswrite, const char *fn,
       }      
       if (len) /* doesn't already have a port */
       {
-        sprintf(&hostbuf[len],":%d", foundport);
+        sprintf(&hostbuf[len], ":%d", foundport);
         if (multiple)
         {
           len = strlen(hostbuf);
@@ -281,7 +281,7 @@ static int _readwrite_hostname_and_port( int aswrite, const char *fn,
             p++;
           if (*p)
           {
-            strcat(hostbuf,";");
+            strcat(hostbuf, ";");
             len++;
             while (*p && len < (sizeof(hostbuf)-1))
             {
