@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.110  1998/12/25 02:32:11  silby
+// ini writing functions are now not part of client object.
+// This allows the win32 (and other) guis to have
+// configure modules that act on a dummy client object.
+// (Client::Configure should be seperated as well.)
+// Also fixed bug with spaces being taken out of pathnames.
+//
 // Revision 1.109  1998/12/19 05:04:30  cyp
 // Fixed unix'ish -kill/-hup to ignore processes that are already dead.
 //
@@ -108,7 +115,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.109 1998/12/19 05:04:30 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.110 1998/12/25 02:32:11 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -120,6 +127,7 @@ return "@(#)$Id: cmdline.cpp,v 1.109 1998/12/19 05:04:30 cyp Exp $"; }
 #include "console.h"   // ConOutErr()
 #include "clitime.h"   // CliTimer() for -until setting
 #include "cmdline.h"   // ourselves
+#include "confrwv.h"   // ValidateConfig()
 
 /* -------------------------------------- */
 
@@ -365,7 +373,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
 
     InitWorkingDirectoryFromSamplePaths( inifilename, argv[0] );
 
-    if ( ReadConfig() != 0)
+    if ( ReadConfig(this) != 0)
       {
       stopiniio = 1; /* client class */
       ModeReqSet( MODEREQ_CONFIG );
@@ -1102,7 +1110,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         break;
         }
       }
-    ValidateConfig();
+    ValidateConfig(this);
     }
         
   //-----------------------------------

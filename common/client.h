@@ -12,6 +12,13 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.110  1998/12/25 02:32:11  silby
+// ini writing functions are now not part of client object.
+// This allows the win32 (and other) guis to have
+// configure modules that act on a dummy client object.
+// (Client::Configure should be seperated as well.)
+// Also fixed bug with spaces being taken out of pathnames.
+//
 // Revision 1.109  1998/12/23 00:30:24  silby
 // Stepped back to 1.106.
 //
@@ -502,15 +509,18 @@ public:
   s32  ConfigureGeneral( s32 currentmenu );
     // part of the interactive setup
 
-  int ReadConfig( void );
-    // returns -1 if no ini exits, 0 otherwise
-
-  void ValidateConfig( void );
-    // verifies configuration and forces valid values
-
-  int  WriteConfig( int writeeverything = 0 );
-    // if 'writeeverything' is !=0, *all* options are overwritten
-    // returns -1 on error, 0 otherwise
+// Now a seperate module
+//  int ReadConfig( void );
+//    // returns -1 if no ini exits, 0 otherwise
+//
+// Now a seperate module
+//  void ValidateConfig( void );
+//    // verifies configuration and forces valid values
+//
+// Now a seperate module
+//  int  WriteConfig( int writeeverything = 0 );
+//    // if 'writeeverything' is !=0, *all* options are overwritten
+//    // returns -1 on error, 0 otherwise
 
   int Run( void );
     // run the loop, do the work

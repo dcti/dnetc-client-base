@@ -8,6 +8,13 @@
 */    
 //
 // $Log: modereq.cpp,v $
+// Revision 1.15  1998/12/25 02:32:11  silby
+// ini writing functions are now not part of client object.
+// This allows the win32 (and other) guis to have
+// configure modules that act on a dummy client object.
+// (Client::Configure should be seperated as well.)
+// Also fixed bug with spaces being taken out of pathnames.
+//
 // Revision 1.14  1998/12/16 05:55:53  cyp
 // MODEREQ_FFORCE doesn't do anything different from normal force/flush, so I
 // recycled it as MODEREQ_FQUIET for use with non-interactive BufferUpdate()
@@ -55,7 +62,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.14 1998/12/16 05:55:53 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.15 1998/12/25 02:32:11 silby Exp $"; }
 #endif
 
 #include "client.h"   //client class
@@ -72,6 +79,7 @@ return "@(#)$Id: modereq.cpp,v 1.14 1998/12/16 05:55:53 cyp Exp $"; }
 #include "bench.h"    //"mode" Benchmark()
 #include "buffwork.h" //"mode" UnlockBuffer()
 #include "buffupd.h"  //"mode" BufferUpdate() flags
+#include "confrwv.h"  // Needed to update config
 #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
   #include "baseincs.h" // client-specific includes
 #endif
@@ -220,14 +228,14 @@ int ModeReqRun(Client *client)
           for (i=0;client->inifilename[i];i++)
             newclient->inifilename[i]=client->inifilename[i];
           newclient->inifilename[i]=0;  
-          if ( newclient->ReadConfig() ) /* ini missing */
+          if ( ReadConfig(newclient) ) /* ini missing */
             {
             delete newclient;
             newclient = client;
             nodestroy = 1;
             }
           if ( newclient->Configure() == 1 )
-            newclient->WriteConfig(1); //full new build
+            WriteConfig(newclient,1); //full new build
           if (!nodestroy)
             delete newclient;
           if ((bits & MODEREQ_CONFRESTART) != 0)

@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.11  1998/12/25 02:32:11  silby
+// ini writing functions are now not part of client object.
+// This allows the win32 (and other) guis to have
+// configure modules that act on a dummy client object.
+// (Client::Configure should be seperated as well.)
+// Also fixed bug with spaces being taken out of pathnames.
+//
 // Revision 1.10  1998/12/23 03:24:56  silby
 // Client once again listens to keyserver for next contest start time,
 // tested, it correctly updates.  Restarting after des blocks have
@@ -65,7 +72,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.10 1998/12/23 03:24:56 silby Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.11 1998/12/25 02:32:11 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -80,6 +87,7 @@ return "@(#)$Id: confrwv.cpp,v 1.10 1998/12/23 03:24:56 silby Exp $"; }
 #include "network.h"   // ntohl()
 #include "triggers.h"  // RaiseRestartRequestTrigger()
 #include "clicdata.h"  // CliClearContestData()
+#include "confrwv.h"   // Outselves
 
 // --------------------------------------------------------------------------
 
@@ -91,7 +99,7 @@ static const char *OPTION_SECTION="parameters"; //#define OPTION_SECTION "parame
 
 //----------------------------------------------------------------------------
 
-int Client::ReadConfig(void)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
+int ReadConfig(Client *client)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
 {
   IniSection ini;
   s32 inierror, tempconfig;
@@ -99,212 +107,212 @@ int Client::ReadConfig(void)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   char *p;
   IniRecord *tempptr;
 
-  inierror = ini.ReadIniFile( GetFullPathForFilename( inifilename ) );
+  inierror = ini.ReadIniFile( GetFullPathForFilename( client->inifilename ) );
   if (inierror) return -1;
 
   if (INIFIND(CONF_ID) != NULL)
-    INIGETKEY(CONF_ID).copyto(id, sizeof(id));
+    INIGETKEY(CONF_ID).copyto(client->id, sizeof(client->id));
 
   if (INIFIND(CONF_THRESHOLDI) != NULL)
     {
     INIGETKEY(CONF_THRESHOLDI).copyto(buffer, sizeof(buffer));
     p = strchr( buffer, ':' );
-    inthreshold[0]=((confopt_isstringblank(buffer))?(10):(atoi(buffer)));
-    outthreshold[0]=((p==NULL)?(inthreshold[0]):(atoi(p+1)));
+    client->inthreshold[0]=((confopt_isstringblank(buffer))?(10):(atoi(buffer)));
+    client->outthreshold[0]=((p==NULL)?(client->inthreshold[0]):(atoi(p+1)));
     }
 
   if (INIFIND(CONF_THRESHOLDI2) != NULL)
     {
     INIGETKEY(CONF_THRESHOLDI2).copyto(buffer, sizeof(buffer));
     p = strchr( buffer, ':' );
-    inthreshold[1]=((confopt_isstringblank(buffer))?(inthreshold[0]):(atoi(buffer)));
-    outthreshold[1]=((p==NULL)?(inthreshold[1]):(atoi(p+1)));
+    client->inthreshold[1]=((confopt_isstringblank(buffer))?(client->inthreshold[0]):(atoi(buffer)));
+    client->outthreshold[1]=((p==NULL)?(client->inthreshold[1]):(atoi(p+1)));
     }
   else
     {
-    outthreshold[1]=outthreshold[0];
-    inthreshold[1]=inthreshold[0];
+    client->outthreshold[1]=client->outthreshold[0];
+    client->inthreshold[1]=client->inthreshold[0];
     }
 
   if (INIFIND(CONF_HOURS) != NULL)
     {
     INIGETKEY(CONF_HOURS).copyto(buffer, sizeof(buffer));
     tempconfig = atoi(buffer);
-    minutes = -1;
+    client->minutes = -1;
     if (tempconfig > 0)
       {
       if ((p = strchr( buffer, ':' )) == NULL)
         p = strchr( buffer, '.' );
       if (p != NULL && strlen( p )==3 && isdigit(p[1]) && isdigit(p[2]))
-        minutes = (tempconfig *60) + atoi(p+1);
+        client->minutes = (tempconfig *60) + atoi(p+1);
       else if (p != NULL && *p == '.')
-        minutes = (s32)(atol( buffer )* 60.);
+        client->minutes = (s32)(atol( buffer )* 60.);
       }
-    if (minutes < 0)
-      minutes = 0;
+    if (client->minutes < 0)
+      client->minutes = 0;
     }
 
   #if 0 /* obsolete */
   if (INIFIND(CONF_TIMESLICE) != NULL)
-    timeslice = INIGETKEY(CONF_TIMESLICE);
+    client->timeslice = INIGETKEY(CONF_TIMESLICE);
   #else
-  timeslice = 0x10000;
+  client->timeslice = 0x10000;
   #endif
 
   #ifdef OLDNICENESS
   if (INIFIND(CONF_NICENESS) != NULL)
-    niceness = INIGETKEY(CONF_NICENESS);
+    client->niceness = INIGETKEY(CONF_NICENESS);
   #else  
   tempptr = ini.findfirst( "processor usage", "priority");
   if (tempptr) 
-    priority = (ini.getkey("processor usage", "priority", "0")[0]);
+    client->priority = (ini.getkey("processor usage", "priority", "0")[0]);
   else
     {
-    priority = (ini.getkey(OPTION_SECTION, "niceness", "0")[0]);
-    priority = ((priority==2)?(8):((priority==1)?(4):(0)));
+    client->priority = (ini.getkey(OPTION_SECTION, "niceness", "0")[0]);
+    client->priority = ((client->priority==2)?(8):((client->priority==1)?(4):(0)));
     }
   #endif    
 
   if (INIFIND(CONF_UUEHTTPMODE) != NULL)
-  uuehttpmode = INIGETKEY(CONF_UUEHTTPMODE);
+  client->uuehttpmode = INIGETKEY(CONF_UUEHTTPMODE);
   if (INIFIND(CONF_HTTPPROXY) != NULL)
-  INIGETKEY(CONF_HTTPPROXY).copyto(httpproxy, sizeof(httpproxy));
+  INIGETKEY(CONF_HTTPPROXY).copyto(client->httpproxy, sizeof(client->httpproxy));
   if (INIFIND(CONF_HTTPID) != NULL)
-  INIGETKEY(CONF_HTTPID).copyto(httpid, sizeof(httpid));
+  INIGETKEY(CONF_HTTPID).copyto(client->httpid, sizeof(client->httpid));
   if (INIFIND(CONF_HTTPPORT) != NULL)
-  httpport = INIGETKEY(CONF_HTTPPORT);
+  client->httpport = INIGETKEY(CONF_HTTPPORT);
   if (INIFIND(CONF_KEYPORT) != NULL)
-  keyport = INIGETKEY(CONF_KEYPORT);
+  client->keyport = INIGETKEY(CONF_KEYPORT);
 
   if (INIFIND(CONF_KEYPROXY) == NULL)
     {
-    autofindkeyserver = 1;
-    keyproxy[0]=0;
+    client->autofindkeyserver = 1;
+    client->keyproxy[0]=0;
     }
   else
     {
     //do an autofind only if the host is a dnet host AND autofindkeyserver is on.
-    autofindkeyserver = 0;
-    INIGETKEY(CONF_KEYPROXY).copyto(keyproxy, sizeof(keyproxy));
-    if (confopt_isstringblank(keyproxy) || strcmpi( keyproxy, "(auto)")==0 ||
-      strcmpi( keyproxy, "auto")==0 || strcmpi( keyproxy, "rc5proxy.distributed.net" )==0) 
+    client->autofindkeyserver = 0;
+    INIGETKEY(CONF_KEYPROXY).copyto(client->keyproxy, sizeof(client->keyproxy));
+    if (confopt_isstringblank(client->keyproxy) || strcmpi( client->keyproxy, "(auto)")==0 ||
+      strcmpi( client->keyproxy, "auto")==0 || strcmpi( client->keyproxy, "rc5proxy.distributed.net" )==0) 
       {                                         
-      keyproxy[0]=0;
-      autofindkeyserver = 1; //let Resolve() get a better hostname.
+      client->keyproxy[0]=0;
+      client->autofindkeyserver = 1; //let Resolve() get a better hostname.
       }
-    else if (confopt_IsHostnameDNetHost(keyproxy))
+    else if (confopt_IsHostnameDNetHost(client->keyproxy))
       {
       tempconfig=ini.getkey("networking", "autofindkeyserver", "1")[0];
-      autofindkeyserver = (tempconfig)?(1):(0);
-      if (autofindkeyserver)
-        keyproxy[0]=0;
+      client->autofindkeyserver = (tempconfig)?(1):(0);
+      if (client->autofindkeyserver)
+        client->keyproxy[0]=0;
       }
     }
 
   if (INIFIND(CONF_CPUTYPE) != NULL)
-  cputype = INIGETKEY(CONF_CPUTYPE);
+  client->cputype = INIGETKEY(CONF_CPUTYPE);
   if (INIFIND(CONF_NUMCPU) != NULL)
-  numcpu = INIGETKEY(CONF_NUMCPU);
+  client->numcpu = INIGETKEY(CONF_NUMCPU);
 
   if (INIFIND(CONF_MESSAGELEN) != NULL)
-  messagelen = INIGETKEY(CONF_MESSAGELEN);
+  client->messagelen = INIGETKEY(CONF_MESSAGELEN);
   if (INIFIND(CONF_SMTPPORT) != NULL)
-  smtpport = INIGETKEY(CONF_SMTPPORT);
+  client->smtpport = INIGETKEY(CONF_SMTPPORT);
   if (INIFIND(CONF_SMTPSRVR) != NULL)
-  INIGETKEY(CONF_SMTPSRVR).copyto(smtpsrvr, sizeof(smtpsrvr));
+  INIGETKEY(CONF_SMTPSRVR).copyto(client->smtpsrvr, sizeof(client->smtpsrvr));
   if (INIFIND(CONF_SMTPFROM) != NULL)
-  INIGETKEY(CONF_SMTPFROM).copyto(smtpfrom, sizeof(smtpfrom));
+  INIGETKEY(CONF_SMTPFROM).copyto(client->smtpfrom, sizeof(client->smtpfrom));
   if (INIFIND(CONF_SMTPDEST) != NULL)
-  INIGETKEY(CONF_SMTPDEST).copyto(smtpdest, sizeof(smtpdest));
+  INIGETKEY(CONF_SMTPDEST).copyto(client->smtpdest, sizeof(client->smtpdest));
 
   if (INIFIND(CONF_RANDOMPREFIX) != NULL)
-  randomprefix = INIGETKEY(CONF_RANDOMPREFIX);
+  client->randomprefix = INIGETKEY(CONF_RANDOMPREFIX);
   if (INIFIND(CONF_PROCESSDES) != NULL)
-  preferred_contest_id = 1; // INIGETKEY(CONF_PROCESSDES);
+  client->preferred_contest_id = 1; // INIGETKEY(CONF_PROCESSDES);
   if (INIFIND(CONF_PREFERREDBLOCKSIZE) != NULL)
-  preferred_blocksize = INIGETKEY(CONF_PREFERREDBLOCKSIZE);
+  client->preferred_blocksize = INIGETKEY(CONF_PREFERREDBLOCKSIZE);
 
-  blockcount = INIGETKEY(CONF_COUNT);
+  client->blockcount = INIGETKEY(CONF_COUNT);
   tempconfig=ini.getkey(OPTION_SECTION, "runbuffers", "0")[0];
   if (tempconfig) 
-    blockcount = -1;
+    client->blockcount = -1;
 
   tempconfig=ini.getkey(OPTION_SECTION, "runoffline", "0")[0];
-  offlinemode = (tempconfig != 0);
+  client->offlinemode = (tempconfig != 0);
   tempconfig=ini.getkey(OPTION_SECTION, "percentoff", "0")[0];
-  percentprintingoff = (tempconfig != 0);
+  client->percentprintingoff = (tempconfig != 0);
   tempconfig=ini.getkey(OPTION_SECTION, "frequent", "0")[0];
-  connectoften = (tempconfig != 0);
+  client->connectoften = (tempconfig != 0);
   tempconfig=ini.getkey(OPTION_SECTION, "nodisk", "0")[0];
-  nodiskbuffers = (tempconfig != 0);
+  client->nodiskbuffers = (tempconfig != 0);
   tempconfig=ini.getkey(OPTION_SECTION, "quiet", "0")[0];
-  quietmode = (tempconfig != 0);
+  client->quietmode = (tempconfig != 0);
   
   if ( ini.findfirst( OPTION_SECTION, "win95hidden") != NULL )
     {
     tempconfig=ini.getkey(OPTION_SECTION, "win95hidden", "0")[0]; //obsolete
-    quietmode = (tempconfig != 0);
+    client->quietmode = (tempconfig != 0);
     }
   if ( ini.findfirst( OPTION_SECTION, "runhidden") != NULL )
     {
     tempconfig=ini.getkey(OPTION_SECTION, "runhidden", "0")[0]; //obsolete
-    quietmode = (tempconfig != 0);
+    client->quietmode = (tempconfig != 0);
     }
   
   tempconfig=ini.getkey(OPTION_SECTION, "nofallback", "0")[0];
-  nofallback= (tempconfig != 0);
+  client->nofallback= (tempconfig != 0);
   tempconfig=ini.getkey(OPTION_SECTION, "nettimeout", "0")[0];
-  if (tempconfig) nettimeout=tempconfig; 
+  if (tempconfig) client->nettimeout=tempconfig; 
   tempconfig=ini.getkey(OPTION_SECTION, "noexitfilecheck", "0")[0];
-  noexitfilecheck = (tempconfig != 0);
+  client->noexitfilecheck = (tempconfig != 0);
 
   #if defined(LURK)
   tempconfig=ini.getkey(OPTION_SECTION, "lurk", "0")[0];
   dialup.lurkmode = (tempconfig != 0);
   tempconfig=ini.getkey(OPTION_SECTION, "lurkonly", "0")[0];
-  if (tempconfig) {dialup.lurkmode=2; connectoften=0;}
+  if (tempconfig) {dialup.lurkmode=2; client->connectoften=0;}
   tempconfig=ini.getkey(OPTION_SECTION, "dialwhenneeded", "0")[0];
   if (tempconfig) dialup.dialwhenneeded=1;
   INIGETKEY(CONF_CONNECTNAME).copyto(dialup.connectionname,sizeof(dialup.connectionname));
   #endif
 
-  INIGETKEY(CONF_LOGNAME).copyto(logname, sizeof(logname));
-  INIGETKEY(CONF_CHECKPOINT).copyto(checkpoint_file[0], sizeof(checkpoint_file[0]));
+  INIGETKEY(CONF_LOGNAME).copyto(client->logname, sizeof(client->logname));
+  INIGETKEY(CONF_CHECKPOINT).copyto(client->checkpoint_file[0], sizeof(client->checkpoint_file[0]));
 
   #if 0 /*obsolete */
   INIGETKEY(CONF_CHECKPOINT2).copyto(checkpoint_file[1], sizeof(checkpoint_file[1]));
   #endif
 
-  ini.getkey(OPTION_SECTION,"in",in_buffer_file[0])[0].copyto(in_buffer_file[0],sizeof(in_buffer_file[0]));
-  ini.getkey(OPTION_SECTION,"out",out_buffer_file[0])[0].copyto(out_buffer_file[0],sizeof(out_buffer_file[0]));
-  ini.getkey(OPTION_SECTION,"in2",in_buffer_file[1])[0].copyto(in_buffer_file[1],sizeof(in_buffer_file[1]));
-  ini.getkey(OPTION_SECTION,"out2",out_buffer_file[1])[0].copyto(out_buffer_file[1],sizeof(out_buffer_file[1]));
-  ini.getkey(OPTION_SECTION,"pausefile",pausefile)[0].copyto(pausefile,sizeof(pausefile));
+  ini.getkey(OPTION_SECTION,"in",client->in_buffer_file[0])[0].copyto(client->in_buffer_file[0],sizeof(client->in_buffer_file[0]));
+  ini.getkey(OPTION_SECTION,"out",client->out_buffer_file[0])[0].copyto(client->out_buffer_file[0],sizeof(client->out_buffer_file[0]));
+  ini.getkey(OPTION_SECTION,"in2",client->in_buffer_file[1])[0].copyto(client->in_buffer_file[1],sizeof(client->in_buffer_file[1]));
+  ini.getkey(OPTION_SECTION,"out2",client->out_buffer_file[1])[0].copyto(client->out_buffer_file[1],sizeof(client->out_buffer_file[1]));
+  ini.getkey(OPTION_SECTION,"pausefile",client->pausefile)[0].copyto(client->pausefile,sizeof(client->pausefile));
 
   tempconfig=ini.getkey(OPTION_SECTION, "contestdone", "0")[0];
-  contestdone[0] = (tempconfig != 0);
+  client->contestdone[0] = (tempconfig != 0);
   tempconfig=ini.getkey(OPTION_SECTION, "contestdone2", "0")[0];
-  contestdone[1]= (tempconfig != 0);
+  client->contestdone[1]= (tempconfig != 0);
 
-  descontestclosed=ntohl(ini.getkey(OPTION_SECTION,"descontestclosed","0")[0]);
-  scheduledupdatetime=ntohl(ini.getkey(OPTION_SECTION,"scheduledupdatetime","0")[0]);
+  client->descontestclosed=ntohl(ini.getkey(OPTION_SECTION,"descontestclosed","0")[0]);
+  client->scheduledupdatetime=ntohl(ini.getkey(OPTION_SECTION,"scheduledupdatetime","0")[0]);
 
   #if defined(MMX_BITSLICER) || defined(MMX_RC5)
-    usemmx=ini.getkey(OPTION_SECTION, "usemmx", "1")[0];
+    client->usemmx=ini.getkey(OPTION_SECTION, "usemmx", "1")[0];
   #endif
 
   #if defined(NEEDVIRTUALMETHODS)
     InternalReadConfig(ini);
   #endif
 
-  ValidateConfig();
+  ValidateConfig(client);
 
   return( inierror ? -1 : 0 );
 }
 
 // --------------------------------------------------------------------------
 
-void Client::ValidateConfig( void ) //DO NOT PRINT TO SCREEN HERE!
+void ValidateConfig(Client *client) //DO NOT PRINT TO SCREEN HERE!
 {
   unsigned int cont_i;
   unsigned int maxthresh=(unsigned int)conf_options[CONF_THRESHOLDI].choicemax;
@@ -313,30 +321,28 @@ void Client::ValidateConfig( void ) //DO NOT PRINT TO SCREEN HERE!
   
   for (cont_i=0;cont_i<2;cont_i++)
     {
-    if ( inthreshold[cont_i] < conf_options[CONF_THRESHOLDI].choicemin ) 
-      inthreshold[cont_i] = conf_options[CONF_THRESHOLDI].choicemin;
-    if ( (unsigned int)inthreshold[cont_i] > maxthresh ) 
-      inthreshold[cont_i] = maxthresh;
-    if ( outthreshold[cont_i] < conf_options[CONF_THRESHOLDI].choicemin ) 
-      outthreshold[cont_i] = conf_options[CONF_THRESHOLDI].choicemin;
-    if ( (unsigned int)outthreshold[cont_i] > maxthresh ) 
-      outthreshold[cont_i] = maxthresh;
-    if ( outthreshold[cont_i] > inthreshold[cont_i] ) 
-      outthreshold[cont_i]=inthreshold[cont_i];
+    if ( client->inthreshold[cont_i] < conf_options[CONF_THRESHOLDI].choicemin ) 
+      client->inthreshold[cont_i] = conf_options[CONF_THRESHOLDI].choicemin;
+    if ( (unsigned int)client->inthreshold[cont_i] > maxthresh ) 
+      client->inthreshold[cont_i] = maxthresh;
+    if ( client->outthreshold[cont_i] < conf_options[CONF_THRESHOLDI].choicemin ) 
+      client->outthreshold[cont_i] = conf_options[CONF_THRESHOLDI].choicemin;
+    if ( (unsigned int)client->outthreshold[cont_i] > maxthresh ) 
+      client->outthreshold[cont_i] = maxthresh;
+    if ( client->outthreshold[cont_i] > client->inthreshold[cont_i] ) 
+      client->outthreshold[cont_i]=client->inthreshold[cont_i];
 
-    confopt_killwhitespace(in_buffer_file[cont_i]);
-    if (in_buffer_file[cont_i][0] == 0)
-      strcpy(in_buffer_file[cont_i], 
+    if (client->in_buffer_file[cont_i][0] == 0)
+      strcpy(client->in_buffer_file[cont_i], 
         conf_options[((cont_i==0)?(CONF_RC5IN):(CONF_DESIN))].defaultsetting );
 
-    confopt_killwhitespace(out_buffer_file[cont_i]);
-    if (confopt_isstringblank(out_buffer_file[cont_i]))
-    strcpy(out_buffer_file[cont_i], 
+    if (confopt_isstringblank(client->out_buffer_file[cont_i]))
+    strcpy(client->out_buffer_file[cont_i], 
      conf_options[((cont_i==0)?(CONF_RC5OUT):(CONF_DESOUT))].defaultsetting );
     }
 
-  if (blockcount < 0)
-    blockcount = -1;
+  if (client->blockcount < 0)
+    client->blockcount = -1;
 
   #if 0 /* obsolete */
   if ( timeslice < 1 ) 
@@ -348,65 +354,64 @@ void Client::ValidateConfig( void ) //DO NOT PRINT TO SCREEN HERE!
        niceness > conf_options[CONF_NICENESS].choicemax )
     niceness = conf_options[CONF_NICENESS].choicemin;
   #else
-  if ( priority < conf_options[CONF_NICENESS].choicemin || 
-       priority > conf_options[CONF_NICENESS].choicemax )
-    priority = conf_options[CONF_NICENESS].choicemin;
+  if ( client->priority < conf_options[CONF_NICENESS].choicemin || 
+       client->priority > conf_options[CONF_NICENESS].choicemax )
+    client->priority = conf_options[CONF_NICENESS].choicemin;
   #endif
 
-  if ( uuehttpmode < conf_options[CONF_UUEHTTPMODE].choicemin || 
-       uuehttpmode > conf_options[CONF_UUEHTTPMODE].choicemax ) 
-    uuehttpmode = 0;
-  if ( (u32)randomprefix < (u32)conf_options[CONF_RANDOMPREFIX].choicemin || 
-       (u32)randomprefix > (u32)conf_options[CONF_RANDOMPREFIX].choicemax) 
-    randomprefix=100;
-  if (smtpport < 0 || smtpport > 65535L) 
-    smtpport=25;
-  if (messagelen !=0 && messagelen < conf_options[CONF_MESSAGELEN].choicemin)
-    messagelen = conf_options[CONF_MESSAGELEN].choicemin;
-  if (( preferred_contest_id < 0 ) || ( preferred_contest_id > 1 )) 
-    preferred_contest_id = 1;
-  if (preferred_blocksize < conf_options[CONF_PREFERREDBLOCKSIZE].choicemin) 
-    preferred_blocksize = conf_options[CONF_PREFERREDBLOCKSIZE].choicemin;
-  if (preferred_blocksize > conf_options[CONF_PREFERREDBLOCKSIZE].choicemax) 
-    preferred_blocksize = conf_options[CONF_PREFERREDBLOCKSIZE].choicemax;
-  if ( minutes < 0 ) 
-    minutes=0;
-  if (nettimeout < conf_options[CONF_NETTIMEOUT].choicemin) 
-    nettimeout=conf_options[CONF_NETTIMEOUT].choicemin;
-  else if (nettimeout > conf_options[CONF_NETTIMEOUT].choicemax) 
-    nettimeout=conf_options[CONF_NETTIMEOUT].choicemax;
+  if ( client->uuehttpmode < conf_options[CONF_UUEHTTPMODE].choicemin || 
+       client->uuehttpmode > conf_options[CONF_UUEHTTPMODE].choicemax ) 
+    client->uuehttpmode = 0;
+  if ( (u32)client->randomprefix < (u32)conf_options[CONF_RANDOMPREFIX].choicemin || 
+       (u32)client->randomprefix > (u32)conf_options[CONF_RANDOMPREFIX].choicemax) 
+    client->randomprefix=100;
+  if (client->smtpport < 0 || client->smtpport > 65535L) 
+    client->smtpport=25;
+  if (client->messagelen !=0 && client->messagelen < conf_options[CONF_MESSAGELEN].choicemin)
+    client->messagelen = conf_options[CONF_MESSAGELEN].choicemin;
+  if (( client->preferred_contest_id < 0 ) || ( client->preferred_contest_id > 1 )) 
+    client->preferred_contest_id = 1;
+  if (client->preferred_blocksize < conf_options[CONF_PREFERREDBLOCKSIZE].choicemin) 
+    client->preferred_blocksize = conf_options[CONF_PREFERREDBLOCKSIZE].choicemin;
+  if (client->preferred_blocksize > conf_options[CONF_PREFERREDBLOCKSIZE].choicemax) 
+    client->preferred_blocksize = conf_options[CONF_PREFERREDBLOCKSIZE].choicemax;
+  if ( client->minutes < 0 ) 
+    client->minutes=0;
+  if (client->nettimeout < conf_options[CONF_NETTIMEOUT].choicemin) 
+    client->nettimeout=conf_options[CONF_NETTIMEOUT].choicemin;
+  else if (client->nettimeout > conf_options[CONF_NETTIMEOUT].choicemax) 
+    client->nettimeout=conf_options[CONF_NETTIMEOUT].choicemax;
 
-  confopt_killwhitespace(keyproxy);
-  if (keyproxy[0]==0 || strcmpi(keyproxy,"auto")==0 || strcmpi(keyproxy,"(auto)")==0)
-    keyproxy[0]=0;
-  if (keyproxy[0] == 0 || confopt_IsHostnameDNetHost( keyproxy ))
-    switch (uuehttpmode) {
-      case 1 : if (keyport != 23) keyport = 23; break;
-      case 2 :
-      case 3 : if (keyport != 80) keyport = 80; break;
-      default: if (keyport != 2064 && keyport != 3064) keyport = 2064; break;
+  confopt_killwhitespace(client->keyproxy);
+  if (client->keyproxy[0]==0 || strcmpi(client->keyproxy,"auto")==0 || strcmpi(client->keyproxy,"(auto)")==0)
+    client->keyproxy[0]=0;
+  if (client->keyproxy[0] == 0 || confopt_IsHostnameDNetHost( client->keyproxy ))
+    switch (client->uuehttpmode) {
+      case 1 : if (client->keyport != 23) client->keyport = 23; break;
+      case 2 : // Fallthrough intentional
+      case 3 : if (client->keyport != 80) client->keyport = 80; break;
+      default: if (client->keyport != 2064 && client->keyport != 3064) client->keyport = 2064; break;
     }
-  else if (uuehttpmode == 2 || uuehttpmode == 3)
-    keyport = 80; // for some reasons, the http code has port 80 hardwired in it
+  else if (client->uuehttpmode == 2 || client->uuehttpmode == 3)
+    client->keyport = 80; // for some reasons, the http code has port 80 hardwired in it
 
-  confopt_killwhitespace(httpproxy);
-  confopt_killwhitespace(smtpsrvr);
+  confopt_killwhitespace(client->httpproxy);
+  confopt_killwhitespace(client->smtpsrvr);
 
-  confopt_killwhitespace(id);
-  if (id[0]==0)
-    strcpy(id,"rc5@distributed.net");
+  confopt_killwhitespace(client->id);
+  if (client->id[0]==0)
+    strcpy(client->id,"rc5@distributed.net");
 
-  confopt_killwhitespace(logname);
-  if (logname[0]==0 || strcmp(logname,"none")==0)
-    logname[0]=0;
+  confopt_killwhitespace(client->logname);
+  if (client->logname[0]==0 || strcmp(client->logname,"none")==0)
+    client->logname[0]=0;
 
-  confopt_killwhitespace(pausefile);
-  if (confopt_isstringblank(pausefile) || strcmp(pausefile,"none")==0)
-    pausefile[0]=0;
+  if (confopt_isstringblank(client->pausefile) || strcmp(client->pausefile,"none")==0)
+    client->pausefile[0]=0;
 
-  confopt_killwhitespace(checkpoint_file[0]);
-  if (confopt_isstringblank(checkpoint_file[0]) || strcmp(checkpoint_file[0],"none")==0)
-    checkpoint_file[0][0]=0;
+  confopt_killwhitespace(client->checkpoint_file[0]);
+  if (confopt_isstringblank(client->checkpoint_file[0]) || strcmp(client->checkpoint_file[0],"none")==0)
+    client->checkpoint_file[0][0]=0;
 
   //validate numcpu is now in SelectCore(); //1998/06/21 cyrus
 
@@ -414,7 +419,7 @@ void Client::ValidateConfig( void ) //DO NOT PRINT TO SCREEN HERE!
   InternalValidateConfig();
 #endif
 
-  InitRandom2( id );
+  InitRandom2( client->id );
 }
 
 // --------------------------------------------------------------------------
@@ -422,11 +427,11 @@ void Client::ValidateConfig( void ) //DO NOT PRINT TO SCREEN HERE!
 //Some OS's write run-time stuff to the .ini, so we protect
 //the ini by only allowing that client's internal settings to change.
 
-int Client::WriteConfig(int writefull /* defaults to 0*/)  
+int WriteConfig(Client *client, int writefull /* defaults to 0*/)  
 {
   IniSection ini;
 
-  if ( ini.ReadIniFile( GetFullPathForFilename( inifilename ) ) )
+  if ( ini.ReadIniFile( GetFullPathForFilename( client->inifilename ) ) )
     writefull = 1;
     
   if (writefull != 0)
@@ -434,30 +439,30 @@ int Client::WriteConfig(int writefull /* defaults to 0*/)
     char buffer[64];
     IniRecord *tempptr;
 
-    INISETKEY( CONF_ID, id );
+    INISETKEY( CONF_ID, client->id );
   
     int default_threshold = atoi(conf_options[CONF_THRESHOLDI].defaultsetting);
     if (INIFIND(CONF_THRESHOLDI)!=NULL || 
-       inthreshold[0]!=default_threshold || outthreshold[0]!=default_threshold)
+       client->inthreshold[0]!=default_threshold || client->outthreshold[0]!=default_threshold)
       {
-      sprintf(buffer,"%d:%d",(int)inthreshold[0],(int)outthreshold[0]);
+      sprintf(buffer,"%d:%d",(int)client->inthreshold[0],(int)client->outthreshold[0]);
       INISETKEY( CONF_THRESHOLDI, buffer );
       }
-    if (inthreshold[1] == inthreshold[0] && outthreshold[1] == outthreshold[0])
+    if (client->inthreshold[1] == client->inthreshold[0] && client->outthreshold[1] == client->outthreshold[0])
       {
       tempptr = INIFIND(CONF_THRESHOLDI2);
       if (tempptr) tempptr->values.Erase();
       }
     else if (INIFIND(CONF_THRESHOLDI2)!=NULL || 
-      inthreshold[1]!=default_threshold || outthreshold[1]!=default_threshold )
+      client->inthreshold[1]!=default_threshold || client->outthreshold[1]!=default_threshold )
       {
-      sprintf(buffer,"%d:%d",(int)inthreshold[1],(int)outthreshold[1]);
+      sprintf(buffer,"%d:%d",(int)client->inthreshold[1],(int)client->outthreshold[1]);
       INISETKEY( CONF_THRESHOLDI2, buffer );
       }
   
-    if (minutes!=0 || INIFIND(CONF_HOURS)!=NULL)
+    if (client->minutes!=0 || INIFIND(CONF_HOURS)!=NULL)
       {
-      sprintf(buffer,"%u:%02u", (unsigned)(minutes/60), (unsigned)(minutes%60)); 
+      sprintf(buffer,"%u:%02u", (unsigned)(client->minutes/60), (unsigned)(client->minutes%60)); 
       INISETKEY( CONF_HOURS, buffer );
       }
     
@@ -465,36 +470,36 @@ int Client::WriteConfig(int writefull /* defaults to 0*/)
     if (niceness != 0 || ini.findfirst( OPTION_SECTION, "niceness" )!=NULL )
       INISETKEY( CONF_NICENESS, niceness );
     #else
-    if (priority != 0 || ini.findfirst( "processor usage", "priority")!=NULL )
-      ini.setrecord("processor usage", "priority", IniString(priority));
+    if (client->priority != 0 || ini.findfirst( "processor usage", "priority")!=NULL )
+      ini.setrecord("processor usage", "priority", IniString(client->priority));
     tempptr = ini.findfirst( OPTION_SECTION, "niceness");
     if (tempptr) tempptr->values.Erase();
     #endif
   
-    if (cputype!=-1 || INIFIND(CONF_CPUTYPE)!=NULL)
-      INISETKEY( CONF_CPUTYPE, cputype );
-    if (numcpu!=-1 || INIFIND(CONF_NUMCPU)!=NULL)
-      INISETKEY( CONF_NUMCPU, numcpu );
-    if (INIFIND(CONF_NUMCPU)!=NULL || preferred_blocksize!=
+    if (client->cputype!=-1 || INIFIND(CONF_CPUTYPE)!=NULL)
+      INISETKEY( CONF_CPUTYPE, client->cputype );
+    if (client->numcpu!=-1 || INIFIND(CONF_NUMCPU)!=NULL)
+      INISETKEY( CONF_NUMCPU, client->numcpu );
+    if (INIFIND(CONF_NUMCPU)!=NULL || client->preferred_blocksize!=
       (atoi(conf_options[CONF_PREFERREDBLOCKSIZE].defaultsetting)))
-     INISETKEY( CONF_PREFERREDBLOCKSIZE, preferred_blocksize );
-    if (noexitfilecheck!=0 || INIFIND(CONF_NOEXITFILECHECK)!=NULL)
-      INISETKEY( CONF_NOEXITFILECHECK, noexitfilecheck );
-    if (percentprintingoff!=0 || INIFIND(CONF_PERCENTOFF)!=NULL)
-      INISETKEY( CONF_PERCENTOFF, percentprintingoff );
-    if (connectoften!=0 || INIFIND(CONF_FREQUENT)!=NULL)
-      INISETKEY( CONF_FREQUENT, connectoften );
-    if (nodiskbuffers!=0 || INIFIND(CONF_NODISK)!=NULL)
-      INISETKEY( CONF_NODISK, IniString((nodiskbuffers)?("1"):("0")) );
-    if (nofallback!=0 || INIFIND(CONF_NOFALLBACK)!=NULL)
-      INISETKEY( CONF_NOFALLBACK, nofallback );
-    if (nettimeout!=atoi(conf_options[CONF_NETTIMEOUT].defaultsetting) || 
+     INISETKEY( CONF_PREFERREDBLOCKSIZE, client->preferred_blocksize );
+    if (client->noexitfilecheck!=0 || INIFIND(CONF_NOEXITFILECHECK)!=NULL)
+      INISETKEY( CONF_NOEXITFILECHECK, client->noexitfilecheck );
+    if (client->percentprintingoff!=0 || INIFIND(CONF_PERCENTOFF)!=NULL)
+      INISETKEY( CONF_PERCENTOFF, client->percentprintingoff );
+    if (client->connectoften!=0 || INIFIND(CONF_FREQUENT)!=NULL)
+      INISETKEY( CONF_FREQUENT, client->connectoften );
+    if (client->nodiskbuffers!=0 || INIFIND(CONF_NODISK)!=NULL)
+      INISETKEY( CONF_NODISK, IniString((client->nodiskbuffers)?("1"):("0")) );
+    if (client->nofallback!=0 || INIFIND(CONF_NOFALLBACK)!=NULL)
+      INISETKEY( CONF_NOFALLBACK, client->nofallback );
+    if (client->nettimeout!=atoi(conf_options[CONF_NETTIMEOUT].defaultsetting) || 
       INIFIND(CONF_NETTIMEOUT)!=NULL)
-      INISETKEY( CONF_NETTIMEOUT, nettimeout );
-    if (logname[0]!=0 || INIFIND(CONF_LOGNAME)!=NULL)
-      INISETKEY( CONF_LOGNAME, logname );
-    if (checkpoint_file[0][0]!=0 || INIFIND(CONF_CHECKPOINT)!=NULL)
-      INISETKEY( CONF_CHECKPOINT, checkpoint_file[0] );
+      INISETKEY( CONF_NETTIMEOUT, client->nettimeout );
+    if (client->logname[0]!=0 || INIFIND(CONF_LOGNAME)!=NULL)
+      INISETKEY( CONF_LOGNAME, client->logname );
+    if (client->checkpoint_file[0][0]!=0 || INIFIND(CONF_CHECKPOINT)!=NULL)
+      INISETKEY( CONF_CHECKPOINT, client->checkpoint_file[0] );
     if ((tempptr=ini.findfirst(OPTION_SECTION,"checkpoint2"))!=NULL)/*obsolete*/
       tempptr->values.Erase();
     if ((tempptr=ini.findfirst(OPTION_SECTION,"timeslice"))!=NULL)/*obsolete*/
@@ -503,14 +508,14 @@ int Client::WriteConfig(int writefull /* defaults to 0*/)
     if (timeslice != 65536 || INIFIND(CONF_TIMESLICE)!=NULL)
       INISETKEY( CONF_TIMESLICE, timeslice );
     #endif
-    if (pausefile[0]!=0 || INIFIND(CONF_PAUSEFILE)!=NULL)
-      INISETKEY( CONF_PAUSEFILE, pausefile );
+    if (client->pausefile[0]!=0 || INIFIND(CONF_PAUSEFILE)!=NULL)
+      INISETKEY( CONF_PAUSEFILE, client->pausefile );
 
   
-    INISETKEY( CONF_RC5IN, in_buffer_file[0]);
-    INISETKEY( CONF_RC5OUT, out_buffer_file[0]);
-    INISETKEY( CONF_DESIN, in_buffer_file[1]);
-    INISETKEY( CONF_DESOUT, out_buffer_file[1]);
+    INISETKEY( CONF_RC5IN, client->in_buffer_file[0]);
+    INISETKEY( CONF_RC5OUT, client->out_buffer_file[0]);
+    INISETKEY( CONF_DESIN, client->in_buffer_file[1]);
+    INISETKEY( CONF_DESOUT, client->out_buffer_file[1]);
 
   
     #if defined(MMX_BITSLICER) || defined(MMX_RC5)
@@ -531,30 +536,30 @@ int Client::WriteConfig(int writefull /* defaults to 0*/)
       tempptr->values.Erase();    
     if ((tempptr = ini.findfirst(OPTION_SECTION, "win95hidden"))!=NULL)
       tempptr->values.Erase();    
-    if (quietmode!=0 || INIFIND(CONF_QUIETMODE)!=NULL)
-      INISETKEY( CONF_QUIETMODE, ((quietmode)?("1"):("0")) );
+    if (client->quietmode!=0 || INIFIND(CONF_QUIETMODE)!=NULL)
+      INISETKEY( CONF_QUIETMODE, ((client->quietmode)?("1"):("0")) );
 
-    if (offlinemode != 0 && offlinemode != 1) /* old runbuffers */
+    if (client->offlinemode != 0 && client->offlinemode != 1) /* old runbuffers */
       {
-      blockcount = -1;
-      offlinemode = 0;
+      client->blockcount = -1;
+      client->offlinemode = 0;
       }
-    if (offlinemode != 0 || ini.findfirst(OPTION_SECTION, "runoffline")!=NULL)
-      ini.setrecord(OPTION_SECTION, "runoffline", IniString((offlinemode)?("1"):("0")));
-    if (blockcount != 0 || INIFIND(CONF_COUNT)!=NULL)
-      INISETKEY( CONF_COUNT, blockcount );
+    if (client->offlinemode != 0 || ini.findfirst(OPTION_SECTION, "runoffline")!=NULL)
+      ini.setrecord(OPTION_SECTION, "runoffline", IniString((client->offlinemode)?("1"):("0")));
+    if (client->blockcount != 0 || INIFIND(CONF_COUNT)!=NULL)
+      INISETKEY( CONF_COUNT, client->blockcount );
 
     if ((tempptr = ini.findfirst(OPTION_SECTION, "runbuffers"))!=NULL)
       tempptr->values.Erase();   /* obsolete - uses blockcount==-1 */
       
     if ((tempptr = ini.findfirst(OPTION_SECTION, "contestdone"))!=NULL)
       tempptr->values.Erase();
-    if (contestdone[0]) 
-      ini.setrecord(OPTION_SECTION, "contestdone",IniString(contestdone[0]));
+    if (client->contestdone[0]) 
+      ini.setrecord(OPTION_SECTION, "contestdone",IniString(client->contestdone[0]));
     if ((tempptr = ini.findfirst(OPTION_SECTION, "contestdone2"))!=NULL)
       tempptr->values.Erase();
-    if (contestdone[1]) 
-      ini.setrecord(OPTION_SECTION, "contestdone2",IniString(contestdone[1]));
+    if (client->contestdone[1]) 
+      ini.setrecord(OPTION_SECTION, "contestdone2",IniString(client->contestdone[1]));
 
     #if defined(LURK)
     if (dialup.lurkmode==1)
@@ -578,9 +583,9 @@ int Client::WriteConfig(int writefull /* defaults to 0*/)
     if ((tempptr = ini.findfirst( "networking", "autofindkeyserver"))!=NULL)
       tempptr->values.Erase();
 
-    INISETKEY( CONF_UUEHTTPMODE, uuehttpmode );
+    INISETKEY( CONF_UUEHTTPMODE, client->uuehttpmode );
     
-    if (uuehttpmode <= 1)
+    if (client->uuehttpmode <= 1)
       {
       // wipe out httpproxy and httpport & httpid
       tempptr = INIFIND( CONF_HTTPPROXY );
@@ -592,13 +597,13 @@ int Client::WriteConfig(int writefull /* defaults to 0*/)
       }
     else
       {
-      INISETKEY( CONF_HTTPPROXY, httpproxy );
-      INISETKEY( CONF_HTTPPORT, httpport );
-      INISETKEY( CONF_HTTPID, httpid);
+      INISETKEY( CONF_HTTPPROXY, client->httpproxy );
+      INISETKEY( CONF_HTTPPORT, client->httpport );
+      INISETKEY( CONF_HTTPID, client->httpid);
       }
   
-    if (confopt_isstringblank(keyproxy) || 
-	(autofindkeyserver && confopt_IsHostnameDNetHost(keyproxy)))
+    if (confopt_isstringblank(client->keyproxy) || 
+	(client->autofindkeyserver && confopt_IsHostnameDNetHost(client->keyproxy)))
       {
       //autokeyserver is enabled (because its on AND its a dnet host), so delete 
       //the old ini keys so that old inis stay compatible. We could at this 
@@ -608,21 +613,21 @@ int Client::WriteConfig(int writefull /* defaults to 0*/)
       }
     else 
       {
-      if (confopt_IsHostnameDNetHost(keyproxy))
+      if (confopt_IsHostnameDNetHost(client->keyproxy))
         ini.setrecord("networking", "autofindkeyserver", IniString("0"));
-      INISETKEY( CONF_KEYPROXY, keyproxy );
+      INISETKEY( CONF_KEYPROXY, client->keyproxy );
       }
     // write keyport only if it differs from the default for the given uuehttpmode
-    if (((uuehttpmode == 0 || uuehttpmode == 4 || uuehttpmode == 5) && keyport != 2064) || 
-	((uuehttpmode == 2 || uuehttpmode == 3) && keyport != 80) ||
-	(uuehttpmode == 1 && keyport != 23))
-      INISETKEY( CONF_KEYPORT, keyport );
+    if (((client->uuehttpmode == 0 || client->uuehttpmode == 4 || client->uuehttpmode == 5) && client->keyport != 2064) || 
+	((client->uuehttpmode == 2 || client->uuehttpmode == 3) && client->keyport != 80) ||
+	(client->uuehttpmode == 1 && client->keyport != 23))
+      INISETKEY( CONF_KEYPORT, client->keyport );
     else {
       tempptr = ini.findfirst(OPTION_SECTION, "keyport");
       if (tempptr) tempptr->values.Erase();
     }
   
-    if (messagelen == 0)
+    if (client->messagelen == 0)
       {
       tempptr = INIFIND( CONF_MESSAGELEN );
       if (tempptr) tempptr->values.Erase();
@@ -637,11 +642,11 @@ int Client::WriteConfig(int writefull /* defaults to 0*/)
       }
     else
       {  
-      INISETKEY( CONF_MESSAGELEN, messagelen );
-      INISETKEY( CONF_SMTPSRVR, smtpsrvr );
-      INISETKEY( CONF_SMTPPORT, smtpport );
-      INISETKEY( CONF_SMTPFROM, smtpfrom );
-      INISETKEY( CONF_SMTPDEST, smtpdest );
+      INISETKEY( CONF_MESSAGELEN, client->messagelen );
+      INISETKEY( CONF_SMTPSRVR, client->smtpsrvr );
+      INISETKEY( CONF_SMTPPORT, client->smtpport );
+      INISETKEY( CONF_SMTPFROM, client->smtpfrom );
+      INISETKEY( CONF_SMTPDEST, client->smtpdest );
       }
     } /* if (writefull != 0) */
   
@@ -656,10 +661,10 @@ int Client::WriteConfig(int writefull /* defaults to 0*/)
     tempptr->values.Erase();    
   if ((tempptr = ini.findfirst(OPTION_SECTION, "win95hidden"))!=NULL)
     tempptr->values.Erase();    
-  if (quietmode!=0 || INIFIND(CONF_QUIETMODE)!=NULL)
-    INISETKEY( CONF_QUIETMODE, ((quietmode)?("1"):("0")) );
+  if (client->quietmode!=0 || INIFIND(CONF_QUIETMODE)!=NULL)
+    INISETKEY( CONF_QUIETMODE, ((client->quietmode)?("1"):("0")) );
 
-  return( ini.WriteIniFile( GetFullPathForFilename( inifilename ) ) ? -1 : 0 );
+  return( ini.WriteIniFile( GetFullPathForFilename( client->inifilename ) ) ? -1 : 0 );
 }
 
 // --------------------------------------------------------------------------
