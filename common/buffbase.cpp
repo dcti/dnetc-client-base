@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.46 2000/11/11 13:15:41 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.47 2000/11/21 03:27:34 cyp Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -963,7 +963,7 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
     if (cont_i < CONTEST_COUNT && /* not user disabled */
        IsProblemLoadPermitted(-1, cont_i)) /* core not disabled */
     {
-      int isclosed = 0;
+      int fetchable = 1, flushable = 1;
       char proj_flags = client->project_flags[cont_i];
       TRACE_OUT((0,"proj_flags[cont_i=%d] = 0x%x\n", cont_i, proj_flags));
       if (!ignore_closed_flags && 
@@ -999,48 +999,50 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
         } /* if (closed_expired < 0) (undetermined) */
         TRACE_OUT((0,"closed_expired = %d\n", closed_expired));
         if (!closed_expired)
-          isclosed = 1;
-      }	  
-      TRACE_OUT((0,"contest %d, closed=%d\n", cont_i, isclosed));
-      if (!isclosed)
-      {
-        if (check_flush && !need_flush)
         {
-          if (GetBufferCount( client, cont_i, 1 /* use_out_file */, NULL ) > 0)
-          {
-            need_flush = 1;
-            if (either_or)    /* either criterion satisfied ... */
-              need_fetch = 1; /* ... fullfills both criteria */
-          }    
-          TRACE_OUT((0,"1. contest %d, need_flush = %d need_fetch = %d\n", cont_i, need_flush, need_fetch));
-        }      
-        if (check_fetch && !need_fetch)
-        {
-          if (!BufferAssertIsBufferFull(client,cont_i))
-          {
-            unsigned long swucount;
-            long pktcount = GetBufferCount( client, cont_i, 0, &swucount );
-            if (pktcount <= 0) /* buffer is empty */
-            {
-              need_fetch = 1;
-            }
-            else if (fill_even_if_not_totally_empty)
-            {
-              if (swucount == 0) /* count not supported */
-                swucount = pktcount * 100; /* >= 1.00 SWU's per packet */
-              if (swucount < ClientGetInThreshold( client, cont_i, 0 ))
-              {     
-                need_fetch = 1;
-              }  
-            }
-          }      
-          if (need_fetch && either_or) /* either criterion satisfied ... */
-            need_flush = 1;            /* ... fulfills both criteria */
-          TRACE_OUT((0,"2. contest %d, need_flush = %d need_fetch = %d\n", cont_i, need_flush, need_fetch));
+          if ((proj_flags & PROJECTFLAGS_CLOSED) != 0)
+            fetchable = flushable = 0;
+          else /* suspended */
+            fetchable = 0;
         }
-        if (need_flush && need_fetch)
-          break;
-      } /* if (!isclosed) */
+      }	  
+      TRACE_OUT((0,"contest %d, fetchable=%d flushable=%d\n", cont_i, fetchable, flushable));
+      if (check_flush && !need_flush && flushable)
+      {
+        if (GetBufferCount( client, cont_i, 1 /* use_out_file */, NULL ) > 0)
+        {
+          need_flush = 1;
+          if (either_or)    /* either criterion satisfied ... */
+            need_fetch = 1; /* ... fullfills both criteria */
+        }    
+        TRACE_OUT((0,"1. contest %d, need_flush = %d need_fetch = %d\n", cont_i, need_flush, need_fetch));
+      }      
+      if (check_fetch && !need_fetch && fetchable)
+      {
+        if (!BufferAssertIsBufferFull(client,cont_i))
+        {
+          unsigned long swucount;
+          long pktcount = GetBufferCount( client, cont_i, 0, &swucount );
+          if (pktcount <= 0) /* buffer is empty */
+          {
+            need_fetch = 1;
+          }
+          else if (fill_even_if_not_totally_empty)
+          {
+            if (swucount == 0) /* count not supported */
+              swucount = pktcount * 100; /* >= 1.00 SWU's per packet */
+            if (swucount < ClientGetInThreshold( client, cont_i, 0 ))
+            {     
+              need_fetch = 1;
+            }  
+          }
+        }      
+        if (need_fetch && either_or) /* either criterion satisfied ... */
+          need_flush = 1;            /* ... fulfills both criteria */
+        TRACE_OUT((0,"2. contest %d, need_flush = %d need_fetch = %d\n", cont_i, need_flush, need_fetch));
+      }
+      if (need_flush && need_fetch)
+        break;
     } /* if (i < CONTEST_COUNT) */ /* not disabled */
   } /* for (;cont_i < cont_count; cont_i++) */
 
