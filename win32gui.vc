@@ -99,6 +99,9 @@ BASE_OBJS =                    \
 	$(OUTPUTPATH)/rg6x86.obj  \
 	$(OUTPUTPATH)/rc5-rgk6.obj \
 	$(OUTPUTPATH)/rc5mmx.obj   \
+        $(OUTPUTPATH)/deseval.obj \
+        $(OUTPUTPATH)/des-slice.obj \
+        $(OUTPUTPATH)/sboxes-kwan4.obj \
 	$(OUTPUTPATH)/w32pre.obj   \
 	$(OUTPUTPATH)/guicons.obj \
 !ifndef WIN32S
