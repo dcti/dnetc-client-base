@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.8 2003/04/28 07:35:55 andreasb Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.9 2003/08/09 12:35:26 mweiser Exp $"
 
 #include "cputypes.h"
 
@@ -299,24 +299,44 @@
   #include <fcntl.h> /* O_RDWR etc */
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_NEXTSTEP)
-  #include <bsd/sys/time.h>
-  #include <sys/types.h>
-  #include <fcntl.h>
-  #include <libc.h>
-  #include <next_sup.h>                         /* strdup() etc. */
+  #include <netinet/in.h> /* ntohl/htonl/ntohs/htons */
+  #include <mach/mach.h>  /* host_self, host_kernel_version */
+  #include <libc.h>       /* access, geteuid, ... */
+  #include <next_sup.h>   /* strdup */
+
+  /* defaults in header are (void (*)())0/1 which make gcc complain */
+  #undef  SIG_DFL
+  #undef  SIG_IGN
+  #define SIG_DFL (void (*)(int))0
+  #define SIG_IGN (void (*)(int))1
+
+  #define setsid() setpgrp(0, getpid())         /* cmdline.cpp */
+
+  /* the following are present in NeXTstep but not defined in system
+  ** headers or for some reason marked as POSIX-subsystem only */
   #define       S_IRUSR         0x400           /* read permission, */
   #define       S_IWUSR         0x200           /* write permission, */
   #define       S_IRGRP         0x040           /* read permission, group */
   #define       S_IWGRP         0x020           /* write permission, group */
-  #define       CLOCKS_PER_SEC  CLK_TCK
-  #undef        SIG_DFL
-  #undef        SIG_IGN
-  #define       SIG_DFL         (void (*)(int))0
-  #define       SIG_IGN         (void (*)(int))1
+
+  typedef int pid_t;
+
   extern "C" int sleep(unsigned int seconds);
-  extern "C" int usleep(unsigned int useconds);
   extern "C" void tzset(void);
-  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
+  extern "C" int getppid(void);            /* triggers.cpp */
+  extern "C" int syscall(int number, ...); /* for uname */
+
+  #define SYS_uname       182
+  #define _SYS_NAMELEN    32
+  struct utsname {
+    char sysname[_SYS_NAMELEN];  /* Name of OS */
+    char nodename[_SYS_NAMELEN]; /* Name of this node */
+    char release[_SYS_NAMELEN];  /* Release level of */
+    char version[_SYS_NAMELEN];  /* Version level of */
+    char machine[_SYS_NAMELEN];  /* Hardware name */
+  };
+
+  #define uname(x) syscall(SYS_uname, x)   /* client.cpp */
 #endif
 
 #endif /* __BASEINCS_H__ */
