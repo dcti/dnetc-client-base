@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.15 2004/01/08 00:44:25 oliver Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.16 2004/01/09 01:23:32 piru Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -42,9 +42,13 @@ return "@(#)$Id: problem.cpp,v 1.177.2.15 2004/01/08 00:44:25 oliver Exp $"; }
 #else
   #include <stddef.h> /* offsetof */
 #endif
+
 #if (CLIENT_OS == OS_MORPHOS)
-  #include <exec/tasks.h>
-  #include <emul/emulinterface.h>
+  #define SAVE_CLIENT_OS_CONTEXT    APTR *__ehptr = (APTR *) (((IPTR) FindTask(NULL)->tc_ETask) + 130); *__ehptr = MyEmulHandle;
+  #define RESTORE_CLIENT_OS_CONTEXT *__ehptr = NULL;
+#else
+  #define SAVE_CLIENT_OS_CONTEXT
+  #define RESTORE_CLIENT_OS_CONTEXT
 #endif
 
 /* ------------------------------------------------------------------- */
@@ -1616,15 +1620,11 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
 
       *keyscheckedP = keystocheck; /* Pass 'keystocheck', get back 'keyschecked'*/
 
-#if (CLIENT_OS == OS_MORPHOS)
-      APTR *ehptr = (APTR *) (((IPTR) FindTask(NULL)->tc_ETask) + 130);
-      *ehptr = MyEmulHandle;
-#endif
+      SAVE_CLIENT_OS_CONTEXT
+
       rescode = (*(thisprob->pub_data.unit_func.gen_72))(&thisprob->priv_data.rc5_72unitwork,keyscheckedP,thisprob->priv_data.core_membuffer);
 
-#if (CLIENT_OS == OS_MORPHOS)
-      *ehptr = NULL;
-#endif
+      RESTORE_CLIENT_OS_CONTEXT
 
       if (rescode >= 0 && thisprob->pub_data.cruncher_is_asynchronous) /* co-processor or similar */
       {

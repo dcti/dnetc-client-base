@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.39 2004/01/08 20:20:23 oliver Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.40 2004/01/09 01:23:32 piru Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -827,18 +827,20 @@ static long __GetRawProcessorID(const char **cpuname)
     }
     switch (cpu)
     {
-      case CPU_603:  detectedtype = 0x0003; break;
-      case CPU_603e: detectedtype = 0x0006; break;
-      case CPU_603p: detectedtype = 0x0006; break;
-      case CPU_604:  detectedtype = 0x0004; break;
-      case CPU_604e: detectedtype = 0x0009; break;
-      case 0x0008:   // G3
+      case 0x0003:   // 603
+      case 0x0004:   // 604
+      case 0x0006:   // 603e
+      case 0x0007:   // 603r/603ev
+      case 0x0008:   // 740/750 (G3)
+      case 0x0009:   // 604e
+      case 0x000A:   // 604ev
       case 0x000C:   // 7400 (G4)
       case 0x8000:   // 7450 (G4)
       case 0x8001:   // 7455 (G4)
       case 0x8002:   // 7457/7447 (G4)
       case 0x8003:   // 7447A (G4)
       case 0x800C:   // 7410 (G4)
+      case 0x0039:   // 970 (G5)
       detectedtype = cpu; break;
       default: // some PPC processor that we don't know about
                // set the tag (so that the user can tell us), but return 0

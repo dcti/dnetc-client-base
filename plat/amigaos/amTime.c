@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amTime.c,v 1.2.4.2 2004/01/08 21:00:48 oliver Exp $
+ * $Id: amTime.c,v 1.2.4.3 2004/01/09 01:23:32 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -59,7 +59,16 @@
 #endif
 
 static int GMTOffset = -9999;
-struct Device *TimerBase = NULL;
+
+#ifdef __MORPHOS__
+#define TIMERBASETYPE  struct Library *
+#define LOCALEBASETYPE struct Library *
+#else
+#define TIMERBASETYPE  struct Device *
+#define LOCALEBASETYPE struct LocaleBase *
+#endif
+
+TIMERBASETYPE TimerBase = NULL;
 
 #ifdef __OS3PPC__
 
@@ -99,7 +108,7 @@ extern struct Library *DnetcBase;
 
 /* Local prototypes */
 static int GetGMTOffset(void);
-struct Device *OpenTimer(BOOL isthread);
+TIMERBASETYPE OpenTimer(BOOL isthread);
 VOID CloseTimer(VOID);
 BOOL GlobalTimerInit(VOID);
 VOID GlobalTimerDeinit(VOID);
@@ -148,9 +157,10 @@ VOID CloseTimer(VOID)
    }
 }
 
-struct Device *OpenTimer(BOOL isthread)
+
+TIMERBASETYPE OpenTimer(BOOL isthread)
 {
-   struct Device *timerbase = NULL;
+   TIMERBASETYPE timerbase = NULL;
    struct TimerResources *res;
 
    if ((res = (struct TimerResources *)AllocVec(sizeof(struct TimerResources),MEMF_CLEAR|MEMF_PUBLIC))) {
@@ -166,7 +176,7 @@ struct Device *OpenTimer(BOOL isthread)
          if ((res->tr_TimeReq = (struct timerequest *)CreateIORequest(res->tr_TimePort,sizeof(struct timerequest)))) {
             if (!OpenDevice("timer.device",UNIT_VBLANK,(struct IORequest *)res->tr_TimeReq,0)) {
                res->tr_TimerDevOpen = TRUE;
-               timerbase = res->tr_TimeReq->tr_node.io_Device;
+               timerbase = (TIMERBASETYPE) res->tr_TimeReq->tr_node.io_Device;
 	    }
          }
       }
@@ -395,7 +405,7 @@ static int GetGMTOffset(void)
    int gmtoffset = 0;
 
    if (!LocaleBase) {
-      LocaleBase = (struct LocaleBase *)OpenLibrary("locale.library",38L);
+      LocaleBase = (LOCALEBASETYPE)OpenLibrary("locale.library",38L);
       #ifdef __amigaos4__
       if (LocaleBase) {
          if (!(ILocale = (struct LocaleIFace *)GetInterface( (struct Library *)LocaleBase, "main", 1L, NULL ))) {

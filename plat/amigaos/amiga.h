@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amiga.h,v 1.2.4.2 2004/01/08 21:00:48 oliver Exp $
+ * $Id: amiga.h,v 1.2.4.3 2004/01/09 01:23:32 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -24,8 +24,6 @@ extern "C" {
       #define __END_DECLS
       #define __P(p) p
       #define NO_MIAMI
-   #elif !defined(AFF_68060)
-      #define AFF_68060 (1L<<7)
    #endif
 
    #if defined(__PPC__) && !defined(__amigaos4__) && !defined(__MORPHOS__)
@@ -37,6 +35,11 @@ extern "C" {
    #endif
 
    #include <exec/exec.h>
+   #include <exec/execbase.h>
+
+   #if !defined(AFF_68060)
+      #define AFF_68060 (1L<<7)
+   #endif
 
    #ifdef __OS3PPC__
       #ifndef __POWERUP__
@@ -64,10 +67,8 @@ extern "C" {
          #endif /* !NO_PPCINLINE_STDARG */
       #endif
    #elif defined(__MORPHOS__)
-      #include <proto/ppc.h>
-      #include <ppclib/ppc.h>
-      #include <ppclib/tasks.h>
-      #include <ppclib/message.h>
+      #include <exec/tasks.h>
+      #include <emul/emulinterface.h>
    #endif
 
    #include <proto/exec.h>

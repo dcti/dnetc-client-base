@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amSupport.c,v 1.2.4.4 2004/01/08 21:00:48 oliver Exp $
+ * $Id: amSupport.c,v 1.2.4.5 2004/01/09 01:23:32 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -28,6 +28,17 @@
 #ifdef __OS3PPC__
 #pragma pack(2)
 #endif
+
+#if __MORPHOS__
+#define USE_RESETHANDLER 1
+#endif
+
+#if USE_RESETHANDLER
+#include <exec/io.h>
+#include <devices/keyboard.h>
+#include <devices/timer.h>
+#endif
+
 
 #include <workbench/startup.h>
 #include <proto/locale.h>
@@ -100,6 +111,161 @@ const char *amigaGetOSVersion(void)
    return osver[ver-36];
 }
 #endif
+
+#if USE_RESETHANDLER
+
+struct rhdata
+{
+  struct ExecBase   *SysBase;
+  struct Task       *Self;
+  struct MsgPort    *msgport;
+  struct IOStdReq   *ioreq;
+  struct timerequest timereq;
+  struct Interrupt   is;
+  int                handleradded;
+  int                rebooting;
+  int                timing;
+};
+
+static struct rhdata _rhdata, *rhdata = &_rhdata;
+
+
+static void native_resethandler(struct rhdata *rhdata)
+{
+  struct ExecBase *SysBase = rhdata->SysBase;
+
+  /* Indicate we're rebooting... */
+  rhdata->rebooting = TRUE;
+
+  /* Ask ourself to terminate. */
+  Signal(rhdata->Self, SIGBREAKF_CTRL_C);
+}
+
+#ifdef __MORPHOS__
+static void gate_resethandler(void)
+{
+  struct rhdata *rhdata = (struct rhdata *) REG_A1;
+  native_resethandler(rhdata);
+}
+static struct EmulLibEntry rhgate  = {TRAP_LIBNR, 0, gate_resethandler};
+#define resethandler_code  &rhgate
+
+#else
+
+#error "TODO: You must implement resethandler_code for your OS"
+
+#endif
+
+static void rem_resethandler(void);
+
+static int add_resethandler(void)
+{
+  int ok = FALSE;
+
+  bzero(rhdata, sizeof(*rhdata));
+  rhdata->SysBase = SysBase;
+  rhdata->Self    = FindTask(NULL);
+  rhdata->msgport = CreateMsgPort();
+  if (rhdata->msgport)
+  {
+    rhdata->ioreq = (struct IOStdReq *) CreateIORequest(rhdata->msgport, sizeof(struct IOStdReq));
+    if (rhdata->ioreq)
+    {
+      if (OpenDevice("keyboard.device", 0, (struct IORequest *) rhdata->ioreq, 0) == 0)
+      {
+        rhdata->is.is_Node.ln_Type = NT_INTERRUPT;
+        rhdata->is.is_Node.ln_Pri  = -128;
+        rhdata->is.is_Node.ln_Name = "distributed.net client";
+        rhdata->is.is_Data         = (APTR) rhdata;
+        rhdata->is.is_Code         = (void (*)(void)) resethandler_code;
+
+        rhdata->ioreq->io_Command = KBD_ADDRESETHANDLER;
+        rhdata->ioreq->io_Data    = (APTR) &rhdata->is;
+        DoIO((struct IORequest *) rhdata->ioreq);
+
+        rhdata->handleradded = TRUE;
+
+        ok = TRUE;
+      }
+    }
+  }
+
+  if (!ok)
+  {
+    rem_resethandler();
+  }
+
+  return ok;
+}
+
+static void rem_resethandler(void)
+{
+  if (rhdata->ioreq)
+  {
+    if (rhdata->handleradded)
+    {
+      if (rhdata->rebooting)
+      {
+        rhdata->timereq.tr_node.io_Message.mn_Node.ln_Type = NT_REPLYMSG;
+        rhdata->timereq.tr_node.io_Message.mn_Node.ln_Pri  = 0;
+        rhdata->timereq.tr_node.io_Message.mn_ReplyPort    = rhdata->msgport;
+        rhdata->timereq.tr_node.io_Message.mn_Length       = sizeof(rhdata->timereq);
+
+        if (OpenDevice(TIMERNAME, UNIT_VBLANK, &rhdata->timereq.tr_node, 0) == 0)
+        {
+          rhdata->timereq.tr_node.io_Command = TR_ADDREQUEST;
+          rhdata->timereq.tr_time.tv_secs    = 3;
+          rhdata->timereq.tr_time.tv_micro   = 0;
+
+          SendIO(&rhdata->timereq.tr_node);
+          rhdata->timing = TRUE;
+        }
+
+        return;
+      }
+
+      rhdata->handleradded = FALSE;
+
+      rhdata->ioreq->io_Command = KBD_REMRESETHANDLER;
+      rhdata->ioreq->io_Data    = (APTR) &rhdata->is;
+      DoIO((struct IORequest *) rhdata->ioreq);
+
+      CloseDevice((struct IORequest *) rhdata->ioreq);
+    }
+
+    DeleteIORequest((struct IORequest *) rhdata->ioreq); rhdata->ioreq = NULL;
+  }
+
+  if (rhdata->msgport)
+  {
+    DeleteMsgPort(rhdata->msgport); rhdata->msgport = NULL;
+  }
+}
+
+static void finish_resethandler(void)
+{
+  if (rhdata->rebooting)
+  {
+    if (rhdata->timing)
+    {
+      /* Wait until 3 seconds has passed allowing disk buffers to flush. */
+      WaitIO(&rhdata->timereq.tr_node);
+      CloseDevice(&rhdata->timereq.tr_node);
+    }
+
+    /* Tell system it's ok to reboot now. */
+    rhdata->ioreq->io_Command = KBD_RESETHANDLERDONE;
+    rhdata->ioreq->io_Data    = (APTR) &rhdata->is;
+    DoIO((struct IORequest *) rhdata->ioreq);
+
+    rhdata->rebooting = FALSE;
+    rem_resethandler();
+  }
+}
+
+
+#endif
+
 
 int amigaInit(int *argc, char **argv[])
 {
@@ -227,11 +393,19 @@ int amigaInit(int *argc, char **argv[])
    }
    #endif
 
+   #if USE_RESETHANDLER
+   add_resethandler();
+   #endif
+
    return(done);
 }
 
 void amigaExit(void)
 {
+   #if USE_RESETHANDLER
+   rem_resethandler();
+   #endif
+
    #ifndef NO_GUI
    amigaCloseNewConsole();
    amigaGUIDeinit();
@@ -279,6 +453,10 @@ void amigaExit(void)
       RemPort(TriggerPort);
       DeleteMsgPort(TriggerPort);
    }
+   #endif
+
+   #if USE_RESETHANDLER
+   finish_resethandler();
    #endif
 }
 
@@ -411,10 +589,10 @@ int amigaPutTriggerSigs(ULONG trigs)
                   PPCWaitPort(replyport);
                   PPCGetMessage(replyport);
                   done = 1;
-	       }
-	    }
+               }
+            }
             PPCReleasePort(port);
-	 }
+         }
          PPCDeleteMessage(msg);
       }
       PPCDeletePort(replyport);
