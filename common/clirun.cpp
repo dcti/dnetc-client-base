@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.9  1998/10/05 02:12:12  cyp
+// Removed explicit time stamping ([%s],Time()). This is now done automatically
+// by Log...(). Added LogSetTimeStampingMode(1); at the top of Client::Run().
+//
 // Revision 1.8  1998/10/03 03:44:10  cyp
 // Removed pthread yield section completely. Changed win16 SurrenderCPU()
 // function to a straight win api Yield() call. Fixed a re-RegPollProc()
@@ -40,7 +44,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.8 1998/10/03 03:44:10 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.9 1998/10/05 02:12:12 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -59,7 +63,6 @@ return "@(#)$Id: clirun.cpp,v 1.8 1998/10/03 03:44:10 cyp Exp $"; }
 #include "buffwork.h"
 #include "clirate.h"
 #include "clitime.h"   //CliTimer(), Time()/(CliGetTimeString(NULL,1))
-#define Time() (CliGetTimeString(NULL,1))
 #include "logstuff.h"  //Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "clisrate.h"
 #include "clicdata.h"
@@ -95,10 +98,9 @@ static int checkifbetaexpired(void)
   if (currenttime.tv_sec > expirationtime.tv_sec ||
       currenttime.tv_sec < (BETA_EXPIRATION_TIME - 1814400))
     {
-    Log("[%s] This beta release expired on %s. Please\n"
-        " %s  download a newer beta, or run a standard-release client.\n", 
-        CliGetTimeString(&currenttime,1), CliGetTimeString(&expirationtime,1), 
-        CliGetTimeString(NULL,0) );
+    Log("This beta release expired on %s. Please\n"
+        "download a newer beta, or run a standard-release client.\n", 
+        CliGetTimeString(&expirationtime,1) );
     return 1;
     }
 #endif
@@ -251,7 +253,7 @@ static void yield_pump( void *tv_p )
     else if ((++pumps_without_run) > 5)
       {
       pumps_without_run = 0;
-      LogScreen("[%s] Yielding too fast. Doubled pump interval.\n", Time()); 
+      LogScreen("Yielding too fast. Doubled pump interval.\n"); 
       struct timeval *tv = (struct timeval *)tv_p;
       tv->tv_usec<<=1; tv->tv_sec<<=1;
       if (tv->tv_usec>1000000)
@@ -259,7 +261,7 @@ static void yield_pump( void *tv_p )
       }
     if (RegPolledProcedure(yield_pump, tv_p, NULL, 32 ) == -1)
       {         //should never happen, but better safe than sorry...
-      LogScreen("[%s] Panic! Unable to re-initialize yield pump\n", Time()); 
+      LogScreen("Panic! Unable to re-initialize yield pump\n"); 
       RaiseExitRequestTrigger();
       }
     }
@@ -358,7 +360,7 @@ fflush(stdout);
     else if (hgrain_run_count == 0) /* badly lagging or timer bad */
       {
       if (((fubared_run_count++) & 0xFF ) == 1)
-        Log("[%s] Running inefficiently. Timer is possibly bad.\n", Time() );
+        Log("Running inefficiently. Timer is possibly bad.\n");
       tslice_table[0] = MIN_SANE_TIMESLICE_RC5;
       tslice_table[1] = MIN_SANE_TIMESLICE_DES;
       }
@@ -833,6 +835,8 @@ int Client::Run( void )
     u32 connectrequested = 0;
   #endif
 
+  LogSetTimeStampingMode(1); /* turn on automatic timestamps */
+
   // =======================================
   // Notes:
   //
@@ -842,7 +846,7 @@ int Client::Run( void )
   // Code order:
   //
   // Initialization: (order is important, 'F' symbolizes code that can fail)
-  // 1. F  SelectCore() (because those messages are not timestamped)
+  // 1. F  SelectCore()
   // 2.    CkpointToBufferInput() (it is not affected by TimeToQuit)
   // 3.    Determine number of problems (needs select core)
   // 4. F  Load (or try to load) that many problems (needs number of problems)
@@ -887,9 +891,9 @@ int Client::Run( void )
       {
       s32 recovered = CkpointToBufferInput( (u8)cont_i ); 
       if (recovered != 0) 
-        Log( "[%s] Recovered %d block%s from %s checkpoint file\n", Time(),
+        Log( "Recovered %d block%s from %s checkpoint file\n",
              recovered, ((recovered==1)?(""):("s")), 
-             ((cont_i==0)?("RC5"):("DES")) );
+             CliGetContestNameFromID( cont_i ) ); //clicdata.cpp
       }
     }
 
@@ -934,7 +938,7 @@ int Client::Run( void )
     {
     planned_problem_count = load_problem_count;
     if ( load_problem_count > 1 )
-      Log( "[%s] Loading two blocks per thread...\n", Time() );
+      Log( "Loading two blocks per thread...\n" );
     load_problem_count = LoadSaveProblems( load_problem_count, 0 );
     numcputemp = (load_problem_count + 1) >> 1;
     if (load_problem_count == 0)
@@ -950,9 +954,8 @@ int Client::Run( void )
 
   if (!TimeToQuit && contestdone[0] && contestdone[1])
     {
-    Log( "[%s] Both contests are marked as closed. This may mean that\n"
-         " %s  the contests are over. Check at http://www.distributed.net/\n",
-         Time(), CliGetTimeString(NULL,0) );
+    Log( "Both contests are marked as closed. This may mean that\n"
+         "the contests are over. Check at http://www.distributed.net/\n" );
     TimeToQuit = 1;
     exitcode = -2;
     }
@@ -963,7 +966,7 @@ int Client::Run( void )
 
   if (!TimeToQuit && InitializePolling())
     {
-    Log( "[%s] Unable to initialize async subsystem.\n", Time() );
+    Log( "Unable to initialize async subsystem.\n");
     TimeToQuit = 1;
     exitcode = -1;
     }
@@ -991,7 +994,7 @@ int Client::Run( void )
         }
       else
         {
-        Log("[%s] Could not start child thread '%c'.\n",Time(),thread_i+'A');
+        Log("Could not start child thread '%c'.\n", thread_i+'A');
 
         if ( thread_i == 0 ) //was it the first thread that failed?
           load_problem_count = 1; //then switch to non-threaded mode
@@ -1002,7 +1005,7 @@ int Client::Run( void )
       }
     if (load_problem_count == 1)
       {
-      Log("[%s] Switching to single-threaded mode.\n", Time());
+      Log("Switching to single-threaded mode.\n" );
       numcputemp = 1;
       }
     else
@@ -1011,10 +1014,10 @@ int Client::Run( void )
 
       numcputemp = load_problem_count>>1;
       if (load_problem_count == 2)
-        Log("[%s] 1 Child thread has been started.\n", Time());
+        Log("1 Child thread has been started.\n");
       else if (load_problem_count > 2)
-        Log("[%s] %d Child threads ('a'%s'%c') have been started.\n",
-         Time(), load_problem_count>>1, 
+        Log("%d Child threads ('a'%s'%c') have been started.\n",
+         load_problem_count>>1, 
             ((load_problem_count>4)?("-"):(" and ")),
             'a'+((load_problem_count>>1)-1));
       }
@@ -1076,13 +1079,13 @@ int Client::Run( void )
     
       if (RegPolledProcedure(yield_pump, (void *)&tv, NULL, 32 ) == -1)
         {
-        Log("[%s] Unable to initialize yield pump\n", Time() );
+        Log("Unable to initialize yield pump\n" );
         TimeToQuit = -1; 
         exitcode = -1;
         }
       else
         {
-        LogScreen("[%s] Yield pump has started... \n", Time() );
+        LogScreen("Yield pump has started... \n" );
         }
       }
     
@@ -1092,13 +1095,13 @@ int Client::Run( void )
                     0 /*thread_i*/, 0 /*numthreads*/, timeslice, priority );
       if (thrparams)
         {
-        LogScreen("[%s] Crunch handler has started...\n", Time() );
+        LogScreen("Crunch handler has started...\n" );
         thread_data_table = thrparams;
         running_threaded = 1;
         }
       else
         {
-        Log("[%s] Unable to initialize crunch handler\n", Time() );
+        Log("Unable to initialize crunch handler\n" );
         TimeToQuit = -1; 
         exitcode = -1;
         } 
@@ -1263,7 +1266,7 @@ int Client::Run( void )
     #endif
     if (!TimeToQuit && CheckExitRequestTrigger())
       {
-      Log( "\n[%s] Received %s request...\n", Time(),
+      Log( "Received %s request...\n",
            (CheckRestartRequestTrigger()?("restart"):("shutdown")) );
       TimeToQuit = 1;
       exitcode = 1;
@@ -1287,8 +1290,7 @@ int Client::Run( void )
     if ( !TimeToQuit && (minutes > 0) && ( ( CliTimer( NULL )->tv_usec ) > 
                             ( time_t )( timeStarted + ( 60 * minutes ) ) ) )
       {
-      Log( "\n[%s] Shutdown - %u.%02u hours expired\n", Time(), 
-                                                minutes/60, (minutes%60) );
+      Log( "Shutdown - %u.%02u hours expired\n", minutes/60, (minutes%60) );
       TimeToQuit = 1;
       exitcode = 3;
       }
@@ -1306,17 +1308,17 @@ int Client::Run( void )
         WriteContestandPrefixConfig( );
         if (!TimeToQuit)
           {
-          Log( "\n[%s] Too many consecutive %s solutions detected.\n", Time(), contname );
-          Log( "[%s] Either the contest is over, or this client is pointed at a test port.\n", Time() );
-          Log( "[%s] Marking %s contest as closed.\n", Time(), contname );
-          Log( "[%s] Further %s blocks will not be processed.\n", Time(), contname );
+          Log( "Too many consecutive %s solutions detected.\n"  
+          "Either the contest is over, or this client is pointed at a test port.\n"
+          "Marking contest as closed. Further %s blocks will not be processed.\n", 
+          contname, contname );
           }
         }
       }
     if (!TimeToQuit && contestdone[0] && contestdone[1])
       {
       TimeToQuit = 1;
-      Log( "\n[%s] Both RC5 and DES are marked as closed.\n", Time() );
+      Log( "Both RC5 and DES are marked as closed.\n");
       exitcode = -2;
       }
 
@@ -1340,7 +1342,7 @@ int Client::Run( void )
     if (!TimeToQuit && blockcount > 0 && 
          ( totalBlocksDone[0]+totalBlocksDone[1] >= (u32) blockcount ) )
       {
-      Log( "[%s] Shutdown - %d blocks completed\n", Time(), 
+      Log( "Shutdown - %d blocks completed\n", 
                            (u32)totalBlocksDone[0]+totalBlocksDone[1] );
       TimeToQuit = 1;
       exitcode = 4;
@@ -1373,7 +1375,7 @@ int Client::Run( void )
 
   if (thread_data_table)  //we have threads running
     {
-    LogScreen("[%s] Waiting for threads to end...\n", Time());
+    LogScreen("Waiting for threads to end...\n");
     while (thread_data_table)
       {
       struct thread_param_block *thrdatap = thread_data_table;
@@ -1459,8 +1461,8 @@ void Client::DoCheckpoint( unsigned int load_problem_count )
                          (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
             if (InternalPutBuffer( checkpoint_file[cont_i], &fileentry )== -1)
               {
-              //Log( "[%s] Checkpoint %d, Buffer Error \"%s\"\n", Time(), 
-              //                          cont_i, checkpoint_file[cont_i] );
+              //Log( "Checkpoint %d, Buffer Error \"%s\"\n", 
+              //                     cont_i, checkpoint_file[cont_i] );
               }
             }
           } 
@@ -1486,8 +1488,7 @@ s32 Client::SetContestDoneState( Packet * packet)
     if (contestdone[1]==1) {detect = 2; contestdone[1] = 0;}
   }
   if (detect == 2) {
-    Log( "Received notification: %s contest %s.\n",
-         (detect == 2 ? "DES" : "RC5"),
+    Log( "Received notification: DES contest %s.\n",
          (contestdone[(int)detect-1]?"is not currently active":"has started") );
   }
 
@@ -1497,8 +1498,7 @@ s32 Client::SetContestDoneState( Packet * packet)
     if (contestdone[0] == 1) {detect = 1; contestdone[0] = 0;}
   }
   if (detect == 1) {
-    Log( "Received notification: %s CONTEST %s\n",
-        (detect == 2 ? "DES" : "RC5"),
+    Log( "Received notification: RC5 CONTEST %s\n",
         (contestdone[(int)detect-1]?"IS OVER":"HAS STARTED") );
   }
 
