@@ -24,7 +24,7 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.21.4.3 2003/01/19 22:49:50 snake Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.21.4.4 2003/08/09 12:54:11 mweiser Exp $"; }
 
 // #define TRACE
 
@@ -46,7 +46,11 @@ return "@(#)$Id: pathwork.cpp,v 1.21.4.3 2003/01/19 22:49:50 snake Exp $"; }
   #include <kernel.h>
   #include <swis.h>
 #elif defined(__unix__)
-  #include <unistd.h>    /* geteuid() */
+  #if (CLIENT_OS == OS_NEXTSTEP)
+    #include <libc.h>    /* geteuid() */
+  #else
+    #include <unistd.h>  /* geteuid() */
+  #endif
   #include <pwd.h>       /* getpwnam(), getpwuid(), struct passwd */
   #define HAVE_UNIX_TILDE_EXPANSION
 #endif

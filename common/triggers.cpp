@@ -18,7 +18,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.7 2003/07/29 23:57:20 bdragon Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.8 2003/08/09 12:54:11 mweiser Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -1147,12 +1147,17 @@ static void __init_signal_handlers( int doingmodes )
     #else          
     // stop the shell from seeing SIGTSTP and putting the client into 
     // the background when we '-pause' it.
-    if( getpgrp() != getpid() ) 
-      setpgid( 0, 0 );  // 
+      #if (CLIENT_OS == OS_NEXTSTEP)
+    if( getpgrp( 0 ) != getpid() ) 
+      setpgrp( 0, 0 );  // 
+      #else
     // porters : those calls are POSIX.1, 
     // - on BSD you might need to change setpgid(0,0) to setpgrp()
     // - on SYSV you might need to change getpgrp() to getpgid(0)
-    #endif
+    if( getpgrp() != getpid() ) 
+      setpgid( 0, 0 );  // 
+      #endif /* CLIENT_OS == OS_NEXTSTEP */
+    #endif /* CLIENT_OS == OS_QNX ... */
     SETSIGNAL( TRIGGER_PAUSE_SIGNAL, CliSignalHandler );  //pause
     SETSIGNAL( TRIGGER_UNPAUSE_SIGNAL, CliSignalHandler );  //continue
   }

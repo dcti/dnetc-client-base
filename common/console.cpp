@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.75.2.4 2003/06/11 11:29:56 pfeffi Exp $"; }
+return "@(#)$Id: console.cpp,v 1.75.2.5 2003/08/09 12:54:11 mweiser Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -46,8 +46,8 @@ return "@(#)$Id: console.cpp,v 1.75.2.4 2003/06/11 11:29:56 pfeffi Exp $"; }
 #include <termios.h>
 #define HAVE_TERMIOS
 #endif
-#if defined(__unix__) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_OS390) || \
-                  (CLIENT_OS == OS_NEXTSTEP) || (CLIENT_OS == OS_AMIGAOS)
+#if defined(__unix__) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_OS390) \
+  || (CLIENT_OS == OS_AMIGAOS)
 #define HAVE_ANSICOMPLIANTTERM /* tty understands basic ansi sequences */
 #endif
 #if defined(__unix__)

@@ -18,7 +18,7 @@
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.37 2002/09/02 00:35:42 andreasb Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.37.4.1 2003/08/09 12:54:11 mweiser Exp $"; }
 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
@@ -32,6 +32,8 @@ return "@(#)$Id: iniread.cpp,v 1.37 2002/09/02 00:35:42 andreasb Exp $"; }
 extern "C" { /* headers are unsafe for c++ */
 #include <unistd.h>
 }
+#elif __NeXT__
+#include <libc.h>    /* access() */
 #else
 #include <unistd.h>  /* access() */
 #endif
