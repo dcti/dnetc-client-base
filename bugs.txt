@@ -6,10 +6,12 @@ Bugs Listing
   This is a text file that lists any bugs that have been found by either
   the coders, or by users.
 
+
 06-23-98 - Kevin Bracey
   The help display crashes if the terminal height is more than the
   amount to be displayed.
 FIXED - Remi
+
   
 06-18-98 - Kevin Bracey
   There seem to be far too many breaks in the switch statement in the x86
@@ -18,12 +20,14 @@ FIXED - Remi
 FIXED - Remi
   even if I don't think being an x86 weenie ! :-)
 
+
 06-14-98 - Mike Silbersack
   I just noticed that in the log file, there's a CR after received XX
   blocks, but none after Sent XX blocks; perhaps one should be removed,
   or the other added so that it's consistant.
 FIXED - Kevin Bracey
   Should be no CRs in the log file now.
+
 
 06-11-98 - Kevin Bracey
   During autodetect x86 and ARM cores will say "Automatically selecting
@@ -34,6 +38,7 @@ FIXED - Kevin Bracey
 FIXED (sorta) - since x86ident gets almost all know processors, and
   the selection based on speed was never accurate, I just removed it.
   Now unidentified chips will get core 0 by default.
+
 
 06-11-98 - Mike Silbersack
   I just verified a report that x86ident on linux w/build 408
@@ -49,6 +54,7 @@ FIXED - Remi - 06-13-98
   Ok, it works now. Note that I also patched cliconfig.cpp, it
   didn't test the correct value, see the log.
 
+
 06-08-98 - Jeff Lawson
   Should a -detach option be made to make forked executions easier?
   It would probably set quiet mode, fork, close fd's 0,1,2, and reattach
@@ -56,8 +62,8 @@ FIXED - Remi - 06-13-98
   desirable to perform the functionality of "nohup" and ignore all other
   signals?  Maybe a -detachnohup or something to do this?
 
-06-08-98 - Jeff Lawson
 
+06-08-98 - Jeff Lawson
   A user reported: (note this occurs under the gui clients where
   client member functions may be run many times, so it's likely that
   some variable isn't getting rezeroed at the start of the benchmark
@@ -71,6 +77,10 @@ FIXED - Remi - 06-13-98
   Benchmarking RC5 with 10000000 tests:
   .....10%.....20%.....30%.....40%.....50%.....60%.....70%...(etc)...100
   Completed 5 RC5 Blocks 0.00:32:15.64 - [559887.82 keys/s]
+FIXED - Cyrus
+  a benchmark no longer affects (nor looks at) the cumulative
+  block statistics anymore.
+
 
 06-08-98 - Jeff Lawson
   Suggestion: A user reported: the send and recieve messages seem
@@ -101,10 +111,12 @@ Fixed (Silby)  6/14/1998
            complete!). Doesn't happen if contestdone2=0.
   FIXED by Cyrus Patel
 
+
 06-03-98 - Jeff Lawson
   New Suggestion: A/C power checking on the Win32 clients.  Some users
   run their client on their battery powered laptops and would like the
   client to only be working when they are connected to A/C.
+
 
 06-03-98 - Jeff Lawson
   New Suggestion: some of the files produced by the client are still
@@ -121,9 +133,11 @@ Addendum (silby):  Ok, here's how it works now.  All files are fully
   Either way, it seems to work fine, and much better than before. :)
   (June 10th, 1998)
 
+
 6-03-98 - Kevin Bracey
   New Bug: Some parts of the program (mail.cpp in particular) print stuff
            irrespective of the quietmode setting.
+
 
 6-03-98 - Kevin Bracey
   New Suggestion: Would it not be a good idea to move the number of CPUs
@@ -132,6 +146,7 @@ Addendum (silby):  Ok, here's how it works now.  All files are fully
                   was the last place I looked for it when setting 7022 up
                   on by dual-PII box for the first time.
   Fixed: Both options now on a Performance Options menu
+
   
 6-01-98 - Remi Guyomarch
   New Bug: In 407+ (406?) a call to client.WriteConfig() overwrites the
@@ -152,6 +167,7 @@ Addendum (silby):  Ok, here's how it works now.  All files are fully
          WriteContestandPrefixConfig. This appears to fix the bug for me.
          (If it does not, please comment, of course.)
 
+
 5-31-98 - Oscar Chang
   FIXED!!: Between 403 and 406, there is a drop of almost 50k keys/sec on my
            K6-200 using the same CPU core. I've tried taking out the new
@@ -162,6 +178,8 @@ Addendum (silby):  Ok, here's how it works now.  All files are fully
            rc5 cores, since it doesn't affect the DES core.
            In addition, it solved the problem of why the k6 core was running
            slower then the p6 core on a K6. It was all in the stack.
+
+
 5-31-98 - Oscar Chang
   FIXED!!: The X key no longer works on Watcom compiles. It will display the
            message that it will quit after the next block is completed but,
