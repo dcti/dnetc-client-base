@@ -1,32 +1,24 @@
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+/*
+   This file contains functions for obtaining/formatting/manipulating
+   the time. 'time' is always stored/passed/returned in timeval format.
 
-// This file contains functions for obtaining/formatting/manipulating
-// the time. 'time' is always stored/passed/returned in timeval format.
-//
-// CliTimer() requires porting so that it returns the time as gettimeofday() 
-// would, ie seconds since 1.1.70 GMT in tv_sec, and remaining fraction in 
-// microseconds in tv_usec;
-//
-// ---------------------------------------------------------------------
-//
+   CliTimer() requires porting so that it returns the time as gettimeofday() 
+   would, ie seconds since 1.1.70 GMT in tv_sec, and remaining fraction in 
+   microseconds in tv_usec;
+*/
 // $Log: clitime.cpp,v $
+// Revision 1.19  1998/08/10 20:04:55  cyruspatel
+// NetWare specific change: moved gettime code to a function in netware.cpp
+//
 // Revision 1.18  1998/07/13 03:29:57  cyruspatel
 // Added 'const's or 'register's where the compiler was complaining about
 // ambiguities. ("declaration/type or an expression")
 //
 // Revision 1.17  1998/07/07 21:55:29  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
+// client.h has been split into client.h and baseincs.h 
 //
 // Revision 1.16  1998/07/06 09:21:22  jlawson
 // added lint tags around cvs id's to suppress unused variable warnings.
@@ -47,14 +39,13 @@
 // Revision 1.11  1998/06/14 08:12:45  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
-// Revision 0.00  1998/05/01 05:01:08  cyruspatel
+// Revision 1.00  1998/05/01 05:01:08  cyruspatel
 // Created
 // 
 
 #if (!defined(lint) && defined(__showids__))
 const char *clitime_cpp(void) {
-static const char *id="@(#)$Id: clitime.cpp,v 1.18 1998/07/13 03:29:57 cyruspatel Exp $";
-return id; }
+return "@(#)$Id: clitime.cpp,v 1.19 1998/08/10 20:04:55 cyruspatel Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -114,25 +105,7 @@ struct timeval *CliTimer( struct timeval *tv )
   stv.tv_sec = tb.time;
   stv.tv_usec = tb.millitm*1000;
 #elif (CLIENT_OS == OS_NETWARE)
-  //NIOS port note: CLIB funcs have equivs in netware.cpp to avoid clib dependance
-  #define PCLOCKS_PER_SEC (1193180) //often defined as UCLOCKS_PER_SEC
-  static unsigned int timebase=0;
-  unsigned int picsnow = 0; //(GetSuperHighResolutionTimer()&0xFFFF);
-  unsigned int secs, hsecs, ticks, ticksnow = CliGetCurrentTicks(); //GetSystemTime()
-
-  CliConvertTicksToSeconds( ticksnow, &secs, &hsecs );
-  if (timebase==0) timebase = ((unsigned int)(time(NULL))) - secs;
-  CliConvertSecondsToTicks( secs, 0, &ticks); // ticks = (secs*18.207)
-  ticksnow-=ticks;
-  picsnow +=(ticksnow << 16);
-
-  stv.tv_sec = (time_t)(timebase + secs);
-  stv.tv_usec = (picsnow*100000L)/(PCLOCKS_PER_SEC/10);
-  if (stv.tv_usec > 1000000L)
-  {
-    stv.tv_sec += (stv.tv_usec/1000000L);
-    stv.tv_usec = (stv.tv_usec%1000000L);
-  }
+  nwCliGetTimeOfDay( &stv ); 
 #elif (CLIENT_OS == OS_AMIGAOS)
   int dofallback = timer((unsigned int *)&stv );
   #define REQUIRES_TIMER_FALLBACK
