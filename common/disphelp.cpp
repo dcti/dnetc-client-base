@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.72.4.1 2003/01/17 23:58:50 andreasb Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.72.4.2 2003/01/22 04:17:26 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -40,6 +40,7 @@ static const char *helpbody[] =
   "                   [optional: only core cn, must be used with prj]",
   "-test [prj [cn]]   tests for core errors [optional: only project prj]",
   "                   [optional: only core cn, must be used with prj]",
+  "-cpuinfo           print information about the detected cpu(s)",
   "-restart           restart all active clients",
   "-shutdown          gracefully shut down all active clients",
   "-pause             pause all active clients",
@@ -65,6 +66,7 @@ static const char *helpbody[] =
   "-import <filename> import packets from file <filename> into client buffers",
   "-forceunlock <fn>  unlock buffer file <fn>",
   "-help              display this text",
+  "-version           print version information",
   "",
 /*"------------------------------------ max width == 77 ------------------------" */
   "Project and buffer related options:",

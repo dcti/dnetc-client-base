@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.160.2.4 2003/01/16 00:33:46 andreasb Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.160.2.5 2003/01/22 04:17:26 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -1694,7 +1694,8 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           ( strcmp( thisarg, "-update"      ) == 0 ) ||
           ( strcmp( thisarg, "-ident"       ) == 0 ) ||
           ( strcmp( thisarg, "-cpuinfo"     ) == 0 ) ||
-          ( strcmp( thisarg, "-config"      ) == 0 ) )
+          ( strcmp( thisarg, "-config"      ) == 0 ) ||
+          ( strcmp( thisarg, "-version"     ) == 0 ) )
       {
         havemode = 1; //nothing - handled in next loop
       }
@@ -1875,6 +1876,14 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         ModeReqClear(-1); //clear all - only do -config
         ModeReqSet( MODEREQ_CONFIG );
         ModeReqSetArg( MODEREQ_CONFIG, (const void *)thisarg /* anything */);
+        break;
+      }
+      else if ( strcmp( thisarg, "-version" ) == 0 )
+      {
+        client->quietmode = 0;
+        *inimissing = 0; // Don't complain if the inifile is missing
+        ModeReqClear(-1); //clear all - only do -version
+        ModeReqSet( MODEREQ_VERSION );
         break;
       }
     }

@@ -12,7 +12,7 @@
  * ---------------------------------------------------------------
 */
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.38.4.1 2003/01/19 22:49:50 snake Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.38.4.2 2003/01/22 04:17:26 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -310,6 +310,12 @@ int ModeReqRun(Client *client)
         } while (!testfailed && modereq.test_projbits);
         retval |= (MODEREQ_TEST|MODEREQ_TEST_ALLCORE);
         modereq.reqbits &= ~(MODEREQ_TEST|MODEREQ_TEST_ALLCORE);
+      }
+      if ((bits & MODEREQ_VERSION)!=0)
+      {
+        /* the requested information already has been printed */
+        modereq.reqbits &= ~(MODEREQ_VERSION);
+        retval |= (MODEREQ_VERSION);
       }
       if (CheckExitRequestTriggerNoIO())
       {
