@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.9 1999/10/26 20:43:58 remi Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.10 1999/11/03 21:33:25 remi Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -69,7 +69,10 @@ protected: /* these members *must* be protected for thread safety */
   ContestWork contestwork;
   CoreDispatchTable *ogr;
   /* --------------------------------------------------------------- */
-  char ogrstate[OGR_PROBLEM_SIZE];
+  union {
+    double __align_64_ogr;
+    char ogrstate[OGR_PROBLEM_SIZE];
+  };
   #ifdef MAX_MEM_REQUIRED_BY_CORE
   char core_membuffer[MAX_MEM_REQUIRED_BY_CORE];
   #endif
