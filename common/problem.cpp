@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.19  1998/06/15 00:12:24  skand
+// fix id marker so it won't interfere when another .cpp file is #included here
+//
 // Revision 1.18  1998/06/14 10:13:43  skand
 // use #if 0 (or 1) to turn on some debugging info, rather than // on each line
 //
@@ -17,7 +20,7 @@
 // Added $Log.
 //
 
-static char *id="@(#)$Id: problem.cpp,v 1.18 1998/06/14 10:13:43 skand Exp $";
+static char *id_problem_cpp="@(#)$Id: problem.cpp,v 1.19 1998/06/15 00:12:24 skand Exp $";
 
 #define NEW_STATS_AND_LOGMSG_STUFF
 
