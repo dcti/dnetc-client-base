@@ -11,6 +11,9 @@
    to functions in modules in your own platform/ area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.7  1998/10/07 20:43:37  silby
+// Various quick hacks to make the win32gui operational again (will be cleaned up).
+//
 // Revision 1.6  1998/10/07 18:36:18  silby
 // Changed logic in ConInKey once more so it's not reading uninit variables.  Should be solid now. :)
 //
@@ -32,7 +35,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.6 1998/10/07 18:36:18 silby Exp $"; }
+return "@(#)$Id: console.cpp,v 1.7 1998/10/07 20:43:37 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -106,7 +109,7 @@ int InitializeConsole(int runhidden)
 /* 
 ** ConOut() does what printf("%s",str) would do 
 */ 
-
+#if !((CLIENT_OS==OS_WIN32) && defined(NEEDVIRTUALMETHODS))
 int ConOut(const char *msg)
 {
   if (constatics.initlevel > 0 /*&& constatics.conisatty*/ )
@@ -117,7 +120,7 @@ int ConOut(const char *msg)
     }
   return -1;
 }
-
+#endif
 /* ---------------------------------------------------- */
 
 /* 

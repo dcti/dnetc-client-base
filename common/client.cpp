@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.146  1998/10/07 20:43:32  silby
+// Various quick hacks to make the win32gui operational again (will be cleaned up).
+//
 // Revision 1.145  1998/10/06 22:28:53  cyp
 // Changed initialization order so that initialization that requires filenames
 // follows the second ParseCommandLine().
@@ -38,7 +41,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.145 1998/10/06 22:28:53 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.146 1998/10/07 20:43:32 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -387,7 +390,7 @@ int realmain( int argc, char *argv[] )
 
 
 #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-
+#if !defined(NEEDVIRTUALMETHODS)
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                              LPSTR lpszCmdLine, int nCmdShow)
 { 
@@ -396,7 +399,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     return w32ConShowWindow(); //only shows if not -runhidden
   return realmain( __argc, __argv );
 }
-
+#endif
 #else
 
 int main( int argc, char *argv[] )
