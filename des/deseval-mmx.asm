@@ -4,21 +4,19 @@
 ;
 ; Needs work on memory allocation and freeing, extern declarations etc. 
 ; for various platforms.
+; Look for PLATFORM
+;
 ;
 ; $Log: deseval-mmx.asm,v $
+; Revision 1.2  1999/01/12 07:11:18  fordbr
+; Debug code removed
+;
 ; Revision 1.1  1999/01/12 03:30:19  fordbr
 ; DES bitslice driver for MMX
 ;  73 clocks per key on Pentium MMX
 ;  85                   AMD K6-2
 ;  90                   Intel PII
 ; 118                   AMD K6
-;
-; Revision 1.1  1999/01/12 03:25:28  fordbr
-; DES bitslice driver code for MMX
-;  73 clocks per key on Pentium MMX
-;  85 clocks per key on AMD K6-2
-;  90 clocks per key on Intel PII
-; 118 clocks per key on AMD K6
 ;
 ;-----------------------------------------------
 
@@ -1410,23 +1408,34 @@ global _whack16
                               ; 55 clocks for 58 variables
 %endmacro
 
+; PLATFORM  text segment definition
 %ifdef BCC
 SECTION TEXT USE32 ALIGN=16
 %else
 [SECTION .text]
 %endif
 
-extern _malloc, _free, _dumpmem
+; PLATFORM external routines and memory allocation
 
-%macro dumpmem 2
-   pusha
-   push  dword %2
-   lea   ecx, [%1]
-   push  ecx
-   call  _dumpmem
-   add   esp, 8
-   popa
+extern _malloc, _free
+
+%macro getmem 1
+; amount given by argument and leaves a pointer in eax
+   push  dword %1
+   call  _malloc
 %endmacro
+
+%macro relmem 0
+; expects the pointer returned from getmem(_malloc) to be on the stack
+   call  _free
+%endmacro
+
+; PLATFORM yielding if required
+; yield1ms is approximately every 1 ms on a Pentium MMX 166MHz
+; yield10ms is approximately every 10ms
+
+%define yield1ms
+%define yield10ms
 
 %include "startup.asm"
 
@@ -1537,7 +1546,7 @@ partial_round:
    test  ecx, 80h
    jz    near partial_2
    movq  mm6, [ebx+32]
-	sbox_1 edx,     edx+8,   edx+16,  edx+24,  edx+32,  edx+40
+   sbox_1 edx,     edx+8,   edx+16,  edx+24,  edx+32,  edx+40
 partial_2:
    test  ecx, 40h
    jz    near partial_3
@@ -1564,9 +1573,9 @@ partial_8:
    sbox_8 edx+336, edx+344, edx+352, edx+360, edx+368, edx+376
    pxor  mm2,[esi+208]        ; out2 ^= x54
 
-	movq  [edi+32],mm6         ; store out1
+   movq  [edi+32],mm6         ; store out1
 
-	movq  [edi+160],mm1        ; store out4
+   movq  [edi+160],mm1        ; store out4
 
    movq  [edi+112],mm5        ; store out3
 
@@ -1591,25 +1600,25 @@ next_round:
    sbox_8 edx+336, edx+344, edx+352, edx+360, edx+368, edx+376
 
    pxor  mm2,[esi+208]        ; out2 ^= x54
-	mov   esi, ebx
+   mov   esi, ebx
 
-	movq  [edi+32],mm6         ; store out1
-	mov   ebx, edi
+   movq  [edi+32],mm6         ; store out1
+   mov   ebx, edi
 
-	movq  [edi+160],mm1        ; store out4
-	add   edx, 384
+   movq  [edi+160],mm1        ; store out4
+   add   edx, 384
 
-	movq  [edi+112],mm5        ; store out3
-	mov   edi, ebp
+   movq  [edi+112],mm5        ; store out3
+   mov   edi, ebp
 
-	movq  [ebx+208],mm2        ; store out2
-	mov   ebp, ebx
+   movq  [ebx+208],mm2        ; store out2
+   mov   ebp, ebx
 
-	cmp   edx, ecx
-	jb   near next_round
+   cmp   edx, ecx
+   jb   near next_round
 
 full_end:
-	retn
+   retn
 
 whack16:
 _whack16:
@@ -1620,7 +1629,7 @@ whack16_:
    			  ; esp+20 (retn)
 
    push  ebp  ; esp+16
-	push  ebx  ; esp+12
+   push  ebx  ; esp+12
 
    push  ecx  ; esp+8
    push  esi  ; esp+4
@@ -1631,8 +1640,7 @@ whack16_:
    mov   esi, [esp+28]
    mov   ebx, [esp+24]
 
-   push  dword mem_needed
-   call  _malloc
+   getmem mem_needed
 
    pop   edx                 ; remove argument from the stack
    push  eax                 ; keep the pointer to allocated memory
@@ -1645,61 +1653,61 @@ whack16_:
    mov   dword [headstep1], 0
    pcmpeqd mm0, mm0
 
-	mov   dword [tailstep], 0
-	mov   dword [headstep2], 0
+   mov   dword [tailstep], 0
+   mov   dword [headstep2], 0
 
-	movq  [mmNOT], mm0
-	xor   ebp, ebp
+   movq  [mmNOT], mm0
+   xor   ebp, ebp
 
 tail_setup:
-	call  create_tail
+   call  create_tail
 
-	lea   ebx, [PR]
-	lea   esi, [PL]
+   lea   ebx, [PR]
+   lea   esi, [PL]
 
-	lea   edi, [L1]
-	lea   edx, [round1]
+   lea   edi, [L1]
+   lea   edx, [round1]
 
-	call  full_round
+   call  full_round
 
-	lea   edi, [R2]
-	call  full_round
+   lea   edi, [R2]
+   call  full_round
 
 tail_6:
-	lea   edi, [L3]
-	call  full_round
+   lea   edi, [L3]
+   call  full_round
 
 head_4:
-	lea   edi, [R]
-	lea   ebp, [L]
+   lea   edi, [R]
+   lea   ebp, [L]
 
-	; Rounds 4 to 10
-	lea   edx, [round4]
-	call  full_round
+   ; Rounds 4 to 10
+   lea   edx, [round4]
+   call  full_round
 
-	; Round 11 S-Boxes 1, 2, 4, 5, 6, 7
-	mov   ebp, [headstep1]
-	mov   ecx, 0deh
+   ; Round 11 S-Boxes 1, 2, 4, 5, 6, 7
+   mov   ebp, [headstep1]
+   mov   ecx, 0deh
 
-	call  partial_round
+   call  partial_round
 
-	mov   esi, ebx
-	mov   ebx, edi
+   mov   esi, ebx
+   mov   ebx, edi
 
 %define STORE_RESULT 0
-	sbox_3 keybit54, keybit26, keybit34, keybit03, keybit18, keybit06
+   sbox_3 keybit54, keybit26, keybit34, keybit03, keybit18, keybit06
 
-	movq  [esi+40], mm7
-	movq  mm4, mm3
+   movq  [esi+40], mm7
+   movq  mm4, mm3
 
-	pxor  mm7, [ebp+R12_05]    ; bit 5
-	movq  mm5, mm2
+   pxor  mm7, [ebp+R12_05]    ; bit 5
+   movq  mm5, mm2
 
-	pxor  mm3, [ebp+R12_29]    ; bit 29
-	movq  mm1, mm6
+   pxor  mm3, [ebp+R12_29]    ; bit 29
+   movq  mm1, mm6
 
-	pxor  mm2, [ebp+R12_23]    ; bit 23
-	por   mm7, mm3
+   pxor  mm2, [ebp+R12_23]    ; bit 23
+   por   mm7, mm3
 
    pxor  mm6, [ebp+R12_15]    ; bit 15
    por   mm7, mm2
@@ -1717,15 +1725,6 @@ head_4:
    cmp   ecx, 0ffffffffh
 
    movd  edx, mm2
-; pushf
-; not ecx
-; not edx
-; mov [temp3], ecx
-; mov [temp3+4], edx
-; not ecx
-; not edx
-; dumpmem temp3, 8
-; popf
    jne   R12_sbox1
 
    cmp   edx, 0ffffffffh
@@ -1757,7 +1756,7 @@ R12_sbox1:
    movq  mm6, mm5
 
    pxor  mm0, [ebp+R12_30]    ; bit 30
-	movq  mm4, mm7
+   movq  mm4, mm7
 
    pxor  mm5, [ebp+R12_08]    ; bit 8
    movq  mm3, mm2
@@ -1783,15 +1782,6 @@ R12_sbox1:
    cmp   ecx, 0ffffffffh
 
    movd  edx, mm1
-; pushf
-; not ecx
-; not edx
-; mov [temp3], ecx
-; mov [temp3+4], edx
-; not ecx
-; not edx
-; dumpmem temp3, 8
-; popf
    jne   R12_sbox2
 
    cmp   edx, 0ffffffffh
@@ -1858,7 +1848,7 @@ R12_sbox2:
    por   mm7, mm3
 
    movd  mm0, ecx
-	por   mm7, mm2
+   por   mm7, mm2
 
    movd  mm1, edx
    por   mm0, mm7
@@ -1866,21 +1856,12 @@ R12_sbox2:
    movq  [esi+96], mm6
    punpckhdq mm7, mm7
 
-	movd  ecx, mm0
+   movd  ecx, mm0
    por   mm1, mm7
 
    cmp   ecx, 0ffffffffh
 
    movd  edx, mm1
-; pushf
-; not ecx
-; not edx
-; mov [temp3], ecx
-; mov [temp3+4], edx
-; not ecx
-; not edx
-; dumpmem temp3, 8
-; popf
    jne   near R12_sbox4
 
    cmp   edx, 0ffffffffh
@@ -1890,27 +1871,27 @@ R12_sbox4:
    movq  [R+216], mm5
    lea   esi, [R14+ebp]
 
-	movq  [R+136], mm4
+   movq  [R+136], mm4
    lea   ebx, [L13+ebp]
 
    ; round 14 decrypt
-	sbox_4 keybit33, keybit27, keybit53, keybit04, keybit12, keybit17
+   sbox_4 keybit33, keybit27, keybit53, keybit04, keybit12, keybit17
 
    movq  [temp1],mm1          ; store out1
 
-	movq  [temp2],mm0          ; store out2
+   movq  [temp2],mm0          ; store out2
    lea   esi, [R]
 
    movq  [temp3],mm6          ; store out3
-	lea   ebx, [L]
+   lea   ebx, [L]
 
    movq  [temp4],mm5          ; store out4
 
-	; round 12 encrypt
+   ; round 12 encrypt
    sbox_4 keybit05, keybit24, keybit25, keybit33, keybit41, keybit46
 
    movq  [R+200], mm1
-	movq  mm7, mm0
+   movq  mm7, mm0
 
    pxor  mm1, [temp1]         ; bit 25
    movq  mm4, mm6
@@ -1918,11 +1899,11 @@ R12_sbox4:
    pxor  mm0, [temp2]         ; bit 19
    movq  mm3, mm5
 
-	pxor  mm6, [temp3]         ; bit 9
-	por   mm1, mm0
+   pxor  mm6, [temp3]         ; bit 9
+   por   mm1, mm0
 
    pxor  mm5, [temp4]         ; bit 0
-	por   mm6, mm1
+   por   mm6, mm1
 
    movd  mm0, ecx
    por   mm6, mm5
@@ -1930,27 +1911,16 @@ R12_sbox4:
    movd  mm1, edx
    por   mm0, mm6
 
-	movq  [R+152], mm7
+   movq  [R+152], mm7
    punpckhdq mm6, mm6
 
    movd  ecx, mm0
-	por   mm1, mm6
+   por   mm1, mm6
 
    cmp   ecx, 0ffffffffh
 
-	movd  edx, mm1
-; pushf
-; not ecx
-; not edx
-; mov [temp3], ecx
-; mov [temp3+4], edx
-; not ecx
-; not edx
-; mov dword [temp4], 4
-; dumpmem temp4, 1
-; dumpmem temp3, 8
-; popf
-	jne   near R12_sbox5
+   movd  edx, mm1
+   jne   near R12_sbox5
 
    cmp   edx, 0ffffffffh
    jne   near R12_sbox5
@@ -1962,45 +1932,45 @@ step_head:
    pxor  mm0, [keybit10]      ; This is correct 50% of the time and costs nothing
    add   ebp, 8
 
-	mov   [headstep1], ebp
+   mov   [headstep1], ebp
    pcmpeqd  mm1, mm1
 
    test  ebp, 8
-	jz    near h4_18
+   jz    near h4_18
 
    ; Modify key bit 10 in rounds 3 to 11
 
-	movq  [eax+ 296], mm0
-	movq  [eax+1040], mm0
-	movq  [eax+1280], mm0
-	movq  [eax+1776], mm0
-	movq  [eax+2064], mm0
-	lea   edx, [round3]
+   movq  [eax+ 296], mm0
+   movq  [eax+1040], mm0
+   movq  [eax+1280], mm0
+   movq  [eax+1776], mm0
+   movq  [eax+2064], mm0
+   lea   edx, [round3]
    movq  [eax+2968], mm0
-	lea   ebx, [L1]
+   lea   ebx, [L1]
 
 changeR2S1:
-	movq  mm6, [L1+32]
+   movq  mm6, [L1+32]
    lea   esi, [PR]
 
-	sbox_1 keybit54, keybit18, keybit33, keybit10, keybit20, keybit48
+   sbox_1 keybit54, keybit18, keybit33, keybit10, keybit20, keybit48
 
    movq  [R2+64],mm5          ; bit 8 round 2
-	mov   ecx, 07dh            ; setup for partial_round
+   mov   ecx, 07dh            ; setup for partial_round
 
-	movq  [R2+240],mm0         ; bit 30 round 2
+   movq  [R2+240],mm0         ; bit 30 round 2
    mov   esi, ebx
 
    movq  [R2+128],mm7         ; bit 16 round 2
-	lea   ebx, [R2]
+   lea   ebx, [R2]
 
-	movq  [R2+176],mm2         ; bit 22 round 2
-	lea   edi, [L3]
+   movq  [R2+176],mm2         ; bit 22 round 2
+   lea   edi, [L3]
 
-	call  partial_round
+   call  partial_round
 
    mov   esi, ebx             ; Organize for round 4 to 11
-	mov   ebx, edi
+   mov   ebx, edi
 
    jmp   head_4
 
@@ -2012,41 +1982,41 @@ h4_18:
 
    pxor  mm1, [keybit18]
    ; stall
-	movq  [eax+ 304], mm1
-	movq  [eax+ 528], mm1
-	movq  [eax+1432], mm1
-	movq  [eax+1704], mm1
-	movq  [eax+2168], mm1
-	movq  [eax+2616], mm1
-	lea   edx, [round3]
+   movq  [eax+ 304], mm1
+   movq  [eax+ 528], mm1
+   movq  [eax+1432], mm1
+   movq  [eax+1704], mm1
+   movq  [eax+2168], mm1
+   movq  [eax+2616], mm1
+   lea   edx, [round3]
 
-	movq  [eax+2872], mm1
-	lea   ebx, [L1]
+   movq  [eax+2872], mm1
+   lea   ebx, [L1]
 
-	movq  [eax+4032], mm1      ; Change in round 3 for partial_round
-	jmp   changeR2S1
+   movq  [eax+4032], mm1      ; Change in round 3 for partial_round
+   jmp   changeR2S1
 
 h4_46:
-	test  ebp, 20h
+   test  ebp, 20h
    jz    near h4_49
 
    pxor  mm1, [keybit46]
    ; stall
-	movq  [eax+ 136], mm1
-	movq  [eax+ 576], mm1
-	movq  [eax+1072], mm1
-	movq  [eax+1296], mm1
-	movq  [eax+2184], mm1
-	movq  [eax+2504], mm1
-	lea   edx, [round3]
+   movq  [eax+ 136], mm1
+   movq  [eax+ 576], mm1
+   movq  [eax+1072], mm1
+   movq  [eax+1296], mm1
+   movq  [eax+2184], mm1
+   movq  [eax+2504], mm1
+   lea   edx, [round3]
 
-	movq  [eax+2952], mm1
-	lea   ebx, [L1]
+   movq  [eax+2952], mm1
+   lea   ebx, [L1]
 
-	movq  [eax+4072], mm1      ; Change in round 3 for partial_round
-	lea   esi, [PR]
+   movq  [eax+4072], mm1      ; Change in round 3 for partial_round
+   lea   esi, [PR]
 
-	sbox_2 keybit34, keybit13, keybit04, keybit55, keybit46, keybit26
+   sbox_2 keybit34, keybit13, keybit04, keybit55, keybit46, keybit26
 
    movq  [R2+8],mm7           ; bit 1 round 2
    mov   ecx, 0bbh
@@ -2054,7 +2024,7 @@ h4_46:
    movq  [R2+96],mm1          ; bit 12 round 2
    mov   esi, ebx
 
-	movq  [R2+216],mm3         ; bit 27 round 2
+   movq  [R2+216],mm3         ; bit 27 round 2
    lea   ebx, [R2]
 
    movq  [R2+136],mm2         ; bit 17 round 2
@@ -2070,22 +2040,22 @@ h4_46:
 h4_49:
    pxor  mm1, [keybit49]
    ; stall
-	movq  [eax+ 368], mm1
-	movq  [eax+ 824], mm1
-	movq  [eax+1480], mm1
-	movq  [eax+2016], mm1
-	lea   edx, [round3]
+   movq  [eax+ 368], mm1
+   movq  [eax+ 824], mm1
+   movq  [eax+1480], mm1
+   movq  [eax+2016], mm1
+   lea   edx, [round3]
 
-	movq  [eax+2344], mm1
-	lea   ebx, [L1]
+   movq  [eax+2344], mm1
+   lea   ebx, [L1]
 
-	movq  [eax+2656], mm1
-	lea   esi, [PR]
+   movq  [eax+2656], mm1
+   lea   esi, [PR]
 
-	movq  [eax+3080], mm1
-	test  ebp, 40h
+   movq  [eax+3080], mm1
+   test  ebp, 40h
 
-	movq  [eax+4344], mm1      ; Change in round 3 for partial_round
+   movq  [eax+4344], mm1      ; Change in round 3 for partial_round
 
    ; By testing after the bits are reset all are correct for the next loop
    ; sbox_7 is redone in the partial_round call for round 2 of each tail bit
@@ -2108,7 +2078,7 @@ h4_49:
    call  partial_round
 
    mov   esi, ebx
-	mov   ebx, edi
+   mov   ebx, edi
 
    jmp   head_4
 
@@ -2125,19 +2095,21 @@ step_tail:
    test  ecx, 1
    jz    near t6_11
 
+   yield1ms
+
    pxor  mm0, [keybit03]
    ; stall
-	movq  [eax+ 232], mm0
-	movq  [eax+ 520], mm0
-	movq  [eax+ 960], mm0
-	movq  [eax+1456], mm0
-	movq  [eax+1680], mm0
-	movq  [eax+2136], mm0
-	movq  [eax+2568], mm0
-	movq  [eax+2888], mm0
-	movq  [eax+3680], mm0      ; Round 2 for partial_round
-	movq  [eax+4048], mm0      ; Round 3 for full_round
-	lea   ebx, [PR]
+   movq  [eax+ 232], mm0
+   movq  [eax+ 520], mm0
+   movq  [eax+ 960], mm0
+   movq  [eax+1456], mm0
+   movq  [eax+1680], mm0
+   movq  [eax+2136], mm0
+   movq  [eax+2568], mm0
+   movq  [eax+2888], mm0
+   movq  [eax+3680], mm0      ; Round 2 for partial_round
+   movq  [eax+4048], mm0      ; Round 3 for full_round
+   lea   ebx, [PR]
 
 changeR1S1R15S3:
    movq  mm6, [PR+32]
@@ -2162,7 +2134,7 @@ fix_r15s3:
    sbox_3 keybit39, keybit11, keybit19, keybit20, keybit03, keybit48
 
    add   ebx, 256
-	add   edi, 256
+   add   edi, 256
 
    cmp   ebx, ecx
    jb    near fix_r15s3
@@ -2188,18 +2160,18 @@ t6_11:
 
    pxor  mm0, [keybit11]
    ; stall
-	movq  [eax+ 240], mm0
-	movq  [eax+ 600], mm0
-	movq  [eax+1032], mm0
-	movq  [eax+1352], mm0
-	movq  [eax+1784], mm0
-	movq  [eax+2096], mm0
-	movq  [eax+2464], mm0
-	movq  [eax+2976], mm0
-	movq  [eax+3728], mm0      ; Round 2 for partial_round
-	lea   ebx, [PR]
-	movq  [eax+3968], mm0      ; Round 3 for full_round
-	jmp   changeR1S1R15S3
+   movq  [eax+ 240], mm0
+   movq  [eax+ 600], mm0
+   movq  [eax+1032], mm0
+   movq  [eax+1352], mm0
+   movq  [eax+1784], mm0
+   movq  [eax+2096], mm0
+   movq  [eax+2464], mm0
+   movq  [eax+2976], mm0
+   movq  [eax+3728], mm0      ; Round 2 for partial_round
+   lea   ebx, [PR]
+   movq  [eax+3968], mm0      ; Round 3 for full_round
+   jmp   changeR1S1R15S3
 
 %define STORE_RESULT 0
 
@@ -2209,23 +2181,23 @@ t6_42:
 
    pxor  mm0, [keybit42]
    ; stall
-	movq  [eax+ 496], mm0
-	movq  [eax+ 744], mm0
-	movq  [eax+1224], mm0
-	movq  [eax+1536], mm0
-	movq  [eax+1960], mm0
-	movq  [eax+2328], mm0
-	movq  [eax+2768], mm0
-	movq  [eax+3104], mm0
-	movq  [eax+3856], mm0      ; Round 2 for partial_round
-	lea   ebx, [PR]
-	movq  [eax+4176], mm0      ; Round 3 for full_round
-	lea   esi, [PL]
+   movq  [eax+ 496], mm0
+   movq  [eax+ 744], mm0
+   movq  [eax+1224], mm0
+   movq  [eax+1536], mm0
+   movq  [eax+1960], mm0
+   movq  [eax+2328], mm0
+   movq  [eax+2768], mm0
+   movq  [eax+3104], mm0
+   movq  [eax+3856], mm0      ; Round 2 for partial_round
+   lea   ebx, [PR]
+   movq  [eax+4176], mm0      ; Round 3 for full_round
+   lea   esi, [PL]
 
-	sbox_7 keybit02, keybit37, keybit22, keybit00, keybit42, keybit38
+   sbox_7 keybit02, keybit37, keybit22, keybit00, keybit42, keybit38
 
-	movq  [L1+248],mm7         ; bit 31 round 1
-	lea   ecx, [R14+4096]
+   movq  [L1+248],mm7         ; bit 31 round 1
+   lea   ecx, [R14+4096]
 
    movq  [L1+88],mm1          ; bit 11 round 1
    lea   ebx, [R14]
@@ -2297,22 +2269,24 @@ check_end_42:
 
 t6_05:
    test  ecx, 8
-	jz    near t6_43
+   jz    near t6_43
+
+   yield10ms
 
    pxor  mm0, [keybit05]
    ; stall
-	movq  [eax+ 176], mm0
-	movq  [eax+ 544], mm0
-	movq  [eax+1056], mm0
-	movq  [eax+1760], mm0
-	movq  [eax+2600], mm0
-	xor   ebp, ebp
-	movq  [eax+3736], mm0
-	lea   ebx, [PR]
-	movq  [eax+4008], mm0
-	lea   esi, [PL]
+   movq  [eax+ 176], mm0
+   movq  [eax+ 544], mm0
+   movq  [eax+1056], mm0
+   movq  [eax+1760], mm0
+   movq  [eax+2600], mm0
+   xor   ebp, ebp
+   movq  [eax+3736], mm0
+   lea   ebx, [PR]
+   movq  [eax+4008], mm0
+   lea   esi, [PL]
 
-	sbox_3 keybit53, keybit25, keybit33, keybit34, keybit17, keybit05
+   sbox_3 keybit53, keybit25, keybit33, keybit34, keybit17, keybit05
 
    movq  [L1+40], mm7         ; bit 5 round 1
 
@@ -2351,7 +2325,7 @@ fix_r15s2:
    pxor  mm0, [mmNOT]
    ; stall
    movq  [keybit10], mm0
-	jmp   fix_r15s2
+   jmp   fix_r15s2
 
 check_t605_46:
    test  ebp, 10h
@@ -2388,24 +2362,24 @@ t6_43:
 
    pxor  mm0, [keybit43]
    ; stall
-	movq  [eax+ 344], mm0
-	movq  [eax+1168], mm0
-	movq  [eax+1488], mm0
-	movq  [eax+2032], mm0
-	movq  [eax+2360], mm0
-	mov   ecx, 0deh
-	movq  [eax+3016], mm0
-	xor   ebp, ebp
-	movq  [eax+3776], mm0      ; round 2
-	lea   ebx, [PR]
-	movq  [eax+4272], mm0      ; round 3
-	lea   esi, [PL]
+   movq  [eax+ 344], mm0
+   movq  [eax+1168], mm0
+   movq  [eax+1488], mm0
+   movq  [eax+2032], mm0
+   movq  [eax+2360], mm0
+   mov   ecx, 0deh
+   movq  [eax+3016], mm0
+   xor   ebp, ebp
+   movq  [eax+3776], mm0      ; round 2
+   lea   ebx, [PR]
+   movq  [eax+4272], mm0      ; round 3
+   lea   esi, [PL]
 
-	sbox_8 keybit16, keybit43, keybit44, keybit01, keybit07, keybit28
+   sbox_8 keybit16, keybit43, keybit44, keybit01, keybit07, keybit28
 
-	pxor  mm2,[esi+208]        ; out2 ^= x54
+   pxor  mm2,[esi+208]        ; out2 ^= x54
 
-	movq  [L1+32],mm6          ; bit 4 round 1
+   movq  [L1+32],mm6          ; bit 4 round 1
 
    movq  [L1+160],mm1         ; bit 20 round 1
    lea   ebx, [R14]
@@ -2432,7 +2406,7 @@ fix_r15s7:
 
    call  fix_r14s1s3
 
-	test  ebp, 80h             ; loop termination test
+   test  ebp, 80h             ; loop termination test
    jnz   fix_t643_r2
 
    test  ebp, 8
@@ -2459,7 +2433,7 @@ check_t643_46:
 
 fix_t643_r2:
    lea   edx, [round2]
-	lea   ebx, [L1]
+   lea   ebx, [L1]
 
    lea   esi, [PR]
    lea   edi, [R2]
@@ -2475,21 +2449,21 @@ fix_t643_r2:
 t6_08:
    pxor  mm0, [keybit08]
    ; stall
-	movq  [eax+ 504], mm0
-	movq  [eax+ 752], mm0
-	movq  [eax+1208], mm0
-	movq  [eax+1864], mm0
-	movq  [eax+2304], mm0
-	test  ecx, 40h             ; tail stepping loop termination test
-	movq  [eax+2728], mm0
-	mov   ecx, 0f7h
-	movq  [eax+3040], mm0
-	mov   ebp, 0
-	movq  [eax+3944], mm0      ; round 2
-	lea   ebx, [PR]
-	movq  [eax+4288], mm0      ; round 3
-	lea   esi, [PL]
-	jnz   near step_rest
+   movq  [eax+ 504], mm0
+   movq  [eax+ 752], mm0
+   movq  [eax+1208], mm0
+   movq  [eax+1864], mm0
+   movq  [eax+2304], mm0
+   test  ecx, 40h             ; tail stepping loop termination test
+   movq  [eax+2728], mm0
+   mov   ecx, 0f7h
+   movq  [eax+3040], mm0
+   mov   ebp, 0
+   movq  [eax+3944], mm0      ; round 2
+   lea   ebx, [PR]
+   movq  [eax+4288], mm0      ; round 3
+   lea   esi, [PL]
+   jnz   near step_rest
 
    ; Rounds 1, 13, 14 and 15 will be redone so there is no need to fix them
    ; if stepping the rest of the bits
@@ -2513,7 +2487,7 @@ step_rest:
    mov   dword [tailstep], 0
    mov   ecx, [headstep2]
 
-	inc   ecx
+   inc   ecx
    pcmpeqd mm0, mm0
 
    test  ecx, 1
@@ -2529,7 +2503,7 @@ step_rest:
    movq  [eax+ 696], mm0
    movq  [eax+ 952], mm0
    movq  [eax+1408], mm0
-	movq  [eax+1688], mm0
+   movq  [eax+1688], mm0
    movq  [eax+2144], mm0
    movq  [eax+2512], mm0
    movq  [eax+2920], mm0
@@ -2537,16 +2511,16 @@ step_rest:
    movq  [eax+4040], mm0
    movq  [eax+16600], mm0
    movq  [eax+16912], mm0
-	jmp   tail_setup
+   jmp   tail_setup
 
 rest_15:
-	test  ecx, 2
-	jz    rest_45
-	pxor  mm0, [keybit15]
-	; stall
+   test  ecx, 2
+   jz    rest_45
+   pxor  mm0, [keybit15]
+   ; stall
    movq  [eax+ 400], mm0
    movq  [eax+ 720], mm0
-	movq  [eax+1264], mm0
+   movq  [eax+1264], mm0
    movq  [eax+1512], mm0
    movq  [eax+1992], mm0
    movq  [eax+2248], mm0
@@ -2555,32 +2529,32 @@ rest_15:
    movq  [eax+3800], mm0
    movq  [eax+16816], mm0
    movq  [eax+17144], mm0
-	jmp   tail_setup
+   jmp   tail_setup
 
 rest_45:
-	test  ecx, 4
-	jz    rest_50
+   test  ecx, 4
+   jz    rest_50
    pxor  mm0, [keybit45]
    ; stall
    movq  [eax+ 424], mm0
-	movq  [eax+ 736], mm0
+   movq  [eax+ 736], mm0
    movq  [eax+1160], mm0
    movq  [eax+1856], mm0
    movq  [eax+2296], mm0
-	movq  [eax+3176], mm0
+   movq  [eax+3176], mm0
    movq  [eax+3912], mm0
    movq  [eax+4224], mm0
    movq  [eax+16744], mm0
    movq  [eax+17208], mm0
-	jmp   tail_setup
+   jmp   tail_setup
 
 rest_50:
-	; Modify bit 50
-	test  ecx, 10h             ; outermost loop termination
-	jnz   finish
-	pxor  mm0, [keybit50]
-	; stall
-	movq  [eax+ 872], mm0
+   ; Modify bit 50
+   test  ecx, 10h             ; outermost loop termination
+   jnz   finish
+   pxor  mm0, [keybit50]
+   ; stall
+   movq  [eax+ 872], mm0
    movq  [eax+1216], mm0
    movq  [eax+1656], mm0
    movq  [eax+1904], mm0
@@ -2591,13 +2565,13 @@ rest_50:
    movq  [eax+4216], mm0
    movq  [eax+16800], mm0
    movq  [eax+17160], mm0
-	jmp   tail_setup
+   jmp   tail_setup
 
 finish:
-	emms
+   emms
 
    ; Uses the eax value pushed after the call to _malloc
-   call  _free
+   relmem
 
    pop   edx                 ; remove argument from the stack
    xor   eax, eax
@@ -2662,17 +2636,6 @@ R12_sbox5:
    cmp   ecx, 0ffffffffh
 
    movd  edx, mm1
-; pushf
-; not ecx
-; not edx
-; mov [temp3], ecx
-; mov [temp3+4], edx
-; not ecx
-; not edx
-; mov dword [temp4], 5
-; dumpmem temp4, 1
-; dumpmem temp3, 8
-; popf
    jne   R12_sbox6
 
    cmp   edx, 0ffffffffh
@@ -2731,15 +2694,6 @@ R12_sbox6:
    cmp   ecx, 0ffffffffh
 
    movd  edx, mm1
-; pushf
-; not ecx
-; not edx
-; mov [temp3], ecx
-; mov [temp3+4], edx
-; not ecx
-; not edx
-; dumpmem temp3, 8
-; popf
    jne   R12_sbox7
 
    cmp   edx, 0ffffffffh
@@ -2798,17 +2752,6 @@ R12_sbox7:
    cmp   ecx, 0ffffffffh
 
    movd  edx, mm1
-; pushf
-; not ecx
-; not edx
-; mov [temp3], ecx
-; mov [temp3+4], edx
-; not ecx
-; not edx
-; mov dword [temp4], 7
-; dumpmem temp4, 1
-; dumpmem temp3, 8
-; popf
    jne   R12_sbox8
 
    cmp   edx, 0ffffffffh
@@ -2871,17 +2814,6 @@ R12_sbox8:
    cmp   ecx, 0ffffffffh
 
    movd  edx, mm1
-; pushf
-; not ecx
-; not edx
-; mov [temp3], ecx
-; mov [temp3+4], edx
-; not ecx
-; not edx
-; mov dword [temp4], 8
-; dumpmem temp4, 1
-; dumpmem temp3, 8
-; popf
    jne   R13_sbox1
 
    cmp   edx, 0ffffffffh
@@ -2896,20 +2828,6 @@ R13_sbox1:
 
    movq  mm6, [R+32]
    lea   edi, [L13+ebp]
-; dumpmem R+248,8
-; dumpmem R,8
-; dumpmem R+8,8
-; dumpmem R+16,8
-; dumpmem R+24,8
-; dumpmem R+32,8
-; dumpmem L+64,8
-; dumpmem L+128,8
-; dumpmem L+176,8
-; dumpmem L+240,8
-; dumpmem edi+64,8
-; dumpmem edi+128,8
-; dumpmem edi+176,8
-; dumpmem edi+240,8
 
    ; encrypt from round 12
    sbox_1 keybit05, keybit26, keybit41, keybit18, keybit53, keybit24
@@ -2938,15 +2856,6 @@ R13_sbox1:
    cmp   ecx, 0ffffffffh
 
    movd  edx, mm1
-; pushf
-; not ecx
-; not edx
-; mov [temp3], ecx
-; mov [temp3+4], edx
-; not ecx
-; not edx
-; dumpmem temp3, 8
-; popf
    jne   R13_sbox2
 
    cmp   edx, 0ffffffffh
@@ -2980,15 +2889,6 @@ R13_sbox2:
    cmp   ecx, 0ffffffffh
 
    movd  edx, mm1
-; pushf
-; not ecx
-; not edx
-; mov [temp3], ecx
-; mov [temp3+4], edx
-; not ecx
-; not edx
-; dumpmem temp3, 8
-; popf
    jne   R13_sbox3
 
    cmp   edx, 0ffffffffh
@@ -3022,15 +2922,6 @@ R13_sbox3:
    cmp   ecx, 0ffffffffh
 
    movd  edx, mm1
-; pushf
-; not ecx
-; not edx
-; mov [temp3], ecx
-; mov [temp3+4], edx
-; not ecx
-; not edx
-; dumpmem temp3, 8
-; popf
    jne   R13_sbox4
 
    cmp   edx, 0ffffffffh
@@ -3064,15 +2955,6 @@ R13_sbox4:
    cmp   ecx, 0ffffffffh
 
    movd  edx, mm1
-; pushf
-; not ecx
-; not edx
-; mov [temp3], ecx
-; mov [temp3+4], edx
-; not ecx
-; not edx
-; dumpmem temp3, 8
-; popf
    jne   R13_sbox5
 
    cmp   edx, 0ffffffffh
@@ -3106,15 +2988,6 @@ R13_sbox5:
    cmp   ecx, 0ffffffffh
 
    movd  edx, mm1
-; pushf
-; not ecx
-; not edx
-; mov [temp3], ecx
-; mov [temp3+4], edx
-; not ecx
-; not edx
-; dumpmem temp3, 8
-; popf
    jne   R13_sbox6
 
    cmp   edx, 0ffffffffh
@@ -3148,15 +3021,6 @@ R13_sbox6:
    cmp   ecx, 0ffffffffh
 
    movd  edx, mm1
-; pushf
-; not ecx
-; not edx
-; mov [temp3], ecx
-; mov [temp3+4], edx
-; not ecx
-; not edx
-; dumpmem temp3, 8
-; popf
    jne   R13_sbox7
 
    cmp   edx, 0ffffffffh
@@ -3190,15 +3054,6 @@ R13_sbox7:
    cmp   ecx, 0ffffffffh
 
    movd  edx, mm1
-; pushf
-; not ecx
-; not edx
-; mov [temp3], ecx
-; mov [temp3+4], edx
-; not ecx
-; not edx
-; dumpmem temp3, 8
-; popf
    jne   R13_sbox8
 
    cmp   edx, 0ffffffffh
@@ -3234,15 +3089,6 @@ R13_sbox8:
    cmp   ecx, 0ffffffffh
 
    movd  edx, mm1
-; pushf
-; not ecx
-; not edx
-; mov [temp3], ecx
-; mov [temp3+4], edx
-; not ecx
-; not edx
-; dumpmem temp3, 8
-; popf
    jne   key_found
 
    cmp   edx, 0ffffffffh
