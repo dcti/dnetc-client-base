@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.30 2004/07/13 22:22:59 kakace Exp $
+ * $Id: ogr.cpp,v 1.2.4.31 2004/07/13 22:30:11 kakace Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -1915,7 +1915,7 @@ static void dump_ruler(struct State *oState, int depth)
 
 #if (defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)) \
     && defined(HAVE_KOGE_PPC_CORES)
-#if !define(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
+#if !defined(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
   #error KOGE cores are NOT time constrained
 #endif
 #if (OGROPT_ALTERNATE_CYCLE == 2) && (defined(__VEC__) || defined(__ALTIVEC__))
