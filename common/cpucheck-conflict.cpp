@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.20 1999/12/10 04:28:30 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.21 1999/12/12 01:33:06 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -174,6 +174,10 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     #elif (CLIENT_OS == OS_RISCOS)
     {
       cpucount = riscos_count_cpus();
+    }
+    #elif (CLIENT_OS == OS_MACOS)
+    {
+      cpucount = 1; // I am just a workaround: FIX ME!
     }
     #elif ( (CLIENT_OS == OS_DEC_UNIX) && defined(OS_SUPPORTS_SMP))
     {
