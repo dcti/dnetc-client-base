@@ -2,9 +2,11 @@
  * -install and -uninstall support for Linux (maybe all SysV style init?)
  *
  * Created Aug 23 2000, by Cyrus Patel <cyp@fb14.uni-mainz.de>
- * $Id: li_inst.c,v 1.1.2.1 2001/01/21 15:10:23 cyp Exp $
+ * $Id: li_inst.c,v 1.1.2.2 2001/02/18 23:58:40 cyp Exp $
  *
 */
+#define __NO_STRING_INLINES /* work around bugs in glibc bits/string2.h */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -9,7 +9,7 @@
  * has 'host', and that too can be bypassed (described below).
  *
  * Created Aug 2 2000, by Cyrus Patel <cyp@fb14.uni-mainz.de>
- * $Id: resolv.c,v 1.1.2.1 2001/01/21 15:10:23 cyp Exp $
+ * $Id: resolv.c,v 1.1.2.2 2001/02/18 23:58:40 cyp Exp $
  *
  * The functions exported from here will first check if a bypass 
  * (described below) has been provided. 
@@ -87,6 +87,7 @@
 #if defined(__linux__) && defined(__STRICT_ANSI__)
 #undef __STRICT_ANSI__ /* headers won't prototype popen()/usleep() otherwise */
 #endif
+#define __NO_STRING_INLINES /* work around glibc bug in bits/strings2.h */
 
 #include <stdio.h>
 #include <unistd.h>

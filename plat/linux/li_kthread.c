@@ -3,8 +3,10 @@
  *
  * Created Nov 2000, by Cyrus Patel <cyp@fb14.uni-mainz.de>
  * clone() cloned from wine source (wine/misc/port.c)
- * $Id: li_kthread.c,v 1.1.2.1 2001/01/21 15:10:23 cyp Exp $
+ * $Id: li_kthread.c,v 1.1.2.2 2001/02/18 23:58:40 cyp Exp $
 */
+#define __NO_STRING_INLINES /* work around bugs in glibc bits/strings2.h */
+
 #include <sched.h>       /* sched_yield() */
 #include <stdlib.h>      /* malloc()/free() */
 #include <unistd.h>      /* sched_yield() */
