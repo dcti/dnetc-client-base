@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.73  1998/07/10 18:45:00  nordquist
+# Fixed rc5stub.cpp handling for HP-UX (generalized RC5CORECOPY that can
+# come from any subdirectory, not just rc5).
+#
 # Revision 1.72  1998/07/10 10:19:20  remi
 # Added special targets for cramer's non-standard EGCS installation.
 # There is now 15 targets for x86-linux. Is there anyone around here
@@ -425,14 +429,14 @@ case "$1" in
 
 ###### MIPS based platforms
     *mips-sni-gcc)           #For MIPS SINIX
-	RC5CORECOPY="mips-crunch.cpp"
+	RC5CORECOPY="rc5/mips-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 -DMIPS_CRUNCH=1 -Dsinix"
 	TARGET_LIBS="-lsocket -lnsl -lc -L/usr/ucblib -lucb"
 	;;
 
     *mips-cc-64)             # For 64bit MIPS processors
 	#  mips-crunch.cpp doesn't yet compile with CC
-	RC5CORECOPY="rc5ansi2-rg2.cpp"
+	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
 	TARGET_CC="/usr/lib64/cmplrs/CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -O3 -static -r10000 -64 -mips4 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
 	TARGET_LDFLAGS="-static -64 -IPA -mips4"
@@ -441,7 +445,7 @@ case "$1" in
 
     *mips5-cc)                # IRIX CC is slower than mips-gcc targets
         #  mips-crunch.cpp doesn't compile with CC
-	RC5CORECOPY="rc5ansi2-rg2.cpp"
+	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -DPIPELINE_COUNT=2 -DBIT_32 -D_irix5_ -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
@@ -449,27 +453,27 @@ case "$1" in
 
     *mips-cc)                # IRIX CC is slower than mips-gcc targets
         #  mips-crunch.cpp doesn't compile with CC
-	RC5CORECOPY="rc5ansi2-rg2.cpp"
+	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	;;
 
     *mips-gcc-irix5-crunch)        # faster than mips-gcc for IRIX
-        RC5CORECOPY="mips-crunch.cpp"
+        RC5CORECOPY="rc5/mips-crunch.cpp"
         TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 -D_irix5_ -DMIPS_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
         ;;
 
 
     *mips-gcc-crunch)        # faster than mips-gcc for IRIX
-        RC5CORECOPY="mips-crunch.cpp"
+        RC5CORECOPY="rc5/mips-crunch.cpp"
         TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 -DMIPS_CRUNCH=1 -DBIT_32 -DKWAN"
         TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
         ;;
 
     *mips-gcc)               # faster than mips-cc for IRIX
-        RC5CORECOPY="rc5ansi2-rg.cpp"
+        RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
         TARGET_CCFLAGS="$OPTS_GCC_MIPS -DBIT_32 -DPIPELINE_COUNT=2 -DKWAN"
         TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
         ;;
@@ -478,21 +482,21 @@ case "$1" in
 ###### HPUX
 
     *hpux-CC)
-	RC5CORECOPY="parisc.cpp"
+	RC5CORECOPY="platforms/parisc.cpp"
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_HPUX -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="platforms/parisc.s $MEGGS_SLICE_SRCS"
 	;;
 
     *hpux-gcc)
-	RC5CORECOPY="parisc.cpp"
+	RC5CORECOPY="platforms/parisc.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_HPUX -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="platforms/parisc.s $MEGGS_SLICE_SRCS"
 	;;
 
 
     *hpux-gcc-m68k)
-	RC5CORECOPY="rc5ansi1-b2.cpp"
+	RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_HPUX_M68K -DPIPELINE_COUNT=1 -DBIT_32 -DKWAN"
 	TARGET_AFLAGS="$OPTS_GAS_M68030K"
 	TARGET_ADDASMS="rc5/crunch.68k.gcc.s"
@@ -503,13 +507,13 @@ case "$1" in
 
 ###### DGUX (Data General Unix)
     *dgux-gcc)
-	RC5CORECOPY="rc5ansi2-rg.cpp"
+	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
 	TARGET_CC="/usr/local/bin/g++"
 	TARGET_CCFLAGS="$OPTS_GCC_DGUX -static"
 	;;
 
     *dgux-gcc-mt)
-	RC5CORECOPY="rc5ansi2-rg.cpp"
+	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
 	TARGET_CC="/usr/local/bin/g++"
 	TARGET_CCFLAGS="$OPTS_GCC_DGUX -D_POSIX4A_DRAFT6_SOURCE -DMULTITHREAD"
 	TARGET_LIBS="-lthread"
@@ -518,27 +522,27 @@ case "$1" in
 ###### Sparc/UltraSparc or Sun/SunOS/Solaris
 
     *sparc-openbsd)
-	RC5CORECOPY="rc5ansi2-rg2.cpp"
+	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_NONULTRA_SPARC -DPIPELINE_COUNT=2 -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS="$SLICE_SRCS4"
 	;;
 
     *sparc-linux)
-	RC5CORECOPY="rc5ansi2-rg.cpp"
+	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_NONULTRA_SPARC -DPIPELINE_COUNT=2 -DSPARCLINUX=1 -DKWAN -DBIT_32"
 	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
 	TARGET_LIBS="-ldl"
 	;;
 
     *sparc-cc)
-	RC5CORECOPY="rc5-ultra-crunch.cpp"
+	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
 	TARGET_CC="cc"
 	TARGET_CCFLAGS="$OPTS_CC_SPARC -DPIPELINE_COUNT=1"
 	TARGET_LIBS="-lnsl -lsocket"
 	;;
 
     *sunos-gcc-static)	
-	RC5CORECOPY="rc5ansi2-rg.cpp"
+	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -DPIPELINE_COUNT=2"
 	TARGET_LIBS="-static"
 	;;
@@ -562,28 +566,28 @@ case "$1" in
     #####
 
     *sparc-solaris-gcc-mt)        # slower rc5, slower des
-	RC5CORECOPY="rc5ansi2-rg.cpp"
+	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DULTRA_CRUNCH=1 -DKWAN"
 	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
 	;;
 
     *sparc-solaris-gcc-crunch-mt)    # fastest rc5, slower des
-	RC5CORECOPY="rc5-ultra-crunch.cpp"
+	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DULTRA_CRUNCH=1 -DKWAN"
 	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
 	;;
 
     *sparc-solaris-gcc-crunch-slice-mt)   # fastest rc5 & des for ultra
-	RC5CORECOPY="rc5-ultra-crunch.cpp"
+	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris -DBIT_32 -DMEGGS -DKWAN -DPIPELINE_COUNT=2 -DMULTITHREAD -DULTRA_CRUNCH=1"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
 	;;
 
     *sparc-solaris-gcc-crunch-asmslice-mt)   # fastest rc5 & VIS DES
-	RC5CORECOPY="rc5-ultra-crunch.cpp"
+	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris -DPIPELINE_COUNT=2 -DMULTITHREAD -DULTRA_CRUNCH=1"
 	TARGET_ADDSRCS="$DESULTRA_SRCS_ASM"
  	TARGET_ADDASMS="platforms/ultrasparc/simple.handopt.s"
@@ -610,7 +614,7 @@ case "$1" in
 
 ###### Alpha
     *alpha-cc-ev5-static)
-	RC5CORECOPY="rc5ansi2-bo2.cpp"
+	RC5CORECOPY="rc5/rc5ansi2-bo2.cpp"
 	TARGET_CC="cxx"
 	TARGET_CCFLAGS="$OPTS_CC_ALPHA_EV5 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
@@ -618,7 +622,7 @@ case "$1" in
 	;;
 
     *alpha-cc-ev4-static)
-        RC5CORECOPY="rc5ansi2-bo2.cpp"
+	RC5CORECOPY="rc5/rc5ansi2-bo2.cpp"
 	TARGET_CC="cxx"
 	TARGET_CCFLAGS="$OPTS_CC_ALPHA_EV4 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
@@ -626,14 +630,14 @@ case "$1" in
 	;;
 
     *alpha-cc)
-	RC5CORECOPY="rc5ansi2-bo2.cpp"
+	RC5CORECOPY="rc5/rc5ansi2-bo2.cpp"
 	TARGET_CC="cxx"
 	TARGET_CCFLAGS="$OPTS_CC_ALPHA -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	;;
 
     *alpha-gcc)
-	RC5CORECOPY="rc5ansi1-b2.cpp"
+	RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 -DBIT_64 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
@@ -642,7 +646,7 @@ case "$1" in
 	;;
 
     *alpha-gcc-mt)
-	RC5CORECOPY="rc5ansi1-b2.cpp"
+	RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 -DBIT_64 -DMEGGS -DKWAN -DMULTITHREAD"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
@@ -651,7 +655,7 @@ case "$1" in
 	;;
 
     *alpha-netbsd)
-	RC5CORECOPY="rc5ansi1-b2.cpp"
+	RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 -DBIT_64 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
@@ -697,13 +701,13 @@ case "$1" in
 	;;
 
     *aix-gcc)      # possibly useful for POWER machines
-	RC5CORECOPY="rc5ansi1-rg.cpp"
+	RC5CORECOPY="rc5/rc5ansi1-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_AIX -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	;;
 
     *aix-gcc2)     # possibly useful for POWER machines
-	RC5CORECOPY="rc5ansi2-rg.cpp"
+	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_AIX -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
@@ -922,20 +926,20 @@ case "$1" in
 	;;
 
     *m68k-next)
-	RC5CORECOPY="rc5ansi1-b2.cpp"
+	RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
 	TARGET_CC="cc++"
 	TARGET_CCLAGS="$OPTS_NEXT_M68K -arch m68k -D_NeXT_ -DPIPELINE_COUNT=1"
 	;;
 
     *sparc-next)
-	RC5CORECOPY="rc5ansi2-rg.cpp"
+	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
 	TARGET_CC="cc++"
 	TARGET_CCFLAGS="$OPTS_NEXT_SPARC -arch sparc -D_NeXT_ -DPIPELINE_COUNT=2 -DBIT_32"
 	TARGET_ADDSRCS="des/des-slice.cpp des/deseval.cpp"
 	;;
 
     *hppa-next)
-	RC5CORECOPY="rc5ansi2-b2.cpp"
+	RC5CORECOPY="rc5/rc5ansi2-b2.cpp"
 	TARGET_CC="cc++"
 	TARGET_CCFLAGS="$OPTS_NEXT_HPPA -arch hppa -D_NeXT_ -DPIPELINE_COUNT=2 -DBIT_32"
 	TARGET_ADDSRCS="des/des-slice.cpp des/deseval.cpp"
@@ -974,7 +978,7 @@ case "$1" in
 
 ###### OS390
     *os390)
-	RC5CORECOPY="rc5ansi2-rg2.cpp"
+	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
 	TARGET_CC="gcc"
 	TARGET_AS=""
 	TARGET_CCFLAGS="$OPTS_OS390 -D__showids__ -DPIPELINE_COUNT=2 -DBIT_32 -DKWAN -DMEGGS"
@@ -996,7 +1000,6 @@ case "$1" in
 	exit 1
 esac
 echo "Platform target for \"$1\" recognized."
-
 
 
 #
@@ -1115,9 +1118,9 @@ for target in ${TARGET_ALLCCOBJS}; do
   SAFENAME=`echo $target | tr -d '/.\$\-'`
   eval TARGETSRC=$`echo DEPEND_$SAFENAME`
   if [ -n "${RC5CORECOPY}" -a `basename ${TARGETSRC}` = problem.cpp ]; then
-    echo "$target:	${TARGETSRC} rc5/${RC5CORECOPY}" >> Makefile
+    echo "$target:	${TARGETSRC} ${RC5CORECOPY}" >> Makefile
     echo "	rm -f rc5/rc5stub.cpp" >> Makefile
-    echo "	cp rc5/${RC5CORECOPY} rc5/rc5stub.cpp" >> Makefile
+    echo "	cp ${RC5CORECOPY} rc5/rc5stub.cpp" >> Makefile
     echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
     echo "	rm -f rc5/rc5stub.cpp" >> Makefile
   else
