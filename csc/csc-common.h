@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-common.h,v $
+// Revision 1.1.2.7  1999/11/29 19:12:53  lyndon
+// Document the reason for the MIPS-specific tests.
+//
 // Revision 1.1.2.6  1999/11/29 00:29:44  lyndon
 // Irix MIPSpro incremental commit:
 //
@@ -38,7 +41,7 @@
 //
 
 #ifndef __CSC_COMMON_H
-#define __CSC_COMMON_H "@(#)$Id: csc-common.h,v 1.1.2.6 1999/11/29 00:29:44 lyndon Exp $"
+#define __CSC_COMMON_H "@(#)$Id: csc-common.h,v 1.1.2.7 1999/11/29 19:12:53 lyndon Exp $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -63,6 +66,12 @@
     #error something missing
   #endif
 #elif defined(_MIPS_SZLONG)
+/*
+ * The tests against ULONG_MAX in the following section fail on
+ * Irix/MIPSpro due to sign-extension of the constants. The
+ * Irix compilers explicitly provide the information we need, so
+ * we use that instead.
+ */
   #if (_MIPS_SZLONG == 32)
     #define CSC_BIT_32
     typedef unsigned long ulong;
