@@ -5,6 +5,13 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: logstuff-conflict.cpp,v $
+// Revision 1.21.2.6  1999/01/09 11:37:16  remi
+// Synced with :
+//
+//  Revision 1.26  1999/01/08 02:56:26  michmarc
+//  Fix a trailing ; typo; plus change va_arg for those platforms
+//  (like Alpha/NT) where va_arg is a structure, not a pointer
+//
 // Revision 1.21.2.5  1999/01/04 02:19:18  remi
 // Synced with :
 //
@@ -35,7 +42,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.21.2.5 1999/01/04 02:19:18 remi Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.21.2.6 1999/01/09 11:37:16 remi Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -114,7 +121,10 @@ static void InternalLogScreen( const char *msgbuffer, unsigned int msglen, int /
 
 // ------------------------------------------------------------------------
 
-void LogWithPointer( int loggingTo, const char *format, va_list arglist ) 
+// On NT/Alpha (and maybe some other platforms) the va_list type is a struct,
+// not an int or a pointer-type.  Hence, NULL is not a valid va_list.  Pass
+// a (va_list *) instead to avoid this problem
+void LogWithPointer( int loggingTo, const char *format, va_list *arglist ) 
 {
   char msgbuffer[MAX_LOGENTRY_LEN];
   unsigned int msglen = 0;
@@ -141,7 +151,7 @@ void LogWithPointer( int loggingTo, const char *format, va_list arglist )
     if ( arglist == NULL )
       strcat( msgbuffer, format );
     else 
-      vsprintf( msgbuffer, format, arglist );
+      vsprintf( msgbuffer, format, *arglist );
     msglen = strlen( msgbuffer );
 
     if ( msglen == 0 )
@@ -250,7 +260,7 @@ void LogScreen( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_SCREEN, format, argptr );
+  LogWithPointer( LOGTO_SCREEN, format, &argptr );
   va_end(argptr);
   return;
 }    
@@ -259,7 +269,7 @@ void LogScreenRaw( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN, format, argptr );
+  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN, format, &argptr );
   va_end(argptr);
   return;
 }  
@@ -268,7 +278,7 @@ void Log( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_SCREEN, format, argptr );
+  LogWithPointer( LOGTO_SCREEN, format, &argptr );
   va_end(argptr);
   return;
 }  
@@ -277,7 +287,7 @@ void LogRaw( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN, format, argptr );
+  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN, format, &argptr );
   va_end(argptr);
   return;
 }  
