@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.65 2004/05/20 21:13:14 kakace Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.66 2004/06/16 18:33:26 kakace Exp $"; }
 
 //#define TRACE
 
@@ -131,6 +131,29 @@ unsigned int corecount_for_contest( unsigned int cont_i )
     return count_i;
   }
   return 0;
+}
+
+/* -------------------------------------------------------------------- */
+
+unsigned int nominal_rate_for_contest( unsigned int cont_i)
+{
+  switch (cont_i)
+  {
+#ifdef HAVE_RC5_72_CORES
+    case RC5_72:
+      return estimate_nominal_rate_rc572();
+#endif
+#ifdef HAVE_OGR_CORES
+    case OGR:
+      return estimate_nominal_rate_ogr();
+#endif
+#ifdef HAVE_OGR_PASS2
+    case OGR_P2:
+      return estimate_nominal_rate_ogr();
+#endif
+    default:
+      return 0;
+  }
 }
 
 /* ===================================================================== */
