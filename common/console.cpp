@@ -11,6 +11,9 @@
    to functions in modules in your own platform/ area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.6  1998/10/07 18:36:18  silby
+// Changed logic in ConInKey once more so it's not reading uninit variables.  Should be solid now. :)
+//
 // Revision 1.5  1998/10/07 12:56:46  silby
 // Reordered Deinitconsole so console functions would still be available during w32deinitconsole.
 //
@@ -29,7 +32,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.5 1998/10/07 12:56:46 silby Exp $"; }
+return "@(#)$Id: console.cpp,v 1.6 1998/10/07 18:36:18 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -240,11 +243,12 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       usleep(50*1000); /* with a 50ms delay, no visible processor activity */
                        /* with NT4/P200 and still responsive to user requests */
 
-      if (timeout_millisecs >= 0) CliTimer(&timenow);
+      CliTimer(&timenow);
 
-      } while (( timenow.tv_sec < timestop.tv_sec ) ||
+      } while ( (timeout_millisecs == -1) ||
+                (( timenow.tv_sec < timestop.tv_sec ) ||
                  (( timenow.tv_sec == timestop.tv_sec ) &&
-                  ( timenow.tv_usec < timestop.tv_usec )));
+                 ( timenow.tv_usec < timestop.tv_usec ))));
     }
 
   return ch;
