@@ -58,6 +58,7 @@ PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/p2bdespro.obj  \
 	$(OUTPUTPATH)/x86ident.obj  \
 	$(OUTPUTPATH)/sboxes-mmx.obj \
+	$(OUTPUTPATH)/rc5mmx.obj \
 	$(OUTPUTPATH)/deseval-meggs3-mmx.obj
 
 RC5_LIBS = wsock32.lib advapi32.lib
@@ -75,6 +76,10 @@ RC5_LIBS = wsock32.lib advapi32.lib
 
 {$(RC5PATH)}.asm{$(OUTPUTPATH)}.obj:
 	tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
+
+{$(RC5PATH)/nasm}.asm{$(OUTPUTPATH)}.obj:
+	nasm -o $(@:/=\) -f coff -i $(RC5PATH:/=\)\nasm\ $(**:/=\)
+
 
 {$(DESPATH)}.cpp{$(OUTPUTPATH)}.obj:
 	cl -c $(OPTS_MSVC) -Fo$@ $**
