@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.5 1999/07/20 03:41:50 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.6 1999/09/17 19:36:59 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -44,6 +44,7 @@ struct trigstruct
 static struct 
 {
   int isinit;
+  int exitmsgwasseen;
   struct trigstruct exittrig;
   struct trigstruct pausetrig;
   struct trigstruct huptrig;
@@ -122,7 +123,7 @@ void *RegisterPollDrivenBreakCheck( register void (*proc)(void) )
 
 // -----------------------------------------------------------------------
 
-static void InternalPollExternalTrigger(struct trigstruct *trig, int undoable)
+static void __PollExternalTrigger(struct trigstruct *trig, int undoable)
 {
   #if (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN32S)
   // we treat a running defrag as another flagfile (we need to ensure
@@ -177,11 +178,9 @@ static void InternalPollExternalTrigger(struct trigstruct *trig, int undoable)
 
 int CheckExitRequestTrigger(void) 
 {
-  static int wasseen = 0;
-
   if (!trigstatics.isinit)
     InitializeTriggers( NULL, NULL );
-  if (!wasseen && !trigstatics.exittrig.incheck)
+  if (!trigstatics.exitmsgwasseen && !trigstatics.exittrig.incheck)
   {
     ++trigstatics.exittrig.incheck;
     if ( !trigstatics.exittrig.trigger )
@@ -190,7 +189,7 @@ int CheckExitRequestTrigger(void)
         (*trigstatics.exittrig.pollproc)();
     }
     if ( !trigstatics.exittrig.trigger )
-      InternalPollExternalTrigger( &trigstatics.exittrig, 0 );
+      __PollExternalTrigger( &trigstatics.exittrig, 0 );
     if ( trigstatics.exittrig.trigger )
     {
       LogScreen("*Break*%s\n", 
@@ -198,7 +197,7 @@ int CheckExitRequestTrigger(void)
          (" (found exit flag file)"): 
          ((trigstatics.huptrig.trigger)?(" Restarting..."):
          (" Shutting down...")) );
-      wasseen = 1;             
+      trigstatics.exitmsgwasseen = 1;             
     }
     --trigstatics.exittrig.incheck;
   }
@@ -217,7 +216,7 @@ int CheckPauseRequestTrigger(void)
        trigstatics.pausetrig.trigger != TRIGSETBY_INTERNAL )
   {
     ++trigstatics.pausetrig.incheck;
-    InternalPollExternalTrigger( &trigstatics.pausetrig, 1 );
+    __PollExternalTrigger( &trigstatics.pausetrig, 1 );
     --trigstatics.pausetrig.incheck;
   }
   return( trigstatics.pausetrig.trigger );
@@ -288,7 +287,7 @@ void __PollDrivenBreakCheck( void ) /* not static */
   if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
     RaiseExitRequestTrigger();
   #elif (CLIENT_OS == OS_NETWARE)
-    nwCliCheckForUserBreak(); //in netware.cpp
+    nwCliCheckForUserBreak(); //in nwccons.cpp
   #elif (CLIENT_OS == OS_DOS)
     _asm mov ah,0x0b  /* benign dos call (kbhit()) */
     _asm int 0x21     /* to keep int23h (^C) handling alive */
@@ -376,14 +375,10 @@ extern "C" void CliSignalHandler( int sig )
   ClearRestartRequestTrigger();
   RaiseExitRequestTrigger();
 
-  #if (CLIENT_OS == OS_NETWARE)
-    nwCliSignalHandler( sig ); //never to return...
-  #elif (CLIENT_OS == OS_RISCOS)
+  #if (CLIENT_OS == OS_RISCOS)
     _kernel_escape_seen();  // clear escape trigger
-    signal(sig,SIG_IGN);
-  #else
-    signal(sig,SIG_IGN);
   #endif
+  signal(sig,SIG_IGN);
 }  
 #endif //ifndef CLISIGHANDLER_IS_SPECIAL
 
