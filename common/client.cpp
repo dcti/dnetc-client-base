@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.4 2002/12/10 16:04:50 andreasb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.5 2003/01/07 15:10:28 oliver Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -166,7 +166,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
     if (level == 0)
     {
       LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME " "
-                    "Copyright 1997-2002, distributed.net\n");
+                    "Copyright 1997-2003, distributed.net\n");
 #if defined HAVE_RC5_64_CORES
       #if (CLIENT_CPU == CPU_68K)
       LogScreenRaw( "RC5 68K assembly by John Girvin\n");
@@ -188,6 +188,12 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
 #if defined HAVE_RC5_72_CORES
       #if (CLIENT_CPU == CPU_ARM)
       LogScreenRaw( "RC5-72 ARM assembly by Peter Teichmann\n");
+      #endif
+      #if (CLIENT_CPU == CPU_68K)
+      LogScreenRaw( "RC5-72 68K assembly by Malcolm Howell and John Girvin\n");
+      #endif
+      #if (CLIENT_CPU == CPU_POWERPC)
+      LogScreenRaw( "RC5-72 PowerPC assembly by Malcolm Howell\n");
       #endif
 #endif
 #if defined(HAVE_DES_CORES)
