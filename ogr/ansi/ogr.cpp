@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.42 2001/02/19 08:10:39 mfeiri Exp $
+ * $Id: ogr.cpp,v 1.1.2.43 2001/02/24 15:55:30 teichp Exp $
  */
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
@@ -85,7 +85,6 @@
   #endif
 #elif defined(ASM_ARM)
   #if (__GNUC__)
-    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1
     #define OGROPT_BITOFLIST_DIRECT_BIT           0
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         1
@@ -119,7 +118,6 @@
       (defined(__ICC)) /* icc is Intel only (duh!) */ || \
       (defined(__GNUC__) && (defined(ASM_ALPHA) \
                              || defined(ASM_X86) \
-                             || defined(ASM_ARM) \
                              || (defined(ASM_68K) && (defined(mc68020) \
                              || defined(mc68030) || defined(mc68040) \
                              || defined(mc68060)))))
