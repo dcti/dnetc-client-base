@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.101 2000/01/20 22:11:03 snake Exp $
+# @(#)$Id: configure,v 1.222.2.102 2000/01/21 22:14:45 ctate Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1557,7 +1557,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -fno-pic -O3 -Wno-multichar -DMMX_RC5 \
 			-D__showids__ -DMULTITHREAD -DHAVE_OGR_CORES"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$KWAN_SLICE_SRCS4 $OGR_ANSI_SRCS"
+	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
 	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
 	TARGET_LIBS=""
