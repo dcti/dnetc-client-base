@@ -8,7 +8,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.45 1999/04/23 06:18:37 gregh Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.46 1999/11/14 19:00:48 cyp Exp $"; }
 
 #include "cputypes.h"  // u64
 #include "problem.h"   // Problem class
@@ -56,11 +56,9 @@ return "@(#)$Id: clisrate.cpp,v 1.45 1999/04/23 06:18:37 gregh Exp $"; }
  *
  */
 
-static char *num_sep(char *number)
+static char *num_sep(const char *number)
 {
-
-  #define STR_LEN 32
-  static char num_string[STR_LEN + 1];
+  static char num_string[(sizeof(long)*3*2) + 1];
 
   char *rp, *wp, *xp;             /* read ptr, write ptr, aux ptr */
   register unsigned int digits;
@@ -74,12 +72,12 @@ static char *num_sep(char *number)
 
   digits = strlen(number);
 
-  if (digits >= STR_LEN)
-    return(number);
+  if (digits >= (sizeof(num_string)-1))
+    return ((char *)number);
 
   strcpy(num_string, number);
   rp = num_string + digits - 1;
-  wp = num_string + STR_LEN;
+  wp = num_string + (sizeof(num_string)-1);
   *wp-- = '\0';
   if ((xp = strchr(num_string, '.')) != NULL) {
     while (rp >= xp) {
@@ -94,7 +92,7 @@ static char *num_sep(char *number)
   }
   if (wp[1] == ',')
     wp++;
-  return(wp + 1);
+  return (wp + 1);
 }
 
 
@@ -216,7 +214,7 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
   static char str[160];
   ContestWork work;
   struct timeval tv = {0,0};
-  char keyrate[32];
+  char keyrate[64];
   unsigned int /* size=1, count=32, */ itermul;
   unsigned int mulfactor, contestid = 0;
   const char *keyrateP = "---.-- ", *name = "???";
@@ -228,9 +226,11 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
   {
     if (CliGetContestInfoBaseData( contestid, &name, &mulfactor )==0) //clicdata
     {
-      keyrateP = CliGetKeyrateAsString( keyrate, 
+      keyrateP = __CliGetKeyrateAsString( keyrate, 
           ((doSave) ? ( CliGetKeyrateForProblem( prob ) ) :
-                      ( CliGetKeyrateForProblemNoSave( prob ) ))  );
+                      ( CliGetKeyrateForProblemNoSave( prob ) )),
+                      _U32LimitDouble_ );
+      keyrateP = (const char *)strcpy( keyrate, num_sep( keyrateP ) );
     }
     /*  
     tv.tv_sec = prob->timehi;
@@ -246,11 +246,11 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
     case RC5:
     case DES:
     case CSC:
-//"Completed one RC5 packet 00000000:00000000 (4*2^28 keys)\n"
+//"Completed RC5 packet 00000000:00000000 (4*2^28 keys)\n"
 //"%s - [%skeys/sec]\n"
       itermul = (((work.crypto.iterations.lo) >> 28) +
                  ((work.crypto.iterations.hi) <<  4) );
-      sprintf( str, "Completed one %s packet %08lX:%08lX (%u*2^28 keys)\n"
+      sprintf( str, "Completed %s packet %08lX:%08lX (%u*2^28 keys)\n"
                     "%s - [%skeys/sec]\n",  
                     name, 
                     (unsigned long) ( work.crypto.key.hi ) ,
@@ -260,13 +260,13 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
                     keyrateP );
       break;
     case OGR:
-//"Completed one OGR stub 22/1-3-5-7 (123456789 nodes)\n"
-//"%s - [%snodes/sec]\n"
-      sprintf( str, "Completed one %s stub %s (%s nodes)\n"
+//[Nov 12 16:20:35 UTC] Completed OGR stub 23/21-16-11-31 (17,633,305,532 nodes)
+//"%s - [%skeys/sec]\n"
+      sprintf( str, "Completed %s stub %s (%s nodes)\n"
                     "%s - [%snodes/sec]\n",  
                     name, 
                     ogr_stubstr( &work.ogr.workstub.stub ),
-                    CliGetU64AsString(&work.ogr.nodes, 0, -1),
+                    num_sep(CliGetU64AsString(&work.ogr.nodes, 0, -1)),
                     CliGetTimeString( &tv, 2 ),
                     keyrateP );
       break;

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.87 1999/11/08 02:02:39 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.88 1999/11/14 19:00:48 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -234,15 +234,10 @@ unsigned int ValidateProcessorCount( int numcpu, int quietly )
 {
   static int detected_count = -2;
 
-  //-------------------------------------------------------------
-  // Validate processor/thread count.
-  // --------------------
+  //--------------------------------------
+  // Validate processor/thread count:
   // numcpu with zero implies "force-single-threaded"
-  //
-  // Whether a CLIENT_CPU (core) is thread safe or not, or whether the client
-  // was built with thread support or not, is not the responsibility of
-  // select cpu logic.
-  //--------------------
+  //--------------------------------------
 
   if (detected_count == -2)  // returns -1 if no hardware detection
     detected_count = GetNumberOfDetectedProcessors(); 
@@ -659,8 +654,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     else if ( vendorid == 0x654E /* 'eN' */  ) //"NexGenDriven"
     {   
       static struct cpuxref nexgenxref[]={
-          {  0x0500, 1500,     0, "Nx586" },
-          {  0x0000, 1500,     0, NULL  } //no such thing
+          {  0x0300, 1500,     1, "Nx586" }, //386/486 core
+          {  0x0000, 1500,     1, NULL  } //no such thing
           }; internalxref = &nexgenxref[0];
       vendorname = "NexGen ";
       cpuidbmask = 0xfff0;
@@ -693,14 +688,21 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0570, 1611, 0x105, "K6"       },
           {  0x0580, 1690, 0x105, "K6-2"     },
           {  0x0590, 1690, 0x105, "K6-3"     },
-          {  0x0610, 3400, 0x102, "K7"       }, /* P6, Cyrix or K6 core ? */
-          {  0x0620, 3400, 0x102, "K7"       },
+          {  0x0610, 3400, 0x103, "K7"       }, /* P6, or Cyrix core ? */
+          /* There may be a split personality issue here:
+             7541:0612  600 MHz K7: core #2 gets 1.798 Mkey/sec, 
+                              while core #3 gets 1.809 Mkey/sec consistently.
+             However, I now have two reports (no email addy unfortunately)
+             of core #2 being definitely faster. That may be the later
+             series K7 (7541:062x). Needs checking.
+          */
+          {  0x0620, 3400, 0x103, "K7-2"     },
           {  0x0000, 4096,     2, NULL       } // default core = P6 (?)
           }; internalxref = &amdxref[0];
       vendorname = "AMD ";
       cpuidbmask = 0xfff0; //strip last 4 bits, don't need stepping info
     }
-    else if ( vendorid == 0x6E49 /* 'nI' */ || vendorid == 0x6547 /* 'eG' */ ) // Intel CPU
+    else if ( vendorid == 0x6547 /* 'eG' */ ) // "GenuineIntel"
     {
       static struct cpuxref intelxref[]={
           {  0x0030,  426,     1, "80386"      },   // generic 386/486 core

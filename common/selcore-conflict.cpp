@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.55 1999/11/11 02:30:32 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.56 1999/11/14 19:00:48 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -41,12 +41,12 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       /* we should be using names that tell us how the cores are different
          (just like "bryd" and "movzx bryd")
       */
-      "RG/BRF class 5", /* (P5/Am486/Cx486) - may become P5MMX at runtime*/
-      "RG class 3/4",   /* (autofor 386/486) may become SMC at runtime */
-      "RG class 6",     /* (autofor PPro/II/III/AMD K7) */
-      "RG Cx re-pair",  /* Cyrix 6x86[MX]/M2 */
+      "RG/BRF class 5", /* P5/Am486/Cx486 - may become P5MMX at runtime*/
+      "RG class 3/4",   /* 386/486 - may become SMC at runtime */
+      "RG class 6",     /* PPro/II/III */
+      "RG Cx re-pair",  /* Cyrix 6x86[MX]/M2, AMD K7 */
       "RG RISC-rotate I", /* K5 */
-      "RG RISC-rotate II", /* K6, may become mmx-k6-2 at runtime */
+      "RG RISC-rotate II", /* K6 - may become mmx-k6-2 core at runtime */
       NULL
     },
     { /* DES */
@@ -506,7 +506,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         case 4:  // K5
           selcorestatics.corenum[CSC] = 2; // 1key - inline
           break;
-        case 3:  // Cx6x86
+        case 3:  // Cx6x86, AMD K7
         case 5:  // K6/K6-2/K6-3
           selcorestatics.corenum[CSC] = 0; // 6bit - inline
           break;
