@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.52  1999/01/23 21:36:10  patrick
+//
+// OS2-EMX supports close (doesn't even know about soclose ;-)
+//
 // Revision 1.51  1999/01/21 22:01:04  cyp
 // fixed LowLevelSend() which didn't know /anything/ about non-blocking sox.
 //
@@ -251,7 +255,9 @@ extern "C" {
   // This is nessessary since the order of the OS/2 defines are important
   #include "platforms/os2cli/os2defs.h"
   typedef int SOCKET;
+  #if !defined(__EMX__)
   #define close(s) soclose(s)
+  #endif
   #define read(sock, buff, len) recv(sock, (char*)buff, len, 0)
   #define write(sock, buff, len) send(sock, (char*)buff, len, 0)
 #elif (CLIENT_OS == OS_AMIGAOS)
