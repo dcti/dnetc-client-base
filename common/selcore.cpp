@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.41 2003/04/03 21:46:47 oliver Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.42 2003/04/04 20:21:39 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -258,7 +258,7 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.41 2003/04/03 21:46:47 oliver Exp $"; }
       extern "C" s32 CDECL rc5_72_unit_func_KKS7400( RC5_72UnitWork *, u32 *, void *);
       extern "C" s32 CDECL rc5_72_unit_func_KKS7450( RC5_72UnitWork *, u32 *, void *);
     #endif
-  #elif (CLIENT_CPU == CPU_SPARC) && (CLIENT_OS == OS_SOLARIS)
+  #elif (CLIENT_CPU == CPU_SPARC)
     extern "C" s32 CDECL rc5_72_unit_func_KKS_2 ( RC5_72UnitWork *, u32 *, void * );
   #endif
 
@@ -496,7 +496,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "MH 1-pipe 604e",/* gas format */
       NULL
     },
-  #elif (CLIENT_CPU == CPU_SPARC) && (CLIENT_OS == OS_SOLARIS)
+  #elif (CLIENT_CPU == CPU_SPARC)
     { /* RC5-72 */
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -1586,6 +1586,13 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
         default: cindex =-1; break; // no default 
       }
     }
+    #else /* non-Solaris */
+    /* there is currently only one asm core and this is the fastest core
+       on all systems benchmarked so far ...
+       ... so we currently don't need to care about cpu detection (linux
+       only) and just pre-select KKS 2-pipe everywhere
+    */
+    cindex = 3; // == KKS 2-pipe
     #endif
   }
   #elif (CLIENT_OS == OS_PS2LINUX) // OUCH !!!! SELECT_BY_CPU !!!!! FIXME
@@ -2395,7 +2402,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         unit_func.gen_72 = rc5_72_unit_func_mh604e_addi;
         pipeline_count = 1;
         break;
-     #elif (CLIENT_CPU == CPU_SPARC) && (CLIENT_OS == OS_SOLARIS)
+     #elif (CLIENT_CPU == CPU_SPARC)
        case 3:
          unit_func.gen_72 = rc5_72_unit_func_KKS_2;
          pipeline_count = 2;
