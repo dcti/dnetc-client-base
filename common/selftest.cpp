@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.82 2002/09/28 01:58:06 andreasb Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.83 2002/10/13 08:09:19 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -411,10 +411,10 @@ long SelfTest( unsigned int contest )
         contestwork.crypto.key.hi = expectedsolution_hi;
       }
 #endif
-      if (0)
-      {
-        PROJECT_NOT_HANDLED(contest);
-      }
+      //if (0)
+      //{
+      //  PROJECT_NOT_HANDLED(contest);
+      //}
 
       switch (contest) 
       {
