@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.54  1998/12/22 02:38:39  snake
+//
+// EPROTO doesn't exist on some systems
+//
 // Revision 1.53  1998/12/21 17:54:23  cyp
 // (a) Network connect is now non-blocking. (b) timeout param moved from
 // network::Get() to object scope.
@@ -149,7 +153,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.53 1998/12/21 17:54:23 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.54 1998/12/22 02:38:39 snake Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -1377,7 +1381,7 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
             rc = ((FD_ISSET(sock, &writefds))?(0):(-1));
             #endif
             
-            #ifndef ERRNO_IS_UNUSABLE
+            #if !defined(ERRNO_IS_UNUSABLE) && defined(EPROTO)
             if (rc != 0)      /* exception */
               errno = EPROTO;
             #endif
