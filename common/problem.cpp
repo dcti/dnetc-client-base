@@ -3,8 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.51  1998/12/09 07:38:40  dicamillo
+// Fixed missing // in log comment (MacCVS Pro bug!).
+//
 // Revision 1.50  1998/12/09 07:36:34  dicamillo
-// Added support for MacOS client scheduling, andinfo needed by MacOS GUI.
+// Added support for MacOS client scheduling, and info needed
+// by MacOS GUI.
 //
 // Revision 1.49  1998/12/07 15:21:23  chrisb
 // more riscos/x86 changes
@@ -131,7 +135,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.50 1998/12/09 07:36:34 dicamillo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.51 1998/12/09 07:38:40 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"
