@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.30 2000/01/10 23:32:53 michmarc Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.31 2000/01/11 19:43:48 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -571,7 +571,10 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     sprintf( namebuf, "%04X:%04X", vendorid, cpuid );
     detectedname = (const char *)&namebuf[0];
     detectedtype = -1; /* assume not found */
-  
+    
+    /* use detectedt type= 0xFF when you don't know what to use.
+       DO *NOT* guess
+    */
     if ( vendorid == 0x7943 /* 'yC' */ ) // Cyrix CPU
     {
       static struct cpuxref cyrixxref[]={
@@ -589,8 +592,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     else if ( vendorid == 0x6952 /* 'iR' */  ) //"RiseRiseRiseRise"
     {
       static struct cpuxref risexref[]={
-          {  0x0500, 1500,     0, "mP6" }, /* (0.25 æm) */
-          {  0x0500, 1500,     0, "mP6" }, /* (0.18 æm) */
+           {  0x0500, 1500,  0xFF, "mP6" }, /* (0.25 æm) - dunno which core */
+          {  0x0500, 1500,  0xFF, "mP6" }, /* (0.18 æm) - dunno which core */
           {  0x0000, 2115,    -1, NULL  }
           }; internalxref = &risexref[0];
       vendorname = "Rise ";
@@ -599,8 +602,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     else if ( vendorid == 0x6543 /* 'eC' */ ) //"CentaurHauls"
     {
       static struct cpuxref centaurxref[]={
-          {  0x0540, 1200,0x100, "C6"          }, // use Pentium core
-          {  0x0585, 1346,0x108, "WinChip 2"   }, // pentium Pro (I think)
+          {  0x0540, 1200,0x10A, "C6"          }, // has its own id
+          {  0x0585, 1346,0x10A, "WinChip 2"   }, // uses RG Cx re-pair
           {  0x0000, 1346,   -1, NULL          }
           }; internalxref = &centaurxref[0];
       vendorname = "Centaur/IDT ";

@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.43 2000/01/09 05:05:56 mfeiri Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.44 2000/01/11 19:43:49 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -579,20 +579,21 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
           int cindex = -1; 
           switch ( detected_type & 0xff )
           {
-            case 0: cindex = 0; break; // P5
-            case 1: cindex = 1; break; // 386/486
-            case 2: cindex = 2; break; // PII/PIII
-            case 3: cindex = 3; break; // Cx6x86
-            case 4: cindex = 4; break; // K5
-            case 5: cindex = 5; break; // K6/K6-2/K6-3
+            case 0x00: cindex = 0; break; // P5 ("RG/BRF class 5")
+            case 0x01: cindex = 1; break; // 386/486 ("RG class 3/4")
+            case 0x02: cindex = 2; break; // PII/PIII ("RG class 6")
+            case 0x03: cindex = 3; break; // Cx6x86 ("RG Cx re-pair")
+            case 0x04: cindex = 4; break; // K5 ("RG RISC-rotate I")
+            case 0x05: cindex = 5; break; // K6/K6-2/K6-3 ("RG RISC-rotate II)
             #if defined(SMC)    
-            case 6: cindex = 1; break; // cyrix 486 uses SMC if available
+            case 0x06: cindex = 1; break; // cyrix 486 uses SMC if available
             #else 
-            case 6: cindex = 0; break; // else default to P5 (see /bugs/ #99)
+            case 0x06: cindex = 0; break; // else default to P5 (see /bugs/ #99)
             #endif
-            case 7: cindex = 2; break; // castrated Celeron
-            case 8: cindex = 2; break; // PPro
-            case 9: cindex = 3; break; // AMD K7
+            case 0x07: cindex = 2; break; // castrated Celeron
+            case 0x08: cindex = 2; break; // PPro
+            case 0x09: cindex = 3; break; // AMD K7
+            case 0x0A: cindex = 3; break; // Centaur C6
             //no default
           }
           selcorestatics.corenum[RC5] = cindex;
@@ -615,16 +616,17 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
           {
             switch ( detected_type & 0xff )
             {
-              case 0: cindex = 0; break; // P5             == standard Bryd
-              case 1: cindex = 0; break; // 386/486        == standard Bryd
-              case 2: cindex = 1; break; // PII/PIII       == movzx Bryd
-              case 3: cindex = 1; break; // Cx6x86         == movzx Bryd
-              case 4: cindex = 0; break; // K5             == standard Bryd
-              case 5: cindex = 1; break; // K6             == movzx Bryd
-              case 6: cindex = 0; break; // Cx486          == movzx Bryd
-              case 7: cindex = 1; break; // orig Celeron   == movzx Bryd
-              case 8: cindex = 1; break; // PPro           == movzx Bryd
-              case 9: cindex = 1; break; // AMD K7         == movzx Bryd
+              case 0x00: cindex = 0; break; // P5             == standard Bryd
+              case 0x01: cindex = 0; break; // 386/486        == standard Bryd
+              case 0x02: cindex = 1; break; // PII/PIII       == movzx Bryd
+              case 0x03: cindex = 1; break; // Cx6x86         == movzx Bryd
+              case 0x04: cindex = 0; break; // K5             == standard Bryd
+              case 0x05: cindex = 1; break; // K6             == movzx Bryd
+              case 0x06: cindex = 0; break; // Cx486          == movzx Bryd
+              case 0x07: cindex = 1; break; // orig Celeron   == movzx Bryd
+              case 0x08: cindex = 1; break; // PPro           == movzx Bryd
+              case 0x09: cindex = 1; break; // AMD K7         == movzx Bryd
+              //se 0x0A: cindex = ?; break; // Centaur C6
               //no default
             }
           }
@@ -649,16 +651,17 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             // this is only valid for nasm'd cores or GCC 2.95 and up
             switch ( detected_type & 0xff )
             {
-              case 0: cindex = 3; break; // P5             == 1key - called
-              case 1: cindex = 3; break; // 386/486        == 1key - called
-              case 2: cindex = 2; break; // PII/PIII       == 1key - inline
-              case 3: cindex = 3; break; // Cx6x86         == 1key - called
-              case 4: cindex = 2; break; // K5             == 1key - inline
-              case 5: cindex = 0; break; // K6/K6-2/K6-3   == 6bit - inline
-              case 6: cindex = 3; break; // Cyrix 486      == 1key - called
-              case 7: cindex = 3; break; // orig Celeron   == 1key - called
-              case 8: cindex = 3; break; // PPro           == 1key - called
-              case 9: cindex = 0; break; // AMD K7         == 6bit - inline
+              case 0x00: cindex = 3; break; // P5           == 1key - called
+              case 0x01: cindex = 3; break; // 386/486      == 1key - called
+              case 0x02: cindex = 2; break; // PII/PIII     == 1key - inline
+              case 0x03: cindex = 3; break; // Cx6x86       == 1key - called
+              case 0x04: cindex = 2; break; // K5           == 1key - inline
+              case 0x05: cindex = 0; break; // K6/K6-2/K6-3 == 6bit - inline
+              case 0x06: cindex = 3; break; // Cyrix 486    == 1key - called
+              case 0x07: cindex = 3; break; // orig Celeron == 1key - called
+              case 0x08: cindex = 3; break; // PPro         == 1key - called
+              case 0x09: cindex = 0; break; // AMD K7       == 6bit - inline
+              //se 0x0A: cindex = ?; break; // Centaur C6
               //no default
             }
           }
