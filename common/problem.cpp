@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.95 1999/04/04 16:15:13 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.96 1999/04/06 19:24:04 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -565,24 +565,6 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
 
 /* ------------------------------------------------------------------- */
 
-s32 Problem::GetResult( RC5Result * result )
-{
-  if ( !initialized )
-    return ( -1 );
-
-  result->key.hi = contestwork.crypto.key.hi;
-  result->key.lo = contestwork.crypto.key.lo;
-  result->keysdone.hi = contestwork.crypto.keysdone.hi;
-  result->keysdone.lo = contestwork.crypto.keysdone.lo;
-  result->iterations.hi = contestwork.crypto.iterations.hi;
-  result->iterations.lo = contestwork.crypto.iterations.lo;
-  result->result = resultcode;
-
-  return ( contest );
-}
-
-/* ------------------------------------------------------------------- */
-
 int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dopurge )
 {
   if (!initialized)
@@ -593,7 +575,9 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dop
     *contestid = contest;
   if (dopurge)
     initialized = finished = 0;
-  return( resultcode );
+  if (resultcode < 0)
+    return -1;
+  return ( resultcode );
 }
 
 /* ------------------------------------------------------------- */
