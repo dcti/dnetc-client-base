@@ -1,8 +1,29 @@
+// Hey, Emacs, this a -*-C++-*- file !
+
 // Copyright distributed.net 1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 // 
+/* This include file ensures that sleep() and usleep() are valid.
+   They MUST actually block/yield for approx. the duration requested.
+
+   Porter notes: Check network.cpp and network.h to remove duplicate
+   or conflicting defines or code in the platform specific sections there.
+
+  1. if your platform does not support frac second sleep, try using
+     select() as a substitute: For example:
+     #define usleep(x) { struct timeval tv = {0,(x)}; \
+                         select(0,NULL,NULL,NULL,&tv); }
+     (Not all implementations support this: some don't sleep at all, 
+     while others sleep forever)
+  2. if usleep(x) or sleep(x) are macros, make sure that 'x' is
+     enclosed in parens. ie #define sleep(x) myDelay((x)/1000)
+*/
+//
 // $Log: sleepdef.h,v $
+// Revision 1.11  1998/08/10 10:16:35  cyruspatel
+// DOS port changes.
+//
 // Revision 1.10  1998/07/16 20:12:58  nordquist
 // DYNIX port changes.
 //
@@ -19,7 +40,7 @@
 // Revision 1.6  1998/06/22 01:05:03  cyruspatel
 // DOS changes. Fixes various compile-time errors: removed extraneous ')' in
 // sleepdef.h, resolved htonl()/ntohl() conflict with same def in client.h
-// (is now inline asm), added NONETWORK wrapper around Network::Resolve()
+// (is now inline asm), added NO!NETWORK wrapper around Network::Resolve()
 //
 // Revision 1.5  1998/06/15 09:12:56  jlawson
 // moved more sleep defines into sleepdef.h
@@ -30,30 +51,14 @@
 // Revision 1.3  1998/06/14 08:13:10  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
+// Revision 1.0  1998/05/01 05:01:08  cyruspatel
+// Created to support real sleep periods (needed for buffwork revision)
 // 
-
-// This include file ensures that sleep() and usleep() are valid.
-// They MUST actually block/yield for approx. the duration requested.
-
-// include this file from client.h and network.h
 
 #ifndef __SLEEPDEF_H__
 #define __SLEEPDEF_H__
 
 #include "cputypes.h"
-
-/* Porter notes: Check network.cpp and network.h to remove duplicate
-   or conflicting defines or code in the platform specific sections there.
-
-  1. if your platform does not support frac second sleep, try using
-       select() as a substitute: For example:
-       #define usleep(x) { struct timeval tv = {0,(x)}; \
-                          select(0,NULL,NULL,NULL,&tv); }
-     That is ok according to the posix definition, but some bsdsocket
-     implementations don't support it and don't sleep or sleep forever.
-  2. if usleep(x) or sleep(x) are macros, make sure that 'x' is
-     enclosed in parens. ie #define sleep(x) myDelay((x)/1000)
-*/
 
 #if (CLIENT_OS == OS_WIN32)
   #define WIN32_LEAN_AND_MEAN
@@ -68,12 +73,9 @@
   #define sleep(x)
   #define usleep(x)
 #elif (CLIENT_OS == OS_DOS)
-  #if (defined(__WATCOMC__) || defined(__TURBOC__))
-    #include <dos.h>
-    #define usleep(x) delay((x)/1000)
-  #elif defined(DJGPP)
-    #include <unistd.h>
-  #endif
+  #include "platforms/dos/clidos.h"
+  #define sleep(x) dosCliSleep((x))
+  #define usleep(x) dosCliUSleep((x))
 #elif (CLIENT_OS == OS_OS2)
   #include "platforms/os2cli/os2defs.h"
   #ifdef sleep
@@ -130,6 +132,4 @@
 #endif
 
 #endif
-
-
 
