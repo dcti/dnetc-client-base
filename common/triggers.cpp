@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.17 2000/01/22 00:56:34 ctate Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.18 2000/01/23 14:33:09 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -327,18 +327,35 @@ static void __init_signal_handlers( int doingmodes )
 // -----------------------------------------------------------------------
 
 #ifndef CLISIGHANDLER_IS_SPECIAL
+#if (CLIENT_OS == OS_IRIX)
+static void (*SETSIGNAL(int signo, void (*proc)(int)))(int)
+{
+  struct sigaction sa, osa;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  sa.sa_handler = (sig_t)proc;
+  //if (!sigismember(&_sigintr, signo))
+    sa.sa_flags |= SA_RESTART;
+  if (sigaction(signo, &sa, &osa) < 0)
+    return (void (*)(int))(SIG_ERR);
+  return (void (*)(int))(osa.sa_handler);
+}
+#else
+#define SETSIGNAL signal
+#endif
+
 extern "C" void CliSignalHandler( int sig )
 {
   #if defined(TRIGGER_PAUSE_SIGNAL)
   if (sig == TRIGGER_PAUSE_SIGNAL)
   {
-    signal(sig,CliSignalHandler);
+    SETSIGNAL(sig,CliSignalHandler);
     RaisePauseRequestTrigger();
     return;
   }
   if (sig == TRIGGER_UNPAUSE_SIGNAL)
   {
-    signal(sig,CliSignalHandler);
+    SETSIGNAL(sig,CliSignalHandler);
     ClearPauseRequestTrigger();
     return;
   }
@@ -346,7 +363,7 @@ extern "C" void CliSignalHandler( int sig )
   #if defined(SIGHUP)
   if (sig == SIGHUP)
   {
-    signal(sig,CliSignalHandler);
+    SETSIGNAL(sig,CliSignalHandler);
     RaiseRestartRequestTrigger();
     return;
   }  
@@ -354,7 +371,7 @@ extern "C" void CliSignalHandler( int sig )
   ClearRestartRequestTrigger();
   RaiseExitRequestTrigger();
 
-  signal(sig,SIG_IGN);
+  SETSIGNAL(sig,SIG_IGN);
 }  
 #endif //ifndef CLISIGHANDLER_IS_SPECIAL
 
@@ -366,7 +383,7 @@ static void __init_signal_handlers( int doingmodes )
   __assert_statics(); 
   doingmodes = doingmodes; /* possibly unused */
   #if (CLIENT_OS == OS_SOLARIS)
-  signal( SIGPIPE, SIG_IGN );
+  SETSIGNAL( SIGPIPE, SIG_IGN );
   #endif
   #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS)
   RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
@@ -376,7 +393,7 @@ static void __init_signal_handlers( int doingmodes )
   RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
   #endif
   #if defined(SIGHUP)
-  signal( SIGHUP, CliSignalHandler );   //restart
+  SETSIGNAL( SIGHUP, CliSignalHandler );   //restart
   #endif
   #if defined(TRIGGER_PAUSE_SIGNAL)  // signal-based pause/unpause mechanism?
   if (!doingmodes)
@@ -390,24 +407,24 @@ static void __init_signal_handlers( int doingmodes )
     if( getpgrp() != getpid() )
       setpgid( 0, 0 );
     #endif
-    signal( TRIGGER_PAUSE_SIGNAL, CliSignalHandler );  //pause
-    signal( TRIGGER_UNPAUSE_SIGNAL, CliSignalHandler );  //continue
+    SETSIGNAL( TRIGGER_PAUSE_SIGNAL, CliSignalHandler );  //pause
+    SETSIGNAL( TRIGGER_UNPAUSE_SIGNAL, CliSignalHandler );  //continue
   }
   #endif
   #if defined(SIGQUIT)
-  signal( SIGQUIT, CliSignalHandler );  //shutdown
+  SETSIGNAL( SIGQUIT, CliSignalHandler );  //shutdown
   #endif
   #if defined(SIGSTOP)
-  signal( SIGSTOP, CliSignalHandler );  //shutdown, maskable some places
+  SETSIGNAL( SIGSTOP, CliSignalHandler );  //shutdown, maskable some places
   #endif
   #if defined(SIGABRT)
-  signal( SIGABRT, CliSignalHandler );  //shutdown
+  SETSIGNAL( SIGABRT, CliSignalHandler );  //shutdown
   #endif
   #if defined(SIGBREAK)
-  signal( SIGBREAK, CliSignalHandler ); //shutdown
+  SETSIGNAL( SIGBREAK, CliSignalHandler ); //shutdown
   #endif
-  signal( SIGTERM, CliSignalHandler );  //shutdown
-  signal( SIGINT, CliSignalHandler );   //shutdown
+  SETSIGNAL( SIGTERM, CliSignalHandler );  //shutdown
+  SETSIGNAL( SIGINT, CliSignalHandler );   //shutdown
 }
 #endif
 
