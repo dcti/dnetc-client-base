@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.19 1999/07/14 11:16:53 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.20 1999/07/14 13:07:04 ivo Exp $"; }
 
 //#define TRACE
 
@@ -256,7 +256,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                 (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX)
           pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
 	  #elif (CLIENT_OS == OS_IRIX) || (CLIENT_OS == OS_HPUX)
-          pscmd = "/usr/bin/ps -e |awk '{print$1\" \"$4}' 2>/dev/null";
+          pscmd = "/usr/bin/ps -e |awk '{print$1\" \"$4\" \"$5\" \"$6\" \"$7\" \"$8\" \"$9}' 2>/dev/null";
           #else
           #error fixme: select an appropriate ps syntax
           #endif
