@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.51 1999/04/08 19:02:59 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.52 1999/04/10 14:38:09 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // Client class
@@ -423,7 +423,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
       host = NULL; //delete keys so that old inis stay compatible and default.
     else if (confopt_IsHostnameDNetHost(host)) //make clear that name==port
         { af = "0"; if (client->keyport != 3064) port = NULL; }
-    if (port!=NULL) sprintf(port,"%ld",client->keyport);
+    if (port!=NULL) sprintf(port,"%d",((int)(client->keyport)));
     WritePrivateProfileStringB( OPTSECT_NET, "autofindkeyserver", af, fn );
     WritePrivateProfileStringB( sect, "keyport", port, fn );
     WritePrivateProfileStringB( sect, "keyproxy", host, fn );
