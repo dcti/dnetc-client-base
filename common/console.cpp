@@ -11,6 +11,10 @@
    to functions in modules in your own platform area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.14  1998/11/08 19:05:02  cyp
+// Created new function ConGetSize(int *width, int *height) from stuff in
+// DisplayHelp().
+//
 // Revision 1.13  1998/10/31 03:31:39  sampo
 // removed MacOS specific #include, checked for EOF input
 //
@@ -53,8 +57,10 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.13 1998/10/31 03:31:39 sampo Exp $"; }
+return "@(#)$Id: console.cpp,v 1.14 1998/11/08 19:05:02 cyp Exp $"; }
 #endif
+
+#define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -66,10 +72,9 @@ return "@(#)$Id: console.cpp,v 1.13 1998/10/31 03:31:39 sampo Exp $"; }
 #ifndef NOTERMIOS
 #if (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS)
 #include <termios.h>
-#define USE_TERMIOS_FOR_INKEY
+#define TERMIOS_IS_AVAILABLE
 #endif
 #endif
-#define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
 /* ---------------------------------------------------- */
 
 static struct 
@@ -271,7 +276,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
             ch = (getch() << 8);
           }
         }
-      #elif (defined(USE_TERMIOS_FOR_INKEY))
+      #elif (defined(TERMIOS_IS_AVAILABLE))
         {
         struct termios stored;
         struct termios newios;
@@ -289,14 +294,14 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         }
       #elif (CLIENT_OS == OS_MACOS)
         {
-		unsigned long keys[4];
-		GetKeys(keys);
-		if (keys[0] != 0 || keys[1] != 0 || keys[2] != 0 || keys[3] != 0)
-			{
-				ch = getchar();
-				if (ch == EOF)
-					ch = 0;
-			}
+    unsigned long keys[4];
+    GetKeys(keys);
+    if (keys[0] != 0 || keys[1] != 0 || keys[2] != 0 || keys[3] != 0)
+      {
+        ch = getchar();
+        if (ch == EOF)
+          ch = 0;
+      }
         }
       #else
         {
@@ -446,7 +451,7 @@ int ConInStr(char *buffer, unsigned int buflen )
 
 /* ---------------------------------------------------- */
 
-#if 0  /* unimplemented */
+#if 0 //unimplemented
 int ConGetPos( int *col, int *row )  /* zero-based */
 {
   if (constatics.initlevel > 0 && constatics.conisatty)
@@ -466,7 +471,7 @@ int ConGetPos( int *col, int *row )  /* zero-based */
 
 /* ---------------------------------------------------- */
 
-#if 0 /* unimplemented */
+#if 0 //unimplemented
 int ConSetPos( int col, int row )  /* zero-based */
 {
   if (constatics.initlevel > 0 && constatics.conisatty)
@@ -474,13 +479,112 @@ int ConSetPos( int col, int row )  /* zero-based */
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
     w32ConSetPos(col,row);
     #elif (CLIENT_OS == OS_NETWARE)
-    gotoxy( (short)col, (short)row );
+    WORD c = col, r = row;
+    gotoxy( c, r );
     #endif
     return 0;
     }
   return -1;
 }
 #endif
+
+/* ---------------------------------------------------- */
+
+int ConGetSize(int *widthP, int *heightP) /* one-based */
+{
+  int width = 0, height = 0;
+
+  if (constatics.initlevel <= 0 || !constatics.conisatty)
+    return -1;
+
+  #if (CLIENT_OS == OS_RISCOS)
+    {
+    static const int var[3] = { 133, 135, -1 };
+    int value[3];
+    if (!riscos_in_taskwindow)
+      {
+      if (_swix(OS_ReadVduVariables, _INR(0,1), var, value) == 0)
+        {
+        // nlines = TWBRow - TWTRow + 1
+        height = value[0] - value[1] + 1;
+        }
+      }
+    }
+  #elif (CLIENT_OS == OS_WIN32)
+    if ( w32ConGetSize(&width,&height) < 0 )
+      height = width = 0;
+  #elif (CLIENT_OS == OS_NETWARE)
+    WORD ht, wdth;
+    GetSizeOfScreen( &ht, &wt );
+    height = ht; width = wt;
+  #else
+    {
+    #if 0 //-- no longer needed since paging is disabled on unix targets
+    // grrr... terminfo database location is installation dependent
+    // search some standard (?) locations
+    static int slines=0, scolumns=0;
+    
+    if (slines == 0 && scolumns == 0)
+      {
+      unsigned int loc = 0;
+      int success = 0;
+      
+      while (success == 0)
+        {
+        int termerr;
+        if (setupterm( NULL, 1, &termerr ) != ERR) 
+          {
+          if (termerr == 1)
+            {
+            success = 1;
+            break;
+            }
+          }
+        char *terminfo_locations[] = 
+          {
+          "/usr/share/terminfo",       // ncurses 1.9.9g defaults
+          "/usr/local/share/terminfo", //
+          "/usr/lib/terminfo",         // Debian 1.3x use this one
+          "/usr/local/lib/terminfo",   // variation
+          "/etc/terminfo",             // found something here on my machine, doesn't hurt
+          "~/.terminfo",               // last resort
+          NULL                         // stop tag
+          };
+        if (terminfo_locations[loc] == NULL)
+          break;
+        setenv( "TERMINFO", terminfo_locations[loc], 1);
+        loc++;
+        }
+      if (success)
+        {
+        slines = tigetnum( "lines" );
+        scolums = tigetnum( "columns" );
+        }
+      }
+    height = slines; width = scolumns;
+    #endif
+    }
+  #endif
+  
+  if (height == 0)
+    {
+    char *p = getenv( "LINES" );
+    if (p) height = atoi( p );
+    }
+  if (width == 0)
+    {
+    char *p = getenv( "COLUMNS" );
+    if (p) width = atoi( p );
+    }
+  if (height <= 0 || height >= 300)
+    height = 25;
+  if (width <=0 || width >=300)
+    width = 80;
+
+  if (heightP) *heightP = height;
+  if (widthP)  *widthP = width;
+  return 0;
+}
 
 /* ---------------------------------------------------- */
 

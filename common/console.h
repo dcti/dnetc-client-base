@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: console.h,v $
+// Revision 1.22  1998/11/08 19:05:03  cyp
+// Created new function ConGetSize(int *width, int *height) from stuff in
+// DisplayHelp().
+//
 // Revision 1.21  1998/10/26 02:52:46  cyp
 // Remved IS_A_TTY() macros.
 //
@@ -13,8 +17,6 @@
 //
 // Revision 1.1  1998/10/03 05:34:47  cyp
 // Created.
-//
-//
 
 #ifndef __CONSOLE_H__
 #define __CONSOLE_H__
@@ -44,7 +46,7 @@ int ConOutModal(const char *str); //currently no use for it.
 int ConInKey(int timeout_millisecs); // Returns -1 if err. 0 if timed out.
 
 // ConInStr() does what gets() would do (without the trailing '\n') and the
-// buffer is always '\0' terminated. Returns -1 if err (stdin is not a tty)
+// buffer is always '\0' terminated. Returns -1 if console is not a tty
 int ConInStr(char *buffer, unsigned int len, int flags );
 #define CONINSTR_BYEXAMPLE  1  /* the buffer contains a 'live' example */
 #define CONINSTR_ASPASSWORD 2  /* print '*' for each character typed */
@@ -60,6 +62,10 @@ int ConGetPos( int *row, int *col );
 // Set the cursor position (zero-based)
 // returns -1 if console is not a tty
 int ConSetPos( int row, int col );  
+
+// Get screen size (one-based)
+// returns -1 if console is not a tty 
+int ConGetSize( int *width, int *height );
 
 // Deinitialize console functionality. 
 // Waits for a user keypress (on some platforms) if !autoclose.
