@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.88 2001/04/01 11:47:52 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.89 2001/04/13 12:33:43 cyp Exp $
 ==========================================================================
 
 2.8000
@@ -36,7 +36,8 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.88 2001/04/01 11:47:52 cyp Exp $
             new: x86/win32/netware: added support for the RC5 SMC core.
             new: win32: RAS profile names are now supported in the
                       "Interfaces to Watch" list.
-
+            new: *ix: support for shell-style tilde expansion for filenames.
+                      
 2.8013.467  new: 68k: new, faster RC5 cores (previously only available in
                  the AmigaOS client)
             new: x86: new, faster RC5 core for the P4.
