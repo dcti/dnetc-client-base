@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.50 1999/04/04 16:15:14 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.51 1999/04/08 19:02:59 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // Client class
@@ -105,7 +105,7 @@ static int __remapObsoleteParameters( const char *fn ) /* returns <0 if failed *
           break;
         }
       }
-      modfail += (!WritePrivateProfileStringB( OPTSECT_MISC, "project-priority", NULL, fn ));
+      modfail += (!WritePrivateProfileStringB( OPTSECT_MISC, "project-priority", projectmap_expand(buffer), fn ));
     }
   }
 
