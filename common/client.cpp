@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.57  1998/06/24 21:53:40  cyruspatel
+// Created CliGetMessageForProblemCompletedNoSave() in clisrate.cpp. It
+// is similar to its non-nosave pendant but doesn't affect cumulative
+// statistics.  Modified Client::Benchmark() to use the function.
+//
 // Revision 1.56  1998/06/23 20:19:52  cyruspatel
 // Adjusted NetWare specific stuff in ::Benchmark to obtain the timeslice
 // from the new GetTimesliceBaseline()
@@ -46,7 +51,9 @@
 //
 //
 
-static const char *id="@(#)$Id: client.cpp,v 1.56 1998/06/23 20:19:52 cyruspatel Exp $";
+#if (!defined(lint) && defined(__showids__))
+static const char *id="@(#)$Id: client.cpp,v 1.57 1998/06/24 21:53:40 cyruspatel Exp $";
+#endif
 
 #include "client.h"
 
@@ -1156,7 +1163,7 @@ s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr )
 u32 Client::Benchmark( u8 contest, u32 numk )
 {
   u32 numkeys = 10000000L;
-  u32 percent2;
+  u32 percent2, tslice;
 
   if (SelectCore()) return 0;
   if (numk != 0) numkeys=max(numk,1000000L);
@@ -1191,38 +1198,51 @@ u32 Client::Benchmark( u8 contest, u32 numk )
 #endif
 
   (problem[0]).percent = 0;
-#if (CLIENT_OS == OS_NETWARE)
-  //A normal .Run() with such a large timeslice would cause the OS to
-  //suspend this thread for hogging the CPU, so we run with a small
-  //timeslice and yield frequently.
-  unsigned int tslice = GetTimesliceBaseline(); //in cpucheck.cpp
-  while ( (problem[0]).Run( tslice, 0 ) == 0 ) //was 2000/PIPELINE_COUNT 
-  {                             //normal ThreadSwitch on NetWare 3.x
-    CliThreadSwitchLowPriority(); //or ThreadSwitchLowPriority on NetWare 4.x
-#else
-  while ( (problem[0]).Run( 100000L / PIPELINE_COUNT , 0 ) == 0 )
-  {
-#endif
-    if (!percentprintingoff)
+  tslice = ( 100000L / PIPELINE_COUNT );
+
+  #if (CLIENT_OS == OS_NETWARE)
+    tslice = GetTimesliceBaseline(); //in cpucheck.cpp
+  #endif
+  
+  while ( (problem[0]).Run( tslice , 0 ) == 0 )
     {
+    if (!percentprintingoff)
+      {
       percent2 = (problem[0]).CalcPercent();
       if ( percent2 > (problem[0]).percent )
-      {
+        {
         LogScreenPercentSingle((u32) percent2, (u32) problem[0].percent, false);
         problem[0].percent = percent2;
+        }
       }
-    }
-#if (CLIENT_OS == OS_AMIGAOS)
-    if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C)
-      SignalTriggered = UserBreakTriggered = 1;
-#endif
-    if ( SignalTriggered ) return 0;
-  }
+    #if (CLIENT_OS == OS_NETWARE)   //yield 
+      CliThreadSwitchLowPriority();
+    #endif
+
+    #if (CLIENT_OS == OS_AMIGAOS)
+      if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C)
+        SignalTriggered = UserBreakTriggered = 1;
+    #endif
+    if ( SignalTriggered ) 
+      return 0;
+    } 
 
 #ifdef NEW_STATS_AND_LOGMSG_STUFF
-  u32 rate = (u32)CliGetKeyrateForProblem( &(problem[0]) ); //and update stats
-  LogScreenf("\nCompleted %s\n", CliGetSummaryStringForContest( contest-1 ) );
-  return rate;
+  #if 0
+    LogScreenf("\n[%s] %s\n", CliGetTimeString( NULL, 1 ), 
+                CliGetMessageForProblemCompletedNoSave( &(problem[0]) ) );
+    return (u32)0;  //unused, so we don't care
+  #else
+    struct timeval tv;  
+    char ratestr[32];
+    double rate = CliGetKeyrateForProblemNoSave( &(problem[0]) );
+    tv.tv_sec = (problem[0]).timehi;  //read the time the problem:run started
+    tv.tv_usec = (problem[0]).timelo;
+    CliTimerDiff( &tv, &tv, NULL );    //get the elapsed time
+    LogScreenf("\nCompleted in %s [%skeys/sec]\n", CliGetTimeString( &tv, 2 ), 
+                             CliGetKeyrateAsString( ratestr, rate ) );
+    return (u32)(rate);                         
+  #endif
 #else //old_timing here
   double lenhi = (double) ((problem[0]).timehi);
   double lenlo = (double) ((problem[0]).timelo);

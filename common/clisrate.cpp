@@ -6,6 +6,11 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.17  1998/06/24 21:53:45  cyruspatel
+// Created CliGetMessageForProblemCompletedNoSave() in clisrate.cpp. It
+// is similar to its non-nosave pendant but doesn't affect cumulative
+// statistics.  Modified Client::Benchmark() to use the function.
+//
 // Revision 1.16  1998/06/15 12:03:53  kbracey
 // Lots of consts.
 //
@@ -16,22 +21,65 @@
 // Revision 1.14  1998/06/14 08:12:41  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
+// Revision 1.13  1998/06/12 09:12:44  kbracey
+// Tidied up progress display some more: capitalisation of Block/block
+// standardised to block, pluralisation sorted out, ensured that
+// "Retrieved/sent n xxx blocks from/to server" lines fully blank out
+// "n% transferred" lines.
 //
+// Revision 1.12  1998/06/09 12:35:06  kbracey
+// Changed to print (3.29% done) instead of (03.29% done).
+//
+// Revision 1.11  1998/06/09 10:17:05  kbracey
+// Cleared up Bovine's commit of Cyrus' stuff. Mostly putting all the consts
+// back. Also updated RISC OS GUI.
+//
+// Revision 1.10  1998/06/09 08:54:27  jlawson
+// Committed Cyrus' changes: phrase "keys/s" is changed back to "k/s" in
+// CliGetSummaryStringForContest. That line has exactly 3 characters to 
+// spare, and >9 blocks (or >9 days, or >999Kk/s) will cause line to wrap.
+//
+// Revision 1.9  1998/06/08 15:47:06  kbracey
+// Added lots of "const"s and "static"s to reduce compiler warnings, and
+// hopefully improve output code, too.
+//
+// Revision 1.8  1998/06/08 14:10:33  kbracey
+// Changed "Kkeys to kkeys"
+//
+// Revision 1.7  1998/05/29 08:01:07  bovine
+// copyright update, indents
+//
+// Revision 1.6  1998/05/27 18:21:27  bovine
+// SGI Irix warnings and configure fixes
+//
+// Revision 1.5  1998/05/26 15:18:51  bovine
+// fixed compile warnings for g++/linux
+//
+// Revision 1.4  1998/05/25 07:16:45  bovine
+// fixed warnings on g++/solaris
+//
+// Revision 1.3  1998/05/25 05:58:32  bovine
+// fixed warnings for Borland C++
+//
+// Revision 1.2  1998/05/25 02:54:18  bovine
+// fixed indents
+//
+// Revision 1.1  1998/05/24 14:25:49  daa
+// Import 5/23/98 client tree
+//
+// Revision 0.0  1998/05/01 05:01:08  cyruspatel
+// Created
+//
+// ==============================================================
 
 
 /* module history:
    01 May 1998 - created - Cyrus Patel <cyp@fb14.uni-mainz.de>
-
-   ?? May 1998 - ?? - changed phrase "kps" to "keys/s"
-
-   30 May 1998 - Cyrus Patel <cyp@fb14.uni-mainz.de>
-                 changed phrase "keys/s" *BACK* to "k/s" in
-                 CliGetSummaryStringForContest. That line has
-                 exactly 3 characters to spare, and >9 blocks (or
-                 >9 days, or >999Kk/s) will cause line to wrap.
 */
 
-static const char *id="@(#)$Id: clisrate.cpp,v 1.16 1998/06/15 12:03:53 kbracey Exp $";
+#if (!defined(lint) && defined(__showids__))
+static const char *id="@(#)$Id: clisrate.cpp,v 1.17 1998/06/24 21:53:45 cyruspatel Exp $";
+#endif
 
 #include "clisrate.h" //includes client.h, clitime.h, clirate.h, clicdata.h
 
@@ -138,7 +186,7 @@ const char *CliGetU64AsString( u64 *u, int inNetOrder, int contestid )
 
 // ---------------------------------------------------------------------------
 
-// Queued 1 RC5 1*2^30 block 68E0D85A:A0000000 (10.25% done)
+// Loaded 1 RC5 1*2^30 block 68E0D85A:A0000000 (10.25% done)
 const char *CliGetMessageForFileentryLoaded( FileEntry *fileentry )
 {
   static char str[84];
@@ -174,9 +222,10 @@ const char *CliGetMessageForFileentryLoaded( FileEntry *fileentry )
 
 // ---------------------------------------------------------------------------
 
+// internal - with or without adjusting cumulative stats
 // Completed RC5 block 68E0D85A:A0000000 (123456789 keys)
 //          123:45:67:89 - [987654321 keys/s]
-const char *CliGetMessageForProblemCompleted( Problem *prob )
+static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave )
 {
   static char str[160];
   RC5Result rc5result;
@@ -186,12 +235,16 @@ const char *CliGetMessageForProblemCompleted( Problem *prob )
   int contestid = prob->GetResult( &rc5result );
 
   if (CliGetContestInfoBaseData( contestid, &name, NULL )==0) //clicdata
-    keyrateP = CliGetKeyrateAsString(keyrate, CliGetKeyrateForProblem( prob ));
+    {
+    keyrateP = CliGetKeyrateAsString( keyrate, 
+        ((doSave) ? ( CliGetKeyrateForProblem( prob ) ) :
+                    ( CliGetKeyrateForProblemNoSave( prob ) ))  );
+    }                    
   else
-  {
+    {
     keyrateP = "---.-- ";
     name = "???";
-  }
+    }
 
   tv.tv_sec = prob->timehi;
   tv.tv_usec = prob->timelo;
@@ -208,6 +261,14 @@ const char *CliGetMessageForProblemCompleted( Problem *prob )
                 keyrateP );
   return str;
 }
+
+// Completed RC5 block 68E0D85A:A0000000 (123456789 keys)
+//          123:45:67:89 - [987654321 keys/s]
+const char *CliGetMessageForProblemCompleted( Problem *prob )
+{ return __CliGetMessageForProblemCompleted( prob, 1 ); }
+
+const char *CliGetMessageForProblemCompletedNoSave( Problem *prob )
+{ return __CliGetMessageForProblemCompleted( prob, 0 ); }
 
 // ---------------------------------------------------------------------------
 
