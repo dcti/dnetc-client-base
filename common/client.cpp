@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.197  1999/03/20 07:48:39  cyp
+// added #include "random.h"
+//
 // Revision 1.196  1999/03/18 03:56:07  cyp
 // Minor adjustments to reflect changed client class variables.
 //
@@ -209,7 +212,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.196 1999/03/18 03:56:07 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.197 1999/03/20 07:48:39 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -218,7 +221,7 @@ return "@(#)$Id: client.cpp,v 1.196 1999/03/18 03:56:07 cyp Exp $"; }
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "client.h"    // Client class
-#include "scram.h"     // InitRandom()
+#include "random.h"    // InitRandom()
 #include "pathwork.h"  // EXTN_SEP
 #include "clitime.h"   // CliTimer()
 #include "util.h"      // projectmap_build()
