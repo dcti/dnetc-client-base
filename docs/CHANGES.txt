@@ -21,13 +21,14 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.3 2002/11/26 13:49:33 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.4 2002/12/22 21:07:22 andreasb Exp $
 ==========================================================================
 
 2.9000
 ------
 2.9001.478  new: os2: enabled command line options: -pause, -unpause, -restart
             imp: all: write checkpoint files before client suspends
+            fix: all: correctly round summary rate and OGR stats units (#3041)
 
 2.9001.477  fix: os2: installation complete rewritten (#2061)
             fix: os2: keyboard hangs, random colors after -config or -help

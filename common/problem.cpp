@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.1 2002/11/20 09:56:41 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.2 2002/12/22 21:07:22 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -2291,14 +2291,14 @@ char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
     unsigned int suffixstr_len;
     unsigned int suffix_len = 0;
     /* buffer = [buflen:digits,comma,dot][suffix_len:space,magna][suffixstr_len:keys/nodes/...][\0] */
-    
+
     --buflen; // buffer[buflen] = '\0'
     if (numstr_style != 2 || !numstr_suffix)
       numstr_suffix = ""; 
     suffixstr_len = strlen( numstr_suffix );
     if (numstr_style == 2 && suffixstr_len == 0)
       numstr_style = 1;
-    if (numstr_style == 1 || numstr_style == 2) 
+    if (buflen && (numstr_style == 1 || numstr_style == 2))
     {
       ++suffix_len; /* space after number */
       --buflen;
@@ -2361,7 +2361,7 @@ char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
           if (((++len) % 3)==0)
             *--w = ',';
         }
-        len = strlen(strcpy( numbuf, w )); 
+        len = strlen(strcpy( numbuf, w ));
         //printf("commal = %2d  ", len);
         if (len > buflen)
         {
@@ -2382,11 +2382,37 @@ char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
             {
               magna++;
               pos += 4;
-            }  
+            }
             numbuf[len] = '.';
             len += 3;
+            /* round the resulting number */
+            if (numbuf[len] >= '5')
+            {
+              int carry = 1;
+              r = &numbuf[len];
+              w = &fmtbuf[sizeof(fmtbuf)];
+              *--w = '\0';
+              for (;;)
+              {
+                *--w = *--r;
+                if (carry && '0' <= *w && *w <= '9')
+                {
+                  ++(*w);
+                  if (*w > '9')
+                    *w = '0';
+                  else
+                    carry = 0;
+                }
+                if (r == &numbuf[0])
+                  break;
+              }
+              if (carry)
+                *--w = '1';
+              if (!carry) /* do not round if string length changes */
+                len = strlen(strcpy( numbuf, w ));
+            }
             numbuf[len] = '\0';
-          } 
+          }
         }
       } /* len > 3 */
       //printf("truncl = %2d  ", len);
@@ -2399,7 +2425,7 @@ char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
     } /* buflen >= 5 */
     if (strlen(numbuf) > (buflen + suffix_len))
       strcpy( numbuf, "***" );
-    strncpy( buffer, numbuf, (buflen + suffix_len) ); 
+    strncpy( buffer, numbuf, (buflen + suffix_len) );
     buffer[buflen+suffix_len] = '\0';
     if (numstr_style == 2) /* buflen has already been checked to ensure */
       strcat(buffer, numstr_suffix); /* this strcat() is ok */
@@ -2564,8 +2590,8 @@ int WorkGetSWUCount( const ContestWork *work,
       {
         if (swucount && rescode != RESULT_WORKING)
         {
-          u32 hi, tcounthi = work->ogr.nodes.hi;
-          u32 lo, tcountlo = work->ogr.nodes.lo;
+          u32 lo, tcountlo = work->ogr.nodes.lo + 5000000ul;
+          u32 hi, tcounthi = work->ogr.nodes.hi + (tcountlo<work->ogr.nodes.lo ? 1 : 0);
           /* ogr stats unit is Gnodes */
           __u64div( tcounthi, tcountlo, 0, 1000000000ul, 0, &hi, 0, &lo);
           units = (unsigned int)(hi * 100)+(lo / 10000000ul);
@@ -2780,8 +2806,11 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
               }
               if ((flags & P_INFO_SWUCOUNT) && (tcounthi || tcountlo)) /* only if finished */
               {
-                /* ogr stats unit is Gnodes */
-                __u64div( tcounthi, tcountlo, 0, 1000000000ul, 0, &hi, 0, &lo);
+                u32 nodeshi, nodeslo;
+                /* ogr stats unit is Gnodes, rounded to 0.01 Gnodes */
+                nodeslo = tcountlo + 5000000ul;
+                nodeshi = tcounthi + (nodeslo<tcountlo ? 1 : 0);
+                __u64div( nodeshi, nodeslo, 0, 1000000000ul, 0, &hi, 0, &lo);
                 info->swucount = (hi * 100)+(lo / 10000000ul);
               }
               if (flags & P_INFO_EXACT_PE)
