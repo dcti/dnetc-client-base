@@ -4,13 +4,15 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.2 1999/09/18 18:02:34 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.3 1999/10/07 18:36:10 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "client.h"   /* CONTEST_COUNT, stub definition */
 #include "clicdata.h" /* CliGetContestNameFromID() */
 #include "pathwork.h" /* GetFullPathForFilename() */
 #include "util.h"     /* ourselves */
+
+#define MAX_CONTEST_NAME_LEN 3
 
 /* ------------------------------------------------------------------- */
 
@@ -88,30 +90,158 @@ const char *ogr_stubstr(const struct Stub *stub)
 
 /* ------------------------------------------------------------------- */
 
-#if 0
-char *strfproj( char *buffer, const char *fmt, WorkRecord *data )
+const char *utilGatherOptionArraysToList( int *table1, int *table2 )
 {
-//"Completed one RC5 packet 00000000:00000000 (4*2^28 keys)\n"
-//          123:45:67:89 - [987654321 keys/sec]\n"
-// Completed RC5 packet 68E0D85A:A0000000 (123456789 keys)
-//          123:45:67:89 - [987654321 keys/s]
-// Completed OGR stub 22/1-3-5-7 (123456789 nodes)
-//          123:45:67:89 - [987654321 nodes/s]
-// Summary: 4 RC5 packets 12:34:56.78 - [234.56 Kkeys/s]" 
-
-%i == identifier (key # or stubstr)
-%C == contest name (upper case)
-%c == contest name (lower case)
-%u == number of units (keys/nodes) in workrecord *data
-%U == name of unit ("keys"/"nodes")
-%t == time to complete WorkRecord 
-
+  static char buffer[(CONTEST_COUNT+1)*(MAX_CONTEST_NAME_LEN+10)];
+  unsigned int contest, pos = 0;
+  const char *delim = "";
+  buffer[0] = '\0';
+  for (contest = 0; contest < CONTEST_COUNT; contest++)
+  {
+    /* HACK: OGR doesn't a member in the preferred_blocksize/coretype arrays */
+    if (table2 || (contest != OGR)) /* HACK! OGR only for threshold arrays */
+    {
+      const char *p = CliGetContestNameFromID(contest);
+      if (p)
+      {
+        char single[(MAX_CONTEST_NAME_LEN+1+(sizeof(int)*3)+1+(sizeof(int)*3)+1)];
+        unsigned int len = 0;
+        if (table2)
+          len = sprintf(single,"%s%s=%d:%d",delim, p,
+                        (int)table1[contest],(int)table2[contest]);
+        else
+          len = sprintf(single,"%s%s=%d",delim, p, (int)table1[contest] );
+        if (len <= (MAX_CONTEST_NAME_LEN+10))
+        {
+          strcpy( &buffer[pos], single );
+          pos += len;
+          delim = ",";
+        }
+      }
+    }
+  }
+  return (const char *)&buffer[0];
 }
-#endif
 
-/* ------------------------------------------------------------------- */
-
-#define MAX_CONTEST_NAME_LEN 3
+int utilScatterOptionListToArrays( const char *oplist, 
+                                   int *table1, int *table2, int defaultval )
+{
+  unsigned int cont_i;
+  for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+  {
+    table1[cont_i] = defaultval;
+    if (table2)
+      table2[cont_i] = defaultval;
+  }
+  
+  while (*oplist)
+  {
+    while (*oplist && !isalpha(*oplist)) /*contestname must begin with alpha*/
+      oplist++;
+    if (*oplist)
+    {
+      char buffer[64];
+      unsigned int len = 0;
+      int needbreak = 0, kwpos = 0, precspace = 0;
+      unsigned int contest = CONTEST_COUNT;
+      int havenondig = 0, haveval1 = 0, haveval2 = 0;
+      int value1 = defaultval, value2 = defaultval;
+      while (!needbreak && len<sizeof(buffer)-1)
+      {
+        char c = buffer[len] = (char)(*oplist++);
+        buffer[len+1] = '\0';
+        if (c==',' || c==';' || !c)
+        {
+          c=':';
+          needbreak = 1;
+          oplist--;
+        }
+        if (c==':' || c=='=')
+        {
+          buffer[len] = '\0';
+          precspace = 0;
+          if (len != 0)
+          {  
+            kwpos++;
+            if (kwpos == 1)
+            {
+              for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+              {
+                const char *cname = CliGetContestNameFromID(cont_i);
+                if (cname)
+                {
+                  if (strcmp(cname, buffer)==0)
+                  {
+                    contest = cont_i;
+                    break;
+                  }
+                }
+              }
+              if (contest >= CONTEST_COUNT)
+                break;
+            }
+            else if (kwpos == 2)
+            {
+              if (havenondig)
+                break;
+              value1 = atoi(buffer);
+              haveval1 = 1;
+            }
+            else if (kwpos == 3 && table2)
+            {
+              if (havenondig)
+                break;
+              value2 = atoi(buffer);
+              haveval2 = 1;
+            }
+            else
+            {
+              break;
+            }
+            len = 0;
+            havenondig = 0;
+          }
+        }
+        else if (c == ' ' || c=='\t') /* may only be followed by [=:;,\0] */
+        {
+          if (len != 0) /* otherwise ignore it */
+            precspace = 1;
+        }
+        else if (isalpha(c))
+        {
+          if (kwpos || precspace)
+            break;
+          buffer[len] = (char)toupper(c);
+          havenondig = 1;
+          len++;
+        }
+        else if (isdigit(c))
+        {
+          if (precspace)
+            break;
+          len++;
+        }
+        else if (c == '+' || c=='-')
+        {
+          if (len!=0 || !isdigit(*oplist))
+            break;
+          len++;
+        }
+      }
+      if (contest < CONTEST_COUNT && haveval1)
+      {
+        table1[contest] = value1;
+        if (!haveval2)
+          value2 = value1;
+        if (table2)
+          table2[contest] = value2;
+      }
+      while (*oplist && *oplist!=',' && *oplist!=';')
+        oplist++;
+    }
+  }
+  return 0;
+}
 
 const char *projectmap_expand( const char *map )
 {
@@ -128,7 +258,7 @@ const char *projectmap_expand( const char *map )
       strcat( buffer, "," );
     strcat( buffer, CliGetContestNameFromID( map[id] & 0x7f ) );
     if (( map[id] & 0x80 ) != 0)
-      strcat( buffer,":0" );
+      strcat( buffer,"=0" );
   }
   return buffer;
 }
@@ -137,6 +267,9 @@ const char *projectmap_expand( const char *map )
 
 const char *projectmap_build( char *buf, const char *strtomap )
 {
+  #if (CONTEST_COUNT != 4)
+    #error static table needs fixing. (CONTEST_COUNT is not 4).
+  #endif
   static char default_map[CONTEST_COUNT] = { 1,3,2,0 };
   static char map[CONTEST_COUNT];
   unsigned int map_pos, i;

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.16 1999/09/22 03:07:25 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.17 1999/10/07 18:36:09 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -23,6 +23,7 @@ return "@(#)$Id: client.cpp,v 1.206.2.16 1999/09/22 03:07:25 cyp Exp $"; }
 #include "triggers.h"  // [De]InitializeTriggers(),RestartRequestTrigger()
 #include "logstuff.h"  // [De]InitializeLogging(),Log()/LogScreen()
 #include "console.h"   // [De]InitializeConsole(), ConOutErr()
+#include "selcore.h"   // [De]InitializeCoreTable()
 #include "network.h"   // [De]InitializeConnectivity()
 
 /* ------------------------------------------------------------------------ */
@@ -78,14 +79,18 @@ static void __initialize_client_object(Client *client)
   client->noupdatefromfile = 0;
     client->remote_update_dir[0] = '\0';
   client->connectoften=0;
-  client->preferred_blocksize=31;
   for (contest=0; contest<CONTEST_COUNT; contest++)
+  {
     client->inthreshold[contest] = client->outthreshold[contest] = 10;
+    client->preferred_blocksize[contest] = 31;
+  }
 
   /* -- perf -- */
   client->numcpu = -1;
   client->cputype = -1;
   client->priority = 0;
+  for (contest=0; contest<CONTEST_COUNT; contest++)
+    client->coretypes[contest] = -1;
 
   /* -- log -- */
   client->logname[0]= 0;
@@ -158,9 +163,8 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
   {
     if (level == 0)
     {
-      LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME "\n"
-                    "Copyright 1997-1999 distributed.net\n");
-
+      LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME " "
+                    "Copyright 1997-1999, distributed.net\n");
       #if (CLIENT_CPU == CPU_68K)
       LogScreenRaw( "RC5 68K assembly by John Girvin\n");
       #endif
@@ -232,7 +236,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
 
 /* ---------------------------------------------------------------------- */
 
-int Client::Main( int argc, const char *argv[] )
+static int ClientMain( Client *client, int argc, const char *argv[] )
 {
   int retcode = 0;
   int restart = 0;
@@ -243,53 +247,64 @@ int Client::Main( int argc, const char *argv[] )
     int restarted = restart;
     restart = 0;
 
-    __initialize_client_object(this); /* reset everything in the object */
+    __initialize_client_object(client); /* reset everything in the object */
     //ReadConfig() and parse command line - returns !0 if shouldn't continue
 
     TRACE_OUT((0,"Client.parsecmdline restarted?: %d\n", restarted));
-    if (ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0)
+    if (client->ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0)
     {
       int domodes = (ModeReqIsSet(-1) != 0);
       TRACE_OUT((0,"initializetriggers\n"));
-      if (InitializeTriggers(((noexitfilecheck ||
+      if (InitializeTriggers(((client->noexitfilecheck ||
                               domodes)?(NULL):("exitrc5" EXTN_SEP "now")),
-                              ((domodes)?(NULL):(pausefile)) )==0)
+                              ((domodes)?(NULL):(client->pausefile)) )==0)
       {
         TRACE_OUT((0,"initializeconnectivity\n"));
         if (InitializeConnectivity() == 0) //do global initialization
         {
           TRACE_OUT((0,"initializeconsole\n"));
-          if (InitializeConsole(quietmode,domodes) == 0)
+          if (InitializeConsole(client->quietmode,domodes) == 0)
           {
             TRACE_OUT((+1,"initializelogging\n"));
-            InitializeLogging( (quietmode!=0), (percentprintingoff!=0),
-                               logname, logfiletype, logfilelimit, 
-                               messagelen, smtpsrvr, smtpport, smtpfrom, 
-                               smtpdest, id );
+            InitializeLogging( (client->quietmode!=0), 
+                               (client->percentprintingoff!=0),
+                               client->logname, 
+                               client->logfiletype, 
+                               client->logfilelimit, 
+                               client->messagelen, 
+                               client->smtpsrvr, 
+                               client->smtpport, 
+                               client->smtpfrom, 
+                               client->smtpdest, 
+                               client->id );
             TRACE_OUT((-1,"initializelogging\n"));
-            PrintBanner(id,0,restarted);
+            PrintBanner(client->id,0,restarted);
             TRACE_OUT((+1,"parsecmdline(1)\n"));
-            ParseCommandline( 1, argc, argv, NULL, (quietmode==0)); //show overrides
+            client->ParseCommandline( 1, argc, argv, NULL, 
+                                    (client->quietmode==0)); //show overrides
             TRACE_OUT((-1,"parsecmdline(1)\n"));
-            InitRandom2( id );
+            InitRandom2( client->id );
+            TRACE_OUT((+1,"initcoretable\n"));
+            InitializeCoreTable( &(client->coretypes[0]) );
+            TRACE_OUT((-1,"initcoretable\n"));
 
             if (domodes)
             {
               TRACE_OUT((+1,"modereqrun\n"));
-              ModeReqRun( this );
+              ModeReqRun( client );
               TRACE_OUT((-1,"modereqrun\n"));
             }
             else
             {
-              PrintBanner(id,1,restarted);
-              TRACE_OUT((+1,"selectcore\n"));
-              SelectCore( 0 );
-              TRACE_OUT((-1,"selectcore\n"));
+              PrintBanner(client->id,1,restarted);
               TRACE_OUT((+1,"client.run\n"));
-              retcode = Run();
+              retcode = client->Run();
               TRACE_OUT((-1,"client.run\n"));
               restart = CheckRestartRequestTrigger();
             }
+
+            TRACE_OUT((0,"deinit coretable\n"));
+            DeinitializeCoreTable();
             TRACE_OUT((0,"deinitialize logging\n"));
             DeinitializeLogging();
             TRACE_OUT((0,"deinitialize console\n"));
@@ -379,7 +394,7 @@ static int _realmain( int argc, char *argv[] ) /* YES, *STATIC* */
 
   if ( init_success )
   {
-    retcode = clientP->Main( argc, (const char **)argv );
+    retcode = ClientMain( clientP, argc, (const char **)argv );
   }
 
   TRACE_OUT((+0,"realmain: 6 (%d)\n",init_success));

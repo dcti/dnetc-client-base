@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.2 1999/06/01 16:31:34 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.3 1999/10/07 18:36:09 cyp Exp $"; }
 
 //#define TRACE
 
@@ -17,6 +17,7 @@ return "@(#)$Id: confrwv.cpp,v 1.60.2.2 1999/06/01 16:31:34 cyp Exp $"; }
 #include "lurk.h"      // lurk stuff
 #include "cpucheck.h"  // GetProcessorType() for mmx stuff
 #include "triggers.h"  // RaiseRestartRequestTrigger()
+#include "clicdata.h"  // CliGetContestNameFromID()
 #include "cmpidefs.h"  // strcmpi()
 #include "confrwv.h"   // Ourselves
 
@@ -26,8 +27,35 @@ static const char *OPTION_SECTION  = "parameters";
 static const char *OPTSECT_NET     = "networking";
 static const char *OPTSECT_BUFFERS = "buffers";
 static const char *OPTSECT_MISC    = "misc";
-static const char *OPTSECT_RC5     = "rc5";
 static const char *OPTSECT_LOG     = "logging";
+
+/* ------------------------------------------------------------------------ */
+
+static const char *__getprojsectname( unsigned int ci )
+{
+  if (ci < CONTEST_COUNT)
+  {
+    #if 1
+    #if (CONTEST_COUNT != 4)
+      #error fixme: (CONTEST_COUNT != 4) static table
+    #endif
+    static const char *sectnames[CONTEST_COUNT]={"rc5","des","ogr","csc"};
+    return sectnames[ci];
+    #else
+    const char *cname = CliGetContestNameFromID(ci);
+    if (cname)
+    {
+      static char cont_name[16];
+      ci=0;
+      while (*cname && ci<(sizeof(cont_name)-1))
+        cont_name[ci++] = (char)tolower((char)(*cname++));
+      cont_name[ci]='\0';
+      return &cont_name[0];
+    }
+    #endif
+  }
+  return ((const char *)0);
+}
 
 /* ------------------------------------------------------------------------ */
 
@@ -40,11 +68,73 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
              "contestdone3", "contestdoneflags", "descontestclosed",
              "scheduledupdatetime" /* now in OPTSECT_NET */,
              "processdes", "usemmx", "runoffline", "in","out","in2","out2",
-             "in3","out3","nodisk", "dialwhenneeded","connectionname" };
+             "in3","out3","nodisk", "dialwhenneeded","connectionname",
+             "cputype","threshold","threshold2","preferredblocksize" };
   char buffer[128];
+  char *p;
+  unsigned int ui;
   int i, modfail = 0;
 
   TRACE_OUT((+1,"__remapObsoleteParameters()\n"));
+
+  if (!GetPrivateProfileStringB( __getprojsectname(RC5), "coretype", "", buffer, sizeof(buffer), fn ))
+  {
+    if ((i = GetPrivateProfileIntB(OPTION_SECTION, "cputype", -1, fn ))!=-1)
+    {
+      client->coretypes[RC5] = i;
+      modfail += (!WritePrivateProfileIntB( __getprojsectname(RC5), "coretype", i, fn));
+    }
+  }
+
+  if (!GetPrivateProfileStringB( __getprojsectname(RC5), "preferred-blocksize", "", buffer, sizeof(buffer), fn )
+   && !GetPrivateProfileStringB( __getprojsectname(DES), "preferred-blocksize", "", buffer, sizeof(buffer), fn ))
+  {
+    if ((i = GetPrivateProfileIntB(OPTION_SECTION, "preferredblocksize", -1, fn ))!=-1)
+    {
+      if (i >= 28 && i <= 33 && i != 31 /* was default */)
+      {
+        i -= 27;
+        client->preferred_blocksize[RC5] = i;
+        client->preferred_blocksize[DES] = i;
+        modfail += (!WritePrivateProfileIntB( __getprojsectname(RC5), "preferred-blocksize", i, fn));
+        modfail += (!WritePrivateProfileIntB( __getprojsectname(DES), "preferred-blocksize", i, fn));
+      }
+    }
+  }
+
+  for (ui=0; ui<2; ui++)
+  {
+    i = ((ui)?(RC5):(DES));
+    p = ((ui)?("threshold"):("threshold2"));
+    if (!GetPrivateProfileStringB( __getprojsectname(i), "fetch-threshold", "", buffer, sizeof(buffer), fn )
+     && !GetPrivateProfileStringB( __getprojsectname(i), "flush-threshold", "", buffer, sizeof(buffer), fn ))
+    {
+      if (GetPrivateProfileStringB( OPTION_SECTION, p, "", buffer, sizeof(buffer), fn ))
+      {
+        if ((i = atoi(buffer))>0)
+        {                                    
+          int oldstyle_inout[2];
+          oldstyle_inout[0] = oldstyle_inout[1] = i;
+          if ((p = strchr( buffer, ':' )) != ((char *)0))
+          {
+            if ((i = atoi( p+1 ))>0)
+              oldstyle_inout[1] = i;
+          }
+          i = ((ui)?(RC5):(DES));
+          if (oldstyle_inout[0] != 10)
+          {
+            client->inthreshold[i] = oldstyle_inout[0];
+            modfail += (!WritePrivateProfileIntB( __getprojsectname(i), "fetch-threshold", client->inthreshold[i], fn));
+          }
+          if (oldstyle_inout[1] != 10)
+          {
+            client->outthreshold[i] = oldstyle_inout[1];
+            modfail += (!WritePrivateProfileIntB( __getprojsectname(i), "flush-threshold", client->outthreshold[i], fn));
+          }
+        }          
+      }
+    }
+  }
 
   if (!GetPrivateProfileStringB( OPTION_SECTION, "quiet", "", buffer, sizeof(buffer), fn ))
   {
@@ -80,9 +170,9 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
     {
       int basenameoffset = GetFilenameBaseOffset( buffer );
       const char *suffixsep = EXTN_SEP;
-      char *suffix = strrchr( &buffer[basenameoffset], *suffixsep );
-      if (suffix)
-        *suffix = '\0';
+      p = strrchr( &buffer[basenameoffset], *suffixsep );
+      if (p)
+        *p = '\0';
       if (strcmp( buffer, "buff-in" ) != 0)
       {
         strcpy( client->in_buffer_basename, buffer );
@@ -97,9 +187,9 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
     {
       int basenameoffset = GetFilenameBaseOffset( buffer );
       const char *suffixsep = EXTN_SEP;
-      char *suffix = strrchr( &buffer[basenameoffset], *suffixsep );
-      if (suffix)
-        *suffix = '\0';
+      p = strrchr( &buffer[basenameoffset], *suffixsep );
+      if (p)
+        *p = '\0';
       if (strcmp( buffer, "buff-out" ) != 0)
       {
         strcpy( client->out_buffer_basename, buffer );
@@ -143,17 +233,17 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
     {
       int doneclient = 0, doneini = 0;
       projectmap_build( buffer, "" );
-      for (i = 0; i < ((int)CONTEST_COUNT) && (!doneclient || !doneini); i++)
+      for (ui = 0; ui < CONTEST_COUNT && (!doneclient || !doneini); ui++)
       {
-        if (client->loadorder_map[i] == 1)
+        if (client->loadorder_map[ui] == 1)
         {
           doneclient = 1;
-          client->loadorder_map[i] |= 0x80;
+          client->loadorder_map[ui] |= 0x80;
         }
-        if (buffer[i] == DES)
+        if (buffer[ui] == DES)
         {
           doneini = 1;
-          buffer[i] |= 0x80; /* disable */
+          buffer[ui] |= 0x80; /* disable */
         }
       }
       modfail += (!WritePrivateProfileStringB( OPTSECT_MISC, "project-priority", projectmap_expand(buffer), fn ));
@@ -174,8 +264,8 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
   }
   
   /* unconditional deletion of obsolete keys */
-  for (i = 0; i < (int)(sizeof(obskeys) / sizeof(obskeys[0])); i++)
-    modfail += (!WritePrivateProfileStringB( OPTION_SECTION, obskeys[i], NULL, fn ));
+  for (ui = 0; ui < (sizeof(obskeys) / sizeof(obskeys[0])); ui++)
+    modfail += (!WritePrivateProfileStringB( OPTION_SECTION, obskeys[ui], NULL, fn ));
 
   TRACE_OUT((-1,"__remapObsoleteParameters() modif failed?=%d\n", modfail));
   
@@ -211,6 +301,8 @@ int ReadConfig(Client *client)
 
   char buffer[64];
   const char *sect = OPTION_SECTION;
+  const char *cont_name;
+  unsigned int cont_i;
   char *p; int i;
 
   client->randomchanged = 0;
@@ -228,25 +320,6 @@ int ReadConfig(Client *client)
 
   if (!GetPrivateProfileStringB( sect, "id", "", client->id, sizeof(client->id), fn ))
     strcpy( client->id, "rc5@distributed.net" );
-
-  if (GetPrivateProfileStringB( sect, "threshold", "", buffer, sizeof(buffer), fn ))
-  {
-    p = strchr( buffer, ':' );
-    client->inthreshold[0] = atoi(buffer);
-    client->outthreshold[0] = ((p==NULL)?(client->inthreshold[0]):(atoi(p+1)));
-    for (i = 1; i < CONTEST_COUNT; i++ )
-    {
-      client->inthreshold[i] = client->inthreshold[0];
-      client->outthreshold[i] = client->outthreshold[0];
-    }
-  }
-  if (GetPrivateProfileStringB( sect, "threshold2", "", buffer, sizeof(buffer), fn ))
-  {
-    p = strchr( buffer, ':' );
-    client->inthreshold[1] = atoi(buffer);
-    client->outthreshold[1] = ((p==NULL)?(client->inthreshold[1]):(atoi(p+1)));
-  }
-
 
   if (GetPrivateProfileStringB( sect, "hours", "", buffer, sizeof(buffer), fn ))
   {
@@ -279,9 +352,29 @@ int ReadConfig(Client *client)
   i = GetPrivateProfileIntB( sect, "niceness", -12345, fn );
   if (i>=0 && i<=2) client->priority = ((i==2)?(8):((i==1)?(4):(0)));
   client->priority = GetPrivateProfileIntB( "processor-usage", "priority", client->priority, fn );
-  client->cputype = GetPrivateProfileIntB( sect, "cputype", client->cputype, fn );
   client->numcpu = GetPrivateProfileIntB( sect, "numcpu", client->numcpu, fn );
-  client->preferred_blocksize = GetPrivateProfileIntB( sect, "preferredblocksize", client->preferred_blocksize, fn );
+
+  for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+  {
+    if ((cont_name = __getprojsectname(cont_i)) != ((const char *)0))
+    {
+      client->inthreshold[cont_i] = 
+           GetPrivateProfileIntB(cont_name, "fetch-threshold",
+                         client->inthreshold[cont_i], fn );
+      client->outthreshold[cont_i] = 
+           GetPrivateProfileIntB(cont_name, "flush-threshold",
+                         client->outthreshold[cont_i], fn );
+      if (cont_i != OGR)
+      {                         
+        client->coretypes[cont_i] = 
+           GetPrivateProfileIntB(cont_name, "coretype",
+                         client->coretypes[cont_i],fn);
+        client->preferred_blocksize[cont_i] = 
+           GetPrivateProfileIntB(cont_name, "preferred-blocksize",
+                         client->preferred_blocksize[cont_i], fn );
+      }                         
+    }
+  }
 
   TRACE_OUT((0,"ReadConfig() [2 begin]\n"));
 
@@ -417,6 +510,8 @@ static void __XSetProfileInt( const char *sect, const char *key,
 int WriteConfig(Client *client, int writefull /* defaults to 0*/)  
 {
   char buffer[64]; int i;
+  unsigned int cont_i;
+  const char *cont_name;
   const char *sect = OPTION_SECTION;
 
   const char *fn = client->inifilename;
@@ -448,17 +543,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     __XSetProfileStr( OPTSECT_MISC, "project-priority", projectmap_expand(client->loadorder_map), fn, buffer );
 
     __XSetProfileInt( sect, "frequent", client->connectoften, fn, 0, 1 );
-    __XSetProfileInt( sect, "preferredblocksize", client->preferred_blocksize, fn, 31, 0 );
     
-    sprintf(buffer,"%d:%d", (int)client->inthreshold[0], (int)client->outthreshold[0]);
-    __XSetProfileStr( sect, "threshold", buffer, fn, "10:10" );
-    if (client->inthreshold[1] == client->inthreshold[0] && client->outthreshold[1] == client->outthreshold[0])
-      WritePrivateProfileStringB( sect, "threshold2", NULL, fn );
-    else
-    {
-      sprintf(buffer,"%d:%d", (int)client->inthreshold[1], (int)client->outthreshold[1]);
-      WritePrivateProfileStringB( sect, "threshold2", buffer, fn );
-    }
     __XSetProfileStr( sect, "checkpointfile", client->checkpoint_file, fn, NULL );
     
     /* --- CONF_MENU_MISC __ */
@@ -476,9 +561,22 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     
     /* --- CONF_MENU_PERF -- */
 
-    __XSetProfileInt( sect, "cputype", client->cputype, fn, -1, 0 );
     __XSetProfileInt( sect, "numcpu", client->numcpu, fn, -1, 0 );
     __XSetProfileInt( "processor-usage", "priority", client->priority, fn, 0, 0);
+
+    for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+    {
+      if ((cont_name =  __getprojsectname(cont_i)) != ((const char *)0))
+      {
+        __XSetProfileInt( cont_name, "fetch-threshold", client->inthreshold[cont_i], fn, 10, 0 );
+        __XSetProfileInt( cont_name, "flush-threshold", client->outthreshold[cont_i], fn, 10, 0 );
+        if (cont_i != OGR)
+        {
+          __XSetProfileInt( cont_name, "coretype", client->coretypes[cont_i], fn, -1, 0 );
+          __XSetProfileInt( cont_name, "preferred-blocksize", client->preferred_blocksize[cont_i], fn, 31, 0 );
+        }
+      }
+    }
 
     /* --- CONF_MENU_NET -- */
 
@@ -557,26 +655,26 @@ void RefreshRandomPrefix( Client *client )
       if ( access( fn, 0 )!=0 )
         return;
 
-      client->randomprefix =  GetPrivateProfileIntB(OPTSECT_RC5, "randomprefix", 
+      client->randomprefix =  GetPrivateProfileIntB(__getprojsectname(RC5), "randomprefix", 
                                                  client->randomprefix, fn);
       client->scheduledupdatetime = GetPrivateProfileIntB(OPTSECT_NET, 
                       "scheduledupdatetime", client->scheduledupdatetime, fn);
 
-      client->rc564closed = (GetPrivateProfileIntB(OPTSECT_RC5, "closed", 0, fn )!=0);
+      client->rc564closed = (GetPrivateProfileIntB(__getprojsectname(RC5), "closed", 0, fn )!=0);
     }
     
     if (client->randomchanged)
     {
       client->randomchanged = 0;
-      if (client->randomprefix != 100 || GetPrivateProfileIntB(OPTSECT_RC5, "randomprefix", 0, fn))
+      if (client->randomprefix != 100 || GetPrivateProfileIntB(__getprojsectname(RC5), "randomprefix", 0, fn))
       {
-        if (!WritePrivateProfileIntB(OPTSECT_RC5,"randomprefix",client->randomprefix,fn))
+        if (!WritePrivateProfileIntB(__getprojsectname(RC5),"randomprefix",client->randomprefix,fn))
         {
           //client->stopiniio == 1;
           return; //write fail
         }
       }
-      WritePrivateProfileStringB(OPTSECT_RC5,"closed",(client->rc564closed)?("1"):(NULL), fn );
+      WritePrivateProfileStringB(__getprojsectname(RC5),"closed",(client->rc564closed)?("1"):(NULL), fn );
       if (client->scheduledupdatetime == 0)
         WritePrivateProfileStringB(OPTSECT_NET, "scheduledupdatetime", NULL, fn );
       else

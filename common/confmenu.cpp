@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.3 1999/09/18 18:02:32 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.4 1999/10/07 18:36:10 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -26,8 +26,41 @@ return "@(#)$Id: confmenu.cpp,v 1.41.2.3 1999/09/18 18:02:32 cyp Exp $"; }
 static const char *CONFMENU_CAPTION="distributed.net client configuration: %s\n"
 "--------------------------------------------------------------------------\n";
 
+static int __enumcorenames(unsigned int contestid,
+                           const char *displayname,
+                           int index, void * /* unused */ )
+{
+  if (contestid == DES) /* same as RC5 */
+    return +1; /* keep going */
+  if (contestid == OGR) /* nothing */
+    return +1; /* keep going */
+  if (contestid == RC5)
+  {
+    if (index == 0)
+      LogScreenRaw("  RC5 and DES: -1) Auto-select\n");
+    LogScreenRaw(  "               %2d) %s\n", index, displayname );
+  }
+  else if (contestid == CSC)
+  {
+    if (index == 0)
+      LogScreenRaw("          CSC: -1) Auto-select\n");
+    LogScreenRaw(  "               %2d) %s\n", index, displayname );
+  }
+  return +1; /* keep going */
+}
+
 int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
 {
+  struct __userpass { 
+    char username[128]; 
+    char password[128]; 
+  } userpass;
+  unsigned int cont_i;
+  char loadorder[64];
+  char cputypelist[64];
+  char threshlist[64];
+  char blsizelist[64];
+  
   if (!ConIsScreen())
   {
     ConOutErr("Can't configure when stdin or stdout is redirected.\n");
@@ -48,11 +81,17 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
   conf_options[CONF_NOEXITFILECHECK].thevariable=&noexitfilecheck;
   conf_options[CONF_PERCENTOFF].thevariable=&percentprintingoff;
   conf_options[CONF_PAUSEFILE].thevariable=(char *)(&pausefile[0]);
-  char loadorder[64];
   strcpy(loadorder, projectmap_expand( loadorder_map ) );
   conf_options[CONF_CONTESTPRIORITY].thevariable=(char *)(&loadorder[0]);
 
   /* ------------------- CONF_MENU_BUFF ------------------ */  
+
+  strncpy(threshlist,utilGatherOptionArraysToList( 
+               &inthreshold[0], &outthreshold[0]), sizeof(threshlist));
+  threshlist[sizeof(threshlist)-1] = '\0'; 
+  strncpy(blsizelist,utilGatherOptionArraysToList( 
+               &preferred_blocksize[0], NULL), sizeof(blsizelist));
+  blsizelist[sizeof(blsizelist)-1] = '\0'; 
 
   conf_options[CONF_NODISK].thevariable=&nodiskbuffers;
   conf_options[CONF_INBUFFERBASENAME].thevariable=(char *)(&in_buffer_basename[0]);
@@ -62,8 +101,8 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
   conf_options[CONF_REMOTEUPDATEDISABLED].thevariable=&noupdatefromfile;
   conf_options[CONF_REMOTEUPDATEDIR].thevariable=(char *)(&remote_update_dir[0]);
   conf_options[CONF_FREQUENT].thevariable=&connectoften;
-  conf_options[CONF_PREFERREDBLOCKSIZE].thevariable=&preferred_blocksize;
-  conf_options[CONF_THRESHOLDI].thevariable=(s32 *)&inthreshold[0];
+  conf_options[CONF_PREFERREDBLOCKSIZE].thevariable=(char *)&blsizelist[0];
+  conf_options[CONF_THRESHOLDI].thevariable=(char *)&threshlist[0];
 
   /* ------------------- CONF_MENU_LOG  ------------------ */  
 
@@ -144,7 +183,6 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
   
   conf_options[CONF_FWALLHOSTNAME].thevariable=(char *)(&httpproxy[0]);
   conf_options[CONF_FWALLHOSTPORT].thevariable=&httpport;
-  struct { char username[sizeof(httpid)], password[sizeof(httpid)]; } userpass;
   userpass.username[0] = userpass.password[0] = 0;
   
   if (httpid[0] == 0)
@@ -238,6 +276,8 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
 
   /* ------------------- CONF_MENU_PERF ------------------ */  
 
+
+  #if 0
   conf_options[CONF_CPUTYPE].thevariable=NULL;
   conf_options[CONF_CPUTYPE].choicemax=0;
   conf_options[CONF_CPUTYPE].choicemin=0;
@@ -260,6 +300,15 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
     conf_options[CONF_CPUTYPE].choicemax=tablesize-2;
     conf_options[CONF_CPUTYPE].thevariable=&cputype;
   }
+  #endif
+
+  for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+     coretypes[cont_i] = selcoreValidateCoreIndex(cont_i,coretypes[cont_i]);
+  
+  strncpy(cputypelist,utilGatherOptionArraysToList( &coretypes[0], NULL),
+                     sizeof(cputypelist));
+  cputypelist[sizeof(cputypelist)-1] = '\0'; 
+  conf_options[CONF_CPUTYPE].thevariable = &cputypelist[0];
   conf_options[CONF_NICENESS].thevariable = &priority;
   conf_options[CONF_NUMCPU].thevariable = &numcpu;
 
@@ -685,7 +734,10 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
           }
           LogScreenRaw("%s\n",p);
         }
-    
+
+        if (editthis == CONF_CPUTYPE) /* ugh! */
+           selcoreEnumerate( __enumcorenames, NULL ); 
+
         if ( conf_options[editthis].type == CONF_TYPE_ASCIIZ || 
              conf_options[editthis].type == CONF_TYPE_INT ||
              conf_options[editthis].type == CONF_TYPE_PASSWORD )
@@ -928,9 +980,59 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
         if (conf_options[editthis].type==CONF_TYPE_ASCIIZ ||
             conf_options[editthis].type==CONF_TYPE_PASSWORD)
         {
+          int newtypes[CONTEST_COUNT];
           strncpy( (char *)conf_options[editthis].thevariable, parm, 
                    64 - 1 );
           ((char *)conf_options[editthis].thevariable)[64-1]=0;
+          if (editthis == CONF_CPUTYPE) 
+          { /* give immediate feedback */
+            utilScatterOptionListToArrays(cputypelist,&newtypes[0], NULL,-1);
+            for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+              newtypes[cont_i] = selcoreValidateCoreIndex(cont_i,newtypes[cont_i]);
+            strncpy(cputypelist,
+                    utilGatherOptionArraysToList(&newtypes[0],NULL),
+                    sizeof(cputypelist));
+            cputypelist[sizeof(cputypelist)-1] = '\0'; 
+          }
+          else if (editthis == CONF_PREFERREDBLOCKSIZE)
+          {
+            int mmin = (int)conf_options[editthis].choicemin;
+            int mmax = (int)conf_options[editthis].choicemax;
+            utilScatterOptionListToArrays(blsizelist,&newtypes[0], NULL,31);
+            for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+            {
+              if (newtypes[cont_i] < mmin)
+                newtypes[cont_i] = mmin;
+              else if (newtypes[cont_i] > mmax)
+                newtypes[cont_i] = mmax;
+            }
+            strncpy(blsizelist,
+                    utilGatherOptionArraysToList(&newtypes[0],NULL),
+                    sizeof(blsizelist));
+            blsizelist[sizeof(blsizelist)-1] = '\0'; 
+          }
+          else if (editthis == CONF_THRESHOLDI)
+          {
+            int mmin = (int)conf_options[editthis].choicemin;
+            int mmax = (int)conf_options[editthis].choicemax;
+            int newtypesout[CONTEST_COUNT];
+            utilScatterOptionListToArrays(threshlist,&newtypes[0], &newtypesout[0],10);
+            for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+            {
+              if (newtypes[cont_i] < mmin)
+                newtypes[cont_i] = mmin;
+              else if (newtypes[cont_i] > mmax)
+                newtypes[cont_i] = mmax;
+              if (newtypesout[cont_i] < mmin)
+                newtypesout[cont_i] = mmin;
+              else if (newtypesout[cont_i] > mmax)
+                newtypesout[cont_i] = mmax;
+            }
+            strncpy(threshlist,
+                    utilGatherOptionArraysToList(&newtypes[0],&newtypesout[0]),
+                    sizeof(threshlist));
+            threshlist[sizeof(threshlist)-1] = '\0'; 
+          }
         }
         else //bool or int types
         {
@@ -974,6 +1076,10 @@ int Client::Configure( void ) /* returns >1==save, <1==DON'T save */
     }
 
     autofindkeyserver = (autofindks!=0);
+
+    utilScatterOptionListToArrays(cputypelist,&coretypes[0], NULL, -1 );
+    utilScatterOptionListToArrays(blsizelist,&preferred_blocksize[0], NULL,4);
+    utilScatterOptionListToArrays(threshlist,&inthreshold[0], &outthreshold[0],10);
 
     if (nettimeout < 0)
       nettimeout = -1;

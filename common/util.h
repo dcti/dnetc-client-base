@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------
 */ 
 #ifndef __UTIL_H__ 
-#define __UTIL_H__ "@(#)$Id: util.h,v 1.6.2.1 1999/09/18 18:02:34 cyp Exp $"
+#define __UTIL_H__ "@(#)$Id: util.h,v 1.6.2.2 1999/10/07 18:36:09 cyp Exp $"
 
 void trace_out( int indlevel, const char *fmt, ... );
 #ifdef TRACE
@@ -21,6 +21,10 @@ void trace_out( int indlevel, const char *fmt, ... );
 const char *projectmap_expand( const char *map );
 const char *projectmap_build( char *buf, const char *strtomap );
 //char *strfproj( char *buffer, const char *fmt, WorkRecord *work );
+
+const char *utilGatherOptionArraysToList( int *table1, int *table2 );
+int utilScatterOptionListToArrays( const char *oplist, 
+                           int *table1, int *table2, int defaultval );
 
 const char *ogr_stubstr(const struct Stub *stub);
 unsigned long ogr_nodecount( const struct Stub *stub );
