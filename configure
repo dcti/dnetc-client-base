@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.110  1998/10/30 04:40:01  foxyloxy
+#
+# More MIPS cleanup.
+#
 # Revision 1.109  1998/10/30 00:09:48  foxyloxy
 #
 # Start SGI clean up so it (make rc5des) will work on machines
@@ -381,7 +385,7 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
     -fexpensive-optimizations -fomit-frame-pointer \
     -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
     -funroll-loops -Wall -Icommon -Irc5 -Ides -Iplatforms \
-    -fno-inline-functions -fno-handle-exceptions \
+    -fno-inline-functions -fno-exceptions \
     '
 
 OPTS_XLC3='-O3 -qansialias -qlibansi'
@@ -570,7 +574,8 @@ case "$1" in
         #  mips-crunch.cpp doesn't compile with CC
 	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_LDFLAGS="-n32"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -n32 -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	;;
 
@@ -583,8 +588,8 @@ case "$1" in
 
     *mips-gcc-crunch)        # faster than mips-gcc for IRIX
         RC5CORECOPY="rc5/mips-crunch.cpp"
-        TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 -DMIPS_CRUNCH=1 -DBIT_32 -DKWAN"
-        TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
+        TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 -DMIPS_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
         ;;
 
     *mips-gcc)               # faster than mips-cc for IRIX
