@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.24  1999/03/18 04:28:17  cyp
+// Timezone detection was *not* reversed with last change.  Un-"Fixed".
+//
 // Revision 1.23  1999/03/09 21:33:10  silby
 // Timezone detection was reversed with last change.  Fixed.
 //
@@ -83,7 +86,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.23 1999/03/09 21:33:10 silby Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.24 1999/03/18 04:28:17 cyp Exp $"; }
 #endif
 
 //---------------------------------------------------------------------
@@ -191,7 +194,7 @@ static int IsHostnameDNetKeyserver( const char *hostname, int *tzdiff )
 static int calc_tzmins(void)
 {
   #ifndef TEST
-  return CliTimeGetMinutesWest();  /* clitime.cpp */
+  return -CliTimeGetMinutesWest();  /* clitime.cpp */
   #else
   static int saved_tz = -12345; 
   time_t timenow;
