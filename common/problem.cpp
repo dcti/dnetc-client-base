@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.110 2001/03/20 09:50:24 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.111 2001/03/22 10:56:09 cyp Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -140,11 +140,11 @@ typedef struct
 
 typedef struct 
 {
-  InternalProblem twist_and_shout[3]; 
+  InternalProblem iprobs[3]; 
   #define PICKPROB_MAIN 0 /* MAIN must be first */
   #define PICKPROB_CORE 1
   #define PICKPROB_TEMP 2 /* temporary copy used by load */
-  mutex_t copy_lock; /* locked when a sync is in progress */
+  fastlock_t copy_lock; /* locked when a sync is in progress */
 } SuperProblem;  
 
 #ifndef MIPSpro
@@ -214,7 +214,7 @@ Problem *ProblemAlloc(void)
     
   if (thisprob && !err)
   {
-    p = (char *)&(thisprob->twist_and_shout[PICKPROB_CORE].priv_data.rc5unitwork);
+    p = (char *)&(thisprob->iprobs[PICKPROB_CORE].priv_data.rc5unitwork);
     if ((((unsigned long)p) & (sizeof(void *)-1)) != 0)
     {
       /* Ensure that the core data is going to be aligned */
@@ -225,7 +225,7 @@ Problem *ProblemAlloc(void)
     {
       /* Ensure that what we return as 'Problem *' is valid */
       if ( ((Problem *)thisprob) != 
-        ((Problem *)&(thisprob->twist_and_shout[PICKPROB_MAIN].pub_data)) )
+        ((Problem *)&(thisprob->iprobs[PICKPROB_MAIN].pub_data)) )
       {
         Log("Ack! Phui! Problem != Problem\n");
         err = 1;
@@ -235,10 +235,10 @@ Problem *ProblemAlloc(void)
 
   if (thisprob && !err)
   {
-    mutex_t initmux = DEFAULTMUTEX; /* {0} or whatever */
+    fastlock_t initmux = FASTLOCK_INITIALIZER_UNLOCKED; /* {0} or whatever */
 
     memset( thisprob, 0, sizeof(SuperProblem) );
-    memcpy( &(thisprob->copy_lock), &initmux, sizeof(mutex_t));
+    memcpy( &(thisprob->copy_lock), &initmux, sizeof(fastlock_t));
     
     // sorry, this is needed for mutex emulation
     #if (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
@@ -246,26 +246,26 @@ Problem *ProblemAlloc(void)
       MPCreateCriticalRegion(&(thisprob->copy_lock.MPregion));
     #endif
     
-    thisprob->twist_and_shout[PICKPROB_CORE].priv_data.threadindex = 
-    thisprob->twist_and_shout[PICKPROB_MAIN].priv_data.threadindex = 
-    thisprob->twist_and_shout[PICKPROB_TEMP].priv_data.threadindex = 
+    thisprob->iprobs[PICKPROB_CORE].priv_data.threadindex = 
+    thisprob->iprobs[PICKPROB_MAIN].priv_data.threadindex = 
+    thisprob->iprobs[PICKPROB_TEMP].priv_data.threadindex = 
                                               __problem_counter++;
 
     //align core_membuffer to 16byte boundary
-    p = &(thisprob->twist_and_shout[PICKPROB_CORE].priv_data.__core_membuffer_space[0]);
+    p = &(thisprob->iprobs[PICKPROB_CORE].priv_data.__core_membuffer_space[0]);
     while ((((unsigned long)p) & ((1UL << CORE_MEM_ALIGNMENT) - 1)) != 0)
       p++;
-    thisprob->twist_and_shout[PICKPROB_CORE].priv_data.core_membuffer = p;
+    thisprob->iprobs[PICKPROB_CORE].priv_data.core_membuffer = p;
 
-    p = &(thisprob->twist_and_shout[PICKPROB_MAIN].priv_data.__core_membuffer_space[0]);
+    p = &(thisprob->iprobs[PICKPROB_MAIN].priv_data.__core_membuffer_space[0]);
     while ((((unsigned long)p) & ((1UL << CORE_MEM_ALIGNMENT) - 1)) != 0)
       p++;
-    thisprob->twist_and_shout[PICKPROB_MAIN].priv_data.core_membuffer = p;
+    thisprob->iprobs[PICKPROB_MAIN].priv_data.core_membuffer = p;
 
-    p = &(thisprob->twist_and_shout[PICKPROB_TEMP].priv_data.__core_membuffer_space[0]);
+    p = &(thisprob->iprobs[PICKPROB_TEMP].priv_data.__core_membuffer_space[0]);
     while ((((unsigned long)p) & ((1UL << CORE_MEM_ALIGNMENT) - 1)) != 0)
       p++;
-    thisprob->twist_and_shout[PICKPROB_TEMP].priv_data.core_membuffer = p;
+    thisprob->iprobs[PICKPROB_TEMP].priv_data.core_membuffer = p;
   }
   
   if (thisprob && err)
@@ -288,7 +288,7 @@ static InternalProblem *__pick_probptr(void *__thisprob, unsigned int which)
     // or something. note that this is only called with #defined
     // positive constants, so changing prototype to unsigned.  - sampo
     
-    return &(p->twist_and_shout[which]);
+    return &(p->iprobs[which]);
   }    
   return (InternalProblem *)0;
 }
@@ -296,13 +296,13 @@ static InternalProblem *__pick_probptr(void *__thisprob, unsigned int which)
 static inline void __assert_lock( void *__thisprob )
 {
   SuperProblem *p = (SuperProblem *)__thisprob;
-  mutex_lock(&(p->copy_lock));
+  fastlock_lock(&(p->copy_lock));
 }
 
 static inline void __release_lock( void *__thisprob )
 {
   SuperProblem *p = (SuperProblem *)__thisprob;
-  mutex_unlock(&(p->copy_lock));
+  fastlock_unlock(&(p->copy_lock));
 }
 
 #undef SuperProblem /* no references beyond this point */
