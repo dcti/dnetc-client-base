@@ -18,12 +18,16 @@
 
 //
 // $Log: deseval-meggs3-mmx.cpp,v $
+// Revision 1.4  1998/07/12 05:29:14  fordbr
+// Replaced sboxes 1, 2 and 7 with Kwan versions
+// Now 1876 kkeys/s on a P5-200MMX
+//
 // Revision 1.3  1998/07/09 21:01:07  remi
 // Fixed sboxes names in inline assembly for Linux-aout.
 //
 // Revision 1.2  1998/07/08 23:37:35  remi
 // Added support for aout targets (.align).
-// Tweaked $Id: deseval-meggs3-mmx.cpp,v 1.3 1998/07/09 21:01:07 remi Exp $.
+// Tweaked $Id: deseval-meggs3-mmx.cpp,v 1.4 1998/07/12 05:29:14 fordbr Exp $.
 //
 // Revision 1.1  1998/07/08 15:49:36  remi
 // MMX bitslicer integration.
@@ -32,7 +36,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_mmx_cpp(void) {
-return "@(#)$Id: deseval-meggs3-mmx.cpp,v 1.3 1998/07/09 21:01:07 remi Exp $"; }
+return "@(#)$Id: deseval-meggs3-mmx.cpp,v 1.4 1998/07/12 05:29:14 fordbr Exp $"; }
 #endif
 
 #include <stdlib.h>
@@ -84,6 +88,26 @@ return "@(#)$Id: deseval-meggs3-mmx.cpp,v 1.3 1998/07/09 21:01:07 remi Exp $"; }
 #define s7(i0,i1,i2,i3,i4,i5,out0,out1,out2,out3) xs7(i0,i1,i2,i3,i4,i5,out0,out0,out1,out1,out2,out2,out3,out3)
 #define s8(i0,i1,i2,i3,i4,i5,out0,out1,out2,out3) xs8(i0,i1,i2,i3,i4,i5,out0,out0,out1,out1,out2,out2,out3,out3)
 
+#define xs1(a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3) \
+do { \
+    load_kwan_params (a1,a2,a3,a4,a5,a6,i0,i1,i2,i3); \
+    mmxs1_kwan (mmxParams); \
+    asm ("movq %%mm5, %0" : "=m"(o0)); \
+    asm ("movq %%mm7, %0" : "=m"(o1)); \
+    asm ("movq %%mm2, %0" : "=m"(o2)); \
+    asm ("movq %%mm0, %0" : "=m"(o3)); \
+} while (0)
+
+#define xs2(a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3) \
+do { \
+    load_kwan_params (a1,a2,a3,a4,a5,a6,i0,i1,i2,i3); \
+    mmxs2_kwan (mmxParams); \
+    asm ("movq %%mm1, %0" : "=m"(o0)); \
+    asm ("movq %%mm5, %0" : "=m"(o1)); \
+    asm ("movq %%mm7, %0" : "=m"(o2)); \
+    asm ("movq %%mm2, %0" : "=m"(o3)); \
+} while (0)
+
 #define xs3(a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3) \
 do { \
     load_kwan_params (a1,a2,a3,a4,a5,a6,i0,i1,i2,i3); \
@@ -124,6 +148,16 @@ do { \
     asm ("movq %%mm4, %0" : "=m"(o3)); \
 } while (0)
 
+#define xs7(a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3) \
+do { \
+    load_kwan_params (a1,a2,a3,a4,a5,a6,i0,i1,i2,i3); \
+    mmxs7_kwan (mmxParams); \
+    asm ("movq %%mm7, %0" : "=m"(o0)); \
+    asm ("movq %%mm1, %0" : "=m"(o1)); \
+    asm ("movq %%mm3, %0" : "=m"(o2)); \
+    asm ("movq %%mm0, %0" : "=m"(o3)); \
+} while (0)
+
 #define xs8(a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3) \
 do { \
     load_kwan_params (a1,a2,a3,a4,a5,a6,i0,i1,i2,i3); \
@@ -134,13 +168,13 @@ do { \
     asm ("movq %%mm1, %0" : "=m"(o3)); \
 } while (0)
 
-#define xs1(a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3) do { load_params (a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3); mmxs1 (mmxParams); } while (0)
-#define xs2(a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3) do { load_params (a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3); mmxs2 (mmxParams); } while (0)
+//#define xs1(a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3) do { load_params (a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3); mmxs1 (mmxParams); } while (0)
+//#define xs2(a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3) do { load_params (a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3); mmxs2 (mmxParams); } while (0)
 //#define xs3(a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3) do { load_params (a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3); mmxs3 (mmxParams); } while (0)
 //#define xs4(a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3) do { load_params (a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3); mmxs4 (mmxParams); } while (0)
 //#define xs5(a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3) do { load_params (a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3); mmxs5 (mmxParams); } while (0)
 //#define xs6(a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3) do { load_params (a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3); mmxs6 (mmxParams); } while (0)
-#define xs7(a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3) do { load_params (a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3); mmxs7 (mmxParams); } while (0)
+//#define xs7(a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3) do { load_params (a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3); mmxs7 (mmxParams); } while (0)
 //#define xs8(a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3) do { load_params (a1,a2,a3,a4,a5,a6,i0,o0,i1,o1,i2,o2,i3,o3); mmxs8 (mmxParams); } while (0)
 
 // CYGWIN32 because it's my debugging & benchmarking platform
@@ -394,6 +428,18 @@ static const unsigned char initCLCR_dest[] = {
 
 	"CALL(mmfunc)" \n"
 
+#define save_kwan1(MD0,MD1,MD2,MD3) \
+"	movq	%%mm5, "MD0"*8(%%ebp)
+	movq	%%mm7, "MD1"*8(%%ebp)
+	movq	%%mm2, "MD2"*8(%%ebp)
+	movq	%%mm0, "MD3"*8(%%ebp) \n"
+
+#define save_kwan2(MD0,MD1,MD2,MD3) \
+"	movq	%%mm1, "MD0"*8(%%ebp)
+	movq	%%mm5, "MD1"*8(%%ebp)
+	movq	%%mm7, "MD2"*8(%%ebp)
+	movq	%%mm2, "MD3"*8(%%ebp) \n"
+
 #define save_kwan3(MD0,MD1,MD2,MD3) \
 "	movq	%%mm2, "MD0"*8(%%ebp)
 	movq	%%mm6, "MD1"*8(%%ebp)
@@ -418,6 +464,12 @@ static const unsigned char initCLCR_dest[] = {
 	movq	%%mm2, "MD2"*8(%%ebp)
 	movq	%%mm4, "MD3"*8(%%ebp) \n"
 
+#define save_kwan7(MD0,MD1,MD2,MD3) \
+"	movq	%%mm7, "MD0"*8(%%ebp)
+	movq	%%mm1, "MD1"*8(%%ebp)
+	movq	%%mm3, "MD2"*8(%%ebp)
+	movq	%%mm0, "MD3"*8(%%ebp) \n"
+
 #define save_kwan8(MD0,MD1,MD2,MD3) \
 "	movq	%%mm6, "MD0"*8(%%ebp)
 	movq	%%mm2, "MD1"*8(%%ebp)
@@ -435,14 +487,14 @@ static void partialround( slice S[32], slice M[32], slice D[32], slice K[56], in
 
 	testb	$0x80, %1
 	jz	__and_0x80
-"	load	("31","0","1","2","3","4",  "0","1","2","3","4","5",  "8","16","22","30")
-"	"CALL(mmxs1)"
+"	call_kwan (mmxs1_kwan,"31","0","1","2","3","4",  "0","1","2","3","4","5",  "8","16","22","30")"
+"	save_kwan1 ("8","16","22","30")"
 "ALIGN4"
 __and_0x80:
 	testb	$0x40, %1
 	jz	__and_0x40
-"	load	("3","4","5","6","7","8",  "6","7","8","9","10","11",  "12","27","1","17")
-"	"CALL(mmxs2)"
+"	call_kwan (mmxs2_kwan,"3","4","5","6","7","8",  "6","7","8","9","10","11",  "12","27","1","17")"
+"	save_kwan2 ("12","27","1","17")"
 "ALIGN4"
 __and_0x40:
 	testb	$0x20, %1
@@ -471,8 +523,8 @@ __and_0x04:
 	addl	$12*8, %%ebx		# helps reduce code size
 	testb	$0x02, %1
 	jz	__and_0x02
-"	load	("0","1","2","3","4","5",  "6","7","8","9","10","11",  "31","11","21","6")"
-"	CALL(mmxs7)"
+"	call_kwan (mmxs7_kwan,"0","1","2","3","4","5",  "6","7","8","9","10","11",  "31","11","21","6")"
+"	save_kwan7 ("31","11","21","6")"
 "ALIGN4"
 __and_0x02:
 	testb	$0x01, %1
@@ -564,11 +616,11 @@ static void multiround( slice S[32], slice N[32], slice M[32], slice D[32], slic
 "ALIGN16"
 __loop_multiround:
  
-"	load ("31", "0", "1", "2", "3", "4",   "0", "1", "2", "3", "4", "5",   "8","16","22","30")"
-"	CALL(mmxs1)"
+"	call_kwan (mmxs1_kwan,"31","0","1","2","3","4",  "0","1","2","3","4","5",  "8","16","22","30")"
+"	save_kwan1 ("8","16","22","30")"
 
-"	load ( "3", "4", "5", "6", "7", "8",   "6", "7", "8", "9","10","11",  "12","27", "1","17")"
-"	CALL(mmxs2)"
+"	call_kwan (mmxs2_kwan,"3", "4", "5", "6", "7", "8",   "6", "7", "8", "9","10","11",  "12","27", "1","17")"
+"	save_kwan2 ("12","27", "1","17")"
 
 "	call_kwan (mmxs3_kwan,"7", "8", "9","10","11","12", "12","13","14","15","16","17", "23","15","29","5")"
 "	save_kwan3 ("23","15","29","5")"
@@ -585,8 +637,8 @@ __loop_multiround:
 "	save_kwan6 ("3","28","10","18")"
 
 	addl	$12*8, %%ebx	# helps reduce code size
-"	load ("0","1","2","3","4","5",  "6","7","8","9","10","11",  "31","11","21","6")"
-"	CALL(mmxs7)"
+"	call_kwan (mmxs7_kwan,"0","1","2","3","4","5",  "6","7","8","9","10","11",  "31","11","21","6")"
+"	save_kwan7 ("31","11","21","6")"
 
 "	call_kwan (mmxs8_kwan,"4","5","6","7","8","-23", "12","13","14","15","16","17", "4","26","14","20")"
 "	save_kwan8 ("4","26","14","20")"

@@ -1,6 +1,10 @@
 
 //
 // $Log: sboxes-mmx.h,v $
+// Revision 1.4  1998/07/12 05:29:18  fordbr
+// Replaced sboxes 1, 2 and 7 with Kwan versions
+// Now 1876 kkeys/s on a P5-200MMX
+//
 // Revision 1.3  1998/07/08 18:51:37  remi
 // There is 14 locals in older sboxes, not 15.
 //
@@ -25,7 +29,7 @@ typedef struct {
 typedef struct {
 	slice mmNOT;
 	slice i0,i1,i2,i3;
-	slice locals[14];
+	slice locals[15];
 } stNewMmxParams;
 
 typedef union {
@@ -41,13 +45,13 @@ extern "C" {
 
     slice whack16(slice *P, slice *C, slice *K);
 
-    void mmxs1      (stMmxParams *params) REGPARAM;
-    void mmxs2      (stMmxParams *params) REGPARAM;
+    void mmxs1_kwan (stMmxParams *params) REGPARAM;
+    void mmxs2_kwan (stMmxParams *params) REGPARAM;
     void mmxs3_kwan (stMmxParams *params) REGPARAM;
     void mmxs4_kwan (stMmxParams *params) REGPARAM;
     void mmxs5_kwan (stMmxParams *params) REGPARAM;
     void mmxs6_kwan (stMmxParams *params) REGPARAM;
-    void mmxs7      (stMmxParams *params) REGPARAM;
+    void mmxs7_kwan (stMmxParams *params) REGPARAM;
     void mmxs8_kwan (stMmxParams *params) REGPARAM;
 }
 

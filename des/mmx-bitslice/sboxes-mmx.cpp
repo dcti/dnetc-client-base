@@ -6,6 +6,10 @@
 
 //
 // $Log: sboxes-mmx.cpp,v $
+// Revision 1.3  1998/07/12 05:29:16  fordbr
+// Replaced sboxes 1, 2 and 7 with Kwan versions
+// Now 1876 kkeys/s on a P5-200MMX
+//
 // Revision 1.2  1998/07/08 23:42:28  remi
 // Added support for CliIdentifyModules().
 //
@@ -16,7 +20,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *sboxes_mmx_cpp(void) { 
-return "@(#)$Id: sboxes-mmx.cpp,v 1.2 1998/07/08 23:42:28 remi Exp $"; }
+return "@(#)$Id: sboxes-mmx.cpp,v 1.3 1998/07/12 05:29:16 fordbr Exp $"; }
 #endif
 
 #include "sboxes-mmx.h"
@@ -52,6 +56,368 @@ static void xprint (char *comm, slice a1, slice a2) {
 #define out2  "16(%eax)"
 #define out3  "24(%eax)"
 #define out4  "32(%eax)"
+
+
+// --------------------------------------------------------
+// --------------------------------------------------------
+void mmxs1_kwan(stMmxParams *)
+{
+
+// On exit:
+// out1 - mm5
+// out2 - mm7
+// out3 - mm2
+// out4 - mm0
+
+#define a1    "40(%eax)"
+#define a3    "48(%eax)"
+#define a5    "56(%eax)"
+#define x1    "64(%eax)"
+#define x3    "72(%eax)"
+#define x4    "80(%eax)"
+#define x5    "88(%eax)"
+#define x6    "96(%eax)"
+#define x13  "104(%eax)"
+#define x14  "112(%eax)"
+#define x25  "120(%eax)"
+#define x26  "128(%eax)"
+#define x38  "136(%eax)"
+#define x55  "144(%eax)"
+#define x58  "152(%eax)"
+
+asm ("
+
+   movq  %mm0, "a1"
+   movq  %mm3, %mm6      # copy a4
+
+   pxor  "mmNOT", %mm0   # x2 = ~a1
+   pxor  %mm2, %mm3      # x3 = a3 ^ a4
+
+   pxor  "mmNOT", %mm6   # x1 = ~a4
+   movq  %mm0, %mm7      # copy x2
+
+   movq  %mm4, "a5"
+   por   %mm2, %mm7      # x5 = a3 | x2
+
+   movq  %mm3, "x3"
+   movq  %mm5, %mm4      # copy a6
+
+   movq  %mm6, "x1"
+   pxor  %mm0, %mm3      # x4 = x2 ^ x3
+
+   movq  %mm7, "x5"
+   por   %mm6, %mm0      # x9 = x1 | x2
+
+   movq  %mm2, "a3"
+   pand  %mm6, %mm7      # x6 = x1 & x5
+
+   movq  %mm3, "x4"
+   por   %mm3, %mm2      # x23 = a3 | x4
+
+   pxor  "mmNOT", %mm2   # x24 = ~x23
+   pand  %mm0, %mm4      # x10 = a6 & x9
+
+   movq  %mm7, %mm6      # copy x6
+   por   %mm5, %mm2      # x25 = a6 | x24
+
+   movq  %mm7, "x6"
+   por   %mm5, %mm6      # x7 = a6 | x6
+
+   pxor  %mm2, %mm7      # x26 = x6 ^ x25
+   pxor  %mm6, %mm3      # x8 = x4 ^ x7
+
+   movq  %mm2, "x25"
+   pxor  %mm4, %mm6      # x11 = x7 ^ x10
+
+   pand  "a3", %mm4      # x38 = a3 & x10
+   movq  %mm6, %mm2      # copy x11
+
+   pxor  "a3", %mm6      # x53 = a3 ^ x11
+   por   %mm1, %mm2      # x12 = a2 | x11
+
+   pand  "x5", %mm6      # x54 = x5 & x53
+   pxor  %mm3, %mm2      # x13 = x8 ^ x12
+
+   movq  %mm4, "x38"
+   pxor  %mm2, %mm0      # x14 = x9 ^ x13
+
+   movq  %mm7, "x26"
+   movq  %mm5, %mm4      # copy a6
+
+   movq  %mm2, "x13"
+   por   %mm0, %mm4      # x15 = a6 | x14
+
+   movq  "x1", %mm7
+   por   %mm1, %mm6      # x55 = a2 | x54
+
+   movq  %mm0, "x14"
+   movq  %mm3, %mm2      # copy x8
+
+   pandn "x3", %mm0      # x18 = x3 & ~x14
+   pxor  %mm7, %mm4      # x16 = x1 ^ x15
+
+   por   "x4", %mm5      # x57 = a6 | x4
+   por   %mm1, %mm0      # x19 = a2 | x18
+
+   pxor  "x38", %mm5     # x58 = x38 ^ x57
+   pxor  %mm0, %mm4      # x20 = x16 ^ x19
+
+   movq  "a5", %mm0
+   pand  %mm7, %mm2      # x27 = x1 & x8
+
+   movq  %mm6, "x55"
+   por   %mm1, %mm2      # x28 = a2 | x27
+
+   movq  "x14", %mm6
+   por   %mm4, %mm0      # x21 = a5 | x20
+
+   pand  "x5", %mm6      # x32 = x5 & x14
+   por   %mm3, %mm7      # x30 = x1 | x8
+
+   movq  %mm5, "x58"
+   pxor  %mm3, %mm6      # x33 = x8 ^ x32
+
+   pxor  "x6", %mm7      # x31 = x6 ^ x30
+   movq  %mm1, %mm5      # copy a2
+
+   pxor  "x26", %mm2     # x29 = x26 ^ x28
+   pand  %mm6, %mm5      # x34 = a2 & x33
+
+   pand  "a3", %mm6      # x40 = a3 & x33
+   pxor  %mm7, %mm5      # x35 = x31 ^ x34
+
+   por   "a5", %mm5      # x36 = a5 | x35
+
+   movq  "a1", %mm7
+   pxor  %mm2, %mm5      # x37 = x29 ^ x36
+
+   movq  "x4", %mm2
+   por   %mm3, %mm7      # x46 = a1 | x8
+
+   por   "x38", %mm2     # x39 = x4 | x38
+   pxor  %mm6, %mm3      # x52 = x8 ^ x40
+
+   pxor  "x25", %mm6     # x41 = x25 ^ x40
+   pxor  %mm4, %mm7      # x47 = x46 ^ x20
+
+   movq  "a3", %mm4
+   por   %mm1, %mm7      # x48 = a2 | x47
+
+   por   "x26", %mm4     # x44 = a3 | x26
+   por   %mm1, %mm6      # x42 = a2 | x41
+
+   pxor  "x14", %mm4     # x45 = x14 ^ x44
+   pxor  %mm2, %mm6      # x43 = x39 ^ x42
+
+   movq  "x13", %mm2
+   pxor  %mm4, %mm7      # x49 = x45 ^ x48
+
+   pxor  "x55", %mm3     # x56 = x52 ^ x55
+   pxor  %mm2, %mm0      # x22 = x13 ^ x21
+
+   pxor  "out1", %mm5    # out1 ^= x37
+   pand  %mm3, %mm2      # x59 = x13 & x56
+
+   movq  "a5", %mm4
+   pand  %mm1, %mm2      # x60 = a2 & x59
+
+   pxor  "x58", %mm2     # x61 = x58 ^ x60
+   pand  %mm4, %mm7      # x50 = a5 & x49
+
+   pxor  "out4", %mm0    # out4 ^= x22
+   pand  %mm4, %mm2      # x62 = a5 & x61
+
+   pxor  %mm6, %mm7      # x51 = x43 ^ x50
+   pxor  %mm3, %mm2      # x63 = x56 ^ x62
+
+   pxor  "out2", %mm7    # out2 ^= x51
+
+   pxor  "out3", %mm2    # out3 ^= x63
+
+                         # 51 clocks for 67 variables
+");
+#undef a1
+#undef a3
+#undef a5
+#undef x1
+#undef x3
+#undef x4
+#undef x5
+#undef x6
+#undef x13
+#undef x14
+#undef x25
+#undef x26
+#undef x38
+#undef x55
+#undef x58
+}
+
+
+// --------------------------------------------------------
+// --------------------------------------------------------
+void mmxs2_kwan(stMmxParams *)
+{
+
+// On exit:
+// out1 - mm1
+// out2 - mm5
+// out3 - mm7
+// out4 - mm2
+
+#define a1    "0x28(%eax)"
+#define a2    "0x30(%eax)"
+#define a3    "0x38(%eax)"
+#define a4    "0x40(%eax)"
+#define x3    "0x48(%eax)"
+#define x4    "0x50(%eax)"
+#define x5    "0x58(%eax)"
+#define x13   "0x60(%eax)"
+#define x18   "0x68(%eax)"
+#define x25   "0x70(%eax)"
+
+asm ("
+
+   movq  %mm3, "a4"
+   movq  %mm4, %mm6      # copy a5
+
+   movq  %mm0, "a1"
+   movq  %mm4, %mm7      # copy a5
+
+   pxor  "mmNOT", %mm0   # x2 = ~a1
+   pxor  %mm5, %mm6      # x3 = a5 ^ a6
+
+   pxor  "mmNOT", %mm7   # x1 = ~a5
+   movq  %mm0, %mm3      # copy x2
+
+   movq  %mm2, "a3"
+   por   %mm5, %mm7      # x6 = a6 | x1
+
+   movq  %mm6, "x3"
+   por   %mm7, %mm3      # x7 = x2 | x6
+
+   pxor  %mm4, %mm7      # x13 = a5 ^ x6
+   pxor  %mm0, %mm6      # x4 = x2 ^ x3
+
+   pand  %mm1, %mm3      # x8 = a2 & x7
+   por   %mm7, %mm2      # x14 = a3 | x13
+
+   movq  %mm1, "a2"
+   pxor  %mm5, %mm3      # x9 = a6 ^ x8
+
+   movq  %mm6, "x4"
+   pxor  %mm1, %mm6      # x5 = a2 ^ x4
+
+   movq  %mm7, "x13"
+   pand  %mm3, %mm1      # x12 = a2 & x9
+
+   pand  "a3", %mm3      # x10 = a3 & x9
+   pxor  %mm2, %mm1      # x15 = x12 ^ x14
+
+   movq  "x4", %mm7
+   movq  %mm1, %mm2      # copy x15
+
+   pand  "a4", %mm2      # x16 = a4 & x15
+   pxor  %mm6, %mm3      # x11 = x5 ^ x10
+
+   movq  %mm6, "x5"
+   pxor  %mm2, %mm3      # x17 = x11 ^ x16
+
+   movq  "a1", %mm2
+   por   %mm5, %mm7      # x22 = a6 | x4
+
+   por   %mm2, %mm1      # x40 = a1 | x15
+   pand  %mm3, %mm7      # x23 = x17 & x22
+
+   pxor  "out2", %mm3    # out2 ^= x17
+   por   %mm4, %mm2      # x18 = a1 | a5
+
+   por   "a3", %mm7      # x24 = a3 | x23
+   movq  %mm2, %mm6      # copy x18
+
+   pxor  "x13", %mm1     # x41 = x13 ^ x40
+   por   %mm5, %mm6      # x19 = a6 | x18
+
+   movq  %mm3, "out2"
+   pand  %mm0, %mm4      # x27 = a5 & x2
+
+   movq  "x13", %mm3
+   por   %mm0, %mm5      # x26 = a6 | x2
+
+   movq  %mm2, "x18"
+   pxor  %mm6, %mm3      # x20 = x13 ^ x19
+
+   movq  "a2", %mm2
+   pxor  %mm6, %mm0      # x31 = x2 ^ x19
+
+   pxor  %mm2, %mm3      # x21 = a2 ^ x20
+   pand  %mm2, %mm0      # x32 = a2 & x31
+
+   pxor  %mm3, %mm7      # x25 = x21 ^ x24
+   por   %mm4, %mm2      # x28 = a2 | x27
+
+   pxor  "x3", %mm4      # x30 = x3 ^ x27
+   pand  %mm3, %mm6      # x47 = x19 & x21
+
+   pxor  %mm0, %mm4      # x33 = x30 ^ x32
+   pxor  %mm5, %mm6      # x48 = x26 ^ x47
+
+   movq  %mm7, "x25"
+   pand  %mm3, %mm0      # x38 = x21 & x32
+
+   movq  "a3", %mm7
+   pxor  %mm2, %mm5      # x29 = x26 ^ x28
+
+   pxor  "x5", %mm0      # x39 = x5 ^ x38
+   pand  %mm4, %mm7      # x34 = a3 & x33
+
+   pand  "a2", %mm4      # x49 = a2 & x33
+   pxor  %mm5, %mm7      # x35 = x29 ^ x34
+
+   por   "a4", %mm7      # x36 = a4 | x35
+   movq  %mm1, %mm5      # copy x41
+
+   por   "a3", %mm5      # x42 = a3 | x41
+   por   %mm2, %mm1      # x44 = x28 | x41
+
+   pand  "x18", %mm2     # x53 = x18 & x28
+   pxor  %mm3, %mm4      # x50 = x21 ^ x49
+
+   movq  "a4", %mm3
+   pand  %mm4, %mm2      # x54 = x50 & x53
+
+   pand  "a3", %mm4      # x51 = a3 & x50
+   pxor  %mm5, %mm0      # x43 = x39 ^ x42
+
+   pxor  "x25", %mm7     # x37 = x25 ^ x36
+   pxor  %mm6, %mm4      # x52 = x48 ^ x51
+
+   pxor  "out3", %mm7    # out3 ^= x37
+   pand  %mm3, %mm1      # x45 = a4 & x44
+
+   movq  "out2", %mm5
+   pxor  %mm0, %mm1      # x46 = x43 ^ x45
+
+   pxor  "out1", %mm1    # out1 ^= x46
+   por   %mm3, %mm2      # x55 = a4 | x54
+
+   pxor  %mm4, %mm2      # x56 = x52 ^ x55
+
+   pxor  "out4", %mm2    # out4 ^= x56
+
+                         # 44 clocks for 60 variables
+");
+#undef a1
+#undef a2
+#undef a3
+#undef a4
+#undef x3
+#undef x4
+#undef x5
+#undef x13
+#undef x18
+#undef x25
+}
 
 // --------------------------------------------------------
 // --------------------------------------------------------
@@ -829,6 +1195,184 @@ asm ("
 #undef x8 
 #undef x15
 #undef x16
+}
+
+
+// --------------------------------------------------------
+// --------------------------------------------------------
+void mmxs7_kwan(stMmxParams *)
+{
+
+// On exit:
+// out1 - mm7
+// out2 - mm1
+// out3 - mm3
+// out4 - mm0
+
+#define a1    "40(%eax)"
+#define a2    "48(%eax)"
+#define a4    "56(%eax)"
+#define a6    "64(%eax)"
+#define x6    "72(%eax)"
+#define x7    "80(%eax)"
+#define x8    "88(%eax)"
+#define x11   "96(%eax)"
+#define x13  "104(%eax)"
+#define x15  "112(%eax)"
+#define x25  "120(%eax)"
+#define x26  "128(%eax)"
+
+asm ("
+
+   movq  %mm0, "a1"
+   movq  %mm1, %mm6      # copy a2
+
+   movq  %mm1, "a2"
+   movq  %mm3, %mm7      # copy a4
+
+   movq  %mm5, "a6"
+   pand  %mm3, %mm6      # x3 = a2 & a4
+
+   movq  %mm3, "a4"
+   pxor  %mm4, %mm6      # x4 = a5 ^ x3
+
+   pxor  "mmNOT", %mm4   # x2 = ~a5
+   pand  %mm6, %mm7      # x6 = a4 & x4
+
+   pand  %mm4, %mm3      # x12 = a4 & x2
+   movq  %mm1, %mm5      # copy a2
+
+   pxor  %mm2, %mm6      # x5 = a3 ^ x4
+   pxor  %mm7, %mm5      # x7 = a2 ^ x6
+
+   movq  %mm7, "x6"
+   por   %mm1, %mm4      # x14 = a2 | x2
+
+   por   %mm3, %mm1      # x13 = a2 | x12
+   pxor  %mm6, %mm7      # x25 = x5 ^ x6
+
+   movq  %mm5, "x7"
+   pand  %mm2, %mm4      # x15 = a3 & x14
+
+   pand  %mm2, %mm5      # x8 = a3 & x7
+   por   %mm7, %mm3      # x26 = x12 | x25
+
+   movq  %mm1, "x13"
+   pxor  %mm5, %mm0      # x9 = a1 ^ x8
+
+   por   "a6", %mm0      # x10 = a6 | x9
+   pxor  %mm4, %mm1      # x16 = x13 ^ x15
+
+   movq  %mm4, "x15"
+   pxor  %mm6, %mm0      # x11 = x5 ^ x10
+
+   movq  %mm5, "x8"
+   movq  %mm3, %mm4      # copy x26
+
+   movq  "a6", %mm6
+   movq  %mm0, %mm5      # copy x11
+
+   pxor  "x6", %mm5      # x17 = x6 ^ x11
+   por   %mm6, %mm4      # x27 = a6 | x26
+
+   movq  %mm7, "x25"
+   por   %mm6, %mm5      # x18 = a6 | x17
+
+   movq  "a1", %mm7
+   pxor  %mm1, %mm5      # x19 = x16 ^ x18
+
+   movq  %mm3, "x26"
+   pand  %mm5, %mm7      # x20 = a1 & x19
+
+   movq  %mm0, "x11"
+   pxor  %mm0, %mm7      # x21 = x11 ^ x20
+
+   movq  "a4", %mm3
+   movq  %mm7, %mm0      # copy x21
+
+   por   "a2", %mm0      # x22 = a2 | x21
+   pand  %mm3, %mm1      # x35 = a4 & x16
+
+   pand  "x13", %mm3     # x39 = a4 & x13
+
+   por   "x7", %mm2      # x40 = a3 | x7
+
+   pxor  "x6", %mm0      # x23 = x6 ^ x22
+   pxor  %mm3, %mm2      # x41 = x39 ^ x40
+
+   movq  "a2", %mm3
+   movq  %mm0, %mm6      # copy x23
+
+   pxor  "mmNOT", %mm3   # x1 = ~a2
+
+   pxor  "x15", %mm6     # x24 = x15 ^ x23
+   por   %mm3, %mm1      # x36 = x1 | x35
+
+   pand  "x26", %mm0     # x30 = x23 & x26
+   pxor  %mm6, %mm4      # x28 = x24 ^ x27
+
+   pand  "a6", %mm0      # x31 = a6 & x30
+   por   %mm3, %mm6      # x42 = x1 | x24
+
+   por   "a6", %mm6      # x43 = a6 | x42
+   pand  %mm5, %mm3      # x29 = x1 & x19
+
+   pand  "a6", %mm1      # x37 = a6 & x36
+   pxor  %mm3, %mm0      # x32 = x29 ^ x31
+
+   por   "a1", %mm0      # x33 = a1 | x32
+   pxor  %mm6, %mm2      # x44 = x41 ^ x48
+
+   pxor  "x11", %mm1     # x38 = x11 ^ x37
+   pxor  %mm4, %mm0      # x34 = x28 ^ x33
+
+   movq  "a1", %mm4
+   pxor  %mm2, %mm5      # x51 = x19 ^ x44
+
+   movq  "a4", %mm6
+   por   %mm2, %mm4      # x45 = a1 | x44
+
+   pxor  "x25", %mm6     # x52 = a4 ^ x25
+   pxor  %mm4, %mm1      # x46 = x38 ^ x45
+
+   movq  "a6", %mm4
+   pand  %mm1, %mm6      # x53 = x46 & x52
+
+   movq  "x6", %mm3
+   pand  %mm4, %mm6      # x54 = a6 & x53
+
+   pxor  "x15", %mm3     # x48 = x6 ^ x15
+   pxor  %mm5, %mm6      # x55 = x51 ^ x54
+
+   pxor  "x8", %mm2      # x47 = x8 ^ x44
+   por   %mm4, %mm3      # x49 = a6 | x48
+
+   por   "a1", %mm6      # x56 = a1 | x55
+   pxor  %mm2, %mm3      # x50 = x47 ^ x49
+
+   pxor  "out1", %mm7    # out1 ^= x21
+   pxor  %mm6, %mm3      # x57 = x50 ^ x56
+
+   pxor  "out2", %mm1    # out2 ^= x46
+
+   pxor  "out3", %mm3    # out3 ^= x57
+
+   pxor  "out4", %mm0    # out4 ^= x34
+
+                         # 48 clocks for 61 variables
+");
+#undef a1
+#undef a2
+#undef a4
+#undef a6
+#undef x6
+#undef x7
+#undef x8
+#undef x11
+#undef x13
+#undef x15
+#undef x25
+#undef x26
 }
 
 
