@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.30 2001/01/24 16:44:30 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.31 2001/03/31 18:52:19 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -60,7 +60,10 @@ static int __is_opt_available_for_project(unsigned int cont_i, int menuoption)
 }
 
 
-static int __enumcorenames(const char **corenames, int idx, void * /*unused*/)
+#if 0 
+/* one column per contest, max 3 contests */
+static int __enumcorenames_wide(const char **corenames, 
+                                int idx, void * /*unused*/)
 {
   char scrline[80];
   unsigned int cont_i, i, colwidth, nextpos;
@@ -169,6 +172,90 @@ static int __enumcorenames(const char **corenames, int idx, void * /*unused*/)
 
   return +1; /* keep going */
 }      
+#endif
+
+struct enumcoredata
+{
+  int linepos;
+  unsigned int cont_i;
+};
+
+
+/* N rows per contest, upto 3 corenames per row */
+static int __enumcorenames(unsigned int cont_i, const char *corename, 
+                           int idx, void *arg)
+{
+  if (__is_opt_available_for_project(cont_i, CONF_CPUTYPE))
+  {
+    struct enumcoredata *ecd = (struct enumcoredata *)arg;
+    int which = ((ecd->cont_i == cont_i)?(1):(0));
+
+    for (; which < 2; which++)
+    {
+      char label[80]; 
+      char contnamepad[32]; 
+      unsigned int len;
+      int need_pre_lf;
+      
+      if (which == 0)
+        strcpy( label, "-1) Auto select" ); 
+      else
+      {
+        len = 0;
+        if (selcoreValidateCoreIndex(cont_i,idx) == idx)
+          len = sprintf(label, "%2d) ", idx);
+        else
+          len = strlen(strcpy(label, "*) "));
+        strncpy( &label[len], corename, sizeof(label)-len );
+        label[sizeof(label)-1] = '\0';
+      }
+
+      len = strlen(label);
+      {
+        unsigned int maxlen = len;
+        if (maxlen > 75)
+          len = maxlen = 75;
+        else if (maxlen > 50)
+          maxlen = 75;
+        else if (maxlen > 25)
+          maxlen = 50;        
+        else
+          maxlen = 25;
+        for (;len < maxlen; len++)
+          label[len] = ' ';
+        len = maxlen;
+        label[len] = '\0';
+      }
+
+      need_pre_lf = 0;
+      if (ecd->linepos != 0)
+      {
+        if (ecd->cont_i != cont_i ||
+            (ecd->linepos + len) > 78)
+        {
+          need_pre_lf = 1;
+          ecd->linepos = 0;
+        }
+      }
+
+      contnamepad[0] = '\0';
+      if (ecd->linepos == 0)
+      {
+        if (ecd->cont_i != cont_i)
+          sprintf(contnamepad, "%-3.3s:", CliGetContestNameFromID(cont_i));
+        else
+          strcpy(contnamepad,"    ");
+      }
+    
+      LogScreenRaw( "%s%s%s", ((need_pre_lf)?("\n"):("")), 
+                                contnamepad, label );     
+      ecd->linepos += len;
+      ecd->cont_i = cont_i;
+    } /* for for (; which < 2; which++) */
+  }
+  return +1;
+}
+
 
 /* ----------------------------------------------------------------------- */
 
@@ -950,8 +1037,16 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
           
           if (editthis == CONF_CPUTYPE) /* ugh! */
           {
-            selcoreEnumerateWide( __enumcorenames, NULL ); 
+            #if 1 /* N rows per contest */
+            struct enumcoredata ecd;
+            ecd.linepos = 0;
+            ecd.cont_i = ((unsigned int)-1);
+            selcoreEnumerate( __enumcorenames, &ecd ); 
+            LogScreenRaw("\n\n");
+            #else /* one column per contest */
+            selcoreEnumerateWide( __enumcorenames_wide, NULL ); 
             LogScreenRaw("\n");
+            #endif
           }
           if (conf_options[editthis].choicelist !=NULL)
           {
