@@ -1,15 +1,15 @@
 
- distributed.net client for Linux
- document revision $Id: readme.linux,v 1.1.2.1 2002/07/26 22:36:36 andreasb Exp $
+ distributed.net client for Linux/x86
+ document revision $Id: readme.linux,v 1.1.2.2 2002/07/26 22:51:17 andreasb Exp $
                                                           
  Welcome to the distributed.net client.
 
- This document covers information specific to the client for Linux.
+ This document covers information specific to the client for Linux/x86.
  Refer to other enclosed documentation or browse the online FAQ at
  http://www.distributed.net/FAQ for non-platform-specific documentation.
 
     1.0  Getting started
-    2.0  Linux specific notes
+    2.0  Linux/x86 specific notes
    
  1.0  Getting started ------------------------------------------------
  
