@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.46 2001/04/12 10:55:47 cyp Exp $
+ * $Id: ogr.cpp,v 1.1.2.47 2001/04/25 22:02:32 oliver Exp $
  */
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
@@ -34,7 +34,15 @@
   #endif
   #define OGROPT_BITOFLIST_DIRECT_BIT 0          /* we want 'no' */
 #elif defined(ASM_68K)
-  #define OGROPT_BITOFLIST_DIRECT_BIT 0          /* we want 'no' */
+  #if defined(mc68040)
+    #define OGROPT_BITOFLIST_DIRECT_BIT 0        /* we want 'no' */
+  #else // 68000/020/030/060
+    #define OGROPT_STRENGTH_REDUCE_CHOOSE 0      /* GCC is better */
+    #define OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP 1
+  #endif
+  #if defined(mc68020) || defined(mc68030) || defined(mc68040) || defined(mc68060)
+    #define OGROPT_CYCLE_CACHE_ALIGN 1
+  #endif
 #elif defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
   #if (__MWERKS__)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
@@ -65,9 +73,10 @@
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
-    #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* GCC does benefit */
+    #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* GCC is better    */
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
     #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 2 /* use switch_asm   */
+    #define OGROPT_CYCLE_CACHE_ALIGN              1
   #else
     #error play with the defines to find optimal settings for your compiler
   #endif
@@ -221,6 +230,16 @@
     /* for comparison with an existing .S */
   #undef OGROPT_IGNORE_TIME_CONSTRAINT_ARG
 #endif  
+
+/* Some cpus benefit from having the top of the main ogr_cycle() loop being
+   aligned on a specific memory boundary, for optimum performance during
+   cache line reads.  Your compiler may well already align the code optimumly,
+   but notably gcc for 68k, and PPC, does not.  If you turn this option on,
+   you'll need to supply suitable code for the OGR_CYCLE_CACHE_ALIGN macro.
+*/
+#ifndef OGROPT_CYCLE_CACHE_ALIGN
+#define OGROPT_CYCLE_CACHE_ALIGN 0 /* the default is "no" */
+#endif
 
 /* ----------------------------------------------------------------------- */
 
@@ -2102,6 +2121,25 @@ static int found_one(const struct State *oState)
                :"=r" (result), "=r" (temp) : "1" (input), "r" ((unsigned int)ogr_first_blank_8bit));
       return result;
     }
+  #elif defined(ASM_68K) && defined(__GNUC__)
+    static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int input)
+    {
+      register int result;
+      __asm__ ("   cmp.l   #0xffff0000,%1\n"
+               "   bcs.b   0f\n"
+               "   moveq   #16,%0\n"
+               "   bra.b   1f\n"
+               "0: swap    %1\n"
+               "   moveq   #0,%0\n"
+               "1: cmp.w   #0xff00,%1\n"
+               "   bcs.b   2f\n"
+               "   lsl.w   #8,%1\n"
+               "   addq    #8,%0\n"
+               "2: lsr.w   #8,%1\n"
+               "   add.b   0(%3,%1.w),%0"
+               :"=d" (result), "=d" (input) : "1" (input), "a" (ogr_first_blank_8bit));
+      return result;
+    }
   #else /* C code, no asm */
   static __inline int LOOKUP_FIRSTBLANK(register unsigned int input)
   {
@@ -2190,6 +2228,24 @@ static int found_one(const struct State *oState)
   #error OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM is defined, and no code to match
 #endif
 
+#if (OGROPT_CYCLE_CACHE_ALIGN == 1)
+  #if defined(ASM_68K) && defined(__GNUC__)
+    #if defined(mc68040)
+      // align to 8-byte boundary - pad with nops
+      #define OGR_CYCLE_CACHE_ALIGN __asm__ __volatile__ (".balignw 8,0x4e71; nop" : : )
+    #elif defined(mc68060) || defined(mc68030) || defined(mc68020)
+      // align to 4-byte boundary - pad with nops
+      #define OGR_CYCLE_CACHE_ALIGN __asm__ __volatile__ (".balignw 4,0x4e71; nop" : : )
+    #endif
+  #elif defined(ASM_PPC) && defined(__GNUC__)
+    // align to 32-byte boundary - pad with nops
+    #define OGR_CYCLE_CACHE_ALIGN __asm__ __volatile__ (".balignl 32,0x60000000; nop; nop" : : )
+  #else
+    #error OGROPT_CYCLE_CACHE_ALIGN is defined, and no code to match
+  #endif
+#else
+  #define OGR_CYCLE_CACHE_ALIGN { }
+#endif
 
 
 static int ogr_init(void)
@@ -2564,6 +2620,8 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
 
    SETUP_TOP_STATE(oState,lev);
 
+   OGR_CYCLE_CACHE_ALIGN;
+
    for (;;) {
 
    //continue:
@@ -2671,6 +2729,9 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
 #ifdef OGR_DEBUG
   oState->LOGGING = 1;
 #endif
+
+  OGR_CYCLE_CACHE_ALIGN;
+
   for (;;) {
 
     if (with_time_constraints) { /* if (...) is optimized away if unused */
