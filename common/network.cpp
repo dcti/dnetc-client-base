@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.28  1998/07/08 09:24:54  jlawson
+// eliminated integer size warnings on win16
+//
 // Revision 1.27  1998/07/07 21:55:46  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -55,7 +58,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-static const char *id="@(#)$Id: network.cpp,v 1.27 1998/07/07 21:55:46 cyruspatel Exp $";
+static const char *id="@(#)$Id: network.cpp,v 1.28 1998/07/08 09:24:54 jlawson Exp $";
 return id; }
 #endif
 
@@ -643,10 +646,10 @@ Socks4Failure:
       len = 0;
       socksreq[len++] = 1;    // username/pw subnegotiation version
       socksreq[len++] = (char) userlen;
-      memcpy(socksreq + len, username, userlen);
+      memcpy(socksreq + len, username, (int) userlen);
       len += userlen;
       socksreq[len++] = (char) pwlen;
-      memcpy(socksreq + len, password, pwlen);
+      memcpy(socksreq + len, password, (int) pwlen);
       len += pwlen;
 
       if (LowLevelPut(len, socksreq) < 0)
@@ -935,7 +938,7 @@ s32 Network::Get( u32 length, char * data, u32 timeout )
   // transfer back what was read in
   u32 bytesfilled = (netbuffer.GetLength() < length ?
       netbuffer.GetLength() : length);
-  memmove(data, netbuffer.GetHead(), bytesfilled);
+  memmove(data, netbuffer.GetHead(), (int) bytesfilled);
   netbuffer.RemoveHead(bytesfilled);
 
   if (need_close) Close();
@@ -968,7 +971,7 @@ s32 Network::Put( u32 length, const char * data )
     {
       char line[80], *b = line;
 
-      int n = (length > 45 ? 45 : length);
+      int n = (int) (length > 45 ? 45 : length);
       length -= n;
       *b++ = UU_ENC(n);
 
@@ -1062,11 +1065,7 @@ s32 Network::LowLevelGet(u32 length, char *data)
     select(sock + 1, &rs, NULL, NULL, &tv);
     if (!FD_ISSET(sock, &rs)) return -1;
   #endif
-  #if (CLIENT_OS == OS_BEOS)
-  s32 numRead = recv(sock, data, length, 0);
-  #else
   s32 numRead = read(sock, data, length);
-  #endif
 
   #if (CLIENT_OS == OS_HPUX)
     // HPUX incorrectly returns 0 on a non-blocking socket with

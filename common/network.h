@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.27  1998/07/08 09:24:58  jlawson
+// eliminated integer size warnings on win16
+//
 // Revision 1.26  1998/07/08 05:19:34  jlawson
 // updates to get Borland C++ to compile under Win32.
 //
@@ -97,8 +100,8 @@ extern "C" {
   #include <windows.h>
   #include <winsock.h>
   #include <io.h>
-  #define write(sock, buff, len) send(sock, (char*)buff, len, 0)
-  #define read(sock, buff, len) recv(sock, (char*)buff, len, 0)
+  #define write(sock, buff, len) send(sock, (char*)buff, (int)len, 0)
+  #define read(sock, buff, len) recv(sock, (char*)buff, (int)len, 0)
   #define close(sock) closesocket(sock);
 #elif (CLIENT_OS == OS_RISCOS)
   extern "C" {
