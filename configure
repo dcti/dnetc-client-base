@@ -5,6 +5,12 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.72  1998/07/10 10:19:20  remi
+# Added special targets for cramer's non-standard EGCS installation.
+# There is now 15 targets for x86-linux. Is there anyone around here
+# who want to put their own things in Linux-x86 entries ? After all, there
+# is no size limit on shell scripts ...
+#
 # Revision 1.71  1998/07/10 03:50:33  cramer
 # Changed gcc back to egcs for x86-linux*-egcs.
 # gcc is gcc; egcs is egcs.  NEVER ASSUME THE TWO ARE THE SAME.
@@ -704,7 +710,17 @@ case "$1" in
 	;;
 
 ###### Intel X86 Linux platforms
-    *x86-linux-egcs)    # uses EGCS options
+    *x86-linux-egcs)              # uses EGCS options
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2"
+	TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+	TARGET_LIBS="-lncurses"
+	;;
+
+    *x86-linux-egcs-cramer)       # special target for cramer's non-standard installation
 	TARGET_AS="egcs -c"
 	TARGET_CC="egcs"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2"
@@ -714,7 +730,7 @@ case "$1" in
 	TARGET_LIBS="-lncurses"
 	;;
 
-    *x86-linux-gcc)   # uses standard GCC options plus '-pipe'
+    *x86-linux-gcc)               # uses standard GCC options plus '-pipe'
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
@@ -723,7 +739,7 @@ case "$1" in
 	TARGET_LIBS="-lncurses"
 	;;
 
-    *x86-linux-gcc-nocurses) # uses standard GCC options plus '-pipe'
+    *x86-linux-gcc-nocurses)      # client without curses and termios, uses standard GCC options plus '-pipe'
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2 -DNOCURSES -DNOTERMIOS"
 	TARGET_LDFLAGS="-static"
@@ -731,7 +747,17 @@ case "$1" in
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	;;
 
-    *x86-linux-egcs-debug)    # debug version of x86-linux-egcs
+    *x86-linux-egcs-debug)        # debug version of x86-linux-egcs
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc -g"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DPIPELINE_COUNT=2 -D__showids__"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+	TARGET_STRIP="touch"
+	TARGET_LIBS="-lncurses"
+	;;
+
+    *x86-linux-egcs-debug-cramer) # debug version of x86-linux-egcs-cramer
 	TARGET_AS="egcs -c"
 	TARGET_CC="egcs -g"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DPIPELINE_COUNT=2 -D__showids__"
@@ -741,7 +767,7 @@ case "$1" in
 	TARGET_LIBS="-lncurses"
 	;;
 
-    *x86-linux-gcc-debug)    # debug version of x86-linux-gcc
+    *x86-linux-gcc-debug)         # debug version of x86-linux-gcc
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc -g"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DPIPELINE_COUNT=2 -D__showids__"
@@ -752,6 +778,17 @@ case "$1" in
 	;;
 
     *x86-linux-desultra-egcs-debug)    # to debug UltraSparc DES code integration
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc -g"
+	# -Wno-unused to avoid tons of warnings on some ultra files
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -Wno-unused -D__showids__ -DPIPELINE_COUNT=2 $OPTS_DES_ULTRA_C"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESULTRA_SRCS_C"
+	TARGET_ADDASMS="platforms/x86ident.S"
+	TARGET_LIBS="-lncurses"
+	TARGET_STRIP="touch"
+	;;
+
+    *x86-linux-desultra-egcs-debug-cramer)    # special target for cramer's non-standard installation
 	TARGET_AS="egcs -c"
 	TARGET_CC="egcs -g"
 	# -Wno-unused to avoid tons of warnings on some ultra files
@@ -762,7 +799,7 @@ case "$1" in
 	TARGET_STRIP="touch"
 	;;
 
-    *x86-linux-aout-egcs)
+    *x86-linux-aout-egcs)          # aout version, using EGCS options
 	TARGET_AS="i486-pc-linux-gnuaout-gcc -c"
 	TARGET_CC="i486-pc-linux-gnuaout-gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2"
@@ -772,7 +809,27 @@ case "$1" in
 	TARGET_LIBS="-lncurses"
 	;;
 
-    *x86-linux-mt-egcs)
+    *x86-linux-aout-egcs-cramer)   # special target for cramer's non-standard installation
+	TARGET_AS="i486-pc-linux-gnuaout-egcs -c"
+	TARGET_CC="i486-pc-linux-gnuaout-egcs"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2"
+	TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
+	TARGET_LIBS="-lncurses"
+	;;
+
+    *x86-linux-mt-egcs)            # multithreaded build using EGCS options
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2 -DMULTITHREAD"
+	TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+	TARGET_LIBS="-lpthread -lncurses"
+	;;
+
+    *x86-linux-mt-egcs-cramer)     # special target for cramer's non-standard installation
 	TARGET_AS="egcs -c"
 	TARGET_CC="egcs"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2 -DMULTITHREAD"
@@ -782,7 +839,7 @@ case "$1" in
 	TARGET_LIBS="-lpthread -lncurses"
 	;;
 
-    *x86-linux-mt-gcc)
+    *x86-linux-mt-gcc)             # multithreaded build using GCC options
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
@@ -791,7 +848,7 @@ case "$1" in
 	TARGET_LIBS="-lpthread -lncurses"
 	;;
 
-    *x86-linux-mt-slice-kwan-gcc)     # using slice not bryddes
+    *x86-linux-mt-slice-kwan-gcc)  # using slice not bryddes
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -D__showids__ -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DKWAN"
 	TARGET_LDFLAGS="-static"
