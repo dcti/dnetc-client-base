@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: sleepdef.h,v $
+// Revision 1.9  1998/06/29 06:58:12  jlawson
+// added new platform OS_WIN32S to make code handling easier.
+//
 // Revision 1.8  1998/06/29 04:22:28  jlawson
 // Updates for 16-bit Win16 support
 //
@@ -57,7 +60,7 @@
   #endif
   #define sleep(x) Sleep(1000*(x))
   #define usleep(x) Sleep((x)/1000)
-#elif (CLIENT_OS == OS_WIN16)
+#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
   // Win16 doesn't have any form of sleep available
   #define sleep(x)
   #define usleep(x)

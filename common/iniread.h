@@ -1,6 +1,11 @@
 // Hey, Emacs, this a -*-C++-*- file !
+//
+// INI file reading/processing class for C++
 // 
 // $Log: iniread.h,v $
+// Revision 1.12  1998/06/29 06:58:04  jlawson
+// added new platform OS_WIN32S to make code handling easier.
+//
 // Revision 1.11  1998/06/26 07:13:53  daa
 // move strcmpi and strncmpi defs to cmpidefs.h
 //
@@ -8,15 +13,6 @@
 // 'Log' keywords added to maintain automatic change history
 //
 // 
-
-/*
-  INI file reading/processing class for C++
-
-  version 1.2 (Apr 20, 1997)
-  by Jeff Lawson
-  jlawson@hmc.edu     or    JeffLawson@aol.com
-  http://members.aol.com/JeffLawson/
-*/
 
 #ifndef __INIREAD_H__
 #define __INIREAD_H__

@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.23  1998/06/29 06:58:10  jlawson
+// added new platform OS_WIN32S to make code handling easier.
+//
 // Revision 1.22  1998/06/26 09:19:40  jlawson
 // removed inclusion of dos.h for win32
 //
@@ -69,7 +72,7 @@ extern "C" {
 }
 #endif
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
   #include <winsock.h>
   #include <io.h>
   #define write(sock, buff, len) send(sock, (char*)buff, len, 0)

@@ -8,6 +8,9 @@
 // problem and for obtaining the total/average keyrate for an entire contest.
 // 
 // $Log: clirate.h,v $
+// Revision 1.8  1998/06/29 06:57:49  jlawson
+// added new platform OS_WIN32S to make code handling easier.
+//
 // Revision 1.7  1998/06/24 22:36:45  remi
 // Fixed line ending.
 //
@@ -35,10 +38,6 @@
 // Created
 //
 // =====================================================================
-
-/* module history:
-   01 May 1998 - created - Cyrus Patel <cyp@fb14.uni-mainz.de>
-*/   
 
 #ifndef _CLIRATE_H_
 #define _CLIRATE_H_

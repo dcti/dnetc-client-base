@@ -6,6 +6,9 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.18  1998/06/29 06:57:51  jlawson
+// added new platform OS_WIN32S to make code handling easier.
+//
 // Revision 1.17  1998/06/24 21:53:45  cyruspatel
 // Created CliGetMessageForProblemCompletedNoSave() in clisrate.cpp. It
 // is similar to its non-nosave pendant but doesn't affect cumulative
@@ -73,12 +76,8 @@
 // ==============================================================
 
 
-/* module history:
-   01 May 1998 - created - Cyrus Patel <cyp@fb14.uni-mainz.de>
-*/
-
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: clisrate.cpp,v 1.17 1998/06/24 21:53:45 cyruspatel Exp $";
+static const char *id="@(#)$Id: clisrate.cpp,v 1.18 1998/06/29 06:57:51 jlawson Exp $";
 #endif
 
 #include "clisrate.h" //includes client.h, clitime.h, clirate.h, clicdata.h

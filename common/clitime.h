@@ -8,14 +8,13 @@
 // the time. 'time' is always stored/passed/returned in timeval format.
 // 
 // $Log: clitime.h,v $
+// Revision 1.6  1998/06/29 06:57:58  jlawson
+// added new platform OS_WIN32S to make code handling easier.
+//
 // Revision 1.5  1998/06/14 08:12:46  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
 // 
-
-/* module history:
-   01 May 1998 - created - Cyrus Patel <cyp@fb14.uni-mainz.de>
-*/   
 
 #ifndef _CLITIME_H_
 #define _CLITIME_H_

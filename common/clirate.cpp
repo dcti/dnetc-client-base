@@ -6,6 +6,9 @@
 // problem and for obtaining the total/average keyrate for an entire contest.
 //
 // $Log: clirate.cpp,v $
+// Revision 1.12  1998/06/29 06:57:45  jlawson
+// added new platform OS_WIN32S to make code handling easier.
+//
 // Revision 1.11  1998/06/24 19:25:51  cyruspatel
 // Created function CliGetKeyrateForProblemNoSave(). Same as
 // CliGetKeyrateForProblem() but does not affect cumulative stats.
@@ -51,17 +54,9 @@
 
 // ======================================================================
 
-/* module history:
-   01 May 1998 - created - Cyrus Patel <cyp@fb14.uni-mainz.de>
-
-   revisions:
-   23 May 1998 - corrected CliGetKeyrateForProblem so that blocks
-                 with the same key but different contest ids
-                 are recognized as unique problems.
-*/
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: clirate.cpp,v 1.11 1998/06/24 19:25:51 cyruspatel Exp $";
+static const char *id="@(#)$Id: clirate.cpp,v 1.12 1998/06/29 06:57:45 jlawson Exp $";
 #endif
 
 #include "clirate.h" //includes client.h, clicdata.h, clitime.h

@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.22  1998/06/29 06:58:00  jlawson
+// added new platform OS_WIN32S to make code handling easier.
+//
 // Revision 1.21  1998/06/22 09:25:18  cyruspatel
 // Added __WATCOMC__ check for bool support. 'true' was incorrectly defined
 // as (1). Changed to be (!false). As of this writing, this should have no
@@ -128,7 +131,8 @@ struct s128 { s64 hi, lo; };
 #define OS_SINIX        37
 #define OS_DYNIX        38
 #define OS_OS390        39
-#define OS_MASPAR	40
+#define OS_MASPAR       40
+#define OS_WIN32S       41    // windows 3.1, 3.11, wfw (32-bit Win32s)
 
 // determine current compiling platform
 #if defined(WIN32) || defined(__WIN32__) || defined(_Windows) || defined(_WIN32)
@@ -144,7 +148,7 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_CPU    CPU_X86
   #elif defined(NOMAIN) && !defined(MULTITHREAD)
     // win32s gui
-    #define CLIENT_OS     OS_WIN16
+    #define CLIENT_OS     OS_WIN32S
     #define CLIENT_CPU    CPU_X86
   #elif defined(_M_IX86)
     #define CLIENT_OS     OS_WIN32

@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: client.h,v $
+// Revision 1.52  1998/06/29 06:57:43  jlawson
+// added new platform OS_WIN32S to make code handling easier.
+//
 // Revision 1.51  1998/06/28 23:40:23  silby
 // Changes to path handling code so that path validation+adding to filenames will be more reliable (especially on win32).
 //
@@ -158,7 +161,7 @@ extern "C" {
   #include <share.h>
   #include <dir.h>
   #include <fcntl.h>
-#elif (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S)
   #include <sys/timeb.h>
   #include <process.h>
   #include <ras.h>
@@ -168,10 +171,12 @@ extern "C" {
   #ifdef __TURBOC__
     #include <dir.h>
   #endif
-  typedef DWORD (CALLBACK *rasenumconnectionsT)(LPRASCONN, LPDWORD, LPDWORD);
-  typedef DWORD (CALLBACK *rasgetconnectstatusT)(HRASCONN, LPRASCONNSTATUS);
-  extern rasenumconnectionsT rasenumconnections;
-  extern rasgetconnectstatusT rasgetconnectstatus;
+  #if (CLIENT_OS == OS_WIN32)
+    typedef DWORD (CALLBACK *rasenumconnectionsT)(LPRASCONN, LPDWORD, LPDWORD);
+    typedef DWORD (CALLBACK *rasgetconnectstatusT)(HRASCONN, LPRASCONNSTATUS);
+    extern rasenumconnectionsT rasenumconnections;
+    extern rasgetconnectstatusT rasgetconnectstatus;
+  #endif
 #elif (CLIENT_OS == OS_DOS)
   #include <sys/timeb.h>
   #include <io.h>
@@ -216,7 +221,7 @@ extern "C" {
 //#define PATH_SEP_C '\\'   //where the references are
 #define EXTN_SEP   "."
 #define EXTN_SEP_C '.'
-#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)
+#elif ((CLIENT_OS == OS_DOS) || CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)
 #define PATH_SEP   "\\"
 #define PATH_SEP_C '\\'
 #define ALT_PATH_SEP '/'
@@ -660,7 +665,8 @@ public:
   #define Time() (CliGetTimeString(NULL,1))
 #else
   #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_NETWARE) || \
-      (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
+      (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32S) || \
+      (CLIENT_OS == OS_WIN16) || \
       ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
     #ifdef __WATCOMC__
       // disable "Warning! W481: col(1) class/enum has the same name 
@@ -677,9 +683,10 @@ public:
      (CLIENT_OS == OS_MACOS) ||                              \
      (CLIENT_OS == OS_SCO) ||                                \
      (CLIENT_OS == OS_OS2) ||                                \
-     (CLIENT_OS == OS_WIN32) ||                              \
      (CLIENT_OS == OS_AMIGAOS) ||                            \
      (CLIENT_OS == OS_NETWARE) ||                            \
+     (CLIENT_OS == OS_WIN32) ||                              \
+     (CLIENT_OS == OS_WIN32S) ||                             \
      (CLIENT_OS == OS_WIN16) ||                              \
      (CLIENT_OS == OS_DOS) ||                                \
      ((CLIENT_OS == OS_VMS) && !defined(MULTINET)))

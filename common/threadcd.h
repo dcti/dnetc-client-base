@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: threadcd.h,v $
+// Revision 1.7  1998/06/29 06:58:14  jlawson
+// added new platform OS_WIN32S to make code handling easier.
+//
 // Revision 1.6  1998/06/29 04:22:32  jlawson
 // Updates for 16-bit Win16 support
 //
@@ -53,7 +56,7 @@
 #elif (CLIENT_OS == OS_MACOS)
   typedef int THREADID ; //dummy
   #undef OS_SUPPORTS_THREADING
-#elif (CLIENT_OS == OS_WIN16)
+#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
   #include <stdlib.h>
   typedef int THREADID ; //dummy
   #undef OS_SUPPORTS_THREADING

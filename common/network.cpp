@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.26  1998/06/29 06:58:06  jlawson
+// added new platform OS_WIN32S to make code handling easier.
+//
 // Revision 1.25  1998/06/29 04:22:26  jlawson
 // Updates for 16-bit Win16 support
 //
@@ -39,7 +42,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: network.cpp,v 1.25 1998/06/29 04:22:26 jlawson Exp $";
+static const char *id="@(#)$Id: network.cpp,v 1.26 1998/06/29 06:58:06 jlawson Exp $";
 #endif
 
 #include "network.h"
@@ -129,7 +132,7 @@ void NetworkInitialize(void)
 {
 #if !defined(NONETWORK)
   // perform platform specific socket initialization
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
     WSADATA wsaData;
     WSAStartup(0x0101, &wsaData);
   #elif defined(DJGPP) || (CLIENT_OS == OS_OS2)
@@ -161,7 +164,7 @@ void NetworkDeinitialize(void)
 {
 #if !defined(NONETWORK)
   // perform platform specific socket deinitialization
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
     WSACleanup();
   #elif (CLIENT_OS == OS_AMIGAOS)
   if (SocketBase) {
@@ -1084,7 +1087,7 @@ void MakeNonBlocking(SOCKET socket, bool nonblocking)
   // change socket to non-blocking
 #if defined(NONETWORK)
   // nothing
-#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
   unsigned long flagon = nonblocking;
   ioctlsocket(socket, FIONBIO, &flagon);
 #elif (CLIENT_OS == OS_VMS)

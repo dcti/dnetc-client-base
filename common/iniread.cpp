@@ -3,6 +3,9 @@
 
 
   $Log: iniread.cpp,v $
+  Revision 1.8  1998/06/29 06:58:02  jlawson
+  added new platform OS_WIN32S to make code handling easier.
+
   Revision 1.7  1998/06/15 12:03:59  kbracey
   Lots of consts.
 
@@ -13,27 +16,9 @@
   Revision 1.5  1998/06/14 08:12:53  friedbait
   'Log' keywords added to maintain automatic change history
 
-
-
-  version 2.0 (May 25, 1997)
-  by Jeff Lawson
-  jlawson@hmc.edu     or    JeffLawson@aol.com
-  http://members.aol.com/JeffLawson/
-
-
-  changes in 1.1: (Mar 2, 1997)
-    read function handles equating lines with nothing after equal sign.
-    update will delete a key if the value array is NULL;
-  changes in 1.2: (Apr 20, 1997)
-    addrecord() now has an alternate protoype allowing a single string.
-    files are closed before swapping in updateini.
-    updateini now handles situation when ini file does not exist.
-    updateini no longer copies multiple blank lines.
-  changes in 2.0: (May 25, 1997)
-    complete rewrite to not depend on the Borland string class.
 */
 
-static const char *id="@(#)$Id: iniread.cpp,v 1.7 1998/06/15 12:03:59 kbracey Exp $";
+static const char *id="@(#)$Id: iniread.cpp,v 1.8 1998/06/29 06:58:02 jlawson Exp $";
 
 #include "iniread.h"
 

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.117  1998/06/29 06:57:31  jlawson
+// added new platform OS_WIN32S to make code handling easier.
+//
 // Revision 1.116  1998/06/28 23:40:18  silby
 // Changes to path handling code so that path validation+adding to filenames will be more reliable (especially on win32).
 //
@@ -128,7 +131,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.116 1998/06/28 23:40:18 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.117 1998/06/29 06:57:31 jlawson Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -815,7 +818,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           if (choice > 2) choice=2;
           *(s32 *)options[CONF_OFFLINEMODE].thevariable=choice;
           break;
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS==OS_OS2)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
         case CONF_LURKMODE:
           choice=atoi(parm);
           if (choice < 0) choice=0;
@@ -1213,7 +1216,7 @@ s32 Client::ReadConfig(void)
   if (tempconfig) noexitfilecheck=1;
   tempconfig=ini.getkey(OPTION_SECTION, "exitfilechecktime", "30")[0];
   if (tempconfig) exitfilechecktime=max(tempconfig,1);
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS==OS_OS2)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
 #if (!defined(WINNTSERVICE))
   tempconfig=ini.getkey(OPTION_SECTION, "win95hidden", "0")[0];
   if (tempconfig) win95hidden=1;
@@ -1520,7 +1523,7 @@ s32 Client::WriteConfig(void)
   ini.setrecord(OPTION_SECTION, "contestdone",  IniString(contestdone[0]));
   ini.setrecord(OPTION_SECTION, "contestdone2", IniString(contestdone[1]));
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS==OS_OS2)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
 
   if (lurk==0)
     {
@@ -2381,7 +2384,7 @@ int gettimeofday(struct timeval *tv, struct timezone *)
   tv->tv_usec = t % 1000000U;
   return 0;
 }
-#elif (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_DOS) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
+#elif (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_DOS) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
 int gettimeofday(struct timeval *tv, struct timezone *)
 {
   struct timeb tb;

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clicdata.cpp,v $
+// Revision 1.9  1998/06/29 06:57:28  jlawson
+// added new platform OS_WIN32S to make code handling easier.
+//
 // Revision 1.8  1998/06/22 11:25:44  cyruspatel
 // Created new function in clicdata.cpp: CliClearContestSummaryData(int c)
 // Needed to flush/clear accumulated statistics for a particular contest.
@@ -25,10 +28,10 @@
 // iteration-to-keycount-multiplication-factor) or obtaining/adding to
 // contest summary data (totalblocks, totaliterations, totaltime).
 // The data itself is hidden from other modules to protect integrity and
-// ease maintenance. Created 01 May 1998 Cyrus Patel <cyp@fb14.uni-mainz.de>
+// ease maintenance.
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: clicdata.cpp,v 1.8 1998/06/22 11:25:44 cyruspatel Exp $";
+static const char *id="@(#)$Id: clicdata.cpp,v 1.9 1998/06/29 06:57:28 jlawson Exp $";
 #endif
 
 #include "clicdata.h" //includes client.h for timeval and NULL definitions

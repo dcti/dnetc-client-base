@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.61  1998/06/29 06:57:38  jlawson
+// added new platform OS_WIN32S to make code handling easier.
+//
 // Revision 1.60  1998/06/29 04:22:17  jlawson
 // Updates for 16-bit Win16 support
 //
@@ -63,7 +66,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.60 1998/06/29 04:22:17 jlawson Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.61 1998/06/29 06:57:38 jlawson Exp $";
 #endif
 
 #include "client.h"
@@ -1981,7 +1984,7 @@ PreferredIsDone1:
     //Do keyboard stuff for clients that allow user interaction during the run
     //------------------------------------
 
-    #if ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)) && !defined(NEEDVIRTUALMETHODS)
+    #if ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)) && !defined(NEEDVIRTUALMETHODS)
     {
       while ( kbhit() )
       {
@@ -2995,19 +2998,19 @@ int main( int argc, char *argv[] )
   }
   else
   {
-#if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
-  #ifndef DJGPP // __WATCOM__ || __TURBOC__ || MSVC
-    char fndrive[_MAX_DRIVE], fndir[_MAX_DIR], fname[_MAX_FNAME], fext[_MAX_FNAME];
-    _splitpath(argv[0], fndrive, fndir, fname, fext);
-    _makepath(client.inifilename, fndrive, fndir, fname, EXTN_SEP "ini");
+#if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
+  #if defined(DJGPP)
+    char fndrive[MAXDRIVE], fndir[MAXDIR], fname[MAXFILE], fext[MAXEXT];
+    fnsplit(argv[0], fndrive, fndir, fname, fext);
+    fnmerge(client.inifilename, fndrive, fndir, fname, EXTN_SEP "ini");
     strcpy(client.exepath, fndrive);   // have the drive
     strcat(client.exepath, fndir);     // append dir for fully qualified path
     strcpy(client.exename, fname);     // exe filename
     strcat(client.exename, fext);      // tack on extention
-  #elif defined(DJGPP)
-    char fndrive[MAXDRIVE], fndir[MAXDIR], fname[MAXFILE], fext[MAXEXT];
-    fnsplit(argv[0], fndrive, fndir, fname, fext);
-    fnmerge(client.inifilename, fndrive, fndir, fname, EXTN_SEP "ini");
+  #else // __WATCOM__ || __TURBOC__ || MSVC
+    char fndrive[_MAX_DRIVE], fndir[_MAX_DIR], fname[_MAX_FNAME], fext[_MAX_FNAME];
+    _splitpath(argv[0], fndrive, fndir, fname, fext);
+    _makepath(client.inifilename, fndrive, fndir, fname, EXTN_SEP "ini");
     strcpy(client.exepath, fndrive);   // have the drive
     strcat(client.exepath, fndir);     // append dir for fully qualified path
     strcpy(client.exename, fname);     // exe filename
@@ -3022,10 +3025,10 @@ int main( int argc, char *argv[] )
       #if (CLIENT_OS != OS_MACOS) && (CLIENT_OS != OS_RISCOS)
       slash = strrchr( client.inifilename, '/' );
       #endif
-      #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_DOSWIN) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)
+      #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S)
       slash = max( slash, strrchr( client.inifilename, '\\') );
       #endif
-      #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_DOSWIN) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_VMS)
+      #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_VMS)
       slash = max( slash, strrchr( client.inifilename, ':') );
       #endif
       if (slash) *(slash+1) = 0;

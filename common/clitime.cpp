@@ -6,6 +6,9 @@
 // the time. 'time' is always stored/passed/returned in timeval format.
 //
 // $Log: clitime.cpp,v $
+// Revision 1.14  1998/06/29 06:57:55  jlawson
+// added new platform OS_WIN32S to make code handling easier.
+//
 // Revision 1.13  1998/06/15 12:03:55  kbracey
 // Lots of consts.
 //
@@ -28,7 +31,7 @@
    01 May 1998 - created - Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 
-static const char *id="@(#)$Id: clitime.cpp,v 1.13 1998/06/15 12:03:55 kbracey Exp $";
+static const char *id="@(#)$Id: clitime.cpp,v 1.14 1998/06/29 06:57:55 jlawson Exp $";
 
 #include "clitime.h" //which #includes client.h
 
@@ -79,7 +82,7 @@ struct timeval *CliTimer( struct timeval *tv )
   Microseconds( (UnsignedWide *)&t );
   stv.tv_sec = t / 1000000U;
   stv.tv_usec = t % 1000000U;
-#elif (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_DOS) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
+#elif (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_DOS) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
   struct timeb tb;
   ftime(&tb);
   stv.tv_sec = tb.time;
