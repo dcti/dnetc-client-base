@@ -4,6 +4,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff.cpp,v $
+// Revision 1.20  1998/11/03 18:33:35  cyp
+// Stack overflows caused by LogScreenPercent() are (hopefully) fixed now.
+//
 // Revision 1.19  1998/11/03 00:38:11  cyp
 // Modified percbar stuff to deal with the one-problem/thread change.
 //
@@ -75,7 +78,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.19 1998/11/03 00:38:11 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.20 1998/11/03 18:33:35 cyp Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -551,6 +554,7 @@ const char *LogGetCurrentLogFilename( void )
 
 #include "probman.h"
 
+#if 0
 static void GetPercDataForThread( unsigned int selthread, unsigned int /*numthreads*/, 
    unsigned int *percent, unsigned int *lastperc, unsigned int *restartperc )
 {
@@ -611,114 +615,101 @@ static void GetPercDataForThread( unsigned int selthread, unsigned int /*numthre
   if (lastperc)  *lastperc  = lastperc_i;
   return;
 }  
+#endif
 
 void LogScreenPercent( unsigned int load_problem_count )
 {
   static unsigned int lastperc = 0, displevel = 0;
-  unsigned int percent, restartperc, specperc, equals, prob_i;
+  unsigned int percent, restartperc, endperc, equals, prob_i;
+  int isatty, multiperc;
   char ch; char buffer[88];
   char *bufptr = &buffer[0];
   unsigned char pbuf[30]; /* 'a'-'z' */
-  specperc=0;
 
-  if (CheckExitRequestTrigger() || CheckPauseRequestTrigger())
+  if (CheckExitRequestTrigger() || CheckPauseRequestTrigger() || 
+    !logstatics.percprint || ( logstatics.loggingTo & LOGTO_SCREEN ) == 0 )
     return;
 
-  if (logstatics.percprint && ( logstatics.loggingTo & LOGTO_SCREEN ) != 0 )
+  isatty  = ConIsScreen();
+  endperc = restartperc = 0;
+
+  if (!logstatics.lastwasperc || isatty)
+    lastperc = 0;
+  if (lastperc == 0)
+    *bufptr++ = '\r';
+
+  for (prob_i = 0; prob_i < load_problem_count; prob_i++)
     {
-    if (!logstatics.lastwasperc)
-      lastperc = 0; 
+    Problem *selprob = GetProblemPointerFromIndex(prob_i);
+    percent = 0; 
 
-    for (prob_i = 0; prob_i < load_problem_count; prob_i++)    
+    if (selprob && selprob->IsInitialized())
       {
-      Problem *selprob = GetProblemPointerFromIndex(prob_i);
-
-      percent = lastperc = 0; int startperc_i = 0;
-      if (selprob)
-        {
-        startperc_i = selprob->startpercent / 1000;
-        lastperc  = selprob->percent;
-
-        if ( selprob->finished )
-          percent = 100;
-        else if ( selprob->started )
-          percent = selprob->CalcPercent();
-        if ( percent == 0 )
-          {
-          percent = startperc_i;
-          lastperc = 0;
-          }
-        selprob->percent = percent;
-        }
-      restartperc = ((lastperc == 0)?(startperc_i):(0));
-
-      if (percent != lastperc) 
-        UpdatePercentBar();// Trigger GUI percent bar to update
-      if (percent > specperc)
-        specperc = percent;
-      if (percent && ((percent>90)?((percent&1)!=0):((percent&1)==0)))
-        percent--;  //make sure that it is visible
-      if (load_problem_count <= 26) /* a-z */
-        pbuf[prob_i] = (unsigned char)(percent);
-
-      if (load_problem_count == 1)
-        {
-        restartperc = (!restartperc || percent == 100) ? 0 :
+      if (selprob->finished)
+        percent = 100;
+      else if (selprob->started)
+        percent = selprob->CalcPercent();
+      if (percent == 0)
+        percent = selprob->startpercent / 1000;
+      if (load_problem_count == 1 && percent != 100) 
+        {   /* don't do 'R' if multiple-problems */
+        restartperc = selprob->startpercent / 1000;
+        restartperc = (!restartperc || percent == 100) ? 0 : 
             ( restartperc - ((restartperc > 90) ? (restartperc & 1) : 
-                         (1 - (restartperc & 1))) );
+            (1 - (restartperc & 1))) );
         }
-      else
-        {
-        restartperc = 0; //we don't bother with the restart flag
-        if ( ConIsScreen() )
-          {
-          *bufptr++ = '\r';
-          lastperc = 0;  //always paint the whole bar
-          }
-        }
-      percent = lastperc;
-      lastperc = specperc;
-
-      for ( ++percent; percent <= specperc; percent++ )
-        {
-        if ( percent >= 100 )
-          { strcpy( bufptr, "100" ); bufptr+=3; break; }
-        else if ( ( percent % 10 ) == 0 )
-          { sprintf( bufptr, "%d%%", (int)(percent) ); bufptr+=3; }
-        else if ( restartperc == percent) 
-          { *bufptr++='R'; }
-        else if (((percent&1)?(percent<90):(percent>90)))
-          {
-          ch = '.';
-          if (load_problem_count > 1 && load_problem_count <= 26 /*a-z*/ && 
-                         ConIsScreen() && specperc < 100)
-            {
-            equals = 0;
-            for ( prob_i=0; prob_i<load_problem_count; prob_i++ )
-              {
-              if ( pbuf[prob_i] == (unsigned char)(percent) )
-                {
-                ch = (char)('a'+prob_i);
-                if ( (++equals)>displevel )
-                  break;
-                }
-              }
-            }
-          *bufptr++ = ch; 
-          }
-        }
-      displevel++;
-      if (displevel >= load_problem_count)
-        displevel=0;
+      if (percent > endperc)
+          endperc = percent;
+      if (percent && ((percent>90)?((percent&1)!=0):((percent&1)==0)))
+        percent--;  /* make sure that it is visible */
       }
+    if (load_problem_count <= 26) /* a-z */
+      pbuf[prob_i] = (unsigned char)(percent);
+    }
+    
+  multiperc = (load_problem_count > 1 && load_problem_count <= 26 /*a-z*/ 
+                 && lastperc == 0 && isatty && endperc < 100);
 
-    if ( bufptr > (&buffer[0]))
+  for (percent = lastperc+1; percent <= endperc; percent++)
+    {
+    if ( percent >= 100 )
+      { strcpy( bufptr, "100" ); bufptr+=3; break; }
+    else if ( ( percent % 10 ) == 0 )
+      { sprintf( bufptr, "%d%%", (int)(percent) ); bufptr+=3; }
+    else if ( restartperc == percent) 
+      { *bufptr++='R'; }
+    else if (((percent&1)?(percent<90):(percent>90)))
       {
-      *bufptr = 0;
-      LogWithPointer( LOGTO_SCREEN|LOGTO_RAWMODE, buffer, NULL );
-      logstatics.lastwasperc = 1; //reset to 1
-      logstatics.stableflag = 0; //cursor is not at column 0 
+      ch = '.';
+      if (multiperc)
+        {
+        equals = 0;
+        for ( prob_i=0; prob_i<load_problem_count; prob_i++ )
+          {
+          if ( pbuf[prob_i] == (unsigned char)(percent) )
+            {
+            ch = (char)('a'+prob_i);
+            if ( (++equals)>displevel )
+              break;
+            }
+          }
+        }
+      *bufptr++ = ch; 
       }
+    }
+  displevel++;
+  if (displevel >= load_problem_count)
+    displevel=0;
+  lastperc = endperc;
+
+  if ( (buffer[0]==0) || (buffer[0]=='\r' && buffer[1]==0) )
+    ;
+  else
+    {
+    *bufptr = 0;
+    LogWithPointer( LOGTO_SCREEN|LOGTO_RAWMODE, buffer, NULL );
+    logstatics.lastwasperc = 1; //reset to 1
+    logstatics.stableflag = 0; //cursor is not at column 0 
     }
   return;
 }
