@@ -18,7 +18,7 @@
 //#define TRACE
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43 1999/05/08 19:05:30 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.44 1999/05/11 17:38:15 cyp Exp $"; }
 
 /* ---------------------------------------------------------- */
 #include <stdio.h>
@@ -497,13 +497,13 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
       if (__WSAStartup && __WSASocket && __WSAIoctl && __WSACleanup && __closesocket)
       {
         WSADATA winsockData; 
-        if (( (*((int PASCAL FAR (*)(WORD, LPWSADATA))(__WSAStartup)))
+        if (( (*((int (PASCAL FAR *)(WORD, LPWSADATA))(__WSAStartup)))
                                          (MAKEWORD(2,2), &winsockData)) == 0)
         {
           #define LPWSAPROTOCOL_INFO void *
           #define GROUP unsigned int
           SOCKET s = 
-          (*((int PASCAL FAR (*)(int,int,int,LPWSAPROTOCOL_INFO,GROUP,DWORD))
+          (*((int (PASCAL FAR *)(int,int,int,LPWSAPROTOCOL_INFO,GROUP,DWORD))
             (__WSASocket)))(AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL, 0, 0);
           if (s != INVALID_SOCKET)
           {
@@ -544,7 +544,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
             //IMO, Thats a serious bug in the API that returns AF_INET6 data 
             //for an AF_INET[4] socket.
 
-            int wsError = (*((int PASCAL FAR (*)(
+            int wsError = (*((int (PASCAL FAR *)(
                 SOCKET,DWORD,LPVOID,DWORD,LPVOID,DWORD,LPDWORD,
                 LPWSAOVERLAPPED,LPWSAOVERLAPPED_COMPLETION_ROUTINE))
                 (__WSAIoctl)))(s, SIO_GET_INTERFACE_LIST, NULL, 0, 
@@ -601,9 +601,9 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
                 }
               }
             }
-            (*((int PASCAL FAR (*)(SOCKET))(__closesocket)))(s);
+            (*((int (PASCAL FAR *)(SOCKET))(__closesocket)))(s);
           }
-          (*((int PASCAL FAR (*)(void))(__WSACleanup)))();
+          (*((int (PASCAL FAR *)(void))(__WSACleanup)))();
         }
       }
       FreeLibrary(ws2lib);
