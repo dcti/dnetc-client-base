@@ -15,7 +15,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.17.2.4 1999/09/18 18:02:29 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.17.2.5 1999/11/02 14:14:37 cyp Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -24,7 +24,7 @@ return "@(#)$Id: cliident.cpp,v 1.17.2.4 1999/09/18 18:02:29 cyp Exp $"; }
 #include "bench.h"
 #include "buffupd.h"
 #include "client.h"
-#include "buffwork.h"
+#include "buffbase.h"
 #include "ccoreio.h"
 #include "checkpt.h"
 #include "clicdata.h"
@@ -71,7 +71,7 @@ static const char *h_ident_table[] =
   (const char *)__BASEINCS_H__,
   (const char *)__BENCH_H__,
   (const char *)__BUFFUPD_H__,
-  (const char *)__BUFFWORK_H__,
+  (const char *)__BUFFBASE_H__,
   (const char *)__CHECKPT_H__,
   (const char *)__CCOREIO_H__,
   (const char *)__CLICDATA_H__,

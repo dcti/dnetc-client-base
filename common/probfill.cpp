@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.8 1999/10/16 16:40:11 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.9 1999/11/02 14:14:37 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -28,6 +28,7 @@ return "@(#)$Id: probfill.cpp,v 1.58.2.8 1999/10/16 16:40:11 cyp Exp $"; }
 #include "checkpt.h"   // CHECKPOINT_CLOSE define
 #include "triggers.h"  // RaiseExitRequestTrigger()
 #include "buffupd.h"   // BUFFERUPDATE_FETCH/_FLUSH define
+#include "buffbase.h"  // GetBufferCount,Get|PutBufferRecord,etc
 #include "modereq.h"   // ModeReqSet() and MODEREQ_[FETCH|FLUSH]
 #include "probfill.h"  // ourselves.
 #include "rsadata.h"   // Get cipher/etc for random blocks
@@ -166,7 +167,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       }
       
       // send it back... error messages is printed by PutBufferRecord
-      if ( (longcount = client->PutBufferRecord( &wrdata )) >= 0)
+      if ( (longcount = PutBufferRecord( client, &wrdata )) >= 0)
       {
         //---------------------
         // update the totals for this contest
@@ -212,7 +213,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         msg = "Discarded (core error)";
         norm_key_count = 0;
       }
-      else if (client->PutBufferRecord( &wrdata ) < 0)  // send it back...
+      else if (PutBufferRecord( client, &wrdata ) < 0)  // send it back...
       {
         msg = "Unable to save";
         norm_key_count = 0;
@@ -288,7 +289,7 @@ static long __loadapacket( Client *client, WorkRecord *wrdata,
 //LogScreen("loadapacket 2: contest %u. load not permitted.\n", selproject );
       continue; /* problem.cpp - result depends on #defs, threadsafety etc */
     }
-    bufcount = client->GetBufferRecord( wrdata, selproject, 0 );
+    bufcount = GetBufferRecord( client, wrdata, selproject, 0 );
 //LogScreen("loadapacket 2: contest %u count %ld\n", selproject, bufcount );
   }
   return bufcount;
@@ -521,9 +522,17 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
 
 // --------------------------------------------------------------------
 
-unsigned int LoadSaveProblems(Client *client,
+unsigned int LoadSaveProblems(Client *pass_client,
                               unsigned int load_problem_count,int mode)
 {
+  /* Some platforms need to stop asynchronously, for example, Win16 which
+     gets an ENDSESSION message and has to exit then and there. So also 
+     win9x when running as a service where windows suspends all threads 
+     except the window thread. For these (and perhaps other platforms)
+     we save our last state so calling with (NULL,0,PROBFILL_UNLOADALL)
+     saves the problem states.
+  */
+  static Client *client = (Client *)NULL;
   static unsigned int previous_load_problem_count = 0, reentrant_count = 0;
 
   unsigned int retval = 0;
@@ -556,6 +565,8 @@ unsigned int LoadSaveProblems(Client *client,
     --reentrant_count;
     return 0;
   }
+  if (pass_client)
+    client = pass_client;
 
   /* ============================================================= */
 
@@ -749,7 +760,7 @@ unsigned int LoadSaveProblems(Client *client,
       for (inout=0;inout<=1;inout++)
       {
         unsigned long norm_count;
-        long block_count = client->GetBufferCount( cont_i, inout, &norm_count );
+        long block_count = GetBufferCount( client, cont_i, inout, &norm_count );
         if (block_count >= 0) /* no error */
         {
           char buffer[100+128 /*sizeof(client->in_buffer_basename)*/];
