@@ -1,5 +1,6 @@
 Dual mode (RC5DES) clients
 --------------------------
+v2.7025.410 98.06.24 New ARM DES cores from Steve Lee
 v2.7025.410 98.06.23 Fixed various things in the help pager
 v2.7024.409 98.06.18 Users can now tell us exactly what we need to add to the CPU identification code to stop their cpu from being mis-ident'd.
 v2.7024.409 98.06.17 Added a new PPro/PII/6x86/K6 *DES* core
