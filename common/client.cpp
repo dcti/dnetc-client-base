@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.192  1999/02/06 10:42:55  remi
+// - the default for dialup.ifacestowatch is now 'ppp0:sl0'.
+// - #ifdef'ed dialup.ifacestowatch (only Linux at the moment)
+// - modified a bit the help text in confopt.cpp
+//
 // Revision 1.191  1999/02/04 07:48:05  cyp
 // added lurk.h
 //
@@ -192,7 +197,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.191 1999/02/04 07:48:05 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.192 1999/02/06 10:42:55 remi Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -291,6 +296,9 @@ static void __initialize_client_object(Client *client)
 #if defined(LURK)
   dialup.lurkmode=0;
   dialup.dialwhenneeded=0;
+  #if (CLIENT_OS == OS_LINUX)
+  strcpy (dialup.ifacestowatch, "ppp0:sl0");
+  #endif
 #endif
   srand( (unsigned) time(NULL) );
   InitRandom();

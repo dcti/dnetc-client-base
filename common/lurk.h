@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk.h,v $
+// Revision 1.11  1999/02/06 10:42:55  remi
+// - the default for dialup.ifacestowatch is now 'ppp0:sl0'.
+// - #ifdef'ed dialup.ifacestowatch (only Linux at the moment)
+// - modified a bit the help text in confopt.cpp
+//
 // Revision 1.10  1999/02/06 09:08:08  remi
 // Enhanced the lurk fonctionnality on Linux. Now it use a list of interfaces
 // to watch for online/offline status. If this list is empty (the default), any
@@ -59,12 +64,14 @@ char *GetEntryList(long *finalcount);
   // Gets the list of possible dial-up networking connections for the
   // user to select. - called in cliconfig
 
+#if (CLIENT_OS == OS_LINUX) 
 char ifacestowatch[100];
   // Used by Linux as a list of interfaces to watch for detecting online status
   // accept a ':' separated list of interface names, for example :
   // "ppp0:eth0:eth1"
   // "\0" means any interface (besides the loopback one)
-
+#endif
+ 
 int CheckIfConnectRequested(void); // -> 0=no, !0=yes
 int CheckForStatusChange(void);    // -> 0 = nochange, !0 connection dropped
 int DialIfNeeded(int ignore_lurkonly_flag); // -> 0=success, !0 = failure

@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.cpp,v $
+// Revision 1.19  1999/02/06 10:42:55  remi
+// - the default for dialup.ifacestowatch is now 'ppp0:sl0'.
+// - #ifdef'ed dialup.ifacestowatch (only Linux at the moment)
+// - modified a bit the help text in confopt.cpp
+//
 // Revision 1.18  1999/02/06 09:08:08  remi
 // Enhanced the lurk fonctionnality on Linux. Now it use a list of interfaces
 // to watch for online/offline status. If this list is empty (the default), any
@@ -57,7 +62,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.18 1999/02/06 09:08:08 remi Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.19 1999/02/06 10:42:55 remi Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -449,18 +454,18 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "        on random blocks until a connection is detected.\n"
   ),CONF_MENU_NET,CONF_TYPE_INT,10,NULL,CFGTXT(&lurkmodetable[0]),0,2},
 //40
-{ "interfaces-to-watch", CFGTXT("Interfaces to watch"),"",
+{ "interfaces-to-watch", CFGTXT("Interfaces to watch"),"ppp0:sl0",
   CFGTXT(
-  "Colon-separated list of interfaces. If one of the interfaces listed\n"
+  "Colon-separated list of interfaces. If one of the interfaces listed here\n"
   "goes up, the client will know it can fetch and flush blocks.\n"
   "\n"
-  "1) if you are on a private LAN and you access the Internet through only\n"
-  "a modem, put (without the quotes) 'ppp0' for a PPP connection, 'sl0' for a\n"
-  "SLIP connection, or both in this list.\n"
+  "1) If you access the Internet only through a modem, put in this list\n"
+  "'ppp0' for a PPP connection, 'sl0' for a SLIP connection, or 'ppp0:sl0'\n"
+  "for both.\n"
   "\n"
   "2) if you have an intermittent ethernet connection through which you can\n"
   "access the Internet, put the corresponding interface name in this list,\n"
-  "typically 'eth0' (without the quotes).\n"
+  "typically 'eth0'.\n"
   "\n"
   "3) if you don't put anything here, the client will know it can fetch or\n"
   "flush blocks through any 'up' interface. This is OK for home users without\n"

@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.40  1999/02/06 10:42:55  remi
+// - the default for dialup.ifacestowatch is now 'ppp0:sl0'.
+// - #ifdef'ed dialup.ifacestowatch (only Linux at the moment)
+// - modified a bit the help text in confopt.cpp
+//
 // Revision 1.39  1999/02/06 09:08:08  remi
 // Enhanced the lurk fonctionnality on Linux. Now it use a list of interfaces
 // to watch for online/offline status. If this list is empty (the default), any
@@ -167,7 +172,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.39 1999/02/06 09:08:08 remi Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.40 1999/02/06 10:42:55 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -449,7 +454,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
       WritePrivateProfileStringB( netsect, "enable-start-stop", (dialup.dialwhenneeded)?("yes"):("no"), fn );
     __XSetProfileStr( netsect, "dialup-start-cmd", dialup.connectionname, fn, NULL );
     __XSetProfileStr( netsect, "dialup-stop-cmd", dialup.stopconnection, fn, NULL );
-    __XSetProfileStr( netsect, "interfaces-to-watch", dialup.ifacestowatch, fn, NULL );
+    __XSetProfileStr( netsect, "interfaces-to-watch", dialup.ifacestowatch, fn, "ppp0:sl0" );
     #elif (CLIENT_OS==OS_WIN32)
     __XSetProfileInt( sect, "dialwhenneeded", dialup.dialwhenneeded, fn, 0, 1 );
     __XSetProfileStr( sect, "connectionname", dialup.connectionname, fn, NULL );
