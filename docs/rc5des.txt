@@ -197,12 +197,13 @@
 
      Firewall software Known to work with the distributed.net client.
 
-     Wingate 2.x              Win32       HTTP proxy, Direct port mapping
+     Wingate 2.x              Win32       HTTP proxy, Direct port mapping,
+                                          SOCKS 4 & 5
                                           http://www.wingate.com
      Internet Gate            OS/2        Direct port mapping
      Microsoft Proxy Server   WinNT       HTTP proxy 
-     Novell BorderManager     NetWare     HHTP proxy
-     Squid                    Unix        HHTP proxy
+     Novell BorderManager     NetWare     HTTP proxy
+     Squid                    Unix        HTTP proxy
                                           http://squid.nlanr.net
      AltaVista 97 proxy       Unix/Win32  HTTP proxy
      Gauntlet Firewall        ?           HTTP proxy
