@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.259 2001/09/15 18:35:51 friedbait Exp $
+# @(#)$Id: configure,v 1.222.2.260 2001/11/06 22:39:26 mfeiri Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -385,7 +385,9 @@ add_sources() # $1=os, $2=arch, $3=custom
 	     rc5/ppc/rc5_unit_func_lintilla_604e.cpp \
 	     rc5/ppc/rc5_unit_func_allitnil.cpp"
     RC5ALTIVEC_SRCS="rc5/ppc/crunch_vec.ppcosx.s \
-		   rc5/ppc/rc5_unit_func_vec.cpp"
+        rc5/ppc/crunch_vec_7450.ppcosx.s \
+		 rc5/ppc/rc5_unit_func_vec.cpp \
+		 rc5/ppc/rc5_unit_func_vec_7450.cpp"
        
     if [ "$2" = "power" ]; then
       TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
