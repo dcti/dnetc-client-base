@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.167 2000/06/30 20:11:48 jlawson Exp $
+# @(#)$Id: configure,v 1.222.2.168 2000/07/01 10:43:44 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1689,7 +1689,7 @@ case "$1" in
     *riscos)
 	TARGET_CC="armcpp -aif -nodebug -littleend -apcs 3/26bit/swst/hardfp/fpe2 -zps1 -nounusedareas -l/home/cberry/play/riscoslib/CLib/stubs.o"
 	TARGET_AS="armasm -apcs 3/26bit"
-	TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -Iogr -Iplatforms -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -J/home/cberry/play/riscoslib/CLib -D__showids__ -DCOMPAT_INET4 -D__riscos -DBIT_32 -DHAVE_OGR_CORES -DUNSAFEHEADERS"
+	TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -Iogr -Iplatforms -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -J/home/cberry/play/riscoslib/CLib -D__showids__ -DCOMPAT_INET4 -D__riscos -DBIT_32 -DHAVE_OGR_CORES"
 	TARGET_ADDSRCS="platforms/riscos/riscos_sup.cpp platforms/riscos/riscos_x86.cpp $OGR_ANSI_SRCS"
 	TARGET_ADDASMS="platforms/riscos/riscos_asm.s rc5/arm/rc5-arm-1.s rc5/arm/rc5-arm-2.s rc5/arm/rc5-arm-3.s des/arm/des-slice-arm.s des/arm/des-slice-sa.s"
 	TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"

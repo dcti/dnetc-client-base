@@ -5,22 +5,13 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.38 2000/06/30 19:39:26 jlawson Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.39 2000/07/01 10:43:45 cyp Exp $"
 
 #include "cputypes.h"
 
-// ------------------
-
-#ifdef UNSAFEHEADERS
-  // Some environments include old system headers that are not safe for
-  // direct inclusion within C++ programs and need to be explicitly
-  // wrapped with extern.  However, this should not be unconditionally
-  // done for all platforms, since some platform headers intentionally
-  // try to prototype C++ versions of functions
-  extern "C" {
+#if (CLIENT_OS == OS_RISCOS)
+ extern "C" { /* headers are unsafe for c++ */
 #endif
-
-// ------------------
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,12 +24,15 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <limits.h>
-#include <assert.h>
 #if defined(__unix__)
   #include <sys/utsname.h> /* uname() */
 #endif
 
-// ------------------
+#if (CLIENT_OS == OS_RISCOS)
+} /* End the extern needed to handle unsafe standard headers. */
+#endif
+
+/* ------------------------------------------------------------------ */
 
 #if (CLIENT_OS == OS_IRIX)
   #include <unistd.h>
@@ -84,6 +78,7 @@
   #include <sys/unistd.h>
   #include <fcntl.h>
 #elif (CLIENT_OS == OS_RISCOS)
+  extern "C" {
   #include <sys/fcntl.h>
   #include <unistd.h>
   #include <stdarg.h>
@@ -105,6 +100,7 @@
   #define fileno(f) ((f)->__file)
   #define isatty(f) ((f) == 0)
   #define tzset() /* nothing */
+  } /* extern "C" */
   extern s32 guiriscos, guirestart;
   extern int riscos_in_taskwindow;
 #elif (CLIENT_OS == OS_VMS)
@@ -292,13 +288,5 @@
   extern "C" int sleep(unsigned int seconds);
   extern "C" int usleep(unsigned int useconds);
 #endif
-
-// ------------------
-
-#ifdef UNSAFEHEADERS
-} // End the extern needed to handle unsafe system headers.
-#endif
-
-// ------------------
 
 #endif /* __BASEINCS_H__ */
