@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.10 2003/09/02 00:48:54 mweiser Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.11 2003/09/07 18:18:19 kakace Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -81,7 +81,7 @@ static struct
   int pause_if_no_mains_power;
   struct
   {
-    unsigned int lothresh, hithresh; /* in Kelvin */
+    u32 lothresh, hithresh; /* in Kelvin */
     int marking_high; /* we were >= high, waiting for < lowthresh */
   } cputemp;
 } trigstatics;
@@ -633,30 +633,36 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 // -----------------------------------------------------------------------
 
 #if (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY)
-extern "C" int macosx_cputemp();
+extern "C" s32 macosx_cputemp();
 #elif (CLIENT_OS == OS_DEC_UNIX)
 extern "C" int dunix_cputemp();
 #endif
 
 static int __CPUTemperaturePoll(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 {
-  int lowthresh = (int)trigstatics.cputemp.lothresh;
-  int highthresh = (int)trigstatics.cputemp.hithresh;
-  if (highthresh > lowthresh) /* otherwise values are invalid */
+  s32 lowthresh = (s32)trigstatics.cputemp.lothresh;
+  s32 highthresh = (s32)trigstatics.cputemp.hithresh;
+  if (lowthresh > 0 && highthresh >= lowthresh) /* otherwise values are invalid */
   {
     /* read the cpu temp in Kelvin. For multiple cpus, gets one
        with highest temp. On error, returns < 0.
        Note that cputemp is in Kelvin, if your OS returns a value in
        Farenheit or Celsius, see _init_cputemp for conversion functions.
+       The temperature is encoded in fixed-point format to allow two
+       digits after the decimal point.
     */
-    int cputemp = -1;
+    s32 cputemp = -1;
     #if (CLIENT_OS == OS_MACOS)
       cputemp = macosCPUTemp();
-      #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+      cputemp = cputemp * 100 + 15;     // Convert to fixed-point format
+    #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
       cputemp = macosx_cputemp();
     #elif (CLIENT_OS == OS_DEC_UNIX)
       if ((cputemp = dunix_cputemp()) < 0) {
         trigstatics.cputemp.hithresh=0; // disable checking on failure
+      }
+      else {
+        cputemp = cputemp * 100 + 15;   // Convert to fixed-point format
       }
     #elif 0 /* other client_os */
       cputemp = fooyaddablahblahbar();
@@ -952,18 +958,19 @@ int CheckPauseRequestTrigger(void)
       if ((trigstatics.pausetrig.trigger & TRIGPAUSEBY_CPUTEMP)!=0 &&
           (trigstatics.pausetrig.laststate & TRIGPAUSEBY_CPUTEMP)==0)
       {
-        Log("Pause%sd... (CPU temperature exceeds %uK)\n",
+        Log("Pause%sd... (CPU temperature exceeds %u.%02uK)\n",
              ((trigstatics.pausetrig.laststate)?(" level raise"):("")),
-               trigstatics.cputemp.hithresh );
+               trigstatics.cputemp.hithresh / 100, trigstatics.cputemp.hithresh % 100);
         trigstatics.pausetrig.laststate |= TRIGPAUSEBY_CPUTEMP;
       }
       else if ((trigstatics.pausetrig.trigger & TRIGPAUSEBY_CPUTEMP)==0 &&
           (trigstatics.pausetrig.laststate & TRIGPAUSEBY_CPUTEMP)!=0)
       {
         trigstatics.pausetrig.laststate &= ~TRIGPAUSEBY_CPUTEMP;
-        Log("%s... (CPU temperature below %uK)\n",
-          ((trigstatics.pausetrig.laststate)?("Pause level lowered"):
-          ("Running again after pause")), trigstatics.cputemp.lothresh );
+        Log("%s... (CPU temperature below %u.%02uK)\n",
+            ((trigstatics.pausetrig.laststate)?("Pause level lowered"):
+            ("Running again after pause")), trigstatics.cputemp.lothresh / 100, 
+            trigstatics.cputemp.lothresh % 100);
       }
     }
   }
@@ -1249,7 +1256,7 @@ static const char *_init_trigfile(const char *fn, char *buffer, unsigned int buf
 
 static void _init_cputemp( const char *p ) /* cpu temperature string */
 {
-  int K[2];
+  s32 K[2];
   int which;
 
   trigstatics.cputemp.hithresh = trigstatics.cputemp.lothresh = 0;
@@ -1258,7 +1265,8 @@ static void _init_cputemp( const char *p ) /* cpu temperature string */
   K[0] = K[1] = -1;
   for (which=0;which<2;which++)
   {
-    int val = 0, len = 0, neg = 0;
+    s32 val = 0;
+    int len = 0, frac = 0, neg = 0;
     while (*p && isspace(*p))
       p++;
     if (!*p)
@@ -1274,30 +1282,51 @@ static void _init_cputemp( const char *p ) /* cpu temperature string */
     }
     if (len == 0) /* bad number */
       return;
-    if (*p == '.') /* hmm, decimal pt */
+    
+    if (*p == '.') /* hmm, decimal pt. Allow for two digits after the decimal point */
     {
       p++;
       if (!isdigit(*p))
         return;
-      if (*p >= '5')
+
+      while (frac < 2) 
+      {
+        val = val*10;
+        if (isdigit(*p)) 
+        {
+          val += (*p - '0');
+          p++;
+        }
+        frac++;
+      }
+      if (isdigit(*p) && *p >= '5') 
+      {
         val++;
+        p++;
+      }
       while (isdigit(*p))
         p++;
     }
+    else 
+    {
+      val = val*100;
+    }
+    
     if (neg)
       val = -val;
     while (*p && isspace(*p))
       p++;
+
     if (*p=='F' || *p=='f' || *p=='R' || *p=='r') /* farenheit or rankine */
     {
       if (*p == 'R' || *p == 'r') /* convert rankine to farenheit first */
-        val -= 459; /* 459.67 */
-      val = (((val - 32) * 5)/9) + 273/*.15*/;  /* F -> K */
+        val -= 45967; /* 459.67 */
+      val = (((val - 3200) * 5)/9) + 27315 /*273.15*/;  /* F -> K */
       p++;
     }
     else if (*p == 'C' || *p == 'c') /* celcius/centigrade */
     {
-      val += 273/*.15*/; /* C -> K */
+      val += 27315 /*273.15*/; /* C -> K */
       p++;
     }
     else if (*p == 'K' || *p == 'k') /* Kelvin */
@@ -1317,10 +1346,10 @@ static void _init_cputemp( const char *p ) /* cpu temperature string */
   {
     if (K[1] < 0) /* only single temp provided */
     {
-      K[1] = K[0]; /* then make that the high water mark */
+      K[1] = K[0];       /* then make that the high water mark */
       K[0] -= (K[0]/10); /* low water mark is 90% of high water mark */
     }
-    TRACE_OUT((0,"cputemp: %dK:%dK\n", K[0], K[1]));
+    TRACE_OUT((0,"cputemp: %d.%02dK:%d.%02dK\n", K[0]/100, K[0]%100, K[1]/100, K[1]%100));
 
     trigstatics.cputemp.lothresh = K[0];
     trigstatics.cputemp.hithresh = K[1];
