@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.58 1999/11/28 13:47:34 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.59 1999/11/28 15:23:52 remi Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1649,7 +1649,7 @@ echo "" >> Makefile
 echo "reconfigure: dep" >> Makefile
 echo "" >> Makefile
 echo "clean:" >> Makefile
-echo "	rm -f \${ALLOBJS}  ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
+echo "	rm -f \${ALLOBJS}  ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} ${TARGET_BINNAME}.1" >> Makefile
 echo "" >> Makefile
 
 fi
