@@ -6,6 +6,12 @@ Bugs Listing
   This is a text file that lists any bugs that have been found by either
   the coders, or by users.
 
+06-08-98 - Kevin Bracey
+  New Bug: Run the client offline, with contestdone2 set to 1, and
+           nothing in the input buffer. Instead of generating a random
+           block it starts processing a garbage block (often 400%
+           complete!). Doesn't happen if contestdone2=0.
+
 06-03-98 - Jeff Lawson
   New Suggestion: A/C power checking on the Win32 clients.  Some users
   run their client on their battery powered laptops and would like the
