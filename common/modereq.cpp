@@ -11,7 +11,7 @@
  * ---------------------------------------------------------------
 */    
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.28.2.10 2000/11/12 22:57:59 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.28.2.11 2001/02/17 20:31:42 sampo Exp $"; }
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
@@ -181,7 +181,10 @@ int ModeReqRun(Client *client)
              || (sel_contests & (1L<<contest)) != 0)
             {
               if ((bits & (MODEREQ_BENCHMARK_ALLCORE))!=0)
-                selcoreBenchmark( contest, benchsecs );
+                if(client->corenumtotestbench < 0)
+                  selcoreBenchmark( contest, benchsecs, -1 );
+                else
+                  selcoreBenchmark( contest, benchsecs, client->corenumtotestbench);
               else
                 TBenchmark( contest, benchsecs, 0 );
             }
@@ -284,10 +287,18 @@ int ModeReqRun(Client *client)
             {
               if ((bits & (MODEREQ_TEST_ALLCORE))!=0)
               {
-                if (selcoreSelfTest( contest ) < 0)
-                  testfailed = 1;
+                if (client->corenumtotestbench < 0)
+                {
+                  if (selcoreSelfTest( contest, -1 ) < 0)
+                    testfailed = 1;
+                }
+                else
+                {
+                  if (selcoreSelfTest( contest, client->corenumtotestbench ) < 0)
+                    testfailed = 1;
+                }
               }
-              else if ( SelfTest( contest ) < 0 ) 
+              else if ( SelfTest( contest ) < 0 )
                  testfailed = 1;
             }
           }

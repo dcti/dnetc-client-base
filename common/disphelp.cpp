@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.16 2001/01/22 20:01:44 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.17 2001/02/17 20:31:42 sampo Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -35,8 +35,10 @@ static const char *helpbody[] =
   "-update            fetch + flush",
   "-benchmark [pn]    16-20 sec speed check [optional: only project pn]",
   "-benchmark2 [pn]   half (8-10 sec) and slightly inaccurate -benchmark",
-  "-bench [pn]        -benchmark all cores [optional: only project pn]",
-  "-test [pn]         tests for core errors [optional: only project pn]",
+  "-bench [pn] [cn]   -benchmark all cores [optional: only project pn]",
+  "                   [optional: only core cn, must be used with pn]",
+  "-test [pn] [cn]    tests for core errors [optional: only project pn]",
+  "                   [optional: only core cn, must be used with pn]",
   "-restart           restart all active clients",
   "-shutdown          gracefully shut down all active clients",
   "-pause             pause all active clients",

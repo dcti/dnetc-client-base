@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.98 2001/02/14 19:58:43 sampo Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.99 2001/02/17 20:31:42 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -485,7 +485,7 @@ void sig_invop( int nothing ) {
 #endif
 
 static long __bench_or_test( int which, 
-                            unsigned int cont_i, unsigned int benchsecs )
+                            unsigned int cont_i, unsigned int benchsecs, int in_corenum )
 {
   long rc = -1;
   #if (CLIENT_OS == OS_AIX)            /* need a signal handler to be able */
@@ -509,7 +509,21 @@ static long __bench_or_test( int which,
       /* only bench/test cores that won't be automatically substituted */
       if (__apply_selcore_substitution_rules(cont_i, coreidx) == coreidx)
       {
-        selcorestatics.user_cputype[cont_i] = coreidx; /* as if user set it */
+        if (in_corenum < 0)
+            selcorestatics.user_cputype[cont_i] = coreidx; /* as if user set it */
+        else
+        {
+          if( in_corenum < corecount )
+          {
+            selcorestatics.user_cputype[cont_i] = in_corenum;
+            coreidx = corecount;
+          }
+          else  /* invalid core selection, test them all */
+          {
+            selcorestatics.user_cputype[cont_i] = coreidx;
+            in_corenum = -1;
+          }
+        }   
         selcorestatics.corenum[cont_i] = -1; /* reset to show name */
 
         #if (CLIENT_OS == OS_AIX)
@@ -559,14 +573,14 @@ static long __bench_or_test( int which,
   return rc;
 }
 
-long selcoreBenchmark( unsigned int cont_i, unsigned int secs )
+long selcoreBenchmark( unsigned int cont_i, unsigned int secs, int corenum )
 {
-  return __bench_or_test( 'b', cont_i, secs );
+  return __bench_or_test( 'b', cont_i, secs, corenum );
 }
 
-long selcoreSelfTest( unsigned int cont_i )
+long selcoreSelfTest( unsigned int cont_i, int corenum)
 {
-  return __bench_or_test( 's', cont_i, 0 );
+  return __bench_or_test( 's', cont_i, 0, corenum );
 }
 
 /* ---------------------------------------------------------------------- */

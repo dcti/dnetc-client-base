@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.21 2000/11/12 22:54:43 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.22 2001/02/17 20:31:40 sampo Exp $"
 
 #include "problem.h" /* WorkRecord, CONTEST_COUNT */
 #include "lurk.h"    /* lurk_conf structure */
@@ -55,6 +55,7 @@ typedef struct
   int  blockcount;
   int  minutes;
   int  crunchmeter;
+  int  corenumtotestbench;
 
   /* -- buffers -- */
   int  nodiskbuffers;

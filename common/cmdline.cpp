@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.71 2001/02/05 18:39:41 ephraim Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.72 2001/02/17 20:31:41 sampo Exp $"; }
 
 //#define TRACE
 
@@ -80,7 +80,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
   int got_ini_switch = 0;
   int havemode = 0;
   int pos, skip_next;
-  const char *thisarg, *argvalue;
+  const char *thisarg, *argvalue, *argvalue2;
 
   TRACE_OUT((+1,"ParseCommandline(%d), misc_call=%d\n",run_level,misc_call));
 
@@ -815,6 +815,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
       if (thisarg && *thisarg=='-' && thisarg[1]=='-')
         thisarg++;
       argvalue = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
+      argvalue2 = ((pos < (argc-2))?(argv[pos+2]):((char *)NULL));
 
       if ( thisarg == NULL )
         ; //nothing
@@ -1649,6 +1650,12 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         {
           if (__arg2cname(argvalue,CONTEST_COUNT) < CONTEST_COUNT)
             skip_next = 1;
+          
+          if (argvalue2)
+          {
+            client->corenumtotestbench = atoi(argvalue2);
+            skip_next = 2;
+          }
         }
       }
       else if (( strcmp( thisarg, "-forceunlock" ) == 0 ) ||

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.100 2001/02/05 18:39:39 ephraim Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.101 2001/02/17 20:31:40 sampo Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -48,6 +48,7 @@ void ResetClientData(Client *client)
   client->crunchmeter=-1;
   projectmap_build(client->loadorder_map,"");
   client->numcpu = -1;
+  client->corenumtotestbench = -1;
   for (contest=0; contest<CONTEST_COUNT; contest++)
     client->coretypes[contest] = -1;
 }
