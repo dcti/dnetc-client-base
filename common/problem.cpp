@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.63  1999/01/08 02:59:29  michmarc
+// Added support for Alpha/NT architecture.
+//
 // Revision 1.62  1999/01/06 09:54:29  chrisb
 // fixes to the RISC OS timeslice stuff for DES - now runs about 2.5 times as fast
 //
@@ -175,7 +178,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.62 1999/01/06 09:54:29 chrisb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.63 1999/01/08 02:59:29 michmarc Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -271,9 +274,17 @@ extern void CliSignalHandler(int);
   #endif
   #error Please verify these core prototypes
 #elif (CLIENT_CPU == CPU_ALPHA)
-  extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
-  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
-  #error Please verify these core prototypes
+  #if (CLIENT_OS == OS_WIN32)
+     extern "C" u32 rc5_unit_func ( RC5UnitWork *rc5unitwork, u32 timeslice);
+     extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+     #if (PIPELINE_COUNT != 2)
+     #error "Expecting PIPELINE_COUNT=2"
+     #endif
+  #else
+     extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
+     extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+     #error Please verify these core prototypes
+  #endif
 #else
   extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
   extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
@@ -1138,6 +1149,58 @@ printf("DES: kiter is %d\n",kiter);
                (long) kiter, (long)(timeslice*pipeline_count));
       }
     }
+#elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
+  if (contest == 0) {
+    u32 result = rc5_unit_func( &rc5unitwork, timeslice);
+    if ( result )
+    {
+      // found it?
+      rc5result.key.hi = contestwork.key.hi;
+      rc5result.key.lo = contestwork.key.lo;
+      rc5result.keysdone.hi = contestwork.keysdone.hi;
+      rc5result.keysdone.lo = contestwork.keysdone.lo + timeslice*pipeline_count - result;
+      rc5result.iterations.hi = contestwork.iterations.hi;
+      rc5result.iterations.lo = contestwork.iterations.lo;
+      rc5result.result = RESULT_FOUND;
+      finished = 1;
+      return( 1 );
+    }
+
+    contestwork.keysdone.lo += timeslice*pipeline_count;
+    if (contestwork.keysdone.lo < timeslice*pipeline_count)
+       contestwork.keysdone.hi++;
+  }
+  else  /* DES portion taken from the ANSI routines below */
+  {
+    unsigned long kiter = 0;
+
+    timeslice *= 1;
+    u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
+
+    if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
+    else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
+    timeslice = (1ul << nbits);
+    kiter = des_unit_func ( &rc5unitwork, nbits );
+    contestwork.keysdone.lo += kiter;
+    if (kiter < timeslice )
+    {
+      // found it?
+      rc5result.key.hi = contestwork.key.hi;
+      rc5result.key.lo = contestwork.key.lo;
+      rc5result.keysdone.hi = contestwork.keysdone.hi;
+      rc5result.keysdone.lo = contestwork.keysdone.lo;
+      rc5result.iterations.hi = contestwork.iterations.hi;
+      rc5result.iterations.lo = contestwork.iterations.lo;
+      rc5result.result = RESULT_FOUND;
+      finished = 1;
+      return( 1 );
+    }
+    else if (kiter != (timeslice))
+    {
+        LogScreen("kiter wrong %ld %ld\n",
+               (long) kiter, (long)(timeslice));
+    }
+  }
 #else
   unsigned long kiter = 0;
   if (contest == 0) 
