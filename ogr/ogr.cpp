@@ -252,7 +252,7 @@ static void dump(int depth, struct Level *lev, int limit)
   printf("dist=%08lx%08lx%08lx%08lx%08lx\n", lev->dist[0], lev->dist[1], lev->dist[2], lev->dist[3], lev->dist[4]);
   printf("comp=%08lx%08lx%08lx%08lx%08lx\n", lev->comp[0], lev->comp[1], lev->comp[2], lev->comp[3], lev->comp[4]);
   printf("cnt1=%d cnt2=%d limit=%d\n", lev->cnt1, lev->cnt2, limit);
-  sleep(1);
+  //sleep(1);
 }
 
 static int ogr_create(void *input, int inputlen, void **state)
