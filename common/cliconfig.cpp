@@ -1248,7 +1248,14 @@ void Client::ValidateConfig( void )
   if (isstringblank(ini_checkpoint_file[1])) strcpy(ini_checkpoint_file[1],"none");
   if (isstringblank(ini_logname)) strcpy (ini_logname,"none");
 
-  // now, add in path to current directory if path isn't specified
+
+#if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS)
+  // now, add path of exe to filenames if path isn't specified
+
+  if (strrchr(ini_exit_flag_file, PATH_SEP_C) == NULL)
+    strcpy(exit_flag_file,InternalGetLocalFilename(ini_exit_flag_file));
+  else 
+    strcpy(exit_flag_file,ini_exit_flag_file);
 
   if (strrchr(ini_in_buffer_file[0], PATH_SEP_C) == NULL)
     strcpy(in_buffer_file[0],InternalGetLocalFilename(ini_in_buffer_file[0]));
@@ -1294,6 +1301,130 @@ void Client::ValidateConfig( void )
     else
       strcpy(logname,ini_logname);
 
+  // generate the paths of the other files based on the ini filename
+#else
+  char buffer[200];
+  strcpy( buffer,client.inifilename );
+  char *slash = strrchr(buffer, PATH_SEP_C);
+  if (slash == NULL)
+    {
+    buffer[0]=0; // Blank the string, we have no path info
+    }
+  else *(slash+1) = 0; // we have to add path info in!
+     
+    if (strrchr(ini_exit_flag_file,PATH_SEP_C) == NULL)
+      {
+      // no path already here, add it
+      strcpy(exit_flag_file,buffer);
+      strcat(exit_flag_file,ini_exit_flag_file);
+      }
+    else
+      {
+      // path here, DON'T TOUCH IT!
+      strcpy(exit_flag_file,ini_exit_flag_file);
+      };
+
+    if (strrchr(ini_in_buffer_file[0],PATH_SEP_C) == NULL)
+      {
+      // no path already here, add it
+      strcpy(in_buffer_file[0],buffer);
+      strcat(in_buffer_file[0],ini_in_buffer_file[0]);
+      }
+    else
+      {
+      // path here, DON'T TOUCH IT!
+      strcpy(in_buffer_file[0],ini_in_buffer_file[0]);
+      };
+
+    if (strrchr(ini_out_buffer_file[0],PATH_SEP_C) == NULL)
+      {
+      // no path already here, add it
+      strcpy(out_buffer_file[0],buffer);
+      strcat(out_buffer_file[0],ini_out_buffer_file[0]);
+      }
+    else
+      {
+      // path here, DON'T TOUCH IT!
+      strcpy(out_buffer_file[0],ini_out_buffer_file[0]);
+      };
+
+    if (strrchr(ini_in_buffer_file[1],PATH_SEP_C) == NULL)
+      {
+      // no path already here, add it
+      strcpy(in_buffer_file[1],buffer);
+      strcat(in_buffer_file[1],ini_in_buffer_file[1]);
+      }
+    else
+      {
+      // path here, DON'T TOUCH IT!
+      strcpy(in_buffer_file[1],ini_in_buffer_file[1]);
+      };
+
+    if (strrchr(ini_out_buffer_file[1],PATH_SEP_C) == NULL)
+      {
+      // no path already here, add it
+      strcpy(out_buffer_file[1],buffer);
+      strcat(out_buffer_file[1],ini_out_buffer_file[1]);
+      }
+    else
+      {
+      // path here, DON'T TOUCH IT!
+      strcpy(out_buffer_file[1],ini_out_buffer_file[1]);
+      };
+
+  if (strcmpi(ini_pausefile,"none") != 0)
+    if (strrchr(ini_pausefile,PATH_SEP_C) == NULL)
+      {
+      // no path already here, add it
+      strcpy(pausefile,buffer);
+      strcat(pausefile,ini_pausefile);
+      }
+    else
+      {
+      // path here, DON'T TOUCH IT!
+      strcpy(pausefile,ini_pausefile);
+      };
+
+  if (strcmpi(ini_checkpoint_file[0],"none") != 0)
+    if (strrchr(ini_checkpoint_file[0],PATH_SEP_C) == NULL)
+      {
+      // no path already here, add it
+      strcpy(checkpoint_file[0],buffer);
+      strcat(checkpoint_file[0],ini_checkpoint_file[0]);
+      }
+    else
+      {
+      // path here, DON'T TOUCH IT!
+      strcpy(checkpoint_file[0],ini_checkpoint_file[0]);
+      };
+
+  if (strcmpi(ini_checkpoint_file[1],"none") != 0)
+    if (strrchr(ini_checkpoint_file[1],PATH_SEP_C) == NULL)
+      {
+      // no path already here, add it
+      strcpy(checkpoint_file[1],buffer);
+      strcat(checkpoint_file[1],ini_checkpoint_file[1]);
+      }
+    else
+      {
+      // path here, DON'T TOUCH IT!
+      strcpy(checkpoint_file[1],ini_checkpoint_file[1]);
+      };
+
+  if (strcmpi(ini_logname,"none") != 0)
+    if (strrchr(ini_logname,PATH_SEP_C) == NULL)
+      {
+      // no path already here, add it
+      strcpy(logname,buffer);
+      strcat(logname,ini_logname);
+      }
+    else
+      {
+      // path here, DON'T TOUCH IT!
+      strcpy(logname,ini_logname);
+      };
+
+#endif
 
 
   CheckForcedKeyport();
@@ -1953,6 +2084,10 @@ s32 Client::RunStartup(void)
 
 s32 Client::SelectCore(void)
 {
+static int coreselectalreadydone=0;
+
+if (coreselectalreadydone) return 0;
+
 #if ((CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU != CPU_POWERPC))
   if (!(SysBase->AttnFlags & AFF_68020))
   {
@@ -2087,33 +2222,17 @@ s32 Client::SelectCore(void)
     }
   }
 
+LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
+
   // select the correct core engine
   switch(fastcore)
   {
-    case 1:
-      LogScreen("Selecting Intel 80386, Intel 80486 code\n");
-      rc5_unit_func = rc5_unit_func_486;
-      break;
-    case 2:
-      LogScreen("Selecting Intel Pentium Pro, Intel Pentium II code\n");
-      rc5_unit_func = rc5_unit_func_p6;
-      break;
-    case 3:
-      LogScreen("Selecting AMD 486, Cyrix 6x86/6x86MX/M2 code\n");
-      rc5_unit_func = rc5_unit_func_6x86;
-      break;
-    case 4:
-      LogScreen("Selecting AMD K5 optimized code\n");
-      rc5_unit_func = rc5_unit_func_k5;
-      break;
-    case 5:
-      LogScreen("Selecting AMD K6 optimized code\n");
-      rc5_unit_func = rc5_unit_func_k6;
-      break;
-    default:
-      LogScreen("Selecting Intel Pentium, Intel Pentium MMX, Cyrix 5x86 code\n");
-      rc5_unit_func = rc5_unit_func_p5;
-      break;
+    case 1:rc5_unit_func = rc5_unit_func_486;break;
+    case 2:rc5_unit_func = rc5_unit_func_p6;break;
+    case 3:rc5_unit_func = rc5_unit_func_6x86;break;
+    case 4:rc5_unit_func = rc5_unit_func_k5;break;
+    case 5:rc5_unit_func = rc5_unit_func_k6;break;
+    default:rc5_unit_func = rc5_unit_func_p5;break;
   }
 #elif (CLIENT_CPU == CPU_ARM)
   int fastcore = cputype;
@@ -2177,6 +2296,7 @@ s32 Client::SelectCore(void)
   }
 
 #endif
+  coreselectalreadydone=1;
   return 0;
 }
 
@@ -3035,12 +3155,12 @@ int Client::x86id()
     else if (detectedvalue == 0x0580)
     {
       coretouse = 5;
-      LogScreen("Detected an AMD K6-3D\n");
+      LogScreen("Detected an AMD K6-2\n");
     }
     else if (detectedvalue == 0x0590)
     {
       coretouse = 5;
-      LogScreen("Detected an AMD K6-3D+\n");
+      LogScreen("Detected an AMD K6-3\n");
     }
     else
     {
