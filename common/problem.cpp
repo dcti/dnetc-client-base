@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.9 1999/10/07 18:39:00 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.10 1999/10/08 00:08:14 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -154,13 +154,13 @@ extern "C" void riscos_upcall_6(void);
 #endif
 
 /* ------------------------------------------------------------------- */
-
+extern "C" {
 // CSC cores
-extern s32 csc_unit_func_1k  ( RC5UnitWork *, u32 *timeslice, void *membuff );
-extern s32 csc_unit_func_1k_i( RC5UnitWork *, u32 *timeslice, void *membuff );
-extern s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *timeslice, void *membuff );
-extern s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *timeslice, void *membuff );
-
+s32 csc_unit_func_1k  ( RC5UnitWork *, u32 *timeslice, void *membuff );
+s32 csc_unit_func_1k_i( RC5UnitWork *, u32 *timeslice, void *membuff );
+s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *timeslice, void *membuff );
+s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *timeslice, void *membuff );
+}
 /* ------------------------------------------------------------------- */
 
 
