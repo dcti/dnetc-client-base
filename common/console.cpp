@@ -14,11 +14,9 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.9 1999/09/22 03:08:14 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.10 1999/10/05 16:43:15 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
-
-#define CLICONS_LONGNAME "distributed.net client " CLIENT_VERSIONSTRING ""
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -198,10 +196,13 @@ int ConOut(const char *msg)
 int ConOutModal(const char *msg)
 {
   #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-     MessageBox( NULL, msg, CLICONS_LONGNAME,  MB_OK | MB_ICONINFORMATION );
+    w32ConOutModal(msg);
   #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
     WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, msg,
-       CLICONS_LONGNAME, NULL, MB_OK | MB_INFORMATION | MB_MOVEABLE );
+       "distributed.net client " CLIENT_VERSIONSTRING "",
+       NULL, MB_OK | MB_INFORMATION | MB_MOVEABLE );
+  #elif (CLIENT_OS == OS_NETWARE)
+    ConsolePrintf( "%s\r\n", msg );
   #else
     fprintf( stderr, "%s\n", msg );
     fflush( stderr );
@@ -212,18 +213,18 @@ int ConOutModal(const char *msg)
 /* ---------------------------------------------------- */
 
 /*
-** ConOutErr() does what fprintf(stderr "\nAPPNAME: %s\n",msg) would do.
-** Can be blocking. Note the leading and trailing newlines.
+** ConOutErr() does what fprintf(stderr, "APPNAME: %s\n",msg) would do.
+** Can be blocking. Note the trailing newline.
 */
 
 int ConOutErr(const char *msg)
 {
   #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-    MessageBox( NULL, msg, CLICONS_LONGNAME,
-                 MB_OK | MB_TASKMODAL | MB_ICONSTOP /*MB_ICONERROR*/ );
+    w32ConOutErr(msg);
   #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
      WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, (PSZ)msg,
-           CLICONS_LONGNAME,  NULL, MB_OK | MB_APPLMODAL | MB_ERROR | MB_MOVEABLE );
+           "distributed.net client " CLIENT_VERSIONSTRING "",
+           NULL, MB_OK | MB_APPLMODAL | MB_ERROR | MB_MOVEABLE );
   #elif (CLIENT_OS == OS_NETWARE)
     ConsolePrintf( "%s: %s\r\n", utilGetAppName(), msg );
   #else
