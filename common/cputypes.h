@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.38 2000/11/10 03:13:34 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.39 2000/11/12 04:18:04 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -555,6 +555,8 @@
   #define false bool_type_is_not_portable
   #undef bool
   #define bool  bool_type_is_not_portable
+  #undef class
+  #define class the_client_is_class_free /* phew! */
 #endif
 
 /* ----------------------------------------------------------------- */
