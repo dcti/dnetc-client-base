@@ -9,7 +9,7 @@
 */
 
 #ifndef __CLIEVENT_H__
-#define __CLIEVENT_H__ "@(#)$Id: clievent.h,v 1.10.2.1 1999/12/16 03:02:36 cyp Exp $"
+#define __CLIEVENT_H__ "@(#)$Id: clievent.h,v 1.10.2.2 2000/10/31 03:04:22 cyp Exp $"
 
                                               /* parm is ... */
 #define CLIEVENT_CLIENT_STARTED        0x0001 /* ...client ptr */
@@ -34,7 +34,7 @@
 #define CLIEVENT_SELFTEST_FINISHED     0x0304 /* ...[+|-]successes */
 #define CLIEVENT_BENCHMARK_STARTED     0x0401 /* ...problem ptr */
 #define CLIEVENT_BENCHMARK_BENCHING    0x0402 /* ...problem ptr */
-#define CLIEVENT_BENCHMARK_FINISHED    0x0403 /* ...rate (double ptr) or NULL*/
+#define CLIEVENT_BENCHMARK_FINISHED    0x0403 /* ...problem ptr */
 
 /* 
   Structures defined for used as parameters
