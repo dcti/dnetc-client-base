@@ -5,6 +5,12 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.71  1998/07/10 03:50:33  cramer
+# Changed gcc back to egcs for x86-linux*-egcs.
+# gcc is gcc; egcs is egcs.  NEVER ASSUME THE TWO ARE THE SAME.
+# (Read that again.  GCC is not always EGCS.  If you want to build an
+#  egcs version, then it should actually use egcs -- or am I just nuts.)
+#
 # Revision 1.70  1998/07/09 18:40:08  remi
 # Reverted most to the previous changes. If you want to compile x86 linux
 # clients using GCC instead of EGCS, please use the *-gcc targets, not the
@@ -699,8 +705,8 @@ case "$1" in
 
 ###### Intel X86 Linux platforms
     *x86-linux-egcs)    # uses EGCS options
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc"
+	TARGET_AS="egcs -c"
+	TARGET_CC="egcs"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
@@ -726,8 +732,8 @@ case "$1" in
 	;;
 
     *x86-linux-egcs-debug)    # debug version of x86-linux-egcs
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc -g"
+	TARGET_AS="egcs -c"
+	TARGET_CC="egcs -g"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DPIPELINE_COUNT=2 -D__showids__"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
@@ -746,8 +752,8 @@ case "$1" in
 	;;
 
     *x86-linux-desultra-egcs-debug)    # to debug UltraSparc DES code integration
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc -g"
+	TARGET_AS="egcs -c"
+	TARGET_CC="egcs -g"
 	# -Wno-unused to avoid tons of warnings on some ultra files
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -Wno-unused -D__showids__ -DPIPELINE_COUNT=2 $OPTS_DES_ULTRA_C"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESULTRA_SRCS_C"
@@ -767,8 +773,8 @@ case "$1" in
 	;;
 
     *x86-linux-mt-egcs)
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc"
+	TARGET_AS="egcs -c"
+	TARGET_CC="egcs"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
