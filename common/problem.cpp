@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.117 2001/05/06 11:01:10 teichp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.118 2001/06/25 00:55:56 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -2271,6 +2271,8 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
                   info->c_permille = 0;
                 if (flags & P_INFO_S_PERMIL)
                   info->s_permille = 0;
+                /* do not do inexact permille calculation for OGR */
+                flags &= ~(P_INFO_C_PERMIL | P_INFO_S_PERMIL);
               }
             } /* OGR */      
             break;
