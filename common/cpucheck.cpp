@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.40  1998/11/04 22:35:42  dicamillo
+// additional updates to Mac CPU detection code
+//
 // Revision 1.39  1998/11/04 20:02:42  sampo
 // Fix for cpu detection on macs with a 601 processor upgraded to 750.
 //
@@ -141,7 +144,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.39 1998/11/04 20:02:42 sampo Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.40 1998/11/04 22:35:42 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -352,26 +355,76 @@ int GetProcessorType(int quietly)
 {
 	long result;
 	static int detectedtype = -1;
+	char cpu_description[6];
+
 	if(detectedtype == -1)
 	{
+		// Note: need to use gestaltNativeCPUtype in order to get the correct value
+		// for G3 upgrade cards in a 601 machine.
+		// The value for detectedtype is the Gestalt result - 0x101 (gestaltCPU601).
 		if(Gestalt(gestaltNativeCPUtype, &result) == noErr)
    		{
-			if(result == gestaltCPU601) // PowerPC 601 detected
-				detectedtype = 0;
-			else
-				detectedtype = 1; // Any other PowerPC chip, including a 601 with a G3
-								  // upgrade card, which returns the correct type but
-								  // wrong family.
-		}
-	if(!quietly)
-	{
-		if(detectedtype)
-    		LogScreen("Automatic processor detection found a PowerPC 603/604/750\n");
-    	else
-    		LogScreen("Automatic processor detection found a PowerPC 601\n");
+			switch(result) 
+			{
+				case gestaltCPU601:						// IBM 601
+							detectedtype = 0;
+							strcpy(cpu_description, "601");
+							break;
 
+				case gestaltCPU603:
+							detectedtype = 2;
+							strcpy(cpu_description, "603");
+							break;
+
+				case gestaltCPU604:
+							detectedtype = 3;
+							strcpy(cpu_description, "604");
+							break
+
+				case gestaltCPU603e:
+							detectedtype = 5;
+							strcpy(cpu_description, "603e");
+							break;
+
+				case gestaltCPU603ev:
+							detectedtype = 6;
+							strcpy(cpu_description, "603ev");
+							break
+
+				case gestaltCPU750:						// Also 740 - "G3"
+							detectedtype = 7;
+							strcpy(cpu_description, "750");
+							break
+
+				case gestaltCPU604e:
+							detectedtype = 8;
+							strcpy(cpu_description, "604e");
+							break
+
+				case gestaltCPU604ev:					// Mach 5, 250Mhz and up
+							detectedtype = 9;
+							strcpy(cpu_description, "604ev");
+							break
+
+				default:
+							detectedtype = 2;	// assume 603 if unknown
+							strcpy(cpu_description, "603");
+							break;			
+			}
+		}
+		else
+		{
+			detectedtype = 2;		// assume 603 if Gestalt fails
+			strcpy(cpu_description, "603");
+		}
+		
 	}
+
+	if (!quietly)
+	{
+    	LogScreen("Automatic processor detection found a PowerPC %s\n", cpu_description);
 	}
+
 	return (detectedtype);
 }
 #endif
@@ -380,27 +433,53 @@ int GetProcessorType(int quietly)
 {
 	long result;
 	static int detectedtype = -1;
+
 	if(detectedtype == -1)
 	{
-		if(Gestalt(gestaltNativeCPUtype, &result) == noErr)
+		// Note: gestaltProcessorType is used so that if the 68K client is run on
+		// on PPC machine for test purposes, it will get the type of the 68K emulator.
+		// Also, gestaltNativeCPUType is not present in early versions of System 7.
+		// (For more info, see Gestalt.h)
+		if(Gestalt(gestaltProcessorType, &result) == noErr)
    		{
-			if(result == 0) // Motorola 68000 detected
-				detectedtype = 0;
-			else if (result == 1)
-				detectedtype = 1; // Motorola 68010 detected
-			else if (result == 2)
-				detectedtype = 2; // Motorola 68020 detected
-			else if (result == 3)
-				detectedtype = 3; // Motorola 68030 detected
-			else if (result == 4)
-				detectedtype = 4; // Motorola 68040 detected
+			switch(result) 
+			{
+				case gestalt68000:
+							detectedtype = 0;
+							break;
+
+				case gestalt68010:
+							detectedtype = 1;
+							break;
+
+				case gestalt68020:
+							detectedtype = 2;
+							break
+
+				case gestalt68030:
+							detectedtype = 3;
+							break;
+
+				case gestalt68040:
+							detectedtype = 4;
+							break
+
+				default:
+							detectedtype = 0;	// assume 68000  (should never happen)
+							break;			
+			}
 		}
-	if(!quietly)
+		else
+		{
+			detectedtype = 0;		// if Gestalt fails, also assume 68000
+		}
+	}
+
+	if (!quietly)
 	{
-    int x68k = detectedtype;
-    LogScreen("Automatic processor detection found a Motorola 680%d0\n",x68k);
+    LogScreen("Automatic processor detection found a Motorola 680%d0\n", detectedtype);
 	}
-	}
+
 	return (detectedtype);
 }
 #endif
