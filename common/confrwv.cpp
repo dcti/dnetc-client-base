@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.28  1999/01/10 15:17:48  remi
+// Added "network.h" to the list of includes (needed for htonl() and ntohl())
+//
 // Revision 1.27  1999/01/09 00:52:12  silby
 // descontestclosed and scheduledupdate time back
 // to network byte order.
@@ -124,7 +127,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.27 1999/01/09 00:52:12 silby Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.28 1999/01/10 15:17:48 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -138,6 +141,7 @@ return "@(#)$Id: confrwv.cpp,v 1.27 1999/01/09 00:52:12 silby Exp $"; }
 #include "confopt.h"   // conf_option table
 #include "triggers.h"  // RaiseRestartRequestTrigger()
 #include "clicdata.h"  // CliClearContestData()
+#include "network.h"   // ntohl() / htonl()
 #include "confrwv.h"   // Outselves
 
 // --------------------------------------------------------------------------
