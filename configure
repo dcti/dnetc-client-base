@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.218 2001/01/04 14:16:00 oliver Exp $
+# @(#)$Id: configure,v 1.222.2.219 2001/01/06 14:05:57 friedbait Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1896,6 +1896,18 @@ case "$1" in
         TARGET_CC="gcc"
         generate_gcc_opts "s390" "linux"
         TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-s390"
+        add_sources "linux" "s390" 
+        ;;
+
+    *s390-linux-static)	        # [friedbait]  fb@baiti.net
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "s390" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
         TARGET_LIBS=""
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-s390"
