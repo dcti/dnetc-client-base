@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.34 2000/06/04 09:44:48 oliver Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.35 2000/06/13 00:41:28 mfeiri Exp $"
 
 #include "cputypes.h"
 
@@ -27,10 +27,8 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
-#if (CLIENT_OS != OS_MACOS)
 #include <sys/types.h>
 #include <sys/stat.h>
-#endif
 #include <errno.h>
 #include <limits.h>
 #include <assert.h>
@@ -219,14 +217,16 @@
   #if defined(__ELF__)
     #include <sched.h>
   #endif
-#elif (CLIENT_OS == OS_MACOS)  
-  #include <unix.h>
-  #include <Gestalt.h>
+#elif (CLIENT_OS == OS_MACOS)
   #include "client_defs.h"
-  struct timezone { int tz_minuteswest, tz_dsttime; };
-  extern "C" int gethostname(char *, int);
-  extern "C" int gettimeofday(struct timeval *, struct timezone *);
+  #include <Gestalt.h>
+  #define CLOCK_MONOTONIC 3
+  extern "C" void tzset(void);
+  extern "C" int clock_gettime(int clktype, struct timespec *tsp);
+  #include <unistd.h>
   #define fileno(f) ((f)->handle)
+#elif (CLIENT_OS == OS_MACOSX)
+  #include <unistd.h>
 #elif (CLIENT_OS == OS_FREEBSD)  
   #include <sys/time.h>
   #include <unistd.h>
