@@ -11,7 +11,7 @@
  * ------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.14 2000/02/06 05:24:00 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.15 2000/02/09 22:54:12 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -37,7 +37,7 @@ return "@(#)$Id: logstuff.cpp,v 1.37.2.14 2000/02/06 05:24:00 cyp Exp $"; }
 
 #define LOGFILETYPE_NONE    0 //
 #define LOGFILETYPE_NOLIMIT 1 //unlimited (or limit == -1)
-#define LOGFILETYPE_RESTART 2 //then logLimit is in KByte 
+#define LOGFILETYPE_RESTART 2 //then logLimit is in KByte
 #define LOGFILETYPE_FIFO    3 //then logLimit is in KByte (minimum 100K)
 #define LOGFILETYPE_ROTATE  4 //then logLimit is in days
 
@@ -61,6 +61,9 @@ return "@(#)$Id: logstuff.cpp,v 1.37.2.14 2000/02/06 05:24:00 cyp Exp $"; }
   #define ftruncate( fd, sz ) //nada, not supported
   #define FTRUNCATE_NOT_SUPPORTED
 #endif  
+#if defined(PERSISTANT_OPENLOG) && defined(FTRUNCATE_NOT_SUPPORTED)
+  #undef PERSISTANT_OPENLOG
+#endif
 
 #if ((!defined(MAX_LOGENTRY_LEN)) || (MAX_LOGENTRY_LEN < 1024))
   #ifdef MAX_LOGENTRY_LEN
@@ -195,35 +198,51 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
        (logstatics.loggingTo & LOGTO_FILE) == 0)
     return;
     
-  if ( logfileType == LOGFILETYPE_RESTART ) 
+  if ( logfileType == LOGFILETYPE_RESTART) 
   {
-    long filelen = (long)(-1);
     if ( logstatics.logfile[0] == 0 )
       return;
-    if ( logfileLimit < 100 )
-      logfileLimit = 100;
+    if ( logfileLimit < 1 ) /* no size specified */
+      return;
     if (!logstatics.logstream)
-      logstatics.logstream = __fopenlog( logstatics.logfile, "a" );
-    if ( logstatics.logstream )
     {
-      fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
-      fflush( logstatics.logstream );
-      filelen = (long)ftell( logstatics.logstream );
       #ifndef PERSISTANT_OPENLOG
-      fclose( logstatics.logstream );
-      logstatics.logstream = NULL;
+      logstatics.logstream = __fopenlog( logstatics.logfile, "a" );
+      #else
+      if ((logstatics.logstream = __fopenlog( logstatics.logfile, "r+" )) == NULL)
+        logstatics.logstream = __fopenlog( logstatics.logfile, "w" );
       #endif
     }
-    if ( filelen != (long)(-1) && ((unsigned int)(filelen >> 10)) > logfileLimit )
+    if ( logstatics.logstream )
     {
-      if (logstatics.logstream)
-        fclose( logstatics.logstream );
-      logstatics.logstream = __fopenlog( logstatics.logfile, "w" ); 
-      if ( logstatics.logstream )
+      long filelen;
+      fseek( logstatics.logstream, 0, SEEK_END );
+      filelen = (long)ftell( logstatics.logstream );
+      if (filelen != (long)(-1))
       {
-        fprintf( logstatics.logstream, "[%s] Log file exceeded %uKbyte limit. "
-           "Restarted...\n\n", CliGetTimeString( NULL, 1 ), 
-           (unsigned int)( logstatics.logfileLimit ));
+        //filelen += msglen;
+        if ( ((unsigned int)(filelen >> 10)) > logfileLimit )
+        {
+          int truncated = 1;
+          #ifndef PERSISTANT_OPENLOG
+          fclose( logstatics.logstream );
+          logstatics.logstream = __fopenlog( logstatics.logfile, "w" );
+          #else
+          if (ftruncate(fileno(logstatics.logstream),0) == -1)
+            truncated = 0;
+          #endif
+          if (logstatics.logstream && truncated)
+          {
+            fprintf( logstatics.logstream, 
+               "[%s] Log file exceeded %uKbyte limit. Restarted...\n\n",
+                CliGetTimeString( NULL, 1 ),
+               (unsigned int)( logstatics.logfileLimit ));
+          }
+        }
+      }  
+      if (logstatics.logstream)
+      {
+        logstatics.logfilestarted = 1;
         fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
         #ifndef PERSISTANT_OPENLOG
         fclose( logstatics.logstream );
@@ -233,7 +252,6 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
         #endif
       }
     }
-    logstatics.logfilestarted = 1;
   }
   else if ( logfileType == LOGFILETYPE_ROTATE )
   {
