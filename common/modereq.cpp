@@ -11,7 +11,7 @@
  * ---------------------------------------------------------------
 */    
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.28 1999/04/19 21:32:14 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.28.2.1 1999/06/08 02:08:38 pice Exp $"; }
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
@@ -36,14 +36,15 @@ static struct
 {
   int isrunning;
   int reqbits;
+  int size;
   const char *filetounlock;
   const char *filetoimport;
   const char *helpoption;
-} modereq = {0,0,(const char *)0,(const char *)0};
+} modereq = {0,0,0, (const char *)0,(const char *)0};
 
 /* --------------------------------------------------------------- */
 
-int ModeReqSetArg(int mode, void *arg )
+int ModeReqSetArg(int mode, void *arg, int impsize )
 {
   if (mode == MODEREQ_UNLOCK)
   {
@@ -55,6 +56,7 @@ int ModeReqSetArg(int mode, void *arg )
   {
     ModeReqSet(MODEREQ_IMPORT);
     modereq.filetoimport = (const char *)arg;
+	modereq.size = impsize;
     return 0;
   }
   if (mode == MODEREQ_CMDLINE_HELP)
@@ -229,7 +231,7 @@ int ModeReqRun(Client *client)
       {
         if (modereq.filetoimport && client)
         {
-          BufferImportFileRecords(client, modereq.filetoimport, 1 /* interactive */);
+          BufferImportFileRecords(client, modereq.filetoimport, 1 /* interactive */, modereq.size);
           modereq.filetoimport = (const char *)0;
           retval |= (MODEREQ_IMPORT);
         }

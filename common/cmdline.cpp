@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.9 1999/06/02 17:13:02 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.10 1999/06/08 02:08:37 pice Exp $"; }
 
 //#define TRACE
 
@@ -45,7 +45,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
   int inimissing = 0;
   int terminate_app = 0, havemode = 0;
   int pos, skip_next;
-  const char *thisarg, *argvalue;
+  const char *thisarg, *argvalue, *nextarg;
 
   TRACE_OUT((+1,"ParseCommandline(%d,%d)\n",run_level,argc));
   
@@ -69,9 +69,15 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       thisarg = argv[pos];
       if (thisarg && *thisarg=='-' && thisarg[1]=='-')
         thisarg++;
+
       argvalue = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
       if (argvalue && *argvalue == '-')
         argvalue = NULL; 
+
+      nextarg = ((pos+1 < (argc-1))?(argv[pos+2]):((char *)NULL));
+      if (nextarg && *nextarg == '-')
+        nextarg = NULL; 
+
       skip_next = 0;
     
       if ( thisarg == NULL )
@@ -511,9 +517,14 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       thisarg = argv[pos];
       if (thisarg && *thisarg=='-' && thisarg[1]=='-')
         thisarg++;
+
       argvalue = ((pos < (argc-1))?(argv[pos+1]):((char *)NULL));
       if (argvalue && *argvalue == '-')
         argvalue = NULL;
+
+      nextarg = ((pos+1 < (argc-1))?(argv[pos+2]):((char *)NULL));
+      if (nextarg && *nextarg == '-')
+        nextarg = NULL; 
 
       if ( thisarg == NULL )
         ; //nothing
@@ -1256,7 +1267,10 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         }
         else
         { 
-          skip_next = 1;
+          if (strcmp( thisarg, "-import" ) == 0)
+			skip_next = nextarg ? 2 : 1;
+		  else
+            skip_next = 1;
           havemode = 1; //f'd up "mode" - handled in next loop
         }
       }
@@ -1265,7 +1279,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         quietmode = 0;
         ModeReqClear(-1); /* clear all */
         ModeReqSet( MODEREQ_CMDLINE_HELP );
-        ModeReqSetArg(MODEREQ_CMDLINE_HELP,(void *)thisarg);
+        ModeReqSetArg(MODEREQ_CMDLINE_HELP,(void *)thisarg, 0);
         inimissing = 0; // don't need an .ini file if we just want help
         havemode = 0;
         break;
@@ -1375,7 +1389,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           skip_next = 1;
           ModeReqClear(-1); //clear all - only do -forceunlock
           ModeReqSet(MODEREQ_UNLOCK);
-          ModeReqSetArg(MODEREQ_UNLOCK,(void *)argvalue);
+          ModeReqSetArg(MODEREQ_UNLOCK,(void *)argvalue, 0);
           break;
         }
       }
@@ -1384,10 +1398,10 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         if (!inimissing && argvalue)
         {
           quietmode = 0;
-          skip_next = 1;
+          skip_next = nextarg ? 2 : 1;
           ModeReqClear(-1); //clear all - only do -import
           ModeReqSet(MODEREQ_IMPORT);
-          ModeReqSetArg(MODEREQ_IMPORT,(void *)argvalue);
+          ModeReqSetArg(MODEREQ_IMPORT,(void *)argvalue, nextarg ? atoi(nextarg) : 0);
           break;
         }
       }

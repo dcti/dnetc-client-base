@@ -14,7 +14,7 @@
 */ 
 
 #ifndef __MODEREQ_H__
-#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.11 1999/04/09 14:07:16 cyp Exp $"
+#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.11.2.1 1999/06/08 02:08:38 pice Exp $"
 
 #define MODEREQ_IDENT              0x0001    
 #define MODEREQ_CPUINFO            0x0002
@@ -47,7 +47,7 @@ extern int ModeReqClear(int modemask);
 extern int ModeReqIsRunning(void);
 
 /* set an optional argument * for a mode. The mode must support it */
-extern int ModeReqSetArg( int mode, void *arg );
+extern int ModeReqSetArg( int mode, void *arg, int impsize );
 
 /* this is the mode runner. bits can be set/cleared while active.
    returns a mask of modebits that were cleared during the run. */

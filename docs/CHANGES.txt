@@ -21,9 +21,10 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log:   $Id: CHANGES.txt,v 1.4.2.3 1999/06/03 15:43:50 cyp Exp $
+Version change log:   $Id: CHANGES.txt,v 1.4.2.4 1999/06/08 02:12:27 pice Exp $
 ==========================================================================  
-
+2.7110.444  chg: -import [numberofblockstoimport] number of blocks to be 
+                 transfered
 2.7110.443  new: win/*nix: support -pause and -unpause (SIGSTOP and SIGCONT
                  respectively). Used like -restart/-shutdown etc.
 2.7110.442  new: win32: ioctl-driven network adapter online state detection.
