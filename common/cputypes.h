@@ -5,6 +5,11 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.54  1999/03/03 01:27:49  jlawson
+// changed sunos sparc detection macro since sun's workshop compiler only
+// defines __sparc and not __sparc__.  removed inappropriate use of
+// ignoreunknowncpuos for dynix.
+//
 // Revision 1.53  1999/02/28 02:44:55  jlawson
 // fixed lint warning messages.
 //
@@ -354,7 +359,7 @@ struct s128 { s64 hi, lo; };
   #define CLIENT_OS       OS_SOLARIS
   #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
-  #elif defined(__sparc__) || defined(ASM_SPARC)
+  #elif defined(__sparc) || defined(ASM_SPARC)
     #define CLIENT_CPU    CPU_SPARC
   #endif
 #elif defined(_SUN68K_)
@@ -482,14 +487,10 @@ struct s128 { s64 hi, lo; };
   #define CLIENT_OS     OS_OS390
   #define CLIENT_CPU    CPU_S390
 #elif defined(_SEQUENT_)
+  #define CLIENT_OS     OS_DYNIX
   #define CLIENT_OS_NAME   "Dynix"
   #if defined(ASM_X86)
-    #define CLIENT_OS     OS_DYNIX
     #define CLIENT_CPU    CPU_X86
-  #else
-    #define CLIENT_OS     OS_DYNIX
-    #define CLIENT_CPU    CPU_UNKNOWN
-    #define IGNOREUNKNOWNCPUOS
   #endif
 #endif
 
@@ -503,6 +504,7 @@ struct s128 { s64 hi, lo; };
   #define CLIENT_CPU    CPU_UNKNOWN
 #endif
 #if (CLIENT_OS == OS_UNKNOWN) || (CLIENT_CPU == CPU_UNKNOWN)
+  // ignoreunknowncpuos is used by the client's testplat.cpp utility.
   #if !defined(IGNOREUNKNOWNCPUOS)
     #error "Unknown CPU/OS detected in cputypes.h"
   #endif
