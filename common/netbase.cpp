@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.5.2.13 2003/09/01 19:11:09 jlawson Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.5.2.14 2003/09/02 00:48:54 mweiser Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -174,7 +174,7 @@ return "@(#)$Id: netbase.cpp,v 1.5.2.13 2003/09/01 19:11:09 jlawson Exp $"; }
     #define HAVE_POLL_SYSCALL
     #include "pack0.h"
     }
-  #elif (CLIENT_OS == OS_RISCOS)    
+  #elif (CLIENT_OS == OS_RISCOS)
     #include <sys/select.h>
     #undef FIONREAD
     #undef HOST_NOT_FOUND
@@ -208,7 +208,7 @@ return "@(#)$Id: netbase.cpp,v 1.5.2.13 2003/09/01 19:11:09 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "triggers.h" // CheckExitRequestTriggerNoIO()
-#include "util.h"     // trace
+#include "util.h"     // trace, DNETC_UNUSED_*
 #include "lurk.h"     // #ifdef LURK
 #include "netbase.h"  // ourselves
 
@@ -351,6 +351,9 @@ int net_deinitialize(int final_call)
 static int __dialupsupport_action(int doWhat)
 {
   int rc = 0;
+
+  DNETC_UNUSED_PARAM(doWhat);
+
   #if defined(LURK)
   {
     //'redial_if_needed' is used here as follows:
@@ -398,7 +401,6 @@ static int __dialupsupport_action(int doWhat)
     } /* if LurkIsWatching() */
   } /* if defined(LURK) */
   #endif /* LURK */
-  doWhat = doWhat; /* possible unused */
   return rc;
 }
 
@@ -569,8 +571,9 @@ static struct
 static int ___read_errnos(SOCKET fd, int ps_errnum,
                           int *syserr, int *neterr, int *extra )
 {
+  DNETC_UNUSED_PARAM(fd);
+
   *syserr = *neterr = *extra = 0;
-  fd = fd; /* possibly unused */
 
   /* don't make this a switch() or an if ... else ... */
 
@@ -1946,11 +1949,13 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
                               int iotimeout /* millisecs */ )
 {
   int rc = ps_ENETDOWN;
-  this_address = this_address; this_port = this_port; /* shaddup compiler */
+
+  DNETC_UNUSED_PARAM(this_address);
+  DNETC_UNUSED_PARAM(this_port);
 
   TRACE_CONNECT((+1, "net_connect(s, %s:%d, %d)\n",
-                     net_ntoa((that_address)?(*that_address):(0)),
-                     ((that_port)?(*that_port):(0)), iotimeout ));
+                 net_ntoa((that_address)?(*that_address):(0)),
+                 ((that_port)?(*that_port):(0)), iotimeout ));
 
   if ( sock == INVALID_SOCKET )
   {

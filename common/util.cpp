@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.29.2.9 2003/09/02 00:28:19 mweiser Exp $"; }
+return "@(#)$Id: util.cpp,v 1.29.2.10 2003/09/02 00:48:54 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -20,7 +20,7 @@ return "@(#)$Id: util.cpp,v 1.29.2.9 2003/09/02 00:28:19 mweiser Exp $"; }
 #include "clicdata.h" /* CliGetContestNameFromID() */
 #include "pathwork.h" /* GetFullPathForFilename() */
 #include "sleepdef.h" /* usleep() */
-#include "util.h"     /* ourselves */
+#include "util.h"     /* ourselves, DNETC_UNUSED_* */
 #define MAX_CONTEST_NAME_LEN 6
 // PROJECT_NOT_HANDLED("is MAX_CONTEST_NAME_LEN still ok?")
 // OK!
@@ -1032,6 +1032,9 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
       pid_t thatpid, ourpid = getpid();
       size_t linelen; char buffer[1024];
       int usefullpathcmp = (strchr( procname, '/' ) != ((char *)0));
+
+      DNETC_UNUSED(thatpid);
+
       #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
           (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
           (CLIENT_OS == OS_PS2LINUX)
@@ -1249,7 +1252,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         } /* if (file != ((FILE *)NULL)) */
       }
       #endif /* spawn ps */
-      thatpid = thatpid; /* shaddup compiler */
+
       p=p;
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++

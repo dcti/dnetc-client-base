@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.129.2.9 2003/09/01 23:59:49 mweiser Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.129.2.10 2003/09/02 00:48:53 mweiser Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -26,7 +26,7 @@ return "@(#)$Id: clirun.cpp,v 1.129.2.9 2003/09/01 23:59:49 mweiser Exp $"; }
 #include "clitime.h"   // CliTimer(), Time()/(CliGetTimeString(NULL,1))
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "clicdata.h"  // CliGetContestNameFromID()
-#include "util.h"      // utilCheckIfBetaExpired()
+#include "util.h"      // utilCheckIfBetaExpired(), DNETC_UNUSED_*
 #include "checkpt.h"   // CHECKPOINT_[OPEN|CLOSE|REFRESH|_FREQ_[SECS|PERC]DIFF]
 #include "cpucheck.h"  // GetNumberOfDetectedProcessors()
 #include "probman.h"   // GetProblemPointerFromIndex()
@@ -147,7 +147,8 @@ static void __cruncher_sleep__(struct thread_param_block * /*thrparams*/)
 
 static int __cruncher_yield__(struct thread_param_block *thrparams)
 {
-  thrparams = thrparams;  /* shaddup compiler */
+  DNETC_UNUSED_PARAM(thrparams);
+
   /* thrparams is needed for some OSs like MacOS that have different
   ** yield calls depending on how the cruncher was created.
   */

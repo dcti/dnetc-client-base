@@ -14,11 +14,12 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.56.2.4 2003/08/09 12:45:25 mweiser Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.56.2.5 2003/09/02 00:48:53 mweiser Exp $"; }
 
 #include "cputypes.h"
-#include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
-#include "clitime.h"  // keep the prototypes in sync
+#include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
+#include "clitime.h"    /* keep the prototypes in sync */
+#include "unused.h"     /* DNETC_UNUSED_* */
 
 #if (CLIENT_OS == OS_WIN32) && (CLIENT_CPU == CPU_ALPHA)
 extern "C" int _AcquireSpinLockCount(long *, int);
@@ -803,7 +804,7 @@ int CliGetThreadUserTime( struct timeval *tv )
   is_supp = 1;
   return 0;
 #else
-  tv = tv; /* shaddup compiler */
+  DNETC_UNUSED_PARAM(tv);
   return -1;
 #endif
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
@@ -31,13 +31,15 @@
  * and pe.szExeFile usually (I've seen a few ".com"s, but not all .com's
  * appear with ".com") does not have an extension.
  *
- * $Id: w32snapp.c,v 1.2 2002/09/02 00:35:53 andreasb Exp $
+ * $Id: w32snapp.c,v 1.2.4.1 2003/09/02 00:48:54 mweiser Exp $
 */
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <winperf.h>  /* performance counter data stuff */
-#include <tlhelp32.h> /* toolhlp32 structures and function prototypes */
+#include <winperf.h>    /* performance counter data stuff */
+#include <tlhelp32.h>   /* toolhlp32 structures and function prototypes */
+
+#include "unused.h"     /* DNETC_UNUSED_* */
 
 //#define FORCE_TOOLHELP /* the real toolhelp snapshot functions */
 //#define FORCE_NTQUERY  /* the NtQuery snapshot emulation routines */
@@ -109,6 +111,8 @@ static HANDLE WINAPI NtQuery_CreateToolhelp32Snapshot(DWORD dwFlags,
   char mailslotname[128];
   FILETIME ftUnique, ftJunk;
   HANDLE hSnapshot = (HANDLE)0; /* assume failure */
+
+  DNETC_UNUSED_PARAM(th32ProcessID);
 
   GetProcessTimes(GetCurrentProcess(), &ftJunk, &ftJunk, &ftJunk, &ftUnique );
   wsprintf(mailslotname,"\\\\.\\mailslot\\Thelp32.emu\\%lu\\%lu\\%lu",
@@ -294,7 +298,6 @@ static HANDLE WINAPI NtQuery_CreateToolhelp32Snapshot(DWORD dwFlags,
     } /* if (issupported && fnNtQuerySystemInformation) */
   } /* if ((dwFlags & THCS_SNAPPROCESS) != 0) */
 
-  th32ProcessID = th32ProcessID; /* shaddup compiler */
   return hSnapshot;
 }
 
@@ -314,7 +317,7 @@ static DWORD my_atoi(const char *str)
 }
 
 static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
-                                                      DWORD th32ProcessID)
+                                                       DWORD th32ProcessID)
 {
   /*
     This method uses Windows NT Performance Counters, as seen in
@@ -340,6 +343,8 @@ static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
   char mailslotname[128];
   FILETIME ftUnique, ftJunk;
   HANDLE hSnapshot = (HANDLE)0; /* assume failure */
+
+  DNETC_UNUSED_PARAM(th32ProcessID);
 
   GetProcessTimes(GetCurrentProcess(), &ftJunk, &ftJunk, &ftJunk, &ftUnique );
   wsprintf(mailslotname,"\\\\.\\mailslot\\Thelp32.emu\\%lu\\%lu\\%lu",
@@ -642,7 +647,6 @@ static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
     } /* if (hProcessHeap) */
   } /* if ((dwFlags & TH32CS_SNAPPROCESS)!=0) */
 
-  th32ProcessID = th32ProcessID; /* shaddup compiler */
   return hSnapshot;
 }
 

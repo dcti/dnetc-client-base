@@ -5,7 +5,7 @@
 */
 
 #ifndef __UNUSED_H__
-#define __UNUSED_H__  "@(#)$Id: unused.h,v 1.1.2.1 2003/09/01 22:26:20 mweiser Exp $"
+#define __UNUSED_H__  "@(#)$Id: unused.h,v 1.1.2.2 2003/09/02 00:48:54 mweiser Exp $"
 
 /* This file is a bit empty at the moment because it's meant to be
 ** extended for all the compilers encountered by this code. If it
@@ -38,7 +38,11 @@
 ** which might still cause senselessness warnings on some compilers
 ** though. We choose the last option for now. */
 
-#define DNETC_UNUSED_PARAM(x) ((void)x)
+#define DNETC_UNUSED_PARAM(x)   ((void)x)
+
+/* all occurences of DNETC_UNUSED should actually be fixed to not have
+** those variables in the first place */
+#define DNETC_UNUSED(x)         DNETC_UNUSED_PARAM(x)
 
 /* #endif */
 

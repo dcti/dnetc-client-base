@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.62.2.9 2003/09/01 22:33:43 mweiser Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.62.2.10 2003/09/02 00:48:53 mweiser Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -75,6 +75,9 @@ static int __enumcorenames_wide(const char **corenames,
   unsigned int cont_i, i, colwidth, nextpos;
   int have_xxx_table[CONTEST_COUNT];
   unsigned int colcount = 0;
+
+  /* if you get warnings, uncomment
+  ** DNETC_UNUSED(have_xxx_table); */
 
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {

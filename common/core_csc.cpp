@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_csc_cpp(void) {
-return "@(#)$Id: core_csc.cpp,v 1.1.2.3 2003/09/01 21:40:15 mweiser Exp $"; }
+return "@(#)$Id: core_csc.cpp,v 1.1.2.4 2003/09/02 00:48:53 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -20,7 +20,7 @@ return "@(#)$Id: core_csc.cpp,v 1.1.2.3 2003/09/01 21:40:15 mweiser Exp $"; }
 #include "selcore.h"   // keep prototypes in sync
 #include "probman.h"   // GetManagedProblemCount()
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
-#include "util.h"      // TRACE_OUT
+#include "util.h"      // TRACE_OUT, DNETC_UNUSED_*
 
 #if defined(HAVE_CSC_CORES)
 
@@ -166,8 +166,8 @@ int selcoreGetPreselectedCoreForProject_csc()
 
 /* ---------------------------------------------------------------------- */
 
-int selcoreSelectCore_csc( unsigned int threadindex,
-                       int *client_cpuP, struct selcore *selinfo )
+int selcoreSelectCore_csc(unsigned int threadindex,
+                          int *client_cpuP, struct selcore *selinfo)
 {
   int use_generic_proto = 0; /* if rc5/des unit_func proto is generic */
   unit_func_union unit_func; /* declared in problem.h */
@@ -175,6 +175,9 @@ int selcoreSelectCore_csc( unsigned int threadindex,
   int pipeline_count = 2; /* most cases */
   int client_cpu = CLIENT_CPU; /* usual case */
   int coresel = selcoreGetSelectedCoreForContest(CSC);
+
+  DNETC_UNUSED_PARAM(threadindex);
+
   if (coresel < 0)
     return -1;
   memset( &unit_func, 0, sizeof(unit_func));
@@ -230,7 +233,6 @@ int selcoreSelectCore_csc( unsigned int threadindex,
     return coresel;
   }
 
-  threadindex = threadindex; /* possibly unused. shaddup compiler */
   return -1; /* core selection failed */
 }
 

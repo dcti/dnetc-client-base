@@ -20,7 +20,7 @@
 */
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi_2_rg_cpp (void) {
-return "@(#)$Id: rc5ansi_2-rg.cpp,v 1.6.4.1 2003/09/01 23:46:36 mweiser Exp $"; }
+return "@(#)$Id: rc5ansi_2-rg.cpp,v 1.6.4.2 2003/09/02 00:48:55 mweiser Exp $"; }
 #endif
 //
 //*Run-time generation of S0[] :
@@ -51,6 +51,7 @@ return "@(#)$Id: rc5ansi_2-rg.cpp,v 1.6.4.1 2003/09/01 23:46:36 mweiser Exp $"; 
 #define PIPELINE_COUNT 2
 #define USE_ANSI_INCREMENT
 
+#include "unused.h"     /* DNETC_UNUSED_* */
 #include "problem.h"
 #include "rotate.h"
 
@@ -345,6 +346,9 @@ s32 rc5_ansi_rg_unified_form( RC5UnitWork *work,
                               u32 *keystocheck, void *scratch_area )
 {
   u32 keyschecked, iterstodo;
+
+  DNETC_UNUSED_PARAM(scratch_area);
+
   /*
    *  since the caller does not care about how many pipelines we have,
    *  and since this is a N pipeline core, we do ...
@@ -373,6 +377,5 @@ s32 rc5_ansi_rg_unified_form( RC5UnitWork *work,
     return RESULT_FOUND;        /* so that we can point to THE key */
   }
 
-  scratch_area = scratch_area; /* unused arg. shaddup compiler */
   return -1; /* error */
 }

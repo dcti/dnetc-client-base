@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.9 2003/09/01 22:53:39 mweiser Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.10 2003/09/02 00:48:54 mweiser Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -47,6 +47,10 @@ return "@(#)$Id: triggers.cpp,v 1.31.2.9 2003/09/01 22:53:39 mweiser Exp $"; }
 #define TRIGPAUSEBY_APPACTIVE  0x10 /* pause due to app being active*/
 #define TRIGPAUSEBY_SRCBATTERY 0x20 /* pause due to running on battery */
 #define TRIGPAUSEBY_CPUTEMP    0x40 /* cpu temperature guard */
+
+#if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_WIN32)
+# define CLISIGHANDLER_IS_SPECIAL 1
+#endif
 
 struct trigstruct
 {
@@ -118,8 +122,16 @@ int RaiseExitRequestTrigger(void)
 { return __trig_raise( &trigstatics.exittrig ); }
 int RaiseRestartRequestTrigger(void)
 { RaiseExitRequestTrigger(); return __trig_raise( &trigstatics.huptrig ); }
-static int ClearRestartRequestTrigger(void) /* used internally */
-{ return __trig_clear( &trigstatics.huptrig ); }
+
+#ifndef CLISIGHANDLER_IS_SPECIAL
+
+/* used internally */
+static int ClearRestartRequestTrigger(void) {
+  return __trig_clear( &trigstatics.huptrig );
+}
+
+#endif /* !CLISIGHANDLER_IS_SPECIAL */
+
 int RaisePauseRequestTrigger(void)
 { return __trig_raise( &trigstatics.pausetrig ); }
 int ClearPauseRequestTrigger(void)
@@ -254,6 +266,8 @@ static void __CheckIniFileChangeStuff(void)
 
 static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
 {
+  DNETC_UNUSED_PARAM(unmangle_it);
+
   #if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16))
   /* these two are frequently used 16bit apps that aren't visible (?)
      to utilGetPIDList so they are searched for by window class name,
@@ -303,7 +317,6 @@ static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
   } /* win9x? */
   #endif /* ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)) */
 
-  unmangle_it = unmangle_it; /* shaddup compiler */
   return name;
 }
 
@@ -660,12 +673,16 @@ static int __CPUTemperaturePoll(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 
 // -----------------------------------------------------------------------
 
+#if defined(CLISIGHANDLER_IS_SPECIAL) || \
+    (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS) || \
+    (CLIENT_OS == OS_DOS)
+
 static void __PollDrivenBreakCheck(int io_cycle_allowed)
 {
   /* io_cycle_allowed is non-zero when called through CheckExitRequestTrigger
-     and is zero when called through CheckExitRequestTriggerNoIO()
-  */
-  io_cycle_allowed = io_cycle_allowed; /* shaddup compiler */
+  ** and is zero when called through CheckExitRequestTriggerNoIO() */
+  DNETC_UNUSED_PARAM(io_cycle_allowed)
+
   #if (CLIENT_OS == OS_RISCOS)
 /* This hs no equivalent in Unixlib but strange as it is, it seems to be not
    necessary */
@@ -698,6 +715,7 @@ static void __PollDrivenBreakCheck(int io_cycle_allowed)
   #endif
   return;
 }
+#endif
 
 // =======================================================================
 
@@ -961,11 +979,12 @@ extern "C" void __chkabort(void)
   /* Disable SAS/C / GCC CTRL-C handing */
   return;
 }
-#define CLISIGHANDLER_IS_SPECIAL
+
 static void __init_signal_handlers( int doingmodes )
 {
+  DNETC_UNUSED_PARAM(doingmodes);
+
   __assert_statics();
-  doingmodes = doingmodes; /* unused */
   SetSignal(0L, SIGBREAKF_CTRL_C); // Clear the signal triggers
   RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
 }
@@ -989,11 +1008,12 @@ BOOL WINAPI CliSignalHandler(DWORD dwCtrlType)
   }
   return FALSE;
 }
-#define CLISIGHANDLER_IS_SPECIAL
+
 static void __init_signal_handlers( int doingmodes )
 {
+  DNETC_UNUSED_PARAM(doingmodes);
+
   __assert_statics();
-  doingmodes = doingmodes; /* unused */
   SetConsoleCtrlHandler( /*(PHANDLER_ROUTINE)*/CliSignalHandler, FALSE );
   SetConsoleCtrlHandler( /*(PHANDLER_ROUTINE)*/CliSignalHandler, TRUE );
   RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
@@ -1123,8 +1143,10 @@ int TriggersSetThreadSigMask(void)
 #ifndef CLISIGHANDLER_IS_SPECIAL
 static void __init_signal_handlers( int doingmodes )
 {
+  DNETC_UNUSED_PARAM(doingmodes);
+
   __assert_statics();
-  doingmodes = doingmodes; /* possibly unused */
+
   #if defined(SIGPIPE) //needed by at least solaris and fbsd
   SETSIGNAL( SIGPIPE, SIG_IGN );
   #endif
@@ -1416,8 +1438,6 @@ int InitializeTriggers(int doingmodes,
     if (watchcputempthresh && cputempthresh)
       _init_cputemp( cputempthresh ); /* cpu temp string */
     trigstatics.pause_if_no_mains_power = pauseifnomainspower;
-    if (doingmodes) /* dummy if, always false */
-      __PollDrivenBreakCheck(1); /* shaddup compiler */
   }
   TRACE_OUT( (-1, "InitializeTriggers\n") );
   return 0;
@@ -1428,11 +1448,13 @@ int InitializeTriggers(int doingmodes,
 int DeinitializeTriggers(void)
 {
   int huptrig;
+
   __assert_statics();
   huptrig = trigstatics.huptrig.trigger;
+
   /* clear everything to ensure we don't use IO after DeInit */
   memset( (void *)(&trigstatics), 0, sizeof(trigstatics) );
-  ClearRestartRequestTrigger(); /* consume possibly unused static function */
+
   return huptrig;
 }
 

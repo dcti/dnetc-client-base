@@ -1,3 +1,4 @@
+#include "unused.h"     /* DNETC_UNUSED_* */
 #include "problem.h"
 
 extern "C" {
@@ -10,14 +11,15 @@ u32 rc5_unit_func_vec_7450_compat( RC5UnitWork *, u32 iterations ); /* this */
 u32 rc5_unit_func_vec_7450_compat( RC5UnitWork *work, u32 iterations )
 {
   return crunch_vec_7450( work, iterations );
-}  
+}
 
 s32 rc5_unit_func_vec_7450( RC5UnitWork *work, u32 *timeslice, void *savstate)
 {
   u32 kiter = rc5_unit_func_vec_7450_compat( work, *timeslice );
-  savstate = savstate; /* unused. shaddup compiler */
 
-  if (*timeslice == kiter) 
+  DNETC_UNUSED_PARAM(savstate);
+
+  if (*timeslice == kiter)
      return RESULT_WORKING;
   if (*timeslice > kiter) {
     *timeslice = kiter;

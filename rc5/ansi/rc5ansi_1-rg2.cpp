@@ -1,3 +1,4 @@
+
 /*
  * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
@@ -16,12 +17,13 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi_1_rg_cpp (void) {
-return "@(#)$Id: rc5ansi_1-rg2.cpp,v 1.3.4.1 2003/09/01 23:46:36 mweiser Exp $"; }
+return "@(#)$Id: rc5ansi_1-rg2.cpp,v 1.3.4.2 2003/09/02 00:48:55 mweiser Exp $"; }
 #endif
 
 #define PIPELINE_COUNT = 1
 #define USE_ANSI_INCREMENT
 
+#include "unused.h"     /* DNETC_UNUSED_* */
 #include "problem.h"
 #include "rotate.h"
 
@@ -138,6 +140,8 @@ s32 rc5_unit_func_ansi_1_rg2( RC5UnitWork *work, u32 *timeslice,
 
   u32 kiter = 0;
   u32 keycount = *timeslice;
+
+  DNETC_UNUSED_PARAM(scratch_area);
 
   while ( keycount-- ) // timeslice ignores the number of pipelines
     {
@@ -261,8 +265,7 @@ s32 rc5_unit_func_ansi_1_rg2( RC5UnitWork *work, u32 *timeslice,
         *timeslice = kiter;     /* save how many we actually did */
         return RESULT_FOUND;
   }
-  /* this coude will never be reached and is mostly to satisfy the compiler */
-  scratch_area = scratch_area; /* unused arg. shaddup compiler */
-  return -1; /* error */
 
+  /* this coude will never be reached and is mostly to satisfy the compiler */
+  return -1; /* error */
 }

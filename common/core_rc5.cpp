@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_rc5_cpp(void) {
-return "@(#)$Id: core_rc5.cpp,v 1.1.2.3 2003/09/01 22:40:07 mweiser Exp $"; }
+return "@(#)$Id: core_rc5.cpp,v 1.1.2.4 2003/09/02 00:48:54 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -20,7 +20,7 @@ return "@(#)$Id: core_rc5.cpp,v 1.1.2.3 2003/09/01 22:40:07 mweiser Exp $"; }
 #include "selcore.h"   // keep prototypes in sync
 #include "probman.h"   // GetManagedProblemCount()
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
-#include "util.h"      // TRACE_OUT
+#include "util.h"      // TRACE_OUT, DNETC_UNUSED_*
 #if (CLIENT_CPU == CPU_X86) && defined(SMC)
   #if defined(__unix__)
     #include <sys/types.h>
@@ -141,6 +141,8 @@ return "@(#)$Id: core_rc5.cpp,v 1.1.2.3 2003/09/01 22:40:07 mweiser Exp $"; }
 
 int InitializeCoreTable_rc564(int first_time)
 {
+  DNETC_UNUSED_PARAM(first_time);
+
   #if (CLIENT_CPU == CPU_X86) && defined(SMC)
   {                      /* self-modifying code needs initialization */
 
@@ -191,7 +193,6 @@ int InitializeCoreTable_rc564(int first_time)
   }
   #endif /* ifdef SMC */
 
-  first_time = first_time;    /* possibly unused. */
   return 0;
 }
 
@@ -544,6 +545,9 @@ int selcoreSelectCore_rc564(unsigned int threadindex,
   int pipeline_count = 2; /* most cases */
   int client_cpu = CLIENT_CPU; /* usual case */
   int coresel = selcoreGetSelectedCoreForContest(RC5);
+
+  DNETC_UNUSED_PARAM(threadindex);
+
   if (coresel < 0)
     return -1;
   memset( &unit_func, 0, sizeof(unit_func));
@@ -886,7 +890,6 @@ int selcoreSelectCore_rc564(unsigned int threadindex,
     return coresel;
   }
 
-  threadindex = threadindex; /* possibly unused. shaddup compiler */
   return -1; /* core selection failed */
 }
 

@@ -8,17 +8,19 @@
 */
 
 const char *w32ss_cpp(void) {
-return "@(#)$Id: w32ss.cpp,v 1.2.4.1 2003/09/02 00:14:43 mweiser Exp $"; }
+return "@(#)$Id: w32ss.cpp,v 1.2.4.2 2003/09/02 00:48:54 mweiser Exp $"; }
 
 #include "cputypes.h"
+#include "unused.h"     /* DNETC_UNUSED_* */
 #define INCLUDE_COMMDLG_H
 #define INCLUDE_SHELLAPI_H
 #define INCLUDE_VER_H
 #include <windows.h>
 #include <commdlg.h>
-#include "w32util.h" /* int (PASCAL *__SSMAIN)(HINSTANCE,HINSTANCE,LPSTR,int);*/
-#include "w32ini.h"  /* [Get|Write]DCTIProfile[String|Int]() */
-#include "w32cons.h" /* W32CLI_CONSOLE_NAME, W32CLI_MUTEX_NAME */
+#include "w32util.h"    /* int (PASCAL *__SSMAIN)
+                        **  (HINSTANCE,HINSTANCE,LPSTR,int); */
+#include "w32ini.h"     /* [Get|Write]DCTIProfile[String|Int]() */
+#include "w32cons.h"    /* W32CLI_CONSOLE_NAME, W32CLI_MUTEX_NAME */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -530,7 +532,8 @@ static BOOL CALLBACK __SSFreeProcessEnumWinProc(HWND hwnd,LPARAM lParam)
 /* only valid if we didn't wait for exit */
 int SSFreeProcess( void *handle, int withShutdown )
 {
-  withShutdown = withShutdown; /* shaddup compiler */
+  DNETC_UNUSED_PARAM(withShutdown);
+
   if (handle && handle != ((void *)ULONG_MAX))
   {
     #if (CLIENT_OS == OS_WIN32)
@@ -2322,12 +2325,14 @@ static void SSAssertConfiguration(HINSTANCE hInst)
 
 /* ---------------------------------------------------- */
 
-int PASCAL SSMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
+int PASCAL SSMain(HINSTANCE hInst, HINSTANCE hPrevInst,
+                  LPSTR lpszCmdLine, int nCmdShow)
 {
+  DNETC_UNUSED_PARAM(nCmdShow);
+
   szAlternateAppName[0] = '\0';
   SSAssertConfiguration( hInst );
 
-  nCmdShow = nCmdShow; /* shaddup compiler */
   if (!hPrevInst && winGetVersion()<400)
   {
     #if (CLIENT_OS == OS_WIN32)
@@ -2430,4 +2435,3 @@ int PASCAL SSMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int n
 #else
   #error foo
 #endif
-

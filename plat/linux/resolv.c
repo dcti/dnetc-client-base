@@ -13,7 +13,7 @@
  * has 'host', and that too can be bypassed (described below).
  *
  * Created Aug 2 2000, by Cyrus Patel <cyp@fb14.uni-mainz.de>
- * $Id: resolv.c,v 1.2.4.5 2003/09/01 23:23:46 mweiser Exp $
+ * $Id: resolv.c,v 1.2.4.6 2003/09/02 00:48:54 mweiser Exp $
  *
  * The functions exported from here will first check if a bypass
  * (described below) has been provided.
@@ -103,6 +103,8 @@
 #include <netinet/in.h>  /* struct in_addr */
 #include <arpa/inet.h>   /* inet_ntoa, inet_addr */
 #include <sys/socket.h>  /* AF_INET define */
+
+#include "unused.h"      /* DNETC_UNUSED_* */
 
 #ifndef _REENTRANT /* consolidate various implied forms of _REENTRANT */
 #  if defined(_THREAD_SAFE) || defined(THREAD_SAFE) || \
@@ -1413,9 +1415,10 @@ static int do_res_xxx( struct gen_hostent_data *_r_buffer,
                         struct hostent **hpp )
 {
 #if defined(NOWEAKS) || !defined(__GNUC__) /* we need '#pragma weak' here */
+  DNETC_UNUSED_PARAM(reverse);
+
   TRACE_OUT(("skipping do_res_weaks()\n"));
   *hpp = do_gen_hostent( _r_buffer, hostname, 0, 0, 0, 0, 0 );
-  reverse = reverse; /* unused */
   return 1;
 #else
   int proceed_to_next = 1;

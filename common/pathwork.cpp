@@ -24,13 +24,13 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.21.4.6 2003/09/02 00:24:24 mweiser Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.21.4.7 2003/09/02 00:48:54 mweiser Exp $"; }
 
 // #define TRACE
 
 #include "baseincs.h"
 #include "pathwork.h"
-#include "util.h"      // trace
+#include "util.h"      /* trace, DNETC_UNUSED_* */
 
 #if defined(__unix__)
   #include <pwd.h>       /* getpwnam(), getpwuid(), struct passwd */
@@ -87,7 +87,8 @@ unsigned int GetFilenameBaseOffset( const char *fullpath )
 
 static const char *__finalize_fixup(char *path, unsigned int maxlen)
 {
-  maxlen = maxlen;  /* shaddup compiler */
+  DNETC_UNUSED_PARAM(maxlen);
+
 #if defined(HAVE_UNIX_TILDE_EXPANSION)
   if (*path == '~')
   {

@@ -7,11 +7,12 @@
 */
 
 const char *w32svc_cpp(void) {
-return "@(#)$Id: w32svc.cpp,v 1.2.4.1 2003/09/01 23:31:13 mweiser Exp $"; }
+return "@(#)$Id: w32svc.cpp,v 1.2.4.2 2003/09/02 00:48:54 mweiser Exp $"; }
 
 //#define TRACE
 
 #include "cputypes.h"
+#include "unused.h"     /* DNETC_UNUSED_* */
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <string.h>
@@ -496,9 +497,11 @@ static int __DoModeService( int mode, int argc, char **argv )
   int isinstalled = -1; /* assume error */
   int retcode = -1; /* assume error */
 
+  DNETC_UNUSED_PARAM(argc);
+  DNETC_UNUSED_PARAM(argv);
+
   if (__winGetVersion() < 400) /* win16 */
   {
-    argc = argc; argv = argv; /* shaddup compiler */
     if (mode == SVC_CSD_MODE_ISINSTALLED) /* check */
       isinstalled = __win31InstallDeinstallClient(0,1);
   }
@@ -1361,6 +1364,8 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
   DWORD svc_bits = 0x3FC00000; /* some arbitrary bits */
   SERVICE_STATUS serviceStatus;
 
+  DNETC_UNUSED(svc_bits);
+
   if (serviceStatusHandle == 0)
   {
     unsigned int i;
@@ -1371,7 +1376,6 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
                                               ServiceCtrlHandler);
       if (serviceStatusHandle != 0)
       {
-        svc_bits = svc_bits; /* possibly unused */
         SetServiceBits(serviceStatusHandle, svc_bits, TRUE, TRUE );
         break;
       }

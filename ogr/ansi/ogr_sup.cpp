@@ -5,16 +5,17 @@
  *
  * OGR support routines and data.
  *
- * $Id: ogr_sup.cpp,v 1.2.4.1 2003/02/25 12:30:23 snake Exp $
+ * $Id: ogr_sup.cpp,v 1.2.4.2 2003/09/02 00:48:54 mweiser Exp $
 */
 #include <stdio.h>
 #include <string.h>
 
+#include "unused.h"     /* DNETC_UNUSED_* */
 #include "ogr.h"
 
 unsigned long ogr_nodecount(const struct Stub *stub)
 {
-  stub = stub; /* shaddup compiler */
+  DNETC_UNUSED_PARAM(stub);
   return 1;
 }
 
@@ -51,15 +52,15 @@ const char *ogr_stubstr_r(const struct Stub *stub,
             sprintf(&buf[strlen(buf)], "%d", (int)stub->diffs[i]);
 	  }
         }
-      }  
-    }  
+      }
+    }
     buffer[0] = '\0';
     if (bufflen > 1) {
       strncpy(buffer,buf,bufflen);
       buffer[bufflen-1] = '\0';
     }
     return buffer;
-  }  
+  }
   return "";
 }
 

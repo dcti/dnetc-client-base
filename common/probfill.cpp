@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.87.2.4 2003/09/02 00:26:05 mweiser Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.87.2.5 2003/09/02 00:48:54 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -35,7 +35,7 @@ return "@(#)$Id: probfill.cpp,v 1.87.2.4 2003/09/02 00:26:05 mweiser Exp $"; }
 #include "buffbase.h"  // GetBufferCount,Get|PutBufferRecord,etc
 #include "modereq.h"   // ModeReqSet() and MODEREQ_[FETCH|FLUSH]
 #include "clievent.h"  // ClientEventSyncPost
-#include "util.h"      // trace
+#include "util.h"      // trace, DNETC_UNUSED_*
 #include "probfill.h"  // ourselves.
 
 // =======================================================================
@@ -300,7 +300,8 @@ static unsigned int ClientGetOutThreshold(Client *client,
                                    int contestid, int /* force */)
 {
   int outthresh = 0;  /* returns zero if outthresholds are not to be checked */
-  client = client; /* shaddup compiler. */
+
+  DNETC_UNUSED_PARAM(client);
 
   if (contestid < CONTEST_COUNT)
   {
@@ -387,7 +388,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
                 int abortive_action )
 {
   unsigned int did_save = 0;
-  prob_i = prob_i; /* shaddup compiler. we need this */
+
+  DNETC_UNUSED_PARAM(prob_i);
 
   *contest = 0;
   *is_empty = 1; /* assume not initialized */

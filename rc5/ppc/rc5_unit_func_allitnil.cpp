@@ -1,3 +1,4 @@
+#include "unused.h"     /* DNETC_UNUSED_* */
 #include "problem.h"
 
 extern "C" {
@@ -9,12 +10,13 @@ u32 rc5_unit_func_allitnil_compat( RC5UnitWork *, u32 iterations ); /* this */
 u32 rc5_unit_func_allitnil_compat( RC5UnitWork *work, u32 iterations )
 {
   return crunch_allitnil( work, iterations );
-}  
+}
 
 s32 rc5_unit_func_allitnil( RC5UnitWork *work, u32 *timeslice, void *savstate )
 {
   u32 kiter = 0;
-  savstate = savstate; /* not needed. shaddup compiler */
+
+  DNETC_UNUSED_PARAM(savstate);
 
   kiter = crunch_allitnil( work, *timeslice );
   if (*timeslice == kiter)
@@ -22,9 +24,9 @@ s32 rc5_unit_func_allitnil( RC5UnitWork *work, u32 *timeslice, void *savstate )
   if (*timeslice < kiter) {
     *timeslice = kiter;
     return RESULT_FOUND;
-  }    
+  }
   /* shouldn't happen with this core */
-  *timeslice = kiter; 
+  *timeslice = kiter;
   return -1; /* error */
 }
 

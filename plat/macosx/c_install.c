@@ -17,7 +17,7 @@
  * But http://developer.apple.com/techpubs/macosx/Essentials/SystemOverview/
  * BootingLogin/Creating_Cu_artup_Items.html seems to have more recent info.
  *
- * $Id: c_install.c,v 1.2.4.3 2003/09/01 23:26:27 mweiser Exp $
+ * $Id: c_install.c,v 1.2.4.4 2003/09/02 00:48:54 mweiser Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,6 +27,8 @@
 #include <sys/param.h>
 #include <dirent.h>
 #include <errno.h>
+
+#include "unused.h"     /* DNETC_UNUSED_* */
 
 #define STARTUPITEMS_HOST "/Library/StartupItems"
 #define STARTUPITEMS_DIR (STARTUPITEMS_HOST"/dnetc")
@@ -302,6 +304,8 @@ static int recursive_delete(const char *basename,
   struct dirent *dp;
   DIR *dir;
 
+  DNETC_UNUSED_PARAM(basepath);
+
   dir = opendir(".");
   if (!dir)
   {
@@ -368,7 +372,7 @@ static int recursive_delete(const char *basename,
     } /* while (readdir) */
     closedir(dir);
   }
-  basepath = basepath; /* may be unused */
+
   return rc;
 }
 

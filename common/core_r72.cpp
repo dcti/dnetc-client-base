@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.4 2003/09/01 22:38:02 mweiser Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.5 2003/09/02 00:48:53 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -20,7 +20,7 @@ return "@(#)$Id: core_r72.cpp,v 1.1.2.4 2003/09/01 22:38:02 mweiser Exp $"; }
 #include "selcore.h"   // keep prototypes in sync
 #include "probman.h"   // GetManagedProblemCount()
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
-#include "util.h"      // TRACE_OUT
+#include "util.h"      // TRACE_OUT, DNETC_UNUSED_*
 
 #if defined(HAVE_RC5_72_CORES)
 
@@ -459,6 +459,9 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
   int pipeline_count = 2; /* most cases */
   int client_cpu = CLIENT_CPU; /* usual case */
   int coresel = selcoreGetSelectedCoreForContest(RC5_72);
+
+  DNETC_UNUSED_PARAM(threadindex);
+
   if (coresel < 0)
     return -1;
   memset( &unit_func, 0, sizeof(unit_func));
@@ -650,7 +653,6 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
     return coresel;
   }
 
-  threadindex = threadindex; /* possibly unused. shaddup compiler */
   return -1; /* core selection failed */
 }
 

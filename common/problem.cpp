@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.8 2003/08/29 14:24:01 mweiser Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.9 2003/09/02 00:48:54 mweiser Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -28,7 +28,7 @@ return "@(#)$Id: problem.cpp,v 1.177.2.8 2003/08/29 14:24:01 mweiser Exp $"; }
 #include "rsadata.h"  //Get cipher/etc for random blocks
 #include "clicdata.h" //CliSetContestWorkUnitSpeed()
 #include "selcore.h"  //selcoreGetSelectedCoreForContest()
-#include "util.h"     //trace
+#include "util.h"     //trace, DNETC_UNUSED_*
 #include "cpucheck.h" //hardware detection
 #include "console.h"  //ConOutErr
 #include "triggers.h" //RaiseExitRequestTrigger()
@@ -1999,7 +1999,7 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
 
 int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
 {
-  prob_index = prob_index; /* possibly unused */
+  DNETC_UNUSED_PARAM(prob_index);
 
   #if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
   if (prob_index == 1 && /* thread number reserved for x86 card */

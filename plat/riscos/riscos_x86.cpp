@@ -5,7 +5,7 @@
  *
  * x86 PCCARD support including a crunch wrapper/controller
  *
- * $Id: riscos_x86.cpp,v 1.2.4.3 2003/09/01 23:28:38 mweiser Exp $
+ * $Id: riscos_x86.cpp,v 1.2.4.4 2003/09/02 00:48:54 mweiser Exp $
 */
 
 #include <string.h> /* memcpy */
@@ -13,8 +13,9 @@
 #include <kernel.h>
 #include <swis.h>
 
-#include "cputypes.h" /* u8, u32 */
-#include "problem.h"  /* RC5UnitWork */
+#include "cputypes.h"   /* u8, u32 */
+#include "unused.h"     /* DNETC_UNUSED_* */
+#include "problem.h"    /* RC5UnitWork */
 #include "riscos_x86.h" /* ourselves */
 
 #define RC5PC 0x523C0
@@ -105,6 +106,10 @@ s32 rc5_unit_func_x86( RC5UnitWork *work, u32 *iterations, void *memblk )
   #if defined(HAVE_X86_CARD_SUPPORT)
   static int isrunning = -2;
   static RC5UnitWork last;
+
+  DNETC_UNUSED_PARAM(work);
+  DNETC_UNUSED_PARAM(iterations);
+  DNETC_UNUSED_PARAM(memblk);
 
   RC5PCstruct rc5pc;
   _kernel_oserror *err;
@@ -230,9 +235,6 @@ s32 rc5_unit_func_x86( RC5UnitWork *work, u32 *iterations, void *memblk )
   }
   #endif /* HAVE_X86_CARD_SUPPORT */
 
-  work = work;             /* possibly unused */
-  iterations = iterations; /* possibly unused */
-  memblk = memblk;         /* unused */
   return -1;               /* error */
 }
 

@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.75.2.6 2003/08/14 00:32:27 mweiser Exp $"; }
+return "@(#)$Id: console.cpp,v 1.75.2.7 2003/09/02 00:48:53 mweiser Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -23,7 +23,7 @@ return "@(#)$Id: console.cpp,v 1.75.2.6 2003/08/14 00:32:27 mweiser Exp $"; }
 #include "version.h"  //CLIENT_VERSIONSTRING
 #include "clitime.h"
 #include "triggers.h"
-#include "util.h"     //utilGetAppName()
+#include "util.h"     //utilGetAppName(), DNETC_UNUSED_*
 #include "sleepdef.h" //usleep()
 #include "console.h"  //ourselves
 
@@ -103,12 +103,14 @@ int DeinitializeConsole(int waitforuser)
 int InitializeConsole(int *runhidden,int doingmodes)
 {
   int retcode = 0;
+
+  DNETC_UNUSED_PARAM(doingmodes);
+
   if ((++constatics.initlevel) == 1)
   {
     memset( (void *)&constatics, 0, sizeof(constatics) );
     constatics.initlevel = 1;
     constatics.runhidden = *runhidden;
-    doingmodes = doingmodes; /* possibly unused */
 
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     retcode = w32InitializeConsole(constatics.runhidden,doingmodes);
@@ -686,7 +688,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     static const int var[3] = { 133, 135, -1 };
     int value[3];
     _kernel_swi_regs regs;
-    
+
     if (!riscos_in_taskwindow)
     {
       regs.r[0]=(int)var;

@@ -18,10 +18,11 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi2_rg_cpp (void) {
-return "@(#)$Id: 2-rg.c,v 1.9.4.1 2003/09/02 00:19:26 mweiser Exp $"; }
+return "@(#)$Id: 2-rg.c,v 1.9.4.2 2003/09/02 00:48:55 mweiser Exp $"; }
 #endif
 
 #include "cputypes.h"
+#include "unused.h"     /* DNETC_UNUSED_* */
 #include "ccoreio.h"
 #include "rotate.h"
 
@@ -376,7 +377,8 @@ s32 rc5_ansi_rg_unified_form( RC5UnitWork *work,
    *                              and ... iterations_done  == retval * 2
   */
   u32 kiter, xiter = (*timeslice / 2);
-  scratch_area = scratch_area; /* shaddup compiler */
+
+  DNETC_UNUSED_PARAM(scratch_area);
 
   kiter = rc5_ansi_2_rg_unit_func( work, xiter );
   *timeslice = kiter * 2;
