@@ -12,7 +12,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.73 2001/06/23 17:52:30 andreasb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.74 2001/07/08 12:20:33 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -496,7 +496,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
           }
           else
           {
-            U64stringify(dcountbuf, sizeof(dcountbuf), info.dcounthi, info.dcountlo, 2, info.unit);
+            U64stringify(dcountbuf, (15<sizeof(dcountbuf))?15:sizeof(dcountbuf), 
+                         info.dcounthi, info.dcountlo, 2, info.unit);
             if (finito && info.is_test_packet) /* finished test packet */
               strcat( strcpy( dcountbuf,"Test: RESULT_"),
                      ((resultcode==RESULT_NOTHING)?("NOTHING"):("FOUND")) );
@@ -526,7 +527,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
             if (finito && info.show_exact_iterations_done)
             {
               Log("%s: %s [%s]\n", info.name, info.sigbuf,
-              ProblemComputeRate(cont_i, 0, 0, info.tcounthi, info.tcountlo, 0, 0, dcountbuf, sizeof(dcountbuf)));
+                  ProblemComputeRate(cont_i, 0, 0, info.tcounthi, info.tcountlo, 
+                                     0, 0, dcountbuf, sizeof(dcountbuf)));
             }
           } /* if (reason_msg) else */
         } /* if (action_msg) */
