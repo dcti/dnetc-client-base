@@ -65,6 +65,7 @@ struct s128 { s64 hi, lo; };
 #define CPU_88K         12
 #define CPU_KSR1        13
 #define CPU_S390        14
+#define CPU_MASPAR	15
 
 // Major OS Architectures.
 #define OS_UNKNOWN      0
@@ -107,6 +108,7 @@ struct s128 { s64 hi, lo; };
 #define OS_SINIX        37
 #define OS_DYNIX        38
 #define OS_OS390        39
+#define OS_MASPAR	40
 
 // determine current compiling platform
 #if defined(WIN32) || defined(__WIN32__) || defined(_Windows) || defined(_WIN32)
