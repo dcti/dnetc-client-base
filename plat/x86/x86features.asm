@@ -13,7 +13,7 @@
 ;
 ; Modified for distributed.net by Steven Nikkel, Nov 2003
 ;
-; $Id: x86features.asm,v 1.1.2.14 2004/08/20 16:32:43 snikkel Exp $
+; $Id: x86features.asm,v 1.1.2.15 2004/11/23 15:35:16 snikkel Exp $
 ;
 ; return u32
 
@@ -107,11 +107,11 @@ TryAMD:
 ; Check for Cyrix
 TryCyrix:
   cmp ebx, 69727943h
-  jne TryExtended
+  jne AMD_TryExtended
   cmp edx, 736E4978h
-  jne TryExtended
+  jne AMD_TryExtended
   cmp ecx, 64616574h
-  jne TryExtended
+  jne AMD_TryExtended
   jmp Cyrix
 
 Cyrix:
@@ -126,13 +126,13 @@ Cyrix:
   cpuid
 
   test edx, 01000000h  ; Test for Cyrix Ext'd MMX
-  jz Extended_Checks
+  jz AMD_Extended_Checks
   or esi, CPU_F_CYRIX_MMX_PLUS           ; Cyrix EMMX supported
 
-  jmp Extended_Checks
+  jmp AMD_Extended_Checks
 
 AMD:
-TryExtended:
+AMD_TryExtended:
   ; See if extended CPUID is supported
   mov eax, 80000000h
   cpuid
@@ -143,7 +143,7 @@ TryExtended:
   mov eax, 80000001h
   cpuid
 
-Extended_Checks:
+AMD_Extended_Checks:
 
   test edx, 00800000h   ; Test for MMX
   jz AMDMMXPlus_test
@@ -165,7 +165,28 @@ AMD64_test:
   jz Standard   
   or esi, CPU_F_AMD64   ; AMD64 supported
 
+  jmp Standard
+
 Intel:
+Intel_TryExtended:
+  ; See if extended CPUID is supported
+  mov eax, 80000000h
+  cpuid
+  cmp eax, 80000000h
+  jl Standard  ; Try standard CPUID instead
+
+  ; Extended CPUID supported, so get extended features
+  mov eax, 80000001h
+  cpuid
+
+Intel_Extended_Checks:
+EM64T_test:
+  test edx, 20000000h   ; Test for EM64T
+  jz Standard
+  or esi, CPU_F_EM64T   ; EM64T supported
+
+  jmp Standard
+
 Standard:
   mov eax, 1h
   cpuid
@@ -187,12 +208,8 @@ SSE2_test:
   or esi, CPU_F_SSE2    ; SSE2 Supported
 SSE3_test:
   test ecx, 00000001h   ; Test for SSE3
-  jz EM64T_test         ; SSE3 Not supported
+  jz HT_test            ; SSE3 Not supported
   or esi, CPU_F_SSE3    ; SSE3 Supported
-EM64T_test:
-  test edx, 20000000h   ; Test for EM64T
-  jz HT_test
-  or esi, CPU_F_EM64T   ; EM64T supported
 HT_test:
   test edx, 10000000h   ; Test for Hyper-Threading support
   jz Return
@@ -200,6 +217,7 @@ HT_test:
   cmp ebx, 00010000h    ; Check if Hyper-Threading enabled
   je Return
   or esi, CPU_F_HYPERTHREAD ; Hyper-Threading supported and enabled
+
   jmp Return
 
 ; Nothing supported
