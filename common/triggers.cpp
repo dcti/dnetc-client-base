@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.62 2001/03/20 09:50:28 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.63 2001/03/26 16:28:24 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -1335,6 +1335,7 @@ int DeinitializeTriggers(void)
   huptrig = trigstatics.huptrig.trigger;
   /* clear everything to ensure we don't use IO after DeInit */
   memset( (void *)(&trigstatics), 0, sizeof(trigstatics) );
+  ClearRestartRequestTrigger(); /* consume possibly unused static function */
   return huptrig;
 }  
 
