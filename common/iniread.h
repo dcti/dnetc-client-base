@@ -3,6 +3,9 @@
 // INI file reading/processing class for C++
 //
 // $Log: iniread.h,v $
+// Revision 1.19  1999/01/27 17:41:47  cyp
+// ANSIfied (cleaned up clib/os specific stuff)
+//
 // Revision 1.18  1999/01/27 00:55:26  jlawson
 // committed iniread from proxy again.  now uses INIREAD_SINGLEVALUE and
 // new INIREAD_WIN32_LIKE for client compiles.  the win32-like interface
@@ -64,40 +67,27 @@
 #ifndef __INIREAD_H__
 #define __INIREAD_H__
 
-#include "cputypes.h"
-
-/////////////////////////////////////////////////////////////////////////////
-
-#if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS)
-extern "C" {
-#endif
-
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include "cmpidefs.h"
-
-#if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS)
-}
-#endif
-
-#if defined(__TURBOC__)
-#pragma warn -inl       // disable "cannot inline" warning.
-#endif
-
-/////////////////////////////////////////////////////////////////////////////
-
 // define this value to not split ini values by commas.
 #define INIREAD_SINGLEVALUE
 
 // define this value to only provide a public win32-like interface.
 #define INIREAD_WIN32_LIKE
 
+
 /////////////////////////////////////////////////////////////////////////////
 
 #if !defined(INIREAD_WIN32_LIKE) || defined(COMPILING_INIREAD)
+
+#if defined(__TURBOC__)
+#pragma warn -inl       // disable "cannot inline" warning.
+#endif
+
+extern "C" {
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+#include <stdlib.h>
+}
 
 // convenient macro for an empty IniString.
 #define IniNULL IniString()
@@ -112,15 +102,15 @@ public:
   inline IniString(const void *value) : buffer(NULL) {*this = (char *)value;}
   inline IniString(const char *value) : buffer(NULL) {*this = value;}
   inline IniString(char value) : buffer(NULL) {*this = value;}
-  inline IniString(s32 value) : buffer(NULL) {*this = value;}
-  inline IniString(int value) : buffer(NULL) {*this = (s32) value;}
+  inline IniString(long value) : buffer(NULL) {*this = value;}
+  inline IniString(int value) : buffer(NULL) {*this = (long) value;}
   inline ~IniString() {if (buffer) delete buffer;}
 
   // assignment
   IniString &operator= (const char *value);
   IniString &operator= (const IniString &that);
   IniString &operator= (char value);
-  IniString &operator= (s32 value);
+  IniString &operator= (long value);
 
   // output conversions
   inline const char *c_str(void) const
@@ -129,8 +119,8 @@ public:
     { return (buffer ? buffer : ""); }
   inline operator int (void) const
     { return (int) atol(c_str()); }
-  inline operator s32 (void) const
-    { return (s32) atol(c_str()); }
+  inline operator long (void) const
+    { return (long) atol(c_str()); }
   inline void copyto(char *target, int maxlen) const
     {
       strncpy(target, c_str(), maxlen);
@@ -139,15 +129,17 @@ public:
 
 
   // conditional tests
-  inline bool is_null(void) const
+  inline int is_null(void) const
     { return (!buffer || !buffer[0]); }
-  inline friend bool operator== (const IniString &s1, const IniString &s2)
-    { return (strcmpi(s1.c_str(), s2.c_str()) == 0); }
-  inline friend bool operator== (const IniString &s1, const char *s2)
-    { return (strcmpi(s1.c_str(), s2) == 0); }
-  inline friend bool operator!= (const IniString &s1, const IniString &s2)
+  inline friend int operator== (const IniString &s1, const char *s2)
+    { const char *z1 = s1.c_str(); 
+      if (z1 == s2) return 1; if (!z1 || !s2) return 0; 
+      while (tolower(*z1)==tolower(*s2)) {z1++;s2++;} return (*z1 == *s2); }
+  inline friend int operator== (const IniString &s1, const IniString &s2)
+    { return (s1 == s2.c_str()); }
+  inline friend int operator!= (const IniString &s1, const IniString &s2)
     { return !(s1 == s2); }
-  inline bool need_quotes(void) const
+  inline int need_quotes(void) const
     {return (buffer && (strchr(buffer, ' ') || strchr(buffer, ',')) &&
           *buffer != '"' && strlen(buffer) > 1 &&
           buffer[strlen(buffer) - 1] != '"' );}
@@ -291,7 +283,7 @@ public:
   inline IniStringList(const IniString &v1, const IniString &v2) { AddNew(v1); AddNew(v2); }
 
   // integer constructors
-  inline IniStringList(s32 v1) { AddFrom(new IniString(v1)); }
+  inline IniStringList(long v1) { AddFrom(new IniString(v1)); }
   inline IniStringList(int v1) { AddFrom(new IniString(v1)); }
 
   // file writing
@@ -323,7 +315,7 @@ public:
 #endif
   inline IniRecord(const char *Key, const char *Value) :
     flags(0), key(Key), values(Value) {};
-  inline IniRecord(const char *Key, s32 v1) :
+  inline IniRecord(const char *Key, long v1) :
     flags(0), key(Key), values(v1) {};
   inline IniRecord(const char *Key, int v1) :
     flags(0), key(Key), values(v1) {};
@@ -348,6 +340,7 @@ public:
   inline IniSection() {};
   inline IniSection(const char *Section) : section(Section) {};
 
+
   // record addition
 #ifdef INIREAD_SINGLEVALUE
   inline void addrecord(const char *Key, const IniString &Values)
@@ -358,36 +351,70 @@ public:
 #endif
   inline void addrecord(const char *Key, const char *Value)
     { records.AddFrom(new IniRecord(Key, Value)); }
-  inline void addrecord(const char *Key, s32 Value)
+  inline void addrecord(const char *Key, long Value)
     { records.AddFrom(new IniRecord(Key, Value)); }
   inline void addrecord(const char *Key, int Value)
     { records.AddFrom(new IniRecord(Key, Value)); }
 
+
   // record modification
 #ifdef INIREAD_SINGLEVALUE
-  inline void setkey(const char *Key, const IniString &Values);
+  inline void setkey(const char *Key, const IniString &Values)
 #else
-  inline void setkey(const char *Key, const IniStringList &Values);
+  inline void setkey(const char *Key, const IniStringList &Values)
 #endif
-  inline void setkey(const char *Key, const char *v1);
-  inline void setkey(const char *Key, s32 v1);
-  inline void setkey(const char *Key, int v1) { setkey(Key, (s32) v1); }
+  { IniRecord *that = findfirst(Key); 
+    if (that) that->values = Values;  else addrecord(Key, Values); }
+  inline void setkey(const char *Key, const char *v1)
+    { IniRecord *that = findfirst(Key); 
+#ifdef INIREAD_SINGLEVALUE
+    if (that) { that->values = v1; }
+#else
+    if (that) { that->values.Flush(); that->values.AddFrom(new IniString(v1));}
+#endif
+    else addrecord(Key, v1);}
+  inline void setkey(const char *Key, long v1)
+    { IniRecord *that = findfirst(Key);
+#ifdef INIREAD_SINGLEVALUE
+    if (that) { that->values = v1; }
+#else
+    if (that) { that->values.Flush(); that->values.AddFrom(new IniString(v1)); }
+#endif
+    else addrecord(Key, v1);}
+  inline void setkey(const char *Key, int v1) { setkey(Key, (long) v1); }
+
 
   // record retrieval
 #ifdef INIREAD_SINGLEVALUE
-  inline const IniString &getkey(const char *Key, const IniString &DefValue);
+  inline const IniString &getkey(const char *Key, const IniString &DefValue)
 #else
-  inline const IniStringList &getkey(const char *Key, const IniStringList &DefValue);
+  inline const IniStringList &getkey(const char *Key, const IniStringList &DefValue)
 #endif
-  inline s32 getkey(const char *Key, s32 DefValue);
+    { IniRecord *that = findfirst(Key); return (that ? that->values : DefValue); }
+  inline long getkey(const char *Key, long DefValue)
+    { IniRecord *that = findfirst(Key);
+#ifdef INIREAD_SINGLEVALUE
+    return (that ? (long) that->values : DefValue );
+#else
+    return (that && that->values.GetCount() > 0 ? (long) that->values[0] : DefValue );
+#endif
+    }
   inline int getkey(const char *Key, int DefValue)
-    { return (int) getkey(Key, (s32) DefValue); }
-  inline IniString getkey(const char *Key, const char *DefValue = 0);
+    { return (int) getkey(Key, (long) DefValue); }
+  inline IniString getkey(const char *Key, const char *DefValue = 0)
+    { IniRecord *that = findfirst(Key);
+#ifdef INIREAD_SINGLEVALUE
+    return IniString((that ? that->values.c_str() : DefValue ));
+#else
+   return IniString((that && that->values.GetCount() > 0 ? that->values[0].c_str() : DefValue ));
+#endif
+    }
+
 
   // efficient alternate record retrieval (similar to Win32 api)
   inline int GetProfileInt(const char *Key, int DefValue)
-    { return (int) getkey(Key, (s32) DefValue); }
-  bool GetProfileBool(const char *Key, bool DefValue);
+    { return (int) getkey(Key, (long) DefValue); }
+  int GetProfileBool(const char *Key, int DefValue);
   inline void GetProfileStringA(const char *Key, const char *DefValue, char *buffer, int buffsize)
     {
       IniRecord *that = findfirst(Key);
@@ -439,8 +466,8 @@ public:
     { sections.Flush(); }
 
   // reading and writing
-  bool ReadIniFile(const char *Filename = NULL, const char *Section = 0);
-  bool WriteIniFile(const char *Filename = NULL);
+  int ReadIniFile(const char *Filename = NULL, const char *Section = 0);
+  int WriteIniFile(const char *Filename = NULL);
   void fwrite(FILE *out);
 
   // alternate record retrieval (similar to Win32 api).
@@ -449,7 +476,7 @@ public:
     { IniSection *section = findsection(Section);
       if (section) return section->GetProfileInt(Key, DefValue);
       else return DefValue; }
-  inline bool GetProfileBool(const char *Section, const char *Key, bool DefValue)
+  inline int GetProfileBool(const char *Section, const char *Key, int DefValue)
     { IniSection *section = findsection(Section);
       if (section) return section->GetProfileBool(Key, DefValue);
       else return DefValue; }
@@ -464,101 +491,32 @@ public:
 
   // section matching
   IniSection *findsection(const char *Section);
-  inline IniSection *addsection(const char *Section);
+  inline IniSection *addsection(const char *Section)
+    { IniSection *that = findsection(Section);
+      return (that ? that : sections.AddFrom(new IniSection(Section))); }
 };
-
-/////////////////////////////////////////////////////////////////////////////
-
-inline IniSection *IniFile::addsection(const char *Section)
-{
-  IniSection *that = findsection(Section);
-  return (that ? that : sections.AddFrom(new IniSection(Section)));
-}
-
-#ifdef INIREAD_SINGLEVALUE
-inline void IniSection::setkey(const char *Key, const IniString &Values)
-#else
-inline void IniSection::setkey(const char *Key, const IniStringList &Values)
-#endif
-{
-  IniRecord *that = findfirst(Key);
-  if (that) that->values = Values;
-  else addrecord(Key, Values);
-}
-
-inline void IniSection::setkey(const char *Key, const char *v1)
-{
-  IniRecord *that = findfirst(Key);
-#ifdef INIREAD_SINGLEVALUE
-  if (that) { that->values = v1; }
-#else
-  if (that) { that->values.Flush(); that->values.AddFrom(new IniString(v1)); }
-#endif
-  else addrecord(Key, v1);
-}
-
-inline void IniSection::setkey(const char *Key, s32 v1)
-{
-  IniRecord *that = findfirst(Key);
-#ifdef INIREAD_SINGLEVALUE
-  if (that) { that->values = v1; }
-#else
-  if (that) { that->values.Flush(); that->values.AddFrom(new IniString(v1)); }
-#endif
-  else addrecord(Key, v1);
-}
-
-#ifdef INIREAD_SINGLEVALUE
-inline const IniString &IniSection::getkey(const char *Key, const IniString &DefValue)
-#else
-inline const IniStringList &IniSection::getkey(const char *Key, const IniStringList &DefValue)
-#endif
-{
-  IniRecord *that = findfirst(Key);
-  return (that ? that->values : DefValue);
-}
-
-inline s32 IniSection::getkey(const char *Key, s32 DefValue)
-{
-  IniRecord *that = findfirst(Key);
-#ifdef INIREAD_SINGLEVALUE
-  return (that ? (s32) that->values : DefValue );
-#else
-  return (that && that->values.GetCount() > 0 ? (s32) that->values[0] : DefValue );
-#endif
-}
-
-inline IniString IniSection::getkey(const char *Key, const char *DefValue)
-{
-  IniRecord *that = findfirst(Key);
-#ifdef INIREAD_SINGLEVALUE
-  const char *src = (that ? that->values.c_str() : DefValue );
-#else
-  const char *src = (that && that->values.GetCount() > 0 ? that->values[0].c_str() : DefValue );
-#endif
-  return IniString(src);
-}
 #endif    // COMPILING_INIREAD
+
 /////////////////////////////////////////////////////////////////////////////
+
 #ifdef INIREAD_WIN32_LIKE
 
 unsigned long GetPrivateProfileStringB( const char *sect, const char *key, 
                                     const char *defval, char *buffer, 
                                     unsigned long buffsize, 
                                     const char *filename );
-
 int WritePrivateProfileStringB( const char *sect, const char *key, 
                                     const char *value, const char *filename );
-
 unsigned int GetPrivateProfileIntB( const char *sect, const char *key, 
                                     int defvalue, const char *filename );
-
 int WritePrivateProfileIntB( const char *sect, const char *key, 
                                      int value, const char *filename );
 
-#endif
+#endif /* ifdef INIREAD_WIN32_LIKE */
+
+
 /////////////////////////////////////////////////////////////////////////////
 
-#endif
+#endif /* ifndef __INIREAD_H__ */
 
 

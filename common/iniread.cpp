@@ -3,6 +3,9 @@
 
 
   $Log: iniread.cpp,v $
+  Revision 1.17  1999/01/27 17:41:47  cyp
+  ANSIfied (cleaned up clib/os specific stuff)
+
   Revision 1.16  1999/01/27 02:15:55  jlawson
   corrected return value checks
 
@@ -44,17 +47,8 @@
   added new iniread code
 
   Revision 1.10  1998/07/07 21:55:41  cyruspatel
-  Serious house cleaning - client.h has been split into client.h (Client
-  class, FileEntry struct etc - but nothing that depends on anything) and
-  baseincs.h (inclusion of generic, also platform-specific, header files).
-  The catchall '#include "client.h"' has been removed where appropriate and
-  replaced with correct dependancies. cvs Ids have been encapsulated in
-  functions which are later called from cliident.cpp. Corrected other
-  compile-time warnings where I caught them. Removed obsolete timer and
-  display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-  Made MailMessage in the client class a static object (in client.cpp) in
-  anticipation of global log functions.
-
+  client.h has been split into client.h and baseincs.h 
+  
   Revision 1.9  1998/06/29 08:44:11  jlawson
   More OS_WIN32S/OS_WIN16 differences and long constants added.
 
@@ -75,8 +69,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *iniread_cpp(void) {
-static const char *id="@(#)$Id: iniread.cpp,v 1.16 1999/01/27 02:15:55 jlawson Exp $";
-return id; }
+return "@(#)$Id: iniread.cpp,v 1.17 1999/01/27 17:41:47 cyp Exp $"; }
 #endif
 
 #define COMPILING_INIREAD
@@ -104,16 +97,10 @@ IniString &IniString::operator= (const IniString &that)
     return *this;
 }
 /////////////////////////////////////////////////////////////////////////////
-IniString &IniString::operator= (s32 value)
+IniString &IniString::operator= (long value)
 {
-  char temp[30];
-#if defined(HAVE_SNPRINTF)
-  snprintf(temp, sizeof(temp), "%ld", (long) value);
-#elif (CLIENT_OS == OS_WIN32)
-  ltoa((long) value, temp, 10);
-#else
+  char temp[(sizeof(long)+1)*3];
   sprintf(temp, "%ld", (long) value);
-#endif
   (*this) = temp;
   return *this;
 }
@@ -126,20 +113,6 @@ IniString &IniString::operator= (char value)
   buffer[1] = 0;
   return *this;
 }
-/////////////////////////////////////////////////////////////////////////////
-#ifdef NO_STRCASECMP
-int strcasecmp(const char *s1, const char *s2)
-{
-  while (*s1 && *s2) {
-    if (toupper(*s1) != toupper(*s2)) {
-      return (*s1 < *s2) ? -1 : 1;
-    }
-    s1++;
-    s2++;
-  }
-  return *s2 ? -1 : (*s1 ? 1 : 0);
-}
-#endif
 /////////////////////////////////////////////////////////////////////////////
 IniString operator+ (const IniString &s1, const IniString &s2)
 {
@@ -208,37 +181,34 @@ int IniString::instr(int offset, const IniString &match) const
 IniString IniString::ucase(void) const
 {
   IniString output = *this;
-#ifdef __TURBOC__
-  strupr((char*)output.c_str());
-#else
-  for (char *p = (char*) c_str(); *p; p++) *p = (char) toupper(*p);
-#endif
+  for (char *p = (char*) c_str(); *p; p++) 
+    *p = (char) toupper(*p);
   return output;
 }
 /////////////////////////////////////////////////////////////////////////////
 IniString IniString::lcase(void) const
 {
   IniString output = *this;
-#ifdef __TURBOC__
-  strlwr((char*)output.c_str());
-#else
-  for (char *p = (char*) c_str(); *p; p++) *p = (char) tolower(*p);
-#endif
+  for (char *p = (char*) c_str(); *p; p++) 
+    *p = (char) tolower(*p);
   return output;
 }
 /////////////////////////////////////////////////////////////////////////////
-bool IniSection::GetProfileBool(const char *Key, bool DefValue)
+int IniSection::GetProfileBool(const char *Key, int DefValue)
 {
   const char *value = GetProfileStringA(Key);
-  if (value)
-  {
-    static const char *falses[] = {"0", "false", "no", "off", "f", "n", NULL};
-    for (int i = 0; falses[i]; i++)
-      if (strcmpi(value, falses[i]) == 0) return false;
-    return true;
-  }
-  return DefValue;
-}
+  if (!value)
+    return DefValue;
+  if (atoi(value))
+    return 1;
+  char buf[6];int i=0;
+  for (;i<5 && value[i];i++)
+    buf[i]=(char)tolower(value[i]);
+  buf[i]=0;
+  if (strcmp(buf,"yes")==0 || strcmp(buf,"on")==0 || strcmp(buf,"true")==0)
+    return 1;
+  return 0;
+}  
 /////////////////////////////////////////////////////////////////////////////
 #ifndef INIREAD_SINGLEVALUE
 void IniStringList::fwrite(FILE *out)
@@ -271,9 +241,11 @@ void IniRecord::fwrite(FILE *out)
 #ifdef INIREAD_SINGLEVALUE
     fprintf(out, "%s=%s\n", key.c_str(), values.c_str());
 #else
+    #ifdef QUOTIFIY_KEYS
     if (key.need_quotes())
       fprintf(out, "\"%s\"=", key.c_str());
     else
+    #endif
       fprintf(out, "%s=", key.c_str());
 
     values.fwrite(out);
@@ -315,13 +287,13 @@ IniRecord *IniSection::findnext()
   return NULL;
 }
 /////////////////////////////////////////////////////////////////////////////
-// returns false on error
-bool IniFile::ReadIniFile(const char *Filename, const char *Section)
+// returns 0 on error
+int IniFile::ReadIniFile(const char *Filename, const char *Section)
 {
   // open up the file
   if (Filename) lastfilename = Filename;
   FILE *inf = fopen(lastfilename.c_str(), "r");
-  if (inf == NULL) return false;             // open failed
+  if (inf == NULL) return 0;             // open failed
 
   // start reading the file
   IniSection *section = 0;
@@ -425,7 +397,7 @@ bool IniFile::ReadIniFile(const char *Filename, const char *Section)
         IniStringList args;
 
         // strip out one argument
-        while (true)
+        while (peekch != EOF /* always */)
         {
           IniString value;
 
@@ -488,18 +460,19 @@ bool IniFile::ReadIniFile(const char *Filename, const char *Section)
     }
   }
   fclose(inf);
-  return true;
+  return 1;
 }
 /////////////////////////////////////////////////////////////////////////////
-// returns false on error
-bool IniFile::WriteIniFile(const char *Filename)
+// returns 0 on error
+int IniFile::WriteIniFile(const char *Filename)
 {
   if (Filename) lastfilename = Filename;
   FILE *outf = fopen(lastfilename.c_str(), "w");
-  if (outf == NULL) return true;
+  if (outf == NULL) 
+    return 0;
   fwrite(outf);
   fclose(outf);
-  return true;
+  return 1;
 }
 /////////////////////////////////////////////////////////////////////////////
 #ifdef INIREAD_WIN32_LIKE
@@ -507,7 +480,7 @@ unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
                       const char *defval, char *buffer, 
                       unsigned long buffsize, const char *filename )
 {
-  bool foundentry = false;
+  int foundentry = 0;
   IniFile inifile;
   IniSection *inisect;
   IniRecord *inirec;
@@ -530,7 +503,7 @@ unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
       if ((inirec = inisect->findfirst( key )) != NULL)
       {
         buffer[0] = 0;
-        foundentry = true;
+        foundentry = 1;
 #ifdef INIREAD_SINGLEVALUE
         inirec->values.copyto(buffer, buffsize );
 #else
@@ -540,7 +513,7 @@ unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
       }
     }
   }
-  if (!foundentry && *defval && defval != buffer)
+  if (foundentry==0 && *defval && defval != buffer)
   {
     strncpy( buffer, defval, buffsize-1 );
     buffer[buffsize-1] = 0;
@@ -555,7 +528,7 @@ int WritePrivateProfileStringB( const char *sect, const char *key,
   IniSection *inisect;
   IniRecord *inirec;
 
-  bool changed = false;
+  int changed = 0;
   if (sect == NULL)
     return 0;
   if (key == NULL)                 //we do not support section functions
@@ -573,13 +546,13 @@ int WritePrivateProfileStringB( const char *sect, const char *key,
     if ((inirec = inisect->findfirst( key ))!=NULL)
     {
       inisect->deleterecord( inirec );
-      changed = true;
+      changed = 1;
     }
   }
   else
   {
     inisect->setkey(key, value);
-    changed = true;
+    changed = 1;
   }
   if (changed)
   {
@@ -615,11 +588,7 @@ int WritePrivateProfileIntB( const char *sect, const char *key,
                             int value, const char *filename )
 {
   char buf[(sizeof(long)+1)*3];
-#ifdef HAVE_SNPRINTF
-  snprintf(buf, sizeof(buf), "%ld", (long)value);
-#else
   sprintf(buf, "%ld", (long)value);
-#endif
   return WritePrivateProfileStringB( sect, key, buf, filename );
 }
 
