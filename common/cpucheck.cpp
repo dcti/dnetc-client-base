@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.39 2000/04/21 10:17:59 jlawson Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.40 2000/05/06 20:20:53 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -92,7 +92,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     }
     #elif (CLIENT_OS == OS_NETWARE)
     {
-      cpucount = nwCliGetNumberOfProcessors();
+      cpucount = GetNumberOfRegisteredProcessors();
     }
     #elif (CLIENT_OS == OS_OS2)
     {
