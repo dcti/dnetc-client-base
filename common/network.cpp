@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.60  1999/01/03 06:19:35  cyp
+// Cleared an unused variable notice.
+//
 // Revision 1.59  1999/01/03 02:36:58  cyp
 // A strlwr() equivalent is not really needed here... It was a remnant of a
 // debug session.
@@ -172,12 +175,13 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.59 1999/01/03 02:36:58 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.60 1999/01/03 06:19:35 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
 
 #include "cputypes.h"
+#include "baseincs.h"  // standard stuff
 #include "sleepdef.h"  // Fix sleep()/usleep() macros there! <--
 #include "autobuff.h"  // Autobuffer class
 #include "cmpidefs.h"  // strncmpi(), strcmpi()
@@ -485,7 +489,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
   
   while (retries < maxtries) 
     {
-    int success = 0, sockopened = 0;
+    int success = 0;
     const char *netcheckfailed = "Network::Open Error - TCP/IP Connection Lost.\n";
 
     if (CheckExitRequestTrigger())

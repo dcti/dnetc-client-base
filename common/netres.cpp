@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.11  1999/01/03 06:20:32  cyp
+// Cleared an unused variable notice.
+//
 // Revision 1.10  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -38,7 +41,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.10 1999/01/01 02:45:15 cramer Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.11 1999/01/03 06:20:32 cyp Exp $"; }
 #endif
 
 //---------------------------------------------------------------------
@@ -83,7 +86,7 @@ static const struct        // this structure defines which proxies are
                 { "aussie", +9, -9 , +12 }, //jp and aussie cross the dateline
                 { "jp",    +10, -8 , -11 }   
                };
-static int dnet_portlist[] = {80,23,2064,3064,110};
+//static int dnet_portlist[] = {80,23,2064,3064,110};
 static const char DNET_PROXY_DOMAINNAME[]="v27.distributed.net"; // NOT char* 
 #endif
 
