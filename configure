@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.16 1999/07/15 21:11:13 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.17 1999/07/20 04:10:16 cyp Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -1249,7 +1249,6 @@ case "$1" in
 	TARGET_LIBS="-lc_r"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="freebsd-x86-elf"
-	TARGET_TARBALL_COMMENT="this release supercedes/consolidates all freebsd-x86-elf clients"
 	;;
  
     *x86-freebsd-mt-elf)    # (obsolete) [dbaker] elf + pthread
@@ -1766,7 +1765,7 @@ if [ "X$TARGET_TARBALL" != "X" ]; then
   if  [ "$TARGET_ARCTYPE" = "zip" ]; then
     echo "Zip support is not in place"  
   else     # tgz
-    echo "	tar -cvf rc5des\${BUILDNUM}-${TARGET_TARBALL}.tar.gz ${EXENAME} \${DOCFILES}" >>Makefile
+    echo "	tar -czf rc5des\${BUILDNUM}-${TARGET_TARBALL}.tar.gz ${EXENAME} \${DOCFILES}" >>Makefile
   fi
   echo "" >> Makefile  
 
