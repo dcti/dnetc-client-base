@@ -5,7 +5,7 @@
 ##   where <platform> is one of [dos | netware | os2 | w32 | w_h | wsv ]
 ##                       or anything else defined at the end of this makefile
 ##
-## $Id: makefile.wat,v 1.10 1998/06/16 22:29:59 silby Exp $
+## $Id: makefile.wat,v 1.11 1998/06/18 07:22:46 jlawson Exp $
 ##
 ## Revision history:
 ## 1.6  cyp Added support for new disphelp.cpp, deleted obsolete "cd xxx" 
@@ -29,8 +29,8 @@ LINK=wlink
            output\scram.obj output\des-x86.obj output\convdes.obj &
            output\clitime.obj output\clicdata.obj output\clirate.obj &
            output\clisrate.obj output\X86IDENT.OBJ &
-           platforms\win32-os2\p1bdespro.obj &
-           platforms\win32-os2\p2bdespro.obj
+           output\p1bdespro.obj &
+           output\p2bdespro.obj
            # this list can be added to in the platform specific section
 
 %STACKSIZE= 32767          #may be redefined in the platform specific section
@@ -79,7 +79,6 @@ clean :
   erase des\*.err
   erase rc5\*.bak
   erase rc5\*.err
-  erase platforms\win32-os2\*.bak
 
 zip :
   *zip -r zip *
@@ -164,71 +163,88 @@ output\buffwork.obj : common\buffwork.cpp common\buffwork.h common\client.h comm
   *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS) 
   @set isused=1
 
-output\rg-486.obj : platforms\win32-os2\rg-486.asm makefile.wat
+output\rg-486.obj : rc5\rg-486.asm makefile.wat
   *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
-output\rg-6x86.obj : platforms\win32-os2\rg-6x86.asm makefile.wat
+output\rg-6x86.obj : rc5\rg-6x86.asm makefile.wat
   *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
-output\rc5p5brf.obj : platforms\win32-os2\rc5p5brf.asm makefile.wat
+output\rc5p5brf.obj : rc5\rc5p5brf.asm makefile.wat
   *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
-output\rg-p5.obj : platforms\win32-os2\rg-p5.asm makefile.wat
+### rc5p5brf is faster than rg-p5
+#output\rg-p5.obj : rc5\rg-p5.asm makefile.wat
+#  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
+#  @set isused=1
+
+output\rg-p6.obj : rc5\rg-p6.asm makefile.wat
   *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
-output\rg-p6.obj : platforms\win32-os2\rg-p6.asm makefile.wat
+output\rg-k5.obj : rc5\rg-k5.asm makefile.wat
   *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
-output\rg-k5.obj : platforms\win32-os2\rg-k5.asm makefile.wat
+output\rg-k6.obj : rc5\rg-k6.asm makefile.wat
   *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
-output\rg-k6.obj : platforms\win32-os2\rg-k6.asm makefile.wat
+#---
+
+output\bdeslow.obj: des\brydwasm\bdeslow.asm makefile.wat
   *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
-output\bdeslow.obj: platforms\win32-os2\bdeslow.asm makefile.wat
+output\Bbdeslow.obj: des\brydwasm\Bbdeslow.asm makefile.wat
   *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
-output\Bbdeslow.obj: platforms\win32-os2\Bbdeslow.asm makefile.wat
+output\p1bdespro.obj: des\brydwasm\p1bdespro.asm makefile.wat
+  @if exist output\p1bdespro.obj erase output\p1bdespro.obj
+  copy /y des\brydmasm\p1bdespro.obj output\p1bdespro.obj
+  touch output\p1bdespro.obj
+#  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
+#  @set isused=1
+
+output\p2bdespro.obj: des\brydwasm\p2bdespro.asm makefile.wat
+  @if exist output\p2bdespro.obj erase output\p2bdespro.obj
+  copy /y des\brydmasm\p2bdespro.obj output\p2bdespro.obj
+  touch output\p2bdespro.obj
+#  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
+#  @set isused=1
+
+#---
+
+
+output\x86ident.obj : platforms\x86ident.asm makefile.wat
   *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
-output\bdeshgh.obj: platforms\win32-os2\bdeshgh.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
-  @set isused=1
-
-output\Bbdeshgh.obj: platforms\win32-os2\Bbdeshgh.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
-  @set isused=1
-
-output\x86ident.obj : platforms\win32-os2\x86ident.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
-  @set isused=1
-
+## OS/2 only
 output\dod.obj : platforms\os2cli\dod.cpp platforms\os2cli\dod.h makefile.wat 
   *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS);common
   @set isused=1
 
+## Netware only
 output\netware.obj : platforms\netware\netware.cpp common\client.h makefile.wat 
   *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS);common
   @set isused=1
 
+## Netware only
 output\hbyname.obj : platforms\netware\hbyname.cpp makefile.wat
   *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
   @set isused=1
 
-output\chklocks.obj : platforms\win32-os2\chklocks.asm makefile.wat
+## DOS only
+output\chklocks.obj : platforms\dos\chklocks.asm makefile.wat
   *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
-output\clearscr.obj : platforms\win32-os2\clearscr.asm makefile.wat
+## DOS only
+output\clearscr.obj : platforms\dos\clearscr.asm makefile.wat
   *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
