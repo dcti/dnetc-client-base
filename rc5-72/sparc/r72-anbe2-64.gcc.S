@@ -4,7 +4,7 @@
 !
 ! Author: Andreas Beckmann <andreasb@distributed.net>
 !
-! $Id: r72-anbe2-64.gcc.S,v 1.1.2.1 2004/08/13 04:14:58 snikkel Exp $
+! $Id: r72-anbe2-64.gcc.S,v 1.1.2.2 2004/08/13 16:38:01 snikkel Exp $
 !
 ! This 2 pipeline core is optimized for a sparc processor that is able to 
 ! dispatch two integer instructions (but only one shift, which must be the 
@@ -78,7 +78,7 @@ rc5_72_unit_func_anbe_2:
 
 #define stack_bias              2047
 
-#define default_stackframe	(8*(16+1+6))
+#define default_stackframe	(8*(16+1+6+1))
 
 #define stack			%sp+default_stackframe+stack_bias
 
@@ -93,8 +93,8 @@ rc5_72_unit_func_anbe_2:
 #define s_CS0			s_save_iterationsP-4
 #define s_GS1			s_CS0-4
 #define s_GS2			s_GS1-4
-#define fp_relative_size	(sizeof_r72unitwork+4+2*8+3*4)
-//   <--? here could be a filler for dword alignment
+//filler 4
+#define fp_relative_size	(sizeof_r72unitwork+4+2*8+3*4+4)
 #define stackframe_size         (default_stackframe+fp_relative_size+8+4*(2*26+26))
 // s_Sinit[26]
 #define s_Sinit(i)		stack+8+8*26+(4*i)
