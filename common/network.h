@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.24  1998/06/29 08:01:13  ziggyb
+// DOD defines
+//
 // Revision 1.23  1998/06/29 06:58:10  jlawson
 // added new platform OS_WIN32S to make code handling easier.
 //
@@ -140,9 +143,6 @@ extern "C" {
   #define close(s) soclose(s)
   #define read(sock, buff, len) recv(sock, (char*)buff, len, 0)
   #define write(sock, buff, len) send(sock, (char*)buff, len, 0)
-  #define StartDOD   "StartDOD.CMD"
-  #define StopDOD    "StopDOD.CMD"
-  #define DODCfg     "DOD.CFG"
 #elif (CLIENT_OS == OS_AMIGAOS)
   extern "C" {
   #include "platforms/amiga.h"
