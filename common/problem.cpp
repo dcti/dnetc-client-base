@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.72 2000/10/27 17:58:43 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.73 2000/10/28 15:41:09 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -209,51 +209,6 @@ static void __IncrementKey(u32 *keyhi, u32 *keylo, u32 iters, int contest)
       break;
   }
 }
-
-/* ------------------------------------------------------------- */
-
-#if 0
-u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%. */
-{
-  u32 retpermille = 0;
-  if (initialized && last_resultcode >= 0)
-  {
-    if (!started)
-      retpermille = startpermille;
-    else if (last_resultcode != RESULT_WORKING)
-      retpermille = 1000;
-    else
-    {
-      switch (contest)
-      {
-        case RC5:
-        case DES:
-        case CSC:
-                {
-                retpermille = (u32)( ((double)(1000.0)) *
-                (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
-                             ((double)(contestwork.crypto.keysdone.lo))) /
-                ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
-                             ((double)(contestwork.crypto.iterations.lo)))) );
-                break;
-                }
-        #if defined(HAVE_OGR_CORES)
-        case OGR:
-                WorkStub curstub;
-                (unit_func.ogr)->getresult(core_membuffer, &curstub, sizeof(curstub));
-                // This is just a quick&dirty calculation that resembles progress.
-                retpermille = curstub.stub.diffs[contestwork.ogr.workstub.stub.length]*10
-                            + curstub.stub.diffs[contestwork.ogr.workstub.stub.length+1]/10;
-                break;
-        #endif
-      }
-    }
-    if (retpermille > 1000)
-      retpermille = 1000;
-  }
-  return retpermille;
-}
-#endif
 
 /* ------------------------------------------------------------------- */
 
@@ -1179,70 +1134,6 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
   }
   return 0;
 }
-
-/* ----------------------------------------------------------------------- */
-
-#if 0
-// Calculates elapsed wall clock time between loadtime and now/finishtime
-// Stores the result in *elapsed and returns last_resultcode or -1 if error
-int Problem::GetElapsedTime(struct timeval *elapsed) const
-{
-  if (!elapsed)
-    return -1;
-  if (!initialized || last_resultcode < 0)
-  {
-    elapsed->tv_sec = elapsed->tv_usec = 0;
-    return -1;
-  }
-
-  if (elapsed_time_sec != 0xfffffffful)
-  {
-    /* problem finished, elapsed time has already calculated by Run() */
-    elapsed->tv_sec  = elapsed_time_sec;
-    elapsed->tv_usec = elapsed_time_usec;
-  }
-  else /* compute elapsed wall clock time since loadtime */
-  {
-    u32 start_sec  = loadtime_sec;
-    u32 start_usec = loadtime_usec;
-    struct timeval clock_now;
-
-    if (start_sec != 0xfffffffful) /* our start time was not invalid */
-    {
-      if (CliGetMonotonicClock(&clock_now) != 0)
-      {
-        if (CliGetMonotonicClock(&clock_now) != 0)
-          start_sec = 0xfffffffful; /* no current time, so make start invalid */
-      }
-    }
-    u32 elapsed_sec  = clock_now.tv_sec;
-    u32 elapsed_usec = clock_now.tv_usec;
-
-    if (start_sec == 0xfffffffful || /* start time is invalid */
-        elapsed_sec <  start_sec || (elapsed_sec == start_sec && elapsed_usec < start_usec ))
-    {
-      /* either start time is invalid, or current-time < start-time */
-      /* both are BadThing(TM)s - have to use the per-run total */
-      elapsed_sec  = runtime_sec;
-      elapsed_usec = runtime_usec;
-    }
-    else /* start and 'now' time are ok */
-    {
-      if (elapsed_usec < start_usec)
-      {
-        elapsed_usec += 1000000UL;
-        elapsed_sec  --;
-      }
-      elapsed_sec  -= start_sec;
-      elapsed_usec -= start_usec;
-    }
-    elapsed->tv_sec  = elapsed_sec;
-    elapsed->tv_usec = elapsed_usec;
-  }
-
-  return last_resultcode;
-}
-#endif
 
 /* ----------------------------------------------------------------------- */
 

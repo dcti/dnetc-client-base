@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.35 2000/10/27 17:58:44 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.36 2000/10/28 15:41:10 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -202,12 +202,12 @@ public: /* anything public must be thread safe */
                      char *ccountbuf, unsigned int ccountbufsz);
 
   // Return the % completed in the current block, to nearest 0.1%.
-  // used by clirun for checkpoint management (probably shouldn't)
-  u32 CalcPermille() {
-      u32 ret = 0; 
-      GetInfo(0, 0, 0, 0, 0, 0, 0, &ret, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-      return ret;
-  }      
+  // used to be used by clirun for checkpoint management
+  //u32 CalcPermille() {
+  //   u32 ret = 0; 
+  //   GetInfo(0, 0, 0, 0, 0, 0, 0, &ret, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+  //  return ret;
+  //}      
 };
 
 /* ------------------------------------------------------------------- */
