@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.39  1998/11/04 20:02:42  sampo
+// Fix for cpu detection on macs with a 601 processor upgraded to 750.
+//
 // Revision 1.38  1998/11/03 22:26:46  remi
 // Attempt to auto-detect the number of cpus on Linux/Sparc machines.
 //
@@ -138,7 +141,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.38 1998/11/03 22:26:46 remi Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.39 1998/11/04 20:02:42 sampo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -356,7 +359,9 @@ int GetProcessorType(int quietly)
 			if(result == gestaltCPU601) // PowerPC 601 detected
 				detectedtype = 0;
 			else
-				detectedtype = 1; // Any other PowerPC chip
+				detectedtype = 1; // Any other PowerPC chip, including a 601 with a G3
+								  // upgrade card, which returns the correct type but
+								  // wrong family.
 		}
 	if(!quietly)
 	{
