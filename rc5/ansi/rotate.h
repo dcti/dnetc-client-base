@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: rotate.h,v $
+// Revision 1.5.2.3  2001/02/09 04:16:57  sampo
+// let ia64 use alpha rotate macro, 50% speedup
+//
 // Revision 1.5.2.2  2000/01/08 01:16:38  snake
 // Makes ansi cores usable for 68k NetBSDs (maybe faster than crunch core)
 //
@@ -242,7 +245,7 @@ static __inline__ u32 ROTL3(u32 x)
 	return res;
 }
 
-#elif (CLIENT_CPU == CPU_ALPHA)
+#elif (CLIENT_CPU == CPU_ALPHA || CLIENT_CPU == CPU_IA64)
 
 //// This is based on the post on the rc5 list by micha (mbruck@ins-coin.de)
 //// It'll work on any DEC Alpha platform and maybe others
