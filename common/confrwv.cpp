@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.23 2000/03/13 12:40:31 jlawson Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.24 2000/03/16 22:38:52 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -699,19 +699,15 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
     if (GetPrivateProfileStringB( OPTION_SECTION, "keyproxy", "", buffer, sizeof(buffer), fn ))
     {
       if (__STRCASECMP(buffer,"auto")==0 || __STRCASECMP(buffer,"(auto)")==0)
-        buffer[0]=0; //one config version accidentally wrote "auto" out
-      else if (strcmp( buffer, "rc5proxy.distributed.net" )==0)
-        buffer[0]=0; //obsolete hostname
-      else if ( confopt_IsHostnameDNetHost( buffer ) &&
-        GetPrivateProfileIntB( OPTSECT_NET, "autofindkeyserver", 1, fn ) )
-        buffer[0]=0; //its a d.net host AND autofind is on. purge it.
-      if (buffer[0]==0)
-        WritePrivateProfileStringB( OPTSECT_NET,"autofindkeyserver",NULL,fn);
-      else
-      {
-        strncpy( client->keyproxy, buffer, sizeof(client->keyproxy) );
-        client->keyproxy[sizeof(client->keyproxy)-1]='\0';
-      }
+        buffer[0] = 0; //one config version accidentally wrote "auto" out
+      else if ( confopt_IsHostnameDNetHost( buffer ) == 1 )
+        buffer[0] = 0; //it's an unsupported d.net host, purge it.
+
+      strncpy( client->keyproxy, buffer, sizeof(client->keyproxy) );
+      client->keyproxy[sizeof(client->keyproxy)-1] = '\0';
+
+      WritePrivateProfileStringB( OPTSECT_NET,"autofindkeyserver",
+             (buffer[0] == 0 ? NULL : "no"), fn);
     }
     if ((i = GetPrivateProfileIntB( OPTION_SECTION, "keyport", 0, fn ))!=0)
     {
@@ -986,6 +982,11 @@ int ReadConfig(Client *client)
       // the user specified a blank servername, so force autofind.
       client->autofindkeyserver = 1;
       client->keyproxy[0] = 0;
+    }
+    else
+    {
+      // the user specified a valid servername, so ensure we use it.
+      client->autofindkeyserver = 0;
     }
   }
   else
