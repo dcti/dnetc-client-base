@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.90  1999/03/20 19:32:38  gregh
+// Update OGR processing code.
+//
 // Revision 1.89  1999/03/18 03:49:24  cyp
 // a) discarded intermediate rc5result state/structures; b) Modified
 // RetrieveState() to return the core's resultcode; c) #if 0'd all Log()
@@ -277,7 +280,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.89 1999/03/18 03:49:24 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.90 1999/03/20 19:32:38 gregh Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -1144,34 +1147,43 @@ else if (contest == 1) // *********************** DES *********************
 else if (contest == 2) // ******************************* OGR ***************
   {
     #ifndef GREGH
-    LogScreen("OGR stub %s\nOGR not implemented yet in Problem::Run\n"); 
+    LogScreen("OGR not implemented yet in Problem::Run\n"); 
     return -1;
     #else
     int nodes = 0x10000;
     int r = ogr->cycle(ogrstate, &nodes);
-    if (r != CORE_S_CONTINUE) 
-    {
-      if (r != CORE_S_OK) 
-      {
-        // error!
-      } 
-      else 
+    switch (r) {
+      case CORE_S_OK:
       {
         r = ogr->destroy(ogrstate);
-        if (r != CORE_S_OK) 
+        if (r == CORE_S_OK) 
         {
-          // error!
+          ogrstate = NULL;
+          resultcode = RESULT_NOTHING;
+          return 1;
         }
-        ogrstate = NULL;
+        break;
       }
-      resultcode = RESULT_NOTHING;
-      finished = 1;
-    } 
-    else 
-    {
-      resultcode = RESULT_WORKING;
-      finished = 0;
+      case CORE_S_CONTINUE:
+      {
+        resultcode = RESULT_WORKING;
+        return 0;
+      }
+      case CORE_S_SUCCESS:
+      {
+        Stub result;
+        if (ogr->getresult(ogrstate, &result, sizeof(result)) == CORE_S_OK)
+        {
+          Log("OGR Success!\n");
+          resultcode = RESULT_FOUND;
+          finished = 1;
+          return 1;
+        }
+        break;
+      }
     }
+    /* Something bad happened */
+    return -1;
     #endif
   }
 else
