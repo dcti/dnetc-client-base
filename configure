@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.190  1999/02/15 10:46:00  snake
+#
+# fixed rc5 core paths
+#
 # Revision 1.189  1999/02/11 21:24:42  patrick
 #
 # added new target x86-os2-nams-gcc to select nasm cores, based on a comment
@@ -867,20 +871,20 @@ COMMON_SRCS="common/client.cpp \
 XLC_LINTILLA_ASMS="rc5/crunch_lintilla.ppcxlc.s \
 		   rc5/crunch_allitnil_552.ppcxlc.s"
 
-NASM_RC5X86_SRCS="rc5/nasm/rg486.asm \
-		  rc5/nasm/rc5-rgk5.asm \
-		  rc5/nasm/brfp5.asm \
-		  rc5/nasm/rc5-rgk6.asm \
-		  rc5/nasm/rc5-rgp6.asm \
-		  rc5/nasm/rg6x86.asm \
-		  rc5/nasm/rc5mmx.asm"
+NASM_RC5X86_SRCS="rc5/x86/nasm/rg486.asm \
+		  rc5/x86/nasm/rc5-rgk5.asm \
+		  rc5/x86/nasm/brfp5.asm \
+		  rc5/x86/nasm/rc5-rgk6.asm \
+		  rc5/x86/nasm/rc5-rgp6.asm \
+		  rc5/x86/nasm/rg6x86.asm \
+		  rc5/x86/nasm/rc5mmx.asm"
 
-RC5X86_SRCS="rc5/rc5-486-rg.cpp \
-	     rc5/rc5-6x86-rg.cpp \
-	     rc5/rc5p5brf.cpp \
-	     rc5/rc5-p6-rg.cpp \
-	     rc5/rc5-k5-rg.cpp \
-	     rc5/rc5-k6-rg.cpp"
+RC5X86_SRCS="rc5/x86/rc5-486-rg.cpp \
+	     rc5/x86/rc5-6x86-rg.cpp \
+	     rc5/x86/rc5p5brf.cpp \
+	     rc5/x86/rc5-p6-rg.cpp \
+	     rc5/x86/rc5-k5-rg.cpp \
+	     rc5/x86/rc5-k6-rg.cpp"
 
 #
 # Source files making up the DES core code
@@ -928,7 +932,7 @@ TARGET_LDFLAGS=""
 TARGET_LIBS=""
 TARGET_AS="as"
 TARGET_NASM="nasm"
-TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -d__ELF__ -f elf"
+TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -d__ELF__ -f elf"
 TARGET_ASFLAGS=""
 TARGET_STRIP="strip"
 TARGET_CP="cp"
@@ -951,7 +955,7 @@ case "$1" in
 
 ###### MIPS based platforms
     *mips-sni-gcc)	   #For MIPS SINIX
-	RC5CORECOPY="rc5/mips-crunch.cpp"
+	RC5CORECOPY="rc5/mips/mips-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -Dsinix \
 			-DPIPELINE_COUNT=2 -DMIPS_CRUNCH=1"
 	TARGET_LIBS="-lsocket -lnsl -lc -L/usr/ucblib -lucb"
@@ -959,7 +963,7 @@ case "$1" in
 
     *mips-cc-64)	     # For 64bit MIPS processors
 	#  mips-crunch.cpp doesn't yet compile with CC
-	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-rg2.cpp"
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -O3 -r5000 -IPA -64 -mips4 \
 			-DPIPELINE_COUNT=2 -DBIT_64 -DKWAN -DMEGGS"
@@ -969,7 +973,7 @@ case "$1" in
 
     *mips5-cc)		# IRIX CC is slower than mips-gcc targets
 	#  mips-crunch.cpp doesn't compile with CC
-	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-rg2.cpp"
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -D_irix5_ \
 			-DPIPELINE_COUNT=2 -DBIT_32 -DKWAN -DMEGGS"
@@ -978,7 +982,7 @@ case "$1" in
 
     *mips-cc)		# IRIX CC is slower than mips-gcc targets
 	#  mips-crunch.cpp doesn't compile with CC
-	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-rg2.cpp"
 	TARGET_CC="CC"
 	TARGET_LDFLAGS="-n32"
 	TARGET_CCFLAGS="$OPTS_CC_MIPS -n32 \
@@ -989,14 +993,14 @@ case "$1" in
 	;;
 
     *mips-gcc-irix5-crunch)	# faster than mips-gcc for IRIX
-	RC5CORECOPY="rc5/mips-crunch.cpp"
+	RC5CORECOPY="rc5/mips/mips-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 -D_irix5_ \
 			-DMIPS_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	;;
 
     *mips-egcs-crunch-64)     #needs very recent egcs
-	RC5CORECOPY="rc5/mips-crunch.cpp"
+	RC5CORECOPY="rc5/mips/mips-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_EGCS_MIPS -mabi=64 \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 \
 			-DMIPS_CRUNCH=1 -DBIT_64 -DKWAN -DMEGGS"
@@ -1005,7 +1009,7 @@ case "$1" in
 	;;
 
     *mips-egcs-crunch)	# faster than mips-gcc for IRIX
-	RC5CORECOPY="rc5/mips-crunch.cpp"
+	RC5CORECOPY="rc5/mips/mips-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_EGCS_MIPS -mab=n32 \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 \
 			-DMIPS_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
@@ -1015,7 +1019,7 @@ case "$1" in
 
     *mips-gcc-ultrix)	# For mips based DEC Ultrix machines
 	DELETECHARS="'/.\$\-'"
-	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
@@ -1025,7 +1029,7 @@ case "$1" in
 ###### HPUX
 
     *hpux-CC)
-	RC5CORECOPY="rc5/parisc.cpp"
+	RC5CORECOPY="rc5/parisc/parisc.cpp"
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_GCC_HPUX -DPIPELINE_COUNT=2 \
 			-DBIT_32 -DKWAN -DMEGGS"
@@ -1034,7 +1038,7 @@ case "$1" in
 	;;
 
     *hpux-gcc)
-	RC5CORECOPY="rc5/parisc.cpp"
+	RC5CORECOPY="rc5/parisc/parisc.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_HPUX -DPIPELINE_COUNT=2 \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/parisc.s $MEGGS_SLICE_SRCS2"
@@ -1042,7 +1046,7 @@ case "$1" in
 
 
     *hpux-gcc-m68k)
-	RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi1-b2.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_HPUX_M68K -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DKWAN"
 	TARGET_LDFLAGS="-static"
@@ -1054,14 +1058,14 @@ case "$1" in
 
 ###### DGUX (Data General Unix)
     *dgux-gcc)
-	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CC="/usr/local/bin/g++"
 	TARGET_CCFLAGS="$OPTS_GCC_DGUX"
 	TARGET_LDFLAGS="-static"
 	;;
 
     *dgux-gcc-mt)
-	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CC="/usr/local/bin/g++"
 	TARGET_CCFLAGS="$OPTS_GCC_DGUX -D_POSIX4A_DRAFT6_SOURCE -DMULTITHREAD"
 	TARGET_LIBS="-lthread"
@@ -1070,7 +1074,7 @@ case "$1" in
 ###### Sparc/UltraSparc or Sun/SunOS/Solaris
 
     *sparc-openbsd)
-	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC272_SPARC1 \
 			-DPIPELINE_COUNT=2 -DBIT_32 -DKWAN -DMEGGS"
 	TARGET_LDFLAGS="-static"
@@ -1079,7 +1083,7 @@ case "$1" in
 	;;
 
     *sparc-linux)
-	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -D__showids__ \
 			-DPIPELINE_COUNT=2 -DLURK \
 			-DBIT_32 -DKWAN -DMEGGS"
@@ -1089,7 +1093,7 @@ case "$1" in
 	;;
 
     *sparc-linux-mt)
-	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -D__showids__ \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 -DLURK \
 			-DBIT_32 -DKWAN -DMEGGS"
@@ -1100,7 +1104,7 @@ case "$1" in
 	;;
 
     *sparc-linux-mt-egcs)
-	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC -fno-inline-functions \
 			-D__showids__ -DLURK \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 \
@@ -1112,7 +1116,7 @@ case "$1" in
 	;;
 
     *sparc-cc)
-	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
+	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
 	TARGET_CC="cc"
 	TARGET_CCFLAGS="$OPTS_CC_SPARC -DPIPELINE_COUNT=1"
 	TARGET_LIBS="-lnsl -lsocket"
@@ -1121,7 +1125,7 @@ case "$1" in
     *sunos-gcc-static)	
 	# FIX THIS
 	DELETECHARS="'[:punct:]'"
-	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -DPIPELINE_COUNT=2"
 	TARGET_LIBS="-static"
 	;;
@@ -1149,7 +1153,7 @@ case "$1" in
     #####
 
     *sparc-solaris-gcc-mt)	# slower rc5, slower des
-	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 \
@@ -1159,7 +1163,7 @@ case "$1" in
 	;;
 
     *sparc-solaris-gcc-crunch-mt)    # fastest rc5, slower des
-	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
+	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 \
@@ -1169,7 +1173,7 @@ case "$1" in
 	;;
 
     *sparc-solaris-gcc-crunch-slice)   # fastest rc5 & des for ultra
-	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
+	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
 	TARGET_CC="gcc -pipe"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
 			-DPIPELINE_COUNT=2 \
@@ -1179,7 +1183,7 @@ case "$1" in
 	;;
 
     *sparc-solaris-gcc-crunch-slice-mt)   # fastest rc5 & des for ultra
-	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
+	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
 	TARGET_CC="gcc -pipe"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 \
@@ -1189,7 +1193,7 @@ case "$1" in
 	;;
 
     *sparc-solaris-gcc-crunch-asmslice-mt)   # fastest rc5 & VIS DES
-	RC5CORECOPY="rc5/rc5-ultra-crunch.cpp"
+	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
 	TARGET_CC="gcc -pipe"
 	TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 -DULTRA_CRUNCH=1"
@@ -1223,7 +1227,7 @@ case "$1" in
 
 ###### Alpha
     *alpha-cc-ev5-static)	# If anyone is still using this rule, please remove this comment by May 99
-	RC5CORECOPY="rc5/rc5ansi2-bo2.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-bo2.cpp"
 	TARGET_CC="cxx"
 	TARGET_CCFLAGS="$OPTS_CC_ALPHA_EV5 -DPIPELINE_COUNT=2 \
 			-DBIT_64 -DKWAN -DMEGGS"
@@ -1232,7 +1236,7 @@ case "$1" in
 	;;
 
     *alpha-cc-ev4-static)	# If anyone is still using this rule, please remove this comment by May 99
-	RC5CORECOPY="rc5/rc5ansi2-bo2.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-bo2.cpp"
 	TARGET_CC="cxx"
 	TARGET_CCFLAGS="$OPTS_CC_ALPHA_EV4 -DPIPELINE_COUNT=2 \
 			-DBIT_64 -DKWAN -DMEGGS"
@@ -1263,7 +1267,7 @@ case "$1" in
 	;;
 
     *alpha-cc)	# If anyone is still using this rule, please remove this comment by May 99
-	RC5CORECOPY="rc5/rc5ansi2-bo2.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-bo2.cpp"
 	TARGET_CC="cxx"
 	TARGET_CCFLAGS="$OPTS_CC_ALPHA -DPIPELINE_COUNT=2 \
 			-DBIT_64 -DKWAN -DMEGGS"
@@ -1271,7 +1275,7 @@ case "$1" in
 	;;
 
     *alpha-gcc)
-	RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi1-b2.cpp"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 \
 			-DBIT_64 -DKWAN -DDWORZ"
@@ -1281,7 +1285,7 @@ case "$1" in
 	;;
 
     *alpha-gcc-mt)	# If anyone is still using this rule, please remove this comment by May 99
-	RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi1-b2.cpp"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA \
 			-DMULTITHREAD -DPIPELINE_COUNT=1 \
@@ -1292,7 +1296,7 @@ case "$1" in
 	;;
 
     *alpha-netbsd)
-	RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi1-b2.cpp"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 \
 			-DBIT_64 -DKWAN -DDWORZ"
@@ -1302,12 +1306,13 @@ case "$1" in
 	;;
 
     *alpha-openbsd)
-	RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi1-b2.cpp"
 	TARGET_AS="g++ -c"
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 \
 			-DBIT_64 -DKWAN -DDWORZ"
 	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS"
+	#TARGET_ADDSRC="$DWORZ_SLICE_SRCS rc5/alphaasm/axp-bmeyer.cpp rc5/alphaasm/axp-bmeyer.s"
 	TARGET_LDFLAGS="-static"
 	;;
 
@@ -1416,7 +1421,7 @@ case "$1" in
 	;;
 
     *power-gcc)	    # generic POWER target
-	RC5CORECOPY="rc5/rc5ansi1-rg.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi1-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_POWER -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
@@ -1456,7 +1461,7 @@ case "$1" in
 
     *aix-power-gcc-pipe1)  # AIX POWER with PIPELINE_COUNT=1 (do not use)
         DELETECHARS="'/.\$\-'"
-	RC5CORECOPY="rc5/rc5ansi1-rg.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi1-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_POWER -D_AIX -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
@@ -1464,7 +1469,7 @@ case "$1" in
 
     *aix-power-gcc-pipe2)  # AIX POWER with PIPELINE_COUNT=2 (preferred)
         DELETECHARS="'/.\$\-'"
-	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_POWER -D_AIX -DPIPELINE_COUNT=2 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
@@ -1500,7 +1505,7 @@ case "$1" in
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ \
 			  -d__showids__ \
 			  -f aout"
 	TARGET_LIBS=""
@@ -1518,7 +1523,7 @@ case "$1" in
 			platforms/x86ident.S \
 			des/p1bdespro.S des/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ \
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS="-lpthread"
@@ -1536,7 +1541,7 @@ case "$1" in
 			platforms/x86ident.S \
 			des/p1bdespro.S des/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ \
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS="-lpthread"
@@ -1550,11 +1555,11 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 \
 			-D__showids__ -DSMC -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ \
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS=""
@@ -1566,11 +1571,11 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 \
 			-D__showids__ -DSMC -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ \
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_STRIP="touch"
@@ -1583,13 +1588,13 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 \
 			-D__showids__ -DSMC -DMULTITHREAD"
 	TARGET_LDFLAGS="-static -Xlinker -omagic -DLURK"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
 			platforms/x86ident.S \
 			des/p1bdespro.S des/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ \
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS="-lpthread"
@@ -1604,11 +1609,11 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -pipe \
 			-D__showids__ -DSMC -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ \
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS=""
@@ -1620,13 +1625,13 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
 			-DSMC -DLURK"
 	TARGET_LDFLAGS="-Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
 			platforms/x86ident.S \
 			des/p1bdespro.S des/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ \
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_STRIP="touch"
@@ -1638,13 +1643,13 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
 			-DMULTITHREAD -DSMC -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
 			platforms/x86ident.S \
 			des/p1bdespro.S des/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ \
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS="-lpthread"
@@ -1655,13 +1660,13 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -DMMX_RC5 -D__showids__ -pipe \
 			-DMULTITHREAD -DBIT_32 -DKWAN -DMEGGS -DSMC"
 	TARGET_LDFLAGS="-static -Xlinker -omagic -DLURK"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
 			platforms/x86ident.S \
 			des/p1bdespro.S des/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ \
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS="-lpthread"
@@ -1673,11 +1678,11 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
 			-DSMC -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ \
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS=""
@@ -1689,11 +1694,11 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
 			-DSMC -DLURK"
 	TARGET_LDFLAGS="-Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ \
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_STRIP="touch"
@@ -1706,13 +1711,13 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
 			-DMULTITHREAD -DSMC -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S \
 			platforms/x86ident.S \
 			des/p1bdespro.S des/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ \
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS="-lpthread"
@@ -1729,7 +1734,7 @@ case "$1" in
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_LIBS="-lc_r"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -f aoutb"
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -f aoutb"
 	;;
 
     *x86-freebsd-mt)
@@ -1743,7 +1748,7 @@ case "$1" in
 			des/p1bdespro.S des/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_LIBS="-lc_r"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -f aoutb"
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -f aoutb"
 	;;
 
     *x86-freebsd-elf)
@@ -1791,7 +1796,7 @@ case "$1" in
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -d__AOUT__ -f aoutb"
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -d__AOUT__ -f aoutb"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	;;
 
@@ -1848,7 +1853,7 @@ case "$1" in
 ####### Intel x86 DYNIX
 
     *x86-dynix4)
-	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-rg2.cpp"
 	TARGET_CC="ec++"
 	TARGET_CCFLAGS="$OPTS_EPC_DYNIX -DMMX_RC5 -DPIPELINE_COUNT=2 \
 			-DBIT_32 -DMEGGS -DKWAN"
@@ -1858,7 +1863,7 @@ case "$1" in
 	;;
 
     *x86-dynix2)
-	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-rg2.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_DYNIX -DMMX_RC5 -DPIPELINE_COUNT=2 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
@@ -1884,17 +1889,17 @@ case "$1" in
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_NEXT_M68K -D_NeXT_ -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DKWAN"
-	TARGET_ADDSRCS="rc5/crunch.68k.gcc.s $KWAN_SLICE_SRCS4"
+	TARGET_ADDSRCS="rc5/68k/crunch.68k.gcc.s $KWAN_SLICE_SRCS4"
 	;;
 
     *m68k-next)
-	RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi1-b2.cpp"
 	TARGET_CC="cc++"
 	TARGET_CCLAGS="$OPTS_NEXT_M68K -arch m68k -D_NeXT_ -DPIPELINE_COUNT=1"
 	;;
 
     *sparc-next)
-	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CC="cc++"
 	TARGET_CCFLAGS="$OPTS_NEXT_SPARC -arch sparc -D_NeXT_  \
 			-DPIPELINE_COUNT=2 -DBIT_32"
@@ -1902,7 +1907,7 @@ case "$1" in
 	;;
 
     *hppa-next)
-	RC5CORECOPY="rc5/rc5ansi2-b2.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-b2.cpp"
 	TARGET_CC="cc++"
 	TARGET_CCFLAGS="$OPTS_NEXT_HPPA -arch hppa -D_NeXT_ \
 			-DPIPELINE_COUNT=2 -DBIT_32"
@@ -1916,7 +1921,7 @@ case "$1" in
 		   -apcs 3/26bit/swst/hardfp/fpe2 -zps1 -nounusedareas \
 		   -l/home/cberry/play/riscoslib/CLib/stubs.o"
 	TARGET_AS="armasm -apcs 3/26bit"
-	TARGET_CCFLAGS="-Icommon -Irc5 -Ides -Iplatforms \
+	TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -Iplatforms \
 			-I/home/cberry/play/riscoslib/OSLib \
 			-I/home/cberry/play/riscoslib/TCPIPLibs \
 			-J/home/cberry/play/riscoslib/CLib \
@@ -1925,7 +1930,7 @@ case "$1" in
 			-DPIPELINE_COUNT=2 -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS="platforms/riscos/riscos.cpp"
 	TARGET_ADDASMS="platforms/riscos/riscosasm.s \
-			rc5/rc5-arm-1.s rc5/rc5-arm-2.s rc5/rc5-arm-3.s \
+			rc5/arm/rc5-arm-1.s rc5/arm/rc5-arm-2.s rc5/arm/rc5-arm-3.s \
 			des/des-slice-arm.s des/des-slice-sa.s"
 	TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o \
 		     /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o \
@@ -1940,7 +1945,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_ARM -Dlinux \
 			-DPIPELINE_COUNT=2 -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS=""
-	TARGET_ADDASMS="rc5/rc5-sa-gnu.s rc5/rc5-arm-gnu.s \
+	TARGET_ADDASMS="rc5/arm/rc5-sa-gnu.s rc5/arm/rc5-arm-gnu.s \
 			des/des-slice-sa-gnu.s des/des-slice-arm-gnu.s"
 	TARGET_LIBS="-lm"
 	;;
@@ -1950,14 +1955,14 @@ case "$1" in
 	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_ARM -DPIPELINE_COUNT=2 -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS=""
-	TARGET_ADDASMS="rc5/rc5-sa-gnu.s rc5/rc5-arm-gnu.s \
+	TARGET_ADDASMS="rc5/arm/rc5-sa-gnu.s rc5/arm/rc5-arm-gnu.s \
 			des/des-slice-sa-gnu.s des/des-slice-arm-gnu.s"
 	TARGET_LIBS="-lm"
 	;;
 
 ###### OS390
     *os390)
-	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
+	RC5CORECOPY="rc5/ansi/rc5ansi2-rg2.cpp"
 	TARGET_CC="gcc"
 	TARGET_AS=""
 	TARGET_CCFLAGS="$OPTS_OS390 -D__showids__ \
@@ -1979,7 +1984,7 @@ case "$1" in
 			platforms/x86ident.S \
 			des/p1bdespro.S des/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ \
+	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ \
 			  -d__showids__ -d__ELF__ \
 			  -f elf"
 	TARGET_LIBS=""
@@ -2002,10 +2007,10 @@ case "$1" in
         TARGET_CC="gcc"
 	TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -I. -I${C_INCLUDE_PATH} -DMULTITHREAD -D__showids__"
 	TARGET_LDFLAGS="-Zmt"
-	TARGET_ADDSRCS="common/lurk.cpp rc5/rc5-486-smc-rg.cpp $RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 platforms/os2cli/os2inst.cpp"
+	TARGET_ADDSRCS="common/lurk.cpp rc5/x86/rc5-486-smc-rg.cpp $RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 platforms/os2cli/os2inst.cpp"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
-	TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm $NASM_DESMMX_SRCS"
-        TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -d__showids__ -f aout "
+	TARGET_ADDNASMS="rc5/x86/nasm/rc5mmx.asm $NASM_DESMMX_SRCS"
+        TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -d__showids__ -f aout "
         TARGET_LIBS="-lsocket"
         TARGET_OS=OS2
         ;;
@@ -2020,10 +2025,10 @@ case "$1" in
         TARGET_CC="gcc"
 	TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -I. -I${C_INCLUDE_PATH} -DMULTITHREAD -D__showids__"
 	TARGET_LDFLAGS="-Zmt"
-	TARGET_ADDSRCS="common/lurk.cpp rc5/rc5-486-smc-rg.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 platforms/os2cli/os2inst.cpp"
+	TARGET_ADDSRCS="common/lurk.cpp rc5/x86/rc5-486-smc-rg.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 platforms/os2cli/os2inst.cpp"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
-        TARGET_NASMFLAGS="-i rc5/nasm/ -i des/mmx-bitslice/ -d__showids__ -f aout "
+        TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ -d__showids__ -f aout "
         TARGET_LIBS="-lsocket"
         TARGET_OS=OS2
         ;;
