@@ -24,6 +24,7 @@ RC5_SRCS =                   \
 	common/clicdata.cpp  \
 	common/buffwork.cpp  \
 	common/convdes.cpp   \
+	common/disphelp.cpp  \
 	des/des-x86.cpp
 
 RC5_OBJS =                    \
@@ -41,6 +42,7 @@ RC5_OBJS =                    \
 	output/clicdata.obj   \
 	output/buffwork.obj   \
 	output/des-x86.obj    \
+	output/disphelp.obj   \
 	output/convdes.obj
 
 PREBUILT_OBJS =                          \
@@ -65,7 +67,7 @@ RC5_LIBS = wsock32.lib advapi32.lib
 	cl -c $(OPTS_MSVC) -Fo$@ $**
 
 {platforms/win32-os2}.asm{platforms/win32-os2}.obj:
-#	touch $@
+#       touch $@
 
 all: rc5v2
 
