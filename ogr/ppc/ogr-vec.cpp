@@ -5,7 +5,7 @@
 */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.3.4.7 2004/07/08 17:15:34 piru Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.3.4.8 2004/07/13 22:18:35 kakace Exp $"; }
 
 #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
   #if (__MWERKS__)
@@ -121,7 +121,6 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.7 2004/07/08 17:15:34 piru Exp $"; }
      comp0  = lev->comp0;                                             \
      list0  = lev->list0;                                             \
      int cnt2 = lev->cnt2;                                            \
-     U c0neg = ~comp0;                                                \
      int newbit = 1;                                                  \
      int limit;
 
@@ -749,7 +748,6 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.7 2004/07/08 17:15:34 piru Exp $"; }
           listV0 = __vsldoi(ZEROS, listV0, 12);                       \
           break;                                                      \
      }                                                                \
-     c0neg = ~comp0;                                                  \
      newbit = 0;                                                      \
   }
 
@@ -761,8 +759,7 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.7 2004/07/08 17:15:34 piru Exp $"; }
      listV1 = __vsldoi(listV0, listV1, 12);                           \
      newbit = 0;                                                      \
      lev->compV.v = compV;                                            \
-     listV0 = __vsldoi(ZEROS, listV0, 12);                            \
-     c0neg  = ~comp0;
+     listV0 = __vsldoi(ZEROS, listV0, 12);
 
   /* set the current mark and push a level to start a new mark */
   #define PUSH_LEVEL_UPDATE_STATE(lev)                                \
@@ -778,8 +775,7 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.7 2004/07/08 17:15:34 piru Exp $"; }
      comp0 |= dist0;                                                  \
      lev->cnt2 = cnt2;                                                \
      newbit = 1;                                                      \
-     lev->limit = limit;                                              \
-     c0neg  = ~comp0;
+     lev->limit = limit;
 
   /* pop a level to continue work on previous mark */
   #define POP_LEVEL(lev)                                              \
@@ -792,7 +788,6 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.7 2004/07/08 17:15:34 piru Exp $"; }
      distV = vec_andc(distV, listV1);                                 \
      limit = lev->limit;                                              \
      cnt2 = lev->cnt2;                                                \
-     c0neg = ~comp0;                                                  \
      dist0 = dist0 & ~list0;
 
   /* save the local state variables */
