@@ -1,7 +1,7 @@
 
  RC5-DES Client for BeOS (x86 and PowerPC)
  Released by Peter DiCamillo <Peter_DiCamillo@brown.edu>
- document revision $Id: readme.beos,v 1.1 1999/05/06 18:37:35 cyp Exp $
+ document revision $Id: readme.beos,v 1.1.2.1 1999/06/03 20:44:07 cyp Exp $
 
  Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
 
@@ -34,6 +34,6 @@
 
  2.0  Notes: ---------------------------------------------------------
 
-    Beginning with v2.7100.416, the DOS client no longer assumes that the 
-    buffer files are in the _current_ directory. The default path is now
-    the client's directory.
+    None. :)
+    
+    
