@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.25 2000/03/09 07:49:36 jlawson Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.26 2000/03/09 09:24:13 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
@@ -1001,6 +1001,8 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
 
 /* --------------------------------------------------------------------- */
 
+// Flush blocks to a remote buffer fie.
+
 long BufferFlushFile( Client *client, const char *loadermap_flags )
 {
   long combinedtrans = 0, combinedworkunits = 0;
@@ -1009,9 +1011,17 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
   unsigned int contest;
   int failed = 0;
 
+
+  //
+  // If we aren't configured to do remote buffer updating, then quit.
+  //
   if (client->noupdatefromfile || client->remote_update_dir[0] == '\0')
     return 0;
 
+
+  //
+  // Generate the full path of the remote buffer.
+  //
   if (client->out_buffer_basename[0] == '\0')
   {
     strcpy( basename,
@@ -1028,6 +1038,10 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
   }
   basename[sizeof(basename)-1] = '\0';
 
+
+  //
+  // Loop through each contest and perform the fetching activity.
+  //
   for (contest = 0; failed == 0  && contest < CONTEST_COUNT; contest++)
   {
     WorkRecord wrdata;
@@ -1103,6 +1117,10 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
 
   } /* for (contest = 0; contest < CONTEST_COUNT; contest++) */
 
+
+  //
+  // Print out a final summary of how many blocks were transferred.
+  //
   if (combinedtrans > 0)
   {
     ClientEventSyncPost( CLIEVENT_BUFFER_FLUSHEND, (long)(combinedtrans) );
@@ -1110,12 +1128,18 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
       combinedtrans, ((combinedtrans==1)?(""):("s")), combinedworkunits );
   }
 
+
+  //
+  // Return the result code.
+  //
   if (failed)
     return -((long)(combinedtrans+1));
   return combinedtrans;
 }
 
 /* --------------------------------------------------------------------- */
+
+// Fetch blocks from a remote buffer file
 
 long BufferFetchFile( Client *client, const char *loaderflags_map )
 {
@@ -1125,12 +1149,19 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
   unsigned int contest;
   int failed = 0;
 
+
+  //
+  // If we aren't configured to do remote buffer updating, then quit.
+  //
   if (client->noupdatefromfile || client->remote_update_dir[0] == '\0')
     return 0;
 
+
+  //
+  // we need the correct number of cpus _used_ for time estimates
+  // but need the correct number of _crunchers_ for thresh.
+  //
   int proc, numcrunchers;
-  /* we need the correct number of cpus _used_ for time estimates */
-  /* but need the correct number of _crunchers_ for thresh */
   proc = GetNumberOfDetectedProcessors();
   if (proc < 1)
     proc = 1;
@@ -1140,6 +1171,10 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
   else if (numcrunchers == 0) /* force non-threaded */
     numcrunchers = 1;
 
+
+  //
+  // Generate the full path of the remote buffer.
+  //
   if (client->in_buffer_basename[0] == '\0')
   {
     strcpy( basename,
@@ -1158,6 +1193,10 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
   basename[sizeof(basename)-1] = '\0';
 //printf("basename: %s\n",basename);
 
+
+  //
+  // Loop through each contest and perform the fetching activity.
+  //
   for (contest = 0; !failed && contest < CONTEST_COUNT; contest++)
   {
     unsigned long projtrans = 0, projworkunits = 0;
@@ -1230,9 +1269,9 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
       }
 
       projtrans++;
-      projworkunits+=workunits;
+      projworkunits += workunits;
       combinedtrans++;
-      combinedworkunits+=workunits;
+      combinedworkunits += workunits;
       if (((unsigned long)workunits) > lefttotrans)
         lefttotrans = 0;
       else
@@ -1260,6 +1299,10 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
 
   } /* for (contest = 0; contest < CONTEST_COUNT; contest++) */
 
+
+  //
+  // Print out a final summary of how many blocks were transferred.
+  //
   if (combinedtrans > 0)
   {
     ClientEventSyncPost( CLIEVENT_BUFFER_FETCHEND, (long)(combinedtrans) );
@@ -1268,6 +1311,10 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
       combinedtrans, ((combinedtrans==1)?(""):("s")) );
   }
 
+
+  //
+  // Return the result code.
+  //
   if (failed)
     return -((long)(combinedtrans+1));
   return combinedtrans;
