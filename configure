@@ -5,6 +5,17 @@
 # Any other distribution or use of this source violates copyright.
 
 # $Log: configure,v $
+# Revision 1.113.2.2  1998/11/11 01:04:07  remi
+# Synced with :
+#   Revision 1.119  1998/11/10 10:35:31  jlawson
+#   moved location of the parisc rc5 core files into the rc5 directory
+#
+#   Revision 1.118  1998/11/10 09:18:09  silby
+#   Added alpha-linux target, should use axp-bmeyer core.
+#
+#   Revision 1.116  1998/11/08 21:35:42  silby
+#   Removed second processor source from freebsd-elf nonmt build.
+#
 # Revision 1.113.2.1  1998/11/08 11:01:59  remi
 # Initial (re)import of the public code.
 #
@@ -255,17 +266,17 @@ case "$1" in
 ###### HPUX
 
     *hpux-CC)
-	RC5CORECOPY="platforms/parisc.cpp"
+	RC5CORECOPY="rc5/parisc.cpp"
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_HPUX -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="platforms/parisc.s $MEGGS_SLICE_SRCS"
+	TARGET_ADDSRCS="rc5/parisc.s $MEGGS_SLICE_SRCS"
 	TARGET_LDFLAGS="$LDFLAGS_CC_HPUX"
 	;;
 
     *hpux-gcc)
-	RC5CORECOPY="platforms/parisc.cpp"
+	RC5CORECOPY="rc5/parisc.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_HPUX -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="platforms/parisc.s $MEGGS_SLICE_SRCS"
+	TARGET_ADDSRCS="rc5/parisc.s $MEGGS_SLICE_SRCS"
 	;;
 
 
@@ -413,6 +424,13 @@ case "$1" in
 	TARGET_LIBS="-ltermcap"
 	;;
 
+    *alpha-linux)
+	TARGET_AS="g++ -c"
+	TARGET_CC="g++"
+	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS rc5/alphaasm/axp-bmeyer.cpp rc5/alphaasm/axp-bmeyer.s"
+	;;
+
 ###### PowerPC/POWER
 
     *ppc-gcc)
@@ -495,7 +513,7 @@ case "$1" in
         TARGET_AS="gcc -c"
         TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -DPIPELINE_COUNT=2 -D__ELF__"
         TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-        TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+        TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_NASMFLAGS="-i rc5/nasm/ -f elf"
         TARGET_LIBS="-lc_r"
