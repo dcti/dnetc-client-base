@@ -1,3 +1,4 @@
+/* @(#)$Id: des-arm-wrappers.cpp,v 1.2 1999/12/07 23:53:30 cyp Exp $ */
 
 #ifdef __cplusplus
 extern "C" {

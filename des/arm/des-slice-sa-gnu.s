@@ -1,3 +1,4 @@
+/* @(#)$Id: des-slice-sa-gnu.s,v 1.9 1999/12/07 23:53:30 cyp Exp $ */
 
 .macro  adrli   dest, addr, a, b, c
         .set    \a, \addr-.-8

@@ -1,26 +1,18 @@
-//
-// $Log: deseval-meggs2.cpp,v $
-// Revision 1.6  1998/11/16 16:30:48  remi
-// #if defined(BITSLICER_WITH_LESS_BITS)
-//   #error "This core won't work with BITSLICER_WITH_LESS_BITS !"
-// #endif
-//
-// Revision 1.5  1998/11/16 16:13:43  remi
-// This core shouldn't be used in a multithread client.
-// Removed the Rocke Verser copyright comment, since we don't use
-// his sboxes anymore.
-//
-// Revision 1.4  1998/07/08 23:42:10  remi
-// Added support for CliIdentifyModules().
-//
-// Revision 1.3  1998/06/14 08:27:05  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-//
-// Revision 1.2  1998/06/14 08:13:20  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-//
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "kwan-sboxes.h"
+
+/* Bitslice driver copyright (C) 1998 Andrew Meggs / casa de la cabeza explosiva */
+/* All rights reserved. A non-transferrable, royalty free license to this code   */
+/* is granted to distributed.net for use exclusively in the DES Challenge II,    */
+/* but ownership remains with the author.                                        */
+
+
+#if (!defined(lint) && defined(__showids__))
+const char *deseval_meggs2_cpp(void) {
+return "@(#)$Id: deseval-meggs2.cpp,v 1.7 1999/12/07 23:53:29 cyp Exp $"; }
+#endif
 
 #ifdef (MULTITHREAD)
   #error "This core is *NOT* multithread-safe !"
@@ -28,21 +20,6 @@
   #error "This core won't work with BITSLICER_WITH_LESS_BITS !"
 #endif
 
-#if (!defined(lint) && defined(__showids__))
-const char *deseval_meggs2_cpp(void) {
-return "@(#)$Id: deseval-meggs2.cpp,v 1.6 1998/11/16 16:30:48 remi Exp $"; }
-#endif
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-/* Bitslice driver copyright (C) 1998 Andrew Meggs / casa de la cabeza explosiva */
-/* All rights reserved. A non-transferrable, royalty free license to this code   */
-/* is granted to distributed.net for use exclusively in the DES Challenge II,    */
-/* but ownership remains with the author.                                        */
-
-#include "kwan-sboxes.h"
 #define WORD_TYPE unsigned long
 
 static void
