@@ -21,26 +21,35 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.41 2000/04/10 14:39:01 jlawson Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.42 2000/04/18 03:59:52 jlawson Exp $
 ==========================================================================
 
 2.8000
 ------
 
 2.8008.459  new: all: new rc5 K7 core thanks to
-                 Sean Stanek <vulture@iastate.edu>
+                   Sean Stanek <vulture@iastate.edu>
                  all: -btime <pn> <n>    command line option
+                 all: exit flagfile filename now configurable (exitrc5.now)
+                 all: the "update frequently (-frequent)" has been replaced
+                   with "additional buffer-level checking" that allows the
+                   conditions for updating to be specified (in-buffer not
+                   full, out-buffer not empty, or both).  Also a new mode
+                   "update on per-project in-buffer empty" to prevent
+                   rotation between open contests.
             chg: macos: now supports all variants of System 7
                  Linux: now attempts to explicitly load resolv libraries for
-                 dns resolution for greater glibc/libc cross compatibility.
+                   dns resolution for greater glibc/libc cross compatibility.
                  all: checkpointing now done at 10% or 10 minute intervals,
-                 instead of 10% with 10 minute minimum.
+                   instead of 10% with 10 minute minimum.
                  winnt4: pause on process handling optimized
                  all: now logs, if exitfile was found during startup.
                  all: time threshold uses fetch work threshold > 0 as minimum
-                 number of workunits to be fetched.
+                   number of workunits to be fetched.
                  all: -b[in] <pn> <n> now clears time threshold for <pn>.
-                 all: rotating projects before fetching disabled by default.
+                 all: rotating between projects before fetching can now be
+                   controlled (see the -frequent change above for the
+                   "update on per-project in-buffer empty" option).
                  all: will now flush to a proxy/server that is empty.
             fix: all: OGR -> RC5 / CSC -> RC5 switchover hang.
                  all: OGR nodecount network packet ordering fixed.
@@ -49,8 +58,8 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.41 2000/04/10 14:39:01 jlawson Exp 
                  Freebsd: timezone detection for automatic proxy pick works.
                  many: better file system locking on buffers done now.
                  all: reported OGR noderate when completing a resumed stub is 
-                 now the correct rate (was displayed as unacceptably high).
-                 all: now finishs partial OGR stubs before starting new ones.
+                   now the correct rate (was displayed as unacceptably high).
+                 all: now finishes partial OGR stubs before starting new ones.
                  all: wrong flush threshold selection.
 
 2.8007.458  fix: all: the annoying OGR 1 node bug finally fixed
