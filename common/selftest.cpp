@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selftest.cpp,v $
+// Revision 1.42  1999/03/01 08:19:44  gregh
+// Changed ContestWork to a union that contains crypto (RC5/DES) and OGR data.
+//
 // Revision 1.41  1999/02/21 21:44:59  cyp
 // tossed all redundant byte order changing. all host<->net order conversion
 // as well as scram/descram/checksumming is done at [get|put][net|disk] points
@@ -61,7 +64,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.41 1999/02/21 21:44:59 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.42 1999/03/01 08:19:44 gregh Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -214,8 +217,8 @@ int SelfTest( unsigned int contest, int cputype, int threadindex /* defaults to 
         expectedsolution.lo = ~expectedsolution.lo;
         }
       }
-    contestwork.key.lo = expectedsolution.lo & 0xFFFF0000L;
-    contestwork.key.hi = expectedsolution.hi;
+    contestwork.crypto.key.lo = expectedsolution.lo & 0xFFFF0000L;
+    contestwork.crypto.key.hi = expectedsolution.hi;
 
     if (contest == 0) { // RC5-64
       // test case 1 is the RSA pseudo-contest solution
@@ -263,28 +266,28 @@ int SelfTest( unsigned int contest, int cputype, int threadindex /* defaults to 
 */
       if (testnum>1 && testnum<=6) 
         {
-        if (!(contestwork.key.lo & 0xFFFF0000)) 
+        if (!(contestwork.crypto.key.lo & 0xFFFF0000)) 
           {
-          contestwork.key.lo -= 0x00010000;
-          contestwork.key.hi--;
+          contestwork.crypto.key.lo -= 0x00010000;
+          contestwork.crypto.key.hi--;
           } 
         else
-          contestwork.key.lo -= 0x00010000;
+          contestwork.crypto.key.lo -= 0x00010000;
         }
       }
 
-    contestwork.key.lo = ( contestwork.key.lo );
-    contestwork.key.hi = ( contestwork.key.hi );
-    contestwork.iv.lo =  ( (*test_cases)[testnum][2] );
-    contestwork.iv.hi =  ( (*test_cases)[testnum][3] );
-    contestwork.plain.lo = ( (*test_cases)[testnum][4] );
-    contestwork.plain.hi = ( (*test_cases)[testnum][5] );
-    contestwork.cypher.lo = ( (*test_cases)[testnum][6] );
-    contestwork.cypher.hi = ( (*test_cases)[testnum][7] );
-    contestwork.keysdone.lo = ( 0 );
-    contestwork.keysdone.hi = ( 0 );
-    contestwork.iterations.lo = ( 0x00020000L ); // 17 bits instead of 16
-    contestwork.iterations.hi = ( 0 );
+    contestwork.crypto.key.lo = ( contestwork.crypto.key.lo );
+    contestwork.crypto.key.hi = ( contestwork.crypto.key.hi );
+    contestwork.crypto.iv.lo =  ( (*test_cases)[testnum][2] );
+    contestwork.crypto.iv.hi =  ( (*test_cases)[testnum][3] );
+    contestwork.crypto.plain.lo = ( (*test_cases)[testnum][4] );
+    contestwork.crypto.plain.hi = ( (*test_cases)[testnum][5] );
+    contestwork.crypto.cypher.lo = ( (*test_cases)[testnum][6] );
+    contestwork.crypto.cypher.hi = ( (*test_cases)[testnum][7] );
+    contestwork.crypto.keysdone.lo = ( 0 );
+    contestwork.crypto.keysdone.hi = ( 0 );
+    contestwork.crypto.iterations.lo = ( 0x00020000L ); // 17 bits instead of 16
+    contestwork.crypto.iterations.hi = ( 0 );
 
     problem.LoadState( &contestwork, contest, 0x1000, cputype);
 

@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.41  1999/03/01 08:19:44  gregh
+// Changed ContestWork to a union that contains crypto (RC5/DES) and OGR data.
+//
 // Revision 1.40  1999/02/21 21:44:59  cyp
 // tossed all redundant byte order changing. all host<->net order conversion
 // as well as scram/descram/checksumming is done at [get|put][net|disk] points
@@ -132,6 +135,7 @@
 #define _PROBLEM_H_
 
 #include "cputypes.h"
+#include "stub.h"
 
 #if (CLIENT_CPU == CPU_X86)
   #define MAX_MEM_REQUIRED_BY_CORE (17*1024)
@@ -167,14 +171,19 @@ typedef struct
 } RC5UnitWork;
 
 // this has to stay 'in sync' with FileEntry
-typedef struct
+typedef union
 {
-  u64 key;              // starting key
-  u64 iv;               // initialization vector
-  u64 plain;            // plaintext we're searching for
-  u64 cypher;           // cyphertext
-  u64 keysdone;         // iterations done (also current position in block)
-  u64 iterations;       // iterations to do
+  struct {
+    u64 key;              // starting key
+    u64 iv;               // initialization vector
+    u64 plain;            // plaintext we're searching for
+    u64 cypher;           // cyphertext
+    u64 keysdone;         // iterations done (also current position in block)
+    u64 iterations;       // iterations to do
+  } crypto;
+  struct {
+    Stub stub;
+  } ogr;
 } ContestWork;
 
 typedef struct
@@ -262,10 +271,10 @@ public:
 
   u32 CalcPercent() { return (u32)( ((double)(100.0)) *
     /* Return the % completed in the current block, to nearest 1%. */
-        (((((double)(contestwork.keysdone.hi))*((double)(4294967296.0)))+
-                                 ((double)(contestwork.keysdone.lo))) /
-        ((((double)(contestwork.iterations.hi))*((double)(4294967296.0)))+
-                                 ((double)(contestwork.iterations.lo)))) ); }
+        (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
+                                 ((double)(contestwork.crypto.keysdone.lo))) /
+        ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
+                                 ((double)(contestwork.crypto.iterations.lo)))) ); }
 
   u32 AlignTimeslice(void);
      // return a modified ::tslice value that [has been adjusted if 

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: bench.cpp,v $
+// Revision 1.19  1999/03/01 08:19:44  gregh
+// Changed ContestWork to a union that contains crypto (RC5/DES) and OGR data.
+//
 // Revision 1.18  1999/02/21 21:44:58  cyp
 // tossed all redundant byte order changing. all host<->net order conversion
 // as well as scram/descram/checksumming is done at [get|put][net|disk] points
@@ -72,7 +75,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.18 1999/02/21 21:44:58 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.19 1999/03/01 08:19:44 gregh Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -210,18 +213,18 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
     tslice = GetTimesliceToUse(contestid);
   #endif
   
-  contestwork.key.lo = ( 0 );
-  contestwork.key.hi = ( 0 );
-  contestwork.iv.lo = ( 0 );
-  contestwork.iv.hi = ( 0 );
-  contestwork.plain.lo = ( 0 );
-  contestwork.plain.hi = ( 0 );
-  contestwork.cypher.lo = ( 0 );
-  contestwork.cypher.hi = ( 0 );
-  contestwork.keysdone.lo = ( 0 );
-  contestwork.keysdone.hi = ( 0 );
-  contestwork.iterations.lo = ( (1<<itersize) );
-  contestwork.iterations.hi = ( 0 );
+  contestwork.crypto.key.lo = ( 0 );
+  contestwork.crypto.key.hi = ( 0 );
+  contestwork.crypto.iv.lo = ( 0 );
+  contestwork.crypto.iv.hi = ( 0 );
+  contestwork.crypto.plain.lo = ( 0 );
+  contestwork.crypto.plain.hi = ( 0 );
+  contestwork.crypto.cypher.lo = ( 0 );
+  contestwork.crypto.cypher.hi = ( 0 );
+  contestwork.crypto.keysdone.lo = ( 0 );
+  contestwork.crypto.keysdone.hi = ( 0 );
+  contestwork.crypto.iterations.lo = ( (1<<itersize) );
+  contestwork.crypto.iterations.hi = ( 0 );
 
   problem.LoadState( &contestwork, contestid, tslice, cputype );
 

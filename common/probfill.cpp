@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.35  1999/03/01 08:19:44  gregh
+// Changed ContestWork to a union that contains crypto (RC5/DES) and OGR data.
+//
 // Revision 1.34  1999/02/21 21:44:59  cyp
 // tossed all redundant byte order changing. all host<->net order conversion
 // as well as scram/descram/checksumming is done at [get|put][net|disk] points
@@ -144,7 +147,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.34 1999/02/21 21:44:59 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.35 1999/03/01 08:19:44 gregh Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -257,7 +260,14 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       if (client->keyport == 3064)
         LogScreen("Test block success detected!\n");
       fileentry.op = ( OP_SUCCESS_MULTI );
-      fileentry.key.lo += fileentry.keysdone.lo;
+      switch (fileentry.contest) {
+        case 0: // RC5
+        case 1: // DES
+          fileentry.data.crypto.key.lo += fileentry.data.crypto.keysdone.lo;
+          break;
+        case 2: // OGR
+          break;
+      }
       }
     else
       {
@@ -316,14 +326,29 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
     *contest = cont_i;
     *is_empty = 1; /* will soon be */
 
-    unsigned long keyhi = ( fileentry.key.hi );
-    unsigned long keylo = ( fileentry.key.lo );
-    unsigned long percent = (unsigned long) ( (double) 10000.0 *
-                           ((double) (fileentry.keysdone.lo) /
-                            (double) (fileentry.iterations.lo) ) );
-    norm_key_count = 
-       (unsigned int)__iter2norm( (fileentry.iterations.lo),
-                                  (fileentry.iterations.hi) );
+    char workunit[80];
+    unsigned long percent = 0;
+    norm_key_count = 1;
+
+    switch (fileentry.contest) {
+      case 0: // RC5
+      case 1: // DES
+      {
+        unsigned long keyhi = ( fileentry.data.crypto.key.hi );
+        unsigned long keylo = ( fileentry.data.crypto.key.lo );
+        percent = (unsigned long) ( (double) 10000.0 *
+                 ((double) (fileentry.data.crypto.keysdone.lo) /
+                  (double) (fileentry.data.crypto.iterations.lo) ) );
+        norm_key_count = 
+           (unsigned int)__iter2norm( (fileentry.data.crypto.iterations.lo),
+                                      (fileentry.data.crypto.iterations.hi) );
+        sprintf(workunit, "%08lX:%08lX", keyhi, keylo);
+        break;
+      }
+      case 2: // OGR
+        strcpy(workunit, "stub"); //stubstr(fileentry.data.ogr.stub));
+        break;
+    }
 
     s32 cputype       = client->cputype; /* needed for FILEENTRY_CPU macro */
     #if (CLIENT_OS == OS_RISCOS)
@@ -353,8 +378,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       }
     if (msg)
       {
-      Log( "%s block %08lX:%08lX (%d.%02d%% complete)\n", msg,
-          (unsigned long) keyhi, (unsigned long) keylo,
+      Log( "%s block %s (%d.%02d%% complete)\n", msg, workunit,
             (unsigned int)(percent/100), (unsigned int)(percent%100) );
       }
     } /* unconditional unload */
@@ -384,7 +408,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
 
   contest_preferred = (client->preferred_contest_id == 0)?(0):(1);
   contest_alternate = (contest_preferred == 0)?(1):(0);
-  contest_count     = 2;
+  contest_count     = CONTEST_COUNT;
   cputype           = client->cputype; /* needed for FILEENTRY_CPU macro */
     
   /* RISC OS x86 thread currently only supports RC5 */
@@ -399,6 +423,10 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
 
   didrandom = didload = didupdate = 0;
   resetloop = 1;
+
+/*****/
+  // (for ogr testing) contest_preferred = 2;
+/*****/
 
 #ifdef DEBUG
 Log("Loadblock::Start Preferred contest: %u\n", contest_preferred);
@@ -437,7 +465,7 @@ Log("Loadblock::loop %u (contest %u), isdone: %s\n", cont_i,
               longcount = client->GetBufferRecord( &fileentry, contest_selected, 0 );
             }
           didupdate = 1; /* don't try another network update */
-          }
+          } 
 
 #ifdef DEBUG
 Log("Loadblock::getfromdisk(contest = %u) -> %s\n",
@@ -458,31 +486,35 @@ Log("Loadblock::getfromdisk(contest = %u) -> %s\n",
     {
     *load_needed = 0;
     
-    if (fileentry.contest != 1)
-      fileentry.contest=0;
-
-    if ( ((fileentry.keysdone.lo)!=0) || 
-         ((fileentry.keysdone.hi)!=0) )
-      {
-      // If this is a partial block, and completed by a different 
-      // cpu/os/build, then reset the keysdone to 0...
-      if ((fileentry.os      != FILEENTRY_OS) ||
-          (fileentry.buildhi != FILEENTRY_BUILDHI) || 
-          (fileentry.cpu     != FILEENTRY_CPU) || /* uses 'cputype' variable */
-          (fileentry.buildlo != FILEENTRY_BUILDLO))
-        {
-        fileentry.keysdone.lo = fileentry.keysdone.hi = 0;
-        //LogScreen("Read partial block from another cpu/os/build.\n"
-        // "Marking entire block as unchecked.\n");
-        }
-      else if (((fileentry.iterations.lo) & 0x00000001L) == 1)
-        {
-        // If a block was finished with an 'odd' number of keys done, 
-        // then make redo the last key
-        fileentry.iterations.lo = fileentry.iterations.lo & 0xFFFFFFFEL;
-        fileentry.key.lo        = fileentry.key.lo & 0xFEFFFFFFL;
-        }
-      }
+    switch (fileentry.contest) {
+      case 0: // RC5
+      case 1: // DES
+        if ( ((fileentry.data.crypto.keysdone.lo)!=0) || 
+             ((fileentry.data.crypto.keysdone.hi)!=0) )
+          {
+          // If this is a partial block, and completed by a different 
+          // cpu/os/build, then reset the keysdone to 0...
+          if ((fileentry.os      != FILEENTRY_OS) ||
+              (fileentry.buildhi != FILEENTRY_BUILDHI) || 
+              (fileentry.cpu     != FILEENTRY_CPU) || /* uses 'cputype' variable */
+              (fileentry.buildlo != FILEENTRY_BUILDLO))
+            {
+            fileentry.data.crypto.keysdone.lo = fileentry.data.crypto.keysdone.hi = 0;
+            //LogScreen("Read partial block from another cpu/os/build.\n"
+            // "Marking entire block as unchecked.\n");
+            }
+          else if (((fileentry.data.crypto.iterations.lo) & 0x00000001L) == 1)
+            {
+            // If a block was finished with an 'odd' number of keys done, 
+            // then make redo the last key
+            fileentry.data.crypto.iterations.lo = fileentry.data.crypto.iterations.lo & 0xFFFFFFFEL;
+            fileentry.data.crypto.key.lo        = fileentry.data.crypto.key.lo & 0xFEFFFFFFL;
+            }
+          }
+        break;
+      case 2: // OGR
+        break;
+    }
     } 
   else /* normal load from buffer failed */
     {
@@ -501,20 +533,20 @@ Log("Loadblock::getfromdisk(contest = %u) -> %s\n",
       RefreshRandomPrefix(client); //get/put an up-to-date prefix 
 
       u32 randomprefix = ( ( (u32)(client->randomprefix) ) + 1 ) & 0xFF;
-      fileentry.key.lo = Random( NULL, 0 ) & 0xF0000000L;
-      fileentry.key.hi = (Random( NULL, 0 ) & 0x00FFFFFFL) + 
+      fileentry.data.crypto.key.lo = Random( NULL, 0 ) & 0xF0000000L;
+      fileentry.data.crypto.key.hi = (Random( NULL, 0 ) & 0x00FFFFFFL) + 
                               ( randomprefix << 24); // 64 bits significant
       //constants are in clicdata.h
-      fileentry.iv.lo = ( RC564_IVLO );         //( 0xD5D5CE79L );
-      fileentry.iv.hi = ( RC564_IVHI );         //( 0xFCEA7550L );
-      fileentry.cypher.lo = ( RC564_CYPHERLO ); //( 0x550155BFL );
-      fileentry.cypher.hi = ( RC564_CYPHERHI ); //( 0x4BF226DCL );
-      fileentry.plain.lo = ( RC564_PLAINLO );   //( 0x20656854L );
-      fileentry.plain.hi = ( RC564_PLAINHI );   //( 0x6E6B6E75L );
-      fileentry.keysdone.lo = ( 0 );
-      fileentry.keysdone.hi = ( 0 );
-      fileentry.iterations.lo = ( 0x10000000L );
-      fileentry.iterations.hi = ( 0 );
+      fileentry.data.crypto.iv.lo = ( RC564_IVLO );         //( 0xD5D5CE79L );
+      fileentry.data.crypto.iv.hi = ( RC564_IVHI );         //( 0xFCEA7550L );
+      fileentry.data.crypto.cypher.lo = ( RC564_CYPHERLO ); //( 0x550155BFL );
+      fileentry.data.crypto.cypher.hi = ( RC564_CYPHERHI ); //( 0x4BF226DCL );
+      fileentry.data.crypto.plain.lo = ( RC564_PLAINLO );   //( 0x20656854L );
+      fileentry.data.crypto.plain.hi = ( RC564_PLAINHI );   //( 0x6E6B6E75L );
+      fileentry.data.crypto.keysdone.lo = ( 0 );
+      fileentry.data.crypto.keysdone.hi = ( 0 );
+      fileentry.data.crypto.iterations.lo = ( 0x10000000L );
+      fileentry.data.crypto.iterations.hi = ( 0 );
       fileentry.id[0] = 0;
       fileentry.op = ( OP_DATA );
       fileentry.os = 0;
@@ -537,8 +569,16 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
     *contest = (unsigned int)(fileentry.contest);
     thisprob->LoadState( (ContestWork *) &fileentry , 
           (u32) (fileentry.contest), client->timeslice, client->cputype );
-    norm_key_count = (unsigned int)__iter2norm((fileentry.iterations.lo),
-                                               (fileentry.iterations.hi));
+    norm_key_count = 1;
+    switch (fileentry.contest) {
+      case 0: // RC5
+      case 1: // DES
+        norm_key_count = (unsigned int)__iter2norm((fileentry.data.crypto.iterations.lo),
+                                                   (fileentry.data.crypto.iterations.hi));
+        break;
+      case 2: // OGR
+        break;
+    }
 
     ClientEventSyncPost( CLIEVENT_PROBLEM_STARTED, (long)prob_i );
 
@@ -547,12 +587,24 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
       const char *cont_name = CliGetContestNameFromID(*contest);
       unsigned int startpercent = (unsigned int)( thisprob->startpercent/10 );
 
-      Log("Loaded %s%s %u*2^28 block %08lX:%08lX%c(%u.%02u%% done)",
-              cont_name, ((didrandom)?(" random"):("")), norm_key_count,
-              (unsigned long) ( fileentry.key.hi ),
-              (unsigned long) ( fileentry.key.lo ),
-              ((startpercent!=0 && startpercent<=10000)?(' '):(0)),
-              (startpercent/100), (startpercent%100) );
+      switch (fileentry.contest) {
+        case 0: // RC5
+        case 1: // DES
+          Log("Loaded %s%s %u*2^28 block %08lX:%08lX%c(%u.%02u%% done)",
+                  cont_name, ((didrandom)?(" random"):("")), norm_key_count,
+                  (unsigned long) ( fileentry.data.crypto.key.hi ),
+                  (unsigned long) ( fileentry.data.crypto.key.lo ),
+                  ((startpercent!=0 && startpercent<=10000)?(' '):(0)),
+                  (startpercent/100), (startpercent%100) );
+          break;
+        case 2: // OGR
+          Log("Loaded %s stub %s (%u.%02u%% done)",
+                  cont_name,
+                  "(stub)", //stubstr(fileentry.data.ogr.stub),
+                  ((startpercent!=0 && startpercent<=10000)?(' '):(0)),
+                  (startpercent/100), (startpercent%100) );
+          break;
+      }
       }
     } 
 

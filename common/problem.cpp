@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.85  1999/03/01 08:19:44  gregh
+// Changed ContestWork to a union that contains crypto (RC5/DES) and OGR data.
+//
 // Revision 1.84  1999/03/01 06:50:28  foxyloxy
 // Prototype correction.... crunch() declared extern "C++" instead of "C".
 //
@@ -259,7 +262,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.84 1999/03/01 06:50:28 foxyloxy Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.85 1999/03/01 08:19:44 gregh Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -270,6 +273,7 @@ return "@(#)$Id: problem.cpp,v 1.84 1999/03/01 06:50:28 foxyloxy Exp $"; }
 #include "cpucheck.h"
 #include "console.h"
 #include "triggers.h"
+#include "client.h" // CONTEST_COUNT
 #if (CLIENT_OS == OS_RISCOS)
 #include "../platforms/riscos/riscos_x86.h"
 extern "C" void riscos_upcall_6(void);
@@ -387,6 +391,30 @@ extern void CliSignalHandler(int);
     #error Please declare/prototype cores by CLIENT_CPU if you are not using ansi*.cpp cores.
   #endif
 #endif
+
+/* ------------------------------------------------------------------- */
+
+static const char *stubstr(const Stub &stub)
+{
+  static char buf[80];
+  if (stub.length > 5) {
+    sprintf(buf, "(error:%d/%d)", stub.marks, stub.length);
+    return buf;
+  }
+  sprintf(buf, "%d/", stub.marks);
+  if (stub.length == 0) {
+    strcat(buf, "-");
+    return buf;
+  }
+  int len = stub.length;
+  for (int i = 0; i < len; i++) {
+    sprintf(&buf[strlen(buf)], "%d", stub.stub[i]);
+    if (i+1 < len) {
+      strcat(buf, "-");
+    }
+  }
+  return buf;
+}
 
 /* ------------------------------------------------------------------- */
 
@@ -515,7 +543,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   contest = _contest;
   cputype = _cputype;
 
-  if (contest != 0 && contest != 1)
+  if (contest < 0 || contest >= CONTEST_COUNT)
     return -1;
 
   pipeline_count = PIPELINE_COUNT;
@@ -621,7 +649,7 @@ ConInKey(-1);
 #endif
       }
     }
-  else //if (contest == 0) 
+  else if (contest == 0) 
     {
     if (cputype == 1)   // Intel 386/486
       {
@@ -658,48 +686,61 @@ ConInKey(-1);
 
   //----------------------------------------------------------------
 
-  // copy over the state information
-  contestwork.key.hi = ( work->key.hi );
-  contestwork.key.lo = ( work->key.lo );
-  contestwork.iv.hi = ( work->iv.hi );
-  contestwork.iv.lo = ( work->iv.lo );
-  contestwork.plain.hi = ( work->plain.hi );
-  contestwork.plain.lo = ( work->plain.lo );
-  contestwork.cypher.hi = ( work->cypher.hi );
-  contestwork.cypher.lo = ( work->cypher.lo );
-  contestwork.keysdone.hi = ( work->keysdone.hi );
-  contestwork.keysdone.lo = ( work->keysdone.lo );
-  contestwork.iterations.hi = ( work->iterations.hi );
-  contestwork.iterations.lo = ( work->iterations.lo );
+  switch (contest) {
+    case 0: // RC5
+    case 1: // DES
 
-  //determine starting key number. accounts for carryover & highend of keysdone
-  u64 key;
-  key.hi = contestwork.key.hi + contestwork.keysdone.hi + 
-     ((((contestwork.key.lo & 0xffff) + (contestwork.keysdone.lo & 0xffff)) + 
-       ((contestwork.key.lo >> 16) + (contestwork.keysdone.lo >> 16))) >> 16);
-  key.lo = contestwork.key.lo + contestwork.keysdone.lo;
-  
-  // set up the unitwork structure
-  rc5unitwork.plain.hi = contestwork.plain.hi ^ contestwork.iv.hi;
-  rc5unitwork.plain.lo = contestwork.plain.lo ^ contestwork.iv.lo;
-  rc5unitwork.cypher.hi = contestwork.cypher.hi;
-  rc5unitwork.cypher.lo = contestwork.cypher.lo;
+      // copy over the state information
+      contestwork.crypto.key.hi = ( work->crypto.key.hi );
+      contestwork.crypto.key.lo = ( work->crypto.key.lo );
+      contestwork.crypto.iv.hi = ( work->crypto.iv.hi );
+      contestwork.crypto.iv.lo = ( work->crypto.iv.lo );
+      contestwork.crypto.plain.hi = ( work->crypto.plain.hi );
+      contestwork.crypto.plain.lo = ( work->crypto.plain.lo );
+      contestwork.crypto.cypher.hi = ( work->crypto.cypher.hi );
+      contestwork.crypto.cypher.lo = ( work->crypto.cypher.lo );
+      contestwork.crypto.keysdone.hi = ( work->crypto.keysdone.hi );
+      contestwork.crypto.keysdone.lo = ( work->crypto.keysdone.lo );
+      contestwork.crypto.iterations.hi = ( work->crypto.iterations.hi );
+      contestwork.crypto.iterations.lo = ( work->crypto.iterations.lo );
 
-  rc5unitwork.L0.lo = key.lo;
-  rc5unitwork.L0.hi = key.hi;
-  if (contest == 0)
-    __SwitchRC5Format (rc5unitwork.L0);
+      //determine starting key number. accounts for carryover & highend of keysdone
+      u64 key;
+      key.hi = contestwork.crypto.key.hi + contestwork.crypto.keysdone.hi + 
+         ((((contestwork.crypto.key.lo & 0xffff) + (contestwork.crypto.keysdone.lo & 0xffff)) + 
+           ((contestwork.crypto.key.lo >> 16) + (contestwork.crypto.keysdone.lo >> 16))) >> 16);
+      key.lo = contestwork.crypto.key.lo + contestwork.crypto.keysdone.lo;
 
-  refL0 = rc5unitwork.L0;
+      // set up the unitwork structure
+      rc5unitwork.plain.hi = contestwork.crypto.plain.hi ^ contestwork.crypto.iv.hi;
+      rc5unitwork.plain.lo = contestwork.crypto.plain.lo ^ contestwork.crypto.iv.lo;
+      rc5unitwork.cypher.hi = contestwork.crypto.cypher.hi;
+      rc5unitwork.cypher.lo = contestwork.crypto.cypher.lo;
 
-  // set up the current result state
-  rc5result.key.hi = contestwork.key.hi;
-  rc5result.key.lo = contestwork.key.lo;
-  rc5result.keysdone.hi = contestwork.keysdone.hi;
-  rc5result.keysdone.lo = contestwork.keysdone.lo;
-  rc5result.iterations.hi = contestwork.iterations.hi;
-  rc5result.iterations.lo = contestwork.iterations.lo;
-  rc5result.result = RESULT_WORKING;
+      rc5unitwork.L0.lo = key.lo;
+      rc5unitwork.L0.hi = key.hi;
+      if (contest == 0)
+        __SwitchRC5Format (rc5unitwork.L0);
+
+      refL0 = rc5unitwork.L0;
+
+      // set up the current result state
+      rc5result.key.hi = contestwork.crypto.key.hi;
+      rc5result.key.lo = contestwork.crypto.key.lo;
+      rc5result.keysdone.hi = contestwork.crypto.keysdone.hi;
+      rc5result.keysdone.lo = contestwork.crypto.keysdone.lo;
+      rc5result.iterations.hi = contestwork.crypto.iterations.hi;
+      rc5result.iterations.lo = contestwork.crypto.iterations.lo;
+      rc5result.result = RESULT_WORKING;
+
+      break;
+
+    case 2: // OGR
+
+      contestwork.ogr = work->ogr;
+      break;
+
+  }
 
   //---------------------------------------------------------------
   
@@ -709,12 +750,12 @@ ConInKey(-1);
   //--------------------------------------------------------------- 
  
   startpercent = (u32)( ((double)(100000.0)) *
-        (((((double)(contestwork.keysdone.hi))*((double)(4294967296.0)))+
-                                 ((double)(contestwork.keysdone.lo))) /
-        ((((double)(contestwork.iterations.hi))*((double)(4294967296.0)))+
-                                 ((double)(contestwork.iterations.lo)))) );
+        (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
+                                 ((double)(contestwork.crypto.keysdone.lo))) /
+        ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
+                                 ((double)(contestwork.crypto.iterations.lo)))) );
   percent=0;
-  restart = ( contestwork.keysdone.lo!=0 || contestwork.keysdone.hi!=0 );
+  restart = ( contestwork.crypto.keysdone.lo!=0 || contestwork.crypto.keysdone.hi!=0 );
 
   initialized = 1;
   finished = 0;
@@ -788,18 +829,26 @@ s32 Problem::GetResult( RC5Result * result )
 s32 Problem::RetrieveState( ContestWork * work , s32 setflags )
 {
   // store back the state information
-  work->key.hi = ( contestwork.key.hi );
-  work->key.lo = ( contestwork.key.lo );
-  work->iv.hi = ( contestwork.iv.hi );
-  work->iv.lo = ( contestwork.iv.lo );
-  work->plain.hi = ( contestwork.plain.hi );
-  work->plain.lo = ( contestwork.plain.lo );
-  work->cypher.hi = ( contestwork.cypher.hi );
-  work->cypher.lo = ( contestwork.cypher.lo );
-  work->keysdone.hi = ( contestwork.keysdone.hi );
-  work->keysdone.lo = ( contestwork.keysdone.lo );
-  work->iterations.hi = ( contestwork.iterations.hi );
-  work->iterations.lo = ( contestwork.iterations.lo );
+  switch (contest) {
+    case 0: // RC5
+    case 1: // DES
+      work->crypto.key.hi = ( contestwork.crypto.key.hi );
+      work->crypto.key.lo = ( contestwork.crypto.key.lo );
+      work->crypto.iv.hi = ( contestwork.crypto.iv.hi );
+      work->crypto.iv.lo = ( contestwork.crypto.iv.lo );
+      work->crypto.plain.hi = ( contestwork.crypto.plain.hi );
+      work->crypto.plain.lo = ( contestwork.crypto.plain.lo );
+      work->crypto.cypher.hi = ( contestwork.crypto.cypher.hi );
+      work->crypto.cypher.lo = ( contestwork.crypto.cypher.lo );
+      work->crypto.keysdone.hi = ( contestwork.crypto.keysdone.hi );
+      work->crypto.keysdone.lo = ( contestwork.crypto.keysdone.lo );
+      work->crypto.iterations.hi = ( contestwork.crypto.iterations.hi );
+      work->crypto.iterations.lo = ( contestwork.crypto.iterations.lo );
+      break;
+    case 2: // OGR
+      work->ogr.stub = contestwork.ogr.stub;
+      break;
+  }
 
   if (setflags) 
     {
@@ -818,9 +867,9 @@ u32 Problem::AlignTimeslice(void) // align the timeslice to an even
 
   // don't allow a too large of a timeslice be used
   // (technically not necessary, but may save some wasted time)
-  if (contestwork.keysdone.hi == contestwork.iterations.hi)
+  if (contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi)
     {
-    u32 todo = contestwork.iterations.lo-contestwork.keysdone.lo;
+    u32 todo = contestwork.crypto.iterations.lo-contestwork.crypto.keysdone.lo;
     if (todo < timeslice)
       {
       timeslice = todo;
@@ -977,18 +1026,18 @@ if (contest == 0) // RC5
     return -1;
     };
 
-  contestwork.keysdone.lo += kiter;
-  if (contestwork.keysdone.lo < kiter)
-    contestwork.keysdone.hi++;
+  contestwork.crypto.keysdone.lo += kiter;
+  if (contestwork.crypto.keysdone.lo < kiter)
+    contestwork.crypto.keysdone.hi++;
     // Checks passed, increment keys done count.
 
   // Update data returned to caller
-  rc5result.key.hi = contestwork.key.hi;
-  rc5result.key.lo = contestwork.key.lo;
-  rc5result.keysdone.hi = contestwork.keysdone.hi;
-  rc5result.keysdone.lo = contestwork.keysdone.lo;
-  rc5result.iterations.hi = contestwork.iterations.hi;
-  rc5result.iterations.lo = contestwork.iterations.lo;
+  rc5result.key.hi = contestwork.crypto.key.hi;
+  rc5result.key.lo = contestwork.crypto.key.lo;
+  rc5result.keysdone.hi = contestwork.crypto.keysdone.hi;
+  rc5result.keysdone.lo = contestwork.crypto.keysdone.lo;
+  rc5result.iterations.hi = contestwork.crypto.iterations.hi;
+  rc5result.iterations.lo = contestwork.crypto.iterations.lo;
 
   if (kiter < timeslice*pipeline_count)
     {
@@ -1006,9 +1055,9 @@ if (contest == 0) // RC5
     return -1;
     };
 
-  if ( ( contestwork.keysdone.hi > contestwork.iterations.hi ) ||
-       ( ( contestwork.keysdone.hi == contestwork.iterations.hi ) &&
-       ( contestwork.keysdone.lo >= contestwork.iterations.lo ) ) )
+  if ( ( contestwork.crypto.keysdone.hi > contestwork.crypto.iterations.hi ) ||
+       ( ( contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi ) &&
+       ( contestwork.crypto.keysdone.lo >= contestwork.crypto.iterations.lo ) ) )
     {
     // done with this block and nothing found
     rc5result.result = RESULT_NOTHING;
@@ -1173,18 +1222,18 @@ else if (contest == 1) // DES
     return -1;
     };
 
-  contestwork.keysdone.lo+=kiter;
-  if (contestwork.keysdone.lo < kiter)
-    contestwork.keysdone.hi++;
+  contestwork.crypto.keysdone.lo+=kiter;
+  if (contestwork.crypto.keysdone.lo < kiter)
+    contestwork.crypto.keysdone.hi++;
     // Checks passed, increment keys done count.
 
   // Update data returned to caller
-  rc5result.key.hi = contestwork.key.hi;
-  rc5result.key.lo = contestwork.key.lo;
-  rc5result.keysdone.hi = contestwork.keysdone.hi;
-  rc5result.keysdone.lo = contestwork.keysdone.lo;
-  rc5result.iterations.hi = contestwork.iterations.hi;
-  rc5result.iterations.lo = contestwork.iterations.lo;
+  rc5result.key.hi = contestwork.crypto.key.hi;
+  rc5result.key.lo = contestwork.crypto.key.lo;
+  rc5result.keysdone.hi = contestwork.crypto.keysdone.hi;
+  rc5result.keysdone.lo = contestwork.crypto.keysdone.lo;
+  rc5result.iterations.hi = contestwork.crypto.iterations.hi;
+  rc5result.iterations.lo = contestwork.crypto.iterations.lo;
 
   if (kiter < timeslice*pipeline_count)
     {
@@ -1202,9 +1251,9 @@ else if (contest == 1) // DES
     return -1;
     };
 
-  if ( ( contestwork.keysdone.hi > contestwork.iterations.hi ) ||
-       ( ( contestwork.keysdone.hi == contestwork.iterations.hi ) &&
-       ( contestwork.keysdone.lo >= contestwork.iterations.lo ) ) )
+  if ( ( contestwork.crypto.keysdone.hi > contestwork.crypto.iterations.hi ) ||
+       ( ( contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi ) &&
+       ( contestwork.crypto.keysdone.lo >= contestwork.crypto.iterations.lo ) ) )
     {
     // done with this block and nothing found
     rc5result.result = RESULT_NOTHING;
@@ -1228,6 +1277,7 @@ else if (contest == 2) // OGR
       ,/'     `\_,
 */
   {
+    Log("OGR stub %s\n", stubstr(contestwork.ogr.stub));
     Log("OGR not implemented yet in Problem::Run!\n");
     return -1;
   }
