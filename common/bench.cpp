@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.5 1999/10/11 04:16:11 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.6 1999/10/11 19:46:57 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -254,7 +254,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
 // ---------------------------------------------------------------------------
 
 //old style
-u32 Benchmark( unsigned int contestid, u32 numkeys, int */*numblocks*/)
+u32 Benchmark( unsigned int contestid, u32 numkeys, int * /*numblocks*/)
 {                                                        
   unsigned int numsecs = 8;
   if (numkeys == 0)

@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.5 1999/10/10 23:24:44 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.6 1999/10/11 19:46:58 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -31,7 +31,7 @@ return "@(#)$Id: confmenu.cpp,v 1.41.2.5 1999/10/10 23:24:44 cyp Exp $"; }
 static const char *CONFMENU_CAPTION="distributed.net client configuration: %s\n"
 "--------------------------------------------------------------------------\n";
 
-static int __enumcorenames(const char **corenames, int index, void */*unused*/)
+static int __enumcorenames(const char **corenames, int index, void * /*unused*/)
 {
   unsigned int cont_i;
   char linebuff[CONTEST_COUNT][32];
