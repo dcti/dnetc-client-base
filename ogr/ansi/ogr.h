@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.6 2003/08/25 08:37:59 mweiser Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.7 2003/08/25 16:40:50 mweiser Exp $"
 
 #ifndef u16
 #include "cputypes.h"
@@ -121,12 +121,6 @@ typedef struct {
   int (*cleanup)(void);
 
 } DNETC_PACKED CoreDispatchTable;
-
-#if (!defined(__GNUC__) || (__GNUC__ < 2) || \
-     ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))) && \
-    !defined(MIPSpro) && !defined(__SUNPRO_CC)
-# pragma pack()
-#endif
 
 /* ===================================================================== */
 
