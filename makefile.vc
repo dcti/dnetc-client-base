@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.56.2.15 1999/12/20 05:02:34 jlawson Exp $
+# $Id: makefile.vc,v 1.56.2.16 1999/12/20 06:04:39 jlawson Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
@@ -255,7 +255,7 @@ OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_CORES
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 !else
 {$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
-        tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
+        nasmw -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
 
 {$(RC5SRCPATH)/x86/nasm}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(RC5SRCPATH:/=\)\x86\nasm\ $(**:/=\)

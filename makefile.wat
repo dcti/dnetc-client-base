@@ -6,7 +6,7 @@
 ##               [dos | netware | os2 | w32 | w16]
 ##               or anything else with a section at the end of this file
 ##
-## $Id: makefile.wat,v 1.27.2.6 1999/12/08 02:49:14 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.7 1999/12/20 06:04:39 jlawson Exp $
 
 BASENAME = dnetc
 
@@ -246,7 +246,7 @@ output\rc5mmx-k6-2.obj : rc5\x86\nasm\rc5mmx-k6-2.asm $(%dependall)
 # ----------------------------------------------------------------
 
 output\x86ident.obj : platforms\x86ident.asm $(%dependall)
-  *$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
   @set isused=1
 
 output\confrwv.obj : common\confrwv.cpp $(%dependall) .AUTODEPEND
