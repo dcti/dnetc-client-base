@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: AppClass.c,v 1.1.2.1 2004/01/09 22:43:27 piru Exp $
+ * $Id: AppClass.c,v 1.1.2.2 2004/01/09 23:36:28 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -18,6 +18,7 @@
 #include	<proto/intuition.h>
 #include	<proto/muimaster.h>
 #include	<proto/dos.h>
+#include	<proto/icon.h>
 #include	"AppClass.h"
 #include	"CreateGUI.h"
 #include	"LibHeader.h"
@@ -52,8 +53,16 @@ static ULONG mNew(struct IClass *cl, Object *obj, struct DnetcLibrary *LibBase)
 	mOpenMainWindow
 **********************************************************************/
 
-static ULONG mOpenMainWindow(struct Application_Data *data, struct DnetcLibrary *LibBase)
+static ULONG mOpenMainWindow(struct Application_Data *data, struct DnetcLibrary *LibBase, Object *obj)
 {
+	if (LibBase->dobj)
+	{
+		if (FindToolType(((struct DiskObject *)LibBase->dobj)->do_ToolTypes, "HIDE"))
+		{
+			set(obj, MUIA_Application_Iconified, TRUE);
+		}
+	}
+
 	return set(data->mainwnd, MUIA_Window_Open, TRUE);
 }
 
@@ -147,7 +156,7 @@ DISPATCHERPROTO(MyApp_Dispatcher)
 	{
 		case OM_NEW										: return mNew				(cl, obj, LibBase);
 		case MUIM_MyApplication_NativeCall		: return mNativeCall		((APTR)msg);
-		case MUIM_MyApplication_OpenMainWindow	: return mOpenMainWindow(data, LibBase);
+		case MUIM_MyApplication_OpenMainWindow	: return mOpenMainWindow(data, LibBase, obj);
 		case MUIM_MyApplication_InsertNode		: return mInsertNode		(data, LibBase, (APTR)msg);
 		case MUIM_MyApplication_GetMenuItem		: return mGetMenuItem	(data, LibBase, (APTR)msg, obj);
 		case MUIM_MyApplication_CloseReq			: return mCloseReq		(data, LibBase);

@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: MUIGUI.c,v 1.1.2.1 2004/01/09 22:43:27 piru Exp $
+ * $Id: MUIGUI.c,v 1.1.2.2 2004/01/09 23:36:28 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -13,9 +13,11 @@
 */
 
 #include	<libraries/mui.h>
+#include	<workbench/startup.h>
 
 #include	<clib/alib_protos.h>
 #include	<proto/exec.h>
+#include	<proto/dos.h>
 #include	<proto/icon.h>
 #include	<proto/intuition.h>
 #include	<proto/muimaster.h>
@@ -43,9 +45,20 @@ ULONG NATDECLFUNC_5(GUI_Open, d0, ULONG, cpu, a0, UBYTE *, ProgramName, a1, stru
 
 	ULONG	sigmask;
 
-	(void)IconName;
 	(void)ProgramName;
 	(void)cpu;
+
+	if (!LibBase->dobj)
+	{
+		if (IconName)
+		{
+			BPTR olddir;
+
+			olddir = CurrentDir(IconName->wa_Lock);
+			LibBase->dobj	= GetDiskObject(IconName->wa_Name);
+			CurrentDir(olddir);
+		}
+	}
 
 	sigmask	= 0;
 

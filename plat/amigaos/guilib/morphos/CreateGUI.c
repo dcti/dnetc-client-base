@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: CreateGUI.c,v 1.1.2.1 2004/01/09 22:43:27 piru Exp $
+ * $Id: CreateGUI.c,v 1.1.2.2 2004/01/09 23:36:28 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -79,7 +79,7 @@ static const UBYTE about[]	= "\33cdistributed.net client - a product of distribu
 Object *CreateGUI(struct IClass *cl, Object *obj, struct ObjStore *os, struct DnetcLibrary *LibBase)
 {
 	return DoSuperNew(cl, obj,
-		MUIA_Application_DiskObject	, LibBase->dobj	= GetDiskObject("PROGDIR:dnetc_ppc"),
+		MUIA_Application_DiskObject	, LibBase->dobj,
 		MUIA_Application_Commands		, commands,
 		MUIA_Application_Version		, &VerString[1],
 		MUIA_Application_Copyright		, "Ilkka Lehtoranta",
