@@ -4,6 +4,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff-conflict.cpp,v $
+// Revision 1.13  1998/10/06 21:31:11  cyp
+// Modified InitializeLogging() so that logging to mail/file must be
+// explicitly enabled.
+//
 // Revision 1.12  1998/10/05 02:18:34  cyp
 // Resolved a "computed value is not used" warning.
 //
@@ -54,7 +58,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.12 1998/10/05 02:18:34 cyp Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.13 1998/10/06 21:31:11 cyp Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -67,9 +71,9 @@ return "@(#)$Id: logstuff-conflict.cpp,v 1.12 1998/10/05 02:18:34 cyp Exp $"; }
 #include "pathwork.h"  // GetFullPathForFilename( x )
 #include "problem.h"   // needed for logscreenpercent
 #include "cmpidefs.h"  // strcmpi()
+#include "console.h"   // for ConOut() and STDOUT_IS_A_TTY() macro
 #include "logstuff.h"  // keep the prototypes in sync
 #include "guistuff.h"  // Hooks for the GUIs
-#include "console.h"   // for ConOut() and STDOUT_IS_A_TTY() macro
 
 //-------------------------------------------------------------------------
 
@@ -106,7 +110,10 @@ return "@(#)$Id: logstuff-conflict.cpp,v 1.12 1998/10/05 02:18:34 cyp Exp $"; }
 
 static struct 
 {
+  int initlevel;
   char loggingTo;            // LOGTO_xxx bitfields 
+  char spoolson;             // mail/file logging and time stamping is on/off.
+  char percprint;            // percentprinting is enabled
   
   MailMessage *mailmessage;  //note: pointer, not class struct.
   char logfile[128+20];      //fname when LOGFILETYPE_RESTART or _FIFO
@@ -116,25 +123,26 @@ static struct
   unsigned int logfileLimit; //days when rotating or kbyte when fifo/restart
   unsigned int logfilestarted; // 1 after the first logfile write
 
-  char stamptime;            // time stamping is on/off.
-  
   char stdoutisatty;         //log screen can handle lines not ending in '\n'
   char stableflag;           //last log screen didn't end in '\n'
   char lastwasperc;          //last log screen was a percentbar
   
-} logstatics = { LOGTO_NONE, NULL, {0}, 0, LOGFILETYPE_NONE, 0,0,0,0,0 };
+} logstatics = { 0, LOGTO_NONE, NULL, {0}, 0, LOGFILETYPE_NONE, 0,0,0,0,0 };
 
 // ========================================================================
 
 static void InternalLogScreen( const char *msgbuffer, unsigned int msglen, int /*flags*/ )
 {
-  if (msglen && (msgbuffer[msglen-1] == '\n' || IS_STDOUT_A_TTY() ))
+  if ((logstatics.loggingTo & LOGTO_SCREEN) != 0)
     {
-    if (strlen( msgbuffer ) == msglen) //we don't do binary data
-      ConOut( msgbuffer );             //which shouldn't happen anyway.
+    if ( msglen && (msgbuffer[msglen-1] == '\n' || IS_STDOUT_A_TTY() ) )
+      {
+      if (strlen( msgbuffer ) == msglen) //we don't do binary data
+        ConOut( msgbuffer );             //which shouldn't happen anyway.
+      }
+    else
+      ConOut( "" ); //flush.
     }
-  else
-    ConOut( "" ); //flush.
   return;
 }
 
@@ -151,7 +159,8 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
     return;
   if ( !msglen || msgbuffer[msglen-1] != '\n') 
     return;
-  if ( logfileType == LOGFILETYPE_NONE )
+  if ( logfileType == LOGFILETYPE_NONE || logstatics.spoolson==0 ||
+       (logstatics.loggingTo & LOGTO_FILE) == 0)
     return;
     
   if ( logfileLimit == (unsigned int)(-1) ) 
@@ -299,14 +308,15 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
 
 static void InternalLogMail( const char *msgbuffer, unsigned int msglen, int /*flags*/ )
 {
-  if ( msglen && logstatics.mailmessage )
+ if ( msglen && logstatics.mailmessage && logstatics.spoolson &&
+                                  (logstatics.loggingTo & LOGTO_MAIL) != 0)
     logstatics.mailmessage->append( msgbuffer ); 
   return;
 }
 
 // ------------------------------------------------------------------------
 
-void LogWithPointer( int loggingTo, const char *format, va_list argptr ) 
+void LogWithPointer( int loggingTo, const char *format, va_list arglist ) 
 {
   char msgbuffer[MAX_LOGENTRY_LEN];
   unsigned int msglen = 0;
@@ -330,10 +340,10 @@ void LogWithPointer( int loggingTo, const char *format, va_list argptr )
 
   if ( loggingTo != LOGTO_NONE )
     {
-    if ( argptr == NULL )
+    if ( arglist == NULL )
       strcat( msgbuffer, format );
     else 
-      vsprintf( msgbuffer, format, argptr);
+      vsprintf( msgbuffer, format, arglist );
     msglen = strlen( msgbuffer );
 
     if ( msglen == 0 )
@@ -342,32 +352,36 @@ void LogWithPointer( int loggingTo, const char *format, va_list argptr )
       loggingTo &= LOGTO_SCREEN|LOGTO_RAWMODE;  //screen only obviously
     }
 
-  if (loggingTo != LOGTO_NONE && (old_loggingTo & LOGTO_RAWMODE) == 0)
+  if (loggingTo != LOGTO_NONE && logstatics.spoolson /* timestamps */ && 
+      (old_loggingTo & LOGTO_RAWMODE) == 0 )
     {
-    if (logstatics.stamptime)
-      {
-      buffptr = &msgbuffer[0];
-      sel = 1;
-      do{
-        while (*buffptr == '\r' || *buffptr=='\n' )
+    buffptr = &msgbuffer[0];
+    sel = 1;
+    do{
+      while (*buffptr == '\r' || *buffptr=='\n' )
           buffptr++;
-        if (*buffptr && *buffptr!=((sel)?('['):(' ')))  /* no timestamp */
-          {
-          timestamp = CliGetTimeString( NULL, sel );
-          memmove( buffptr+(strlen(timestamp)+3), 
-                   buffptr, strlen( buffptr )+1 );
-          *buffptr++=((sel)?('['):(' '));
-          while (*timestamp) 
-            *buffptr++ = *timestamp++;
-          *buffptr++=((sel)?(']'):(' '));
-          *buffptr=' ';
-          }
-        sel = 0;
-        while (*buffptr && *buffptr != '\n' && *buffptr != '\r')
-           buffptr++;
-        } while (*buffptr);
-      msglen = strlen( msgbuffer );
-      }
+      if (*buffptr == ' ' || *buffptr == '\t')
+        {
+        obuffptr = buffptr;
+        while (*obuffptr == ' ' || *obuffptr == '\t')
+          *obuffptr++;
+        memmove( buffptr, obuffptr, strlen( obuffptr )+1 );
+        }
+      if (*buffptr && *buffptr!='[' && *buffptr!='\r' && *buffptr!='\n' )
+        {
+        timestamp = CliGetTimeString( NULL, sel );
+        memmove( buffptr+(strlen(timestamp)+3), buffptr, strlen( buffptr )+1 );
+        *buffptr++=((sel)?('['):(' '));
+        while (*timestamp) 
+          *buffptr++ = *timestamp++;
+        *buffptr++=((sel)?(']'):(' '));
+        *buffptr=' ';
+        }
+      sel = 0;
+      while (*buffptr && *buffptr != '\n' && *buffptr != '\r')
+        buffptr++;
+      } while (*buffptr);
+    msglen = strlen( msgbuffer );
     }
 
   #ifdef ASSERT_WIDTH_80  //"show" where badly formatted lines are cropping up
@@ -421,10 +435,10 @@ void LogWithPointer( int loggingTo, const char *format, va_list argptr )
       }
     }
   
-  if (( loggingTo & LOGTO_FILE ) != 0)
+  if (logstatics.spoolson && ( loggingTo & LOGTO_FILE ) != 0)
     InternalLogFile( msgbuffer, msglen, 0 );
 
-  if (( loggingTo & LOGTO_MAIL ) != 0)
+  if (logstatics.spoolson && ( loggingTo & LOGTO_MAIL ) != 0)
     InternalLogMail( msgbuffer, msglen, 0 );
       
   return;
@@ -579,7 +593,7 @@ void LogScreenPercent( unsigned int load_problem_count )
   char ch; char buffer[88];
   char *bufptr = &buffer[0];
 
-  if (( logstatics.loggingTo & LOGTO_SCREEN ) != 0 )
+  if (logstatics.percprint && ( logstatics.loggingTo & LOGTO_SCREEN ) != 0 )
     {
     method = 2; //LogScreenPercentSingle() type bar for multiple threads
     if ( load_problem_count <= 2 )
@@ -731,6 +745,7 @@ void LogScreenPercent( unsigned int load_problem_count )
       *bufptr = 0;
       LogWithPointer( LOGTO_SCREEN|LOGTO_RAWMODE, buffer, NULL );
       logstatics.lastwasperc = 1; //reset to 1
+      logstatics.stableflag = 0; //cursor is not at column 0 
       }
     }
   return;
@@ -751,26 +766,20 @@ void Client::DeinitializeLogging(void)
     }
   logstatics.logfileType = LOGFILETYPE_NONE;
   logstatics.loggingTo &= ~LOGTO_FILE;    
+
   return;
 }
 
 // ---------------------------------------------------------------------------
 
-int LogSetTimeStampingMode(int turn_on)
-{
-  int retval = (logstatics.stamptime!=0);
-  logstatics.stamptime = (turn_on != 0);
-  return retval;
-}
-    
-// ---------------------------------------------------------------------------
-
-void Client::InitializeLogging(void)
+void Client::InitializeLogging(int spools_on)
 {
   DeinitializeLogging();
+    
   logstatics.loggingTo = LOGTO_NONE;
   logstatics.lastwasperc = 0;
-  logstatics.stamptime = 0;
+  logstatics.spoolson = (spools_on != 0);
+  logstatics.percprint = (percentprintingoff == 0);
 
   if ( !quietmode && !runhidden )
     {
@@ -797,7 +806,7 @@ void Client::InitializeLogging(void)
       strcpy( logstatics.logfile, logname );
       logstatics.logfilebaselen = strlen( logstatics.logfile );
       logstatics.logfilestarted = 0;
-
+ 
       logstatics.loggingTo |= LOGTO_FILE;
       logstatics.logfileType = LOGFILETYPE_NOLIMIT;
       logstatics.logfileLimit = 0; // unused if LOGFILETYPE_NOLIMIT;
@@ -811,5 +820,5 @@ void Client::InitializeLogging(void)
   return;
 }
 
-// ------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
