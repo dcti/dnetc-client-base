@@ -1,27 +1,17 @@
-/* Copyright distributed.net 1997 - All Rights Reserved
- * For use in distributed.net projects only.
- * Any other distribution or use of this source violates copyright.
- *
- * $Log: buffbase.cpp,v $
- * Revision 1.2  1999/04/01 03:08:57  cyp
- * Cleared an unused variable warning.
- *
- * Revision 1.1  1999/04/01 01:49:55  cyp
- * Created BufferFetchFile()/BufferFlushFile() to fetch/flush from/to remote/
- * alternate buffers.
- *
- *
-*/
+// Copyright distributed.net 1997,1998,1999 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+//
 
 #if (!defined(lint) && defined(__showids__))
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.2 1999/04/01 03:08:57 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.2.2.1 1999/04/04 09:48:28 jlawson Exp $"; }
 #endif
 
 #include "cputypes.h"
 #include "client.h"   //client class
 #include "baseincs.h" //basic #includes
-#include "network.h"  //ntohl(), htonl()
+#include "netio.h"    //ntohl(), htonl()
 #include "util.h"     //IsFilenameValid(), DoesFileExist()
 #include "clievent.h" //event stuff
 #include "clicdata.h" //GetContestNameFromID() 
@@ -1110,4 +1100,6 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
 
   return (failed ? (- (long) (combinedtrans+1)) : (combinedtrans));
 }
+
+/* --------------------------------------------------------------------- */
 
