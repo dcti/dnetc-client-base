@@ -11,6 +11,9 @@
    to functions in modules in your own platform area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.19  1998/11/10 09:49:28  silby
+// added termios for freebsd, console input works much nicer now.
+//
 // Revision 1.18  1998/11/09 17:24:35  chrisb
 // Added riscos_backspace() to work round some lame implementation of consoles.
 //
@@ -71,7 +74,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.18 1998/11/09 17:24:35 chrisb Exp $"; }
+return "@(#)$Id: console.cpp,v 1.19 1998/11/10 09:49:28 silby Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -85,7 +88,8 @@ return "@(#)$Id: console.cpp,v 1.18 1998/11/09 17:24:35 chrisb Exp $"; }
 #include "sleepdef.h" //usleep
 
 #if !defined(NOTERMIOS) && ((CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) || \
-    (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS))
+    (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
+    || (CLIENT_OS==OS_FREEBSD))
 #include <termios.h>
 #define TERMIOS_IS_AVAILABLE
 #endif
