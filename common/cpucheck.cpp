@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.77 2001/10/05 19:58:35 mfeiri Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.78 2001/10/06 22:57:20 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -448,7 +448,7 @@ static long __GetRawProcessorID(const char **cpuname)
     if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
     {
       if (result == gestaltCPUG47450) /* gestaltCPUG47450 = 0x0110 */
-        result = 0x8100L /* Apples ID makes sense but we prefer pure PVR */
+        result = 0x8100L; /* Apples ID makes sense but we prefer pure PVR */
     
       detectedtype = result - 0x100L; // PVR!!
       if (Gestalt( gestaltSystemVersion, &result ) == noErr)
