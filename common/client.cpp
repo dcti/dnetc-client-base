@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251 2002/10/09 22:22:14 andreasb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.1 2002/11/26 13:51:13 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -165,6 +165,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
     {
       LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME " "
                     "Copyright 1997-2002, distributed.net\n");
+#if defined HAVE_RC5_64_CORES
       #if (CLIENT_CPU == CPU_68K)
       LogScreenRaw( "RC5 68K assembly by John Girvin\n");
       #endif
@@ -181,7 +182,13 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
       LogScreenRaw( "RISCOS/PC Card support by Dominic Plunkett\n");
       #endif
       #endif
-      #if defined(HAVE_DES_CORES)
+#endif
+#if defined HAVE_RC5_64_CORES
+      #if (CLIENT_CPU == CPU_ARM)
+      LogScreenRaw( "RC5-72 ARM assembly by Peter Teichmann\n");
+      #endif
+#endif
+#if defined(HAVE_DES_CORES)
       #if defined(KWAN) && defined(MEGGS)
       LogScreenRaw( "DES bitslice driver Copyright 1997-1998, Andrew Meggs\n"
                     "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
@@ -194,7 +201,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
       #if (CLIENT_CPU == CPU_X86)
       LogScreenRaw( "DES search routines Copyright 1997-1998, Svend Olaf Mikkelsen\n");
       #endif
-      #endif
+#endif
       #if (CLIENT_OS == OS_DOS)
       LogScreenRaw( "PMODE DOS extender Copyright 1994-1998, Charles Scheffold and Thomas Pytel\n");
       #endif
