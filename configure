@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.68 1999/11/30 14:36:00 ivo Exp $
+# @(#)$Id: configure,v 1.222.2.69 1999/12/06 10:04:38 myshkin Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -99,7 +99,11 @@ XLC_LINTILLA_ASMS="rc5/ppc/crunch_lintilla.ppcxlc.s \
 
 RC5PPC_SRCS="rc5/ppc/crunch_lintilla_296.ppc.s \
 	     rc5/ppc/crunch_allitnil_552.ppc.s \
-	     rc5/ppc/crunch_ppc_wrappers.cpp"
+	     rc5/ppc/rc5_unit_func_lintilla.cpp \
+	     rc5/ppc/rc5_unit_func_allitnil.cpp"
+
+RC5ALTIVEC_SRCS="rc5/ppc/crunch-vec.s \
+		 rc5/ppc/rc5_unit_func_vec.cpp"
 
 NASM_RC5X86_SRCS="rc5/x86/nasm/rg486.asm \
 		  rc5/x86/nasm/rc5-rgk5.asm \
@@ -209,7 +213,11 @@ OPTS_GCC="-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
 	  -funroll-loops -fno-inline-functions -fno-handle-exceptions \
 	  $OPTS_WARN"
 OPTS_GCC272="-fomit-frame-pointer -fno-inline-functions \
-	     -fno-exceptions -fno-rtti $OPTS_WARN"
+	     -fno-handle-exceptions -fno-rtti \
+	     -Wall -Wtraditional -Wpointer-arith -Wcast-align \
+	     -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes \
+	     -Wconversion  -Winline -Waggregate-return -Wcast-qual \
+	     -Woverloaded-virtual -Wnested-externs"
 OPTS_GCC295="-fomit-frame-pointer -fno-inline-functions \
 	     -fno-exceptions -fno-rtti $OPTS_WARN"
 OPTS_XLC3="-O3 -qansialias -qlibansi"
@@ -984,15 +992,16 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
-    *ppc-gcc)		# [myshkin] generic PPC target
+    *ppc-gcc)		# [myshkin-out-of-date] generic PPC target
 	TARGET_CCFLAGS="$OPTS_GCC_PPC \
-			-DBIT_32 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			$RC5PPC_SRCS"
+			-DBIT_32 -DHAVE_CSC_CORES"
+	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
+	TARGET_ADDSRCS="common/lurk.cpp $RC5PPC_SRCS $CSC_ANSI_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="linux-ppc-glibc21-nomt"
 	;;
 
-    *ppc860-gcc)	# [myshkin] PPC 821/860 target
+    *ppc860-gcc)	# [myshkin-out-of-date] PPC 821/860 target
 	TARGET_CCFLAGS="$OPTS_GCC_PPC \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
@@ -1002,13 +1011,14 @@ case "$1" in
 
     *ppc-gcc272)	# [myshkin] generic PPC target, gcc 2.7.2
 	TARGET_CCFLAGS="$OPTS_GCC272_PPC \
-			-DBIT_32 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			$RC5PPC_SRCS"
+			-DBIT_32 -DHAVE_CSC_CORES -DNO_ALTIVEC"
+	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
+	TARGET_ADDSRCS="common/lurk.cpp $RC5PPC_SRCS $CSC_ANSI_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="linux-ppc-glibc2-nomt"
 	;;
 
-    *ppc860-gcc272)	# [myshkin] PPC 821/860 target, gcc 2.7.2
+    *ppc860-gcc272)	# [myshkin-out-of-date] PPC 821/860 target, gcc 2.7.2
 	TARGET_CCFLAGS="$OPTS_GCC272_PPC860 \
 			-DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
