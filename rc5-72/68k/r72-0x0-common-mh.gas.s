@@ -14,9 +14,12 @@
 	| Converted from Amiga Devpac assembler notation to GAS
 	| notation by Oliver Roberts <oliver@futuara.co.uk>
 	|
-	| $Id: r72-0x0-common-mh.gas.s,v 1.1.2.2 2003/04/04 12:13:45 oliver Exp $
+	| $Id: r72-0x0-common-mh.gas.s,v 1.1.2.3 2003/04/04 12:41:43 oliver Exp $
 	|
 	| $Log: r72-0x0-common-mh.gas.s,v $
+	| Revision 1.1.2.3  2003/04/04 12:41:43  oliver
+	| ooops - missed replacing pc with %pc
+	|
 	| Revision 1.1.2.2  2003/04/04 12:13:45  oliver
 	| changed regname syntax (d0 now %d0, etc) to provide better compatibility
 	| with varying gas versions
@@ -68,7 +71,7 @@ _rc5_check64:
 
         |---- Mix secret key into S[] ----
         move.l  L0_hi(%a0),%d3        |%d3=L2=L0.hi
-        lea     L.c64_p2q(pc),%a3 |%a3=&S[02] read address
+        lea     L.c64_p2q(%pc),%a3 |%a3=&S[02] read address
         move.l  L0_mid(%a0),%d2       |%d2=L1=L0.mid
         move.l  %a1,%a2   |%a2=&S[00] write address
         move.l  L0_lo(%a0),%d1        |%d1=L0=L0.lo
