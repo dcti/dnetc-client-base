@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: client.cpp,v $
+// Revision 1.152.2.9  1998/12/28 16:40:36  remi
+// Fixed the merge.
+//
 // Revision 1.152.2.8  1998/12/28 14:13:57  remi
 // Synced with :
 //
@@ -222,10 +225,7 @@ int Client::Main( int argc, const char *argv[], int restarted )
       {
       if (InitializeConsole(0,domodes) == 0)
         {
-        InitializeLogging(0); //enable only screen logging for now
-        InitializeLogging( (quietmode!=0), (percentprintingoff!=0), 
-			   logname, LOGFILETYPE_NOLIMIT, 0, messagelen, 
-			   smtpsrvr, smtpport, smtpfrom, smtpdest, id );
+	InitializeLogging( 0, 0, NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL );
         PrintBanner(NULL, 0, restarted); //tracks restart state itself
         ParseCommandline( 1, argc, argv, NULL, 1 ); //show cmdline overrides
       

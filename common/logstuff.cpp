@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: logstuff.cpp,v $
+// Revision 1.21.2.4  1998/12/28 16:44:06  remi
+// Fixed the merge.
+//
 // Revision 1.21.2.3  1998/12/28 14:59:25  remi
 // Synced with :
 //  Revision 1.23  1998/12/08 05:46:15  dicamillo
@@ -28,7 +31,6 @@
 #include "problem.h"   // needed for logscreenpercent
 #include "cmpidefs.h"  // strcmpi()
 #include "console.h"   // for ConOut() and ConIsScreen()
-#include "guistuff.h"  // Hooks for the GUIs
 #include "triggers.h"  // don't print percbar if pause/exit/restart triggered
 #include "logstuff.h"  // keep the prototypes in sync
 
