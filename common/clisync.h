@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.3 2003/09/12 22:29:25 mweiser Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.4 2003/09/17 00:17:53 bdragon Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -77,8 +77,7 @@
   /* _trylock returns -1 on EINVAL, 0 if could not lock, 1 if could lock */
   static inline int fastlock_trylock(fastlock_t *l) { *l = 1; return 1; }
 
-#elif (CLIENT_CPU == CPU_ALPHA) && defined(__GNUC__) && \
-      (CLIENT_OS != OS_DEC_UNIX)
+#elif (CLIENT_CPU == CPU_ALPHA) && defined(__GNUC__)
 
   typedef volatile unsigned int fastlock_t;
 
@@ -98,6 +97,32 @@
     unsigned long temp;
     int *m = ((int *) addr) + (nr >> 5);
 
+#if (CLIENT_OS == OS_DEC_UNIX)
+     /* quad-word aligned branch targets are optimal, backwards
+       branches are predicted as outcome, while forwards branches are
+       predicted as fall-through. misprediction can cost 10
+       instruction cycles, leading to double branches on infrequent case
+       (forwards then backwards) being more optimal */
+    asm volatile("1:     ldl_l %0,%4   \n\t" \
+                 "       and %0,%3,%2  \n\t" \
+                 "       bne %2,2f     \n\t" \
+                 "       xor %0,%3,%0  \n\t" \
+                 "       stl_c %0,%1   \n\t" \
+                 "       beq %0,3f     \n\t" /* begin double branch */ \
+                 "       unop          \n\t" /*align branch target below */ \
+                 "       unop          \n\t" /*align branch target below */ \
+                 "2:     mb            \n\t" \
+                 "       br 4f         \n\t" \
+                 "       unop          \n\t" /*align branch target below */ \
+                 "       unop          \n\t" /*align branch target below */ \
+                 "3:     br 1b         \n\t" /* on infrequent case double */ \
+                                             /* branch is faster due to */ \
+                                             /* i-cache mispredictions */ \
+                 "       unop          \n\t" /*align branch target below */ \
+                 "       unop          \n\t" /*align branch target below */ \
+                 "       unop          \n\t" /*align branch target below */ \
+                 "4:     "
+#else
     asm volatile("1:     ldl_l %0,%4   \n\t" \
                  "       and %0,%3,%2  \n\t" \
                  "       bne %2,2f     \n\t" \
@@ -108,6 +133,7 @@
                  ".subsection 2        \n\t" \
                  "3:     br 1b         \n\t" \
                  ".previous"
+#endif
                  :"=&r" (temp), "=m" (*m), "=&r" (oldbit)
                  :"Ir" (1UL << (nr & 31)), "m" (*m) : "memory");
 
