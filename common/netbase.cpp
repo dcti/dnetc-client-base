@@ -59,7 +59,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.22 2001/10/23 22:23:43 mfeiri Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.23 2002/03/22 01:35:58 grub Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -219,8 +219,10 @@ extern "C" {
   #endif
 #endif
 
+// added OS_OPENBSD. grub 20020321
 #if (defined(__GLIBC__) && (__GLIBC__ >= 2)) \
     || (CLIENT_OS == OS_MACOS) \
+    || (CLIENT_OS == OS_OPENBSD) \
     || (CLIENT_OS == OS_NETBSD) \
     || ((CLIENT_OS == OS_FREEBSD) && (__FreeBSD__ >= 4))
   /* nothing - socklen_t already defined */
