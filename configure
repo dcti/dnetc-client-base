@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.53  1998/06/24 11:00:43  cberry
+# Added -lncurses to arm-linux
+#
 # Revision 1.52  1998/06/24 08:58:59  kbracey
 # Defined __showids__ for RISC OS
 #
@@ -731,7 +734,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_ARM -DPIPELINE_COUNT=1 -DBIT_32 -Dlinux -DKWAN"
 	TARGET_ADDSRCS=""
 	TARGET_ADDASMS="rc5/rc5-sa-gnu.s rc5/rc5-arm-gnu.s des/des-slice-sa-gnu.s des/des-slice-arm-gnu.s"
-	TARGET_LIBS="-lm"
+	TARGET_LIBS="-lm -lncurses"
 	;;
 
     *arm-netbsd)
