@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.16  1998/12/31 09:18:54  silby
+// Client now honors autoreadkeyserver ini option.
+// (Needed so that people can use us80.v27.distributed.net
+// until Network::Resolve is fixed to handle non-2064 connects.)
+//
 // Revision 1.15  1998/12/28 03:32:47  silby
 // WIN32GUI internalread/writeconfig procedures are back.
 //
@@ -86,7 +91,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.15 1998/12/28 03:32:47 silby Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.16 1998/12/31 09:18:54 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -198,6 +203,9 @@ int ReadConfig(Client *client)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   if (INIFIND(CONF_KEYPORT) != NULL)
   client->keyport = INIGETKEY(CONF_KEYPORT);
 
+  tempconfig=ini.getkey(OPTION_SECTION, "autofindkeyserver", "1")[0];
+  client->autofindkeyserver = (tempconfig)?(1):(0);
+
   if (INIFIND(CONF_KEYPROXY) == NULL)
     {
     client->autofindkeyserver = 1;
@@ -206,21 +214,15 @@ int ReadConfig(Client *client)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   else
     {
     //do an autofind only if the host is a dnet host AND autofindkeyserver is on.
-    client->autofindkeyserver = 0;
     INIGETKEY(CONF_KEYPROXY).copyto(client->keyproxy, sizeof(client->keyproxy));
-    if (confopt_isstringblank(client->keyproxy) || strcmpi( client->keyproxy, "(auto)")==0 ||
-      strcmpi( client->keyproxy, "auto")==0 || strcmpi( client->keyproxy, "rc5proxy.distributed.net" )==0) 
-      {                                         
-      client->keyproxy[0]=0;
-      client->autofindkeyserver = 1; //let Resolve() get a better hostname.
-      }
-    else if (confopt_IsHostnameDNetHost(client->keyproxy))
-      {
-      tempconfig=ini.getkey("networking", "autofindkeyserver", "1")[0];
-      client->autofindkeyserver = (tempconfig)?(1):(0);
-      if (client->autofindkeyserver)
+    if (client->autofindkeyserver)
+      if (confopt_isstringblank(client->keyproxy) ||
+          strcmpi( client->keyproxy, "auto")==0 ||
+          strcmpi( client->keyproxy, "rc5proxy.distributed.net" )==0 ||
+          confopt_IsHostnameDNetHost(client->keyproxy))
+        {                                         
         client->keyproxy[0]=0;
-      }
+        }
     }
 
   if (INIFIND(CONF_CPUTYPE) != NULL)
@@ -595,9 +597,6 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
       tempptr->values.Erase();
     #endif
   
-    if ((tempptr = ini.findfirst( "networking", "autofindkeyserver"))!=NULL)
-      tempptr->values.Erase();
-
     INISETKEY( CONF_UUEHTTPMODE, client->uuehttpmode );
     
     if (client->uuehttpmode <= 1)
