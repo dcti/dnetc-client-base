@@ -5,6 +5,21 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.23  1998/06/23 09:23:39  remi
+// - Added gettermheight support for Linux (and possibly for other *nixes)
+//   (Add your OS to the list and add -lcurses to configure if it fit your needs)
+// - Turn off ECHO in readkeypress for Linux/NetBSD/BeOS
+//   (so we can clear "--More--" when the user hit CR)
+// - Resolved bad interaction between termios pager and external pager
+// - Don't screw up the common "rc5des --help | more"
+//   (Don't use our own pager if the user ask for help and stdout is redirected,
+//   use it if the user gives a bad option)
+// - The termios pager doesn't need an extra line at the bottom
+// - Catch ^C under Win32 etc ... so the user can abort in the "--More--" pager
+//   (why it doesn't get catched by the signal handler ?)
+// - ^Break exit immediately under Win32 (not sure the kbhit()/usleep() hack is the
+//   right thing to do under DOS/Netware/Win16)
+//
 // Revision 1.22  1998/06/22 17:29:09  remi
 // Added gettermheight() so the pager is allowed to use more than 25 lines
 // if there is more. Win32 only for the moment.
@@ -47,7 +62,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: disphelp.cpp,v 1.22 1998/06/22 17:29:09 remi Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.23 1998/06/23 09:23:39 remi Exp $";
 #endif
 
 #include "client.h"
@@ -59,7 +74,20 @@ static const char *id="@(#)$Id: disphelp.cpp,v 1.22 1998/06/22 17:29:09 remi Exp
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BEOS)
 #include <termios.h>
+#include "sleepdef.h"
 #define TERMIOSPAGER
+#endif
+
+// Other *nixes may want to use this (add "-lcurses" to configure / Makefile)
+#if (CLIENT_OS == OS_LINUX)
+#include <curses.h>
+#include <term.h>
+#define TERMINFOLINES
+#endif
+
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS) || \
+    (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS)
+#define SHELL_INSERT_NL_AT_END
 #endif
 
 // --------------------------------------------------------------------------
@@ -70,23 +98,76 @@ static int readkeypress()
   int ch;
 #if (defined(NOCONFIG) || (defined(NOLESS) && defined(NOMORE)))
   ch = -1;  // actually nothing. function never gets called.
+
+  // Tested under Win32. May work under OS2 too. Not sure with DOS or Netware.
+#elif (CLIENT_OS == OS_WIN32)
+  for (;;) {
+    if (SignalTriggered || UserBreakTriggered)
+      return -1;
+    if (kbhit()) {
+      ch = getch();
+      if (!ch) ch = (getch() << 8);
+      if (ch == 0x03) { // ^C
+        SignalTriggered = UserBreakTriggered = 1;
+        fprintf( stderr, "*Break*\n" );
+      }
+      break;
+    } else
+      usleep (50*1000); // with a 50ms delay, no visible processor activity
+                        // with NT4/P200 and still responsive to user requests
+  }
+
 #elif (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS) || \
-  (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || \
-  (CLIENT_OS == OS_NETWARE)
+  (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_NETWARE)
   ch = getch();
   if (!ch) ch = (getch() << 8);
+  if (ch == 0x03) { // ^C
+    SignalTriggered = UserBreakTriggered = 1;
+    fprintf( stderr, "*Break*\n" );
+  }
+
 #elif (CLIENT_OS == OS_RISCOS)
   ch = _swi(OS_ReadC, _RETURN(0));
+
 #elif defined(TERMIOSPAGER)
   struct termios stored;
   struct termios newios;
+
+  /* Wait a bit to avoid bad interaction with external pagers
+   *
+   * Without this delay (just a guess) :
+   * 1) We start outputing some text, change the termios settings
+   *    and wait for a key.
+   * 2) The external pager comes into action, gets the current termios
+   *    settings and change them to something suitable for it.
+   * 3) We get the key, and restore the original termios settings
+   *    (the ones suitable for shell interaction, but not the ones suitable
+   *    for the external pager, strange things occurs)
+   * 4) The client terminates
+   * 5) User exit from the external pager
+   * 6) The external pager restore termios settings to the values
+   *    we set in this routine. Everythhing's broken, even more with
+   *    ECHO turned off :-(
+   *
+   * {1,3,4} and {2,5,6} occurs asynchonously.
+   *
+   * With this delay the external pager can fetch the shell termios settings
+   * and change them to its own flavour before we start cooking them up.
+   *
+   * This is a hack, it will not work if the external pager takes more than
+   * 2/10s to start up...
+   */
+  usleep (200*1000);
 
   /* Get the original termios configuration */
   tcgetattr(0,&stored);
 
   /* Disable canonical mode, and set buffer size to 1 byte */
+  /* Disable echo. With echo turned on, the string "--More--" 
+   * won't be erased if the user hit CR)
+   */
   memcpy(&newios,&stored,sizeof(struct termios));
-  newios.c_lflag &= (~ICANON);
+  newios.c_lflag &= ~(ICANON | ECHO);
   newios.c_cc[VTIME] = 0;
   newios.c_cc[VMIN] = 1;
 
@@ -98,6 +179,7 @@ static int readkeypress()
 
   /* Restore the original settings */
   tcsetattr(0,TCSANOW,&stored);
+
 #else
   ch = getchar();
 #endif
@@ -120,8 +202,25 @@ static int gettermheight() {
   if (! GetConsoleScreenBufferInfo(hStdout, &csbiInfo)) return -1;
   return csbiInfo.srWindow.Bottom - csbiInfo.srWindow.Top + 1;
 
+#elif defined(TERMINFOLINES)
+  setupterm( NULL, 1, NULL );
+  int nlines = tigetnum( "lines" );
+  // check for insane values
+  if (nlines <= 0 || nlines >= 300) 
+    return -1;
+  else
+    return nlines;
+
 #else
-  return 25;
+  // check for common $LINES / $COLUMNS environment variables
+  char *p = getenv( "LINES" );
+  if (!p) return -1;
+  int nlines = atoi( p );
+  // check for insane values
+  if (nlines <= 0 || nlines >= 300) 
+    return -1;
+  else
+    return nlines;
 #endif
 }
 
@@ -234,6 +333,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
   int headerlines, bodylines, footerlines;
   int startline, maxscreenlines, maxpagesize;
   char whoami[64];
+  int foundhelprequest = 0;
 
   int nostdin, forcenopagemode = 0; //forcenopagemode is "--More--" mode
   FILE *outstream, *teestream;
@@ -266,11 +366,10 @@ void Client::DisplayHelp( const char * unrecognized_option )
 
   if (unrecognized_option && *unrecognized_option)
     {
-    int found = 0;
-    for (int i = 0; ((!found) && (i < (int)
+    for (int i = 0; ((!foundhelprequest) && (i < (int)
          (sizeof(valid_help_requests)/sizeof(char *)))); i++)
-      found = (strcmpi(unrecognized_option,valid_help_requests[i]) == 0);
-    if (!found)
+      foundhelprequest = (strcmpi(unrecognized_option,valid_help_requests[i]) == 0);
+    if (!foundhelprequest)
       {
       fprintf( outstream, "\nUnrecognized option '%s'\n", unrecognized_option);
       if (teestream)
@@ -296,7 +395,9 @@ void Client::DisplayHelp( const char * unrecognized_option )
     }
 
   if ((maxscreenlines = gettermheight()) == -1) maxscreenlines = 25;
+#if defined(SHELL_INSERT_NL_AT_END) || !defined(TERMIOSPAGER)
   maxscreenlines--;
+#endif
   headerlines = (sizeof(helpheader) / sizeof(char *));
   bodylines = (sizeof(helpbody) / sizeof(char *));
   footerlines = 2;
@@ -313,25 +414,28 @@ void Client::DisplayHelp( const char * unrecognized_option )
     }
   if (nostdin || forcenopagemode) //stdin is redirected or NOLESS
     {
-    int i, l, n=maxpagesize-5; // -5 to see the 'invalid option' message
-    for (i = 0; i < headerlines; i++)
-      fprintf( outstream, "%s\n", helpheader[i] );
-    for (l = 0; l < bodylines; )
+    if (!foundhelprequest || !teestream) 
       {
-      for (i = 0; (l < bodylines) && (i < n); i++ ) 
-        fprintf( outstream, "%s\n", helpbody[l++] );
-      n = maxscreenlines-2; //use a two line overlap
-      if (l<bodylines && !nostdin) //NOLESS mode: stdin is ok
-        {
-        #ifndef NOMORE // very obstinate people :)
-        fprintf( outstream, "--More--" );
-        fflush( outstream );
-        readkeypress();
-        if (SignalTriggered || UserBreakTriggered) 
-          break;
-        fprintf( outstream, "\r" ); //overwrite the --More--
-        #endif
-        }
+      int i, l, n=maxpagesize-5; // -5 to see the 'invalid option' message
+      for (i = 0; i < headerlines; i++)
+	fprintf( outstream, "%s\n", helpheader[i] );
+      for (l = 0; l < bodylines; ) 
+	{
+	for (i = 0; (l < bodylines) && (i < n); i++ ) 
+	  fprintf( outstream, "%s\n", helpbody[l++] );
+	n = maxscreenlines-2; //use a two line overlap
+	if (l<bodylines && !nostdin && !foundhelprequest) //NOLESS mode: stdin is ok
+	  {
+          #ifndef NOMORE // very obstinate people :)
+	  fprintf( outstream, "--More--" );
+	  fflush( outstream );
+	  readkeypress();
+	  if (SignalTriggered || UserBreakTriggered) 
+	    break;
+	  fprintf( outstream, "\r" ); //overwrite the --More--
+          #endif
+	  }
+	}
       }
     }
   else  //stdout may or may not be redirected
@@ -399,6 +503,11 @@ void Client::DisplayHelp( const char * unrecognized_option )
         i = -1; //unknown keystroke, so quit
         }
       } while (i >= 0);
+#if !defined(SHELL_INSERT_NL_AT_END) && !defined(TERMIOSPAGER)
+      // clear end of line (pager line)
+      // put spaces in case ANSI is not supported
+      if (!teestream && !nostdin) fprintf( outstream, "\r\x1B[K\r    \r" );
+#endif
     } //stdin is a tty
 
   //fprintf( outstream, "\n\n");
