@@ -4,11 +4,15 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-// INI file reading/processing class for C++
+// ----------------------------------------------------------------------
+// INI file reading/processing class for C++.
+// Created by Jeff Lawson.
+// ----------------------------------------------------------------------
 //
+// $Id: iniread.h,v 1.28 1999/04/05 13:51:32 jlawson Exp $
 
 #ifndef __INIREAD_H__
-#define __INIREAD_H__ "@(#)$Id: iniread.h,v 1.27 1999/04/04 16:36:32 cyp Exp $"
+#define __INIREAD_H__
 
 #ifdef PROXYTYPE      // compiling proxy
   // proxy needs automatic tokenizing of ini values.

@@ -8,9 +8,8 @@
 // ----------------------------------------------------------------------
 //
 
-
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.26 1999/04/04 14:40:30 jlawson Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.27 1999/04/05 13:51:32 jlawson Exp $"; }
 
 #define COMPILING_INIREAD
 #include "iniread.h"
