@@ -1,11 +1,31 @@
+;
+; $Log: rg-p6.asm,v $
+; Revision 1.6  1998/06/17 18:53:04  cyruspatel
+; modified model definition directives to work with any (intel asm)
+; assembler - model is overridden to flat unless small model was explicitely
+; defined on the command line. Added $Logs.
+;
+; Revision 1.5  1998/06/15 02:54:54  jlawson
+; all asm's modified to use a "modelnum" equate to define memory model.
+;
+; Revision 1.4  1998/06/09 08:54:53  jlawson
+; Changes from Cyrus Patel - commented out explicit .model directive
+; 
+; Revision 1.3  1998/05/25 20:56:41  bovine
+; Added unix style files.
+;
+; Revision 1.2  1998/05/25 20:53:45  bovine
+; Purged old dos mode files for replacement with unix style ascii files.
+;
+; Revision 1.1  1998/05/24 14:27:07  daa
+; Import 5/23/98 client tree
+;
+
 .386p
 
-if modelnum eq 1
-  .model small
-elseif modelnum eq 2
-  .model flat
+ifndef __SMALL__
+  .model flat 
 endif
-
 
 _TEXT   segment dword public use32 'CODE'
 align 4
@@ -21,12 +41,12 @@ mov ebp,[ 292+esp]
 mov [ 268+esp],ebp
 mov [ 16+esp],dword ptr 0
 mov eax,[ 288+esp]
- 	;APP
+  ;APP
 mov [ 244+esp],ebp
-mov ebx,[ 20+eax]	; ebx = l0 = Llo1
-mov edx,[ 16+eax]	; edx = l1 = Lhi1
-mov esi,ebx	; esi = l2 = Llo2
-lea edi,[ 16777216+edx]	; edi = l3 = lhi2
+mov ebx,[ 20+eax] ; ebx = l0 = Llo1
+mov edx,[ 16+eax] ; edx = l1 = Lhi1
+mov esi,ebx ; esi = l2 = Llo2
+lea edi,[ 16777216+edx] ; edi = l3 = lhi2
 mov [ 264+esp],ebx
 mov [ 260+esp],edx
 mov ebp,[ 4+eax]
@@ -347,10 +367,10 @@ add edx,ecx
 rol edx,cl
 lea ecx,[ebp+esi]
 add edi,ecx
-lea eax,[-1089828067+eax+edx]	; wrap with start of ROUND2
+lea eax,[-1089828067+eax+edx] ; wrap with start of ROUND2
 rol edi,cl
 _end_round1_p6:
- 	;leal 0xbf0a8b1d(%edx,%eax),  %eax   # already in ROUND1_LAST
+  ;leal 0xbf0a8b1d(%edx,%eax),  %eax   # already in ROUND1_LAST
 lea ebp,[-1089828067+edi+ebp]
 rol eax,3
 rol ebp,3
@@ -709,18 +729,18 @@ rol ebp,3
 mov [ 120+esp],eax
 mov [ 224+esp],ebp
 lea ecx,[eax+ebx]
- 	; addl ((25+1)*4)+4+16(%esp),%eax
+  ; addl ((25+1)*4)+4+16(%esp),%eax
 add edx,ecx
 rol edx,cl
 lea ecx,[ebp+esi]
-add eax,[ 20+esp]	; wrap with first part of ROUND3
+add eax,[ 20+esp] ; wrap with first part of ROUND3
 add edi,ecx
 rol edi,cl
 _end_round2_p6:
 mov [ 248+esp],ebp
 mov [ 256+esp],esi
 mov [ 252+esp],edi
- 	;addl ((0)*4)+4+16(%esp),%eax # already in ROUND_2_LAST
+  ;addl ((0)*4)+4+16(%esp),%eax # already in ROUND_2_LAST
 add eax,edx
 rol eax,3
 mov esi,[ 228+esp]
@@ -1287,10 +1307,10 @@ mov [ 260+esp],edx
 lea edi,[ 16777216+edx]
 sub [ 268+esp], dword ptr 1
 jg _loaded_p6
-mov eax,[ 288+esp]	; pointer to rc5unitwork
+mov eax,[ 288+esp]  ; pointer to rc5unitwork
 mov ebx,[ 264+esp]
-mov [ 20+eax],ebx	; Update real data
-mov [ 16+eax],edx	; (used by caller)
+mov [ 20+eax],ebx ; Update real data
+mov [ 16+eax],edx ; (used by caller)
 jmp _full_exit_p6
 
 _next_inc_p6:
@@ -1308,14 +1328,14 @@ add edx,1
 test edx,255
 jnz _next_iter_p6
 
- 	; we should never go here, it would mean we have iterated 2^32 times ...
- 	; stop the client, something went wrong
-;mov 0,0	; generate a segfault
+  ; we should never go here, it would mean we have iterated 2^32 times ...
+  ; stop the client, something went wrong
+;mov 0,0  ; generate a segfault
 
 _full_exit_p6:
 mov ebp,[ 244+esp]
 
- 	;NO_APP
+  ;NO_APP
 mov edx,ebp
 sub edx,[ 268+esp]
 mov eax,[ 16+esp]
