@@ -13,11 +13,15 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.31 2000/06/06 18:03:10 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.32 2000/06/13 00:34:11 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
 #include "clitime.h"  // keep the prototypes in sync
+
+#if (CLIENT_OS == OS_MACOSX)
+  #include <sys/sysctl.h>
+#endif
 
 #if defined(__unix__) && !defined(__EMX__)
   #define HAVE_GETRUSAGE
@@ -34,7 +38,7 @@ return "@(#)$Id: clitime.cpp,v 1.37.2.31 2000/06/06 18:03:10 cyp Exp $"; }
 
 int InitializeTimers(void)
 {
-  #if ((CLIENT_OS != OS_MACOS) && (CLIENT_OS != OS_RISCOS) && (CLIENT_OS != OS_AMIGAOS))
+  #if ((CLIENT_OS != OS_RISCOS) && (CLIENT_OS != OS_AMIGAOS))
   CliIsTimeZoneInvalid(); /* go assume TZ=GMT if invalid timezone */
   tzset();                /* set correct timezone for everyone else */
   #endif
@@ -747,6 +751,9 @@ int CliIsTimeZoneInvalid(void)
     }
   }
   return needfixup;
+  #elif (CLIENT_OS == OS_MACOS)
+  #warning I should make use of this sometime in the future!
+  return 0;
   #else
   return 0;
   #endif
