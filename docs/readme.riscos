@@ -1,7 +1,7 @@
 
  distributed.net client for RISC OS v3.10 or later.
  Released by Chris "chrisb" Berry <chrisb@distributed.net>
- Document revision $Id: readme.riscos,v 1.1.2.2 2000/01/27 10:37:28 chrisb Exp $
+ Document revision $Id: readme.riscos,v 1.1.2.3 2001/01/13 22:45:22 teichp Exp $
 
  Welcome to the distributed.net client.
 
@@ -14,23 +14,26 @@
 
  1.0  Getting started ------------------------------------------------
 
-    Just unpack the client in a directory of your choice and fire it up
-    in a task window.
+    Just unpack the client in a directory of your choice and start the
+    file "!Run", or start it manually in a task window.
 
     If you have never run the client before, it will initiate the
     menu-driven configuration. Save and quit when done, the
     configuration file will be saved in the same directory as the
     client. Then, simply restart the client. From that point on it will
     use the saved configuration.
-
+    
     The configuration options are fairly self-explanatory and can be run
     at any time by starting the client with the '-config' option.
     A list of command line options is available by starting the client
-    with '-help'.
-
-    If you prefer to have the client start automatically when the computer
-    is powered up, run the client with the -install switch. To remove the
-    client from the startup folder, run the client with -uninstall.
+    with '-help'. You can also start the file "!Config" or "!Help"
+    instead.
+    
+    If you want to run the client quiet, start "!RunQuiet" instead. To
+    stop a running client, press the "Esc" key in its task window. If
+    you have started it quiet, start the file "!Stop". This will
+    create a file called "exitrc5/now" in the clients directory. Note
+    that this method may take up to 30 seconds.
 
     A "Complete Step-by-Step Guide to Running Your First Client" is
     available at http://distributed.net/FAQ/
@@ -40,14 +43,18 @@
     The client for RISC OS requires the Acorn Internet module, or a
     compatible TCP/IP stack (eg FreeNet).
 
-    The client can be run in a task window at boot time by adding
-      TaskWindow "Run {path to client}.binname" -wimpslot 352K
-           -name "d.net client"
-    to your desktop boot file. Changing the quoted command to
-    "Run {path to client}.binname { > null: }" will make the client
-    invisible. Stop it by killing it via the task manager or by
-    creating a file "exitrc5/now" in the client's directory.
-
+    If you want to run the client automatically when the computer
+    starts, you can not simply copy "!Run" or "!RunQuiet" to your
+    desktop boot directory. You will first have to edit the files
+    and replace <Obey$Dir> with the path of your client directory.
+    
+    Do never forget to stop the client before shutting down the
+    computer, otherwise all the work may get lost. Do not kill it
+    from the task manager. You can also configure it to use a
+    checkpoint file. That will make the client save its state
+    every couple of minutes, so that it can be recovered if the
+    client is killed by accident.
+    
     This version does not support the x86 coprocessor card.
 
     This version is not compatible with the previously released
