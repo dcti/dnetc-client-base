@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.41 2000/02/16 04:23:50 petermack Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.42 2000/03/04 12:59:04 jlawson Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -877,7 +877,7 @@ int ClientRun( Client *client )
   unsigned int getbuff_errs = 0;
 
   time_t timeNow,timeRun=0,timeLast=0; /* Last is also our "firstloop" flag */
-  time_t timeNextConnect=0, timeNextCheckpoint = 0;
+  time_t timeNextConnect=0, timeNextCheckpoint=0, ignoreCheckpointUntil=0;
 
   time_t last_scheduledupdatetime = 0; /* we reset the next two vars on != */
   //unsigned int flush_scheduled_count = 0; /* used for exponential staging */
@@ -1363,9 +1363,21 @@ int ClientRun( Client *client )
 
     if (!TimeToQuit && !checkpointsDisabled && !CheckPauseRequestTrigger())
     {
-      if (timeRun >= timeNextCheckpoint)
+      int checkpointNow = 0;
+      unsigned long perc_now = 0;
+
+      // Decide if we should definitely checkpoint now, or if we need to
+      // possibly check the percentage before deciding.
+      if ( (timeNextCheckpoint == 0) || (timeRun >= timeNextCheckpoint) )
+        checkpointNow = 1;      // time expired, checkpoint now.
+      else if ( (ignoreCheckpointUntil == 0) || (timeRun >= ignoreCheckpointUntil) )
+        checkpointNow = -1;     // check percent and maybe checkpoint.
+
+      // Compute the current percentage complete, if needed.
+      // Even if we already know we're going to checkpoint, compute the
+      // percentage so it can be remembered for the last checkpoint place.
+      if (checkpointNow != 0)
       {
-        unsigned long perc_now = 0;
         unsigned int probs_counted = 0;
         for ( prob_i = 0 ; prob_i < load_problem_count ; prob_i++)
         {
@@ -1378,14 +1390,25 @@ int ClientRun( Client *client )
         }
         perc_now /= probs_counted;
 
-        if ( ( timeNextCheckpoint == 0 ) || ( CHECKPOINT_FREQ_PERCDIFF < 
-          abs((int)(checkpointsPercent - ((unsigned int)perc_now))) ) )
+        if (checkpointNow < 0)
         {
-          checkpointsPercent = (unsigned int)perc_now;
-          if (CheckpointAction( client, CHECKPOINT_REFRESH, load_problem_count ))
-            checkpointsDisabled = 1;
-          timeNextCheckpoint = timeRun + (time_t)(CHECKPOINT_FREQ_SECSDIFF);
+          if ( CHECKPOINT_FREQ_PERCDIFF <
+              abs( (int)(checkpointsPercent - (unsigned int)perc_now) ) )
+              checkpointNow = 1;    // percent completed, checkpoint now.
+          else
+            // don't check percentage for another "ignore period".
+            ignoreCheckpointUntil = timeRun + (time_t)(CHECKPOINT_FREQ_SECSIGNORE);
         }
+      }
+
+      // Write out the checkpoint now if needed.
+      if (checkpointNow > 0)
+      {
+        checkpointsPercent = (unsigned int)perc_now;
+        if (CheckpointAction( client, CHECKPOINT_REFRESH, load_problem_count ))
+          checkpointsDisabled = 1;
+        timeNextCheckpoint = timeRun + (time_t)(CHECKPOINT_FREQ_SECSDIFF);
+        ignoreCheckpointUntil = timeRun + (time_t)(CHECKPOINT_FREQ_SECSIGNORE);
       }
     }
   
