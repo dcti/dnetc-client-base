@@ -1,18 +1,18 @@
-// Hey, Emacs, this a -*-C++-*- file !
-
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-// 
-// ----------------------------------------------------------------------
-// Dynamicly growing buffering class oriented for containing
-// arbitrary binary data for network communications.
-// Created by Jeff Lawson.
-// ----------------------------------------------------------------------
-// 
-
+/* 
+ * Hey, Emacs, this a -*-C++-*- file !
+ *
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * ----------------------------------------------------------------------
+ * Dynamicly growing buffering class oriented for containing
+ * arbitrary binary data for network communications.
+ * Created by Jeff Lawson.
+ * ----------------------------------------------------------------------
+*/ 
 #ifndef __AUTOBUFF_H__
-#define __AUTOBUFF_H__
+#define __AUTOBUFF_H__ "@(#)$Id: autobuff.h,v 1.11 1999/04/05 13:28:38 cyp Exp $"
 
 #ifndef AUTOBUFFER_INCREMENT
 #define AUTOBUFFER_INCREMENT 100
@@ -46,7 +46,5 @@ public:
   bool StepLine(AutoBuffer &line, u32 &offset) const;
 };
 
-
-
-#endif
+#endif /* __AUTOBUFF_H__ */
 
