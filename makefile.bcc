@@ -14,15 +14,15 @@ BCCLIBRARY = c:\borland\bcc55\lib
 
 
 # distributed.net source and compilation paths.
-EXENAME = dnetc.exe
+BASENAME = dnetc
 OUTPUTPATH = output
 COMMONPATH = common
 DESPATH = des
 RC5PATH = rc5
 CSCPATH = csc
 OGRPATH = ogr
-PLATPATH = platforms
-MODULEDEFNAME = $(OUTPUTPATH)\dnetc.def
+CHIPSRCPATH = platforms
+PLATSRCPATH = platforms/win32cli
 
 
 # define variable to existence to enable debugging.
@@ -63,13 +63,17 @@ BCCOPTS = $(BCCOPTS) /DMMX_BITSLICER /DBIT_64 /DMEGGS /DKWAN
 !endif
 
 
-.path.asm = $(RC5PATH)\x86\nasm;$(DESPATH)\mmx-bitslice;$(CSCPATH)\x86;$(PLATPATH)
-.path.cpp = $(COMMONPATH);$(RC5PATH);$(DESPATH);$(CSCPATH);$(OGRPATH);$(PLATPATH)/win32cli
+.path.asm = $(RC5PATH)\x86\nasm;$(DESPATH)\mmx-bitslice;$(CSCPATH)\x86;$(CHIPSRCPATH)
+.path.cpp = $(COMMONPATH);$(RC5PATH);$(DESPATH);$(CSCPATH);$(OGRPATH);$(PLATSRCPATH)
 .path.obj = $(OUTPUTPATH)
 
-all:	$(EXENAME)
+all:	$(BASENAME).exe
 
 # --------------------------------------------
+
+DEF_FILE = $(OUTPUTPATH)\dnetc.def
+RES_FILE = $(OUTPUTPATH)\$(BASENAME).res
+RC_FILE = $(PLATSRCPATH)\w32cons.rc
 
 COMMON_OBJS =                    \
         $(OUTPUTPATH)/autobuff.obj   \
@@ -221,21 +225,33 @@ BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES
 
 # --------------------------------------------
 
+# Target rule to produce the compiled resource file.
+
+$(RES_FILE):	$(RC_FILE)
+	brcc32 -32 -i$(BCCINCLUDE) -i$(COMMONPATH) -fo$(RES_FILE:/=\) $(RC_FILE:/=\)
+
+
+### Unfortunately, the Borland C++ 5.5 initial public release does not
+### include any of the include\*.rh files necessary to compile resources.
+### So we will skip the resources for now.
+RES_FILE=
+
+# --------------------------------------------
+
 # Apparently it is necessary to supply a module definition file (*.DEF)
 # for our exe, since ILINK32 says it contains "Additional segments".
 
-$(MODULEDEFNAME):
-	if exist $(MODULEDEFNAME:/=\) del $(MODULEDEFNAME:/=\)
+$(DEF_FILE):
+	if exist $(DEF_FILE:/=\) del $(DEF_FILE:/=\)
 	copy &&|
 CODE	PRELOAD MOVEABLE DISCARDABLE
-DATA	PRELOAD MOVEABLE MULTIPLE   ; (for applications)
-	PRELOAD MOVEABLE SINGLE   ; (for DLLs)
+DATA	PRELOAD MOVEABLE MULTIPLE
 HEAPSIZE	4096
 STACKSIZE	1048576
 SEGMENTS
 	_TEXT
 	_DATA
-| $(MODULEDEFNAME:/=\)
+| $(DEF_FILE:/=\)
 
 # --------------------------------------------
 
@@ -244,9 +260,9 @@ SEGMENTS
 ALLCLIENTOBJS = $(COMMON_OBJS) $(PLAT_OBJS) $(CHIP_OBJS) \
 		$(RC5_OBJS) $(DES_OBJS) $(CSC_OBJS) $(OGR_OBJS)
 
-$(EXENAME):   $(MODULEDEFNAME) $(ALLCLIENTOBJS)
+$(BASENAME).exe:   $(DEF_FILE) $(RES_FILE) $(ALLCLIENTOBJS)
         ilink32 /ap $(TLINKOPTS) @&&|
-c0w32.obj $(ALLCLIENTOBJS:/=\),$(EXENAME:/=\),,$(CLI_LIBS),$(MODULEDEFNAME)
+c0w32.obj $(ALLCLIENTOBJS:/=\),$(BASENAME:/=\).exe,,$(CLI_LIBS),$(DEF_FILE),$(RES_FILE)
 |
 
 # --------------------------------------------
