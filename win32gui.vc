@@ -51,6 +51,7 @@ GUI_OBJS =                    \
 	$(OUTPUTPATH)/guiwind.obj    \
 	$(OUTPUTPATH)/guiprogress.obj    \
 	$(OUTPUTPATH)/vWindowAppCore.obj \
+	$(OUTPUTPATH)/prgrsbr.obj \
 
 BASE_OBJS =                    \
 	$(OUTPUTPATH)/client.obj     \
