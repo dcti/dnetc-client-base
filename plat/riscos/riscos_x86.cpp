@@ -4,17 +4,13 @@
  * Any other distribution or use of this source violates copyright.
  *
  * x86 PCCARD support including a crunch wrapper/controller
- * $Id: riscos_x86.cpp,v 1.1.2.1 2001/01/21 15:10:28 cyp Exp $
+ * $Id: riscos_x86.cpp,v 1.1.2.2 2001/05/06 10:43:53 teichp Exp $
 */
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 #include <string.h> /* memcpy */
 #include <stdlib.h> /* atexit */
-#include <swis.h>   /* _swix */
-#ifdef __cplusplus
-}
-#endif
+#include <sys/swis.h>
+#include <kernel.h>
 
 #include "cputypes.h" /* u8, u32 */
 #include "problem.h"  /* RC5UnitWork */
