@@ -9,9 +9,55 @@
 
 #include "client.h"
 
+#if (CLIENT_OS == OS_LINUX)
+#include <termios.h>
+#endif
+
+
 // --------------------------------------------------------------------------
-// call from main() with the invalid option (argv[x]) that triggered help
+
+#if !defined(NOCONFIG)
+// read a single keypress, without waiting for an Enter if possible
+static int readkeypress()
+{
+  int ch;
+
+#if (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS) || \
+  (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_NETWARE)
+  ch = getch();
+  if (!ch) ch = (getch() << 8);
+#elif (CLIENT_OS == OS_LINUX)
+  struct termios stored;     
+  struct termios newios;
+
+  /* Get the original termios configuration */
+  tcgetattr(0,&stored);
+
+  /* Disable canonical mode, and set buffer size to 1 byte */
+  memcpy(&newios,&stored,sizeof(struct termios));
+  newios.c_lflag &= (~ICANON);
+  newios.c_cc[VTIME] = 0;
+  newios.c_cc[VMIN] = 1;
+
+  /* Activate the new settings */
+  tcsetattr(0,TCSANOW,&new);
+
+  /* Read the single character */
+  ch = getchar();
+
+  /* Restore the original settings */
+  tcsetattr(0,TCSANOW,&stored);
+#else
+  ch = getchar()
+#endif
+
+  return ch;
+}
+#endif
+
 // --------------------------------------------------------------------------
+
+// provide a full-screen, interactive help for an invalid option (argv[x])
 
 #if !defined(NOCONFIG)
 void Client::DisplayHelp( const char * unrecognized_option )
@@ -114,18 +160,17 @@ void Client::DisplayHelp( const char * unrecognized_option )
   };
 
   int headerlines, bodylines, footerlines;
-  int maxscreenlines, maxpagesize;
-  int i, done, startline;
+  int startline, maxscreenlines, maxpagesize;
   char whoami[64];
 
   if (unrecognized_option && *unrecognized_option)
   {
-    done = 0;
-    for (i = 0; i < (int) (sizeof(valid_help_requests)/sizeof(char *)); i++)
+    bool done = false;
+    for (int i = 0; i < (int) (sizeof(valid_help_requests)/sizeof(char *)); i++)
     {
-      if (strcmpi(unrecognized_option,valid_help_requests[i])==0)
+      if (strcmpi(unrecognized_option,valid_help_requests[i]) == 0)
       {
-        done = 1;
+        done = true;
         break;
       }
     }
@@ -134,38 +179,25 @@ void Client::DisplayHelp( const char * unrecognized_option )
       printf( "Unrecognized option '%s'\n"
            "Press enter to display a list of valid command line options\n"
             "or press any other key to quit... ", unrecognized_option );
-      i=0;
-      while (!i)
-      {
-        if ((i=getch())==0) //non-blocking or DOS-style getch()
-        {
-          #if (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS) || \
-              (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || \
-              (CLIENT_OS == OS_NETWARE)
-            getch(); //dos-style getch(), so this is an extended keystroke
-          #else
-            usleep(250000);
-          #endif
-        }
-      }
-      if (i!='\n' && i!='\r')
-        return;
-      } // if (!found)
-    } //if (unrecognized_option && *unrecognized_option)
+      int i = readkeypress();
+      if (i != '\n' && i != '\r') return;
+    }
+  }
 
-  maxscreenlines = 24; /* you can decrease, but don't increase this */
-  headerlines = (sizeof(helpheader)/sizeof(char *));
-  bodylines = (sizeof(helpbody)/sizeof(char *));
+  maxscreenlines = 24;    /* you can decrease, but don't increase this */
+  headerlines = (sizeof(helpheader) / sizeof(char *));
+  bodylines = (sizeof(helpbody) / sizeof(char *));
   footerlines = 2;
-  done = startline = 0;
+  startline = 0;
   maxpagesize = maxscreenlines - (headerlines+footerlines);
 
   sprintf(whoami, "RC5DES v2.%d.%d client - a project of distributed.net",
                   CLIENT_CONTEST*100 + CLIENT_BUILD, CLIENT_BUILD_FRAC );
   helpheader[0] = whoami;
 
-  while (!done)
-    {
+  while (true)
+  {
+    int i;
     clearscreen();
 
     for (i = 0; i < headerlines; i++)
@@ -180,40 +212,29 @@ void Client::DisplayHelp( const char * unrecognized_option )
     else
       printf("\nPress '+' or '-' for the next/previous page, or any other key to quit... ");
 
-    i = 0;
-    while (!i)
+    i = readkeypress();
+    if (i == '+' || i == ' ' || i == 'f' || i == '\r' || i == '\n')
     {
-      if ((i=getch())==0) //non-blocking or DOS-style getch()
-      {
-        #if (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS) || \
-            (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || \
-            (CLIENT_OS == OS_NETWARE)
-          getch(); //dos-style getch(), so this is an extended keystroke
-        #else
-          usleep(250000);
-        #endif
-      }
-      else if (i == '+' || i == ' ' || i == 'f' || i == '\r' || i == '\n')
-      {
-        startline += maxpagesize;
-        if ( startline >= (bodylines-maxpagesize))
-          startline = (bodylines-maxpagesize)-1;
-      }
-      else if (i == '-' || i == 'b')
-      {
-        startline -= maxpagesize;
-        if ( startline < 0 )
-          startline = 0;
-      }
-      else
-      {
-        done = 1;
-      }
+      startline += maxpagesize;
+      if ( startline >= (bodylines-maxpagesize))
+        startline = (bodylines-maxpagesize) - 1;
     }
-  } // while !done
+    else if (i == '-' || i == 'b')
+    {
+      startline -= maxpagesize;
+      if ( startline < 0 )
+        startline = 0;
+    }
+    else
+    {
+      break;
+    }
+  }
 
   clearscreen();
   return;
 }
 #endif
+
+// --------------------------------------------------------------------------
 
