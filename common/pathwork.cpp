@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2001 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de> to be able to throw
@@ -23,7 +23,7 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.15.2.6 2001/04/15 18:23:52 oliver Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.15.2.7 2001/04/16 17:56:28 cyp Exp $"; }
 
 #include <stdio.h>
 #include <string.h>
@@ -385,6 +385,9 @@ const char *GetFullPathForFilename( const char *filename )
 
   if ( filename == NULL )
     outpath = "";
+  else if (filename >= &__path_buffer[0] && 
+           filename <= &__path_buffer[sizeof(__path_buffer)-1])
+    outpath = filename; /* consider already parsed */
   else if (*filename == '\0' || __is_filename_absolute(filename))
     outpath = filename;
   else if (strlen(filename) >= sizeof(__path_buffer))
