@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.h,v $
+// Revision 1.62  1998/07/06 03:15:31  jlawson
+// prototype for InternalGetLocalFilename no longer defined by default.
+//
 // Revision 1.61  1998/07/05 15:54:02  cyruspatel
 // Implemented EraseCheckpointFile() and TruncateBufferFile() in buffwork.cpp;
 // substituted unlink() with EraseCheckpointFile() in client.cpp; modified
@@ -530,8 +533,9 @@ protected:
   s32 InternalPutBuffer( const char *filename, const FileEntry * data );
   s32 InternalGetBuffer( const char *filename, FileEntry * data, u32 *optype , u8 contest);
   s32 InternalCountBuffer( const char *filename , u8 contest);
+#if defined(DONT_USE_PATHWORK)
   const char *InternalGetLocalFilename( const char *filename );
-  //s32 EnsureBufferConsistency( const char *filename ); //obsolete
+#endif
 
   s32 StartLurk(void);// Initializes Lurk Mode -> 0=success, -1 = failed
   s32 LurkStatus(void);// Checks status of connection -> !0 = connected
