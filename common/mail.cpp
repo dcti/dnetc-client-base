@@ -179,7 +179,7 @@ int MailMessage::inittext(int out)
                 localtime( &time_of_day ) );
   #endif
 
-   strcpy(messagetext,"Subject: RC5-64 stats (");
+   strcpy(messagetext,"Subject: RC5DES stats (");
    strcat(messagetext,my_hostname);
    strcat(messagetext,":");
    strcat(messagetext,rc5id);
