@@ -149,7 +149,7 @@ static optionstruct options[OPTION_COUNT]=
   "keyrate. For this reason, Extremely Nice is recommended.\n"),4,2,1,NULL,
   &nicenesstable[0][0],0,2},
 //9
-{ "logname", CFGTXT("File to log to"), "", CFGTXT("(128 characters max, blank = no log)\n"),2,1,1,NULL},
+{ "logname", CFGTXT("File to log to"), "none", CFGTXT("(128 characters max, none = no log)\n"),2,1,1,NULL},
 //10
 { "uuehttpmode", CFGTXT("Firewall Communications mode (UUE/HTTP/SOCKS)"), "0",
   CFGTXT(""),3,2,1,NULL,&uuehttptable[0][0],0,5},
@@ -507,7 +507,11 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
             niceness = 0;
           break;
         case CONF_LOGNAME:
-          strncpy( logname, parm, sizeof(logname) - 1 );
+          strncpy( ini_logname, parm, sizeof(ini_logname) - 1 );
+          if (isblank(ini_logname)) strcpy (ini_logname,"none");
+          if (strcmpi(ini_logname,"none") != 0)
+            strcpy(logname,InternalGetLocalFilename(ini_logname));
+          else strcpy(logname, "none");
           break;
         case CONF_KEYPROXY:
           strncpy( keyproxy, parm, sizeof(keyproxy) - 1 );
@@ -704,13 +708,19 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
 #endif
         case CONF_CHECKPOINT:
           strncpy( ini_checkpoint_file[0] , parm, sizeof(ini_checkpoint_file)/2 -1 );
+          if (isblank(ini_checkpoint_file[0])) strcpy (ini_checkpoint_file[0],"none");
           if (strcmpi(ini_checkpoint_file[0],"none") != 0)
             strcpy(checkpoint_file[0],InternalGetLocalFilename(ini_checkpoint_file[0]));
+          else
+            strcpy(ini_checkpoint_file[0],"none");
           break;
         case CONF_CHECKPOINT2:
           strncpy( ini_checkpoint_file[1] , parm, sizeof(ini_checkpoint_file)/2 -1 );
+          if (isblank(ini_checkpoint_file[1])) strcpy (ini_checkpoint_file[1],"none");
           if (strcmpi(ini_checkpoint_file[1],"none") != 0)
             strcpy(checkpoint_file[1],InternalGetLocalFilename(ini_checkpoint_file[1]));
+          else
+            strcpy(ini_checkpoint_file[1],"none");
           break;
         case CONF_PREFERREDBLOCKSIZE:
           preferred_blocksize = atoi(parm);
@@ -784,24 +794,31 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
 #endif
         case CONF_RC5IN:
           strncpy( ini_in_buffer_file[0] , parm, sizeof(ini_in_buffer_file)/2 -1 );
+          if (isblank(ini_in_buffer_file[0])) strcpy (ini_in_buffer_file[0],"buff-in.rc5");
           strcpy(in_buffer_file[0],InternalGetLocalFilename(ini_in_buffer_file[0]));
           break;
         case CONF_RC5OUT:
           strncpy( ini_out_buffer_file[0] , parm, sizeof(ini_out_buffer_file)/2 -1 );
+          if (isblank(ini_out_buffer_file[0])) strcpy (ini_out_buffer_file[0],"buff-out.rc5");
           strcpy(out_buffer_file[0],InternalGetLocalFilename(ini_out_buffer_file[0]));
           break;
         case CONF_DESIN:
           strncpy( ini_in_buffer_file[1] , parm, sizeof(ini_in_buffer_file)/2 -1 );
+          if (isblank(ini_in_buffer_file[1])) strcpy (ini_in_buffer_file[1],"buff-in.des");
           strcpy(in_buffer_file[1],InternalGetLocalFilename(ini_in_buffer_file[1]));
           break;
         case CONF_DESOUT:
           strncpy( ini_out_buffer_file[1] , parm, sizeof(ini_out_buffer_file)/2 -1 );
+          if (isblank(ini_out_buffer_file[1])) strcpy (ini_in_buffer_file[1],"buff-out.des");
           strcpy(out_buffer_file[1],InternalGetLocalFilename(ini_out_buffer_file[1]));
           break;
         case CONF_PAUSEFILE:
           strncpy( ini_pausefile, parm, sizeof(ini_pausefile) -1 );
+          if (isblank(ini_pausefile)) strcpy (ini_pausefile,"none");
           if (strcmpi(ini_pausefile,"none") != 0)
             strcpy(pausefile,InternalGetLocalFilename(ini_pausefile));
+          else
+            strcpy(pausefile,"none");
           break;
         default:
           break;
@@ -920,7 +937,7 @@ options[CONF_TIMESLICE].optionscreen=0;
 #endif
 options[CONF_TIMESLICE].thevariable=&timeslice;
 options[CONF_NICENESS].thevariable=&niceness;
-options[CONF_LOGNAME].thevariable=&logname;
+options[CONF_LOGNAME].thevariable=&ini_logname;
 options[CONF_UUEHTTPMODE].thevariable=&uuehttpmode;
 options[CONF_KEYPROXY].thevariable=&keyproxy;
 options[CONF_KEYPORT].thevariable=&keyport;
@@ -1022,6 +1039,30 @@ while (strchr(string, ' ') != NULL)
 
 //----------------------------------------------------------------------------
 
+#if !defined(NOCONFIG)
+
+int Client::isblank( char *string )
+{
+s32 counter, summation=0;
+
+if (string==NULL) return 1;
+
+if (strlen(string) == 0) return 1;
+
+for (counter=0;counter!=strlen(string);counter++)
+  {
+  summation+=isalnum(*(string+counter));
+  };
+
+if (summation == 0) return 1;
+
+return 0;
+}
+#endif
+
+
+//----------------------------------------------------------------------------
+
 
 #if !defined(NOCONFIG)
 void Client::clearscreen( void )
@@ -1090,7 +1131,7 @@ s32 Client::ReadConfig(void)
   minutes = (s32) (atol(hours) * 60.);
   timeslice = INIGETKEY(CONF_TIMESLICE);
   niceness = INIGETKEY(CONF_NICENESS);
-  INIGETKEY(CONF_LOGNAME).copyto(logname, sizeof(logname));
+  INIGETKEY(CONF_LOGNAME).copyto(ini_logname, sizeof(ini_logname));
   INIGETKEY(CONF_KEYPROXY).copyto(keyproxy, sizeof(keyproxy));
   keyport = INIGETKEY(CONF_KEYPORT);
   INIGETKEY(CONF_HTTPPROXY).copyto(httpproxy, sizeof(httpproxy));
@@ -1221,20 +1262,34 @@ void Client::ValidateConfig( void )
   if ( minutes < 0 ) minutes=0;
   if ( blockcount < 0 ) blockcount=0;
 
+  if (isblank(ini_in_buffer_file[0]))
+    strcpy(ini_in_buffer_file[0],"buff-in.rc5");
   strcpy(in_buffer_file[0],InternalGetLocalFilename(ini_in_buffer_file[0]));
+  if (isblank(ini_out_buffer_file[0]))
+    strcpy(ini_out_buffer_file[0],"buff-out.rc5");
   strcpy(out_buffer_file[0],InternalGetLocalFilename(ini_out_buffer_file[0]));
+  if (isblank(ini_in_buffer_file[1]))
+    strcpy(ini_in_buffer_file[1],"buff-in.des");
   strcpy(in_buffer_file[1],InternalGetLocalFilename(ini_in_buffer_file[1]));
+  if (isblank(ini_out_buffer_file[1]))
+    strcpy(ini_out_buffer_file[1],"buff-out.des");
   strcpy(out_buffer_file[1],InternalGetLocalFilename(ini_out_buffer_file[1]));
-  
+
+  if (isblank(ini_pausefile)) strcpy(ini_pausefile,"none");
   if (strcmpi(ini_pausefile,"none") != 0)
     strcpy(pausefile,InternalGetLocalFilename(ini_pausefile));
 
-  if (strlen(ini_checkpoint_file[0])==0) strcpy(ini_checkpoint_file[0],"none");
+  if (isblank(ini_checkpoint_file[0])) strcpy(ini_checkpoint_file[0],"none");
   if (strcmpi(ini_checkpoint_file[0],"none") != 0)
     strcpy(checkpoint_file[0],InternalGetLocalFilename(ini_checkpoint_file[0]));
-  if (strlen(ini_checkpoint_file[1])==0) strcpy(ini_checkpoint_file[1],"none");
+  if (isblank(ini_checkpoint_file[1])) strcpy(ini_checkpoint_file[1],"none");
   if (strcmpi(ini_checkpoint_file[1],"none") != 0)
     strcpy(checkpoint_file[1],InternalGetLocalFilename(ini_checkpoint_file[1]));
+
+  if (isblank(ini_logname)) strcpy (ini_logname,"none");
+  if (strcmpi(ini_logname,"none") != 0)
+    strcpy(logname,InternalGetLocalFilename(ini_logname));
+
 
   CheckForcedKeyport();
 
@@ -1393,7 +1448,7 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_HOURS, hours );
   INISETKEY( CONF_TIMESLICE, timeslice );
   INISETKEY( CONF_NICENESS, niceness );
-  INISETKEY( CONF_LOGNAME, logname );
+  INISETKEY( CONF_LOGNAME, ini_logname );
   INISETKEY( CONF_KEYPROXY, keyproxy );
   INISETKEY( CONF_KEYPORT, keyport );
   INISETKEY( CONF_HTTPPROXY, httpproxy );
