@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.54  1999/01/30 12:11:06  snake
+//
+// fixed a small typo affecting BSD/OS
+//
 // Revision 1.53  1998/12/05 22:19:57  cyp
 // Added -kill (aka -shutdown) and -hup (aka -restart) to the list of switches.
 //
@@ -172,7 +176,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.53 1998/12/05 22:19:57 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.54 1999/01/30 12:11:06 snake Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -189,7 +193,7 @@ return "@(#)$Id: disphelp.cpp,v 1.53 1998/12/05 22:19:57 cyp Exp $"; }
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD)  || \
     (CLIENT_OS == OS_BEOS)  || (CLIENT_OS == OS_SOLARIS) || \
     (CLIENT_OS == OS_IRIX)  || (CLIENT_OS == OS_FREEBSD) || \
-    (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_AIX)     || \
+    (CLIENT_OS == OS_BSDI) || (CLIENT_OS == OS_AIX)     || \
     (CLIENT_OS == OS_OS390) || (CLIENT_OS == OS_NEXT)    || \
     (CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_MACH)    || \
     (CLIENT_OS == OS_SCO)   || (CLIENT_OS == OS_OPENBSD) || \
