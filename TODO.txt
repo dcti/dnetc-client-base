@@ -7,8 +7,8 @@ To avoid having the wheel reinvented, please holler if you wish
 to tackle a project.
 
 If you have the expertise but lack the time to handle a project, 
-please post your willingness to assist to coders@. Perhaps someone 
-else has what you don't. :)
+please post your willingness to assist to coders@lists.distributed.net.
+Perhaps someone else has what you don't. :)
 
 
 1. Add support for GSSAPI authentication to the client's SOCKS5 handler.
@@ -49,4 +49,20 @@ else has what you don't. :)
    keyserver to return a rc5 block from its ready queue.   Priority: Low
     
 6. Write a small routine to obtain a list of the local host's UP af_inet 
-   if's by using SNMP or ... Use ioctl() to do the same (for your port).                                                                   Priority: Low
+   if's by using SNMP or ... Use ioctl() to do the same (for your port).
+                                                           Priority: Low
+
+7. Modify client to use an ini file format with more varied sections
+   to classify the option categories better.
+
+8. Replace networking code in client with the DCTIConnServer classes
+   from the proxy codebase.
+
+9. Make win32cli start hidden to tray instead of minimized to to taskbar
+   when the client is started via a shortcut with minimized as default.
+
+
+
+
+
+
