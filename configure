@@ -5,15 +5,16 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.192  1999/02/18 02:31:34  remi
+# Another rc5 core path fix.
+#
 # Revision 1.191  1999/02/16 06:19:41  gregh
 # Fixed location of des/*.S to des/brydgnu/*.S as appropriate.
 #
 # Revision 1.190  1999/02/15 10:46:00  snake
-#
 # fixed rc5 core paths
 #
 # Revision 1.189  1999/02/11 21:24:42  patrick
-#
 # added new target x86-os2-nams-gcc to select nasm cores, based on a comment
 # by cyp. Couldn't find any difference though
 #
@@ -1488,7 +1489,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -pipe \
 			-D__showids__ -DSMC -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
@@ -1504,7 +1505,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 \
 			-D__showids__ -DSMC -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
@@ -1520,7 +1521,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 \
 			-D__showids__ -DSMC -DMULTITHREAD -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
@@ -1538,7 +1539,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 \
 			-D__showids__ -DSMC -DMULTITHREAD -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp common/lurk.cpp \
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
