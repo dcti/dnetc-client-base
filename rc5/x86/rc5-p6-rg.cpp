@@ -23,7 +23,7 @@
 //	- precalculate some things for ROUND1 & ROUND2
 
 const char *rc5_p6_rg_cpp (void) {
-return "@(#)$Id: rc5-p6-rg.cpp,v 1.15.2.3 1999/11/02 19:17:07 remi Exp $"; }
+return "@(#)$Id: rc5-p6-rg.cpp,v 1.15.2.4 2000/02/16 04:21:00 petermack Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 
@@ -41,7 +41,7 @@ return "@(#)$Id: rc5-p6-rg.cpp,v 1.15.2.3 1999/11/02 19:17:07 remi Exp $"; }
 #define _(s)    __(s)
 #define __(s)   #s
 
-#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__))
+#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__)) || defined(__NeXT__)
 #define BALIGN4 ".align 2,0x90"
 #else
 #define BALIGN4 ".balign 4"

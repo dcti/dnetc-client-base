@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-k6-rg.cpp,v $
+// Revision 1.15.2.2  2000/02/16 04:20:37  petermack
+// Nextstep doesn't understand .balign
+//
 // Revision 1.15.2.1  1999/11/02 19:20:50  remi
 // Updated this core to compile with gcc 2.95.x.
 // Also tweaked a bit alignment directives.
@@ -44,7 +47,7 @@
 // causing build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.6  1998/07/08 22:59:37  remi
-// Lots of $Id: rc5-k6-rg.cpp,v 1.15.2.1 1999/11/02 19:20:50 remi Exp $ stuff.
+// Lots of $Id: rc5-k6-rg.cpp,v 1.15.2.2 2000/02/16 04:20:37 petermack Exp $ stuff.
 //
 // Revision 1.5  1998/07/08 18:47:47  remi
 // $Id fun ...
@@ -63,14 +66,14 @@
 //
 //
 // K6 optimized version
-// Rémi Guyomarch - rguyom@mail.dotcom.fr
+// Rimi Guyomarch - rguyom@mail.dotcom.fr
 //
 // 980307 :
 //	- Finally a K6 optimization that works ...
 //	- Based on the 486/980226 version
 
 const char *rc5_k6_rg_cpp (void) {
-return "@(#)$Id: rc5-k6-rg.cpp,v 1.15.2.1 1999/11/02 19:20:50 remi Exp $"; }
+return "@(#)$Id: rc5-k6-rg.cpp,v 1.15.2.2 2000/02/16 04:20:37 petermack Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 
@@ -88,7 +91,7 @@ return "@(#)$Id: rc5-k6-rg.cpp,v 1.15.2.1 1999/11/02 19:20:50 remi Exp $"; }
 #define _(s)    __(s)
 #define __(s)   #s
 
-#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__))
+#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__)) || defined(__NeXT__)
 #define BALIGN4 ".align 2, 0x90"
 #define BALIGN8 ".align 3, 0x90"
 #else

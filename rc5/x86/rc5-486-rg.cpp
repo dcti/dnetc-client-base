@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-486-rg.cpp,v $
+// Revision 1.14.2.2  2000/02/16 04:22:15  petermack
+// Nextstep doesn't understand .balign
+//
 // Revision 1.14.2.1  1999/11/02 19:17:06  remi
 // Upgraded RC5 .cpp cores to compile with gcc 2.95.x
 //
@@ -27,7 +30,7 @@
 // causing build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.6  1998/07/08 22:59:33  remi
-// Lots of $Id: rc5-486-rg.cpp,v 1.14.2.1 1999/11/02 19:17:06 remi Exp $ stuff.
+// Lots of $Id: rc5-486-rg.cpp,v 1.14.2.2 2000/02/16 04:22:15 petermack Exp $ stuff.
 //
 // Revision 1.5  1998/07/08 18:47:43  remi
 // $Id fun ...
@@ -45,7 +48,7 @@
 //
 //
 // 386/486 optimized version
-// Rémi Guyomarch - rguyom@mail.dotcom.fr
+// Rimi Guyomarch - rguyom@mail.dotcom.fr
 //
 // 980226 :
 //	- Corrected bug in the key incrementation algorithm that caused the
@@ -66,7 +69,7 @@
 // probably because less load/store operations
 //
 const char *rc5_486_rg_cpp (void) {
-return "@(#)$Id: rc5-486-rg.cpp,v 1.14.2.1 1999/11/02 19:17:06 remi Exp $"; }
+return "@(#)$Id: rc5-486-rg.cpp,v 1.14.2.2 2000/02/16 04:22:15 petermack Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 
@@ -84,7 +87,7 @@ return "@(#)$Id: rc5-486-rg.cpp,v 1.14.2.1 1999/11/02 19:17:06 remi Exp $"; }
 #define _(s)    __(s)
 #define __(s)   #s
 
-#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__))
+#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__)) || defined(__NeXT__)
 #define BALIGN(x)
 #else
 #define BALIGN(x) ".balign 4"

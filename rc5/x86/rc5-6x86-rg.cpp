@@ -4,6 +4,9 @@
 // torment.ntr.net K6 233 sean@ntr.net
 //
 // $Log: rc5-6x86-rg.cpp,v $
+// Revision 1.17.2.2  2000/02/16 04:19:33  petermack
+// Nextstep doesn't understand .balign
+//
 // Revision 1.17.2.1  1999/11/02 19:17:07  remi
 // Upgraded RC5 .cpp cores to compile with gcc 2.95.x
 //
@@ -34,7 +37,7 @@
 // causing build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.7  1998/07/08 22:59:34  remi
-// Lots of $Id: rc5-6x86-rg.cpp,v 1.17.2.1 1999/11/02 19:17:07 remi Exp $ stuff.
+// Lots of $Id: rc5-6x86-rg.cpp,v 1.17.2.2 2000/02/16 04:19:33 petermack Exp $ stuff.
 //
 // Revision 1.6  1998/07/08 18:47:45  remi
 // $Id fun ...
@@ -122,7 +125,7 @@
 // PR133 = 110		PR166 = 150
 
 const char *rc5_6x86_rg_cpp (void) {
-return "@(#)$Id: rc5-6x86-rg.cpp,v 1.17.2.1 1999/11/02 19:17:07 remi Exp $"; }
+return "@(#)$Id: rc5-6x86-rg.cpp,v 1.17.2.2 2000/02/16 04:19:33 petermack Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 
@@ -140,7 +143,7 @@ return "@(#)$Id: rc5-6x86-rg.cpp,v 1.17.2.1 1999/11/02 19:17:07 remi Exp $"; }
 #define _(s)    __(s)
 #define __(s)   #s
 
-#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__))
+#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__)) || defined(__NeXT__)
 #define BALIGN4 ".align 2,0x90"
 #else
 #define BALIGN4 ".balign 4"
