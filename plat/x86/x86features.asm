@@ -25,14 +25,14 @@
 
 global          x86features,_x86features
 
-%define MMX             1
-%define CYRIX_MMX_PLUS  2
-%define AMD_MMX_PLUS    4
-%define 3DNOW		8
-%define 3DNOW_PLUS	16
-%define SSE		32
-%define SSE2		64
-%define SSE3		128
+%define CPU_F_MMX             00000001h
+%define CPU_F_CYRIX_MMX_PLUS  00000002h
+%define CPU_F_AMD_MMX_PLUS    00000004h
+%define CPU_F_3DNOW           00000008h
+%define CPU_F_3DNOW_PLUS      00000010h
+%define CPU_F_SSE             00000020h
+%define CPU_F_SSE2            00000040h
+%define CPU_F_SSE3            00000080h
 
 __CODESECT__
 _x86features:            
@@ -62,9 +62,8 @@ x86features:
   pop eax
 
   ; ... Compare and test result
-  xor ecx, eax
-  test ecx, 200000h
-  jz NotSupported  ; Nothing supported
+  cmp ecx, eax
+  je NotSupported  ; Nothing supported
 
   ; Get standard CPUID information, and
   ; go to a specific vendor section
@@ -108,9 +107,14 @@ Cyrix:
   cmp eax, 80000000h
   jl Standard  ; Try standard CPUID instead
 
+  ; Extended CPUID supported, so get extended features
+  mov eax, 80000001h
+  cpuid
+  mov edx, eax
+
   test edx, 01000000h  ; Test for Cyrix Ext'd MMX
-  jz Extended
-  or esi, CYRIX_MMX_PLUS           ; Cyrix EMMX supported
+  jz Extended_Checks
+  or esi, CPU_F_CYRIX_MMX_PLUS           ; Cyrix EMMX supported
 
   jmp Extended_Checks
 
@@ -131,19 +135,19 @@ Extended_Checks:
 
   test edx, 00800000h   ; Test for MMX
   jz AMDMMXPLUS
-  or esi, MMX           ; MMX Supported
+  or esi, CPU_F_MMX     ; MMX Supported
 AMDMMXPlus:
   test edx, 00400000h   ; Test for AMD Ext'd MMX
   jz 3DNow
-  or esi, AMD_MMX_PLUS  ; AMD EMMX supported
+  or esi, CPU_F_AMD_MMX_PLUS  ; AMD EMMX supported
 3DNow:
   test edx, 80000000h   ; Test for 3DNow!
   jz 3DNowPlus
-  or esi, 3DNOW         ; 3DNow! also supported
+  or esi, CPU_F_3DNOW   ; 3DNow! also supported
 3DNowPlus:
   test edx, 40000000h   ; Test for 3DNow!+
   jz Standard
-  or esi, 3DNOW_PLUS    ; 3DNow!+ also supported
+  or esi, CPU_F_3DNOW_PLUS  ; 3DNow!+ also supported
 
 Intel:
 Standard:
@@ -151,20 +155,20 @@ Standard:
   cpuid
 MMX:
   test edx, 00800000h   ; Test for MMX
-  jz SSE		; MMX Not supported
-  or esi, MMX		; MMX Supported
+  jz SSE                ; MMX Not supported
+  or esi, CPU_F_MMX     ; MMX Supported
 SSE:
-  test edx, 02000000h	; Test for SSE
-  jz SSE2		; SSE Not supported
-  or esi, SSE		; SSE Supported
+  test edx, 02000000h   ; Test for SSE
+  jz SSE2               ; SSE Not supported
+  or esi, CPU_F_SSE     ; SSE Supported
 SSE2:
   test edx, 04000000h   ; Test for SSE2
   jz SSE3               ; SSE2 Not supported
-  or esi, SSE2          ; SSE2 Supported
+  or esi, CPU_F_SSE2    ; SSE2 Supported
 SSE3:
   test ecx, 00000001h   ; Test for SSE3
   jz Return             ; SSE3 Not supported
-  or esi, SSE3          ; SSE3 Supported
+  or esi, CPU_F_SSE3    ; SSE3 Supported
   jmp Return
 
 ; Nothing supported
