@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.173  1998/08/14 00:23:19  silby
+// Changed WriteContestAndPrefixConfig so that it would not attempt to do so if nodiskbuffers was specified (aiming towards complete diskless operation aside from the inital .ini read)
+//
 // Revision 1.172  1998/08/14 00:04:48  silby
 // Changes for rc5 mmx core integration.
 //
@@ -185,7 +188,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.172 1998/08/14 00:04:48 silby Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.173 1998/08/14 00:23:19 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -1882,6 +1885,7 @@ s32 Client::WriteConfig(void)
   #else
   return( ini.WriteIniFile( GetFullPathForFilename( inifilename ) ) ? -1 : 0 );
   #endif
+
 }
 
 // --------------------------------------------------------------------------
@@ -1891,6 +1895,9 @@ s32 Client::WriteContestandPrefixConfig(void)
     // only writes contestdone and randomprefix .ini entries
 {
   IniSection ini;
+
+if (!nodiskbuffers)
+{
 
   #ifdef DONT_USE_PATHWORK
   ini.ReadIniFile( inifilename );
@@ -1916,6 +1923,9 @@ s32 Client::WriteContestandPrefixConfig(void)
   #else
   return( ini.WriteIniFile( GetFullPathForFilename( inifilename ) ) ? -1 : 0 );
   #endif
+} 
+else return 0;
+
 }
 
 //----------------------------------------------------------------------------
