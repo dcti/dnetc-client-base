@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.9 1999/10/10 23:05:36 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.79.2.10 1999/11/03 01:00:04 remi Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -622,8 +622,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     if ( vendorid == 0x7943 /* 'yC' */ ) // Cyrix CPU
     {
       static struct cpuxref cyrixxref[]={
-          {    0x40,  512,     0, "486"       }, // use Pentium core
-          {  0x0440,  512,     0, "MediaGX"   },
+          {    0x40,  950,     0, "486"       }, // use Pentium core
+          {  0x0440,  950,     0, "MediaGX"   },
           {  0x0490, 1185,     0, "5x86"      },
           {  0x0520, 2090,     3, "6x86"      }, // "Cyrix 6x86/6x86MX/M2"
           {  0x0540, 1200,     0, "GXm"       }, // use Pentium core here too
@@ -678,11 +678,11 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     else if ( vendorid == 0x7541 /* 'uA' */ ) // "AuthenticAMD"
     {
       static struct cpuxref amdxref[]={
-          {  0x0040,  512,     0, "486"      }, // "Pentium, Pentium MMX, Cyrix 486/5x86/MediaGX, AMD 486",
-          {  0x0430,  512,     0, "486DX2"   },
-          {  0x0470,  512,     0, "486DX2WB" },
-          {  0x0480,  512,     0, "486DX4"   },
-          {  0x0490,  512,     0, "486DX4WB" },
+          {  0x0040,  950,     0, "486"      }, // "Pentium, Pentium MMX, Cyrix 486/5x86/MediaGX, AMD 486",
+          {  0x0430,  950,     0, "486DX2"   },
+          {  0x0470,  950,     0, "486DX2WB" },
+          {  0x0480,  950,     0, "486DX4"   },
+          {  0x0490,  950,     0, "486DX4WB" },
           {  0x04E0, 1185,     0, "5x86"     },
           {  0x04F0, 1185,     0, "5x86WB"   },
           {  0x0500, 2353,     4, "K5 PR75, PR90, or PR100" }, // use K5 core
@@ -693,9 +693,9 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0570, 1611, 0x105, "K6"       },
           {  0x0580, 1690, 0x105, "K6-2"     },
           {  0x0590, 1690, 0x105, "K6-3"     },
-          {  0x0610, 4096, 0x102, "K7"       }, /* K6 core or PII core? */
-          {  0x0620, 4096, 0x102, "K7"       },
-          {  0x0000, 4096,     2, NULL       } // default core = K7
+          {  0x0610, 3400, 0x103, "K7"       }, /* K7 is faster with the Cyrix core */
+          {  0x0620, 3400, 0x103, "K7"       },
+          {  0x0000, 4096,     2, NULL       } // default core = P6 (??)
           }; internalxref = &amdxref[0];
       vendorname = "AMD ";
       cpuidbmask = 0xfff0; //strip last 4 bits, don't need stepping info
@@ -704,16 +704,16 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     {
       static struct cpuxref intelxref[]={
           {  0x0030,  426,     1, "80386"      },   // generic 386/486 core
-          {  0x0040,  512,     1, "80486"      },
-          {  0x0400,  512,     1, "486DX 25 or 33" },
-          {  0x0410,  512,     1, "486DX 50" },
-          {  0x0420,  512,     1, "486SX" },
-          {  0x0430,  512,     1, "486DX2" },
-          {  0x0440,  512,     1, "486SL" },
-          {  0x0450,  512,     1, "486SX2" },
-          {  0x0470,  512,     1, "486DX2WB" },
-          {  0x0480,  512,     1, "486DX4" },
-          {  0x0490,  512,     1, "486DX4WB" },
+          {  0x0040,  950,     1, "80486"      },
+          {  0x0400,  950,     1, "486DX 25 or 33" },
+          {  0x0410,  950,     1, "486DX 50" },
+          {  0x0420,  950,     1, "486SX" },
+          {  0x0430,  950,     1, "486DX2" },
+          {  0x0440,  950,     1, "486SL" },
+          {  0x0450,  950,     1, "486SX2" },
+          {  0x0470,  950,     1, "486DX2WB" },
+          {  0x0480,  950,     1, "486DX4" },
+          {  0x0490,  950,     1, "486DX4WB" },
           {  0x0500, 1416,     0, "Pentium" }, //stepping A
           {  0x0510, 1416,     0, "Pentium" },
           {  0x0520, 1416,     0, "Pentium" },
@@ -723,10 +723,10 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0580, 1432, 0x100, "Pentium MMX" },
           {  0x0600, 2785,     2, "Pentium Pro" },
           {  0x0610, 2785,     2, "Pentium Pro" },
-          {  0x0630, 3092, 0x102, "Pentium II" },
-          {  0x0650, 3092, 0x102, "Pentium II" },
-          {  0x0660, 3092, 0x102, "Celeron-A" },
-          {  0x0670, 4096, 0x102, "Pentium III" },
+          {  0x0630, 2785, 0x102, "Pentium II" },
+          {  0x0650, 2785, 0x102, "Pentium II" },
+          {  0x0660, 2785, 0x102, "Celeron-A" },
+          {  0x0670, 2785, 0x102, "Pentium III" },
           {  0x0000, 4096,     2, NULL           }  // default core = PPro/PII
           }; internalxref = &intelxref[0];
       vendorname = "Intel "; 
