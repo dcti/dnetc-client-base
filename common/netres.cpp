@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.19  1999/01/11 23:39:11  michmarc
+// Fix compile error when DEBUG is defined
+//
 // Revision 1.18  1999/01/09 00:12:34  cyp
 // we now assume that nameservers do _not_ rotate. If they rotate, fine, if
 // they don't also fine. :)
@@ -67,7 +70,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.18 1999/01/09 00:12:34 cyp Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.19 1999/01/11 23:39:11 michmarc Exp $"; }
 #endif
 
 //---------------------------------------------------------------------
@@ -394,9 +397,11 @@ int Network::Resolve(const char *host, u32 *hostaddress, int resport )
     }
 
   #ifdef DEBUG
+  {
   unsigned int i;
   for (i=0;i<plist->numproxies;i++)
     printf("%s resolved to %s\n", host, plist->proxies[i]);
+  }
   #endif        
 
   addrcount = 0;
