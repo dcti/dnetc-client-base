@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.56.2.32 2000/10/31 15:22:41 cyp Exp $
+# $Id: makefile.vc,v 1.56.2.33 2001/01/04 15:24:25 gregh Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
@@ -73,7 +73,7 @@ OPTS_MSVC = -nologo -I$(COMMONPATH) -I$(PLATSRCPATH) -I$(OGRSRCPATH) \
             -I$(CSCSRCPATH) -DMULTITHREAD -D__WIN32__ -DLURK \
             -W3 -MT -GR- -GX- -GA -GF \
             -D_M_$(OPTS_M_PLAT) $(OPTS_CC_CPU) $(OPTS_CC_DEBUG) 
-OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib
+OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib shell32.lib
 OPTS_LINK = /nologo /incremental:no /version:3.10 \
             /machine:$(OPTS_M_PLAT) $(OPTS_LINK_DEBUG)
 OPTS_RC   = -d_Windows -d_M_{$(OPTS_M_PLAT)}
