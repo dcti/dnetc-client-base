@@ -11,8 +11,10 @@
 */
 //
 // $Log: setprio.cpp,v $
-// Revision 1.32  1998/10/29 04:13:19  foxyloxy
+// Revision 1.33  1998/10/31 17:34:51  cyp
+// more win32 priority adjustment.
 //
+// Revision 1.32  1998/10/29 04:13:19  foxyloxy
 // Initial IRIX support of new priority handling. Not debugged yet,
 // but it won't lock up your system.
 //
@@ -34,7 +36,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.32 1998/10/29 04:13:19 foxyloxy Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.33 1998/10/31 17:34:51 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -72,27 +74,63 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
       DosSetPriority( prio_scope, PRTYC_IDLETIME, prio_level, 0);
       }
   #elif (CLIENT_OS == OS_WIN32)
+    /*
+       win32's implementation of thread priorities is totally screwy. It
+       is technically easier to implement different priorities for different 
+       threads based off of normal or high priority than to do so based off 
+       of idle priority. M$ is apparently aware of the problem: (a) Win-CE
+       does away with process priorities altogether (b) The screen saver
+       runs with a class priority of idle but a thread priority of normal
+       giving an effective priority of low priority, but by no means idle.
+       To implement a class priority of idle, a crunch thread priority of 
+       idle and a main thread priority of normal (to keep it responsive) 
+       would require setting the thread priority of the main thread to 
+       real-time priority. yuk! (This is also not an option on NT without
+       admin rights).
+       However, it is possible to set a class priority of normal, a crunch 
+       priority of idle and a main thread priority of idle.
+     definitions: 
+       - The "base_priority", of a thread is computed off of the priority 
+       level of the process (ie the priority class) which owns it. The 
+       *priority class* can only be one of 0x20(normal),0x40(idle),0x80(high),
+       or 0x100(real-time). The resulting base_priority will then be either 4 
+       (idle), 8 (normal), 12 (high) or 14 (real-time). 
+       Changing the priority class causes the kernel to walk the thread
+       info structures of all threads belonging to that process and
+       change the base_priority field individually for that thread.
+       - "thread_priority" is a delta which is added to the "base_priority"
+       and can be either +15 or in the range +2 to -15.
+       -  The "effective_priority" of a thread, ie the priority a thread has
+       when it is scheduled to run is computed from the sum of its 
+       "base_priority" and its "thread_priority", and truncated such that it
+       lies in the range 1 to 31.
+     */
     static HANDLE main_thrid = 0;
+    HANDLE our_thrid = GetCurrentThread();
     if (!set_for_thread && !main_thrid)
-      main_thrid = GetCurrentThread();
-    if (prio >=9)
+      main_thrid = our_thrid;
+    if (set_for_thread)
+      {
+      int newprio=THREAD_PRIORITY_LOWEST;
+      if (prio >= 9)      newprio = THREAD_PRIORITY_NORMAL; /* +0 */
+      else if (prio >= 5) newprio = THREAD_PRIORITY_BELOW_NORMAL; /* -1 */
+      else if (prio >= 1) newprio = THREAD_PRIORITY_LOWEST; /* -2 */
+      //else if (prio == 0) newprio = THREAD_PRIORITY_IDLE;  /* -15 */
+      /* At thread_prio_idle, the crunch stops when a screen saver is active.
+         There is no priority level between -15 and -2! */
+      SetPriorityClass(GetCurrentProcess(),IDLE_PRIORITY_CLASS/* 0x20->4 */);
+      //setting priority class has no effect here since it is changed below
+      SetThreadPriority( our_thrid, newprio );
+      #if 0 /* old locked method */
+      SetThreadPriority( our_thrid, ((!set_for_thread || prio >=9)?
+        (THREAD_PRIORITY_NORMAL /* +0 */):( THREAD_PRIORITY_IDLE /* -15 */))); 
+      #endif
+      }
+    if (main_thrid)
       {
       SetPriorityClass( GetCurrentProcess(), NORMAL_PRIORITY_CLASS );
-      SetThreadPriority( GetCurrentThread(), THREAD_PRIORITY_NORMAL );
-      }
-    else //between THREAD_PRIORITY_NORMAL (+0) and THREAD_PRIORITY_IDLE (-15)
-      { 
-      SetPriorityClass( GetCurrentProcess(), IDLE_PRIORITY_CLASS );
-      if (GetCurrentThread() != main_thrid)
-        {
-        SetThreadPriority( GetCurrentThread(),THREAD_PRIORITY_IDLE);
-//        SetThreadPriority( GetCurrentThread(), 
-//              ((((THREAD_PRIORITY_IDLE + THREAD_PRIORITY_NORMAL)+1)
-//                                                  *(9-prio))/10) );
-        }
-      }
-    if (set_for_thread && main_thrid) //if we have threads,...
       SetThreadPriority( main_thrid, THREAD_PRIORITY_NORMAL );
+      }
   #elif (CLIENT_OS == OS_MACOS)
     if ( set_for_thread )
       {
