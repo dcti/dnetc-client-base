@@ -13,6 +13,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: console.cpp,v $
+// Revision 1.45.2.1  1999/04/04 07:26:24  jlawson
+// network.h not needed.
+//
 // Revision 1.45  1999/03/31 13:58:55  cyp
 // non-printable char suppression fix in ConInStr()
 //
@@ -172,14 +175,13 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.45 1999/03/31 13:58:55 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.45.2.1 1999/04/04 07:26:24 jlawson Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
 
 #include "cputypes.h"
 #include "baseincs.h"
-#include "network.h"
 #include "clitime.h"
 #include "triggers.h"
 #include "console.h" //also has CLICONS_SHORTNAME, CLICONS_LONGNAME
