@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.24  1998/06/09 10:46:27  cberry
+# initialise TARGET_ALLCCOBJS and TARGET_ALLASOBJS to be empty.
+#
 # Revision 1.23  1998/06/09 09:50:40  daa
 # add 2 new files in common/ disphelp.cpp and threadcd.cpp
 #
@@ -622,6 +625,10 @@ echo "Platform target for \"$1\" recognized."
 # Generate the list of output objects, making note of what
 # source file it was derrived from.
 #
+
+TARGET_ALLCCOBJS=
+TARGET_ALLASOBJS=
+
 echo "Scanning output C++ dependencies..."
 for target in ${COMMON_SRCS} ${TARGET_ADDSRCS}; do
     TARGETOBJECT=output/`basename $target .cpp`.o
