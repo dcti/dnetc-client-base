@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.21  1998/12/20 18:26:43  silby
+// RC5 iv/cipher/plain are pulled from contestdata.h now, made preferred contest
+// setting more truthful.
+//
 // Revision 1.20  1998/12/20 17:39:50  cyp
 // Minor tweaks for contestdone 'advertising' such as immediate write of
 // contestdone flags after a successful fetch/flush. Also added hardcoded DES
@@ -86,7 +90,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.20 1998/12/20 17:39:50 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.21 1998/12/20 18:26:43 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -107,6 +111,7 @@ return "@(#)$Id: probfill.cpp,v 1.20 1998/12/20 17:39:50 cyp Exp $"; }
 #include "triggers.h"  // RaiseExitRequestTrigger()
 #include "buffupd.h"   // BUFFERUPDATE_FETCH/_FLUSH define
 #include "probfill.h"  // ourselves.
+#include "contestdata.h" // Info about contest ciphers, etc.
 
 // =======================================================================
 // each individual problem load+save generates 4 or more messages lines 
@@ -510,7 +515,9 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   s32 cputype;
 
   cputype           = client->cputype; /* needed for FILEENTRY_CPU macro */
-  contest_preferred = 1; //(client->preferred_contest_id == 0)?(0):(1);
+  #define CYPS_PREFERRED_CONTEST 1
+  contest_preferred = CYPS_PREFERRED_CONTEST;
+    //(client->preferred_contest_id == 0)?(0):(1);
   contest_alternate = (contest_preferred == 0)?(1):(0);
   contest_count     = 2;
     
@@ -624,12 +631,12 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       fileentry.key.lo = htonl( Random( NULL, 0 ) & 0xF0000000L );
       fileentry.key.hi = htonl( (Random( NULL, 0 ) & 0x00FFFFFFL) + 
                               ( randomprefix << 24) ); // 64 bits significant
-      fileentry.iv.lo = htonl( 0xD5D5CE79L );
-      fileentry.iv.hi = htonl( 0xFCEA7550L );
-      fileentry.cypher.lo = htonl( 0x550155BFL );
-      fileentry.cypher.hi = htonl( 0x4BF226DCL );
-      fileentry.plain.lo = htonl( 0x20656854L );
-      fileentry.plain.hi = htonl( 0x6E6B6E75L );
+      fileentry.iv.lo = htonl( RC564_IVLO );
+      fileentry.iv.hi = htonl( RC564_IVHI );
+      fileentry.cypher.lo = htonl( RC564_CYPHERLO );
+      fileentry.cypher.hi = htonl( RC564_CYPHERHI );
+      fileentry.plain.lo = htonl( RC564_PLAINLO );
+      fileentry.plain.hi = htonl( RC564_PLAINHI );
       fileentry.keysdone.lo = htonl( 0 );
       fileentry.keysdone.hi = htonl( 0 );
       fileentry.iterations.lo = htonl( 0x10000000L );
