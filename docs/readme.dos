@@ -1,0 +1,59 @@
+                                                    
+ RC5-DES Client for x86 DOS (PC-,MS-,DR- or whatever) 5.0 and above
+ Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
+                                                          
+ Welcome to the new RC5-DES (Project Monarch) Client for DOS.
+
+    1.0  Getting started
+    2.0  DOS specific notes
+    3.0  Help! 
+   
+ 1.0  Getting started ------------------------------------------------
+ 
+    Just unpack the client in a directory of your choice and fire it up
+    with [path]RC5DES.COM   
+
+    If you have never run the client before, it will initiate the
+    menu-driven configuration. Save and quit when done, the 
+    configuration file will be saved in the same directory as the 
+    client. Then, simply restart the client. From that point on it will 
+    use the saved configuration.
+    
+    The configuration options are fairly self-explanatory and can be run
+    at any time by starting the client with the '-config' option.
+    A list of command line options is available by starting the client 
+    with '-help'.
+
+    A detailed guide to the various configuration options as well as 
+    applicable command line switches is in the enclosed rc5des.txt.
+    FAQs are available online at http://www.distributed.net/FAQ/
+
+ 2.0  Notes: ---------------------------------------------------------
+
+    The DOS client is still unable to communicate over a network link
+    (I'm working on it though) due principally to the lack of a 
+    standardized network programming interface. 
+    
+    It can however share buffers with any other client, across shared
+    network disks if need be. Checkpoint files however *cannot* be shared.
+
+    Beginning with v2.7100.416, the DOS client no longer requires the 
+    external DOS4GW.EXE DOS extender. The far superior (as can expected 
+    from free software) DOS extender, PMODE/W is now built directly into 
+    the client.
+
+    Beginning with v2.7100.416, the DOS client no longer assumes that the 
+    buffer files are in the current directory. The default path is now
+    the client's directory.
+
+ 3.0  Help: ----------------------------------------------------------
+
+    Please report problems, suggestions to the port maintainer
+    Cyrus Patel <cyp@fb14.uni-mainz.de>  Don't fret if you don't get 
+    a response right away.
+ 
+    If you need assistance regarding use or operation, post a message to 
+    the mailing list at <rc5@lists.distributed.net> (To subscribe to the 
+    mailing list, send a message to <majordomo@lists.distributed.net> with 
+    "subscribe rc5" as the message text).
+

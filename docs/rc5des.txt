@@ -19,11 +19,10 @@ Index:
     b.  Windows NT Service installation instructions
     c.  OS/2 CLI installation instructions
     d.  Unix installation instructions
-    e.  MS-DOS client installation instructions
-    f.  Amiga client installation instructions
-    g.  RISC OS CLI installation instructions
-   (Amiga, Windows, Macintosh, NetWare, OS/2 and RISC OS GUI installation 
-   instructions are included with their respective programs.)
+    e.  Amiga client installation instructions
+    f.  RISC OS CLI installation instructions
+   (DOS, NetWare, Amiga, Windows, Macintosh, OS/2 and RISC OS GUI 
+   installation instructions are included with their respective programs.)
 4.  Upgrading from a previous version of the client
 5.  Configuration of the client via the client config menu
 6.  Client commands
@@ -32,9 +31,8 @@ Index:
 9.  Format of the log file
 10. Platform specific information
     a.  Windows NT Service client
-    b.  MS-DOS client
-    c.  Amiga client
-    d.  RISC OS CLI
+    b.  Amiga client
+    c.  RISC OS CLI
 11. Frequently asked questions
 12. Firewall support / Network protocol description
 13. Flushing and fetching buffers via e-mail
@@ -163,22 +161,7 @@ unauthorized installations is help in uninstalling them.
      e.  Start the client up again; it should now receive some
          blocks, and begin working.
 
-3e.  MS-DOS/PC-DOS/Novell DOS/DR-DOS client installation instructions:
-
-     a.  Unzip the compressed file into the directory in which
-         you will be running the client, "c:\rc5des" for example.
-     b.  Read the documentation (this file) through so that you
-         completely understand how to operate the client.
-     c.  Run rc5des.exe.  This will initiate the menu-driven
-         configuration (described below.)  Set the options for your
-         configuration.
-     d.  Start the client up again.
-     
-     Note: The DOS client is not a standalone client; it requires 
-     "feeding" of buffer files from a networkable client. Please 
-     refer to section 10b for more information on how to use it.
-
-3f.  Amiga client installation instructions:
+3e.  Amiga client installation instructions:
 
      a.  Unpack the compressed file into the directory from which you
          will be running the client.
@@ -204,7 +187,7 @@ unauthorized installations is help in uninstalling them.
       Please read section 10c of this document for more Amiga specific
       information.
 
-3g.  RISC OS CLI installation instructions:
+3f.  RISC OS CLI installation instructions:
 
      a.  Unpack the archive into the directory from which you will be
          running the client.
@@ -745,7 +728,7 @@ ARM CPU types:
 
 --------------------------------------------
 Command line argument: -l <path/logfilename>
-Config file entry: logname=<path/logfilename>
+Config file entry: /logname=<path/logfilename>
 Default setting: None
 
 This is the name of the file to which the client will log its activity.
@@ -1064,7 +1047,7 @@ enabled, you tend to loose hours worth of work if the computer crashes
 or restarts.
 
 -----------------------------
-Command line argument: -quiet/-noquiet
+Command line argument: -quiet
 Config file entry: quietmode=<0/1>
 Default setting: 0
 
@@ -1259,23 +1242,7 @@ how you read them.  The averages
           consider using the GUI client, as the service has no user
           interface.
 
-    10b.  MS-DOS client
-
-          The MS-DOS client operates in the same manner as the other
-          non-GUI clients, with two major differences:
-
-          1. Due to the fact that MS-DOS is not a multitasking operating
-             system, this client has no way to run in the background 
-             unless it has been set up to run under the control of an
-             external multitasker such as Desqview, or Windows.
-          2. Due to a lack of standards for TCP/IP stacks (and a lack
-             of time), there is no TCP/IP support in the MS-DOS client.
-             To use this client, you must use a file sharing method to
-             feed it buffer files (NFS, NetWare, SMB, etc are all
-             acceptable). You may also transfer buffers to an offline
-             MS-DOS machine via a floppy disk if you so desire.
-             
-    10c.  Amiga client
+    10b.  Amiga client
 
           Please refer to 'readme.amiga' for detailed notes.
 
@@ -1292,7 +1259,7 @@ how you read them.  The averages
           `Blast2' on ANet #Amiga. (irc.amiganet.org or any other ANet
           server will work.)
 
-    10d.  RISC OS CLI
+    10c.  RISC OS CLI
 
           The RISC OS CLI client requires:
 
