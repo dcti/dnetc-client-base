@@ -9,7 +9,7 @@
  * Created March 2001 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *probmem_cpp(void) {
-return "@(#)$Id: coremem.cpp,v 1.2.4.1 2003/01/16 00:33:46 andreasb Exp $"; }
+return "@(#)$Id: coremem.cpp,v 1.2.4.2 2003/08/09 12:49:44 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -58,7 +58,17 @@ static void *__shm_cmem_alloc(unsigned int sz)
       sz += pgsize - (sz % pgsize);
   }
   #endif
-  #if defined(USE_SYSV_SHM)
+  #if (CLIENT_OS == OS_NEXTSTEP)
+  if (vm_allocate(task_self(), (vm_address_t *)&mem,
+                  sz, TRUE) != KERN_SUCCESS)
+    return NULL;
+
+  if (vm_inherit(task_self(), (vm_address_t)mem, sz,
+                 VM_INHERIT_SHARE) != KERN_SUCCESS) {
+    vm_deallocate(task_self(), (vm_address_t)mem, sz);
+    return NULL;
+  }
+  #elif defined(USE_SYSV_SHM)
   {
     int shmid = shmget(IPC_PRIVATE, sz, 0600 );
     if (shmid != -1)
@@ -108,7 +118,13 @@ static int __shm_cmem_free(void *mem)
     p -= sizeof(void *);
     mem = (void *)p;
   }
-  #if defined(USE_SYSV_SHM)
+  #if (CLIENT_OS == OS_NEXTSTEP)
+  if (vm_deallocate(task_self(), (vm_address_t)mem,
+                    (vm_size_t)*((unsigned int *)mem)) != KERN_SUCCESS)
+    return -1;
+
+  return 0;
+  #elif defined(USE_SYSV_SHM)
   TRACE_OUT((0,"shmdt(%p)\n", mem));
   return shmdt((char *)mem);
   #else
