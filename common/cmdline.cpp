@@ -3,16 +3,20 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.2  1998/10/03 03:56:51  cyp
+// running "modes", excluding -fetch/-flush but including -config (or a
+// missing ini file) disables -hidden and -quiet. -install and -uninstall
+// are now run before all other checks. trap for argv[x]=="" added. -noquiet
+// now negates xxhidden as well as quiet.
+//
 // Revision 1.1  1998/08/28 21:35:42  cyp
 // Created (complete rewrite). The command line is now "reusable", and allows
 // main() to be re-startable. *All* option handling is done here.
 //
-//
-//
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.1 1998/08/28 21:35:42 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.2 1998/10/03 03:56:51 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -20,13 +24,11 @@ return "@(#)$Id: cmdline.cpp,v 1.1 1998/08/28 21:35:42 cyp Exp $"; }
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "logstuff.h"  //Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "pathwork.h"
+#include "iniread.h"
 #include "cliident.h"  // CliIdentifyModules()
 #include "sleepdef.h"  // usleep()
 #include "triggers.h"  // CheckExitRequestTrigger()
 #include "cpucheck.h"  //GetTimesliceBaseline()
-#if ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32))
-#include "lurk.h"      //lurk stuff
-#endif
 
 /* ------------------------------------------------------------------------
  * runlevel == 0 = pre-anything    (-quiet, -ini, -guistart etc done here)
@@ -61,7 +63,7 @@ return "@(#)$Id: cmdline.cpp,v 1.1 1998/08/28 21:35:42 cyp Exp $"; }
  *------------------------------------------------------------------------ */
 
 int Client::ParseCommandline( int runlevel, int argc, const char *argv[], 
-                        int *inimissP, int *retcodeP, int show_set_messages )
+               int *inimissP, int *retcodeP, int logging_is_initialized )
 {
   int inimissing = ((inimissP)?(*inimissP):(1));
   int skip_next = 0, do_break = 0, retcode = 0;
@@ -75,6 +77,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
   if (runlevel >= 0) // this is only to protect against an invalid runlevel
     {
     inifilename[0]=0; //so we know when it changes
+
     for (pos = 1;((!do_break) && (pos<argc)); pos+=(1+skip_next))
       {
       thisarg = argv[pos];
@@ -91,6 +94,32 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         {                 // See if are restarting (hence less banners wanted)
         #if (CLIENT_OS == OS_RISCOS)
         guirestart=1;
+        #endif
+        }
+      else if ( strcmp(thisarg, "-install" ) == 0)
+        {
+        #if (CLIENT_OS == OS_WIN32)
+          win32CliInstallService(0);
+          do_break = 1;
+          retcode = 0;
+        #endif
+        #if (CLIENT_OS == OS_OS2)
+          os2CliInstallClient(0);
+          do_break = 1;
+          retcode = 0;
+        #endif
+        }
+      else if ( strcmp(thisarg, "-uninstall" ) == 0)
+        {
+        #if (CLIENT_OS == OS_OS2)
+          os2CliUninstallClient(0);
+          do_break = 1;
+          retcode = 0;
+        #endif
+        #if (CLIENT_OS == OS_WIN32) 
+          win32CliUninstallService(0);
+          do_break = 1;
+          retcode = 0;
         #endif
         }
       else if ( strcmp(thisarg, "-ini" ) == 0)
@@ -111,9 +140,9 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         }
       else if ( strcmp( thisarg, "-noquiet" ) == 0 )      
         {
-        quietmode = 0;
+        runhidden = quietmode = 0;
         }
-      }
+      } //for ... next
 
     if (!inifilename[0]) //we don't have an ini filename
       {
@@ -174,7 +203,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
   "+ini","-trace","-guiriscos","-guirestart","-hide","-quiet","-noquiet",
   "-ident","-cpuinfo","-test","-config","-install","-uninstall","+forceunlock",
   "-benchmark2rc5","-benchmark2des","-benchmark2","-benchmarkrc5","-benchmarkdes",
-  "-benchmark","-fetch","-forcefetch","-flush","-forceflush","-update" };
+  "-benchmark","-fetch","-forcefetch","-flush","-forceflush","-update","" };
 
   if (runlevel >= 1 && !do_break)
     {
@@ -247,14 +276,14 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
       else if ( strcmp(thisarg, "-frequent" ) == 0)
         {
         connectoften=1;
-        if (show_set_messages)
+        if (logging_is_initialized)
           LogScreenRaw("Setting connections to frequent\n");
         }
       else if ( strcmp(thisarg, "-nommx" ) == 0)
         {
         #if (CLIENT_CPU == CPU_X86) && defined(MMX_BITSLICER)
         usemmx=0;
-        if (show_set_messages)
+        if (logging_is_initialized)
           LogScreenRaw("Won't use MMX instructions\n");
         #endif
         }
@@ -268,7 +297,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
             inimissing=0; // Don't complain if the inifile is missing
             int conid = (( strcmp( thisarg, "-b2" ) == 0 ) ? (1) : (0));
             outthreshold[conid] = inthreshold[conid] = (s32) atoi( nextarg );
-            if (show_set_messages)
+            if (logging_is_initialized)
               LogScreenRaw("Setting %s buffer thresholds to %u\n",
                    ((conid)?("DES"):("RC5")), (unsigned int)inthreshold[conid] );
             }
@@ -284,7 +313,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
             inimissing=0; // Don't complain if the inifile is missing
             int conid = (( strcmp( thisarg, "-bin2" ) == 0 ) ? (1) : (0));
             inthreshold[conid] = (s32) atoi( nextarg );
-            if (show_set_messages)
+            if (logging_is_initialized)
               LogScreenRaw("Setting %s in-buffer threshold to %u\n",
                     ((conid)?("DES"):("RC5")), (unsigned int)inthreshold[conid] );
             }
@@ -300,7 +329,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
             inimissing=0; // Don't complain if the inifile is missing
             int conid = (( strcmp( thisarg, "-bout2" ) == 0 ) ? (1) : (0));
             outthreshold[conid] = (s32) atoi( nextarg );
-            if (show_set_messages)
+            if (logging_is_initialized)
               LogScreenRaw("Setting %s out-buffer threshold to %u\n",
                   ((conid)?("DES"):("RC5")), (unsigned int)outthreshold[conid] );
             }
@@ -318,7 +347,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           #ifdef DONT_USE_PATHWORK
             strcpy(ini_in_buffer_file[conid], in_buffer_file[conid]);
           #endif
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting %s in-buffer file to %s\n",
                     ((conid)?("DES"):("RC5")), in_buffer_file[conid] );
           }
@@ -335,7 +364,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           #ifdef DONT_USE_PATHWORK
             strcpy(ini_out_buffer_file[conid], out_buffer_file[conid]);
           #endif
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting %s out-buffer file to %s\n",
                     ((conid)?("DES"):("RC5")), out_buffer_file[conid] );
           }
@@ -347,7 +376,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           skip_next = 1;
           inimissing=0; // Don't complain if the inifile is missing
           uuehttpmode = (s32) atoi( nextarg );
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting uue/http mode to %u\n",(unsigned int)uuehttpmode);
           }
         }
@@ -358,7 +387,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           skip_next = 1;
           inimissing=0; // Don't complain if the inifile is missing
           strcpy( keyproxy, nextarg );
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting keyserver to %s\n", keyproxy );
           }
         }
@@ -369,7 +398,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           skip_next = 1;
           inimissing=0; // Don't complain if the inifile is missing
           keyport = (s32) atoi( nextarg );
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting keyserver port to %u\n",(unsigned int)keyport);
           }
         }
@@ -380,7 +409,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           skip_next = 1;
           inimissing=0; // Don't complain if the inifile is missing
           strcpy( httpproxy, nextarg );
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting SOCKS/HTTP proxy to %s\n", httpproxy);
           }
         }
@@ -391,7 +420,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           skip_next = 1;
           inimissing=0; // Don't complain if the inifile is missing
           httpport = (s32) atoi( nextarg );
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting SOCKS/HTTP proxy port to %u\n",(unsigned int)httpport);
           }
         }
@@ -401,7 +430,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           {
           skip_next = 1;
           strcpy( logname, nextarg );
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting log file to %s\n", logname );
           }
         }
@@ -411,7 +440,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           {
           skip_next = 1;
           messagelen = (s32) atoi(nextarg);
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting Mail message length to %s\n", nextarg );
           }
         }
@@ -421,7 +450,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           {
           skip_next = 1;
           smtpport = (s32) atoi(nextarg);
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting smtp port to %s\n", nextarg);
           }
         }
@@ -431,7 +460,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           {
           skip_next = 1;
           strcpy( smtpsrvr, nextarg );
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting SMTP relay host to %s\n", smtpsrvr);
           }
         }
@@ -441,7 +470,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           {
           skip_next = 1;
           strcpy( smtpfrom, nextarg );
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting mail 'from' address to %s\n", smtpfrom );
           }
         }
@@ -451,7 +480,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           {
           skip_next = 1;
           strcpy( smtpdest, nextarg );
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting mail 'to' address to %s\n", smtpdest );
           }
         }
@@ -462,7 +491,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           skip_next = 1;
           strcpy( id, nextarg );
           inimissing=0; // Don't complain if the inifile is missing
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting distributed.net ID to %s\n", id );
           }
         }
@@ -473,7 +502,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           skip_next = 1;
           int tmp = atoi( nextarg );
           nettimeout = ((tmp <= 5)?(5):((tmp>=300)?(300):(tmp)));
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting network timeout to %u\n", 
                                              (unsigned int)(nettimeout));
           }
@@ -486,7 +515,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           exitfilechecktime = atoi(nextarg);
           if (exitfilechecktime < 5) exitfilechecktime=5;
           else if (exitfilechecktime > 600) exitfilechecktime=600;
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting exitfile check time to %u\n", 
                 (unsigned int)(exitfilechecktime) );
           }
@@ -515,7 +544,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           {
           skip_next = 1;
           minutes = (s32) (60. * atol( nextarg ));
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting time limit to %ul minutes\n",
                                                        (unsigned long)(minutes));
           }
@@ -527,7 +556,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           skip_next = 1;
           if ( (blockcount = atoi( nextarg )) < 0)
             blockcount = 0;
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting block completion limit to %u\n",
                                                     (unsigned int)blockcount);
           }
@@ -544,7 +573,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
                                        ((60. * gmt->tm_hour) + gmt->tm_min));
           if (minutes<0) minutes += 24*60;
           if (minutes<0) minutes = 0;
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting time limit to %d minutes\n",minutes);
           sprintf(hours,"%u.%02u",(unsigned int)(minutes/60),
                                     (unsigned int)(minutes%60));
@@ -571,7 +600,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           inimissing=0; // Don't complain if the inifile is missing
           int conid = (( strcmp( thisarg, "-ckpoint2" ) == 0 ) ? (1) : (0));
           strcpy(checkpoint_file[conid], nextarg );
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting RC5 checkpoint file to %s\n", nextarg );
           }
         }
@@ -583,7 +612,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           int tmp = atoi(nextarg);
           inimissing=0; // Don't complain if the inifile is missing
           checkpoint_min=((tmp <=2)?(2):(tmp));
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting checkpointing to %u minutes\n", (unsigned int)(checkpoint_min));
           }
         }
@@ -593,7 +622,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           {
           skip_next = 1;
           strcpy(pausefile, nextarg );
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting pause file to %s\n",pausefile);
           }
         }
@@ -605,7 +634,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           preferred_blocksize = (s32) atoi(nextarg);
           if (preferred_blocksize < 28) preferred_blocksize = 28;
           if (preferred_blocksize > 31) preferred_blocksize = 31;
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Setting preferred blocksize to 2^%d\n",preferred_blocksize);
           }
         }
@@ -617,13 +646,14 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
           preferred_contest_id = (s32) atoi(nextarg);
           if (preferred_contest_id != 0)
             preferred_contest_id = 1;
-          if (show_set_messages)
+          if (logging_is_initialized)
             LogScreenRaw("Client will now%s compete in DES contest(s).\n",
                       ((preferred_contest_id==0)?(" NOT"):("")) );
           }
         }
       else if (runlevel > 0)
         {
+        quietmode = runhidden = 0;
         DisplayHelp(thisarg);
         retcode = 1;
         do_break = 1;
@@ -710,12 +740,14 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         }
       else if ( strcmp(thisarg, "-ident" ) == 0)
         {
+        quietmode = runhidden = 0;
         do_break = 1;
         CliIdentifyModules();
         retcode = 0;
         }
       else if ( strcmp( thisarg, "-cpuinfo" ) == 0 )
         {
+        quietmode = runhidden = 0;
         do_break = 1;
         DisplayProcessorInformation(); //in cpucheck.cpp
         retcode = 0; //and break out of loop
@@ -724,6 +756,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         {
         if (!inimissing)
           {
+          quietmode = runhidden = 0;
           do_break = 1;
           if ( SelfTest(1) > 0 && SelfTest(2) > 0 ) //both OK
             retcode = 0;
@@ -742,6 +775,7 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         {
         if (!inimissing)
           {
+          quietmode = runhidden = 0;
           do_break = 1;
           int dobench = '1';  //default to benchmark2
           if ( strcmp( thisarg, "-benchmark2rc5" ) == 0 )      dobench = '2';
@@ -792,32 +826,28 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
         {
         if (!inimissing)
           {
+          quietmode = runhidden = 0;
           do_break = 1;
           retcode = -1;
           retcode = UnlockBuffer(nextarg);
           }
         }
-      else if ( strcmp( thisarg, "-install" ) == 0 )
-        {
-        do_break = 1;
-        #if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2))
-        Install();
-        retcode = 0; //and break out of loop
-        #endif
-        }
-      else if ( strcmp( thisarg, "-uninstall" ) == 0 )
-        {
-        do_break = 1;
-        #if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2))
-        Uninstall();
-        retcode = 0; //and break out of loop
-        #endif
-        }
       else if ( strcmp( thisarg, "-config" ) == 0 )
         {
+        quietmode = runhidden = 0;
         retcode = 0;
         inimissing = 1; //this should force main to run config
         }
+      }
+    }
+
+  if (quietmode || runhidden)
+    {
+    IniSection ini;
+    if ( ini.ReadIniFile( GetFullPathForFilename( inifilename ) ) )
+      {
+      quietmode = runhidden = 0;
+      inimissing = 1;
       }
     }
   
@@ -827,3 +857,4 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
     *retcodeP = retcode;
   return do_break;
 }
+
