@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.98 2003/08/23 19:06:51 mweiser Exp $
+# @(#)$Id: configure,v 1.288.2.99 2003/08/25 23:30:04 mweiser Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2327,6 +2327,20 @@ case "$1" in
         add_sources "bsdos" "x86"
         ;;
 
+    *x86-macosx)
+        generate_gcc_opts "x86" "macosx"
+        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
+        TARGET_LDFLAGS="-framework IOKit -framework CoreFoundation"
+
+        # set empty to use ANSI cores and x86ident.S with Apple as
+        # doesn't need -force_cpusubtype_ALL like NeXT
+        TARGET_NASM_FMT="macho"
+
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="darwin-x86"
+        add_sources "macosx" "x86"
+        ;;
+
     *x86-qnx4)
         TARGET_AS="cc -c"
         TARGET_CC="cc"
@@ -2418,18 +2432,6 @@ case "$1" in
         ;;
 
 ###### NeXT (x86, m68k, sparc, hppa)
-
-    *x86-macosx)
-        # this one's for X86-Rhapsody which is quite similar to NeXTstep
-        # but not completely identical     - snake
-        TARGET_AS="cc -c"
-        TARGET_CC="cc"
-        TARGET_ASFLAGS="-DNO_BALIGN"
-        TARGET_CCFLAGS="-DNO_BALIGN"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="rhapsody-x86"
-        add_sources "macosx" "x86"
-        ;;
 
     *x86-next)
         generate_gcc_opts "x86" "next"
