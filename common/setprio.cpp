@@ -9,6 +9,9 @@
 */
 //
 // $Log: setprio.cpp,v $
+// Revision 1.48  1999/02/13 00:11:21  silby
+// Improved Range Checking
+//
 // Revision 1.47  1999/01/29 18:47:04  jlawson
 // fixed formatting.
 //
@@ -74,7 +77,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.47 1999/01/29 18:47:04 jlawson Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.48 1999/02/13 00:11:21 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -112,6 +115,8 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
     static int useidleclass = -1;
     int threadprio = 0, classprio = 0;
     HANDLE our_thrid = GetCurrentThread();
+
+    if (set_for_thread == 1) prio=0;
   
     /* ************************** Article ID: Q106253 *******************
                               process priority class
