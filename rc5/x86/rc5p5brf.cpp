@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5p5brf.cpp,v $
+// Revision 1.4  1998/07/08 18:47:42  remi
+// $Id fun ...
+//
 // Revision 1.3  1998/06/14 08:27:37  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
 // material of the binary executable
@@ -36,7 +39,11 @@
 // For a really *good* pentium optimization manual :
 //	http://announce.com/agner/assem
 
-static char *id="@(#)$Id: rc5p5brf.cpp,v 1.3 1998/06/14 08:27:37 friedbait Exp $";
+#if (!defined(lint) && defined(__showids__))
+const char *rc5p5brf_cpp (void) {
+static char *id="@(#)$Id: rc5p5brf.cpp,v 1.4 1998/07/08 18:47:42 remi Exp $";
+return id; }
+#endif
 
 #define CORE_INCREMENTS_KEY
 

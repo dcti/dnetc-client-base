@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-p6-rg.cpp,v $
+// Revision 1.5  1998/07/08 18:47:49  remi
+// $Id fun ...
+//
 // Revision 1.4  1998/06/14 10:03:59  skand
 // define and use a preprocessor macro to hide the .balign directive for
 // ancient assemblers
@@ -32,7 +35,11 @@
 // 980104 :
 //	- precalculate some things for ROUND1 & ROUND2
 
-static char *id="@(#)$Id: rc5-p6-rg.cpp,v 1.4 1998/06/14 10:03:59 skand Exp $";
+#if (!defined(lint) && defined(__showids__))
+const char *rc5_p6_rg_cpp (void) {
+static char *id="@(#)$Id: rc5-p6-rg.cpp,v 1.5 1998/07/08 18:47:49 remi Exp $";
+return id; }
+#endif
 
 #define CORE_INCREMENTS_KEY
 

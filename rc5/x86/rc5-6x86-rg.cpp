@@ -4,6 +4,9 @@
 // torment.ntr.net K6 233 sean@ntr.net
 //
 // $Log: rc5-6x86-rg.cpp,v $
+// Revision 1.6  1998/07/08 18:47:45  remi
+// $Id fun ...
+//
 // Revision 1.5  1998/06/16 08:25:29  remi
 // rc5_unit_func_6x86 should not be made "static".
 //
@@ -86,7 +89,11 @@
 // PR150 = 120		PR200 = 166
 // PR133 = 110		PR166 = 150
 
-static char *id="@(#)$Id: rc5-6x86-rg.cpp,v 1.5 1998/06/16 08:25:29 remi Exp $";
+#if (!defined(lint) && defined(__showids__))
+const char *rc5_6x86_rg_cpp (void) {
+static char *id="@(#)$Id: rc5-6x86-rg.cpp,v 1.6 1998/07/08 18:47:45 remi Exp $";
+return id; }
+#endif
 
 #define CORE_INCREMENTS_KEY
 

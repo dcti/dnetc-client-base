@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-k5-rg.cpp,v $
+// Revision 1.5  1998/07/08 18:47:46  remi
+// $Id fun ...
+//
 // Revision 1.4  1998/06/14 10:03:56  skand
 // define and use a preprocessor macro to hide the .balign directive for
 // ancient assemblers
@@ -59,7 +62,11 @@
 // PR120 =  90   / 60			   rg=193 ? / 307-336 ?
 // PR??? =  75   / ??    v1=120 v2=215-225 rg=165   / 256-280 ?
 
-static char *id="@(#)$Id: rc5-k5-rg.cpp,v 1.4 1998/06/14 10:03:56 skand Exp $";
+#if (!defined(lint) && defined(__showids__))
+const char *rc5_k5_rg_cpp (void) {
+static char *id="@(#)$Id: rc5-k5-rg.cpp,v 1.5 1998/07/08 18:47:46 remi Exp $";
+return id; }
+#endif
 
 #define CORE_INCREMENTS_KEY
 

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-486-rg.cpp,v $
+// Revision 1.5  1998/07/08 18:47:43  remi
+// $Id fun ...
+//
 // Revision 1.4  1998/06/14 10:03:54  skand
 // define and use a preprocessor macro to hide the .balign directive for
 // ancient assemblers
@@ -36,7 +39,11 @@
 // Checking two keys at once is still a (slight) win for a 486
 // probably because less load/store operations
 
-static char *id="@(#)$Id: rc5-486-rg.cpp,v 1.4 1998/06/14 10:03:54 skand Exp $";
+#if (!defined(lint) && defined(__showids__))
+const char *rc5_486_rg_cpp (void) {
+static const char *id="@(#)$Id: rc5-486-rg.cpp,v 1.5 1998/07/08 18:47:43 remi Exp $";
+return id; }
+#endif
 
 #define CORE_INCREMENTS_KEY
 
