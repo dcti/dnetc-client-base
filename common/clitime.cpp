@@ -10,6 +10,9 @@
    microseconds in tv_usec;
 */
 // $Log: clitime.cpp,v $
+// Revision 1.21  1998/11/19 10:49:04  cyp
+// Timestrings are now "UTC" instead of "GMT"
+//
 // Revision 1.20  1998/10/29 23:16:16  sampo
 // MacOS doesn't use tzset()
 //
@@ -48,7 +51,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.20 1998/10/29 23:16:16 sampo Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.21 1998/11/19 10:49:04 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -65,28 +68,28 @@ struct timeval *CliClock( struct timeval *tv )
 {
   static struct timeval stv = {0,0};
   if (cliclock.tv_sec == 0)
-  {
+    {
     CliTimer( NULL ); //set cliclock to current time
     stv.tv_usec = 21; //just something (the meaning of life)
     stv.tv_sec = 0;
-  }
+    }
   else
-  {
+    {
     CliTimer( &stv );
     if (stv.tv_usec < cliclock.tv_usec )
-    {
+      {
       stv.tv_usec += 1000000L;
       stv.tv_sec--;
-    }
+      }
     stv.tv_usec -= cliclock.tv_usec;
     stv.tv_sec -= cliclock.tv_sec;
-  }
+    }
   if (tv)
-  {
+    {
     tv->tv_sec = stv.tv_sec;
     tv->tv_usec = stv.tv_usec;
     return tv;
-  }
+    }
   return (&stv);
 }
 
@@ -120,30 +123,30 @@ struct timeval *CliTimer( struct timeval *tv )
 #ifdef REQUIRES_TIMER_FALLBACK
 #undef REQUIRES_TIMER_FALLBACK
   if (dofallback)
-  {
+    {
     static unsigned int timebase = 0;
     unsigned int secs, rate, xclock = (unsigned int)(clock());
 
     if (!xclock)
-    {
-      if (!stv.tv_sec && !stv.tv_usec)
       {
+      if (!stv.tv_sec && !stv.tv_usec)
+        {
         stv.tv_sec = ((unsigned int)(time(NULL)));
         stv.tv_usec = 0;
-      }
+        }
       else if ((long) stv.tv_sec == (long) (secs = ((unsigned int)(time(NULL)))))
-      {
+        {
         usleep(100000L); //1/10 sec
         stv.tv_usec += 100000L;
-      }
+        }
       else
-      {
+        {
         stv.tv_sec = secs;
         stv.tv_usec = 0;
+        }
       }
-    }
     else
-    {
+      {
       rate = CLOCKS_PER_SEC;
       secs = (xclock/rate);
       if (!timebase) timebase = ((unsigned int)(time(NULL))) - secs;
@@ -153,26 +156,26 @@ struct timeval *CliTimer( struct timeval *tv )
         stv.tv_usec = xclock * (1000000L/rate);
       else
         stv.tv_usec = xclock / (rate/1000000L);
-    }
+      }
 
     if (stv.tv_usec > 1000000L)
-    {
+      {
       stv.tv_sec += stv.tv_usec/1000000L;
       stv.tv_usec %= 1000000L;
+      }
     }
-  }
 #endif
   if (cliclock.tv_sec == 0) //CliClock() not initialized
-  {
+    {
     cliclock.tv_sec = stv.tv_sec;
     cliclock.tv_usec = stv.tv_usec;
-  }
+    }
   if (tv)
-  {
+    {
     tv->tv_sec = stv.tv_sec;
     tv->tv_usec = stv.tv_usec;
     return tv;
-  }
+    }
   return (&stv);
 }
 
@@ -183,21 +186,21 @@ struct timeval *CliTimer( struct timeval *tv )
 int CliTimerAdd( struct timeval *dest, struct timeval *tv1, struct timeval *tv2 )
 {
   if (dest)
-  {
-    if (!tv1 || !tv2)
     {
+    if (!tv1 || !tv2)
+      {
       CliTimer( NULL );
       if (!tv1) tv1 = dest;
       if (!tv2) tv2 = dest;
-    }
+      }
     dest->tv_sec = tv1->tv_sec + tv2->tv_sec;
     dest->tv_usec = tv1->tv_usec + tv2->tv_usec;
     if (dest->tv_usec > 1000000L)
-    {
+      {
       dest->tv_sec += dest->tv_usec / 1000000L;
       dest->tv_usec %= 1000000L;
+      }
     }
-  }
   return 0;
 }
 
@@ -211,34 +214,34 @@ int CliTimerDiff( struct timeval *dest, struct timeval *tv1, struct timeval *tv2
   struct timeval *tv0;
 
   if (dest)
-  {
+    {
     if (!tv1 && !tv2)
       dest->tv_sec = dest->tv_usec = 0;
     else
-    {
-      if (!tv1 || !tv2)
       {
+      if (!tv1 || !tv2)
+        {
         CliTimer( &tvtemp );
         if (!tv1) tv1 = &tvtemp;
         else tv2 = &tvtemp;
-      }
+        }
       if ((((unsigned int)(tv2->tv_sec)) < ((unsigned int)(tv1->tv_sec))) ||
          ((tv2->tv_sec == tv1->tv_sec) &&
            ((unsigned int)(tv2->tv_usec)) < ((unsigned int)(tv1->tv_usec))))
-      {
+        {
         tv0 = tv1; tv1 = tv2; tv2 = tv0;
-      }
+        }
       tvdiff.tv_sec = tv2->tv_sec;
       tvdiff.tv_usec = tv2->tv_usec;
       if (((unsigned int)(tvdiff.tv_usec)) < ((unsigned int)(tv1->tv_usec)))
-      {
+        {
         tvdiff.tv_usec += 1000000L;
         tvdiff.tv_sec--;
-      }
+        }
       dest->tv_sec  = tvdiff.tv_sec - tv1->tv_sec;
       dest->tv_usec = tvdiff.tv_usec - tv1->tv_usec;
+      }
     }
-  }
   return 0;
 }
 
@@ -253,65 +256,70 @@ const char *CliGetTimeString( struct timeval *tv, int strtype )
   static char timestring[30], spacestring[30], hourstring[30];
 
   if (!timelast)
-  {
+    {
     timestring[0]=spacestring[0]=hourstring[0]=0;
     timelast = 1;
     lasttype = 0;
-  }
+    }
 
   if (strtype == 0)
-  {
-    if (!spacestring[0])
     {
+    if (!spacestring[0])
+      {
       CliGetTimeString( NULL, 1 );
       register char *ts = timestring, *ss = spacestring;
       while (*ts++) *ss++=' '; *ss=0;
-    }
+      }
     return spacestring;
-  }
+    }
   else if (strtype == 1 || strtype == -1) //new fmt = 1, old fmt = -1
-  {
-#if ((CLIENT_OS != OS_RISCOS) && (CLIENT_OS != OS_MACOS))
+    {
+    #if ((CLIENT_OS != OS_RISCOS) && (CLIENT_OS != OS_MACOS))
     tzset();
-#endif
+    #endif
     time_t timenow = ((tv)?(tv->tv_sec):(time(NULL)));
 
     if (timenow && (timenow != timelast) && (lasttype != strtype))
-    {
+      {
       struct tm *gmt;
-      int utc = (( gmt = gmtime( (const time_t *) &timenow) ) != NULL);
+      int utc = 1;
+      #if 0 /*((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
+              (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_OS2)) */
+      utc = ( getenv("TZ") != NULL );
+      #endif
+      if (utc) utc = (( gmt = gmtime( (const time_t *) &timenow) ) != NULL);
       if (!utc) gmt = localtime( (const time_t *) &timenow);
 
       if (gmt)
-      {
+        {
         timelast = timenow;
 
-        if (strtype == -1) // old "unfriendly" type of length 21 OR 23 chars
-        {
+        if (strtype == -1) // old "un-PC" type of length 21 OR 23 chars
+          {
           // old: "04/03/98 11:22:33 GMT"
           //                      2 1  2 1 2  1  2 1 2  1 2  1 3/5 = 21 or 23
           sprintf( timestring, "%02d/%02d/%02d %02d:%02d:%02d %s",
                gmt->tm_mon + 1, gmt->tm_mday,
                gmt->tm_year%100, gmt->tm_hour,
                gmt->tm_min, gmt->tm_sec, ((utc)?("GMT"):("local")) );
-        }
+          }
         else // strtype == 1 == new type of fixed length and neutral locale
-        {
+          {
           static const char *monnames[]={ "Jan","Feb","Mar","Apr","May","Jun",
-              "Jul","Aug","Sep","Oct","Nov","Dec"};
+                                          "Jul","Aug","Sep","Oct","Nov","Dec"};
 
           // new: "Apr 03 11:22:33 GMT" year = gmt->tm_year%100,
           //                    3 1  2 1  2 1  2 1  2 1 3   = 19
           sprintf( timestring, "%s %02d %02d:%02d:%02d %s",
              monnames[gmt->tm_mon%12], gmt->tm_mday,
-             gmt->tm_hour, gmt->tm_min, gmt->tm_sec, ((utc)?("GMT"):("---")) );
+             gmt->tm_hour, gmt->tm_min, gmt->tm_sec, ((utc)?("UTC"):("---")) );
+          }
         }
       }
-    }
     return timestring;
-  }
+    }
   else if (strtype == 2)
-  {
+    {
     if (!tv) tv = CliTimer( NULL );
     sprintf( hourstring, "%u.%02u:%02u:%02u.%02u", (unsigned) (tv->tv_sec / 86400L),
       (unsigned) ((tv->tv_sec % 86400L) / 3600L), (unsigned) ((tv->tv_sec % 3600L)/60),
@@ -319,7 +327,7 @@ const char *CliGetTimeString( struct timeval *tv, int strtype )
     //if ((tv->tv_sec / 86400L)==0 ) //don't show days if not needed
     //  return hourstring+sizeof("0.");
     return hourstring;
-  }
+    }
   return "";
 }
 
