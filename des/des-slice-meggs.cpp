@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-meggs.cpp,v $
+// Revision 1.14  1998/07/12 23:52:14  foxyloxy
+// Fixed typo (changed NOTSZERO to NOTZERO) to allow compile to work on IRIX
+// (and probably other platforms).
+//
 // Revision 1.13  1998/07/10 20:08:25  cyruspatel
 // Added support for Watcom compilers (__int64) to mmx bitslice stuff
 //
@@ -34,7 +38,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_meggs_cpp(void) {
-return "@(#)$Id: des-slice-meggs.cpp,v 1.13 1998/07/10 20:08:25 cyruspatel Exp $"; }
+return "@(#)$Id: des-slice-meggs.cpp,v 1.14 1998/07/12 23:52:14 foxyloxy Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -61,7 +65,7 @@ return "@(#)$Id: des-slice-meggs.cpp,v 1.13 1998/07/10 20:08:25 cyruspatel Exp $
   #endif
 #else
   #define BASIC_SLICE_TYPE unsigned long
-  #define NOTSZERO ~(0ul)
+  #define NOTZERO ~(0ul)
 #endif
 
 #ifdef BIT_32
