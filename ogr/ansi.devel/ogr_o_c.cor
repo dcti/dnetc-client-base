@@ -8,11 +8,8 @@
  * - use the processor cache better when many registers are available
  * - support altivec
  *
+ * $Id: ogr_o_c.cor,v 1.1.2.5 2001/02/02 13:41:05 cyp Exp $
  */
-#ifndef NO_OGR_IDENT
-const char *ogr_core(void) {
-return "@(#)$Id: ogr_o_c.cor,v 1.1.2.4 2001/02/01 20:55:12 oliver Exp $"; }
-#endif
 
 #if ( (OGROPT_ALTERNATE_CYCLE == 1) || (OGROPT_ALTERNATE_CYCLE == 2))
 

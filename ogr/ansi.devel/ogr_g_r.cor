@@ -6,12 +6,8 @@
  * This is based on GARSP 5.13 "Garry's adaptions of Rado's search principles".
  * There were many modifications ... can anyone tell?
  *
+ * $Id: ogr_g_r.cor,v 1.1.2.7 2001/02/02 13:41:05 cyp Exp $
  */
-#ifndef NO_OGR_IDENT
-const char *ogr_core(void) {
-return "@(#)$Id: ogr_g_r.cor,v 1.1.2.6 2001/02/01 20:55:12 oliver Exp $"; }
-#endif
-
 #if (OGROPT_ALTERNATE_CYCLE == 0)
 
 #if defined(OGR_CORE_HAS_NAME)

@@ -1,6 +1,9 @@
-const char *ogr_dat_cpp(void) {
-return "@(#)$Id: ogr_dat.cpp,v 1.1.2.2 2001/01/19 02:31:25 andreasb Exp $"; }
-
+/*
+ * static choose table used by ogr core(s).
+ * 
+ * $Id: ogr_dat.cpp,v 1.1.2.3 2001/02/02 13:41:03 cyp Exp $
+ *
+*/
 #include "ogr.h"
 
 const int choose_version     = 1;
