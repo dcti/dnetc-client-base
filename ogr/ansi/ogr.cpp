@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2 2002/09/02 00:35:47 andreasb Exp $
+ * $Id: ogr.cpp,v 1.2.4.1 2002/11/23 02:04:31 andreasb Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -2158,6 +2158,20 @@ static int found_one(const struct State *oState)
                :"=d" (result), "=d" (input) : "1" (input), "a" (ogr_first_blank_8bit));
       return result;
     }
+  #elif defined(FP_CLZ_LITTLEEND) /* using the exponent in floating point double format */
+  static __inline int LOOKUP_FIRSTBLANK(register unsigned int input)
+  {
+    unsigned int i;
+    union {
+      double d;
+      int i[2];
+    } u;
+    
+    i=~input;
+    u.d=i;
+    
+    return i == 0 ? 33 : 1055 - (u.i[1] >> 20);
+  }
   #else /* C code, no asm */
   static __inline int LOOKUP_FIRSTBLANK(register unsigned int input)
   {

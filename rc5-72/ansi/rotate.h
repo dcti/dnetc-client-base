@@ -2,7 +2,7 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 // 
-// $Id: rotate.h,v 1.4 2002/10/17 12:04:36 andreasb Exp $
+// $Id: rotate.h,v 1.4.2.1 2002/11/23 02:04:31 andreasb Exp $
 //
 
 #ifndef __ROTATE_H__
@@ -14,7 +14,7 @@
 
 //-------------------------------------------------------------------
 
-#if (CLIENT_CPU == CPU_SPARC) && !defined(__SUNPRO_CC)
+#if ((CLIENT_CPU == CPU_SPARC) && !defined(__SUNPRO_CC)) || (CLIENT_CPU == CPU_ARM)
 
 #define SHL(x, s) ((u32) ((x) << (s) ))
 #define SHR(x, s) ((u32) ((x) >> (32 - (s)) ))

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112 2002/10/28 16:40:23 rick Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.1 2002/11/23 02:04:31 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -95,13 +95,13 @@ static const char **__corenames_for_contest( unsigned int cont_i )
   #elif (CLIENT_CPU == CPU_ARM)
     { /* RC5 */
       "Series A", /* (autofor for ARM 3/6xx/7xxx) "ARM 3, 610, 700, 7500, 7500FE" */
-      "Series B", /* (autofor ARM 8xx/StrongARM) "ARM 810, StrongARM 110" */
+      "Series B", /* (autofor ARM 8xx/StrongARM) "ARM 810, StrongARM 110, 1100, 1110" */
       "Series C", /* (autofor ARM 2xx) "ARM 2, 250" */
       NULL             /* "ARM 710" */
     },
     { /* DES */
       "Standard ARM core", /* "ARM 3, 610, 700, 7500, 7500FE" or  "ARM 710" */
-      "StrongARM core", /* "ARM 810, StrongARM 110" or "ARM 2, 250" */
+      "StrongARM core", /* "ARM 810, StrongARM 110, 1100, 1110" or "ARM 2, 250" */
       NULL
     },
     { /* OGR */
@@ -240,6 +240,16 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "DG 2-pipe",
       "DG 3-pipe",
       "DG 3-pipe alt",
+      NULL
+    },
+  #elif (CLIENT_CPU == CPU_ARM)
+    { /* RC5-72 */
+      "ANSI 4-pipe",
+      "ANSI 2-pipe",
+      "ANSI 1-pipe",
+      #ifdef HAVE_RC5_72_ASM_CORES
+      "ARM 1-pipe",
+      #endif
       NULL
     },
   #else
@@ -1157,7 +1167,9 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
           detected_type == 0x7500FE) /* ARM 7500FE */
         cindex = 0;
       else if (detected_type == 0x810 || /* ARM 810 */
-               detected_type == 0xA10)   /* StrongARM 110 */
+               detected_type == 0xA10 || /* StrongARM 110 */
+               detected_type == 0xA11 || /* StrongARM 1100 */
+               detected_type == 0xB11)   /* StrongARM 1110 */
         cindex = 1;
       else if (detected_type == 0x200 || /* ARM 2 */
                detected_type == 0x250)   /* ARM 250 */
@@ -1173,6 +1185,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       int cindex = -1;
       if (detected_type == 0x810 ||  /* ARM 810 */
           detected_type == 0xA10 ||  /* StrongARM 110 */
+          detected_type == 0xA11 ||  /* StrongARM 1100 */
+          detected_type == 0xB11 ||  /* StrongARM 1110 */
           detected_type == 0x200 ||  /* ARM 2 */
           detected_type == 0x250)    /* ARM 250 */
         cindex = 1;
@@ -1530,6 +1544,9 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       extern "C" s32 rc5_72_unit_func_dg_3( RC5_72UnitWork *, u32 *, void *);
       extern "C" s32 rc5_72_unit_func_dg_3a( RC5_72UnitWork *, u32 *, void *);
     #endif
+  #endif
+  #if (CLIENT_CPU == CPU_ARM) && defined(HAVE_RC5_72_ASM_CORES)
+      extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
   #endif
 #endif
 
@@ -2118,6 +2135,13 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       case 7:
         unit_func.gen_72 = rc5_72_unit_func_dg_3a;
         pipeline_count = 3;
+        break;
+     #endif
+
+     #if (CLIENT_CPU == CPU_ARM) && defined(HAVE_RC5_72_ASM_CORES)
+      case 3:
+        unit_func.gen_72 = rc5_72_unit_func_arm1;
+        pipeline_count = 1;
         break;
      #endif
 
