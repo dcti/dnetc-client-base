@@ -46,7 +46,7 @@ extern "C" {
   #define strcmpi(x,y)  strcasecmp(x,y)
 #elif (CLIENT_OS == OS_SUNOS)
   #include <sys/types.h>
-  #if (CLIENT_CPU==CPU_68K)
+  #if (CLIENT_CPU == CPU_68K)
     #define strcmpi(x,y)  strcasecmp(x,y)
     extern "C" int strcasecmp(char *s1, char *s2); // Keep g++ happy.
   #endif

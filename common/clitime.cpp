@@ -16,9 +16,6 @@
 
 #include "clitime.h" //which #includes client.h
 
-#if (CLIENT_OS == OS_SOLARIS) // keep g++ happy
-extern "C" void usleep(unsigned int);
-#endif
 
 // ---------------------------------------------------------------------
 

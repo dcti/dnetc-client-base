@@ -59,6 +59,9 @@ extern "C" {
 #include <time.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <string.h>
+#include <sys/types.h>
+
 #if (CLIENT_OS == OS_RISCOS)
 #include <sys/fcntl.h>
 #include <unistd.h>
@@ -114,6 +117,15 @@ extern "C" {
   #include <io.h>
   #include <conio.h>
   #include <dos.h>
+  #include <share.h>
+  #include <dir.h>
+#elif (CLIENT_OS == OS_WIN32)
+  #include <sys/timeb.h>
+  #include <process.h>
+  #include <ras.h>
+  #include <conio.h>
+  #include <share.h>
+  #include <dir.h>
 #elif (CLIENT_OS == OS_DOS)
   #include <sys/timeb.h>
   #include <io.h>
@@ -125,12 +137,6 @@ extern "C" {
     #include <dos.h> //sleep, usleep
     #include <sys/stat.h> //S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP
   #endif
-#elif (CLIENT_OS == OS_WIN32)
-  #include <sys/timeb.h>
-  #include <process.h>
-  #include <ras.h>
-  #include <conio.h>
-  #include <share.h>
 #elif (CLIENT_OS == OS_BEOS)
 // nothing  #include <share.h>
 #elif (CLIENT_OS == OS_NETWARE)
@@ -198,8 +204,11 @@ extern "C" {
   #define stat( _fn, _statblk )  sizonly_stat( _fn, _statblk )
   #define unlink( _fn )          purged_unlink( _fn )
 
-#elif (CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K)
-  extern "C" int nice(int); // Keep g++ happy.
+#elif (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS)
+  extern "C" int nice(int);
+  extern "C" void usleep(unsigned int);
+  extern "C" int ftruncate(int, off_t);
+  extern "C" int gethostname(char *, int); // Keep g++ happy.
 #endif
 
 

@@ -3,48 +3,24 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
-// define showmail to see mail transcript on stdout...
-//#define SHOWMAIL
-#undef SHOWMAIL
 
-
-// Modified by Cyrus Patel (cyp@radiolink.net) April 28 1998
-// to allow mail buffers to stay intact if sendmessage() fails, ie when new 
-// entries come in, the oldest are discarded. 
-// Also, the  message headers are generated at send-time (and not at message 
-// creation time), so adding headers (for instance mime-type, so long lines 
-// are displayed correctly in the recipients mailer) isn't a problem.
-
+#undef SHOWMAIL               // define showmail to see mail transcript on stdout
 #define GEN_HEADER_AT_SEND    // if defined, then the message header is 
                               // generated and sent at message send time, and 
                               // is not pre-made as part of the message itself
 #define FIFO_ON_BUFF_OVERFLOW // if defined, lines are thrown out as needed. 
                               // if !defined, then all old text is discarded.
-#ifdef  FIFO_ON_BUFF_OVERFLOW // FIFO buffer requires generating headers at 
-#define GEN_HEADER_AT_SEND    // send time rather than at msg creation time.
-#endif                             
+
+#if defined(FIFO_ON_BUFF_OVERFLOW) && !defined(GEN_HEADER_AT_SEND)
+#define GEN_HEADER_AT_SEND    // FIFO buffer requires generating headers at 
+#endif                        // send time rather than at msg creation time.
 
 #include "network.h"
 #include "client.h"
 #include "mail.h"
 
+
 char *rfc822Date(void); // at the end of this file
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
-#include <dos.h>
-#include <conio.h>
-#include <winsock.h>
-#endif
-
-#if ((CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS))
-extern "C" int gethostname(char *, int); // Keep g++ happy.
-#endif
-
-#include <sys/types.h>
 
 MailMessage::MailMessage(void)
 {
@@ -628,3 +604,4 @@ char *rfc822Date(void)
 
   return(timestring);
 }
+
