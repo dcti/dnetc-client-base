@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.206  1999/03/18 04:56:20  cyp
+# new modules: util.cpp and base64.cpp
+#
 # Revision 1.205  1999/03/09 07:37:11  gregh
 # Add OGR source files. Only added to one target for now.
 #
@@ -923,7 +926,9 @@ COMMON_SRCS="common/client.cpp \
 	     common/confmenu.cpp \
 	     common/confrwv.cpp \
 	     common/confopt.cpp \
-	     common/checkpt.cpp"
+	     common/checkpt.cpp \
+	     common/util.cpp \
+	     common/base64.cpp"
 
 #
 # Source files making up the RC5 core code
