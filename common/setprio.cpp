@@ -9,11 +9,12 @@
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.50.2.13 2000/06/21 22:30:43 oliver Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.50.2.14 2000/07/12 14:04:57 oliver Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
 #include "baseincs.h"  // basic (even if port-specific) #includes
+#include "sleepdef.h"  // sleep(), usleep()
 
 /* -------------------------------------------------------------------- */
 
@@ -193,26 +194,23 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
   }
   #elif (CLIENT_OS == OS_AMIGAOS)
   {
-    if ( set_for_thread )
-    {
-      //nothing - non threaded
-    }
-    else
-    {
-      #ifdef __PPC__
-        #ifdef __POWERUP__
-        int pri = -(((133*(9-prio))+5)/10); /* scale from 0-9 to -120 to zero */
-        PPCSetTaskAttr(PPCTASKINFOTAG_PRIORITY,pri);
-        #else
-        struct TaskPPC *task = FindTaskPPC(NULL);
-        int newnice = ((22*(9-prio))+5)/10;  /* scale from 0-9 to 20-0 */
-        SetNiceValue(task, newnice );
-        #endif
-      #else
+    #ifdef __PPC__
+      if ( set_for_thread )
+      {
+        SetTaskPri(FindTask(NULL),3);
+      }
+      #ifdef __POWERUP__
       int pri = -(((133*(9-prio))+5)/10); /* scale from 0-9 to -120 to zero */
-      SetTaskPri(FindTask(NULL), pri );
+      PPCSetTaskAttrsTags(PPCFindTask(NULL),PPCTASKINFOTAG_PRIORITY,pri,TAG_END);
+      #else
+      struct TaskPPC *task = FindTaskPPC(NULL);
+      int newnice = ((22*(9-prio))+5)/10;  /* scale from 0-9 to 20-0 */
+      SetNiceValue(task, newnice );
       #endif
-    }
+    #else
+    int pri = -(((133*(9-prio))+5)/10); /* scale from 0-9 to -120 to zero */
+    SetTaskPri(FindTask(NULL), pri );
+    #endif
   }
   #elif (CLIENT_OS == OS_QNX)
   {
