@@ -2,10 +2,27 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.h,v 1.1.2.2 2000/09/17 10:33:54 cyp Exp $
+ * $Id: ogr.h,v 1.1.2.3 2000/10/05 12:21:11 cyp Exp $
 */
 #ifndef __OGR_H__
 #define __OGR_H__ 
+
+#ifndef u16
+#include "cputypes.h"
+#endif
+
+#include <limits.h>
+#if (UINT_MAX < 0xfffffffful)
+  #error "ogr needs an int thats not less than 32bits"
+#elif (UINT_MAX == 0xffffffff)
+  #define OGR_INT_SIZE 4
+#elif (UINT_MAX == 0xffffffffffffffff)
+  #define OGR_INT_SIZE 8
+#else
+  #error "What's up Doc?"
+#endif
+
+/* ===================================================================== */
 
 /*
  * Constants for return values from all the below functions.
@@ -19,6 +36,10 @@
 #define CORE_E_IO       (-2)
 #define CORE_E_FORMAT   (-3)
 #define CORE_E_STOPPED  (-4)
+
+#ifndef MIPSpro
+#pragma pack(1)
+#endif
 
 /*
  * Dispatch table structure. A pointer to one of these should be returned
@@ -91,21 +112,6 @@ typedef struct {
 
 /* ===================================================================== */
 
-#ifndef u16
-#include "cputypes.h"
-#endif
-
-#include <limits.h>
-#if (UINT_MAX < 0xfffffffful)
-  #error "ogr needs an int thats not less than 32bits"
-#elif (UINT_MAX == 0xffffffff)
-  #define OGR_INT_SIZE 4
-#elif (UINT_MAX == 0xffffffffffffffff)
-  #define OGR_INT_SIZE 8
-#else
-  #error "What's up Doc?"
-#endif
-
 // define this to enable LOGGING code
 #undef OGR_DEBUG
 
@@ -164,6 +170,10 @@ struct State {
 #endif
   struct Level Levels[MAXDEPTH];
 };
+
+#ifndef MIPSpro
+#pragma pack()
+#endif
 
 #define OGR_PROBLEM_SIZE (16+ (6*OGR_INT_SIZE)+(OGR_INT_SIZE*(MAXDEPTH+1))+ \
                          (4*OGR_INT_SIZE)+(OGR_LEVEL_SIZE*MAXDEPTH) + 64)
