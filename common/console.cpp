@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.14 1999/12/02 08:50:17 mfeiri Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.15 1999/12/05 00:32:23 mfeiri Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -311,7 +311,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         if (ch == EOF) ch = 0;
       }
       #elif (CLIENT_OS == OS_MACOS)
-       ch = getchar(); /* sometimes we do console input ;-) - Mindmorph */
+       ch = getch(); /* sometimes we do console input ;-) - Mindmorph */
       #else
       {
         setvbuf(stdin, (char *)NULL, _IONBF, 0);
