@@ -3,7 +3,7 @@
 // Any other distribution or use of this source violates copyright.
 
 // Created 28. May 98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
-// 
+//
 // call DisplayHelp() from main with the 'unrecognized option' argv[x]
 // or NULL or "-help" or "help" (or whatever)
 
@@ -14,12 +14,12 @@
 // --------------------------------------------------------------------------
 
 #if !defined(NOCONFIG)
-void Client::DisplayHelp( char * unrecognized_option )
+void Client::DisplayHelp( const char * unrecognized_option )
 {
-  static char *valid_help_requests[] = 
+  static const char *valid_help_requests[] =
   { "-help", "help", "-h", "/h", "/?", "-?", "?", "/help" };
 
-  static char *helpbody[] =
+  static const char *helpbody[] =
   {
   "Special Options: (the client will execute the option and then exit)",
   ""
@@ -71,7 +71,7 @@ void Client::DisplayHelp( char * unrecognized_option )
   "-pausefile <fn>    name of file that causes the client to pause",
   "-l <filename>      name of the log file",
   "-nofallback        don't fallback to a distributed.net proxy",
-  "-smtplen <len>     max size (in bytes) of a mail message (0 means no mail)", 
+  "-smtplen <len>     max size (in bytes) of a mail message (0 means no mail)",
   "-smtpsrvr <nm>     name or IP address of mail (SMTP) server",
   "-smtpport <port>   mail (SMTP) server port number",
   "-smtpfrom <id>     who the client should say is sending the message",
@@ -97,9 +97,9 @@ void Client::DisplayHelp( char * unrecognized_option )
   "-quiet             suppress screen output"
   };
 
-  static char *helpheader[] = 
+  static const char *helpheader[] =
   {
-  NULL, // "RC5DES v2.%d.%d client - a project of distributed.net" goes here 
+  NULL, // "RC5DES v2.%d.%d client - a project of distributed.net" goes here
   #if (CLIENT_OS == OS_VMS)
     #if defined(MULTINET)
       "Compiled for OpenVMS with Multinet support",
@@ -136,7 +136,7 @@ void Client::DisplayHelp( char * unrecognized_option )
             "or press any other key to quit... ", unrecognized_option );
       i=0;
       while (!i)
-        {        
+        {
         if ((i=getch())==0) //non-blocking or DOS-style getch()
           {
           #if (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS) || \
@@ -163,7 +163,7 @@ void Client::DisplayHelp( char * unrecognized_option )
   sprintf(whoami, "RC5DES v2.%d.%d client - a project of distributed.net",
                   CLIENT_CONTEST*100 + CLIENT_BUILD, CLIENT_BUILD_FRAC );
   helpheader[0] = whoami;
- 
+
   while (!done)
     {
     clearscreen();
@@ -172,14 +172,14 @@ void Client::DisplayHelp( char * unrecognized_option )
       printf("%s\n", helpheader[i] );
     for (i=startline;i<(startline+maxpagesize);i++)
       printf("%s\n", helpbody[i] );
-      
+
     if (startline == 0)
       printf("\nPress '+' for the next page... ");
     else if (startline >= ((bodylines-maxpagesize)-1))
       printf("\nPress '-' for the previous page... ");
-    else 
+    else
       printf("\nPress '+' or '-' for the next/previous page, or any other key to quit... ");
-  
+
     i = 0;
     while (!i)
       {
@@ -193,13 +193,13 @@ void Client::DisplayHelp( char * unrecognized_option )
           usleep(250000);
         #endif
         }
-      else if (i=='+' || i=='\r' || i=='\n') 
+      else if (i=='+' || i=='\r' || i=='\n')
         {
         startline += maxpagesize;
         if ( startline >= (bodylines-maxpagesize))
           startline = (bodylines-maxpagesize)-1;
         }
-      else if (i=='-') 
+      else if (i=='-')
         {
         startline -= maxpagesize;
         if ( startline < 0 )
@@ -211,7 +211,7 @@ void Client::DisplayHelp( char * unrecognized_option )
         }
       }
     } // while !done
-  
+
   clearscreen();
   return;
 }

@@ -97,6 +97,7 @@ extern "C" {
     extern bool riscos_check_taskwindow();
     extern int riscos_find_local_directory(const char *argv0);
     extern char *riscos_localise_filename(const char *filename);
+    extern int getch();
 
     #define fileno(f) ((f)->__file)
     #define isatty(f) ((f) == 0)
@@ -510,7 +511,7 @@ public:
     // Make the checkpoint file represent current blocks being worked on
 
 
-  void DisplayHelp( char * unrecognized_option );
+  void DisplayHelp( const char * unrecognized_option );
     // Displays the interactive command line help screen.
 
 #if defined(NEEDVIRTUALMETHODS)

@@ -10,9 +10,9 @@
 //-----------------------------------------------------------------------
 // Note: #ifdef MULTITHREAD is intentionally avoided until
 // the #if/#elif falls into the #else, and that too should be
-// removed. This is to support platforms that support threading 
-// independantly of whether the client.cpp is being built with 
-// multithread support or not. 
+// removed. This is to support platforms that support threading
+// independantly of whether the client.cpp is being built with
+// multithread support or not.
 //
 // Once portable thread creation/destruction is guaranteed, it
 // isn't a big step to add functionality to the client - For example:
@@ -28,14 +28,14 @@
 #elif (CLIENT_OS == OS_OS2)
    #error threadcd.h needs an include //replace this with appropriate includes
    typedef long THREADID;
-#elif (CLIENT_OS == OS_NETWARE)   
+#elif (CLIENT_OS == OS_NETWARE)
    #include <process.h>
    typedef long THREADID;
    extern int CliWaitForThreadExit( int threadID );
 #elif (CLIENT_OS == OS_BEOS)
    #error threadcd.h needs an include //replace this with appropriate includes
    typedef thread_id THREADID;
-#elif (CLIENT_OS == OS_DOS) 
+#elif (CLIENT_OS == OS_DOS)
    typedef int THREADID ; //dummy
    #undef OS_SUPPORTS_THREADING
 #elif (CLIENT_OS == OS_MACOS)
@@ -44,15 +44,18 @@
 #elif (CLIENT_OS == OS_WIN16)
    typedef int THREADID ; //dummy
    #undef OS_SUPPORTS_THREADING
+#elif (CLIENT_OS == OS_RISCOS)
+   typedef int THREADID ; //dummy
+   #undef OS_SUPPORTS_THREADING
 #else
    #if !defined(MULTITHREAD)
      typedef int THREADID ;
      #undef OS_SUPPORTS_THREADING
    #else
-     #include <pthread.h> 
+     #include <pthread.h>
      typedef pthread_t THREADID;
    #endif
-#endif   
+#endif
 
 //-----------------------------------------------------------------------
 

@@ -13,9 +13,9 @@
 #include "cputypes.h"
 
 /* Porter notes: Check network.cpp and network.h to remove duplicate
-   or conflicting defines or code in the platform specific sections there. 
+   or conflicting defines or code in the platform specific sections there.
 
-  1. if your platform does not support frac second sleep, try using 
+  1. if your platform does not support frac second sleep, try using
        select() as a substitute: For example:
        #define usleep(x) { struct timeval tv = {0,(x)}; \
                           select(0,NULL,NULL,NULL,&tv); }
@@ -23,7 +23,7 @@
      implementations don't support it and don't sleep or sleep forever.
   2. if usleep(x) or sleep(x) are macros, make sure that 'x' is
      enclosed in parens. ie #define sleep(x) myDelay((x)/1000)
-*/   
+*/
 
 #if (CLIENT_OS == OS_WIN32)
   #define WIN32_LEAN_AND_MEAN
@@ -82,7 +82,7 @@
   #else // HP-UX 9.x doesn't have nanosleep() or usleep()
     #define usleep(x) sleep(1)
   #endif
-#elif (CLIENT_OS == OS_AMIGA)
+#elif (CLIENT_OS == OS_AMIGAOS)
   extern "C" {
   #include <unistd.h>
   }
@@ -90,7 +90,7 @@
   extern "C" {
   #include <unistd.h>
   }
-#else  
+#else
   #include <unistd.h> //gcc has both sleep() and usleep()
 #endif
 

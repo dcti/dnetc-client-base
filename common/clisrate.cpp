@@ -12,10 +12,10 @@
 
    30 May 1998 - Cyrus Patel <cyp@fb14.uni-mainz.de>
                  changed phrase "keys/s" *BACK* to "k/s" in
-                 CliGetSummaryStringForContest. That line has 
+                 CliGetSummaryStringForContest. That line has
                  exactly 3 characters to spare, and >9 blocks (or
                  >9 days, or >999Kk/s) will cause line to wrap.
-*/   
+*/
 
 #include "clisrate.h" //includes client.h, clitime.h, clirate.h, clicdata.h
 
@@ -30,7 +30,7 @@ char *CliGetKeyrateAsString( char *buffer, double rate )
   else
   {
     unsigned int t1, t2 = 0;
-    char *t3[]={"","K","M","G","T"}; // "", "Kilo", "Mega", "Giga", "Tera"
+    const char *t3[]={"","k","M","G","T"}; // "", "kilo", "mega", "giga", "tera"
     while (t2<=5 && (((double)(rate))>((double)(_U32LimitDouble_))) )
     {
       t2++;
@@ -42,8 +42,8 @@ char *CliGetKeyrateAsString( char *buffer, double rate )
     {
       t1 = (unsigned int)(rate);
       sprintf( buffer, "%u.%02u %s", t1,
-         ((unsigned int)((((double)(rate-((double)(t1)))))*((double)(100)))), 
-         t3[t2] ); 
+         ((unsigned int)((((double)(rate-((double)(t1)))))*((double)(100)))),
+         t3[t2] );
     }
   }
   return buffer;
@@ -55,10 +55,11 @@ char *CliGetKeyrateAsString( char *buffer, double rate )
 const char *CliGetSummaryStringForContest( int contestid )
 {
   static char str[70];
-  char keyrate[32], *keyrateP, *name;
+  char keyrate[32];
+  const char *keyrateP, *name;
   unsigned blocks;
   struct timeval ttime;
-  
+
   if ( CliIsContestIDValid( contestid ) ) //clicdata.cpp
   {
     CliGetContestInfoBaseData( contestid, &name, NULL ); //clicdata.cpp
@@ -71,16 +72,16 @@ const char *CliGetSummaryStringForContest( int contestid )
     blocks = ttime.tv_sec = ttime.tv_usec = 0;
     keyrateP = "---.-- ";
   }
-    
+
   sprintf(str, "%d %s Block%s %s%c- [%sk/s]", //!!!DON'T MAKE IT longer!
-       blocks, name, ((blocks==1)?(""):("s")), 
+       blocks, name, ((blocks==1)?(""):("s")),
        CliGetTimeString( &ttime, 2 ), ((!blocks)?(0):(' ')), keyrateP );
   return str;
-}  
+}
 
 // ---------------------------------------------------------------------------
 
-// return iter/keysdone/whatever as string. set inNetOrder if 'u' 
+// return iter/keysdone/whatever as string. set inNetOrder if 'u'
 // needs ntohl()ing first, set contestID = -1 to have the ID ignored
 const char *CliGetU64AsString( u64 *u, int inNetOrder, int contestid )
 {
@@ -111,13 +112,13 @@ const char *CliGetU64AsString( u64 *u, int inNetOrder, int contestid )
     i = (unsigned int)(d / 1000000000.0);
     norm.hi = (unsigned int)(d - (((double)(i))*1000000000.0));
   }
-  
+
   if (i)            sprintf( str, "%u%09u%09u", (unsigned) i, (unsigned) norm.hi, (unsigned) norm.lo );
   else if (norm.hi) sprintf( str, "%u%09u", (unsigned) norm.hi, (unsigned) norm.lo );
   else              sprintf( str, "%u", (unsigned) norm.lo );
-    
+
   return str;
-}  
+}
 
 // ---------------------------------------------------------------------------
 
@@ -125,11 +126,11 @@ const char *CliGetU64AsString( u64 *u, int inNetOrder, int contestid )
 const char *CliGetMessageForFileentryLoaded( FileEntry *fileentry )
 {
   static char str[84];
-  char *name;
+  const char *name;
   unsigned int size=1, count=32, iter = ntohl(fileentry->iterations.lo);
   unsigned int startpercent = (unsigned int) ( (double) 10000.0 *
            ( (double) (ntohl(fileentry->keysdone.lo)) / (double)(iter) ) );
-  
+
   if (iter)
   {
     count = 1;
@@ -140,17 +141,17 @@ const char *CliGetMessageForFileentryLoaded( FileEntry *fileentry )
   }
   if (CliGetContestInfoBaseData( fileentry->contest, &name, NULL )!=0) //clicdata
     name = "???";
-  
+
   sprintf( str, "%s %s %d*2^%d block %08lX:%08lX%c(%02u.%02u%% done)",
   #ifdef MULTITHREAD
-           "Loaded", 
+           "Loaded",
   #else
            "Started",
-  #endif           
+  #endif
            name, (int) count, (int)size,
-           (unsigned long) ntohl( fileentry->key.hi ), 
+           (unsigned long) ntohl( fileentry->key.hi ),
            (unsigned long) ntohl( fileentry->key.lo ),
-           ((startpercent)?(' '):(0)), 
+           ((startpercent)?(' '):(0)),
            (unsigned)(startpercent/100), (unsigned)(startpercent%100) );
   return str;
 }
@@ -164,7 +165,8 @@ const char *CliGetMessageForProblemCompleted( Problem *prob )
   static char str[160];
   RC5Result rc5result;
   struct timeval tv;
-  char keyrate[32], *keyrateP, *name;
+  char keyrate[32];
+  const char *keyrateP, *name;
   int contestid = prob->GetResult( &rc5result );
 
   if (CliGetContestInfoBaseData( contestid, &name, NULL )==0) //clicdata
@@ -178,7 +180,7 @@ const char *CliGetMessageForProblemCompleted( Problem *prob )
   tv.tv_sec = prob->timehi;
   tv.tv_usec = prob->timelo;
   CliTimerDiff( &tv, &tv, NULL );
-  
+
   sprintf( str, "Completed %s block %08lX:%08lX (%s keys)\n"
                 " %s  %s - [%skeys/sec]\n",
                 name,
@@ -188,16 +190,17 @@ const char *CliGetMessageForProblemCompleted( Problem *prob )
                 CliGetTimeString( NULL, 0 ),
                 CliGetTimeString( &tv, 2 ),
                 keyrateP );
-  return str;                
-}                
+  return str;
+}
 
 // ---------------------------------------------------------------------------
 
-const char *CliReformatMessage( char *header, char *message )
+const char *CliReformatMessage( const char *header, const char *message )
 {
   static char strspace[160];
   unsigned int prelen, linelen, doquote = (header!=NULL);
-  char buffer[84], *bptr, *sptr, *mptr = message;
+  char buffer[84], *bptr, *sptr;
+  const char *mptr = message;
 
   strspace[0]=0;
   if (mptr && *mptr)
@@ -242,11 +245,11 @@ const char *CliReformatMessage( char *header, char *message )
       *bptr++ = '\"';
     *bptr++='\n';
     *bptr=0;
-    
+
     strcat(strspace, buffer );
 
     //second line
-    
+
     if (*mptr)
     {
       bptr = strspace+strlen( strspace );
@@ -256,7 +259,7 @@ const char *CliReformatMessage( char *header, char *message )
 
       linelen = prelen;
       bptr = buffer;
-    
+
       while (linelen < 78)
       {
         if (!*mptr)
@@ -287,9 +290,9 @@ const char *CliReformatMessage( char *header, char *message )
     }
 
     //end of second line
-    
+
     bptr = strspace;                 //convert non-breaking space
-    while (*bptr) 
+    while (*bptr)
     {
       if (*bptr == (char) 0xFF)
         *bptr = ' ';
