@@ -4,12 +4,17 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff-conflict.cpp,v $
+// Revision 1.10  1998/10/03 04:05:46  cyp
+// Removed CliClearScreen() [now in console.cpp], InternalLogScreen() now
+// calls ConOut() [likewise in console.cpp]
+//
 // Revision 1.9  1998/09/28 01:40:30  cyp
 // Modified percentage stuff to use problem table. Removed dead/obsolete OS2
 // priority boost code.
 //
 // Revision 1.8  1998/09/08 21:36:52  silby
-// Added guistuff to the tree - now all GUIs can hook at once place, so that the common tree doesn't become a mess.
+// Added guistuff to the tree - now all GUIs can hook at once place, so 
+// that the common tree doesn't become a mess.
 //
 // Revision 1.7  1998/09/07 18:10:34  blast
 // Changed a typo and added AMIGAOS to list of OS'es without ftruncate().
@@ -42,7 +47,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.9 1998/09/28 01:40:30 cyp Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.10 1998/10/03 04:05:46 cyp Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -57,6 +62,7 @@ return "@(#)$Id: logstuff-conflict.cpp,v 1.9 1998/09/28 01:40:30 cyp Exp $"; }
 #include "cmpidefs.h"  // strcmpi()
 #include "logstuff.h"  // keep the prototypes in sync
 #include "guistuff.h"  // Hooks for the GUIs
+#include "console.h"   // for ConOut() and STDOUT_IS_A_TTY() macro
 
 //-------------------------------------------------------------------------
 
@@ -112,17 +118,17 @@ static struct
 
 // ========================================================================
 
-
-#if (!defined(NEEDVIRTUALMETHODS))  // gui clients will override this function
-void InternalLogScreen( const char *msgbuffer, unsigned int msglen, int /*flags*/ )
+static void InternalLogScreen( const char *msgbuffer, unsigned int msglen, int /*flags*/ )
 {
-  if (msglen && (msgbuffer[msglen-1] == '\n' || logstatics.stdoutisatty ))
-    fwrite( msgbuffer, sizeof(char), msglen, stdout);
-  fflush(stdout);
-
+  if (msglen && (msgbuffer[msglen-1] == '\n' || IS_STDOUT_A_TTY() ))
+    {
+    if (strlen( msgbuffer ) == msglen) //we don't do binary data
+      ConOut( msgbuffer );             //which shouldn't happen anyway.
+    }
+  else
+    ConOut( "" ); //flush.
   return;
 }
-#endif
 
 // ------------------------------------------------------------------------
 
@@ -296,6 +302,9 @@ void LogWithPointer( int loggingTo, const char *format, va_list argptr )
 {
   char msgbuffer[MAX_LOGENTRY_LEN];
   unsigned int head, msglen = 0;
+  char *buffptr;
+  const char *timestamp;
+  int old_loggingTo = loggingTo;
   
   msgbuffer[0]=0;
   loggingTo &= (logstatics.loggingTo|LOGTO_RAWMODE);
@@ -311,19 +320,6 @@ void LogWithPointer( int loggingTo, const char *format, va_list argptr )
       loggingTo = LOGTO_NONE;
     }
 
-  if ( loggingTo != LOGTO_NONE && (loggingTo & LOGTO_RAWMODE) == 0) 
-    {
-    head = 0;
-    msgbuffer[0]=0;
-    while (format[head]=='\r' || format[head]=='\n')
-      { msgbuffer[head] = format[head]; msgbuffer[++head]=0; }
-    if ( format[head]!=0 && format[head]!='[' && format[head]!=' ')  
-      {
-      format+=head;
-      sprintf( (msgbuffer+strlen(msgbuffer)), "[%s] ", "Jan 01 00:00:00 GMT" ); //CliGetTimeString(NULL,1) );
-      }
-    }
-
   if ( loggingTo != LOGTO_NONE )
     {
     if ( argptr == NULL )
@@ -331,10 +327,30 @@ void LogWithPointer( int loggingTo, const char *format, va_list argptr )
     else 
       vsprintf( msgbuffer, format, argptr);
     msglen = strlen( msgbuffer );
+
     if ( msglen == 0 )
       loggingTo = LOGTO_NONE;
     else if (msgbuffer[msglen-1] != '\n')
       loggingTo &= LOGTO_SCREEN|LOGTO_RAWMODE;  //screen only obviously
+    }
+
+  if (loggingTo != LOGTO_NONE && (old_loggingTo & LOGTO_RAWMODE) == 0)
+    {
+    buffptr = &msgbuffer[0];
+    while (*buffptr == '\r' || *buffptr=='\n' )
+      buffptr++;
+    if (*buffptr && *buffptr!='[' && *buffptr != ' ') /* no timestamp */
+      {
+      timestamp = CliGetTimeString( NULL, 1 );
+      memmove( buffptr+(strlen(timestamp)+3), 
+                 buffptr, strlen( buffptr )+1 );
+      *buffptr++='[';
+      while (*timestamp) 
+        *buffptr++ = *timestamp++;
+      *buffptr++=']';
+      *buffptr=' ';
+      msglen = strlen( msgbuffer );
+      }
     }
 
   if (( loggingTo & LOGTO_SCREEN ) != 0)
@@ -525,7 +541,7 @@ void LogScreenPercent( unsigned int load_problem_count )
     if ( load_problem_count <= 2 )
       method = 0;  //old LogScreenPercentSingle()
     #if (defined(PERCBAR_ON_ONE_LINE)) /* max 13 threads */
-    else if (logstatics.stdoutisatty && (numthreads*sizeof("A:00% "))<79 ) 
+    else if (IS_STDOUT_A_TTY() && (numthreads*sizeof("A:00% "))<79 ) 
       method = 3; //"\rA:10% B:20% C:30% D:40% E:50% ... M:99%" on *one* line
     #elif (defined(FORCE_OLD_LOGSCREENPERCENTMULTI))
     else
@@ -583,7 +599,7 @@ void LogScreenPercent( unsigned int load_problem_count )
       else
         {
         restartperc = 0; //we don't bother with the restart flag
-        if ( logstatics.stdoutisatty )
+        if ( IS_STDOUT_A_TTY() )
           {
           *bufptr++ = '\r';
           lastperc = 0;  //always paint the whole bar
@@ -604,7 +620,7 @@ void LogScreenPercent( unsigned int load_problem_count )
           {
           ch = '.';
           if (numthreads > 1 && numthreads < sizeof(pbuf) && 
-                         logstatics.stdoutisatty && specperc < 100)
+                         IS_STDOUT_A_TTY() && specperc < 100)
             {
             equals = 0;
             for ( selthread=0; selthread<numthreads; selthread++ )
@@ -702,16 +718,12 @@ void Client::InitializeLogging(void)
   logstatics.loggingTo = LOGTO_NONE;
   logstatics.lastwasperc = 0;
 
-  if ( !quietmode )
+  if ( !quietmode && !runhidden )
     {
     logstatics.loggingTo |= LOGTO_SCREEN;
     logstatics.stableflag = 0;   //assume next log screen needs a '\n' first
-    logstatics.stdoutisatty = 1; 
-    #if (!defined(NEEDVIRTUALMETHODS))
-    if (!isatty(fileno(stdout)))
-      logstatics.stdoutisatty = 0;
-    #endif
     }
+
 
   if (!logstatics.mailmessage && messagelen && !offlinemode)
     logstatics.mailmessage = new MailMessage();
@@ -748,39 +760,3 @@ void Client::InitializeLogging(void)
 
 // ------------------------------------------------------------------------
 
-void CliScreenClear( void )  // SLIGHTLY out of place.... :) - cyp
-{
-  if (logstatics.stdoutisatty)
-    {
-    #if (CLIENT_OS == OS_WIN32)
-      HANDLE hStdout;
-      CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-      DWORD nLength;
-      COORD topleft = {0,0};
-      DWORD temp;
-
-      hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-      if (hStdout == INVALID_HANDLE_VALUE) return;
-      if (! GetConsoleScreenBufferInfo(hStdout, &csbiInfo)) return;
-      nLength = csbiInfo.dwSize.X * csbiInfo.dwSize.Y;
-      SetConsoleCursorPosition(hStdout, topleft);
-      FillConsoleOutputCharacter(hStdout, (TCHAR) ' ', nLength, topleft, &temp);
-      FillConsoleOutputAttribute(hStdout, csbiInfo.wAttributes, nLength, topleft, &temp);
-      SetConsoleCursorPosition(hStdout, topleft);
-    #elif (CLIENT_OS == OS_OS2)
-      BYTE space[] = " ";
-      VioScrollUp(0, 0, -1, -1, -1, space, 0);
-      VioSetCurPos(0, 0, 0);      // move cursor to upper left
-    #elif (CLIENT_OS == OS_DOS)
-      dosCliClearScreen(); //in platform/dos/clidos.cpp
-    #elif (CLIENT_OS == OS_NETWARE)
-      clrscr();
-    #elif (CLIENT_OS == OS_RISCOS)
-      riscos_clear_screen();
-    #else
-      printf("\x1B" "[2J" "\x1B" "[H" "\r       \r" );
-      //ANSI cls  '\r space \r' is in case ansi is not supported
-    #endif
-    }
-  return;
-}
