@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.77  1999/02/06 00:51:15  silby
+// Change to win32 thread shutdown; win95 goes nuts if
+// thread-related funcs are called with invalid handles,
+// which sometimes occurs during shutdown. Code changed
+// to rely on threadid==0.
+//
 // Revision 1.76  1999/02/04 07:48:04  cyp
 // added lurk.h
 //
@@ -291,7 +297,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.76 1999/02/04 07:48:04 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.77 1999/02/06 00:51:15 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -958,9 +964,10 @@ static int __StopThread( struct thread_param_block *thrparams )
         DosSetPriority( 2, PRTYC_REGULAR, 0, 0); /* thread to normal prio */
         DosWaitThread( &(thrparams->threadID), DCWW_WAIT);
         #elif (CLIENT_OS == OS_WIN32)
-        SetThreadPriority( (HANDLE)thrparams->threadID,
-                           GetThreadPriority(GetCurrentThread()) );
-        WaitForSingleObject((HANDLE)thrparams->threadID, INFINITE);
+        while (thrparams->threadID)
+          {
+          Sleep(100);
+          }
         #elif (CLIENT_OS == OS_BEOS)
         static status_t be_exit_value;
         wait_for_thread(thrparams->threadID, &be_exit_value);
