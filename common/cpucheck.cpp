@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.47 2000/06/20 03:27:05 mfeiri Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.48 2000/06/20 15:00:16 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -632,7 +632,7 @@ static long __GetRawProcessorID(const char **cpuname)
       case CPUF_620:  detectedtype = 0x0004 + (1<<16); break;
       default: // some PPC processor that we don't know about
                // set the tag (so that the user can tell us), but return 0
-      sprintf(namebuf, "WOS:0x%x", cputags[0].ti_Data );
+      sprintf(namebuf, "WOS:0x%lx", cputags[0].ti_Data );
       detectedname = (const char *)&namebuf[0];
       detectedtype = 0;
       break;
@@ -649,7 +649,7 @@ static long __GetRawProcessorID(const char **cpuname)
       case CPU_604e: detectedtype = 0x0009; break;
       default: // some PPC processor that we don't know about
                // set the tag (so that the user can tell us), but return 0
-      sprintf(namebuf, "PU:0x%x", cpu );
+      sprintf(namebuf, "PUP:0x%lx", cpu );
       detectedname = (const char *)&namebuf[0];
       detectedtype = 0;
       break;
