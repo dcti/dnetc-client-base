@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.50 2000/06/02 06:24:52 jlawson Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.51 2000/07/11 04:39:43 mfeiri Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -145,7 +145,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   /* non-preemptive os minimum yields per second */
   Problem *problem;
   unsigned long last_permille;
-  ContestWork contestwork;
+  ContestWork contestwork, tmp_work;
   const char *contname;
   struct timeval totalruntime;
   u32 keysdone_hi, keysdone_lo;
@@ -202,7 +202,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   #if (CLIENT_OS == OS_NETWARE)
   if ( ( flags & TBENCHMARK_CALIBRATION ) != 0 ) // 2 seconds without yield
     numsecs = ((numsecs > 2) ? (2) : (numsecs)); // ... is acceptable
-  else if (GetFileServerMajorVersionNumber() < 5)
+  else
   {
     non_preemptive_os.yps = 1000/10; /* 10 ms minimum yield rate */ 
     tslice = 0; /* zero means 'use calibrated value' */
@@ -276,6 +276,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   while (((unsigned int)totalruntime.tv_sec) < numsecs)
   {
     run = RESULT_WORKING;
+    problem->RetrieveState(&tmp_work, NULL, 1); //unload state (if previous)
     if ( problem->LoadState( &contestwork, contestid, tslice, 0, 0, 0, 0) != 0)
       run = -1;
     else if ((flags & TBENCHMARK_QUIET) == 0 && scropen < 0)
@@ -286,7 +287,6 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     }
     while ( run == RESULT_WORKING )
     {
-      ContestWork tmp_work;
       if (non_preemptive_os.yps) /* is this a non-preemptive environment? */
       {
         if (non_preemptive_os.did_adjust < 30 /* don't do this too often */
@@ -315,7 +315,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         #elif (CLIENT_OS == OS_RISCOS)
         riscos_upcall_6();
         #elif (CLIENT_OS == OS_NETWARE)
-        nwCliThreadSwitchLowPriority();
+        ThreadSwitchLowPriority();
         #endif
       }
       run = problem->Run();
@@ -397,6 +397,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     run = -1; /* core error */
   if (scropen > 0 && run < 0)
     LogScreen("\n");
+  problem->RetrieveState(&tmp_work, NULL, 1); //unload state (regardless of 'run')
 
   /* --------------------------- */
   

@@ -12,7 +12,7 @@
 //
 
 #ifndef __AUTOBUFF_H__
-#define __AUTOBUFF_H__ "@(#)$Id: autobuff.h,v 1.17 2000/06/03 03:24:39 jlawson Exp $"
+#define __AUTOBUFF_H__ "@(#)$Id: autobuff.h,v 1.18 2000/07/11 04:41:39 mfeiri Exp $"
 
 #ifndef AUTOBUFFER_INCREMENT
 #define AUTOBUFFER_INCREMENT 100
@@ -42,8 +42,8 @@ public:
   void Clear(void) {bufferfilled = bufferskip = 0;}
   void operator+= (const AutoBuffer &that);
   void operator= (const AutoBuffer &that);
-  bool RemoveLine(AutoBuffer *line);
-  bool StepLine(AutoBuffer *line, unsigned int *offset) const;
+  int RemoveLine(AutoBuffer *line);
+  int StepLine(AutoBuffer *line, unsigned int *offset) const;
 };
 
 #endif /* __AUTOBUFF_H__ */

@@ -10,10 +10,10 @@
 //
 
 const char *autobuff_cpp(void) {
-return "@(#)$Id: autobuff.cpp,v 1.18 2000/06/03 03:24:39 jlawson Exp $"; }
+return "@(#)$Id: autobuff.cpp,v 1.19 2000/07/11 04:41:37 mfeiri Exp $"; }
 
 #include <string.h> /* memmove() */
-#include <assert.h>
+//#include <assert.h>
 #include "autobuff.h"
 
 AutoBuffer::AutoBuffer(void)
@@ -21,7 +21,7 @@ AutoBuffer::AutoBuffer(void)
   buffersize = AUTOBUFFER_INCREMENT;
   bufferfilled = bufferskip = 0;
   buffer = new char[(int)buffersize];
-  assert(buffer != NULL);
+  //assert(buffer != NULL); /* what good is this supposed to do? */
 }
 
 AutoBuffer::AutoBuffer(const AutoBuffer &that)
@@ -30,8 +30,8 @@ AutoBuffer::AutoBuffer(const AutoBuffer &that)
   bufferskip = 0;
   bufferfilled = that.GetLength();
   buffer = new char[(int)buffersize];
-  assert(buffer != NULL);
-  memmove(buffer, that.GetHead(), (int)bufferfilled);
+  //assert(buffer != NULL); /* what good is this supposed to do? */
+  if (buffer) memmove(buffer, that.GetHead(), (int)bufferfilled);
 }
 
 AutoBuffer::AutoBuffer(const char *szText)
@@ -40,8 +40,8 @@ AutoBuffer::AutoBuffer(const char *szText)
   bufferskip = 0;
   buffersize = bufferfilled + AUTOBUFFER_INCREMENT;
   buffer = new char[(int)buffersize];
-  assert(buffer != NULL);
-  memmove(buffer, szText, (int)bufferfilled);
+  //assert(buffer != NULL); /* what good is this supposed to do? */
+  if (buffer) memmove(buffer, szText, (int)bufferfilled);
 }
 
 AutoBuffer::AutoBuffer(const char *chData, unsigned int amount)
@@ -50,8 +50,8 @@ AutoBuffer::AutoBuffer(const char *chData, unsigned int amount)
   buffersize = bufferfilled + AUTOBUFFER_INCREMENT;
   bufferskip = 0;
   buffer = new char[(int)buffersize];
-  assert(buffer != NULL);
-  memmove(buffer, chData, (int)bufferfilled);
+  //assert(buffer != NULL); /* what good is this supposed to do? */
+  if (buffer) memmove(buffer, chData, (int)bufferfilled);
 }
 
 AutoBuffer::~AutoBuffer(void)
@@ -80,7 +80,7 @@ char *AutoBuffer::Reserve(unsigned int amount)
   } else if (amount > buffersize - bufferfilled - bufferskip) {
     // Buffer is large enough, but only when you count the skipped
     // slack at the beginning of the buffer, so move things forward.
-    assert(amount <= buffersize - bufferfilled);
+    //assert(amount <= buffersize - bufferfilled); /* what good is this supposed to do? */
     memmove(buffer, buffer + (int)bufferskip, (int)bufferfilled);
     bufferskip = 0;
   }
@@ -94,7 +94,7 @@ void AutoBuffer::MarkUsed(unsigned int amount)
   if (buffersize - bufferskip >= amount + bufferfilled) {
     bufferfilled += amount;
   }
-  else assert(0);     // should not happen.
+  //else assert(0);     // should not happen.
 }
 
 // Deallocates the indicated number of characters starting from the
@@ -105,7 +105,7 @@ void AutoBuffer::RemoveHead(unsigned int amount)
     bufferskip += amount;
     bufferfilled -= amount;
   }
-  else assert(0);     // should not happen.
+  //else assert(0);     // should not happen.
 }
 
 // Deallocates the indicated number of characters starting from
@@ -115,7 +115,7 @@ void AutoBuffer::RemoveTail(unsigned int amount)
   if (bufferfilled >= amount) {
     bufferfilled -= amount;
   }
-  else assert(0);     // should not happen.
+  //else assert(0);     // should not happen.
 }
 
 // appending operator.  redefines the buffer to contain the combined
@@ -140,20 +140,23 @@ void AutoBuffer::operator= (const AutoBuffer &that)
 // destructively returns a copy of the first whole text line,
 // and removes it from the head of the buffer.
 // returns true if a complete line was found.
-bool AutoBuffer::RemoveLine(AutoBuffer *line)
+int AutoBuffer::RemoveLine(AutoBuffer *line)
 {
-  assert(line != NULL);
+  if (!line) return 0;
+  //assert(line != NULL); /* what good is this supposed to do? */
   unsigned int offset = 0;
-  bool result = StepLine(line, &offset);
+  int result = StepLine(line, &offset);
   if (result) RemoveHead(offset);
   return result;
 }
 
 // non-destructively returns a copy of the first whole text line.
 // returns true if a complete line was found.
-bool AutoBuffer::StepLine(AutoBuffer *line, unsigned int *offset) const
+int AutoBuffer::StepLine(AutoBuffer *line, unsigned int *offset) const
 {
-  assert(line != NULL && offset != NULL);
+  if (!line || !offset)
+    return 0;
+  //assert(line != NULL && offset != NULL); /* what good is this supposed to do? */
   line->Clear();
 
   // find the position of the next line break.
@@ -164,7 +167,7 @@ bool AutoBuffer::StepLine(AutoBuffer *line, unsigned int *offset) const
     if (ch == 0 || ch == '\r' || ch == '\n')
       { eol = (pos - (int)(*offset) ); break; }
   }
-  if (eol < 0) return false;
+  if (eol < 0) return 0; /* false */
 
   // copy the separated line into the target buffer.
   line->Reserve(eol + 1);
@@ -178,7 +181,7 @@ bool AutoBuffer::StepLine(AutoBuffer *line, unsigned int *offset) const
       (int)GetLength() > (int)(*offset) + 1 &&
       GetHead()[(int)(*offset) + 1] == '\n') (*offset) += 2;
   else (*offset)++;
-  return true;
+  return 1; /* true */
 }
 
 
