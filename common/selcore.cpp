@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.135 2002/03/29 20:34:51 sampo Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.136 2002/03/30 06:12:38 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -932,7 +932,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             case 0x00: cindex = ((have_mmx)?(9):(0)); break; // P5 == RG/BRF class 5
             case 0x01: cindex = ((have_smc)?(7 /*#99*/):(6 /*#1939*/)); break; // 386/486
             case 0x02: cindex = 2; break; // PII/PIII   == RG class 6
-            case 0x03: cindex = 3; break; // Cx6x86/MII == RG re-pair I (#1913)
+            case 0x03: cindex = 6; break; // Cx6x86/MII == RG re-pair II
             case 0x04: cindex = 4; break; // K5         == RG RISC-rotate I
             case 0x05: cindex = 5; break; // K6-1/2/3   == RG RISC-rotate II
             case 0x06: cindex = ((have_smc)?(7 /*#99*/):(6 /*#804*/)); break; // cx486
