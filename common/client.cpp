@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.126  1998/08/16 06:00:28  silby
+// Changed ::Update back so that it checks contest/buffer status before connecting (lurk connecting every few seconds wasn't pretty.)
+// Also, changed command line option handling so that update() would be called with force so that it would connect over all.
+//
 // Revision 1.125  1998/08/15 21:32:49  jlawson
 // added parens around an abiguous shift operation.
 //
@@ -328,7 +332,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.125 1998/08/15 21:32:49 jlawson Exp $"; }
+return "@(#)$Id: client.cpp,v 1.126 1998/08/16 06:00:28 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -2271,7 +2275,7 @@ int Client::RunCommandlineModes( int argc, char *argv[], int *retcodeP )
         else if ( strcmp( cmdstr, "-flush" ) == 0 )      doflush=1;
         else if ( strcmp( cmdstr, "-forcefetch" ) == 0 ) dofetch=doforce=1;
         else if ( strcmp( cmdstr, "-forceflush" ) == 0 ) doflush=doforce=1;
-        else /* ( strcmp( cmdstr, "-update" ) == 0) */   dofetch=doflush=1;
+        else /* ( strcmp( cmdstr, "-update" ) == 0) */   dofetch=doflush=doforce=1;
 
         retcode = 0;
         offlinemode=0;
