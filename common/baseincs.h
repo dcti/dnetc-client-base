@@ -5,6 +5,31 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: baseincs.h,v $
+// Revision 1.30.2.5  1998/12/28 15:29:38  remi
+// Synced with :
+//
+//  Revision 1.38  1998/12/22 15:58:24  jcmichot
+//  QNX port.
+//
+//  Revision 1.37  1998/12/15 07:00:21  dicamillo
+//  Use "_" instead of "/" in Mac header file names for CVS.
+//
+//  Revision 1.36  1998/12/14 05:09:16  dicamillo
+//  Fix formatting error in log comment.
+//
+//  Revision 1.35  1998/12/14 05:05:04  dicamillo
+//  MacOS updates to eliminate MULTITHREAD and have a singe client for MT
+//  and non-MT machines
+//
+//  Revision 1.34  1998/12/08 05:27:51  dicamillo
+//  Add includes for MacOS
+//
+//  Revision 1.33  1998/11/25 09:23:26  chrisb
+//  various changes to support x86 coprocessor under RISC OS
+//
+//  Revision 1.32  1998/11/25 05:59:36  dicamillo
+//  Header changes for BeOS R4.
+//
 // Revision 1.30.2.4  1998/11/16 09:56:01  remi
 // In win32 section, fixed two #include.
 //
@@ -36,7 +61,11 @@ extern "C" {
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+#if (CLIENT_OS == OS_MACOS)
+#include <sys_types.h>
+#else
 #include <sys/types.h>
+#endif
 #include <errno.h>
 
 #if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
@@ -80,11 +109,13 @@ extern "C" {
     extern unsigned int ARMident(), IOMDident();
     extern void riscos_clear_screen();
     extern bool riscos_check_taskwindow();
+    extern void riscos_backspace();
+    extern int riscos_count_cpus();
+    extern char *riscos_x86_determine_name();
     extern int riscos_find_local_directory(const char *argv0);
     extern char *riscos_localise_filename(const char *filename);
     extern void riscos_upcall_6(void); //yield
     extern int getch();
-
     #define fileno(f) ((f)->__file)
     #define isatty(f) ((f) == 0)
   }
@@ -129,8 +160,10 @@ extern "C" {
     #include <dir.h>
   #endif
 #elif (CLIENT_OS == OS_BEOS)
-// nothing  #include <share.h>
+  #include <OS.h>
+  #include <unistd.h>
   #include <fcntl.h>
+  #include <sched.h>
 #elif (CLIENT_OS == OS_NETWARE)
   #include <sys/time.h> //timeval
   #include <unistd.h> //isatty, chdir, getcwd, access, unlink, chsize, O_...
@@ -155,6 +188,10 @@ extern "C" {
   #endif
 #elif (CLIENT_OS == OS_NETBSD) && (CLIENT_CPU == CPU_ARM)
   #include <sys/time.h>
+#elif (CLIENT_OS == OS_QNX)
+  #include <sys/time.h>
+  #include <sys/select.h>
+  #define strncmpi strncasecmp
 #elif (CLIENT_OS == OS_DYNIX)
   #include <unistd.h> // sleep(3c)
   struct timezone
@@ -164,6 +201,27 @@ extern "C" {
   };
   extern "C" int gethostname(char *, int);
   extern "C" int gettimeofday(struct timeval *, struct timezone *);
+#elif (CLIENT_OS == OS_MACOS)
+  #include <sys_time.h>
+  #include <stat.mac.h>
+  #include <machine_endian.h>
+  #include <unistd.h>
+  #define _UTIME
+  #include <unix.mac.h>
+  #include "mac_extras.h"
+  #include <console.h>
+  #include <Multiprocessing.h>
+  void YieldToMain(char force_events);
+  u32 GetTimesliceToUse(u32 contestid);
+  void tick_sleep(unsigned long tickcount);
+  extern Boolean haveMP;
+  extern short MP_active;
+  extern "C" unsigned long mp_sleep(unsigned long seconds);
+  extern MPCriticalRegionID MP_count_region;
+  extern volatile s32 ThreadIsDone[2*MAC_MAXCPUS];
+  #if defined(MAC_GUI)
+    #include "gui_incs.h"
+  #endif
 #endif
 
 // --------------------------------------------------------------------------
