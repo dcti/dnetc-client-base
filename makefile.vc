@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.78 2002/09/28 02:52:46 andreasb Exp $
+# $Id: makefile.vc,v 1.79 2002/10/06 19:26:50 andreasb Exp $
 #
 
 BASENAME = dnetc
@@ -127,6 +127,7 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/pollsys.obj    \
         $(OUTPUTPATH)/probfill.obj   \
         $(OUTPUTPATH)/problem.obj    \
+        $(OUTPUTPATH)/projdata.obj   \
         $(OUTPUTPATH)/probman.obj    \
         $(OUTPUTPATH)/random.obj     \
         $(OUTPUTPATH)/selcore.obj    \

@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.33 2002/09/28 02:52:46 andreasb Exp $
+## $Id: makefile.wat,v 1.34 2002/10/06 19:26:50 andreasb Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -36,6 +36,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %COREOBJS = # constructed at runtime
 # LINKOBJS is (somewhat) sorted by coherence - speed sentitive stuff first
 %LINKOBJS = output\problem.obj  &
+            output\projdata.obj &
             output\bench.obj    &
             output\clirun.obj   &
             output\pollsys.obj  &
@@ -476,6 +477,10 @@ output\selftest.obj : common\selftest.cpp $(%dependall) .AUTODEPEND
   @set isused=1
 
 output\problem.obj : common\problem.cpp $(%dependall) .AUTODEPEND
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\projdata.obj : common\projdata.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 

@@ -22,7 +22,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.26 2002/09/02 00:35:41 andreasb Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.27 2002/10/06 19:26:50 andreasb Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -58,6 +58,7 @@ return "@(#)$Id: cliident.cpp,v 1.26 2002/09/02 00:35:41 andreasb Exp $"; }
 #include "probfill.h"
 #include "problem.h"
 #include "probman.h"
+#include "projdata.h"
 #include "random.h"
 #include "rsadata.h"
 #include "selcore.h"
@@ -111,6 +112,7 @@ static const char *h_ident_table[] =
   (const char *)__PROBFILL_H__,
   (const char *)__PROBLEM_H__,
   (const char *)__PROBMAN_H__,
+  (const char *)__PROJDATA_H__,
   (const char *)__RANDOM_H__,
   (const char *)__RSADATA_H__,
   (const char *)__SELCORE_H__,
@@ -162,6 +164,7 @@ extern const char *pollsys_cpp(void);
 extern const char *probfill_cpp(void);
 extern const char *problem_cpp(void);
 extern const char *probman_cpp(void);
+extern const char *projdata_cpp(void);
 extern const char *selcore_cpp(void);
 extern const char *selftest_cpp(void);
 extern const char *setprio_cpp(void);
@@ -211,6 +214,7 @@ static const char * (*ident_table[])(void) =
   probfill_cpp,
   problem_cpp,
   probman_cpp,
+  projdata_cpp,
   selcore_cpp,
   selftest_cpp,
   setprio_cpp,

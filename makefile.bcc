@@ -12,7 +12,7 @@
 # (replace ?? with a two letter country code, eg 'de', 'us', 'uk' etc)
 # A list of all mirrors is at http://www.kernel.org/mirrors/
 #
-# $Id: makefile.bcc,v 1.29 2002/09/28 02:52:46 andreasb Exp $
+# $Id: makefile.bcc,v 1.30 2002/10/06 19:26:49 andreasb Exp $
 
 BASENAME = dnetc
 OUTPUTPATH = output
@@ -107,6 +107,7 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/pollsys.obj    \
         $(OUTPUTPATH)/probfill.obj   \
         $(OUTPUTPATH)/problem.obj    \
+        $(OUTPUTPATH)/projdata.obj   \
         $(OUTPUTPATH)/probman.obj    \
         $(OUTPUTPATH)/random.obj     \
         $(OUTPUTPATH)/selcore.obj    \
@@ -180,7 +181,7 @@ RC5_72_OBJS =                        \
         $(OUTPUTPATH)/rc5ansi1.obj   \
         $(OUTPUTPATH)/rc5ansi2.obj   \
         $(OUTPUTPATH)/rc5ansi4.obj
-BCCOPTS = $(BCCOPTS) -DSMC -DHAVE_RC5_72_CORES
+BCCOPTS = $(BCCOPTS) -DHAVE_RC5_72_CORES
 !endif
 
 # --------------------------------- DES ----------------------------
@@ -321,7 +322,7 @@ $(BASENAME).exe:   $(BCC_CHECK) $(COMMON_OBJS) $(PLAT_OBJS) $(CHIP_OBJS) \
 !else
         $(ILINK32) $(TLINKOPTS) /aa /V3.10 c0w32.obj \
                    $(COMMON_OBJS:/=\) $(PLAT_OBJS:/=\) $(CHIP_OBJS:/=\) \
-                   $(RC5_OBJS:/=\) $(DES_OBJS:/=\) $(CSC_OBJS:/=\) $(OGR_OBJS:/=\), \
+                   $(RC5_64_OBJS:/=\) $(RC5_72_OBJS:/=\) $(DES_OBJS:/=\) $(CSC_OBJS:/=\) $(OGR_OBJS:/=\), \
                    $(BASENAME:/=\).exe,,$(MT_LIBS),$(DEF_FILE:/=\),$(RES_FILE:/=\)
         #actually this call to UPX doesn't work, ought to try PKLITE32 sometime 
         @if exist $(UPXW) \
