@@ -12,6 +12,12 @@
 // ----------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.94.2.10  1999/02/04 23:21:43  remi
+// Synced with :
+//
+//  Revision 1.115  1999/01/31 20:19:08  cyp
+//  Discarded all 'bool' type wierdness. See cputypes.h for explanation.
+//
 // Revision 1.94.2.9  1999/01/30 16:20:29  remi
 // Fixed the previous merge.
 //
@@ -70,7 +76,7 @@ public:
     // encapsulated main().  client.Main() may restart itself
 
   int ParseCommandline( int runlevel, int argc, const char *argv[], 
-                        int *retcodeP, bool logging_is_initialized );
+                        int *retcodeP, int logging_is_initialized );
                         
   //runlevel == 0 = ReadConfig() (-quiet, -ini, -guistart etc done here too)
   //         >= 1 = post-readconfig (override ini options)
@@ -79,7 +85,7 @@ public:
   void ValidateConfig( void );
     // verifies configuration and forces valid values
 
-  int SelectCore(bool quietly);
+  int SelectCore(int quietly);
     // always returns zero.
     // to configure for cpu. called before Run() from main(), or for 
     // "modes" (Benchmark()/Test()) from ParseCommandLine().
