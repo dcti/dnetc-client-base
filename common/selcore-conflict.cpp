@@ -11,7 +11,7 @@
  * ----------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.44 1999/04/08 19:35:09 patrick Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.45 1999/04/09 18:46:03 patrick Exp $"; }
 
 
 #include "cputypes.h"
@@ -278,7 +278,7 @@ int Client::SelectCore(int quietly)
       memset( (void *)&contestwork, 0, sizeof(contestwork));
       contestwork.crypto.iterations.lo = benchsize;
       problem.LoadState( &contestwork , 0 /* RC5 */, benchsize, whichcrunch );
-      problem.Run( 0 );  //threadnum
+      problem.Run();  //threadnum
       elapsed = (((unsigned long)problem.runtime_sec) * 1000000UL)+
                  (((unsigned long)problem.runtime_usec));
       if (cputype < 0 || elapsed < fasttime)
