@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.51.4.6 2003/05/17 22:13:55 bdragon Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.51.4.7 2003/07/06 01:38:46 bdragon Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -153,9 +153,17 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "If this option is enabled, the client will pause itself if it finds that\n"
   "the temperature of a processor exceeds the threshold specified in the\n"
   "\"Processor temperature thresholds\" option.\n"
+  #if ((CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_MACOSX))
   "\n"
   "Processor temperature checking is only supported under Mac OS with certain\n"
   "PowerPC G3 or G4 processors (those featuring a Thermal Assist Unit, TAU).\n"
+  #elif (CLIENT_OS == OS_DEC_UNIX)
+  "\n"
+  "Processor temperature checking is only supported under OSF/1 with certain\n"
+  "Alpha systems, and the envmon subsystem must be loaded.\n"
+  "\n"
+  "\"/sbin/sysconfig -c envmon\" as a privileged user will load the system.\n"
+  #endif
   ,CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
 },
 { 
@@ -174,9 +182,17 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "Illegal values, for instance a 'low' that is not less than 'high', will\n"
   "render the pair invalid and cause temperature threshold checking to be\n"
   "silently disabled.\n"
+  #if ((CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_MACOSX))
   "\n"
   "Processor temperature checking is only supported under Mac OS with certain\n"
   "PowerPC G3 or G4 processors (those featuring a Thermal Assist Unit, TAU).\n"
+  #elif (CLIENT_OS == OS_DEC_UNIX)
+  "\n"
+  "Processor temperature checking is only supported under OSF/1 with certain\n"
+  "Alpha systems, and the envmon subsystem must be loaded.\n"
+  "\n"
+  "\"/sbin/sysconfig -c envmon\" as a privileged user will load the system.\n"
+  #endif
   ,CONF_MENU_MISC,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
 { 

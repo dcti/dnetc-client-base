@@ -21,11 +21,13 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.32 2003/06/19 22:42:27 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.33 2003/07/06 01:38:46 bdragon Exp $
 ==========================================================================
 
 2.9000
 ------
+
+2.9006-485  new: decunix: cpu temperature detection
 
 2.9005-484  new: x86: detect Athlon with Barton core (#3227)
             new: x86: detect Celeron with Tualatin core / brand id 1 (#3246)

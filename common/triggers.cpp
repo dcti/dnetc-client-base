@@ -18,7 +18,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.4 2003/02/18 02:00:31 mfeiri Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.5 2003/07/06 01:38:46 bdragon Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -664,6 +664,45 @@ static int __CPUTemperaturePoll(void)
           if (cputemp!=-1) {
               cputemp += 273/*.15*/; /* C -> K */
           }
+      }
+    #elif (CLIENT_OS == OS_DEC_UNIX)
+      FILE *file;
+      char buf[256];
+      char *buf2;
+      char envsup=0,found=0;
+      char searchstr[]="env_current_temp = ";
+
+      if ((file = popen("/sbin/sysconfig -q envmon", "r"))
+      != NULL) {
+        while ((fgets(buf, sizeof(buf), file) != NULL) && ((!envsup) ||
+              (cputemp==-1))) {
+          if (strstr (buf, "env_supported = 1")) {
+            //environmental system is loaded, and hardware supports it
+            envsup=found=1;
+          } else if (strstr (buf, "env_supported = 0")) {
+            //environmental system is loaded, but hardware doesn't support it
+            Log("Environmental monitoring not supported\n"
+                "on this system, disabling temperature checking.\n");
+            trigstatics.cputemp.hithresh=0;
+            found=1;
+            break;
+          }
+          if ((buf2=strstr (buf, searchstr)) != NULL) {
+            //environmental system is loaded, and we have a temperature
+            //reading, although it could be bogus, hence the support checks
+            buf2+=strlen(searchstr); /*forward pointer past the search string*/
+            if (*buf2) { /*just in case we've hit the end of the string*/
+              cputemp=atoi(buf2);
+              cputemp += 273/*.15*/; /* C -> K */
+            }
+          }
+        }
+        pclose(file);
+        if (!found) {
+          Log("Environmental monitoring subsystem not loaded,\n"
+              "disabling temperature checking.\n");
+          trigstatics.cputemp.hithresh=0;
+        }
       }
     #elif 0 /* other client_os */
       cputemp = fooyaddablahblahbar();
