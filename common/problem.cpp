@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.29  1998/08/05 16:43:29  cberry
+// ARM clients now define PIPELINE_COUNT=2, and RC5 cores return number of keys checked, rather than number of keys left to check
+//
 // Revision 1.28  1998/08/02 16:18:27  cyruspatel
 // Completed support for logging.
 //
@@ -61,7 +64,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-static const char *id="@(#)$Id: problem.cpp,v 1.28 1998/08/02 16:18:27 cyruspatel Exp $";
+static const char *id="@(#)$Id: problem.cpp,v 1.29 1998/08/05 16:43:29 cberry Exp $";
 return id; }
 #endif
 
@@ -455,21 +458,36 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
       riscos_upcall_6();
   }
 #endif
+//  timeslice *= PIPELINE_COUNT;
+//  done in the cores.
 
   if (contest == 0)
   {
-    /*
-        returns timeslice - keys processed
-    */
+//    printf("timeslice = %d\n",timeslice);
+    if (rc5unitwork.L0.hi&(1<<24))
+    {
+	rc5unitwork.L0.hi -= 1<<24;
+	if (contestwork.keysdone.lo & 1)
+	{
+	    contestwork.keysdone.lo--;
+	}
+	else
+	{
+	    LogScreen("Something really bad has happened - the number of keys looks wrong.\n");
+	}
+    }
 
+    /*
+        Now returns number of keys processed!
+	(Since 5/8/1998, SA core 1.5, ARM core 1.6).
+    */
     kiter = rc5_unit_func(&rc5unitwork, timeslice);
-//    kiter = rc5_girv(&rc5unitwork, timeslice);
-// for testing new 68030 core... look above
-    contestwork.keysdone.lo += timeslice;
-    if (kiter)
+    contestwork.keysdone.lo += kiter;
+
+//    printf("kiter is %d\n",kiter);
+    if (kiter != (timeslice*PIPELINE_COUNT))
     {
       // found it?
-      contestwork.keysdone.lo -= kiter;
 
       rc5result.key.hi = contestwork.key.hi;
       rc5result.key.lo = contestwork.key.lo;
@@ -485,7 +503,6 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
   else
   {
     // protect the innocent
-    timeslice *= PIPELINE_COUNT;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
 
     if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
