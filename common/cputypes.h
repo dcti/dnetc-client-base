@@ -8,11 +8,12 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.8 1999/12/02 10:47:00 mfeiri Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.9 1999/12/05 17:31:28 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
 /* Major CPU architectures, we don't need (or want) very fine resolution */
+/* We only have 4 bits to store the CLIENT_CPU in, so please recycle! */
 #define CPU_UNKNOWN     0
 #define CPU_X86         1
 #define CPU_POWERPC     2
@@ -21,15 +22,16 @@
 #define CPU_PA_RISC     5
 #define CPU_68K         6
 #define CPU_SPARC       7
-/* #define CPU_UNUSED_1 8 */
+/* #define CPU_UNUSED_1 8 - please recycle */
 #define CPU_POWER       9
 #define CPU_VAX         10
 #define CPU_ARM         11
 #define CPU_88K         12
-#define CPU_KSR1        13
+/* #define CPU_UNUSED_2 13 - please recycle */
 #define CPU_S390        14
-/* #define CPU_UNUSED_2 15 */
+/* #define CPU_UNUSED_3 15 - please recycle */
 #define CPU_DESCRACKER  16  /* eff descracker */
+/* **** We only have 4 bits to store the CLIENT_CPU in ******* */
 
 /* Major OS Architectures. */
 #define OS_UNKNOWN      0
@@ -628,7 +630,7 @@ extern "C" {
   #define SIZEOF_LONGLONG 8
   typedef unsigned __int64 ui64;
   typedef __int64 si64;
-#elif defined(__MWERKS__) || defined(__MRC__) || defined(__MOTO__) /* verify these */
+#elif defined(__MWERKS__) || defined(__MRC__) || defined(__MOTO__)
   #define HAVE_I64
   #define SIZEOF_LONGLONG 8
   typedef unsigned long long ui64;
