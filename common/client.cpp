@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.194  1999/02/20 02:59:14  gregh
+// Add defaults for new OGR config options.
+//
 // Revision 1.193  1999/02/07 16:00:09  cyp
 // Lurk changes: genericified variable names, made less OS-centric.
 //
@@ -200,7 +203,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.193 1999/02/07 16:00:09 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.194 1999/02/20 02:59:14 gregh Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -264,6 +267,8 @@ static void __initialize_client_object(Client *client)
   strcpy(client->out_buffer_file[0], "buff-out" EXTN_SEP "rc5");
   strcpy(client->in_buffer_file[1], "buff-in" EXTN_SEP "des");
   strcpy(client->out_buffer_file[1], "buff-out" EXTN_SEP "des");
+  strcpy(client->in_buffer_file[2], "buff-in" EXTN_SEP "ogr");
+  strcpy(client->out_buffer_file[2], "buff-out" EXTN_SEP "ogr");
   strcpy(client->exit_flag_file,     "exitrc5" EXTN_SEP "now" );
 
   client->messagelen = 0;
