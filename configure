@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.113 2000/01/26 14:00:29 jlawson Exp $
+# @(#)$Id: configure,v 1.222.2.114 2000/01/26 15:14:27 jlawson Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1122,17 +1122,16 @@ case "$1" in
 
   ### ***RELEASE*** targets - mt for all but libc4, _never_ static for glibc2
 
-    *x86-linux-glibc2)	                   # glibc2
+    *x86-linux-glibc2)	                   # glibc20/glibc21
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -DMMX_RC5 -D__showids__ \
-			-DMULTITHREAD -DLURK -DSMC"
-			##-DHAVE_OGR_CORES
+			-DMULTITHREAD -DLURK -DSMC -DHAVE_OGR_CORES"
 			##-DMMX_CSC -DHAVE_CSC_CORES 
 			##$OPTS_DES_MMX -DHAVE_DES_CORES 
 	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
-	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp"
-			##$OGR_ANSI_SRCS
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp \
+			common/lurk.cpp $OGR_ANSI_SRCS"
 			##$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4
 	TARGET_ADDASMS="platforms/x86ident.S"
 			##des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S
@@ -1148,17 +1147,19 @@ case "$1" in
     *x86-linux-glibc2-static)	 # glibc2 static for b0rken RH50
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
-			-DMULTITHREAD -DLURK -DMMX_CSC \
-			-DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -DMMX_RC5 -D__showids__ \
+			-DMULTITHREAD -DLURK -DHAVE_OGR_CORES"
+                        ##-DMMX_CSC -DHAVE_CSC_CORES
+                        ##$OPTS_DES_MMX -DHAVE_DES_CORES
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="common/lurk.cpp \
-			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
-			" #$OGR_ANSI_SRCS
-	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
-			platforms/x86ident.S \
-			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS $CSC_ASM_SRCS"
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp \
+			common/lurk.cpp $OGR_ANSI_SRCS"
+			##$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
+	TARGET_ADDASMS="platforms/x86ident.S"
+                        ##des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S
+			##des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+                        ## $NASM_DESMMX_SRCS $CSC_ASM_SRCS
 	TARGET_NASM_FMT="elf"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -1169,14 +1170,13 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -DMMX_RC5 -D__showids__ \
-			-DMULTITHREAD -DSMC -DLURK "
-			##-DHAVE_OGR_CORES
+			-DMULTITHREAD -DSMC -DLURK -DHAVE_OGR_CORES"
 			##$OPTS_DES_MMX -DHAVE_DES_CORES
 			##-DMMX_CSC -DHAVE_CSC_CORES 
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp"
-			##$OGR_ANSI_SRCS
-			##$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp \
+			common/lurk.cpp $OGR_ANSI_SRCS"
+			##$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4
 	TARGET_ADDASMS="platforms/x86ident.S"
 			##des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S
 			##des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S
@@ -1191,17 +1191,19 @@ case "$1" in
     *x86-linux-libc4)	                    # libc4
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-D__showids__ -DSMC -DLURK -DMMX_CSC \
-			-DHAVE_CSC_CORES -DHAVE_DES_CORES"  #-DHAVE_OGR_CORES
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -DMMX_RC5 -D__showids__ \
+			-DSMC -DLURK -DHAVE_OGR_CORES"
+			##-DHAVE_DES_CORES $OPTS_DES_MMX 
+			##-DMMX_CSC -DHAVE_CSC_CORES
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
-			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
-			" #$OGR_ANSI_SRCS
-	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
-			platforms/x86ident.S \
-			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS $CSC_ASM_SRCS"
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp \
+			common/lurk.cpp $OGR_ANSI_SRCS"
+			##$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4
+	TARGET_ADDASMS="platforms/x86ident.S"
+			##des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S			
+			##des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+			## $NASM_DESMMX_SRCS $CSC_ASM_SRCS
         TARGET_NASM_FMT="aout"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-x86-libc4"
@@ -1211,20 +1213,22 @@ case "$1" in
 
     *x86-linux-debug)	              # debug
 	TARGET_AS="gcc -c"
-	TARGET_CC="gcc -g"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DMMX_CSC \
-			-D__showids__ -DSMC -DMULTITHREAD -DLURK \
-			-DHAVE_CSC_CORES -DHAVE_DES_CORES"  #-DHAVE_OGR_CORES
+	TARGET_CC="gcc -g"        # -g for debug
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -DMMX_RC5 -D__showids__ \
+			-DSMC -DMULTITHREAD -DLURK -DHAVE_OGR_CORES"
+			##-DMMX_CSC -DHAVE_CSC_CORES 
+			##-DHAVE_DES_CORES $OPTS_DES_MMX 
 	TARGET_LDFLAGS="-Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
-			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
-			" #$OGR_ANSI_SRCS
-	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
-			platforms/x86ident.S \
-			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS $CSC_ASM_SRCS"
+	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp \
+			common/lurk.cpp $OGR_ANSI_SRCS"
+			##$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4
+	TARGET_ADDASMS="platforms/x86ident.S"
+			##des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S
+			##des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+			## $NASM_DESMMX_SRCS $CSC_ASM_SRCS
 	TARGET_NASM_FMT="elf"
-	TARGET_STRIP="touch"
+	TARGET_STRIP="touch"      # do not strip
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-x86-debug"
