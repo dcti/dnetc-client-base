@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.40  1998/06/15 10:11:10  kbracey
+# Fixed escaping and EXENAME in ident rule.
+#
 # Revision 1.39  1998/06/15 04:38:32  remi
 # Added -fno-exceptions to EGCS options : ~200 KB less on the final executable.
 #
@@ -820,8 +823,8 @@ echo "	rm -f Makefile buff-in.* buff-out.* *.ini testplat" >> Makefile
 echo "	rm -f \`find . -name '*~' -printf %p\ \`" >> Makefile
 echo "" >> Makefile
 
-echo "ident:" >> Makefile
-echo "	ident rc5des | awk '{ printf(\"%-30s %10s %s %s %s %s\n\", \$\$2,\$\$3,\$\$4,\$\$5,\$\$6,\$\$7)}'" >> Makefile
+echo "ident:	${EXENAME}" >> Makefile
+echo "	ident ${EXENAME} | awk '{ printf(\"%-30s %10s %s %s %s %s\\\n\", \$\$2,\$\$3,\$\$4,\$\$5,\$\$6,\$\$7)}'" >> Makefile
 echo "" >> Makefile
 
 #
