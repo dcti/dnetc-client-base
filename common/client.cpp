@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.219 1999/10/18 01:45:00 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.220 1999/10/18 02:54:01 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -82,8 +82,9 @@ void ResetClientData(Client *client)
   client->connectoften=0;
   for (contest=0; contest<CONTEST_COUNT; contest++)
   {
-    client->inthreshold[contest] = client->outthreshold[contest] = 10;
-    client->preferred_blocksize[contest] = 30;
+    client->inthreshold[contest] = BUFTHRESHOLD_DEFAULT;
+    client->outthreshold[contest] = BUFTHRESHOLD_DEFAULT;
+    client->preferred_blocksize[contest] = PREFERREDBLOCKSIZE_DEFAULT;
   }
 
   /* -- perf -- */

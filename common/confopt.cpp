@@ -4,14 +4,14 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.39 1999/10/17 23:05:43 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.40 1999/10/18 02:54:01 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
 #include "cputypes.h" // CLIENT_OS
 #include "pathwork.h" // EXTN_SEP
 #include "baseincs.h" // NULL
-#include "client.h"   // only the MAXBLOCKSPERBUFFER define
+#include "client.h"   // MAXBLOCKSPERBUFFER etc
 #include "confopt.h"  // ourselves
 
 /* ----------------------------------------------------------------------- */
@@ -201,21 +201,29 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "be updated frequently while a connection is detected.\n" 
   ),CONF_MENU_BUFF,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL},
 //19
-{ CFGTXT("Preferred packet size (2^X keys/packet)"), "31 (default)",
-  CFGTXT(
+{ CFGTXT("Preferred packet size (2^X keys/packet)"), PREFERREDBLOCKSIZE_DEFAULT_TEXT" (default)",
+  /* CFGTXT( */
   "When fetching key-based packets from a server, the client will request\n"
   "packets with the size you specify in this option. Packet sizes are\n"
-  "specified as powers of 2. The minimum and maximum packet sizes are 28\n"
-  "and 33 respectively.\n"
+  "specified as powers of 2.\n"
+  #if (PREFERREDBLOCKSIZE_MIN == 28 && PREFERREDBLOCKSIZE_MAX == 33)
+  "The minimum and maximum packet sizes are 28 and 33 respectively.\n"
+  #elif (PREFERREDBLOCKSIZE_MIN == 28 && PREFERREDBLOCKSIZE_MAX == 31)
+  "The minimum and maximum packet sizes are 28 and 31 respectively.\n"
+  #else
+  #error fixme PREFERREDBLOCKSIZE_MIN or MAX has changed
+  #endif
   "Note: the number you specify is the *preferred* size. Although the\n"
   "keyserver will do its best to serve that size, there is no guarantee that\n"
   "it will always do so.\n"
+  #if (PREFERREDBLOCKSIZE_MAX > 31)
   "*Warning*: clients older than v2.7106 do not know how to deal with packets\n"
   "larger than 2^31 keys. Do not share buffers with such a client if you set\n"
   "the preferred packet size to a value greater than 31.\n"
-  ),CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,28,33,NULL,NULL},
+  #endif
+  /*)*/,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,PREFERREDBLOCKSIZE_MIN,PREFERREDBLOCKSIZE_MAX,NULL,NULL},
 //20
-{ CFGTXT("Fetch:flush threshold"), "" /*10 (default)" */,
+{ CFGTXT("Fetch:flush threshold"), BUFTHRESHOLD_DEFAULT_TEXT " (default)",
   CFGTXT(
   "This option specifies how many packets your client will buffer between\n"
   "communications with a keyserver. The client operates directly on packets\n"

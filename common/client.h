@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.137 1999/10/17 23:05:42 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.138 1999/10/18 02:54:01 cyp Exp $"
 
 
 enum {
@@ -34,7 +34,13 @@ typedef struct
 #pragma pack()
 
 
-#define MAXBLOCKSPERBUFFER  500
+#define MAXBLOCKSPERBUFFER              500
+#define BUFTHRESHOLD_DEFAULT             10
+#define BUFTHRESHOLD_DEFAULT_TEXT       "10" /* for configure */
+#define PREFERREDBLOCKSIZE_DEFAULT       30
+#define PREFERREDBLOCKSIZE_DEFAULT_TEXT "30" /* for configure */
+#define PREFERREDBLOCKSIZE_MIN           28
+#define PREFERREDBLOCKSIZE_MAX           33
 #define BUFFER_DEFAULT_IN_BASENAME  "buff-in"
 #define BUFFER_DEFAULT_OUT_BASENAME "buff-out"
 #define MINCLIENTOPTSTRLEN   64 /* no asciiz var is smaller than this */

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.66 1999/10/18 01:45:00 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.67 1999/10/18 02:54:01 cyp Exp $"; }
 
 //#define TRACE
 
@@ -93,9 +93,10 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
   {
     if ((i = GetPrivateProfileIntB(OPTION_SECTION, "preferredblocksize", -1, fn ))!=-1)
     {
-      if (i >= 28 && i <= 33 && i != 31 /* was default */)
+      if (i >= PREFERREDBLOCKSIZE_MIN && 
+          i <= PREFERREDBLOCKSIZE_MAX && 
+	  i != PREFERREDBLOCKSIZE_DEFAULT)
       {
-        i -= 27;
         client->preferred_blocksize[RC5] = i;
         client->preferred_blocksize[DES] = i;
         modfail += (!WritePrivateProfileIntB( __getprojsectname(RC5), "preferred-blocksize", i, fn));
@@ -123,12 +124,12 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
               oldstyle_inout[1] = i;
           }
           i = ((ui)?(RC5):(DES));
-          if (oldstyle_inout[0] != 10)
+          if (oldstyle_inout[0] != BUFTHRESHOLD_DEFAULT)
           {
             client->inthreshold[i] = oldstyle_inout[0];
             modfail += (!WritePrivateProfileIntB( __getprojsectname(i), "fetch-threshold", client->inthreshold[i], fn));
           }
-          if (oldstyle_inout[1] != 10)
+          if (oldstyle_inout[1] != BUFTHRESHOLD_DEFAULT)
           {
             client->outthreshold[i] = oldstyle_inout[1];
             modfail += (!WritePrivateProfileIntB( __getprojsectname(i), "flush-threshold", client->outthreshold[i], fn));
@@ -572,12 +573,13 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     {
       if ((cont_name =  __getprojsectname(cont_i)) != ((const char *)0))
       {
-        __XSetProfileInt( cont_name, "fetch-threshold", client->inthreshold[cont_i], fn, 10, 0 );
-        __XSetProfileInt( cont_name, "flush-threshold", client->outthreshold[cont_i], fn, 10, 0 );
+        __XSetProfileInt( cont_name, "fetch-threshold", client->inthreshold[cont_i], fn,  BUFTHRESHOLD_DEFAULT, 0 );
+        __XSetProfileInt( cont_name, "flush-threshold", client->outthreshold[cont_i], fn, BUFTHRESHOLD_DEFAULT, 0 );
         if (cont_i != OGR)
         {
           __XSetProfileInt( cont_name, "core", client->coretypes[cont_i], fn, -1, 0 );
-          __XSetProfileInt( cont_name, "preferred-blocksize", client->preferred_blocksize[cont_i], fn, 31, 0 );
+          __XSetProfileInt( cont_name, "preferred-blocksize", 
+	    client->preferred_blocksize[cont_i], fn, PREFERREDBLOCKSIZE_DEFAULT, 0 );
         }
       }
     }
