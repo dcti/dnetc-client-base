@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.8 1999/11/09 19:00:00 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.9 1999/11/23 05:53:27 cyp Exp $"; }
 
 //#define TRACE
 
@@ -15,6 +15,7 @@ return "@(#)$Id: confrwv.cpp,v 1.60.2.8 1999/11/09 19:00:00 cyp Exp $"; }
 #include "pathwork.h"  // GetFullPathForFilename()
 #include "util.h"      // projectmap_*() and trace
 #include "lurk.h"      // lurk stuff
+#include "base64.h"    // base64_[en|de]code()
 #include "cpucheck.h"  // GetProcessorType() for mmx stuff
 #include "triggers.h"  // RaiseRestartRequestTrigger()
 #include "clicdata.h"  // CliGetContestNameFromID()
@@ -59,6 +60,169 @@ static const char *__getprojsectname( unsigned int ci )
 
 /* ------------------------------------------------------------------------ */
 
+static int _readwrite_fwallstuff(int aswrite, const char *fn, Client *client)
+{
+  char buffer[128];
+  char scratch[2];
+  char *that;
+
+  if (!aswrite) /* careful. 'aswrite' may change */
+  {
+    TRACE_OUT((+1,"_readwrite_fwallstuff(asread)\n"));
+
+    if (GetPrivateProfileStringB( OPTSECT_NET, "firewall-type", "", buffer, sizeof(buffer), fn )
+     || GetPrivateProfileStringB( OPTSECT_NET, "firewall-host", "", scratch, sizeof(scratch), fn )
+     || GetPrivateProfileStringB( OPTSECT_NET, "firewall-auth", "", scratch, sizeof(scratch), fn )
+     || GetPrivateProfileStringB( OPTSECT_NET, "encoding", "", scratch, sizeof(scratch), fn ))
+    {
+      int i;
+
+      TRACE_OUT((+1,"newform: _readwrite_fwallstuff(asread)\n"));
+
+      client->uuehttpmode = 0;
+      for (i=0; buffer[i]; i++)
+        buffer[i] = (char)tolower(buffer[i]);
+      if ( strcmp( buffer, "socks4" ) == 0 || 
+           strcmp( buffer, "socks" ) == 0 )
+        client->uuehttpmode = 4;
+      else if ( strcmp( buffer, "socks5" ) == 0 )
+        client->uuehttpmode = 5;
+      else
+      {
+        if ( strcmp( buffer, "http" ) == 0)
+          client->uuehttpmode = 2;
+        if (GetPrivateProfileStringB( OPTSECT_NET, "encoding", "", buffer, sizeof(buffer), fn ))
+        {
+          for (i=0; buffer[i]; i++)
+            buffer[i] = (char)tolower(buffer[i]);
+          if ( strcmp( buffer, "uue" ) == 0 )
+            client->uuehttpmode |= 1;
+        }
+      }
+      client->httpport = 0;      
+      client->httpproxy[0] = '\0';
+      if (GetPrivateProfileStringB( OPTSECT_NET, "firewall-host", "", buffer, sizeof(buffer), fn ))
+      {
+        that = strchr( buffer, ':' );
+        if (that)
+        {
+          *that++ = '\0';
+          client->httpport = atoi(that);
+        }
+        strncpy( client->httpproxy, buffer, sizeof(client->httpproxy));
+        client->httpproxy[sizeof(client->httpproxy)-1] = '\0';
+      }
+      client->httpid[0] = '\0';
+      if (GetPrivateProfileStringB( OPTSECT_NET, "firewall-auth", "", buffer, sizeof(buffer), fn ))
+      {
+        if (base64_decode( client->httpid, buffer, 
+                       sizeof(client->httpid), strlen(buffer) ) < 0)
+        {
+          TRACE_OUT((0,"new decode parity err=\"%s\"\n", client->httpid ));
+          client->httpid[0] = '\0'; /* parity errors */
+        }
+        client->httpid[sizeof(client->httpid)-1] = '\0';
+      }
+      TRACE_OUT((0,"new uuehttpmode=%d\n",client->uuehttpmode));
+      TRACE_OUT((0,"new httpproxy=\"%s\"\n",client->httpproxy));
+      TRACE_OUT((0,"new httpport=%d\n",client->httpport));
+      TRACE_OUT((0,"new httpid=\"%s\"\n",client->httpid));
+
+      TRACE_OUT((-1,"newform: _readwrite_fwallstuff(asread)\n"));
+    }
+    else
+    {
+      TRACE_OUT((+1,"oldform: _readwrite_fwallstuff(asread)\n"));
+
+      client->uuehttpmode = GetPrivateProfileIntB( OPTION_SECTION, "uuehttpmode", client->uuehttpmode, fn );
+      TRACE_OUT((0,"old uuehttpmode=%d\n",client->uuehttpmode));
+      GetPrivateProfileStringB( OPTION_SECTION, "httpproxy", client->httpproxy, client->httpproxy, sizeof(client->httpproxy), fn );
+      TRACE_OUT((0,"old httpproxy=\"%s\"\n",client->httpproxy));
+      client->httpport = GetPrivateProfileIntB( OPTION_SECTION, "httpport", client->httpport, fn );
+      TRACE_OUT((0,"old httpport=%d\n",client->httpport));
+      GetPrivateProfileStringB( OPTION_SECTION, "httpid", client->httpid, client->httpid, sizeof(client->httpid), fn );
+      TRACE_OUT((0,"old httpid=\"%s\"\n",client->httpid));
+      if (client->httpid[0] && 
+          (client->uuehttpmode == 2 || client->uuehttpmode == 3))
+      {
+        if (base64_decode( buffer, client->httpid, 
+                   sizeof(buffer), strlen(client->httpid) ) < 0 )
+        {
+          TRACE_OUT((0,"oldconv parity err=\"%s\"\n", client->httpid ));
+          client->httpid[0] = '\0';
+        }
+        else
+        {
+          strncpy( client->httpid, buffer, sizeof(client->httpid) );
+          client->httpid[sizeof(client->httpid)-1]='\0';
+        }
+      }
+      aswrite = 1; //rewrite the stuff
+      TRACE_OUT((-1,"oldform: _readwrite_fwallstuff(asread). rewrite?=%d\n",aswrite));
+    }
+    TRACE_OUT((-1,"_readwrite_fwallstuff(asread)\n"));
+  }
+  if (aswrite)
+  {
+    TRACE_OUT((+1,"_readwrite_fwallstuff(aswrite)\n"));
+
+    WritePrivateProfileStringB( OPTION_SECTION, "uuehttpmode", NULL, fn);
+    WritePrivateProfileStringB( OPTION_SECTION, "httpproxy", NULL, fn);
+    WritePrivateProfileStringB( OPTION_SECTION, "httpport", NULL, fn);
+    WritePrivateProfileStringB( OPTION_SECTION, "httpid", NULL, fn);
+
+    that = "";
+    if (client->uuehttpmode == 1 || client->uuehttpmode == 3)
+      that = "uue";
+    if (*that || GetPrivateProfileStringB( OPTSECT_NET, "encoding", "", scratch, sizeof(scratch), fn ))
+      WritePrivateProfileStringB( OPTSECT_NET, "encoding", that, fn);
+
+    that = "";
+    if (client->uuehttpmode == 2 || client->uuehttpmode == 3)
+      that = "http";
+    else if (client->uuehttpmode == 4)
+      that = "socks4";
+    else if (client->uuehttpmode == 5)
+      that = "socks5";
+    TRACE_OUT((0,"new set fwall-type=%s\n",that));
+    if (*that || GetPrivateProfileStringB( OPTSECT_NET, "firewall-type", "", scratch, sizeof(scratch), fn ))
+      WritePrivateProfileStringB( OPTSECT_NET, "firewall-type", that, fn);
+
+    buffer[0] = '\0';
+    if (client->httpproxy[0])
+    {
+      strcpy(buffer,client->httpproxy);
+      if (client->httpport)
+        sprintf(&buffer[strlen(buffer)],":%d",client->httpport);
+    }
+    if (buffer[0] || 
+       GetPrivateProfileStringB( OPTSECT_NET, "firewall-host", "", scratch, sizeof(scratch), fn ))
+      WritePrivateProfileStringB( OPTSECT_NET, "firewall-host", buffer, fn);
+       
+    buffer[0] = '\0';
+    if (client->httpid[0]) 
+    {
+      TRACE_OUT((0,"pre-write httpid=\"%s\"\n", client->httpid ));
+      if (base64_encode(buffer, client->httpid, sizeof(buffer), 
+                     strlen(client->httpid)) < 0)
+      {
+        TRACE_OUT((0,"new encode length err=\"%s\"\n", buffer ));
+        buffer[0]='\0';
+      }
+      buffer[sizeof(buffer)-1] = '\0';
+      TRACE_OUT((0,"post-write httpid=\"%s\"\n", buffer ));
+    }
+    if (buffer[0] || 
+       GetPrivateProfileStringB( OPTSECT_NET, "firewall-auth", "", scratch, sizeof(scratch), fn ))
+      WritePrivateProfileStringB( OPTSECT_NET, "firewall-auth", buffer, fn);
+
+    TRACE_OUT((-1,"_readwrite_fwallstuff(aswrite)\n"));
+  }
+  return client->uuehttpmode;
+}  
+
+/* ------------------------------------------------------------------------ */
+
 static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if failed */
 {
   static const char *obskeys[]={ /* all in "parameters" section */
@@ -69,13 +233,24 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
              "scheduledupdatetime" /* now in OPTSECT_NET */,
              "processdes", "usemmx", "runoffline", "in","out","in2","out2",
              "in3","out3","nodisk", "dialwhenneeded","connectionname",
-             "cputype","threshold","threshold2","preferredblocksize" };
+             "cputype","threshold","threshold2","preferredblocksize",
+             "logname" };
   char buffer[128];
   char *p;
   unsigned int ui;
   int i, modfail = 0;
 
   TRACE_OUT((+1,"__remapObsoleteParameters()\n"));
+
+  if (!GetPrivateProfileStringB( OPTSECT_LOG, "log-file", "", buffer, sizeof(buffer), fn ))
+  {
+    if (GetPrivateProfileStringB( OPTION_SECTION, "logname", "", buffer, sizeof(buffer), fn ))
+    {
+      strncpy( client->logname, buffer, sizeof(client->logname) );
+      client->logname[sizeof(client->logname)-1] = '\0';
+      modfail += (!WritePrivateProfileStringB( OPTSECT_LOG, "log-file", buffer, fn ));
+    }  
+  }
 
   #if (CLIENT_CPU != CPU_ALPHA) /* no RC5 cputype->coretype mapping for Alpha */
   if (!GetPrivateProfileStringB( __getprojsectname(RC5), "core", "", buffer, sizeof(buffer), fn ))
@@ -343,10 +518,8 @@ int ReadConfig(Client *client)
       client->minutes = 0;
   }
   
-  client->uuehttpmode = GetPrivateProfileIntB( sect, "uuehttpmode", client->uuehttpmode, fn );
-  GetPrivateProfileStringB( sect, "httpproxy", client->httpproxy, client->httpproxy, sizeof(client->httpproxy), fn );  
-  client->httpport = GetPrivateProfileIntB( sect, "httpport", client->httpport, fn );
-  GetPrivateProfileStringB( sect, "httpid", client->httpid, client->httpid, sizeof(client->httpid), fn );
+  _readwrite_fwallstuff( 0, fn, client );
+
   client->keyport = GetPrivateProfileIntB( sect, "keyport", client->keyport, fn );
   GetPrivateProfileStringB( sect, "keyproxy", client->keyproxy, client->keyproxy, sizeof(client->keyproxy), fn );
   if (strcmpi(client->keyproxy,"auto")==0 || strcmpi(client->keyproxy,"(auto)")==0)
@@ -412,7 +585,7 @@ int ReadConfig(Client *client)
   client->nofallback = GetPrivateProfileIntB( sect, "nofallback", client->nofallback, fn );
   client->noexitfilecheck = GetPrivateProfileIntB( sect, "noexitfilecheck", client->noexitfilecheck, fn );
 
-  GetPrivateProfileStringB( sect, "logname", client->logname, client->logname, sizeof(client->logname), fn );
+  GetPrivateProfileStringB( OPTSECT_LOG, "log-file", client->logname, client->logname, sizeof(client->logname), fn );
   GetPrivateProfileStringB( OPTSECT_LOG, "log-file-type", client->logfiletype, client->logfiletype, sizeof(client->logfiletype), fn );
   GetPrivateProfileStringB( OPTSECT_LOG, "log-file-limit", client->logfilelimit, client->logfilelimit, sizeof(client->logfilelimit), fn );
 
@@ -603,13 +776,11 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     if (port!=NULL && client->keyport==0 && !GetPrivateProfileIntB(sect,"keyport",0,fn))
       port = NULL;
     if (port!=NULL) sprintf(port,"%d",((int)(client->keyport)));
+
     WritePrivateProfileStringB( OPTSECT_NET, "autofindkeyserver", af, fn );
     WritePrivateProfileStringB( sect, "keyport", port, fn );
     WritePrivateProfileStringB( sect, "keyproxy", host, fn );
-    __XSetProfileInt( sect, "uuehttpmode", client->uuehttpmode, fn, 0, 0);
-    __XSetProfileInt( sect, "httpport", client->httpport, fn, 0, 0);
-    __XSetProfileStr( sect, "httpproxy", client->httpproxy, fn, NULL);
-    __XSetProfileStr( sect, "httpid", client->httpid, fn, NULL);
+    _readwrite_fwallstuff( 1, fn, client );
 
     #if defined(LURK)
     i = dialup.GetCapabilityFlags();
@@ -632,7 +803,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     
     /* --- CONF_MENU_LOG -- */
 
-    __XSetProfileStr( sect, "logname", client->logname, fn, NULL );
+    __XSetProfileStr( OPTSECT_LOG, "log-file", client->logname, fn, NULL );
     if ((client->logfiletype[0] && strcmpi(client->logfiletype,"none")!=0) || 
       GetPrivateProfileStringB(OPTSECT_LOG,"log-file-type","",buffer,2,fn))
       WritePrivateProfileStringB( OPTSECT_LOG,"log-file-type", client->logfiletype, fn );
@@ -693,4 +864,5 @@ void RefreshRandomPrefix( Client *client )
   }
   return;
 }
+
 
