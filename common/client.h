@@ -12,6 +12,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.94.2.9  1999/01/30 16:20:29  remi
+// Fixed the previous merge.
+//
 // Revision 1.94.2.8  1999/01/30 15:59:50  remi
 // Synced with :
 //
@@ -63,7 +66,7 @@ public:
   ~Client() {};
 
 
-  int Main( int argc, const char *argv[] );
+  int Main( int argc, const char *argv[], int /*restarted*/ );
     // encapsulated main().  client.Main() may restart itself
 
   int ParseCommandline( int runlevel, int argc, const char *argv[], 
