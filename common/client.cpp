@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.88 2000/09/17 11:46:27 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.89 2000/10/05 18:27:41 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -522,6 +522,7 @@ static int ClientMain( int argc, char *argv[] )
               TRACE_OUT((+1,"initializelogging\n"));
               InitializeLogging( (client->quietmode!=0),
                                  (client->percentprintingoff!=0),
+                                 0, /* nobaton */
                                  client->logname,
                                  client->logfiletype,
                                  client->logfilelimit,
