@@ -1,4 +1,3 @@
-
 /* Hey, Emacs, this a -*-C++-*- file !
  *
  * Copyright distributed.net 1997-1998 - All Rights Reserved
@@ -6,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.2 1999/10/16 16:37:44 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.3 1999/10/17 23:02:50 cyp Exp $"
 
 
 enum {
@@ -38,6 +37,7 @@ typedef struct
 #define MAXBLOCKSPERBUFFER  500
 #define BUFFER_DEFAULT_IN_BASENAME  "buff-in"
 #define BUFFER_DEFAULT_OUT_BASENAME "buff-out"
+#define MINCLIENTOPTSTRLEN   64 /* no asciiz var is smaller than this */
 
 struct membuffstruct 
 { 
@@ -55,55 +55,55 @@ public:
   int  rc564closed;
   int  stopiniio;
   u32  scheduledupdatetime;
-  char inifilename[128];
+  char inifilename[MINCLIENTOPTSTRLEN*2];
   struct { struct membuffstruct in, out; } membufftable[CONTEST_COUNT];
 
   /* -- general -- */
-  char id[64];
+  char id[MINCLIENTOPTSTRLEN];
   int  quietmode;
-  s32  blockcount;
-  s32  minutes;
-  s32  percentprintingoff;
-  s32  noexitfilecheck;
-  char pausefile[128];
+  int  blockcount;
+  int  minutes;
+  int  percentprintingoff;
+  int  noexitfilecheck;
+  char pausefile[MINCLIENTOPTSTRLEN*2];
   char loadorder_map[CONTEST_COUNT];
 
   /* -- buffers -- */
-  s32  nodiskbuffers;
-  char in_buffer_basename[128];
-  char out_buffer_basename[128];
-  char checkpoint_file[128];
-  s32  offlinemode;
-    s32  nettimeout;
-    s32  nofallback;
+  int  nodiskbuffers;
+  char in_buffer_basename[MINCLIENTOPTSTRLEN*2];
+  char out_buffer_basename[MINCLIENTOPTSTRLEN*2];
+  char checkpoint_file[MINCLIENTOPTSTRLEN*2];
+  int  offlinemode;
+    int  nettimeout;
+    int  nofallback;
     int  autofindkeyserver;
-    char keyproxy[64];
-    s32  keyport;
-    char httpproxy[64];
-    s32  httpport;
-    s32  uuehttpmode;
-    char httpid[128];
-  s32  noupdatefromfile;
-    char remote_update_dir[128];
-  s32  connectoften;
+    char keyproxy[MINCLIENTOPTSTRLEN];
+    int  keyport;
+    char httpproxy[MINCLIENTOPTSTRLEN];
+    int  httpport;
+    int  uuehttpmode;
+    char httpid[MINCLIENTOPTSTRLEN*2];
+  int  noupdatefromfile;
+    char remote_update_dir[MINCLIENTOPTSTRLEN*2];
+  int  connectoften;
   int inthreshold[CONTEST_COUNT]; 
   int outthreshold[CONTEST_COUNT];
   int preferred_blocksize[CONTEST_COUNT];
 
   /* -- perf -- */
-  s32  numcpu;
-  s32  priority;
+  int  numcpu;
+  int  priority;
   int  coretypes[CONTEST_COUNT];
 
   /* -- log -- */
-  char logname[128];
-  char logfiletype[64]; /* "none", "no limit", "rotate", "restart", "fifo" */
-  char logfilelimit[64]; /* "nnn K|M|days" etc */
-  s32  messagelen;
-  char smtpsrvr[128];
-  s32  smtpport;
-  char smtpfrom[128];
-  char smtpdest[128];
+  char logname[MINCLIENTOPTSTRLEN*2];
+  char logfiletype[MINCLIENTOPTSTRLEN]; /* "none", "no limit", "rotate", "restart", "fifo" */
+  char logfilelimit[MINCLIENTOPTSTRLEN]; /* "nnn K|M|days" etc */
+  int  messagelen;
+  char smtpsrvr[MINCLIENTOPTSTRLEN];
+  int  smtpport;
+  char smtpfrom[MINCLIENTOPTSTRLEN];
+  char smtpdest[MINCLIENTOPTSTRLEN];
 
   /* --------------------------------------------------------------- */
 
