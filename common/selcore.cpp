@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.23 1999/11/29 22:47:35 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.24 1999/12/06 09:58:42 myshkin Exp $"; }
 
 
 #include "cputypes.h"
@@ -107,8 +107,8 @@ static const char **__corenames_for_contest( unsigned int cont_i )
          on POWER/PowerPC hybrid clients ("_AIXALL"), running on a POWER
          CPU, core #0 becomes "RG AIXALL", and core #1 disappears.
        */
-      "allitnil", /* aka rc5_unit_func_g1() wrapper */
-      "lintilla", /* aka rc5_unit_func_g2_g3() wrapper */
+      "allitnil", /* aka rc5_unit_func_allitnil() wrapper */
+      "lintilla", /* aka rc5_unit_func_lintilla() wrapper */
       NULL
     },
     { /* DES */
@@ -499,7 +499,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         #endif
         switch (det)
         {
-          case 0: cindex = 1; break; // G1: 16k L1 cache
+          case 0: cindex = 2; break; // G1: 16k L1 cache
         //case 1: cindex = 1; break; // G2/G3: 16-64k L1 cache 
           case 2: cindex = 0; break; // G4: L1 cache 64k
         }
