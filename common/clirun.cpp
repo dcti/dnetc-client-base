@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.129.2.16 2004/01/08 20:20:23 oliver Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.129.2.17 2004/05/08 15:38:19 piru Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -760,9 +760,23 @@ static int __StopThread( struct thread_param_block *thrparams )
       #elif (CLIENT_OS == OS_FREEBSD)
       while (!thrparams->hasexited)
         NonPolledUSleep(100000);
-      #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
+      #elif (CLIENT_OS == OS_AMIGAOS)
       while (!thrparams->hasexited)
         NonPolledUSleep(300000);
+      #elif (CLIENT_OS == OS_MORPHOS)
+      /* Make the thread run at least the same priority as ourself */
+      Forbid();
+      if (!thrparams->hasexited)
+      {
+        LONG mypri = 0, thpri = 0;
+        NewGetTaskAttrsA(NULL, &mypri, sizeof(mypri), TASKINFOTYPE_PRI, TAG_DONE);
+        NewGetTaskAttrsA((struct Task *) thrparams->threadID, &thpri, sizeof(thpri), TASKINFOTYPE_PRI, TAG_DONE);
+        if (thpri < mypri)
+          SetTaskPri((struct Task *) thrparams->threadID, mypri);
+      }
+      Permit();
+      while (!thrparams->hasexited)
+        NonPolledUSleep(100000);
       #endif
     }
     ClientEventSyncPost( CLIEVENT_CLIENT_THREADSTOPPED,
