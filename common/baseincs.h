@@ -5,6 +5,19 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: baseincs.h,v $
+// Revision 1.30.2.10  1999/01/23 13:57:49  remi
+// Synced with :
+//
+//  Revision 1.49  1999/01/21 05:02:41  pct
+//  Minor updates for Digital Unix clients.
+//
+//  Revision 1.48  1999/01/19 12:51:01  patrick
+//  added strings.h for AIX
+//
+//  Revision 1.47  1999/01/18 15:22:55  patrick
+//  added/changed some OS2 includes to work also for gcc.
+//  added unistd.h for AIX
+//
 // Revision 1.30.2.9  1999/01/17 12:19:25  remi
 // Synced with :
 //
@@ -121,11 +134,16 @@ extern "C" {
   #include <sys/timeb.h>
   #include <conio.h>
   #include <share.h>
-  #include <direct.h>
+  #if defined(__WATCOMC__)
+    // patrick: not used with gcc (where, whom is this file, WATCOM ?)
+    #include <direct.h>
+  #endif
   #include <fcntl.h>
   #include <io.h>
   #include "platforms/os2cli/os2defs.h"
+  #if !defined(__EMX__)               // not currently supported (patrick)
   #include "platforms/os2cli/dod.h"   // needs to be included after Client
+  #endif
   #include "lurk.h"
   #include "platforms/os2cli/os2inst.h" //-install/-uninstall functionality
   #ifndef QSV_NUMPROCESSORS       /* This is only defined in the SMP toolkit */
@@ -214,6 +232,9 @@ extern "C" {
   #include <unistd.h>
   extern "C" int nice(int);
   extern "C" int gethostname(char *, int);
+#elif (CLIENT_OS == OS_AIX)
+  #include <unistd.h>		// nice()
+  #include <strings.h>		// bzero(), strcase..., 
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS==OS_BSDI) || (CLIENT_OS == OS_OPENBSD)
   #include <sys/time.h>
   #include <unistd.h>
@@ -263,6 +284,8 @@ extern "C" {
   #if defined(MAC_GUI)
     #include "gui_incs.h"
   #endif
+#elif (CLIENT_OS == OS_DEC_UNIX)
+  #include <unistd.h>
 #endif
 
 // --------------------------------------------------------------------------
