@@ -1538,7 +1538,7 @@ void Client::SetNiceness(void)
               //   really needed when GO-VMS.COM isn't used.
 #elif (CLIENT_OS == OS_AMIGA)
   SetTaskPri(FindTask(NULL), -20);
-#elif (CLIENT_OS == OS_DOSWIN16) || (CLIENT_OS == OS_WIN16)
+#elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16)
   // nothing
 #elif (CLIENT_OS == OS_BEOS)
   // Main control thread runs at normal priority, since it does very little;
@@ -1560,7 +1560,7 @@ void Client::SetNiceness(void)
   // nothing
 #elif (CLIENT_OS == OS_NETWARE)
   // nothing - set dynamically
-#elif (CLIENT_OS == OS_DOSWIN16) || (CLIENT_OS == OS_WIN16)
+#elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16)
   // nothing
 #elif (CLIENT_OS == OS_VMS)
   nice( 2 );
@@ -1635,12 +1635,12 @@ void CliSignalHandler( int sig )
     void CliSignalHandler( int )
   #endif
 {
-  #if (CLIENT_OS != OS_DOSWIN16)
+  #if (CLIENT_OS != OS_DOS)
   fprintf(stderr, "*Break*\n");
   #endif
   SignalTriggered = UserBreakTriggered = 1;
 
-  #if (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOSWIN16)
+  #if (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS)
     signal( SIGINT, CliSignalHandler );
     signal( SIGTERM, CliSignalHandler );
   #elif (CLIENT_OS == OS_RISCOS)
@@ -1677,7 +1677,7 @@ void CliSetupSignals( void )
     signal( SIGABRT, CliSignalHandler ); //abort on floating point [...]printf
     signal( SIGINT, CliSignalHandler );  //       and mathlib.nlm isn't loaded
     signal( SIGTERM, CliSignalHandler );
-  #elif (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOSWIN16)
+  #elif (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS)
     signal( SIGINT, CliSignalHandler );
     signal( SIGTERM, CliSignalHandler );
   #elif (CLIENT_OS != OS_MACOS)
@@ -1704,7 +1704,7 @@ int gettimeofday(struct timeval *tv, struct timezone *)
   tv->tv_usec = t % 1000000U;
   return 0;
 }
-#elif (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_DOSWIN16) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
+#elif (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_DOS) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
 int gettimeofday(struct timeval *tv, struct timezone *)
 {
   struct timeb tb;
@@ -2207,7 +2207,7 @@ void Client::PrintBanner(char * clname)
 
 #if (CLIENT_CPU == CPU_X86)
 int Client::x86id()
-#if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_DOSWIN16)
+#if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_DOS)
 {
   u32 detectedvalue; //valye x86ident returns, must be interpreted
   int coretouse; // the core the client should use of the 5(6?)

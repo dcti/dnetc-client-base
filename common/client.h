@@ -270,7 +270,7 @@ extern "C" {
   #include <io.h>
   #include <conio.h>
   #include <dos.h>
-#elif (CLIENT_OS == OS_DOSWIN16)
+#elif (CLIENT_OS == OS_DOS)
   #include <sys/timeb.h>
   #include <io.h>
   #include <conio.h>
@@ -371,7 +371,7 @@ extern "C" {
 // --------------------------------------------------------------------------
 
 #ifndef NEW_STATS_AND_LOGMSG_STUFF
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOSWIN16) || (CLIENT_OS == OS_WIN16) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
 #ifdef __WATCOMC__
   // disable "Warning! W481: col(1) class/enum has the same name as the function/variable 'timezone'"
   #pragma warning 481 9 ;
@@ -384,7 +384,7 @@ struct timezone
 #endif
 #endif
 
-#if ((CLIENT_OS == OS_DOSWIN16) && defined(DOS4G))
+#if ((CLIENT_OS == OS_DOS) && defined(DOS4G))
 #define ntohl(x) ((((x)<<24) & 0xFF000000) | (((x)<<8) & 0x00FF0000) | (((x)>>8) & 0x0000FF00) | (((x)>>24) & 0x000000FF))
 #define htonl(x) ((((x)<<24) & 0xFF000000) | (((x)<<8) & 0x00FF0000) | (((x)>>8) & 0x0000FF00) | (((x)>>24) & 0x000000FF))
 #endif
@@ -770,7 +770,7 @@ public:
 
 // --------------------------------------------------------------------------
 #if (CLIENT_CPU == CPU_X86)
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOSWIN16) || (CLIENT_OS == OS_OS2)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_OS2)
   #ifdef __WATCOMC__
     #define x86ident _x86ident
 //    #define checklocks _checklocks
@@ -781,19 +781,17 @@ public:
 #endif
 
 #ifndef NEW_STATS_AND_LOGMSG_STUFF
-#if ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU==CPU_68K))
+#if ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K) ||   \
+     (CLIENT_OS == OS_MACOS) ||                              \
+     (CLIENT_OS == OS_SCO) ||                                \
+     (CLIENT_OS == OS_OS2) ||                                \
+     (CLIENT_OS == OS_WIN32) ||                              \
+     (CLIENT_OS == OS_AMIGA) ||                              \
+     (CLIENT_OS == OS_NETWARE) ||                            \
+     (CLIENT_OS == OS_WIN16) ||                              \
+     (CLIENT_OS == OS_DOS) ||                                \
+     ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
   extern "C" gettimeofday(struct timeval *tv, struct timezone *);
-#elif ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU==CPU_68K)) ||   \
-    (CLIENT_OS == OS_MACOS) ||                              \
-    (CLIENT_OS == OS_SCO) ||                                \
-    (CLIENT_OS == OS_OS2) ||                                \
-    (CLIENT_OS == OS_WIN32) ||                              \
-    (CLIENT_OS == OS_AMIGA) ||                              \
-    (CLIENT_OS == OS_NETWARE) ||                            \
-    (CLIENT_OS == OS_WIN16) ||                              \
-    (CLIENT_OS == OS_DOSWIN16) ||                           \
-    ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
-extern gettimeofday(struct timeval *tv, struct timezone *);
 #endif
 #endif //#ifdef NEW_STATS_AND_LOGMSG_STUFF
 

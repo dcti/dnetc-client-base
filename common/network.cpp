@@ -11,7 +11,7 @@
 #define UU_DEC(Ch) (char) (((Ch) - ' ') & 077)
 #define UU_ENC(Ch) (char) (((Ch) & 077) != 0 ? ((Ch) & 077) + 0x20 : '`')
 
-#if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_DOSWIN16)
+#if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_DOS)
   #include <varargs.h>
 #elif (CLIENT_OS == OS_AMIGA)
   static struct Library *SocketBase;
@@ -265,7 +265,7 @@ s32 Network::Resolve(const char *host, u32 &hostaddress)
 {
 #if !defined(NONETWORK)
 
-#if (CLIENT_OS == OS_DOSWIN16) && defined(DJGPP)
+#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
   hostaddress = resolve((char*)host);
   if (hostaddress == 0) return -1;
 #else
@@ -345,7 +345,7 @@ s32 Network::Open( void )
   Close();
   mode = startmode;
 
-#if (CLIENT_OS == OS_DOSWIN16) && defined(DJGPP)
+#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
   int status;
   if (lastaddress == 0)
   {
@@ -673,7 +673,7 @@ Socks5Failure:
 #endif
   return 0;
 
-#if (CLIENT_OS == OS_DOSWIN16) && defined(DJGPP)
+#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
 sock_err:
   return -1;
 #endif
@@ -686,7 +686,7 @@ s32 Network::Close(void)
 #if !defined(NONETWORK)
   if ( sock )
   {
-#if (CLIENT_OS == OS_DOSWIN16) && defined(DJGPP)
+#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
     int status;
     sock_close(sock);
     sock_wait_closed(sock, sock_delay, NULL, &status);
@@ -702,7 +702,7 @@ s32 Network::Close(void)
 #endif
   return 0;
 
-#if (CLIENT_OS == OS_DOSWIN16) && defined(DJGPP)
+#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
 sock_err:
   return -1;
 #endif
@@ -996,7 +996,7 @@ s32 Network::Put( u32 length, const char * data )
   if (mode & MODE_HTTP)
   {
     char header[500], ipbuff[64];
-#if (CLIENT_OS == OS_DOSWIN16) && defined(DJGPP)
+#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
     inet_ntoa(ipbuff, lasthttpaddress);
 #else
     if (lasthttpaddress) {
@@ -1045,7 +1045,7 @@ s32 Network::Put( u32 length, const char * data )
 #if !defined(NONETWORK)
 s32 Network::LowLevelGet(u32 length, char *data)
 {
-#if (CLIENT_OS == OS_DOSWIN16) && defined(DJGPP)
+#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
   //if (!sock_sselect(sock, SOCKESTABLISHED)) return 0;
   if (!sock_dataready(sock))
   {
@@ -1090,7 +1090,7 @@ sock_err:
 #if !defined(NONETWORK)
 s32 Network::LowLevelPut(u32 length, const char *data)
 {
-#if (CLIENT_OS == OS_DOSWIN16) && defined(DJGPP)
+#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
   sock_write(sock, (unsigned char*) data, length);
   sock_flush(sock);
   return (s32) length;
@@ -1126,7 +1126,7 @@ void MakeNonBlocking(SOCKET socket, bool nonblocking)
     unsigned long flagon = nonblocking;
     socket_ioctl(socket, FIONBIO, &flagon);
   #endif
-#elif (CLIENT_OS == OS_DOSWIN16) && defined(DJGPP)
+#elif (CLIENT_OS == OS_DOS) && defined(DJGPP)
   // nothing.  WATTCP is always nonblocking
 #elif (CLIENT_OS == OS_RISCOS)
     {
@@ -1311,7 +1311,7 @@ NetworkServer::~NetworkServer()
 // returns -1 on error, 0 on success
 s32 NetworkServer::StartListening( s16 myport, u32 myaddress, u32 backlog)
 {
-#if (CLIENT_OS == OS_DOSWIN16) && defined(DJGPP)
+#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
 // HERE--code
 #else
   // open socket on which this process will listen for input
@@ -1356,7 +1356,7 @@ s32 NetworkServer::StopListening(void)
 {
   if (listener)
   {
-#if (CLIENT_OS == OS_DOSWIN16) && defined(DJGPP)
+#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
 // HERE--code
 #else
     close(listener);
@@ -1375,7 +1375,7 @@ s32 NetworkServer::Connect(Network *connection, u32 *peeraddress, u32 Timeout)
   if (!listener) return -1;
   while (timer <= Timeout)
   {
-#if (CLIENT_OS == OS_DOSWIN16) && defined(DJGPP)
+#if (CLIENT_OS == OS_DOS) && defined(DJGPP)
 // HERE--code
 #else
     struct sockaddr_in addr;

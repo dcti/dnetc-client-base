@@ -1826,7 +1826,7 @@ PreferredIsDone1:
     //Do keyboard stuff for clients that allow user interaction during the run
     //------------------------------------
 
-    #if (!defined(NOMAIN) && ((CLIENT_OS == OS_DOSWIN16) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)))
+    #if (!defined(NOMAIN) && ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)))
     {
       while ( kbhit() )
       {
@@ -1926,7 +1926,7 @@ PreferredIsDone1:
     {
       #if (CLIENT_OS == OS_WIN16)
         SurrenderCPU();        
-      #elif (CLIENT_OS != OS_DOSWIN16)
+      #elif (CLIENT_OS != OS_DOS)
         sleep(1);
       #endif
         continue; //go back to top and check the keyboard for release
@@ -2759,7 +2759,7 @@ int main( int argc, char *argv[] )
   }
   else
   {
-#if (CLIENT_OS == OS_DOSWIN16) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
+#if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
   #ifndef DJGPP // __WATCOM__ || __TURBOC__ || MSVC
     char fndrive[_MAX_DRIVE], fndir[_MAX_DIR], fname[_MAX_FNAME], fext[_MAX_FNAME];
     _splitpath(argv[0], fndrive, fndir, fname, fext);
@@ -2821,7 +2821,7 @@ int main( int argc, char *argv[] )
 
 
   // generate the paths of the other files based on the ini filename
-#if (CLIENT_OS == OS_DOSWIN16) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
+#if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
 #elif (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_AMIGA) || (CLIENT_OS == OS_RISCOS)
 #else
   {

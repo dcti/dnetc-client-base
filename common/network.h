@@ -34,7 +34,7 @@ extern "C" {
   #if defined(_MSC_VER)
     #define sleep(x) Sleep(1000*x)
   #endif
-#elif (CLIENT_OS == OS_DOSWIN16) && defined(DJGPP)
+#elif (CLIENT_OS == OS_DOS) && defined(DJGPP)
   #define gethostname xxxx
   #include <tcp.h>
   #undef gethostname
@@ -43,7 +43,7 @@ extern "C" {
 #elif (CLIENT_OS == OS_RISCOS)
   #include <sys/types.h>
   #define SOCKET int
-#elif (CLIENT_OS == OS_DOSWIN16) && defined(DOS4G)
+#elif (CLIENT_OS == OS_DOS) && defined(DOS4G)
   #define SOCKET int
   struct timeval {
         long    tv_sec;         /* seconds */

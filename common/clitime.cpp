@@ -66,7 +66,7 @@ struct timeval *CliTimer( struct timeval *tv )
   Microseconds( (UnsignedWide *)&t );
   stv.tv_sec = t / 1000000U;
   stv.tv_usec = t % 1000000U;
-#elif (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_DOSWIN16) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
+#elif (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_DOS) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
   struct timeb tb;
   ftime(&tb);
   stv.tv_sec = tb.time;

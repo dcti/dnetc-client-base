@@ -54,7 +54,7 @@ struct s128 { s64 hi, lo; };
 // do not just add numbers here email beberg@distributed.net for an assignment
 #define OS_UNKNOWN      0
 #define OS_WIN32        1  // 95 + NT + win32
-#define OS_DOSWIN16     2  // dos (win31 now separate)
+#define OS_DOS          2  // dos (win31 now separate)
 #define OS_FREEBSD      3
 #define OS_LINUX        4
 #define OS_BEOS         5
@@ -112,7 +112,7 @@ struct s128 { s64 hi, lo; };
         #define CLIENT_CPU    CPU_X86
     #endif
 #elif defined(DJGPP) || defined(DOS4G) || defined(__MSDOS__)
-    #define CLIENT_OS     OS_DOSWIN16
+    #define CLIENT_OS     OS_DOS
     #define CLIENT_CPU    CPU_X86
 #elif defined(__NETWARE__) && defined(_M_IX86)
     #define CLIENT_OS     OS_NETWARE
