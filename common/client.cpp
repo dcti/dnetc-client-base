@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.125  1998/08/15 21:32:49  jlawson
+// added parens around an abiguous shift operation.
+//
 // Revision 1.124  1998/08/14 00:04:53  silby
 // Changes for rc5 mmx core integration.
 //
@@ -325,7 +328,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.124 1998/08/14 00:04:53 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.125 1998/08/15 21:32:49 jlawson Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -662,7 +665,7 @@ u32 Client::Benchmark( u8 contest, u32 numk )
 
   LogScreenRaw( "\nBenchmarking %s with 1*2^%d tests (%u keys):\n", 
                  contestname, itersize+keycountshift,
-                          (int)((1<<itersize+keycountshift)) );
+                          (int)(1<<(itersize+keycountshift)) );
 
   contestwork.key.lo = htonl( 0 );
   contestwork.key.hi = htonl( 0 );
