@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.44 1999/12/23 21:43:22 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.45 1999/12/23 23:14:57 gregh Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -361,8 +361,6 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
           contestwork.ogr.nodes.hi = contestwork.work.ogr.nodes.lo = 0;
         }  
       }
-      contestwork.ogr.nodes.lo = 0;
-      contestwork.ogr.nodes.hi = 0;
       extern CoreDispatchTable *ogr_get_dispatch_table();
       ogr = ogr_get_dispatch_table();
       int r = ogr->init();
