@@ -6,6 +6,7 @@
  *
 */
 
+#include "client.h"
 #include "cputypes.h"
 #include "netio.h"
 #include "xmlserve.h"
