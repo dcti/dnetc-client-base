@@ -3,7 +3,7 @@ PROGNAME_68K = rc5des_68K
 
 DEBUG    = 
 OPTIMIZE = optimize optsched
-CFLAGS   = unsignedchars nostkchk strmerge parms=reg define=LESS_GETENV define=PIPELINE_COUNT=1 define=_CPU_32BIT_ define=BIT_32 define=KWAN define=MEGGS includedir=netinclude: includedir=platforms/ includedir=common/ utillib nover NOLINK
+CFLAGS   = unsignedchars nostkchk strmerge parms=reg define=LESS_GETENV define=PIPELINE_COUNT=256 define=_CPU_32BIT_ define=BIT_32 define=KWAN define=MEGGS includedir=netinclude: includedir=platforms/ includedir=common/ utillib nover NOLINK
 DISASM   =
 LFLAGS   = #farcode fardata
 
@@ -24,9 +24,10 @@ common_objs.o_ppc\
 core_objs.o_ppc
 
 COMMON_OBJS_PPC =\
-platforms/_tzset.o_ppc\
-platforms/amiga_version.o_ppc\
+platforms/amiga/_tzset.o_ppc\
+platforms/amiga/amiga_version.o_ppc\
 common/cliconfig.o_ppc\
+common/cliident.o_ppc\
 common/clirate.o_ppc\
 common/clisrate.o_ppc\
 common/clitime.o_ppc\
@@ -40,6 +41,7 @@ common/buffwork.o_ppc\
 common/mail.o_ppc\
 common/convdes.o_ppc\
 common/cpucheck.o_ppc\
+common/pathwork.o_ppc\
 common/disphelp.o_ppc
 
 RC5_OBJS_PPC	=\
@@ -55,10 +57,14 @@ des/deseval-meggs3.o_ppc
 #des/des-slice.o_ppc\
 #des/sboxes-kwan4.o_ppc
 
+EXTRA_OBJS_68K	=\
+platforms/amiga/sleep.o_ppc\
+platforms/amiga/usleep.o_ppc
+
 COMMON_OBJS_68K =\
-platforms/_tzset.o_68k\
-platforms/amiga_version.o_68k\
-common/cliconfig.o_68k\
+platforms/amiga/_tzset.o_68k\
+platforms/amiga/amiga_version.o_68k\
+common/cliident.o_68k\
 common/clirate.o_68k\
 common/clisrate.o_68k\
 common/clitime.o_68k\
@@ -72,24 +78,31 @@ common/buffwork.o_68k\
 common/mail.o_68k\
 common/convdes.o_68k\
 common/cpucheck.o_68k\
-common/disphelp.o_68k
+common/pathwork.o_68k\
+common/disphelp.o_68k\
+common/cliconfig.o_68k
 
 RC5_OBJS_68K	=\
 common/problem.o_68k\
-rc5/keycheck_opt.o_68k
+rc5/cor_mu0.o_68k
+
+#rc5/keycheck_opt.o_68k
 
 DES_OBJS_68K	=\
 des/des-slice-meggs.o_68k\
 des/deseval-meggs3.o_68k
 
+EXTRA_OBJS_68K	=\
+platforms/amiga/sleep.o_68k\
+platforms/amiga/usleep.o_68k
 
 LIBSTART     = lib:c.o
 LIBSTART_PPC = $(LIBSTART)
-OBJS_PPC     = $(COMMON_OBJS_PPC) $(RC5_OBJS_PPC) $(DES_OBJS_PPC)
+OBJS_PPC     = $(RC5_OBJS_PPC) $(DES_OBJS_PPC) $(EXTRA_OBJS_PPC) $(COMMON_OBJS_PPC)
 LIBS_PPC     = LIB:sccxxppc.lib LIB:scppc.lib #LIB:end.o
 
 LIBSTART_68K = $(LIBSTART)
-OBJS_68K     = $(COMMON_OBJS_68K) $(RC5_OBJS_68K) $(DES_OBJS_68K)
+OBJS_68K     = $(RC5_OBJS_68K) $(DES_OBJS_68K) $(EXTRA_OBJS_68K) $(COMMON_OBJS_68K) 
 LIBS_68K     = LIB:scm.lib LIB:sc.lib LIB:amiga.lib LIB:debug.lib
 
 .s.o_ppc:
@@ -140,9 +153,10 @@ common_objs.o_ppc	:	$(COMMON_OBJS_PPC)
 core_objs.o_ppc	:	$(RC5_OBJS_PPC) $(DES_OBJS_PPC)
 	ppc-amigaos-ld -r -o core_objs.o_ppc $(RC5_OBJS_PPC) $(DES_OBJS_PPC)
 
-platforms/_tzset.o_ppc	:	platforms/_tzset.c
-platforms/amiga_version.o_ppc	:	platforms/amiga_version.c common/client.h
+platforms/amiga/_tzset.o_ppc	:	platforms/amiga/_tzset.c
+platforms/amiga/amiga_version.o_ppc	:	platforms/amiga/amiga_version.c common/client.h
 common/cliconfig.o_ppc	:	common/cliconfig.cpp
+common/cliident.o_ppc	:	common/cliident.cpp
 common/clirate.o_ppc	:	common/clirate.cpp
 common/clisrate.o_ppc	:	common/clisrate.cpp
 common/clitime.o_ppc	:	common/clitime.cpp
@@ -157,6 +171,7 @@ common/mail.o_ppc	:	common/mail.cpp
 common/convdes.o_ppc	:	common/convdes.cpp
 common/cpucheck.o_ppc	:	common/cpucheck.cpp
 common/disphelp.o_ppc	:	common/disphelp.cpp
+common/pathwork.o_ppc	:	common/pathwork.cpp
 common/problem.o_ppc	:	common/problem.cpp
 
 # RC5 Dependencies
@@ -169,13 +184,19 @@ rc5/crunch_lintilla_296.ppc.o_ppc	:	rc5/crunch_lintilla_296.ppc.s
 des/des-slice-meggs.o_ppc	:	des/des-slice-meggs.cpp
 des/deseval-meggs3.o_ppc	:	des/deseval-meggs3.cpp
 
+# EXTRA Dependencies
+
+platforms/amiga/sleep.o_ppc	:	platforms/amiga/sleep.c
+platforms/amiga/usleep.o_ppc	:	platforms/amiga/usleep.c
+
 #
 # 68k Dependencies
 #	
  
-platforms/_tzset.o_68k	:	platforms/_tzset.c
-platforms/amiga_version.o_68k	:	platforms/amiga_version.c common/client.h
+platforms/amiga/_tzset.o_68k	:	platforms/amiga/_tzset.c
+platforms/amiga/amiga_version.o_68k	:	platforms/amiga/amiga_version.c common/client.h
 common/cliconfig.o_68k	:	common/cliconfig.cpp
+common/cliident.o_68k	:	common/cliident.cpp
 common/clirate.o_68k	:	common/clirate.cpp
 common/clisrate.o_68k	:	common/clisrate.cpp
 common/clitime.o_68k	:	common/clitime.cpp
@@ -190,16 +211,24 @@ common/mail.o_68k	:	common/mail.cpp
 common/convdes.o_68k	:	common/convdes.cpp
 common/cpucheck.o_68k	:	common/cpucheck.cpp
 common/disphelp.o_68k	:	common/disphelp.cpp
+common/pathwork.o_68k	:	common/pathwork.cpp
 common/problem.o_68k	:	common/problem.cpp
 
 # RC5 Dependencies
 
 rc5/keycheck_opt.o_68k	:	rc5/keycheck_opt.s
+rc5/cor_act.o_68k	:	rc5/cor_act.s
+rc5/cor_mu0.o_68k	:	rc5/cor_mu0.s
 
 # DES Dependencies
 
 des/des-slice-meggs.o_68k	:	des/des-slice-meggs.cpp
 des/deseval-meggs3.o_68k	:	des/deseval-meggs3.cpp
+
+# EXTRA Dependencies
+
+platforms/amiga/sleep.o_68k	:	platforms/amiga/sleep.c
+platforms/amiga/usleep.o_68k	:	platforms/amiga/usleep.c
 
 clean:
 	delete common/*.o_68k rc5/*.o_68k des/*.o_68k platforms/*.o_68k $(PROGNAME_68K) QUIET
