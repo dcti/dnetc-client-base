@@ -63,7 +63,7 @@ x86features:
 
   ; ... Compare and test result
   cmp ecx, eax
-  je NotSupported  ; Nothing supported
+  je near NotSupported
 
   ; Get standard CPUID information, and
   ; go to a specific vendor section
@@ -134,17 +134,17 @@ TryExtended:
 Extended_Checks:
 
   test edx, 00800000h   ; Test for MMX
-  jz AMDMMXPLus
+  jz AMDMMXPlus_test
   or esi, CPU_F_MMX     ; MMX Supported
-AMDMMXPlus:
+AMDMMXPlus_test:
   test edx, 00400000h   ; Test for AMD Ext'd MMX
-  jz 3DNow
+  jz ThreeDNow_test
   or esi, CPU_F_AMD_MMX_PLUS  ; AMD EMMX supported
-3DNow:
+ThreeDNow_test:
   test edx, 80000000h   ; Test for 3DNow!
-  jz 3DNowPlus
+  jz ThreeDNowPlus_test
   or esi, CPU_F_3DNOW   ; 3DNow! also supported
-3DNowPlus:
+ThreeDNowPlus_test:
   test edx, 40000000h   ; Test for 3DNow!+
   jz Standard
   or esi, CPU_F_3DNOW_PLUS  ; 3DNow!+ also supported
@@ -153,19 +153,19 @@ Intel:
 Standard:
   mov eax, 1h
   cpuid
-MMX:
+MMX_test:
   test edx, 00800000h   ; Test for MMX
-  jz SSE                ; MMX Not supported
+  jz SSE_test           ; MMX Not supported
   or esi, CPU_F_MMX     ; MMX Supported
-SSE:
+SSE_test:
   test edx, 02000000h   ; Test for SSE
-  jz SSE2               ; SSE Not supported
+  jz SSE2_test          ; SSE Not supported
   or esi, CPU_F_SSE     ; SSE Supported
-SSE2:
+SSE2_test:
   test edx, 04000000h   ; Test for SSE2
-  jz SSE3               ; SSE2 Not supported
+  jz SSE3_test          ; SSE2 Not supported
   or esi, CPU_F_SSE2    ; SSE2 Supported
-SSE3:
+SSE3_test:
   test ecx, 00000001h   ; Test for SSE3
   jz Return             ; SSE3 Not supported
   or esi, CPU_F_SSE3    ; SSE3 Supported
