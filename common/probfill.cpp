@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.3  1998/10/04 17:15:15  silby
+// Made test block completion notice more verbose.
+//
 // Revision 1.2  1998/10/03 23:59:50  remi
 // Removed extraneous #if defined(KWAN) && defined(MEGGS). MMX_BITSLICER is now
 // defined only when the MMX DES core is compiled.
@@ -16,7 +19,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.2 1998/10/03 23:59:50 remi Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.3 1998/10/04 17:15:15 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -209,7 +212,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       {
       client->consecutivesolutions[cont_i]++; 
       if (client->keyport == 3064)
-        LogScreen("Success\n");
+        LogScreen("Test block success detected!\n");
       fileentry.op = htonl( OP_SUCCESS_MULTI );
       fileentry.key.lo = htonl( ntohl( fileentry.key.lo ) +
                           ntohl( fileentry.keysdone.lo ) );
@@ -217,7 +220,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
     else
       {
       if (client->keyport == 3064)
-        LogScreen("Success was not detected!\n");
+        LogScreen("Test block success was not detected!\n");
       fileentry.op = htonl( OP_DONE_MULTI );
       }
 
