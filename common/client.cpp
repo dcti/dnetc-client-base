@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.102  1998/07/16 03:15:51  silby
+// Change to non-PERCBAR_ON_ONE_LINE code for peterd so multicpu startup % looks correct
+//
 // Revision 1.101  1998/07/15 06:58:03  silby
 // Changes to Flush, Fetch, and Update so that when the win32 gui sets connectoften to initiate one of the above more verbose feedback will be given.  Also, when force=1, a connect will be made regardless of offlinemode and lurk.
 //
@@ -60,7 +63,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.101 1998/07/15 06:58:03 silby Exp $.
+// Tweaked $Id: client.cpp,v 1.102 1998/07/16 03:15:51 silby Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -236,7 +239,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.101 1998/07/15 06:58:03 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.102 1998/07/16 03:15:51 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -2160,7 +2163,7 @@ PreferredIsDone1:
         {
           LogScreenPercentMulti((u32) cpu_i%numcputemp,
             (u32) problem[(int) cpu_i].percent, 0, (bool) problem[(int) cpu_i].restart );
-          cpu_i++;
+//          cpu_i++; // removed at peterd's request on 7/15/1998
         }
         else
         {
