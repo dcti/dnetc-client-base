@@ -1,12 +1,12 @@
 // Hey, Emacs, this a -*-C++-*- file !
 
-// Copyright distributed.net 1997-1999 - All Rights Reserved
+// Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.h,v $
-// Revision 1.6  1999/01/01 02:45:15  cramer
-// Part 1 of 1999 Copyright updates...
+// Revision 1.7  1999/01/04 02:47:30  cyp
+// Cleaned up menu options and handling.
 //
 // Revision 1.5  1998/12/23 00:41:45  silby
 // descontestclosed and scheduledupdatetime now read from the .ini file.
@@ -35,60 +35,65 @@
 #ifndef __CONFOPT_H__
 #define __CONFOPT_H__
 
-#define CONF_ID                    0
-#define CONF_THRESHOLDI            1
-#define CONF_THRESHOLDO            2 /* obsolete in menu */
-#define CONF_THRESHOLDI2           3 /* obsolete in menu */
-#define CONF_THRESHOLDO2           4 /* obsolete in menu */
-#define CONF_COUNT                 5 /* now allows -1 == runbuffers */
-#define CONF_HOURS                 6
-#define CONF_TIMESLICE             7 /* obsolete */
-#define CONF_NICENESS              8 /* priority */
-#define CONF_LOGNAME               9
-#define CONF_UUEHTTPMODE          10
-#define CONF_KEYPROXY             11
-#define CONF_KEYPORT              12
-#define CONF_HTTPPROXY            13
-#define CONF_HTTPPORT             14
-#define CONF_HTTPID               15
-#define CONF_CPUTYPE              16
-#define CONF_MESSAGELEN           17
-#define CONF_SMTPSRVR             18
-#define CONF_SMTPPORT             19
-#define CONF_SMTPFROM             20
-#define CONF_SMTPDEST             21
-#define CONF_NUMCPU               22 /* 0 ... */
-#define CONF_CHECKPOINT           23
-#define CONF_CHECKPOINT2          24 /* obsolete */
-#define CONF_RANDOMPREFIX         25 /* obsolete in menu */
-#define CONF_PREFERREDBLOCKSIZE   26 
-#define CONF_PROCESSDES           27 /* obsolete */
-#define CONF_QUIETMODE            28
-#define CONF_NOEXITFILECHECK      29
-#define CONF_PERCENTOFF           30
-#define CONF_FREQUENT             31
-#define CONF_NODISK               32
-#define CONF_NOFALLBACK           33
-#define CONF_CKTIME               34 /* obsolete */
-#define CONF_NETTIMEOUT           35
-#define CONF_EXITFILECHECKTIME    36 /* obsolete */
-#define CONF_OFFLINEMODE          37 /* runoffline not runbuffers */
-#define CONF_LURKMODE             38
-#define CONF_RC5IN                39
-#define CONF_RC5OUT               40
-#define CONF_DESIN                41
-#define CONF_DESOUT               42
-#define CONF_PAUSEFILE            43
-#define CONF_DIALWHENNEEDED       44
-#define CONF_CONNECTNAME          45
-#define CONF_DESCONTESTCLOSED     46 /* Current DES contest status */
-                                     /* 0xBEEFFOOD means closed,   */
-                                     /* otherwise checksum of      */
-                                     /* ciphertext                 */
-#define CONF_SCHEDULEDUPDATETIME  47 /* Time all clients should do */
-                                     /* a flush, in GMT - used to  */
-                                     /* coordinate project start.  */
-#define OPTION_COUNT              48
+#define CONF_ID                    0 /* CONF_MENU_BUFF */
+#define CONF_NODISK                1 /* CONF_MENU_BUFF */
+#define CONF_FREQUENT              2 /* CONF_MENU_BUFF */
+#define CONF_PREFERREDBLOCKSIZE    3 /* CONF_MENU_BUFF */
+#define CONF_THRESHOLDI            4 /* CONF_MENU_BUFF */
+#define CONF_RC5IN                 5 /* CONF_MENU_BUFF */
+#define CONF_RC5OUT                6 /* CONF_MENU_BUFF */
+#define CONF_DESIN                 7 /* CONF_MENU_BUFF */
+#define CONF_DESOUT                8 /* CONF_MENU_BUFF */
+#define CONF_CHECKPOINT            9 /* CONF_MENU_BUFF */
+
+#define CONF_COUNT                10 /* CONF_MENU_MISC -1 == runbuffers */
+#define CONF_HOURS                11 /* CONF_MENU_MISC */
+#define CONF_PAUSEFILE            12 /* CONF_MENU_MISC */
+#define CONF_QUIETMODE            13 /* CONF_MENU_MISC */
+#define CONF_NOEXITFILECHECK      14 /* CONF_MENU_MISC */
+#define CONF_PERCENTOFF           15 /* CONF_MENU_MISC */
+
+#define CONF_CPUTYPE              16 /* CONF_MENU_PERF */
+#define CONF_NUMCPU               17 /* CONF_MENU_PERF 0 ... */
+#define CONF_NICENESS             18 /* CONF_MENU_PERF priority */
+
+#define CONF_LOGNAME              19 /* CONF_MENU_LOG */
+#define CONF_MESSAGELEN           20 /* CONF_MENU_LOG */
+#define CONF_SMTPSRVR             21 /* CONF_MENU_LOG */
+#define CONF_SMTPPORT             22 /* CONF_MENU_LOG */
+#define CONF_SMTPFROM             23 /* CONF_MENU_LOG */
+#define CONF_SMTPDEST             24 /* CONF_MENU_LOG */
+
+#define CONF_OFFLINEMODE          25 /* CONF_MENU_NET runoffline not runbuffers */
+#define CONF_NETTIMEOUT           26 /* CONF_MENU_NET */
+#define CONF_UUEHTTPMODE          27 /* CONF_MENU_NET */
+#define CONF_AUTOFINDKS           28 /* CONF_MENU_NET autofindkeyserver */
+#define CONF_KEYSERVNAME          29 /* CONF_MENU_NET (CONF_KEYPROXY) */
+#define CONF_KEYSERVPORT          30 /* CONF_MENU_NET (CONF_HTTPPORT) */
+#define CONF_NOFALLBACK           31 /* CONF_MENU_NET */
+#define CONF_FWALLHOSTNAME        32 /* CONF_MENU_NET (CONF_HTTPPROXY) */
+#define CONF_FWALLHOSTPORT        33 /* CONF_MENU_NET (CONF_HTTPPPORT) */
+#define CONF_FWALLUSERNAME        34 /* CONF_MENU_NET (CONF_HTTPID)*/
+#define CONF_FWALLPASSWORD        35 /* CONF_MENU_NET */
+
+#define CONF_DIALWHENNEEDED       36 /* CONF_MENU_NET */
+#define CONF_CONNECTNAME          37 /* CONF_MENU_NET */
+#define CONF_LURKMODE             38 /* CONF_MENU_NET */
+#define CONF_OPTION_COUNT         39
+
+#define CONF_MENU_UNDEF            0
+#define CONF_MENU_BUFF             1
+#define CONF_MENU_LOG              2
+#define CONF_MENU_NET              3
+#define CONF_MENU_PERF             4
+#define CONF_MENU_MISC             5
+
+#define CONF_TYPE_UNDEF            0
+#define CONF_TYPE_ASCIIZ           1
+#define CONF_TYPE_INT              2
+#define CONF_TYPE_BOOL             3
+#define CONF_TYPE_TIMESTR          4
+#define CONF_TYPE_PASSWORD         5
 
 /* ---------------------------------------------------------------- */
 
@@ -98,9 +103,9 @@ struct optionstruct
   const char *description;     //description of the option
   const char *defaultsetting;  //default setting
   const char *comments;        //additional comments
-  s32 optionscreen;            //screen to appear on
-  s32 type;                    //type: 0=other, 1=string, 2=integer, 3=bool (yes/no)
-  s32 menuposition;            //number on that menu to appear as
+  int optionscreen;            //screen to appear on
+  int type;                    //type: 0=other, 1=string, 2=integer, 3=bool (yes/no)
+  int menuposition;            //number on that menu to appear as
   void *thevariable;           //pointer to the variable
   const char **choicelist;     //pointer to the char* array of choices
                                //(used for numeric responses)
@@ -110,7 +115,7 @@ struct optionstruct
 
 /* ---------------------------------------------------------------- */
 
-extern struct optionstruct conf_options[OPTION_COUNT];
+extern struct optionstruct conf_options[CONF_OPTION_COUNT];
 extern int    confopt_IsHostnameDNetHost( const char * hostname );
 extern int    confopt_isstringblank( const char *string );
 extern void   confopt_killwhitespace( char *string );
