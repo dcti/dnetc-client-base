@@ -8,6 +8,9 @@
 ;
 ;
 ; $Log: deseval-mmx.asm,v $
+; Revision 1.4  1999/01/12 08:42:50  silby
+; Will learn to spell __ELF__ one of these days.
+;
 ; Revision 1.3  1999/01/12 08:39:43  silby
 ; Added define for ELF.
 ;
@@ -1422,7 +1425,7 @@ SECTION TEXT USE32 ALIGN=16
 %endif
 
 ; PLATFORM external routines and memory allocation
-%ifdef __ELF
+%ifdef __ELF__
 extern malloc, free
 %define _malloc malloc
 %define _free free
