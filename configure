@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.114 2000/01/26 15:14:27 jlawson Exp $
+# @(#)$Id: configure,v 1.222.2.115 2000/01/27 01:57:17 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -846,8 +846,7 @@ case "$1" in
 
     *x86-solaris)    # gcc, mt, dynamic
 	TARGET_CCFLAGS="$OPTS_GCC272_X86 -Dsolaris -DMULTITHREAD -D_REENTRANT -DMMX_RC5 -DHAVE_OGR_CORES"
-	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+	TARGET_ADDNASMS="platforms/x86ident.asm $NASM_RC5X86_SRCS"
 	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lthread"
         TARGET_DOCFILES="docs/readme._ix docs/readme.x86-solaris libstdc++.so.2.8.1"   #platform specific docfile
@@ -1236,42 +1235,19 @@ case "$1" in
 
 ###### Intel X86 FreeBSD
 
-
-    *x86-freebsd)             # [dbaker] aout
-	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -DMMX_RC5 -DLURK"
-			#-DHAVE_CSC_CORES -DMMX_CSC" #-DHAVE_OGR_CORES
-                        # -DHAVE_DES_CORES $OPTS_DES_MMX 
-        TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="common/lurk.cpp" #$OGR_ANSI_SRCS 
-                        #$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4
-	TARGET_ADDASMS="platforms/x86ident.S"
-                        #des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
-			#des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	TARGET_LIBS="-lc_r"
-	TARGET_NASM_FMT="aoutb"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"  #$CSC_ASM_SRCS" $NASM_DESMMX_SRCS 
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="freebsd-x86-aout"
-        ;;
-
-    # as I don't know what the above target should be for, I added the
-    # following FreeBSD 2 target for a.out. The above target can't be used
-    # for that, as it assumes FreeBSD 3.x stuff.
-
     *x86-freebsd-aout)             # FreeBSD 2.x experimental, snake 
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -DMMX_RC5 -DLURK -DHAVE_OGR_CORES"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -Werror -DMMX_RC5 -DLURK -DHAVE_OGR_CORES"
 			#-DHAVE_CSC_CORES -DMMX_CSC"
                         # -DHAVE_DES_CORES $OPTS_DES_MMX 
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp $OGR_ANSI_SRCS"
                         #$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4
-	TARGET_ADDASMS="platforms/x86ident.S"
-                        #des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
+	TARGET_ADDASMS="" #des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			#des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
 	TARGET_NASM_FMT="aoutb"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"  #$CSC_ASM_SRCS" $NASM_DESMMX_SRCS 
+	TARGET_ADDNASMS="platforms/x86ident.asm $NASM_RC5X86_SRCS"  
+	                #$CSC_ASM_SRCS" $NASM_DESMMX_SRCS 
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_TARBALL="freebsd-x86-aout"
         ;;
@@ -1283,11 +1259,11 @@ case "$1" in
                         # -DHAVE_DES_CORES $OPTS_DES_MMX 
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp $OGR_ANSI_SRCS"
-	                #$KWAN_SLICE_SRCS4 $DESX86_SRCS $DESMMX_SRCS
-	TARGET_ADDASMS="platforms/x86ident.S"
-                        #des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
+	                #$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4
+	TARGET_ADDASMS="" #des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			#des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS" #$CSC_ASM_SRCS $NASM_DESMMX_SRCS
+	TARGET_ADDNASMS="platforms/x86ident.asm $NASM_RC5X86_SRCS" 
+	                #$CSC_ASM_SRCS $NASM_DESMMX_SRCS
 	TARGET_LIBS="-lc_r"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="freebsd-x86-elf"
