@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.18.2.11 2000/11/04 18:50:37 cyp Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.18.2.12 2001/02/23 00:05:43 sampo Exp $"; }
 
 #include "baseincs.h" //for timeval
 #include "clitime.h" //required for CliTimerDiff() and CliClock()
@@ -103,6 +103,9 @@ int CliGetContestWorkUnitSpeed( int contestid, int force, int *was_forced)
 // ---------------------------------------------------------------------------
 
 // set new record speed for a contest, returns !0 on success
+// XXX we only call this function once, from problem.cpp line 2362
+//     and we don't check it's return value.  should we convert this
+//     to void, or handle a failed call in problem.cpp, or what?
 int CliSetContestWorkUnitSpeed( int contestid, unsigned int sec)
 {
   struct contestInfo *conInfo =
