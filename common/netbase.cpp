@@ -59,7 +59,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.2 2000/10/23 02:01:23 cyp Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.3 2000/10/24 19:34:20 oliver Exp $"; }
 
 //#define TRACE /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -227,6 +227,8 @@ extern "C" {
   #define socklen_t size_t
 #elif ((CLIENT_OS == OS_NTO2) || (CLIENT_OS == OS_QNX))
   #define socklen_t size_t
+#elif (CLIENT_OS == OS_AMIGAOS)
+  #define socklen_t long
 #else
   #define socklen_t int
 #endif
@@ -1589,10 +1591,7 @@ static int net_ioctl( SOCKET sock, unsigned long opt, int *i_optval )
     *i_optval = optval;
     return 0;
   #elif (CLIENT_OS == OS_AMIGAOS)
-    /* are you sure that it isn't just the prototype that wants char *? */
-    char optval = (char)*i_optval; //hmm, very strange
-    if (IoctlSocket(sock, opt, &optval)!=0) return ps_stdneterr;
-    *i_optval = (char)((optval > 0xff) ? (0xff) : (optval));
+    if (IoctlSocket(sock, opt, (char *)i_optval)!=0) return ps_stdneterr;
     return 0;
   #elif (CLIENT_OS == OS_LINUX) /*use ioctl to avoid 2.0+2.1 vs 2.2+ trouble*/
     unsigned int optval = (unsigned int)*i_optval;
