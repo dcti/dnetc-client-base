@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: modereq.cpp,v $
+// Revision 1.6.2.4  1998/11/15 11:07:20  remi
+// Synced with :
+//  Revision 1.10  1998/11/15 11:00:17  remi
+//  Moved client->SelectCore() for -test and -benchmark* from cmdline.cpp to
+//  modereq.cpp and told it to not be quiet.
+//
 // Revision 1.6.2.3  1998/11/11 03:11:08  remi
 // Synced with :
 //  Revision 1.7  1998/11/08 19:03:21  cyp
@@ -109,6 +115,7 @@ int ModeReqRun(Client *client)
         {
         if (client)
           {
+          client->SelectCore( 0 /* not quietly */ );
           u32 benchsize = (1L<<23); /* long bench: 8388608 instead of 100000000 */
           if ((bits & (MODEREQ_BENCHMARK_QUICK))!=0)
             benchsize = (1L<<20); /* short bench: 1048576 instead of 10000000 */
@@ -132,6 +139,7 @@ int ModeReqRun(Client *client)
         {
         if (client)
           {
+          client->SelectCore( 0 /* not quietly */ );
           if ( SelfTest(0, client->cputype ) > 0 ) 
             SelfTest(1, client->cputype );
           }
