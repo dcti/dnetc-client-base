@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.42 2004/01/31 21:06:57 kakace Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.43 2004/02/18 20:46:33 piru Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -815,18 +815,26 @@ static long __GetRawProcessorID(const char **cpuname)
   if (detectedtype == -2L)
   {
     /* MorphOS */
+    #include <exec/resident.h>
     ULONG cpu = 0;
+    struct Resident *m_res;
     NewGetSystemAttrsA(&cpu, sizeof(cpu), SYSTEMINFOTYPE_PPC_CPUVERSION, NULL);
 
-    /* Altivec support was added in 50.59 */
-    if ((SysBase->LibNode.lib_Version == 50 && SysBase->LibNode.lib_Revision >= 59) ||
-        SysBase->LibNode.lib_Version > 50)
+    /* Altivec support was added in MorphOS 1.5 */
+    m_res = FindResident("MorphOS");
+    if (m_res && (m_res->rt_Flags & RTF_EXTENDED) &&
+        ((m_res->rt_Version == 1 && m_res->rt_Revision >= 5) ||
+         m_res->rt_Version > 1))
     {
-      ULONG avf = 0;
-      NewGetSystemAttrsA(&avf, sizeof(avf), SYSTEMINFOTYPE_PPC_ALTIVEC, NULL);
-      if (avf)
+      if ((SysBase->LibNode.lib_Version == 50 && SysBase->LibNode.lib_Revision >= 60) ||
+          SysBase->LibNode.lib_Version > 50)
       {
-        isaltivec = 1;
+        ULONG avf = 0;
+        NewGetSystemAttrsA(&avf, sizeof(avf), SYSTEMINFOTYPE_PPC_ALTIVEC, NULL);
+        if (avf)
+        {
+          isaltivec = 1;
+        }
       }
     }
     switch (cpu)
