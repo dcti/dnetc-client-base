@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.29.2.7 2003/08/09 12:46:21 mweiser Exp $"; }
+return "@(#)$Id: util.cpp,v 1.29.2.8 2003/08/17 19:01:59 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -1282,6 +1282,17 @@ static int __utilIsUserIDAValidEmailAddress(const char *userid)
     }
     if (*c <= 32) // control or space
       return 0;
+
+    if (*c == '\"' || *c == ',' || *c == '\\' ||
+        *c == '<' || *c == '>' || *c == ';' ||
+        *c == '{' || *c == '}' ||
+        !isprint((unsigned char)*c))
+      {
+        // although some of these characters are allowed by RFC, we
+        // enforce restrictions on these to reduce problems with log
+        // file delimiters and unprintable characters.
+        return 0;
+      }
 
     // for now, every other char is allowed in the username part
     ++username_length;
