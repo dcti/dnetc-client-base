@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-p6-rg.cpp,v $
+// Revision 1.16  1999/07/13 23:16:07  remi
+// 0.45% speedup patch by Mario Weilguni <mweilguni@sime.com>
+//
+// Revision 1.15.2.1  1999/07/13 23:12:00  remi
+// 0.45% speedup patch by Mario Weilguni <mweilguni@sime.com>
+//
 // Revision 1.15  1999/04/06 13:30:34  cyp
 // removed #ifndef _32BIT_ guard
 //
@@ -27,7 +33,7 @@
 // causing build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.6  1998/07/08 22:59:39  remi
-// Lots of $Id: rc5-p6-rg.cpp,v 1.15 1999/04/06 13:30:34 cyp Exp $ stuff.
+// Lots of $Id stuff.
 //
 // Revision 1.5  1998/07/08 18:47:49  remi
 // $Id fun ...
@@ -62,7 +68,7 @@
 //	- precalculate some things for ROUND1 & ROUND2
 
 const char *rc5_p6_rg_cpp (void) {
-return "@(#)$Id: rc5-p6-rg.cpp,v 1.15 1999/04/06 13:30:34 cyp Exp $"; }
+return "@(#)$Id: rc5-p6-rg.cpp,v 1.16 1999/07/13 23:16:07 remi Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 
@@ -284,8 +290,8 @@ struct work_struct {
 #define ROUND_3_EVEN_AND_ODD(N,Sx) \
 "	addl	"Sx(N)",  %%eax
 	addl	%%edx,    %%eax
-	roll	$3,       %%eax
 	movl	%%edi,    %%ecx
+	roll	$3,       %%eax
 	xorl	%%edi,    %%esi
 	roll	%%cl,     %%esi
 	leal	(%%eax,   %%edx), %%ecx
