@@ -4,7 +4,20 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
+//
+// ----------------------------------------------------------------------
+// This file contains the basic types used in a lot of places: Client class;
+// Operation, contest_id_t enums; Packet, FileHeader and FileEntry structs; 
+// none of them depend on anything other than cputypes.h, and network.h
+// ----------------------------------------------------------------------
+//
 // $Log: client.h,v $
+// Revision 1.94.2.8  1999/01/30 15:59:50  remi
+// Synced with :
+//
+//  Revision 1.114  1999/01/29 19:03:14  jlawson
+//  fixed formatting.  changed some int vars to bool.
+//
 // Revision 1.94.2.7  1999/01/23 14:03:44  remi
 // In sync with 1.113
 //
@@ -50,11 +63,11 @@ public:
   ~Client() {};
 
 
-  int Main( int argc, const char *argv[], int restarted );
-  //encapsulated main().  client.Main() is restartable
+  int Main( int argc, const char *argv[] );
+    // encapsulated main().  client.Main() may restart itself
 
   int ParseCommandline( int runlevel, int argc, const char *argv[], 
-                        int *retcodeP, int logging_is_initialized );
+                        int *retcodeP, bool logging_is_initialized );
                         
   //runlevel == 0 = ReadConfig() (-quiet, -ini, -guistart etc done here too)
   //         >= 1 = post-readconfig (override ini options)
@@ -63,7 +76,8 @@ public:
   void ValidateConfig( void );
     // verifies configuration and forces valid values
 
-  int SelectCore(int quietly); //always returns zero.
+  int SelectCore(bool quietly);
+    // always returns zero.
     // to configure for cpu. called before Run() from main(), or for 
     // "modes" (Benchmark()/Test()) from ParseCommandLine().
 
