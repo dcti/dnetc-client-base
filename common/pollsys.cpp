@@ -27,6 +27,10 @@
 // does away with the 'timeslice factor' crutch.
 //
 // $Log: pollsys.cpp,v $
+// Revision 1.4  1998/11/02 04:48:42  cyp
+// Minor fix to suppress looping if there are no events in the queue.
+// Previously it would suppress looping only if there was no queue (at all).
+//
 // Revision 1.3  1998/09/28 22:01:29  remi
 // Cleared a gcc 2.7.2.2 warning about 'register' parameters in
 // RegPolledProcedure.
@@ -41,7 +45,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *pollsys_cpp(void) {
-return "@(#)$Id: pollsys.cpp,v 1.3 1998/09/28 22:01:29 remi Exp $"; }
+return "@(#)$Id: pollsys.cpp,v 1.4 1998/11/02 04:48:42 cyp Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -80,8 +84,12 @@ struct polldata
   struct timeval execat; 
 };
 
-struct polldata *runlist = NULL;
-struct polldata *nextrun[MAX_POLL_RUNLEVEL+1];
+static struct
+{
+  struct polldata *runlist;
+  unsigned int regcount;
+  struct polldata *nextrun[MAX_POLL_RUNLEVEL+1];
+} pollsysdata = { NULL, 0, {NULL}};
 
 // UnregPolledProcedure() unregisters a procedure previously registered with
 // RegPolledProcedure(). Procedures are auto unregistered when executed.
@@ -91,7 +99,7 @@ int UnregPolledProcedure( int fd )
   struct polldata *thisp;
   int rc = -1;
   
-  thisp = runlist;
+  thisp = pollsysdata.runlist;
   while ( thisp )
     {
     if (thisp->fd == fd)
@@ -101,6 +109,7 @@ int UnregPolledProcedure( int fd )
         thisp->inuse = 0;
         rc = 0;
         }
+      pollsysdata.regcount--;
       break;
       }
     thisp = thisp->next;
@@ -127,7 +136,7 @@ int RegPolledProcedure( void (*proc)(void *), void *arg,
 
   if (proc)
     {
-    thisp = runlist;
+    thisp = pollsysdata.runlist;
     while ( thisp )
       {
       fd = thisp->fd;
@@ -137,10 +146,10 @@ int RegPolledProcedure( void (*proc)(void *), void *arg,
       }
     if ( !thisp )
       {
-      if (!runlist)
+      if (!pollsysdata.runlist)
         {
-        for (i=0;i<(sizeof(nextrun)/sizeof(nextrun[0]));i++)
-          nextrun[i]=NULL;
+        for (i=0;i<(sizeof(pollsysdata.nextrun)/sizeof(pollsysdata.nextrun[0]));i++)
+          pollsysdata.nextrun[i]=NULL;
         }
       mcount = 1024/(sizeof(struct polldata));
       thisp = (struct polldata *)(malloc( mcount * sizeof(struct polldata) ));
@@ -158,11 +167,11 @@ int RegPolledProcedure( void (*proc)(void *), void *arg,
           thatp->fd = ++fd;
           thatp++;
           }
-        if (runlist == NULL)
-          runlist = thisp;
+        if (pollsysdata.runlist == NULL)
+          pollsysdata.runlist = thisp;
         else
           {
-          thatp = runlist;
+          thatp = pollsysdata.runlist;
           while ( thatp->next )
             thatp = thatp->next;
           thatp->next = thisp;
@@ -173,6 +182,7 @@ int RegPolledProcedure( void (*proc)(void *), void *arg,
       fd = -1;
     else
       {
+      pollsysdata.regcount++;
       fd = thisp->fd;
       thisp->inuse = 1;
       thisp->proc = proc;
@@ -198,7 +208,7 @@ static void __initchk(void *dummy) { dummy = dummy; }
 int InitializePolling(void)
 { 
   int fd;
-  if (runlist != NULL)
+  if (pollsysdata.runlist != NULL)
     return 0;
   if ((fd = RegPolledProcedure( __initchk, NULL, NULL, 0 )) != -1)
     {
@@ -213,8 +223,8 @@ int DeinitializePolling(void)
 {
   struct polldata *thatp, *thisp;
 
-  thisp = runlist;
-  thatp = runlist = NULL;
+  thisp = pollsysdata.runlist;
+  thatp = pollsysdata.runlist = NULL;
 
   while ( thisp )
     {
@@ -245,7 +255,7 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
     {
     fprintf(stderr, "call to sleep when no sleep allowed!");
     }
-  else if (!runlist)
+  else if (!pollsysdata.runlist || pollsysdata.regcount==0)
     {
     if ( secs )
       sleep( secs );
@@ -274,7 +284,7 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
 //printf("i");
       
         //could lock MUTEX here 
-        if ( !runlist )
+        if ( !pollsysdata.runlist )
           {
           loopend = 1;
           reclock = 0;
@@ -284,13 +294,14 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
           //lock MUTEX here
           if ( !thisp )
             {
-            if ( !nextrun[runprio] )
-              nextrun[runprio] = runlist;
-            thisp = nextrun[runprio];
+            if ( !pollsysdata.nextrun[runprio] )
+              pollsysdata.nextrun[runprio] = pollsysdata.runlist;
+            thisp = pollsysdata.nextrun[runprio];
             }
           if ((nextp = thisp->next) == NULL)
-            nextp = runlist;
-          loopend = ( !nextp || (nextrun[runprio])->fd == nextp->fd );
+            nextp = pollsysdata.runlist;
+          loopend = ( !nextp || 
+                (pollsysdata.nextrun[runprio])->fd == nextp->fd );
           if (thisp->inuse)
             {
             if ((thisp->priority == runprio) &&
@@ -301,9 +312,10 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
               arg = thisp->arg;
               proc = thisp->proc;
               thisp->inuse = 0;
+              pollsysdata.regcount--;
               dorun = 1;
               reclock = 1;
-              nextrun[runprio] = nextp;
+              pollsysdata.nextrun[runprio] = nextp;
               loopend = 1;
 //printf("r%dp%d", thisp->fd, thisp->priority );
               }
