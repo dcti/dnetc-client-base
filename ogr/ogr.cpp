@@ -1,8 +1,9 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-
+/* Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * @(#)$Id: ogr.cpp,v 1.6 1999/11/08 01:44:48 cyp Exp $
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,11 +15,7 @@
 /* this is in choosedat.c */
 extern unsigned char choose_dat[];
 
-typedef unsigned long U;
-
 #define CHOOSEBITS 12
-#define BITMAPS     5       /* need to change macros when changing this */
-#define MAXDEPTH   40
 #define MAXBITS    12
 #define ttmMAXBITS (32-MAXBITS)
 
@@ -32,31 +29,6 @@ static int OGR[] = {
 };
 static char first[65537];  /* first blank in 16 bit COMP bitmap, range: 1..16 */
 static U bit[200];         /* which bit of LIST to update */
-
-struct Level {
-  U list[BITMAPS];
-  U dist[BITMAPS];
-  U comp[BITMAPS];
-  int cnt1;
-  int cnt2;
-  int limit;
-};
-
-struct State {
-  double Nodes;                   /* counts "tree branches" */
-  int max;                        /* maximum length of ruler */
-  int maxdepth;                   /* maximum number of marks in ruler */
-  int maxdepthm1;                 /* maxdepth-1 */
-  int half_length;                /* half of max */
-  int half_depth;                 /* half of maxdepth */
-  int half_depth2;                /* half of maxdepth, adjusted for 2nd mark */
-  int marks[MAXDEPTH+1];          /* current length */
-  int startdepth;
-  int depth;
-  int limit;
-  int LOGGING;
-  struct Level Levels[MAXDEPTH];
-};
 
 #define COMP_LEFT_LIST_RIGHT(lev,s)                             \
   {                                                             \
@@ -248,14 +220,14 @@ static int ogr_init()
 static void dump(int depth, struct Level *lev, int limit)
 {
   printf("--- depth %d\n", depth);
-  printf("list=%08lx%08lx%08lx%08lx%08lx\n", lev->list[0], lev->list[1], lev->list[2], lev->list[3], lev->list[4]);
-  printf("dist=%08lx%08lx%08lx%08lx%08lx\n", lev->dist[0], lev->dist[1], lev->dist[2], lev->dist[3], lev->dist[4]);
-  printf("comp=%08lx%08lx%08lx%08lx%08lx\n", lev->comp[0], lev->comp[1], lev->comp[2], lev->comp[3], lev->comp[4]);
+  printf("list=%08x%08x%08x%08x%08x\n", lev->list[0], lev->list[1], lev->list[2], lev->list[3], lev->list[4]);
+  printf("dist=%08x%08x%08x%08x%08x\n", lev->dist[0], lev->dist[1], lev->dist[2], lev->dist[3], lev->dist[4]);
+  printf("comp=%08x%08x%08x%08x%08x\n", lev->comp[0], lev->comp[1], lev->comp[2], lev->comp[3], lev->comp[4]);
   printf("cnt1=%d cnt2=%d limit=%d\n", lev->cnt1, lev->cnt2, limit);
   //sleep(1);
 }
 
-static int ogr_create(void *input, int inputlen, void **state)
+static int ogr_create(void *input, int inputlen, void *state, int statelen)
 {
   struct State *State;
   struct WorkStub *workstub = (struct WorkStub *)input;
@@ -264,18 +236,20 @@ static int ogr_create(void *input, int inputlen, void **state)
     return CORE_E_FORMAT;
   }
 
-  State = (struct State *)malloc(sizeof(struct State));
+  if (((unsigned int)statelen) < sizeof(struct State)) {
+    return CORE_E_FORMAT;
+  }
+  State = (struct State *)state;
   if (State == NULL) {
     return CORE_E_MEMORY;
   }
-  *state = State;
 
   memset(State, 0, sizeof(struct State));
 
   State->maxdepth = workstub->stub.marks;
   State->maxdepthm1 = State->maxdepth-1;
 
-  if (State->maxdepth > sizeof(OGR)/sizeof(OGR[0])) {
+  if (((unsigned int)State->maxdepth) > (sizeof(OGR)/sizeof(OGR[0]))) {
     return CORE_E_FORMAT;
   }
 
@@ -347,7 +321,7 @@ static int ogr_create(void *input, int inputlen, void **state)
     }
   }
 
-  State->startdepth = workstub->stub.length + 1;
+  State->startdepth = workstub->stub.length;
 
 /*
   printf("sizeof      = %d\n", sizeof(struct State));
@@ -421,7 +395,7 @@ static int ogr_cycle(void *state, int *pnodes)
     /* Find the next available mark location for this level */
 stay:
     comp0 = lev->comp[0];
-    if (State->LOGGING) printf("comp0=%08lx\n", comp0);
+    if (State->LOGGING) printf("comp0=%08x\n", comp0);
     if (comp0 < 0xffff0000) {
       s = first[comp0 >> 16];
     } else {
@@ -466,7 +440,7 @@ skip_out:
 up:
     lev--;
     depth--;
-    if (depth < State->startdepth) {
+    if (depth <= State->startdepth) {
       retval = CORE_S_OK;
       break;
     }
@@ -493,7 +467,7 @@ static int ogr_getresult(void *state, void *result, int resultlen)
     return CORE_E_FORMAT;
   }
   workstub->stub.marks = (u16)State->maxdepth;
-  workstub->stub.length = (u16)(State->startdepth - 1);
+  workstub->stub.length = (u16)State->startdepth;
   for (i = 0; i < STUB_MAX; i++) {
     workstub->stub.diffs[i] = (u16)(State->marks[i+1] - State->marks[i]);
   }
@@ -506,7 +480,7 @@ static int ogr_getresult(void *state, void *result, int resultlen)
 
 static int ogr_destroy(void *state)
 {
-  free(state);
+  state = state;
   return CORE_S_OK;
 }
 

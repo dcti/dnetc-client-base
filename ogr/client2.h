@@ -37,7 +37,7 @@ typedef struct {
    * Create a new work unit, called once for each thread.
    * The format of input is defined by the core.
    */
-  int (*create)(void *input, int inputlen, void **state);
+  int (*create)(void *input, int inputlen, void *state, int statelen);
 
   /*
    * Continue working, return CORE_S_OK if no more work to do, or
@@ -46,7 +46,7 @@ typedef struct {
    * to do. On output, nodes will contain the actual number of iterations
    * done.
    */
-  int (*cycle)(void *state, int *nodes);
+  int (*cycle)(void *state, int *steps);
 
   /*
    * If cycle returns CORE_S_SUCCESS, call getresult to get the successful

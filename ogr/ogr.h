@@ -24,4 +24,41 @@ struct WorkStub { /* size is 28 */
   u32 worklength;      /* depth of current state */
 };
 
+/*
+ * Internal stuff that's not part of the interface but we need for
+ * declaring the problem work area size.
+ */
+
+#define BITMAPS     5       /* need to change macros when changing this */
+#define MAXDEPTH   40
+
+typedef u32 U;
+
+struct Level {
+  U list[BITMAPS];
+  U dist[BITMAPS];
+  U comp[BITMAPS];
+  int cnt1;
+  int cnt2;
+  int limit;
+};
+
+struct State {
+  double Nodes;                   /* counts "tree branches" */
+  int max;                        /* maximum length of ruler */
+  int maxdepth;                   /* maximum number of marks in ruler */
+  int maxdepthm1;                 /* maxdepth-1 */
+  int half_length;                /* half of max */
+  int half_depth;                 /* half of maxdepth */
+  int half_depth2;                /* half of maxdepth, adjusted for 2nd mark */
+  int marks[MAXDEPTH+1];          /* current length */
+  int startdepth;
+  int depth;
+  int limit;
+  int LOGGING;
+  struct Level Levels[MAXDEPTH];
+};
+
+#define OGR_PROBLEM_SIZE sizeof(struct State)
+
 #endif

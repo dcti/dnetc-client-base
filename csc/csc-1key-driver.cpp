@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-1key-driver.cpp,v $
+// Revision 1.6  1999/11/08 01:49:42  cyp
+// sync
+//
+// Revision 1.3.2.7  1999/11/08 01:48:57  cyp
+// rewound last change
+//
 // Revision 1.5  1999/11/01 17:25:51  cyp
 // sync from release
 //
@@ -44,7 +50,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_1key_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-1key-driver.cpp,v 1.5 1999/11/01 17:25:51 cyp Exp $"; }
+return "@(#)$Id: csc-1key-driver.cpp,v 1.6 1999/11/08 01:49:42 cyp Exp $"; }
 #endif
 
 // ------------------------------------------------------------------
