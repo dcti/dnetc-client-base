@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.120 2001/07/09 08:29:55 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.121 2001/10/05 22:33:27 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -145,9 +145,10 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       */
       "allitnil",
       "lintilla",
-      "lintilla-604", /* Roberto Ragusa's core optimized for PPC 604e */
-      "Power RS",     /* _AIXALL only */
-      "crunch-vec",   /* altivec only */
+      "lintilla-604",    /* Roberto Ragusa's core optimized for PPC 604e */
+      "Power RS",        /* _AIXALL only */
+      "crunch-vec",      /* altivec only */
+      "crunch-vec-7450", /* altivec only */
       NULL
     },
     { /* DES */
@@ -273,9 +274,11 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
       if (have_pwr)
         cindex = 3;                     /* "PowerRS" */
       if (!have_pwr && cindex == 3)     /* "PowerRS" */
-        cindex = 1;                     /* "allitnil" */
+        cindex = 1;                     /* "lintilla" */
       if (!have_vec && cindex == 4)     /* "crunch-vec" */
-        cindex = 1;                     /* "allitnil" */
+        cindex = 1;                     /* "lintilla" */
+      if (!have_vec && cindex == 5)     /* "crunch-vec-7450" */
+        cindex = 1;                     /* "lintilla" */
     }
     else if (contestid == OGR)
     {
@@ -803,24 +806,24 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   }
   else if (contestid == RC5)
   {
-    /* lintilla depends on allitnil, and since we need both even on OS's 
-       that don't support the 601, we may as well "support" them visually.
-    */
     selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
     if (selcorestatics.corenum[RC5] < 0 && detected_type > 0)
     {
       int cindex = -1;
-      long det = detected_type & 0xff;
-
-      if (det == 1 )                   /* PPC 601 */
-        cindex = 0;                    /*  "allitnil" */
-      else if (det == 4 ||             /* PPC 604   */
-               det == 9 ||             /* PPC 604e  */
-               det == 10 )             /* PPC 604ev */
-        cindex = 2;                    /*   "lintilla-604" */
-      else                             /* the rest */
-        cindex = 1;                    /*   "lintilla" */
-
+      switch ( detected_type )
+      {
+        case 0x0001: cindex = 0; break; // 601            == allitnil
+        case 0x0003: cindex = 1; break; // 603            == lintilla
+        case 0x0004: cindex = 2; break; // 604            == lintilla-604
+        case 0x0006: cindex = 1; break; // 603e           == lintilla
+        case 0x0007: cindex = 1; break; // 603r/603ev     == lintilla
+        case 0x0008: cindex = 1; break; // 740/750 (G3)   == lintilla
+        case 0x0009: cindex = 2; break; // 604e           == lintilla-604
+        case 0x000A: cindex = 2; break; // 604ev          == lintilla-604
+        case 0x000C: cindex = 1; break; // 7400/7410 (G4) == lintilla
+        case 0x8000: cindex = 1; break; // 7450 (G4+)     == lintilla
+        default:     cindex =-1; break; // no default (used to be lintilla)
+      }
       #if defined(_AIXALL)             /* Power/PPC hybrid */
       if (( detected_type & (1L<<24) ) != 0) //ARCH_IS_POWER?
         cindex = 3;                    /* "PowerRS" */
@@ -829,9 +832,15 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       #endif
       #if defined(__VEC__)             /* OS+compiler support altivec */
       if (( detected_type & (1L<<25) ) != 0) //altivec?
-        cindex = 4;                    /* "crunch-vec" */
+        {
+          switch ( detected_type )
+          {
+            case 0x000C: cindex = 4; break; // 7400/7410 (G4) == crunch-vec
+            case 0x8000: cindex = 5; break; // 7450 (G4+)     == crunch-vec-7450
+            default:     cindex =-1; break; // no default
+          }
+        }
       #endif
-
       selcorestatics.corenum[RC5] = cindex;
     }
   }
@@ -1242,6 +1251,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       extern "C" u32 rc5_unit_func_lintilla_604_compat( RC5UnitWork *, u32 );
       #if defined(__VEC__) /* OS+compiler support altivec */
         extern "C" u32 rc5_unit_func_vec_compat( RC5UnitWork *, u32 );
+        extern "C" u32 rc5_unit_func_vec_7450_compat( RC5UnitWork *, u32 );
       #endif
     #endif
   #endif
@@ -1557,9 +1567,14 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         }
         #endif
         #if defined(__VEC__)
-        else if (coresel == 4)    // G4 (PPC 7400)
+        else if (coresel == 4)    // G4 (PPC 7400/7410)
         {
           unit_func.rc5 = rc5_unit_func_vec_compat;
+          pipeline_count = 1;
+        }
+        else if (coresel == 5)    // G4 (PPC 7450)
+        {
+          unit_func.rc5 = rc5_unit_func_vec_7450_compat;
           pipeline_count = 1;
         }
         #endif
