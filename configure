@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.204  1999/03/07 06:03:10  peter
+# Added mips-cobalt target, which doesn't work yet.  Fails DES tests,
+# and segfaults when running for real.
+#
 # Revision 1.203  1999/03/05 21:17:14  patrick
 #
 # removed pipelinecount for AIX targets, added comments according to
@@ -1007,6 +1011,16 @@ DELETECHARS="'[:punct:]'"
 case "$1" in
 
 ###### MIPS based platforms
+    *mips-cobalt)	# For Cobalt Qube - doesn't work yet - Peter
+	RC5CORECOPY="rc5/mips-crunch.cpp"
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="$OPTS_GCC_MIPS -mcpu=r3000 \
+			-DMULTITHREAD \
+			-DBIT_32 -DKWAN -DMEGGS -DMIPS_CRUNCH=1"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+	TARGET_LIBS="-lpthread"
+	;;
+
     *mips-sni-gcc)	   #For MIPS SINIX
 	RC5CORECOPY="rc5/mips/mips-crunch.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -Dsinix \
