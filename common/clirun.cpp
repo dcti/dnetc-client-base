@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.54 2000/05/07 17:49:42 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.55 2000/05/07 18:03:07 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -239,13 +239,14 @@ void Go_mt( void * parm )
   if (thrparams->realthread)
   {
     thrparams->threadID = GetThreadID(); /* in case we got here first */
-    nwCliInitializeThread( threadnum+1 );
-    /* rename thread, migrate to MP, bind to cpu... */
+    nwCliInitializeThread( threadnum+1 ); /* rename thread, migrate to MP, etc */
+    #if defined(HAVE_POLLPROC_SUPPORT)
     if (nwCliGetPollingAllowedFlag() && threadnum == 0)
     {
       thrparams->thread_restart_time = 0;  
       usepollprocess = 1;
     }
+    #endif
   }
 #elif ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))  
   if (thrparams->realthread)
@@ -316,7 +317,7 @@ void Go_mt( void * parm )
       elapsed_usec = thisprob->runtime_usec;
 
       thrparams->is_suspended = 0;
-      #if (CLIENT_OS == OS_NETWARE)
+      #if (CLIENT_OS == OS_NETWARE) && defined(HAVE_POLLPROC_SUPPORT)
       if (usepollprocess)
         run = nwCliRunProblemAsCallback( thisprob, threadnum+1, thrparams->priority);
       else
