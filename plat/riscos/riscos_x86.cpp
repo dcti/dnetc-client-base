@@ -5,7 +5,7 @@
  *
  * x86 PCCARD support including a crunch wrapper/controller
  *
- * $Id: riscos_x86.cpp,v 1.4 2003/11/01 14:20:15 mweiser Exp $
+ * $Id: riscos_x86.cpp,v 1.5 2003/11/01 15:07:10 mweiser Exp $
 */
 
 #include <string.h> /* memcpy */

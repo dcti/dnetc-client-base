@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.7 2003/11/01 14:20:13 mweiser Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.8 2003/11/01 15:07:10 mweiser Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -101,6 +101,10 @@ return "@(#)$Id: netbase.cpp,v 1.7 2003/11/01 14:20:13 mweiser Exp $"; }
   #include <sys/socket.h>
   #include <sys/select.h>
   #include <sys/ioctl.h>
+  #if defined (__WATCOMC__)
+    #include <types.h>
+    #include <tcpustd.h>
+  #endif
 #elif (CLIENT_OS == OS_AMIGAOS)
   extern "C" {
   #include <assert.h>

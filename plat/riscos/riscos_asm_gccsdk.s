@@ -7,7 +7,7 @@
 
         AREA    |C$$code|, CODE, READONLY
 
-        DCB     "@(#)$Id: riscos_asm_gccsdk.s,v 1.3 2003/11/01 14:20:15 mweiser Exp $", 0
+        DCB     "@(#)$Id: riscos_asm_gccsdk.s,v 1.4 2003/11/01 15:07:10 mweiser Exp $", 0
         ALIGN
 
 OS_Byte			*	&06
