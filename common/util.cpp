@@ -5,7 +5,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.45 2001/03/11 14:57:22 andreasb Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.46 2001/03/19 18:06:58 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -1045,8 +1045,12 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
         #elif (CLIENT_OS == OS_IRIX) || (CLIENT_OS == OS_HPUX)
         pscmd = "/usr/bin/ps -e |awk '{print$1\" \"$4\" \"$5\" \"$6\" \"$7\" \"$8\" \"$9}' 2>/dev/null";
-        #elif (CLIENT_OS == OS_NTO2)
-        pscmd = "ps -A -o pid,comm 2>/dev/null";
+        #elif (CLIENT_OS == OS_QNX)
+          #if defined(__QNXNTO__) /* neutrino */
+          pscmd = "ps -A -o pid,comm 2>/dev/null";
+          #else
+          pscmd = "ps -A -F"%p %c" 2>/dev/null";
+          #endif
         #else
         #error fixme: select an appropriate ps syntax (or use another method to get pidlist)
         #error "this part is only needed for OSs that do not have another way"
@@ -1176,4 +1180,3 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
 
   return num_found;
 }
-

@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.72 2001/02/17 20:31:41 sampo Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.73 2001/03/19 18:06:56 cyp Exp $"; }
 
 //#define TRACE
 
@@ -428,9 +428,11 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           #elif (CLIENT_OS == OS_BEOS)
           pscmd = "/bin/ps | /bin/egrep zzz | /bin/egrep -v crunch 2>/dev/null";  /* get the (sleeping) main thread ID, not the team ID */
           #elif (CLIENT_OS == OS_QNX)
-          pscmd = "ps -A -F"%p %c" 2>/dev/null";
-          #elif (CLIENT_OS == OS_NTO2)
-          pscmd = "ps -A -o pid,comm 2>/dev/null";
+            #if defined(__QNXNTO__) /* neutrino */
+            pscmd = "ps -A -o pid,comm 2>/dev/null";
+            #else
+            pscmd = "ps -A -F"%p %c" 2>/dev/null";
+            #endif
           #else
           #error fixme: select an appropriate ps syntax
           #endif

@@ -9,7 +9,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.89 2001/02/22 08:02:24 mfeiri Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.90 2001/03/19 18:06:55 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -226,8 +226,6 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
        different syscall # on 3.4,4.x */
     //sched_yield();
     NonPolledUSleep( 0 ); /* yield */
-  #elif (CLIENT_OS == OS_QNX)
-    NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_AIX)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_ULTRIX)
@@ -242,8 +240,12 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
    NonPolledUSleep(0);
   #elif (CLIENT_OS == OS_NEXTSTEP)
     NonPolledUSleep(0);
-  #elif (CLIENT_OS == OS_NTO2)
+  #elif (CLIENT_OS == OS_QNX)
+    #if defined(__QNXNTO__)
     sched_yield();
+    #else
+    NonPolledUSleep(0);
+    #endif
   #elif (CLIENT_OS == OS_AMIGAOS)
     NonPolledUSleep( 0 ); /* yield */
   #else

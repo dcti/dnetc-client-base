@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.60 2001/02/03 20:03:48 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.61 2001/03/19 18:06:57 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -1052,7 +1052,10 @@ static void __init_signal_handlers( int doingmodes )
   #if defined(__unix__) && defined(TRIGGER_PAUSE_SIGNAL)
   if (!doingmodes)                  // signal-based pause/unpause mechanism?
   {
-    #if (CLIENT_OS != OS_NTO2) && (CLIENT_OS != OS_BEOS)
+    #if ((CLIENT_OS == OS_QNX) && defined(__QNXNTO__)) || \
+         (CLIENT_OS == OS_BEOS)
+       /* nothing */          
+    #else          
     // stop the shell from seeing SIGTSTP and putting the client into 
     // the background when we '-pause' it.
     if( getpgrp() != getpid() ) 

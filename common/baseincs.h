@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.49 2001/02/05 18:39:39 ephraim Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.50 2001/03/19 18:06:55 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -284,17 +284,14 @@
   #include <unistd.h>
 #elif (CLIENT_OS == OS_QNX)
   #include <sys/time.h>
-  #include <sys/select.h>
-  #include <process.h>
-  #include <env.h>
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
-#elif (CLIENT_OS == OS_NTO2)
-  #include <sys/time.h>
-  #include <strings.h>
-  #include <unistd.h>
+  #if defined(__QNXNTO__) /* neutrino */
   #include <sched.h>
   #include <sys/syspage.h>
-  #include <netinet/in.h> //ntohl/htonl/ntohs/htons
+  #else
+  #include <process.h>
+  #include <env.h>
+  #endif
 #elif (CLIENT_OS == OS_DYNIX)
   #include <unistd.h> // sleep(3c)
   extern "C" int gethostname(char *, int);

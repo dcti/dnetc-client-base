@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.51 2001/03/10 16:25:04 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.52 2001/03/19 18:06:57 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -26,7 +26,7 @@
 #define CPU_POWER       9
 #define CPU_VAX         10
 #define CPU_ARM         11
-#define CPU_88K         12
+#define CPU_88K         12 /* may be recycled - DG/UX is no longer supported */
 #define CPU_IA64        13
 #define CPU_S390        14
 /* #define CPU_UNUSED_3 15 - please recycle */
@@ -55,8 +55,8 @@
 #define OS_BSDOS        18
 #define OS_NEXTSTEP     19
 #define OS_SCO          20
-#define OS_QNX          21
-#define OS_NTO2         22 /* QNX Neutrino */
+#define OS_QNX          21 /* includes QNX Neutrino */
+/* #define OS_UNUSED_3  22 */ /* reserved until Jul 2001 */
 /* #define OS_UNUSED_4  23 */ /* never used. was minix */
 /* #define OS_UNUSED_5  24 */ /* never used. was mach10 */
 #define OS_AIX          25
@@ -131,7 +131,7 @@
   #define CLIENT_OS     OS_LINUX
   #if defined(ASM_HPPA) /* cross compile, ergo don't use __hppa/__hppa__ */
     #define CLIENT_CPU    CPU_PA_RISC
-  #elif defined(ASM_SH4) /* cross compile */
+  #elif defined(ASM_SH4) /* cross compile, ergo don't use __sh__ */
     #define CLIENT_CPU   CPU_SH4
   #elif defined(ASM_ALPHA) || defined(__alpha__)
     #define CLIENT_CPU    CPU_ALPHA
@@ -214,12 +214,11 @@
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
+  #define CLIENT_OS       OS_QNX
   #if defined(__QNXNTO__)
-    #define CLIENT_OS_NAME "Neutrino"
-    #define CLIENT_OS	    OS_NTO2
+    #define CLIENT_OS_NAME "QNX Neutrino"
   #else
     #define CLIENT_OS_NAME  "QNX"
-    #define CLIENT_OS       OS_QNX
   #endif
   #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
@@ -229,7 +228,7 @@
     #define CLIENT_CPU    CPU_MIPS
   #elif defined(ASM_ARM)
     #define CLIENT_CPU    CPU_ARM
-  #elif defined(ASM_SH4)
+  #elif defined(ASM_SH4) /* cross compile, ergo don't use  __sh__ */
     #define CLIENT_CPU    CPU_SH4
   #endif
 #elif defined(solaris) || defined(sun) || defined(_SUN68K_)
@@ -286,7 +285,7 @@
   #if defined(ASM_MIPS) || defined(__mips)
     #define CLIENT_CPU    CPU_MIPS
   #endif
-#elif (defined(ASM_MIPS) || defined(__mips))
+#elif defined(IRIX) || defined(Irix) || defined(irix)
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif

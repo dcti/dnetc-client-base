@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.50 2001/02/05 18:39:41 ephraim Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.51 2001/03/19 18:06:56 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -36,7 +36,8 @@ return "@(#)$Id: console.cpp,v 1.48.2.50 2001/02/05 18:39:41 ephraim Exp $"; }
   || (CLIENT_OS==OS_FREEBSD) || ((CLIENT_OS==OS_OS2) && defined(__EMX__)) \
   || (CLIENT_OS==OS_AIX) || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==BSDOS) \
   || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_HPUX) || (CLIENT_OS==OS_SUNOS) \
-  || ((CLIENT_OS==OS_MACOSX) && !defined(__RHAPSODY__)) || (CLIENT_OS==OS_NTO2) \
+  || ((CLIENT_OS==OS_MACOSX) && !defined(__RHAPSODY__)) \
+  || ((CLIENT_OS==OS_QNX) && defined(__QNXNTO__)) \
   || (CLIENT_OS==OS_DYNIX))
 #include <termios.h>
 #define HAVE_TERMIOS
@@ -348,7 +349,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         #if (CLIENT_OS == OS_BEOS)
         newios.c_lflag &= ~(ECHO|ECHONL);  /* BeOS does not have (non-Posix?) ECHOPRT and ECHOCTL */
         #else
-        #if (CLIENT_OS == OS_NTO2)
+        #if (CLIENT_OS == OS_QNX) && defined(__QNXNTO__)
         newios.c_lflag &= ~(ECHO|ECHONL|ECHOCTL);
         #else
         newios.c_lflag &= ~(ECHO|ECHONL|ECHOPRT|ECHOCTL); /* no echo at all */
@@ -696,7 +697,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
       width   = winsz.ts_cols;
       height  = winsz.ts_lines;
     }
-  #elif (CLIENT_OS == OS_NTO2)
+  #elif (CLIENT_OS == OS_QNX) && defined(__QNXNTO__)
     tcgetsize(fileno(stdout), &height, &width);
   #elif (CLIENT_OS == OS_AMIGAOS)
     amigaConGetSize( &width, &height);

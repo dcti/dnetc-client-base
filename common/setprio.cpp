@@ -10,7 +10,7 @@
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.50.2.17 2001/01/20 12:32:25 cyp Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.50.2.18 2001/03/19 18:06:57 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -217,19 +217,13 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
   }
   #elif (CLIENT_OS == OS_QNX)
   {
-    if ( set_for_thread )
-    {
-      // nothing - non threaded
-    }
-    else
-    {
-      setprio( 0, prio-3 );
-    }
-  }
-  #elif (CLIENT_OS == OS_NTO2)
-  {
+    #if defined(__QNXNTO__) /* neutrino */
     if (set_for_thread)
       setprio(0,prio+1);
+    #else
+    if (!set_for_thread) /* actually always non-threaded */
+      setprio( 0, prio-3 );
+    #endif
   }
   #else // all other UNIX-like environments
   {

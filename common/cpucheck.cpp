@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.67 2001/02/14 19:58:43 sampo Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.68 2001/03/19 18:06:56 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -193,7 +193,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     {
       cpucount = riscos_count_cpus();
     }
-    #elif (CLIENT_OS == OS_NTO2)
+    #elif (CLIENT_OS == OS_QNX) && defined(__QNXNTO__) /* neutrino */
     {
       cpucount = _syspage_ptr->num_cpu;
     }
