@@ -10,14 +10,17 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
-// Revision 1.22  1998/09/30 08:12:32  snake
+// Revision 1.23  1998/10/03 03:47:01  cyp
+// added 3 local header files (w32svc, w32cons, lurk) to the win32 section
+// and 2 header files to os2 (os2inst, lurk)
 //
+// Revision 1.22  1998/09/30 08:12:32  snake
 // Removed NASM stuff for BSD/OS, nasm does not support the a.out format of
 // BSD/OS.
 //
 // Revision 1.21  1998/09/30 07:41:05  snake
-//
-// BSD/OS also needs <errno.h>, maybe we should include it for all BSD like OS's
+// BSD/OS also needs <errno.h>, maybe we should include it for all BSD 
+// like OS's
 //
 // Revision 1.20  1998/09/29 23:14:19  silby
 // Fix for the syntax of the last fix. :)
@@ -89,16 +92,7 @@
 // added time includes for Linux (probably will be needed for others)
 //
 // Revision 1.1  1998/07/07 21:55:01  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
+// client.h has been split into client.h and baseincs.h 
 //
 
 #ifndef __BASEINCS_H__
@@ -120,6 +114,7 @@ extern "C" {
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
+#include <errno.h>
 
 #if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
 }
@@ -140,6 +135,8 @@ extern "C" {
   #include <io.h>
   #include "platforms/os2cli/os2defs.h"
   #include "platforms/os2cli/dod.h"   // needs to be included after Client
+  #include "lurk.h"
+  #include "platforms/os2cli/os2inst.h" //-install/-uninstall functionality
   #ifndef QSV_NUMPROCESSORS       /* This is only defined in the SMP toolkit */
     #define QSV_NUMPROCESSORS     26
   #endif
@@ -160,6 +157,7 @@ extern "C" {
     extern bool riscos_check_taskwindow();
     extern int riscos_find_local_directory(const char *argv0);
     extern char *riscos_localise_filename(const char *filename);
+    extern void riscos_upcall_6(void); //yield
     extern int getch();
 
     #define fileno(f) ((f)->__file)
@@ -195,6 +193,9 @@ extern "C" {
   #define WIN32_LEAN_AND_MEAN
   #include <windows.h>
   #include <winsock.h>      // timeval
+  #include "lurk.h"
+  #include "platforms/win32cli/w32svc.h" //service
+  #include "platforms/win32cli/w32cons.h" //console
 #elif (CLIENT_OS == OS_DOS)
   #include <sys/timeb.h>
   #include <io.h>
