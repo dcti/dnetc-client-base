@@ -5,6 +5,9 @@
 ;
 ;
 ; $Log: rc5-arm-2.s,v $
+; Revision 1.2  1999/01/06 14:45:21  chrisb
+; changed to allow cores to increment the high word of the key, so they pass -test. rc5-arm-3.s coming soon.
+;
 ; Revision 1.1  1998/09/25 11:33:32  chrisb
 ; rc5-arm-1.s rc5-arm-2.s and rc5-arm-3.s replace rc5-arm.s and rc5-sa.s
 ;
@@ -13,7 +16,7 @@
 
 	AREA	fastrc5area, CODE
 
-        DCB     "@(#)$Id: rc5-arm-2.s,v 1.1 1998/09/25 11:33:32 chrisb Exp $", 0
+        DCB     "@(#)$Id: rc5-arm-2.s,v 1.2 1999/01/06 14:45:21 chrisb Exp $", 0
         ALIGN
 
 	EXPORT	rc5_unit_func_arm_2
@@ -507,25 +510,25 @@ carry_1st
 	add	r2,r2,#&00000001
 	ands	r2,r2,#&000000ff
 ; will never increment high word
-	b	timingloop2
-;	bne	timingloop2
+	;	b	timingloop2
+	bne	timingloop2
 ;
 ;; not likely to happen very often...
-;	ldr	r3,[r13,#28]
-;	adds	r3,r3,#&01000000
-;	bcc	timingloop
+	ldr	r3,[r13,#28]
+	adds	r3,r3,#&01000000
+	bcc	timingloop
 ;
-;	add	r3,r3,#&00010000
-;	tst	r3,   #&00ff0000
-;	bne	timingloop
-;	sub	r3,r3,#&01000000
-;	add	r3,r3,#&00000100
-;	tst	r3,   #&0000ff00
-;	bne	timingloop
-;	sub	r3,r3,#&00010000
-;	add	r3,r3,#&00000001
-;	and	r3,r3,#&000000ff
-;	b	timingloop
+	add	r3,r3,#&00010000
+	tst	r3,   #&00ff0000
+	bne	timingloop
+	sub	r3,r3,#&01000000
+	add	r3,r3,#&00000100
+	tst	r3,   #&0000ff00
+	bne	timingloop
+	sub	r3,r3,#&00010000
+	add	r3,r3,#&00000001
+	and	r3,r3,#&000000ff
+	b	timingloop
 
 
 
@@ -551,24 +554,24 @@ the_end
 	add	r2,r2,#&00000001
 	ands	r2,r2,#&000000ff
 ; increment of high word only at end of block - result does not matter then.
-	b	function_exit
-;	bne	function_exit
+;	b	function_exit
+	bne	function_exit
 ;
 ;; not likely to happen very often...
-;	adds	r3,r3,#&01000000
-;	tst	r3,   #&ff000000
-;	bne	function_exit
+	adds	r3,r3,#&01000000
+	tst	r3,   #&ff000000
+	bne	function_exit
 ;
-;	add	r3,r3,#&00010000
-;	tst	r3,   #&00ff0000
-;	bne	function_exit
-;	sub	r3,r3,#&01000000
-;	add	r3,r3,#&00000100
-;	tst	r3,   #&0000ff00
-;	bne	function_exit
-;	sub	r3,r3,#&00010000
-;	add	r3,r3,#&00000001
-;	and	r3,r3,#&000000ff
+	add	r3,r3,#&00010000
+	tst	r3,   #&00ff0000
+	bne	function_exit
+	sub	r3,r3,#&01000000
+	add	r3,r3,#&00000100
+	tst	r3,   #&0000ff00
+	bne	function_exit
+	sub	r3,r3,#&00010000
+	add	r3,r3,#&00000001
+	and	r3,r3,#&000000ff
 
 
 function_exit
