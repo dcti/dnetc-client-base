@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-meggs.cpp,v $
+// Revision 1.11  1998/07/08 16:26:22  remi
+// Added support for MS-VC++ 5.0
+//
 // Revision 1.10  1998/07/08 10:06:20  remi
 // Another RCS-id tweaking.
 //
@@ -25,7 +28,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_meggs_cpp(void) {
-static const char *id="@(#)$Id: des-slice-meggs.cpp,v 1.10 1998/07/08 10:06:20 remi Exp $";
+static const char *id="@(#)$Id: des-slice-meggs.cpp,v 1.11 1998/07/08 16:26:22 remi Exp $";
 return id; }
 #endif
 
@@ -41,9 +44,16 @@ return id; }
 #error "everything assumes a 32bit CPU..."
 #endif
 
-#ifdef MMX_BITSLICER
-  #define BASIC_SLICE_TYPE unsigned long long
-  #define NOTZERO ~(0ull)
+#if defined(MMX_BITSLICER)
+  #if defined(__GNUC__)
+    #define BASIC_SLICE_TYPE unsigned long long
+    #define NOTZERO ~(0ull)
+  #elif (_MSC_VER >= 11) // VC++ 5.0
+    #define BASIC_SLICE_TYPE __int64
+    #define NOTZERO ~((__int64)0)
+  #elif
+    #error "What's the 64-bit type on your compiler ?"
+  #endif
 #else
   #define BASIC_SLICE_TYPE unsigned long
   #define NOTSZERO ~(0ul)
@@ -157,20 +167,22 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
     key[ 0] = 0xF0F0F0F0ul;
     key[ 1] = 0xFF00FF00ul;
     key[ 2] = 0xFFFF0000ul;
-#elif MMX_BITSLICER
+#elif defined(MMX_BITSLICER) && defined(__GNUC__)
     key[40] = 0xAAAAAAAAAAAAAAAAull;
     key[41] = 0xCCCCCCCCCCCCCCCCull;
     key[ 0] = 0x0F0F0F0FF0F0F0F0ull;
     key[ 1] = 0xFF00FF00FF00FF00ull;
     key[ 2] = 0xFFFF0000FFFF0000ull;
     key[ 4] = 0xFFFFFFFF00000000ull;
-#elif BIT_64
+#elif (defined(MMX_BITSLICER) && (_MSC_VER>=11)) || (defined(BIT_64) && !defined(MMX_BITSLICER))
     key[40] = 0xAAAAAAAAAAAAAAAAul;
     key[41] = 0xCCCCCCCCCCCCCCCCul;
     key[ 0] = 0x0F0F0F0FF0F0F0F0ul;
     key[ 1] = 0xFF00FF00FF00FF00ul;
     key[ 2] = 0xFFFF0000FFFF0000ul;
     key[ 4] = 0xFFFFFFFF00000000ul;
+#else
+    #error "Write this section for your compiler"
 #endif
 	
 #if defined(DEBUG) && defined(BIT_32)
