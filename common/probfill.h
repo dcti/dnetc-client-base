@@ -1,0 +1,37 @@
+// Hey, Emacs, this a -*-C++-*- file !
+
+// Copyright distributed.net 1997-1998 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+//
+// $Log: probfill.h,v $
+// Revision 1.1  1998/09/28 01:16:09  cyp
+// Spun off from client.cpp
+//
+// 
+
+#ifndef __PROBFILL_H__
+#define __PROBFILL_H__
+
+#define PROBFILL_ANYCHANGED  1
+#define PROBFILL_GETBUFFERRS 2
+#define PROBFILL_UNLOADALL   3
+
+// --------------------------------------------------------------------------
+#if ((CLIENT_CPU > 0x01F /* 0-31 */) || ((CLIENT_CONTEST-64) > 0x0F /* 64-79 */) || \
+     (CLIENT_BUILD > 0x07 /* 0-7 */) || (CLIENT_BUILD_FRAC > 0x03FF /* 0-1023 */) || \
+     (CLIENT_OS  > 0x3F  /* 0-63 */)) // + cputype 0-15
+#error CLIENT_CPU/_OS/_CONTEST/_BUILD are out of range for FileEntry check tags
+#endif    
+
+#define FILEENTRY_CPU    ((u8)(((cputype & 0x0F)<<4) | (CLIENT_CPU & 0x0F)))
+#define FILEENTRY_OS      ((CLIENT_OS & 0x3F) | ((CLIENT_CPU & 0x10) << 3) | \
+                           (((CLIENT_BUILD_FRAC>>8)&2)<<5))
+#define FILEENTRY_BUILDHI ((((CLIENT_CONTEST-64)&0x0F)<<4) | \
+                            ((CLIENT_BUILD & 0x07)<<1) | \
+                            ((CLIENT_BUILD_FRAC>>8)&1)) 
+#define FILEENTRY_BUILDLO ((CLIENT_BUILD_FRAC) & 0xff)  
+
+// --------------------------------------------------------------------------
+
+#endif /* __PROBFILL_H__ */
