@@ -1,6 +1,6 @@
 
   distributed.net client documentation
-  document revision $Id: rc5des.txt,v 1.38 1999/10/11 18:41:41 cyp Exp $
+  document revision $Id: dnetc.txt,v 1.1 1999/10/11 18:46:57 cyp Exp $
 
   Copyright distributed.net 1997-1999 - All Rights Reserved
   For use in distributed.net projects only.
