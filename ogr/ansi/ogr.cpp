@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.28 2004/05/22 12:57:53 kakace Exp $
+ * $Id: ogr.cpp,v 1.2.4.29 2004/06/16 18:11:01 kakace Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -96,14 +96,12 @@
     #endif
   #elif defined(__xlC__)
     #include <builtins.h>                           /* __cntlz4()       */
-
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* xlC does benefit */
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
-
     /* xlC has __rlwimi but lacks __rlwinm */
     #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0
     #define OGROPT_CYCLE_CACHE_ALIGN              0 /* no balignl       */
@@ -122,14 +120,12 @@
     #define OGROPT_CYCLE_CACHE_ALIGN              0 /* no balignl       */
   #elif defined(__xlC__)
     #include <builtins.h>                           /* __cntlz4()       */
-
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* xlC does benefit */
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
-
     /* xlC has __rlwimi but lacks __rlwinm */
     #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0
     #define OGROPT_CYCLE_CACHE_ALIGN              0 /* no balignl       */
@@ -173,20 +169,17 @@
            (OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM == 0)
   #undef OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
 #else
-  #if (!defined(OVERWRITE_DEFAULT_OPTIMIZATIONS) && \
+  #if (!defined(OVERWRITE_DEFAULT_OPTIMIZATIONS) &&     \
        defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM)) || \
        !defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM)
     #undef OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
-    #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__) || \
-        defined(ASM_POWER) || \
-        (defined(__WATCOMC__) && defined(__386__)) || \
-        (defined(__MWERKS__) && defined(__INTEL__)) || \
-        (defined(__ICC)) /* icc is Intel only (duh!) */ || \
-        defined(ALPHA_CIX) || \
-        (defined(__GNUC__) && (defined(ASM_X86) \
-                               || (defined(ASM_68K) && (defined(mc68020) \
-                               || defined(mc68030) || defined(mc68040) \
-                               || defined(mc68060)))))
+    #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)         \
+        || defined(ASM_POWER) || (defined(__WATCOMC__) && defined(__386__))  \
+        || (defined(__MWERKS__) && defined(__INTEL__))                       \
+        || (defined(__ICC)) /* icc is Intel only */ || defined(ALPHA_CIX)    \
+        || (defined(__GNUC__) && (defined(ASM_X86)  || (defined(ASM_68K) &&  \
+                                    (defined(mc68020) || defined(mc68030)    \
+                                  || defined(mc68040) || defined(mc68060)))))
       #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 1
       /* #define OGR_TEST_FIRSTBLANK */ /* ... to test */
     #endif
@@ -314,6 +307,7 @@
 #if !defined(HAVE_STATIC_CHOOSEDAT) || defined(CRC_CHOOSEDAT_ANYWAY)
 #include "crc32.h" /* only need to crc choose_dat if its not static */
 #endif
+
 #include "ogr.h"
 
 #ifndef OGROPT_NEW_CHOOSEDAT
@@ -338,36 +332,38 @@ extern "C" {
 #endif
 
 #ifndef OGROPT_NEW_CHOOSEDAT
-#ifdef HAVE_STATIC_CHOOSEDAT  /* choosedat table is static, pre-generated */
-   extern const unsigned char ogr_choose_dat[]; /* this is in ogr_dat.cpp */
-   #if (CHOOSE_MARKS == 12 && OGROPT_STRENGTH_REDUCE_CHOOSE == 1)
+  #ifdef HAVE_STATIC_CHOOSEDAT  /* choosedat table is static, pre-generated */
+    extern const unsigned char ogr_choose_dat[]; /* this is in ogr_dat.cpp */
+    #if (CHOOSE_MARKS == 12 && OGROPT_STRENGTH_REDUCE_CHOOSE == 1)
       // strength reduce the multiply -- which is slow on MANY processors
       #define choose(x,y) (ogr_choose_dat[((x)<<3)+((x)<<2)+(y+3)]) /*+3 skips header */
-   #else
+    #else
       #define choose(x,y) (ogr_choose_dat[CHOOSE_MARKS*(x)+(y+3)]) /*+3 skips header */
-   #endif
-#else
-   static const unsigned char *choosedat;/* set in init_load_choose() */
-   #if (CHOOSE_MARKS == 12 && OGROPT_STRENGTH_REDUCE_CHOOSE == 1)
+    #endif
+  #else
+    static const unsigned char *choosedat;/* set in init_load_choose() */
+    #if (CHOOSE_MARKS == 12 && OGROPT_STRENGTH_REDUCE_CHOOSE == 1)
       // strength reduce the multiply -- which is slow on MANY processors
       #define choose(x,y) (choosedat[((x)<<3)+((x)<<2)+(y)])
-   #else
+    #else
       #define choose(x,y) (choosedat[CHOOSE_MARKS*(x)+(y)])
-   #endif
-#endif
-#else /* we have OGROPT_NEW_CHOOSEDAT */
-#ifdef HAVE_STATIC_CHOOSEDAT  /* choosedat table is static, pre-generated */
-//  extern const unsigned char ogr_choose_dat2[]; /* this is in ogr_dat2.cpp */
-  #if (CHOOSE_ALIGN_MARKS == 16 && OGROPT_STRENGTH_REDUCE_CHOOSE == 1)
-     // strength reduce the multiply -- which is slow on MANY processors
-     #define choose(x,y) (ogr_choose_dat2[((x)<<4)+(y)])
-  #else
-     #define choose(x,y) (ogr_choose_dat2[CHOOSE_ALIGN_MARKS*(x)+(y)])
+    #endif
   #endif
-#else
-  #error OGROPT_NEW_CHOOSEDAT and not HAVE_STATIC_CHOOSEDAT ???   
-#endif
+#else /* we have OGROPT_NEW_CHOOSEDAT */
+  #ifdef HAVE_STATIC_CHOOSEDAT  /* choosedat table is static, pre-generated */
+    //  extern const unsigned char ogr_choose_dat2[]; /* this is in ogr_dat2.cpp */
+    #if (CHOOSE_ALIGN_MARKS == 16 && OGROPT_STRENGTH_REDUCE_CHOOSE == 1)
+      // strength reduce the multiply -- which is slow on MANY processors
+      #define choose(x,y) (ogr_choose_dat2[((x)<<4)+(y)])
+    #else
+      #define choose(x,y) (ogr_choose_dat2[CHOOSE_ALIGN_MARKS*(x)+(y)])
+    #endif
+  #else
+    #error OGROPT_NEW_CHOOSEDAT and not HAVE_STATIC_CHOOSEDAT ???   
+  #endif
 #endif /* OGROPT_NEW_CHOOSEDAT */
+
+/* ----------------------------------------------------------------------- */
 
 static const int OGR[] = {
   /*  1 */    0,   1,   3,   6,  11,  17,  25,  34,  44,  55,
@@ -385,6 +381,7 @@ static const int OGR[] = {
    #define OGR_NO_FUNCTION_INLINE(x) x
 #endif
 
+
 #ifndef __MRC__
 static int init_load_choose(void);
 #if defined(OGR_NON_STATIC_FOUND_ONE)
@@ -393,17 +390,20 @@ OGR_NO_FUNCTION_INLINE(int found_one(const struct State *oState));
 OGR_NO_FUNCTION_INLINE(static int found_one(const struct State *oState));
 #endif
 static int ogr_init(void);
-static int ogr_create(void *input, int inputlen, void *state, int statelen, int minpos);
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints);
 static int ogr_getresult(void *state, void *result, int resultlen);
 static int ogr_destroy(void *state);
+static int ogr_cleanup(void);
+
+#if defined(HAVE_OGR_CORES)
+static int ogr_create(void *input, int inputlen, void *state, int statelen, int minpos);
+#endif
 #if defined(HAVE_OGR_COUNT_SAVE_LOAD_FUNCTIONS)
 static int ogr_count(void *state);
 static int ogr_save(void *state, void *buffer, int buflen);
 static int ogr_load(void *buffer, int buflen, void **state);
 #endif
-static int ogr_cleanup(void);
-#endif
+#endif  /* __MRC__ */
 
 #ifndef OGR_GET_DISPATCH_TABLE_FXN
   #define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table
@@ -413,7 +413,9 @@ static int ogr_cleanup(void);
   #define OGR_P2_GET_DISPATCH_TABLE_FXN ogr_p2_get_dispatch_table
 #endif
 
+#if defined(HAVE_OGR_CORES)
 extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
+#endif
 extern CoreDispatchTable * OGR_P2_GET_DISPATCH_TABLE_FXN (void);
 
 #if defined(__cplusplus)
@@ -427,113 +429,17 @@ extern CoreDispatchTable * OGR_P2_GET_DISPATCH_TABLE_FXN (void);
  * The variables defined here should only be manipulated within these class macros.
  ***********************************************************************************/
 
-#if (OGROPT_ALTERNATE_CYCLE == 2) /* support macros for the vectorized ogr_cycle() routine */
+#if (OGROPT_ALTERNATE_CYCLE == 1) /* support macros for the alternate ogr_cycle() routine */
 
-#if (defined(__GNUC__) && !defined(__APPLE_CC__))
-  #define ZEROBIT_DECL {0, 0, 1, 0}
-  #define ZEROS_DECL {0}
-#else
-  #define ZEROBIT_DECL (0, 0, 1, 0)
-  #define ZEROS_DECL (0)
-#endif
-
- /* define the local variables used for the top recursion state */
-#define SETUP_TOP_STATE(state,lev)                                  \
-   vector unsigned int  compV0;                                     \
-   vector unsigned int  compV1;                                     \
-   vector unsigned int  listV0;                                     \
-   vector unsigned int  listV1;                                     \
-   vector unsigned int  distV0;                                     \
-   vector unsigned int  distV1;                                     \
-   int cnt2 = lev->cnt2;                                            \
-   vector unsigned int ZEROBIT = (vector unsigned int)ZEROBIT_DECL; \
-   vector unsigned int ZEROS = (vector unsigned int)ZEROS_DECL;     \
-   vector unsigned int ONES = vec_nor(ZEROS,ZEROS);                 \
-   int limit;                                                       \
-   union {                                                          \
-      vector unsigned int V;                                        \
-      unsigned int U[4];                                            \
-   } VU;                                                            \
-   distV0 = state->distV0;                                          \
-   distV1 = state->distV1;                                          \
-   VU.V = distV0;                                                   \
-   compV0 = lev->compV0;                                            \
-   compV1 = lev->compV1;                                            \
-   listV0 = vec_or(lev->listV0, ZEROBIT);                           \
-   listV1 = lev->listV1;                                            \
-   U dist0;
-
-#define VEC_TO_INT(v,n) (VU.V = (v), VU.U[n])
-#define WRITE_VEC(v) (VU.V = (v))
-#define EXTRACT_INT(n) VU.U[n]
-
-/* shift the list to add or extend the first mark */
-#define COMP_LEFT_LIST_RIGHT(lev, s)                                \
-   VU.U[3] = s;                                                     \
-   vector unsigned int Vs = vec_splat(VU.V,3);                      \
-   vector unsigned int Vm = vec_sl(ONES,Vs);                        \
-   vector unsigned int Vss = vec_sub(ZEROS,Vs);                     \
-   compV0 = vec_rl(compV0,Vs);                                      \
-   compV1 = vec_rl(compV1,Vs);                                      \
-   compV0 = vec_sel(vec_sld(compV0,compV1,4),compV0,Vm);            \
-   compV1 = vec_sel(vec_sld(compV1,ZEROS,4),compV1,Vm);             \
-   listV1 = vec_sel(vec_sld(listV0,listV1,12),listV1,Vm);           \
-   listV0 = vec_sel(vec_sld(ZEROS,listV0,12),listV0,Vm);            \
-   listV1 = vec_rl(listV1,Vss);                                     \
-   listV0 = vec_rl(listV0,Vss);
-
-/* shift by word size */
-#define COMP_LEFT_LIST_RIGHT_32(lev)                                \
-   compV0 = vec_sld(compV0, compV1, 4);                             \
-   compV1 = vec_sld(compV1, ZEROS, 4);                              \
-   listV1 = vec_sld(listV0, listV1, 12);                            \
-   listV0 = vec_sld(ZEROS, listV0, 12);
-
-/* set the current mark and push a level to start a new mark */
-#define PUSH_LEVEL_UPDATE_STATE(lev)                                \
-   lev->listV0 = listV0;                                            \
-   lev->listV1 = listV1;                                            \
-   listV0 = vec_or(listV0, ZEROBIT);                                \
-   distV0 = vec_or(distV0, listV0);                                 \
-   distV1 = vec_or(distV1, listV1);                                 \
-   WRITE_VEC(distV0);                                               \
-   lev->compV0 = compV0;                                            \
-   lev->compV1 = compV1;                                            \
-   compV0 = vec_or(compV0, distV0);                                 \
-   compV1 = vec_or(compV1, distV1);                                 \
-   lev->cnt2 = cnt2;                                                \
-   lev->limit = limit;
-
-/* pop a level to continue work on previous mark */
-#define POP_LEVEL(lev)                                              \
-   compV0 = lev->compV0;                                            \
-   compV1 = lev->compV1;                                            \
-   WRITE_VEC(compV0);                                               \
-   listV0 = lev->listV0;                                            \
-   listV1 = lev->listV1;                                            \
-   distV0 = vec_andc(distV0, listV0);                               \
-   distV1 = vec_andc(distV1, listV1);                               \
-   limit = lev->limit;                                              \
-   cnt2 = lev->cnt2;
-
-/* save the local state variables */
-#define SAVE_FINAL_STATE(state,lev)                                 \
-   lev->listV0 = listV0;                                            \
-   lev->listV1 = listV1;                                            \
-   state->distV0 = distV0;                                          \
-   state->distV1 = distV1;                                          \
-   lev->compV0 = compV0;                                            \
-   lev->compV1 = compV1;                                            \
-   lev->cnt2 = cnt2;
-
-#elif (OGROPT_ALTERNATE_CYCLE == 1) /* support macros for the alternate ogr_cycle() routine */
-
-#define SETUP_TOP_STATE(state,lev)                 \
-   U  comp0 = lev->comp[0], comp1 = lev->comp[1], comp2 = lev->comp[2], comp3 = lev->comp[3], comp4 = lev->comp[4]; \
-   U  list0 = lev->list[0], list1 = lev->list[1], list2 = lev->list[2], list3 = lev->list[3], list4 = lev->list[4]; \
-   U  dist0 = state->dist[0], dist1 = state->dist[1], dist2 = state->dist[2], dist3 = state->dist[3], dist4 = state->dist[4]; \
-   int cnt2 = lev->cnt2;                           \
-   int newbit = 1;                                 \
+#define SETUP_TOP_STATE(state,lev)                                      \
+   U  comp0 = lev->comp[0], comp1 = lev->comp[1], comp2 = lev->comp[2], \
+      comp3 = lev->comp[3], comp4 = lev->comp[4];                       \
+   U  list0 = lev->list[0], list1 = lev->list[1], list2 = lev->list[2], \
+      list3 = lev->list[3], list4 = lev->list[4];                       \
+   U  dist0 = state->dist[0], dist1 = state->dist[1], dist2 = state->dist[2], \
+      dist3 = state->dist[3], dist4 = state->dist[4];                   \
+   int cnt2 = lev->cnt2;                                                \
+   int newbit = 1;                                                      \
    int limit;
 
 /* shift the list to add or extend the first mark */
@@ -542,25 +448,35 @@ extern CoreDispatchTable * OGR_P2_GET_DISPATCH_TABLE_FXN (void);
 /* gcc lacks builtin functions for rlwinm and rlwimi but has
 ** inline assembly to call them directly */
 #if defined(__GNUC__) && defined(ASM_POWER)
-# define __rlwinm(Rs,SH,MB,ME) ({ \
-   int Ra; \
-   __asm__ ("rlinm %0,%1,%2,%3,%4" : \
-   "=r" (Ra) : "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
+  #define __rlwinm(Rs,SH,MB,ME) ({      \
+    int Ra;                             \
+    __asm__ ("rlinm %0,%1,%2,%3,%4"     \
+      : "=r" (Ra) : "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); \
+    Ra;                                 \
+  })
 
-# define __rlwimi(Ra,Rs,SH,MB,ME) ({ \
-   __asm__ ("rlimi %0,%2,%3,%4,%5" : \
-   "=r" (Ra) : "0" (Ra), "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
+  #define __rlwimi(Ra,Rs,SH,MB,ME) ({   \
+    __asm__ ("rlimi %0,%2,%3,%4,%5"     \
+      : "=r" (Ra) : "0" (Ra), "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); \
+    Ra;                                 \
+  })
 
-#elif defined(__GNUC__) && (defined(ASM_PPC) || \
-       defined(__PPC__) || defined(__POWERPC__))
-# define __rlwinm(Rs,SH,MB,ME) ({ \
-   int Ra; \
-   __asm__ ("rlwinm %0,%1,%2,%3,%4" : \
-   "=r" (Ra) : "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
+  #define __nop ({ __asm__ volatile ("nop");})
+#elif defined(__GNUC__) && (defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__))
+  #define __rlwinm(Rs,SH,MB,ME) ({      \
+    int Ra;                             \
+    __asm__ ("rlwinm %0,%1,%2,%3,%4"    \
+      : "=r" (Ra) : "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); \
+    Ra;                                 \
+  })
 
-# define __rlwimi(Ra,Rs,SH,MB,ME) ({ \
-   __asm__ ("rlwimi %0,%2,%3,%4,%5" : \
-   "=r" (Ra) : "0" (Ra), "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
+  #define __rlwimi(Ra,Rs,SH,MB,ME) ({   \
+    __asm__ ("rlwimi %0,%2,%3,%4,%5"    \
+      : "=r" (Ra) : "0" (Ra), "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); \
+    Ra;                                 \
+  })
+
+  #define __nop ({ __asm__ volatile ("nop");})
 #endif
 
 #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__) || \
@@ -591,6 +507,7 @@ extern CoreDispatchTable * OGR_P2_GET_DISPATCH_TABLE_FXN (void);
     switch (s)                                     \
     {                                              \
       case 0:                                      \
+         __nop;                                    \
          break;                                    \
       case 1:                                      \
          COMP_LEFT_LIST_RIGHT_BASIC(1)             \
@@ -764,470 +681,200 @@ extern CoreDispatchTable * OGR_P2_GET_DISPATCH_TABLE_FXN (void);
     );                                      \
   }
 #else
-#error you dont have inline assembly for COMP_LEFT_LIST_RIGHT
+  #error you dont have inline assembly for COMP_LEFT_LIST_RIGHT
 #endif
 #elif (OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 1)
-#define COMP_LEFT_LIST_RIGHT(lev, s) {             \
-   switch (s)                                      \
+  #define COMP_LEFT_LIST_RIGHT_BASIC(k) {          \
+    comp0 = (comp0 << (k)) | (comp1 >> (32-(k)));  \
+    list4 = (list4 >> (k)) | (list3 << (32-(k));   \
+    comp1 = (comp1 << (k)) | (comp2 >> (32-(k));   \
+    list3 = (list3 >> (k)) | (list2 << (32-(k));   \
+    comp2 = (comp2 << (k)) | (comp3 >> (32-(k));   \
+    list2 = (list2 >> (k)) | (list1 << (32-(k));   \
+    comp3 = (comp3 << (k)) | (comp4 >> (32-(k));   \
+    list1 = (list1 >> (k)) | (list0 << (32-(k));   \
+    list0 = (list0 >> (k)) | (newbit << (32-(k));  \
+    comp4 = comp4 << (k);
+  
+  #define COMP_LEFT_LIST_RIGHT(lev, s) {           \
+    switch (s)                                     \
       {                                            \
       case 0:                                      \
-         comp0 = (comp0 << 0) | (comp1 >> 32);     \
-         list4 = (list4 >> 0) | (list3 << 32);     \
-         comp1 = (comp1 << 0) | (comp2 >> 32);     \
-         list3 = (list3 >> 0) | (list2 << 32);     \
-         comp2 = (comp2 << 0) | (comp3 >> 32);     \
-         list2 = (list2 >> 0) | (list1 << 32);     \
-         comp3 = (comp3 << 0) | (comp4 >> 32);     \
-         list1 = (list1 >> 0) | (list0 << 32);     \
-         list0 = (list0 >> 0) | (newbit << 32);    \
-         comp4 = comp4 << 0;                       \
          break;                                    \
       case 1:                                      \
-         comp0 = (comp0 << 1) | (comp1 >> 31);     \
-         list4 = (list4 >> 1) | (list3 << 31);     \
-         comp1 = (comp1 << 1) | (comp2 >> 31);     \
-         list3 = (list3 >> 1) | (list2 << 31);     \
-         comp2 = (comp2 << 1) | (comp3 >> 31);     \
-         list2 = (list2 >> 1) | (list1 << 31);     \
-         comp3 = (comp3 << 1) | (comp4 >> 31);     \
-         list1 = (list1 >> 1) | (list0 << 31);     \
-         list0 = (list0 >> 1) | (newbit << 31);    \
-         comp4 = comp4 << 1;                       \
+         COMP_LEFT_LIST_RIGHT_BASIC(1)             \
          break;                                    \
       case 2:                                      \
-         comp0 = (comp0 << 2) | (comp1 >> 30);     \
-         list4 = (list4 >> 2) | (list3 << 30);     \
-         comp1 = (comp1 << 2) | (comp2 >> 30);     \
-         list3 = (list3 >> 2) | (list2 << 30);     \
-         comp2 = (comp2 << 2) | (comp3 >> 30);     \
-         list2 = (list2 >> 2) | (list1 << 30);     \
-         comp3 = (comp3 << 2) | (comp4 >> 30);     \
-         list1 = (list1 >> 2) | (list0 << 30);     \
-         list0 = (list0 >> 2) | (newbit << 30);    \
-         comp4 = comp4 << 2;                       \
+         COMP_LEFT_LIST_RIGHT_BASIC(2)             \
          break;                                    \
       case 3:                                      \
-         comp0 = (comp0 << 3) | (comp1 >> 29);     \
-         list4 = (list4 >> 3) | (list3 << 29);     \
-         comp1 = (comp1 << 3) | (comp2 >> 29);     \
-         list3 = (list3 >> 3) | (list2 << 29);     \
-         comp2 = (comp2 << 3) | (comp3 >> 29);     \
-         list2 = (list2 >> 3) | (list1 << 29);     \
-         comp3 = (comp3 << 3) | (comp4 >> 29);     \
-         list1 = (list1 >> 3) | (list0 << 29);     \
-         list0 = (list0 >> 3) | (newbit << 29);    \
-         comp4 = comp4 << 3;                       \
+         COMP_LEFT_LIST_RIGHT_BASIC(3)             \
          break;                                    \
       case 4:                                      \
-         comp0 = (comp0 << 4) | (comp1 >> 28);     \
-         list4 = (list4 >> 4) | (list3 << 28);     \
-         comp1 = (comp1 << 4) | (comp2 >> 28);     \
-         list3 = (list3 >> 4) | (list2 << 28);     \
-         comp2 = (comp2 << 4) | (comp3 >> 28);     \
-         list2 = (list2 >> 4) | (list1 << 28);     \
-         comp3 = (comp3 << 4) | (comp4 >> 28);     \
-         list1 = (list1 >> 4) | (list0 << 28);     \
-         list0 = (list0 >> 4) | (newbit << 28);    \
-         comp4 = comp4 << 4;                       \
+         COMP_LEFT_LIST_RIGHT_BASIC(4)             \
          break;                                    \
       case 5:                                      \
-         comp0 = (comp0 << 5) | (comp1 >> 27);     \
-         list4 = (list4 >> 5) | (list3 << 27);     \
-         comp1 = (comp1 << 5) | (comp2 >> 27);     \
-         list3 = (list3 >> 5) | (list2 << 27);     \
-         comp2 = (comp2 << 5) | (comp3 >> 27);     \
-         list2 = (list2 >> 5) | (list1 << 27);     \
-         comp3 = (comp3 << 5) | (comp4 >> 27);     \
-         list1 = (list1 >> 5) | (list0 << 27);     \
-         list0 = (list0 >> 5) | (newbit << 27);    \
-         comp4 = comp4 << 5;                       \
+         COMP_LEFT_LIST_RIGHT_BASIC(5)             \
          break;                                    \
       case 6:                                      \
-         comp0 = (comp0 << 6) | (comp1 >> 26);     \
-         list4 = (list4 >> 6) | (list3 << 26);     \
-         comp1 = (comp1 << 6) | (comp2 >> 26);     \
-         list3 = (list3 >> 6) | (list2 << 26);     \
-         comp2 = (comp2 << 6) | (comp3 >> 26);     \
-         list2 = (list2 >> 6) | (list1 << 26);     \
-         comp3 = (comp3 << 6) | (comp4 >> 26);     \
-         list1 = (list1 >> 6) | (list0 << 26);     \
-         list0 = (list0 >> 6) | (newbit << 26);    \
-         comp4 = comp4 << 6;                       \
+         COMP_LEFT_LIST_RIGHT_BASIC(6)             \
          break;                                    \
       case 7:                                      \
-         comp0 = (comp0 << 7) | (comp1 >> 25);     \
-         list4 = (list4 >> 7) | (list3 << 25);     \
-         comp1 = (comp1 << 7) | (comp2 >> 25);     \
-         list3 = (list3 >> 7) | (list2 << 25);     \
-         comp2 = (comp2 << 7) | (comp3 >> 25);     \
-         list2 = (list2 >> 7) | (list1 << 25);     \
-         comp3 = (comp3 << 7) | (comp4 >> 25);     \
-         list1 = (list1 >> 7) | (list0 << 25);     \
-         list0 = (list0 >> 7) | (newbit << 25);    \
-         comp4 = comp4 << 7;                       \
+         COMP_LEFT_LIST_RIGHT_BASIC(7)             \
          break;                                    \
       case 8:                                      \
-         comp0 = (comp0 << 8) | (comp1 >> 24);     \
-         list4 = (list4 >> 8) | (list3 << 24);     \
-         comp1 = (comp1 << 8) | (comp2 >> 24);     \
-         list3 = (list3 >> 8) | (list2 << 24);     \
-         comp2 = (comp2 << 8) | (comp3 >> 24);     \
-         list2 = (list2 >> 8) | (list1 << 24);     \
-         comp3 = (comp3 << 8) | (comp4 >> 24);     \
-         list1 = (list1 >> 8) | (list0 << 24);     \
-         list0 = (list0 >> 8) | (newbit << 24);    \
-         comp4 = comp4 << 8;                       \
+         COMP_LEFT_LIST_RIGHT_BASIC(8)             \
          break;                                    \
       case 9:                                      \
-         comp0 = (comp0 << 9) | (comp1 >> 23);     \
-         list4 = (list4 >> 9) | (list3 << 23);     \
-         comp1 = (comp1 << 9) | (comp2 >> 23);     \
-         list3 = (list3 >> 9) | (list2 << 23);     \
-         comp2 = (comp2 << 9) | (comp3 >> 23);     \
-         list2 = (list2 >> 9) | (list1 << 23);     \
-         comp3 = (comp3 << 9) | (comp4 >> 23);     \
-         list1 = (list1 >> 9) | (list0 << 23);     \
-         list0 = (list0 >> 9) | (newbit << 23);    \
-         comp4 = comp4 << 9;                       \
+         COMP_LEFT_LIST_RIGHT_BASIC(9)             \
          break;                                    \
       case 10:                                     \
-         comp0 = (comp0 << 10) | (comp1 >> 22);    \
-         list4 = (list4 >> 10) | (list3 << 22);    \
-         comp1 = (comp1 << 10) | (comp2 >> 22);    \
-         list3 = (list3 >> 10) | (list2 << 22);    \
-         comp2 = (comp2 << 10) | (comp3 >> 22);    \
-         list2 = (list2 >> 10) | (list1 << 22);    \
-         comp3 = (comp3 << 10) | (comp4 >> 22);    \
-         list1 = (list1 >> 10) | (list0 << 22);    \
-         list0 = (list0 >> 10) | (newbit << 22);   \
-         comp4 = comp4 << 10;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(10)            \
          break;                                    \
       case 11:                                     \
-         comp0 = (comp0 << 11) | (comp1 >> 21);    \
-         list4 = (list4 >> 11) | (list3 << 21);    \
-         comp1 = (comp1 << 11) | (comp2 >> 21);    \
-         list3 = (list3 >> 11) | (list2 << 21);    \
-         comp2 = (comp2 << 11) | (comp3 >> 21);    \
-         list2 = (list2 >> 11) | (list1 << 21);    \
-         comp3 = (comp3 << 11) | (comp4 >> 21);    \
-         list1 = (list1 >> 11) | (list0 << 21);    \
-         list0 = (list0 >> 11) | (newbit << 21);   \
-         comp4 = comp4 << 11;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(11)            \
          break;                                    \
       case 12:                                     \
-         comp0 = (comp0 << 12) | (comp1 >> 20);    \
-         list4 = (list4 >> 12) | (list3 << 20);    \
-         comp1 = (comp1 << 12) | (comp2 >> 20);    \
-         list3 = (list3 >> 12) | (list2 << 20);    \
-         comp2 = (comp2 << 12) | (comp3 >> 20);    \
-         list2 = (list2 >> 12) | (list1 << 20);    \
-         comp3 = (comp3 << 12) | (comp4 >> 20);    \
-         list1 = (list1 >> 12) | (list0 << 20);    \
-         list0 = (list0 >> 12) | (newbit << 20);   \
-         comp4 = comp4 << 12;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(12)            \
          break;                                    \
       case 13:                                     \
-         comp0 = (comp0 << 13) | (comp1 >> 19);    \
-         list4 = (list4 >> 13) | (list3 << 19);    \
-         comp1 = (comp1 << 13) | (comp2 >> 19);    \
-         list3 = (list3 >> 13) | (list2 << 19);    \
-         comp2 = (comp2 << 13) | (comp3 >> 19);    \
-         list2 = (list2 >> 13) | (list1 << 19);    \
-         comp3 = (comp3 << 13) | (comp4 >> 19);    \
-         list1 = (list1 >> 13) | (list0 << 19);    \
-         list0 = (list0 >> 13) | (newbit << 19);   \
-         comp4 = comp4 << 13;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(13)            \
          break;                                    \
       case 14:                                     \
-         comp0 = (comp0 << 14) | (comp1 >> 18);    \
-         list4 = (list4 >> 14) | (list3 << 18);    \
-         comp1 = (comp1 << 14) | (comp2 >> 18);    \
-         list3 = (list3 >> 14) | (list2 << 18);    \
-         comp2 = (comp2 << 14) | (comp3 >> 18);    \
-         list2 = (list2 >> 14) | (list1 << 18);    \
-         comp3 = (comp3 << 14) | (comp4 >> 18);    \
-         list1 = (list1 >> 14) | (list0 << 18);    \
-         list0 = (list0 >> 14) | (newbit << 18);   \
-         comp4 = comp4 << 14;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(14)            \
          break;                                    \
       case 15:                                     \
-         comp0 = (comp0 << 15) | (comp1 >> 17);    \
-         list4 = (list4 >> 15) | (list3 << 17);    \
-         comp1 = (comp1 << 15) | (comp2 >> 17);    \
-         list3 = (list3 >> 15) | (list2 << 17);    \
-         comp2 = (comp2 << 15) | (comp3 >> 17);    \
-         list2 = (list2 >> 15) | (list1 << 17);    \
-         comp3 = (comp3 << 15) | (comp4 >> 17);    \
-         list1 = (list1 >> 15) | (list0 << 17);    \
-         list0 = (list0 >> 15) | (newbit << 17);   \
-         comp4 = comp4 << 15;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(15)            \
          break;                                    \
       case 16:                                     \
-         comp0 = (comp0 << 16) | (comp1 >> 16);    \
-         list4 = (list4 >> 16) | (list3 << 16);    \
-         comp1 = (comp1 << 16) | (comp2 >> 16);    \
-         list3 = (list3 >> 16) | (list2 << 16);    \
-         comp2 = (comp2 << 16) | (comp3 >> 16);    \
-         list2 = (list2 >> 16) | (list1 << 16);    \
-         comp3 = (comp3 << 16) | (comp4 >> 16);    \
-         list1 = (list1 >> 16) | (list0 << 16);    \
-         list0 = (list0 >> 16) | (newbit << 16);   \
-         comp4 = comp4 << 16;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(16)            \
          break;                                    \
       case 17:                                     \
-         comp0 = (comp0 << 17) | (comp1 >> 15);    \
-         list4 = (list4 >> 17) | (list3 << 15);    \
-         comp1 = (comp1 << 17) | (comp2 >> 15);    \
-         list3 = (list3 >> 17) | (list2 << 15);    \
-         comp2 = (comp2 << 17) | (comp3 >> 15);    \
-         list2 = (list2 >> 17) | (list1 << 15);    \
-         comp3 = (comp3 << 17) | (comp4 >> 15);    \
-         list1 = (list1 >> 17) | (list0 << 15);    \
-         list0 = (list0 >> 17) | (newbit << 15);   \
-         comp4 = comp4 << 17;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(17)            \
          break;                                    \
       case 18:                                     \
-         comp0 = (comp0 << 18) | (comp1 >> 14);    \
-         list4 = (list4 >> 18) | (list3 << 14);    \
-         comp1 = (comp1 << 18) | (comp2 >> 14);    \
-         list3 = (list3 >> 18) | (list2 << 14);    \
-         comp2 = (comp2 << 18) | (comp3 >> 14);    \
-         list2 = (list2 >> 18) | (list1 << 14);    \
-         comp3 = (comp3 << 18) | (comp4 >> 14);    \
-         list1 = (list1 >> 18) | (list0 << 14);    \
-         list0 = (list0 >> 18) | (newbit << 14);   \
-         comp4 = comp4 << 18;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(18)            \
          break;                                    \
       case 19:                                     \
-         comp0 = (comp0 << 19) | (comp1 >> 13);    \
-         list4 = (list4 >> 19) | (list3 << 13);    \
-         comp1 = (comp1 << 19) | (comp2 >> 13);    \
-         list3 = (list3 >> 19) | (list2 << 13);    \
-         comp2 = (comp2 << 19) | (comp3 >> 13);    \
-         list2 = (list2 >> 19) | (list1 << 13);    \
-         comp3 = (comp3 << 19) | (comp4 >> 13);    \
-         list1 = (list1 >> 19) | (list0 << 13);    \
-         list0 = (list0 >> 19) | (newbit << 13);   \
-         comp4 = comp4 << 19;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(19)            \
          break;                                    \
       case 20:                                     \
-         comp0 = (comp0 << 20) | (comp1 >> 12);    \
-         list4 = (list4 >> 20) | (list3 << 12);    \
-         comp1 = (comp1 << 20) | (comp2 >> 12);    \
-         list3 = (list3 >> 20) | (list2 << 12);    \
-         comp2 = (comp2 << 20) | (comp3 >> 12);    \
-         list2 = (list2 >> 20) | (list1 << 12);    \
-         comp3 = (comp3 << 20) | (comp4 >> 12);    \
-         list1 = (list1 >> 20) | (list0 << 12);    \
-         list0 = (list0 >> 20) | (newbit << 12);   \
-         comp4 = comp4 << 20;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(20)            \
          break;                                    \
       case 21:                                     \
-         comp0 = (comp0 << 21) | (comp1 >> 11);    \
-         list4 = (list4 >> 21) | (list3 << 11);    \
-         comp1 = (comp1 << 21) | (comp2 >> 11);    \
-         list3 = (list3 >> 21) | (list2 << 11);    \
-         comp2 = (comp2 << 21) | (comp3 >> 11);    \
-         list2 = (list2 >> 21) | (list1 << 11);    \
-         comp3 = (comp3 << 21) | (comp4 >> 11);    \
-         list1 = (list1 >> 21) | (list0 << 11);    \
-         list0 = (list0 >> 21) | (newbit << 11);   \
-         comp4 = comp4 << 21;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(21)            \
          break;                                    \
       case 22:                                     \
-         comp0 = (comp0 << 22) | (comp1 >> 10);    \
-         list4 = (list4 >> 22) | (list3 << 10);    \
-         comp1 = (comp1 << 22) | (comp2 >> 10);    \
-         list3 = (list3 >> 22) | (list2 << 10);    \
-         comp2 = (comp2 << 22) | (comp3 >> 10);    \
-         list2 = (list2 >> 22) | (list1 << 10);    \
-         comp3 = (comp3 << 22) | (comp4 >> 10);    \
-         list1 = (list1 >> 22) | (list0 << 10);    \
-         list0 = (list0 >> 22) | (newbit << 10);   \
-         comp4 = comp4 << 22;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(22)            \
          break;                                    \
       case 23:                                     \
-         comp0 = (comp0 << 23) | (comp1 >> 9);     \
-         list4 = (list4 >> 23) | (list3 << 9);     \
-         comp1 = (comp1 << 23) | (comp2 >> 9);     \
-         list3 = (list3 >> 23) | (list2 << 9);     \
-         comp2 = (comp2 << 23) | (comp3 >> 9);     \
-         list2 = (list2 >> 23) | (list1 << 9);     \
-         comp3 = (comp3 << 23) | (comp4 >> 9);     \
-         list1 = (list1 >> 23) | (list0 << 9);     \
-         list0 = (list0 >> 23) | (newbit << 9);    \
-         comp4 = comp4 << 23;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(23)            \
          break;                                    \
       case 24:                                     \
-         comp0 = (comp0 << 24) | (comp1 >> 8);     \
-         list4 = (list4 >> 24) | (list3 << 8);     \
-         comp1 = (comp1 << 24) | (comp2 >> 8);     \
-         list3 = (list3 >> 24) | (list2 << 8);     \
-         comp2 = (comp2 << 24) | (comp3 >> 8);     \
-         list2 = (list2 >> 24) | (list1 << 8);     \
-         comp3 = (comp3 << 24) | (comp4 >> 8);     \
-         list1 = (list1 >> 24) | (list0 << 8);     \
-         list0 = (list0 >> 24) | (newbit << 8);    \
-         comp4 = comp4 << 24;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(24)            \
          break;                                    \
       case 25:                                     \
-         comp0 = (comp0 << 25) | (comp1 >> 7);     \
-         list4 = (list4 >> 25) | (list3 << 7);     \
-         comp1 = (comp1 << 25) | (comp2 >> 7);     \
-         list3 = (list3 >> 25) | (list2 << 7);     \
-         comp2 = (comp2 << 25) | (comp3 >> 7);     \
-         list2 = (list2 >> 25) | (list1 << 7);     \
-         comp3 = (comp3 << 25) | (comp4 >> 7);     \
-         list1 = (list1 >> 25) | (list0 << 7);     \
-         list0 = (list0 >> 25) | (newbit << 7);    \
-         comp4 = comp4 << 25;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(25)            \
          break;                                    \
       case 26:                                     \
-         comp0 = (comp0 << 26) | (comp1 >> 6);     \
-         list4 = (list4 >> 26) | (list3 << 6);     \
-         comp1 = (comp1 << 26) | (comp2 >> 6);     \
-         list3 = (list3 >> 26) | (list2 << 6);     \
-         comp2 = (comp2 << 26) | (comp3 >> 6);     \
-         list2 = (list2 >> 26) | (list1 << 6);     \
-         comp3 = (comp3 << 26) | (comp4 >> 6);     \
-         list1 = (list1 >> 26) | (list0 << 6);     \
-         list0 = (list0 >> 26) | (newbit << 6);    \
-         comp4 = comp4 << 26;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(26)            \
          break;                                    \
       case 27:                                     \
-         comp0 = (comp0 << 27) | (comp1 >> 5);     \
-         list4 = (list4 >> 27) | (list3 << 5);     \
-         comp1 = (comp1 << 27) | (comp2 >> 5);     \
-         list3 = (list3 >> 27) | (list2 << 5);     \
-         comp2 = (comp2 << 27) | (comp3 >> 5);     \
-         list2 = (list2 >> 27) | (list1 << 5);     \
-         comp3 = (comp3 << 27) | (comp4 >> 5);     \
-         list1 = (list1 >> 27) | (list0 << 5);     \
-         list0 = (list0 >> 27) | (newbit << 5);    \
-         comp4 = comp4 << 27;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(27)            \
          break;                                    \
       case 28:                                     \
-         comp0 = (comp0 << 28) | (comp1 >> 4);     \
-         list4 = (list4 >> 28) | (list3 << 4);     \
-         comp1 = (comp1 << 28) | (comp2 >> 4);     \
-         list3 = (list3 >> 28) | (list2 << 4);     \
-         comp2 = (comp2 << 28) | (comp3 >> 4);     \
-         list2 = (list2 >> 28) | (list1 << 4);     \
-         comp3 = (comp3 << 28) | (comp4 >> 4);     \
-         list1 = (list1 >> 28) | (list0 << 4);     \
-         list0 = (list0 >> 28) | (newbit << 4);    \
-         comp4 = comp4 << 28;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(28)            \
          break;                                    \
       case 29:                                     \
-         comp0 = (comp0 << 29) | (comp1 >> 3);     \
-         list4 = (list4 >> 29) | (list3 << 3);     \
-         comp1 = (comp1 << 29) | (comp2 >> 3);     \
-         list3 = (list3 >> 29) | (list2 << 3);     \
-         comp2 = (comp2 << 29) | (comp3 >> 3);     \
-         list2 = (list2 >> 29) | (list1 << 3);     \
-         comp3 = (comp3 << 29) | (comp4 >> 3);     \
-         list1 = (list1 >> 29) | (list0 << 3);     \
-         list0 = (list0 >> 29) | (newbit << 3);    \
-         comp4 = comp4 << 29;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(29)            \
          break;                                    \
       case 30:                                     \
-         comp0 = (comp0 << 30) | (comp1 >> 2);     \
-         list4 = (list4 >> 30) | (list3 << 2);     \
-         comp1 = (comp1 << 30) | (comp2 >> 2);     \
-         list3 = (list3 >> 30) | (list2 << 2);     \
-         comp2 = (comp2 << 30) | (comp3 >> 2);     \
-         list2 = (list2 >> 30) | (list1 << 2);     \
-         comp3 = (comp3 << 30) | (comp4 >> 2);     \
-         list1 = (list1 >> 30) | (list0 << 2);     \
-         list0 = (list0 >> 30) | (newbit << 2);    \
-         comp4 = comp4 << 30;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(30)            \
          break;                                    \
       case 31:                                     \
-         comp0 = (comp0 << 31) | (comp1 >> 1);     \
-         list4 = (list4 >> 31) | (list3 << 1);     \
-         comp1 = (comp1 << 31) | (comp2 >> 1);     \
-         list3 = (list3 >> 31) | (list2 << 1);     \
-         comp2 = (comp2 << 31) | (comp3 >> 1);     \
-         list2 = (list2 >> 31) | (list1 << 1);     \
-         comp3 = (comp3 << 31) | (comp4 >> 1);     \
-         list1 = (list1 >> 31) | (list0 << 1);     \
-         list0 = (list0 >> 31) | (newbit << 1);    \
-         comp4 = comp4 << 31;                      \
+         COMP_LEFT_LIST_RIGHT_BASIC(31)            \
          break;                                    \
       case 32:                                     \
-         comp0 = (comp0 << 32) | (comp1 >> 0);     \
-         list4 = (list4 >> 32) | (list3 << 0);     \
-         comp1 = (comp1 << 32) | (comp2 >> 0);     \
-         list3 = (list3 >> 32) | (list2 << 0);     \
-         comp2 = (comp2 << 32) | (comp3 >> 0);     \
-         list2 = (list2 >> 32) | (list1 << 0);     \
-         comp3 = (comp3 << 32) | (comp4 >> 0);     \
-         list1 = (list1 >> 32) | (list0 << 0);     \
-         list0 = (list0 >> 32) | (newbit << 0);    \
-         comp4 = comp4 << 32;                      \
+         comp0 = comp1;                            \
+         comp1 = comp2;                            \
+         comp2 = comp3;                            \
+         comp3 = comp4;                            \
+         comp4 = 0;                                \
+         list4 = list3;                            \
+         list3 = list2;                            \
+         list2 = list1;                            \
+         list1 = list0;                            \
+         list0 = newbit;                           \
          break;                                    \
       }                                            \
    newbit = 0;                                     \
 }
 #else // OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 0
-#define COMP_LEFT_LIST_RIGHT(lev, s) {             \
-   int ss = 32 - s;                                \
-   comp0 = (comp0 << s) | (comp1 >> ss);           \
-   comp1 = (comp1 << s) | (comp2 >> ss);           \
-   comp2 = (comp2 << s) | (comp3 >> ss);           \
-   comp3 = (comp3 << s) | (comp4 >> ss);           \
-   comp4 = comp4 << s;                             \
-   list4 = (list4 >> s) | (list3 << ss);           \
-   list3 = (list3 >> s) | (list2 << ss);           \
-   list2 = (list2 >> s) | (list1 << ss);           \
-   list1 = (list1 >> s) | (list0 << ss);           \
-   list0 = (list0 >> s) | (newbit << ss);          \
-   newbit = 0;                                     \
-   }
+  #define COMP_LEFT_LIST_RIGHT(lev, s) {           \
+    int ss = 32 - s;                               \
+    comp0 = (comp0 << s) | (comp1 >> ss);          \
+    comp1 = (comp1 << s) | (comp2 >> ss);          \
+    comp2 = (comp2 << s) | (comp3 >> ss);          \
+    comp3 = (comp3 << s) | (comp4 >> ss);          \
+    comp4 = comp4 << s;                            \
+    list4 = (list4 >> s) | (list3 << ss);          \
+    list3 = (list3 >> s) | (list2 << ss);          \
+    list2 = (list2 >> s) | (list1 << ss);          \
+    list1 = (list1 >> s) | (list0 << ss);          \
+    list0 = (list0 >> s) | (newbit << ss);         \
+    newbit = 0;                                    \
+  }
 #endif
 
 /* shift by word size */
 #define COMP_LEFT_LIST_RIGHT_32(lev) { \
-   comp0 = comp1; comp1 = comp2; comp2 = comp3; comp3 = comp4; comp4 = 0;  \
-   list4 = list3; list3 = list2; list2 = list1; list1 = list0; list0 = newbit; \
-   newbit = 0; \
+  comp0 = comp1; comp1 = comp2; comp2 = comp3; comp3 = comp4; comp4 = 0;  \
+  list4 = list3; list3 = list2; list2 = list1; list1 = list0; list0 = newbit; \
+  newbit = 0; \
 }
+
 /* set the current mark and push a level to start a new mark */
-#define PUSH_LEVEL_UPDATE_STATE(lev) { \
-   lev->list[0] = list0; dist0 |= list0; \
-   lev->list[1] = list1; dist1 |= list1; \
-   lev->list[2] = list2; dist2 |= list2; \
-   lev->list[3] = list3; dist3 |= list3; \
-   lev->list[4] = list4; dist4 |= list4; \
-   lev->comp[0] = comp0; comp0 |= dist0; \
-   lev->comp[1] = comp1; comp1 |= dist1; \
-   lev->comp[2] = comp2; comp2 |= dist2; \
-   lev->comp[3] = comp3; comp3 |= dist3; \
-   lev->comp[4] = comp4; comp4 |= dist4; \
-   newbit = 1; \
-   lev->cnt2 = cnt2; \
-   lev->limit = limit; \
+#define PUSH_LEVEL_UPDATE_STATE(lev) {  \
+  lev->list[0] = list0; dist0 |= list0; \
+  lev->list[1] = list1; dist1 |= list1; \
+  lev->list[2] = list2; dist2 |= list2; \
+  lev->list[3] = list3; dist3 |= list3; \
+  lev->list[4] = list4; dist4 |= list4; \
+  lev->comp[0] = comp0; comp0 |= dist0; \
+  lev->comp[1] = comp1; comp1 |= dist1; \
+  lev->comp[2] = comp2; comp2 |= dist2; \
+  lev->comp[3] = comp3; comp3 |= dist3; \
+  lev->comp[4] = comp4; comp4 |= dist4; \
+  newbit = 1; \
+  lev->cnt2 = cnt2; \
+  lev->limit = limit; \
 }
 
 /* pop a level to continue work on previous mark */
-#define POP_LEVEL(lev) { \
-   limit = lev->limit; \
-   list0 = lev->list[0], list1 = lev->list[1], list2 = lev->list[2], list3 = lev->list[3], list4 = lev->list[4]; \
-   dist0 = dist0 & ~list0; dist1 = dist1 & ~list1; dist2 = dist2 & ~list2; dist3 = dist3 & ~list3; dist4 = dist4 & ~list4; \
-   comp0 = lev->comp[0], comp1 = lev->comp[1], comp2 = lev->comp[2], comp3 = lev->comp[3], comp4 = lev->comp[4]; \
-   newbit = 0; \
-   cnt2 = lev->cnt2; \
+#define POP_LEVEL(lev) {                                                  \
+  limit = lev->limit;                                                     \
+  list0 = lev->list[0], list1 = lev->list[1], list2 = lev->list[2],       \
+  list3 = lev->list[3], list4 = lev->list[4];                             \
+  dist0 = dist0 & ~list0; dist1 = dist1 & ~list1; dist2 = dist2 & ~list2; \
+  dist3 = dist3 & ~list3; dist4 = dist4 & ~list4;                         \
+  comp0 = lev->comp[0], comp1 = lev->comp[1], comp2 = lev->comp[2],       \
+  comp3 = lev->comp[3], comp4 = lev->comp[4];                             \
+  newbit = 0;                                                             \
+  cnt2 = lev->cnt2;                                                       \
 }
 
 /* save the local state variables */
-#define SAVE_FINAL_STATE(state,lev) {   \
-   lev->list[0] = list0; lev->list[1] = list1; lev->list[2] = list2; lev->list[3] = list3; lev->list[4] = list4;  \
-   state->dist[0] = dist0; state->dist[1] = dist1; state->dist[2] = dist2; state->dist[3] = dist3; state->dist[4] = dist4; \
-   lev->comp[0] = comp0; lev->comp[1] = comp1; lev->comp[2] = comp2; lev->comp[3] = comp3; lev->comp[4] = comp4; \
-   lev->cnt2 = cnt2; \
+#define SAVE_FINAL_STATE(state,lev) {                                       \
+   lev->list[0] = list0; lev->list[1] = list1; lev->list[2] = list2;        \
+   lev->list[3] = list3; lev->list[4] = list4;                              \
+   state->dist[0] = dist0; state->dist[1] = dist1; state->dist[2] = dist2;  \
+   state->dist[3] = dist3; state->dist[4] = dist4;                          \
+   lev->comp[0] = comp0; lev->comp[1] = comp1; lev->comp[2] = comp2;        \
+   lev->comp[3] = comp3; lev->comp[4] = comp4;                              \
+   lev->cnt2 = cnt2;                                                        \
 }
 
-#else /* support macros for the ogriginal ogr_cycle() routine */
+#elif (OGROPT_ALTERNATE_CYCLE == 0)  /* support macros for the ogriginal ogr_cycle() routine */
 
 #define COMP_LEFT_LIST_RIGHT(lev,s)                             \
   {                                                             \
@@ -1493,6 +1140,8 @@ extern CoreDispatchTable * OGR_P2_GET_DISPATCH_TABLE_FXN (void);
 
 #endif
 
+/* ------------------------------------------------------------------ */
+
 #ifndef OGROPT_NEW_CHOOSEDAT
 static int init_load_choose(void)
 {
@@ -1557,9 +1206,9 @@ static int init_load_choose(void)
 #else /* OGROPT_NEW_CHOOSEDAT */
 static int init_load_choose(void)
 {
-#ifndef HAVE_STATIC_CHOOSEDAT
-  #error non static choosedat not supported with OGROPT_NEW_CHOOSEDAT
-#endif
+  #ifndef HAVE_STATIC_CHOOSEDAT
+    #error non static choosedat not supported with OGROPT_NEW_CHOOSEDAT
+  #endif
   if ( (CHOOSE_ALIGN_MARKS != choose_align_marks) ||
        (CHOOSE_DIST_BITS   != choose_distbits)    ||
        (CHOOSE_MAX_MARKS   >  choose_max_marks) )
@@ -1703,7 +1352,8 @@ static int found_one(const struct State *oState)
                "ldrb    %1,[%3,%1,lsr#24]\n\t" \
                "addcs   %0,%0,#8\n\t"          \
                "add     %0,%0,%1"              \
-               :"=r" (result), "=r" (temp) : "1" (input), "r" ((unsigned int)ogr_first_blank_8bit));
+               :"=r" (result), "=r" (temp)
+               : "1" (input), "r" ((unsigned int)ogr_first_blank_8bit));
       return result;
     }
   #elif defined(ASM_68K) && defined(__GNUC__) && (__NeXT__)
@@ -1727,7 +1377,8 @@ static int found_one(const struct State *oState)
                "   addql   #8,%0\n"
                "2: lsrw    #8,%1\n"
                "   addb    %3@(0,%1:w),%0"
-               :"=d" (result), "=d" (input) : "1" (input), "a" (&ogr_first_blank_8bit[0]));
+               :"=d" (result), "=d" (input)
+               : "1" (input), "a" (&ogr_first_blank_8bit[0]));
       return result;
     }
   #elif defined(ASM_68K) && defined(__GNUC__)
@@ -1746,7 +1397,8 @@ static int found_one(const struct State *oState)
                "   addq    #8,%0\n"
                "2: lsr.w   #8,%1\n"
                "   add.b   0(%3,%1.w),%0"
-               :"=d" (result), "=d" (input) : "1" (input), "a" (ogr_first_blank_8bit));
+               :"=d" (result), "=d" (input)
+               : "1" (input), "a" (ogr_first_blank_8bit));
       return result;
     }
   #elif defined(FP_CLZ_LITTLEEND) /* using the exponent in floating point double format */
@@ -1785,11 +1437,11 @@ static int found_one(const struct State *oState)
     { i = ~i; __asm__ ("cntlzw %0,%0" : "=r" (i) : "0" (i)); return ++i; }
     #define PPC_CNTLZW(b,p) __asm__ volatile ("cntlzw %0,%1" : "=r"(b) : "r" (p))
   #elif defined(__MWERKS__) || defined(__MRC__)
-    #define LOOKUP_FIRSTBLANK(x) (__cntlzw(~((unsigned int)(x)))+1)
-    #define PPC_CNTLZW(b,p)      (b = __cntlzw((unsigned int)(p)))
+    #define LOOKUP_FIRSTBLANK(x)  (__cntlzw(~((unsigned int)(x)))+1)
+    #define PPC_CNTLZW(b,p)       (b = __cntlzw((unsigned int)(p)))
   #elif defined(__xlC__)
-    #define LOOKUP_FIRSTBLANK(x) (__cntlz4(~((unsigned int)(x)))+1)
-    #define PPC_CNTLZW(b,p)      (b = __cntlz4((unsigned int)(p)))
+    #define LOOKUP_FIRSTBLANK(x)  (__cntlz4(~((unsigned int)(x)))+1)
+    #define PPC_CNTLZW(b,p)       (b = __cntlz4((unsigned int)(p)))
   #else
     #error "Please check this (define OGR_TEST_FIRSTBLANK to test)"
   #endif
@@ -1799,8 +1451,8 @@ static int found_one(const struct State *oState)
     { i = ~i; __asm__ ("cntlz %0,%0" : "=r" (i) : "0" (i)); return ++i; }
     #define PPC_CNTLZW(b,p) __asm__ volatile ("cntlzw %0,%1" : "=r"(b) : "r" (p))
   #elif defined(__xlC__)
-    #define LOOKUP_FIRSTBLANK(x) (__cntlz4(~((unsigned int)(x)))+1)
-    #define PPC_CNTLZW(b,p)      (b = __cntlz4((unsigned int)(p)))
+    #define LOOKUP_FIRSTBLANK(x)  (__cntlz4(~((unsigned int)(x)))+1)
+    #define PPC_CNTLZW(b,p)       (b = __cntlz4((unsigned int)(p)))
   #else
     #error "Please check this (define OGR_TEST_FIRSTBLANK to test)"
   #endif
@@ -1902,6 +1554,7 @@ static int found_one(const struct State *oState)
   #define OGR_CYCLE_CACHE_ALIGN { }
 #endif
 
+/* ------------------------------------------------------------------ */
 
 static int ogr_init(void)
 {
@@ -2004,6 +1657,7 @@ static void dump(int depth, struct Level *lev, int limit)
 }
 #endif
 
+#if defined(HAVE_OGR_CORES)
 static int ogr_create(void *input, int inputlen, void *state, int statelen, int dummy)
 {
   struct State *oState;
@@ -2124,7 +1778,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen, int 
     oState->depth--; // externally visible depth is one less than internal
   }
 
-#else
+#else /* OGROPT_ALTERNATE_CYCLE > 0 */
 
   {
     int i, n;
@@ -2149,11 +1803,6 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen, int 
     int oStateDepth = oState->depth;
 
     for (i = 0; i < n; i++) {
-
-     #if (OGROPT_ALTERNATE_CYCLE == 2)
-       dist0 = VEC_TO_INT(distV0,3);
-     #endif
-
      int maxMinusDepth = oStateMaxDepthM1 - oStateDepth;
 
       if (oStateDepth <= oStateHalfDepth2) {
@@ -2196,7 +1845,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen, int 
     SAVE_FINAL_STATE(oState,lev);
     oState->depth = oStateDepth - 1; // externally visible depth is one less than internal
   }
-#endif
+#endif  /* OGROPT_ALTERNATE_CYCLE */
 
   oState->startdepth = workstub->stub.length;
 
@@ -2234,6 +1883,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen, int 
 
   return CORE_S_OK;
 }
+#endif  /* HAVE_OGR_CORES */
 
 #ifdef OGR_DEBUG
 static void dump_ruler(struct State *oState, int depth)
@@ -2251,6 +1901,8 @@ static void dump_ruler(struct State *oState, int depth)
 }
 #endif
 
+/* ------------------------------------------------------------------ */
+
 #if (OGROPT_ALTERNATE_CYCLE == 2) || (OGROPT_ALTERNATE_CYCLE == 1)
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
 {
@@ -2259,26 +1911,22 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
   struct Level *lev = &oState->Levels[depth];
   int nodes = 0;
   const int oStateMax = oState->max;
-  const int oStateMaxDepthM1 = oState->maxdepthm1;
+  int remainingDepth = oState->maxdepthm1 - depth;
   const int oStateHalfDepth2 = oState->half_depth2;
   const int oStateHalfDepth  = oState->half_depth;
   struct Level *levHalfDepth = &oState->Levels[oStateHalfDepth];
-  struct Level *levMaxM1 = &oState->Levels[oStateMaxDepthM1];
   int retval = CORE_S_CONTINUE;
 
-  SETUP_TOP_STATE(oState,lev);  // Buffers distV0
+  SETUP_TOP_STATE(oState,lev);
   OGR_CYCLE_CACHE_ALIGN;
 
   for (;;) {
-    U c0neg;
-    #if (OGROPT_ALTERNATE_CYCLE == 2)
-      dist0 = EXTRACT_INT(3);   // distV0[3]
-      WRITE_VEC(compV0);
-    #else
-      c0neg = ~comp0;
+    #if (OGROPT_ALTERNATE_CYCLE == 1)
+      U c0neg = ~comp0;
     #endif
     int firstbit;
-    limit = choose(dist0 >> ttmDISTBITS, oStateMaxDepthM1 - depth);
+
+    limit = choose(dist0 >> ttmDISTBITS, remainingDepth);
 
     if (with_time_constraints) { /* if (...) is optimized away if unused */
       #if !defined(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
@@ -2292,7 +1940,7 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
 
     if (depth <= oStateHalfDepth2) {
       if (depth <= oStateHalfDepth) {
-        limit = oStateMax - OGR[oStateMaxDepthM1 - depth];
+        limit = oStateMax - OGR[remainingDepth];
         if (nodes >= *pnodes) {
           break;
         }
@@ -2305,10 +1953,6 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
           limit = temp;
       }
     }
-
-    #if (OGROPT_ALTERNATE_CYCLE == 2)
-      c0neg = ~EXTRACT_INT(3);    // compV0[3]
-    #endif
 
     nodes++;
 
@@ -2324,33 +1968,21 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
     else { /* firstbit > 32 */
       if ((cnt2 += 32) > limit)  goto up; /* no spaces left */
       if (c0neg == 0) {
-        #if (OGROPT_ALTERNATE_CYCLE == 2)
-          WRITE_VEC(compV1);
-        #else
+        #if (OGROPT_ALTERNATE_CYCLE == 1)
           c0neg = ~comp1;
         #endif
-        COMP_LEFT_LIST_RIGHT_32(lev)
-        #if (OGROPT_ALTERNATE_CYCLE == 2)
-          c0neg = ~EXTRACT_INT(0);    // compV1[0]
-        #endif
+        COMP_LEFT_LIST_RIGHT_32(lev);
         goto stay;
       }
       else {
-        COMP_LEFT_LIST_RIGHT_32(lev)
+        COMP_LEFT_LIST_RIGHT_32(lev);
       }
     }
-
-    #if (OGROPT_ALTERNATE_CYCLE == 2)
-      WRITE_VEC(compV0);
-    #endif
-
     /* New ruler? */
-    if (depth == oStateMaxDepthM1) {
-      levMaxM1->cnt2 = cnt2;       /* not placed yet into list arrays! */
+    if (remainingDepth == 0) {
+      oState->Levels[oState->maxdepthm1].cnt2 = cnt2;
       retval = found_one(oState);
-      #if (OGROPT_ALTERNATE_CYCLE == 2)
-        c0neg = ~EXTRACT_INT(3);    // compV0[3]
-      #else
+      #if (OGROPT_ALTERNATE_CYCLE == 1)
         c0neg = ~comp0;
       #endif
       if (retval != CORE_S_CONTINUE) {
@@ -2360,7 +1992,8 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
     }
 
     /* Go Deeper */
-    PUSH_LEVEL_UPDATE_STATE(lev); // Buffers distV0
+    PUSH_LEVEL_UPDATE_STATE(lev);
+    remainingDepth--;
     lev++;
     depth++;
     continue;
@@ -2368,11 +2001,9 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
   up:
     lev--;
     depth--;
-    POP_LEVEL(lev);               // Buffers compV0
-
-    #if (OGROPT_ALTERNATE_CYCLE == 2)
-      c0neg = ~EXTRACT_INT(3);    // compV0[3]
-    #else
+    remainingDepth++;
+    POP_LEVEL(lev);
+    #if (OGROPT_ALTERNATE_CYCLE == 1)
       c0neg = ~comp0;
     #endif
 
@@ -2388,7 +2019,9 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
   *pnodes = nodes;
   return retval;
 }
-#else
+
+#else   /* OGROPT_ALTERNATE_CYCLE == 0 */
+
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
 {
   struct State *oState = (struct State *)state;
@@ -2403,9 +2036,9 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
   int limit;
   U comp0;
 
-#ifdef OGR_DEBUG
+  #ifdef OGR_DEBUG
   oState->LOGGING = 1;
-#endif
+  #endif
 
   OGR_CYCLE_CACHE_ALIGN;
 
@@ -2419,9 +2052,9 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
        #endif  
     }
 
-#ifdef OGR_DEBUG
+    #ifdef OGR_DEBUG
     if (oState->LOGGING) dump_ruler(oState, depth);
-#endif
+    #endif
 
     if (depth <= oState->half_depth2) {
       if (depth <= oState->half_depth) {
@@ -2441,23 +2074,23 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
       limit = oState->max - choose(lev->dist[0] >> ttmDISTBITS, oState->maxdepthm1 - depth);
     }
 
-#ifdef OGR_DEBUG
+    #ifdef OGR_DEBUG
     if (oState->LOGGING) dump(depth, lev, limit);
-#endif
+    #endif
 
     nodes++;
 
     /* Find the next available mark location for this level */
 stay:
     comp0 = lev->comp[0];
-#ifdef OGR_DEBUG
+    #ifdef OGR_DEBUG
     if (oState->LOGGING) printf("comp0=%08x\n", comp0);
-#endif
+    #endif
     if (comp0 < 0xfffffffe) {
       int s = LOOKUP_FIRSTBLANK( comp0 );
-#ifdef OGR_DEBUG
-  if (oState->LOGGING) printf("depth=%d s=%d len=%d limit=%d\n", depth, s+(lev->cnt2-lev->cnt1), lev->cnt2+s, limit);
-#endif
+    #ifdef OGR_DEBUG
+    if (oState->LOGGING) printf("depth=%d s=%d len=%d limit=%d\n", depth, s+(lev->cnt2-lev->cnt1), lev->cnt2+s, limit);
+    #endif
       if ((lev->cnt2 += s) > limit) goto up; /* no spaces left */
       COMP_LEFT_LIST_RIGHT(lev, s);
     } else {
@@ -2480,12 +2113,12 @@ stay:
 
     /* Go Deeper */
     lev2 = lev + 1;
-#if (OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP == 1)
+  #if (OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP == 1)
     COPY_LIST_SET_BIT_COPY_DIST_COMP(lev2, lev, lev->cnt2-lev->cnt1);
-#else
+  #else
     COPY_LIST_SET_BIT(lev2, lev, lev->cnt2-lev->cnt1);
     COPY_DIST_COMP(lev2, lev);
-#endif
+  #endif
     oState->marks[depth] = lev->cnt2;
     lev2->cnt1 = lev->cnt2;
     lev2->cnt2 = lev->cnt2;
@@ -2515,7 +2148,7 @@ up:
 
   return retval;
 }
-#endif
+#endif  /* OGROPT_ALTERNATE_CYCLE */
 
 static int ogr_getresult(void *state, void *result, int resultlen)
 {
@@ -2579,13 +2212,14 @@ static int ogr_load(void *buffer, int buflen, void **state)
   memcpy(*state, buffer, sizeof(struct State));
   return CORE_S_OK;
 }
-#endif
+#endif  /* HAVE_OGR_COUNT_SAVE_LOAD_FUNCTIONS */
 
 static int ogr_cleanup(void)
 {
   return CORE_S_OK;
 }
 
+#if defined(HAVE_OGR_CORES)
 CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
 {
   static CoreDispatchTable dispatch_table;
@@ -2594,14 +2228,15 @@ CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
   dispatch_table.cycle     = ogr_cycle;
   dispatch_table.getresult = ogr_getresult;
   dispatch_table.destroy   = ogr_destroy;
-#if defined(HAVE_OGR_COUNT_SAVE_LOAD_FUNCTIONS)
+  #if defined(HAVE_OGR_COUNT_SAVE_LOAD_FUNCTIONS)
   dispatch_table.count     = ogr_count;
   dispatch_table.save      = ogr_save;
   dispatch_table.load      = ogr_load;
-#endif
+  #endif
   dispatch_table.cleanup   = ogr_cleanup;
   return &dispatch_table;
 }
+#endif
 
 
 /*==========================================================================*/
@@ -2718,13 +2353,13 @@ static int ogr_create_pass2(void *input, int inputlen, void *state,
 
   oState->depth = 1;
   
-#ifdef OGROPT_NEW_CHOOSEDAT
+  #ifdef OGROPT_NEW_CHOOSEDAT
   /* would we choose values somewhere behind the precalculated values from 
      ogr_choose_dat2 ? */
   if (oState->maxdepthm1 - (oState->half_depth+1) > (CHOOSE_MAX_MARKS-1) ) {
     return CORE_E_CHOOSE;
   }
-#endif
+  #endif
 
 #if (OGROPT_ALTERNATE_CYCLE == 0)
 
@@ -2835,7 +2470,7 @@ static int ogr_create_pass2(void *input, int inputlen, void *state,
     oState->depth--; // externally visible depth is one less than internal
   }
 
-#else
+#else   /* OGROPT_ALTERNATE_CYCLE > 0 */
 
   {
     int i, n;
@@ -2860,11 +2495,6 @@ static int ogr_create_pass2(void *input, int inputlen, void *state,
     int oStateDepth = oState->depth;
 
     for (i = 0; i < n + finalization_stub; i++) {
-
-     #if (OGROPT_ALTERNATE_CYCLE == 2)
-       dist0 = VEC_TO_INT(distV0,3);
-     #endif
-
      int maxMinusDepth = oStateMaxDepthM1 - oStateDepth;
 
       if (oStateDepth <= oStateHalfDepth2) {
@@ -2905,9 +2535,6 @@ static int ogr_create_pass2(void *input, int inputlen, void *state,
         }
 
         stay:
-        #if (OGROPT_ALTERNATE_CYCLE == 2)
-          U comp0 = VEC_TO_INT(compV0,3);
-        #endif
         if (comp0 < 0xfffffffe) {
           s = LOOKUP_FIRSTBLANK( comp0 );
           if ((cnt2 += s) > limit)
@@ -2937,7 +2564,6 @@ static int ogr_create_pass2(void *input, int inputlen, void *state,
           COMP_LEFT_LIST_RIGHT(lev, s);
         }
       }
-
       PUSH_LEVEL_UPDATE_STATE(lev);
       lev++;
       oStateDepth++;
@@ -2946,7 +2572,7 @@ static int ogr_create_pass2(void *input, int inputlen, void *state,
     SAVE_FINAL_STATE(oState,lev);
     oState->depth = oStateDepth - 1; // externally visible depth is one less than internal
   }
-#endif
+#endif    /* OGROPT_ALTERNATE_CYCLE */
 
   oState->startdepth = workstub->stub.length;
 
@@ -2961,11 +2587,11 @@ CoreDispatchTable * OGR_P2_GET_DISPATCH_TABLE_FXN (void)
   dispatch_table_pass2.cycle     = ogr_cycle;
   dispatch_table_pass2.getresult = ogr_getresult;
   dispatch_table_pass2.destroy   = ogr_destroy;
-#if defined(HAVE_OGR_COUNT_SAVE_LOAD_FUNCTIONS)
+  #if defined(HAVE_OGR_COUNT_SAVE_LOAD_FUNCTIONS)
   dispatch_table_pass2.count     = ogr_count;
   dispatch_table_pass2.save      = ogr_save;
   dispatch_table_pass2.load      = ogr_load;
-#endif
+  #endif
   dispatch_table_pass2.cleanup   = ogr_cleanup;
   return &dispatch_table_pass2;
 }
