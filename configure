@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.123  1998/11/12 03:18:24  silby
+# Fixed freebsd build targets.
+#
 # Revision 1.122  1998/11/11 19:08:19  remi
 # Simplified $OPTS_GCC272
 #
@@ -1102,7 +1105,7 @@ case "$1" in
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lc_r"
-        TARGET_NASMFLAGS="-i rc5/nasm/ -f elf"
+        TARGET_NASMFLAGS="-i rc5/nasm/ -f aoutb"
 	;;
 
     *x86-freebsd-elf)
@@ -1115,6 +1118,16 @@ case "$1" in
         TARGET_NASM="/usr/local/bin/nasm"
         TARGET_LIBS="-lc_r"
         ;;
+
+    *x86-freebsd-mt-elf)
+	TARGET_AS="gcc -c"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
+	TARGET_LIBS="-lc_r"
+        TARGET_NASMFLAGS="-i rc5/nasm/ -f elf"
+	;;
 
     *x86-netbsd)
 	TARGET_AS="g++ -c -DNO_BALIGN"
