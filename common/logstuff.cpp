@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.21 2000/05/27 17:39:03 trevorh Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.22 2000/06/03 14:13:43 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -590,11 +590,17 @@ void LogFlush( int forceflush )
 
 // ------------------------------------------------------------------------
 
+#if (CLIENT_OS == OS_WIN16) && defined(__WATCOMC__)
+#define MAKE_VA_LIST_PTR(__va_list) ((va_list *)(&(__va_list[0])))
+#else
+#define MAKE_VA_LIST_PTR(__va_list) (&__va_list)
+#endif
+
 void LogScreen( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_SCREEN, format, &argptr );
+  LogWithPointer( LOGTO_SCREEN, format, MAKE_VA_LIST_PTR(argptr) );
   va_end(argptr);
   return;
 }
@@ -603,7 +609,7 @@ void LogScreenRaw( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN, format, &argptr );
+  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN, format, MAKE_VA_LIST_PTR(argptr));
   va_end(argptr);
   return;
 }
@@ -612,7 +618,7 @@ void Log( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL, format, &argptr );
+  LogWithPointer( LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL, format, MAKE_VA_LIST_PTR(argptr));
   va_end(argptr);
   return;
 }
@@ -621,7 +627,7 @@ void LogRaw( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL, format, &argptr );
+  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL, format, MAKE_VA_LIST_PTR(argptr));
   va_end(argptr);
   return;
 }
@@ -630,7 +636,7 @@ void LogTo( int towhat, const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( towhat, format, &argptr );
+  LogWithPointer( towhat, format, MAKE_VA_LIST_PTR(argptr) );
   va_end(argptr);
   return;
 }
