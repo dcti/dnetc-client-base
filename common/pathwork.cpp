@@ -22,6 +22,9 @@
 // --------------------------------------------------------------------
 //
 // $Log: pathwork.cpp,v $
+// Revision 1.9  1998/08/05 16:49:32  cberry
+// commented out #define DEBUG that KB had put in for some reason.
+//
 // Revision 1.8  1998/07/30 02:11:52  blast
 // AmigaOS update
 //
@@ -45,7 +48,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *pathwork_cpp(void) {
-static const char *id="@(#)$Id: pathwork.cpp,v 1.8 1998/07/30 02:11:52 blast Exp $";
+static const char *id="@(#)$Id: pathwork.cpp,v 1.9 1998/08/05 16:49:32 cberry Exp $";
 return id; }
 #endif
 
@@ -70,7 +73,7 @@ return id; }
 #endif
 
 #if (CLIENT_OS == OS_RISCOS)
-#define DEBUG
+//#define DEBUG
 #define MAX_FULLPATH_BUFFER_LENGTH (1024)
 #else
 #define MAX_FULLPATH_BUFFER_LENGTH (256)
