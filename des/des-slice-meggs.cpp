@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-meggs.cpp,v $
+// Revision 1.25  1999/04/05 20:32:05  patrick
+//
+// removed check for CPU_32BIT
+//
 // Revision 1.24  1999/02/21 09:51:39  silby
 // Changes for large block support.
 //
@@ -84,7 +88,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_meggs_cpp(void) {
-return "@(#)$Id: des-slice-meggs.cpp,v 1.24 1999/02/21 09:51:39 silby Exp $"; }
+return "@(#)$Id: des-slice-meggs.cpp,v 1.25 1999/04/05 20:32:05 patrick Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -94,12 +98,6 @@ return "@(#)$Id: des-slice-meggs.cpp,v 1.24 1999/02/21 09:51:39 silby Exp $"; }
 #include "problem.h"
 #include "convdes.h"
 
-
-//#define DEBUG
-
-#ifndef _CPU_32BIT_
-#error "everything assumes a 32bit CPU..."
-#endif
 
 #if defined(MMX_BITSLICER)
   #include "logstuff.h"
