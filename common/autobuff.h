@@ -12,7 +12,7 @@
 //
 
 #ifndef __AUTOBUFF_H__
-#define __AUTOBUFF_H__ "@(#)$Id: autobuff.h,v 1.14.2.2 2000/03/09 01:47:19 jlawson Exp $"
+#define __AUTOBUFF_H__ "@(#)$Id: autobuff.h,v 1.14.2.3 2000/03/09 11:39:25 jlawson Exp $"
 
 #ifndef AUTOBUFFER_INCREMENT
 #define AUTOBUFFER_INCREMENT 100
@@ -30,7 +30,7 @@ public:
   AutoBuffer(const char *szText);
   AutoBuffer(const char *chData, unsigned int amount);
   ~AutoBuffer(void);
-  operator const char* (void) const {return GetHead();}
+  operator const char* (void) const {return buffer + (int)bufferskip;}
   char *GetHead(void) const {return buffer + (int)bufferskip;}
   char *GetTail(void) const {return buffer + (int)bufferskip + (int)bufferfilled;}
   char *Reserve(unsigned int amount);
