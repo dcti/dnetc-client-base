@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.10 1999/04/21 04:55:22 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.11 1999/04/22 03:18:53 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -25,6 +25,7 @@ return "@(#)$Id: buffbase.cpp,v 1.10 1999/04/21 04:55:22 cyp Exp $"; }
 static int BufferPutMemRecord( struct membuffstruct *membuff,
     const WorkRecord* data, unsigned long *countP ) /* returns <0 on ioerr */
 {
+  unsigned long count = 0;
   int retcode = -1;
   WorkRecord *dest;
 
@@ -43,11 +44,12 @@ static int BufferPutMemRecord( struct membuffstruct *membuff,
       memcpy( (void *)dest, (void *)data, sizeof( WorkRecord ));
       membuff->buff[membuff->count] = dest;
       membuff->count++;
-      if (countP)
-        *countP = membuff->count;
+      count = (unsigned long)membuff->count;
       retcode = 0;
     }
   }
+  if (countP)
+    *countP = count;
   return retcode;
 }    
 
@@ -59,8 +61,9 @@ static int BufferGetMemRecord( struct membuffstruct *membuff,
                            const WorkRecord* data, unsigned long *countP ) 
 {
   /*  <0 on ioerr, >0 if norecs */
-  int retcode = 1;
-  WorkRecord *src;
+  unsigned long count = 0;
+  int retcode = +1;
+  WorkRecord *src = (WorkRecord *)0;
 
   if (membuff->count > 0)
   {
@@ -73,10 +76,11 @@ static int BufferGetMemRecord( struct membuffstruct *membuff,
       retcode = 0;
       memcpy( (void *)data, (void *)src, sizeof( WorkRecord ));
       free( (void *)src );
-      if (countP)
-        *countP = membuff->count;
+      count = (unsigned long)membuff->count;
     }
   }
+  if (countP)
+    *countP = count;
   return retcode;
 }    
 
@@ -102,19 +106,18 @@ static int BufferCountMemRecords( struct membuffstruct *membuff,
       {
         if ( membuff->buff[rec] != NULL )
         {
-          WorkRecord workrec;
-          memcpy((void *)&workrec, (void *)(membuff->buff[rec]),sizeof(WorkRecord));
-          if (((unsigned int)workrec.contest) == contest)
+          WorkRecord *workrec = membuff->buff[rec];
+          if (((unsigned int)workrec->contest) == contest)
           {
             packetcount++;
-            switch (workrec.contest) 
+            switch (contest) 
             {
               case RC5:
               case DES:
               case CSC:
                 normcount += (unsigned int)
-                   __iter2norm( workrec.work.crypto.iterations.lo, 
-                                workrec.work.crypto.iterations.hi );
+                   __iter2norm( workrec->work.crypto.iterations.lo, 
+                                workrec->work.crypto.iterations.hi );
                 break;
               case OGR:
                 normcount++;
