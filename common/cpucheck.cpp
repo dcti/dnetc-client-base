@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.5 2002/12/29 13:23:37 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.6 2002/12/30 00:52:17 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1413,21 +1413,30 @@ static long __GetRawProcessorID(const char **cpuname)
   static long detectedtype = -2L; /* -1 == failed, -2 == not supported */
   static const char *detectedname = NULL;
   
-  /* from linux/arch/sparc/kernel/cpu.c */
+  /* from linux kernel - last synced with kernel 2.4.19 */
   static struct { int psr_impl, psr_vers; const char *name; } cpuridtable[] = {
-  { 0, 0, "Fujitsu  MB86900/1A or LSI L64831 SparcKIT-40"}, /* Sun4/100, 4/200, SLC */
-  { 0, 4, "Fujitsu  MB86904"}, /* born STP1012PGA */
-  { 1, 0, "LSI Logic Corporation - L64811"}, /* SparcStation2, SparcServer 490 & 690 */
-  { 1, 1, "Cypress/ROSS CY7C601"}, /* SparcStation2 */
-  { 1, 3, "Cypress/ROSS CY7C611"}, /* Embedded controller */
-  { 1, 0xf, "ROSS HyperSparc RT620"}, /* Ross Technologies HyperSparc */
-  { 1, 0xe, "ROSS HyperSparc RT625"},
+  /* from linux/arch/sparc/kernel/cpu.c */
+  /* Sun4/100, 4/200, SLC */
+  { 0, 0, "Fujitsu  MB86900/1A or LSI L64831 SparcKIT-40"},
+  /* borned STP1012PGA */
+  { 0, 4, "Fujitsu  MB86904"},
+  { 0, 5, "Fujitsu TurboSparc MB86907"},
+  /* SparcStation2, SparcServer 490 & 690 */
+  { 1, 0, "LSI Logic Corporation - L64811"},
+  /* SparcStation2 */
+  { 1, 1, "Cypress/ROSS CY7C601"},
+  /* Embedded controller */
+  { 1, 3, "Cypress/ROSS CY7C611"},
+  /* Ross Technologies HyperSparc */
+  { 1, 0xf, "ROSS HyperSparc RT620"},
+  { 1, 0xe, "ROSS HyperSparc RT625 or RT626"},
   /* ECL Implementation, CRAY S-MP Supercomputer... AIEEE! */
   /* Someone please write the code to support this beast! ;) */
-  { 2, 0, "Bipolar Integrated Technology - B5010"}, /* Cray S-MP */
+  { 2, 0, "Bipolar Integrated Technology - B5010"},
   { 3, 0, "LSI Logic Corporation - unknown-type"},
-  { 4, 0, "Texas Instruments, Inc. - SuperSparc 50"},
-  { 4, 1, "Texas Instruments, Inc. - MicroSparc"}, /* SparcClassic STP1010TAB-50*/
+  { 4, 0, "Texas Instruments, Inc. - SuperSparc-(II)"},
+  /* SparcClassic  --  borned STP1010TAB-50*/
+  { 4, 1, "Texas Instruments, Inc. - MicroSparc"},
   { 4, 2, "Texas Instruments, Inc. - MicroSparc II"},
   { 4, 3, "Texas Instruments, Inc. - SuperSparc 51"},
   { 4, 4, "Texas Instruments, Inc. - SuperSparc 61"},
@@ -1435,10 +1444,25 @@ static long __GetRawProcessorID(const char **cpuname)
   { 5, 0, "Matsushita - MN10501"},
   { 6, 0, "Philips Corporation - unknown"},
   { 7, 0, "Harvest VLSI Design Center, Inc. - unknown"},
-  { 8, 0, "Systems and Processes Engineering Corporation (SPEC)"}, /* Gallium arsenide 200MHz, BOOOOGOOOOMIPS!!! */
+  /* Gallium arsenide 200MHz, BOOOOGOOOOMIPS!!! */
+  { 8, 0, "Systems and Processes Engineering Corporation (SPEC)"},
+  { 9, 0, "Fujitsu or Weitek Power-UP"},
+  { 9, 1, "Fujitsu or Weitek Power-UP"},
+  { 9, 2, "Fujitsu or Weitek Power-UP"},
+  { 9, 3, "Fujitsu or Weitek Power-UP"},
+  /* from linux/arch/sparc64/kernel/cpu.c */
+  { 0x17, 0x10, "TI UltraSparc I   (SpitFire)"},
+  { 0x22, 0x10, "TI UltraSparc II  (BlackBird)"},
+  { 0x17, 0x11, "TI UltraSparc II  (BlackBird)"},
+  { 0x17, 0x12, "TI UltraSparc IIi"},
+  { 0x17, 0x13, "TI UltraSparc IIe"},
+  { 0x3e, 0x14, "TI UltraSparc III (Cheetah)"},
+  /* old speling from earlier kernel versions */
+  { 1, 0xe, "ROSS HyperSparc RT625"},
   { 9, 0, "Fujitsu #3"},
+  { 4, 0, "Texas Instruments, Inc. - SuperSparc 50"},
   };
-  
+
   #if (CLIENT_OS == OS_LINUX)
   if (detectedtype == -2L)
   {
