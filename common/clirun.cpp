@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.86 1999/04/11 00:16:59 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.87 1999/04/11 15:37:21 sampo Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -816,7 +816,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         Problem *thisprob;
         thisprob = GetProblemPointerFromIndex( 0 );
         MakeGUIThread(thisprob->contest, 0);
-        InitializeThreadProgress(0, thisprob->CalcPercent(),
+        InitializeThreadProgress(0, thisprob->CalcPermille(),
                   thisprob->GetKeysDone());
         UpdateClientInfo(&client_info);
       }
