@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.19 1999/09/07 01:37:59 elric Exp $
+# @(#)$Id: configure,v 1.222.2.20 1999/09/28 23:18:10 cyp Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -270,6 +270,11 @@ RC5X86_SRCS="rc5/x86/rc5-486-rg.cpp \
 	     rc5/x86/rc5-k5-rg.cpp \
 	     rc5/x86/rc5-k6-rg.cpp"
 
+#
+# Source files making up the OGR core code
+#
+OGR_ANSI_SRCS="ogr/ogr.cpp ogr/crc32.cpp ogr/choosedat.cpp"
+	     
 #
 # Source files making up the DES core code
 #
@@ -1060,10 +1065,11 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -pipe \
-			-D__showids__ -DSMC -DLURK"
+			-D__showids__ -DSMC -DLURK -DGREGH"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
-			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
+			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
+			$OGR_ANSI_SRCS"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_NASMFLAGS="-i rc5/x86/nasm/ -i des/mmx-bitslice/ \
