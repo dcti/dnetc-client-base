@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: util.cpp,v $
+// Revision 1.2  1999/03/18 07:52:47  gregh
+// Cast short to int when passing to printf(%d).
+//
 // Revision 1.1  1999/03/18 03:51:18  cyp
 // Created.
 //
@@ -10,7 +13,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.1 1999/03/18 03:51:18 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.2 1999/03/18 07:52:47 gregh Exp $"; }
 #endif
 
 #include "baseincs.h" /* string.h */
@@ -35,7 +38,7 @@ const char *ogr_stubstr(const struct Stub *stub)
     return buf;
   }
   for (i = 0; i < len; i++) {
-    sprintf(&buf[strlen(buf)], "%d", stub->stub[i]);
+    sprintf(&buf[strlen(buf)], "%d", (int)stub->stub[i]);
     if (i+1 < len) {
       strcat(buf, "-");
     }
