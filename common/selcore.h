@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.3.2.8 2000/11/12 02:00:16 cyp Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.3.2.9 2001/01/03 23:21:54 cyp Exp $"
 
 #if defined(__PROBLEM_H__)
 /* Set the xx_unit_func vectors/cputype/coresel in the problem. */
@@ -27,9 +27,9 @@ void selcoreEnumerateWide( int (*enumcoresproc)(
                               const char **corenames, int idx, void *udata ),
                            void *userdata );
 
-/* benchmark/test each core */
-int selcoreBenchmark( unsigned int cont_i, unsigned int secs );
-int selcoreSelfTest( unsigned int cont_i );
+/* benchmark/test each core - return < 0 on error, 0 = not supported, > 0=ok */
+long selcoreBenchmark( unsigned int cont_i, unsigned int secs );
+long selcoreSelfTest( unsigned int cont_i );
 
 /* ClientMain() calls these */
 int InitializeCoreTable( int *coretypes );

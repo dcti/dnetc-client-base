@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.84 2001/01/02 20:12:45 patrick Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.85 2001/01/03 23:21:53 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -406,87 +406,81 @@ static long __bench_or_test( int which,
                             unsigned int cont_i, unsigned int benchsecs )
 {
   long rc = -1;
-#if (CLIENT_OS == OS_AIX)	/* need a signal handler to be able to test
-				   all cores on all systems 	*/
-  struct sigaction invop, old_handler;
-
+  #if (CLIENT_OS == OS_AIX)            /* need a signal handler to be able */
+  struct sigaction invop, old_handler; /* to test all cores on all systems */
   memset ((void *)&invop, 0, sizeof(invop) );
   invop.sa_handler = sig_invop;
   sigaction(SIGILL, &invop, &old_handler);
-#endif
+  #endif
  
-  if (InitializeCoreTable(((int *)0)) < 0) /* ACK! selcoreInitialize() */
-    return -1;                             /* hasn't been called */
-
-  if (cont_i < CONTEST_COUNT)
+  if (InitializeCoreTable(((int *)0)) >= 0 /* core table is initialized? */
+      && cont_i < CONTEST_COUNT)           /* valid contest id? */
   {
     /* save current state */
     int user_cputype = selcorestatics.user_cputype[cont_i]; 
     int corenum = selcorestatics.corenum[cont_i];
     unsigned int coreidx, corecount = __corecount_for_contest( cont_i );
+
+    rc = 0; /* assume nothing done */
     for (coreidx = 0; coreidx < corecount; coreidx++)
     {
       selcorestatics.user_cputype[cont_i] = coreidx; /* as if user set it */
       selcorestatics.corenum[cont_i] = -1; /* reset to show name */
-    #if (CLIENT_OS == OS_AIX)
-      if ( setjmp(context) ) { /* setjump will return true if coming from the handler */
-	LogScreen("Error: Core #%i does not work for this system.\n", coreidx);
-      } else 
-    #endif
-      if (which == 's') /* selftest */
-      {
-        int irc = SelfTest( cont_i );
-        if (irc <= 0) /* failed or not supported */
-        {
-          rc = (long)irc;
-          break; /* test failed. stop */
-        }
-      }
-      else if ((rc = TBenchmark( cont_i, benchsecs, 0 )) <= 0)
-        break; /* failed/not supported for this contest */
 
-      #if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
-      if (cont_i == RC5 && coreidx == (corecount-1) &&
-          GetNumberOfDetectedProcessors() > 1) /* have x86 card */
+      #if (CLIENT_OS == OS_AIX)
+      if (setjmp(context)) /* setjump will return true if coming from the handler */
+      { 
+	LogScreen("Error: Core #%i does not work for this system.\n", coreidx);
+      } 
+      else 
+      #endif
       {
-        Problem *prob = ProblemAlloc(); /* so bench/test gets threadnum+1 */
-        rc = -1;
-        if (prob)
-        {
-          rc = 1;
-          Log("RC5: using x86 core.\n" );
-          if (which != 's') /* bench */
-            rc = TBenchmark( cont_i, benchsecs, 0 );
-          else
-          {
-            int irc = SelfTest( cont_i );
-            if (irc <= 0) /* failed or not supported */
-              rc = (long)irc;
-          }
-          ProblemFree(prob);
-        }
-        if (rc <= 0) 
-          break; /* failed/not supported for this contest */
-      }      
-      #endif 
-    }
-  #if (CLIENT_OS == OS_AIX)
-    sigaction (SIGILL, &old_handler, NULL);	/* reset handler */
-  #endif
+        if (which == 's') /* selftest */
+          rc = SelfTest( cont_i );
+        else 
+          rc = TBenchmark( cont_i, benchsecs, 0 );
+        if (rc <= 0) /* failed (<0) or not supported (0) */
+          break; /* stop */
+      }
+    } /* for (coreidx = 0; coreidx < corecount; coreidx++) */
+
     selcorestatics.user_cputype[cont_i] = user_cputype; 
     selcorestatics.corenum[cont_i] = corenum;
-  }
+
+    #if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
+    if (rc > 0 && cont_i == RC5 && 
+          GetNumberOfDetectedProcessors() > 1) /* have x86 card */
+    {
+      Problem *prob = ProblemAlloc(); /* so bench/test gets threadnum+1 */
+      rc = -1; /* assume alloc failed */
+      if (prob)
+      {
+        Log("RC5: using x86 core.\n" );
+        if (which != 's') /* bench */
+          rc = TBenchmark( cont_i, benchsecs, 0 );
+        else
+          rc = SelfTest( cont_i );
+        ProblemFree(prob);
+      }
+    }      
+    #endif 
+
+  } /* if (cont_i < CONTEST_COUNT) */
+
+  #if (CLIENT_OS == OS_AIX)
+  sigaction (SIGILL, &old_handler, NULL);	/* reset handler */
+  #endif
   return rc;
 }
 
-int selcoreBenchmark( unsigned int cont_i, unsigned int secs )
+long selcoreBenchmark( unsigned int cont_i, unsigned int secs )
 {
   return __bench_or_test( 'b', cont_i, secs );
 }
 
-int selcoreSelfTest( unsigned int cont_i )
+long selcoreSelfTest( unsigned int cont_i )
 {
-  return (int)__bench_or_test( 's', cont_i, 0 );
+  return __bench_or_test( 's', cont_i, 0 );
 }
 
 /* ---------------------------------------------------------------------- */
