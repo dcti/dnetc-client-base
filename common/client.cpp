@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.107 2002/03/31 13:06:35 andreasb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.108 2002/04/11 10:38:42 oliver Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -618,7 +618,7 @@ int main( int argc, char *argv[] )
 int main( int argc, char *argv[] )
 {
   int rc = 20;
-  if (amigaInit())
+  if (amigaInit(&argc,&argv))
   {
     rc = ClientMain( argc, argv );
     if (rc) rc = 5; //Warning
