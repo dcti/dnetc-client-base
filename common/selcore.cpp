@@ -10,14 +10,14 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.101 2001/02/22 07:54:05 mfeiri Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.102 2001/03/07 00:21:09 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "problem.h"   // problem class
 #include "cpucheck.h"  // cpu selection, GetTimesliceBaseline()
-#include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
+#include "logstuff.h"  // Log()/LogScreen()
 #include "clicdata.h"  // GetContestNameFromID()
 #include "bench.h"     // TBenchmark()
 #include "selftest.h"  // SelfTest()

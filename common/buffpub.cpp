@@ -8,13 +8,13 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.1.2.14 2001/02/05 16:39:34 cyp Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.1.2.15 2001/03/07 00:21:06 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
 #include "baseincs.h" //basic #includes
 #include "util.h"     //trace
-#include "logstuff.h" //Log()/LogScreen()/LogScreenPercent()/LogFlush()
+#include "logstuff.h" //Log()/LogScreen()
 #include "pathwork.h" //GetFullPathForFilename()
 #include "problem.h"  //Resultcode enum
 #include "buffupd.h"  // BUFFERUPDATE_FETCH / BUFFERUPDATE_FLUSH

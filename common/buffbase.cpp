@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.55 2001/03/06 03:17:22 sampo Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.56 2001/03/07 00:21:23 sampo Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -18,7 +18,7 @@ return "@(#)$Id: buffbase.cpp,v 1.12.2.55 2001/03/06 03:17:22 sampo Exp $"; }
 #include "util.h"     //trace
 #include "clievent.h" //event stuff
 #include "clicdata.h" //GetContestNameFromID()
-#include "logstuff.h" //Log()/LogScreen()/LogScreenPercent()/LogFlush()
+#include "logstuff.h" //Log()/LogScreen()
 #include "triggers.h" //[Check|Raise][Pause|Exit]RequestTrigger()
 #include "pathwork.h" //GetFullPathForFilename() or dummy if DONT_USE_PATHWORK
 #include "problem.h"  //Resultcode enum
