@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-1key-driver.cpp,v $
+// Revision 1.3.2.2  1999/10/07 19:08:59  remi
+// CSC_64_BITS patch
+//
 // Revision 1.3.2.1  1999/10/07 18:41:14  cyp
 // sync'd from head
 //
@@ -27,7 +30,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_1key_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-1key-driver.cpp,v 1.3.2.1 1999/10/07 18:41:14 cyp Exp $"; }
+return "@(#)$Id: csc-1key-driver.cpp,v 1.3.2.2 1999/10/07 19:08:59 remi Exp $"; }
 #endif
 
 // ------------------------------------------------------------------
@@ -41,7 +44,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
 
 #ifdef CSC_BIT_32
   assert( sizeof(ulong) == 4);
-#elif CSC_BIT_64
+#elif defined(CSC_BIT_64)
   assert( sizeof(ulong) == 8);
 #endif
 
