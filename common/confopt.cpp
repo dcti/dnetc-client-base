@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.53 2001/01/11 15:51:45 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.54 2001/01/16 19:06:02 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -711,8 +711,12 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   CONF_KEYSERVPORT             , /* CONF_MENU_NET */
   CFGTXT("Keyserver port"), "", /* atoi("") is zero too. */
   CFGTXT(
-  "This field determines which keyserver port the client should connect to.\n"
-  "You should leave this at zero unless:\n"
+  "This field determines the default keyserver port if the client is to select\n"
+  "a keyserver automatically, or when no keyserver port was explicitely specified\n"
+  "for a host in the \"Keyserver host name(s)\" list (in which case hosts without\n"
+  "keyserver port numbers will be appended with the value you specify here).\n"
+  "\n"
+  "The keyserver port should be left at zero (default) unless:\n"
   "a) You are connecting to a personal proxy is that is *not* listening on\n"
   "   port 2064.\n"
   "b) You are connecting to a keyserver (regardless of type: personal proxy\n"
