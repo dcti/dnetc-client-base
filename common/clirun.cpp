@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.3 1999/06/07 03:56:35 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.4 1999/06/11 02:15:38 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -602,6 +602,10 @@ if (targ->realthread)
            NonPolledSleep(1); // don't race in this loop
         #endif
       }
+      #if 0 //not needed now. main changes from sleep() to NonPolledSleep()
+      else
+        NonPolledUSleep(500000); // don't race in this loop
+      #endif
     }
     else if (!thisprob->IsInitialized())
     {
@@ -1337,7 +1341,7 @@ int Client::Run( void )
     {             
       SetGlobalPriority( priority );
       if (isPaused)
-        sleep(3);
+        NonPolledSleep(3); //sleep(3);
       else
       {
         int i = 0;
@@ -1406,12 +1410,12 @@ int Client::Run( void )
       if (isPaused)
       {
         if (!wasPaused)
-          LogScreen("Paused...\n");
+          Log("Paused...\n");
         wasPaused = 1;
       }
       else if (wasPaused)
       {
-        LogScreen("Running again after pause...\n");
+        Log("Running again after pause...\n");
         wasPaused = 0;
       }
     }
