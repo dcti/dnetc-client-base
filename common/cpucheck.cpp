@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.79 2002/03/21 18:04:22 sampo Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.80 2002/03/21 18:52:21 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1005,15 +1005,19 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
                          chipname_override = "Celeron (Covington)"; 
                        else if ((cpuid & 0x0f00) == 0x0600)
                          chipname_override = "Celeron-A (Mendocino/Dixon)"; 
-                       else
+                       else if ((cpuid & 0x00f0) < 0x00B0)
                          chipname_override = "Celeron-A (Coppermine)";
+                       else
+                         chipname_override = "Mobile Celeron (Tualatin)";
                        break;
           case 0x2000: chipname_override = "Pentium III"; break;
           case 0x3000: chipname_override = "Celeron (Tualatin)"; break;
           case 0x4000: if ((cpuid & 0x0f00) < 0x0700)
                          chipname_override = "Pentium II Xeon";
+                       else if ((cpuid & 0x00f0) < 0x00B0)
+                         chipname_override = "Pentium III Xeon";
                        else
-                         chipname_override = "Pentium III Xeon"; 
+                         chipname_override = "Pentium III-S";
                        break;
           case 0x6000: chipname_override = "Pentium III-M"; break;
           case 0x8000: chipname_override = "Pentium 4"; break;
