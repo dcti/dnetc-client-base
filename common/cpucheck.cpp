@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.99 1999/12/07 05:43:24 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.100 1999/12/08 00:30:25 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -340,13 +340,13 @@ static long __GetRawProcessorID(const char **cpuname)
                 {        12,   "7400/G4"               },
                 {        50,   "821"                   },
                 {        80,   "860"                   },
-                {0x10000L+1,   "Power RS"              }, //not PVR based
-                {0x10000L+2,   "Power RS2 Superchip"   }, //not PVR based
-                {0x10000L+3,   "Power RS2"             }, //not PVR based
-                {0x10000L+4,   "620"                   }, //not PVR based
-                {0x10000L+5,   "630"                   }, //not PVR based
-                {0x10000L+6,   "A35"                   }, //not PVR based
-                {0x10000L+7,   "RS64II"                }, //not PVR based
+                {(1L<<16)+1,   "Power RS"              }, //not PVR based
+                {(1L<<16)+2,   "Power RS2 Superchip"   }, //not PVR based
+                {(1L<<16)+3,   "Power RS2"             }, //not PVR based
+                {(1L<<16)+4,   "620"                   }, //not PVR based
+                {(1L<<16)+5,   "630"                   }, //not PVR based
+                {(1L<<16)+6,   "A35"                   }, //not PVR based
+                {(1L<<16)+7,   "RS64II"                }, //not PVR based
                 };
   #if (CLIENT_OS == OS_AIX)
   if (detectedtype == -2L)
@@ -384,13 +384,13 @@ static long __GetRawProcessorID(const char **cpuname)
                   { POWER_601,            1 },
                   { POWER_603,            3 },
                   { POWER_604,            4 },
-                  { POWER_RS1,   0x10000L+1 },
-                  { POWER_RSC,   0x10000L+2 },
-                  { POWER_RS2,   0x10000L+3 },
-                  { POWER_620,   0x10000L+4 },
-                  { POWER_630,   0x10000L+5 },
-                  { POWER_A35,   0x10000L+6 },
-                  { POWER_RS64II,0x10000L+7 },
+                  { POWER_RS1,   (1L<<16)+1 },
+                  { POWER_RSC,   (1L<<16)+2 },
+                  { POWER_RS2,   (1L<<16)+3 },
+                  { POWER_620,   (1L<<16)+4 },
+                  { POWER_630,   (1L<<16)+5 },
+                  { POWER_A35,   (1L<<16)+6 },
+                  { POWER_RS64II,(1L<<16)+7 },
                   };
     unsigned int imp_i;
     detectedtype = -1L; /* assume failed */
@@ -410,7 +410,7 @@ static long __GetRawProcessorID(const char **cpuname)
       detectedname = (const char *)&namebuf[0];
       if (ispower) /* if POWER CPU, then don't let ident fail */
       {            /*   - we need the power bit in the retval */
-        detectedtype = _system_configuration.implementation + 0x10000;
+        detectedtype = (1L<<16)+_system_configuration.implementation;
       }
     }
   }
@@ -505,7 +505,7 @@ static long __GetRawProcessorID(const char **cpuname)
   if (cpuname)
     *cpuname = detectedname;
   if (detectedtype >= 0 && ispower)
-    return (0x02000000l | detectedtype);
+    return ((1L<<24) | detectedtype);
   return detectedtype;
 }
 #endif /* (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) */

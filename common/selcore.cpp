@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.63 1999/12/06 19:11:10 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.64 1999/12/08 00:30:25 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -164,21 +164,20 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
     {
       long det = GetProcessorType(1);
-      if (det > 0)
-      {
-        if (( det & 0x02000000L ) != 0) //ARCH_IS_POWER
-        {                               //only one core - (ansi)
-          corenames_table[RC5][0] = "RG AIXALL (Power CPU)",
-          corenames_table[RC5][1] = NULL;
-        }
-        #if (CLIENT_OS == OS_MACOS)
-        else if (( det & 0x00ffffffL ) == 12) //PPC 7500
-        {
-          corenames_table[RC5][2] = "crunch-vec"; /* aka rc5_unit_func_vec() wrapper */
-          corenames_table[RC5][3] = NULL;
-        }
-        #endif
+      if (det < 0) 
+        ; /* error, Power never errors though */
+      else if (( det & (1L<<24) ) != 0) //ARCH_IS_POWER
+      {                               //only one core - (ansi)
+        corenames_table[RC5][0] = "RG AIXALL (Power CPU)",
+        corenames_table[RC5][1] = NULL;
       }
+      #if (CLIENT_OS == OS_MACOS)
+      else if ( det == 12) //PPC 7500
+      {
+        corenames_table[RC5][2] = "crunch-vec"; /* aka rc5_unit_func_vec() wrapper */
+        corenames_table[RC5][3] = NULL;
+      }
+      #endif
     }
     #endif
     fixed_up = 1;  
@@ -473,16 +472,16 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   if (detected_type >= 0)
   {
     #if (CLIENT_CPU == CPU_POWER)
-    if ((detected_type & 0x02000000L ) != 0x02000000L ) //not power?
+    if ((detected_type & (1L<<24)) == 0 ) //not power?
     {
       Log("PANIC::Can't run a PowerPC client on Power architecture\n");
-      return -1;
+      return -1; //this is a good place to abort()
     }
-    #else
-    if ((detected_type & 0x02000000L ) == 0x02000000L ) //is power?
+    #else /* PPC */
+    if ((detected_type & (1L<<24)) != 0 ) //is power?
     {
       Log("PANIC::Can't run a Power client on PowerPC architecture\n");
-      return -1;
+      return -1; //this is a good place to abort()
     }
     #endif
   }  
@@ -500,20 +499,16 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     if (selcorestatics.corenum[RC5] < 0 && detected_type >= 0)
     {
       int cindex = -1;
-      if (( detected_type & 0x02000000L ) != 0) //ARCH_IS_POWER
+      if (( detected_type & (1L<<24) ) != 0) //ARCH_IS_POWER
         cindex = 0;                 //only one core - (ansi)
-      else
-      {
-        long det =  ( detected_type & 0x00ffffffL );
-        if (det == 1 )              //PPC 601
-          cindex = 0;               // lintilla
-        #if (CLIENT_OS == OS_MACOS) /* vec core is currently macos only */
-        else if (det == 12)         //PPC 7500
-          cindex = 2;               // vector
-        #endif
-        else                        //the rest
-          cindex = 1;               // allitnil
-      }
+      else if (detected_type == 1 )    //PPC 601
+        cindex = 0;               // lintilla
+      #if (CLIENT_OS == OS_MACOS) /* vec core is currently macos only */
+      else if (detected_type == 12) //PPC 7500
+        cindex = 2;               // vector
+      #endif
+      else                        //the rest
+        cindex = 1;               // allitnil
       selcorestatics.corenum[RC5] = cindex;
     }
   }
