@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.179 2000/07/12 14:36:07 oliver Exp $
+# @(#)$Id: configure,v 1.222.2.180 2000/08/04 00:53:51 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -74,15 +74,6 @@ TARGET_ADDOBJS=""
 # to get a working client. *sigh* This flag will get set in the
 # target to -O0. See endofscript for usage. -- myshkin
 OPTS_NOOPT=""
-
-
-# Define characters to delete (via 'tr') to form a safe name.
-# Safe names are used for temporary environmental variable names.
-#     [WARNING: this is a GNU-ism]
-DELETECHARS="'[:punct:]'"
-#if [ `echo "moo-cow/a.b" | tr -d ${DELETECHARS}` -ne "moocowab" ]; then
-#  DELETECHARS="'/.\$\-'"
-#fi
 
 #
 # Platform specific docfiles to be included in the tarball. You only need
@@ -765,7 +756,7 @@ case "$1" in
 	TARGET_CC="gcc"
         generate_gcc_opts "mipx" "linux"
 	TARGET_CCFLAGS="$OPTS_GCC -mcpu=r3000 -DMULTITHREAD \
-			-D__showids__ -DLURK -DHAVE_OGR_CORES"
+			-DLURK -DHAVE_OGR_CORES"
 	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.cpp common/lurk.cpp $OGR_ANSI_SRCS"
 	TARGET_LDFLAGS=""
 	TARGET_LIBS="-lpthread"
@@ -795,7 +786,6 @@ case "$1" in
 	;;
 
     *mips-gcc-irix5-crunch)	# faster than mips-gcc for IRIX
-        DELETECHARS="'/.\$\-'"
 	TARGET_CC="g++"
         generate_gcc_opts "mips" "irix" 
 	TARGET_CCFLAGS="$OPTS_GCC -D_irix5_ "
@@ -829,7 +819,6 @@ case "$1" in
 	;;
 
     *mips-irix-nomt)     # [ivo] generic mips-irix5 target (note: Ivo no longer porter!)
-        DELETECHARS="'/.\$\-'"
         TARGET_CC="gcc"
         generate_gcc_opts "mips" "irix"
         TARGET_CCFLAGS="$OPTS_GCC -DHAVE_OGR_CORES "
@@ -842,7 +831,6 @@ case "$1" in
         ;;
 
     *mips-gcc)	# [lyndon] Irix 6, gcc, threaded (assumes n32 ABI)
-        DELETECHARS="'/.\$\-'"
         TARGET_CC="gcc"
         generate_gcc_opts "mips" "irix"
         TARGET_CCFLAGS="$OPTS_GCC -DHAVE_OGR_CORES -DMULTITHREAD"
@@ -853,7 +841,6 @@ case "$1" in
         ;;
 
     *mips-gcc-ultrix)	# For mips based DEC Ultrix machines
-	DELETECHARS="'/.\$\-'"
 	TARGET_CC="g++"
         generate_gcc_opts "mips" "irix"
 	TARGET_CCFLAGS="$OPTS_GCC"
@@ -914,7 +901,6 @@ case "$1" in
 	;;
 
     *hpux-hppa-gcc-nomt)  # [ivo]
-        #DELETECHARS="'/.\$\-'"
 	TARGET_CC="g++"
         generate_gcc_opts "hppa" "hpux"
         TARGET_CCFLAGS="$OPTS_GCC -DHAVE_OGR_CORES"
@@ -966,7 +952,7 @@ case "$1" in
 	TARGET_AS="gcc295 -c"
         generate_gcc_opts "supersparc" "linux"
 	TARGET_CCFLAGS="$OPTS_GCC -g \
-			-D__showids__ -DLURK -DMULTITHREAD \
+			-DLURK -DMULTITHREAD \
 			-DHAVE_OGR_CORES"
 	TARGET_LDFLAGS="-g -static"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c common/lurk.cpp $OGR_ANSI_SRCS"
@@ -978,7 +964,6 @@ case "$1" in
     #####
 
     *sparc-sunos-gcc-nomt)   # [ivo sunos413/nomt]
-        DELETECHARS="'/.\$\-'"
         TARGET_CC="gcc"
         generate_gcc_opts "sparc" "sunos"
         TARGET_CCFLAGS="$OPTS_GCC -Dsunos -DHAVE_OGR_CORES"
@@ -991,7 +976,6 @@ case "$1" in
         ;;
 
     *sparc-solaris-gcc-nomt)   # [ivo solaris/nomt]
-        #DELETECHARS="'/.\$\-'"
         TARGET_CC="gcc"
         generate_gcc_opts "supersparc" "solaris"
         TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris -DHAVE_OGR_CORES"
@@ -1003,7 +987,6 @@ case "$1" in
         ;;
 
     *sparc-solaris-gcc)   # [ivo solaris/mt] fastest rc5 <- production target
-        #DELETECHARS="'/.\$\-'"
         TARGET_CC="gcc"
         generate_gcc_opts "supersparc" "solaris"
         TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris -DMULTITHREAD -DHAVE_OGR_CORES"
@@ -1015,7 +998,6 @@ case "$1" in
         ;;
 
     *sparc-solaris-gcc-ultra)   # [ivo ultra] very fast DES -> hence obsolete
-        #DELETECHARS="'/.\$\-'"
         TARGET_CC="gcc"
         # See Also: platforms/ultrasparc/s_paramaters.h
         #OPTS_DES_ULTRA_C="-DDES_ULTRA -DINLINE=' ' -DIN_DCTI_CLIENT \
@@ -1195,7 +1177,6 @@ case "$1" in
 	# classes are buggy with AIX !
 
     *aix4-ppc-xlc)	 # This is the fastest build for AIX 4.x PPC machines
-	DELETECHARS="'/.\$\-'"
 	TARGET_CC="xlC"
 	TARGET_CCFLAGS="$OPTS_XLC_PPC"
 	TARGET_ADDASMS="$XLC_LINTILLA_ASMS"
@@ -1209,7 +1190,6 @@ case "$1" in
 	;;
 
     *aix4-ppc601-xlc)      # AIX 4.x PPC, 601 chip
-	DELETECHARS="'/.\$\-'"
 	TARGET_CC="xlC"
 	TARGET_CCFLAGS="$OPTS_XLC_PPC601"
 	TARGET_ADDASMS="$XLC_LINTILLA_ASMS"
@@ -1223,7 +1203,6 @@ case "$1" in
 	;;
 
     *aix32-ppc-xlc)	# AIX 3.2.x PPC
-	DELETECHARS="'/.\$\-'"
 	TARGET_CC="xlC"
         TARGET_CCFLAGS="$OPTS_XLC3_PPC601"
         TARGET_ADDSRCS="rc5/ppc/crunch_allitnil_552.ppc.s \
@@ -1238,7 +1217,6 @@ case "$1" in
 	;;
 
     *ppc-gcc-aix32)	# AIX 3.2.x gcc [patrick] <patrick@mail4you.de>
-	DELETECHARS="'/.\$\-'"
 	TARGET_CC="g++"
         generate_gcc_opts "ppc" "aix"
 	TARGET_CCFLAGS="$OPTS_GCC -D_AIX"
@@ -1251,7 +1229,6 @@ case "$1" in
 	;;
 
     *aix4-ppc-egcs)			# [patrick] <patrick@mail4you.de>
-        DELETECHARS="'/.\$\-'"
 	TARGET_CC="g++"
         generate_gcc_opts "ppc" "aix"
         TARGET_CCFLAGS="$OPTS_GCC -D_AIX"
@@ -1268,7 +1245,6 @@ case "$1" in
         # AIX POWER this one works for all platforms (AIX 3.x, 4.[1-3])!
 
     *power-aix-gcc)                     # [patrick] <patrick@mail4you.de>
-        DELETECHARS="'/.\$\-'"
 	TARGET_CC="g++"
         generate_gcc_opts "power" "aix"
 	TARGET_CCFLAGS="$OPTS_GCC -D_AIX"
@@ -1281,7 +1257,6 @@ case "$1" in
 	;;
 
     *power-aix-egcs)                     # [patrick] <patrick@mail4you.de>
-        DELETECHARS="'/.\$\-'"
 	TARGET_CC="g++"
         generate_gcc_opts "power" "aix"
         TARGET_CCFLAGS="$OPTS_GCC -D_AIX"
@@ -1296,7 +1271,6 @@ case "$1" in
     *aixall-egcs)                       # [patrick] new all in one AIX target
         # WARNING: the code will show a PPC CPU even though also POWER
         # CPUs are supported !
-        DELETECHARS="'/.\$\-'"
 	TARGET_CC="g++"
 	AIXALL=TRUE
         ALLCORES="-I./common -I./rc5 -I./des -I./ogr -I./csc -mthreads -D_AIX -DBIT32 -DMEGGS -DKWAN"
@@ -1378,24 +1352,23 @@ case "$1" in
 
 ###### Intel X86 Linux platforms
 
-  ### ***RELEASE*** targets - mt for all
+    ### ***RELEASE*** targets - mt for all
+    ### use of -Xlinker -omagic (for the SMC core) forces -static
+    ### so which lib (libc4/libc5/glibc20/glibc21) the binary is linked
+    ### against is fairly moot. HOWEVER, you _should_ add resolv.c
+    ### to TARGET_ADDSRCS to be truly binary compatible. If you don't,
+    ### dns lookup will either not work (or not work reliably), or segfault.
+    ### The rest of the client is unaffected by the choice of libc.
 
-  ### The "x86-linux-elf" (universal elf) target is now the only release
-  ### build that should be distributed anymore.  The remaining x86-linux
-  ### targets for libc4/libc5/glibc2 are only left for development
-  ### convenience.  The "x86-linux-elf" target should ideally be built on
-  ### a glibc21 machine and verified with "ldd" that it does not have
-  ### any dynamic library dependencies.
-
-    *x86-linux-elf)	          # [jlawson] universal elf <- production target
+    *x86-linux-elf)	 # universal elf <- production target
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
         generate_gcc_opts "x86" "linux"
-	TARGET_CCFLAGS="$OPTS_GCC -DMMX_RC5 -D__showids__ \
-			-DMULTITHREAD -DLURK -DSMC -DHAVE_OGR_CORES \
-                        -DUNIVERSALRESOLVER"
+	TARGET_CCFLAGS="$OPTS_GCC -DMMX_RC5 \
+			-DMULTITHREAD -DLURK -DSMC -DHAVE_OGR_CORES"
 	TARGET_LDFLAGS="-Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp \
+                        platforms/linux/resolv.c \
 			common/lurk.cpp $OGR_ANSI_SRCS"
 	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
@@ -1406,20 +1379,21 @@ case "$1" in
 	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_CSC -DHAVE_CSC_CORES"
 	##csc## TARGET_ADDNASMS="$TARGET_ADDNASMS $CSC_ASM_SRCS"
 	TARGET_NASM_FMT="elf"
-	TARGET_LIBS="-lpthread -ldl"
+	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-x86-elf"
 	;;
 
-    *x86-linux-mit)                        # mit pthreads
-        TARGET_AS="gcc -c"
-        TARGET_CC="gcc"
+    *x86-linux-mit)               # mit pthreads. same as above but needs
+        TARGET_AS="gcc -c"        # -D_MIT_POSIX_THREADS=1 (linuxthreads
+        TARGET_CC="gcc"           # is no longer libc4/5 compatible)
         generate_gcc_opts "x86" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -DMMX_RC5 -D__showids__ \
+        TARGET_CCFLAGS="$OPTS_GCC -DMMX_RC5 \
                         -DMULTITHREAD -DLURK -DSMC -DHAVE_OGR_CORES \
-                        -D_MIT_POSIX_THREADS=1 -Werror" 
-        TARGET_LDFLAGS="-static -Xlinker -omagic"
+                        -D_MIT_POSIX_THREADS=1" 
+        TARGET_LDFLAGS="-Xlinker -omagic"
         TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp \
+                        platforms/linux/resolv.c \
                         common/lurk.cpp $OGR_ANSI_SRCS"
         TARGET_ADDASMS="platforms/x86ident.S"
         TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
@@ -1429,60 +1403,15 @@ case "$1" in
         TARGET_TARBALL="linux-x86-elf"
         ;;
 
-    *x86-linux-glibc2)	                   # glibc20/glibc21
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc"
+    *x86-linux)	                    # generic. clone() for threads and thus
+	TARGET_AS="gcc -c"          # avoids mitthreads/linuxthreads issue
+	TARGET_CC="gcc"             # can make aout if TARGET_CCFLAGS.=-aout
         generate_gcc_opts "x86" "linux"
-	TARGET_CCFLAGS="$OPTS_GCC -DMMX_RC5 -D__showids__ \
-			-DMULTITHREAD -DLURK -DSMC -DHAVE_OGR_CORES"
+	TARGET_CCFLAGS="$OPTS_GCC -DMMX_RC5 \
+			-DSMC -DLURK -DHAVE_OGR_CORES"
 	TARGET_LDFLAGS="-Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp \
-			common/lurk.cpp $OGR_ANSI_SRCS"
-	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_BITSLICER -DKWAN -DMEGGS  -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	##des## TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	##des## TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_DESMMX_SRCS"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_CSC -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDNASMS="$TARGET_ADDNASMS $CSC_ASM_SRCS"
-	TARGET_NASM_FMT="elf"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-x86-glibc2"
-	;;
-
-    *x86-linux-libc5)	                   # libc5-elf
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc"
-        generate_gcc_opts "x86" "linux"
-	TARGET_CCFLAGS="$OPTS_GCC -DMMX_RC5 -D__showids__ \
-			-DMULTITHREAD -DSMC -DLURK -DHAVE_OGR_CORES"
-	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp \
-			common/lurk.cpp $OGR_ANSI_SRCS"
-	TARGET_ADDASMS="platforms/x86ident.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-	##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_BITSLICER -DKWAN -DMEGGS  -DHAVE_DES_CORES"
-	##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-	##des## TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	##des## TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_DESMMX_SRCS"
-	##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_CSC -DHAVE_CSC_CORES"
-	##csc## TARGET_ADDNASMS="$TARGET_ADDNASMS $CSC_ASM_SRCS"
-	TARGET_NASM_FMT="elf"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-x86-elf"
-	;;
-
-    *x86-linux)	                    # generic. clone() for threads
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc"
-        generate_gcc_opts "x86" "linux"
-	TARGET_CCFLAGS="$OPTS_GCC -DMMX_RC5 -D__showids__ \
-			-DSMC -DLURK -DHAVE_OGR_CORES"
-	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp \
+                        platforms/linux/resolv.c \
 			common/lurk.cpp $OGR_ANSI_SRCS"
 	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
@@ -1500,7 +1429,7 @@ case "$1" in
     *x86-linux-aout)	              # [jlawson] aout, no threads/smc/lurk
 	TARGET_CC="gcc"               # old gcc doesn't know .cpp
 	TARGET_CCFLAGS="-x c++ -O2 -fomit-frame-pointer -DNEED_FAKE_BOOL \
-                        -DMMX_RC5 -D__showids__ -DHAVE_OGR_CORES"
+                        -DMMX_RC5 -DHAVE_OGR_CORES"
         TARGET_LD="gcc"
 	TARGET_LDFLAGS=""
 	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
@@ -1519,7 +1448,7 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
         generate_gcc_opts "x86" "linux"  # -g for debug
-	TARGET_CCFLAGS="-g $OPTS_GCC -DMMX_RC5 -D__showids__ \
+	TARGET_CCFLAGS="-g $OPTS_GCC -DMMX_RC5 \
 			-DSMC -DMULTITHREAD -DLURK -DHAVE_OGR_CORES"
 	TARGET_LDFLAGS="-Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp \
@@ -1854,7 +1783,7 @@ case "$1" in
 	TARGET_CC="armcpp -aif -nodebug -littleend -apcs 3/26bit/swst/hardfp/fpe2 -zps1 -nounusedareas -l/home/cberry/play/riscoslib/CLib/stubs.o"
 	TARGET_AS="armasm"
         TARGET_ASFLAGS="-apcs 3/26bit"
-	TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -Iogr -Iplatforms -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -J/home/cberry/play/riscoslib/CLib -D__showids__ -DCOMPAT_INET4 -D__riscos -DBIT_32 -DHAVE_OGR_CORES"
+	TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -Iogr -Iplatforms -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -J/home/cberry/play/riscoslib/CLib -DCOMPAT_INET4 -D__riscos -DBIT_32 -DHAVE_OGR_CORES"
 	TARGET_ADDSRCS="platforms/riscos/riscos_sup.cpp platforms/riscos/riscos_x86.cpp $OGR_ANSI_SRCS"
 	TARGET_ADDASMS="platforms/riscos/riscos_asm.s rc5/arm/rc5-arm-1.s rc5/arm/rc5-arm-2.s rc5/arm/rc5-arm-3.s des/arm/des-slice-arm.s des/arm/des-slice-sa.s"
 	TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
@@ -1955,7 +1884,7 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
         generate_gcc_opts "s390" "linux"
-	TARGET_CCFLAGS="$OPTS_GCC -D__showids__ \
+	TARGET_CCFLAGS="$OPTS_GCC \
 			-DMULTITHREAD -DLURK -HAVE_OGR_CORES"
 	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
 	TARGET_ADDSRCS="common/lurk.cpp \
@@ -1978,7 +1907,7 @@ case "$1" in
 	TARGET_CC="gcc"
 	TARGET_AS=""
         generate_gcc_opts "s390" "os390"
-	TARGET_CCFLAGS="$OPTS_GCC -D_ALL_SOURCE -D__showids__ \
+	TARGET_CCFLAGS="$OPTS_GCC -D_ALL_SOURCE \
                         -DHAVE_OGR_CORES" #-D__STRING_CODE_SET__="ISO8859-1"
 	TARGET_ADDSRCS="rc5/ansi/rc5ansi_2-rg.c \
                         $OGR_ANSI_SRCS"
@@ -1998,7 +1927,7 @@ case "$1" in
 	TARGET_CC="gcc"
         generate_gcc_opts "x86" "beos"
 	TARGET_CCFLAGS="$OPTS_GCC -fno-pic -O3 -Wno-multichar -DMMX_RC5 \
-			-D__showids__ -DMULTITHREAD -DHAVE_OGR_CORES"
+			-DMULTITHREAD -DHAVE_OGR_CORES"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
 	TARGET_ADDASMS="platforms/x86ident.S"
@@ -2011,7 +1940,7 @@ case "$1" in
     *ppc-beos)
 	TARGET_AS="mwcc -c"
 	TARGET_CC="mwcc"
-	TARGET_CCFLAGS="$OPTS_MWCC_PPC604 -D__showids__ -DMULTITHREAD -DHAVE_OGR_CORES"
+	TARGET_CCFLAGS="$OPTS_MWCC_PPC604 -DMULTITHREAD -DHAVE_OGR_CORES"
 	TARGET_LDFLAGS=""
 	TARGET_ADDSRCS="$RC5PPC_MWCC_SRCS $OGR_ANSI_SRCS"
 	TARGET_LIBS=""
@@ -2032,7 +1961,7 @@ case "$1" in
 	TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "x86" "os2"
-	TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC -DMMX_RC5 -I. -I${C_INCLUDE_PATH} -DMULTITHREAD -D__showids__"
+	TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC -DMMX_RC5 -I. -I${C_INCLUDE_PATH} -DMULTITHREAD"
 	TARGET_LDFLAGS="-Zmt"
 	TARGET_ADDSRCS="common/lurk.cpp rc5/x86/rc5-486-smc-rg.cpp $RC5X86_SRCS platforms/os2cli/os2inst.cpp"
 	TARGET_ADDASMS="platforms/x86ident.S"
@@ -2057,7 +1986,7 @@ case "$1" in
 	TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "x86" "os2"
-	TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC -Os -O6 -fexceptions -funroll-loops -DMMX_RC5 -I. -I${C_INCLUDE_PATH} -DMULTITHREAD -DLURK -DHAVE_OGR_CORES -D__showids__"
+	TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC -Os -O6 -fexceptions -funroll-loops -DMMX_RC5 -I. -I${C_INCLUDE_PATH} -DMULTITHREAD -DLURK -DHAVE_OGR_CORES"
 	TARGET_LDFLAGS="-Zmt"
 	TARGET_ADDSRCS="common/lurk.cpp platforms/os2cli/os2inst.cpp $OGR_ANSI_SRCS"
 	TARGET_ADDASMS="platforms/x86ident.S"
@@ -2160,59 +2089,6 @@ TARGET_CCFLAGS="$TARGET_CCFLAGS -I./common -I./rc5 -I./des -I./ogr -I./csc"
 #TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES -DHAVE_OGR_CORES"
 
 
-#
-# Generate the list of output objects, making note of what
-# source file it was derrived from.
-#
-
-TARGET_ALLCCOBJS=
-TARGET_ALLASOBJS=
-TARGET_ALLNASMOBJS=
-
-if [ -n "${COMMON_SRCS}" -o -n "${TARGET_ADDSRCS}" ]; then
-  echo "Scanning output C++ dependencies..."
-  for target in ${COMMON_SRCS} ${TARGET_ADDSRCS}; do
-      TARGETOBJECT=output/`basename $target .cpp`.o
-      SAFENAME=`echo ${TARGETOBJECT} | tr -d ${DELETECHARS}`
-      echo "  ${target} -> ${TARGETOBJECT} (${SAFENAME})"
-      eval "DEPEND_${SAFENAME}=${target}"
-      TARGET_ALLCCOBJS="${TARGET_ALLCCOBJS} ${TARGETOBJECT}"
-  done
-fi
-
-if [ -n "${TARGET_ADDASMS}" ]; then
-  echo "Scanning output AS dependencies..."
-  for target in ${TARGET_ADDASMS}; do
-      TARGETOBJECT=output/`basename $target`.o
-      SAFENAME=`echo ${TARGETOBJECT} | tr -d ${DELETECHARS}`
-      echo "  $target -> $TARGETOBJECT ($SAFENAME)"
-      eval "DEPEND_${SAFENAME}=$target"
-      TARGET_ALLASOBJS="${TARGET_ALLASOBJS} ${TARGETOBJECT}"
-  done
-fi
-
-if [ -n "${TARGET_ADDNASMS}" ]; then
-  echo "Scanning output NASM dependencies..."
-  for target in ${TARGET_ADDNASMS}; do
-      TARGETOBJECT=output/`basename $target`.o
-      SAFENAME=`echo ${TARGETOBJECT} | tr -d ${DELETECHARS}`
-      echo "  $target -> $TARGETOBJECT ($SAFENAME)"
-      eval "DEPEND_${SAFENAME}=$target"
-      TARGET_ALLNASMOBJS="${TARGET_ALLNASMOBJS} ${TARGETOBJECT}"
-  done
-fi
-
-if [ "$TARGET_OS" = "DIGITAL_UNIX" ]; then
-  echo "Scanning additional Digital Unix Sources"
-  for target in ${TARGET_DIGITAL_UNIX_EV5_SRCS}; do
-      TARGETOBJECT=output/`basename $target .cpp`.o
-      SAFENAME=`echo ${TARGETOBJECT} | tr -d ${DELETECHARS}`
-      echo "  ${target} -> ${TARGETOBJECT} (${SAFENAME})"
-      eval "DEPEND_${SAFENAME}=${target}"
-      TARGET_DUEV5OBJS="${TARGET_DUEV5OBJS} ${TARGETOBJECT}"
-  done
-fi
-
 
 #
 # Build the test program and look up the CPU and OS types.
@@ -2268,8 +2144,7 @@ if [ -z "$TARGET_NASM_FMT" ]; then
   TARGET_NASM_FMT="elf"
 fi
 TARGET_NASMFLAGS="-f $TARGET_NASM_FMT \
-                  -i rc5/x86/nasm/ -i des/mmx-bitslice/ -i csc/x86/ \
-		  -d__showids__"
+                  -i rc5/x86/nasm/ -i des/mmx-bitslice/ -i csc/x86/"
 if [ "$TARGET_NASM_FMT" = "elf" ]; then
   TARGET_NASMFLAGS="$TARGET_NASMFLAGS -d__ELF__"
 else
@@ -2294,6 +2169,58 @@ fi
 TARGET_DOCFILES="${TARGET_DOCFILES} docs/CHANGES.txt docs/${TARGET_BINNAME}.txt"
 if [ -n "$TARGET_GENMAN" ]; then
   TARGET_DOCFILES="${TARGET_DOCFILES} ${TARGET_BINNAME}.1"
+fi
+
+
+#
+# Generate the list of output objects
+#
+
+TARGET_ALLOBJS=""        # obj, obj, obj, obj, ...
+TARGET_SRCOBJLIST="none" # type1, src, obj, src, obj, ... type2, src, obj ... 
+                         # the "none" in there initially is a dummy to squelch
+		         # leading space (and serve as a reset indicator)
+
+if [ -n "${COMMON_SRCS}" -o -n "${TARGET_ADDSRCS}" ]; then
+  echo "Scanning output C/C++ dependencies..."
+  TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} cc"
+  for target in ${COMMON_SRCS} ${TARGET_ADDSRCS}; do
+      TARGETOBJECT=`basename $target .c`
+      TARGETOBJECT=output/`basename $TARGETOBJECT .cpp`.o
+      echo "  ${target} -> ${TARGETOBJECT}"
+      TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
+  done
+fi
+if [ -n "${TARGET_ADDASMS}" ]; then
+  echo "Scanning output AS dependencies..."
+  TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} as"
+  for target in ${TARGET_ADDASMS}; do
+      TARGETOBJECT=output/`basename $target`.o
+      echo "  $target -> $TARGETOBJECT"
+      TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
+  done
+fi
+if [ -n "${TARGET_ADDNASMS}" ]; then
+  echo "Scanning output NASM dependencies..."
+  TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} nasm"
+  for target in ${TARGET_ADDNASMS}; do
+      TARGETOBJECT=output/`basename $target`.o
+      echo "  $target -> $TARGETOBJECT"
+      TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
+  done
+fi
+if [ "$TARGET_OS" = "DIGITAL_UNIX" ]; then
+  echo "Scanning additional Digital Unix Sources"
+  TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} cc-decunix"
+  for target in ${TARGET_DIGITAL_UNIX_EV5_SRCS}; do
+      TARGETOBJECT=output/`basename $target .cpp`.o
+      echo "  ${target} -> ${TARGETOBJECT}"
+      TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
+  done
 fi
 
 
@@ -2333,7 +2260,7 @@ echo "ASFLAGS = ${TARGET_ASFLAGS}" >> Makefile
 echo "NASM = ${TARGET_NASM}" >> Makefile
 echo "NASMFLAGS = ${TARGET_NASMFLAGS}" >> Makefile
 echo "STRIP = ${TARGET_STRIP}" >> Makefile
-echo "ALLOBJS = ${TARGET_ALLCCOBJS} ${TARGET_ALLASOBJS} ${TARGET_ALLNASMOBJS} ${TARGET_DUEV5OBJS}" >> Makefile
+echo "ALLOBJS = ${TARGET_ALLOBJS}" >> Makefile
 echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
 echo "BUILDNAME = $1" >> Makefile
 echo "DOCFILES = ${TARGET_DOCFILES}" >>Makefile
@@ -2351,6 +2278,8 @@ echo "" >> Makefile
 echo "Generating Makefile production targets..."
 echo "# Regular targets follow" >> Makefile
 
+TARGET_RES=""
+TARGET_RESBIND_CMD=""
 if [ "$TARGET_OS" = "OS2" ]; then
   TARGET_RES="output/\${BUILDNAME}.res"
   TARGET_RESBIND_CMD="emxbind -b -r output/\${BUILDNAME}.res \${BUILDNAME}"
@@ -2476,60 +2405,71 @@ echo "ident:	${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
 echo "	ident ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} | awk '{ printf(\"%-30s %10s %s %s %s %s%c\", \$\$2,\$\$3,\$\$4,\$\$5,\$\$6,\$\$7,10)}'" >> Makefile
 echo "" >> Makefile
 
-
 #
 # Generate the dependency targets in the makefile
 #
-echo "# Dependency targets follow" >> Makefile
 
-if [ -n "${TARGET_ALLCCOBJS}" ]; then
-  echo "Generating Makefile C++ dependency targets..."
-  for target in ${TARGET_ALLCCOBJS}; do
-    SAFENAME=`echo $target | tr -d ${DELETECHARS}`
-    eval TARGETSRC=$`echo DEPEND_$SAFENAME`
-#broken
-    TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
-#broken
-    echo "$target:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
-    echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
-    echo "" >> Makefile
+if [ -n "${TARGET_SRCOBJLIST}" ]; then
+  echo "# Dependency targets follow" >> Makefile
+  echo ""
+  echo "Generating Makefile dependency targets..."
+  #
+  # _SRCOBJLIST goes ... type1, src, obj, src, obj, ... type2, src, obj ...
+  # the 'types' are defined where _SRCOBJLIST is added to
+  #
+  TARGETTYP=""
+  TARGETSRC=""
+  for target in $TARGET_SRCOBJLIST; do
+    if [ "${target}X" = "X" ]; then # shouldn't happen
+      target=$target
+    # ------------------------------------  
+    elif [ "${target}" = "none" ]; then  
+      TARGETTYP="$target"
+    elif [ "${target}" = "cc" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "cc-decunix" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "as" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "nasm" ]; then  
+      TARGETTYP="$target"
+    # ------------------------------------  
+    elif [ "${TARGETSRC}X" = "X" ]; then
+      TARGETSRC="$target"
+    # ------------------------------------  
+    elif [ "${TARGETTYP}" = "cc" ]; then
+      TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
+      echo "$target:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
+      echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------  
+    elif [ "${TARGETTYP}" = "as" ]; then
+      echo "$target:	${TARGETSRC}" >> Makefile
+      echo "	\${AS} \${ASFLAGS} ${TARGETSRC} -o $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------  
+    elif [ "${TARGETTYP}" = "nasm" ]; then
+      echo "$target:	${TARGETSRC}" >> Makefile
+      echo "	\${NASM} \${NASMFLAGS} ${TARGETSRC} -o $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------  
+    elif [ "${TARGETTYP}" = "cc-decunix" ]; then
+      TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
+      echo "$target:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
+      echo "	\${CC} -c $TARGET_EV5_CCFLAGS ${TARGETSRC} -o $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------  
+    else
+      echo "Unknown target type ${TARGETTYP}"
+      exit 1
+    fi
   done
-fi
-
-if [ -n "${TARGET_ALLASOBJS}" ]; then
-  echo "Generating Makefile AS dependency targets..."
-  for target in ${TARGET_ALLASOBJS}; do
-    SAFENAME=`echo $target | tr -d ${DELETECHARS}`
-    eval TARGETSRC=$`echo DEPEND_$SAFENAME`
-    echo "$target:	${TARGETSRC}" >> Makefile
-    echo "	\${AS} \${ASFLAGS} ${TARGETSRC} -o $target" >> Makefile
-    echo "" >> Makefile
-  done
-fi
-
-if [ -n "${TARGET_ALLNASMOBJS}" ]; then
-  echo "Generating Makefile NASM dependency targets..."
-  for target in ${TARGET_ALLNASMOBJS}; do
-    SAFENAME=`echo $target | tr -d ${DELETECHARS}`
-    eval TARGETSRC=$`echo DEPEND_$SAFENAME`
-    echo "$target:	${TARGETSRC}" >> Makefile
-    echo "	\${NASM} \${NASMFLAGS} ${TARGETSRC} -o $target" >> Makefile
-    echo "" >> Makefile
-  done
-fi
-
-if [ "$TARGET_OS" = "DIGITAL_UNIX" ]; then
-  echo "Generating Makefile Digital Unix EV5 dependency targets..."
-  for target in ${TARGET_DUEV5OBJS}; do
-    SAFENAME=`echo $target | tr -d ${DELETECHARS}`
-    eval TARGETSRC=$`echo DEPEND_$SAFENAME`
-    TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
-    echo "$target:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
-    echo "	\${CC} -c $TARGET_EV5_CCFLAGS ${TARGETSRC} -o $target" >> Makefile
-    echo "" >> Makefile
-  done
-fi
-
+fi        
+      
 if [ "$TARGET_OS" = "AMIGAOS_68K" ]; then
   echo "Generating Makefile AmigaOS 68k multi-core OGR dependency targets..."
   TARGETSRC="ogr/ogr.cpp"
