@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.26 1999/11/26 13:08:51 cyp Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.27 1999/12/02 05:25:24 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -70,9 +70,11 @@
   #define usleep(x) snooze((x))
 #elif (CLIENT_OS == OS_MACOS)
   #include <unistd.h>
-  void usleep(unsigned int usecs);
-  #define sleep(x) my_sleep(x)
-  unsigned int my_sleep(unsigned int seconds);
+  //gusi unistd prototypes both
+  //#undef sleep
+  //#undef usleep
+  //extern "C" void usleep(unsigned int usecs);
+  //extern "C" unsigned int sleep(unsigned int secs);
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
   #include <sys/types.h>
@@ -81,11 +83,13 @@
   extern "C" int usleep(useconds_t);
 #elif (CLIENT_OS == OS_IRIX)
   #include <unistd.h>
+#ifdef _irix5_
   #undef usleep
   #define usleep(x) poll(NULL, 0, (x)/1000);
   //#define usleep(x) sginap((((x)*CLK_TCK)+500000)/1000000L)
   //CLK_TCK is defined as sysconf(_SC_CLK_TCK) in limits.h and 
   //is 100 (10ms) for non-realtime processes, machine dependant otherwise
+#endif /* _irix5_ */
 #elif (CLIENT_OS == OS_AMIGAOS)
   extern "C" {
   #ifdef sleep

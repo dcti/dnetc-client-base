@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.22 1999/11/26 13:08:51 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.23 1999/12/02 05:25:24 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -349,18 +349,6 @@ void CliSetupSignals( void )
   SetConsoleCtrlHandler( /*(PHANDLER_ROUTINE)*/CliSignalHandler, FALSE );
   SetConsoleCtrlHandler( /*(PHANDLER_ROUTINE)*/CliSignalHandler, TRUE );
   RegisterPollDrivenBreakCheck( __PollDrivenBreakCheck );
-}
-#endif
-
-// -----------------------------------------------------------------------
-
-#if (CLIENT_OS == OS_MACOS)
-// Mac framework code will raise requests by calling
-// RaiseExitRequestTrigger
-#define CLISIGHANDLER_IS_SPECIAL
-void CliSetupSignals( void ) 
-{
-  __assert_statics(); 
 }
 #endif
 
