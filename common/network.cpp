@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.87  1999/03/23 06:06:17  dicamillo
+// Add low-level read and write code for MacOS.
+//
 // Revision 1.86  1999/03/18 18:46:57  cyp
 // No, documentation is/was correct: proxies understand all encoding methods on
 // all ports they listen on. As the descrip for keyport in the conf menu also
@@ -196,7 +199,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.86 1999/03/18 18:46:57 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.87 1999/03/23 06:06:17 dicamillo Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -1673,6 +1676,9 @@ int Network::LowLevelPut(const char *data,int length)
   #if (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32S)
   if (sendquota > 0x7FFF)  /* 16 bit OS but int is 32 bits */
     sendquota = 0x7FFF;
+  #elif (CLIENT_OS == OS_MACOS)	
+  if (sendquota > 0xFFFF)  /* Mac network library uses "unsigned short" */
+    sendquota = 0xFFFF;
   #else
   if (sendquota > INT_MAX)  
     sendquota = INT_MAX;
@@ -1710,6 +1716,25 @@ int Network::LowLevelPut(const char *data,int length)
           if (t_look(sock) == T_DISCONNECT)
             return 0;
         }
+      }
+    }
+   #elif (CLIENT_OS == OS_MACOS)
+    int noiocount = 0;
+    written = -2;
+    while (written == -2)
+    {
+      written = socket_write(sock, data, (unsigned long)towrite);
+      if (written == 0)       /* transport provider accepted nothing */
+      {                   /* should never happen unless 'towrite' was 0*/
+        if ((++noiocount) < 3)
+        {
+          written = -2;   /* retry */
+          usleep(500000); // 0.5 secs
+        }
+      }  
+      else if (written == -1)
+      {
+        if (!valid_socket(sock)) return(0);
       }
     }
     #elif defined(AF_INET) && defined(SOCK_STREAM)      //BSD 4.3 sockets
@@ -1818,6 +1843,9 @@ int Network::LowLevelGet(char *data,int length)
   #if ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32))
   if (writequota > 0x7FFF)
     writequota = 0x7FFF;
+  #elif (CLIENT_OS == OS_MACOS)	
+  if (writequota > 0xFFFF)  /* Mac network library uses "unsigned short" */
+    writequota = 0xFFFF;
   #else
   if (writequota > INT_MAX)
     writequota = INT_MAX;
@@ -1836,6 +1864,17 @@ int Network::LowLevelGet(char *data,int length)
       if (bytesread == -1)
       {
         if ( t_errno != TNODATA ) /* TLOOK (async event) or TSYSERR */
+          bytesread = 0; /* set as socket closed */
+      }
+      else if (bytesread == 0) /* should never happen? */
+        bytesread = -1; /* set as none waiting */
+    }
+    #elif (CLIENT_OS == OS_MACOS)
+    {
+      bytesread = socket_read( sock, data, toread);
+      if (bytesread == -1)
+      {
+        if ( !valid_socket(sock) )
           bytesread = 0; /* set as socket closed */
       }
       else if (bytesread == 0) /* should never happen? */
