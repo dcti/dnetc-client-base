@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.99  1998/06/21 01:37:56  silby
+// Furthur changes in validation of options (validations are all being moved to ValidateConfig, which is now used much more liberally), fixed isstringblank to say that "   " is a blank string, and fixed a bug with buff-in.des being set wrong if a blank string was put into buff-out.des.
+//
 // Revision 1.98  1998/06/20 22:42:56  silby
 // Improved error checking on some options (notable changes include mins and maxes now on checkpoint time and exitfilechecktime)
 //
@@ -56,7 +59,7 @@
 #include "client.h"
 
 #if (!defined(lint) && !defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.98 1998/06/20 22:42:56 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.99 1998/06/21 01:37:56 silby Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -498,7 +501,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
       {
         case CONF_ID:
           strncpy( id, parm, sizeof(id) - 1 );
-          killwhitespace(id);
+          ValidateConfig();
           break;
         case CONF_THRESHOLDI:
           choice=atoi(parm);
@@ -510,8 +513,6 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           choice=atoi(parm);
           if (choice > 0) outthreshold[0]=choice;
           ValidateConfig();
-          if ( outthreshold[0] > inthreshold[0] )
-             outthreshold[0]=inthreshold[0];
           break;
         case CONF_THRESHOLDI2:
           choice=atoi(parm);
@@ -523,8 +524,6 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           choice=atoi(parm);
           if (choice > 0) outthreshold[1]=choice;
           ValidateConfig();
-          if ( outthreshold[1] > inthreshold[1] )
-             outthreshold[1]=inthreshold[1];
           break;
         case CONF_COUNT:
           blockcount = atoi(parm);
@@ -559,39 +558,45 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           break;
         case CONF_KEYPROXY:
           strncpy( keyproxy, parm, sizeof(keyproxy) - 1 );
-          killwhitespace(keyproxy);
-          CheckForcedKeyport();
+          ValidateConfig();
           break;
         case CONF_KEYPORT:
-          keyport = atoi(parm); CheckForcedKeyport();
+          keyport = atoi(parm);
+          ValidateConfig();
           break;
         case CONF_HTTPPROXY:
           strncpy( httpproxy, parm, sizeof(httpproxy) - 1);
-          killwhitespace(httpproxy);break;
+          ValidateConfig();
+          break;
         case CONF_HTTPPORT:
           httpport = atoi(parm); break;
         case CONF_HTTPID:
-          if ( strcmp(parm,".") == 0) {
-             strcpy(httpid,"");
-          } else if (uuehttpmode == 4) {  // socks4
-             strcpy(httpid, parm);
-          } else {             // http & socks5
-             printf("Enter password--> ");
-             fflush( stdout );
-             fgets(parm2, sizeof(parm2), stdin);
-             for ( p = parm2; *p; p++ )
-             {
-               if ( !isprint(*p) )
-               {
-                 *p = 0;
-                 break;
-               }
-             }
-             if (uuehttpmode == 5)   // socks5
-               sprintf(httpid, "%s:%s", parm, parm2);
-             else                    // http
-               strcpy(httpid,Network::base64_encode(parm, parm2));
-          }
+          if ( strcmp(parm,".") == 0)
+            {
+            strcpy(httpid,"");
+            }
+          else if (uuehttpmode == 4)
+            {  // socks4
+            strcpy(httpid, parm);
+            }
+          else
+            {             // http & socks5
+            printf("Enter password--> ");
+            fflush( stdout );
+            fgets(parm2, sizeof(parm2), stdin);
+            for ( p = parm2; *p; p++ )
+              {
+              if ( !isprint(*p) )
+                {
+                *p = 0;
+                break;
+                }
+              }
+            if (uuehttpmode == 5)   // socks5
+              sprintf(httpid, "%s:%s", parm, parm2);
+            else                    // http
+              strcpy(httpid,Network::base64_encode(parm, parm2));
+            }
           break;
         case CONF_UUEHTTPMODE:
           uuehttpmode = atoi(parm);
@@ -648,11 +653,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
 #endif
         case CONF_MESSAGELEN:
           messagelen = atoi(parm);
-          if ( messagelen < 0 )
-            messagelen = 0;
-          if ( messagelen > MAXMAILSIZE) {
-            messagelen = MAXMAILSIZE;
-          }
+          ValidateConfig();
           if (messagelen != 0)
             {
             options[CONF_SMTPSRVR].optionscreen=2;
@@ -670,19 +671,18 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           break;
         case CONF_SMTPPORT:
           smtpport = atoi(parm);
-          if ( smtpport < 0 )
-            smtpport = 0;
+          ValidateConfig();
           break;
         case CONF_SMTPSRVR:
           strncpy( smtpsrvr, parm, sizeof(smtpsrvr) - 1 );
-          killwhitespace(smtpsrvr);
+          ValidateConfig();
           break;
         case CONF_SMTPFROM:
           strncpy( smtpfrom, parm, sizeof(smtpfrom) - 1 );
           break;
         case CONF_SMTPDEST:
           strncpy( smtpdest, parm, sizeof(smtpdest) - 1 );
-          killwhitespace(smtpdest);
+          ValidateConfig();
           break;
 #if defined(MULTITHREAD)
         case CONF_NUMCPU:
@@ -752,10 +752,11 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
 #endif
         case CONF_CHECKPOINT:
           strncpy( ini_checkpoint_file[0] , parm, sizeof(ini_checkpoint_file)/2 -1 );
-          if (isstringblank(ini_checkpoint_file[0])) strcpy (ini_checkpoint_file[0],"none");
+          ValidateConfig();
           break;
         case CONF_CHECKPOINT2:
           strncpy( ini_checkpoint_file[1] , parm, sizeof(ini_checkpoint_file)/2 -1 );
+
           if (isstringblank(ini_checkpoint_file[1])) strcpy (ini_checkpoint_file[1],"none");
           break;
         case CONF_PREFERREDBLOCKSIZE:
@@ -832,19 +833,19 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
 #endif
         case CONF_RC5IN:
           strncpy( ini_in_buffer_file[0] , parm, sizeof(ini_in_buffer_file)/2 -1 );
-          if (isstringblank(ini_in_buffer_file[0])) strcpy (ini_in_buffer_file[0],"buff-in" EXTN_SEP "rc5");
+          ValidateConfig();
           break;
         case CONF_RC5OUT:
           strncpy( ini_out_buffer_file[0] , parm, sizeof(ini_out_buffer_file)/2 -1 );
-          if (isstringblank(ini_out_buffer_file[0])) strcpy (ini_out_buffer_file[0],"buff-out" EXTN_SEP "rc5");
+          ValidateConfig();
           break;
         case CONF_DESIN:
           strncpy( ini_in_buffer_file[1] , parm, sizeof(ini_in_buffer_file)/2 -1 );
-          if (isstringblank(ini_in_buffer_file[1])) strcpy (ini_in_buffer_file[1],"buff-in" EXTN_SEP "des");
+          ValidateConfig();
           break;
         case CONF_DESOUT:
           strncpy( ini_out_buffer_file[1] , parm, sizeof(ini_out_buffer_file)/2 -1 );
-          if (isstringblank(ini_out_buffer_file[1])) strcpy (ini_in_buffer_file[1],"buff-out" EXTN_SEP "des");
+          ValidateConfig();
           break;
         case CONF_PAUSEFILE:
           strncpy( ini_pausefile, parm, sizeof(ini_pausefile) -1 );
@@ -1073,9 +1074,12 @@ int Client::isstringblank( char *string )
 
   length = strlen(string);
 
+  if (length == 0) return 1;
+
   for (counter = 0; counter < length; counter++)
   {
-    summation += isprint(*(string+counter));
+    if (isprint(*(string+counter)) && (*(string+counter) != ' '))
+     summation ++;
   };
 
   if (summation == 0) return 1;
@@ -1266,10 +1270,12 @@ void Client::ValidateConfig( void )
   if ( inthreshold[0] > 1000 ) inthreshold[0] = 1000;
   if ( outthreshold[0] < 1   ) outthreshold[0] = 1;
   if ( outthreshold[0] > 1000 ) outthreshold[0] = 1000;
+  if ( outthreshold[0] > inthreshold[0] ) outthreshold[0]=inthreshold[0];
   if ( inthreshold[1] < 1   ) inthreshold[1] = 1;
   if ( inthreshold[1] > 1000 ) inthreshold[1] = 1000;
   if ( outthreshold[1] < 1   ) outthreshold[1] = 1;
   if ( outthreshold[1] > 1000 ) outthreshold[1] = 1000;
+  if ( outthreshold[1] > inthreshold[1] ) outthreshold[1]=inthreshold[1];
   if ( blockcount < 0 ) blockcount = 0;
 #if (CLIENT_OS == OS_WIN16)
   if ( timeslice < 1 ) timeslice = 200;
@@ -1292,6 +1298,8 @@ void Client::ValidateConfig( void )
   if ( messagelen > MAXMAILSIZE) messagelen = MAXMAILSIZE;
   if ( randomprefix <0  ) randomprefix=100;
   if ( randomprefix >255) randomprefix=100;
+  if (smtpport < 0) smtpport=25;
+  if (smtpport > 65535) smtpport=25;
   if (( preferred_contest_id < 0 ) || ( preferred_contest_id > 1 )) preferred_contest_id = 1;
   if (preferred_blocksize < 28) preferred_blocksize = 28;
   if (preferred_blocksize > 31) preferred_blocksize = 31;
