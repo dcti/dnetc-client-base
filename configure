@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.237 2001/03/10 17:31:49 andreasb Exp $
+# @(#)$Id: configure,v 1.222.2.238 2001/03/19 17:51:17 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -77,6 +77,15 @@ TARGET_ARCTYPE="tgz"  # or "zip", "zipflat", "lha" or "tgzdir"
 
 # -----------------------------------------------------------------------
 
+# Select here, which OGR sources to use. Do not mention 'ogr' or 'ogr2' 
+# anywhere. Always use $OGR.
+OGR="ogr"
+#OGR="ogr2"
+
+# enable this to build with current ansi sources, even if hand optimized
+# assembler versions are available
+#OGR_FORCE_ANSI="1"
+
 add_sources() # $1=os, $2=arch, $3=custom
 {
   # additions to COMMON_SRCS need to be before ${COMMON_SRCS}
@@ -134,7 +143,7 @@ add_sources() # $1=os, $2=arch, $3=custom
   # -- CSC -- (needs -DHAVE_CSC_CORES)
   CSC_ANSI_SRCS="csc/convcsc.cpp csc/csc-common.cpp csc/csc-1k-i.cpp csc/csc-1k.cpp csc/csc-6b-i.cpp csc/csc-6b.cpp"
   # -- OGR -- (needs -DHAVE_OGR_CORES) -------------------------
-  OGR_ANSI_SRCS="ogr/ansi/ogr.cpp ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
+  OGR_ANSI_SRCS="$OGR/ansi/ogr.cpp $OGR/ansi/ogr_sup.cpp $OGR/ansi/ogr_dat.cpp"
 
   # -------------------------------------------------------------------
 
@@ -189,19 +198,24 @@ add_sources() # $1=os, $2=arch, $3=custom
     #fi  
 
     # --------------- ogr ----------------
-    if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
-      # -- non-nasm/ogr --
-      TARGET_ADDASMS="$TARGET_ADDASMS ogr/x86/ogr.S"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
-      ##TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
-      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+    if [ "X$OGR_FORCE_ANSI" = "X" ]; then # use asm
+      if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
+        # -- non-nasm/ogr --
+        TARGET_ADDASMS="$TARGET_ADDASMS $OGR/x86/ogr.S"
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogr_sup.cpp $OGR/ansi/ogr_dat.cpp"
+        ##TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+        TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+      else
+        # -- nasm/ogr --
+        TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogr.asm"
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogr_sup.cpp $OGR/ansi/ogr_dat.cpp"
+        ##TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+        TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+      fi
     else
-      # -- nasm/ogr --
-      TARGET_ADDNASMS="$TARGET_ADDNASMS ogr/x86/ogr.asm"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
-      ##TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
       TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
-    fi  
+    fi
 
     # --------------- csc ----------------
     #if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
@@ -292,7 +306,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ASFLAGS="$TARGET_ASFLAGS -I./rc5/68k"
     fi
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
-    TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogr_sup.cpp $OGR/ansi/ogr_dat.cpp"
     TARGET_ADDOBJS="$TARGET_ADDOBJS output/ogr000.o output/ogr020.o \
                                     output/ogr030.o output/ogr040.o \
                                     output/ogr060.o"
@@ -379,7 +393,7 @@ add_sources() # $1=os, $2=arch, $3=custom
 
     if [ "${1}" = "macosx" ]; then  #... and macosxserver (apple cc)
      if [ "X$3" = "X" ]; then #mach3+
-       TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ppc/ogr-vec.cpp"  
+       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"  
      fi
     fi
   #-----------------------------------------------------------------  
@@ -1858,7 +1872,7 @@ case "$1" in
         TARGET_CC="armcpp -aif -nodebug -littleend -apcs 3/26bit/swst/hardfp/fpe2 -zps1 -nounusedareas -l/home/cberry/play/riscoslib/CLib/stubs.o"
         TARGET_AS="armasm"
         TARGET_ASFLAGS="-apcs 3/26bit"
-        TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -Iogr -Iplat/riscos \
+        TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -I$OGR -Iplat/riscos \
 	                -I/home/cberry/play/riscoslib/OSLib \
 			-I/home/cberry/play/riscoslib/TCPIPLibs \
 			-J/home/cberry/play/riscoslib/CLib \
@@ -1882,11 +1896,11 @@ case "$1" in
         mkdir dnetc_riscos/rc5
         mkdir dnetc_riscos/rc5/arm
         mkdir dnetc_riscos/rc5/arm/s
-        mkdir dnetc_riscos/ogr
-	mkdir dnetc_riscos/ogr/h
-        mkdir dnetc_riscos/ogr/ansi
-        mkdir dnetc_riscos/ogr/ansi/c++
-        mkdir dnetc_riscos/ogr/ansi/h
+        mkdir dnetc_riscos/$OGR
+        mkdir dnetc_riscos/$OGR/h
+        mkdir dnetc_riscos/$OGR/ansi
+        mkdir dnetc_riscos/$OGR/ansi/c++
+        mkdir dnetc_riscos/$OGR/ansi/h
         mkdir dnetc_riscos/plat
         mkdir dnetc_riscos/plat/riscos
         mkdir dnetc_riscos/plat/riscos/c++
@@ -1902,14 +1916,14 @@ case "$1" in
         for file in rc5/arm/rc5-arm-?.s; do
           cp $file dnetc_riscos/rc5/arm/s/`basename $file | sed -e s/[.]s//`
         done
-        for file in ogr/*.h; do
-          cp $file dnetc_riscos/ogr/h/`basename $file | sed -e s/[.]h//`
+        for file in $OGR/*.h; do
+          cp $file dnetc_riscos/$OGR/h/`basename $file | sed -e s/[.]h//`
         done
-        for file in ogr/ansi/*.h; do
-          cp $file dnetc_riscos/ogr/ansi/h/`basename $file | sed -e s/[.]h//`
+        for file in $OGR/ansi/*.h; do
+          cp $file dnetc_riscos/$OGR/ansi/h/`basename $file | sed -e s/[.]h//`
         done
-        for file in ogr/ansi/*.cpp; do
-          cp $file dnetc_riscos/ogr/ansi/c++/`basename $file | sed -e s/[.]cpp//`
+        for file in $OGR/ansi/*.cpp; do
+          cp $file dnetc_riscos/$OGR/ansi/c++/`basename $file | sed -e s/[.]cpp//`
         done
         for file in plat/riscos/*.cpp; do
           cp $file dnetc_riscos/plat/riscos/c++/`basename $file | sed -e s/[.]cpp//`
@@ -2174,12 +2188,12 @@ echo "Platform target for \"$1\" recognized."
 #
 if [ -z "${TARGET_IS_CROSSCOMPILE}" ]; then
   echo "Building test program..."
-  echo "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
-  ${SHELL} -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
+  echo "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -DOGRDIR=${OGR} -o testplat"
+  ${SHELL} -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -DOGRDIR=${OGR} -o testplat"
   if [ $? -ne 0 ]; then
     echo "Compilation failed.  Check your target options."
     echo " ---------------------------------------------"
-    echo "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
+    echo "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -DOGRDIR=${OGR} -o testplat"
     echo " ---------------------------------------------"
     exit 1
   fi
@@ -2306,7 +2320,7 @@ echo "" >> Makefile
 
 echo "CC = ${TARGET_CC}" >> Makefile
 echo "CP = ${TARGET_CP}" >> Makefile
-echo "HPATHS = -I./common -I./rc5 -I./des -I./ogr -I./csc" >> Makefile
+echo "HPATHS = -I./common -I./rc5 -I./des -I./$OGR -I./csc" >> Makefile
 echo "CCFLAGS = ${TARGET_CCFLAGS} \${HPATHS}" >> Makefile
 if [ "${BUILDNAME}" = "aix-all" ]; then
   echo "PPC601FLAGS = ${AIXPPC601FLAGS} \${HPATHS}" >> Makefile
@@ -2474,8 +2488,8 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       has_lurk_h=0
       deplist=""
       for dep in $TARGET_HDEPS; do
-        if [ $dep = "ogr/ogr.h" ]; then
-          dep="ogr/ansi/ogr.h"
+        if [ $dep = "$OGR/ogr.h" ]; then
+          dep="$OGR/ansi/ogr.h"
           has_ogr_h=1
         elif [ $dep = "common/ccoreio.h" ]; then  
           has_ccoreio_h=1
@@ -2502,7 +2516,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
           deplist="$deplist common/ccoreio.h"
         fi  
         if [ $has_ogr_h -eq 0 ]; then
-          deplist="$deplist ogr/ansi/ogr.h"
+          deplist="$deplist $OGR/ansi/ogr.h"
         fi
       fi    
       #----------------
@@ -2567,12 +2581,12 @@ fi
       
 if [ "$TARGET_OGR_MULTI" = "68k" ]; then
   echo "Generating Makefile 68k multi-core OGR dependency targets..."
-  TARGETSRC="ogr/ansi/ogr.cpp"
+  TARGETSRC="$OGR/ansi/ogr.cpp"
   TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
   OGR68K="000 020 030 040 060"
   for targetext in ${OGR68K}; do
     echo "output/ogr${targetext}.o:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
-    echo "	\$(CC) \$(CCFLAGS) -m68${targetext} -c -o output/ogr${targetext}.o ogr/ansi/ogr.cpp \\" >> Makefile
+    echo "	\$(CC) \$(CCFLAGS) -m68${targetext} -c -o output/ogr${targetext}.o $OGR/ansi/ogr.cpp \\" >> Makefile
     echo "	-DOGR_GET_DISPATCH_TABLE_FXN=ogr_get_dispatch_table_${targetext}" >> Makefile
     echo "" >> Makefile
   done

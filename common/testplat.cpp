@@ -7,7 +7,7 @@
  * Specify 'build_dependancies' as argument 
  * (which is all this needs to do anymore)
  *
- * $Id: testplat.cpp,v 1.4.2.5 2001/01/28 14:31:55 cyp Exp $
+ * $Id: testplat.cpp,v 1.4.2.6 2001/03/19 17:51:19 andreasb Exp $
 */ 
 #include <stdio.h>
 #include <string.h>
@@ -15,7 +15,7 @@
 static const char *include_dirs[] = { "common", 
                                       "rc5", 
                                       "des", 
-                                      "ogr/ansi"
+                                      "OGRDIR/ansi"
                                      };
 
 static int fileexists( const char *filename ) /* not all plats have unistd.h */
