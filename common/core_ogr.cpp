@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.3 2003/09/01 22:16:53 mweiser Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.4 2003/09/01 22:19:19 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -20,7 +20,7 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.3 2003/09/01 22:16:53 mweiser Exp $"; }
 #include "selcore.h"   // keep prototypes in sync
 #include "probman.h"   // GetManagedProblemCount()
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
-#include "util.h"      // TRACE_OUT
+#include "util.h"      // TRACE_OUT, DNETC_UNUSED_*
 
 #if defined(HAVE_OGR_CORES)
 
@@ -64,6 +64,8 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.3 2003/09/01 22:16:53 mweiser Exp $"; }
 
 int InitializeCoreTable_ogr(int first_time)
 {
+  DNETC_UNUSED_PARAM(first_time);
+
 #if defined(HAVE_MULTICRUNCH_VIA_FORK)
   if (first_time) {
     // HACK! for bug #3006
@@ -96,7 +98,6 @@ int InitializeCoreTable_ogr(int first_time)
       #endif
   }
 #endif
-  first_time = first_time;     /* possibly unused */
   return 0;
 }
 
