@@ -2,7 +2,7 @@
 # feel free to generalize to do Win32 Alpha as well
 # see http://www.distributed.net/
 
-EXENAME = rc5des.exe
+EXENAME = dnetc.exe
 OUTPUTPATH = output
 COMMONPATH = common
 DESPATH = des
@@ -20,10 +20,10 @@ OPTS_MSVC = -nologo -W3 -O1 -MT -I$(RC5PATH) -I$(DESPATH) \
 
 OPTS_LINK = /incremental:no
 
-RES_FILE = $(OUTPUTPATH)/rc5des.res
-RC_FILE = $(W32CLIPATH)/rc5des.rc
+RES_FILE = $(OUTPUTPATH)/dnetc.res
+RC_FILE = $(W32CLIPATH)/dnetc.rc
 
-all: rc5des
+all: dnetc
 
 # --------------------------------------------
 
@@ -163,14 +163,14 @@ $(RES_FILE):    $(RC_FILE)
 
 # --------------------------------------------
 
-rc5des: $(RC5_OBJS) $(PREBUILT_OBJS) $(RES_FILE)
+dnetc: $(RC5_OBJS) $(PREBUILT_OBJS) $(RES_FILE)
 	link $(OPTS_LINK) /OUT:$(EXENAME) $(RC5_LIBS) $**
 
 clean:
 	del $(RC5_OBJS:/=\) $(RC_FILE:/=\) $(RES_FILE:/=\)
 
 superclean: clean
-	del $(EXENAME) rc5des.ini buff-in.rc5 buff-out.rc5
+	del $(EXENAME) dnetc.ini buff-in.* buff-out.*
 
 rebuild: clean all
 

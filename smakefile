@@ -1,5 +1,5 @@
-PROGNAME_PPC = rc5des_ppc
-PROGNAME_68K = rc5des_68k
+PROGNAME_PPC = dnetc_ppc
+PROGNAME_68K = dnetc_68k
 
 DEBUG    = 
 OPTIMIZE = optimize optsched
@@ -173,7 +173,7 @@ PPC FROM $(LIBSTART_PPC) $(OBJS_PPC) TO $(PROGNAME_PPC) LIB $(LIBS_PPC) $(LFLAGS
 <
 
 $(PROGNAME_68K): $(OBJS_68K)
-	slink noicons with lib:utillib.with <with < (rc5des.lnk)
+	slink noicons with lib:utillib.with <with < (dnetc.lnk)
 FROM $(LIBSTART_68K) $(OBJS_68K) TO $(PROGNAME_68K) LIB $(LIBS_68K) $(LFLAGS_68K)
 <
 

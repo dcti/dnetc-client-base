@@ -1,4 +1,4 @@
-# RC5DES Win32 CLI client makefile (MS Visual C++ for Win32 Alpha/NT)
+# Win32 client makefile (MS Visual C++ for Win32 Alpha/NT)
 # see http://www.distributed.net/
 #
 # Must be built on an Alpha -- there is no VC cross-compiler.
@@ -7,8 +7,8 @@
 VWCL_PATH = c:\rc5src\vwcl
 
 # REST SHOULD BE FINE AS IS
-EXENAME_CLI = rc5des.exe
-EXENAME_GUI = rc5desg.exe
+EXENAME_CLI = dnetc.exe
+EXENAME_GUI = dnetc-g.exe
 OUTPUTPATH = output
 COMMONPATH = common
 DESPATH = des\alpha-asm
@@ -46,7 +46,7 @@ OPTS_MSVCG = $(OPTS_MSVCG) -DNDEBUG
 OPTS_AS = $(OPTS_AS) /O1
 !endif
 
-all: rc5des rc5desg
+all: dnetc dnetc-g
 
 # --------------------------------------------
 
@@ -172,17 +172,17 @@ $(OUTPUTPATH)\cli: $(OUTPUTPATH)
 $(OUTPUTPATH)\gui: $(OUTPUTPATH)
 	-mkdir $(OUTPUTPATH)\gui
 
-rc5des: $(OUTPUTPATH)\cli $(BASE_OBJS) $(CLI_OBJS)
+dnetc: $(OUTPUTPATH)\cli $(BASE_OBJS) $(CLI_OBJS)
 	link $(OPTS_LINK) /out:$(EXENAME_CLI) $(CLI_LIBS) $(BASE_OBJS) $(CLI_OBJS)
 
-rc5desg: $(OUTPUTPATH)\gui $(BASE_OBJS) $(GUI_OBJS) $(RES_FILE)
+dnetc-g: $(OUTPUTPATH)\gui $(BASE_OBJS) $(GUI_OBJS) $(RES_FILE)
 	link $(OPTS_LINK) /out:$(EXENAME_GUI) $(GUI_LIBS) $(BASE_OBJS) $(GUI_OBJS) $(RES_FILE)
 
 clean:
 	-del $(BASE_OBJS) $(CLI_OBJS) $(GUI_OBJS) $(PREBUILT_OBJS)
 
 superclean: clean
-	-del $(EXENAME_CLI) $(EXENAME_GUI) rc5des.ini rc5desg.ini buff-in.rc5 buff-out.rc5
+	-del $(EXENAME_CLI) $(EXENAME_GUI) dnetc.ini dnetc-g.ini buff-in.rc5 buff-out.rc5
 
 rebuild: clean all
 

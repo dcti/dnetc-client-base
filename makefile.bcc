@@ -1,9 +1,9 @@
-# RC5DES client makefile (Borland C++ for Win32)
+# client makefile (Borland C++ for Win32)
 # see http://www.distributed.net/
 
 .autodepend
 
-EXENAME = rc5des.exe
+EXENAME = dnetc.exe
 OUTPUTPATH = output
 COMMONPATH = common
 DESPATH = des
@@ -55,7 +55,7 @@ BCCOPTS = $(BCCOPTS) /DMMX_BITSLICER /DBIT_64 /DMEGGS /DKWAN
 .path.cpp = $(COMMONPATH);$(DESPATH);$(RC5PATH);$(PLATPATH)/win32cli
 .path.obj = $(OUTPUTPATH)
 
-all: rc5des
+all: dnetc
 
 # --------------------------------------------
 
@@ -175,7 +175,7 @@ $(OUTPUTPATH)/rc5mmx-k6-2.obj:	$(RC5PATH)/nasm/rc5mmx-k6-2.asm
 
 # --------------------------------------------
 
-rc5des:   $(COMMON_OBJS) $(NASM_OBJS) $(TASM_OBJS)
+dnetc:   $(COMMON_OBJS) $(NASM_OBJS) $(TASM_OBJS)
         tlink32 /ap $(TLINKOPTS) @&&|
 c0w32.obj $(COMMON_OBJS:/=\) $(NASM_OBJS:/=\) $(TASM_OBJS:/=\),\
 $(EXENAME:/=\),,$(CLI_LIBS)
