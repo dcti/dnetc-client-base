@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.154  1998/11/10 21:51:32  cyp
+// Completely reorganized Client::Main() initialization order so that (a) the
+// client object is completely initialized (both ini file and cmdline) before
+// anything else, (b) whether the client is running "modes" is known from the
+// beginning (c) Single instance protection can occur conditionally (ie only
+// if the client will not be running "modes").
+//
 // Revision 1.153  1998/11/09 20:05:11  cyp
 // Did away with client.cktime altogether. Time-to-Checkpoint is calculated
 // dynamically based on problem completion state and is now the greater of 1
@@ -65,7 +72,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.153 1998/11/09 20:05:11 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.154 1998/11/10 21:51:32 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -249,47 +256,69 @@ static void PrintBanner(const char *dnet_id)
 
 //------------------------------------------------------------------------
 
+int DoSingleInstanceProtection(int level) /* >0 set, <0 unset */
+{
+  #if 0 //(CLIENT_OS == OS_WIN32) -- win32API is fscked. ReleaseMutex() does not work
+  static HANDLE hmutex = NULL;
+  if (level > 0)
+    {
+    SetLastError(0); // only allow one running instance
+    hmutex = CreateMutex(NULL, TRUE, "Bovine RC5/DES Win32 Client");
+    return (GetLastError() != 0);
+    }
+  if (level < 0)
+    {
+    if (hmutex)
+      {
+      ReleaseMutex( hmutex );
+      hmutex = NULL;
+      }
+    }
+  #endif
+  return 0;
+}
+
+//------------------------------------------------------------------------
+
 int Client::Main( int argc, const char *argv[], int restarted )
 {
   int retcode = 0;
+  int domodes = 0;
 
-  //set up break handlers
-  if (InitializeTriggers(NULL, NULL)==0) //CliSetupSignals();
+  //ReadConfig() and parse command line - returns !0 if shouldn't continue
+  if (ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0)
     {
-    //get -ini options/defaults, then ReadConfig(), then get -quiet
-    if (ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0) //!0 if "mode"
-      {                                                
-      if (InitializeConsole(quietmode) == 0) //initialize conio
+    domodes = (ModeReqIsSet(-1) != 0);
+    if (((domodes)?(1):(DoSingleInstanceProtection(+1) == 0)))
+      {
+      if (InitializeTriggers(((noexitfilecheck)?(NULL):(exit_flag_file)),pausefile)==0)
         {
-        int autoclosecon = 1; // let console close without user intervention
-        InitializeLogging(0); //enable only screen logging for now
-
-        PrintBanner(id); //tracks restart state itself
-
-        //get remaining option overrides and set "mode" bits if applicable
-        if ( !restarted && ParseCommandline( 2, argc, argv, &retcode, 1 ) !=0 )
-          { 
-          if ( ModeReqIsSet( -1 ) ) //do any "modes" (including -config)
+        if (InitializeConsole(quietmode,domodes) == 0)
+          {
+          InitializeLogging(0); //enable only screen logging for now
+          PrintBanner(id); //tracks restart state itself
+          ParseCommandline( 1, argc, argv, NULL, 1 ); //show cmdline overrides
+      
+          if (domodes)
             {
             ModeReqRun( this );     
-            autoclosecon = 0; //wait for a keypress before closing the console
             }
+          else
+            {
+            InitializeLogging(1);   //enable timestamps and file/mail logging
+            PrintBanner( id );
+            SelectCore( 0 );
+            retcode = Run();
+            }
+          DeinitializeLogging();
+          DeinitializeConsole();
           }
-        else 
-          {
-          InitializeTriggers(((noexitfilecheck)?(NULL):(exit_flag_file)),pausefile);
-          InitializeLogging(1);   //enable timestamps and file/mail logging
-          PrintBanner( id );
-          SelectCore( 0 );
-          retcode = Run();
-          }
-        DeinitializeLogging();
-        DeinitializeConsole(autoclosecon);
+        DeinitializeTriggers();
         }
+      if (!domodes)
+        DoSingleInstanceProtection(-1);
       }
-    DeinitializeTriggers();
     }
-  
   return retcode;
 }  
 
@@ -313,18 +342,6 @@ int realmain( int argc, char *argv[] )
     riscos_in_taskwindow = riscos_check_taskwindow();
     if (riscos_find_local_directory(argv[0])) 
       init_success = 0;
-    }
-  #endif
-
-  //-----------------------------
-
-  #if (CLIENT_OS == OS_WIN32)
-  HANDLE hmutex = NULL;
-  if (init_success) 
-    {
-    SetLastError(0); // only allow one running instance
-    hmutex = CreateMutex(NULL, TRUE, "Bovine RC5/DES Win32 Client");
-    init_success = (GetLastError() == 0);
     }
   #endif
 
@@ -372,11 +389,6 @@ int realmain( int argc, char *argv[] )
   
   if (clientP)
     delete clientP;
-
-  #if (CLIENT_OS == OS_WIN32)
-  if (hmutex)
-    ReleaseMutex( hmutex );
-  #endif  
 
   return (retcode);
 }
