@@ -3,6 +3,19 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.60  1998/12/29 06:57:49  cyp
+// Removed redundant percbar event. Its covered by TFILL_STARTED.
+//
+// Revision 1.59  1998/12/29 20:36:23  silby
+// Added new event to cause GUIs to update their percent bars.
+// (Assumes percent bar routines have their own logic
+// similar to logscreen_percent.)
+//
+// Revision 1.58  1998/12/29 19:29:26  cyp
+// Cleaned up ::scheduledupdatetime: (a) clear scheduled time after a
+// successful fetch in that period [should really be in fetch/flush itself],
+// (b) added random time adj factor, (c) shut up all the verbose messages.
+//
 // Revision 1.57  1998/12/26 21:45:15  cyp
 // Cleared a 'may be used uninitialized' warning. Removed threadcd.h from
 // include list.
@@ -12,10 +25,10 @@
 // tested, it correctly updates.  Restarting after des blocks have
 // been recieved has not yet been implemented, I don't have a clean
 // way to do it yet.  Writing of contest data to the .ini has been
-// moved back to confrwv with its other ini friends.
+// moved to confrwv with its other ini friends.
 //
 // Revision 1.55  1998/12/22 15:58:24  jcmichot
-// *** empty log message ***
+// QNX NonPolledSleep() change.
 //
 // Revision 1.54  1998/12/21 18:43:58  cyp
 // Removed 'unused'/'unimplemented' sil[l|b]yness added in recent version.
@@ -222,7 +235,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.57 1998/12/26 21:45:15 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.60 1998/12/29 06:57:49 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -248,6 +261,7 @@ return "@(#)$Id: clirun.cpp,v 1.57 1998/12/26 21:45:15 cyp Exp $"; }
 #include "probman.h"   //GetProblemPointerFromIndex()
 #include "probfill.h"  //LoadSaveProblems(), FILEENTRY_xxx macros
 #include "modereq.h"   //ModeReq[Set|IsSet|Run]()
+#include "clievent.h"  //ClientEventSyncPost() and constants
 
 // --------------------------------------------------------------------------
 
@@ -427,7 +441,7 @@ static void yield_pump( void *tv_p )
     // to know the contest
     // MP code yields here because it can do only pure computing
     // (no toolbox or mixed-mode calls)
-    if (MP_active) tick_sleep(60);	// is this optimal?
+    if (MP_active) tick_sleep(60);  // is this optimal?
   #elif (CLIENT_OS == OS_BEOS)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_OPENBSD)
@@ -792,7 +806,7 @@ if (targ->realthread)
                           thisprob->contest, threadnum );
       #endif
       #if (CLIENT_OS == OS_MACOS)
-	    thisprob->tslice = GetTimesliceToUse(thisprob->contest);
+      thisprob->tslice = GetTimesliceToUse(thisprob->contest);
       #endif
 
       targ->is_suspended = 0;
@@ -815,15 +829,15 @@ if (targ->realthread)
         {
         //if (targ->realthread)
           #if (CLIENT_OS == OS_MACOS)
-		    if (targ->realthread) {
-		      mp_sleep(1);		 // Mac needs special sleep call in MP threads
-		    }
-		    else {
+        if (targ->realthread) {
+          mp_sleep(1);     // Mac needs special sleep call in MP threads
+        }
+        else {
               NonPolledSleep(1); // don't race in this loop
-		    }
+        }
           #else
             NonPolledSleep(1); // don't race in this loop
-		  #endif
+      #endif
         }
       #ifdef NON_PREEMPTIVE_OS_PROFILING
       reset_ts_profiling();
@@ -832,11 +846,11 @@ if (targ->realthread)
       }
     if (!targ->realthread)
       {
-	  #if (CLIENT_OS == OS_MACOS)
+    #if (CLIENT_OS == OS_MACOS)
         RegPolledProcedure( (void (*)(void *))Go_mt, parm, NULL, 0 );
-	  #else
+    #else
         RegPolledProcedure( Go_mt, parm, NULL, 0 );
-	  #endif
+    #endif
       runstatics.nonmt_ran = 1;
       break;
       }
@@ -856,7 +870,7 @@ if (targ->realthread)
       MP_active--;
       MPExitCriticalRegion(MP_count_region);
     }
-	return(noErr);
+  return(noErr);
   #endif
 }
 
@@ -884,9 +898,9 @@ static int __StopThread( struct thread_param_block *thrparams )
         wait_for_thread(thrparams->threadID, &be_exit_value);
         #elif (CLIENT_OS == OS_NETWARE)
         nwCliWaitForThreadExit( thrparams->threadID ); //in netware.cpp
-	#elif (CLIENT_OS == OS_MACOS)
+  #elif (CLIENT_OS == OS_MACOS)
         while (ThreadIsDone[thrparams->threadnum] == 0) {
-	  tick_sleep(60); }
+    tick_sleep(60); }
         #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
         pthread_join( thrparams->threadID, (void **)NULL);
         #endif
@@ -966,22 +980,22 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         MPTaskID new_threadid;
         ThreadIsDone[thread_i] = 0;
         thread_error = MPCreateTask(Go_mt, (void *)thrparams, (unsigned long)0, (OpaqueMPQueueID *)kMPNoID,
-            		(void *)0, (void *)0, (unsigned long)0, &new_threadid);
+                (void *)0, (void *)0, (unsigned long)0, &new_threadid);
         if (thread_error != noErr) {
           new_threadid = NULL;
         }
-		else {
-		  success = 1;
-		}
-		thrparams->threadID = new_threadid;
+    else {
+      success = 1;
+    }
+    thrparams->threadID = new_threadid;
         #if defined(MAC_GUI)
-		  if (success) {
-			  Problem *thisprob;
-			  thisprob = GetProblemPointerFromIndex( thread_i );
-			  MakeGUIThread(thisprob->contest, thread_i);
-			  InitializeThreadProgress(thread_i, thisprob->percent,
-									 thisprob->GetKeysDone()); 
-			  UpdateClientInfo(&client_info);
+      if (success) {
+        Problem *thisprob;
+        thisprob = GetProblemPointerFromIndex( thread_i );
+        MakeGUIThread(thisprob->contest, thread_i);
+        InitializeThreadProgress(thread_i, thisprob->percent,
+                   thisprob->GetKeysDone()); 
+        UpdateClientInfo(&client_info);
             }
         #endif
       #elif defined(_POSIX_THREADS_SUPPORTED) //defined in cputypes.h
@@ -1010,27 +1024,27 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       thrparams->realthread = 0;            /* int */
       if (timeslice > (1<<12)) 
         thrparams->timeslice = (1<<12);
-	  #if (CLIENT_OS == OS_MACOS)
+    #if (CLIENT_OS == OS_MACOS)
         thrparams->threadID = (MPTaskID)RegPolledProcedure((void (*)(void *))Go_mt, 
                                 (void *)thrparams , NULL, 0 );
-	  #else
+    #else
         thrparams->threadID = RegPolledProcedure(Go_mt, 
                                 (void *)thrparams , NULL, 0 );
-	  #endif
+    #endif
       success = ((int)thrparams->threadID != -1);
       }
         
     if (success)
       {
       #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-	    {
-	    Problem *thisprob;
-	    thisprob = GetProblemPointerFromIndex( 0 );
-	    MakeGUIThread(thisprob->contest, 0);
-	    InitializeThreadProgress(0, thisprob->percent,
-								thisprob->GetKeysDone()); 
-	    UpdateClientInfo(&client_info);
-	    }
+      {
+      Problem *thisprob;
+      thisprob = GetProblemPointerFromIndex( 0 );
+      MakeGUIThread(thisprob->contest, 0);
+      InitializeThreadProgress(0, thisprob->percent,
+                thisprob->GetKeysDone()); 
+      UpdateClientInfo(&client_info);
+      }
       #endif
 
       yield_pump(NULL);   //let the thread start
@@ -1071,10 +1085,16 @@ int Client::Run( void )
   
   time_t timeNow;
   time_t timeRun=0, timeLast=0, timeNextConnect=0, timeNextCheckpoint = 0;
-  time_t timeNextScheduledUpdateCheck = 0;
+
+  time_t last_scheduledupdatetime = 0; /* we reset the next two vars on != */
+  //unsigned int flush_scheduled_count = 0; /* used for exponential staging */
+  unsigned int flush_scheduled_adj   = 0; /*time adjustment to next schedule*/
+
   int checkpointsDisabled = (nodiskbuffers != 0);
   unsigned int checkpointsPercent = 0;
   int isPaused=0, wasPaused=0;
+
+  ClientEventSyncPost( CLIEVENT_CLIENT_RUNSTARTED, 0 );
 
   // =======================================
   // Notes:
@@ -1155,7 +1175,7 @@ int Client::Run( void )
     #endif
 
     #if (CLIENT_OS == OS_MACOS)
-    if (!haveMP) numcrunchers = 0;	// no real threads if MP not present or not wanted
+    if (!haveMP) numcrunchers = 0;  // no real threads if MP not present or not wanted
     #endif
     
     if (numcrunchers < 1) /* == 0 = user requested non-mt */
@@ -1388,10 +1408,6 @@ int Client::Run( void )
       getbuff_errs+=LoadSaveProblems(load_problem_count,PROBFILL_GETBUFFERRS);
       runstatics.refillneeded = 0;
 
-      #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-		UpdateRunStatus( load_problem_count );
-      #endif
-
       if (CheckExitRequestTriggerNoIO())
         continue;
       }
@@ -1415,32 +1431,28 @@ int Client::Run( void )
     #define TIME_AFTER_START_TO_UPDATE 10800 // Three hours
     #define UPDATE_INTERVAL 600 // Ten minutes
 
-    if ((scheduledupdatetime != 0) &&
-        (timeNow > scheduledupdatetime) &&
-        (timeNow < scheduledupdatetime+TIME_AFTER_START_TO_UPDATE) &&
-        (preferred_contest_id==1))
-      {
-      // Sanity check when next update check will occur
-      if ((timeNextScheduledUpdateCheck < scheduledupdatetime) ||
-         (timeNextScheduledUpdateCheck > scheduledupdatetime + TIME_AFTER_START_TO_UPDATE))
+    if (scheduledupdatetime != 0 && (preferred_contest_id==1) && 
+      (timeNow >= scheduledupdatetime) && (contestdone[1] != 0) &&
+      (timeNow < (scheduledupdatetime+TIME_AFTER_START_TO_UPDATE)) )
+      { 
+      if (scheduledupdatetime != last_scheduledupdatetime)
         {
-        timeNextScheduledUpdateCheck = scheduledupdatetime;
-        Log("I've just detected that it's time to start another\n");
-        Log("DES contest.  I will now attempt to get blocks.\n");
-        };
-      if (timeNow > timeNextScheduledUpdateCheck)
+        last_scheduledupdatetime = scheduledupdatetime;
+        //flush_scheduled_count = 0;
+        flush_scheduled_adj = (Random(NULL,0)%UPDATE_INTERVAL); 
+        Log("Buffer update scheduled in %u minutes %02u seconds.\n", 
+             flush_scheduled_adj/60, flush_scheduled_adj%60 );
+        }
+      if ( (flush_scheduled_adj < TIME_AFTER_START_TO_UPDATE) &&
+        (timeNow >= (time_t)(flush_scheduled_adj+scheduledupdatetime)) )
         {
-        // If we haven't gotten the des start signal yet, keep updating
-        if (contestdone[1] != 0) 
-          {
-          contestdone[1]=0; // Since we can't force a flush, we must
-                            // pretend the contest started so a
-                            // flush will occur
-          ModeReqSet(MODEREQ_FETCH);
-          };
-        timeNextScheduledUpdateCheck=timeNow+UPDATE_INTERVAL;
-        };
-      };
+        //flush_scheduled_count++; /* for use with exponential staging */
+        flush_scheduled_adj += ((UPDATE_INTERVAL>>1)+
+                               (Random(NULL,0)%(UPDATE_INTERVAL>>1)));
+        contestdone[1]=0;          //open the contest so we can get past the 
+        ModeReqSet(MODEREQ_FETCH); // contestdone check in ::BufferUpdate()
+        }
+      }
 
     //------------------------------------
     //handle 'connectoften' requests
@@ -1539,10 +1551,10 @@ int Client::Run( void )
     
     if (!TimeToQuit && ModeReqIsSet(-1))
       {
-      //Assume that we have "normal priority" at this point and 
-      //threads are running at lower priority. If this is not the case, 
-      //then benchmarks are going to return wrong results. The messy
-      //way around this is to suspend the threads.
+      //For interactive benchmarks, assume that we have "normal priority" 
+      //at this point and threads are running at lower priority. If that is 
+      //not the case, then benchmarks are going to return wrong results. 
+      //The messy way around that is to suspend the threads.
       ModeReqRun(this);
       }
     }  // End of MAIN LOOP
@@ -1579,7 +1591,8 @@ int Client::Run( void )
    LoadSaveProblems(load_problem_count, PROBFILL_UNLOADALL );
    CheckpointAction( CHECKPOINT_CLOSE, 0 ); /* also done by LoadSaveProb */
 
-  
+  ClientEventSyncPost( CLIEVENT_CLIENT_RUNFINISHED, 0 );
+
   #if (CLIENT_OS == OS_VMS)
     nice(0);
   #endif
