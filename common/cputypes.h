@@ -8,9 +8,13 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.1 2002/12/21 00:56:38 pstadt Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.2 2003/01/04 21:21:33 andreasb Exp $"
 
 /* ----------------------------------------------------------------- */
+
+/* There are no longer any size limitations storing CLIENT_CPU and CLIENT_OS 
+   in the buffer files. So don't recycle any old entries or you will make
+   the stats gurus unhappy. */
 
 /* Major CPU architectures, we don't need (or want) very fine resolution */
 #define CPU_UNKNOWN     0
@@ -25,12 +29,14 @@
 #define CPU_POWER       9
 #define CPU_VAX         10
 #define CPU_ARM         11
-#define CPU_88K         12 /* may be recycled - DG/UX is no longer supported */
+#define CPU_88K         12 /* DG/UX is no longer supported */
 #define CPU_IA64        13
 #define CPU_S390        14
 #define CPU_S390X       15
 #define CPU_DESCRACKER  16  /* eff descracker */
 
+/* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
+/* Old OSes will stay in stats forever! */
 /* Major OS Architectures. */
 #define OS_UNKNOWN      0
 #define OS_WIN32        1  /* win95 + win98 + winnt */
@@ -77,6 +83,7 @@
 #define OS_DESCRACKER   42 /* eff des cracker */
 /* #define OS_MACOSX    43 */ /* obsolete, is now 27.   DO NOT RECYCLE! */
 #define OS_PS2LINUX     44
+/* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 
 /* ----------------------------------------------------------------- */
 
