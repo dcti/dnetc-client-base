@@ -1,6 +1,6 @@
 
  distributed.net client for Mac OS
- document revision $Id: readme.macos,v 1.1.2.6 1999/11/25 01:58:08 cyp Exp $
+ document revision $Id: readme.macos,v 1.1.2.8 1999/12/20 03:09:25 cyp Exp $
 
  Welcome to the distributed.net client.
 
@@ -10,6 +10,7 @@
 
     1.0  Getting started
     2.0  Client for Mac OS specific notes
+    3.0  Client for Mac OS specific FAQ
    
  1.0  Getting started ------------------------------------------------
 
