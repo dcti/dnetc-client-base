@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.21 2002/03/28 01:07:44 andreasb Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.22 2002/04/11 10:43:49 oliver Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -56,6 +56,9 @@ static const char *helpbody[] =
   "                   all [...options...] that follow '-install' serve",
   "                   as parameters for the installed client.",
   "-uninstall         remove the client from /etc[/rc.d]/init.d/",
+#elif (CLIENT_OS == OS_AMIGAOS)
+  "-install           install the client in the WBStartup drawer",
+  "-uninstall         remove the client from the WBStartup drawer",
 #endif
 //"-import <fn> [cnt] import [cnt] packets from file <fn> into client buffers",
   "-import <filename> import packets from file <filename> into client buffers",

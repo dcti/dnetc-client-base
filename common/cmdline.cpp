@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.78 2002/03/28 01:07:42 andreasb Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.79 2002/04/11 10:43:48 oliver Exp $"; }
 
 //#define TRACE
 
@@ -673,6 +673,10 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         extern int os2CliInstallClient(int quiet, const char *exename);
         os2CliInstallClient(loop0_quiet, argv[0]); /* os2inst.cpp */
         retcode = 0;
+        #elif (CLIENT_OS == OS_AMIGAOS)
+        retcode = 0;  
+        if (0!=amigaInstall(loop0_quiet, argv[0]))
+          retcode = 3;           /* plat/amigaos/amigaInstall.c */
         #else
         not_supported = 1;
         #endif
@@ -717,6 +721,10 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
         win32CliUninstallService(loop0_quiet); /*w32svc.cpp*/
         retcode = 0;
+        #elif (CLIENT_OS == OS_AMIGAOS)
+        retcode = 0;
+        if (amigaUninstall(loop0_quiet, argv[0])!=0)
+          retcode = 3;           /* plat/amigaos/amigaInstall.c */ 
         #else
         not_supported = 1;
         #endif
