@@ -17,7 +17,7 @@
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.2 2002/09/02 00:35:42 andreasb Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.3 2002/10/11 00:02:27 andreasb Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET
@@ -2025,11 +2025,11 @@ void *netconn_open( const char * _servname, int _servport,
           {              
             have_a_dnet_proxy = 1; /* we have a dnet proxy */
           }
-          else if (memcmp(".v27.", &hostname[namelen-20],5) !=0)
+          else if (memcmp(".v29.", &hostname[namelen-20],5) !=0)
           {          
             badname = 1; /* its a d.net hostname, but not a proxy */
           }
-          else /* we have a .v27.d.net proxy, validate it */
+          else /* we have a .v29.d.net proxy, validate it */
           { 
             unsigned int pos;
             badname = 1; /* assume this, clear it later */
@@ -2102,11 +2102,11 @@ void *netconn_open( const char * _servname, int _servport,
         }
         if ( inrange ) 
         {
-          char proxyname[15+sizeof(".v27.distributed.net")];
+          char proxyname[15+sizeof(".v29.distributed.net")];
           strcpy( proxyname, proxyzoi[pos].name );
           if (fallback_port != 2064 && fallback_port != 3064)
             sprintf( &proxyname[strlen(proxyname)], "%d", fallback_port );
-          strcat( proxyname, ".v27.distributed.net" );
+          strcat( proxyname, ".v29.distributed.net" );
           if ((strlen(proxyname)+buf_used+2) >= sizeof(netstate->servername_buffer))
             break;
           strcpy( &netstate->servername_buffer[buf_used], proxyname );

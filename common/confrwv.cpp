@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.88 2002/10/06 19:57:12 andreasb Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.89 2002/10/11 00:02:27 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -167,7 +167,7 @@ static int _readwrite_hostname_and_port( int aswrite, const char *fn,
         while (*p && (isspace(*p) || *p == ';' || *p == ','))
           p++;
         while (*p && !isspace(*p) && *p!=';' && *p!=',')
-          hostbuf[len++] = *p++;
+          hostbuf[len++] = tolower(*p++);
         hostbuf[len] = '\0';
         if (len)
         {
@@ -187,6 +187,9 @@ static int _readwrite_hostname_and_port( int aswrite, const char *fn,
         }  
         if (len && strcmp(hostbuf,"*")!=0 && strcmp(hostbuf,"auto")!=0)
         {
+          /* update .v27. proxy names to .v29. */
+          if (len > 20 && strcmp(&hostbuf[len-20], ".v27.distributed.net") == 0)
+            hostbuf[len-17] = '9';
           if (portnum)
           {
             sprintf(&hostbuf[len],":%d", portnum);
