@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.19 1999/10/24 23:54:52 remi Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.20 1999/10/31 08:44:16 remi Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -163,14 +163,20 @@ extern "C" void riscos_upcall_6(void);
 #endif
 
 /* ------------------------------------------------------------------- */
+#ifdef HAVE_CSC_CORES
 extern "C" {
-// CSC cores
 s32 csc_unit_func_1k  ( RC5UnitWork *, u32 *timeslice, void *membuff );
 s32 csc_unit_func_1k_i( RC5UnitWork *, u32 *timeslice, void *membuff );
 s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *timeslice, void *membuff );
 s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *timeslice, void *membuff );
 }
+#endif
 /* ------------------------------------------------------------------- */
+#ifdef HAVE_OGR_CORES
+extern CoreDispatchTable *ogr_get_dispatch_table(void);
+#endif
+/* ------------------------------------------------------------------- */
+
 
 
 Problem::Problem(long _threadindex /* defaults to -1L */)
@@ -598,7 +604,7 @@ static int __core_picker(Problem *problem, unsigned int contestid)
   }
   #endif /* #ifdef HAVE_DES_CORES */
 
-  #if defined(GREGH) || defined(HAVE_OGR_CORES)
+  #if defined(HAVE_OGR_CORES)
   if (contestid == OGR)
   {
     return 0;
@@ -715,10 +721,9 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
 
     case OGR:
 
-      #if !defined(GREGH) && !defined(HAVE_OGR_CORES)
+      #if !defined(HAVE_OGR_CORES)
       return -1;
       #else
-      extern CoreDispatchTable *ogr_get_dispatch_table();
       contestwork.ogr = work->ogr;
       contestwork.ogr.nodes.lo = 0;
       contestwork.ogr.nodes.hi = 0;
@@ -1143,7 +1148,7 @@ int Problem::Run_DES(u32 *timesliceP, int *resultcode)
 
 int Problem::Run_OGR(u32 *timesliceP, int *resultcode)
 {
-#if !defined(GREGH) && !defined(HAVE_OGR_CORES)
+#if !defined(HAVE_OGR_CORES)
   timesliceP = timesliceP;
 #else
   int r, nodes;
@@ -1340,7 +1345,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
     }
     case OGR:
     {
-      #if defined(GREGH) || defined(HAVE_OGR_CORES)
+      #ifdef HAVE_OGR_CORES
       return 1;
       #else
       return 0;
