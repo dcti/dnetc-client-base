@@ -522,6 +522,9 @@ public:
     // Returns the id of the option that matches the menu and option
     // requested. Will return -1 if not found.
 
+  void setupoptions( void );
+    // Sets all the pointers/etc for optionstruct options
+
   void clearscreen( void );
     // Clears the screen. (Platform specific ifdefs go inside of it.)
 
