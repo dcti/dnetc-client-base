@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.163  1998/11/16 22:31:09  cyp
+// Cleaned up banner(s) and made use of CLIENT_OS_NAME.
+//
 // Revision 1.162  1998/11/14 14:01:38  cyp
 // Removed DoInstanceInitialization(). Moved win32 mutex alloc back to its
 // window init code; unix'ish client fork-on-hidden code is in ParseCmdLine.
@@ -95,7 +98,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.162 1998/11/14 14:01:38 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.163 1998/11/16 22:31:09 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -201,18 +204,41 @@ Client::Client()
 
 // --------------------------------------------------------------------------
 
+static const char *GetBuildOrEnvDescription(void)
+{
+  /*
+  <cyp> hmm. would it make sense to have the client print build data 
+  when starting? running OS, static/dynamic, libver etc? For idiots who
+  send us log extracts but don't mention the OS they are running on.
+  Only useful for win-weenies I suppose. 
+  */
+
+  #if ((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S))
+  static buffer[64];
+  int major, minor;
+  w32ConGetWinVersion(&major,&minor);
+  sprintf(buffer,"Running under Windows%s %u.%u", (major>20)?("NT"):(""), major%20, minor );
+  return buffer;
+  #else
+  return "";
+  #endif
+}  
+
+// --------------------------------------------------------------------------
+
 static void PrintBanner(const char *dnet_id)
 {
   static unsigned int level = 0; //incrementing so messages are not repeated
             //0 = show copyright/version,  1 = show startup message
-  
+ 
   if (level == 0)
     {
     level++; //will never print this message again
 
     LogScreenRaw( "\nRC5DES " CLIENT_VERSIONSTRING 
                " client - a project of distributed.net\n"
-               "Copyright distributed.net 1997-1998\n" );
+               "Copyright 1997-1998 distributed.net\n" );
+    
     #if (CLIENT_CPU == CPU_68K)
     LogScreenRaw( "RC5 68K assembly by John Girvin\n");
     #endif
@@ -220,16 +246,16 @@ static void PrintBanner(const char *dnet_id)
     LogScreenRaw( "PowerPC assembly by Dan Oetting at USGS\n");
     #endif
     #if defined(KWAN) && defined(MEGGS)
-    LogScreenRaw( "DES bitslice driver Copyright Andrew Meggs\n" 
-                  "DES sboxes routines Copyright Matthew Kwan\n" );
+    LogScreenRaw( "DES bitslice driver Copyright 1997-1998, Andrew Meggs\n" 
+                  "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
     #elif defined(KWAN) 
-    LogScreenRaw( "DES search routines Copyright Matthew Kwan\n" );
+    LogScreenRaw( "DES search routines Copyright 1997-1998, Matthew Kwan\n" );
     #endif
     #if (CLIENT_CPU == CPU_X86)
-    LogScreenRaw( "DES search routines Copyright Svend Olaf Mikkelsen\n");
+    LogScreenRaw( "DES search routines Copyright 1997-1998, Svend Olaf Mikkelsen\n");
     #endif
-    #if (CLIENT_OS == OS_DOS)  //PMODE (c) string if not win16 
-    LogScreenRaw( "%s", dosCliGetPmodeCopyrightMsg() );
+    #if (CLIENT_OS == OS_DOS)  
+    LogScreenRaw( "PMODE DOS extender Copyright 1994-1998, Charles Scheffold and Thomas Pytel\n");
     #endif
     LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n"
                "%s\n",
@@ -238,12 +264,12 @@ static void PrintBanner(const char *dnet_id)
             "Interactive help is available, or select 'Help contents' from the menu for\n"
             "detailed client information.\n" :
             #endif
-            "Execute with option '-help' for online help, or read rc5des" EXTN_SEP "txt\n"
-            "for a list of command line options.\n"
+            "Start the client with '-help' for a list of valid command line options.\n"
             );
     #if (CLIENT_OS == OS_DOS)
       dosCliCheckPlatform(); //show warning if pure DOS client is in win/os2 VM
     #endif
+
     #if ((CLIENT_OS==OS_DOS) || (CLIENT_OS==OS_WIN16) || \
          (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_OS2) || \
          ((CLIENT_OS==OS_WIN32) && !defined(NEEDVIRTUALMETHODS)))
@@ -265,11 +291,13 @@ static void PrintBanner(const char *dnet_id)
   if ( level == 1 )
     {  
     level++; //will never print this message again
+    LogRaw("\nRC5DES Client %s for %s started.\n", CLIENT_VERSIONSTRING,
+                                                   CLIENT_OS_NAME );
+    const char *msg = GetBuildOrEnvDescription();
+    if (msg && *msg) LogRaw( "%s\n", msg );
 
-    LogRaw("\nRC5DES Client %s started.\n"
-             "Using distributed.net ID %s\n\n",
-         CLIENT_VERSIONSTRING,dnet_id);
-
+    LogRaw( "Using distributed.net ID %s\n\n", dnet_id );
+    
     #if defined(BETA) && defined(BETA_EXPIRATION_TIME) && (BETA_EXPIRATION_TIME != 0)
     timeval currenttime;
     timeval expirationtime;
