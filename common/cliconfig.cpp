@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.177  1998/08/20 19:34:21  cyruspatel
+// Removed that terrible PIPELINE_COUNT hack: Timeslice and pipeline count
+// are now computed in Problem::LoadState(). Client::SelectCore() now saves
+// core type to Client::cputype.
+//
 // Revision 1.176  1998/08/20 02:11:43  silby
 // Changed MMX option to specify that it was for DES MMX cores only.
 //
@@ -198,7 +203,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.176 1998/08/20 02:11:43 silby Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.177 1998/08/20 19:34:21 cyruspatel Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -207,7 +212,7 @@ return "@(#)$Id: cliconfig.cpp,v 1.176 1998/08/20 02:11:43 silby Exp $"; }
 #include "version.h"
 #include "iniread.h"
 #include "network.h"  
-#include "problem.h"  // ___unit_func(), PIPELINE_COUNT
+#include "problem.h"  // ___unit_func()
 #include "cpucheck.h" // cpu selection, GetTimesliceBaseline()
 #include "triggers.h" //[Check|Raise][Pause|Exit]RequestTrigger()/Init...Handler()
 #include "clirate.h"
@@ -250,7 +255,7 @@ static const char *OPTION_SECTION="parameters"; //#define OPTION_SECTION "parame
 // --------------------------------------------------------------------------
 
 #if (CLIENT_CPU == CPU_X86)
-static char cputypetable[8][60]=
+static char *cputypetable[]=
   {
   "Autodetect",
   "Pentium Classic, Cyrix 486/5x86/MediaGX, AMD 486",
@@ -262,21 +267,23 @@ static char cputypetable[8][60]=
   "Pentium MMX"
   };
 #elif (CLIENT_CPU == CPU_ARM)
-static char cputypetable[5][60]=
+static char *cputypetable[]=
   {
   "Autodetect",
   "ARM 3, 610, 700, 7500, 7500FE",
   "ARM 810, StrongARM 110",
   "ARM 2, 250",
-  "ARM 710",
+  "ARM 710"
   };
 #elif (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX))
-static char cputypetable[3][60]=
+static char *cputypetable[]=
   {
   "Autodetect",
   "PowerPC 601",
-  "PowerPC 603/604/750",
+  "PowerPC 603/604/750"
   };
+#else
+  #define NO_CPUTYPE_TABLE
 #endif
 
 // --------------------------------------------------------------------------
@@ -371,7 +378,7 @@ static optionstruct options[OPTION_COUNT]=
     "65536",
 #endif
     CFGTXT("\nThe lower the value, the less impact the client will have on your system, but\n"
-    "the slower it will go. Values from 200 to 65536 are good."),4,2,5,NULL},
+    "the slower it will go. Values from 256 to 65536 are good."),4,2,5,NULL},
 //8
 { "niceness", CFGTXT("Level of niceness to run at"), "0",
   CFGTXT("\n\nExtremely Nice will not slow down other running programs.\n"
@@ -399,21 +406,14 @@ static optionstruct options[OPTION_COUNT]=
 { "httpport", CFGTXT("Local HTTP/SOCKS proxy port"), "80", CFGTXT("(TCP/IP port on HTTP proxy)"),3,2,5,NULL},
 //15
 { "httpid", CFGTXT("HTTP/SOCKS proxy userid/password"), "", CFGTXT("(Enter userid (. to reset it to empty) )"),3,1,6,NULL},
-#if (CLIENT_CPU == CPU_X86)
-//16
-{ "cputype", CFGTXT("Optimize performance for CPU type"), "-1",
-      CFGTXT("\n"),4,2,2,NULL,CFGTXT(&cputypetable[1][0]),-1,6},
-#elif (CLIENT_CPU == CPU_ARM)
-{ "cputype", CFGTXT("Optimize performance for CPU type"), "-1",
-      CFGTXT("\n"),4,2,2,NULL,CFGTXT(&cputypetable[1][0]),-1,3},
-#elif (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX))
-//16
-{ "cputype", CFGTXT("Optimize performance for CPU type"), "-1",
-      CFGTXT("\n"),4,2,2,NULL,CFGTXT(&cputypetable[1][0]),-1,1},
-#else
+#ifdef NO_CPUTYPE_TABLE
 //16
 { "cputype", CFGTXT("CPU type...not applicable in this client"), "-1", CFGTXT("(default -1)"),0,2,0,
   NULL,NULL,0,0},
+#else
+//16
+{ "cputype", CFGTXT("Optimize performance for CPU type"), "-1",
+      CFGTXT("\n"),4,2,2,NULL,CFGTXT(cputypetable[0]),-1,((sizeof(cputypetable)/sizeof(cputypetable[0]))-2)},
 #endif
 //17
 { "messagelen", CFGTXT("Message Mailing (bytes)"), "0", CFGTXT("(0=no messages mailed.  10000 recommended.  125000 max.)\n"),2,2,2,NULL},
@@ -952,16 +952,14 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
             options[CONF_HTTPID].optionscreen=0;
             };
           break;
-#if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM) || \
-    ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || \
-    (CLIENT_OS == OS_AIX))))
+        #ifndef NO_CPUTYPE_TABLE
         case CONF_CPUTYPE:
           cputype = atoi(parm);
           if (cputype < -1 ||
               cputype > options[CONF_CPUTYPE].choicemax)
             cputype = -1;
           break;
-#endif
+        #endif
         case CONF_MESSAGELEN:
           messagelen = atoi(parm);
           ValidateConfig();
@@ -1267,7 +1265,7 @@ options[CONF_KEYPORT].thevariable=&keyport;
 options[CONF_HTTPPROXY].thevariable=(char *)(&httpproxy[0]);
 options[CONF_HTTPPORT].thevariable=&httpport;
 options[CONF_HTTPID].thevariable=(char *)(&httpid[0]);
-#if !((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM) || ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))) )
+#ifdef NO_CPUTYPE_TABLE
 options[CONF_CPUTYPE].optionscreen=0;
 #endif
 options[CONF_CPUTYPE].thevariable=&cputype;
@@ -1441,9 +1439,9 @@ s32 Client::ReadConfig(void)
   httpport = INIGETKEY(CONF_HTTPPORT);
   uuehttpmode = INIGETKEY(CONF_UUEHTTPMODE);
   INIGETKEY(CONF_HTTPID).copyto(httpid, sizeof(httpid));
-#if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM) || ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))) )
+  #ifndef NO_CPUTYPE_TABLE
   cputype = INIGETKEY(CONF_CPUTYPE);
-#endif
+  #endif
   messagelen = INIGETKEY(CONF_MESSAGELEN);
   smtpport = INIGETKEY(CONF_SMTPPORT);
   INIGETKEY(CONF_SMTPSRVR).copyto(smtpsrvr, sizeof(smtpsrvr));
@@ -1576,16 +1574,12 @@ void Client::ValidateConfig( void )
 #else
   if ( timeslice < 1 ) timeslice = 65536;
 #endif
-  if ( timeslice < PIPELINE_COUNT ) timeslice=PIPELINE_COUNT;
   if ( niceness < 0 || niceness > 2 ) niceness = 0;
   if ( uuehttpmode < 0 || uuehttpmode > 5 ) uuehttpmode = 0;
-#if (CLIENT_CPU == CPU_X86)
-  if ( cputype < -1 || cputype > 6) cputype = -1;
-#elif (CLIENT_CPU == CPU_ARM)
-  if ( cputype < -1 || cputype > 3) cputype = -1;
-#elif ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX)) )
-  if ( cputype < -1 || cputype > 1) cputype = -1;
-#endif
+  #ifndef NO_CPUTYPE_TABLE
+  if (cputype < -1 || cputype > options[CONF_CPUTYPE].choicemax)
+  #endif
+    cputype = -1;
   if ( randomprefix <0  ) randomprefix=100;
   if ( randomprefix >255) randomprefix=100;
   if (smtpport < 0) smtpport=25;
@@ -1758,9 +1752,9 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_HTTPPORT, httpport );
   INISETKEY( CONF_UUEHTTPMODE, uuehttpmode );
   INISETKEY( CONF_HTTPID, httpid);
-#if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM) || ((CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX)) )
+  #ifndef NO_CPUTYPE_TABLE
   INISETKEY( CONF_CPUTYPE, cputype );
-#endif
+  #endif
   INISETKEY( CONF_MESSAGELEN, messagelen );
   INISETKEY( CONF_SMTPSRVR, smtpsrvr );
   INISETKEY( CONF_SMTPPORT, smtpport );
@@ -1906,37 +1900,23 @@ s32 Client::WriteContestandPrefixConfig(void)
 {
   IniSection ini;
 
-if (!nodiskbuffers)
-{
+  if (nodiskbuffers)
+    return 0;
 
-  #ifdef DONT_USE_PATHWORK
-  ini.ReadIniFile( inifilename );
-  #else
   ini.ReadIniFile( GetFullPathForFilename( inifilename ) );
-  #endif
 
-#define INISETKEY(key, value) ini.setrecord(OPTION_SECTION, options[key].name, IniString(value))
-
+  #define INISETKEY(key, value) ini.setrecord(OPTION_SECTION, options[key].name, IniString(value))
   INISETKEY( CONF_RANDOMPREFIX, randomprefix );
-
-#undef INISETKEY
+  #undef INISETKEY
 
   ini.setrecord(OPTION_SECTION, "contestdone",  IniString(contestdone[0]));
   ini.setrecord(OPTION_SECTION, "contestdone2", IniString(contestdone[1]));
 
-#if defined(NEEDVIRTUALMETHODS)
+  #if defined(NEEDVIRTUALMETHODS)
   InternalWriteConfig(ini);
-#endif
-
-  #ifdef DONT_USE_PATHWORK
-  return( ini.WriteIniFile(inifilename) ? -1 : 0 );
-  #else
-  return( ini.WriteIniFile( GetFullPathForFilename( inifilename ) ) ? -1 : 0 );
   #endif
-};
 
-return 0;
-
+  return( ini.WriteIniFile( GetFullPathForFilename( inifilename ) ) ? -1 : 0 );
 }
 
 //----------------------------------------------------------------------------
@@ -2260,33 +2240,36 @@ s32 Client::SelectCore(void)
 {
   static s32 previouscputype = 0xBEEFD00DL;// An unknown proc type, I hope
 
-  if (previouscputype == cputype) return 0;// We already autodetected.
+  if (previouscputype == cputype) 
+    return 0;// We already autodetected.
 
   previouscputype = cputype;// Set this so we know next time this proc is run.
-
   ValidateProcessorCount(); //in cpucheck.cpp
 
 #if ((CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU != CPU_POWERPC))
   if (!(SysBase->AttnFlags & AFF_68020))
-  {
+    {
     LogScreenRaw("\nIncompatible CPU type.  Sorry.\n");
     return -1;
-  }
+    }
+  cputype = 0;
 #elif (CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_AMIGAOS))
   // Be OS isn't supported on 601 machines
   // There is no 601 PPC board for the Amiga
   LogScreenRaw( "| PowerPC assembly by Dan Oetting at USGS\n");
   double fasttime = 0;
   whichcrunch = 1;
+  
+  cputype = 1;
 #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_WIN32)
   const s32 benchsize = 500000L;
   double fasttime = 0;
   LogScreenRaw( "| RC5 PowerPC assembly by Dan Oetting at USGS\n");
   s32 fastcore = cputype;
   if (fastcore == -1)
-  {
-    for (whichcrunch = 0; whichcrunch < 2; whichcrunch++)
     {
+    for (whichcrunch = 0; whichcrunch < 2; whichcrunch++)
+      {
       Problem problem;
       ContestWork contestwork;
       contestwork.key.lo = contestwork.key.hi = htonl( 0 );
@@ -2296,34 +2279,35 @@ s32 Client::SelectCore(void)
       contestwork.keysdone.lo = contestwork.keysdone.hi = htonl( 0 );
       contestwork.iterations.lo = htonl( benchsize );
       contestwork.iterations.hi = htonl( 0 );
-      problem.LoadState( &contestwork , 0 ); // RC5 core selection
+      problem.LoadState( &contestwork, 0, benchsize, whichcrunch ); // RC5 core selection
 
       LogScreenRaw( "| Benchmarking version %d: ", whichcrunch );
 
       fflush( stdout );
 
-      problem.Run( benchsize , 0 );
+      problem.Run( 0 ); //threadnum
 
       double elapsed = CliGetKeyrateForProblemNoSave( &problem );
       LogScreenRaw( "%.1f kkeys/sec\n", (elapsed / 1000.0) );
 
       if (fastcore < 0 || elapsed > fasttime)
           {fastcore = whichcrunch; fasttime = elapsed;}
+      }
     }
-  }
   whichcrunch = fastcore;
   LogScreenRaw( "| Using v%d.\n\n", whichcrunch );
   /*
   switch (whichcrunch)
-  {
+    {
     case 0:
       Log("Using the 601 core.\n\n");
       break;
     case 1:
       Log("Using the 603/604/750 core.\n\n");
       break;
-  }
+    }
   */
+  cputype = fastcore;
 #elif (CLIENT_CPU == CPU_X86)
   // benchmark all cores
   s32 fastcore = cputype;
@@ -2337,12 +2321,14 @@ s32 Client::SelectCore(void)
     fastcore=detectedtype;
     LogScreenRaw("Your processor is not mmx capable, "
                  "the pentium mmx core can not be used.\n");
-    };
+    }
 
   LogScreenRaw("Selecting %s code.\n", cputypetable[(int)(fastcore & 0xFF)+1]);
 
+  cputype = (fastcore & 0xFF);
+
   // select the correct core engine
-  switch(fastcore & 0xFF)
+  switch( cputype )
     {
     #if (defined(KWAN) || defined(MEGGS)) && !defined(MMX_BITSLICER)
       #define DESUNITFUNC51 des_unit_func_slice
@@ -2356,9 +2342,9 @@ s32 Client::SelectCore(void)
       #define DESUNITFUNC62 p2des_unit_func_pro
     #else
       #define DESUNITFUNC51 p1des_unit_func_p5
-      #define DESUNITFUNC52 NULL
+      #define DESUNITFUNC52 p1des_unit_func_p5
       #define DESUNITFUNC61 p1des_unit_func_pro
-      #define DESUNITFUNC62 NULL
+      #define DESUNITFUNC62 p1des_unit_func_pro
     #endif
 
     case 0: // Pentium Classic + others
@@ -2390,22 +2376,19 @@ s32 Client::SelectCore(void)
       des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
       des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
       break;
-#ifdef MMX_BITSLICER
+    #ifdef MMX_BITSLICER
     case 6: // Pentium MMX ONLY
       rc5_unit_func = rc5_unit_func_p5_mmx;
       des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
       des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
       break;
-#endif
+    #endif
       
     #undef DESUNITFUNC61
     #undef DESUNITFUNC62
     #undef DESUNITFUNC51
     #undef DESUNITFUNC52
     }
-
-  PIPELINE_COUNT=pipelinecounts[fastcore & 0xff];
-    // Set the rc5 pipeline count - differs for mmx core from rest
 
   #ifdef MMX_BITSLICER
   if ((detectedtype & 0x100) && usemmx)   // use the MMX DES core ?
@@ -2422,8 +2405,8 @@ s32 Client::SelectCore(void)
       fastcore = GetProcessorType(); // will return -1 if unable to identify
   #endif
   if (fastcore == -1)
-  {
-    const s32 benchsize = 50000;
+    {
+    const s32 benchsize = 50000*2; // pipeline count is 2
     double fasttime[2] = { 0, 0 };
     s32 fastcoretest[2] = { -1, -1 };
 
@@ -2431,9 +2414,9 @@ s32 Client::SelectCore(void)
               "This is just a guess based on a small test of each core.  If you know what CPU\n"
               "this machine has, then set it in the Performance section of the choices.\n");
     fflush(stdout);
-    for (int j = 0; j < 2; j++)
-    for (int i = 0; i < 2; i++)
-    {
+    for (int contestid = 0; contestid < 2; contestid++)
+    for (int whichcrunch = 0; whichcrunch < 2; whichcrunch++)
+      {
       Problem problem;
       ContestWork contestwork;
       contestwork.key.lo = contestwork.key.hi = htonl( 0 );
@@ -2443,11 +2426,11 @@ s32 Client::SelectCore(void)
       contestwork.keysdone.lo = contestwork.keysdone.hi = htonl( 0 );
       contestwork.iterations.lo = htonl( benchsize );
       contestwork.iterations.hi = htonl( 0 );
-      problem.LoadState( &contestwork , j ); // DES or RC5 core selection
-
+      problem.LoadState( &contestwork , contestid, benchsize, whichcrunch ); 
+                                                   // DES or RC5 core selection
       // select the correct core engine
-      switch(i)
-      {
+      switch(whichcrunch)
+        {
         case 1:
           rc5_unit_func = rc5_unit_func_strongarm;
           des_unit_func = des_unit_func_strongarm;
@@ -2456,26 +2439,25 @@ s32 Client::SelectCore(void)
           rc5_unit_func = rc5_unit_func_arm;
           des_unit_func = des_unit_func_arm;
           break;
-      }
+        }
 
-      problem.Run( benchsize / PIPELINE_COUNT , 0 );
+      problem.Run( 0 ); //threadnum
 
       double elapsed = CliGetKeyrateForProblemNoSave( &problem );
-//printf("%s Core %d: %f\n",j ? "DES" : "RC5",i,elapsed);
+      //printf("%s Core %d: %f\n",contestid ? "DES" : "RC5",whichcrunch,elapsed);
 
-
-      if (fastcoretest[j] < 0 || elapsed < fasttime[j])
-        {fastcoretest[j] = i; fasttime[j] = elapsed;}
-    }
+      if (fastcoretest[contestid] < 0 || elapsed < fasttime[contestid])
+        {fastcoretest[contestid] = whichcrunch; fasttime[contestid] = elapsed;}
+      }
 
     fastcore = (4-(fastcoretest[0] + (fastcoretest[1]<<1)))&3;
-  }
+    }
 
   LogScreenRaw("Selecting %s code.\n",cputypetable[(int)(fastcore+1)]);
 
   // select the correct core engine
   switch(fastcore)
-  {
+    {
     case 0:
       rc5_unit_func = rc5_unit_func_arm;
       des_unit_func = des_unit_func_arm;
@@ -2493,7 +2475,8 @@ s32 Client::SelectCore(void)
       rc5_unit_func = rc5_unit_func_strongarm;
       des_unit_func = des_unit_func_arm;
       break;
-  }
+    }
+  cputype = fastcore;
 
 #endif
   return 0;

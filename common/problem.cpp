@@ -3,11 +3,17 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.31  1998/08/20 19:34:28  cyruspatel
+// Removed that terrible PIPELINE_COUNT hack: Timeslice and pipeline count
+// are now computed in Problem::LoadState(). Client::SelectCore() now saves
+// core type to Client::cputype.
+//
 // Revision 1.30  1998/08/14 00:05:07  silby
 // Changes for rc5 mmx core integration.
 //
 // Revision 1.29  1998/08/05 16:43:29  cberry
-// ARM clients now define PIPELINE_COUNT=2, and RC5 cores return number of keys checked, rather than number of keys left to check
+// ARM clients now define PIPELINE_COUNT=2, and RC5 cores return number of 
+// keys checked, rather than number of keys left to check
 //
 // Revision 1.28  1998/08/02 16:18:27  cyruspatel
 // Completed support for logging.
@@ -18,19 +24,10 @@
 //
 // Revision 1.26  1998/07/13 03:31:52  cyruspatel
 // Added 'const's or 'register's where the compiler was complaining about
-// ambiguities. ("declaration/type or an expression")
+// "declaration/type or an expression" ambiguities.
 //
 // Revision 1.25  1998/07/07 21:55:50  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
+// client.h has been split into client.h and baseincs.h 
 //
 // Revision 1.24  1998/07/06 09:21:26  jlawson
 // added lint tags around cvs id's to suppress unused variable warnings.
@@ -49,7 +46,8 @@
 // Updates for BeOS
 //
 // Revision 1.19  1998/06/15 00:12:24  skand
-// fix id marker so it won't interfere when another .cpp file is #included here
+// fix id marker so it won't interfere when another .cpp file is 
+// #included here
 //
 // Revision 1.18  1998/06/14 10:13:43  skand
 // use #if 0 (or 1) to turn on some debugging info, rather than // on each line
@@ -67,8 +65,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-static const char *id="@(#)$Id: problem.cpp,v 1.30 1998/08/14 00:05:07 silby Exp $";
-return id; }
+return "@(#)$Id: problem.cpp,v 1.31 1998/08/20 19:34:28 cyruspatel Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -83,39 +80,36 @@ return id; }
 #endif
 
 #if (CLIENT_CPU == CPU_X86)
-  int PIPELINE_COUNT=0;
   u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
   u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
   u32 (*des_unit_func2)( RC5UnitWork * rc5unitwork, u32 timeslice );
 #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS == OS_WIN32)
   // NT PPC doesn't have good assembly
   #include "rc5ansi2-rg.cpp"
+  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
 #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_VMS)
   #include "rc5ansi2-rg.cpp"
+  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
 #elif (CLIENT_CPU == CPU_POWER)
   // power, not powerpc
   #include "rc5ansi1-rg.cpp"
+  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
 #elif (CLIENT_CPU == CPU_POWERPC)
   extern "C" int crunch_allitnil( RC5UnitWork *work, unsigned long iterations );
   extern "C" int crunch_lintilla( RC5UnitWork *work, unsigned long iterations );
+  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
   int whichcrunch = 0;
 #elif (CLIENT_CPU == CPU_68K)
   extern "C" int rc5_unit_func( RC5UnitWork *work );
+  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
 //  extern "C" __asm int rc5_girv( register __a0 RC5UnitWork *work );
 // Testing a new 68030 core which might be used later...
 #elif (CLIENT_CPU == CPU_ARM)
   u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long iterations  );
-#elif ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU==CPU_68K))
-  extern "C" int gettimeofday(struct timeval *tp, struct timezone *tzp);
+  u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
 #else
   #include "rc5stub.cpp"
-#endif
-
-#if (CLIENT_CPU == CPU_ARM)
- u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
-#elif (CLIENT_CPU == CPU_X86)
-#else
-extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+  extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
 #endif
 
 #if (CLIENT_OS == OS_RISCOS)
@@ -123,7 +117,7 @@ extern "C" void riscos_upcall_6(void);
 extern void CliSignalHandler(int);
 #endif
 
-
+//-----------------------------------------------------------------------
 
 Problem::Problem()
 {
@@ -146,7 +140,7 @@ s32 Problem::IsInitialized()
   }
 }
 
-s32 Problem::LoadState( ContestWork * work , u32 contesttype )
+s32 Problem::LoadState( ContestWork * work, u32 contesttype, u32 _timeslice, u32 _cputype )
 {
   contest = contesttype;
 //LogScreen("loadstate contest: %d %d \n",contesttype,contest);
@@ -182,14 +176,14 @@ s32 Problem::LoadState( ContestWork * work , u32 contesttype )
   key.hi = contestwork.key.hi;
   key.lo = contestwork.key.lo + contestwork.keysdone.lo;
 
-
   // set up the unitwork structure
   rc5unitwork.plain.hi = contestwork.plain.hi ^ contestwork.iv.hi;
   rc5unitwork.plain.lo = contestwork.plain.lo ^ contestwork.iv.lo;
   rc5unitwork.cypher.hi = contestwork.cypher.hi;
   rc5unitwork.cypher.lo = contestwork.cypher.lo;
+
   if (contesttype == 0)
-  {
+    {
     rc5unitwork.L0.lo = ((key.hi >> 24) & 0x000000FFL) |
         ((key.hi >>  8) & 0x0000FF00L) |
         ((key.hi <<  8) & 0x00FF0000L) |
@@ -198,10 +192,12 @@ s32 Problem::LoadState( ContestWork * work , u32 contesttype )
         ((key.lo >>  8) & 0x0000FF00L) |
         ((key.lo <<  8) & 0x00FF0000L) |
         ((key.lo << 24) & 0xFF000000L);
-  } else {
+    } 
+  else 
+    {
     rc5unitwork.L0.lo = key.lo;
     rc5unitwork.L0.hi = key.hi;
-  }
+    }
 
   // set up the current result state
   rc5result.key.hi = contestwork.key.hi;
@@ -213,6 +209,23 @@ s32 Problem::LoadState( ContestWork * work , u32 contesttype )
   rc5result.result = RESULT_WORKING;
 
 #endif
+
+  //---------------------------------------------------------------
+
+  pipeline_count = PIPELINE_COUNT;
+  
+  #if (CLIENT_CPU == CPU_X86)
+    if (_cputype == 6 && contest == 0) //RC5 MMX cores
+      pipeline_count = 4;
+  #endif
+
+  if ( _timeslice < pipeline_count )
+    tslice = pipeline_count;
+  else
+    tslice = _timeslice;
+  
+  //--------------------------------------------------------------- 
+
   startpercent = (u32) ( (double) 100000.0 *
      ( (double) (contestwork.keysdone.lo) /
        (double) (contestwork.iterations.lo) ) );
@@ -251,8 +264,9 @@ s32 Problem::RetrieveState( ContestWork * work , s32 setflags )
   return( contest );
 }
 
-s32 Problem::Run( u32 timeslice , u32 threadnum )
+s32 Problem::Run( u32 threadnum )
 {
+  u32 timeslice;
 
   if ( !initialized )
     return ( -1 );
@@ -261,23 +275,31 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     return ( 1 );
 
   if (!started)
-  {
+    {
     struct timeval stop;
     CliTimer(&stop);
     timehi = stop.tv_sec;
     timelo = stop.tv_usec;
-    #if ((CLIENT_CPU != CPU_X86) || !defined(MULTITHREAD))
-       started = threadnum; //suppress unused argument compiler warning
+    #if (CLIENT_CPU != CPU_X86)
+       started = (threadnum == 0); //squelch 'unused variable' warning
     #endif
     started=1;
-  }
+    }
 
   // don't allow a too large of a timeslice be used
   // (technically not necessary, but may save some wasted time)
   // note: doesn't account for high end or carry over
-  if ( ( contestwork.keysdone.lo + ( timeslice * PIPELINE_COUNT ) ) > contestwork.iterations.lo )
+  if ( ( contestwork.keysdone.lo + tslice ) > contestwork.iterations.lo )
+    {
     timeslice = ( contestwork.iterations.lo - contestwork.keysdone.lo +
-                PIPELINE_COUNT - 1 ) / PIPELINE_COUNT + 1;
+                pipeline_count - 1 ) / pipeline_count + 1;
+    }
+  else
+    {
+    timeslice = tslice / pipeline_count; //from the problem object
+    }
+
+  
 
 #if (CLIENT_CPU == CPU_POWERPC)
 {
@@ -301,12 +323,13 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
   else
   {
     // protect the innocent
-    timeslice *= PIPELINE_COUNT;
+    timeslice *= pipeline_count;
+
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
 
     if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
-    timeslice = (1ul << nbits) / PIPELINE_COUNT;
+    timeslice = (1ul << nbits) / pipeline_count;
     kiter = des_unit_func ( &rc5unitwork, nbits );
   }
 
@@ -330,34 +353,28 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
 {
   unsigned long kiter;
   if (contest == 0)
-  {
+    {
     kiter = rc5_unit_func ( &rc5unitwork, timeslice );
-  }
+    }
   else
-  {
+    {
     // protect the innocent
-    timeslice *= PIPELINE_COUNT;
+    timeslice *= pipeline_count;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
 
     if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
-    timeslice = (1ul << nbits) / PIPELINE_COUNT;
-#ifdef MULTITHREAD
-    if (threadnum == 0)
-      {
+    timeslice = (1ul << nbits) / pipeline_count;
+
+    if (threadnum == 0) //both are the same on non_mt
       kiter = des_unit_func ( &rc5unitwork, nbits );
-      }
     else
-      {
       kiter = des_unit_func2 ( &rc5unitwork, nbits );
-      }
-#else
-    kiter = des_unit_func ( &rc5unitwork, nbits );
-#endif
-  }
+    }
+
   contestwork.keysdone.lo += kiter;
-  if ( kiter < timeslice * PIPELINE_COUNT )
-  {
+  if ( kiter < timeslice * pipeline_count )
+    {
     // found it?
     rc5result.key.hi = contestwork.key.hi;
     rc5result.key.lo = contestwork.key.lo;
@@ -368,11 +385,11 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     rc5result.result = RESULT_FOUND;
     finished = 1;
     return( 1 );
-  }
-  else if ( kiter != timeslice * PIPELINE_COUNT )
-  {
-    LogScreen("kiter wrong %ld %d\n", kiter, (int)(timeslice*PIPELINE_COUNT));
-  }
+    }
+  else if ( kiter != timeslice * pipeline_count )
+    {
+    LogScreen("kiter wrong %ld %d\n", kiter, (int)(timeslice*pipeline_count));
+    }
 }
 #elif (CLIENT_CPU == CPU_SPARC) && (ULTRA_CRUNCH == 1)
 {
@@ -381,16 +398,16 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     kiter = crunch( &rc5unitwork, timeslice );
   } else {
     // protect the innocent
-    timeslice *= PIPELINE_COUNT;
+    timeslice *= pipeline_count;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
 
     if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
-    timeslice = (1ul << nbits) / PIPELINE_COUNT;
+    timeslice = (1ul << nbits) / pipeline_count;
     kiter = des_unit_func ( &rc5unitwork, nbits );
   }
   contestwork.keysdone.lo += kiter;
-  if (kiter < ( timeslice * PIPELINE_COUNT ) )
+  if (kiter < ( timeslice * pipeline_count ) )
   {
     // found it?
     rc5result.key.hi = contestwork.key.hi;
@@ -403,9 +420,9 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     finished = 1;
     return( 1 );
   }
-  else if (kiter != ( timeslice * PIPELINE_COUNT ) )
+  else if (kiter != ( timeslice * pipeline_count ) )
   {
-    LogScreen("kiter wrong %ld %d\n", (long) kiter, (int) (timeslice*PIPELINE_COUNT));
+    LogScreen("kiter wrong %ld %d\n", (long) kiter, (int) (timeslice*pipeline_count));
   }
 }
 #elif ((CLIENT_CPU == CPU_MIPS) && (MIPS_CRUNCH == 1))
@@ -415,16 +432,16 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     kiter = crunch( &rc5unitwork, timeslice );
   } else {
     // protect the innocent
-    timeslice *= PIPELINE_COUNT;
+    timeslice *= pipeline_count;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
 
     if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
-    timeslice = (1ul << nbits) / PIPELINE_COUNT;
+    timeslice = (1ul << nbits) / pipeline_count;
     kiter = des_unit_func ( &rc5unitwork, nbits );
   }
   contestwork.keysdone.lo += kiter;
-  if (kiter < ( timeslice * PIPELINE_COUNT ) )
+  if (kiter < ( timeslice * pipeline_count ) )
   {
     // found it?
     rc5result.key.hi = contestwork.key.hi;
@@ -437,9 +454,9 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     finished = 1;
     return( 1 );
   }
-  else if (kiter != (timeslice * PIPELINE_COUNT))
+  else if (kiter != (timeslice * pipeline_count))
   {
-    LogScreen("kiter wrong %ld %d\n", kiter, timeslice*PIPELINE_COUNT);
+    LogScreen("kiter wrong %ld %d\n", kiter, timeslice*pipeline_count);
   }
 }
 #elif (CLIENT_CPU == CPU_ARM)
@@ -455,7 +472,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
       riscos_upcall_6();
   }
 #endif
-//  timeslice *= PIPELINE_COUNT;
+//  timeslice *= pipeline_count;
 //  done in the cores.
 
   if (contest == 0)
@@ -463,26 +480,26 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
 //    printf("timeslice = %d\n",timeslice);
     if (rc5unitwork.L0.hi&(1<<24))
     {
-	rc5unitwork.L0.hi -= 1<<24;
-	if (contestwork.keysdone.lo & 1)
-	{
-	    contestwork.keysdone.lo--;
-	}
-	else
-	{
-	    LogScreen("Something really bad has happened - the number of keys looks wrong.\n");
-	}
+  rc5unitwork.L0.hi -= 1<<24;
+  if (contestwork.keysdone.lo & 1)
+  {
+      contestwork.keysdone.lo--;
+  }
+  else
+  {
+      LogScreen("Something really bad has happened - the number of keys looks wrong.\n");
+  }
     }
 
     /*
         Now returns number of keys processed!
-	(Since 5/8/1998, SA core 1.5, ARM core 1.6).
+  (Since 5/8/1998, SA core 1.5, ARM core 1.6).
     */
     kiter = rc5_unit_func(&rc5unitwork, timeslice);
     contestwork.keysdone.lo += kiter;
 
 //    printf("kiter is %d\n",kiter);
-    if (kiter != (timeslice*PIPELINE_COUNT))
+    if (kiter != (timeslice*pipeline_count))
     {
       // found it?
 
@@ -504,7 +521,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
 
     if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
-    timeslice = (1ul << nbits) / PIPELINE_COUNT;
+    timeslice = (1ul << nbits) / pipeline_count;
     kiter = des_unit_func ( &rc5unitwork, nbits );
     contestwork.keysdone.lo += kiter;
     if (kiter < timeslice)
@@ -547,7 +564,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
       else
       {
         // "mangle-increment" the key number by the number of pipelines
-        rc5unitwork.L0.hi = (rc5unitwork.L0.hi + (PIPELINE_COUNT << 24)) & 0xFFFFFFFF;
+        rc5unitwork.L0.hi = (rc5unitwork.L0.hi + (pipeline_count << 24)) & 0xFFFFFFFF;
         if (!(rc5unitwork.L0.hi & 0xFF000000)) {
 
           rc5unitwork.L0.hi = (rc5unitwork.L0.hi + 0x00010000) & 0x00FFFFFF;
@@ -579,21 +596,21 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
         }
         // increment the count of keys done
         // note: doesn't account for carry
-        contestwork.keysdone.lo += PIPELINE_COUNT;
+        contestwork.keysdone.lo += pipeline_count;
       }
     }
   }
   else
   {
-    timeslice *= PIPELINE_COUNT;
+    timeslice *= pipeline_count;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
 
     if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
-    timeslice = (1ul << nbits) / PIPELINE_COUNT;
+    timeslice = (1ul << nbits) / pipeline_count;
     kiter = des_unit_func ( &rc5unitwork, nbits );
     contestwork.keysdone.lo += kiter;
-    if (kiter < ( timeslice * PIPELINE_COUNT ) )
+    if (kiter < ( timeslice * pipeline_count ) )
     {
       // found it?
       rc5result.key.hi = contestwork.key.hi;
@@ -606,10 +623,10 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
       finished = 1;
       return( 1 );
     }
-    else if (kiter != (timeslice * PIPELINE_COUNT))
+    else if (kiter != (timeslice * pipeline_count))
     {
         LogScreen("kiter wrong %ld %ld\n",
-               (long) kiter, (long)(timeslice*PIPELINE_COUNT));
+               (long) kiter, (long)(timeslice*pipeline_count));
     }
   }
 #endif
@@ -668,5 +685,4 @@ u32 Problem::CalcPercent()
                   ( ((double) rc5result.keysdone.lo) /
                     ((double) rc5result.iterations.lo) ) );
 }
-
 

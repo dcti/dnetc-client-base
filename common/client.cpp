@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.129  1998/08/20 19:34:34  cyruspatel
+// Removed that terrible PIPELINE_COUNT hack: Timeslice and pipeline count
+// are now computed in Problem::LoadState(). Client::SelectCore() now saves
+// core type to Client::cputype.
+//
 // Revision 1.128  1998/08/20 03:48:59  silby
 // Quite hack to get winnt service compiling.
 //
@@ -23,12 +28,8 @@
 // Change to a NOMAIN definition so that the win32gui will compile.
 //
 // Revision 1.122  1998/08/10 23:02:12  cyruspatel
-// Four changes: (a) xxxTrigger and pausefilefound flags are now wrapped in
-// functions in trigger.cpp (b) NetworkInitialize()/NetworkDeinitialize()
-// related changes: (see netinit.cpp for documentation): calls to those two
-// functions have been removed from main() and are used before network i/o is
-// actually attempted. (c) NO!NETWORK references have been removed. network.cpp
-// changelog has details. (d) Fetch()/Flush()/Update() are now in buffupd.cpp
+// xxxTrigger and pausefilefound flags are now wrapped in functions in 
+// trigger.cpp. NetworkInitialize()/NetworkDeinitialize() related changes.
 //
 // Revision 1.121  1998/08/08 00:55:25  silby
 // Changes to get win32gui working again
@@ -112,233 +113,10 @@
 // Revision 1.100  1998/07/15 06:10:54  silby
 // Fixed an improper #ifdef
 //
-// Revision 1.99  1998/07/14 04:37:33  cramer
-// -runbuffers now works (as far as I've been able to tell)  It will process
-// blocks from the buffer files until all blocks have been exhausted and then
-// exit.  [look in common/client.cpp for the three "cramer magic" lines]
-//
-//    Ricky Beam <cramer@foobar.interpath.net>
-//
-// Revision 1.98  1998/07/13 22:52:29  cramer
-// Fixed Alde's divide by zero error in printing the % for block flush/fetch.
-// (Leave it to NFS to create a race condition!)
-//
-// Revision 1.97  1998/07/13 13:18:45  kbracey
-// Put back in .ini filename selection code. CYP! STOP MESSING ABOUT!
-//
-// Revision 1.96  1998/07/13 03:29:49  cyruspatel
-// Added 'const's or 'register's where the compiler was complaining about
-// ambiguities. ("declaration/type or an expression")
-//
-// Revision 1.95  1998/07/12 12:51:36  cyruspatel
-// Added static functions for use by ::Run() et al: IsFilenameValid() which
-// checks for zero length and "none" filenames, and DoesFileExist() which
-// expands the filename to the full path (if not DONT_USE_PATHWORK) before
-// doing an access(filename, 0) check.
-//
-// Revision 1.94  1998/07/12 09:05:59  silby
-// Fixed path handling code *again* so that the .ini name will follow the executible's name. This is how it's been done for hundreds of releases, now is a bad time to change.
-//
-// Revision 1.93  1998/07/11 07:26:26  silby
-// Fixed my fix for the exitrc5.now path problem.  Now the path is added on at each read instead of once at the beginning of the code (where it could be wrong depending on the os.)
-//
-// Revision 1.92  1998/07/11 04:31:43  silby
-// Made exitrc5.now files GetFullPathed so they act properly.
-//
-// Revision 1.91  1998/07/11 01:53:14  silby
-// Change in logging statements - all have full timestamps now so they look correct in the win32gui.
-//
-// Revision 1.90  1998/07/11 01:36:28  silby
-// switched order of lurk and connectrequested code so that it would work properly with the win32 gui, also fixed a bug with win32gui forced fetches.
-//
-// Revision 1.89  1998/07/10 04:34:55  silby
-// Changes to connectrequested variable to allow better GUI interface with the main thread for requested flushes,fetches, and updates.
-//
-// Revision 1.88  1998/07/09 09:43:25  remi
-// Give an error message when the user ask for '-ident' and there is no support
-// for it in the client.
-//
-// Revision 1.87  1998/07/09 04:37:56  jlawson
-// cleared integer cast warning.
-//
-// Revision 1.86  1998/07/08 23:31:27  remi
-// Cleared a GCC warning. Tweaked Id.
-//
-// Revision 1.85  1998/07/08 09:28:10  jlawson
-// eliminate integer size warnings on win16
-//
-// Revision 1.84  1998/07/08 09:22:52  remi
-// Added support for the MMX bitslicer.
-// Wrapped $Log comments to some reasonable value.
-//
-// Revision 1.83  1998/07/08 05:19:23  jlawson
-// updates to get Borland C++ to compile under Win32.
-//
-// Revision 1.82  1998/07/07 21:55:14  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
-//
-// Revision 1.81  1998/07/07 02:52:57  silby
-// Another slight change to logging where date will now be shown for proper
-// alignment in the win32gui.
-//
-// Revision 1.80  1998/07/07 02:12:14  silby
-// Removed an over-zealous #if DONT_USE_PATHWORK - was preventing .inis from
-// following the executible's name.
-//
-// Revision 1.79  1998/07/07 01:14:09  silby
-// Fixed a bug where the default rc5 out buffer was buff-out.des. 413 needs
-// to be recalled now.
-//
-// Revision 1.78  1998/07/05 21:49:15  silby
-// Modified logging so that manual wrapping is not done on win32gui, as it
-// looks terrible in a non-fixed spaced font.
-//
-// Revision 1.77  1998/07/05 15:53:58  cyruspatel
-// Implemented EraseCheckpointFile() and TruncateBufferFile() in buffwork.cpp;
-// substituted unlink() with EraseCheckpointFile() in client.cpp; modified
-// client.h to #include buffwork.h; moved InternalGetLocalFilename() to
-// cliconfig.cpp; cleaned up some.
-//
-// Revision 1.76  1998/07/05 13:44:07  cyruspatel
-// Fixed an inadvertent wrap of one of the long single-line revision headers.
-//
-// Revision 1.75  1998/07/05 13:08:58  cyruspatel
-// Created new pathwork.cpp which contains functions for determining/setting
-// the "work directory" and pathifying a filename that has no dirspec.
-// GetFullPathForFilename() is ideally suited for use in (or just prior to) a
-// call to fopen(). This obviates the neccessity to pre-parse filenames or
-// maintain separate filename buffers. In addition, each platform has its own
-// code section to avoid cross-platform assumptions. More doc in pathwork.cpp
-// #define DONT_USE_PATHWORK if you don't want to use these functions.
-//
-// Revision 1.74  1998/07/04 22:05:53  silby
-// Fixed problem found by peterd in which message mailing would have
-// overridden offlinemode
-//
-// Revision 1.73  1998/07/04 21:05:30  silby
-// Changes to lurk code; win32 and os/2 code now uses the same variables, and
-// has been integrated into StartLurk and LurkStatus functions so they now act
-// the same.  Additionally, problems with lurkonly clients trying to connect
-// when contestdone was wrong should be fixed.
-//
-// Revision 1.72  1998/07/04 10:30:10  jlawson
-// fixed printing of info of invalid block when -runbuffers consumes
-// all blocks from buffin
-//
-// Revision 1.71  1998/07/04 01:57:33  cyruspatel
-// Fixed the pause file fix :) - on mt systems inner cpu_i loop was being run
-// even if pausefilefound.
-//
-// Revision 1.70  1998/07/03 23:13:55  remi
-// Fix the pause file bug in non-multithreaded clients.
-//
-// Revision 1.69  1998/07/02 13:09:25  kbracey
-// A couple of RISC OS fixes - printf format specifiers made long.
-// Changed a "blocks" to "block%s", n==1?"":"s".
-//
-// Revision 1.68  1998/07/01 10:52:04  ziggyb
-// Fixed the problem of a mail message being attemped when run in offline mode
-// after the main thread is quit.
-//
-// Revision 1.67  1998/07/01 03:12:42  blast
-// AmigaOS changes...
-//
-// Revision 1.66  1998/07/01 00:06:27  cyruspatel
-// Added full buffering to ::LogScreenPercentSingle() so that the write is
-// done in one go, regardless of whether stdout is buffered or not.
-//
-// Revision 1.65  1998/06/30 05:57:33  jlawson
-// benchmark will exit before status message is printed if SignalTriggered
-// is already set on function entry.
-//
-// Revision 1.64  1998/06/30 03:11:46  fordbr
-// Fixed blockcount bug with 'x' to exit
-//
-// Revision 1.63  1998/06/29 08:43:53  jlawson
-// More OS_WIN32S/OS_WIN16 differences and long constants added.
-//
-// Revision 1.62  1998/06/29 07:57:30  ziggyb
-// Redid the lurk detection for OS/2. Also gave the text output functions
-// a priority boost so the display isn't so sluggish.
-//
-// For the general client, I added an if(!offlinemode) on all the mailmessages,
-// since it seemed that even in offline mode, or lurk mode, a smtp attempt was
-// being made.
-//
-// Revision 1.61  1998/06/29 06:57:38  jlawson
-// added new platform OS_WIN32S to make code handling easier.
-//
-// Revision 1.60  1998/06/29 04:22:17  jlawson
-// Updates for 16-bit Win16 support
-//
-// Revision 1.59  1998/06/25 02:30:33  jlawson
-// put back public Client::connectrequested for use by win32gui
-//
-// Revision 1.58  1998/06/25 01:34:31  blast
-//
-// AmigaOS changes, also changed makefile so that there now is only ONE
-// AmigaOS makefile for both cpu's.
-//
-// Revision 1.57  1998/06/24 21:53:40  cyruspatel
-// Created CliGetMessageForProblemCompletedNoSave() in clisrate.cpp. It
-// is similar to its non-nosave pendant but doesn't affect cumulative
-// statistics.  Modified Client::Benchmark() to use the function.
-//
-// Revision 1.56  1998/06/23 20:19:52  cyruspatel
-// Adjusted NetWare specific stuff in ::Benchmark to obtain the timeslice
-// from the new GetTimesliceBaseline()
-//
-// Revision 1.55  1998/06/22 03:25:30  silby
-// changed so that pausefile is only checked every exitfilechecktime now.
-//
-// Revision 1.54  1998/06/21 16:08:02  cyruspatel
-// NetWare change: first thread no longer migrates to smp.
-//
-// Revision 1.53  1998/06/17 10:51:23  kbracey
-// Fixed printfs for machines with 64-bit longs.
-//
-// Revision 1.52  1998/06/17 07:53:02  cberry
-// replaced the % in [%s] Both RC5 and DES are marked as finished.  Quitting.
-//
-// Revision 1.51  1998/06/15 12:03:49  kbracey
-// Lots of consts.
-//
-// Revision 1.50  1998/06/15 08:28:02  jlawson
-// fixed signed/unsigned comparison
-//
-// Revision 1.49  1998/06/15 06:18:32  dicamillo
-// Updates for BeOS
-//
-// Revision 1.48  1998/06/14 12:24:15  ziggyb
-// Fixed the OS/2 lurk mode so that it updates less freqently. It only
-// does a -update after a completed block. I've also OS2 defined -fetch/-flush
-// so that if a connection is lost while in lurk mode, it will stop trying to
-// connect and return with a value of -3.
-//
-// Win32 clients may want to look at that to reduce the client trying to -update
-// after a connection is lost in lurk mode.
-//
-// Revision 1.47  1998/06/14 08:26:38  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-//
-// Revision 1.46  1998/06/14 08:12:33  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-//
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.128 1998/08/20 03:48:59 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.129 1998/08/20 19:34:34 cyruspatel Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -673,6 +451,12 @@ u32 Client::Benchmark( u8 contest, u32 numk )
   if (SelectCore() || CheckExitRequestTrigger()) 
     return 0;
 
+  tslice = 100000L;
+
+  #if (CLIENT_OS == OS_NETWARE)
+    tslice = GetTimesliceBaseline(); //in cpucheck.cpp
+  #endif
+
   LogScreenRaw( "\nBenchmarking %s with 1*2^%d tests (%u keys):\n", 
                  contestname, itersize+keycountshift,
                           (int)(1<<(itersize+keycountshift)) );
@@ -690,16 +474,11 @@ u32 Client::Benchmark( u8 contest, u32 numk )
   contestwork.iterations.lo = htonl( (1<<itersize) );
   contestwork.iterations.hi = htonl( 0 );
 
-  (problem[0]).LoadState( &contestwork , (u32) (contestid) );
+  (problem[0]).LoadState( &contestwork , (u32) (contestid), tslice, cputype );
 
   (problem[0]).percent = 0;
-  tslice = ( 100000L / PIPELINE_COUNT );
 
-  #if (CLIENT_OS == OS_NETWARE)
-    tslice = GetTimesliceBaseline(); //in cpucheck.cpp
-  #endif
-
-  while ( (problem[0]).Run( tslice , 0 ) == 0 )
+  while ( (problem[0]).Run( 0 ) == 0 ) //threadnum
     {
     if (!percentprintingoff)
       LogScreenPercent( 1 ); //logstuff.cpp - number of loaded problems
@@ -816,8 +595,8 @@ s32 Client::SelfTest( u8 contest )
     contestwork.iterations.lo = htonl( 0x00010000L );  // only need to get to xDEEO
     contestwork.iterations.hi = htonl( 0 );
 
-    (problem[0]).LoadState( &contestwork , (u32) (contest-1) );
-    while ( ( run = (problem[0]).Run( 0x4000 , 0 ) ) == 0 )
+    (problem[0]).LoadState( &contestwork , (u32) (contest-1), 0x8000, cputype);
+    while ( ( run = (problem[0]).Run( 0 ) ) == 0 ) //threadnum
     {
       #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
       SurrenderCPU();
@@ -860,12 +639,12 @@ s32 Client::SelfTest( u8 contest )
             u32 lo2 = ntohl( rc5result.key.lo ) + (u32) ntohl( rc5result.keysdone.lo );
             convert_key_from_inc_to_des (&hi2, &lo2);
 
-            LogScreen( "Test %d Passed: %08X:%08X - %08X:%08X\n", successes,
+            LogScreen( "Test %02d Passed: %08X:%08X - %08X:%08X\n", successes,
               (u32) hi2, (u32) lo2, (u32) hi, (u32) lo);
 
           } else {
             // RC5...
-            LogScreen( "Test %d Passed: %08X:%08X\n", successes,
+            LogScreen( "Test %02d Passed: %08X:%08X\n", successes,
               (u32) ntohl( rc5result.key.hi ) + (u32) ntohl( rc5result.keysdone.hi ),
               (u32) ntohl( rc5result.key.lo ) + (u32) ntohl( rc5result.keysdone.lo ));
           }
@@ -987,11 +766,10 @@ void Go_mt( void * parm )
           #if (CLIENT_OS == OS_NETWARE)
               //sets up and uses a polling procedure that runs as
               //an OS callback when the system enters an idle loop.
-          run = nwCliRunProblemAsCallback( &(problem[tempi]),
-                         timeslice / PIPELINE_COUNT, tempi2, niceness );
+          run = nwCliRunProblemAsCallback( &(problem[tempi]), tempi2, niceness );
           #else
           // This will return without doing anything if uninitialized...
-          run = (problem[tempi]).Run( timeslice / PIPELINE_COUNT , tempi2 );
+          run = (problem[tempi]).Run( tempi2 ); //threadnum
           #endif
           } 
         }
@@ -1266,7 +1044,8 @@ PreferredIsDone1:
         }
       }
 
-      (problem[(int) cpu_i]).LoadState( (ContestWork *) &fileentry , (u32) (fileentry.contest) );
+      (problem[(int) cpu_i]).LoadState( (ContestWork *) &fileentry , 
+               (u32) (fileentry.contest), timeslice, cputype );
 
       //----------------------------
       //spin off a thread for this problem
@@ -1475,12 +1254,11 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
         {
         //sets up and uses a polling procedure that runs as
         //an OS callback when the system enters an idle loop.
-        nwCliRunProblemAsCallback( &(problem[0]),
-                                timeslice/PIPELINE_COUNT, 0 , niceness );
+        nwCliRunProblemAsCallback( &(problem[0]), 0 , niceness );
         }
       #else
         {
-        (problem[0]).Run( timeslice / PIPELINE_COUNT , 0 );
+        (problem[0]).Run( 0 ); //threadnum
         #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
         SurrenderCPU();
         #endif
@@ -1753,7 +1531,8 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
           // now load the problem with the fileentry
           //---------------------
           if (!nonewblocks)
-            (problem[(int)cpu_i]).LoadState( (ContestWork *) &fileentry , (u32) (fileentry.contest) );
+            (problem[(int)cpu_i]).LoadState( (ContestWork *) &fileentry , 
+               (u32) (fileentry.contest), timeslice, cputype );
 
         } // end (if 'found' or 'nothing')
 
@@ -2213,9 +1992,9 @@ int main( int argc, char *argv[] )
     #if (CLIENT_OS == OS_RISCOS)
     if (!guirestart)
     #endif
-    LogRaw("\nRC5DES Client %s started.\n"
+    LogRaw("\nRC5DES Client v2.%d.%d started.\n"
              "Using distributed.net ID %s\n\n",
-             CLIENT_VERSIONSTRING,client.id);
+             CLIENT_CONTEST*100+CLIENT_BUILD,CLIENT_BUILD_FRAC,client.id);
 
     client.Run();
 

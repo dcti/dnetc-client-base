@@ -5,6 +5,11 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.22  1998/08/20 19:34:30  cyruspatel
+// Removed that terrible PIPELINE_COUNT hack: Timeslice and pipeline count
+// are now computed in Problem::LoadState(). Client::SelectCore() now saves
+// core type to Client::cputype.
+//
 // Revision 1.21  1998/08/20 01:54:41  silby
 // Chnages to accomodate rc5mmx cores
 //
@@ -62,7 +67,7 @@
 
 #include "cputypes.h"
 
-#if (!defined(PIPELINE_COUNT) && (CLIENT_CPU != CPU_X86))
+#ifndef PIPELINE_COUNT
  #define PIPELINE_COUNT  2  // normally 1, but 2+ if we do more then one unit in parallel
 #endif
 
@@ -119,18 +124,9 @@ typedef enum
 
 
 #if (CLIENT_CPU == CPU_X86)
-  const int pipelinecounts[7]=
-    {
-    2, // Core 0 - P5 + others
-    2, // Core 1 - Intel 386/486
-    2, // Core 2 - Ppro/PII
-    2, // Core 3 - 6x86(mx)
-    2, // Core 4 - K5
-    2, // Core 5 - K6
-    4  // Core 6 - PMMX (uses MMX)
-    };
-
-  extern int PIPELINE_COUNT;
+  #if (PIPELINE_COUNT != 2)
+  #error "Expecting PIPELINE_COUNT=2"
+  #endif
 
   #ifdef __WATCOMC__
     #define rc5_unit_func_486 _rc5_unit_func_486
@@ -139,13 +135,7 @@ typedef enum
     #define rc5_unit_func_6x86 _rc5_unit_func_6x86
     #define rc5_unit_func_k5 _rc5_unit_func_k5
     #define rc5_unit_func_k6 _rc5_unit_func_k6
-    #define rc5_unit_func_p5_mmx _rc5_unit_func_p5_mmx
   #endif
-
-  #if (CLIENT_OS == OS_LINUX)
-  #define rc5_unit_func_p5_mmx _rc5_unit_func_p5_mmx
-  #endif
-
 
   extern u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern u32 (*des_unit_func2)( RC5UnitWork * rc5unitwork, u32 timeslice );
@@ -159,15 +149,15 @@ typedef enum
   extern "C" u32 rc5_unit_func_p5_mmx( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern u32 p1des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern u32 p1des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 timeslice );
-#if defined(MULTITHREAD)
-  extern u32 p2des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
-  extern u32 p2des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 timeslice );
-#endif
-#if defined(MMX_BITSLICER)
-  extern u32 des_unit_func_mmx( RC5UnitWork * rc5unitwork, u32 nbbits );
-#elif defined(MEGGS) || defined(KWAN)
-  extern u32 des_unit_func_slice( RC5UnitWork * rc5unitwork, u32 nbbits );
-#endif
+  #if defined(MULTITHREAD)
+    extern u32 p2des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
+    extern u32 p2des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 timeslice );
+  #endif
+  #if defined(MMX_BITSLICER)
+    extern u32 des_unit_func_mmx( RC5UnitWork * rc5unitwork, u32 nbbits );
+  #elif defined(MEGGS) || defined(KWAN)
+    extern u32 des_unit_func_slice( RC5UnitWork * rc5unitwork, u32 nbbits );
+  #endif
 
 #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
   #if (PIPELINE_COUNT != 1)
@@ -212,6 +202,9 @@ public:
   u32 started;
   u32 contest;
 
+  u32 pipeline_count;
+  u32 tslice; 
+  
 protected:
   u32 initialized;
   ContestWork contestwork;
@@ -222,9 +215,9 @@ public:
   Problem();
   ~Problem();
 
-  s32 IsInitialized();
+  s32 IsInitialized(); 
 
-  s32 LoadState( ContestWork * work , u32 contesttype );
+  s32 LoadState( ContestWork * work, u32 contesttype, u32 _timeslice, u32 _cputype );
     // Load state into internal structures.
     // state is invalid (will generate errors) until this is called.
     // returns: -1 on error, 0 is OK
@@ -236,7 +229,7 @@ public:
     // returns: -1 on error, 0 is OK
     // Note: data is all in Network Byte order (coming out)( Big Endian )
 
-  s32 Run( u32 timeslice , u32 threadnum );
+  s32 Run( u32 threadnum );
     // Runs calling rc5_unit for timeslice times...
     // Returns:
     //   -1 if something goes wrong (state not loaded, already done etc...)
