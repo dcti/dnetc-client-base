@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.44  1998/12/01 02:18:27  cyp
+// win32 change: __StopThread() boosts a cruncher's priority to its own
+// priority level when waiting for the thread to die. This is primarily
+// for win9x that appears to allow idle threads to starve.
+//
 // Revision 1.43  1998/12/01 00:14:47  cyp
 // Cleared an unused variable warning.
 //
@@ -15,8 +20,7 @@
 // Restore BeOS priority ranging from 1 to 10.
 //
 // Revision 1.40  1998/11/26 07:31:03  cyp
-// Updated to reflect changed checkpoint and buffwork methods. Corrected BeOS
-// priority scaling.
+// Updated to reflect changed checkpoint and buffwork methods. 
 //
 // Revision 1.39  1998/11/25 09:23:30  chrisb
 // various changes to support x86 coprocessor under RISC OS
@@ -165,7 +169,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.43 1998/12/01 00:14:47 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.44 1998/12/01 02:18:27 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -767,9 +771,6 @@ if (targ->realthread)
   
   targ->threadID = 0; //the thread is dead
   
-  if (targ->realthread)
-    SetThreadPriority( 9 ); /* for OSs that need to "exit faster" (OS2) */
-
   #if (CLIENT_OS == OS_BEOS)
   if (targ->realthread)
     exit(0);
@@ -782,15 +783,16 @@ static int __StopThread( struct thread_param_block *thrparams )
 {
   if (thrparams)
     {
+    yield_pump(NULL);   //give threads some air
     if (thrparams->threadID) //thread did not exit by itself
       {
       if (thrparams->realthread) //real thread
         {
-        yield_pump(NULL);   //give threads some air
-        
         #if (CLIENT_OS == OS_OS2)
         DosWaitThread( &(thrparams->threadID), DCWW_WAIT);
         #elif (CLIENT_OS == OS_WIN32)
+        SetThreadPriority( (HANDLE)thrparams->threadID, 
+           GetThreadPriority(GetCurrentThread()) );
         WaitForSingleObject((HANDLE)thrparams->threadID, INFINITE);
         CloseHandle((HANDLE)thrparams->threadID);
         #elif (CLIENT_OS == OS_BEOS)
