@@ -5,44 +5,7 @@
  * based machines!!
  * Marco.Walther@mch.sni.de
  *
- * $Log: mips-crunch.cpp,v $
- * Revision 1.12.2.3  1999/11/28 15:13:39  cyp
- * standardized all protos to extern "C" rc5_unit_func_mips_crunch(...)
- *
- * Revision 1.12.2.2  1999/11/15 21:14:14  ivo
- * removed #error everythomh assumes 32bit cpus
- *
- * Revision 1.12.2.1  1999/06/16 12:22:15  ivo
- * Fixed some stuff to let Irix compile once again
- *
- * Revision 1.12  1999/02/06 23:00:31  foxyloxy
- * *** empty log message ***
- *
- * Revision 1.11  1999/02/06 22:49:57  foxyloxy
- * *** empty log message ***
- *
- * Revision 1.10  1998/11/28 18:21:33  remi
- * Fixed the key incrementation bug. Many thanks to Simon Fenney for
- * finding it !
- *
- * Revision 1.8  1998/07/14 08:41:30  remi
- * Cleaned-up the extra $Log
- *
- * Revision 1.7  1998/07/12 23:17:37  foxyloxy
- * Stripped some ctrl-Ls that were scattered about the whitespace...
- *
- * Revision 1.6  1998/07/08 22:59:31  remi
- * Lots of $Id stuff.
- *
- * Revision 1.5  1998/06/14 08:27:13  friedbait
- * 'Id' tags added in order to support 'ident' command to display a bill of
- * material of the binary executable
- *
- * Revision 1.4  1998/06/14 08:13:30  friedbait
- * 'Log' keywords added to maintain automatic change history
- *
- *
- */
+*/
 
 /* dual-key, mixed round 3 and encryption, A1/A2 use for last value,
  * non-arrayed S1/S2 tables, direct use of last value, run-time
@@ -51,7 +14,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mips_crunch_cpp(void) {
-return "@(#)$Id: mips-crunch.cpp,v 1.12.2.3 1999/11/28 15:13:39 cyp Exp $"; }
+return "@(#)$Id: mips-crunch.cpp,v 1.12.2.4 1999/11/30 13:00:18 cyp Exp $"; }
 #endif
 
 
