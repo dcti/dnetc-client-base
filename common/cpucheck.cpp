@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.43 2004/02/18 20:46:33 piru Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.44 2004/03/04 17:06:00 piru Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -656,6 +656,7 @@ static long __GetRawProcessorID(const char **cpuname)
            { "603ev",           0x0007  },
            { "603r",            0x0007  },
            { "740/750",         0x0008  },
+           { "745/755",         0x0008  },
            { "750",             0x0008  },
            { "750CX",           0x0008  },
            { "750FX",           0x0008  }, /* PVR coreid is actually 0x7000 */
