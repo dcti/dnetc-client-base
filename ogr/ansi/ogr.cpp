@@ -2,17 +2,21 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.49 2001/07/21 18:41:18 mfeiri Exp $
+ * $Id: ogr.cpp,v 1.1.2.50 2001/07/21 21:33:56 mfeiri Exp $
  */
-#include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
 
 #define HAVE_STATIC_CHOOSEDAT /* choosedat table is static, pre-generated */
 /* #define CRC_CHOOSEDAT_ANYWAY */ /* you'll need to link crc32 if this is defd */
 
+/* #define OGR_DEBUG           */ /* turn on miscellaneous debug information */ 
 /* #define OGR_TEST_FIRSTBLANK */ /* test firstblank logic (table or asm) */
 /* #define OGR_TEST_BITOFLIST  */ /* test bitoflist table */
+
+#ifdef (OGR_DEBUG) || (OGR_TEST_FIRSTBLANK) || (OGR_TEST_BITOFLIST)
+#include <stdio.h>  /* printf for debugging */
+#endif
 
 /* --- various optimization option overrides ----------------------------- */
 
@@ -2285,7 +2289,7 @@ static int ogr_init(void)
   }
   #endif    
 
-  #if defined(FIRSTBLANK_ASM_TEST)
+  #if defined(OGR_TEST_FIRSTBLANK)
   {
     static int done_test = -1;
     static char ogr_first_blank[65537]; /* first blank in 16 bit COMP bitmap, range: 1..16 */
