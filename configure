@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.151 2000/05/01 05:13:01 jlawson Exp $
+# @(#)$Id: configure,v 1.222.2.152 2000/05/01 06:05:29 jlawson Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1930,8 +1930,8 @@ fi
 #
 # Finalize the LD that will be used.
 #
-if [ -z "$TARGET_LD" ]; then
-  $TARGET_LD="$TARGET_CC"
+if [ -z "${TARGET_LD}" ]; then
+  TARGET_LD="${TARGET_CC}"
 fi
 
 
