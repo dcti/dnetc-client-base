@@ -4,7 +4,7 @@
  *
  */
 
-const char *clisrate_cpp(void) {
+const char *ogr_cpp(void) {
 return "@(#)$Id:"; }
 
 #include <stdio.h>
