@@ -5,6 +5,9 @@
 ; based on deseval.c from Matthew Kwan's bitslicing DES key search.
 ;
 ; $Log: des-slice-arm.s,v $
+; Revision 1.10  1998/06/23 13:56:00  kbracey
+; New ARM DES cores - calling convention changed to add a few %
+;
 ; Revision 1.9  1998/06/15 12:04:10  kbracey
 ; Lots of consts.
 ;
@@ -14,11 +17,10 @@
 ; Revision 1.7  1998/06/14 10:40:55  friedbait
 ; 'Log' keywords added
 ;
-;
 
 	AREA	fastdesarea, CODE, READONLY
 
-        DCB     "@(#)$Id: des-slice-arm.s,v 1.9 1998/06/15 12:04:10 kbracey Exp $", 0
+        DCB     "@(#)$Id: des-slice-arm.s,v 1.10 1998/06/23 13:56:00 kbracey Exp $", 0
         ALIGN
 
         EXPORT	des_unit_func_arm
@@ -76,47 +78,69 @@ t8 RN 14
 
 
 	MACRO
-	s_start	$s, $inp
+	s_start	$s, $inp1, $inp2, $inp3, $inp4
 	LCLS	reglist
 	LCLS	reg
 	LCLS	reg2
 	LCLA	i
+	LCLL	split
 s$s
- [ $inp = 0
-	STMFD	r13!,{t1-t4,t6,r14}
-reglist	SETS	"t1,t2,t3,t4,t5,t6"
+ [ $inp1 = 0
+reglist	SETS	"t1,"
  |
-  [ $inp < 3
-   [ $inp = 1
-	STMFD	r13!,{t2-t4,t6,r14}
-reglist	SETS	"t2,t3,t4,t5,t6,t7"
-   |
-	STMFD	r13!,{t1,t3-t4,t6,r14}
-reglist	SETS	"t1,t3,t4,t5,t6,t7"
-   ]
+reglist	SETS	""
+ ]
+ [ $inp2 = 0
+reglist	SETS	reglist:CC:"t2,"
+ ]
+ [ $inp3 = 0
+reglist	SETS	reglist:CC:"t3,"
+ ]
+ [ $inp4 = 0
+reglist	SETS	reglist:CC:"t4,"
+ ]
+	STMFD	r13!,{$reglist t6}
+split	SETL	{FALSE}
+ [ :LEN:reglist = 12
+reglist	SETS	reglist:CC:"t5,t6"
+ |
+  [ :LEN:reglist = 9
+reglist	SETS	reglist:CC:"t5,t6,t7"
   |
-   [ $inp = 3
-	STMFD	r13!,{t1-t2,t4,t6,r14}
-reglist	SETS	"t1,t2,t4,t5,t6,t7"
+   [ :LEN:reglist = 6 :LAND: $s <> 8
+reglist	SETS	reglist:CC:"t5,t6,t7,t8"
    |
-	STMFD	r13!,{t1-t3,t6,r14}
-reglist	SETS	"t1,t2,t3,t5,t6,t7"
+reglist	SETS	"t5,t6,t8"
+split	SETL	{TRUE}
    ]
   ]
  ]
  [ $s = 1
 reg	SETS	reglist:LEFT:2
 	LDR	$reg,[t7,#4*31]
+  [ split
+reg	SETS	reglist:RIGHT:5
+	LDMIA	t7!,{$reg}
+  |
 reg	SETS	reglist:RIGHT:14
 	LDMIA	t7,{$reg}
+  ]
  |
   [ $s = 8
+   [ split
+	LDMIA	t7!,{$reglist}
+   |
 reg	SETS	reglist:LEFT:14
 	LDMIA	t7,{$reg}
 reg	SETS	reglist:RIGHT:2
 	LDR	$reg,[t7,#4*(-27)]
+   ]
   |
+   [ split
+	LDMIA	t7!,{$reglist}
+   |
 	LDMIA	t7,{$reglist}
+   ]
   ]
  ]
 
@@ -124,6 +148,15 @@ reglist	SETS	reglist:CC:","
 i	SETA	1
 
 	WHILE	i <= 6
+ [ i = 3 :LAND: split
+  [ $s = 8
+	LDMIA	t7,{t5,t6}
+	LDR	t7,[t7,#4*(-27-3)]
+  |
+	LDMIA	t7,{t5,t6,t7}
+  ]
+reglist	SETS	reglist:CC:"t5,t6,t7,"
+ ]
 reg	SETS	"a":CC:("$i":RIGHT:1)
 reg2	SETS	reglist:LEFT:2
 reglist	SETS	reglist:RIGHT:(:LEN:reglist - 3)
@@ -137,7 +170,8 @@ i	SETA	i+1
 	MACRO
 	s_end	$s, $got1, $got2, $got3, $got4
 
-	LDMFD	r13!,{t6,pc}
+	LDR	t6,[r13],#4
+	B	s_call_loop
 
 	GBLA	got1_$s
 	GBLA	got2_$s
@@ -150,20 +184,6 @@ got4_$s	SETA	$got4
 
 	MEND
 
-
-
-
-
-
-
-
-
-
-
-
-;        AREA |C$$code|, CODE, READONLY
-
-;|x$codeseg| DATA
 
 
 lowbits
@@ -601,7 +621,7 @@ foundkey
 
 cachedcode_start
 
-        GET      kwan-sboxes-arm.h
+	GET	kwan-sboxes-arm.h
 
 timingloop
         ADD      r2,r13,#&208
@@ -653,25 +673,27 @@ deseval
 ; 0      : identification bit
 
 	ADR	t6, s_param_table
+
 s_call_loop
-	LDR	t5,[t6],#4
+
+	LDR	t3,[t6],#4
 
 ; is this an s-box call or a check?
-	TST	t5,#&80000000
+	TST	t3,#&80000000
 	BNE	do_check
 
 donecheck
 ; load values of inputs
 	LDR	t8,[r13,#4*(64+1)]
-	AND	a1,t5,#&3f000000
+	AND	a1,t3,#&3f000000
 	LDR	a1,[t8,a1,LSR #22]
-	AND	a2,t5,#&00fc0000
+	AND	a2,t3,#&00fc0000
 	LDR	a2,[t8,a2,LSR #16]
-	AND	a3,t5,#&0003f000
+	AND	a3,t3,#&0003f000
 	LDR	a3,[t8,a3,LSR #10]
-	AND	a4,t5,#&00000fc0
+	AND	a4,t3,#&00000fc0
 	LDR	a4,[t8,a4,LSR #4]
-	AND	a5,t5,#&3f
+	AND	a5,t3,#&3f
 	LDR	a5,[t8,a5,LSL #2]
 	LDR	t5,[t6],#4
 	AND	a6,t5,#&3f
@@ -697,9 +719,8 @@ donecheck
 	ADDNE	t7,t7,t5,LSR #25
 	SUBNE	t7,t7,#4
 
- ; fake a BL. but as we're faking it, return to different address
- ; and loop at the same time.
-	ADR	r14,s_call_loop
+; no need to provide return address - it is always s_call_loop,
+; so s_boxes jump directly to it.
 	LDR	pc,[pc,t5,LSR #27]
 
 	DCD	&12345678
@@ -732,9 +753,9 @@ value	SETA	(1<<31)+(($coff/4)<<27)+((($r1)>>5)<<26)
  [ got1_$s = 0
 value	SETA	value+((($r1):OR:32)<<20)
  ]
- [ got2_$s = 0
+; [ got2_$s = 0
 value	SETA	value+((($r2):OR:32)<<14)
- ]
+; ]
  [ got3_$s = 0
 value	SETA	value+((($r3):OR:32)<<8)
  ]
@@ -756,36 +777,38 @@ value	SETA	value+((($r4):OR:32)<<2)
 
 
 do_check
-	TST	t5,#&04000000
+	TST	t3,#&04000000
 	SUBEQ	a6,r13,#32*4
 	MOVNE	a6,r13
-	ANDS	a5,t5,#&03f00000
-	LDRNE	t1,[a6,a5,LSR #18]
-	ANDS	a5,t5,#&000fc000
-	LDRNE	t2,[a6,a5,LSR #12]
-	ANDS	a5,t5,#&3f00
-	LDRNE	t3,[a6,a5,LSR #6]
-	ANDS	a5,t5,#&00fc
-	LDRNE	t4,[a6,a5]
+	ANDS	a5,t3,#&03f00000
+	LDRNE	t5,[a6,a5,LSR #18]
+; Use t1 to stand in for t6, as t6 used for other purposes.
+; NB 'check' macro above also modified.
+	AND	a5,t3,#&000fc000
+	LDR	t1,[a6,a5,LSR #12]
+	ANDS	a5,t3,#&3f00
+	LDRNE	t7,[a6,a5,LSR #6]
+	ANDS	a5,t3,#&00fc
+	LDRNE	t8,[a6,a5]
 
 	LDR	a2,[r13,#4*64]
-	AND	a5,t5,#&78000000
+	AND	a5,t3,#&78000000
 	ADD	a2,a2,a5,LSR #23
-	LDMIA	a2,{a4,a5,a6,t8}
+	LDMIA	a2,{a4,a5,a6,t2}
 	LDR	a1,[r13,#4*(64+2)]
-	EOR	a3,t8,t1
+	EOR	a3,t2,t5
 	BIC	a1,a1,a3
-	EOR	a3,a6,t2
+	EOR	a3,a6,t1
 	BIC	a1,a1,a3
-	EOR	a3,a5,t3
+	EOR	a3,a5,t7
 	BIC	a1,a1,a3
-	EOR	a3,a4,t4
+	EOR	a3,a4,t8
 	BICS	a1,a1,a3
 	BEQ	gotresult
 
 	STR	a1,[r13,#4*(64+2)]
-	LDR	t5,[t6],#4
-	TST	t5,#&80000000
+	LDR	t3,[t6],#4
+	TST	t3,#&80000000
 	BEQ	donecheck
 
 gotresult
@@ -956,38 +979,40 @@ s_param_table
 	do_s	6, 45,  1, 23, 36,  7,  2, 32+3, 32+28, 32+10, 32+18
 	do_s	7, 29,  9, 49, 31, 14, 37, 32+31, 32+11, 32+21, 32+6
 	do_s	8, 43, 15, 16, 28, 38,  0, 32+4, 32+26, 32+14, 32+20
-	do_s	1, 33, 54, 12, 46, 24, 27, 8, 16, 22, 30
-	check	1, 60, 8, 16, 22, 30
-	do_s	2, 13, 17, 40, 34, 25,  5, 12, 27, 1, 17
-	check	2, 56, 12, 27, 1, 17
-	do_s	3, 39, 11, 19, 20,  3, 48, 23, 15, 29, 5
-	check	3, 52, 23, 15, 29, 5
+
+; current order of s-boxes (smallest no. of cycles first): 47286351
 	do_s	4, 47, 41, 10, 18, 26,  6, 25, 19, 9, 0
 	check	4, 48, 25, 19, 9, 0
-	do_s	5, 22, 44,  7, 49,  9, 38, 7, 13, 24, 2
-	check	5, 44, 7, 13, 24, 2
-	do_s	6,  0, 15, 37, 50, 21, 16, 3, 28, 10, 18
-	check	6, 40, 3, 28, 10, 18
 	do_s	7, 43, 23,  8, 45, 28, 51, 31, 11, 21, 6
 	check	7, 36, 31, 11, 21, 6
+	do_s	2, 13, 17, 40, 34, 25,  5, 12, 27, 1, 17
+	check	2, 56, 12, 27, 1, 17
 	do_s	8,  2, 29, 30, 42, 52, 14, 4, 26, 14, 20
 	check	8, 32, 4, 26, 14, 20
-	do_s	1, 40,  4, 19, 53,  6, 34, 32+8, 32+16, 32+22, 32+30
-	check	1, 28, 32+8, 32+16, 32+22, 32+30
-	do_s	2, 20, 24, 47, 41, 32, 12, 32+12, 32+27, 32+1, 32+17
-	check	2, 24, 32+12, 32+27, 32+1, 32+17
-	do_s	3, 46, 18, 26, 27, 10, 55, 32+23, 32+15, 32+29, 32+5
-	check	3, 20, 32+23, 32+15, 32+29, 32+5
+	do_s	6,  0, 15, 37, 50, 21, 16, 3, 28, 10, 18
+	check	6, 40, 3, 28, 10, 18
+	do_s	3, 39, 11, 19, 20,  3, 48, 23, 15, 29, 5
+	check	3, 52, 23, 15, 29, 5
+	do_s	5, 22, 44,  7, 49,  9, 38, 7, 13, 24, 2
+	check	5, 44, 7, 13, 24, 2
+	do_s	1, 33, 54, 12, 46, 24, 27, 8, 16, 22, 30
+	check	1, 60, 8, 16, 22, 30
 	do_s	4, 54, 48, 17, 25, 33, 13, 32+25, 32+19, 32+9, 32+0
 	check	4, 16, 32+25, 32+19, 32+9, 32+0
-	do_s	5, 29, 51, 14,  1, 16, 45, 32+7, 32+13, 32+24, 32+2
-	check	5, 12, 32+7, 32+13, 32+24, 32+2
-	do_s	6,  7, 22, 44,  2, 28, 23, 32+3, 32+28, 32+10, 32+18
-	check	6,  8, 32+3, 32+28, 32+10, 32+18
 	do_s	7, 50, 30, 15, 52, 35, 31, 32+31, 32+11, 32+21, 32+6
 	check	7,  4, 32+31, 32+11, 32+21, 32+6
+	do_s	2, 20, 24, 47, 41, 32, 12, 32+12, 32+27, 32+1, 32+17
+	check	2, 24, 32+12, 32+27, 32+1, 32+17
 	do_s	8,  9, 36, 37, 49,  0, 21, 32+4, 32+26, 32+14, 32+20
 	check	8,  0, 32+4, 32+26, 32+14, 32+20
+	do_s	6,  7, 22, 44,  2, 28, 23, 32+3, 32+28, 32+10, 32+18
+	check	6,  8, 32+3, 32+28, 32+10, 32+18
+	do_s	3, 46, 18, 26, 27, 10, 55, 32+23, 32+15, 32+29, 32+5
+	check	3, 20, 32+23, 32+15, 32+29, 32+5
+	do_s	5, 29, 51, 14,  1, 16, 45, 32+7, 32+13, 32+24, 32+2
+	check	5, 12, 32+7, 32+13, 32+24, 32+2
+	do_s	1, 40,  4, 19, 53,  6, 34, 32+8, 32+16, 32+22, 32+30
+	check	1, 28, 32+8, 32+16, 32+22, 32+30
 
 	DCD	-1 ; mark end of table...
 
