@@ -59,9 +59,9 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.6 2000/10/31 23:19:52 cyp Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.7 2000/11/02 16:21:20 cyp Exp $"; }
 
-//#define TRACE /* expect trace to _really_ slow I/O down */
+#define TRACE /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
 #define TRACE_ERRMGMT(x)  //TRACE_OUT(x) /* error string/number calls */
 #define TRACE_POLL(x)     //TRACE_OUT(x) /* net_poll1() */
@@ -1030,6 +1030,46 @@ const char *__trace_expand_pollmask(int events) /* can't make this static :( */
 #define ps_T_GODATA     0x400  /* flow control restrictions on normal data flow have been lifted */
 #define ps_T_GOEXDATA   0x800  /* flow control restrictions on expedited data flow have been lifted */
 
+#if !defined(_TIUSER_) && defined(SOCK_STREAM) /* BSD sox only */
+static int __bsd_quick_disco_look(SOCKET fd, int fdr_is_ready)
+{
+  int rc = 1;
+
+  TRACE_POLL((+1,"__bsd_quick_disco_look(fd,%d)\n", fdr_is_ready));
+  if (!fdr_is_ready)
+  {
+    struct timeval tv;
+    struct fd_set rfds;
+    FD_ZERO(&rfds);
+    FD_SET(fd,&rfds);
+    tv.tv_sec = 0; 
+    tv.tv_usec = 0;
+
+    TRACE_POLL((+1,"ql: select()\n"));
+    rc = select( fd+1, &rfds, 0, 0, &tv );
+    TRACE_POLL((-1,"ql: select(...) =>%d%s\n", rc, trace_expand_api_rc(rc,fd) ));
+
+    if (rc < 0)
+      rc = 0; /* we don't deal with select errors here */
+  }
+  if (rc > 0)
+  {
+    char ch;          
+    TRACE_POLL((+1,"ql: recv(...,MSG_PEEK)\n"));
+    rc = recv(fd, &ch, 1, MSG_PEEK);
+    TRACE_POLL((-1,"ql: recv(...,MSG_PEEK) =>%d%s\n",rc,trace_expand_api_rc(rc,fd)));
+    if (rc == 0) /* 0 means graceful shutdown */
+      rc = ps_T_ORDREL;
+    else if (rc < 0) /* means reset */
+      rc = ps_T_DISCONNECT;
+    else
+      rc = 0; /* plain data */ 
+  }
+  TRACE_POLL((-1,"__bsd_quick_disco_look(...)=>%s\n", ((rc==ps_T_ORDREL)?("ordrel"):((rc)?("disco"):("(nothing)"))) ));
+  return rc;
+}
+#endif
+
 /* net_look() looks for the events asked for (sleep until they happen or */
 /* timeout) and returns _one_ of the events in revents, or rc is non-zero */
 /* on error. NB BSD sox: because select() can't check for disconnect and */
@@ -1145,33 +1185,19 @@ static int net_look( SOCKET fd, int events, int *revents, int mstimeout )
       if ((events & (ps_T_CONNECT|ps_T_GODATA))!=0)
       {
         wfdsP = &wfds;
-        if (!rfdsP)
-        {
-          FD_ZERO(wfdsP);
-          FD_SET(fd,wfdsP);
-          tv.tv_sec = tv.tv_usec = 0;
-          rc = select( fd+1, wfdsP, 0, 0, &tv );
-          if (rc > 0)
-          {
-            char ch;          
-            TRACE_POLL((+1,"a) recv(...,MSG_PEEK)\n"));
-            rc = recv(fd, &ch, 1, MSG_PEEK);
-            TRACE_POLL((-1,"a) recv(...,MSG_PEEK) =>%d%s\n",rc,trace_expand_api_rc(rc,fd)));
-            if (rc == 0) /* 0 means graceful shutdown */
-            {
-              result_events = ps_T_ORDREL;
-              break;
-            }
-            else if (rc < 0) /* means reset */
-            {
-              result_events = ps_T_DISCONNECT;
-              break;
-            }
-            /* else normal data */
-          }
-          FD_ZERO(wfdsP);
-          FD_SET(fd,wfdsP);
-        }  
+        FD_ZERO(wfdsP);
+        FD_SET(fd,wfdsP);
+      }
+      /* if we're only waiting for "ready to accept data for send" */
+      /* then quickly check if the read bit is set. If it is, then */
+      /* that could mean two things: a) there is data to be read,  */
+      /* or there is a disconnect indication (or error) pending.   */
+      if (!rfdsP && (events & ps_T_GODATA)!=0)
+      {
+        rc = 0;
+        result_events = __bsd_quick_disco_look(fd, 0);
+        if (result_events != 0) /* ps_T_ORDREL or ps_T_DISCONNECT */
+          break;                /* if ps_T_DISCONNECT, then errno is set */
       }
       tvP = (struct timeval *)0;
       if (mstimeout >= 0)
@@ -1190,12 +1216,13 @@ static int net_look( SOCKET fd, int events, int *revents, int mstimeout )
       {
         break; /* result_events = 0, return 0 */
       }
-      else if (rc > 0) /* have fd */
+      else if (rc > 0) /* something set in one of more of the fd_sets */
       {
         int isx = FD_ISSET(fd,&xfds);
         rc = 0;
         if (isx)
         {
+         TRACE_POLL((0,"select says exception set\n"));
           #if 0 /* fallthrough to read to get errno primed */
           if ((events & ps_T_CONNECT)!=0)
           { 
@@ -1214,6 +1241,7 @@ static int net_look( SOCKET fd, int events, int *revents, int mstimeout )
         {
           if (FD_ISSET(fd,wfdsP))
           {
+            TRACE_POLL((0,"select says write ready\n"));
             if ((events & ps_T_CONNECT)!=0)
               result_events = ps_T_CONNECT;
             else
@@ -1222,46 +1250,34 @@ static int net_look( SOCKET fd, int events, int *revents, int mstimeout )
           }
           if (!rfdsP)
           {
-            FD_SET(fd, wfdsP);
-            tv.tv_sec = tv.tv_usec = 0;
-            if (select( fd+1, wfdsP, 0, 0, &tv ) > 0)
-            {
-              rfdsP = wfdsP;
-              events = 0;
-            }
+            rc = 0;
+            TRACE_POLL((0,"CONNECT/GODATA. Doing quick read test.\n"));
+            result_events = __bsd_quick_disco_look(fd, 0);
+            if (result_events != 0) /* ps_T_ORDREL or ps_T_DISCONNECT */
+              break;                /* if ps_T_DISCONNECT, then errno is set */
           }
-          /* fallthrough */
         }
         if (rfdsP)
         {
           if (FD_ISSET(fd, rfdsP))
           {
-            char ch;          
-            TRACE_POLL((+1,"b) recv(...,MSG_PEEK)\n"));
-            rc = recv(fd, &ch, 1, MSG_PEEK);
-            TRACE_POLL((-1,"b) recv(...,MSG_PEEK) =>%d%s\n",rc,trace_expand_api_rc(rc,fd)));
-            if (rc == 0) /* 0 means graceful shutdown */
-            {
-              result_events = ps_T_ORDREL;
-              break;
-            }
-            else if (rc < 0) /* must mean unrecoverable (not EWOULDBLOCK) error */
-            {
-              rc = 0;
-              result_events = ps_T_DISCONNECT;
-              break;
-            }
+            TRACE_POLL((0,"select says read ready.\n"));
             rc = 0;
             if ((events & ps_T_LISTEN)!=0)
               result_events = ps_T_LISTEN; 
-            else if (events!=0) /* may have been cleared by wfds stuff above*/
-              result_events = ps_T_DATA;
+            else
+            {
+              result_events = __bsd_quick_disco_look(fd, 1);
+              if (result_events == 0)
+                result_events = ps_T_DATA;
+            }
             break;
           }
         } /* rfdsP */
         rc = 0;
         if (isx) /* neither wfds or rfds were set, but xfds is set */
         {
+          TRACE_POLL((0,"neither wfds nor rfds are are, but xfds is set. Disconnect assumed.\n")); 
           result_events = ps_T_ORDREL;
           break;
         }
@@ -2145,7 +2161,9 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
           {
             int revents = 0;
 #if defined(LOOK_NOT_POLL)
+            TRACE_CONNECT((0,"begin net_look\n"));
             rc = net_look( sock, ps_T_CONNECT, &revents, mssleep );
+            TRACE_CONNECT((0,"end net_look\n"));
             if (rc != 0)
               break;
             if (revents == ps_T_CONNECT)
@@ -2213,18 +2231,24 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
               rc = ps_ETIMEDOUT;
               break;
             }
+            TRACE_CONNECT((0,"EINPROGRESS loop bottom\n"));
           } /* for (;;) */
           TRACE_CONNECT((-1,"EINPROGRESS loop =>%d%s\n",rc,trace_expand_ps_rc(rc,sock)));
         } /* connect completion pending */    
         if (rc == 0)
         {
+          int rc2;
           socklen_t addrsz;
           if (this_address || this_port)
           {
             addrsz = sizeof(saddr);
             memset((void *) &saddr, 0, sizeof(saddr));
             saddr.sin_family = AF_INET;
-            if (getsockname(sock, (struct sockaddr *)&saddr, &addrsz) == 0)
+            
+            TRACE_CONNECT((+1,"getsockname(...)\n"));
+            rc2 = getsockname(sock, (struct sockaddr *)&saddr, &addrsz);
+            TRACE_CONNECT((-1,"getsockname(...) => %d%s\n", rc2, trace_expand_api_rc(rc2,sock)));
+            if (rc2 == 0)
             {
               if (this_address)
                 *this_address = saddr.sin_addr.s_addr;
@@ -2232,12 +2256,26 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
                 *this_port = 0xffff & ((int)htons(saddr.sin_port));
             }
           }
+          #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+          /* another freaking windows bug - winNT only:
+           * getpeername() will freeze the machine (yes, super-duper-
+           * "secure" NT can thus be frozen) in the half-blocking scenario
+           * we have here. 
+          */
+          if (winGetVersion() >= 2000) /* winnt (winsock2?) only */
+          {
+            that_address = 0; that_port = 0;
+          }
+          #endif
           if (that_address || that_port)
           { 
             addrsz = sizeof(saddr);
             memset((void *) &saddr, 0, sizeof(saddr));
             saddr.sin_family = AF_INET;
-            if (getpeername(sock, (struct sockaddr *)&saddr, &addrsz) == 0)
+            TRACE_CONNECT((+1,"getpeername(...)\n"));
+            rc2 = getpeername(sock, (struct sockaddr *)&saddr, &addrsz);
+            TRACE_CONNECT((-1,"getpeername(...) => %d%s\n", rc2, trace_expand_api_rc(rc2,sock)));
+            if (rc2 == 0)
             {
               if (that_address)
                 *that_address = saddr.sin_addr.s_addr;
