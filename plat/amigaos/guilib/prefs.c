@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: prefs.c,v 1.2 2002/09/02 00:35:50 andreasb Exp $
+ * $Id: prefs.c,v 1.2.4.1 2004/05/08 10:29:31 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -22,12 +22,11 @@
 #include <gadgets/listbrowser.h>
 #include <gadgets/getfont.h>
 #include <gadgets/button.h>
-#include <gadgets/integer.h>
-#include <gadgets/checkbox.h>
-#include <gadgets/chooser.h>
 #include <images/label.h>
 #include <reaction/reaction_macros.h>
+#ifndef __amigaos4__
 #include <clib/reaction_lib_protos.h>
+#endif
 
 #include <proto/layout.h>
 #include <proto/listbrowser.h>
@@ -53,7 +52,10 @@ Object *PrefsWinObj;
 struct Window *PrefsWin;
 struct Gadget *PrefsGads[NUM_PREFS_GADS];
 UBYTE FontName[256];
+
+#ifndef __amigaos4__
 struct List *WinPosLabels;
+#endif
 
 VOID PrefsDefaults(struct Screen *scr)
 {
@@ -191,7 +193,11 @@ VOID SavePrefs(char *filename)
 VOID OpenPrefsWindow(UBYTE *screentitle)
 {
    if (!PrefsWinObj) {
+#ifdef __amigaos4__
+      static STRPTR WinPosLabels[] = {"Custom (Snapshot)","Centre of screen","Mouse relative",NULL};
+#else
       WinPosLabels = ChooserLabels("Custom (Snapshot)","Centre of screen","Mouse relative",NULL);
+#endif
 
       if (PrefsWinObj = WindowObject,
          WA_SizeBBottom, TRUE,
@@ -276,7 +282,11 @@ VOID OpenPrefsWindow(UBYTE *screentitle)
                   LAYOUT_SpaceOuter, TRUE,
 
                   LAYOUT_AddChild, PrefsGads[GAD_WINPOS] = ChooserObject,
+#ifdef __amigaos4__
+                     CHOOSER_LabelArray, WinPosLabels,
+#else
                      CHOOSER_Labels, WinPosLabels,
+#endif
                      CHOOSER_Selected, Prefs.winposmode,
                      CHOOSER_AutoFit, TRUE,
                      CHOOSER_Justification, CHJ_CENTER,
@@ -380,10 +390,12 @@ VOID ClosePrefsWindow(VOID)
       DisposeObject(PrefsWinObj);
       PrefsWinObj = NULL;
    }
+#ifndef __amigaos4__
    if (WinPosLabels) {
       FreeChooserLabels(WinPosLabels);
       WinPosLabels = NULL;
    }
+#endif
 }
 
 VOID HandlePrefsWindow(VOID)

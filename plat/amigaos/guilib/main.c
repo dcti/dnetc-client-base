@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: main.c,v 1.2.4.1 2003/01/11 13:52:13 oliver Exp $
+ * $Id: main.c,v 1.2.4.2 2004/05/08 10:29:31 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -28,6 +28,7 @@
 #include <proto/requester.h>
 #include <proto/arexx.h>
 #include <proto/window.h>
+#include <proto/wb.h>
 
 #include "dnetcgui.h"
 #include "prefs.h"
@@ -75,6 +76,23 @@ struct Library *ChooserBase;
 struct Library *WorkbenchBase;
 struct Library *ARexxBase;
 struct Library *WindowBase;
+
+#ifdef __amigaos4__
+struct IconIFace *IIcon;
+struct GadToolsIFace *IGadTools;
+struct RequesterIFace *IRequester;
+struct LayoutIFace *ILayout;
+struct ListBrowserIFace *IListBrowser;
+struct GetFontIFace *IGetFont;
+struct ButtonIFace *IButton;
+struct LabelIFace *ILabel;
+struct IntegerIFace *IInteger;
+struct CheckBoxIFace *ICheckBox;
+struct ChooserIFace *IChooser;
+struct WorkbenchIFace *IWorkbench;
+struct ARexxIFace *IARexx;
+struct WindowIFace *IWindow;
+#endif
 
 struct MsgPort *IDCMPPort, *AppPort, *ArexxPort;
 
@@ -139,12 +157,13 @@ struct NewMenu ClientMenus[] = {
 
 const char AboutText[] =
    "distributed.net client - a product of distributed.net\n"
-   "%s\nCopyright 1997-2003 distributed.net\n\n"
+   "%s\nCopyright (C) 1997-2004 distributed.net\n\n"
    "\33cAmigaOS clients maintained by\n"
    "Oliver Roberts <oliver@futaura.co.uk>\n\n"
    "ClassAct/ReAction GUI module (v%ld.%ld) maintained by\n"
    "Oliver Roberts <oliver@futaura.co.uk>";
 
+#ifndef __amigaos4__
 APTR NewObject( struct IClass *classPtr, CONST_STRPTR classID, ULONG tag1, ... )
 {
    return NewObjectA(classPtr,(STRPTR)classID,(struct TagItem *)&tag1);
@@ -153,15 +172,6 @@ APTR NewObject( struct IClass *classPtr, CONST_STRPTR classID, ULONG tag1, ... )
 static void __stuffChar(void)
 {
    __asm__ __volatile__ ("move.b d0,(a3)+" : : );
-}
-
-#if 0
-VOID SPrintf(UBYTE *ostring, UBYTE *format, ...)
-{
-   va_list va;
-   va_start(va,format);
-   RawDoFmt(format,va,__stuffChar,ostring);
-   va_end(va);
 }
 #endif
 
@@ -183,15 +193,33 @@ static struct DiskObject *ReadTooltypeOptions(struct WBArg *iconarg)
    return icon;
 }
 
-VOID DisplayError(const char *error, ...)
+VOID VARARGS68K DisplayError(const char *error, ...)
 {
    va_list va;
    Object *ReqObject;
-   char *buffer;
 
+#ifdef __amigaos4__
+   va_startlinear(va,error);
+
+   ReqObject = NewObject( REQUESTER_GetClass(), NULL,
+         REQ_TitleText, (ULONG)"distributed.net client",
+         REQ_Type, REQTYPE_INFO,
+         REQ_GadgetText, (ULONG)"_Moo!",
+         REQ_BodyText, (ULONG)error,
+         REQ_VarArgs, (ULONG)va_getlinearva(va,APTR),
+         TAG_END);
+
+   if (ReqObject) {
+      SetAttrs(GlbWindowP, WA_BusyPointer, TRUE, TAG_DONE);
+      OpenRequester(ReqObject,GlbIWindowP);
+      DisposeObject(ReqObject);
+      SetAttrs(GlbWindowP, WA_BusyPointer, FALSE, TAG_DONE);
+   }
+#else
+   char *buffer;
    va_start(va,error);
 
-   if (buffer = AllocVec(2048,MEMF_PUBLIC)) {
+   if (buffer = AllocVec(2048,MEMF_ANY)) {
       RawDoFmt((STRPTR)error,va,__stuffChar,buffer);
 
       ReqObject = NewObject( REQUESTER_GetClass(), NULL,
@@ -210,19 +238,28 @@ VOID DisplayError(const char *error, ...)
 
       FreeVec(buffer);
    }
+#endif
 
    va_end(va);
 }
 
-VOID UpdateGadget(struct Window *win, struct Gadget *gad, ...)
+VOID VARARGS68K UpdateGadget(struct Window *win, struct Gadget *gad, ...)
 {
    va_list va;
 
    if (gad) {
+#ifdef __amigaos4__
+      va_startlinear(va,gad);
+
+      if (SetGadgetAttrsA(gad, win, NULL, va_getlinearva(va,struct TagItem *)))
+#else
       va_start(va,gad);
 
       if (SetGadgetAttrsA(gad, win, NULL, (struct TagItem *)va))
+#endif
+      {
          if (win) RethinkLayout(gad, win, NULL, TRUE);
+      }
 
       va_end(va);
    }
@@ -327,8 +364,14 @@ SAVEDS VOID HandleRexx(REG(a0,struct ARexxCmd *cmd), REG(a1,struct RexxMsg *rm))
    }
 }
 
+#ifdef __amigaos4__
+LIBFUNC ULONG dnetcguiHandleMsgs(struct Interface *self, ULONG signals)
+{
+   struct LibBase *lb = (struct LibBase *)self->Data.LibBase;
+#else
 LIBFUNC ULONG dnetcguiHandleMsgs(REG(d0,ULONG signals),REG(a6,struct LibBase *lb))
 {
+#endif
    WORD code;
    ULONG result, cmds = 0, cmds68k = 0, cmdsppc = 0, slavecmds;
    static ULONG pendingcmds = 0;  // shared between tasks, so use semaphores!
@@ -348,12 +391,10 @@ LIBFUNC ULONG dnetcguiHandleMsgs(REG(d0,ULONG signals),REG(a6,struct LibBase *lb
 
          while ((result = RA_HandleInput(GlbWindowP, &code)) != WMHI_LASTMSG) {
             switch (result & WMHI_CLASSMASK) {
+
                case WMHI_CLOSEWINDOW:
                   cmds |= DNETC_MSG_SHUTDOWN;
                   break;
-
-               //case WMHI_GADGETUP:
-               //   break;
 
                case WMHI_RAWKEY:
                   switch (result & WMHI_KEYMASK) {
@@ -735,43 +776,49 @@ static void FreeGUI(void)
 
 static VOID CloseLibs(void )
 {
-   CloseLibrary(LabelBase);
-   CloseLibrary(ChooserBase);
-   CloseLibrary(IntegerBase);
-   CloseLibrary(CheckBoxBase);
-   CloseLibrary(ButtonBase);
-   CloseLibrary(GetFontBase);
-   CloseLibrary(ListBrowserBase);
-   CloseLibrary(LayoutBase);
-   CloseLibrary(RequesterBase);
-   CloseLibrary(WindowBase);
-   CloseLibrary(ARexxBase);
-   CloseLibrary(GadToolsBase);
-   CloseLibrary(WorkbenchBase);
-   CloseLibrary(IconBase);
+   CloseLibraryIFace(LabelBase,ILabel);
+   CloseLibraryIFace(ChooserBase,IChooser);
+   CloseLibraryIFace(IntegerBase,IInteger);
+   CloseLibraryIFace(CheckBoxBase,ICheckBox);
+   CloseLibraryIFace(ButtonBase,IButton);
+   CloseLibraryIFace(GetFontBase,IGetFont);
+   CloseLibraryIFace(ListBrowserBase,IListBrowser);
+   CloseLibraryIFace(LayoutBase,ILayout);
+   CloseLibraryIFace(RequesterBase,IRequester);
+   CloseLibraryIFace(WindowBase,IWindow);
+   CloseLibraryIFace(ARexxBase,IARexx);
+   CloseLibraryIFace(GadToolsBase,IGadTools);
+   CloseLibraryIFace(WorkbenchBase,IWorkbench);
+   CloseLibraryIFace(IconBase,IIcon);
 }
 
 static BOOL OpenLibs(void)
 {
-   if(!(IconBase = OpenLibrary("icon.library",36)))    return FALSE;
-   if(!(WorkbenchBase = OpenLibrary("workbench.library",36)))    return FALSE;
-   if(!(GadToolsBase = OpenLibrary("gadtools.library",36)))    return FALSE;
-   if(!(ARexxBase = OpenLibrary("arexx.class",0))) return FALSE;
-   if(!(WindowBase = OpenLibrary("window.class",0))) return FALSE;
-   if(!(RequesterBase = OpenLibrary("requester.class",0))) return FALSE;
-   if(!(LayoutBase = OpenLibrary("gadgets/layout.gadget",0))) return FALSE;
-   if(!(ListBrowserBase = OpenLibrary("gadgets/listbrowser.gadget",0))) return FALSE;
-   if(!(GetFontBase = OpenLibrary("gadgets/getfont.gadget",0))) return FALSE;
-   if(!(ButtonBase = OpenLibrary("gadgets/button.gadget",0))) return FALSE;
-   if(!(CheckBoxBase = OpenLibrary("gadgets/checkbox.gadget",0))) return FALSE;
-   if(!(IntegerBase = OpenLibrary("gadgets/integer.gadget",0))) return FALSE;
-   if(!(ChooserBase = OpenLibrary("gadgets/chooser.gadget",0))) return FALSE;
-   if(!(LabelBase = OpenLibrary("images/label.image",0))) return FALSE;
+   if(!(IconBase = OpenLibraryIFace("icon.library",36,(APTR *)&IIcon)))    return FALSE;
+   if(!(WorkbenchBase = OpenLibraryIFace("workbench.library",36,(APTR *)&IWorkbench)))    return FALSE;
+   if(!(GadToolsBase = OpenLibraryIFace("gadtools.library",36,(APTR *)&IGadTools)))    return FALSE;
+   if(!(ARexxBase = OpenLibraryIFace("arexx.class",0,(APTR *)&IARexx))) return FALSE;
+   if(!(WindowBase = OpenLibraryIFace("window.class",0,(APTR *)&IWindow))) return FALSE;
+   if(!(RequesterBase = OpenLibraryIFace("requester.class",0,(APTR *)&IRequester))) return FALSE;
+   if(!(LayoutBase = OpenLibraryIFace("gadgets/layout.gadget",0,(APTR *)&ILayout))) return FALSE;
+   if(!(ListBrowserBase = OpenLibraryIFace("gadgets/listbrowser.gadget",0,(APTR *)&IListBrowser))) return FALSE;
+   if(!(GetFontBase = OpenLibraryIFace("gadgets/getfont.gadget",0,(APTR *)&IGetFont))) return FALSE;
+   if(!(ButtonBase = OpenLibraryIFace("gadgets/button.gadget",0,(APTR *)&IButton))) return FALSE;
+   if(!(CheckBoxBase = OpenLibraryIFace("gadgets/checkbox.gadget",0,(APTR *)&ICheckBox))) return FALSE;
+   if(!(IntegerBase = OpenLibraryIFace("gadgets/integer.gadget",0,(APTR *)&IInteger))) return FALSE;
+   if(!(ChooserBase = OpenLibraryIFace("gadgets/chooser.gadget",0,(APTR *)&IChooser))) return FALSE;
+   if(!(LabelBase = OpenLibraryIFace("images/label.image",0,(APTR *)&ILabel))) return FALSE;
    return TRUE;
 }
 
+#ifdef __amigaos4__
+LIBFUNC ULONG dnetcguiOpen(struct Interface *self, ULONG cpu, UBYTE *programname, struct WBArg *iconname, const char *vstring)
+{
+   struct LibBase *lb = (struct LibBase *)self->Data.LibBase;
+#else
 LIBFUNC ULONG dnetcguiOpen(REG(d0,ULONG cpu),REG(a0,UBYTE *programname),REG(a1,struct WBArg *iconname),REG(a2,const char *vstring),REG(a6,struct LibBase *lb))
 {
+#endif
    ULONG sigmask = 0;
    struct TaskSpecificData *clientdata = (cpu == DNETCGUI_68K) ? &GUIInfo.client68k : &GUIInfo.clientppc;
    struct Task *task = FindTask(NULL);
@@ -832,8 +879,14 @@ LIBFUNC ULONG dnetcguiOpen(REG(d0,ULONG cpu),REG(a0,UBYTE *programname),REG(a1,s
    return (sigmask);
 }
 
+#ifdef __amigaos4__
+LIBFUNC BOOL dnetcguiClose(struct Interface *self, struct ClientGUIParams *params)
+{
+   struct LibBase *lb = (struct LibBase *)self->Data.LibBase;
+#else
 LIBFUNC BOOL dnetcguiClose(REG(a0,struct ClientGUIParams *params),REG(a6,struct LibBase *lb))
 {
+#endif
    BOOL success = FALSE;
    struct Task *task = FindTask(NULL);
 
@@ -900,8 +953,14 @@ LIBFUNC BOOL dnetcguiClose(REG(a0,struct ClientGUIParams *params),REG(a6,struct 
    return (success);
 }
 
+#ifdef __amigaos4__
+LIBFUNC VOID dnetcguiConsoleOut(struct Interface *self, ULONG cpu, UBYTE *output, BOOL overwrite)
+{
+   struct LibBase *lb = (struct LibBase *)self->Data.LibBase;
+#else
 LIBFUNC VOID dnetcguiConsoleOut(REG(d0,ULONG cpu),REG(a0,UBYTE *output),REG(d1,BOOL overwrite))
 {
+#endif
    struct Gadget *gadget;
    struct Node *node;
    struct ConsoleLines *consolelist;
@@ -913,6 +972,9 @@ LIBFUNC VOID dnetcguiConsoleOut(REG(d0,ULONG cpu),REG(a0,UBYTE *output),REG(d1,B
    else {
       gadget = GlbGadgetsP[GAD_CON68K];
       consolelist = &ConsoleLines68K;
+      #ifdef __amigaos4__
+      overwrite &= 0xffff;
+      #endif
    }
 
    if ((node = AllocListBrowserNode(1,LBNCA_CopyText, TRUE,

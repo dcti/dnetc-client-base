@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: common.h,v 1.2 2002/09/02 00:35:49 andreasb Exp $
+ * $Id: common.h,v 1.2.4.1 2004/05/08 10:29:31 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -95,10 +95,15 @@ struct LibBase
 #elif defined(__GNUC__)
 
 #define ASM
+#undef SAVEDS
 #define SAVEDS
-#define REG(x,y) y __asm(#x)
 #define INLINE __inline__
+#ifndef __amigaos4__
+#define REG(x,y) y __asm(#x)
 #define ALIAS(a,b) __asm(".stabs \"_" #a "\",11,0,0,0\n\t.stabs \"_" #b "\",1,0,0,0")
+#else
+#define ALIAS(a,b)
+#endif
 
 #endif
 
@@ -112,8 +117,26 @@ struct ClientGUIParams
    ULONG signals;
 };
 
+#undef NewObject
+
+#ifdef __amigaos4__
+struct Library *OpenLibraryIFace( STRPTR name, ULONG version, APTR *iface );
+VOID CloseLibraryIFace( struct Library *lib, APTR iface );
+#define DoMethod IDoMethod
+#define NewObject IIntuition->NewObject
+
+LIBFUNC ULONG dnetcguiOpen(struct Interface *self, ULONG cpu, UBYTE *programname, struct WBArg *iconname, const char *vstring);
+LIBFUNC BOOL dnetcguiClose(struct Interface *self, struct ClientGUIParams *params);
+LIBFUNC VOID dnetcguiConsoleOut(struct Interface *self, ULONG cpu, UBYTE *output, BOOL overwrite);
+LIBFUNC ULONG dnetcguiHandleMsgs(struct Interface *self, ULONG signals);
+#else
+
+#define OpenLibraryIFace(name,version,iface) OpenLibrary(name,version)
+#define CloseLibraryIFace(lib,iface) CloseLibrary(lib)
+#define VARARGS68K
+
 LIBFUNC ULONG dnetcguiOpen(REG(d0,ULONG cpu),REG(a0,UBYTE *programname),REG(a1,struct WBArg *iconname),REG(a2,const char *vstring),REG(a6,struct LibBase *lb));
 LIBFUNC BOOL dnetcguiClose(REG(a0,struct ClientGUIParams *params),REG(a6,struct LibBase *libbase));
 LIBFUNC ULONG dnetcguiHandleMsgs(REG(d0,ULONG signals),REG(a6,struct LibBase *lb));
 LIBFUNC VOID dnetcguiConsoleOut(REG(d0,ULONG cpu),REG(a0,UBYTE *output),REG(d1,BOOL overwrite));
-LIBFUNC ULONG dnetcguiGetSigMask(VOID);
+#endif
