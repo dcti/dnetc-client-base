@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.cpp,v $
+// Revision 1.4  1998/11/26 22:27:24  cyp
+// Fixed _IsHostnameDNetHost() to work with any/all distributed.net hostnames.
+//
 // Revision 1.3  1998/11/26 06:51:31  cyp
 // Added missing log entry.
 //
@@ -10,7 +13,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.3 1998/11/26 06:51:31 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.4 1998/11/26 22:27:24 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -402,15 +405,16 @@ struct optionstruct conf_options[OPTION_COUNT]=
 
 int confopt_IsHostnameDNetHost( const char * hostname )
 {
-  if (!hostname || !*hostname) //shouldn't happen
+  unsigned int len;
+  const char sig[]="distributed.net";
+  
+  if (!hostname || !*hostname) 
     return 1;
-  if (isdigit( *hostname )) //illegal
+  if (isdigit( *hostname )) //IP address
     return 0;
-  const char *dot = (const char *)strchr( hostname, '.');
-  if ( dot == NULL || dot == hostname )
-    return 0;
-  return (strcmpi(dot, ".v27.distributed.net") == 0 ||
-      strcmpi(dot, ".distributed.net") == 0);
+  len = strlen( hostname );
+  return (len > (sizeof( sig )-1) &&
+      strcmpi( &hostname[(len-(sizeof( sig )-1))], sig ) == 0);
 }           
 
 // --------------------------------------------------------------------------
