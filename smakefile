@@ -2,12 +2,12 @@ PROGNAME_PPC = rc5des_PPC
 PROGNAME_68K = rc5des_68K
 
 DEBUG    = 
-OPTIMIZE = #optimize optsched
+OPTIMIZE = optimize optsched
 CFLAGS   = unsignedchars nostkchk strmerge parms=reg define=LESS_GETENV define=PIPELINE_COUNT=1 define=_CPU_32BIT_ define=BIT_32 define=KWAN define=MEGGS includedir=netinclude: includedir=platforms/ includedir=common/ utillib nover NOLINK
 DISASM   =
-LFLAGS   = #farcode fardata
+LFLAGS   = NODEBUG #farcode fardata
 
-DEBUG_PPC    = $(DEBUG) DEBUG=S
+DEBUG_PPC    = $(DEBUG) #DEBUG=S
 OPTIMIZE_PPC = $(OPTIMIZE)
 CFLAGS_PPC   = $(DEBUG_PPC) $(OPTIMIZE_PPC) $(CFLAGS) HUNKOBJ
 DISASM_PPC   = $(DISASM)
@@ -22,8 +22,6 @@ LFLAGS_68K   = $(LFLAGS)
 FINAL_OBJS_PPC =\
 common_objs.o_ppc\
 core_objs.o_ppc
-
-#dummy_obj.o_ppc
 
 COMMON_OBJS_PPC =\
 platforms/_tzset.o_ppc\
@@ -95,7 +93,8 @@ OBJS_68K     = $(COMMON_OBJS_68K) $(RC5_OBJS_68K) $(DES_OBJS_68K)
 LIBS_68K     = LIB:scm.lib LIB:sc.lib LIB:amiga.lib LIB:debug.lib
 
 .s.o_ppc:
-	ppc-amigaos-gas -m604 $*.s -o $*.o
+	ppc-amigaos-gas -m604 $*.s -o $*.o_ppc
+	elf2am -o $*.o_ppc
 
 .cpp.o_ppc:
 	scppc RESETOPTS $(CFLAGS_PPC) $(DISASM) $*.cpp
@@ -103,7 +102,7 @@ LIBS_68K     = LIB:scm.lib LIB:sc.lib LIB:amiga.lib LIB:debug.lib
 	@delete $*.o QUIET
 
 .c.o_ppc:
-	scppc RESETOPTS $(CFLAGS_PPC) $(DISASM) $*.c
+	scppc RESETOPTS $(CFLAGS_PPC)  $(DISASM) $*.c
 	@copy $*.o $*.o_ppc QUIET CLONE
 	@delete $*.o QUIET
 
@@ -127,7 +126,7 @@ ppc: $(PROGNAME_PPC)
 $(PROGNAME_PPC): $(OBJS_PPC)
 #	ppc-amigaos-ld -r -o $(PROGNAME_PPC) $(LIBSTART_PPC) $(FINAL_OBJS_PPC) $(LIBS_PPC)
 	SLINKPPC with << 
-PPC FROM $(LIBSTART_PPC) $(OBJS_PPC) TO $(PROGNAME_PPC) LIB $(LIBS_PPC)
+PPC FROM $(LIBSTART_PPC) $(OBJS_PPC) TO $(PROGNAME_PPC) LIB $(LIBS_PPC) $(LFLAGS_PPC)
 <
 	protect $(PROGNAME_PPC) rwed
 
@@ -141,8 +140,6 @@ FROM $(LIBSTART_68K) $(OBJS_68K) TO $(PROGNAME_68K) LIB $(LIBS_68K) $(LFLAGS_68K
 # PPC Dependencies
 #	
  
-dummy_obj.o_ppc		:	dummy_obj.c
-
 common_objs.o_ppc	:	$(COMMON_OBJS_PPC)
 	ppc-amigaos-ld -r -o common_objs.o_ppc $(COMMON_OBJS_PPC)
 
