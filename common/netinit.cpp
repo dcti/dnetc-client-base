@@ -10,6 +10,9 @@
 */
 //
 // $Log: netinit.cpp,v $
+// Revision 1.8  1998/09/28 20:27:54  remi
+// Cleared a warning.
+//
 // Revision 1.7  1998/09/20 15:23:26  blast
 // AmigaOS changes
 //
@@ -37,7 +40,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.7 1998/09/20 15:23:26 blast Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.8 1998/09/28 20:27:54 remi Exp $"; }
 #endif
 
 //--------------------------------------------------------------------------
@@ -61,7 +64,9 @@ return "@(#)$Id: netinit.cpp,v 1.7 1998/09/20 15:23:26 blast Exp $"; }
   and (== 0) to return the current 'isOK' state.
 */
 
+#if (CLIENT_OS == OS_AMIGAOS)
 static struct Library *SocketBase;
+#endif
 
 static int __netInitAndDeinit( int doWhat )  
 {                                            
