@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.142 2000/03/10 03:06:18 jlawson Exp $
+# @(#)$Id: configure,v 1.222.2.143 2000/03/14 22:57:01 mfeiri Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -182,6 +182,10 @@ DESULTRA_SRCS_ASM="des/ultrasparc/des-slice-ultrasparc.cpp \
 OGR_ANSI_SRCS="ogr/ogr.cpp ogr/crc32.cpp ogr/choosedat.cpp"
 #if adding OGR, also -DHAVE_OGR_CORES
 
+OGR_PPC_SRCS="ogr/ppc/ogr-ppc.cpp ogr/crc32.cpp ogr/choosedat.cpp"
+
+OGR_ALTIVEC_SRCS="ogr/ppc/ogr-vec.cpp"
+
 #
 # Source files making up the CSC core code
 #
@@ -341,6 +345,9 @@ OPTS_EGCS_PPC601="$OPTS_EGCS -O6 -DASM_PPC -mcpu=601"
 OPTS_EGCS_PPC604="$OPTS_EGCS -O6 -DASM_PPC -mcpu=604"
 OPTS_EGCS_PPC860="$OPTS_EGCS -O6 -DASM_PPC -mcpu=860 -msoft-float"
 OPTS_EGCS_POWER="$OPTS_EGCS -O6 -DASM_POWER -mcpu=power"
+
+# Apples custom compiler for MacOSX featuring AltiVec support
+OPTS_EGCS2_PPC="$OPTS_EGCS -O6"
 
 OPTS_XLC_PPC601="$OPTS_XLC -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC"
 OPTS_XLC_PPC="$OPTS_XLC -qarch=ppc -qtune=604 -D_AIX -D_ARCH_PPC"
@@ -1002,6 +1009,18 @@ case "$1" in
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
+
+
+  ### MacOSX PPC targets
+
+    *ppc-macosx)     # [mfeiri] MacOSX (including MacOSX Server and Darwin)
+	TARGET_CC="cc"
+	TARGET_CCFLAGS="$OPTS_EGCS2_PPC -DHAVE_OGR_CORES"
+	TARGET_ADDSRCS="$RC5PPC_SRCS $OGR_ANSI_SRCS"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="macosx-ppc"
+	;;
+
 
   ### AIX PPC targets
 	# classes are buggy with AIX !
