@@ -5,24 +5,29 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.25  1998/06/23 18:41:36  cyruspatel
+// Removed fprintf(stderr,"**Break**") and SHELL_INSERT_NL_AT_END for NetWare
+// and DOS. IMO, this is getting ridiculous!
+//
 // Revision 1.24  1998/06/23 13:53:37  kbracey
-// Restored line ending type.
+// Restored line ending type. 
 // Fixed paging for RISC OS.
 //
 // Revision 1.23  1998/06/23 09:23:39  remi
 // - Added gettermheight support for Linux (and possibly for other *nixes)
-//   (Add your OS to the list and add -lcurses to configure if it fit your needs)
+//   (Add your OS to the list and add -lcurses to configure if it fit your 
+//   needs)
 // - Turn off ECHO in readkeypress for Linux/NetBSD/BeOS
 //   (so we can clear "--More--" when the user hit CR)
 // - Resolved bad interaction between termios pager and external pager
 // - Don't screw up the common "rc5des --help | more"
-//   (Don't use our own pager if the user ask for help and stdout is redirected,
-//   use it if the user gives a bad option)
+//   (Don't use our own pager if the user ask for help and stdout is 
+//   redirected, use it if the user gives a bad option)
 // - The termios pager doesn't need an extra line at the bottom
-// - Catch ^C under Win32 etc ... so the user can abort in the "--More--" pager
-//   (why it doesn't get catched by the signal handler ?)
-// - ^Break exit immediately under Win32 (not sure the kbhit()/usleep() hack is the
-//   right thing to do under DOS/Netware/Win16)
+// - Catch ^C under Win32 etc ... so the user can abort in the "--More--" 
+//   pager (why it doesn't get caught by the signal handler ?)
+// - ^Break exit immediately under Win32 (not sure the kbhit()/usleep() 
+//   hack is the right thing to do under DOS/Netware/Win16)
 //
 // Revision 1.22  1998/06/22 17:29:09  remi
 // Added gettermheight() so the pager is allowed to use more than 25 lines
@@ -66,7 +71,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: disphelp.cpp,v 1.24 1998/06/23 13:53:37 kbracey Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.25 1998/06/23 18:41:36 cyruspatel Exp $";
 #endif
 
 #include "client.h"
@@ -89,8 +94,7 @@ static const char *id="@(#)$Id: disphelp.cpp,v 1.24 1998/06/23 13:53:37 kbracey 
 #define TERMINFOLINES
 #endif
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS) || \
-    (CLIENT_OS == OS_NETWARE)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2) 
 #define SHELL_INSERT_NL_AT_END
 #endif
 
@@ -102,9 +106,8 @@ static int readkeypress()
   int ch;
 #if (defined(NOCONFIG) || (defined(NOLESS) && defined(NOMORE)))
   ch = -1;  // actually nothing. function never gets called.
-
-  // Tested under Win32. May work under OS2 too. Not sure with DOS or Netware.
 #elif (CLIENT_OS == OS_WIN32)
+  // Tested under Win32. May work under OS2 too. Not sure with DOS or Netware.
   for (;;) {
     if (SignalTriggered || UserBreakTriggered)
       return -1;
@@ -127,7 +130,6 @@ static int readkeypress()
   if (!ch) ch = (getch() << 8);
   if (ch == 0x03) { // ^C
     SignalTriggered = UserBreakTriggered = 1;
-    fprintf( stderr, "*Break*\n" );
   }
 
 #elif (CLIENT_OS == OS_RISCOS)
@@ -442,8 +444,8 @@ void Client::DisplayHelp( const char * unrecognized_option )
 	for (i = 0; (l < bodylines) && (i < n); i++ )
 	  fprintf( outstream, "%s\n", helpbody[l++] );
 	n = maxscreenlines-2; //use a two line overlap
-	if (l<bodylines && !nostdin && !foundhelprequest) //NOLESS mode: stdin is ok
-	  {
+	if (l<bodylines && !nostdin && !foundhelprequest) 
+          {  //NOLESS mode: stdin is ok
           #ifndef NOMORE // very obstinate people :)
 	  fprintf( outstream, "--More--" );
 	  fflush( outstream );
@@ -488,6 +490,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
       i = readkeypress();
       if (SignalTriggered || UserBreakTriggered)
         break;
+      fprintf( outstream, "\r");
 
       if (i == '+' || i == '=' || i == ' ' ||
         i == 'f' || i == '\r' || i == '\n')
@@ -536,7 +539,6 @@ void Client::DisplayHelp( const char * unrecognized_option )
 #endif
     } //stdin is a tty
 
-  //fprintf( outstream, "\n\n");
   return;
 }
 #endif
