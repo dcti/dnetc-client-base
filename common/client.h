@@ -11,6 +11,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.123  1999/03/18 03:55:09  cyp
+// cleaned up client class variables.
+//
 // Revision 1.122  1999/03/09 07:15:45  gregh
 // Various OGR changes.
 //
@@ -330,12 +333,8 @@
 // room for OGR in the config, but no actual OGR support. So clients
 // compiled like this won't be surprised when OGR suddenly appears from
 // the proxies.
-#define CONFIG_CONTEST_COUNT 3 /* leave room for 3 contests */
-#ifdef GREGH_DEBUG
-#define CONTEST_COUNT       3 /* RC5, DES, OGR */
-#else
-#define CONTEST_COUNT       2 /* ... but only make 2 active (no OGR now) */
-#endif
+
+#define CONTEST_COUNT       3 /* RC5,DES,OGR */
 
 // --------------------------------------------------------------------------
 
@@ -428,7 +427,7 @@ typedef struct Packet
   u32  op;            // operation code                     }--|    }--|
   union {             //                                       |       |
     struct {          //                                       |       |
-      u64  key;       // the Key starting point                |       |
+      u64  key;       // the Key                               |       |
       u64  iv;        // the IV                                |       |
       u64  plain;     // the Plaintext                         |       |
       u64  cypher;    // the Cyphertext                        |       |
@@ -453,6 +452,27 @@ typedef struct Packet
   u32  scramble;      // the key we're using to scrambling this -------|
 } Packet;
 
+typedef struct ScramPacket
+{
+  u32  op;            // operation code
+  u32  scram;         //                                -, key
+  u32  proxytime;     // the time_t at the proxy end    -'
+  char reserved[28];  //                                - iv/plain/cypher/iter
+  char proxymsg[64];  //                                - id
+  u32  ip;            // IP Address (proxy filled)      - ip
+  u32  schedupdate;   // time should update next (abs)  - iterhi
+  char other[20];     // extra space
+  u32  rc564contestdone; //  set to h.tonl(0xBEEFF00D) by the proxies if the rc564 contest is finished
+  u32  descontestdone;   //   set to h.tonl(0xBEEFF00D) by the proxies if current des contest is over
+  u32  contestid;     // contest identifier
+  u32  build;         // build number <send client build #, get proxy build #>
+  u32  os;            // OS - see defines
+  u32  cpu;           // CPU - see defines
+  u32  version;       // packet version (3)
+  u32  checksum;      // pre scrambled checksum
+  u32  scramble;      // the key we're using to scrambling this
+} ScramPacket;
+
 #pragma pack()
 
 class Network;            // prototype for referenced classes
@@ -464,103 +484,88 @@ struct membuffstruct
   FileEntry *buff[MAXBLOCKSPERBUFFER];
 };
 
-
 class Client
 {
 public:
-  int  quietmode;
+  /* non-user-configurable */
+  int  nonewblocks;
+  int  randomprefix;
+  int  randomchanged;
+  int  rc564closed;
+  int  stopiniio;
+  u32  scheduledupdatetime;
   char inifilename[128];
+
+  /* -- block/buffer -- */
   char id[64];
-  volatile s32  inthreshold[CONFIG_CONTEST_COUNT];
-  volatile s32  outthreshold[CONFIG_CONTEST_COUNT];
-  s32  blockcount;
-  s32  minutes;
-  s32  timeslice;
-  s32  priority;
+  char checkpoint_file[128];
+  int  nodiskbuffers;
+  s32  connectoften;
+  s32  preferred_blocksize;
+  struct { struct membuffstruct in, out; } membufftable[CONTEST_COUNT];
+  char in_buffer_file[CONTEST_COUNT][128];
+  char out_buffer_file[CONTEST_COUNT][128];
+  volatile s32 inthreshold[CONTEST_COUNT];
+  volatile s32 outthreshold[CONTEST_COUNT];
+
+  /* -- net -- */
+  s32  offlinemode;
+  s32  nettimeout;
+  s32  nofallback;
+  int  autofindkeyserver;
   char keyproxy[64];
   s32  keyport;
   char httpproxy[64];
   s32  httpport;
   s32  uuehttpmode;
   char httpid[128];
-  s32  cputype;
-  s32  offlinemode;
-  int  stopiniio;
 
+  /* -- log -- */
+  char logname[128];
   s32  messagelen;
   char smtpsrvr[128];
   s32  smtpport;
   char smtpfrom[128];
   char smtpdest[128];
 
-  char logname[128];
-  char exit_flag_file[128];
-  char checkpoint_file[128];
+  /* -- perf -- */
+  s32  numcpu;
+  s32  cputype;
+  s32  priority;
+
+  /* -- misc -- */
+  int  quietmode;
+  s32  blockcount;
+  s32  minutes;
+  s32  percentprintingoff;
+  s32  noexitfilecheck;
+  char loadorder_map[CONTEST_COUNT];
   char pausefile[128];
 
-  s32 numcpu;
-  s32 percentprintingoff;
-  s32 connectoften;
 
-  int nodiskbuffers;
-  struct { struct membuffstruct in, out; } membufftable[CONFIG_CONTEST_COUNT];
-  char in_buffer_file[CONFIG_CONTEST_COUNT][128];
-  char out_buffer_file[CONFIG_CONTEST_COUNT][128];
+  /* --------------------------------------------------------------- */
+
   long PutBufferRecord(const FileEntry *data);
   long GetBufferRecord( FileEntry *data, unsigned int contest, int use_out_file);
   long GetBufferCount( unsigned int contest, int use_out_file, unsigned long *normcountP );
-  
-  s32 nofallback;
-  u32 randomprefix;
-  int randomchanged;
-  s32 consecutivesolutions[CONFIG_CONTEST_COUNT];
-  int autofindkeyserver;
-  s32 nonewblocks;
-  s32 nettimeout;
-  s32 noexitfilecheck;
-  s32 preferred_contest_id;  // 0 for RC564, 1 for DESII 
-  s32 preferred_blocksize;
-  s32 contestdone[CONFIG_CONTEST_COUNT];
-  u32 descontestclosed;
-  s32 scheduledupdatetime;
-
-#if defined(MMX_BITSLICER) || defined(MMX_RC5)
-  int usemmx;
-#endif
-
-#if defined(NEEDVIRTUALMETHODS)
-  // methods that can be overriden to provide additional functionality
-  // virtuals required for OS2 & win GUI clients...
-  virtual void InternalReadConfig( IniSection &ini ) {};
-  virtual void InternalValidateConfig( void) {};
-  virtual void InternalWriteConfig( IniSection &ini ) {};
-#endif
 
   Client();
   ~Client() {};
-
 
   int Main( int argc, const char *argv[] );
     // encapsulated main().  client.Main() may restart itself
 
   int ParseCommandline( int runlevel, int argc, const char *argv[], 
                         int *retcodeP, int logging_is_initialized );
-                        
-  // runlevel == 0: ReadConfig() (-quiet, -ini, -guistart etc done here too)
-  //          >= 1: post-readconfig (override ini options)
-  //          == 2: run "modes"
+    // runlevel=0 = parse cmdline, >0==exec modes && print messages for init'd cmdline options
+    // returns !0 if app should be terminated
 
   int CheckpointAction(int action, unsigned int load_problem_count );
     // CHECKPOINT_OPEN (copy from checkpoint to in-buffer), *_REFRESH, *_CLOSE
     // returns !0 if checkpointing is disabled
 
-#if defined(NEEDVIRTUALMETHODS)
-  virtual int Configure( void );
-    // runs the interactive configuration setup
-#else
   int  Configure( void );
     // runs the interactive configuration setup
-#endif
 
   int Run( void );
     // run the loop, do the work
