@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114 2002/10/09 22:22:15 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.1 2002/11/16 22:55:40 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -231,7 +231,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       int i;
       cpucount = 0;
       for (i = 0; i < nprocs; i++)
-	if (TMP_ENG_ONLINE == tmp_ctl(TMP_QUERY, i)) cpucount++;
+        if (TMP_ENG_ONLINE == tmp_ctl(TMP_QUERY, i)) cpucount++;
     #endif
     if (cpucount < 1)  //not supported
       cpucount = -1;
@@ -415,7 +415,7 @@ static long __GetRawProcessorID(const char **cpuname)
                   { 0x0080   ,   (1L<<16)+5 }, /* POWER_630 */
                   { 0x0100   ,   (1L<<16)+6 }, /* POWER_A35 */
                   { 0x0200   ,   (1L<<16)+7 }, /* POWER_RS64II */
-		  { 0x0400   ,   (1L<<16)+8 }, /* POWER_RS64III */
+                  { 0x0400   ,   (1L<<16)+8 }, /* POWER_RS64III */
                   };
     unsigned int imp_i;
     detectedtype = -1L; /* assume failed */
@@ -1099,7 +1099,7 @@ static long __GetRawProcessorID(const char **cpuname )
   {
     /*
        ARMident() will throw SIGILL on an ARM 2 or ARM 250, because they 
-       don't have the system control coprocessor. (We ignore the ARM 1 
+       don't have the system control coprocessor. (We ignore the ARM 1
        because I'm not aware of any existing C++ compiler that targets it...)
     */
     signal(SIGILL, ARMident_catcher);
@@ -1131,7 +1131,7 @@ static long __GetRawProcessorID(const char **cpuname )
   #elif (CLIENT_OS == OS_LINUX)
   if (detectedtype == -2)
   {
-    unsigned int n;  
+    unsigned int n;
     FILE *cpuinfo;
     detectedtype = -1L;
     namebuf[0] = '\0';
@@ -1139,23 +1139,25 @@ static long __GetRawProcessorID(const char **cpuname )
     {
       char buffer[256];
       n = 0;
-      while(fgets(buffer, sizeof(buffer), cpuinfo)) 
+      while(fgets(buffer, sizeof(buffer), cpuinfo))
       {
         if(memcmp(buffer, "Type\t\t: ", 8) == 0)
-	  n = 8;
-	if(memcmp(buffer, "Processor\t: ", 12) == 0)
-	  n = 12;
-	
+          n = 8;
+        if(memcmp(buffer, "Processor\t: ", 12) == 0)
+          n = 12;
+
         if(n != 0)
-	{
-	  strncpy(namebuf, &buffer[n], sizeof(namebuf)-1);
-	  namebuf[sizeof(namebuf)-1] = '\0';
-	  break;
-	}
+        {
+          if (memcmp(&buffer[n], "Intel ", 6) == 0)
+            n += 6;
+          strncpy(namebuf, &buffer[n], sizeof(namebuf)-1);
+          namebuf[sizeof(namebuf)-1] = '\0';
+          break;
+        }
       }
       fclose(cpuinfo);
     }
-    
+
     if (namebuf[0])
     {
       static struct { const char *sig;  int rid; } sigs[] ={
@@ -1168,22 +1170,24 @@ static long __GetRawProcessorID(const char **cpuname )
                     { "arm7",       0x700},
                     { "arm710",     0x710},
                     { "sa110",      0xA10},
-		    { "ARM/VLSI ARM 6",		0x600},
-		    { "ARM/VLSI ARM 610",	0x610},
-		    { "ARM/VLSI ARM 7",		0x700},
-		    { "ARM/VLSI ARM 710",	0x710},
-		    { "Intel StrongARM-110",	0xA10}
+                    { "ARM/VLSI ARM 6",         0x600},
+                    { "ARM/VLSI ARM 610",       0x610},
+                    { "ARM/VLSI ARM 7",         0x700},
+                    { "ARM/VLSI ARM 710",       0x710},
+                    { "StrongARM-110",          0xA10},
+                    { "StrongARM-1100",         0xA11},
+                    { "StrongARM-1110",         0xB11}
                     };
       /* assume unknown ID and unrecognized name in namebuf */
-      detectedtype = 0; 
+      detectedtype = 0;
       detectedname = ((const char *)&(namebuf[0]));
-       
+
       for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
       {
         int l = strlen(sigs[n].sig);
-	
+
         if ((strncmp(namebuf, sigs[n].sig, l) == 0) &&
-	    ((namebuf[l] == '\0') || (namebuf[l] == ' ')))
+            ((namebuf[l] == '\0') || (namebuf[l] == ' ')))
         {
           /* known ID and recognized name */
           detectedtype = (long)sigs[n].rid;
@@ -1215,7 +1219,7 @@ static long __GetRawProcessorID(const char **cpuname )
     }
     if (buffer[0]) /* sysctl() succeeded and name if clean */
     {
-      static struct 
+      static struct
         { const char *sig;  int rid; } sigs[] ={
         { "ARM2",       0X200},
         { "ARM250",     0X250},
@@ -1227,7 +1231,7 @@ static long __GetRawProcessorID(const char **cpuname )
         { "SA-110",     0XA10}
         };
       unsigned int n;
-      detectedtype = 0; 
+      detectedtype = 0;
       for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
       {
         if (strcmp(buffer,sigs[n].sig)==0)
@@ -1237,10 +1241,10 @@ static long __GetRawProcessorID(const char **cpuname )
         }
       }
       if (detectedtype == 0) /* unrecognized name */
-      { 
+      {
         strncpy( namebuf, buffer, sizeof(namebuf) );
         namebuf[sizeof(namebuf)-1] = '\0';
-        detectedname = ((const char *)&(namebuf[0])); 
+        detectedname = ((const char *)&(namebuf[0]));
       }
     } /* if (len > 0) */
   } /* if (detectedtype == -2) */
@@ -1252,8 +1256,10 @@ static long __GetRawProcessorID(const char **cpuname )
     switch (detectedtype)
     {
       case 0x200: strcpy( namebuf, "ARM 2" ); break;
-      case 0x300: strcpy( namebuf, "ARM 3" ); break; 
+      case 0x300: strcpy( namebuf, "ARM 3" ); break;
       case 0xA10: strcpy( namebuf, "StrongARM 110" ); break;
+      case 0xA11: strcpy( namebuf, "StrongARM 1100" ); break;
+      case 0xB11: strcpy( namebuf, "StrongARM 1110" ); break;
       case 0x250:
       case 0x600:
       case 0x610:
@@ -1268,11 +1274,11 @@ static long __GetRawProcessorID(const char **cpuname )
                   break;
     }
   }
-  
+
   if ( cpuname )
     *cpuname = detectedname;
   return detectedtype;
-}  
+}
 #endif
 
 /* ---------------------------------------------------------------------- */
