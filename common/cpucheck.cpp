@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.49  1998/12/09 07:34:15  dicamillo
+// Added constant for number of processors Mac client supports; fixed typos which prevented compilation.
+//
+// Revision 1.48  1998/12/04 12:09:01  chrisb
+// fixed typo
+//
 // Revision 1.47  1998/12/04 16:44:30  cyp
 // Noticed and fixed MacOS's returning raw cpu type numbers to SelectCore().
 // Fixed a long description header in ProcessorIndentification stuff. Tried
@@ -166,7 +172,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.47 1998/12/04 16:44:30 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.49 1998/12/09 07:34:15 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -186,6 +192,9 @@ unsigned int GetNumberOfSupportedProcessors( void )
 {
 #if (CLIENT_OS == OS_RISCOS)
   return ( 2 ); /* not just some arbitrary number */
+#elif (CLIENT_OS == OS_MACOS)
+  return ( MAC_MAXCPUS ); // Mac constant needed for static arrays;
+  						  // if too large, a lot of memory would be wasted
 #else
   return ( 128 ); /* just some arbitrary number */
 #endif
@@ -457,7 +466,7 @@ static int __GetRawPPCIdentification(const char **cpuname)
       {
       case 0:  *cpuname = "601"; break;
       case 2:  *cpuname = "603"; break;
-      case 3;  *cpuname = "604"; break;
+      case 3:  *cpuname = "604"; break;
       case 5:  *cpuname = "603e"; break;
       case 6:  *cpuname = "603ev"; break;
       case 7:  *cpuname = "740/750/G3"; break;
@@ -473,7 +482,7 @@ static int __GetRawPPCIdentification(const char **cpuname)
 int GetProcessorType(int quietly)
 {
   const char *cpu_desc = NULL;
-  int rawid = __GetRawPPCIdentification(&cpu_descr);
+  int rawid = __GetRawPPCIdentification(&cpu_desc);
   int coretouse = -1; /* use manual detection */
   
   if (!quietly)
@@ -686,7 +695,7 @@ static void ARMident_catcher(int)
   longjmp(ARMident_jmpbuf, 1); 
 }
 
-static u32 ___GetARMIdentification(void)
+static u32 __GetARMIdentification(void)
 {
   static u32 detectedvalue = 0x0;
 
@@ -839,12 +848,12 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
     strcat(cpuid_b,riscos_x86_determine_name());
   cpuid_s = ((const char *)(&cpuid_b[0]));      
 #elif (CLIENT_CPU == CPU_POWERPC)
-  int cpuidb = __GetPPCIdentification(&cpuid_s);
+  int cpuidb = __GetRawPPCIdentification(&cpuid_s);
   if (cpuidb < 0)
     cpuid_s = ((cpuidb==-1)?("?\n\t(identification failed)"):
               ("none\n\t(client does not support identification)"));    
 #elif (CLIENT_CPU == CPU_68K)
-  int cpuidb = __Get68kIdentification(&cpuid_s);
+  int cpuidb = __GetRaw68kIdentification(&cpuid_s);
   if (cpuidb < 0)
     cpuid_s = ((cpuidb==-1)?("?\n\t(identification failed)"):
               ("none\n\t(client does not support identification)"));    
