@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version.h,v $
+// Revision 1.11  1998/08/20 02:40:41  silby
+// Kicked version to 2.7100.418-BETA1, ensured that clients report the string ver (which has beta1 in it) in the startup.
+//
 // Revision 1.10  1998/07/22 04:28:49  jlawson
 // updated version to 417
 //
@@ -49,10 +52,10 @@
 
 #define CLIENT_CONTEST      71
 #define CLIENT_BUILD        00
-#define CLIENT_BUILD_FRAC   417
+#define CLIENT_BUILD_FRAC   418
 
-#define CLIENT_VERSIONSTRING    "v2.7100.417"
-#define CLIENT_VERSIONSTRING2   "2.7100.417"        // no leading "v"
+#define CLIENT_VERSIONSTRING    "v2.7100.418-BETA1"
+#define CLIENT_VERSIONSTRING2   "2.7100.418-BETA1"        // no leading "v"
 
 #endif // _VERSION_H
 

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.127  1998/08/20 02:40:34  silby
+// Kicked version to 2.7100.418-BETA1, ensured that clients report the string ver (which has beta1 in it) in the startup.
+//
 // Revision 1.126  1998/08/16 06:00:28  silby
 // Changed ::Update back so that it checks contest/buffer status before connecting (lurk connecting every few seconds wasn't pretty.)
 // Also, changed command line option handling so that update() would be called with force so that it would connect over all.
@@ -332,7 +335,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.126 1998/08/16 06:00:28 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.127 1998/08/20 02:40:34 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -2207,9 +2210,9 @@ int main( int argc, char *argv[] )
     #if (CLIENT_OS == OS_RISCOS)
     if (!guirestart)
     #endif
-    LogRaw("\nRC5DES Client v2.%d.%d started.\n"
+    LogRaw("\nRC5DES Client %s started.\n"
              "Using distributed.net ID %s\n\n",
-             CLIENT_CONTEST*100+CLIENT_BUILD,CLIENT_BUILD_FRAC,client.id);
+             CLIENT_VERSIONSTRING,client.id);
 
     client.Run();
 
