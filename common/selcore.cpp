@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.107 2001/03/30 12:30:27 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.108 2001/04/05 23:16:14 teichp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -160,6 +160,20 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "GARSP 5.13 PowerRS",
       #endif
       NULL, /* possibly used by "GARSP 5.13-vec" */
+      NULL
+    },
+  #elif (CLIENT_CPU == CPU_SPARC) && (CLIENT_OS == OS_LINUX)
+    { /* RC5 */
+      "Ultrasparc RC5 core",
+      "Generic RC5 core",
+      NULL
+    },
+    { /* DES */
+      "Generic DES core",
+      NULL
+    },
+    { /* OGR */
+      "GARSP 5.13",
       NULL
     },
   #else
@@ -945,6 +959,11 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       selcorestatics.corenum[DES] = cindex;  
     }  
   }
+  #elif (CLIENT_CPU == CPU_SPARC) && (CLIENT_OS == OS_LINUX)
+  if (contestid == RC5)
+  {
+    selcorestatics.corenum[RC5] = -1;
+  }
   #endif
 
   if (selcorestatics.corenum[contestid] < 0)
@@ -1090,6 +1109,11 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
      (defined(__GCC__) || defined(__GNUC__)) /* doesn't build with sun cc */
     //rc5/ultra/rc5-ultra-crunch.cpp
     extern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
+  #elif (CLIENT_OS == OS_LINUX)
+    //rc5/ultra/rc5-ultra-crunch.cpp
+    extern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
+    // rc5/ansi/2-rg.cpp
+    extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
   #else
     // rc5/ansi/2-rg.cpp
     extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
@@ -1349,13 +1373,27 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     #elif (CLIENT_CPU == CPU_SPARC)
     {
       #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)) && \
-        (defined(__GCC__) || defined(__GNUC__)) /* doesn't build with sun cc */
+          (defined(__GCC__) || defined(__GNUC__)) /* doesn't build with sun cc */
       {
         //rc5/ultra/rc5-ultra-crunch.cpp
         //xtern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
         unit_func.rc5 = rc5_unit_func_ultrasparc_crunch;
         pipeline_count = 2;
         coresel = 0;
+      }
+      #elif (CLIENT_OS == OS_LINUX)
+      if (coresel == 0)
+      {
+        //rc5/ultra/rc5-ultra-crunch.cpp
+        unit_func.rc5 = rc5_unit_func_ultrasparc_crunch;
+        pipeline_count = 2;
+      }
+      else
+      {
+        // rc5/ansi/rc5ansi_2-rg.cpp
+        unit_func.rc5 = rc5_unit_func_ansi_2_rg;
+        pipeline_count = 2;
+        coresel = 1;
       }
       #else
       {

@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.70 2001/03/29 15:08:38 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.71 2001/04/05 23:16:15 teichp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1309,7 +1309,7 @@ static long __GetRawProcessorID(const char **cpuname)
       char buffer[256];
       while(fgets(buffer, sizeof(buffer), cpuinfo)) 
       {
-        const char *p = "cpu model\t\t: ";
+        const char *p = "cpu\t\t: ";
         unsigned int n = strlen( p );
         if ( memcmp( buffer, p, n ) == 0 )
         {
