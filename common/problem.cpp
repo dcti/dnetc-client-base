@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.161 2002/09/24 16:05:34 jlawson Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.162 2002/09/24 16:35:33 jlawson Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -1970,9 +1970,16 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
   switch (contest_i)
   {
     case RC5_72:
-    case RC5:
     {
       return 1;
+    }
+    case RC5:
+    {
+      #ifdef HAVE_RC564_CORES
+      return 1;
+      #else
+      return 0;
+      #endif
     }
     case DES:
     {
