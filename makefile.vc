@@ -5,65 +5,78 @@
 
 OPTS_MSVC = -O1 -MD -Irc5 -Ides -Icommon -DPIPELINE_COUNT=2 -D_CPU_32BIT_ -DMULTITHREAD -D__WIN32__
 
-
-all: rc5des
-
 # --------------------------------------------
 
 EXENAME = rc5des.exe
 
+RC5_SRCS =                   \
+	common/client.cpp    \
+	common/problem.cpp   \
+	common/autobuff.cpp  \
+	common/iniread.cpp   \
+	common/network.cpp   \
+	common/scram.cpp     \
+	common/mail.cpp      \
+	common/cliconfig.cpp \
+	common/clitime.cpp   \
+	common/clirate.cpp   \
+	common/clisrate.cpp  \
+	common/clicdata.cpp  \
+	common/buffwork.cpp  \
+	common/convdes.cpp   \
+	des/des-x86.cpp
+
 RC5_OBJS =                    \
-        output/client.obj     \
-        output/threadcd.obj   \
-        output/disphelp.obj   \
-        output/autobuff.obj   \
-        output/iniread.obj    \
-        output/network.obj    \
-        output/scram.obj      \
-        output/mail.obj       \
-        output/cliconfig.obj  \
-        output/clitime.obj    \
-        output/clirate.obj    \
-        output/clisrate.obj   \
-        output/clicdata.obj   \
-        output/buffwork.obj   \
-        output/problem.obj    \
-        output/des-x86.obj    \
-        output/convdes.obj
+	output/client.obj     \
+	output/problem.obj    \
+	output/autobuff.obj   \
+	output/iniread.obj    \
+	output/network.obj    \
+	output/scram.obj      \
+	output/mail.obj       \
+	output/cliconfig.obj  \
+	output/clitime.obj    \
+	output/clirate.obj    \
+	output/clisrate.obj   \
+	output/clicdata.obj   \
+	output/buffwork.obj   \
+	output/des-x86.obj    \
+	output/convdes.obj
 
 PREBUILT_OBJS =                          \
-        platforms/win32-os2/rg-486.obj   \
-        platforms/win32-os2/rg-6x86.obj  \
-        platforms/win32-os2/rg-k5.obj    \
-        platforms/win32-os2/rg-k6.obj    \
-        platforms/win32-os2/rc5p5brf.obj \
-        platforms/win32-os2/rg-p6.obj    \
-        platforms/win32-os2/bdeslow.obj  \
-        platforms/win32-os2/bbdeslow.obj \
-        platforms/win32-os2/x86ident.obj
+	platforms/win32-os2/rg-486.obj   \
+	platforms/win32-os2/rg-6x86.obj  \
+	platforms/win32-os2/rg-k5.obj    \
+	platforms/win32-os2/rg-k6.obj    \
+	platforms/win32-os2/rc5p5brf.obj \
+	platforms/win32-os2/rg-p6.obj    \
+	platforms/win32-os2/bdeslow.obj  \
+	platforms/win32-os2/bbdeslow.obj \
+	platforms/win32-os2/x86ident.obj
 
 RC5_LIBS = wsock32.lib advapi32.lib
 
 # --------------------------------------------
 
 {des}.cpp{output}.obj:
-        cl -c $(OPTS_MSVC) -Fo$@ $**
+	cl -c $(OPTS_MSVC) -Fo$@ $**
 
 {common}.cpp{output}.obj:
-        cl -c $(OPTS_MSVC) -Fo$@ $**
+	cl -c $(OPTS_MSVC) -Fo$@ $**
 
 {platforms/win32-os2}.asm{platforms/win32-os2}.obj:
+#	touch $@
 
-# --------------------------------------------
+all: rc5v2
 
-rc5des: $(RC5_OBJS) $(PREBUILT_OBJS)
-        cl $(OPTS_MSVC) -Fe$(EXENAME) $(RC5_LIBS) $**
+rc5v2: $(RC5_OBJS) $(PREBUILT_OBJS)
+	cl $(OPTS_MSVC) -Fe$(EXENAME) $(RC5_LIBS) $**
 
 clean:
-        del $(RC5_OBJS:/=\)
+	del $(RC5_OBJS:/=\)
 
 superclean: clean
-        del rc5des.exe rc5des.ini buff-in.rc5 buff-out.rc5
+	del rc5des.exe rc5des.ini buff-in.rc5 buff-out.rc5
 
 rebuild: clean all
 
