@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.62 1999/10/11 17:06:29 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.63 1999/10/12 17:05:00 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -281,10 +281,14 @@ static long __loadapacket( Client *client, WorkRecord *wrdata,
     unsigned int selproject = (unsigned int)client->loadorder_map[cont_i];
     if (selproject >= CONTEST_COUNT) /* user disabled */
       continue;
-    if (!IsProblemLoadPermitted((long)prob_i, cont_i))
+//LogScreen("loadapacket 1: trying contest %u for problem %u\n", selproject, prob_i);
+    if (!IsProblemLoadPermitted((long)prob_i, selproject ))
+    {
+//LogScreen("loadapacket 2: contest %u. load not permitted.\n", selproject );
       continue; /* problem.cpp - result depends on #defs, threadsafety etc */
+    }
     bufcount = client->GetBufferRecord( wrdata, selproject, 0 );
-//LogScreen("trying contest %d count %ld\n", selproject, bufcount );
+//LogScreen("loadapacket 2: contest %u count %ld\n", selproject, bufcount );
   }
   return bufcount;
 }  
