@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.15 2003/09/07 00:05:51 oliver Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.16 2003/09/07 11:33:33 mweiser Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -455,7 +455,8 @@
     }
   }
 
-#elif (CLIENT_CPU == CPU_S390) && defined(__GNUC__)
+#elif ((CLIENT_CPU == CPU_S390) || (CLIENT_CPU == CPU_S390X) && \
+      defined(__GNUC__)
   /* based on
   ** http://lxr.linux.no/source/include/asm-s390/spinlock.h?a=s390 */
 
@@ -484,40 +485,6 @@
   }
 
   static inline void fastlock_lock(fastlock_t *l) {
-    while (fastlock_trylock(l) <= 0) {
-      NonPolledUSleep(1);
-    }
-  }
-
-#elif (CLIENT_CPU == CPU_S390X) && defined(__GNUC__)
-  /* based on
-  ** http://lxr.linux.no/source/include/asm-s390x/spinlock.h?a=s390x */
-
-  typedef volatile unsigned long fastlock_t;
-
-  static inline void fastlock_init(fastlock_t *l) {
-    *l = 0;
-  }
-
-  static inline void fastlock_unlock(fastlock_t *l) {
-    asm volatile("xc 0(4,%0),0(%0)\n\t" \
-                 "bcr 15,0"
-                 : : "a" (l) : "memory", "cc" );
-  }
-
-  static inline int fastlock_trylock(fastlock_t *l) {
-    unsigned int result, reg;
-
-    asm volatile("        slr   %0,%0 \n" \
-                 "        basr  %1,0  \n"  \
-                 "0:      cs    %0,%1,0(%2)"
-                 : "=&d" (result), "=&d" (reg)
-                 : "a" (l) : "cc", "memory" );
-
-    return !result;
-  }
-
-  static inline void fastlock_lock(fastlock_t *) {
     while (fastlock_trylock(l) <= 0) {
       NonPolledUSleep(1);
     }
