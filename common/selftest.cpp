@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.85.2.7 2004/02/14 14:16:26 kakace Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.85.2.8 2004/05/20 21:13:14 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -202,6 +202,7 @@ static const s32 ogr_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
   //{0, 28, 3, 12, 26, 25, 29, 2},
   //{0, 29, 3, 25, 5, 8, 54, 61},
 };
+#endif  /* HAVE_OGR_CORES */
 
 #ifdef HAVE_OGR_PASS2
 // OGR-P2 test cases
@@ -250,7 +251,6 @@ static const s32 ogrp2_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
   {~0x0328B048, 25, 145, 47, 48, 19,  1}
 };
 #endif  /* HAVE_OGR_PASS2 */
-#endif  /* HAVE_OGR_CORES */
 
 #ifdef HAVE_CSC_CORES
 #include "convcsc.h"   // convert_key_from_csc_to_inc
@@ -451,13 +451,13 @@ long SelfTest( unsigned int contest )
         test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])ogr_test_cases;
         expectedsolution_lo = (*test_cases)[testnum][0];
       }
-  #if defined(HAVE_OGR_PASS2)
+#endif
+#if defined(HAVE_OGR_PASS2)
       if (contest == OGR_P2)
       {
         test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])ogrp2_test_cases;
         expectedsolution_lo = (*test_cases)[testnum][0];
       }
-  #endif
 #endif
 #if defined(HAVE_CSC_CORES)
       if (contest == CSC) // CSC
@@ -515,7 +515,6 @@ long SelfTest( unsigned int contest )
           break;
         }
         #endif
-        #if defined(HAVE_OGR_CORES)
         #if defined(HAVE_OGR_PASS2)
         case OGR_P2:
         {
@@ -535,6 +534,7 @@ long SelfTest( unsigned int contest )
           break;
         }  
         #endif
+        #if defined(HAVE_OGR_CORES)
         case OGR: 
         {
           int tcd;
@@ -738,7 +738,6 @@ long SelfTest( unsigned int contest )
                 break;
               }
               #endif
-              #ifdef HAVE_OGR_CORES
               #ifdef HAVE_OGR_PASS2
               case OGR_P2:
               {
@@ -775,6 +774,7 @@ long SelfTest( unsigned int contest )
                 break;
               }
               #endif
+              #ifdef HAVE_OGR_CORES
               case OGR:
               {
                 if (expectedsolution_lo & 0x80000000)  // no solution
@@ -809,7 +809,7 @@ long SelfTest( unsigned int contest )
                                   contestwork.ogr.nodes.lo, expectedsolution_lo );
                 break;
               }
-              #endif /* HAVE_OGR_CORES */
+              #endif
               default:
               {
                 PROJECT_NOT_HANDLED(contest);

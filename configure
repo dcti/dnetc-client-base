@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.130 2004/05/13 19:27:02 pfeffi Exp $
+# @(#)$Id: configure,v 1.288.2.131 2004/05/20 21:12:38 kakace Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -100,7 +100,7 @@ OGR="ogr"
 # select the projects to include in the client
 HAVE_RC5_64="0"
 HAVE_RC5_72="1"
-HAVE_OGR="1"
+HAVE_OGR="0"
 HAVE_OGR_P2="1"
 HAVE_DES="0"
 HAVE_CSC="0"
@@ -196,7 +196,7 @@ add_sources() # $1=os, $2=arch, $3=custom
   MEGGS_SLICE_SRCS2="des/deseval-meggs3.cpp des/des-slice-meggs.cpp"
   # -- CSC -- (needs -DHAVE_CSC_CORES)
   CSC_ANSI_SRCS="csc/convcsc.cpp csc/csc-common.cpp csc/csc-1k-i.cpp csc/csc-1k.cpp csc/csc-6b-i.cpp csc/csc-6b.cpp"
-  # -- OGR -- (needs -DHAVE_OGR_CORES) -------------------------
+  # -- OGR -- (needs -DHAVE_OGR_CORES or -DHAVE_OGR_PASS2) -----
   OGR_GENERAL_SRCS="$OGR/ansi/ogr_sup.cpp $OGR/ansi/ogr_dat.cpp"
   OGR_ANSI_SRCS="$OGR/ansi/ogr.cpp $OGR_GENERAL_SRCS"
 
@@ -279,7 +279,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi # HAVE_DES
 
     # --------------- ogr ----------------
-    if [ "$HAVE_OGR" = "1" ]; then
+    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
       DEFAULT_OGR="0"
       if [ "$OGR" = "ogr2" ]; then
         # -- no special versions yet --
@@ -427,7 +427,7 @@ add_sources() # $1=os, $2=arch, $3=custom
         TARGET_ASFLAGS="$TARGET_ASFLAGS -I./rc5-72/68k"
       fi
     fi # HAVE_RC5_72
-    if [ "$HAVE_OGR" = "1" ]; then
+    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
       DEFAULT_OGR="0"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS"
       TARGET_ADDOBJS="$TARGET_ADDOBJS output/ogr000.o output/ogr020.o \
@@ -451,7 +451,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
       TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alpha/axp-bmeyer.cpp"
     fi # HAVE_RC5_64
-    if [ "$HAVE_OGR" = "1" ]; then
+    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
       # this is just an addition to the default ansi core
       # maybe this should be moved in to specific targets ?
       TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev67.cpp"
@@ -537,7 +537,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
     fi # HAVE_RC5_72
 
-    if [ "$HAVE_OGR" = "1" ]; then
+    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
       #DEFAULT_OGR="1" # this is just an addition to default core
       if [ "${1}" = "macosx" ]; then
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"
@@ -612,7 +612,7 @@ add_sources() # $1=os, $2=arch, $3=custom
                                         rc5-72/arm/r72arm2-gnu.S"
       fi
     fi # HAVE_RC5_72
-    if [ "$HAVE_OGR" = 1 ]; then
+    if [ "$HAVE_OGR" = 1 -o "$HAVE_OGR_P2" = "1" ]; then
       if [ "$1" = "riscos" ]; then
         if [ "$3" = "gccsdk" ]; then
           TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gccsdk.s \
@@ -686,12 +686,14 @@ add_sources() # $1=os, $2=arch, $3=custom
 
   if [ "$HAVE_OGR" = "1" ]; then
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+  fi
+  if [ "$HAVE_OGR_P2" = "1" ]; then
+    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_PASS2"
+  fi
+  if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
     TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
     if [ "$DEFAULT_OGR" = "1" ]; then
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
-    fi
-    if [ "$HAVE_OGR_P2" = "1" ]; then
-      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_PASS2"
     fi
   fi
 
@@ -1114,8 +1116,11 @@ OPTS_MIPSPRO_ABI_64="-64 -mips4 -r10000"
 OPTS_CC_MIPSPRO="-O3 -IPA -LNO:opt=1 -xansi -DMIPSpro"
 
 # Common across all MIPSpro compiles:
-OPTS_MIPSPRO_CCFLAGS="${OPTS_CC_MIPSPRO} -DIRIX -DHAVE_POSIX_THREADS -DHAVE_OGR_CORES"
+OPTS_MIPSPRO_CCFLAGS="${OPTS_CC_MIPSPRO} -DIRIX -DHAVE_POSIX_THREADS"
 OPTS_MIPSPRO_DOCS="docs/readme._ix"
+  if [ "$HAVE_OGR" = "1" ]; then
+    OPTS_MIPSPRO_CCFLAGS="$OPTS_MIPSPRO_CCFLAGS -DHAVE_OGR_CORES"
+  fi
 
 # Common to a specific ABI:
 OPTS_MIPSPRO_CCFLAGS_32="${OPTS_MIPSPRO_CCFLAGS} ${OPTS_MIPSPRO_ABI_32}"
@@ -1399,7 +1404,10 @@ case "$1" in
                         -I/home/cberry/play/riscoslib/OSLib \
                         -I/home/cberry/play/riscoslib/TCPIPLibs \
                         -J/home/cberry/play/riscoslib/CLib \
-                        -DCOMPAT_INET4 -D__riscos -DHAVE_OGR_CORES"
+                        -DCOMPAT_INET4 -D__riscos"
+        if [ "$HAVE_OGR" = "1" ]; then
+          TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+        fi
         TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o \
                      /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o \
                      /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
@@ -2511,7 +2519,10 @@ case "$1" in
     *m68k-netbsd) # NetBSD on NeXT, 68k Macs, 68k Amiga, sun3 etc, [snake]
         TARGET_CC="g++"
         TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer \
-                        -m68020-40 -DASM_68K -DLURK -DHAVE_OGR_CORES"
+                        -m68020-40 -DASM_68K -DLURK"
+          if [ "$HAVE_OGR" = "1" ]; then
+            TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+          fi
         TARGET_LDFLAGS="-static"
         TARGET_ASFLAGS="$OPTS_GAS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile

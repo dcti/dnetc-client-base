@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *projdata_cpp(void) {
-return "@(#)$Id: projdata.cpp,v 1.2.2.3 2003/12/13 12:57:15 kakace Exp $"; }
+return "@(#)$Id: projdata.cpp,v 1.2.2.4 2004/05/20 21:13:14 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "projdata.h"
@@ -80,7 +80,7 @@ u32 ProjectGetFlags(int projectid)
   #else
     #define PROJECT_OK_RC5_72 PROJECT_UNSUPPORTED
   #endif
-  #if defined(HAVE_OGR_PASS2) && defined(HAVE_OGR_CORES)
+  #if defined(HAVE_OGR_PASS2)
     #define PROJECT_OK_OGR_P2 PROJECT_OK
   #else
     #define PROJECT_OK_OGR_P2 PROJECT_UNSUPPORTED

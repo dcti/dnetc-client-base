@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.19 2004/01/10 02:49:14 piru Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.20 2004/05/20 21:13:14 kakace Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -262,7 +262,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
 #endif
 #if defined HAVE_RC5_72_CORES
       #if (CLIENT_CPU == CPU_ARM)
-        #if defined HAVE_OGR_CORES
+        #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
         LogScreenRaw( "RC5-72 and OGR ARM assembly by Peter Teichmann\n");
         #else
         LogScreenRaw( "RC5-72 ARM assembly by Peter Teichmann\n");
@@ -282,7 +282,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
       LogScreenRaw( "RC5-72 SPARC assembly by Didier Levet and Andreas Beckmann\n");
       #endif
 #endif
-#if defined HAVE_OGR_CORES
+#if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
       #if (CLIENT_CPU == CPU_ARM)
         #if !defined HAVE_RC5_72_CORES
         LogScreenRaw( "OGR ARM assembly by Peter Teichmann\n");

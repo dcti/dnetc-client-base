@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.51.4.13 2004/01/29 21:33:17 kakace Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.51.4.14 2004/05/20 21:13:14 kakace Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -391,9 +391,9 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "You can turn off a project by setting \":0\" or \"=0\" after the project's\n"
   "name - for instance, \"XYZ:0\" tells your client not to work on, or request\n"
   "work for, the XYZ project."
-  #if defined(HAVE_OGR_CORES) && ((CLIENT_OS == OS_MACOS) || \
-    (CLIENT_OS == OS_NETWARE) /*|| (CLIENT_OS == OS_RISCOS)*/ || \
-    (CLIENT_OS == OS_WIN16))
+  #if (defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2))   \
+    && ((CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_NETWARE) \
+       /*|| (CLIENT_OS == OS_RISCOS)*/ || (CLIENT_OS == OS_WIN16))
                              " OGR is automatically disabled for non-preemptive\n"
   "operating environments running on low(er)-end hardware. For details, see\n"
   "http://www.distributed.net/faq/cache/188.html"
@@ -500,7 +500,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "Internet, or the cost of your dialup connection is negligible. While you\n"
   "could theoretically enter any number in the fields here, the client has\n"
   "internal limits on the number of packets that it can safely deal with.\n"
-#ifdef HAVE_OGR_CORES
+#if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
   "\n"
   "The number of stats units per packet is assumed to be 1 when the number of\n"
   "stats units cannot be determined before the packet is completed (ie for OGR).\n"
@@ -524,7 +524,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "For fixed (static) connections, you should set this to a low value, eg\n"
   "three to six hours. For dialup connections, set this to a value high\n"
   "enough to ensure that the client will not prematurely run out of work.\n"
-#ifdef HAVE_OGR_CORES
+#if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
   "\n"
   "Currently not implemented for OGR because the amount of work in an\n"
   "unprocessed packet cannot be predicted.\n"

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.20 2004/05/07 19:34:42 jlawson Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.21 2004/05/20 21:13:14 kakace Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -521,7 +521,6 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
       return contestid;
     }
     #endif
-    #if defined(HAVE_OGR_CORES)
     #if defined(HAVE_OGR_PASS2)
     case OGR_P2:
     {
@@ -543,6 +542,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
       return contestid;
     }
     #endif
+    #if defined(HAVE_OGR_CORES)
     case OGR:
     {
       //24/2-22-32-21-5-1-12
@@ -952,7 +952,6 @@ static int __InternalLoadState( InternalProblem *thisprob,
     }
   #endif
 
-  #if defined(HAVE_OGR_CORES)
   #if defined(HAVE_OGR_PASS2)
   case OGR_P2:
   {
@@ -997,6 +996,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
     break;
   }
   #endif
+  #if defined(HAVE_OGR_CORES)
   case OGR:
   {
     int r;
@@ -1151,7 +1151,6 @@ int ProblemRetrieveState( void *__thisprob,
                   sizeof(ContestWork));
           break;
         }
-        #if defined(HAVE_OGR_CORES)
         #if defined(HAVE_OGR_PASS2)
         case OGR_P2:
         {
@@ -1182,6 +1181,7 @@ int ProblemRetrieveState( void *__thisprob,
           break;
         }
         #endif
+        #if defined(HAVE_OGR_CORES)
         case OGR:
         {
           (thisprob->pub_data.unit_func.ogr)->getresult(
@@ -1607,7 +1607,7 @@ static int Run_OGR( InternalProblem *thisprob, /* already validated */
 static int Run_OGR_P2( InternalProblem *thisprob, /* already validated */
                     u32 *iterationsP, int *resultcode)
 {
-#if !defined(HAVE_OGR_CORES) || !defined(HAVE_OGR_PASS2)
+#if !defined(HAVE_OGR_PASS2)
   thisprob = thisprob;
   iterationsP = iterationsP;
 #else
@@ -2279,7 +2279,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
     }
     case OGR_P2:
     {
-      #if defined(HAVE_OGR_CORES) && defined (HAVE_OGR_PASS2)
+      #if defined (HAVE_OGR_PASS2)
       return 1;
       #else
       return 0;
@@ -2672,8 +2672,7 @@ static unsigned int __compute_permille(unsigned int cont_i,
     }
     break;
 #endif
-#ifdef HAVE_OGR_CORES
-  #ifdef HAVE_OGR_PASS2
+#ifdef HAVE_OGR_PASS2
     case OGR_P2:
     if (work->ogr_p2.workstub.worklength > (u32)work->ogr_p2.workstub.stub.length)
     {
@@ -2682,7 +2681,8 @@ static unsigned int __compute_permille(unsigned int cont_i,
                 +work->ogr_p2.workstub.stub.diffs[work->ogr_p2.workstub.stub.length+1]/10;
     }
     break;
-  #endif
+#endif
+#ifdef HAVE_OGR_CORES
     case OGR:
     if (work->ogr.workstub.worklength > (u32)work->ogr.workstub.stub.length)
     {
@@ -2765,8 +2765,7 @@ int WorkGetSWUCount( const ContestWork *work,
       }
       break;
 #endif
-#ifdef HAVE_OGR_CORES
-  #ifdef HAVE_OGR_PASS2
+#ifdef HAVE_OGR_PASS2
       case OGR_P2:
       {
         if (swucount && rescode != RESULT_WORKING)
@@ -2779,7 +2778,8 @@ int WorkGetSWUCount( const ContestWork *work,
         }
       } /* OGR-P2 */
       break;
-  #endif
+#endif
+#ifdef HAVE_OGR_CORES
       case OGR:
       {
         if (swucount && rescode != RESULT_WORKING)
@@ -2792,7 +2792,7 @@ int WorkGetSWUCount( const ContestWork *work,
         }
       } /* OGR */
       break;
-#endif /* HAVE_OGR_CORES */
+#endif
 #ifdef HAVE_CRYPTO_V2
       case RC5_72:
       {
@@ -2974,8 +2974,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
             } /* case: crypto */
             break;
   #endif /* HAVE_CRYPTO_V1 */
-  #ifdef HAVE_OGR_CORES
-        #ifdef HAVE_OGR_PASS2
+  #ifdef HAVE_OGR_PASS2
             case OGR_P2:
             {
               dcounthi = work.ogr_p2.nodes.hi;
@@ -3019,7 +3018,8 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
               }
             } /* OGR-P2 */
             break;
-        #endif
+  #endif
+  #ifdef HAVE_OGR_CORES
             case OGR:
             {
               dcounthi = work.ogr.nodes.hi;
@@ -3063,7 +3063,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
               }
             } /* OGR */
             break;
-  #endif /* HAVE_OGR_CORES */
+  #endif
   #ifdef HAVE_CRYPTO_V2
             case RC5_72:
             {

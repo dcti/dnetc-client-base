@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.19 2004/03/29 17:58:16 snikkel Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.20 2004/05/20 21:13:14 kakace Exp $"; }
 
 //#define TRACE
 
@@ -22,7 +22,7 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.19 2004/03/29 17:58:16 snikkel Exp $"; }
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
 #include "util.h"      // TRACE_OUT, DNETC_UNUSED_*
 
-#if defined(HAVE_OGR_CORES)
+#if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
 
 /* ======================================================================== */
 
@@ -30,7 +30,7 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.19 2004/03/29 17:58:16 snikkel Exp $"; }
    note: we may have more prototypes here than cores in the client
    note2: if you need some 'cdecl' value define it in selcore.h to CDECL */
 
-
+#if defined(HAVE_OGR_CORES)
 #if (CLIENT_CPU == CPU_POWERPC)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
     #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
@@ -57,7 +57,7 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.19 2004/03/29 17:58:16 snikkel Exp $"; }
 #else
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
 #endif
-
+#endif  /* HAVE_OGR_CORES */
 
 #if defined(HAVE_OGR_PASS2)
 
@@ -93,7 +93,7 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.19 2004/03/29 17:58:16 snikkel Exp $"; }
 
 /* ======================================================================== */
 
-
+#if defined(HAVE_OGR_CORES)
 int InitializeCoreTable_ogr(int first_time)
 {
   DNETC_UNUSED_PARAM(first_time);
@@ -147,7 +147,7 @@ void DeinitializeCoreTable_ogr()
 {
   /* ogr does not require any deinitialization */
 }
-
+#endif  /* HAVE_OGR_CORES */
 
 #if defined(HAVE_OGR_PASS2)
 int InitializeCoreTable_ogr_p2(int first_time)
@@ -435,6 +435,7 @@ int selcoreGetPreselectedCoreForProject_ogr()
 
 /* ---------------------------------------------------------------------- */
 
+#if defined(HAVE_OGR_CORES)
 int selcoreSelectCore_ogr(unsigned int threadindex,
                           int *client_cpuP, struct selcore *selinfo)
 {
@@ -538,6 +539,7 @@ int selcoreSelectCore_ogr(unsigned int threadindex,
 
   return -1; /* core selection failed */
 }
+#endif
 
 /* ------------------------------------------------------------- */
 
@@ -643,4 +645,4 @@ int selcoreSelectCore_ogr_p2(unsigned int threadindex,
 #endif /* HAVE_OGR_PASS2 */
 /* ------------------------------------------------------------- */
 
-#endif // defined(HAVE_OGR_CORES)
+#endif // defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)

@@ -8,13 +8,13 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.94.2.9 2004/02/14 14:16:26 kakace Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.94.2.10 2004/05/20 21:13:14 kakace Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
 #include "projdata.h" /* RC5, DES, ..., CONTEST_COUNT */
 #include "selcore.h"
-#if defined(HAVE_OGR_CORES)
+#if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
 #include "ogr.h"      /* OGR core stuff */
 #endif
 
@@ -66,7 +66,7 @@ enum {
      #define CORE_MEM_ALIGNMENT 4
   #endif
 #endif
-#if defined(HAVE_OGR_CORES)
+#if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
   #if defined(HAVE_OGR_PASS2)
      #define HAVE_OGR_FINALIZE
   #endif
@@ -126,6 +126,7 @@ typedef union
     struct {u32 hi,lo;} nodes;            // nodes completed
     u32    iterations;
   } DNETC_PACKED ogr;                     /* 40 bytes */
+  #endif
   #if defined(HAVE_OGR_PASS2)
   struct { // OGR-P2 : Should overlap with the corresponding OGR members for safety reasons !
     struct WorkStub workstub;             // stub to work on (28 bytes)
@@ -133,8 +134,7 @@ typedef union
     u32    minpos;
     struct {u32 hi,lo;} ticket;           // OGR-P2 addition : opaque ticket
   } DNETC_PACKED ogr_p2;                  /* 48 bytes */
-  #endif // HAVE_OGR_PASS2
-  #endif // HAVE_OGR_CORES
+  #endif
   struct {
     char unused[80];
   } DNETC_PACKED unused;

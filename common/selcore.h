@@ -5,11 +5,11 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.16.2.7 2003/12/13 12:57:14 kakace Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.16.2.8 2004/05/20 21:13:14 kakace Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
-#if defined(HAVE_OGR_CORES)
+#if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
 #include "ogr.h"
 #endif
 
@@ -25,7 +25,7 @@ extern "C" {
 typedef s32 gen_func( RC5UnitWork *, u32 *, void * );
 typedef u32 CDECL rc5_func( RC5UnitWork *, u32 );
 typedef u32 des_func( RC5UnitWork *, u32 *, char * );
-#if defined(HAVE_OGR_CORES)
+#if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
 typedef CoreDispatchTable *ogr_func;
 #endif
 typedef s32 CDECL gen_72_func( RC5_72UnitWork *, u32 *, void * );
@@ -43,7 +43,7 @@ typedef union
   #endif
 
   /* OGR */
-  #if defined(HAVE_OGR_CORES)
+  #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
   CoreDispatchTable *ogr;
   #endif
 
@@ -184,6 +184,12 @@ int selcoreSelectCore_ogr( unsigned int threadindex,
 int InitializeCoreTable_ogr_p2(int first_time);
 
 void DeinitializeCoreTable_ogr_p2();
+
+const char **corenames_for_contest_ogr();
+
+int apply_selcore_substitution_rules_ogr(int cindex);
+
+int selcoreGetPreselectedCoreForProject_ogr();
 
 int selcoreSelectCore_ogr_p2( unsigned int threadindex,
                            int *client_cpuP, struct selcore *selinfo );

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.64 2004/02/14 14:16:26 kakace Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.65 2004/05/20 21:13:14 kakace Exp $"; }
 
 //#define TRACE
 
@@ -53,8 +53,11 @@ const char **corenames_for_contest( unsigned int cont_i )
       return corenames_for_contest_des();
 #endif
 #ifdef HAVE_OGR_CORES
-    case OGR_P2:
     case OGR:
+      return corenames_for_contest_ogr();
+#endif
+#ifdef HAVE_OGR_PASS2
+    case OGR_P2:
       return corenames_for_contest_ogr();
 #endif
     default:
@@ -103,8 +106,11 @@ int apply_selcore_substitution_rules(unsigned int contestid, int cindex)
       return apply_selcore_substitution_rules_des(cindex);
 #endif
 #ifdef HAVE_OGR_CORES
-    case OGR_P2:
     case OGR:
+      return apply_selcore_substitution_rules_ogr(cindex);
+#endif
+#ifdef HAVE_OGR_PASS2
+    case OGR_P2:
       return apply_selcore_substitution_rules_ogr(cindex);
 #endif
     default:
@@ -461,8 +467,11 @@ int selcoreGetPreselectedCoreForProject(unsigned int projectid)
       return selcoreGetPreselectedCoreForProject_des();
 #endif
 #ifdef HAVE_OGR_CORES
-    case OGR_P2:
     case OGR:
+      return selcoreGetPreselectedCoreForProject_ogr();
+#endif
+#ifdef HAVE_OGR_PASS2
+    case OGR_P2:
       return selcoreGetPreselectedCoreForProject_ogr();
 #endif
     default:
@@ -620,11 +629,11 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     case DES:
       return selcoreSelectCore_des( threadindex, client_cpuP, selinfo );
 #endif
-#ifdef HAVE_OGR_CORES
 #ifdef HAVE_OGR_PASS2
     case OGR_P2:
       return selcoreSelectCore_ogr_p2( threadindex, client_cpuP, selinfo );
 #endif
+#ifdef HAVE_OGR_CORES
     case OGR:
       return selcoreSelectCore_ogr( threadindex, client_cpuP, selinfo );
 #endif
