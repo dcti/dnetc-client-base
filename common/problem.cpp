@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.153 2002/09/23 16:58:36 acidblood Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.154 2002/09/23 21:19:03 acidblood Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -1157,30 +1157,30 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
   };
 
   // Checks passed, increment keys done count.
-  thisprob->priv_data.contestwork.crypto.keysdone.lo += *keyscheckedP;
-  if (thisprob->priv_data.contestwork.crypto.keysdone.lo < *keyscheckedP)
-    thisprob->priv_data.contestwork.crypto.keysdone.hi++;
+  thisprob->priv_data.contestwork.bigcrypto.keysdone.lo += *keyscheckedP;
+  if (thisprob->priv_data.contestwork.bigcrypto.keysdone.lo < *keyscheckedP)
+    thisprob->priv_data.contestwork.bigcrypto.keysdone.hi++;
 
   // Update data returned to caller
   if (*resultcode == RESULT_FOUND)  //(*keyscheckedP < keystocheck)
   {
     // found it!
-    u32 keylo = thisprob->priv_data.contestwork.crypto.key.lo;
-    thisprob->priv_data.contestwork.crypto.key.lo  += thisprob->priv_data.contestwork.crypto.keysdone.lo;
-    thisprob->priv_data.contestwork.crypto.key.mid += thisprob->priv_data.contestwork.crypto.keysdone.mid;
-    thisprob->priv_data.contestwork.crypto.key.hi  += thisprob->priv_data.contestwork.crypto.keysdone.hi;
-    if (thisprob->priv_data.contestwork.crypto.key.lo < keylo)
+    u32 keylo = thisprob->priv_data.contestwork.bigcryptocrypto.key.lo;
+    thisprob->priv_data.contestwork.bigcrypto.key.lo  += thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
+    thisprob->priv_data.contestwork.bigcrypto.key.mid += thisprob->priv_data.contestwork.bigcrypto.keysdone.mid;
+    thisprob->priv_data.contestwork.bigcrypto.key.hi  += thisprob->priv_data.contestwork.bigcrypto.keysdone.hi;
+    if (thisprob->priv_data.contestwork.bigcrypto.key.lo < keylo)
     {
-      thisprob->priv_data.contestwork.crypto.key.mid++; // wrap occured ?
-      if (thisprob->priv_data.contestwork.crypto.key.mid == 0)
-        thisprob->priv_data.contestwork.crypto.key.hi++;
+      thisprob->priv_data.contestwork.bigcrypto.key.mid++; // wrap occured ?
+      if (thisprob->priv_data.contestwork.bigcrypto.key.mid == 0)
+        thisprob->priv_data.contestwork.bigcrypto.key.hi++;
     }
     return RESULT_FOUND;
   }
 
-  if ( ( thisprob->priv_data.contestwork.crypto.keysdone.hi > thisprob->priv_data.contestwork.crypto.iterations.hi ) ||
-       ( ( thisprob->priv_data.contestwork.crypto.keysdone.hi == thisprob->priv_data.contestwork.crypto.iterations.hi ) &&
-       ( thisprob->priv_data.contestwork.crypto.keysdone.lo >= thisprob->priv_data.contestwork.crypto.iterations.lo ) ) )
+  if ( ( thisprob->priv_data.contestwork.bigcrypto.keysdone.hi > thisprob->priv_data.contestwork.bigcrypto.iterations.hi ) ||
+       ( ( thisprob->priv_data.contestwork.bigcrypto.keysdone.hi == thisprob->priv_data.contestwork.bigcrypto.iterations.hi ) &&
+       ( thisprob->priv_data.contestwork.bigcrypto.keysdone.lo >= thisprob->priv_data.contestwork.bigcrypto.iterations.lo ) ) )
   {
     // done with this block and nothing found
     *resultcode = RESULT_NOTHING;
@@ -1188,17 +1188,17 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
   }
 
   #ifdef STRESS_THREADS_AND_BUFFERS
-  if (core_prob->priv_data.contestwork.crypto.key.hi  ||
-      core_prob->priv_data.contestwork.crypto.key.mid ||
-      core_prob->priv_data.contestwork.crypto.key.lo) /* not bench */
+  if (core_prob->priv_data.contestwork.bigcrypto.key.hi  ||
+      core_prob->priv_data.contestwork.bigcrypto.key.mid ||
+      core_prob->priv_data.contestwork.bigcrypto.key.lo) /* not bench */
   {
-    core_prob->priv_data.contestwork.crypto.key.hi = 0;
-    core_prob->priv_data.contestwork.crypto.key.mid = 0;
-    core_prob->priv_data.contestwork.crypto.key.lo = 0;
-    core_prob->priv_data.contestwork.crypto.keysdone.hi = 
-      core_prob->priv_data.contestwork.crypto.iterations.hi;
-    core_prob->priv_data.contestwork.crypto.keysdone.lo = 
-      core_prob->priv_data.contestwork.crypto.iterations.lo;
+    core_prob->priv_data.contestwork.bigcrypto.key.hi = 0;
+    core_prob->priv_data.contestwork.bigcrypto.key.mid = 0;
+    core_prob->priv_data.contestwork.bigcrypto.key.lo = 0;
+    core_prob->priv_data.contestwork.bigcrypto.keysdone.hi = 
+      core_prob->priv_data.contestwork.bigcrypto.iterations.hi;
+    core_prob->priv_data.contestwork.bigcrypto.keysdone.lo = 
+      core_prob->priv_data.contestwork.bigcrypto.iterations.lo;
     *resultcode = RESULT_NOTHING;
   }
   #endif
@@ -1637,7 +1637,7 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
     /* Run_XXX retcode:
     ** although the value returned by Run_XXX is usually the same as
     ** the priv_data.last_resultcode it is not always the case. For instance, 
-    ** if post-LoadState() initialization  failed, but can be deferred, Run_XXX
+    ** if post-LoadState() initialization failed, but can be deferred, Run_XXX
     ** may choose to return -1, but keep priv_data.last_resultcode at 
     ** RESULT_WORKING.
     */
@@ -2188,6 +2188,28 @@ static unsigned int __compute_permille(unsigned int cont_i,
     }
     break;
 #endif
+    case RC5_72:
+    {
+      if (work->bigcrypto.keysdone.lo || work->bigcrypto.keysdone.hi)
+      {
+        permille = 1000;
+        if ((work->bigcrypto.keysdone.hi < work->bigcrypto.iterations.hi) ||
+            ((work->bigcrypto.keysdone.hi== work->bigcrypto.iterations.hi) &&
+            (work->bigcrypto.keysdone.lo < work->bigcrypto.iterations.lo)))
+        {
+          u32 hi,lo;
+          __u64mul( work->bigcrypto.keysdone.hi, work->bigcrypto.keysdone.lo,
+                    0, 1000, &hi, &lo );   
+          __u64div( hi, lo, work->bigcrypto.iterations.hi,
+                            work->bigcrypto.iterations.lo, &hi, &lo, 0, 0);
+          if (lo > 1000)
+            lo = 1000;
+          permille = lo;   
+        }
+      }
+    }
+    break;
+
     default:
     PROJECT_NOT_HANDLED(cont_i);
     break;
@@ -2216,8 +2238,12 @@ int WorkGetSWUCount( const ContestWork *work,
       case DES:
       case CSC:
       { 
-        u32 tcounthi = work->crypto.iterations.hi;
-        u32 tcountlo = work->crypto.iterations.lo;
+        u32 tcounthi = (contestid == RC5_72) ?
+                       work->bigcrypto.iterations.hi :
+                       work->crypto.iterations.hi;
+        u32 tcountlo = (contestid == RC5_72) ?
+                       work->bigcrypto.iterations.lo :
+                       work->crypto.iterations.lo;
         if (contestid == DES)
         {
           tcounthi <<= 1; tcounthi |= (tcountlo >> 31); tcountlo <<= 1; 
@@ -2235,7 +2261,7 @@ int WorkGetSWUCount( const ContestWork *work,
         if (contestid == RC5_72 && rescode != RESULT_WORKING &&
             ((tcounthi != 0) || (tcounthi == 0 && tcountlo != 0x00100000UL)))
         {
-          last_rc5_72_prefix = work->crypto.key.hi;
+          last_rc5_72_prefix = work->bigcrypto.key.hi;
         }
       }
       break;
@@ -2464,6 +2490,60 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
             } /* OGR */      
             break;
   #endif /* HAVE_OGR_CORES */
+            case RC5_72:
+            { 
+              unsigned int units, twoxx;
+              rate2wuspeed = 1UL<<28; // FIXME: 2^32 doesn't fit here
+  
+              ccounthi = thisprob->pub_data.startkeys.hi;
+              ccountlo = thisprob->pub_data.startkeys.lo;
+              tcounthi = work.bigcrypto.iterations.hi;
+              tcountlo = work.bigcrypto.iterations.lo;
+              dcounthi = work.bigcrypto.keysdone.hi;
+              dcountlo = work.bigcrypto.keysdone.lo;
+              /* current = donecount - startpos */
+              ccountlo = dcountlo - ccountlo;
+              ccounthi = dcounthi - ccounthi;
+              if (ccountlo > dcountlo)
+                ccounthi--;
+  
+              units = tcounthi; 
+              twoxx = 32;
+              if (!units) /* less than 2^32 packet (eg test) */
+              {
+                units = tcountlo >> 20;
+                twoxx = 20;
+              }
+              if (rescode != RESULT_NOTHING && rescode != RESULT_FOUND)
+              {
+                tcounthi = 0;
+                tcountlo = 0;
+              }
+              if (flags & P_INFO_SIGBUF)
+              {
+                sprintf( info->sigbuf, "%02lX:%08lX:%08lX:%u*2^%u", 
+                         (unsigned long) ( work.bigcrypto.key.hi ),
+                         (unsigned long) ( work.bigcrypto.key.mid ),
+                         (unsigned long) ( work.bigcrypto.key.lo ),
+                         units, twoxx );
+              }
+              if (flags & P_INFO_CWPBUF)
+              {
+                // ToDo: do something different here - any ideas for a cwp for crypto packets?
+                sprintf( info->cwpbuf, "%02lX:%08lX:%08lX:%u*2^%u", 
+                         (unsigned long) ( work.bigcrypto.key.hi ),
+                         (unsigned long) ( work.bigcrypto.key.mid ),
+                         (unsigned long) ( work.bigcrypto.key.lo ),
+                         units, twoxx );
+              }
+              if ((flags & P_INFO_SWUCOUNT) && (tcounthi || tcountlo)) /* only if finished */
+              {
+                /* note that we return zero for test packets */
+                info->swucount = tcounthi*100;
+              }
+            } /* case: crypto */
+            break;
+
             default:
             PROJECT_NOT_HANDLED(contestid);
             break;  
