@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.84  1998/08/19 01:31:05  silby
+# Cazatnged -fno-handle-exceptions to -fno-exceptions, since GCC told me that was what to do. <g> Also, removed -DPIPELINE_COUNT for linux x85 builds - it's now a variable for x86.
+#
 # Revision 1.83  1998/08/10 22:36:53  cyruspatel
 # Added support for triggers.cpp and buffupd.cpp
 #
@@ -315,7 +318,7 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
     -fexpensive-optimizations -fomit-frame-pointer \
     -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
     -funroll-loops -Wall -Icommon -Irc5 -Ides -Iplatforms \
-    -fno-inline-functions -fno-handle-exceptions'
+    -fno-inline-functions -fno-exceptions'
 
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
@@ -444,6 +447,8 @@ RC5X86_SRCS="rc5/rc5-486-rg.cpp rc5/rc5-6x86-rg.cpp rc5/rc5p5brf.cpp rc5/rc5-p6-
 DESX86_SRCS="des/des-x86.cpp"
 DESMMX_SRCS="des/deseval-meggs3-mmx.cpp des/sboxes-mmx.cpp des/des-slice-meggs.cpp"
 DESULTRA_SRCS_C="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/simple.c platforms/ultrasparc/des_ultra_crunch.c platforms/ultrasparc/kwan_from_to.c platforms/ultrasparc/do_all.c platforms/ultrasparc/do_all_fancy.c platforms/ultrasparc
+
+
 
 /do_s1.c platforms/ultrasparc/do_s1_s3.c platforms/ultrasparc/do_s2.c platforms/ultrasparc/do_s3.c platforms/ultrasparc/do_s4.c platforms/ultrasparc/do_s5.c platforms/ultrasparc/do_s6.c platforms/ultrasparc/do_s7.c platforms/ultrasparc/do_s8.c"
 DESULTRA_SRCS_ASM="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/des_ultra_crunch.c"
@@ -761,7 +766,7 @@ case "$1" in
     *x86-linux-egcs)              # uses EGCS options
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
@@ -771,7 +776,7 @@ case "$1" in
     *x86-linux-egcs-cramer)       # special target for cramer's non-standard installation
 	TARGET_AS="egcs -c"
 	TARGET_CC="egcs"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
@@ -780,7 +785,7 @@ case "$1" in
 
     *x86-linux-gcc)               # uses standard GCC options plus '-pipe'
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2"
+	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -static -D__showids__"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
@@ -789,7 +794,7 @@ case "$1" in
 
     *x86-linux-gcc-nocurses)      # client without curses and termios, uses standard GCC options plus '-pipe'
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2 -DNOCURSES -DNOTERMIOS"
+	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -static -D__showids__ -DNOCURSES -DNOTERMIOS"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
@@ -798,7 +803,7 @@ case "$1" in
     *x86-linux-egcs-debug)        # debug version of x86-linux-egcs
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DPIPELINE_COUNT=2 -D__showids__"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -D__showids__"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_STRIP="touch"
@@ -808,7 +813,7 @@ case "$1" in
     *x86-linux-egcs-debug-cramer) # debug version of x86-linux-egcs-cramer
 	TARGET_AS="egcs -c"
 	TARGET_CC="egcs -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DPIPELINE_COUNT=2 -D__showids__"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -D__showids__"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_STRIP="touch"
@@ -818,7 +823,7 @@ case "$1" in
     *x86-linux-gcc-debug)         # debug version of x86-linux-gcc
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc -g"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DPIPELINE_COUNT=2 -D__showids__"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -D__showids__"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_STRIP="touch"
@@ -829,7 +834,7 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc -g"
 	# -Wno-unused to avoid tons of warnings on some ultra files
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 -Wno-unused -D__showids__ -DPIPELINE_COUNT=2 $OPTS_DES_ULTRA_C"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -Wno-unused -D__showids__ $OPTS_DES_ULTRA_C"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESULTRA_SRCS_C"
 	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_LIBS="-lncurses"
@@ -840,7 +845,7 @@ case "$1" in
 	TARGET_AS="egcs -c"
 	TARGET_CC="egcs -g"
 	# -Wno-unused to avoid tons of warnings on some ultra files
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 -Wno-unused -D__showids__ -DPIPELINE_COUNT=2 $OPTS_DES_ULTRA_C"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -Wno-unused -D__showids__ $OPTS_DES_ULTRA_C"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESULTRA_SRCS_C"
 	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_LIBS="-lncurses"
@@ -850,7 +855,7 @@ case "$1" in
     *x86-linux-aout-egcs)          # aout version, using EGCS options
 	TARGET_AS="i486-pc-linux-gnuaout-gcc -c"
 	TARGET_CC="i486-pc-linux-gnuaout-gcc"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
@@ -860,7 +865,7 @@ case "$1" in
     *x86-linux-aout-egcs-cramer)   # special target for cramer's non-standard installation
 	TARGET_AS="i486-pc-linux-gnuaout-egcs -c"
 	TARGET_CC="i486-pc-linux-gnuaout-egcs"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
@@ -870,7 +875,7 @@ case "$1" in
     *x86-linux-mt-egcs)            # multithreaded build using EGCS options
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2 -DMULTITHREAD"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
@@ -880,7 +885,7 @@ case "$1" in
     *x86-linux-mt-egcs-cramer)     # special target for cramer's non-standard installation
 	TARGET_AS="egcs -c"
 	TARGET_CC="egcs"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2 -DMULTITHREAD"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
@@ -889,7 +894,7 @@ case "$1" in
 
     *x86-linux-mt-gcc)             # multithreaded build using GCC options
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2 -DMULTITHREAD"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -D__showids__ -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
@@ -898,7 +903,7 @@ case "$1" in
 
     *x86-linux-mt-slice-kwan-gcc)  # using slice not bryddes
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -D__showids__ -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DKWAN"
+	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -D__showids__ -DBIT_32 -DMULTITHREAD -DKWAN"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="platforms/x86ident.S"
