@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.20 2000/11/11 13:15:42 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.21 2000/11/12 22:54:43 cyp Exp $"
 
 #include "problem.h" /* WorkRecord, CONTEST_COUNT */
 #include "lurk.h"    /* lurk_conf structure */
@@ -13,7 +13,6 @@
 #define __TEXTIFY(x) #x
 #define _TEXTIFY(x) __TEXTIFY(x)
 
-#define BUFTHRESHOLD_DEFAULT             24  /* Now in work units */
 #define PREFERREDBLOCKSIZE_DEFAULT       31  /* was 30, now 31 */
 #define PREFERREDBLOCKSIZE_MIN           28
 #define PREFERREDBLOCKSIZE_MAX           33
