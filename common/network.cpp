@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.46  1998/09/30 22:27:55  remi
+// http connections should always be send to port 80 (?).
+//
 // Revision 1.45  1998/09/28 03:44:16  cyp
 // Added no-support wrapper around shutdown()
 //
@@ -119,7 +122,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.45 1998/09/28 03:44:16 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.46 1998/09/30 22:27:55 remi Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -1085,21 +1088,21 @@ s32 Network::Put( u32 length, const char * data )
 
     if ( httpid[0] ) 
       {
-      sprintf(header, "POST http://%s:%li/cgi-bin/rc5.cgi HTTP/1.0\r\n"
+      sprintf(header, "POST http://%s:80/cgi-bin/rc5.cgi HTTP/1.0\r\n"
          "Proxy-authorization: Basic %s\r\n"
          "Proxy-Connection: Keep-Alive\r\n"
          "Content-Type: application/octet-stream\r\n"
          "Content-Length: %lu\r\n\r\n",
-         ipbuff, (long) lastport,
+         ipbuff, //(long) lastport,
          httpid,
          (unsigned long) outbuf.GetLength());
       } 
     else 
       {
-      sprintf(header, "POST http://%s:%li/cgi-bin/rc5.cgi HTTP/1.0\r\n"
+      sprintf(header, "POST http://%s:80/cgi-bin/rc5.cgi HTTP/1.0\r\n"
          "Content-Type: application/octet-stream\r\n"
          "Content-Length: %lu\r\n\r\n",
-         ipbuff, (long) lastport,
+         ipbuff, //(long) lastport,
          (unsigned long) outbuf.GetLength());
       }
     #if (CLIENT_OS == OS_OS390)
