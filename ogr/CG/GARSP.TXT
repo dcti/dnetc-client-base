@@ -1,0 +1,157 @@
+GARSP Improvements:
+
+GARSP has been modified in many significant ways from
+version 5.13.  The most obvious one is that the external
+CHOOSE file has been eliminated.   To accomplish this,
+several other changes were required, including eliminating
+the use of CHOOSE for the middle of the ruler (between the
+two middle marks) and selectively skipping generation of
+CHOOSE data (i.e., avoid calculating CHOOSE for bitmaps that
+conflict with the current status of the DIST arrays).
+Rather than try to describe in long format what each of the
+changes were, the following is a brief list of the major
+changes and notes as to their impact, etc.
+
+1) No external choose file.
+     The external CHOOSE file is gone.  In its place, we
+     calculate a CHOOSE file "on-the-fly" in memory.  Thus,
+     we no longer check the CRC's, nor do we have the
+     read/write operations and the separate CHOOSE.C file.
+     As currently stands, CHOOSE is calculated at varying
+     depths in the recursion.  This has a fantastic benefit
+     that certain bits are already taken (especially for
+     "short stubs").  These "implicit" bits when added to
+     the bits we calculate CHOOSE for, result in the
+     equivalent of a VERY high MAXBITS setting in the old
+     version of GARSP (v5.xx) and much improved GARSP
+     speeds.
+
+2) Switched from using CHOOSE to MINSUM when in the middle
+of the ruler
+     Version 5.13 and earlier the CHOOSE(N_marks) limit
+     between the two middle marks.  This was a reasonable
+     limit, but calculating the CHOOSE for these spans was
+     very time extensive.  To make CHOOSE "on-the-fly" it
+     was necessary to find a different way to set the
+     limits. As luck would have it, the limits are already
+     strong due to the second middle mark.  In addition, a
+     MINSUM (sum of the first N available diffs) is now used
+     whenever the mark being placed is to the left of the
+     average mark location (see the code for more on this)
+     indicating that a MINSUM is likely to be worth
+     calculating.
+
+3) Added MINSUM limits to the OGR limits in the front part
+of the ruler
+     The MINSUM is checked whenever the placed mark is less
+     than the average for that mark.  It is also used not
+     only against the right side edge, but against the
+     middle marks as well.  An examination of the code will
+     show that several limits are used.
+     
+      The single MINSUM is simply the limit of the N
+     smallest available diffs.  However, it is often more
+     efficient to consider the N+(N-1) diffs.  Why?
+     Consider the following pattern:  we have to place, say,
+     4 more diffs.  The available diffs are
+     1,2,3,4,5,6,7,8,9,...etc.  If we look only at the 1-
+     diffs, the smallest sum is 1+2+3+4=10.  However, if we
+     also consider that the 1-diffs, when combined to make 2-
+     diffs, must look something like this:
+         x1  x2  x3  x4
+           x5  x6  x7
+     then the sum must be equal to x1+x2+x3+x4 (>=10 from
+     above) ...or... (x1+x5+x6+x7+x4)/2.  This is because
+     x5=x1+x2, etc.  So we have also that the length is
+     (x1+x2+x3+x4+x5+x6+x7+(x1+x4))/3.  This must therefore
+     be >= (1+2+3+4+5+6+7+1+2)/3 = 31/3 or >=11. This limit
+     is stronger than the "10" we got using the single
+     MINSUM.
+     
+     Although there are cases where a triple minsum (or many
+     of a series of possibilities) can produce even tighter
+     limits, we found that the combination of single and
+     double MINSUMs provided the most benefit for the least
+     cost.
+     
+4) Added a MINSUM to the middle marks for the front of the
+ruler.
+     The OGR-22 and OGR-23 are very "tight" rulers. For
+     example, the largest 1st diff in the OGR-22 ruler must
+     be <=23 (356-333) and the OGR-23 is even tighter!
+     Tight rulers tend to spend more time in the front half
+     of the ruler than loose ones.  E.g., the search for
+     OGR-21 may have spent 95% or more of its time after the
+     second middle mark.  The search for OGR-22 and OGR-23
+     will spend a MUCH higher fraction of their time before
+     the second middle mark.
+     
+      To avoid too much effort in the front portion of the
+     ruler, MINSUMs to the middle marks were added back in
+     (they were used in early versions of GARSP, but dropped
+     before the final releases for OGR-21).  However, a
+     special form was used ... perhaps best termed a hybrid
+     of the single and double MINSUMs.  Rather than summing
+     the diffs to the first middle mark and then adding the
+     sums to the second middle mark, we consider them all at
+     once. The diffs *between* the two middle marks are only
+     used once.  The diffs *before* the first middle mark
+     are used twice.  So rather than use twice the sum of
+     the first set of diffs, we expand them and instead take
+     the sum of the diffs from the current mark all the way
+     to the second middle mark, and then add "every other"
+     SECOND diff to the first middle mark.  A little
+     analysis with random numbers will show that this is
+     generally much better than dealing with just the 1-
+     diffs.
+     
+5) Exclude from CHOOSE any bitmap combinations that
+"conflict" with the starting stub
+     Again a major difference from the 5.13 version.  To
+     avoid unnecessary calculations, when calculating choose
+     for a given input and ending stub in the save file, the
+     CHOOSE is only calculated for bitmap patterns that
+     exclude the diffs already taken in the starting stub.
+     For example, if the program is being run to solve the 3-
+     13-7 stub, CHOOSE will not be calculated for any bitmap
+     patterns that use a 3, 13, 7, 16, 20, or 23.  this
+     effectively adds 6 to the actual MAXBITS setting in the
+     old (v5.13) GARSP.  E.g., if we use MAXBITS=16 in the
+     new version, this is the same as MAXBITS=22 in the old
+     version.  To facilitate the "compressed" CHOOSE, two
+     routines were added that compress and decompress
+     CHOOSE.
+     
+6) Switched to OGR/MINSUM limits for the last marks to get
+better data localization in CHOOSE
+     CHOOSE data locality can be critical to speed
+     improvements both in terms of the fit into L2 cache and
+     L1 cache.  To increase L1 and L2 cache hits, the tail
+     end of the ruler (the last 4 marks) do not use CHOOSE
+     data, but simply rely on MINSUM and/or OGR limits.
+     Thus, in the critical parts of the search, the data
+     locality is much improved, since the second dimension
+     in the array has been reduced from about 11 (in the old
+     GARSP) to just 5 in the current version.
+     
+7) Choose generation is now done using 2 arrays (64 bits)
+even for 32 bit versions.
+     Since CHOOSE is calculated on the fly, its execution
+     speed is critical.  As such, several improvements to
+     the generation of CHOOSE data were made.  These include
+     using 2 32 bit bitmaps (or 1 64 bit bitmap) which is
+     even more critical for the CHOOSE data for rulers with
+     a lot of marks. (Why didn't we do this for OGR-21???)
+     in addition, to improve the tradeoff between having
+     "perfect" choose data and minimizing the time required
+     to compute it, we currently set a maximum length for
+     all 9 mark rulers to 165 in the CHOOSE calculations.
+     This appears about optimal when considering the total
+     (CHOOSE+GARSP) execution speeds.
+
+8) DD was increased to 48
+     The DD parameter appears to more optimal when increased
+     to about 48 for the OGR-22 search and the current
+     version of GARSP.
+
+
