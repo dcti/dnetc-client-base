@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.13  1998/07/09 03:22:54  silby
+// Changed so that IDT winchip WILL use mmx now also.
+//
 // Revision 1.12  1998/07/08 09:50:36  remi
 // Added support for the MMX bitslicer.
 // GetProcessorType() & 0x100 != 0 if we should use the MMX DES core.
@@ -58,7 +61,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-static const char *id="@(#)$Id: cpucheck-conflict.cpp,v 1.12 1998/07/08 09:50:36 remi Exp $";
+static const char *id="@(#)$Id: cpucheck-conflict.cpp,v 1.13 1998/07/09 03:22:54 silby Exp $";
 return id; }
 #endif
 
@@ -236,8 +239,8 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
     vendorname = "Centaur/IDT";
     cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
     static struct _cpuxref __cpuxref[]={
-      {  0x0540, 1200,   0, "C6"      }, // use Pentium core
-      {  0x0000, 1200,   0, NULL      }  // default core == Pentium
+      {  0x0540, 1200,0x100, "C6"      }, // use Pentium core
+      {  0x0000, 1200,    0, NULL      }  // default core == Pentium
       }; cpuxref = &__cpuxref[0];
     }
   else if ( vendorid == 0x7541) // AMD CPU
