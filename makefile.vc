@@ -40,7 +40,7 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/pathwork.obj   \
 	$(OUTPUTPATH)/cliident.obj   \
 	$(OUTPUTPATH)/lurk.obj \
-	$(OUTPUTPATH)/logging.obj \
+	$(OUTPUTPATH)/logstuff.obj \
 	$(OUTPUTPATH)/des-slice-meggs.obj 
 
 PREBUILT_OBJS =                   \

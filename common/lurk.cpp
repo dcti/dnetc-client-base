@@ -4,7 +4,7 @@
 
 #include "baseincs.h"
 #include "lurk.h"
-#include "logging.h"
+#include "logstuff.h"
 
 Lurk dialup;
 
@@ -179,7 +179,7 @@ s32 Lurk::Start(void)// Initializes Lurk Mode
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
         NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
         (LPTSTR) &lpMsgBuf,0,NULL);
-      LogScreenf("%s\n",lpMsgBuf);
+      LogScreen("%s\n",lpMsgBuf);
       LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
       LocalFree( lpMsgBuf );
       return -1;
@@ -191,7 +191,7 @@ s32 Lurk::Start(void)// Initializes Lurk Mode
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
         NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
         (LPTSTR) &lpMsgBuf,0,NULL);
-      LogScreenf("%s\n",lpMsgBuf);
+      LogScreen("%s\n",lpMsgBuf);
       LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
       LocalFree( lpMsgBuf );
       return -1;
@@ -203,7 +203,7 @@ s32 Lurk::Start(void)// Initializes Lurk Mode
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
         NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
         (LPTSTR) &lpMsgBuf,0,NULL);
-      LogScreenf("%s\n",lpMsgBuf);
+      LogScreen("%s\n",lpMsgBuf);
       LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
       LocalFree( lpMsgBuf );
       return -1;
@@ -215,7 +215,7 @@ s32 Lurk::Start(void)// Initializes Lurk Mode
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
         NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
         (LPTSTR) &lpMsgBuf,0,NULL);
-      LogScreenf("%s\n",lpMsgBuf);
+      LogScreen("%s\n",lpMsgBuf);
       LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
       LocalFree( lpMsgBuf );
       return -1;
@@ -227,7 +227,7 @@ s32 Lurk::Start(void)// Initializes Lurk Mode
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
         NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
         (LPTSTR) &lpMsgBuf,0,NULL);
-      LogScreenf("%s\n",lpMsgBuf);
+      LogScreen("%s\n",lpMsgBuf);
       LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
       LocalFree( lpMsgBuf );
       return -1;
@@ -240,7 +240,7 @@ s32 Lurk::Start(void)// Initializes Lurk Mode
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
         NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
         (LPTSTR) &lpMsgBuf,0,NULL);
-      LogScreenf("%s\n",lpMsgBuf);
+      LogScreen("%s\n",lpMsgBuf);
       LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
       LocalFree( lpMsgBuf );
       return -1;
@@ -327,7 +327,7 @@ else
   switch(returnvalue)
     {
     case ERROR_CANNOT_FIND_PHONEBOOK_ENTRY:
-      LogScreenf("Phonebook entry %s could not be found, aborting dial.\n",
+      LogScreen("Phonebook entry %s could not be found, aborting dial.\n",
                  connectionname);
       return -1;
     case ERROR_CANNOT_OPEN_PHONEBOOK:
@@ -338,13 +338,13 @@ else
       return -1;
     };
 
-LogScreenf("Phonebook entry %s found, dialing.\n",connectionname);
+LogScreen("Phonebook entry %s found, dialing.\n",connectionname);
 returnvalue=rasdial(NULL,NULL,&dialparameters,NULL,NULL,&connectionhandle);
 
 if (returnvalue != 0)
   {  
   rasgeterrorstring(returnvalue,errorstring,sizeof(errorstring));
-  LogScreenf("There was an error initiating a connection: %s\n",errorstring);
+  LogScreen("There was an error initiating a connection: %s\n",errorstring);
   return -1;
   };
 return 1; // If we got here, connection successful.

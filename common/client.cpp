@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.116  1998/08/02 16:17:37  cyruspatel
+// Completed support for logging.
+//
 // Revision 1.115  1998/08/02 05:36:19  silby
 // Lurk functionality is now fully encapsulated inside the Lurk Class, much less code floating inside client.cpp now.
 //
@@ -104,7 +107,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.115 1998/08/02 05:36:19 silby Exp $.
+// Tweaked $Id: client.cpp,v 1.116 1998/08/02 16:17:37 cyruspatel Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -280,7 +283,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.115 1998/08/02 05:36:19 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.116 1998/08/02 16:17:37 cyruspatel Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -294,26 +297,30 @@ return "@(#)$Id: client.cpp,v 1.115 1998/08/02 05:36:19 silby Exp $"; }
 #include "mail.h"
 #include "scram.h"
 #include "convdes.h"
-#include "sleepdef.h"
+#include "sleepdef.h"  //sleep(), usleep()
 #include "threadcd.h"
 #include "buffwork.h"
 #include "clitime.h"
 #include "clirate.h"
 #include "clisrate.h"
 #include "clicdata.h"
-#include "cliident.h"  // CliIdentifyModules()
-#include "cpucheck.h" //GetTimesliceBaseline()
-#define Time() (CliGetTimeString(NULL,1))
-#ifndef DONT_USE_PATHWORK
 #include "pathwork.h"
+#include "cliident.h"  // CliIdentifyModules()
+#include "cpucheck.h"  //GetTimesliceBaseline()
+#include "logstuff.h"  //Log()/LogScreen()/LogScreenPercent()/LogFlush()
+
+#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+#include "lurk.h"      //lurk stuff
 #endif
+
+#define Time() (CliGetTimeString(NULL,1))
 
 // --------------------------------------------------------------------------
 
 #if (CLIENT_OS == OS_AMIGAOS)
 #if (CLIENT_CPU == CPU_68K)
-long __near __stack  = 65536L;	// AmigaOS has no automatic stack extension
-			// seems standard stack isn't enough
+long __near __stack  = 65536L;  // AmigaOS has no automatic stack extension
+      // seems standard stack isn't enough
 #endif // (CLIENT_CPU == CPU_68K)
 #endif // (CLIENT_OS == OS_AMIGAOS)
 
@@ -326,7 +333,6 @@ s32 guiriscos, guirestart;
 Problem problem[2*MAXCPUS];
 volatile u32 SignalTriggered, UserBreakTriggered;
 volatile s32 pausefilefound = 0;
-MailMessage mailmessage;
 
 // --------------------------------------------------------------------------
 
@@ -587,7 +593,7 @@ s32 Client::ForceFetch( u8 contest, Network *netin )
     temp2 = temp1;
     temp1 = CountBufferInput(contest);
 
-    LogScreenf("[%s] %d block%s remain%s in %s\n",Time(),temp1,temp1==1?"":"s",temp1==1?"s":"",
+    LogScreen("[%s] %d block%s remain%s in %s\n",Time(),temp1,temp1==1?"":"s",temp1==1?"s":"",
 #ifdef DONT_USE_PATHWORK
     ini_in_buffer_file[contest]);
 #else
@@ -633,7 +639,7 @@ if (force == 0) // check to see if fetch should be done
   // first, find out if we are already full
   if (CountBufferInput(contest) >= inthreshold[contest]) 
     {
-    if (force == 1) LogScreenf("%s in buffer is already full, no connect needed.\n",(contest == 1 ? "DES":"RC5"));
+    if (force == 1) LogScreen("%s in buffer is already full, no connect needed.\n",(contest == 1 ? "DES":"RC5"));
     return 0;
     };
 
@@ -688,7 +694,7 @@ if (force == 0) // check to see if fetch should be done
       if (!netin) delete net;
       return( -1 );
     }
-    LogScreenf( "[%s] Network::Open Error %d - sleeping for 3 seconds\n", Time(), retry );
+    LogScreen( "[%s] Network::Open Error %d - sleeping for 3 seconds\n", Time(), retry );
     sleep( 3 );
 
 #if (CLIENT_OS == OS_AMIGAOS)
@@ -699,7 +705,7 @@ if (force == 0) // check to see if fetch should be done
 #if defined(LURK)
     if (dialup.CheckForStatusChange() == -1)
       {
-      LogScreenf("TCPIP Connection Lost - Aborting fetch\n");
+      LogScreen("TCPIP Connection Lost - Aborting fetch\n");
       return -3;                 // so stop trying and return
       };
 #endif
@@ -731,7 +737,7 @@ if (force == 0) // check to see if fetch should be done
 
   if ( net->Put( sizeof( Packet ), (char *) &packet ) )
   {
-    LogScreenf( "[%s] Network::Error Unable to send data 1\n", Time() );
+    LogScreen( "[%s] Network::Error Unable to send data 1\n", Time() );
     if (!netin) delete net;
     return( -1 );
   }
@@ -745,14 +751,14 @@ if (force == 0) // check to see if fetch should be done
          ( ntohl( packet.version ) != PACKET_VERSION ) || // version valid
          ( ntohl( packet.op ) != OP_SCRAM ) )  // expected packet
     {
-      LogScreenf( "[%s] Network::Error Bad Data 2\n", Time() );
+      LogScreen( "[%s] Network::Error Bad Data 2\n", Time() );
       if (!netin) delete net;
       return( -1 );
     }
   }
   else
   {
-    LogScreenf( "[%s] Network::Error Read failed 3/%d\n", Time(), (int) err );
+    LogScreen( "[%s] Network::Error Read failed 3/%d\n", Time(), (int) err );
     if (!netin) delete net;
     return( -1 );
   }
@@ -802,7 +808,7 @@ if (force == 0) // check to see if fetch should be done
 
     if ( net->Put( sizeof( Packet ), (char *) &packet ) )
     {
-      LogScreenf( "\n[%s] Network::Error Unable to send data 4\n", Time() );
+      LogScreen( "\n[%s] Network::Error Unable to send data 4\n", Time() );
       if (!netin) delete net;
       return( count ? count : -1 );
     }
@@ -817,14 +823,14 @@ if (force == 0) // check to see if fetch should be done
            ( ntohl( packet.op ) != OP_DATA ) )  // expected packet
       {
 
-        LogScreenf( "\n[%s] Network::Error Bad Data 5\n", Time() );
+        LogScreen( "\n[%s] Network::Error Bad Data 5\n", Time() );
         if (!netin) delete net;
         return( count ? count : -1 );
       }
     }
     else
     {
-      LogScreenf( "\n[%s] Network::Error Read failed 6/%d\n", Time(), (int) err );
+      LogScreen( "\n[%s] Network::Error Read failed 6/%d\n", Time(), (int) err );
       if (!netin) delete net;
       return( count ? count : -1 );
     }
@@ -874,7 +880,7 @@ if (force == 0) // check to see if fetch should be done
     if (packet.iterations == 0)
     {
       packet.iterations = (u32) 1<<31;
-      LogScreenf("\n[%s] Received 2^32 block.  Truncating to 2^31\n", Time());
+      LogScreen("\n[%s] Received 2^32 block.  Truncating to 2^31\n", Time());
     }
     data.iterations.hi = (packet.iterations == 0 ? 1 : 0 );
     data.iterations.lo = packet.iterations;
@@ -934,7 +940,7 @@ if (force == 0) // check to see if fetch should be done
       u32 percent2div = (inthreshold[contest]-more)+count;
       if (((s32)(percent2div)) <= 0) percent2div = 0; 
       u32 percent2 = ((percent2div)?((count*10000)/percent2div):(10000));
-       LogScreenf( "\r[%s] Retrieved block %u of %u (%u.%02u%% transferred) ",
+       LogScreen( "\r[%s] Retrieved block %u of %u (%u.%02u%% transferred) ",
           CliGetTimeString(NULL,1), count, percent2div?percent2div:count,
           percent2/100, percent2%100 );
       }    
@@ -1030,7 +1036,7 @@ if (force == 0) // Check if flush should be done
   // first, find out if we are empty already
   if (CountBufferOutput(contest) < 1)
     {
-    if (force == 1) LogScreenf("%s out buffer is already empty, no connect needed.\n",(contest == 1 ? "DES":"RC5"));
+    if (force == 1) LogScreen("%s out buffer is already empty, no connect needed.\n",(contest == 1 ? "DES":"RC5"));
     return 0;
     };
 
@@ -1083,7 +1089,7 @@ if (force == 0) // Check if flush should be done
       return( -1 );
     }
 
-    LogScreenf( "\n[%s] Network::Open Error - Sleeping for 3 seconds\n", Time() );
+    LogScreen( "\n[%s] Network::Open Error - Sleeping for 3 seconds\n", Time() );
     sleep( 3 );
 #if (CLIENT_OS == OS_AMIGAOS)
     if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C)
@@ -1093,7 +1099,7 @@ if (force == 0) // Check if flush should be done
 #if defined(LURK)
     if (dialup.CheckForStatusChange() == -1)
        {
-       LogScreenf("TCPIP Connection Lost - Aborting flush\n");
+       LogScreen("TCPIP Connection Lost - Aborting flush\n");
        return -3;                 // so stop trying and return
        };
 #endif
@@ -1123,7 +1129,7 @@ if (force == 0) // Check if flush should be done
 
   if ( net->Put( sizeof( Packet ), (char *) &packet ) )
   {
-    LogScreenf( "[%s] Network::Error Unable to send 21\n", Time() );
+    LogScreen( "[%s] Network::Error Unable to send 21\n", Time() );
     if (!netin) delete net;
     return( -1 );
   }
@@ -1137,14 +1143,14 @@ if (force == 0) // Check if flush should be done
          ( ntohl( packet.version ) != PACKET_VERSION ) || // version valid
          ( ntohl( packet.op ) != OP_SCRAM ) )  // expected packet
     {
-      LogScreenf( "[%s] Network::Error Bad Data 22\n", Time() );
+      LogScreen( "[%s] Network::Error Bad Data 22\n", Time() );
       if (!netin) delete net;
       return( -1 );
     }
   }
   else
   {
-    LogScreenf( "[%s] Network::Error Read failed 23/%d\n", Time(), (int) err );
+    LogScreen( "[%s] Network::Error Read failed 23/%d\n", Time(), (int) err );
     if (!netin) delete net;
     return( -1 );
   }
@@ -1294,7 +1300,7 @@ if (force == 0) // Check if flush should be done
     packet.scramble = htonl( scram2 );
     if ( net->Put( sizeof( Packet ), (char *) &packet ) )
     {
-      LogScreenf( "\n[%s] Network::Error Unable to send 25\n", Time() );
+      LogScreen( "\n[%s] Network::Error Unable to send 25\n", Time() );
 
       // return packet to buffer...
       Scramble( ntohl( data.scramble ),
@@ -1318,7 +1324,7 @@ if (force == 0) // Check if flush should be done
                  OP_DONE_NOCLOSE_ACK : OP_SUCCESS_ACK ) ) )
             )
       {
-        LogScreenf( "Network::Error Bad Data 26\n", Time() );
+        LogScreen( "Network::Error Bad Data 26\n", Time() );
         // return packet to buffer...
         Scramble( ntohl( data.scramble ),
                   (u32 *) &data, ( sizeof(FileEntry) / 4 ) - 1 );
@@ -1349,14 +1355,14 @@ if (force == 0) // Check if flush should be done
       u32 percent2div = (more+count);  //hmm, can more be negative?
       if (((s32)(percent2div)) <= 0) percent2div = 0;
       u32 percent2 = ((percent2div)?((count*10000)/percent2div):(10000));
-       LogScreenf( "\r[%s] Sent block %u of %u (%u.%02u%% transferred) ",
+       LogScreen( "\r[%s] Sent block %u of %u (%u.%02u%% transferred) ",
           CliGetTimeString(NULL,1), count, percent2div?percent2div:count,
           percent2/100, percent2%100 );
       }
     }
     else //Get()...
     {
-      LogScreenf( "\n[%s] Network::Error Read Failed 27/%d\n", Time(), (int) err );
+      LogScreen( "\n[%s] Network::Error Read Failed 27/%d\n", Time(), (int) err );
       // return packet to buffer...
       Scramble( ntohl( data.scramble ),
                 (u32 *) &data, ( sizeof(FileEntry) / 4 ) - 1 );
@@ -1410,11 +1416,9 @@ if (force == 0) // We need to check if we're allowed to connect
       #endif
     )
     return( -1 );
-  };
+  }
 
-    mailmessage.quietmode=quietmode;
-    if (!offlinemode)
-       mailmessage.checktosend(0);
+    LogFlush(0); //checktosend(x)
 
   // Ready the net
 
@@ -1495,9 +1499,7 @@ if (force == 0) // We need to check if we're allowed to connect
   if ((retcode1>0) || (retcode1==-1) || (retcode2>0) || (retcode2==-1))
   {
     // did any net traffic occur?
-    mailmessage.quietmode=quietmode;
-    if (!offlinemode)
-      mailmessage.checktosend(0);
+    LogFlush(0); //checktosend(x)
   }
   return( retcode );
 }
@@ -1511,15 +1513,15 @@ u32 Client::Benchmark( u8 contest, u32 numk )
   ContestWork contestwork;
 
   u32 numkeys = 10000000L;
-  u32 percent2, tslice;
+  u32 tslice;
 
   if (SelectCore() || SignalTriggered) return 0;
   if (numk != 0) numkeys = max(numk,1000000L);
 
   if (contest == 1)
-    LogScreenf( "Benchmarking RC5 with %d tests:\n", (int) numkeys );
+    LogScreen( "Benchmarking RC5 with %d tests:\n", (int) numkeys );
   else if (contest == 2)
-    LogScreenf( "Benchmarking DES with %d tests:\n", (int) numkeys * 2 );
+    LogScreen( "Benchmarking DES with %d tests:\n", (int) numkeys * 2 );
   else return 0;
 
   contestwork.key.lo = htonl( 0 );
@@ -1547,14 +1549,8 @@ u32 Client::Benchmark( u8 contest, u32 numk )
   while ( (problem[0]).Run( tslice , 0 ) == 0 )
     {
     if (!percentprintingoff)
-      {
-      percent2 = (problem[0]).CalcPercent();
-      if ( percent2 > (problem[0]).percent )
-        {
-        LogScreenPercentSingle((u32) percent2, (u32) problem[0].percent, false);
-        problem[0].percent = percent2;
-        }
-      }
+      LogScreenPercent( 1 ); //logstuff.cpp - number of loaded problems
+
     #if (CLIENT_OS == OS_NETWARE)   //yield
       nwCliThreadSwitchLowPriority();
     #endif
@@ -1568,7 +1564,7 @@ u32 Client::Benchmark( u8 contest, u32 numk )
     }
 
   #if 0 //could use this, but it shows the block number ("00000000:00000000")
-    LogScreenf("\n[%s] %s\n", CliGetTimeString( NULL, 1 ),
+    LogScreen("\n[%s] %s\n", CliGetTimeString( NULL, 1 ),
                 CliGetMessageForProblemCompletedNoSave( &(problem[0]) ) );
     return (u32)0;  //unused, so we don't care
   #else
@@ -1578,7 +1574,7 @@ u32 Client::Benchmark( u8 contest, u32 numk )
     tv.tv_sec = (problem[0]).timehi;  //read the time the problem:run started
     tv.tv_usec = (problem[0]).timelo;
     CliTimerDiff( &tv, &tv, NULL );    //get the elapsed time
-    LogScreenf("\nCompleted in %s [%skeys/sec]\n", CliGetTimeString( &tv, 2 ),
+    LogScreen("\nCompleted in %s [%skeys/sec]\n", CliGetTimeString( &tv, 2 ),
                              CliGetKeyrateAsString( ratestr, rate ) );
     return (u32)(rate);
   #endif
@@ -1688,12 +1684,12 @@ s32 Client::SelfTest( u8 contest )
             u32 lo2 = ntohl( rc5result.key.lo ) + (u32) ntohl( rc5result.keysdone.lo );
             convert_key_from_inc_to_des (&hi2, &lo2);
 
-            LogScreenf( "Test %d Passed: %08X:%08X - %08X:%08X\n", successes,
+            LogScreen( "Test %d Passed: %08X:%08X - %08X:%08X\n", successes,
               (u32) hi2, (u32) lo2, (u32) hi, (u32) lo);
 
           } else {
             // RC5...
-            LogScreenf( "Test %d Passed: %08X:%08X\n", successes,
+            LogScreen( "Test %d Passed: %08X:%08X\n", successes,
               (u32) ntohl( rc5result.key.hi ) + (u32) ntohl( rc5result.keysdone.hi ),
               (u32) ntohl( rc5result.key.lo ) + (u32) ntohl( rc5result.keysdone.lo ));
           }
@@ -1712,7 +1708,7 @@ s32 Client::SelfTest( u8 contest )
 
 // ---------------------------------------------------------------------------
 
-int IsFilenameValid( const char *filename )
+static int IsFilenameValid( const char *filename )
 { return ( *filename != 0 && strcmp( filename, "none" ) != 0 ); }
 
 static int DoesFileExist( const char *filename )
@@ -1758,10 +1754,10 @@ void Go_mt( void * parm )
   numcputemp = atol(argv[1]);
   timeslice = atol(argv[2]);
   niceness = atol(argv[3]);
-//LogScreenf("tempi2: %d\n",tempi2);
-//LogScreenf("numcpu: %d\n",numcputemp);
-//LogScreenf("timeslice: %d\n",timeslice);
-//LogScreenf("niceness: %d\n",niceness);
+//LogScreen("tempi2: %d\n",tempi2);
+//LogScreen("numcpu: %d\n",numcputemp);
+//LogScreen("timeslice: %d\n",timeslice);
+//LogScreen("niceness: %d\n",niceness);
 
 
 #if (CLIENT_OS == OS_WIN32)
@@ -1823,7 +1819,7 @@ void Go_mt( void * parm )
     }
     sleep( 1 ); // Avoid looping in case no buffers become available, or pausefile found
   }
-//   LogScreenf("Exiting child thread %d\n",tempi2+1);
+//   LogScreen("Exiting child thread %d\n",tempi2+1);
 #if (CLIENT_OS == OS_BEOS)
   exit(0);
 #endif
@@ -2176,50 +2172,7 @@ PreferredIsDone1:
   //------------------------------------
 
   if (!percentprintingoff)
-  {
-    #if (defined(PERCBAR_ON_ONE_LINE) && (MAXCPUS<=16))
-    if (numcputemp > 1)
-    {
-      char percbar[((MAXCPUS+1)*(sizeof(char)*6))];
-      for (cpu_i = 0; cpu_i < numcputemp; cpu_i++)
-      {
-        int percent2 = ((problem[cpu_i]).startpercent / 1000 );
-        problem[cpu_i].percent = percent2;
-        problem[cpu_i+numcputemp].percent =
-            ((problem[cpu_i+numcputemp]).startpercent / 1000 );
-        if (percent2 == 100)
-          percent2 = 99;
-        sprintf(percbar+(cpu_i*(sizeof(char)*6)),
-                               "%c:%02d%% ", cpu_i+'A', percent2 );
-      }
-      char *t = (char *)Time();
-      if ((strlen(t)+sizeof("[] ")+strlen(percbar))<79)
-        LogScreenf("[%s] %s", t, percbar );
-      else
-        LogScreen( percbar );
-    }
-    else
-#endif
-    {
-      for (cpu_i = 0; cpu_i < numcputemp; cpu_i++)
-      {
-        //startpercent is 1/100000 not 1/100
-        problem[(int) cpu_i].percent = ((problem[(int) cpu_i]).startpercent / 1000);
-        if (numcputemp > 1)
-        {
-          LogScreenPercentMulti((u32) cpu_i%numcputemp,
-            (u32) problem[(int) cpu_i].percent, 0, (bool) problem[(int) cpu_i].restart );
-          cpu_i++;
-        }
-        else
-        {
-          LogScreenPercentSingle((u32) problem[(int) cpu_i].percent, 0,
-                                        (bool)problem[(int) cpu_i].restart );
-        }
-        problem[(int) cpu_i].restart = 0;
-      }
-    }
-  } //if (!percentprintingoff)
+    LogScreenPercent( load_problem_count ); //logstuff.cpp
 
   //============================= MAIN LOOP =====================
   //now begin looping until we have a reason to quit
@@ -2328,43 +2281,51 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
   connectrequested=dialup.CheckIfConnectRequested();
 #endif
 
-
     //------------------------------------
     //sleep, run or pause...
     //------------------------------------
 
     if (load_problem_count > 1) //ie MUTLITHREAD
-    {
+      {
       // prevent the main thread from racing & bogging everything down.
       sleep(3);
-    }
+      }
     else if (pausefilefound) //threads have their own sleep section
-    {
+      {
       #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
         SurrenderCPU();
       #elif (CLIENT_OS != OS_DOS)
         sleep(1);
       #endif
-    }
+      }
     else //only one problem and we are not paused
-    {
+      {
       //Actually run a problem
       #if (CLIENT_OS == OS_NETWARE)
-      {
+        {
         //sets up and uses a polling procedure that runs as
         //an OS callback when the system enters an idle loop.
         nwCliRunProblemAsCallback( &(problem[0]),
                                 timeslice/PIPELINE_COUNT, 0 , niceness );
-      }
+        }
       #else
-      {
+        {
         (problem[0]).Run( timeslice / PIPELINE_COUNT , 0 );
-#if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+        #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
         SurrenderCPU();
-#endif
-      }
+        #endif
+        }
       #endif //if non-mt, netware or not
-    }
+      }
+   
+
+    //------------------------------------
+    //update the status bar
+    //------------------------------------
+
+    if (!percentprintingoff)
+      LogScreenPercent( load_problem_count ); //logstuff.cpp
+
 
     //------------------------------------
     //now check all problems for change, do checkpointing, reloading etc
@@ -2372,61 +2333,9 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
 
     for (cpu_i = 0; ((!pausefilefound) && (!SignalTriggered) && (cpu_i < load_problem_count)); cpu_i++)
     {
-      // -------------
-      //  update the percent bar
-      // -------------
-      if (!percentprintingoff)
-      {
-        #if (defined(PERCBAR_ON_ONE_LINE) && MAXCPUS<=16)
-        if (numcputemp > 1)
-        {
-          if (cpu_i == 0) //only once per loop
-          {
-            char percbar[((MAXCPUS+1)*(sizeof(char)*6))];
-            for (int cpu_i2 = 0; cpu_i2 < numcputemp; cpu_i2++)
-            {
-              //first try to figure out which problem to print perc for
-              int percent2;
-              if (problem[cpu_i2].started)
-                percent2 = problem[cpu_i2].percent =
-                   problem[cpu_i2].CalcPercent();
-              else if (problem[cpu_i2+numcputemp].started)
-                percent2 = problem[cpu_i2+numcputemp].percent =
-                   problem[cpu_i2+numcputemp].CalcPercent();
-              else
-                percent2 = ((problem[cpu_i2]).startpercent / 1000);
-              sprintf(percbar+(cpu_i2*(sizeof(char)*6)),
-                ((percent2<100)?("%c:%02d%% "):("%c:%d ")),
-                cpu_i2+'A', percent2 );
-            }
-            char *t = (char *)Time();
-            if ((strlen(t)+sizeof("[] ")+strlen(percbar))<79)
-              LogScreenf("\r[%s] %s", t, percbar );
-            else
-              LogScreenf( "\r%s", percbar );
-          }
-        }
-        else
-        #endif
-        if (problem[(int) cpu_i].started == 1)
-        {
-          int percent2 = (int) problem[(int) cpu_i].CalcPercent();
-          if ( percent2 > (int) problem[(int) cpu_i].percent )
-          {
-            if (numcputemp > 1)
-                LogScreenPercentMulti((u32) cpu_i%numcputemp, (u32) percent2,
-                (u32) problem[(int) cpu_i].percent, (bool) problem[(int) cpu_i].restart);
-            else
-              LogScreenPercentSingle((u32) percent2, (u32) problem[(int) cpu_i].percent,
-                (bool) problem[(int) cpu_i].restart);
-              problem[(int) cpu_i].percent = percent2;
-              problem[(int) cpu_i].restart = 0;
-          }
-        }
-      }
 
       // -------------
-      // now check for finished blocks that need reloading
+      // check for finished blocks that need reloading
       // -------------
 
       // Did any threads finish a block???
@@ -2949,68 +2858,6 @@ void Client::DoCheckpoint( int load_problem_count )
   }
 }
 
-// ------------------------------------------------------------------------
-
-void Client::MailInitialize(void)
-{
-  strcpy(mailmessage.destid,smtpdest);
-  strcpy(mailmessage.fromid,smtpfrom);
-  strcpy(mailmessage.smtp,smtpsrvr);
-  strcpy(mailmessage.rc5id,id);
-  mailmessage.messagelen=messagelen;
-  mailmessage.port=(int)smtpport;
-  //mailmessage.quietmode=quietmode;
-}
-
-// ------------------------------------------------------------------------
-
-void Client::MailDeinitialize(void)
-{
-  mailmessage.quietmode=quietmode;
-  if (!offlinemode)
-    mailmessage.checktosend(1);
-}
-
-// ---------------------------------------------------------------------------
-
-void Client::LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted)
-{
-  // fixes the problem of "100%" running off an 80 column screen and
-  // also gives a '.' sooner for new blocks.
-  char buffer[88];
-  int pos = 0;
-  u32 restartpercent =
-              (!restarted || percent == 100) ? 0 :
-              ( percent - ((percent > 90) ? (percent & 1) : (1 - (percent & 1))) );
-  buffer[0] = 0;
-  for ( u32 p = (lastpercent + 1) ; (pos < 80) && (p < (percent+1)) ; p++ )
-  {
-    if ( p == 100 )
-      { strcat( buffer, "100" ); pos+=3; } //LogScreen("100");
-    else if ( p == restartpercent )
-      { strcat( buffer, "R" ); pos++; } // LogScreen("R");
-    else if ( ( p % 10 ) == 0 )
-      { sprintf( (buffer+pos), "%ld%%",p ); pos+=3; } //LogScreenf("%ld%%",p);
-    else if ( ( p<90 && p&1 ) || ( p>90 && (!(p&1)) ) )
-      { strcat( buffer, "." ); pos++; } //LogScreen(".");
-  }
-  LogScreen( buffer );
-  return;
-}
-
-// ---------------------------------------------------------------------------
-
-void Client::LogScreenPercentMulti(u32 cpu, u32 percent, u32 lastpercent, bool restarted)
-{
-  for ( u32 p = lastpercent + 1 ; p < percent + 1 ; p++ )
-  {
-    if ( ( p % 10 ) == 0 ) LogScreenf( "%c:%d%% ", 'A' + cpu, p );
-    else if ( ( p % 2 ) == 0 ) LogScreen( "." );
-  }
-  if (restarted) LogScreen( "R" );
-  fflush( stdout );
-}
-
 // ---------------------------------------------------------------------------
 
 s32 Client::SetContestDoneState( Packet * packet)
@@ -3144,7 +2991,7 @@ int main( int argc, char *argv[] )
   {
     if ( strcmp(argv[i], "-quiet" ) == 0)
     {
-      quietmode=1;
+      client.quietmode=1;
       argv[i][0] = 0;
     }
   }
@@ -3168,6 +3015,8 @@ int main( int argc, char *argv[] )
     }
   }
 #endif
+
+  client.InitializeLogging(); //let quietmode take effect
 
   // print a banner
   client.PrintBanner(argv[0]);
@@ -3196,10 +3045,10 @@ int main( int argc, char *argv[] )
              ( strcmp( argv[i], "-forceflush" ) == 0 ) || \
              ( strcmp( argv[i], "-update"     ) == 0 ))
     {
-        client.LogScreen( 
-        "Sorry, this client is not capable of networking and cannot support\n"
+        LogScreen( 
+        "Sorry, this client is not network capable and cannot support\n"
          "the -flush, -forceflush, -fetch, -forcefetch or -update options.\n");
-        //retcode = 0; //and break out of loop
+        retcode = 0; //and break out of loop
     }    
     #endif
     else if ( strcmp(argv[i], "-ident" ) == 0)
@@ -3212,13 +3061,13 @@ int main( int argc, char *argv[] )
       int i = client.SelfTest(1);
       int j = client.SelfTest(2);
       if ( i < 0 )
-        LogScreenf( "\n%d Tests, Failed on RC5 Test %d\n", (int) TEST_CASE_COUNT, (int) -i );
+        LogScreen( "\n%d Tests, Failed on RC5 Test %d\n", (int) TEST_CASE_COUNT, (int) -i );
       else
-        LogScreenf( "\n%d/%d RC5 Tests Passed\n", (int) i, (int) TEST_CASE_COUNT);
+        LogScreen( "\n%d/%d RC5 Tests Passed\n", (int) i, (int) TEST_CASE_COUNT);
       if ( j < 0 )
-        LogScreenf( "\n%d Tests, Failed on DES Test %d\n", (int) TEST_CASE_COUNT, (int) -j );
+        LogScreen( "\n%d Tests, Failed on DES Test %d\n", (int) TEST_CASE_COUNT, (int) -j );
       else
-        LogScreenf( "\n%d/%d DES Tests Passed\n", (int) j, (int) TEST_CASE_COUNT);
+        LogScreen( "\n%d/%d DES Tests Passed\n", (int) j, (int) TEST_CASE_COUNT);
       retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
     }
     else if ( strcmp( argv[i], "-benchmark2rc5" ) == 0 )
@@ -3274,10 +3123,7 @@ int main( int argc, char *argv[] )
         retcode = client.ForceFetch(1); // DES Fetch
       }
       if (client.contestdone[1]) retcode=1;
-
-      mailmessage.quietmode = quietmode;
-      if (!client.offlinemode)
-         mailmessage.checktosend(1);
+      LogFlush(1); //checktosend(1)
       NetworkDeinitialize();
       if (retcode < 0 || retcode2 < 0)
       {
@@ -3309,9 +3155,7 @@ int main( int argc, char *argv[] )
       }
       if (client.contestdone[1]) retcode = 0;
 
-      mailmessage.quietmode=quietmode;
-      if (!client.offlinemode)
-         mailmessage.checktosend(1);
+      LogFlush(1); //checktosend(1)
       NetworkDeinitialize();
       if (retcode < 0 || retcode2 < 0)
       {
@@ -3336,9 +3180,7 @@ int main( int argc, char *argv[] )
       // DES We care about both the fetch & flush errors.
       int retcode2 = client.contestdone[1] ? 0 : client.Update(1,1,1);
 
-      mailmessage.quietmode = quietmode;
-      if (!client.offlinemode)
-         mailmessage.checktosend(1);
+      LogFlush(1); //checktosend(1)
       NetworkDeinitialize();
 
       if (retcode < 0 || retcode2 < 0)
@@ -3354,7 +3196,7 @@ int main( int argc, char *argv[] )
     {
       const char *scpuid, *smaxcpus, *sfoundcpus;  //cpucheck.cpp
       GetProcessorInformationStrings( &scpuid, &smaxcpus, &sfoundcpus );
-      LogScreenf("Automatic processor detection tag:\n\t%s\n"
+      LogScreen("Automatic processor detection tag:\n\t%s\n"
       "Number of processors detected by this client:\n\t%s\n"
       "Number of processors supported by each instance of this client:\n\t%s\n",
       scpuid, sfoundcpus, smaxcpus );
@@ -3422,32 +3264,32 @@ int main( int argc, char *argv[] )
     #endif
     if (!client.offlinemode)
       NetworkInitialize();
-    client.MailInitialize(); //copy the smtp ini settings over
+    client.InitializeLogging(); //copy the smtp ini settings over
 
 #if (CLIENT_OS == OS_RISCOS)
     if (!guirestart)
 #endif
       Log("RC5DES Client v2.%d.%d started.\nUsing %s as email address.\n\n",
              CLIENT_CONTEST*100+CLIENT_BUILD,CLIENT_BUILD_FRAC,client.id);
-//client.LogScreenf("in: %s\n",client.in_buffer_file[0]);
-//client.LogScreenf("out: %s\n",client.out_buffer_file[0]);
-//client.LogScreenf("in2: %s\n",client.in_buffer_file[1]);
-//client.LogScreenf("out2: %s\n",client.out_buffer_file[1]);
-//client.LogScreenf("percentoff: %d\n",client.percentprintingoff);
-//client.LogScreenf("frequent: %d\n",client.connectoften);
-//client.LogScreenf("nodisk: %d\n",client.nodiskbuffers);
-//client.LogScreenf("nofallback: %d\n",client.nofallback);
-//client.LogScreenf("quiet: %d\n",client.quietmode);
-//client.LogScreenf("offlinemode: %d\n",client.offlinemode);
-//client.LogScreenf("cktime: %d\n",client.checkpoint_min);
-//client.LogScreenf("win95hidden: %d\n",client.win95hidden);
-//client.LogScreenf("lurk: %d\n",client.lurk);
-//client.LogScreenf("nettimeout: %d\n", client.nettimeout);
-//client.LogScreenf("noexitfilecheck: %d\n", client.noexitfilecheck);
+//LogScreen("in: %s\n",client.in_buffer_file[0]);
+//LogScreen("out: %s\n",client.out_buffer_file[0]);
+//LogScreen("in2: %s\n",client.in_buffer_file[1]);
+//LogScreen("out2: %s\n",client.out_buffer_file[1]);
+//LogScreen("percentoff: %d\n",client.percentprintingoff);
+//LogScreen("frequent: %d\n",client.connectoften);
+//LogScreen("nodisk: %d\n",client.nodiskbuffers);
+//LogScreen("nofallback: %d\n",client.nofallback);
+//LogScreen("quiet: %d\n",client.quietmode);
+//LogScreen("offlinemode: %d\n",client.offlinemode);
+//LogScreen("cktime: %d\n",client.checkpoint_min);
+//LogScreen("win95hidden: %d\n",client.win95hidden);
+//LogScreen("lurk: %d\n",client.lurk);
+//LogScreen("nettimeout: %d\n", client.nettimeout);
+//LogScreen("noexitfilecheck: %d\n", client.noexitfilecheck);
 
     client.Run();
 
-    client.MailDeinitialize(); //checktosend(1) if not offlinemode
+    client.DeinitializeLogging(); //flush and close logs/mail
     if (!client.offlinemode)
       NetworkDeinitialize();
 

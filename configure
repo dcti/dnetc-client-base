@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.81  1998/08/02 16:17:15  cyruspatel
+# Completed support for logging.
+#
 # Revision 1.80  1998/08/02 03:22:02  silby
 # Added logging.cpp as a default source file.
 #
@@ -422,7 +425,7 @@ COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
     common/convdes.cpp common/clicdata.cpp common/clirate.cpp
     common/clisrate.cpp common/clitime.cpp common/disphelp.cpp
     common/threadcd.cpp common/cpucheck.cpp common/pathwork.cpp
-    common/cliident.cpp common/logging.cpp"
+    common/cliident.cpp common/logstuff.cpp"
 #KWAN_SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
 #KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
 KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"

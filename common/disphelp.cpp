@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.37  1998/08/02 16:17:58  cyruspatel
+// Completed support for logging.
+//
 // Revision 1.36  1998/07/20 00:28:36  silby
 // Change to combine NT Service and 95 CLI.
 //
@@ -126,7 +129,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-static const char *id="@(#)$Id: disphelp.cpp,v 1.36 1998/07/20 00:28:36 silby Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.37 1998/08/02 16:17:58 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -136,6 +139,7 @@ return id; }
 #include "baseincs.h"
 #include "cmpidefs.h" //strcmpi()
 #include "sleepdef.h"
+#include "logstuff.h" //Log()/LogScreen()/CliScreenClear()
 
 // --------------------------------------------------------------------------
 
@@ -567,7 +571,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
             fprintf( outstream, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
           }
         else
-          clearscreen(); //this applies to stdout only
+          CliScreenClear(); //this applies to stdout only
 
         for (i = 0; i < headerlines; i++)
           fprintf( outstream, "%s\n", helpheader[i] );

@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.33  1998/08/02 16:18:12  cyruspatel
+// Completed support for logging.
+//
 // Revision 1.32  1998/07/26 12:46:12  cyruspatel
 // new inifile option: 'autofindkeyserver', ie if keyproxy= points to a
 // xx.v27.distributed.net then that will be interpreted by Network::Resolve()
@@ -73,7 +76,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-static const char *id="@(#)$Id: network.cpp,v 1.32 1998/07/26 12:46:12 cyruspatel Exp $";
+static const char *id="@(#)$Id: network.cpp,v 1.33 1998/08/02 16:18:12 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -82,6 +85,7 @@ return id; }
 #include "sleepdef.h"    //  Fix sleep()/usleep() macros there! <--
 #include "autobuff.h"
 #include "cmpidefs.h"
+#include "logstuff.h"   //LogScreen()
 
 #define VERBOSE_OPEN //print cause of ::Open() errors
 
@@ -326,17 +330,6 @@ void Network::SetModeSOCKS5(const char *sockshost, s16 socksport,
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Network::LogScreen ( const char * text) const
-{
-#if (CLIENT_OS == OS_NETWARE)
-  if (!quietmode) printf("%s", text );
-#elif !defined(NEEDVIRTUALMETHODS)
-  if (!quietmode) fwrite(text, 1, strlen(text), stdout);
-#endif
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 #if defined(NONETWORK)
 
 s32 Network::Open( SOCKET ) { return -1; }
@@ -422,8 +415,7 @@ s32 Network::Open( void )
       }
 
 #ifdef VERBOSE_OPEN
-    sprintf(logstr,"Connecting to %s...\n",hostname);
-    LogScreen(logstr);
+    LogScreen("Connecting to %s...\n",hostname);
 #endif
     if (Resolve(hostname, lastaddress ) < 0)
     {
@@ -432,8 +424,7 @@ s32 Network::Open( void )
       sock = 0;
       retries++;
 #ifdef VERBOSE_OPEN
-      sprintf(logstr,"Network::failed to resolve hostname \"%s\"\n", hostname);
-      LogScreen(logstr);
+      LogScreen("Network::failed to resolve hostname \"%s\"\n", hostname);
 #endif
       return (-1);
     }
@@ -460,8 +451,7 @@ s32 Network::Open( void )
       } 
 
 #ifdef VERBOSE_OPEN
-    sprintf(logstr,"Connecting to %s...\n",hostname);
-    LogScreen(logstr);
+    LogScreen("Connecting to %s...\n",hostname);
 #endif
     if (Resolve(hostname, lasthttpaddress ) < 0)
     {
@@ -475,8 +465,7 @@ s32 Network::Open( void )
         sock = 0;
         retries++;
 #ifdef VERBOSE_OPEN
-        sprintf(logstr,"Network::failed to resolve hostname \"%s\"\n", hostname);
-        LogScreen(logstr);
+        LogScreen("Network::failed to resolve hostname \"%s\"\n", hostname);
 #endif
         return (-1);
       }
@@ -576,7 +565,7 @@ s32 Network::Open( void )
         psocks4->CD != 90) // 90 is successful return
     {
 #ifdef VERBOSE_OPEN
-      sprintf(logstr, "SOCKS4 request rejected%s\n",
+      LogScreen("SOCKS4 request rejected%s\n",
         (psocks4->CD == 91)
           ? ""
           :
@@ -587,7 +576,6 @@ s32 Network::Open( void )
           ? ", invalid identd response"
           :
           ", unexpected response");
-      LogScreen(logstr);
 #endif
 
 Socks4Failure:
@@ -628,9 +616,8 @@ Socks4Failure:
     if (psocks5mreply->ver != 5)
     {
 #ifdef VERBOSE_OPEN
-      sprintf(logstr, "SOCKS5 authentication method reply has wrong "
+      LogScreen("SOCKS5 authentication method reply has wrong "
                       "version, %d should be 5.\n", psocks5mreply->ver);
-      LogScreen(logstr);
 #endif
       goto Socks5Failure;
     }
@@ -683,8 +670,7 @@ Socks4Failure:
           psocks5userpwreply->status != 0)
       {
 #ifdef VERBOSE_OPEN
-        sprintf(logstr, "SOCKS5 user %s rejected by server.\n", username);
-        LogScreen(logstr);
+        LogScreen("SOCKS5 user %s rejected by server.\n", username);
 #endif
 
         goto Socks5Failure;
@@ -693,8 +679,7 @@ Socks4Failure:
     else
     {
 #ifdef VERBOSE_OPEN
-      sprintf(logstr, "SOCKS5 authentication method rejected.\n");
-      LogScreen(logstr);
+      LogScreen("SOCKS5 authentication method rejected.\n");
 #endif
 
       goto Socks5Failure;
@@ -717,8 +702,7 @@ Socks4Failure:
     if (psocks5->ver != 5)
     {
 #ifdef VERBOSE_OPEN
-      sprintf(logstr, "SOCKS5 reply has wrong version, %d should be 5\n", psocks5->ver);
-      LogScreen(logstr);
+      LogScreen("SOCKS5 reply has wrong version, %d should be 5\n", psocks5->ver);
 #endif
       goto Socks5Failure;
     }
@@ -726,12 +710,11 @@ Socks4Failure:
     if (psocks5->cmdORrep != 0)          // 0 is successful connect
     {
 #ifdef VERBOSE_OPEN
-      sprintf(logstr, "SOCKS5 server error connecting to keyproxy: %s\n",
+      LogScreen("SOCKS5 server error connecting to keyproxy: %s\n",
               (psocks5->cmdORrep >=
                 (sizeof Socks5ErrorText / sizeof Socks5ErrorText[0]))
                 ? "unrecognized SOCKS5 error"
                 : Socks5ErrorText[ psocks5->cmdORrep ] );
-      LogScreen(logstr);
 #endif
 
 Socks5Failure:

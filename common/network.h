@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.31  1998/08/02 16:18:22  cyruspatel
+// Completed support for logging.
+//
 // Revision 1.30  1998/07/29 21:34:33  blast
 // AmigaOS specific change due to change from platforms/ to platforms/amiga
 // for AmigaOS specific files ...
@@ -223,10 +226,10 @@ extern "C" {
   #if (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_ALPHA)
     #include <asm/byteorder.h>
   #elif (CLIENT_OS == OS_DYNIX) && defined(NTOHL)
-    #define ntohl(x)	NTOHL(x)
-    #define htonl(x)	HTONL(x)
-    #define ntohs(x)	NTOHS(x)
-    #define htons(x)	HTONS(x)
+    #define ntohl(x)  NTOHL(x)
+    #define htonl(x)  HTONL(x)
+    #define ntohs(x)  NTOHS(x)
+    #define htons(x)  HTONS(x)
   #endif
   #if (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_DYNIX)
     #include <errno.h>
@@ -301,7 +304,6 @@ protected:
   AutoBuffer netbuffer, uubuffer;
   bool gotuubegin, gothttpend, puthttpdone, gethttpdone;
   u32 httplength;
-  char logstr[1024];
 
   friend void MakeNonBlocking(SOCKET sock, bool nonblocking = true);
 
@@ -373,8 +375,6 @@ public:
 
   void MakeBlocking();
     // makes the socket operate in blocking mode.
-
-  void LogScreen( const char * txt) const;
 };
 
 ///////////////////////////////////////////////////////////////////////////

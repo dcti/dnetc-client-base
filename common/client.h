@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.75  1998/08/02 16:17:47  cyruspatel
+// Completed support for logging.
+//
 // Revision 1.74  1998/08/02 06:51:40  silby
 // Slight logging changes to bring win32gui in sync with rest of tree.
 //
@@ -265,20 +268,6 @@ typedef struct Packet
 
 #pragma pack()
 
-#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
-#define LURK
-#include "lurk.h"
-#endif
-
-#include "logging.h"
-
-// --------------------------------------------------------------------------
-// Global Functions:
-
-  int IsFilenameValid( const char *filename );
-
-// --------------------------------------------------------------------------
-
 class Network;            // prototype for referenced classes
 class IniSection;
 
@@ -287,6 +276,7 @@ class Client
 public:
   char exename[64];
   char exepath[128];
+  int  quietmode;
   char inifilename[128];
   char id[64];
   s32  inthreshold[2];
@@ -310,16 +300,19 @@ public:
   s32  smtpport;
   char smtpfrom[128];
   char smtpdest[128];
-  void MailInitialize(void); //copy the mail specific settings over
-  void MailDeinitialize(void); //checktosend(1) if not offline mode
+
+  void InitializeLogging(void); //copy the mail/log specific settings over
+  void DeinitializeLogging(void); 
 
 #ifdef DONT_USE_PATHWORK
+  char ini_logname[128];
   char ini_in_buffer_file[2][128];
   char ini_out_buffer_file[2][128];
   char ini_exit_flag_file[128];
   char ini_checkpoint_file[2][128];
   char ini_pausefile[128];
 #endif
+  char logname[128];
   char in_buffer_file[2][128];
   char out_buffer_file[2][128];
   char exit_flag_file[128];
@@ -435,9 +428,6 @@ public:
   Client();
   ~Client();
 
-  void PrintBanner(const char * clname);
-    // prints out a version banner to screen
-
   void ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing);
     // parses commandline options, setting parsed items to NULL
 
@@ -451,21 +441,9 @@ public:
     // Displays the interactive command line help screen.
 
 #if defined(NEEDVIRTUALMETHODS)
-
-  virtual void LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted);
-
-  virtual void LogScreenPercentMulti(u32 cpu, u32 percent, u32 lastpercent, bool restarted);
-    // progress percentage printing to screen only.
-
   virtual s32  Configure( void );
     // runs the interactive configuration setup
 #else
-
-  void LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted);
-
-  void LogScreenPercentMulti(u32 cpu, u32 percent, u32 lastpercent, bool restarted);
-    // progress percentage printing to screen only.
-
   s32  Configure( void );
     // runs the interactive configuration setup
 #endif
@@ -473,27 +451,12 @@ public:
   s32  ConfigureGeneral( s32 currentmenu );
     // part of the interactive setup
 
-  static s32 yesno(char *str);
-    // Checks whether user typed yes or no, used in interactive setup
-    // Returns 1=yes, 0=no, -1=unknown
-
   static s32 findmenuoption( s32 menu, s32 option);
     // Returns the id of the option that matches the menu and option
     // requested. Will return -1 if not found.
 
   void setupoptions( void );
     // Sets all the pointers/etc for optionstruct options
-
-#ifndef DONT_USE_PATHWORK
-  static void killwhitespace( char *string );
-    // Removes all spaces from a string
-
-  static int isstringblank( char *string );
-    // returns 1 if a string is blank (or null), 0 if it is not
-#endif
-
-  static void clearscreen( void );
-    // Clears the screen. (Platform specific ifdefs go inside of it.)
 
   s32  ReadConfig( void );
     // returns -1 if no ini exits, 0 otherwise
@@ -592,11 +555,12 @@ public:
   s32 SetContestDoneState( Packet * packet);
     // Set the contest state appropriately based on packet information
     // Returns 1 if a change to contest state was detected
+
+  void PrintBanner(const char *dummy); 
+    //show version/copyright banner
 };
 
 // --------------------------------------------------------------------------
-
-
 
 #ifdef DONT_USE_PATHWORK
   #if (CLIENT_OS == OS_NETWARE)
@@ -644,15 +608,6 @@ extern volatile s32 pausefilefound;
 extern void CliSetupSignals( void );
 
 // --------------------------------------------------------------------------
-// Setup the message mailing class.
-#include "mail.h"
-extern MailMessage mailmessage;
-
-// Setup the Lurk class
-#if defined(LURK)
-extern Lurk dialup;
-#endif
-
 
 #endif // __CLIBASICS_H__
 

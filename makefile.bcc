@@ -60,7 +60,8 @@ RC5_OBJS =                    \
         $(OUTPUTPATH)/problem.obj    \
         $(OUTPUTPATH)/des-x86.obj    \
         $(OUTPUTPATH)/pathwork.obj   \
-        $(OUTPUTPATH)/cliident.obj
+        $(OUTPUTPATH)/cliident.obj   \
+        $(OUTPUTPATH)/logstuff.obj
 
 PREBUILT_OBJS =                   \
         $(OUTPUTPATH)/rg-486.obj   \

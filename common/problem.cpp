@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.28  1998/08/02 16:18:27  cyruspatel
+// Completed support for logging.
+//
 // Revision 1.27  1998/07/13 12:40:33  kbracey
 // RISC OS update.
 // Added -noquiet option.
@@ -58,7 +61,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-static const char *id="@(#)$Id: problem.cpp,v 1.27 1998/07/13 12:40:33 kbracey Exp $";
+static const char *id="@(#)$Id: problem.cpp,v 1.28 1998/08/02 16:18:27 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -67,7 +70,7 @@ return id; }
 #include "problem.h"
 #include "network.h" // for timeval and htonl/ntohl
 #include "clitime.h" //for CliTimer() which gets a timeval of the current time
-#include <stdio.h> //printf()
+#include "logstuff.h" //LogScreen()
 
 #ifndef _CPU_32BIT_
 #error "everything assumes a 32bit CPU..."
@@ -146,7 +149,7 @@ s32 Problem::IsInitialized()
 s32 Problem::LoadState( ContestWork * work , u32 contesttype )
 {
   contest = contesttype;
-//printf("loadstate contest: %d %d \n",contesttype,contest);
+//LogScreen("loadstate contest: %d %d \n",contesttype,contest);
 
 #ifdef _CPU_32BIT_
   // copy over the state information
@@ -163,13 +166,13 @@ s32 Problem::LoadState( ContestWork * work , u32 contesttype )
   contestwork.iterations.hi = ntohl( work->iterations.hi );
   contestwork.iterations.lo = ntohl( work->iterations.lo );
 #if 0
-  printf("key    hi/lo:  %08x:%08x\n", contestwork.key.hi, contestwork.key.lo);
-  printf("iv     hi/lo:  %08x:%08x\n", contestwork.iv.hi, contestwork.iv.lo);
-  printf("plain  hi/lo:  %08x:%08x\n",
+  LogScreen("key    hi/lo:  %08x:%08x\n", contestwork.key.hi, contestwork.key.lo);
+  LogScreen("iv     hi/lo:  %08x:%08x\n", contestwork.iv.hi, contestwork.iv.lo);
+  LogScreen("plain  hi/lo:  %08x:%08x\n",
    contestwork.plain.hi, contestwork.plain.lo);
-  printf("cipher hi/lo:  %08x:%08x\n",
+  LogScreen("cipher hi/lo:  %08x:%08x\n",
    contestwork.cypher.hi, contestwork.cypher.lo);
-  printf("iter   hi/lo:  %08x:%08x\n",
+  LogScreen("iter   hi/lo:  %08x:%08x\n",
    contestwork.iterations.hi, contestwork.iterations.lo);
 #endif
 
@@ -244,7 +247,7 @@ s32 Problem::RetrieveState( ContestWork * work , s32 setflags )
     initialized = 0;
     finished = 0;
   }
-//printf("retrievestate contest: %d \n",contest);
+//LogScreen("retrievestate contest: %d \n",contest);
   return( contest );
 }
 
@@ -368,9 +371,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
   }
   else if ( kiter != timeslice * PIPELINE_COUNT )
   {
-#if !defined(NEEDVIRTUALMETHODS)
-    printf("kiter wrong %ld %d\n", kiter, (int)(timeslice*PIPELINE_COUNT));
-#endif
+    LogScreen("kiter wrong %ld %d\n", kiter, (int)(timeslice*PIPELINE_COUNT));
   }
 }
 #elif (CLIENT_CPU == CPU_SPARC) && (ULTRA_CRUNCH == 1)
@@ -404,9 +405,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
   }
   else if (kiter != ( timeslice * PIPELINE_COUNT ) )
   {
-#if !defined(NEEDVIRTUALMETHODS)
-    printf("kiter wrong %ld %d\n", (long) kiter, (int) (timeslice*PIPELINE_COUNT));
-#endif
+    LogScreen("kiter wrong %ld %d\n", (long) kiter, (int) (timeslice*PIPELINE_COUNT));
   }
 }
 #elif ((CLIENT_CPU == CPU_MIPS) && (MIPS_CRUNCH == 1))
@@ -440,9 +439,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
   }
   else if (kiter != (timeslice * PIPELINE_COUNT))
   {
-#if !defined(NEEDVIRTUALMETHODS)
-    printf("kiter wrong %ld %d\n", kiter, timeslice*PIPELINE_COUNT);
-#endif
+    LogScreen("kiter wrong %ld %d\n", kiter, timeslice*PIPELINE_COUNT);
   }
 }
 #elif (CLIENT_CPU == CPU_ARM)
@@ -597,10 +594,8 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     }
     else if (kiter != (timeslice * PIPELINE_COUNT))
     {
-#if !defined(NEEDVIRTUALMETHODS)
-        printf("kiter wrong %ld %ld\n",
+        LogScreen("kiter wrong %ld %ld\n",
                (long) kiter, (long)(timeslice*PIPELINE_COUNT));
-#endif
     }
   }
 #endif

@@ -9,6 +9,9 @@
 // function.
 //
 // $Log: cliident.cpp,v $
+// Revision 1.4  1998/08/02 16:17:52  cyruspatel
+// Completed support for logging.
+//
 // Revision 1.3  1998/07/13 23:39:32  cyruspatel
 // Added functions to format and display raw cpu info for better management
 // of the processor detection functions and tables. Well, not totally raw,
@@ -36,14 +39,14 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliident_cpp(void) { 
-static const char *id="@(#)$Id: cliident.cpp,v 1.3 1998/07/13 23:39:32 cyruspatel Exp $";
-return id; } 
+return "@(#)$Id: cliident.cpp,v 1.4 1998/08/02 16:17:52 cyruspatel Exp $"; } 
 #endif
 
 //-----------------------------------------------------------------------
 
 #include <stdio.h>
 #include <string.h>
+#include "logstuff.h" //LogScreen()
 #include "cliident.h" //just to keep the prototypes in sync.
 
 #if defined(__showids__) //not needed if we're not showing ids anyway
@@ -67,21 +70,22 @@ extern const char *clirate_cpp(void);
 extern const char *clicdata_cpp(void);
 extern const char *mail_cpp(void);
 extern const char *clisrate_cpp(void);
+extern const char *logstuff_cpp(void);
 
 static const char * (*ident_table[])() = { 
    disphelp_cpp, cliconfig_cpp, buffwork_cpp, clitime_cpp, cpucheck_cpp,
    scram_cpp, cliident_cpp, problem_cpp, client_cpp, pathwork_cpp,
    threadcd_cpp, iniread_cpp, autobuff_cpp, network_cpp, convdes_cpp,
-   clirate_cpp, clicdata_cpp, mail_cpp, clisrate_cpp };
+   clirate_cpp, clicdata_cpp, mail_cpp, clisrate_cpp, logstuff_cpp };
 
-//"@(#)$Id: cliident.cpp,v 1.3 1998/07/13 23:39:32 cyruspatel Exp $"
+//"@(#)$Id: cliident.cpp,v 1.4 1998/08/02 16:17:52 cyruspatel Exp $"
 
 void CliIdentifyModules(void)
 {
   unsigned int i;
   for (i=0;i<(sizeof(ident_table)/sizeof(ident_table[0]));i++)
     {
-    //printf( "%s\n", (*ident_table[i])() );
+    //LogScreen( "%s\n", (*ident_table[i])() );
     const char *p1 = (*ident_table[i])();
     if ( p1 != NULL )
       {              
@@ -105,7 +109,7 @@ void CliIdentifyModules(void)
         }
       *p2 = 0;
       if ( p2 != &buffer[0] )
-        printf( "%s\n", buffer );
+        LogScreen( "%s\n", buffer );
       }  
     }
   return;
@@ -115,7 +119,7 @@ void CliIdentifyModules(void)
 
 void CliIdentifyModules(void)
 {
-  printf( "No support for -ident in this client.\n" );
+  LogScreen( "No support for -ident in this client.\n" );
 }
   
 #endif //#if defined(__showids__)

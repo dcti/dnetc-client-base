@@ -6,6 +6,9 @@
 ##                       or anything else defined at the end of this makefile
 ##
 ## $Log: makefile.wat,v $
+## Revision 1.22  1998/08/02 16:17:28  cyruspatel
+## Completed support for logging.
+##
 ## Revision 1.21  1998/07/19 20:06:11  cyruspatel
 ## Makefile now also gens the upload readme, eg rc5des-416-dos-x86-cli.readme
 ##
@@ -93,7 +96,7 @@
 ## Import 5/23/98 client tree
 ## 
 
-## $Id: makefile.wat,v 1.21 1998/07/19 20:06:11 cyruspatel Exp $
+## $Id: makefile.wat,v 1.22 1998/08/02 16:17:28 cyruspatel Exp $
 
 %VERMINOR = 416       # for zip - fixit if not the same as version.h
 %VERMAJOR = 7100      # for NetWare copyright: v2.$(%VERMAJOR).$(%VERMINOR)
@@ -112,10 +115,11 @@
             output\iniread.obj   output\network.obj   output\scram.obj    &
             output\clitime.obj   output\clicdata.obj  output\clirate.obj  &
             output\clisrate.obj  output\cpucheck.obj  output\pathwork.obj &
-            output\cliident.obj  output\threadcd.obj  output\x86ident.obj 
+            output\cliident.obj  output\threadcd.obj  output\x86ident.obj &
+            output\logstuff.obj
             # this list can be added to in the platform specific section
 
-            # 29 std OBJ's (+3 mmx, +2 mt) - platform specific stuff is extra
+            # 30 std OBJ's (+3 mmx, +2 mt) - platform specific stuff extra
 
 %mmx_LINKOBJS = output\sboxes-mmx.obj output\deseval-meggs3-mmx.obj &
                 output\des-slice-meggs.obj 
@@ -223,6 +227,10 @@ output\cliconfig.obj : common\cliconfig.cpp $(%dependall) .autodepend
   @set isused=1
 
 output\cpucheck.obj : common\cpucheck.cpp $(%dependall) .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
+  @set isused=1
+
+output\logstuff.obj : common\logstuff.cpp $(%dependall) .autodepend
   *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 

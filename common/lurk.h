@@ -4,6 +4,11 @@
 
 // These are config variables, everything needs access to them
 
+#ifndef __LURK_H__
+
+#ifndef LURK
+#define LURK
+#endif
 
 class Lurk
   {
@@ -73,3 +78,7 @@ s32 dialstatus;
   // 0 = We did not initiate any dialing, don't touch the connect.
   // 1 = We dialed, you're welcome to hangup.
 };
+
+extern Lurk dialup;
+
+#endif __LURK_H__

@@ -39,6 +39,7 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/cpucheck.obj   \
 	$(OUTPUTPATH)/pathwork.obj   \
 	$(OUTPUTPATH)/cliident.obj   \
+        $(OUTPUTPATH)/logstuff.obj   \
         $(OUTPUTPATH)/des-slice-meggs.obj
 
 PREBUILT_OBJS =                   \
