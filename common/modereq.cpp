@@ -8,6 +8,9 @@
 */    
 //
 // $Log: modereq.cpp,v $
+// Revision 1.20  1999/01/15 20:54:21  friedbait
+// #include "baseincs.h" added to fix undefined 'NULL' in linux x86, gcc-2.7.2.3
+//
 // Revision 1.19  1999/01/15 20:21:59  michmarc
 // Fix the fact that Benchmark() in bench.cpp changed its prototype
 //
@@ -74,10 +77,11 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.19 1999/01/15 20:21:59 michmarc Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.20 1999/01/15 20:54:21 friedbait Exp $"; }
 #endif
 
 #include "client.h"   //client class
+#include "baseincs.h" //basic #includes
 #include "triggers.h" //CheckExitRequestTrigger() [used by bench stuff]
 #include "logstuff.h" //LogScreen() [used by update/fetch/flush stuff]
 #include "modereq.h"  //our constants
