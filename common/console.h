@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: console.h,v $
+// Revision 1.2  1998/10/11 05:24:31  cyp
+// Implemented ConIsScreen(): a real (not a macro) isatty wrapper.
+//
 // Revision 1.1  1998/10/03 05:34:47  cyp
 // Created.
 //
@@ -17,16 +20,9 @@
 #define CLICONS_SHORTNAME  "RC5DES"
 #define CLICONS_LONGNAME "Distributed.Net RC5/DES Client " CLIENT_VERSIONSTRING ""
 
-
-#if (defined(NEEDVIRTUALMETHODS) || (CLIENT_OS == OS_RISCOS))
-#define IS_STDOUT_A_TTY() (1)
-#define IS_STDIN_A_TTY() (1)
-#else
-#define IS_STDOUT_A_TTY() (isatty(fileno(stdout)))
-#define IS_STDIN_A_TTY() (isatty(fileno(stdin)))
-#endif
-
-
+// ConIsScreen() returns true (!0) if console (both stdin and stdout) 
+// represents the screen. also returns 0 if the console is not initialized.
+int ConIsScreen(void);
 
 // ConOut() does what printf("%s",str) would do 
 // writes only if stdout is a tty. (or equivalent)
@@ -40,8 +36,8 @@ int ConOutErr(const char *msg); //Can be used at any time. Always succeeds.
 // uninitialized. Can be blocking. Not affected by -hidden/-quiet mode
 int ConOutModal(const char *str); //currently no use for it.
 
-// ConInKey() does what a (non-blocking and polling) DOS-ish getch() would do
-// key is not echoed. timeout ==> 0 == don't wait, -1 == wait forever. 
+// ConInKey() does what a (non-blocking and polling) DOS-ish getch() would 
+// do key is not echoed. timeout ==> 0 == don't wait, -1 == wait forever. 
 int ConInKey(int timeout_millisecs); // Returns -1 if err. 0 if timed out.
 
 // ConInStr() does what gets() would do (without the trailing '\n') and
@@ -66,5 +62,8 @@ int ConSetPos( int row, int col );
 // returns -1 if console could not be initialized
 int DeinitializeConsole(void);
 int InitializeConsole(int runhidden);
+
+#define IS_STDOUT_A_TTY() (ConIsScreen())
+#define IS_STDIN_A_TTY() (ConIsScreen())
 
 #endif

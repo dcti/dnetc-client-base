@@ -11,6 +11,9 @@
    to functions in modules in your own platform/ area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.9  1998/10/11 05:24:29  cyp
+// Implemented ConIsScreen(): a real (not a macro) isatty wrapper.
+//
 // Revision 1.8  1998/10/11 00:53:10  cyp
 // new win32 callouts: w32ConOut(), w32ConGetCh(), w32ConKbhit()
 //
@@ -38,7 +41,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.8 1998/10/11 00:53:10 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.9 1998/10/11 05:24:29 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -101,12 +104,28 @@ int InitializeConsole(int runhidden)
     if (retcode != 0)
       DeinitializeConsole(); /* decrement constatics.initlevel */
     else if (!runhidden)
-      constatics.conisatty = (IS_STDOUT_A_TTY() && IS_STDIN_A_TTY());
+      {
+      #if (CLIENT_OS == OS_WIN32)
+        constatics.conisatty = w32ConIsScreen();
+      #elif (CLIENT_OS == OS_RISCOS)
+        constatics.conisatty = 1;
+      #else
+        constatics.conisatty = ((isatty(fileno(stdout))) && 
+          (isatty(fileno(stdin))));
+      #endif
+      }
     } /* constatics.initlevel == 1 */
     
   return retcode;
 }
   
+/* ---------------------------------------------------- */
+
+int ConIsScreen(void)
+{
+  return (constatics.initlevel > 0 && constatics.conisatty );
+}
+
 /* ---------------------------------------------------- */
 
 /* 
