@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.77 2000/11/12 04:27:13 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.78 2000/11/12 17:19:28 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -723,17 +723,26 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
           #if defined(ONLY_NEEDED_VMPAGES_INHERITABLE)
           {
             //children are faster, main is slower
-            extern int TBF_MakeTriggersVMInheritable(void); /* triggers.cpp */
-            extern int TBF_MakeProblemsVMInheritable(void); /* probman.cpp */
-            //fprintf(stderr, "beginning TBF_MakeProblemsVMInheritable()\n" );
-            if (TBF_MakeProblemsVMInheritable() == 0 )
+            unsigned int prob_i, numprobs = numthreads;
+            assertedvms = +1; //assume success
+            for (prob_i = 0; assertedvms > 0 && prob_i < numprobs; prob_i++)
             {
-              //fprintf(stderr, "beginning TBF_MakeTriggersVMInheritable()\n" );
-              if (TBF_MakeTriggersVMInheritable() == 0 )
-                assertedvms = +1; //success
-            }     
-          }
-          //fprintf(stderr, "assertedvms = %d\n", assertedvms );
+              Problem *thisprob = GetProblemPointerFromIndex(prob_i);
+              if (thisprob)
+              {
+                madvise((void *)thisprob,ProblemGetSize(),MADV_WILLNEED);
+                #ifdef FIRST_THREAD_UNDER_MAIN_CONTROL
+                if (prob_i != 0) /* don't need to flag first problem */
+                #endif  
+                {
+                  int mflag = 0; /*VM_INHERIT_SHARE*/ /*MAP_SHARED|MAP_INHERIT*/;
+                  if (minherit((void *)thisprob,ProblemGetSize(),mflag)!=0)
+                    assertedvms = -1;
+                }    
+              }
+            }
+            //fprintf(stderr, "assertedvms = %d\n", assertedvms );
+          }    
           #else
           {
             extern _start; //iffy since crt0 is at the top only by default
