@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.18 2002/03/25 22:26:16 sampo Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.19 2002/03/26 00:16:12 zebe Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -346,11 +346,11 @@ void GenerateManPage( void )
     }
     fprintf(manp,".El\n");
     fprintf(manp,".Sh BUGS\n"
-                 "No client, irrespective of platform, has ever been released "
-                 "with any known bugs.\n"
+                 "distributed.net maintains a database to assist with the tracking "
+                 "and resolution of bugs in dnetc and related software.\n"
 		 ".Sp\n"
-                 "If you believe you have found one, please submit it to the "
-                 "distributed.net bug reporting pages at "
+                 "If you believe you have found a bug, please submit it to the "
+                 "distributed.net bug tracking database at "
                  "http://www.distributed.net/bugs/\n"
                  ".sp 1\n" 
 		 "Please provide the entire version descriptor as displayed on client start "
