@@ -11,7 +11,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.3 2002/10/14 00:30:24 andreasb Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE
@@ -33,6 +33,7 @@ return "@(#)$Id: w32cons.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $"; }
 #include <shellapi.h> // now include shellapi.h for win32 (tray/registry)
 
 #include "cputypes.h"
+#include "projdata.h" // general project data: ids, flags, states; names, ...
 #include "clitime.h"  // CliGetTimeString(&tv,4),GetBuildDate()
 #include "console.h"  // for CLICONS_[SHORT|LONG]NAME, ConOut, ConInKey
 #include "cliident.h" // CliGetFullVersionDescriptor()
@@ -1680,6 +1681,11 @@ static HMENU __w16WindowConstructMenu(W16CONP console, HWND hwnd,
           AppendMenu(hbench, MF_ENABLED, mpos++, "All projects - selected cores" );
           for (contest = 0;contest < CONTEST_COUNT; contest++)
           {
+            if (ProjectGetFlags(contest) == PROJECT_UNSUPPORTED)
+            {
+              mpos += 2; /* skip them to keep commands easily computable */
+              continue;
+            }
             int ok2bench = (IsProblemLoadPermitted(-1,contest)?(MF_ENABLED):(MF_GRAYED));
             oplabelp = CliGetContestNameFromID(contest);
             sprintf(oplabel,"%s - all cores", oplabelp );
@@ -2334,6 +2340,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
     unsigned int cont_sel;
     int cont_sel_uncertain;
     int cont_sel_explicit;
+    int item_to_project_map[PROJECT_COUNT];
     DWORD cont_sel_exptime;
     DWORD last_rate_disp;
     int last_in_tray;
@@ -2478,16 +2485,21 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
       hwnd = GetDlgItem( dialog, IDC_PROJLIST );
       if (hwnd)
       {
+        int item_i;
         //SetWindowLong(hwnd,GWL_STYLE,GetWindowLong(hwnd,GWL_STYLE)|LBS_NOTIFY);
-        for (cont_i=0; cont_i<CONTEST_COUNT;cont_i++)
+        for (cont_i=0, item_i=0; cont_i<CONTEST_COUNT;cont_i++)
         {
-          SendMessage(hwnd,LB_INSERTSTRING, (WORD)cont_i,
+          if (ProjectGetFlags(cont_i) == PROJECT_UNSUPPORTED)
+            continue;
+          dd->item_to_project_map[item_i] = cont_i;
+          SendMessage(hwnd,LB_INSERTSTRING, (WORD)item_i,
                       (LPARAM)CliGetContestNameFromID(cont_i));
           if (dd->cont_sel_uncertain && ProblemCountLoaded(cont_i) > 0)
           {
             dd->cont_sel = (int)cont_i;
             dd->cont_sel_uncertain = 0;
           }
+          ++item_i;
         }
         SendMessage(hwnd,LB_SETCURSEL,
                (WPARAM)((dd->cont_sel_uncertain)?(-1):(dd->cont_sel)), 0);
@@ -2589,16 +2601,20 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
 
         if (dd->cont_sel_uncertain) /* no contest selected yet */
         {
-          for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+          int item_i;
+          for (cont_i = 0, item_i = 0; cont_i < CONTEST_COUNT; cont_i++)
           {
+            if (ProjectGetFlags(cont_i) == PROJECT_UNSUPPORTED)
+              continue;
             if (ProblemCountLoaded(cont_i) > 0)
             {
               dd->cont_sel = cont_i;
               dd->cont_sel_uncertain = 0;
               SendDlgItemMessage(dialog, IDC_PROJLIST,
-                                 LB_SETCURSEL,(WPARAM)cont_i,0);
+                                 LB_SETCURSEL,(WPARAM)item_i,0);
               break;
             }
+            ++item_i;
           }
         }
         for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
@@ -3527,9 +3543,10 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
           short pos = (short)SendMessage(hwnd,LB_GETCURSEL,0,0);
           if (pos >= 0 && pos < CONTEST_COUNT)
           {
-            dd->cont_sel = (unsigned int)pos;
+            int proj = dd->item_to_project_map[pos];
+            dd->cont_sel = (unsigned int)proj;
             dd->timer_cont_sel = -1; /* contest at last WM_TIMER */
-            dd->cont_sel_explicit = (unsigned int)pos;
+            dd->cont_sel_explicit = (unsigned int)proj;
             dd->cont_sel_exptime = GetTickCount(); /* switch time */
             PostMessage(dialog,WM_TIMER,1,0); /* load changed buffer info */
             InvalidateRect(dialog,0,0); /* everything needs repainting */
