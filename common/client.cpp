@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.52  1998/06/17 07:53:02  cberry
+// replaced the % in [%s] Both RC5 and DES are marked as finished.  Quitting.
+//
 // Revision 1.51  1998/06/15 12:03:49  kbracey
 // Lots of consts.
 //
@@ -30,7 +33,7 @@
 //
 //
 
-static const char *id="@(#)$Id: client.cpp,v 1.51 1998/06/15 12:03:49 kbracey Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.52 1998/06/17 07:53:02 cberry Exp $";
 
 #include "client.h"
 
@@ -2554,7 +2557,7 @@ PreferredIsDone1:
     if (contestdone[0] && contestdone[1])
     {
       TimeToQuit = 1;
-      Log( "\n[s] Both RC5 and DES are marked as finished.  Quitting.\n", Time() );
+      Log( "\n[%s] Both RC5 and DES are marked as finished.  Quitting.\n", Time() );
       exitcode = -2;
     }
 
