@@ -1,3 +1,15 @@
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * $Id: amVersion.c,v 1.1.2.2 2002/04/11 11:09:16 oliver Exp $
+ *
+ * ----------------------------------------------------------------------
+ * AmigaOS version string/tag
+ * ----------------------------------------------------------------------
+*/
+
 #ifndef _AMIGA_VERSION_C
 #define _AMIGA_VERSION_C
 

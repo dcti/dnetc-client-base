@@ -1,15 +1,20 @@
-/* Created by Oliver Roberts <oliver@futaura.co.uk>
-**
-** $Id: amMemory.c,v 1.1.2.1 2001/01/21 15:10:27 cyp Exp $
-**
-** ----------------------------------------------------------------------
-** This file contains replacement stdlib memory allocation routines,
-** utilizing system memory pool routines.  Note: the main reason I'm
-** using custom routines is because the 68k libnix memory routines were
-** found to be causing crashes on some systems - but, besides, using
-** memory pools for 68k should be more efficient anyway (decided to add
-** WarpOS/PowerUp support too)
-** ----------------------------------------------------------------------
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * $Id: amMemory.c,v 1.1.2.2 2002/04/11 11:10:28 oliver Exp $
+ *
+ * Created by Oliver Roberts <oliver@futaura.co.uk>
+ *
+ * ----------------------------------------------------------------------
+ * This file contains replacement stdlib memory allocation routines,
+ * utilizing system memory pool routines.  Note: the main reason I'm
+ * using custom routines is because the 68k libnix memory routines were
+ * found to be causing crashes on some systems - but, besides, using
+ * memory pools for 68k should be more efficient anyway (decided to add
+ * WarpOS/PowerUp support too)
+ * ----------------------------------------------------------------------
 */
 
 #ifndef __POWERUP__

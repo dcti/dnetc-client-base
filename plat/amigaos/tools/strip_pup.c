@@ -1,6 +1,17 @@
 /*
-** Strip symbols PowerUp relocatable ELF - requires strip and vlink (from VBCC)
-** This is quite messy, but there is no other way with gcc/PowerUp :(
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * $Id: strip_pup.c,v 1.1.2.2 2002/04/11 11:11:42 oliver Exp $
+ *
+ * Created by Oliver Roberts <oliver@futaura.co.uk>
+ *
+ * ----------------------------------------------------------------------
+ * Strip symbols PowerUp relocatable ELF - requires strip and vlink (from
+ * VBCC).  This is quite messy, but there is no other way with
+ * gcc/PowerUp :(
+ * ----------------------------------------------------------------------
 */
 
 #include <stdio.h>
