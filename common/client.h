@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.66  1998/07/11 00:37:29  silby
+// Documented the connectrequested variable better.
+//
 // Revision 1.65  1998/07/08 09:22:48  remi
 // Added support for the MMX bitslicer.
 // Wrapped $Log comments to some reasonable value.
@@ -333,6 +336,10 @@ protected:
 
 #if (CLIENT_OS == OS_WIN32) && defined(NEEDVIRTUALMETHODS)
   u32 connectrequested;       // used by win32gui to signal an update
+  // 1 = user requested update
+  // 2 = automaticly requested update (quiet mode)
+  // 3 = user requested flush
+  // 4 = user requested fetch
 #endif
 
 
