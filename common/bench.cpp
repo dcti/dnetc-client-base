@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.57.2.2 2001/03/22 22:12:51 sampo Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.57.2.3 2001/03/22 22:18:15 sampo Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -280,7 +280,6 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
             run = -4;
             break;
           }
-          ratebuf = info.ratebuf;
           
           if (bestlo || besthi)
           {
