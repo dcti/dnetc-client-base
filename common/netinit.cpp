@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.26.2.12 2000/09/21 16:46:08 oliver Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.26.2.13 2000/09/22 16:11:17 cyp Exp $"; }
 
 //#define TRACE
 
@@ -23,13 +23,67 @@ return "@(#)$Id: netinit.cpp,v 1.26.2.12 2000/09/21 16:46:08 oliver Exp $"; }
 #include "lurk.h"     //#ifdef LURK
 #include "network.h"  //ourselves
 
-//--------------------------------------------------------------------------
+/* --------------------------------------------------------------------- */
 
 /*
   __netInitAndDeinit( ... ) combines both init and deinit so statics can
   be localized. The function is called with (> 0) to init, (< 0) to deinint
   and (== 0) to return the current 'isOK' state.
 */
+
+static int __dialupsupport_action(int doWhat)
+{
+  int rc = 0;
+  #if defined(LURK)
+  {
+    //'redial_if_needed' is used here as follows:
+    //   If a connection had been previously initiated with DialIfNeeded()
+    //   AND there has been no HangupIfNeeded() since then AND the connection
+    //   has dropped, THEN kickoff a new DialIfNeeded().
+    // Should this behaviour be integrated in lurk.cpp?
+    static int redial_if_needed = 0;
+    // dialup.IsWatching() returns zero if 'dialup' isn't initialized.
+    // Otherwise it returns a bitmask of things it is configured to do,
+    // ie CONNECT_LURK|CONNECT_LURKONLY|CONNECT_DOD
+    int confbits = dialup.IsWatching();
+    if (confbits) /* 'dialup' initialized and have LURK[ONLY] and/or DOD */
+    {       
+      if (doWhat < 0) /* request to de-initialize? */
+      {
+        // HangupIfNeeded will hang up a connection if previously 
+        // initiated with DialIfNeeded(). Otherwise it does nothing.
+        dialup.HangupIfNeeded();
+        redial_if_needed = 0;
+      }  
+      // IsConnected() returns non-zero when 'dialup' is initialized and
+      // a link is up. Otherwise it returns zero.
+      else if (!dialup.IsConnected()) /* not online/no longer online? */
+      {
+        rc = -1; /* conn dropped and assume not (re)startable */
+	      if (doWhat > 0 || redial_if_needed) /* request to initialize? */
+        {
+          if ((confbits & CONNECT_DOD)!=0) /* configured for dial-on-demand?*/
+	        {                              
+            // DialIfNeeded(1) returns zero if already connected OR 
+            // not-configured-for-dod OR dial success. Otherwise it returns -1 
+            // (either 'dialup' isn't initialized or dialing failed).
+            // Passing '1' makes it ignore any lurkonly restriction.
+      	    if (dialup.DialIfNeeded(1) == 0) /* reconnect to complete */
+    	      {                                /* whatever we were doing */
+   	          rc = 0; /* (re-)dial was successful */
+              redial_if_needed = 1;
+  	        }
+          }
+        } /* request to initialize? */  
+      } /* !dialup.IsConnected() */
+    } /* if dialup.IsWatching() */
+  } /* if defined(LURK) */
+  #endif /* LURK */
+  doWhat = doWhat; /* possible unused */
+  return rc;
+}  
+
+/* --------------------------------------------------------------------- */
 
 static int __netInitAndDeinit( int doWhat )
 {
@@ -49,16 +103,11 @@ static int __netInitAndDeinit( int doWhat )
     }
     else if ((--init_level)==0)  //don't deinitialize more than once
     {
-      #if defined(LURK) 
-      // HangupIfNeeded will hang up a connection if previously 
-      // initiated with DialIfNeeded(). Otherwise it does nothing.
-      dialup.HangupIfNeeded(); 
-      #endif
+      __dialupsupport_action(doWhat);
       #if (CLIENT_OS == OS_AMIGAOS)
       amigaSocketDeinit();
       #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
-      if (winGetVersion() < 400) /* win16 or win32s */
-        w32sockDeinitialize();
+      WSACleanup();
       #endif
     }
   }  
@@ -67,32 +116,33 @@ static int __netInitAndDeinit( int doWhat )
 
   if (rc == 0 && doWhat > 0)  //request to initialize
   {
-    if ((++init_level)!=1) //already initialized?
-      doWhat = 0; //convert into request to check online mode
-    else  
+    if ((++init_level)==1) //don't initialize more than once
     {
       #if (!defined(AF_INET) || !defined(SOCK_STREAM))
         rc = -1;  //no networking capabilities
       #elif (CLIENT_OS == OS_AMIGAOS)
-      #if defined(LURK)
-      if (!amigaSocketInit(dialup.IsWatching())) // some libs not needed if lurking
-      #else
-      if (!amigaSocketInit(0))
-      #endif
-        rc = -1;
-      #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
-      if (rc == 0 && winGetVer() < 400) /* win16 or win32s */
-        rc = ((!w32sockInitialize())?(-1):(rc));
-      #endif    
-      if (rc == 0)
-        rc = __netInitAndDeinit(0); //recurse as request to check online mode
-      if (rc != 0)
-      {
-        init_level--;
-        #if (CLIENT_OS == OS_AMIGAOS)
-        amigaSocketDeinit();
+        int libsloaded = 0;
+        #if defined(LURK)
+        libsloaded = dialup.IsWatching(); // some libs not needed if lurking
         #endif
-      }
+        if (!amigaSocketInit(libsloaded))
+          rc = -1;
+      #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+        WSADATA wsaData;
+        if ( WSAStartup( 0x0101, &wsaData ) != 0 )
+          rc = -1;
+      #endif
+      if (rc == 0)
+        rc = __dialupsupport_action(+1);
+    }
+    if (rc == 0)
+      rc = __netInitAndDeinit(0); //check
+    if (rc != 0)
+    {
+      if (init_level == 1)
+        __netInitAndDeinit(-1); //de-init (and decrement init_level)
+      else  
+        init_level--;
     }    
   } 
 
@@ -102,13 +152,10 @@ static int __netInitAndDeinit( int doWhat )
   {
     if (init_level == 0) /* ACK! haven't been initialized yet */
       rc = -1;
-    else
+    else  
     {  
       #if (!defined(AF_INET) || !defined(SOCK_STREAM))
-      rc = -1;  //no networking capabilities
-      #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
-      if (rc == 0 && winGetVersion() < 400) /* win16 or win32s */
-        rc = ((!w32sockIsAlive())?(-1):(rc));
+        rc = -1;  //no networking capabilities
       #elif(CLIENT_OS == OS_AMIGAOS)
       if (!amigaIsNetworkingActive())  //test if tcpip is still available
         rc = -1;
@@ -117,36 +164,8 @@ static int __netInitAndDeinit( int doWhat )
         rc = -1;
       #endif    
     }	  
-
-    #if defined(LURK)
     if (rc == 0)
-    {
-      // dialup.IsWatching() returns zero if 'dialup' isn't initialized.
-      // Otherwise it returns a bitmask of things it is configured to do,
-      // ie CONNECT_LURK|CONNECT_LURKONLY|CONNECT_DOD
-      int confbits = dialup.IsWatching();
-      if (confbits) /* 'dialup' initialized and have LURK[ONLY] and/or DOD */
-      {       
-        // IsConnected() returns non-zero when 'dialup' is initialized and
-        // a link is up. Otherwise it returns zero.
-        if (!dialup.IsConnected()) /* no longer online? */
-        {
-	  rc = -1; /* conn dropped and assume not restartable */
-	  if ((confbits & CONNECT_DOD)!=0) /* configured for dial-on-demand?*/
-	  {                              
-            // DialIfNeeded(1) returns zero if already connected OR 
-            // not-configured-for-dod OR dial success. Otherwise it returns -1 
-            // (either 'dialup' isn't initialized or dialing failed).
-            // Passing '1' makes it ignore any lurkonly restriction.
-    	    if (dialup.DialIfNeeded(1) == 0) /* reconnect to complete */
-  	    {                                /* whatever we were doing */
-	      rc = 0; /* (re-)dial was successful */
-	    }
-          }
-        } /* !dialup.IsConnected() */
-      } /* if dialup.IsWatching() */
-    }	/* if (rc == 0) */
-    #endif /* if defined(LURK) */
+      rc = __dialupsupport_action(doWhat);
   } /* if ( rc == 0 && doWhat == 0 ) */
 
   /* ----------------------- */
@@ -155,7 +174,7 @@ static int __netInitAndDeinit( int doWhat )
   return rc;
 }
 
-//======================================================================
+/* --------------------------------------------------------------------- */
 
 //  __globalInitAndDeinit() gets called once (to init) when the
 // client starts and once (to deinit) when the client stops/restarts.
@@ -178,11 +197,6 @@ static int __globalInitAndDeinit( int doWhat )
       #if ((CLIENT_OS == OS_OS2) && !defined(__EMX__))
       sock_init();
       #endif
-      #if (CLIENT_OS == OS_WIN32)
-      WSADATA wsaData;
-      if ( WSAStartup( 0x0101, &wsaData ) != 0 )
-        global_is_init = 0;
-      #endif
     }
     if (global_is_init == 0)
       rc = -1;
@@ -192,10 +206,6 @@ static int __globalInitAndDeinit( int doWhat )
     if (global_is_init != 0)
     {
       global_is_init = 0; // assume all success
-  
-      #if (CLIENT_OS == OS_WIN32)
-      WSACleanup();
-      #endif
     }
   }
   else //if (doWhat == 0)                   //query state
