@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.193  1998/11/09 14:32:16  chrisb
+// Set the RISC OS CPU priority message, and fixed a typo of CLIEN_OS == WIN32S.
+//
 // Revision 1.192  1998/11/06 02:21:38  cyp
 // Fixed a missing return type for findmenuoption().
 //
@@ -261,7 +264,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.192 1998/11/06 02:21:38 cyp Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.193 1998/11/09 14:32:16 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -492,12 +495,17 @@ static optionstruct options[OPTION_COUNT]=
   "The priority option is ignored on this machine. The distributed.net client\n"
   "for NetWare dynamically adjusts its process priority.\n"
   ),
-#elif (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32) || (CLIEN_OS==OS_WIN32S)
+#elif (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN32S)
   CFGTXT(
   "The priority option is ignored on this machine. distributed.net clients\n"
   "for Windows always run at lowest ('idle') priority.\n"
   ),
-#elif (CLIENT_OS == OS_RISCOS) || (CLIENT_OS==OS_MACOS)
+#elif (CLIENT_OS == OS_RISCOS)
+  CFGTXT(
+  "The priority option is ignored on this machine. The distributed.net client\n"
+  "for RISC OS dynamically adjusts its process priority.\n"
+  ),
+#elif (CLIENT_OS==OS_MACOS)
   CFGTXT(
   "DESCRIPTION IS MISSING"
   ),
