@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.58 1999/04/24 22:44:32 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.59 1999/04/30 23:50:06 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // Client class
@@ -200,6 +200,9 @@ static int confopt_IsHostnameDNetHost( const char * hostname )
 
 int ReadConfig(Client *client) 
 {
+  // 1. never printf()/logscreen()/conout() from here
+  // 2. never force an option based on the value of some other valid option
+
   char buffer[64];
   const char *sect = OPTION_SECTION;
   char *p; int i;
@@ -310,12 +313,9 @@ int ReadConfig(Client *client)
   i = dialup.GetCapabilityFlags();
   dialup.lurkmode = 0;
   if ((i & CONNECT_LURKONLY)!=0 && GetPrivateProfileIntB( sect, "lurkonly", 0, fn ))
-    { dialup.lurkmode = CONNECT_LURKONLY; client->connectoften = 1; }
+    { dialup.lurkmode = CONNECT_LURKONLY; }
   else if ((i & CONNECT_LURK)!=0 && GetPrivateProfileIntB( sect, "lurk", 0, fn ))
     dialup.lurkmode = CONNECT_LURK;
-  if (dialup.lurkmode)
-    client->offlinemode = 0;
-  
   if ((i & CONNECT_IFACEMASK)!=0)
     GetPrivateProfileStringB( OPTSECT_NET, "interfaces-to-watch", dialup.connifacemask,
                               dialup.connifacemask, sizeof(dialup.connifacemask), fn );
