@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: threadcd.h,v $
+// Revision 1.6  1998/06/29 04:22:32  jlawson
+// Updates for 16-bit Win16 support
+//
 // Revision 1.5  1998/06/16 05:38:08  dicamillo
 // Added #include for BeOS for OS.h
 //
@@ -32,38 +35,39 @@
 #define OS_SUPPORTS_THREADING  //#undef this IN *YOUR* SECTION if untrue
 
 #if (CLIENT_OS == OS_WIN32)
-   #include <process.h>
-   typedef unsigned long THREADID;
+  #include <process.h>
+  typedef unsigned long THREADID;
 #elif (CLIENT_OS == OS_OS2)
-   #error threadcd.h needs an include //replace this with appropriate includes
-   typedef long THREADID;
+  #error threadcd.h needs an include //replace this with appropriate includes
+  typedef long THREADID;
 #elif (CLIENT_OS == OS_NETWARE)
-   #include <process.h>
-   typedef long THREADID;
-   extern int CliWaitForThreadExit( int threadID );
+  #include <process.h>
+  typedef long THREADID;
+  extern int CliWaitForThreadExit( int threadID );
 #elif (CLIENT_OS == OS_BEOS)
-   #include <OS.h>
-   typedef thread_id THREADID;
+  #include <OS.h>
+  typedef thread_id THREADID;
 #elif (CLIENT_OS == OS_DOS)
-   typedef int THREADID ; //dummy
-   #undef OS_SUPPORTS_THREADING
+  typedef int THREADID ; //dummy
+  #undef OS_SUPPORTS_THREADING
 #elif (CLIENT_OS == OS_MACOS)
-   typedef int THREADID ; //dummy
-   #undef OS_SUPPORTS_THREADING
+  typedef int THREADID ; //dummy
+  #undef OS_SUPPORTS_THREADING
 #elif (CLIENT_OS == OS_WIN16)
-   typedef int THREADID ; //dummy
-   #undef OS_SUPPORTS_THREADING
+  #include <stdlib.h>
+  typedef int THREADID ; //dummy
+  #undef OS_SUPPORTS_THREADING
 #elif (CLIENT_OS == OS_RISCOS)
-   typedef int THREADID ; //dummy
-   #undef OS_SUPPORTS_THREADING
+  typedef int THREADID ; //dummy
+  #undef OS_SUPPORTS_THREADING
 #else
-   #if !defined(MULTITHREAD)
-     typedef int THREADID ;
-     #undef OS_SUPPORTS_THREADING
-   #else
-     #include <pthread.h>
-     typedef pthread_t THREADID;
-   #endif
+  #if !defined(MULTITHREAD)
+    typedef int THREADID ;
+    #undef OS_SUPPORTS_THREADING
+  #else
+    #include <pthread.h>
+    typedef pthread_t THREADID;
+  #endif
 #endif
 
 //-----------------------------------------------------------------------

@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.29  1998/06/29 04:22:23  jlawson
+// Updates for 16-bit Win16 support
+//
 // Revision 1.28  1998/06/27 21:23:34  jlawson
 // fixed tabs
 //
@@ -86,7 +89,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: disphelp.cpp,v 1.28 1998/06/27 21:23:34 jlawson Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.29 1998/06/29 04:22:23 jlawson Exp $";
 #endif
 
 #include "client.h"
@@ -115,6 +118,7 @@ static const char *id="@(#)$Id: disphelp.cpp,v 1.28 1998/06/27 21:23:34 jlawson 
 
 // --------------------------------------------------------------------------
 
+#if !defined(NOCONFIG)
 // read a single keypress, without waiting for an Enter if possible
 static int readkeypress()
 {
@@ -203,11 +207,14 @@ static int readkeypress()
 
   return ch;
 }
+#endif
 
 // --------------------------------------------------------------------------
 
+#if !defined(NOCONFIG)
 // How many visible lines there is in this terminal ?
-static int gettermheight() {
+static int gettermheight()
+{
 
 #if (CLIENT_OS == OS_WIN32)
 
@@ -278,6 +285,7 @@ static int gettermheight() {
     return nlines;
 #endif
 }
+#endif
 
 // --------------------------------------------------------------------------
 

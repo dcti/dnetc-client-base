@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: threadcd.cpp,v $
+// Revision 1.9  1998/06/29 04:22:30  jlawson
+// Updates for 16-bit Win16 support
+//
 // Revision 1.8  1998/06/18 23:25:49  remi
 // Cleared a (stupid) gcc warning.
 //
@@ -22,14 +25,10 @@
 //
 
 
-/* module history:
-   04 June 1998 - slapped together - Cyrus Patel <cyp@fb14.uni-mainz.de>
-*/
-
 // This module encapsulates functions for the creation and destruction of
 // a single thread - used by client.cpp and piproxy.cpp
 
-static const char *id="@(#)$Id: threadcd.cpp,v 1.8 1998/06/18 23:25:49 remi Exp $";
+static const char *id="@(#)$Id: threadcd.cpp,v 1.9 1998/06/29 04:22:30 jlawson Exp $";
 
 #include "threadcd.h"   //includes implementation and porting notes.
 #include "sleepdef.h"   //sleep() and usleep()
@@ -38,7 +37,7 @@ static const char *id="@(#)$Id: threadcd.cpp,v 1.8 1998/06/18 23:25:49 remi Exp 
 // ************** implementation and porting notes are in threadcd.h ****
 //-----------------------------------------------------------------------
 
-    //destroy a thread (block until dead)
+// destroy a thread (block until dead)
 int CliDestroyThread( THREADID cliThreadID )
 {
   int rescode = 0;
@@ -62,9 +61,6 @@ int CliDestroyThread( THREADID cliThreadID )
 }
 
 //-----------------------------------------------------------------------
-
-
-
 
 // The thread is wrapped in a shell for two reasons:
 // 1. we can block until the thread has started
@@ -109,7 +105,7 @@ static void __thread_shell( void *param )
 
 //-----------------------------------------------------------------------
 
-  //create a thread (block until running) return threadID or NULL if error
+// create a thread (block until running) return threadID or NULL if error
 THREADID CliCreateThread( void (*proc)(void *), void *param )
 {
   THREADID cliThreadID;

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.60  1998/06/29 04:22:17  jlawson
+// Updates for 16-bit Win16 support
+//
 // Revision 1.59  1998/06/25 02:30:33  jlawson
 // put back public Client::connectrequested for use by win32gui
 //
@@ -60,7 +63,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.59 1998/06/25 02:30:33 jlawson Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.60 1998/06/29 04:22:17 jlawson Exp $";
 #endif
 
 #include "client.h"
@@ -504,15 +507,15 @@ s32 Client::Fetch( u8 contest, Network *netin, s32 quietness )
     packet.iterations = htonl( 1 << preferred_blocksize );
 #endif
     packet.version = htonl( PACKET_VERSION );
-     packet.os = htonl( CLIENT_OS );
-     packet.cpu = htonl( CLIENT_CPU );
-     packet.build = htonl( CLIENT_CONTEST*100 + CLIENT_BUILD );
+    packet.os = htonl( CLIENT_OS );
+    packet.cpu = htonl( CLIENT_CPU );
+    packet.build = htonl( CLIENT_CONTEST*100 + CLIENT_BUILD );
 
-     if (contest == 0) {
-       packet.contestid = htonl( IDCONTEST_RC564 );
-     } else {
-       packet.contestid = htonl( IDCONTEST_DESII );
-     }
+    if (contest == 0) {
+      packet.contestid = htonl( IDCONTEST_RC564 );
+    } else {
+      packet.contestid = htonl( IDCONTEST_DESII );
+    }
 
     packet.checksum =
       htonl( Checksum( (u32 *) &packet, ( sizeof(Packet) / 4 ) - 2 ) );

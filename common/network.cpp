@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.25  1998/06/29 04:22:26  jlawson
+// Updates for 16-bit Win16 support
+//
 // Revision 1.24  1998/06/26 06:56:38  daa
 // convert all the strncmp's in the http code with strncmpi to deal with proxy's case shifting HTML
 //
@@ -36,7 +39,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: network.cpp,v 1.24 1998/06/26 06:56:38 daa Exp $";
+static const char *id="@(#)$Id: network.cpp,v 1.25 1998/06/29 04:22:26 jlawson Exp $";
 #endif
 
 #include "network.h"
@@ -285,7 +288,11 @@ s32 Network::Resolve(const char *host, u32 &hostaddress)
 #if !defined(NONETWORK)
   if ((hostaddress = inet_addr((char*)host)) == 0xFFFFFFFFL)
   {
+#if (CLIENT_OS == OS_WIN16)
+    struct hostent FAR *hp;
+#else
     struct hostent *hp;
+#endif
     if ((hp = gethostbyname((char*)host)) == NULL) return -1;
 
     int addrcount;
@@ -293,7 +300,11 @@ s32 Network::Resolve(const char *host, u32 &hostaddress)
     // randomly select one
     for (addrcount = 0; hp->h_addr_list[addrcount]; addrcount++);
     int index = rand() % addrcount;
-    memcpy((void*) &hostaddress, hp->h_addr_list[index], sizeof(u32));
+#if (CLIENT_OS == OS_WIN16)
+    _fmemcpy((void*) &hostaddress, (void FAR*) hp->h_addr_list[index], sizeof(u32));
+#else
+    memcpy((void*) &hostaddress, (void*) hp->h_addr_list[index], sizeof(u32));
+#endif
   }
 #endif
   return 0;
@@ -977,7 +988,11 @@ s32 Network::Put( u32 length, const char * data )
     if (lasthttpaddress) {
       in_addr addr;
       addr.s_addr = lasthttpaddress;
+#if (CLIENT_OS == OS_WIN16)
+      _fstrncpy(ipbuff, inet_ntoa(addr), sizeof(ipbuff));
+#else
       strncpy(ipbuff, inet_ntoa(addr), sizeof(ipbuff));
+#endif
     } else {
       strncpy(ipbuff, server_name, sizeof(ipbuff));
     }

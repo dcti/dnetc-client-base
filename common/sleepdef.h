@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: sleepdef.h,v $
+// Revision 1.8  1998/06/29 04:22:28  jlawson
+// Updates for 16-bit Win16 support
+//
 // Revision 1.7  1998/06/25 20:57:08  foxyloxy
 // IRIX5's lack of usleep() rectified temporarily with sleep()... will change
 // to nanosleep() soon. (sleepdef.h) -MIPS4 changed to -mips4 (configure)
@@ -55,12 +58,9 @@
   #define sleep(x) Sleep(1000*(x))
   #define usleep(x) Sleep((x)/1000)
 #elif (CLIENT_OS == OS_WIN16)
-  #if defined(__WATCOMC__) || defined(__TURBOC__)
-    #include <dos.h>
-    #define usleep(x) delay((x)/1000)
-  #else
-    #error sleep()/usleep() are still undefined in sleepdef.h
-  #endif
+  // Win16 doesn't have any form of sleep available
+  #define sleep(x)
+  #define usleep(x)
 #elif (CLIENT_OS == OS_DOS)
   #if (defined(__WATCOMC__) || defined(__TURBOC__))
     #include <dos.h>
