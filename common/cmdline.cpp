@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.125  1999/02/20 03:09:51  gregh
+// Use CliGetContestNameFromID instead of hard coding contest names.
+//
 // Revision 1.124  1999/02/07 16:00:09  cyp
 // Lurk changes: genericified variable names, made less OS-centric.
 //
@@ -164,7 +167,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.124 1999/02/07 16:00:09 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.125 1999/02/20 03:09:51 gregh Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -178,6 +181,7 @@ return "@(#)$Id: cmdline.cpp,v 1.124 1999/02/07 16:00:09 cyp Exp $"; }
 #include "clitime.h"   // CliTimer() for -until setting
 #include "cmdline.h"   // ourselves
 #include "confrwv.h"   // ValidateConfig()
+#include "clicdata.h"  // CliGetContestNameFromID()
 
 /* -------------------------------------- */
 
@@ -633,7 +637,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             {
             if (logging_is_initialized)
               LogScreenRaw("Setting %s buffer thresholds to %u\n",
-                   ((conid)?("DES"):("RC5")), (unsigned int)inthreshold[conid] );
+                   CliGetContestNameFromID(conid), (unsigned int)inthreshold[conid] );
             }
           else if ( atoi( nextarg ) > 0)
             {
@@ -652,7 +656,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             {
             if (logging_is_initialized)
               LogScreenRaw("Setting %s in-buffer threshold to %u\n",
-                 ((conid)?("DES"):("RC5")), (unsigned int)inthreshold[conid] );
+                 CliGetContestNameFromID(conid), (unsigned int)inthreshold[conid] );
             }
           else if ( atoi( nextarg ) > 0)
             {
@@ -671,7 +675,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             {
             if (logging_is_initialized)
               LogScreenRaw("Setting %s out-buffer threshold to %u\n",
-                  ((conid)?("DES"):("RC5")), (unsigned int)outthreshold[conid] );
+                  CliGetContestNameFromID(conid), (unsigned int)outthreshold[conid] );
             }
           else if ( atoi( nextarg ) > 0)
             {
@@ -690,7 +694,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             {
             if (logging_is_initialized)
               LogScreenRaw("Setting %s in-buffer file to %s\n",
-                    ((conid)?("DES"):("RC5")), in_buffer_file[conid] );
+                    CliGetContestNameFromID(conid), in_buffer_file[conid] );
             }
           else
             {
@@ -710,7 +714,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             {
             if (logging_is_initialized)
               LogScreenRaw("Setting %s out-buffer file to %s\n",
-                    ((conid)?("DES"):("RC5")), out_buffer_file[conid] );
+                    CliGetContestNameFromID(conid), out_buffer_file[conid] );
             }
           else
             {
