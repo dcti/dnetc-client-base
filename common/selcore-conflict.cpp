@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.8  1998/10/03 05:14:58  sampo
+// minor change for MacOS CVS build
+//
 // Revision 1.7  1998/10/03 03:22:07  cyp
 // Moved 68k core kudos to PrintBanner() [client.cpp]
 //
@@ -34,7 +37,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.7 1998/10/03 03:22:07 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.8 1998/10/03 05:14:58 sampo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -70,7 +73,7 @@ static const char *cputypetable[]=
   "ARM 710"
   };
 #elif ((CLIENT_CPU == CPU_POWERPC) && \
-      ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX)))
+      ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX || (CLIENT_OS == OS_MACOS))))
 static const char *cputypetable[]=
   {
   "PowerPC 601",
