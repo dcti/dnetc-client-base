@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.41 2000/10/28 21:56:42 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.42 2000/10/31 03:04:51 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -111,6 +111,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     int silent = 1, run = RESULT_WORKING;
     unsigned long last_permille = 1001;
 
+    ClientEventSyncPost(CLIEVENT_BENCHMARK_STARTED, (long)problem );
     if ((flags & TBENCHMARK_QUIET) == 0)
     {
       silent = 0;
@@ -118,8 +119,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     }
     while ( run == RESULT_WORKING )
     {
-      unsigned long permille;
-      double rate;
+      unsigned long permille; u32 ratehi, ratelo;
 
       if (non_preemptive_os.yps) /* is this a non-preemptive environment? */
       {
@@ -127,13 +127,13 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
            && problem->runtime_sec >= ((u32)(2+non_preemptive_os.did_adjust)))
         {
           u32 newtslice;
-          if (problem->GetInfo(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &rate,
-                               0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ) == -1)
+          if (problem->GetInfo(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                               &ratelo, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ) == -1)
           {
             run = -1;
             break;
           }
-          newtslice = (u32)(rate/((double)non_preemptive_os.yps));
+          newtslice = (u32)(ratelo/((u32)non_preemptive_os.yps));
           if (newtslice > (tslice + (tslice/10)))
           {
             non_preemptive_os.did_adjust++;
@@ -195,27 +195,34 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
                      contname, (unsigned int)(permille/10), 
                              (unsigned int)((permille%10)*10) );
         last_permille = (permille / 10);
+        ClientEventSyncPost(CLIEVENT_BENCHMARK_BENCHING, (long)problem );
       }                                 
       if (permille == 1000) /* time is up or ran out of work */
       {
-        char ratebuf[32]; const char *unitname; u32 secs, usecs;
-        if (problem->GetInfo(0, 0, &secs, &usecs, 0, 0, &unitname, 0, 0, 0, 
-                             &rate, ratebuf, sizeof(ratebuf),
-                             0, 0, 0, 0, 0, 0, 0, 0 ) == -1)
+        char ratebuf[32]; u32 secs, usecs;
+        if (problem->GetInfo(0, 0, /* cont_id, cont_name */
+                             &secs, &usecs, 
+                             0, 0, 0, /* swucount, pad_strings, unit_name */
+                             0, 0, 0, /* currpermille, startperm, poie */
+                             0, 0,    /* idbuf, idbufsz */
+                             &ratehi, &ratelo, 
+                             ratebuf, sizeof(ratebuf),
+                             0, 0, 0, 0,   0, 0, 0, 0 ) == -1)
         {
           run = -1;
           break;
         }
-        retvalue = (long)rate;
+        retvalue = (long)ratelo;
         if (!silent)
         {
           struct timeval tv; 
           tv.tv_sec = secs; tv.tv_usec = usecs;
-          Log("\rBenchmark for %s core #%d (%s)\n%s [%s %s/sec]",
+          Log("\rBenchmark for %s core #%d (%s)\n%s [%s/sec]",
              contname, problem->coresel, 
              selcoreGetDisplayName(contestid, problem->coresel),
-             CliGetTimeString( &tv, 2 ), ratebuf, unitname );
+             CliGetTimeString( &tv, 2 ), ratebuf );
         }
+        ClientEventSyncPost(CLIEVENT_BENCHMARK_FINISHED, (long)problem );
         break;
       } /* permille == 1000 */
     } /* while ( run == RESULT_WORKING ) */
