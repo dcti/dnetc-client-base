@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.132  1998/08/21 18:18:22  cyruspatel
+// Failure to start a thread will no longer force a client to exit. ::Run
+// will continue with a reduced number of threads or switch to non-threaded
+// mode if no threads could be started. Loaded but unneeded blocks are
+// written back out to disk. A multithread-capable client can still be forced
+// to run in non-threaded mode by setting numcpu=0.
+//
 // Revision 1.131  1998/08/21 16:05:51  cyruspatel
 // Extended the DES mmx define wrapper from #if MMX_BITSLICER to
 // #if (defined(MMX_BITSLICER) && defined(KWAN) && defined(MEGGS)) to
@@ -125,7 +132,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.131 1998/08/21 16:05:51 cyruspatel Exp $"; }
+return "@(#)$Id: client.cpp,v 1.132 1998/08/21 18:18:22 cyruspatel Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -152,7 +159,7 @@ return "@(#)$Id: client.cpp,v 1.131 1998/08/21 16:05:51 cyruspatel Exp $"; }
 #include "cliident.h"  // CliIdentifyModules()
 #include "logstuff.h"  //Log()/LogScreen()/LogScreenPercent()/LogFlush()
 
-#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+#if ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32))
 #include "lurk.h"      //lurk stuff
 #endif
 
@@ -160,16 +167,17 @@ return "@(#)$Id: client.cpp,v 1.131 1998/08/21 16:05:51 cyruspatel Exp $"; }
 
 // --------------------------------------------------------------------------
 #if ((CLIENT_CPU > 0x01F /* 0-31 */) || ((CLIENT_CONTEST-64) > 0x0F /* 64-79 */) || \
-     (CLIENT_BUILD > 0x07 /* 0-7 */) || (CLIENT_BUILD_FRAC > 0x01FF /* 0-1023 */) || \
-     (CLIENT_OS  > 0x7F /* 0-127 */))
+     (CLIENT_BUILD > 0x07 /* 0-7 */) || (CLIENT_BUILD_FRAC > 0x03FF /* 0-1023 */) || \
+     (CLIENT_OS  > 0x3F  /* 0-63 */)) // + cputype 0-15
 #error CLIENT_CPU/_OS/_CONTEST/_BUILD are out of range for FileEntry check tags
 #endif    
 
-#define FILEENTRY_CPU     (((cputype & 0x0F)<<4) | (CLIENT_CPU & 0x0F))
-#define FILEENTRY_OS      ((CLIENT_OS & 0x7F) | ((CLIENT_CPU & 0x10) << 3))
+#define FILEENTRY_CPU    ((u8)(((cputype & 0x0F)<<4) | (CLIENT_CPU & 0x0F)))
+#define FILEENTRY_OS      ((CLIENT_OS & 0x3F) | ((CLIENT_CPU & 0x10) << 3) | \
+                           (((CLIENT_BUILD_FRAC>>8)&2)<<5))
 #define FILEENTRY_BUILDHI ((((CLIENT_CONTEST-64)&0x0F)<<4) | \
                             ((CLIENT_BUILD & 0x07)<<1) | \
-			    ((CLIENT_BUILD_FRAC>>8)&1)) 
+                            ((CLIENT_BUILD_FRAC>>8)&1)) 
 #define FILEENTRY_BUILDLO ((CLIENT_BUILD_FRAC) & 0xff)  
 
 // --------------------------------------------------------------------------
@@ -698,11 +706,7 @@ static int DoesFileExist( const char *filename )
 {
   if ( !IsFilenameValid( filename ) )
     return 0;
-#ifdef DONT_USE_PATHWORK
-  return ( access( filename, 0 ) == 0 );
-#else
   return ( access( GetFullPathForFilename( filename ), 0 ) == 0 );
-#endif
 }
 
 // ---------------------------------------------------------------------------
@@ -847,14 +851,12 @@ s32 Client::Run( void )
   s32 count = 0, nextcheckpointtime = 0;
   s32 TimeToQuit = 0, getbuff_errs = 0;
 
-#if defined(MULTITHREAD)
   #if (CLIENT_OS == OS_WIN32) && defined(NEEDVIRTUALMETHODS)
     connectrequested = 0;         // uses public class member
   #else
     u32 connectrequested = 0;
   #endif
   u32 connectloops = 0;
-#endif
 
   s32 cpu_i;
   s32 exitchecktime;
@@ -1079,7 +1081,10 @@ PreferredIsDone1:
       //spin off a thread for this problem
       //----------------------------
 
-#if defined(MULTITHREAD)
+#if defined(MULTITHREAD)  //this is the last time we use the MULTITHREAD define. 
+  #undef MULTITHREAD //protect against abuse lower down. A client can be mt capable
+  //but be running single threaded, so we need to check (load_problem_count > 1)
+  //and not whether its mt capable or not.
       {
         //Only launch a thread if we have really loaded 2*threadcount buffers
         if ((load_problem_count > 1) && (cpu_i < numcputemp))
@@ -1128,6 +1133,7 @@ PreferredIsDone1:
           if (pthread_create( &threadid[cpu_i], &thread_sched[cpu_i], (void *(*)(void*)) Go_mt, thstart[cpu_i]) )
             threadid[cpu_i] = (pthread_t) NULL; //0
 #else
+          #define USING_POSIX_THREADS //so we can stop later without using MULTITHREAD
           if (pthread_create( &threadid[cpu_i], NULL, (void *(*)(void*)) Go_mt, thstart[cpu_i]) )
             threadid[cpu_i] = (pthread_t) NULL; //0
 #endif
@@ -1135,7 +1141,33 @@ PreferredIsDone1:
           if ( !threadid[cpu_i] )
           {
             Log("[%s] Could not start child thread '%c'.\n",Time(),cpu_i+'A');
-            return(-1);  //All those loaded blocks are gonna get lost
+
+            numcputemp = cpu_i+1;            //# of threads already loaded
+
+            if ( cpu_i == 0 ) //was it the first thread that failed?
+            {
+              load_problem_count = 1; //then switch to non-threaded mode
+              Log("[%s] Switching to single-threaded mode.\n", Time());
+              break;
+            }
+            else
+            {
+              load_problem_count = numcputemp * 2; //resize ourselves
+              
+              fileentry.contest = (u8) (problem[(int)cpu_i]).RetrieveState( (ContestWork *) &fileentry , 1 );
+              fileentry.op = htonl( OP_DATA );
+
+              fileentry.cpu     = FILEENTRY_CPU;
+              fileentry.os      = FILEENTRY_OS;
+              fileentry.buildhi = FILEENTRY_BUILDHI; 
+              fileentry.buildlo = FILEENTRY_BUILDLO;
+
+              fileentry.checksum =
+                  htonl( Checksum( (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 2 ) );
+              Scramble( ntohl( fileentry.scramble ),
+                         (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
+              PutBufferInput( &fileentry );  // send it back...
+            }
           }
         }
       }
@@ -1193,13 +1225,11 @@ PreferredIsDone1:
               Log("Exiting after current block\n");
               exitcode = 1;
             }
-          #if (defined(MULTITHREAD))
-            if (hitchar == 'u' || hitchar == 'U')
+            if ((load_problem_count > 1) && (hitchar == 'u' || hitchar == 'U'))
             {
               Log("Keyblock Update forced\n");
               connectrequested = 1;
             }
-          #endif
           }
         }
     }
@@ -1209,10 +1239,10 @@ PreferredIsDone1:
     //special update request (by keyboard or by lurking) handling
     //------------------------------------
 
-    #if (defined(MULTITHREAD))
-    {
-      if ((connectoften && ((connectloops++)==19)) || (connectrequested > 0) )
+    if (load_problem_count > 1)  //ie multi-threaded
       {
+      if ((connectoften && ((connectloops++)==19)) || (connectrequested > 0) )
+        {
         // Connect every 20*3=60 seconds
         // Non-MT 60 + (time for a client.run())
         connectloops=0;
@@ -1243,11 +1273,8 @@ PreferredIsDone1:
           LogScreen("Fetch request completed.\n");
           connectrequested=0;
           };
-
-
+        }
       }
-    }
-    #endif
 
     //------------------------------------
     // Lurking
@@ -1262,7 +1289,7 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
     //sleep, run or pause...
     //------------------------------------
 
-    if (load_problem_count > 1) //ie MUTLITHREAD
+    if (load_problem_count > 1) //ie multi-threaded
       {
       // prevent the main thread from racing & bogging everything down.
       sleep(3);
@@ -1628,11 +1655,7 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
     //----------------------------------------
 
     // cramer magic (voodoo)
-#ifdef MULTITHREAD
-    if (nonewblocks > 0 && (getbuff_errs >= 2*numcputemp))
-#else
-    if (nonewblocks > 0 && getbuff_errs)
-#endif
+    if (nonewblocks > 0 && (getbuff_errs >= load_problem_count))
     {
       TimeToQuit = 1;
       exitcode = 4;
@@ -1668,26 +1691,25 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
 
       RaiseExitRequestTrigger(); // will make other threads exit
 
-#if defined(MULTITHREAD)
-
       LogScreen("Quitting...\n");
-
-      // Wait for all threads to end...
-      for (cpu_i = 0; cpu_i < numcputemp; cpu_i++)
-      {
+      if (load_problem_count > 1)  //we have threads running
+        {
+        // Wait for all threads to end...
+        for (cpu_i = 0; cpu_i < numcputemp; cpu_i++)
+          {
 #if (CLIENT_OS == OS_OS2)
-        DosWaitThread(&threadid[cpu_i], DCWW_WAIT);
+          DosWaitThread(&threadid[cpu_i], DCWW_WAIT);
 #elif (CLIENT_OS == OS_WIN32)
-        WaitForSingleObject((HANDLE)threadid[cpu_i], INFINITE);
+          WaitForSingleObject((HANDLE)threadid[cpu_i], INFINITE);
 #elif (CLIENT_OS == OS_BEOS)
-        wait_for_thread(threadid[cpu_i], &be_exit_value);
+          wait_for_thread(threadid[cpu_i], &be_exit_value);
 #elif (CLIENT_OS == OS_NETWARE)
-        nwCliWaitForThreadExit( threadid[cpu_i] ); //in netware.cpp
-#else
-        pthread_join(threadid[cpu_i], NULL);
+          nwCliWaitForThreadExit( threadid[cpu_i] ); //in netware.cpp
+#elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING) || defined(USING_POSIX_THREADS)
+          pthread_join(threadid[cpu_i], NULL);
 #endif
-      }
-#endif
+          }
+        }
 
       // ----------------
       // Shutting down: save problem buffers
