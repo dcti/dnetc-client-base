@@ -47,9 +47,12 @@
 ;# adding extra latencies (stalls) to the VSIU instruction pattern, the keyrate
 ;# would be near 16 MKeys/s when running at 2 GHz.
 ;#
-;# $Id: r72-KKS970.osx.s,v 1.1.2.2 2004/01/08 20:37:38 oliver Exp $
+;# $Id: r72-KKS970.osx.s,v 1.1.2.3 2004/03/04 17:42:58 piru Exp $
 ;#
 ;# $Log: r72-KKS970.osx.s,v $
+;# Revision 1.1.2.3  2004/03/04 17:42:58  piru
+;# Fixed to build with GNU assembler.
+;#
 ;# Revision 1.1.2.2  2004/01/08 20:37:38  oliver
 ;# Should compile also with GNU assembler now.
 ;#
@@ -171,9 +174,9 @@
 .set lo16_P,	(P & 0xFFFF)
 .set hi16_Q,	(Q >> 16)
 .set lo16_Q,	(Q & 0xFFFF)
-.set hi16_P2Q,	((P+2*Q) >> 16)
+.set hi16_P2Q,	(((P+2*Q) >> 16) & 0xFFFF)
 .set lo16_P2Q,	((P+2*Q) & 0xFFFF)
-.set hi16_P3Q,	((P+3*Q) >> 16)
+.set hi16_P3Q,	(((P+3*Q) >> 16) & 0xFFFF)
 .set lo16_P3Q,	((P+3*Q) & 0xFFFF)
 
 
