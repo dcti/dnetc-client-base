@@ -1,4 +1,4 @@
-# RC5 client makefile (MS Visual C++ for Win32 x86)
+# RC5DES Win32 GUI client makefile (MS Visual C++ for Win32 x86)
 # feel free to generalize to do Win32 Alpha as well
 # see http://www.distributed.net/
 

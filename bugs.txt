@@ -6,6 +6,14 @@ Bugs Listing
   This is a text file that lists any bugs that have been found by either
   the coders, or by users.
 
+06-03-98 - Jeff Lawson
+  New Suggestion: some of the files produced by the client are still
+  not made "fully qualified" by the Client::InternalGetLocalFilename()
+  function.  The checkpoint files are this way.  On startup, if a
+  filename is not a fully qualified filename (doesn't contain any '\'
+  or '/' or start with a drive specifier), then the filename should be
+  made into a fully qualified local file by using the above function.
+
 6-03-98 - Kevin Bracey
   New Bug: Some parts of the program (mail.cpp in particular) print stuff
            irrespective of the quietmode setting.
@@ -41,6 +49,8 @@ Bugs Listing
            K6-200 using the same CPU core. I've tried taking out the new
            CLI code and playing with the link order with no avail. Me and Daa
            are guessing that it could be the new timing code.
+
+5-31-98 - Oscar Chang
   FIXED!!: The X key no longer works on Watcom compiles. It will display the
            message that it will quit after the next block is completed but,
            it just keeps going.
