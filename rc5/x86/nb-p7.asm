@@ -98,10 +98,8 @@
 ; Llo3 = ROTL (Llo3 + A3 + Lhi3, A3 + Lhi1);
 ; Llo4 = ROTL (Llo4 + A4 + Lhi4, A4 + Lhi2);
 %macro ROUND_1_EVEN 1
-        mov     [work_Lhi1], ecx
         mov     ecx, S3(%1-1)
         lea     ebx, [S_not(%1)+ebx+edx]    ; A2 = (A2 + Lhi2 + S_not(N));
-        mov     [work_Lhi2], edx
         mov     edx, S4(%1-1)
         lea     ecx, [S_not(%1)+ecx+esi]    ; A3 = (A3 + Lhi3 + S_not(N));
         lea     edx, [S_not(%1)+edx+edi]    ; A4 = (A4 + Lhi4 + S_not(N));
@@ -111,9 +109,9 @@
         rol     eax, 3
         mov     ebp, [work_Llo4]
         mov     S4(%1), edx
-        add     edx, edi
-        add     ebp, edx
-        rol     ebp, dl                     ; Llo4 = ROTL (Llo4 + A4 + Lhi4, A4 + Lhi2);
+        lea     ecx, [edx+edi]
+        add     ebp, ecx
+        rol     ebp, cl                     ; Llo4 = ROTL (Llo4 + A4 + Lhi4, A4 + Lhi2);
         mov     [work_Lhi4], edi
         mov     edi, [work_Llo3]
         mov     S3(%1), ecx
@@ -124,17 +122,19 @@
         mov     ecx, [work_Lhi1]
         mov     esi, [work_Llo1]
         mov     S1(%1), eax
-        add     eax, ecx
-        add     esi, eax
-        rol     esi, al
+        add     ecx, eax
+        add     esi, ecx
+        rol     esi, cl
         mov     edx, [work_Lhi2]
         mov     [work_Llo4],ebp
         mov     ebp, [work_Llo2]
-        mov     S2(%2), ebx
-        add     ebx, edx
-        add     ebp, ebx
-        rol     ebp, bl                                
+        mov     S2(%1), ebx
+        lea     ecx, [ebx+edx]
+        add     ebp, ecx
+        rol     ebp, cl                                
         lea     ecx, [S_not(%1+1)+ecx+edi]
+        mov     eax, S1(%1)
+        mov     ebx, S2(%1)
 %endmacro
 
 ; S1(N) = A1 = ROTL3 (A1 + Llo1 + S_not(N));
@@ -146,14 +146,14 @@
 ; Lhi3 = ROTL (Lhi3 + A3 + Llo3, A3 + Llo3);
 ; Lhi4 = ROTL (Lhi4 + A4 + Llo4, A4 + Llo4);
 
+;        use1  use2        use1  use2
+;        -----|-----|      -----|-----|
 ;   eax  A1           ebx  A2    tmp
 ;   ecx  A3    Lhi1   edx  A4    Lhi2  
 ;   esi  Llo1  Lhi3   edi  Llo3  Lhi4
 ;   ebp  Llo4  Llo2      
 
 %macro ROUND_1_ODD 1
-        mov     eax, S1(%1-1)
-        mov     ebx, S2(%1-1)
         rol     ecx, 3                      ; A3 = ROTL3 (A3 + Llo3 + S_not(N));
         lea     eax, [S_not(%1)+eax+esi]
         mov     edx, S4(%1-1)
@@ -163,38 +163,38 @@
         rol     ebx, 3                      ; A2 = ROTL3 (A2 + Llo2 + S_not(N));
         lea     edx, [S_not(%1)+edx+ebp]
         rol     edx, 3                      ; A4 = ROTL3 (A4 + Llo4 + S_not(N));
-        mov     S3(%1), ecx
-        mov     ecx, [work_Lhi1]
         mov     S1(%1), eax
-        add     eax, esi
-        add     ecx, eax
-        rol     ecx, al                     ; Lhi1 = ROTL (Lhi1 + A1 + Llo1, A1 + Llo1);
-        mov     eax, S3(%1)
-        mov     [work_Llo1], esi
-        mov     esi, [work_Lhi3]
         mov     S2(%1), ebx
-        add     eax, edi
-        add     esi, eax
-        rol     esi, al                     ; Lhi3 = ROTL (Lhi3 + A3 + Llo3, A3 + Llo3);
-        mov     ebp, [work_Llo2]
+        mov     S3(%1), ecx
         mov     S4(%1), edx
+        lea     ecx, [eax+esi]
+        mov     eax, [work_Lhi1]
+        add     eax, ecx
+        rol     eax, cl                     ; Lhi1 = ROTL (Lhi1 + A1 + Llo1, A1 + Llo1);
+        lea     ecx, [edx+ebp]
         mov     edx, [work_Lhi4]
-        lea     eax, [ebx+ebp]
-        add     edx, eax
-        rol     edx, al                     ; Lhi2 = ROTL (Lhi2 + A2 + Llo2, A2 + Llo2);
-        mov     ebp, [work_Llo4]
-        mov     eax, S4(%1)
-        mov     edi, [work_Lhi4]
-        add     eax, ebp
-        add     edi, eax
-        rol     edi, al                     ; Lhi4 = ROTL (Lhi4 + A4 + Llo4, A4 + Llo4);
-        mov     eax, S1(%1)
-        lea     eax, [S_not(%1+1)+eax+ecx]
+        add     edx, ecx
+        rol     edx, cl                     ; Lhi4 = ROTL (Lhi4 + A4 + Llo4, A4 + Llo4);
+        mov     ebp, [work_Llo2]
+        lea     ecx, [ebx+ebp]
+        mov     ebx, [work_Lhi2]
+        add     ebx, ecx
+        rol     ebx, cl                     ; Lhi2 = ROTL (Lhi2 + A2 + Llo2, A2 + Llo2);
+        mov     esi, S3(%1)
+        lea     ecx, [esi+edi]
+        mov     esi, [work_Lhi3]
+        add     esi, ecx
+        rol     esi, cl                     ; Lhi3 = ROTL (Lhi3 + A3 + Llo3, A3 + Llo3);
+        mov     ecx, S1(%1)
+        mov     [work_Lhi1], eax
+        lea     eax, [S_not(%1+1)+ecx+eax]
+        mov     edi, edx
+        mov     edx, ebx
+        mov     [work_Lhi2], ebx
+        mov     ebx, S2(%1)
 %endmacro
 
 %macro ROUND_1_LAST 1
-        mov     eax, S1(%1-1)
-        mov     ebx, S2(%1-1)
         rol     ecx, 3                      ; A3 = ROTL3 (A3 + Llo3 + S_not(N));
         lea     eax, [S_not(%1)+eax+esi]
         mov     edx, S4(%1-1)
@@ -204,33 +204,35 @@
         rol     ebx, 3                      ; A2 = ROTL3 (A2 + Llo2 + S_not(N));
         lea     edx, [S_not(%1)+edx+ebp]
         rol     edx, 3                      ; A4 = ROTL3 (A4 + Llo4 + S_not(N));
-        mov     S3(%1), ecx
-        mov     ecx, [work_Lhi1]
         mov     S1(%1), eax
-        add     eax, esi
-        add     ecx, eax
-        rol     ecx, al                     ; Lhi1 = ROTL (Lhi1 + A1 + Llo1, A1 + Llo1);
-        mov     eax, S3(%1)
-        mov     [work_Llo1], esi
-        mov     esi, [work_Lhi3]
         mov     S2(%1), ebx
-        add     eax, edi
-        add     esi, eax
-        rol     esi, al                     ; Lhi3 = ROTL (Lhi3 + A3 + Llo3, A3 + Llo3);
-        mov     ebp, [work_Llo2]
+        mov     S3(%1), ecx
         mov     S4(%1), edx
+        lea     ecx, [eax+esi]
+        mov     eax, [work_Lhi1]
+        add     eax, ecx
+        rol     eax, cl                     ; Lhi1 = ROTL (Lhi1 + A1 + Llo1, A1 + Llo1);
+        lea     ecx, [edx+ebp]
         mov     edx, [work_Lhi4]
-        lea     eax, [ebx+ebp]
-        add     edx, eax
-        rol     edx, al                     ; Lhi2 = ROTL (Lhi2 + A2 + Llo2, A2 + Llo2);
-        mov     ebp, [work_Llo4]
-        mov     eax, S4(%1)
-        mov     edi, [work_Lhi4]
-        add     eax, ebp
-        add     edi, eax
-        rol     edi, al                     ; Lhi4 = ROTL (Lhi4 + A4 + Llo4, A4 + Llo4);
-        mov     eax, S1(%1)
-        lea     eax, [S0_ROTL3+eax+ecx]
+        add     edx, ecx
+        rol     edx, cl                     ; Lhi4 = ROTL (Lhi4 + A4 + Llo4, A4 + Llo4);
+        mov     ebp, [work_Llo2]
+        lea     ecx, [ebx+ebp]
+        mov     ebx, [work_Lhi2]
+        add     ebx, ecx
+        rol     ebx, cl                     ; Lhi2 = ROTL (Lhi2 + A2 + Llo2, A2 + Llo2);
+        mov     esi, S3(%1)
+        lea     ecx, [esi+edi]
+        mov     esi, [work_Lhi3]
+        add     esi, ecx
+        rol     esi, cl                     ; Lhi3 = ROTL (Lhi3 + A3 + Llo3, A3 + Llo3);
+        mov     ecx, S1(%1)
+        mov     [work_Lhi1], eax
+        lea     eax, [S0_ROTL3+ecx+eax]
+        mov     edi, edx
+        mov     edx, ebx
+        mov     [work_Lhi2], ebx
+        mov     ebx, S2(%1)
 %endmacro
 
 %macro ROUND_1_ODD_AND_EVEN 2
@@ -247,12 +249,6 @@
 ; Llo2 = ROTL (Llo2 + A2 + Lhi2, A2 + Lhi2);
 ; Llo3 = ROTL (Llo3 + A3 + Lhi3, A3 + Lhi3);
 ; Llo4 = ROTL (Llo4 + A4 + Lhi4, A4 + Lhi4);
-;        use1  use2        use1  use2
-;        -----|-----|      -----|-----|
-;   eax  A1           ebx  A2    tmp
-;   ecx  A3    Lhi1   edx  A4    Lhi2  
-;   esi  Llo1  Lhi3   edi  Llo3  Lhi4
-;   ebp  Llo4  Llo2      
 
 %macro ROUND_2_EVEN 1
         add     eax, [work_Lhi1]
@@ -267,33 +263,34 @@
         mov     S2(%1), ebx
         mov     S3(%1), ecx
         mov     S4(%1), edx
-        lea     eax, [edx+edi]
+        mov     ebx, ecx
+        lea     ecx, [edx+edi]
         add     edx, S4(%1+1)
-        add     ebp, eax
-        rol     ebp, al
+        add     ebp, ecx
+        rol     ebp, cl                     ; Llo4 = ROTL (Llo4 + A4 + Lhi4, A4 + Lhi4);
         mov     [work_Lhi4], edi
-        mov     edi, [work_Llo3]
-        lea     eax, [ecx+esi]           
-        add     ecx, S3(%1+1)
-        add     edi, eax
-        rol     edi, al
-        mov     [work_A4], edx
-        mov     edx, [work_Lhi2]
+        mov     edi, [work_Llo3]        
+        lea     ecx, [ebx+esi]
+        add     ebx, S3(%1+1)
+        add     edi, ecx
+        rol     edi, cl                     ; Llo3 = ROTL (Llo3 + A3 + Lhi3, A3 + Lhi3);  
+        mov     [work_A3], ebx
+        mov     ecx, S2(0)
+        mov     ebx, ecx
+        add     ecx, [work_Lhi2]
         mov     [work_Llo4], ebp
         mov     ebp, [work_Llo2]
-        lea     eax, [ebx+edx]
+        lea     ecx, [ebx+edx]
         add     ebx, S2(%1+1)
-        add     ebp, eax
-        rol     ebp, al
-        mov     [work_A3], ecx
-        mov     ecx, [work_Lhi1]
+        add     ebp, ecx
+        rol     ebp, cl                     ; Llo2 = ROTL (Llo2 + A2 + Lhi2, A2 + Lhi2);
         mov     [work_Lhi3], esi
         mov     esi, [work_Llo1]
-        mov     eax, S1(%1)
-        lea     edx, [eax+ecx]
+        mov     edx, [work_Lhi1]
+        lea     ecx, [eax+edx] 
         add     eax, S1(%1+1)
-        add     esi, edx
-        rol     esi, dl
+        add     esi, ecx
+        rol     esi, cl                     ; Llo1 = ROTL (Llo1 + A1 + Lhi1, A1 + Lhi1);
 %endmacro
 
 ; S1N = A1 = ROTL3 (A1 + Llo1 + S1N);
@@ -306,7 +303,6 @@
 ; Lhi4 = ROTL (Lhi4 + A4 + Llo4, A4 + Llo4);
 %macro ROUND_2_ODD 1
         mov     ecx, [work_A3]
-        mov     edx, [work_A4]
         add     ebx, ebp
         rol     ebx, 3
         add     ecx, edi
@@ -317,44 +313,40 @@
         rol     eax, 3
         mov     S2(%1), ebx
         mov     S3(%1), ecx
-        mov     S1(%1), eax
         mov     S4(%1), edx
-        lea     ebx, [eax+esi]
+        mov     S1(%1), eax
+        lea     ecx, [eax+esi]
         add     eax, S1(%1+1)
-        add     ecx, ebx
-        rol     ecx, bl
-        mov     ebx, S2(%1)
         mov     [work_A1], eax
+        add     eax, [work_Lhi1]
+        rol     eax, cl                 ; Lhi1 = ROTL (Lhi1 + A1 + Llo1, A1 + Llo1);
         mov     edx, [work_Lhi2]
-        lea     eax, [ebx+ebp]
+        lea     ecx, [ebx+ebp]
         add     ebx, S2(%1+1)
-        add     edx, eax
-        rol     edx, al
+        add     edx, ecx
+        rol     edx, cl                 ; Lhi2 = ROTL (Lhi2 + A2 + Llo2, A2 + Llo2);
         mov     [work_Llo1], esi
+        mov     [work_Lhi1], eax
         mov     esi, [work_Lhi3]
-        mov     [work_Lhi1], ecx
-        mov     ecx, S3(%1)
-        lea     eax, [ecx+edi]
-        add     esi, eax
-        add     ecx, S3(%1+1)
-        rol     esi, 3
-        mov     [work_Llo3], edi
-        mov     [work_Llo2], ebp        
-        mov     edi, [work_Lhi4]
+        mov     eax, S3(%1)
+        lea     ecx, [eax+edi]
+        add     eax, S3(%1+1)
+        add     esi, ecx
+        rol     esi, cl                 ; Lhi3 = ROTL (Lhi3 + A3 + Llo3, A3 + Llo3);
+        mov     [work_Llo2], ebp
         mov     ebp, [work_Llo4]
         mov     [work_Lhi2], edx
         mov     edx, S4(%1)
-        lea     eax, [edx+ebp]
+        lea     ecx, [edx+ebp]
         add     edx, S4(%1+1)
-        add     edi, eax
-        rol     edi, al
-        mov     eax, [work_A1]        
+        add     ebp, ecx
+        rol     ebp, cl
+        mov     ecx, eax
+        mov     eax, [work_A1]                  
 %endmacro
-
 
 %macro ROUND_2_LAST 1
         mov     ecx, [work_A3]
-        mov     edx, [work_A4]
         add     ebx, ebp
         rol     ebx, 3
         add     ecx, edi
@@ -365,35 +357,33 @@
         rol     eax, 3
         mov     S2(%1), ebx
         mov     S3(%1), ecx
-        mov     S1(%1), eax
         mov     S4(%1), edx
-        lea     ebx, [eax+esi]
+        mov     S1(%1), eax
+        lea     ecx, [eax+esi]
         add     eax, S1(0)
-        add     ecx, ebx
-        rol     ecx, bl
-        mov     ebx, S2(%1)
         mov     [work_A1], eax
+        add     eax, [work_Lhi1]
+        rol     eax, cl                 ; Lhi1 = ROTL (Lhi1 + A1 + Llo1, A1 + Llo1);
         mov     edx, [work_Lhi2]
-        lea     eax, [ebx+ebp]
-        add     edx, eax
-        rol     edx, al
+        lea     ecx, [ebx+ebp]
+        add     edx, ecx
+        rol     edx, cl                 ; Lhi2 = ROTL (Lhi2 + A2 + Llo2, A2 + Llo2);
         mov     [work_Llo1], esi
+        mov     [work_Lhi1], eax
         mov     esi, [work_Lhi3]
-        mov     [work_Lhi1], ecx
-        mov     ecx, S3(%1)
-        lea     eax, [ecx+edi]
-        add     esi, eax
-        rol     esi, 3
-        mov     [work_Llo3], edi
-        mov     [work_Llo2], ebp        
-        mov     edi, [work_Lhi4]
+        mov     eax, S3(%1)
+        lea     ecx, [eax+edi]
+        add     esi, ecx
+        rol     esi, cl                 ; Lhi3 = ROTL (Lhi3 + A3 + Llo3, A3 + Llo3);
+        mov     [work_Llo2], ebp
         mov     ebp, [work_Llo4]
         mov     [work_Lhi2], edx
         mov     edx, S4(%1)
-        lea     eax, [edx+ebp]
-        add     edi, eax
-        rol     edi, al
-        mov     eax, [work_A1]        
+        lea     ecx, [edx+ebp]
+        add     ebp, ecx
+        rol     ebp, cl
+        mov     ecx, eax
+        mov     eax, [work_A1]                  
 %endmacro
 
 ; S1N = A1 = ROTL3 (A1 + Llo1 + S1N);
@@ -543,28 +533,21 @@ _loaded_p7:
     ; Begin round 1 of key expansion
     ; ------------------------------
 
-;        use1  use2        use1  use2
-;        -----|-----|      -----|-----|
-;   eax  A1    Llo4   ebx  A2    tmp
-;   ecx  A3    Lhi1   edx  A4    Lhi2  
-;   esi  Llo1  Lhi3   edi  Llo2  Lhi4
-;   ebp  Llo3        
-
         mov     ecx, [work_Lhi1]
         mov     edx, [work_Lhi2]
         mov     esi, [work_Lhi3]
         mov     edi, [work_Lhi4]
 
-        mov     ebx, [work_pre3_r1]
+        mov     ecx, [work_pre3_r1]
 
         add     ecx, ebx
-        rol     ecx, bl
+        rol     ecx, cl
         add     edx, ebx
-        rol     edx, bl
+        rol     edx, cl
         add     esi, ebx
-        rol     esi, bl
+        rol     esi, cl
         add     edi, ebx
-        rol     edi, bl
+        rol     edi, cl
         
         mov		eax, [work_pre1_r1]
         mov		[work_Llo1], eax
@@ -575,7 +558,7 @@ _loaded_p7:
         mov     ebx, eax
         mov     [work_A3], eax
         mov     [work_A4], eax
-        lea     eax, [S_not(2)+eax+ecx]     ;  A1 = (A1 + Lhi1 + S_not(N));
+        lea     eax, [S_not(2)+eax+ecx]
 
 
 	ROUND_1_EVEN             2
@@ -600,50 +583,54 @@ _loaded_p7:
 align 4
 _end_round1_p7:
 
-        mov     [work_Lhi1], ecx
+;        use1  use2        use1  use2
+;        -----|-----|      -----|-----|
+;   eax  A1           ebx  A2    tmp
+;   ecx  A3    Lhi1   edx  A4    Lhi2  
+;   esi  Llo1  Lhi3   edi  Llo3  Lhi4
+;   ebp  Llo4  Llo2      
+
         mov     ecx, S3(25)
         lea     ebx, [S0_ROTL3+ebx+edx]    ; A2 = (A2 + Lhi2 + S_not(N));
-        mov     [work_Lhi2], edx
         mov     edx, S4(25)
         lea     ecx, [S0_ROTL3+ecx+esi]    ; A3 = (A3 + Lhi3 + S_not(N));
         lea     edx, [S0_ROTL3+edx+edi]    ; A4 = (A4 + Lhi4 + S_not(N));
-        rol     eax, 3
-        rol     ebx, 3
-        rol     ecx, 3
         rol     edx, 3
+        rol     ecx, 3
+        rol     ebx, 3
+        rol     eax, 3
         mov     S1(0), eax
         mov     S2(0), ebx
         mov     S3(0), ecx
         mov     S4(0), edx
-        lea     ebx, [edx+edi]
+        mov     ebx, ecx
+        lea     ecx, [edx+edi]
         add     edx, [work_pre2_r1]
-        add     ebp, ebx
-        rol     ebp, bl                     ; Llo4 = ROTL (Llo4 + A4 + Lhi4, A4 + Lhi4);
-        mov     [work_Lhi4],edi
-        mov     edi, [work_Llo3]
-        lea     ebx, [ecx+esi]
-        add     ecx, [work_pre2_r1]
-        add     edi, ebx
-        rol     edi, bl                     ; Llo3 = ROTL (Llo3 + A3 + Lhi3, A3 + Lhi3);              
-        mov     ebx, S2(0)
+        add     ebp, ecx
+        rol     ebp, cl                     ; Llo4 = ROTL (Llo4 + A4 + Lhi4, A4 + Lhi4);
+        mov     [work_Lhi4], edi
+        mov     edi, [work_Llo3]        
+        lea     ecx, [ebx+esi]
         add     ebx, [work_pre2_r1]
-        mov     [work_A4], edx
-        mov     [work_A2], ebx
-        mov     edx, [work_Lhi2]
-        add     ebx, edx
+        add     edi, ecx
+        rol     edi, cl                     ; Llo3 = ROTL (Llo3 + A3 + Lhi3, A3 + Lhi3);  
+        mov     [work_A3], ebx
+        mov     ecx, S2(0)
+        mov     ebx, ecx
+        add     ecx, [work_Lhi2]
         mov     [work_Llo4], ebp
         mov     ebp, [work_Llo2]
-        add     ebp, ebx
-        rol     ebp, bl                     ; Llo2 = ROTL (Llo2 + A2 + Lhi2, A2 + Lhi2);
-        mov     [work_A3],ecx
-        mov     ecx, [work_Lhi1]
-        lea     ebx, [eax+ecx]
+        lea     ecx, [ebx+edx]
+        add     ebx, [work_pre2_r1]
+        add     ebp, ecx
+        rol     ebp, cl                     ; Llo2 = ROTL (Llo2 + A2 + Lhi2, A2 + Lhi2);
         mov     [work_Lhi3], esi
         mov     esi, [work_Llo1]
+        mov     edx, [work_Lhi1]
+        lea     ecx, [eax+edx] 
         add     eax, [work_pre2_r1]
-        add     esi, ebx
-        rol     esi, bl                     ; Llo1 = ROTL (Llo1 + A1 + Lhi1, A1 + Lhi1);
-        mov     ebx, [work_A2]
+        add     esi, ecx
+        rol     esi, cl                     ; Llo1 = ROTL (Llo1 + A1 + Lhi1, A1 + Lhi1);
 
 	ROUND_2_ODD_AND_EVEN  1, 2
 	ROUND_2_ODD_AND_EVEN  3, 4
