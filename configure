@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.126 2000/02/13 14:53:01 dworz Exp $
+# @(#)$Id: configure,v 1.222.2.127 2000/02/13 19:03:51 lyndon Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -457,7 +457,7 @@ case "$1" in
 #
 # lyndon@orthanc.ab.ca (Nov 28, 1999)
 
-    *mips-cc-n32)
+    *mips-cc-n32)	# [lyndon]
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} \
 			-DCLIENT_OS_NAME=\"\\\"Irix (generic-n32)\\\"\""
@@ -468,7 +468,7 @@ case "$1" in
 	TARGET_TARBALL="irix6.5-mips-n32"
 	;;
 
-    *mips-cc-64)
+    *mips-cc-64)	# [lyndon]
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} \
 			-DCLIENT_OS_NAME=\"\\\"Irix (generic-64)\\\"\""
@@ -479,7 +479,7 @@ case "$1" in
 	TARGET_TARBALL="irix6.5-mips-64"
 	;;
 
-    *mips-cc-ip19)
+    *mips-cc-ip19)	# [lyndon]
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip19 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP19\\\"\""
@@ -490,7 +490,7 @@ case "$1" in
 	TARGET_TARBALL="irix6-mips-ip19"
 	;;
 
-    *mips-cc-ip20)
+    *mips-cc-ip20)	# [lyndon]
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip20 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP20\\\"\""
@@ -501,7 +501,7 @@ case "$1" in
 	TARGET_TARBALL="irix6-mips-ip20"
 	;;
 
-    *mips-cc-ip21)
+    *mips-cc-ip21)	# [lyndon]
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip21 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP21\\\"\""
@@ -512,7 +512,7 @@ case "$1" in
 	TARGET_TARBALL="irix6-mips-ip21"
 	;;
 
-    *mips-cc-ip22_4k)
+    *mips-cc-ip22_4k)	# [lyndon]
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip22_4k \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP22/R4K\\\"\""
@@ -523,7 +523,7 @@ case "$1" in
 	TARGET_TARBALL="irix6-mips-ip22_4k"
 	;;
 
-    *mips-cc-ip22_5k)
+    *mips-cc-ip22_5k)	# [lyndon]
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip22_5k \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP22/R5K\\\"\""
@@ -534,7 +534,7 @@ case "$1" in
 	TARGET_TARBALL="irix6-mips-ip22_5k"
 	;;
 
-    *mips-cc-ip24)
+    *mips-cc-ip24)	# [lyndon]
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip24 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP24\\\"\""
@@ -545,7 +545,7 @@ case "$1" in
 	TARGET_TARBALL="irix6-mips-ip24"
 	;;
 
-    *mips-cc-ip25)
+    *mips-cc-ip25)	# [lyndon]
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip25 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP25\\\"\""
@@ -556,7 +556,7 @@ case "$1" in
 	TARGET_TARBALL="irix6-mips-ip25"
 	;;
 
-    *mips-cc-ip26)
+    *mips-cc-ip26)	# [lyndon]
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip26 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP26\\\"\""
@@ -567,7 +567,7 @@ case "$1" in
 	TARGET_TARBALL="irix6-mips-ip26"
 	;;
 
-    *mips-cc-ip27)
+    *mips-cc-ip27)	# [lyndon]
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip27 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP27\\\"\""
@@ -578,7 +578,7 @@ case "$1" in
 	TARGET_TARBALL="irix6-mips-ip27"
 	;;
 
-    *mips-cc-ip27-64)
+    *mips-cc-ip27-64)	# [lyndon]
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} -TARG:platform=ip27 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP27-64\\\"\""
@@ -589,7 +589,7 @@ case "$1" in
 	TARGET_TARBALL="irix6-mips-ip27-64"
 	;;
 
-    *mips-cc-ip28)
+    *mips-cc-ip28)	# [lyndon]
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip28 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP28\\\"\""
@@ -600,7 +600,7 @@ case "$1" in
 	TARGET_TARBALL="irix6-mips-ip28"
 	;;
 
-    *mips-cc-ip30)
+    *mips-cc-ip30)	# [lyndon]
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip30 \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP30\\\"\""
@@ -611,7 +611,7 @@ case "$1" in
 	TARGET_TARBALL="irix6-mips-ip30"
 	;;
 
-    *mips-cc-ip32_5k)
+    *mips-cc-ip32_5k)	# [lyndon]
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip32_5k \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP32/R10K\\\"\""
@@ -622,7 +622,7 @@ case "$1" in
 	TARGET_TARBALL="irix6-mips-ip32_5k"
 	;;
 
-    *mips-cc-ip32_10k)
+    *mips-cc-ip32_10k)	# [lyndon]
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="-ISA -LNO ${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip32_10k \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP32/R10K\\\"\""
@@ -633,7 +633,7 @@ case "$1" in
 	TARGET_TARBALL="irix6-mips-ip32_10k"
 	;;
 
-    *mips-cc-ip32_10k-64)
+    *mips-cc-ip32_10k-64)	# [lyndon]
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} -TARG:platform=ip32_10k \
 			-DCLIENT_OS_NAME=\"\\\"Irix IP32/R10K-64\\\"\""
