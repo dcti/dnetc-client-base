@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.49 2000/07/13 19:47:11 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.50 2000/08/22 13:40:53 oliver Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -553,8 +553,18 @@ static void __PollDrivenBreakCheck(int io_cycle_allowed)
   if (_kernel_escape_seen())
       RaiseExitRequestTrigger();
   #elif (CLIENT_OS == OS_AMIGAOS)
-  if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
-    RaiseExitRequestTrigger();
+  ULONG trigs;
+  if ( (trigs = amigaGetTriggerSigs()) )  // checks for ^C and other sigs
+  {
+    if ( trigs & DNETC_MSG_SHUTDOWN )
+      RaiseExitRequestTrigger();
+    if ( trigs & DNETC_MSG_RESTART )
+      RaiseRestartRequestTrigger();
+    if ( trigs & DNETC_MSG_PAUSE )
+      RaisePauseRequestTrigger();
+    if ( trigs & DNETC_MSG_UNPAUSE )
+      ClearPauseRequestTrigger();
+  }
   #elif (CLIENT_OS == OS_NETWARE)
   if (io_cycle_allowed)
     nwCliCheckForUserBreak(); //in nwccons.cpp
