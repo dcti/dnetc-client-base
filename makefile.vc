@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.66 1999/10/30 17:31:38 cyp Exp $
+# $Id: makefile.vc,v 1.67 1999/11/02 22:02:52 michmarc Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
@@ -225,7 +225,7 @@ OGR_OBJS =                           \
         cl -c $(OPTS_MSVC) -O1 -Fo$(OUTPUTPATH)\ $<
 
 {$(PLATSRCPATH)}.c{$(OUTPUTPATH)}.obj::
-        cl -c -Zl -Gs8192 -O1 -Fo$(OUTPUTPATH)\ $<
+        cl -c -Zl -O1 -Fo$(OUTPUTPATH)\ $<
 
 {$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -O2 -Fo$(OUTPUTPATH)\ $<
