@@ -5,7 +5,7 @@
  *
 */ 
 const char *convdes_cpp(void) {
-return "@(#)$Id: convdes.cpp,v 1.13 1999/04/05 17:56:51 cyp Exp $"; }
+return "@(#)$Id: convdes.cpp,v 1.14 1999/04/05 20:02:35 patrick Exp $"; }
 
 /* DES convertion routines */
 
@@ -13,12 +13,6 @@ return "@(#)$Id: convdes.cpp,v 1.13 1999/04/05 17:56:51 cyp Exp $"; }
 #include <string.h>
 #include "problem.h"
 #include "convdes.h"
-
-#ifndef _CPU_32BIT_
-#error "everything assumes a 32bit CPU..."
-#endif
-
-//#define DEBUG
 
 #if (CLIENT_CPU != CPU_ARM)
 
