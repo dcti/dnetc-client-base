@@ -6,7 +6,7 @@
 ##               [dos | netware | os2 | w32 | w16]
 ##               or anything else with a section at the end of this file
 ##
-## $Id: makefile.wat,v 1.27.2.7 1999/12/20 06:04:39 jlawson Exp $
+## $Id: makefile.wat,v 1.27.2.8 2000/01/16 22:27:14 cyp Exp $
 
 BASENAME = dnetc
 
@@ -40,9 +40,11 @@ BASENAME = dnetc
 #---
 %cscstd_LINKOBJS = output\csc-1k-i.obj output\csc-1k.obj &
                    output\csc-6b-i.obj output\csc-6b.obj &
-                   output\convcsc.obj output\csc-common.obj
-%cscstd_DEFALL   = -DHAVE_CSC_CORES -Icsc
-%cscstd_SYMALIAS =
+                   output\convcsc.obj output\csc-common.obj &
+                   output\csc-mmx.obj
+%cscstd_DEFALL   = -DHAVE_CSC_CORES -Icsc -DMMX_CSC
+%cscstd_SYMALIAS = 
+#                  csc_unit_func_1k=_csc_unit_func_1k
 #                  csc_unit_func_6b_i=_csc_unit_func_6b_i &
 #                  csc_unit_func_1k=_csc_unit_func_1k &
 #                  csc_unit_func_6b=_csc_unit_func_6b
@@ -92,7 +94,7 @@ BASENAME = dnetc
 %LINK=wlink #\develop\watcom\binnt\wlink.exe
 
 %NASMEXE  = nasm           #point this to nasm (don't call the envvar 'NASM'!)
-%NASMFLAGS= -f obj -D__OMF__ -DOS2 -s
+%NASMFLAGS= -f win32 -s #-f obj -D__OMF__ -DOS2 -s
 %TASMEXE  =                #point this to tasm in your section if you have it
 %TFLAGS   = /ml /m9 /q /t  #if TASMEXE.==. then wasm will be executed
 %STACKSIZE= 32K            #may be redefined in the platform specific section
@@ -247,6 +249,7 @@ output\rc5mmx-k6-2.obj : rc5\x86\nasm\rc5mmx-k6-2.asm $(%dependall)
 
 output\x86ident.obj : platforms\x86ident.asm $(%dependall)
   $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
+  #*$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\confrwv.obj : common\confrwv.cpp $(%dependall) .AUTODEPEND
@@ -512,6 +515,13 @@ output\convcsc.obj : csc\x86\convcsc.asm $(%dependall) .AUTODEPEND
   @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
   @set isused=1
 
+output\csc-mmx.obj : csc\x86\mmx\csc-mmx.asm $(%dependall) .AUTODEPEND
+  @if exist $[*.obj copy $[*.obj $^@ >nul: 
+  @if exist $[*.obj wtouch $^@
+  @if exist $[*.obj @echo Updated $^@ from $[*.obj
+  @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[:..\ $[@
+  @set isused=1
+
 output\csc-common.obj : csc\x86\csc-comm.asm $(%dependall) .AUTODEPEND
   @if exist $[*.obj copy $[*.obj $^@ >nul: 
   @if exist $[*.obj wtouch $^@
@@ -523,7 +533,7 @@ output\csc-1k.obj : csc\x86\csc-1k.asm $(%dependall) .AUTODEPEND
   @if exist $[*.obj copy $[*.obj $^@ >nul: 
   @if exist $[*.obj wtouch $^@
   @if exist $[*.obj @echo Updated $^@ from $[*.obj
-  @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
+  @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -l $[*.lst -i $[: $[@ 
   @set isused=1
 
 output\csc-1k-i.obj : csc\x86\csc-1k-i.asm $(%dependall) .AUTODEPEND
@@ -670,7 +680,7 @@ output\os2inst.obj : platforms\os2cli\os2inst.cpp $(%dependall) .AUTODEPEND
 #-----------------------------------------------------------------------
 
 platform: .symbolic
-  @set CFLAGS    = $(%CFLAGS) /zq -DBETA      ## compile quietly
+  @set CFLAGS    = $(%CFLAGS) /zq #-DBETA      ## compile quietly
   @set AFLAGS    = $(%AFLAGS) /q              ## assemble quietly
   @set CFLAGS    = $(%CFLAGS) $(%DEFALL)      ## tack on global defines
   @set isused=0
@@ -750,13 +760,13 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      @set DOCFILES  = docs\readme.dos docs\$(BASENAME).txt docs\readme.txt
      @set ZIPFILE   = $(BASENAME)-dos-x86-cli
      @set BINNAME   = $(BASENAME).com
-     @%make declare_for_des
-     @%make declare_for_desmt
-     @%make declare_for_desmmx
+##   @%make declare_for_des
+##   @%make declare_for_desmt
+##   @%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-     @%make declare_for_ogr
-     @%make declare_for_csc
+#    @%make declare_for_ogr
+#    @%make declare_for_csc
      @%make platform
      #-------------------------
      @\develop\pmodew\pmwlite.exe /C4 /S\develop\pmodew\pmodew.exe $(%BINNAME)
@@ -786,13 +796,13 @@ os2: .symbolic                                       # OS/2
      @set LINKOBJS  = output\os2inst.obj  output\lurk.obj
      @set OBJDIROP  = /fo=output\
      @set ERRDIROP  =                      # no /fr= option for Watcom 10.0
-     @%make declare_for_des
-     @%make declare_for_desmt
-     @%make declare_for_desmmx
+##   @%make declare_for_des
+##   @%make declare_for_desmt
+##   @%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-     @%make declare_for_ogr
-     @%make declare_for_csc
+#    @%make declare_for_ogr
+#    @%make declare_for_csc
      @%make platform
 
 w16: .symbolic                                       # Windows/16
@@ -824,13 +834,13 @@ w16: .symbolic                                       # Windows/16
      @set ZIPFILE   = $(BASENAME)-win16-x86-cli
      @set BINNAME   = $(BASENAME).exe
      @if exist $(BASENAME).rex @del $(BASENAME).rex
-     #@%make declare_for_des
-     ##@%make declare_for_desmt
-     ##@%make declare_for_desmmx
+##   @%make declare_for_des
+##   @%make declare_for_desmt
+##   #@%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-     @%make declare_for_ogr
-     @%make declare_for_csc
+#    @%make declare_for_ogr
+#    @%make declare_for_csc
      @%make platform
      #---------------------------
      @if exist $(BASENAME).rex @del $(BASENAME).rex
@@ -868,13 +878,13 @@ w32: .symbolic                               # win32
      @set ZIPFILE   = #$(BASENAME)-win32-x86-cli
      @set BINNAME   = $(BASENAME).exe
      @set EXECOMPRESSOR=\develop\upx\upxw.exe -9 --compress-resources=0
-     @%make declare_for_des
-     @%make declare_for_desmt
-     @%make declare_for_desmmx
+##   @%make declare_for_des
+##   @%make declare_for_desmt
+##   @%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-     @%make declare_for_ogr
-     @%make declare_for_csc
+#    @%make declare_for_ogr
+#    @%make declare_for_csc
      @%make platform
      #---------------------------------
      @wrc -31 -bt=nt &
@@ -967,13 +977,13 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
      @set COPYRIGHT = 'Copyright 1997-1999 distributed.net\r\n  Visit http://www.distibuted.net/ for more information'
      @set FORMAT    = Novell NLM 'distributed.net client for NetWare'
      @set %dependall=
-     #@%make declare_for_des
-     #@%make declare_for_desmt
-     #@%make declare_for_desmmx
+##   #@%make declare_for_des
+##   #@%make declare_for_desmt
+##   #@%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-     @%make declare_for_ogr
-     @%make declare_for_csc
+#    @%make declare_for_ogr
+#    @%make declare_for_csc
      @%make platform
      #
      @\develop\sdkcdall\nlmdump\nlm_dos.exe *$(BASENAME).nlm /b:$(BASENAME).map 
