@@ -9,6 +9,9 @@
 */
 //  
 // $Log: cmpidefs.h,v $
+// Revision 1.10  1998/12/08 05:38:18  dicamillo
+// Add defines for MacOS.
+//
 // Revision 1.9  1998/09/25 04:29:12  pct
 // DEC Ultrix port changes
 //
@@ -84,6 +87,11 @@
     extern "C" int strcasecmp(char *s1, char *s2); // Keep g++ happy.
     extern "C" int strncasecmp(char *s1, char *s2, size_t); // Keep g++ happy.
   #endif
+#elif (CLIENT_OS == OS_MACOS)
+  #include <stat.mac.h>
+  #include "mac_extras.h"
+  #define strcmpi(x,y)  stricmp(x,y)
+  #define strncmpi(x,y,n)  strnicmp(x,y,n)
 #else
   #if (CLIENT_OS == OS_AIX) || defined(__MVS__)
     #include <strings.h>
