@@ -5,7 +5,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.42 2000/11/02 18:29:47 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.43 2000/11/22 19:04:54 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -539,7 +539,11 @@ const char *utilGetAppName(void)
   #include <kernel/OS.h>      // get_next_team_info()
   #include <kernel/image.h>   // get_next_image_info()
 #elif (CLIENT_OS == OS_WIN32)
+  #define WIN32_LEAN_AND_MEAN
+  #include <windows.h>
   #include <tlhelp32.h> /* toolhlp32 structures and function prototypes */
+#elif (CLIENT_OS == OS_WIN16)
+  #include <windows.h>
 #endif
 #ifdef __unix__
   #include <fcntl.h>

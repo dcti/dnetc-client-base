@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.54 2000/11/17 00:56:34 mfeiri Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.55 2000/11/22 19:04:53 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -648,7 +648,7 @@ int CheckPauseRequestTrigger(void)
     {
       custom_now_active = "(defrag running)";
       custom_now_inactive = "(defrag no longer running)";
-      if (FindWindow("MSDefragWClass1",NULL))
+      if (utilGetPIDList( "#MSDefragWClass1", NULL, 0 ) > 0)
         trigstatics.pausetrig.trigger |= TRIGSETBY_CUSTOM;
       else
         trigstatics.pausetrig.trigger &= ~TRIGSETBY_CUSTOM;
@@ -927,6 +927,7 @@ extern "C" void CliSignalHandler( int sig )
   }  
   #endif
   ClearRestartRequestTrigger();
+//printf("\ngot sig %d\n", sig);
   RaiseExitRequestTrigger();
 
   SETSIGNAL(sig,SIG_IGN);

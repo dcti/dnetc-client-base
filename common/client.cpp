@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.94 2000/11/12 04:27:11 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.95 2000/11/22 19:04:53 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -401,7 +401,12 @@ int main( void )
   ClientMain(1,argv);
   return 0;
 }
-#elif (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32)
+#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+//if you get compile or link errors it is probably because you compiled with
+//STRICT, which is a no-no when using cpp (think 'overloaded')
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include "w32pre.h"       // prelude
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
 { /* parse the command line and call the bootstrap */
   TRACE_OUT((+1,"WinMain()\n"));
