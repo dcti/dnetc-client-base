@@ -1,6 +1,6 @@
 
   distributed.net client documentation
-  document revision $Id: dnetc.txt,v 1.4.4.1 2005/03/08 22:06:00 jlawson Exp $
+  document revision $Id: dnetc.txt,v 1.4.4.2 2005/03/09 22:18:11 jlawson Exp $
 
   Copyright distributed.net 1997-2005 - All Rights Reserved
   For use in distributed.net projects only.
@@ -30,9 +30,7 @@
     you have downloaded is capable of working on two of distributed.net's
     ongoing projects: The brute-force decryption of a RC5-72 message, and
     the search for Optimal Golomb Rulers (OGR). Both are long-term projects
-    that will go on for some time. Because the RC5-72 contest has a finite
-    number of keys to test, however, the OGR contest is selected as the
-    default.
+    that will go on for some time.
 
  2.0  General system requirements ------------------------------------
 
