@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.11 1999/04/22 03:18:53 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12 1999/04/22 03:54:10 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -514,8 +514,8 @@ int Client::BufferUpdate( int updatereq_flags, int interactive )
 
 /* --------------------------------------------------------------------- */
 
-int BufferGetFileRecord( const char *filename, WorkRecord * data, 
-               unsigned long *countP ) /* returns <0 on ioerr, >0 if norecs */
+int BufferGetFileRecordNoOpt( const char *filename, WorkRecord * data, 
+             unsigned long *countP ) /* returns <0 on ioerr, >0 if norecs */
 {                                      
   unsigned long reccount = 0;
   FILE *file = BufferOpenFile( filename, &reccount );
@@ -559,6 +559,14 @@ int BufferGetFileRecord( const char *filename, WorkRecord * data,
   if (!failed && countP)
     BufferCountFileRecords( filename, data->contest, countP, NULL );
   return failed;
+}  
+
+/* --------------------------------------------------------------------- */
+
+int BufferGetFileRecord( const char *filename, WorkRecord * data, 
+               unsigned long *countP ) /* returns <0 on ioerr, >0 if norecs */
+{
+  return BufferGetFileRecordNoOpt( filename, data, countP );
 }  
 
 /* --------------------------------------------------------------------- */
@@ -890,7 +898,7 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
     return -1L;
   }
   
-  while (BufferGetFileRecord( source_file, &data, &remaining ) == 0) 
+  while (BufferGetFileRecordNoOpt( source_file, &data, &remaining ) == 0) 
                            //returns <0 on ioerr/corruption, > 0 if norecs
   {
     if (lastremaining != 0)
@@ -1097,7 +1105,7 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
       if (CheckExitRequestTriggerNoIO() != 0 )
         break;
 
-      if ( BufferGetFileRecord( remote_file, &wrdata, &remaining ) != 0 )
+      if ( BufferGetFileRecordNoOpt( remote_file, &wrdata, &remaining ) != 0 )
         break;
       if (remaining < ((unsigned long)(lefttotrans)))
         lefttotrans = remaining;
