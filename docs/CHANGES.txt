@@ -21,11 +21,13 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.14 2003/03/17 01:32:00 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.15 2003/03/26 17:12:06 andreasb Exp $
 ==========================================================================
 
 2.9000
 ------
+
+2.9005-483  fix: x86: re-added SS-2 core - new version fixes bug #3187
 
 2.9004-482  undo: x86: rc5-72 SS-2 core (Athlon optimized) removed due to 
                        reentrancy and stack problems (#3187)
@@ -40,7 +42,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.14 2003/03/17 01:32:00 andreasb Ex
             new: ppc: two additional rc5-72 cores for ppc by Didier Levet
             new: arm: ogr assembly cores by Peter Teichmann
 
-2.9003-480  new: x86: rc5-72 SS-2 core by Gnatiuc Ianos (Athlon optimized)
+2.9003-480  new: x86: rc5-72 SS-2 core by Ianos Gnatiuc (Athlon optimized)
             chg: all: -numcpu 0 disables use of shared memory (if any)
             fix: macosx: changed -install to work on Mac OS X 10.2 (#1618)
 
