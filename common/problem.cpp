@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.93  1999/03/31 22:31:03  cyp
+// grr. when will gcc learn that whitespace following a '\' (#if continuation)
+// can be ignored?
+//
 // Revision 1.92  1999/03/31 22:01:43  cyp
 // a) Created separate (internal) Run_RC5(), Run_DES() and Run_OGR() sub-
 // functions. b) Folded AlignTimeslice() method into Run_RC5() since its only
@@ -290,7 +294,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.92 1999/03/31 22:01:43 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.93 1999/03/31 22:31:03 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -1264,7 +1268,7 @@ s32 Problem::Run( u32 /*unused*/ )
 
 #if (CLIENT_CPU == CPU_ARM)
 // ARM looks like a mess, I'll wait for ARM porters to integrate it
-#error Chris, (the comment above is someone else's remark) I have migrated 
+#error Chris, (the comment above is someone elses remark) I have migrated 
 #error ARM/DES into Run_DES() and added comments in Run_RC5() suggesting how 
 #error the rest could be done. The _kernel_escape_seen() poll is now handled
 #error from triggers.cpp                                               - cyp
