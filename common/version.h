@@ -5,6 +5,16 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: version.h,v $
+// Revision 1.22.2.8  1999/01/09 11:51:01  remi
+// Synced with :
+//
+//  Revision 1.34  1999/01/09 01:40:52  silby
+//  Welcome to .427
+//
+//  Revision 1.33  1999/01/06 01:20:01  cyp
+//  .426  I herewith remind everyone that a/b/c style revs are on a
+//  platform basis.
+//
 // Revision 1.22.2.7  1999/01/04 02:35:08  remi
 // Synced with :
 //  Revision 1.32  1999/01/02 06:12:13  silby
@@ -52,10 +62,10 @@
 
 #define CLIENT_CONTEST      71
 #define CLIENT_BUILD        02
-#define CLIENT_BUILD_FRAC   425
+#define CLIENT_BUILD_FRAC   427
 
-#define CLIENT_VERSIONSTRING    "v2.7102.425-TEST"
-#define CLIENT_VERSIONSTRING2   "2.7102.425-TEST"        // no leading "v"
+#define CLIENT_VERSIONSTRING    "v2.7102.427-TEST"
+#define CLIENT_VERSIONSTRING2   "2.7102.427-TEST"        // no leading "v"
 
 #endif // _VERSION_H
 
