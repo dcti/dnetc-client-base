@@ -15,7 +15,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.53.4.9 2004/06/20 18:30:56 kakace Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.53.4.10 2004/06/24 21:11:35 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1071,9 +1071,12 @@ static int __do_crunchometer( int event_disp_format,
           else if (girc != -1)
           {
             if (load_problem_count > 1) {
-              sprintf(buffer, "%s #%u:%s [%s]", info.name, prob_i+1, info.cwpbuf,
+              char core = 'a' + prob_i;
+              if (core > 'z')
+                core = 'A' + (prob_i - ('z' - 'a'));
+              sprintf(buffer, "%s #%c:%s [%s]", info.name, core, info.cwpbuf,
                     U64stringify(blkdone, sizeof(blkdone),
-                                 info.dcounthi, info.dcountlo, 0, info.unit));
+                    info.dcounthi, info.dcountlo, 0, info.unit));
             }
             else {
               sprintf(buffer, "%s:%s [%s]", info.name, info.cwpbuf,
