@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk.h,v $
+// Revision 1.10  1999/02/06 09:08:08  remi
+// Enhanced the lurk fonctionnality on Linux. Now it use a list of interfaces
+// to watch for online/offline status. If this list is empty (the default), any
+// interface up and running (besides the lookback one) will trigger the online
+// status.
+// Fixed formating in lurk.cpp.
+//
 // Revision 1.9  1999/02/04 07:47:06  cyp
 // Re-import from proxy base. Cleaned up. Added linux and win16 support.
 //
@@ -29,7 +36,7 @@
 #define CONNECT_LURK     1
 
 class Lurk
-  {
+{
 public:
 
 int lurkmode;
@@ -52,6 +59,12 @@ char *GetEntryList(long *finalcount);
   // Gets the list of possible dial-up networking connections for the
   // user to select. - called in cliconfig
 
+char ifacestowatch[100];
+  // Used by Linux as a list of interfaces to watch for detecting online status
+  // accept a ':' separated list of interface names, for example :
+  // "ppp0:eth0:eth1"
+  // "\0" means any interface (besides the loopback one)
+
 int CheckIfConnectRequested(void); // -> 0=no, !0=yes
 int CheckForStatusChange(void);    // -> 0 = nochange, !0 connection dropped
 int DialIfNeeded(int ignore_lurkonly_flag); // -> 0=success, !0 = failure
@@ -59,8 +72,8 @@ int HangupIfNeeded(void);          // -> 0=success, !0 = failure
 int Start(void);                   // Start lurking -> 0=success, !0 = failure
 int Stop(void);                    // Stop lurking -> 0=success, !0 = failure
 
-Lurk() { islurkstarted = lastcheckshowedconnect=0; } // Init lurk
-~Lurk() {;}                 // guess!
+Lurk() { islurkstarted = lastcheckshowedconnect = 0; };  // Init lurk
+~Lurk() {;}; // guess!
 
 protected:
 
@@ -68,6 +81,7 @@ int IsConnected(void);      // Checks status of connection -> !0 = connected
 int islurkstarted;          //was lurk.Start() successful?
 int lastcheckshowedconnect; //the connect state at the last CheckIfConnectRequested()
 int dohangupcontrol;        //if we dialed, we're welcome to hangup
+
 };
 
 extern Lurk dialup;

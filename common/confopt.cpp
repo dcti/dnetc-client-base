@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.cpp,v $
+// Revision 1.18  1999/02/06 09:08:08  remi
+// Enhanced the lurk fonctionnality on Linux. Now it use a list of interfaces
+// to watch for online/offline status. If this list is empty (the default), any
+// interface up and running (besides the lookback one) will trigger the online
+// status.
+// Fixed formating in lurk.cpp.
+//
 // Revision 1.17  1999/02/04 10:44:19  cyp
 // Added support for script-driven dialup. (currently linux only)
 //
@@ -50,7 +57,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.17 1999/02/04 10:44:19 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.18 1999/02/06 09:08:08 remi Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -440,7 +447,26 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "        connected. HOWEVER, if the client runs out of blocks,\n"
   "        it will NOT trigger auto-dial, and will instead work\n"
   "        on random blocks until a connection is detected.\n"
-  ),CONF_MENU_NET,CONF_TYPE_INT,10,NULL,CFGTXT(&lurkmodetable[0]),0,2}
+  ),CONF_MENU_NET,CONF_TYPE_INT,10,NULL,CFGTXT(&lurkmodetable[0]),0,2},
+//40
+{ "interfaces-to-watch", CFGTXT("Interfaces to watch"),"",
+  CFGTXT(
+  "Colon-separated list of interfaces. If one of the interfaces listed\n"
+  "goes up, the client will know it can fetch and flush blocks.\n"
+  "\n"
+  "1) if you are on a private LAN and you access the Internet through only\n"
+  "a modem, put (without the quotes) 'ppp0' for a PPP connection, 'sl0' for a\n"
+  "SLIP connection, or both in this list.\n"
+  "\n"
+  "2) if you have an intermittent ethernet connection through which you can\n"
+  "access the Internet, put the corresponding interface name in this list,\n"
+  "typically 'eth0' (without the quotes).\n"
+  "\n"
+  "3) if you don't put anything here, the client will know it can fetch or\n"
+  "flush blocks through any 'up' interface. This is OK for home users without\n"
+  "a LAN and for portable users who can access the Internet through the office\n"
+  "LAN and through a modem connection when they are at home.\n"
+  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,15,NULL,NULL,0,0}
 };
 
 // --------------------------------------------------------------------------

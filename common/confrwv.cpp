@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.39  1999/02/06 09:08:08  remi
+// Enhanced the lurk fonctionnality on Linux. Now it use a list of interfaces
+// to watch for online/offline status. If this list is empty (the default), any
+// interface up and running (besides the lookback one) will trigger the online
+// status.
+// Fixed formating in lurk.cpp.
+//
 // Revision 1.38  1999/02/04 10:44:19  cyp
 // Added support for script-driven dialup. (currently linux only)
 //
@@ -160,7 +167,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.38 1999/02/04 10:44:19 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.39 1999/02/06 09:08:08 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -294,6 +301,7 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   dialup.dialwhenneeded = GetPrivateProfileIntB( "networking", "enable-start-stop", 0, fn );
   GetPrivateProfileStringB( "networking", "dialup-start-cmd", dialup.connectionname, dialup.connectionname, sizeof(dialup.connectionname), fn );
   GetPrivateProfileStringB( "networking", "dialup-stop-cmd", dialup.stopconnection, dialup.stopconnection, sizeof(dialup.stopconnection), fn );
+  GetPrivateProfileStringB( "networking", "interfaces-to-watch", dialup.ifacestowatch, dialup.ifacestowatch, sizeof(dialup.ifacestowatch), fn );
   #elif (CLIENT_OS == OS_WIN32)
   dialup.dialwhenneeded = GetPrivateProfileIntB( sect, "dialwhenneeded", 0, fn );
   GetPrivateProfileStringB( sect, "connectionname", dialup.connectionname, dialup.connectionname, sizeof(dialup.connectionname), fn );
@@ -441,6 +449,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
       WritePrivateProfileStringB( netsect, "enable-start-stop", (dialup.dialwhenneeded)?("yes"):("no"), fn );
     __XSetProfileStr( netsect, "dialup-start-cmd", dialup.connectionname, fn, NULL );
     __XSetProfileStr( netsect, "dialup-stop-cmd", dialup.stopconnection, fn, NULL );
+    __XSetProfileStr( netsect, "interfaces-to-watch", dialup.ifacestowatch, fn, NULL );
     #elif (CLIENT_OS==OS_WIN32)
     __XSetProfileInt( sect, "dialwhenneeded", dialup.dialwhenneeded, fn, 0, 1 );
     __XSetProfileStr( sect, "connectionname", dialup.connectionname, fn, NULL );

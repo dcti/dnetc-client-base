@@ -5,6 +5,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.h,v $
+// Revision 1.9  1999/02/06 09:08:08  remi
+// Enhanced the lurk fonctionnality on Linux. Now it use a list of interfaces
+// to watch for online/offline status. If this list is empty (the default), any
+// interface up and running (besides the lookback one) will trigger the online
+// status.
+// Fixed formating in lurk.cpp.
+//
 // Revision 1.8  1999/02/04 10:44:19  cyp
 // Added support for script-driven dialup. (currently linux only)
 //
@@ -83,7 +90,8 @@
 #define CONF_CONNECTNAME          37 /* CONF_MENU_NET */
 #define CONF_DISCONNECTNAME       38 /* CONF_MENU_NET */
 #define CONF_LURKMODE             39 /* CONF_MENU_NET */
-#define CONF_OPTION_COUNT         40
+#define CONF_INTERFACESTOWATCH    40 /* CONF_MENU_NET */
+#define CONF_OPTION_COUNT         41
 
 #define CONF_MENU_UNDEF            0
 #define CONF_MENU_BUFF             1

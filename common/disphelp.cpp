@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.58  1999/02/06 09:08:08  remi
+// Enhanced the lurk fonctionnality on Linux. Now it use a list of interfaces
+// to watch for online/offline status. If this list is empty (the default), any
+// interface up and running (besides the lookback one) will trigger the online
+// status.
+// Fixed formating in lurk.cpp.
+//
 // Revision 1.57  1999/02/03 17:49:38  cyp
 // Cleaned up CLIENT_VERSIONSTRING #define
 //
@@ -184,7 +191,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.57 1999/02/03 17:49:38 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.58 1999/02/06 09:08:08 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -292,10 +299,13 @@ void DisplayHelp( const char * unrecognized_option )
     "-install           install the client in the startup folder",
     "-uninstall         remove the client from the startup folder",
   #endif
-     #ifdef LURK
+  #ifdef LURK
     "-lurk              automatically detect modem connections",
     "-lurkonly          perform buffer updates only when a connection is detected",
+    #if (CLIENT_OS == OS_LINUX)
+    "-interfaces <list> watch those interfaces to detect online/offline status",
     #endif
+  #endif
     "-percentoff        don't display block completion as a running percentage",
     "-quiet or -hide    suppress screen output (== detach for some clients)",
     "-noquiet           don't suppress screen output (override ini quiet setting)"

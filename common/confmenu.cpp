@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.23  1999/02/06 09:08:08  remi
+// Enhanced the lurk fonctionnality on Linux. Now it use a list of interfaces
+// to watch for online/offline status. If this list is empty (the default), any
+// interface up and running (besides the lookback one) will trigger the online
+// status.
+// Fixed formating in lurk.cpp.
+//
 // Revision 1.22  1999/02/04 10:44:19  cyp
 // Added support for script-driven dialup. (currently linux only)
 //
@@ -94,7 +101,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.22 1999/02/04 10:44:19 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.23 1999/02/06 09:08:08 remi Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -309,12 +316,15 @@ int Client::Configure( void )
     #elif (CLIENT_OS == OS_LINUX)
     conf_options[CONF_DIALWHENNEEDED].optionscreen=
     conf_options[CONF_CONNECTNAME].optionscreen=
+    conf_options[CONF_INTERFACESTOWATCH].optionscreen=
     conf_options[CONF_DISCONNECTNAME].optionscreen=CONF_MENU_NET;
     conf_options[CONF_DIALWHENNEEDED].thevariable=&dialup.dialwhenneeded;
     conf_options[CONF_CONNECTNAME].thevariable=&dialup.connectionname;
     conf_options[CONF_CONNECTNAME].description="Command/script to start dialup";
     conf_options[CONF_DISCONNECTNAME].thevariable=&dialup.stopconnection;    
     conf_options[CONF_DISCONNECTNAME].description="Command/script to stop dialup";
+    conf_options[CONF_INTERFACESTOWATCH].thevariable=&dialup.ifacestowatch;
+
     #elif (CLIENT_OS == OS_WIN32)
     conf_options[CONF_DIALWHENNEEDED].optionscreen=
     conf_options[CONF_CONNECTNAME].optionscreen=CONF_MENU_NET;
