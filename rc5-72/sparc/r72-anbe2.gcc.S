@@ -7,7 +7,7 @@
 .section	".rodata"
 
 Id_tag:
-	.ascii	"@(#)$Id: r72-anbe2.gcc.S,v 1.1.2.1 2003/04/19 17:32:34 andreasb Exp $\000"
+	.ascii	"@(#)$Id: r72-anbe2.gcc.S,v 1.1.2.2 2003/04/19 17:33:54 andreasb Exp $\000"
 
 
 .section	".text"
@@ -71,12 +71,15 @@ rc5_72_unit_func_anbe_2:
 #define s_save_i7		s_save_iterationsP-4
 #define fp_relative_size	(3*8+4+sizeof_r72unitwork+4+4)
 !   <--? here could be a filler for dword alignment
-#define stackframe_size		(default_stackframe+fp_relative_size+4*(26+26))
+#define stackframe_size		(default_stackframe+fp_relative_size+4*(1+2*26))
 ! s_S2[26]
-#define s_S2(i)			stack+0+(4*26)+(4*i)
+//#define s_S2(i)			stack+0+(4*26)+(4*i)
 ! s_S1[26]
-#define s_S1(i)			stack+0+(4*i)
-#define bar			stack+0
+//#define s_S1(i)			stack+0+(4*i)
+! s_S#[26][2]
+#define s_S2(i)			s_S1(i)+4
+#define s_S1(i)			stack+4+(8*i)
+#define bar			stack+0		// alignment
 ! <<<=== 'stack' points here
 ! (default stackframe 6+1+16 words)
 ! <<<=== %sp points here
@@ -113,7 +116,7 @@ rc5_72_unit_func_anbe_2:
 #define P_ROTL3		0xBF0A8B1D
 
 #define RGiterations	%i5
-#define RGLlo		%l3
+#define RGLlo		%g3///%l3
 #define RGLmid		%l4
 #define	RGLhi		%l5
 
@@ -124,11 +127,11 @@ rc5_72_unit_func_anbe_2:
 #define RCQ		%o2
 
 
-#define R1SS		%g1
+#define R1SS		%l0///%g1
 #define R1L(i)		R1L_##i
-#define R1L_0		%l0
-#define R1L_1		%l1
-#define R1L_2		%l2
+#define R1L_0		%g1///%l0
+#define R1L_1		%g5///%l1
+#define R1L_2		%o4///%l2
 #define R1Lpred(i)	R1L##i##pred
 #define R1L0pred	R1L_2
 #define R1L1pred	R1L_0
@@ -137,11 +140,11 @@ rc5_72_unit_func_anbe_2:
 #define R1A		%l6
 #define R1B		%l7
 
-#define T1a		%o4
+#define T1a		%l2//%o4
 #define	T1b		%o5
 
 
-#define R2SS		%g5//%g2
+#define R2SS		%l1///%g5//%g2
 #define R2L(i)		R2L_##i
 #define R2L_0		%g2//%g3//%i3
 #define R2L_1		%i2
@@ -154,7 +157,7 @@ rc5_72_unit_func_anbe_2:
 #define R2A		%g6//%i0
 #define R2B		%g7//%i1
 
-#define T2a		%g3//%i3
+#define T2a		%l3///%g3//%i3
 #define	T2b		%g4//%i4
 
 
@@ -211,30 +214,30 @@ mainloop:
 #define ROUND1(i,j)				\
 /* ! ROUND 1 (i,j) */				\
 	add	RGSinit,RCQ,RGSinit		;\
+						\
 	add	R1SS,R1Lpred(j),R1SS		;\
+	add	R2SS,R2Lpred(j),R2SS		;\
 	add	R1SS,RGSinit,R1SS		;\
 	sll	R1SS,3,T1a			;\
-	srl	R1SS,29,R1SS			;\
-	or	R1SS,T1a,R1SS			;\
-	st	R1SS,[s_S1(i)]			;\
-	add	R1SS,R1Lpred(j),T1a		;\
-	add	R1L(j),T1a,R1L(j)		;\
-	sll	R1L(j),T1a,T1b			;\
-	neg	T1a				;\
-	srl	R1L(j),T1a,R1L(j)		;\
-	or	R1L(j),T1b,R1L(j)		;\
-						\
-	add	R2SS,R2Lpred(j),R2SS		;\
 	add	R2SS,RGSinit,R2SS		;\
 	sll	R2SS,3,T2a			;\
+	srl	R1SS,29,R1SS			;\
 	srl	R2SS,29,R2SS			;\
+	or	R1SS,T1a,R1SS			;\
 	or	R2SS,T2a,R2SS			;\
-	st	R2SS,[s_S2(i)]			;\
+	add	R1SS,R1Lpred(j),T1a		;\
 	add	R2SS,R2Lpred(j),T2a		;\
+	st	R1SS,[s_S1(i)]			;\
+	st	R2SS,[s_S2(i)]			;\
+	add	R1L(j),T1a,R1L(j)		;\
 	add	R2L(j),T2a,R2L(j)		;\
+	sll	R1L(j),T1a,T1b			;\
+	neg	T1a				;\
 	sll	R2L(j),T2a,T2b			;\
 	neg	T2a				;\
+	srl	R1L(j),T1a,R1L(j)		;\
 	srl	R2L(j),T2a,R2L(j)		;\
+	or	R1L(j),T1b,R1L(j)		;\
 	or	R2L(j),T2b,R2L(j)		;\
 
 
@@ -302,31 +305,30 @@ mainloop:
 #define ROUND2(i,j)				\
 /* ! ROUND 2 (i,j) */				\
 	ld	[s_S1(i)],T1a			;\
+	ld	[s_S2(i)],T2a			;\
 	add	R1SS,R1Lpred(j),R1SS		;\
+	add	R2SS,R2Lpred(j),R2SS		;\
 	add	R1SS,T1a,R1SS			;\
 	sll	R1SS,3,T1a			;\
-	srl	R1SS,29,R1SS			;\
-	or	R1SS,T1a,R1SS			;\
-	st	R1SS,[s_S1(i)]			;\
-	add	R1SS,R1Lpred(j),T1a		;\
-	add	R1L(j),T1a,R1L(j)		;\
-	sll	R1L(j),T1a,T1b			;\
-	neg	T1a				;\
-	srl	R1L(j),T1a,R1L(j)		;\
-	or	R1L(j),T1b,R1L(j)		;\
-						\
-	ld	[s_S2(i)],T2a			;\
-	add	R2SS,R2Lpred(j),R2SS		;\
 	add	R2SS,T2a,R2SS			;\
 	sll	R2SS,3,T2a			;\
+	srl	R1SS,29,R1SS			;\
 	srl	R2SS,29,R2SS			;\
+	or	R1SS,T1a,R1SS			;\
 	or	R2SS,T2a,R2SS			;\
-	st	R2SS,[s_S2(i)]			;\
+	add	R1SS,R1Lpred(j),T1a		;\
 	add	R2SS,R2Lpred(j),T2a		;\
+	st	R1SS,[s_S1(i)]			;\
+	st	R2SS,[s_S2(i)]			;\
+	add	R1L(j),T1a,R1L(j)		;\
 	add	R2L(j),T2a,R2L(j)		;\
+	sll	R1L(j),T1a,T1b			;\
+	neg	T1a				;\
 	sll	R2L(j),T2a,T2b			;\
 	neg	T2a				;\
+	srl	R1L(j),T1a,R1L(j)		;\
 	srl	R2L(j),T2a,R2L(j)		;\
+	or	R1L(j),T1b,R1L(j)		;\
 	or	R2L(j),T2b,R2L(j)		;\
 
 	ROUND2(0,2)
@@ -362,65 +364,62 @@ mainloop:
 #define ROUND3(i,j)				\
 /* ! ROUND 3 (i,j) */				\
 	ld	[s_S1(i)],T1a			;\
+	ld	[s_S2(i)],T2a			;\
 	add	R1SS,R1Lpred(j),R1SS		;\
+	add	R2SS,R2Lpred(j),R2SS		;\
 	add	R1SS,T1a,R1SS			;\
 	sll	R1SS,3,T1a			;\
-	srl	R1SS,29,R1SS			;\
-	or	R1SS,T1a,R1SS			;\
-	/* !st	R1SS,[s_S1(i)]	*/		;\
-	add	R1SS,R1Lpred(j),T1a		;\
-	add	R1L(j),T1a,R1L(j)		;\
-	sll	R1L(j),T1a,T1b			;\
-	neg	T1a				;\
-	srl	R1L(j),T1a,R1L(j)		;\
-	or	R1L(j),T1b,R1L(j)		;\
-						\
-	ld	[s_S2(i)],T2a			;\
-	add	R2SS,R2Lpred(j),R2SS		;\
 	add	R2SS,T2a,R2SS			;\
 	sll	R2SS,3,T2a			;\
+	srl	R1SS,29,R1SS			;\
 	srl	R2SS,29,R2SS			;\
+	or	R1SS,T1a,R1SS			;\
 	or	R2SS,T2a,R2SS			;\
+	/* !st	R1SS,[s_S1(i)]	*/		;\
 	/* !st	R2SS,[s_S2(i)]	*/		;\
+	add	R1SS,R1Lpred(j),T1a		;\
 	add	R2SS,R2Lpred(j),T2a		;\
+	add	R1L(j),T1a,R1L(j)		;\
 	add	R2L(j),T2a,R2L(j)		;\
+	sll	R1L(j),T1a,T1b			;\
+	neg	T1a				;\
 	sll	R2L(j),T2a,T2b			;\
 	neg	T2a				;\
+	srl	R1L(j),T1a,R1L(j)		;\
 	srl	R2L(j),T2a,R2L(j)		;\
+	or	R1L(j),T1b,R1L(j)		;\
 	or	R2L(j),T2b,R2L(j)		;\
 
 #define ROUND3S(i,j)				\
 /* ! ROUND 3 (i,j) */				\
 	ld	[s_S1(i)],T1a			;\
+	ld	[s_S2(i)],T2a			;\
 	add	R1SS,R1Lpred(j),R1SS		;\
+	add	R2SS,R2Lpred(j),R2SS		;\
 	add	R1SS,T1a,R1SS			;\
 	sll	R1SS,3,T1a			;\
-	srl	R1SS,29,R1SS			;\
-	or	R1SS,T1a,R1SS			;\
-	/* !st	R1SS,[s_S1(i)]	*/		;\
-						\
-	ld	[s_S2(i)],T2a			;\
-	add	R2SS,R2Lpred(j),R2SS		;\
 	add	R2SS,T2a,R2SS			;\
 	sll	R2SS,3,T2a			;\
+	srl	R1SS,29,R1SS			;\
 	srl	R2SS,29,R2SS			;\
+	or	R1SS,T1a,R1SS			;\
 	or	R2SS,T2a,R2SS			;\
+	/* !st	R1SS,[s_S1(i)]	*/		;\
 	/* !st	R2SS,[s_S2(i)]	*/		;\
 
 #define ROUND3L(i,j)				\
 /* ! ROUND 3 (i,j) */				\
 	add	R1SS,R1Lpred(j),T1a		;\
+	add	R2SS,R2Lpred(j),T2a		;\
 	add	R1L(j),T1a,R1L(j)		;\
+	add	R2L(j),T2a,R2L(j)		;\
 	sll	R1L(j),T1a,T1b			;\
 	neg	T1a				;\
-	srl	R1L(j),T1a,R1L(j)		;\
-	or	R1L(j),T1b,R1L(j)		;\
-						\
-	add	R2SS,R2Lpred(j),T2a		;\
-	add	R2L(j),T2a,R2L(j)		;\
 	sll	R2L(j),T2a,T2b			;\
 	neg	T2a				;\
+	srl	R1L(j),T1a,R1L(j)		;\
 	srl	R2L(j),T2a,R2L(j)		;\
+	or	R1L(j),T1b,R1L(j)		;\
 	or	R2L(j),T2b,R2L(j)		;\
 
 
@@ -440,33 +439,31 @@ mainloop:
 #define ENCRYPTION_EVEN(i)			\
 /* ! ENCRYPTION EVEN (i) */			\
 	xor	R1A,R1B,R1A			;\
+	xor	R2A,R2B,R2A			;\
 	sll	R1A,R1B,T1a			;\
 	neg	R1B,T1b				;\
-	srl	R1A,T1b,R1A			;\
-	or	R1A,T1a,R1A			;\
-	add	R1A,R1SS,R1A			;\
-						\
-	xor	R2A,R2B,R2A			;\
 	sll	R2A,R2B,T2a			;\
 	neg	R2B,T2b				;\
+	srl	R1A,T1b,R1A			;\
 	srl	R2A,T2b,R2A			;\
+	or	R1A,T1a,R1A			;\
 	or	R2A,T2a,R2A			;\
+	add	R1A,R1SS,R1A			;\
 	add	R2A,R2SS,R2A			;\
 
 #define ENCRYPTION_ODD(i)			\
 /* ! ENCRYPTION ODD (i)	*/			\
 	xor	R1B,R1A,R1B			;\
+	xor	R2B,R2A,R2B			;\
 	sll	R1B,R1A,T1a			;\
 	neg	R1A,T1b				;\
-	srl	R1B,T1b,R1B			;\
-	or	R1B,T1a,R1B			;\
-	add	R1B,R1SS,R1B			;\
-						\
-	xor	R2B,R2A,R2B			;\
 	sll	R2B,R2A,T2a			;\
 	neg	R2A,T2b				;\
+	srl	R1B,T1b,R1B			;\
 	srl	R2B,T2b,R2B			;\
+	or	R1B,T1a,R1B			;\
 	or	R2B,T2a,R2B			;\
+	add	R1B,R1SS,R1B			;\
 	add	R2B,R2SS,R2B			;\
 
 
