@@ -5,7 +5,7 @@
  */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.1.2.6 2000/02/21 03:31:28 sampo Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.1.2.7 2000/02/21 05:54:39 sampo Exp $"; }
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,19 +33,19 @@ static int OGR[] = {
 //static char first[65537];  /* first blank in 16 bit COMP bitmap, range: 1..16 */
 static U bit[200];         /* which bit of LIST to update */
 
-#define COMP_LEFT_LIST_RIGHT(lev,s)                             \
-  {                                                             \
-    int ss = 32 - s;                                            \
-    lev->comp[0] = (lev->comp[0] << s) | (lev->comp[1] >> ss);  \
-    lev->comp[1] = (lev->comp[1] << s) | (lev->comp[2] >> ss);  \
-    lev->comp[2] = (lev->comp[2] << s) | (lev->comp[3] >> ss);  \
-    lev->comp[3] = (lev->comp[3] << s) | (lev->comp[4] >> ss);  \
-    lev->comp[4] <<= s;                                         \
-    lev->list[4] = (lev->list[4] >> s) | (lev->list[3] << ss);  \
-    lev->list[3] = (lev->list[3] >> s) | (lev->list[2] << ss);  \
-    lev->list[2] = (lev->list[2] >> s) | (lev->list[1] << ss);  \
-    lev->list[1] = (lev->list[1] >> s) | (lev->list[0] << ss);  \
-    lev->list[0] >>= s;                                         \
+#define COMP_LEFT_LIST_RIGHT(lev,s)                                   \
+  {                                                                   \
+    register int ss = 32 - s;                                         \
+    lev->comp.u[0] = (lev->comp.u[0] << s) | (lev->comp.u[1] >> ss);  \
+    lev->comp.u[1] = (lev->comp.u[1] << s) | (lev->comp.u[2] >> ss);  \
+    lev->comp.u[2] = (lev->comp.u[2] << s) | (lev->comp.u[3] >> ss);  \
+    lev->comp.u[3] = (lev->comp.u[3] << s) | (lev->comp.u[4] >> ss);  \
+    lev->comp.u[4] <<= s;                                             \
+    lev->list.u[4] = (lev->list.u[4] >> s) | (lev->list.u[3] << ss);  \
+    lev->list.u[3] = (lev->list.u[3] >> s) | (lev->list.u[2] << ss);  \
+    lev->list.u[2] = (lev->list.u[2] >> s) | (lev->list.u[1] << ss);  \
+    lev->list.u[1] = (lev->list.u[1] >> s) | (lev->list.u[0] << ss);  \
+    lev->list.u[0] >>= s;                                             \
   }
 
 #define COMP_LEFT_LIST_RIGHT_32(lev)                  \
@@ -264,7 +264,16 @@ static int ogr_init()
   for( i=1; i < 200; i++) {
      bit[i] = 0x80000000 >> ((i-1) % 32);
   }
-
+/*
+  for( i=1; i < 50; i++) {
+     vector unsigned int modulo = vec_add(vb,negone);
+     modulo = vec_sub(modulo,vec_sr(modulo,vec_splat_u32(5)));
+     bit.v[i] = vec_sr(x8,modulo);
+  }
+  for( i=197; i < 200; i++) {
+     bit.s[i] = 0x80000000 >> ((i-1) % 32);
+  }
+*/
   return CORE_S_OK;
 }
 
@@ -356,7 +365,7 @@ static int vec_ogr_create(void *input, int inputlen, void *state, int statelen)
       //dump(oState->depth, lev, 0);
       oState->marks[i+1] = oState->marks[i] + s;
       lev->cnt2 += s;
-      int t = s;
+      register int t = s;
       while (t >= 32) {
         COMP_LEFT_LIST_RIGHT_32(lev);
         t -= 32;
