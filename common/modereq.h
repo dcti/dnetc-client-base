@@ -14,7 +14,7 @@
 */ 
 
 #ifndef __MODEREQ_H__
-#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.10 1999/04/05 17:56:52 cyp Exp $"
+#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.11 1999/04/09 14:07:16 cyp Exp $"
 
 #define MODEREQ_IDENT              0x0001    
 #define MODEREQ_CPUINFO            0x0002
@@ -26,6 +26,7 @@
 #define MODEREQ_CONFRESTART        0x0080 /* set restart flag after successful config? */
 #define MODEREQ_BENCHMARK_RC5      0x0100
 #define MODEREQ_BENCHMARK_DES      0x0200
+#define MODEREQ_BENCHMARK_ALL      (MODEREQ_BENCHMARK_DES|MODEREQ_BENCHMARK_RC5)
 #define MODEREQ_BENCHMARK_QUICK    0x0400
 #define MODEREQ_CMDLINE_HELP       0x0800
 #define MODEREQ_UNLOCK             0x1000
