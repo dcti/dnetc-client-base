@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.7 1999/09/22 03:06:43 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.8 1999/10/11 18:22:02 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -288,7 +288,7 @@ int InitializeTriggers( const char *exitfile, const char *pausefile )
 
 // =======================================================================
 
-static void __PollDrivenBreakCheck( void ) /* not static */
+void __PollDrivenBreakCheck( void ) /* not static to avoid compiler warnings */
 {
   #if (CLIENT_OS == OS_RISCOS)
   if (_kernel_escape_seen())
