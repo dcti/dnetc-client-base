@@ -5,6 +5,11 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.101  1998/09/30 08:12:27  snake
+#
+# Removed NASM stuff for BSD/OS, nasm does not support the a.out format of
+# BSD/OS.
+#
 # Revision 1.100  1998/09/30 07:41:01  snake
 #
 # BSD/OS also needs <errno.h>, maybe we should include it for all BSD like OS's
@@ -1011,11 +1016,9 @@ case "$1" in
 
     *x86-bsdi)
 	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -DPIPELINE_COUNT=2"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_NASMFLAGS="-i rc5/nasm/ -f aoutb"
        ;;
 
 ####### Intel X86 SCO5
