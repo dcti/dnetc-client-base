@@ -2,6 +2,12 @@
 # feel free to generalize to do Win32 Alpha as well
 # see http://www.distributed.net/
 
+# $Log: makefile.vc,v $
+# Revision 1.37.2.2  1998/11/16 09:57:24  remi
+# Various fixes.
+# Added $Log tag.
+#
+
 EXENAME = rc5des.exe
 OUTPUTPATH = output
 COMMONPATH = common
@@ -13,7 +19,7 @@ W32CLIPATH = platforms/win32cli
 OPTS_MSVC = -nologo -W3 -O1 -MT -I$(RC5PATH) -I$(DESPATH) \
   -I$(COMMONPATH) -I$(W32CLIPATH) -D_CPU_32BIT_ \
   -DMULTITHREAD -D__WIN32__ -DNDEBUG -GR- -GX- -GA -GF \
-  -DMMX_BITSLICER -DBIT_64 -DMEGGS -DKWAN
+  -DMMX_BITSLICER -DMMX_RC5 -DBIT_64 -DMEGGS -DKWAN
 
 all: rc5des
 
@@ -22,7 +28,6 @@ all: rc5des
 RC5_OBJS =                    \
 	$(OUTPUTPATH)/client.obj     \
 	$(OUTPUTPATH)/disphelp.obj   \
-	$(OUTPUTPATH)/iniread.obj    \
 	$(OUTPUTPATH)/cliconfig.obj  \
 	$(OUTPUTPATH)/selftest.obj   \
 	$(OUTPUTPATH)/cmdline.obj    \
@@ -38,7 +43,6 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/des-slice-meggs.obj \
 	$(OUTPUTPATH)/triggers.obj   \
 	$(OUTPUTPATH)/selcore.obj    \
-	$(OUTPUTPATH)/clirun.obj     \
 	$(OUTPUTPATH)/probman.obj    \
 	$(OUTPUTPATH)/bench.obj      \
 	$(OUTPUTPATH)/w32cons.obj    \
