@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.49 2001/02/03 21:37:27 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.50 2001/03/06 03:17:22 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -725,7 +725,7 @@ const char *LogGetCurrentLogFilename(char *buffer, unsigned int buflen)
 static int __ContestGetLiveRate(unsigned int contest_i,
                                 int called_from_logscreenpercent,
                                 int *some_doneP,
-                                u32 *ratehiP, u32 *rateloP,
+                                u32 *rateloP,
                                 u32 *walltime_hiP, u32 *walltime_loP,
                                 u32 *coretime_hiP, u32 *coretime_loP)
 {
@@ -759,19 +759,10 @@ static int __ContestGetLiveRate(unsigned int contest_i,
             if (selprob->pub_data.contest == contest_i)
             {
               u32 ccounthi, ccountlo;
-              if (ProblemGetInfo(selprob, 0, 0,
-                                 0, 0,
-                                 0, 0, 
-                                 0, 
-                                 0, 0, 
-                                 0, 
-                                 0, 0, 
-                                 0, 0, 
-                                 0, 0, 0, 0,
-                                 0, 0, 0, 0,
-                                 &ccounthi, &ccountlo, 0, 0,
-                                 0, 0, 0, 0 ) >= 0)
+              if (ProblemGetResultCode(selprob) >= 0)
               {
+                ProblemGetCCounts(selprob, &ccounthi, &ccountlo);
+
                 int gotit = 0;
                 u32 last_ccounthi = 0, last_ccountlo = 0; 
                 u32 last_ctimehi = 0, last_ctimelo = 0; 
@@ -830,7 +821,7 @@ static int __ContestGetLiveRate(unsigned int contest_i,
                   }
                   probcount++;
                 }
-              } /* if ProblemGetInfo() */
+              } /* if ProblemGetResultCode() */
             } /* if (selprob->pub_data.contest == contest_i) */
           } /* if (selprob) */
         } /* for (prob_i = 0; prob_i < numprobs; prob_i++) */
@@ -862,11 +853,11 @@ static int __ContestGetLiveRate(unsigned int contest_i,
               *walltime_hiP = c_sec;
             if (walltime_loP)
               *walltime_loP = c_usec;
-            if (ratehiP || rateloP)
+            if (rateloP)
             {
               ProblemComputeRate( contest_i, c_sec, c_usec, 
                                   tccount_hi, tccount_lo, 
-                                  ratehiP, rateloP, 0, 0);
+                                  rateloP, 0, 0);
             } /* if (ratehiP || rateloP) */
           } /* time is valid */
         } /* if (probcount > 0) */
@@ -876,12 +867,11 @@ static int __ContestGetLiveRate(unsigned int contest_i,
   return probcount;
 }
 
-int LogGetContestLiveRate(unsigned int contest_i,
-                          u32 *ratehiP, u32 *rateloP,
+int LogGetContestLiveRate(unsigned int contest_i, u32 *rateloP,
                           u32 *walltime_hiP, u32 *walltime_loP,
                           u32 *coretime_hiP, u32 *coretime_loP)
 {
-  return __ContestGetLiveRate(contest_i, 0, 0, ratehiP, rateloP, 
+  return __ContestGetLiveRate(contest_i, 0, 0, rateloP, 
                               walltime_hiP, walltime_loP, 
                               coretime_hiP, coretime_loP );
 }
@@ -941,7 +931,7 @@ void LogScreenPercent( unsigned int load_problem_count )
 
   if (disp_format == DISPFORMAT_RATE) /* live rate */
   {
-    u32 ratehi, ratelo, wtimehi, wtimelo, ctimehi, ctimelo;
+    u32 ratelo, wtimehi, wtimelo, ctimehi, ctimelo;
     int some_done; unsigned int i, x;
     cont_i = logstatics.perc_callcount % active_contests;
 
@@ -958,7 +948,7 @@ void LogScreenPercent( unsigned int load_problem_count )
       }
     }
     if (__ContestGetLiveRate(cont_i, 1, /* <= YES, called from LogScreen... */
-                             &some_done, &ratehi, &ratelo, 
+                             &some_done, &ratelo, 
                              &wtimehi, &wtimelo, &ctimehi, &ctimelo) < 1)
     {
       return; /* no rate available yet */
@@ -970,7 +960,7 @@ void LogScreenPercent( unsigned int load_problem_count )
     else
     {
       i = sprintf(buffer,"\r%s: rate: ", CliGetContestNameFromID(cont_i));
-      ProblemComputeRate( cont_i, 0, 0, ratehi, ratelo, 0, 0,
+      ProblemComputeRate( cont_i, 0, 0, ratelo, 0, 0,
                           &buffer[i], sizeof(buffer)-i );
       strcat(buffer, "/sec");
 #if 0
@@ -1041,10 +1031,15 @@ void LogScreenPercent( unsigned int load_problem_count )
             (!buffer[0] || prob_i == selprob_i))
         {
           char blkdone[32], blksig[32]; const char *contname;
-          girc = ProblemGetInfo(selprob, &cont_i, &contname, 0, 0, 0, 0, 0, 
-                           &permille, &startpermille, 0,
-                           0, 0, blksig, sizeof(blksig), 0, 0, 0, 0, 0,0,0, 0,0,0,
-                           0, 0, 0, 0, blkdone, sizeof(blkdone) );
+
+          girc = ProblemGetResultCode(selprob);
+          cont_i = ProblemGetContestID(selprob);
+          ProblemGetContestName(selprob, &contname);
+          permille = ProblemGetCPermille(selprob, 0);
+          startpermille = ProblemGetSPermille(selprob, 0);
+          ProblemGetWorkbuf(selprob, blksig, sizeof(blksig), 1);
+          ProblemGetDBuf(selprob, 0, blkdone, sizeof(blkdone));
+
           if (permille == 1000 && disp_format == DISPFORMAT_AUTO)
             disp_format = DISPFORMAT_PERC;
           else if (girc != -1)
@@ -1056,10 +1051,10 @@ void LogScreenPercent( unsigned int load_problem_count )
         }
         else
         {
-          girc = ProblemGetInfo(selprob, &cont_i, 0, 0, 0, 0, 0, 0,
-                                         &permille, &startpermille, 0,
-                                         0, 0, 0, 0, 0, 0, 0, 0, 
-                                         0,0,0, 0,0,0, 0, 0, 0, 0, 0, 0 );
+          girc = ProblemGetResultCode(selprob);
+          cont_i = ProblemGetContestID(selprob);
+          permille = ProblemGetCPermille(selprob, 0);
+          startpermille = ProblemGetSPermille(selprob, 0);
         }
         if (girc != -1)
         {

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __LOGSTUFF_H__
-#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.11.2.4 2000/11/17 07:44:25 cyp Exp $"
+#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.11.2.5 2001/03/06 03:17:23 sampo Exp $"
 
 /* this is shared with Configure() */
 #define LOGFILETYPE_NONE    0 //no logging to file
@@ -24,29 +24,34 @@
 /* ---------------------------------------------------- */
 
 //Flush mail and if last screen write didn't end with a LF then do that now. 
-extern void LogFlush( int forceflush );
+void LogFlush( int forceflush );
 
 //Log message to screen only. Make adjustments, like fixing a missing datestamp
-extern void LogScreen( const char *format, ... );
+void LogScreen( const char *format, ... );
 
 //Log to mail+file+screen. Make adjustments.
-extern void Log( const char *format, ... );
+void Log( const char *format, ... );
 
 //Log message in raw form (no adjustments) to screen only.
-extern void LogScreenRaw( const char *format, ... );
+void LogScreenRaw( const char *format, ... );
 
 //Log to mail+file+screen. No adjustments.
-extern void LogRaw( const char *format, ... );
+void LogRaw( const char *format, ... );
 
 //Log to LOGTO_* flags (RAW implies screen)
-extern void LogTo( int towhat, const char *format, ... );
+void LogTo( int towhat, const char *format, ... );
 
 //display percent bar. (bar is now always compound form)
-extern void LogScreenPercent( unsigned int load_problem_count );
+void LogScreenPercent( unsigned int load_problem_count );
 
 //Return name of current logfile, or NULL if not logging to file,
 //or "" if logfile hasn't been accessed yet.
-extern const char *LogGetCurrentLogFilename(char *buffer, unsigned int len);
+const char *LogGetCurrentLogFilename(char *buffer, unsigned int len);
+
+int LogGetContestLiveRate(unsigned int contest_i,
+                          u32 *ratehiP, u32 *rateloP,
+                          u32 *walltime_hiP, u32 *walltime_loP,
+                          u32 *coretime_hiP, u32 *coretime_loP);
 
 //init/deinit prototypes
 void DeinitializeLogging(void);

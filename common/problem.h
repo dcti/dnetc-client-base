@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.49 2001/02/03 18:18:00 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.50 2001/03/06 03:17:25 sampo Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -238,23 +238,23 @@ int ProblemRun(void *__thisprob);
 // this time, *dcount* == numdone so far all times. 
 // numstring_style: -1=unformatted, 0=commas, 
 // 1=0+space between magna and number (or at end), 2=1+"nodes"/"keys"
-int ProblemGetInfo(void *__thisprob,
-                     unsigned int *cont_id, const char **cont_name, 
-                     u32 *elapsed_secs, u32 *elapsed_usecs, 
-                     unsigned int *swucount, int numstring_style,
-                     const char **unit_name, 
-                     unsigned int *c_permille, unsigned int *s_permille,
-                     int permille_only_if_exact,
-                     char *idbuf, unsigned int idbufsz,
-                     char *cwpbuf, unsigned int cwpbufsz,
-                     u32 *ratehi, u32 *ratelo,
-                     char *ratebuf, unsigned int ratebufsz,
-                     u32 *ubtcounthi, u32 *ubtcountlo, 
-                     char *tcountbuf, unsigned int tcountbufsz,
-                     u32 *ubccounthi, u32 *ubccountlo, 
-                     char *ccountbuf, unsigned int ccountbufsz,
-                     u32 *ubdcounthi, u32 *ubdcountlo, 
-                     char *dcountbuf, unsigned int dcountbufsz);
+//int ProblemGetInfo(void *__thisprob,
+//                   unsigned int *cont_id, const char **cont_name, 
+//                   u32 *elapsed_secs, u32 *elapsed_usecs, 
+//                   unsigned int *swucount, int numstring_style,
+//                   const char **unit_name, 
+//                   unsigned int *c_permille, unsigned int *s_permille,
+//                   int permille_only_if_exact,
+//                   char *idbuf, unsigned int idbufsz,
+//                   char *cwpbuf, unsigned int cwpbufsz,
+//                   u32 *ratehi, u32 *ratelo,
+//                   char *ratebuf, unsigned int ratebufsz,
+//                   u32 *ubtcounthi, u32 *ubtcountlo, 
+//                   char *tcountbuf, unsigned int tcountbufsz,
+//                   u32 *ubccounthi, u32 *ubccountlo, 
+//                   char *ccountbuf, unsigned int ccountbufsz,
+//                   u32 *ubdcounthi, u32 *ubdcountlo, 
+//                   char *dcountbuf, unsigned int dcountbufsz);
 
 Problem *ProblemAlloc(void);
 void ProblemFree(void *__thisprob);
@@ -267,16 +267,48 @@ unsigned int ProblemCountLoaded(int contestid);
 /* used for IPC, shmem et al */
 unsigned int ProblemGetSize(void);
 
-const char *ProblemComputeRate( unsigned int contestid, 
-                                u32 secs, u32 usecs, u32 iterhi, u32 iterlo, 
-                                u32 *ratehi, u32 *ratelo,
-                                char *ratebuf, unsigned int ratebufsz ); 
+int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
+/* result depends on #ifdefs, threadsafety issues etc */
 
-int ProblemGetSWUCount( const ContestWork *work,
+void ProblemComputeRate( unsigned int contestid, 
+                                u32 secs, u32 usecs, u32 iterhi, u32 iterlo, 
+                                u32 *ratelo, char *ratebuf, unsigned int ratebufsz ); 
+
+int WorkGetSWUCount( const ContestWork *work,
                         int rescode, unsigned int contestid,
                         unsigned int *swucount );
 
-int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
-/* result depends on #ifdefs, threadsafety issues etc */
+// Problem data accessor functions
+
+int ProblemGetResultCode(void *__thisprob);
+
+unsigned int ProblemGetContestID(void *__thisprob);
+
+void ProblemGetContestName(void *__thisprob, const char **cont_name);
+
+unsigned int ProblemGetCPermille(void *__thisprob, int permille_only_if_exact);
+
+unsigned int ProblemGetSPermille(void *__thisprob, int permille_only_if_exact);
+
+void ProblemGetElapsedTime(void *__thisprob, unsigned int *secs, unsigned int *usecs);
+
+unsigned int ProblemGetSWUCount(void *__thisprob);
+
+void ProblemGetWorkbuf(void *__thisprob, char *buf, unsigned int bufsz, unsigned int cwp );
+
+unsigned int ProblemGetRate(void *__thisprob, char *ratebuf, unsigned int ratebufsz);
+
+void ProblemGetTCounts(void *__thisprob, u32 *ubtcounthi, u32 *ubtcountlo);
+
+void ProblemGetTBuf(void *__thisprob, int numstring_style, char *tcountbuf, unsigned int tcountbufsz);
+
+void ProblemGetCCounts(void *__thisprob, u32 *ubccounthi, u32 *ubccountlo);
+
+void ProblemGetCBuf(void *__thisprob, int numstring_style, char *ccountbuf, unsigned int ccountbufsz);
+
+void ProblemGetDCounts(void *__thisprob, u32 *ubdcounthi, u32 *ubdcountlo);
+
+void ProblemGetDBuf(void *__thisprob, int numstring_style, char *dcountbuf, unsigned int dcountbufsz);
+
 
 #endif /* __PROBLEM_H__ */

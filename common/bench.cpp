@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.55 2001/03/03 03:59:27 sampo Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.56 2001/03/06 03:17:21 sampo Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -154,7 +154,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
                              contestid, tslice, 0, 0, 0, 0) == 0)
     {
       const char *contname = CliGetContestNameFromID(contestid);
-      int silent = 1, run = RESULT_WORKING; u32 bestlo = 0, besthi = 0;
+      int silent = 1, run = RESULT_WORKING; u32 bestlo = 0;
       unsigned long last_permille = 1001;
 
       //ClientEventSyncPost(CLIEVENT_BENCHMARK_STARTED, (long)thisprob );
@@ -172,7 +172,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
 
       while ( run == RESULT_WORKING )
       {
-        unsigned long permille; u32 ratehi, ratelo;
+        unsigned long permille; u32 ratelo;
     
         if (non_preemptive_os.yps) /* is this a non-preemptive environment? */
         {
@@ -181,9 +181,11 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
              && thisprob->pub_data.runtime_sec >= ((u32)(2+non_preemptive_os.did_adjust)))
           {
             u32 newtslice;
-            if (ProblemGetInfo(thisprob, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                               &ratelo, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0 ) == -1)
+            if (ProblemGetResultCode(thisprob) != -1)
+            {
+                ratelo = ProblemGetRate(thisprob,0,0);
+            }
+            else 
             {
               run = -2;
               break;
@@ -211,32 +213,30 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
              if (!thisprob->pub_data.last_runtime_is_invalid)
         {
           u32 donehi, donelo;
-          if (ProblemGetInfo(thisprob, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                             &donehi, &donelo, 0, 0 ) == -1)
+          if(ProblemGetResultCode(thisprob) != -1)
+          {
+            ProblemGetDCounts(thisprob, &donehi, &donelo);
+          }
+          else
           {
             run = -2;
             break;
           }
           ProblemComputeRate( contestid, thisprob->pub_data.runtime_sec, 
                                          thisprob->pub_data.runtime_usec,
-                              donehi, donelo, &ratehi, &ratelo, 0, 0 );
+                              donehi, donelo, &ratelo, 0, 0 );
 
           tslice = thisprob->pub_data.tslice;
-          if (ratehi > besthi || (ratehi == besthi && ratelo > bestlo))
+          if (ratelo > bestlo)
           {
             bestlo = ratelo; 
-            besthi = ratehi;
 //printf("\noldtslice=%u, newtslice=%u %s\n", tslice, ratelo, "BEST!");
           }
           else
           { 
-            ratehi = besthi;
             ratelo = bestlo;
 //printf("\noldtslice=%u, newtslice=%u %s\n", tslice, ratelo, "");
           }
-          if (ratehi)
-            ratelo = 0x0fffffff;
           if (ratelo > tslice || contestid == OGR)
             tslice = thisprob->pub_data.tslice = ratelo;
         }
@@ -273,29 +273,21 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         if (permille == 1000) /* time is up or ran out of work */
         {
           char ratebuf[32]; u32 secs, usecs;
-          if (ProblemGetInfo(thisprob,0, 0, /* cont_id, cont_name */
-                                      &secs, &usecs, 
-                                      0, 0, 0, /* swucount, pad_strings, unit_name */
-                                      0, 0, 0, /* currpermille, startperm, poie */
-                                      0, 0,    /* idbuf, idbufsz */
-                                      0, 0,    /* cwpbuf, cwpbufsz */
-                                      &ratehi, &ratelo, 
-                                      ratebuf, sizeof(ratebuf),
-                                      0, 0, 0, 0,   0, 0, 0, 0, 
-                                      0, 0, 0, 0 ) == -1)
+          if (ProblemGetResultCode(thisprob) != -1)
+          {
+            ProblemGetElapsedTime(thisprob, &secs, &usecs);
+            ratelo = ProblemGetRate(thisprob, ratebuf, sizeof(ratebuf));
+          }
+          else
           {
             run = -4;
             break;
           }
-          if (bestlo || besthi)
+          if (bestlo)
           {
-            ProblemComputeRate( contestid, 0, 0, besthi, bestlo, &ratehi, 
-                                &ratelo, ratebuf, sizeof(ratebuf) );                                       
+            ProblemComputeRate( contestid, 0, 0, 0, bestlo, &ratelo, ratebuf, sizeof(ratebuf) );                                       
           }
-          retvalue = (long)ratelo;
-          #if (ULONG_MAX > 0xfffffffful)
-          retvalue = (long)((ratehi << 32)+(ratelo));
-          #endif
+          retvalue = ratelo;
           __BenchSetBestRate(contestid, retvalue);
           if (!silent)
           {

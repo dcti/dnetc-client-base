@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.104 2001/03/03 03:57:47 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.105 2001/03/06 03:17:23 sampo Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -1629,7 +1629,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
 }
 
 /* ----------------------------------------------------------------------- */
-/* support functions for ProblemGetInfo()                         */
+/* support functions for Problem Info Accessors                            */
 /* ----------------------------------------------------------------------- */
 
 static void __u64mul( u32 _ahi, u32 _alo, u32 _bhi, u32 _blo,
@@ -1917,10 +1917,9 @@ static char *__u64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
 /* if secs:usecs is zero, ProblemComputeRate() just returns 
    a formatted iterhi:lo
 */
-const char *ProblemComputeRate( unsigned int contestid, 
-                                u32 secs, u32 usecs, u32 iterhi, u32 iterlo,
-                                u32 *ratehi, u32 *ratelo, 
-                                char *ratebuf, unsigned int ratebufsz )
+void ProblemComputeRate( unsigned int contestid, 
+                         u32 secs, u32 usecs, u32 iterhi, u32 iterlo,
+                         u32 *ratelo, char *ratebuf, unsigned int ratebufsz )
 {
   u32 hi = iterhi, lo = iterlo;
   TRACE_U64OPS((+1,"ProblemComputeRate(%s,%u:%u,%u:%u)\n",
@@ -1938,7 +1937,6 @@ const char *ProblemComputeRate( unsigned int contestid,
       __u64div( hi, lo, thi, tlo, &hi, &lo, 0, 0 ); /* (iter*1000)/millisecs */
     }
   }
-  if (ratehi) *ratehi = hi;
   if (ratelo) *ratelo = lo;
   if (ratebuf && ratebufsz)
   {
@@ -1954,7 +1952,6 @@ const char *ProblemComputeRate( unsigned int contestid,
     __u64stringify( ratebuf, ratebufsz, hi, lo, 2, unitname );
   }
   TRACE_U64OPS((-1,"ProblemComputeRate() => %u:%u\n",hi,lo));
-  return ratebuf;
 }
 
 static unsigned int __compute_permille(unsigned int cont_i, 
@@ -2003,7 +2000,7 @@ static unsigned int __compute_permille(unsigned int cont_i,
 }
 
 
-int ProblemGetSWUCount( const ContestWork *work,
+int WorkGetSWUCount( const ContestWork *work,
                         int rescode, unsigned int contestid,
                         unsigned int *swucount )
 {
@@ -2064,184 +2061,140 @@ int ProblemGetSWUCount( const ContestWork *work,
   return rescode;
 }
 
-
-/* more info than you ever wanted. :) any/all params can be NULL/0
- * sig/idbuf: packet identifier
- * cwpbuf: current working position
- * tcount = total_number_of_iterations_to_do
- * ccount = number_of_iterations_done_thistime.
- * dcount = number_of_iterations_done_ever
- * counts are unbiased (adjustment for DES etc already done)
- * numstring_style: -1=unformatted, 0=commas, 
- * 1=0+space between magna and number (or at end), 2=1+"nodes"/"keys"
-*/
-int ProblemGetInfo(void *__thisprob,
-                   unsigned int *cont_id, const char **cont_name, 
-                   u32 *elapsed_secsP, u32 *elapsed_usecsP, 
-                   unsigned int *swucount, int numstring_style,
-                   const char **unit_name, 
-                   unsigned int *c_permille, unsigned int *s_permille,
-                   int permille_only_if_exact,
-                   char *sigbuf, unsigned int sigbufsz,
-                   char *cwpbuf, unsigned int cwpbufsz,
-                   u32 *ratehi, u32 *ratelo, 
-                   char *ratebuf, unsigned int ratebufsz,
-                   u32 *ubtcounthi, u32 *ubtcountlo, 
-                   char *tcountbuf, unsigned int tcountbufsz,
-                   u32 *ubccounthi, u32 *ubccountlo, 
-                   char *ccountbuf, unsigned int ccountbufsz,
-                   u32 *ubdcounthi, u32 *ubdcountlo,
-                   char *dcountbuf, unsigned int dcountbufsz)
+int ProblemGetResultCode(void *__thisprob)
 {
-  int rescode = -1;
-  InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
-  permille_only_if_exact = permille_only_if_exact; /* possibly unused */
+    int rescode = -1;
+    InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
 
-  if (thisprob)
-  {  
-    if (thisprob->priv_data.initialized)
-      rescode = thisprob->priv_data.last_resultcode;
-  }
-  if (rescode >= 0)
-  {
-    u32 e_sec = 0, e_usec = 0;
-
-    if (cont_id)
-    {
-      *cont_id = thisprob->pub_data.contest;
+    if (thisprob)
+    {  
+        if (thisprob->priv_data.initialized)
+            rescode = thisprob->priv_data.last_resultcode;
     }
-    if (cont_name)
+    return rescode;
+}    
+
+unsigned int ProblemGetContestID(void *__thisprob)
+{
+    // XXX if it's public data, why the heck do we have an accessor function?
+    InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
+    return thisprob->pub_data.contest;
+}
+
+void ProblemGetContestName(void *__thisprob, const char **cont_name)
+{
+    InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
+
+    switch (thisprob->pub_data.contest)
     {
-      switch (thisprob->pub_data.contest)
-      {
         case RC5: *cont_name = "RC5"; break;
         case DES: *cont_name = "DES"; break;
         case OGR: *cont_name = "OGR"; break;
         case CSC: *cont_name = "CSC"; break;
         default:  *cont_name = "???"; break;
-      }
     }
-    if (unit_name)
+}
+
+unsigned int ProblemGetCPermille(void *__thisprob, int permille_only_if_exact)
+{
+    InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
+    unsigned int retval = 0;
+
+    ContestWork work;
+    unsigned int contestid = 0;
+    int rescode = ProblemRetrieveState( thisprob, &work, &contestid, 0, 0 );
+    
+    if( !permille_only_if_exact )
     {
-      switch (thisprob->pub_data.contest)
-      {
-        case RC5:
-        case DES:
-        case CSC: *unit_name = "keys"; break; 
-        case OGR: *unit_name = "nodes"; break;
-        default:  *unit_name = "???"; break;
-      }
+      if (!thisprob->priv_data.started)
+        retval = thisprob->pub_data.startpermille;
+      else if (rescode != RESULT_WORKING) /* _FOUND or _NOTHING */
+        retval = 1000;
+      else
+        retval = __compute_permille(contestid, &work); 
     }
-    if (sigbuf)
+    return retval;
+}
+
+unsigned int ProblemGetSPermille(void *__thisprob, int permille_only_if_exact)
+{
+    InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
+    unsigned int retval = 0;
+    
+    if( !permille_only_if_exact )
     {
-      if (sigbufsz)
-        *sigbuf = '\0';
-      if (sigbufsz < 2)
-        sigbuf = (char *)0;
+      retval = thisprob->pub_data.startpermille;
     }
-    if (cwpbuf)
+    return retval;
+}
+
+void ProblemGetElapsedTime(void *__thisprob, unsigned int *secs, unsigned int *usecs)
+{
+    InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
+    unsigned int e_sec = 0, e_usec = 0;
+    
+    if (thisprob->pub_data.elapsed_time_sec != 0xfffffffful)
     {
-      if (cwpbufsz)
-        *cwpbuf = '\0';
-      if (cwpbufsz < 2)
-        cwpbuf = (char *)0;
-    }
-    if (ratebuf)
-    {
-      if (ratebufsz)
-        *ratebuf = '\0';
-      if (ratebufsz < 2)
-        ratebuf = (char *)0;
-    }
-    if (tcountbuf)
-    {
-      if (tcountbufsz)
-        *tcountbuf = '\0';
-      if (tcountbufsz < 2)
-        tcountbuf = (char *)0;
-    }
-    if (ccountbuf)
-    {
-      if (ccountbufsz)
-        *ccountbuf = '\0';
-      if (ccountbufsz < 2)
-        ccountbuf = (char *)0;
-    }
-    if (elapsed_secsP || elapsed_usecsP || ratehi || ratelo || ratebuf)
-    {
-      if (thisprob->pub_data.elapsed_time_sec != 0xfffffffful)
-      {
         /* problem finished, elapsed time has already calculated by Run() */
         e_sec  = thisprob->pub_data.elapsed_time_sec;
         e_usec = thisprob->pub_data.elapsed_time_usec;
-      }     
-      else /* compute elapsed wall clock time since loadtime */
-      {
+    }     
+    else /* compute elapsed wall clock time since loadtime */
+    {
         u32 start_sec  = thisprob->priv_data.loadtime_sec;
         u32 start_usec = thisprob->priv_data.loadtime_usec;
 
         if (start_sec != 0xfffffffful) /* our start time was not invalid */
         {
-          struct timeval clock_now;
-          if (CliGetMonotonicClock(&clock_now) != 0)
-          {
+            struct timeval clock_now;
             if (CliGetMonotonicClock(&clock_now) != 0)
-              start_sec = 0xfffffffful; /* no current time, so make start invalid */
-          }
-          if (start_sec != 0xfffffffful)
-          {
-            e_sec  = clock_now.tv_sec;
-            e_usec = clock_now.tv_usec;
-          }
+            {
+                if (CliGetMonotonicClock(&clock_now) != 0)
+                    start_sec = 0xfffffffful; /* no current time, so make start invalid */
+            }
+            if (start_sec != 0xfffffffful)
+            {
+                e_sec  = clock_now.tv_sec;
+                e_usec = clock_now.tv_usec;
+            }
         }
         if (start_sec == 0xfffffffful || /* start time is invalid */
             e_sec <  start_sec || (e_sec == start_sec && e_usec < start_usec ))
         {
           /* either start time is invalid, or current-time < start-time */
           /* both are BadThing(TM)s - have to use the per-run total */
-          e_sec  = thisprob->pub_data.runtime_sec;
-          e_usec = thisprob->pub_data.runtime_usec;
+            e_sec  = thisprob->pub_data.runtime_sec;
+            e_usec = thisprob->pub_data.runtime_usec;
         }
         else /* start and 'now' time are ok */
         {
-          if (e_usec < start_usec)
-          {
-            e_usec += 1000000UL;
-            e_sec  --;
-          }
-          e_sec  -= start_sec;
-          e_usec -= start_usec;
+            if (e_usec < start_usec)
+            {
+                e_usec += 1000000UL;
+                e_sec  --;
+            }
+            e_sec  -= start_sec;
+            e_usec -= start_usec;
         }
-      }
-      if (elapsed_secsP)
-        *elapsed_secsP = e_sec;
-      if (elapsed_usecsP)
-        *elapsed_usecsP = e_usec;
-      if (thisprob->pub_data.is_benchmark && (thisprob->pub_data.runtime_sec || thisprob->pub_data.runtime_usec))
-      {
-        e_sec = thisprob->pub_data.runtime_sec;
-        e_usec = thisprob->pub_data.runtime_usec;
-      }
-    } /* if (elapsed || rate || ratebuf) */    
-    if ( sigbuf     || cwpbuf     || 
-         c_permille || s_permille || swucount  ||
-         ratehi     || ratelo     || ratebuf   ||
-         ubtcounthi || ubtcountlo || tcountbuf ||
-         ubccounthi || ubccountlo || ccountbuf ||
-         ubdcounthi || ubdcountlo || dcountbuf )
-    { 
-      ContestWork work;
-      unsigned int contestid = 0;
-      int rescode = ProblemRetrieveState( thisprob, &work, &contestid, 0, 0 );
+    }
+    *secs = e_sec;
+    *usecs = e_usec;
+}
 
-      if (rescode >= 0) /* hmm! */
-      {
-        u32 hi, lo;
+unsigned int ProblemGetSWUCount(void *__thisprob)
+{
+    InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
+
+    ContestWork work;
+    unsigned int contestid = 0;
+    unsigned int swucount = 0;
+    
+    int rescode = ProblemRetrieveState( thisprob, &work, &contestid, 0, 0 );
+
+    if (rescode >= 0) /* hmm! */
+    {
         u32 tcounthi=0, tcountlo=0; /*total 'iter' (n/a if not finished)*/
-        u32 ccounthi=0, ccountlo=0; /*'iter' done (so far, this start) */
         u32 dcounthi=0, dcountlo=0; /*'iter' done (so far, all starts) */
-        const char *numstr_suffix = "";
-        unsigned long rate2wuspeed = 0;
 
         switch (contestid)
         {
@@ -2249,19 +2202,152 @@ int ProblemGetInfo(void *__thisprob,
           case DES:
           case CSC:
           { 
-            unsigned int units, twoxx;
-            numstr_suffix = "keys";
+            tcounthi = work.crypto.iterations.hi;
+            tcountlo = work.crypto.iterations.lo;
+            if (contestid == DES)
+              tcounthi <<= 1; tcounthi |= (tcountlo >> 31); tcountlo <<= 1; 
+
+            if (rescode != RESULT_NOTHING && rescode != RESULT_FOUND)
+            {
+              tcounthi = 0;
+              tcountlo = 0;
+            }
+            if (tcounthi || tcountlo) /* only if finished */
+            {
+              /* note that we return zero for test packets */
+              swucount = ((tcountlo >> 28)+(tcounthi << 4))*100;
+            }
+          } /* case: crypto */
+          break;
+#ifdef HAVE_OGR_CORES
+          case OGR:
+          {
+            dcounthi = work.ogr.nodes.hi;
+            dcountlo = work.ogr.nodes.lo;
+            if (rescode == RESULT_NOTHING || rescode == RESULT_FOUND)
+            {
+              tcounthi = dcounthi;
+              tcountlo = dcountlo;
+            }
+            if (tcounthi || tcountlo) /* only if finished */
+            {
+              /* ogr stats unit is Gnodes */
+              u32 hi, lo;
+              __u64div( tcounthi, tcountlo, 0, 1000000000ul, 0, &hi, 0, &lo);
+              swucount = (hi * 100)+(lo / 10000000ul);
+            }
+          } /* OGR */      
+          break;
+#endif /* HAVE_OGR_CORES */
+          default:
+          break;  
+        } /* switch() */
+    }
+    return swucount;
+}
+
+void ProblemGetWorkbuf(void *__thisprob, char *buf, unsigned int bufsz, unsigned int cwp )
+{
+    InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
+
+    if (bufsz)
+        *buf = '\0';
+    if (bufsz < 2)
+        buf = (char *)0;
+
+    ContestWork work;
+    unsigned int contestid = 0;
+    int rescode = ProblemRetrieveState( thisprob, &work, &contestid, 0, 0 );
+
+    if (rescode >= 0) /* hmm! */
+    {
+        u32 tcounthi=0, tcountlo=0; /*total 'iter' (n/a if not finished)*/
+
+        switch (contestid)
+        {
+          case RC5:
+          case DES:
+          case CSC:
+          { 
+            unsigned int units = 0, twoxx = 0;
+            char scratch[32];
+
+            tcounthi = work.crypto.iterations.hi;
+            tcountlo = work.crypto.iterations.lo;
+
+            if (contestid == DES)
+              tcounthi <<= 1; tcounthi |= (tcountlo >> 31); tcountlo <<= 1; 
+
+            units = ((tcountlo >> 28)+(tcounthi << 4)); 
+            twoxx = 28;
+            
+            if (!units) /* less than 2^28 packet (eg test) */
+            {
+              units = tcountlo >> 20;
+              twoxx = 20;
+            }
+
+            sprintf( scratch, "%08lX:%08lX:%u*2^%u", 
+                     (unsigned long) ( work.crypto.key.hi ),
+                     (unsigned long) ( work.crypto.key.lo ),
+                     units, twoxx );
+            strncpy( buf, scratch, bufsz );
+            buf[bufsz-1] = '\0';
+          } /* case: crypto */
+          break;
+#ifdef HAVE_OGR_CORES
+          case OGR:
+              ogr_stubstr_r( &work.ogr.workstub.stub, buf, bufsz, (cwp ? work.ogr.workstub.worklength : 0));
+          break;
+#endif /* HAVE_OGR_CORES */
+          default:
+          break;  
+        } /* switch() */
+    }
+}
+
+unsigned int ProblemGetRate(void *__thisprob, char *ratebuf, unsigned int ratebufsz)
+{
+    InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
+
+    u32 e_sec, e_usec, lo = 0;
+
+    if (ratebufsz)
+        *ratebuf = '\0';
+    if (ratebufsz < 2)
+        ratebuf = (char *)0;
+
+    ProblemGetElapsedTime(__thisprob, &e_sec, &e_usec);
+    if (thisprob->pub_data.is_benchmark && (thisprob->pub_data.runtime_sec || thisprob->pub_data.runtime_usec))
+    {
+        e_sec = thisprob->pub_data.runtime_sec;
+        e_usec = thisprob->pub_data.runtime_usec;
+    }
+    
+    ContestWork work;
+    unsigned int contestid = 0;
+    int rescode = ProblemRetrieveState( thisprob, &work, &contestid, 0, 0 );
+
+    if (rescode >= 0) /* hmm! */
+    {
+        u32 ccounthi=0, ccountlo=0; /*'iter' done (so far, this start) */
+        u32 dcounthi=0, dcountlo=0; /*'iter' done (so far, all starts) */
+        unsigned int rate2wuspeed = 0;
+
+        switch (contestid)
+        {
+          case RC5:
+          case DES:
+          case CSC:
+          { 
             rate2wuspeed = 1UL<<28;
 
             ccounthi = thisprob->pub_data.startkeys.hi;
             ccountlo = thisprob->pub_data.startkeys.lo;
-            tcounthi = work.crypto.iterations.hi;
-            tcountlo = work.crypto.iterations.lo;
             dcounthi = work.crypto.keysdone.hi;
             dcountlo = work.crypto.keysdone.lo;
             if (contestid == DES)
             {
-              tcounthi <<= 1; tcounthi |= (tcountlo >> 31); tcountlo <<= 1; 
               dcounthi <<= 1; dcounthi |= (dcountlo >> 31); dcountlo <<= 1; 
               ccounthi <<= 1; ccounthi |= (ccountlo >> 31); ccountlo <<= 1;
             }
@@ -2271,82 +2357,76 @@ int ProblemGetInfo(void *__thisprob,
             if (ccountlo > dcountlo)
               ccounthi--;
 
-            units = ((tcountlo >> 28)+(tcounthi << 4)); 
-            twoxx = 28;
-            if (!units) /* less than 2^28 packet (eg test) */
-            {
-              units = tcountlo >> 20;
-              twoxx = 20;
-            }
-            if (rescode != RESULT_NOTHING && rescode != RESULT_FOUND)
-            {
-              tcounthi = 0;
-              tcountlo = 0;
-            }
-            if (sigbuf)
-            {
-              char scratch[32];
-              sprintf( scratch, "%08lX:%08lX:%u*2^%u", 
-                       (unsigned long) ( work.crypto.key.hi ),
-                       (unsigned long) ( work.crypto.key.lo ),
-                       units, twoxx );
-              strncpy( sigbuf, scratch, sigbufsz );
-              sigbuf[sigbufsz-1] = '\0';
-            }
-            if (cwpbuf)
-            {
-              // ToDo: do something different here - any ideas for a cwp for crypto packets?
-              char scratch[32];
-              sprintf( scratch, "%08lX:%08lX:%u*2^%u", 
-                       (unsigned long) ( work.crypto.key.hi ),
-                       (unsigned long) ( work.crypto.key.lo ),
-                       units, twoxx );
-              strncpy( cwpbuf, scratch, cwpbufsz );
-              cwpbuf[cwpbufsz-1] = '\0';
-            }
-            if (swucount && (tcounthi || tcountlo)) /* only if finished */
-            {
-              /* note that we return zero for test packets */
-              *swucount = ((tcountlo >> 28)+(tcounthi << 4))*100;
-            }
           } /* case: crypto */
           break;
 #ifdef HAVE_OGR_CORES
           case OGR:
           {
             rate2wuspeed = 0;
-            numstr_suffix = "nodes";
+
             dcounthi = work.ogr.nodes.hi;
             dcountlo = work.ogr.nodes.lo;
-            if (rescode == RESULT_NOTHING || rescode == RESULT_FOUND)
-            {
-              tcounthi = dcounthi;
-              tcountlo = dcountlo;
-            }
-            /* current = donecount - startpos */
-            ccountlo = dcountlo - thisprob->pub_data.startkeys.lo;
+
             ccounthi = dcounthi - thisprob->pub_data.startkeys.hi;
+            ccountlo = dcountlo - thisprob->pub_data.startkeys.lo;
             if (ccountlo > dcountlo)
               ccounthi--;
 
-            if (sigbuf)
+          } /* OGR */      
+          break;
+#endif /* HAVE_OGR_CORES */
+          default:
+          break;  
+        } /* switch() */
+
+        ProblemComputeRate( contestid, e_sec, e_usec, ccounthi, ccountlo, &lo, ratebuf, ratebufsz );
+          
+        if (rate2wuspeed && lo)
+        {
+            CliSetContestWorkUnitSpeed( contestid, (unsigned int)
+                                        ((1+rate2wuspeed) / lo) );     
+        }
+    }
+    return lo;
+}
+
+void ProblemGetTCounts(void *__thisprob, u32 *ubtcounthi, u32 *ubtcountlo)
+{
+    InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
+
+    ContestWork work;
+    unsigned int contestid = 0;
+    int rescode = ProblemRetrieveState( thisprob, &work, &contestid, 0, 0 );
+
+    if (rescode >= 0) /* hmm! */
+    {
+        u32 tcounthi=0, tcountlo=0; /*total 'iter' (n/a if not finished)*/
+
+        switch (contestid)
+        {
+          case RC5:
+          case DES:
+          case CSC:
+          { 
+            tcounthi = work.crypto.iterations.hi;
+            tcountlo = work.crypto.iterations.lo;
+            if (contestid == DES)
+              tcounthi <<= 1; tcounthi |= (tcountlo >> 31); tcountlo <<= 1; 
+
+            if (rescode != RESULT_NOTHING && rescode != RESULT_FOUND)
             {
-              ogr_stubstr_r( &work.ogr.workstub.stub, sigbuf, sigbufsz, 0);
+              tcounthi = 0;
+              tcountlo = 0;
             }
-            if (cwpbuf)
+          } /* case: crypto */
+          break;
+#ifdef HAVE_OGR_CORES
+          case OGR:
+          {
+            if (rescode == RESULT_NOTHING || rescode == RESULT_FOUND)
             {
-              ogr_stubstr_r( &work.ogr.workstub.stub, cwpbuf, cwpbufsz, work.ogr.workstub.worklength);
-            }
-            if (swucount && (tcounthi || tcountlo)) /* only if finished */
-            {
-              /* ogr stats unit is Gnodes */
-              __u64div( tcounthi, tcountlo, 0, 1000000000ul, 0, &hi, 0, &lo);
-              *swucount = (hi * 100)+(lo / 10000000ul);
-            }
-            if (permille_only_if_exact)
-            {
-              if (c_permille) *c_permille = 0; c_permille = (unsigned int *)0;
-              if (s_permille) *s_permille = 0; s_permille = (unsigned int *)0; 
+              tcounthi = work.ogr.nodes.hi;
+              tcountlo = work.ogr.nodes.lo;
             }
           } /* OGR */      
           break;
@@ -2355,59 +2435,192 @@ int ProblemGetInfo(void *__thisprob,
           break;  
         } /* switch() */
 
-        if (tcountbuf && (tcounthi || tcountlo)) /* only if finished */
+        *ubtcounthi = tcounthi;
+        *ubtcountlo = tcountlo;
+    }
+}
+
+void ProblemGetTBuf(void *__thisprob, int numstring_style, char *tcountbuf, unsigned int tcountbufsz)
+{
+    InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
+
+    if (tcountbufsz)
+        *tcountbuf = '\0';
+    if (tcountbufsz < 2)
+        tcountbuf = (char *)0;
+
+    ContestWork work;
+    unsigned int contestid = 0;
+    int rescode = ProblemRetrieveState( thisprob, &work, &contestid, 0, 0 );
+
+    if (rescode >= 0) /* hmm! */
+    {
+        u32 tcounthi=0, tcountlo=0; /*total 'iter' (n/a if not finished)*/
+        const char *numstr_suffix = (contestid == RC5 || 
+                                     contestid == DES ||
+                                     contestid == CSC) ? "keys" : "nodes";
+
+        ProblemGetTCounts(__thisprob, &tcounthi, &tcountlo);
+        
+        if (tcounthi || tcountlo) /* only if finished */
         {
           __u64stringify( tcountbuf, tcountbufsz, tcounthi, tcountlo, 
                           numstring_style, numstr_suffix);
         }
-        if (ccountbuf) /* count - this time */
-        {
-          __u64stringify( ccountbuf, ccountbufsz, ccounthi, ccountlo,
-                          numstring_style, numstr_suffix);
-        }
-        if (dcountbuf) /* count - all times */
-        {
-          __u64stringify( dcountbuf, dcountbufsz, dcounthi, dcountlo,
-                          numstring_style, numstr_suffix);
-        }
-        if (ratehi || ratelo || ratebuf)
-        {
-          ProblemComputeRate( contestid, e_sec, e_usec, ccounthi, ccountlo,
-                              &hi, &lo, ratebuf, ratebufsz );
-          if (rate2wuspeed && lo)
-          {
-            CliSetContestWorkUnitSpeed( contestid, (unsigned int)
-                                        ((1+rate2wuspeed) / lo) );     
-          }
-          if (ratehi) *ratehi = hi;
-          if (ratelo) *ratelo = lo;
-        }
-        if (c_permille)
-        {
-          if (!thisprob->priv_data.started)
-            *c_permille = thisprob->pub_data.startpermille;
-          else if (rescode != RESULT_WORKING) /* _FOUND or _NOTHING */
-            *c_permille = 1000;
-          else
-            *c_permille = __compute_permille(contestid, &work); 
-        }
-        if (s_permille)
-          *s_permille = thisprob->pub_data.startpermille;
-        if (ubdcounthi)
-          *ubdcounthi = dcounthi;
-        if (ubdcountlo)
-          *ubdcountlo = dcountlo;
-        if (ubccounthi)
-          *ubccounthi = ccounthi;
-        if (ubccountlo)
-          *ubccountlo = ccountlo;
-        if (ubtcounthi)
-          *ubtcounthi = tcounthi;
-        if (ubtcountlo)
-          *ubtcountlo = tcountlo;
-      } /* if (rescode >= 0) */
-    } /* if (sigbuf || ... ) */
-  } /* if (rescode >= 0) */
-  return rescode;
+    }
 }
 
+void ProblemGetCCounts(void *__thisprob, u32 *ubccounthi, u32 *ubccountlo)
+{
+    InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
+
+    ContestWork work;
+    unsigned int contestid = 0;
+    int rescode = ProblemRetrieveState( thisprob, &work, &contestid, 0, 0 );
+
+    if (rescode >= 0) /* hmm! */
+    {
+        u32 ccounthi=0, ccountlo=0; /*'iter' done (so far, this start) */
+        u32 dcounthi=0, dcountlo=0; /*'iter' done (so far, all starts) */
+
+        switch (contestid)
+        {
+          case RC5:
+          case DES:
+          case CSC:
+          { 
+            ccounthi = thisprob->pub_data.startkeys.hi;
+            ccountlo = thisprob->pub_data.startkeys.lo;
+            dcounthi = work.crypto.keysdone.hi;
+            dcountlo = work.crypto.keysdone.lo;
+            if (contestid == DES)
+            {
+              dcounthi <<= 1; dcounthi |= (dcountlo >> 31); dcountlo <<= 1; 
+              ccounthi <<= 1; ccounthi |= (ccountlo >> 31); ccountlo <<= 1;
+            }
+            /* current = donecount - startpos */
+            ccountlo = dcountlo - ccountlo;
+            ccounthi = dcounthi - ccounthi;
+            if (ccountlo > dcountlo)
+              ccounthi--;
+          } /* case: crypto */
+          break;
+#ifdef HAVE_OGR_CORES
+          case OGR:
+          {
+            dcounthi = work.ogr.nodes.hi;
+            dcountlo = work.ogr.nodes.lo;
+
+            /* current = donecount - startpos */
+            ccountlo = dcountlo - thisprob->pub_data.startkeys.lo;
+            ccounthi = dcounthi - thisprob->pub_data.startkeys.hi;
+            if (ccountlo > dcountlo)
+              ccounthi--;
+
+          } /* OGR */      
+          break;
+#endif /* HAVE_OGR_CORES */
+          default:
+          break;  
+        } /* switch() */
+
+        *ubccounthi = ccounthi;
+        *ubccountlo = ccountlo;
+    }
+}
+
+void ProblemGetCBuf(void *__thisprob, int numstring_style, char *ccountbuf, unsigned int ccountbufsz)
+{
+    InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
+
+    if (ccountbufsz)
+        *ccountbuf = '\0';
+    if (ccountbufsz < 2)
+        ccountbuf = (char *)0;
+
+    ContestWork work;
+    unsigned int contestid = 0;
+    int rescode = ProblemRetrieveState( thisprob, &work, &contestid, 0, 0 );
+
+    if (rescode >= 0) /* hmm! */
+    {
+        u32 ccounthi=0, ccountlo=0; /*total 'iter' (n/a if not finished)*/
+        const char *numstr_suffix = (contestid == RC5 || 
+                                     contestid == DES ||
+                                     contestid == CSC) ? "keys" : "nodes";
+
+        ProblemGetCCounts(__thisprob, &ccounthi, &ccountlo);
+        
+        __u64stringify( ccountbuf, ccountbufsz, ccounthi, ccountlo, 
+                          numstring_style, numstr_suffix);
+    }
+}
+
+void ProblemGetDCounts(void *__thisprob, u32 *ubdcounthi, u32 *ubdcountlo)
+{
+    InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
+  
+    ContestWork work;
+    unsigned int contestid = 0;
+    int rescode = ProblemRetrieveState( thisprob, &work, &contestid, 0, 0 );
+
+    if (rescode >= 0) /* hmm! */
+    {
+        u32 dcounthi=0, dcountlo=0; /*'iter' done (so far, all starts) */
+
+        switch (contestid)
+        {
+          case RC5:
+          case DES:
+          case CSC:
+          { 
+            dcounthi = work.crypto.keysdone.hi;
+            dcountlo = work.crypto.keysdone.lo;
+            if (contestid == DES)
+              dcounthi <<= 1; dcounthi |= (dcountlo >> 31); dcountlo <<= 1; 
+          } /* case: crypto */
+          break;
+#ifdef HAVE_OGR_CORES
+          case OGR:
+          {
+            dcounthi = work.ogr.nodes.hi;
+            dcountlo = work.ogr.nodes.lo;
+          } /* OGR */      
+          break;
+#endif /* HAVE_OGR_CORES */
+          default:
+          break;  
+        } /* switch() */
+
+        *ubdcounthi = dcounthi;
+        *ubdcountlo = dcountlo;
+    }
+}
+
+
+void ProblemGetDBuf(void *__thisprob, int numstring_style, char *dcountbuf, unsigned int dcountbufsz)
+{
+    InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
+
+    if (dcountbufsz)
+        *dcountbuf = '\0';
+    if (dcountbufsz < 2)
+        dcountbuf = (char *)0;
+
+    ContestWork work;
+    unsigned int contestid = 0;
+    int rescode = ProblemRetrieveState( thisprob, &work, &contestid, 0, 0 );
+
+    if (rescode >= 0) /* hmm! */
+    {
+        u32 dcounthi=0, dcountlo=0; /*total 'iter' (n/a if not finished)*/
+        const char *numstr_suffix = (contestid == RC5 || 
+                                     contestid == DES ||
+                                     contestid == CSC) ? "keys" : "nodes";
+
+        ProblemGetDCounts(__thisprob, &dcounthi, &dcountlo);
+        
+        __u64stringify( dcountbuf, dcountbufsz, dcounthi, dcountlo, 
+                          numstring_style, numstr_suffix);
+    }
+}

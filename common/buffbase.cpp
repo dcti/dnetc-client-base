@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.54 2001/03/02 01:15:42 andreasb Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.55 2001/03/06 03:17:22 sampo Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -37,8 +37,8 @@ int BufferGetRecordInfo( const WorkRecord * data,
   if (data)
   {
     unsigned int cont_i = (unsigned int)data->contest;
-    rc = ProblemGetSWUCount( &(data->work), ((unsigned int)data->resultcode),
-                             cont_i, swucount );
+    rc = WorkGetSWUCount( &(data->work), ((unsigned int)data->resultcode),
+                          cont_i, swucount );
     if (rc >= 0 && contest)
       *contest = cont_i;
   }
