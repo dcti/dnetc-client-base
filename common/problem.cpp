@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.72  1999/01/27 02:48:21  silby
+// If there's a kiter error, client will now shut down.
+//
 // Revision 1.71  1999/01/26 17:28:27  michmarc
 // Updated Alpha/Win32 driver for DWORZ DES engine
 //
@@ -204,7 +207,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.71 1999/01/26 17:28:27 michmarc Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.72 1999/01/27 02:48:21 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -920,6 +923,7 @@ s32 Problem::Run( u32 /*unused*/ )
   else if ( kiter != timeslice * pipeline_count )
     {
     LogScreen("kiter wrong %ld %d\n", kiter, (int)(timeslice*pipeline_count));
+    RaiseExitRequestTrigger();
     }
   }
 #elif (CLIENT_CPU == CPU_SPARC) && (ULTRA_CRUNCH == 1)
@@ -957,6 +961,7 @@ s32 Problem::Run( u32 /*unused*/ )
   else if (kiter != ( timeslice * pipeline_count ) )
     {
     LogScreen("kiter wrong %ld %d\n", (long) kiter, (int) (timeslice*pipeline_count));
+    RaiseExitRequestTrigger();
     }
   }
 #elif ((CLIENT_CPU == CPU_MIPS) && (MIPS_CRUNCH == 1))
@@ -994,6 +999,7 @@ s32 Problem::Run( u32 /*unused*/ )
   else if (kiter != (timeslice * pipeline_count))
     {
     LogScreen("kiter wrong %ld %d\n", kiter, timeslice*pipeline_count);
+    RaiseExitRequestTrigger();
     }
   }
 #elif (CLIENT_CPU == CPU_ARM)
@@ -1197,6 +1203,7 @@ printf("DES: kiter is %d\n",kiter);
       {
       LogScreen("kiter wrong %ld %ld\n",
                (long) kiter, (long)(timeslice*pipeline_count));
+      RaiseExitRequestTrigger();
       }
     }
 #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
@@ -1252,6 +1259,7 @@ printf("DES: kiter is %d\n",kiter);
     {
         LogScreen("kiter wrong %ld %ld\n",
                (long) kiter, (long)(timeslice));
+        RaiseExitRequestTrigger();
     }
   }
 #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_LINUX)
@@ -1336,6 +1344,7 @@ printf("RESULT2: result[%X] key[%X/%X] keysdone[%X/%X] iters[%X/%X]\n",
     {
         LogScreen("kiter wrong %ld %ld\n",
                (long) kiter, (long)(timeslice));
+        RaiseExitRequestTrigger();
     }
   }
 #else
@@ -1428,6 +1437,7 @@ printf("RESULT2: result[%X] key[%X/%X] keysdone[%X/%X] iters[%X/%X]\n",
       {
       LogScreen("kiter wrong %ld %ld\n",
                (long) kiter, (long)(timeslice*pipeline_count));
+      RaiseExitRequestTrigger();
       }
     }
 #endif
