@@ -48,7 +48,3 @@ includes: fd/dnetcgui_lib.fd clib/dnetcgui_protos.h
 #	fd2inline -proto fd/dnetcgui_lib.fd clib/dnetcgui_protos.h > proto/dnetcgui.h
 	fd2inline_ -powerup fd/dnetcgui_lib.fd clib/dnetcgui_protos.h > inline/dnetcguippc.h
 #	fd2inline -powerup -proto fd/dnetcgui_lib.fd clib/dnetcgui_protos.h > proto/dnetcguippc.h
-	mkdir -p morphos/clib morphos/proto morphos/ppcinline
-	cvinclude.pl --fd fd/dnetcgui_lib.fd --clib clib/dnetcgui_protos.h --outclib morphos/clib/cnetcgui_protos.h
-	cvinclude.pl --fd fd/dnetcgui_lib.fd --clib clib/dnetcgui_protos.h --proto morphos/proto/dnetcgui.h
-	cvinclude.pl --fd fd/dnetcgui_lib.fd --clib clib/dnetcgui_protos.h --inlines morphos/ppcinline/dnetcgui.h
