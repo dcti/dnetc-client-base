@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.24  1998/06/23 13:53:37  kbracey
+// Restored line ending type.
+// Fixed paging for RISC OS.
+//
 // Revision 1.23  1998/06/23 09:23:39  remi
 // - Added gettermheight support for Linux (and possibly for other *nixes)
 //   (Add your OS to the list and add -lcurses to configure if it fit your needs)
@@ -35,8 +39,8 @@
 // This is a much improved way of disabling the pager. It looks decent. :)
 //
 // Revision 1.19  1998/06/21 02:36:26  silby
-// Made changes so that the help display would detect if it was piped and 
-// not wait for user input.  It's ugly and could use work, but it prevents 
+// Made changes so that the help display would detect if it was piped and
+// not wait for user input.  It's ugly and could use work, but it prevents
 // the former problem of the help screen appearing to lock up.
 //
 // Revision 1.18  1998/06/15 12:03:58  kbracey
@@ -62,7 +66,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: disphelp.cpp,v 1.23 1998/06/23 09:23:39 remi Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.24 1998/06/23 13:53:37 kbracey Exp $";
 #endif
 
 #include "client.h"
@@ -86,7 +90,7 @@ static const char *id="@(#)$Id: disphelp.cpp,v 1.23 1998/06/23 09:23:39 remi Exp
 #endif
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS) || \
-    (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS)
+    (CLIENT_OS == OS_NETWARE)
 #define SHELL_INSERT_NL_AT_END
 #endif
 
@@ -163,7 +167,7 @@ static int readkeypress()
   tcgetattr(0,&stored);
 
   /* Disable canonical mode, and set buffer size to 1 byte */
-  /* Disable echo. With echo turned on, the string "--More--" 
+  /* Disable echo. With echo turned on, the string "--More--"
    * won't be erased if the user hit CR)
    */
   memcpy(&newios,&stored,sizeof(struct termios));
@@ -202,11 +206,25 @@ static int gettermheight() {
   if (! GetConsoleScreenBufferInfo(hStdout, &csbiInfo)) return -1;
   return csbiInfo.srWindow.Bottom - csbiInfo.srWindow.Top + 1;
 
+#elif (CLIENT_OS == OS_RISCOS)
+
+  // nlines = TWBRow - TWTRow + 1
+  static const int var[3] = { 133, 135, -1 };
+  int value[3];
+
+  if (riscos_in_taskwindow)
+    return -1;
+
+  if (_swix(OS_ReadVduVariables, _INR(0,1), var, value))
+    return -1;
+
+  return value[0] - value[1] + 1;
+
 #elif defined(TERMINFOLINES)
   setupterm( NULL, 1, NULL );
   int nlines = tigetnum( "lines" );
   // check for insane values
-  if (nlines <= 0 || nlines >= 300) 
+  if (nlines <= 0 || nlines >= 300)
     return -1;
   else
     return nlines;
@@ -217,7 +235,7 @@ static int gettermheight() {
   if (!p) return -1;
   int nlines = atoi( p );
   // check for insane values
-  if (nlines <= 0 || nlines >= 300) 
+  if (nlines <= 0 || nlines >= 300)
     return -1;
   else
     return nlines;
@@ -338,21 +356,21 @@ void Client::DisplayHelp( const char * unrecognized_option )
   int nostdin, forcenopagemode = 0; //forcenopagemode is "--More--" mode
   FILE *outstream, *teestream;
 
-  #if defined(NOLESS) || defined(NOPAGER) // fyi: noless was previously 
+  #if defined(NOLESS) || defined(NOPAGER) // fyi: noless was previously
     forcenopagemode = 1;                  // called nopager
   #endif
-  
+
   nostdin = (!isatty(fileno(stdin))); //may not work for </dev/nul
   outstream = stdout;
   if (isatty(fileno(outstream))) //normal mode
     {
     teestream = NULL;
     }
-  else if (isatty(fileno(stderr))) // could dup() but thats not supported 
+  else if (isatty(fileno(stderr))) // could dup() but thats not supported
     {                              // everywhere
     teestream = outstream; //stdout
     outstream = stderr;
-    forcenopagemode = 1;  //paging works, but turn it off 
+    forcenopagemode = 1;  //paging works, but turn it off
     }                     //for aesthetic reasons. :)
   else //neither is a tty, so leave outstream==stdout and turn off paging
     {
@@ -374,9 +392,9 @@ void Client::DisplayHelp( const char * unrecognized_option )
       fprintf( outstream, "\nUnrecognized option '%s'\n", unrecognized_option);
       if (teestream)
         fprintf( teestream, "\nUnrecognized option '%s'\n", unrecognized_option);
-      char *msg = "\n\nThe following list may be obtained at any time by "
-                  "running\nthe client with the '-help' option.\n\n";
-      fprintf( outstream, ((nostdin || forcenopagemode)?(msg):  
+      const char *msg = "\n\nThe following list may be obtained at any time by "
+                        "running\nthe client with the '-help' option.\n\n";
+      fprintf( outstream, ((nostdin || forcenopagemode)?(msg):
           ("Press enter/space to display a list of valid command line\n"
           "options or press any other key to quit... ")) );
       if (teestream)
@@ -388,7 +406,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
         if (SignalTriggered || UserBreakTriggered)
           return;
         fprintf( outstream, "\n" );
-        if (i != '\n' && i != '\r' && i != ' ') 
+        if (i != '\n' && i != '\r' && i != ' ')
           return;
         }
       }
@@ -414,14 +432,14 @@ void Client::DisplayHelp( const char * unrecognized_option )
     }
   if (nostdin || forcenopagemode) //stdin is redirected or NOLESS
     {
-    if (!foundhelprequest || !teestream) 
+    if (!foundhelprequest || !teestream)
       {
       int i, l, n=maxpagesize-5; // -5 to see the 'invalid option' message
       for (i = 0; i < headerlines; i++)
 	fprintf( outstream, "%s\n", helpheader[i] );
-      for (l = 0; l < bodylines; ) 
+      for (l = 0; l < bodylines; )
 	{
-	for (i = 0; (l < bodylines) && (i < n); i++ ) 
+	for (i = 0; (l < bodylines) && (i < n); i++ )
 	  fprintf( outstream, "%s\n", helpbody[l++] );
 	n = maxscreenlines-2; //use a two line overlap
 	if (l<bodylines && !nostdin && !foundhelprequest) //NOLESS mode: stdin is ok
@@ -430,7 +448,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
 	  fprintf( outstream, "--More--" );
 	  fflush( outstream );
 	  readkeypress();
-	  if (SignalTriggered || UserBreakTriggered) 
+	  if (SignalTriggered || UserBreakTriggered)
 	    break;
 	  fprintf( outstream, "\r" ); //overwrite the --More--
           #endif
@@ -506,7 +524,15 @@ void Client::DisplayHelp( const char * unrecognized_option )
 #if !defined(SHELL_INSERT_NL_AT_END) && !defined(TERMIOSPAGER)
       // clear end of line (pager line)
       // put spaces in case ANSI is not supported
+      #if (CLIENT_OS == OS_RISCOS)
+      if (!teestream && !nostdin)
+        {
+        static char clear[] = { 13, 23, 8, 4, 6, 0, 0, 0, 0, 0, 0 };
+        _swix(OS_WriteN, _INR(0,1), clear, sizeof clear);
+        }
+      #else
       if (!teestream && !nostdin) fprintf( outstream, "\r\x1B[K\r    \r" );
+      #endif
 #endif
     } //stdin is a tty
 
