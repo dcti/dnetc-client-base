@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.113 2000/01/02 04:07:20 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.114 2000/01/04 01:31:37 michmarc Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -456,9 +456,24 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       break; /* return -1; */
     }
 
-    /* ---------- get the show on the road ---------- */
-    
-    success = 1; /* assumed */
+    /* ---------- create a new socket --------------- */
+
+    success = (LowLevelCreateSocket() == 0);
+    isnonblocking = 0;
+
+    if (!success)
+    {
+      if (verbose_level > 0)
+      {
+        #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+        LogScreen("Network::failed to create network socket. (err=%d)\n",
+                   WSAGetLastError());
+        #else
+        LogScreen("Network::failed to create network socket.\n");
+        #endif
+      }
+      break; /* return -1; */
+    }
 
     /* --- resolve the addresses(es) --- */
 
@@ -1665,7 +1680,8 @@ int Network::LowLevelConnectSocket( u32 that_address, int that_port )
 
   do
   {
-    if ( connect(sock, (struct sockaddr *)&sin, sizeof(sin)) >= 0 )
+    int retval;
+    if ( (retval = connect(sock, (struct sockaddr *)&sin, sizeof(sin))) >= 0 )
     {
       rc = 0;
       break;
@@ -1677,6 +1693,9 @@ int Network::LowLevelConnectSocket( u32 that_address, int that_port )
     }
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
     errno = WSAGetLastError();
+#ifdef DEBUGTHIS
+    Log( "failure (ret: %d, code: %d)\n", retval, errno);
+#endif
     #undef  EISCONN
     #define EISCONN WSAEISCONN
     #undef  EINPROGRESS

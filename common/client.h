@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.141 1999/12/04 15:45:40 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.142 2000/01/04 01:31:34 michmarc Exp $"
 
 
 enum {
@@ -39,12 +39,12 @@ typedef struct
 # pragma pack()
 #endif /* ! MIPSpro */
 
+#define __T(x) #x
+#define _T(x) __T(x)
 
-#define MAXBLOCKSPERBUFFER              500
-#define BUFTHRESHOLD_DEFAULT             10
-#define BUFTHRESHOLD_DEFAULT_TEXT       "10" /* for configure */
+#define MAXBLOCKSPERBUFFER             2000  /* Now in work units */
+#define BUFTHRESHOLD_DEFAULT             25  /* Now in work units */
 #define PREFERREDBLOCKSIZE_DEFAULT       30
-#define PREFERREDBLOCKSIZE_DEFAULT_TEXT "30" /* for configure */
 #define PREFERREDBLOCKSIZE_MIN           28
 #define PREFERREDBLOCKSIZE_MAX           33
 #define BUFFER_DEFAULT_IN_BASENAME  "buff-in"
@@ -101,8 +101,13 @@ public:
   struct dialup_conf lurk_conf;
   #endif
   int  connectoften;
+
+  // In general, don't use inthreshold anymore;
+  // Use ClientGetInThreshold(client, contest)
   int inthreshold[CONTEST_COUNT]; 
   int outthreshold[CONTEST_COUNT];
+  int timethreshold[CONTEST_COUNT];  /* in hours */
+
   int preferred_blocksize[CONTEST_COUNT];
 
   /* -- perf -- */
@@ -123,6 +128,8 @@ public:
 } Client;
 
 void ResetClientData(Client *client); /* reset everything */
+int ClientGetInThreshold(Client *client, int contestid, bool force = false);
+int ClientGetOutThreshold(Client *client, int contestid, bool force = false);
 int ClientRun(Client *client);  /* run the loop, do the work */
 
 #endif /* __CLIENT_H__ */

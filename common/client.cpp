@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.238 2000/01/02 04:07:19 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.239 2000/01/04 01:31:34 michmarc Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -19,9 +19,11 @@ return "@(#)$Id: client.cpp,v 1.238 2000/01/02 04:07:19 cyp Exp $"; }
 #include "random.h"    // InitRandom()
 #include "pathwork.h"  // EXTN_SEP
 #include "clitime.h"   // CliTimer()
+#include "clicdata.h"  // CliGetContestWorkUnitSpeed()
 #include "util.h"      // projectmap_build(), trace, utilCheckIfBetaExpired
 #include "modereq.h"   // ModeReqIsSet()/ModeReqRun()
 #include "cmdline.h"   // ParseCommandLine() and load config
+#include "cpucheck.h"  // GetNumberOfDetectedProcessors()
 #include "triggers.h"  // [De]InitializeTriggers(),RestartRequestTrigger()
 #include "logstuff.h"  // [De]InitializeLogging(),Log()/LogScreen()
 #include "console.h"   // [De]InitializeConsole(), ConOutErr()
@@ -85,8 +87,13 @@ void ResetClientData(Client *client)
   //memset(&(client->lurk_conf),0,sizeof(client->lurk_conf));
   for (contest=0; contest<CONTEST_COUNT; contest++)
   {
-    client->inthreshold[contest] = BUFTHRESHOLD_DEFAULT;
-    client->outthreshold[contest] = BUFTHRESHOLD_DEFAULT;
+    // If in/out threshold is -1, then use time exclusively.
+    // If time threshold is 0, then use in/out exclusively.
+    // If in/out is -1, and time is 0, then use BUFTHRESHOLD_DEFAULT
+    client->inthreshold[contest] = -1 /*BUFTHRESHOLD_DEFAULT*/;
+    client->outthreshold[contest] = -1 /*BUFTHRESHOLD_DEFAULT*/;
+    client->timethreshold[contest] = 0; // Disabled
+
     client->preferred_blocksize[contest] = PREFERREDBLOCKSIZE_DEFAULT;
   }
 
@@ -106,6 +113,58 @@ void ResetClientData(Client *client)
   client->smtpfrom[0]=0;
   client->smtpdest[0]=0;
 }
+
+// --------------------------------------------------------------------------
+
+int ClientGetInThreshold(Client *client, int contestid, bool force)
+{
+  if (client->timethreshold[contestid] == 0)
+    {
+    if (client->inthreshold[contestid] == -1)
+      return BUFTHRESHOLD_DEFAULT;
+    else
+      return client->outthreshold[contestid];
+    }
+
+  // We have a time limit
+  int proc = (client->numcpu == -1) ?
+             GetNumberOfDetectedProcessors() :
+             client->numcpu;
+  if (proc <= 0) proc = 1;
+
+  unsigned int sec = CliGetContestWorkUnitSpeed(contestid, force);
+  if (sec == 0)
+    return proc;  /* Just make sure we have one unit for each CPU */
+  
+  int rv = 1 + client->timethreshold[contestid]*3600*proc/sec;
+  return (rv > MAXBLOCKSPERBUFFER) ? MAXBLOCKSPERBUFFER : rv;
+};
+
+// --------------------------------------------------------------------------
+
+int ClientGetOutThreshold(Client *client, int contestid, bool force)
+{
+  if (client->timethreshold[contestid] == 0)
+    {
+    if (client->outthreshold[contestid] == -1)
+      return BUFTHRESHOLD_DEFAULT;
+    else
+      return client->outthreshold[contestid];
+    }
+
+  // We have a time limit
+  unsigned int sec = CliGetContestWorkUnitSpeed(contestid, force);
+  if (sec == 0)
+    return MAXBLOCKSPERBUFFER;  /* Don't connect unncessesarily */
+  
+  int proc = (client->numcpu == -1) ?
+             GetNumberOfDetectedProcessors() :
+             client->numcpu;
+  if (proc <= 0) proc = 1;
+
+  int rv = 1 + client->timethreshold[contestid]*3600*proc/sec;
+  return (rv > MAXBLOCKSPERBUFFER) ? MAXBLOCKSPERBUFFER : rv;
+};
 
 // --------------------------------------------------------------------------
 

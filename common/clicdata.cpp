@@ -12,10 +12,12 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.24 1999/11/23 15:41:35 cyp Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.25 2000/01/04 01:31:33 michmarc Exp $"; }
 
 #include "baseincs.h" //for timeval
 #include "clitime.h" //required for CliTimerDiff() and CliClock()
+#include "bench.h"    // for TBenchmark
+#include "selcore.h"  // for selcoreGetSelectedCoreForContest()
 
 /* ------------------------------------------------------------------------ */
 
@@ -29,11 +31,12 @@ static struct contestInfo
   double IterDone;
   struct timeval TimeDone;
   unsigned int UnitsDone;
-} conStats[] = {  { "RC5", 0,  1, 0, 0, {0,0}, 0 },
-                  { "DES", 1,  2, 0, 0, {0,0}, 0 },
-                  { "OGR", 2,  1, 0, 0, {0,0}, 0 },
-                  { "CSC", 3,  1, 0, 0, {0,0}, 0 },
-                  {  NULL,-1,  0, 0, 0, {0,0}, 0 }  };
+  unsigned int BestTime;  /* in seconds */
+} conStats[] = {  { "RC5", 0,  1, 0, 0, {0,0}, 0, 0 },
+                  { "DES", 1,  2, 0, 0, {0,0}, 0, 0 },
+                  { "OGR", 2,  1, 0, 0, {0,0}, 0, 0 },
+                  { "CSC", 3,  1, 0, 0, {0,0}, 0, 0 },
+                  {  NULL,-1,  0, 0, 0, {0,0}, 0, 0 }  };
 
 /* ----------------------------------------------------------------------- */
 
@@ -155,9 +158,55 @@ int CliAddContestInfoSummaryData( int contestid, unsigned int *addblocks,
       conInfo->TimeDone.tv_usec %= 1000000L;
     }
   }
+
   return 0;
 }
 
+// ---------------------------------------------------------------------------
+
+// returns the expected time to complete a work unit, in seconds
+// if force is true, then a microbenchmark will be done to get the
+// rate if no work on this contest has been completed yet.
+int CliGetContestWorkUnitSpeed( int contestid, bool force)
+{
+  struct contestInfo *conInfo =
+                       __internalCliGetContestInfoVectorForID( contestid );
+  if (!conInfo)
+    return 0;
+
+  if ((conInfo->BestTime == 0) && force)
+    {
+    // This may trigger a mini-benchmark, which will get the speed
+    // we need and not waste time.
+    selcoreGetSelectedCoreForContest( contestid );
+
+    if (conInfo->BestTime == 0)
+      TBenchmark(contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK);
+    }
+
+  return conInfo->BestTime;
+};
+
+// ---------------------------------------------------------------------------
+
+// sets a possible new value for best time; returns true
+// if this speed was a new record
+bool CliSetContestWorkUnitSpeed( int contestid, unsigned int sec)
+{
+  struct contestInfo *conInfo =
+                       __internalCliGetContestInfoVectorForID( contestid );
+  if (!conInfo || !sec)
+    return false;
+
+  if ((conInfo->BestTime == 0) || (conInfo->BestTime > sec))
+    {
+    conInfo->BestTime = sec;
+    return true;
+    };
+
+  return false;
+};
+    
 // ---------------------------------------------------------------------------
 
 // return 0 if contestID is invalid, non-zero if valid.

@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.52 1999/12/05 15:34:50 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.53 2000/01/04 01:31:36 michmarc Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -111,6 +111,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   conf_options[CONF_FREQUENT].thevariable=&(client->connectoften);
   conf_options[CONF_PREFERREDBLOCKSIZE].thevariable=&(client->preferred_blocksize[0]);
   conf_options[CONF_THRESHOLDI].thevariable=&(client->inthreshold[0]);
+  conf_options[CONF_THRESHOLDT].thevariable=&(client->timethreshold[0]);
 
   /* ------------------- CONF_MENU_LOG  ------------------ */  
 
@@ -311,13 +312,13 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
                   (client->offlinemode ? " ==> n/a [no net & no remote dir]" : NULL );
       conf_options[CONF_REMOTEUPDATEDIR].disabledtext = 
                   (client->noupdatefromfile ? na : NULL );
-      conf_options[CONF_THRESHOLDI].disabledtext= 
-                  (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_FREQUENT].disabledtext= 
                   (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_PREFERREDBLOCKSIZE].disabledtext= 
                   (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_THRESHOLDI].disabledtext= 
+                  (client->offlinemode && noremotedir ? na : NULL );
+      conf_options[CONF_THRESHOLDT].disabledtext= 
                   (client->offlinemode && noremotedir ? na : NULL );
  
     }

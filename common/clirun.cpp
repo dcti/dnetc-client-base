@@ -5,7 +5,7 @@
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.114 1999/12/31 20:29:31 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.115 2000/01/04 01:31:34 michmarc Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1367,8 +1367,9 @@ int ClientRun( Client *client )
               have_non_empty = 1; /* at least one out-buffer is not empty */
               break;
             }
-            if (GetBufferCount( client, cont_i, 0, NULL ) >= 
-               ((long)(client->inthreshold[cont_i]))) 
+            unsigned long count;
+            GetBufferCount( client, cont_i, 0, &count );
+            if (count >= (unsigned int)ClientGetInThreshold( client, cont_i, true )) 
             {         
               have_one_full = 1; /* at least one in-buffer is full */
             }

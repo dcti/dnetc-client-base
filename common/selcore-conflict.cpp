@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.70 2000/01/02 04:07:21 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.71 2000/01/04 01:31:38 michmarc Exp $"; }
 
 
 #include "cputypes.h"
@@ -705,38 +705,31 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     {
       int whichcrunch;
       int saidmsg = 0, fastestcrunch = -1;
-      unsigned long fasttime = 0;
+      int fasttime = 0;
       const u32 benchsize = 100000;
       Problem *problem = new Problem();
 
       for (whichcrunch = 0; whichcrunch < corecount; whichcrunch++)
       {
-        ContestWork contestwork;
-        unsigned long elapsed;
+        int rate;
         selcorestatics.corenum[contestid] = whichcrunch;
-        memset( (void *)&contestwork, 0, sizeof(contestwork));
-        contestwork.crypto.iterations.lo = benchsize;
-        if (problem->LoadState( &contestwork, contestid, 
-                                benchsize, 0, 0, 0, 0 ) == 0)
+        if (!saidmsg)
         {
-          if (!saidmsg)
+          LogScreen("%s: Running micro-bench to select fastest core...\n", 
+                    contname);
+          saidmsg = 1;
+        }                                
+        if ((rate = TBenchmark( contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK )) > 0)
+        {
+#ifdef DEBUG
+          LogScreen("%s Core %d: %d keys/sec\n", contname,whichcrunch,rate);
+#endif
+          if (fastestcrunch < 0 || rate > fasttime)
           {
-            LogScreen("%s: Running micro-bench to select fastest core...\n", 
-                      contname);
-            saidmsg = 1;
-          }                                
-          problem->Run();
-   
-          elapsed = (((unsigned long)problem->runtime_sec) * 1000000UL)+
-                    (((unsigned long)problem->runtime_usec));
-          //printf("%s Core %d: %lu usec\n", contname,whichcrunch,elapsed);
-    
-          if (fastestcrunch < 0 || elapsed < fasttime)
-          {
+            fasttime = rate;
             fastestcrunch = whichcrunch; 
-            fasttime = elapsed;
-          }
-        }
+          };
+        };
       }
       delete problem;
 

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.141 2000/01/02 04:07:20 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.142 2000/01/04 01:31:38 michmarc Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -360,7 +360,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
         { 
           was_reset = 1;
           contestwork.ogr.workstub.worklength = contestwork.ogr.workstub.stub.length;
-          contestwork.ogr.nodes.hi = contestwork.work.ogr.nodes.lo = 0;
+          contestwork.ogr.nodes.hi = contestwork.ogr.nodes.lo = 0;
         }  
       }
       extern CoreDispatchTable *ogr_get_dispatch_table();

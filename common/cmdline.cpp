@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.148 1999/12/31 20:29:31 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.149 2000/01/04 01:31:35 michmarc Exp $"; }
 
 //#define TRACE
 
@@ -752,13 +752,13 @@ int ParseCommandline( Client *client,
             else if (isthresh)
             {
               if ((isthresh & 1)!=0)
-                LogScreenRaw("%s fetch threshold set to %d packets\n", 
+                LogScreenRaw("%s fetch threshold set to %d work unit%s\n", 
                   CliGetContestNameFromID(contest), 
-                  client->inthreshold[contest] );
+                  client->inthreshold[contest], (client->inthreshold[contest]==1)?"":"s" );
               if ((isthresh & 2)!=0)
-                LogScreenRaw("%s flush threshold set to %d packets\n", 
+                LogScreenRaw("%s flush threshold set to %d work unit%s\n", 
                   CliGetContestNameFromID(contest), 
-                  client->outthreshold[contest] );
+                  client->outthreshold[contest], (client->outthreshold[contest]==1)?"":"s" );
             }
             else /* coretype */
             {

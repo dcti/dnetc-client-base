@@ -6,10 +6,11 @@
 */
 
 #ifndef __CONFRWV_H__
-#define __CONFRWV_H__ "@(#)$Id: confrwv.h,v 1.10 1999/04/04 16:28:04 cyp Exp $"
+#define __CONFRWV_H__ "@(#)$Id: confrwv.h,v 1.11 2000/01/04 01:31:37 michmarc Exp $"
 
 int ReadConfig(Client *client);
 int WriteConfig(Client *client, int writefull /* defaults to 0*/);
 void RefreshRandomPrefix( Client *client );
+
 
 #endif /* __CONFRWV_H__ */
