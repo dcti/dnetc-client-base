@@ -52,16 +52,22 @@ void MailMessage::checktosend( u32 forcesend)
          retry=0;
 #ifdef FIFO_ON_BUFF_OVERFLOW
          while ((this->sendmessage() == -1) && retry++ < 3) {
+#if !defined(NEEDVIRTUALMETHODS)
             printf("Mail::sendmessage %d - Unable to send mail message\n",
                   (int) retry );
+#endif
             if (retry < 3) sleep(1);
          }
 #else
          while ((this->sendmessage() == -1) && retry++ < 3) {
             if (retry == 3) {
+#if !defined(NEEDVIRTUALMETHODS)
                printf("Mail::sendmessage %d - Unable to send mail message.  Contents discarded.\n", (int) retry);
+#endif
             } else {
+#if !defined(NEEDVIRTUALMETHODS)
                printf("Mail::sendmessage %d - Unable to send mail message\n", (int) retry );
+#endif
                sleep( 1 );
             }
          }
@@ -119,6 +125,7 @@ int MailMessage::inittext(int out)
        messagelen=MAXMAILSIZE;
     }
   }
+#if !defined(NEEDVIRTUALMETHODS)
   if (out == 1) {
     printf("Mail server:port is %s:%d\n", smtp, (int) port);
     printf("Mail id is %s\n", fromid);
@@ -126,6 +133,7 @@ int MailMessage::inittext(int out)
     printf("Message length set to %d\n", (int) messagelen);
     printf("RC5id set to %s\n", rc5id);
   }
+#endif
 
 #ifndef NONETWORK
   gethostname(my_hostname, 255);   //This should be in network.cpp
@@ -240,7 +248,9 @@ int MailMessage::sendmessage()
         delete net;
         return(-1);
       }
+#if !defined(NEEDVIRTUALMETHODS)
       printf("Network::MailMessage %d - Unable to open connection to smtp server\n", (int) retry );
+#endif
       sleep( 3 );
       // Unable to open network.
     }
@@ -252,7 +262,9 @@ int MailMessage::sendmessage()
       if (0 == send_smtp_edit_data(net))
       {
         finish_smtp_message(net);
+#if !defined(NEEDVIRTUALMETHODS)
         printf("Mail message has been sent.\n");
+#endif
         net->Close();
         delete net;
         return(0);
@@ -262,7 +274,9 @@ int MailMessage::sendmessage()
         return(-1);
       }
     } else {
+#if !defined(NEEDVIRTUALMETHODS)
       printf("Error in prepare_smtp_message\n");
+#endif
       net->Close();
       return(-1);
     }
@@ -384,7 +398,9 @@ int MailMessage::get_smtp_line( Network * net )
     {
     if ( net->Get( 1, &in_data[index], 2*NETTIMEOUT ) != 1)
       {
+#if !defined(NEEDVIRTUALMETHODS)
       printf("recv error\n");
+#endif
       return(-1);
       }
 #ifdef SHOWMAIL
@@ -411,7 +427,9 @@ printf("PUT: %s",line);
 //  delay(1); //Some servers can't talk too fast.
   if ( net->Put( nchars, line ) )
   {
+#if !defined(NEEDVIRTUALMETHODS)
     printf("send error\n");
+#endif
     return -1;
   }
   return (0);
@@ -491,7 +509,7 @@ int MailMessage::transform_and_send_edit_data(Network * net)
     while ((unsigned int) (index - messagetext) < send_len)
     {
       this_char = *index;
-#ifdef SHOWMAIL
+#if defined(SHOWMAIL) && !defined(NEEDVIRTUALMETHODS)
 printf("%c",this_char);
 #endif
 //      delay(1); //Some servers can't talk too fast.
@@ -543,9 +561,11 @@ printf("%c",this_char);
 
 void MailMessage::smtp_error (Network *net, const char * message)
 {
- printf("%s\n",message);
- put_smtp_line("QUIT\r\n", 6,net);
- net->Close();
+#if !defined(NEEDVIRTUALMETHODS)
+  printf("%s\n",message);
+#endif
+  put_smtp_line("QUIT\r\n", 6,net);
+  net->Close();
 }
 
 #endif

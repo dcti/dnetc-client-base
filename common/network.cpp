@@ -321,7 +321,7 @@ void Network::LogScreen ( const char * text)
 {
 #if (CLIENT_OS == OS_NETWARE)
   if (!quietmode) printf("%s", text );
-#else
+#elif !defined(NEEDVIRTUALMETHODS)
   if (!quietmode) fwrite(text, 1, strlen(text), stdout);
 #endif
 }
@@ -536,7 +536,8 @@ s32 Network::Open( void )
     if (psocks4->VN != 0 ||
         psocks4->CD != 90) // 90 is successful return
     {
-      fprintf(stderr, "SOCKS4 request rejected%s\n",
+#ifdef VERBOSE_OPEN
+      sprintf(logstr, "SOCKS4 request rejected%s\n",
         (psocks4->CD == 91)
           ? ""
           :
@@ -547,7 +548,8 @@ s32 Network::Open( void )
           ? ", invalid identd response"
           :
           ", unexpected response");
-      fflush(stderr);
+      LogScreen(logstr);
+#endif
 
 Socks4Failure:
       close(sock);
@@ -586,10 +588,11 @@ Socks4Failure:
 
     if (psocks5mreply->ver != 5)
     {
-      fprintf(stderr, "SOCKS5 authentication method reply has wrong "\
+#ifdef VERBOSE_OPEN
+      sprintf(logstr, "SOCKS5 authentication method reply has wrong "\
                       "version, %d should be 5.\n", psocks5mreply->ver);
-      fflush(stderr);
-
+      LogScreen(logstr);
+#endif
       goto Socks5Failure;
     }
 
@@ -640,16 +643,20 @@ Socks4Failure:
       if (psocks5userpwreply->ver != 1 ||
           psocks5userpwreply->status != 0)
       {
-        fprintf(stderr, "SOCKS5 user %s rejected by server.\n", username);
-        fflush(stderr);
+#ifdef VERBOSE_OPEN
+        sprintf(logstr, "SOCKS5 user %s rejected by server.\n", username);
+        LogScreen(logstr);
+#endif
 
         goto Socks5Failure;
       }
     }
     else
     {
-      fprintf(stderr, "SOCKS5 authentication method rejected.\n");
-      fflush(stderr);
+#ifdef VERBOSE_OPEM
+      sprintf(logstr, "SOCKS5 authentication method rejected.\n");
+      LogScreen(logstr);
+#endif
 
       goto Socks5Failure;
     }
@@ -670,18 +677,23 @@ Socks4Failure:
 
     if (psocks5->ver != 5)
     {
-      fprintf(stderr, "SOCKS5 reply has wrong version, %d should be 5\n", psocks5->ver);
-      fflush(stderr);
+#ifdef VERBOSE_OPEN
+      sprintf(logstr, "SOCKS5 reply has wrong version, %d should be 5\n", psocks5->ver);
+      LogScreen(logstr);
+#endif
       goto Socks5Failure;
     }
 
     if (psocks5->cmdORrep != 0)          // 0 is successful connect
     {
-      fprintf(stderr, "SOCKS5 server error connecting to keyproxy: %s\n",
+#ifdef VERBOSE_OPEN
+      sprintf(logstr, "SOCKS5 server error connecting to keyproxy: %s\n",
               (psocks5->cmdORrep >=
                 (sizeof Socks5ErrorText / sizeof Socks5ErrorText[0]))
                 ? "unrecognized SOCKS5 error"
                 : Socks5ErrorText[ psocks5->cmdORrep ] );
+      LogScreen(logstr);
+#endif
 
 Socks5Failure:
       close(sock);
@@ -1141,7 +1153,10 @@ void Network::ensureonline()
 
     if(!access(DODCfg, R_OK))      // read DOD config file if there is one
     {
-      printf("Reading %s for DOD parameters...\n", DODCfg);
+#ifdef VERBOSE_OPEN
+      sprintf(logstr,"Reading %s for DOD parameters...\n", DODCfg);
+      LogScreen(logstr);
+#endif
 
       FILE *cfg;
       cfg = fopen(DODCfg, "r+t");
@@ -1166,15 +1181,21 @@ void Network::ensureonline()
 
     if(!rweonline())
     {
-      printf("Not Connected, Starting StartDOD.cmd...\n"
+#ifdef VERBOSE_OPEN
+      sprintf(logstr, "Not Connected, Starting StartDOD.cmd...\n"
           "Waiting for %d seconds to be connected.\n", DOD_Sleeptime);
+      LogScreen(logstr);
+#endif
       do
       {
         spawnl( P_NOWAIT, StartDOD, (char *)NULL );
         sleep( DOD_Sleeptime );
         if(!rweonline())   // Still not connected.
         {
-          printf("Could not connect, hanging up and trying again...\n");
+#ifdef VERBOSE_OPEN
+          sprintf(logstr,"Could not connect, hanging up and trying again...\n");
+          LogScreen(logstr);
+#endif
           spawnl( P_NOWAIT, StopDOD, (char *)NULL );
           sleep( 10 );     // Give it time to run whatever program that hangs up
         }
@@ -1193,8 +1214,11 @@ void Network::checkoffline()
 {
   if(DOD_On)
   {
-    printf("Dialed in with DOD, disconnecting...\n");
+#ifdef VERBOSE_OPEN
+    sprintf(logstr,"Dialed in with DOD, disconnecting...\n");
+    LogScreen(logstr);
     flushall();
+#endif
     spawnl( P_NOWAIT, StopDOD, (char *)NULL );
   }
 }

@@ -295,7 +295,9 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
   }
   else if ( kiter != timeslice * PIPELINE_COUNT )
   {
+#if !defined(NEEDVIRTUALMETHODS)
     printf("kiter wrong %ld %d\n", kiter, (int)(timeslice*PIPELINE_COUNT));
+#endif
   }
 }
 #elif (CLIENT_CPU == CPU_SPARC) && (ULTRA_CRUNCH == 1)
@@ -329,7 +331,9 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
   }
   else if (kiter != ( timeslice * PIPELINE_COUNT ) )
   {
+#if !defined(NEEDVIRTUALMETHODS)
     printf("kiter wrong %ld %d\n", (long) kiter, (int) (timeslice*PIPELINE_COUNT));
+#endif
   }
 }
 #elif ((CLIENT_CPU == CPU_MIPS) && (MIPS_CRUNCH == 1))
@@ -363,7 +367,9 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
   }
   else if (kiter != (timeslice * PIPELINE_COUNT))
   {
+#if !defined(NEEDVIRTUALMETHODS)
     printf("kiter wrong %ld %d\n", kiter, timeslice*PIPELINE_COUNT);
+#endif
   }
 }
 #elif (CLIENT_CPU == CPU_ARM)
@@ -512,8 +518,12 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
       return( 1 );
     }
     else if (kiter != (timeslice * PIPELINE_COUNT))
+    {
+#if !defined(NEEDVIRTUALMETHODS)
         printf("kiter wrong %ld %ld\n",
                (long) kiter, (long)(timeslice*PIPELINE_COUNT));
+#endif
+    }
   }
 #endif
 

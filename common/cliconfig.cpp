@@ -2389,7 +2389,9 @@ bool CliSignalHandler(DWORD  dwCtrlType)
   if ( dwCtrlType == CTRL_C_EVENT || dwCtrlType == CTRL_BREAK_EVENT ||
        dwCtrlType == CTRL_CLOSE_EVENT || dwCtrlType == CTRL_SHUTDOWN_EVENT)
   {
+#if !defined(NEEDVIRTUALMETHODS)
     fprintf( stderr, "*Break*\n" );
+#endif
     SignalTriggered = UserBreakTriggered = 1;
     return TRUE;
   }
