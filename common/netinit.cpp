@@ -12,7 +12,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.26 1999/05/07 04:28:19 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.27 1999/06/15 04:15:16 silby Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -191,10 +191,6 @@ static int __netInitAndDeinit( int doWhat )
   {
     if ( doWhat == 0 )     //request to check online mode
     {
-      #if defined(LURK)
-      if (dialup.IsConnected() == 0)   //- no longer-online?
-        return 0;                        //oops, return 0
-      #endif
       return 1;            //assume always online once initialized
     }
     else if (doWhat > 0)   //request to initialize
