@@ -2,9 +2,16 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
+ *
+ * ------------------------------------------------------
+ * Pardon, oh, pardon, that my sould should make
+ * Of all the strong divineness which I know
+ * For thine and thee, an image only so
+ * Formed of the sand, and fit to shift and break.
+ * ------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.37.2.4 1999/12/13 05:21:05 cyp Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.37.2.5 2000/01/02 04:06:13 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -50,10 +57,6 @@ return "@(#)$Id: logstuff-conflict.cpp,v 1.37.2.4 1999/12/13 05:21:05 cyp Exp $"
   #define FTRUNCATE_NOT_SUPPORTED
 #endif  
 
-#ifdef DONT_USE_PATHWORK
-  #define GetFullPathForFilename( x ) ( x )
-#endif  
-
 #if ((!defined(MAX_LOGENTRY_LEN)) || (MAX_LOGENTRY_LEN < 1024))
   #ifdef MAX_LOGENTRY_LEN
   #undef MAX_LOGENTRY_LEN
@@ -73,6 +76,8 @@ static struct
   MailMessage *mailmessage;  //note: pointer, not class struct.
   char logfile[128+20];      //fname when LOGFILETYPE_RESTART or _FIFO
                              //lastused fname when LOGFILETYPE_ROTATE
+  FILE *logstream;           //open logfile 
+
   unsigned int logfilebaselen;//len of the log fname without ROTATE suffix
   int  logfileType;          //rotate, restart, fifo, none
   unsigned int logfileLimit; //days when rotating or kbyte when fifo/restart
@@ -87,8 +92,9 @@ static struct
   LOGTO_NONE,   // loggingTo
   0,      // spoolson
   0,      // percprint
-  NULL,     // *mailmessage
-  {0},      // logfile[]
+  NULL,   // *mailmessage
+  {0},    // logfile[]
+  NULL,   // logstream
   0,      // logfilebaselen
   LOGFILETYPE_NONE, // logfileType
   0,      // logfileLimit
@@ -116,12 +122,67 @@ static void InternalLogScreen( const char *msgbuffer, unsigned int msglen, int /
 
 // ------------------------------------------------------------------------
 
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || \
+    (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_NETWARE) || \
+    (CLIENT_OS == OS_OS2)
+static FILE *__fopenlog( const char *fn, const char *mode )
+{
+  FILE *file;
+  int fd, amode, xmode, tmode;
+  char cmode[3]; const char *p = mode;
+  
+  cmode[0] = cmode[1] = cmode[2] = 0;
+  while (*p)
+  {
+    int pos = 0;
+    if (*p == 'a' || *p == 'w' || *p == 'r')
+      pos = 0;
+    else if (*p == '+')
+      pos = 1;
+    else if (*p == 't' || *p == 'b')
+      pos = 2;
+    else
+      return (FILE *)0;
+    if (cmode[pos] != 0)
+      return (FILE *)0;
+    cmode[pos] = ((char)(*p++));
+  }  
+
+  xmode = 0;
+  amode = O_WRONLY;
+  tmode = O_TEXT;  
+  if (cmode[0] == 'r')
+    amode = O_RDONLY;
+  else if (cmode[0] == 'w')
+    xmode = O_CREAT | O_TRUNC;
+  else if (cmode[0] == 'a')
+    xmode = O_CREAT | O_APPEND;
+  else
+    return (FILE *)0;
+  if (cmode[1] == '+')
+    amode = O_RDWR;
+  if (cmode[2] == 'b')
+    tmode = O_BINARY;
+
+  fd = sopen( GetFullPathForFilename(fn), xmode|amode|tmode, SH_DENYNO, 0 );
+  if (fd == -1)
+    return (FILE *)0;
+  file = fdopen( fd, mode );
+  if (file)
+    return file;
+  close(fd);
+  return (FILE *)0;
+}
+#else
+#define __fopenlog( _fn, _mode ) fopen( GetFullPathForFilename( _fn ), _mode )
+#endif
+
+
 //this can ONLY be called from LogWithPointer. msgbuffer is recycled!
 static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/ )
 {
   int logfileType = logstatics.logfileType;
   unsigned int logfileLimit = logstatics.logfileLimit;
-  FILE *logstream = NULL;
   
   if ( logstatics.logfile[0] == 0 )
     return;
@@ -138,11 +199,17 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
 
   if ( logfileType == LOGFILETYPE_NOLIMIT )
   {
-    logstream = fopen( GetFullPathForFilename( logstatics.logfile ), "a" );
-    if (logstream)
+    if (!logstatics.logstream)
+      logstatics.logstream = __fopenlog( logstatics.logfile, "a" );
+    if (logstatics.logstream)
     {
-      fwrite( msgbuffer, sizeof( char ), msglen, logstream );
-      fclose( logstream );
+      fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
+      #ifndef __unix__
+      fclose( logstatics.logstream );
+      logstatics.logstream = NULL;
+      #else
+      fflush( logstatics.logstream );
+      #endif
     }
     logstatics.logfilestarted = 1;
   }
@@ -151,23 +218,35 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
     long filelen = (long)(-1);
     if ( logfileLimit < 100 )
       logfileLimit = 100;
-    logstream = fopen( GetFullPathForFilename( logstatics.logfile ), "a" );
-    if ( logstream )
+    if (!logstatics.logstream)
+      logstatics.logstream = __fopenlog( logstatics.logfile, "a" );
+    if ( logstatics.logstream )
     {
-      fwrite( msgbuffer, sizeof( char ), msglen, logstream );
-      filelen = (long)ftell( logstream );
-      fclose( logstream );
+      fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
+      fflush( logstatics.logstream );
+      filelen = (long)ftell( logstatics.logstream );
+      #ifndef __unix__
+      fclose( logstatics.logstream );
+      logstatics.logstream = NULL;
+      #endif
     }
     if ( filelen != (long)(-1) && ((unsigned int)(filelen >> 10)) > logfileLimit )
     {
-      logstream= fopen( GetFullPathForFilename( logstatics.logfile ), "w" ); 
-      if ( logstream )
+      if (logstatics.logstream)
+        fclose( logstatics.logstream );
+      logstatics.logstream = __fopenlog( logstatics.logfile, "w" ); 
+      if ( logstatics.logstream )
       {
-        fprintf( logstream, "[%s] Log file exceeded %uKbyte limit. "
+        fprintf( logstatics.logstream, "[%s] Log file exceeded %uKbyte limit. "
            "Restarted...\n\n", CliGetTimeString( NULL, 1 ), 
            (unsigned int)( logstatics.logfileLimit ));
-        fwrite( msgbuffer, sizeof( char ), msglen, logstream );
-        fclose( logstream );
+        fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
+        #ifndef __unix__
+        fclose( logstatics.logstream );
+        logstatics.logstream = NULL;
+        #else
+        fflush( logstatics.logstream );
+        #endif
       }
     }
     logstatics.logfilestarted = 1;
@@ -265,11 +344,29 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
     }
     if (!abortwrite)
     {
-      logstream = fopen( GetFullPathForFilename( logstatics.logfile ), "a" );
-      if ( logstream )
+      static char lastfilename[sizeof(logstatics.logfile)] = {0};
+      if (logstatics.logstream)
       {
-        fwrite( msgbuffer, sizeof( char ), msglen, logstream );
-        fclose( logstream );
+        if ( strcmp( lastfilename, logstatics.logfile ) != 0 )
+        {
+          fclose( logstatics.logstream );
+          logstatics.logstream = NULL;
+        }
+      }
+      if (!logstatics.logstream)
+      {
+        strcpy( lastfilename, logstatics.logfile );
+        logstatics.logstream = __fopenlog( logstatics.logfile, "a" );
+      }  
+      if ( logstatics.logstream )
+      {
+        fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
+        #ifndef __unix__
+        fclose( logstatics.logstream );
+        logstatics.logstream = NULL;
+        #else
+        fflush( logstatics.logstream );
+        #endif
       }
       logstatics.logfilestarted = 1;
     }
@@ -279,24 +376,40 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
     unsigned long filelen = 0;
     if ( logfileLimit < 100 )
       logfileLimit = 100;
-    logstream = fopen( GetFullPathForFilename( logstatics.logfile ), "a" );
-    if ( logstream )
+      
+    if (!logstatics.logstream)
     {
-      fwrite( msgbuffer, sizeof( char ), msglen, logstream );
-      if (((long)(filelen = ftell( logstream ))) == ((long)(-1)))
+      #ifndef __unix__
+      logstatics.logstream = __fopenlog( logstatics.logfile, "a" );
+      #else
+      logstatics.logstream = __fopenlog( logstatics.logfile, "r+" );
+      if (logstatics.logstream)
+        fseek( logstatics.logstream, 0, SEEK_END );
+      else
+        logstatics.logstream = __fopenlog( logstatics.logfile, "w+" );
+      #endif        
+    }  
+    if ( logstatics.logstream )
+    {
+      fwrite( msgbuffer, sizeof( char ), msglen, logstatics.logstream );
+      if (((long)(filelen = ftell( logstatics.logstream ))) == ((long)(-1)))
         filelen = 0;
-      fclose( logstream );
+      #ifndef __unix__
+      fclose( logstatics.logstream );
+      logstatics.logstream = NULL;
+      #endif
     }
     if ( filelen > (((unsigned long)(logfileLimit))<<10) )
     {    /* careful: file must be read/written without translation - cyp */
-      logstream = fopen( GetFullPathForFilename( logstatics.logfile ), "r+b" );
-      if ( logstream )
+      if (!logstatics.logstream) /* always false for unix */
+        logstatics.logstream = __fopenlog( logstatics.logfile, "r+b" );
+      if ( logstatics.logstream )
       {
         unsigned long next_top = filelen - /* keep last 90% */
                                ((((unsigned long)(logfileLimit))<<10)*9)/10;
-        if ( fseek( logstream, next_top, SEEK_SET ) == 0 &&
+        if ( fseek( logstatics.logstream, next_top, SEEK_SET ) == 0 &&
           ( msglen = fread( msgbuffer, sizeof( char ), MAX_LOGENTRY_LEN-1, 
-                    logstream ) ) != 0 )
+                    logstatics.logstream ) ) != 0 )
         {
           msgbuffer[msglen]=0;
           char *p = strchr( msgbuffer, '\n' );  //translate manually
@@ -311,19 +424,22 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
           }
           filelen = 0;
           
-          while ( fseek( logstream, next_top, SEEK_SET ) == 0 &&
+          while ( fseek( logstatics.logstream, next_top, SEEK_SET ) == 0 &&
              ( msglen = fread( msgbuffer, sizeof( char ), MAX_LOGENTRY_LEN, 
-                    logstream ) ) != 0 &&
-                fseek( logstream, filelen, SEEK_SET ) == 0 &&
+                    logstatics.logstream ) ) != 0 &&
+                fseek( logstatics.logstream, filelen, SEEK_SET ) == 0 &&
              ( msglen == fwrite( msgbuffer, sizeof( char ), msglen, 
-                     logstream ) ) )
+                     logstatics.logstream ) ) )
           {
             next_top += msglen;
             filelen += msglen;
           }
-          ftruncate( fileno( logstream ), filelen );
+          ftruncate( fileno( logstatics.logstream ), filelen );
         }
-        fclose( logstream );
+        #ifndef __unix__
+        fclose( logstatics.logstream );
+        logstatics.logstream = NULL;
+        #endif
       }
     }  
     logstatics.logfilestarted = 1;
@@ -659,6 +775,11 @@ void DeinitializeLogging(void)
   {
     logstatics.mailmessage->Deinitialize(); //forces a send
     delete logstatics.mailmessage;
+  }
+  if ( logstatics.logstream )
+  {
+    fclose( logstatics.logstream );
+    logstatics.logstream = NULL;
   }
   memset((void *)&logstatics, 0, sizeof(logstatics));
   logstatics.loggingTo = LOGTO_NONE;
