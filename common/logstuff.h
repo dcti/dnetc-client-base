@@ -5,26 +5,21 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __LOGSTUFF_H__
-#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.11.2.2 2000/09/24 23:31:08 andreasb Exp $"
+#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.11.2.3 2000/10/05 18:25:41 cyp Exp $"
 
-#define LOGFILETYPE_NONE    0 //
+/* this is shared with Configure() */
+#define LOGFILETYPE_NONE    0 //no logging to file
 #define LOGFILETYPE_NOLIMIT 1 //unlimited (or limit == -1)
 #define LOGFILETYPE_RESTART 2 //then logLimit is in KByte 
 #define LOGFILETYPE_FIFO    3 //then logLimit is in KByte (minimum 100K)
 #define LOGFILETYPE_ROTATE  4 //then logLimit is in days
 
-#define LOGTO_NONE       0x00
+/* this is shared with anything that uses LogTo() */
+#define LOGTO_NONE       0x00 
 #define LOGTO_SCREEN     0x01
 #define LOGTO_FILE       0x02
 #define LOGTO_MAIL       0x04
-
-#define LOGTO_PERCENTBAR 0x40  // use together with _SCREEN and _RAWMODE
-#define LOGTO_RAWMODE    0x80
-#define LOGTO_ALLMODES   (LOGTO_RAWMODE | LOGTO_PERCENTBAR)
-
-#define MAX_LOGENTRY_LEN 1024 //don't make this smaller than 1K!
-
-#define ASSERT_WIDTH_80     //show where badly formatted lines are cropping up
+#define LOGTO_RAWMODE    0x80    
 
 /* ---------------------------------------------------- */
 
@@ -55,7 +50,8 @@ extern const char *LogGetCurrentLogFilename( void );
 
 //init/deinit prototypes
 void DeinitializeLogging(void);
-void InitializeLogging( int noscreen, int nopercent, const char *logfilename, 
+void InitializeLogging( int noscreen, int nopercent, int nopercbaton,
+                        const char *logfilename, 
                         const char *logfiletype, const char *logfilelimit, 
                         long mailmsglen, const char *smtpsrvr, 
                         unsigned int smtpport, const char *smtpfrom, 

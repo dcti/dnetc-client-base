@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.29 2000/09/24 23:31:08 andreasb Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.30 2000/10/05 18:25:41 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -22,45 +22,38 @@ return "@(#)$Id: logstuff.cpp,v 1.37.2.29 2000/09/24 23:31:08 andreasb Exp $"; }
 #include "pathwork.h"  // GetFullPathForFilename(), GetWorkingDirectory()
 #include "problem.h"   // Problem object for logscreenpercent
 #include "probman.h"   // GetProblemPointerFromIndex() for LogScreenPercent
-#include "console.h"   // for ConOut() and ConIsScreen()
+#include "console.h"   // for ConOut(), ConIsScreen(), ConIsGUI()
 #include "util.h"      // TRACE
 #include "logstuff.h"  // keep the prototypes in sync
 
 //-------------------------------------------------------------------------
-
-#if 0 /* logstuff.h defines */
-
-#define LOGFILETYPE_NONE    0 //
-#define LOGFILETYPE_NOLIMIT 1 //unlimited (or limit == -1)
-#define LOGFILETYPE_RESTART 2 //then logLimit is in KByte
-#define LOGFILETYPE_FIFO    3 //then logLimit is in KByte (minimum 100K)
-#define LOGFILETYPE_ROTATE  4 //then logLimit is in days
-
+#ifndef LOGTO_NONE       /* the following are declared in logstuff.h */
 #define LOGTO_NONE       0x00
 #define LOGTO_SCREEN     0x01
 #define LOGTO_FILE       0x02
 #define LOGTO_MAIL       0x04
-
-#define LOGTO_PERCENTBAR 0x40  // use together with _SCREEN and _RAWMODE
 #define LOGTO_RAWMODE    0x80
-#define LOGTO_ALLMODES   (LOGTO_RAWMODE | LOGTO_PERCENTBAR)
+#endif
 
-#define MAX_LOGENTRY_LEN 1024 //don't make this smaller than 1K!
+#ifndef LOGFILETYPE_NONE    /* the following are declared in logstuff.h */
+#define LOGFILETYPE_NONE    0 //no logging to file
+#define LOGFILETYPE_NOLIMIT 1 //unlimited (or limit == -1)
+#define LOGFILETYPE_RESTART 2 //then logLimit is in KByte
+#define LOGFILETYPE_FIFO    3 //then logLimit is in KByte (minimum 100K)
+#define LOGFILETYPE_ROTATE  4 //then logLimit is in days
+#endif
 
 #define ASSERT_WIDTH_80     //show where badly formatted lines are cropping up
-
-#endif /* logstuff.h defines */
-
-#define ASSUMED_SCREEN_WIDTH 80
+#define ASSUMED_SCREEN_WIDTH 80 //... until all platforms support ConGetSize()
 // ========================================================================
 
 static struct
 {
   int initlevel;
-  char loggingTo;            // LOGTO_xxx bitfields
-  char spoolson;             // mail/file logging and time stamping is on/off.
-  char percprint;            // percentprinting is enabled
-  char percbaton;            // percent baton is enabled
+  int loggingTo;            // LOGTO_xxx bitfields
+  int spoolson;             // mail/file logging and time stamping is on/off.
+  int percprint;            // percentprinting is enabled
+  int percbaton;            // percent baton is enabled
 
   void *mailmessage;         //handle returned from smtp_construct_message()
   char basedir[256];         //filled if user's 'logfile' is not qualified
@@ -73,9 +66,9 @@ static struct
   unsigned int logfileLimit; //days when rotating or kbyte when fifo/restart
   unsigned int logfilestarted; // 1 after the first logfile write
 
-  char stdoutisatty;         //log screen can handle lines not ending in '\n'
-  char stableflag;           //last log screen did end in '\n'
-  int last_screen_flags;     //flags used in last screenlog (RAWMODE, PERCENTBAR)
+  int stdoutisatty;         //log screen can handle lines not ending in '\n'
+  int stableflag;           //last log screen did end in '\n'
+  int lastwasperc;          //last log screen was a percentbar
 
 } logstatics = {
   0,      // initlevel
@@ -93,43 +86,20 @@ static struct
   0,      // logfilestarted
   0,      // stdoutisatty
   0,      // stableflag
-  0       // last_screen_flags
-};
+  0 };      // lastwasperc
 
 // ========================================================================
 
-static void InternalLogScreen( const char *msgbuffer, unsigned int msglen, int loggingMode )
+static void InternalLogScreen( const char *msgbuffer, unsigned int msglen, int /*flags*/ )
 {
   if ((logstatics.loggingTo & LOGTO_SCREEN) != 0)
   {
-    if ( msglen && (msgbuffer[msglen-1] == '\n' || ConIsScreen() ) )
+    if ( msglen && (msgbuffer[msglen-1] == '\n' || logstatics.stdoutisatty ) )
     {
       if (strlen( msgbuffer ) == msglen) //we don't do binary data
       {                                  //which shouldn't happen anyway.
-        if (*msgbuffer == '\r' && (loggingMode & LOGTO_PERCENTBAR) == 0)
-        {
-          const char *p;
-          char blankline[ASSUMED_SCREEN_WIDTH+1];
-          memset(blankline, ' ' ,sizeof(blankline));
-          blankline[sizeof(blankline)-1] = '\0';
-          blankline[0] = '\r';
-          p = strchr(msgbuffer, '\n');
-          if (!p && (loggingMode & LOGTO_RAWMODE) == 0)
-          {
-            // Cursor position won't be exact: right edge of screen instead of
-            // end of message. But saves some (sometimes expensive) redraws.
-            p = strchr(msgbuffer, '\0');
-          }
-          if (p && (((unsigned int)(p-msgbuffer))<sizeof(blankline)-1))
-          {
-            memcpy(blankline, msgbuffer, (p-msgbuffer));
-            msgbuffer = p;
-          }  
-          ConOut( blankline );
-        }  
-        if (*msgbuffer)
-          ConOut( msgbuffer );
-      }
+        ConOut( msgbuffer );             
+      }  
     }
     else
       ConOut( "" ); //flush.
@@ -450,20 +420,13 @@ static void InternalLogMail( const char *msgbuffer, unsigned int msglen, int /*f
 // a (va_list *) instead to avoid this problem
 void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
 {
-  #if ((!defined(MAX_LOGENTRY_LEN)) || (MAX_LOGENTRY_LEN < 1024))
-    #ifdef MAX_LOGENTRY_LEN
-    #undef MAX_LOGENTRY_LEN
-    #endif
-    #define MAX_LOGENTRY_LEN 1024
-  #endif
-  char msgbuffer[MAX_LOGENTRY_LEN];
+  char msgbuffer[1024]; //min 1024!!, but also think of other OSs stack!!
   unsigned int msglen = 0, sel;
   char *buffptr, *obuffptr;
-  const char *timestamp;
-  int loggingMode = loggingTo & LOGTO_ALLMODES;
+  int old_loggingTo = loggingTo;
 
   msgbuffer[0]=0;
-  loggingTo &= logstatics.loggingTo;
+  loggingTo &= (logstatics.loggingTo|LOGTO_RAWMODE);
 
   if ( !format || !*format )
     loggingTo = LOGTO_NONE;
@@ -479,12 +442,11 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
     if ( msglen == 0 )
       loggingTo = LOGTO_NONE;
     else if (msgbuffer[msglen-1] != '\n')
-      loggingTo &= LOGTO_SCREEN;  //screen only obviously
+      loggingTo &= LOGTO_SCREEN|LOGTO_RAWMODE;  //screen only obviously
   }
 
-  // add timestamp/indent following lines if (!RAWMODE)
   if (loggingTo != LOGTO_NONE && logstatics.spoolson /* timestamps */ &&
-      (loggingMode & LOGTO_RAWMODE) == 0 )
+      (old_loggingTo & LOGTO_RAWMODE) == 0 )
   {
     buffptr = &msgbuffer[0];
     sel = 1;
@@ -501,7 +463,7 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
       }
       if (*buffptr && *buffptr!='[' && *buffptr!='\r' && *buffptr!='\n' )
       {
-        timestamp = CliGetTimeString( NULL, sel );
+        const char *timestamp = CliGetTimeString( NULL, sel );
         memmove( buffptr+(strlen(timestamp)+3), buffptr, strlen( buffptr )+1 );
         *buffptr++=((sel)?('['):(' '));
         while (*timestamp)
@@ -516,7 +478,6 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
     msglen = strlen( msgbuffer );
   }
 
-  // log to file, mail
   if (logstatics.spoolson && (loggingTo & (LOGTO_FILE|LOGTO_MAIL)) != 0 )
   {
     sel = msglen;
@@ -535,17 +496,14 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
     }
   }
 
-  // truncate lines and log to screen
   if (( loggingTo & LOGTO_SCREEN ) != 0)
   {
+    int scrwidth = ASSUMED_SCREEN_WIDTH; /* assume this for consistancy */
     #ifdef ASSERT_WIDTH_80  //"show" where badly formatted lines are cropping up
-    //if (ConIsScreen())
+    //if (logstatics.stdoutisatty)
     {
-      // FIXME: !logstatics.stableflag and LogScreenRaw() can produce too long lines
-      int scrwidth = ASSUMED_SCREEN_WIDTH; /* assume this for consistancy */
       buffptr = &msgbuffer[0];
-      do 
-      {
+      do{
         while (*buffptr == '\r' || *buffptr == '\n' )
            buffptr++;
         obuffptr = buffptr;
@@ -564,51 +522,44 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
           buffptr = obuffptr+(scrwidth-1);
         }
       } while (*buffptr);
+      msglen = strlen( msgbuffer );
     }
     #endif
 
     buffptr = &msgbuffer[0];
-    msglen = strlen( msgbuffer );
-    if (logstatics.stableflag)      /* if cursor is in first column */
+    if ((loggingTo & LOGTO_RAWMODE)==0)
     {
-      while (*buffptr == '\r')      /* remove all leading '\r' */
+      if (logstatics.stableflag) /* previous print ended with '\n' */
       {
-        buffptr++;
-        msglen--;
-      }
-      if ((loggingMode & LOGTO_RAWMODE) == 0 && *buffptr == '\n')
-      {                             /* and the first '\n' if !RAWMODE */
-        buffptr++;
-        msglen--;
-        
-        while (*buffptr == '\r')    /* remove all leading '\r' */
+        if (*buffptr=='\n') /* remove extraneous leading '\n' */
         {
-          buffptr++;
           msglen--;
+          buffptr++;
         }
+      }    
+      else  /* a linefeed is pending */
+      {
+        if (*buffptr == '\r')  /* curr print expects to overwrites previous */
+        {                      /* so ensure the old line is clear */
+          memmove( &msgbuffer[scrwidth], msgbuffer, msglen+1 );
+          msglen += scrwidth;
+          memset( msgbuffer, ' ', scrwidth );
+          msgbuffer[0] = '\r';
+        }
+        else if (*buffptr!='\n') /* curr print expects to be on a newline */
+        {                        /* so ensure it is */
+          msglen++;
+          memmove( msgbuffer+1, msgbuffer, msglen );
+          msgbuffer[0] = '\n';
+          logstatics.stableflag = 1;
+        }  
       }
     }
-    else if (*buffptr == '\n')
+    if (msglen)
     {
-      //logstatics.stableflag = 1;
-    }
-    else if ((loggingMode != logstatics.last_screen_flags) || 
-             ((loggingMode & LOGTO_RAWMODE) == 0 && *buffptr != '\r'))
-      // cursor is not in first column and message has no leading '\n'
-      // modes have changed or concatenation in !RAWMODE not permitted 
-      //   -> add a newline before the message
-    {
-      msglen++;
-      memmove( msgbuffer+1, msgbuffer, msglen );
-      msgbuffer[0] = '\n';
-      //logstatics.stableflag = 1;
-    }
-
-    if (msglen > 0)
-    {
-      InternalLogScreen( buffptr, msglen, loggingMode);
+      logstatics.lastwasperc = 0; //perc bar looks for this
       logstatics.stableflag = ( buffptr[(msglen-1)] == '\n' );
-      logstatics.last_screen_flags = loggingMode;
+      InternalLogScreen( buffptr, msglen, 0 );
     }
   }
 
@@ -709,17 +660,14 @@ const char *LogGetCurrentLogFilename( void )
 void LogScreenPercent( unsigned int load_problem_count )
 {
   static unsigned int displevel = 0, lastperc = 0, batonpos = 0;
-  unsigned int percent, restartperc, endperc, equals, prob_i;
-  int istty, multiperc;
+  unsigned int percent, multiperc, restartperc, endperc, equals, prob_i;
   char ch; char batonchar; char buffer[88];
-  char *bufptr; unsigned char pbuf[30]; /* 'a'-'z' */
+  char *bufptr; unsigned char pbuf[52]; /* 'a'-'z','A'-'Z' */
 
   if (!logstatics.percprint || ( logstatics.loggingTo & LOGTO_SCREEN ) == 0 )
     return;
 
-  istty  = ConIsScreen();
   endperc = restartperc = 0;
-
   for (prob_i = 0; prob_i < load_problem_count; prob_i++)
   {
     Problem *selprob = GetProblemPointerFromIndex(prob_i);
@@ -745,21 +693,27 @@ void LogScreenPercent( unsigned int load_problem_count )
       if (percent && ((percent>90)?((percent&1)!=0):((percent&1)==0)))
         percent--;  /* make sure that it is visible */
     }
-    if (load_problem_count <= 26) /* a-z */
+    if (prob_i < sizeof(pbuf)) /* a-z,A-Z */
       pbuf[prob_i] = (unsigned char)(percent);
   }
 
-  if ((logstatics.last_screen_flags & LOGTO_PERCENTBAR) == 0 || istty)
+  if (!logstatics.lastwasperc || logstatics.stdoutisatty)
     lastperc = 0;
-  multiperc = (load_problem_count > 1 && load_problem_count <= 26 /*a-z*/
-                 && lastperc == 0 && istty && endperc < 100);
+  multiperc = 0;
+  if (load_problem_count > 1 && lastperc == 0 && 
+      logstatics.stdoutisatty && endperc < 100)
+  {
+    multiperc = load_problem_count;
+    if (multiperc > sizeof(pbuf))
+      multiperc = sizeof(pbuf);
+  }      
 
   batonchar = 0;                 
   bufptr = &buffer[0];
-  if (lastperc == 0 && endperc > 0 && istty )
+  if (lastperc == 0 && endperc > 0 && logstatics.stdoutisatty)
   {
     #ifndef NO_PERCENTOMATIC_BATON
-    if (endperc < 100 && logstatics.percbaton && !ConIsGUI()) 
+    if (endperc < 100 && logstatics.percbaton) 
     {/* not for macos or win GUI - window repaints are _expensive_ */
       const char batonchars[4] = {'|','/','-','\\'};
       batonchar = batonchars[(++batonpos) % sizeof(batonchars)];
@@ -788,14 +742,17 @@ void LogScreenPercent( unsigned int load_problem_count )
       if (multiperc)
       {
         equals = 0;
-        for ( prob_i=0; prob_i<load_problem_count; prob_i++ )
+        /* multiperc is min(load_problem_count,sizeof(pbuf)) */
+        for ( prob_i=0; prob_i < multiperc; prob_i++ )
         {
           if ( pbuf[prob_i] == (unsigned char)(percent) )
           {
             ch = (char)('a'+prob_i);
+            if (ch > 'z')
+              ch = (char)('A'+(prob_i-('z'-'a')));
             if ( (++equals)>displevel )
               break;
-          }
+          }    
         }
       }
       *bufptr++ = ch;
@@ -814,7 +771,7 @@ void LogScreenPercent( unsigned int load_problem_count )
   else
   {
     int doit = 1;
-    if ((logstatics.last_screen_flags & LOGTO_PERCENTBAR) != 0)
+    if (logstatics.lastwasperc)
     {
       static char lastbuffer[sizeof(buffer)] = {0};
       if ((doit = strcmp( lastbuffer, buffer )) != 0)
@@ -822,7 +779,9 @@ void LogScreenPercent( unsigned int load_problem_count )
     }
     if (doit)
     {
-      LogWithPointer( LOGTO_SCREEN|LOGTO_RAWMODE|LOGTO_PERCENTBAR, buffer, NULL );
+      LogWithPointer( LOGTO_SCREEN|LOGTO_RAWMODE, buffer, NULL );
+      logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0
+      logstatics.lastwasperc = 1; //(endperc != 0); //percbar requires reset
     }
   }
   return;
@@ -995,16 +954,19 @@ static int fixup_logfilevars( const char *stype, const char *slimit,
   return 0;
 }
 
-void InitializeLogging( int noscreen, int nopercent, const char *logfilename,
+void InitializeLogging( int noscreen, int nopercent, int nopercbaton,
+                        const char *logfilename,
                         const char *logfiletype, const char *logfilelimit,
                         long mailmsglen, const char *smtpsrvr,
                         unsigned int smtpport, const char *smtpfrom,
                         const char *smtpdest, const char *id )
 {
   DeinitializeLogging();
-  logstatics.percprint = (nopercent == 0);
-  logstatics.percbaton = (nopercent == 0 /*&& nobaton == 0 */);
   logstatics.spoolson = 1;
+  logstatics.stdoutisatty = ConIsScreen();
+  logstatics.percprint = (nopercent == 0);
+  logstatics.percbaton = (nopercent == 0 && nopercbaton == 0 && !ConIsGUI());
+             /* not for macos or win GUI - window repaints are _expensive_ */
 
   if ( noscreen == 0 )
   {
@@ -1035,3 +997,4 @@ void InitializeLogging( int noscreen, int nopercent, const char *logfilename,
 }
 
 // ---------------------------------------------------------------------------
+
