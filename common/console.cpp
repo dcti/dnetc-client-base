@@ -11,6 +11,10 @@
    to functions in modules in your own platform area.   - cyp
 */
 // $Log: console.cpp,v $
+// Revision 1.32  1999/01/19 09:46:48  patrick
+//
+// changed behaviour for OS2-EMX to be more *ix like, added some casts.
+//
 // Revision 1.31  1999/01/13 08:49:27  cramer
 // Removed the stdin isatty() check -- who gives a flip if stdin is a tty;
 // stdout is what matters. (Note: if rc5des is started from a script...)
@@ -118,7 +122,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.31 1999/01/13 08:49:27 cramer Exp $"; }
+return "@(#)$Id: console.cpp,v 1.32 1999/01/19 09:46:48 patrick Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -133,7 +137,7 @@ return "@(#)$Id: console.cpp,v 1.31 1999/01/13 08:49:27 cramer Exp $"; }
 
 #if !defined(NOTERMIOS) && ((CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) || \
     (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
-    || (CLIENT_OS==OS_FREEBSD))
+    || (CLIENT_OS==OS_FREEBSD) || defined(__EMX__))
 #include <termios.h>
 #define TERMIOS_IS_AVAILABLE
 #endif
@@ -178,7 +182,8 @@ int DeinitializeConsole(void)
       {
       #if (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S) || \
           ((CLIENT_OS==OS_WIN32) && (!defined(WIN32GUI))) || \
-          (CLIENT_OS==OS_NETWARE) || (CLIENT_OS==OS_OS2)
+          (CLIENT_OS==OS_NETWARE) || \
+          ( (CLIENT_OS==OS_OS2) && !defined (__EMX__) )
         {
         int init = 0;
         time_t endtime = (CliTimer(NULL)->tv_sec) + CONCLOSE_DELAY;
@@ -324,8 +329,9 @@ int ConOutErr(const char *msg)
   #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
     MessageBox( NULL, msg, CLICONS_LONGNAME, 
                  MB_OK | MB_TASKMODAL | MB_ICONSTOP /*MB_ICONERROR*/ );
-  #elif (CLIENT_OS == OS_OS2)
-     WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, msg, (PSZ)NULL,
+  #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
+     // this is definitly wrong !! (also only for PM)
+     WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, (PSZ)msg, (PSZ)NULL,
            CLICONS_LONGNAME, MB_OK | MB_APPLMODAL | MB_ERROR | MB_MOVEABLE );
   #elif (CLIENT_OS == OS_NETWARE)
     ConsolePrintf( "%s: %s\r\n", CLICONS_SHORTNAME, msg );
@@ -376,7 +382,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
           }
         }
       #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_NETWARE) || \
-         (CLIENT_OS == OS_OS2)
+         ( (CLIENT_OS == OS_OS2) && !defined(__EMX__) )
         {
         fflush(stdout);
         if (kbhit())
@@ -622,7 +628,8 @@ int ConGetPos( int *col, int *row )  /* zero-based */
     #elif (CLIENT_OS == OS_DOS)
     return dosCliConGetPos( col, row );
     #elif (CLIENT_OS == OS_OS2)
-    return ((VioGetCurPos( row, col, 0 /*handle*/) != 0)?(-1):(0));
+    return ((VioGetCurPos( (unsigned int)row, (unsigned int)col,
+                 0 /*handle*/) != 0)?(-1):(0));
     #else
     return ((row == NULL && col == NULL)?(0):(-1));
     #endif
