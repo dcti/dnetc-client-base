@@ -2394,10 +2394,11 @@ PreferredIsDone1:
       // ----------------
 
       SignalTriggered = 1; // will make other threads exit
-      LogScreen("Quitting...\n");
 
       #if defined(MULTITHREAD)
       {
+        LogScreen("Quitting...\n");
+
         // Wait for all threads to end...
         for (cpu_i = 0; cpu_i < numcputemp; cpu_i++)
         {
