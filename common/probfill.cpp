@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.44 1999/04/04 16:15:13 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.45 1999/04/08 12:44:26 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -93,173 +93,176 @@ int SetProblemLoaderFlags( const char *loaderflags_map )
 
 /* ----------------------------------------------------------------------- */
 
-
 static unsigned int __IndividualProblemSave( Problem *thisprob, 
                 unsigned int prob_i, Client *client, int *is_empty, 
                 unsigned load_problem_count, unsigned int *contest,
                 int *bufupd_pending, int unconditional_unload )
 {                    
-  WorkRecord wrdata;
-  int resultcode;
-  unsigned int cont_i;
   unsigned int norm_key_count = 0;
-  long longcount;
-  s32 cputype = client->cputype; /* needed for FILEENTRY_CPU macro */
-  #if (CLIENT_OS == OS_RISCOS)
-  if (prob_i == 1) cputype = CPU_X86; 
-  #endif
-  prob_i = prob_i; //get rid of warning
-
-  memset( (void *)&wrdata, 0, sizeof(WorkRecord));
-
   *contest = 0;
   *is_empty = 0;
 
   if ( thisprob->IsInitialized()==0 )  
   {
     *is_empty = 1; 
+    prob_i = prob_i; //get rid of warning
   }
-  else if (-1 == ( resultcode = 
-            thisprob->RetrieveState( &wrdata.work, &cont_i, 0 )))
+  else 
   {
-    *is_empty = 1;                  /* should not have happened */
-  }
-  else if (resultcode == RESULT_FOUND || resultcode == RESULT_NOTHING )
-  {
-    *contest = cont_i;
-    *is_empty = 1; /* will soon be */
+    WorkRecord wrdata;
+    int resultcode;
+    unsigned int cont_i;
+    s32 cputype = client->cputype; /* needed for FILEENTRY_CPU macro */
+    memset( (void *)&wrdata, 0, sizeof(WorkRecord));
+    resultcode = thisprob->RetrieveState( &wrdata.work, &cont_i, 0 );
+    #if (CLIENT_OS == OS_RISCOS)
+    if (prob_i == 1) cputype = CPU_X86; 
+    #endif
 
-
-    if (client->keyport == 3064)
+    if (resultcode == RESULT_FOUND || resultcode == RESULT_NOTHING )
     {
-      LogScreen("Test success was %sdetected!\n",
-         (wrdata.resultcode == RESULT_NOTHING ? "not" : "") );
-    }
+      long longcount;
+      *contest = cont_i;
+      *is_empty = 1; /* will soon be */
 
-    wrdata.contest = (u8)(cont_i);
-    wrdata.resultcode = resultcode;
-    wrdata.os      = CLIENT_OS;
-    wrdata.cpu     = (u8)cputype;
-    wrdata.buildhi = CLIENT_CONTEST;
-    wrdata.buildlo = CLIENT_BUILD;
-    strncpy( wrdata.id, client->id , sizeof(wrdata.id));
-    wrdata.id[sizeof(wrdata.id)-1]=0;
-
-    // send it back... error messages is printed by PutBufferRecord
-    if ( (longcount = client->PutBufferRecord( &wrdata )) >= 0)
-    {
-      //---------------------
-      // update the totals for this contest
-      //---------------------
-      if ((unsigned long)(longcount) >= (unsigned long)(client->outthreshold[*contest]))
-        *bufupd_pending |= BUFFERUPDATE_FLUSH;
-
-      if (load_problem_count <= COMBINEMSG_THRESHOLD)
+      if (client->keyport == 3064)
       {
-        Log( CliGetMessageForProblemCompleted( thisprob ) );
+        LogScreen("Test success was %sdetected!\n",
+           (wrdata.resultcode == RESULT_NOTHING ? "not" : "") );
       }
-      else /* stop the log file from being cluttered with load/save msgs */
-      {
-        CliGetKeyrateForProblem( thisprob ); //add to totals
-      }
+
+      wrdata.contest = (u8)(cont_i);
+      wrdata.resultcode = resultcode;
+      wrdata.os      = CLIENT_OS;
+      wrdata.cpu     = (u8)cputype;
+      wrdata.buildhi = CLIENT_CONTEST;
+      wrdata.buildlo = CLIENT_BUILD;
+      strncpy( wrdata.id, client->id , sizeof(wrdata.id));
+      wrdata.id[sizeof(wrdata.id)-1]=0;
+
       switch (cont_i) 
       {
         case 0: // RC5
         case 1: // DES
+        {
           norm_key_count = 
-            (unsigned int)__iter2norm( wrdata.work.crypto.iterations.lo,
-                                       wrdata.work.crypto.iterations.hi );
+             (unsigned int)__iter2norm( (wrdata.work.crypto.iterations.lo),
+                                      (wrdata.work.crypto.iterations.hi) );
           if (norm_key_count == 0) /* test block */
             norm_key_count = 1;
           break;
-        case 2: //OGR
+        }
+        case 2: // OGR
+        {
           norm_key_count = 1;
           break;
+        }
       }
+      
+      // send it back... error messages is printed by PutBufferRecord
+      if ( (longcount = client->PutBufferRecord( &wrdata )) >= 0)
+      {
+        //---------------------
+        // update the totals for this contest
+        //---------------------
+        if ((unsigned long)(longcount) >= (unsigned long)(client->outthreshold[*contest]))
+          *bufupd_pending |= BUFFERUPDATE_FLUSH;
 
+        if (load_problem_count <= COMBINEMSG_THRESHOLD)
+        {
+          Log( CliGetMessageForProblemCompleted( thisprob ) );
+        }
+        else /* stop the log file from being cluttered with load/save msgs */
+        {
+          CliGetKeyrateForProblem( thisprob ); //add to totals
+        }
+      }
       ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, (long)prob_i );
     }
+    else if (unconditional_unload || resultcode < 0 /* core error */ ||
+      (thisprob->loaderflags & (PROBLDR_DISCARD|PROBLDR_FORCEUNLOAD)) != 0) 
+    {                           
+      unsigned long percent = 0;
+      char workunit[80];
+      const char *msg = NULL;
 
-    //event posted, keyrate computed, we can purge the object now
-    thisprob->RetrieveState( NULL, NULL, 1 );
-  } 
-  else if (unconditional_unload || 
-    (thisprob->loaderflags & (PROBLDR_DISCARD|PROBLDR_FORCEUNLOAD)) != 0) 
-  {                                       /* must be RESULT_WORKING */
-    const char *msg = NULL;
-    char workunit[80];
-    unsigned long percent = 0;
+      *contest = cont_i;
+      *is_empty = 1; /* will soon be */
 
-    *contest = cont_i;
-    *is_empty = 1; /* will soon be */
+      wrdata.contest    = (u8)cont_i;
+      wrdata.resultcode = resultcode;
+      wrdata.cpu        = FILEENTRY_CPU; /* uses cputype variable */
+      wrdata.os         = FILEENTRY_OS;
+      wrdata.buildhi    = FILEENTRY_BUILDHI; 
+      wrdata.buildlo    = FILEENTRY_BUILDLO;
 
-    wrdata.contest    = (u8)cont_i;
-    wrdata.resultcode = resultcode;
-    wrdata.cpu        = FILEENTRY_CPU; /* uses cputype variable */
-    wrdata.os         = FILEENTRY_OS;
-    wrdata.buildhi    = FILEENTRY_BUILDHI; 
-    wrdata.buildlo    = FILEENTRY_BUILDLO;
-
-    switch (cont_i) 
-    {
-      case 0: // RC5
-      case 1: // DES
+      switch (cont_i) 
       {
-        percent = (u32) (((double)(10000.0)) *
-        (((((double)(wrdata.work.crypto.keysdone.hi))*((double)(4294967296.0)))+
-                                 ((double)(wrdata.work.crypto.keysdone.lo))) /
-        ((((double)(wrdata.work.crypto.iterations.hi))*((double)(4294967296.0)))+
-                                 ((double)(wrdata.work.crypto.iterations.lo)))) );
-
-        norm_key_count = 
-           (unsigned int)__iter2norm( (wrdata.work.crypto.iterations.lo),
+        case 0: // RC5
+        case 1: // DES
+        {
+          percent = (u32) (((double)(10000.0)) *
+          (((((double)(wrdata.work.crypto.keysdone.hi))*((double)(4294967296.0)))+
+                                   ((double)(wrdata.work.crypto.keysdone.lo))) /
+          ((((double)(wrdata.work.crypto.iterations.hi))*((double)(4294967296.0)))+
+                                   ((double)(wrdata.work.crypto.iterations.lo)))) );
+          norm_key_count = 
+             (unsigned int)__iter2norm( (wrdata.work.crypto.iterations.lo),
                                       (wrdata.work.crypto.iterations.hi) );
-        if (norm_key_count == 0) /* test block */
+          if (norm_key_count == 0) /* test block */
+            norm_key_count = 1;
+          sprintf(workunit, "%08lX:%08lX", 
+  	(long) ( wrdata.work.crypto.key.hi ),
+  	(long) ( wrdata.work.crypto.key.lo ) );
+          break;
+        }
+        case 2: // OGR
+        {
           norm_key_count = 1;
-        sprintf(workunit, "%08lX:%08lX", 
-		(long) ( wrdata.work.crypto.key.hi ),
-		(long) ( wrdata.work.crypto.key.lo ) );
-        break;
+          strcpy(workunit, ogr_stubstr(&wrdata.work.ogr.stub));
+          break;
+        }
       }
-      case 2: // OGR
+      
+      if ((thisprob->loaderflags & PROBLDR_DISCARD)!=0)
       {
-        norm_key_count = 1;
-        strcpy(workunit, ogr_stubstr(&wrdata.work.ogr.stub));
-        break;
+        msg = "Discarded (project disabled/closed)";
+        norm_key_count = 0;
+	percent = 0;
       }
-    }
-
-    if ((thisprob->loaderflags & PROBLDR_DISCARD)!=0)
-    {
-      msg = "Discarded (project disabled)";
-      norm_key_count = 0;
-    }
-    else if (client->PutBufferRecord( &wrdata ) < 0)  // send it back...
-    {
-      msg = "Unable to save";
-      norm_key_count = 0;
-    }
-    else
-    {
-      if (client->nodiskbuffers)
-        *bufupd_pending |= BUFFERUPDATE_FLUSH;
-      if (load_problem_count <= COMBINEMSG_THRESHOLD)
-        msg = "Saved";
-    }
-    if (msg)
-    {
-      Log( "%s packet %s (%d.%02d%% complete)\n", msg, workunit,
-            (unsigned int)(percent/100), (unsigned int)(percent%100) );
-    }
-
-    //no event for this, we can purge the object now
-    thisprob->RetrieveState( NULL, NULL, 1 );
-
-  } /* unconditional unload */
+      else if (resultcode < 0)
+      {
+        msg = "Discarded (core error)";
+        norm_key_count = 0;
+	percent = 0;
+      }
+      else if (client->PutBufferRecord( &wrdata ) < 0)  // send it back...
+      {
+        msg = "Unable to save";
+        norm_key_count = 0;
+	percent = 0;
+      }
+      else
+      {
+        if (client->nodiskbuffers)
+          *bufupd_pending |= BUFFERUPDATE_FLUSH;
+        if (load_problem_count <= COMBINEMSG_THRESHOLD)
+          msg = "Saved";
+      }
+      if (msg)
+      {
+        Log( "%s packet %s%c(%d.%02d%% complete)\n", msg, workunit,
+	      ((percent == 0)?('\0'):(' ')),
+              (unsigned int)(percent/100), (unsigned int)(percent%100) );
+      }
+    } /* unconditional unload */
+    
+    if (*is_empty) /* we can purge the object now */
+      thisprob->RetrieveState( NULL, NULL, 1 );
+  }
 
   return norm_key_count;
 }
-
 
 /* ----------------------------------------------------------------------- */
 
