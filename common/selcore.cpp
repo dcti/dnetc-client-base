@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.117 2001/05/19 19:03:20 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.118 2001/05/19 22:04:21 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -160,10 +160,16 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "GARSP 5.13 PPC-vector", /* altivec only */
       NULL
     },
-  #elif (CLIENT_CPU == CPU_SPARC) && (CLIENT_OS == OS_LINUX)
+  #elif (CLIENT_CPU == CPU_SPARC)
     { /* RC5 */
-      "Ultrasparc RC5 core",
-      "Generic RC5 core",
+      #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))
+        "Ultrasparc RC5 core",
+      #elif (CLIENT_OS == OS_LINUX)
+        "Ultrasparc RC5 core",
+        "Generic RC5 core",
+      #else
+        "Generic RC5 core",
+      #endif
       NULL
     },
     { /* DES */
