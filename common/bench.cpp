@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: bench.cpp,v $
+// Revision 1.7  1998/12/08 05:29:45  dicamillo
+// MacOS updates for timeslice and GUI display
+//
 // Revision 1.6  1998/10/26 04:15:31  cyp
 // Replaces use of the IS_A_TTY() macro with a call to ConIsScreen()
 //
@@ -30,7 +33,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.6 1998/10/26 04:15:31 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.7 1998/12/08 05:29:45 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -98,7 +101,10 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
     tslice = GetTimesliceBaseline(); //in cpucheck.cpp
   #endif
 
-
+  #if (CLIENT_OS == OS_MACOS)
+    tslice = GetTimesliceToUse(contestid);
+  #endif
+  
   contestwork.key.lo = htonl( 0 );
   contestwork.key.hi = htonl( 0 );
   contestwork.iv.lo = htonl( 0 );
@@ -122,6 +128,17 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
   sm4 = ((cm3)?(""):("\n"));
   run = 0;
 
+  #if (CLIENT_OS == OS_MACOS)
+    // fixup log window display
+    LogScreenRaw( "%c", '\n');
+    cm1 = cm3;
+    // start rate timing from now
+    #if defined(MAC_GUI)    
+    UpdateThreadProgress(0, 0, 0, true );
+    UpdateClientInfo(&client_info);
+	#endif
+  #endif
+
   do{
     if ( CheckExitRequestTriggerNoIO() )
       {
@@ -135,6 +152,12 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
         sm4 = ((problem.percent == 101)?(" *Break* \n"):("             \n"));
         cm2 = 0;
         }
+
+	  #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
+		UpdateThreadProgress(0, problem.percent, problem.GetKeysDone(), true );
+		UpdateClientInfo(&client_info);
+	  #endif
+
       LogScreenRaw( sm0, cm1, contestname, itersize+keycountshift,
           (unsigned int)(1<<(itersize+keycountshift)), sm4, cm2, 
           (unsigned int)(problem.percent) );
@@ -174,6 +197,15 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
   CliTimerDiff( &tv, &tv, NULL );    //get the elapsed time
   LogScreenRaw("Completed in %s [%skeys/sec]\n",  CliGetTimeString( &tv, 2 ),
                     CliGetKeyrateAsString( ratestr, rate ) );
+
+  #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
+    {
+    char smsg[128];
+    char *contestname[2] = {"RC5", "DES"};
+    sprintf(smsg, "%s benchmark: %.0fKkeys/sec", contestname[contest], rate/1000.0);
+    SetStatusMessage(smsg);
+    }
+  #endif
 
   itersize+=keycountshift;
   while ((tv.tv_sec<(60*60) && itersize<31) || (itersize < 28))
