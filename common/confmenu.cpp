@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.33  1999/03/18 06:06:44  cyp
+// fixed: threshold and preferred packet size are nodiskbuffers dependancies,
+// and not of offlinemode.
+//
 // Revision 1.32  1999/03/18 03:32:57  cyp
 // This module is now OGR ready. Moved base64 routines to base64.cpp so that
 // Client::Configure() does not have to be a virtual method for !cli clients.
@@ -128,7 +132,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.32 1999/03/18 03:32:57 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.33 1999/03/18 06:06:44 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -442,11 +446,9 @@ int Client::Configure( void )
           conf_options[CONF_RC5OUT].optionscreen=
           conf_options[CONF_DESOUT].optionscreen=
           conf_options[CONF_CHECKPOINT].optionscreen=
-                      ((nodiskbuffers != 0)?(0):(CONF_MENU_BUFF));
-
           conf_options[CONF_PREFERREDBLOCKSIZE].optionscreen=
           conf_options[CONF_THRESHOLDI].optionscreen= 
-                      ((offlinemode)?(0):(CONF_MENU_BUFF));
+                      ((nodiskbuffers != 0)?(0):(CONF_MENU_BUFF));
           }
         else if (whichmenu == CONF_MENU_LOG)
           {
