@@ -1,10 +1,19 @@
 // Hey, Emacs, this a -*-C++-*- file !
 
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
 // $Log: network.h,v $
+// Revision 1.40.2.4  1999/01/04 02:16:26  remi
+// Synced with :
+//
+//  Revision 1.47  1999/01/02 07:18:23  dicamillo
+//  Add ctype.h for BeOS.
+//
+//  Revision 1.46  1999/01/01 02:45:16  cramer
+//  Part 1 of 1999 Copyright updates...
+//
 // Revision 1.40.2.3  1998/12/28 15:49:10  remi
 // Synced with :
 //  Revision 1.44  1998/12/24 05:19:55  dicamillo
@@ -154,6 +163,7 @@ extern "C" {
   #include <unistd.h>
   #include <fcntl.h>
   #include <netdb.h>
+  #include <ctype.h>
   typedef int SOCKET;
   #define write(sock, buff, len) send(sock, (unsigned char*)buff, len, 0)
   #define read(sock, buff, len) recv(sock, (unsigned char*)buff, len, 0)
