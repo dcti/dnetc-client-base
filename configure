@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.12 1999/07/01 17:23:15 chrisb Exp $
+# @(#)$Id: configure,v 1.222.2.13 1999/07/14 15:53:25 ivo Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -508,6 +508,7 @@ case "$1" in
 	;;
 
     *sparc-cc)
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
 	TARGET_CC="cc"
 	TARGET_CCFLAGS="$OPTS_CC_SPARC -DPIPELINE_COUNT=1"
@@ -516,12 +517,14 @@ case "$1" in
 
     *sunos-gcc-static)	
 	# FIX THIS
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -DPIPELINE_COUNT=2"
 	TARGET_LIBS="-static"
 	;;
 
     *sun3-gcc)
+        DELETECHARS="'/.\$\-'"
 	TARGET_CCFLAGS="$OPTS_GCC_SUN68K -DPIPELINE_COUNT=1 \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/crunch.sun68k.gcc.s"
@@ -544,50 +547,54 @@ case "$1" in
     #####
 
     *sparc-solaris-gcc-mt)	# slower rc5, slower des
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
-			-DMULTITHREAD -DPIPELINE_COUNT=2 \
+			-DMULTITHREAD \
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
 	;;
 
     *sparc-solaris-gcc-crunch-mt)    # fastest rc5, slower des
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
-			-DMULTITHREAD -DPIPELINE_COUNT=2 \
+			-DMULTITHREAD \
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN"
 	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
 	;;
 
     *sparc-solaris-gcc-crunch-slice)   # fastest rc5 & des for ultra
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
 	TARGET_CC="gcc -pipe"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
-			-DPIPELINE_COUNT=2 \
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lnsl -lsocket -ldl"
 	;;
 
     *sparc-solaris-gcc-crunch-slice-mt)   # fastest rc5 & des for ultra
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
 	TARGET_CC="gcc -pipe"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
-			-DMULTITHREAD -DPIPELINE_COUNT=2 \
+			-DMULTITHREAD \
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
 	;;
 
     *sparc-solaris-gcc-crunch-asmslice-mt)   # fastest rc5 & VIS DES
+        DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
 	TARGET_CC="gcc -pipe"
 	TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris \
-			-DMULTITHREAD -DPIPELINE_COUNT=2 -DULTRA_CRUNCH=1"
+			-DMULTITHREAD -DULTRA_CRUNCH=1"
 	TARGET_ADDSRCS="$DESULTRA_SRCS_ASM"
  	TARGET_ADDASMS="des/ultrasparc/simple.handopt.s"
 	TARGET_ASFLAGS="$OPTS_AS_ULTRA"
