@@ -1,11 +1,16 @@
-/* Created by Oliver Roberts <oliver@futaura.co.uk>
-**
-** $Id: amSupport.c,v 1.1.2.3 2001/03/19 19:18:19 oliver Exp $
-**
-** ----------------------------------------------------------------------
-** This file contains general Amiga specific support code, including
-** startup initializations.
-** ----------------------------------------------------------------------
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * $Id: amSupport.c,v 1.1.2.4 2002/04/11 11:54:56 oliver Exp $
+ *
+ * Created by Oliver Roberts <oliver@futaura.co.uk>
+ *
+ * ----------------------------------------------------------------------
+ * This file contains general Amiga specific support code, including
+ * startup initializations.
+ * ----------------------------------------------------------------------
 */
 
 /*
@@ -19,19 +24,23 @@
 
 #include "amiga.h"
 #include "sleepdef.h"
+#include "modereq.h"
 
+#ifdef __PPC__
+#pragma pack(2)
+#endif
+
+#include <workbench/startup.h>
 #include <proto/locale.h>
 #include <proto/timer.h>
+#include "proto/dnetcgui.h"
 
-#ifndef __PPC__ /* for 68K only */
-#ifdef __SASC
-long __near __stack  = 65536L;
-#else
-unsigned long __stack = 65536L;
-#endif
+#ifdef __PPC__
+#pragma pack()
 #endif
 
 #ifndef __PPC__
+unsigned long __stack = 65536L;
 static struct MsgPort *TriggerPort;
 #else
 #ifdef CHANGE_MIRROR_TASK_PRI
@@ -54,7 +63,7 @@ struct TriggerMessage
 extern BOOL GlobalTimerInit(VOID);
 extern VOID GlobalTimerDeinit(VOID);
 extern VOID CloseTimer(VOID);
-extern struct Device *OpenTimer(VOID);
+struct Device *OpenTimer(BOOL isthread);
 extern struct Library *SocketBase;
 
 const char *amigaGetOSVersion(void)
@@ -73,7 +82,7 @@ const char *amigaGetOSVersion(void)
    return osver[ver];
 }
 
-int amigaInit(void)
+int amigaInit(int *argc, char **argv[])
 {
    int done = TRUE;
 
@@ -181,11 +190,42 @@ int amigaInit(void)
 
    if (!done) amigaExit();
 
+   #ifndef NOGUI
+   /* Workbench startup */
+   if (done && *argc == 0) {
+      struct WBStartup *wbs = (struct WBStartup *)*argv;
+      struct WBArg *arg = wbs->sm_ArgList;
+      static char /*cmdname[256],*/ *newargv[1] = { (char *)arg->wa_Name };
+
+      //NameFromLock(wbs->sm_ArgList->wa_Lock,cmdname,256);
+      //AddPart(cmdname,wbs->sm_ArgList->wa_Name,256);
+
+      *argc = 1;
+      *argv = newargv;
+
+      if (wbs->sm_NumArgs > 1) {
+         /* Started via a project icon */
+         arg = &wbs->sm_ArgList[1];
+      }
+
+      if (!(amigaGUIInit((char *)wbs->sm_ArgList->wa_Name,arg))) {
+         if (!(amigaOpenNewConsole("CON:////distributed.net client/CLOSE/WAIT"))) {
+            done = FALSE;
+         }
+      }
+   }
+   #endif
+
    return(done);
 }
 
 void amigaExit(void)
 {
+   #ifndef NOGUI
+   amigaCloseNewConsole();
+   amigaGUIDeinit();
+   #endif
+
    GlobalTimerDeinit();
    CloseLibrary((struct Library *)LocaleBase);
    CloseLibrary(SocketBase); // ensure something hasn't left this open
@@ -230,7 +270,7 @@ void amigaExit(void)
 
 int amigaThreadInit(void)
 {
-   return (OpenTimer() != NULL);
+   return (OpenTimer(TRUE) != NULL);
 }
 
 void amigaThreadExit(void)
@@ -240,39 +280,50 @@ void amigaThreadExit(void)
 
 ULONG amigaGetTriggerSigs(void)
 {
-   ULONG trigs = 0;
+   ULONG trigs = 0, sigr;
 
-   if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C ) trigs |= DNETC_MSG_SHUTDOWN;
-   if (TriggerPort) {
-      #ifndef __PPC__
-      /*
-      ** 68K
-      */
+   sigr = SetSignal(0L,0L);
+
+   if ( sigr & SIGBREAKF_CTRL_C ) trigs |= DNETC_MSG_SHUTDOWN;
+
+   #ifndef NOGUI
+   if ( DnetcBase && ModeReqIsSet(-1) ) trigs |= dnetcguiHandleMsgs(sigr);
+   #endif
+
+   #ifndef __PPC__
+   /*
+   ** 68K
+   */
+   if ( TriggerPort && sigr & 1L << TriggerPort->mp_SigBit ) {
       struct TriggerMessage *msg;
       while ((msg = (struct TriggerMessage *)GetMsg(TriggerPort))) {
          trigs |= msg->tm_TriggerType;
          ReplyMsg((struct Message *)msg);
       }
-      #elif !defined(__POWERUP__)
-      /*
-      ** WarpOS
-      */
+   }
+   #elif !defined(__POWERUP__)
+   /*
+   ** WarpOS
+   */
+   if ( TriggerPort && sigr & 1L << TriggerPort->mp_Port.mp_SigBit ) {
       struct TriggerMessage *msg;
       while ((msg = (struct TriggerMessage *)GetMsgPPC(TriggerPort))) {
          trigs |= msg->tm_TriggerType;
          ReplyMsgPPC((struct Message *)msg);
       }
-      #else
-      /*
-      ** PowerUp
-      */
+   }
+   #else
+   /*
+   ** PowerUp
+   */
+   {
       void *msg;
       while ((msg = PPCGetMessage(TriggerPort))) {
          trigs |= PPCGetMessageAttr(msg,PPCMSGTAG_MSGID);
          PPCReplyMessage(msg);
       }
-      #endif
    }
+   #endif
 
    return(trigs);
 }
@@ -396,7 +447,9 @@ char *strncpy(char *d, const char *s, size_t n)
 */
 #include <sys/types.h>
 #include <sys/stat.h>
+#pragma pack(2)
 #include <dos/dosextens.h>
+#pragma pack()
 
 __BEGIN_DECLS
 extern void __seterrno(void);
@@ -422,4 +475,149 @@ int chmod(const char *name, mode_t mode)
                               
   return ret;
 }
+
+/*
+** libnix startup code doesn't support Workbench - this does
+** (thanks to Peter Annuss <paladin@cs.tu-berlin.de>)
+*/
+extern int    __argc; /* Defined in startup */
+extern char **__argv;
+extern char  *__commandline;
+extern unsigned long __commandlen;
+extern struct WBStartup *_WBenchMsg;
+
+extern char __stdiowin[];
+
+static char *cline=NULL; /* Copy of commandline */
+
+static BPTR cd=0;       /* Lock for Current Directory */
+static BPTR window=0;   /* CLI-window for start from workbench */
+static BPTR input=0, output=0;
+
+/* This guarantees that this module gets linked in.
+   If you replace this by an own reference called
+   __nocommandline you get no commandline arguments */
+
+asm(".section	\".text\"\n\t.align 2\n\t.globl __nocommandline\n\t.type\t __nocommandline,@function\n__nocommandline:\n");
+void __nocommandline(void)
+{
+    struct WBStartup *wbs=_WBenchMsg;
+
+    if (wbs!=NULL)
+    {
+      if(__stdiowin[0])
+      { BPTR win;
+
+        if((window=win=PPCOpen(__stdiowin,MODE_OLDFILE))==0l)
+          exit(RETURN_FAIL);
+        input = SelectInput(win);
+        output = SelectOutput(win);
+      }
+
+      if(wbs->sm_ArgList!=NULL) /* cd to icon */
+        cd=CurrentDir(DupLock(wbs->sm_ArgList->wa_Lock));
+
+      __argc=0;
+      __argv=(char **)wbs;
+    }
+    else
+    {
+      char **av,*a,*cl=__commandline;
+      size_t i=__commandlen;
+      int ac;
+
+      if(!(cline=(char *)PPCAllocVec(i+1,MEMF_ANY))) /* get buffer */
+        exit(RETURN_FAIL);
+  
+      for(a=cline,ac=1;;) /* and parse commandline */
+      {
+        while(i&&(*cl==' '||*cl=='\t'||*cl=='\n'))
+        { cl++;
+          i--; }
+        if(!i)
+          break;
+        if(*cl=='\"')
+        {
+          cl++;
+          i--;
+          while(i)
+          {
+            if(*cl=='\"')
+            {
+              cl++;
+              i--;
+              break;
+            }
+            if(*cl=='*')
+            {
+              cl++;
+              i--;
+              if(!i)
+                break;
+            }
+            *a++=*cl++;
+            i--;
+          }
+        }
+        else
+          while(i&&(*cl!=' '&&*cl!='\t'&&*cl!='\n'))
+          { *a++=*cl++;
+            i--; }
+        *a++='\0';
+        ac++;
+      }
+        /* NULL Terminated */
+      if(!(__argv=av=(char **)PPCAllocVec(((__argc=ac-1)+1)*sizeof(char *),MEMF_ANY|MEMF_CLEAR)))
+        exit(RETURN_FAIL);
+
+      for(a=cline,i=1;i<ac;i++)
+      { 
+        av[i-1]=a;
+        while(*a++)
+          ; 
+      }
+    }
+}
+
+asm(".section	\".text\"\n\t.align 2\n\t.globl __exitcommandline\n\t.type\t __exitcommandline,@function\n__exitcommandline:\n");
+void __exitcommandline(void)
+{
+  struct WBStartup *wbs=_WBenchMsg;
+
+  if (wbs!=NULL)
+  { BPTR file;
+    if((file=window)!=0) {
+      SelectOutput(output);
+      SelectInput(input);
+      PPCClose(file);
+    }
+    if(wbs->sm_ArgList!=NULL) { // set original lock
+      UnLock(CurrentDir(cd));
+    }
+  }
+  else
+  {
+    char *cl=cline;
+
+    if(cl!=NULL)
+    { char **av=__argv;
+
+      if(av!=NULL)
+      { 
+        PPCFreeVec(av);
+      }
+      PPCFreeVec(cl);
+    }
+  }
+}
+  
+/* Add these two functions to the lists */
+#define ADD2INIT(a,pri) asm(".section .init"); \
+                        asm(" .long .text+(" #a "-.text); .long 0x58")
+#define ADD2EXIT(a,pri) asm(".section .fini"); \
+                        asm(" .long .text+(" #a "-.text); .long 0x58")
+
+ADD2INIT(__nocommandline,-40);
+ADD2EXIT(__exitcommandline,-40);
+
 #endif /* defined(__PPC__) && defined(__POWERUP__) */
