@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.70  1998/07/03 23:13:55  remi
+// Fix the pause file bug in non-multithreaded clients.
+//
 // Revision 1.69  1998/07/02 13:09:25  kbracey
 // A couple of RISC OS fixes - printf format specifiers made long.
 // Changed a "blocks" to "block%s", n==1?"":"s".
@@ -99,7 +102,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.69 1998/07/02 13:09:25 kbracey Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.70 1998/07/03 23:13:55 remi Exp $";
 #endif
 
 #include "client.h"
@@ -2166,7 +2169,6 @@ PreferredIsDone1:
       #elif (CLIENT_OS != OS_DOS)
         sleep(1);
       #endif
-        continue; //go back to top and check the keyboard for release
     }
     else //only one problem and we are not paused
     {
@@ -2192,6 +2194,7 @@ PreferredIsDone1:
     //now check all problems for change, do checkpointing, reloading etc
     //------------------------------------
 
+    if (load_problem_count > 1 || !pausefilefound)
     for (cpu_i = 0; ((!SignalTriggered) && (cpu_i < load_problem_count)); cpu_i++)
     {
       // -------------
