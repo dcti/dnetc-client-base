@@ -8,25 +8,16 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.1.2.11 2001/01/29 05:03:52 cyp Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.1.2.12 2001/01/31 05:11:26 cyp Exp $"; }
 
 #include "cputypes.h"
-#include "cpucheck.h" //GetNumberOfDetectedProcessors()
 #include "client.h"   //client class
 #include "baseincs.h" //basic #includes
 #include "util.h"     //trace
-#include "clievent.h" //event stuff
-#include "clicdata.h" //GetContestNameFromID()
 #include "logstuff.h" //Log()/LogScreen()/LogScreenPercent()/LogFlush()
-#include "triggers.h" //[Check|Raise][Pause|Exit]RequestTrigger()
-#include "pathwork.h" //GetFullPathForFilename() or dummy if DONT_USE_PATHWORK
+#include "pathwork.h" //GetFullPathForFilename()
 #include "problem.h"  //Resultcode enum
-#include "probfill.h"
 #include "buffupd.h"  // BUFFERUPDATE_FETCH / BUFFERUPDATE_FLUSH
-#include "sleepdef.h" // usleep()
-#include "random.h"   //Random()
-#include "version.h"  //needed by FILEENTRY_x macros
-#include "probfill.h" //FILEENTRY_x macros
 #include "buffbase.h" //the functions we're intending to export.
 
 /* --------------------------------------------------------------------- */
@@ -139,7 +130,9 @@ static FILE *BufferOpenFile( const char *filename, unsigned long *countP )
     return NULL;
   }
   if (countP)
+  {
     *countP = (filelen / sizeof(WorkRecord));
+  }    
   return file;
 }
 
@@ -158,10 +151,25 @@ static int BufferCloseFile( FILE *file )
 // with the same operation on both little-endian and big-endian
 // machines (only on PDP machines does this assumption fail).
 
-static void  __switchborder( WorkRecord *dest, const WorkRecord *source )
+static void  __switchborder( WorkRecord *dest, const WorkRecord *source,
+                             int from_disk /* going net->host */ )
 {
   if (((const WorkRecord *)dest) != source )
     memcpy( (void *)dest, (const void *)source, sizeof(WorkRecord));
+
+  dest->id[sizeof(dest->id)-1] = '\0';
+  if (from_disk)
+  {
+    #if (CLIENT_OS == OS_OS390)
+    __atoe(dest->id);
+    #endif
+  }
+  else
+  {
+    #if (CLIENT_OS == OS_OS390)
+    __etoa(dest->id);
+    #endif
+  }
 
   switch (dest->contest)
   {
@@ -216,41 +224,55 @@ int BufferNetUpdate(Client *client,int updatereq_flags, int break_pending,
 
 /* --------------------------------------------------------------------- */
 
+/* on failure returns -1, else 0 */
 int BufferPutFileRecord( const char *filename, const WorkRecord * data,
                          unsigned long *countP )
 {
   unsigned long reccount;
   FILE *file = BufferOpenFile( filename, &reccount );
-  int failed = -1;
+  long count = -1L;
   if ( file )
   {
-    unsigned long recno = 0;
+    unsigned long recno = 0, writerec = reccount;
     WorkRecord blank, scratch;
     memset( (void *)&blank, 0, sizeof(blank) );
-    failed = 0;
+    count = 0;
+
     if ( fseek( file, 0, SEEK_SET ) != 0)
-      failed = -1;
-    while (!failed && recno < reccount)
+      count = -1L;
+    while (count >= 0 && recno < reccount)
     {
       if ( fread( (void *)&scratch, sizeof(WorkRecord), 1, file ) != 1)
-        failed = -1;
-      else if ( 0 == memcmp( (void *)&scratch, (void *)&blank, sizeof(WorkRecord)))
-        break; /* blank record, write here */
+        count = -1L;
+      else if ( 0 != memcmp( (void *)&scratch, (void *)&blank, sizeof(WorkRecord)))
+        count++;
+      else /* blank record. write here */	
+      {
+        writerec = recno; /* blank record, write here */
+	if (!countP) /* don't need to count to the end */
+	  break;
+      }	  
       recno++;
     }
-    if (!failed)
+    if (count >= 0)
     {
-      failed = -1;
-      __switchborder( &scratch, data );
-      if ( fseek( file, (recno * sizeof(WorkRecord)), SEEK_SET ) == 0 &&
-                fwrite( (void *)&scratch, sizeof(WorkRecord), 1, file ) == 1 )
-        failed = 0;
+      __switchborder( &scratch, data, 0 /* going host->net order */ );
+      if (fseek( file, (writerec * sizeof(WorkRecord)), SEEK_SET ) != 0)
+        count = -1L;
+      else if (fwrite( (void *)&scratch, sizeof(WorkRecord), 1, file ) != 1)
+        count = -1L;
+      else	
+        count++;
     }
     BufferCloseFile( file );
   }
-  if (!failed && countP)
-    BufferCountFileRecords( filename, data->contest, countP, NULL );
-  return failed;
+  if (count != -1L)
+  {
+    if (countP) 
+      *countP = count;
+    return 0;
+  }
+  return -1;
 }
 
 /* --------------------------------------------------------------------- */
@@ -260,45 +282,45 @@ int BufferGetFileRecordNoOpt( const char *filename, WorkRecord * data,
 {
   unsigned long reccount = 0;
   FILE *file = BufferOpenFile( filename, &reccount );
-  int failed = -1;
+  int rc = -1;
   if ( file )
   {
-    unsigned long recno = 0;
+    unsigned long recno = 0, blanked = 0;
     WorkRecord blank, scratch;
     memset( (void *)&blank, 0, sizeof(blank) );
-    failed = 0;
+    rc = +1; /* assume no records */
     if ( fseek( file, 0, SEEK_SET ) != 0)
-      failed = -1;
-    while (!failed && recno < reccount)
+      rc = -1;
+    while (rc > 0 && recno < reccount)
     {
       if ( fread( (void *)&scratch, sizeof(WorkRecord), 1, file ) != 1)
-        failed = -1;
+        rc = -1;
       else if ( 0 == memcmp( (void *)&scratch, (void *)&blank, sizeof(WorkRecord)) )
-        ; /* blank record, ignore it */
+        blanked++; /* blank record, ignore it */
       else if ( fseek( file, (recno * sizeof(WorkRecord)), SEEK_SET ) != 0)
-        failed = -1;
+        rc = -1;
       else if ( fwrite( (void *)&blank, sizeof(WorkRecord), 1, file ) != 1)
-        failed = -1;
+        rc = -1;
       else
+      {
+        blanked++;
+        __switchborder( data, &scratch, 1 /* going net->host order */ );
+	rc = 0;
         break; /* got it */
+      }	
       recno++;
     }
     BufferCloseFile( file );
-    if ( failed == 0 )
-    {
-      failed = +1;
-      if (recno < reccount ) /* got it */
-      {
-        failed = 0;
-        __switchborder( data, &scratch );
-        if (reccount == 1)
-          BufferZapFileRecords( filename );
-      }
-    }
+    if (reccount > 0 && reccount == blanked) /* all blank */
+      BufferZapFileRecords( filename );
   }
-  if (!failed && countP)
-    BufferCountFileRecords( filename, data->contest, countP, NULL );
-  return failed;
+  if (countP)  
+  {
+    *countP = 0;
+    if (rc == 0)
+      BufferCountFileRecords(filename, data->contest, countP, NULL );
+  }      
+  return rc;
 }
 
 /* --------------------------------------------------------------------- */
@@ -331,17 +353,21 @@ int BufferCountFileRecords( const char *filename, unsigned int contest,
         failed = -1;
       else if ( 0 == memcmp( (void *)&scratch, (void *)&blank, sizeof(WorkRecord)) )
         ; /* blank record, ignore it */
-      else if ( ((unsigned int)(scratch.contest)) == contest )
+      else 
       {
-        packetcount++;
-        if ( normcountP )
-        {
-          unsigned int swucount; 
-          if (BufferGetRecordInfo( &scratch, 0, &swucount) >= 0)
+        __switchborder( &scratch, &scratch, 1 /* going net->host order */ );
+        if ( ((unsigned int)(scratch.contest)) == contest )
+	{
+          packetcount++;
+          if ( normcountP )
           {
-            normcount += swucount;
-          }
-        }
+            unsigned int swucount; 
+            if (BufferGetRecordInfo( &scratch, 0, &swucount) >= 0)
+            {
+              normcount += swucount;
+            }
+	  }    
+        } /* contest is same */
       }
       recno++;
     }
