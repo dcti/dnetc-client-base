@@ -1,21 +1,20 @@
-/* 
- * Copyright distributed.net 1997-1999 - All Rights Reserved
- * For use in distributed.net projects only.
- * Any other distribution or use of this source violates copyright.
- *
- * ------------------------------------------------------------------
- * The following is adapted from source in
- *   "Inner Loops -- A sourcebook for fast 32-bit software development"
- *                                                      by Rick Booth.
- * Get a random 32bit number with Random() 
- * If called continuously, the sequence IL_MixRandom() generates 
- * wouldn't start to repeat for about 37 trillion years.
- *
- *                                - Added by Tim Charron 12.15.1997
- * -----------------------------------------------------------------
-*/
+// Copyright distributed.net 1997-1999 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+//
+// ------------------------------------------------------------------
+// The following is adapted from source in
+//   "Inner Loops -- A sourcebook for fast 32-bit software development"
+//                                                      by Rick Booth.
+// Get a random 32bit number with Random() 
+// If called continuously, the sequence IL_MixRandom() generates 
+// wouldn't start to repeat for about 37 trillion years.
+//
+//                                - Added by Tim Charron 12.15.1997
+// -----------------------------------------------------------------
+
 const char *random_cpp(void) {
-return "@(#)$Id: random.cpp,v 1.3 1999/04/05 13:08:26 cyp Exp $"; }
+return "@(#)$Id: random.cpp,v 1.4 1999/04/05 14:34:58 jlawson Exp $"; }
 
 #include "cputypes.h" /* u32 */
 #include <time.h>     /* time() */
