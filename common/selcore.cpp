@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.19 2003/02/17 19:06:03 gavin Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.20 2003/02/21 12:03:30 snake Exp $"; }
 
 //#define TRACE
 
@@ -894,6 +894,25 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
           #endif
         #else
           #error FIXME! call all your *ogr_get_dispatch_table* functions here once
+        #endif
+      #elif (CLIENT_OS == OS_NETBSD)
+        #if (CLIENT_CPU == CPU_68K)
+          ogr_get_dispatch_table_000();
+          ogr_get_dispatch_table_020();
+          ogr_get_dispatch_table_030();
+          ogr_get_dispatch_table_040();
+          ogr_get_dispatch_table_060();
+        #else
+          ogr_get_dispatch_table();
+          #if (CLIENT_CPU == CPU_X86)
+            ogr_get_dispatch_table_nobsr();
+          #elif (CLIENT_CPU == CPU_POWERPC)
+            #if defined(__VEC__)      /* compiler supports AltiVec */
+              vec_ogr_get_dispatch_table();
+            #endif
+          #elif (CLIENT_CPU == CPU_ALPHA)
+            vec_ogr_get_dispatch_table_cix();
+          #endif
         #endif
       #else
         #error FIXME! call all your *ogr_get_dispatch_table* functions here once
