@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.73 2004/12/20 04:12:12 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.74 2005/01/13 19:59:37 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2180,8 +2180,11 @@ unsigned int GetProcessorFrequency()
 unsigned long GetProcessorFeatureFlags()
 {
   #if (CLIENT_CPU == CPU_X86)
-    return (__GetRawProcessorID(NULL, 'f')) | (x86features());
-
+    if ((__GetRawProcessorID(NULL, 0) == 0x65430540) {  // fix buggy winchip c6 (#3809)
+      return (CPU_F_I586 | CPU_F_MMX);
+    } else {
+      return (__GetRawProcessorID(NULL, 'f')) | (x86features());
+    }
   #elif (CLIENT_CPU == CPU_POWERPC)
     unsigned long ppc_features = 0;
     #if (CLIENT_OS == OS_MACOS)
