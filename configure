@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.198 2000/10/31 12:41:03 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.199 2000/11/08 00:07:35 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -61,9 +61,7 @@ TARGET_NASM_FMT="elf"  #<- set this to "" if you have no nasm
 TARGET_ASFLAGS=""
 TARGET_STRIP="strip"
 TARGET_CP="cp"
-
-CLIENTCPU=""     # non-blank implies a hardcoded value
-CLIENTOS=""      # non-blank implies a hardcoded value
+TARGET_OS=""           #<-may be needed for cross-compile or special handling
 
 TARGET_ADDSRCS=""
 TARGET_ADDASMS=""
@@ -87,7 +85,7 @@ TARGET_GENMAN=1        # non-blank generate a man page, or not (blank)
 #
 TARGET_TARBALL=""     # 'binnameNNN-' is auto prepended, ".tar.gz" is appended
 TARGET_TARBALL_COMMENT="" # special comments for tarball.readme (if needed)
-TARGET_ARCTYPE="tgz"  # or "zip", "lha" or "tgzdir"
+TARGET_ARCTYPE="tgz"  # or "zip", "zipflat", "lha" or "tgzdir"
 
 # -----------------------------------------------------------------------
 
@@ -199,7 +197,8 @@ add_sources() # $1=os, $2=arch, $3=custom
                        rc5/x86/nasm/rc5-hbk7.asm"
       # -- nasm/ogr --
       TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+      TARGET_ADDNASMS="$TARGET_ADDNASMS ogr/x86/ogr.asm"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
     fi  
   #-----------------------------------------------------------------  
   elif [ "$2" = "sparc" ]; then
@@ -1060,8 +1059,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-mipsle"
         TARGET_GENMAN=
-        CLIENTCPU="3"        # cross-compilation
-        CLIENTOS="22"
+        TARGET_OS="NTO2"     # cross-compilation
         add_sources "nto2" "mips"
         ;;
 
@@ -1077,8 +1075,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-mipsbe"
         TARGET_GENMAN=
-        CLIENTCPU="3"        # cross-compilation
-        CLIENTOS="22"
+        TARGET_OS="NTO2"     # cross-compilation
         add_sources "nto2" "mips"
         ;;
 
@@ -1227,7 +1224,7 @@ case "$1" in
         TARGET_CCFLAGS="-mcpu=ev4 $TARGET_BASE_CCFLAGS"
         TARGET_EV5_CCFLAGS="-mcpu=ev5 $TARGET_BASE_CCFLAGS"
         TARGET_LIBS="-lpthread -lexc"
-        TARGET_OS=DIGITAL_UNIX
+        TARGET_OS="DIGITAL_UNIX"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "digital-unix" "alpha" "ev4"
         ;;
@@ -1241,7 +1238,7 @@ case "$1" in
         TARGET_EV5_CCFLAGS="-mcpu=ev5 $TARGET_BASE_CCFLAGS"
         TARGET_LIBS="-static"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_OS=DIGITAL_UNIX
+        TARGET_OS="DIGITAL_UNIX"
         TARGET_TARBALL="digital_unix-alpha"
         add_sources "digital-unix" "alpha"
         ;;
@@ -1391,8 +1388,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-ppcbe"
         TARGET_GENMAN=
-        CLIENTCPU="2"        # cross-compilation
-        CLIENTOS="22"
+        TARGET_OS="NTO2"     # cross-compilation
         add_sources "nto2" "ppc"
         ;;
 
@@ -1411,8 +1407,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-sh4le"
         TARGET_GENMAN=
-        CLIENTCPU="8"        # cross-compilation
-        CLIENTOS="22"
+        TARGET_OS="NTO2"     # cross-compilation
         add_sources "nto2" "sh4" 
         ;;
 
@@ -1427,8 +1422,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-sh4be"
         TARGET_GENMAN=
-        CLIENTCPU="8"        # cross-compilation
-        CLIENTOS="22"
+        TARGET_OS="NTO2"     # cross-compilation
         add_sources "nto2" "sh4"
         ;;
 
@@ -1598,8 +1592,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-x86"
         TARGET_GENMAN=
-        CLIENTCPU="1"         # cross-compilation
-        CLIENTOS="22"
+        TARGET_OS="NTO2"     # cross-compilation
         add_sources "nto2" "x86" 
 	      ;;
 
@@ -1701,8 +1694,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme.riscos"   #platform specific docfile
         TARGET_STRIP=touch
         TARGET_BINNAME_SUFFIX=",ff8"
-        CLIENTCPU="11"        # cross-compilation
-        CLIENTOS="34"
+        TARGET_OS="RISCOS"     # cross-compilation
         add_sources "riscos" "arm"
 	      ;;
 
@@ -1760,8 +1752,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-arm"
         TARGET_GENMAN=
-        CLIENTCPU="11"        # cross-compilation
-        CLIENTOS="22"
+        TARGET_OS="NTO2"     # cross-compilation
         add_sources "nto2" "arm"
         ;;
 
@@ -1830,15 +1821,15 @@ case "$1" in
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "x86" "os2"
-        TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC -Os -O6 -fexceptions -funroll-loops -I. -I${C_INCLUDE_PATH} -DMULTITHREAD"
+        TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC -fexceptions -I. -I${C_INCLUDE_PATH}"
         TARGET_LDFLAGS="-Zmt"
         TARGET_NASM_FMT="aout"
         TARGET_STRIP="touch"
-        TARGET_ARCTYPE=zip
+        TARGET_ARCTYPE="zipflat"
         TARGET_NASM="nasm097.exe"
         TARGET_LIBS="-lsocket -lvideo"
         TARGET_DOCFILES="docs/readme.os2"   #platform specific docfile
-        TARGET_OS=OS2
+        TARGET_OS="OS2"
         TARGET_TARBALL="os2-x86"
         TARGET_BINNAME_SUFFIX=".exe"
         add_sources "os2" "x86"
@@ -1927,12 +1918,15 @@ TARGET_CCFLAGS="$TARGET_CCFLAGS -I./common -I./rc5 -I./des -I./ogr -I./csc"
 ##ogr## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
 
 #
-# Build the test program and look up the CPU and OS types.
+# Build the test program
 #
-if [ -z "$CLIENTOS" -o -z "$CLIENTCPU" ]; then
+if [ "${TARGET_OS}" = "NTO2" -o "${TARGET_OS}" = "OS2" \
+  -o "${TARGET_OS}" = "RISCOS" ]; then  #cross-compile
+  gcc common/testplat.cpp -o testplat
+else  
   echo "Building test program..."
   echo "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
-  sh -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
+  $(SHELL) -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
   if [ $? -ne 0 ]; then
     echo "Compilation failed.  Check your target options."
     echo " ---------------------------------------------"
@@ -1945,33 +1939,7 @@ if [ -z "$CLIENTOS" -o -z "$CLIENTCPU" ]; then
   else
      ${TARGET_STRIP} testplat
   fi
-  CLIENTCPU=`./testplat cpu`
-  CLIENTOS=`./testplat os`
-else
-  if [ $CLIENTOS = 22 ]; then
-	gcc common/testplat.cpp -o testplat
-  fi
 fi
-
-
-
-#
-# Look up the descriptive name for the CPU and OS
-#
-CLIENTOSNAME=`grep "#define OS_.*\<$CLIENTOS\>" common/cputypes.h | head -1 | cut -d' ' -f2`
-CLIENTCPUNAME=`grep "#define CPU_.*\<$CLIENTCPU\>" common/cputypes.h | head -1 | cut -d' ' -f2`
-echo "CLIENT_CPU = $CLIENTCPUNAME ($CLIENTCPU)"
-echo "CLIENT_OS = $CLIENTOSNAME ($CLIENTOS)"
-
-
-#
-# Append the textual CPU/OS names a compilation defines.
-#
-TARGET_CCFLAGS="-DBUILDNAME=\${BUILDNAME} ${TARGET_CCFLAGS}"
-if [ "$TARGET_OS" = "DIGITAL_UNIX" ]; then
-  TARGET_EV5_CCFLAGS="-DBUILDNAME=\${BUILDNAME} ${TARGET_EV5_CCFLAGS}"
-fi
-
 
 #
 # Finalize the NASM compilation options.
@@ -2047,6 +2015,7 @@ if [ -n "${TARGET_ADDNASMS}" ]; then
   echo "Scanning output NASM dependencies..."
   TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} nasm"
   for target in ${TARGET_ADDNASMS}; do
+      TARGETOBJECT=`basename $target .asm`
       TARGETOBJECT=output/`basename $target .asm`.o
       echo "  $target -> $TARGETOBJECT"
       TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
@@ -2075,6 +2044,15 @@ if [ -n "${TARGET_ADDSRCS}" ]; then
   done
 fi
 
+#
+# Generate the targets for supplementary resource files.
+#
+TARGET_RESBIND_CMD=""
+if [ "$TARGET_OS" = "OS2" ]; then
+  TARGET_RESBIND_CMD="emxbind -b -r output/${TARGET_BINNAME}.res ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}"
+  TARGET_ALLOBJS="${TARGET_ALLOBJS} output/${TARGET_BINNAME}.rc"
+  TARGET_ALLOBJS="${TARGET_ALLOBJS} output/${TARGET_BINNAME}.res"
+fi
 
 #
 # Start building the output makefile.
@@ -2083,12 +2061,6 @@ echo "Generating output Makefile prologue code..."
 rm -f Makefile
 
 echo "# Autogenerated $TARGET_BINNAME client makefile ($1)" > Makefile
-if [ -n "$AIXALL" ]; then
-  echo "#   target cpu --> CPU_POWERPC (2) && CPU_POWER (9)" >> Makefile
-else
-  echo "#   target cpu --> $CLIENTCPUNAME ($CLIENTCPU)" >> Makefile
-fi
-echo "#    target os --> $CLIENTOSNAME ($CLIENTOS)" >> Makefile
 echo "# see http://www.distributed.net/ for details." >> Makefile
 echo "" >> Makefile
 
@@ -2130,50 +2102,30 @@ echo "" >> Makefile
 echo "Generating Makefile production targets..."
 echo "# Regular targets follow" >> Makefile
 
-TARGET_RES=""
-TARGET_RESBIND_CMD=""
-if [ "$TARGET_OS" = "OS2" ]; then
-  TARGET_RES="output/\${BUILDNAME}.res"
-  TARGET_RESBIND_CMD="emxbind -b -r output/\${BUILDNAME}.res \${BUILDNAME}"
-fi
-
-
 #
 # Generate the main client binary target.
 #
-echo "${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}:	\${ALLOBJS} \${ADDOBJS} ${TARGET_RES}" >> Makefile
+echo "${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
 echo "	\${LD} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
 if [ -n "$TARGET_RESBIND_CMD" ]; then
   echo "	$TARGET_RESBIND_CMD" >> Makefile
 fi
 echo "	\${STRIP} ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
-
-
-#
-# Append the commands for man page generation to the main rule.
-#
 if [ -n "$TARGET_GENMAN" ]; then
   echo "	./${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} -genman" >> Makefile
 fi
-
-
-#
-# Append the commands for archived file generation to the main rule.
-#
 if [ -n "$TARGET_TARBALL" ]; then
   FULLTARNAME="${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}"
   if [ "$TARGET_ARCTYPE" = "zip" ]; then
+    echo "	zip -9 $FULLTARNAME.zip ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} \${DOCFILES}" >> Makefile
+  elif [ "$TARGET_ARCTYPE" = "zipflat" ]; then  
     # zip file with flat directory structure.
-    if [ "$TARGET_OS" = "OS2" ]; then
-      echo "	zip -9 -j $FULLTARNAME.zip ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} \${DOCFILES}" >> Makefile
-    else
-      echo "	zip -9 $FULLTARNAME.zip ${TARGET_BINNAME} \${DOCFILES}" >> Makefile
-    fi
+    echo "	zip -9 -j $FULLTARNAME.zip ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} \${DOCFILES}" >> Makefile    
   elif [ "$TARGET_ARCTYPE" = "tgz" ]; then
-    # tar.gz, with flat directory structure.
+    # tar.gz, with base+doc directory structure.
     echo "	tar -cvf - ${TARGET_BINNAME} \${DOCFILES} | gzip -9 > $FULLTARNAME.tar.gz" >> Makefile
   elif [ "$TARGET_ARCTYPE" = "tgzdir" ]; then
-    # tar.gz, with embedded directory structure.
+    # tar.gz, with buildname(base+doc) directory structure.
     echo "	-rm -rf $FULLTARNAME" >> Makefile
     echo "	mkdir $FULLTARNAME" >> Makefile
     echo "	cp ${TARGET_BINNAME} \${DOCFILES} $FULLTARNAME" >> Makefile
@@ -2188,8 +2140,6 @@ if [ -n "$TARGET_TARBALL" ]; then
   echo "" >> Makefile
 fi
 
-
-
 #
 # Create the rule to ftp the packaged tarball.
 #
@@ -2198,23 +2148,12 @@ if [ -n "$TARGET_TARBALL" ]; then
   if [ -n "$TARGET_TARBALL_COMMENT" ]; then
     echo "	echo \"${TARGET_TARBALL_COMMENT}\">${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
   fi
-  echo "	sh ./upload.sh ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}" >>Makefile
+  echo "	\$(SHELL) ./upload.sh ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}" >>Makefile
   if [ -n "$TARGET_TARBALL_COMMENT" ]; then
     echo "	rm -f ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
   fi
   echo "" >> Makefile
 fi
-
-
-#
-# Generate the targets for supplementary resource files.
-#
-if [ "$TARGET_OS" = "OS2" ]; then
-  echo "${TARGET_RES}: platforms/os2cli/${TARGET_BINNAME}.rc" >> Makefile
-  echo "	 platforms\\os2cli\\gcc_rc.cmd \${BUILDNAME}.res" >> Makefile
-  echo "" >> Makefile
-fi
-
 
 #
 # Create the dependencies and reconfigure rules.
@@ -2232,9 +2171,6 @@ echo "" >> Makefile
 echo "clean:" >> Makefile
 echo "	rm -f \${ALLOBJS}" >> Makefile
 echo "	rm -f ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
-if [ -n "$TARGET_RES" ]; then
-  echo "	rm -f ${TARGET_RES}" >> Makefile
-fi
 if [ -n "$TARGET_GENMAN" ]; then
   echo "	rm -f ${TARGET_BINNAME}.1" >> Makefile
 fi
@@ -2262,13 +2198,12 @@ echo "" >> Makefile
 #
 
 if [ -n "${TARGET_SRCOBJLIST}" ]; then
-  echo "# Dependency targets follow" >> Makefile
-  echo ""
   echo "Generating Makefile dependency targets..."
   #
   # _SRCOBJLIST goes ... type1, src, obj, src, obj, ... type2, src, obj ...
   # the 'types' are defined where _SRCOBJLIST is added to
   #
+  echo "# Dependency targets follow" >> Makefile
   TARGETTYP=""
   TARGETSRC=""
   for target in $TARGET_SRCOBJLIST; do
@@ -2291,6 +2226,45 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
     # ------------------------------------  
     elif [ "${TARGETTYP}" = "cc" ]; then
       TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
+      has_problem_h=0
+      has_client_h=0
+      has_ogr_h=0
+      has_ccoreio_h=0
+      has_lurk_h=0
+      deplist=""
+      for dep in $TARGET_HDEPS; do
+        if [ $dep = "ogr/ogr.h" ]; then
+          dep="ogr/ansi/ogr.h"
+          has_ogr_h=1
+        elif [ $dep = "common/ccoreio.h" ]; then  
+          has_ccoreio_h=1
+        elif [ $dep = "common/problem.h" ]; then  
+          has_problem_h=1
+        elif [ $dep = "common/client.h" ]; then  
+          has_client_h=1
+        elif [ $dep = "common/lurk.h" ]; then  
+          has_lurk_h=1
+        fi
+        deplist="$deplist $dep"  
+      done
+      if [ $has_client_h -eq 1 ]; then
+        if [ $has_lurk_h -eq 0 ]; then  
+          deplist="$deplist common/lurk.h"
+        fi  
+        if [ $has_problem_h -eq 0 ]; then
+          deplist="$deplist common/problem.h"
+          has_problem_h=1
+        fi
+      fi    
+      if [ $has_problem_h -eq 1 ]; then
+        if [ $has_ccoreio_h -eq 0 ]; then
+          deplist="$deplist common/ccoreio.h"
+        fi  
+        if [ $has_ogr_h -eq 0 ]; then
+          deplist="$deplist ogr/ansi/ogr.h"
+        fi
+      fi    
+      TARGET_HDEPS="$deplist"
       echo "$target:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
       echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
       echo "" >> Makefile
@@ -2335,7 +2309,15 @@ if [ "$TARGET_OS" = "AMIGAOS_68K" ]; then
   done
 fi
 
-
+if [ "$TARGET_OS" = "OS2" ]; then
+  echo "Generating rules for .res and .rc"
+  echo "output/${TARGET_BINNAME}.rc:" >>Makefile
+  echo "	echo \"POINTER 1		 platforms\\os2cli\\dnet.ico\">output\\${TARGET_BINNAME}.rc">>Makefile
+  echo "" >> Makefile
+  echo "output/${TARGET_BINNAME}.res: output/${TARGET_BINNAME}.rc" >> Makefile
+  echo "	rc -r output\\${TARGET_BINNAME}.rc output\\${TARGET_BINNAME}.res" >> Makefile
+  echo "" >> Makefile
+fi
 
 #
 # Other ugly platform specific manipulations on final Makefile.
@@ -2385,6 +2367,7 @@ if [ -z "$TARGET_TARBALL" ]; then
   echo "Upload-ready tarballs will not be auto-generated"
   echo "and Makefile does not have an 'ftp' target"
 fi
+rm -f testplat
 echo ""
 exit 0
 
