@@ -6,7 +6,7 @@
  *
 */
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.25.2.5 1999/12/22 01:04:58 trevorh Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.25.2.6 2000/03/03 08:38:38 jlawson Exp $"; }
 
 //#define TEST  //standalone test
 //#define RESDEBUG //to show what network::resolve() is resolving
@@ -218,6 +218,47 @@ static struct proxylist *GetApplicableProxyList(int port, int tzdiff) /*host ord
 
 //-----------------------------------------------------------------------
 
+// Returns -1 if the resolve fails, or 0 on success.
+
+static int __LowLevelGethostbyname(const char *hostname,
+    u32 *addrlist, unsigned int addrlistcount,
+    unsigned int *foundaddrcount)
+{
+  struct hostent *hp;
+  char *lookup;
+
+  // copy pointer to "lookup" to work around gethostbyname()
+  // not prototyped to take const arg on some platforms.
+  *((const char **)&lookup) = hostname;
+  
+  if ((hp = gethostbyname(lookup) ) != NULL)
+  {
+    unsigned int addrpos;
+
+    // Iterate through the matching IP Address list and add only
+    // addresses that we haven't already added, ignoring the
+    // duplicates that already exist.
+    for ( addrpos = 0; (hp->h_addr_list[addrpos] &&
+         (*foundaddrcount < addrlistcount)); addrpos++ )
+    {
+      unsigned int dupcheck = 0;
+      addrlist[*foundaddrcount] = *((u32 *)(hp->h_addr_list[addrpos]));
+      while (dupcheck < *foundaddrcount)
+      {
+        if (addrlist[*foundaddrcount] == addrlist[dupcheck])
+          break;
+        dupcheck++;
+      }
+      if (!(dupcheck < *foundaddrcount)) /* no dupes */
+        (*foundaddrcount)++;
+    }
+    return 0;
+  }
+  return -1;
+}
+
+//-----------------------------------------------------------------------
+
 int NetResolve( const char *host, int resport, int resauto,
                 u32 *addrlist, unsigned int addrlistcount,
                 char *resolve_hostname, unsigned int resolve_hostname_sz )
@@ -297,6 +338,8 @@ int NetResolve( const char *host, int resport, int resauto,
       struct proxylist *plist;
       struct proxylist dummylist;
 
+      // If automatic geographic zone selection based on time zone should
+      // be done, then first identify which zones apply to us.
       if (resauto)
       {
         int tzmin = -6*60; /* middle of us.d.net */
@@ -323,19 +366,20 @@ int NetResolve( const char *host, int resport, int resauto,
         plist = &dummylist;
       }
 
+      // Iterate through all of the hostnames lists and place all
+      // of the resolved IP Addresses into the "addrlist".
       for (pos = 0; ((pos < (plist->numproxies)) &&
                          (foundaddrcount < addrlistcount)); pos++ )
       {
-        struct hostent *hp; char *lookup;
         #ifdef RESDEBUG
         printf(" => %d:\"%s\"\n", pos+1, plist->proxies[pos] );
         #endif
 
-        //work around gethostbyname not getting const arg on some platforms
-        *((const char **)&lookup) = plist->proxies[pos];
-        if ((hp = gethostbyname(lookup) ) != NULL)
+        if (__LowLevelGethostbyname(plist->proxies[pos], addrlist,
+            addrlistcount, &foundaddrcount) >= 0)
         {
-          unsigned int addrpos;
+          // when successful, copy the first good hostname into
+          // the "resolve_hostname" buffer for display purposes.
           if (resolve_hostname_sz)
           {
             if (resolve_hostname[0] == '\0')
@@ -345,23 +389,10 @@ int NetResolve( const char *host, int resport, int resauto,
               resolve_hostname[resolve_hostname_sz-1]='\0';
             }
           }
-          for ( addrpos = 0; (hp->h_addr_list[addrpos] &&
-               (foundaddrcount < addrlistcount)); addrpos++ )
-          {
-            unsigned int dupcheck = 0;
-            addrlist[foundaddrcount] = *((u32 *)(hp->h_addr_list[addrpos]));
-            while (dupcheck < foundaddrcount)
-            {
-              if (addrlist[foundaddrcount] == addrlist[dupcheck])
-                break;
-              dupcheck++;
-            }
-            if (!(dupcheck < foundaddrcount)) /* no dupes */
-              foundaddrcount++;
-          }
         }
       }
 
+      // If a successful zone name was found, then do something with it.
       if (resolve_hostname_sz)
       {
         if (resolve_hostname[0] == '\0')
@@ -481,3 +512,6 @@ int main(void)
   return 0;
 }
 #endif
+
+//-----------------------------------------------------------------------
+
