@@ -64,13 +64,6 @@ static char uuehttptable[6][60]=
   "SOCKS5 proxy"
   };
 
-static char contesttable[3][60]=
-  {
-  "",//need a null placeholder since this is 1/2 based
-  "RC5 only",
-  "DES when possible, RC5 otherwise"
-  };
-
 static char offlinemodetable[3][60]=
   {
   "Normal Operation",
@@ -222,22 +215,21 @@ static optionstruct options[OPTION_COUNT]=
 { "preferredblocksize", CFGTXT("Preferred Block Size (2^X keys/block)"),"30",
   CFGTXT("(2^28 -> 2^31)"),5,2,5,NULL},
 //27
-{ "preferredcontest", CFGTXT("Contest to process"),"2",CFGTXT(""),5,2,6,
-  NULL,&contesttable[0][0],1,2},
+{ "processdes", CFGTXT("Compete in DES contests?"),"1",CFGTXT(""),5,3,6,NULL},
 //28
-{ "quiet", CFGTXT("Disable all screen output? (quiet mode)"),"no",CFGTXT(""),5,3,7,NULL},
+{ "quiet", CFGTXT("Disable all screen output? (quiet mode)"),"0",CFGTXT(""),5,3,7,NULL},
 //29
-{ "noexitfilecheck", CFGTXT("Disable exit file checking?"),"no",(""),5,3,8,NULL},
+{ "noexitfilecheck", CFGTXT("Disable exit file checking?"),"0",(""),5,3,8,NULL},
 //30
-{ "percentoff", CFGTXT("Disable block percent completion indicators?"),"no",CFGTXT(""),5,3,9,NULL},
+{ "percentoff", CFGTXT("Disable block percent completion indicators?"),"0",CFGTXT(""),5,3,9,NULL},
 //31
-{ "frequent", CFGTXT("Attempt keyserver connections frequently?"),"no",CFGTXT(""),3,3,6,NULL},
+{ "frequent", CFGTXT("Attempt keyserver connections frequently?"),"0",CFGTXT(""),3,3,6,NULL},
 //32
-{ "nodisk", CFGTXT("Buffer blocks in RAM only? (no disk I/O)"),"no",
+{ "nodisk", CFGTXT("Buffer blocks in RAM only? (no disk I/O)"),"0",
     CFGTXT("\nNote: This option will cause all buffered, unflushable blocks to be lost\n"
     "during client shutdown!"),5,3,10,NULL},
 //33
-{ "nofallback", CFGTXT("Disable fallback to US Round-Robin?"),"no",
+{ "nofallback", CFGTXT("Disable fallback to US Round-Robin?"),"0",
   CFGTXT("\nIf your specified proxy is down, the client normally falls back\n"
   "to the US Round-Robin (us.v27.distributed.net) - this option causes\n"
   "the client to NEVER attempt a fallback if the local proxy is down."),
@@ -308,7 +300,7 @@ static optionstruct options[OPTION_COUNT]=
 #define CONF_CHECKPOINT2 24
 #define CONF_RANDOMPREFIX 25
 #define CONF_PREFERREDBLOCKSIZE 26
-#define CONF_PREFERREDCONTEST 27
+#define CONF_PROCESSDES 27
 #define CONF_QUIETMODE 28
 #define CONF_NOEXITFILECHECK 29
 #define CONF_PERCENTOFF 30
@@ -335,8 +327,6 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
   s32 choice=1;
   s32 temp;
   s32 temp2;
-  s32 contestidtemp;//since it's 0/1 based now, we need a temp for
-                    //screen I/O
   char str[3];
   char *p;
 #if (CLIENT_OS == OS_WIN32) && defined(MULTITHREAD)
@@ -348,8 +338,6 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
   while ( 1 )
   {
 setupoptions();
-options[CONF_PREFERREDCONTEST].thevariable=&contestidtemp;
-contestidtemp=preferred_contest_id+1;
 
     // display menu
 
@@ -428,9 +416,10 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
            }
     else if (options[choice].type==3)
       {
+      sprintf(str, "%s", atoi(options[choice].defaultsetting)?"yes":"no");
       printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: ",
               options[choice].description, options[choice].comments,
-              options[choice].defaultsetting);
+              str);
       sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
       printf("%s\nNew Setting --> ",str);
       };
@@ -727,8 +716,8 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
           if (preferred_blocksize < 28) preferred_blocksize = 28;
           if (preferred_blocksize > 31) preferred_blocksize = 31;
           break;
-        case CONF_PREFERREDCONTEST:
-          preferred_contest_id = atoi(parm) - 1;
+        case CONF_PROCESSDES:
+          preferred_contest_id = yesno(parm);
           if ((preferred_contest_id < 0) || (preferred_contest_id > 1))
              preferred_contest_id = 1;
           break;
@@ -961,6 +950,7 @@ options[CONF_CHECKPOINT].thevariable=&ini_checkpoint_file[0];
 options[CONF_CHECKPOINT2].thevariable=&ini_checkpoint_file[1];
 options[CONF_RANDOMPREFIX].thevariable=&randomprefix;
 options[CONF_PREFERREDBLOCKSIZE].thevariable=&preferred_blocksize;
+options[CONF_PROCESSDES].thevariable=&preferred_contest_id;
 options[CONF_QUIETMODE].thevariable=&quietmode;
 options[CONF_NOEXITFILECHECK].thevariable=&noexitfilecheck;
 options[CONF_PERCENTOFF].thevariable=&percentprintingoff;
@@ -1152,7 +1142,7 @@ s32 Client::ReadConfig(void)
   INIGETKEY(CONF_CHECKPOINT).copyto(ini_checkpoint_file[0], sizeof(ini_checkpoint_file)/2);
   INIGETKEY(CONF_CHECKPOINT2).copyto(ini_checkpoint_file[1], sizeof(ini_checkpoint_file)/2);
   randomprefix = INIGETKEY(CONF_RANDOMPREFIX);
-  preferred_contest_id = INIGETKEY(CONF_PREFERREDCONTEST) - 1;
+  preferred_contest_id = INIGETKEY(CONF_PROCESSDES);
   preferred_blocksize = INIGETKEY(CONF_PREFERREDBLOCKSIZE);
 
   tempconfig=ini.getkey(OPTION_SECTION, "runbuffers", "0")[0];
@@ -1470,7 +1460,7 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_CHECKPOINT2, ini_checkpoint_file[1] );
   INISETKEY( CONF_RANDOMPREFIX, randomprefix );
   INISETKEY( CONF_PREFERREDBLOCKSIZE, preferred_blocksize );
-  INISETKEY( CONF_PREFERREDCONTEST, (s32)(preferred_contest_id + 1) );
+  INISETKEY( CONF_PROCESSDES, (s32)(preferred_contest_id) );
   INISETKEY( CONF_QUIETMODE, quietmode );
   INISETKEY( CONF_NOEXITFILECHECK, noexitfilecheck );
   INISETKEY( CONF_PERCENTOFF, percentprintingoff );
