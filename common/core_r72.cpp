@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.19 2004/03/02 16:50:03 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.20 2004/03/04 17:20:13 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -342,8 +342,8 @@ int selcoreGetPreselectedCoreForProject_rc572()
                                        :2); // P5         == DG 2-pipe
 		                 break;
           case 0x01: cindex = 0; break; // 386/486        == SES 1-pipe
-          case 0x02: cindex = 1; break; // PII/PIII       == SES 2-pipe
-          case 0x03: cindex = 2; break; // Cx6x86         == DG 2-pipe
+          case 0x02: cindex = 1; break; // Pentium II     == SES 2-pipe
+          case 0x03: cindex = 5; break; // Cx6x86         == SS 2-pipe (#3580)
           case 0x04: cindex = 2; break; // K5             == DG 2-pipe
           case 0x05: cindex = 5; break; // K6             == SS 2-pipe (#3293)
           case 0x06: cindex = 0; break; // Cx486          == SES 1-pipe
@@ -352,6 +352,9 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x09: cindex = 6; break; // K7             == GO 2-pipe
           case 0x0A: cindex =-1; break; // Centaur C6     == ?
           case 0x0B: cindex = 7; break; // Pentium 4      == SGP 3-pipe
+          case 0x0C: cindex = 4; break; // Via C3         == DG 3-pipe alt (#3477)
+          case 0x0D: cindex = 3; break; // Pentium M      == DG 3-pipe
+          case 0x0E: cindex = 6; break; // Pentium III    == GO 2-pipe (#3602)
           default:   cindex =-1; break; // no default
         }
         #else
