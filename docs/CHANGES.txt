@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.10 2003/02/12 01:00:57 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.11 2003/02/18 02:10:58 mfeiri Exp $
 ==========================================================================
 
 2.9000
@@ -29,13 +29,17 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.10 2003/02/12 01:00:57 andreasb Ex
 
 2.9003-481  fix: smp via fork: 2nd process died after switching to project
                                ogr (added workaround for #3006)
+            chg: ppc: use OGR-scalar cruncher for PowerPC 7450  (#3035)
+            fix: ppc: manual selection of OGR cores is now possible
+            new: macosx: CPU temperature reading by Karakoussis Apostolos
+            new: ppc: two additional rc5-72 cores for ppc by Didier Levet
 
 2.9003-480  new: x86: rc5-72 core by Gnatiuc Ianos (Athlon optimized)
             chg: all: -numcpu 0 disables use of shared memory (if any)
-            fix: macosx: changed -install to work on Mac OS X 10.2 
+            fix: macosx: changed -install to work on Mac OS X 10.2 (#1618)
 
 2.9002-479  new: ppc: rc5-72 core by Malcolm Howell (603e optimized)
-            new: ppc: rc5-72 cores by Didier Levet (AltiVec optimized)
+            new: ppc: two rc5-72 cores by Didier Levet (AltiVec optimized)
             new: amigaos: optimized 68k rc5-72 cores by Malcolm Howell
             fix: amigaos: PowerUp compiler linklib no longer trashes memory
             imp: amigaos: added G3/G4 cpu detection
