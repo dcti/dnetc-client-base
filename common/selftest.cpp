@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.14 1999/11/23 22:48:34 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.15 1999/11/24 01:38:56 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -191,6 +191,7 @@ static const u32 csc_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
 
 // ---------------------------------------------------------------------------
 
+// returns 0 if not supported, <0 on failed or break
 int SelfTest( unsigned int contest )
 {
   int threadpos, threadcount = 1;
@@ -204,10 +205,10 @@ int SelfTest( unsigned int contest )
   if (contest >= CONTEST_COUNT)
   {
     LogScreen("test::error. invalid contest %u\n", contest );
-    return -TEST_CASE_COUNT;
+    return 0;
   }
   if (!IsProblemLoadPermitted(-1, contest)) /* also checks HAVE_xxx_CORES */
-    return -TEST_CASE_COUNT;
+    return 0;
   #if (CLIENT_OS == OS_RISCOS)
   if (contest == RC5 && GetNumberOfDetectedProcessors() == 2)
     threadcount = 2;
@@ -235,6 +236,13 @@ int SelfTest( unsigned int contest )
       u64 expectedsolution;
       ContestWork contestwork;
       Problem *problem = new Problem(threadindex);
+
+      u32 tslice = 0x1000;
+      #if (CLIENT_OS == OS_NETWARE)
+      tslice = GetTimesliceBaseline();
+      #elif (CLIENT_OS == OS_MACOS)
+      tslice = GetTimesliceToUse(contestid);
+      #endif
 
       if (contest == RC5)
       { 
@@ -364,7 +372,7 @@ int SelfTest( unsigned int contest )
           for (int i = 0; i < TEST_CASE_DATA-2; i++) {
             contestwork.ogr.workstub.stub.diffs[i] = (u16)((*test_cases)[testnum][2+i]);
             if (contestwork.ogr.workstub.stub.diffs[i] == 0) {
-              contestwork.ogr.workstub.stub.length = i;
+              contestwork.ogr.workstub.stub.length = (u16)i;
               break;
             }
           }
@@ -373,8 +381,8 @@ int SelfTest( unsigned int contest )
           break;
       }
   
-      problem->LoadState( &contestwork, contest, 0x1000, 0 /* unused */);
-  
+      problem->LoadState( &contestwork, contest, tslice, 0 /* unused */);
+
       ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (long)(problem) );
 
       do
@@ -471,7 +479,9 @@ int SelfTest( unsigned int contest )
 
     } /* for ( testnum = 0 ; testnum < TEST_CASE_COUNT ; testnum++ ) */
 
-    if (!userbreak)
+    if (userbreak)
+      successes = -1;
+    else 
     {
       if (successes > 0)
       {
