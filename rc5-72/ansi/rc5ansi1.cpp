@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *rc5ansi1_cpp(void) {
-return "@(#)$Id: rc5ansi1.cpp,v 1.10 2002/10/19 16:47:56 acidblood Exp $"; }
+return "@(#)$Id: rc5ansi1.cpp,v 1.11 2002/10/19 16:55:41 acidblood Exp $"; }
 
 #include "ccoreio.h"
 #include "rotate.h"
@@ -25,7 +25,7 @@ s32 rc5_72_unit_func_ansi_1 (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, vo
   u32 A, B;
   u32 S[26];
   u32 L[3];
-  u32 kiter = *iterations/4;
+  u32 kiter = *iterations;
   while (kiter--)
   {
     L[2] = rc5_72unitwork->L0.hi;
