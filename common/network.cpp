@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.23 2000/02/08 22:00:08 remi Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.24 2000/02/10 17:10:38 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -672,7 +672,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       }
       #endif
 
-      if (CheckExitRequestTriggerNoIO())
+      if (iotimeout > 0 && CheckExitRequestTriggerNoIO())
       {
         success = 0;
         maxtries = 0;
@@ -939,8 +939,8 @@ int Network::InitializeConnection(void)
         *p = (char)(len = strlen( p+1 ));
         p += (++len);
         u16 xx = (u16)htons((u16)svc_hostport);
-	*(p+0) = *(((char*)(&xx)) + 0);
-	*(p+1) = *(((char*)(&xx)) + 1);
+        *(p+0) = *(((char*)(&xx)) + 0);
+        *(p+1) = *(((char*)(&xx)) + 1);
         packetsize = (10-sizeof(u32))+len;
       }
 
@@ -1074,9 +1074,12 @@ int Network::Get( char * data, int length )
   int tmp_isnonblocking = (isnonblocking != 0); //we handle timeout ourselves
   isnonblocking = 0;                 //so stop LowLevelGet() from doing it.
 
-  while (netbuffer.GetLength() < (u32)length && !CheckExitRequestTrigger())
+  while (netbuffer.GetLength() < (u32)length)
   {
     int nothing_done = 1;
+    
+    if (iotimeout > 0 && CheckExitRequestTrigger())
+      break;
 
     if (starttime == 0) /* first pass through */
       time(&starttime);
@@ -1268,7 +1271,7 @@ int Network::Get( char * data, int length )
       #else
         usleep( 100000 );  // Prevent racing on error (1/10 second)
       #endif
-      if (CheckExitRequestTriggerNoIO())
+      if (iotimeout > 0 && CheckExitRequestTrigger())
         break;
     }
   } // while (netbuffer.GetLength() < blah)
@@ -1623,7 +1626,7 @@ int Network::LowLevelConnectSocket( u32 that_address, int that_port )
           stoptime = time(NULL) + (time_t)iotimeout;
           while (rc < 0 && err == TNODATA && time(NULL) <= stoptime)
           {
-            if (CheckExitRequestTriggerNoIO())
+            if (!isnonblocking && CheckExitRequestTrigger())
               break;
             usleep(250000);
             rc = t_rcvconnect(sock, NULL);
@@ -1688,7 +1691,7 @@ int Network::LowLevelConnectSocket( u32 that_address, int that_port )
       rc = 0;
       break;
     }
-    if (CheckExitRequestTriggerNoIO())
+    if (!isnonblocking && CheckExitRequestTrigger())
     {
       rc = -1;
       break;
@@ -1919,7 +1922,9 @@ int Network::LowLevelPut(const char *ccdata,int length)
           usleep( sleepdur % 1000000UL );
       }
     }
-  } while (length && !CheckExitRequestTriggerNoIO());
+    if (!isnonblocking && CheckExitRequestTrigger())
+      break;
+  } while (length);
 
   #ifdef DEBUGTHIS
   Log("LLPut: towrite=%d, written=%d\n", totaltowrite, totalwritten );
@@ -2049,7 +2054,7 @@ int Network::LowLevelGet(char *data,int length)
         break;
       if (time(&timenow) > stoptime)
         break;
-      if (CheckExitRequestTrigger())
+      if (!isnonblocking && CheckExitRequestTrigger())
         break;
       ++sleptcount;
     }
@@ -2058,7 +2063,9 @@ int Network::LowLevelGet(char *data,int length)
       sleep( sleepdur / 1000000UL );
     if ((sleepdur % 1000000UL) != 0)
       usleep( sleepdur % 1000000UL );
-  } while (length && !CheckExitRequestTriggerNoIO());
+    if (!isnonblocking && CheckExitRequestTrigger())
+      break;
+  } while (length);
 
   #ifdef DEBUGTHIS
   Log("LLGet: got %u (requested %u) sockclosed:%s\n",
@@ -2175,4 +2182,3 @@ int Network::LowLevelSetSocketOption( int cond_type, int parm )
 }
 
 // ----------------------------------------------------------------------
-
