@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.36  1999/03/02 03:49:49  silby
+// Large block support added, des support fixed (unrelated.)
+//
 // Revision 1.35  1999/03/01 08:19:44  gregh
 // Changed ContestWork to a union that contains crypto (RC5/DES) and OGR data.
 //
@@ -147,7 +150,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.35 1999/03/01 08:19:44 gregh Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.36 1999/03/02 03:49:49 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -273,7 +276,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       {
       if (client->keyport == 3064)
         LogScreen("Test block success was not detected!\n");
-      fileentry.op = OP_DONE_MULTI;
+      fileentry.op = OP_BIGDONE_MULTI;
       }
 
     fileentry.os      = CLIENT_OS;
@@ -355,7 +358,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
     if (prob_i == 1) cputype = CPU_X86; 
     #endif
     
-    fileentry.op      = OP_DATA;
+    fileentry.op      = OP_BIGDATA;
     fileentry.cpu     = FILEENTRY_CPU; /* uses cputype variable */
     fileentry.os      = FILEENTRY_OS;
     fileentry.buildhi = FILEENTRY_BUILDHI; 
@@ -548,7 +551,7 @@ Log("Loadblock::getfromdisk(contest = %u) -> %s\n",
       fileentry.data.crypto.iterations.lo = ( 0x10000000L );
       fileentry.data.crypto.iterations.hi = ( 0 );
       fileentry.id[0] = 0;
-      fileentry.op = ( OP_DATA );
+      fileentry.op = ( OP_BIGDATA );
       fileentry.os = 0;
       fileentry.cpu = 0;
       fileentry.buildhi = 0;
