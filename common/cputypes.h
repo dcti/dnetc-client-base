@@ -5,10 +5,10 @@
  * Any other distribution or use of this source violates copyright.
  *
  * ** header is included by cores, so guard around c++ constructs **
-*/ 
+*/
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.42 2001/01/09 00:52:54 mfeiri Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.43 2001/01/15 08:45:16 dg Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -133,7 +133,7 @@
     #define CLIENT_CPU    CPU_ALPHA
   #elif defined(ASM_X86) || defined(__i386__)
     #define CLIENT_CPU    CPU_X86
-  #elif defined(__S390__)  
+  #elif defined(__S390__)
     #define CLIENT_CPU    CPU_S390
   #elif defined(ARM) || defined(__arm__)
     #define CLIENT_CPU    CPU_ARM
@@ -209,7 +209,7 @@
   #if defined(__QNXNTO__)
     #define CLIENT_OS_NAME "Neutrino"
     #define CLIENT_OS	    OS_NTO2
-  #else  
+  #else
     #define CLIENT_OS_NAME  "QNX"
     #define CLIENT_OS       OS_QNX
   #endif
@@ -401,7 +401,7 @@
   #define CLIENT_OS     OS_OS390
   #define CLIENT_CPU    CPU_S390
 #elif defined(_SEQUENT_)
-  #ifndef __unix__ 
+  #ifndef __unix__
   #define __unix__
   #endif
   #define CLIENT_OS     OS_DYNIX
@@ -416,7 +416,7 @@
 #endif
 #if !defined(CLIENT_OS_NAME)
   #define CLIENT_OS_NAME "**Unknown OS**"
-#endif  
+#endif
 #if !defined(CLIENT_CPU)
   #define CLIENT_CPU    CPU_UNKNOWN
 #endif
@@ -436,7 +436,7 @@
      (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM) || \
      ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)))
    #define CORES_SUPPORT_SMP
-#endif   
+#endif
 
 #if (CLIENT_OS == OS_WIN32)
   #include <process.h>
@@ -459,12 +459,12 @@
   typedef MPTaskID THREADID;
   #define OS_SUPPORTS_SMP
 #elif  ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))
-  /* Uses LWP instead of pthreads */  
+  /* Uses LWP instead of pthreads */
   #include <thread.h>
   typedef thread_t THREADID;
   #define OS_SUPPORTS_SMP
 #elif (CLIENT_OS == OS_FREEBSD)
-  /* Uses rfork() instead of pthreads */  
+  /* Uses rfork() instead of pthreads */
   typedef int /*pid_t*/ THREADID;
   #define OS_SUPPORTS_SMP
   #include <sys/wait.h>     /* wait() */
@@ -480,16 +480,16 @@
   #define OS_SUPPORTS_SMP
   typedef long THREADID;
 #elif defined(MULTITHREAD)
-  /* 
+  /*
   Q: can't we simply use if defined(_POSIX_THREADS), as this is often defined
      if POSIX threads are supported. Patrick Hildenbrand (patrick@mail4you.de)
   A: yes and no. :)
      no: _POSIX_THREADS may have been defined by an include file, but the
-         compiler might generate unsafe code. This is usually made clear with 
+         compiler might generate unsafe code. This is usually made clear with
          the absence/presence of _THREAD_SAFE.
-     yes: to keep the number of downloadable binaries to a minimum, clients  
+     yes: to keep the number of downloadable binaries to a minimum, clients
           should always be built with thread support (the only reason why two
-          binaries might be necessary is when threading depends on a lib that 
+          binaries might be necessary is when threading depends on a lib that
           is not installed everywhere and a static build is not possible).
           Users can always force non-threadedness by setting numcpu=0.  -cyp
   */
@@ -511,14 +511,14 @@
         /* no use under AIX 4.1.5, all threads have same prio */
     #undef _POSIX_THREAD_PRIORITY_SCHEDULING
   #endif
-#else 
+#else
   typedef int THREADID;
 #endif
 
 /* Fix up MULTITHREAD to mean "SMP aware and thread safe" */
 #if (defined(CORES_SUPPORT_SMP) && defined(OS_SUPPORTS_SMP))
    #define CLIENT_SUPPORTS_SMP
-#endif  
+#endif
 #undef MULTITHREAD /* undef it to avoid 'unsafe' meaning */
 
 /* ----------------------------------------------------------------- */
@@ -564,14 +564,16 @@
   #undef class
   /* There is a reference to 'class' in the Win32 unknwn.h header, */
   /* so don't break the class keyword in this case. */
-  #if !defined(_MSC_VER) || (_MSC_VER < 1200)
+  /* Need to disable this for VC 5.0, since installation of recent */
+  /* platform SDK's (e.g. January 2000) puts the class back in unknwn.h */
+  #if !defined(_MSC_VER) || (_MSC_VER < 1100)
     #define class the_client_is_class_free /* phew! */
   #endif
 #endif
 
 /* ----------------------------------------------------------------- */
 
-#ifdef __cplusplus 
+#ifdef __cplusplus
 extern "C" {
 #endif
 #include <limits.h>
@@ -586,7 +588,7 @@ extern "C" {
     #error your limits.h is borked. ULONG_MAX can never be less than UINT_MAX
   #else
     #if (!defined(USHRT_MAX) && defined(USHORT_MAX))
-      #define USHRT_MAX USHORT_MAX 
+      #define USHRT_MAX USHORT_MAX
     #endif
     #if !defined(SIZEOF_SHORT) && defined(USHRT_MAX)
       #if (USHRT_MAX == 0xFF)
@@ -607,7 +609,7 @@ extern "C" {
           #define SIZEOF_SHORT SIZEOF_INT
         #elif (SIZEOF_INT > 4)
           #define SIZEOF_SHORT (SIZEOF_INT>>1)
-        #else 
+        #else
           #define SIZEOF_SHORT 2
         #endif
       #endif
@@ -667,7 +669,7 @@ extern "C" {
     #endif
   #endif /* ULONG_MAX >= UINT_MAX */
 #endif
-      
+
 #if (defined(SIZEOF_SHORT) && (SIZEOF_SHORT == 2))
   typedef unsigned short u16;
   typedef signed short s16;
@@ -729,7 +731,7 @@ extern "C" {
   #define SIZEOF_LONGLONG 8
   typedef unsigned long long ui64;
   typedef signed long long si64;
-#endif  
+#endif
 
 typedef unsigned char u8;
 
