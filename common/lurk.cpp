@@ -48,7 +48,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.39 2001/10/23 22:18:00 mfeiri Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.40 2002/04/11 10:46:43 oliver Exp $"; }
 
 //#define TRACE
 
@@ -1524,7 +1524,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
    }
 
    #if (CLIENT_OS == OS_AMIGAOS)
-   amigaCloseSocketLib();
+   amigaCloseSocketLib(foundif != 0);
    #endif
 
    if (foundif)
