@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.19 2000/11/03 16:47:48 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.20 2000/11/11 13:15:42 cyp Exp $"
 
 #include "problem.h" /* WorkRecord, CONTEST_COUNT */
 #include "lurk.h"    /* lurk_conf structure */
@@ -30,17 +30,19 @@ struct membuffstruct
 
 // ------------------
 
-#define PROJECTFLAGS_CLOSED 0x01 /* updated only from net. never saved to disk */
-/* user-disabled projects don't have a flag (yet). They are 'invisible' to all
-   but the configuration functions ('invalid' slot in the loadorder_map)
+/* project flags are updated only from net. never saved to disk
+ * user-disabled projects don't have a flag. They are 'invisible' to all
+ * but the configuration functions ('invalid' slot in the loadorder_map)
 */
+#define PROJECTFLAGS_CLOSED     0x01
+#define PROJECTFLAGS_SUSPENDED  0x02 /* no data available */
+
+// ------------------
 
 typedef struct
 {
   /* non-user-configurable */
   int  nonewblocks;
-  int  randomchanged;
-  int  randomprefix;
   int  rc564closed;
   int  stopiniio;
   u32  scheduledupdatetime;

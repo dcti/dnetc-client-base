@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.45 2000/11/04 18:45:54 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.46 2000/11/11 13:15:41 cyp Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -966,7 +966,8 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
       int isclosed = 0;
       char proj_flags = client->project_flags[cont_i];
       TRACE_OUT((0,"proj_flags[cont_i=%d] = 0x%x\n", cont_i, proj_flags));
-      if (!ignore_closed_flags && (proj_flags & PROJECTFLAGS_CLOSED) != 0)
+      if (!ignore_closed_flags && 
+          (proj_flags & (PROJECTFLAGS_CLOSED|PROJECTFLAGS_SUSPENDED)) != 0)
       {
         /* this next bit is not a good candidate for a code hoist */
         if (closed_expired < 0) /* undetermined */
