@@ -1,6 +1,6 @@
 //
 // $Log: deseval-meggs3.cpp,v $
-// Revision 1.13.2.2  1999/12/07 23:56:28  cyp
+// Revision 1.13.2.3  1999/12/08 00:14:37  cyp
 // sync
 //
 // Revision 1.19  1999/12/07 23:44:25  cyp
@@ -60,7 +60,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_cpp(void) {
-return "@(#)$Id: deseval-meggs3.cpp,v 1.13.2.2 1999/12/07 23:56:28 cyp Exp $"; }
+return "@(#)$Id: deseval-meggs3.cpp,v 1.13.2.3 1999/12/08 00:14:37 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"		/* Isn't this needed for using CLIENT_OS defines? */

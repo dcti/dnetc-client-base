@@ -6,7 +6,7 @@
 ; based on deseval.c from Matthew Kwan's bitslicing DES key search.
 ;
 ; $Log: des-slice-sa.s,v $
-; Revision 1.9.2.2  1999/12/07 23:56:30  cyp
+; Revision 1.9.2.3  1999/12/08 00:14:40  cyp
 ; sync
 ;
 ; Revision 1.10  1999/12/07 23:44:26  cyp
@@ -42,7 +42,7 @@
 
 	AREA	fastdesarea, CODE, READONLY
 
-        DCB     "@(#)$Id: des-slice-sa.s,v 1.9.2.2 1999/12/07 23:56:30 cyp Exp $", 0
+        DCB     "@(#)$Id: des-slice-sa.s,v 1.9.2.3 1999/12/08 00:14:40 cyp Exp $", 0
         ALIGN
 
         EXPORT	des_unit_func_strongarm_asm

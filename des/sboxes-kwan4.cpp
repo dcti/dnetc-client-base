@@ -1,6 +1,6 @@
 //
 // $Log: sboxes-kwan4.cpp,v $
-// Revision 1.5.2.1  1999/12/07 23:56:29  cyp
+// Revision 1.5.2.2  1999/12/08 00:14:38  cyp
 // sync
 //
 // Revision 1.6  1999/12/07 23:44:25  cyp
@@ -27,7 +27,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *sboxes_kwan4_cpp(void) {
-return "@(#)$Id: sboxes-kwan4.cpp,v 1.5.2.1 1999/12/07 23:56:29 cyp Exp $"; }
+return "@(#)$Id: sboxes-kwan4.cpp,v 1.5.2.2 1999/12/08 00:14:38 cyp Exp $"; }
 #endif
 
 #include "sboxes.h"

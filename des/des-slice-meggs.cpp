@@ -7,7 +7,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_meggs_cpp(void) {
-return "@(#)$Id: des-slice-meggs.cpp,v 1.25.2.1 1999/12/07 23:56:27 cyp Exp $"; }
+return "@(#)$Id: des-slice-meggs.cpp,v 1.25.2.2 1999/12/08 00:14:36 cyp Exp $"; }
 #endif
 
 #include <stdio.h>

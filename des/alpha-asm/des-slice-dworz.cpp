@@ -3,8 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-dworz.cpp,v $
-// Revision 1.7.2.1  1999/12/07 23:56:29  cyp
+// Revision 1.7.2.2  1999/12/08 00:14:38  cyp
 // sync
+//
+// Revision 1.9  1999/12/08 00:12:57  cyp
+// inserted 'slice' in function name to identify that these are KWAN cores.
 //
 // Revision 1.8  1999/12/07 23:44:25  cyp
 // standardized calling conventions, converted nbbits parameter to iterstodo
@@ -38,7 +41,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_dworz_cpp(void) {
-return "@(#)$Id: des-slice-dworz.cpp,v 1.7.2.1 1999/12/07 23:56:29 cyp Exp $"; }
+return "@(#)$Id: des-slice-dworz.cpp,v 1.7.2.2 1999/12/08 00:14:38 cyp Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -73,7 +76,7 @@ extern "C" WORD_TYPE checkKey (DesWorkStruct *dws);
 
 // rc5unitwork.LO in lo:hi 24+32 incrementable format
 
-u32 des_unit_func_alpha_dworz( RC5UnitWork * rc5unitwork, u32 *iterations, char * /* coremem */)
+u32 des_unit_func_slice_dworz( RC5UnitWork * rc5unitwork, u32 *iterations, char * /* coremem */)
 {
   WORD_TYPE i, j, result, SK, EK;
   DesWorkStruct dws;

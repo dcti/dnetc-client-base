@@ -11,7 +11,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs2_cpp(void) {
-return "@(#)$Id: deseval-meggs2.cpp,v 1.6.2.1 1999/12/07 23:56:28 cyp Exp $"; }
+return "@(#)$Id: deseval-meggs2.cpp,v 1.6.2.2 1999/12/08 00:14:37 cyp Exp $"; }
 #endif
 
 #ifdef (MULTITHREAD)

@@ -1,4 +1,4 @@
-/* @(#)$Id: des-arm-wrappers.cpp,v 1.3.2.1 1999/12/07 23:56:29 cyp Exp $ */
+/* @(#)$Id: des-arm-wrappers.cpp,v 1.3.2.2 1999/12/08 00:14:38 cyp Exp $ */
 
 #include "cputypes.h" /* u32 */
 #include "problem.h" /* RC5UnitWork */
@@ -12,7 +12,7 @@ extern "C" {
 }  
 #endif
 
-u32 des_unit_func_arm( RC5UnitWork *rc5unitwork, u32 *iterations, char *)
+u32 des_unit_func_slice_arm( RC5UnitWork *rc5unitwork, u32 *iterations, char *)
 {
   unsigned long nbits = 8;
   while (*iterations > (1ul << nbits)) 
@@ -23,7 +23,7 @@ u32 des_unit_func_arm( RC5UnitWork *rc5unitwork, u32 *iterations, char *)
   return des_unit_func_arm_asm( rc5unitwork, nbits );
 }  
 
-u32 des_unit_func_strongarm( RC5UnitWork *rc5unitwork, u32 *iterations, char *)
+u32 des_unit_func_slice_strongarm( RC5UnitWork *rc5unitwork, u32 *iterations, char *)
 {
   unsigned long nbits = 8;
   while (*iterations > (1ul << nbits)) 

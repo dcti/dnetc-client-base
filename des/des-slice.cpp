@@ -8,7 +8,7 @@
  * --------------------------------------------------------------
 */
 const char *des_slice_cpp(void) {
-return "@(#)$Id: des-slice.cpp,v 1.11.2.1 1999/12/07 23:56:27 cyp Exp $"; }
+return "@(#)$Id: des-slice.cpp,v 1.11.2.2 1999/12/08 00:14:36 cyp Exp $"; }
 
 #include <stdio.h>
 #include <stdlib.h>
