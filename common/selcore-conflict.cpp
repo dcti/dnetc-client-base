@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.35  1999/02/09 04:23:06  dworz
+// fixed a typo on line 166
+// include machine/cpuconf.h only when CLIENT_OS!=OS_LINUX
+//
 // Revision 1.34  1999/02/04 23:06:44  remi
 // Added OS_LINUX in the Alpha cputypetable[] #ifdef block.
 //
@@ -130,7 +134,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.34 1999/02/04 23:06:44 remi Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.35 1999/02/09 04:23:06 dworz Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -162,9 +166,10 @@ static const char *cputypetable[]=
   //core 6 is "reserved" (was Pentium MMX)
   };
 #elif (CLIENT_CPU == CPU_ALPHA)
-  #if ((CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_OPENBSD) || 
-       (CLIENT_OS == OS_LINUX))
-    #include <machine/cpuconf.h>
+  #if ((CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_LINUX))
+	#if (CLIENT_OS != OS_LINUX)
+  	  #include <machine/cpuconf.h>
+    #endif
     static const char *cputypetable[]=
      {
      "unknown",
