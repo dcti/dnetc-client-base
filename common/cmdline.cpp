@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.146 1999/12/02 05:14:59 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.147 1999/12/04 15:52:13 cyp Exp $"; }
 
 //#define TRACE
 
@@ -820,17 +820,17 @@ int ParseCommandline( Client *client,
           client->nofallback = 1;
       }
       else if ( strcmp( thisarg, "-lurk" ) == 0 )
-      {
+      {                           // Detect modem connections
         #if defined(LURK)
         if (run_level == 0)
-          dialup.lurkmode=CONNECT_LURK;      // Detect modem connections
+          client->lurk_conf.lurkmode=CONNECT_LURK;
         #endif
       }
       else if ( strcmp( thisarg, "-lurkonly" ) == 0 )
-      {
+      {                           // Only connect when modem connects
         #if defined(LURK)
         if (run_level == 0)
-          dialup.lurkmode=CONNECT_LURKONLY;  // Only connect when modem connects
+          client->lurk_conf.lurkmode=CONNECT_LURKONLY;  
         #endif
       }
       else if ( strcmp( thisarg, "-interfaces" ) == 0 )
@@ -847,12 +847,13 @@ int ParseCommandline( Client *client,
           {
             if (logging_is_initialized)
               LogScreenRaw ("Limited interface watch list to %s\n",
-                             dialup.connifacemask );
+                             client->lurk_conf.connifacemask );
           }
           else
           {
-            strncpy(dialup.connifacemask, argvalue, sizeof(dialup.connifacemask) );
-            dialup.connifacemask[sizeof(dialup.connifacemask)-1] = 0;
+            strncpy(client->lurk_conf.connifacemask, argvalue, 
+                       sizeof(client->lurk_conf.connifacemask) );
+            client->lurk_conf.connifacemask[sizeof(client->lurk_conf.connifacemask)-1] = 0;
           }
           #endif
         }
@@ -1493,9 +1494,9 @@ int ParseCommandline( Client *client,
                 strcmp( thisarg, "-test" ) == 0 )
       {
         int do_mode = MODEREQ_BENCHMARK;
-	inimissing = 0; // Don't need ini
+        inimissing = 0; // Don't need ini
         client->quietmode = 0;
-	
+        
         if (strcmp( thisarg, "-benchmark2"  ) == 0)
           do_mode = MODEREQ_BENCHMARK_QUICK;
         else if (strcmp( thisarg, "-bench"  ) == 0)
@@ -1580,18 +1581,18 @@ int ParseCommandline( Client *client,
 
       if (setsid() == -1)
       {
-	terminate_app = 1;
-	ConOutErr("setsid() failed. Unable to start quiet/hidden.");
+        terminate_app = 1;
+        ConOutErr("setsid() failed. Unable to start quiet/hidden.");
       }
       else
       {
         if ((fd = open("/dev/null", O_RDWR, 0)) != -1)
         {
-  	  (void) dup2(fd, 0);
-	  (void) dup2(fd, 1);
-	  (void) dup2(fd, 2);
-	  if (fd > 2)
-	    (void) close(fd);
+          (void) dup2(fd, 0);
+          (void) dup2(fd, 1);
+          (void) dup2(fd, 2);
+          if (fd > 2)
+            (void) close(fd);
         }
       }
     }

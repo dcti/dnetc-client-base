@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.72 1999/12/02 05:14:59 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.73 1999/12/04 15:52:13 cyp Exp $"; }
 
 //#define TRACE
 
@@ -14,12 +14,8 @@ return "@(#)$Id: confrwv.cpp,v 1.72 1999/12/02 05:14:59 cyp Exp $"; }
 #include "iniread.h"   // [Get|Write]Profile[Int|String]()
 #include "pathwork.h"  // GetFullPathForFilename()
 #include "util.h"      // projectmap_*() and trace
-#include "lurk.h"      // lurk stuff
 #include "base64.h"    // base64_[en|de]code()
-#include "cpucheck.h"  // GetProcessorType() for mmx stuff
-#include "triggers.h"  // RaiseRestartRequestTrigger()
 #include "clicdata.h"  // CliGetContestNameFromID()
-#include "cmpidefs.h"  // strcmpi()
 #include "confrwv.h"   // Ourselves
 
 /* ------------------------------------------------------------------------ */
@@ -32,6 +28,19 @@ static const char *OPTSECT_LOG     = "logging";
 static const char *OPTSECT_CPU     = "processor-usage";
 
 /* ------------------------------------------------------------------------ */
+
+static int __strcasecmp(const char *s1, const char *s2)
+{
+  for (;;)
+  {
+    if (tolower(*s1) != tolower(*s2))
+      return *s1 - *s2;
+    if (!*s1)
+      break;
+    s1++; s2++;
+  }
+  return 0;
+}
 
 static const char *__getprojsectname( unsigned int ci )
 {
@@ -308,7 +317,7 @@ static int confopt_IsHostnameDNetHost( const char * hostname )
     return 0;
   len = strlen( hostname );
   return (len > (sizeof( sig )-1) &&
-      strcmpi( &hostname[(len-(sizeof( sig )-1))], sig ) == 0);
+      __strcasecmp( &hostname[(len-(sizeof( sig )-1))], sig ) == 0);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -326,7 +335,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
              "cputype","threshold","threshold2","preferredblocksize",
              "logname", "keyproxy", "keyport", "numcpu",
              "smtpsrvr", "smtpport", "messagelen", "smtpfrom", "smtpdest"
-              };
+             "lurk", "lurkonly" };
   char buffer[128];
   char *p;
   unsigned int ui;
@@ -389,7 +398,8 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
 
   /* ----------------- project options ----------------- */
 
-  #if (CLIENT_CPU != CPU_ALPHA) /* no RC5 cputype->coretype mapping for Alpha */
+  #if (CLIENT_CPU != CPU_ALPHA) && (CLIENT_CPU != CPU_68K) && (CLIENT_CPU != CPU_ARM)
+  /* don't have RC5 cputype->coretype mapping for Alpha or m68k or arm */
   if (!GetPrivateProfileStringB( __getprojsectname(RC5), "core", "", buffer, sizeof(buffer), fn ))
   {
     if ((i = GetPrivateProfileIntB(OPTION_SECTION, "cputype", -1, fn ))!=-1)
@@ -519,9 +529,9 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
   {
     if (GetPrivateProfileStringB( OPTION_SECTION, "keyproxy", "", buffer, sizeof(buffer), fn ))
     {
-      if (strcmpi(buffer,"auto")==0 || strcmpi(buffer,"(auto)")==0)
+      if (__strcasecmp(buffer,"auto")==0 || __strcasecmp(buffer,"(auto)")==0)
         buffer[0]=0; //one config version accidentally wrote "auto" out
-      else if (strcmpi( buffer, "rc5proxy.distributed.net" )==0) 
+      else if (strcmp( buffer, "rc5proxy.distributed.net" )==0)
         buffer[0]=0; //obsolete hostname
       else if ( confopt_IsHostnameDNetHost( buffer ) &&
         GetPrivateProfileIntB( OPTSECT_NET, "autofindkeyserver", 1, fn ) )
@@ -554,20 +564,39 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
     if ((i = GetPrivateProfileIntB( OPTION_SECTION, "dialwhenneeded", -123, fn )) != -123)
     {
       #ifdef LURK
-      dialup.dialwhenneeded = i;
+      client->lurk_conf.dialwhenneeded = i;
       #endif
       if (i)
         modfail += (!WritePrivateProfileStringB( OPTSECT_NET, "enable-start-stop", "yes", fn ));
     }
   }   
-  
+  if (!GetPrivateProfileStringB( OPTSECT_NET, "dialup-watcher", "", buffer, sizeof(buffer), fn ))
+  {
+    buffer[0] = '\0';
+    if ((i = GetPrivateProfileIntB( OPTION_SECTION, "lurk", 0, fn )) != 0)
+    {
+      strcpy(buffer,"active");
+      #ifdef LURK
+      client->lurk_conf.lurkmode = CONNECT_LURK;
+      #endif
+    }
+    else if ((i = GetPrivateProfileIntB( OPTION_SECTION, "lurkonly", 0, fn )) != 0)
+    {
+      strcpy(buffer,"passive");
+      #ifdef LURK
+      client->lurk_conf.lurkmode = CONNECT_LURKONLY;
+      #endif
+    }
+    if (buffer[0])
+      modfail += (!WritePrivateProfileStringB( OPTSECT_NET, "dialup-watcher", buffer, fn ));
+  }
   if (!GetPrivateProfileStringB( OPTSECT_NET, "dialup-profile", "", buffer, sizeof(buffer), fn ))
   {
     if (GetPrivateProfileStringB( OPTSECT_MISC, "connectionname", "", buffer, sizeof(buffer), fn ))
     {
       #ifdef LURK
-      strncpy( dialup.connprofile, buffer, sizeof(dialup.connprofile) );
-      dialup.connprofile[sizeof(dialup.connprofile)-1]='\0';
+      strncpy( client->lurk_conf.connprofile, buffer, sizeof(client->lurk_conf.connprofile) );
+      client->lurk_conf.connprofile[sizeof(client->lurk_conf.connprofile)-1]='\0';
       #endif
       modfail += (!WritePrivateProfileStringB( OPTSECT_NET, "dialup-profile", buffer, fn ));
     }
@@ -679,7 +708,7 @@ int ReadConfig(Client *client)
 
   if (GetPrivateProfileStringB( sect, "id", "", client->id, sizeof(client->id), fn ))
   {
-    if (strcmp( client->id, "rc5@distributed.net" ) == 0)
+    if (__strcasecmp( client->id, "rc5@distributed.net" ) == 0)
       client->id[0] = '\0';
   }
 
@@ -715,33 +744,31 @@ int ReadConfig(Client *client)
                                 client->keyproxy, sizeof(client->keyproxy),
                                 &(client->keyport) );
   client->autofindkeyserver = (client->keyproxy[0]==0 || 
-    strcmpi( client->keyproxy, "rc5proxy.distributed.net" )==0 ||
+    strcmp( client->keyproxy, "rc5proxy.distributed.net" )==0 ||
     /* this is only to catch incomplete direct edits of the .ini */
     ( confopt_IsHostnameDNetHost(client->keyproxy) &&
     GetPrivateProfileIntB( OPTSECT_NET, "autofindkeyserver", 1, fn ) ));
 
   #if defined(LURK)
   {
-    int caps = dialup.GetCapabilityFlags();
-    dialup.lurkmode = 0;
-    if ((caps & CONNECT_LURKONLY)!=0 && GetPrivateProfileIntB( sect, "lurkonly", 0, fn ))
-      { dialup.lurkmode = CONNECT_LURKONLY; }
-    else if ((caps & CONNECT_LURK)!=0 && GetPrivateProfileIntB( sect, "lurk", 0, fn ))
-      dialup.lurkmode = CONNECT_LURK;
-    if ((caps & CONNECT_IFACEMASK)!=0)
-      GetPrivateProfileStringB( OPTSECT_NET, "interfaces-to-watch", dialup.connifacemask,
-                                dialup.connifacemask, sizeof(dialup.connifacemask), fn );
-    if ((caps & CONNECT_DOD)!=0)
+    p = "";
+    if (client->lurk_conf.lurkmode == CONNECT_LURKONLY)
+      p = "passive";
+    else if (client->lurk_conf.lurkmode == CONNECT_LURK)
+      p = "active";
+    client->lurk_conf.lurkmode = 0;
+    if (GetPrivateProfileStringB( OPTSECT_NET, "dialup-watcher", p, buffer, sizeof(buffer), fn ))
     {
-      dialup.dialwhenneeded = GetPrivateProfileIntB( OPTSECT_NET, "enable-start-stop", 0, fn );
-      if ((caps & CONNECT_DODBYSCRIPT)!=0)
-      {
-        GetPrivateProfileStringB( OPTSECT_NET, "dialup-start-cmd", dialup.connstartcmd, dialup.connstartcmd, sizeof(dialup.connstartcmd), fn );
-        GetPrivateProfileStringB( OPTSECT_NET, "dialup-stop-cmd", dialup.connstopcmd, dialup.connstopcmd, sizeof(dialup.connstopcmd), fn );
-      }
-      if ((caps & CONNECT_DODBYPROFILE)!=0)
-        GetPrivateProfileStringB( OPTSECT_NET, "dialup-profile", dialup.connprofile, dialup.connprofile, sizeof(dialup.connprofile), fn );
+      if (__strcasecmp( buffer, "active" ) == 0)
+        client->lurk_conf.lurkmode = CONNECT_LURK;
+      else if (__strcasecmp( buffer, "passive" ) == 0)
+        client->lurk_conf.lurkmode = CONNECT_LURKONLY;
     }
+    GetPrivateProfileStringB( OPTSECT_NET, "interfaces-to-watch", client->lurk_conf.connifacemask, client->lurk_conf.connifacemask, sizeof(client->lurk_conf.connifacemask), fn );
+    client->lurk_conf.dialwhenneeded = GetPrivateProfileIntB( OPTSECT_NET, "enable-start-stop", client->lurk_conf.dialwhenneeded, fn );
+    GetPrivateProfileStringB( OPTSECT_NET, "dialup-start-cmd", client->lurk_conf.connstartcmd, client->lurk_conf.connstartcmd, sizeof(client->lurk_conf.connstartcmd), fn );
+    GetPrivateProfileStringB( OPTSECT_NET, "dialup-stop-cmd", client->lurk_conf.connstopcmd, client->lurk_conf.connstopcmd, sizeof(client->lurk_conf.connstopcmd), fn );
+    GetPrivateProfileStringB( OPTSECT_NET, "dialup-profile", client->lurk_conf.connprofile, client->lurk_conf.connprofile, sizeof(client->lurk_conf.connprofile), fn );
   }
   #endif /* LURK */
 
@@ -962,21 +989,21 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
                                 &(client->keyport) );
 
     #if defined(LURK)
-    i = dialup.GetCapabilityFlags();
-    WritePrivateProfileStringB( sect, "lurk", (dialup.lurkmode==CONNECT_LURK)?("1"):(NULL), fn );
-    WritePrivateProfileStringB( sect, "lurkonly", (dialup.lurkmode==CONNECT_LURKONLY)?("1"):(NULL), fn );
-    if ((i & CONNECT_IFACEMASK) != 0)
-      __XSetProfileStr( OPTSECT_NET, "interfaces-to-watch", dialup.connifacemask, fn, NULL );
-    if ((i & CONNECT_DOD) != 0)
     {
-      __XSetProfileInt( OPTSECT_NET, "enable-start-stop", (dialup.dialwhenneeded!=0), fn, 0, 'n' );
-      if ((i & CONNECT_DODBYPROFILE) != 0)
-        __XSetProfileStr( OPTSECT_NET, "dialup-profile", dialup.connprofile, fn, NULL );
-      if ((i & CONNECT_DODBYSCRIPT) != 0)
-      {
-        __XSetProfileStr( OPTSECT_NET, "dialup-start-cmd", dialup.connstartcmd, fn, NULL );
-        __XSetProfileStr( OPTSECT_NET, "dialup-stop-cmd", dialup.connstopcmd, fn, NULL );
-      }
+      p = NULL;
+      if (client->lurk_conf.lurkmode == CONNECT_LURKONLY)
+        p = "passive";
+      else if (client->lurk_conf.lurkmode == CONNECT_LURK)
+        p = "active";
+      else if (GetPrivateProfileStringB(OPTSECT_NET,"dialup-watcher","",buffer,2,fn))
+        p = "disabled";
+      if (p)
+        WritePrivateProfileStringB( OPTSECT_NET, "dialup-watcher", p, fn );
+      __XSetProfileStr( OPTSECT_NET, "interfaces-to-watch", client->lurk_conf.connifacemask, fn, NULL );
+      __XSetProfileInt( OPTSECT_NET, "enable-start-stop", (client->lurk_conf.dialwhenneeded!=0), fn, 0, 'n' );
+      __XSetProfileStr( OPTSECT_NET, "dialup-profile", client->lurk_conf.connprofile, fn, NULL );
+      __XSetProfileStr( OPTSECT_NET, "dialup-start-cmd", client->lurk_conf.connstartcmd, fn, NULL );
+      __XSetProfileStr( OPTSECT_NET, "dialup-stop-cmd", client->lurk_conf.connstopcmd, fn, NULL );
     }
     #endif // defined LURK
     
@@ -992,7 +1019,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     
     __XSetProfileStr( OPTSECT_LOG, "log-file-limit", client->logfilelimit, fn, NULL );
     __XSetProfileStr( OPTSECT_LOG, "log-file", client->logname, fn, NULL );
-    if ((client->logfiletype[0] && strcmpi(client->logfiletype,"none")!=0) || 
+    if ((client->logfiletype[0] && __strcasecmp(client->logfiletype,"none")!=0) || 
       GetPrivateProfileStringB(OPTSECT_LOG,"log-file-type","",buffer,2,fn))
       WritePrivateProfileStringB( OPTSECT_LOG,"log-file-type", client->logfiletype, fn );
 
