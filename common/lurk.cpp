@@ -14,6 +14,10 @@
 
 */
 // $Log: lurk.cpp,v $
+// Revision 1.32  1999/02/14 00:32:32  silby
+// Changed order DialIfNeeded checks status so RAS is not inited if
+// it doesn't need to be.
+//
 // Revision 1.31  1999/02/12 23:21:19  silby
 // Changed win32 RAS function names used so that they
 // do not conflict with system headers.
@@ -102,7 +106,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.31 1999/02/12 23:21:19 silby Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.32 1999/02/14 00:32:32 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -729,14 +733,14 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
   if (!islurkstarted)
     return -1; // Lurk can't be started, evidently
 
+  if (!dialwhenneeded)           // We don't handle dialing
+    return 0;
+
   if (IsConnected()) // We're already connected
     return 0;
 
   if (lurkmode == CONNECT_LURKONLY && !force)
     return -1; // lurk-only, we're not allowed to connect unless forced
-
-  if (!dialwhenneeded)           // We don't handle dialing
-    return 0;
 
 #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
 
