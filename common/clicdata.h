@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */ 
 #ifndef __CLICDATA_H__
-#define __CLICDATA_H__ "@(#)$Id: clicdata.h,v 1.19.2.6 2000/11/04 18:50:37 cyp Exp $"
+#define __CLICDATA_H__ "@(#)$Id: clicdata.h,v 1.19.2.6.2.1 2001/03/22 22:03:56 sampo Exp $"
 
 // return 0 if contestID is invalid, non-zero if valid.
 int CliIsContestIDValid(int contestID);
@@ -49,6 +49,9 @@ int CliAddContestInfoSummaryData( int contestid,
 
 // Return a usable contest name, returns "???" if bad id.
 const char *CliGetContestNameFromID(int contestid);
+
+// Return a usable contest unit name, returns "???" if bad id.
+const char *CliGetContestUnitFromID(int contestid);
 
 // returns the expected time to complete a work unit, in seconds
 // if force is true, then a microbenchmark will be done to get the

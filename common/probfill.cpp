@@ -12,7 +12,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.67 2001/03/19 15:38:59 andreasb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.66.2.1 2001/03/22 22:03:56 sampo Exp $"; }
 
 //#define TRACE
 
@@ -399,12 +399,9 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       const char *reason_msg = 0;
       int discarded = 0;
       unsigned int permille, swucount = 0;
-      const char *contname;
       char pktid[32], ratebuf[32]; 
       char dcountbuf[64]; /* we use this as scratch space too */
-      u32 secs, usecs, ccounthi, ccountlo, tcounthi, tcountlo;
       struct timeval tv;
-      ProblemInfo info;
 
       *contest = cont_i;
       *is_empty = 1; /* will soon be */
@@ -476,28 +473,21 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         else
           action_msg = "Completed";
       }
-
-      memset(&info, 0, sizeof(info));
-      if (ProblemGetInfo( thisprob, &info, 0, 
-                                    0, &contname, 
-                                    &secs, &usecs,
-                                    &swucount, 2, 
-                                    0, 
-                                    &permille, 0, 1,
-                                    pktid, sizeof(pktid),
-                                    0, 0, 
-                                    0, 0, 
-                                    ratebuf, sizeof(ratebuf),
-                                    &tcounthi, &tcountlo,
-                                    0, 0,
-                                    &ccounthi, &ccountlo,
-                                    0, 0,
-                                    0, 0, dcountbuf, 15 ) != -1)
+      ProblemInfo info;
+      info.sigbuf = pktid;
+      info.sigbufsz = sizeof(pktid);
+      info.ratebuf = ratebuf;
+      info.ratebufsz = sizeof(ratebuf);
+      info.permille_only_if_exact = 1;
+      
+      if (ProblemGetInfo( thisprob, &info, P_INFO_E_TIME   | P_INFO_SWUCOUNT | P_INFO_C_PERMIL |
+                                           P_INFO_SIGBUF   | P_INFO_RATEBUF  | P_INFO_CCOUNT   |
+                                           P_INFO_DCOUNT) != -1)
       {
-        tv.tv_sec = secs; tv.tv_usec = usecs;
+        tv.tv_sec = info.elapsed_secs; tv.tv_usec = info.elapsed_usecs;
 
         if (finito && !discarded && !info.is_test_packet)
-          CliAddContestInfoSummaryData(cont_i,ccounthi,ccountlo,&tv,swucount);
+          CliAddContestInfoSummaryData(cont_i,info.ccounthi,info.ccountlo,&tv,info.swucount);
 
         if (action_msg)
         {
@@ -505,24 +495,24 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
           {
             //[....] Discarded CSC 12345678:ABCDEF00 4*2^28
             //       (project disabled/closed)
-            Log("%s: %s %s%c(%s)\n", contname, action_msg, pktid, 
+            Log("%s: %s %s%c(%s)\n", CliGetContestNameFromID(thisprob->contest), action_msg, pktid, 
                                    ((strlen(reason_msg)>10)?('\n'):(' ')),
                                    reason_msg );
           }
           else
           {
-            if (finito && info.is_test_packet) /* finished test packet */
+            U64stringify(dcountbuf, sizeof(dcountbuf), info.dcounthi, info.dcountlo, 2, CliGetContestUnitNameFromID(cont_i));
+            if (finito && !info.is_test_packet) /* finished test packet */
               strcat( strcpy( dcountbuf,"Test: RESULT_"),
                      ((resultcode==RESULT_NOTHING)?("NOTHING"):("FOUND")) );
             else if (finito) /* finished non-test packet */ 
             {
-              char *p = strrchr(pktid, ':'); /* HACK! to supress too long */
-              if (p) *p = '\0';              /* crypto "Completed" lines */
-              sprintf( dcountbuf, "%u.%02u stats units", 
-                                  swucount/100, swucount%100);
+              char *p = strrchr(pktid,':'); /* HACK! to supress too long */
+              if (p) *p = '\0';            /* crypto "Completed" lines */
+              sprintf( dcountbuf, "%u.%02u stats units", info.swucount/100, info.swucount%100);
             }
-            else if (permille > 0)
-              sprintf( dcountbuf, "%u.%u0%% done", permille/10, permille%10);
+            else if (info.c_permille > 0)
+              sprintf( dcountbuf, "%u.%u0%% done", info.c_permille/10, info.c_permille%10);
             else
               strcat( dcountbuf, " done" );
 
@@ -534,15 +524,15 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
             //       1.23:45:67:89 - [987,654,321 keys/s]
             //[....] OGR: Completed 22/1-3-5-7 (12.30 stats units)
             //       1.23:45:67:89 - [987,654,321 nodes/s]
-            Log("%s: %s %s (%s)\n%s - [%s/s]\n",
-              contname, action_msg, pktid, dcountbuf,
+            Log("%s: %s %s (%s)\n%s - [%s/s]\n", 
+              CliGetContestNameFromID(cont_i), action_msg, pktid, dcountbuf,
               CliGetTimeString( &tv, 2 ), ratebuf );
-            if (finito && info.show_exact_iterations_done) 
+            if (finito && info.show_exact_iterations_done)
             {
-              Log("%s: %s [%s]\n", contname, pktid, 
-                    ProblemComputeRate(cont_i, 0, 0, tcounthi, tcountlo, 
-                                         0, 0, dcountbuf, sizeof(dcountbuf)));
-            }                                                                                                                   } /* if (reason_msg) else */
+              Log("%s: %s [%s]\n", CliGetContestNameFromID(cont_i), pktid,
+              ProblemComputeRate(cont_i, 0, 0, info.dcounthi, info.dcountlo, 0, 0, dcountbuf, sizeof(dcountbuf)));
+            }
+          } /* if (reason_msg) else */
         } /* if (action_msg) */
       } /* if (thisprob->GetProblemInfo( ... ) != -1) */
     
@@ -716,23 +706,12 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     
         if (load_problem_count <= COMBINEMSG_THRESHOLD)
         {
-          unsigned int permille; u32 ddonehi, ddonelo;
-          const char *contname; char pktid[32]; char ddonebuf[15];
-          if (ProblemGetInfo( thisprob, 0, 0, 
-                                        loaded_for_contest, &contname, 
-                                        0, 0,
-                                        0, 2, 
-                                        0, 
-                                        0, &permille, 1,
-                                        pktid, sizeof(pktid),
-                                        0, 0, 
-                                        0, 0, 0, 0,
-                                        0, 0, 
-                                        0, 0,
-                                        0, 0,
-                                        0, 0,
-                                        &ddonehi, &ddonelo,
-                                        ddonebuf, sizeof(ddonebuf) ) != -1)
+          unsigned int permille; char pktid[32]; char ddonebuf[15];
+          ProblemInfo info;
+          info.permille_only_if_exact = 1;
+          info.sigbuf = pktid;
+          info.sigbufsz = sizeof(pktid);
+          if (ProblemGetInfo( thisprob, &info, P_INFO_S_PERMIL, | P_INFO_SIGBUF | P_INFO_DCOUNT) != -1)
           {
             const char *extramsg = ""; 
             char perdone[32]; 
@@ -741,12 +720,15 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
               extramsg="\nPacket was from a different core/client cpu/os/build.";
             else if (permille > 0 && permille < 1000)
             {
-              sprintf(perdone, " (%u.%u0%% done)", (permille/10), (permille%10));
+              sprintf(perdone, " (%u.%u0%% done)", (info.s_permille/10), (info.s_permille%10));
               extramsg = perdone;
             }
             else if (ddonehi || ddonelo)
             {
-              strcat( strcat( strcpy(perdone, " ("), ddonebuf)," done)");
+              strcat( strcat( strcpy(perdone, " ("), U64strinfigy(ddonebuf, sizeof(ddonebuf), 
+                                                                  info.ddonehi, info.ddonelo, 2,
+                                                                  CliGetContestUnitFromID(thisprob->contest)),
+                                                     " done)"); 
               extramsg = perdone;
             }
             

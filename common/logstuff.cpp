@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.53 2001/03/19 15:34:25 andreasb Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.52.2.1 2001/03/22 22:03:56 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -758,22 +758,11 @@ static int __ContestGetLiveRate(unsigned int contest_i,
               numdone++;
             if (selprob->pub_data.contest == contest_i)
             {
-              u32 ccounthi, ccountlo;
-              if (ProblemGetInfo(selprob, 0, 0,
-                                 0, 0,
-                                 0, 0,
-                                 0, 0, 
-                                 0, 
-                                 0, 0, 
-                                 0, 
-                                 0, 0, 
-                                 0, 0, 
-                                 0, 0, 0, 0,
-                                 0, 0, 0, 0,
-                                 &ccounthi, &ccountlo, 0, 0,
-                                 0, 0, 0, 0 ) >= 0)
+              ProblemInfo info;
+              if (ProblemGetInfo(selprob, &info, P_INFO_CCOUNT) >= 0)
               {
                 int gotit = 0;
+                u32 ccounthi = info.ccounthi, ccountlo = info.ccountlo;
                 u32 last_ccounthi = 0, last_ccountlo = 0; 
                 u32 last_ctimehi = 0, last_ctimelo = 0; 
                 u32 last_utimehi = 0, last_utimelo = 0; 
@@ -1041,26 +1030,37 @@ void LogScreenPercent( unsigned int load_problem_count )
         if (disp_format != DISPFORMAT_PERC &&
             (!buffer[0] || prob_i == selprob_i))
         {
-          char blkdone[32], blksig[32]; const char *contname;
-          girc = ProblemGetInfo(selprob, 0, 0, &cont_i, &contname, 0, 0, 0, 0, 0, 
-                           &permille, &startpermille, 0,
-                           0, 0, blksig, sizeof(blksig), 0, 0, 0, 0, 0,0,0, 0,0,0,
-                           0, 0, 0, 0, blkdone, sizeof(blkdone) );
+          char blkdone[32], blksig[32];
+          ProblemInfo info;
+          info.cwpbuf = blksig;
+          info.cwpbufsz = sizeof(blksig);
+          info.permille_only_if_exact = 0;
+          
+          girc = ProblemGetInfo(selprob, &info, P_INFO_S_PERMIL | P_INFO_C_PERMIL  |
+                                                P_INFO_CWPBUF   | P_INFO_DCOUNT);
+          cont_i = selprob->contest;
+          permille = info.c_permille;
+          startpermille = info.s_permille;
+
           if (permille == 1000 && disp_format == DISPFORMAT_AUTO)
             disp_format = DISPFORMAT_PERC;
           else if (girc != -1)
           {
             sprintf(buffer, "#%u: %s:%s [%s]", 
-                    prob_i+1, contname, blksig, blkdone );
+                    prob_i+1, CliGetContestNameFromID(cont_i), blksig, 
+                    U64stringify(blkdone, suzeof(blkdone), info.dcounthi,
+                    info.dcountlo, 2, CliGetContestUnitFromID(cont_i)));
             //there isn't enough space for percent so don't even think about it
           }
         }
         else
         {
-          girc = ProblemGetInfo(selprob, 0, 0, &cont_i, 0, 0, 0, 0, 0, 0,
-                                         &permille, &startpermille, 0,
-                                         0, 0, 0, 0, 0, 0, 0, 0, 
-                                         0,0,0, 0,0,0, 0, 0, 0, 0, 0, 0 );
+          ProblemInfo info;
+          info.permille_only_if_exact = 0;
+          girc = ProblemGetInfo(selprob, &info, P_INFO_C_PERMIL | P_INFO_S_PERMIL);
+          cont_i = selprob->contest;
+          permille = info.c_permille;
+          startpermille = info.s_permille;
         }
         if (girc != -1)
         {
