@@ -20,12 +20,16 @@
   #define OGR_INT_SIZE 8
 #else
   #error "What's up Doc?"
-#endif  
+#endif
 
 // define this to enable LOGGING code
 #undef OGR_DEBUG
 
-#define STUB_MAX 10 /* change ogr_packet_t in packets.h when changing this */
+// specifies the number of ruler diffs can be represented.
+// Warning: increasing this will cause all structures based
+// on workunit_t in packets.h to change, possibly breaking
+// network and buffer structure operations.
+#define STUB_MAX 10
 
 struct Stub { /* size is 24 */
   u16 marks;           /* N-mark ruler to which this stub applies */
@@ -38,11 +42,8 @@ struct WorkStub { /* size is 28 */
   u32 worklength;      /* depth of current state */
 };
 
-/*
- * Internal stuff that's not part of the interface but we need for
- * declaring the problem work area size.
- */
-
+// Internal stuff that's not part of the interface but we need for
+// declaring the problem work area size.
 #define BITMAPS     5       /* need to change macros when changing this */
 #define MAXDEPTH   40
 
