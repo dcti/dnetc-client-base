@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.41  1998/12/31 11:28:26  cyp
+// Moved inclusion of sys/stat.h and sys_stat.h from buffwork.cpp to baseincs.h
+//
 // Revision 1.40  1998/12/31 08:06:26  dicamillo
 // Add UseMP function for MacOS.
 //
@@ -167,9 +170,11 @@ extern "C" {
 #include <string.h>
 #include <ctype.h>
 #if (CLIENT_OS == OS_MACOS)
-#include <sys_types.h>
+#include <sys_types.h> /* in platforms/macos */
+#include <sys_stat.h>  /* in platforms/macos */
 #else
 #include <sys/types.h>
+#include <sys/stat.h>
 #endif
 #include <errno.h>
 
