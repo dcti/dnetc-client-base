@@ -4,7 +4,7 @@
 //
 
 const char *netio_cpp(void) {
-return "@(#)$Id: netio.cpp,v 1.2 2000/06/03 03:24:39 jlawson Exp $"; }
+return "@(#)$Id: netio.cpp,v 1.3 2000/06/20 08:15:49 jlawson Exp $"; }
 
 #define __NETIO_CPP__ /* suppress redefinitions in netio.h */
 #include "netio.h"
@@ -149,10 +149,15 @@ int netio_seterrno(int err)
 
 // ----------------------------------------------------------------------
 
+// Translates a numeric IP Address into a printable ASCII text-string.
+// shortcut to avoid use of socket.h structures outside netio.cpp
+// as well as 'inet_ntoa(*(in_addr*)&hostaddr)' nastiness.
+// so... yes, "it is apparently better to reinvent the wheel".
 // Returns a pointer to a static buffer that receives a
 // dotted decimal ASCII conversion of the specified IP address.
 // short circuit the u32 -> in_addr.s_addr ->inet_ntoa method.
 // besides, it works around context issues.
+
 const char *netio_ntoa(u32 addr)
 {
   static char buff[sizeof("255.255.255.255  ")];
@@ -498,6 +503,7 @@ int netio_openlisten(SOCKET &sock, u32 addr, u16 port, bool nonblocking)
 
 // ----------------------------------------------------------------------
 
+// Uses a pre-created socket
 // connect to a desination host. socket *MUST* have been bound.
 // Returns -1 on error, 0 on success.
 
@@ -628,6 +634,10 @@ int netio_connect(SOCKET &sock, const char *host, u16 port, u32 &addr,
 
 // ----------------------------------------------------------------------
 
+// Does a low-level connection acceptance, without conditioning
+// the accepted socket or any other port range checks.
+// Returns -1 on error, 0 on success.
+
 int netio_laccept(SOCKET sock, SOCKET *thatsock, u32 *thataddr, int *thatport)
 {
   u32 taddr = 0;
@@ -733,23 +743,85 @@ int netio_accept(SOCKET sock, SOCKET *newsock, u32 *thataddr, int *thatport,
 
 // ----------------------------------------------------------------------
 
-// Translates a numeric IP Address into a printable ASCII text-string.
-// shortcut to avoid use of socket.h structures outside netio.cpp
-// as well as 'inet_ntoa(*(in_addr*)&hostaddr)' nastiness.
-// so... yes, "it is apparently better to reinvent the wheel".
-// Returns -1 on error, 0 on success.
+// Performs a non-blocking read from the specified socket.
+// Some platforms might implement this function as a blocking
+// operation if non-blocking is not possible.
+// Returns 0 if the socket was closed, or -1 if no data was waiting.
+// Otherwise returns the positive number of bytes that were read.
 
-const char *netio_ntoa(u32 hostaddr)
+int netio_lrecv(SOCKET sock, void *data, int toread)
 {
-  static char buff[18];
-  char *p = (char *)(&hostaddr);
-  sprintf( buff, "%d.%d.%d.%d", (p[0]&255),(p[1]&255),(p[2]&255),(p[3]&255));
-  return buff;
+  int bytesread = 0;
+
+  if (!length)
+    return -1;
+
+  #if defined(_TIUSER_)                               //OSI/TLI/XTI
+  int flags = 0; /* T_MORE, T_EXPEDITED etc */
+  bytesread = t_rcv( sock, data, toread, &flags );
+  if (bytesread == 0) /* peer sent a zero byte message */
+    bytesread = -1; /* treat as none waiting */
+  else if (bytesread < 0)
+  {
+    int look, err = t_errno;
+    bytesread = -1;
+    debugtli("t_rcv", sock);
+    if (err == TNODATA )
+      bytesread = -1; /* fall through */
+    else if (err != TLOOK) /* TSYSERR et al */
+      bytesread = 0; /* set as socket closed */
+    else if ((look = t_look(sock)) == T_ORDREL)
+    {                /* connection closing... */
+      t_rcvrel( sock );
+      bytesread = 0; /* treat as closed */
+    }
+    else if (look == T_DISCONNECT || look == T_ERROR )
+      bytesread = 0; /* treat as closed */
+    else /* else T_DATA (Normal data received), and T_GODATA and family */
+      bytesread = -1;
+  }
+  #elif (CLIENT_OS == OS_MACOS)
+  // Note: MacOS client does not use XTI, and the socket emulation
+  // code doesn't support select, so this is blocking-mode code.
+  {
+    bytesread = read( sock, data, toread);
+    if (bytesread == -1)
+    {
+      if ( !valid_socket(sock) )
+        bytesread = 0; // set as socket closed
+    }
+    else if (bytesread == 0) // should never happen?
+      bytesread = -1; // set as none waiting
+  }
+  #elif (defined(AF_INET) && defined(SOCK_STREAM))        //BSD 4.3
+  {
+    fd_set rs;
+    timeval tv = {0,0};
+    FD_ZERO(&rs);
+    FD_SET(sock, &rs);
+    bytesread = select(sock + 1, &rs, NULL, NULL, &tv);
+    if (bytesread < 0)   /* ENETDOWN, EINVAL, EINTR */
+      bytesread = 0; /* == sock closed */
+    else if (bytesread != 1) /* not ready */
+      bytesread = -1;
+    else /* socket says ready, but that could also mean closed :) */
+    {
+      bytesread = recv(sock, data, toread, 0 );
+      if (bytesread <= 0)
+        bytesread = 0;
+    }
+  }
+  #endif /* TLI/XTI or BSD */
+  return bytesread;
 }
 
 // ----------------------------------------------------------------------
 
-int netio_recv(SOCKET s, void *data, int len)
+// If iotimeout is a positive value, then this will loop until that
+// number of seconds have elapsed, or a packet is received.
+
+int netio_recv(SOCKET s, void *data, int length,
+               int iotimeout, int (*exitcheckfn)(void) )
 {
   if (!length)
     return -1;
@@ -761,6 +833,8 @@ int netio_recv(SOCKET s, void *data, int len)
   int sleepms = 250; /* sleep time in millisecs. adjust here if needed */
   int sockclosed = 0;
 
+
+  // Determine how large our receive quota should be.
   #if defined(_TIUSER_)
   rcvquota = 512;
   struct t_info info;
@@ -785,77 +859,23 @@ int netio_recv(SOCKET s, void *data, int len)
     rcvquota = INT_MAX;
   #endif
 
-  if (isnonblocking)
+
+  // Compute the stop time if needed.
+  if (iotimeout > 0)
     stoptime = time(&starttime) + (time_t)iotimeout;
 
   #ifdef DEBUGTHIS
-  Log("LLGet: total to recv=%d, quota:%d\n", length, rcvquota );
+  netio_logerr("LLGet: total to recv=%d, quota:%d\n", length, rcvquota );
   #endif
 
   do
   {
     int toread = (int)((((u32)length)>((u32)rcvquota))?(rcvquota):(length));
-    int bytesread = 0;
+    int bytesread;
 
-    #if defined(_TIUSER_)                               //OSI/TLI/XTI
-    int flags = 0; /* T_MORE, T_EXPEDITED etc */
-    bytesread = t_rcv( sock, data, toread, &flags );
-    if (bytesread == 0) /* peer sent a zero byte message */
-      bytesread = -1; /* treat as none waiting */
-    else if (bytesread < 0)
-    {
-      int look, err = t_errno;
-      bytesread = -1;
-      debugtli("t_rcv", sock);
-      if (err == TNODATA )
-        bytesread = -1; /* fall through */
-      else if (err != TLOOK) /* TSYSERR et al */
-        bytesread = 0; /* set as socket closed */
-      else if ((look = t_look(sock)) == T_ORDREL)
-      {                /* connection closing... */
-        t_rcvrel( sock );
-        bytesread = 0; /* treat as closed */
-      }
-      else if (look == T_DISCONNECT || look == T_ERROR )
-        bytesread = 0; /* treat as closed */
-      else /* else T_DATA (Normal data received), and T_GODATA and family */
-        bytesread = -1;
-    }
-    #elif (CLIENT_OS == OS_MACOS)
-    // Note: MacOS client does not use XTI, and the socket emulation
-    // code doesn't support select.
-    {
-      bytesread = read( sock, data, toread);
-      if (bytesread == -1)
-      {
-        if ( !valid_socket(sock) )
-          bytesread = 0; // set as socket closed
-      }
-      else if (bytesread == 0) // should never happen?
-        bytesread = -1; // set as none waiting
-    }
-    #elif (defined(AF_INET) && defined(SOCK_STREAM))        //BSD 4.3
-    {
-      fd_set rs;
-      timeval tv = {0,0};
-      FD_ZERO(&rs);
-      FD_SET(sock, &rs);
-      bytesread = select(sock + 1, &rs, NULL, NULL, &tv);
-      if (bytesread < 0)   /* ENETDOWN, EINVAL, EINTR */
-        bytesread = 0; /* == sock closed */
-      else if (bytesread != 1) /* not ready */
-        bytesread = -1;
-      else /* socket says ready, but that could also mean closed :) */
-      {
-        bytesread = recv(sock, data, toread, 0 );
-        if (bytesread <= 0)
-          bytesread = 0;
-      }
-    }
-    #endif /* TLI/XTI or BSD */
-
+    bytesread = netio_lrecv(s, data, toread);
     #ifdef DEBUGTHIS
-    Log("LLGet: read(%d)-> %d\n", toread, bytesread );
+    netio_logerr("LLGet: read(%d)-> %d\n", toread, bytesread );
     #endif
 
     if (bytesread == 0) /* sock closed */
@@ -871,33 +891,36 @@ int netio_recv(SOCKET s, void *data, int len)
       if (length == 0) /* done all */
         break;
     }
-    if (!isnonblocking)
-      break;
+
+    // if we didn't read anything, then do some time checks.
     if (bytesread < 0)
     {
       if (totalread != 0)
         break;
-      if (time(&timenow) > stoptime || timenow < starttime)
+      if (stoptime != 0 &&
+          (time(&timenow) > stoptime || timenow < starttime))
         break;
-      if (!isnonblocking && CheckExitRequestTrigger())
+      if (exitcheckfn != NULL && exitcheckfn() != 0)
         break;
       ++sleptcount;
     }
+
+    // sleep for an arbitrary amount.
     unsigned long sleepdur = ((unsigned long)(sleptcount+1)) * sleepms;
     if (sleepdur > 1000000UL)
       sleep( sleepdur / 1000000UL );
     if ((sleepdur % 1000000UL) != 0)
       usleep( sleepdur % 1000000UL );
-    if (!isnonblocking && CheckExitRequestTrigger())
+    if (exitcheckfn != NULL && exitcheckfn() != 0)
       break;
   } while (length);
 
   #ifdef DEBUGTHIS
-  Log("LLGet: got %u (requested %u) sockclosed:%s\n",
+  netio_logerr("LLGet: got %u (requested %u) sockclosed:%s\n",
               totalread, totalread+length, ((sockclosed)?("yes"):("no")));
   #endif
 
-  if (totalread!=0)
+  if (totalread != 0)
     return (int)totalread;
   if (sockclosed)
     return 0;
@@ -906,121 +929,77 @@ int netio_recv(SOCKET s, void *data, int len)
 
 // ----------------------------------------------------------------------
 
-// Returns length of sent data or 0 if the socket is
-// closed, or -1 if timeout/nodata
-
-int netio_send(SOCKET s, const void *ccdata, int length)
+int netio_lsend(SOCKET s, const void *ccdata, int towrite)
 {
+  int written;
+  char *data;
+
   if (length == 0)
     return -1;
 
-  u32 totaltowrite = length;
-  u32 totalwritten = 0;
-  u32 sendquota = 1500; /* how much to send per send() call */
-  int firsttime = 1;
-  time_t timenow = 0, starttime = 0, stoptime = 0;
-  int sleptcount = 0; /* ... in a row */
-  int sleepms = 250; /* sleep time in millisecs. adjust here if needed */
-  char *data;
   *((const char **)&data) = ccdata; /* get around const being used for send */
 
-  if (isnonblocking)
-    stoptime = time(&starttime) + (time_t)iotimeout;
-
-  #if defined(_TIUSER_)
-  sendquota = 512;
-  struct t_info info;
-  if ( t_getinfo( sock, &info ) != -1)
+  #if defined(_TIUSER_)                              //TLI/XTI
+  int noiocount = 0;
+  written = -2;
+  while (written == -2)
   {
-    if (info.tsdu > 0)
-      sendquota = info.tsdu;
-    else if (info.tsdu == -1) /* no limit */
-      sendquota = length;
-    else if (info.tsdu == 0) /* no boundaries */
-      sendquota = 1500;
-    else //if (info.tsdu == -2) /* normal send not supp'd (ever happens?)*/
-      return -1;
+    //int flag = (((length - towrite)==0) ? (0) : (T_MORE));
+    written = t_snd(sock, (char *)data, (unsigned int)towrite, 0 /* flag */ );
+    if (written == 0)       /* transport provider accepted nothing */
+    {                   /* should never happen unless 'towrite' was 0*/
+      if ((++noiocount) < 3)
+      {
+        written = -2;   /* retry */
+        usleep(500000); // 0.5 secs
+      }
+    }
+    else if (written < 0)
+    {
+      written = -1;
+      debugtli("t_snd", sock);
+      if ( t_errno == TFLOW ) /* sending too fast */
+      {
+        usleep(500000); // 0.5 secs
+        written = -2;
+      }
+      else if (t_errno == TLOOK)
+      {
+        int look = t_look(sock);
+        if ( look == T_ORDREL)
+        {
+           //t_sndrel( sock );
+           //t_rcvrel( sock );
+           written = 0;
+        }
+        if (look == T_DISCONNECT || look == T_UDERR|| look == T_ERROR)
+          return 0;
+      }
+    }
   }
-  #elif (CLIENT_OS == OS_WIN16)
-  if (sendquota > 0x7FFF)  /* 16 bit OS but int is 32 bits */
-    sendquota = 0x7FFF;
-  #elif (CLIENT_OS == OS_MACOS)
-  if (sendquota > 0xFFFF)  // Mac network library uses "unsigned short"
-    sendquota = 0xFFFF;
-  #else
-  if (sendquota > INT_MAX)
-    sendquota = INT_MAX;
-  #endif
-
-  #ifdef DEBUGTHIS
-  Log("LLPut: total to send=%d, quota:%d\n", length, sendquota );
-  #endif
-
-  do
+ #elif (CLIENT_OS == OS_MACOS)
+  // Note: MacOS client does not use XTI, and the socket emulation
+  // code doesn't support select.
+  int noiocount = 0;
+  written = -2;
+  while (written == -2)
   {
-    int towrite = (int)((((u32)length)>((u32)sendquota))?(sendquota):(length));
-    int written;
+    written = write(sock, data, (unsigned long)towrite);
+    if (written == 0)       // transport provider accepted nothing
+    {                   // should never happen unless 'towrite' was 0
+      if ((++noiocount) < 3)
+      {
+        written = -2;   // retry
+        usleep(500000); // 0.5 secs
+      }
+    }
+    else if (written == -1)
+    {
+      if (!valid_socket(sock)) return(0);
+    }
+  }
+  #elif defined(AF_INET) && defined(SOCK_STREAM)      //BSD 4.3 sockets
 
-    #if defined(_TIUSER_)                              //TLI/XTI
-    int noiocount = 0;
-    written = -2;
-    while (written == -2)
-    {
-      //int flag = (((length - towrite)==0) ? (0) : (T_MORE));
-      written = t_snd(sock, (char *)data, (unsigned int)towrite, 0 /* flag */ );
-      if (written == 0)       /* transport provider accepted nothing */
-      {                   /* should never happen unless 'towrite' was 0*/
-        if ((++noiocount) < 3)
-        {
-          written = -2;   /* retry */
-          usleep(500000); // 0.5 secs
-        }
-      }
-      else if (written < 0)
-      {
-        written = -1;
-        debugtli("t_snd", sock);
-        if ( t_errno == TFLOW ) /* sending too fast */
-        {
-          usleep(500000); // 0.5 secs
-          written = -2;
-        }
-        else if (t_errno == TLOOK)
-        {
-          int look = t_look(sock);
-          if ( look == T_ORDREL)
-          {
-             //t_sndrel( sock );
-             //t_rcvrel( sock );
-             written = 0;
-          }
-          if (look == T_DISCONNECT || look == T_UDERR|| look == T_ERROR)
-            return 0;
-        }
-      }
-    }
-   #elif (CLIENT_OS == OS_MACOS)
-    // Note: MacOS client does not use XTI, and the socket emulation
-    // code doesn't support select.
-    int noiocount = 0;
-    written = -2;
-    while (written == -2)
-    {
-      written = write(sock, data, (unsigned long)towrite);
-      if (written == 0)       // transport provider accepted nothing
-      {                   // should never happen unless 'towrite' was 0
-        if ((++noiocount) < 3)
-        {
-          written = -2;   // retry
-          usleep(500000); // 0.5 secs
-        }
-      }
-      else if (written == -1)
-      {
-        if (!valid_socket(sock)) return(0);
-      }
-    }
-    #elif defined(AF_INET) && defined(SOCK_STREAM)      //BSD 4.3 sockets
     #if (CLIENT_OS != OS_BEOS)
     if (firsttime)
     {
@@ -1051,17 +1030,82 @@ int netio_send(SOCKET s, const void *ccdata, int length)
       firsttime = 0;
     }
     #endif
-    written = send(sock, (char*)data, towrite, 0 );
 
-    /*
-      When used on a blocking SOCK_STREAM socket, send() requests block
-      until all of the client's data can be sent or buffered by the socket.
-      When used on a nonblocking socket, send() requests send or buffer the
-      maximum amount of data that can be handled without blocking and
-      return the amount that was taken. If no data is taken, they return
-      a value of -1, indicating an EWOULDBLOCK error.
-    */
-    #endif
+  written = send(sock, (char*)data, towrite, 0 );
+
+  /*
+    When used on a blocking SOCK_STREAM socket, send() requests block
+    until all of the client's data can be sent or buffered by the socket.
+    When used on a nonblocking socket, send() requests send or buffer the
+    maximum amount of data that can be handled without blocking and
+    return the amount that was taken. If no data is taken, they return
+    a value of -1, indicating an EWOULDBLOCK error.
+  */
+  #endif
+
+  return written;
+}
+
+// ----------------------------------------------------------------------
+
+// Returns length of sent data or 0 if the socket is
+// closed, or -1 if timeout/nodata
+
+int netio_send(SOCKET s, const void *ccdata, int length,
+               int iotimeout, int (*exitcheckfn)(void) )
+{
+  if (length == 0)
+    return -1;
+
+  u32 totaltowrite = length;
+  u32 totalwritten = 0;
+  u32 sendquota = 1500; /* how much to send per send() call */
+  int firsttime = 1;
+  time_t timenow = 0, starttime = 0, stoptime = 0;
+  int sleptcount = 0; /* ... in a row */
+  int sleepms = 250; /* sleep time in millisecs. adjust here if needed */
+  char *data;
+  *((const char **)&data) = ccdata; /* get around const being used for send */
+
+  if (iotimeout > 0)
+    stoptime = time(&starttime) + (time_t)iotimeout;
+
+  // Determine how large our send quota should be.
+  #if defined(_TIUSER_)
+  sendquota = 512;
+  struct t_info info;
+  if ( t_getinfo( sock, &info ) != -1)
+  {
+    if (info.tsdu > 0)
+      sendquota = info.tsdu;
+    else if (info.tsdu == -1) /* no limit */
+      sendquota = length;
+    else if (info.tsdu == 0) /* no boundaries */
+      sendquota = 1500;
+    else //if (info.tsdu == -2) /* normal send not supp'd (ever happens?)*/
+      return -1;
+  }
+  #elif (CLIENT_OS == OS_WIN16)
+  if (sendquota > 0x7FFF)  /* 16 bit OS but int is 32 bits */
+    sendquota = 0x7FFF;
+  #elif (CLIENT_OS == OS_MACOS)
+  if (sendquota > 0xFFFF)  // Mac network library uses "unsigned short"
+    sendquota = 0xFFFF;
+  #else
+  if (sendquota > INT_MAX)
+    sendquota = INT_MAX;
+  #endif
+
+  #ifdef DEBUGTHIS
+  netio_logerr("LLPut: total to send=%d, quota:%d\n", length, sendquota );
+  #endif
+
+  do
+  {
+    int towrite = (int)((((u32)length)>((u32)sendquota))?(sendquota):(length));
+    int written;
+
+    written = netio_lsend(s, data, towrite);
 
     if (written > 0)
     {
@@ -1073,12 +1117,14 @@ int netio_send(SOCKET s, const void *ccdata, int length)
         break;
       firsttime = 0;
     }
-    if (isnonblocking == 0)
+
+
+    if (stoptime == 0)
     {
       if (written <= 0)
         break;
     }
-    else //if (isnonblocking)
+    else
     {
       if (time(&timenow) < starttime)
         break;
@@ -1098,12 +1144,12 @@ int netio_send(SOCKET s, const void *ccdata, int length)
           usleep( sleepdur % 1000000UL );
       }
     }
-    if (!isnonblocking && CheckExitRequestTrigger())
+    if (exitcheckfn != NULL && exitcheckfn() != 0)
       break;
   } while (length);
 
   #ifdef DEBUGTHIS
-  Log("LLPut: towrite=%d, written=%d\n", totaltowrite, totalwritten );
+  netio_logerr("LLPut: towrite=%d, written=%d\n", totaltowrite, totalwritten );
   #endif
   totaltowrite = totaltowrite; //squash compiler warning
   return ((totalwritten != 0) ? ((int)totalwritten) : (-1));

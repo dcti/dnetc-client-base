@@ -6,7 +6,7 @@
 //
 
 #ifndef __NETIO_H__
-#define __NETIO_H__ "@(#)$Id: netio.h,v 1.2 2000/06/03 03:24:39 jlawson Exp $"
+#define __NETIO_H__ "@(#)$Id: netio.h,v 1.3 2000/06/20 08:15:49 jlawson Exp $"
 
 #include "cputypes.h"
 
@@ -67,7 +67,7 @@
   #endif
   #include <sys/ioctl.h>
   #include <signal.h>
-  #undef FD_SETSIZE            /* we don't care because we don't use it */ 
+  #undef FD_SETSIZE            /* we don't care because we don't use it */
   #define FD_SETSIZE INT_MAX
 #else
   #undef USES_SIGIO
@@ -115,7 +115,7 @@
  * function, or retrieved with the netio_getsockopt function. */
 
 #define CONDSOCK_BLOCKMODE        1
-#define CONDSOCK_KEEPALIVE        2   
+#define CONDSOCK_KEEPALIVE        2
 #define CONDSOCK_SETMINBUFSIZE    3
 #define CONDSOCK_REUSEADDR        4
 #define CONDSOCK_GETERROR         5
@@ -132,25 +132,36 @@
 /* Functions exported by netio.cpp */
 
 extern const char *netio_describe_error(void);
+extern int netio_geterrno(void);
+extern int netio_seterrno(int err);
+extern const char *netio_ntoa(u32 addr);
+extern unsigned int netio_getopensocketcount(void);
 extern int netio_createsocket(SOCKET &sock, bool nonblocking = false);
 extern int netio_close(SOCKET &sock);
 extern int netio_resolve(const char *hosttgt, u32 &hostaddress);
+extern int netio_gethostname( char *buffer, unsigned int buflen );
+extern int netio_gethostaddr( u32 * addr );
+extern int netio_bind( SOCKET sock, u32 addr, u16 port );
+extern int netio_listen( SOCKET sock, int backlog );
 extern int netio_openlisten(SOCKET &sock, u32 addr, u16 port,
     bool nonblocking = false);
+extern int netio_lconnect( SOCKET sock, u32 addr, u16 port );
 extern int netio_connect(SOCKET &sock, const char *host,
     u16 port, u32 &addr, u32 listenaddr, bool nonblocking = false);
+extern int netio_laccept(SOCKET sock, SOCKET *thatsock,
+    u32 *thataddr, int *thatport);
 extern int netio_accept(SOCKET sock, SOCKET *snew,
     u32 *hostaddress, int *hostport, bool nonblocking = false);
-extern const char *netio_ntoa(u32 hostaddr);
-extern int netio_recv(SOCKET sock, void *data, int len);
-extern int netio_send(SOCKET sock, const void *data, int len);
+extern int netio_lrecv(SOCKET sock, void *data, int toread);
+extern int netio_recv(SOCKET s, void *data, int length,
+               int iotimeout, int (*exitcheckfn)(void) = NULL );
+extern int netio_lsend(SOCKET s, const void *ccdata, int towrite);
+extern int netio_send(SOCKET s, const void *ccdata, int length,
+               int iotimeout, int (*exitcheckfn)(void) = NULL );
 extern int netio_select(int width, fd_set *, fd_set *, fd_set *,
     struct timeval *);
-extern int netio_gethostname( char *buffer, unsigned int len );
-extern int netio_gethostaddr( u32 *addr );
 extern int netio_setsockopt( SOCKET sock, int cond_type, int parm );
 extern int netio_getsockopt( SOCKET sock, int cond_type, int *parm );
-extern unsigned int netio_getopensocketcount(void);
 
 #endif /* NETIO_H */
 
