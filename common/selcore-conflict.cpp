@@ -11,7 +11,7 @@
  * ----------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.41 1999/04/05 20:16:26 patrick Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.42 1999/04/05 21:46:51 patrick Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -89,7 +89,7 @@ static const char *cputypetable[]=
   "PowerPC 601",
   "PowerPC 603/604/750"
 #if (CLIENT_OS == OS_AIX)
-  , "POWER CPUs"
+  , "POWER CPU"
 #endif
   };
 #elif (CLIENT_CPU == CPU_68K)
