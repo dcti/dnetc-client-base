@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.10  1998/10/04 00:02:34  remi
+// Removed extraneous #if defined(KWAN) && defined(MEGGS). MMX_BITSLICER is now
+// defined only when the MMX DES core is compiled.
+//
 // Revision 1.9  1998/10/03 23:19:06  remi
 // usemmx select both DES and RC5 cores.
 // LogScreenRaw instead of LogScreen for DES core selection.
@@ -42,7 +46,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.9 1998/10/03 23:19:06 remi Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.10 1998/10/04 00:02:34 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -270,7 +274,7 @@ s32 Client::SelectCore(void)
     cputype = 0;
     }
 
-  #if (defined(MMX_BITSLICER) && defined(KWAN) && defined(MEGGS))
+  #if defined(MMX_BITSLICER)
   if ((detectedtype & 0x100) && usemmx)   // use the MMX DES core ?
     { 
     des_unit_func = des_unit_func2 = des_unit_func_mmx;

@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.2  1998/10/03 23:59:50  remi
+// Removed extraneous #if defined(KWAN) && defined(MEGGS). MMX_BITSLICER is now
+// defined only when the MMX DES core is compiled.
+//
 // Revision 1.1  1998/09/28 01:16:08  cyp
 // Spun off from client.cpp
 //
@@ -12,7 +16,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.1 1998/09/28 01:16:08 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.2 1998/10/03 23:59:50 remi Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -287,7 +291,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   #if ((CLIENT_CPU == CPU_X86) || (CLIENT_OS == OS_BEOS))
   if ( prob_i >= 4 )
     {
-    #if ((CLIENT_CPU == CPU_X86) && defined(MMX_BITSLICER) && defined(KWAN) && defined(MEGGS))
+    #if defined(MMX_BITSLICER)
     if ( des_unit_func != des_unit_func_mmx ) // if not using mmx cores
     #endif
       {
