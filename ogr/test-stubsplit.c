@@ -2,7 +2,7 @@
 
 #include "stubsplit.h"
 
-int callback(void *userdata, struct stub *stub)
+int callback(void *userdata, struct Stub *stub)
 {
   int i;
   printf("%d ", stub->marks);
@@ -15,7 +15,7 @@ int callback(void *userdata, struct stub *stub)
 
 int main(int argc, char *argv[])
 {
-  struct stub stub;
+  struct Stub stub;
   int i;
 
   if (argc < 2) {

@@ -6,9 +6,9 @@ static int OGR[] = {
   /* 21 */  333, 356, 372, 425, 480, 492, 553, 585, 623
 };
 
-int stub_split(struct stub *stub, stub_callback callback, void *userdata)
+int stub_split(struct Stub *stub, stub_callback callback, void *userdata)
 {
-  struct stub newstub = *stub;
+  struct Stub newstub = *stub;
   int used[1000];
   int i, j, t, tmax, limit;
 

@@ -9,6 +9,6 @@
 
 #include "stub.h"
 
-typedef int (*stub_callback)(void *userdata, struct stub *stub);
+typedef int (*stub_callback)(void *userdata, struct Stub *stub);
 
-int stub_split(struct stub *stub, stub_callback callback, void *userdata);
+int stub_split(struct Stub *stub, stub_callback callback, void *userdata);
