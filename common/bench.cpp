@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.56.2.3 2003/12/07 22:56:19 kakace Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.56.2.4 2003/12/13 12:57:14 kakace Exp $"; }
 
 //#define TRACE
 
@@ -257,7 +257,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
           }
           if (ratehi)
             ratelo = 0x0fffffff;
-          if (ratelo > tslice || contestid == OGR || contestid == OGR_24_P2)
+          if (ratelo > tslice || contestid == OGR || contestid == OGR_P2)
             tslice = thisprob->pub_data.tslice = ratelo;
         }
         run = ProblemRun(thisprob);

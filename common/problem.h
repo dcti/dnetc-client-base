@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.94.2.6 2003/12/07 22:56:19 kakace Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.94.2.7 2003/12/13 12:57:14 kakace Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -27,9 +27,9 @@ enum {
   CSC, // http://www.cie-signaux.fr/security/index.htm
   OGR_NEXTGEN_SOMEDAY,
   RC5_72, // http://www.rsasecurity.com/rsalabs/challenges/secretkey/
-  OGR_24_P2
+  OGR_P2
 };
-#define CONTEST_COUNT       7  /* RC5,DES,OGR,CSC,OGR_NEXTGEN,RC5_72,OGR_24_P2 */
+#define CONTEST_COUNT       7  /* RC5,DES,OGR,CSC,OGR_NEXTGEN,RC5_72,OGR_P2 */
 #endif
 
 /* ---------------------------------------------------------------------- */
@@ -67,8 +67,8 @@ enum {
   #endif
 #endif
 #if defined(HAVE_OGR_CORES)
-  #if defined(HAVE_OGR24_PASS2)
-     #define HAVE_OGR24_FINALIZE
+  #if defined(HAVE_OGR_PASS2)
+     #define HAVE_OGR_FINALIZE
   #endif
   #if MAX_MEM_REQUIRED_BY_CORE < OGR_PROBLEM_SIZE
      #undef MAX_MEM_REQUIRED_BY_CORE

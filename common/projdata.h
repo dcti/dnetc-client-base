@@ -7,7 +7,7 @@
  * This file should be shared between client and proxynet some day ...
  */
 #ifndef __PROJDATA_H__
-#define __PROJDATA_H__ "@(#)$Id: projdata.h,v 1.1.2.2 2003/12/07 22:56:19 kakace Exp $"
+#define __PROJDATA_H__ "@(#)$Id: projdata.h,v 1.1.2.3 2003/12/13 12:57:14 kakace Exp $"
 
 #include "cputypes.h"   // u32 ...
 
@@ -20,10 +20,10 @@ enum {
   CSC, // http://www.cie-signaux.fr/security/index.htm
   OGR_NEXTGEN_SOMEDAY,
   RC5_72, // http://www.rsasecurity.com/rsalabs/challenges/secretkey/
-  OGR_24_P2 // OGR-24 final stage
+  OGR_P2  // OGR final stage
   // PROJECT_NOT_HANDLED("create your project id here and adjust count")
 };
-#define PROJECT_COUNT       7  /* RC5,DES,OGR,CSC,OGR_NEXTGEN,RC5_72,OGR_24_P2*/
+#define PROJECT_COUNT       7  /* RC5,DES,OGR,CSC,OGR_NEXTGEN,RC5_72,OGR_P2*/
 #define CONTEST_COUNT       PROJECT_COUNT
 
 #define MAX_PROJECT_NAME_LEN 6 /* "RC5-72" */

@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.35.2.2 2003/12/07 22:56:19 kakace Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.35.2.3 2003/12/13 12:57:14 kakace Exp $"; }
 
 //#define TRACE
 
@@ -49,7 +49,7 @@ static struct contestInfo
                   { /*"CSC",    "keys", */ CSC,     1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
                   { /*"OGR_NG", "nodes",*/ OGR_NEXTGEN_SOMEDAY,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
                   { /*"RC5-72", "keys", */ RC5_72,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  { /*"OGR-P2", "nodes",*/ OGR_24_P2, 1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { /*"OGR-P2", "nodes",*/ OGR_P2,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
                   { /* NULL,    NULL,   */ -1,      0, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 }  };
 // obsolete projects may be omitted
 #if (CONTEST_COUNT != 7)

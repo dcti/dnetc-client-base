@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.160.2.12 2003/12/07 22:56:19 kakace Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.160.2.13 2003/12/13 12:57:14 kakace Exp $"; }
 
 //#define TRACE
 
@@ -917,7 +917,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
               contest = DES;
           }
           
-          if ((contest == OGR || contest == OGR_24_P2) && (whichswitch & (4+8))!=0)
+          if ((contest == OGR || contest == OGR_P2) && (whichswitch & (4+8))!=0)
             invalid_value = 1;  /* no prefferedblocksize / timethresh */
           else if (op == NULL)
             missing_value = 1;
@@ -1036,7 +1036,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
                     sprintf(scratch,"%d",n);
                   LogScreenRaw("%s work-unit-based %s threshold set to %s\n",
                      cname, ((apos==1)?("fetch"):("flush")), scratch );
-                  if (contest != OGR && contest != OGR_24_P2 && client->timethreshold[contest] <= 0)
+                  if (contest != OGR && contest != OGR_P2 && client->timethreshold[contest] <= 0)
                     LogScreenRaw("%s time-based %s threshold cleared\n",
                      cname, ((apos==1)?("fetch"):("flush")) );
                 }

@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.112 2003/12/07 23:05:28 kakace Exp $
+# @(#)$Id: configure,v 1.288.2.113 2003/12/13 12:57:59 kakace Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -101,7 +101,7 @@ OGR="ogr"
 HAVE_RC5_64="0"
 HAVE_RC5_72="1"
 HAVE_OGR="1"
-HAVE_OGR24_P2="0"   # Need some testing first...
+HAVE_OGR_P2="0"     # Need some testing first...
 HAVE_DES="0"
 HAVE_CSC="0"
 
@@ -427,11 +427,11 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDOBJS="$TARGET_ADDOBJS output/ogr000.o output/ogr020.o \
                                       output/ogr030.o output/ogr040.o \
                                       output/ogr060.o"
-      if [ "$HAVE_OGR24_P2" = "1" ]; then
+      if [ "$HAVE_OGR_P2" = "1" ]; then
       TARGET_ADDOBJS="$TARGET_ADDOBJS output/ogr_p2_000.o output/ogr_p2_020.o \
                                       output/ogr_p2_030.o output/ogr_p2_040.o \
                                       output/ogr_p2_060.o"
-      fi #HAVE_OGR24_P2
+      fi #HAVE_OGR_P2
       TARGET_OGR_MULTI="68k"
     fi # HAVE_OGR
     if [ "$HAVE_DES" = "1" ]; then
@@ -606,7 +606,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
     fi # HAVE_RC5_72
     if [ "$HAVE_OGR" = 1 ]; then
-      HAVE_OGR24_P2="0"             # Doesn't work with asm cores
+      HAVE_OGR_P2="0"             # Doesn't work with asm cores
       if [ "$1" = "riscos" ]; then
         if [ "$3" = "gccsdk" ]; then
           TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gccsdk.s \
@@ -684,8 +684,8 @@ add_sources() # $1=os, $2=arch, $3=custom
     if [ "$DEFAULT_OGR" = "1" ]; then
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
     fi
-    if [ "$HAVE_OGR24_P2" = "1" ]; then
-      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR24_PASS2"
+    if [ "$HAVE_OGR_P2" = "1" ]; then
+      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_PASS2"
     fi
   fi
 
@@ -3254,9 +3254,9 @@ if [ "$TARGET_OGR_MULTI" = "68k" ]; then
     echo "output/ogr${targetext}.o:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
     echo "	\$(CC) \$(CCFLAGS) -DOGR_GET_DISPATCH_TABLE_FXN=ogr_get_dispatch_table_${targetext} \\" >>Makefile
 
-    if [ "$HAVE_OGR24_P2" = "1"]; then
+    if [ "$HAVE_OGR_P2" = "1"]; then
       echo "output/ogr_p2_${targetext}.o:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
-      echo "	\$(CC) \$(CCFLAGS) -DOGR24_P2_GET_DISPATCH_TABLE_FXN=ogr24_p2_get_dispatch_table_${targetext} \\" >>Makefile
+      echo "	\$(CC) \$(CCFLAGS) -DOGR_P2_GET_DISPATCH_TABLE_FXN=ogr_p2_get_dispatch_table_${targetext} \\" >>Makefile
     fi
 
     # fake 68060 optimisation with gcc < 2.95 - easiest way for now

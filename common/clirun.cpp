@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.129.2.13 2003/12/07 22:56:19 kakace Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.129.2.14 2003/12/13 12:57:14 kakace Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -54,7 +54,7 @@ static struct __dyn_timeslice_struct
   {  CSC, 1000000, 0x80000000,  0x00100,  0x10000 },
   {  OGR_NEXTGEN_SOMEDAY,  200000,  0x8000000,  0x00010,  0x10000 },
   {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000 },
-  {  OGR_24_P2,  200000,  0x8000000,  0x00010,  0x10000 },
+  {  OGR_P2,  200000,  0x8000000,  0x00010,  0x10000 },
 };
 // OK!
 static struct __dyn_timeslice_struct
@@ -66,7 +66,7 @@ static struct __dyn_timeslice_struct
   {  CSC, 1000000, 0x80000000,  0x00100,  0x10000 },
   {  OGR_NEXTGEN_SOMEDAY,  200000,  0x8000000,  0x00010,  0x10000 },
   {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000 },
-  {  OGR_24_P2,  200000,  0x8000000,  0x00010,  0x10000 },
+  {  OGR_P2,  200000,  0x8000000,  0x00010,  0x10000 },
 };
 
 // OK!
@@ -415,7 +415,7 @@ void Go_mt( void * parm )
         case RC5_72:
           thrparams->dyn_timeslice_table[tsinitd].usec = 8000000;
           break;
-        case OGR_24_P2:
+        case OGR_P2:
         case OGR:
           thrparams->dyn_timeslice_table[tsinitd].usec = 4000000;
           break;
@@ -462,7 +462,7 @@ void Go_mt( void * parm )
       u32 last_count = thisprob->pub_data.core_run_count;
 
       #if (!defined(DYN_TIMESLICE)) /* compile time override */
-      if (is_non_preemptive_cruncher || contest_i == OGR || contest_i == OGR_24_P2)
+      if (is_non_preemptive_cruncher || contest_i == OGR || contest_i == OGR_P2)
       #endif
       {
         if (last_count == 0) /* prob hasn't started yet */
@@ -552,7 +552,7 @@ void Go_mt( void * parm )
           if (runtime_usec != 0xfffffffful) /* not negative time or other bad thing */
           {
             #ifdef HAVE_I64
-            if (contest_i == OGR || contest_i == OGR_24_P2)
+            if (contest_i == OGR || contest_i == OGR_P2)
             {
               /* This calculates the optimal timeslice based on a sliding
               ** average of the reached rate. It reacts slower than the

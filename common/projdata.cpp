@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *projdata_cpp(void) {
-return "@(#)$Id: projdata.cpp,v 1.2.2.2 2003/12/07 22:56:19 kakace Exp $"; }
+return "@(#)$Id: projdata.cpp,v 1.2.2.3 2003/12/13 12:57:15 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "projdata.h"
@@ -30,7 +30,7 @@ static const struct ProjectInfo_t
   { CSC,                  "CSC",    "csc", "csc",    "keys",  1 },
   { OGR_NEXTGEN_SOMEDAY,  "OGR_NG", "og2", "ogr_ng", "nodes", 1 },
   { RC5_72,               "RC5-72", "r72", "rc5-72", "keys",  1 },
-  { OGR_24_P2,            "OGR-P2", "ogf", "ogr_p2", "nodes", 1 },
+  { OGR_P2,               "OGR-P2", "ogf", "ogr_p2", "nodes", 1 },
   { -1,                   NULL,     NULL,  NULL,     NULL,    0 }
 #if (PROJECT_COUNT != 7)
   #error PROJECT_NOT_HANDLED("ProjectInfo[]: static initializer was last updated for PROJECT_COUNT == 7")
@@ -80,10 +80,10 @@ u32 ProjectGetFlags(int projectid)
   #else
     #define PROJECT_OK_RC5_72 PROJECT_UNSUPPORTED
   #endif
-  #if defined(HAVE_OGR24_PASS2) && defined(HAVE_OGR_CORES)
-    #define PROJECT_OK_OGR_24_P2 PROJECT_OK
+  #if defined(HAVE_OGR_PASS2) && defined(HAVE_OGR_CORES)
+    #define PROJECT_OK_OGR_P2 PROJECT_OK
   #else
-    #define PROJECT_OK_OGR_24_P2 PROJECT_UNSUPPORTED
+    #define PROJECT_OK_OGR_P2 PROJECT_UNSUPPORTED
   #endif
   static const u32 projectflags[PROJECT_COUNT] = {
     /* RC5    */ PROJECT_OK_RC5_64
@@ -98,14 +98,14 @@ u32 ProjectGetFlags(int projectid)
     /* RC5_72 */ PROJECT_OK_RC5_72
         | PROJECTFLAG_TIME_THRESHOLD /* not yet! | PROJECTFLAG_PREFERRED_BLOCKSIZE */
         | PROJECTFLAG_RANDOM_BLOCKS,
-    /* OGR_24_P2 */ PROJECT_OK_OGR_24_P2,
+    /* OGR_P2 */ PROJECT_OK_OGR_P2,
   };
   #undef PROJECT_OK_RC5_64
   #undef PROJECT_OK_DES
   #undef PROJECT_OK_OGR
   #undef PROJECT_OK_CSC
   #undef PROJECT_OK_RC5_72
-  #undef PROJECT_OK_OGR_24_P2
+  #undef PROJECT_OK_OGR_P2
 
   if ( 0 <= projectid && projectid < PROJECT_COUNT )
     if ((projectflags[projectid] & PROJECT_OK) == PROJECT_OK)

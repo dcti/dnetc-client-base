@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.11 2003/12/07 22:56:19 kakace Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.12 2003/12/13 12:57:14 kakace Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -455,7 +455,7 @@ static void __IncrementKey(u32 *keyhi, u32 *keymid, u32 *keylo, u32 iters, int c
       *keylo = *keylo + iters;
       if (*keylo < iters) *keyhi = *keyhi + 1; /* Account for carry */
       break;
-    case OGR_24_P2:
+    case OGR_P2:
     case OGR:
       /* This should never be called for OGR */
       break;
@@ -533,8 +533,8 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
       return contestid;
     }
     #endif
-    #if defined(HAVE_OGR24_FINALIZE)
-    case OGR_24_P2:
+    #if defined(HAVE_OGR_FINALIZE)
+    case OGR_P2:
     {
       //24/2-22-32-21-5-1-12
       work->ogr.workstub.stub.marks = 24;
@@ -941,8 +941,8 @@ static int __InternalLoadState( InternalProblem *thisprob,
   #endif
 
   #if defined(HAVE_OGR_CORES)
-  #if defined(HAVE_OGR24_PASS2)
-  case OGR_24_P2:
+  #if defined(HAVE_OGR_PASS2)
+  case OGR_P2:
   #endif
   case OGR:
   {
@@ -1098,8 +1098,8 @@ int ProblemRetrieveState( void *__thisprob,
           break;
         }
         #if defined(HAVE_OGR_CORES)
-        #if defined(HAVE_OGR24_PASS2)
-        case OGR_24_P2:
+        #if defined(HAVE_OGR_PASS2)
+        case OGR_P2:
         #endif
         case OGR:
         {
@@ -1949,8 +1949,8 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
       case DES:
         retcode = Run_DES( core_prob, &iterations, &last_resultcode );
         break;
-      #ifdef HAVE_OGR24_PASS2
-      case OGR_24_P2:
+      #ifdef HAVE_OGR_PASS2
+      case OGR_P2:
       #endif
       case OGR:
         retcode = Run_OGR( core_prob, &iterations, &last_resultcode );
@@ -2051,7 +2051,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
      process in a taskwindow is preemptively scheduled. At least as
      fas as I know and observed.
   */
-  if (contest_i == OGR || contest_i == OGR_24_P2 /* && prob_index >= 0 */) /* crunchers only */
+  if (contest_i == OGR || contest_i == OGR_P2 /* && prob_index >= 0 */) /* crunchers only */
   {
     #if (CLIENT_CPU == CPU_68K)
     return 0;
@@ -2133,9 +2133,9 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
       return 0;
       #endif
     }
-    case OGR_24_P2:
+    case OGR_P2:
     {
-      #ifdef HAVE_OGR24_FINALIZE
+      #ifdef HAVE_OGR_FINALIZE
       return 1;
       #else
       return 0;
@@ -2529,8 +2529,8 @@ static unsigned int __compute_permille(unsigned int cont_i,
     break;
 #endif
 #ifdef HAVE_OGR_CORES
-  #ifdef HAVE_OGR24_PASS2
-    case OGR_24_P2:
+  #ifdef HAVE_OGR_PASS2
+    case OGR_P2:
   #endif
     case OGR:
     if (work->ogr.workstub.worklength > (u32)work->ogr.workstub.stub.length)
@@ -2615,7 +2615,7 @@ int WorkGetSWUCount( const ContestWork *work,
       break;
 #endif
 #ifdef HAVE_OGR_CORES
-      case OGR_24_P2:
+      case OGR_P2:
       case OGR:
       {
         if (swucount && rescode != RESULT_WORKING)
@@ -2677,8 +2677,8 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
                              work.bigcrypto.iterations.hi == 0;
 #endif
 // FIXME: hmmm is this correct ??????
-      info->stats_units_are_integer = (contestid != OGR && contestid != OGR_24_P2);
-      info->show_exact_iterations_done = (contestid == OGR || contestid == OGR_24_P2);
+      info->stats_units_are_integer = (contestid != OGR && contestid != OGR_P2);
+      info->show_exact_iterations_done = (contestid == OGR || contestid == OGR_P2);
 
       if (flags & (P_INFO_E_TIME | P_INFO_RATE | P_INFO_RATEBUF))
       {
@@ -2811,8 +2811,8 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
             break;
   #endif /* HAVE_CRYPTO_V1 */
   #ifdef HAVE_OGR_CORES
-          #ifdef HAVE_OGR24_PASS2
-            case OGR_24_P2:
+          #ifdef HAVE_OGR_PASS2
+            case OGR_P2:
           #endif
             case OGR:
             {
@@ -2978,7 +2978,7 @@ int ProjectSetSpeed(int projectid, u32 speedhi, u32 speedlo)
       wusizehi = 0;
       wusizelo = 1UL<<28;
       break;
-    case OGR_24_P2:
+    case OGR_P2:
     case OGR:
       /* unknown */
       wusizehi = wusizelo = 0;

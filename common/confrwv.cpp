@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.92.2.5 2003/12/07 22:56:19 kakace Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.92.2.6 2003/12/13 12:57:14 kakace Exp $"; }
 
 //#define TRACE
 
@@ -746,7 +746,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
                multiplier -= (PREFERREDBLOCKSIZE_MIN-1);
                break;
              case OGR:
-             case OGR_24_P2:
+             case OGR_P2:
                multiplier = 1;
                break;
           }

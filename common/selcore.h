@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.16.2.6 2003/12/07 22:56:19 kakace Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.16.2.7 2003/12/13 12:57:14 kakace Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
@@ -180,12 +180,12 @@ int selcoreGetPreselectedCoreForProject_ogr();
 int selcoreSelectCore_ogr( unsigned int threadindex,
                            int *client_cpuP, struct selcore *selinfo );
 #endif
-#ifdef HAVE_OGR24_PASS2
-int InitializeCoreTable_ogr24_p2(int first_time);
+#ifdef HAVE_OGR_PASS2
+int InitializeCoreTable_ogr_p2(int first_time);
 
-void DeinitializeCoreTable_ogr24_p2();
+void DeinitializeCoreTable_ogr_p2();
 
-int selcoreSelectCore_ogr24_p2( unsigned int threadindex,
+int selcoreSelectCore_ogr_p2( unsigned int threadindex,
                            int *client_cpuP, struct selcore *selinfo );
 #endif
 
