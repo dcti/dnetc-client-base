@@ -1,7 +1,7 @@
 
 /*
  * $Log: gentestsdes.c,v $
- * Revision 1.2  1998/06/18 22:48:29  remi
+ * Revision 1.5  1998/06/18 22:50:15  remi
  * This is a C file, not a C++ one.
  *
  * Revision 1.4  1998/06/14 10:44:19  remi
@@ -25,7 +25,7 @@ Copies to:        tcharron@interlog.com, jlawson@hmc.edu, beberg@distributed.net
 Subject:          Re: (Fwd) DES x86-core news
 */
 
-static char *id="@(#)$Id: gentestsdes.c,v 1.2 1998/06/18 22:48:29 remi Exp $";
+static char *id="@(#)$Id: gentestsdes.c,v 1.5 1998/06/18 22:50:15 remi Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
