@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.51 2000/06/02 06:24:56 jlawson Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.52 2000/07/11 04:06:18 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -57,7 +57,7 @@ static struct
   char spoolson;             // mail/file logging and time stamping is on/off.
   char percprint;            // percentprinting is enabled
 
-  MailMessage *mailmessage;  //note: pointer, not class struct.
+  void *mailmessage;         //handle returned from smtp_construct_message()
   char basedir[256];         //filled if user's 'logfile' is not qualified
   char logfile[128+20];      //fname when LOGFILETYPE_RESTART or _FIFO
                              //lastused fname when LOGFILETYPE_ROTATE
@@ -114,16 +114,9 @@ static FILE *__fopenlog( const char *fn, const char *mode )
   unsigned int len = strlen(logstatics.basedir);
   if ((len + strlen(fn) +1) < sizeof(logstatics.basedir))
   {
-    #if (CLIENT_OS == OS_MACOS)
-    OSType old_ftype = __gettype(0);
-    _ftype = 'RC5L';
-    #endif
     strcat( logstatics.basedir, fn );
     file = fopen( logstatics.basedir, mode );
     logstatics.basedir[len] = '\0';
-    #if (CLIENT_OS == OS_MACOS)
-    _ftype = old_ftype;
-    #endif
   }
   return file;
 }
@@ -135,8 +128,7 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
        CLIENT_OS == OS_OS2 || CLIENT_OS == OS_WIN16 || \
        CLIENT_OS == OS_WIN32 || CLIENT_OS == OS_WIN32S )
     #define ftruncate( fd, sz )  chsize( fd, sz )
-  #elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_AMIGAOS) || \
-        (CLIENT_OS == OS_MACOS)
+  #elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_AMIGAOS)
     #define ftruncate( fd, sz ) //nada, not supported
     #define FTRUNCATE_NOT_SUPPORTED
   #endif
@@ -414,7 +406,7 @@ static void InternalLogMail( const char *msgbuffer, unsigned int msglen, int /*f
   {
     static int recursion_check = 0; //network stuff sometimes Log()s.
     if ((++recursion_check) == 1)
-      logstatics.mailmessage->append( msgbuffer );
+      smtp_append_message( logstatics.mailmessage, msgbuffer );
     --recursion_check;
   }
   return;
@@ -581,7 +573,10 @@ void LogFlush( int forceflush )
     if ( logstatics.mailmessage )
     {
       logstatics.loggingTo &= ~LOGTO_MAIL;
-      logstatics.mailmessage->checktosend(forceflush);
+      if (forceflush)
+        smtp_send_message( logstatics.mailmessage );
+      else   
+        smtp_send_if_needed( logstatics.mailmessage );
       logstatics.loggingTo |= LOGTO_MAIL;
     }
   }
@@ -590,11 +585,17 @@ void LogFlush( int forceflush )
 
 // ------------------------------------------------------------------------
 
+#if (CLIENT_OS == OS_WIN16) && defined(__WATCOMC__)
+#define MAKE_VA_LIST_PTR(__va_list) ((va_list *)(&(__va_list[0])))
+#else
+#define MAKE_VA_LIST_PTR(__va_list) (&__va_list)
+#endif
+
 void LogScreen( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_SCREEN, format, &argptr );
+  LogWithPointer( LOGTO_SCREEN, format, MAKE_VA_LIST_PTR(argptr) );
   va_end(argptr);
   return;
 }
@@ -603,7 +604,7 @@ void LogScreenRaw( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN, format, &argptr );
+  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN, format, MAKE_VA_LIST_PTR(argptr));
   va_end(argptr);
   return;
 }
@@ -612,7 +613,7 @@ void Log( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL, format, &argptr );
+  LogWithPointer( LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL, format, MAKE_VA_LIST_PTR(argptr));
   va_end(argptr);
   return;
 }
@@ -621,7 +622,7 @@ void LogRaw( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL, format, &argptr );
+  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL, format, MAKE_VA_LIST_PTR(argptr));
   va_end(argptr);
   return;
 }
@@ -630,7 +631,7 @@ void LogTo( int towhat, const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( towhat, format, &argptr );
+  LogWithPointer( towhat, format, MAKE_VA_LIST_PTR(argptr) );
   va_end(argptr);
   return;
 }
@@ -763,13 +764,17 @@ void LogScreenPercent( unsigned int load_problem_count )
 
 void DeinitializeLogging(void)
 {
-  if (logstatics.mailmessage && (logstatics.loggingTo & LOGTO_MAIL)!=0)
+  if (logstatics.mailmessage)
   {
-    MailMessage *mmsg = logstatics.mailmessage;
+    void *mailmessage = logstatics.mailmessage;
     logstatics.mailmessage = NULL;
-    logstatics.loggingTo &= ~LOGTO_MAIL;
-    mmsg->Deinitialize(); //forces a send
-    delete mmsg;
+    if ((logstatics.loggingTo & LOGTO_MAIL)!=0)
+    {
+      logstatics.loggingTo &= ~LOGTO_MAIL;
+      smtp_send_message( mailmessage );
+      smtp_clear_message( mailmessage );
+    }  
+    smtp_destruct_message( mailmessage );
   }
   if ( logstatics.logstream )
   {
@@ -949,21 +954,14 @@ void InitializeLogging( int noscreen, int nopercent, const char *logfilename,
   }
   if (mailmsglen > 0)
   {
-    logstatics.mailmessage = new MailMessage();
-  }
-  if (logstatics.mailmessage)
-  {
-    if (logstatics.mailmessage->Initialize( mailmsglen, smtpsrvr, smtpport,
-                                           smtpfrom, smtpdest, id ) == 0)
+    logstatics.mailmessage = smtp_construct_message( mailmsglen, 
+                                                     smtpsrvr, smtpport,
+                                                     smtpfrom, smtpdest, id );
+    if (logstatics.mailmessage) /* initialized ok */
     {
       logstatics.loggingTo |= LOGTO_MAIL;
     }
-    else
-    {
-      delete logstatics.mailmessage;
-      logstatics.mailmessage = NULL;
-    }
-  }
+  }  
   return;
 }
 

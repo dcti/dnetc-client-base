@@ -12,19 +12,24 @@
  * C, is portable, passes -pedantic tests, does not 'new' a bazillion 
  * and one times, will not die if mem is scarce, does not fragment 
  * memory, does not attempt to parse comments, will not choke on
- * crlf translation, and does not assume that the calling function
- * was written by a twit. 
+ * crlf translation, can somewhat deal with no-disk space conditions, 
+ * and does not assume that the calling function was written by a twit. 
  *
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.35 2000/06/02 06:24:56 jlawson Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.36 2000/07/11 04:08:18 mfeiri Exp $"; }
 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
-#include <ctype.h>   /* tolower(). do not use isxxx() functions! */
+#include <ctype.h>   /* tolower()/isctrl(). do not use isspace()! */
 #include <stdlib.h>  /* malloc()/free()/atoi() */
 #include <limits.h>  /* UINT_MAX */
+#if defined(__BORLANDC__) || defined(_MSC_VER) /*don't dare use the 'uni' word*/
+#include <io.h>      /* access() */
+#else
+#include <unistd.h>  /* access() */
+#endif
 #include "iniread.h"
 
 #ifndef SEEK_SET   /* some OSs (sunos4) don't have SEEK_* */
@@ -54,6 +59,7 @@ return "@(#)$Id: iniread.cpp,v 1.35 2000/06/02 06:24:56 jlawson Exp $"; }
                     w with key/value (as above)
 */                            
 
+
 static unsigned long ini_doit( int dowrite, const char *sect, 
                                const char *key, const char *value,
                                char *buffer, unsigned long bufflen, 
@@ -62,130 +68,113 @@ static unsigned long ini_doit( int dowrite, const char *sect,
   char *data = NULL;
   long i,n,filelen = 0;
   unsigned long success = 0;
-  const char *quotechar = "";
 
   if (dowrite && !sect && !key && !value ) /* flush */
   {
     success = 1;
   }
-  else if (filename && (dowrite || (buffer && bufflen>1)))
+  else if ((!filename) || (!dowrite && (!buffer || bufflen <2)))
+  {
+    ; /* go return default (or if dowrite then return fail) */
+  }
+  else if (access(filename,0)!=0) /* file doesn't exist */
+  {
+    if (dowrite)
+    {
+      if (!sect || !key || !value) /* delete something */
+      {
+        success = 1;
+      }
+      else
+      {
+        long malloclen = 16;
+        malloclen += (((sect)?(strlen(sect)):(0))+strlen(key)+strlen(value)+3);
+        if (((unsigned long)malloclen) < ((unsigned long)(UINT_MAX-128)))
+        {
+          data = (char *)malloc((int)malloclen);
+          if (data)
+            memset(data,'\n',((int)malloclen));
+        }
+        filelen = 0;
+      }
+    }
+  }
+  else /* file exists, the fopen() is our write test */
   {
     FILE *file = fopen( filename, ((dowrite)?("r+"):("r")) );
-    if (!file && dowrite)
-    {
-      if (!key || !value) /* delete section || key+value */
-        success = 1;
-      else 
-        file = fopen( filename, "w+" );
-    }
-    data = NULL;
-
+    /* printf("fopen(\"%s\",\"%s\") => %p\n", filename, ((dowrite)?("r+"):("r")), file ); */
     if (file)
     {
-      if (dowrite && key && value && value[0]!='\'' && value[0]!='\"')
-      {
-        int qn=0;
-        for (i=0;*quotechar==0 && value[i];i++)
-        {
-          char c=value[i];
-          if (c=='\"' || c=='\'')
-            quotechar = (const char *)((c=='\"')?("\'"):("\""));
-          else if (c == ' ' || c=='\t')
-            qn = 1;
-          #ifdef ALLOW_EMBEDDED_COMMENTS
-          else if (c==';' || c=='#')
-            qn = 1;
-          #endif
-        }
-        if (qn && !*quotechar)
-          quotechar = "\"";
-      }
-
+      filelen = -1L;
       if ( fseek( file, 0, SEEK_END ) == 0 )
       {
         filelen = ftell( file );
-//printf("filelen: %ld\n", filelen );
-//getchar();
-        if (filelen == 0)
+        if (filelen > 0)
         {
-          if (dowrite)
-          {
-            if (!key || !value) /* delete section || key+value */
-              success = 1;
-            else
-            {
-              int ok = 1;
-              if ( sect != NULL)
-              {
-                ok = (fputc('[', file ) != EOF);
-                for (n=0;ok && sect[n];n++)
-                  ok = (fputc(sect[n], file ) != EOF);
-                if (ok && (fputc(']', file ) != EOF))
-                  ok = (fputc('\n', file ) != EOF);
-              }
-              for (n=0;ok && key[n];n++)
-                ok = (fputc(key[n], file ) != EOF);
-              if (ok)
-                ok = (fputc('=', file ) != EOF);
-              if (ok && *quotechar)
-                ok = (fputc(*quotechar, file ) != EOF);
-              for (n=0;ok && value[n];n++)
-                ok = (fputc(value[n], file ) != EOF);
-              if (ok && *quotechar)
-                ok = (fputc(*quotechar, file ) != EOF);
-              if (ok)
-                ok = (fputc('\n', file ) != EOF);
-              if (!ok)
-              {
-                fclose(file);
-                file=fopen(filename,"w+");
-              }
-              success=ok;
-            }
-          }
-        }  
-        else if (filelen > 0)
+          if ( fseek( file, 0, SEEK_SET ) != 0 )
+            filelen = -1L;
+        }
+        /* printf("filelen 1 => %ld\n", filelen ); */
+      }
+      if (filelen != -1L)
+      {
+        long malloclen = filelen + 16;
+        if (dowrite && key && value)
+          malloclen += (((sect)?(strlen(sect)):(0))+strlen(key)+strlen(value)+3);
+        /* printf("malloclen: %ld, max: %ld\n", malloclen, (((long)(UINT_MAX))-128) ); */
+        if (((unsigned long)malloclen) < ((unsigned long)(UINT_MAX-128)))
         {
-          if (fseek( file, 0, SEEK_SET ) == 0)
+          data = (char *)malloc((int)malloclen);
+          /* printf("havedata 1: %p\n", data ); */
+          if (data)
           {
-            long malloclen = filelen + 16;
-            if (dowrite && key && value)
-              malloclen += (((sect)?(strlen(sect)):(0))+strlen(key)+strlen(value)+3);
-//printf("malloclen: %ld, max: %ld\n", malloclen, (((long)(UINT_MAX))-128) );
-            if (((unsigned long)malloclen) < ((unsigned long)(UINT_MAX-128)))
+            memset(data,'\n',((int)malloclen));
+            if (filelen > 0)
             {
-              data = (char *)malloc((int)malloclen);
-//printf("havedata 1: %p\n", data );
-              if (data)
+              i = (long)fread( (void *)data, sizeof(char), filelen, file );
+              /* printf("read len: %ld\n", i ); */
+              if (i == 0)  /* can't do (i < filelen) because of crlf trans */
               {
-                memset(data,'\n',malloclen);
-                filelen = (long)fread( (void *)data, sizeof(char), filelen, file );
-//printf("fillen 2: %ld\n", filelen );
-                if (filelen == 0)
-                {
-                  free(data);
-                  data=NULL;
-                }
+                free(data);
+                data = NULL;
               }
             }
           }
         }
       }
-      if (file)
-        fclose(file);
-      file = NULL;
+      fclose(file);
     }
   }
 
-//printf("havedata: %p\n", data );
+  /* printf("havedata: %p\n", data ); getchar(); */
       
   if (data)
   {
+    char quotechar = 0;
     long offset = 0, sectoff = 0, sectoffend = 0, foundrecs = 0;
     int anysect = 0, changed = 0, foundsect = 0;
 
     if (sect == NULL && filelen)
       foundsect = 1;      
+
+    if (dowrite && key && value && value[0]!='\'' && value[0]!='\"')
+    {
+      int qn=0;
+      for (i=0;quotechar==0 && value[i];i++)
+      {
+        char c = (char)value[i];
+        if (c=='\"' || c=='\'')
+          quotechar = ((c=='\"')?('\''):('\"'));
+        else if (c == ' ' || c=='\t')
+          qn = 1;
+        #ifdef ALLOW_EMBEDDED_COMMENTS
+        else if (c==';' || c=='#')
+          qn = 1;
+        #endif
+      }
+      if (qn && !quotechar)
+        quotechar = '\"';
+    }
 
     while (offset < filelen)
     {
@@ -217,7 +206,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
       }
       if (linelen)
       {
-//printf("line: \"%70.70s\"\n", &data[keyoff] );
+        /* printf("line: \"%70.70s\"\n", &data[keyoff] ); */
 
         if (data[keyoff]=='[')
         {
@@ -316,7 +305,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
                 valuelen = 0;
                 while (value[valuelen])
                   valuelen++;
-                linelen = keylen+1+valuelen+((*quotechar)?(2):(0))+1;
+                linelen = keylen+1+valuelen+((quotechar)?(2):(0))+1;
                 if (keyoff < filelen)
                 {
                   int iseosec = (data[keyoff] == '[');
@@ -337,17 +326,17 @@ static unsigned long ini_doit( int dowrite, const char *sect,
                 for (i=0;i<keylen;i++)
                   data[n++]=key[i];
                 data[n++]='=';
-                if (*quotechar)
-                  data[n++]=*quotechar;
+                if (quotechar)
+                  data[n++]=quotechar;
                 for (i=0;i<valuelen;i++)
                   data[n++]=value[i];
-                if (*quotechar)
-                  data[n++]=*quotechar;
+                if (quotechar)
+                  data[n++]=quotechar;
                 data[n++]='\n';
               }
               changed = 1;
             }
-            else //if (dowrite) else
+            else /* if (dowrite) else */
             {
               long valueoff;
 
@@ -414,7 +403,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
                 break;
               }
             } /* if dowrite else */
-          } //if keyfound */
+          } /* if keyfound */
         } /* if foundsect */
       } /* if linelen */
     } /* while (offset < filelen) */
@@ -450,12 +439,12 @@ static unsigned long ini_doit( int dowrite, const char *sect,
           for (i=0;key[i];i++)
             data[filelen++]=key[i];
           data[filelen++]='=';
-          if (*quotechar)
-            data[filelen++]=*quotechar;
+          if (quotechar)
+            data[filelen++]=quotechar;
           for (i=0;value[i];i++)
             data[filelen++]=value[i];
-          if (*quotechar)
-            data[filelen++]=*quotechar;
+          if (quotechar)
+            data[filelen++]=quotechar;
           data[filelen++]='\n';
           changed=1;
         }
@@ -501,7 +490,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
                  data[sectoffend-1]=='\n' || data[sectoffend-1]==' ' || 
                  data[sectoffend-1]=='\t'))
             sectoffend--;
-          i = strlen(key)+strlen(value)+1+((*quotechar)?(2):(0))+2;
+          i = strlen(key)+strlen(value)+1+((quotechar)?(2):(0))+2;
           memmove( (void *)&data[sectoffend+i], (void *)&data[sectoffend],
                    filelen-sectoffend );
           filelen+=i;
@@ -509,12 +498,12 @@ static unsigned long ini_doit( int dowrite, const char *sect,
           for (i=0;key[i];i++)
             data[sectoffend++]=key[i];
           data[sectoffend++]='=';
-          if (*quotechar)
-            data[sectoffend++]=*quotechar;
+          if (quotechar)
+            data[sectoffend++]=quotechar;
           for (i=0;value[i];i++)
             data[sectoffend++]=value[i];
-          if (*quotechar)
-            data[sectoffend++]=*quotechar;
+          if (quotechar)
+            data[sectoffend++]=quotechar;
           data[sectoffend++]='\n';
           data[sectoffend++]='\n';
           changed = 1;
@@ -522,27 +511,113 @@ static unsigned long ini_doit( int dowrite, const char *sect,
       }
       if (changed)
       {
-        FILE *file = fopen(filename,"w" );
+        FILE *file = fopen(filename,"r+");
+
+        /* strip trailing triviality */
+        while (filelen > 0 && (data[filelen-1]=='\r' ||
+             data[filelen-1]=='\n' || data[filelen-1]==' ' ||
+             data[filelen-1]=='\t' || iscntrl(data[filelen-1])))
+          filelen--;
+        if (filelen > 0)
+          data[filelen++]='\n';
+
+        i = -1L; 
+        if (!file)
+        {
+          if (access(filename,0)!=0) /* only if file doesn't exist */
+          {
+            file = fopen(filename,"w");
+            if (file)
+              i = 0;
+          }
+        }
+        else if (fseek(file,0,SEEK_END)==0)
+        {
+          i = ftell(file);
+          if (i != -1L)
+          {
+            char nnn[64];
+            memset(nnn, ' ', sizeof(nnn));
+            nnn[0] = '\n';
+
+            if (i != -1L && filelen >= i)
+            {
+              /* if new size is greater than old, gently extend the file */
+              while (i != -1L && filelen > i)
+              {
+                unsigned int s = (filelen - i);
+                if (s > sizeof(nnn))
+                  s = sizeof(nnn);
+                if (fwrite( (void *)&nnn[0], sizeof(char), s, file )!=s)
+                  i = -1L;
+                else if (fflush(file) != 0)
+                  i = -1L;
+                else if (nnn[0] == '\n')
+                  i += s;
+                else if (fseek(file,0,SEEK_END)!=0)
+                  i = -1L;
+                else
+                  i = ftell(file);
+                nnn[0] = ' ';
+              }
+              if (i != -1L)
+              { 
+                if (fseek(file,0,SEEK_SET)!=0)
+                  i = -1L;
+              }
+            }
+            else /* new size is less than old */
+            {
+              /* we should use ftruncate here, but thats not 
+                 supported by MacOS, AmigaOS, VMS and perhaps others.
+              */
+              if (fwrite( (void *)&nnn[0], sizeof(char), 
+                           sizeof(nnn), file )!=sizeof(nnn))
+                i = -1L;
+              else if (fflush(file) != 0)
+                i = -1L;
+              else if (fseek(file,0,SEEK_END)!=0)
+                i = -1L;
+              else
+              {
+                i = ftell(file);
+                if (i != -1L)
+                {
+                  /* if the size difference was small, then the padding
+                     maybe all we need. The chances are good that thats 
+                     good enough to avoid the fopen(,"w") since .ini's 
+                     rarely shrink by more than a few bytes.
+                  */
+                  if (filelen >= i)
+                  {
+                    if (fseek(file,0,SEEK_SET)!=0)
+                      i = -1L;
+                  }
+                  else
+                  {
+                    fclose(file);
+                    file = fopen( filename, "w" );
+                  }
+                }
+              }
+            }
+          }
+        }
         if (file)
         {
-          long i = filelen;
-          while (filelen > 0 && (data[filelen-1]=='\r' || 
-                 data[filelen-1]=='\n' || data[filelen-1]==' ' || 
-                 data[filelen-1]=='\t'))
-            filelen--;
-          if (i != filelen)
-            data[filelen++]='\n';
-          if (fwrite( (void *)data, sizeof(char), filelen, file )!=0)
-            success = 1;
-          if (i == filelen)
-            fputc( '\n', file );
+          if (i != -1L)
+          {
+            if (fwrite( (void *)data, sizeof(char), filelen, file )!=0)
+              success = 1;
+          }
           fclose(file);
         }
-      }
+
+      } /* if changed */
     } /* if dowrite */
     
     free(data);
-  } //if data
+  } /* if data */
 
   
   if (!dowrite) 

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.49 2000/06/02 06:24:55 jlawson Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.50 2000/07/11 04:15:29 mfeiri Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -27,6 +27,7 @@ static const char *lurkmodetable[] =
 // --------------------------------------------------------------------------
 
 #define CFGTXT(x) (x)
+#define ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME "Additional buffer-level checking"
 
 struct optionstruct conf_options[] = {
 { 
@@ -158,8 +159,8 @@ struct optionstruct conf_options[] = {
   "render the pair invalid and cause temperature threshold checking to be\n"
   "silently disabled.\n"
   "\n"
-  "Processor temperature checking is currently only available on MacOS/PPC.\n"
-  //"Processor temperature checking is not available on all platforms.\n"
+  //"Processor temperature checking is currently only available on MacOS/PPC.\n"
+  "Processor temperature checking is not available on all platforms.\n"
   ,CONF_MENU_MISC,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
 { 
@@ -169,8 +170,16 @@ struct optionstruct conf_options[] = {
   "system is running on battery power or, where more appropriate, if it finds\n"
   "that the system is not running on mains power.\n" 
   "\n"
+  #if (CLIENT_OS == OS_LINUX) ||  ((CLIENT_CPU == CPU_X86) && \
+      ((CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_NETBSD)))
+  "This option is ignored if power management is disabled or not configured or\n"
+  "if /dev/apm cannot be opened for reading (may require superuser privileges).\n"
+  #elif (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_WIN32)
   "This option is ignored if power source detection is not supported by the\n"
   "the operating system or hardware architecture.\n"
+  #else
+  "This option is not supported on this platform and is ignored.\n"
+  #endif
   ,CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
 },
 { 
@@ -188,8 +197,21 @@ struct optionstruct conf_options[] = {
 { 
   CONF_PERCENTOFF              , /* CONF_MENU_MISC */
   CFGTXT("Disable the crunch-o-meter (packet progress indicator)?"),"no",
-  CFGTXT(""
-  ),CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
+  /*CFGTXT(*/
+  "When left enabled, the client will display an indicator that reflects the\n"
+  "approximate position of each of the first 26 crunchers (a...z) relative\n"
+  "to the packet each cruncher is processing.\n"
+  #if 0
+  "When left enabled, the client will display an indicator that reflects\n"
+  "the approximate position the first 26 crunchers are at when working on\n"
+  "a packet.\n"
+  #endif
+  "\n"
+  "For linear crunching, for instance RC5, the indicator is fairly accurate,\n"
+  "but for non-linear crunching, such as OGR, the indicator is only a crude\n"
+  "approximation since the total amount of work in a packet cannot be\n"
+  "determined until the packet has been processed completely.\n"
+  /*)*/,CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
 },
 { 
   CONF_COMPLETIONSOUNDON       , /* CONF_MENU_MISC */
@@ -328,37 +350,50 @@ struct optionstruct conf_options[] = {
   "\n"
   "It is possible to have the client rotate through this list, updating\n"
   "its buffers only once for each pass. To do so, 'Dialup-link detection'\n"
-  "and 'Buffer-level check frequency' must be disabled since a buffer update\n"
-  "(new work being made available) would otherwise cause the client to go back\n"
-  "to the beginning of the load order.\n"
+  "and '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"' must be disabled since a buffer\n"
+  "update (new work being made available) would otherwise cause the client\n"
+  "to go back to the beginning of the load order.\n"
   /*) */,CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
 { 
   CONF_FREQUENT                , /* CONF_MENU_BUFF */
-  CFGTXT("Additional buffer-level checking"),"0 (none)",
+  CFGTXT(ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME),"0 (none)",
   /*CFGTXT(*/
   "The following options are extensions to normal threshold management and are\n"
-  "not usually necessary.\n"
+  "not usually necessary:\n"
+  "   0) no additional buffer-level checking. (default)\n"
+  "   1) ensure that there is always work available.\n"
+  "   2) ensure that all completed work is kept flushed.\n"
+  "   3) both 1) and 2). (implied if 'Dialup detection options' are enabled)\n"
+  "   4) update on per-project buffer exhaustion.\n"
   "\n"
-  " 0) no additional buffer-level checking. (default)\n"
-  " 1) ensure that there is always work available.\n"
-  " 2) ensure that all completed work is kept flushed.\n"
-  " 3) both 1) and 2). (implied if 'Dialup detection options' are enabled)\n"
-  " 4) update on per-project buffer exhaustion.\n"
-  "\n"
-  "Options 1, 2 and 3 will cause the client to check buffers levels every few\n"
-  "minutes or so. You might want to use them if you have a single computer with\n"
-  "a network connection \"feeding\" other clients via a common set of buffers,\n"
-  "or if you want to ensure that completed work is flushed immediately.\n"
+  "Options 1, 2 and 3 will cause the client to frequently check buffers levels.\n"
+  "(Frequency/interval is determined by the 'Buffer-level check interval' option)\n"
+  "You might want to use them if you have a single computer with a network\n"
+  "connection \"feeding\" other clients via a common set of buffers, or if you\n"
+  "want to ensure that completed work is flushed immediately.\n"
   "Option 4 is a hint to the client to work on a single project as long as\n"
   "possible (updating per-project buffers individually), rather than loop through\n"
   "all active/enabled projects (one combined update per pass).\n"
-#if 0  
+  /*)*/,CONF_MENU_BUFF,CONF_TYPE_INT,NULL,NULL,0,4,NULL,NULL
+},
+{  
+  CONF_FREQUENT_FREQUENCY      , /* CONF_MENU_BUFF */
+  CFGTXT("Buffer-level check interval"), "0:00 (on buffer change)",
+  /*CFGTXT(*/
+  "This option determines how how often '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'\n"
+  "should be performed. (More precisely: how much time must elapse between\n"
+  "buffer-level checks)\n" 
   "\n"
-  "Note: enabling (modem-) connection detection implies type 3, ie that\n" 
-  "buffers will be updated frequently while a connection is detected.\n" 
-#endif
-  /*)*/,CONF_MENU_BUFF,CONF_TYPE_INT,NULL,NULL,0,4,NULL,NULL},
+  "This setting is meaningful only if one of the extensions to normal threshold\n"
+  "management is enabled: either implicitely when 'Dialup detection options' are\n"
+  "active or explicitely with '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'.\n"
+  "\n"
+  "The interval specified here is in hours and minutes, and the default denotes\n"
+  "that the client should check buffer-levels whenever it detects a change (by any\n"
+  "client) to a buffer file, but not more often than twice per minute.\n"
+  /*)*/,CONF_MENU_BUFF,CONF_TYPE_TIMESTR,NULL,NULL,0,0,NULL,NULL
+},   
 { 
   CONF_PREFERREDBLOCKSIZE      , /* CONF_MENU_BUFF */
   CFGTXT("Preferred packet size (2^X keys/packet)"), "-1 (auto)",
@@ -395,7 +430,7 @@ struct optionstruct conf_options[] = {
   "should be used instead. If that too is unspecified, then the client will\n"
   "use defaults.\n"
   "\n"
-  "* See also: 'Buffer-level check frequency'\n"
+  "* See also: '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'\n"
   ,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,1,0xffff,NULL,NULL
 },
 { 
@@ -415,7 +450,7 @@ struct optionstruct conf_options[] = {
   "unprocessed packet cannot be predicted.\n"
 #endif
   "\n"
-  "* See also: 'Buffer-level check frequency'\n"
+  "* See also: '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'\n"
   ,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,0,336,NULL,NULL
 },
 
@@ -514,6 +549,7 @@ struct optionstruct conf_options[] = {
   "             in the \"Log file limit\" option is reached.\n"
   "3) fifo      the oldest lines in the file will be discarded when the size\n"
   "             of the file exceeds the limit in the \"Log file limit\" option.\n"
+  "             This option is not supported on MacOS, AmigaOS and VMS.\n"
   "4) rotate    a new file will be created when the rotation interval specified\n"
   "             in the \"Log file limit\" option is exceeded.\n"
   ),CONF_MENU_LOG,CONF_TYPE_INT,NULL,NULL /*logtypes[]*/,0,0,NULL,NULL

@@ -6,7 +6,7 @@
 */ 
 
 #ifndef __CONFOPT_H__
-#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.22 2000/06/02 06:24:55 jlawson Exp $"
+#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.23 2000/07/11 04:15:33 mfeiri Exp $"
 
 enum /* anonymous */
 {
@@ -37,16 +37,17 @@ enum /* anonymous */
   CONF_REMOTEUPDATEDIR         , /* CONF_MENU_BUFF */
   CONF_LOADORDER               , /* CONF_MENU_BUFF "DES,OGR,RC5" */
   CONF_FREQUENT                , /* CONF_MENU_BUFF */
+  CONF_FREQUENT_FREQUENCY      , /* CONF_MENU_BUFF */
   CONF_PREFERREDBLOCKSIZE      , /* CONF_MENU_BUFF */
   CONF_THRESHOLDI              , /* CONF_MENU_BUFF */
   CONF_THRESHOLDT              , /* CONF_MENU_BUFF */
 
-  CONF_MENU_PERF_PLACEHOLDER   , /* 28 */
+  CONF_MENU_PERF_PLACEHOLDER   , /* 29 */
   CONF_CPUTYPE                 , /* CONF_MENU_PERF */
   CONF_NUMCPU                  , /* CONF_MENU_PERF 0 ... */
   CONF_NICENESS                , /* CONF_MENU_PERF priority */
 
-  CONF_MENU_LOG_PLACEHOLDER    , /* 32 */
+  CONF_MENU_LOG_PLACEHOLDER    , /* 33 */
   CONF_LOGTYPE                 , /* CONF_MENU_LOG */
   CONF_LOGNAME                 , /* CONF_MENU_LOG */
   CONF_LOGLIMIT                , /* CONF_MENU_LOG */

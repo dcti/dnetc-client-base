@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.72 2000/06/02 06:24:55 jlawson Exp $"; }
+return "@(#)$Id: console.cpp,v 1.73 2000/07/11 04:11:20 mfeiri Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -37,11 +37,12 @@ return "@(#)$Id: console.cpp,v 1.72 2000/06/02 06:24:55 jlawson Exp $"; }
   || (CLIENT_OS==OS_FREEBSD) || ((CLIENT_OS==OS_OS2) && defined(__EMX__)) \
   || (CLIENT_OS==OS_AIX) || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==BSDOS) \
   || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_HPUX) || (CLIENT_OS==OS_SUNOS) \
-  || (CLIENT_OS==OS_NTO2) )
+  || (CLIENT_OS==OS_NTO2) || (CLIENT_OS==OS_MACOSX) || (CLIENT_OS==OS_RHAPSODY))
 #include <termios.h>
 #define TERMIOS_IS_AVAILABLE
 #endif
-#if (defined(__unix__) && !defined(__EMX__)) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_OS390)
+#if (defined(__unix__) && !defined(__EMX__)) || (CLIENT_OS == OS_VMS) || \
+    (CLIENT_OS == OS_OS390) || (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RHAPSODY)
 #define TERM_IS_ANSI_COMPLIANT
 #endif
 #if defined(__unix__)
@@ -127,6 +128,8 @@ int InitializeConsole(int *runhidden,int doingmodes)
         constatics.conisatty = w32ConIsScreen();
       #elif (CLIENT_OS == OS_RISCOS)
         constatics.conisatty = 1;
+      #elif (CLIENT_OS == OS_AMIGAOS)
+        constatics.conisatty = amigaConIsScreen();
       #else
         constatics.conisatty = (isatty(fileno(stdout)));
       #endif
@@ -324,6 +327,11 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
            ch = kbdkeyinfo.chChar;
         }
       }
+      #elif (CLIENT_OS == OS_AMIGAOS)
+      {
+        fflush(stdout);
+        ch = getch();
+      }
       #elif (defined(TERMIOS_IS_AVAILABLE))
       {
         struct termios stored;
@@ -456,8 +464,7 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
     if (asbool && redraw)
     {
       char scratch[8];
-      strcpy(scratch, ((boolval)?((boolistf)?("1 "):("yes  ")):
-                                ((boolistf)?("0"):("no   "))) );
+      strcpy(scratch, (boolval)?("yes  "):("no   ") );
       #if (CLIENT_OS == OS_RISCOS)
       if (redraw) /* not the first round */
         riscos_backspace();
@@ -580,6 +587,8 @@ int ConGetPos( int *col, int *row )  /* zero-based */
       if (col) *col = (int)c;
       return 0;
     }
+    #elif (CLIENT_OS == OS_AMIGAOS)
+    return amigaConGetPos(col,row);
     #else
     return ((row == NULL && col == NULL) ? (0) : (-1));
     #endif
@@ -663,7 +672,8 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
         (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_IRIX) || \
         (CLIENT_OS == OS_HPUX)  || (CLIENT_OS == OS_AIX) || \
         (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_NEXTSTEP) || \
-        (CLIENT_OS == OS_DEC_UNIX)
+        (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_MACOSX) || \
+        (CLIENT_OS == OS_RHAPSODY)
     /* good for any non-sco flavour? */
     struct winsize winsz;
     winsz.ws_col = winsz.ws_row = 0;
@@ -683,6 +693,8 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     }
   #elif (CLIENT_OS == OS_NTO2)
     tcgetsize(fileno(stdout), &height, &width);
+  #elif (CLIENT_OS == OS_AMIGAOS)
+    amigaConGetSize( &width, &height);
   #elif defined(TIOCGWINSZ)
     #error please add support for TIOCGWINSZ to avoid the following stuff
   #else

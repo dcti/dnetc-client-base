@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.145 2000/06/02 06:24:53 jlawson Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.146 2000/07/11 04:24:59 mfeiri Exp $"
 
 
 // ------------------
@@ -67,6 +67,11 @@ struct membuffstruct
 
 // ------------------
 
+#define PROJECTFLAGS_CLOSED 0x01 /* updated only from net. never saved to disk */
+/* user-disabled projects don't have a flag (yet). They are 'invisible' to all
+   but the configuration functions ('invalid' slot in the loadorder_map)
+*/
+
 typedef struct
 {
   /* non-user-configurable */
@@ -77,6 +82,8 @@ typedef struct
   int  stopiniio;
   u32  scheduledupdatetime;
   char inifilename[MINCLIENTOPTSTRLEN*2];
+  u32  last_buffupd_time; /* monotonic. goes with max_buffupd_interval */
+  char project_flags[CONTEST_COUNT]; /* do NOT save to disk! */
 
   /* -- general -- */
   char id[MINCLIENTOPTSTRLEN];
@@ -110,8 +117,8 @@ typedef struct
   // Don't use inthreshold directly, Use ClientGetInThreshold(client, contest)
   int inthreshold[CONTEST_COUNT]; 
   int timethreshold[CONTEST_COUNT];  /* in hours */
+  int max_buffupd_interval; /* the better 'outthreshold'. in minutes */
   #if (!defined(NO_OUTBUFFER_THRESHOLDS))
-  int  minupdateinterval; /* the better 'outthreshold'. in minutes */
   int outthreshold[CONTEST_COUNT];
   #endif
   int preferred_blocksize[CONTEST_COUNT];

@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.81 2000/06/02 06:24:56 jlawson Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.82 2000/07/11 04:11:51 mfeiri Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -61,7 +61,7 @@
 /* #define OS_UNUSED_5  24 */ /* never used. was mach10 */
 #define OS_AIX          25
 /* #define OS_UNUSED_6  26 */ /* never used. was AUX */
-#define OS_MACOSX       27    /* recycled rhapsody - it was just the codename for MacOSX(S)*/
+#define OS_RHAPSODY     27 /* MACH 2.x based and AltiVec unsafe variants of MacOSX (MXS and others) */
 #define OS_AMIGAOS      28
 #define OS_OPENBSD      29
 #define OS_NETWARE      30
@@ -77,6 +77,7 @@
 /* #define OS_UNUSED4   40 */ /* never used. was os_maspar */
 #define OS_WIN16        41 /* windows 3.1, 3.11, wfw (was 16bit, now 32bit) */
 #define OS_DESCRACKER   42 /* eff des cracker */
+#define OS_MACOSX       43 /* MACH 3.x based versions of Mac OS X (min. Mac OS X DP4 or Darwin 1.0) */
 
 /* ----------------------------------------------------------------- */
 
@@ -341,7 +342,11 @@
   #endif
 #elif defined(__APPLE__)
    #define CLIENT_OS_NAME  "Mac OS X"
-   #define  CLIENT_OS   OS_MACOSX
+   #if (__APPLE_CC__ < 795)
+     #define CLIENT_OS OS_RHAPSODY
+   #else
+     #define CLIENT_OS OS_MACOSX
+   #endif
    #if defined(__ppc__)
      #define CLIENT_CPU CPU_POWERPC
    #elif defined(__i386__)
@@ -480,6 +485,8 @@
   #if (CLIENT_OS == OS_DGUX)
     #define PTHREAD_SCOPE_SYSTEM PTHREAD_SCOPE_GLOBAL
     #define pthread_sigmask(a,b,c)
+  #elif (CLIENT_OS == OS_MACOSX)
+    #define pthread_sigmask(a,b,c) //no
   #elif (CLIENT_OS == OS_AIX)
 	/* only for AIX 4.1??? */
     #define pthread_sigmask(a,b,c) sigthreadmask(a,b,c)

@@ -9,18 +9,14 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.111 2000/06/02 06:24:55 jlawson Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.112 2000/07/11 04:11:25 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
 #include "cpucheck.h"  //just to keep the prototypes in sync.
 #include "logstuff.h"  //LogScreen()/LogScreenRaw()
 
-#if (CLIENT_OS == OS_SOLARIS)
-#  include <unistd.h>    // cramer - sysconf()
-#elif (CLIENT_OS == OS_IRIX)
-#  include <sys/prctl.h>
-#elif (CLIENT_OS == OS_DEC_UNIX)
+#if (CLIENT_OS == OS_DEC_UNIX)
 #  include <unistd.h>
 #  include <sys/sysinfo.h>
 #  include <machine/hal_sysinfo.h>
@@ -30,11 +26,8 @@ return "@(#)$Id: cpucheck.cpp,v 1.111 2000/06/02 06:24:55 jlawson Exp $"; }
 #  include <Multiprocessing.h>
 #elif (CLIENT_OS == OS_AIX)
 #  include <sys/systemcfg.h>
-#elif ((CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD) || \
-       (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
-        (CLIENT_OS == OS_MACOSX))
-#  include <sys/param.h>
-#  include <sys/sysctl.h>
+#elif (CLIENT_OS == OS_MACOSX)
+#  include <mach/mach.h>
 #endif
 
 /* ------------------------------------------------------------------------ */
@@ -63,14 +56,22 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
   {
     cpucount = -1;
     #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
-        (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
-        (CLIENT_OS == OS_MACOSX)
+        (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD)
     { /* comment out if inappropriate for your *bsd - cyp (25/may/1999) */
       int ncpus; size_t len = sizeof(ncpus);
       int mib[2]; mib[0] = CTL_HW; mib[1] = HW_NCPU;
       if (sysctl( &mib[0], 2, &ncpus, &len, NULL, 0 ) == 0)
       //if (sysctlbyname("hw.ncpu", &ncpus, &len, NULL, 0 ) == 0)
         cpucount = ncpus;
+    }
+    #elif (CLIENT_OS == OS_MACOSX)
+    {
+      unsigned int    count;
+      struct host_basic_info  info;
+      count = HOST_BASIC_INFO_COUNT;
+      if (host_info(mach_host_self(), HOST_BASIC_INFO, (host_info_t)&info,
+          &count) == KERN_SUCCESS)
+         cpucount=info.avail_cpus;
     }
     #elif (CLIENT_OS == OS_HPUX)
     {
@@ -105,7 +106,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     }
     #elif (CLIENT_OS == OS_LINUX)
     {
-      #if (CLIENT_CPU == CPU_ARM)
+      #if (CLIENT_CPU == CPU_ARM) || (CLIENT_CPU == CPU_MIPS)
         cpucount = 1;
       #else
       FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
@@ -250,7 +251,7 @@ static long __GetRawProcessorID(const char **cpuname)
     else if (flags & AFF_68010)
       detectedtype = 68010L; // 68010
     else
-      detectedtype = -1;
+      detectedtype = 68000L; // 68000
   }
   #elif (CLIENT_OS == OS_MACOS)
   if (detectedtype == -2)
@@ -350,17 +351,20 @@ static long __GetRawProcessorID(const char **cpuname)
   static struct { long rid; const char *name; int powername; } cpuridtable[] = {
     //note: if the name is not prefixed with "Power", it defaults to "PowerPC"
     //note: Non-PVR based numbers start at 0x10000 (real PVR numbers are 16bit)
-                {         1,   "601"                   },
-                {         3,   "603"                   },
-                {         4,   "604"                   },
-                {         6,   "603e"                  },
-                {         7,   "603ev"                 },
-                {         8,   "740/750/G3"            },
-                {         9,   "604e"                  },
-                {        10,   "604ev"                 },
-                {        12,   "7400/G4"               },
-                {        50,   "821"                   },
-                {        80,   "860"                   },
+                {    0x0001,   "601"                   },
+                {    0x0003,   "603"                   },
+                {    0x0004,   "604"                   },
+                {    0x0006,   "603e"                  },
+                {    0x0007,   "603r/603ev"            }, //ev=0x0007, r=0x1007
+                {    0x0008,   "740/750 (G3)"          },
+                {    0x0009,   "604e"                  },
+                {    0x000A,   "604ev"                 },
+                {    0x000C,   "7400 (G4)"             },
+                {    0x0020,   "403G/403GC/403GCX"     },
+                {    0x0050,   "821"                   },
+                {    0x0080,   "860"                   },
+                {    0x0081,   "8240"                  },
+                {    0x4011,   "405GP"                 },
                 {(1L<<16)+1,   "Power RS"              }, //not PVR based
                 {(1L<<16)+2,   "Power RS2 Superchip"   }, //not PVR based
                 {(1L<<16)+3,   "Power RS2"             }, //not PVR based
@@ -372,46 +376,18 @@ static long __GetRawProcessorID(const char **cpuname)
   #if (CLIENT_OS == OS_AIX)
   if (detectedtype == -2L)
   { 
-    /* extract from src/bos/kernel/sys/POWER/systemcfg.h 1.12 */
-    #ifndef POWER_RS1
-    #  define POWER_RS1 0x0001
-    #endif
-    #ifndef POWER_RSC
-    #  define POWER_RSC 0x0002
-    #endif
-    #ifndef POWER_RS2
-    #  define POWER_RS2 0x0004
-    #endif
-    #ifndef POWER_601
-    #  define POWER_601 0x0008
-    #endif
-    #ifndef POWER_603
-    #  define POWER_603 0x0020
-    #endif
-    /* if compiled on older versions of 4.x ... */
-    #ifndef POWER_620
-    #  define POWER_620 0x0040
-    #endif
-    #ifndef POWER_630
-    #  define POWER_630 0x0080
-    #endif
-    #ifndef POWER_A35
-    #  define POWER_A35 0x0100
-    #endif
-    #ifndef POWER_RS64II
-    #  define POWER_RS64II 0x0200 /* RS64-II class CPU */
-    #endif
     static struct { long imp;   long rid; } cpumap[] = {
-                  { POWER_601,            1 },
-                  { POWER_603,            3 },
-                  { POWER_604,            4 },
-                  { POWER_RS1,   (1L<<16)+1 },
-                  { POWER_RSC,   (1L<<16)+2 },
-                  { POWER_RS2,   (1L<<16)+3 },
-                  { POWER_620,   (1L<<16)+4 },
-                  { POWER_630,   (1L<<16)+5 },
-                  { POWER_A35,   (1L<<16)+6 },
-                  { POWER_RS64II,(1L<<16)+7 },
+    /* imp constants from src/bos/kernel/sys/POWER/systemcfg.h 1.12 */
+                  { 0x0008   ,            1 }, /* POWER_601 */
+                  { 0x0020   ,            3 }, /* POWER_603 */
+                  { POWER_604,            4 }, /* POWER_604 */
+                  { 0x0001   ,   (1L<<16)+1 }, /* POWER_RS1 */
+                  { 0x0002   ,   (1L<<16)+2 }, /* POWER_RSC */
+                  { 0x0004   ,   (1L<<16)+3 }, /* POWER_RS2 */
+                  { 0x0040   ,   (1L<<16)+4 }, /* POWER_620 */
+                  { 0x0080   ,   (1L<<16)+5 }, /* POWER_630 */
+                  { 0x0100   ,   (1L<<16)+6 }, /* POWER_A35 */
+                  { 0x0200   ,   (1L<<16)+7 }  /* POWER_RS64II */
                   };
     unsigned int imp_i;
     detectedtype = -1L; /* assume failed */
@@ -445,8 +421,63 @@ static long __GetRawProcessorID(const char **cpuname)
     long result;
     detectedtype = -1;
     if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
+    {
       detectedtype = result - 0x100L; // PVR!!
-    isaltivec = macosAltiVec();
+      if (Gestalt( gestaltSystemVersion, &result ) == noErr)
+      {   
+        if (result >= 860) /* Mac OS 8.6 and above? */
+        {
+          if ( Gestalt(gestaltPowerPCProcessorFeatures, &result) == noErr)
+          {
+            if (((1 << gestaltPowerPCHasVectorInstructions) & result)!=0)
+              isaltivec = 1;
+          }
+        }
+      }
+    }
+  }
+  #elif (CLIENT_OS == OS_MACOSX)
+  if (detectedtype == -2L)
+  {
+    kern_return_t   kr;
+    unsigned int    count;
+    struct host_basic_info  info;
+
+    count = HOST_BASIC_INFO_COUNT;
+    kr = host_info(mach_host_self(),HOST_BASIC_INFO,(host_info_t)&info,&count);
+    if (kr == KERN_SUCCESS)
+    {
+      // host_info() doesnt use PVR values, so I map them as in mach/machine.h
+      switch (info.cpu_subtype)
+      {
+        case CPU_SUBTYPE_POWERPC_601:  detectedtype = 0x0001; break;
+        case CPU_SUBTYPE_POWERPC_603:  detectedtype = 0x0003; break;
+        case CPU_SUBTYPE_POWERPC_603e: detectedtype = 0x0006; break;
+        case CPU_SUBTYPE_POWERPC_603ev:detectedtype = 0x0007; break;
+        case CPU_SUBTYPE_POWERPC_604:  detectedtype = 0x0004; break;
+        case CPU_SUBTYPE_POWERPC_604e: detectedtype = 0x0009; break;
+        case CPU_SUBTYPE_POWERPC_750:  detectedtype = 0x0008; break;
+        case CPU_SUBTYPE_POWERPC_Max:
+        {
+          detectedtype = 0x000C;
+          // AltiVec is for MacOSXDP4 or higher (and Darwin 1.0 or higher)
+          char ostype[64]; size_t len = sizeof(ostype);
+          int mib[2]; mib[0] = CTL_KERN; mib[1] = KERN_OSTYPE;
+          if (sysctl( &mib[0], 2, ostype, &len, NULL, 0 ) == 0)
+          {
+            if (memcmp(ostype,"Darwin",6)==0) // MACH 3.x with a Darwin kernel
+               isaltivec = 1;
+          }
+          break;
+        }
+        default: // some PPC processor that we don't know about
+                 // set the tag (so that the user can tell us), but return 0
+        sprintf(namebuf, "0x%x", info.cpu_subtype );
+        detectedname = (const char *)&namebuf[0];
+        detectedtype = 0;
+        break;
+      }
+    }
   }
   #elif (CLIENT_OS == OS_WIN32)
   if (detectedtype == -2L)
@@ -481,18 +512,30 @@ static long __GetRawProcessorID(const char **cpuname)
         {
           static struct 
            { const char *sig;  int rid; } sigs[] = {
-           { "601",                  1  },
-           { "603",                  3  },
-           { "604",                  4  },
-           { "603e",                 6  },
-           { "603ev",                7  },
-           { "750",                  8  },
-           { "604e",                 9  },
-           { "604ev",               10  }, /* < 2.3.34 */
-           { "604ev5",              10  }, /* >= 2.3.34 */
-           { "7400",                12  },
-           { "821",                 50  },
-           { "860",                 80  }
+           /*
+           last update Jun 13/2000 from 
+           http://lxr.linux.no/source/arch/ppc/kernel/setup.c?v=2.3.99-pre5;a=ppc
+           */
+           { "601",             0x0001  },
+           { "603",             0x0003  },
+           { "604",             0x0004  },
+           { "603e",            0x0006  },
+           { "603ev",           0x0007  },
+           { "603r",            0x0007  },
+           { "750",             0x0008  },
+           { "750P",            0x0008  },
+           { "604e",            0x0009  },
+           { "604r",            0x000A  }, /* >= 2.3.99 */
+           { "604ev",           0x000A  }, /* < 2.3.34 */
+           { "604ev5",          0x000A  }, /* >= 2.3.34 */
+           { "7400",            0x000C  },
+           { "403G",            0x0020  },
+           { "403GC",           0x0020  },
+           { "403GCX",          0x0020  },
+           { "821",             0x0050  },
+           { "860",             0x0080  },
+           { "8240",            0x0081  },
+           { "405GP",           0x4011  }
            };
           p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
           for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
@@ -502,6 +545,27 @@ static long __GetRawProcessorID(const char **cpuname)
             {
               detectedtype = (long)sigs[n].rid;
               break;
+            }
+          }
+          if (detectedtype == 0x000C) /* 7400 (G4) */
+          {
+            /* Altivec support appeared in 2.3.99-pre4 */
+            struct utsname ut;
+            if (uname(&ut)==0)
+            {
+              if (strcmp(ut.sysname,"Linux")==0)
+              {
+                p = strchr(ut.release,'.');
+                n = atoi(ut.release);
+                if (n < 2)
+                  isaltivec = 0;
+                else if (n > 2)
+                  isaltivec = 1;
+                else if (!p)
+                  isaltivec = 0;
+                else if (atoi(p+1) >= 4)
+                  isaltivec = 1;
+              }
             }
           }
           if (detectedtype == -1L)
@@ -522,27 +586,67 @@ static long __GetRawProcessorID(const char **cpuname)
   if (detectedtype == -2L)
   {
     system_info sInfo;
-    sInfo.cpu_type = 0;
+    sInfo.cpu_type = (cpu_type) 0;
     get_system_info(&sInfo);
     detectedtype = -1;
     if (sInfo.cpu_type) /* didn't fail */
     {
       switch (sInfo.cpu_type)
       {
-        case B_CPU_PPC_601:  detectedtype = 1; break;
-        case B_CPU_PPC_603:  detectedtype = 3; break;
-        case B_CPU_PPC_603e: detectedtype = 6; break;
-        case B_CPU_PPC_604:  detectedtype = 4; break;
-        case B_CPU_PPC_604e: detectedtype = 9; break;
-        case B_CPU_PPC_750:  detectedtype = 8; break;
+        case B_CPU_PPC_601:  detectedtype = 0x0001; break;
+        case B_CPU_PPC_603:  detectedtype = 0x0003; break;
+        case B_CPU_PPC_603e: detectedtype = 0x0006; break;
+        case B_CPU_PPC_604:  detectedtype = 0x0004; break;
+        case B_CPU_PPC_604e: detectedtype = 0x0009; break;
+        case B_CPU_PPC_750:  detectedtype = 0x0008; break;
         default: // some PPC processor that we don't know about
                  // set the tag (so that the user can tell us), but return 0
-        sprintf(namebuf, "%d", sInfo.cpu_type );
+        sprintf(namebuf, "0x%x", sInfo.cpu_type );
         detectedname = (const char *)&namebuf[0];
         detectedtype = 0;
         break;
       }
     }
+  }
+  #elif (CLIENT_OS == OS_AMIGAOS)  // AmigaOS PPC
+  if (detectedtype == -2L)
+  {
+    #ifndef __POWERUP__
+    /* WarpOS */
+    struct TagItem cputags[2] = { {GETINFO_CPU, 0}, {TAG_END,0} };
+    GetInfo(cputags);
+    switch (cputags[0].ti_Data)
+    {
+      case CPUF_603:  detectedtype = 0x0003; break;
+      case CPUF_603E: detectedtype = 0x0006; break;
+      case CPUF_604:  detectedtype = 0x0004; break;
+      case CPUF_604E: detectedtype = 0x0009; break;
+      case CPUF_620:  detectedtype = 0x0004 + (1<<16); break;
+      default: // some PPC processor that we don't know about
+               // set the tag (so that the user can tell us), but return 0
+      sprintf(namebuf, "WOS:0x%lx", cputags[0].ti_Data );
+      detectedname = (const char *)&namebuf[0];
+      detectedtype = 0;
+      break;
+    }
+    #else
+    /* PowerUp */
+    ULONG cpu = PPCGetAttr(PPCINFOTAG_CPU);
+    switch (cpu)
+    {
+      case CPU_603:  detectedtype = 0x0003; break;
+      case CPU_603e: detectedtype = 0x0006; break;
+      case CPU_603p: detectedtype = 0x0006; break;
+      case CPU_604:  detectedtype = 0x0004; break;
+      case CPU_604e: detectedtype = 0x0009; break;
+      default: // some PPC processor that we don't know about
+               // set the tag (so that the user can tell us), but return 0
+      sprintf(namebuf, "PUP:0x%lx", cpu );
+      detectedname = (const char *)&namebuf[0];
+      detectedtype = 0;
+      break;
+    }
+    #endif
   }
   #endif
   
@@ -695,8 +799,11 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0570, 1611, 0x105, "K6"       },
           {  0x0580, 1690, 0x105, "K6-2"     },
           {  0x0590, 1690, 0x105, "K6-3"     },
-          {  0x0610, 3400, 0x109, "K7"       },
+          {  0x0610, 3400, 0x109, "K7"       }, 
           {  0x0620, 3400, 0x109, "K7-2"     },
+          {  0x0630, 3400, 0x109, "K7-3" }, //spitfire, socket+128K on-die 
+          {  0x0640, 3400, 0x109, "K7-4" }, //thunderbird, 256K on-die cache
+          //next-gen chip is athlon core + 2MB on-die cache (Mustang)
           {  0x0000, 4096,    -1, NULL       }
           }; internalxref = &amdxref[0];
       vendorname = "AMD ";
@@ -1030,8 +1137,8 @@ static long __GetRawProcessorID(const char **cpuname)
           p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
           for ( n = 0; n < (sizeof(cpuridtable)/sizeof(cpuridtable[0])); n++ )
           {
-            unsigned int l = strlen( cpuridtable[n].sig );
-            if ((!p[l] || isspace(p[l])) && memcmp( p, cpuridtable[n].sig, l)==0)
+            unsigned int l = strlen( cpuridtable[n].name );
+            if ((!p[l] || isspace(p[l])) && memcmp( p, cpuridtable[n].name, l)==0)
             {
               detectedtype = (long)cpuridtable[n].rid;
               break;

@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.52 2000/06/02 06:24:54 jlawson Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.53 2000/07/11 04:19:06 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -34,7 +34,7 @@ return "@(#)$Id: clitime.cpp,v 1.52 2000/06/02 06:24:54 jlawson Exp $"; }
 
 int InitializeTimers(void)
 {
-  #if ((CLIENT_OS != OS_MACOS) && (CLIENT_OS != OS_RISCOS))  
+  #if ((CLIENT_OS != OS_RISCOS) && (CLIENT_OS != OS_AMIGAOS))
   CliIsTimeZoneInvalid(); /* go assume TZ=GMT if invalid timezone */
   tzset();                /* set correct timezone for everyone else */
   #endif
@@ -115,10 +115,6 @@ static int __GetTimeOfDay( struct timeval *tv )
       tv->tv_sec = (time_t)secs;
       tv->tv_usec = (long)fsec;
     }
-    #elif (CLIENT_OS == OS_AMIGAOS)
-    {
-      return timer((unsigned int *)tv );
-    }
     #else
     {
       //struct timezone tz;
@@ -131,8 +127,9 @@ static int __GetTimeOfDay( struct timeval *tv )
 
 /* --------------------------------------------------------------------- */
 
-// timezone offset after compensating for dst (west of utc > 0, east < 0)
-// such that the number returned is constant for any time of year
+// timezone offset such that the number returned is constant for any 
+// time of year (ie, dst unadjusted, just as if the date was always Jan 1)
+// "minuteswest" means west of utc > 0, east < 0, ie utctime-localtime
 // CliGetMinutesWest() caches the value returned from __GetMinutesWest()
 
 static int __GetMinutesWest(void)
@@ -140,18 +137,18 @@ static int __GetMinutesWest(void)
   int minwest;
 #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN16) || \
   ((CLIENT_OS == OS_OS2) && !defined(__EMX__))
-  /* ANSI rules :) */
-  minwest = ((int)timezone)/60;
-  if (daylight)
-    minwest += 60;
-  minwest = -minwest;      /* UTC = localtime + (timezone/60) */
+  /* ANSI rules :) - 'timezone' doesn't reflect 'daylight' state. */
+  /* ie utctime-localtime == timezone-(daylight*3600) */
+  minwest = (int)(((long)timezone)/60L); 
 #elif (CLIENT_OS == OS_WIN32)
   TIME_ZONE_INFORMATION TZInfo;
   if (GetTimeZoneInformation(&TZInfo) == 0xFFFFFFFFL)
     return 0;
   minwest = TZInfo.Bias; /* sdk doc is wrong. .Bias is always !dst */
-#elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_SCO) || \
-      (CLIENT_OS == OS_AMIGA) || (CLIENT_OS == OS_VMS)
+#elif (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_VMS) || \
+      (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_NETBSD) || \
+      (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_BSDOS) || \
+      (CLIENT_OS == OS_MACOSX) /* *BSDs don't set timezone in gettimeofday() */
   time_t timenow;
   struct tm * tmP;
   struct tm loctime, utctime;
@@ -179,13 +176,13 @@ static int __GetMinutesWest(void)
   tzdiff =  ((loctime.tm_min  - utctime.tm_min) )
           +((loctime.tm_hour - utctime.tm_hour)*60 );
   /* last two are when the time is on a year boundary */
-  if      (loctime.tm_yday == utctime.tm_yday) { ;/* no change */ }
+  if      (loctime.tm_yday == utctime.tm_yday)     { ;/* no change */}
   else if (loctime.tm_yday == utctime.tm_yday + 1) { tzdiff += 1440; }
   else if (loctime.tm_yday == utctime.tm_yday - 1) { tzdiff -= 1440; }
-  else if (loctime.tm_yday <  utctime.tm_yday) { tzdiff += 1440; }
-  else { tzdiff -= 1440; }
+  else if (loctime.tm_yday <  utctime.tm_yday)     { tzdiff += 1440; }
+  else                                             { tzdiff -= 1440; }
 
-  if (utctime.tm_isdst > 0)
+  if (loctime.tm_isdst > 0)
     tzdiff -= 60;
   if (tzdiff < -(12*60))
     tzdiff = -(12*60);
@@ -195,13 +192,12 @@ static int __GetMinutesWest(void)
   minwest = -tzdiff;
 #else
   /* POSIX rules :) */
-  /* FreeBSD does not provide timezone information with gettimeofday */
   struct timezone tz; struct timeval tv;
   if ( gettimeofday(&tv, &tz) )
     return 0;
   minwest = tz.tz_minuteswest;
-  if (tz.tz_dsttime)
-    minwest += 60;
+  if (tz.tz_dsttime) /* is this correct? does minuteswest really change when */
+    minwest += 60;   /* dst comes into effect/is no longer effective? */
 #endif
   return minwest;
 }
@@ -512,18 +508,32 @@ int CliGetMonotonicClock( struct timeval *tv )
     }
     #elif (CLIENT_OS == OS_LINUX) /*only RTlinux has clock_gettime/gethrtime*/
     {
-      /* we have no choice but to use getrusage() [we can */
-      /* do that because each thread has its own pid] */
-      struct rusage rus;
-      if (getrusage(RUSAGE_SELF,&rus) != 0)
-        return -1;
-      tv->tv_sec  = rus.ru_utime.tv_sec  + rus.ru_stime.tv_sec;
-      tv->tv_usec = rus.ru_utime.tv_usec + rus.ru_stime.tv_usec;
-      if (tv->tv_usec >= 1000000)
+      /* this is computationally expensive, but we don't have a choice,
+         and since linux supports thread time, this is only called when 
+         a block starts/ends. /proc/uptime is buggy (it wraps) in 2.0.x 
+         kernels for uptimes greater than ~18 months.
+      */
+      int rc = -1;
+      FILE *file = fopen("/proc/uptime","r");
+      if (file)
       {
-        tv->tv_usec -= 1000000;
-        tv->tv_sec++;
+        double uptime, idletime; /* eg "10762.56 10733.61\n" */
+        if (fscanf(file,"%lf %lf", &uptime, &idletime) == 2)
+        {
+          unsigned long secs = (unsigned long)uptime;
+          tv->tv_usec = (long)(1000000.0 * (uptime - ((double)secs)));
+          tv->tv_sec = (time_t)secs;
+          rc = 0;
+        }
+        fclose(file);
       }
+      if (rc != 0)
+        return -1;
+    }
+    #elif (CLIENT_OS == OS_AMIGAOS)
+    {
+      if (amigaGetMonoClock(tv) != 0)
+        return -1;
     }
     #elif defined(CLOCK_MONOTONIC) /* POSIX 1003.1c */
     {                           /* defined doesn't always mean supported :( */
@@ -548,9 +558,9 @@ int CliGetMonotonicClock( struct timeval *tv )
          a) that clock() is not dependant on system time (all watcom clibs
             have this bug). Otherwise you may as well use __GetTimeOfDay()
          b) that clock() does not return virtual time. Under unix clock()
-            is often implemented via times() is thus virtual. Look at
-            'top' source [get_system_info() in machine.c] to see what
-            you might be able to use instead.
+            is often implemented via times() and is thus virtual. Look at
+            uptime source or see if something in top source (get_system_info 
+            in machine/m_[yourplat].c) is usable.
          c) clock_t is at least an unsigned long
          d) that the value from clock() does indeed count up to ULONG_MAX
             before wrapping. At least one implementation (EMX <=0.9) is
@@ -737,6 +747,9 @@ int CliIsTimeZoneInvalid(void)
     }
   }
   return needfixup;
+  #elif (CLIENT_OS == OS_MACOS)
+  #warning I should make use of this sometime in the future!
+  return 0;
   #else
   return 0;
   #endif
