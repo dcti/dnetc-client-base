@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.2 1999/06/07 02:42:21 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.3 1999/06/10 23:31:47 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -293,16 +293,17 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       {
         struct termios stored;
         struct termios newios;
-
+        int fd = fileno(stdin);
         fflush(stdout);
-        tcgetattr(0,&stored); /* Get the original termios configuration */
+        tcgetattr(fd,&stored); /* Get the original termios configuration */
         memcpy(&newios,&stored,sizeof(struct termios));
-        newios.c_lflag &= ~(ICANON|ECHO|ECHONL); /* disable canonical mode */
-        newios.c_cc[VTIME] = 0;                  /* ... and echo */
-        newios.c_cc[VMIN] = 1;         /* set buffer size to 1 byte */
-        tcsetattr(0,TCSANOW,&newios);  /* Activate the new settings */
-        ch = getchar();                /* Read the single character */
-        tcsetattr(0,TCSANOW,&stored);  /* Restore the original settings */
+        newios.c_lflag &= ~(ECHO|ECHONL|ECHOPRT|ECHOCTL); /* no echo at all */
+        newios.c_lflag &= ~(ICANON);     /* not linemode and no translation */
+        newios.c_cc[VTIME] = 0;          /* tsecs inter-char gap */
+        newios.c_cc[VMIN] = 1;           /* number of chars to block for */
+        tcsetattr(0,TCSANOW,&newios);    /* Activate the new settings */
+        ch = getchar();                  /* Read a single character */
+        tcsetattr(fd,TCSAFLUSH,&stored); /* Restore the original settings */
         if (ch == EOF) ch = 0;
       }
       #elif (CLIENT_OS == OS_MACOS)
@@ -338,7 +339,6 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
               (( timenow.tv_sec == timestop.tv_sec ) &&
               ( timenow.tv_usec < timestop.tv_usec ))));
   }
-
   return ch;
 }
 
@@ -593,7 +593,8 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     GetSizeOfScreen( &ht, &wt );
     height = ht; width = wt;
   #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_SOLARIS) || \
-        (CLIENT_OS == OS_SUNOS)
+        (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_IRIX) || \
+        (CLIENT_OS == OS_HPUX)
     /* good for any non-sco flavour? */
     struct winsize winsz;
     winsz.ws_col = winsz.ws_row = 0;
