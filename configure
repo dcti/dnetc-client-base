@@ -5,6 +5,11 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.67  1998/07/08 23:34:37  remi
+# Added the MMX bitslicer to all x86 targets.
+# Cleared an obvious error in DESULTRA_SRCS_C (who has an editor which can't
+# deal with >250 chars lines ?)
+#
 # Revision 1.66  1998/07/07 21:54:52  cyruspatel
 # Serious house cleaning - client.h has been split into client.h (Client
 # class, FileEntry struct etc - but nothing that depends on anything) and
@@ -244,8 +249,7 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
 
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
-OPTS_EGCS='-Os -fno-exceptions -fomit-frame-pointer -Wall -Icommon -Ides -Irc5 -Iplatforms'
-
+OPTS_EGCS='-O2 -fno-exceptions -fomit-frame-pointer -Wall -Icommon -Ides -Irc5 -Iplatforms'
 
 #
 # Common platform compiler options
@@ -338,6 +342,8 @@ OPTS_DES_ULTRA_ASM="-DINTSIZES=442 -fstrength-reduce -Wall -Icommon \
 -DUSE_IDENTICAL_FLOAT_REGISTERS -DUSE_64_BIT_SENTINEL -DBIT_64 \
 -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc"
 
+#--
+OPTS_DES_MMX="-DMMX_BITSLICER -DKWAN -DMEGGS -DBIT_64"
 
 #
 # Source C++ files making up the base client code
@@ -357,11 +363,9 @@ MEGGS_SLICE_SRCS="des/deseval-meggs3.cpp des/des-slice-meggs.cpp"
 XLC_LINTILLA_ASMS="rc5/crunch_lintilla.ppcxlc.s rc5/crunch_allitnil.ppcxlc.s"
 RC5X86_SRCS="rc5/rc5-486-rg.cpp rc5/rc5-6x86-rg.cpp rc5/rc5p5brf.cpp rc5/rc5-p6-rg.cpp rc5/rc5-k5-rg.cpp rc5/rc5-k6-rg.cpp"
 DESX86_SRCS="des/des-x86.cpp"
-DESULTRA_SRCS_C="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/simple.c platforms/ultrasparc/des_ultra_crunch.c platforms/ultrasparc/kwan_from_to.c platforms/ultrasparc/do_all.c platforms/ultrasparc/do_all_fancy.c platforms/ultrasparc
-
-/do_s1.c platforms/ultrasparc/do_s1_s3.c platforms/ultrasparc/do_s2.c platforms/ultrasparc/do_s3.c platforms/ultrasparc/do_s4.c platforms/ultrasparc/do_s5.c platforms/ultrasparc/do_s6.c platforms/ultrasparc/do_s7.c platforms/ultrasparc/do_s8.c"
+DESMMX_SRCS="des/deseval-meggs3-mmx.cpp des/sboxes-mmx.cpp des/des-slice-meggs.cpp"
+DESULTRA_SRCS_C="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/simple.c platforms/ultrasparc/des_ultra_crunch.c platforms/ultrasparc/kwan_from_to.c platforms/ultrasparc/do_all.c platforms/ultrasparc/do_all_fancy.c platforms/ultrasparc/do_s1.c platforms/ultrasparc/do_s1_s3.c platforms/ultrasparc/do_s2.c platforms/ultrasparc/do_s3.c platforms/ultrasparc/do_s4.c platforms/ultrasparc/do_s5.c platforms/ultrasparc/do_s6.c platforms/ultrasparc/do_s7.c platforms/ultrasparc/do_s8.c"
 DESULTRA_SRCS_ASM="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/des_ultra_crunch.c"
-
 
 #
 # Define the default compilation options
@@ -557,15 +561,15 @@ case "$1" in
     #####
 
     *x86-solaris)
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -Dsolaris -DPIPELINE_COUNT=2"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -Dsolaris -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="output/bdeslow.S output/x86ident.S des/p1bdespro.S"
 	TARGET_LIBS="-lnsl -lsocket -ldl"
 	;;
 
     *x86-solaris-mt)
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -Dsolaris -DPIPELINE_COUNT=2 -DMULTITHREAD"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -Dsolaris -DPIPELINE_COUNT=2 -DMULTITHREAD"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="output/bdeslow.S output/bbdeslow.S output/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
 	;;
@@ -668,9 +672,9 @@ case "$1" in
     *x86-linux-egcs)    # uses EGCS options
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -D__showids__ -DPIPELINE_COUNT=2"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_LIBS="-lncurses"
 	;;
@@ -678,8 +682,8 @@ case "$1" in
     *x86-linux-egcs-debug)    # debug version of x86-linux-egcs
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 -DPIPELINE_COUNT=2 -D__showids__"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DPIPELINE_COUNT=2 -D__showids__"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_STRIP="touch"
 	TARGET_LIBS="-lncurses"
@@ -698,27 +702,27 @@ case "$1" in
 
     *x86-linux-old)   # uses standard GCC options plus '-pipe'
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -D__showids__ -DPIPELINE_COUNT=2"
+	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_LIBS="-lncurses"
 	;;
 
     *x86-linux-old-nocurses) # uses standard GCC options plus '-pipe'
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -D__showids__ -DPIPELINE_COUNT=2 -DNOCURSES -DNOTERMIOS"
+	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2 -DNOCURSES -DNOTERMIOS"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	;;
 
     *x86-linux-aout)
 	TARGET_AS="i486-pc-linux-gnuaout-gcc -c"
 	TARGET_CC="i486-pc-linux-gnuaout-gcc"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -D__showids__ -DPIPELINE_COUNT=2"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_LIBS="-lncurses"
 	;;
@@ -726,18 +730,18 @@ case "$1" in
     *x86-linux-mt-egcs)
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -D__showids__ -DPIPELINE_COUNT=2 -DMULTITHREAD"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_LIBS="-lpthread -lncurses"
 	;;
 
     *x86-linux-mt-gcc)
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -D__showids__ -DPIPELINE_COUNT=2 -DMULTITHREAD"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_LIBS="-lpthread -lncurses"
 	;;
@@ -755,37 +759,37 @@ case "$1" in
 
     *x86-freebsd)
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	;;
 
     *x86-freebsd-mt)
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_LIBS="-lc_r"
 	;;
 
     *x86-netbsd)
 	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	;;
 
     *x86-openbsd)
 	TARGET_AS="g++ -c"
-	TARGET_CCFLAGS="$OPTS_GCC_P5 -static -DPIPELINE_COUNT=2"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	;;
 
     *x86-bsdi)
 	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
        ;;
 
@@ -793,8 +797,8 @@ case "$1" in
 
     *x86-sco5)
 	TARGET_AS="g++ -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -belf -Dsco5"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -static -DPIPELINE_COUNT=2 -belf -Dsco5"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	TARGET_LIBS="-lsocket"
 	;;
@@ -804,8 +808,8 @@ case "$1" in
     *x86-next)
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -D_NeXT_ -DPIPELINE_COUNT=2 -DBIT_32"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -D_NeXT_ -DPIPELINE_COUNT=2 -DBIT_32"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
 	;;
 
