@@ -18,6 +18,17 @@
 
 //
 // $Log: deseval-meggs3-mmx.cpp,v $
+// Revision 1.6  1998/07/14 10:43:36  remi
+// Added support for a minimum timeslice value of 16 instead of 20 when
+// using BIT_64, which is needed by MMX_BITSLICER. Will help some platforms
+// like Netware or Win16. I added support in deseval-meggs3.cpp, but it's just
+// for completness, Alphas don't need this patch.
+//
+// Important note : this patch **WON'T** work with deseval-meggs2.cpp, but
+// according to the configure script it isn't used anymore. If you compile
+// des-slice-meggs.cpp and deseval-meggs2.cpp with BIT_64 and
+// BITSLICER_WITH_LESS_BITS, the DES self-test will fail.
+//
 // Revision 1.5  1998/07/13 00:37:29  silby
 // Changes to make MMX_BITSLICE client buildable on freebsd
 //
@@ -30,7 +41,7 @@
 //
 // Revision 1.2  1998/07/08 23:37:35  remi
 // Added support for aout targets (.align).
-// Tweaked $Id: deseval-meggs3-mmx.cpp,v 1.5 1998/07/13 00:37:29 silby Exp $.
+// Tweaked $Id: deseval-meggs3-mmx.cpp,v 1.6 1998/07/14 10:43:36 remi Exp $.
 //
 // Revision 1.1  1998/07/08 15:49:36  remi
 // MMX bitslicer integration.
@@ -39,7 +50,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_mmx_cpp(void) {
-return "@(#)$Id: deseval-meggs3-mmx.cpp,v 1.5 1998/07/13 00:37:29 silby Exp $"; }
+return "@(#)$Id: deseval-meggs3-mmx.cpp,v 1.6 1998/07/14 10:43:36 remi Exp $"; }
 #endif
 
 #include <stdlib.h>
@@ -824,10 +835,12 @@ slice whack16(slice *P, slice *C, slice *K)
        then tail: 03 11 42 05 43 08
        then rest of head: 12 15 45 50 */
 
+#if !(defined(BITSLICER_WITH_LESS_BITS) && defined(BIT_64))
     int hs2 = 0; // secondary, outermost head-stepper
+#endif
     int ts = 0; // tail-stepper (outer loop)
     int hs = 0; // head-stepper (inner loop)
-    for (;;) {	
+    for (;;) {
 	//whack_init_00();
 	{
 	    /* First set up the tails for the 16 head possibilities. We could gain speed
@@ -1116,6 +1129,7 @@ slice whack16(slice *P, slice *C, slice *K)
 	    }			
 	    break;
 	}
+#if !(defined(BITSLICER_WITH_LESS_BITS) && defined(BIT_64))
 	ts = 0;
 	K[ 8] = ~K[ 8];
 	++hs2;
@@ -1136,6 +1150,7 @@ slice whack16(slice *P, slice *C, slice *K)
 	    K[50] = ~K[50];
 	    continue;
 	}
+#endif
 	break;
     }
     asm ("emms\n");

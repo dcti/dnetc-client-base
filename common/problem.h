@@ -5,6 +5,17 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.16  1998/07/14 10:43:33  remi
+// Added support for a minimum timeslice value of 16 instead of 20 when
+// using BIT_64, which is needed by MMX_BITSLICER. Will help some platforms
+// like Netware or Win16. I added support in deseval-meggs3.cpp, but it's just
+// for completness, Alphas don't need this patch.
+//
+// Important note : this patch **WON'T** work with deseval-meggs2.cpp, but
+// according to the configure script it isn't used anymore. If you compile
+// des-slice-meggs.cpp and deseval-meggs2.cpp with BIT_64 and
+// BITSLICER_WITH_LESS_BITS, the DES self-test will fail.
+//
 // Revision 1.15  1998/07/08 09:56:11  remi
 // Added support for the MMX bitslicer.
 //
@@ -46,6 +57,9 @@
   #if defined(BIT_32)
     #define MIN_DES_BITS 19
     #define MAX_DES_BITS 19
+  #elif defined(BIT_64) && defined(BITSLICER_WITH_LESS_BITS)
+    #define MIN_DES_BITS 16
+    #define MAX_DES_BITS 16
   #elif defined(BIT_64)
     #define MIN_DES_BITS 20
     #define MAX_DES_BITS 20
