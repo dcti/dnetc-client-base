@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.23  1999/01/06 03:07:00  remi
+// Last minute patch from cyp.
+//
 // Revision 1.22  1999/01/05 09:02:02  silby
 // Fixed bug in writeconfig - processdes=0 was being set, but
 // not deleted.
@@ -107,7 +110,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.22 1999/01/05 09:02:02 silby Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.23 1999/01/06 03:07:00 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -333,23 +336,23 @@ void ValidateConfig(Client *client) //DO NOT PRINT TO SCREEN HERE!
   if (client->uuehttpmode  < conf_options[CONF_UUEHTTPMODE].choicemin || 
       client->uuehttpmode  > conf_options[CONF_UUEHTTPMODE].choicemax ) 
     client->uuehttpmode    = conf_options[CONF_UUEHTTPMODE].choicemin;
-  if (client->smtpport     < conf_options[CONF_SMTPPORT].choicemin ||
+/*  if (client->smtpport     < conf_options[CONF_SMTPPORT].choicemin ||
       client->smtpport     > conf_options[CONF_SMTPPORT].choicemax) 
     client->smtpport=25;
   if (client->messagelen   < conf_options[CONF_MESSAGELEN].choicemin ||
       client->messagelen   > conf_options[CONF_MESSAGELEN].choicemax)
-    client->messagelen     = conf_options[CONF_MESSAGELEN].choicemin;
+    client->messagelen     = conf_options[CONF_MESSAGELEN].choicemin;*/
   if (client->preferred_blocksize < conf_options[CONF_PREFERREDBLOCKSIZE].choicemin)
     client->preferred_blocksize = conf_options[CONF_PREFERREDBLOCKSIZE].choicemin;
   else if (client->preferred_blocksize > conf_options[CONF_PREFERREDBLOCKSIZE].choicemax) 
     client->preferred_blocksize = conf_options[CONF_PREFERREDBLOCKSIZE].choicemax;
   if (client->minutes      < 0) 
     client->minutes = 0;
-  if (client->nettimeout   < conf_options[CONF_NETTIMEOUT].choicemin) 
+/*  if (client->nettimeout   < conf_options[CONF_NETTIMEOUT].choicemin) 
     client->nettimeout     = conf_options[CONF_NETTIMEOUT].choicemin;
   else if (client->nettimeout > conf_options[CONF_NETTIMEOUT].choicemax) 
     client->nettimeout     = conf_options[CONF_NETTIMEOUT].choicemax;
-
+*/
   confopt_killwhitespace(client->keyproxy);
   confopt_killwhitespace(client->httpproxy);
   confopt_killwhitespace(client->smtpsrvr);
