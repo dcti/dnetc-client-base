@@ -17,6 +17,8 @@ OPTS_MSVC = -nologo -W3 -O1 -MT -I$(RC5PATH) -I$(DESPATH) \
 
 all: rc5des
 
+RES_FILE = $(OUTPUTPATH)/rc5des.res
+
 # --------------------------------------------
 
 RC5_OBJS =                    \
@@ -115,12 +117,16 @@ RC5_LIBS = wsock32.lib advapi32.lib user32.lib gdi32.lib
 {$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj:
 	cl -c $(OPTS_MSVC) -Fo$@ $**
 
+$(OUTPUTPATH)/rc5des.res:    $(W32CLIPATH)/rc5des.rc
+	rc -d_Windows -d_M_IX86 -i $(COMMONPATH) -fo$@ $(W32CLIPATH)/rc5des.rc
+
 # --------------------------------------------
 
-rc5des: $(RC5_OBJS) $(PREBUILT_OBJS)
+rc5des: $(RC5_OBJS) $(PREBUILT_OBJS) $(RES_FILE)
 	cl $(OPTS_MSVC) -Fe$(EXENAME) $(RC5_LIBS) $**
 
 clean:
+	echo 1 ICON platforms\win32gui\cowhead.ico > $(W32CLIPATH)/rc5des.rc
 	del $(RC5_OBJS:/=\)
 
 superclean: clean
