@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.85 2000/06/30 19:26:24 mfeiri Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.86 2000/07/05 03:09:43 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -55,6 +55,7 @@ void ResetClientData(Client *client)
   client->scheduledupdatetime = 0;
   client->inifilename[0]=0;
   client->last_buffupd_time = 0;
+  memset(&(client->project_flags[0]),0,sizeof(client->project_flags));
 
   /* -- general -- */
   client->id[0]='\0';

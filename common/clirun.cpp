@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.63 2000/06/30 19:17:02 mfeiri Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.64 2000/07/05 03:09:43 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1592,25 +1592,28 @@ int ClientRun( Client *client )
           unsigned cont_i = (unsigned int)client->loadorder_map[i];
           if (cont_i < CONTEST_COUNT) /* not disabled */
           {
-            if ((local_connectoften & 2) != 0) /* check flush */
+            if ((client->project_flags[cont_i] & PROJECTFLAGS_CLOSED) == 0)
             {
-              if (GetBufferCount( client, cont_i, 1, NULL ) > 0) 
+              if ((local_connectoften & 2) != 0) /* check flush */
               {
-                have_non_empty = 1; /* at least one out-buffer is not empty */
-                break;
-              }
-            }  
-            if ((local_connectoften & 1) != 0) /* check fetch */
-            {
-              unsigned long count;
-              if (GetBufferCount( client, cont_i, 0, &count ) >= 0)
-              {
-                if (count >= (unsigned int)ClientGetInThreshold( client, cont_i, 1 /* force */ )) 
-                {         
-                  have_one_full = 1; /* at least one in-buffer is full */
+                if (GetBufferCount( client, cont_i, 1, NULL ) > 0) 
+                {
+                  have_non_empty = 1; /* at least one out-buffer is not empty */
+                  break;
                 }
-              }
-            }  
+              }  
+              if ((local_connectoften & 1) != 0) /* check fetch */
+              {
+                unsigned long count;
+                if (GetBufferCount( client, cont_i, 0, &count ) >= 0)
+                {
+                  if (count >= (unsigned int)ClientGetInThreshold( client, cont_i, 1 /* force */ )) 
+                  {         
+                    have_one_full = 1; /* at least one in-buffer is full */
+                  }
+                }
+              }  
+            }
           }
         }
         doupd = (have_non_empty || !have_one_full);

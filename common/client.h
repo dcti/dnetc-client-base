@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.15 2000/06/19 16:38:42 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.16 2000/07/05 03:09:43 cyp Exp $"
 
 
 // ------------------
@@ -67,6 +67,11 @@ struct membuffstruct
 
 // ------------------
 
+#define PROJECTFLAGS_CLOSED 0x01 /* updated only from net. never saved to disk */
+/* user-disabled projects don't have a flag (yet). They are 'invisible' to all
+   but the configuration functions ('invalid' slot in the loadorder_map)
+*/
+
 typedef struct
 {
   /* non-user-configurable */
@@ -78,6 +83,7 @@ typedef struct
   u32  scheduledupdatetime;
   char inifilename[MINCLIENTOPTSTRLEN*2];
   u32  last_buffupd_time; /* monotonic. goes with max_buffupd_interval */
+  char project_flags[CONTEST_COUNT]; /* do NOT save to disk! */
 
   /* -- general -- */
   char id[MINCLIENTOPTSTRLEN];
