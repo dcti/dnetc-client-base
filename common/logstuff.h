@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff.h,v $
+// Revision 1.6  1998/10/06 21:29:14  cyp
+// Removed prototype for LogSetTimeStampingMode()
+//
 // Revision 1.5  1998/10/05 01:58:07  cyp
 // Implemented automatic time stamping. Added LogSetTimeStampingMode(int) to
 // enable timestamps once the ::Run has started.
@@ -28,9 +31,6 @@
 
 #ifndef __LOGSTUFF_H__
 #define __LOGSTUFF_H__
-
-//Turn on/off automatic timestamps. Returns old mode.
-extern int LogSetTimeStampingMode(int turn_on);
 
 //Flush mail and if last screen write didn't end with a LF then do that now. 
 extern void LogFlush( int forceflush );
