@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.31 2004/07/13 22:30:11 kakace Exp $
+ * $Id: ogr.cpp,v 1.2.4.32 2004/07/16 13:19:20 kakace Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -55,7 +55,6 @@
     /* ASM-optimized OGR cores. Only set relevant options for ogr_create() */
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
-    #define OGROPT_NON_STATIC_FOUND_ONE           1
   #elif defined(__MWERKS__)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
@@ -388,8 +387,7 @@ static const int OGR[] = {
 
 #ifndef __MRC__
 static int init_load_choose(void);
-#if  (OGROPT_ALTERNATE_CYCLE != 2) || !defined(HAVE_KOGE_PPC_CORES)
-  // We only need one instance when using both KOGE cores
+#if !defined(HAVE_KOGE_PPC_CORES)
   #if defined(OGROPT_NON_STATIC_FOUND_ONE)
   OGR_NO_FUNCTION_INLINE(int found_one(const struct State *oState));
   #else
@@ -1235,7 +1233,6 @@ static int init_load_choose(void)
 }
 #endif /* OGROPT_NEW_CHOOSEDAT */
 
-
 /*-----------------------------------------*/
 /*  found_one() - print out golomb rulers  */
 /*-----------------------------------------*/
@@ -1292,7 +1289,7 @@ static int found_one(const struct State *oState)
   }
   return 1;
 }
-#elif (OGROPT_ALTERNATE_CYCLE == 1) || !defined(HAVE_KOGE_PPC_CORES)
+#elif !defined(HAVE_KOGE_PPC_CORES)
 #if defined(OGROPT_NON_STATIC_FOUND_ONE)
 int found_one(const struct State *oState)
 #else
