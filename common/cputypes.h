@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.55 2001/04/06 16:10:53 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.56 2001/04/12 10:53:55 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -515,9 +515,9 @@
     #define PTHREAD_SCOPE_SYSTEM PTHREAD_SCOPE_GLOBAL
     #define pthread_sigmask(a,b,c)
   #elif (CLIENT_OS == OS_MACOSX)
-    #define pthread_sigmask(a,b,c) //no
+    #define pthread_sigmask(a,b,c) /*no*/
   #elif (CLIENT_OS == OS_LINUX) && defined(_MIT_POSIX_THREADS)
-    #define pthread_sigmask(a,b,c) //no
+    #define pthread_sigmask(a,b,c) /*no*/
   #elif (CLIENT_OS == OS_AIX)
 	/* only for AIX 4.1??? */
     #define pthread_sigmask(a,b,c) sigthreadmask(a,b,c)
@@ -739,7 +739,7 @@ extern "C" {
   typedef unsigned long long ui64;
   typedef signed long long si64;
 #elif (defined(__WATCOMC__) && (__WATCOMC__ >= 11))
-  #if (CLIENT_OS != OS_NETWARE) /* only if intrinsic (no %,/,[vfs]printf) */
+  #if 1/*(CLIENT_OS != OS_NETWARE)*/ /* only if intrinsic (no [vfs]printf etc)*/
   #define HAVE_I64
   #define SIZEOF_LONGLONG 8
   typedef unsigned __int64 ui64;
