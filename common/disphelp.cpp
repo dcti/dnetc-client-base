@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.8 1999/10/24 19:18:13 remi Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.9 2000/02/21 00:54:54 trevorh Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -16,9 +16,9 @@ return "@(#)$Id: disphelp.cpp,v 1.64.2.8 1999/10/24 19:18:13 remi Exp $"; }
 #include "util.h"     //UtilGetAppName()
 #include "console.h"  //ConClear(), ConInkey()
 
-#if defined(__unix__)
+#if defined(__unix__) && !defined(__EMX__)
   #define NO_INTERNAL_PAGING  //internal paging is very un-unix-ish
-#endif  
+#endif
 
 /* ------------------------------------------------------------------------ */
 
@@ -129,7 +129,7 @@ void GenerateManPage( void )
   buffer[sizeof(buffer)-1] = '\0';
   strcpy( buffer, buffer );
   strcat( buffer, ".1" );
-  
+
   manp = fopen(buffer,"w");
   if (!manp)
     fprintf(stderr,"Unable to create %s", buffer );
@@ -139,7 +139,7 @@ void GenerateManPage( void )
     char *p; const char *cp;
     time_t t = time(NULL);
     struct tm *gmt = gmtime(&t);
-  
+
     fprintf(manp, ".\\\" Copyright (c) 1996-%d\n", gmt->tm_year+1900 );
     fprintf(manp, ".\\\"         distributed.net. All rights reserved.\n" );
     fprintf(manp, ".\\\"\n");
@@ -148,7 +148,7 @@ void GenerateManPage( void )
     fprintf(manp, ".Dd %s", ctime(&t));
     strncpy(buffer, appname,sizeof(buffer));
     buffer[sizeof(buffer)-1] = '\0';
-    for (pos=0;buffer[pos];pos++)  
+    for (pos=0;buffer[pos];pos++)
       buffer[pos]=(char)toupper(buffer[pos]);
     fprintf(manp, ".Dt %s 1\n", buffer );
     //fprintf(manp, ".Os "CLIENT_OS_NAME"\n");
@@ -193,7 +193,7 @@ void GenerateManPage( void )
 
     fprintf(manp,"\n");
     fprintf(manp, ".Sh DESCRIPTION\n");
-    fprintf(manp, 
+    fprintf(manp,
       ".Ar %s\nis a distributed computing client that coordinates with servers\n"
       "operated by\n.Ar distributed.net\nto cooperate with other network-connected\n"
       "computers to work on a common task.  It communicates over public networks\n"
@@ -203,7 +203,7 @@ void GenerateManPage( void )
 
     fprintf(manp,"\n");
     fprintf(manp, ".Sh INSTALLATION\n");
-    fprintf(manp, 
+    fprintf(manp,
       "Since you are already reading this, I assume you know how to\n"
       "unpack an archive (don't laugh!) into a directory of your\n"
       "choice.\n"
@@ -237,7 +237,7 @@ void GenerateManPage( void )
           {
             cp++;
             fputc('\'', manp);
-          }  
+          }
           else
           {
             if (_istrofspecial(*cp))
@@ -258,7 +258,7 @@ void GenerateManPage( void )
             {
               cp++;
               fputc('\'', manp);
-            }  
+            }
             else
             {
               if (_istrofspecial(*cp))
@@ -280,7 +280,7 @@ void GenerateManPage( void )
             {
               cp++;
               fputc('\'', manp);
-            }  
+            }
             else
             {
               if (_istrofspecial(*cp))
@@ -303,7 +303,7 @@ void GenerateManPage( void )
             {
               cp++;
               fputc('\'', manp);
-            }  
+            }
             else
             {
               if (_istrofspecial(*cp))
@@ -316,7 +316,7 @@ void GenerateManPage( void )
       }
       else if (*cp) /* new section */
       {
-	if (pos) 
+	if (pos)
 	  fprintf(manp,".El\n");
         fprintf(manp, ".sp 2\n");
         fprintf(manp,".Ss \"");
@@ -355,7 +355,7 @@ void GenerateManPage( void )
     fprintf(manp,".Sh AUTHOR\n"
                  "distributed.net\n"
                  "http://www.distributed.net/\n");
-                 
+
     fclose(manp);
   }
   #endif /* __unix__ */
@@ -378,7 +378,7 @@ void DisplayHelp( const char * unrecognized_option )
     "Visit http://www.distributed.net/FAQ/ for in-depth command line help",
     "-------------------------------------------------------------------------"
   };
-  
+
   int headerlines, bodylines, footerlines;
   int startline, maxscreenlines, maxpagesize;
   int i, key, nopaging = (!ConIsScreen());
@@ -468,14 +468,14 @@ void DisplayHelp( const char * unrecognized_option )
     LogScreenRaw( linebuffer );
 
     key = ConInKey(-1);
-    
+
     linebuffer[i=strlen(linebuffer)]='\r';
     linebuffer[i+1]=0;
-    for (--i; i > 0; i--) 
+    for (--i; i > 0; i--)
       linebuffer[i]=' ';
     linebuffer[0]='\r';
     LogScreenRaw( linebuffer );
-    
+
     if (CheckExitRequestTriggerNoIO())
       break;
 
@@ -505,7 +505,7 @@ void DisplayHelp( const char * unrecognized_option )
       key = -1; //unknown keystroke, so quit
     }
   } while (key >= 0);
-      
+
   return;
 }
 

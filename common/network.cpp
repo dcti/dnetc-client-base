@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.24 2000/02/10 17:10:38 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.25 2000/02/21 00:56:22 trevorh Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -170,7 +170,7 @@ static void __hostnamecpy( char *dest,
   return;
 }
 
-static int __fixup_dnethostname( char *host, int *portP, int mode, 
+static int __fixup_dnethostname( char *host, int *portP, int mode,
                                   int *nofallback )
 {
   static char *dnet = ".distributed.net";
@@ -307,7 +307,7 @@ Network::Network( const char * servname, int servport, int _nofallback,
 
 #if (CLIENT_OS == OS_RISCOS)
   iotimeout = -1; // always blocking please
-#endif    
+#endif
   if (iotimeout < 0)
     iotimeout = -1;
   else if (iotimeout < 5)
@@ -427,7 +427,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       return -1;
     }
   }
-  
+
   for (whichtry = 0; whichtry < maxtries; whichtry++) /* forever true */
   {
     int success = 0;
@@ -559,7 +559,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
           {
             resolve_addrcount =
                NetResolve( svc_hostname, svc_hostport, autofindkeyserver,
-               &resolve_addrlist[0], 
+               &resolve_addrlist[0],
                sizeof(resolve_addrlist)/sizeof(resolve_addrlist[0]),
                resolve_hostname, sizeof(resolve_hostname) );
             if (resolve_addrcount > maxtries)
@@ -592,7 +592,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
         {
           resolve_addrcount =
              NetResolve( svc_hostname, svc_hostport, autofindkeyserver,
-             &resolve_addrlist[0], 
+             &resolve_addrlist[0],
              sizeof(resolve_addrlist)/sizeof(resolve_addrlist[0]),
              resolve_hostname, sizeof(resolve_hostname) );
           if (resolve_addrcount > maxtries) /* found! */
@@ -726,7 +726,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
               }
             }
             err = TLOOK;
-            sprintf(tlookerr, "asynchronous event %d %s%s%soccurred", 
+            sprintf(tlookerr, "asynchronous event %d %s%s%soccurred",
               look, ((*msg)?("("):("")), msg, ((*msg)?(") "):("")) );
             msg = (const char *)&tlookerr[0];
           }
@@ -1077,7 +1077,7 @@ int Network::Get( char * data, int length )
   while (netbuffer.GetLength() < (u32)length)
   {
     int nothing_done = 1;
-    
+
     if (iotimeout > 0 && CheckExitRequestTrigger())
       break;
 
@@ -1112,7 +1112,7 @@ int Network::Get( char * data, int length )
         {
           u32 newaddr = 0;
           char newhostname[64];
-          if (NetResolve( line + 13, svc_hostport, 0, &newaddr, 1, 
+          if (NetResolve( line + 13, svc_hostport, 0, &newaddr, 1,
                           newhostname, sizeof(newhostname) ) > 0)
           {
             resolve_addrlist[0] = svc_hostaddr = newaddr;
@@ -1318,7 +1318,7 @@ int Network::Put( const char * data, int length )
       return -1;
   }
 
-  #if (CLIENT_OS != OS_390) /* can't do UUE with EBCDIC */ 
+  #if (CLIENT_OS != OS_390) /* can't do UUE with EBCDIC */
   if (mode & MODE_UUE)
   {
     /**************************/
@@ -1372,12 +1372,12 @@ int Network::Put( const char * data, int length )
     userpass[0] = '\0';
     if (fwall_userpass[0])
     {
-      if ( base64_encode( userpass, fwall_userpass, 
+      if ( base64_encode( userpass, fwall_userpass,
                   sizeof(userpass), strlen(fwall_userpass)) < 0 )
         userpass[0] = '\0';
       userpass[sizeof(userpass)-1]='\0';
     }
-    
+
     header.Reserve(1024);
     header.MarkUsed(
             sprintf(header.GetHead(),
@@ -1399,7 +1399,7 @@ int Network::Put( const char * data, int length )
     //outbuf = header + outbuf;
     header += outbuf;
     outbuf = header;
-             
+
     puthttpdone = 1;
   }
 
@@ -1495,7 +1495,7 @@ int Network::LowLevelCloseSocket(void)
      #if (defined(AF_INET) && defined(SOCK_STREAM))
      shutdown( sock, 2 );
      #endif
-     #if (CLIENT_OS == OS_OS2)
+     #if (CLIENT_OS == OS_OS2) && !defined(__EMX__)
      int retcode = (int)soclose( sock );
      #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
      int retcode = (int)closesocket( sock );
@@ -1571,12 +1571,12 @@ void debugtli(const char *label, int fd)
     ;
   else if (err > 0 && err < t_nerr)
     Log("%s: t_error: \"%s\" (%d)\n", label, t_errlist[err], err);
-  else 
+  else
     Log("%s: unknown error %d\n", label, err );
   return;
-}  
+}
 #endif
-#endif    
+#endif
 
 // -----------------------------------------------------------------------
 
@@ -1596,14 +1596,14 @@ int Network::LowLevelConnectSocket( u32 that_address, int that_port )
     struct t_call *sndcall = (struct t_call *)t_alloc(sock, T_CALL, T_ADDR);
     time_t stoptime = time(NULL) + 2;
     #if 0
-    while (sndcall != ((struct t_call *)0) && t_getstate(sock) == T_UNBND)  
+    while (sndcall != ((struct t_call *)0) && t_getstate(sock) == T_UNBND)
     {
       if (time(NULL) > stoptime)
       {
         t_free((char *)sndcall, T_CALL);
         sndcall = (struct t_call *)0;
       }
-    }  
+    }
     #endif
     if ( sndcall != ((struct t_call *)0) )
     {
@@ -1614,7 +1614,7 @@ int Network::LowLevelConnectSocket( u32 that_address, int that_port )
       sin->sin_addr.s_addr = that_address;
       sin->sin_family = AF_INET;
       sin->sin_port = htons(((u16)that_port));
-      
+
       rc = t_connect( sock, sndcall, NULL);
       t_free((char *)sndcall, T_CALL);
       if (rc < 0)
@@ -1630,7 +1630,7 @@ int Network::LowLevelConnectSocket( u32 that_address, int that_port )
               break;
             usleep(250000);
             rc = t_rcvconnect(sock, NULL);
-            if (rc < 0) 
+            if (rc < 0)
             {
               err = t_errno;
               debugtli("t_connect2", sock);
@@ -1990,7 +1990,7 @@ int Network::LowLevelGet(char *data,int length)
     bytesread = t_rcv( sock, data, toread, &flags );
     if (bytesread == 0) /* peer sent a zero byte message */
       bytesread = -1; /* treat as none waiting */
-    else if (bytesread < 0) 
+    else if (bytesread < 0)
     {
       int look, err = t_errno;
       bytesread = -1;
@@ -2001,7 +2001,7 @@ int Network::LowLevelGet(char *data,int length)
         bytesread = 0; /* set as socket closed */
       else if ((look = t_look(sock)) == T_ORDREL)
       {                /* connection closing... */
-        t_rcvrel( sock ); 
+        t_rcvrel( sock );
         bytesread = 0; /* treat as closed */
       }
       else if (look == T_DISCONNECT || look == T_ERROR )

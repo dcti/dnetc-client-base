@@ -1,4 +1,4 @@
-/* Created by Cyrus Patel <cyp@fb14.uni-mainz.de> 
+/* Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
@@ -14,21 +14,21 @@
  *
  * CliTimer() is assumed to return a valid (possibly adjusted) time_t value
  * in tv_sec by much of the client code. If you see wierd time strings,
- * your implementation is borked. 
+ * your implementation is borked.
  *
  * Please use native OS functions where possible.
  *                                                                 - cyp
  * ----------------------------------------------------------------------
-*/ 
+*/
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.16 2000/01/18 19:59:25 ctate Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.17 2000/02/21 00:50:35 trevorh Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
 #include "clitime.h"  // keep the prototypes in sync
 
 //Warning for getrusage(): if the OSs thread model is ala SunOS's LWP,
-//ie, threads don't get their own pid, then GetProcessTime() functionality 
+//ie, threads don't get their own pid, then GetProcessTime() functionality
 //is limited to single thread/benchmark/test only (the way it is now),
 //otherwise it will be return process time for all threads.
 //(problem::Run() guards against this condition, but keep it mind anyway.)
@@ -45,7 +45,7 @@ static int __GetTimeOfDay( struct timeval *tv )
   {
     #if (CLIENT_OS==OS_SCO) || (CLIENT_OS==OS_OS2) || (CLIENT_OS==OS_VMS) || \
         (CLIENT_OS == OS_NETWARE)
-    {     
+    {
       struct timeb tb;
       ftime(&tb);
       tv->tv_sec = tb.time;
@@ -63,7 +63,7 @@ static int __GetTimeOfDay( struct timeval *tv )
       GetSystemTime(&st);
       SystemTimeToFileTime(&st, &ft);
       //epoch.dwHighDate = 27111902UL;
-      //epoch.dwLowDate = 3577643008UL; 
+      //epoch.dwLowDate = 3577643008UL;
       epoch = 116444736000000000ui64;
       now = ft.dwHighDateTime;
       now <<= 32;
@@ -106,7 +106,7 @@ static int __GetTimeOfDay( struct timeval *tv )
  * Unlike __GetTimeOfDay(), which may change when the user changes
  * the day/date, __GetMonotonicClock should return a monotonic time.
  * This is particularly critical for timing on non-preemptive systems.
-*/ 
+*/
 static int __GetMonotonicClock( struct timeval *tv )
 {
   #if (CLIENT_OS == OS_NETWARE) /* use hardware clock */
@@ -115,10 +115,10 @@ static int __GetMonotonicClock( struct timeval *tv )
    * raw read of the hardware clock but is liable to drift.
    * NetWare is a non-preemptive OS and dynamically adjusts timeslice, for
    * which it needs a high res timesource. So, we use the ftime() for
-   * "displayable" time and the hardware clock for core timing since 
+   * "displayable" time and the hardware clock for core timing since
    * hwclock skew hardly figures when measuring elapsed time, but
-   * is quite visible if we were to use it for "displayable time". 
-  */  
+   * is quite visible if we were to use it for "displayable time".
+  */
   return nwCliGetHardwareClock(tv); /* hires but not sync'd with time() */
   #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   /* with win16 this is not soooo critical since its a single user system */
@@ -139,8 +139,8 @@ static int __GetMonotonicClock( struct timeval *tv )
   #endif
 }
 
-/* 
- * get thread time 
+/*
+ * get thread time
 */
 static int __GetProcessTime( struct timeval *tv )
 {
@@ -151,7 +151,7 @@ static int __GetProcessTime( struct timeval *tv )
   tv->tv_sec = tInfo.user_time / 1000000;	// convert from microseconds
   tv->tv_usec = tInfo.user_time % 1000000;
   return 0;
-  #elif defined(HAVE_GETRUSAGE)
+  #elif defined(HAVE_GETRUSAGE) && !defined(__EMX__)
   struct rusage rus;
   if (getrusage(RUSAGE_SELF,&rus) == 0)
   {
@@ -168,7 +168,7 @@ static int __GetProcessTime( struct timeval *tv )
       isnt = 0;
   }
   #endif
-  if ( isnt != 0 ) 
+  if ( isnt != 0 )
   {
     FILETIME ct,et,kt,ut;
     if (GetThreadTimes(GetCurrentThread(),&ct,&et,&kt,&ut))
@@ -176,7 +176,7 @@ static int __GetProcessTime( struct timeval *tv )
       unsigned __int64 now, epoch;
       unsigned long ell;
       //epoch.dwHighDate = 27111902UL;
-      //epoch.dwLowDate = 3577643008UL; 
+      //epoch.dwLowDate = 3577643008UL;
       epoch = 116444736000000000ui64;
       now = ut.dwHighDateTime;
       now <<= 32;
@@ -202,7 +202,7 @@ static int __GetMinutesWest(void) /* see CliTimeGetMinutesWest() for descr */
 {
   int minwest;
 #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN16) || \
-  ((CLIENT_OS == OS_OS2) && !defined(EMX))
+  ((CLIENT_OS == OS_OS2) && !defined(__EMX__))
   /* ANSI rules :) */
   minwest = ((int)timezone)/60;
   if (daylight)
@@ -229,7 +229,7 @@ static int __GetMinutesWest(void) /* see CliTimeGetMinutesWest() for descr */
 }
 
 // ---------------------------------------------------------------------
-  
+
 static int precalced_minuteswest = -1234;
 static int adj_time_delta = 0;
 static const char *monnames[]={ "Jan","Feb","Mar","Apr","May","Jun",
@@ -278,7 +278,7 @@ struct timeval *CliClock( struct timeval *tv )
 
   /* initialization is not thread safe, (see ctor below) */
   if (base_tv.tv_sec == -1) /* CliClock() not initialized */
-  {                         
+  {
     __GetMonotonicClock(&base_tv); /* set cliclock to current time */
     base_tv.tv_sec--;       /* we've been running 1 second. :) */
   }
@@ -338,9 +338,9 @@ int CliTimerAdd( struct timeval *result, const struct timeval *tv1, const struct
       CliTimer( result );
       if (!tv1 && !tv2)
         return 0;
-      if (!tv1) 
+      if (!tv1)
         tv1 = (const struct timeval *)result;
-      if (!tv2) 
+      if (!tv2)
         tv2 = (const struct timeval *)result;
     }
     result->tv_sec = tv1->tv_sec + tv2->tv_sec;
@@ -400,7 +400,7 @@ int CliIsTimeZoneInvalid(void)
 {
   #if ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
        (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32))
-  static int needfixup = -1;       
+  static int needfixup = -1;
   if (needfixup == -1)
   {
     needfixup = 0;
@@ -423,8 +423,8 @@ int CliIsTimeZoneInvalid(void)
 // ---------------------------------------------------------------------
 
 // Get time as string. Curr time if tv is NULL. Separate buffers for each
-// type: 0=blank type 1, 
-//       1="MMM dd hh:mm:ss UTC", 
+// type: 0=blank type 1,
+//       1="MMM dd hh:mm:ss UTC",
 //       2="hhhh:mm:ss.pp"
 //       3="yyyy/mm/dd hh:mm:ss" (iso/cvs format, implied utc)
 //       4="yymmddhh"            (bugzilla format)
@@ -434,7 +434,7 @@ const char *CliGetTimeString( const struct timeval *tv, int strtype )
   static unsigned long timelast = 0;
   static const char *timestr = "";
   static int lasttype = 0;
-  unsigned long longtime; 
+  unsigned long longtime;
 
   if (strtype < -1 || strtype > 5)
     return "";
@@ -472,14 +472,14 @@ const char *CliGetTimeString( const struct timeval *tv, int strtype )
   {
     time_t timenow = tv->tv_sec;
     struct tm *gmt = (struct tm *)0;
-    struct tm tmbuf; 
+    struct tm tmbuf;
 
     if (CliIsTimeZoneInvalid()) /* initializes it if not initialized */
     {
       if (strtype == 1)
         strtype = 5; /* like 1 but local time */
     }
-    
+
     lasttype = strtype;
     timelast = longtime;
 
@@ -488,7 +488,7 @@ const char *CliGetTimeString( const struct timeval *tv, int strtype )
       gmt = localtime( (const time_t *) &timenow);
       strtype = 1; /* just like 1 */
     }
-    else 
+    else
     {
       gmt = gmtime( (const time_t *) &timenow );
     }
@@ -496,7 +496,7 @@ const char *CliGetTimeString( const struct timeval *tv, int strtype )
     {
       memset((void *)&tmbuf, 0, sizeof(tmbuf));
       gmt = &tmbuf;
-    }    
+    }
 
     if (strtype == 3) // "yyyy/mm/dd hh:mm:ss" (cvs/iso format, implied utc)
     {

@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.31 2000/02/16 04:24:50 petermack Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.32 2000/02/21 00:54:00 trevorh Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -40,7 +40,7 @@ return "@(#)$Id: console.cpp,v 1.48.2.31 2000/02/16 04:24:50 petermack Exp $"; }
 #include <termios.h>
 #define TERMIOS_IS_AVAILABLE
 #endif
-#if defined(__unix__) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_OS390)
+#if (defined(__unix__) && !defined(__EMX__)) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_OS390)
 #define TERM_IS_ANSI_COMPLIANT
 #endif
 #if defined(__unix__)
@@ -49,7 +49,9 @@ return "@(#)$Id: console.cpp,v 1.48.2.31 2000/02/16 04:24:50 petermack Exp $"; }
 #if (CLIENT_OS == OS_RISCOS)
 extern "C" void riscos_backspace();
 #endif
-
+#if defined(__EMX__)
+#include <sys/video.h>
+#endif
 /* ---------------------------------------------------- */
 
 static struct
@@ -99,8 +101,13 @@ int InitializeConsole(int runhidden,int doingmodes)
     retcode = w32InitializeConsole(constatics.runhidden,doingmodes);
     #elif (CLIENT_OS == OS_NETWARE)
     retcode = nwCliInitializeConsole(constatics.runhidden,doingmodes);
-    #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
-    retcode = os2CliInitializeConsole(constatics.runhidden,doingmodes);
+    #elif (CLIENT_OS == OS_OS2)
+     #if defined(OS2_PM)
+     retcode = os2CliInitializeConsole(constatics.runhidden,doingmodes);
+     #endif
+     #if defined(__EMX__)
+     v_init();
+     #endif
     #endif
 
     if (retcode != 0)
@@ -619,8 +626,8 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     if (dosCliConGetSize( &width, &height ) < 0)
       height = width = 0;
   #elif (CLIENT_OS == OS_OS2)
+    #if !defined(__EMX__)
     VIOMODEINFO viomodeinfo = {0};
-    APIRET rc;
     HVIO   hvio = 0;
     viomodeinfo.cb = sizeof(VIOMODEINFO);
     if(!VioGetMode(&viomodeinfo, hvio))
@@ -628,6 +635,10 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
        height = viomodeinfo.row;
        width = viomodeinfo.col;
        }
+    #else
+    v_init();
+    v_dimen(&width, &height);
+    #endif
   #elif (CLIENT_OS == OS_WIN32)
     if ( w32ConGetSize(&width,&height) < 0 )
       height = width = 0;
@@ -763,12 +774,18 @@ int ConClear(void)
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
       return w32ConClear();
     #elif (CLIENT_OS == OS_OS2)
-      CHAR attrib = 0007;
+      #ifndef __EMX__
+      UCHAR attrib = ' ';
       USHORT row = 0, col = 0;
       HVIO hvio = 0;
+
       VioScrollUp(0, 0, (USHORT)-1, (USHORT)-1, (USHORT)-1, &attrib, hvio);
       VioSetCurPos(row, col, hvio);      /* move cursor to upper left */
       return 0;
+      #else
+      v_clear();
+      v_gotoxy(0,0);
+      #endif
     #elif (CLIENT_OS == OS_DOS)
       return dosCliConClear();
     #elif (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS)
