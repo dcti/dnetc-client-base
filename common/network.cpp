@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.6 1999/11/08 00:01:19 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.7 1999/11/19 00:04:53 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -547,7 +547,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
           fwall_hostaddr = 0;
           if (verbose_level > 0)
             LogScreen("Network::failed to resolve name \"%s\"\n",
-                       resolve_hostname );
+                       fwall_hostname );
 
           // unrecoverable error. retry won't help
           maxtries = 0;
@@ -576,7 +576,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
               success = 0; // socks needs the address to resolve now.
               if (verbose_level > 0)
                 LogScreen("Network::failed to resolve hostname \"%s\"\n",
-                           resolve_hostname);
+                           svc_hostname);
             }
           }
           svc_hostname = resolve_hostname; //socks5 will use this
