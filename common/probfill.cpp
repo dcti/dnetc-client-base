@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.67 1999/11/26 13:08:50 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.68 1999/12/06 19:38:19 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -842,7 +842,7 @@ unsigned int LoadSaveProblems(Client *pass_client,
 
     previous_load_problem_count = load_problem_count;
 
-    if (bufupd_pending)
+    if (bufupd_pending && client->blockcount >= 0)
     {
       int req = MODEREQ_FLUSH; // always flush while fetching
       if (!CheckExitRequestTriggerNoIO()) //((bufupd_pending & BUFFERUPDATE_FETCH)!=0)
