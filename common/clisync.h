@@ -18,7 +18,7 @@
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2 2002/09/02 00:35:41 andreasb Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.1 2002/12/21 00:56:38 pstadt Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -406,30 +406,61 @@
 
 #elif (CLIENT_CPU == CPU_S390) && defined(__GNUC__)
   /* based on
-     http://lxr.linux.no/source/include/asm-s390/spinlock.h?v=2.4.0
+     http://lxr.linux.no/source/include/asm-s390/spinlock.h?a=s390
   */
-  #error "please check this"
 
   typedef struct { volatile unsigned long lock; } fastlock_t;
   #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
 
   static __inline__ void fastlock_unlock(fastlock_t *lp)
   {
-    __asm__ __volatile__ ("    xc 0(4,%0),0(%0)\n" \
+    __asm__ __volatile("    xc 0(4,%0),0(%0)\n" \
                           "    bcr 15,0"
-                          : /* no output */ : "a" (lp) );
+                          : : "a" (&lp->lock) : "memory", "cc" );
   }
   static __inline__ int fastlock_trylock(fastlock_t *lp)
   {
-    unsigned long result;
-    __asm__ __volatile("    slr   %1,%1\n" \
-                       "    lhi   0,-1\n"  \
-                       "0:  cs    %1,0,%0"
-                       : "=m" (lp->lock), "=&d" (result)
-                       : "" (lp->lock) : "");
-    return ((!result) ? (+1) : (0));
+    unsigned long result, reg;
+    __asm__ __volatile("    slr   %0,%0\n" \
+                       "    basr  %1,0\n"  \
+                       "0:  cs    %0,%1,0(%2)"
+		       : "=&d" (result), "=&d" (reg)
+		       : "a" (&lp->lock) : "cc", "memory" );	
+    return !result;
   }
-  static __inline__ void fastlock_lock(volatile fastlock_t *m)
+  static __inline__ void fastlock_lock(fastlock_t *m)
+  {
+    while (fastlock_trylock(m) <= 0)
+    {
+      NonPolledUSleep(1);
+    }
+  }
+
+#elif (CLIENT_CPU == CPU_S390X) && defined(__GNUC__)
+  /* based on
+     http://lxr.linux.no/source/include/asm-s390x/spinlock.h?a=s390x
+  */
+
+  typedef struct { volatile unsigned long lock; } fastlock_t;
+  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
+
+  static __inline__ void fastlock_unlock(fastlock_t *lp)
+  {
+    __asm__ __volatile("    xc 0(4,%0),0(%0)\n" \
+                       "    bcr 15,0"
+                       : : "a" (&lp->lock) : "memory", "cc" );
+  }
+  static __inline__ int fastlock_trylock(fastlock_t *lp)
+  {
+    unsigned int result, reg;
+    __asm__ __volatile("    slr   %0,%0\n" \
+                       "    basr  %1,0\n"  \
+                       "0:  cs    %0,%1,0(%2)"
+		       : "=&d" (result), "=&d" (reg)
+		       : "a" (&lp->lock) : "cc", "memory" );	
+    return !result;
+  }
+  static __inline__ void fastlock_lock(fastlock_t *m)
   {
     while (fastlock_trylock(m) <= 0)
     {

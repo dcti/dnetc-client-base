@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86 2002/10/28 19:47:27 rick Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.1 2002/12/21 00:56:38 pstadt Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -28,7 +28,7 @@
 #define CPU_88K         12 /* may be recycled - DG/UX is no longer supported */
 #define CPU_IA64        13
 #define CPU_S390        14
-/* #define CPU_UNUSED_3 15 - please recycle */
+#define CPU_S390X       15
 #define CPU_DESCRACKER  16  /* eff descracker */
 
 /* Major OS Architectures. */
@@ -142,8 +142,14 @@
     #define CLIENT_CPU    CPU_ALPHA
   #elif defined(ASM_X86) || defined(__i386__)
     #define CLIENT_CPU    CPU_X86
+  #elif defined(__S390__) && defined(S390_Z_ARCH)	
+    #define CLIENT_CPU    CPU_S390	/* like S390 except rotate.h */
+    #undef  CLIENT_OS_NAME
+    #define CLIENT_OS_NAME "Linux (z/Architecture)"
   #elif defined(__S390__)
     #define CLIENT_CPU    CPU_S390
+  #elif defined(__S390X__)
+    #define CLIENT_CPU    CPU_S390X
   #elif defined(__IA64__)
     #define CLIENT_CPU    CPU_IA64
   #elif defined(ARM) || defined(__arm__)

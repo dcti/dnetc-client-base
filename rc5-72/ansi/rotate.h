@@ -2,7 +2,7 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 // 
-// $Id: rotate.h,v 1.4.2.1 2002/11/23 02:04:31 andreasb Exp $
+// $Id: rotate.h,v 1.4.2.2 2002/12/21 00:56:38 pstadt Exp $
 //
 
 #ifndef __ROTATE_H__
@@ -158,6 +158,69 @@ static __inline__ u32 ROTL3(u32 x)
        :"r" (x));
   return res;
 }
+
+#elif (CLIENT_CPU == CPU_S390) && !defined(S390_Z_ARCH) && defined(__GNUC__)
+  /* replace "shift, subtract, shift, or" with "shift, and, or"     */
+  /* sldl need an even/odd register pair, we fix this on r2 and r3. */
+  /* all other logical operations are done by the compiler          */
+
+static __inline__ u32 ROTL(u32 x, u32 y)
+{
+  register u32 res asm("2") = 0;
+  register u32 ov asm("3") = x;
+  register u32 sh = y & 31;
+
+  __asm__ __volatile__ (
+        "sldl	%0,0(%2)"
+       :"+r" (res), "+r" (ov)
+       :"a" (sh)
+       :"cc" );
+  return (res | ov);
+}
+
+static __inline__ u32 ROTL3(u32 x)
+{
+  register u32 res asm("2") = 0;
+  register u32 ov asm("3") = x;
+
+  __asm__ __volatile__ (
+        "sldl	%0,3"
+       :"+r" (res), "+r" (ov)
+       :
+       :"cc" );
+  return (res | ov);
+}
+
+
+#elif (CLIENT_CPU == CPU_S390) && defined(S390_Z_ARCH) && defined(__GNUC__)
+   /* z/Architecture has the RLL Operation for 31 Bit OSses as well     */
+   /* gcc only translates this with '-Wa,-Aesame' and adequate binutils */
+   /* Looking forward for a -march=z900 which recognizes the rotation   */
+
+static __inline__ u32 ROTL(u32 x, u32 y)
+{
+  register u32 res;
+  __asm__ (
+        "rll	%0,%1,0(%2)"
+       :"=r" (res)
+       :"r" (x), "a" (y));
+  return res;
+}
+
+static __inline__ u32 ROTL3(u32 x)
+{
+  register u32 res;
+  __asm__ (
+        "rll	%0,%1,3"
+       :"=r" (res)
+       :"r" (x));
+  return res;
+}
+
+#elif (CLIENT_CPU == CPU_S390X) && defined(__GNUC__)
+  /* no asm, because compiler recognizes ROTL as RLL */
+#define ROTL(x, s) ((u32) (SHL((x), (s)) | SHR((x), (s))))
+#define ROTL3(x) ROTL(x, 3)
 
 #elif (CLIENT_CPU == CPU_X86) && defined(_MSC_VER)
 

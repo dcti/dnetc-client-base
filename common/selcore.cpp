@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.3 2002/12/11 21:15:32 jt Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.4 2002/12/21 00:56:38 pstadt Exp $"; }
 
 //#define TRACE
 
@@ -1377,6 +1377,9 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 #elif (CLIENT_CPU == CPU_S390)
   // rc5/ansi/rc5ansi_2-rg.cpp
   extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
+#elif (CLIENT_CPU == CPU_S390X)
+  // rc5/ansi/rc5ansi_2-rg.cpp
+  extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
 #elif (CLIENT_CPU == CPU_IA64)
   // rc5/ansi/rc5ansi_4-rg.cpp
   extern "C" u32 rc5_unit_func_ansi_4_rg( RC5UnitWork *, u32 iterations );
@@ -1641,6 +1644,14 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       #endif
     }  
     #elif (CLIENT_CPU == CPU_S390)
+    {
+      // rc5/ansi/rc5ansi_2-rg.cpp
+      //xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
+      unit_func.rc5 = rc5_unit_func_ansi_2_rg;
+      pipeline_count = 2;
+      coresel = 0;
+    }
+    #elif (CLIENT_CPU == CPU_S390X)
     {
       // rc5/ansi/rc5ansi_2-rg.cpp
       //xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
