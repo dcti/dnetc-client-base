@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.14 2002/10/09 22:22:15 andreasb Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.15 2002/10/19 22:13:11 andreasb Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
@@ -14,29 +14,44 @@
 #endif
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef union
 {
-    /* this is our generic prototype */
-    s32 (*gen)( RC5UnitWork *, u32 *iterations, void *memblk );
-    s32 (*gen_72)( RC5_72UnitWork *, u32 *iterations, void *memblk );
-    #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
-    u32 __regargs (*rc5)( RC5UnitWork * , u32 iterations );
-    #elif (CLIENT_OS == OS_QNX ) && !defined( __QNXNTO__ )
-    u32 cdecl (*rc5)( RC5UnitWork * , u32 iterations );
-    #else
-    u32 (*rc5)( RC5UnitWork * , u32 iterations );
-    #endif
-    #if defined(HAVE_DES_CORES)
-    u32 (*des)( RC5UnitWork * , u32 *iterations, char *membuf );
-    #endif
-    #if defined(HAVE_OGR_CORES)
-    CoreDispatchTable *ogr;
-    #endif
-    u32 (*rc5_72)( RC5_72UnitWork * , u32 iterations );
-    #if 0
-    PROJECT_NOT_HANDLED("in unit_func_union");
-    #endif
+  /* generic prototype: RC5-64, DES, CSC */
+  s32 (*gen)( RC5UnitWork *, u32 *iterations, void *memblk );
+
+  /* old style: RC5-64, DES */
+  #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
+  u32 __regargs (*rc5)( RC5UnitWork *, u32 iterations );
+  #elif (CLIENT_OS == OS_QNX ) && !defined( __QNXNTO__ )
+  u32 cdecl (*rc5)( RC5UnitWork *, u32 iterations );
+  #else
+  u32 (*rc5)( RC5UnitWork *, u32 iterations );
+  #endif
+  #if defined(HAVE_DES_CORES)
+  u32 (*des)( RC5UnitWork *, u32 *iterations, char *membuf );
+  #endif
+
+  /* OGR */
+  #if defined(HAVE_OGR_CORES)
+  CoreDispatchTable *ogr;
+  #endif
+
+  /* generic prototype: RC5-72 */
+  s32 (*gen_72)( RC5_72UnitWork *, u32 *iterations, void *memblk );
+
+  #if 0
+  PROJECT_NOT_HANDLED("in unit_func_union");
+  #endif
 } unit_func_union;
+
+#ifdef __cplusplus
+}
+#endif
+
 
 struct selcore
 {

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.174 2002/10/17 15:17:47 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.175 2002/10/19 22:13:10 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -1572,16 +1572,8 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
     }
     else /* old style */
     {
-      // FIXME! do not use old style any longer, just "rescore = -1"
-      *keyscheckedP = (*(thisprob->pub_data.unit_func.rc5_72))(&thisprob->priv_data.rc5_72unitwork,(keystocheck/thisprob->pub_data.pipeline_count));
-      //don't use the next few lines as a guide for conversion to unified
-      //prototypes!  look at the end of rc5/ansi/rc5ansi_2-rg.cpp instead.
-      if (*keyscheckedP < keystocheck)
-        rescode = RESULT_FOUND;
-      else if (*keyscheckedP == keystocheck)
-        rescode = RESULT_WORKING; /* synonymous with RESULT_NOTHING */
-      else
-        rescode = -1;
+      /* do not write old style cores for rc5-72 ! */
+      rescode = -1;
     }
   } /* brace to ensure that 'keystocheck' is not referenced beyond here */
   /* -- the code from here on down is identical to that of CSC -- */
