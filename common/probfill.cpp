@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.38 2000/09/17 11:46:33 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.39 2000/09/20 09:16:23 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -722,6 +722,27 @@ unsigned int LoadSaveProblems(Client *pass_client,
 
   /* ============================================================= */
 
+  // close checkpoint file immediately after saving the problems to disk
+  if (mode == PROBFILL_UNLOADALL)
+  {
+    previous_load_problem_count = 0;
+    if (client->nodiskbuffers == 0)
+      CheckpointAction( client, CHECKPOINT_CLOSE, 0 );
+    else {
+      BufferUpdate(client,BUFFERUPDATE_FLUSH,0);
+      for(int i = 0; i < CONTEST_COUNT; i++)
+      {
+        for(unsigned long j = 0; j < client->membufftable[i].in.count; j++)
+          free(client->membufftable[i].in.buff[j]);
+        for(unsigned long k = 0; k < client->membufftable[i].out.count; k++)
+          free(client->membufftable[i].out.buff[k]);
+      }
+    }
+    retval = total_problems_saved;
+  }
+
+  /* ============================================================= */
+
   for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++) //once for each contest
   {
     if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
@@ -850,24 +871,7 @@ unsigned int LoadSaveProblems(Client *pass_client,
 
   /* ============================================================ */
 
-  if (mode == PROBFILL_UNLOADALL)
-  {
-    previous_load_problem_count = 0;
-    if (client->nodiskbuffers == 0)
-      CheckpointAction( client, CHECKPOINT_CLOSE, 0 );
-    else {
-      BufferUpdate(client,BUFFERUPDATE_FLUSH,0);
-      for(int i = 0; i < CONTEST_COUNT; i++)
-      {
-          for(unsigned long j = 0; j < client->membufftable[i].in.count; j++)
-            free(client->membufftable[i].in.buff[j]);
-          for(unsigned long k = 0; k < client->membufftable[i].out.count; k++)
-            free(client->membufftable[i].out.buff[k]);
-      }
-    }
-    retval = total_problems_saved;
-  }
-  else
+  if (mode != PROBFILL_UNLOADALL)
   {
     /* 
     =============================================================
