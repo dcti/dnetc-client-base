@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.62.2.8 2003/09/01 21:08:05 mweiser Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.62.2.9 2003/09/01 22:33:43 mweiser Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -23,7 +23,7 @@ return "@(#)$Id: confmenu.cpp,v 1.62.2.8 2003/09/01 21:08:05 mweiser Exp $"; }
 #include "logstuff.h" // LogScreenRaw()
 #include "selcore.h"  // GetCoreNameFromCoreType()
 #include "clicdata.h" // GetContestNameFromID()
-#include "util.h"     // projectmap_*()
+#include "util.h"     // projectmap_*(), DNETC_UNUSED_*
 #include "triggers.h" // CheckExitRequestTriggerNoIO()
 #include "confrwv.h"  // ConfigRead()/ConfigWrite()
 #include "confopt.h"  // the option table
@@ -69,14 +69,13 @@ static int __count_projects_having_flag (u32 flag)
 #if 0
 /* one column per contest, max 3 contests */
 static int __enumcorenames_wide(const char **corenames,
-                                int idx, void * /*unused*/)
+                                int idx, void *)
 {
   char scrline[80];
   unsigned int cont_i, i, colwidth, nextpos;
   int have_xxx_table[CONTEST_COUNT];
   unsigned int colcount = 0;
 
-  have_xxx_table[0] = 0; /* shaddup "perhaps unused" */
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
     have_xxx_table[cont_i] = 0;
