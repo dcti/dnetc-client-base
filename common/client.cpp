@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.120  1998/08/07 20:35:31  cyruspatel
+// NetWare specific change: Fixed broken IsNetworkAvailable() test
+//
 // Revision 1.119  1998/08/07 18:01:38  cyruspatel
 // Modified Fetch()/Flush() and Benchmark() to display normalized blocksizes
 // (ie 4*2^28 versus 1*2^30). Also added some functionality to Benchmark()
@@ -305,7 +308,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.119 1998/08/07 18:01:38 cyruspatel Exp $"; }
+return "@(#)$Id: client.cpp,v 1.120 1998/08/07 20:35:31 cyruspatel Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -3226,8 +3229,8 @@ int Client::RunCommandlineModes( int argc, char *argv[], int *retcodeP )
 
       if ( dofetch && doflush )
         {
-        dofetch = Update (0, 1, 1, 0 );
-        doflush = Update (1, 1, 1, 0 );
+        Update(0 ,1,1,1);  // RC5 We care about the errors, force update
+        Update(1 ,1,1,1);  // DES We care about the errors, force update
         }
       else if ( dofetch )
         {
@@ -3285,7 +3288,10 @@ int Client::RunCommandlineModes( int argc, char *argv[], int *retcodeP )
 
       retcode = 0;
       if (dofetch >= 0 && doflush >= 0) //no errors
+        {
+        argv[i][1] = toupper(argv[i][1]);
         LogScreen( "%s completed.\n", argv[i]+1 );
+        }
       else
         {
         #if defined(NONETWORK)
@@ -3302,7 +3308,7 @@ int Client::RunCommandlineModes( int argc, char *argv[], int *retcodeP )
           }
         else
           {
-          LogScreen( "\nAn error occured trying to %s. "
+          LogScreen( "An error occured trying to %s. "
                      "Please try again later\n", argv[i]+1 );
           retcode = dofetch;
           if (doflush < dofetch)
