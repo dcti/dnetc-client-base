@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.114 2001/04/16 21:00:44 oliver Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.115 2001/04/22 12:17:48 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -114,11 +114,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       NULL
     },
     { /* OGR */
-      "GARSP 5.13 - 68000",
-      "GARSP 5.13 - 68020",
-      "GARSP 5.13 - 68030",
-      "GARSP 5.13 - 68040",
-      "GARSP 5.13 - 68060",
+      "GARSP 5.13 68000",
+      "GARSP 5.13 68020",
+      "GARSP 5.13 68030",
+      "GARSP 5.13 68040",
+      "GARSP 5.13 68060",
       NULL
     },
   #elif (CLIENT_CPU == CPU_ALPHA) 
@@ -236,22 +236,10 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
       return 0;      /* the only supported core */
   }
   #elif (CLIENT_CPU == CPU_68K)
-  // only make available ogr cores <= current cpu
-  // (e.g. since the 060 compiled core will crash an 020)
   if (contestid == OGR)
   {
     long det = GetProcessorType(1);
-    int max = 0;
-    switch (det)
-    {
-      case 68000: max = 0; break;
-      case 68020: max = 1; break;
-      case 68030: max = 2; break;
-      case 68040: max = 3; break;
-      default:    max = cindex;
-    }
-    if (cindex > max)
-      return max;
+    if (det == 68000) cindex = 0;
   }
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
   {
