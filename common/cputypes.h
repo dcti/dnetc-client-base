@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.53  1999/02/28 02:44:55  jlawson
+// fixed lint warning messages.
+//
 // Revision 1.52  1999/02/23 22:26:41  remi
 // Added support for NetBSD/VAX. Anyone to compile the client ?
 //
@@ -558,6 +561,39 @@ struct s128 { s64 hi, lo; };
    #define CLIENT_SUPPORTS_SMP
 #endif  
 #undef MULTITHREAD //undef it to avoid 'unsafe' meaning
+
+/* ----------------------------------------------------------------- */
+
+// Some compilers/platforms don't yet support bool internally.
+// When creating new rules here, please try to use compiler-specific
+// macro tests since not all compilers on a specific platform (or even
+// a newer version of your own compiler) may be missing bool.
+//
+#if defined(__VMS) || defined(__SUNPRO_CC) || defined(__DECCXX) || defined(__MVS__)
+  #define NEED_FAKE_BOOL
+#elif defined(_HPUX) || defined(_OLD_NEXT_)
+  #define NEED_FAKE_BOOL
+#elif defined(__IBMCPP__)
+  #define NEED_FAKE_BOOL
+#elif defined(__WATCOMC__)
+  //nothing - bool is defined
+#elif defined(__xlc) || defined(__xlC) || defined(__xlC__) || defined(__XLC121__)
+  #define NEED_FAKE_BOOL
+#elif (defined(__mips) && __mips < 3 && !defined(__GNUC__))
+  #define NEED_FAKE_BOOL
+#elif (defined(__TURBOC__) && __TURBOC__ <= 0x400)
+  #define NEED_FAKE_BOOL
+#elif (defined(_MSC_VER) && _MSC_VER < 1100)
+  #define NEED_FAKE_BOOL
+#elif (defined(_SEQUENT_) && !defined(__GNUC__))
+  #define NEED_FAKE_BOOL
+#endif
+
+#if defined(NEED_FAKE_BOOL)
+    typedef int bool;
+    #define true 1
+    #define false 0
+#endif
 
 /* ----------------------------------------------------------------- */
 
