@@ -141,6 +141,9 @@ struct s128 { s64 hi, lo; };
   #if defined(ASM_ALPHA)
     #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_ALPHA
+  #elif defined(ASM_SPARC)
+    #define CLIENT_OS     OS_OPENBSD
+    #define CLIENT_CPU    CPU_SPARC
   #elif defined(ASM_X86)
     #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_X86
