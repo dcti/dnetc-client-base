@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.61  1998/12/31 08:08:35  dicamillo
+// MacOS GUI code needed to call CalcPercent;support MacOS UseMP function.
+//
+// Revision 1.60  1998/12/29 06:57:49  cyp
+// Removed redundant percbar event. Its covered by TFILL_STARTED.
+//
 // Revision 1.59  1998/12/29 20:36:23  silby
 // Added new event to cause GUIs to update their percent bars.
 // (Assumes percent bar routines have their own logic
@@ -232,7 +238,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.59 1998/12/29 20:36:23 silby Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.61 1998/12/31 08:08:35 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -990,7 +996,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         Problem *thisprob;
         thisprob = GetProblemPointerFromIndex( thread_i );
         MakeGUIThread(thisprob->contest, thread_i);
-        InitializeThreadProgress(thread_i, thisprob->percent,
+        InitializeThreadProgress(thread_i, thisprob->CalcPercent(),
                    thisprob->GetKeysDone()); 
         UpdateClientInfo(&client_info);
             }
@@ -1038,7 +1044,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       Problem *thisprob;
       thisprob = GetProblemPointerFromIndex( 0 );
       MakeGUIThread(thisprob->contest, 0);
-      InitializeThreadProgress(0, thisprob->percent,
+      InitializeThreadProgress(0, thisprob->CalcPercent(),
                 thisprob->GetKeysDone()); 
       UpdateClientInfo(&client_info);
       }
@@ -1172,7 +1178,7 @@ int Client::Run( void )
     #endif
 
     #if (CLIENT_OS == OS_MACOS)
-    if (!haveMP) numcrunchers = 0;  // no real threads if MP not present or not wanted
+    if ((!haveMP) || (!useMP())) numcrunchers = 0;  // no real threads if MP not present or not wanted
     #endif
     
     if (numcrunchers < 1) /* == 0 = user requested non-mt */
@@ -1400,7 +1406,6 @@ int Client::Run( void )
 
     if (!TimeToQuit && !isPaused)
       {
-      ClientEventSyncPost(0x0105,0); // Update GUI percent bars
       if (!percentprintingoff)
         LogScreenPercent( load_problem_count ); //logstuff.cpp
       getbuff_errs+=LoadSaveProblems(load_problem_count,PROBFILL_GETBUFFERRS);
@@ -1438,9 +1443,6 @@ int Client::Run( void )
         last_scheduledupdatetime = scheduledupdatetime;
         //flush_scheduled_count = 0;
         flush_scheduled_adj = (Random(NULL,0)%UPDATE_INTERVAL); 
-        struct timeval tv;
-        tv.tv_sec = timeNow + (time_t)flush_scheduled_adj;
-        tv.tv_usec = 0;
         Log("Buffer update scheduled in %u minutes %02u seconds.\n", 
              flush_scheduled_adj/60, flush_scheduled_adj%60 );
         }
@@ -1556,15 +1558,7 @@ int Client::Run( void )
       //at this point and threads are running at lower priority. If that is 
       //not the case, then benchmarks are going to return wrong results. 
       //The messy way around that is to suspend the threads.
-      if ((ModeReqRun(this) & MODEREQ_FETCH)!=0)
-        {
-        if (scheduledupdatetime != 0 && (preferred_contest_id==1) && 
-          (timeNow >= scheduledupdatetime) && 
-          (timeNow < (scheduledupdatetime+TIME_AFTER_START_TO_UPDATE+10)) )
-          { 
-          scheduledupdatetime = 0;
-          }
-        }
+      ModeReqRun(this);
       }
     }  // End of MAIN LOOP
 
