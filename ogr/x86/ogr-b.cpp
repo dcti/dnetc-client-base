@@ -1,15 +1,23 @@
 /*
- * Copyright distributed.net 2001-2003 - All Rights Reserved
+ * Copyright distributed.net 2001-2004 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Wrapper around ogr.cpp for all processor WITHOUT a fast bsr instruction.
  * (ie, 386, 486, Pentium, P4, K5, K6, K7, Cyrix(all), etc)
  *
- * $Id: ogr-b.cpp,v 1.2.4.3 2003/12/13 12:57:39 kakace Exp $
+ * $Id: ogr-b.cpp,v 1.2.4.3.2.1 2004/08/08 19:29:08 kakace Exp $
 */
-#define OGR_NOFFZ
-#define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table_nobsr
-#define OGR_P2_GET_DISPATCH_TABLE_FXN ogr_p2_get_dispatch_table_nobsr
 
+#define OGR_GET_DISPATCH_TABLE_FXN    ogr_get_dispatch_table_nobsr
+
+#define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* 0-2 - 'no'  (default) */
+#define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* 0/1 - 'yes' (default) */
+#define OGROPT_NO_FUNCTION_INLINE             0 /* 0/1 - 'no'  (default) */
+#define OGROPT_HAVE_OGR_CYCLE_ASM             0 /* 0-2 - 'no'  (default) */
+#define OGROPT_CYCLE_CACHE_ALIGN              0 /* 0/1 - 'no'  (default) */
+#define OGROPT_ALTERNATE_CYCLE                0 /* 0-2 - 'no'  (default) */
+#define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* 0/1 - 'std' (default) */
+
+#include "asm-x86.h"
 #include "ansi/ogr.cpp"

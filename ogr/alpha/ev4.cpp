@@ -6,26 +6,30 @@
  */
 
 const char *ogr_ev4_cpp(void) {
-return "@(#)$Id: ev4.cpp,v 1.1.2.5 2004/01/24 07:16:07 bdragon Exp $"; }
+return "@(#)$Id: ev4.cpp,v 1.1.2.5.2.1 2004/08/08 19:29:18 kakace Exp $"; }
 
 #if defined(__GNUC__)
-  #define OGROPT_BITOFLIST_DIRECT_BIT           1 /* seems to be a win */
-  #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* nope              */
-  #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* nope              */
-  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* we have no ctlz   */
-  #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* nope              */
+  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* 0-2 - 'no'  (default) */
+  #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* 0/1 - 'no'            */
+  #define OGROPT_NO_FUNCTION_INLINE             0 /* 0/1 - 'no'  (default) */
+  #define OGROPT_HAVE_OGR_CYCLE_ASM             0 /* 0-2 - 'no'  (default) */
+  #define OGROPT_CYCLE_CACHE_ALIGN              0 /* 0/1 - 'no'  (default) */
+  #define OGROPT_ALTERNATE_CYCLE                0 /* 0-2 - 'no'  (default) */
+  #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* 0/1 - 'std' (default) */
+
 #else /* Compaq CC */
   #include <c_asm.h>
-  #define OGROPT_BITOFLIST_DIRECT_BIT           1 /* yep               */
-  #define OGROPT_COPY_LIST_SET_BIT_JUMPS        1 /* yep               */
-  #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 1 /* yep               */
-  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* we have no ctlz   */
-  #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* nope              */
+  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* 0-2 - 'no'  (default) */
+  #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* 0/1 - 'no'            */
+  #define OGROPT_NO_FUNCTION_INLINE             0 /* 0/1 - 'no'  (default) */
+  #define OGROPT_HAVE_OGR_CYCLE_ASM             0 /* 0-2 - 'no'  (default) */
+  #define OGROPT_CYCLE_CACHE_ALIGN              0 /* 0/1 - 'no'  (default) */
+  #define OGROPT_ALTERNATE_CYCLE                0 /* 0-2 - 'no'  (default) */
+  #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* 0/1 - 'std' (default) */
+
 #endif
 
 //#define ALPHA_CIX
-#define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table_ev4
-#define OGR_P2_GET_DISPATCH_TABLE_FXN ogr_p2_get_dispatch_table_ev4
-#define OVERWRITE_DEFAULT_OPTIMIZATIONS
+#define OGR_GET_DISPATCH_TABLE_FXN    ogr_get_dispatch_table_ev4
 
 #include "ansi/ogr.cpp"
