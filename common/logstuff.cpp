@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.52.2.4 2001/03/23 21:40:54 sampo Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.52.2.5 2001/03/23 21:54:09 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -883,7 +883,7 @@ int LogGetContestLiveRate(unsigned int contest_i,
 
 void LogScreenPercent( unsigned int load_problem_count )
 {
-  unsigned int percent, restartperc, endperc, prob_i, cont_i;
+  unsigned int percent = 0, restartperc, endperc, prob_i, cont_i;
   unsigned int selprob_i = logstatics.perc_callcount % load_problem_count;
   char buffer[128]; unsigned char pbuf[52]; /* 'a'-'z','A'-'Z' */
   int disp_format, event_only = 0, active_contests = 0;
@@ -1024,6 +1024,7 @@ void LogScreenPercent( unsigned int load_problem_count )
       pbuf[prob_i] = 0;
       if (selprob)
       {
+        u32 permille = 0, start_permille = 0;
         int girc = -1;
         cont_i = selprob->pub_data.contest;
  
