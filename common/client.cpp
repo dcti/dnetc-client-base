@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.89 2000/10/05 18:27:41 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.90 2000/10/20 21:24:41 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -24,11 +24,11 @@ return "@(#)$Id: client.cpp,v 1.206.2.89 2000/10/05 18:27:41 cyp Exp $"; }
 #include "modereq.h"   // ModeReqIsSet()/ModeReqRun()
 #include "cmdline.h"   // ParseCommandLine() and load config
 #include "clitime.h"   // [De]InitializeTimers(),CliTimer()
+#include "netbase.h"   // net_[de]initialize()
 #include "triggers.h"  // [De]InitializeTriggers(),RestartRequestTrigger()
 #include "logstuff.h"  // [De]InitializeLogging(),Log()/LogScreen()
 #include "console.h"   // [De]InitializeConsole(), ConOutErr()
 #include "selcore.h"   // [De]InitializeCoreTable()
-#include "network.h"   // [De]InitializeConnectivity()
 
 /* ------------------------------------------------------------------------ */
 
@@ -454,7 +454,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
 
 static int ClientMain( int argc, char *argv[] )
 {
-  Client *client;
+  Client *client = (Client *)0;
   int retcode = 0;
   int restart = 0;
 
@@ -465,10 +465,6 @@ static int ClientMain( int argc, char *argv[] )
     ConOutErr( "Unable to initialize timers." );
     return -1;
   }
-
-  srand( (unsigned) time(NULL) );
-  InitRandom();
-
   client = (Client *)malloc(sizeof(Client));
   if (!client)
   {
@@ -476,8 +472,10 @@ static int ClientMain( int argc, char *argv[] )
     ConOutErr( "Unable to initialize client. Out of memory." );
     return -1;
   }
+  srand( (unsigned) time(NULL) );
+  InitRandom();
   
-  do
+  do    
   {
     int restarted = restart;
     restart = 0;
@@ -507,7 +505,7 @@ static int ClientMain( int argc, char *argv[] )
         if (!CheckExitRequestTrigger())
         {
           TRACE_OUT((0,"initializeconnectivity\n"));
-          if (InitializeConnectivity() == 0) //do global initialization
+          if (net_initialize() == 0) //do global initialization
           {
             #ifdef LURK /* start must come just after initializeconnectivity */
             TRACE_OUT((0,"dialup.Start()\n")); /*and always before initlogging*/
@@ -587,7 +585,7 @@ static int ClientMain( int argc, char *argv[] )
             dialup.Stop(); /* just before DeinitializeConnectivity() */
             #endif
             TRACE_OUT((0,"deinitialize connectivity\n"));
-            DeinitializeConnectivity(); //netinit.cpp
+            net_deinitialize(!restart /* final call */);
           } /* if (InitializeConnectivity() == 0) */
         } /* if (!CheckExitRequestTrigger()) */
         TRACE_OUT((0,"deinitialize triggers\n"));
