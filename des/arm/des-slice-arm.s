@@ -9,6 +9,8 @@
         AREA    fastdesarea, CODE
 
         EXPORT  des_unit_func__FP11RC5UnitWorkUl
+        EXPORT  convert_key_from_des_to_inc__FPUlT1
+        EXPORT  convert_key_from_inc_to_des__FPUlT1
 
         GBLL    patch
 patch   SETL    {FALSE}
@@ -1097,7 +1099,7 @@ reg     SETS    "$pass"
 
 ;|x$codeseg| DATA
 
-convert_key_from_des_to_inc
+convert_key_from_des_to_inc__FPUlT1
         STMDB    r13!,{r4,lr}
         LDR      r2,[r0,#0]
         AND      r3,r2,#&fe
@@ -1174,7 +1176,7 @@ convert_key_from_des_to_inc
         STR      r1,[r0,#0]
         LDMIA    r13!,{r4,pc}^
 
-convert_key_from_inc_to_des
+convert_key_from_inc_to_des__FPUlT1
         STMDB    r13!,{r4,lr}
         LDR      r2,[r1,#0]
         MOV      r2,r2,LSR #28
@@ -1357,7 +1359,7 @@ des_unit_func__FP11RC5UnitWorkUl
         STR      r0,[r13,#0]
         MOV      r1,r13
         ADD      r0,r13,#4
-        BL       convert_key_from_inc_to_des
+        BL       convert_key_from_inc_to_des__FPUlT1
         MOV      r5,#1
         MOV      r6,#0
         LDMIA    r13,{r7,r8}
@@ -1865,7 +1867,7 @@ foundkey
 |L00033c.J62|
         MOV      r1,r13
         ADD      r0,r13,#4
-        BL       convert_key_from_des_to_inc
+        BL       convert_key_from_des_to_inc__FPUlT1
         LDR      r0,[r4,#&14]
         LDR      r1,[r13,#0]
         SUB      r0,r1,r0
