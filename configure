@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.242 2001/03/29 15:08:36 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.243 2001/03/29 21:56:50 oliver Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2510,16 +2510,6 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
         else
           CCFLAGS_SELECT="-mcpu=ev4 ${CCFLAGS_SELECT}"
         fi  
-      elif [ "$BUILDNAME" = "ppc-amigaos-pup"  \
-          -o "$BUILDNAME" = "ppc-amigaos-wos"  \
-          -o "$BUILDNAME" = "ppc-linux" ]; then
-        # get around gcc2.8/gcc2.9/egcs bugs
-        if [ "$target" = "output/problem.o" \
-          -o "$target" = "output/rc5_unit_func_lintilla.o" \
-          -o "$target" = "output/rc5_unit_func_lintilla-604.o" \
-          -o "$target" = "output/rc5_unit_func_allitnil.o" ]; then
-          CCFLAGS_SELECT="${CCFLAGS_SELECT} -O0"
-        fi
       elif [ "${BUILDNAME}" = "aix-all" ]; then
         if [ "$target" = "output/rc5ansi_2-rg.o" ]; then
           CCFLAGS_SELECT="\${POWERFLAGS}"
