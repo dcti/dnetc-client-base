@@ -11,12 +11,14 @@
  * C, is portable, passes -pedantic tests, does not 'new' a bazillion 
  * and one times, will not die if mem is scarce, does not fragment 
  * memory, does not attempt to parse comments, and does not assume 
- * that the calling function was written by a twit.
+ * that the calling function was written by a twit. 
+ *
+ * But,.. it ain't perfect (yet) and doesn't pretend to be.
  *
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.27.2.1 1999/11/08 02:29:12 cyp Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.27.2.2 1999/11/08 02:48:37 cyp Exp $"; }
 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
@@ -384,7 +386,8 @@ static unsigned long ini_doit( int dowrite, const char *sect,
               else
               {
                 success=0;
-                while (success<(bufflen-1) && success<valuelen)
+                while (((unsigned int)success)<(bufflen-1) && 
+		       ((long)success)<valuelen)
                   buffer[success++]=data[valueoff++];
                 buffer[success++]=0;
                 break;
