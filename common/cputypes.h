@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.22 2000/01/28 03:50:10 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.23 2000/01/28 07:37:55 mfeiri Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -61,7 +61,7 @@
 /* #define OS_UNUSED_5  24 */ /* never used. was mach10 */
 #define OS_AIX          25
 /* #define OS_UNUSED_6  26 */ /* never used. was AUX */
-/* #define OS_UNUSED_7  27 */ /* never used. was rhapsody */
+#define OS_MACOSX       27    /* recycled rhapsody - it was just the codename for MacOSX(S)*/
 #define OS_AMIGAOS      28
 #define OS_OPENBSD      29
 #define OS_NETWARE      30
@@ -319,6 +319,14 @@
   #elif __MC68K__
     #define CLIENT_CPU    CPU_68K
   #endif
+#elif defined(__APPLE__)
+   #define CLIENT_OS_NAME  "Mac OS X"
+   #define  CLIENT_OS   OS_MACOSX
+   #if defined(__ppc__)
+     #define CLIENT_CPU CPU_POWERPC
+   #elif defined(__i386__)
+     #define CLIENT_CPU CPU_X86
+   #endif
 #elif defined(__BEOS__) || defined(__be_os)
   #ifndef __unix__ /* 4.4bsd compatible or not? */
   #define __unix__ /* it ain't that special! */
@@ -411,6 +419,10 @@
 #elif (CLIENT_OS == OS_BEOS)
   #include <OS.h>
   typedef thread_id THREADID;
+  #define OS_SUPPORTS_SMP
+#elif (CLIENT_OS == OS_MACOS)
+  #include <Multiprocessing.h>
+  typedef MPTaskID THREADID;
   #define OS_SUPPORTS_SMP
 #elif (CLIENT_OS == OS_FREEBSD)
   typedef int /*pid_t*/ THREADID;
