@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.30  1998/07/29 21:34:33  blast
+// AmigaOS specific change due to change from platforms/ to platforms/amiga
+// for AmigaOS specific files ...
+//
 // Revision 1.29  1998/07/26 12:46:16  cyruspatel
 // new inifile option: 'autofindkeyserver', ie if keyproxy= points to a
 // xx.v27.distributed.net then that will be interpreted by Network::Resolve()
@@ -176,7 +180,7 @@ extern "C" {
   #define write(sock, buff, len) send(sock, (char*)buff, len, 0)
 #elif (CLIENT_OS == OS_AMIGAOS)
   extern "C" {
-  #include "platforms/amiga.h"
+  #include "platforms/amiga/amiga.h"
   #include <assert.h>
   #include <clib/socket_protos.h>
   #include <pragmas/socket_pragmas.h>
