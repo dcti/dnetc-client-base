@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.3  1998/10/03 12:32:19  cyp
+// Removed a trailing ^Z
+//
 // Revision 1.2  1998/10/03 03:56:51  cyp
 // running "modes", excluding -fetch/-flush but including -config (or a
 // missing ini file) disables -hidden and -quiet. -install and -uninstall
@@ -16,7 +19,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.2 1998/10/03 03:56:51 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.3 1998/10/03 12:32:19 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -857,4 +860,3 @@ int Client::ParseCommandline( int runlevel, int argc, const char *argv[],
     *retcodeP = retcode;
   return do_break;
 }
-
