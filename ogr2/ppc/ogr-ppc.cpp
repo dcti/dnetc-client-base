@@ -5,7 +5,7 @@
  */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.1.2.8 2000/02/22 10:21:09 sampo Exp $"; }
+return "@(#)$Id: ogr-ppc.cpp,v 1.1.2.1 2000/02/22 10:21:31 sampo Exp $"; }
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -195,7 +195,7 @@ static int found_one(struct State *oState)
   return 1;
 }
 
-static int vec_ogr_init()
+static int ogr_init()
 {
   int r, i;
   
@@ -358,7 +358,7 @@ static inline int first_asm (register int i)
 	return __cntlzw(~i)+1;
 }
 
-static int vec_ogr_cycle(void *state, int *pnodes)
+static int ogr_cycle(void *state, int *pnodes)
 {
   struct State *oState = (struct State *)state;
   int depth = oState->depth+1;      /* the depth of recursion */
@@ -525,11 +525,11 @@ static int ogr_cleanup()
   return CORE_S_OK;
 }
 
-CoreDispatchTable *vec_ogr_get_dispatch_table()
+CoreDispatchTable *ogr_get_dispatch_table()
 {
-  dispatch_table.init      = &vec_ogr_init;
+  dispatch_table.init      = &ogr_init;
   dispatch_table.create    = &ogr_create;
-  dispatch_table.cycle     = &vec_ogr_cycle;
+  dispatch_table.cycle     = &ogr_cycle;
   dispatch_table.getresult = &ogr_getresult;
   dispatch_table.destroy   = &ogr_destroy;
 #if 0

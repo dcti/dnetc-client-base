@@ -47,15 +47,10 @@ struct WorkStub { /* size is 28 */
 #define MAXDEPTH   40
 
 typedef u32 U;
+
 typedef union {
-	vector unsigned int v;
-	U u[4];
-    struct{U t,h,m,l;};
-} vec;
-typedef union {
-	vector unsigned int v[2];
-	U u[8];
-    struct{U ui1,ui2,ui3,ui4,ui5,ui6,ui7,ui8;};
+	U u[5];
+    struct{U ui1,ui2,ui3,ui4,ui5;};
 } vec2;
 
 struct Level {
