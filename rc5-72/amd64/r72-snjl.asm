@@ -7,7 +7,7 @@
 ;     Jeff Lawson <bovine@distributed.net>
 ;
 ; Based off of the r72-dg3.asm core by Décio Luiz Gazzoni Filho.
-; $Id: r72-snjl.asm,v 1.1.2.3 2003/10/19 12:09:02 jlawson Exp $
+; $Id: r72-snjl.asm,v 1.1.2.4 2003/10/20 06:13:17 jlawson Exp $
 
 [SECTION .text]
 BITS 64
@@ -110,9 +110,7 @@ defwork iterations,2		; 2nd argument (64-bit pointer), passed in rsi
 %ifidn %1,S
         add     A1, S1(%2+1)
 %else
-;        lea     A1, [A1 + B1 + S_not(%2+1)]
-        add A1,B1
-        add A1, S_not(%2+1)
+        lea     A1, [A1 + B1 + S_not(%2+1)]
 %endif
 
         add     B2, A2
@@ -128,9 +126,7 @@ defwork iterations,2		; 2nd argument (64-bit pointer), passed in rsi
         add     A2, S2(%2+1)
         add     A1, B1
 %else
-;        lea     A2, [A2 + B2 + S_not(%2+1)]
-        add A2, B2
-        add A2, S_not(%2+1)
+        lea     A2, [A2 + B2 + S_not(%2+1)]
 %endif
 
         mov     L1_%3, B1
@@ -142,9 +138,7 @@ defwork iterations,2		; 2nd argument (64-bit pointer), passed in rsi
         add     A3, S3(%2+1)
         add     A2, B2
 %else
-;        lea     A3, [A3 + B3 + S_not(%2+1)]
-        add A3, B3
-        add A3, S_not(%2+1)
+        lea     A3, [A3 + B3 + S_not(%2+1)]
 %endif
 
         mov     L2_%3, B2
@@ -296,15 +290,9 @@ key_setup_1:
         rol     B2, 0x1D
         rol     B3, 0x1D
 
-;        lea     A1, [A1 + B1 + S_not(1)]
-        add A1, B1
-        add A1, S_not(1)
-;        lea     A2, [A2 + B2 + S_not(1)]
-        add A2, B2
-        add A2, S_not(1)
-;        lea     A3, [A3 + B3 + S_not(1)]
-        add A3, B3
-        add A3, S_not(1)
+        lea     A1, [A1 + B1 + S_not(1)]
+        lea     A2, [A2 + B2 + S_not(1)]
+        lea     A3, [A3 + B3 + S_not(1)]
 
         mov     L1_0, B1
         mov     L2_0, B2
