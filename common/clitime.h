@@ -10,6 +10,10 @@
 // ----------------------------------------------------------------------
 // 
 // $Log: clitime.h,v $
+// Revision 1.16  1999/03/18 03:11:25  cyp
+// New function CliTimeGetBuildDate() returns build time_t. Used to check
+// that time obtained from proxy is (somewhat) sane.
+//
 // Revision 1.15  1999/03/03 04:29:36  cyp
 // created CliTimeGetMinutesWest() and CliTimerSetDelta(). See .h for descrip.
 //
@@ -61,6 +65,10 @@ struct timeval *CliTimer( struct timeval *tv );
 // Set the 'time delta', a value added to the tv_sec member by CliTimer()
 // before it the time is returned. CliTimerSetDelta() returns the old delta.
 int CliTimerSetDelta( int delta );
+
+// Get Date/Time this module was built. Used, for instance, to 'ensure' 
+// that time from the .ini or recvd from a proxy is sane.
+time_t CliTimeGetBuildDate(void);
 
 // Get time as string. Curr time if tv is NULL. Separate buffers for each
 // type: 0=blank type 1, 1="MMM dd hh:mm:ss GMT", 2="hhhh:mm:ss.pp"

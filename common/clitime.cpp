@@ -17,6 +17,10 @@
 // ----------------------------------------------------------------------
 //
 // $Log: clitime.cpp,v $
+// Revision 1.30  1999/03/18 03:11:25  cyp
+// New function CliTimeGetBuildDate() returns build time_t. Used to check
+// that time obtained from proxy is (somewhat) sane.
+//
 // Revision 1.29  1999/03/10 11:54:48  cyp
 // Fixed win32 returning minutes east.
 //
@@ -82,7 +86,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.29 1999/03/10 11:54:48 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.30 1999/03/18 03:11:25 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -95,6 +99,8 @@ return "@(#)$Id: clitime.cpp,v 1.29 1999/03/10 11:54:48 cyp Exp $"; }
 static int precalced_minuteswest = -1234;
 static struct timeval cliclock = {0,0};  //base time for CliClock()
 static int adj_time_delta = 0;
+static const char *monnames[]={ "Jan","Feb","Mar","Apr","May","Jun",
+                                "Jul","Aug","Sep","Oct","Nov","Dec"};
 
 /*
  * Set the 'time delta', a value added to the tv_sec member by CliTimer()
@@ -373,6 +379,65 @@ int CliTimerDiff( struct timeval *dest, struct timeval *tv1, struct timeval *tv2
 
 // ---------------------------------------------------------------------
 
+/*
+ *  Get Date/Time this module was built. Used, for instance, to 'ensure' 
+ *  that time from the .ini or recvd from a proxy is sane. (could also use
+ *  CVS ID)
+ */
+time_t CliTimeGetBuildDate(void)
+{
+  static time_t bdtime = 0;
+  if (bdtime == 0)
+  {
+    struct tm bd;
+    bd.tm_mon = 99;
+
+    bdtime = (time_t)0x362a72f0L; /* my 32nd birthday :) */
+
+    #ifdef __DATE__
+    {
+      int i;
+      const char *p = __DATE__;
+      memset((void *)&bd,0,sizeof(bd));
+      bd.tm_mon = 99;
+      if (p[3]==' ')
+      {
+        for (i=0;i<12;i++)
+        {
+          if (memcmp(monnames[i],p,3)==0)
+          {
+            bd.tm_mon = i;
+            bd.tm_mday = atoi(p+4);
+            bd.tm_year = (atoi(p+7) - 1900);
+            #ifdef __TIME__
+            p = __TIME__;
+            bd.tm_hour = atoi(p);
+            bd.tm_min = atoi(p+3);
+            bd.tm_sec = atoi(p+6);
+            if (bd.tm_hour<0 || bd.tm_hour>23 || bd.tm_min<0 || bd.tm_min>59)
+              bd.tm_hour = bd.tm_min = bd.tm_sec = 0;
+            else if (bd.tm_sec < 0 || bd.tm_sec > 61)
+              bd.tm_sec = 0;
+            #endif
+            break;
+          }
+        }
+      }
+    }
+    #endif
+    if (bd.tm_mon >= 0 && bd.tm_mon <= 11 && 
+        bd.tm_mday >= 1 && bd.tm_mday <= 31 &&
+        bd.tm_year >= 99 && bd.tm_year <= 132 )
+    {
+      bdtime = mktime( &bd );
+    }
+  }
+  return bdtime;
+}
+   
+
+// ---------------------------------------------------------------------
+
 // Get time as string. Curr time if tv is NULL. Separate buffers for each
 // type: 0=blank type 1, 1="MMM dd hh:mm:ss GMT", 2="hhhh:mm:ss.pp"
 const char *CliGetTimeString( struct timeval *tv, int strtype )
@@ -432,8 +497,6 @@ const char *CliGetTimeString( struct timeval *tv, int strtype )
         }
         else // strtype == 1 == new type of fixed length and neutral locale
         {
-          static const char *monnames[]={ "Jan","Feb","Mar","Apr","May","Jun",
-                                          "Jul","Aug","Sep","Oct","Nov","Dec"};
 
           // new: "Apr 03 11:22:33 GMT" year = gmt->tm_year%100,
           //                    3 1  2 1  2 1  2 1  2 1 3   = 19
