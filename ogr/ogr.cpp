@@ -5,7 +5,7 @@
  */
 
 const char *ogr_cpp(void) {
-return "@(#)$Id:"; }
+return "@(#)$Id: ogr.cpp,v 1.3.2.14 2000/01/31 15:29:18 ivo Exp $"; }
 
 #include <stdio.h>
 #include <stdlib.h>
