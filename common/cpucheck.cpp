@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.36 2000/01/26 18:52:59 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.37 2000/01/28 07:40:02 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -186,7 +186,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
         cpucount = MPProcessors();
       else
         cpucount = 1;
-      #else // Dont support MP on 68k CPUs
+      #elif (CLIENT_CPU == CPU_68K) // no MP support on 68k CPUs
         cpucount = 1;
       #endif
     }
@@ -440,7 +440,7 @@ static long __GetRawProcessorID(const char **cpuname)
     detectedtype = -1;
     if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
       detectedtype = result - 0x100L; // PVR!!
-    isaltivec = macosAltiVecPresent();
+    isaltivec = macosAltiVec();
   }
   #elif (CLIENT_OS == OS_WIN32)
   if (detectedtype == -2L)
