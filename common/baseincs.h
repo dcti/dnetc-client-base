@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.14  1998/08/05 15:29:41  cyruspatel
+// Added <ctype.h>
+//
 // Revision 1.13  1998/08/02 03:16:16  silby
 // Major reorganization:  Log,LogScreen, and LogScreenf are now in logging.cpp, and are global functions - client.h #includes logging.h, which is all you need to use those functions.  Lurk handling has been added into the Lurk class, which resides in lurk.cpp, and is auto-included by client.h if lurk is defined as well. baseincs.h has had lurk-specific win32 includes moved to lurk.cpp, cliconfig.cpp has been modified to reflect the changes to log/logscreen/logscreenf, and mail.cpp uses logscreen now, instead of printf. client.cpp has had variable names changed as well, etc.
 //
@@ -32,8 +35,7 @@
 // added io.h for Watcom, which has some IO functions not in stdio.h
 //
 // Revision 1.6  1998/07/13 12:40:23  kbracey
-// RISC OS update.
-// Added -noquiet option.
+// RISC OS update. Added -noquiet option.
 //
 // Revision 1.5  1998/07/13 00:37:25  silby
 // Changes to make MMX_BITSLICE client buildable on freebsd
@@ -77,6 +79,7 @@ extern "C" {
 #include <signal.h>
 #include <stdarg.h>
 #include <string.h>
+#include <ctype.h>
 #include <sys/types.h>
 
 #if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
