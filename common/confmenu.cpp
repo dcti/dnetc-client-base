@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.62.2.5 2003/05/17 22:13:55 bdragon Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.62.2.6 2003/05/20 20:35:35 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -569,9 +569,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
     }  
   }
   conf_options[CONF_NICENESS].thevariable = &(client->priority);
-  #if !defined(SINGLE_CRUNCHER_ONLY)
   conf_options[CONF_NUMCPU].thevariable = &(client->numcpu);
-  #endif /* SINGLE_CRUNCHER_ONLY */
 
   /* --------------------------------------------------------- */
 
@@ -743,6 +741,14 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
       }
       #endif
     }
+    #if defined(SINGLE_CRUNCHER_ONLY) // prevent "empty if statement" warnings
+    else if (whichmenu == CONF_MENU_PERF)
+    {
+      #if defined(SINGLE_CRUNCHER_ONLY)
+      conf_options[CONF_NUMCPU].disabledtext = "n/a [SINGLE_CRUNCHER_ONLY]";
+      #endif
+    }
+    #endif
 
     /* -------------------- display menu -------------------------- */
 
