@@ -1,5 +1,5 @@
 
-$Id: TODO.txt,v 1.6 1999/04/10 14:02:31 cyp Exp $"
+$Id: TODO.txt,v 1.7 1999/04/13 14:09:56 jlawson Exp $
 
 This file contains a list of mini-projects. Submissions as well as 
 volunteers :) are welcome. 
@@ -9,7 +9,7 @@ To avoid having the wheel reinvented, please holler if you wish
 to tackle a project. 
 
 *Do not* add bug reports or platform specific to-do (which are synonymous 
-with 'bug' or 'feature request) here. 
+with 'bug' or 'feature request') here. 
 
 If you have the expertise but lack the time to handle a project, 
 please post your willingness to assist to coders@lists.distributed.net.
