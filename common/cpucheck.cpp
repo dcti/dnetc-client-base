@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.41 2000/05/06 21:07:37 mfeiri Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.42 2000/06/04 10:17:33 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -543,6 +543,46 @@ static long __GetRawProcessorID(const char **cpuname)
         break;
       }
     }
+  }
+  #elif (CLIENT_OS == OS_AMIGAOS)  // AmigaOS PPC
+  if (detectedtype == -2L)
+  {
+    #ifndef __POWERUP__
+    /* WarpOS */
+    struct TagItem cputags[2] = { {GETINFO_CPU, 0}, {TAG_END,0} };
+    GetInfo(cputags);
+    switch (cputags[0].ti_Data)
+    {
+      case CPUF_603:  detectedtype = 3; break;
+      case CPUF_603E: detectedtype = 6; break;
+      case CPUF_604:  detectedtype = 4; break;
+      case CPUF_604E: detectedtype = 9; break;
+      case CPUF_620:  detectedtype = 4 + 65536; break;
+      default: // some PPC processor that we don't know about
+               // set the tag (so that the user can tell us), but return 0
+      sprintf(namebuf, "GetInfo -> %d", cputags[0].ti_Data );
+      detectedname = (const char *)&namebuf[0];
+      detectedtype = 0;
+      break;
+    }
+    #else
+    /* PowerUp */
+    ULONG cpu = PPCGetAttr(PPCINFOTAG_CPU);
+    switch (cpu)
+    {
+      case CPU_603:  detectedtype = 3; break;
+      case CPU_603e: detectedtype = 6; break;
+      case CPU_603p: detectedtype = 6; break;
+      case CPU_604:  detectedtype = 4; break;
+      case CPU_604e: detectedtype = 9; break;
+      default: // some PPC processor that we don't know about
+               // set the tag (so that the user can tell us), but return 0
+      sprintf(namebuf, "PPCGetAttr -> %d", cpu );
+      detectedname = (const char *)&namebuf[0];
+      detectedtype = 0;
+      break;
+    }
+    #endif
   }
   #endif
   
