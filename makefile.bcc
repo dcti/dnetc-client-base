@@ -1,82 +1,83 @@
-# makefile distributed.net client (Borland C++ for Win32).
-# For information about distributed.net, see http://www.distributed.net/
-#
-# $Id: makefile.bcc,v 1.23.2.26 2001/03/30 10:11:39 cyp Exp $
+# distributed.net client makefile for Borland C++ for Win32.
+# see http://www.distributed.net/
 #
 # As of Jul 2000, Borland C++ 5.5.1 compiler is free for download.
 # http://www.borland.com/bcppbuilder/freecompiler/
 # ftp://ftpd.inprise.com/download/bcppbuilder/freecommandLinetools.exe
 # ftp://ftpd.inprise.com/download/bcppbuilder/TurboDebugger.exe
+#
+# This makefile expects NASM (Netwide Assembler) to be in the search path.
+# NASM is available at all kernel.org mirror sites under 
+# ftp://ftp.??.kernel.org/pub/software/devel/nasm/ 
+# (replace ?? with a two letter country code, eg 'de', 'us', 'uk' etc)
+# A list of all mirrors is at http://www.kernel.org/mirrors/
+#
+# $Id: makefile.bcc,v 1.23.2.27 2001/04/10 00:50:53 cyp Exp $
 
-.autodepend
-
-# Borland library and include paths.
-BCCINCLUDE = c:\borland\bcc55\include
-BCCLIBRARY = c:\borland\bcc55\lib
-
-# define variable to existence to enable debugging.
-#DEBUG=1
-
-# distributed.net source and compilation paths.
 BASENAME = dnetc
 OUTPUTPATH = output
 COMMONPATH = common
 DESPATH = des
 RC5PATH = rc5
 CSCPATH = csc
-OGRPATH = ogr\ansi
+OGRPATH = ogr
 CHIPSRCPATH = plat\x86
 PLATSRCPATH = plat\win
+#DEBUG=1
 
 #HAVE_DES_CORES=1
 #HAVE_CSC_CORES=1
 HAVE_OGR_CORES=1
 
-
+# -------------------------------------------------------------------
 
 # Main compilation and linking options
+BCC32 = "$(MAKEDIR)\bcc32.exe"
+BRCC32 = "$(MAKEDIR)\brcc32.exe"
+ILINK32 = "$(MAKEDIR)\ilink32.exe"
+NASM32 = nasmw
+UPXW = "$(MAKEDIR)\upxw.bat"
+#upxw is a batchfile, eg "@i:\develop\upx\upxw.exe %1 %2 %3 %4 %5 %6 %7 %8 %9"
 
-# We can't do anything against the following warnings, so let's ignore them:
-#   /w-aus disables "'identifier' is assigned a value that is never used" warning (8004)
-#   /w-par disables "Parameter 'parameter' is never used" warning (8057)
-BCCOPTS = /a4 /Vv /x- /xd- /RT- /r /k- /d /O2 /O /OS /tWM -5 \
-        /w /w-aus /w-par /I$(BCCINCLUDE)
-NASMOPTS = -f obj -D__OMF__
-TLINKOPTS = /aa /x /Tpe /n /Gn /B:0x400000 /L$(BCCLIBRARY)
+# -------------------------------------------------------------------
+
+BCCWARN = -w -w! # can't do anything against the following warnings, so ignore them:
+BCCWARN = $(BCCWARN) -w-8080 # "'identifier' is declared but never used"
+BCCWARN = $(BCCWARN) -w-aus  # "'identifier' is assigned a value that is never used" (8004)
+BCCWARN = $(BCCWARN) -w-par  # "Parameter 'parameter' is never used (8057)
+BCCWARN = $(BCCWARN) -w-inl  # "Functions containing reserved words are not expanded inline"
+
+BCCOPTS   = -q -c /a4 /Vv /x- /xd- /RT- /r /k- /d /O2 /O /OS -5 -vi -X- -P- -T- \
+            -tWM $(BCCWARN) -I"$(MAKEDIR)\..\include" -n$(OUTPUTPATH) 
+NASMOPTS  = -f obj -D__OMF__
+TLINKOPTS = /q /x /n /Gn /b:0x400000 /L"$(MAKEDIR)\..\lib" #/Tpe 
 
 !ifdef DEBUG
-BCCOPTS = /v $(BCCOPTS) /DDEBUG /Tkh10000
-TASMOPTS = /zi $(TASMOPTS)
-TLINKOPTS = /v $(TLINKOPTS)
-NASMOPTS = $(NASMOPTS) -D__showids__
+BCCOPTS   = $(BCCOPTS)   -y -v /DDEBUG /Tkh10000
+TASMOPTS  = $(TASMOPTS)  /zi
+TLINKOPTS = $(TLINKOPTS) -v -m -s 
 !endif
 
 !ifdef BETA
-BCCOPTS = $(BCCOPTS) -DBETA
-NASMOPTS = $(NASMOPTS) -DBETA
+BCCOPTS  = $(BCCOPTS) -DBETA
 !endif
 
-
-.path.asm = $(RC5PATH)\x86;$(DESPATH)\x86;$(CSCPATH)\x86;$(CSCPATH)\x86;$(OGRPATH)\x86;$(CHIPSRCPATH)
-# do not add $(CSCPATH) to .path.cpp - everything is in .path.asm
-.path.cpp = $(COMMONPATH);$(RC5PATH);$(DESPATH);$(OGRPATH);$(PLATSRCPATH)
-.path.c = $(PLATSRCPATH)
-.path.obj = $(OUTPUTPATH)
-
-all:    $(BASENAME).exe
-
-# --------------------------------------------
+MT_LIBS  = noeh32.lib import32.lib cw32mt.lib 
+UT_LIBS  = noeh32.lib import32.lib cw32.lib 
 
 DEF_FILE = $(OUTPUTPATH)\$(BASENAME).def
 RES_FILE = $(OUTPUTPATH)\$(BASENAME).res
-RC_FILE = $(PLATSRCPATH)\w32cons.rc
+RC_FILE  = $(PLATSRCPATH)\w32cons.rc
+MAKE_CMD = "$(MAKEDIR)\$(MAKE)" /$(MAKEFLAGS) -fmakefile.bcc
+
+all:    $(BASENAME).com $(BASENAME).scr $(BASENAME).exe 
+
+# --------------------------------------------
 
 COMMON_OBJS =                        \
         $(OUTPUTPATH)/base64.obj     \
         $(OUTPUTPATH)/bench.obj      \
-        $(OUTPUTPATH)/buffupd.obj    \
         $(OUTPUTPATH)/buffbase.obj   \
-        $(OUTPUTPATH)/buffpriv.obj   \
         $(OUTPUTPATH)/checkpt.obj    \
         $(OUTPUTPATH)/clicdata.obj   \
         $(OUTPUTPATH)/client.obj     \
@@ -106,13 +107,23 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/problem.obj    \
         $(OUTPUTPATH)/probman.obj    \
         $(OUTPUTPATH)/random.obj     \
-        $(OUTPUTPATH)/scram.obj      \
         $(OUTPUTPATH)/selcore.obj    \
         $(OUTPUTPATH)/selftest.obj   \
         $(OUTPUTPATH)/setprio.obj    \
         $(OUTPUTPATH)/triggers.obj   \
         $(OUTPUTPATH)/util.obj
-BCCOPTS = $(BCCOPTS) /I$(COMMONPATH) -DLURK
+BCCOPTS = $(BCCOPTS) -I$(COMMONPATH) -DLURK
+!ifndef WHICHSRC
+       #nothing - constructed below
+!elif $(WHICHSRC) == 0
+COMMON_OBJS = $(COMMON_OBJS)         \
+        $(OUTPUTPATH)/buffupd.obj    \
+        $(OUTPUTPATH)/buffpriv.obj   \
+        $(OUTPUTPATH)/scram.obj
+!else
+COMMON_OBJS = $(COMMON_OBJS)         \
+        $(OUTPUTPATH)/buffpub.obj
+!endif
 
 PLAT_OBJS =                          \
         $(OUTPUTPATH)/w32cons.obj    \
@@ -125,7 +136,7 @@ PLAT_OBJS =                          \
         $(OUTPUTPATH)/w32ini.obj     \
         $(OUTPUTPATH)/w32snapp.obj   \
         $(OUTPUTPATH)/w32util.obj
-BCCOPTS = $(BCCOPTS)  /I$(PLATSRCPATH)
+BCCOPTS = $(BCCOPTS) -I$(PLATSRCPATH) -DLURK
 
 SCR_OBJS =                           \
         $(OUTPUTPATH)/w32ss.obj      \
@@ -138,8 +149,6 @@ CUI_OBJS =                           \
         $(OUTPUTPATH)/w32cuis.obj
 
 CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj
-
-CLI_LIBS = noeh32.lib cw32mt.lib import32.lib
 
 # --------------------------------- RC5 ----------------------------
 
@@ -154,7 +163,7 @@ RC5_OBJS =                           \
         $(OUTPUTPATH)/hb-k7.obj      \
         $(OUTPUTPATH)/nb-p7.obj      \
         $(OUTPUTPATH)/brf-smc.obj
-BCCOPTS = $(BCCOPTS) -DSMC
+BCCOPTS = $(BCCOPTS) -DSMC 
 
 # --------------------------------- DES ----------------------------
 
@@ -176,7 +185,7 @@ DES_OBJS =                                   \
         $(OUTPUTPATH)/p2bdespro.obj          \
         $(OUTPUTPATH)/sboxes-kwan4.obj       \
 #       $(OUTPUTPATH)/sboxes-mmx.obj
-BCCOPTS = $(BCCOPTS) -DHAVE_DES_CORES -DMMX_BITSLICER -DMEGGS -DKWAN
+BCCOPTS = $(BCCOPTS) -DHAVE_DES_CORES -DMMX_BITSLICER -DMEGGS -DKWAN -I$(DESPATH) 
 !endif
 
 # --------------------------------- CSC ----------------------------
@@ -192,7 +201,7 @@ CSC_OBJS =                           \
          $(OUTPUTPATH)/csc-6b-i.obj  \
          $(OUTPUTPATH)/csc-comm.obj  \
          $(OUTPUTPATH)/csc-mmx.obj
-BCCOPTS = $(BCCOPTS) -DHAVE_CSC_CORES /I$(CSCPATH) 
+BCCOPTS = $(BCCOPTS) -DHAVE_CSC_CORES -I$(CSCPATH) 
 !endif
 
 # --------------------------------- OGR ----------------------------
@@ -201,55 +210,65 @@ BCCOPTS = $(BCCOPTS) -DHAVE_CSC_CORES /I$(CSCPATH)
 OGR_OBJS =
 !else
 OGR_OBJS =                        \
-        $(OUTPUTPATH)/ogr.aobj    \
+        $(OUTPUTPATH)/ogr-a.obj   \
+        $(OUTPUTPATH)/ogr-b.obj   \
         $(OUTPUTPATH)/ogr_dat.obj \
         $(OUTPUTPATH)/ogr_sup.obj
-BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES /I$(OGRPATH) 
+BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES -I$(OGRPATH) 
 !endif
 
 # --------------------------------------------
 
-{$(CSCPATH)\x86\;$(CSCPATH)\x86\mmx\}.asm{$(OUTPUTPATH:/=\)}.obj:
-        nasmw $(NASMOPTS) -i $(CSCPATH)\x86\ $(<:/=\) -o $(@:/=\)
+.autodepend
+.suffixes: .asm .c .cpp # the order in which files are looked for
+.path.asm = $(RC5PATH)\x86;$(DESPATH)\x86;$(CSCPATH)\x86;$(CSCPATH)\x86\mmx;$(OGRPATH)\x86;$(CHIPSRCPATH)
+.path.cpp = $(COMMONPATH);$(DESPATH);$(OGRPATH)\x86;$(OGRPATH)\ansi;$(PLATSRCPATH)
+.path.c   = $(PLATSRCPATH)
+.path.obj = $(OUTPUTPATH)
 
 .asm.obj:
-        nasmw $(NASMOPTS) -i $(<D:/=\) $(<:/=\) -o $(@:/=\)
-
-# use the .aobj extension to prefer an .asm file to a .cpp file with same name
-.asm.aobj:
-        nasmw $(NASMOPTS) -i $(<D:/=\) $(<:/=\) -o $(@:/=\)
+        $(NASM32) $(NASMOPTS) -i $(<D:/=\) -i $(<D:/=\).. $(<:/=\) -o $(@:/=\)
 
 .cpp.obj:
-        bcc32 -q -c @&&|
-        -P $(BCCOPTS) -n$(OUTPUTPATH)
-| $<
-
+        $(BCC32) $(BCCOPTS) $(<:/=\) -o$(@:/=\)
 
 .c.obj:
-        bcc32 -q -c @&&|
-        -P $(BCCOPTS) -n$(OUTPUTPATH)
-| $<
-
+        $(BCC32) $(BCCOPTS) $(<:/=\) -o$(@:/=\)
 
 # --------------------------------------------
 
 clean:
         @if exist $(OUTPUTPATH)\*.obj erase $(OUTPUTPATH)\*.obj 
-        @if exist $(OUTPUTPATH)\*.aobj erase $(OUTPUTPATH)\*.aobj 
         @if exist $(OUTPUTPATH)\*.res erase $(OUTPUTPATH)\*.res 
+        @if exist $(OUTPUTPATH)\bltwith.* erase $(OUTPUTPATH)\bltwith.*
         @if exist $(DEF_FILE) erase $(DEF_FILE) 
         @if exist $(RES_FILE) erase $(RES_FILE)
+        @if exist tdconfig.* erase tdconfig.*
+        @if exist td32.* erase td32.*
         @if exist $(BASENAME).il? erase $(BASENAME).il?
-        @if exist $(BASENAME).tds erase $(BASENAME).tds
+        @if exist $(BASENAME).td? erase $(BASENAME).td?
+        @if exist $(BASENAME).tr? erase $(BASENAME).tr?
         @if exist $(BASENAME).exe erase $(BASENAME).exe
+        @if exist $(BASENAME).com erase $(BASENAME).com
+        @if exist $(BASENAME).scr erase $(BASENAME).scr
+
+# --------------------------------------------
+
+BCC_CHECK = $(OUTPUTPATH)/bltwith.bcc
+#ensure that vc, watcom and bcc objs don't collide
+
+$(BCC_CHECK):
+        @$(MAKE_CMD) clean >nul: 
+        @echo moo > $(BCC_CHECK:/=\)
 
 # --------------------------------------------
 
 # Target rule to produce the compiled resource file.
 
 $(RES_FILE):    $(RC_FILE)
-        brcc32 -32 -i$(BCCINCLUDE) -i$(COMMONPATH) -fo$(RES_FILE:/=\) $(RC_FILE:/=\)
+        $(BRCC32) -32 -i$(BCCINCLUDE) -i$(COMMONPATH) -fo$(RES_FILE:/=\) $(RC_FILE:/=\)
 
+# --------------------------------------------
 
 ### Unfortunately, the Borland C++ 5.5 initial public release does not
 ### include any of the include\*.rh files necessary to compile resources.
@@ -263,27 +282,48 @@ $(RES_FILE):    $(RC_FILE)
 # for our exe, since ILINK32 says it contains "Additional segments".
 
 $(DEF_FILE):
-        if exist $(DEF_FILE:/=\) del $(DEF_FILE:/=\)
-        copy &&|
-CODE    PRELOAD MOVEABLE DISCARDABLE
-DATA    PRELOAD MOVEABLE MULTIPLE
-HEAPSIZE        4096
-STACKSIZE       1048576
-SEGMENTS
-        _TEXT
-        _DATA
-| $(DEF_FILE:/=\)
+        @if exist $(DEF_FILE:/=\) del $(DEF_FILE:/=\)
+        @echo CODE      PRELOAD MOVEABLE DISCARDABLE >> $(DEF_FILE:/=\)
+        @echo DATA      PRELOAD MOVEABLE MULTIPLE    >> $(DEF_FILE:/=\)
+        @echo HEAPSIZE  4096                         >> $(DEF_FILE:/=\)
+        @echo STACKSIZE 1048576                      >> $(DEF_FILE:/=\)
+        @echo SEGMENTS                               >> $(DEF_FILE:/=\)      
+        @echo 	_TEXT                                >> $(DEF_FILE:/=\)
+        @echo   _DATA                                >> $(DEF_FILE:/=\)
 
 # --------------------------------------------
 
-# This is the main client exe compilation target rule.
+$(BASENAME).exe:   $(BCC_CHECK) $(COMMON_OBJS) $(PLAT_OBJS) $(CHIP_OBJS) \
+                   $(RC5_OBJS) $(DES_OBJS) $(CSC_OBJS) $(OGR_OBJS) \
+                   $(DEF_FILE) $(RES_FILE)
+!ifndef WHICHSRC
+        @if     exist $(COMMONPATH:/=\)\buffpriv.cpp $(MAKE_CMD) -DWHICHSRC=0
+        @if not exist $(COMMONPATH:/=\)\buffpriv.cpp $(MAKE_CMD) -DWHICHSRC=1
+!else
+        $(ILINK32) $(TLINKOPTS) /aa /V3.10 c0w32.obj \
+                   $(COMMON_OBJS:/=\) $(PLAT_OBJS:/=\) $(CHIP_OBJS:/=\) \
+                   $(RC5_OBJS:/=\) $(DES_OBJS:/=\) $(CSC_OBJS:/=\) $(OGR_OBJS:/=\), \
+                   $(BASENAME:/=\).exe,,$(MT_LIBS),$(DEF_FILE:/=\),$(RES_FILE:/=\)
+        #actually this call to UPX doesn't work, ought to try PKLITE32 sometime 
+        @if exist $(UPXW) \
+                   $(UPXW) -9 -qq --compress-resources=0 $(BASENAME).exe
+!endif
 
-ALLCLIENTOBJS = $(COMMON_OBJS) $(PLAT_OBJS) $(CHIP_OBJS) \
-                $(RC5_OBJS) $(DES_OBJS) $(CSC_OBJS) $(OGR_OBJS)
+# the .com generated by bc is significantly larger than that created by 
+# watcom or vc.
 
-$(BASENAME).exe:   $(DEF_FILE) $(RES_FILE) $(ALLCLIENTOBJS)
-        ilink32 /q $(TLINKOPTS) @&&|
-c0w32.obj $(ALLCLIENTOBJS:/=\),$(BASENAME:/=\).exe,,$(CLI_LIBS),$(DEF_FILE),$(RES_FILE)
-|
+$(BASENAME).com:   $(BCC_CHECK) $(CUI_OBJS) #c0x32.obj
+        $(ILINK32) $(TLINKOPTS) /ap /V3.10 $(CUI_OBJS:/=\), \
+                    $(BASENAME:/=\).com,,$(UT_LIBS),,
+        @if exist $(UPXW) \
+                   $(UPXW) -9 -qq --compress-resources=0 $(BASENAME).com
+
+$(BASENAME).scr:   $(BCC_CHECK) $(SCR_OBJS) $(RES_FILE)
+        $(ILINK32) $(TLINKOPTS) /GC"SCRNSAVE : distributed.net client" \
+                   /aa /V4.0 /Gn c0w32.obj $(SCR_OBJS:/=\), \
+                   $(BASENAME:/=\).scr,,$(UT_LIBS),,$(RES_FILE:/=\)
+        @if exist $(UPXW) \
+                   $(UPXW) -9 -qq --compress-resources=0 $(BASENAME).scr
+
 
 # --------------------------------------------
