@@ -11,7 +11,7 @@
  * ---------------------------------------------------------------
 */    
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.28.2.2 1999/06/10 18:19:54 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.28.2.3 1999/09/19 16:08:58 cyp Exp $"; }
 
 #include "client.h"   //client class + CONTEST_COUNT
 #include "baseincs.h" //basic #includes
@@ -117,38 +117,37 @@ int ModeReqRun(Client *client)
     while ((modereq.reqbits & MODEREQ_ALL)!=0)
     {
       unsigned int bits = modereq.reqbits;
-      if ((bits & (MODEREQ_BENCHMARK_DES | MODEREQ_BENCHMARK_RC5 | 
-                                           MODEREQ_BENCHMARK_ALL)) != 0)
+      if ((bits & (MODEREQ_BENCHMARK_QUICK | MODEREQ_BENCHMARK_ALL)) != 0)
       {
         if (client)
         {
-          client->SelectCore( 0 /* not quietly */ );
-          u32 benchsize = (1L<<23); /* long bench: 8388608 instead of 100000000 */
-          if ((bits & (MODEREQ_BENCHMARK_QUICK))!=0)
-            benchsize = (1L<<20); /* short bench: 1048576 instead of 10000000 */
-          if ((bits & MODEREQ_BENCHMARK_ALL) == MODEREQ_BENCHMARK_ALL)
+          #if (CONTEST_COUNT != 4)
+          #error This needs fixing
+          #endif        
+          static int bmask2cid[CONTEST_COUNT] = 
           {
-            unsigned int contest;
-            for (contest = 0; contest < CONTEST_COUNT; contest++)
+            MODEREQ_BENCHMARK_RC5,
+            MODEREQ_BENCHMARK_DES,
+            MODEREQ_BENCHMARK_OGR,
+            MODEREQ_BENCHMARK_CSC
+          };
+          unsigned int contest, benchsecs = 16;
+          if ((bits & (MODEREQ_BENCHMARK_QUICK))!=0)
+            benchsecs = 8;
+          client->SelectCore( 0 /* not quietly */ );
+          for (contest = 0; contest < CONTEST_COUNT; contest++)
+          {
+            if (CheckExitRequestTriggerNoIO())
+              break;
+            if ((bits & MODEREQ_BENCHMARK_ALL)==0 || /*none set==all set*/
+                (bits & bmask2cid[contest]) != 0)
             {
-              if (CheckExitRequestTriggerNoIO())
-                break;
-              Benchmark( contest, benchsize, client->cputype, NULL );
+              retval |= bmask2cid[contest];
+              TBenchmark( contest, benchsecs, client->cputype, 0 );
             }
           }
-          else
-          {
-            if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_RC5)!=0) 
-              Benchmark( 0, benchsize, client->cputype, NULL );
-            if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_DES)!=0) 
-              Benchmark( 1, benchsize, client->cputype, NULL );
-          }
-        }
-        retval |= (modereq.reqbits & (MODEREQ_BENCHMARK_DES | 
-                 MODEREQ_BENCHMARK_RC5 | MODEREQ_BENCHMARK_ALL | 
-                 MODEREQ_BENCHMARK_QUICK ));
-        modereq.reqbits &= ~(MODEREQ_BENCHMARK_DES | MODEREQ_BENCHMARK_RC5 | 
-                 MODEREQ_BENCHMARK_ALL | MODEREQ_BENCHMARK_QUICK );
+        }    
+        modereq.reqbits &= ~(MODEREQ_BENCHMARK_QUICK | MODEREQ_BENCHMARK_ALL);
       }
       if ((bits & MODEREQ_CMDLINE_HELP) != 0)
       {
