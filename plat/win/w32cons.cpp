@@ -7,7 +7,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.1.2.3 2001/01/24 21:39:19 cyp Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.1.2.4 2001/02/27 00:45:30 andreasb Exp $"; }
 
 #define TRACE
 //define any/all/some of the following to TRACE_OUT(x) for sectional tracing
@@ -413,7 +413,7 @@ static int GetShell32Version(void)
         DWORD dwBuildNumber;
         DWORD dwPlatformID;
       } my_DllVersionInfo;
-      #pragma pack(0)
+      #pragma pack()
       typedef DWORD (CALLBACK *_DllGetVersion)(my_DllVersionInfo *);
       _DllGetVersion proc = (_DllGetVersion)
                                 GetProcAddress(hShell32, "DllGetVersion");
