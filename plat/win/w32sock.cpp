@@ -39,7 +39,7 @@
  *   #endif
 */
 const char *w32sock_cpp(void) {
-return "@(#)$Id: w32sock.cpp,v 1.1.2.1 2001/01/21 15:10:25 cyp Exp $"; }
+return "@(#)$Id: w32sock.cpp,v 1.1.2.2 2001/03/26 18:00:55 cyp Exp $"; }
 
 #include <windows.h>
 #include "w32sock.h" // <windows.h> and <winsock.h> as documented above.
@@ -436,7 +436,7 @@ SOCKET PASCAL FAR socket(int domain, int type, int protocol)
     #endif
   }
   w32sockstatics.lasterror = WSAEOPNOTSUPP;
-  return -1;
+  return INVALID_SOCKET;
 }
 
 /* ---------------------------------------- */
@@ -539,7 +539,7 @@ SOCKET PASCAL FAR accept(SOCKET s, struct sockaddr FAR *addr,
     #endif
   }
   w32sockstatics.lasterror = WSAEOPNOTSUPP;
-  return -1;
+  return INVALID_SOCKET;
 }
 
 /* ---------------------------------------- */
@@ -831,7 +831,7 @@ unsigned long PASCAL FAR inet_addr(const char FAR * cp)
     #endif
   }
   w32sockstatics.lasterror = WSAEOPNOTSUPP;
-  return -1;
+  return 0xfffffffful;
 }
 
 /* ---------------------------------------- */
