@@ -48,44 +48,20 @@ struct WorkStub { /* size is 28 */
 
 typedef u32 U;
 typedef union {
-	vector unsigned int vec;
-	unsigned int sca[4];
-} v_u32;
+	vector unsigned int v;
+	U u[4];
+    struct{U t,h,m,l;};
+} vec;
+typedef union {
+	vector unsigned int v[2];
+	U u[8];
+    struct{U ui1,ui2,ui3,ui4,ui5,ui6,ui7,ui8;};
+} vec2;
 
 struct Level {
-  union {
-  	struct {
-  		U pad;
-  		vector unsigned int vec;
-  	} offset_list_vec;
-  	struct {
-  		vector unsigned int vec;
-  		U pad;
-  	} zeroed_list_vec;
-	U list[BITMAPS];
-  };
-  union {
-  	struct {
-  		U pad;
-  		vector unsigned int vec;
-  	} offset_dist_vec;
-  	struct {
-  		vector unsigned int vec;
-  		U pad;
-  	} zeroed_dist_vec;
-	U dist[BITMAPS];
-  };
-  union {
-  	struct {
-  		U pad;
-	  	vector unsigned int vec;
-	} offset_comp_vec;
-  	struct {
-  		vector unsigned int vec;
-  		U pad;
-  	} zeroed_comp_vec;
-	U comp[BITMAPS];
-  };
+  vec2 list;
+  vec2 dist;
+  vec2 comp;
   int cnt1;
   int cnt2;
   int limit;
