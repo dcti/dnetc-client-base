@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2 2002/09/02 00:35:47 andreasb Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.1 2003/03/22 20:11:59 gavin Exp $"
 
 #ifndef u16
 #include "cputypes.h"
@@ -20,6 +20,12 @@
   #define OGR_INT_SIZE 8
 #else
   #error "What's up Doc?"
+#endif
+
+#if (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_POWERPC)
+  #ifdef __VEC__ 
+    #include <altivec.h>
+  #endif
 #endif
 
 /* ===================================================================== */
