@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.60 1999/11/27 06:23:21 sampo Exp $"; }
+return "@(#)$Id: console.cpp,v 1.61 1999/11/28 17:06:45 sampo Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -320,6 +320,10 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       }
       #elif (CLIENT_OS == OS_MACOS)
       // Mac code never does console input
+      // getchar() is blocking, let's set up a mac key event
+      // pool and read out of it here.  This will also allow
+      // us to handle "special" chars such as ^C (shouldn't
+      // GUSI handle that anyway...I think GUSI is broken).
        ch = getchar(); /* sometimes we do console input ;-) - Mindmorph */
       #else
       {
