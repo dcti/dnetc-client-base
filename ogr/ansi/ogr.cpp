@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.43 2001/02/24 15:55:30 teichp Exp $
+ * $Id: ogr.cpp,v 1.1.2.44 2001/03/13 23:46:49 teichp Exp $
  */
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
@@ -2097,7 +2097,7 @@ static int found_one(const struct State *oState)
                "ldrb    %1,[%3,%1,lsr#24]\n\t" \
                "addcs   %0,%0,#8\n\t"          \
                "add     %0,%0,%1"              \
-               :"=r" (result), "=r" (temp) : "1" (input), "r" (ogr_first_blank_8bit));
+               :"=r" (result), "=r" (temp) : "1" (input), "r" ((unsigned int)ogr_first_blank_8bit));
       return result;
     }
   #else /* C code, no asm */
