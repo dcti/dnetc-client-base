@@ -6,6 +6,9 @@
  * Marco.Walther@mch.sni.de
  *
  * $Log: mips-crunch.cpp,v $
+ * Revision 1.11  1999/02/06 22:49:57  foxyloxy
+ * *** empty log message ***
+ *
  * Revision 1.10  1998/11/28 18:21:33  remi
  * Fixed the key incrementation bug. Many thanks to Simon Fenney for
  * finding it !
@@ -36,7 +39,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mips_crunch_cpp(void) {
-return "@(#)$Id: mips-crunch.cpp,v 1.10 1998/11/28 18:21:33 remi Exp $"; }
+return "@(#)$Id: mips-crunch.cpp,v 1.11 1999/02/06 22:49:57 foxyloxy Exp $"; }
 #endif
 
 
@@ -978,8 +981,8 @@ int RC5_KEY_CHECK_INNER_REMI (RC5_WORD L_0, RC5_WORD L_1,
 
 #define LB_RC5_ROUND0_PARTIAL2_A					\
 {									\
-    A = _init;		       	/* 1 */ /* S[0] rotated left 3 by macro */ \
-    A2 = A;			/* -1 */				\
+    int A = _init;		/* 1 */ /* S[0] rotated left 3 by macro */ \
+    int A2 = A;			/* -1 */				\
          \
     pipelined_read2 = pipelined_read = S0_Source[1];			\
 /*    S0_Dest[0] = A; */		/* no need to store not used */	\
@@ -1498,8 +1501,6 @@ int RC5_KEY_CHECK_INNER_REMI (RC5_WORD L_0, RC5_WORD L_1,
 }
 
 /* code from Butcher starts here */
-
-static char LB_VERSION[] = "Lawrence Butcher 16/9/97 lbutcher@eng.sun.com  LB Version 1.3";
 
 /* an array of constants that can be LOADed instead of SETHI/ORI'd */
 static u32 S0_INIT[60] =  { (SHL(S0_00,3) | SHR(S0_00,3)), S0_01,
