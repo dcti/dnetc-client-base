@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.60 2000/05/25 18:59:16 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.61 2000/05/26 00:42:50 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -1027,6 +1027,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
         runstart_secs = 0xfffffffful;
     }
   }
+  runstart_usecs = 0; /* shaddup compiler */
   if (runstart_secs == 0)
   {
     runstart_secs = tv.tv_sec;
@@ -1065,7 +1066,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   }
   
   core_run_count++;
-  __compute_run_times( this, runstart_secs, runstart_secs, &timehi, &timelo,
+  __compute_run_times( this, runstart_secs, runstart_usecs, &timehi, &timelo,
                        using_ptime, &s_using_ptime, core_resultcode );
   tslice = iterations;
   last_resultcode = core_resultcode;
