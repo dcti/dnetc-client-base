@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.49  1998/11/08 19:01:04  cyp
+// Removed lots and lots of junk; DisplayHelp() is no longer a client method;
+// unix-ish clients no longer use the internal pager.
+//
 // Revision 1.48  1998/11/08 14:30:44  remi
 // char **location should be moved out of the loop in gettermheight()
 //
@@ -154,166 +158,38 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.48 1998/11/08 14:30:44 remi Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.49 1998/11/08 19:01:04 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
 #include "version.h"  //CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
-#include "client.h"   //client class
-#include "baseincs.h"
+#include "baseincs.h" //generic include
 #include "cmpidefs.h" //strcmpi()
-#include "sleepdef.h"
-#include "triggers.h" //[Check|Raise]ExitRequestTrigger()
-#include "logstuff.h" //Log()/LogScreen()
+#include "triggers.h" //CheckExitRequestTriggerNoIO()
+#include "logstuff.h" //LogScreenRaw()
 #include "console.h"  //ConClear(), ConInkey()
+#include "lurk.h"     //define LURK if 'lurk' is supported
 
 // --------------------------------------------------------------------------
 
-//#define NOLESS // (aka NOPAGER) define if you don't like less (+/- paging)
-//#define NOMORE // define this if you don't like --More--
-
-#ifndef NOTERMIOS
-#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BEOS)
-#include <termios.h>
-#include "sleepdef.h"
-#define TERMIOSPAGER
-#endif
-#endif
-
-#ifndef NOCURSES
-// Other *nixes may want to use this (add "-lcurses" to configure / Makefile)
-#if (CLIENT_OS == OS_LINUX)
-#include <curses.h>
-#include <term.h>
-#define TERMINFOLINES
-#endif
-#endif
-
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
-#define SHELL_INSERT_NL_AT_END
-#endif
-
-// --------------------------------------------------------------------------
-
-#if !defined(NOCONFIG)
-// read a single keypress, without waiting for an Enter if possible
-static int readkeypress()
-{
-#if defined(TERMIOSPAGER)
-  usleep (200*1000);
-  /* Wait a bit to avoid bad interaction with external pagers 
-   *
-   * Without this delay (just a guess) :
-   * 1) We start outputing some text, change the termios settings
-   *    and wait for a key.
-   * 2) The external pager comes into action, gets the current termios
-   *    settings and change them to something suitable for it.
-   * 3) We get the key, and restore the original termios settings
-   *    (the ones suitable for shell interaction, but not the ones suitable
-   *    for the external pager, strange things occurs)
-   * 4) The client terminates
-   * 5) User exit from the external pager
-   * 6) The external pager restore termios settings to the values
-   *    we set in this routine. Everythhing's broken, even more with
-   *    ECHO turned off :-(
-   *
-   * {1,3,4} and {2,5,6} occurs asynchonously.
-   *
-   * With this delay the external pager can fetch the shell termios settings
-   * and change them to its own flavour before we start cooking them up.
-   *
-   * This is a hack, it will not work if the external pager takes more than
-   * 2/10s to start up...
-   */
-#endif  /* the rest is generic */
-
-  return ConInKey(-1); /* -1 == wait forever. returns zero if break. */
-}
-#endif
-
-// --------------------------------------------------------------------------
-
-#if !defined(NOCONFIG)
-// How many visible lines there is in this terminal ?
-static int gettermheight()
-{
-
-#if (CLIENT_OS == OS_WIN32)
-
-  HANDLE hStdout;
-  CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
-
-  hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-  if (hStdout == INVALID_HANDLE_VALUE) return -1;
-  if (! GetConsoleScreenBufferInfo(hStdout, &csbiInfo)) return -1;
-  return csbiInfo.srWindow.Bottom - csbiInfo.srWindow.Top + 1;
-
-#elif (CLIENT_OS == OS_RISCOS)
-
-  // nlines = TWBRow - TWTRow + 1
-  static const int var[3] = { 133, 135, -1 };
-  int value[3];
-
-  if (riscos_in_taskwindow)
-    return -1;
-
-  if (_swix(OS_ReadVduVariables, _INR(0,1), var, value))
-    return -1;
-
-  return value[0] - value[1] + 1;
-
-
-#elif defined(TERMINFOLINES)
-
-  // grrr... terminfo database location is installation dependent
-  // search some standard (?) locations
-  char *terminfo_locations[] = {
-      "/usr/share/terminfo",       // ncurses 1.9.9g defaults
-      "/usr/local/share/terminfo", //
-      "/usr/lib/terminfo",         // Debian 1.3x use this one
-      "/usr/local/lib/terminfo",   // variation
-      "/etc/terminfo",             // found something here on my machine, doesn't hurt
-      "~/.terminfo",               // last resort
-      NULL                         // stop tag
-  };
-  char **location = &terminfo_locations[0];
-  for (;;) {
-    int termerr;
-    if (setupterm( NULL, 1, &termerr ) == ERR) {
-      if ((termerr == 0 || termerr == -1) && *location != NULL)
-        setenv( "TERMINFO", *(location++), 1);
-      else
-        return -1;
-    } else
-      break;
-  }
-
-  int nlines = tigetnum( "lines" );
-  // check for insane values
-  if (nlines <= 0 || nlines >= 300)
-    return -1;
-  else
-    return nlines;
-
-#else
-  // check for common $LINES / $COLUMNS environment variables
-  char *p = getenv( "LINES" );
-  if (!p) return -1;
-  int nlines = atoi( p );
-  // check for insane values
-  if (nlines <= 0 || nlines >= 300)
-    return -1;
-  else
-    return nlines;
-#endif
-}
-#endif
+#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD)  || \
+    (CLIENT_OS == OS_BEOS)  || (CLIENT_OS == OS_SOLARIS) || \
+    (CLIENT_OS == OS_IRIX)  || (CLIENT_OS == OS_FREEBSD) || \
+    (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_AIX)     || \
+    (CLIENT_OS == OS_OS390) || (CLIENT_OS == OS_NEXT)    || \
+    (CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_MACH)    || \
+    (CLIENT_OS == OS_SCO)   || (CLIENT_OS == OS_OPENBSD) || \
+    (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_HPUX)    || \
+    (CLIENT_OS == OS_DGUX)  || (CLIENT_OS == OS_ULTRIX)
+  #define NO_INTERNAL_PAGING  //internal paging is very un-unix-ish
+#endif  
 
 // --------------------------------------------------------------------------
 
 // provide a full-screen, interactive help for an invalid option (argv[x])
+// 'unrecognized_option' may be NULL or a null string
 
-void Client::DisplayHelp( const char * unrecognized_option )
+void DisplayHelp( const char * unrecognized_option )
 {
 #if !defined(NOCONFIG)
   static const char *valid_help_requests[] =
@@ -331,9 +207,9 @@ void Client::DisplayHelp( const char * unrecognized_option )
   "-update            fetch + flush",
   "-forceunlock <fn>  unlock buffer file <fn>",
   "-benchmark         tests the client speed",
-  "                   (add rc5 or des to test only one core)",
+//"                   (add rc5 or des to test only one core)",
   "-benchmark2        quick (but slightly inaccurate) client speed test",
-  "                   (add rc5 or des to test only one core)",
+//"                   (add rc5 or des to test only one core)",
   "-help              display these help screens",
   "",
 //----the runoffline/runbuffers lines are the longest a description may get-----#
@@ -385,19 +261,17 @@ void Client::DisplayHelp( const char * unrecognized_option )
 #if (CLIENT_OS == OS_WIN32)
   "-install           install the client as a service",
   "-uninstall         uninstall the client if running as a service",
-  "-hide              run hidden",
-#endif
-#if (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)
-  "-lurk              automatically detect modem connections",
-  "-lurkonly          perform buffer updates only when a connection is detected",
 #endif
 #if (CLIENT_OS == OS_OS2)
   "-install           install the client in the startup folder",
   "-uninstall         remove the client from the startup folder",
-  "-hide              run detached (hidden)",
 #endif
+   #ifdef LURK
+  "-lurk              automatically detect modem connections",
+  "-lurkonly          perform buffer updates only when a connection is detected",
+  #endif
   "-percentoff        don't display block completion as a running percentage",
-  "-quiet             suppress screen output",
+  "-quiet or -hide    suppress screen output (== detach for some clients)",
   "-noquiet           don't suppress screen output (override ini quiet setting)"
   };
 
@@ -410,198 +284,124 @@ void Client::DisplayHelp( const char * unrecognized_option )
 
   int headerlines, bodylines, footerlines;
   int startline, maxscreenlines, maxpagesize;
-  int foundhelprequest = 0;
+  int i, key, nopaging = (!ConIsScreen());
+  char linebuffer[128];
 
-  int nostdin, forcenopagemode = 0; //forcenopagemode is "--More--" mode
-  FILE *outstream, *teestream;
-
-  #if defined(NOLESS) || defined(NOPAGER) // fyi: noless was previously
-    forcenopagemode = 1;                  // called nopager
-  #endif
-
-  nostdin = (!isatty(fileno(stdin))); //may not work for </dev/nul
-  outstream = stdout;
-  if (isatty(fileno(outstream))) //normal mode
-    {
-    teestream = NULL;
-    }
-  else if (isatty(fileno(stderr))) // could dup() but thats not supported
-    {                              // everywhere
-    teestream = outstream; //stdout
-    outstream = stderr;
-    forcenopagemode = 1;  //paging works, but turn it off
-    }                     //for aesthetic reasons. :)
-  else //neither is a tty, so leave outstream==stdout and turn off paging
-    {
-    nostdin = 1;
-    teestream = NULL;
-    }
-
-  if (unrecognized_option && *unrecognized_option)
-    {
-    for (int i = 0; ((!foundhelprequest) && (i < (int)
-         (sizeof(valid_help_requests)/sizeof(char *)))); i++)
-      foundhelprequest = (strcmpi(unrecognized_option,valid_help_requests[i]) == 0);
-    if (!foundhelprequest)
-      {
-      fprintf( outstream, "\nUnrecognized option '%s'\n", unrecognized_option);
-      if (teestream)
-        fprintf( teestream, "\nUnrecognized option '%s'\n", unrecognized_option);
-      const char *msg = "\n\nThe following list may be obtained at any time by "
-                        "running\nthe client with the '-help' option.\n\n";
-      fprintf( outstream, ((nostdin || forcenopagemode)?(msg):
-          ("Press enter/space to display a list of valid command line\n"
-          "options or press any other key to quit... ")) );
-      if (teestream)
-        fprintf( teestream, msg );
-      fflush( outstream );
-      if (!nostdin && !forcenopagemode)
-        {
-        int i = readkeypress();
-        if (CheckExitRequestTriggerNoIO())
-          return;
-        fprintf( outstream, "\n" );
-        if (i != '\n' && i != '\r' && i != ' ')
-          return;
-        }
-      }
-    }
-
-  if ((maxscreenlines = gettermheight()) == -1) maxscreenlines = 25;
-#if defined(SHELL_INSERT_NL_AT_END) || !defined(TERMIOSPAGER)
-  maxscreenlines--;
-#endif
+  if (ConGetSize(NULL,&maxscreenlines) == -1)
+    maxscreenlines = 25;
   headerlines = (sizeof(helpheader) / sizeof(char *));
   bodylines = (sizeof(helpbody) / sizeof(char *));
   footerlines = 2;
   startline = 0;
   maxpagesize = maxscreenlines - (headerlines+footerlines);
 
-  if (teestream) //we do this first, so we're not paging there
+  #if defined(NO_INTERNAL_PAGING)
+  nopaging = 1;
+  #endif
+
+  /* -------------------------------------------------- */
+
+  if (unrecognized_option && *unrecognized_option)
     {
-    int i;
-    for (i = 0; i < headerlines; i++)
-      fprintf( teestream, "%s\n", helpheader[i] );
-    for (i = 0; i < bodylines; i++)
-      fprintf( teestream, "%s\n", helpbody[i] );
-    }
-  if (nostdin || forcenopagemode) //stdin is redirected or NOLESS
-    {
-    if (!foundhelprequest || !teestream)
+    int goodopt = 0;
+
+    for (i = 0; ((goodopt == 0) && (i < (int)
+         (sizeof(valid_help_requests)/sizeof(char *)))); i++)
+      goodopt = (strcmpi(unrecognized_option,valid_help_requests[i])==0);
+
+    if (goodopt == 0)
       {
-      int i, l, n=maxpagesize-5; // -5 to see the 'invalid option' message
-      for (i = 0; i < headerlines; i++)
-        fprintf( outstream, "%s\n", helpheader[i] );
-      for (l = 0; l < bodylines; )
+      LogScreenRaw( "\nUnrecognized option '%s'\n\n", unrecognized_option);
+      LogScreenRaw( "The following list of command line switches may be obtained\n"
+             "at any time by running the client with the '-help' option.\n\n");
+      if (!nopaging)
         {
-          for (i = 0; (l < bodylines) && (i < n); i++ )
-            fprintf( outstream, "%s\n", helpbody[l++] );
-          n = maxscreenlines-2; //use a two line overlap
-          if (l<bodylines && !nostdin && !foundhelprequest)
-            {  //NOLESS mode: stdin is ok
-              #ifndef NOMORE // very obstinate people :)
-              fprintf( outstream, "--More--" );
-              fflush( outstream );
-              readkeypress();
-              if (CheckExitRequestTriggerNoIO())
-                break;
-              fprintf( outstream, "\r" ); //overwrite the --More--
-              #endif
-            }
+        LogScreenRaw("Press enter to continue... ");
+        key = ConInKey(-1); /* -1 == wait forever. returns zero if break. */
+        LogScreenRaw( "\r                          \r" );
+        if (CheckExitRequestTriggerNoIO())
+          return;
+        if (key != '\n' && key != '\r' && key != ' ')
+          return;
         }
       }
     }
-  else if (maxpagesize >= bodylines) { // enough lines in a single screen ?
-    int i;
-    for (i = 0; i < headerlines; i++)
-      fprintf( outstream, "%s\n", helpheader[i] );
-    for (i = startline; i < bodylines; i++)
-      fprintf( outstream, "%s\n", helpbody[i] );
-  }
-  else  //stdout may or may not be redirected
+
+  /* -------------------------------------------------- */
+
+  if (nopaging || (maxscreenlines > (headerlines+bodylines)))
     {
-    int i = 1;
-    do{
-      if (i > 0) //do we need a screen refresh?
-        {
-        if (teestream) //can't use clearscreen if not stdout
-          {
-          for (i=0;i<10;i++) // 10*20 should be more than enough :)
-            fprintf( outstream, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-          }
-        else
-          ConClear(); //this applies to stdout only
+    for (i = 0; i < headerlines; i++)
+      LogScreenRaw( "%s\n", helpheader[i] );
+    for (i = 0; i < bodylines; i++)
+      LogScreenRaw( "%s\n", helpbody[i] );
+    return;
+    }
 
-        for (i = 0; i < headerlines; i++)
-          fprintf( outstream, "%s\n", helpheader[i] );
-        for (i = startline; i < (startline+maxpagesize); i++)
-          fprintf( outstream, "%s\n", helpbody[i] );
+  /* -------------------------------------------------- */
 
-        if (startline == 0)
-          fprintf( outstream, "\nPress '+' for the next page... ");
-        else if (startline >= ((bodylines-maxpagesize)-1))
-          fprintf( outstream, "\nPress '-' for the previous page... ");
-        else
-          fprintf( outstream, "\nPress '+' or '-' for the next/previous page,"
-                  " or any other key to quit... ");
-        }
+  key = 0;
+  do{
+    if (key == 0) /* refresh required */
+      {
+      ConClear();
+      for (i = 0; i < headerlines; i++)
+        LogScreenRaw( "%s\n", helpheader[i] );
+      for (i = startline; i < (startline+maxpagesize); i++)
+        LogScreenRaw( "%s\n", helpbody[i] );
+      LogScreenRaw("\n");
+      }
 
-      fflush( outstream );
-      i = readkeypress();
-      if (CheckExitRequestTriggerNoIO())
-        break;
-      fprintf( outstream, "\r");
+    if (startline == 0)
+      strcpy( linebuffer, "Press '+' for the next page... ");
+    else if (startline >= ((bodylines-maxpagesize)-1))
+      strcpy( linebuffer, "Press '-' for the previous page... ");
+    else
+      strcpy( linebuffer, "Press '+' or '-' for the next/previous page,"
+                          " or any other key to quit... ");
+    LogScreenRaw( linebuffer );
 
-      if (i == '+' || i == '=' || i == ' ' ||
-        i == 'f' || i == '\r' || i == '\n')
-        {
-        i = 0; //assume no refresh required
-        if (startline <= ((bodylines-maxpagesize) - 1))
-          {
-          startline += maxpagesize;
-          if ( startline >= (bodylines-maxpagesize))
-            startline = (bodylines-maxpagesize);
-          i = 1; //signal refresh required
-          }
-        //else if (teestream) //stdout is redirected, so clean up after getch()
-        //  i = 1;
-        }
-      else if (i == '-' || i == 'b')
-        {
-        i = 0; //assume no refresh required
-        if (startline > 0)
-          {
-          startline -= maxpagesize;
-          if ( startline < 0 )
-            startline = 0;
-          i = 1; //signal refresh required
-          }
-        //else if (teestream) //stdout is redirected, so clean up after getch()
-        //  i = 1;
-        }
-      else
-        {
-        i = -1; //unknown keystroke, so quit
-        }
-      } while (i >= 0);
-#if !defined(SHELL_INSERT_NL_AT_END) && (defined(TERMIOSPAGER) || (CLIENT_OS == OS_RISCOS))
-      // clear end of line (pager line)
-      // put spaces in case ANSI is not supported
-      #if (CLIENT_OS == OS_RISCOS)
-      if (!teestream && !nostdin)
-        {
-        static char clear[] = { 13, 23, 8, 4, 6, 0, 0, 0, 0, 0, 0 };
-        _swix(OS_WriteN, _INR(0,1), clear, sizeof clear);
-        }
-      #else
-      if (!teestream && !nostdin) fprintf( outstream, "\r\x1B[K\r    \r" );
-      #endif
-#endif
-    } //stdin is a tty
+    key = ConInKey(-1);
+    
+    linebuffer[i=strlen(linebuffer)]='\r';
+    linebuffer[i+1]=0;
+    for (--i;i>0;i--) 
+      linebuffer[i]=' ';
+    linebuffer[0]='\r';
+    LogScreenRaw( linebuffer );
+    
+    if (CheckExitRequestTriggerNoIO())
+      break;
 
+    if (key == '+' || key == '=' || key == ' ' ||
+      key == 'f' || key == '\r' || key == '\n')
+      {
+      if (startline <= ((bodylines-maxpagesize) - 1))
+        {
+        startline += maxpagesize;
+        if ( startline >= (bodylines-maxpagesize))
+          startline = (bodylines-maxpagesize);
+        key = 0; //refresh required
+        }
+      }
+    else if (key == '-' || key == 'b')
+      {
+      if (startline > 0)
+        {
+        startline -= maxpagesize;
+        if ( startline < 0 )
+          startline = 0;
+        key = 0; //refresh required
+        }
+      }
+    else
+      {
+      key = -1; //unknown keystroke, so quit
+      }
+    } while (key >= 0);
+      
   return;
 #endif
 }
 
 // --------------------------------------------------------------------------
-
