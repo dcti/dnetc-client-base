@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.45 2000/11/10 03:13:33 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.46 2000/11/21 19:22:05 teichp Exp $"
 
 #include "cputypes.h"
 
@@ -83,26 +83,25 @@
 #elif (CLIENT_OS == OS_RISCOS)
   extern "C" {
   #include <sys/fcntl.h>
-  #include <unistd.h>
+  //#include <unistd.h>
   #include <stdarg.h>
   #include <machine/endian.h>
   #include <sys/time.h>
+  #include <socklib.h>
+  #include <inetlib.h>
+  #include <unixlib.h>
+  #include <sys/ioctl.h>
+  #include <netdb.h>
   #include <swis.h>
-  extern unsigned int ARMident(), IOMDident();
-  extern void riscos_clear_screen();
-  extern int riscos_check_taskwindow();
-  extern void riscos_backspace();
-  extern int riscos_count_cpus();
-  extern char *riscos_x86_determine_name();
-  extern int riscos_find_local_directory(const char *argv0);
-  extern char *riscos_localise_filename(const char *filename);
-  extern int riscos_get_filelength(int fd, unsigned long *fsizeP);
-  extern int riscos_get_file_modified(const char *filename, unsigned long *timestampP);
-  extern void riscos_upcall_6(void); //yield
+  #include <riscos_sup.h>
   extern int getch();
   #define fileno(f) ((f)->__file)
   #define isatty(f) ((f) == 0)
   #define tzset() /* nothing */
+  #define S_IRUSR S_IREAD
+  #define S_IWUSR S_IWRITE
+  #define S_IRGRP 0
+  #define S_IWGRP 0
   } /* extern "C" */
   extern s32 guiriscos, guirestart;
   extern int riscos_in_taskwindow;

@@ -18,15 +18,21 @@
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.27.2.12 2000/09/17 11:46:31 cyp Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.27.2.13 2000/11/21 19:25:33 teichp Exp $"; }
 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
 #include <ctype.h>   /* tolower()/isctrl(). do not use isspace()! */
 #include <stdlib.h>  /* malloc()/free()/atoi() */
 #include <limits.h>  /* UINT_MAX */
+#include <cputypes.h>
+
 #if defined(__BORLANDC__) || defined(_MSC_VER) /*don't dare use the 'uni' word*/
 #include <io.h>      /* access() */
+#elif (CLIENT_OS == OS_RISCOS)
+extern "C" { /* headers are unsafe for c++ */
+#include <unixlib.h>
+}
 #else
 #include <unistd.h>  /* access() */
 #endif

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.46 2000/11/17 07:44:24 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.47 2000/11/21 19:25:34 teichp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -369,7 +369,7 @@ struct optionstruct conf_options[/*CONF_OPTION_COUNT*/] = {
   "name - for instance, \"XYZ:0\" tells your client not to work on, or request\n"
   "work for, the XYZ project."
   #if defined(HAVE_OGR_CORES) && ((CLIENT_OS == OS_MACOS) || \
-    (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_RISCOS) || \
+    (CLIENT_OS == OS_NETWARE) /*|| (CLIENT_OS == OS_RISCOS)*/ || \
     (CLIENT_OS == OS_WIN16))
                              " OGR is automatically disabled for non-preemptive\n"
   "operating environments running on low(er)-end hardware. For details, see\n"

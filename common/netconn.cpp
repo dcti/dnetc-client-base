@@ -17,7 +17,7 @@
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.1.2.6 2000/11/09 22:56:01 cyp Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.1.2.7 2000/11/21 19:25:33 teichp Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET
@@ -32,7 +32,7 @@ return "@(#)$Id: netconn.cpp,v 1.1.2.6 2000/11/09 22:56:01 cyp Exp $"; }
 #include "netbase.h"   // net_*() primitives
 #include "netconn.h"   // thats us
 
-#if (CLIENT_OS == OS_QNX)
+#if (CLIENT_OS == OS_QNX) || (CLIENT_OS == OS_RISCOS)
   #undef offsetof
   #define offsetof(__typ,__id) ((size_t)&(((__typ*)0)->__id))
 #else

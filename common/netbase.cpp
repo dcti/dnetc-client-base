@@ -59,7 +59,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.9 2000/11/20 20:24:16 teichp Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.10 2000/11/21 19:25:28 teichp Exp $"; }
 
 #define TRACE /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -102,8 +102,9 @@ extern "C" {
   #include <inetlib.h>
   #include <unixlib.h>
   #include <sys/ioctl.h>
-  #include <unistd.h>
+  //#include <unistd.h>
   #include <netdb.h>
+  #undef FIONREAD
   }
 #elif (CLIENT_OS == OS_DOS) 
   //ntohl()/htonl() defines are in...

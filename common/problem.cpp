@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.83 2000/11/20 15:08:14 oliver Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.84 2000/11/21 19:25:33 teichp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -1254,7 +1254,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
     return 0;
   #endif
   #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS) || \
-      (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_RISCOS)
+      (CLIENT_OS == OS_WIN16) /*|| (CLIENT_OS == OS_RISCOS)*/
   /* Cannot run (long-running) OGR on non-preemptive OSs on low end
      hardware. OGR has significant per-call overhead which ultimately
      prevents frequent yielding no matter how small the timeslice.
@@ -1266,6 +1266,10 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
      thisprob->priv_data.started dropping packets, clients disconnected, the profiler
      froze - I couldn't switch back to the console to unload the
      client and had to power-cycle.
+     
+     But that has nothing to do with RiscOS in a taskwindow, as a
+     process in a taskwindow is preemptively scheduled. At least as
+     fas as I know and observed.
   */
   if (contest_i == OGR /* && prob_index >= 0 */) /* crunchers only */
   {
