@@ -1,3 +1,4 @@
+# Alpha AXP rc5 core by Bernie Meyer (bmeyer@cs.monash.edu.au)
 .align 5                                # mem_off=-1 0     0 (   0) | 
 .set noat                               # mem_off=-1 0     0 (   0) | 
 .globl alpha_keycracker                 # mem_off=-1 0     0 (   0) | 
