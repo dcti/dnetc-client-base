@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: gentests72.cpp,v 1.7 2002/10/22 15:35:43 acidblood Exp $
+ * $Id: gentests72.cpp,v 1.7.2.1 2003/01/28 04:58:00 andreasb Exp $
 */
 /**************************************************************************/
 /*                                                                        */
@@ -92,6 +92,11 @@ int main ()
    unsigned char key[b];
    WORD bigcipher[2],bigplain[2],iv[2];
    WORD seed;
+   WORD expected_result; // 0 no success/no cmc, 1 success and cmc, -1 only cmc
+                         // abs(expected_result) == cmc_count, but I assume
+                         // it's 1 in the tests 'cause they are so short
+   WORD key_lo, startkey_lo;
+   const char *comment = NULL;
 
    if (sizeof(WORD)!=4)
       printf("RC5 error: WORD has %d bytes. \n", sizeof(WORD));
@@ -103,6 +108,8 @@ int main ()
    printf("static const u32 rc5_72_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = { // seed = %ld\n", seed);
 
    for (int testcase = 0; testcase < TEST_CASE_COUNT ; testcase ++) {
+      comment = NULL;
+      expected_result = 1;
       if (testcase == 0) {
          key[0]=0xc9;
          key[1]=0x0c;
@@ -117,6 +124,7 @@ int main ()
          iv[1]=0x419a1486;
          bigcipher[0]= 0x562d285a;
          bigcipher[1]= 0x2fb7852a;
+         comment = "official RSA testcase ?";
       } else {
          key[0]=Random( ) & 0x000000FF;
          key[1]=Random( ) & 0x000000FF;
@@ -128,12 +136,21 @@ int main ()
          key[7]=Random( ) & 0x000000FF;
          key[8]=Random( ) & 0x000000FF;
 	 switch (testcase) {
-         case 7 :key[1] = 0x00;
+	     case 7 :key[1] = 0x00;
 	     case 6 :key[2] = 0x00;
 	     case 5 :key[3] = 0x00;
 	     case 4 :key[4] = 0x00;
 	     case 3 :key[5] = 0x00;
-	     case 2 :key[6] = 0x00; break;
+	     case 2 :key[6] = 0x00; comment = "increment"; break;
+       case 22:
+       case 23:
+       case 24:
+       case 25:
+           key[7] = 0;
+           key[8] = testcase - 22;
+           comment = "aggressive";
+           break;
+       case 30: key[7] = 0; key[8] = 42; comment = "dummy"; break;
 	 }
          iv[0]=Random( ) & 0xFFFFFFFF;
          iv[1]=Random( ) & 0xFFFFFFFF;
@@ -142,8 +159,8 @@ int main ()
       }
 
       printf("  {"); printrevword(key[0]);
-         printf(","); printrevword((key[1]<<24) + (key[2]<<16) + (key[3]<<8) + key[4]);
-         printf(","); printrevword((key[5]<<24) + (key[6]<<16) + (key[7]<<8) + key[8]); printf(",");
+      printf(","); printrevword((key[1]<<24) + (key[2]<<16) + (key[3]<<8) + key[4]);
+      printf(","); printrevword((key[5]<<24) + (key[6]<<16) + (key[7]<<8) + key[8]); printf(",");
       printrevword(iv[0]); printf(","); printrevword(iv[1]); printf(",");
 
       // Setup the S / L values...
@@ -160,15 +177,44 @@ int main ()
       iv[0]=ct[0];
       iv[1]=ct[1];
 
+      switch (testcase) {
+          case 31:
+              bigplain[0] = ~bigplain[0];
+              bigplain[1] = ~bigplain[1];
+              expected_result = 0;
+              comment = "no success";
+              break;
+          case 26:
+          case 27:
+          case 28:
+          case 29:
+              bigcipher[1] = ~bigcipher[1];
+              expected_result = (WORD)-1;
+              comment = "cmc only";
+              break;
+      }
+
       // Print the plaintext (hex)...
       printrevword(bigplain[0]);printf(",");printrevword(bigplain[1]);printf(",");
       // Print the ciphertext (hex)...
       printrevword(bigcipher[0]);printf(",");printrevword(bigcipher[1]);
+      printf(","); printrevword(expected_result);
       if (testcase != (TEST_CASE_COUNT-1)) {
-         printf("},\n");
+         printf("},");
       } else {
-         printf("}\n");
+         printf("} ");
       }
+
+      // Print the pipeline and comment stuff
+      printf(" // ");
+      key_lo = (key[5]<<24) + (key[6]<<16) + (key[7]<<8) + key[8];
+      startkey_lo = (key_lo & 0xffff0000L) - 0x00010000;
+      for (j = 1; j <= 4; ++j)
+        printf("%d", (key_lo - startkey_lo)%j);
+      if (comment)
+        printf(" %s", comment);
+
+      printf("\n");
    }
    printf("};\n");
    return 0;
