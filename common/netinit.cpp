@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.26.2.11 2000/09/20 18:15:51 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.26.2.12 2000/09/21 16:46:08 oliver Exp $"; }
 
 //#define TRACE
 
@@ -74,7 +74,11 @@ static int __netInitAndDeinit( int doWhat )
       #if (!defined(AF_INET) || !defined(SOCK_STREAM))
         rc = -1;  //no networking capabilities
       #elif (CLIENT_OS == OS_AMIGAOS)
-      if (!amigaSocketInit())
+      #if defined(LURK)
+      if (!amigaSocketInit(dialup.IsWatching())) // some libs not needed if lurking
+      #else
+      if (!amigaSocketInit(0))
+      #endif
         rc = -1;
       #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
       if (rc == 0 && winGetVer() < 400) /* win16 or win32s */
@@ -83,7 +87,12 @@ static int __netInitAndDeinit( int doWhat )
       if (rc == 0)
         rc = __netInitAndDeinit(0); //recurse as request to check online mode
       if (rc != 0)
+      {
         init_level--;
+        #if (CLIENT_OS == OS_AMIGAOS)
+        amigaSocketDeinit();
+        #endif
+      }
     }    
   } 
 
