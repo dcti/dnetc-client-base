@@ -4,6 +4,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff.cpp,v $
+// Revision 1.5  1998/08/24 23:50:07  cyp
+// added mailmessage.clear() so logstuff can clear the spool if necessary.
+//
 // Revision 1.4  1998/08/20 19:25:04  cyruspatel
 // Restored spooling via static buffer until Autobuffer growth can be
 // limited.
@@ -26,7 +29,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.4 1998/08/20 19:25:04 cyruspatel Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.5 1998/08/24 23:50:07 cyp Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -649,6 +652,8 @@ void Client::DeinitializeLogging(void)
 {
   if (logstatics.mailmessage) 
     {
+    if (offlinemode) 
+      logstatics.mailmessage->clear();
     logstatics.mailmessage->Deinitialize(); //forces a send
     delete logstatics.mailmessage;
     logstatics.mailmessage = NULL;

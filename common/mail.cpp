@@ -4,6 +4,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mail.cpp,v $
+// Revision 1.25  1998/08/24 23:50:03  cyp
+// added mailmessage.clear() so logstuff can clear the spool if necessary.
+//
 // Revision 1.24  1998/08/21 00:05:47  cyruspatel
 // Added a sendpendingflag so that smtp_deinitialize() (or the MailMessage
 // destructor) will attempt a send() before the spool is destroyed/cleared.
@@ -97,7 +100,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.24 1998/08/21 00:05:47 cyruspatel Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.25 1998/08/24 23:50:03 cyp Exp $"; }
 #endif
 
 #include "network.h"
@@ -157,8 +160,9 @@ static int put_smtp_line(const char * line, unsigned int nchars, Network *net)
 
 static int smtp_close_net( Network *net )
 {
-  if (net) { net->Close(); delete net; }
-  NetworkDeinitialize();
+  if (net) NetClose(net);
+  //if (net) { net->Close(); delete net; }
+  //NetworkDeinitialize();
   return 0;
 }  
 
@@ -166,16 +170,19 @@ static int smtp_close_net( Network *net )
     
 static Network *smtp_open_net( const char *smtphost, unsigned int smtpport )
 {
-  Network *net;
-    
-  if (NetworkInitialize() < 0 ) 
-    return NULL;
-    
   if ( smtpport == 0 || smtpport > 0xFFFE)
     smtpport = 25; //standard SMTP port
   if ( !smtphost || !*smtphost )
     smtphost = "127.0.0.1";   
+
+  return NetOpen( smtphost, (s32)(smtpport) );
     
+  #if 0
+  Network *net;
+  
+  if (NetworkInitialize() < 0 ) 
+    return NULL;
+
   if ((net = new Network( smtphost, smtphost, (s16)smtpport, 0 ))!=NULL)
     {
     if (!net->Open())
@@ -194,7 +201,9 @@ static Network *smtp_open_net( const char *smtphost, unsigned int smtpport )
     #endif
     NetworkDeinitialize();
     }
+
   return(net);
+  #endif
 }  
 
 //-------------------------------------------------------------------------
@@ -996,10 +1005,8 @@ int smtp_append_message( struct mailmessage *msg, const char *txt )
 
 //-------------------------------------------------------------------------
 
-int smtp_deinitialize_message( struct mailmessage *msg )
+int smtp_clear_message( struct mailmessage *msg )
 {
-  smtp_send_message( msg );
-
   #if (defined(MAILSPOOL_IS_AUTOBUFFER))
     {
     if (msg->spoolbuff)
@@ -1021,6 +1028,13 @@ int smtp_deinitialize_message( struct mailmessage *msg )
     msg->spoolbuff[0]=0;
     }
   #endif
+  return 0;
+}
+
+int smtp_deinitialize_message( struct mailmessage *msg )
+{
+  smtp_send_message( msg );
+  smtp_clear_message( msg );
   return 0;
 }
 

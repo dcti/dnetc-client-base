@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: mail.h,v $
+// Revision 1.13  1998/08/24 23:49:58  cyp
+// added mailmessage.clear() so logstuff can clear the spool if necessary.
+//
 // Revision 1.12  1998/08/21 00:05:50  cyruspatel
 // Added a sendpendingflag so that smtp_deinitialize() (or the MailMessage
 // destructor) will attempt a send() before the spool is destroyed/cleared.
@@ -71,6 +74,7 @@ extern int smtp_initialize_message( struct mailmessage *msg,
 extern int smtp_deinitialize_message( struct mailmessage *msg );
 extern int smtp_append_message( struct mailmessage *msg, const char *txt );
 extern int smtp_send_message( struct mailmessage *msg );
+extern int smtp_clear_message( struct mailmessage *msg );
 extern unsigned long smtp_countspooled( struct mailmessage *msg );
 
 class MailMessage
@@ -91,6 +95,8 @@ public:
   
   int send(void)              { return smtp_send_message( &msg );          }
 
+  int clear(void)             { return smtp_clear_message( &msg );         }
+  
   unsigned long countspooled(void) { return smtp_countspooled( &msg );     }
 
   int checktosend(int force)  { return ((force || (countspooled()>
