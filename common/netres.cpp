@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.7  1998/10/26 02:55:08  cyp
+// win16 changes
+//
 // Revision 1.6  1998/10/04 11:35:46  remi
 // Id tags fun.
 //
@@ -30,7 +33,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.6 1998/10/04 11:35:46 remi Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.7 1998/10/26 02:55:08 cyp Exp $"; }
 #endif
 
 //---------------------------------------------------------------------
@@ -244,11 +247,7 @@ s32 Network::Resolve(const char *host, u32 &hostaddress )
 {
   if ((hostaddress = inet_addr((char*)host)) == 0xFFFFFFFFL)
     {
-    #if (CLIENT_OS == OS_WIN16)
-    struct hostent FAR *hp;
-    #else
     struct hostent *hp;
-    #endif
     if ((hp = gethostbyname((char*)host)) == NULL) return -1;
 
     int addrcount;
@@ -256,11 +255,7 @@ s32 Network::Resolve(const char *host, u32 &hostaddress )
     // randomly select one
     for (addrcount = 0; hp->h_addr_list[addrcount]; addrcount++);
     int index = rand() % addrcount;
-    #if (CLIENT_OS == OS_WIN16)
-      _fmemcpy((void*) &hostaddress, (void FAR*) hp->h_addr_list[index], sizeof(u32));
-    #else
-      memcpy((void*) &hostaddress, (void*) hp->h_addr_list[index], sizeof(u32));
-    #endif
+    memcpy((void*) &hostaddress, (void*) hp->h_addr_list[index], sizeof(u32));
     }
   return 0;
 }
@@ -273,11 +268,7 @@ s32 Network::Resolve(const char *host, u32 &hostaddress )
   struct proxylist dummylist;
   u32 addrlist[64]; /* should be more than enough */
   unsigned int proxypos, maxaddr, addrpos, addrcount;
-  #if (CLIENT_OS == OS_WIN16)
-     struct hostent FAR *hp;
-  #else
-     struct hostent *hp;
-  #endif
+  struct hostent *hp;
 
   int resport = lastport;            // as found in the network class
   int resauto = autofindkeyserver;
@@ -325,13 +316,8 @@ s32 Network::Resolve(const char *host, u32 &hostaddress )
       for ( addrpos = 0; hp->h_addr_list[addrpos] && 
                                   (addrcount < maxaddr ); addrpos++ )
         {      
-        #if (CLIENT_OS == OS_WIN16)
-          _fmemcpy((void*) &addrlist[addrcount], 
-                       (void FAR*) hp->h_addr_list[addrpos], sizeof(u32));
-        #else
-          memcpy((void*) &addrlist[addrcount], 
-                           (void*) hp->h_addr_list[addrpos], sizeof(u32));
-        #endif
+        memcpy((void*) &addrlist[addrcount], 
+               (void*) hp->h_addr_list[addrpos], sizeof(u32));
         addrcount++;
         }
       }

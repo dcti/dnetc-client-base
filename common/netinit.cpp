@@ -10,6 +10,9 @@
 */
 //
 // $Log: netinit.cpp,v $
+// Revision 1.9  1998/10/26 02:55:03  cyp
+// win16 changes
+//
 // Revision 1.8  1998/09/28 20:27:54  remi
 // Cleared a warning.
 //
@@ -40,7 +43,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.8 1998/09/28 20:27:54 remi Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.9 1998/10/26 02:55:03 cyp Exp $"; }
 #endif
 
 //--------------------------------------------------------------------------
@@ -51,10 +54,7 @@ return "@(#)$Id: netinit.cpp,v 1.8 1998/09/28 20:27:54 remi Exp $"; }
 #include "clitime.h"  //for the time stamp string
 #include "sleepdef.h" //for sleep();
 #include "triggers.h" //for break checks
-#define Time() (CliGetTimeString(NULL,1))
-#if ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32))
 #include "lurk.h"
-#endif
 
 //--------------------------------------------------------------------------
 
@@ -75,7 +75,7 @@ static int __netInitAndDeinit( int doWhat )
 
   if (( doWhat < 0 ) && ( initializationlevel == 0 ))
     {
-    Log("[%s] Squawk! Unbalanced Network Init/Deinit!\n",Time());
+    Log("Squawk! Unbalanced Network Init/Deinit!\n");
     abort();
     }
   else if (( doWhat == 0 ) && ( initializationlevel == 0 ))
@@ -122,7 +122,33 @@ static int __netInitAndDeinit( int doWhat )
 
   //----------------------------
 
-  #if (CLIENT_OS == OS_WIN32) 
+  #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+  if (success)
+    {
+    if ( doWhat == 0 )                     //request to check online mode
+      {
+      return w32sockIsAlive();
+      }
+    else if (doWhat > 0)                  //request to initialize
+      {
+      if ((++initializationlevel)!=1)     //don't initialize more than once
+        success = 1;
+      else if ((success = w32sockInitialize()) == 0)
+        --initializationlevel;
+      }
+    else if (doWhat < 0)
+      {
+      if ((--initializationlevel)==0) //don't deinitialize more than once
+        w32sockDeinitialize();
+      success = 1;
+      }
+    }
+  #define DOWHAT_WAS_HANDLED
+  #endif
+
+  //----------------------------
+
+  #if (CLIENT_OS==OS_WIN32) 
   if (success)
     {
     if ( doWhat == 0 )                     //request to check online mode
@@ -247,7 +273,7 @@ static int __netInitAndDeinit( int doWhat )
           success = 1;
         else
           {
-          LogScreen("[%s] Network::Failed to open " SOCK_LIB_NAME "\n",Time());
+          LogScreen("Network::Failed to open " SOCK_LIB_NAME "\n");
           success = 0;
           initializationlevel--;
           }
@@ -387,15 +413,15 @@ Network *NetOpen(const char *keyserver, s32 keyserverport, int nofallback,
         }
       if ((retry < 4) && (!CheckExitRequestTrigger()))
         {
-        LogScreen( "[%s] Network::Open Error - "
-                   "sleeping for 3 seconds (%d)\n", Time(), retry );
+        LogScreen( "Network::Open Error - "
+                   "sleeping for 3 seconds (%d)\n", retry );
         sleep( 3 );
         }
       if (CheckExitRequestTrigger())
         break;
       if ( !NetCheckIsOK() ) //connection broken
         {
-        Log("[%s] Network::Open Error - TCP/IP Connection Lost.\n", Time());
+        Log("Network::Open Error - TCP/IP Connection Lost.\n");
         break;
         }
       } while ((++retry) <= 4);

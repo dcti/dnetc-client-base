@@ -5,14 +5,16 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.49  1998/10/26 02:55:04  cyp
+// win16 changes
+//
 // Revision 1.48  1998/10/16 16:14:58  remi
 // Corrected my $Log comments.
 //
 // Revision 1.47  1998/10/16 16:09:13  remi
 // Fixed SOCKS4 / SOCKS5 support. In InitializeConnection() 'lastport' is the
-// SOCKS proxy port, not the keyproxy port.
-// SOCKS4 doesn't work on my machines, but that's perhaps a bug in my SOCKS
-// server. SOCKS5 seems Ok.
+// SOCKS proxy port, not the keyproxy port. SOCKS4 doesn't work on my 
+// machines, but that's perhaps a bug in my SOCKS server. SOCKS5 seems Ok.
 //
 // Revision 1.46  1998/09/30 22:27:55  remi
 // http connections should always be sent to port 80 (?).
@@ -131,7 +133,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.48 1998/10/16 16:14:58 remi Exp $"; }
+return "@(#)$Id: network.cpp,v 1.49 1998/10/26 02:55:04 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -148,7 +150,8 @@ extern "C"
 {
 #include <errno.h>     // for errno and EINTR
 };
-#elif (CLIENT_OS == OS_DOS) /* sockerrno != errno */ || (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32) || \
+      (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
 #  define ERRNO_IS_UNUSABLE 
 #else
 #include <errno.h>     // for errno and EINTR
@@ -156,7 +159,6 @@ extern "C"
 
 #include "network.h"   // thats us
 extern int NetCheckIsOK(void); // used before doing i/o
-#define Time() (CliGetTimeString(NULL,1))
 
 //----------------------------------------------------------------------
 
@@ -291,7 +293,7 @@ Network::Network( const char * Preferred, const char * Roundrobin,
      ((dummy = offsetof(SOCKS5METHODREPLY, end)) != 2) ||
      ((dummy = offsetof(SOCKS5USERPWREPLY, end)) != 2) ||
      ((dummy = offsetof(SOCKS5, end)) != 10))
-    LogScreenf("[%s] Network::Socks Incorrectly packed structures.\n",Time());
+    LogScreenf("Network::Socks Incorrectly packed structures.\n");
 }
 
 
@@ -418,7 +420,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
   if (!success)
     {
     if (verbose_level > 0) 
-      LogScreen("[%s] Network::failed to create network socket.\n", Time() );
+      LogScreen("Network::failed to create network socket.\n");
     }
     
   if (success)  
@@ -465,8 +467,8 @@ int Network::Open( void )               // returns -1 on error, 0 on success
           retries++;
 
           if (verbose_level > 0)
-            LogScreen("[%s] Network::failed to resolve hostname \"%s\"\n", 
-                         Time(), conntohost);
+            LogScreen("Network::failed to resolve hostname \"%s\"\n", 
+                         conntohost);
           }
         }  // NetCheckIsOK())
       } // if (lastaddress == 0)
@@ -512,8 +514,8 @@ int Network::Open( void )               // returns -1 on error, 0 on success
             lastaddress = 0;
             
             if (verbose_level > 0)
-              LogScreen("[%s] Network::failed to resolve hostname \"%s\"\n", 
-                          Time(), hostname);
+              LogScreen("Network::failed to resolve hostname \"%s\"\n", 
+                          hostname);
             }
           } // if (Resolve(hostname, lasthttpaddress ) < 0)
         } // if (NetCheckIsOK())
@@ -531,7 +533,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       else if (p && (strcmpi(p,".distributed.net")==0 || 
            strcmpi(p,".v27.distributed.net")==0) && autofindkeyserver)
         conntohost = "distributed.net";
-      LogScreen("[%s] Connecting to %s:%u...\n", Time(), conntohost,
+      LogScreen("Connecting to %s:%u...\n", conntohost,
                                               ((unsigned int)(lastport)) );
       }
     success = ( LowLevelConnectSocket( lastaddress, lastport ) == 0 );
@@ -539,8 +541,8 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       {
       if (verbose_level > 0)
         {
-        LogScreen( "[%s] Connect to host %s:%u failed.\n",
-           Time(),  __inet_ntoa__(lastaddress), (unsigned int)(lastport));
+        LogScreen( "Connect to host %s:%u failed.\n",
+           __inet_ntoa__(lastaddress), (unsigned int)(lastport));
         }
       #ifdef ERRNO_IS_UNUSABLE 
         {
@@ -579,8 +581,8 @@ int Network::Open( void )               // returns -1 on error, 0 on success
     success = ( InitializeConnection() == 0 );
     if (!success && verbose_level > 0)
       {
-      LogScreen( "[%s] Network::Failed to initialize %sconnection.\n",
-       Time(), ((!startmode)?(""):((startmode & MODE_SOCKS5)?("SOCKS5 "):
+      LogScreen( "Network::Failed to initialize %sconnection.\n",
+       ((!startmode)?(""):((startmode & MODE_SOCKS5)?("SOCKS5 "):
        ((startmode & MODE_SOCKS4)?("SOCKS4 "):
        ((startmode & MODE_HTTP)?("HTTP "):("??? "))))));
       }
@@ -590,7 +592,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
     {
     isnonblocking = ( MakeNonBlocking() == 0 );
     if (verbose_level > 1) //debug
-      LogScreen("[%s] Network::Connected (%sblocking).\n", Time(),
+      LogScreen("Network::Connected (%sblocking).\n", 
                                  ((isnonblocking)?("non-"):("")) );
     }
 
@@ -648,8 +650,8 @@ int Network::InitializeConnection(void)
     if (psocks5mreply->ver != 5)
       {
       if (verbose_level > 0)
-      LogScreen("[%s] SOCKS5 authentication has wrong version, %d should be 5\n", 
-                           Time(), psocks5mreply->ver);
+      LogScreen("SOCKS5 authentication has wrong version, %d should be 5\n", 
+                            psocks5mreply->ver);
       goto Socks5InitEnd;
       }
 
@@ -702,8 +704,7 @@ int Network::InitializeConnection(void)
         {
         if (verbose_level > 0)
           {
-          LogScreen("[%s] SOCKS5 user %s rejected by server.\n", 
-                     Time(), username);
+          LogScreen("SOCKS5 user %s rejected by server.\n", username);
           }       
         goto Socks5InitEnd;
         }
@@ -711,7 +712,7 @@ int Network::InitializeConnection(void)
     else 
       {
       if (verbose_level > 0)
-        LogScreen("[%s] SOCKS5 authentication method rejected.\n", Time());
+        LogScreen("SOCKS5 authentication method rejected.\n");
       goto Socks5InitEnd;
       }
 
@@ -732,8 +733,8 @@ int Network::InitializeConnection(void)
     if (psocks5->ver != 5)
       {
       if (verbose_level > 0)
-        LogScreen("[%s] SOCKS5 reply has wrong version, %d should be 5\n", 
-                           Time(), psocks5->ver);
+        LogScreen("SOCKS5 reply has wrong version, %d should be 5\n", 
+                           psocks5->ver);
       goto Socks5InitEnd;
       }
 
@@ -743,9 +744,7 @@ int Network::InitializeConnection(void)
       }
     else if (verbose_level > 0)
       {
-      LogScreen("[%s] SOCKS5 server error connecting to keyproxy: \n"
-                " %s  %s",
-               Time(), CliGetTimeString(NULL,0),
+      LogScreen("SOCKS5 server error connecting to keyproxy:\n%s", 
                 (psocks5->cmdORrep >=
                 (sizeof Socks5ErrorText / sizeof Socks5ErrorText[0]))
                 ? "unrecognized SOCKS5 error"
@@ -784,7 +783,7 @@ Socks5InitEnd:
           }
         else if (verbose_level > 0)
           {
-          LogScreen("[%s] SOCKS4 request rejected%s\n", Time(), 
+          LogScreen("SOCKS4 request rejected%s.\n", 
             (psocks4->CD == 91)
              ? ""
              :
@@ -1083,11 +1082,7 @@ s32 Network::Put( u32 length, const char * data )
       #if 0      
         in_addr addr;
         addr.s_addr = lasthttpaddress;
-        #if (CLIENT_OS == OS_WIN16)
-          _fstrncpy(ipbuff, inet_ntoa(addr), sizeof(ipbuff));
-        #else
-          strncpy(ipbuff, inet_ntoa(addr), sizeof(ipbuff));
-        #endif
+        strncpy(ipbuff, inet_ntoa(addr), sizeof(ipbuff));
       #endif
       } 
     else
@@ -1294,9 +1289,8 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
     sin.sin_port = htons( that_port ); 
     sin.sin_addr.s_addr = that_address;
 
-    if (connect(sock, (struct sockaddr *) &sin, sizeof(sin)) < 0)
-      return -1;
-    return 0;
+    if (!(connect(sock, (struct sockaddr *) &sin, sizeof(sin)) < 0))
+      return 0;
     }
   #else //no socket support
   if (!that_address && !that_port)
