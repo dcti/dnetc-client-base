@@ -54,6 +54,9 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/probman.obj    \
 	$(OUTPUTPATH)/probfill.obj   \
 	$(OUTPUTPATH)/bench.obj      \
+	$(OUTPUTPATH)/console.obj    \
+	$(OUTPUTPATH)/w32cons.obj    \
+	$(OUTPUTPATH)/w32svc.obj     \
 	$(OUTPUTPATH)/setprio.obj    
 
 PREBUILT_OBJS =                   \
@@ -91,8 +94,10 @@ RC5_LIBS = wsock32.lib advapi32.lib
 {$(RC5PATH)/nasm}.asm{$(OUTPUTPATH)}.obj:
 	nasm -o $(@:/=\) -f coff -i $(RC5PATH:/=\)\nasm\ $(**:/=\)
 
-
 {$(DESPATH)}.cpp{$(OUTPUTPATH)}.obj:
+	cl -c $(OPTS_MSVC) -Fo$@ $**
+
+{$(PLATPATH)/win32cli}.cpp{$(OUTPUTPATH)}.obj:
 	cl -c $(OPTS_MSVC) -Fo$@ $**
 
 {$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj:

@@ -54,6 +54,7 @@ common/pollsys.o_ppc\
 common/probman.o_ppc\
 common/probfill.o_ppc\
 common/bench.o_ppc\
+common/console.o_ppc\
 common/setprio.o_ppc
 
 RC5_OBJS_PPC	=\
@@ -108,6 +109,7 @@ common/pollsys.o_68k\
 common/probman.o_68k\
 common/probfill.o_68k\
 common/bench.o_68k\
+common/console.o_68k\
 common/setprio.o_68k
 
 RC5_OBJS_68K	=\
@@ -213,6 +215,7 @@ common/pollsys.o_ppc    :       common/pollsys.cpp
 common/probman.o_ppc    :       common/probman.cpp
 common/probfill.o_ppc   :       common/probfill.cpp
 common/bench.o_ppc      :       common/bench.cpp
+common/console.o_ppc    :       common/console.cpp
 common/setprio.o_ppc    :       common/setprio.cpp
 
 # RC5 Dependencies
@@ -267,6 +270,7 @@ common/pollsys.o_68k    :       common/pollsys.cpp
 common/probman.o_68k    :       common/probman.cpp
 common/probfill.o_68k   :       common/probfill.cpp
 common/bench.o_68k      :       common/bench.cpp
+common/console.o_68k    :       common/console.cpp
 common/setprio.o_68k    :       common/setprio.cpp
 
 # RC5 Dependencies
