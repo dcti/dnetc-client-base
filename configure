@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.43  1998/06/16 09:01:46  kbracey
+# Another attempt to fix ident rule in a way that works for everyone.
+#
 # Revision 1.42  1998/06/16 06:27:33  remi
 # - Integrated some patches in the UltraSparc DES code.
 # - Cleaned-up C++ style comments in the UltraSparc DES code.
@@ -832,7 +835,7 @@ echo "	find . -name '*~' -exec rm {} \\;" >> Makefile
 echo "" >> Makefile
 
 echo "ident:	${EXENAME}" >> Makefile
-echo "	ident ${EXENAME} | awk '{ printf(\"%-30s %10s %s %s %s %s\\n\", \$\$2,\$\$3,\$\$4,\$\$5,\$\$6,\$\$7)}'" >> Makefile
+echo "	ident ${EXENAME} | awk '{ printf(\"%-30s %10s %s %s %s %s%c\", \$\$2,\$\$3,\$\$4,\$\$5,\$\$6,\$\$7,10)}'" >> Makefile
 echo "" >> Makefile
 
 #
