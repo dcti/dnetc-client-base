@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.72 2004/12/01 03:14:05 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.73 2004/12/20 04:12:12 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1275,7 +1275,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x9F20, CPU_F_I686, 0x0B, "Pentium 4 (Northwood)" },
           {  0xAF20, CPU_F_I686, 0x0B, "Celeron 4 (Northwood)" },
           {  0xBF20, CPU_F_I686, 0x0B, "Xeon" },
-          {  0xCF20, CPU_F_I686, 0x0B, "Xeon MP" },
+          {  0xCF20, CPU_F_I686, 0x0B, "Xeon MP" }, /* (#3696) */
           {  0xEF20, CPU_F_I686, 0x0B, "Mobile Pentium 4-M (Northwood)" },
           {  0xFF20, CPU_F_I686, 0x0B, "Mobile Celeron 4 (Northwood)" },
           {  0x0F30, CPU_F_I686, 0x0B, "Pentium 4 (Prescott)" }, /* (#3627) */
