@@ -479,6 +479,7 @@ static int ogr_getresult(void *state, void *result, int resultlen)
 
 static int ogr_destroy(void *state)
 {
+  state = state;
   return CORE_S_OK;
 }
 
