@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.5  1998/08/15 21:34:00  jlawson
+// corrected loss of precision warning
+//
 // Revision 1.4  1998/08/10 21:53:56  cyruspatel
 // Two major changes to work around a lack of a method to detect if the network
 // availability state had changed (or existed to begin with) and also protect
@@ -23,7 +26,7 @@
 //
 
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.4 1998/08/10 21:53:56 cyruspatel Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.5 1998/08/15 21:34:00 jlawson Exp $"; }
 
 //---------------------------------------------------------------------
 //#define TEST  //standalone test
@@ -83,7 +86,7 @@ static int IsHostnameDNetKeyserver( const char *hostname, int *tzdiff )
     {
     strcpy( buffer, hostname );
     for ( pos = 0; pos < i; pos++ )
-      buffer[pos] = tolower( hostname[pos] );
+      buffer[pos] = (char)tolower( hostname[pos] );
     if ( strcmp( buffer, "rc5proxy.distributed.net" )==0 ) //old name
       {
       if ( tzdiff ) *tzdiff = 0;
