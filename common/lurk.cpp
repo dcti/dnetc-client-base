@@ -14,11 +14,10 @@
  *                  DialIfNeeded() and HangupIfNeeded()
 */
 
-//#define LURKDEBUG
 //#define TRACE
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.14 2000/01/11 05:23:21 snake Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.15 2000/02/04 08:07:31 cyp Exp $"; }
 
 /* ---------------------------------------------------------- */
 
@@ -71,8 +70,11 @@ int Lurk::CheckIfConnectRequested(void) //yes/no
   if ((conf.lurkmode & (CONNECT_LURKONLY|CONNECT_LURK)) == 0)
     return 0; // We're not supposed to lurk!
 
+  TRACE_OUT((+1,"Lurk::CheckIfConnectRequested\n"));
+
   if (IsConnected()) //we are connected!
   {
+    TRACE_OUT((0,"IsConnected() => yes\n"));
     if ( lastcheckshowedconnect == 0 ) // We previously weren't connected
     {
       if (conndevice[0]==0) /* only win16 has no name */
@@ -81,6 +83,7 @@ int Lurk::CheckIfConnectRequested(void) //yes/no
         LogScreen("Connection detected on '%s'...\n", conndevice );
     }
     lastcheckshowedconnect = 1;
+    TRACE_OUT((-1,"Lurk::CheckIfConnectRequested returning '1'\n"));
     return 1;
   }
   else if ( lastcheckshowedconnect ) // we were previously connected...connection lost
@@ -91,6 +94,7 @@ int Lurk::CheckIfConnectRequested(void) //yes/no
       msg = " and will not be re-initiated";
     LogScreen("Connection lost%s.\n",msg);
   }
+  TRACE_OUT((-1,"Lurk::CheckIfConnectRequested returning '0'\n"));
   return 0;
 }
 
@@ -199,44 +203,46 @@ int Lurk::GetCapabilityFlags(void)
   TRACE_OUT((+1,"Lurk::GetCapabilityFlags()\n"));
 
 #if (CLIENT_OS == OS_WIN32)
-  static int caps = -1;
-  if (caps == -1)
   {
-    OSVERSIONINFO osver;
-    osver.dwOSVersionInfoSize = sizeof(osver);
-    TRACE_OUT((+1,"Lurk::GetCapabilityFlags() ras check.\n"));
-    //if ( RasHangUp( (HRASCONN)-1 ) == ERROR_INVALID_HANDLE )
-    //  what |= (CONNECT_LURK|CONNECT_LURKONLY|CONNECT_DODBYPROFILE);
-    if (GetConnectionProfileList() != NULL)
-      what |= (CONNECT_LURK|CONNECT_LURKONLY|CONNECT_DODBYPROFILE);
-    TRACE_OUT((-1,"Lurk::GetCapabilityFlags() ras checked. caps=0x%08x\n",what));
-    if ( GetVersionEx( &osver ) != 0 )
+    static int caps = -1;
+    if (caps == -1)
     {
-      int isok = 1;
-      OFSTRUCT ofstruct;
-      ofstruct.cBytes = sizeof(ofstruct);
-      #ifndef OF_SEARCH
-      #define OF_SEARCH 0x0400
-      #endif
-      TRACE_OUT((+1,"Lurk::GetCapabilityFlags() ioctl check.\n"));
-      if (osver.dwPlatformId == VER_PLATFORM_WIN32_NT)
+      OSVERSIONINFO osver;
+      osver.dwOSVersionInfoSize = sizeof(osver);
+      if ( GetVersionEx( &osver ) != 0 )
       {
-        #if !defined(_MSC_VER) || defined(_M_ALPHA) //strange, eh?
-        isok = ((osver.dwMajorVersion > 4) ||
-                (osver.dwMajorVersion == 4 &&
-                 strncmp(osver.szCSDVersion,"Service Pack ",13)==0 &&
-                 atoi(&(osver.szCSDVersion[13])) >= 4));
-        //http://support.microsoft.com/support/kb/articles/q181/5/20.asp
-        //http://support.microsoft.com/support/kb/articles/q170/6/42.asp
+        int isok = 1;
+        OFSTRUCT ofstruct;
+        ofstruct.cBytes = sizeof(ofstruct);
+        #ifndef OF_SEARCH
+        #define OF_SEARCH 0x0400
         #endif
+        TRACE_OUT((+1,"Lurk::GetCapabilityFlags() ioctl check.\n"));
+        if (osver.dwPlatformId == VER_PLATFORM_WIN32_NT)
+        {
+          #if !defined(_MSC_VER) || defined(_M_ALPHA) //strange, eh?
+          isok = ((osver.dwMajorVersion > 4) ||
+                  (osver.dwMajorVersion == 4 &&
+                   strncmp(osver.szCSDVersion,"Service Pack ",13)==0 &&
+                   atoi(&(osver.szCSDVersion[13])) >= 4));
+          //http://support.microsoft.com/support/kb/articles/q181/5/20.asp
+          //http://support.microsoft.com/support/kb/articles/q170/6/42.asp
+          #endif
+        }
+        if (isok && OpenFile( "WS2_32.DLL", &ofstruct, OF_EXIST|OF_SEARCH)!=HFILE_ERROR)
+          what |= (CONNECT_LURK|CONNECT_LURKONLY|CONNECT_IFACEMASK);
+        TRACE_OUT((-1,"end: Lurk::GetCapabilityFlags() ioctl check end. caps=0x%08x\n",what));
       }
-      if (isok && OpenFile( "WS2_32.DLL", &ofstruct, OF_EXIST|OF_SEARCH)!=HFILE_ERROR)
-        what |= (CONNECT_LURK|CONNECT_LURKONLY|CONNECT_IFACEMASK);
-      TRACE_OUT((-1,"end: Lurk::GetCapabilityFlags() ioctl check end. caps=0x%08x\n",what));
+      caps = what;
     }
-    caps = what;
+    what |= caps;
   }
-  what = caps;
+  TRACE_OUT((+1,"Lurk::GetCapabilityFlags() ras check.\n"));
+  //if ( RasHangUp( (HRASCONN)-1 ) == ERROR_INVALID_HANDLE )
+  //  what |= (CONNECT_LURK|CONNECT_LURKONLY|CONNECT_DODBYPROFILE);
+  if (GetConnectionProfileList() != NULL)
+    what |= (CONNECT_LURK|CONNECT_LURKONLY|CONNECT_DODBYPROFILE);
+  TRACE_OUT((-1,"Lurk::GetCapabilityFlags() ras checked. caps=0x%08x\n",what));
 #elif (CLIENT_OS == OS_WIN16)
   OFSTRUCT ofstruct;
   ofstruct.cBytes = sizeof(ofstruct);
@@ -544,6 +550,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
     return 1;
 
 #elif (CLIENT_OS == OS_WIN32)
+  TRACE_OUT((+1,"Lurk::IsConnected()\n"));
   if ((GetCapabilityFlags() & CONNECT_IFACEMASK) != 0 /* have working WS2_32 */
    && (!mask_default_only || (GetCapabilityFlags() & CONNECT_DODBYPROFILE)==0))
   {
@@ -683,6 +690,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
     DWORD cb, whichconn, cConnections;
     int foundconn = 0;
 
+    TRACE_OUT((+1,"Lurk::IsConnected() [BYPROFILE]\n"));
     cb = sizeof(rasconn);
     rasconn.dwSize = sizeof(RASCONN);
     rasconnp = &rasconn;
@@ -700,6 +708,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
         }
       }
     }
+    TRACE_OUT((0,"number of profiles: %d\n",cConnections));
 
     for (whichconn = 0; whichconn < cConnections; whichconn++ )
     {
@@ -721,6 +730,8 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
 
     if (rasconnp != NULL && rasconnp != &rasconn)
       free((void *)rasconnp );
+
+    TRACE_OUT((-1,"found conn?: %d\n",foundconn));
     if (foundconn)
       return 1;
   }
@@ -912,17 +923,31 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
 
 int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
 {                                /* returns 0 if connected, -1 if error */
+  TRACE_OUT((+1,"Lurk::DialIfNeeded()\n"));
+
   if (!islurkstarted)
+  {
+    TRACE_OUT((+1,"!islurkstarted. returning -1\n"));
     return -1; // Lurk can't be started, evidently
+  }
 
   if (!conf.dialwhenneeded)           // We don't handle dialing
+  {
+    TRACE_OUT((-1,"!conf.dialwhenneeded. returning 0\n"));
     return 0;
+  }
 
   if (IsConnected()) // We're already connected
+  {
+    TRACE_OUT((-1,"already connected. returning 0\n"));
     return 0;
+  }
 
   if (conf.lurkmode == CONNECT_LURKONLY && !force)
+  {
+    TRACE_OUT((-1,"(conf.lurkmode == CONNECT_LURKONLY && !force). returning -1\n"));
     return -1; // lurk-only, we're not allowed to connect unless forced
+  }
 
 #if (CLIENT_OS == OS_WIN16)
 
@@ -951,11 +976,14 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
     char buffer[260]; /* maximum registry key length */
     const char *connname = (const char *)(&conf.connprofile[0]);
 
+    TRACE_OUT((0,"((GetCapabilityFlags() & CONNECT_DODBYPROFILE) != 0)\n"));
+
     dohangupcontrol = 0;           // whether we do HangupIfNeeded() or not
 
     if (*connname == 0)
     {
       HKEY hkey;
+      TRACE_OUT((0,"No connname provided. Trying to get default.\n"));
       if (RegOpenKey(HKEY_CURRENT_USER,"RemoteAccess",&hkey) == ERROR_SUCCESS)
       {
         DWORD valuetype = REG_SZ;
@@ -967,7 +995,9 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
       }
       if (*connname == 0)
       {
+        TRACE_OUT((0,"No default, getting first on list\n"));
         const char **connlist = GetConnectionProfileList();
+        TRACE_OUT((0,"GetConnectionProfileList() => %p\n", connlist));
         if (connlist)
         {
           int j;
@@ -978,6 +1008,7 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
           return -1;
       }
     }
+    TRACE_OUT((0,"using profile='%s'\n", connname));
     dialparameters.dwSize=sizeof(RASDIALPARAMS);
     strcpy(dialparameters.szEntryName,connname);
     strcpy(dialparameters.szPhoneNumber,"");
@@ -986,23 +1017,25 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
     strcpy(dialparameters.szPassword,"");
     strcpy(dialparameters.szDomain,"*");
 
+    TRACE_OUT((0,"RasGetEntryDialParams()\n"));
     returnvalue =
       RasGetEntryDialParams(NULL,&dialparameters,&passwordretrieved);
+    TRACE_OUT((0,"RasGetEntryDialParams() => %d\n", returnvalue));
 
     if ( returnvalue==0 )
     {
       HRASCONN connhandle = NULL;
 
-      //if (passwordretrieved != TRUE)
-      //  LogScreen("Password could not be found, connection may fail.\n");
-
       LogScreen("Dialing '%s'...\n",dialparameters.szEntryName);
+      TRACE_OUT((0,"RasDial()\n"));
       returnvalue = RasDial(NULL,NULL,&dialparameters,NULL,NULL,&connhandle);
+      TRACE_OUT((0,"RasDial() => %d\n", returnvalue));
 
       if (returnvalue == 0)
       {
         hRasDialConnHandle = connhandle; //we only hangup this connection
         dohangupcontrol = 1;  // we also control hangup
+        TRACE_OUT((-1,"DialIfNeeded() => 0\n"));
         return 0;
       }
       else if (connhandle != NULL)
@@ -1023,12 +1056,12 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
     }
     else
     {
-      if (RasGetErrorString(returnvalue,buffer,sizeof(buffer)) == 0)
-        LogScreen("Dial cancelled: %s\n", buffer);
-      else
-        LogScreen("Dial cancelled: Unknown RAS error %ld\n", (long) returnvalue);
+      if (RasGetErrorString(returnvalue,buffer,sizeof(buffer)) != 0)
+        sprintf( buffer, "Unknown RAS error %ld", (long) returnvalue );
+      LogScreen("Dial cancelled:\n%s\n", buffer);
     }
   }
+  TRACE_OUT((-1,"DialIfNeeded() => -1\n"));
   return -1;
 
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2) || \
@@ -1074,15 +1107,28 @@ int Lurk::HangupIfNeeded(void) //returns 0 on success, -1 on fail
 {
   int isconnected;
 
-  if (!islurkstarted)      // Lurk can't be started, evidently
-    return -1;
-  if (!conf.dialwhenneeded)     // We don't handle dialing
-    return 0;
+  TRACE_OUT((+1,"Lurk::HangupIfNeeded()\n"));
 
+  if (!islurkstarted)      // Lurk can't be started, evidently
+  {
+    TRACE_OUT((-1,"!islurkstarted. returning -1\n"));
+    return -1;
+  }
+  if (!conf.dialwhenneeded)     // We don't handle dialing
+  {
+    TRACE_OUT((-1,"!conf.dialwhenneeded. returning 0\n"));
+    return 0;
+  }
+
+  TRACE_OUT((0,"IsConnected() check\n"));
   isconnected = IsConnected();
+  TRACE_OUT((0,"IsConnected() returned %d\n",isconnected));
 
   if (!dohangupcontrol) //if we didn't initiate, we shouldn't terminate
+  {
+    TRACE_OUT((-1,"we didn't initiate, so returning\n"));
     return ((isconnected)?(-1):(0));
+  }
 
 #if (CLIENT_OS == OS_WIN16)
   if (hWinsockInst)
@@ -1095,6 +1141,7 @@ int Lurk::HangupIfNeeded(void) //returns 0 on success, -1 on fail
 
 #elif (CLIENT_OS == OS_WIN32)
 
+  TRACE_OUT((0,"HUP-stage-01\n"));
   if (isconnected)
   {
     RASCONN rasconn;
@@ -1104,45 +1151,68 @@ int Lurk::HangupIfNeeded(void) //returns 0 on success, -1 on fail
     cb = sizeof(rasconn);
     rasconn.dwSize = sizeof(RASCONN);
     rasconnp = &rasconn;
+    TRACE_OUT((0,"HUP-stage-02\n"));
     if (RasEnumConnections( rasconnp, &cb, &cConnections) != 0)
     {
       cConnections = 0;
+      TRACE_OUT((0,"HUP-stage-03\n"));
       if (cb > (DWORD)(sizeof(RASCONN)))
       {
         rasconnp = (RASCONN *) malloc( (int)cb );
+        TRACE_OUT((0,"HUP-stage-04\n"));
         if (rasconnp)
         {
+          TRACE_OUT((0,"HUP-stage-05\n"));
           rasconnp->dwSize = sizeof(RASCONN);
           if (RasEnumConnections( rasconnp, &cb, &cConnections) != 0)
             cConnections = 0;
+          TRACE_OUT((0,"HUP-stage-06\n"));
         }
+        TRACE_OUT((0,"HUP-stage-07\n"));
       }
+      TRACE_OUT((0,"HUP-stage-08\n"));
     }
+    TRACE_OUT((0,"HUP-stage-09\n"));
 
+
+    TRACE_OUT((0,"HUP-stage-10\n"));
     for (whichconn = 0; whichconn < cConnections; whichconn++ )
     {
       HRASCONN hrasconn = rasconnp[whichconn].hrasconn;
       if (hrasconn == hRasDialConnHandle) // same conn as opened with rasdial?
       {
+        TRACE_OUT((0,"HUP-stage-11\n"));
         RASCONNSTATUS rasconnstatus;
         rasconnstatus.dwSize = sizeof(RASCONNSTATUS);
         do{
+          TRACE_OUT((0,"HUP-stage-12\n"));
           if (RasGetConnectStatus(hrasconn,&rasconnstatus) != 0)
             break;
+          TRACE_OUT((0,"HUP-stage-13\n"));
           if (rasconnstatus.rasconnstate == RASCS_Connected)
           {
+            TRACE_OUT((0,"HUP-stage-14\n"));
             if (RasHangUp( hrasconn ) != 0)
               break;
+            TRACE_OUT((0,"HUP-stage-15\n"));
             Sleep(1000);
           }
+          TRACE_OUT((0,"HUP-stage-16\n"));
         } while (rasconnstatus.rasconnstate == RASCS_Connected);
+        TRACE_OUT((0,"HUP-stage-17\n"));
       }
+      TRACE_OUT((0,"HUP-stage-18\n"));
     }
+    TRACE_OUT((0,"HUP-stage-19\n"));
 
     if (rasconnp != NULL && rasconnp != &rasconn)
+    {
+      TRACE_OUT((0,"HUP-stage-20\n"));
       free((void *)rasconnp );
+    }
   }
 
+  TRACE_OUT((-1,"returning 0\n"));
   hRasDialConnHandle = NULL;
   dohangupcontrol = 0;
   return 0;
