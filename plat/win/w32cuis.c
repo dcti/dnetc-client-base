@@ -12,7 +12,7 @@
  * The pipe shim itself is generic and will work without changes with any 
  * backend that SetStdHandle()s the 'advertised' pipe ends.
  *
- * $Id: w32cuis.c,v 1.1.2.1 2001/01/21 15:10:25 cyp Exp $
+ * $Id: w32cuis.c,v 1.1.2.2 2001/04/10 00:51:09 cyp Exp $
 */
 
 /* #define HAVE_EXEC_AS_TEMPFILE */  /* davehart's solution */
@@ -28,37 +28,45 @@ extern int main(void);
    winapi executable. Its a size saving of about 20K.
 */
 #if defined(__WATCOMC__)
-#pragma intrinsic(memset)             /* ZeroMemory is redef'd to memset */
-#pragma off (check_stack)             /* doesn't work. need wcl /s ... */
-#pragma comment(lib,"kernel32")       /* need kernel32.lib */
-#pragma comment(lib,"user32")         /* need user32.lib as well */
-#pragma code_seg ( "BEGTEXT" );       /* entry point is main */
-int __syscall mainCRTStartup(void) { return main(); }
-#pragma code_seg ( "_TEXT" );        
-int _argc;                            /* compiler always references this */
-int __syscall _cstart_(void) { return main(); } /* ... and this */
+
+  #pragma intrinsic(memset)             /* ZeroMemory is redef'd to memset */
+  #pragma off (check_stack)             /* doesn't work. need wcl /s ... */
+  #pragma comment(lib,"kernel32")       /* need kernel32.lib */
+  #pragma comment(lib,"user32")         /* need user32.lib as well */
+  #pragma code_seg ( "BEGTEXT" );       /* entry point is main */
+  int __syscall mainCRTStartup(void) { return main(); }
+  #pragma code_seg ( "_TEXT" );        
+  int _argc;                            /* compiler always references this */
+  int __syscall _cstart_(void) { return main(); } /* ... and this */
+
 #elif defined(_MSC_VER)
-#pragma intrinsic(memset)             /* ZeroMemory is redef'd to memset */
-#pragma check_stack(off)              /* turn off stack checking */
-#pragma comment(lib,"kernel32")       /* need kernel32.lib */
-#pragma comment(lib,"user32")         /* need user32.lib as well */
-int mainCRTStartup(void) {return main();} /* entry point is main */
-#pragma comment(linker, "/subsystem:console")
-#pragma comment(linker, "/entry:main") /* entry point is main */
+
+  #pragma intrinsic(memset)             /* ZeroMemory is redef'd to memset */
+  #pragma check_stack(off)              /* turn off stack checking */
+  #pragma comment(lib,"kernel32")       /* need kernel32.lib */
+  #pragma comment(lib,"user32")         /* need user32.lib as well */
+  int mainCRTStartup(void) {return main();} /* entry point is main */  
+  #pragma comment(linker, "/subsystem:console")
+  #pragma comment(linker, "/entry:main") /* entry point is main */
+
+#elif defined(__BORLANDC__)
+
+  /* mainCRTStartup() [or whatever] must be the first function in the file */
+  int mainCRTStartup(void) {return main();} /* entry point is main */  
+
+  void *memset(void *s,int ch,unsigned int len) 
+  {                             /* grrr! ZeroMemory() is redef'd! */
+    char *p = (char *)s;
+    char *e = p+len;
+    while (p<e)
+      *p++ = (char)ch;
+    return s;
+  } 
+
 #else
-void *memset(void *s,int ch,unsigned int len) 
-{                             /* grrr! ZeroMemory() is redef'd! */
-  char *p = (char *)s;
-  char *e = p+len;
-  while (p<e)
-    *p++ = (char)ch;
-  return s;
-}
-#endif
 
-/* -------------------------------------------------------------------- */
+  int mainCRTStartup(void) {return main();} /* entry point is main */  
 
-#if defined(__WATCOMC__) /* || defined(MSC_VER) */
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -181,8 +189,8 @@ static char *__constructCmdLine(const char *filename,
 
 /* ---------------------------------------------------------------- */
 
-HWND __advertised_cmd_hwnd = 0;
-DWORD __dwChildPid = 0;
+static HWND __advertised_cmd_hwnd = 0;
+static DWORD __dwChildPid = 0;
 static BOOL WINAPI TriggerControl(DWORD dwCtrlType)
 {
   if (dwCtrlType == CTRL_BREAK_EVENT || /* \_ only break and ^C are  */
@@ -514,14 +522,14 @@ static int __ansigetopts( const char *cmdbuf, int cmdbuflen,
     return -1;
   if (cmdbuflen > 3)
   {
-    int pos, val1, val2, opcount, have1, have2;
+    int pos, val1, val2, have1, have2, opcount;
     val1 = val2 = have1 = have2 = opcount = 0;
     for (pos = 2; pos < cmdbuflen; pos++)
     {
       char c = cmdbuf[pos];
       if (c >= '0' && c <= '9')
       {
-        c -= '0';
+        c = (char)(c - '0');
         if (opcount == 0)
         {
           have1++;
@@ -537,11 +545,8 @@ static int __ansigetopts( const char *cmdbuf, int cmdbuflen,
       }  
       else if (c == ';' || pos == (cmdbuflen-1))
       {
-        if (opcount == 0)
-          opcount = 1;
-        else /* if (opcount == 1) */
+        if ((++opcount) > 1) /* opcount == 2 */
         {
-          opcount = 2;
           break;
         }
       }
@@ -740,7 +745,7 @@ static DWORD __exec_with_pipes(const char *filename) /* cyp's solution */
                   si.lpReserved2 == NULL)
               {
                 si.cbReserved2 = (sizeof(int)+((1+sizeof(HANDLE))*3));
-                si.lpReserved2 = &cHandleInfo[0];
+                si.lpReserved2 = (void *)(&cHandleInfo[0]);
                 *((int *)(si.lpReserved2)) = 3;
               }
               /* this is how the msvc runtime does it */
@@ -950,8 +955,8 @@ static DWORD __exec_with_pipes(const char *filename) /* cyp's solution */
                         if (!ansicmdquote &&
                            (c>='A' && c<='Z') || (c>='a' && c<='z'))
                         {
-                          if (ansicmdbuf[ansicmdbuflen-1] = c)
-                          {
+                          if (ansicmdbuflen < (sizeof(ansicmdbuf)-1))
+                          {           /* command fit completely in buffer */   
                             /* evaluate ansi commands here */
                             CONSOLE_SCREEN_BUFFER_INFO csbi;
                             COORD coord;

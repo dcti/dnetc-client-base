@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.44 2001/03/13 23:46:49 teichp Exp $
+ * $Id: ogr.cpp,v 1.1.2.45 2001/04/10 00:50:16 cyp Exp $
  */
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
@@ -27,7 +27,7 @@
   #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* 0-2 - default is 0 */
 #elif (defined(OVERWRITE_DEFAULT_OPTIMIZATIONS))  
   /* defines reside in an external file */
-#elif (defined(ASM_X86) || defined(__386__))
+#elif (defined(ASM_X86) || defined(__386__) || defined(_M_IX86))
   #if defined(OGR_NOFFZ) 
     /* the bsr insn is slooooow on anything less than a PPro */
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 0
@@ -1715,7 +1715,7 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
   #undef BoL
 };
 #else
-  #define BITOFLIST(x) 0x80000000>>((x-1)&0x1f) /*0x80000000 >> ((x-1) % 32)*/
+  #define BITOFLIST(x) (0x80000000>>((x-1)&0x1f)) /*0x80000000 >> ((x-1) % 32)*/
 #endif
 
 
@@ -2101,7 +2101,7 @@ static int found_one(const struct State *oState)
       return result;
     }
   #else /* C code, no asm */
-  static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int input)
+  static __inline int LOOKUP_FIRSTBLANK(register unsigned int input)
   {
     register int result = 0;
     if (input >= 0xffff0000) {

@@ -48,7 +48,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.35 2001/04/01 11:38:48 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.36 2001/04/10 00:51:09 cyp Exp $"; }
 
 //#define TRACE
 
@@ -933,7 +933,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
         TRACE_OUT((0,"ioctl InternalIsConnected() [2]\n"));
 
         if (( (*((int (PASCAL FAR *)(WORD, LPWSADATA))(__WSAStartup)))
-                                         (MAKEWORD(2,2), &winsockData)) == 0)
+                                         (0x202, &winsockData)) == 0)
         {
           #define LPWSAPROTOCOL_INFO void *
           #define GROUP unsigned int
