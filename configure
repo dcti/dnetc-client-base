@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.233 1999/10/10 23:45:56 gregh Exp $
+# @(#)$Id: configure,v 1.234 1999/10/10 23:59:46 gregh Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -313,6 +313,7 @@ DESULTRA_SRCS_ASM="des/ultrasparc/des-slice-ultrasparc.cpp \
 OGR_SRCS="ogr/ogr.cpp \
 	  ogr/choosedat.cpp \
 	  ogr/crc32.cpp"
+COMMON_SRCS="${COMMON_SRCS} ${OGR_SRCS}"
 
 #
 # Source files making up the CSC core code
