@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: bench.cpp,v $
+// Revision 1.21  1999/03/18 02:59:35  cyp
+// fixed that silly ((int)pow(2,int)). Whats next? "#def 1 (cos(pi)-sin(pi))"?
+//
 // Revision 1.20  1999/03/10 04:24:51  silby
 // Benchmark reflects 2^33 block ceiling now.
 //
@@ -78,7 +81,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.20 1999/03/10 04:24:51 silby Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.21 1999/03/18 02:59:35 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -96,7 +99,6 @@ return "@(#)$Id: bench.cpp,v 1.20 1999/03/10 04:24:51 silby Exp $"; }
 #include "clievent.h"  // event post etc.
 #include "bench.h"     // ourselves
 #include "confrwv.h"   // Read/Validate/WriteConfig()
-#include <math.h>      // pow()
 
 // --------------------------------------------------------------------------
 
@@ -350,7 +352,7 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
              "enough for approximately %u %s.\n", 
              CliGetContestNameFromID(contestid), 
              (unsigned int)itersize, 
-             (unsigned int)pow(2,(itersize-28)),
+             (unsigned int)((itersize-28)*(itersize-28)),
              CliGetTimeString( &tv, 2 ),recommendedblockcount,
              ((hourstobuffer > 24)?(hourstobuffer/24):(hourstobuffer)),
              ((hourstobuffer > 24)?("days"):("hours")) );
