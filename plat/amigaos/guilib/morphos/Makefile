@@ -32,9 +32,9 @@ $(TARGET): $(OBJS)
 		  $(CC) $(LDFLAGS) -nostartfiles -o $@.db $(OBJS)
 		  ppc-morphos-strip --strip-unneeded --strip-debug --remove-section .comment -o $@ $@.db
 
-GLOBAL		= CreateGui.h ../dnetcgui.h
-LibHeader.o	: LibHeader.c $(GLOBAL) LibHeader.h guilib_version.h
-LibInit.o	: LibInit.c  $(GLOBAL) LibHeader.h AppClass.h
+GLOBAL		= LibHeader.h CreateGui.h dnetcgui.h ../dnetcgui.h
+LibHeader.o	: LibHeader.c $(GLOBAL) guilib_version.h
+LibInit.o	: LibInit.c  $(GLOBAL) AppClass.h
 AppClass.o	: AppClass.c $(GLOBAL) AppClass.h
 CreateGUI.o	: CreateGUI.c $(GLOBAL) guilib_version.h
 MUIGUI.o	: MUIGUI.c $(GLOBAL)

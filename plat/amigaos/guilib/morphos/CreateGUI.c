@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: CreateGUI.c,v 1.1.2.2 2004/01/09 23:36:28 piru Exp $
+ * $Id: CreateGUI.c,v 1.1.2.3 2004/01/10 01:29:22 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -82,7 +82,7 @@ Object *CreateGUI(struct IClass *cl, Object *obj, struct ObjStore *os, struct Dn
 		MUIA_Application_DiskObject	, LibBase->dobj,
 		MUIA_Application_Commands		, commands,
 		MUIA_Application_Version		, &VerString[1],
-		MUIA_Application_Copyright		, "Ilkka Lehtoranta",
+		MUIA_Application_Copyright		, "distributed.net",
 		MUIA_Application_Author			, "Ilkka Lehtoranta",
 		MUIA_Application_Base			, "DNETC",
 		MUIA_Application_UsedClasses	, ClassList,
@@ -96,8 +96,8 @@ Object *CreateGUI(struct IClass *cl, Object *obj, struct ObjStore *os, struct Dn
 
 			WindowContents, VGroup,
 				Child, NListviewObject,
-					MUIA_Background, MUII_ReadListBack,
-					MUIA_Frame, MUIV_Frame_ReadList,
+					//MUIA_Background, MUII_ReadListBack,
+					//MUIA_Frame, MUIV_Frame_ReadList,
 					MUIA_Listview_List, os->lst	= NFloattextObject,
 						MUIA_CycleChain, TRUE,
 						MUIA_NList_ConstructHook, MUIV_NList_ConstructHook_String,
