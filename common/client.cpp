@@ -2975,11 +2975,11 @@ int main( int argc, char *argv[] )
       if ( i < 0 )
         client.LogScreenf( "\n%d Tests, Failed on RC5 Test %d\n", (int) TEST_CASE_COUNT, (int) -i );
       else
-        client.LogScreenf( "\n%d/%d RC5 Tests Passed\n", (int) TEST_CASE_COUNT, (int) i );
+        client.LogScreenf( "\n%d/%d RC5 Tests Passed\n", (int) i, (int) TEST_CASE_COUNT);
       if ( j < 0 )
         client.LogScreenf( "\n%d Tests, Failed on DES Test %d\n", (int) TEST_CASE_COUNT, (int) -j );
       else
-        client.LogScreenf( "\n%d/%d DES Tests Passed\n", (int) TEST_CASE_COUNT, (int) j );
+        client.LogScreenf( "\n%d/%d DES Tests Passed\n", (int) j, (int) TEST_CASE_COUNT);
       retcode = ( UserBreakTriggered ? -1 : 0 ); //and break out of loop
     }
     else if ( strcmp( argv[i], "-benchmark2" ) == 0 )
