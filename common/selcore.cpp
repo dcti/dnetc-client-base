@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.126 2002/03/22 02:22:20 sampo Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.127 2002/03/22 21:06:44 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -1057,15 +1057,16 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       selcorestatics.corenum[DES] = cindex;  
     }  
   }
-  #elif (CLIENT_CPU == CPU_SPARC) && ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))
+  #elif (CLIENT_CPU == CPU_SPARC)
   if (contestid == RC5)
   {
-    selcorestatics.corenum[RC5] = 0; // ultra-crunch is faster on everything I found ...
-  }
-  #elif (CLIENT_CPU == CPU_SPARC) && (CLIENT_OS == OS_LINUX)
-  if (contestid == RC5)
-  {
-    selcorestatics.corenum[RC5] = -1;
+    selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
+    #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
+    if (selcorestatics.corenum[RC5] < 0)
+      selcorestatics.corenum[RC5] = 0; // ultra-crunch is faster on everything I found ...
+    #elif (CLIENT_OS == OS_LINUX)
+    // run micro benchmark
+    #endif
   }
   #endif
 
