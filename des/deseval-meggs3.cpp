@@ -1,5 +1,8 @@
 //
 // $Log: deseval-meggs3.cpp,v $
+// Revision 1.17  1999/11/27 08:15:03  sampo
+// round one of the mac command-line client changes
+//
 // Revision 1.16  1999/11/27 06:57:34  sampo
 // Mac command-line client checkins round 1...all changes commented with /* Mindmorph */ until everything settles out.
 //
@@ -59,7 +62,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_cpp(void) {
-return "@(#)$Id: deseval-meggs3.cpp,v 1.16 1999/11/27 06:57:34 sampo Exp $"; }
+return "@(#)$Id: deseval-meggs3.cpp,v 1.17 1999/11/27 08:15:03 sampo Exp $"; }
 #endif
 
 #include <cputypes.h>		/* Isn't this needed for using CLIENT_OS defines? */
@@ -87,8 +90,7 @@ return "@(#)$Id: deseval-meggs3.cpp,v 1.16 1999/11/27 06:57:34 sampo Exp $"; }
 #if (CLIENT_OS == OS_MACOS)
 #define TICKS ((unsigned long *)0x16a)
 #define slice unsigned long
-//extern void DES_YieldToMain(void);
-extern void mac_yield(void);
+extern void DoYieldToMain(char);
 unsigned long DES_ticks_to_use = 6; /* hardcode 100ms for now */
 unsigned long DES_yield_ticks = 0;
 #endif
@@ -1058,7 +1060,7 @@ SliceType whack16(SliceType *P, SliceType *C, SliceType *K)
             #if (CLIENT_OS == OS_MACOS)
 		    if (DES_yield_ticks < *TICKS) {
 	            DES_yield_ticks = *TICKS + DES_ticks_to_use;
-			    mac_yield(0);
+			    DoYieldToMain(true);
 			}
             #endif
 

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.107 1999/11/27 06:22:59 sampo Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.108 1999/11/27 08:14:42 sampo Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -496,7 +496,7 @@ static int __StopThread( struct thread_param_block *thrparams )
         #elif (CLIENT_OS == OS_NETWARE)
         while (thrparams->threadID) delay(100);
         #elif (CLIENT_OS == OS_MACOS)
-        while (thrparams->threadID) mac_yield(60);
+        while (thrparams->threadID) tick_sleep(60);
         #elif (CLIENT_OS == OS_FREEBSD)
         while (thrparams->threadID) NonPolledUSleep(1000);
         #endif

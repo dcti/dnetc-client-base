@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.226 1999/11/26 13:08:47 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.227 1999/11/27 08:14:14 sampo Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -27,7 +27,9 @@ return "@(#)$Id: client.cpp,v 1.226 1999/11/26 13:08:47 cyp Exp $"; }
 #include "console.h"   // [De]InitializeConsole(), ConOutErr()
 #include "selcore.h"   // [De]InitializeCoreTable()
 #include "network.h"   // [De]InitializeConnectivity()
-
+#if(CLIENT_OS == OS_MACOS)
+#include "maccli.h"
+#endif
 /* ------------------------------------------------------------------------ */
 
 void ResetClientData(Client *client)
@@ -352,14 +354,177 @@ static int ClientMain( int argc, char *argv[] )
 /* ---------------------------------------------------------------------- */
 
 #if (CLIENT_OS == OS_MACOS)
-#ifdef CLIENT_17
-void main(void)
+int main( void )
 {
-  //extern void macosCliMain(int (*)(int,char **));
-  macosCliMain(ClientMain); /* sythesise a command line for ClientMain */
-  return;                 /* UI will be initialized later via console.cpp */
-}  
-#endif
+  //MaxApplZone();
+  MacInitToolbox();
+  MacMainEventLoop();
+}
+//ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
+//	¥ HandleMenuCommand
+//ÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑÑ
+//	This is called when an item is chosen from the menu bar (after calling
+//	MenuSelect or MenuKey). It performs the right operation for each command.
+//	It tries to get the command ID of the menu item selected. If it can't, or
+//	the command is unknown, we pass it on to the front window, if any. We
+//	also special case the Apple menu items.
+//	
+void
+HandleMenuCommand( long menuResult )
+{
+	short		menuID;
+	short		menuItem;
+	Str255		daName;
+	UInt32		command;
+	Boolean		handled;
+	OSErr		err;
+	int argc;
+	char **argv;
+	
+	menuID = HiWrd( menuResult );
+	menuItem = LoWrd( menuResult );
+	
+	err = GetMenuItemCommandID( GetMenuHandle( menuID ), menuItem, &command );
+	
+	handled = false;
+	
+	if ( err || command == 0 )
+	{
+		if ( menuID == mApple )
+		{
+			GetMenuItemText( GetMenuHandle( mApple ), menuItem, daName );
+			OpenDeskAcc( daName );
+			handled = true;
+		}
+	}
+	else
+	{
+		handled = true;
+		
+		switch( command )
+		{
+			case kAboutClient:
+				//DoAboutBox();
+				break;
+			/*
+			case kCloseCmd:
+				if ( FrontWindow() )
+					CloseAnyWindow( FrontWindow() );
+				break;
+			*/
+			case kQuitCmd:
+				RaiseExitRequestTrigger();
+				gQuit = true;
+				break;
+
+			case kRunNormalCmd:
+				TRACE_OUT((+1,"main()\n"));
+				easywienix(0);
+	 			TRACE_OUT((-1,"main()\n"));
+				break;
+				
+			case kRunOfflineCmd:
+				TRACE_OUT((+1,"main()\n"));
+				easywienix(1, "-runoffline");
+			 	TRACE_OUT((-1,"main()\n"));
+				break;
+			
+			case kUpdateBufferCmd:
+				TRACE_OUT((+1,"main()\n"));
+				easywienix(1, "-update");
+	 			TRACE_OUT((-1,"main()\n"));
+				break;
+			
+			case kTestCmd:
+				TRACE_OUT((+1,"main()\n"));
+				easywienix(1, "-test");
+			 	TRACE_OUT((-1,"main()\n"));
+				break;
+				
+			case kConfigureCmd:
+				TRACE_OUT((+1,"main()\n"));
+				easywienix(1, "-config");
+			 	TRACE_OUT((-1,"main()\n"));
+				break;
+			
+			case kBenchmarkAllCmd:
+				TRACE_OUT((+1,"main()\n"));
+				easywienix(1, "-benchmark2");
+			 	TRACE_OUT((-1,"main()\n"));
+				break;
+			
+			case kBenchmarkRC5Cmd:
+				TRACE_OUT((+1,"main()\n"));
+				easywienix(2, "-benchmark","rc5");
+			 	TRACE_OUT((-1,"main()\n"));
+				break;
+			
+			case kBenchmarkDESCmd:
+				TRACE_OUT((+1,"main()\n"));
+				easywienix(2, "-benchmark","des");
+			 	TRACE_OUT((-1,"main()\n"));
+				break;
+			
+			case kBenchmarkCSCCmd:
+				TRACE_OUT((+1,"main()\n"));
+				easywienix(2, "-benchmark","csc");
+			 	TRACE_OUT((-1,"main()\n"));
+				break;
+			
+			case kBenchmarkOGRCmd:
+				TRACE_OUT((+1,"main()\n"));
+				easywienix(2, "-benchmark","ogr");
+			 	TRACE_OUT((-1,"main()\n"));
+				break;
+			
+			case kCommandLine:
+				TRACE_OUT((+1,"main()\n"));
+				argc = ccommand(&argv);
+ 		 		ClientMain( argc, argv );
+	 		 	TRACE_OUT((-1,"main()\n"));
+				break;
+			
+			default:
+				handled = false;
+				break;
+		}
+	}
+	HiliteMenu(0);
+}
+void easywienix ( int my_argcount, ... )
+{
+int i, argc;
+char **argv;
+Handle userDataHandle = NULL;
+va_list arg_zeiger;
+
+
+	HiliteMenu(0);
+
+AllocateAppNames(&userDataHandle, my_argcount);
+SetApplicationName(userDataHandle);
+		
+va_start ( arg_zeiger, my_argcount );
+
+for ( i=1 ; my_argcount>=i ; i++ )
+{
+SetArgumentN(userDataHandle,i,(va_arg(arg_zeiger, char*)));
+}
+
+va_end ( arg_zeiger );
+
+ 	fileNamePtr fileNames;
+
+	HLock(userDataHandle);
+		fileNames = *((fileNameHandle) userDataHandle);
+		argc = fileNames->count;
+		argv = fileNames->names;
+		ClientMain(argc, argv);
+	HUnlock(userDataHandle);
+
+	DeallocateAppNames(userDataHandle);
+
+}
 #elif (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
 { /* parse the command line and call the bootstrap */
