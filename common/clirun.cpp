@@ -5,7 +5,7 @@
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.20 1999/12/10 06:23:14 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.21 1999/12/11 07:34:23 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -542,9 +542,11 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
             //children are faster, main is slower
             extern int TBF_MakeTriggersVMInheritable(void); /* probman.cpp */
             extern int TBF_MakeProblemsVMInheritable(void); /* triggers.cpp */
-            if (TBF_MakeTriggersVMInheritable()!=0 ||
-                TBF_MakeProblemsVMInheritable()!=0)
-              assertedvms = +1; //success
+            if (TBF_MakeProblemsVMInheritable() == 0 )
+            {
+              if (TBF_MakeTriggersVMInheritable() == 0 )
+                assertedvms = +1; //success
+            }     
           }
           #else
           {
