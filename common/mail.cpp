@@ -4,6 +4,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mail.cpp,v $
+// Revision 1.21  1998/08/15 18:09:45  cyruspatel
+// (a) completely restructured to remove the logical limit on the size of a
+// message. (b) mem bleeds cauterized - net object is now destroyed from only
+// one place. (c) completed fifo handling of spool buffer. (d) mail is now
+// also discarded on smtp error. (d) error messages are now in english :) -
+// they hint at possible hotspots. (f) many sanity checks added, eg address
+// handling is now RFC822 aware. (g) cleaned up a bit.
+//
 // Revision 1.20  1998/08/10 20:29:39  cyruspatel
 // Call to gethostname() is now a call to Network::GetHostName(). Updated
 // send routine to reflect new NetworkInitialize()/NetworkDeinitialize()
@@ -13,20 +21,18 @@
 // Completed support for logging.
 //
 // Revision 1.18  1998/08/02 03:16:54  silby
-// Major reorganization:  Log,LogScreen, and LogScreenf are now in logging.cpp, and are global functions - client.h #includes logging.h, which is all you need to use those functions.  Lurk handling has been added into the Lurk class, which resides in lurk.cpp, and is auto-included by client.h if lurk is defined as well. baseincs.h has had lurk-specific win32 includes moved to lurk.cpp, cliconfig.cpp has been modified to reflect the changes to log/logscreen/logscreenf, and mail.cpp uses logscreen now, instead of printf. client.cpp has had variable names changed as well, etc.
+// Log,LogScreen, and LogScreenf are in logging.cpp, and are global functions 
+// Lurk handling has been added into the Lurk class, which resides in lurk.
 //
 // Revision 1.17  1998/07/26 12:46:07  cyruspatel
-// new inifile option: 'autofindkeyserver', ie if keyproxy= points to a
-// xx.v27.distributed.net then that will be interpreted by Network::Resolve()
-// to mean 'find a keyserver that covers the timezone I am in'. Network
-// constructor extended to take this as an argument.
+// Network constructor extended to take 'autofindkeyserver' as an argument.
 //
 // Revision 1.16  1998/07/13 23:54:23  cyruspatel
 // Cleaned up NO!NETWORK handling.
 //
 // Revision 1.15  1998/07/13 03:30:05  cyruspatel
 // Added 'const's or 'register's where the compiler was complaining about
-// ambiguities. ("declaration/type or an expression")
+// "declaration/type or an expression" ambiguities. 
 //
 // Revision 1.14  1998/07/08 05:19:32  jlawson
 // updates to get Borland C++ to compile under Win32.
@@ -53,361 +59,35 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.20 1998/08/10 20:29:39 cyruspatel Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.21 1998/08/15 18:09:45 cyruspatel Exp $"; }
 #endif
 
 #include "network.h"
+#include "version.h"
 #include "baseincs.h"
-#include "sleepdef.h"
 #include "mail.h"
 #include "logstuff.h"
-#include "triggers.h"
 #include "clitime.h"
 #define Time() (CliGetTimeString(NULL,1))
 
 //-------------------------------------------------------------------------
 
-#undef SHOWMAIL               // define showmail to see mail transcript on stdout
-#define FIFO_ON_BUFF_OVERFLOW // if defined, lines are thrown out as needed.
-                              // if !defined, then all old text is discarded.
+//#define SHOWMAIL    // define showmail to see mail transcript on stdout
 
 //-------------------------------------------------------------------------
 
-char *rfc822Date(void); // at the end of this file
-
-MailMessage::MailMessage(void)
-{
-   messagetext[0]=0;
-   messagelen=10000;
-   strcpy(fromid,"RC5notify");
-   smtp[0]=0;
-   destid[0]=0;
-   strcpy(my_hostname, "");
-   strcpy(rc5id,"");
-   port=25;
-   timeoffset=0;
-}
-
-//-------------------------------------------------------------------------
-
-MailMessage::~MailMessage()
-{
-  timeoffset=0; // nothing to do. - suppress compiler warning.
-}
-
-//-------------------------------------------------------------------------
-
-void MailMessage::checktosend( u32 forcesend)
-{
-  int retry;
-   
-  if (strlen(messagetext) == 0) 
-    {
-    this->inittext(0);
-    }
-  if (messagelen != 0 && strlen(messagetext) != 0)
-    {
-    if ((strlen(messagetext) >= messagelen) || forcesend) 
-      {
-      retry=0;
-      //sendmessage returns 0 if success, <0 if send error, >0 no network (defer)
-      do{
-        if (this->sendmessage() >= 0) 
-          break;
-        ++retry;
-        #ifndef FIFO_ON_BUFF_OVERFLOW
-        if (retry > 3)
-          {
-          LogScreen("[%s] Mail::sendmessage - - Giving up. Contents discared.\n", Time() );
-          strcpy(messagetext,"");
-          break;
-          }
-        #endif
-        LogScreen("[%s] Mail::sendmessage %d - Unable to send mail message.\n", Time(), (int) retry);
-        } while (retry <= 3);
-      }
-    }
-  return;
-}
-
-//-------------------------------------------------------------------------
-
-void MailMessage::addtomessage(char *txt ) 
-{
-  if (messagelen != 0) 
-    {
-    if ((strlen(messagetext)+strlen(txt)+1) >= MAILBUFFSIZE) 
-      { // drop old mail due to overflow?
-      #ifdef FIFO_ON_BUFF_OVERFLOW
-      int len;
-      if ( ((len=strlen(txt))+1) >= MAILBUFFSIZE ) // should never happen
-        return;
-      else
-        {
-        char *p=strchr(messagetext+len,'\n');
-        if (p != NULL)
-          strcpy( messagetext, p+1 ); // move the whole lot up
-        else
-          messagetext[0]=0; //no '\n' terminated lines in buffer anyway.
-        }
-      #else
-      strcpy(messagetext,"");
-      #endif
-      }
-    if (strlen(messagetext) == 0) 
-      {
-      this->inittext(0);
-      }
-    strcat(messagetext,txt);
-    if ('\r' == txt[strlen(txt)-1]) 
-      {
-      strcat(messagetext,"\n");
-      }
-    if (strlen(messagetext) >= (messagelen+5000)) 
-      { 
-      checktosend(1);
-      }
-    } 
-  return;
-}
-
-//-------------------------------------------------------------------------
-
-int MailMessage::inittext(int out)
-{
-  if (messagelen != 0) 
-    {
-    if (messagelen<500) 
-       messagelen=500;
-     if (messagelen>MAXMAILSIZE) 
-       messagelen=MAXMAILSIZE;
-    }
-  if (out == 1) 
-    {
-    LogScreen("Mail server:port is %s:%d\n", smtp, (int) port);
-    LogScreen("Mail id is %s\n", fromid);
-    LogScreen("Destination is %s\n", destid);
-    LogScreen("Message length set to %d\n", (int) messagelen);
-    LogScreen("RC5id set to %s\n", rc5id);
-    }
-  return(0);
-}
-
-//-------------------------------------------------------------------------
-
-//returns 0 if success, <0 if send error, >0 no network (should defer)
-
-int MailMessage::sendmessage()
-{
-  // Get the SMTP server name, destination mailid from the INI file...
-  s32 retry;
-  int retcode;
-  Network *net;
-
-  retcode = 0;
-  net = NULL;
-  
-  if (messagelen == 0) 
-    return 0;
-  
-  if (NetworkInitialize() < 0)
-    return +1;
-  
-  net = new Network( (const char *) smtp , (const char *) smtp, (s16) port, 0 );
-  if (!net) 
-    {
-    retcode = +1;
-    }
-    
-  if (retcode == 0)
-    {
-    net->quietmode = quietmode;
-    retry=0;
-    do 
-      {
-      if (!net->Open())
-        break;
-      if ((++retry) == 3)
-        {
-        retcode = -1;
-        break;
-        }
-      if (!CheckExitRequestTrigger())
-        {
-        LogScreen("[%s] Network::MailMessage %d - Unable to open connection to smtp server\n", Time(), (int) retry );
-        sleep( 3 );
-        }
-      if (CheckExitRequestTrigger())
-        retcode = -1;
-      } while (!retcode);
-    }
-
-  if (retcode == 0)
-    {
-    net->MakeBlocking(); // This message is sent byte-by-byte -- there's no reason to be non-blocked
-
-    if (prepare_smtp_message(net) == -1)
-      {
-      LogScreen("[%s] Error in prepare_smtp_message\n", Time());
-      retcode = -1;
-      }
-    }
-  
-  if (retcode == 0)
-    {
-    if (0 == send_smtp_edit_data(net))
-      {
-      finish_smtp_message(net);
-      LogScreen("[%s] Mail message has been sent.\n", Time());
-      }
-    else
-      retcode = -1;
-    }
-
-  if (net)
-    {
-    net->Close();
-    delete net;
-    }
-    
-  NetworkDeinitialize();
-
-  if (!retcode)               //clear message if no errors
-    strcpy(messagetext,"");
-
-  return(retcode);
-}
-
-//-------------------------------------------------------------------------
-
-// 'destination' is the address the message is to be sent to
-// 'message' is a pointer to a null-terminated 'string' containing the
-// entire text of the message.
-
-int MailMessage::prepare_smtp_message(Network *net)
-{
-  char out_data[255];
-  char str[1024];
-  char destidcopy[255];
-  char *ptr;
-  int len, startLen;
-
-  if ( get_smtp_line(net) != 220 )
-    {
-    smtp_error (net,"SMTP server error");
-    return(-1);
-    }
-
-  net->GetHostName(my_hostname, 255);
-
-  sprintf( out_data, "HELO %s\r\n", my_hostname );
-  if (0 != put_smtp_line( out_data, strlen (out_data), net ))  
-    {
-    smtp_error(net,"SMTP server error");
-    return -1;
-    }
-
-  if ( get_smtp_line(net) != 250 )
-    {
-    smtp_error (net,"SMTP server error");
-    return -1;
-    }
-
-  sprintf (out_data, "MAIL From:<%s>\r\n", fromid);
-  if (0 != put_smtp_line( out_data, strlen (out_data) , net))  
-    {
-    smtp_error(net,"SMTP server error");
-    return -1;
-    }
-
-  if (get_smtp_line(net) != 250)
-    {
-    smtp_error (net,"The mail server doesn't like the sender name,\nhave you set your mail address correctly?\n");
-    return -1;
-    }
-
-  // do a series of RCPT lines for each name in address line
-  strcpy( (char *)(&destidcopy[0]), (char const *)(&destid[0]) );
-  for (ptr = destidcopy; *ptr; ptr += len + 1)
-    {
-    // if there's only one token left, then len will = startLen,
-    // and we'll iterate once only
-    startLen = strlen (ptr);
-    if ((len = strcspn (ptr, " ,\n\t\r")) != startLen)
-      {
-      ptr[len] = '\0';                  // replace delim with NULL char
-      while (strchr (" ,\n\t\r", ptr[len+1]))   // eat white space
-        ptr[len++] = '\0';
-      }
-
-    sprintf (out_data, "RCPT To: <%s>\r\n", ptr);
-    if (0 != put_smtp_line( out_data, strlen (out_data) , net ))  
-      {
-      smtp_error(net,"SMTP server error");
-      return -1;
-      } 
-
-    if (get_smtp_line(net) != 250)
-      {
-      sprintf (str, "The mail server doesn't like the name %s.\nHave you set the 'To' field correctly\n",ptr);
-      smtp_error (net,str);
-      return -1;
-      }
-
-    if (len == startLen)        // last token, we're done
-      break;
-    }
-
-  sprintf (out_data, "DATA\r\n");
-  if (0 != put_smtp_line( out_data, strlen (out_data) , net))  
-    {
-    smtp_error(net,"SMTP server error");
-    return -1;
-    }
-
-  if (get_smtp_line(net) != 354)
-    {
-    smtp_error(net,"Mail server error accepting message data");
-    return -1;
-    }
-
-  return(0);
-}
-
-//-------------------------------------------------------------------------
-
-int MailMessage::send_smtp_edit_data (Network * net)
-{
-  transform_and_send_edit_data(net);
-
-  if (get_smtp_line(net) != 250)
-    {
-    smtp_error (net,"Message not accepted by server");
-    return -1;
-    }
-  #ifdef FIFO_ON_BUFF_OVERFLOW   // send OK. The buffer is finally emptied
-  strcpy(messagetext,"");
-  #endif
-  return(0);
-}
-
-//-------------------------------------------------------------------------
-
-int MailMessage::get_smtp_line( Network * net )
+static int get_smtp_result( Network * net )
 {
   char in_data[10];
   int index = 0;
   in_data[3] = 0;
 
-  while (1)
+  while (index>=0) //ie, while(1)
     {
     if ( net->Get( 1, &in_data[index], 2*NETTIMEOUT ) != 1)
-      {
-      LogScreen("[%s] Mailmessage: recv error\n", Time());
       return(-1);
-      }
     #ifdef SHOWMAIL
-    LogScreen("%s%c", ((index==0)?("GET: "):("")), in_data[index] );
+    printf( "%c", in_data[index] );
     #endif
     if (in_data[index] == '\n')
       {
@@ -418,182 +98,332 @@ int MailMessage::get_smtp_line( Network * net )
     else if (index < 5)
       index++;
     }
-  return( atoi( in_data ) );
+  if (isdigit(in_data[0]))
+    return ( atoi( in_data ) );
+  return( -1 );
 }
 
 //-------------------------------------------------------------------------
 
-int MailMessage::put_smtp_line( const char * line, unsigned int nchars , Network *net)
+static int put_smtp_line(const char * line, unsigned int nchars, Network *net)
 {
-
   #ifdef SHOWMAIL
-  LogScreen("PUT: %s",line);
-  #endif
-  //  delay(1); //Some servers can't talk too fast.
+  fwrite( line, nchars, 1, stdout );
+  #endif 
   if ( net->Put( nchars, line ) )
-    {
-    LogScreen("[%s] Mailmessage:Send error\n", Time());
     return -1;
-    }
   return (0);
 }
 
 //-------------------------------------------------------------------------
 
-int MailMessage::finish_smtp_message(Network * net)
+static int smtp_close_net( Network *net )
 {
-  return put_smtp_line( "QUIT\r\n", 6 , net);
-}
+  if (net) { net->Close(); delete net; }
+  NetworkDeinitialize();
+  return 0;
+}  
 
 //-------------------------------------------------------------------------
-
-int send_message_header( Network * net, char *desthost, char *fromhost,
-                 char *destid, char *fromid, char *statsid, char *date )
+    
+static Network *smtp_open_net( const char *smtphost, unsigned int smtpport )
 {
-   //fromid, destid and desthost would have been validated
-   //during the EHLO/MAIL/RCPT exchange, so only need to check for
-   //statsid and fromhost
-
-   if ( net->Put( 6, "From: " ) ) return(-1);
-   if ( net->Put( strlen(fromid), fromid ) ) return(-1);
-   if (!strchr(fromid, '@') )
-     {
-     if ( net->Put( 1, "@" ) ) return(-1);
-     if ( net->Put( strlen(desthost), desthost ) ) return(-1);
-     }
-   if ( net->Put( 6, "\r\nTo: " ) ) return(-1);
-   if ( net->Put( strlen(destid), destid ) ) return(-1);
-   if (!strchr(fromid, '@') )
-     {
-     if ( net->Put( 1, "@" ) ) return(-1);
-     if ( net->Put( strlen(desthost), desthost ) ) return(-1);
-     }
-   if (date && *date)
-     {
-     if ( net->Put( 8, "\r\nDate: " ) ) return(-1);
-     if ( net->Put( strlen(date), date ) ) return(-1);
-     }
-   if ( net->Put( 23, "\r\nSubject: RC5DES stats" ) ) return(-1);
-   if (( fromhost && *fromhost) || ( statsid && *statsid ))
-     {
-     if ( net->Put( 2, " (" )) return (-1);
-     if ( fromhost && *fromhost)
-       {
-       char *p = strchr( fromhost, '.' );
-       unsigned int len = strlen(fromhost);
-       if ( p && p!=fromhost ) len = (p-fromhost)-1;
-       if ( len && net->Put( len, fromhost ) ) return(-1);
-       if ( statsid && *statsid && len && net->Put( 1, ":" )) return (-1);
-       }
-     if ( statsid && *statsid )
-       {
-       if ( net->Put( strlen(statsid), statsid ) ) return(-1);
-       }
-     if ( net->Put( 1, ")" )) return (-1);
-     }
-   if ( net->Put( 4, "\r\n\r\n" ) ) return(-1);
-
-   return 0;
-}
-
-//-------------------------------------------------------------------------
-
-int MailMessage::transform_and_send_edit_data(Network * net)
-{
-  char *index;
-  char *header_end;
-  char previous_char = 'x';
-  char this_char;
-  unsigned int send_len;
-  bool done = 0;
-
-  send_len = strlen(messagetext);
-  index = messagetext;
-
-  if (strlen( my_hostname )==0)
-    net->GetHostName(my_hostname, 255);
-
-  if ( send_message_header( net, smtp,   my_hostname,
-                          destid, fromid, rc5id, rfc822Date() ) )
-    return -1;
-  header_end = messagetext;
-
-  while (!done)
+  Network *net;
+    
+  if (NetworkInitialize() < 0 ) 
+    return NULL;
+    
+  if ( smtpport == 0 || smtpport > 0xFFFE)
+    smtpport = 25; //standard SMTP port
+  if ( !smtphost || !*smtphost )
+    smtphost = "127.0.0.1";   
+    
+  if ((net = new Network( smtphost, smtphost, (s16)smtpport, 0 ))!=NULL)
     {
-    // room for extra char for double dot on end case
-    while ((unsigned int) (index - messagetext) < send_len)
+    if (!net->Open())
+      net->MakeBlocking(); // no reason to be non-blocked
+    else
       {
-      this_char = *index;
-      #if defined(SHOWMAIL)
-      LogScreen("%c",this_char);
-      #endif
-      //delay(1); //Some servers can't talk too fast.
-      switch (this_char)
-      {
-      case '.':
-         if (previous_char == '\n')
-                      /* send _two_ dots... */
-            if ( net->Put( 1, index ) ) {return(-1);}
-            if ( net->Put( 1, index ) ) {return(-1);}
-            break;
-      case '\r':
-                     // watch for soft-breaks in the header, and ignore them
-         if (index < header_end && (strncmp (index, "\r\r\n", 3) == 0))
-            index += 2;
-         else
-            if (previous_char != '\r')
-               if ( net->Put( 1, index ) ) {return(-1);}
-                     // soft line-break (see EM_FMTLINES), skip extra CR */
-         break;
-      case '\n': // all \n's should be preceeded by \r's...
-         if (previous_char != '\r') {
-            if ( net->Put( 2, "\r\n" ) ) {return(-1);}
-         } else {
-            if ( net->Put( 1, index ) ) {return(-1);}
-         }
-         break;
-      default:
-         if ( net->Put( 1, index ) ) {return(-1);}
+      delete net;
+      net = NULL;
       }
-      previous_char = *index;
-      index++;
     }
-    if( (unsigned int) (index - messagetext) == send_len) done = 1;
-  }
 
-  // this handles the case where the user doesn't end the last
-  // line with a <return>
-
-  if (messagetext[send_len-1] != '\n')
-  {
-     if ( net->Put( 5, "\r\n.\r\n" ) ) {return(-1);}
-  } else {
-     if ( net->Put( 3, ".\r\n" ) ) {return(-1);}
-  }
-
-  return (0);
-}
+  if (!net)
+    NetworkDeinitialize();
+  return(net);
+}  
 
 //-------------------------------------------------------------------------
 
-void MailMessage::smtp_error (Network *net, const char * message)
+//returns -1 if totally illegal address, +1 if addr is incomplete (truncated)
+//this only handles single addresses. multi-address lines require tokenizing.
+static int rfc822Address( char *buffer, const char *addr, 
+                                       const char *host, const char **next )
 {
-  LogScreen("[%s] %s\n", Time(),message);
-  if (net)
-    {
-    put_smtp_line("QUIT\r\n", 6,net);
-    net->Close();
+  char pchar;
+  int errcode = 0;
+  int started = 0; 
+  char *ptr = buffer;
+  
+  if (!addr)
+    addr = "";
+
+  while (*addr)
+    {    
+    if (*addr == '<')
+      {
+      ptr = buffer;
+      if (started)
+        errcode = -1;
+      else
+        {
+        errcode = 0;
+        addr++;
+        while (*addr!='>')
+          {
+          if (!*addr)
+            {
+            ptr = buffer;
+            errcode = -1;
+            break;
+            }    
+          if (*addr==',' || !isprint(*addr) || isspace(*addr))
+            {
+            while (!isprint(*addr) || isspace(*addr))
+            addr++;
+            if (started && *addr!='>')
+              {
+              ptr = buffer;
+              errcode = (*addr)?(-1):(+1);
+              break;
+              }
+            }
+          else //officially [A-Za-z0-9_.=\-]
+            {
+            *ptr++ = *addr++;
+            started = 1;
+            }
+          }
+        }
+      break;
+      }
+    #if 0 //if strings in () or "" or '' ARE ALLOWED to be addresses
+    if (*addr == '(' || *addr == '\"' || *addr == '\'')
+      {
+      pchar = ((*addr=='(')?(')'):(*addr));
+      addr++;
+
+      char *ptr2 = ptr;
+      while (*addr && *addr!=pchar && (isspace(*addr) || !isprint(*addr)))
+        addr++;
+      while (*addr && *addr!=pchar)
+        { 
+        if (!started) 
+          *ptr2++=*addr;
+        *addr++;
+        }
+      if (*addr!=pchar)
+        {
+        errcode = +1;
+        break;  
+        }
+      while (*addr && (*addr==',' || isspace(*addr) || !isprint(*addr)))
+        addr++;
+      if (started)
+        break;    
+
+      *ptr2=0;
+      if (ptr2 > ptr)
+        {
+        do{    
+          ptr2--;
+          } while (ptr2>=ptr) && 
+                 (isspace(*ptr2) || !isprint(*ptr2) || *ptr2==','))
+        }
+      if (ptr2 >= ptr)
+        {
+        *ptr2 = 0;
+        ptr2 = ptr;
+        while (*ptr2)
+          {
+          if (isspace(*ptr2) || !isprint(*ptr2) || *ptr2==',')
+          break;
+          }
+        if (*ptr2==0 && strchr(ptr,'@')!=NULL)
+          {
+          ptr = ptr2;
+          break;
+          } 
+        }
+      *ptr = 0;
+      }
+    #else  //if strings in (), "" or '' ARE NOT ALLOWED to be addresses
+    if (*addr == '(' || *addr == '\"' || *addr == '\'')
+      {
+      pchar = ((*addr=='(')?(')'):(*addr));
+      addr++;
+      while (*addr && *addr!=pchar)
+        addr++;
+      if (*addr!=pchar)
+        {
+        errcode=+1;
+        break; 
+        }
+      addr++;
+      while (*addr && (*addr==',' || isspace(*addr) || !isprint(*addr)))
+        addr++;
+      if (started)
+        break;
+      }
+    #endif   
+    else if (*addr==',' || isspace(*addr) || !isprint(*addr))
+      {
+      while (*addr && (*addr==',' || isspace(*addr) || !isprint(*addr)))
+        addr++;
+      if (started)
+        break;    
+      }  
+    else
+      {
+      started = 1;
+      *ptr++ = *addr++;
+      }
     }
-  return;
+  *ptr = 0;
+  if (next)
+    *next = addr;
+    
+  if (!*buffer)
+    {
+    //strcpy( buffer, "postmaster" ); //leaving at <> will usually allow the
+    if (!errcode) errcode = -1;       //msg through with a copy to postmaster
+    }
+  else
+    { 
+    ptr = strrchr( buffer, '@' );
+    if (ptr && !ptr[1])
+      {
+      *ptr = 0;
+      ptr = NULL;
+      }
+    if (!ptr && host && *host)
+      {
+      strcat( buffer, "@" );
+      if ( isdigit( *host ) )
+        strcat( buffer, "[" );
+      strcat( buffer, host );
+      if ( isdigit( *host ) )
+        strcat( buffer, "]" );
+      }
+    }
+  return errcode;
+}  
+
+//---------------------------------------------------------------------
+
+//returns 0 if success, <0 if smtp error, >0 if network error (should defer)
+static int smtp_open_message_envelope(Network *net, 
+    const char *fromid, const char *destid, const char *smtphost )
+{
+  char out_data[300];
+  const char *writefailmsg="[%s] Mail::Timeout waiting for SMTP server.\n";
+  const char *errmsg = NULL;
+  unsigned int pos;
+    
+  if ( get_smtp_result(net) != 220 ) //wait for server to welcome us
+    errmsg = writefailmsg;
+    
+  if (!errmsg)
+    {
+    strcpy( out_data, "HELO " );
+    pos = strlen( out_data );
+    if (net->GetHostName( out_data+pos, 256)!=0)
+      {
+      out_data[pos]=0;
+      strcat( out_data, "127.0.0.1" );//wicked! try it anyway
+      }
+    strcat( out_data, "\r\n" );  
+    if ( put_smtp_line( out_data, strlen(out_data), net ))  
+      errmsg = writefailmsg;
+    else if ( get_smtp_result(net) != 250 )
+      errmsg = "[%s] Mail::SMTP server refused our connection.\n";
+    }
+       
+  if (!errmsg)  
+    {
+    strcpy( out_data, "MAIL From:<" );
+    rfc822Address( out_data+11, fromid, smtphost, &fromid );
+    strcat( out_data, ">\r\n" );
+    if ( put_smtp_line( out_data, strlen(out_data), net) )  
+      errmsg = writefailmsg;
+    else if (get_smtp_result(net) != 250)
+      errmsg = "[%s] Mail::SMTP server rejected sender name.\n";
+    }
+
+  if (!errmsg)
+    {    
+    unsigned int addrtries = 0, addrok = 0;
+    while (!errmsg && *destid)
+      {
+      strcpy( out_data, "RCPT To:<" );
+      pos = strlen( out_data );
+      while (*destid && (*destid==',' || !isprint(*destid) ||isspace(*destid)))
+        destid++;
+      if ( *destid == '\"' || *destid == '(' || *destid == '\'')
+        {
+        out_data[pos] = ((*destid=='(')?(')'):(*destid));
+        destid++;
+        while (*destid && *destid!=out_data[pos])
+          destid++;
+        if (*destid)  
+          destid++;  
+        continue;
+        }
+      if ( !*destid )
+        break;
+      if ( rfc822Address( out_data+pos, destid, smtphost, &destid ) )
+        break;
+      strcat( out_data, ">\r\n" ); 
+      addrtries++;     
+      if ( put_smtp_line( out_data, strlen(out_data), net ))  
+        errmsg = writefailmsg;
+      else if (get_smtp_result(net) == 250)
+        addrok++;
+      }
+    if (!errmsg)
+      {
+      if (addrtries==0)       
+        errmsg = "[%s] Mail::Invalid or missing recipient address(es).\n";
+      else if (addrok<addrtries) //this is not a fatal error, so continue.
+        LogScreen( "[%s] Mail::One or more recipient addresses are invalid.\n",
+         Time());
+      }
+    }
+
+  if (!errmsg)
+    {
+    strcpy(out_data, "DATA\r\n");
+    if ( put_smtp_line( out_data, strlen (out_data) , net))  
+      errmsg = writefailmsg;
+    if (get_smtp_result(net) != 354)
+      errmsg = "[%s] Mail::SMTP server refused to accept message.\n";
+    }
+  
+  if (errmsg)
+    {
+    LogScreen( errmsg, Time());
+    return ((errmsg==writefailmsg)?(-1):(+1)); //retry hint
+    }
+  return(0);
 }
 
 //-------------------------------------------------------------------------
 
-char *rfc822Date(void)
+static char *rfc822Date(char *timestring)  //min 32 chars
 {
   time_t timenow;
   struct tm * tmP;
-  static char timestring[32];
 
   static const char *monnames[12] = {"Jan","Feb","Mar","Apr","May","Jun",
                                      "Jul","Aug","Sep","Oct","Nov","Dec" };
@@ -645,3 +475,284 @@ char *rfc822Date(void)
   return(timestring);
 }
 
+// -----------------------------------------------------------------------
+
+static int smtp_send_message_header( Network * net,  
+                                char *fromid, char *destid, char *statsid )
+{
+  //fromid, destid and desthost would have been validated during
+  //the EHLO/MAIL/RCPT exchange, so only need to check for statsid
+
+  char buffer[512];
+  int errcode = 0;
+  char *p;
+
+  if (errcode == 0) //send the senders address
+    {
+    sprintf( buffer, "From: %s", ((fromid && *fromid)?(fromid):("<>")) );
+    if ( put_smtp_line( buffer, strlen(buffer), net ) ) 
+      errcode = -1;
+    }
+
+  if (errcode == 0) //send the recipients address
+    {
+    sprintf( buffer, "\r\nTo: %s", ((destid && *destid)?(destid):("<>")));
+    if ( put_smtp_line( buffer, strlen(buffer), net ) ) 
+      errcode = -1;
+    }
+
+  if (errcode == 0)
+    {
+    p = (!statsid)?(NULL):(strchr(statsid,'@'));
+    if ( p && strcmp( p, "@distributed.net" )!=0 )
+      {
+      sprintf( buffer,"\r\nErrors-to: %s", statsid );
+      if ( put_smtp_line( buffer, strlen(buffer), net ) ) 
+        errcode = -1;
+      else
+        { 
+        sprintf( buffer,"\r\nReply-to: %s", statsid );
+        if ( put_smtp_line( buffer, strlen(buffer), net ) ) 
+          errcode = -1;
+        }
+      }
+    }
+    
+  if (errcode == 0) //send the date 
+    {
+    sprintf( buffer, "\r\nDate: %s" 
+        "\r\nX-Mailer: distributed.net RC5DES "CLIENT_VERSIONSTRING" client",
+        rfc822Date( buffer + 256 ) ); 
+    if ( put_smtp_line( buffer, strlen( buffer ), net ) ) 
+      errcode = -1;
+    }
+  
+  if (errcode == 0) //make sure mail forward agents don't screw with this
+    { /*                                             
+    strcpy( buffer, "\r\nMIME-Version: 1.0"
+        "\r\nContent-Type: text/plain; charset=\"us-ascii\"" );
+    if ( put_smtp_line( buffer, strlen( buffer ), net ) ) 
+      errcode = -1; */
+    }    
+       
+  if (errcode == 0) //send the subject
+    {
+    strcpy( buffer, "\r\nSubject: RC5DES stats (" );
+    if ((net->GetHostName( buffer+25, 256 ))!=0) buffer[25] = 0;
+    if ((!isdigit(buffer[25])) && ((p=strchr(buffer+25,'.'))!=NULL)) *p = 0;
+    if ((buffer[25]) && ( statsid && *statsid )) strcat( buffer+25, ":" ); 
+    if ( statsid && *statsid ) strcat( buffer+25, statsid );
+    if ( buffer[25] ) strcat( buffer, ")" ); else buffer[23]=0;
+    if ( put_smtp_line( buffer, strlen(buffer), net ) ) 
+      errcode = -1;
+    }
+
+       
+  if (errcode == 0) //finish off
+    {
+    if ( put_smtp_line( "\r\n\r\n", 4, net ) ) 
+      errcode = -1;
+    }
+  return errcode;
+}
+
+//-------------------------------------------------------------------------
+
+//returns 0 if success, <0 if smtp error, >0 if network error (should defer)
+static int smtp_send_message_text(Network * net, const char *txt)
+{
+  char netbuf[512]; 
+  unsigned int index=0;
+  int errcode = 0;
+  char thischar, prevchar = 0;
+  
+  while (!errcode && (thischar = *txt)!=0)
+    {
+    if ((thischar == '.') && (prevchar == '\n'))  // '.' on a new line?
+      {
+      netbuf[index++]='.'; //convert to two dots (ie nextchar won't be a CR)
+      netbuf[index++]='.';
+      }
+    else if (thischar == '\r')
+      {
+      if (txt[1]=='\r' && txt[2]=='\n') //ignore softbreaks "\r\r\n"
+        {
+        txt+=2;
+        if (prevchar!=' ' && prevchar!='\t' && prevchar!='-')
+          netbuf[index++]=' ';
+        }
+      else if (txt[1] != '\n')
+        {
+        netbuf[index++]='\r';
+        netbuf[index++]='\n';
+        }
+      }
+    else if (thischar == '\n')
+      {
+      if (prevchar != '\r') // all \n's should be preceeded by \r's...
+        netbuf[index++]='\r';
+      netbuf[index++]='\n';
+      }
+    else 
+      netbuf[index++] = thischar;
+    prevchar = ((index)?(netbuf[index-1]):(0));
+
+    if ( (*(++txt))==0 || (index >= (sizeof(netbuf)-10)))//little safety margin
+      {
+      if ( put_smtp_line( netbuf, index, net ) ) 
+        errcode = -1;
+      index = 0;
+      }
+    }
+  return (errcode); // <=0
+} 
+
+//-------------------------------------------------------------------------
+
+static int smtp_send_message_footer( Network *net )
+{
+  if ( put_smtp_line( "\r\n.\r\n", 5, net ) ) 
+    return -1;
+  if ( get_smtp_result(net) != 250 )
+    {
+    LogScreen("[%s] Mail::Message was not accepted by server.\n",Time());
+    return +1;
+    }
+  return 0;
+}
+
+//-------------------------------------------------------------------------
+
+static int smtp_close_message_envelope(Network * net)
+{ return (put_smtp_line( "QUIT\r\n", 6 , net)?(-1):(0)); }
+
+//-------------------------------------------------------------------------
+
+//returns 0 if success, <0 if send error, >0 no network (should defer)
+static int smtp_send_message( MailMessage *msg )
+{
+  int errcode = 0;
+  Network *net;
+
+  if (msg->sendthreshold == 0 )    
+    return 0; //mail disabled. nothing to do
+  if (msg->spoolbuff[0] == 0 ) 
+    return 0; //nothing to do
+  if ((net = smtp_open_net( msg->smtphost, msg->smtpport )) == NULL)
+    return +1; //retry hint
+
+  //---------------
+  if (errcode == 0)
+    errcode = smtp_open_message_envelope(net,msg->fromid,msg->destid,NULL);
+  if (errcode == 0)
+    errcode = smtp_send_message_header(net, msg->fromid,msg->destid,msg->rc5id);
+  if (errcode == 0)
+    errcode = smtp_send_message_text( net, msg->spoolbuff );
+  if (errcode == 0) 
+    errcode = smtp_send_message_footer( net );
+  if (errcode >= 0)                             
+    smtp_close_message_envelope( net );  // always send QUIT unless net error
+  //---------------
+
+  if (errcode > 0) //smtp error (error message has already been printed)
+    {   
+    LogScreen("[%s] Mail::Message has been discarded.\n", Time() );
+    msg->spoolbuff[0] = 0; //smtp error. not recoverable. so clear up
+    }
+  else if ( errcode < 0 ) //net error (only send_envelope() said something)
+    { 
+    LogScreen("[%s] Mail::Network error. Send cancelled.\n", Time());
+    //we do not clear the message buffer. Could try again later.
+    }
+  else //if (errcode == 0)  //no error - yippee
+    {   
+    LogScreen("[%s] Mail::Message has been sent.\n", Time() );
+    msg->spoolbuff[0] = 0; //successfully sent, so clear up
+    }
+
+  smtp_close_net(net);
+  return(errcode);
+}
+
+//-------------------------------------------------------------------------
+
+static int smtp_append_message( MailMessage *msg, const char *txt )
+{
+  size_t txtlen, msglen;
+  
+  if (msg->sendthreshold == 0)    //mail isn't initialized or is disabled 
+    return 0;                          
+  if (msg->sendthreshold < 1024)  //max size before we force send
+    msg->sendthreshold = 1024;
+  if (msg->sendthreshold > ((msg->spoolbuffmaxsize/10)*9))
+    msg->sendthreshold = ((msg->spoolbuffmaxsize/10)*9);  
+
+  txtlen = strlen( txt );
+  msglen = strlen( msg->spoolbuff );
+  if (txtlen > 0 ) 
+    {  
+    if (( msglen + txtlen + 1) >= msg->spoolbuffmaxsize) 
+      {
+      size_t maxlen = msg->spoolbuffmaxsize; 
+      if ( (txtlen + 1) >= maxlen ) //shouldn't happen
+        {
+        char *p = (char *)strchr( (txt + ((txtlen + 1)-maxlen)),'\n');
+        if ( p != NULL )
+          txt = (const char *)(p);  
+        else //try to find some kind of sensible place to start
+          {
+          while (*txt && *txt!=' ' && *txt!='\t' && *txt!='\r')
+            txt++;
+          }
+        while (*txt == '\n' || *txt == '\r')
+          txt++;
+        txtlen = strlen( txt );
+        msg->spoolbuff[0]=0;
+        msglen = 0;
+        }
+      maxlen -= (txtlen + 1); 
+      if (msglen >= maxlen)
+        {
+        char *p = NULL;
+        p = strchr( (msg->spoolbuff + (msglen-maxlen)), '\n' );
+        if ( p != NULL )
+          {
+          while ( *p == '\n' || *p == '\r' )
+          p++;
+          }
+        if (!p || !*p) 
+          {
+          msg->spoolbuff[0]=0;
+          msglen = 0;
+          }
+        else
+          {
+          msglen = strlen( p );
+          strcpy( msg->spoolbuff, p );  
+          //memmove( msg->spoolbuff, p, msglen );
+          }
+        }
+      }  
+    strcat(msg->spoolbuff,txt);
+    if ('\r' == txt[txtlen-1]) 
+      strcat(msg->spoolbuff,"\n");
+    }
+  if ( msglen > msg->sendthreshold )   //crossed the threshold?
+    return smtp_send_message( msg );  
+  return 0;
+}
+  
+// =========================================================================
+// Class wrapper functions
+// =========================================================================
+// ---------------the rest are in the class definition ------------
+
+//returns 0 if success, <0 if send error, >0 no network (should defer)
+int MailMessage::send(void) 
+{ return smtp_send_message(this); }
+
+//returns same as send
+int MailMessage::append(const char *txt)    
+{ return smtp_append_message(this,txt); }
+
+//-------------------------------------------------------------------------
