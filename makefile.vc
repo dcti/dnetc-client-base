@@ -64,6 +64,9 @@ RC5_LIBS = wsock32.lib advapi32.lib
 {common}.cpp{output}.obj:
         cl -c $(OPTS_MSVC) -Fo$@ $**
 
+{platforms/win32-os2}.asm{platforms/win32-os2}.obj:
+#      	touch $@
+
 all: rc5v2
 
 rc5v2: $(RC5_OBJS) $(PREBUILT_OBJS)
@@ -78,3 +81,4 @@ superclean: clean
 rebuild: clean all
 
 # --------------------------------------------
+
