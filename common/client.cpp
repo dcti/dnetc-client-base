@@ -799,9 +799,9 @@ s32 Client::Flush( u8 contest , Network *netin )
 //printf("%s\n",data.id);
 //printf("%d %d %d %d \n",htonl( (u32) data.os ) , htonl((u32) data.cpu),htonl((u32) data.buildhi),htonl((u32) data.buildlo));
 
-    if ((64 != (u32) data.buildhi ) && (70 != (u32) data.buildhi))
+    if ((64 != (u32) data.buildhi ) && (70 != (u32) data.buildhi) && (71 != (u32) data.buildhi))
     {
-      // Well, if 64 (or 70) isn't saved in data.buildhi, then this record was written with an
+      // Well, if 64 (or 70 or 71) isn't saved in data.buildhi, then this record was written with an
       // older version of the client.
       strncpy( packet.id, id, sizeof(packet.id) - 1 );
 #if (CLIENT_OS == OS_OS390)
