@@ -10,6 +10,10 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.29  1998/10/30 00:14:07  foxyloxy
+//
+// Added unistd.h to Irix standard includes.
+//
 // Revision 1.28  1998/10/26 03:21:26  cyp
 // More tags fun.
 //
@@ -137,6 +141,7 @@ extern "C" {
 
 #if (CLIENT_OS == OS_IRIX)
   #include <limits.h>
+  #include <unistd.h>
   #include <sys/types.h>
   #include <sys/prctl.h>
   #include <sys/schedctl.h>
