@@ -7,7 +7,7 @@
 ; Written in a dark and stormy night (Jan 16, 1998) by
 ; Cyrus Patel <cyp@fb14.uni-mainz.de>
 ;
-; $Id: x86ident.asm,v 1.1.2.1 2003/10/19 11:47:37 jlawson Exp $
+; $Id: x86ident.asm,v 1.1.2.2 2003/10/19 12:08:38 jlawson Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:
@@ -68,6 +68,7 @@ _ge586:         push    rbx             ; cpuid trashes ebx
                 and     ax,0fffh        ; drop the type flags
                 mov     cx,ax           ; save family/model/stepping bits
                 pop     rax             ; restore maker code
+		shl	eax,16
                 mov     ax,cx           ; add family/model/stepping bits
 		pop	rbx
 
