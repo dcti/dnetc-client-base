@@ -59,7 +59,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.11 2000/11/23 16:19:20 teichp Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.12 2000/11/25 19:43:18 patrick Exp $"; }
 
 #define TRACE /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -201,6 +201,9 @@ extern "C" {
     int setsockopt(int, int, int, char *, int);
     int connect(int, struct sockaddr *, int);
     }
+  #elif (CLIENT_OS == OS_AIX)
+    #include <sys/select.h>
+    #include <strings.h>
   #elif (CLIENT_OS == OS_ULTRIX)
     extern "C" {
       int socket(int, int, int);
