@@ -21,13 +21,17 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.27 2000/02/02 20:06:34 ivo Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.28 2000/02/04 09:55:40 cyp Exp $
 ==========================================================================
 
 2.8000
 ------
 
-2.8007.458  fix: all: an annoying OGR bug finally fixed
+2.8007.458  fix: all: the annoying OGR 1 node bug finally fixed
+            new: all: client can be configured a) to restart itself
+            on .ini change; b) (on most platforms) to pause itself as
+            long as process/executable x|y|z|... is running.
+            fix: win32: use NULL DACLs for CreateMutex. Go Condor!
 
 2.8006.457  fix: BeOS: work not being saved on exit
             fix: *nix: -config hangs client
