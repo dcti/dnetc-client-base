@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.106 2002/03/29 20:34:51 sampo Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.107 2002/03/31 13:06:35 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -507,7 +507,7 @@ int main( int argc, char *argv[] )
     char *q = "RC5PROG";
     int didset = 0;
     #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_IRIX) || \
-        (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_BEOS) \
+        (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_BEOS) || \
         (CLIENT_OS == OS_DEC_UNIX)
     char *m = (char *)malloc( strlen(q)+1+strlen(argv[0])+1 );
     if (m) {
