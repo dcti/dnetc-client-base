@@ -1,4 +1,7 @@
-#include "rc5.h"
+// Note: this file is obsolete- replaced by crunch_lintilla_296.ppc.c
+//       Peter DiCamillo, 6/16/98
+
+#include "problem.h"
 extern "C" int crunch_lintilla(RC5UnitWork *work, unsigned long itr);
  
 // IMPORTANT: This function only tests the low word of the encryption result.
