@@ -4,6 +4,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff-conflict.cpp,v $
+// Revision 1.2  1998/08/03 21:13:38  cyruspatel
+// Fixed many bugs (especially percentbar related ones). New log file
+// types work correctly now. Added some functionality, eg a function for
+// obtaining the name of the last used log file (used for win32 gui graphing).
+//
 // Revision 1.1  1998/08/02 16:00:42  cyruspatel
 // Created. Check the FIXMEs! Please get in touch with me before implementing
 // support for the extended file logging types (rotate/fifo/restart types).
@@ -14,7 +19,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.1 1998/08/02 16:00:42 cyruspatel Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.2 1998/08/03 21:13:38 cyruspatel Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -37,10 +42,11 @@ return "@(#)$Id: logstuff-conflict.cpp,v 1.1 1998/08/02 16:00:42 cyruspatel Exp 
 #define LOGFILETYPE_RESTART 4 //then logLimit is in KByte 
 #define LOGFILETYPE_FIFO    8 //then logLimit is in KByte (minimum 100K)
 
-#define LOGTO_NONE          0 
-#define LOGTO_SCREEN        1
-#define LOGTO_FILE          2
-#define LOGTO_MAIL          4
+#define LOGTO_NONE       0x00 
+#define LOGTO_SCREEN     0x01
+#define LOGTO_FILE       0x02
+#define LOGTO_MAIL       0x04
+#define LOGTO_RAWMODE    0x80    
 
 #define MAX_LOGENTRY_LEN 1024 //don't make this smaller than 1K!
 
@@ -64,41 +70,41 @@ return "@(#)$Id: logstuff-conflict.cpp,v 1.1 1998/08/02 16:00:42 cyruspatel Exp 
 
 static struct 
 {
-  char initialized;
   char loggingTo;            // LOGTO_xxx bitfields 
   
   MailMessage *mailmessage;  //note: pointer, not class struct.
-  char  logfile[128];        //fname when LOGFILETYPE_RESTART or _FIFO
-                             //prefix when LOGFILETYPE_ROTATE
+  char logfile[128+20];      //fname when LOGFILETYPE_RESTART or _FIFO
+                             //lastused fname when LOGFILETYPE_ROTATE
+  unsigned int logfilebaselen;//len of the log fname without ROTATE suffix
   int  logfileType;          //rotate, restart, fifo, none
   unsigned int logfileLimit; //days when rotating or kbyte when fifo/restart
+  unsigned int logfilestarted; // 1 after the first logfile write
   
   char stdoutisatty;         //log screen can handle lines not ending in '\n'
   char stableflag;           //last log screen didn't end in '\n'
   char lastwasperc;          //last log screen was a percentbar
   char mailpending;          //a best guess only
   
-} logstatics = { 0, LOGTO_NONE, NULL, {0}, LOGFILETYPE_NONE, 0, 0, 0, 0, 0 };
+} logstatics = { LOGTO_NONE, NULL, {0}, 0, LOGFILETYPE_NONE, 0,0,0,0,0,0 };
 
 // ========================================================================
 
 
 #if (!defined(NEEDVIRTUALMETHODS))  // gui clients will override this function
-void InternalLogScreen( const char *msgbuffer, unsigned int msglen )
+void InternalLogScreen( const char *msgbuffer, unsigned int msglen, int /*flags*/ )
 {
+  #if (CLIENT_OS == OS_OS2)
+  //DosSetPriority(PRTYS_THREAD, PRTYC_REGULAR, 0, 0);  //FIXME
+  // Give prioirty boost so that text appears faster
+  #endif
+
   if (msglen && (msgbuffer[msglen-1] == '\n' || logstatics.stdoutisatty ))
-    {
-    logstatics.stableflag = ( msgbuffer[msglen-1] == '\n' );
-    #if (CLIENT_OS == OS_OS2)
-    //DosSetPriority(PRTYS_THREAD, PRTYC_REGULAR, 0, 0);  //FIXME
-    // Give prioirty boost so that text appears faster
-    #endif
     fwrite( msgbuffer, sizeof(char), msglen, stdout);
-    #if (CLIENT_OS == OS_OS2)
-    //SetNiceness();              //FIXME
-    #endif
-    }
   fflush(stdout);
+
+  #if (CLIENT_OS == OS_OS2)
+  //SetNiceness();              //FIXME
+  #endif
   return;
 }
 #endif
@@ -106,7 +112,7 @@ void InternalLogScreen( const char *msgbuffer, unsigned int msglen )
 // ------------------------------------------------------------------------
 
 //this can ONLY be called from LogWithPointer. msgbuffer is recycled!
-static void InternalLogFile( char *msgbuffer, unsigned int msglen )
+static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/ )
 {
   int logfileType = logstatics.logfileType;
   unsigned int logfileLimit = logstatics.logfileLimit;
@@ -134,12 +140,13 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen )
       fwrite( msgbuffer, sizeof( char ), msglen, logstream );
       fclose( logstream );
       }
+    logstatics.logfilestarted = 1;
     }
   else if (( logfileType & LOGFILETYPE_RESTART ) != 0 ) 
     {
     long filelen = (long)(-1);
-    if ( logfileLimit < 100 )
-      logfileLimit = 100;
+    //if ( logfileLimit < 100 )
+    //  logfileLimit = 100;
     logstream = fopen( GetFullPathForFilename( logstatics.logfile ), "a" );
     if ( logstream )
       {
@@ -159,27 +166,28 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen )
         fclose( logstream );
         }
       }
+    logstatics.logfilestarted = 1;
     }
   else if (( logfileType & LOGFILETYPE_ROTATE ) != 0)
     {
     static unsigned int last_year = 0, last_mon = 0, last_day = 0;
     static unsigned long last_jdn = 0;
-    char fname[sizeof(logstatics.logfile)+20];
     unsigned int curr_year, curr_mon, curr_day;
     unsigned long curr_jdn;
     struct tm *currtmP;
     time_t ttime;
-        
+
     ttime = time(NULL);
     currtmP = localtime( &ttime );
     if (currtmP != NULL ) 
       {
       curr_year = currtmP->tm_year+ 1900;
       curr_mon  = currtmP->tm_mon + 1;
-      curr_day  = currtmP->tm_mday + 1;
-      #define _jdn( y, m, d ) ( (long)(d - 32076) + 1461L * (y + 4800L + \
-        (m - 14) / 12) / 4 + 367 * (m - 2 - (m - 14) / 12 * 12) / 12 - \
-        3 * ((y + 4900L + (m - 14) / 12) / 100) / 4 + 1 )
+      curr_day  = currtmP->tm_mday;
+      #define _jdn( y, m, d ) ( (long)((d) - 32076) + 1461L * \
+        ((y) + 4800L + ((m) - 14) / 12) / 4 + 367 * \
+        ((m) - 2 - ((m) - 14) / 12 * 12) / 12 - 3 * \
+        (((y) + 4900L + ((m) - 14) / 12) / 100) / 4 + 1 )
       curr_jdn = _jdn( curr_year, curr_mon, curr_day );
       #undef _jdn
       if (( curr_jdn - last_jdn ) > logfileLimit );
@@ -190,48 +198,58 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen )
         last_day  = curr_day;
         }
       }
-    sprintf( fname, "%s%02d%02d%02d.log", logstatics.logfile,
-           (int)(last_year%100), (int)(last_mon), (int)(last_day) );
-    logstream = fopen( GetFullPathForFilename( fname ), "a" );
-    if ( logstream )
-      {
-      fwrite( msgbuffer, sizeof( char ), msglen, logstream );
-      fclose( logstream );
-      }
-    }
-  else if ( ( logfileType & LOGFILETYPE_FIFO ) != 0 ) 
-    {
-    long filelen = (long)(-1);
-    if ( logfileLimit < 100 )
-      logfileLimit = 100;
+    sprintf( logstatics.logfile+logstatics.logfilebaselen, 
+             "%02d%02d%02d.log", (int)(last_year%100), 
+             (int)(last_mon), (int)(last_day) );
     logstream = fopen( GetFullPathForFilename( logstatics.logfile ), "a" );
     if ( logstream )
       {
       fwrite( msgbuffer, sizeof( char ), msglen, logstream );
-      filelen = (long)ftell( logstream );
       fclose( logstream );
       }
-    if (( filelen != (long)(-1) ) && (((unsigned int)(filelen>>10)) > logfileLimit ))
+    logstatics.logfilestarted = 1;
+    }
+  else if ( ( logfileType & LOGFILETYPE_FIFO ) != 0 ) 
+    {
+    unsigned long filelen = 0;
+    //if ( logfileLimit < 100 )
+    //  logfileLimit = 100;
+    logstream = fopen( GetFullPathForFilename( logstatics.logfile ), "a" );
+    if ( logstream )
       {
-      logstream = fopen( GetFullPathForFilename( logstatics.logfile ), "r+" );
+      fwrite( msgbuffer, sizeof( char ), msglen, logstream );
+      if (((long)(filelen = ftell( logstream ))) == ((long)(-1)))
+        filelen = 0;
+      fclose( logstream );
+      }
+    if ( filelen > (((unsigned long)(logfileLimit))<<10) )
+      {    /* careful: file must be read/written without translation - cyp */
+      logstream = fopen( GetFullPathForFilename( logstatics.logfile ), "r+b" );
       if ( logstream )
         {
-        unsigned long next_top;
-        unsigned long shrink_diff = (logfileLimit/10); //90%
-        if ( fseek( logstream, shrink_diff, SEEK_SET ) == 0 &&
-          ( msglen = fread( msgbuffer, sizeof( char ), MAX_LOGENTRY_LEN, 
+        unsigned long next_top = filelen - /* keep last 90% */
+                               ((((unsigned long)(logfileLimit))<<10)*9)/10;
+        if ( fseek( logstream, next_top, SEEK_SET ) == 0 &&
+          ( msglen = fread( msgbuffer, sizeof( char ), MAX_LOGENTRY_LEN-1, 
                     logstream ) ) != 0 )
           {
-          char *p = strchr( msgbuffer, '\n' );
+          msgbuffer[msglen]=0;
+          char *p = strchr( msgbuffer, '\n' );  //translate manually
+          char *q = strchr( msgbuffer, '\r' );  //to find next line start
+          if ( q != NULL && q > p ) 
+            p = q;
           if ( p != NULL )
-            shrink_diff += (( msgbuffer - p )+1);
-          next_top = shrink_diff;
+            {
+            while (*p=='\r' || *p=='\n') 
+              p++;
+            next_top += ( p - (&msgbuffer[0]) );
+            }
           filelen = 0;
           
           while ( fseek( logstream, next_top, SEEK_SET ) == 0 &&
              ( msglen = fread( msgbuffer, sizeof( char ), MAX_LOGENTRY_LEN, 
                     logstream ) ) != 0 &&
-                fseek( logstream, next_top-shrink_diff, SEEK_SET ) == 0 &&
+                fseek( logstream, filelen, SEEK_SET ) == 0 &&
              ( msglen == fwrite( msgbuffer, sizeof( char ), msglen, 
                      logstream ) ) )
             {
@@ -243,13 +261,14 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen )
         fclose( logstream );
         }
       }  
+    logstatics.logfilestarted = 1;
     }
   return;
 }
 
 // ------------------------------------------------------------------------
 
-static void InternalLogMail( char *msgbuffer, unsigned int msglen )
+static void InternalLogMail( char *msgbuffer, unsigned int msglen, int /*flags*/ )
 {
   if ( msglen && logstatics.mailmessage && logstatics.mailmessage->messagelen )
     {
@@ -261,15 +280,91 @@ static void InternalLogMail( char *msgbuffer, unsigned int msglen )
 
 // ------------------------------------------------------------------------
 
+void LogWithPointer( int loggingTo, const char *format, va_list argptr ) 
+{
+  char msgbuffer[MAX_LOGENTRY_LEN];
+  unsigned int head, msglen = 0;
+  
+  msgbuffer[0]=0;
+  loggingTo &= (logstatics.loggingTo|LOGTO_RAWMODE);
+
+  if ( !format || !*format )
+    loggingTo = LOGTO_NONE;
+  
+  if ( loggingTo != LOGTO_NONE && *format == '\r' )   //can only be screen
+    {                                                 //(or nothing)
+    if (( loggingTo & LOGTO_SCREEN ) != 0 )
+      loggingTo = (LOGTO_SCREEN|LOGTO_RAWMODE);  //force into raw mode
+    else
+      loggingTo = LOGTO_NONE;
+    }
+
+  if ( loggingTo != LOGTO_NONE && (loggingTo & LOGTO_RAWMODE) == 0) 
+    {
+    head = 0;
+    msgbuffer[0]=0;
+    while (format[head]=='\r' || format[head]=='\n')
+      { msgbuffer[head] = format[head]; msgbuffer[++head]=0; }
+    if ( format[head]!=0 && format[head]!='[' && format[head]!=' ')  
+      {
+      format+=head;
+      sprintf( (msgbuffer+strlen(msgbuffer)), "[%s] ", "Jan 01 00:00:00 GMT" ); //CliGetTimeString(NULL,1) );
+      }
+    }
+
+  if ( loggingTo != LOGTO_NONE )
+    {
+    if ( argptr == NULL )
+      strcat( msgbuffer, format );
+    else 
+      vsprintf( msgbuffer, format, argptr);
+    msglen = strlen( msgbuffer );
+    if ( msglen == 0 )
+      loggingTo = LOGTO_NONE;
+    else if (msgbuffer[msglen-1] != '\n')
+      loggingTo &= LOGTO_SCREEN|LOGTO_RAWMODE;  //screen only obviously
+    }
+
+  if (( loggingTo & LOGTO_SCREEN ) != 0)
+    {
+    head = 0;
+    if ((loggingTo & LOGTO_RAWMODE)==0)
+      {
+      if (msgbuffer[0]=='\n' && logstatics.stableflag) 
+        {
+        head++;
+        msglen--;
+        }
+      else if (msgbuffer[0]!='\n' && !logstatics.stableflag) 
+        {
+        InternalLogScreen( "\n", 1, 0 );
+        logstatics.stableflag = 1;
+        }
+      }  
+    if (msglen)
+      {
+      logstatics.lastwasperc = 0; //perc bar looks for this
+      logstatics.stableflag = ( msgbuffer[head+(msglen-1)] == '\n' );
+      InternalLogScreen( msgbuffer+head, msglen, 0 );
+      }
+    }
+  
+  if (( loggingTo & LOGTO_FILE ) != 0)
+    InternalLogFile( msgbuffer, msglen, 0 );
+
+  if (( loggingTo & LOGTO_MAIL ) != 0)
+    InternalLogMail( msgbuffer, msglen, 0 );
+      
+  return;
+}
+
+// ------------------------------------------------------------------------
+
 void LogFlush( int forceflush )
 {
   if (( logstatics.loggingTo & LOGTO_SCREEN ) != 0)
     {
-    if ( !logstatics.stableflag )
-      InternalLogScreen( "\n", sizeof("\n") );
-    else
-      InternalLogScreen( "", 0 ); //fflush(stdout);
-    logstatics.stableflag = 1;
+    LogWithPointer( LOGTO_SCREEN, "\n", NULL );  //LF if needed then fflush()
     }
   if (( logstatics.loggingTo & LOGTO_MAIL ) != 0)
     {
@@ -287,66 +382,7 @@ void LogFlush( int forceflush )
 
 // ------------------------------------------------------------------------
 
-void LogWithPointer( int loggingTo, const char *format, va_list argptr ) 
-{
-  char msgbuffer[MAX_LOGENTRY_LEN];
-  unsigned int msglen;
-  
-  msgbuffer[0]=0;
-  if ( format && *format )
-    {
-    #ifdef ASSERT_DATE_STAMP
-    unsigned int i = (*format=='\r'|| *format=='\n') ? 1 : 0;
-    if ( format[i]!='[' && format[i]!=' ')  
-      {
-      if (i) msgbuffer[0] = *format++;
-      sprintf( msgbuffer+i, "[%s] ", CliGetTimeString(NULL,1) );
-      }
-    #endif
-    if ( argptr == NULL )
-      strcat( msgbuffer, format );
-    else 
-      vsprintf( (msgbuffer+strlen( msgbuffer )), format, argptr);
-    #ifdef ASSERT_WIDTH_80
-    char *p = strchr( msgbuffer + ((msgbuffer[0]=='\n')?1:0), '\n' );
-    if ( p == NULL )
-      msgbuffer[79]=0;
-    else if (( p-(&msgbuffer[0]) ) > 79)
-      {
-      msgbuffer[78]='\n';
-      msgbuffer[79]=0;
-      }
-    #endif
-    }
-  
-  msglen = strlen( msgbuffer );
-  loggingTo &= logstatics.loggingTo;
-
-  if ( msglen == 0 )
-    loggingTo = LOGTO_NONE;
-  else if ( msgbuffer[msglen-1] != '\n' )
-    loggingTo &= LOGTO_SCREEN;    //screen only obviously
-  
-  if (( loggingTo & LOGTO_SCREEN ) != 0)
-    {
-    //if (!logstatics.stableflag && msgbuffer[0]!='\n') 
-    //  InternalLogScreen( "\n", sizeof( "\n" ));
-    logstatics.stableflag = ( msgbuffer[msglen-1] == '\n' );
-    InternalLogScreen( msgbuffer, msglen );
-    }
-  
-  if (( loggingTo & LOGTO_FILE ) != 0)
-    InternalLogFile( msgbuffer, msglen );
-
-  if (( loggingTo & LOGTO_MAIL ) != 0)
-    InternalLogMail( msgbuffer, msglen );
-      
-  return;
-}
-
-// ------------------------------------------------------------------------
-
-void LogScreen( const char *format, ... ) 
+void LogScreen( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
@@ -355,11 +391,22 @@ void LogScreen( const char *format, ... )
   return;
 }    
 
-void LogScreenf( const char *format, ... ) 
+#if 0
+void LogScreenf( const char *format, ... )//Legacy function. Same as LogScreen
 {
   va_list argptr;
   va_start(argptr, format);
   LogWithPointer( LOGTO_SCREEN, format, argptr );
+  va_end(argptr);
+  return;
+}  
+#endif
+
+void LogScreenRaw( const char *format, ... )
+{
+  va_list argptr;
+  va_start(argptr, format);
+  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN, format, argptr );
   va_end(argptr);
   return;
 }  
@@ -373,6 +420,25 @@ void Log( const char *format, ... )
   return;
 }  
 
+void LogRaw( const char *format, ... )
+{
+  va_list argptr;
+  va_start(argptr, format);
+  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL, format, argptr );
+  va_end(argptr);
+  return;
+}  
+
+const char *LogGetCurrentLogFilename( void )
+{
+  if ((logstatics.loggingTo & LOGTO_FILE) == 0 || 
+    logstatics.logfileType == LOGFILETYPE_NONE )
+    return NULL;
+  if ( !logstatics.logfilestarted )
+    return "";
+  return logstatics.logfile;
+}  
+    
 // ---------------------------------------------------------------------------
 
 extern Problem problem[2*MAXCPUS];
@@ -382,14 +448,18 @@ static void GetPercDataForThread( unsigned int selthread, unsigned int numthread
 {
   unsigned int percent_i, lastperc_i, startperc_i;
 
-  if ( (problem[selthread+numthreads]).started )
-    selthread += numthreads;
+  if ( !((problem[selthread]).started) &&
+    ( (problem[selthread+numthreads]).started ) ) 
+    selthread+=numthreads;
   startperc_i = (problem[selthread]).startpercent / 1000;
   lastperc_i  = (problem[selthread]).percent;
   percent_i   = 0;
 
-  if ( (problem[selthread]).started )
+  if ( (problem[selthread]).finished )
+    percent_i = 100;
+  else if ( (problem[selthread]).started )
     percent_i = (problem[selthread]).CalcPercent();
+
   if ( percent_i == 0 )
     {
     percent_i = startperc_i;
@@ -431,7 +501,90 @@ void LogScreenPercent( unsigned int load_problem_count )
         problem[selthread].percent = 0;
       }
 
-    if ( method == 0 ) //old LogScreenPercentSingle()
+    if ( method == 1 ) //old LogScreenPercentMulti()
+      {
+      for (selthread = 0; selthread < numthreads; selthread++)    
+        {
+        GetPercDataForThread( selthread, numthreads, &percent, &lastperc, &restartperc );
+        if (restartperc) restartperc = (restartperc & 0xFD)|1;
+        for ( ++lastperc; lastperc <= percent ; lastperc++ )
+          {
+          if ( lastperc == 100 )
+            { sprintf( bufptr, "%c:100%% ", selthread+'A' ); 
+              bufptr+=sizeof("A:100% "); break; }
+          else if ( ( lastperc % 10 ) == 0 ) 
+            { sprintf( bufptr, "%c:%02d%% ", selthread+'A', lastperc ); 
+              bufptr+=sizeof("A:90% "); }
+          else if ( ( lastperc & 1 ) == 0 ) 
+            { *bufptr++ = ((lastperc==restartperc)?('R'):('.')); }
+          }
+        }
+      }
+    else if ( method == 2 || method == 0 ) //single bar for all threads
+      {
+      specperc=0;
+      for (selthread = 0; selthread < numthreads; selthread++)    
+        {
+        GetPercDataForThread(selthread,numthreads, &percent, NULL, &restartperc);
+        if (percent > specperc)
+          specperc = percent;
+        if (percent && ((percent>90)?((percent&1)!=0):((percent&1)==0)))
+          percent--;  //make sure that it is visible
+        if (numthreads > 1)
+          problem[selthread].percent = percent; 
+        }
+      if (numthreads < 2)
+        {
+        restartperc = (!restartperc || percent == 100) ? 0 :
+         ( restartperc - ((restartperc > 90) ? (restartperc & 1) : 
+                      (1 - (restartperc & 1))) );
+        }
+      else
+        {
+        restartperc = 0; //we don't bother with the restart flag
+        if ( logstatics.stdoutisatty )
+          {
+          *bufptr++ = '\r';
+          lastperc = 0;  //always paint the whole bar
+          }
+        }
+      percent = lastperc;
+      lastperc = specperc;
+
+      for ( ++percent; percent <= specperc; percent++ )
+        {
+        if ( percent >= 100 )
+          { strcpy( bufptr, "100" ); bufptr+=3; break; }
+        else if ( ( percent % 10 ) == 0 )
+          { sprintf( bufptr, "%d%%", (int)(percent) ); bufptr+=3; }
+        else if ( restartperc == percent) 
+          { *bufptr++='R'; }
+        else if (((percent&1)?(percent<90):(percent>90)))
+          {
+          equals = 0;
+          if (numthreads > 1 && logstatics.stdoutisatty )
+            {
+            for (selthread=0; selthread<numthreads; selthread++ )
+              {
+              if ( (problem[selthread].percent) == percent )
+                {
+                *bufptr = (char)('a'+selthread);
+                if ( (++equals)>displevel )
+                  break;
+                }
+              }
+            }
+          if (!equals)
+            *bufptr = '.'; 
+          bufptr++;
+          }
+        }
+      displevel++;
+      if (displevel >= numthreads)
+        displevel=0;
+      }
+    #if 0
+    else if ( method == 0 ) //old LogScreenPercentSingle()
       {
       GetPercDataForThread( 0, 1, &percent, NULL, &restartperc);
       if ( percent > lastperc )
@@ -452,87 +605,14 @@ void LogScreenPercent( unsigned int load_problem_count )
         lastperc = percent;
         }
       }
-    else if ( method == 1 ) //old LogScreenPercentMulti()
-      {
-      for (selthread = 0; selthread < numthreads; selthread++)    
-        {
-        GetPercDataForThread( selthread, numthreads, &percent, &lastperc, &restartperc );
-        restartperc |= ((restartperc)?(1):(0));
-        for ( ++lastperc; lastperc <= percent ; lastperc++ )
-          {
-          if ( lastperc == 100 )
-            { sprintf( bufptr, "%c:100%% ", selthread+'A' ); 
-              bufptr+=sizeof("A:100% "); break; }
-          else if ( ( lastperc % 10 ) == 0 ) 
-            { sprintf( bufptr, "%c:%02d%% ", selthread+'A', lastperc ); 
-              bufptr+=sizeof("A:90% "); }
-          else if ( ( lastperc & 1 ) == 0 ) 
-            { *bufptr++ = ((lastperc==restartperc)?('R'):('.')); }
-          }
-        }
-      }
-    else if ( method == 2  ) //single bar for all threads
-      {
-      specperc=0;
-      for (selthread = 0; selthread < numthreads; selthread++)    
-        {
-        GetPercDataForThread( selthread, numthreads, &percent, NULL, NULL );
-        if (percent == 0)           
-          percent++;
-        else if ( percent >= 100 )  
-          percent = 100;
-        else  
-          percent = (percent | 1) & (( percent <= 90 ) ? 0xFD : 0xFE );
-
-        if ( percent > specperc )
-          specperc = percent;
-        (problem[selthread].percent)=percent;
-        }  
-      if ( logstatics.stdoutisatty )
-        {
-        *bufptr++ = '\r';
-        lastperc = 0;  //always paint the whole bar
-        }
-
-      for ( percent = lastperc+1; (percent <= specperc) ; percent++ )
-        {
-        if ( percent == 100 )
-          { strcpy( bufptr, "100" ); bufptr+=sizeof("100"); }
-        else if ( ( percent % 10 ) == 0 )
-          { sprintf( bufptr, "%d%%", ((unsigned int)(percent)) ); 
-            bufptr+=sizeof("10%"); }
-        else if ((percent&1)?(percent<90):(percent>90))
-          { 
-          equals = 0;
-          if ( logstatics.stdoutisatty )
-            {
-            for (selthread=0; selthread<numthreads; selthread++ )
-              {
-              if ( (problem[selthread].percent) == percent )
-                {
-                *bufptr = (char)('a'+selthread);
-                if ( (++equals)>displevel )
-                  break;
-                }
-              }
-            }
-          if (!equals)
-            *bufptr = '.'; 
-          bufptr++;
-          }
-        }
-      lastperc = specperc;
-      displevel++;
-      if (displevel >= numthreads)
-        displevel=0;
-      }
+    #endif
     else if ( method == 3 ) //PERCBAR_ON_ONE_LINE. Requires stdoutisatty
       {
       *bufptr++='\r';
       #if (CLIENT_OS != OS_WIN32) //looks lousy with a proportional font
       sprintf( bufptr, " %s  ", CliGetTimeString(NULL,0) );
-      if ((strlen(bufptr)+(sizeof("A:00% ")*numthreads)) >= 79)
-        bufptr = &bufptr[1];
+      if ((strlen(bufptr)+(sizeof("A:00% ")*numthreads)) < 79)
+        bufptr += strlen(bufptr);
       #endif
       for ( selthread = 0; selthread < numthreads; selthread++)
         {
@@ -546,9 +626,8 @@ void LogScreenPercent( unsigned int load_problem_count )
     if ( bufptr > (&buffer[0]))
       {
       *bufptr = 0;
-      InternalLogScreen( buffer, bufptr-(&buffer[0]) );
-      logstatics.stableflag = 0;
-      logstatics.lastwasperc = 1;
+      LogWithPointer( LOGTO_SCREEN|LOGTO_RAWMODE, buffer, NULL );
+      logstatics.lastwasperc = 1; //reset to 1
       }
     }
   return;
@@ -632,19 +711,19 @@ void Client::InitializeLogging(void)
     else
       {
       strcpy( logstatics.logfile, logname );
+      logstatics.logfilebaselen = strlen( logstatics.logfile );
+      logstatics.logfilestarted = 0;
 
       logstatics.loggingTo |= LOGTO_FILE;
       logstatics.logfileType = LOGFILETYPE_NOLIMIT;
-
       logstatics.logfileLimit = 0; // unused if LOGFILETYPE_NOLIMIT;
+
       /* ****************************************************************
-         FIXME: the new logfiletypes (ie non _NOLIMIT) haven't been tested!
-         Talk to me about implementation of the new options in the ini. - cyp
+      FIXME: Please check with me before implementing support for the 
+             new logfiletypes - cyp
       ******************************************************************* */
       }
     }
-
-  logstatics.initialized = 1;
   return;
 }
 
