@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.42 2001/01/10 01:51:29 andreasb Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.43 2001/01/10 14:22:38 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -332,10 +332,12 @@ long SelfTest( unsigned int contest )
       }
 #endif
 
-      switch (contest) {
+      switch (contest) 
+      {
         case RC5:
         case DES:
         case CSC:
+        {
           contestwork.crypto.iv.lo =  ( (*test_cases)[testnum][2] );
           contestwork.crypto.iv.hi =  ( (*test_cases)[testnum][3] );
           contestwork.crypto.plain.lo = ( (*test_cases)[testnum][4] );
@@ -347,24 +349,29 @@ long SelfTest( unsigned int contest )
           contestwork.crypto.iterations.lo = ( 0x00020000L ); // 17 bits instead of 16
           contestwork.crypto.iterations.hi = ( 0 );
           break;
+        }  
         #if defined(HAVE_OGR_CORES)
-        case OGR: {
+        case OGR: 
+        {
+          int tcd;
           contestwork.ogr.workstub.stub.marks = (u16)((*test_cases)[testnum][1]);
           contestwork.ogr.workstub.stub.length = 0;
-          for (int i = 0; i < TEST_CASE_DATA-2; i++, contestwork.ogr.workstub.stub.length++) {
-            contestwork.ogr.workstub.stub.diffs[i] = (u16)((*test_cases)[testnum][2+i]);
-            if (contestwork.ogr.workstub.stub.diffs[i] == 0)
+          for (tcd = 0; tcd < TEST_CASE_DATA-2; tcd++) 
+          {
+            contestwork.ogr.workstub.stub.diffs[tcd] = (u16)((*test_cases)[testnum][2+tcd]);
+            if (contestwork.ogr.workstub.stub.diffs[tcd] == 0)
               break;
+            contestwork.ogr.workstub.stub.length++;  
           }
           contestwork.ogr.workstub.worklength = 0;
           contestwork.ogr.nodes.lo = contestwork.ogr.nodes.hi = 0;
-          }
           break;
+        }  
         #endif
         default:
           userbreak = 1;
           break;
-      }
+      } /* switch */
 
       if (userbreak)
         break;
