@@ -3,8 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-k5-rg.cpp,v $
+// Revision 1.7  1998/08/20 00:25:20  silby
+// Took out PIPELINE_COUNT checks inside .cpp x86 cores - they were causing build problems with new PIPELINE_COUNT architecture on x86.
+//
 // Revision 1.6  1998/07/08 22:59:36  remi
-// Lots of $Id$ stuff.
+// Lots of $Id: rc5-k5-rg.cpp,v 1.7 1998/08/20 00:25:20 silby Exp $ stuff.
 //
 // Revision 1.5  1998/07/08 18:47:46  remi
 // $Id fun ...
@@ -67,7 +70,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5_k5_rg_cpp (void) {
-return "@(#)$Id: rc5-k5-rg.cpp,v 1.6 1998/07/08 22:59:36 remi Exp $"; }
+return "@(#)$Id: rc5-k5-rg.cpp,v 1.7 1998/08/20 00:25:20 silby Exp $"; }
 #endif
 
 #define CORE_INCREMENTS_KEY
@@ -75,9 +78,11 @@ return "@(#)$Id: rc5-k5-rg.cpp,v 1.6 1998/07/08 22:59:36 remi Exp $"; }
 // This file is included from rc5.cpp so we can use __inline__.
 #include "problem.h"
 
-#if (PIPELINE_COUNT != 2)
-#error "Expecting pipeline count of 2"
-#endif
+// With different pipeline counts for different cores, this check cannot
+// be done here
+//#if (PIPELINE_COUNT != 2)
+//#error "Expecting pipeline count of 2"
+//#endif
 
 #ifndef _CPU_32BIT_
 #error "everything assumes a 32bit CPU..."
