@@ -36,6 +36,7 @@ Network::Network( const char *servname, int servport,
          const char *_fwalluid)
 {
   connserver = NULL;
+  proxyver = 0;
 
 
   // server name, server port
