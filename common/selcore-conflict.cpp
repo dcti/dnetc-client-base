@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.7 1999/10/10 23:26:48 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.8 1999/10/11 04:16:13 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -19,6 +19,8 @@ return "@(#)$Id: selcore-conflict.cpp,v 1.47.2.7 1999/10/10 23:26:48 cyp Exp $";
 #include "cpucheck.h"  // cpu selection, GetTimesliceBaseline()
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "clicdata.h"  // GetContestNameFromID()
+#include "bench.h"     // TBenchmark()
+#include "selftest.h"  // SelfTest()
 #include "selcore.h"   // keep prototypes in sync
 
 /* ------------------------------------------------------------------------ */
@@ -315,6 +317,55 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
 
 /* ---------------------------------------------------------------------- */
 
+static long __bench_or_test( int which, 
+                            unsigned int cont_i, unsigned int benchsecs )
+{
+  long rc = -1;
+  
+  if (InitializeCoreTable(((int *)0)) < 0) /* ACK! selcoreInitialize() */
+    return -1;                             /* hasn't been called */
+
+  if (cont_i < CONTEST_COUNT)
+  {
+    /* save current state */
+    int user_cputype = selcorestatics.user_cputype[cont_i]; 
+    int corenum = selcorestatics.corenum[cont_i];
+    unsigned int coreidx, corecount = __corecount_for_contest( cont_i );
+    rc = 0;
+    for (coreidx = 0; coreidx < corecount; coreidx++)
+    {
+      selcorestatics.user_cputype[cont_i] = coreidx; /* as if user set it */
+      selcorestatics.corenum[cont_i] = -1; /* reset to show name */
+      if (which == 's') /* bench */
+      {
+        int irc = SelfTest( cont_i );
+        if (irc <= 0) /* failed or not supported */
+        {
+          rc = (long)irc;
+          break; /* test failed. stop */
+        }
+      }
+      else if ((rc = TBenchmark( cont_i, benchsecs, 0 )) <= 0)
+        break; /* failed/not supported for this contest */
+    }
+    selcorestatics.user_cputype[cont_i] = user_cputype; 
+    selcorestatics.corenum[cont_i] = corenum;
+  }
+  return rc;
+}
+
+int selcoreBenchmark( unsigned int cont_i, unsigned int secs )
+{
+  return __bench_or_test( 'b', cont_i, secs );
+}
+
+int selcoreSelfTest( unsigned int cont_i )
+{
+  return (int)__bench_or_test( 's', cont_i, 0 );
+}
+
+/* ---------------------------------------------------------------------- */
+
 /* this is called from Problem::LoadState() */
 int selcoreGetSelectedCoreForContest( unsigned int contestid )
 {
@@ -407,72 +458,67 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     #endif
   }
   #elif (CLIENT_CPU == CPU_X86)
-  if (contestid == RC5)
   {
-    selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
-    if (selcorestatics.corenum[RC5] < 0)
-      selcorestatics.corenum[RC5] = (int)(detected_type & 0xff);
-    if (selcorestatics.corenum[RC5] >= 0)
+    int user_selected = 1;
+    if (contestid == RC5)
     {
-      LogScreen( "%s: selecting %s code.\n", contname, 
-        selcoreGetDisplayName( RC5, selcorestatics.corenum[RC5] ) );
-    }
-  }     
-  else if (contestid == DES)
-  {  
-    selcorestatics.corenum[DES] = selcorestatics.user_cputype[DES];
-    if (selcorestatics.corenum[DES] < 0)
-    {
-      if ((detected_type & 0x100) != 0 && /* have mmx */
-         __corecount_for_contest(contestid) > 2) /* have mmx-bitslicer */
-        selcorestatics.corenum[DES] = 2; /* mmx bitslicer */
-      else
+      selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
+      if (selcorestatics.corenum[RC5] < 0)
       {
-        int det = (int)(detected_type & 0xff);
-        if (det == 0 /*P5*/ || det == 1 /*386/486 */ || det == 4 /*K5*/)
-          selcorestatics.corenum[DES] = 0; /* standard Bryd */
+        selcorestatics.corenum[RC5] = (int)(detected_type & 0xff);
+        user_selected = 0;
+      }
+    }     
+    else if (contestid == DES)
+    {  
+      selcorestatics.corenum[DES] = selcorestatics.user_cputype[DES];
+      if (selcorestatics.corenum[DES] < 0)
+      {
+        user_selected = 0;
+        if ((detected_type & 0x100) != 0 && /* have mmx */
+           __corecount_for_contest(contestid) > 2) /* have mmx-bitslicer */
+          selcorestatics.corenum[DES] = 2; /* mmx bitslicer */
         else
-          selcorestatics.corenum[DES] = 1; /* movzx Bryd */
+        {
+          int det = (int)(detected_type & 0xff);
+          if (det == 0 /*P5*/ || det == 1 /*386/486 */ || det == 4 /*K5*/)
+            selcorestatics.corenum[DES] = 0; /* standard Bryd */
+          else
+            selcorestatics.corenum[DES] = 1; /* movzx Bryd */
+        }
       }
     }
-    if (selcorestatics.corenum[DES] >= 0)
+    else if (contestid == CSC)
     {
-      LogScreen( "%s: selecting %s code.\n", contname, 
-        selcoreGetDisplayName( DES, selcorestatics.corenum[DES] ) );
+      selcorestatics.corenum[CSC] = selcorestatics.user_cputype[CSC];
+      if (selcorestatics.corenum[CSC] < 0)
+      {
+  #if 0
+        int cpu2core = detected_type & 0xff;
+        /* note: because these are C cores, crunch efficacy can swing
+           wildly. For instance (here PII/400):
+           Watcom 10      VC 5.0
+           core0: 130     354
+           core1: 344     441
+           core2: 121     508
+           core3: 334     418
+           We need to find the best generated asm for each core and nasmify it.
+        */
+        if (cpu2core == 3) // Ppro/PII/PIII
+          selcorestatics.corenum[CSC] = 1; //6bit - called
+        /*
+        else if (cpu2core == ....
+          ...
+        */
+  #endif
+      }
     }
-  }
-  else if (contestid == CSC)
-  {
-    selcorestatics.corenum[CSC] = selcorestatics.user_cputype[CSC];
-    int user_selected = 1;
-    if (selcorestatics.corenum[CSC] < 0)
-    {
-#if 0
-      int cpu2core = detected_type & 0xff;
-      /* note: because these are C cores, crunch efficacy can swing
-         wildly. For instance (here PII/400):
-         Watcom 10      VC 5.0
-         core0: 130     354
-         core1: 344     441
-         core2: 121     508
-         core3: 334     418
-         We need to find the best generated asm for each core and nasmify it.
-      */
-      if (cpu2core == 3) // Ppro/PII/PIII
-        selcorestatics.corenum[CSC] = 1; //6bit - called
-      /*
-      else if (cpu2core == ....
-        ...
-      */
-      user_selected = 0;
-#endif
-    }
-    if (selcorestatics.corenum[CSC] >= 0)
+    if (selcorestatics.corenum[contestid] >= 0)
     {
       LogScreen( "%s: %s core #%d (%s)\n", contname, 
-                 ((user_selected)?("using"):("auto-selected")),
-                 selcorestatics.corenum[CSC],
-                 selcoreGetDisplayName( CSC, selcorestatics.corenum[CSC] ) );
+        ((user_selected)?("using"):("auto-selected")),
+        selcorestatics.corenum[contestid],
+       selcoreGetDisplayName( contestid, selcorestatics.corenum[contestid] ) );
     }
   }
   #elif (CLIENT_CPU == CPU_ARM)
@@ -536,4 +582,3 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   return selcorestatics.corenum[contestid];
 }
 
-/* ---------------------------------------------------------------------- */

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.3.2.3 1999/10/10 23:28:00 cyp Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.3.2.4 1999/10/11 04:16:14 cyp Exp $"
 
 /* this is called from Problem::LoadState() */
 int selcoreGetSelectedCoreForContest( unsigned int contestid );
@@ -18,7 +18,9 @@ void selcoreEnumerate( int (*proc)(unsigned int cont,
 void selcoreEnumerateWide( int (*proc)(
                             const char **corenames, int idx, void *udata ),
                        void *userdata );
-                       
+/* benchmark/test each core */
+int selcoreBenchmark( unsigned int cont_i, unsigned int secs );
+int selcoreSelfTest( unsigned int cont_i );
 
 /* ClientMain() calls these */
 int InitializeCoreTable( int *coretypes );

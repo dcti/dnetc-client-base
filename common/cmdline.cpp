@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.25 1999/10/10 23:18:57 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.26 1999/10/11 04:16:12 cyp Exp $"; }
 
 //#define TRACE
 
@@ -495,14 +495,14 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           int isinst = win32CliIsServiceInstalled();/*<0=err,0=no,>0=yes */
           if (isinst < 0)
             ConOutErr("Service manager error. Service could not be started.\n");
-          else if (isint == 0)
+          else if (isinst == 0)
             ConOutErr("Cannot start a service that is not -installed.\n");
           else
             terminate_app = 0;
         }
         if (!terminate_app) /* no error */
         {
-          char *xargv[2]; xargv[0] = argv[0]; xargv[1]=NULL;
+          char *xargv[2]; xargv[0] = (char *)argv[0]; xargv[1]=NULL;
           win32CliStartService( 1, &xargv[0] ); /* *installed* client */  
           terminate_app = 1;
         }
@@ -1362,13 +1362,14 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           ( strcmp( thisarg, "-update"      ) == 0 ) ||
           ( strcmp( thisarg, "-ident"       ) == 0 ) ||
           ( strcmp( thisarg, "-cpuinfo"     ) == 0 ) ||
-          ( strcmp( thisarg, "-test"        ) == 0 ) ||
           ( strcmp( thisarg, "-config"      ) == 0 ) )
       {
         havemode = 1; //nothing - handled in next loop
       }
       else if ( strcmp( thisarg, "-benchmark"   ) == 0  ||
-                strcmp( thisarg, "-benchmark2"  ) == 0 )
+                strcmp( thisarg, "-benchmark2"  ) == 0 ||
+                strcmp( thisarg, "-bench"  ) == 0 ||
+                strcmp( thisarg, "-test" ) == 0 )
       {
         havemode = 1;
         if (argvalue)
@@ -1467,41 +1468,32 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         ModeReqSet( MODEREQ_CPUINFO );
         break;
       }
-      else if ( strcmp( thisarg, "-test" ) == 0 )
+      else if ( strcmp( thisarg, "-benchmark" ) == 0  ||
+                strcmp( thisarg, "-bench" ) == 0 ||
+                strcmp( thisarg, "-benchmark2" ) == 0 ||
+                strcmp( thisarg, "-test" ) == 0 )
       {
-        quietmode = 0;
-        inimissing = 0; // Don't complain if the inifile is missing
-        ModeReqClear(-1); //clear all - only do -test
-        ModeReqSet( MODEREQ_TEST );
-        break;
-      }
-      else if ( strcmp( thisarg, "-benchmark"   ) == 0  ||
-                strcmp( thisarg, "-benchmark2"  ) == 0 )
-      {
-        int do_mode = 0;
-        int contest = CONTEST_COUNT;
-        
+        int do_mode = MODEREQ_BENCHMARK;
         if (strcmp( thisarg, "-benchmark2"  ) == 0)
-          do_mode |= MODEREQ_BENCHMARK_QUICK;
+          do_mode = MODEREQ_BENCHMARK_QUICK;
+        else if (strcmp( thisarg, "-bench"  ) == 0)
+          do_mode = MODEREQ_BENCHMARK_ALLCORE;
+        else if (strcmp( thisarg, "-test"  ) == 0)
+          do_mode = MODEREQ_TEST_ALLCORE;
+
+        inimissing = 0; // Don't complain if the inifile is missing
+        ModeReqClear(-1); //clear all - only do benchmark/test
+        ModeReqSet( do_mode );
 
         if (argvalue)
         {
-          contest = __arg2cname(argvalue,CONTEST_COUNT);
+          int contest = __arg2cname(argvalue,CONTEST_COUNT);
           if (contest < CONTEST_COUNT)
+          {
             skip_next = 1;
+            ModeReqLimitProject(do_mode, contest);
+          }
         }
-
-        switch (contest)
-        {
-          case RC5: do_mode |= MODEREQ_BENCHMARK_RC5; break;
-          case DES: do_mode |= MODEREQ_BENCHMARK_DES; break;
-          case OGR: do_mode |= MODEREQ_BENCHMARK_OGR; break;
-          case CSC: do_mode |= MODEREQ_BENCHMARK_CSC; break;
-          default:  do_mode |= MODEREQ_BENCHMARK_ALL; break;
-        }  
-        inimissing = 0; // Don't complain if the inifile is missing
-        ModeReqClear(-1); //clear all - only do benchmark
-        ModeReqSet( do_mode );
         break;
       }
       else if ( strcmp( thisarg, "-forceunlock" ) == 0 )
