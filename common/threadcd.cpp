@@ -151,7 +151,7 @@ THREADID CliCreateThread( void (*proc)(void *), void *param )
        }
     #endif
 
-    if (cliThreadID != NULL)
+    if ((void*)cliThreadID != NULL)
       {
       while (!shelldata.started)
         usleep(10000);
