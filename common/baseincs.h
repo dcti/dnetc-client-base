@@ -5,6 +5,15 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: baseincs.h,v $
+// Revision 1.30.2.8  1999/01/09 11:12:26  remi
+// Synced with :
+//
+//  Revision 1.45  1999/01/06 22:14:47  dicamillo
+//  Support PPC prototype machines.
+//
+//  Revision 1.44  1999/01/06 06:04:02  cramer
+//  cleaned up some of the solaris/sunos updates
+//
 // Revision 1.30.2.7  1999/01/04 01:50:06  remi
 // Synced with :
 //
@@ -196,6 +205,7 @@ extern "C" {
   #include "platforms/netware/netware.h" //for stuff in netware.cpp
 #elif (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS)
   #include <fcntl.h>
+  #include <unistd.h>
   extern "C" int nice(int);
   extern "C" int gethostname(char *, int);
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS==OS_BSDI)
@@ -237,6 +247,7 @@ extern "C" {
   void YieldToMain(char force_events);
   u32 GetTimesliceToUse(u32 contestid);
   void tick_sleep(unsigned long tickcount);
+  extern Boolean Mac_PPC_prototype;
   extern Boolean haveMP;
   extern short MP_active;
   extern "C" unsigned long mp_sleep(unsigned long seconds);
