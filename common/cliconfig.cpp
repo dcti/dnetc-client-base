@@ -1446,7 +1446,6 @@ s32 Client::WriteContestandPrefixConfig(void)
     // only writes contestdone and randomprefix .ini entries
 {
   IniSection ini;
-  char buffer[64];
 
   ini.ReadIniFile(inifilename);
 
@@ -1459,18 +1458,11 @@ s32 Client::WriteContestandPrefixConfig(void)
   ini.setrecord(OPTION_SECTION, "contestdone",  IniString(contestdone[0]));
   ini.setrecord(OPTION_SECTION, "contestdone2", IniString(contestdone[1]));
 
-#define INIFIND(key) ini.findfirst(OPTION_SECTION, options[key].name)
-
 #if defined(NEEDVIRTUALMETHODS)
   InternalWriteConfig(ini);
 #endif
 
-#undef INIFIND
-
   return( ini.WriteIniFile(inifilename) ? -1 : 0 );
-
-
-
 }
 
 //----------------------------------------------------------------------------

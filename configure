@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.18  1998/06/05 17:34:34  bovine
+# added gcc-alpha-mt configure target.  cleaned up unused buffer in cliconfig's writecontestprefix
+#
 # Revision 1.17  1998/06/01 21:49:05  friedbait
 # added '-DKWAN' for OS/390,
 # changed the copy command for the RC5CORECOPY platforms such that
@@ -335,9 +338,17 @@ case "$1" in
 
     *alpha-gcc)
 	RC5CORECOPY="rc5ansi1-b2.cpp"
-	TARGET_CC="gcc"
+	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 -DBIT_64 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	;;
+
+    *alpha-gcc-mt)
+	RC5CORECOPY="rc5ansi1-b2.cpp"
+	TARGET_CC="g++"
+	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 -DBIT_64 -DMEGGS -DKWAN -DMULTITHREAD"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	TARGET_LIBS="-lpthread"
 	;;
 
 
@@ -478,7 +489,7 @@ case "$1" in
 	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
 	;;
 
-     *x86-bsdi)
+    *x86-bsdi)
        TARGET_AS="as"
        TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
        TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
