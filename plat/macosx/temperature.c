@@ -12,15 +12,16 @@
  *
  * Currently we try 3 different sources:
  *   - host_processor_info(), which uses a CPUs builtin Thermal Assist Unit
- *   - AppleCPUThermo, an IOKit Object that provides "temp-monitor" from a dedicated sensor 
- *     near the CPU
- *   - IOHWSensor, an IOKit Object that provides "temp-sensor" data from a dedicated sensor
+ *   - AppleCPUThermo, an IOKit Object that provides "temp-monitor" from a
+ *     dedicated sensor near the CPU (PowerMac MDD)
+ *   - IOHWSensor, an IOKit Object that provides "temp-sensor" data from a
+ *     dedicated sensor (PowerBook Alu)
  *
  * FIXES:
  *   - #3338 : kIOMasterPortDefault doesn't exist prior Mac OS 10.2 (2.9006.485)
  *   - #3343 : The object filled by CFNumberGetValue shall not be released (2.9006.485)
  *
- *  $Id: temperature.c,v 1.1.2.3 2003/09/07 18:45:44 kakace Exp $
+ *  $Id: temperature.c,v 1.1.2.4 2003/11/04 16:30:21 kakace Exp $
  */
 
 #include <string.h>
@@ -43,7 +44,7 @@ extern "C" {
 }
 #endif
 
-SInt32 _readTAU(void) {
+static SInt32 _readTAU(void) {
 
     SInt32                 cputemp = -1;
     kern_return_t          ret;
@@ -117,7 +118,7 @@ static SInt32 _readTemperature(const char *className, const char *location, CFSt
           if(location == NULL) {
             matched = 1;      /* match all instances */
           }
-          else if (CFDictionaryGetValueIfPresent(properties, CFSTR("location"), (const void **)&string)) {
+          else if (CFDictionaryGetValueIfPresent(properties, CFSTR("location"), (const void **) &string)) {
             if (CFStringGetTypeID() == CFGetTypeID(string) 
                   && CFStringGetCString(string, strbuf, sizeof(strbuf), CFStringGetSystemEncoding())) {
 						
@@ -130,7 +131,7 @@ static SInt32 _readTemperature(const char *className, const char *location, CFSt
           ** Obtain raw temperature data. When multiple instances are matched, we remember the
           ** largest temperature value.
           */
-          if(matched && CFDictionaryGetValueIfPresent(properties, dataKey, (const void **)&number)) {
+          if(matched && CFDictionaryGetValueIfPresent(properties, dataKey, (const void **) &number)) {
             if (CFNumberGetTypeID() == CFGetTypeID(number) 
                       && CFNumberGetValue(number, kCFNumberSInt32Type, &temp)) {
 						
@@ -166,7 +167,7 @@ static SInt32 _readAppleCPUThermo(void)
 }
 
 /*
-** PowerBook Alu 12" and 17"
+** PowerBook Alu 12", 15" and 17"
 */
 static SInt32 _readIOHWSensor(void)
 {
@@ -193,7 +194,7 @@ SInt32 macosx_cputemp(void) {
         case 2:
             return _readAppleCPUThermo();   /* PowerMac MDD, XServe */
         case 3:
-            return _readIOHWSensor();       /* PowerBook Alu 12" and 17" */
+            return _readIOHWSensor();       /* PowerBook Alu 12", 15" and 17" */
             
         default:
             temp = _readTAU();
