@@ -5,8 +5,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.65  1999/01/05 22:56:29  cyp
+// Added support for SOCKS5 address type 0x03 (hostname) so a failed lookup
+// on the target hostname is no longer fatal. Nevertheless, SOCKS5 still
+// says "address type unsupported", and since I don't have IPv6, I assume my
+// SOCKS5 server is faulty.
+//
 // Revision 1.64  1999/01/04 21:47:58  cyp
-// SOCKS4 works fine. SOCKS5 says "address type not supported". Looking into it.
+// SOCKS4 works fine. SOCKS5 says "address type not supported".
 //
 // Revision 1.63  1999/01/04 16:05:06  silby
 // Fixed byte ordering problem with socks code; Still does not work, however.
@@ -187,7 +193,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.64 1999/01/04 21:47:58 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.65 1999/01/05 22:56:29 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -275,7 +281,7 @@ typedef struct _socks5 {
 
 const char *Socks5ErrorText[9] =
 {
- /* 0 */ NULL,                              // success
+ /* 0 */ "" /* success */,
   "general SOCKS server failure",
   "connection not allowed by ruleset",
   "Network unreachable",
@@ -441,6 +447,8 @@ void Network::SetModeSOCKS4(const char *sockshost, s16 socksport,
     fwall_userpass[0] = 0;
     if (socksusername && *socksusername)
       strncpy(fwall_userpass, socksusername, sizeof(fwall_userpass));
+    if (fwall_hostport == 0)
+      fwall_hostport = 1080;
     }
   else
     {
@@ -466,6 +474,8 @@ void Network::SetModeSOCKS5(const char *sockshost, s16 socksport,
     fwall_userpass[0] = 0;
     if (socksusernamepw && *socksusernamepw)
       strncpy(fwall_userpass, socksusernamepw, sizeof(fwall_userpass));
+    if (fwall_hostport == 0)
+      fwall_hostport = 1080;
     }
   else
     {
@@ -534,7 +544,6 @@ int Network::Open( void )               // returns -1 on error, 0 on success
 
     /* ---------- create a new socket --------------- */
 
-    sock = INVALID_SOCKET;
     success = (LowLevelCreateSocket() == 0);      
 
     if (!success)
@@ -582,9 +591,9 @@ int Network::Open( void )               // returns -1 on error, 0 on success
         }
 
       if ((startmode & MODE_HTTP) == 0) /* we always re-resolve unless http */
-        {
-        svc_hostaddr = 0; 
-        }
+        {                               // socks5 needs a 'good' hostname
+        svc_hostaddr = 0;               // (obtained from resolve_hostname)
+        }                               // if name resolution fails - cyp
       
       if (!NetCheckIsOK())
         {
@@ -599,19 +608,24 @@ int Network::Open( void )               // returns -1 on error, 0 on success
           success = 0;
           fwall_hostaddr = 0;
           if (verbose_level > 0)
-            LogScreen("Network::failed to resolve name \"%s\"\n", fwall_hostname );
+            LogScreen("Network::failed to resolve name \"%s\"\n", 
+                                                     resolve_hostname );
           retries = maxtries; //unrecoverable error. retry won't help
           }
-        else if (svc_hostaddr == 0 && Resolve(svc_hostname, &svc_hostaddr, svc_hostport ) < 0)
+        else if (svc_hostaddr == 0) /* always true unless http */
           {
-          svc_hostaddr = 0;
-          if (startmode & (MODE_SOCKS4 | MODE_SOCKS5))
+          if ( Resolve(svc_hostname, &svc_hostaddr, svc_hostport ) < 0 )
             {
-            success = 0; // socks needs the address to resolve now.
-            if (verbose_level > 0)
-              LogScreen("Network::failed to resolve hostname \"%s\"\n", 
-                                           svc_hostname);
+            svc_hostaddr = 0;
+            if ((startmode & (MODE_SOCKS4 /*| MODE_SOCKS5*/))!=0)
+              {
+              success = 0; // socks needs the address to resolve now.
+              if (verbose_level > 0)
+                LogScreen("Network::failed to resolve hostname \"%s\"\n", 
+                                                     resolve_hostname);
+              }
             }
+          svc_hostname = resolve_hostname; //socks5 will use this
           }
         conn_hostaddr = fwall_hostaddr;
         conn_hostname = fwall_hostname;
@@ -624,8 +638,10 @@ int Network::Open( void )               // returns -1 on error, 0 on success
           success = 0;
           svc_hostaddr = 0;
           if (verbose_level > 0)
-            LogScreen("Network::failed to resolve name \"%s\"\n", svc_hostname );
+            LogScreen("Network::failed to resolve name \"%s\"\n", 
+                                                    resolve_hostname );
           }
+        svc_hostname = resolve_hostname;
         conn_hostaddr = svc_hostaddr;
         conn_hostname = svc_hostname;
         conn_hostport = svc_hostport;
@@ -652,6 +668,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
             targethost = scratch;
             }
           }
+        
         if ((startmode & MODE_PROXIED)==0)
           {  
           #ifdef DEBUG
@@ -709,14 +726,11 @@ int Network::Open( void )               // returns -1 on error, 0 on success
        
     if (success)
       {
-      success = ( InitializeConnection() == 0 );
-      if (!success && verbose_level > 0)
-        {
-        LogScreen( "Network::Failed to initialize %sconnection.\n",
-          (((startmode & MODE_PROXIED)==0)?(""):((startmode & MODE_SOCKS5)?("SOCKS5 "):
-          ((startmode & MODE_SOCKS4)?("SOCKS4 "):
-          ((startmode & MODE_HTTP)?("HTTP "):("??? "))))));
-        }
+      int rc = InitializeConnection();
+      if (rc != 0)
+        success = 0;
+      if (rc < 0)           /* unrecoverable error (negotiation failure) */
+        retries = maxtries; /* so don't retry */
       }
 
     /* ---- clean up ---- */
@@ -756,12 +770,27 @@ int Network::InitializeConnection(void)
   if (startmode & MODE_SOCKS5)
     {
     int success = 0; //assume failed
+    int recoverable = 0; //assume non-recoverable error (negotiation failure)
+    
     char socksreq[600];  // room for large username/pw (255 max each)
     SOCKS5METHODREQ *psocks5mreq = (SOCKS5METHODREQ *)socksreq;
     SOCKS5METHODREPLY *psocks5mreply = (SOCKS5METHODREPLY *)socksreq;
     SOCKS5USERPWREPLY *psocks5userpwreply = (SOCKS5USERPWREPLY *)socksreq;
     SOCKS5 *psocks5 = (SOCKS5 *)socksreq;
     u32 len;
+
+    int tmp_isnonblocking = (isnonblocking != 0);
+    if (isnonblocking)
+      {
+      isnonblocking = ((MakeBlocking() == 0)?(0):(1));
+      if (isnonblocking)
+        {
+        if (verbose_level > 0)
+          LogScreen("SOCKS5: unable to temporarily revert to blocking mode\n");
+        iotimeout = -1; //force blocking mode in next try
+        return +1; //recoverable
+        }
+      }
 
     // transact a request to the SOCKS5 proxy requesting
     // authentication methods.  If the username/password
@@ -773,153 +802,186 @@ int Network::InitializeConnection(void)
     psocks5mreq->Methods[0] = 0;  // no authentication
     psocks5mreq->Methods[1] = 2;  // username/password
 
+    int authaccepted = 0;
+
     len = 2 + psocks5mreq->nMethods;
     if (LowLevelPut(len, socksreq) < 0)
       {
       if (verbose_level > 0)
         LogScreen("SOCKS5: error sending negotiation request\n");
-      //goto Socks5InitEnd;
+      recoverable = 1;
       }
     else if ((u32)LowLevelGet(2, socksreq) != 2)
       {
       if (verbose_level > 0)
         LogScreen("SOCKS5: failed to get negotiation request ack.\n");
-      //goto Socks5InitEnd;
+      recoverable = 1;
       }
     else if (psocks5mreply->ver != 5)
       {
       if (verbose_level > 0)
         LogScreen("SOCKS5: authentication has wrong version, %d should be 5\n", 
                             psocks5mreply->ver);
-      //goto Socks5InitEnd;
       }
-    else 
+    else if (psocks5mreply->Method == 2)  // username and pw
       {
-      int authaccepted = 0;
-      if (psocks5mreply->Method == 0)       // no authentication
-        {
-        // nothing to do for no authentication method
-        authaccepted = 1;
-        }
-      else if (psocks5mreply->Method == 2)  // username and pw
-        {
-        char username[255];
-        char password[255];
-        char *pchSrc, *pchDest;
-        int userlen, pwlen;
+      char username[255];
+      char password[255];
+      char *pchSrc, *pchDest;
+      int userlen, pwlen;
 
-        pchSrc = fwall_userpass;
-        pchDest = username;
-        while (*pchSrc && *pchSrc != ':')
-          *pchDest++ = *pchSrc++;
-        *pchDest = 0;
-        userlen = pchDest - username;
-        if (*pchSrc == ':')
-          pchSrc++;
-        strcpy(password, pchSrc);
-        pwlen = strlen(password);
+      pchSrc = fwall_userpass;
+      pchDest = username;
+      while (*pchSrc && *pchSrc != ':')
+        *pchDest++ = *pchSrc++;
+      *pchDest = 0;
+      userlen = pchDest - username;
+      if (*pchSrc == ':')
+        pchSrc++;
+      strcpy(password, pchSrc);
+      pwlen = strlen(password);
 
-        //   username/password request looks like
-        // +----+------+----------+------+----------+
-        // |VER | ULEN |  UNAME   | PLEN |  PASSWD  |
-        // +----+------+----------+------+----------+
-        // | 1  |  1   | 1 to 255 |  1   | 1 to 255 |
-        // +----+------+----------+------+----------+
+      //   username/password request looks like
+      // +----+------+----------+------+----------+
+      // |VER | ULEN |  UNAME   | PLEN |  PASSWD  |
+      // +----+------+----------+------+----------+
+      // | 1  |  1   | 1 to 255 |  1   | 1 to 255 |
+      // +----+------+----------+------+----------+
 
-        len = 0;
-        socksreq[len++] = 1;    // username/pw subnegotiation version
-        socksreq[len++] = (char) userlen;
-        memcpy(socksreq + len, username, (int) userlen);
-        len += userlen;
-        socksreq[len++] = (char) pwlen;
-        memcpy(socksreq + len, password, (int) pwlen);
-        len += pwlen;
+      len = 0;
+      socksreq[len++] = 1;    // username/pw subnegotiation version
+      socksreq[len++] = (char) userlen;
+      memcpy(socksreq + len, username, (int) userlen);
+      len += userlen;
+      socksreq[len++] = (char) pwlen;
+      memcpy(socksreq + len, password, (int) pwlen);
+      len += pwlen;
 
-        if (LowLevelPut(len, socksreq) < 0)
-          {
-          if (verbose_level > 0)
-            LogScreen("SOCKS5: failed to send sub-negotiation request.\n");
-          //goto Socks5InitEnd;
-          }
-        else if ((u32)LowLevelGet(2, socksreq) != 2)
-          {
-          if (verbose_level > 0)
-            LogScreen("SOCKS5: failed to get sub-negotiation response.\n");
-          //goto Socks5InitEnd;
-          }
-        else if (psocks5userpwreply->ver != 1 ||
-             psocks5userpwreply->status != 0)
-          {
-          if (verbose_level > 0)
-            LogScreen("SOCKS5: user %s rejected by server.\n", username);
-          //goto Socks5InitEnd;
-          }       
-        else
-          {
-          authaccepted = 1;
-          }
-        } //if (psocks5mreply->Method == 2)  // username and pw
-      else
+      if (LowLevelPut(len, socksreq) < 0)
         {
         if (verbose_level > 0)
-          LogScreen("SOCKS5 authentication method rejected.\n");
-        //goto Socks5InitEnd;
+          LogScreen("SOCKS5: failed to send sub-negotiation request.\n");
+        recoverable = 1;
         }
-      
-      if (authaccepted)
+      else if ((u32)LowLevelGet(2, socksreq) != 2)
         {
-        // after subnegotiation, send connect request
-        psocks5->ver = 5;
-        psocks5->cmdORrep = 1;   // connnect
-        psocks5->rsv = 0;   // must be zero
-        psocks5->atyp = 1;  // IPv4
-        psocks5->addr = svc_hostaddr;
-        psocks5->port = (u16)htons(svc_hostport); //(u16)(htons((server_name[0]!=0)?((u16)port):((u16)(DEFAULT_PORT))));
-
-        if (LowLevelPut(10, socksreq) < 0)
-          {
-          if (verbose_level > 0)
-            LogScreen("SOCKS5: failed to send connect request.\n");
-          //goto Socks5InitEnd;
-          }
-        else if ((u32)LowLevelGet(10, socksreq) != 10)
-          {
-          if (verbose_level > 0)
-            LogScreen("SOCKS5: failed to get connect request ack.\n");
-          //goto Socks5InitEnd;
-          }
-        else if (psocks5->ver != 5)
-          {
-          if (verbose_level > 0)
-             LogScreen("SOCKS5: reply has wrong version, %d should be 5\n", 
-                           psocks5->ver);
-          //goto Socks5InitEnd;
-          }
-        else if (psocks5->cmdORrep == 0)  // 0 is successful connect
-          {
-          success = 1; 
-          }
-        else if (verbose_level > 0)
-          {
-          LogScreen("SOCKS5: server error connecting to keyserver:\n%s", 
-                (psocks5->cmdORrep >=
-                (sizeof Socks5ErrorText / sizeof Socks5ErrorText[0]))
-                ? "unrecognized SOCKS5 error"
-                : Socks5ErrorText[ psocks5->cmdORrep ] );
-          }
-        } //if (authaccepted)
+        if (verbose_level > 0)
+          LogScreen("SOCKS5: failed to get sub-negotiation response.\n");
+        recoverable = 1;
+        }
+      else if (psocks5userpwreply->ver != 1 ||
+           psocks5userpwreply->status != 0)
+        {
+        if (verbose_level > 0)
+          LogScreen("SOCKS5: user %s rejected by server.\n", username);
+        }       
+      else
+        {
+        authaccepted = 1;
+        }
+      } //username and pw
+    else if (psocks5mreply->Method == 1)  // GSSAPI
+      {
+      if (verbose_level > 0)
+        LogScreen("SOCKS5: GSSAPI per-message authentication is\n"
+                  "not supported. Please use SOCKS4 or HTTP.\n");
+      }
+    else if (psocks5mreply->Method == 0)       // no authentication required
+      {
+      // nothing to do for no authentication method
+      authaccepted = 1;
+      }
+    else //if (psocks5mreply->Method > 2)
+      {
+      if (verbose_level > 0)
+        LogScreen("SOCKS5 authentication method rejected.\n");
       }
       
-//Socks5InitEnd: 
-    return ((success)?(0):(-1));
+    if (authaccepted)
+      {
+      // after subnegotiation, send connect request
+      psocks5->ver = 5;
+      psocks5->cmdORrep = 1;   // connnect
+      psocks5->rsv = 0;   // must be zero
+      psocks5->atyp = 1;  // IPv4 = 1
+      psocks5->addr = svc_hostaddr;
+      psocks5->port = (u16)htons(svc_hostport); //(u16)(htons((server_name[0]!=0)?((u16)port):((u16)(DEFAULT_PORT))));
+      int packetsize = 10;
+
+      if (svc_hostaddr == 0)           
+        {                              
+        psocks5->atyp = 0x03; //fully qualified domainname
+        char *p = (char *)(&psocks5->addr);
+        strcpy( p+1, svc_hostname );     //at this point svc_hostname is a
+        *p = (char)(len = strlen( p+1 )); //ptr to a resolve_hostname
+        p += (++len);
+        *((u16 *)(p)) = (u16)htons(svc_hostport);
+        packetsize = (10-sizeof(u32))+len;
+        }
+        
+      if (LowLevelPut(packetsize, socksreq) < 0)
+        {
+        if (verbose_level > 0)
+          LogScreen("SOCKS5: failed to send connect request.\n");
+        recoverable = 1;
+        }
+      else if ((u32)LowLevelGet(packetsize, socksreq) < 10 /*ok for both atyps*/)
+        {
+        if (verbose_level > 0)
+          LogScreen("SOCKS5: failed to get connect request ack.\n");
+        recoverable = 1;
+        }
+      else if (psocks5->ver != 5)
+        {
+        if (verbose_level > 0)
+           LogScreen("SOCKS5: reply has wrong version, %d should be 5\n", 
+                       psocks5->ver);
+        }
+      else if (psocks5->cmdORrep == 0)  // 0 is successful connect
+        {
+        success = 1; 
+        if (psocks5->atyp == 1)  // IPv4
+          svc_hostaddr = psocks5->addr;
+        }
+      else if (verbose_level > 0)
+        {
+        const char *p = ((psocks5->cmdORrep >=
+                         (sizeof Socks5ErrorText / sizeof Socks5ErrorText[0]))
+                         ? ("") : (Socks5ErrorText[ psocks5->cmdORrep ]));
+        LogScreen("SOCKS5: server error 0x%02x%s%s%s\nconnecting to %s:%u", 
+                 ((int)(psocks5->cmdORrep)),
+                 ((*p) ? (" (") : ("")), p, ((*p) ? (")") : ("")),
+                 svc_hostname, (unsigned int)svc_hostport );
+        }
+      } //if (authaccepted)
+      
+    if (tmp_isnonblocking)
+      isnonblocking = (MakeNonBlocking()==0);
+      
+    return ((success)?(0):((recoverable)?(+1):(-1)));
     } //if (startmode & MODE_SOCKS5)
 
   if (startmode & MODE_SOCKS4)
     {
     int success = 0; //assume failed
+    int recoverable = 0; //assume non-recoverable error (negotiation failure)
+
     char socksreq[128];  // min sizeof(fwall_userpass) + sizeof(SOCKS4)
     SOCKS4 *psocks4 = (SOCKS4 *)socksreq;
     u32 len;
+
+    int tmp_isnonblocking = (isnonblocking != 0);
+    if (isnonblocking)
+      {
+      isnonblocking = ((MakeBlocking() == 0)?(0):(1));
+      if (isnonblocking)
+        {
+        if (verbose_level > 0)
+          LogScreen("SOCKS4: unable to temporarily revert to blocking mode\n");
+        iotimeout = -1; //force blocking mode in next try
+        return +1; //recoverable
+        }
+      }
 
     // transact a request to the SOCKS4 proxy giving the
     // destination ip/port and username and process its reply.
@@ -935,6 +997,7 @@ int Network::InitializeConnection(void)
       {
       if (verbose_level > 0)
         LogScreen("SOCKS4: Error sending connect request\n");
+      recoverable = 1;
       }
     else
       {
@@ -945,6 +1008,7 @@ int Network::InitializeConnection(void)
         if (verbose_level > 0)
           LogScreen("SOCKS4:%s response from server.\n",
                                      ((gotlen<=0)?("No"):("Invalid")));
+        recoverable = 1;
         }
       else //if ( (u32)(gotlen)) == len)
         {
@@ -968,7 +1032,11 @@ int Network::InitializeConnection(void)
           }
         }
       }
-    return ((success)?(0):(-1));
+
+    if (tmp_isnonblocking)
+      isnonblocking = (MakeNonBlocking()==0);
+
+    return ((success)?(0):((recoverable)?(+1):(-1)));
     }
     
   return 0;
