@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.94.2.2 2003/04/03 21:32:41 oliver Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.94.2.3 2003/08/09 12:39:27 mweiser Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -90,8 +90,17 @@ enum {
 
 /* ---------------------------------------------------------------------- */
 
-#ifndef MIPSpro
-#pragma pack(1)
+#if !defined(PACKED)
+# define PACKED
+#endif
+
+#if !defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)
+# if !defined(MIPSpro)
+#  pragma pack(1)
+# endif
+#else
+# undef PACKED
+# define PACKED __attribute__((packed)) /* use attribute on >= egcs-1.1.2 */
 #endif
 
 typedef union
@@ -104,7 +113,7 @@ typedef union
     struct {u32 hi,lo;} cypher;           // cyphertext
     struct {u32 hi,lo;} keysdone;         // iterations done (also current position in block)
     struct {u32 hi,lo;} iterations;       // iterations to do
-  } crypto;        /* 48 bytes */
+  } PACKED crypto;        /* 48 bytes */
   #endif
   #if defined(HAVE_CRYPTO_V2)
   struct {
@@ -116,21 +125,21 @@ typedef union
     struct {u32 hi,lo;} iterations;       // iterations to do
     u32 randomsubspace;                   // subspace for random generation.
     struct {u32 count; u32 hi,mid,lo;} check;   // keyid of last found counter-measure check.
-  } bigcrypto;     /* 68 bytes */
+  } PACKED bigcrypto;     /* 68 bytes */
   #endif
   #if defined(HAVE_OGR_CORES)
   struct {
     struct WorkStub workstub;             // stub to work on (28 bytes)
     struct {u32 hi,lo;} nodes;            // nodes completed
-  } ogr;           /* 36 bytes */
+  } PACKED ogr;           /* 36 bytes */
   #endif
   struct {
     char unused[80];
-  } unused;
+  } PACKED unused;
 //  #if 0
 //    PROJECT_NOT_HANDLED("in ContestWork");
 //  #endif
-} ContestWork;
+} PACKED ContestWork;
 
 typedef struct
 {
@@ -142,11 +151,13 @@ typedef struct
   u32  os;         /* CLIENT_OS */
   u32  build;      /* CLIENT_VERSION - combined build identifier */
   u32  core;       /* core used to process the packet */
-} WorkRecord;
+} PACKED WorkRecord;
 
-#ifndef MIPSpro
+#if (!defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)) && \
+    !defined(MIPSpro)
 # pragma pack()
-#endif /* ! MIPSpro */
+#endif
+#undef PACKED
 
 /* ---------------------------------------------------------------------- */
 

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.4 2003/01/29 01:29:58 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.5 2003/08/09 12:39:27 mweiser Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -76,12 +76,25 @@ static unsigned int __problem_counter = 0;
 
 /* ------------------------------------------------------------------- */
 
-#if !defined(MIPSpro) 
-  #if (SIZEOF_LONG == 8)  /* SIZEOF_LONG is defined in cputypes.h */
-    #pragma pack(8)
-  #else    
-    #pragma pack(4)
-  #endif    
+#if !defined(ALIGN)
+# define ALIGN
+#endif
+
+#if !defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)
+# if !defined(MIPSpro)
+#  if (SIZEOF_LONG == 8)  /* SIZEOF_LONG is defined in cputypes.h */
+#   pragma pack(8)
+#  else    
+#   pragma pack(4)
+#  endif    
+# endif
+#else
+# undef ALIGN
+# if (SIZEOF_LONG == 8)
+#  define ALIGN __attribute__((packed,aligned(8))) /* use attribute on >= egcs-1.1.2 */
+# else    
+#  define ALIGN __attribute__((packed,aligned(4)))
+# endif
 #endif
 
 typedef struct
@@ -109,17 +122,28 @@ typedef struct
     int started;
     int initialized;
     unsigned int threadindex; /* 0-n (globally unique identifier) */
-  } priv_data;
-} InternalProblem;
+  } ALIGN priv_data;
+} ALIGN InternalProblem;
 
-#ifndef MIPSpro
-#pragma pack()
+#if (!defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)) && \
+    !defined(MIPSpro)
+# pragma pack()
 #endif
+#undef ALIGN
 
 /* ======================================================================= */
 
-#ifndef MIPSpro
-#pragma pack(1)
+#if !defined(PACKED)
+# define PACKED
+#endif
+
+#if !defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)
+# if !defined(MIPSpro)
+#  pragma pack(1)
+# endif
+#else
+# undef PACKED
+# define PACKED __attribute__((packed)) /* use attribute on >= egcs-1.1.2 */
 #endif
 
 /* SuperProblem() is an InternalInternal problem struct                */
@@ -161,11 +185,13 @@ typedef struct
   #define PICKPROB_CORE 1
   #define PICKPROB_TEMP 2 /* temporary copy used by load */
   fastlock_t copy_lock; /* locked when a sync is in progress */
-} SuperProblem;  
+} PACKED SuperProblem;  
 
-#ifndef MIPSpro
-#pragma pack()
+#if (!defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)) && \
+    !defined(MIPSpro)
+# pragma pack()
 #endif
+#undef PACKED
 
 unsigned int ProblemGetSize(void)
 { /* needed by IPC/shmem */

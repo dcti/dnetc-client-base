@@ -21,7 +21,7 @@
  *   of the problem object (ie created when the object is new'd) 
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.13.2.2 2003/03/01 11:12:49 andreasb Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.13.2.3 2003/08/09 12:39:27 mweiser Exp $"
 
 #include "cputypes.h"   /* u32 etc. used here and in the cores */
 
@@ -45,8 +45,17 @@ typedef enum
   RESULT_FOUND   = 2
 } Resultcode;
 
-#ifndef MIPSpro
-#pragma pack(1)
+#if !defined(PACKED)
+# define PACKED
+#endif
+
+#if !defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)
+# if !defined(MIPSpro)
+#  pragma pack(1)
+# endif
+#else
+# undef PACKED
+# define PACKED __attribute__((packed)) /* use attribute on >= egcs-1.1.2 */
 #endif
 
 typedef struct
@@ -54,7 +63,7 @@ typedef struct
   struct {u32 hi,lo;} plain;  /* plaintext (already mixed with iv!) */
   struct {u32 hi,lo;} cypher; /* cyphertext */
   struct {u32 hi,lo;} L0;     /* key, changes with every unit * PIPELINE_COUNT. */
-} RC5UnitWork;
+} PACKED RC5UnitWork;
 
 typedef struct
 {
@@ -62,10 +71,12 @@ typedef struct
   struct {u32 hi,lo;} cypher; /* cyphertext */
   struct {u32 hi,mid,lo;} L0; /* key, changes with every unit * PIPELINE_COUNT. */
   struct {u32 count; u32 hi,mid,lo;} check; /* counter-measure check */
-} RC5_72UnitWork;
+} PACKED RC5_72UnitWork;
 
-#ifndef MIPSpro
-#pragma pack()
+#if (!defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)) && \
+    !defined(MIPSpro)
+# pragma pack()
 #endif
+#undef PACKED
 
 #endif /* __CCOREIO_H__ */
