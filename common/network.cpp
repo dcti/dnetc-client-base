@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.66  1999/01/07 22:01:41  cyp
+// fixed a bad #if in errno checking.
+//
 // Revision 1.65  1999/01/05 22:56:29  cyp
 // Added support for SOCKS5 address type 0x03 (hostname) so a failed lookup
 // on the target hostname is no longer fatal. Nevertheless, SOCKS5 still
@@ -193,7 +196,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.65 1999/01/05 22:56:29 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.66 1999/01/07 22:01:41 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -705,7 +708,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
           {
           LogScreen( "Connect to host %s:%u failed.\n",
              __inet_ntoa__(conn_hostaddr), (unsigned int)(conn_hostport));
-          #ifdef ERRNO_IS_UNUSABLE 
+          #ifndef ERRNO_IS_UNUSABLE 
           if (NetCheckIsOK()) //use errno only if netcheck says ok.
             {
             #if defined(_TIUSER_)
