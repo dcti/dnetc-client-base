@@ -1,14 +1,15 @@
 /* Hey, Emacs, this a -*-C++-*- file !
-** 
-** Intra-process synchronization primitives.
-** Written Jan 2001 by Cyrus Patel <cyp@fb14.uni-mainz.de>
-**
-** Based on the prototypes as used in Solaris/SunOS
-** http://hoth.stsci.edu/man/man3T/
-**
+ * 
+ * Intra-process synchronization primitives.
+ * Written Jan 2001 by Cyrus Patel <cyp@fb14.uni-mainz.de>
+ *
+ * Although based on the prototypes as used in Solaris/SunOS
+ * eg http://hoth.stsci.edu/man/man3T/ , they are used in the client 
+ * for lightweight protection of (small and fast) critical sections, 
+ * and are therefore intended to behave more like spinlocks than mutexes.
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.1 2001/01/25 00:45:33 andreasb Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.2 2001/01/26 13:26:54 cyp Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* usleep() */
@@ -19,7 +20,8 @@
   #define DEFAULTMUTEX {0}
   static inline void mutex_lock(mutex_t *m)   { m->spl = 1; }
   static inline void mutex_unlock(mutex_t *m) { m->spl = 0; }
-  static inline int mutex_trylock(mutex_t *m) { m->spl = 1; return 0; }
+  static inline int mutex_trylock(mutex_t *m) { m->spl = 1; return +1; }
+  /* _trylock returns -1 on EINVAL, 0 if could not lock, +1 if could lock */
 
 #elif defined(_POSIX_THREADS_SUPPORTED)
 
@@ -56,11 +58,12 @@
    {
      _ReleaseSpinLock(&(m->spl));
    }
+   /* _trylock returns -1 on EINVAL, 0 if could not lock, +1 if could lock */
    static inline int mutex_trylock(mutex_t *m)
    {
      if (!_AcquireSpinLockCount(&(m->spl),1))
-       return -1;
-     return 0;
+       return 0;
+     return +1;
    }
 
 #elif (CLIENT_CPU == CPU_X86)
@@ -72,6 +75,7 @@
      #pragma pack()
    } mutex_t;
    #define DEFAULTMUTEX {0}
+   /* _trylock returns -1 on EINVAL, 0 if could not lock, +1 if could lock */
    static inline int mutex_trylock(mutex_t *m)
    {
      long *splptr = &(m->spl);
@@ -96,8 +100,8 @@
      _asm mov lacquired,eax       
      #endif
      if (lacquired)
-       return 0;
-     return -1;
+       return +1;
+     return 0;
    }
    static inline void mutex_unlock(mutex_t *m)
    {
@@ -105,7 +109,7 @@
    }
    static inline void mutex_lock(mutex_t *m)
    {
-     while (mutex_trylock(m)!=0)
+     while (mutex_trylock(m) <= 0)
      {
        #if defined(__unix__)
        usleep(1);
