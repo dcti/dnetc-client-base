@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.140 2000/03/05 19:47:56 patrick Exp $
+# @(#)$Id: configure,v 1.222.2.141 2000/03/06 20:27:22 patrick Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1074,6 +1074,7 @@ case "$1" in
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS $OGR_ANSI_SRCS $RC5PPC_SRCS \
                 rc5/ansi/rc5ansi_2-rg.cpp "
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_LIBS="$TARGET_LIBS -lpthreads "
 	TARGET_TARBALL="aix-all-aix4.1"
         ;;
 
