@@ -6,7 +6,7 @@
  *
 */ 
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.25.2.2 1999/11/23 22:48:32 cyp Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.25.2.3 1999/12/02 10:51:23 mfeiri Exp $"; }
 
 //#define TEST  //standalone test
 //#define RESDEBUG //to show what network::resolve() is resolving
@@ -121,9 +121,8 @@ static int calc_tzmins(void)
   if (saved_tz != -12345)
     return saved_tz;
 
-  #if (CLIENT_OS != OS_MACOS)
-    tzset();
-  #endif
+  tzset();
+
   timenow = time(NULL);
   tmP = localtime( (const time_t *) &timenow);
   if ((haveloctime = (tmP != NULL))!=0)
@@ -258,11 +257,7 @@ int NetResolve( const char *host, int resport, int resauto,
       resauto = 1;
     else
     {
-      #if (CLIENT_OS == OS_MACOS)
-      addrlist[0] = (u32)(inet_addr(hostname).s_addr);
-      #else
       addrlist[0] = (u32)(inet_addr(hostname));
-      #endif
       if (addrlist[0] != 0xFFFFFFFFL)
       {
         if (resolve_hostname_sz)
