@@ -9,7 +9,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.91 2001/03/20 09:50:15 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.92 2001/03/20 19:37:59 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -521,7 +521,8 @@ void Go_mt( void * parm )
               usecs=(usecs*15+runtime_usec)/16;
 
               /*if(usecs!=0)
-                printf("%5d %4d\r", thisprob->pub_data.tslice, ixes*1000/usecs);*/
+                printf("%5d %4d\r", thisprob->pub_data.tslice, ixes*1000/usecs);
+              */
 
               optimal_timeslice=(ui64)thrparams->dyn_timeslice_table[contest_i].usec*ixes/usecs;
               if (optimal_timeslice < thrparams->dyn_timeslice_table[contest_i].min)
@@ -602,7 +603,9 @@ void Go_mt( void * parm )
   }
 
   if (thrparams->realthread)
+  {
     SetThreadPriority( 9 ); /* 0-9 */
+  }
 
   thrparams->hasexited = 1; //the thread is dead
 
@@ -649,24 +652,36 @@ static int __StopThread( struct thread_param_block *thrparams )
       #elif (CLIENT_OS==OS_LINUX) && defined(HAVE_KTHREADS) /*kernel threads*/
       kthread_join( thrparams->threadID );
       #elif defined(HAVE_MULTICRUNCH_VIA_FORK)
-      int timeout = 5*1000000; /* 5 secs */
-      int res = -1;
-      int status;
-      while (timeout > 0)
+      int status = 0, elapsed = 0;
+      pid_t chld = 0, pid = ((pid_t)(thrparams->threadID));
+      while (chld == 0 && elapsed < (5*1000000))  /* 5 secs */
       {
-        if (waitpid(thrparams->threadID,&status,WNOHANG|WUNTRACED) != -1)
-        {
-          res = 0;
-          break;
-        }
         NonPolledUSleep(100000);
-        timeout -= 100000;
+        elapsed += 100000;
+        chld = waitpid(pid,&status,WNOHANG|WUNTRACED);
+        if (chld != pid && errno == ECHILD)
+          chld = pid; /* hmm! */
       }
-      if (res != 0)
+      if (chld != pid) /* hasn't exited */
       {
-        kill(thrparams->threadID, SIGKILL); /* its hung. kill it */
-        waitpid(thrparams->threadID,&status,WUNTRACED);
+        kill(pid, SIGKILL); /* its hung. kill it */
+        waitpid(pid,&status,WUNTRACED);
       }
+      #if 0
+      {
+        if (WIFEXITED(status))
+          printf("child %d called _exit(%d)\n",pid, WEXITSTATUS(status));
+        else if (WIFSIGNALED(status))
+        {
+          int sig = WTERMSIG(status);
+          printf("child %d caught %s signal %d\n",pid,(sig < NSIG ? sys_siglist[sig] : "unknown"), sig );
+        }
+        else if (WIFSTOPPED(status))
+          printf("child %d stopped on %d signal\n",pid, WSTOPSIG(status));
+        else
+          printf("unknown cause for stop\n");
+      }
+      #endif  
       #elif (CLIENT_OS == OS_FREEBSD)
       while (!thrparams->hasexited)
         NonPolledUSleep(100000);
@@ -741,16 +756,6 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         pid_t pid = fork();
         if (pid == 0) /* child */
         {
-          int fd;
-          setsid();
-          if ((fd = open("/dev/null", O_RDWR, 0)) != -1)
-          {
-            (void) dup2(fd, 0);
-            (void) dup2(fd, 1);
-            (void) dup2(fd, 2);
-            if (fd > 2)
-              (void) close(fd);
-          }
           thrparams->threadID = getpid();
           Go_mt((void *)thrparams);
           _exit(0);
