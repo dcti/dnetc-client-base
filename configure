@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.84 2000/01/04 23:35:18 snake Exp $
+# @(#)$Id: configure,v 1.222.2.85 2000/01/05 20:13:27 patrick Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -204,7 +204,7 @@ TARGET_ARCTYPE="tgz"  # or "zip"
 #
 OPTS_WARN="-Wall -Wtraditional -Wpointer-arith -Wcast-align \
 	  -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes \
-	  -Wconversion -Werror -Winline -Waggregate-return -Wcast-qual \
+	  -Wconversion -Winline -Waggregate-return -Wcast-qual \
 	  -Woverloaded-virtual -Wnested-externs"
 #
 # Common compiler options
@@ -1092,14 +1092,16 @@ case "$1" in
         # CPUs are supported !
         DELETECHARS="'/.\$\-'"
 	AIXALL=TRUE
+        ALLCORES="-I./common -I./rc5 -I./des -I./ogr -I./csc -D_AIX -DBIT32 -DMEGGS -DKWAN"
+        AIXPPC601FLAGS="$OPTS_EGCS_PPC601 $ALLCORES"
+        AIXPPC604FLAGS="$OPTS_EGCS_PPC601 $ALLCORES"
+        AIXPOWERFLAGS="$OPTS_EGCS_POWER $ALLCORES"
         TARGET_CCFLAGS="$OPTS_EGCS -mcpu=common -D_AIX -D_AIXALL \
                         -DMEGGS -DKWAN -DHAVE_CSC_CORES"
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS $RC5PPC_SRCS \
                 rc5/ansi/rc5ansi_2-rg.cpp "
-        AIXPPC601FLAGS="$OPTS_EGCS_PPC601 -D_AIX -DBIT32 -DMEGGS -DKWAN"
-        AIXPPC604FLAGS="$OPTS_EGCS_PPC601 -D_AIX -DBIT32 -DMEGGS -DKWAN"
-        AIXPOWERFLAGS="$OPTS_EGCS_POWER -D_AIX -DBIT32 -DMEGGS -DKWAN"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="aix-all-aix4.1"
         ;;
 
 
