@@ -273,7 +273,7 @@ s32 Client::ForceFetch( u8 contest, Network *netin )
 }
 // --------------------------------------------------------------------------
 
-s32 Client::Fetch( u8 contest, Network *netin )
+s32 Client::Fetch( u8 contest, Network *netin, s32 quietness )
 {
 #if defined(NONETWORK)
   return -2;
@@ -564,11 +564,14 @@ s32 Client::Fetch( u8 contest, Network *netin )
     }
     count++;
     if (proxymessage[0] != 0) {
+      if (quietness <= 1) // if > 1, don't show proxy message
+        {
 #ifdef NEW_STATS_AND_LOGMSG_STUFF  //handles linewrap //in clisrate.cpp
-      Log( CliReformatMessage( "The proxy says: ", proxymessage ) );
+        Log( CliReformatMessage( "The proxy says: ", proxymessage ) );
 #else
-      Log( "\n[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
+        Log( "\n[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
 #endif
+        };
       proxymessage[0]=0;
     }
 #if !defined(NOMAIN)           // these two must match
@@ -628,7 +631,7 @@ s32 Client::ForceFlush( u8 contest , Network *netin )
 
 // ---------------------------------------------------------------------------
 
-s32 Client::Flush( u8 contest , Network *netin )
+s32 Client::Flush( u8 contest , Network *netin, s32 quietness )
 {
 #if defined(NONETWORK)
   return -2;
@@ -785,11 +788,14 @@ s32 Client::Flush( u8 contest , Network *netin )
       // no more to do
       if (proxymessage[0] != 0)
         {
+        if (quietness <= 1) // if > 1, don't show proxy message
+          {
 #ifdef NEW_STATS_AND_LOGMSG_STUFF       //handles linewrap
-        Log( CliReformatMessage( "The proxy says: ", proxymessage ) );
+          Log( CliReformatMessage( "The proxy says: ", proxymessage ) );
 #else
-        Log( "\n[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
+          Log( "\n[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
 #endif
+          };
         proxymessage[0]=0;
       }
       //Log( "\n[%s] Sent %d %s block(s) to server\n", Time(), (int) count, (contest == 1 ? "DES":"RC5") );
@@ -937,11 +943,14 @@ s32 Client::Flush( u8 contest , Network *netin )
       count++;
       if (proxymessage[0] != 0)
       {
+        if (quietness <= 1) // if > 1, don't show proxy message
+          {
 #ifdef NEW_STATS_AND_LOGMSG_STUFF       //handles linewrap
-        Log( CliReformatMessage( "The proxy says: ", proxymessage ) );
+          Log( CliReformatMessage( "The proxy says: ", proxymessage ) );
 #else
-        Log( "\n[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
+          Log( "\n[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
 #endif
+          };
         proxymessage[0]=0;
       }
 #if !defined(NOMAIN)           // these two must match
@@ -1042,10 +1051,15 @@ s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr )
     // If we only need the flush to succeed, then do it first
     // to prevent timeout problems.
     retcode2 = Flush(contest, net);
-    retcode1 = Fetch(contest, net);
+    if (retcode2 >= 1) // some blocks were transferred
+      retcode1 = Fetch(contest, net, 2);// No proxy message display a second time
+    else retcode1 = Fetch(contest, net,0);
+
   } else {                        // This is either a flush request, or an update request.
     retcode1 = Fetch(contest, net);
-    retcode2 = Flush(contest, net);
+    if (retcode1 >= 1) // some blocks were transferred
+      retcode2 = Flush(contest, net, 2);// No proxy message display a second time
+    else retcode2 = Flush(contest, net, 0);
   }
   if (contest == 0) {
     if (randomchanged) {
