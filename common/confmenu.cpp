@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.17  1999/01/12 14:57:35  cyp
+// -1 is a legal nettimeout value (force blocking net i/o).
+//
 // Revision 1.16  1999/01/12 14:37:42  cyp
 // re-prompt the user on range error.
 //
@@ -75,7 +78,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.16 1999/01/12 14:37:42 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.17 1999/01/12 14:57:35 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -850,6 +853,8 @@ int Client::Configure( void )
               blockcount = -1;
             else if (userselection == CONF_THRESHOLDI)
               outthreshold[0]=inthreshold[1]=outthreshold[1]=newval_d;
+            else if (userselection == CONF_NETTIMEOUT)
+              nettimeout = ((newval_d<0)?(-1):((newval_d<5)?(5):(newval_d)));
             }
 
           } // if (userselection >= 0)
@@ -869,11 +874,19 @@ int Client::Configure( void )
     {
     if (id[0]==0)
       strcpy(id,"rc5@distributed.net");
+
     autofindkeyserver = (autofindks!=0);
+
+    if (nettimeout < 0)
+      nettimeout = -1;
+    else if (nettimeout < 5)
+      nettimeout = 5;
+
     #ifdef LURK
     if (dialup.lurkmode != 1)
       connectoften=0;
     #endif
+
     if (strlen(userpass.username)==0 && strlen(userpass.password)==0)
       httpid[0]=0;
     else if (uuehttpmode == 2 || uuehttpmode == 3)

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.cpp,v $
+// Revision 1.12  1999/01/12 14:57:35  cyp
+// -1 is a legal nettimeout value (force blocking net i/o).
+//
 // Revision 1.11  1999/01/04 02:47:30  cyp
 // Cleaned up menu options and handling.
 //
@@ -32,7 +35,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.11 1999/01/04 02:47:30 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.12 1999/01/12 14:57:35 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -319,7 +322,8 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   CFGTXT(
   "This option determines the amount of time the client will wait for a network\n"
   "read or write acknowledgement before it assumes that the connection has been\n"
-  "broken.\n"
+  "broken. Any value between 5 and 300 seconds is valid and setting the timeout\n"
+  "to -1 forces a blocking connection.\n"
   ),CONF_MENU_NET,CONF_TYPE_INT,2,NULL,NULL,5,300},
 //27
 { "uuehttpmode", CFGTXT("Firewall Protocol/Communications mode"), "0 (direct connection)",
