@@ -6,7 +6,7 @@
 */
 
 const char *next_sup_cpp(void) {
-return "@(#)$Id: next_sup.cpp,v 1.1.2.3 2003/08/25 09:33:27 mweiser Exp $"; }
+return "@(#)$Id: next_sup.cpp,v 1.1.2.4 2003/08/25 23:28:18 mweiser Exp $"; }
 
 #include "next_sup.h"
 #include <stdlib.h>   /* malloc */
@@ -16,7 +16,7 @@ return "@(#)$Id: next_sup.cpp,v 1.1.2.3 2003/08/25 09:33:27 mweiser Exp $"; }
 
 char *strdup(const char *src)
 {
-  char *dst = (char *)malloc(strlen(src + 1));
+  char *dst = (char *)malloc(strlen(src) + 1);
 
   if (dst != NULL)
     strcpy(dst, src);
