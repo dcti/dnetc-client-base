@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.63 2000/06/02 06:25:00 jlawson Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.64 2000/07/11 03:46:34 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -15,7 +15,6 @@ return "@(#)$Id: selftest.cpp,v 1.63 2000/06/02 06:25:00 jlawson Exp $"; }
 #include "cpucheck.h"  // GetNumberOfDetectedProcessors() [for RISCOS]
 #include "clicdata.h"  // CliGetContestNameFromID() 
 #include "clievent.h"  // ClientEventSyncPost()
-#include "util.h"      // ogr_stubstr()
 
 // --------------------------------------------------------------------------
 
@@ -398,7 +397,7 @@ int SelfTest( unsigned int contest )
           #elif (CLIENT_OS == OS_RISCOS)
           riscos_upcall_6();
           #elif (CLIENT_OS == OS_NETWARE)
-          nwCliThreadSwitchLowPriority();
+          ThreadSwitchLowPriority();
           #endif
         }
         if (CheckExitRequestTrigger())
@@ -453,6 +452,7 @@ int SelfTest( unsigned int contest )
                expectedsolution_hi, expectedsolution_lo );
             break;
 
+          #ifdef HAVE_OGR_CORES
           case OGR:
             if (expectedsolution_lo & 0x80000000) { // no solution
               expectedsolution_lo = ~expectedsolution_lo;
@@ -479,6 +479,7 @@ int SelfTest( unsigned int contest )
                ogr_stubstr(&contestwork.ogr.workstub.stub),
                contestwork.ogr.nodes.lo, expectedsolution_lo );
             break;
+          #endif /* HAVE_OGR_CORES */
         } /* switch */
 
       } /* if (!userbreak) */
@@ -494,12 +495,12 @@ int SelfTest( unsigned int contest )
     {
       if (successes > 0)
       {
-        LogScreen( "\n%s: %d/%d Tests Passed\n", contname,
+        Log( "%s: %d/%d Tests Passed\n", contname,
           (int) successes, (int) TEST_CASE_COUNT );
       }
       if (successes != TEST_CASE_COUNT)
       {
-        LogScreen( "\n%s: WARNING WARNING WARNING: %d Tests FAILED!!!\n", 
+        Log( "%s: WARNING WARNING WARNING: %d Tests FAILED!!!\n", 
           contname, (int) (TEST_CASE_COUNT - successes) );
           successes=-successes;
       }

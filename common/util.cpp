@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.22 2000/06/02 06:25:01 jlawson Exp $"; }
+return "@(#)$Id: util.cpp,v 1.23 2000/07/11 03:42:54 mfeiri Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -67,7 +67,7 @@ int utilCheckIfBetaExpired(int print_msg)
 {
   if (CliIsDevelVersion()) /* cliident.cpp */
   {
-    timeval expirationtime;
+    struct timeval expirationtime;
     time_t now = (CliTimer(NULL)->tv_sec); /* net adjusted */
 
     #ifndef BETA_PERIOD
@@ -88,58 +88,23 @@ int utilCheckIfBetaExpired(int print_msg)
     }
     else if (print_msg)
     {
-      static time_t last_seen = 0;
-      time_t wtime = time(NULL);
-      if (last_seen == 0)
-        last_seen = 1; //let it through once (print banner)
-      else if (wtime < last_seen || (wtime - last_seen) > 10*60)
+      static time_t last_seen = ((time_t)-1);
+      struct timeval tv;
+      if (CliClock(&tv) == 0)
       {
-        expirationtime.tv_sec -= now;
-        LogScreen("*** This BETA release expires in %s. ***\n",
+        if (last_seen == ((time_t)-1)) //let it through once
+          last_seen = tv.tv_sec;
+        else if (tv.tv_sec < last_seen || (tv.tv_sec - last_seen) > 10*60)
+        {
+          expirationtime.tv_sec -= now;
+          LogScreen("*** This BETA release expires in %s. ***\n",
             CliGetTimeString(&expirationtime,2) );
-        last_seen = wtime;
+          last_seen = tv.tv_sec;
+        }
       }
     }
   }
   return 0;
-}
-
-/* ------------------------------------------------------------------- */
-
-u32 __iter2norm( u32 iterlo, u32 iterhi )
-{
-  iterlo = ((iterlo >> 28) + (iterhi << 4));
-  if (!iterlo)
-    iterlo++;
-  return iterlo;
-}
-
-unsigned long ogr_nodecount(const struct Stub * /* stub */)
-{
-  return 1;
-}
-
-const char *ogr_stubstr(const struct Stub *stub)
-{
-  static char buf[80];
-  int i, len = (int)stub->length;
-
-  if (len > STUB_MAX) {
-    sprintf(buf, "(error:%d/%d)", (int)stub->marks, len);
-    return buf;
-  }
-  sprintf(buf, "%d/", (int)stub->marks);
-  if (len == 0) {
-    strcat(buf, "-");
-    return buf;
-  }
-  for (i = 0; i < len; i++) {
-    sprintf(&buf[strlen(buf)], "%d", (int)stub->diffs[i]);
-    if (i+1 < len) {
-      strcat(buf, "-");
-    }
-  }
-  return buf;
 }
 
 /* ------------------------------------------------------------------- */
@@ -485,21 +450,19 @@ int DoesFileExist( const char *filename )
   return ( access( GetFullPathForFilename( filename ), 0 ) == 0 );
 }
 
-int GetFileLengthFromStream( FILE *file, u32 *length )
+int GetFileLengthFromStream( FILE *file, unsigned long *length )
 {
   #if (CLIENT_OS == OS_WIN32)
-    u32 result = (u32) GetFileSize((HANDLE)_get_osfhandle(fileno(file)),NULL);
-    if (result == 0xFFFFFFFFL) return -1;
-    *length = result;
+    DWORD result = GetFileSize((HANDLE)_get_osfhandle(fileno(file)),NULL);
+    if (result == ((DWORD)-1)) return -1;
+    *length = (unsigned long)result;
   #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16)
-    u32 result = filelength( fileno(file) );
-    if (result == 0xFFFFFFFFL) return -1;
+    unsigned long result = filelength( fileno(file) );
+    if (result == ((unsigned long)-1L)) return -1;
     *length = result;
   #elif (CLIENT_OS == OS_RISCOS)
     if (riscos_get_filelength(fileno(file),(unsigned long *)length) != 0)
-    {
       return -1;
-    }
   #else
     struct stat statbuf;
     #if (CLIENT_OS == OS_NETWARE)
@@ -509,56 +472,18 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
       { vno = 0; inode = 0; }
     if ( vno == 0 && inode == 0 )
     {                                       /* file on DOS partition */
-      u32 result = filelength( fileno(file) );  // ugh! uses seek
-      if (result == 0xFFFFFFFFL) return -1;
+      unsigned long result = filelength( fileno(file) );  // ugh! uses seek
+      if (result == ((unsigned long)-1L)) return -1;
       *length = result;
       return 0;
     }
     #endif
     if ( fstat( fileno( file ), &statbuf ) != 0) return -1;
-    *length = (u32)statbuf.st_size;
+    *length = (unsigned long)statbuf.st_size;
+    //if (*length != statbuf.st_size) /* overflow */
+    //  return -1;
   #endif
   return 0;
-}
-
-/* ------------------------------------------------------------------ */
-
-const char *BufferGetDefaultFilename( unsigned int project, int is_out_type,
-                                                       const char *basename )
-{
-  static char filename[128];
-  const char *suffix = CliGetContestNameFromID( project );
-  unsigned int len, n;
-
-  filename[0] = '\0';
-  if (*basename)
-  {
-    while (*basename && isspace(*basename))
-      basename++;
-    if (*basename)
-    {
-      strncpy( filename, basename, sizeof(filename));
-      filename[sizeof(filename)-1]='\0';
-      len = strlen( filename );
-      while (len && isspace( filename[len-1] ) )
-        filename[--len] = '\0';
-    }
-  }
-
-  if (filename[0] == 0)
-  {
-    strcpy( filename, ((is_out_type) ?
-       BUFFER_DEFAULT_OUT_BASENAME /* "buff-out" */:
-       BUFFER_DEFAULT_IN_BASENAME  /* "buff-in" */  ) );
-  }
-
-  filename[sizeof(filename)-5]='\0';
-  strcat( filename, EXTN_SEP );
-  len = strlen( filename );
-  for (n=0;suffix[n] && n<3;n++)
-    filename[len++] = (char)tolower(suffix[n]);
-  filename[len]='\0';
-  return filename;
 }
 
 /* --------------------------------------------------------------------- */
@@ -909,7 +834,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                        not both, which will have been checked above) then
                        allow a match if the basenames (sans-suffix) are equal.
                     */  
-                    int fsuffixlen = 0;
+                    unsigned int fsuffixlen = 0;
                     if (fbasenamelen > 3)
                     {
                       /* Don't be tempted to try to optimize away 
@@ -1224,6 +1149,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         } /* if (file != ((FILE *)NULL)) */
       }
       #endif /* spawn ps */
+      thatpid = thatpid; /* shaddup compiler */
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #endif /* #if (defined(__unix__)) */

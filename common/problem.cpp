@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.146 2000/07/11 01:03:17 mfeiri Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.147 2000/07/11 03:49:02 mfeiri Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -64,6 +64,7 @@ Problem::~Problem()
 {
   __problem_counter--;
   initialized = started = 0;
+  running = 0;
 }
 
 /* ------------------------------------------------------------------- */
@@ -235,13 +236,15 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
                              ((double)(contestwork.crypto.iterations.lo)))) ); 
                 break;
                 }
+        #if defined(HAVE_OGR_CORES)
         case OGR:
                 WorkStub curstub;
-                ogr->getresult(core_membuffer, &curstub, sizeof(curstub));
+                (unit_func.ogr)->getresult(core_membuffer, &curstub, sizeof(curstub));
                 // This is just a quick&dirty calculation that resembles progress.
                 retpermille = curstub.stub.diffs[contestwork.ogr.workstub.stub.length]*10
                             + curstub.stub.diffs[contestwork.ogr.workstub.stub.length+1]/10;
                 break;
+        #endif
       }
     }
     if (retpermille > 1000)
@@ -252,34 +255,21 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
 
 /* ------------------------------------------------------------------- */
 
+/* LoadState() and RetrieveState() work in pairs. A LoadState() without
+   a previous RetrieveState(,,purge) will fail, and vice-versa.
+*/
 int Problem::LoadState( ContestWork * work, unsigned int contestid, 
               u32 _iterations, int expected_cputype, 
               int expected_corenum, int expected_os,
               int expected_buildfrac )
 {
-  if (started && last_resultcode == RESULT_WORKING)
+  if (initialized)
   {
-    Log("BUG! BUG! BUG! LoadState() on active problem!\n");
+    /* This can only happen if RetrieveState(,,purge) was not called */
+    Log("BUG! LoadState() without previous RetrieveState(,,purge)!\n");
     return -1;
   }
-
-  #if 0 /* IF THIS IS NEEDED THEN THE CLIENT IS THOROUGHLY FUBARED */
-  if (running) 
-  {
-    //Log("LoadState() while Run() ...\n");
-    /* wait until Run() has finished, otherwise Run() will overwrite the new state */
-    for (int i = 0; i < 50 && running; ++i)
-      NonPolledUSleep(100000);//usleep(100000);
-    if (running) /* don't load the new state if Run() doesn't finish */
-    {
-      //Log("Still Run()ning. LoadState() failed!\n");
-      started = 0; /* let Run() fail */
-      return -1;
-    }
-  }
-  #endif
   
-  initialized = 0; /* Run() won't start any more */
   last_resultcode = -1;
   started = initialized = 0;
   timehi = timelo = 0;
@@ -401,20 +391,15 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
           contestwork.ogr.nodes.hi = contestwork.ogr.nodes.lo = 0;
         }  
       }
-      #if ((CLIENT_OS != OS_MACOS) || (CLIENT_CPU != CPU_POWERPC))
-      extern CoreDispatchTable *ogr_get_dispatch_table();
-      ogr = ogr_get_dispatch_table();
-      #else
-      ogr = unit_func.ogr;
-      #endif
-      int r = ogr->init();
+      //unit_func.org = [xxx_]ogr_get_dispatch_table(); was done by selcore
+      int r = (unit_func.ogr)->init();
       if (r != CORE_S_OK)
         return -1;
-      r = ogr->create(&contestwork.ogr.workstub, 
+      r = (unit_func.ogr)->create(&contestwork.ogr.workstub, 
                       sizeof(WorkStub), core_membuffer, MAX_MEM_REQUIRED_BY_CORE);
       if (r != CORE_S_OK)
         return -1;
-      if (contestwork.ogr.workstub.worklength > contestwork.ogr.workstub.stub.length)
+      if (contestwork.ogr.workstub.worklength > (u32)contestwork.ogr.workstub.stub.length)
       {
         // This is just a quick&dirty calculation that resembles progress.
         startpermille = contestwork.ogr.workstub.stub.diffs[contestwork.ogr.workstub.stub.length]*10
@@ -431,14 +416,34 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
 
   //---------------------------------------------------------------
 
+  completion_timelo = completion_timehi = 0;
+  runtime_sec = runtime_usec = 0;
+  memset((void *)&profiling, 0, sizeof(profiling));
+  {
+    timehi = 0;
+    struct timeval tv;
+    if (CliGetMonotonicClock(&tv) != 0)
+    {
+      if (CliGetMonotonicClock(&tv) != 0)
+        timehi = 0xfffffffful;
+    }
+    if (timehi == 0)
+    {
+      timehi = tv.tv_sec; 
+      timelo = tv.tv_usec;
+    }
+  }  
+
   last_resultcode = RESULT_WORKING;
   initialized = 1;
-
   return( 0 );
 }
 
 /* ------------------------------------------------------------------- */
 
+/* LoadState() and RetrieveState() work in pairs. A LoadState() without
+   a previous RetrieveState(,,purge) will fail, and vice-versa.
+*/
 int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dopurge )
 {
   if (!initialized)
@@ -451,16 +456,22 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dop
       case CSC:
         // nothing special needs to be done here
         break;
+      #if defined(HAVE_OGR_CORES)
       case OGR:
-        ogr->getresult(core_membuffer, &contestwork.ogr.workstub, sizeof(WorkStub));
+        (unit_func.ogr)->getresult(core_membuffer, &contestwork.ogr.workstub, sizeof(WorkStub));
         break;
+      #endif
     }
     memcpy( (void *)work, (void *)&contestwork, sizeof(ContestWork));
   }
   if (contestid)
     *contestid = contest;
   if (dopurge)
+  {
     initialized = 0;
+    while (running) /* need to guarantee that no Run() will occur on a */
+      usleep(1000); /* purged problem. */
+  }    
   if (last_resultcode < 0)
     return -1;
   return ( last_resultcode );
@@ -755,7 +766,7 @@ int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
     *iterationsP = 0x100000UL;
 
   nodes = (int)(*iterationsP);
-  r = ogr->cycle(core_membuffer, &nodes);
+  r = (unit_func.ogr)->cycle(core_membuffer, &nodes);
   *iterationsP = (u32)nodes;
 
   u32 newnodeslo = contestwork.ogr.nodes.lo + nodes;
@@ -768,7 +779,7 @@ int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
   {
     case CORE_S_OK:
     {
-      r = ogr->destroy(core_membuffer);
+      r = (unit_func.ogr)->destroy(core_membuffer);
       if (r == CORE_S_OK) 
       {
         *resultcode = RESULT_NOTHING;
@@ -783,7 +794,7 @@ int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
     }
     case CORE_S_SUCCESS:
     {
-      if (ogr->getresult(core_membuffer, &contestwork.ogr.workstub, sizeof(WorkStub)) == CORE_S_OK)
+      if ((unit_func.ogr)->getresult(core_membuffer, &contestwork.ogr.workstub, sizeof(WorkStub)) == CORE_S_OK)
       {
         //Log("OGR Success!\n");
         contestwork.ogr.workstub.stub.length = 
@@ -886,7 +897,7 @@ static void __compute_run_times(Problem *problem,
   /* ++++++++++++++++++++++++++ */
 
   /* do we need to compute elapsed wall clock time for this packet? */
-//  if ( core_resultcode == RESULT_WORKING ) /* no, not yet */ 
+  if ( core_resultcode == RESULT_WORKING ) /* no, not yet */ 
   {
     if (clock_stop_is_time_now /* we have determined 'now' */
     && *probstart_secs == 0xfffffffful) /* our start time was invalid */
@@ -895,7 +906,7 @@ static void __compute_run_times(Problem *problem,
       *probstart_usecs = clock_stop.tv_usec;
     }
   }
-//  else /* _FOUND/_NOTHING. run is finished, compute elapsed wall clock time */
+  else /* _FOUND/_NOTHING. run is finished, compute elapsed wall clock time */
   {
     timehi = *probstart_secs;
     timelo = *probstart_usecs;
@@ -948,49 +959,34 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
 
   last_runtime_is_invalid = 1; /* haven't changed runtime fields yet */
 
-  if ( !initialized )
-    return ( -1 );
-
-  if ( last_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
-    return ( last_resultcode );
-
-  if (++running > 1) /* What happened here? Who else called Run(), too? */
+  if ( !initialized ) 
   {
-    Log("Error: Multiple Run() calls ...\n"); /* shouldn't occur */
+    return ( -1 );
+  }  
+  if ((++running) > 1)
+  {
     --running;
     return -1;
-  }
-  
-  if (!started)
-  {
-    timehi = 0;
-    if (CliGetMonotonicClock(&tv) != 0)
-    {
-      if (CliGetMonotonicClock(&tv) != 0)
-        timehi = 0xfffffffful;
-    }
-    if (timehi == 0)
-    {
-      timehi = tv.tv_sec; 
-      timelo = tv.tv_usec;
-    }
-    completion_timelo = completion_timehi = 0;
-    runtime_sec = runtime_usec = 0;
-    memset((void *)&profiling, 0, sizeof(profiling));
-    started=1;
+  }  
 
 #ifdef STRESS_THREADS_AND_BUFFERS 
-    contest = RC5;
+  if (contest == RC5 && !started)
+  {
     contestwork.crypto.key.hi = contestwork.crypto.key.lo = 0;
     contestwork.crypto.keysdone.hi = contestwork.crypto.iterations.hi;
     contestwork.crypto.keysdone.lo = contestwork.crypto.iterations.lo;
     runtime_usec = 1; /* ~1Tkeys for a 2^20 packet */
     completion_timelo = 1;
     last_resultcode = RESULT_NOTHING;
-    --running;
-    return RESULT_NOTHING;
-#endif    
-  }
+    started = 1;
+  }  
+#endif
+
+  if ( last_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
+  {
+    running--;
+    return ( last_resultcode );
+  }  
 
   /* 
     On return from the Run_XXX contestwork must be in a state that we
@@ -1008,6 +1004,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
     may choose to return -1, but keep core_resultcode at RESULT_WORKING.
   */
 
+  started = 1;
   last_runtime_usec = last_runtime_sec = 0;
   runstart_secs = 0xfffffffful;
   using_ptime = s_using_ptime;
@@ -1053,16 +1050,12 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
 
   if (retcode < 0) /* don't touch tslice or runtime as long as < 0!!! */
   {
-    --running;
+    running--;
     return -1;
   }
-  if (!started) /* LoadState was called while we were running - state was overwritten! */
-                /* shouldn't occur any more */  
+  if (!started || !initialized) /* RetrieveState(,,purge) has been called */
   {
-    //Log( "Error: LoadState() while Run()ning (thread %u)!\n", threadindex );
-    last_resultcode = -1; // "Discarded (core error)": discard the overwritten block
-    --running;
-    return -1;
+    core_resultcode = -1; // "Discarded (core error)": discard the purged block
   }
   
   core_run_count++;
@@ -1070,7 +1063,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
                        using_ptime, &s_using_ptime, core_resultcode );
   tslice = iterations;
   last_resultcode = core_resultcode;
-  --running;
+  running--;
   return last_resultcode;
 }
 

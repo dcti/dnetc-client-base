@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.78 2000/06/02 06:24:58 jlawson Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.79 2000/07/11 03:47:31 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -49,7 +49,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "RG RISC-rotate I",  /* K5 */
       "RG RISC-rotate II", /* K6 - may become mmx-k6-2 core at runtime */
       #ifdef MMX_RC5
-      "RG/SS ath",         /* K7 Athlon */
+      "RG/HB ath",         /* K7 Athlon */
       #endif
       NULL
     },
@@ -59,6 +59,10 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       #if defined(MMX_BITSLICER) || defined(CLIENT_SUPPORTS_SMP) 
       "Kwan/Bitslice", /* may become MMX bitslice at runtime */
       #endif
+      NULL
+    },
+    { /* OGR */
+      "GARSP 5.13",
       NULL
     },
   #elif (CLIENT_CPU == CPU_ARM)
@@ -73,11 +77,16 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "StrongARM optimized core", /* "ARM 810, StrongARM 110" or "ARM 2, 250" */
       NULL
     },
+    { /* OGR */
+      "GARSP 5.13",
+      NULL
+    },
   #elif (CLIENT_CPU == CPU_68K)
     { /* RC5 */
       #if (CLIENT_OS == OS_AMIGAOS)
-      "loopy",    /* 68000/10/20/30 */
-      "unrolled", /* 40/60 */
+      "unrolled 68000/010", /* 68000/010 */
+      "loopy 68020/030",    /* 68020/030 */
+      "unrolled 68040/060", /* 68040/060 */
       #elif defined(__GCC__) || defined(__GNUC__) || (CLIENT_OS == OS_MACOS)
       "68k asm cruncher",
       #else
@@ -87,6 +96,18 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
     { /* DES */
       "Generic", 
+      NULL
+    },
+    { /* OGR */
+      #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
+      "GARSP 5.13 - 68000",
+      "GARSP 5.13 - 68020",
+      "GARSP 5.13 - 68030",
+      "GARSP 5.13 - 68040",
+      "GARSP 5.13 - 68060",
+      #else
+      "GARSP 5.13",
+      #endif
       NULL
     },
   #elif (CLIENT_CPU == CPU_ALPHA) 
@@ -102,20 +123,30 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "dworz/amazing",
       NULL
     },
+    { /* OGR */
+      "GARSP 5.13",
+      NULL
+    },
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
     { /* RC5 */
       /* lintilla depends on allitnil, and since we need both even on OS's 
          that don't support the 601, we may as well "support" them visually.
          On POWER/PowerPC hybrid clients ("_AIXALL"), running on a POWER
-         CPU, core #0 becomes "RG AIXALL", and core #1 disappears.
+         CPU, core #0 becomes "RG AIXALL", and cores #1 and #2 disappear.
        */
       "allitnil",
       "lintilla",
+      "lintilla-604", /* Roberto Ragusa's core optimized for PPC 604e */
       NULL, /* this may become the G4 vector core at runtime */
       NULL
     },
     { /* DES */
       "Generic DES core", 
+      NULL
+    },
+    { /* OGR */
+      "GARSP 5.13",
+      NULL, /* possibly used by "GARSP 5.13-vec" */
       NULL
     },
   #else
@@ -127,12 +158,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "Generic DES core",
       NULL
     },
-  #endif  
     { /* OGR */
       "GARSP 5.13",
-      NULL, /* possibly used by "GARSP 5.13-vec" */
       NULL
     },
+  #endif  
     { /* CSC */
       "6 bit - inline", 
       "6 bit - called",
@@ -184,16 +214,27 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       {                               //only one core - (ansi)
         corenames_table[RC5][0] = "RG AIXALL (Power CPU)",
         corenames_table[RC5][1] = NULL;
+        corenames_table[RC5][2] = NULL;
       }
       else if (( det & (1L<<25) ) != 0) //have altivec
       {
-        corenames_table[RC5][2] = "crunch-vec"; /* aka rc5_unit_func_vec() wrapper */
-        corenames_table[RC5][3] = NULL;
+        corenames_table[RC5][3] = "crunch-vec"; /* aka rc5_unit_func_vec() wrapper */
+        corenames_table[RC5][4] = NULL;
         //corenames_table[OGR][0] = "GARSP 5.13-scalar"; /* rename */
         //corenames_table[OGR][1] = "GARSP 5.13-vector"; /* aka vec_ogr_get_dispatch_table() */
         //corenames_table[OGR][2] = NULL;
       }
     }
+    #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
+      long det = GetProcessorType(1);
+      /* only make available ogr cores <= current cpu */
+      switch (det)
+      {
+        case 68000: corenames_table[OGR][1] = NULL;
+        case 68020: corenames_table[OGR][2] = NULL;
+        case 68030: corenames_table[OGR][3] = NULL;
+        case 68040: corenames_table[OGR][4] = NULL;
+      }
     #endif
     fixed_up = 1;  
   }
@@ -221,11 +262,11 @@ static unsigned int __corecount_for_contest( unsigned int cont_i )
 
 /* ===================================================================== */
 
-void selcoreEnumerateWide( int (*proc)(
+void selcoreEnumerateWide( int (*enumcoresproc)(
                             const char **corenames, int idx, void *udata ),
                        void *userdata )
 {
-  if (proc)
+  if (enumcoresproc)
   {
     unsigned int corenum;
     for (corenum = 0;;corenum++)
@@ -245,7 +286,7 @@ void selcoreEnumerateWide( int (*proc)(
       }
       if (!have_one)
         break;
-      if (! ((*proc)( &carray[0], (int)corenum, userdata )) )
+      if (! ((*enumcoresproc)( &carray[0], (int)corenum, userdata )) )
         break;
     }
   }  
@@ -254,11 +295,11 @@ void selcoreEnumerateWide( int (*proc)(
   
 /* ---------------------------------------------------------------------- */
 
-void selcoreEnumerate( int (*proc)(unsigned int cont, 
+void selcoreEnumerate( int (*enumcoresproc)(unsigned int cont, 
                             const char *corename, int idx, void *udata ),
                        void *userdata )
 {
-  if (proc)
+  if (enumcoresproc)
   {
     int stoploop = 0;
     unsigned int cont_i;
@@ -270,7 +311,7 @@ void selcoreEnumerate( int (*proc)(unsigned int cont,
         unsigned int coreindex;
         const char **corenames = __corenames_for_contest(cont_i);
         for (coreindex = 0; !stoploop && coreindex < corecount; coreindex++)
-          stoploop = (! ((*proc)(cont_i, 
+          stoploop = (! ((*enumcoresproc)(cont_i, 
                       corenames[coreindex], (int)coreindex, userdata )) );
       }
     }
@@ -488,13 +529,34 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       selcorestatics.corenum[RC5] = 0;
       #if (CLIENT_OS == OS_AMIGAOS)
       if (detected_type >= 68040)
-        selcorestatics.corenum[RC5] = 1; /* rc5-040_060-jg.s */
+        selcorestatics.corenum[RC5] = 2; /* rc5-040_060-jg.s */
+      else if (detected_type >= 68020)
+        selcorestatics.corenum[RC5] = 1; /* rc5-020_030-jg.s */
       #endif
     }
   }
   else if (contestid == DES)
   {
     selcorestatics.corenum[DES] = 0; //only one core
+  }
+  else if (contestid == OGR)
+  {
+    selcorestatics.corenum[OGR] = selcorestatics.user_cputype[OGR];
+    if (selcorestatics.corenum[OGR] < 0 && detected_type > 0)
+    {
+      int cindex = 0;
+      #if (CLIENT_OS == OS_AMIGAOS)
+      if (detected_type >= 68060)
+        cindex = 4;
+      else if (detected_type == 68040)
+        cindex = 3;
+      else if (detected_type == 68030)
+        cindex = 2;
+      else if (detected_type == 68020)
+        cindex = 1;
+      #endif
+      selcorestatics.corenum[OGR] = cindex;
+    }
   }
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
   #if (!defined(_AIXALL)) //not a PPC/POWER hybrid client?
@@ -531,11 +593,15 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       if (( detected_type & (1L<<24) ) != 0) //ARCH_IS_POWER
         cindex = 0;                 //only one core - (ansi)
       else if (( detected_type & (1L<<25) ) != 0) //OS supports altivec
-        cindex = 2;                 // vector
+        cindex = 3;                 // vector
       else if (detected_type == 1 ) //PPC 601
-        cindex = 0;                 // lintilla
+        cindex = 0;                 // allitnil
+      else if (detected_type == 4 || //PPC 604
+               detected_type == 9 || //PPC 604e
+               detected_type == 10 ) //PPC 604ev
+        cindex = 2;                 // lintilla-604
       else                          //the rest
-        cindex = 1;                 // allitnil
+        cindex = 1;                 // lintilla
       selcorestatics.corenum[RC5] = cindex;
     }
   }
@@ -820,7 +886,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 #elif (CLIENT_CPU == CPU_68K)
   #if (CLIENT_OS == OS_AMIGAOS)
     // rc5/68k/rc5_68k_crunch.c around rc5/68k/rc5-0x0_0y0-jg.s
-    extern "C" u32 rc5_unit_func_000_030( RC5UnitWork *, u32 );
+    extern "C" u32 rc5_unit_func_000_010( RC5UnitWork *, u32 );
+    extern "C" u32 rc5_unit_func_020_030( RC5UnitWork *, u32 );
     extern "C" u32 rc5_unit_func_040_060( RC5UnitWork *, u32 );
   #elif defined(__GCC__) || defined(__GNUC__) || (CLIENT_OS == OS_MACOS)
     // rc5/68k/rc5_68k_gcc_crunch.c around rc5/68k/crunch.68k.gcc.s
@@ -851,7 +918,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       // so we have both anyway, we may as well support both.
       extern "C" u32 rc5_unit_func_allitnil_compat( RC5UnitWork *, u32 );
       extern "C" u32 rc5_unit_func_lintilla_compat( RC5UnitWork *, u32 );
-      #if (CLIENT_OS == OS_MACOS)
+      extern "C" u32 rc5_unit_func_lintilla_604_compat( RC5UnitWork *, u32 );
+      #if (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_MACOSX)
         extern "C" u32 rc5_unit_func_vec_compat( RC5UnitWork *, u32 );
       #else /* MacOS currently is the only one to support altivec cores */
         #define rc5_unit_func_vec_compat  rc5_unit_func_lintilla_compat
@@ -1042,18 +1110,19 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       #if (CLIENT_OS == OS_AMIGAOS)
       {
         // rc5/68k/rc5_68k_crunch.c around rc5/68k/rc5-0x0_0y0-jg.s
-        //xtern "C" u32 rc5_unit_func_000_030( RC5UnitWork *, u32 );
-        //xtern "C" u32 rc5_unit_func_040_060( RC5UnitWork *, u32 );
-        if (coresel == 1 )
-        {
-          pipeline_count = 2;
+        //xtern "C" u32 rc5_unit_func_000_010( RC5UnitWork *, u32 );
+        //xtern "C" u32 rc5_unit_func_020_030( RC5UnitWork *, u32 );
+        //xtern "C" u32 rc5_unit_func_040( RC5UnitWork *, u32 );
+        //xtern "C" u32 rc5_unit_func_060( RC5UnitWork *, u32 );
+        pipeline_count = 2;
+        if (coresel == 2)
           unit_func.rc5 = rc5_unit_func_040_060;
-          coresel = 1;
-        }
+        else if (coresel == 1)
+          unit_func.rc5 = rc5_unit_func_020_030;
         else
         {
           pipeline_count = 2;
-          unit_func.rc5 = rc5_unit_func_000_030;
+          unit_func.rc5 = rc5_unit_func_000_010;
           coresel = 0;
         }
       }
@@ -1131,8 +1200,14 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
           unit_func.rc5 = rc5_unit_func_allitnil_compat;
           pipeline_count = 1;
           gotcore = 1;
-        }  
-        else if (!gotcore && coresel == 2) // G4 (PPC 7400)
+        }
+        else if (!gotcore && coresel == 2) // G2 (PPC 604/604e/604ev only)
+        {
+          unit_func.rc5 = rc5_unit_func_lintilla_604_compat;
+          pipeline_count = 1;
+          gotcore = 1;
+        }
+        else if (!gotcore && coresel == 3) // G4 (PPC 7400)
         {
           unit_func.rc5 = rc5_unit_func_vec_compat;
           pipeline_count = 1;
@@ -1158,20 +1233,16 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         if (threadindex == 0) /* first thread or benchmark/test */
           unit_func.rc5 =  rc5_unit_func_486_smc;
         #endif
-	break;
-
+        break;
       case 2: // Ppro/PII
         unit_func.rc5 = rc5_unit_func_p6;
-	break;
-
+        break;
       case 3: // 6x86(mx)
         unit_func.rc5 = rc5_unit_func_6x86;
-	break;
-
+        break;
       case 4: // K5
         unit_func.rc5 = rc5_unit_func_k5;
-	break;
-
+        break;
       case 5: // K6/K6-2
         unit_func.rc5 = rc5_unit_func_k6;
         #if defined(MMX_RC5_AMD)
@@ -1181,14 +1252,12 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
           pipeline_count = 4;
         }
         #endif
-	break;
-
-#ifdef MMX_RC5
+        break;
+      #ifdef MMX_RC5
       case 6: // K7
         unit_func.rc5 = rc5_unit_func_k7;
-	break;
-#endif
-
+	      break;
+      #endif
       default: // Pentium (0) + others
         unit_func.rc5 = rc5_unit_func_p5;
         #if defined(MMX_RC5)
@@ -1330,15 +1399,35 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
   #if defined(HAVE_OGR_CORES)
   if (contestid == OGR)
   {
-    #if (CLIENT_CPU != CPU_POWERPC)
-      coresel = 0;
+    #if (CLIENT_CPU == CPU_POWERPC)
+      extern CoreDispatchTable *ogr_get_dispatch_table();
+      extern CoreDispatchTable *vec_ogr_get_dispatch_table();
+      unit_func.ogr = ogr_get_dispatch_table(); //default
+      //if (coresel == 1)    // our vec_ogr core
+      //  unit_func.ogr = vec_ogr_get_dispatch_table();
+    #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
+      extern CoreDispatchTable *ogr_get_dispatch_table_000();
+      extern CoreDispatchTable *ogr_get_dispatch_table_020();
+      extern CoreDispatchTable *ogr_get_dispatch_table_030();
+      extern CoreDispatchTable *ogr_get_dispatch_table_040();
+      extern CoreDispatchTable *ogr_get_dispatch_table_060();
+      if (coresel == 4)
+        unit_func.ogr = ogr_get_dispatch_table_060();
+      else if (coresel == 3)
+        unit_func.ogr = ogr_get_dispatch_table_040();
+      else if (coresel == 2)
+        unit_func.ogr = ogr_get_dispatch_table_030();
+      else if (coresel == 1)
+        unit_func.ogr = ogr_get_dispatch_table_020();
+      else
+      {
+        unit_func.ogr = ogr_get_dispatch_table_000();
+        coresel = 0;
+      }
     #else
-        extern CoreDispatchTable *ogr_get_dispatch_table();
-        //extern CoreDispatchTable *vec_ogr_get_dispatch_table();
-        //if (coresel == 1)    // G1,G2,G3
-        //  unit_func.ogr = vec_ogr_get_dispatch_table();
-        //else                 // G4
-          unit_func.ogr = ogr_get_dispatch_table();
+      extern CoreDispatchTable *ogr_get_dispatch_table();
+      unit_func.ogr = ogr_get_dispatch_table();
+      coresel = 0;
     #endif
   }
   #endif

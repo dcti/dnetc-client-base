@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.7 2000/06/02 06:25:00 jlawson Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.8 2000/07/11 03:47:37 mfeiri Exp $"
 
 #if defined(__PROBLEM_H__)
 /* Set the xx_unit_func vectors/cputype/coresel in the problem. */
@@ -20,10 +20,10 @@ const char *selcoreGetDisplayName( unsigned int cont_i, int index );
 
 /* conf calles these */
 int selcoreValidateCoreIndex( unsigned int cont_i, int index );
-void selcoreEnumerate( int (*proc)(unsigned int cont, 
+void selcoreEnumerate( int (*enumcoresproc)(unsigned int cont, 
                               const char *corename, int idx, void *udata ),
                        void *userdata );
-void selcoreEnumerateWide( int (*proc)(
+void selcoreEnumerateWide( int (*enumcoresproc)(
                               const char **corenames, int idx, void *udata ),
                            void *userdata );
 

@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.79 2000/06/02 06:24:58 jlawson Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.80 2000/07/11 03:49:06 mfeiri Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -19,7 +19,6 @@
 int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
 /* result depends on #ifdefs, threadsafety issues etc */
 
-/* ---------------------------------------------------------------------- */
 
 #undef MAX_MEM_REQUIRED_BY_CORE
 #define MAX_MEM_REQUIRED_BY_CORE  8  //64 bits
@@ -79,7 +78,11 @@ typedef union
 {
     /* this is our generic prototype */
     s32 (*gen)( RC5UnitWork *, u32 *iterations, void *memblk );
+    #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
+    u32 __regargs (*rc5)( RC5UnitWork * , u32 iterations );
+    #else
     u32 (*rc5)( RC5UnitWork * , u32 iterations );
+    #endif
     #if defined(HAVE_DES_CORES)
     u32 (*des)( RC5UnitWork * , u32 *iterations, char *membuf );
     #endif  
@@ -98,7 +101,6 @@ protected: /* these members *must* be protected for thread safety */
   RC5UnitWork rc5unitwork; /* MUST BE longword (64bit) aligned */
   struct {u32 hi,lo;} refL0;               
   ContestWork contestwork;
-  CoreDispatchTable *ogr;
   /* --------------------------------------------------------------- */
   char __core_membuffer_space[(MAX_MEM_REQUIRED_BY_CORE+(1UL<<CORE_MEM_ALIGNMENT)-1)];
   void *core_membuffer; /* aligned pointer to __core_membuffer_space */
@@ -108,7 +110,7 @@ protected: /* these members *must* be protected for thread safety */
   int started;
   int initialized;
   unsigned int threadindex; /* 0-n (globally unique identifier) */
-  volatile int running; /* LoadState() has to wait while Run()ning */
+  volatile int running; /* RetrieveState(,,purge) has to wait while Run()ning */
 
 public: /* anything public must be thread safe */
   u32 completion_timehi, completion_timelo; /* wall clock time between start/finish */
@@ -147,6 +149,9 @@ public: /* anything public must be thread safe */
 
   int IsInitialized() { return (initialized!=0); }
 
+  // LoadState() and RetrieveState() work in pairs. A LoadState() without
+  // a previous RetrieveState(,,purge) will fail, and vice-versa.
+  
   int LoadState( ContestWork * work, unsigned int _contest, u32 _iterations, 
      int expected_cpunum, int expected_corenum, 
      int expected_os, int expected_buildfrac );
@@ -169,9 +174,20 @@ public: /* anything public must be thread safe */
     /* Return the % completed in the current block, to nearest 0.1%. */
 };
 
-/* ----------------------------------------------------------------------- */
+/* ------------------------------------------------------------------- */
+
+/* RC5/DES/CSC 2^28 key count conversion.
+   belongs in ccoreio.c[pp], but that doesn't exist, and its not worth
+   creating for this itty-bitty thing.
+*/
+inline u32 __iter2norm( u32 iterlo, u32 iterhi )
+{
+  iterlo = ((iterlo >> 28) + (iterhi << 4));
+  if (!iterlo)
+    iterlo++;
+  return iterlo;
+}
 
 #endif /* __cplusplus */
 
 #endif /* __PROBLEM_H__ */
-

@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.34 2000/06/02 06:25:01 jlawson Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.35 2000/07/11 03:45:26 mfeiri Exp $"
 
 #include "cputypes.h"
 
@@ -94,9 +94,6 @@
   #ifdef sleep
   #undef usleep
   #endif
-  #define sleep(n) Delay(n*TICKS_PER_SECOND);
-  #define usleep(n) Delay(n*TICKS_PER_SECOND/1000000);
-  #error Intentionally left unfixed. (hint: use parenthesis)
   }
 #elif (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS)
   //Jul '99: It appears Sol/Sparc and/or Sol/ultra have a

@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.37 2000/07/05 21:11:04 mfeiri Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.38 2000/07/11 03:54:57 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -24,9 +24,6 @@ return "@(#)$Id: netinit.cpp,v 1.37 2000/07/05 21:11:04 mfeiri Exp $"; }
 #include "triggers.h" //for break checks
 #include "lurk.h"
 
-#if (CLIENT_OS == OS_AMIGAOS)
-static struct Library *SocketBase;
-#endif
 
 //--------------------------------------------------------------------------
 
@@ -100,7 +97,7 @@ static int __netInitAndDeinit( int doWhat )
     }
     else if (doWhat > 0)                  //request to initialize
     {
-      if ((++net_init_level) != 1)     //don't initialize more than once
+      if ((++net_init_level)!=1)     //don't initialize more than once
         success = 1;
       else if ((success = w32sockInitialize()) == 0)
         --net_init_level;
@@ -120,42 +117,22 @@ static int __netInitAndDeinit( int doWhat )
   #if (CLIENT_OS == OS_AMIGAOS)
   if (success)
   {
-    //static struct Library *SocketBase;
     if ( doWhat == 0 )     //request to check online mode
     {
-      return 1;            //assume always online once initialized
+      return amigaIsOnline();  //test if tcpip is still online
     }
     else if (doWhat > 0)   //request to initialize
     {
-      if ((++net_init_level) != 1) //don't initialize more than once
+      if ((++net_init_level)!=1) //don't initialize more than once
         success = 1;
-      else
-      {
-        #define SOCK_LIB_NAME "bsdsocket.library"
-        SocketBase = OpenLibrary((unsigned char *)SOCK_LIB_NAME, 4UL);
-        if (SocketBase)
-          success = 1;
-        else
-        {
-          LogScreen("Network::Failed to open " SOCK_LIB_NAME "\n");
-          success = 0;
-          net_init_level--;
-        }
-      }
+      else if ((success = amigaSocketInit()) == 0)
+        --net_init_level;
     }
     else //if (doWhat < 0) //request to de-initialize
     {
-      if ((--net_init_level) != 0) //don't deinitialize more than once
-        success = 1;
-      else
-      {
-        if (SocketBase)
-        {
-          CloseLibrary(SocketBase);
-          SocketBase = NULL;
-        }
-        success = 1;
-      }
+      if ((--net_init_level)==0) //don't deinitialize more than once
+        amigaSocketDeinit();
+      success = 1;
     }
   }
   #define DOWHAT_WAS_HANDLED
@@ -240,7 +217,7 @@ static int __globalInitAndDeinit( int doWhat )
     if (global_is_init != 0)
     {
       global_is_init = 0; // assume all success
-
+      
       #if (CLIENT_OS == OS_WIN32)
       WSACleanup();
       #endif
@@ -278,10 +255,9 @@ int NetClose( Network *net )
 //----------------------------------------------------------------------
 
 Network *NetOpen( const char *servname, int servport,
-                  bool _nofallback/*= true*/,
-                  int _iotimeout/*= -1*/, int _enctype/*=0*/,
-                  const char *_fwallhost /*= NULL*/, int _fwallport /*= 0*/,
-                  const char *_fwalluid /*= NULL*/ )
+           int _nofallback/*= 1*/, int _iotimeout/*= -1*/, int _enctype/*=0*/,
+           const char *_fwallhost /*= NULL*/, int _fwallport /*= 0*/,
+           const char *_fwalluid /*= NULL*/ )
 {
   Network *net;
   int success;
@@ -295,12 +271,8 @@ Network *NetOpen( const char *servname, int servport,
     return NULL;
 
   net = new Network( servname, servport,
-                     _nofallback /*=true*/,
-                     _iotimeout/*=-1*/,
-                     _enctype /*= 0*/,
-                     _fwallhost /*= NULL*/,
-                     _fwallport /*= 0*/,
-                     _fwalluid /*= NULL*/ );
+           _nofallback /*=1*/, _iotimeout/*=-1*/, _enctype /*= 0*/,
+           _fwallhost /*= NULL*/, _fwallport /*= 0*/, _fwalluid /*= NULL*/ );
   success = ( net != NULL );
 
   if (success)

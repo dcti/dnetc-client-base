@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.79 2000/06/02 06:24:58 jlawson Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.80 2000/07/11 03:51:22 mfeiri Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -19,7 +19,6 @@ return "@(#)$Id: probfill.cpp,v 1.79 2000/06/02 06:24:58 jlawson Exp $"; }
 #include "logstuff.h"  // Log()/LogScreen()
 #include "clitime.h"   // CliGetTimeString()
 #include "cpucheck.h"  // GetNumberOfDetectedProcessors()
-#include "util.h"      // ogr_stubstr(), __iter2norm()
 #include "random.h"    // Random()
 #include "selcore.h"   // selcoreSelectCore()
 #include "clisrate.h"  // CliGetMessageFor... et al.
@@ -263,11 +262,13 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
                     (unsigned long) ( wrdata.work.crypto.key.lo ) );
             break;
           }
+          #ifdef HAVE_OGR_CORES
           case OGR:
           {
             sprintf(workpacket," stub %s", ogr_stubstr(&wrdata.work.ogr.workstub.stub) );
             break;
           }
+          #endif
         }
         char perdone[48]; 
         perdone[0]='\0';
@@ -428,8 +429,6 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
        BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0);
     if (!(didupdate < 0))
     {
-      if (client->randomchanged)        
-        RefreshRandomPrefix( client );
       if (didupdate!=0)
         *bufupd_pending&=~(didupdate&(BUFFERUPDATE_FLUSH|BUFFERUPDATE_FETCH));
       if ((didupdate & BUFFERUPDATE_FETCH) != 0) /* fetched successfully */
@@ -442,6 +441,9 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   if (bufcount >= 0) /* load from file succeeded */
   {
     int client_cpu = 0, coresel;
+
+    if (client->randomchanged)        
+      RefreshRandomPrefix( client );
 
     /* if the total number of packets in buffers is less than the number 
        of crunchers running then try to fetch *now*. This means that the
@@ -502,6 +504,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
          expected_cpu, expected_core, expected_os, expected_build );
     thisprob->loaderflags = 0;
 
+    msgbuf[0] = '\0';
     switch (wrdata.contest) 
     {
       case RC5:
@@ -516,12 +519,14 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
                 (unsigned long) ( wrdata.work.crypto.key.lo ) );
         break;
       }
+      #ifdef HAVE_OGR_CORES
       case OGR:
       {
         norm_key_count = 1;
         sprintf(msgbuf," stub %s", ogr_stubstr(&wrdata.work.ogr.workstub.stub) );
         break;
       }
+      #endif
     }
 
     if (load_problem_count <= COMBINEMSG_THRESHOLD && msgbuf[0])

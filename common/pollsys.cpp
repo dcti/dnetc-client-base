@@ -39,7 +39,7 @@
  * --------------------------------------------------------------------
 */
 const char *pollsys_cpp(void) {
-return "@(#)$Id: pollsys.cpp,v 1.13 2000/06/02 06:24:58 jlawson Exp $"; }
+return "@(#)$Id: pollsys.cpp,v 1.14 2000/07/11 03:51:19 mfeiri Exp $"; }
 
 #include "baseincs.h"  /* NULL, malloc */
 #include "clitime.h"   /* CliTimer() */
@@ -171,7 +171,7 @@ int RegPolledProcedure( auto void (*proc)(void *), void *arg,
           chaintail->next = thisp;
       }
     }
-    if ( !thisp )
+    if ( !thisp || CliGetMonotonicClock( &thisp->execat ) != 0 )
       fd = -1;
     else
     {
@@ -183,7 +183,6 @@ int RegPolledProcedure( auto void (*proc)(void *), void *arg,
       thisp->priority = priority;
       if (priority >= MAX_POLL_RUNLEVEL)
         thisp->priority = MAX_POLL_RUNLEVEL-1;
-      CliTimer( &thisp->execat );
       if (interval)
       {
         thisp->execat.tv_sec += interval->tv_sec;
@@ -237,6 +236,7 @@ int DeinitializePolling(void)
 void __RunPollingLoop( unsigned int secs, unsigned int usecs )
 {
   static unsigned int isrunning = 0;
+  static timeval overflow = { 0, 0 };
   struct timeval now, until;
   struct polldata *thisp, *nextp = NULL;
   void *arg = NULL;
@@ -248,7 +248,8 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
   {
     fprintf(stderr, "call to sleep when no sleep allowed!");
   }
-  else if (!pollsysdata.runlist || pollsysdata.regcount==0)
+  else if (!pollsysdata.runlist || pollsysdata.regcount==0 ||
+           CliGetMonotonicClock( &now ) != 0)
   {
     if ( secs )
     {
@@ -261,14 +262,16 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
   }
   else
   {
-    CliTimer( &now );
     until.tv_usec = now.tv_usec;
     until.tv_sec = now.tv_sec;
     until.tv_usec += usecs;
     until.tv_sec += secs;
     until.tv_sec += until.tv_usec / 1000000;
     until.tv_usec %= 1000000;
-  
+
+    /* substract extra time used by previous call */
+    CliTimerDiff( &until, &until, &overflow );
+
     runprio = MAX_POLL_RUNLEVEL;
     
     do
@@ -341,11 +344,21 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
       }
 
       if (reclock)
-        CliTimer( &now );
-           
+      {
+        if (CliGetMonotonicClock( &now ) != 0)
+        {
+          CliTimerDiff( &overflow, &now, &until );
+          usleep( overflow.tv_sec * 1000000 + overflow.tv_usec );
+          now = until; /* exit loop and ensure overflow gets set to zero */
+        }
+      }
     } while (( now.tv_sec < until.tv_sec ) || 
               (( now.tv_sec == until.tv_sec ) && 
                ( now.tv_usec < until.tv_usec )));
+
+    /* store extra time spent, ready for next call */
+    CliTimerDiff( &overflow, &now, &until );
+//printf("overflow = %lu,%06lu\n",overflow.tv_sec,overflow.tv_usec);
   }
     
   --isrunning;
