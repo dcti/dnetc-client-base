@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.74 2002/09/25 00:06:51 acidblood Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.75 2002/09/25 01:31:53 trashover Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -578,9 +578,8 @@ long SelfTest( unsigned int contest )
                   }
                   #endif
                 }
-                LogScreen( "\r%s: Test %02d %s: %08X:%08X-%08X:%08X\n",
+                LogScreen( "\r%s: Test %02d %s: %08X:%08X\n",
                    contname, testnum + 1, resulttext,
-                   contestwork.crypto.key.hi, contestwork.crypto.key.lo,
                    expectedsolution_hi, expectedsolution_lo );
                 break;
               }
