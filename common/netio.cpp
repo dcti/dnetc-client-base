@@ -4,7 +4,7 @@
 //
 
 const char *netio_cpp(void) {
-return "@(#)$Id: netio.cpp,v 1.4 2000/07/03 07:13:14 jlawson Exp $"; }
+return "@(#)$Id: netio.cpp,v 1.5 2000/07/11 00:52:21 mfeiri Exp $"; }
 
 #define __NETIO_CPP__ /* suppress redefinitions in netio.h */
 #include "netio.h"
@@ -25,7 +25,7 @@ return "@(#)$Id: netio.cpp,v 1.4 2000/07/03 07:13:14 jlawson Exp $"; }
 #endif
 
 
-#if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_MACOS)
+#if (CLIENT_OS == OS_DOS)
 #define ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG
 #endif
 
@@ -90,8 +90,8 @@ const char *netio_describe_error(void)
   // publicly accessible error descriptions aren't available?
   return strerror(errno);
 #else
-  if (errno < sys_nerr)
-    return sys_errlist[errno];
+//  if (errno < sys_nerr)
+//    return sys_errlist[errno];
   return "Unknown error";
 #endif
 }
@@ -702,27 +702,6 @@ int netio_lconnect( SOCKET sock, u32 addr, u16 port )
     }
   }
   return rc;
-#elif (CLIENT_OS == OS_MACOS)
-  // The Mac OS client simulates just the most essential socket calls, as a
-  // convenience in interfacing to a non-socket network library. "Select" is
-  // not available, but the timeout for a connection can be specified.
-
-  // set up the address structure
-  struct sockaddr_in sin;
-  memset((void *) &sin, 0, sizeof(sin));
-  sin.sin_family = AF_INET;
-  sin.sin_port = htons(((u16)that_port));
-  sin.sin_addr.s_addr = that_address;
-
-  // set timeout for connect
-  if (iotimeout > 0)
-  {
-    // timeout for this call must be >0 to not have default used
-    socket_set_conn_timeout(sock, iotimeout);
-  }
-
-  return(connect(sock, (struct sockaddr *)&sin, sizeof(sin)));
-
 #elif defined(AF_INET) //BSD sox
 
   // set up the address structure
@@ -1033,19 +1012,6 @@ int netio_lrecv(SOCKET sock, void *data, int toread, bool doprecheck)
     else /* else T_DATA (Normal data received), and T_GODATA and family */
       bytesread = -1;
   }
-#elif (CLIENT_OS == OS_MACOS)
-  // Note: MacOS client does not use XTI, and the socket emulation
-  // code doesn't support select, so this is blocking-mode code.
-  {
-    bytesread = read( sock, data, toread);
-    if (bytesread == -1)
-    {
-      if ( !valid_socket(sock) )
-        bytesread = 0; // set as socket closed
-    }
-    else if (bytesread == 0) // should never happen?
-      bytesread = -1; // set as none waiting
-  }
 #elif (defined(AF_INET) && defined(SOCK_STREAM))        //BSD 4.3
   if (doprecheck)
   {
@@ -1106,9 +1072,6 @@ int netio_recv(SOCKET sock, void *data, int length,
   #elif ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32))
   if (rcvquota > 0x7FFF)
     rcvquota = 0x7FFF;
-  #elif (CLIENT_OS == OS_MACOS)
-  if (rcvquota > 0xFFFF)  // Mac network library uses "unsigned short"
-    rcvquota = 0xFFFF;
   #else
   if (rcvquota > INT_MAX)
     rcvquota = INT_MAX;
@@ -1234,27 +1197,6 @@ int netio_lsend(SOCKET sock, const void *ccdata, int towrite, bool doprecheck)
       }
     }
   }
-#elif (CLIENT_OS == OS_MACOS)
-  // Note: MacOS client does not use XTI, and the socket emulation
-  // code doesn't support select.
-  int noiocount = 0;
-  written = -2;
-  while (written == -2)
-  {
-    written = write(sock, data, (unsigned long)towrite);
-    if (written == 0)       // transport provider accepted nothing
-    {                   // should never happen unless 'towrite' was 0
-      if ((++noiocount) < 3)
-      {
-        written = -2;   // retry
-        usleep(500000); // 0.5 secs
-      }
-    }
-    else if (written == -1)
-    {
-      if (!valid_socket(sock)) return(0);
-    }
-  }
 #elif defined(AF_INET) && defined(SOCK_STREAM)      //BSD 4.3 sockets
 
   #if (CLIENT_OS != OS_BEOS)
@@ -1348,9 +1290,6 @@ int netio_send(SOCKET sock, const void *ccdata, int length,
   #elif (CLIENT_OS == OS_WIN16)
   if (sendquota > 0x7FFF)  /* 16 bit OS but int is 32 bits */
     sendquota = 0x7FFF;
-  #elif (CLIENT_OS == OS_MACOS)
-  if (sendquota > 0xFFFF)  // Mac network library uses "unsigned short"
-    sendquota = 0xFFFF;
   #else
   if (sendquota > INT_MAX)
     sendquota = INT_MAX;
@@ -1798,9 +1737,6 @@ int netio_setsockopt( SOCKET sock, int cond_type, int parm )
       return IoctlSocket(sock, FIONBIO, &flagon);
     #elif (CLIENT_OS == OS_DOS)
       return ((parm == 0 /* off */)?(0):(-1)); //always non-blocking
-    #elif (CLIENT_OS == OS_MACOS)
-      char flagon = ((parm == 0 /* off */) ? (1): (0));
-      return ioctl(sock, FIONBIO, &flagon);
     #elif (defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK)))
     {
       int flag, res, arg;
