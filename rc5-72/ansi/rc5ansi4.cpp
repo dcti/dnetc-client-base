@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *rc5ansi4_cpp(void) {
-return "@(#)$Id: rc5ansi4.cpp,v 1.9 2002/10/15 15:12:17 acidblood Exp $"; }
+return "@(#)$Id: rc5ansi4.cpp,v 1.10 2002/10/15 20:47:27 acidblood Exp $"; }
 
 #include "problem.h"
 #define P 0xB7E15163
@@ -17,7 +17,6 @@ extern "C" u32 rc5_72_unit_func_ansi_4 ( RC5_72UnitWork *, u32 );
 
 u32 rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
 {
-  u32 i, j, k;
   u32 A1, A2, A3, A4, B1, B2, B3, B4;
   u32 S1[26], S2[26], S3[26], S4[26];
   u32 L1[3], L2[3], L3[3], L4[3];
@@ -61,18 +60,67 @@ u32 rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
 	KEY_INIT(24);
 	KEY_INIT(25);
 
-#define ROTL_BLOCK(i,j) \
-    A1 = S1[i] = ROTL(S1[i]+(A1+B1),3); \
-    A2 = S2[i] = ROTL(S2[i]+(A2+B2),3); \
-    A3 = S3[i] = ROTL(S3[i]+(A3+B3),3); \
-    A4 = S4[i] = ROTL(S4[i]+(A4+B4),3); \
-    B1 = L1[j] = ROTL(L1[j]+(A1+B1),(A1+B1)); \
-    B2 = L2[j] = ROTL(L2[j]+(A2+B2),(A2+B2)); \
-    B3 = L3[j] = ROTL(L3[j]+(A3+B3),(A3+B3)); \
-    B4 = L4[j] = ROTL(L4[j]+(A4+B4),(A4+B4)); 
+#define ROTL_BLOCK(i,j) ROTL_BLOCK_j##j (i)
 
-    A1 = A2 = A3 = A4 = B1 = B2 = B3 = B4 = i = j = k = 0;
-    ROTL_BLOCK(0,0);
+#define ROTL_BLOCK_i0_j1 \
+    S1[0] = ROTL(S1[0]+(S1[25]+L1[0]),3); \
+    S2[0] = ROTL(S2[0]+(S2[25]+L2[0]),3); \
+    S3[0] = ROTL(S3[0]+(S3[25]+L3[0]),3); \
+    S4[0] = ROTL(S4[0]+(S4[25]+L4[0]),3); \
+    L1[1] = ROTL(L1[1]+(S1[0]+L1[0]),(S1[0]+L1[0])); \
+    L2[1] = ROTL(L2[1]+(S2[0]+L2[0]),(S2[0]+L2[0])); \
+    L3[1] = ROTL(L3[1]+(S3[0]+L3[0]),(S3[0]+L3[0])); \
+    L4[1] = ROTL(L4[1]+(S4[0]+L4[0]),(S4[0]+L4[0])); 
+
+#define ROTL_BLOCK_i0_j2 \
+    S1[0] = ROTL(S1[0]+(S1[25]+L1[1]),3); \
+    S2[0] = ROTL(S2[0]+(S2[25]+L2[1]),3); \
+    S3[0] = ROTL(S3[0]+(S3[25]+L3[1]),3); \
+    S4[0] = ROTL(S4[0]+(S4[25]+L4[1]),3); \
+    L1[2] = ROTL(L1[2]+(S1[0]+L1[1]),(S1[0]+L1[1])); \
+    L2[2] = ROTL(L2[2]+(S2[0]+L2[1]),(S2[0]+L2[1])); \
+    L3[2] = ROTL(L3[2]+(S3[0]+L3[1]),(S3[0]+L3[1])); \
+    L4[2] = ROTL(L4[2]+(S4[0]+L4[1]),(S4[0]+L4[1])); 
+
+#define ROTL_BLOCK_j0(i) \
+    S1[i] = ROTL(S1[i]+(S1[i-1]+L1[2]),3); \
+    S2[i] = ROTL(S2[i]+(S2[i-1]+L2[2]),3); \
+    S3[i] = ROTL(S3[i]+(S3[i-1]+L3[2]),3); \
+    S4[i] = ROTL(S4[i]+(S4[i-1]+L4[2]),3); \
+    L1[0] = ROTL(L1[0]+(S1[i]+L1[2]),(S1[i]+L1[2])); \
+    L2[0] = ROTL(L2[0]+(S2[i]+L2[2]),(S2[i]+L2[2])); \
+    L3[0] = ROTL(L3[0]+(S3[i]+L3[2]),(S3[i]+L3[2])); \
+    L4[0] = ROTL(L4[0]+(S4[i]+L4[2]),(S4[i]+L4[2])); 
+
+#define ROTL_BLOCK_j1(i) \
+    S1[i] = ROTL(S1[i]+(S1[i-1]+L1[0]),3); \
+    S2[i] = ROTL(S2[i]+(S2[i-1]+L2[0]),3); \
+    S3[i] = ROTL(S3[i]+(S3[i-1]+L3[0]),3); \
+    S4[i] = ROTL(S4[i]+(S4[i-1]+L4[0]),3); \
+    L1[1] = ROTL(L1[1]+(S1[i]+L1[0]),(S1[i]+L1[0])); \
+    L2[1] = ROTL(L2[1]+(S2[i]+L2[0]),(S2[i]+L2[0])); \
+    L3[1] = ROTL(L3[1]+(S3[i]+L3[0]),(S3[i]+L3[0])); \
+    L4[1] = ROTL(L4[1]+(S4[i]+L4[0]),(S4[i]+L4[0])); 
+
+#define ROTL_BLOCK_j2(i) \
+    S1[i] = ROTL(S1[i]+(S1[i-1]+L1[1]),3); \
+    S2[i] = ROTL(S2[i]+(S2[i-1]+L2[1]),3); \
+    S3[i] = ROTL(S3[i]+(S3[i-1]+L3[1]),3); \
+    S4[i] = ROTL(S4[i]+(S4[i-1]+L4[1]),3); \
+    L1[2] = ROTL(L1[2]+(S1[i]+L1[1]),(S1[i]+L1[1])); \
+    L2[2] = ROTL(L2[2]+(S2[i]+L2[1]),(S2[i]+L2[1])); \
+    L3[2] = ROTL(L3[2]+(S3[i]+L3[1]),(S3[i]+L3[1])); \
+    L4[2] = ROTL(L4[2]+(S4[i]+L4[1]),(S4[i]+L4[1])); 
+
+    S1[0] = ROTL(S1[0],3);
+    S2[0] = ROTL(S2[0],3);
+    S3[0] = ROTL(S3[0],3);
+    S4[0] = ROTL(S4[0],3);
+    L1[0] = ROTL(L1[0]+S1[0],S1[0]);
+    L2[0] = ROTL(L2[0]+S2[0],S2[0]);
+    L3[0] = ROTL(L3[0]+S3[0],S3[0]);
+    L4[0] = ROTL(L4[0]+S4[0],S4[0]); 
+
     ROTL_BLOCK(1,1);
     ROTL_BLOCK(2,2);
     ROTL_BLOCK(3,0);
@@ -99,7 +147,7 @@ u32 rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
     ROTL_BLOCK(24,0);
     ROTL_BLOCK(25,1);
 
-    ROTL_BLOCK(0,2);
+    ROTL_BLOCK_i0_j2;
     ROTL_BLOCK(1,0);
     ROTL_BLOCK(2,1);
     ROTL_BLOCK(3,2);
@@ -126,7 +174,7 @@ u32 rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
     ROTL_BLOCK(24,2);
     ROTL_BLOCK(25,0);
 
-    ROTL_BLOCK(0,1);
+    ROTL_BLOCK_i0_j1;
     ROTL_BLOCK(1,2);
     ROTL_BLOCK(2,0);
     ROTL_BLOCK(3,1);

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *rc5ansi1_cpp(void) {
-return "@(#)$Id: rc5ansi1.cpp,v 1.5 2002/10/15 15:12:17 acidblood Exp $"; }
+return "@(#)$Id: rc5ansi1.cpp,v 1.6 2002/10/15 20:47:27 acidblood Exp $"; }
 
 #include "problem.h"
 #define P 0xB7E15163
@@ -17,7 +17,6 @@ extern "C" u32 rc5_72_unit_func_ansi_1 ( RC5_72UnitWork *, u32 );
 
 u32 rc5_72_unit_func_ansi_1 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
 {
-  u32 i, j, k;
   u32 A, B;
   u32 S[26];
   u32 L[3];
@@ -57,12 +56,31 @@ u32 rc5_72_unit_func_ansi_1 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
 	KEY_INIT(24);
 	KEY_INIT(25);
       
-#define ROTL_BLOCK(i,j) \
-    A = S[i] = ROTL(S[i]+(A+B),3); \
-    B = L[j] = ROTL(L[j]+(A+B),(A+B));
+#define ROTL_BLOCK(i,j) ROTL_BLOCK_j##j (i)
 
-    A = B = i = j = k = 0;
-    ROTL_BLOCK(0,0);
+#define ROTL_BLOCK_i0_j1 \
+    S[0] = ROTL(S[0]+(S[25]+L[0]),3); \
+    L[1] = ROTL(L[1]+(S[0]+L[0]),(S[0]+L[0])); \
+
+#define ROTL_BLOCK_i0_j2 \
+    S[0] = ROTL(S[0]+(S[25]+L[1]),3); \
+    L[2] = ROTL(L[2]+(S[0]+L[1]),(S[0]+L[1])); \
+
+#define ROTL_BLOCK_j0(i) \
+    S[i] = ROTL(S[i]+(S[i-1]+L[2]),3); \
+    L[0] = ROTL(L[0]+(S[i]+L[2]),(S[i]+L[2])); \
+
+#define ROTL_BLOCK_j1(i) \
+    S[i] = ROTL(S[i]+(S[i-1]+L[0]),3); \
+    L[1] = ROTL(L[1]+(S[i]+L[0]),(S[i]+L[0])); \
+
+#define ROTL_BLOCK_j2(i) \
+    S[i] = ROTL(S[i]+(S[i-1]+L[1]),3); \
+    L[2] = ROTL(L[2]+(S[i]+L[1]),(S[i]+L[1])); \
+
+    S[0] = ROTL(S[0],3);
+    L[0] = ROTL(L[0]+S[0],S[0]);
+
     ROTL_BLOCK(1,1);
     ROTL_BLOCK(2,2);
     ROTL_BLOCK(3,0);
@@ -89,7 +107,7 @@ u32 rc5_72_unit_func_ansi_1 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
     ROTL_BLOCK(24,0);
     ROTL_BLOCK(25,1);
 
-    ROTL_BLOCK(0,2);
+    ROTL_BLOCK_i0_j2;
     ROTL_BLOCK(1,0);
     ROTL_BLOCK(2,1);
     ROTL_BLOCK(3,2);
@@ -116,7 +134,7 @@ u32 rc5_72_unit_func_ansi_1 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
     ROTL_BLOCK(24,2);
     ROTL_BLOCK(25,0);
 
-    ROTL_BLOCK(0,1);
+    ROTL_BLOCK_i0_j1;
     ROTL_BLOCK(1,2);
     ROTL_BLOCK(2,0);
     ROTL_BLOCK(3,1);
