@@ -5,7 +5,7 @@
  *
  * By Kevin Bracey <kbracey@acorn.com> and Chris Berry <cberry@acorn.com>
  *
- * $Id: riscos_sup.h,v 1.2.4.1 2002/12/10 16:04:50 andreasb Exp $
+ * $Id: riscos_sup.h,v 1.2.4.2 2003/01/03 19:39:02 teichp Exp $
 */
 #ifndef __RISCOS_SUP_H__
 #define __RISCOS_SUP_H__
@@ -29,9 +29,9 @@ const char *riscos_localise_filename(const char *filename);
 int riscos_find_local_directory(const char *progname);
 char *riscos_version(void);
 
-unsigned int sleep(unsigned int s); /* unistd replacement */
-void usleep(unsigned int us);  /* unistd replacement */
-void sched_yield(void); /* if (riscos_check_taskwindow()) riscos_upcall_6(); */
+//unsigned int sleep(unsigned int s); /* unistd replacement */
+//void usleep(unsigned int us);  /* unistd replacement */
+//void sched_yield(void); /* if (riscos_check_taskwindow()) riscos_upcall_6(); */
 
 #ifdef __cplusplus
 }

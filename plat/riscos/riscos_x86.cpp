@@ -5,13 +5,13 @@
  *
  * x86 PCCARD support including a crunch wrapper/controller
  *
- * $Id: riscos_x86.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $
+ * $Id: riscos_x86.cpp,v 1.2.4.1 2003/01/03 19:39:02 teichp Exp $
 */
 
 #include <string.h> /* memcpy */
 #include <stdlib.h> /* atexit */
-#include <sys/swis.h>
 #include <kernel.h>
+#include <swis.h>
 
 #include "cputypes.h" /* u8, u32 */
 #include "problem.h"  /* RC5UnitWork */

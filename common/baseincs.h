@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.2 2002/12/21 00:33:30 andreasb Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.3 2003/01/03 19:39:02 teichp Exp $"
 
 #include "cputypes.h"
 
@@ -85,8 +85,8 @@
   #include <sys/time.h>
   #include <sys/ioctl.h>
   #include <netdb.h>
-  #include <sys/swis.h>
   #include <kernel.h>
+  #include <swis.h>
   #include <riscos_sup.h>
   extern s32 guiriscos, guirestart;
   extern int riscos_in_taskwindow;

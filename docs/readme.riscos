@@ -1,7 +1,7 @@
 
  distributed.net client for RISC OS v3.10 or later.
- Released by Chris "chrisb" Berry <chrisb@distributed.net>
- Document revision $Id: readme.riscos,v 1.4 2002/09/02 00:35:45 andreasb Exp $
+ Released by Peter Teichmann <dnet@peter-teichmann.de>
+ Document revision $Id: readme.riscos,v 1.4.4.1 2003/01/03 19:39:02 teichp Exp $
 
  Welcome to the distributed.net client.
 
@@ -14,26 +14,23 @@
 
  1.0  Getting started ------------------------------------------------
 
-    Just unpack the client in a directory of your choice and start the
-    file "!Run", or start it manually in a task window.
+    Just unpack the client in a directory of your choice. Copy the
+    included !System directory over your !System directory, this will
+    install the SharedUnixLib module which is needed by the client.
+    Now start the client using the file "!Run", or start it manually
+    in a task window.
 
     If you have never run the client before, it will initiate the
     menu-driven configuration. Save and quit when done, the
-    configuration file will be saved in the same directory as the
-    client. Then, simply restart the client. From that point on it will
-    use the saved configuration.
+    configuration file "dnetc/ini" will be saved in the same directory
+    as the client. Then, simply restart the client. From that point on
+    it will use the saved configuration.
     
     The configuration options are fairly self-explanatory and can be run
     at any time by starting the client with the '-config' option.
     A list of command line options is available by starting the client
     with '-help'. You can also start the file "!Config" or "!Help"
-    instead.
-    
-    If you want to run the client quiet, start "!RunQuiet" instead. To
-    stop a running client, press the "Esc" key in its task window. If
-    you have started it quiet, start the file "!Stop". This will
-    create a file called "exitrc5/now" in the clients directory. Note
-    that this method may take up to 30 seconds.
+    instead. 
 
     A "Complete Step-by-Step Guide to Running Your First Client" is
     available at http://distributed.net/FAQ/
@@ -42,6 +39,15 @@
 
     The client for RISC OS requires the Acorn Internet module, or a
     compatible TCP/IP stack (eg FreeNet).
+    
+    If you want to run the client quiet, start "!RunQuiet" instead. To
+    stop a running client, press the "Esc" key in its task window. If
+    you have started it quiet, start the file "!Stop". This will
+    create a file called "exitrc5/now" in the clients directory. Note
+    that this method may take up to 30 seconds. This method of
+    stopping the client will only work if you have configured the
+    exit flag file name "exitrc5/now". This is already done for you in
+    the supplied "dnetc/ini" file.
 
     If you want to run the client automatically when the computer
     starts, you can not simply copy "!Run" or "!RunQuiet" to your
@@ -49,11 +55,11 @@
     and replace <Obey$Dir> with the path of your client directory.
     
     Do never forget to stop the client before shutting down the
-    computer, otherwise all the work may get lost. Do not kill it
-    from the task manager. You can also configure it to use a
-    checkpoint file. That will make the client save its state
-    every couple of minutes, so that it can be recovered if the
-    client is killed by accident.
+    computer, otherwise the work done on the current work unit will
+    be lost. Do not kill it from the task manager. You can configure
+    the client to use a checkpoint file. That will make the client save
+    its state every couple of minutes, so that it can be recovered if
+    the client is killed by accident.
     
     This version does not support the x86 coprocessor card.
 

@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.129.2.1 2002/11/26 13:49:33 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.129.2.2 2003/01/03 19:39:02 teichp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1481,7 +1481,7 @@ int ClientRun( Client *client )
           #if (CLIENT_OS == OS_RISCOS)
           if (riscos_in_taskwindow)
           {
-            non_preemptive_dyn_timeslice_table[tsinitd].usec = 30000;
+            non_preemptive_dyn_timeslice_table[tsinitd].usec = 40000;
             non_preemptive_dyn_timeslice_table[tsinitd].optimal = 32768;
           }
           else

@@ -5,12 +5,12 @@
  *
  * By Kevin Bracey <kbracey@acorn.com> and Chris Berry <cberry@acorn.com>
  *
- * $Id: riscos_sup.cpp,v 1.2.4.1 2002/12/10 16:04:50 andreasb Exp $
+ * $Id: riscos_sup.cpp,v 1.2.4.2 2003/01/03 19:39:02 teichp Exp $
 */
 
 #include <stdio.h> /* printf() for debugging */
 #include <kernel.h>
-#include <sys/swis.h>
+#include <swis.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -115,7 +115,7 @@ void riscos_backspace(void)
   _kernel_swi(XOS_Bit|(OS_WriteI + 8), &regs, &regs);
 }
 
-
+#if 0
 unsigned int sleep(unsigned int s)
 {
   return riscos_hsleep(s * 100);
@@ -130,7 +130,7 @@ void sched_yield(void)
 {
   riscos_hsleep(0);
 }
-
+#endif
 
 static const char *riscos_get_local_directory(const char *appname)
 {
@@ -244,13 +244,18 @@ char *riscos_version(void)
         return "RISC OS 3.6";
       case 0xa7:
         return "RISC OS 3.7";
-      case 0xa8:
-        return "RISC OS 4.0";
       default:
-        return "";
+        if (regs.r[1]>=0xa8)
+        {
+          regs.r[0]=9;
+          regs.r[1]=0;
+          _kernel_swi(XOS_Bit|OS_ReadSysInfo, &regs, &regs);
+          return (char *)regs.r[0];
+        }
+        else
+          return "";
     }
   }
   else
     return "";
 }
-
