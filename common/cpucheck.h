@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.h,v $
+// Revision 1.4  1998/10/08 10:04:23  cyp
+// GetProcessorType() is now standalone (no longer a Client::method).
+//
 // Revision 1.3  1998/09/28 02:49:12  cyp
 // Added prototypes for GetNumberOf[Supported|Detected]Processors()
 //
@@ -21,6 +24,11 @@
 
 #ifndef __CPUCHECK_H__
 #define __CPUCHECK_H__
+
+//get core type by hardware detection
+int GetProcessorType(int quietly);
+
+//-------
 
 //Return cpuid/cputag, maxcpus, foundcpus as descriptive strings.
 //Assists in debugging user complaints/bug reports.

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.27  1998/10/08 10:04:21  cyp
+// GetProcessorType() is now standalone (no longer a Client::method).
+//
 // Revision 1.26  1998/09/28 02:44:47  cyp
 // removed non-mt limit; removed references to MAXCPUS; turned static function
 // __GetProcessorCount() into public GetNumberOfDetectedProcessors(); created
@@ -97,7 +100,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.26 1998/09/28 02:44:47 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.27 1998/10/08 10:04:21 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -229,13 +232,13 @@ void Client::ValidateProcessorCount( void )
       // returns -1 if no hardware detection
       if ( cpu_count < 1 )
         {
-        LogScreenRaw("Automatic processor count detection failed."
-        "\nA single processor machine is assumed.\n");
+        LogScreen("Automatic processor count detection failed.\n"
+                  "A single processor machine is assumed.\n");
         cpu_count = 1;
         }
       else
         {
-        LogScreenRaw("Automatic processor detection found %d processor%s\n",
+        LogScreen("Automatic processor detection found %d processor%s\n",
            cpu_count, ((cpu_count==1)?(""):("s")) );
         }
       }
@@ -250,8 +253,12 @@ void Client::ValidateProcessorCount( void )
 
 #if (!((CLIENT_CPU == CPU_X86) || \
       ((CLIENT_CPU == CPU_ARM) && (CLIENT_OS == OS_RISCOS)) ))
-int Client::GetProcessorType()
-{ return -1; }
+int GetProcessorType(int quietly)
+{ 
+  if (!quietly)
+    LogScreen("Hardware/processor detection is not supported.\n");
+  return -1; 
+}
 #endif
 
 // --------------------------------------------------------------------------
@@ -269,14 +276,13 @@ int Client::GetProcessorType()
 
 struct _cpuxref { int cpuidb;
                   unsigned int kKeysPerMhz; // numbers are from Alde's tables
-                  int coretouse;            // & 0x100 == prefer MMX DES core
-                                            // & 0x200 == prefer MMX RC5 core
+                  int coretouse; // & 0x100 == processor is MMX capable
                   char *cpuname; };
 
 struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
-                               char **pronounP, char **vendornameP )
+                               char **articleP, char **vendornameP )
 {
-  char *pronoun = NULL; //"an" "a"
+  char *article = NULL; //"an" "a"
   char *vendorname = NULL; //"Cyrix", "Centaur", "AMD", "Intel", ""
   static struct _cpuxref *cpuxref = NULL;
 
@@ -289,7 +295,7 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
 
   if ( vendorid == 0x7943) // Cyrix CPU
     {
-    pronoun = "a";
+    article = "a";
     vendorname = "Cyrix";
     cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
     static struct _cpuxref __cpuxref[]={
@@ -304,7 +310,7 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
     }
   else if ( vendorid == 0x6543) //centaur/IDT cpu
     {
-    pronoun = "a";
+    article = "a";
     vendorname = "Centaur/IDT";
     cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
     static struct _cpuxref __cpuxref[]={
@@ -314,7 +320,7 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
     }
   else if ( vendorid == 0x7541) // AMD CPU
     {
-    pronoun = "an";
+    article = "an";
     vendorname = "AMD";
     cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
     static struct _cpuxref __cpuxref[]={
@@ -338,7 +344,7 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
     }
   else if (vendorid == 0x6E49 || vendorid == 0x6547) // Intel CPU
     {
-    pronoun = "an";
+    article = "an";
     vendorname = "Intel";
     if ((cpuidb == 0x30) || (cpuidb == 0x40))
       vendorname = ""; //generic 386/486
@@ -370,7 +376,7 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
       }; cpuxref = &__cpuxref[0];
     }
 
-  if (pronounP) *pronounP = pronoun;
+  if (articleP) *articleP = article;
   if (vendornameP) *vendornameP = vendorname;
 
   if ( cpuxref != NULL ) // we have a mfg's table
@@ -388,34 +394,39 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
 
 // ---------------------
 
-int Client::GetProcessorType()
+int GetProcessorType(int quietly)
 {
   int coretouse;
   int vendorid, cpuidb;                           
-  char *pronoun, *vendorname;
+  char *article, *vendorname;
   struct _cpuxref *cpuxref = 
-          __GetProcessorXRef( &cpuidb, &vendorid, &pronoun, &vendorname );
+          __GetProcessorXRef( &cpuidb, &vendorid, &article, &vendorname );
 
   const char *apd = "Automatic processor detection";
   if ( cpuxref == NULL ) // fell through
     {
-    LogScreenRaw( "%s failed. (id: %04X:%04X)\n", apd, vendorid, cpuidb );
+    if (!quietly)
+      LogScreen( "%s failed. (id: %04X:%04X)\n", apd, vendorid, cpuidb );
     coretouse = 0;
     }
   else if ( cpuxref->cpuname == NULL )  // fell through to last element
     {
     coretouse = (cpuxref->coretouse);
-    LogScreenRaw("%s found an unrecognized %s processor. (id: %04X)\n", apd,
+    if (!quietly)
+      LogScreen("%s found an unrecognized %s processor. (id: %04X)\n", apd,
                                                     vendorname, cpuidb );
     }
   else // if ( cpuidb == (cpuxref->cpuidb))
     {
     coretouse = (cpuxref->coretouse);      
-    if ( !vendorname || !*vendorname )  // generic type - no vendor name
-      LogScreenRaw( "%s found %s %s.\n", apd, pronoun, (cpuxref->cpuname));
-    else
-      LogScreenRaw( "%s found %s %s %s.\n", apd, pronoun,
-                                     vendorname, (cpuxref->cpuname));
+    if (!quietly)
+      {
+      if ( !vendorname || !*vendorname )  // generic type - no vendor name
+        LogScreen( "%s found %s %s.\n", apd, article, (cpuxref->cpuname));
+      else
+        LogScreen( "%s found %s %s %s.\n", apd, article,
+                                       vendorname, (cpuxref->cpuname) );
+      }
     }
   return coretouse;
 }
@@ -486,17 +497,17 @@ static u32 GetARMIdentification(void)
   return detectedvalue;
 }  
 
-int Client::GetProcessorType()
+int GetProcessorType(int quietly)
 {
   u32 detectedvalue = GetARMIdentification(); //must be interpreted
   int coretouse; // the core the client should use
+  char apd[40];
 
-  const char *apd = "Automatic processor detection";
-
+  apd[0]=0;
   switch (detectedvalue)
-  {
+    {
     case 0x200:
-      LogScreenRaw("%s found an ARM 2 or ARM 250.\n", apd);
+      strcpy(apd, "found an ARM 2 or ARM 250.");
       coretouse=2;
       break;
     case 0x3:
@@ -505,26 +516,28 @@ int Client::GetProcessorType()
     case 0x700:
     case 0x7500:
     case 0x7500FE:
-      LogScreenRaw("%s found an ARM %X.\n", apd, detectedvalue);
       coretouse=0;
       break;
     case 0x710:
-      LogScreenRaw("%s found an ARM %X.\n", apd, detectedvalue);
       coretouse=3;
       break;
     case 0x810:
-      LogScreenRaw("%s found an ARM %X.\n", apd, detectedvalue);
       coretouse=1;
       break;
     case 0xA10:
-      LogScreenRaw("%s found a StrongARM 110.\n", apd );
+      strcpy(apd, "found a StrongARM 110." );
       coretouse=1;
       break;
     default:
-      LogScreenRaw("%s failed. (id: %08X)\n", apd, detectedvalue);
+      sprintf(apd, "failed. (id: %08X)", detectedvalue);
       coretouse=-1;
       break;
-  }
+    }
+  if (!quietly)
+    {
+    if (!apd[0]) sprintf(apd, "found an ARM %X.", detectedvalue);
+    LogScreen( "Automatic processor detection %s\n", apd );
+    }
   return coretouse;
 }
 
@@ -621,7 +634,7 @@ void DisplayProcessorInformation(void)
   const char *scpuid, *smaxscpus, *sfoundcpus;
   GetProcessorInformationStrings( &scpuid, &smaxscpus, &sfoundcpus );
   
-  LogScreenRaw("Automatic processor identification tag:\n\t%s\n"
+  LogScreen("Automatic processor identification tag:\n\t%s\n"
    "Number of processors detected by this client:\n\t%s\n"
    "Number of processors supported by each instance of this client:\n\t%s\n",
    scpuid, sfoundcpus, smaxscpus );
