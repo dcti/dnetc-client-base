@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.199 2000/11/08 00:07:35 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.200 2000/11/08 00:15:34 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1926,7 +1926,7 @@ if [ "${TARGET_OS}" = "NTO2" -o "${TARGET_OS}" = "OS2" \
 else  
   echo "Building test program..."
   echo "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
-  $(SHELL) -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
+  ${SHELL} -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
   if [ $? -ne 0 ]; then
     echo "Compilation failed.  Check your target options."
     echo " ---------------------------------------------"
