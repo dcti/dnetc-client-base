@@ -7,7 +7,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.1.2.7 2001/03/30 11:15:11 cyp Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.1.2.8 2001/04/08 14:22:15 cyp Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE
@@ -61,6 +61,15 @@ return "@(#)$Id: w32cons.cpp,v 1.1.2.7 2001/03/30 11:15:11 cyp Exp $"; }
   #define MAKEWORD(a, b) \ 
     ((WORD) (((BYTE) (a)) | ((WORD) ((BYTE) (b))) << 8)) 
 #endif
+#if defined(__BORLANDC__) /* BC5 windows.h needs whacking */
+#undef MAKEWORD
+#define MAKEWORD(low, high) \
+  ((WORD) (((BYTE) (low)) | (((WORD) ((BYTE) (high))) << 8)))
+#undef MAKELONG
+#define MAKELONG(low, high) \
+  ((LONG)(((WORD)(low)) | (((DWORD)((WORD)(high))) << 16)))
+#endif
+
 
 /* ---------------------------------------------------- */
 
@@ -6162,7 +6171,9 @@ int w16ConSetPos(int col, int row)
   w16Yield();
   if (constatics.hwndList[0] == NULL)
     return -1;
-  SendMessage( constatics.hwndList[0], WM_USER_W16CONS, W16CONS_CMD_SETPOS, MAKELONG(row, col));
+  SendMessage( constatics.hwndList[0], WM_USER_W16CONS, W16CONS_CMD_SETPOS, 
+               MAKELONG(row,col) ); 
+     //((LONG)(((WORD)(row))|(((DWORD)((WORD)(col)))<<16))) /*MAKELONG(row,col)*/);
   return 0;
 }
 

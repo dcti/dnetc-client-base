@@ -6,7 +6,7 @@
 */
 
 const char *w32svc_cpp(void) {
-return "@(#)$Id: w32svc.cpp,v 1.1.2.3 2001/04/05 19:14:35 cyp Exp $"; }
+return "@(#)$Id: w32svc.cpp,v 1.1.2.4 2001/04/08 14:22:15 cyp Exp $"; }
 
 //#define TRACE
 
@@ -853,16 +853,16 @@ static int IsTryNTStartServiceWorthwhile(void) /* returns +1=yes, 0=no, -1=error
       if (pGroupInfo) /* got valid token group info */
       {
         int isInteractive = -1, isService = -1;
-        SID_IDENTIFIER_AUTHORITY siaNt1 = SECURITY_NT_AUTHORITY;
-        SID_IDENTIFIER_AUTHORITY siaNt2 = SECURITY_NT_AUTHORITY;
+        SID_IDENTIFIER_AUTHORITY siaNt1 = {SECURITY_NT_AUTHORITY};
+        SID_IDENTIFIER_AUTHORITY siaNt2 = {SECURITY_NT_AUTHORITY};
         PSID sid; DWORD nGrp;
 
         /*
-        ** net start for svc under user=Administrator with wrong passwd.
+        ** net start for svc as regular user but with wrong passwd.
         **   SECURITY_SERVICE_RID=missing, SECURITY_INTERACTIVE_RID=avail
         **   (StartService() fails of course)
         **
-        ** net start for svc under user=Administrator with right passwd.
+        ** net start for svc as regular user and with right passwd.
         **   SECURITY_SERVICE_RID=avail, SECURITY_INTERACTIVE_RID=missing
         **
         ** net start for Local System (with or without "Interact with Desktop")
@@ -1485,7 +1485,7 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
       }
       #endif 
       serviceStatus.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
-      serviceStatus.dwServiceSpecificExitCode = MAKELONG(caps,stat);
+      serviceStatus.dwServiceSpecificExitCode = (((DWORD)caps)|(((DWORD)stat)<<16));
       //fallthrough
     }
     else if (controlCode >= CLIENT_SERVICE_CONTROL_FIRST &&
