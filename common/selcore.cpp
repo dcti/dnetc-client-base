@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.47 2000/01/23 00:13:25 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.48 2000/01/26 18:54:21 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -435,23 +435,18 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 
   if (detected_type == -123) /* haven't autodetected yet? */
   {
-    detected_type = GetProcessorType(1 /* quietly */);
+    int quietly = 1;
+    unsigned int cont_i;
+    for (cont_i = 0; quietly && cont_i < CONTEST_COUNT; cont_i++)
+    {
+      if (__corecount_for_contest(cont_i) < 2)
+        ; /* nothing */
+      else if (selcorestatics.user_cputype[cont_i] < 0)
+        quietly = 0;
+    }
+    detected_type = GetProcessorType(quietly);
     if (detected_type < 0)
       detected_type = -1;
-    else
-    {
-      int quietly = 1;
-      unsigned int cont_i;
-      for (cont_i = 0; quietly && cont_i < CONTEST_COUNT; cont_i++)
-      {
-        if (__corecount_for_contest(cont_i) < 2)
-          ; /* nothing */
-        else if (selcorestatics.user_cputype[cont_i] < 0)
-          quietly = 0;
-      }
-      if (!quietly)
-        GetProcessorType(0);
-    }
   }
 
   #if (CLIENT_CPU == CPU_ALPHA)
