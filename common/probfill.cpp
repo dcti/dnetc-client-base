@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.27 2000/03/11 16:49:32 andreasb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.28 2000/03/18 12:14:53 jlawson Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -266,9 +266,33 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 /* ----------------------------------------------------------------------- */
 
 #ifndef STRESS_RANDOMGEN
-/* returns *total* (of all buffers) number of packets available
-   (... for the thread in question)
-*/
+// Routine description:
+//
+//     Internal function that loads 'wrdata' with a new workrecord
+//     from the next open contest with available blocks, possibly
+//     performing rotation (retrieving a block from the non-primary
+//     contest if are multiple open contests).
+//
+// Arguments:
+//
+//     client = pointer to the main Client object.
+//
+//     wrdata = optional pointer to the WorkRecord structure that is
+//     to be loaded with a new work packet.  If this argument is NULL,
+//     then no new work will be loaded, and this function will only
+//     return the total amount of work available for all contests.
+//
+//     ign_closed = unused argument.
+//
+//     prob_i = indicates the problem thread that this WorkRecord will
+//     eventually be executed on.  This argument is used to test for
+//     thread-safety when choosing a contest type to load.
+//
+// Return value:
+//
+//     Returns the *total* number of packets available for *all*
+//     contests for the thread in question.
+
 static long __loadapacket( Client *client, WorkRecord *wrdata, 
                           int /*ign_closed*/,  unsigned int prob_i )
 {                    
