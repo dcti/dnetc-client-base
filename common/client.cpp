@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.60 2000/02/19 21:00:02 patrick Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.61 2000/02/19 21:04:31 patrick Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -236,11 +236,9 @@ static const char *GetBuildOrEnvDescription(void)
   struct utsname ut;
   if (uname(&ut)==0) {
 #if (CLIENT_OS == OS_AIX)
-        // on AIX version is the major and release the minor
-    static char buffer[sizeof(ut.sysname)+1+sizeof(ut.release)+1+sizeof(ut.versi
-on)+1];
-    return strcat(strcat(strcat(strcat(strcpy(buffer,ut.sysname)," "),ut.version
-),"."),ut.release);
+    // on AIX version is the major and release the minor
+    static char buffer[sizeof(ut.sysname)+1+sizeof(ut.release)+1+sizeof(ut.version)+1];
+    return strcat(strcat(strcat(strcat(strcpy(buffer,ut.sysname)," "),ut.version),"."),ut.release);
 #else
     static char buffer[sizeof(ut.sysname)+1+sizeof(ut.release)+1];
     return strcat(strcat(strcpy(buffer,ut.sysname)," "),ut.release);
