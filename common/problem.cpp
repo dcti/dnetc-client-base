@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.169 2002/10/06 19:58:38 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.170 2002/10/07 08:04:35 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -555,6 +555,11 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
 static int last_rc5_prefix = -1;
 #endif
 
+#ifdef HAVE_RC5_72_CORES
+// FIXME: need code to update this value
+static int rc5_72_random_subspace = 1337;
+#endif
+
 static int __gen_random_work(unsigned int contestid, ContestWork * work)
 {
   // the random prefix is updated by LoadState() for every RC5 block loaded
@@ -562,6 +567,8 @@ static int __gen_random_work(unsigned int contestid, ContestWork * work)
   // make one up in the event that no block was every loaded.
 
   u32 rnd = Random(NULL,0);
+  
+  memset((void*)work, 0, sizeof(ContestWork));
 
   switch (contestid)
   {
@@ -589,9 +596,10 @@ static int __gen_random_work(unsigned int contestid, ContestWork * work)
   #endif
   #ifdef HAVE_RC5_72_CORES
   case RC5_72:
+    /* 1*2^32 from special random subspace*/
     work->bigcrypto.key.lo  = 0;
-    work->bigcrypto.key.mid = (rnd >> 4) & ((u32)work->bigcrypto.randomsubspace << 28);
-    work->bigcrypto.key.hi  = work->bigcrypto.randomsubspace >> 4;
+    work->bigcrypto.key.mid = (rnd & 0x0fffffff) | ((rc5_72_random_subspace & 0x0f) << 28);
+    work->bigcrypto.key.hi  = (rc5_72_random_subspace >> 4) & 0x000000ff;
     //constants are in rsadata.h
     work->bigcrypto.iv.lo     = ( RC572_IVLO );
     work->bigcrypto.iv.hi     = ( RC572_IVHI );
@@ -603,6 +611,11 @@ static int __gen_random_work(unsigned int contestid, ContestWork * work)
     work->bigcrypto.keysdone.hi = 0;
     work->bigcrypto.iterations.lo = 0;
     work->bigcrypto.iterations.hi = 1;
+    work->bigcrypto.randomsubspace = 0xffff; /* invalid, randoms don't propagate random subspaces */
+    work->bigcrypto.check.count = 0;
+    work->bigcrypto.check.hi  = 0;
+    work->bigcrypto.check.mid = 0;
+    work->bigcrypto.check.lo  = 0;
     break;
   #endif
   default:
@@ -676,6 +689,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
   //has to be done before anything else
   if (work == CONTESTWORK_MAGIC_RANDOM) /* ((const ContestWork *)0) */
   {
+    memset (&for_magic, 0, sizeof(for_magic));
     if ((int)contestid != __gen_random_work(contestid, &for_magic))
       return -2; /* ouch! random generation shouldn't fail if random block
                     availability has been checked before requesting 
@@ -685,6 +699,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
   }
   else if (work == CONTESTWORK_MAGIC_BENCHMARK) /* ((const ContestWork *)1) */
   {
+    memset (&for_magic, 0, sizeof(for_magic));
     if ((int)contestid != __gen_benchmark_work(contestid, &for_magic))
       return -2; /* ouch! benchmark generation shouldn't fail */
     work = &for_magic;
@@ -827,6 +842,11 @@ static int __InternalLoadState( InternalProblem *thisprob,
   #if defined(HAVE_CRYPTO_V2)
   case RC5_72:
     {
+      if (!thisprob->pub_data.is_random && (work->bigcrypto.randomsubspace < 0x1000))
+      {
+        rc5_72_random_subspace = work->bigcrypto.randomsubspace;
+        // FIXME: permanently store this in client->... and dnetc.ini
+      }    
 
       // copy over the state information
       thisprob->priv_data.contestwork.bigcrypto.key.hi = ( work->bigcrypto.key.hi );
@@ -842,11 +862,12 @@ static int __InternalLoadState( InternalProblem *thisprob,
       thisprob->priv_data.contestwork.bigcrypto.keysdone.lo = ( work->bigcrypto.keysdone.lo );
       thisprob->priv_data.contestwork.bigcrypto.iterations.hi = ( work->bigcrypto.iterations.hi );
       thisprob->priv_data.contestwork.bigcrypto.iterations.lo = ( work->bigcrypto.iterations.lo );
+      thisprob->priv_data.contestwork.bigcrypto.randomsubspace = ( work->bigcrypto.randomsubspace );
       thisprob->priv_data.contestwork.bigcrypto.check.count = ( work->bigcrypto.check.count );
       thisprob->priv_data.contestwork.bigcrypto.check.hi = ( work->bigcrypto.check.hi );
       thisprob->priv_data.contestwork.bigcrypto.check.mid = ( work->bigcrypto.check.mid );
       thisprob->priv_data.contestwork.bigcrypto.check.lo = ( work->bigcrypto.check.lo );
-      
+
       if (thisprob->priv_data.contestwork.bigcrypto.keysdone.lo || thisprob->priv_data.contestwork.bigcrypto.keysdone.hi)
         {
           if (thisprob->pub_data.client_cpu != expected_cputype || thisprob->pub_data.coresel != expected_corenum ||
@@ -878,8 +899,6 @@ static int __InternalLoadState( InternalProblem *thisprob,
       thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
       thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
 
-      // TODO: acidblood/trashover
-      // OK!
       break;
     }
   #endif
@@ -1028,8 +1047,6 @@ int ProblemRetrieveState( void *__thisprob,
     {
       switch (thisprob->pub_data.contest) 
       {
-// TODO: acidblood/trashover
-// OK!
         case RC5_72:
         case RC5:
         case DES:
