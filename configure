@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.139 2000/03/02 12:22:09 snake Exp $
+# @(#)$Id: configure,v 1.222.2.140 2000/03/05 19:47:56 patrick Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1069,7 +1069,7 @@ case "$1" in
         AIXPPC601FLAGS="$OPTS_EGCS_PPC601 $ALLCORES"
         AIXPPC604FLAGS="$OPTS_EGCS_PPC601 $ALLCORES"
         AIXPOWERFLAGS="$OPTS_EGCS_POWER $ALLCORES"
-        TARGET_CCFLAGS="$OPTS_EGCS -mcpu=common -D_AIX -D_AIXALL \
+        TARGET_CCFLAGS="$OPTS_EGCS -mthreads -mcpu=common -D_AIX -D_AIXALL \
                         -DMEGGS -DKWAN -DHAVE_CSC_CORES -DHAVE_OGR_CORES"
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS $OGR_ANSI_SRCS $RC5PPC_SRCS \
                 rc5/ansi/rc5ansi_2-rg.cpp "
