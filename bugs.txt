@@ -11,6 +11,9 @@ Bugs Listing
   I just verified a report that x86ident on linux w/build 408
   core dumps for 486es.  This does not happen on win32, so it is
   probably a problem with x86ident.s's conversion from x86ident.asm
+FIXED (?) - Remi
+  Does the patch on x86ident.s work ? Can't test myself now,
+  but the line replaced was wrong.
 
 06-08-98 - Jeff Lawson
   Should a -detach option be made to make forked executions easier?
