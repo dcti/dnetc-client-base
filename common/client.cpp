@@ -3,11 +3,15 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.179  1999/01/03 02:31:10  cyp
+// Client::Main() reinitializes the client object when restarting. ::pausefile
+// and ::exitflagfile are now ignored when starting with "modes".
+//
 // Revision 1.178  1999/01/01 02:45:14  cramer
 // Part 1 of 1999 Copyright updates...
 //
 // Revision 1.177  1998/12/22 15:58:24  jcmichot
-// *** empty log message ***
+// QNX needs to initialize srand() with time(NULL)
 //
 // Revision 1.176  1998/12/12 12:28:49  cyp
 // win16/win32 change: win16/win32 console code needs access to the client
@@ -151,7 +155,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.178 1999/01/01 02:45:14 cramer Exp $"; }
+return "@(#)$Id: client.cpp,v 1.179 1999/01/03 02:31:10 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -183,73 +187,80 @@ s32 guiriscos, guirestart;
 
 // --------------------------------------------------------------------------
 
-Client::Client()
+static void __initialize_client_object(Client *client)
 {
-  id[0] = 0;
-  inthreshold[0] = 10;
-  outthreshold[0] = 10;
-  inthreshold[1] = 10;
-  outthreshold[1] = 10;
-  blockcount = 0;
-  minutes = 0;
-  stopiniio = 0;
-  keyproxy[0] = 0;
-  keyport = 2064;
-  httpproxy[0] = 0;
-  httpport = 80;
-  uuehttpmode = 0;
-  httpid[0] = 0;
-  cputype=-1;
-  offlinemode = 0;
-  autofindkeyserver = 1;  //implies 'only if keyproxy==dnetkeyserver'
+  client->id[0] = 0;
+  client->inthreshold[0] = 10;
+  client->outthreshold[0] = 10;
+  client->inthreshold[1] = 10;
+  client->outthreshold[1] = 10;
+  client->blockcount = 0;
+  client->minutes = 0;
+  client->stopiniio = 0;
+  client->keyproxy[0] = 0;
+  client->keyport = 2064;
+  client->httpproxy[0] = 0;
+  client->httpport = 80;
+  client->uuehttpmode = 0;
+  client->httpid[0] = 0;
+  client->cputype=-1;
+  client->offlinemode = 0;
+  client->autofindkeyserver = 1;  //implies 'only if keyproxy==dnetkeyserver'
 
-  pausefile[0]=logname[0]=0;
-  strcpy(inifilename, "rc5des" EXTN_SEP "ini");
-  strcpy(in_buffer_file[0], "buff-in" EXTN_SEP "rc5");
-  strcpy(out_buffer_file[0], "buff-out" EXTN_SEP "rc5");
-  strcpy(in_buffer_file[1], "buff-in" EXTN_SEP "des");
-  strcpy(out_buffer_file[1], "buff-out" EXTN_SEP "des");
-  strcpy(exit_flag_file,     "exitrc5" EXTN_SEP "now" );
-  checkpoint_file[0][0]=checkpoint_file[1][0]=0;
+  client->pausefile[0]=
+  client->logname[0]=0;
+  strcpy(client->inifilename, "rc5des" EXTN_SEP "ini");
+  strcpy(client->in_buffer_file[0], "buff-in" EXTN_SEP "rc5");
+  strcpy(client->out_buffer_file[0], "buff-out" EXTN_SEP "rc5");
+  strcpy(client->in_buffer_file[1], "buff-in" EXTN_SEP "des");
+  strcpy(client->out_buffer_file[1], "buff-out" EXTN_SEP "des");
+  strcpy(client->exit_flag_file,     "exitrc5" EXTN_SEP "now" );
+  client->checkpoint_file[0][0]=
 
-  messagelen = 0;
-  smtpport = 25;
-  strcpy(smtpsrvr,"your.smtp.server");
-  strcpy(smtpfrom,"RC5Notify");
-  strcpy(smtpdest,"you@your.site");
-  numcpu = -1;
-  percentprintingoff=0;
-  connectoften=0;
-  nodiskbuffers=0;
-  membufftable[0].in.count=
-  membufftable[0].out.count=
-  membufftable[1].in.count=
-  membufftable[1].out.count=0;
-  nofallback=0;
-  randomprefix=100;
-  preferred_contest_id = 1;
-  preferred_blocksize=31;
-  randomchanged=0;
-  consecutivesolutions[0]=0;
-  consecutivesolutions[1]=0;
-  quietmode=0;
-  nonewblocks=0;
-  nettimeout=60;
-  noexitfilecheck=0;
+  client->messagelen = 0;
+  client->smtpport = 25;
+  client->smtpsrvr[0]=
+  client->smtpfrom[0]=
+  client->smtpdest[0]=0;
+  client->contestdone[0]=
+  client->contestdone[1]=0;
+  client->numcpu = -1;
+  client->percentprintingoff=0;
+  client->connectoften=0;
+  client->nodiskbuffers=0;
+  client->membufftable[0].in.count=
+  client->membufftable[0].out.count=
+  client->membufftable[1].in.count=
+  client->membufftable[1].out.count=0;
+  client->nofallback=0;
+  client->randomprefix=100;
+  client->preferred_contest_id = 1;
+  client->preferred_blocksize=31;
+  client->randomchanged=0;
+  client->consecutivesolutions[0]=0;
+  client->consecutivesolutions[1]=0;
+  client->quietmode=0;
+  client->nonewblocks=0;
+  client->nettimeout=60;
+  client->noexitfilecheck=0;
+#if defined(MMX_BITSLICER) || defined(MMX_RC5)
+  client->usemmx = 1;
+#endif
 #if defined(LURK)
   dialup.lurkmode=0;
   dialup.dialwhenneeded=0;
 #endif
-  contestdone[0]=contestdone[1]=0;
-#if defined(__QNX__)
+#if (CLIENT_OS == OS_QNX)
   srand( (unsigned) time(NULL)/*(unsigned) CliTimer( NULL )->tv_usec*/ );
 #else
   srand( (unsigned) CliTimer( NULL )->tv_usec );
 #endif
   InitRandom();
-#if defined(MMX_BITSLICER) || defined(MMX_RC5)
-  usemmx = 1;
-#endif
+}
+
+Client::Client()
+{ 
+  __initialize_client_object(this); 
 }
 
 // --------------------------------------------------------------------------
@@ -411,12 +422,15 @@ int Client::Main( int argc, const char *argv[] )
   do{
     restarted = restart;
     restart = 0;
+    __initialize_client_object(this); /* reset everything in the object */
 
     //ReadConfig() and parse command line - returns !0 if shouldn't continue
     if (ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0)
       {
       domodes = (ModeReqIsSet(-1) != 0);
-      if (InitializeTriggers(((noexitfilecheck)?(NULL):(exit_flag_file)),pausefile)==0)
+      if (InitializeTriggers(((noexitfilecheck || 
+                              domodes)?(NULL):(exit_flag_file)),
+                              ((domodes)?(NULL):(pausefile)) )==0)
         {
         if (InitializeConnectivity() == 0)
           {
