@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.83.2.4 2003/03/26 15:18:02 andreasb Exp $
+# $Id: makefile.vc,v 1.83.2.5 2003/09/01 07:04:27 jlawson Exp $
 #
 
 BASENAME = dnetc
@@ -114,6 +114,11 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/confrwv.obj    \
         $(OUTPUTPATH)/console.obj    \
         $(OUTPUTPATH)/coremem.obj    \
+        $(OUTPUTPATH)/core_rc5.obj   \
+        $(OUTPUTPATH)/core_des.obj   \
+        $(OUTPUTPATH)/core_r72.obj   \
+        $(OUTPUTPATH)/core_csc.obj   \
+        $(OUTPUTPATH)/core_ogr.obj   \
         $(OUTPUTPATH)/cpucheck.obj   \
         $(OUTPUTPATH)/disphelp.obj   \
         $(OUTPUTPATH)/iniread.obj    \
