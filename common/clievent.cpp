@@ -28,6 +28,9 @@
  *
  */ 
 // $Log: clievent.cpp,v $
+// Revision 1.4  1999/01/24 17:51:50  cyp
+// You do not need more listeners. You need to learn how to read instructions.
+//
 // Revision 1.3  1999/01/24 00:27:48  silby
 // I want more listeners! :)
 //
@@ -42,7 +45,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clievent_cpp(void) {
-return "@(#)$Id: clievent.cpp,v 1.3 1999/01/24 00:27:48 silby Exp $"; }
+return "@(#)$Id: clievent.cpp,v 1.4 1999/01/24 17:51:50 cyp Exp $"; }
 #endif
 
 #include "baseincs.h"   /* NULL, memset */
@@ -50,7 +53,7 @@ return "@(#)$Id: clievent.cpp,v 1.3 1999/01/24 00:27:48 silby Exp $"; }
 
 
 #ifndef MAX_EVENT_LISTENERS
-#define MAX_EVENT_LISTENERS 8
+#define MAX_EVENT_LISTENERS 4
 #endif
 
 /* ------------------------------------------------------------ */
