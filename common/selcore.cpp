@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.36 2003/03/30 17:38:53 gavin Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.37 2003/03/30 18:43:16 gavin Exp $"; }
 
 //#define TRACE
 
@@ -1250,7 +1250,11 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
         case 0x0004: cindex = 5; break; // 604            == KKS 604e
         case 0x0006: cindex = 4; break; // 603e           == KKS 2pipes
         case 0x0007: cindex = 4; break; // 603r/603ev     == KKS 2pipes
-        case 0x0008: cindex = 4; break; // 740/750 (G3)   == KKS 2pipes
+        #if (CLIENT_OS == OS_MACOSX)
+          case 0x0008: cindex = 4; break; // 740/750 (G3)   == KKS 2pipes
+        #elif defined(__GCC__) || defined(__GNUC__)
+          case 0x0008: cindex = 3; break; // 740/750 (G3)   == MH 2-pipe
+        #endif
         case 0x0009: cindex = 5; break; // 604e           == KKS 604e
         case 0x000A: cindex = 5; break; // 604ev          == KKS 604e
         default:     cindex =-1; break; // no default
