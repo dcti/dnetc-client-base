@@ -6,24 +6,27 @@
 ; if your compiler can generate faster code please send it to me
 ; for disassembly.
 ;
-; $Id: ogr.asm,v 1.1.2.4 2000/11/07 21:29:03 cyp Exp $
+; $Id: ogr.asm,v 1.1.2.5 2000/11/11 12:38:10 cyp Exp $
 
                global ogr_get_dispatch_table, _ogr_get_dispatch_table
-               extern ogr_choose_dat
+               extern ogr_choose_dat, _ogr_choose_dat
 
-%ifdef __OMF__  ; Watcom/OS/2 and Borland
+%ifdef __OMF__  ; Watcom and Borland
 [SECTION _DATA CLASS=DATA USE32 FLAT PUBLIC ALIGN=16]
 [SECTION _TEXT CLASS=CODE USE32 FLAT PUBLIC ALIGN=16] ;8,16,256,512,...
 %define __DATASECT__ [SECTION _DATA]
 %define __CODESECT__ [SECTION _TEXT]
+%define CHOOSE_DAT ogr_choose_dat
 %elifdef __ELF__
 [SECTION .data align=16]
 [SECTION .text align=32]
 %define __DATASECT__ [SECTION .data]
 %define __CODESECT__ [SECTION .text]
+%define CHOOSE_DAT ogr_choose_dat
 %else
 %define __DATASECT__ [SECTION .data]
 %define __CODESECT__ [SECTION .text]
+%define CHOOSE_DAT _ogr_choose_dat
 %endif
 
 %define offset
@@ -153,7 +156,7 @@
 
 __CODESECT__
 init_load_choose:
-    gas_cmp       byte ptr [ogr_choose_dat+0x2],0x0c
+    gas_cmp       byte ptr [CHOOSE_DAT+0x2],0x0c
     jne       X$1
     xor       eax,eax
     ret       
@@ -366,7 +369,7 @@ X$16:
     gas_sub      edi,edx
     mov       edx,edi
     lea       eax,[eax+eax*2]
-    movzx     edx,byte ptr [edx+eax*4+ogr_choose_dat+0x3]
+    movzx     edx,byte ptr [edx+eax*4+CHOOSE_DAT+0x3]
     mov       eax,dword ptr [ebx]
     mov       ecx,eax
     gas_sub      ecx,edx
@@ -386,7 +389,7 @@ X$18:
     gas_sub      edi,edx
     mov       edx,edi
     lea       eax,[eax+eax*2]
-    movzx     eax,byte ptr [edx+eax*4+ogr_choose_dat+0x3]
+    movzx     eax,byte ptr [edx+eax*4+CHOOSE_DAT+0x3]
     mov       edx,dword ptr [ebx]
     gas_sub      edx,eax
 X$19:
@@ -727,7 +730,7 @@ X$28:
     mov       edx,dword ptr [ebx+0x8]
     gas_sub      edx,dword ptr [esp+0x24]
     lea       eax,[eax+eax*2]
-    movzx     edx,byte ptr [edx+eax*4+ogr_choose_dat+0x3]
+    movzx     edx,byte ptr [edx+eax*4+CHOOSE_DAT+0x3]
     mov       eax,dword ptr [ebx]
     mov       ebp,eax
     gas_sub      ebp,edx
@@ -746,7 +749,7 @@ X$30:
     mov       edx,dword ptr [ebx+0x8]
     gas_sub      edx,dword ptr [esp+0x24]
     lea       eax,[eax+eax*2]
-    movzx     eax,byte ptr [edx+eax*4+ogr_choose_dat+0x3]
+    movzx     eax,byte ptr [edx+eax*4+CHOOSE_DAT+0x3]
     mov       ebp,dword ptr [ebx]
     gas_sub      ebp,eax
 X$31:
@@ -995,6 +998,7 @@ _dispatch_table:
 
     align 32
 
+_ogr_get_dispatch_table:
 ogr_get_dispatch_table:
     mov       eax,offset _dispatch_table
     ret
