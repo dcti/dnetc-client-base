@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore.cpp,v $
+// Revision 1.4  1998/09/04 06:05:46  silby
+// Made selcore more verbose on x86 so that people would not confused rc5 and des core selections.
+//
 // Revision 1.3  1998/09/01 22:32:22  remi
 // Allow a P5-MMX to use the RC5 MMX core.
 //
@@ -19,7 +22,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.3 1998/09/01 22:32:22 remi Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.4 1998/09/04 06:05:46 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -156,7 +159,7 @@ s32 Client::SelectCore(void)
     cputype = (requestedtype & 0xFF);
     }
 
-  LogScreenRaw("Selecting %s code.\n", GetCoreNameFromCoreType(cputype));
+  LogScreenRaw("RC5: Selecting %s core.\n", GetCoreNameFromCoreType(cputype));
   
   #if ((defined(KWAN) || defined(MEGGS)) && !defined(MMX_BITSLICER))
     #define DESUNITFUNC51 des_unit_func_slice
@@ -236,9 +239,15 @@ s32 Client::SelectCore(void)
   if ((detectedtype & 0x100) && usemmx)   // use the MMX DES core ?
     { 
     des_unit_func = des_unit_func2 = des_unit_func_mmx;
-    };
+    LogScreen("DES: Selecting MMX Bitslice core.\n");
+    }
+  else
   #endif
-
+    {
+    if (des_unit_func == DESUNITFUNC51)
+      LogScreen("DES: Selecting Pentium optimized Bryddes core.\n");
+    else LogScreen("DES: Selecting Pentium Pro optimized Bryddes core.\n");
+    };
       
   #undef DESUNITFUNC61
   #undef DESUNITFUNC62
