@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.108 2002/10/23 02:24:09 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.109 2002/10/23 22:44:22 acidblood Exp $"; }
 
 //#define TRACE
 
@@ -238,7 +238,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "SES 1-pipe",
       "SES 2-pipe",
       "DG 2-pipe",
-      "DG P4",
+      "DG 3-pipe",
       NULL
     },
   #else
@@ -1126,11 +1126,14 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
           switch (detected_type & 0xff)
           {
             case 0x09: cindex = 5; break; // AMD>=K7/Cx>MII == DG 2-pipe
+            case 0x0B: cindex = 6; break; // Pentium 4 == DG 3-pipe
             default:   cindex =-1; break; // no default
           }
           #if defined(HAVE_NO_NASM)
           if (cindex == 5)   /* ("DG 2-pipe") */
             cindex = 1;      /* ("ANSI 2-pipe") */
+          if (cindex == 6)   /* ("DG 3-pipe") */
+            cindex = 0;      /* ("ANSI 4-pipe") */
           #endif
           selcorestatics.corenum[RC5_72] = cindex;
         }
@@ -1511,7 +1514,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       extern "C" s32 rc5_72_unit_func_ses( RC5_72UnitWork *, u32 *, void *);
       extern "C" s32 rc5_72_unit_func_ses_2( RC5_72UnitWork *, u32 *, void *);
       extern "C" s32 rc5_72_unit_func_dg_2( RC5_72UnitWork *, u32 *, void *);
-      extern "C" s32 rc5_72_unit_func_dg_p4( RC5_72UnitWork *, u32 *, void *);
+      extern "C" s32 rc5_72_unit_func_dg_3( RC5_72UnitWork *, u32 *, void *);
   #endif
 #endif
 
@@ -2094,8 +2097,8 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         pipeline_count = 2;
         break;
       case 6:
-        unit_func.gen_72 = rc5_72_unit_func_dg_p4;
-        pipeline_count = 2;
+        unit_func.gen_72 = rc5_72_unit_func_dg_3;
+        pipeline_count = 3;
         break;
      #endif
 
