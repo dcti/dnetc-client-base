@@ -11,6 +11,10 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.57  1999/04/05 19:42:36  patrick
+//
+// AIX: fd_set is defined in sys/select.h and was missing
+//
 // Revision 1.56  1999/03/05 20:59:36  patrick
 //
 // timeval is found in sys/time.h for OS/2-EMX (somehow got removed)
@@ -340,6 +344,7 @@ extern "C" {
 #elif (CLIENT_OS == OS_AIX)
   #include <unistd.h>		// nice()
   #include <strings.h>		// bzero(), strcase...,
+  #include <sys/select.h>	// fd_set on AIX 4.1
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDI) || (CLIENT_OS == OS_OPENBSD)
   #include <sys/time.h>
   #include <unistd.h>
