@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.110 2001/04/10 00:47:22 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.111 2001/04/10 17:27:15 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -802,7 +802,6 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         {
           int cindex = -1; 
           int have_smc = 0;
-          int dettype = (int)(detected_type & 0xff); 
           #if defined(SMC)
           have_smc = (x86_smc_initialized > 0);
           #endif
