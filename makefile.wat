@@ -6,6 +6,11 @@
 ##                       or anything else defined at the end of this makefile
 ##
 ## $Log: makefile.wat,v $
+## Revision 1.15  1998/07/07 14:51:51  ziggyb
+## Added the pathwork.cpp file to the link objs and the make process. Also moved
+## the Cyrix core around, it seems to speed up the core a bit. Well at least it
+## prevented it from being slowed down, in OS/2 at least.
+##
 ## Revision 1.14  1998/06/21 17:10:20  cyruspatel
 ## Fixed some NetWare smp problems. Merged duplicate numcpu validation code
 ## in ::ReadConfig()/::ValidateConfig() into ::ValidateProcessorCount() and
@@ -70,7 +75,7 @@
 ## Import 5/23/98 client tree
 ## 
 
-## $Id: makefile.wat,v 1.14 1998/06/21 17:10:20 cyruspatel Exp $
+## $Id: makefile.wat,v 1.15 1998/07/07 14:51:51 ziggyb Exp $
 
 CC=wpp386
 CCASM=wasm
@@ -82,15 +87,15 @@ LINK=wlink
 %EXTOBJS =  des\brydmasm\p1bdespro.obj  des\brydmasm\p2bdespro.obj  
             #extra objs (made elsewhere) but need linking here
 
-%LINKOBJS = output\rg-486.obj output\rg-6x86.obj output\rg-k5.obj &
-            output\rg-k6.obj output\rc5p5brf.obj output\rg-p6.obj &
+%LINKOBJS = output\rg-486.obj output\rg-k5.obj output\rg-k6.obj &
+            output\rc5p5brf.obj output\rg-p6.obj output\rg-6x86.obj &
             output\bdeslow.obj output\bbdeslow.obj output\x86ident.obj &
             output\cliconfig.obj output\autobuff.obj output\buffwork.obj &
             output\mail.obj output\client.obj output\disphelp.obj &
             output\iniread.obj output\network.obj output\problem.obj &
             output\scram.obj output\des-x86.obj output\convdes.obj &
             output\clitime.obj output\clicdata.obj output\clirate.obj &
-            output\clisrate.obj output\cpucheck.obj
+            output\clisrate.obj output\cpucheck.obj output\pathwork.obj
             # this list can be added to in the platform specific section
 
 
@@ -187,6 +192,11 @@ output\clisrate.obj : common\clisrate.cpp makefile.wat .autodepend
 output\clistime.obj : common\clistime.cpp makefile.wat .autodepend
   *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
+
+output\pathwork.obj : common\pathwork.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
+  @set isused=1
+
 
 output\deseval-meggs2.obj : des\deseval-meggs2.cpp makefile.wat .autodepend
   *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
