@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.10 1999/11/02 14:20:10 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.11 1999/11/19 00:14:33 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -272,27 +272,44 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 /* ----------------------------------------------------------------------- */
 
 #ifndef STRESS_RANDOMGEN
+/* returns *total* (of all buffers) number of packets available
+   (... for the thread in question)
+*/
 static long __loadapacket( Client *client, WorkRecord *wrdata, 
                           int /*ign_closed*/,  unsigned int prob_i )
 {                    
-  unsigned int cont_i = prob_i; /* consume variable */
-  long bufcount = -1;
+  unsigned int cont_i; 
+  long bufcount, totalcount = -1;
 
-  for (cont_i = 0; (bufcount < 0 && cont_i < CONTEST_COUNT); cont_i++ )
+  for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++ )
   {
     unsigned int selproject = (unsigned int)client->loadorder_map[cont_i];
     if (selproject >= CONTEST_COUNT) /* user disabled */
       continue;
 //LogScreen("loadapacket 1: trying contest %u for problem %u\n", selproject, prob_i);
-    if (!IsProblemLoadPermitted((long)prob_i, selproject ))
+    if (!IsProblemLoadPermitted( (long)prob_i, selproject ))
     {
 //LogScreen("loadapacket 2: contest %u. load not permitted.\n", selproject );
       continue; /* problem.cpp - result depends on #defs, threadsafety etc */
     }
-    bufcount = GetBufferRecord( client, wrdata, selproject, 0 );
+    bufcount = -1;
+    if (!wrdata) /* already loaded a packet */
+      bufcount = GetBufferCount( client, selproject, 0, NULL );
+    else         /* haven't got a packet yet */
+    {
+      bufcount = GetBufferRecord( client, wrdata, selproject, 0 );
 //LogScreen("loadapacket 2: contest %u count %ld\n", selproject, bufcount );
+      if (bufcount >= 0) /* no error */
+        wrdata = NULL;     /* don't load again */
+    }
+    if (bufcount >= 0) /* no error */
+    {  
+      if (totalcount < 0)
+        totalcount = 0;
+      totalcount += bufcount;
+    }
   }
-  return bufcount;
+  return totalcount;
 }  
 #endif
 
