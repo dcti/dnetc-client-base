@@ -15,7 +15,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi_2_bo1_cpp (void) {
-return "@(#)$Id: rc5ansi_2-bo1.cpp,v 1.3 2002/09/02 00:35:55 andreasb Exp $"; }
+return "@(#)$Id: rc5ansi_2-bo1.cpp,v 1.3.4.1 2003/09/01 23:46:36 mweiser Exp $"; }
 #endif
 
 #define PIPELINE_COUNT = 2
@@ -101,15 +101,15 @@ s32 rc5_unit_func_ansi_2_bo1( RC5UnitWork *work, u32 *timeslice,
     {
       Llo2 = Llo1 = rc5unitwork->L0.lo;
       Lhi2 = (Lhi1 = rc5unitwork->L0.hi) + 0x01000000;
-  
+
       /* Begin round 1 of key expansion */
-  
+
       /*  Special case while A and B are known to be zero.  */
       S1[0] = A1 = ROTL3(S_not(0));
       Llo1 = ROTL(Llo1 + A1, A1);
       S2[0] = A2 = ROTL3(S_not(0));
       Llo2 = ROTL(Llo2 + A2, A2);
-  
+
       ROUND1ODD (1)
       ROUND1EVEN(2)
       ROUND1ODD (3)
@@ -135,7 +135,7 @@ s32 rc5_unit_func_ansi_2_bo1( RC5UnitWork *work, u32 *timeslice,
       ROUND1ODD (23)
       ROUND1EVEN(24)
       ROUND1ODD (25)
-  
+
       /* Begin round 2 of key expansion */
       ROUND2EVEN(0)
       ROUND2ODD (1)
@@ -163,11 +163,11 @@ s32 rc5_unit_func_ansi_2_bo1( RC5UnitWork *work, u32 *timeslice,
       ROUND2ODD (23)
       ROUND2EVEN(24)
       ROUND2ODD (25)
-  
+
     {
       register u32 eA1, eB1, eA2, eB2;
       /* Begin round 3 of key expansion (and encryption round) */
-  
+
       eA1 = rc5unitwork->plain.lo + (A1 = ROTL3(S1[0] + A1 + Lhi1));
       eA2 = rc5unitwork->plain.lo + (A2 = ROTL3(S2[0] + A2 + Lhi2));
       Llo1 = ROTL(Llo1 + A1 + Lhi1, A1 + Lhi1);
@@ -176,7 +176,7 @@ s32 rc5_unit_func_ansi_2_bo1( RC5UnitWork *work, u32 *timeslice,
       eB2 = rc5unitwork->plain.hi + (A2 = ROTL3(S2[1] + A2 + Llo2));
       Lhi1 = ROTL(Lhi1 + A1 + Llo1, A1 + Llo1);
       Lhi2 = ROTL(Lhi2 + A2 + Llo2, A2 + Llo2);
-    
+
       ROUND3EVEN(2)
       ROUND3ODD (3)
       ROUND3EVEN(4)
@@ -199,19 +199,19 @@ s32 rc5_unit_func_ansi_2_bo1( RC5UnitWork *work, u32 *timeslice,
       ROUND3ODD (21)
       ROUND3EVEN(22)
       ROUND3ODD (23)
-  
+
       eA1 = ROTL(eA1 ^ eB1, eB1) + (A1 = ROTL3(S1[24] + A1 + Lhi1));
       eA2 = ROTL(eA2 ^ eB2, eB2) + (A2 = ROTL3(S2[24] + A2 + Lhi2));
-  	
+
       if ((rc5unitwork->cypher.lo == eA1) &&
-  	    rc5unitwork->cypher.hi == ROTL(eB1 ^ eA1, eA1) +
-  	      ROTL3(S1[25] + A1 + ROTL(Llo1 + A1 + Lhi1, A1 + Lhi1))) break;
+            rc5unitwork->cypher.hi == ROTL(eB1 ^ eA1, eA1) +
+              ROTL3(S1[25] + A1 + ROTL(Llo1 + A1 + Lhi1, A1 + Lhi1))) break;
       if ((rc5unitwork->cypher.lo == eA2) &&
-  	    rc5unitwork->cypher.hi == ROTL(eB2 ^ eA2, eA2) +
-  	      ROTL3(S2[25] + A2 + ROTL(Llo2 + A2 + Lhi2, A2 + Lhi2))) {
-		kiter++;
-		break;
-	}
+            rc5unitwork->cypher.hi == ROTL(eB2 ^ eA2, eA2) +
+              ROTL3(S2[25] + A2 + ROTL(Llo2 + A2 + Lhi2, A2 + Lhi2))) {
+                kiter++;
+                break;
+        }
     }
     // "mangle-increment" the key number by the number of pipelines
     mangle_increment(rc5unitwork);
@@ -228,5 +228,3 @@ s32 rc5_unit_func_ansi_2_bo1( RC5UnitWork *work, u32 *timeslice,
   return -1; /* error */
 
 }
-
-

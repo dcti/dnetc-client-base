@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * new version of the RC5 ANSI 2-rg core. Replaces 2-rg.c. 
+ * new version of the RC5 ANSI 2-rg core. Replaces 2-rg.c.
  * Can be compiled using g++. Has both old and new naming conventions.
  *
  * ---------------------------------------------------------------
@@ -20,33 +20,33 @@
 */
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi_2_rg_cpp (void) {
-return "@(#)$Id: rc5ansi_2-rg.cpp,v 1.6 2002/09/02 00:35:55 andreasb Exp $"; }
+return "@(#)$Id: rc5ansi_2-rg.cpp,v 1.6.4.1 2003/09/01 23:46:36 mweiser Exp $"; }
 #endif
 //
 //*Run-time generation of S0[] :
 //
-//	- loading a large constant on RISC need two instructions.
-//	  (ie, on sparc :)
-//		sethi %hi(1444465436),%g2
-//		or %g2,%lo(1444465436),%g2
+//      - loading a large constant on RISC need two instructions.
+//        (ie, on sparc :)
+//              sethi %hi(1444465436),%g2
+//              or %g2,%lo(1444465436),%g2
 //
-//	- generating S0[] at run time need only one instruction
-//	  since S0[n] = S0[n-1] + Q
-//	  (ie, : currentS0 += Q )
+//      - generating S0[] at run time need only one instruction
+//        since S0[n] = S0[n-1] + Q
+//        (ie, : currentS0 += Q )
 //
-//	- drawback : we need two more registers
-//	  one for 'currentS0' and one for 'Q'
+//      - drawback : we need two more registers
+//        one for 'currentS0' and one for 'Q'
 //
 // some chips can't do two shifts at once
-//	- Sparcs
-//	- Alphas
+//      - Sparcs
+//      - Alphas
 //
 // out of order :
-//	- ppc604
-//	- R10000
-//	- PA8000
+//      - ppc604
+//      - R10000
+//      - PA8000
 // in order :
-//	- all others
+//      - all others
 
 #define PIPELINE_COUNT 2
 #define USE_ANSI_INCREMENT
@@ -61,125 +61,125 @@ return "@(#)$Id: rc5ansi_2-rg.cpp,v 1.6 2002/09/02 00:35:55 andreasb Exp $"; }
 // Round 1 macros
 // --------------
 
-#define ROUND1EVEN(S1N, S2N)	\
-    cS0 += Q;			\
-    A1 += cS0;			\
-    A2 += cS0;			\
-    A1 += Lhi1;			\
-    A2 += Lhi2;			\
-    A1 = ROTL3(A1);		\
-    A2 = ROTL3(A2);		\
-    S1N = A1;			\
-    tmp1 = A1 + Lhi1;		\
-    S2N = A2;			\
-    tmp2 = A2 + Lhi2;		\
-    Llo1 += tmp1;		\
-    Llo2 += tmp2;		\
-    Llo1 = ROTL(Llo1, tmp1);	\
+#define ROUND1EVEN(S1N, S2N)    \
+    cS0 += Q;                   \
+    A1 += cS0;                  \
+    A2 += cS0;                  \
+    A1 += Lhi1;                 \
+    A2 += Lhi2;                 \
+    A1 = ROTL3(A1);             \
+    A2 = ROTL3(A2);             \
+    S1N = A1;                   \
+    tmp1 = A1 + Lhi1;           \
+    S2N = A2;                   \
+    tmp2 = A2 + Lhi2;           \
+    Llo1 += tmp1;               \
+    Llo2 += tmp2;               \
+    Llo1 = ROTL(Llo1, tmp1);    \
     Llo2 = ROTL(Llo2, tmp2);
 
-#define  ROUND1ODD(S1N, S2N)	\
-    cS0 += Q;			\
-    A1 += cS0;			\
-    A2 += cS0;			\
-    A1 += Llo1;			\
-    A2 += Llo2;			\
-    A1 = ROTL3(A1);		\
-    A2 = ROTL3(A2);		\
-    S1N = A1;			\
-    tmp1 = A1 + Llo1;		\
-    S2N = A2;			\
-    tmp2 = A2 + Llo2;		\
-    Lhi1 += tmp1;		\
-    Lhi2 += tmp2;		\
-    Lhi1 = ROTL(Lhi1, tmp1);	\
+#define  ROUND1ODD(S1N, S2N)    \
+    cS0 += Q;                   \
+    A1 += cS0;                  \
+    A2 += cS0;                  \
+    A1 += Llo1;                 \
+    A2 += Llo2;                 \
+    A1 = ROTL3(A1);             \
+    A2 = ROTL3(A2);             \
+    S1N = A1;                   \
+    tmp1 = A1 + Llo1;           \
+    S2N = A2;                   \
+    tmp2 = A2 + Llo2;           \
+    Lhi1 += tmp1;               \
+    Lhi2 += tmp2;               \
+    Lhi1 = ROTL(Lhi1, tmp1);    \
     Lhi2 = ROTL(Lhi2, tmp2);
 
 
 // Round 2 macros
 // --------------
 
-#define ROUND2EVEN(S1N, S2N)	\
-    tmp1 = S1N;			\
-    A1 += Lhi1;			\
-    tmp2 = S2N;			\
-    A2 += Lhi2;			\
-    A1 += tmp1;			\
-    A2 += tmp2;			\
-    A1 = ROTL3(A1);		\
-    A2 = ROTL3(A2);		\
-    S1N = A1;			\
-    tmp1 = A1 + Lhi1;		\
-    S2N = A2;			\
-    tmp2 = A2 + Lhi2;		\
-    Llo1 += tmp1;		\
-    Llo2 += tmp2;		\
-    Llo1 = ROTL(Llo1,tmp1);	\
+#define ROUND2EVEN(S1N, S2N)    \
+    tmp1 = S1N;                 \
+    A1 += Lhi1;                 \
+    tmp2 = S2N;                 \
+    A2 += Lhi2;                 \
+    A1 += tmp1;                 \
+    A2 += tmp2;                 \
+    A1 = ROTL3(A1);             \
+    A2 = ROTL3(A2);             \
+    S1N = A1;                   \
+    tmp1 = A1 + Lhi1;           \
+    S2N = A2;                   \
+    tmp2 = A2 + Lhi2;           \
+    Llo1 += tmp1;               \
+    Llo2 += tmp2;               \
+    Llo1 = ROTL(Llo1,tmp1);     \
     Llo2 = ROTL(Llo2,tmp2);
 
-#define  ROUND2ODD(S1N, S2N)	\
-    tmp1 = S1N;			\
-    A1 += Llo1;			\
-    tmp2 = S2N;			\
-    A2 += Llo2;			\
-    A1 += tmp1;			\
-    A2 += tmp2;			\
-    A1 = ROTL3(A1);		\
-    A2 = ROTL3(A2);		\
-    S1N = A1;			\
-    tmp1 = A1 + Llo1;		\
-    S2N = A2;			\
-    tmp2 = A2 + Llo2;		\
-    Lhi1 += tmp1;		\
-    Lhi2 += tmp2;		\
-    Lhi1 = ROTL(Lhi1,tmp1);	\
+#define  ROUND2ODD(S1N, S2N)    \
+    tmp1 = S1N;                 \
+    A1 += Llo1;                 \
+    tmp2 = S2N;                 \
+    A2 += Llo2;                 \
+    A1 += tmp1;                 \
+    A2 += tmp2;                 \
+    A1 = ROTL3(A1);             \
+    A2 = ROTL3(A2);             \
+    S1N = A1;                   \
+    tmp1 = A1 + Llo1;           \
+    S2N = A2;                   \
+    tmp2 = A2 + Llo2;           \
+    Lhi1 += tmp1;               \
+    Lhi2 += tmp2;               \
+    Lhi1 = ROTL(Lhi1,tmp1);     \
     Lhi2 = ROTL(Lhi2,tmp2);
 
 // Round 3 macros
 // --------------
 
-#define ROUND3EVEN(S1N, S2N)	\
-    tmp1 = S1N;			\
-    A1 += Lhi1;			\
-    tmp2 = S2N;			\
-    A2 += Lhi2;			\
-    A1 += tmp1;			\
-    A2 += tmp2;			\
-    A1 = ROTL3(A1);		\
-    eA1 ^= eB1;			\
-    A2 = ROTL3(A2);		\
-    eA2 ^= eB2;			\
-    eA1 = ROTL(eA1,eB1);	\
-    eA2 = ROTL(eA2,eB2);	\
-    eA1 += A1;			\
-    eA2 += A2;			\
-    tmp1 = A1 + Lhi1;		\
-    tmp2 = A2 + Lhi2;		\
-    Llo1 += tmp1;		\
-    Llo2 += tmp2;		\
-    Llo1 = ROTL(Llo1,tmp1);	\
+#define ROUND3EVEN(S1N, S2N)    \
+    tmp1 = S1N;                 \
+    A1 += Lhi1;                 \
+    tmp2 = S2N;                 \
+    A2 += Lhi2;                 \
+    A1 += tmp1;                 \
+    A2 += tmp2;                 \
+    A1 = ROTL3(A1);             \
+    eA1 ^= eB1;                 \
+    A2 = ROTL3(A2);             \
+    eA2 ^= eB2;                 \
+    eA1 = ROTL(eA1,eB1);        \
+    eA2 = ROTL(eA2,eB2);        \
+    eA1 += A1;                  \
+    eA2 += A2;                  \
+    tmp1 = A1 + Lhi1;           \
+    tmp2 = A2 + Lhi2;           \
+    Llo1 += tmp1;               \
+    Llo2 += tmp2;               \
+    Llo1 = ROTL(Llo1,tmp1);     \
     Llo2 = ROTL(Llo2,tmp2);
-	
-#define ROUND3ODD(S1N, S2N)	\
-    tmp1 = S1N;			\
-    A1 += Llo1;			\
-    tmp2 = S2N;			\
-    A2 += Llo2;			\
-    A1 += tmp1;			\
-    A2 += tmp2;			\
-    A1 = ROTL3(A1);		\
-    eB1 ^= eA1;			\
-    A2 = ROTL3(A2);		\
-    eB2 ^= eA2;			\
-    eB1 = ROTL(eB1,eA1);	\
-    eB2 = ROTL(eB2,eA2);	\
-    eB1 += A1;			\
-    eB2 += A2;			\
-    tmp1 = A1 + Llo1;		\
-    tmp2 = A2 + Llo2;		\
-    Lhi1 += tmp1;		\
-    Lhi2 += tmp2;		\
-    Lhi1 = ROTL(Lhi1,tmp1);	\
+
+#define ROUND3ODD(S1N, S2N)     \
+    tmp1 = S1N;                 \
+    A1 += Llo1;                 \
+    tmp2 = S2N;                 \
+    A2 += Llo2;                 \
+    A1 += tmp1;                 \
+    A2 += tmp2;                 \
+    A1 = ROTL3(A1);             \
+    eB1 ^= eA1;                 \
+    A2 = ROTL3(A2);             \
+    eB2 ^= eA2;                 \
+    eB1 = ROTL(eB1,eA1);        \
+    eB2 = ROTL(eB2,eA2);        \
+    eB1 += A1;                  \
+    eB2 += A2;                  \
+    tmp1 = A1 + Llo1;           \
+    tmp2 = A2 + Llo2;           \
+    Lhi1 += tmp1;               \
+    Lhi2 += tmp2;               \
+    Lhi1 = ROTL(Lhi1,tmp1);     \
     Lhi2 = ROTL(Lhi2,tmp2);
 
 // rc5_unit will get passed an RC5WorkUnit to complete
@@ -211,20 +211,20 @@ u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *rc5unitwork, u32 tslice)
     {
     Llo2 = Llo1 = rc5unitwork->L0.lo;
     Lhi2 = (Lhi1 = rc5unitwork->L0.hi) + 0x01000000;
-  
+
     /* Begin round 1 of key expansion */
-  
+
     {  register u32 cS0, Q;
-  
+
       /*  Special case while A and B are known to be zero.  */
       cS0 = _P_RC5;
       Q = _Q;
-  
+
       S1_00 = A1 =
       S2_00 = A2 = ROTL3(cS0);
       Llo1 = ROTL(Llo1 + A1, A1);
       Llo2 = ROTL(Llo2 + A2, A2);
-  
+
       ROUND1ODD  (S1_01, S2_01);
       ROUND1EVEN (S1_02, S2_02);
       ROUND1ODD  (S1_03, S2_03);
@@ -251,10 +251,10 @@ u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *rc5unitwork, u32 tslice)
       ROUND1EVEN (S1_24, S2_24);
       ROUND1ODD  (S1_25, S2_25);
     }
-  
-  
+
+
     /* Begin round 2 of key expansion */
-  				
+
     ROUND2EVEN(S1_00, S2_00);
     ROUND2ODD (S1_01, S2_01);
     ROUND2EVEN(S1_02, S2_02);
@@ -281,21 +281,21 @@ u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *rc5unitwork, u32 tslice)
     ROUND2ODD (S1_23, S2_23);
     ROUND2EVEN(S1_24, S2_24);
     ROUND2ODD (S1_25, S2_25);
-  
+
     {
       register u32 eA1, eB1, eA2, eB2;
       /* Begin round 3 of key expansion (and encryption round) */
-  
+
       eA1 = rc5unitwork->plain.lo + (A1 = ROTL3(S1_00 + Lhi1 + A1));
       eA2 = rc5unitwork->plain.lo + (A2 = ROTL3(S2_00 + Lhi2 + A2));
       Llo1 = ROTL(Llo1 + A1 + Lhi1, A1 + Lhi1);
       Llo2 = ROTL(Llo2 + A2 + Lhi2, A2 + Lhi2);
-  
+
       eB1 = rc5unitwork->plain.hi + (A1 = ROTL3(S1_01 + Llo1 + A1));
       eB2 = rc5unitwork->plain.hi + (A2 = ROTL3(S2_01 + Llo2 + A2));
       Lhi1 = ROTL(Lhi1 + A1 + Llo1, A1 + Llo1);
       Lhi2 = ROTL(Lhi2 + A2 + Llo2, A2 + Llo2);
-  				
+
       ROUND3EVEN(S1_02, S2_02);
       ROUND3ODD (S1_03, S2_03);
       ROUND3EVEN(S1_04, S2_04);
@@ -318,16 +318,16 @@ u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *rc5unitwork, u32 tslice)
       ROUND3ODD (S1_21, S2_21);
       ROUND3EVEN(S1_22, S2_22);
       ROUND3ODD (S1_23, S2_23);
-  
+
       eA1 = ROTL(eA1 ^ eB1, eB1) + (A1 = ROTL3(S1_24 + A1 + Lhi1));
       eA2 = ROTL(eA2 ^ eB2, eB2) + (A2 = ROTL3(S2_24 + A2 + Lhi2));
-  	
+
       if (rc5unitwork->cypher.lo == eA1 &&
-  	    rc5unitwork->cypher.hi == ROTL(eB1 ^ eA1, eA1) +
-  	      ROTL3(S1_25 + A1 + ROTL(Llo1 + A1 + Lhi1, A1 + Lhi1))) return kiter;
+            rc5unitwork->cypher.hi == ROTL(eB1 ^ eA1, eA1) +
+              ROTL3(S1_25 + A1 + ROTL(Llo1 + A1 + Lhi1, A1 + Lhi1))) return kiter;
       if (rc5unitwork->cypher.lo == eA2 &&
-  	    rc5unitwork->cypher.hi == ROTL(eB2 ^ eA2, eA2) +
-  	      ROTL3(S2_25 + A2 + ROTL(Llo2 + A2 + Lhi2, A2 + Lhi2))) return ++kiter;
+            rc5unitwork->cypher.hi == ROTL(eB2 ^ eA2, eA2) +
+              ROTL3(S2_25 + A2 + ROTL(Llo2 + A2 + Lhi2, A2 + Lhi2))) return ++kiter;
     }
     // "mangle-increment" the key number by the number of pipelines
     ansi_increment(rc5unitwork);
@@ -345,7 +345,7 @@ s32 rc5_ansi_rg_unified_form( RC5UnitWork *work,
                               u32 *keystocheck, void *scratch_area )
 {
   u32 keyschecked, iterstodo;
-  /*  
+  /*
    *  since the caller does not care about how many pipelines we have,
    *  and since this is a N pipeline core, we do ...
    *         ... iterations_to_do == timeslice / PIPELINE_COUNT
@@ -358,7 +358,7 @@ s32 rc5_ansi_rg_unified_form( RC5UnitWork *work,
    *    (which covers all pipeline_count's currently (Dec/99) in use)
   */
   iterstodo = (*keystocheck / PIPELINE_COUNT); /* how many iterations? */
-  
+
   if ((iterstodo * PIPELINE_COUNT) != *keystocheck) /* misaligned! */
     return -1; /* error because (keystocheck % PIPELINE_COUNT) != 0 */
   /* could also check the starting key #, but just take that on good faith */
@@ -376,4 +376,3 @@ s32 rc5_ansi_rg_unified_form( RC5UnitWork *work,
   scratch_area = scratch_area; /* unused arg. shaddup compiler */
   return -1; /* error */
 }
- 

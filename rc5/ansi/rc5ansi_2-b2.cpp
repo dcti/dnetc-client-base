@@ -13,7 +13,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi_2_b2_cpp (void) {
-return "@(#)$Id: rc5ansi_2-b2.cpp,v 1.3 2002/09/02 00:35:55 andreasb Exp $"; }
+return "@(#)$Id: rc5ansi_2-b2.cpp,v 1.3.4.1 2003/09/01 23:46:36 mweiser Exp $"; }
 #endif
 
 #define PIPELINE_COUNT = 2
@@ -82,32 +82,32 @@ s32 rc5_unit_func_ansi_2_b2( RC5UnitWork *work, u32 *timeslice,
 /* these tests could be done to assure the correctness of the data:
  *
  * the number of keys to check has to be a multiple of the number of pipelines
-  if (*timeslice % PIPELINE_COUNT) 
-	return -1; 
- * to my knowledge the KEY itself is not required to fit ! 
+  if (*timeslice % PIPELINE_COUNT)
+        return -1;
+ * to my knowledge the KEY itself is not required to fit !
  */
 
   u32 kiter = 0;
   u32 iterations = *timeslice/PIPELINE_COUNT;
 
-  while ( iterations-- ) 
+  while ( iterations-- )
    {
      static u32 S1[26], S2[26];
      {
        register u32 A1, Llo1, Lhi1;
        register u32 A2, Llo2, Lhi2;
-   
+
        Llo2 = Llo1 = rc5unitwork->L0.lo;
        Lhi2 = (Lhi1 = rc5unitwork->L0.hi) + 0x01000000;
-   
+
        /* Begin round 1 of key expansion */
-   
+
        /*  Special case while A and B are known to be zero.  */
        S1[0] = A1 = ROTL3(S_not(0));
        Llo1 = ROTL(Llo1 + A1, A1);
        S2[0] = A2 = ROTL3(S_not(0));
        Llo2 = ROTL(Llo2 + A2, A2);
-   
+
        ROUND1ODD (1)
        ROUND1EVEN(2)
        ROUND1ODD (3)
@@ -133,7 +133,7 @@ s32 rc5_unit_func_ansi_2_b2( RC5UnitWork *work, u32 *timeslice,
        ROUND1ODD (23)
        ROUND1EVEN(24)
        ROUND1ODD (25)
-   
+
        /* Begin round 2 of key expansion */
        ROUND2EVEN(0)
        ROUND2ODD (1)
@@ -161,9 +161,9 @@ s32 rc5_unit_func_ansi_2_b2( RC5UnitWork *work, u32 *timeslice,
        ROUND2ODD (23)
        ROUND2EVEN(24)
        ROUND2ODD (25)
-   
+
        /* Begin round 3 of key expansion */
-   
+
        ROUND3EVEN(0)
        ROUND3ODD (1)
        ROUND3EVEN(2)
@@ -189,22 +189,22 @@ s32 rc5_unit_func_ansi_2_b2( RC5UnitWork *work, u32 *timeslice,
        ROUND3EVEN(22)
        ROUND3ODD (23)
        ROUND3EVEN(24)
-   
+
        /*  Special case, don't need to compute B, or double assign to A.  */
        S1[25] = ROTL3(S1[25] + A1 + Llo1);
        S2[25] = ROTL3(S2[25] + A2 + Llo2);
-   
+
      }
      {
        /* Begin the encryption */
        register u32 A1, B1;
        register u32 A2, B2;
-   
+
        A1 = rc5unitwork->plain.lo + S1[0];
        A2 = rc5unitwork->plain.lo + S2[0];
        B1 = rc5unitwork->plain.hi + S1[1];
        B2 = rc5unitwork->plain.hi + S2[1];
-   
+
        ENCRYPTEVEN(2)
        ENCRYPTODD (3)
        ENCRYPTEVEN(4)
@@ -228,19 +228,19 @@ s32 rc5_unit_func_ansi_2_b2( RC5UnitWork *work, u32 *timeslice,
        ENCRYPTEVEN(22)
        ENCRYPTODD (23)
        ENCRYPTEVEN(24)
-   
-   
+
+
        /* an 'if' is less expensive than a rotation, which we
         * will avoid if the first part fails.
         */
-   
+
        if (rc5unitwork->cypher.lo == A1 &&
              rc5unitwork->cypher.hi == ROTL(B1 ^ A1, A1) + S1[25]) break;
        if (rc5unitwork->cypher.lo == A2 &&
              rc5unitwork->cypher.hi == ROTL(B2 ^ A2, A2) + S2[25]) {
-		kiter++;
-		break;
-	}
+                kiter++;
+                break;
+        }
      }
      // "mangle-increment" the key number by the number of pipelines
      mangle_increment(rc5unitwork);
@@ -255,4 +255,4 @@ s32 rc5_unit_func_ansi_2_b2( RC5UnitWork *work, u32 *timeslice,
   /* this code will never be reached and is mostly to satisfy the compiler */
   scratch_area = scratch_area; /* unused arg. shaddup compiler */
   return -1; /* error */
-}   
+}
