@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.74  1998/07/11 01:54:53  cyruspatel
+# Added -fno-exceptions to gcc option list. (Checked with Bovine)
+#
 # Revision 1.73  1998/07/10 18:45:00  nordquist
 # Fixed rc5stub.cpp handling for HP-UX (generalized RC5CORECOPY that can
 # come from any subdirectory, not just rc5).
@@ -282,7 +285,7 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
     -fexpensive-optimizations -fomit-frame-pointer \
     -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
     -funroll-loops -Wall -Icommon -Irc5 -Ides -Iplatforms \
-    -fno-inline-functions'
+    -fno-inline-functions -fno-exceptions'
 
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
@@ -402,7 +405,8 @@ XLC_LINTILLA_ASMS="rc5/crunch_lintilla.ppcxlc.s rc5/crunch_allitnil_552.ppcxlc.s
 RC5X86_SRCS="rc5/rc5-486-rg.cpp rc5/rc5-6x86-rg.cpp rc5/rc5p5brf.cpp rc5/rc5-p6-rg.cpp rc5/rc5-k5-rg.cpp rc5/rc5-k6-rg.cpp"
 DESX86_SRCS="des/des-x86.cpp"
 DESMMX_SRCS="des/deseval-meggs3-mmx.cpp des/sboxes-mmx.cpp des/des-slice-meggs.cpp"
-DESULTRA_SRCS_C="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/simple.c platforms/ultrasparc/des_ultra_crunch.c platforms/ultrasparc/kwan_from_to.c platforms/ultrasparc/do_all.c platforms/ultrasparc/do_all_fancy.c platforms/ultrasparc/do_s1.c platforms/ultrasparc/do_s1_s3.c platforms/ultrasparc/do_s2.c platforms/ultrasparc/do_s3.c platforms/ultrasparc/do_s4.c platforms/ultrasparc/do_s5.c platforms/ultrasparc/do_s6.c platforms/ultrasparc/do_s7.c platforms/ultrasparc/do_s8.c"
+DESULTRA_SRCS_C="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/simple.c platforms/ultrasparc/des_ultra_crunch.c platforms/ultrasparc/kwan_from_to.c platforms/ultrasparc/do_all.c platforms/ultrasparc/do_all_fancy.c platforms/ultrasparc
+/do_s1.c platforms/ultrasparc/do_s1_s3.c platforms/ultrasparc/do_s2.c platforms/ultrasparc/do_s3.c platforms/ultrasparc/do_s4.c platforms/ultrasparc/do_s5.c platforms/ultrasparc/do_s6.c platforms/ultrasparc/do_s7.c platforms/ultrasparc/do_s8.c"
 DESULTRA_SRCS_ASM="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/des_ultra_crunch.c"
 
 #
