@@ -17,7 +17,7 @@
 //#define TRACE
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.16 2000/02/10 16:47:19 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.17 2000/02/24 18:49:46 trevorh Exp $"; }
 
 /* ---------------------------------------------------------- */
 
@@ -43,7 +43,7 @@ int Lurk::Stop(void)
   islurkstarted = lastcheckshowedconnect = dohangupcontrol = 0;
   conf.lurkmode = conf.dialwhenneeded = 0;
   conf.connprofile[0] = conf.connifacemask[0] = 0;
-  conf.connstartcmd[0] = conf.connstopcmd[0] = 
+  conf.connstartcmd[0] = conf.connstopcmd[0] =
   ifacemaskcopy[0] = conndevice[0] = 0;
   ifacestowatch[0] = (const char *)0;
   TRACE_OUT((-1,"Lurk:Stop()\n"));
@@ -53,9 +53,9 @@ int Lurk::Stop(void)
 Lurk::Lurk()  { TRACE_OUT((+1,"Lurk:Lurk()\n")); Stop(); TRACE_OUT((-1,"Lurk:Lurk()\n")); }
 Lurk::~Lurk() { TRACE_OUT((+1,"Lurk:~Lurk()\n")); Stop(); TRACE_OUT((-1,"Lurk:~Lurk()\n")); }
 
-int Lurk::IsWatching(void) 
+int Lurk::IsWatching(void)
 {
-  int rc; 
+  int rc;
   TRACE_OUT((+1,"Lurk::IsWatching() (islurkstarted?=%d)\n",islurkstarted));
   if (!islurkstarted)
   {
@@ -68,7 +68,7 @@ int Lurk::IsWatching(void)
 }
 int Lurk::IsWatcherPassive(void)
 {
-  int rc; 
+  int rc;
   TRACE_OUT((+1,"Lurk::IsWatcherPassive() (islurkstarted?=%d)\n",islurkstarted));
   if (!islurkstarted)
   {
@@ -217,6 +217,7 @@ static HRASCONN hRasDialConnHandle = NULL; /* conn we opened with RasDial */
 extern "C" {
 #include <netinet/in.h>
 #include <sys/socket.h>
+#define _EMX_TCPIP
 #include <sys/ioctl.h>
 }
 #include <net/if.h>          // ifmib
@@ -375,7 +376,7 @@ const char **Lurk::GetConnectionProfileList(void)
 
 /* ---------------------------------------------------------- */
 
-int Lurk::Start(int nonetworking,struct dialup_conf *params) 
+int Lurk::Start(int nonetworking,struct dialup_conf *params)
 {                             // Initializes Lurk Mode. returns 0 on success.
   Stop(); //zap variables/state
 
@@ -384,7 +385,7 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
   {
     int flags = GetCapabilityFlags();
 
-    conf.lurkmode = conf.dialwhenneeded = 0;  
+    conf.lurkmode = conf.dialwhenneeded = 0;
     if (params->lurkmode || params->dialwhenneeded)
     {
       int lurkmode = params->lurkmode;
@@ -420,7 +421,7 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
 
       TRACE_OUT((0,"lurkmode=%d dialwhenneeded=%d\n",conf.lurkmode,conf.dialwhenneeded));
     }
-  
+
     conf.connprofile[0] = 0;
     if (conf.dialwhenneeded && params->connprofile[0]!=0)
     {
@@ -433,7 +434,7 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
         n--;
       conf.connprofile[n]=0;
     }
-  
+
     mask_include_all = mask_default_only = 0;
     conf.connifacemask[0] = ifacemaskcopy[0]=0; ifacestowatch[0]=NULL;
     if ((conf.lurkmode || conf.dialwhenneeded) && params->connifacemask[0])
@@ -458,7 +459,7 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
       // Parse connifacemask[] and store each iface name in *ifacestowatch[]
       unsigned int ptrindex = 0, stindex = 0;
       char *c = &(conf.connifacemask[0]);
-      do 
+      do
       {
         while (*c && (isspace(*c) || *c==':'))
           c++;
@@ -501,7 +502,7 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
         TRACE_OUT((0,"  %d) '%s'\n",ptrindex+1,ifacestowatch[ptrindex]));
       #endif
     }
-  
+
     conf.connstartcmd[0] = 0;
     if (conf.dialwhenneeded && params->connstartcmd[0])
     {
@@ -514,7 +515,7 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
         n--;
       conf.connstartcmd[n]=0;
     }
-    
+
     conf.connstopcmd[0] = 0;
     if (conf.dialwhenneeded && params->connstopcmd[0])
     {
@@ -539,7 +540,7 @@ int Lurk::Start(int nonetworking,struct dialup_conf *params)
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
     (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_WIN32) || \
     (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
-    (CLIENT_OS == OS_MACOS)
+    (CLIENT_OS == OS_MACOS) || ((CLIENT_OS == OS_OS2) && defined(__EMX__))
 static int __MatchMask( const char *ifrname, int mask_include_all,
                        int mask_default_only, const char *ifacestowatch[] )
 {
@@ -561,7 +562,7 @@ static int __MatchMask( const char *ifrname, int mask_include_all,
     wildmask[maskpos]='\0';
     if (mask_default_only)
     {
-      ismatched = (strcmp(wildmask,"ppp*")==0 
+      ismatched = (strcmp(wildmask,"ppp*")==0
       #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
         (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
         (CLIENT_OS == OS_MACOS)
@@ -650,7 +651,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
             DWORD bytesReturned;
 
             TRACE_OUT((0,"ioctl IsConnected() [4]\n"));
- 
+
             #pragma pack(1)
             struct if_info_v4 /* 4+(3*16) */
             {
@@ -806,7 +807,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
       return 1;
     }
   }
-#elif (CLIENT_OS == OS_OS2)
+#elif (CLIENT_OS == OS_OS2) && !defined(__EMX__)
    int s, i, rc, j, foundif = 0;
    struct ifmib MyIFMib = {0};
    struct ifact MyIFNet = {0};
@@ -817,9 +818,11 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
    if (s >= 0)
    {
      /* get active interfaces list */
-     if ( ioctl(s, SIOSTATAT, (char *)&MyIFNet, sizeof(MyIFNet)) >= 0 )
+     i =  ioctl(s, SIOSTATAT, (char *)&MyIFNet, sizeof(MyIFNet));
+     if ( i >= 0 )
      {
-       if ( ioctl(s, SIOSTATIF, (char *)&MyIFMib, sizeof(MyIFMib)) < 0)
+       i = ioctl(s, SIOSTATIF, (char *)&MyIFMib, sizeof(MyIFMib));
+       if ( i < 0)
          MyIFNet.ifNumber = 0;
      }
      for (i = 0; i < MyIFNet.ifNumber; i++)
@@ -862,8 +865,8 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
                  {
                    int maskpos;
                    for (maskpos=0;!ismatched && ifacestowatch[maskpos];maskpos++)
-                     ismatched= (strcmp(ifacestowatch[maskpos],MyIFReq.ifr_name)==0
-                     || (*wildmask && strcmp(ifacestowatch[maskpos],wildmask)==0));
+                     ismatched= (stricmp(ifacestowatch[maskpos],MyIFReq.ifr_name)==0
+                     || (*wildmask && stricmp(ifacestowatch[maskpos],wildmask)==0));
                  }
                  if (ismatched)
                  {
@@ -886,7 +889,8 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
 
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
       (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
-      (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOS)
+      (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOS) || \
+      ((CLIENT_OS == OS_OS2) && defined(__EMX__))
    struct ifconf ifc;
    struct ifreq *ifr;
    int n, foundif = 0;
@@ -921,7 +925,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
 
      if (ifc.ifc_len)
      {
-       #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_MACOS)
+       #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_MACOS) || ((CLIENT_OS == OS_OS2) && defined(__EMX__))
        for (n = 0, ifr = ifc.ifc_req; n < ifc.ifc_len; n += sizeof(struct ifreq), ifr++)
        {
          if (__MatchMask(ifr->ifr_name,mask_include_all,
@@ -930,8 +934,13 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
            strncpy( conndevice, ifr->ifr_name, sizeof(conndevice) );
            conndevice[sizeof(conndevice)-1] = 0;
            ioctl (fd, SIOCGIFFLAGS, ifr); // get iface flags
+           #ifndef __EMX__
            if ((ifr->ifr_flags & (IFF_UP | IFF_RUNNING | IFF_LOOPBACK))
                == (IFF_UP | IFF_RUNNING))
+           #else
+           if (((ifr->ifr_flags & (IFF_UP | IFF_POINTOPOINT))            == (IFF_UP | IFF_POINTOPOINT)) || \
+               ((ifr->ifr_flags & (IFF_UP | IFF_RUNNING | IFF_LOOPBACK)) ==     (IFF_UP | IFF_RUNNING)))
+           #endif
            {
              foundif = (n / sizeof(struct ifreq)) + 1;
              break;
