@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: threadcd.cpp,v $
+// Revision 1.6  1998/06/15 04:57:16  remi
+// Cleared a warning with gcc.
+//
 // Revision 1.5  1998/06/14 08:26:57  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
 // material of the binary executable
@@ -20,7 +23,7 @@
 // This module encapsulates functions for the creation and destruction of
 // a single thread - used by client.cpp and piproxy.cpp
 
-static char *id="@(#)$Id: threadcd.cpp,v 1.5 1998/06/14 08:26:57 friedbait Exp $";
+static char *id="@(#)$Id: threadcd.cpp,v 1.6 1998/06/15 04:57:16 remi Exp $";
 
 #include "threadcd.h"   //includes implementation and porting notes.
 #include "sleepdef.h"   //sleep() and usleep()
@@ -106,7 +109,7 @@ THREADID CliCreateThread( void (*proc)(void *), void *param )
   THREADID cliThreadID;
 
   #ifndef OS_SUPPORTS_THREADING
-    cliThreadID = NULL;
+    cliThreadID = (THREADID) NULL;
   #else
     {
     struct __thread_shell_data shelldata;
