@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.89 1999/04/17 07:38:35 gregh Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.90 1999/04/17 19:03:43 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -29,8 +29,8 @@ return "@(#)$Id: clirun.cpp,v 1.89 1999/04/17 07:38:35 gregh Exp $"; }
 
 // --------------------------------------------------------------------------
 
-const u32 OGR_TIMESLICE_MSEC = 200;
-const u32 OGR_TIMESLICE_MAX  = 0x100000; // in units of nodes
+#define OGR_TIMESLICE_MSEC 200
+#define OGR_TIMESLICE_MAX  0x100000 // in units of nodes
 
 // --------------------------------------------------------------------------
 
@@ -601,50 +601,82 @@ if (targ->realthread)
     else
     {
 //printf("run: doing run\n");
-      int run; u32 last_count; u32 runtime_ms;
+      static struct 
+      {  unsigned int contest; u32 msec, max, min; volatile u32 optimal;
+      } dyn_timeslice[CONTEST_COUNT] = {
+        {  RC5,  500,  0x80000,  0x00100,  0x10000 },
+        {  DES,  500,  0x80000,  0x00100,  0x10000 },
+        {  OGR,    OGR_TIMESLICE_MSEC, OGR_TIMESLICE_MAX, 0x0100,  0x1000 },
+        {  CSC,  500,  0x80000,  0x00100,  0x10000 }
+      };  
+      int run; u32 optimal_timeslice = 0; u32 runtime_ms;
+      unsigned int contest_i = thisprob->contest;
+      u32 last_count = thisprob->core_run_count; 
+                  
       #ifdef NON_PREEMPTIVE_OS_PROFILING
-      thisprob->tslice = do_ts_profiling( thisprob->tslice,
-                          thisprob->contest, threadnum );
+      thisprob->tslice = do_ts_profiling(thisprob->tslice,contest_i,threadnum);
+      optimal_timeslice = 0;
+      #elif (CLIENT_OS == OS_MACOS)
+      thisprob->tslice = GetTimesliceToUse(contest_i);
+      optimal_timeslice = 0;
+      #else
+      #if (!defined(DYN_TIMESLICE))
+      if (contest_i == OGR)
       #endif
-      #if (CLIENT_OS == OS_MACOS)
-      thisprob->tslice = GetTimesliceToUse(thisprob->contest);
-      #endif
-      if (thisprob->contest == OGR)
       {
-        thisprob->tslice = runstatics.ogr_tslice;
-        runtime_ms = (thisprob->runtime_sec*1000 + thisprob->runtime_usec/1000);
+        if (last_count == 0) /* prob hasn't started yet */
+          thisprob->tslice = dyn_timeslice[contest_i].optimal;
+        optimal_timeslice = thisprob->tslice;
       }
+      #endif
 
-      last_count = thisprob->core_run_count; 
-
+      runtime_ms = (thisprob->runtime_sec*1000 + thisprob->runtime_usec/1000);
       targ->is_suspended = 0;
       run = thisprob->Run();
       targ->is_suspended = 1;
+      runtime_ms = (thisprob->runtime_sec*1000 + thisprob->runtime_usec/1000) - runtime_ms;
 
-      if (thisprob->contest == OGR)
-      {
-        runtime_ms = (thisprob->runtime_sec*1000 + thisprob->runtime_usec/1000) - runtime_ms;
-        if (runtime_ms < OGR_TIMESLICE_MSEC/2 && runstatics.ogr_tslice < OGR_TIMESLICE_MAX)
-        {
-          runstatics.ogr_tslice <<= 1;
-        }
-        else if (runtime_ms > OGR_TIMESLICE_MSEC*2 && runstatics.ogr_tslice > 1)
-        {
-          u32 newtslice = runstatics.ogr_tslice;
-          newtslice -= (newtslice >> 2);
-          runstatics.ogr_tslice = newtslice;
-        }
-      }
-
-      didwork = 1;
+      didwork = (last_count != thisprob->core_run_count);
       if (run != RESULT_WORKING)
       {
         runstatics.refillneeded = 1;
-        didwork = (last_count != thisprob->core_run_count);
         if (!didwork && targ->realthread)
           yield_pump(NULL);
       }
+      
+      if (optimal_timeslice != 0) /* we are profiling for preemptive OSs */
+      {
+        optimal_timeslice = thisprob->tslice; /* get the number done back */
+#if defined(DYN_TIMESLICE_SHOWME) || defined(GREGH)
+printf("timeslice: %ld  time: %ldms  working? %d\n",(long)optimal_timeslice, (long)runtime_ms, (run==RESULT_WORKING) );
+#endif
+        if (run == RESULT_WORKING) /* timeslice/time is invalid otherwise */
+        {
+          if (runtime_ms < (dyn_timeslice[contest_i].msec /* >>1 */))
+          {
+            optimal_timeslice <<= 1;
+            if (optimal_timeslice > dyn_timeslice[contest_i].max)
+              optimal_timeslice = dyn_timeslice[contest_i].max;
+          }
+          else if (runtime_ms > (dyn_timeslice[contest_i].msec /* <<1 */))
+          {
+            optimal_timeslice -= (optimal_timeslice>>2);
+            if (optimal_timeslice == 0)
+              optimal_timeslice = dyn_timeslice[contest_i].min;
+          }
+          thisprob->tslice = optimal_timeslice; /* for the next round */
+        }
+        else /* ok, we've finished. so save it */
+        {  
+          u32 opt = dyn_timeslice[contest_i].optimal;
+          if (optimal_timeslice > opt)
+            dyn_timeslice[contest_i].optimal = optimal_timeslice;
+          optimal_timeslice = 0; /* reset for the next prob */
+        }
+      }
+
     }
+    
     if (!didwork)
     {
       #ifdef NON_PREEMPTIVE_OS_PROFILING
@@ -1256,7 +1288,7 @@ int Client::Run( void )
                                (rand()%(UPDATE_INTERVAL>>1)));
         
         int desisrunning = 0;
-        if (GetBufferCount(1,0,NULL) != 0) /* do we have DES blocks? */
+        if (GetBufferCount(DES, 0/*in*/, NULL) != 0) /* do we have DES blocks? */
           desisrunning = 1;
         else
         {
@@ -1275,7 +1307,7 @@ int Client::Run( void )
           {
             int rc = BufferUpdate( BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH, 0 );
             if (rc > 0 && (rc & BUFFERUPDATE_FETCH)!=0)
-              desisrunning = (GetBufferCount(1,0,NULL) != 0);
+              desisrunning = (GetBufferCount( DES, 0/*in*/, NULL) != 0);
           }
         }  
         if (desisrunning)
