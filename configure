@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.96  1998/09/25 04:25:54  pct
+# Added a configuration for Dec Ultrix MIPS processor based machines.
+#
 # Revision 1.95  1998/09/08 21:36:45  silby
 # Added guistuff to the tree - now all GUIs can hook at once place, so that the common tree doesn't become a mess.
 #
@@ -541,6 +544,12 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_GCC_MIPS -DBIT_32 -DPIPELINE_COUNT=2 -DKWAN"
         TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
         ;;
+
+    *mips-gcc-ultrix)        # For mips based DEC Ultrix machines
+	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
+        TARGET_CCFLAGS="$OPTS_GCC_MIPS -DBIT_32 -DPIPELINE_COUNT=2 -DKWAN -DMEGGS"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	;;
 
 
 ###### HPUX
