@@ -21,10 +21,11 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.35 1999/04/08 08:18:17 dicamillo Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.36 1999/04/09 12:15:50 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
+#include "cliident.h" // CliGetNewestModuleTime()
 #include "clitime.h"  // keep the prototypes in sync
 
 // ---------------------------------------------------------------------
@@ -289,6 +290,8 @@ time_t CliTimeGetBuildDate(void)
 {
   static time_t bdtime = 0;
   if (bdtime == 0)
+    bdtime = CliGetNewestModuleTime(); /* cliident.cpp */
+  if (bdtime == 0)
   {
     struct tm bd;
     bd.tm_mon = 99;
@@ -340,7 +343,8 @@ time_t CliTimeGetBuildDate(void)
 // ---------------------------------------------------------------------
 
 // Get time as string. Curr time if tv is NULL. Separate buffers for each
-// type: 0=blank type 1, 1="MMM dd hh:mm:ss GMT", 2="hhhh:mm:ss.pp"
+// type: 0=blank type 1, 1="MMM dd hh:mm:ss UTC", 2="hhhh:mm:ss.pp"
+//       3="yyyy/mm/dd hh:mm:ss" (iso/cvs format, implied utc)
 const char *CliGetTimeString( const struct timeval *tv, int strtype )
 {
   static time_t timelast = (time_t)NULL;
@@ -364,7 +368,7 @@ const char *CliGetTimeString( const struct timeval *tv, int strtype )
     }
     return spacestring;
   }
-  else if (strtype == 1 || strtype == -1) //new fmt = 1, old fmt = -1
+  else if (strtype == 1 || strtype == -1 || strtype == 3) //new fmt = 1, old fmt = -1
   {
     if (!tv) tv = CliTimer(NULL);/* show where CliTimer() is returning gunk */
     time_t timenow = tv->tv_sec;
@@ -382,7 +386,14 @@ const char *CliGetTimeString( const struct timeval *tv, int strtype )
       {
         timelast = timenow;
 
-        if (strtype == -1) // old "un-PC" type of length 21 OR 23 chars
+	if (strtype == 3) // "yyyy/mm/dd hh:mm:ss" (cvs/iso format, implied utc)
+	{
+          sprintf( timestring, "%04d/%02d/%02d %02d:%02d:%02d",
+	       gmt->tm_year+1900, gmt->tm_mon + 1, gmt->tm_mday,
+               gmt->tm_hour,  gmt->tm_min, gmt->tm_sec );
+	  timelast = 0;
+	}
+        else if (strtype == -1) // old "un-PC" type of length 21 OR 23 chars
         {
           // old: "04/03/98 11:22:33 GMT"
           //                      2 1  2 1 2  1  2 1 2  1 2  1 3/5 = 21 or 23
@@ -392,7 +403,7 @@ const char *CliGetTimeString( const struct timeval *tv, int strtype )
                gmt->tm_min, gmt->tm_sec );
         }
         else // strtype == 1 == new type of fixed length and neutral locale
-        {
+        {                      // ie clock(8) without year
           // new: "Apr 03 11:22:33 UTC" year = gmt->tm_year%100,
           //                    3 1  2 1  2 1  2 1  2 1 3   = 19
           sprintf( timestring, "%s %02d %02d:%02d:%02d UTC",
