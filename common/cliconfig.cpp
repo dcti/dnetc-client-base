@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.131  1998/07/07 07:28:36  jlawson
+// eliminated printf type warning with gcc
+//
 // Revision 1.130  1998/07/06 01:28:37  cyruspatel
 // Modified DOS signal handling to also trap ctrl-break. Timeslice is now
 // fixed at 10 times value returned from GetTimesliceBaseline(). (a lot!)
@@ -184,7 +187,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.130 1998/07/06 01:28:37 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.131 1998/07/07 07:28:36 jlawson Exp $";
 return id; }
 #endif
 
@@ -2987,7 +2990,7 @@ bool Client::CheckForcedKeyproxy(void)
           for (temp=&keyproxy[0];isalpha(*temp) > 0;temp++) {};
           *temp=0;
           strcpy(buffer,keyproxy);
-          sprintf(keyproxy,"%s%li.v27.distributed.net",buffer,keyport);
+          sprintf(keyproxy,"%s%i.v27.distributed.net",buffer,(int)keyport);
           }
         else if (keyport == 2064)
           {
