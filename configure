@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.104 2000/01/22 23:46:01 lyndon Exp $
+# @(#)$Id: configure,v 1.222.2.105 2000/01/23 19:20:49 remi Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -338,7 +338,7 @@ OPTS_GCC_X86="$OPTS_GCC -O6 -m486 -DASM_X86"
 OPTS_GCC272_X86="$OPTS_GCC272 -O6 -m486 -DASM_X86"
 OPTS_GCC295_X86="$OPTS_GCC295 -O6 -m486 -DASM_X86"
 
-OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentiumpro -malign-functions=4 -malign-loops=4 -DASM_X86"
+OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentiumpro -malign-functions=5 -malign-loops=4 -DASM_X86"
 
 #-- DYNIX
 
@@ -791,10 +791,11 @@ case "$1" in
     *sparc-linux)	# [remi]
 	TARGET_CC="gcc295"
 	TARGET_AS="gcc295 -c"
-	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC -DHAVE_CSC_CORES \
-			-D__showids__ -DLURK -DMULTITHREAD $CSC_ANSI_CCOPTS"
-	TARGET_ADDSRCS="rc5/ansi/2-rg.c common/lurk.cpp \
-			$CSC_ANSI_SRCS"
+	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC -g \
+			-D__showids__ -DLURK -DMULTITHREAD \
+			-DHAVE_OGR_CORES"
+	TARGET_LDFLAGS="-g -static"
+	TARGET_ADDSRCS="rc5/ansi/2-rg.c common/lurk.cpp $OGR_ANSI_SRCS"
 	TARGET_LIBS="-lpthread"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_TARBALL="linux-sparc-elf-glibc2"
