@@ -4,7 +4,7 @@ DEBUG = debug=symbol
 OPTIMIZE = optimize optsched
 
 
-CFLAGS = $(DEBUG) $(OPTIMIZE) nostkchk strmerge parms=reg define=LESS_GETENV define=PIPELINE_COUNT=1 define=_CPU_32BIT_ define=BIT_32 define=KWAN define=MEGGS includedir=netinclude: utillib NOLINK
+CFLAGS = $(DEBUG) $(OPTIMIZE) nostkchk strmerge parms=reg define=LESS_GETENV define=PIPELINE_COUNT=1 define=_CPU_32BIT_ define=BIT_32 define=KWAN define=MEGGS includedir=netinclude: includedir=platforms/ utillib NOLINK
 DISASM =
 
 LFLAGS = #farcode fardata
