@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.17  1998/06/15 08:28:39  jlawson
+// moved win32 sleep macros out of network.h
+//
 // Revision 1.16  1998/06/14 13:07:23  ziggyb
 // Took out all OS/2 DOD stuff, being moved to platforms\os2cli\dod.h
 //
@@ -53,9 +56,6 @@ extern "C" {
   #define write(sock, buff, len) send(sock, (char*)buff, len, 0)
   #define read(sock, buff, len) recv(sock, (char*)buff, len, 0)
   #define close(sock) closesocket(sock);
-  #if defined(_MSC_VER)
-    #define sleep(x) Sleep(1000*x)
-  #endif
 #elif (CLIENT_OS == OS_RISCOS)
   #include <socklib.h>
   #include <inetlib.h>
@@ -65,6 +65,8 @@ extern "C" {
   #include <netdb.h>
   #define SOCKET int
 #elif (CLIENT_OS == OS_DOS) && defined(DOS4G)
+  #define ntohl(x) ((((x)<<24) & 0xFF000000) | (((x)<<8) & 0x00FF0000) | (((x)>>8) & 0x0000FF00) | (((x)>>24) & 0x000000FF))
+  #define htonl(x) ((((x)<<24) & 0xFF000000) | (((x)<<8) & 0x00FF0000) | (((x)>>8) & 0x0000FF00) | (((x)>>24) & 0x000000FF))
   #define SOCKET int
   struct timeval {
         long    tv_sec;         /* seconds */
