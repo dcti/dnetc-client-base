@@ -10,7 +10,7 @@
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.50.2.15 2000/07/13 20:55:10 cyp Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.50.2.16 2000/10/13 23:02:16 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -51,8 +51,8 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
     int threadprio = 0, classprio = 0;
     HANDLE our_thrid = GetCurrentThread();  // Win32 pseudo-handle constant.
 
-    if (set_for_thread && !win32ConIsLiteUI()) // full-GUI crunchers always
-      prio = 0;                                // run at idle prio
+    if (set_for_thread && win32ConGetType()=='G') // crunchers in a 'fat-'GUI
+      prio = 0;                             // client always run at idle prio
   
     /* ************************** Article ID: Q106253 *******************
                               process priority class

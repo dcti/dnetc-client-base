@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.44 2000/09/24 23:32:08 andreasb Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.45 2000/10/13 23:02:16 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -145,7 +145,8 @@ int InitializeConsole(int *runhidden,int doingmodes)
 int ConIsGUI(void)
 {
   #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
-  return (!win32ConIsLiteUI()); /* do we have a light GUI or a full GUI? */
+  /* => 'C'=native console, 'c'=pipe console, 'g'=lite GUI, 'G'=fat GUI */
+  return (win32ConGetType()=='G' || win32ConGetType()=='g');
   #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
   return 1;
   #elif (CLIENT_OS == OS_RISCOS)
