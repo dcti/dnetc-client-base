@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.h,v $
+// Revision 1.8  1999/03/23 09:37:30  silby
+// Removed win32gui specific code no longer present.
+//
 // Revision 1.7  1999/01/21 21:49:02  cyp
 // completed toss of ValidateConfig().
 //
@@ -38,10 +41,5 @@
 int ReadConfig(Client *client);
 int WriteConfig(Client *client, int writefull /* defaults to 0*/);
 void RefreshRandomPrefix( Client *client, int no_trigger = 0 );
-
-#if defined(WIN32GUI)
-void InternalReadConfig( IniSection &ini );
-void InternalWriteConfig( IniSection &ini );
-#endif
 
 #endif // __CONFRWV_H__
