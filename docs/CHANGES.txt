@@ -21,11 +21,23 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.12 1999/12/11 01:15:47 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.13 1999/12/20 02:36:36 cyp Exp $
 ==========================================================================
 
 2.8000
 ------
+
+2.8004.450  new: macos port including Altivec core support (twice as
+                 fast as MMX on otherwise comparable hardware)
+
+2.8003.449  chg: win32: client sleeps for 10secs immediately after starting
+                 as service to allow the rest of the system to fire up first
+            fix: all: not being able to -update if offlinemode
+            fix: solaris: time stamps/elapsed time on MP boxes
+            fix: all: clients will again reset work if the core # changes 
+                 (functionality was lost in 2.8002.446 - reset if client
+                 version or platform changes was unaffected).
+
 2.8003.448  new: x86: 50% faster CSC MMX core added. '6bit - bitslice' 
                  replaces '6bit - called'
             fix: all: lines in mail/logfile are no longer truncated
@@ -38,9 +50,16 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.12 1999/12/11 01:15:47 cyp Exp $
             imp: all: threads no longer check external flags for shutdown/
                  pause state. Flags are 'pushed' instead, which reduces 
                  cache footprint.
+            fix: win32: win95B doesn't have a 'Lucinda Console' TrueType
+                 font, so client avoids it now.
+            chg: many: DES cores are no longer included
             imp: all: benchmarks have greater time precision (no longer
                  overshoot the end of the bench period)
-
+            chg: *nix: client setsid()s and dups std handles to /dev/null
+                 when started with -quiet/-hide
+            fix: dun config collision with no-networking resolved 
+                 (dun was still active even if the networking was disabled)
+            
 2.8002.447  chg: all: firewall settings in the .ini have moved to the network
                  section. socks user:pass is now saved encoded
             chg: if appropriate, 'Summary:' now also shows # of work units
