@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.75 2000/05/25 19:41:38 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.76 2000/06/03 13:26:51 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -85,13 +85,13 @@ void ResetClientData(Client *client)
   memset(&(client->lurk_conf),0,sizeof(client->lurk_conf));
   #endif
   client->connectoften=0;
-  memset(&(client->inthreshold),0,sizeof(client->inthreshold));
-  memset(&(client->timethreshold),0,sizeof(client->timethreshold));
+  memset(&(client->inthreshold[0]),0,sizeof(client->inthreshold));
+  memset(&(client->timethreshold[0]),0,sizeof(client->timethreshold));
   #if (!defined(NO_OUTBUFFER_THRESHOLDS))
   minupdateinterval = 0;
   memset(&(client->outhreshold),0,sizeof(client->outhreshold));
   #endif
-  memset(&(client->preferred_blocksize),0,sizeof(client->preferred_blocksize));
+  memset(&(client->preferred_blocksize[0]),0,sizeof(client->preferred_blocksize));
   projectmap_build(client->loadorder_map,"");
 
   /* -- perf -- */
