@@ -1,6 +1,6 @@
 /* Created by Oliver Roberts <oliver@futaura.co.uk>
 **
-** $Id: amSupport.c,v 1.1.2.2 2001/02/01 21:10:31 oliver Exp $
+** $Id: amSupport.c,v 1.1.2.3 2001/03/19 19:18:19 oliver Exp $
 **
 ** ----------------------------------------------------------------------
 ** This file contains general Amiga specific support code, including
@@ -55,6 +55,7 @@ extern BOOL GlobalTimerInit(VOID);
 extern VOID GlobalTimerDeinit(VOID);
 extern VOID CloseTimer(VOID);
 extern struct Device *OpenTimer(VOID);
+extern struct Library *SocketBase;
 
 const char *amigaGetOSVersion(void)
 {
@@ -186,7 +187,8 @@ int amigaInit(void)
 void amigaExit(void)
 {
    GlobalTimerDeinit();
-   if (LocaleBase) CloseLibrary((struct Library *)LocaleBase);
+   CloseLibrary((struct Library *)LocaleBase);
+   CloseLibrary(SocketBase); // ensure something hasn't left this open
    #ifdef __PPC__
    /*
    ** PPC
@@ -201,7 +203,7 @@ void amigaExit(void)
    if (TriggerPort) {
       while (!PPCDeletePort(TriggerPort)) usleep(250000);
    }
-   if (PPCLibBase) CloseLibrary(PPCLibBase);
+   CloseLibrary(PPCLibBase);
    #else
    /*
    ** WarpOS
