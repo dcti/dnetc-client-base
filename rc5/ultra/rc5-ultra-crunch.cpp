@@ -3,6 +3,9 @@
  * generation of S0[]
  *
  * $Log: rc5-ultra-crunch.cpp,v $
+ * Revision 1.9.2.4  2000/02/03 22:50:16  ivo
+ * removed some warnings.
+ *
  * Revision 1.9.2.3  1999/12/02 01:50:07  cyp
  * wrapper fixes
  *
@@ -49,7 +52,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5_ultra_crunch_cpp (void) {
-return "@(#)$Id: rc5-ultra-crunch.cpp,v 1.9.2.3 1999/12/02 01:50:07 cyp Exp $"; }
+return "@(#)$Id: rc5-ultra-crunch.cpp,v 1.9.2.4 2000/02/03 22:50:16 ivo Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -671,14 +674,14 @@ int RC5_KEY_CHECK_INNER_REMI (RC5_WORD L_0, RC5_WORD L_1,
 									\
     whole_sum2 = whole_sum2 >> right_dist2; /* -5 */			\
     part_sum = pipelined_read + A;	/* 7 */				\
-  pipelined_read = ((volatile *)S0_Source)[2]; /* 7 + */		\
+  pipelined_read = S0_Source[2]; /* 7 + */		\
 									\
     whole_sum = B + part_sum;		/* 8 */				\
     B2 = macro_tmp2 | whole_sum2;	/* -6 */			\
 									\
     macro_tmp = whole_sum << (3);	/* 9 */				\
     part_sum2 = pipelined_read2 + A2;	/* -7 */			\
-  pipelined_read2 = ((volatile *)S0_Source)[2]; /* -7 + */		\
+  pipelined_read2 = S0_Source[2]; /* -7 + */		\
 									\
     whole_sum = whole_sum >> (29);	/* 10 */			\
     whole_sum2 = B2 + part_sum2;	/* -8 */			\
@@ -1003,14 +1006,14 @@ int RC5_KEY_CHECK_INNER_REMI (RC5_WORD L_0, RC5_WORD L_1,
 									\
     ASM_SR (whole_sum2, whole_sum2, right_dist2); /* -5 */		\
     ASM_ADD (part_sum, pipelined_read, A);/* 7 */			\
-  pipelined_read = ((volatile*) S0_Source)[2];	/* 7 + */		\
+  pipelined_read = S0_Source[2];	/* 7 + */		\
 									\
     ASM_ADD (whole_sum, B, part_sum);	/* 8 */				\
     ASM_OR (B2, macro_tmp2, whole_sum2);/* -6 */			\
 									\
     ASM_SL3 (macro_tmp, whole_sum);	/* 9 */				\
     ASM_ADD (part_sum2, pipelined_read2, A2);/* -7 */			\
-  pipelined_read2 = ((volatile *) S0_Source)[2]; /* -7 + */		\
+  pipelined_read2 = S0_Source[2]; /* -7 + */		\
 									\
     ASM_SR29 (whole_sum, whole_sum);	/* 10 */			\
     ASM_ADD (whole_sum2, B2, part_sum2);/* -8 */			\
@@ -1503,7 +1506,8 @@ int RC5_KEY_CHECK_INNER_REMI (RC5_WORD L_0, RC5_WORD L_1,
 
 /* code from Butcher starts here */
 
-static char LB_VERSION[] = "Lawrence Butcher 16/9/97 lbutcher@eng.sun.com  LB Version 1.3";
+const char *LB_VERSION(void) {
+return "Lawrence Butcher 16/9/97 lbutcher@eng.sun.com  LB Version 1.3"; }
 
 /* an array of constants that can be LOADed instead of SETHI/ORI'd */
 static u32 S0_INIT[60] =  { (SHL(S0_00,3) | SHR(S0_00,3)), S0_01,
