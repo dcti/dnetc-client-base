@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.126  1999/03/18 03:39:00  cyp
+// Minor adjustments for changed client class variables.
+//
 // Revision 1.125  1999/02/20 03:09:51  gregh
 // Use CliGetContestNameFromID instead of hard coding contest names.
 //
@@ -167,7 +170,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.125 1999/02/20 03:09:51 gregh Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.126 1999/03/18 03:39:00 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -617,15 +620,6 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
         else
           connectoften = 1;
-        }
-      else if ( strcmp(thisarg, "-nommx" ) == 0)
-        {
-        #if (CLIENT_CPU == CPU_X86) && (defined(MMX_BITSLICER) || defined(MMX_RC5))
-        if (run_level == 0)
-          usemmx=0;
-        //we don't print a message because usemmx is 
-        //internal/undocumented and for developer use only
-        #endif
         }
       else if ( strcmp( thisarg, "-b" ) == 0 || strcmp( thisarg, "-b2" ) == 0 )
         {
@@ -1151,25 +1145,6 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           else
             {
             preferred_blocksize = (s32) atoi(nextarg);
-            }
-          }
-        }
-      else if ( strcmp(thisarg, "-processdes" ) == 0)
-        {
-        if (nextarg)
-          {
-          skip_next = 1;
-          if (run_level != 0)
-            {
-            if (logging_is_initialized)
-              LogScreenRaw("Client will now%s compete in DES contest(s).\n",
-                      ((preferred_contest_id==0)?(" NOT"):("")) );
-            }
-          else
-            {
-            preferred_contest_id = (s32) atoi(nextarg);
-            if (preferred_contest_id != 0)
-              preferred_contest_id = 1;
             }
           }
         }
