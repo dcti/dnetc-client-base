@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.118 2000/06/02 06:24:57 jlawson Exp $"; }
+return "@(#)$Id: network.cpp,v 1.119 2000/06/03 03:24:39 jlawson Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -23,10 +23,8 @@ return "@(#)$Id: network.cpp,v 1.118 2000/06/02 06:24:57 jlawson Exp $"; }
 #include "util.h"      // trace
 #include "netres.h"    // NetResolve()
 #include "network.h"   // thats us
+#include "netio.h"
 
-#if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_MACOS)
-#define ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG
-#endif
 
 #if (CLIENT_OS == OS_QNX)
   #undef offsetof
@@ -116,19 +114,6 @@ const char *Socks5ErrorText[9] =
 };
 
 //======================================================================
-
-// Returns a pointer to a static buffer that receives a
-// dotted decimal ASCII conversion of the specified IP address.
-// short circuit the u32 -> in_addr.s_addr ->inet_ntoa method.
-// besides, it works around context issues.
-static const char *__inet_ntoa__(u32 addr)
-{
-  static char buff[sizeof("255.255.255.255  ")];
-  char *p = (char *)(&addr);
-  sprintf( buff, "%d.%d.%d.%d",
-      (p[0]&255), (p[1]&255), (p[2]&255), (p[3]&255) );
-  return buff;
-}
 
 #ifdef DEBUGTHIS
 // Logs a hexadecimal dump of the specified raw buffer of data.
@@ -252,7 +237,7 @@ static int __fixup_dnethostname( char *host, int *portP, int mode,
 // Initializes a new network object with the specified connectivity
 // options.
 
-Network::Network( const char * servname, int servport, int _nofallback,
+Network::Network( const char * servname, int servport, bool _nofallback,
                   int _iotimeout, int _enctype, const char *_fwallhost,
                   int _fwallport, const char *_fwalluid)
 {
@@ -266,26 +251,26 @@ Network::Network( const char * servname, int servport, int _nofallback,
     LogScreen("Network::Socks Incorrectly packed structures.\n");
 
   // intialize communication parameters.
-  server_name[0] = 0;
+  server_name[0] = '\0';
   if (servname != NULL)
-     __hostnamecpy( server_name, servname, sizeof(server_name));
+    __hostnamecpy( server_name, servname, sizeof(server_name));
   server_port = servport;
 
   // Reset the general connectivity flags.
-  reconnected = 0;
-  shown_connection = 0;
+  reconnected = false;
+  shown_connection = false;
   nofallback = _nofallback;
   sock = INVALID_SOCKET;
   iotimeout = _iotimeout; /* if iotimeout is <0, use blocking calls */
-  isnonblocking = 0;      /* used later */
+  isnonblocking = false;      /* used later */
 
   // Reset the encoding state flags.
-  gotuubegin = gothttpend = 0;
+  gotuubegin = gothttpend = false;
   httplength = 0;
 
   // Reset firewall and other hostname buffers.
   fwall_hostaddr = svc_hostaddr = conn_hostaddr = 0;
-  fwall_hostname[0] = fwall_userpass[0] = 0;
+  fwall_hostname[0] = fwall_userpass[0] = '\0';
   resolve_hostname[0] = '\0';
   resolve_addrcount = -1; /* uninitialized */
 
@@ -371,28 +356,10 @@ int Network::Reset(u32 thataddress)
 {
   reconnected = 1;
   svc_hostaddr = thataddress;
-//LogScreen("netreset: %s\n",__inet_ntoa__(svc_hostaddr));
   return Open();
 }
 
 /* ---------------------------------------------------------------------- */
-
-// returns -1 on error, 0 on success
-int Network::Open( SOCKET insock)
-{
-  sock = insock;
-
-  // set communications settings
-  mode = startmode;
-  gotuubegin = gothttpend = puthttpdone = gethttpdone = 0;
-  httplength = 0;
-  netbuffer.Clear();
-  uubuffer.Clear();
-
-  return 0;
-}
-
-/* ----------------------------------------------------------------------- */
 
 // Displays the current hostname (and possibly firewall/proxy being used)
 // that we are connecting to.  This will only have an effect if the verbosity
@@ -408,24 +375,30 @@ void Network::ShowConnection(void)
     char sig[]=".distributed.net";
     char scratch[sizeof(sig) + 20];
     char *targethost = svc_hostname;
-    while (*targethost) 
-    { 
+
+    // change the targethost to lowercase.
+    while (*targethost)
+    {
       *targethost = (char)tolower(*targethost);
       targethost++;
     }
     targethost = svc_hostname;
+
+    // if connecting to a hostname that ends in distributed.net, then
+    // change the beautified display name to "distributed.net xx.yy.zz.ww"
     if ((len > (sizeof( sig ) - 1) && autofindkeyserver &&
       strcmp( &targethost[(len-(sizeof( sig )-1))], sig ) == 0))
     {
       targethost = sig + 1;
-      if (svc_hostaddr)
+      if (svc_hostaddr != 0)
       {
-        sprintf(scratch, "%s %s", sig+1, __inet_ntoa__(svc_hostaddr));
+        sprintf(scratch, "%s %s", sig+1, netio_ntoa(svc_hostaddr));
         targethost = scratch;
       }
     }
 
-    if ((startmode & MODE_PROXIED) == 0 || fwall_hostname[0] == 0 /*http*/)
+    // finally display the connection string.
+    if ((startmode & MODE_PROXIED) == 0 || fwall_hostname[0] == '\0' /*http*/)
     {
       LogScreen("Connected to %s:%u...\n", targethost,
                ((unsigned int)(svc_hostport)) );
@@ -437,11 +410,27 @@ void Network::ShowConnection(void)
                  ((unsigned int)(svc_hostport)),
                  ((startmode & MODE_SOCKS5)?("SOCKS5"):
                  ((startmode & MODE_SOCKS4)?("SOCKS4"):("HTTP"))),
-            fwall_hostname, (unsigned int)fwall_hostport );
+                 fwall_hostname, (unsigned int)fwall_hostport );
     }
   }
-  shown_connection = 1;
-  return;
+  shown_connection = true;
+}
+
+/* ----------------------------------------------------------------------- */
+
+// returns -1 on error, 0 on success
+int Network::Open( SOCKET insock )
+{
+  sock = insock;
+
+  // set communications settings
+  mode = startmode;
+  gotuubegin = gothttpend = puthttpdone = gethttpdone = false;
+  httplength = 0;
+  netbuffer.Clear();
+  uubuffer.Clear();
+
+  return 0;
 }
 
 /* ----------------------------------------------------------------------- */
@@ -453,36 +442,38 @@ void Network::ShowConnection(void)
 
 int Network::Open( void )
 {
-  int didfallback, whichtry, maxtries;
+  bool didfallback;
+  int whichtry, maxtries;
 
-  gethttpdone = puthttpdone = 0;
+  gethttpdone = puthttpdone = false;
   netbuffer.Clear();
   uubuffer.Clear();
-  gotuubegin = gothttpend = 0;
+  gotuubegin = gothttpend = false;
   httplength = 0;
   mode = startmode;
 
-  didfallback = 0; /* have we fallen back already? */
+  didfallback = false; /* have we fallen back already? */
   maxtries = 3; /* two for preferred, one for fallback (if permitted) */
 
-  if ((startmode & (MODE_SOCKS4 | MODE_SOCKS5))!=0)
+  // Ensure that if we are in SOCKS mode that we have a servername.
+  if ((startmode & (MODE_SOCKS4 | MODE_SOCKS5)) != 0)
   {
-    if (fwall_hostname[0] == 0 || fwall_hostport == 0)
+    if (fwall_hostname[0] == '\0' || fwall_hostport == 0)
     {
-      Log("Network::Invalid %s proxy hostname or port.\n"
-          "Connect cancelled.\n",
-          ((startmode & MODE_HTTP) ? ("HTTP") : ("SOCKS")));
+      Log("Network::Invalid SOCKS proxy hostname or port.\n"
+          "Connect cancelled.\n");
       return -1;
     }
   }
 
-  for (whichtry = 0; whichtry < maxtries; whichtry++) /* forever true */
+  for (whichtry = 0; whichtry < maxtries; whichtry++)
   {
-    int success = 0;
+    bool success = false;
     const char *netcheckfailed =
         "Network::Open Error - TCP/IP Connection Lost.\n";
 
-    if (whichtry > 0) /* failed before */
+    // If we failed before then pause for a little.
+    if (whichtry > 0)
     {
       if (CheckExitRequestTriggerNoIO())
         break;
@@ -506,7 +497,11 @@ int Network::Open( void )
 
     /* ---------- create a new socket --------------- */
 
-    success = (LowLevelCreateSocket() == 0);
+    if (sock != INVALID_SOCKET) {
+      netio_close(sock);
+    }
+
+    success = (netio_createsocket(sock, false) == 0);
     isnonblocking = 0;
 
     if (!success)
@@ -696,7 +691,7 @@ int Network::Open( void )
 
     /* ------ connect ------- */
 
-    isnonblocking = 0;
+    isnonblocking = false;
     if (success)
     {
       #ifndef ENSURE_CONNECT_WITH_BLOCKING_SOCKET
@@ -822,7 +817,7 @@ int Network::Open( void )
 
     if (success)
     {
-      reconnected = 1;
+      reconnected = true;
       return 0;
     }
 
@@ -1183,7 +1178,7 @@ int Network::Get( char * data, int length )
         lcbuf[sizeof(lcbuf)-1] = '\0';
         for (lcbufpos=0;lcbuf[lcbufpos] && lcbufpos<sizeof(lcbuf);lcbufpos++)
           lcbuf[lcbufpos] = (char)tolower(lcbuf[lcbufpos]);
-        
+
         if (memcmp(lcbuf, "content-length: ", 16) == 0) //"Content-Length: "
         {
           httplength = atoi((const char*)line + 16);
@@ -1527,7 +1522,7 @@ int Network::GetHostName( char *buffer, unsigned int len )
     {
       if (gethostname(buffer, len) == 0)
       {
-        /* BSD man page for gethostname(3) sez: "The returned name is 
+        /* BSD man page for gethostname(3) sez: "The returned name is
            null-terminated, unless insufficient space is provided."
         */
         buffer[len-1] = '\0';
@@ -1552,25 +1547,7 @@ int Network::LowLevelCreateSocket(void)
   if (!NetCheckIsOK())
     return -1;
 
-#if defined(_TIUSER_)                                              //TLI
-  sock = t_open("/dev/tcp", O_RDWR, NULL);
-  if ( sock != -1 )
-    return 0;
-  sock = INVALID_SOCKET;
-  return -1;
-#else
-  #if (defined(AF_INET) && defined(SOCK_STREAM)) //BSD socks
-  sock = socket(AF_INET, SOCK_STREAM, 0);
-  if ( !(( (int)(sock) ) < 0 ) )
-  {
-    LowLevelSetSocketOption( CONDSOCK_SETMINBUFSIZE, 2048/* at least this */);
-    LowLevelSetSocketOption( CONDSOCK_BLOCKMODE, 1 ); /* really only needed for RISCOS */
-    return 0; //success
-  }
-  #endif
-  sock = INVALID_SOCKET;
-  return -1;
-#endif
+  return netio_createsocket(sock, false);
 }
 
 //------------------------------------------------------------------------
@@ -1580,45 +1557,7 @@ int Network::LowLevelCreateSocket(void)
 
 int Network::LowLevelCloseSocket(void)
 {
-#if defined( _TIUSER_ )                                //TLI
-  if ( sock != INVALID_SOCKET )
-  {
-    t_blocking( sock ); /* turn blocking back on */
-    if ( t_getstate( sock ) != T_UNBND )
-    {
-      t_rcvrel( sock );   /* wait for conn release by peer */
-      t_sndrel( sock );   /* initiate close */
-      t_unbind( sock );   /* close our own socket */
-    }
-    int rc = t_close( sock );
-    sock = INVALID_SOCKET;
-    return rc;
-  }
-#else                                                  //BSD socks
-   if ( sock != INVALID_SOCKET )
-   {
-     LowLevelSetSocketOption( CONDSOCK_BLOCKMODE, 1 );
-     #if (defined(AF_INET) && defined(SOCK_STREAM))
-     shutdown( sock, 2 );
-     #endif
-     #if (CLIENT_OS == OS_OS2) && !defined(__EMX__)
-     int retcode = (int)soclose( sock );
-     #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
-     int retcode = (int)closesocket( sock );
-     #elif (CLIENT_OS == OS_AMIGAOS)
-     int retcode = (int)CloseSocket( sock );
-     #elif (CLIENT_OS == OS_BEOS)
-     int retcode = (int)closesocket( sock );
-     #elif (CLIENT_OS == OS_VMS) && defined(MULTINET)
-     int retcode = (int)socket_close( sock );
-     #else
-     int retcode = (int)close( sock );
-     #endif
-     sock = INVALID_SOCKET;
-     return (retcode);
-   }
-#endif
-   return 0;
+  return netio_close(sock);
 }
 
 // -----------------------------------------------------------------------
@@ -1888,208 +1827,14 @@ int Network::LowLevelConnectSocket( u32 that_address, int that_port )
 // writing activities.  Returns length of sent data or 0 if the socket is
 // closed, or -1 if timeout/nodata
 
-int Network::LowLevelPut(const char *ccdata, int length)
+int Network::LowLevelPut(const char *data, int length)
 {
   if ( sock == INVALID_SOCKET )
-    return 0; /* sock closed */
+    return 0; //conn closed
   if (!NetCheckIsOK())
     return -1;
-  if (length == 0)
-    return -1;
 
-  u32 totaltowrite = length;
-  u32 totalwritten = 0;
-  u32 sendquota = 1500; /* how much to send per send() call */
-  int firsttime = 1;
-  time_t timenow = 0, starttime = 0, stoptime = 0;
-  int sleptcount = 0; /* ... in a row */
-  int sleepms = 250; /* sleep time in millisecs. adjust here if needed */
-  char *data;
-  *((const char **)&data) = ccdata; /* get around const being used for send */
-
-  if (isnonblocking)
-    stoptime = time(&starttime) + (time_t)iotimeout;
-
-  #if defined(_TIUSER_)
-  sendquota = 512;
-  struct t_info info;
-  if ( t_getinfo( sock, &info ) != -1)
-  {
-    if (info.tsdu > 0)
-      sendquota = info.tsdu;
-    else if (info.tsdu == -1) /* no limit */
-      sendquota = length;
-    else if (info.tsdu == 0) /* no boundaries */
-      sendquota = 1500;
-    else //if (info.tsdu == -2) /* normal send not supp'd (ever happens?)*/
-      return -1;
-  }
-  #elif (CLIENT_OS == OS_WIN16)
-  if (sendquota > 0x7FFF)  /* 16 bit OS but int is 32 bits */
-    sendquota = 0x7FFF;
-  #elif (CLIENT_OS == OS_MACOS)
-  if (sendquota > 0xFFFF)  // Mac network library uses "unsigned short"
-    sendquota = 0xFFFF;
-  #else
-  if (sendquota > INT_MAX)
-    sendquota = INT_MAX;
-  #endif
-
-  #ifdef DEBUGTHIS
-  Log("LLPut: total to send=%d, quota:%d\n", length, sendquota );
-  #endif
-
-  do
-  {
-    int towrite = (int)((((u32)length)>((u32)sendquota))?(sendquota):(length));
-    int written;
-
-    #if defined(_TIUSER_)                              //TLI/XTI
-    int noiocount = 0;
-    written = -2;
-    while (written == -2)
-    {
-      //int flag = (((length - towrite)==0) ? (0) : (T_MORE));
-      written = t_snd(sock, (char *)data, (unsigned int)towrite, 0 /* flag */ );
-      if (written == 0)       /* transport provider accepted nothing */
-      {                   /* should never happen unless 'towrite' was 0*/
-        if ((++noiocount) < 3)
-        {
-          written = -2;   /* retry */
-          usleep(500000); // 0.5 secs
-        }
-      }
-      else if (written < 0)
-      {
-        written = -1;
-        debugtli("t_snd", sock);
-        if ( t_errno == TFLOW ) /* sending too fast */
-        {
-          usleep(500000); // 0.5 secs
-          written = -2;
-        }
-        else if (t_errno == TLOOK)
-        {
-          int look = t_look(sock);
-          if ( look == T_ORDREL)
-          {
-             //t_sndrel( sock );
-             //t_rcvrel( sock );
-             written = 0;
-          }
-          if (look == T_DISCONNECT || look == T_UDERR|| look == T_ERROR)
-            return 0;
-        }
-      }
-    }
-   #elif (CLIENT_OS == OS_MACOS)
-    // Note: MacOS client does not use XTI, and the socket emulation
-    // code doesn't support select.
-    int noiocount = 0;
-    written = -2;
-    while (written == -2)
-    {
-      written = write(sock, data, (unsigned long)towrite);
-      if (written == 0)       // transport provider accepted nothing
-      {                   // should never happen unless 'towrite' was 0
-        if ((++noiocount) < 3)
-        {
-          written = -2;   // retry
-          usleep(500000); // 0.5 secs
-        }
-      }
-      else if (written == -1)
-      {
-        if (!valid_socket(sock)) return(0);
-      }
-    }
-    #elif defined(AF_INET) && defined(SOCK_STREAM)      //BSD 4.3 sockets
-    #if (CLIENT_OS != OS_BEOS)
-    if (firsttime)
-    {
-      int ready;
-      fd_set rs;
-      timeval tv = {0,0};
-      FD_ZERO(&rs);
-      FD_SET(sock, &rs);
-      ready = select(sock + 1, &rs, NULL, NULL, &tv);
-      if (ready < 0)   /* ENETDOWN, EINVAL, EINTR */
-        return 0; /* assume sock closed */
-      else if (ready == 1)
-      {
-        /*
-        For connection-oriented sockets, readability can also indicate
-        that a close request has been received from the peer. If the virtual
-        circuit was closed gracefully, then a recv will return immediately
-        with zero bytes read. If the virtual circuit was reset, then a
-        recv will complete immediately with an error code.
-
-        Platforms that support OSI/XTI/TLI (MacOS, all SysV, etc) should
-        use that instead.
-        */
-        char scratch[2];
-        if ( recv(sock, &scratch[0], sizeof(scratch), MSG_PEEK ) <= 0)
-          return 0;
-      }
-      firsttime = 0;
-    }
-    #endif
-    written = send(sock, (char*)data, towrite, 0 );
-
-    /*
-      When used on a blocking SOCK_STREAM socket, send() requests block
-      until all of the client's data can be sent or buffered by the socket.
-      When used on a nonblocking socket, send() requests send or buffer the
-      maximum amount of data that can be handled without blocking and
-      return the amount that was taken. If no data is taken, they return
-      a value of -1, indicating an EWOULDBLOCK error.
-    */
-    #endif
-
-    if (written > 0)
-    {
-      totalwritten += written;
-      length -= written;
-      data += written;
-      sleptcount = 0;
-      if (length == 0) /* sent all */
-        break;
-      firsttime = 0;
-    }
-    if (isnonblocking == 0)
-    {
-      if (written <= 0)
-        break;
-    }
-    else //if (isnonblocking)
-    {
-      if (time(&timenow) < starttime)
-        break;
-      else if (timenow > stoptime)
-      {
-        if (written <= 0 && sleptcount > 10)
-          break;
-        else if (written > 0)
-          stoptime = timenow+1;
-      }
-      if (written <= 0) /* nothing sent but haven't timed out yet */
-      {
-        unsigned long sleepdur = ((unsigned long)(++sleptcount)) * sleepms;
-        if (sleepdur > 1000000UL)
-          sleep( sleepdur / 1000000UL );
-        if ((sleepdur % 1000000UL) != 0)
-          usleep( sleepdur % 1000000UL );
-      }
-    }
-    if (!isnonblocking && CheckExitRequestTrigger())
-      break;
-  } while (length);
-
-  #ifdef DEBUGTHIS
-  Log("LLPut: towrite=%d, written=%d\n", totaltowrite, totalwritten );
-  #endif
-  totaltowrite = totaltowrite; //squash compiler warning
-  return ((totalwritten != 0) ? ((int)totalwritten) : (-1));
+  return netio_send(sock, data, length);
 }
 
 // ----------------------------------------------------------------------
@@ -2104,157 +1849,8 @@ int Network::LowLevelGet(char *data,int length)
     return 0; //conn closed
   if (!NetCheckIsOK())
     return -1;
-  if (!length)
-    return -1;
 
-  u32 totalread = 0;
-  u32 rcvquota = 1500;
-  time_t timenow = 0, starttime = 0, stoptime = 0;
-  int sleptcount = 0; /* ... in a row */
-  int sleepms = 250; /* sleep time in millisecs. adjust here if needed */
-  int sockclosed = 0;
-
-  #if defined(_TIUSER_)
-  rcvquota = 512;
-  struct t_info info;
-  if ( t_getinfo( sock, &info ) < 0)
-    info.tsdu = 0; /* assume tdsu not suppported */
-  else if (info.tsdu > 0)
-    rcvquota = info.tsdu;
-  else if (info.tsdu == -1) /* no limit */
-    rcvquota = length;
-  else if (info.tsdu == 0) /* no boundaries */
-    rcvquota = 1500;
-  else //if (info.tsdu == -2) /* normal send not supp'd (ever happens?)*/
-    return -1;
-  #elif ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32))
-  if (rcvquota > 0x7FFF)
-    rcvquota = 0x7FFF;
-  #elif (CLIENT_OS == OS_MACOS)
-  if (rcvquota > 0xFFFF)  // Mac network library uses "unsigned short"
-    rcvquota = 0xFFFF;
-  #else
-  if (rcvquota > INT_MAX)
-    rcvquota = INT_MAX;
-  #endif
-
-  if (isnonblocking)
-    stoptime = time(&starttime) + (time_t)iotimeout;
-
-  #ifdef DEBUGTHIS
-  Log("LLGet: total to recv=%d, quota:%d\n", length, rcvquota );
-  #endif
-
-  do
-  {
-    int toread = (int)((((u32)length)>((u32)rcvquota))?(rcvquota):(length));
-    int bytesread = 0;
-
-    #if defined(_TIUSER_)                               //OSI/TLI/XTI
-    int flags = 0; /* T_MORE, T_EXPEDITED etc */
-    bytesread = t_rcv( sock, data, toread, &flags );
-    if (bytesread == 0) /* peer sent a zero byte message */
-      bytesread = -1; /* treat as none waiting */
-    else if (bytesread < 0)
-    {
-      int look, err = t_errno;
-      bytesread = -1;
-      debugtli("t_rcv", sock);
-      if (err == TNODATA )
-        bytesread = -1; /* fall through */
-      else if (err != TLOOK) /* TSYSERR et al */
-        bytesread = 0; /* set as socket closed */
-      else if ((look = t_look(sock)) == T_ORDREL)
-      {                /* connection closing... */
-        t_rcvrel( sock );
-        bytesread = 0; /* treat as closed */
-      }
-      else if (look == T_DISCONNECT || look == T_ERROR )
-        bytesread = 0; /* treat as closed */
-      else /* else T_DATA (Normal data received), and T_GODATA and family */
-        bytesread = -1;
-    }
-    #elif (CLIENT_OS == OS_MACOS)
-    // Note: MacOS client does not use XTI, and the socket emulation
-    // code doesn't support select.
-    {
-      bytesread = read( sock, data, toread);
-      if (bytesread == -1)
-      {
-        if ( !valid_socket(sock) )
-          bytesread = 0; // set as socket closed
-      }
-      else if (bytesread == 0) // should never happen?
-        bytesread = -1; // set as none waiting
-    }
-    #elif (defined(AF_INET) && defined(SOCK_STREAM))        //BSD 4.3
-    {
-      fd_set rs;
-      timeval tv = {0,0};
-      FD_ZERO(&rs);
-      FD_SET(sock, &rs);
-      bytesread = select(sock + 1, &rs, NULL, NULL, &tv);
-      if (bytesread < 0)   /* ENETDOWN, EINVAL, EINTR */
-        bytesread = 0; /* == sock closed */
-      else if (bytesread != 1) /* not ready */
-        bytesread = -1;
-      else /* socket says ready, but that could also mean closed :) */
-      {
-        bytesread = recv(sock, data, toread, 0 );
-        if (bytesread <= 0)
-          bytesread = 0;
-      }
-    }
-    #endif /* TLI/XTI or BSD */
-
-    #ifdef DEBUGTHIS
-    Log("LLGet: read(%d)-> %d\n", toread, bytesread );
-    #endif
-
-    if (bytesread == 0) /* sock closed */
-    {
-      sockclosed = 1;
-      break;
-    }
-    if (bytesread > 0) /* have data */
-    {
-      totalread += bytesread;
-      data += bytesread;
-      length -= bytesread;
-      if (length == 0) /* done all */
-        break;
-    }
-    if (!isnonblocking)
-      break;
-    if (bytesread < 0)
-    {
-      if (totalread != 0)
-        break;
-      if (time(&timenow) > stoptime || timenow < starttime)
-        break;
-      if (!isnonblocking && CheckExitRequestTrigger())
-        break;
-      ++sleptcount;
-    }
-    unsigned long sleepdur = ((unsigned long)(sleptcount+1)) * sleepms;
-    if (sleepdur > 1000000UL)
-      sleep( sleepdur / 1000000UL );
-    if ((sleepdur % 1000000UL) != 0)
-      usleep( sleepdur % 1000000UL );
-    if (!isnonblocking && CheckExitRequestTrigger())
-      break;
-  } while (length);
-
-  #ifdef DEBUGTHIS
-  Log("LLGet: got %u (requested %u) sockclosed:%s\n",
-              totalread, totalread+length, ((sockclosed)?("yes"):("no")));
-  #endif
-
-  if (totalread!=0)
-    return (int)totalread;
-  if (sockclosed)
-    return 0;
-  return -1;
+  return netio_recv(sock, data, length);
 }
 
 // ----------------------------------------------------------------------
@@ -2269,104 +1865,7 @@ int Network::LowLevelSetSocketOption( int cond_type, int parm )
   if ( sock == INVALID_SOCKET )
     return -1;
 
-  if ( cond_type == CONDSOCK_KEEPALIVE )
-  {
-    #if defined(SOL_SOCKET) && defined(SO_KEEPALIVE)
-    int on = ((parm == 0/* off */)?(0):(1));
-    if (!setsockopt(sock,SOL_SOCKET,SO_KEEPALIVE,(char *)&on, sizeof(on)))
-      return 0;
-    #endif
-    return -1;
-  }
-  else if ( cond_type == CONDSOCK_SETMINBUFSIZE )
-  {
-    #if (defined(SOL_SOCKET) && defined(SO_RCVBUF) && defined(SO_SNDBUF))
-    int which;
-    for (which = 0; which < 2; which++ )
-    {
-      #if (defined(__GLIBC__) && (__GLIBC__ >= 2)) || (CLIENT_OS == OS_MACOS) \
-        || (CLIENT_OS == OS_NETBSD)
-      #define SOCKLEN_T socklen_t
-      #elif ((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION > 199701))
-      #define SOCKLEN_T size_t
-      #elif ((CLIENT_OS == OS_NTO2) || (CLIENT_OS == OS_QNX))
-      #define SOCKLEN_T size_t
-      #else
-      #define SOCKLEN_T int
-      #endif
-      int type = ((which == 0)?(SO_RCVBUF):(SO_SNDBUF));
-      int sz = 0;
-      SOCKLEN_T szint = (SOCKLEN_T)sizeof(int);
-      if (getsockopt(sock, SOL_SOCKET, type, (char *)&sz, &szint)<0)
-        ;
-      else if (sz < parm)
-      {
-        sz = parm;
-        setsockopt(sock, SOL_SOCKET, type, (char *)&sz, szint);
-      }
-    }
-    return 0;
-    #endif
-  }
-  else if ( cond_type == CONDSOCK_BLOCKMODE )
-  {
-    #if defined(_TIUSER_)                                    //TLI
-      if ( parm != 0 ) /* blocking on */
-        return ( t_blocking( sock ) );
-      else
-        return ( t_nonblocking( sock ) );
-    #elif (!defined(FIONBIO) && !(defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK))))
-      return -1;
-    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
-      unsigned long flagon = ((parm == 0/* off */)?(1):(0));
-      return ioctlsocket(sock, FIONBIO, &flagon);
-    #elif ((CLIENT_OS == OS_VMS) && defined(__VMS_UCX__))
-      // nonblocking sockets not directly supported by UCX
-      // - DIGITAL's work around requires system privileges to use
-      return -1;
-    #elif ((CLIENT_OS == OS_VMS) && defined(MULTINET))
-      unsigned long flagon = ((parm == 0 /* off */)?(1):(0));
-      return socket_ioctl(sock, FIONBIO, &flagon);
-    #elif (CLIENT_OS == OS_RISCOS)
-      int flagon = ((parm == 0 /* off */) ? (1): (0));
-      if (ioctl(sock, FIONBIO, &flagon) && !flagon) // allow blocking socket calls
-      { flagon = 1; ioctl(sock, FIOSLEEPTW, &flagon); } //to preemptively multitask
-    #elif (CLIENT_OS == OS_OS2)
-      int flagon = ((parm == 0 /* off */) ? (1): (0));
-      return ioctl(sock, FIONBIO, (char *) &flagon, sizeof(flagon));
-    #elif (CLIENT_OS == OS_AMIGAOS)
-      char flagon = ((parm == 0 /* off */) ? (1): (0));
-      return IoctlSocket(sock, FIONBIO, &flagon);
-    #elif (CLIENT_OS == OS_DOS)
-      return ((parm == 0 /* off */)?(0):(-1)); //always non-blocking
-    #elif (CLIENT_OS == OS_MACOS)
-      char flagon = ((parm == 0 /* off */) ? (1): (0));
-      return ioctl(sock, FIONBIO, &flagon);
-    #elif (defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK)))
-    {
-      int flag, res, arg;
-      #if (defined(FNDELAY))
-        flag = FNDELAY;
-      #else
-        flag = O_NONBLOCK;
-      #endif
-      arg = ((parm == 0 /* off */) ? (flag): (0) );
-
-      if (( res = fcntl(sock, F_GETFL, flag ) ) == -1)
-        return -1;
-      if ((arg && res) || (!arg && !res))
-        return 0;
-      if ((res = fcntl(sock, F_SETFL, arg )) == -1)
-        return -1;
-      if (( res = fcntl(sock, F_GETFL, flag ) ) == -1)
-        return -1;
-      if ((arg && res) || (!arg && !res))
-        return 0;
-    }
-    #endif
-  }
-  parm = parm; /* shaddup compiler */
-  return -1;
+  return netio_setsockopt(sock, cond_type, parm);
 }
 
 // ----------------------------------------------------------------------
