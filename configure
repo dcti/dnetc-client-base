@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.240 1999/11/09 16:06:00 cyp Exp $
+# @(#)$Id: configure,v 1.241 1999/11/09 18:03:16 ivo Exp $
 
 if [ -z "$1" ]; then
   echo "No platform specified on command line.";
@@ -45,7 +45,7 @@ TARGET_ARCTYPE="tgz"  # or "zip"
 OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
 	  -fexpensive-optimizations -fomit-frame-pointer \
 	  -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
-	  -funroll-loops -fno-inline-functions -fno-handle-exceptions \
+	  -funroll-loops -fno-inline-functions -fno-exceptions \
 	  -Wall'
 OPTS_GCC272='-fomit-frame-pointer -fno-inline-functions \
 	     -fno-handle-exceptions -fno-rtti -Wall'
@@ -72,7 +72,7 @@ OPTS_GCC272_SPARC="$OPTS_GCC272 -O6 -msupersparc -DASM_SPARC"
 # (sparc/v9 [Ultra]     gcc)
 OPTS_GCC_ULTRA="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
 OPTS_GCC272_ULTRA="$OPTS_GCC272 -O6 -msupersparc -DASM_SPARC"
-OPTS_EGCS_ULTRA="OPTS_GCC -Os -mtune=ultrasparc -fforce-mem -mvis \
+OPTS_EGCS_ULTRA="$OPTS_EGCS -Os -mtune=ultrasparc -fforce-mem -mvis \
 		-fstrict-aliasing -fcall-used-g4 -fcall-used-g5 -fcall-used-g6"
 OPTS_GAS_ULTRA="-Av9a"
 OPTS_AS_ULTRA="-xarch=v8plusa"
@@ -616,35 +616,38 @@ case "$1" in
 	;;
 
     *sparc-solaris-gcc-crunch-slice)   # [ivo solaris/nonultra/nomt] fastest rc5 & des for ultra
-        DELETECHARS="'/.\$\-'"
+        #DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
-	TARGET_CC="gcc -pipe"
+	TARGET_CC="gcc -pipe -fpermissive" 
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
+                        $OGR_ANSI_CCOPTS $CSC_ANSI_CCOPTS \
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $OGR_ANSI_SRCS $CSC_ANSI_SRCS"
 	TARGET_LIBS="-lnsl -lsocket -ldl"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *sparc-solaris-gcc-crunch-slice-mt)   # [ivo solaris/nonultra/mt] fastest rc5 & des for ultra
-        DELETECHARS="'/.\$\-'"
+        #DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
-	TARGET_CC="gcc -pipe"
+	TARGET_CC="gcc -pipe -fpermissive"
 	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
 			-DMULTITHREAD \
+                        $OGR_ANSI_CCOPTS $CSC_ANSI_CCOPTS \
 			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $OGR_ANSI_SRCS $CSC_ANSI_SRCS"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
-    *sparc-solaris-gcc-crunch-asmslice-mt)   # fastest rc5 & VIS DES
-        DELETECHARS="'/.\$\-'"
+    *sparc-solaris-gcc-crunch-asmslice-mt)   # [ivo ultra] fastest rc5 & VIS DES +ogr/csc
+        #DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
-	TARGET_CC="cc -pipe"
-	TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris \
-			-DMULTITHREAD -DULTRA_CRUNCH=1"
-	TARGET_ADDSRCS="$DESULTRA_SRCS_ASM"
+	TARGET_CC="gcc -pipe -fpermissive"
+	TARGET_CCFLAGS="$OPTS_EGCS_ULTRA $OPTS_DES_ULTRA_ASM -Dsolaris \
+			-DMULTITHREAD -DULTRA_CRUNCH=1 \
+			$OGR_ANSI_CCOPTS $CSC_ANSI_CCOPTS"
+	TARGET_ADDSRCS="$DESULTRA_SRCS_ASM $OGR_ANSI_SRCS $CSC_ANSI_SRCS"
  	TARGET_ADDASMS="des/ultrasparc/simple.handopt.s"
 	TARGET_ASFLAGS="$OPTS_AS_ULTRA"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
