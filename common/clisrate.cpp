@@ -8,6 +8,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.39  1999/03/18 03:57:45  cyp
+// #included "util.h" which is the temporary home of ogr stubstr()
+//
 // Revision 1.38  1999/03/09 07:15:45  gregh
 // Various OGR changes.
 //
@@ -151,18 +154,18 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.38 1999/03/09 07:15:45 gregh Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.39 1999/03/18 03:57:45 cyp Exp $"; }
 #endif
 
-#include "cputypes.h"  // for u64
-#include "problem.h"   // for Problem class
-#include "client.h"    // for Fileentry struct
-#include "baseincs.h"  // for timeval, sprintf et al
-#include "clitime.h"   // for CliTimer(), CliTimerDiff(), CliGetTimeString()
-#include "clirate.h"   // for CliGetKeyrateFor[Problem|Contest]()
-#include "clicdata.h"  // for CliGetContestInfo[Base|Summary]Data()
-#include "clisrate.h"  // included just to keep prototypes accurate
-#include "stubutil.h"  // for stubstr()
+#include "cputypes.h"  // u64
+#include "problem.h"   // Problem class
+#include "client.h"    // Fileentry struct
+#include "baseincs.h"  // timeval, sprintf et al
+#include "clitime.h"   // CliTimer(), CliTimerDiff(), CliGetTimeString()
+#include "clirate.h"   // CliGetKeyrateFor[Problem|Contest]()
+#include "clicdata.h"  // CliGetContestInfo[Base|Summary]Data()
+#include "util.h"      // temporary home of ogr_stubstr()
+#include "clisrate.h"  // keep prototypes in sync
 
 /*
  *
@@ -281,34 +284,34 @@ char *CliGetKeyrateAsString( char *buffer, double rate )
 
 // ---------------------------------------------------------------------------
 
-// "4 RC5 blocks 12:34:56.78 - [234.56 Kkeys/s]" 
+// "4 RC5 packets 12:34:56.78 - [234.56 Kkeys/s]" 
 const char *CliGetSummaryStringForContest( int contestid )
 {
   static char str[70];
   char keyrate[32];
   const char *keyrateP, *name;
-  unsigned blocks;
+  unsigned int packets;
   struct timeval ttime;
 
   if ( CliIsContestIDValid( contestid ) ) //clicdata.cpp
     {
     CliGetContestInfoBaseData( contestid, &name, NULL ); //clicdata.cpp
-    CliGetContestInfoSummaryData( contestid, &blocks, NULL, &ttime ); //ditto
+    CliGetContestInfoSummaryData( contestid, &packets, NULL, &ttime ); //ditto
     keyrateP=__CliGetKeyrateAsString(keyrate,
           CliGetKeyrateForContest(contestid),((double)(1000)));
     }
   else
     {
     name = "???";
-    blocks = 0;
+    packets = 0;
     ttime.tv_sec = 0;
     ttime.tv_usec = 0;
     keyrateP = "---.-- ";
     }
 
-  sprintf(str, "%d %s block%s %s%c- [%skeys/s]", 
-       blocks, name, ((blocks==1)?(""):("s")),
-       CliGetTimeString( &ttime, 2 ), ((!blocks)?(0):(' ')), keyrateP );
+  sprintf(str, "%d %s packet%s %s%c- [%skeys/s]", 
+       packets, name, ((packets==1)?(""):("s")),
+       CliGetTimeString( &ttime, 2 ), ((!packets)?(0):(' ')), keyrateP );
   return str;
 }
 
@@ -350,7 +353,7 @@ const char *CliGetU64AsString( u64 *u, int /*inNetOrder*/, int contestid )
 // ---------------------------------------------------------------------------
 
 // internal - with or without adjusting cumulative stats
-// Completed RC5 block 68E0D85A:A0000000 (123456789 keys)
+// Completed RC5 packet 68E0D85A:A0000000 (123456789 keys)
 //          123:45:67:89 - [987654321 keys/s]
 // Completed OGR stub 22/1-3-5-7 (123456789 nodes)
 //          123:45:67:89 - [987654321 nodes/s]
@@ -384,11 +387,11 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
   switch (prob->contest) {
     case 0: // RC5
     case 1: // DES
-//"Completed one RC5 block 00000000:00000000 (4*2^28 keys)\n"
+//"Completed one RC5 packet 00000000:00000000 (4*2^28 keys)\n"
 //"%s - [%skeys/sec]\n"
       itermul = (((rc5result.iterations.lo) >> 28) +
                  ((rc5result.iterations.hi) * 16) );
-      sprintf( str, "Completed one %s block %08lX:%08lX (%u*2^28 keys)\n"
+      sprintf( str, "Completed one %s packet %08lX:%08lX (%u*2^28 keys)\n"
                     "%s - [%skeys/sec]\n",  
                     name, 
                     (unsigned long) ( rc5result.key.hi ) ,
@@ -403,7 +406,7 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
       sprintf( str, "Completed one %s stub %s (%u nodes)\n"
                     "%s - [%snodes/sec]\n",  
                     name, 
-                    stubstr(&prob->contestwork.ogr.stub),
+                    ogr_stubstr(&prob->contestwork.ogr.stub),
                     0, // node count
                     CliGetTimeString( &tv, 2 ),
                     keyrateP );
@@ -413,7 +416,7 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
   return str;
 }
 
-// Completed RC5 block 68E0D85A:A0000000 (123456789 keys)
+// Completed RC5 packet 68E0D85A:A0000000 (123456789 keys)
 //          123:45:67:89 - [987654321 keys/s]
 const char *CliGetMessageForProblemCompleted( Problem *prob )
 { return __CliGetMessageForProblemCompleted( prob, 1 ); }
