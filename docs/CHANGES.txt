@@ -21,9 +21,33 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.7 1999/07/24 17:32:09 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.8 1999/11/08 01:42:17 cyp Exp $
 ==========================================================================
 
+2.8000
+------
+2.8001.445  new: all: client is now called 'dnetc'
+            new: all: OGR capability
+            new: all: CSC capability
+            chg: all: more .ini options have been spun off from the 
+                 generic [parameters] section into subsections
+            chg: all: each project has its own buffer settings (threshold etc)
+            chg: all: cputype option has been phased out in favor of core 
+                 names/ids and each project can have its own core type
+            chg: all: -benchmark and -benchmark2 can now be limited to a 
+                 single project, eg '-benchmark csc' to bench only csc
+            new: all: '-bench [project]' benches all cores for a given
+                 project (or all projects if no project is specified)
+            new: win32: distribution includes a native cui wrapper
+            new: win16/32: client saves window size and position
+            chg: win32: service ID is 'dnetc' for client, 'dnetd' for pproxy
+            new: netware: complete rewrite of netware specific code
+            new: *nix: client distribution includes a man page
+            chg: auto keyserver name resolution now allows as many retries
+                 as there are addresses for a name.
+
+2.7100
+------
 2.7112.444  chg: ARM: cores have been partially rewritten.
             fix: x86 DOS: ^C always works now. (is now trapped in a hardware
                  interrupt (irq1) handler rather than in the 'soft' int 23h)
