@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.192 2000/10/16 16:09:57 oliver Exp $
+# @(#)$Id: configure,v 1.222.2.193 2000/10/16 17:06:25 oliver Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -65,8 +65,6 @@ TARGET_CP="cp"
 CLIENTCPU=""     # non-blank implies a hardcoded value
 CLIENTOS=""      # non-blank implies a hardcoded value
 
-TARGET_ADDCCFLAGS=""
-TARGET_ADDASFLAGS=""
 TARGET_ADDSRCS=""
 TARGET_ADDASMS=""
 TARGET_ADDNASMS=""
@@ -101,7 +99,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     -o "$1" = "bsdos"   -o "$1" = "os2"    -o "$1" = "amigaos" \
     -o "$1-$3" = "macosx-" -o "$1-$3" = "linux-" ]; then
     COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
-    TARGET_ADDCCFLAGS="$TARGET_ADDCCFLAGS -DLURK"
+    TARGET_CCFLAGS="$TARGET_CCFLAGS -DLURK"
   fi  
   
   # -------------------------------------------------------------------
@@ -120,7 +118,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     COMMON_SRCS="platforms/linux/resolv.c \
     	           platforms/linux/li_inst.c
                  ${COMMON_SRCS}"
-    #(unneeded) TARGET_ADDCCFLAGS="$TARGET_ADDCCFLAGS -DUNIVERSALRESOLVER"
+    #(unneeded) TARGET_CCFLAGS="$TARGET_CCFLAGS -DUNIVERSALRESOLVER"
   elif [ "$1" = "riscos" ]; then
     COMMON_SRCS="platforms/riscos/riscos_sup.cpp \
                  platforms/riscos/riscos_x86.cpp \
@@ -1936,7 +1934,7 @@ echo "Platform target for \"$1\" recognized."
 #
 # add things to all
 #
-TARGET_CCFLAGS="$TARGET_CCFLAGS $TARGET_ADDCCFLAGS -I./common -I./rc5 -I./des -I./ogr -I./csc"
+TARGET_CCFLAGS="$TARGET_CCFLAGS -I./common -I./rc5 -I./des -I./ogr -I./csc"
 ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
 ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
 ##ogr## TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
