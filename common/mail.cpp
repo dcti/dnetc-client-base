@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mail.cpp,v $
+// Revision 1.28  1999/01/18 05:21:40  cyp
+// default addresses (to id) or hostname (to localhost) if in the d.net domain
+//
 // Revision 1.27  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -108,16 +111,15 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.27 1999/01/01 02:45:15 cramer Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.28 1999/01/18 05:21:40 cyp Exp $"; }
 #endif
 
 #include "network.h"
 #include "version.h"
 #include "baseincs.h"
-#include "mail.h"
+#include "cmpidefs.h"
 #include "logstuff.h"
-#include "clitime.h"
-#define Time() (CliGetTimeString(NULL,1))
+#include "mail.h"
 
 //-------------------------------------------------------------------------
 
@@ -387,7 +389,7 @@ static int smtp_open_message_envelope(Network *net,
     const char *fromid, const char *destid, const char *smtphost )
 {
   char out_data[300];
-  const char *writefailmsg="[%s] Mail::Timeout waiting for SMTP server.\n";
+  const char *writefailmsg="Mail::Timeout waiting for SMTP server.\n";
   const char *errmsg = NULL;
   unsigned int pos;
     
@@ -407,7 +409,7 @@ static int smtp_open_message_envelope(Network *net,
     if ( put_smtp_line( out_data, strlen(out_data), net ))  
       errmsg = writefailmsg;
     else if ( get_smtp_result(net) != 250 )
-      errmsg = "[%s] Mail::SMTP server refused our connection.\n";
+      errmsg = "Mail::SMTP server refused our connection.\n";
     }
        
   if (!errmsg)  
@@ -418,7 +420,7 @@ static int smtp_open_message_envelope(Network *net,
     if ( put_smtp_line( out_data, strlen(out_data), net) )  
       errmsg = writefailmsg;
     else if (get_smtp_result(net) != 250)
-      errmsg = "[%s] Mail::SMTP server rejected sender name.\n";
+      errmsg = "Mail::SMTP server rejected sender name.\n";
     }
 
   if (!errmsg)
@@ -454,10 +456,9 @@ static int smtp_open_message_envelope(Network *net,
     if (!errmsg)
       {
       if (addrtries==0)       
-        errmsg = "[%s] Mail::Invalid or missing recipient address(es).\n";
+        errmsg = "Mail::Invalid or missing recipient address(es).\n";
       else if (addrok<addrtries) //this is not a fatal error, so continue.
-        LogScreen( "[%s] Mail::One or more recipient addresses are invalid.\n",
-         Time());
+        LogScreen( "Mail::One or more recipient addresses are invalid.\n");
       }
     }
 
@@ -467,12 +468,12 @@ static int smtp_open_message_envelope(Network *net,
     if ( put_smtp_line( out_data, strlen (out_data) , net))  
       errmsg = writefailmsg;
     if (get_smtp_result(net) != 354)
-      errmsg = "[%s] Mail::SMTP server refused to accept message.\n";
+      errmsg = "Mail::SMTP server refused to accept message.\n";
     }
   
   if (errmsg)
     {
-    LogScreen( errmsg, Time());
+    LogScreen( errmsg );
     return ((errmsg==writefailmsg)?(-1):(+1)); //retry hint
     }
   return(0);
@@ -731,7 +732,7 @@ static int smtp_send_message_footer( Network *net )
     return -1;
   if ( get_smtp_result(net) != 250 )
     {
-    LogScreen("[%s] Mail::Message was not accepted by server.\n",Time());
+    LogScreen("Mail::Message was not accepted by server.\n");
     return +1;
     }
   return 0;
@@ -809,11 +810,11 @@ int smtp_send_message( struct mailmessage *msg )
   //---------------
 
   if (errcode > 0) //smtp error (error message has already been printed)
-    LogScreen("[%s] Mail::Message has been discarded.\n", Time() );
+    LogScreen("Mail::Message has been discarded.\n" );
   else if ( errcode < 0 ) //net error (only send_envelope() said something)
-    LogScreen("[%s] Mail::Network error. Send cancelled.\n", Time());
+    LogScreen("Mail::Network error. Send cancelled.\n");
   else //if (errcode == 0)  //no error - yippee
-    LogScreen("[%s] Mail::Message has been sent.\n", Time() );
+    LogScreen("Mail::Message has been sent.\n" );
 
   //---------------
 
@@ -1048,19 +1049,64 @@ int smtp_deinitialize_message( struct mailmessage *msg )
 
 //-------------------------------------------------------------------------
 
+static void cleanup_field( int atype, char *addr, const char *default_addr )
+{
+  char *p = addr;
+  while (*addr && isspace(*addr))
+    addr++;
+  if (addr != p)
+    strcpy( p, addr );
+  addr = p;
+  if (atype == 1 || atype == 2  /* single address or hostname */)
+    {
+    while (*p && !isspace(*p))
+      p++;
+    *p = 0;
+    }
+
+  unsigned int len = strlen( addr );
+  while (len > 0 && isspace(addr[len-1]))
+    addr[--len]=0;
+
+  const char sig[]="distributed.net";
+  if (len>=(sizeof(sig)-1) && strcmpi(&(addr[(len-(sizeof(sig)-1))]),sig)==0)
+    {
+    if (len==(sizeof(sig)-1))
+      len = 0;
+    else if (addr[(len-(sizeof(sig)-1))-1]=='.' || addr[(len-(sizeof(sig)-1))-1]=='@')
+      len = 0;
+    }
+
+  if (len == 0)   
+    strcpy( addr, default_addr );
+  return;
+}
+
+
 int smtp_initialize_message( struct mailmessage *msg, unsigned long sendthresh,
                const char *smtphost, unsigned int smtpport, const char *fromid,
                                         const char *destid, const char *rc5id )
 {
   if (!msg) return -1;
   memset( (void *)(msg), 0, sizeof( struct mailmessage ));
+
   if (smtphost)   strncpy( msg->smtphost, smtphost, sizeof(msg->smtphost)-1);
   if (smtpport)   msg->smtpport = smtpport;
   if (fromid)     strncpy( msg->fromid, fromid, sizeof(msg->fromid)-1);
   if (destid)     strncpy( msg->destid, destid, sizeof(msg->destid)-1);
   if (rc5id)      strncpy( msg->rc5id, rc5id, sizeof(msg->rc5id)-1);
   if (sendthresh) msg->sendthreshold = sendthresh;
+
+  cleanup_field( 1, msg->rc5id, "" );          
+  cleanup_field( 1, msg->fromid, msg->rc5id ); //if fromid or destid are zero
+  cleanup_field( 0, msg->destid, msg->rc5id ); //len, they default to the rc5id
+  cleanup_field( 2, msg->smtphost, "localhost" );
   
+  if (rc5id[0]==0)
+    {
+    sendthresh=0;
+    return -1;
+    }
   return 0;
 }    
 
