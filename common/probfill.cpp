@@ -8,11 +8,11 @@
 //#define STRESS_RANDOMGEN
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
-// no, we don't rotate by default
-//#define ROTATE_BETWEEN_PROJECTS
+#define ROTATE_BETWEEN_PROJECTS // yes, we rotate between projects
+//people who don't want to rotate can turn it off with -config
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.29 2000/03/20 12:50:09 andreasb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.30 2000/04/10 14:49:06 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
