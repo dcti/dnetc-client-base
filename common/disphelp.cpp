@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.48  1998/11/08 14:30:44  remi
+// char **location should be moved out of the loop in gettermheight()
+//
 // Revision 1.47  1998/10/26 03:15:21  cyp
 // More tag fun.
 //
@@ -151,7 +154,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.47 1998/10/26 03:15:21 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.48 1998/11/08 14:30:44 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -273,8 +276,8 @@ static int gettermheight()
       "~/.terminfo",               // last resort
       NULL                         // stop tag
   };
+  char **location = &terminfo_locations[0];
   for (;;) {
-    char **location = &terminfo_locations[0];
     int termerr;
     if (setupterm( NULL, 1, &termerr ) == ERR) {
       if ((termerr == 0 || termerr == -1) && *location != NULL)
