@@ -32,7 +32,7 @@
  *   - #3338 : kIOMasterPortDefault doesn't exist prior Mac OS 10.2 (2.9006.485)
  *   - #3343 : The object filled by CFNumberGetValue shall not be released (2.9006.485)
  *
- *  $Id: temperature.cpp,v 1.1.2.3 2004/06/16 18:06:48 kakace Exp $
+ *  $Id: temperature.cpp,v 1.1.2.4 2004/07/01 17:48:58 kakace Exp $
  */
 
 #include <string.h>
@@ -190,6 +190,7 @@ static SInt32 _readIOHWSensor(void)
 SInt32 macosx_cputemp(void) {
     static int source = -1;                 /* No source defined */
     SInt32 temp = -1;
+    long CPUid = 0;
     
     switch (source) {
         case 0:
@@ -202,10 +203,12 @@ SInt32 macosx_cputemp(void) {
             return _readIOHWSensor();       /* PowerBook Alu, PowerMac G5*/
             
         default:
-            if ((GetProcessorFeatureFlags() & CPU_F_ALTIVEC) == 0) {
+            CPUid = GetProcessorType(-1);
+            if ((GetProcessorFeatureFlags() & CPU_F_ALTIVEC) == 0
+                || CPUid == 0x000C || CPUid == 0x800C) {
                 /*
                 ** Don't read the TAU if AltiVec units are detected
-                ** (CPU = G4 or G5) since this unit is disabled and we'd
+                ** (CPU = G4+ or G5) since this unit is disabled and we'd
                 ** get random values.
                 */
                 temp = _readTAU();
@@ -216,9 +219,6 @@ SInt32 macosx_cputemp(void) {
             if (temp >= 0) {source = 2; break;}
             temp = _readIOHWSensor();
             if (temp >= 0) {source = 3; break;}
-
-						/* No temperature support */
-            source = 0;
     }
 
     if (source > 0) {
@@ -227,6 +227,7 @@ SInt32 macosx_cputemp(void) {
     }
     else {
       Log("Temperature monitoring disabled (no sensor found)\n");
+      source = 0;
     }
 
     return temp;
