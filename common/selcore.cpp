@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.14 1999/10/26 03:42:41 remi Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.15 1999/11/01 12:19:18 remi Exp $"; }
 
 
 #include "cputypes.h"
@@ -509,10 +509,10 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   #if (__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 95))
 	// select the right cores if compiled with GCC 2.95 and up
 	switch( detected_type & 0xff ) {
-	case 2:  // 386/486
+	case 1:  // 386/486
 	  selcorestatics.corenum[CSC] = 3; // 1key - called
 	  break;
-	case 3:  // Ppro/PII/Celeron/PIII
+	case 2:  // Ppro/PII/Celeron/PIII
 	case 4:  // K5
 	  selcorestatics.corenum[CSC] = 2; // 1key - inline
 	  break;
