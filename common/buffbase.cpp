@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.33 2002/10/10 21:58:48 andreasb Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.34 2002/10/11 23:52:05 andreasb Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -1213,16 +1213,20 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
   suspend_expired = closed_expired = -1;
   for (pos = cont_start; pos < cont_count; pos++)
   {
-    unsigned int projectid = client->project_order_map[pos];
-    if ((client->project_state[projectid] & PROJECTSTATE_USER_DISABLED) == 0 &&
+    unsigned int projectid = pos; /* do not look up project_order_map, 
+                                     may be short circuited ... */
+    int proj_state = client->project_state[projectid];
+    if (ProjectGetFlags(projectid) == PROJECT_UNSUPPORTED)
+      continue;
+    if ((proj_state & PROJECTSTATE_USER_DISABLED) == 0 &&
        IsProblemLoadPermitted(-1, projectid)) /* core not disabled */
     {
       int fetchable = 1, flushable = 1;
-      char proj_flags = client->project_flags[projectid];
+      int proj_state = client->project_state[projectid];
       TRACE_OUT((0,"proj_flags[cont_i=%d] = 0x%x\n", cont_i, proj_flags));
 
       if (!ignore_closed_flags && 
-         (proj_flags & (PROJECTFLAGS_CLOSED|PROJECTFLAGS_SUSPENDED)) != 0)
+         (proj_state & (PROJECTSTATE_CLOSED|PROJECTSTATE_SUSPENDED)) != 0)
       {
         /* this next bit is not a good candidate for a code hoist */
         if (closed_expired < 0) /* undetermined */
@@ -1264,12 +1268,12 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
         } /* if (closed_expired < 0) (undetermined) */
         TRACE_OUT((0,"closed_expired = %d, suspend_expired = %d\n", 
                            closed_expired, suspend_expired ));
-        if ((proj_flags & PROJECTFLAGS_CLOSED)!=0)
+        if ((proj_state & PROJECTSTATE_CLOSED)!=0)
         {
           if (!closed_expired)
             fetchable = flushable = 0;
         }
-        else if ((proj_flags & PROJECTFLAGS_SUSPENDED)!=0)
+        else if ((proj_state & PROJECTSTATE_SUSPENDED)!=0)
         {
           if (!suspend_expired)
             fetchable = 0;

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.148 2002/10/06 19:57:12 andreasb Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.149 2002/10/11 23:52:05 andreasb Exp $"
 
 #include "projdata.h" /* PROJECT_COUNT */
 #include "problem.h"  /* WorkRecord, CONTEST_COUNT */
@@ -30,15 +30,6 @@ struct membuffstruct
 
 // ------------------
 
-/* project flags are updated only from net. never saved to disk
- * user-disabled projects don't have a flag. They are 'invisible' to all
- * but the configuration functions ('invalid' slot in the loadorder_map)
-*/
-#define PROJECTFLAGS_CLOSED     0x01
-#define PROJECTFLAGS_SUSPENDED  0x02 /* no data available */
-
-// ------------------
-
 typedef struct
 {
   /* non-user-configurable */
@@ -49,8 +40,7 @@ typedef struct
   char inifilename[MINCLIENTOPTSTRLEN*2];
   u32  last_buffupd_time; /* monotonic. goes with max_buffupd_[retry_]interval */
   int  last_buffupd_failed_time;
-  char project_flags[CONTEST_COUNT]; /* do NOT save to disk! */ // FIXME: 2 be integrated into project_state !!!
-  int project_state[PROJECT_COUNT];
+  int project_state[PROJECT_COUNT]; /* do NOT save states received from proxy to disk! */
 
   /* -- general -- */
   char id[MINCLIENTOPTSTRLEN];
