@@ -229,7 +229,7 @@ int CliTimerDiff( struct timeval *dest, struct timeval *tv1, struct timeval *tv2
 // type: 0=blank type 1, 1="MMM dd hh:mm:ss GMT", 2="hhhh:mm:ss.pp"
 const char *CliGetTimeString( struct timeval *tv, int strtype )
 {
-  static time_t timelast = NULL;
+  static time_t timelast = (time_t)NULL;
   static int lasttype;
   static char timestring[30], spacestring[30], hourstring[30];
 
