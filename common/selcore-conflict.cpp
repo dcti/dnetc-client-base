@@ -2,6 +2,7 @@
  * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * -------------------------------------------------------------------
  * program (pro'-gram) [vi]: To engage in a pastime similar to banging
@@ -9,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.69 1999/12/31 21:15:40 cyp Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.70 2000/01/02 04:07:21 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -137,7 +138,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "1 key - inline", 
 #endif
       "1 key - called",
-      NULL, /* room for the MMX bitslicer */
+      NULL, /* room */
       NULL
     }
   };  
@@ -539,7 +540,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     if (selcorestatics.corenum[CSC] < 0 && detected_type > 0)
     {
       int cindex = -1;
-      if ((detected_type & 0x02000000L) != 0) //ARCH_IS_POWER
+      if ((detected_type & (1L<<24) ) != 0) //ARCH_IS_POWER
         ; //don't know yet
       else 
       {
@@ -757,6 +758,17 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 
 /* ---------------------------------------------------------------------- */
 
+#if 0
+// available ANSI cores:
+// 2 pipeline: rc5/ansi/rc5ansi_2-rg.cpp
+//   extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
+//   extern "C" s32 rc5_ansi_rg_unified_form( RC5UnitWork *work,
+//                                    u32 *iterations, void *scratch_area );
+// 1 pipeline: rc5/ansi/rc5ansi1-b2.cpp
+//   extern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 iterations );
+#endif                                                                
+
+
 #if (CLIENT_CPU == CPU_X86)
   extern "C" u32 rc5_unit_func_486( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_p5( RC5UnitWork * , u32 iterations );
@@ -775,18 +787,18 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   extern "C" u32 rc5_unit_func_x86( RC5UnitWork * , u32 );
   #endif
 #elif (CLIENT_CPU == CPU_S390)
-  //rc5/ansi/2-rg.c
-  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+  // rc5/ansi/rc5ansi_2-rg.cpp
+  extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
 #elif (CLIENT_CPU == CPU_PA_RISC)
   // rc5/parisc/parisc.cpp encapulates parisc.s, 2 pipelines
   extern "C" u32 rc5_parisc_unit_func( RC5UnitWork *, u32 );
 #elif (CLIENT_CPU == CPU_88K) //OS_DGUX
-  //rc5/ansi/2-rg.c
-  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+  // rc5/ansi/rc5ansi_2-rg.cpp
+  extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
 #elif (CLIENT_CPU == CPU_MIPS)
   #if (CLIENT_OS == OS_ULTRIX) || (CLIENT_OS == OS_IRIX)
-    //rc5/ansi/2-rg.c
-    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+    // rc5/ansi/rc5ansi_2-rg.cpp
+    extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
   #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_SINIX)
     //rc5/mips/mips-crunch.cpp or rc5/mips/mips-irix.S
     extern "C" u32 rc5_unit_func_mips_crunch( RC5UnitWork *, u32 );
@@ -798,8 +810,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     //rc5/ultra/rc5-ultra-crunch.cpp
     extern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
   #else
-    //rc5/ansi/2-rg.c
-    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+    // rc5/ansi/rc5ansi_2-rg.cpp
+    extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
   #endif
 #elif (CLIENT_CPU == CPU_68K)
   #if (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_AMIGAOS)
@@ -818,13 +830,13 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   extern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 );
 #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
   #if (CLIENT_CPU == CPU_POWER) || defined(_AIXALL)
-    // rc5/ansi/2-rg.c
-    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+    // rc5/ansi/rc5ansi_2-rg.cpp
+    extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
   #endif
   #if (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
     #if (CLIENT_OS == OS_WIN32) //NT has poor PPC assembly
-      //rc5/ansi/2-rg.c
-      extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+      // rc5/ansi/rc5ansi_2-rg.cpp
+      extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
       #define rc5_unit_func_lintilla_compat rc5_ansi_2_rg_unit_func
       #define rc5_unit_func_allitnil_compat rc5_ansi_2_rg_unit_func
       #define rc5_unit_func_vec_compat      rc5_ansi_2_rg_unit_func
@@ -891,12 +903,6 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
    extern u32 des_unit_func_slice( RC5UnitWork * , u32 *iter, char *coremem );
 #endif
 #endif
-
-/* ------------------------------------------------------------- */
-
-#if defined(HAVE_OGR_CORES)
-  extern CoreDispatchTable *ogr_get_dispatch_table(void);
-#endif  
 
 /* ------------------------------------------------------------- */
 
@@ -971,9 +977,9 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }  
     #elif (CLIENT_CPU == CPU_S390)
     {
-      //rc5/ansi/2-rg.c
-      //xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
-      unit_func.rc5 = rc5_ansi_2_rg_unit_func;
+      // rc5/ansi/rc5ansi_2-rg.cpp
+      //xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
+      unit_func.rc5 = rc5_unit_func_ansi_2_rg;
       pipeline_count = 2;
       coresel = 0;
     }
@@ -987,9 +993,9 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
     #elif (CLIENT_CPU == CPU_88K) //OS_DGUX
     {
-      //rc5/ansi/2-rg.c
-      //xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
-      unit_func.rc5 = rc5_ansi_2_rg_unit_func;
+      // rc5/ansi/rc5ansi_2-rg.cpp
+      //xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 );
+      unit_func.rc5 = rc5_unit_func_ansi_2_rg;
       pipeline_count = 2;
       coresel = 0;
     }
@@ -997,9 +1003,9 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     {
       #if (CLIENT_OS == OS_ULTRIX) || (CLIENT_OS == OS_IRIX)
       {
-        //rc5/ansi/2-rg.c
-        //xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
-        unit_func.rc5 = rc5_ansi_2_rg_unit_func;
+        // rc5/ansi/rc5ansi_2-rg.cpp
+        //xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 );
+        unit_func.rc5 = rc5_unit_func_ansi_2_rg;
         pipeline_count = 2;
         coresel = 0;
       }
@@ -1027,9 +1033,9 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       }
       #else
       {
-        //rc5/ansi/2-rg.c
-        //xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
-        unit_func.rc5 = rc5_ansi_2_rg_unit_func;
+        // rc5/ansi/rc5ansi_2-rg.cpp
+        //xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
+        unit_func.rc5 = rc5_unit_func_ansi_2_rg;
         pipeline_count = 2;
         coresel = 0;
       }
@@ -1085,16 +1091,16 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     {
       #if (CLIENT_CPU == CPU_POWER) && !defined(_AIXALL) //not hybrid
       {
-        // rc5/ansi/2-rg.c
-        //xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
-        unit_func.rc5 = rc5_ansi_2_rg_unit_func ; //POWER cpu
+        // rc5/ansi/rc5ansi_2-rg.cpp
+        //xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 );
+        unit_func.rc5 = rc5_unit_func_ansi_2_rg; //POWER CPU
         pipeline_count = 2;
       }
       #else //((CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL))
       { 
         //#if (CLIENT_OS == OS_WIN32) //NT has poor PPC assembly
-        //  //rc5/ansi/2-rg.c
-        //  xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
+        //  rc5/ansi/rc5ansi_2-rg.cpp
+        //  xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32  );
         //  #define rc5_unit_func_lintilla_compat rc5_ansi_2_rg_unit_func
         //  #define rc5_unit_func_allitnil_compat rc5_ansi_2_rg_unit_func
         //  #define rc5_unit_func_vec_compat      rc5_ansi_2_rg_unit_func
@@ -1118,7 +1124,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         if ((GetProcessorType(1) & (1L<<24)) != 0) //ARCH_IS_POWER
         {
           client_cpu = CPU_POWER;
-          unit_func.rc5 = rc5_ansi_2_rg_unit_func ; // rc5/ansi/2-rg.c
+          unit_func.rc5 = rc5_unit_func_ansi_2_rg; //rc5/ansi/rc5ansi_2-rg.cpp
           pipeline_count = 2;
           coresel = 0; //core #0 is "RG AIXALL" on POWER, and allitnil on PPC
           gotcore = 1;
@@ -1403,6 +1409,8 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
     return coresel;
   }
+
+  threadindex = threadindex; /* possibly unused. shaddup compiler */
   return -1; /* core selection failed */
 }
 

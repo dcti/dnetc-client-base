@@ -11,697 +11,102 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.140 1999/12/31 00:42:16 friedbait Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.141 2000/01/02 04:07:20 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
 #include "cputypes.h"
 #include "baseincs.h"
+#include "version.h"  //CLIENT_BUILD_FRAC
 #include "client.h"   //CONTEST_COUNT
 #include "clitime.h"  //CliClock()
 #include "logstuff.h" //LogScreen()
 #include "probman.h"  //GetProblemPointerFromIndex()
+#include "problem.h"  //ourselves
 #include "selcore.h"  //selcoreGetSelectedCoreForContest()
 #include "cpucheck.h" //hardware detection
 #include "console.h"  //ConOutErr
 #include "triggers.h" //RaiseExitRequestTrigger()
-#include "problem.h"  //ourselves
-#if (CLIENT_OS == OS_RISCOS)
-#include "../platforms/riscos/riscos_x86.h"
-#endif
 
 //#define STRESS_THREADS_AND_BUFFERS /* !be careful with this! */
 
+#ifndef MINIMUM_ITERATIONS
+#define MINIMUM_ITERATIONS 24
+/* 
+   MINIMUM_ITERATIONS determines minimum number of iterations that will 
+   be requested, as well as the boundary on which number of iterations will
+   be aligned. This then automatically implies keysdone alignment as well.
+   [This applies to partially completed work loaded from disk as well,
+   since partially completed work will (should!) never end up on a cruncher 
+   that it did not originate on because core cpu, core #, client os and 
+   client version are saved in partially completed work, and work is reset 
+   by LoadState if any of them don't match.
+   24 was chosen because it is evenly divisible by any/all the
+   pipeline_counts currently in use (1,2,3,4[,6?])
+*/   
+#endif
+
 /* ------------------------------------------------------------------- */
 
-#if (CLIENT_CPU == CPU_X86)
-  extern "C" u32 rc5_unit_func_486( RC5UnitWork * , u32 iterations );
-  extern "C" u32 rc5_unit_func_p5( RC5UnitWork * , u32 iterations );
-  extern "C" u32 rc5_unit_func_p6( RC5UnitWork * , u32 iterations );
-  extern "C" u32 rc5_unit_func_6x86( RC5UnitWork * , u32 iterations );
-  extern "C" u32 rc5_unit_func_k5( RC5UnitWork * , u32 iterations );
-  extern "C" u32 rc5_unit_func_k6( RC5UnitWork * , u32 iterations );
-  extern "C" u32 rc5_unit_func_p5_mmx( RC5UnitWork * , u32 iterations );
-  extern "C" u32 rc5_unit_func_k6_mmx( RC5UnitWork * , u32 iterations );
-  extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
-#elif (CLIENT_CPU == CPU_ARM)
-  extern "C" u32 rc5_unit_func_arm_1( RC5UnitWork * , u32 );
-  extern "C" u32 rc5_unit_func_arm_2( RC5UnitWork * , u32 );
-  extern "C" u32 rc5_unit_func_arm_3( RC5UnitWork * , u32 );
-#elif (CLIENT_CPU == CPU_S390)
-  //rc5/ansi/2-rg.c
-//extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
-  extern "C" s32 rc5_ansi_rg_unified_form( RC5UnitWork *work,
-                             u32 *timeslice, void *scratch_area );
-             //returns RESULT_FOUND,RESULT_WORKING or -1,
- 
-  extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 timeslice );
-             //returns timeslice
+static unsigned int __problem_counter = 0; 
+/* 
+   problem_counter is what we copy as threadindex and then increment 
+   for the next problem. Its addressed/incremented in the constructor 
+   and addressed/decremented in the destructor, both of which are 
+   'thread safe' in the sense that they are never called from the 
+   actual crunching threads themselves.
+*/
 
-#elif (CLIENT_CPU == CPU_PA_RISC)
-  // rc5/parisc/parisc.cpp encapulates parisc.s, 2 pipelines
-  extern "C" u32 rc5_parisc_unit_func( RC5UnitWork *, u32 );
-#elif (CLIENT_CPU == CPU_88K) //OS_DGUX
-  //rc5/ansi/2-rg.c
-  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
-#elif (CLIENT_CPU == CPU_MIPS)
-  #if (CLIENT_OS == OS_ULTRIX) || (CLIENT_OS == OS_IRIX)
-    //rc5/ansi/2-rg.c
-    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
-  #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_SINIX)
-    //rc5/mips/mips-crunch.cpp or rc5/mips/mips-irix.S
-    extern "C" u32 rc5_unit_func_mips_crunch( RC5UnitWork *, u32 );
-  #else
-    #error "What's up, Doc?"
-  #endif
-#elif (CLIENT_CPU == CPU_SPARC)
-  #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
-    //rc5/ultra/rc5-ultra-crunch.cpp
-    extern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
-  #else
-    //rc5/ansi/2-rg.c
-    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
-  #endif
-#elif (CLIENT_CPU == CPU_68K)
-  #if (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_AMIGAOS)
-    // rc5/68k/rc5_68k_crunch.c around rc5/68k/rc5-0x0_0y0-jg.s
-    extern "C" u32 rc5_unit_func_000_030( RC5UnitWork *, u32 );
-    extern "C" u32 rc5_unit_func_040_060( RC5UnitWork *, u32 );
-  #elif defined(__GCC__) || defined(__GNUC__) /* hpux, next, linux, sun3 */
-    // rc5/68k/rc5_68k_gcc_crunch.c around rc5/68k/crunch.68k.gcc.s
-    extern "C" u32 rc5_68k_crunch_unit_func( RC5UnitWork *, u32 );
-  #else
-    // rc5/ansi/rc5ansi1-b2.cpp
-    extern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 );
-  #endif
-#elif (CLIENT_CPU == CPU_VAX)
-  // rc5/ansi/rc5ansi1-b2.cpp
-  extern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 );
-#elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-  #if (CLIENT_CPU == CPU_POWER) || defined(_AIXALL)
-    // rc5/ansi/rc5ansi_2-rg.cpp
-    extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 );
-  #endif
-  #if (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
-    #if (CLIENT_OS == OS_WIN32) //NT has poor PPC assembly
-      //rc5/ansi/2-rg.c
-      extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
-      #define rc5_unit_func_lintilla_compat rc5_ansi_2_rg_unit_func
-      #define rc5_unit_func_allitnil_compat rc5_ansi_2_rg_unit_func
-      #define rc5_unit_func_vec_compat      rc5_ansi_2_rg_unit_func
-    #else
-      // rc5/ppc/rc5_*.cpp
-      // although Be OS isn't supported on 601 machines and there is
-      // is no 601 PPC board for the Amiga, lintilla depends on allitnil,
-      // so we have both anyway, we may as well support both.
-      extern "C" u32 rc5_unit_func_allitnil_compat( RC5UnitWork *, u32 );
-      extern "C" u32 rc5_unit_func_lintilla_compat( RC5UnitWork *, u32 );
-      #if (CLIENT_OS == OS_MACOS)
-        extern "C" u32 rc5_unit_func_vec_compat( RC5UnitWork *, u32 );
-      #else /* MacOS currently is the only one to support altivec cores */
-        #define rc5_unit_func_vec_compat  rc5_unit_func_lintilla_compat
-      #endif
-    #endif
-  #endif
-#elif (CLIENT_CPU == CPU_ALPHA)
-  #if (CLIENT_OS == OS_DEC_UNIX)
-    //rc5/alpha/rc5-digital-unix-alpha-ev[4|5].cpp
-    extern "C" u32 rc5_alpha_osf_ev4( RC5UnitWork *, u32 );
-    extern "C" u32 rc5_alpha_osf_ev5( RC5UnitWork *, u32 );
-  #elif (CLIENT_OS == OS_WIN32) /* little-endian asm */
-    //rc5/alpha/rc5-alpha-nt.s
-    extern "C" u32 rc5_unit_func_ntalpha_michmarc( RC5UnitWork *, u32 );
-  #else
-    //axp-bmeyer.cpp around axp-bmeyer.s
-    extern "C" u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, u32 );
-  #endif
-#else
-  #error "How did you get here?" 
-#endif    
-
-/* ------------------------------------------------------------- */
-
-#if defined(HAVE_DES_CORES)
-/* DES cores take the 'iterations_to_do', adjust it to min/max/nbbits
-  and store it back in 'iterations_to_do'. all return 'iterations_done'.
-*/   
-#if (CLIENT_CPU == CPU_ARM)
-   //des/arm/des-arm-wrappers.cpp
-   extern u32 des_unit_func_slice_arm( RC5UnitWork * , u32 *iter, char *coremem );
-   extern u32 des_unit_func_slice_strongarm(RC5UnitWork *, u32 *iter, char *coremem);
-#elif (CLIENT_CPU == CPU_ALPHA) 
-   #if (CLIENT_OS == OS_DEC_UNIX) && defined(DEC_UNIX_CPU_SELECT)
-     extern u32 des_alpha_osf_ev4( RC5UnitWork * , u32 *iter, char *coremem );
-     extern u32 des_alpha_osf_ev5( RC5UnitWork * , u32 *iter, char *coremem );
-   #else
-     //des/alpha/des-slice-dworz.cpp
-     extern u32 des_unit_func_slice_dworz( RC5UnitWork * , u32 *iter, char *);
-   #endif
-#elif (CLIENT_CPU == CPU_X86)
-   extern u32 p1des_unit_func_p5( RC5UnitWork * , u32 *iter, char *coremem );
-   extern u32 p1des_unit_func_pro( RC5UnitWork * , u32 *iter, char *coremem );
-   extern u32 p2des_unit_func_p5( RC5UnitWork * , u32 *iter, char *coremem );
-   extern u32 p2des_unit_func_pro( RC5UnitWork * , u32 *iter, char *coremem );
-   extern u32 des_unit_func_mmx( RC5UnitWork * , u32 *iter, char *coremem );
-   extern u32 des_unit_func_slice( RC5UnitWork * , u32 *iter, char *coremem );
-#elif defined(MEGGS)
-   //des/des-slice-meggs.cpp
-   extern u32 des_unit_func_meggs( RC5UnitWork * , u32 *iter, char *coremem );
-#else
-   //all rvs based drivers (eg des/ultrasparc/des-slice-ultrasparc.cpp)
-   extern u32 des_unit_func_slice( RC5UnitWork * , u32 *iter, char *coremem );
-#endif
-#endif
-
-/* ------------------------------------------------------------- */
-
-#if defined(HAVE_OGR_CORES)
-  extern CoreDispatchTable *ogr_get_dispatch_table(void);
-#endif  
-
-/* ------------------------------------------------------------- */
-
-#if defined(HAVE_CSC_CORES)
-  extern "C" s32 csc_unit_func_1k  ( RC5UnitWork *, u32 *iterations, void *membuff );
-  extern "C" s32 csc_unit_func_1k_i( RC5UnitWork *, u32 *iterations, void *membuff );
-  extern "C" s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *iterations, void *membuff );
-  extern "C" s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *iterations, void *membuff );
-  #if (CLIENT_CPU == CPU_X86) && defined(MMX_CSC)
-  extern "C" s32 csc_unit_func_6b_mmx ( RC5UnitWork *, u32 *iterations, void *membuff );
-  #endif
-#endif
-
-/* ------------------------------------------------------------- */
-static int __core_picker(Problem *problem, unsigned int contestid)
-{                               /* must return a valid core selection # */
-  #if (CLIENT_CPU == CPU_X86) //most projects have an mmx core
-  static int ismmx = -1; 
-  if (ismmx == -1) 
-  { 
-    long det = GetProcessorType(1 /* quietly */);
-    ismmx = (det >= 0) ? (det & 0x100) : 0;
-  }    
-  #endif
-
-  int coresel;
-  problem->pipeline_count = 2; /* most cases */
-  problem->client_cpu = CLIENT_CPU; /* usual case */
-
-  coresel = selcoreGetSelectedCoreForContest( contestid );
-  if (coresel < 0)
-    return -1;
-
-  if (contestid == RC5) /* avoid switch */
-  {
-    #if (CLIENT_CPU == CPU_ARM)
-    if (coresel == 0)
-    {
-      problem->rc5_unit_func = rc5_unit_func_arm_1;
-      problem->pipeline_count = 1;
-    }
-    else if (coresel == 1)
-    {
-      problem->rc5_unit_func = rc5_unit_func_arm_2;
-      problem->pipeline_count = 2;
-    }
-    else /* (coresel == 2, default) */
-    {
-      problem->rc5_unit_func = rc5_unit_func_arm_3;
-      problem->pipeline_count = 3;
-      coresel = 2;
-    }
-    #elif (CLIENT_CPU == CPU_S390)
-    {
-      //rc5/ansi/2-rg.c
-      //xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
-//    problem->rc5_unit_func = rc5_ansi_2_rg_unit_func;
-      problem->rc5_unit_func = rc5_unit_func_ansi_2_rg;
-      problem->pipeline_count = 2;
-      coresel = 0;
-    }
-    #elif (CLIENT_CPU == CPU_PA_RISC)
-    {
-      // /rc5/parisc/parisc.cpp encapulates parisc.s, 2 pipelines
-      //xtern "C" u32 rc5_parisc_unit_func( RC5UnitWork *, u32 );
-      problem->rc5_unit_func = rc5_parisc_unit_func;
-      problem->pipeline_count = 2;
-      coresel = 0;
-    }
-    #elif (CLIENT_CPU == CPU_88K) //OS_DGUX
-    {
-      //rc5/ansi/2-rg.c
-      //xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
-      problem->rc5_unit_func = rc5_ansi_2_rg_unit_func;
-      problem->pipeline_count = 2;
-      coresel = 0;
-    }
-    #elif (CLIENT_CPU == CPU_MIPS)
-    {
-      #if (CLIENT_OS == OS_ULTRIX) || (CLIENT_OS == OS_IRIX)
-      {
-        //rc5/ansi/2-rg.c
-        //xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
-        problem->rc5_unit_func = rc5_ansi_2_rg_unit_func;
-        problem->pipeline_count = 2;
-        coresel = 0;
-      }
-      #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_SINIX)
-      {
-        //rc5/mips/mips-crunch.cpp or rc5/mips/mips-irix.S
-        //xtern "C" u32 rc5_unit_func_mips_crunch( RC5UnitWork *, u32 );
-        problem->rc5_unit_func = rc5_unit_func_mips_crunch;
-        problem->pipeline_count = 2;
-        coresel = 0;
-      }  
-      #else
-        #error "What's up, Doc?"
-      #endif
-    }
-    #elif (CLIENT_CPU == CPU_SPARC)
-    {
-      #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
-      {
-        //rc5/ultra/rc5-ultra-crunch.cpp
-        //xtern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
-        rc5_unit_func = rc5_unit_func_ultrasparc_crunch;
-        problem->pipeline_count = 1;
-        coresel = 0;
-      }
-      #else
-      {
-        //rc5/ansi/2-rg.c
-        //xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
-        rc5_unit_func = rc5_ansi_2_rg_unit_func;
-        problem->pipeline_count = 2;
-        coresel = 0;
-      }
-      #endif
-    }
-    #elif (CLIENT_CPU == CPU_68K)
-    {
-      #if (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_AMIGAOS)
-      {
-        // rc5/68k/rc5_68k_crunch.c around rc5/68k/rc5-0x0_0y0-jg.s
-        //xtern "C" u32 rc5_unit_func_000_030( RC5UnitWork *, u32 );
-        //xtern "C" u32 rc5_unit_func_040_060( RC5UnitWork *, u32 );
-        if (coresel == 1 )
-        {
-          problem->pipeline_count = 2;
-          problem->rc5_unit_func = rc5_unit_func_040_060;
-          coresel = 1;
-        }
-        else
-        {
-          problem->pipeline_count = 2;
-          problem->rc5_unit_func = rc5_unit_func_000_030;
-          coresel = 0;
-        }
-      }
-      #elif defined(__GCC__) || defined(__GNUC__) /* hpux, next, linux, sun3 */
-      {
-        // rc5/68k/rc5_68k_gcc_crunch.c around rc5/68k/crunch.68k.gcc.s
-        //xtern "C" u32 rc5_68k_crunch_unit_func( RC5UnitWork *, u32 );
-        problem->rc5_unit_func = rc5_68k_crunch_unit_func;
-        problem->pipeline_count = 1; //the default is 2
-        coresel = 0;
-      }
-      #else 
-      {
-        // rc5/ansi/rc5ansi1-b2.cpp
-        //xtern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 );
-        problem->rc5_unit_func = rc5_ansi_1_b2_rg_unit_func;
-        problem->pipeline_count = 1; //the default is 2
-        coresel = 0;
-      }
-      #endif
-    }
-    #elif (CLIENT_CPU == CPU_VAX)
-    {
-      // rc5/ansi/rc5ansi1-b2.cpp
-      //xtern "C" u32 rc5_ansi_1_b2_rg_unit_func( RC5UnitWork *, u32 );
-      problem->rc5_unit_func = rc5_ansi_1_b2_rg_unit_func;
-      problem->pipeline_count = 1; //the default is 2
-      coresel = 0;
-    }
-    #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
-    {
-      #if (CLIENT_CPU == CPU_POWER) && !defined(_AIXALL) //not hybrid
-      {
-        // rc5/ansi/rc5ansi_2-rg.cpp
-        //xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 );
-        problem->rc5_unit_func = rc5_unit_func_ansi_2_rg ; //POWER cpu
-        problem->pipeline_count = 2;
-      }
-      #else //((CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL))
-      { 
-        //#if (CLIENT_OS == OS_WIN32) //NT has poor PPC assembly
-        //  //rc5/ansi/2-rg.c
-        //  xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 );
-        //  #define rc5_unit_func_lintilla_compat rc5_ansi_2_rg_unit_func
-        //  #define rc5_unit_func_allitnil_compat rc5_ansi_2_rg_unit_func
-        //  #define rc5_unit_func_vec_compat      rc5_ansi_2_rg_unit_func
-        //#else
-        //  // rc5/ppc/rc5_*.cpp
-        //  // although Be OS isn't supported on 601 machines and there is
-        //  // is no 601 PPC board for the Amiga, lintilla depends on allitnil,
-        //  // so we have both anyway, we may as well support both.
-        //  xtern "C" u32 rc5_unit_func_allitnil_compat( RC5UnitWork *, u32 );
-        //  xtern "C" u32 rc5_unit_func_lintilla_compat( RC5UnitWork *, u32 );
-        //  #if (CLIENT_OS == OS_MACOS)
-        //    extern "C" u32 rc5_unit_func_vec_compat( RC5UnitWork *, u32 );
-        //  #else /* MacOS currently is the only one to support altivec cores */
-        //    #define rc5_unit_func_vec_compat  rc5_unit_func_lintilla_compat
-        //  #endif
-        //#endif
-        int gotcore = 0;
-
-        problem->client_cpu = CPU_POWERPC;
-        #if defined(_AIXALL) //ie POWER/POWERPC hybrid client
-        if ((GetProcessorType(1) & (1L<<24)) != 0) //ARCH_IS_POWER
-        {
-          problem->client_cpu = CPU_POWER;
-          problem->rc5_unit_func = rc5_unit_func_ansi_2_rg ; 
-			// rc5/ansi/rc5ansi_2-rg.cpp
-          problem->pipeline_count = 2;
-          coresel = 0; //core #0 is "RG AIXALL" on POWER, and allitnil on PPC
-          gotcore = 1;
-        }
-        #endif
-        if (!gotcore && coresel == 0)     // G1 (PPC 601)
-        {  
-          problem->rc5_unit_func = rc5_unit_func_allitnil_compat;
-          problem->pipeline_count = 1;
-          gotcore = 1;
-        }  
-        else if (!gotcore && coresel == 2) // G4 (PPC 7500)
-        {
-          problem->rc5_unit_func = rc5_unit_func_vec_compat;
-          problem->pipeline_count = 1;
-          gotcore = 1;
-        }
-        if (!gotcore)                     // the rest (G2/G3)
-        {
-          problem->rc5_unit_func = rc5_unit_func_lintilla_compat;
-          problem->pipeline_count = 1;
-          coresel = 1;
-        }
-      }
-      #endif
-    }
-    #elif (CLIENT_CPU == CPU_X86)
-    {
-      if (coresel < 0 || coresel > 5)
-        coresel = 0;
-      problem->pipeline_count = 2; /* most cases */
-      if (coresel == 1)   // Intel 386/486
-      {
-        problem->rc5_unit_func = rc5_unit_func_486;
-        #if defined(SMC) 
-        if (problem->threadindex == 0)
-          problem->rc5_unit_func =  rc5_unit_func_486_smc;
-        #endif
-      }
-      else if (coresel == 2) // Ppro/PII
-        problem->rc5_unit_func = rc5_unit_func_p6;
-      else if (coresel == 3) // 6x86(mx)
-        problem->rc5_unit_func = rc5_unit_func_6x86;
-      else if (coresel == 4) // K5
-        problem->rc5_unit_func = rc5_unit_func_k5;
-      else if (coresel == 5) // K6/K6-2/K7
-      {
-        problem->rc5_unit_func = rc5_unit_func_k6;
-        #if defined(MMX_RC5_AMD)
-        if (ismmx)
-        { 
-          problem->rc5_unit_func = rc5_unit_func_k6_mmx;
-          problem->pipeline_count = 4;
-        }
-        #endif
-      }
-      else // Pentium (0/6) + others
-      {
-        problem->rc5_unit_func = rc5_unit_func_p5;
-        #if defined(MMX_RC5)
-        if (ismmx)
-        { 
-          problem->rc5_unit_func = rc5_unit_func_p5_mmx;
-          problem->pipeline_count = 4; // RC5 MMX core is 4 pipelines
-        }
-        #endif
-        coresel = 0;
-      }
-    }
-    #elif (CLIENT_CPU == CPU_ALPHA)
-    {
-      #if (CLIENT_OS == OS_DEC_UNIX)
-      {
-        //rc5/alpha/rc5-digital-unix-alpha-ev[4|5].cpp
-        //xtern "C" u32 rc5_alpha_osf_ev4( RC5UnitWork *, u32 );
-        //xtern "C" u32 rc5_alpha_osf_ev5( RC5UnitWork *, u32 );
-        if (coresel == 1) /* EV5, EV56, PCA56, EV6 */
-        {
-          problem->pipeline_count = 2;
-          problem->rc5_unit_func = rc5_alpha_osf_ev5;
-        }
-        else // EV3_CPU, EV4_CPU, LCA4_CPU, EV45_CPU and default
-        {
-          problem->pipeline_count = 2;
-          #if defined(DEC_UNIX_CPU_SELECT)
-          problem->rc5_unit_func = rc5_alpha_osf_ev4; 
-          #else
-          problem->rc5_unit_func = rc5_alpha_osf_ev5; 
-          #endif
-          coresel = 0;
-        }
-      }
-      #elif (CLIENT_OS == OS_WIN32) /* little-endian asm */
-      {
-        //rc5/alpha/rc5-alpha-nt.s
-        //xtern "C" u32 rc5_unit_func_ntalpha_michmarc( RC5UnitWork *, u32 );
-        problem->rc5_unit_func = rc5_unit_func_ntalpha_michmarc;
-        problem->pipeline_count = 2;
-        coresel = 0;
-      }
-      #else
-      {
-        //axp-bmeyer.cpp around axp-bmeyer.s
-        //xtern "C" u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, u32 );
-        problem->rc5_unit_func = rc5_unit_func_axp_bmeyer;
-        problem->pipeline_count = 2;
-        coresel = 0;
-      }
-      #endif
-    }
-    #else
-    {
-      #error "How did you get here?"  
-    }
-    #endif
-    return coresel;
-  }
-  
-  /* ================================================================== */
-  
-  #ifdef HAVE_DES_CORES
-  if (contestid == DES)
-  {
-    #if (CLIENT_CPU == CPU_ARM)
-    {
-      //des/arm/des-arm-wrappers.cpp
-      //xtern u32 des_unit_func_slice_arm( RC5UnitWork * , u32 *, char * );
-      //xtern u32 des_unit_func_slice_strongarm( RC5UnitWork * , u32 *, char * );
-      if (coresel == 0)
-        problem->des_unit_func = des_unit_func_slice_arm;
-      else /* (coresel == 1, default) */
-      {
-        problem->des_unit_func = des_unit_func_slice_strongarm;
-        coresel = 1;
-      }
-    }
-    #elif (CLIENT_CPU == CPU_ALPHA) 
-    {
-      #if (CLIENT_OS == OS_DEC_UNIX) && defined(DEC_UNIX_CPU_SELECT)
-      {
-        //xtern u32 des_alpha_osf_ev4( RC5UnitWork * , u32 *, char * );
-        //xtern u32 des_alpha_osf_ev5( RC5UnitWork * , u32 *, char * );
-        if (coresel == 1) /* EV5, EV56, PCA56, EV6 */
-          problem->des_unit_func = des_alpha_osf_ev5;
-        else // EV3_CPU, EV4_CPU, LCA4_CPU, EV45_CPU and default
-          problem->des_unit_func = des_alpha_osf_ev4;
-      }
-      #else
-      {
-        //des/alpha/des-slice-dworz.cpp
-        //xtern u32 des_unit_func_slice_dworz( RC5UnitWork * , u32 *, char * );
-        problem->des_unit_func = des_unit_func_slice_dworz;
-      }
-      #endif
-    }
-    #elif (CLIENT_CPU == CPU_X86)
-    {
-      //xtern u32 p1des_unit_func_p5( RC5UnitWork * , u32 *, char * );
-      //xtern u32 p1des_unit_func_pro( RC5UnitWork * , u32 *, char * );
-      //xtern u32 p2des_unit_func_p5( RC5UnitWork * , u32 *, char * );
-      //xtern u32 p2des_unit_func_pro( RC5UnitWork * , u32 *, char * );
-      //xtern u32 des_unit_func_mmx( RC5UnitWork * , u32 *, char * );
-      //xtern u32 des_unit_func_slice( RC5UnitWork * , u32 *, char * );
-      u32 (*slicit)(RC5UnitWork *,u32 *,char *) = 
-                   ((u32 (*)(RC5UnitWork *,u32 *,char *))0);
-      #if defined(CLIENT_SUPPORTS_SMP)
-      slicit = des_unit_func_slice; //kwan
-      #endif
-      #if defined(MMX_BITSLICER) 
-      {
-        if (ismmx) 
-          slicit = des_unit_func_mmx;
-      }
-      #endif  
-      if (slicit && coresel > 1) /* not standard bryd and not ppro bryd */
-      {                /* coresel=2 is valid only if we have a slice core */
-        coresel = 2;
-        problem->des_unit_func = slicit;
-      }
-      else 
-      {
-        #if defined(CLIENT_SUPPORTS_SMP) 
-        // bryd is not thread safe, so make sure that when 
-        // running benchmark/test asychronously (ie from a gui), 
-        // we pick a core that isn't in use.
-        unsigned int thrindex = problem->threadindex;
-        if (thrindex == 0 && !problem->threadindex_is_valid)
-        { /* !threadindex_is_valid==not probman controlled==benchmark/test*/
-          while (GetProblemPointerFromIndex(thrindex))
-            thrindex++;
-        }
-        #endif
-        if (coresel == 1) /* movzx bryd */
-        {
-          problem->des_unit_func = p1des_unit_func_pro;
-          #if defined(CLIENT_SUPPORTS_SMP) 
-          if (thrindex > 0)  /* not first thread */
-          {
-            if (thrindex == 1)  /* second thread */
-              problem->des_unit_func = p2des_unit_func_pro;
-            else if (thrindex == 2) /* third thread */
-              problem->des_unit_func = p1des_unit_func_p5;
-            else if (thrindex == 3) /* fourth thread */
-              problem->des_unit_func = p2des_unit_func_p5;
-            else                    /* fifth...nth thread */
-              problem->des_unit_func = slicit;
-          }
-          #endif /* if defined(CLIENT_SUPPORTS_SMP)  */
-        }
-        else             /* normal bryd */
-        {
-          coresel = 0;
-          problem->des_unit_func = p1des_unit_func_p5;
-          #if defined(CLIENT_SUPPORTS_SMP) 
-          if (thrindex > 0)  /* not first thread */
-          {
-            if (thrindex == 1)  /* second thread */
-              problem->des_unit_func = p2des_unit_func_p5;
-            else if (thrindex == 2) /* third thread */
-              problem->des_unit_func = p1des_unit_func_pro;
-            else if (thrindex == 3) /* fourth thread */
-              problem->des_unit_func = p2des_unit_func_pro;
-            else                    /* fifth...nth thread */
-              problem->des_unit_func = slicit;
-          }
-          #endif /* if defined(CLIENT_SUPPORTS_SMP)  */
-        }
-      }
-    }
-    #elif defined(MEGGS)
-      //des/des-slice-meggs.cpp
-      //xtern u32 des_unit_func_meggs( RC5UnitWork *, u32 *iter, char *coremem);
-      problem->des_unit_func = des_unit_func_meggs;
-    #else
-      //all rvc based drivers (eg des/ultrasparc/des-slice-ultrasparc.cpp)
-      //xtern u32 des_unit_func_slice( RC5UnitWork *, u32 *iter, char *coremem);
-      problem->des_unit_func = des_unit_func_slice;
-    #endif
-    return coresel;
-  }
-  #endif /* #ifdef HAVE_DES_CORES */
-
-  /* ================================================================== */
-
-  #if defined(HAVE_OGR_CORES)
-  if (contestid == OGR)
-  {
-    return 0;
-  }
-  #endif
-
-  /* ================================================================== */
-
-  #ifdef HAVE_CSC_CORES
-  if( contestid == CSC ) // CSC
-  {
-    //xtern "C" s32 csc_unit_func_1k  ( RC5UnitWork *, u32 *iterations, void *membuff );
-    //xtern "C" s32 csc_unit_func_1k_i( RC5UnitWork *, u32 *iterations, void *membuff );
-    //xtern "C" s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *iterations, void *membuff );
-    //xtern "C" s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *iterations, void *membuff );
-    switch( coresel ) 
-    {
-      case 0 : problem->unit_func = csc_unit_func_6b_i;
-               break;
-      case 1 : problem->unit_func = csc_unit_func_6b;
-               #if (CLIENT_CPU == CPU_X86) && defined(MMX_CSC)
-               //6b-non-mmx isn't used (by default) on x86
-               if (ismmx) 
-                 problem->unit_func = csc_unit_func_6b_mmx;
-               #endif     
-               break;
-      default: coresel = 2;
-      case 2 : problem->unit_func = csc_unit_func_1k_i;
-               break;
-      case 3 : problem->unit_func = csc_unit_func_1k;
-               break;
-    }
-    return coresel;
-  }
-  #endif /* #ifdef HAVE_CSC_CORES */
-
-  /* ================================================================== */
-
-  return -1; /* core selection failed */
+Problem::~Problem()
+{
+  __problem_counter--;
+  initialized = started = 0;
 }
 
-/* ------------------------------------------------------------- */
+/* ------------------------------------------------------------------- */
 
-Problem::Problem(long _threadindex /* defaults to -1L */)
+Problem::Problem(void)
 {
-  threadindex_is_valid = (_threadindex!=-1L);
-  threadindex = ((threadindex_is_valid)?((unsigned int)_threadindex):(0));
-
-  /* this next part is essential for alpha, but is probably beneficial to
-     all platforms. If it fails for your os/cpu, we may need to redesign 
-     how objects are allocated/how rc5unitwork is addressed, so let me know.
-                                                       -cyp Jun 14 1999
-  */
-  
-  {
-    RC5UnitWork *w = &rc5unitwork;
-    unsigned long ww = ((unsigned long)w);
-  
-    #if (CLIENT_CPU == CPU_ALPHA) /* sizeof(long) can be either 4 or 8 */
-    ww &= 0x7; /* (sizeof(longword)-1); */
-    #else
-    ww &= (sizeof(int)-1); /* int alignment */
-    #endif        
-    if (ww) 
-    {
-      Log("rc5unitwork for problem %d is misaligned!\n", threadindex);
-      RaiseExitRequestTrigger();
-      return;
-    }  
-  }
-//LogScreen("Problem created. threadindex=%u\n",threadindex);
-
+  threadindex = __problem_counter++;
   initialized = 0;
   started = 0;
-  
+
+  {
+    unsigned int sz = sizeof(int);
+    if (sz < sizeof(u32)) /* need to do it this way to suppress compiler warnings. */
+    {
+      LogScreen("FATAL: sizeof(int) < sizeof(u32)\n");
+      //#error "everything assumes a 32bit CPU..."
+      RaiseExitRequestTrigger();
+      return;
+    }
+    else
+    {
+      /* 
+       this next part is essential for alpha, but is probably beneficial to
+       all platforms. If it fails for your os/cpu, we may need to redesign 
+       how objects are allocated/how rc5unitwork is addressed, so let me know.
+                                                         -cyp Jun 14 1999
+      */
+      RC5UnitWork *w = &rc5unitwork;
+      unsigned long ww = ((unsigned long)w);
+    
+      #if (CLIENT_CPU == CPU_ALPHA) /* sizeof(long) can be either 4 or 8 */
+      ww &= 0x7; /* (sizeof(longword)-1); */
+      #else
+      ww &= (sizeof(int)-1); /* int alignment */
+      #endif        
+      if (ww) 
+      {
+        Log("rc5unitwork for problem %d is misaligned!\n", threadindex);
+        RaiseExitRequestTrigger();
+        return;
+      }  
+    }
+  }
+
+//LogScreen("Problem created. threadindex=%u\n", threadindex);
+
   #ifdef STRESS_THREADS_AND_BUFFERS 
   {
     static int runlevel = 0;
@@ -733,24 +138,6 @@ Problem::Problem(long _threadindex /* defaults to -1L */)
 
 /* ------------------------------------------------------------------- */
 
-Problem::~Problem()
-{
-  started = 0; // nothing to do. - suppress compiler warning
-
-#if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
-  if (GetNumberOfDetectedProcessors() > 1 && /* have x86 card */
-      GetProblemIndexFromPointer(this) == 1)
-  {
-    _kernel_swi_regs r;
-    r.r[0] = 0;
-    _kernel_swi(RC5PC_RetriveBlock,&r,&r);
-    _kernel_swi(RC5PC_Off,&r,&r);
-  }
-#endif
-}
-
-/* ------------------------------------------------------------------- */
-
 // for some odd reasons, the RC5 algorithm requires keys in reversed order
 //         key.hi   key.lo
 // ie key 01234567:89ABCDEF is sent to rc5_unit_func like that :
@@ -764,17 +151,17 @@ Problem::~Problem()
 // Note that DES has a similiar but far more complex system, but everything
 // is handled by des_unit_func().
 
-static void  __SwitchRC5Format(struct fake_u64 *_key)                               
+static void  __SwitchRC5Format(u32 *hi, u32 *lo)
 {                                                                       
-    register u32 tempkeylo = _key->hi; /* note: we switch the order */  
-    register u32 tempkeyhi = _key->lo;                                  
+    register u32 tempkeylo = *hi; /* note: we switch the order */  
+    register u32 tempkeyhi = *lo;                                  
                                                                         
-    _key->lo =                                                          
+    *lo =                                                          
       ((tempkeylo >> 24) & 0x000000FFL) |                               
       ((tempkeylo >>  8) & 0x0000FF00L) |                               
       ((tempkeylo <<  8) & 0x00FF0000L) |                               
       ((tempkeylo << 24) & 0xFF000000L);                                
-    _key->hi =                                                          
+    *hi =                                                          
       ((tempkeyhi >> 24) & 0x000000FFL) |                               
       ((tempkeyhi >>  8) & 0x0000FF00L) |                               
       ((tempkeyhi <<  8) & 0x00FF0000L) |                               
@@ -789,20 +176,20 @@ static void  __SwitchRC5Format(struct fake_u64 *_key)
 //
 // Output: the key incremented
 
-static void __IncrementKey(struct fake_u64 *key, u32 iters, int contest)        
+static void __IncrementKey(u32 *keyhi, u32 *keylo, u32 iters, int contest)        
 {                                                                   
   switch (contest)                                                  
   {                                                                 
     case RC5:
-      __SwitchRC5Format (key);                                      
-      key->lo += iters;                                             
-      if (key->lo < iters) key->hi++;                               
-      __SwitchRC5Format (key);                                      
+      __SwitchRC5Format(keyhi,keylo);                                      
+      *keylo = *keylo + iters;                                             
+      if (*keylo < iters) *keyhi = *keyhi + 1;
+      __SwitchRC5Format (keyhi,keylo);                                      
       break;                                                        
     case DES:
     case CSC:
-      key->lo += iters;                                             
-      if (key->lo < iters) key->hi++; /* Account for carry */       
+      *keylo = *keylo + iters;                                             
+      if (*keylo < iters) *keyhi = *keyhi + 1; /* Account for carry */
       break;                                                        
     case OGR:
       /* This should never be called for OGR */                     
@@ -854,20 +241,10 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
 /* ------------------------------------------------------------------- */
 
 int Problem::LoadState( ContestWork * work, unsigned int contestid, 
-                              u32 _iterations, int /* was _cputype */ )
+              u32 _iterations, int expected_cputype, 
+              int expected_corenum, int expected_os,
+              int expected_buildfrac )
 {
-  unsigned int sz = sizeof(int);
-
-  if (sz < sizeof(u32)) /* need to do it this way to suppress compiler warnings. */
-  {
-    LogScreen("FATAL: sizeof(int) < sizeof(u32)\n");
-    //#error "everything assumes a 32bit CPU..."
-    RaiseExitRequestTrigger();
-    return -1;
-  }
-  if (!IsProblemLoadPermitted(threadindex, contestid))
-    return -1;
-
   last_resultcode = -1;
   started = initialized = 0;
   timehi = timelo = 0;
@@ -878,18 +255,31 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
   startpermille = permille = 0;
   loaderflags = 0;
   contest = contestid;
-  client_cpu = CLIENT_CPU; /* usual case */
   tslice = _iterations;
-  coresel = __core_picker(this, contestid );
-  if (coresel < 0 || 
-     (coresel > 0 && coresel != selcoreValidateCoreIndex(contestid, coresel)))
+  was_reset = 0;
+
+  if (!IsProblemLoadPermitted(threadindex, contestid))
     return -1;
 
+  client_cpu = CLIENT_CPU; /* usual case */
+  use_generic_proto = 0; /* assume RC5/DES unit_func is _not_ generic form */
+  cruncher_is_asynchronous = 0; /* not a co-processor */
+  memset( &unit_func, 0, sizeof(unit_func) );
+  coresel = selcoreSelectCore( contestid, threadindex, &client_cpu, this );
+  if (coresel < 0)
+    return -1;
+    
   //----------------------------------------------------------------
 
   switch (contest) 
   {
-    case RC5:
+    case RC5: 
+    if ((MINIMUM_ITERATIONS % pipeline_count) != 0)
+    {
+      LogScreen("(MINIMUM_ITERATIONS % pipeline_count) != 0)\n");
+      return -1;
+    }  
+    /* fallthrough */  
     #if defined(HAVE_DES_CORES)
     case DES:
     #endif
@@ -911,14 +301,37 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
       contestwork.crypto.iterations.hi = ( work->crypto.iterations.hi );
       contestwork.crypto.iterations.lo = ( work->crypto.iterations.lo );
 
+      if (contestwork.crypto.keysdone.lo || contestwork.crypto.keysdone.hi)
+      {
+        if (client_cpu != expected_cputype || coresel != expected_corenum ||
+            CLIENT_OS != expected_os || CLIENT_BUILD_FRAC!=expected_buildfrac)
+        { 
+          contestwork.crypto.keysdone.lo = contestwork.crypto.keysdone.hi = 0;
+          was_reset = 1;
+        }  
+      }
+
+      #if 0
+      //this next if is from original TimC post-load-from-disk code, but it
+      //doesn't look valid anymore
+      if (((wrdata.work.crypto.iterations.lo) & 0x00000001L) == 1)
+      {
+        // If packet was finished with an 'odd' number of keys done, 
+        // then make redo the last key
+        wrdata.work.crypto.iterations.lo = wrdata.work.crypto.iterations.lo & 0xFFFFFFFEL;
+        wrdata.work.crypto.key.lo = wrdata.work.crypto.key.lo & 0xFEFFFFFFL;
+      }
+      #endif
+
       //determine starting key number. accounts for carryover & highend of keysdone
       rc5unitwork.L0.hi = contestwork.crypto.key.hi + contestwork.crypto.keysdone.hi + 
          ((((contestwork.crypto.key.lo & 0xffff) + (contestwork.crypto.keysdone.lo & 0xffff)) + 
            ((contestwork.crypto.key.lo >> 16) + (contestwork.crypto.keysdone.lo >> 16))) >> 16);
       rc5unitwork.L0.lo = contestwork.crypto.key.lo + contestwork.crypto.keysdone.lo;
       if (contest == RC5)
-        __SwitchRC5Format (&(rc5unitwork.L0));
-      refL0 = rc5unitwork.L0;
+        __SwitchRC5Format(&(rc5unitwork.L0.hi), &(rc5unitwork.L0.lo));
+      refL0.lo = rc5unitwork.L0.lo;
+      refL0.hi = rc5unitwork.L0.hi;
 
       // set up the unitwork structure
       rc5unitwork.plain.hi = contestwork.crypto.plain.hi ^ contestwork.crypto.iv.hi;
@@ -940,8 +353,17 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
     case OGR:
     {
       contestwork.ogr = work->ogr;
-      contestwork.ogr.nodes.lo = 0;
-      contestwork.ogr.nodes.hi = 0;
+      if (contestwork.ogr.nodes.hi != 0 || contestwork.ogr.nodes.lo != 0)
+      {
+        if (client_cpu != expected_cputype || coresel != expected_corenum ||
+            CLIENT_OS != expected_os || CLIENT_BUILD_FRAC!=expected_buildfrac)
+        { 
+          was_reset = 1;
+          contestwork.ogr.workstub.worklength = contestwork.ogr.workstub.stub.length;
+          contestwork.ogr.nodes.hi = contestwork.work.ogr.nodes.lo = 0;
+        }  
+      }
+      extern CoreDispatchTable *ogr_get_dispatch_table();
       ogr = ogr_get_dispatch_table();
       int r = ogr->init();
       if (r != CORE_S_OK)
@@ -964,44 +386,6 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
   }
 
   //---------------------------------------------------------------
-#if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
-  if (threadindex == 1 &&                  /* reserved for x86 thread*/
-      GetNumberOfDetectedProcessors() > 1) /* have x86 card */
-  {
-    RC5PCstruct rc5pc;
-    _kernel_oserror *err;
-    _kernel_swi_regs r;
-  
-    rc5pc.key.hi = contestwork.key.hi;
-    rc5pc.key.lo = contestwork.key.lo;
-    rc5pc.iv.hi = contestwork.iv.hi;
-    rc5pc.iv.lo = contestwork.iv.lo;
-    rc5pc.plain.hi = contestwork.plain.hi;
-    rc5pc.plain.lo = contestwork.plain.lo;
-    rc5pc.cypher.hi = contestwork.cypher.hi;
-    rc5pc.cypher.lo = contestwork.cypher.lo;
-    rc5pc.keysdone.hi = contestwork.keysdone.hi;
-    rc5pc.keysdone.lo = contestwork.keysdone.lo;
-    rc5pc.iterations.hi = contestwork.iterations.hi;
-    rc5pc.iterations.lo = contestwork.iterations.lo;
-    rc5pc.timeslice = tslice;
-
-    client_cpu = CPU_X86;
- 
-    err = _kernel_swi(RC5PC_On,&r,&r);
-    if (err)
-      LogScreen("Failed to start x86 card");
-    else
-    {
-      r.r[1] = (int)&rc5pc;
-      err = _kernel_swi(RC5PC_AddBlock,&r,&r);
-      if ((err) || (r.r[0] == -1))
-      {
-        LogScreen("Failed to add block to x86 cruncher\n");
-      }
-    }
-  }
-#endif
 
   last_resultcode = RESULT_WORKING;
   initialized = 1;
@@ -1040,61 +424,120 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dop
 
 /* ------------------------------------------------------------- */
 
-int Problem::Run_RC5(u32 *iterationsP, int *resultcode)
+int Problem::Run_RC5(u32 *keyscheckedP /* count of ... */, int *resultcode)
 {
-  u32 kiter = 0;
-  u32 iterations = *iterationsP;
+  s32 rescode = -1;
 
-  // align the iterations to an even-multiple of pipeline_count and 2 
-  u32 alignfact = pipeline_count + (pipeline_count & 1);
-  iterations = ((iterations + (alignfact - 1)) & ~(alignfact - 1));
-
-  // don't allow a too large of a iterations be used ie (>(iter-keysdone)) 
-  // (technically not necessary, but may save some wasted time)
-  if (contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi)
+  /* a brace to ensure 'keystocheck' is not referenced in the common part */
   {
-    u32 todo = contestwork.crypto.iterations.lo-contestwork.crypto.keysdone.lo;
-    if (todo < iterations)
+    u32 keystocheck = *keyscheckedP;
+    // don't allow a too large of a keystocheck be used ie (>(iter-keysdone)) 
+    // (technically not necessary, but may save some wasted time)
+    if (contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi)
     {
-      iterations = todo;
-      iterations = ((iterations + (alignfact - 1)) & ~(alignfact - 1));
+      u32 todo = contestwork.crypto.iterations.lo-contestwork.crypto.keysdone.lo;
+      if (todo < keystocheck)
+        keystocheck = todo;
     }
-  }
 
-#if 0
-LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
-          "suggested iterations: %lu (0x%lx)\n"
-          "pipeline_count = %lu, iterations%%pipeline_count = %lu\n", 
-          (unsigned long)iterations, (unsigned long)(*iterationsP),
-          (unsigned long)tslice, (unsigned long)tslice,
-          pipeline_count, iterations%pipeline_count );
-#endif
+    if (keystocheck < MINIMUM_ITERATIONS)
+      keystocheck = MINIMUM_ITERATIONS;
+    else if ((keystocheck % MINIMUM_ITERATIONS) != 0)
+      keystocheck += (MINIMUM_ITERATIONS - (keystocheck % MINIMUM_ITERATIONS));
 
-  kiter = (*rc5_unit_func)(&rc5unitwork, iterations/pipeline_count );
-  *iterationsP = iterations;
-
-  __IncrementKey (&refL0, iterations, contest);
-    // Increment reference key count
-
-  if (((refL0.hi != rc5unitwork.L0.hi) ||  // Compare ref to core
-      (refL0.lo != rc5unitwork.L0.lo)) &&  // key incrementation
-      (kiter == iterations))
-  {
-    #if 0 /* can you spell "thread safe"? */
-    Log("Internal Client Error #23: Please contact help@distributed.net\n"
-        "Debug Information: %08x:%08x - %08x:%08x\n",
-        rc5unitwork.L0.hi, rc5unitwork.L0.lo, refL0.hi, refL0.lo);
+    #if 0
+    LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
+              "suggested iterations: %lu (0x%lx)\n"
+              "pipeline_count = %lu, iterations%%pipeline_count = %lu\n", 
+              (unsigned long)keystocheck, (unsigned long)keystocheck,
+              (unsigned long)(*keyscheckedP), (unsigned long)(*keyscheckedP),
+              pipeline_count, keystocheck%pipeline_count );
     #endif
+
+    if (use_generic_proto)
+    {
+      //we don't care about pipeline_count when using unified cores. 
+      //we _do_ need to care that the keystocheck and starting key are aligned.
+
+      *keyscheckedP = keystocheck; /* Pass 'keystocheck', get back 'keyschecked'*/
+      rescode = (*(unit_func.gen))(&rc5unitwork,keyscheckedP,core_membuffer);
+
+      if (rescode >= 0 && cruncher_is_asynchronous) /* co-processor or similar */
+      {
+        keystocheck = *keyscheckedP; /* always so */
+        /* how this works:
+         - for RESULT_FOUND, we don't need to do anything, since keyscheckedP 
+           has the real count of iters done. If we were still using old style
+           method of determining RESULT_FOUND by (keyscheckedP < keystocheck), 
+           then we would simply need to set 'keystocheck = 1 + *keyscheckedP'
+           to make it greater.
+         - for RESULT_NOTHING/RESULT_WORKING
+           unlike normal cores, where RESULT_NOTHING and RESULT_WORKING
+           are synonymous (RESULT_NOTHING from the core's perspective ==
+           RESULT_WORKING from the client's perspective), async cores tell 
+           us which-is-which through the keyscheckedP pointer. As long as 
+           they are _WORKING, the *keyscheckedP (ie iterations_done) will be 
+           zero. (And of course, incrementations checks will pass as long
+           as iterations_done is zero :).
+        */
+        //(these next 3 lines are quite useless, since the actual state
+        //is set lower down, but leave them in anyway to show how it works)
+        //remember: keystocheck has already been set equal to *keyscheckedP
+        if (rescode != RESULT_FOUND) /* RESULT_NOTHING/RESULT_WORKING */
+        {
+          rescode = *resultcode = RESULT_NOTHING; //assume we know something
+          if (*keyscheckedP == 0)  /* still working */
+            rescode = *resultcode = RESULT_WORKING;
+        }  
+      }
+    }
+    else /* old style */
+    {  
+      *keyscheckedP = (*(unit_func.rc5))(&rc5unitwork,(keystocheck/pipeline_count));
+      //don't use the next few lines as a guide for conversion to unified
+      //prototypes!  look at the end of rc5/ansi/rc5ansi_2-rg.cpp instead.
+      if (*keyscheckedP < keystocheck)
+        rescode = RESULT_FOUND;
+      else if (*keyscheckedP == keystocheck)
+        rescode = RESULT_WORKING; /* synonymous with RESULT_NOTHING */
+      else 
+        rescode = -1;  
+    }
+  } /* brace to ensure that 'keystocheck' is not referenced beyond here */
+  /* -- the code from here on down is identical to that of CSC -- */
+
+  if (rescode < 0) /* "kiter" error */
+  {
+    *resultcode = -1;
+    return -1;
+  }
+  *resultcode = (int)rescode;
+
+  // Increment reference key count
+  __IncrementKey(&refL0.hi, &refL0.lo, *keyscheckedP, contest);
+
+  // Compare ref to core key incrementation
+  if (((refL0.hi != rc5unitwork.L0.hi) || (refL0.lo != rc5unitwork.L0.lo))
+      && (*resultcode != RESULT_FOUND) )
+  {
+    if (contestwork.crypto.iterations.hi == 0 &&
+        contestwork.crypto.iterations.lo == 0x20000) /* test case */
+    {
+      Log("RC5 incrementation mismatch:\n"
+          "Debug Information: %08x:%08x - %08x:%08x\n",
+          rc5unitwork.L0.hi, rc5unitwork.L0.lo, refL0.hi, refL0.lo);
+    }      
     *resultcode = -1;
     return -1;
   };
 
-  contestwork.crypto.keysdone.lo += kiter;
-  if (contestwork.crypto.keysdone.lo < kiter)
+  // Checks passed, increment keys done count.
+  contestwork.crypto.keysdone.lo += *keyscheckedP;
+  if (contestwork.crypto.keysdone.lo < *keyscheckedP)
     contestwork.crypto.keysdone.hi++;
-    // Checks passed, increment keys done count.
 
-  if (kiter < iterations)
+  // Update data returned to caller
+  if (*resultcode == RESULT_FOUND)  //(*keyscheckedP < keystocheck)
   {
     // found it!
     u32 keylo = contestwork.crypto.key.lo;
@@ -1102,20 +545,8 @@ LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
     contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
     if (contestwork.crypto.key.lo < keylo) 
       contestwork.crypto.key.hi++; // wrap occured ?
-    *resultcode = RESULT_FOUND;
     return RESULT_FOUND;
   }
-  else if (kiter != iterations)
-  {
-    #if 0 /* can you spell "thread safe"? */
-    Log("Internal Client Error #24: Please contact help@distributed.net\n"
-        "Debug Information: k: %x t: %x\n"
-        "Debug Information: %08x:%08x - %08x:%08x\n", kiter, iterations,
-        rc5unitwork.L0.lo, rc5unitwork.L0.hi, refL0.lo, refL0.hi);
-    #endif
-    *resultcode = -1;
-    return -1;
-  };
 
   if ( ( contestwork.crypto.keysdone.hi > contestwork.crypto.iterations.hi ) ||
        ( ( contestwork.crypto.keysdone.hi == contestwork.crypto.iterations.hi ) &&
@@ -1125,7 +556,6 @@ LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
     *resultcode = RESULT_NOTHING;
     return RESULT_NOTHING;
   }
-
   // more to do, come back later.
   *resultcode = RESULT_WORKING;
   return RESULT_WORKING;    // Done with this round
@@ -1140,7 +570,7 @@ int Problem::Run_CSC(u32 *iterationsP, int *resultcode)
   *resultcode = -1;
   return -1;
 #else  
-  s32 rescode = (*unit_func)( &rc5unitwork, iterationsP, core_membuffer );
+  s32 rescode = (*(unit_func.gen))( &rc5unitwork, iterationsP, core_membuffer );
 
   if (rescode < 0) /* "kiter" error */
   {
@@ -1150,16 +580,18 @@ int Problem::Run_CSC(u32 *iterationsP, int *resultcode)
   *resultcode = (int)rescode;
 
   // Increment reference key count
-  __IncrementKey (&refL0, *iterationsP, contest);
+  __IncrementKey (&refL0.hi, &refL0.lo, *iterationsP, contest);
 
   // Compare ref to core key incrementation
   if ((refL0.hi != rc5unitwork.L0.hi) || (refL0.lo != rc5unitwork.L0.lo))
   { 
-    #ifdef DEBUG_CSC_CORE /* can you spell "thread safe"? */
-    Log("CSC incrementation mismatch:\n"
-        "expected %08x:%08x, got %08x:%08x\n",
-        refL0.lo, refL0.hi, rc5unitwork.L0.lo, rc5unitwork.L0.hi );
-    #endif
+    if (contestwork.crypto.iterations.hi == 0 &&
+        contestwork.crypto.iterations.lo == 0x20000) /* test case */
+    {
+      Log("CSC incrementation mismatch:\n"
+          "expected %08x:%08x, got %08x:%08x\n",
+          refL0.lo, refL0.hi, rc5unitwork.L0.lo, rc5unitwork.L0.hi );
+    }
     *resultcode = -1;
     return -1;
   }
@@ -1204,9 +636,9 @@ int Problem::Run_DES(u32 *iterationsP, int *resultcode)
 #else
 
   //iterationsP == in: suggested iterations, out: effective iterations
-  u32 kiter = (*des_unit_func)( &rc5unitwork, iterationsP, core_membuffer );
+  u32 kiter = (*(unit_func.des))( &rc5unitwork, iterationsP, core_membuffer );
 
-  __IncrementKey (&refL0, *iterationsP, contest);
+  __IncrementKey ( &refL0.hi, &refL0.lo, *iterationsP, contest);
   // Increment reference key count
 
   if (((refL0.hi != rc5unitwork.L0.hi) ||  // Compare ref to core
@@ -1328,8 +760,8 @@ int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
 
 int Problem::Run(void) /* returns RESULT_*  or -1 */
 {
-  int using_ptime;
-  struct timeval stop, start, pstart;
+  static volatile int using_ptime = -1;
+  struct timeval stop, start, pstart, clock_stop;
   int retcode, core_resultcode;
   u32 iterations;
 
@@ -1340,9 +772,11 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
     return ( last_resultcode );
 
   CliClock(&start);
-  using_ptime = 1;
-  if (CliGetProcessTime(&pstart) < 0)
-    using_ptime = 0;
+  if (using_ptime)
+  {
+    if (CliGetProcessTime(&pstart) < 0)
+      using_ptime = 0;
+  }      
     
   if (!started)
   {
@@ -1408,9 +842,23 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   core_run_count++;
   if (using_ptime)
   {
+    //Warning for GetProcessTime(): if the OSs thread model is ala SunOS's LWP,
+    //ie, threads don't get their own pid, then GetProcessTime() functionality 
+    //is limited to single thread/benchmark/test only (the way it is now),
+    //otherwise it will be return process time for all threads. 
+    //This is asserted below too.
     if (CliGetProcessTime(&stop) < 0)
       using_ptime = 0;
-    else 
+    else if (using_ptime < 0)
+    {
+      CliClock(&clock_stop);
+      if (((clock_stop.tv_sec < stop.tv_sec) ||
+        (clock_stop.tv_sec==stop.tv_sec) && clock_stop.tv_usec<stop.tv_usec))
+        using_ptime = 0; /* clock time can never be less than process time */
+      else
+        using_ptime = 1;
+    }
+    if (using_ptime)
     {
       start.tv_sec = pstart.tv_sec;
       start.tv_usec = pstart.tv_usec;
@@ -1418,7 +866,6 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   }
   if (!using_ptime || core_resultcode != RESULT_WORKING )
   {
-    struct timeval clock_stop;
     CliClock(&clock_stop);
     if (!using_ptime)
     {
@@ -1480,6 +927,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
      GetNumberOfDetectedProcessors() > 1) /* have x86 card */
     return 0;
   #endif
+  
   switch (contest_i)
   {
     case RC5: 
@@ -1513,3 +961,4 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
   }
   return 0;
 }
+
