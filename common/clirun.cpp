@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.85 1999/04/09 13:31:58 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.86 1999/04/11 00:16:59 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -229,7 +229,7 @@ static void yield_pump( void *tv_p )
 
   // used in conjunction with non-threaded go_mt
   if (tv_p)
-    {
+  {
     if (runstatics.nonmt_ran)
       pumps_without_run = 0;
     #ifdef NON_PREEMPTIVE_OS_PROFILING
@@ -262,20 +262,20 @@ unsigned long fixup_timeslice( unsigned long tslice, int contest )
   if (contest == 0)
     tslice = (tslice + 0x0E) & 0x0FFFFFFF0L;
   else
-    {
+  {
     unsigned long n, i = 0;
     for (n = (1<<31); n > 0; n>>=1 )
-      {
+    {
       if ((tslice & n) != 0)
-        {
+      {
         i = n;
         break;
-        }
       }
+    }
     if (i < 0x80)
       i = 0x80;
     tslice = i;
-    }
+  }
   return tslice;
 }
 
@@ -293,21 +293,21 @@ unsigned long do_ts_profiling( unsigned long tslice, int contest, int threadnum 
   CliTimer(&tvnow);
 
   if (reset_profiling_flag)
-    {
+  {
     tvstop.tv_sec = 0;
     tvstop.tv_usec = 0;
-    }
+  }
   if (tvstop.tv_sec == 0 && tvstop.tv_usec == 0)
-    {
+  {
     if (( tslice_table[0] = tslice_lkg[0] ) == 0 )
       tslice_table[0] = INITIAL_TIMESLICE_RC5;
     if (( tslice_table[1] = tslice_lkg[1] ) == 0 )
       tslice_table[1] = INITIAL_TIMESLICE_DES;
-    }
+  }
   else if (( tvnow.tv_sec > tvstop.tv_sec ) ||
        (( tvnow.tv_sec == tvstop.tv_sec ) &&
         ( tvnow.tv_usec >= tvstop.tv_usec )))
-    {
+  {
     tvstop.tv_sec = tvnow.tv_sec;  /* the time we really stopped */
     tvstop.tv_usec = tvnow.tv_usec;
 
@@ -316,15 +316,15 @@ unsigned long do_ts_profiling( unsigned long tslice, int contest, int threadnum 
     unsigned long usecs = (tvstop.tv_sec - tvstart.tv_sec) * 1000000L;
 
     if (tvstop.tv_usec < tvstart.tv_usec)
-      {
+    {
       if (usecs) /* ie >= 1000000L */
-        {
+      {
         tvstop.tv_usec += 1000000L;
         usecs -= 1000000L;
-        }
+      }
       else                                /* timer is running backwards */
         tvstop.tv_usec = tvstart.tv_usec; /* let usecs = 0, and let % fail */
-      }
+    }
     usecs += (tvstop.tv_usec - tvstart.tv_usec);
 
     if (usecs) /* will also be zero if running backwards */
@@ -339,18 +339,18 @@ fflush(stdout);
 #endif
 
     if (!perc)
-      {
+    {
       /* nothing - data is unreliable (user pressed ^S or something) */
-      }
+    }
     else if (hgrain_run_count == 0) /* badly lagging or timer bad */
-      {
+    {
       if (((fubared_run_count++) & 0xFF ) == 1)
         Log("Running inefficiently. Timer is possibly bad.\n");
       tslice_table[0] = MIN_SANE_TIMESLICE_RC5;
       tslice_table[1] = MIN_SANE_TIMESLICE_DES;
-      }
+    }
     else if (hgrain_run_count < (MIN_RUNS_PER_TIME_GRAIN * 100))
-      {                             /* so decrease timeslice */
+    {                             /* so decrease timeslice */
       unsigned long under_par =
         ((MIN_RUNS_PER_TIME_GRAIN * 100) - hgrain_run_count) / 100;
 
@@ -358,19 +358,19 @@ fflush(stdout);
       goodrun_count = 0;
 
       if (under_par)  /* change is large enough to warrant adjustement */
-        {
+      {
         underrun_count++;
         if (under_par == MIN_RUNS_PER_TIME_GRAIN)
-          {
+        {
 #ifdef DEBUG
       printf("under_par: divide by 0!\n");
 #endif
           under_par--;
-          }
+        }
         ts = (totalslice_table[0]/runstatics.yield_run_count)/
                                     (MIN_RUNS_PER_TIME_GRAIN-under_par);
         if (tslice_table[0] > ts)
-          {
+        {
           tslice_table[0] -= ts;
 #ifdef DEBUG
 printf("-%lu=> ", ts );
@@ -380,22 +380,22 @@ printf("-%lu=> ", ts );
           else if ((underrun_count < 3) && tslice_lkg[0] &&
                                        (tslice_lkg[0] > tslice_table[0]))
             tslice_table[0] = tslice_lkg[0];
-          }
+        }
         ts = (totalslice_table[1]/runstatics.yield_run_count)/
                                     (MIN_RUNS_PER_TIME_GRAIN-under_par);
         if (tslice_table[1] > ts)
-          {
+        {
           tslice_table[1] -= ts;
           if (tslice_table[1] < MIN_SANE_TIMESLICE_DES)
             tslice_table[1] = MIN_SANE_TIMESLICE_DES;
           else if ((underrun_count < 3) && tslice_lkg[1] &&
                                        (tslice_lkg[1] > tslice_table[1]))
             tslice_table[1] = tslice_lkg[1];
-          }
         }
       }
+    }
     else if (hgrain_run_count > (MAX_RUNS_PER_TIME_GRAIN * 100))
-      {                             /* so increase timeslice */
+    {                             /* so increase timeslice */
       unsigned long over_par =
         (hgrain_run_count - (MAX_RUNS_PER_TIME_GRAIN * 100)) / 100;
 
@@ -404,15 +404,15 @@ printf("-%lu=> ", ts );
       goodrun_count = 0;
 
       if (over_par) /* don't do micro adjustments */
-        {
+      {
         ts = tslice_table[0];
         if (over_par ==  MAX_RUNS_PER_TIME_GRAIN)
-          {
+        {
 #ifdef DEBUG
           printf("over_par: divide by 0!\n");
 #endif
           over_par++;
-          }
+        }
         tslice_table[0] += (totalslice_table[0]/runstatics.yield_run_count)/
                                      (over_par-MAX_RUNS_PER_TIME_GRAIN);
 #ifdef DEBUG
@@ -430,10 +430,10 @@ printf("+%u=> ", tslice_table[0]-ts );
           tslice_table[1] = MAX_SANE_TIMESLICE_DES;
         else if ( tslice_table[1] < tslice_lkg[1])
           tslice_table[1] = tslice_lkg[1];
-        }
       }
+    }
     else
-      {
+    {
       fubared_run_count = 0;
       underrun_count = 0;
 
@@ -443,29 +443,29 @@ printf("+%u=> ", tslice_table[0]-ts );
         tslice_lkg[0] = ts;
         if ( tslice_lkg[0] < MIN_SANE_TIMESLICE_RC5 )
           tslice_lkg[0] =  MIN_SANE_TIMESLICE_RC5;
-        }
+      }
       tslice_table[0] = tslice_lkg[0] + ((tslice_lkg[0]/10) * goodrun_count);
       ts = (totalslice_table[1]/runstatics.yield_run_count);
       if (ts > tslice_lkg[1])
-        {
+      {
         tslice_lkg[1] = ts;
         if ( tslice_lkg[1] < MIN_SANE_TIMESLICE_DES )
           tslice_lkg[0] =  MIN_SANE_TIMESLICE_DES;
-        }
+      }
       tslice_table[1] = tslice_lkg[1] + ((tslice_lkg[1]/10) * goodrun_count);
       goodrun_count++;
 #ifdef DEBUG
 printf("+-0=> " );
 #endif
-      }
+    }
     tvstop.tv_sec = 0;
     tvstop.tv_usec = 0;
 #ifdef DEBUG
 printf("%u\n", tslice_table[contest] );
 #endif
-    }
+  }
   if (tvstop.tv_sec == 0 && tvstop.tv_usec == 0)
-    {
+  {
     totalslice_table[0] = threadnum; /* dummy code to use up the variable */
     totalslice_table[0] = 0;
     totalslice_table[1] = 0;
@@ -474,19 +474,19 @@ printf("%u\n", tslice_table[contest] );
 
     tvstop.tv_usec += TIMER_GRANULARITY;
     if (tvstop.tv_usec >= 1000000L)
-      {
+    {
       tvstop.tv_sec += tvstop.tv_usec/1000000L;
       tvstop.tv_usec %= 1000000L;
-      }
+    }
     runstatics.yield_run_count = 0;
     reset_profiling_flag = 0;
-    }
+  }
 
   if (tslice != tslice_table[contest])
-    {
+  {
     tslice_table[contest] = fixup_timeslice( tslice_table[contest], contest );
     tslice = tslice_table[contest];
-    }
+  }
   totalslice_table[contest]+=tslice;
 
   #if (CLIENT_OS == OS_NETWARE)
@@ -568,32 +568,34 @@ if (targ->realthread)
 
   while (!CheckExitRequestTriggerNoIO())
   {
-    int run = -1; /* assume didn't run */
+    int didwork = 0; /* did we work? */
     if (targ->do_refresh)
       thisprob = GetProblemPointerFromIndex(threadnum);
-    if (thisprob == NULL || CheckPauseRequestTriggerNoIO() || targ->do_suspend)
+    if (thisprob == NULL || targ->do_suspend || CheckPauseRequestTriggerNoIO())
     {
 //printf("run: isnull? %08x, ispausereq? %d, issusp? %d\n", thisprob, CheckPauseRequestTriggerNoIO(), targ->do_suspend);
       if (thisprob == NULL)  // this is a bad condition, and should not happen
         runstatics.refillneeded = 1;// ..., ie more threads than problems
-      #if (CLIENT_OS == OS_MACOS)
-        if (targ->realthread)
-          mp_sleep(1);     // Mac needs special sleep call in MP threads
-        else
-          NonPolledSleep(1); // don't race in this loop
-      #else
-        NonPolledSleep(1); // don't race in this loop
-      #endif
+      if (targ->realthread)
+      {
+        #if (CLIENT_OS == OS_MACOS)
+           mp_sleep(1);     // Mac needs special sleep call in MP threads
+        #else
+           NonPolledSleep(1); // don't race in this loop
+        #endif
+      }
     }
     else if (!thisprob->IsInitialized())
     {
 //printf("run: not initialized\n");
       runstatics.refillneeded = 1;
-      yield_pump(NULL);
+      if (targ->realthread)
+        yield_pump(NULL);
     }
     else
     {
 //printf("run: doing run\n");
+      int run; u32 last_count;
       #ifdef NON_PREEMPTIVE_OS_PROFILING
       thisprob->tslice = do_ts_profiling( thisprob->tslice,
                           thisprob->contest, threadnum );
@@ -602,16 +604,20 @@ if (targ->realthread)
       thisprob->tslice = GetTimesliceToUse(thisprob->contest);
       #endif
 
+      last_count = thisprob->core_run_count; 
       targ->is_suspended = 0;
       run = thisprob->Run();
       targ->is_suspended = 1;
+      didwork = 1;
       if (run != RESULT_WORKING)
       {
         runstatics.refillneeded = 1;
-        yield_pump(NULL);
+        didwork = (last_count != thisprob->core_run_count);
+        if (!didwork && targ->realthread)
+          yield_pump(NULL);
       }
     }
-    if (run != RESULT_WORKING)
+    if (!didwork)
     {
       #ifdef NON_PREEMPTIVE_OS_PROFILING
       reset_ts_profiling();
@@ -622,7 +628,7 @@ if (targ->realthread)
     {
 //printf("run: rereg'd\n");    
       RegPolledProcedure( (void (*)(void *))Go_mt, parm, NULL, 0 );
-      runstatics.nonmt_ran = 1;
+      runstatics.nonmt_ran = didwork;
       break;
     }
   }
@@ -668,7 +674,7 @@ static int __StopThread( struct thread_param_block *thrparams )
         #elif (CLIENT_OS == OS_NETWARE)
         while (thrparams->threadID) delay(100);
         #elif (CLIENT_OS == OS_MACOS)
-	#error use while (thrparams->threadID) tick_sleep(60); here
+        #error use while (thrparams->threadID) tick_sleep(60); here
         while (ThreadIsDone[thrparams->threadnum] == 0) tick_sleep(60);
         #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
         pthread_join( thrparams->threadID, (void **)NULL);
@@ -754,8 +760,8 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
 
         thrparams->threadID = new_threadid;
         #if defined(MAC_GUI)
-	#error please change this to use event posted in the if (success) section below
-	#error CalcPercent() and GetKeysdone() may return unexpected results
+        #error please change this to use event posted in the if (success) section below
+        #error CalcPercent() and GetKeysdone() may return unexpected results
         if (success)
         {
           Problem *thisprob;
@@ -805,8 +811,8 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       ClientEventSyncPost( CLIEVENT_CLIENT_THREADSTARTED, (long)thread_i );
       #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
       {
-	#error please change this to use event posted in the if (success) section above
-	#error CalcPercent() and GetKeysdone() may return unexpected results
+        #error please change this to use event posted in the if (success) section above
+        #error CalcPercent() and GetKeysdone() may return unexpected results
         Problem *thisprob;
         thisprob = GetProblemPointerFromIndex( 0 );
         MakeGUIThread(thisprob->contest, 0);
@@ -1260,21 +1266,29 @@ int Client::Run( void )
     {
       if (timeRun > timeNextCheckpoint)
       {
-        unsigned long total_percent_now = 0;
+        unsigned long perc_now = 0;
+        unsigned int probs_counted = 0;
         for ( prob_i = 0 ; prob_i < load_problem_count ; prob_i++)
         {
           Problem *thisprob = GetProblemPointerFromIndex(prob_i);
           if ( thisprob )
-            total_percent_now += ((thisprob->CalcPermille() + 5)/10);
+          {
+            perc_now += ((thisprob->CalcPermille() + 5)/10);
+            probs_counted++;
+          }
         }
-        prob_i = checkpointsPercent;
-        checkpointsPercent = (total_percent_now/load_problem_count);
+        perc_now /= probs_counted;
 
-        if ( abs((int)(checkpointsPercent - prob_i)) >= CHECKPOINT_FREQ_PERCDIFF )
+//LogScreen("ckpoint refresh check. %d%% dif\n", 
+//                           abs((int)(checkpointsPercent - ((int)perc_now))));
+        if ( abs((int)(checkpointsPercent - ((unsigned int)perc_now))) 
+                                                >= CHECKPOINT_FREQ_PERCDIFF )
         {
+          checkpointsPercent = (unsigned int)perc_now;
           if (CheckpointAction( CHECKPOINT_REFRESH, load_problem_count ))
             checkpointsDisabled = 1;
           timeNextCheckpoint = timeRun + (time_t)(CHECKPOINT_FREQ_SECSDIFF);
+//LogScreen("next refresh in %u secs\n", CHECKPOINT_FREQ_SECSDIFF);
         }
       }
     }
