@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.48  1998/12/09 07:31:38  dicamillo
+// Added support for MacOS client scheduling, MP API, and GUI display.
+//
 // Revision 1.47  1998/12/04 16:56:27  cyp
 // Enforced crunching on threads for OS/2. Also added priority boosting when
 // shutting threads down.
@@ -180,7 +183,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.47 1998/12/04 16:56:27 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.48 1998/12/09 07:31:38 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -337,20 +340,10 @@ struct thread_param_block
   #define MIN_SANE_TIMESLICE_DES    256
   #define MAX_SANE_TIMESLICE_RC5   1048576
   #define MAX_SANE_TIMESLICE_DES   1048576
+#elif (CLIENT_OS == OS_MACOS)
+  #undef NON_PREEMPTIVE_OS_PROFILING
 //  #error "Please check timer granularity and timeslice constants"
 //  #undef NON_PREEMPTIVE_OS_PROFILING  //or undef to do your own profiling
-#elif (CLIENT_OS == OS_MACOS)
-  #define TIMER_GRANULARITY       125000
-  #define MIN_RUNS_PER_TIME_GRAIN     12
-  #define MAX_RUNS_PER_TIME_GRAIN     50
-  #define INITIAL_TIMESLICE_RC5      128
-  #define INITIAL_TIMESLICE_DES      256
-  #define MIN_SANE_TIMESLICE_RC5     128
-  #define MIN_SANE_TIMESLICE_DES     256
-  #define MAX_SANE_TIMESLICE_RC5   16384
-  #define MAX_SANE_TIMESLICE_DES   16384
-  //#error "Please check timer granularity and timeslice constants"
-  #undef NON_PREEMPTIVE_OS_PROFILING  //or undef to do your own profiling
 #else
   #error "Unknown OS. Please check timer granularity and timeslice constants"
   #undef NON_PREEMPTIVE_OS_PROFILING  //or undef to do your own profiling
@@ -362,9 +355,6 @@ struct thread_param_block
 
 static void yield_pump( void *tv_p )
 {
-  #if (CLIENT_OS == OS_MACOS)
-    EventRecord event;
-  #endif
   static int pumps_without_run = 0;
   runstatics.yield_run_count++;
 
@@ -394,7 +384,11 @@ static void yield_pump( void *tv_p )
     NonPolledUSleep( 0 ); /* yield */
     #endif
   #elif (CLIENT_OS == OS_MACOS)
-    WaitNextEvent( everyEvent, &event, 0, nil );
+    // Mac non-MP code yields in problem.cpp because it needs
+    // to know the contest
+    // MP code yields here because it can do only pure computing
+    // (no toolbox or mixed-mode calls)
+    if (MP_active) tick_sleep(60);	// is this optimal?
   #elif (CLIENT_OS == OS_BEOS)
     NonPolledUSleep( 0 ); /* yield */
   #else
@@ -673,7 +667,11 @@ printf("%u\n", tslice_table[contest] );
 
 // ----------------------------------------------------------------------
 
-void Go_mt( void * parm )
+#if ((CLIENT_OS == OS_MACOS) && defined(MULTITHREAD))
+  OSStatus Go_mt( void * parm )
+#else
+  void Go_mt( void * parm )
+#endif
 {
   struct thread_param_block *targ = (thread_param_block *)parm;
   Problem *thisprob = NULL;
@@ -713,6 +711,12 @@ if (targ->realthread)
   }
 #elif (CLIENT_OS == OS_OS2)
 #elif (CLIENT_OS == OS_BEOS)
+#elif ((CLIENT_OS == OS_MACOS) && defined(MULTITHREAD))
+  if (targ->realthread) {
+    MPEnterCriticalRegion(MP_count_region, kDurationForever);
+    MP_active++;
+    MPExitCriticalRegion(MP_count_region);
+  }
 #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
 if (targ->realthread)
   {
@@ -744,6 +748,9 @@ if (targ->realthread)
       thisprob->tslice = do_ts_profiling( thisprob->tslice, 
                           thisprob->contest, threadnum );
       #endif
+      #if (CLIENT_OS == OS_MACOS)
+	    thisprob->tslice = GetTimesliceToUse(thisprob->contest);
+      #endif
 
       targ->is_suspended = 0;
       // This will return without doing anything if uninitialized...
@@ -764,7 +771,16 @@ if (targ->realthread)
       else //(CheckPauseRequestTriggerNoIO() || targ->do_suspend)
         {
         //if (targ->realthread)
-          NonPolledSleep(1); // don't race in this loop
+          #if ((CLIENT_OS == OS_MACOS) && defined(MULTITHREAD))
+		    if (targ->realthread) {
+		      mp_sleep(1);		 // Mac needs special sleep call in MP threads
+		    }
+		    else {
+              NonPolledSleep(1); // don't race in this loop
+		    }
+          #else
+            NonPolledSleep(1); // don't race in this loop
+		  #endif
         }
       #ifdef NON_PREEMPTIVE_OS_PROFILING
       reset_ts_profiling();
@@ -773,7 +789,11 @@ if (targ->realthread)
       }
     if (!targ->realthread)
       {
-      RegPolledProcedure( Go_mt, parm, NULL, 0 );
+	  #if (CLIENT_OS == OS_MACOS)
+        RegPolledProcedure( (void (*)(void *))Go_mt, parm, NULL, 0 );
+	  #else
+        RegPolledProcedure( Go_mt, parm, NULL, 0 );
+	  #endif
       runstatics.nonmt_ran = 1;
       break;
       }
@@ -784,6 +804,16 @@ if (targ->realthread)
   #if (CLIENT_OS == OS_BEOS)
   if (targ->realthread)
     exit(0);
+  #endif
+
+  #if ((CLIENT_OS == OS_MACOS) && defined(MULTITHREAD))
+    if (targ->realthread) {
+      ThreadIsDone[threadnum] = 1;
+      MPEnterCriticalRegion(MP_count_region, kDurationForever);
+      MP_active--;
+      MPExitCriticalRegion(MP_count_region);
+    }
+	return(noErr);
   #endif
 }
 
@@ -811,6 +841,10 @@ static int __StopThread( struct thread_param_block *thrparams )
         wait_for_thread(thrparams->threadID, &be_exit_value);
         #elif (CLIENT_OS == OS_NETWARE)
         nwCliWaitForThreadExit( thrparams->threadID ); //in netware.cpp
+		#elif ((CLIENT_OS == OS_MACOS) && defined(MULTITHREAD))
+		  while (ThreadIsDone[thrparams->threadnum] == 0) {
+			tick_sleep(60);
+          }		
         #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
         pthread_join( thrparams->threadID, (void **)NULL);
         #endif
@@ -885,6 +919,28 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         if ( ((thrparams->threadID) >= B_NO_ERROR) &&
              (resume_thread(thrparams->threadID) == B_NO_ERROR) )
           success = 1;
+      #elif ((CLIENT_OS == OS_MACOS) && defined(MULTITHREAD))
+        OSErr thread_error;
+        static MPTaskID threadid[MAC_MAXCPUS];
+        ThreadIsDone[thread_i] = 0;
+        thread_error = MPCreateTask(Go_mt, (void *)thrparams, (unsigned long)0, (OpaqueMPQueueID *)kMPNoID,
+            		(void *)0, (void *)0, (unsigned long)0, &threadid[thread_i]);
+        if (thread_error != noErr) {
+          threadid[thread_i] = NULL;
+        }
+        else {
+          #if defined(MAC_GUI)
+            {
+			  Problem *thisprob;
+			  thisprob = GetProblemPointerFromIndex( thread_i );
+			  MakeGUIThread(thisprob->contest, thread_i);
+			  InitializeThreadProgress(thread_i, thisprob->percent,
+									 thisprob->GetKeysDone()); 
+			  UpdateClientInfo(&client_info);
+            }
+          #endif
+		  success = 1;
+        }
       #elif defined(_POSIX_THREADS_SUPPORTED) //defined in cputypes.h
         #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
           SetGlobalPriority( thrparams->priority );  
@@ -911,13 +967,29 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       thrparams->realthread = 0;            /* int */
       if (timeslice > (1<<12)) 
         thrparams->timeslice = (1<<12);
-      thrparams->threadID = RegPolledProcedure(Go_mt, 
+	  #if (CLIENT_OS == OS_MACOS)
+        thrparams->threadID = RegPolledProcedure((void (*)(void *))Go_mt, 
                                 (void *)thrparams , NULL, 0 );
+	  #else
+        thrparams->threadID = RegPolledProcedure(Go_mt, 
+                                (void *)thrparams , NULL, 0 );
+	  #endif
       success = ((int)thrparams->threadID != -1);
       }
         
     if (success)
       {
+      #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
+	    {
+	    Problem *thisprob;
+	    thisprob = GetProblemPointerFromIndex( 0 );
+	    MakeGUIThread(thisprob->contest, 0);
+	    InitializeThreadProgress(0, thisprob->percent,
+								thisprob->GetKeysDone()); 
+	    UpdateClientInfo(&client_info);
+	    }
+      #endif
+
       yield_pump(NULL);   //let the thread start
       }
     else
@@ -1097,9 +1169,6 @@ int Client::Run( void )
   if (!TimeToQuit)
     {
     static struct timeval tv = {0,500};
-    #if (CLIENT_OS == OS_MACOS)
-      tv.tv_usec = 10000;
-    #endif
    
     if (RegPolledProcedure(yield_pump, (void *)&tv, (timeval *)&tv, 32 ) == -1)
       {
@@ -1270,6 +1339,11 @@ int Client::Run( void )
         LogScreenPercent( load_problem_count ); //logstuff.cpp
       getbuff_errs+=LoadSaveProblems(load_problem_count,PROBFILL_GETBUFFERRS);
       runstatics.refillneeded = 0;
+
+      #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
+		UpdateRunStatus( load_problem_count );
+      #endif
+
       if (CheckExitRequestTriggerNoIO())
         continue;
       }
