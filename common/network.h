@@ -6,7 +6,7 @@
 */
 
 #ifndef __NETWORK_H__
-#define __NETWORK_H__ "@(#)$Id: network.h,v 1.68.2.7 2000/01/08 23:23:27 cyp Exp $"
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.68.2.8 2000/05/06 20:15:42 mfeiri Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
@@ -83,6 +83,13 @@ extern "C" {
       extern "C" char *inet_ntoa(struct in_addr in);
     #endif
   #endif
+  typedef int SOCKET;
+#elif (CLIENT_OS == OS_MACOS)
+  #include "socket_glue.h" // includes ntohl()/htonl() etc.
+  #define write(sock, buff, len) socket_write(sock, buff, len)
+  #define read(sock, buff, len) socket_read(sock, buff, len)
+  #define close(sock) socket_close(sock)
+  #define ioctl(sock, request, arg) socket_ioctl(sock, request, arg)
   typedef int SOCKET;
 #elif (CLIENT_OS == OS_OS2)
   #define BSD_SELECT
