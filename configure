@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.219 1999/04/18 16:01:10 patrick Exp $
+# @(#)$Id: configure,v 1.220 1999/04/23 08:35:17 snake Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -461,8 +461,7 @@ case "$1" in
 
     *sparc-openbsd)                   # snake
 	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC272_SPARC1 \
-			-DPIPELINE_COUNT=2 -DBIT_32 -DKWAN -DMEGGS"
+	TARGET_CCFLAGS="$OPTS_GCC272_SPARC1 -DBIT_32 -DKWAN -DMEGGS"
 	TARGET_LDFLAGS="-static"
 	#TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
 	TARGET_ADDSRCS="des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
@@ -650,7 +649,8 @@ case "$1" in
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DBIT_64 -DKWAN -DDWORZ"
 	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS rc5/alpha/axp-bmeyer.cpp"
-	TARGER_ADDASMS="rc5/alpha/axp-bmeyer.s"
+#            rc5/alpha/axp-bmeyer.s"
+	TARGET_ADDASMS="rc5/alpha/axp-bmeyer.s"
 	TARGET_LDFLAGS="-static"
 	;;
 
