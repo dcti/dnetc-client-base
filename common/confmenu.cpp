@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.16  1999/01/12 14:37:42  cyp
+// re-prompt the user on range error.
+//
 // Revision 1.15  1999/01/07 02:20:35  cyp
 // Greatly improved "yes"/"no" editing with my rad ConInStr() bool mode. :)
 //
@@ -72,7 +75,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.15 1999/01/07 02:20:35 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.16 1999/01/12 14:37:42 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -425,6 +428,7 @@ int Client::Configure( void )
     else if (whichmenu<=(int)(sizeof(menutable)/sizeof(menutable[0])))
       {
       int userselection = 0;
+      int redoselection = -1;
                                  //note: don't return or break from inside 
       while (userselection >= 0) //the loop. Let it fall through instead. - cyp
         {
@@ -574,16 +578,24 @@ int Client::Configure( void )
     
         /* -------------------- get user selection -------------------- */
 
-        LogScreenRaw("\n 0) Return to main menu\n\nChoice --> ");
-        ConInStr( parm, 4, 0 );
-        userselection = atoi( parm );
-    
-        if (userselection == 0 || CheckExitRequestTriggerNoIO())
-          userselection = -2;
-        else if (userselection > 0 )
-          userselection = findmenuoption(whichmenu,userselection); //-1 if !found
+        if (redoselection >= 0)
+          {
+          userselection = redoselection;
+          redoselection = -1;
+          }
         else
-          userselection = -1;
+          {
+          LogScreenRaw("\n 0) Return to main menu\n\nChoice --> ");
+          ConInStr( parm, 4, 0 );
+          userselection = atoi( parm );
+          
+          if (userselection == 0 || CheckExitRequestTriggerNoIO())
+            userselection = -2;
+          else if (userselection > 0 )
+            userselection = findmenuoption(whichmenu,userselection); //-1 if !found
+          else
+            userselection = -1;
+          }
         
         /* -- display user selection in detail and get new value --- */
     
@@ -672,7 +684,7 @@ int Client::Configure( void )
                 newval_d = atol(parm);
                 long selmin = conf_options[userselection].choicemin;
                 long selmax = conf_options[userselection].choicemax;
-                if ((selmin != 0 && selmax != 0) && 
+                if ((selmin != 0 || selmax != 0) && 
                   (newval_d < selmin || newval_d > selmax))
                 newval_isok = 0;
                 }
@@ -786,8 +798,13 @@ int Client::Configure( void )
           }
           
         /* --------------- have modified value, so assign -------------- */
-    
-        if (userselection >= 0 && newval_isok)
+
+        if (userselection >= 0 && !newval_isok)
+          {
+          ConBeep();
+          redoselection = userselection;
+          }
+        else if (userselection >= 0 && newval_isok)
           {
           //DO NOT TOUCH ANY VARIABLE EXCEPT THE SELECTED ONE
           //(unless those variables are not menu options)
@@ -852,13 +869,7 @@ int Client::Configure( void )
     {
     if (id[0]==0)
       strcpy(id,"rc5@distributed.net");
-    if (!autofindks)
-      autofindkeyserver = 0;
-    else
-      {
-      autofindkeyserver = 1;
-      nettimeout = 60; /* never less than whats used by a dnet server */
-      }
+    autofindkeyserver = (autofindks!=0);
     #ifdef LURK
     if (dialup.lurkmode != 1)
       connectoften=0;
