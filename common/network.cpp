@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.81  1999/02/22 00:40:53  cyp
+// fixed pedantic truncations warnings: x=htons(int) when htons() is a macro.
+//
 // Revision 1.80  1999/02/07 02:27:17  silby
 // Change to allow connection to n0 cgis.
 //
@@ -173,7 +176,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.80 1999/02/07 02:27:17 silby Exp $"; }
+return "@(#)$Id: network.cpp,v 1.81 1999/02/22 00:40:53 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -502,8 +505,8 @@ int Network::Open( void )               // returns -1 on error, 0 on success
     const char *netcheckfailed =
         "Network::Open Error - TCP/IP Connection Lost.\n";
 
-    if (CheckExitRequestTrigger())
-      return -1;
+    if (CheckExitRequestTriggerNoIO())
+      break; /* return -1; */
 
     if ((startmode & (MODE_SOCKS4 | MODE_SOCKS5)) != 0 &&
         (fwall_hostname[0] == 0 || fwall_hostport == 0))
@@ -511,13 +514,13 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       Log("Network::Invalid %s proxy hostname or port.\n"
           "Connect cancelled.\n",
           ((startmode & MODE_HTTP) ? ("HTTP") : ("SOCKS")));
-      return -1;
+      break; /* return -1; */
       }
 
     if (!NetCheckIsOK()) /* connection broken */
       {
       LogScreen(netcheckfailed);
-      return -1;
+      break; /* return -1; */
       }
 
     /* ---------- create a new socket --------------- */
@@ -529,6 +532,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       {
       if (verbose_level > 0) 
         LogScreen("Network::failed to create network socket.\n");
+      break; /* return -1; */
       }
 
     /* --- resolve the addresses(es) --- */
@@ -551,7 +555,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
         autofindkeyserver = 1;
         }
       if (svc_hostport == 0)
-          {
+        {
         #if 0                             //2064 also accepts http/uue - cyp
         if ((startmode & MODE_HTTP) != 0)
           svc_hostport = 80;
@@ -686,7 +690,7 @@ int Network::Open( void )               // returns -1 on error, 0 on success
         }
       #endif
       
-      success = ( LowLevelConnectSocket( conn_hostaddr, conn_hostport ) == 0 );
+      success = ( LowLevelConnectSocket( conn_hostaddr, (u16)conn_hostport ) == 0 );
       
       #ifdef ENSURE_CONNECT_WITH_BLOCKING_SOCKET
       if (success && iotimeout > 0)
@@ -914,7 +918,7 @@ int Network::InitializeConnection(void)
       psocks5->rsv = 0;   // must be zero
       psocks5->atyp = 1;  // IPv4 = 1
       psocks5->addr = svc_hostaddr;
-      psocks5->port = (u16)htons(svc_hostport); //(u16)(htons((server_name[0]!=0)?((u16)port):((u16)(DEFAULT_PORT))));
+      psocks5->port = (u16)htons((u16)svc_hostport); //(u16)(htons((server_name[0]!=0)?((u16)port):((u16)(DEFAULT_PORT))));
       int packetsize = 10;
 
       if (svc_hostaddr == 0)           
@@ -925,7 +929,7 @@ int Network::InitializeConnection(void)
         strcpy( p+1, svc_hostname );
         *p = (char)(len = strlen( p+1 )); 
         p += (++len);
-        *((u16 *)(p)) = (u16)htons(svc_hostport);
+        *((u16 *)(p)) = (u16)htons((u16)svc_hostport);
         packetsize = (10-sizeof(u32))+len;
         }
         
@@ -982,7 +986,7 @@ int Network::InitializeConnection(void)
 
     psocks4->VN = 4;
     psocks4->CD = 1;  // CONNECT
-    psocks4->DSTPORT = (u16)htons(svc_hostport); //(u16)htons((server_name[0]!=0)?((u16)port):((u16)DEFAULT_PORT));
+    psocks4->DSTPORT = (u16)htons((u16)svc_hostport); //(u16)htons((server_name[0]!=0)?((u16)port):((u16)DEFAULT_PORT));
     psocks4->DSTIP = svc_hostaddr;   //lasthttpaddress;
     strncpy(psocks4->USERID, fwall_userpass, sizeof(fwall_userpass));
 
@@ -1483,7 +1487,7 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
       struct sockaddr_in *sin = (struct sockaddr_in *) sndcall->addr.buf;
       sin->sin_addr.s_addr = that_address;
       sin->sin_family = AF_INET;
-      sin->sin_port = htons(that_port);
+      sin->sin_port = htons( that_port );
       rc = t_connect( sock, sndcall, NULL);
       if (isnonblocking && rc == -1 && t_error == TNODATA) 
         {
@@ -1508,7 +1512,7 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
   struct sockaddr_in sin;
   memset((void *) &sin, 0, sizeof(sin));
   sin.sin_family = AF_INET;
-  sin.sin_port = htons( that_port ); 
+  sin.sin_port = htons( that_port );
   sin.sin_addr.s_addr = that_address;
 
   // set timeout for connect
