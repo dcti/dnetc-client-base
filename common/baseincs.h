@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.40  1998/12/31 08:06:26  dicamillo
+// Add UseMP function for MacOS.
+//
 // Revision 1.39  1998/12/29 09:27:50  dicamillo
 // For MacOS, add macConOut routine.
 //
@@ -322,6 +325,7 @@ extern "C" {
   extern short MP_active;
   extern "C" unsigned long mp_sleep(unsigned long seconds);
   extern MPCriticalRegionID MP_count_region;
+  extern char useMP(void);
   extern volatile s32 ThreadIsDone[2*MAC_MAXCPUS];
   #if defined(MAC_GUI)
     #include "gui_incs.h"
