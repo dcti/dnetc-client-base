@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.118 2001/05/19 22:04:21 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.119 2001/05/20 23:33:36 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -162,9 +162,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
   #elif (CLIENT_CPU == CPU_SPARC)
     { /* RC5 */
-      #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))
-        "Ultrasparc RC5 core",
-      #elif (CLIENT_OS == OS_LINUX)
+      #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_LINUX))
         "Ultrasparc RC5 core",
         "Generic RC5 core",
       #else
@@ -1048,6 +1046,11 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       selcorestatics.corenum[DES] = cindex;  
     }  
   }
+  #elif (CLIENT_CPU == CPU_SPARC) && ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))
+  if (contestid == RC5)
+  {
+    selcorestatics.corenum[RC5] = 0; // ultra-crunch is faster on everything I found ...
+  }
   #elif (CLIENT_CPU == CPU_SPARC) && (CLIENT_OS == OS_LINUX)
   if (contestid == RC5)
   {
@@ -1194,10 +1197,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     #error "What's up, Doc?"
   #endif
 #elif (CLIENT_CPU == CPU_SPARC)
-  #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))
-    //rc5/ultra/rc5-ultra-crunch.cpp
-    extern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
-  #elif (CLIENT_OS == OS_LINUX)
+  #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_LINUX))
     //rc5/ultra/rc5-ultra-crunch.cpp
     extern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
     // rc5/ansi/2-rg.cpp
@@ -1447,15 +1447,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
     #elif (CLIENT_CPU == CPU_SPARC)
     {
-      #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))
-      {
-        //rc5/ultra/rc5-ultra-crunch.cpp
-        //xtern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
-        unit_func.rc5 = rc5_unit_func_ultrasparc_crunch;
-        pipeline_count = 2;
-        coresel = 0;
-      }
-      #elif (CLIENT_OS == OS_LINUX)
+      #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_LINUX))
       if (coresel == 0)
       {
         //rc5/ultra/rc5-ultra-crunch.cpp

@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.252 2001/05/20 00:40:05 andreasb Exp $
+# @(#)$Id: configure,v 1.222.2.253 2001/05/20 23:33:35 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -251,15 +251,15 @@ add_sources() # $1=os, $2=arch, $3=custom
     #fi
   #-----------------------------------------------------------------  
   elif [ "$2" = "sparc" ]; then
-    if [ "$1" = "solaris" -o "$1" = "sunos" ]; then
+    if [ "$1" = "solaris" -o "$1" = "sunos" -o "$1" = "linux" ]; then
+      # add the rc5-ultra-crunch core
       if [ "$3" = "cc" ]; then # use a gcc -S generated .s file for sun cc
         TARGET_ADDASMS="$TARGET_ADDASMS rc5/ultra/rc5-ultra-crunch.s"
       else
         TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/ultra/rc5-ultra-crunch.cpp"
       fi
-    else  
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
     fi
+    TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
     TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
@@ -1342,7 +1342,6 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-sparc"
         add_sources "linux" "sparc"
-        echo FIXME: use add_sources TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/ultra/rc5-ultra-crunch.cpp"
         ;;
 
     *sparc-sunos-gcc-nomt)   # [ivo sunos413/nomt]
@@ -1406,10 +1405,21 @@ case "$1" in
         TARGET_CC="CC"
         TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
         OPTS_CC_SOLARIS="-fast -xO4 -xarch=v7 -DASM_SPARC"
-        TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS -D__inline=inline"
+        TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="solaris26-sparc-cc-v7"
+        add_sources "solaris" "sparc" "cc"
+        ;;
+
+    *sparc-solaris-cc-v8a)   # [andreasb sparc/v8a] 
+        TARGET_CC="CC"
+        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
+        OPTS_CC_SOLARIS="-fast -xO4 -xarch=v8a -DASM_SPARC"
+        TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS"
+        TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="solaris26-sparc-cc-v8a"
         add_sources "solaris" "sparc" "cc"
         ;;
 
@@ -1417,7 +1427,7 @@ case "$1" in
         TARGET_CC="CC"
         TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
         OPTS_CC_SOLARIS="-fast -xO4 -xarch=v8 -DASM_SPARC"
-        TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS -D__inline=inline"
+        TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="solaris26-sparc-cc-v8"
@@ -1429,23 +1439,11 @@ case "$1" in
         TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
         OPTS_CC_SOLARIS="-fast -xO4 -xtarget=ultra -DASM_SPARC"
         TARGET_ASFLAGS="$TARGET_ASFLAGS -xarch=v8plus"
-        TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS -D__inline=inline"
+        TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="solaris26-sparc-cc-ultra"
         add_sources "solaris" "sparc" "cc"
-        ;;
-
-    *sparc-solaris-cc-ansi)   # [andreasb] ansi rc5 core 
-        TARGET_CC="CC"
-        TARGET_TR="/usr/xpg4/bin/tr"	# Solaris 8 /usr/bin/tr: 0-9 is not [0-9]
-        OPTS_CC_SOLARIS="-fast -xO4 -xtarget=ultra -DASM_SPARC"
-        TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS -D__inline=inline"
-        TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="solaris26-sparc-cc-ansi"
-        add_sources "ansi" "generic"
-        TARGET_CCFLAGS="$TARGET_CCFLAGS -DASM_NONE -Drc5_unit_func_ultrasparc_crunch=rc5_unit_func_ansi_2_rg"
         ;;
 
 
