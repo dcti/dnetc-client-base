@@ -9,7 +9,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.88 2001/02/19 08:16:24 mfeiri Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.89 2001/02/22 08:02:24 mfeiri Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -75,7 +75,7 @@ struct thread_param_block
     long threadID;
   #elif (CLIENT_OS == OS_BEOS)
     thread_id threadID;
-  #elif (CLIENT_OS == OS_MACOS)
+  #elif (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
     MPTaskID threadID;
   #else
     int threadID;
