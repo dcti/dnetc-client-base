@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.273 2002/09/26 00:46:45 sampo Exp $
+# @(#)$Id: configure,v 1.274 2002/09/26 01:58:51 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -572,6 +572,7 @@ gcc_get_ver() {
     #gcc_v="gcc driver version 2.7.2.3 executing gcc version 2.95.2"
     #gcc_v="Reading specs from blah\ngcc version 2.9-hppa-991112"
     #gcc_v="Apple Computer, Inc. version gcc-926, based on gcc version 2.95.2 19991024 (release)"
+    #gcc_v="Reading specs from blah\nConfigured with: blah\nThread model: blah\ngcc version 3.2"
 
     gccver_line=`echo $gcc_v|tail -1|tr '-' ' '`
     #echo "gccver_line=#$gccver_line#"
@@ -623,6 +624,7 @@ gcc_get_ver() {
     #2.7.2.1 = 2000000 +  70000 +  200 + 1 = 2070201
     #2.95.1  = 2000000 + 950000 +  100     = 2950100
     #2.91.66 = 2000000 + 910000 + 6600     = 2916600
+    #3.2     = 3000000 +  20000 +    0     = 3020000
     gccver=`echo "($a1 * 1000000)+($a2 * 10000)+($a3 * 100)+$a4" | bc`
     #echo $gccver
   fi
@@ -636,6 +638,10 @@ generate_gcc_opts() {
 	         -Wstrict-prototypes -Wconversion -Winline \
 	         -Waggregate-return -Wcast-qual -Woverloaded-virtual \
 	         -Wnested-externs" #-Wshadow shows std header errors
+  OPTS_GCC310_WARN="-W -Wall -Wtraditional -Wpointer-arith -Wcast-align \
+  	         -Wmissing-prototypes \
+	         -Wstrict-prototypes -Wconversion -Winline \
+	         -Waggregate-return -Wcast-qual -Woverloaded-virtual"
   OPTS_GCC_BASE="-fcaller-saves -fomit-frame-pointer \
                  -fno-inline-functions" 
   OPTS_272_PLUS="-fno-handle-exceptions -fno-rtti"
@@ -644,8 +650,10 @@ generate_gcc_opts() {
   # miscompile if using an -O level greater than -O2 _and_ -funroll-loops
   #WARNING WARNING: don't use 2.8.x at all.
   OPTS_295_PLUS="-fstrict-aliasing" #-fno-exceptions -fno-rtti
+  OPTS_310_PLUS="-fstrict-aliasing -fno-exceptions -fno-rtti"
   OPTS_GCC272="${OPTS_GCC_WARN} ${OPTS_GCC_BASE} ${OPTS_272_PLUS}"
   OPTS_GCC295="${OPTS_GCC_WARN} ${OPTS_GCC_BASE} ${OPTS_295_PLUS}"
+  OPTS_GCC310="${OPTS_GCC310_WARN} ${OPTS_GCC_BASE} ${OPTS_310_PLUS}"
 
 
   #this is a list of which -O does what for 2.72.x - 2.95.2
@@ -678,67 +686,80 @@ generate_gcc_opts() {
     echo "gcc version less than 2, or something strange happened"
     exit 1
   fi
-  
+
   # ------
 
   opts272=""
   opts295=""
+  opts310=""
   arch="internal-$1"  # do it this way to hide from "./configure list"
   case "$arch" in      
    
     *internal-generic)
         opts272="$OPTS_GCC272"
         opts295="$OPTS_GCC295"
+        opts310="$OPTS_GCC310"
         ;;
 
     *internal-mips)
         opts272="$OPTS_GCC272 -O6 -DASM_MIPS -funroll-loops"
         opts295="$OPTS_GCC295 -Os -DASM_MIPS -funroll-loops"
+        opts310="$OPTS_GCC310 -Os -DASM_MIPS -funroll-loops"
         ;;
 
     *internal-sh4)
 	opts295="$OPTS_GCC295 -O2 -DASM_SH4 -funroll-loops -static"
+	opts310="$OPTS_GCC310 -O2 -DASM_SH4 -funroll-loops -static"
 	;;
 
     *internal-hppa)
         opts272="$OPTS_GCC272 -O6 -DASM_HPPA -funroll-loops -static"
         opts295="$OPTS_GCC295 -O2 -DASM_HPPA -funroll-loops -static"
+        opts310="$OPTS_GCC310 -O2 -DASM_HPPA -funroll-loops -static"
         #OPTS_EGCS="$OPTS_EGCS -O2 -D_HPUX_M68K -static"
         ;;
  
     *internal-88k)
         opts272="$OPTS_GCC272 -O6 -DCPU_ID=CPU_88K -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -DCPU_ID=CPU_88K -funroll-loops"
+        opts310="$OPTS_GCC310 -O2 -DCPU_ID=CPU_88K -funroll-loops"
         ;;
 
     *internal-s390)
         opts272="$OPTS_GCC272 -O6 -D__S390__ -U__i386__ -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -D__S390__ -U__i386__ -funroll-loops \
 	         -fno-caller-saves"
+        opts310="$OPTS_GCC310 -O2 -D__S390__ -U__i386__ -funroll-loops \
+	         -fno-caller-saves"
         ;;
 
     *internal-ia64)
         opts295="$OPTS_GCC295 -O2 -D__IA64__"
+        opts310="$OPTS_GCC310 -O2 -D__IA64__"
         ;;
 
     *internal-vax)
         opts272="$OPTS_GCC272 -O2 -DASM_VAX -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -DASM_VAX -funroll-loops"
+        opts310="$OPTS_GCC310 -O2 -DASM_VAX -funroll-loops"
         ;;
 
     *internal-arm)
         opts272="$OPTS_GCC272 -DARM -DASM_ARM -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -mtune=strongarm -DARM -DASM_ARM -funroll-loops"
+        opts310="$OPTS_GCC310 -O2 -mtune=strongarm -DARM -DASM_ARM -funroll-loops"
         ;;
 
     *internal-sparc)  # (sparc/v7 [SS1/2/IPX]) (v8 [supersparc] is below)
         opts272="$OPTS_GCC272 -O6 -mcypress -DASM_SPARC -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -mcpu=cypress -DASM_SPARC -funroll-loops"
+        opts310="$OPTS_GCC310 -O2 -mcpu=cypress -DASM_SPARC -funroll-loops"
         ;;
 
     *internal-supersparc)  # (sparc/v8 [SS5+])
         opts272="$OPTS_GCC272 -O6 -msupersparc -DASM_SPARC -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -mcpu=supersparc -DASM_SPARC -funroll-loops"
+        opts310="$OPTS_GCC310 -O2 -mcpu=supersparc -DASM_SPARC -funroll-loops"
         ;;
 
     *internal-ultrasparc)  # (sparc/v9 [Ultra])
@@ -746,47 +767,59 @@ generate_gcc_opts() {
         opts295="$OPTS_GCC295 -Os -mcpu=ultrasparc -fforce-mem -mvis \
 		-fcall-used-g4 -fcall-used-g5 -fcall-used-g6 \
 		-fstrict-aliasing -funroll-loops"
+        opts310="$OPTS_GCC310 -Os -mcpu=ultrasparc -fforce-mem -mvis \
+		-fcall-used-g4 -fcall-used-g5 -fcall-used-g6 \
+		-fstrict-aliasing -funroll-loops"
         ;;
 
     *internal-68k) #the 68k targets all have different -m68xxx switches
         opts272="$OPTS_GCC272 -O6 -DASM_68K -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -DASM_68K -funroll-loops"
+        opts310="$OPTS_GCC310 -O2 -DASM_68K -funroll-loops"
         ;;
 
     *internal-ppc)
         opts272="$OPTS_GCC272 -O6 -DASM_PPC -funroll-loops"
         opts295="$OPTS_GCC295 -O3 -DASM_PPC -funroll-loops"
+        opts310="$OPTS_GCC310 -O3 -DASM_PPC -funroll-loops"
         ;;
 
     *internal-ppc603e)
         opts272="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=603e -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -DASM_PPC -mcpu=603e -funroll-loops"
+        opts310="$OPTS_GCC310 -O2 -DASM_PPC -mcpu=603e -funroll-loops"
 	;;
 
     *internal-ppc604)
         opts272="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=604 -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -DASM_PPC -mcpu=604 -funroll-loops"
+        opts310="$OPTS_GCC310 -O2 -DASM_PPC -mcpu=604 -funroll-loops"
 	;;
 
     *internal-power)
         opts272="$OPTS_GCC272 -O6 -DASM_POWER -mcpu=power -funroll-loops"
         opts295="$OPTS_GCC295 -O6 -DASM_POWER -mcpu=power -funroll-loops"
+        opts310="$OPTS_GCC310 -O6 -DASM_POWER -mcpu=power -funroll-loops"
         ;;
 
     *internal-aixcommon)
         opts272="$OPTS_GCC272 -O6 -DASM_COM -mcpu=common -funroll-loops"
         opts295="$OPTS_GCC295 -O6 -DASM_COM -mcpu=common -funroll-loops"
+        opts310="$OPTS_GCC310 -O6 -DASM_COM -mcpu=common -funroll-loops"
         ;;
 
     *internal-alpha)
         opts272="$OPTS_GCC272 -O6 -DASM_ALPHA -static -funroll-loops"
         opts295="$OPTS_GCC295 -O3 -DASM_ALPHA -funroll-loops"
+        opts310="$OPTS_GCC310 -O3 -DASM_ALPHA -funroll-loops"
         ;;
            
     *internal-x86)
         opts272="$OPTS_GCC272 -O6 -DASM_X86 -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -DASM_X86 -mcpu=pentiumpro -fforce-addr \
                  -malign-functions=5 -malign-loops=4 -funroll-loops"
+        opts310="$OPTS_GCC310 -O2 -DASM_X86 -mcpu=pentiumpro -fforce-addr \
+                 -falign-functions=5 -falign-loops=4 -funroll-loops"
         ;;
 
     *) # no default needed
@@ -796,15 +829,21 @@ generate_gcc_opts() {
 
   # undefine everything we used locally
   OPTS_GCC_WARN=
+  OPTS_GCC310_WARN=
   OPTS_GCC_BASE=
   OPTS_272_PLUS=
   OPTS_295_PLUS=
+  OPTS_310_PLUS=
   OPTS_GCC272=
   OPTS_GCC295=
+  OPTS_GCC310=
 
   # ------
 
   gccopts="$opts295" # 3.0
+  if [ $gccver -ge 3010000 ]; then
+    gccopts="$opts310" # 3.1 and above
+  fi
   if [ $gccver -lt 2960000 ]; then
     gccopts="$opts295"
     if [ $gccver -lt 2900000 ]; then
