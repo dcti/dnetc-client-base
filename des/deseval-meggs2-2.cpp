@@ -1,5 +1,10 @@
 //
 // $Log: deseval-meggs2-2.cpp,v $
+// Revision 1.2  1998/11/16 16:30:46  remi
+// #if defined(BITSLICER_WITH_LESS_BITS)
+//   #error "This core won't work with BITSLICER_WITH_LESS_BITS !"
+// #endif
+//
 // Revision 1.1  1998/11/16 15:56:30  remi
 // It's just a set of simple changes from deseval-meggs2.cpp.
 // It's now multithread safe (all variables moved from static
@@ -19,9 +24,13 @@
 //
 //
 
+#ifdef (BITSLICER_WITH_LESS_BITS)
+  #error "This core won't work with BITSLICER_WITH_LESS_BITS !"
+#endif
+
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs2_cpp(void) {
-return "@(#)$Id: deseval-meggs2-2.cpp,v 1.1 1998/11/16 15:56:30 remi Exp $"; }
+return "@(#)$Id: deseval-meggs2-2.cpp,v 1.2 1998/11/16 16:30:46 remi Exp $"; }
 #endif
 
 #include <stdio.h>

@@ -1,5 +1,10 @@
 //
 // $Log: deseval-meggs2.cpp,v $
+// Revision 1.6  1998/11/16 16:30:48  remi
+// #if defined(BITSLICER_WITH_LESS_BITS)
+//   #error "This core won't work with BITSLICER_WITH_LESS_BITS !"
+// #endif
+//
 // Revision 1.5  1998/11/16 16:13:43  remi
 // This core shouldn't be used in a multithread client.
 // Removed the Rocke Verser copyright comment, since we don't use
@@ -17,13 +22,15 @@
 //
 //
 
-#if (!defined(lint) && defined(__showids__))
-const char *deseval_meggs2_cpp(void) {
-return "@(#)$Id: deseval-meggs2.cpp,v 1.5 1998/11/16 16:13:43 remi Exp $"; }
-#endif
-
 #ifdef (MULTITHREAD)
   #error "This core is *NOT* multithread-safe !"
+#elif defined(BITSLICER_WITH_LESS_BITS)
+  #error "This core won't work with BITSLICER_WITH_LESS_BITS !"
+#endif
+
+#if (!defined(lint) && defined(__showids__))
+const char *deseval_meggs2_cpp(void) {
+return "@(#)$Id: deseval-meggs2.cpp,v 1.6 1998/11/16 16:30:48 remi Exp $"; }
 #endif
 
 #include <stdio.h>
