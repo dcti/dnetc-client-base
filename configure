@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.114  1998/11/08 08:27:10  dbaker
+# freebsd elf
+#
 # Revision 1.113  1998/11/06 06:58:02  silby
 # Added additional library to freebsd non_mt target.
 #
@@ -1050,7 +1053,7 @@ case "$1" in
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lc_r"
-        TARGET_NASMFLAGS="-i rc5/nasm/ -f aoutb"
+        TARGET_NASMFLAGS="-i rc5/nasm/ -f elf"
 	;;
 
     *x86-freebsd-elf)
@@ -1060,6 +1063,7 @@ case "$1" in
         TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_NASMFLAGS="-i rc5/nasm/ -f elf"
+        TARGET_NASM="/usr/local/bin/nasm"
         TARGET_LIBS="-lc_r"
         ;;
 
@@ -1331,7 +1335,7 @@ echo "" >> Makefile
 
 echo "clean:" >> Makefile
 echo "	rm -f \${ALLOBJS} ${EXENAME}" >> Makefile
-echo "	sh $0 \${BUILDNAME}" >> Makefile
+#echo "	sh $0 \${BUILDNAME}" >> Makefile
 echo "" >> Makefile
 
 echo "superclean:" >> Makefile
