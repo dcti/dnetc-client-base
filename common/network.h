@@ -5,6 +5,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.19  1998/06/22 01:05:01  cyruspatel
+// DOS changes. Fixes various compile-time errors: removed extraneous ')' in
+// sleepdef.h, resolved htonl()/ntohl() conflict with same def in client.h
+// (is now inline asm), added NONETWORK wrapper around Network::Resolve()
+//
 // Revision 1.18  1998/06/15 09:12:54  jlawson
 // moved more sleep defines into sleepdef.h
 //
@@ -24,10 +29,9 @@
 // Revision 1.13  1998/06/14 08:13:02  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
-// 
-//       network.h,v 1.12 1998/06/13 23:33:20 cyruspatel Exp  
-//                      Fixed NetWare stuff and added #include "sleepdef.h"
-//                      (which should now warn if macros are not the same)
+// Revision 1.12 1998/06/13 23:33:20  cyruspatel 
+// Fixed NetWare stuff and added #include "sleepdef.h" (which should now 
+// warn if macros are not the same)
 //
 
 //#define NONETWORK         // define to eliminate network functionality
@@ -52,6 +56,10 @@ extern "C" {
 #include <stdlib.h>
 #include <time.h>
 
+#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
+}
+#endif
+
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   #include <winsock.h>
   #include <dos.h>
@@ -60,6 +68,7 @@ extern "C" {
   #define read(sock, buff, len) recv(sock, (char*)buff, len, 0)
   #define close(sock) closesocket(sock);
 #elif (CLIENT_OS == OS_RISCOS)
+  extern "C" {
   #include <socklib.h>
   #include <inetlib.h>
   #include <unixlib.h>
@@ -67,14 +76,10 @@ extern "C" {
   #include <unistd.h>
   #include <netdb.h>
   #define SOCKET int
-#elif (CLIENT_OS == OS_DOS) && defined(DOS4G)
-  #define ntohl(x) ((((x)<<24) & 0xFF000000) | (((x)<<8) & 0x00FF0000) | (((x)>>8) & 0x0000FF00) | (((x)>>24) & 0x000000FF))
-  #define htonl(x) ((((x)<<24) & 0xFF000000) | (((x)<<8) & 0x00FF0000) | (((x)>>8) & 0x0000FF00) | (((x)>>24) & 0x000000FF))
-  #define SOCKET int
-  struct timeval {
-        long    tv_sec;         /* seconds */
-        long    tv_usec;        /* and microseconds */
-  };
+  }
+#elif (CLIENT_OS == OS_DOS) 
+  //generally NONETWORK, but to be safe we...
+  #include "platform/dos/clidos.h" 
 #elif (CLIENT_OS == OS_VMS)
   #include <signal.h>
   #ifdef __VMS_UCX__
@@ -128,6 +133,7 @@ extern "C" {
   #define StopDOD    "StopDOD.CMD"
   #define DODCfg     "DOD.CFG"
 #elif (CLIENT_OS == OS_AMIGAOS)
+  extern "C" {
   #include "platforms/amiga.h"
   #include <assert.h>
   #include <clib/socket_protos.h>
@@ -141,10 +147,11 @@ extern "C" {
   #define close(sock) CloseSocket(sock)
   #define inet_ntoa(addr) Inet_NtoA(addr.s_addr)
   #ifndef __PPC__
-	  #define inet_addr(host) inet_addr((unsigned char *)host)
-	  #define gethostbyname(host) gethostbyname((unsigned char *)host)
+     #define inet_addr(host) inet_addr((unsigned char *)host)
+     #define gethostbyname(host) gethostbyname((unsigned char *)host)
   #endif
   typedef int SOCKET;
+  }
 #elif (CLIENT_OS == OS_BEOS)
   #include <sys/types.h>
   #include <sys/socket.h>
@@ -203,9 +210,6 @@ extern "C" {
   #endif
 #endif
 
-#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
-}
-#endif
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -319,10 +323,8 @@ public:
     // makes the socket operate in blocking mode.
 
   void LogScreen( const char * txt) const;
-
 };
 
 ///////////////////////////////////////////////////////////////////////////
 
-
-#endif
+#endif //NETWORK_H

@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: sleepdef.h,v $
+// Revision 1.6  1998/06/22 01:05:03  cyruspatel
+// DOS changes. Fixes various compile-time errors: removed extraneous ')' in
+// sleepdef.h, resolved htonl()/ntohl() conflict with same def in client.h
+// (is now inline asm), added NONETWORK wrapper around Network::Resolve()
+//
 // Revision 1.5  1998/06/15 09:12:56  jlawson
 // moved more sleep defines into sleepdef.h
 //
@@ -53,7 +58,7 @@
     #error sleep()/usleep() are still undefined in sleepdef.h
   #endif
 #elif (CLIENT_OS == OS_DOS)
-  #if defined(__WATCOMC__) || defined(__TURBOC__) && defined(CLIENT_OS != OS_OS2)
+  #if (defined(__WATCOMC__) || defined(__TURBOC__))
     #include <dos.h>
     #define usleep(x) delay((x)/1000)
   #elif defined(DJGPP)

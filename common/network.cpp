@@ -4,8 +4,12 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-//
 // $Log: network.cpp,v $
+// Revision 1.23  1998/06/22 01:04:58  cyruspatel
+// DOS changes. Fixes various compile-time errors: removed extraneous ')' in
+// sleepdef.h, resolved htonl()/ntohl() conflict with same def in client.h
+// (is now inline asm), added NONETWORK wrapper around Network::Resolve()
+//
 // Revision 1.22  1998/06/15 12:04:03  kbracey
 // Lots of consts.
 //
@@ -28,7 +32,9 @@
 //                      (which should now warn if macros are not the same)
 //
 
-static const char *id="@(#)$Id: network.cpp,v 1.22 1998/06/15 12:04:03 kbracey Exp $";
+#if (!defined(lint) && defined(__showids__))
+static const char *id="@(#)$Id: network.cpp,v 1.23 1998/06/22 01:04:58 cyruspatel Exp $";
+#endif
 
 #include "network.h"
 #include "sleepdef.h"    //  Fix sleep()/usleep() macros there! <--
@@ -273,7 +279,7 @@ void Network::SetModeSOCKS5(const char *sockshost, s16 socksport,
 // returns -1 on error, 0 on success
 s32 Network::Resolve(const char *host, u32 &hostaddress)
 {
-
+#if !defined(NONETWORK)
   if ((hostaddress = inet_addr((char*)host)) == 0xFFFFFFFFL)
   {
     struct hostent *hp;
@@ -286,7 +292,7 @@ s32 Network::Resolve(const char *host, u32 &hostaddress)
     int index = rand() % addrcount;
     memcpy((void*) &hostaddress, hp->h_addr_list[index], sizeof(u32));
   }
-
+#endif
   return 0;
 }
 
@@ -628,7 +634,7 @@ Socks4Failure:
     }
     else
     {
-#ifdef VERBOSE_OPEM
+#ifdef VERBOSE_OPEN
       sprintf(logstr, "SOCKS5 authentication method rejected.\n");
       LogScreen(logstr);
 #endif
@@ -881,41 +887,13 @@ s32 Network::Get( u32 length, char * data, u32 timeout )
 
     if (nothing_done)
     {
-      if (need_close || gethttpdone) break;
-#if (CLIENT_OS == OS_WIN32)
-      usleep( 100000 );  // use define in sleepdef.h and catch #error
-      //Sleep( 100 );   // Prevent racing on error (1/10 second)
-#elif (CLIENT_OS == OS_WIN16)
-      usleep( 100000 );  // use define in sleepdef.h and catch #error
-      // nothing
-#elif (CLIENT_OS == OS_OS2)
-      usleep( 100000 );  // use define in sleepdef.h and catch #error
-      //DosSleep( 100000 );   // Prevent racing on error (1/10 second)
-#elif (CLIENT_OS == OS_BEOS)
-      usleep( 100000 );  // use define in sleepdef.h and catch #error
-      //snooze( 100000 );  // Prevent racing on error (1/10 second)
-#elif (CLIENT_OS == OS_VMS)
-      sleep( 1 );  // Prevent racing on error (1 second)
-#elif (CLIENT_OS == OS_SOLARIS)
-      sleep(1); // full 1 second on Solaris due to so many reported network problems.
-#elif (CLIENT_OS == OS_HPUX)
-      usleep( 100000 );  // use define in sleepdef.h and catch #error
-  #if 0
-  #ifdef _STRUCT_TIMESPEC
-      // HP-UX 10.x has nanosleep() rather than usleep()
-      struct timespec interval, remainder;
-      interval.tv_sec = 0;
-      interval.tv_nsec = 100000000;  // Prevent racing on error (1/10 second)
-      nanosleep(&interval, &remainder);
-  #else
-      // HP-UX 9.x doesn't have nanosleep() or usleep()
-      sleep(1);  // Prevent racing on error (1 second)
-  #endif
-  #endif
-#else
-      usleep( 100000 );  // Prevent racing on error (1/10 second)
-#endif
-
+      if (need_close || gethttpdone) 
+        break;
+      #if (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_SOLARIS)
+        sleep(1); // full 1 second due to so many reported network problems.
+      #else
+        usleep( 100000 );  // Prevent racing on error (1/10 second)
+      #endif
     }
   } // while (netbuffer.GetLength() < blah)
 

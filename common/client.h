@@ -5,6 +5,11 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: client.h,v $
+// Revision 1.44  1998/06/22 01:04:56  cyruspatel
+// DOS changes. Fixes various compile-time errors: removed extraneous ')' in
+// sleepdef.h, resolved htonl()/ntohl() conflict with same def in client.h
+// (is now inline asm), added NONETWORK wrapper around Network::Resolve()
+//
 // Revision 1.43  1998/06/21 17:10:26  cyruspatel
 // Fixed some NetWare smp problems. Merged duplicate numcpu validation code
 // in ::ReadConfig()/::ValidateConfig() into ::ValidateProcessorCount() and
@@ -154,17 +159,7 @@ extern "C" {
   #include <conio.h>
   #include <share.h>
   #include <fcntl.h>
-  #if defined(DJGPP)
-    #include <dir.h>
-    #define ntohl(x) ((((x)<<24) & 0xFF000000) | (((x)<<8) & 0x00FF0000) | (((x)>>8) & 0x0000FF00) | (((x)>>24) & 0x000000FF))
-    #define htonl(x) ((((x)<<24) & 0xFF000000) | (((x)<<8) & 0x00FF0000) | (((x)>>8) & 0x0000FF00) | (((x)>>24) & 0x000000FF))
-  #else
-    #include <sys/stat.h> //S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP
-  #endif
-  #ifdef __WATCOMC__
-    //#define checklocks _checklocks
-  #endif   
-  // extern "C" u16 checklocks( void );
+  #include "platforms/dos/clidos.h"
 #elif (CLIENT_OS == OS_BEOS)
 // nothing  #include <share.h>
   #include <fcntl.h>
