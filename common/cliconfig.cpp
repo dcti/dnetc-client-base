@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.112  1998/06/25 04:43:29  silby
+// Changes to Internalgetfilename for win32 (+ other platforms in the future) to make path handling better (now it won't miss / and : on win32)
+//
 // Revision 1.111  1998/06/25 01:55:41  silby
 // Fixed numcpu not showing up in the config, fixed timeslice's menu entry at the same time.
 //
@@ -112,7 +115,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.111 1998/06/25 01:55:41 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.112 1998/06/25 04:43:29 silby Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -1345,54 +1348,23 @@ void Client::ValidateConfig( void )
       (CLIENT_OS == OS_AMIGAOS)
   // now, add path of exe to filenames if path isn't specified
 
-  if (strrchr(ini_exit_flag_file, PATH_SEP_C) == NULL)
     strcpy(exit_flag_file,InternalGetLocalFilename(ini_exit_flag_file));
-  else
-    strcpy(exit_flag_file,ini_exit_flag_file);
 
-  if (strrchr(ini_in_buffer_file[0], PATH_SEP_C) == NULL)
     strcpy(in_buffer_file[0],InternalGetLocalFilename(ini_in_buffer_file[0]));
-  else
-    strcpy(in_buffer_file[0],ini_in_buffer_file[0]);
 
-  if (strrchr(ini_out_buffer_file[0], PATH_SEP_C) == NULL)
     strcpy(out_buffer_file[0],InternalGetLocalFilename(ini_out_buffer_file[0]));
-  else
-    strcpy(out_buffer_file[0],ini_out_buffer_file[0]);
 
-  if (strrchr(ini_in_buffer_file[1], PATH_SEP_C) == NULL)
     strcpy(in_buffer_file[1],InternalGetLocalFilename(ini_in_buffer_file[1]));
-  else
-    strcpy(in_buffer_file[1],ini_in_buffer_file[1]);
 
-  if (strrchr(ini_out_buffer_file[1], PATH_SEP_C) == NULL)
     strcpy(out_buffer_file[1],InternalGetLocalFilename(ini_out_buffer_file[1]));
-  else
-    strcpy(out_buffer_file[1],ini_out_buffer_file[1]);
 
-  if (strcmpi(ini_pausefile,"none") != 0)
-    if (strrchr(ini_pausefile,PATH_SEP_C) == NULL)
-      strcpy(pausefile,InternalGetLocalFilename(ini_pausefile));
-    else
-      strcpy(pausefile,ini_pausefile);
+    strcpy(pausefile,InternalGetLocalFilename(ini_pausefile));
 
-  if (strcmpi(ini_checkpoint_file[0],"none") != 0)
-    if (strrchr(ini_checkpoint_file[0],PATH_SEP_C) == NULL)
-      strcpy(checkpoint_file[0],InternalGetLocalFilename(ini_checkpoint_file[0]));
-    else
-      strcpy(checkpoint_file[0],ini_checkpoint_file[0]);
+    strcpy(checkpoint_file[0],InternalGetLocalFilename(ini_checkpoint_file[0]));
 
-  if (strcmpi(ini_checkpoint_file[1],"none") != 0)
-    if (strrchr(ini_checkpoint_file[1],PATH_SEP_C) == NULL)
-      strcpy(checkpoint_file[1],InternalGetLocalFilename(ini_checkpoint_file[1]));
-    else
-      strcpy(checkpoint_file[1],ini_checkpoint_file[1]);
+    strcpy(checkpoint_file[1],InternalGetLocalFilename(ini_checkpoint_file[1]));
 
-  if (strcmpi(ini_logname,"none") != 0)
-    if (strrchr(ini_logname,PATH_SEP_C) == NULL)
-      strcpy(logname,InternalGetLocalFilename(ini_logname));
-    else
-      strcpy(logname,ini_logname);
+    strcpy(logname,InternalGetLocalFilename(ini_logname));
 
   // generate the paths of the other files based on the ini filename
 #else

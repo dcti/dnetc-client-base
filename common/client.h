@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: client.h,v $
+// Revision 1.50  1998/06/25 04:43:32  silby
+// Changes to Internalgetfilename for win32 (+ other platforms in the future) to make path handling better (now it won't miss / and : on win32)
+//
 // Revision 1.49  1998/06/25 03:02:32  blast
 // Moved the version #defines from client.h to version.h and added a version
 // string called CLIENT_VERSIONSTRING...
@@ -213,6 +216,10 @@ extern "C" {
 #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)
 #define PATH_SEP   "\\"
 #define PATH_SEP_C '\\'
+#define ALT_PATH_SEP '/'
+#define ALT_PATH_SEP_C '/'
+#define DRIVE_SEP ':'
+#define DRIVE_SEP_C ':'
 #define EXTN_SEP   "."
 #define EXTN_SEP_C '.'
 #elif (CLIENT_OS == OS_MACOS)
