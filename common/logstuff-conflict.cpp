@@ -1,13 +1,22 @@
 // Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
+//
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
 // $Log: logstuff-conflict.cpp,v $
+// Revision 1.21.2.3  1998/12/28 14:59:25  remi
+// Synced with :
+//  Revision 1.23  1998/12/08 05:46:15  dicamillo
+//  Add MacOS as a client that doesn't support ftruncate.
+//
+//  Revision 1.22  1998/11/28 19:44:34  cyp
+//  InitializeLogging() and DeinitializeLogging() are no longer Client class
+//  methods.
+//
 // Revision 1.21.2.2  1998/11/08 11:51:26  remi
 // Lots of $Log tags.
 //
-
 // Synchronized with official 1.21
 
 //-------------------------------------------------------------------------
@@ -19,24 +28,18 @@
 #include "problem.h"   // needed for logscreenpercent
 #include "cmpidefs.h"  // strcmpi()
 #include "console.h"   // for ConOut() and ConIsScreen()
-#include "logstuff.h"  // keep the prototypes in sync
+#include "guistuff.h"  // Hooks for the GUIs
 #include "triggers.h"  // don't print percbar if pause/exit/restart triggered
+#include "logstuff.h"  // keep the prototypes in sync
 
 //-------------------------------------------------------------------------
-
-#define LOGTO_NONE       0x00 
-#define LOGTO_SCREEN     0x01
-#define LOGTO_RAWMODE    0x80    
-
-#define MAX_LOGENTRY_LEN 1024 //don't make this smaller than 1K!
-
-#define ASSERT_WIDTH_80     //show where badly formatted lines are cropping up
 
 #if (CLIENT_OS == OS_NETWARE || CLIENT_OS == OS_DOS || \
      CLIENT_OS == OS_OS2 || CLIENT_OS == OS_WIN16 || \
      CLIENT_OS == OS_WIN32 || CLIENT_OS == OS_WIN32S )
   #define ftruncate( fd, sz )  chsize( fd, sz )
-#elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_RISCOS || CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_RISCOS || \
+     CLIENT_OS == OS_AMIGAOS || CLIENT_OS == OS_MACOS)
   #define ftruncate( fd, sz ) //nada, not supported
   #define FTRUNCATE_NOT_SUPPORTED
 #endif  
@@ -44,6 +47,13 @@
 #ifdef DONT_USE_PATHWORK
   #define GetFullPathForFilename( x ) ( x )
 #endif  
+
+#if ((!defined(MAX_LOGENTRY_LEN)) || (MAX_LOGENTRY_LEN < 1024))
+  #ifdef MAX_LOGENTRY_LEN
+  #undef MAX_LOGENTRY_LEN
+  #endif
+  #define MAX_LOGENTRY_LEN 1024
+#endif   
 
 // ========================================================================
 
@@ -166,10 +176,10 @@ void LogWithPointer( int loggingTo, const char *format, va_list arglist )
         buffptr++;
       if ((buffptr-obuffptr) > 79)
         {
-	  obuffptr[75] = ' '; obuffptr[76] = obuffptr[77] = obuffptr[78] = '.';
-	  memmove( obuffptr+79, buffptr, strlen(buffptr)+1 );
-	  buffptr = obuffptr+79;
-	}
+        obuffptr[75] = ' '; obuffptr[76] = obuffptr[77] = obuffptr[78] = '.';
+        memmove( obuffptr+79, buffptr, strlen(buffptr)+1 );
+        buffptr = obuffptr+79;
+        }    
       } while (*buffptr);
     msglen = strlen( msgbuffer );
     }      
@@ -274,11 +284,6 @@ void LogScreenPercent( unsigned int load_problem_count )
   isatty  = ConIsScreen();
   endperc = restartperc = 0;
 
-  if (!logstatics.lastwasperc || isatty)
-    lastperc = 0;
-  if (lastperc == 0)
-    *bufptr++ = '\r';
-
   for (prob_i = 0; prob_i < load_problem_count; prob_i++)
     {
     Problem *selprob = GetProblemPointerFromIndex(prob_i);
@@ -308,13 +313,17 @@ void LogScreenPercent( unsigned int load_problem_count )
       pbuf[prob_i] = (unsigned char)(percent);
     }
     
+  if (!logstatics.lastwasperc || isatty)
+    lastperc = 0;
   multiperc = (load_problem_count > 1 && load_problem_count <= 26 /*a-z*/ 
                  && lastperc == 0 && isatty && endperc < 100);
+  if (lastperc == 0 && endperc > 0 && isatty )
+    *bufptr++ = '\r';
 
   for (percent = lastperc+1; percent <= endperc; percent++)
     {
     if ( percent >= 100 )
-      { strcpy( bufptr, "100" ); bufptr+=3; break; }
+      { strcpy( bufptr, "100\n" ); bufptr+=sizeof("100\n"); endperc=0; break;}
     else if ( ( percent % 10 ) == 0 )
       { sprintf( bufptr, "%d%%", (int)(percent) ); bufptr+=3; }
     else if ( restartperc == percent) 
@@ -349,34 +358,38 @@ void LogScreenPercent( unsigned int load_problem_count )
     {
     *bufptr = 0;
     LogWithPointer( LOGTO_SCREEN|LOGTO_RAWMODE, buffer, NULL );
-    logstatics.lastwasperc = 1; //reset to 1
-    logstatics.stableflag = 0; //cursor is not at column 0 
+    logstatics.stableflag = (endperc == 0);  //cursor is not at column 0 
+    logstatics.lastwasperc = (endperc != 0); //percbar requires reset
     }
   return;
 }
 
 // ------------------------------------------------------------------------
 
-void Client::DeinitializeLogging(void)
+void DeinitializeLogging(void)
 {
   return;
 }
 
 // ---------------------------------------------------------------------------
 
-void Client::InitializeLogging(int spools_on)
+void InitializeLogging( int noscreen, int nopercent, const char *logfilename, 
+                        unsigned int logfiletype, int logfilelimit, 
+                        long mailmsglen, const char *smtpsrvr, 
+                        unsigned int smtpport, const char *smtpfrom, 
+                        const char *smtpdest, const char *id )
 {
   DeinitializeLogging();
     
   logstatics.loggingTo = LOGTO_SCREEN;
   logstatics.lastwasperc = 0;
-  logstatics.spoolson = (spools_on != 0);
-  logstatics.percprint = 1;
+  logstatics.spoolson = 1;
+  logstatics.percprint = (nopercent == 0);
 
   logstatics.stableflag = 0;   //assume next log screen needs a '\n' first
 
   return;
-}
+}  
 
 // ---------------------------------------------------------------------------
 
