@@ -1,8 +1,15 @@
-# RC5 client makefile for VC
+# distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.65 1999/10/22 15:27:40 cyp Exp $
+# $Id: makefile.vc,v 1.66 1999/10/30 17:31:38 cyp Exp $
 #
+
+!ifndef PROCESSOR_ARCHITECTURE
+PROCESSOR_ARCHITECTURE = x86
+!endif # default to x86
+!if "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
+ALPHA=1
+!endif
 
 BASENAME = dnetc
 OUTPUTPATH = output
@@ -11,30 +18,38 @@ RC5SRCPATH = rc5
 DESSRCPATH = des
 OGRSRCPATH = ogr
 CSCSRCPATH = csc
-X86SRCPATH = platforms
+CHIPSRCPATH = platforms
 PLATSRCPATH = platforms/win32cli
-
-OPTS_MSVC =  -I$(COMMONPATH) -I$(PLATSRCPATH) \
-             -I$(DESSRCPATH) -I$(OGRSRCPATH) -I$(CSCSRCPATH) \
-             -DMULTITHREAD -D__WIN32__ -D_CPU_32BIT_ -DLURK \
-	     -DHAVE_DES_CORES -DHAVE_OGR_CORES -DHAVE_CSC_CORES
-OPTS_CC_X86 = -DMMX_BITSLICER -DBIT_64 -DMEGGS -DKWAN -DMMX_RC5 \
-             -nologo -W3 -O1 -MT -GR- -GX- -GA -GF
-
-OPTS_LINK = /incremental:no /version:3.10
-OPTS_LIBS = advapi32.lib user32.lib gdi32.lib
-RES_FILE = $(OUTPUTPATH)/$(BASENAME).res
-RC_FILE = $(PLATSRCPATH)/w32cons.rc
 
 # --------------------------------------------
 
 !ifdef DEBUG
-OPTS_MSVC = -Zi -DDEBUG $(OPTS_MSVC) $(OPTS_CC_X86)
-OPTS_LINK = $(OPTS_LINK) /debug /pdb:none /pdbtype:consolidate
+OPTS_CC_DEBUG = -Zi -DDEBUG
+OPTS_LINK_DEBUG = /debug /pdb:none /pdbtype:consolidate
 !else
-OPTS_MSVC = -DNDEBUG $(OPTS_MSVC) $(OPTS_CC_X86)
-OPTS_LINK = $(OPTS_LINK) /release
+OPTS_CC_DEBUG = -DNDEBUG
+OPTS_LINK_DEBUG = /release
 !endif
+
+!ifdef ALPHA
+OPTS_CC_CPU = -DNTALPHA -DKWAN -DDWORZ
+OPTS_M_PLAT = ALPHA
+OPTS_AS = -Gy -Zi -O1
+!else
+OPTS_CC_CPU = -DMMX_BITSLICER -DMEGGS -DKWAN -DMMX_RC5
+OPTS_M_PLAT = IX86
+!endif
+
+OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib
+OPTS_RC   = -d_Windows -d_M_{$(OPTS_M_PLAT)}
+OPTS_MSVC = -nologo -I$(COMMONPATH) -I$(PLATSRCPATH) \
+            -I$(DESSRCPATH) -I$(OGRSRCPATH) -I$(CSCSRCPATH) \
+            -DMULTITHREAD -D__WIN32__ -D_CPU_32BIT_ -DBIT_64 -DLURK \
+            -DHAVE_DES_CORES -DHAVE_OGR_CORES -DHAVE_CSC_CORES \
+            -W3 -MT -GR- -GX- -GA -GF \
+            -D_M_$(OPTS_M_PLAT) $(OPTS_CC_CPU) $(OPTS_CC_DEBUG) 
+OPTS_LINK = /nologo /incremental:no /version:3.10 \
+            /machine:$(OPTS_M_PLAT) $(OPTS_LINK_DEBUG)
 
 # --------------------------------------------
 
@@ -42,152 +57,197 @@ all: $(BASENAME)
 
 # --------------------------------------------
 
+RES_FILE = $(OUTPUTPATH)/$(BASENAME).res
+RC_FILE = $(PLATSRCPATH)/w32cons.rc
+
 COMMON_OBJS =                        \
-	$(OUTPUTPATH)/client.obj     \
-	$(OUTPUTPATH)/disphelp.obj   \
-	$(OUTPUTPATH)/autobuff.obj   \
-	$(OUTPUTPATH)/iniread.obj    \
-	$(OUTPUTPATH)/network.obj    \
-	$(OUTPUTPATH)/netinit.obj    \
-	$(OUTPUTPATH)/scram.obj      \
-	$(OUTPUTPATH)/mail.obj       \
-	$(OUTPUTPATH)/cpucheck.obj   \
-	$(OUTPUTPATH)/confmenu.obj   \
-	$(OUTPUTPATH)/confrwv.obj    \
-	$(OUTPUTPATH)/confopt.obj    \
-	$(OUTPUTPATH)/selftest.obj   \
-	$(OUTPUTPATH)/cmdline.obj    \
-	$(OUTPUTPATH)/clitime.obj    \
-	$(OUTPUTPATH)/clirate.obj    \
-	$(OUTPUTPATH)/clisrate.obj   \
-	$(OUTPUTPATH)/clicdata.obj   \
-	$(OUTPUTPATH)/buffwork.obj   \
-	$(OUTPUTPATH)/convdes.obj    \
-	$(OUTPUTPATH)/problem.obj    \
-	$(OUTPUTPATH)/pathwork.obj   \
-	$(OUTPUTPATH)/cliident.obj   \
-	$(OUTPUTPATH)/lurk.obj       \
-	$(OUTPUTPATH)/logstuff.obj   \
-	$(OUTPUTPATH)/buffupd.obj    \
-	$(OUTPUTPATH)/triggers.obj   \
-	$(OUTPUTPATH)/selcore.obj    \
-	$(OUTPUTPATH)/clirun.obj     \
-	$(OUTPUTPATH)/pollsys.obj    \
-	$(OUTPUTPATH)/probman.obj    \
-	$(OUTPUTPATH)/probfill.obj   \
-	$(OUTPUTPATH)/bench.obj      \
-	$(OUTPUTPATH)/console.obj    \
-	$(OUTPUTPATH)/setprio.obj    \
-	$(OUTPUTPATH)/modereq.obj    \
-	$(OUTPUTPATH)/checkpt.obj    \
-	$(OUTPUTPATH)/clievent.obj   \
-	$(OUTPUTPATH)/util.obj       \
-	$(OUTPUTPATH)/base64.obj     \
-	$(OUTPUTPATH)/random.obj     \
-	$(OUTPUTPATH)/netres.obj
+        $(OUTPUTPATH)/autobuff.obj   \
+        $(OUTPUTPATH)/base64.obj     \
+        $(OUTPUTPATH)/bench.obj      \
+        $(OUTPUTPATH)/buffupd.obj    \
+        $(OUTPUTPATH)/buffwork.obj   \
+        $(OUTPUTPATH)/checkpt.obj    \
+        $(OUTPUTPATH)/clicdata.obj   \
+        $(OUTPUTPATH)/client.obj     \
+        $(OUTPUTPATH)/clievent.obj   \
+        $(OUTPUTPATH)/cliident.obj   \
+        $(OUTPUTPATH)/clirate.obj    \
+        $(OUTPUTPATH)/clirun.obj     \
+        $(OUTPUTPATH)/clisrate.obj   \
+        $(OUTPUTPATH)/clitime.obj    \
+        $(OUTPUTPATH)/cmdline.obj    \
+        $(OUTPUTPATH)/confmenu.obj   \
+        $(OUTPUTPATH)/confopt.obj    \
+        $(OUTPUTPATH)/confrwv.obj    \
+        $(OUTPUTPATH)/console.obj    \
+        $(OUTPUTPATH)/convdes.obj    \
+        $(OUTPUTPATH)/cpucheck.obj   \
+        $(OUTPUTPATH)/disphelp.obj   \
+        $(OUTPUTPATH)/iniread.obj    \
+        $(OUTPUTPATH)/logstuff.obj   \
+        $(OUTPUTPATH)/lurk.obj       \
+        $(OUTPUTPATH)/mail.obj       \
+        $(OUTPUTPATH)/modereq.obj    \
+        $(OUTPUTPATH)/netinit.obj    \
+        $(OUTPUTPATH)/netres.obj     \
+        $(OUTPUTPATH)/network.obj    \
+        $(OUTPUTPATH)/pathwork.obj   \
+        $(OUTPUTPATH)/pollsys.obj    \
+        $(OUTPUTPATH)/probfill.obj   \
+        $(OUTPUTPATH)/problem.obj    \
+        $(OUTPUTPATH)/probman.obj    \
+        $(OUTPUTPATH)/random.obj     \
+        $(OUTPUTPATH)/scram.obj      \
+        $(OUTPUTPATH)/selcore.obj    \
+        $(OUTPUTPATH)/selftest.obj   \
+        $(OUTPUTPATH)/setprio.obj    \
+        $(OUTPUTPATH)/triggers.obj   \
+        $(OUTPUTPATH)/util.obj
 
 PLAT_OBJS =                          \
-	$(OUTPUTPATH)/w32cons.obj    \
-	$(OUTPUTPATH)/w32sock.obj    \
-	$(OUTPUTPATH)/w32svc.obj     \
-	$(OUTPUTPATH)/w32pre.obj     \
-	$(OUTPUTPATH)/w32ras.obj     \
-	$(OUTPUTPATH)/w32ss.obj      \
-	$(OUTPUTPATH)/w32util.obj
+        $(OUTPUTPATH)/w32cons.obj    \
+        $(OUTPUTPATH)/w32pre.obj     \
+        $(OUTPUTPATH)/w32ras.obj     \
+        $(OUTPUTPATH)/w32sock.obj    \
+        $(OUTPUTPATH)/w32ss.obj      \
+        $(OUTPUTPATH)/w32svc.obj     \
+        $(OUTPUTPATH)/w32util.obj
 
 SCR_OBJS =                           \
-	$(OUTPUTPATH)/w32ssb.obj     \
-	$(OUTPUTPATH)/w32ss.obj      \
-	$(OUTPUTPATH)/w32util.obj
+        $(OUTPUTPATH)/w32ss.obj      \
+        $(OUTPUTPATH)/w32ssb.obj     \
+        $(OUTPUTPATH)/w32util.obj
 
-X86_OBJS =                           \
-	$(OUTPUTPATH)/x86ident.obj
+CUI_OBJS =                           \
+        $(OUTPUTPATH)/w32cuis.obj
 
-RC5_X86_OBJS =                       \
-	$(OUTPUTPATH)/rg486.obj      \
-	$(OUTPUTPATH)/rg6x86.obj     \
-	$(OUTPUTPATH)/rc5-rgk5.obj   \
-	$(OUTPUTPATH)/rc5-rgk6.obj   \
-	$(OUTPUTPATH)/brfp5.obj      \
-	$(OUTPUTPATH)/rc5-rgp6.obj   \
-	$(OUTPUTPATH)/rc5mmx.obj
-				     
-DES_X86_OBJS =                       \
-	$(OUTPUTPATH)/des-slice-meggs.obj \
-	$(OUTPUTPATH)/des-x86.obj    \
-	$(OUTPUTPATH)/bdeslow.obj    \
-	$(OUTPUTPATH)/bbdeslow.obj   \
-	$(OUTPUTPATH)/p1bdespro.obj  \
-	$(OUTPUTPATH)/p2bdespro.obj  \
-#       $(OUTPUTPATH)/sboxes-mmx.obj \
+# -------
+
+!ifdef ALPHA
+CHIP_OBJS =
+!else
+CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj
+!endif
+
+# -------
+
+!ifdef ALPHA
+RC5_OBJS_CHIP =                      \
+        $(OUTPUTPATH)/rc5-alpha-nt.obj
+!else
+RC5_OBJS_CHIP =                      \
+        $(OUTPUTPATH)/brfp5.obj      \
+        $(OUTPUTPATH)/rc5-rgk5.obj   \
+        $(OUTPUTPATH)/rc5-rgk6.obj   \
+        $(OUTPUTPATH)/rc5-rgp6.obj   \
+        $(OUTPUTPATH)/rc5mmx.obj     \
+        $(OUTPUTPATH)/rg486.obj      \
+        $(OUTPUTPATH)/rg6x86.obj
+!endif
+
+# -------
+
+!ifdef ALPHA
+DES_OBJS_CHIP =                              \
+        $(OUTPUTPATH)/des-slice-dworz.obj    \
+        $(OUTPUTPATH)/deseval-dworz3.obj
+!else                                
+DES_OBJS_CHIP =                              \
+        $(OUTPUTPATH)/bbdeslow.obj           \
+        $(OUTPUTPATH)/bdeslow.obj            \
+        $(OUTPUTPATH)/des-slice.obj          \
+        $(OUTPUTPATH)/des-slice-meggs.obj    \
+        $(OUTPUTPATH)/des-x86.obj            \
+        $(OUTPUTPATH)/deseval.obj            \
 #       $(OUTPUTPATH)/deseval-meggs3-mmx.gcc \
-	$(OUTPUTPATH)/deseval-mmx.obj \
-	$(OUTPUTPATH)/deseval.obj    \
-	$(OUTPUTPATH)/des-slice.obj  \
-	$(OUTPUTPATH)/sboxes-kwan4.obj
+        $(OUTPUTPATH)/deseval-mmx.obj        \
+        $(OUTPUTPATH)/p1bdespro.obj          \
+        $(OUTPUTPATH)/p2bdespro.obj          \
+        $(OUTPUTPATH)/sboxes-kwan4.obj       \
+#       $(OUTPUTPATH)/sboxes-mmx.obj
+!endif
 
-OGR_OBJS =                           \
-	$(OUTPUTPATH)/ogr.obj        \
-	$(OUTPUTPATH)/crc32.obj      \
-	$(OUTPUTPATH)/choosedat.obj
+# -------
 
 CSC_OBJS =                           \
-	$(OUTPUTPATH)/convcsc.obj    \
-	$(OUTPUTPATH)/csc-1k-i.obj   \
-	$(OUTPUTPATH)/csc-1k.obj     \
-	$(OUTPUTPATH)/csc-6b-i.obj   \
-	$(OUTPUTPATH)/csc-6b.obj     \
-	$(OUTPUTPATH)/csc-common.obj
+        $(OUTPUTPATH)/convcsc.obj    \
+        $(OUTPUTPATH)/csc-1k.obj     \
+        $(OUTPUTPATH)/csc-1k-i.obj   \
+        $(OUTPUTPATH)/csc-6b.obj     \
+        $(OUTPUTPATH)/csc-6b-i.obj   \
+        $(OUTPUTPATH)/csc-common.obj
+
+# -------
+
+OGR_OBJS =                           \
+        $(OUTPUTPATH)/choosedat.obj  \
+        $(OUTPUTPATH)/crc32.obj      \
+        $(OUTPUTPATH)/ogr.obj
 
 # --------------------------------------------
 
-{$(X86SRCPATH)}.asm{$(OUTPUTPATH)}.obj:
-	tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
+!ifdef ALPHA
+{$(RC5SRCPATH)/alpha}.s{$(OUTPUTPATH)}.obj:
+        asaxp $(OPTS_AS) -Fo$@ $<
+
+{$(DESSRCPATH)/alpha-asm}.s{$(OUTPUTPATH)}.obj:
+        asaxp $(OPTS_AS) -Fo$@ $<
+
+{$(DESSRCPATH)/alpha-asm}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+!else
+{$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
+        tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
 
 {$(DESSRCPATH)/brydmasm}.asm{$(OUTPUTPATH)}.obj:
-	tasm32 /t /m /ml /dmodelnum=2 /i$(DESSRCPATH:/=\)\brydmasm $(**:/=\), $(@:/=\)
+        tasm32 /t /m /ml /dmodelnum=2 /i$(DESSRCPATH:/=\)\brydmasm $(**:/=\), $(@:/=\)
 
 {$(DESSRCPATH)/nasm}.asm{$(OUTPUTPATH)}.obj:
-	nasmw -o $(@:/=\) -f win32 -i $(DESSRCPATH:/=\)\nasm\ $(**:/=\)
+        nasmw -o $(@:/=\) -f win32 -i $(DESSRCPATH:/=\)\nasm\ $(**:/=\)
 
 {$(DESSRCPATH)/mmx-bitslice}.asm{$(OUTPUTPATH)}.obj:
-	nasmw -o $(@:/=\) -f win32 -i $(DESSRCPATH:/=\)\mmx-bitslice\ $(**:/=\)
-
-{$(DESSRCPATH)}.cpp{$(OUTPUTPATH)}.obj:
-	cl -c $(OPTS_MSVC) -Fo$@ $**
+        nasmw -o $(@:/=\) -f win32 -i $(DESSRCPATH:/=\)\mmx-bitslice\ $(**:/=\)
 
 {$(RC5SRCPATH)/x86/nasm}.asm{$(OUTPUTPATH)}.obj:
-	nasmw -o $(@:/=\) -f win32 -i $(RC5SRCPATH:/=\)\x86\nasm\ $(**:/=\)
+        nasmw -o $(@:/=\) -f win32 -i $(RC5SRCPATH:/=\)\x86\nasm\ $(**:/=\)
+!endif
 
-{$(OGRSRCPATH)}.cpp{$(OUTPUTPATH)}.obj:
-	cl -c $(OPTS_MSVC) -Fo$@ $**
+{$(DESSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
-{$(CSCSRCPATH)}.cpp{$(OUTPUTPATH)}.obj:
-	cl -c $(OPTS_MSVC) -Fo$@ $**
+{$(OGRSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
-{$(PLATSRCPATH)}.cpp{$(OUTPUTPATH)}.obj:
-	cl -c $(OPTS_MSVC) -Fo$@ $**
+{$(CSCSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
-{$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj:
-	cl -c $(OPTS_MSVC) -Fo$@ $**
+{$(PLATSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c $(OPTS_MSVC) -O1 -Fo$(OUTPUTPATH)\ $<
+
+{$(PLATSRCPATH)}.c{$(OUTPUTPATH)}.obj::
+        cl -c -Zl -Gs8192 -O1 -Fo$(OUTPUTPATH)\ $<
+
+{$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c $(OPTS_MSVC) -O2 -Fo$(OUTPUTPATH)\ $<
 
 #$(RC_FILE):
-#	echo 1 ICON $(PLATSRCPATH)\w32cons.ico > $(@:/=\)
+#       echo 1 ICON $(PLATSRCPATH)\w32cons.ico > $(@:/=\)
 
 $(RES_FILE):    $(RC_FILE)
-	rc -d_Windows -d_M_IX86 -i $(COMMONPATH) -fo$@ $(**:/=\)
+        rc  -i $(OPTS_RC) -I$(COMMONPATH) -fo$@ $(**:/=\)
 
 # --------------------------------------------
 
-$(BASENAME): $(PLAT_OBJS) $(COMMON_OBJS) $(X86_OBJS) $(RC5_X86_OBJS) $(DES_X86_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(SCR_OBJS) $(RES_FILE)
-	link $(OPTS_LINK) /OUT:$(BASENAME).scr $(OPTS_LIBS) $(SCR_OBJS) $(RES_FILE)
-	link $(OPTS_LINK) /OUT:$(BASENAME).exe $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(X86_OBJS) $(RC5_X86_OBJS) $(DES_X86_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
+$(BASENAME): $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_OBJS_CHIP) $(DES_OBJS_CHIP) $(OGR_OBJS) $(CSC_OBJS) $(SCR_OBJS) $(CUI_OBJS) $(RES_FILE)
+        link $(OPTS_LINK) /SUBSYSTEM:WINDOWS /OUT:$(BASENAME).scr $(OPTS_LIBS) $(SCR_OBJS) $(RES_FILE) 
+        link $(OPTS_LINK) /SUBSYSTEM:CONSOLE /OUT:$(BASENAME).com $(OPTS_LIBS) $(CUI_OBJS)
+        link $(OPTS_LINK) /SUBSYSTEM:WINDOWS /OUT:$(BASENAME).exe $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_OBJS_CHIP) $(DES_OBJS_CHIP) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
 
 clean:
-	del $(OUTPUTPATH:/=\)\*.obj $(RC_FILE:/=\) $(RES_FILE:/=\)
+        -del $(OUTPUTPATH:/=\)\*.obj $(RES_FILE:/=\)
 
 superclean: clean
-	del $(BASENAME).exe $(BASENAME).scr $(BASENAME).ini buff-in.* buff-out.*
+        -del $(BASENAME).exe $(BASENAME).scr $(BASENAME).com $(BASENAME).ini buff-in.* buff-out.*
 
 rebuild: clean all
 
