@@ -21,11 +21,15 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.12 2003/02/27 18:06:40 teichp Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.13 2003/03/17 01:00:48 andreasb Exp $
 ==========================================================================
 
 2.9000
 ------
+
+2.9004-482  undo: x86: rc5-72 SS-2 core (Athlon optimized) removed due to 
+                       reentrancy and stack problems (#3187)
+            chg: some: rc5-72 ansi cores removed in favor of faster asm cores
 
 2.9003-481  fix: smp via fork: 2nd process died after switching to project
                                ogr (added workaround for #3006)
@@ -35,7 +39,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.12 2003/02/27 18:06:40 teichp Exp 
             new: ppc: two additional rc5-72 cores for ppc by Didier Levet
             new: arm: ogr assembly cores by Peter Teichmann
 
-2.9003-480  new: x86: rc5-72 core by Gnatiuc Ianos (Athlon optimized)
+2.9003-480  new: x86: rc5-72 SS-2 core by Gnatiuc Ianos (Athlon optimized)
             chg: all: -numcpu 0 disables use of shared memory (if any)
             fix: macosx: changed -install to work on Mac OS X 10.2 (#1618)
 
