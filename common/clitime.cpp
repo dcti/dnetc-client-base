@@ -17,6 +17,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: clitime.cpp,v $
+// Revision 1.27  1999/03/04 00:55:17  cyp
+// adj_time_delta was being added to the wrong variable.
+//
 // Revision 1.26  1999/03/04 00:17:44  trevorh
 // Correct c0000005 error in CliTimer() after last update
 //
@@ -73,7 +76,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.26 1999/03/04 00:17:44 trevorh Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.27 1999/03/04 00:55:17 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -281,6 +284,7 @@ struct timeval *CliTimer( struct timeval *tv )
     }
   }
 #endif
+  stv.tv_sec += adj_time_delta;
   if (cliclock.tv_sec == 0) //CliClock() not initialized
   {
     cliclock.tv_sec = stv.tv_sec;
@@ -288,7 +292,6 @@ struct timeval *CliTimer( struct timeval *tv )
   }
   if (tv)
   {
-    tv->tv_sec += adj_time_delta;
     tv->tv_sec = stv.tv_sec;
     tv->tv_usec = stv.tv_usec;
     return tv;
