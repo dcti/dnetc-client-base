@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-x86.cpp,v $
+// Revision 1.9  1998/06/17 22:12:51  remi
+// No need of more than two bryd_key_found and bryd_continue C routines.
+//
 // Revision 1.8  1998/06/17 21:56:07  remi
 // Fixed p?bryd_des routines naming.
 //
@@ -26,7 +29,7 @@
 
 // encapsulate the BrydDES library
 
-static char *id="@(#)$Id: des-x86.cpp,v 1.8 1998/06/17 21:56:07 remi Exp $";
+static char *id="@(#)$Id: des-x86.cpp,v 1.9 1998/06/17 22:12:51 remi Exp $";
 
 #include <stdio.h>
 #include <string.h>
@@ -48,8 +51,6 @@ static char *id="@(#)$Id: des-x86.cpp,v 1.8 1998/06/17 21:56:07 remi Exp $";
  #define bryd_key_found _bryd_key_found
  #define bbryd_continue _bbryd_continue
  #define bbryd_key_found _bbryd_key_found
- #define p1bryd_des _p1bryd_des
- #define p2bryd_des _p2bryd_des
 #elif ((CLIENT_OS == OS_BEOS) && (CLIENT_CPU == CPU_X86))
  #define bbryd_des BBRYD_DES
  #define bbryd_continue BBRYD_CONTINUE
@@ -118,29 +119,6 @@ void bbryd_key_found (u8 *bytekey)
   return;
 }
 
-extern "C" void p1bryd_key_found (u8 *bytekey);
-void p1bryd_key_found (u8 *bytekey)
-{
-#ifdef DEBUG
-  printf ("key found!\n");
-#endif
-  memcpy (key_found, bytekey, 8);
-  Bkey_is_found = true;
-  return;
-}
-
-extern "C" void p2bryd_key_found (u8 *bytekey);
-void p2bryd_key_found (u8 *bytekey)
-{
-#ifdef DEBUG
-  printf ("key found!\n");
-#endif
-  memcpy (Bkey_found, bytekey, 8);
-  Bkey_is_found = true;
-  return;
-}
-
-
 // ------------------------------------------------------------------
 // Called before keys are tested, and each time 2^16 (65536) keys are tested.
 // (in fact, it depends on the bitmask used...)
@@ -155,24 +133,6 @@ int bryd_continue (void)
 
 extern "C" int bbryd_continue (void);
 int bbryd_continue (void)
-{
-#ifdef DEBUG
-  printf ("Bbryd_continue_called\n");
-#endif
-  return Bkey_is_found ? 0 : 1;
-}
-
-extern "C" int p1bryd_continue (void);
-int p1bryd_continue (void)
-{
-#ifdef DEBUG
-  printf ("Bbryd_continue_called\n");
-#endif
-  return Bkey_is_found ? 0 : 1;
-}
-
-extern "C" int p2bryd_continue (void);
-int p2bryd_continue (void)
 {
 #ifdef DEBUG
   printf ("Bbryd_continue_called\n");
