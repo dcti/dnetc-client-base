@@ -1,8 +1,14 @@
-// Copyright distributed.net 1997-1998 - All Rights Reserved
+// Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
 // $Log: triggers.cpp,v $
+// Revision 1.8.2.4  1999/01/04 02:33:08  remi
+// Synced with :
+//
+//  Revision 1.11  1999/01/01 02:45:16  cramer
+//  Part 1 of 1999 Copyright updates...
+//
 // Revision 1.8.2.3  1998/12/28 15:26:51  remi
 // Synced with :
 //
@@ -20,7 +26,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.8.2.3 1998/12/28 15:26:51 remi Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.8.2.4 1999/01/04 02:33:08 remi Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
