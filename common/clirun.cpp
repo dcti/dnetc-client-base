@@ -9,7 +9,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.92 2001/03/20 19:37:59 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.93 2001/03/26 17:49:52 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -524,7 +524,9 @@ void Go_mt( void * parm )
                 printf("%5d %4d\r", thisprob->pub_data.tslice, ixes*1000/usecs);
               */
 
-              optimal_timeslice=(ui64)thrparams->dyn_timeslice_table[contest_i].usec*ixes/usecs;
+              optimal_timeslice=(unsigned long)
+                                ((ui64)thrparams->dyn_timeslice_table[contest_i].usec
+                                 *ixes/usecs);
               if (optimal_timeslice < thrparams->dyn_timeslice_table[contest_i].min)
                 optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].min;
               if (optimal_timeslice > thrparams->dyn_timeslice_table[contest_i].max)
