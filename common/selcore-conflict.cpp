@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.5  1998/09/23 22:02:42  blast
+// Added multi-core support for all 68k platforms.
+// AmigaOS now has autodetection (-1) or manual (0, 1) of cores.
+// Other 68k porters will have to add autodetection if their OS can handle
+// autodetection.
+//
 // Revision 1.4  1998/09/04 06:05:46  silby
 // Made selcore more verbose on x86 so that people would not confused rc5 and des core selections.
 //
@@ -22,7 +28,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.4 1998/09/04 06:05:46 silby Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.5 1998/09/23 22:02:42 blast Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -62,6 +68,12 @@ static const char *cputypetable[]=
   {
   "PowerPC 601",
   "PowerPC 603/604/750"
+  };
+#elif (CLIENT_CPU == CPU_68K)
+static const char *cputypetable[]=
+  {
+  "Motorola 68040/060",
+  "Motorola 68000/020/030"
   };
 #else
   #define NO_CPUTYPE_TABLE
@@ -140,14 +152,25 @@ s32 Client::SelectCore(void)
   
   LogScreenRaw( "| Selected %s code.\n", GetCoreNameFromCoreType(cputype) ); 
 #elif (CLIENT_CPU == CPU_68K)
-  cputype = 0;
+  LogScreenRaw( "| RC5 68K assembly by John Girvin\n");
   #if (CLIENT_OS == OS_AMIGAOS)
-  if (!(SysBase->AttnFlags & AFF_68020))
-    {
-    LogScreenRaw("\nIncompatible CPU type. Sorry.\n");
-    return -1;
-    }
+//  if (cputype<0 || cputype>=(int)(sizeof(cputypetable)/sizeof(cputypetable[0])))
+//    cputype=-1;
+  if (cputype==-1)
+  {
+    if (SysBase->AttnFlags & AFF_68040) // Means we have either 040 or 060
+      cputype=0;
+    else
+      cputype=1;
+  }
   #endif
+  if (cputype == 1)
+    rc5_unit_func = rc5_unit_func_000_030;
+  else //if (cputype == 0)
+    rc5_unit_func = rc5_unit_func_040_060;
+
+  LogScreenRaw( "| Selected %s code.\n", GetCoreNameFromCoreType(cputype) ); 
+
 #elif (CLIENT_CPU == CPU_X86)
 
   s32 detectedtype = GetProcessorType(); //was x86id() now in cpucheck.cpp
