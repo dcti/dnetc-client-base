@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.194  1999/02/23 22:24:00  remi
+# Added a NetBSD/VAX target. Anyone to compile the client ?
+#
 # Revision 1.193  1999/02/19 03:14:44  silby
 # Updated hpux targets.
 #
@@ -804,6 +807,11 @@ OPTS_NEXT_HPPA="$OPTS_GCC -O6 -DASM_HPPA -D_OLD_NEXT_"
 #-- ARM
 
 OPTS_GCC_ARM="$OPTS_GCC $OPT_FLAGS -DARM"
+
+#-- NetBSD/vax
+
+OPTS_GCC_VAX="$OPTS_GCC272 -O2 -DASM_VAX"
+OPTS_EGCS_VAX="$OPTS_EGCS -O2 -DASM_VAX"
 
 #-- OS/390
 
@@ -1967,6 +1975,16 @@ case "$1" in
 			des/des-slice-sa-gnu.s des/des-slice-arm-gnu.s"
 	TARGET_LIBS="-lm"
 	;;
+
+###### NetBSD/vax
+    *vax-netbsd-gcc)
+        RC5CORECOPY="rc5/rc5ansi1-b2.cpp"
+        TARGET_CC="g++"
+        TARGET_CCFLAGS="$OPTS_GCC_VAX -DPIPELINE_COUNT=1 -DBIT_32 \
+                        -DMEGGS -DKWAN -DRC5ANSICORE"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
+        TARGET_LIBS="-ltermcap"
+        ;;
 
 ###### OS390
     *os390)
