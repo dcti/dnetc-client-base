@@ -8,6 +8,9 @@
 // common, and all that will be needed are #ifdefs in here.
 //
 // $Log: guistuff.cpp,v $
+// Revision 1.6  1998/12/28 04:09:04  silby
+// Urk.  Fixed some foolishness with out of order defines.
+//
 // Revision 1.5  1998/12/28 04:04:00  silby
 // Functions not defined if GUICLIENT is !defined.
 //
@@ -23,12 +26,13 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *guistuff_cpp(void) {
-return "@(#)$Id: guistuff.cpp,v 1.5 1998/12/28 04:04:00 silby Exp $"; }
+return "@(#)$Id: guistuff.cpp,v 1.6 1998/12/28 04:09:04 silby Exp $"; }
 #endif
+
+#include "guistuff.h"
 
 #if defined (GUICLIENT)
 
-#include "guistuff.h"
 #if (CLIENT_OS == OS_WIN32) && defined(WIN32GUI)
 #include "vwindow.hpp"
 #include "..\platforms\win32gui\guiwin.h"
