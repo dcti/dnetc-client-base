@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.56.2.41 2001/04/16 17:58:51 cyp Exp $
+# $Id: makefile.vc,v 1.56.2.42 2001/04/25 22:42:53 michmarc Exp $
 #
 
 BASENAME = dnetc
@@ -38,10 +38,10 @@ CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 !endif
 
 !ifdef DEBUG
-OPTS_CC_DEBUG = -Zi -DDEBUG
+OPTS_CC_DEBUG = -MTd -Zi -DDEBUG -Od
 OPTS_LINK_DEBUG = /debug /pdb:none /pdbtype:consolidate
 !else
-OPTS_CC_DEBUG = -DNDEBUG
+OPTS_CC_DEBUG = -MT -DNDEBUG
 OPTS_LINK_DEBUG = /release
 !endif
 
@@ -290,10 +290,10 @@ $(VC_CHECK):
         asaxp $(OPTS_AS) -Fo$@ $<
 
 {$(DESSRCPATH)/alpha-asm}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+        cl -c -Ox $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
 {$(CSCSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+        cl -c -Ox $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 
@@ -327,19 +327,19 @@ $(VC_CHECK):
 !endif
 
 {$(DESSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+        cl -c -Ox $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
 {$(OGRSRCPATH)/ansi}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+        cl -c -Ox $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
 {$(PLATSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c $(OPTS_MSVC) -Os -Fo$(OUTPUTPATH)\ $<
+        cl -c -Oxs $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
 {$(PLATSRCPATH)}.c{$(OUTPUTPATH)}.obj::
-        cl -c -Zl -O1 -Fo$(OUTPUTPATH)\ $<
+        cl -c -Ox -Zl $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
 {$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c $(OPTS_MSVC) -O2 -Fo$(OUTPUTPATH)\ $<
+        cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
 $(RES_FILE):    $(RC_FILE)
         rc  -i $(OPTS_RC) -I$(COMMONPATH) -fo$@ $(**:/=\)
