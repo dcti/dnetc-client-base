@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.172  1998/11/26 06:54:25  cyp
+// Updated client contructor.
+//
 // Revision 1.171  1998/11/25 09:23:27  chrisb
 // various changes to support x86 coprocessor under RISC OS
 //
@@ -126,7 +129,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.171 1998/11/25 09:23:27 chrisb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.172 1998/11/26 06:54:25 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -167,6 +170,7 @@ Client::Client()
   outthreshold[1] = 10;
   blockcount = 0;
   minutes = 0;
+  stopiniio = 0;
   keyproxy[0] = 0;
   keyport = 2064;
   httpproxy[0] = 0;
@@ -197,15 +201,10 @@ Client::Client()
   percentprintingoff=0;
   connectoften=0;
   nodiskbuffers=0;
-  for (int i1=0;i1<2;i1++) {
-    membuffcount[i1][0]=0;
-    membuffcount[i1][1]=0;
-    for (int i2=0;i2<500;i2++) {
-      for (int i3=0;i3<2;i3++) {
-        membuff[i1][i2][i3]=NULL;
-      }
-    }
-  }
+  membufftable[0].in.count=
+  membufftable[0].out.count=
+  membufftable[1].in.count=
+  membufftable[1].out.count=0;
   nofallback=0;
   randomprefix=100;
   preferred_contest_id = 1;
