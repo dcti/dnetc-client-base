@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version-conflict.h,v $
+// Revision 1.31  1999/01/02 06:11:01  silby
+// 2.7103.425, happy new year.
+//
 // Revision 1.30  1999/01/01 02:45:16  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -110,11 +113,11 @@
 // as well.
 
 #define CLIENT_CONTEST      71
-#define CLIENT_BUILD        02
-#define CLIENT_BUILD_FRAC   424
+#define CLIENT_BUILD        03
+#define CLIENT_BUILD_FRAC   425
 
-#define CLIENT_VERSIONSTRING    "v2.7102.424"
-#define CLIENT_VERSIONSTRING2   "2.7102.424"        // no leading "v"
+#define CLIENT_VERSIONSTRING    "v2.7102.425"
+#define CLIENT_VERSIONSTRING2   "2.7102.425"        // no leading "v"
 
 // When releasing a beta client, please set the expiration time to
 // about two weeks into the future; that should be an adequate beta
