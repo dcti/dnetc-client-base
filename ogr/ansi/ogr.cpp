@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.27 2001/01/12 12:12:55 andreasb Exp $
+ * $Id: ogr.cpp,v 1.1.2.28 2001/01/14 02:37:09 andreasb Exp $
  */
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
@@ -209,7 +209,7 @@
 */
 #define OGROPT_IGNORE_TIME_CONSTRAINT_ARG
 #if defined(macintosh) || defined(__riscos) || \
-    defined(ASM_X86)
+    (defined(ASM_X86) && defined(GENERATE_ASM))
     /* ASM_X86: the ogr core used by all x86 platforms is a hand optimized */
     /* .S/.asm version of this core - If we're compiling for asm_x86 then */
     /* we're either generating an .S for later optimization, or compiling */
@@ -224,16 +224,28 @@
 #endif
 #include "ogr.h"
 
-// maximum number of marks supported by ogr_choose_dat
-#define CHOOSE_MARKS      12
-// number of bits from the beginning of dist bitmaps supported by ogr_choose_dat
-#define CHOOSE_DIST_BITS  12
-#define ttmDISTBITS (32-CHOOSE_DIST_BITS)
+#ifndef OGROPT_NEW_CHOOSEDAT
+  // maximum number of marks supported by ogr_choose_dat
+  #define CHOOSE_MARKS       12
+  // number of bits from the beginning of dist bitmaps supported by ogr_choose_dat
+  #define CHOOSE_DIST_BITS   12
+  #define ttmDISTBITS (32-CHOOSE_DIST_BITS)
+#else /* OGROPT_NEW_CHOOSEDAT */
+  // maximum number of marks supported by ogr_choose_dat
+  #define CHOOSE_MAX_MARKS   13
+  #define CHOOSE_MARKS       CHOOSE_MAX_MARKS
+  // alignment musn't be equal to CHOOSE_MAX_MARKS
+  #define CHOOSE_ALIGN_MARKS 16
+  // number of bits from the beginning of dist bitmaps supported by ogr_choose_dat
+  #define CHOOSE_DIST_BITS   12
+  #define ttmDISTBITS (32-CHOOSE_DIST_BITS)
+#endif /* OGROPT_NEW_CHOOSEDAT */
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
+#ifndef OGROPT_NEW_CHOOSEDAT
 #ifdef HAVE_STATIC_CHOOSEDAT  /* choosedat table is static, pre-generated */
    extern const unsigned char ogr_choose_dat[]; /* this is in ogr_dat.cpp */
    #if (CHOOSE_MARKS == 12 && OGROPT_STRENGTH_REDUCE_CHOOSE == 1)
@@ -251,6 +263,19 @@ extern "C" {
       #define choose(x,y) (choosedat[CHOOSE_MARKS*(x)+(y)])
    #endif
 #endif
+#else /* we have OGROPT_NEW_CHOOSEDAT */
+#ifdef HAVE_STATIC_CHOOSEDAT  /* choosedat table is static, pre-generated */
+//  extern const unsigned char ogr_choose_dat2[]; /* this is in ogr_dat2.cpp */
+  #if (CHOOSE_ALIGN_MARKS == 16 && OGROPT_STRENGTH_REDUCE_CHOOSE == 1)
+     // strength reduce the multiply -- which is slow on MANY processors
+     #define choose(x,y) (ogr_choose_dat2[((x)<<4)+(y)])
+  #else
+     #define choose(x,y) (ogr_choose_dat2[CHOOSE_ALIGN_MARKS*(x)+(y)])
+  #endif
+#else
+  #error OGROPT_NEW_CHOOSEDAT and not HAVE_STATIC_CHOOSEDAT ???   
+#endif
+#endif /* OGROPT_NEW_CHOOSEDAT */
 
 static const int OGR[] = {
   /*  1 */    0,   1,   3,   6,  11,  17,  25,  34,  44,  55,
@@ -1839,6 +1864,7 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 
 #endif
 
+#ifndef OGROPT_NEW_CHOOSEDAT
 static int init_load_choose(void)
 {
 #ifndef HAVE_STATIC_CHOOSEDAT
@@ -1899,6 +1925,23 @@ static int init_load_choose(void)
 #endif
   return CORE_S_OK;
 }
+#else /* OGROPT_NEW_CHOOSEDAT */
+static int init_load_choose(void)
+{
+#ifndef HAVE_STATIC_CHOOSEDAT
+  #error non static choosedat not supported with OGROPT_NEW_CHOOSEDAT
+#endif
+  if ( (CHOOSE_ALIGN_MARKS != choose_align_marks) ||
+       (CHOOSE_DIST_BITS   != choose_distbits)    ||
+       (CHOOSE_MAX_MARKS   >  choose_max_marks) )
+  {
+    return CORE_E_FORMAT;
+  }
+
+  return CORE_S_OK;
+}
+#endif /* OGROPT_NEW_CHOOSEDAT */
+
 
 /*-----------------------------------------*/
 /*  found_one() - print out golomb rulers  */
@@ -2227,6 +2270,14 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
   if ( !(oState->maxdepth%2) ) oState->half_length = (oState->max-7) >> 1;
 
   oState->depth = 1;
+  
+#ifdef OGROPT_NEW_CHOOSEDAT
+  /* would we choose values somewhere behind the precalculated values from 
+     ogr_choose_dat2 ? */
+  if (oState->maxdepthm1 - (oState->half_depth+1) > (CHOOSE_MAX_MARKS-1) ) {
+    return CORE_E_CHOOSE;
+  }
+#endif
 
 #if (OGROPT_ALTERNATE_CYCLE == 0)
 

@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.h,v 1.1.2.8 2001/01/12 12:12:55 andreasb Exp $
+ * $Id: ogr.h,v 1.1.2.9 2001/01/14 02:37:09 andreasb Exp $
 */
 #ifndef __OGR_H__
 #define __OGR_H__ 
@@ -36,7 +36,27 @@
 #define CORE_E_IO       (-2)
 #define CORE_E_FORMAT   (-3)
 #define CORE_E_STOPPED  (-4)
+/* Stub is not Golomb or exceeds a limit, so it can't  */
 #define CORE_E_STUB     (-5)
+/* current ogr_choose_dat2 has not enough entries for this ruler length */
+#define CORE_E_CHOOSE   (-6)
+
+/* ===================================================================== */
+
+/*
+ * use the new ogr_choose_dat2
+ * - correct precalculated values for choose(bitmap, 13)
+ * - may be extended up to CHOOSE_MARKS = 16
+ * - alignment on 16 byte borders
+ * - header moved to variables
+ * - choose(x,y) needs less instructions !
+ *
+ * You need to define this here in ogr.h, because files other than ogr.cpp 
+ * (e.g. selftest) depend on this setting.
+ */
+//#define OGROPT_NEW_CHOOSEDAT
+
+/* ===================================================================== */
 
 #ifndef MIPSpro
 #pragma pack(1)
@@ -221,6 +241,25 @@ struct State {
                          (4*OGR_INT_SIZE)+(128*2)+(OGR_INT_SIZE*BITMAPS)+ \
                          (OGR_LEVEL_SIZE*MAXDEPTH)+64)
                          /* sizeof(struct State) */
+
+#ifdef OGROPT_NEW_CHOOSEDAT
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+  extern const int choose_version;
+  extern const int choose_distbits;
+  extern const int choose_max_marks;
+  extern const int choose_align_marks;
+
+  extern const unsigned char ogr_choose_dat2[];
+
+#if defined(__cplusplus)
+}
+#endif
+
+#endif /* OGROPT_NEW_CHOOSEDAT */
 
 unsigned long ogr_nodecount(const struct Stub *);
 const char *ogr_stubstr_r(const struct Stub *stub, 
