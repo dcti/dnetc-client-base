@@ -2,6 +2,12 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
+// $Log: cliconfig.cpp,v $
+// Revision 1.192.2.2  1998/11/08 09:20:12  remi
+// Added $Log tag.
+// Synchronized with 1.192.
+//
+
 #include "cputypes.h"
 #include "console.h"
 #include "client.h"   // MAXCPUS, Packet, FileHeader, Client class, etc
