@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.98 1999/12/06 19:11:08 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.99 1999/12/07 05:43:24 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -656,10 +656,23 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0580, 1432, 0x100, "Pentium MMX" },
           {  0x0600, 2785,     8, "Pentium Pro" },
           {  0x0610, 2785,     8, "Pentium Pro" },
+          /*
+          A80522, Klamath (0.28 æm)
+          A80523, Deschutes (0.25 æm)
+          Tonga (0.25 æm mobile) - 0x0650+0
+          Covington (no On-Die L2 Cache)
+          Mendocino (128 KB On-Die L2 Cache) 0x0660
+          Dixon (256 KB On-Die L2 Cache) 
+          Intel P6-core 
+          3 P2 (0.28 æm) 
+          5 P2 (0.25 æm)  
+          6 P2 with on-die L2 cache 
+          */
           {  0x0630, 2785, 0x102, "Pentium II" },
-          {  0x0650, 2785, 0x102, "Pentium II" },
-          {  0x0660, 2785, 0x102, "Pentium II" }, //or Celeron-A or Xeon
+          {  0x0650, 2785, 0x102, "Pentium II" }, //0x0650=mobile,651=boxed PII/Xeon
+          {  0x0660, 2785, 0x102, "Celeron-A" }, //on-die L2 
           {  0x0670, 2785, 0x102, "Pentium III" },
+          {  0x0680, 2785, 0x102, "Pentium III" },
           {  0x0000, 4096,    -1, NULL }
           }; internalxref = &intelxref[0];
       vendorname = "Intel "; 
