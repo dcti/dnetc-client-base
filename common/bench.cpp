@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.7 1999/11/23 05:41:18 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.8 1999/11/23 05:54:31 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -168,7 +168,6 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
       else
       {
         struct timeval runtime;
-        unsigned long permille;
         runtime.tv_sec = totalruntime.tv_sec  + problem->runtime_sec;
         runtime.tv_usec = totalruntime.tv_usec + problem->runtime_usec;
         if (runtime.tv_usec >= 1000000)
