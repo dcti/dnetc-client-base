@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.56 2002/10/09 22:22:14 andreasb Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.56.2.1 2003/01/03 11:30:16 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -556,7 +556,7 @@ int CliGetMonotonicClock( struct timeval *tv )
         #error whats up doc?
         #endif
         if (!lacquired)
-          DosSleep(0);
+          DosSleep(1);
       }
       if (!DosQuerySysInfo(QSV_MS_COUNT, QSV_MS_COUNT, &ticks, sizeof(ticks)))
       {
