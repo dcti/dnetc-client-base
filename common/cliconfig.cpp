@@ -1321,6 +1321,40 @@ s32 Client::WriteConfig(void)
   return( ini.WriteIniFile(inifilename) ? -1 : 0 );
 }
 
+// --------------------------------------------------------------------------
+
+s32 Client::WriteContestandPrefixConfig(void)
+    // returns -1 on error, 0 otherwise
+    // only writes contestdone and randomprefix .ini entries
+{
+  IniSection ini;
+  char buffer[64];
+
+  ini.ReadIniFile(inifilename);
+
+#define INISETKEY(key, value) ini.setrecord(OPTION_SECTION, options[key].name, IniString(value))
+
+  INISETKEY( CONF_RANDOMPREFIX, randomprefix );
+
+#undef INISETKEY
+
+  ini.setrecord(OPTION_SECTION, "contestdone",  IniString(contestdone[0]));
+  ini.setrecord(OPTION_SECTION, "contestdone2", IniString(contestdone[1]));
+
+#define INIFIND(key) ini.findfirst(OPTION_SECTION, options[key].name)
+
+#if defined(NEEDVIRTUALMETHODS)
+  InternalWriteConfig(ini);
+#endif
+
+#undef INIFIND
+
+  return( ini.WriteIniFile(inifilename) ? -1 : 0 );
+
+
+
+}
+
 //----------------------------------------------------------------------------
 
 

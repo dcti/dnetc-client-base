@@ -1045,7 +1045,7 @@ s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr )
   }
   if (contest == 0) {
     if (randomchanged) {
-      if (0==WriteConfig()) {
+      if (0==WriteContestandPrefixConfig()) {
         randomchanged=0;
       }
     }
@@ -2401,7 +2401,7 @@ PreferredIsDone1:
         Log( "[%s] Marking %s contest as over\n", Time(), contname );
         Log( "[%s] Further %s blocks will not be processed.\n", Time(), contname );
         contestdone[tmpc] = 1;
-        WriteConfig( );
+        WriteContestandPrefixConfig( );
       }
     }
     if (contestdone[0] && contestdone[1])
@@ -2801,7 +2801,7 @@ s32 Client::SetContestDoneState( Packet * packet)
   }
 
   if (detect!=0) {
-    WriteConfig();
+    WriteContestandPrefixConfig();
     return 1;
   }
   return 0;
@@ -3027,7 +3027,7 @@ int main( int argc, char *argv[] )
         retcode2 = client.ForceFetch(0); // RC5 Fetch
       }
       if (client.contestdone[0]) retcode2 = 0;
-      if (client.randomchanged) client.WriteConfig();
+      if (client.randomchanged) client.WriteContestandPrefixConfig();
 
       if ( strcmp( argv[i], "-fetch" ) == 0 ) {
         retcode = client.Fetch(1); // DES Fetch
@@ -3091,7 +3091,7 @@ int main( int argc, char *argv[] )
 
       // RC5 We care about both the fetch & flush errors.
       retcode = client.contestdone[0] ? 0 : client.Update(0,1,1);
-      if (client.randomchanged) client.WriteConfig();
+      if (client.randomchanged) client.WriteContestandPrefixConfig();
 
       // DES We care about both the fetch & flush errors.
       int retcode2 = client.contestdone[1] ? 0 : client.Update(1,1,1);
@@ -3248,7 +3248,7 @@ int main( int argc, char *argv[] )
 //client.LogScreenf("noexitfilecheck: %d\n", client.noexitfilecheck);
 
     client.Run();
-    if (client.randomchanged) client.WriteConfig();
+    if (client.randomchanged) client.WriteContestandPrefixConfig();
     client.mailmessage.quietmode=client.quietmode;
     if ((!client.offlinemode) || (client.messagelen > 0))
       client.mailmessage.checktosend(1);

@@ -519,6 +519,10 @@ public:
   s32  WriteConfig( void );
     // returns -1 on error, 0 otherwise
 
+  s32  WriteContestandPrefixConfig( void );
+    // returns -1 on error, 0 otherwise
+    // only writes contestdone and randomprefix .ini entries
+
   u32  Benchmark( u8 contest, u32 numk );
     // returns keys/second
 
