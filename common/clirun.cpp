@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.76 2000/11/12 02:00:13 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.77 2000/11/12 04:27:13 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1644,16 +1644,16 @@ int ClientRun( Client *client )
     //------------------------------------
 
     //this first part has to be done separately from the actual
-    //if-update-needed part below because dialup.IsConnected()
+    //if-update-needed part below because LurkIsConnected()
     //provides user feedback
     local_connectoften = 0;
     if (!CheckExitRequestTriggerNoIO())
     {
       #if defined(LURK)
-      if ((dialup.IsWatching() & (CONNECT_LURK|CONNECT_LURKONLY))!=0)
+      if ((LurkIsWatching() & (CONNECT_LURK|CONNECT_LURKONLY))!=0)
       {                                  /* is lurk or lurkonly enabled? */
         client->connectoften = 0; /* turn off old setting */
-        if (dialup.IsConnected()) 
+        if (LurkIsConnected()) 
           local_connectoften = 3; /* both fetch and flush */
       }         
       else

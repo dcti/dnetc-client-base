@@ -59,7 +59,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.7 2000/11/02 16:21:20 cyp Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.8 2000/11/12 04:27:12 cyp Exp $"; }
 
 #define TRACE /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -386,10 +386,10 @@ static int __dialupsupport_action(int doWhat)
     //   has dropped, THEN kickoff a new DialIfNeeded().
     // Should this behaviour be integrated in lurk.cpp?
     static int redial_if_needed = 0;
-    // dialup.IsWatching() returns zero if 'dialup' isn't initialized.
+    // LurkIsWatching() returns zero if 'dialup' isn't initialized.
     // Otherwise it returns a bitmask of things it is configured to do,
     // ie CONNECT_LURK|CONNECT_LURKONLY|CONNECT_DOD
-    int confbits = dialup.IsWatching();
+    int confbits = LurkIsWatching();
     if (confbits) /* 'dialup' initialized and have LURK[ONLY] and/or DOD */
     {       
       TRACE_STACKIDC((+1,"__dialupsupport_action(%d)=>%d\n",doWhat));
@@ -397,12 +397,12 @@ static int __dialupsupport_action(int doWhat)
       {
         // HangupIfNeeded will hang up a connection if previously 
         // initiated with DialIfNeeded(). Otherwise it does nothing.
-        dialup.HangupIfNeeded();
+        LurkHangupIfNeeded();
         redial_if_needed = 0;
       }  
       // IsConnected() returns non-zero when 'dialup' is initialized and
       // a link is up. Otherwise it returns zero.
-      else if (!dialup.IsConnected()) /* not online/no longer online? */
+      else if (!LurkIsConnected()) /* not online/no longer online? */
       {
         rc = ps_ENETDOWN; /* conn dropped and assume not (re)startable */
         if (doWhat > 0 || redial_if_needed) /* request to initialize? */
@@ -413,16 +413,16 @@ static int __dialupsupport_action(int doWhat)
             // not-configured-for-dod OR dial success. Otherwise it returns -1 
             // (either 'dialup' isn't initialized or dialing failed).
             // Passing '1' makes it ignore any lurkonly restriction.
-      	    if (dialup.DialIfNeeded(1) == 0) /* reconnect to complete */
+      	    if (LurkDialIfNeeded(1) == 0) /* reconnect to complete */
             {                                /* whatever we were doing */
    	      rc = 0; /* (re-)dial was successful */
               redial_if_needed = 1;
             }
           }
         } /* request to initialize? */  
-      } /* !dialup.IsConnected() */
+      } /* !LurkIsConnected() */
       TRACE_STACKIDC((-1,"__dialupsupport_action()=>%d\n",rc));
-    } /* if dialup.IsWatching() */
+    } /* if LurkIsWatching() */
   } /* if defined(LURK) */
   #endif /* LURK */
   doWhat = doWhat; /* possible unused */
@@ -484,7 +484,7 @@ static int net_init_check_deinit( int doWhat, int only_test_api_avail )
         #elif (CLIENT_OS == OS_AMIGAOS)
           int openalllibs = 1;
           #if defined(LURK)
-          openalllibs = !dialup.IsWatching(); /*some libs unneeded if lurking*/
+          openalllibs = !LurkIsWatching(); /*some libs unneeded if lurking*/
           #endif
           if (!amigaNetworkingInit(openalllibs))
             rc = ps_ENOSYS;

@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.26 2000/11/02 14:36:44 oliver Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.27 2000/11/12 04:27:12 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -421,7 +421,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   conf_options[CONF_CONNSTOPCMD].thevariable=NULL;
 
   #if defined(LURK)
-  int dupcap = dialup.GetCapabilityFlags();
+  int dupcap = LurkGetCapabilityFlags();
   if ((dupcap & (CONNECT_LURK|CONNECT_LURKONLY))!=0)
   {
     conf_options[CONF_LURKMODE].thevariable=&(client->lurk_conf.lurkmode);
@@ -440,7 +440,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
     }
     if ((dupcap & CONNECT_DODBYPROFILE)!=0)
     {
-      const char **connectnames = dialup.GetConnectionProfileList();
+      const char **connectnames = LurkGetConnectionProfileList();
       conf_options[CONF_CONNPROFILE].thevariable=&(client->lurk_conf.connprofile[0]);
       conf_options[CONF_CONNPROFILE].choicemin = 
       conf_options[CONF_CONNPROFILE].choicemax = 0;

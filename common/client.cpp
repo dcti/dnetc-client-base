@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.93 2000/11/03 16:47:47 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.94 2000/11/12 04:27:11 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -297,8 +297,8 @@ static int ClientMain( int argc, char *argv[] )
           if (net_initialize() == 0) //do global initialization
           {
             #ifdef LURK /* start must come just after initializeconnectivity */
-            TRACE_OUT((0,"dialup.Start()\n")); /*and always before initlogging*/
-            dialup.Start(client->offlinemode, &(client->lurk_conf));
+            TRACE_OUT((0,"LurkStart()\n")); /*and always before initlogging*/
+            LurkStart(client->offlinemode, &(client->lurk_conf));
             #endif
             TRACE_OUT((0,"initializeconsole\n"));
             if (InitializeConsole(&(client->quietmode),domodes) == 0)
@@ -367,8 +367,8 @@ static int ClientMain( int argc, char *argv[] )
               DeinitializeConsole(con_waitforuser);
             } /* if (InitializeConsole() == 0) */
             #ifdef LURK
-            TRACE_OUT((0,"dialup.Stop()\n"));
-            dialup.Stop(); /* just before DeinitializeConnectivity() */
+            TRACE_OUT((0,"LurkStop()\n"));
+            LurkStop(); /* just before DeinitializeConnectivity() */
             #endif
             TRACE_OUT((0,"deinitialize connectivity\n"));
             net_deinitialize(!restart /* final call */);
