@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: bench.cpp,v $
+// Revision 1.14  1999/01/18 21:13:00  cyp
+// cleaned up 'a bit'. sheesh!
+//
 // Revision 1.13  1999/01/17 23:18:13  silby
 // AutoSetThreshold added.
 //
@@ -52,7 +55,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.13 1999/01/17 23:18:13 silby Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.14 1999/01/18 21:13:00 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -64,6 +67,7 @@ return "@(#)$Id: bench.cpp,v 1.13 1999/01/17 23:18:13 silby Exp $"; }
 #include "clirate.h"   // CliGetKeyrateForProblemNoSave()
 #include "client.h"    // needed for fileentry which is needed by clisrate.h
 #include "clisrate.h"  // CliGetKeyrateAsString()
+#include "clicdata.h"  // GetContestNameFromID()
 #include "cpucheck.h"  // GetTimesliceBaseline()
 #include "logstuff.h"  // LogScreen()
 #include "console.h"   // ConIsScreen()
@@ -74,52 +78,68 @@ return "@(#)$Id: bench.cpp,v 1.13 1999/01/17 23:18:13 silby Exp $"; }
 // --------------------------------------------------------------------------
 
 //Sets buffer thresholds
-void AutoSetThreshold( Client *clientp, unsigned int contest,
-                       unsigned int inbuffer, unsigned int outbuffer )
+void AutoSetThreshold( Client *clientp, unsigned int contestid,
+                       unsigned int /*inbuffer*/, unsigned int /*outbuffer*/ )
 {
-  int blockstobuffer=0;
-  char *contestnames[2]={"RC5","DES"};
+  int blockstobuffer;
   Client *configclient;
-  int configchanged=0;
+  int configchanged;
 
-  if ((contest > 1) || (contest < 0)) return;
-  if (!clientp) return;
-
-  configclient=new Client;
-  strcpy(configclient->inifilename,clientp->inifilename);
-  ReadConfig(configclient);
-
-  Benchmark(contest,1L<<20,-1,&blockstobuffer);
-
-  LogScreen("Setting %s buffer size to %i blocks.\n",
-            contestnames[contest],blockstobuffer);
-
-  if (inbuffer)
+  if (clientp && contestid < CONTEST_COUNT ) 
     {
-    if (configclient->inthreshold[contest] != blockstobuffer)
-      configchanged=1;
-    configclient->inthreshold[contest]=blockstobuffer;
-    clientp->inthreshold[contest]=blockstobuffer;
-    };
+    if (clientp->stopiniio == 0 && clientp->nodiskbuffers == 0)
+      {
+      configclient=new Client;
+      if (configclient)
+        {
+        configchanged = 0;
+        strcpy(configclient->inifilename,clientp->inifilename);
+        ReadConfig(configclient);
 
-  if (outbuffer)
-    {
-    if (configclient->outthreshold[contest] != blockstobuffer)
-      configchanged=1;
-    configclient->outthreshold[contest]=blockstobuffer;
-    clientp->outthreshold[contest]=blockstobuffer;
-    };
-
-  if (configchanged)
-    {
-    ValidateConfig(configclient);
-    WriteConfig(configclient,1);
-    };
+        //for (contestid == 0; contestid < CONTEST_COUNT; contestid++)
+          {
+          blockstobuffer=0;
+          if (Benchmark(contestid,1L<<20,clientp->cputype,&blockstobuffer)!=0)
+            {
+            if (blockstobuffer != 0)
+              {
+              LogScreen("Setting %s buffer threshold to %i block%s.\n",
+                   CliGetContestNameFromID(contestid),blockstobuffer,
+                   ((blockstobuffer==1)?("s"):("")));
   
+              if ((clientp->inthreshold[contestid] != blockstobuffer ||
+                  configclient->inthreshold[contestid] != blockstobuffer) 
+                  /* && inbuffer */ )
+                {
+                configchanged=1;
+                configclient->inthreshold[contestid]=blockstobuffer;
+                clientp->inthreshold[contestid]=blockstobuffer;
+                }
+              if ((clientp->outthreshold[contestid] != blockstobuffer ||
+                  configclient->outthreshold[contestid] != blockstobuffer)
+                  /* && outbuffer */ )
+                {
+                configchanged=1;
+                configclient->outthreshold[contestid]=blockstobuffer;
+                clientp->outthreshold[contestid]=blockstobuffer;
+                }
+              }
+            }
+          }
+        if (configchanged)
+          WriteConfig(configclient,1);
+        delete configclient;
+        }
+      }
+    }
+  return;
 }
 
+
+/* ----------------------------------------------------------------- */
+
 //returns preferred block size or 0 if break
-u32 Benchmark( unsigned int contest, u32 numkeys, int cputype, int *numblocks)
+u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
 {
   ContestWork contestwork;
   Problem problem;
@@ -130,22 +150,9 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype, int *numblocks)
 
   unsigned int itersize;
   unsigned int keycountshift;
-  int recommendedblockcount=0;
-  const char *contestname;
-  unsigned int contestid;
+  unsigned int recommendedblockcount=0;
+  unsigned int hourstobuffer = 0;
   u32 tslice;
-
-  const int secondstobuffer[2]=
-    {
-    259200, // 3 Days for RC5
-    10800 // 3 Hours for DES
-    };
-  const char *secondstobufferdesc[2]=
-    {
-    "3 days",
-    "3 hours"
-    };
-
 
   if (numkeys == 0)
     itersize = 23;            //8388608 instead of 10000000L;
@@ -158,23 +165,21 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype, int *numblocks)
       itersize--;
     }
 
-  if (contest == 1 && itersize < 31) //Assumes that DES is (at least)
-    itersize++;                      //twice as fast as RC5.
-
-  if (contest == 1)
+  if (contestid == 1)
     {
     keycountshift = 1;
-    contestname = "DES";
-    contestid = 1;
+    if (itersize < 31) //Assumes that DES is (at least)
+      itersize++;      //twice as fast as RC5.
+    hourstobuffer = 3; // 3 Hours for DES
     }
   else
     {
     keycountshift = 0;
-    contestname = "RC5";
     contestid = 0;
+    hourstobuffer = (3*24); // 3 Days for RC5
     }
 
-  tslice = 100000L;
+  tslice = 0x1000;
 
   #if (CLIENT_OS == OS_NETWARE)
     tslice = GetTimesliceBaseline(); //in cpucheck.cpp
@@ -248,7 +253,7 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype, int *numblocks)
       ClientEventSyncPost( CLIEVENT_BENCHMARK_BENCHING, (long)((Problem *)(&problem)));
 
       LogScreen( "%cBenchmarking %s with 1*2^%d tests (%u keys):%s%c%u%%",
-          cm1, contestname, itersize+keycountshift,
+          cm1, CliGetContestNameFromID(contestid), itersize+keycountshift,
           (unsigned int)(1<<(itersize+keycountshift)), sm4, cm2, 
           (unsigned int)(problem.percent) );
       }
@@ -305,20 +310,22 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype, int *numblocks)
     itersize++;
     }
 
-  recommendedblockcount=secondstobuffer[contest]/tv.tv_sec;
+  recommendedblockcount=(hourstobuffer*(60*60))/tv.tv_sec;
+  if (numblocks) *numblocks=recommendedblockcount;
 
   LogScreen( "The preferred %s blocksize for this machine should be\n"
              "set to %d (%d*2^28 keys). At the benchmarked keyrate\n"
              "(ie, under ideal conditions) each processor would finish\n"
              "a block of that size in approximately %s.\n"
-             "Your buffers should be set to hold %i blocks,\n"
-             "so that they will last for approximately %s.\n", contestname, 
+             "Your buffer thresholds should be set to %u blocks,\n"
+             "enough for approximately %u %s.\n", 
+             CliGetContestNameFromID(contestid), 
              (unsigned int)itersize, 
              (unsigned int)((((u32)(1<<itersize))/((u32)(1<<28)))),
              CliGetTimeString( &tv, 2 ),recommendedblockcount,
-             secondstobufferdesc[contest]);  
+             ((hourstobuffer > 24)?(hourstobuffer/24):(hourstobuffer)),
+             ((hourstobuffer > 24)?("days"):("hours")) );
 
-  if (numblocks) *numblocks=recommendedblockcount;
   return (u32)(itersize);
 }
 
