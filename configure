@@ -5,11 +5,16 @@
 # Any other distribution or use of this source violates copyright.
 
 # $Log: configure,v $
+# Revision 1.113.2.6  1998/11/15 11:15:38  remi
+# Synced with :
+#  Revision 1.126  1998/11/15 06:31:28  remi
+#  Added the missing RC5CORECOPY to power-gcc target.
+#
 # Revision 1.113.2.5  1998/11/12 23:05:40  remi
 # Synced with :
 #  Revision 1.124  1998/11/12 22:58:34  remi
 #  Reworked a bit AIX ppc & power defines, based on Patrick Hildenbrand
-#  <patrick@de.ibm.com> advices.
+#  advice.
 #
 # Revision 1.113.2.4  1998/11/11 19:16:48  remi
 # Synced with :
@@ -464,6 +469,7 @@ case "$1" in
 	;;
 
     *power-gcc)            # generic POWER target
+	RC5CORECOPY="rc5/rc5ansi1-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_POWER -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	;;
