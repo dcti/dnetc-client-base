@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.38  1998/09/25 11:31:15  chrisb
+// Added stuff to support 3 cores in the ARM clients.
+//
 // Revision 1.37  1998/09/25 04:32:12  pct
 // DEC Ultrix port changes
 //
@@ -118,7 +121,6 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-
 #if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
 }
 #endif

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore.cpp,v $
+// Revision 1.6  1998/09/25 11:31:23  chrisb
+// Added stuff to support 3 cores in the ARM clients.
+//
 // Revision 1.5  1998/09/23 22:02:42  blast
 // Added multi-core support for all 68k platforms.
 // AmigaOS now has autodetection (-1) or manual (0, 1) of cores.
@@ -28,7 +31,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.5 1998/09/23 22:02:42 blast Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.6 1998/09/25 11:31:23 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -278,85 +281,114 @@ s32 Client::SelectCore(void)
   #undef DESUNITFUNC52
 
 #elif (CLIENT_CPU == CPU_ARM)
-  #if (CLIENT_OS == OS_RISCOS)
-  if (cputype<0 || cputype>=(int)(sizeof(cputypetable)/sizeof(cputypetable[0])))
-    cputype = -1;
-  if (cputype == -1)              //was ArmID(). Now in cpucheck.cpp
-    cputype = GetProcessorType(); // will return -1 if unable to identify
-  #endif
-  if (cputype == -1)
+#if (CLIENT_OS == OS_RISCOS)
+    if (cputype<0 || cputype>=(int)(sizeof(cputypetable)/sizeof(cputypetable[0])))
+	cputype = -1;
+    if (cputype == -1)              //was ArmID(). Now in cpucheck.cpp
+	cputype = GetProcessorType(); // will return -1 if unable to identify
+#endif
+    if (cputype == -1)
     {
-    const s32 benchsize = 50000*2; // pipeline count is 2
-    double fasttime[2] = { 0, 0 };
-    s32 fastcoretest[2] = { -1, -1 };
+	const s32 benchsize = 50000*2; // pipeline count is 2
+	double fasttime[2] = { 0, 0 };
+	s32 fastcoretest[2] = { -1, -1 };
+	
+	LogScreenRaw("Automatically selecting fastest core...\n"
+		     "This is just a guess based on a small test of each core. If you know what\n"
+		     "processor this machine has, then please set it in the Performance section\n"
+		     "of the client configuration.\n");
+	
 
-    LogScreenRaw("Automatically selecting fastest core...\n"
-      "This is just a guess based on a small test of each core. If you know what\n"
-      "processor this machine has, then please set it in the Performance section\n"
-      "of the client configuration.\n");
+	for (int contestid = 0; contestid < 2; contestid++)
+	{
+	    for (int whichcrunch = 0; whichcrunch < 3; whichcrunch++)
+	    {
+		Problem problem;
+		ContestWork contestwork;
+		contestwork.key.lo = contestwork.key.hi = htonl( 0 );
+		contestwork.iv.lo = contestwork.iv.hi = htonl( 0 );
+		contestwork.plain.lo = contestwork.plain.hi = htonl( 0 );
+		contestwork.cypher.lo = contestwork.cypher.hi = htonl( 0 );
+		contestwork.keysdone.lo = contestwork.keysdone.hi = htonl( 0 );
+		contestwork.iterations.lo = htonl( benchsize );
+		contestwork.iterations.hi = htonl( 0 );
+		problem.LoadState( &contestwork , contestid, benchsize, whichcrunch ); 
 
-    for (int contestid = 0; contestid < 2; contestid++)
-    for (int whichcrunch = 0; whichcrunch < 2; whichcrunch++)
-      {
-      Problem problem;
-      ContestWork contestwork;
-      contestwork.key.lo = contestwork.key.hi = htonl( 0 );
-      contestwork.iv.lo = contestwork.iv.hi = htonl( 0 );
-      contestwork.plain.lo = contestwork.plain.hi = htonl( 0 );
-      contestwork.cypher.lo = contestwork.cypher.hi = htonl( 0 );
-      contestwork.keysdone.lo = contestwork.keysdone.hi = htonl( 0 );
-      contestwork.iterations.lo = htonl( benchsize );
-      contestwork.iterations.hi = htonl( 0 );
-      problem.LoadState( &contestwork , contestid, benchsize, whichcrunch ); 
-                                                   // DES or RC5 core selection
-      // select the correct core engine
-      switch(whichcrunch)
-        {
-        case 1:
-          rc5_unit_func = rc5_unit_func_strongarm;
-          des_unit_func = des_unit_func_strongarm;
-          break;
-        default:
-          rc5_unit_func = rc5_unit_func_arm;
-          des_unit_func = des_unit_func_arm;
-          break;
-        }
-
-      problem.Run( 0 ); //threadnum
-
-      double elapsed = CliGetKeyrateForProblemNoSave( &problem );
-      //printf("%s Core %d: %f\n",contestid ? "DES" : "RC5",whichcrunch,elapsed);
-
-      if (fastcoretest[contestid] < 0 || elapsed < fasttime[contestid])
-        {fastcoretest[contestid] = whichcrunch; fasttime[contestid] = elapsed;}
-      }
-
-    cputype = (4-(fastcoretest[0] + (fastcoretest[1]<<1)))&3;
+		if (contestid == 0)
+		{
+		    // there are now 3 RC5 cores from which to choose
+		    // probably be a 4th one soon
+		    switch(whichcrunch)
+		    {
+		    case 1:
+			rc5_unit_func = rc5_unit_func_arm_2;
+			break;
+		    case 2:
+			rc5_unit_func = rc5_unit_func_arm_3;
+			break;
+		    default:
+			rc5_unit_func = rc5_unit_func_arm_1;
+			break;
+		    }
+		}
+		else
+		{
+		    // select the correct DES core engine
+		    switch(whichcrunch)
+		    {
+		    case 1:
+			des_unit_func = des_unit_func_strongarm;
+			break;
+		    default:
+			des_unit_func = des_unit_func_arm;
+			break;
+		    }
+		}
+		problem.Run( 0 ); //threadnum
+		
+		double elapsed = CliGetKeyrateForProblemNoSave( &problem );
+		//printf("%s Core %d: %f\n",contestid ? "DES" : "RC5",whichcrunch,elapsed);
+		
+		if (fastcoretest[contestid] < 0 || elapsed < fasttime[contestid])
+		{
+		    fastcoretest[contestid] = whichcrunch; fasttime[contestid] = elapsed;
+		}
+	    }
+	}
+	cputype = (8-(fastcoretest[0] + ((fastcoretest[1]&1)<<2)))&7;
+	if (cputype == 1)
+	{
+	    cputype = 3;
+	}
+	else if (cputype > 3)
+	{
+	    cputype = 1;
+	}
     }
-  LogScreenRaw("Selecting %s code.\n",GetCoreNameFromCoreType(cputype));
-
-  // select the correct core engine
-  switch(cputype)
+    LogScreenRaw("Selecting %s code.\n",GetCoreNameFromCoreType(cputype));
+    
+    // select the correct core engine
+    switch(cputype)
     {
     case 0:
-      rc5_unit_func = rc5_unit_func_arm;
-      des_unit_func = des_unit_func_arm;
-      break;
+	rc5_unit_func = rc5_unit_func_arm_1;
+	des_unit_func = des_unit_func_arm;
+	break;
     default:
     case 1:
-      rc5_unit_func = rc5_unit_func_strongarm;
-      des_unit_func = des_unit_func_strongarm;
-      break;
+	rc5_unit_func = rc5_unit_func_arm_3;
+	des_unit_func = des_unit_func_strongarm;
+	break;
     case 2:
-      rc5_unit_func = rc5_unit_func_arm;
-      des_unit_func = des_unit_func_strongarm;
-      break;
+	rc5_unit_func = rc5_unit_func_arm_2;
+	des_unit_func = des_unit_func_strongarm;
+	break;
     case 3:
-      rc5_unit_func = rc5_unit_func_strongarm;
-      des_unit_func = des_unit_func_arm;
-      break;
+	rc5_unit_func = rc5_unit_func_arm_3;
+	des_unit_func = des_unit_func_arm;
+	break;
     }
-
+    
 #else
   cputype = 0;
 #endif

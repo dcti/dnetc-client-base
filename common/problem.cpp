@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.35  1998/09/25 11:31:18  chrisb
+// Added stuff to support 3 cores in the ARM clients.
+//
 // Revision 1.34  1998/09/23 22:05:20  blast
 // Multi-core support added for m68k.
 // Autodetection of cores added for AmigaOS. (Manual selection
@@ -78,7 +81,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.34 1998/09/23 22:05:20 blast Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.35 1998/09/25 11:31:18 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -226,11 +229,24 @@ s32 Problem::LoadState( ContestWork * work, u32 contesttype, u32 _timeslice, u32
 
   pipeline_count = PIPELINE_COUNT;
   
-  #if (CLIENT_CPU == CPU_X86)
+#if (CLIENT_CPU == CPU_X86)
     if (_cputype == 6 && contest == 0) //RC5 MMX cores
       pipeline_count = 4;
-  #endif
-
+#elif (CLIENT_CPU == CPU_ARM)
+    if (_cputype == 0)
+    {
+	pipeline_count = 1;
+    }
+    else if (_cputype == 2)
+    {
+	pipeline_count = 2;
+    }
+    else
+    {
+	pipeline_count = 3;
+    }
+#endif
+  
   tslice = (( pipeline_count + 1 ) & ( ~1L ));
   if ( _timeslice > tslice )
     tslice = ((_timeslice + (tslice - 1)) & ~(tslice - 1));
@@ -488,22 +504,23 @@ s32 Problem::Run( u32 threadnum )
   if (contest == 0)
   {
 //    printf("timeslice = %d\n",timeslice);
-    if (rc5unitwork.L0.hi&(1<<24))
+    if ((rc5_unit_func == rc5_unit_func_arm_2)&&( rc5unitwork.L0.hi&(1<<24)))
     {
-  rc5unitwork.L0.hi -= 1<<24;
-  if (contestwork.keysdone.lo & 1)
-  {
-      contestwork.keysdone.lo--;
-  }
-  else
-  {
-      LogScreen("Something really bad has happened - the number of keys looks wrong.\n");
-  }
+	rc5unitwork.L0.hi -= 1<<24;
+	if (contestwork.keysdone.lo & 1)
+	{
+	    contestwork.keysdone.lo--;
+	}
+	else
+	{
+	    LogScreen("Something really bad has happened - the number of keys looks wrong.\n");
+	    for(;;); // probably a bit bogus, but hey.
+	}
     }
 
     /*
         Now returns number of keys processed!
-  (Since 5/8/1998, SA core 1.5, ARM core 1.6).
+	(Since 5/8/1998, SA core 1.5, ARM core 1.6).
     */
     kiter = rc5_unit_func(&rc5unitwork, timeslice);
     contestwork.keysdone.lo += kiter;

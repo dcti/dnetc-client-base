@@ -16,6 +16,9 @@
 // -----------------------------------------------------------------------
 //
 // $Log: triggers.cpp,v $
+// Revision 1.5  1998/09/25 11:31:25  chrisb
+// Added stuff to support 3 cores in the ARM clients.
+//
 // Revision 1.4  1998/09/17 18:59:16  cyp
 // Implemented -HUP handling. (See main() for implemention details)
 //
@@ -30,7 +33,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.4 1998/09/17 18:59:16 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.5 1998/09/25 11:31:25 chrisb Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -108,7 +111,7 @@ void *RegisterPollDrivenBreakCheck( register void (*proc)(void) )
     InitializeTriggers( NULL, NULL );
   register void (*oldproc)(void) = trigstatics.exittrig.pollproc;
   trigstatics.exittrig.pollproc = proc;
-  return oldproc;
+  return (void *)oldproc;
 }
 
 // -----------------------------------------------------------------------

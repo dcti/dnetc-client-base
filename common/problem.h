@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.25  1998/09/25 11:31:20  chrisb
+// Added stuff to support 3 cores in the ARM clients.
+//
 // Revision 1.24  1998/09/23 22:08:54  blast
 // problem.h updated for rc5 68k multicore support.
 //
@@ -184,8 +187,9 @@ typedef enum
   #endif
   extern u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long t );
   extern u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, unsigned long t );
-  extern "C" u32 rc5_unit_func_arm( RC5UnitWork * rc5unitwork , unsigned long t);
-  extern "C" u32 rc5_unit_func_strongarm( RC5UnitWork * rc5unitwork , unsigned long t);
+  extern "C" u32 rc5_unit_func_arm_1( RC5UnitWork * rc5unitwork , unsigned long t);
+  extern "C" u32 rc5_unit_func_arm_2( RC5UnitWork * rc5unitwork , unsigned long t);
+  extern "C" u32 rc5_unit_func_arm_3( RC5UnitWork * rc5unitwork , unsigned long t);
 
   extern "C" u32 des_unit_func_arm( RC5UnitWork * rc5unitwork , unsigned long t);
   extern "C" u32 des_unit_func_strongarm( RC5UnitWork * rc5unitwork , unsigned long t);

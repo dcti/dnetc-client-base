@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.17  1998/09/25 11:31:14  chrisb
+// Added stuff to support 3 cores in the ARM clients.
+//
 // Revision 1.16  1998/09/20 15:21:56  blast
 // AmigaOS changes (added lines somebody cut out before .. grrr)
 //
@@ -193,6 +196,8 @@ extern "C" {
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)
   #include <sys/time.h>
   #include <unistd.h>
+#elif (CLIENT_OS == OS_NETBSD) && (CLIENT_CPU == CPU_ARM)
+  #include <sys/time.h>
 #elif (CLIENT_OS == OS_DYNIX)
   #include <unistd.h> // sleep(3c)
   struct timezone

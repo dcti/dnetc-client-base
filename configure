@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.97  1998/09/25 11:30:46  chrisb
+# Added stuff to support 3 cores in the ARM clients.
+#
 # Revision 1.96  1998/09/25 04:25:54  pct
 # Added a configuration for Dec Ultrix MIPS processor based machines.
 #
@@ -1070,7 +1073,7 @@ case "$1" in
 	TARGET_AS="armasm -apcs 3/26bit"
 	TARGET_CCFLAGS="-Icommon -Irc5 -Ides -Iplatforms -J/home/cberry/play/riscoslib/CLib -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -DCOMPAT_INET4 -D__riscos -DPIPELINE_COUNT=2 -DBIT_32 -DKWAN -D__showids__ -DOLDRESOLVE"
 	TARGET_ADDSRCS="platforms/riscos/riscos.cpp"
-	TARGET_ADDASMS="platforms/riscos/riscosasm.s rc5/rc5-sa.s rc5/rc5-arm.s des/des-slice-arm.s des/des-slice-sa.s"
+	TARGET_ADDASMS="platforms/riscos/riscosasm.s rc5/rc5-arm-1.s rc5/rc5-arm-2.s rc5/rc5-arm-3.s des/des-slice-arm.s des/des-slice-sa.s"
 	TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
 	TARGET_STRIP=touch
 	EXENAME=rc5des,ff8
