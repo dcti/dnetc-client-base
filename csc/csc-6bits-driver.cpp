@@ -12,7 +12,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_6bits_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-6bits-driver.cpp,v 1.6 1999/12/09 13:13:20 cyp Exp $"; }
+return "@(#)$Id: csc-6bits-driver.cpp,v 1.7 2000/06/02 06:32:56 jlawson Exp $"; }
 #endif
 
 /*

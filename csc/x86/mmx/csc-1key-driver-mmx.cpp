@@ -12,7 +12,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_1key_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-1key-driver-mmx.cpp,v 1.1 1999/12/08 05:35:46 remi Exp $"; }
+return "@(#)$Id: csc-1key-driver-mmx.cpp,v 1.2 2000/06/02 06:32:58 jlawson Exp $"; }
 #endif
 
 // ------------------------------------------------------------------
@@ -49,9 +49,6 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
 #elif defined(CSC_BIT_64)
   assert( sizeof(ulong) == 8);
 #endif
-
-  // zero-out membuffer to write-allocate cache lines on AMD procs (usefull ?)
-  memset( membuff, 0, MAX_MEM_REQUIRED_BY_CORE );
 
   // convert the starting key from incrementable format
   // to CSC format

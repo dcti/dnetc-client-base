@@ -3,8 +3,8 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-1k-i.cpp,v $
-// Revision 1.3  1999/12/09 13:13:18  cyp
-// sync
+// Revision 1.4  2000/06/02 06:32:55  jlawson
+// sync, copy files from release branch to head
 //
 // Revision 1.1.2.1  1999/10/07 18:41:13  cyp
 // sync'd from head
@@ -16,7 +16,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *csc_1k_i_cpp(void) {
-return "@(#)$Id: csc-1k-i.cpp,v 1.3 1999/12/09 13:13:18 cyp Exp $"; }
+return "@(#)$Id: csc-1k-i.cpp,v 1.4 2000/06/02 06:32:55 jlawson Exp $"; }
 #endif
 
 #include "problem.h"

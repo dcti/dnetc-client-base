@@ -3,8 +3,8 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-6bits-vec-driver.cpp,v $
-// Revision 1.2  1999/12/09 13:13:20  cyp
-// sync
+// Revision 1.3  2000/06/02 06:32:56  jlawson
+// sync, copy files from release branch to head
 //
 // Revision 1.1.2.1  1999/12/09 04:56:48  sampo
 // first few files of the altivec bitslicer for CSC.  note: this is known to be broken!  it will not work!  This is just the start.
@@ -62,7 +62,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_6bits_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-6bits-vec-driver.cpp,v 1.2 1999/12/09 13:13:20 cyp Exp $"; }
+return "@(#)$Id: csc-6bits-vec-driver.cpp,v 1.3 2000/06/02 06:32:56 jlawson Exp $"; }
 #endif
 
 /*

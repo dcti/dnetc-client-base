@@ -3,8 +3,8 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-common.h,v $
-// Revision 1.4  1999/12/09 13:13:20  cyp
-// sync
+// Revision 1.5  2000/06/02 06:32:56  jlawson
+// sync, copy files from release branch to head
 //
 // Revision 1.1.2.7  1999/11/29 19:12:53  lyndon
 // Document the reason for the MIPS-specific tests.
@@ -44,7 +44,7 @@
 //
 
 #ifndef __CSC_COMMON_H
-#define __CSC_COMMON_H "@(#)$Id: csc-common.h,v 1.4 1999/12/09 13:13:20 cyp Exp $"
+#define __CSC_COMMON_H "@(#)$Id: csc-common.h,v 1.5 2000/06/02 06:32:56 jlawson Exp $"
 
 #include <stdlib.h>
 #include <string.h>

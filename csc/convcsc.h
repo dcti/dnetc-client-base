@@ -6,7 +6,7 @@
  *
 */
 #ifndef __CONVCSC_H__
-#define __CONVCSC_H__ "@(#)$Id: convcsc.h,v 1.4 1999/12/09 13:13:18 cyp Exp $"
+#define __CONVCSC_H__ "@(#)$Id: convcsc.h,v 1.5 2000/06/02 06:32:55 jlawson Exp $"
 
 #ifdef __cplusplus
 extern "C" {

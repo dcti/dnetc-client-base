@@ -12,7 +12,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_1key_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-1key-driver.cpp,v 1.8 1999/12/10 01:43:57 michmarc Exp $"; }
+return "@(#)$Id: csc-1key-driver.cpp,v 1.9 2000/06/02 06:32:55 jlawson Exp $"; }
 #endif
 
 // ------------------------------------------------------------------
@@ -107,7 +107,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   ulong result;
   u32 bkey = 0;
   for( ;; ) {
-    result = PASTE(cscipher_bitslicer_,CSC_SUFFIX) ( *key, *plain, *cipher, membuffer );
+    result = PASTE(cscipher_bitslicer_,CSC_SUFFIX) ( (ulong const (* )[64])*key, *plain, *cipher, membuffer );
     if( result )
       break;
     if( ++bkey >= (1ul << (nbits - CSC_BITSLICER_BITS) ) )

@@ -12,7 +12,7 @@ global          csc_transP,csc_transG,csc_transF
 %include "csc-tran.inc" ; macros for csc_trans[P|G|F]
 
 __DATASECT__
-    db  "@(#)$Id: csc-comm.asm,v 1.2 1999/11/08 01:47:36 cyp Exp $",0
+    db  "@(#)$Id: csc-comm.asm,v 1.3 2000/06/02 06:32:57 jlawson Exp $",0
 
 __DATASECT__
     align 16

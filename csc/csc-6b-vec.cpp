@@ -3,8 +3,8 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-6b-vec.cpp,v $
-// Revision 1.2  1999/12/09 13:13:19  cyp
-// sync
+// Revision 1.3  2000/06/02 06:32:55  jlawson
+// sync, copy files from release branch to head
 //
 // Revision 1.1.2.1  1999/12/09 04:56:49  sampo
 // first few files of the altivec bitslicer for CSC.  note: this is known to be broken!  it will not work!  This is just the start.

@@ -1,7 +1,7 @@
 //
 // $Log: gentestscsc.cpp,v $
-// Revision 1.3  1999/12/09 13:13:20  cyp
-// sync
+// Revision 1.4  2000/06/02 06:32:56  jlawson
+// sync, copy files from release branch to head
 //
 // Revision 1.1.2.1  1999/10/07 18:41:14  cyp
 // sync'd from head
@@ -11,7 +11,7 @@
 //
 //
 
-char *id="@(#)$Id: gentestscsc.cpp,v 1.3 1999/12/09 13:13:20 cyp Exp $";
+char *id="@(#)$Id: gentestscsc.cpp,v 1.4 2000/06/02 06:32:56 jlawson Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -3,8 +3,8 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-common.cpp,v $
-// Revision 1.4  1999/12/09 13:13:20  cyp
-// sync
+// Revision 1.5  2000/06/02 06:32:56  jlawson
+// sync, copy files from release branch to head
 //
 // Revision 1.1.2.3  1999/11/01 17:23:23  cyp
 // renamed transX(...) to csc_transX(...) to avoid potential (future) symbol

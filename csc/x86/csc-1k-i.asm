@@ -21,7 +21,7 @@ extern          convert_key_from_inc_to_csc,convert_key_from_csc_to_inc
 %define _call_or_inline_csc_transG _inline_csc_transG
 
 __DATASECT__
-    db  "@(#)$Id: csc-1k-i.asm,v 1.2 1999/11/08 01:47:34 cyp Exp $",0
+    db  "@(#)$Id: csc-1k-i.asm,v 1.3 2000/06/02 06:32:56 jlawson Exp $",0
 
 __CODESECT__
     align 32

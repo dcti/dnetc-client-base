@@ -4,7 +4,7 @@
 ;
 ; Callable/inline versions of csc_trans[F|G|P].
 ;
-; @(#)$Id: csc-tran.inc,v 1.2 1999/11/08 01:47:36 cyp Exp $
+; @(#)$Id: csc-tran.inc,v 1.3 2000/06/02 06:32:57 jlawson Exp $
 ;
 
 %macro        _called_csc_transF 0

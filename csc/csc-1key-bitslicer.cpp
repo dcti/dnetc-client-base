@@ -3,8 +3,8 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-1key-bitslicer.cpp,v $
-// Revision 1.4  1999/12/09 13:13:19  cyp
-// sync
+// Revision 1.5  2000/06/02 06:32:55  jlawson
+// sync, copy files from release branch to head
 //
 // Revision 1.1.2.4  1999/11/01 17:23:23  cyp
 // renamed transX(...) to csc_transX(...) to avoid potential (future) symbol
@@ -27,7 +27,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_1key_bitslicer_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-1key-bitslicer.cpp,v 1.4 1999/12/09 13:13:19 cyp Exp $"; }
+return "@(#)$Id: csc-1key-bitslicer.cpp,v 1.5 2000/06/02 06:32:55 jlawson Exp $"; }
 #endif
 
 // ------------------------------------------------------------------

@@ -3,8 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-6b-mmx.cpp,v $
-// Revision 1.1  1999/12/08 05:35:46  remi
-// Files moved from /csc to /csc/x86/mmx
+// Revision 1.2  2000/06/02 06:32:58  jlawson
+// sync, copy files from release branch to head
+//
+// Revision 1.1.2.1  1999/12/12 11:05:59  remi
+// Moved from directory csc/x86/
+//
+// Revision 1.1.2.2  1999/12/11 00:34:13  cyp
+// made mmx cores not collide with normal cores
 //
 // Revision 1.1.2.1  1999/11/22 18:58:11  remi
 // Initial commit of MMX'fied CSC cores.
@@ -18,8 +24,8 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-const char *csc_6b_mmx_cpp(void) {
-return "@(#)$Id: csc-6b-mmx.cpp,v 1.1 1999/12/08 05:35:46 remi Exp $"; }
+const char *csc_6b_cpp(void) {
+return "@(#)$Id: csc-6b-mmx.cpp,v 1.2 2000/06/02 06:32:58 jlawson Exp $"; }
 #endif
 
 #include "problem.h"

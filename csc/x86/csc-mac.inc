@@ -4,7 +4,7 @@
 ;
 ; macros to simplify conversion issues.
 ;
-; @(#)$Id: csc-mac.inc,v 1.2 1999/11/08 01:47:36 cyp Exp $
+; @(#)$Id: csc-mac.inc,v 1.3 2000/06/02 06:32:57 jlawson Exp $
 ;
 
 %ifdef __OMF__

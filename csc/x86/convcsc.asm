@@ -3,8 +3,8 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; $Log: convcsc.asm,v $
-; Revision 1.2  1999/11/08 01:47:34  cyp
-; sync
+; Revision 1.3  2000/06/02 06:32:56  jlawson
+; sync, copy files from release branch to head
 ;
 ; Revision 1.1.2.1  1999/11/06 00:26:13  cyp
 ; they're here! (see also bench.res for 'ideal' combination)
@@ -18,7 +18,7 @@ global          convert_key_from_inc_to_csc,_convert_key_from_inc_to_csc
 %include "csc-mac.inc"
 
 __DATASECT__
-    db  "@(#)$Id: convcsc.asm,v 1.2 1999/11/08 01:47:34 cyp Exp $",0
+    db  "@(#)$Id: convcsc.asm,v 1.3 2000/06/02 06:32:56 jlawson Exp $",0
 
 __DATASECT__
     align 16

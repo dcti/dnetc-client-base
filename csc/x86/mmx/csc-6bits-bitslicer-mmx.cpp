@@ -1,11 +1,33 @@
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+//
+// $Log: csc-6bits-bitslicer-mmx.cpp,v $
+// Revision 1.2  2000/06/02 06:32:58  jlawson
+// sync, copy files from release branch to head
+//
+// Revision 1.1.2.1  1999/12/12 11:05:59  remi
+// Moved from directory csc/x86/
+//
+// Revision 1.1.2.4  1999/12/05 14:39:43  remi
+// A faster 6bit MMX core.
+//
+// Revision 1.1.2.3  1999/11/28 20:23:15  remi
+// Updated core.
+//
+// Revision 1.1.2.2  1999/11/23 23:39:45  remi
+// csc_transP() optimized.
+// modified csc_transP() calling convention.
+//
+// Revision 1.1.2.1  1999/11/22 18:58:11  remi
+// Initial commit of MMX'fied CSC cores.
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_6bits_bitslicer_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-6bits-bitslicer-mmx.cpp,v 1.1 1999/12/08 05:35:46 remi Exp $"; }
+return "@(#)$Id: csc-6bits-bitslicer-mmx.cpp,v 1.2 2000/06/02 06:32:58 jlawson Exp $"; }
 #endif
+
+#include <stdio.h>
 
 // ------------------------------------------------------------------
 #ifdef __cplusplus
@@ -30,6 +52,8 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 		      ----
                       7928 bytes (or 15856 bytes on a 64-bit cpu or with MMX)
  */
+
+//#include <stdio.h>
 
 ulong
 PASTE(cscipher_bitslicer_,CSC_SUFFIX)
@@ -61,6 +85,25 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
   ulong *skp1; // subkey[n-1]
   const ulong *tcp; // pointer to tabc[] (bitslice values of c0..c8)
   const ulong *tep; // pointer to tabe[] (bitslice values of e and e')
+
+  // for the inlined calls to csc_transP2()
+#define _in0  " 0(%%edx)"
+#define _in1  " 8(%%edx)"
+#define _in2  "16(%%edx)"
+#define _in3  "24(%%edx)"
+#define _in4  "32(%%edx)"
+#define _in5  "40(%%edx)"
+#define _in6  "48(%%edx)"
+#define _in7  "56(%%edx)"
+#define _out0 " 0(%%ecx)"
+#define _out1 " 4(%%ecx)"
+#define _out2 " 8(%%ecx)"
+#define _out3 "12(%%ecx)"
+#define _out4 "16(%%ecx)"
+#define _out5 "20(%%ecx)"
+#define _out6 "24(%%ecx)"
+#define _out7 "28(%%ecx)"
+#define _mmNOT "%4"
 
 /*
 #define APPLY_MP0(adr, adl)						\
@@ -115,7 +158,9 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 	movq	8*7(%%ebx), %%mm7
 	movl	%%eax, 8*8+4*7(%%edx)
 
+	pushl	%%edx
 	call	csc_transP2
+	popl	%%edx
 
 	movl	%2, %%ebx	# tp2
 	movl	%0, %%eax	# cfr
@@ -146,7 +191,9 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 	movq	8*7(%%ebx), %%mm7
 	movl	%%eax, 8*8+4*7(%%edx)
 
+	pushl	%%edx
 	call	csc_transP2
+	popl	%%edx
   " : 							\
     : "m"(cfr), "m"(tp1), "m"(tp2), "d"(csc_params)	\
     : "%ecx", "%eax","%ebx"				\
@@ -365,11 +412,11 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 
 	movl	%%esi, 8*8+4*7(%%edx)
 	
-	#movl	%%eax, %%ebp
 	pushl	%%eax
+	pushl	%%edx
 	call	csc_transP2
+	popl	%%edx
 	popl	%%eax
-	#movl	%%ebp, %%eax
 
 	# in7 = x6 ^ y7;
 	# in6 = x5y6;
@@ -411,18 +458,18 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 	pxor	8*(0+0)(%%edi), %%mm1
 	movl	%%esi, 8*8+4*7(%%edx)
 
-	#movl	%%eax, %%ebp
 	pushl	%%eax
+	pushl	%%edx
 	call	csc_transP2
+	popl	%%edx
 	popl	%%eax
-	#movl	%%ebp, %%eax
 
 	addl	$16*8, %%ebx	# skp += 16;
 
-  " : "=b"(skp)						\
-    : "D"(x_y_xy), "a"(cfr), "d"(csc_params), "0"(skp)	\
-    : "%ecx", "%esi"/*, "%ebp"*/			\
-  );							\
+  " : "+b"(skp)					\
+    : "D"(x_y_xy), "a"(cfr), "d"(csc_params)	\
+    : "%ecx", "%esi"				\
+  );						\
   } while( 0 )
 
 /*
@@ -563,6 +610,7 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 	
 	pushl	%%eax
 # ----------------------------------------------------
+#	pushl	%%edx
 #	call	csc_transP2
 	
 	leal	64(%%edx), %%ecx
@@ -692,6 +740,7 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 	movl	4*5(%%ecx),%%eax
 	movq	%%mm4, (%%eax)
 
+#	popl	%%edx
 # ----------------------------------------------------
 	popl	%%eax
 
@@ -736,15 +785,17 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 	movl	%%esi, 8*8+4*7(%%edx)
 
 	pushl	%%eax
+	pushl	%%edx
 	call	csc_transP2
+	popl	%%edx
 	popl	%%eax
 
 	addl	$16*8, %%ebx	# tep += 16;
 
-  " : "=b"(tep)								\
-    : "D"(x_y_xy), "a"(cfr), "d"(csc_params), "m"(mmNOT), "0"(tep)	\
-    : "%ecx", "%esi"							\
-  );									\
+  " : "+b"(tep)							\
+    : "D"(x_y_xy), "a"(cfr), "d"(csc_params), "m"(mmNOT)	\
+    : "%ecx", "%esi"						\
+  );								\
   } while( 0 )
 
 
@@ -757,7 +808,7 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
   (*subkey)[2][56] = (*subkey)[2][48] = 
   (*subkey)[2][40] = (*subkey)[2][32] = (*subkey)[2][24] = _0;
   (*subkey)[2][16] = (*subkey)[2][ 8] = (*subkey)[2][ 0] = _1;
-  tcp = &csc_tabc_mmx[0][8];
+  tcp = &csc_tabc[0][8];
   skp = &(*subkey)[2][1];
   skp1 = &(*subkey)[1][8];
   {
@@ -772,63 +823,65 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 	# ebx == tcp
 	# edi == skp
 	movl	$7, %%esi
-	movl	%%eax, %%ebp
 
 .balign 4
 .loop0:
-	movq	7*8(%%ebp), %%mm7
+	movq	7*8(%%eax), %%mm7
 	movl	%%edi, 0*4+8*8(%%edx)
 	pxor	7*8(%%ebx), %%mm7
 	addl	$8*8, %%edi
 	movl	%%edi, 1*4+8*8(%%edx)
 
-	movq	6*8(%%ebp), %%mm6
+	movq	6*8(%%eax), %%mm6
 	addl	$8*8, %%edi
 	pxor	6*8(%%ebx), %%mm6
 	movl	%%edi, 2*4+8*8(%%edx)
 
-	movq	5*8(%%ebp), %%mm5
+	movq	5*8(%%eax), %%mm5
 	addl	$8*8, %%edi
 	pxor	5*8(%%ebx), %%mm5
 	movl	%%edi, 3*4+8*8(%%edx)
 
-	movq	4*8(%%ebp), %%mm4
+	movq	4*8(%%eax), %%mm4
 	addl	$8*8, %%edi
 	pxor	4*8(%%ebx), %%mm4
 	movl	%%edi, 4*4+8*8(%%edx)
 
-	movq	3*8(%%ebp), %%mm3
+	movq	3*8(%%eax), %%mm3
 	addl	$8*8, %%edi
 	pxor	3*8(%%ebx), %%mm3
 	movl	%%edi, 5*4+8*8(%%edx)
 
-	movq	2*8(%%ebp), %%mm2
+	movq	2*8(%%eax), %%mm2
 	addl	$8*8, %%edi
 	pxor	2*8(%%ebx), %%mm2
 	movl	%%edi, 6*4+8*8(%%edx)
 
-	movq	1*8(%%ebp), %%mm1
+	movq	1*8(%%eax), %%mm1
 	addl	$8*8, %%edi
 	pxor	1*8(%%ebx), %%mm1
 	movl	%%edi, 7*4+8*8(%%edx)
 
-	movq	0*8(%%ebp), %%mm0
+	movq	0*8(%%eax), %%mm0
 	subl	$(7*8)*8, %%edi
 	pxor	0*8(%%ebx), %%mm0
 
+	pushl	%%eax
+	pushl	%%edx
 	call	csc_transP2
+	popl	%%edx
+	popl	%%eax
 
-	addl	$8*8, %%ebp
+	addl	$8*8, %%eax
 	addl	$8*8, %%ebx
 	addl	$1*8, %%edi
 
 	decl	%%esi
 	jg	.loop0
-	movl	%%ebp, %%eax
 
-      " : "=D"(skp), "=a"(skp1), "=b"(tcp)
-	: "d"(csc_params), "0"(skp), "1"(skp1), "2"(tcp)
-	: "%esi", "%ebp"
+      " : "+D"(skp), "+a"(skp1), "+b"(tcp)
+        : "d"(csc_params)
+        : "%ecx", "%esi"
       );
   }
 
@@ -903,7 +956,7 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
     APPLY_MP0( 32, 40);
     APPLY_MP0( 48, 56);
 
-    tep = &csc_tabe_mmx[0][0];
+    tep = &csc_tabe[0][0];
     APPLY_Me(  0, 16);
     APPLY_Me( 32, 48);
     APPLY_Me(  8, 24);
@@ -916,7 +969,7 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
     // ROUNDS 2..8
     skp = &(*subkey)[3][0];
     skp1 = &(*subkey)[2][0];
-    tcp = &csc_tabc_mmx[1][0];
+    tcp = &csc_tabc[1][0];
     for( int sk=7; sk; sk-- ) {
       /*for( int n=8; n; n--,tcp+=8,skp1+=8,skp++ )
 	csc_transP_call( 
@@ -925,14 +978,11 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 		skp[56], skp[48], skp[40], skp[32], skp[24], skp[16], skp[ 8], skp[ 0] );
       skp -= 8;
       */
-
-      // Changing "pushl %%eax / popl %%eax" with "movl %%eax,%%ebp" results in a ~5% perf. drop
-      // on K6-2. Code is *not* moved (ie it"s not a code alignment issue)
       asm volatile ("
 	# eax == skp1
 	# ebx == tcp
 	# edi == skp
-	movl	$8, %%ecx
+	movl	$8, %%esi
 
 .balign 4
 .loop:
@@ -976,12 +1026,12 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 	subl	$(7*8)*8, %%edi
 	pxor	0*8(%%ebx), %%mm0
 
-	#movl	%%eax, %%ebp
 	pushl	%%eax
 # ----------------------------------------------------
+#	pushl	%%edx
 #	call	csc_transP2
 	
-	leal	0(%%edx), %%edx
+	leal	64(%%edx), %%ecx
 
   ## //csc_transF( in3, in2, in1, in0,	// in
   ## //            in7, in6, in5, in4 );// xor-out
@@ -991,29 +1041,29 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
   ## ulong t09 =  (t07 ^ in1) | in2;   in7      ^=  t07;
   ## in6      ^=  t09;                 in5      ^=  (t09 ^ in0) | in1;
   ## }
-	movq	%%mm0, 8*0(%%edx)	# (store _in0)
+	movq	%%mm0, "_in0"
 
-	movq	%%mm7, 8*7(%%edx)	# (store _in7)
-	movq	%%mm3, %%mm7		# mm7 = in3
-	movq	%%mm3, 8*3(%%edx)	# (store _in3)
-	pxor	%4, %%mm3		# mm3 = t04 = ~in3
-	movq	%%mm6, 8*6(%%edx)	# (store _in6)
-	movq	%%mm3, %%mm6		# mm6 = t04
-	por	%%mm2, %%mm7		# mm7 = t06 = in2 | in3
-	por	%%mm0, %%mm3		# mm3 = t04 | in0
-	movq	%%mm5, 8*5(%%edx)	# (store _in5)
-	pxor	%%mm6, %%mm7		# mm7 = t07 = t06 ^ to4
-	pxor	%%mm3, %%mm4		# mm4 = in4 ^= t04 | in0
-	movq	%%mm7, %%mm5		# mm5 = t07
-	pxor	%%mm1, %%mm5		# mm5 = t07 ^ in1
-	pxor	8*7(%%edx), %%mm7	# mm7 = in7 ^= t07
-	por	%%mm2, %%mm5		# mm5 = t09 = (t07 ^ in1) | in2
-	movq	%%mm5, %%mm6		# mm6 = t09
-	pxor	8*0(%%edx), %%mm6	# mm6 = t09 ^ in0
+	movq	%%mm7, "_in7"
+	movq	%%mm3, %%mm7	# mm7 = in3
+	movq	%%mm3, "_in3"
+	pxor	"_mmNOT", %%mm3	# mm3 = t04 = ~in3
+	movq	%%mm6, "_in6"
+	movq	%%mm3, %%mm6	# mm6 = t04
+	por	%%mm2, %%mm7	# mm7 = t06 = in2 | in3
+	por	%%mm0, %%mm3	# mm3 = t04 | in0
+	movq	%%mm5, "_in5"
+	pxor	%%mm6, %%mm7	# mm7 = t07 = t06 ^ to4
+	pxor	%%mm3, %%mm4	# mm4 = in4 ^= t04 | in0
+	movq	%%mm7, %%mm5	# mm5 = t07
+	pxor	%%mm1, %%mm5	# mm5 = t07 ^ in1
+	pxor	"_in7", %%mm7	# mm7 = in7 ^= t07
+	por	%%mm2, %%mm5	# mm5 = t09 = (t07 ^ in1) | in2
+	movq	%%mm5, %%mm6	# mm6 = t09
+	pxor	"_in0", %%mm6	# mm6 = t09 ^ in0
 	#pxor	%%mm0, %%mm6
-	pxor	8*6(%%edx), %%mm5	# mm5 = in6 ^= t09
-	por	%%mm1, %%mm6		# mm6 = (t09 ^ in0) | in1
-	pxor	8*5(%%edx), %%mm6	# mm6 = in5 ^= (t09 ^ in0) | in1
+	pxor	"_in6", %%mm5	# mm5 = in6 ^= t09
+	por	%%mm1, %%mm6	# mm6 = (t09 ^ in0) | in1
+	pxor	"_in5", %%mm6	# mm6 = in5 ^= (t09 ^ in0) | in1
 	
   ## // csc_transG( in7, in6, in5, in4,  // in
   ## //             in3, in2, in1, in0 );// xor-out
@@ -1024,43 +1074,43 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
   ## out3 = (in3 ^= ~t13);                    out1 = (in1 ^= ~(t10 ^ t08) ^ (t13 | t06));
   ## }
 
-	movq	%%mm6, 8*5(%%edx)	# -- mm6 free
-	pand	%%mm4, %%mm6		# mm6 = in4 & in5
-	movq	%%mm7, 8*7(%%edx)	# -- mm7 free
-	movq	%%mm7, %%mm3		# mm3 = in7
-	por	%%mm4, %%mm7		# mm7 = in4 | in7
-	movq	%%mm5, 8*6(%%edx)	# mm5 free
-	pxor	%%mm6, %%mm7		# + mm7 = t06 = (in4 & in5) ^ (in4 | in7)
-					# -- mm6 free
-	por	%%mm4, %%mm5		# mm5 = in4 | in6
-	pxor	%%mm7, %%mm2		#### mm2 = out2 = in2 ^= t06
-	pxor	%%mm3, %%mm5		# + mm5 = t08 = (in4 | in6) ^ in7;
-	movq	%%mm7, %%mm3		# mm3 = t06
-	movl	4*2+64(%%edx),%%eax
-	movq	%%mm2, (%%eax)		# out2 = in2
-	movq	8*6(%%edx),%%mm6	# mm6 = in6
-	por	%%mm5, %%mm7		# mm7 = t08 | t06
-	pand	%%mm4, %%mm6		# mm6 = in4 & in6
-	pxor	%%mm4, %%mm7		# + mm7 = t10 = (t08 | t06) ^ in4
-	pxor	%%mm7, %%mm5		# mm5 = t10 ^ t08
-	pxor	%%mm7, %%mm0		#### mm0 = in0 ^= t10
-					# -- mm7 free
-	movq	8*5(%%edx),%%mm7	# mm7 = in5
-	pxor	%4,%%mm5		# mm5 = ~(t10 ^ t08)
-	por	%%mm4, %%mm7		# mm7 = in4 | in5
-	movl	4*0+64(%%edx),%%eax
-	movq	%%mm0, (%%eax)		# out0 = in0
-	pxor	%%mm6, %%mm7		# + mm7 = t13 = (in4 & in6) ^ (in4 | in5)
-					# -- mm6 free
-	movq	%%mm7, %%mm6		# mm6 = t13
-	por	%%mm3, %%mm7		# mm7 = t13 | t06
-					# -- mm3 free
-	pxor	%4,%%mm6		# mm6 = ~t13
-	pxor	%%mm7, %%mm5		# mm5 = ~(t10 ^ t08) ^ (t13 | t06)
-					# -- mm7 free
-	pxor	8*3(%%edx),%%mm6	#### mm6 = out3 = in3 ^ ~t13
-	pxor	%%mm5, %%mm1		#### mm1 = out1 = (in1 ^= ~(t10 ^ t08) ^ (t13 | t06))
-					# -- mm5 free
+	movq	%%mm6, "_in5"	# -- mm6 free
+	pand	%%mm4, %%mm6	# mm6 = in4 & in5
+	movq	%%mm7, "_in7"	# -- mm7 free
+	movq	%%mm7, %%mm3	# mm3 = in7
+	por	%%mm4, %%mm7	# mm7 = in4 | in7
+	movq	%%mm5, "_in6"	# mm5 free
+	pxor	%%mm6, %%mm7	# + mm7 = t06 = (in4 & in5) ^ (in4 | in7)
+				# -- mm6 free
+	por	%%mm4, %%mm5	# mm5 = in4 | in6
+	pxor	%%mm7, %%mm2	#### mm2 = out2 = in2 ^= t06
+	pxor	%%mm3, %%mm5	# + mm5 = t08 = (in4 | in6) ^ in7;
+	movq	%%mm7, %%mm3	# mm3 = t06
+	movl	"_out2",%%eax
+	movq	%%mm2, (%%eax)	# out2 = in2
+	movq	"_in6",%%mm6	# mm6 = in6
+	por	%%mm5, %%mm7	# mm7 = t08 | t06
+	pand	%%mm4, %%mm6	# mm6 = in4 & in6
+	pxor	%%mm4, %%mm7	# + mm7 = t10 = (t08 | t06) ^ in4
+	pxor	%%mm7, %%mm5	# mm5 = t10 ^ t08
+	pxor	%%mm7, %%mm0	#### mm0 = in0 ^= t10
+				# -- mm7 free
+	movq	"_in5",%%mm7	# mm7 = in5
+	pxor	"_mmNOT",%%mm5	# mm5 = ~(t10 ^ t08)
+	por	%%mm4, %%mm7	# mm7 = in4 | in5
+	movl	"_out0",%%eax
+	movq	%%mm0, (%%eax)	# out0 = in0
+	pxor	%%mm6, %%mm7	# + mm7 = t13 = (in4 & in6) ^ (in4 | in5)
+				# -- mm6 free
+	movq	%%mm7, %%mm6	# mm6 = t13
+	por	%%mm3, %%mm7	# mm7 = t13 | t06
+				# -- mm3 free
+	pxor	"_mmNOT",%%mm6	# mm6 = ~t13
+	pxor	%%mm7, %%mm5	# mm5 = ~(t10 ^ t08) ^ (t13 | t06)
+				# -- mm7 free
+	pxor	"_in3",%%mm6	#### mm6 = out3 = in3 ^ ~t13
+	pxor	%%mm5, %%mm1	#### mm1 = out1 = (in1 ^= ~(t10 ^ t08) ^ (t13 | t06))
+				# -- mm5 free
 
   ## // csc_transF( in3, in2, in1, in0,	 // in
   ## //             in7, in6, in5, in4 );// xor-out
@@ -1072,58 +1122,58 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
   ## out6 = in6 ^ t09;           out5 = in5 ^ ((t09 ^ in0) | in1);
   ## }
 
-	movl	4*3+64(%%edx),%%eax
-	movq	%%mm6, %%mm3		# mm3 = in3
+	movl	"_out3",%%eax
+	movq	%%mm6, %%mm3	# mm3 = in3
 	movq	%%mm6, (%%eax)
-	pxor	%4, %%mm6		# mm6 = t04 = ~in3
-	por	%%mm2, %%mm3		# mm3 = t06 = in2 | in3
-	movl	4*1+64(%%edx),%%eax
-	movq	%%mm6, %%mm7		# mm7 = t04
+	pxor	"_mmNOT", %%mm6	# mm6 = t04 = ~in3
+	por	%%mm2, %%mm3	# mm3 = t06 = in2 | in3
+	movl	"_out1",%%eax
+	movq	%%mm6, %%mm7	# mm7 = t04
 	movq	%%mm1, (%%eax)
-	por	%%mm0, %%mm6		# mm6 = t04 | in0
-	pxor	%%mm7, %%mm3		# mm3 = t07 = t06 ^ t04
-					# -- mm7 free
-	movq	8*7(%%edx), %%mm7	# mm7 = in7
-	pxor	%%mm4, %%mm6		### mm6 = out4 = in4 ^ (t04 | in0)
-					# -- mm4 free
-	movl	4*4+64(%%edx),%%eax
-	movq	%%mm3, %%mm4		# mm4 = t07
-	movq	8*6(%%edx), %%mm5	# mm5 = in6
-	pxor	%%mm1, %%mm3		# mm3 = t08 = t07 ^ in1
-	movq	%%mm6, (%%eax)		# -- mm6 free
-	pxor	%%mm4, %%mm7		### mm7 = out7 = in7 ^ t07
-					# -- mm4 free
-	por	%%mm2, %%mm3		# mm3 = t09 = t08 | in2
-					# -- mm2 free
-	movl	4*7+64(%%edx),%%eax
-	movq	%%mm7, (%%eax)		# -- mm7 free
-	movq	%%mm3, %%mm4		# mm4 = t09
-	movq	8*5(%%edx), %%mm2	# mm2 = in5
-	pxor	%%mm0, %%mm4		# mm4 = t09 ^ in0
-	pxor	%%mm5, %%mm3		### mm3 = out6 = in6 ^ t09
-	por	%%mm1, %%mm4		# mm4 = (t09 ^ in0) | in1
-	movl	4*6+64(%%edx),%%eax
-	movq	%%mm3, (%%eax)		# -- mm3 free
-	pxor	%%mm2, %%mm4		### mm4 = out5 = in5 ^ ((t09 ^ in0) | in1)
-	movl	4*5+64(%%edx),%%eax
+	por	%%mm0, %%mm6	# mm6 = t04 | in0
+	pxor	%%mm7, %%mm3	# mm3 = t07 = t06 ^ t04
+				# -- mm7 free
+	movq	"_in7", %%mm7	# mm7 = in7
+	pxor	%%mm4, %%mm6	### mm6 = out4 = in4 ^ (t04 | in0)
+				# -- mm4 free
+	movl	"_out4",%%eax
+	movq	%%mm3, %%mm4	# mm4 = t07
+	movq	"_in6", %%mm5	# mm5 = in6
+	pxor	%%mm1, %%mm3	# mm3 = t08 = t07 ^ in1
+	movq	%%mm6, (%%eax)	# -- mm6 free
+	pxor	%%mm4, %%mm7	### mm7 = out7 = in7 ^ t07
+				# -- mm4 free
+	por	%%mm2, %%mm3	# mm3 = t09 = t08 | in2
+				# -- mm2 free
+	movl	"_out7",%%eax
+	movq	%%mm7, (%%eax)	# -- mm7 free
+	movq	%%mm3, %%mm4	# mm4 = t09
+	movq	"_in5", %%mm2	# mm2 = in5
+	pxor	%%mm0, %%mm4	# mm4 = t09 ^ in0
+	pxor	%%mm5, %%mm3	### mm3 = out6 = in6 ^ t09
+	por	%%mm1, %%mm4	# mm4 = (t09 ^ in0) | in1
+	movl	"_out6",%%eax
+	movq	%%mm3, (%%eax)	# -- mm3 free
+	pxor	%%mm2, %%mm4	### mm4 = out5 = in5 ^ ((t09 ^ in0) | in1)
+	movl	"_out5",%%eax
 	movq	%%mm4, (%%eax)
 
+#	popl	%%edx
 # ----------------------------------------------------
 	popl	%%eax
-	#movl	%%ebp, %%eax
 
 	addl	$8*8, %%eax
 	addl	$8*8, %%ebx
 	addl	$1*8, %%edi
 
-	decl	%%ecx
+	decl	%%esi
 	jg	.loop
 
 	subl	$8*8, %%edi	# skp -= 8;
 
-      " : "=D"(skp), "=a"(skp1), "=b"(tcp)
-	: "d"(csc_params), "m"(mmNOT), "0"(skp), "1"(skp1), "2"(tcp)
-	: "%ecx"
+      " : "+D"(skp), "+a"(skp1), "+b"(tcp)
+	: "d"(csc_params), "m"(mmNOT)
+	: "%ecx", "%esi"
       );
 
       APPLY_Ms(  0,  8);
@@ -1131,7 +1181,7 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
       APPLY_Ms( 32, 40);
       APPLY_Ms( 48, 56);
 
-      tep = &csc_tabe_mmx[0][0];
+      tep = &csc_tabe[0][0];
       APPLY_Me(  0, 16);
       APPLY_Me( 32, 48);
       APPLY_Me(  8, 24);
@@ -1149,7 +1199,7 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
       csc_transP_call( skp1[7] ^ tcp[7], skp1[6] ^ tcp[6], skp1[5] ^ tcp[5], skp1[4] ^ tcp[4],
 		       skp1[3] ^ tcp[3], skp1[2] ^ tcp[2], skp1[1] ^ tcp[1], skp1[0] ^ tcp[0],
 		       skp[56], skp[48], skp[40], skp[32], skp[24], skp[16], skp[ 8], skp[ 0] );
-02 38 67 63 22
+
       result &= ~(cipher[56+n] ^ (*cfr)[56+n] ^ skp[56] ^ skp[56-128]); if( !result ) goto stepper;
       result &= ~(cipher[48+n] ^ (*cfr)[48+n] ^ skp[48] ^ skp[48-128]); if( !result ) goto stepper;
       result &= ~(cipher[40+n] ^ (*cfr)[40+n] ^ skp[40] ^ skp[40-128]); if( !result ) goto stepper;
@@ -1166,7 +1216,7 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 	movl	$0, %%esi
 
 .balign 4
-.loop2:
+loop2:
 	movq	7*8(%%eax), %%mm7
 	movl	%%ecx, 0*4+8*8(%%edx)
 	pxor	7*8(%%ebx), %%mm7
@@ -1208,7 +1258,11 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 	pxor	0*8(%%ebx), %%mm0
 
 	pushl	%%eax
+	pushl	%%ecx
+	pushl	%%edx
 	call	csc_transP2
+	popl	%%edx
+	popl	%%ecx
 	popl	%%eax
 
 	movq	%3, %%mm0	# result
@@ -1252,7 +1306,6 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 	jne	.next_test1
 	cmpl	$0, %%ebx
 	je	.goto_stepper
-.balign 4
 .next_test1:
 
      # result &= ~(cipher[16+n] ^ (*cfr)[16+n] ^ skp[16] ^ skp[16-128]); if( !result ) goto stepper;
@@ -1279,7 +1332,6 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 	jne	.next_test2
 	cmpl	$0, %%ebx
 	je	.goto_stepper
-.balign 4
 .next_test2:
 
      # result &= ~(cipher[32+n] ^ (*cfr)[32+n] ^ skp[32] ^ skp[32-128]); if( !result ) goto stepper;
@@ -1306,7 +1358,6 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 	jne	.next_test3
 	cmpl	$0, %%ebx
 	je	.goto_stepper
-.balign 4
 .next_test3:
 
      # result &= ~(cipher[48+n] ^ (*cfr)[48+n] ^ skp[48] ^ skp[48-128]); if( !result ) goto stepper;
@@ -1347,10 +1398,10 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 
 	incl	%%esi
 	cmpl	$8, %%esi
-	jl	.loop2
+	jl	loop2
 
-      " : "=c"(skp), "=a"(skp1), "=b"(tcp), "=m"(result)
-	: "m"(cipher), "m"(cfr), "d"(csc_params), "0"(skp), "1"(skp1), "2"(tcp)
+      " : "+c"(skp), "+a"(skp1), "+b"(tcp), "=m"(result)
+	: "m"(cipher), "m"(cfr), "d"(csc_params)
 	: "%esi", "%edi", "%ebp"
       );
     }
@@ -1396,3 +1447,21 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 
   return 0;
 }
+
+#undef _in0
+#undef _in1
+#undef _in2
+#undef _in3
+#undef _in4
+#undef _in5
+#undef _in6
+#undef _in7
+#undef _out0
+#undef _out1
+#undef _out2
+#undef _out3
+#undef _out4
+#undef _out5
+#undef _out6
+#undef _out7
+#undef _mmNOT
