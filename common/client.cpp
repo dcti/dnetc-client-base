@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.141  1998/10/03 23:27:51  remi
+// Use 'usemmx' .ini setting if any MMX core is compiled in.
+//
 // Revision 1.140  1998/10/03 03:33:13  cyp
 // Removed RunStartup() altogether, changed fprintf(stderr,) to ConOutErr(),
 // moved 68k kudos from selcore.cpp to PrintBanner(), removed ::Install and
@@ -181,7 +184,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.140 1998/10/03 03:33:13 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.141 1998/10/03 23:27:51 remi Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -309,7 +312,7 @@ Client::Client()
   contestdone[0]=contestdone[1]=0;
   srand( (unsigned) CliTimer( NULL )->tv_usec );
   InitRandom();
-#ifdef MMX_BITSLICER
+#if defined(MMX_BITSLICER) || defined(MMX_RC5)
   usemmx = 1;
 #endif
 }
