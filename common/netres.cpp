@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.16  1999/01/07 15:40:39  cyp
+// client>=424 will not work with oldresolve
+//
 // Revision 1.15  1999/01/07 04:01:58  cyp
 // resolve_hostname needed to be set before Resolve() returns _anything_. Its
 // (currently) used by socks5 if the lookup fails, so initializing it before
@@ -57,7 +60,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.15 1999/01/07 04:01:58 cyp Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.16 1999/01/07 15:40:39 cyp Exp $"; }
 #endif
 
 //---------------------------------------------------------------------
@@ -84,6 +87,8 @@ return "@(#)$Id: netres.cpp,v 1.15 1999/01/07 04:01:58 cyp Exp $"; }
 
 #ifdef STUBIFY_ME    //ooookay. do what it asks
 #define OLDRESOLVE   //and don't drag in the statics
+#elif defined(OLDRESOLVE)
+#error clients >=424 will not work with OLDRESOLVE
 #endif
 
 //------------------------------------------------------------------------
