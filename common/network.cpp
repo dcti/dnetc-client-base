@@ -5,6 +5,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.47  1998/10/16 16:09:13  remi
+// Fixed SOCKS4 / SOCKS5 support. In InitializeConnection() 'lastport' is the
+// SOCKS proxy port, not the keyproxy port.
+// SOCKS4 doesn't work on my machines, but that's perhaps a bug in my SOCKS server.
+// SOCKS5 seems Ok.
+//
 // Revision 1.46  1998/09/30 22:27:55  remi
 // http connections should always be send to port 80 (?).
 //
@@ -122,7 +128,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.46 1998/09/30 22:27:55 remi Exp $"; }
+return "@(#)$Id: network.cpp,v 1.47 1998/10/16 16:09:13 remi Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -712,7 +718,7 @@ int Network::InitializeConnection(void)
     psocks5->rsv = 0;   // must be zero
     psocks5->atyp = 1;  // IPv4
     psocks5->addr = lasthttpaddress;
-    psocks5->port = htons(lastport);
+    psocks5->port = htons( server_name[0] ? port : DEFAULT_PORT );
 
     if (LowLevelPut(10, socksreq) < 0)
       goto Socks5InitEnd;
@@ -759,7 +765,7 @@ Socks5InitEnd:
 
     psocks4->VN = 4;
     psocks4->CD = 1;  // CONNECT
-    psocks4->DSTPORT = htons(lastport);
+    psocks4->DSTPORT = htons( server_name[0] ? port : DEFAULT_PORT );
     psocks4->DSTIP = lasthttpaddress;
     strncpy(psocks4->USERID, httpid, sizeof(httpid));
 
