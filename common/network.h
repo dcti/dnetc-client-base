@@ -6,7 +6,7 @@
 */
 
 #ifndef __NETWORK_H__
-#define __NETWORK_H__ "@(#)$Id: network.h,v 1.68.2.10 2000/06/04 11:01:58 oliver Exp $"
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.68.2.11 2000/06/05 22:10:12 oliver Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
@@ -113,14 +113,11 @@ extern "C" {
   #define _KERNEL
   #include <sys/socket.h>
   #undef _KERNEL
-  #ifndef __MAIL_CPP__
-    #include <proto/socket.h>
-  #endif
+  #include <proto/socket.h>
   #include <sys/ioctl.h>
   #include <sys/time.h>
   #define inet_ntoa(addr) Inet_NtoA(addr.s_addr)
   typedef int SOCKET;
-  extern struct Library *SocketBase;
   }
 #elif (CLIENT_OS == OS_BEOS)
   #include <sys/types.h>
