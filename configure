@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.20 1999/09/28 23:18:10 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.21 1999/10/07 18:42:02 cyp Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -271,11 +271,6 @@ RC5X86_SRCS="rc5/x86/rc5-486-rg.cpp \
 	     rc5/x86/rc5-k6-rg.cpp"
 
 #
-# Source files making up the OGR core code
-#
-OGR_ANSI_SRCS="ogr/ogr.cpp ogr/crc32.cpp ogr/choosedat.cpp"
-	     
-#
 # Source files making up the DES core code
 #
 KWAN_SLICE_SRCS1="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
@@ -315,9 +310,16 @@ DESULTRA_SRCS_ASM="des/ultrasparc/des-slice-ultrasparc.cpp \
 #
 # Source files making up the OGR core code
 #
-OGR_SRCS="ogr/ogr.cpp \
-	  ogr/choosedat.cpp \
-	  ogr/crc32.cpp"
+OGR_ANSI_SRCS="ogr/ogr.cpp ogr/crc32.cpp ogr/choosedat.cpp"
+OGR_ANSI_CCOPTS="-DGREGH -DHAVE_OGR_CORES -Iogr"
+	     
+#
+# Source files making up the CSC core code
+#
+CSC_ANSI_SRCS="csc/convcsc.cpp csc/csc-common.cpp \
+               csc/csc-1k-i.cpp csc/csc-1k.cpp \
+               csc/csc-6b-i.cpp csc/csc-6b.cpp"
+CSC_ANSI_CCOPTS="-DHAVE_CSC_CORES -Icsc"
 
 #
 # Define the default compilation options
@@ -1120,11 +1122,10 @@ case "$1" in
     *x86-linux-mt-gcc-gregh)		 # mt, static, gcc, ogr
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
-			-DMULTITHREAD -DSMC -DLURK -DGREGH"
+			-DMULTITHREAD -DSMC -DLURK"
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
-			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
-			$OGR_SRCS"
+			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
@@ -1591,11 +1592,17 @@ case "$1" in
 esac
 echo "Platform target for \"$1\" recognized."
 
+#
+# quick hack to add OGR and CSC to all
+#
+TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS $CSC_ANSI_SRCS"
+TARGET_CCFLAGS="$TARGET_CCFLAGS $OGR_ANSI_CCOPTS $CSC_ANSI_CCOPTS"
 
 #
 # Generate the list of output objects, making note of what
 # source file it was derrived from.
 #
+ 
 
 TARGET_ALLCCOBJS=
 TARGET_ALLASOBJS=
