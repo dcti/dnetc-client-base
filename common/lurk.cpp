@@ -49,7 +49,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.61.4.7 2003/10/15 03:09:36 jr_brady Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.61.4.8 2003/10/30 21:57:49 pfeffi Exp $"; }
 
 //#define TRACE
 
@@ -309,6 +309,12 @@ static HRASCONN hRasDialConnHandle = NULL; /* conn we opened with RasDial */
   #include <sys/types.h>
   #define MAXSOCKETS 2048
   #define soclose(s) close(s)     //handled by EMX
+#elif defined(__WATCOMC__)
+  #include <os2/types.h>
+  #include <io.h>
+  #include <dos.h>             // sleep
+  #include <process.h>
+  #define soclose(s) close(s)     
 #else //IBM distributed OS/2 developers toolkit
   #include <process.h>
   #include <types.h>
@@ -1262,7 +1268,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
   }
 
 #elif (CLIENT_OS == OS_OS2) && !defined(__EMX__)
-   int s, i, rc, j, foundif = 0;
+   int s, i, j, foundif = 0;
    struct ifmib MyIFMib = {0};
    struct ifact MyIFNet = {0};
 
@@ -1284,9 +1290,9 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
      for (i = 0; i < MyIFNet.ifNumber; i++)
      {
        j = MyIFNet.iftable[i].ifIndex;      /* j is now the index into the stats table for this i/f */
-       if (lurker.mask_default_only == 0 || MyIFMib.iftable[j].ifType != HT_ETHER)   /* i/f is not ethernet */
+       if (lurker.mask_default_only == 0 || MyIFMib.iftable[j].iftType != HT_ETHER)   /* i/f is not ethernet */
        {
-         if (MyIFMib.iftable[j].ifType != HT_PPP)  /* i/f is not loopback (yes I know it says PPP) */
+         if (MyIFMib.iftable[j].iftType != HT_PPP)  /* i/f is not loopback (yes I know it says PPP) */
          {
            if (MyIFNet.iftable[i].ifa_addr != 0x0100007f)  /* same thing for TCPIP < 4.1 */
            {
@@ -1317,7 +1323,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
                  if (lurker.mask_include_all)
                    ismatched = 1;
                  else if (lurker.mask_default_only)
-                   ismatched = (MyIFMib.iftable[j].ifType != HT_ETHER);
+                   ismatched = (MyIFMib.iftable[j].iftType != HT_ETHER);
                  else
                  {
                    int maskpos;
