@@ -2948,13 +2948,13 @@ int main( int argc, char *argv[] )
       strcat(client.in_buffer_file[0],"buff-in" EXTN_SEP "rc5");
       strcpy(client.ini_in_buffer_file[0],client.in_buffer_file[0]);
       strcat(client.out_buffer_file[0],"buff-out" EXTN_SEP "rc5");
-      strcpy(client.ini_out_buffer_file[0],out_buffer_file[0]);
+      strcpy(client.ini_out_buffer_file[0],client.out_buffer_file[0]);
       strcat(client.in_buffer_file[1],"buff-in" EXTN_SEP "des");
-      strcpy(client.ini_in_buffer_file[1],in_buffer_file[1]);
+      strcpy(client.ini_in_buffer_file[1],client.in_buffer_file[1]);
       strcat(client.out_buffer_file[1],"buff-out" EXTN_SEP "des");
-      strcpy(client.ini_out_buffer_file[1],out_buffer_file[1]);
+      strcpy(client.ini_out_buffer_file[1],client.out_buffer_file[1]);
       strcat(client.exit_flag_file,"exitrc5" EXTN_SEP "now");
-      strcpy(client.ini_exit_flag_file,exit_flag_file);
+      strcpy(client.ini_exit_flag_file,client.exit_flag_file);
       }
   }
 #endif
