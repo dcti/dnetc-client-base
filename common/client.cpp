@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.64 2000/03/11 20:27:59 andreasb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.65 2000/03/18 00:29:11 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -140,6 +140,7 @@ int ClientGetInThreshold(Client *client, int contestid, int force)
     {
       int proc;
       unsigned int sec;
+      int timethresh = 0;
       proc = GetNumberOfDetectedProcessors();
       if (proc < 1)
         proc = 1;
@@ -147,7 +148,10 @@ int ClientGetInThreshold(Client *client, int contestid, int force)
       // get the speed
       sec = CliGetContestWorkUnitSpeed(contestid, force);
       if (sec != 0) /* we have a rate */
-        thresh = 1 + (client->timethreshold[contestid] * 3600 * proc/sec);
+        timethresh = 1 + (client->timethreshold[contestid] * 3600 * proc/sec);
+        
+      if (timethresh > client->inthreshold[contestid])
+        thresh = timethresh;
     }
   }
   return thresh;
@@ -172,8 +176,11 @@ int ClientGetOutThreshold(Client *client, int contestid, int /* force */)
       {
         if (outthresh >= inthresh) /* an outthreshold >= inthreshold means */
           outthresh = 0;  /* outthreshold is ignorable (inthreshold rules) */
+        #if 0
+        *** Why overwrite outthresh > 0 with inthresh ??? ***
         else
           outthresh = inthresh;
+        #endif
       }
     }
   }
