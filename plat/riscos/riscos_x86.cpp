@@ -1,11 +1,11 @@
-/* 
+/*
  * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * x86 PCCARD support including a crunch wrapper/controller
  *
- * $Id: riscos_x86.cpp,v 1.2.4.2 2003/01/29 01:29:58 andreasb Exp $
+ * $Id: riscos_x86.cpp,v 1.2.4.3 2003/09/01 23:28:38 mweiser Exp $
 */
 
 #include <string.h> /* memcpy */
@@ -46,7 +46,7 @@ struct RC5PCstruct
 
 /* ----------------------------------------------------------------- */
 
-const char *riscos_x86_ident(void) /* returns NULL if no x86 found, */ 
+const char *riscos_x86_ident(void) /* returns NULL if no x86 found, */
 {                                  /* else name or "" if no name */
   static const char *ident = (const char *)0;
   #if defined(HAVE_X86_CARD_SUPPORT)
@@ -66,7 +66,7 @@ const char *riscos_x86_ident(void) /* returns NULL if no x86 found, */
       if (!err)
       {
         static char buf[100];
-        unsigned int pos = 0;  
+        unsigned int pos = 0;
         while (*mfr && pos < (sizeof(buf)-1))
           buf[pos++] = *mfr++;
         if (pos < (sizeof(buf)-2) && *cpu)
@@ -75,15 +75,15 @@ const char *riscos_x86_ident(void) /* returns NULL if no x86 found, */
             buf[pos++] = ' ';
           while (*cpu && pos < (sizeof(buf)-1))
             buf[pos++] = *cpu++;
-        }      
+        }
         buf[pos] = '\0';
         ident = (const char *)&buf[0];
-      }  
-    }    
+      }
+    }
   }
   #endif /* HAVE_X86_CARD_SUPPORT */
   return ident;
-}  
+}
 
 /* ----------------------------------------------------------------- */
 
@@ -98,7 +98,7 @@ s32 rc5_unit_func_x86( RC5UnitWork *work, u32 *iterations, void * );
 static void rc5_unit_func_x86_stop(void) /* called from atexit() */
 {
   rc5_unit_func_x86( ((RC5UnitWork *)0), ((u32 *)0), ((void *)0) );
-} 
+}
 
 s32 rc5_unit_func_x86( RC5UnitWork *work, u32 *iterations, void *memblk )
 {
@@ -119,23 +119,23 @@ s32 rc5_unit_func_x86( RC5UnitWork *work, u32 *iterations, void *memblk )
       {
         _kernel_swi(RC5PC_RetriveBlock,&r,&r); /* unload to /dev/null */
         isrunning = 0;
-      }  
+      }
       if (isrunning == 0) /* started not loaded */
-      {  
+      {
         _kernel_swi(RC5PC_Off,&r,&r);          /* turn it off */
         isrunning = -1; /* not started */
-      }  
-    }  
-    return -1; /* no good result code */     
-  }  
+      }
+    }
+    return -1; /* no good result code */
+  }
 
   if (isrunning < 0) /* not started */
   {
-    if (isrunning == -2 && !riscos_x86_ident()) 
+    if (isrunning == -2 && !riscos_x86_ident())
       return -1;  /* no x86 card */
     if (_kernel_swi(RC5PC_On,&r,&r))
       return -1; /* failed */
-    if (isrunning == -2)  
+    if (isrunning == -2)
       atexit(rc5_unit_func_x86_stop);
     isrunning = 0; /* started, but not loaded */
   }
@@ -145,7 +145,7 @@ s32 rc5_unit_func_x86( RC5UnitWork *work, u32 *iterations, void *memblk )
       ||  last.iv.hi!=work->iv.hi || last.iv.lo!=work->iv.lo
       ||  last.plain.hi!=work->plain.hi || last.plain.lo!=work->plain.lo
       ||  last.cypher.hi!=work->cypher.hi || last.cypher.lo!=work->cypher.lo))
-  {                                                /* different block */ 
+  {                                                /* different block */
     r.r[0] = 0;
     _kernel_swi(RC5PC_RetriveBlock,&r,&r); /* unload to /dev/null */
     isrunning = 0; /* started, but not loaded */
@@ -206,26 +206,26 @@ s32 rc5_unit_func_x86( RC5UnitWork *work, u32 *iterations, void *memblk )
     if (itersdone_lo < work->keysdone.lo || itersdone_lo < last.keysdone.lo)
       itersdone_hi++; /* should never happen - can't deal with it anyway */
     *iterations = itersdone_lo; /* # of iterations we've done in the meantime*/
-    
+
     memcpy( &last, work, sizeof(RC5UnitWork)); /* update last known state */
 
     if ((work->keysdone.hi > work->iterations.hi) ||
                     (work->keysdone.hi == work->iterations.hi &&
                      work->keysdone.lo >= work->iterations.lo))
       return RESULT_NOTHING; /* block completed, nothing found */
-    /* 
+    /*
        ok, if we got here, then the cruncher has either
        found a key (RESULT_FOUND) or is still going (RESULT_WORKING).
-       Two problems: 
+       Two problems:
        a) how do we tell RESULT_FOUND?
           for a normal cruncher (synchronous call), result_found is true
-          when the number of iterations done is less that the number of 
+          when the number of iterations done is less that the number of
           iterations we asked it to do. But we can't do that here because
           the cruncher is still working in the 'background'.
        b) can the cruncher "run out" of iterations_to_do?
           if so, we need to unload it, reset the rc5pc.timeslice
           and reload it. (But perhaps there is a better way)
-    */      
+    */
     #error FIXME
   }
   #endif /* HAVE_X86_CARD_SUPPORT */

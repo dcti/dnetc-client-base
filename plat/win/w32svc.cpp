@@ -7,7 +7,7 @@
 */
 
 const char *w32svc_cpp(void) {
-return "@(#)$Id: w32svc.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $"; }
+return "@(#)$Id: w32svc.cpp,v 1.2.4.1 2003/09/01 23:31:13 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -44,7 +44,7 @@ return "@(#)$Id: w32svc.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $"; }
 #endif
 
 #if defined(PROXYTYPE)
-  #include "settings.h" /* PROXY_FULL|PERSONAL|MASTER constants */ 
+  #include "settings.h" /* PROXY_FULL|PERSONAL|MASTER constants */
   #include "globals.h"  /* bReloadSettings/bForceConnect/bExitNow */
   void RaiseExitRequestTrigger()      { bExitNow = 1; }
   int  CheckExitRequestTriggerIO()    { return bExitNow != 0; }
@@ -64,7 +64,7 @@ return "@(#)$Id: w32svc.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $"; }
   #endif
   const char *NTSERVICEIDS[]={"dnetd"/*oct99*/,"bovproxy"/*old*/,"bovproxy"/*old*/};
   const char *W9xSERVICEKEY = ""; // don't support 9x for proxy
-#else 
+#else
   #define SERVICEFOR  "client"
   #include "triggers.h" //RaiseExitRequestTrigger()
   #include "modereq.h"  //ModeReq(MODEREQ_FETCH|MODEREQ_FLUSH)
@@ -78,10 +78,10 @@ const char *APPDESCRIP = "distributed.net "SERVICEFOR;
 /* ---------------------------------------------------------- */
 
 static int win32cli_servicified = 0;
-int win32CliServiceRunning(void) 
+int win32CliServiceRunning(void)
 {
   return win32cli_servicified;
-} 
+}
 
 /* ---------------------------------------------------------- */
 
@@ -106,27 +106,27 @@ static long __winGetVersion(void)
       {   /* version number is unusable (1.xx) */
         DWORD dwVersion = GetVersion();
         versionmajor = LOBYTE(LOWORD(dwVersion));
-        versionminor = HIBYTE(LOWORD(dwVersion));  
+        versionminor = HIBYTE(LOWORD(dwVersion));
       }
     }
     #else
     {
       DWORD dwVersion = GetVersion();
       versionmajor = LOBYTE(LOWORD(dwVersion));
-      versionminor = HIBYTE(LOWORD(dwVersion));  
+      versionminor = HIBYTE(LOWORD(dwVersion));
       //build number in (HIWORD(dwVersion) & 0x7FFF) in all but plain win3x
 
       /* heck, even the DOS client has better version detection than this */
- 
+
       if ((dwVersion & 0x80000000)==0) //winNT or win3x without win32s
       {
-        const char *p = (const char *)getenv("OS"); 
-        // NT 3.x returns 3.x, NT 4.x returns 4.x, but win2k returns 3.95, 
-        // which not only sounds wierd, but is wrong according to 
+        const char *p = (const char *)getenv("OS");
+        // NT 3.x returns 3.x, NT 4.x returns 4.x, but win2k returns 3.95,
+        // which not only sounds wierd, but is wrong according to
         // http://msdn.microsoft.com/library/psdk/sysmgmt/sysinfo_41bi.htm
         if (versionmajor == 3 && versionminor == 95) /* win2k */
         {
-          versionmajor = 5; 
+          versionmajor = 5;
           versionminor = 0;
         }
         if (p && strcmp(p,"Windows_NT")==0)
@@ -156,9 +156,9 @@ static const char *__constructerrmsg(const char *leadin, DWORD errnum,
 {
   LPVOID lpMsgBuf;
   int len = sprintf(msgbuffer, "%s: error %d\n", leadin, (int)errnum );
-  FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-                 FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, 
-                 NULL, errnum, 0 /*MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT)*/, 
+  FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                 FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                 NULL, errnum, 0 /*MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT)*/,
                  (LPTSTR) &lpMsgBuf, 0, NULL );
   if (lpMsgBuf)
   {
@@ -184,13 +184,13 @@ int __GetMyModuleFilename(char *buffer, unsigned int len)
     //we do it this way for two reasons:
     // win16) we don't have the instance handle here
     //        [we /could/ get the hInst from winGetInstanceHandle() though]
-    // win32) the client may have been stubbed with conshim, so 
+    // win32) the client may have been stubbed with conshim, so
     //        GetModuleHandle() would return the name of the temp file.
     //        [we /could/ get the name from the environment though]
     */
     extern int winGetMyModuleFilename(char *, unsigned int); /* w32pre.cpp */
     return winGetMyModuleFilename(buffer, len);
-    #else 
+    #else
     return GetModuleFileName( NULL, buffer, (WORD)len );
     #endif
   }
@@ -226,15 +226,15 @@ static void __print_message( const char *message, int iserror )
   #include "util.h" /* void trace_out(int indlevel,const char *fmt, ...); */
   #else
   #define TRACE_OUT(x) trace_out x
-  #include <time.h> 
+  #include <time.h>
   static void trace_out(int indlevel, const char *format,...)
   {
     static int indentlevel = 0;
     static char debugfile[MAX_PATH+1];
     static int init = -1;
     FILE *file;
-    va_list arglist; 
-    va_start (arglist, format); 
+    va_list arglist;
+    va_start (arglist, format);
 
     if (init == -1)
     {
@@ -255,13 +255,13 @@ static void __print_message( const char *message, int iserror )
     if (file)
     {
       char buffer[64];
-      DWORD ticks = GetTickCount(); 
+      DWORD ticks = GetTickCount();
       fprintf(file,"%u.%03u: ", ticks/1000, ticks%1000 );
       if (indentlevel > 0)
       {
         size_t spcs = ((size_t)indentlevel) * 2;
         memset((void *)(&buffer[0]),' ',sizeof(buffer));
-        while (sizeof(buffer) == fwrite( buffer, 1, 
+        while (sizeof(buffer) == fwrite( buffer, 1,
            ((spcs>sizeof(buffer))?(sizeof(buffer)):(spcs)), file ))
           spcs -= sizeof(buffer);
       }
@@ -299,7 +299,7 @@ static void __print_message( const char *message, int iserror )
       return "SERVICE_PAUSE_PAUSED";
     sprintf(__debug_name_buffer,"*UNKNOWN* (BAD!) (%ld)", svcstatus );
     return __debug_name_buffer;
-  }  
+  }
   static const char *debug_getsvcControlCodeName(DWORD ctrlCode)
   {
     if (ctrlCode == SERVICE_CONTROL_STOP)
@@ -331,14 +331,14 @@ static void __print_message( const char *message, int iserror )
   {
     LPVOID lpMsgBuf;
     DWORD errnum = GetLastError();
-    FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+    FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER |
        FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL,
-       errnum, 0 /*MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT)*/, 
+       errnum, 0 /*MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT)*/,
        (LPTSTR) &lpMsgBuf, 0, NULL );// Process any inserts in lpMsgBuf.
     TRACE_OUT((tracelev, "%s: GetLastError()=>%ld (\"%s\")\n", caption, errnum, lpMsgBuf ));
     LocalFree( lpMsgBuf );
     return;
-  }  
+  }
   #endif
 #endif
 
@@ -360,13 +360,13 @@ static int __win31InstallDeinstallClient( int which, int quietly )
   else if ((pathlen = strlen(fullpath)) >= 127)
     boxmsg = "Path to executable is too long to -install or -deinstall";
   else
-  {  
+  {
     char inibuffer[1024];
     char *option = "run";
     char *entry = NULL;
     strlwr(fullpath);
 
-    if (( GetProfileString("windows", option, "", 
+    if (( GetProfileString("windows", option, "",
              inibuffer, sizeof(inibuffer)-1)) != 0)
     {
       strlwr( inibuffer );
@@ -379,11 +379,11 @@ static int __win31InstallDeinstallClient( int which, int quietly )
             break;
         }
         entry = strstr( entry+1, fullpath );
-      }  
+      }
       if (entry)
         GetProfileString("windows",option,"",inibuffer, sizeof(inibuffer)-1);
     }
-    if (entry == NULL && ( GetProfileString("windows", "load", "", 
+    if (entry == NULL && ( GetProfileString("windows", "load", "",
              inibuffer, sizeof(inibuffer)-1)) != 0)
     {
       option = "load";
@@ -397,7 +397,7 @@ static int __win31InstallDeinstallClient( int which, int quietly )
             break;
         }
         entry = strstr( entry+1, fullpath );
-      }  
+      }
       if (entry)
         GetProfileString("windows",option,"",inibuffer, sizeof(inibuffer)-1);
     }
@@ -422,7 +422,7 @@ static int __win31InstallDeinstallClient( int which, int quietly )
         if (which < 0)
           boxmsg = "The distributed.net client has been successfully uninstalled.";
       }
-      else 
+      else
       {
         retcode = -1;
         if (retcode < 0) /* Uninstall() */
@@ -437,12 +437,12 @@ static int __win31InstallDeinstallClient( int which, int quietly )
     {
       unsigned int maxlen;
       option = "run";
-      maxlen = pathlen + GetProfileString("windows", option, 
+      maxlen = pathlen + GetProfileString("windows", option,
                                 "", inibuffer, sizeof(inibuffer)-1);
       if (maxlen > (127-2))
       {
         option = "load";
-        maxlen = pathlen + GetProfileString("windows", option, "", 
+        maxlen = pathlen + GetProfileString("windows", option, "",
                                 inibuffer, sizeof(inibuffer)-1);
       }
       if (maxlen > (127-2))
@@ -452,9 +452,9 @@ static int __win31InstallDeinstallClient( int which, int quietly )
                  "entries to -install";
       }
       else
-      { 
+      {
         pathlen = strlen( inibuffer );
-        while ((pathlen > 0) && 
+        while ((pathlen > 0) &&
                (inibuffer[pathlen-1]==' ' || inibuffer[pathlen-1]=='\t'))
           inibuffer[--pathlen]=0;
         maxlen = 0;
@@ -483,7 +483,7 @@ static int __win31InstallDeinstallClient( int which, int quietly )
   if (quietly==0 && boxmsg!=NULL)
     __print_message( boxmsg, (retcode < 0) );
   return retcode;
-}  
+}
 
 /* ---------------------------------------------------------- */
 
@@ -500,7 +500,7 @@ static int __DoModeService( int mode, int argc, char **argv )
   {
     argc = argc; argv = argv; /* shaddup compiler */
     if (mode == SVC_CSD_MODE_ISINSTALLED) /* check */
-      isinstalled = __win31InstallDeinstallClient(0,1); 
+      isinstalled = __win31InstallDeinstallClient(0,1);
   }
   #if (CLIENT_OS == OS_WIN32)
   else if (__winGetVersion() >= 2000) /* NT */
@@ -564,7 +564,7 @@ static int __DoModeService( int mode, int argc, char **argv )
       for (i=0;i<(sizeof(svcnames)/sizeof(svcnames[0]));i++)
       {
         TRACE_OUT((+0,"checking for %s\n", svcnames[i] ));
-        if ( RegQueryValueEx(srvkey, svcnames[i], NULL, &valuetype, 
+        if ( RegQueryValueEx(srvkey, svcnames[i], NULL, &valuetype,
                (unsigned char *)(&buffer[0]), &valuesize) != ERROR_SUCCESS )
         {
           TRACE_OUT((+0,"no such key \"%s\"\n", svcnames[i] ));
@@ -598,7 +598,7 @@ static int __DoModeService( int mode, int argc, char **argv )
           }
           break;
         }
-      }  
+      }
       RegCloseKey(srvkey);
       TRACE_OUT((-1,"regclosed. installed=%d, retcode=%d\n", isinstalled, retcode ));
     }
@@ -643,11 +643,11 @@ int win32CliDetectRunningService(void) /* <0=err, 0=no, >0=yes */
 int win32CliUninstallService(int quiet) /* <0=err, 0=ok(or notinstalled) */
 {                    /* quiet is used internally by the service itself */
   int retcode = -1;
-  const char *msg = "A distributed.net "SERVICEFOR" could not be uninstalled"; 
+  const char *msg = "A distributed.net "SERVICEFOR" could not be uninstalled";
 
   if (__winGetVersion() < 400) /* win16 */
   {
-    retcode = __win31InstallDeinstallClient(-1,quiet); 
+    retcode = __win31InstallDeinstallClient(-1,quiet);
     msg = NULL;
   }
   #if (CLIENT_OS != OS_WIN32)
@@ -661,10 +661,10 @@ int win32CliUninstallService(int quiet) /* <0=err, 0=ok(or notinstalled) */
     SC_HANDLE myService, scm;
     SERVICE_STATUS status;
     int foundcount = 0, deletedcount = 0;
-  
+
     msg = "The Service Control Manager could not be opened.\n"
           "The distributed.net service " SERVICEFOR " could not be uninstalled.";
-  
+
     scm = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
     if (scm)
     {
@@ -718,7 +718,7 @@ int win32CliUninstallService(int quiet) /* <0=err, 0=ok(or notinstalled) */
             msg = "The distributed.net " SERVICEFOR " has been uninstalled.";
             retcode = 0;
           }
-          else 
+          else
           {
             retcode = -1;
             if (deletedcount != 0)
@@ -749,10 +749,10 @@ int win32CliUninstallService(int quiet) /* <0=err, 0=ok(or notinstalled) */
       DWORD valuesize = sizeof(buffer);
       const char *svcnames[] = { W9xSERVICEKEY, "bovwin32" };
       int i, wasinstalled = 0, wasdeleted = 0;
-      
+
       for (i=0;i<(sizeof(svcnames)/sizeof(svcnames[0]));i++)
       {
-        if ( RegQueryValueEx(srvkey, svcnames[i], NULL, &valuetype, 
+        if ( RegQueryValueEx(srvkey, svcnames[i], NULL, &valuetype,
                (unsigned char *)(&buffer[0]), &valuesize) == ERROR_SUCCESS )
           wasinstalled = 1;
         if ( RegDeleteValue(srvkey, svcnames[i] ) == ERROR_SUCCESS )
@@ -771,7 +771,7 @@ int win32CliUninstallService(int quiet) /* <0=err, 0=ok(or notinstalled) */
       }
       else
         msg = "The distributed.net " SERVICEFOR "'s service entry could not\n" \
-              "be deleted. The " SERVICEFOR " has not be uninstalled.";      
+              "be deleted. The " SERVICEFOR " has not be uninstalled.";
 
       RegCloseKey(srvkey);
     }
@@ -791,7 +791,7 @@ int win32CliUninstallService(int quiet) /* <0=err, 0=ok(or notinstalled) */
     __print_message( msg, (retcode < 0) );
 
   return(retcode);
-}    
+}
 
 /* ---------------------------------------------------------- */
 
@@ -814,8 +814,8 @@ static int IsShellRunning(void)
 
 /* ---------------------------------------------------------- */
 
-/* 
-** Guess if the application should attempt to try to initialize itself as 
+/*
+** Guess if the application should attempt to try to initialize itself as
 ** a service.
 */
 #if defined(_WINNT_)
@@ -831,10 +831,10 @@ static int IsTryNTStartServiceWorthwhile(void) /* returns +1=yes, 0=no, -1=error
 
     if (OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
     {
-      PTOKEN_GROUPS pGroupInfo = (PTOKEN_GROUPS)0; 
+      PTOKEN_GROUPS pGroupInfo = (PTOKEN_GROUPS)0;
       DWORD dwSize = 0;
 
-      if (!GetTokenInformation(hToken, TokenGroups, NULL, dwSize, &dwSize)) 
+      if (!GetTokenInformation(hToken, TokenGroups, NULL, dwSize, &dwSize))
       {
         if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
         {
@@ -842,7 +842,7 @@ static int IsTryNTStartServiceWorthwhile(void) /* returns +1=yes, 0=no, -1=error
           if (pGroupInfo)
           {
             if (!GetTokenInformation(hToken, TokenGroups,
-                                     pGroupInfo, dwSize, &dwSize)) 
+                                     pGroupInfo, dwSize, &dwSize))
             {
               LocalFree((HLOCAL)pGroupInfo);
               pGroupInfo = (PTOKEN_GROUPS)0;
@@ -868,7 +868,7 @@ static int IsTryNTStartServiceWorthwhile(void) /* returns +1=yes, 0=no, -1=error
         **
         ** net start for Local System (with or without "Interact with Desktop")
         **   SECURITY_SERVICE_RID=missing, SECURITY_INTERACTIVE_RID=missing
-        ** 
+        **
         ** SECURITY_LOCAL_SYSTEM_RID doesn't seem to be ever set, so the rule
         ** I'm going with is...
         ** isService = (SECURITY_SERVICE_RID || (!SECURITY_SERVICE_RID &&
@@ -876,11 +876,11 @@ static int IsTryNTStartServiceWorthwhile(void) /* returns +1=yes, 0=no, -1=error
         */
 
         if (AllocateAndInitializeSid(&siaNt1, 1,
-            SECURITY_INTERACTIVE_RID, 0, 0, 0, 0, 0, 0, 0, &sid)) 
+            SECURITY_INTERACTIVE_RID, 0, 0, 0, 0, 0, 0, 0, &sid))
         {
           isInteractive = 0;
-          for (nGrp = 0; isInteractive == 0 && 
-               nGrp < pGroupInfo->GroupCount; nGrp++) 
+          for (nGrp = 0; isInteractive == 0 &&
+               nGrp < pGroupInfo->GroupCount; nGrp++)
           {
             if (EqualSid(sid, pGroupInfo->Groups[nGrp].Sid))
               isInteractive = +1;
@@ -888,19 +888,19 @@ static int IsTryNTStartServiceWorthwhile(void) /* returns +1=yes, 0=no, -1=error
           FreeSid(sid);
         }
         if (AllocateAndInitializeSid(&siaNt2, 1,
-            SECURITY_SERVICE_RID, 0, 0, 0, 0, 0, 0, 0, &sid)) 
+            SECURITY_SERVICE_RID, 0, 0, 0, 0, 0, 0, 0, &sid))
         {
           isService = 0;
-          for (nGrp = 0; isService == 0 && 
-               nGrp < pGroupInfo->GroupCount; nGrp++) 
+          for (nGrp = 0; isService == 0 &&
+               nGrp < pGroupInfo->GroupCount; nGrp++)
           {
             if (EqualSid(sid, pGroupInfo->Groups[nGrp].Sid))
               isService = +1;
-          }                           
+          }
           FreeSid(sid);
         }
         TRACE_OUT((0,"isService=%d, isInteractive=%d\n",
-                      isService, isInteractive )); 
+                      isService, isInteractive ));
 
         if (isService > 0 || (isService == 0 && isInteractive == 0))
           tryserv = +1;
@@ -920,7 +920,7 @@ static int IsTryNTStartServiceWorthwhile(void) /* returns +1=yes, 0=no, -1=error
 
 /* ---------------------------------------------------------- */
 
-int win32CliInstallService(int quiet) 
+int win32CliInstallService(int quiet)
 {                    /* quiet is used internally by the service itself */
   int retcode = -1;
   char buffer[260]; /* max size of a reg entry */
@@ -931,7 +931,7 @@ int win32CliInstallService(int quiet)
   if (__winGetVersion() < 400) /* win16 */
   {
     msg = NULL;
-    retcode = __win31InstallDeinstallClient(+1,quiet); 
+    retcode = __win31InstallDeinstallClient(+1,quiet);
   }
   #if (CLIENT_OS != OS_WIN32)
   else
@@ -954,19 +954,19 @@ int win32CliInstallService(int quiet)
 
     TRACE_OUT((0,"Doing OpenSCManager(0,0,SC_MANAGER_CREATE_SERVICE)...\n" ));
     scm = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
-    if (!scm)      
+    if (!scm)
     {
       errnum = GetLastError();
       TRACE_LASTERROR((0,"OpenSCManager failed!\n" ));
-      msg = __constructerrmsg("Unable to open the Service Control Manager", 
+      msg = __constructerrmsg("Unable to open the Service Control Manager",
                         errnum, buffer, sizeof(buffer));
-    }      
-    else 
+    }
+    else
     {
       int reinstalled = 0;
       CloseServiceHandle(scm);
       TRACE_OUT((0,"OpenSCManager opened ok. Closed it again.\n" ));
-      
+
       retcode = 0;
       if (win32CliIsServiceInstalled())
       {
@@ -991,8 +991,8 @@ int win32CliInstallService(int quiet)
            "and has not been %sinstalled.", ((reinstalled)?("re-"):("")) );
            msg = &buffer[0];
         }
-        else 
-#endif        
+        else
+#endif
         {
           int ras_detect_state = -1;
 
@@ -1005,10 +1005,10 @@ int win32CliInstallService(int quiet)
             DWORD dwResume = 0, cbNeeded = 1;
 
             while (ras_detect_state < 0 && cbNeeded > 0)
-            { 
+            {
               DWORD index, csReturned = 0;
               if (!EnumServicesStatus(scm, SERVICE_WIN32, SERVICE_ACTIVE,
-                 essServices, sizeof(essServices), &cbNeeded, &csReturned, 
+                 essServices, sizeof(essServices), &cbNeeded, &csReturned,
                  &dwResume))
               {
                 if (GetLastError() != ERROR_MORE_DATA)
@@ -1032,12 +1032,12 @@ int win32CliInstallService(int quiet)
           }
           TRACE_OUT((-1,"end: NT ras check.\n"));
           #endif
-          
+
           if ((scm = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE)) == 0)
           {
             errnum = GetLastError();
             TRACE_LASTERROR((0,"OpenSCManager(0,0,SC_MANAGER_CREATE_SERVICE) failed!\n" ));
-            msg = __constructerrmsg("Unable to open the Service Control Manager", 
+            msg = __constructerrmsg("Unable to open the Service Control Manager",
                         errnum, buffer, sizeof(buffer));
           }
           else
@@ -1052,25 +1052,25 @@ int win32CliInstallService(int quiet)
             strcat(buffer, "\""); /* "\" -svcrun" */
 
             TRACE_OUT((+1,"CreateService(,\"%s\",,,,\"%s\")\n", NTSERVICEIDS[0], buffer ));
-  
-            myService = CreateService(scm, NTSERVICEIDS[0], 
-                (char *)APPDESCRIP, SERVICE_ALL_ACCESS, 
+
+            myService = CreateService(scm, NTSERVICEIDS[0],
+                (char *)APPDESCRIP, SERVICE_ALL_ACCESS,
                 SERVICE_WIN32_OWN_PROCESS,
                 SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
-                buffer, 0, 0, dependancies, 0, 0); 
+                buffer, 0, 0, dependancies, 0, 0);
             if (!myService)
             {
               errnum = GetLastError();
               TRACE_LASTERROR((-1,"CreateServicer() failed!\n" ));
-              msg = __constructerrmsg("Unable to create service", 
+              msg = __constructerrmsg("Unable to create service",
                         errnum, buffer, sizeof(buffer));
             }
             else
             {
               TRACE_OUT((-1,"CreateService() ok!\n" ));
-  
+
               CloseServiceHandle(myService);
-              sprintf( buffer, 
+              sprintf( buffer,
                 "The distributed.net " SERVICEFOR " has been successfully %sinstalled as\n"
                 "an NT service and has been configured to start automatically.",
                 (reinstalled)?("re-"):("") );
@@ -1099,13 +1099,13 @@ int win32CliInstallService(int quiet)
              "The distributed.net "SERVICEFOR" would not have started correctly\n"
              "and has not been installed.";
     }
-    else 
-#endif    
+    else
+#endif
     {
       HKEY srvkey=NULL;
       DWORD dwDisp=NULL;
 
-      if (RegCreateKeyEx(HKEY_LOCAL_MACHINE, 
+      if (RegCreateKeyEx(HKEY_LOCAL_MACHINE,
           "Software\\Microsoft\\Windows\\CurrentVersion\\RunServices",0,"",
                 REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,
                 &srvkey,&dwDisp) != ERROR_SUCCESS)
@@ -1115,14 +1115,14 @@ int win32CliInstallService(int quiet)
         TRACE_LASTERROR((0,"RegCreateKey(HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\RunServices) failed!\n" ));
       }
       else
-      {       
+      {
         TRACE_OUT((+0,"RegCreateKeyEx(HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\RunServices) succeeded.\n" ));
         __GetMyModuleFilename( &buffer[1], sizeof(buffer)-1);
         buffer[0] = '\"';
         strcat( buffer, "\" -hide" );
- 
+
         TRACE_OUT((+1,"RegSetValueEx(,\"%s\",\"%s\",)\n", W9xSERVICEKEY, buffer ));
-        if (RegSetValueEx(srvkey, W9xSERVICEKEY, 0, REG_SZ, 
+        if (RegSetValueEx(srvkey, W9xSERVICEKEY, 0, REG_SZ,
             (unsigned const char *)buffer, strlen(buffer) + 1) != ERROR_SUCCESS)
         {
           TRACE_LASTERROR((-1,"RegSetValueEx() failed!\n" ));
@@ -1137,7 +1137,7 @@ int win32CliInstallService(int quiet)
         TRACE_OUT((+0,"RegCloseKey() ok\n" ));
         RegCloseKey(srvkey);
       }
-    }  
+    }
   }
   #endif
 
@@ -1158,7 +1158,7 @@ int win32CliSendServiceControlMessage(int msg) /* <0=err, 0=none running, >0=msg
 #if (CLIENT_OS == OS_WIN32)
   int no_ack_needed  = 0;
   DWORD ack_state[2] = {SERVICE_START_PENDING,SERVICE_START_PENDING};
-  if (msg == SERVICE_CONTROL_PARAMCHANGE) //translate win2k only cmd 
+  if (msg == SERVICE_CONTROL_PARAMCHANGE) //translate win2k only cmd
   {
     msg = CLIENT_SERVICE_CONTROL_RESTART; //to one available on all
   }
@@ -1237,7 +1237,7 @@ int win32CliSendServiceControlMessage(int msg) /* <0=err, 0=none running, >0=msg
       CloseServiceHandle(scm);
     }
   }
-#endif  
+#endif
   return retcode;
 }
 
@@ -1254,7 +1254,7 @@ static void ServiceMain(int argc, char *argv[], int (*cmain)(int, char **))
     #else
     HANDLE hmutex;
     SECURITY_ATTRIBUTES sa;
-    char filename[260]; 
+    char filename[260];
     if (__GetMyModuleFilename(filename, sizeof(filename)) < 1)
       return;
     oargv[1] = strrchr(filename, '\\');
@@ -1263,13 +1263,13 @@ static void ServiceMain(int argc, char *argv[], int (*cmain)(int, char **))
     oargv[2] = strrchr(filename, ':');
     if (oargv[2] > oargv[1]) oargv[1] = oargv[2] + 1;
     if (oargv[1])
-    { 
-      argc = *oargv[1]; 
-      *oargv[1] = '\0'; 
-      SetCurrentDirectory(filename); 
-      *oargv[1] = (char)argc; 
+    {
+      argc = *oargv[1];
+      *oargv[1] = '\0';
+      SetCurrentDirectory(filename);
+      *oargv[1] = (char)argc;
     }
-    
+
     init_ok = 0;
     memset(&sa,0,sizeof(sa));
     sa.nLength = sizeof(sa);
@@ -1282,7 +1282,7 @@ static void ServiceMain(int argc, char *argv[], int (*cmain)(int, char **))
     }
     #endif
     argv    = oargv;
-    argv[0] = filename; 
+    argv[0] = filename;
     argv[1] = "-hide";
     argv[2] = NULL;
     argc    = 2;
@@ -1294,7 +1294,7 @@ static void ServiceMain(int argc, char *argv[], int (*cmain)(int, char **))
       TRACE_OUT((+1,"main(2,{\"%s\",\"-hide\",NULL})\n", filename ));
       #if ((CLIENT_OS == OS_WIN32) && defined(SLEEP_ON_SERVICE_START))
       /* sleep a bit to allow other services, fs mounts, etc to kick in */
-      /* we've posted that we're running so keep an eye out for STOP reqs */  
+      /* we've posted that we're running so keep an eye out for STOP reqs */
       {
         int secs = SLEEP_ON_SERVICE_START;
         while ((--secs) >= 0 && win32cli_servicified)
@@ -1314,7 +1314,7 @@ static void ServiceMain(int argc, char *argv[], int (*cmain)(int, char **))
       CloseHandle( hmutex );
     }
     #endif
-  }  
+  }
   TRACE_OUT((-1,"ended ServiceMain()\n"));
   return;
 }
@@ -1371,7 +1371,7 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
                                               ServiceCtrlHandler);
       if (serviceStatusHandle != 0)
       {
-        svc_bits = svc_bits; /* possibly unused */ 
+        svc_bits = svc_bits; /* possibly unused */
         SetServiceBits(serviceStatusHandle, svc_bits, TRUE, TRUE );
         break;
       }
@@ -1381,7 +1381,7 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
                    serviceStatusHandle ));
     if (serviceStatusHandle == 0)
       return;
-  }  
+  }
 
   TRACE_OUT((+1,"ServiceCtrlHandler(%ld) [%s]\n", controlCode, debug_getsvcControlCodeName(controlCode) ));
 
@@ -1404,7 +1404,7 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
     serviceStatus.dwWaitHint = 10000;
     RaiseExitRequestTrigger();
     TRACE_OUT((0,"called RaiseExitRequestTrigger()\n"));
-  } 
+  }
   else
   {
     int restarting = CheckRestartRequestTriggerNoIO();
@@ -1420,7 +1420,7 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
     {
       serviceStatus.dwControlsAccepted |= SERVICE_ACCEPT_PARAMCHANGE;
       if (controlCode == SERVICE_CONTROL_PARAMCHANGE)
-      {   
+      {
         controlCode = CLIENT_SERVICE_CONTROL_RESTART;
       }
     }
@@ -1468,7 +1468,7 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
         stat = (1<<( CLIENT_SERVICE_CONTROL_RESTART - CLIENT_SERVICE_CONTROL_FIRST));
       }
       #if defined(PROXYTYPE)
-      if (bForceConnect) 
+      if (bForceConnect)
       { /* not really, but oh well */
         stat |= (1<<(CLIENT_SERVICE_CONTROL_UPDATE - CLIENT_SERVICE_CONTROL_FIRST ));
       }
@@ -1476,7 +1476,7 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
       {
         int modes = ModeReqIsSet(-1);
         caps |= (1<<(CLIENT_SERVICE_CONTROL_FETCH - CLIENT_SERVICE_CONTROL_FIRST ))
-              || (1<<(CLIENT_SERVICE_CONTROL_FLUSH - CLIENT_SERVICE_CONTROL_FIRST )); 
+              || (1<<(CLIENT_SERVICE_CONTROL_FLUSH - CLIENT_SERVICE_CONTROL_FIRST ));
         if ((modes & (MODEREQ_FETCH|MODEREQ_FLUSH))==(MODEREQ_FETCH|MODEREQ_FLUSH))
           stat |= (1<<(CLIENT_SERVICE_CONTROL_UPDATE - CLIENT_SERVICE_CONTROL_FIRST ));
         if ((modes & MODEREQ_FETCH)!=0)
@@ -1484,7 +1484,7 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
         if ((modes & MODEREQ_FLUSH)!=0)
           stat |= (1<<(CLIENT_SERVICE_CONTROL_FLUSH - CLIENT_SERVICE_CONTROL_FIRST ));
       }
-      #endif 
+      #endif
       serviceStatus.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
       serviceStatus.dwServiceSpecificExitCode = (((DWORD)caps)|(((DWORD)stat)<<16));
       //fallthrough
@@ -1492,8 +1492,8 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
     else if (controlCode >= CLIENT_SERVICE_CONTROL_FIRST &&
              controlCode <= CLIENT_SERVICE_CONTROL_LAST && !stopping)
     {
-      static struct { DWORD controlCode; void *fxn; int arg; } ctrlOps[] = 
-      { 
+      static struct { DWORD controlCode; void *fxn; int arg; } ctrlOps[] =
+      {
         #if defined(PROXYTYPE)
         { CLIENT_SERVICE_CONTROL_FETCH, (void *)TriggerUpdate,  0 },
         { CLIENT_SERVICE_CONTROL_FLUSH, (void *)TriggerUpdate,  0 },
@@ -1518,12 +1518,12 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
           else
             (*((void (*)(void))(ctrlOps[op].fxn)))();
           TRACE_OUT((0,"called ctrlOps[%u].fxn\n",op));
-          break; 
-        }  
+          break;
+        }
       }
       restarting = CheckRestartRequestTriggerNoIO();
       //fallthrough
-    }  
+    }
     //fallthrough (SERVICE_CONTROL_INTERROGATE)
     {
       static DWORD laststate = SERVICE_RUNNING; /* some non-pending state */
@@ -1532,7 +1532,7 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
       {
         serviceStatus.dwCurrentState = SERVICE_STOPPED;
         serviceStatus.dwControlsAccepted = 0;
-      }  
+      }
       else if (restarting)
       {
         /* we toggled it above. Now we *have* to switch back to
@@ -1544,7 +1544,7 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
       }
       else if (stopping)
       {
-        static DWORD lastchkpt = 0;  
+        static DWORD lastchkpt = 0;
         serviceStatus.dwControlsAccepted = 0;
         serviceStatus.dwWaitHint = 10000;
         serviceStatus.dwCurrentState = SERVICE_STOP_PENDING;
@@ -1562,7 +1562,7 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
         serviceStatus.dwCurrentState = SERVICE_RUNNING;
       }
       laststate = serviceStatus.dwCurrentState;
-    }  
+    }
   }
   __SetServiceStatus(serviceStatusHandle, &serviceStatus);
 
@@ -1571,7 +1571,7 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
 }
 struct { int (*proc)(int, char **); } ntsvc = {0};
 static LPSERVICE_MAIN_FUNCTION _NTServiceMain(DWORD Argc, LPTSTR *Argv)
-{ 
+{
   TRACE_OUT((+1,"started _NTServiceMain(%d,{\"%s\",...})\n",Argc,Argv[0]));
 
   win32cli_servicified = 1; /* turn on for ctrlhandler */
@@ -1592,10 +1592,10 @@ int win32CliInitializeService(int argc, char *argv[],
 
   TRACE_OUT((+1,"win32CliInitializeService(). Already running?=%d\n", is_started ));
 
-  /* for win9x we need to ensure that we don't start as a 
-     service when we shouldn't. 
-     On NT, this is not critical, since attempting to init 
-     as a service isn't possible unless the ServiceManager 
+  /* for win9x we need to ensure that we don't start as a
+     service when we shouldn't.
+     On NT, this is not critical, since attempting to init
+     as a service isn't possible unless the ServiceManager
      started us - our only motivation is to try to avoid
      getting "hung" for 20 seconds.
   */
@@ -1622,7 +1622,7 @@ int win32CliInitializeService(int argc, char *argv[],
         if (kernl)
         {
           typedef DWORD (CALLBACK *ULPRET)(DWORD,DWORD);
-          ULPRET func = (ULPRET) GetProcAddress(kernl, 
+          ULPRET func = (ULPRET) GetProcAddress(kernl,
                                         "RegisterServiceProcess");
           if (func)
           {
@@ -1658,8 +1658,8 @@ int win32CliInitializeService(int argc, char *argv[],
       if (startable != 0) /* either unknown or positive */
       {
         unsigned int inst;
-        SERVICE_TABLE_ENTRY serviceTable[] = 
-        {   
+        SERVICE_TABLE_ENTRY serviceTable[] =
+        {
           { NULL, (LPSERVICE_MAIN_FUNCTION)_NTServiceMain },
           { NULL, NULL }
         };
@@ -1668,7 +1668,7 @@ int win32CliInitializeService(int argc, char *argv[],
         {
           serviceTable[0].lpServiceName = (char *)(NTSERVICEIDS[inst]);
           TRACE_OUT((+1,"StartServiceCtrlDispatcher(\"%s\")\n",serviceTable[0].lpServiceName));
-          if (StartServiceCtrlDispatcher(serviceTable)) 
+          if (StartServiceCtrlDispatcher(serviceTable))
           {
             TRACE_OUT((-1,"StartServiceCtrlDispatcher()=ok\n" ));
             is_started = 1;
