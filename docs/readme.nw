@@ -1,7 +1,7 @@
 
  distributed.net client for NetWare 3.11 and above
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
- Document revision $Id: readme.nw,v 1.5.2.4 2000/06/03 12:39:15 cyp Exp $
+ Document revision $Id: readme.nw,v 1.5.2.5 2000/12/25 04:44:27 cyp Exp $
                                                           
  Welcome to the distributed.net client.
  This version is a unified client for both SMP and non-SMP machines.
@@ -11,7 +11,7 @@
  http://www.distributed.net/FAQ/ for non-platform-specific documentation.
 
     1.0  Getting started
-    2.0  distributed.net client for NetWare specific notes
+    2.0  distributed.net client for NetWare specific history
     3.0  client-for-NetWare specific configuration file options
     4.0  Frequently seen problems, frequently asked questions.
 
@@ -21,13 +21,22 @@
     If you have never run the client before, it will prompt you with a
     list of options. Quit and save when done, and then reload the client.
 
+    I *strongly* recommend that you do NOT put the client in the search
+    path when running NetWare 5 (type 'SEARCH' at the console prompt to
+    see what the search paths are).
+    NetWare 5.x is brain-dead with respect to how commands are entered on
+    the command line. It searches for NLMs first, rather than looking at
+    its built-in commands first, which effectively negates the use of the
+    -pause, -unpause, -restart and -shutdown switches.
+
     Dependancies (or not):
 
-    A3112.NLM: is *required* by this version of the client. NetWare 3.x
-    users who do not have this file in their SYS:/SYSTEM directory may
-    obtain it from Novell. It is part of the every recent (after Oct/95)
-    update, ie LIB311.EXE or LIB312.EXE. The updates are also available
-    from http://fb14.uni-mainz.de/~cyp/
+    A3112.NLM: is *required* by this version of the client. 
+    NetWare 3.x users who do not have this file in their SYS:/SYSTEM 
+                directory may obtain it from Novell. It is part of the 
+                every recent (after Oct/95) update, ie LIB311.EXE or 
+                LIB312.EXE. If you can't find it, send me mail.
+    NetWare 4/5 users already have this in their SYS:/SYSTEM directory.
 
     TCPIP.NLM: The client does not require TCPIP (ie it will run offline
     if TCPIP is not detected), but will use it if available/loaded.
@@ -43,31 +52,54 @@
     NetWare 3.11: The client has not been tested under NetWare 3.11.
     Feedback to <cyp@fb14.uni-mainz.de> would be much appreciated.
 
- 2.0  Notes: ---------------------------------------------------------
+ 2.0  History/Notes: -------------------------------------------------
 
-    Beginning with v2.8000, the ability to run the client from within 
-    the polling loop has been removed entirely. 
+    v2.8011+: the client for NetWare no longer supports OGR. For further 
+    information please refer to http://www.distributed.net/faq/cache/188.html
 
-    Beginning with v2.7112, the client supports -shutdown, -restart,
-    -pause and -unpause as console commands. That is, the client
-    inserts itself into the console command parser and can be issued
-    these commands from there. For example, the _command_ (note, *not*
-    "LOAD command") 'dnetc -pause' will cause the client to pause itself.
+    v2.8011+: the client will attempt to use the originating namespace 
+    (DOS/NFS/OS2/NT) of the ini file if one was specified on the command line, 
+    or if no -ini keyword was specified, then the originating namespace of 
+    the NLM itself. The "originating namespace" is the namespace of a file 
+    at the time it was created/copied to your NetWare volume. I have no idea 
+    if this works on NW5, so feedback would be appreciated.
+
+    v2.8010+: the client must either be LOAD'ed from a NetWare volume, or 
+    have been provided with the -ini keyword that specifies the canonical 
+    path (ie, including volume and directory) to the configuration file. 
+    This is because the client infers its working directory from the path 
+    of the -ini, or if the -ini option wasn't specified, then the directory 
+    that the client itself is in. Note that using a directory on the DOS 
+    partition isn't recommended and probably won't work since many CLIB 
+    functions simply do not support file I/O from DOS partitions. Putting 
+    the client on a DOS partition and everything else on a NetWare volume 
+    is fine.
+
+    v2.8000+: the ability to run the client from within the polling loop 
+    has been removed entirely. 
+
+    v2.8000+: The client will shut itself down when the server is DOWN'd.
+
+    v2.7112+: the client supports -shutdown, -restart, -pause and -unpause 
+    as console commands. That is, the client inserts itself into the console 
+    command parser and can be issued these commands from there. For example, 
+    the _command_ (note, *not* "LOAD command") 'dnetc -pause' will cause 
+    the client to pause itself. 
     Due to a bug/feature in the NetWare 5 console command handler, these 
     options will not be available if the client was initially loaded 
     without  the 'LOAD' or if the client is in the search path. 
     Use 'dnetcmd' instead.
 
-    Beginning with v2.7112, the client supports several configuration
-    file settings that are specific to the client for NetWare. See
-    'NetWare specific configuration options' below.
+    v2.7112+: the client supports several configuration file settings that 
+    are specific to the client for NetWare. See 'NetWare specific 
+    configuration options' below.
 
-    Beginning with v2.7014, the client can also be loaded more than once. 
-    Unloading and reloading the client for executing -fetch, -flush or 
-    -update is therefore no longer necessary. 
+    v2.7014+: the client can also be loaded more than once. Unloading and 
+    reloading the client for executing -fetch, -flush or -update is therefore 
+    no longer necessary. 
     
-    Beginning with v2.7012, the two SMP and non-SMP clients have been 
-    merged into one unified client.
+    v2.7012+: the two SMP and non-SMP clients have been merged into one 
+    unified client.
 
  3.0 client-for-NetWare specific configuration file options -------------
 
@@ -98,6 +130,11 @@
       indicator' as a base for rescheduling logic. If your aim is to "hide"
       the client from your boss because you/he/she thinks a whizzing snake
       is scary, don't use the client or get another boss. :)
+
+      If you don't believe me, go read...
+      "Captain! The containment field is at 100 percent! I don't know how 
+      "long she'll be able to hold together at this level!" at
+      http://developer.novell.com/research/devnotes/1995/november/04/02.htm
 
  4.0  Frequently seen problems, frequently asked questions ---------------
 

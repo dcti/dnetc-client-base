@@ -1,6 +1,6 @@
 
  distributed.net client for Win32 (Win9x/WinNT/Win32s)
- document revision $Id: readme.w32,v 1.1.2.9 2000/11/12 21:14:25 cyp Exp $
+ document revision $Id: readme.w32,v 1.1.2.10 2000/12/25 04:44:27 cyp Exp $
 
  Welcome to the distributed.net client.
 
@@ -282,6 +282,11 @@
        devices as "eth[0-9]".
        Generally speaking, if you were happy with the way lurk worked 
        before, you probably do need the 'Dialup interfaces' option now.
+
+       *NOTE*: If you are running WinGate (NAT) proxy on the same machine
+       that the client is on, and wish the client to go online only if
+       a connection is already open, then you CANNOT use RAS - you must
+       tell the client to use the 'Dialup Interfaces' (specify 'ppp*').
 
     Q: Can I share my win32 client's buffers with non-win32 clients?
        ["sharing" is simultaneous access via file-sharing, but also 

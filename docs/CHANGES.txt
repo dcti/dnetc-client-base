@@ -21,11 +21,13 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.70 2000/12/18 04:54:33 mfeiri Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.71 2000/12/25 04:44:27 cyp Exp $
 ==========================================================================
 
 2.8000
 ------
+
+2.8012.465
 
 2.8011.464  imp: many: OGR cores improved - should now be slightly faster
             new: many: AltiVec OGR cruncher by Dan Oetting and Chris Cox
@@ -38,7 +40,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.70 2000/12/18 04:54:33 mfeiri Exp $
                  file in [/usr/local]/etc/. Refer to the man page for details.
             new: *nix: optional -multiok=0 switch to prohibit multiple 
                  instances of the client from running at the same time.
-            new: linux: now supports -install and -uninstall     
+            new: linux: now supports -[un]install for SYSV-style rc.d
             chg: rc5: random-prefix is no longer written to the .ini
             chg: all: If a dialup connection had been previously initiated 
                  by the client AND the link drops while doing network i/o,
@@ -50,7 +52,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.70 2000/12/18 04:54:33 mfeiri Exp $
             new: client can be configured with multiple keyserver names.
             fix: all: no more uneccesary connects when using frequent-checks
             fix: all: mail sent correctly on shutdown.
-            fix: all: no longer discards work on fetch.
+            fix: all: no longer discards work-to-do on fetch.
             fix: win9x: client no longer hangs on sys shutdown
             chg: all: smtp/firewall hostname settings have different semantics
                  (port # is appended to the name in the form hostname:port)
@@ -63,6 +65,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.70 2000/12/18 04:54:33 mfeiri Exp $
                  for project independance (format doesn't have to be processed
                  differently for different projects). Inexact percentages 
                  (ie, for OGR) are no longer displayed at load/save time.
+            new: win16/32: crunch-o-scope, menus et al. (christmas present :)
             new: AmigaOS: fifo log file type now enabled
             new: macos: temp. sensing support for single CPU G3 and G4 Macs
             new: macos: LURK support for users of OT-PPP or RemoteAccess
