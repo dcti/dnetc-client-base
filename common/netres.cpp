@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.17  1999/01/08 10:06:53  chrisb
+// #defined tzset() to nothing for RISCOS
+//
 // Revision 1.16  1999/01/07 15:40:39  cyp
 // client>=424 will not work with oldresolve
 //
@@ -60,7 +63,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.16 1999/01/07 15:40:39 cyp Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.17 1999/01/08 10:06:53 chrisb Exp $"; }
 #endif
 
 //---------------------------------------------------------------------
@@ -69,6 +72,9 @@ return "@(#)$Id: netres.cpp,v 1.16 1999/01/07 15:40:39 cyp Exp $"; }
 //#define RESDEBUG //to show what network::resolve() is resolving
 #ifdef RESDEBUG
   //#define RESDEBUGZONE +12  //the timezone we want to appear to be in 
+#endif
+#if (CLIENT_OS == OS_RISCOS)
+#define tzset() 
 #endif
 
 #if defined(TEST)
