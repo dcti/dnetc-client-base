@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version.h,v $
+// Revision 1.6  1998/07/07 03:10:22  silby
+// Updated to build 414
+//
 // Revision 1.5  1998/06/29 17:05:43  daa
 // bump to 413.
 //
@@ -25,10 +28,10 @@
 
 #define CLIENT_CONTEST      71
 #define CLIENT_BUILD        00
-#define CLIENT_BUILD_FRAC   413
+#define CLIENT_BUILD_FRAC   414
 
-#define CLIENT_VERSIONSTRING    "v2.7100.413"
-#define CLIENT_VERSIONSTRING2   "2.7100.413"        // no leading "v"
+#define CLIENT_VERSIONSTRING    "v2.7100.414"
+#define CLIENT_VERSIONSTRING2   "2.7100.414"        // no leading "v"
 
 #endif // _VERSION_H
 
