@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.74 2000/05/17 18:22:22 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.75 2000/05/25 19:41:38 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -18,12 +18,12 @@ return "@(#)$Id: client.cpp,v 1.206.2.74 2000/05/17 18:22:22 cyp Exp $"; }
 #include "clievent.h"  // ClientEventSyncPost(),_CLIENT_STARTED|FINISHED
 #include "random.h"    // InitRandom()
 #include "pathwork.h"  // EXTN_SEP
-#include "clitime.h"   // CliTimer()
 #include "clicdata.h"  // CliGetContestWorkUnitSpeed()
 #include "cpucheck.h"  // GetNumberOfDetectedProcessors()
 #include "util.h"      // projectmap_build(), trace, utilCheckIfBetaExpired
 #include "modereq.h"   // ModeReqIsSet()/ModeReqRun()
 #include "cmdline.h"   // ParseCommandLine() and load config
+#include "clitime.h"   // [De]InitializeTimers(),CliTimer()
 #include "triggers.h"  // [De]InitializeTriggers(),RestartRequestTrigger()
 #include "logstuff.h"  // [De]InitializeLogging(),Log()/LogScreen()
 #include "console.h"   // [De]InitializeConsole(), ConOutErr()
@@ -427,13 +427,21 @@ static int ClientMain( int argc, char *argv[] )
   int retcode = 0;
   int restart = 0;
 
+  TRACE_OUT((+1,"Client.Main()\n"));
+
+  if (InitializeTimers()!=0)
+  {
+    ConOutErr( "Unable to initialize timers." );
+    return -1;
+  }
+
   srand( (unsigned) time(NULL) );
   InitRandom();
 
-  TRACE_OUT((+1,"Client.Main()\n"));
   client = (Client *)malloc(sizeof(Client));
   if (!client)
   {
+    DeinitializeTimers();
     ConOutErr( "Unable to initialize client. Out of memory." );
     return -1;
   }
@@ -475,7 +483,7 @@ static int ClientMain( int argc, char *argv[] )
             dialup.Start(client->offlinemode, &(client->lurk_conf));
             #endif
             TRACE_OUT((0,"initializeconsole\n"));
-          if (InitializeConsole(&(client->quietmode),domodes) == 0)
+            if (InitializeConsole(&(client->quietmode),domodes) == 0)
             {
               //some plats need to wait for user input before closing the screen
               int con_waitforuser = 0; //only used if doing modes (and !-config)
@@ -556,6 +564,7 @@ static int ClientMain( int argc, char *argv[] )
   } while (restart);
 
   free((void *)client);
+  DeinitializeTimers();
 
   TRACE_OUT((-1,"Client.Main()\n"));
   return retcode;
