@@ -6,24 +6,26 @@
 ; if your compiler can generate faster code please send it to me
 ; for disassembly.
 ;
-; $Id: ogr.asm,v 1.1.2.6 2000/11/25 15:04:19 friedbait Exp $
+; $Id: ogr.asm,v 1.1.2.7 2000/12/25 23:19:14 snake Exp $
 
                global ogr_get_dispatch_table, _ogr_get_dispatch_table
-               extern ogr_choose_dat, _ogr_choose_dat
 
 %ifdef __OMF__  ; Watcom and Borland
+ extern ogr_choose_dat
 [SECTION _DATA CLASS=DATA USE32 FLAT PUBLIC ALIGN=16]
 [SECTION _TEXT CLASS=CODE USE32 FLAT PUBLIC ALIGN=16] ;8,16,256,512,...
 %define __DATASECT__ [SECTION _DATA]
 %define __CODESECT__ [SECTION _TEXT]
 %define CHOOSE_DAT ogr_choose_dat
 %elifdef __ELF__
+ extern ogr_choose_dat
 [SECTION .data align=16]
 [SECTION .text align=32]
 %define __DATASECT__ [SECTION .data]
 %define __CODESECT__ [SECTION .text]
 %define CHOOSE_DAT ogr_choose_dat
 %else
+ extern _ogr_choose_dat
 %define __DATASECT__ [SECTION .data]
 %define __CODESECT__ [SECTION .text]
 %define CHOOSE_DAT _ogr_choose_dat
