@@ -6,7 +6,7 @@
 */
 
 const char *w32svc_cpp(void) {
-return "@(#)$Id: w32svc.cpp,v 1.1.2.4 2001/04/08 14:22:15 cyp Exp $"; }
+return "@(#)$Id: w32svc.cpp,v 1.1.2.5 2001/04/12 14:57:22 cyp Exp $"; }
 
 //#define TRACE
 
@@ -759,7 +759,7 @@ int win32CliUninstallService(int quiet) /* <0=err, 0=ok(or notinstalled) */
       }
       if (wasdeleted)
       {
-        msg = "The distributed.net " SERVICEFOR "'s service entry has been deleted.\n",
+        msg = "The distributed.net " SERVICEFOR "'s service entry has been deleted.\n" \
               "The " SERVICEFOR " is no longer installed as a service.";
         retcode = 0;
       }
@@ -769,7 +769,7 @@ int win32CliUninstallService(int quiet) /* <0=err, 0=ok(or notinstalled) */
         retcode = 0;
       }
       else
-        msg = "The distributed.net " SERVICEFOR "'s service entry could not\n",
+        msg = "The distributed.net " SERVICEFOR "'s service entry could not\n" \
               "be deleted. The " SERVICEFOR " has not be uninstalled.";      
 
       RegCloseKey(srvkey);
@@ -817,12 +817,12 @@ static int IsShellRunning(void)
 ** Guess if the application should attempt to try to initialize itself as 
 ** a service.
 */
+#if defined(_WINNT_)
 static int IsTryNTStartServiceWorthwhile(void) /* returns +1=yes, 0=no, -1=error */
 {
   if (!IsShellRunning()) /* no shell, then must be service */
     return +1;
 
-  #if defined(_WINNT_)
   if (__winGetVersion() >= 2000) /* is windows NT */
   {
     int tryserv = -1; /* assume error */
@@ -912,10 +912,10 @@ static int IsTryNTStartServiceWorthwhile(void) /* returns +1=yes, 0=no, -1=error
     } /* if (OpenProcessToken(...)) */
     return tryserv;
   } /* if (__winGetVersion() >= 2000) */
-  #endif /* defined(__WINNT__) */
 
   return 0;
 }
+#endif /* defined(__WINNT__) */
 
 /* ---------------------------------------------------------- */
 
