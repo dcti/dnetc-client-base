@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.38 2003/03/30 19:52:44 snikkel Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.39 2003/03/31 03:02:38 mfeiri Exp $"; }
 
 //#define TRACE
 
@@ -248,14 +248,12 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.38 2003/03/30 19:52:44 snikkel Exp $"; }
     extern "C" s32 CDECL rc5_72_unit_func_020_030_mh_2( RC5_72UnitWork *, u32 *, void *);
     extern "C" s32 CDECL rc5_72_unit_func_060_mh_2( RC5_72UnitWork *, u32 *, void *);
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+    extern "C" s32 CDECL rc5_72_unit_func_ppc_mh_2( RC5_72UnitWork *, u32 *, void *);
     extern "C" s32 CDECL rc5_72_unit_func_KKS2pipes( RC5_72UnitWork *, u32 *, void *);
     extern "C" s32 CDECL rc5_72_unit_func_KKS604e( RC5_72UnitWork *, u32 *, void *);
     #if defined(__VEC__) /* OS+compiler support altivec */
       extern "C" s32 CDECL rc5_72_unit_func_KKS7400( RC5_72UnitWork *, u32 *, void *);
       extern "C" s32 CDECL rc5_72_unit_func_KKS7450( RC5_72UnitWork *, u32 *, void *);
-    #endif
-    #if defined(__GCC__) || defined(__GNUC__)
-      extern "C" s32 CDECL rc5_72_unit_func_ppc_mh_2( RC5_72UnitWork *, u32 *, void *);
     #endif
   #elif (CLIENT_CPU == CPU_SPARC) && (CLIENT_OS == OS_SOLARIS)
     extern "C" s32 CDECL rc5_72_unit_func_KKS_2 ( RC5_72UnitWork *, u32 *, void * );
@@ -485,7 +483,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ANSI 4-pipe",
       "ANSI 2-pipe",
       "ANSI 1-pipe",
-      "MH 2-pipe",     /* gas format */
+      "MH 2-pipe",     /* gas and OSX format */
       "KKS 2-pipe",    /* gas and OSX format */
       "KKS 604e",      /* gas and OSX format */
       "KKS 7400",      /* gas and OSX format, AltiVec only */
@@ -603,14 +601,10 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
     }
     else if (contestid == RC5_72)
     {
-        #if (CLIENT_OS == OS_MACOSX)
-        if (cindex == 3)
-            cindex = -1;
-        #endif
-        if (!have_vec && cindex == 6)     /* "KKS 7400" */
-            cindex = -1;                  /* minibench */
-        if (!have_vec && cindex == 7)     /* "KKS 7450" */
-            cindex = -1;                  /* minibench */
+      if (!have_vec && cindex == 6)     /* "KKS 7400" */
+        cindex = 4;                     /* "KKS 2pipes" */
+      if (!have_vec && cindex == 7)     /* "KKS 7450" */
+        cindex = 4;                     /* "KKS 2pipes" */
     }
   }
   #elif (CLIENT_CPU == CPU_X86)
@@ -1257,16 +1251,12 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
       switch ( detected_type & 0xffff) // only compare the low PVR bits
       {
         case 0x0003: cindex = 4; break; // 603            == KKS 2pipes
-        case 0x0004: cindex = 5; break; // 604            == KKS 604e
+        case 0x0004: cindex = 4; break; // 604            == KKS 2pipes
         case 0x0006: cindex = 4; break; // 603e           == KKS 2pipes
         case 0x0007: cindex = 4; break; // 603r/603ev     == KKS 2pipes
-        #if (CLIENT_OS == OS_MACOSX)
-          case 0x0008: cindex = 4; break; // 740/750 (G3)   == KKS 2pipes
-        #elif defined(__GCC__) || defined(__GNUC__)
-          case 0x0008: cindex = 3; break; // 740/750 (G3)   == MH 2-pipe
-        #endif
-        case 0x0009: cindex = 5; break; // 604e           == KKS 604e
-        case 0x000A: cindex = 5; break; // 604ev          == KKS 604e
+        case 0x0008: cindex = 4; break; // 740/750 (G3)   == KKS 2pipes
+        case 0x0009: cindex = 4; break; // 604e           == KKS 2pipes
+        case 0x000A: cindex = 4; break; // 604ev          == KKS 2pipes
         default:     cindex =-1; break; // no default
       }
       #if defined(__VEC__)  /* OS+compiler support altivec */
@@ -2348,6 +2338,10 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
 
      /* additional cores */
      #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+      case 3:
+          unit_func.gen_72 = rc5_72_unit_func_ppc_mh_2;
+          pipeline_count = 2;
+          break;
       case 4:
           unit_func.gen_72 = rc5_72_unit_func_KKS2pipes;
           pipeline_count = 2;
@@ -2365,12 +2359,6 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
           unit_func.gen_72 = rc5_72_unit_func_KKS7450;
           pipeline_count = 4;
           break;
-      #endif
-      #if defined(__GCC__) || defined(__GNUC__)
-      case 3:
-        unit_func.gen_72 = rc5_72_unit_func_ppc_mh_2;
-        pipeline_count = 2;
-        break;
       #endif
      #elif (CLIENT_CPU == CPU_SPARC) && (CLIENT_OS == OS_SOLARIS)
        case 3:
