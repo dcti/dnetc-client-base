@@ -7,7 +7,7 @@
 .section	".rodata"
 
 Id_tag:
-	.ascii	"@(#)$Id: r72-anbe1.gcc.S,v 1.1.2.4 2003/04/19 17:34:51 andreasb Exp $\000"
+	.ascii	"@(#)$Id: r72-anbe1.gcc.S,v 1.1.2.5 2003/04/19 17:35:26 andreasb Exp $\000"
 
 
 .section	".text"
@@ -67,7 +67,10 @@ rc5_72_unit_func_anbe_1:
 #define s_CS0			s_save_iterationsP-4
 #define s_GS1			s_CS0-4
 #define s_GS2			s_GS1-4
-#define fp_relative_size	(4+sizeof_r72unitwork+4+3*4)
+#define s_Llo			s_GS2-4
+#define s_Lmid			s_Llo-4
+#define s_Lhi			s_Lmid-4
+#define fp_relative_size	(4+sizeof_r72unitwork+4+3*4+3*4)
 !   <--? here could be a filler for dword alignment
 #define stackframe_size		(default_stackframe+fp_relative_size+4*(1+26+26))
 ! s_Sinit[26]
@@ -114,9 +117,17 @@ rc5_72_unit_func_anbe_1:
 #define Q		0x9E3779B9
 #define P_ROTL3		0xBF0A8B1D
 
+#define R1S10		%i0 // do not reuse
+#define R1S11		%i1 // do not reuse
+#define R1S12		%i2
+#define R1S13		%i3
+#define R1S14		%i4
+#define R1S15		%l3
+#define R1S16		%l4
+
 #define RGiterations	%i5
-#define RGLlo		%l3
-#define RGLmid		%l4
+#define tRGLlo		R1S12
+#define tRGLmid		R1S13
 #define	RGLhi		%l5
 
 #define RCS0		%o0
@@ -162,13 +173,16 @@ rc5_72_unit_func_anbe_1:
 
 	ld	[%i1],RGiterations
 	ld	[%i0+r72unitwork_L0_hi],RGLhi
-	ld	[%i0+r72unitwork_L0_mid],RGLmid
-	ld	[%i0+r72unitwork_L0_lo],RGLlo
+	ld	[%i0+r72unitwork_L0_mid],tRGLmid
+	ld	[%i0+r72unitwork_L0_lo],tRGLlo
 
 	set	P,RCP
 	set	Q,RCQ
 	set	P_ROTL3,RCP_ROTL3
 	st	tRCS0,[s_CS0] /*###*/
+	st	tRGLlo,[s_Llo]
+	st	tRGLmid,[s_Lmid]
+	st	RGLhi,[s_Lhi]
 
 KEYINIT:
 ! #define KEY_INIT(i) S[i] = P + i*Q;
@@ -220,8 +234,9 @@ KEYINIT:
 	!mov	RCP_ROTL3,RCS0
 	!st	RCS0,[s_S#(0)]
 */	/* !! L[0] = ROTL(L[0]+S[0],S[0]); */		\
-	ld	[s_CS0], tRCS0				;\
-	add	RGLlo,tRCS0,R1L(0)			;\
+	ld	[s_CS0],tRCS0				;\
+	ld	[s_Llo],tRGLlo				;\
+	add	tRGLlo,tRCS0,R1L(0)			;\
 	sll	R1L(0),(P_ROTL3 % 32),T1a		;\
 	srl	R1L(0),(32 - (P_ROTL3 % 32)),R1L(0)	;\
 	or	R1L(0),T1a,RGL0				;\
@@ -239,10 +254,11 @@ KEYINIT:
 #define CALCULATE_RGmid_DEPS				\
 							\
 	ld	[s_GS1],tRGS1 /*###*/			;\
+	ld	[s_Lmid],tRGLmid			;\
 	/* ROUND1L(1,1) */				\
 	/* !! L[1] = ROTL(L[1]+(S[1]+L[0]),(S[1]+L[0]));*/	\
 	add	tRGS1,RGL0,T1a				;\
-	add	RGLmid,T1a,R1L(1)			;\
+	add	tRGLmid,T1a,R1L(1)			;\
 	sll	R1L(1),T1a,T1b				;\
 	neg	T1a					;\
 	srl	R1L(1),T1a,R1L(1)			;\
@@ -264,15 +280,15 @@ KEYINIT:
 CALCULATE_RGlo_DEPS
 CALCULATE_RGmid_DEPS
 
-	!mov	RCP,RGSinit
-	mov	RCP_ROTL3,R1SS
-	mov	RGLlo,R1L(0)
+	!!mov	RCP,RGSinit
+	!mov	RCP_ROTL3,R1SS
+	!mov	RGLlo,R1L(0)
 
 mainloop:
 
-	!mov	RGLlo,R1L(0)
-	mov	RGLmid,R1L(1)
-	mov	RGLhi,R1L(2)
+	!!mov	RGLlo,R1L(0)
+	!mov	RGLmid,R1L(1)
+	!mov	RGLhi,R1L(2)
 
 ! ROUND 1 - key init and round 1
 
@@ -325,9 +341,13 @@ ROUND1_i##i##_j##j:				\
 
 #else
 
-#define ROUND1_START(i,j)  ROUND1_S(i,j,pred3(pred3(j)),pred3(j))
-#define ROUND1(i,j)        ROUND1_L_S(i,j,pred3(pred3(j)),pred3(j))
-#define ROUND1_END(i,j)    ROUND1_L(i,j,pred3(pred3(j)),pred3(j))
+#define ROUND1_START(i,j)       ROUND1_S(i,j,pred3(pred3(j)),pred3(j))
+#define ROUND1_prec(i,j,inR1Lj) ROUND1_L_S(i,j,inR1Lj,pred3(pred3(j)),pred3(j))
+#define ROUND1(i,j)             ROUND1_L_S(i,j,R1L(pred3(j)),pred3(pred3(j)),pred3(j))
+#define ROUND1_MR(i,j,R1SSout)  ROUND1_L_S_MR(i,j,R1L(pred3(j)),R1SSout,pred3(pred3(j)),pred3(j))
+#define ROUND1_RR(i,j,R1SSin,R1SSout)  ROUND1_L_S_RR(i,j,R1L(pred3(j)),R1SSin,R1SSout,pred3(pred3(j)),pred3(j))
+#define ROUND1_RM(i,j,R1SSin)   ROUND1_L_S_RM(i,j,R1L(pred3(j)),R1SSin,pred3(pred3(j)),pred3(j))
+#define ROUND1_END(i,j)         ROUND1_L(i,j,pred3(pred3(j)),pred3(j))
 
 #define ROUND1_S(i,j,Lpred,Lcurr)		\
 ROUND1_S_i##i##_j##j:				\
@@ -340,11 +360,12 @@ ROUND1_S_i##i##_j##j:				\
 /*S*/	or	R1SS,T1a,R1SS			;\
 /*S*/	/* st	R1SS,[s_S1(i)] */ /* to next */	;\
 
-#define ROUND1_L_S(i,j,Lpred,Lcurr)		\
+#define ROUND1_L_S(i,j,inR1Lj,Lpred,Lcurr)	\
 ROUND1_L_S_i##i##_j##j:				\
 /*L*/	add	R1SS,R1L(Lpred),T1a		;\
-/*L*/	add	R1L(Lcurr),T1a,R1L(Lcurr)	;\
-/*S*/	st	R1SS,[s_S1(i-1)] /* from next */;\
+/*L*/	/* add	R1L(Lcurr),T1a,R1L(Lcurr) */	;\
+/*L*/	add	inR1Lj,T1a,R1L(Lcurr)		;\
+/*S*/	st	R1SS,[s_S1(i-1)] /* from prev */;\
 /*L*/	sll	R1L(Lcurr),T1a,T1b		;\
 /*L*/	neg	T1a				;\
 /*S*/	/* add	RGSinit,RCQ,RGSinit */		;\
@@ -358,11 +379,68 @@ ROUND1_L_S_i##i##_j##j:				\
 /*S*/	or	R1SS,T1a,R1SS			;\
 /*S*/	/* st	R1SS,[s_S1(i)] */ /* to next */	;\
 
+#define ROUND1_L_S_MR(i,j,inR1Lj,outR1SS,Lpred,Lcurr)	\
+ROUND1_L_S_MR_i##i##_j##j:			\
+/*L*/	add	R1SS,R1L(Lpred),T1a		;\
+/*L*/	/* add	R1L(Lcurr),T1a,R1L(Lcurr) */	;\
+/*L*/	add	inR1Lj,T1a,R1L(Lcurr)		;\
+/*S*/	st	R1SS,[s_S1(i-1)] /* from prev */;\
+/*L*/	sll	R1L(Lcurr),T1a,T1b		;\
+/*L*/	neg	T1a				;\
+/*S*/	/* add	RGSinit,RCQ,RGSinit */		;\
+/*S*/	ld	[s_Sinit(i)],Tc			;\
+/*L*/	srl	R1L(Lcurr),T1a,R1L(Lcurr)	;\
+/*L*/	or	R1L(Lcurr),T1b,R1L(Lcurr)	;\
+/*S*/	add	R1SS,Tc,outR1SS			;\
+/*S*/	add	outR1SS,R1L(Lcurr),outR1SS	;\
+/*S*/	sll	outR1SS,3,T1a			;\
+/*S*/	srl	outR1SS,29,outR1SS		;\
+/*S*/	or	outR1SS,T1a,outR1SS		;\
+/*S*/	/* st	outR1SS,[s_S1(i)] */ /* to next */ ;\
+
+#define ROUND1_L_S_RR(i,j,inR1Lj,inR1SS,outR1SS,Lpred,Lcurr)	\
+ROUND1_L_S_RR_i##i##_j##j:				\
+/*L*/	add	inR1SS,R1L(Lpred),T1a		;\
+/*L*/	/* add	R1L(Lcurr),T1a,R1L(Lcurr) */	;\
+/*L*/	add	inR1Lj,T1a,R1L(Lcurr)		;\
+/*S*/	/* st	inR1SS,[s_S1(i-1)]*/ /* from prev */;/****/\
+/*L*/	sll	R1L(Lcurr),T1a,T1b		;\
+/*L*/	neg	T1a				;\
+/*S*/	/* add	RGSinit,RCQ,RGSinit */		;\
+/*S*/	ld	[s_Sinit(i)],Tc			;\
+/*L*/	srl	R1L(Lcurr),T1a,R1L(Lcurr)	;\
+/*L*/	or	R1L(Lcurr),T1b,R1L(Lcurr)	;\
+/*S*/	add	inR1SS,Tc,outR1SS			;\
+/*S*/	add	outR1SS,R1L(Lcurr),outR1SS	;\
+/*S*/	sll	outR1SS,3,T1a			;\
+/*S*/	srl	outR1SS,29,outR1SS		;\
+/*S*/	or	outR1SS,T1a,outR1SS		;\
+/*S*/	/* st	outR1SS,[s_S1(i)] */ /* to next */ ;\
+
+#define ROUND1_L_S_RM(i,j,inR1Lj,inR1SS,Lpred,Lcurr)	\
+ROUND1_L_S_RM_i##i##_j##j:				\
+/*L*/	add	inR1SS,R1L(Lpred),T1a		;\
+/*L*/	/* add	R1L(Lcurr),T1a,R1L(Lcurr) */	;\
+/*L*/	add	inR1Lj,T1a,R1L(Lcurr)		;\
+/*S*/	/* st	inR1SS,[s_S1(i-1)] */ /* from prev */;/****/\
+/*L*/	sll	R1L(Lcurr),T1a,T1b		;\
+/*L*/	neg	T1a				;\
+/*S*/	/* add	RGSinit,RCQ,RGSinit */		;\
+/*S*/	ld	[s_Sinit(i)],Tc			;\
+/*L*/	srl	R1L(Lcurr),T1a,R1L(Lcurr)	;\
+/*L*/	or	R1L(Lcurr),T1b,R1L(Lcurr)	;\
+/*S*/	add	inR1SS,Tc,R1SS			;\
+/*S*/	add	R1SS,R1L(Lcurr),R1SS		;\
+/*S*/	sll	R1SS,3,T1a			;\
+/*S*/	srl	R1SS,29,R1SS			;\
+/*S*/	or	R1SS,T1a,R1SS			;\
+/*S*/	/* st	R1SS,[s_S1(i)] */ /* to next */	;\
+
 #define ROUND1_L(i,j,Lpred,Lcurr)		\
 ROUND1_L_i##i##_j##j:				\
 /*L*/	add	R1SS,R1L(Lpred),T1a		;\
 /*L*/	add	R1L(Lcurr),T1a,R1L(Lcurr)	;\
-/*S*/	st	R1SS,[s_S1(i-1)] /* from next */;\
+/*S*/	st	R1SS,[s_S1(i-1)] /* from prev */;\
 /*L*/	sll	R1L(Lcurr),T1a,T1b		;\
 /*L*/	neg	T1a				;\
 /*L*/	srl	R1L(Lcurr),T1a,R1L(Lcurr)	;\
@@ -411,6 +489,8 @@ INLINE_ROUND1__i0_j0:
 
 #else
 
+#if 0
+
 	!mov	RCP,RGSinit
 
 	/* ROUND1(0,0) */
@@ -448,6 +528,79 @@ INLINE_ROUND1__i0_j0:
 	ROUND1(24,0)
 	ROUND1(25,1)
 	ROUND1_END(26,2)
+
+#else
+	!mov	RCP,RGSinit
+
+	! Precalculated:
+	!! S[0] = ROTL3(S[0]);
+	!  RCS0 = RCP_ROTL3
+	!! L[0] = ROTL(L[0]+S[0],S[0]);
+	!  RGL0 = ROTL(RGLlo+RCS0,P_ROTL3)
+	!! S[1] = ROTL3(S[1]+(S[0]+L[0]));
+	!  RGS1 = ROTL3(Sinit[1]+RCS0+RGL0)
+	!! L[1] = ROTL(L[1]+(S[1]+L[0]),(S[1]+L[0]));
+	!  RGL1 = ROTL(RGLmid+(RGS1+RGL0),(RGS1+RGL0))
+	!! S[2] = ROTL3(S[2]+S[1]+L[1]);
+	!  RGS2 = ROTL3(Sinit[2]+RGS1+RGL1)
+	!  RGL1S2 = RGL1+RGS2
+	!  RGS2S3 = RGS2+Sinit[3]
+
+	/* ROUND1L(2,2) */
+!INLINE_ROUND1_L_i2_j2:
+	!! L[2] = ROTL(L[2]+(S[2]+L[1]),(S[2]+L[1]));
+	!! L[2] = ROTL(RGLhi+(RGL1S2),(RGL1S2));
+///*2-2*/	/* add	RGLhi,RGL1S2,Tc */ /* to EndOfLoop */
+/*2-2*/	add	RGLhi,RGL1S2,Tc
+/*2-2*/	sll	Tc,RGL1S2,T1b
+/*2-2*/	neg	RGL1S2,T1a			// constant, but slot is free anyway
+/*2-2*/	srl	Tc,T1a,R1L(2)
+/*2-2*/	or	R1L(2),T1b,R1L(2)
+
+INLINE_ROUND1_S_i3_j0:
+	!! S[3] = ROTL3(S[3]+S[2]+L[2]);
+	!! S[3] = ROTL3(RGS2S3+L[2]);
+/*S*/	add	RGS2S3,R1L(2),R1SS
+/*S*/	sll	R1SS,3,T1a
+/*S*/	srl	R1SS,29,R1SS
+/*S*/	or	R1SS,T1a,R1SS
+/*S*/	/* st	R1SS,[s_S1(i)] */ /* to next */
+
+	ROUND1_prec(4,1,RGL0)
+	ROUND1_prec(5,2,RGL1)
+	ROUND1(6,0)
+	ROUND1(7,1)
+	ROUND1(8,2)
+	ROUND1(9,0)
+	ROUND1_MR(10,1,      R1S10)
+	ROUND1_RR(11,2,R1S10,R1S11)
+	ROUND1_RR(12,0,R1S11,R1S12)
+	ROUND1_RR(13,1,R1S12,R1S13)
+	ROUND1_RR(14,2,R1S13,R1S14)
+	ROUND1_RR(15,0,R1S14,R1S15)
+	ROUND1_RR(16,1,R1S15,R1S16)
+	ROUND1_RM(17,2,R1S16)
+/*
+	ROUND1(10,1)
+	ROUND1(11,2)
+	ROUND1(12,0)
+	ROUND1(13,1)
+	ROUND1(14,2)
+	ROUND1(15,0)
+	ROUND1(16,1)
+	ROUND1(17,2)
+*/
+	ROUND1(18,0)
+	ROUND1(19,1)
+	ROUND1(20,2)
+	ROUND1(21,0)
+	ROUND1(22,1)
+	ROUND1(23,2)
+	ROUND1(24,0)
+	ROUND1(25,1)
+	ROUND1_END(26,2)
+
+#endif
 
 #endif
 
@@ -494,13 +647,18 @@ ROUND2_i##i##_j##j:				\
 
 #else
 
-#define ROUND2_START(i,j)  ROUND2_S(i,j,pred3(pred3(j)),pred3(j))
-#define ROUND2(i,j)        ROUND2_L_S(i,j,pred3(pred3(j)),pred3(j))
-#define ROUND2_END(i,j)    ROUND2_L(i,j,pred3(pred3(j)),pred3(j))
+#define ROUND2_START_prec(i,j,loadS1i)   ROUND2_S(i,j,loadS1i,pred3(pred3(j)),pred3(j))
+#define ROUND2_START(i,j)        ROUND2_S(i,j,s_S1(i),pred3(pred3(j)),pred3(j))
+#define ROUND2_prec(i,j,loadS1i) ROUND2_L_S(i,j,loadS1i,pred3(pred3(j)),pred3(j))
+#define ROUND2(i,j)              ROUND2_L_S(i,j,s_S1(i),pred3(pred3(j)),pred3(j))
+#define ROUND2_MR(i,j,outR1SS)   ROUND2_L_S_MR(i,j,s_S1(i),outR1SS,pred3(pred3(j)),pred3(j))
+#define ROUND2_RR(i,j,inR1SS,outR1SS)   ROUND2_L_S_RR(i,j,s_S1(i),inR1SS,outR1SS,pred3(pred3(j)),pred3(j))
+#define ROUND2_RM(i,j,inR1SS)    ROUND2_L_S_RM(i,j,s_S1(i),inR1SS,pred3(pred3(j)),pred3(j))
+#define ROUND2_END(i,j)          ROUND2_L(i,j,pred3(pred3(j)),pred3(j))
 
-#define ROUND2_S(i,j,Lpred,Lcurr)		\
+#define ROUND2_S(i,j,loadS1i,Lpred,Lcurr)	\
 ROUND2_S_i##i##_j##j:				\
-/*S*/	ld	[s_S1(i)],T1a			;\
+/*S*/	ld	[loadS1i],T1a			;\
 /*S*/	add	R1SS,R1L(Lcurr),R1SS		;\
 /*S*/	add	R1SS,T1a,R1SS			;\
 /*S*/	sll	R1SS,3,T1a			;\
@@ -508,7 +666,7 @@ ROUND2_S_i##i##_j##j:				\
 /*S*/	or	R1SS,T1a,R1SS			;\
 /*S*/	st	R1SS,[s_S1(i)]			;\
 
-#define ROUND2_L_S(i,j,Lpred,Lcurr)		\
+#define ROUND2_L_S(i,j,loadS1i,Lpred,Lcurr)	\
 ROUND2_L_S_i##i##_j##j:				\
 /*L*/	add	R1SS,R1L(Lpred),T1a		;\
 /*L*/	add	R1L(Lcurr),T1a,R1L(Lcurr)	;\
@@ -516,8 +674,58 @@ ROUND2_L_S_i##i##_j##j:				\
 /*L*/	neg	T1a				;\
 /*L*/	srl	R1L(Lcurr),T1a,R1L(Lcurr)	;\
 /*L*/	or	R1L(Lcurr),T1b,R1L(Lcurr)	;\
-/*S*/	ld	[s_S1(i)],T1a			;\
+/*S*/	ld	[loadS1i],T1a			;\
 /*S*/	add	R1SS,R1L(Lcurr),R1SS		;\
+/*S*/	add	R1SS,T1a,R1SS			;\
+/*S*/	sll	R1SS,3,T1a			;\
+/*S*/	srl	R1SS,29,R1SS			;\
+/*S*/	or	R1SS,T1a,R1SS			;\
+/*S*/	st	R1SS,[s_S1(i)]			;\
+
+#define ROUND2_L_S_MR(i,j,loadS1i,outR1SS,Lpred,Lcurr)	\
+ROUND2_L_S_MR_i##i##_j##j:			\
+/*L*/	add	R1SS,R1L(Lpred),T1a		;\
+/*L*/	add	R1L(Lcurr),T1a,R1L(Lcurr)	;\
+/*L*/	sll	R1L(Lcurr),T1a,T1b		;\
+/*L*/	neg	T1a				;\
+/*L*/	srl	R1L(Lcurr),T1a,R1L(Lcurr)	;\
+/*L*/	or	R1L(Lcurr),T1b,R1L(Lcurr)	;\
+/*S*/	/* ld	[loadS1i],T1a */ /*****/	;\
+/*S*/	/* add	R1SS,T1a,outR1SS */ /*****/	;\
+/*S*/	add	R1SS,outR1SS,outR1SS		;\
+/*S*/	add	outR1SS,R1L(Lcurr),outR1SS	;\
+/*S*/	sll	outR1SS,3,T1a			;\
+/*S*/	srl	outR1SS,29,outR1SS		;\
+/*S*/	or	outR1SS,T1a,outR1SS		;\
+/*S*/	/* st	outR1SS,[s_S1(i)] */ /*****/	;\
+
+#define ROUND2_L_S_RR(i,j,loadS1i,inR1SS,outR1SS,Lpred,Lcurr)	\
+ROUND2_L_S_RR_i##i##_j##j:			\
+/*L*/	add	inR1SS,R1L(Lpred),T1a		;\
+/*L*/	add	R1L(Lcurr),T1a,R1L(Lcurr)	;\
+/*L*/	sll	R1L(Lcurr),T1a,T1b		;\
+/*L*/	neg	T1a				;\
+/*L*/	srl	R1L(Lcurr),T1a,R1L(Lcurr)	;\
+/*L*/	or	R1L(Lcurr),T1b,R1L(Lcurr)	;\
+/*S*/	/* ld	[loadS1i],T1a */ /*****/	;\
+/*S*/	/* add	inR1SS,T1a,outR1SS */ /*****/	;\
+/*S*/	add	inR1SS,outR1SS,outR1SS		;\
+/*S*/	add	outR1SS,R1L(Lcurr),outR1SS	;\
+/*S*/	sll	outR1SS,3,T1a			;\
+/*S*/	srl	outR1SS,29,outR1SS		;\
+/*S*/	or	outR1SS,T1a,outR1SS		;\
+/*S*/	/* st	outR1SS,[s_S1(i)] */ /*****/	;\
+
+#define ROUND2_L_S_RM(i,j,loadS1i,inR1SS,Lpred,Lcurr)	\
+ROUND2_L_S_RM_i##i##_j##j:			\
+/*L*/	add	inR1SS,R1L(Lpred),T1a		;\
+/*L*/	add	R1L(Lcurr),T1a,R1L(Lcurr)	;\
+/*L*/	sll	R1L(Lcurr),T1a,T1b		;\
+/*L*/	neg	T1a				;\
+/*L*/	srl	R1L(Lcurr),T1a,R1L(Lcurr)	;\
+/*L*/	or	R1L(Lcurr),T1b,R1L(Lcurr)	;\
+/*S*/	ld	[loadS1i],T1a			;\
+/*S*/	add	inR1SS,R1L(Lcurr),R1SS		;\
 /*S*/	add	R1SS,T1a,R1SS			;\
 /*S*/	sll	R1SS,3,T1a			;\
 /*S*/	srl	R1SS,29,R1SS			;\
@@ -566,9 +774,9 @@ ROUND2_L_i##i##_j##j:				\
 
 #else
 
-	ROUND2_START(0,2)
-	ROUND2(1,0)
-	ROUND2(2,1)
+	ROUND2_START_prec(0,2,s_CS0)
+	ROUND2_prec(1,0,s_GS1)
+	ROUND2_prec(2,1,s_GS2)
 	ROUND2(3,2)
 	ROUND2(4,0)
 	ROUND2(5,1)
@@ -576,6 +784,15 @@ ROUND2_L_i##i##_j##j:				\
 	ROUND2(7,0)
 	ROUND2(8,1)
 	ROUND2(9,2)
+	ROUND2_MR(10,0,      R1S10)
+	ROUND2_RR(11,1,R1S10,R1S11)
+	ROUND2_RR(12,2,R1S11,R1S12)
+	ROUND2_RR(13,0,R1S12,R1S13)
+	ROUND2_RR(14,1,R1S13,R1S14)
+	ROUND2_RR(15,2,R1S14,R1S15)
+	ROUND2_RR(16,0,R1S15,R1S16)
+	ROUND2_RM(17,1,R1S16)
+/*
 	ROUND2(10,0)
 	ROUND2(11,1)
 	ROUND2(12,2)
@@ -584,6 +801,7 @@ ROUND2_L_i##i##_j##j:				\
 	ROUND2(15,2)
 	ROUND2(16,0)
 	ROUND2(17,1)
+*/
 	ROUND2(18,2)
 	ROUND2(19,0)
 	ROUND2(20,1)
@@ -649,6 +867,12 @@ ROUND3_L_i##i##_j##j:				\
 #define ROUND3(i,j)     ROUND3_L_S(i,j,pred3(pred3(j)),pred3(j))
 #define ROUND3EVEN(i,j) ROUND3_L_S_A(i,j,A,B,pred3(pred3(j)),pred3(j))
 #define ROUND3ODD(i,j)  ROUND3_L_S_A(i,j,B,A,pred3(pred3(j)),pred3(j))
+#define ROUND3EVEN_MR(i,j,outR1SS)        ROUND3_L_S_A_MR(i,j,outR1SS,A,B,pred3(pred3(j)),pred3(j))
+#define ROUND3EVEN_RR(i,j,inR1SS,outR1SS) ROUND3_L_S_A_RR(i,j,inR1SS,outR1SS,A,B,pred3(pred3(j)),pred3(j))
+#define ROUND3EVEN_RM(i,j,inR1SS)         ROUND3_L_S_A_RM(i,j,inR1SS,A,B,pred3(pred3(j)),pred3(j))
+#define ROUND3ODD_MR(i,j,outR1SS)         ROUND3_L_S_A_MR(i,j,outR1SS,B,A,pred3(pred3(j)),pred3(j))
+#define ROUND3ODD_RR(i,j,inR1SS,outR1SS)  ROUND3_L_S_A_RR(i,j,inR1SS,outR1SS,B,A,pred3(pred3(j)),pred3(j))
+#define ROUND3ODD_RM(i,j,inR1SS)          ROUND3_L_S_A_RM(i,j,inR1SS,B,A,pred3(pred3(j)),pred3(j))
 
 #define ROUND3_S(i,j,Lpred,Lcurr)		\
 ROUND3_S_i##i##_j##j:				\
@@ -695,6 +919,89 @@ ROUND3_L_S_A_i##i##_j##j:			\
 /*L*/	or	R1L(Lcurr),T1b,R1L(Lcurr)	;\
 						\
 /*S*/	add	R1SS,T1a,R1SS			;\
+/*S*/	add	R1SS,R1L(Lcurr),R1SS		;\
+/*S*/	sll	R1SS,3,T1a			;\
+/*A*/	or	R1##A,Tc,R1##A			;\
+/*S*/	srl	R1SS,29,R1SS			;\
+/*S*/	or	R1SS,T1a,R1SS			;\
+/*S*/	/* !st	R1SS,[s_S1(i)]	*/		;\
+/*A*/	add	R1##A,R1SS,R1##A		;\
+
+#define ROUND3_L_S_A_MR(i,j,outR1SS,A,B,Lpred,Lcurr)	\
+ROUND3_L_S_A_MR_i##i##_j##j:			\
+/*L*/	add	R1SS,R1L(Lpred),T1a		;\
+/*A*/	xor	R1##A,R1##B,R1##A		;\
+						\
+/*A*/	sll	R1##A,R1##B,Tc			;\
+/*L*/	add	R1L(Lcurr),T1a,R1L(Lcurr)	;\
+						\
+/*L*/	sll	R1L(Lcurr),T1a,T1b		;\
+/*L*/	neg	T1a				;\
+						\
+/*L*/	srl	R1L(Lcurr),T1a,R1L(Lcurr)	;\
+/*A*/	neg	R1##B,Td			;\
+/*S*/	/* ld	[s_S1(i)],T1a */ /*****/	;\
+						\
+/*A*/	srl	R1##A,Td,R1##A			;\
+/*L*/	or	R1L(Lcurr),T1b,R1L(Lcurr)	;\
+						\
+/*S*/	/* add	R1SS,T1a,outR1SS */ /*****/	;\
+/*S*/	add	R1SS,outR1SS,outR1SS		;\
+/*S*/	add	outR1SS,R1L(Lcurr),outR1SS	;\
+/*S*/	sll	outR1SS,3,T1a			;\
+/*A*/	or	R1##A,Tc,R1##A			;\
+/*S*/	srl	outR1SS,29,outR1SS		;\
+/*S*/	or	outR1SS,T1a,outR1SS		;\
+/*S*/	/* !st	R1SS,[s_S1(i)]	*/		;\
+/*A*/	add	R1##A,outR1SS,R1##A		;\
+
+#define ROUND3_L_S_A_RR(i,j,inR1SS,outR1SS,A,B,Lpred,Lcurr)	\
+ROUND3_L_S_A_RR_i##i##_j##j:			\
+/*L*/	add	inR1SS,R1L(Lpred),T1a		;\
+/*A*/	xor	R1##A,R1##B,R1##A		;\
+						\
+/*A*/	sll	R1##A,R1##B,Tc			;\
+/*L*/	add	R1L(Lcurr),T1a,R1L(Lcurr)	;\
+						\
+/*L*/	sll	R1L(Lcurr),T1a,T1b		;\
+/*L*/	neg	T1a				;\
+						\
+/*L*/	srl	R1L(Lcurr),T1a,R1L(Lcurr)	;\
+/*A*/	neg	R1##B,Td			;\
+/*S*/	/* ld	[s_S1(i)],T1a */ /*****/	;\
+						\
+/*A*/	srl	R1##A,Td,R1##A			;\
+/*L*/	or	R1L(Lcurr),T1b,R1L(Lcurr)	;\
+						\
+/*S*/	/* add	inR1SS,T1a,outR1SS */ /*****/	;\
+/*S*/	add	inR1SS,outR1SS,outR1SS		;\
+/*S*/	add	outR1SS,R1L(Lcurr),outR1SS	;\
+/*S*/	sll	outR1SS,3,T1a			;\
+/*A*/	or	R1##A,Tc,R1##A			;\
+/*S*/	srl	outR1SS,29,outR1SS		;\
+/*S*/	or	outR1SS,T1a,outR1SS		;\
+/*S*/	/* !st	R1SS,[s_S1(i)]	*/		;\
+/*A*/	add	R1##A,outR1SS,R1##A		;\
+
+#define ROUND3_L_S_A_RM(i,j,inR1SS,A,B,Lpred,Lcurr)	\
+ROUND3_L_S_A_RM_i##i##_j##j:			\
+/*L*/	add	inR1SS,R1L(Lpred),T1a		;\
+/*A*/	xor	R1##A,R1##B,R1##A		;\
+						\
+/*A*/	sll	R1##A,R1##B,Tc			;\
+/*L*/	add	R1L(Lcurr),T1a,R1L(Lcurr)	;\
+						\
+/*L*/	sll	R1L(Lcurr),T1a,T1b		;\
+/*L*/	neg	T1a				;\
+						\
+/*L*/	srl	R1L(Lcurr),T1a,R1L(Lcurr)	;\
+/*A*/	neg	R1##B,Td			;\
+/*S*/	ld	[s_S1(i)],T1a			;\
+						\
+/*A*/	srl	R1##A,Td,R1##A			;\
+/*L*/	or	R1L(Lcurr),T1b,R1L(Lcurr)	;\
+						\
+/*S*/	add	inR1SS,T1a,R1SS			;\
 /*S*/	add	R1SS,R1L(Lcurr),R1SS		;\
 /*S*/	sll	R1SS,3,T1a			;\
 /*A*/	or	R1##A,Tc,R1##A			;\
@@ -834,6 +1141,15 @@ ENCR_i##i:					\
 	ROUND3ODD (7,2)
 	ROUND3EVEN(8,0)
 	ROUND3ODD (9,1)
+	ROUND3EVEN_MR(10,2,      R1S10)
+	ROUND3ODD_RR (11,0,R1S10,R1S11)
+	ROUND3EVEN_RR(12,1,R1S11,R1S12)
+	ROUND3ODD_RR (13,2,R1S12,R1S13)
+	ROUND3EVEN_RR(14,0,R1S13,R1S14)
+	ROUND3ODD_RR (15,1,R1S14,R1S15)
+	ROUND3EVEN_RR(16,2,R1S15,R1S16)
+	ROUND3ODD_RM (17,0,R1S16)
+/*
 	ROUND3EVEN(10,2)
 	ROUND3ODD (11,0)
 	ROUND3EVEN(12,1)
@@ -842,6 +1158,7 @@ ENCR_i##i:					\
 	ROUND3ODD (15,1)
 	ROUND3EVEN(16,2)
 	ROUND3ODD (17,0)
+*/
 	ROUND3EVEN(18,1)
 	ROUND3ODD (19,2)
 	ROUND3EVEN(20,0)
@@ -851,7 +1168,7 @@ ENCR_i##i:					\
 	ROUND3EVEN(24,1)
 /* ! delayed after cypher_lo test	
 	ROUND3ODD (25,2)
-	// ROUND3L(26,0) // can be skipped because the calculates L[2] values
+	// ROUND3L(26,0) // can be skipped because the calculated L[2] values
 	                 // aren't used anywhere
 */
 
@@ -871,12 +1188,13 @@ increment_key:
 	add	RGLhi,PIPELINES,RGLhi
 	andcc	RGLhi,0xff,RGLhi
 	bz	complex_increment
-	 mov	RCP_ROTL3,R1SS
+	 nop ! mov	RCP_ROTL3,R1SS
 increment_key_done:
 
 	subcc	RGiterations,PIPELINES,RGiterations
 	bnz	mainloop
-	 mov	RGLlo,R1L(0)
+	 nop ! mov	RGLlo,R1L(0)
+end_of_mainloop:
 	b	finish
 	 mov	RESULT_NOTHING,%i0
 
@@ -892,56 +1210,59 @@ complex_increment:
 #define RI0x0000FF00 R1L(2)
 
 	! increment RGLmid
+	ld	[s_Lmid],tRGLmid
 	set	0x01000000,RI0x01000000
 	set	0xFF000000,RI0xFF000000
-	add	RGLmid,RI0x01000000,RGLmid
-	btst	RI0xFF000000,RGLmid
+	add	tRGLmid,RI0x01000000,tRGLmid
+	btst	RI0xFF000000,tRGLmid
 	bnz	update_RGLmid
 	 set	0x00010000,RI0x00010000
 	!set	0x00FFFFFF,RI0x00FFFFFF			!!!
 	!sub	RI0x01000000,1,RI0x00FFFFFF
-	add	RGLmid,RI0x00010000,RGLmid
+	add	tRGLmid,RI0x00010000,tRGLmid
 	set	0x00FF0000,RI0x00FF0000
-	!and	RGLmid,RI0x00FFFFFF,RGLmid
-	andn	RGLmid,RI0xFF000000,RGLmid
-	btst	RI0x00FF0000,RGLmid
+	!and	tRGLmid,RI0x00FFFFFF,tRGLmid
+	andn	tRGLmid,RI0xFF000000,tRGLmid
+	btst	RI0x00FF0000,tRGLmid
 	bnz	update_RGLmid
 	 sub	RI0x00010000,1,RI0x0000FFFF
-	add	RGLmid,0x0100,RGLmid
+	add	tRGLmid,0x0100,tRGLmid
 	!set	0x0000FF00,RI0x0000FF00			!!!
 	andn	RI0x0000FFFF,0xff,RI0x0000FF00
-	and	RGLmid,RI0x0000FFFF,RGLmid
-	btst	RI0x0000FF00,RGLmid
+	and	tRGLmid,RI0x0000FFFF,tRGLmid
+	btst	RI0x0000FF00,tRGLmid
 	bnz,a	update_RGLmid
 	 nop
-	add	RGLmid,0x01,RGLmid
-	andcc	RGLmid,0xff,RGLmid
+	add	tRGLmid,0x01,tRGLmid
+	andcc	tRGLmid,0xff,tRGLmid
 	bnz,a	update_RGLmid
 	 nop
 
 	! increment RGLlo
-	add	RGLlo,RI0x01000000,RGLlo
-	btst	RI0xFF000000,RGLlo
+	ld	[s_Llo],tRGLlo
+	add	tRGLlo,RI0x01000000,tRGLlo
+	btst	RI0xFF000000,tRGLlo
 	bnz,a	update_RGLlo
 	 nop
-	add	RGLlo,RI0x00010000,RGLlo
-	!and	RGLlo,RI0x00FFFFFF,RGLlo
-	andn	RGLlo,RI0xFF000000,RGLlo
-	btst	RI0x00FF0000,RGLlo
+	add	tRGLlo,RI0x00010000,tRGLlo
+	!and	tRGLlo,RI0x00FFFFFF,tRGLlo
+	andn	tRGLlo,RI0xFF000000,tRGLlo
+	btst	RI0x00FF0000,tRGLlo
 	bnz,a	update_RGLlo
 	 nop
-	add	RGLlo,0x0100,RGLlo
-	and	RGLlo,RI0x0000FFFF,RGLlo
-	btst	RI0x0000FF00,RGLlo
+	add	tRGLlo,0x0100,tRGLlo
+	and	tRGLlo,RI0x0000FFFF,tRGLlo
+	btst	RI0x0000FF00,tRGLlo
 	bnz,a	update_RGLlo
 	 nop
-	add	RGLlo,0x01,RGLlo
-	and	RGLlo,0xff,RGLlo
+	add	tRGLlo,0x01,tRGLlo
+	and	tRGLlo,0xff,tRGLlo
 	!b	update_RGLlo
 	! nop
 
 update_RGLlo:
 	! update precalculated values RGL0, RGS1, RGL1, RGS2
+	st	tRGLlo,[s_Llo]
 
 	! first calculate RGL0, RGS1
 	CALCULATE_RGlo_DEPS
@@ -949,6 +1270,7 @@ update_RGLlo:
 
 update_RGLmid:
 	! update precalculated values RGL1, RGS2
+	st	tRGLmid,[s_Lmid]
 
 	CALCULATE_RGmid_DEPS
 	b	increment_key_done
@@ -971,10 +1293,12 @@ partial_success:
 	! nop
 test_pipe_1_lo_success:
 	ld	[s_uw(r72unitwork_check_count)],T1a
+	ld	[s_Llo],tRGLlo
+	ld	[s_Lmid],tRGLmid
 	inc	T1a
 	st	RGLhi,[s_uw(r72unitwork_check_hi)]
-	st	RGLmid,[s_uw(r72unitwork_check_mid)]
-	st	RGLlo,[s_uw(r72unitwork_check_lo)]
+	st	tRGLmid,[s_uw(r72unitwork_check_mid)]
+	st	tRGLlo,[s_uw(r72unitwork_check_lo)]
 	st	T1a,[s_uw(r72unitwork_check_count)]
 	ld	[s_uw(r72unitwork_cypher_hi)],T1b
 	cmp	R1B,T1b
@@ -993,9 +1317,11 @@ finish:
 
 ! copy r72unitwork from Stack back into supplied memory
 	ld	[s_save_r72unitworkP],%g1
+	ld	[s_Llo],tRGLlo
+	ld	[s_Lmid],tRGLmid
 	st	RGLhi,[%g1+r72unitwork_L0_hi]
-	st	RGLmid,[%g1+r72unitwork_L0_mid]
-	st	RGLlo,[%g1+r72unitwork_L0_lo]
+	st	tRGLmid,[%g1+r72unitwork_L0_mid]
+	st	tRGLlo,[%g1+r72unitwork_L0_lo]
 	ld	[s_uw(r72unitwork_check_count)],%l0
 	ld	[s_uw(r72unitwork_check_hi)],%l1
 	ld	[s_uw(r72unitwork_check_mid)],%l2
