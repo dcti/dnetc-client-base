@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.83 1999/04/05 18:00:11 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.84 1999/04/06 13:36:02 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -13,6 +13,7 @@ return "@(#)$Id: clirun.cpp,v 1.83 1999/04/05 18:00:11 cyp Exp $"; }
 #include "problem.h"   // Problem class
 #include "triggers.h"  // [Check|Raise][Pause|Exit]RequestTrigger()
 #include "sleepdef.h"  // sleep(), usleep()
+#include "pollsys.h"   // NonPolledSleep(), RegPollingProcedure() etc
 #include "setprio.h"   // SetThreadPriority(), SetGlobalPriority()
 #include "lurk.h"      // dialup object
 #include "buffupd.h"   // BUFFERUPDATE_* constants
