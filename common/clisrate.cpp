@@ -6,6 +6,9 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.27  1998/07/12 11:20:11  friedbait
+// added side effect description to 'num_sep' function.
+//
 // Revision 1.26  1998/07/11 02:10:15  cyruspatel
 // Umm, fixed call to __CliGetKeyrateAsString() - third argument is now a
 // double not an unsigned int (caused a compiler warning)
@@ -115,7 +118,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clisrate_cpp(void) {
-static const char *id="@(#)$Id: clisrate.cpp,v 1.26 1998/07/11 02:10:15 cyruspatel Exp $";
+static const char *id="@(#)$Id: clisrate.cpp,v 1.27 1998/07/12 11:20:11 friedbait Exp $";
 return id; }
 #endif
 
@@ -144,9 +147,24 @@ return id; }
  *  of this by skipping the '.' and the fraction and whatever follows
  *  the fraction.
  *
+ * Known Side Effects:
+ *
+ *  The function currently does not work correctly if 'number' points
+ *  to a string with some other characters prefixed to the number in
+ *  question. It also doesn't work, if the 'number' string is a pure
+ *  integer without a fraction and still postfixed with some non-number
+ *  data.
+ *
  * Return Value:
  *
- *  char * to buffer with number separators inserted.
+ *  Good case:
+ *     char * to buffer with number separators inserted.
+ *
+ *  Bad case:
+ *     char *number (exactly what it got as input) The bad case happens
+ *                  if the input points to a huge string which would
+ *                  cause a buffer overflow during processing of the
+ *                  input data.
  *
  */
 
