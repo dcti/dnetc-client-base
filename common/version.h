@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version.h,v $
+// Revision 1.18  1998/10/05 07:22:15  chrisb
+// Added 2 weeks to "BETA_EXPIRATION_TIME" since it expired this weekend.
+//
 // Revision 1.17  1998/10/04 03:23:39  silby
 // Bumped the beta timeout ahead a few days.
 //
@@ -68,7 +71,7 @@
 #define CLIENT_VERSIONSTRING2   "2.7100.418-BETA2"        // no leading "v"
 
 #define BETA
-#define BETA_EXPIRATION_TIME    907834806
+#define BETA_EXPIRATION_TIME    908785600
 
 
 #endif // _VERSION_H
