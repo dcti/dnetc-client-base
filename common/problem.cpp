@@ -11,9 +11,10 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.86 2000/12/21 16:56:44 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.87 2001/01/03 19:38:27 cyp Exp $"; }
 
-/* ------------------------------------------------------------- */
+//#define TRACE
+#define TRACE_U64OPS(x) TRACE_OUT(x)
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -26,6 +27,7 @@ return "@(#)$Id: problem.cpp,v 1.108.2.86 2000/12/21 16:56:44 cyp Exp $"; }
 #include "rsadata.h"  //Get cipher/etc for random blocks
 #include "clicdata.h" //CliSetContestWorkUnitSpeed()
 #include "selcore.h"  //selcoreGetSelectedCoreForContest()
+#include "util.h"     //trace
 #include "cpucheck.h" //hardware detection
 #include "console.h"  //ConOutErr
 #include "triggers.h" //RaiseExitRequestTrigger()
@@ -1386,6 +1388,7 @@ static void __u64mul( u32 _ahi, u32 _alo, u32 _bhi, u32 _blo,
     if (reslo) *reslo = rlo;
     #else /* 32bit - long multiplication using shift+add */
     u32 rhi = 0, rlo = 0, ahi = _ahi, alo = _alo, bhi = _bhi, blo = _blo;
+    TRACE_U64OPS((+1,"__u64mul(%u:%u, %u:%u)\n",ahi,alo,bhi,blo));
     while (bhi || blo)
     {
       if ((blo & 1) != 0)
@@ -1400,6 +1403,7 @@ static void __u64mul( u32 _ahi, u32 _alo, u32 _bhi, u32 _blo,
     }
     if (reshi) *reshi = rhi;
     if (reslo) *reslo = rlo;
+    TRACE_U64OPS((-1,"__u64mul() => %u:%u\n",rhi,rlo));
     #endif
   }
   return;
@@ -1413,30 +1417,45 @@ static void __u64div( u32 numerhi, u32 numerlo, u32 denomhi, u32 denomlo,
   /* when modifying this keep in mind that input parameters and result
      may overlap
   */
-  #if (ULONG_MAX > 0xfffffffful) /* 64 bit */
-  unsigned long n, d, r;
-  n = (((unsigned long)numerhi)<<32UL)+((unsigned long)numerlo);
-  d = (((unsigned long)denomhi)<<32UL)+((unsigned long)denomlo);
-  if (quothi || quotlo)
-  {
-    r = n / d;
-    if (quothi) *quothi = (u32)(r >> 32);
-    if (quotlo) *quotlo = (u32)(r & 0xfffffffful);
+  if (!denomhi && !denomlo) /* treat divide by zero as "divide by an */
+  {                         /* extremely small number" */
+    /* we shouldn't ever have to handle this, but better safe than sorry */
+    u32 qlo = numerlo, qhi = numerhi;
+    if (quothi) *quothi = qhi;
+    if (quotlo) *quotlo = qlo;
+    if (remahi) *remahi = 0;
+    if (remalo) *remalo = 0;
+    return;
   }
-  if (remahi || remalo)
+  #if (ULONG_MAX > 0xfffffffful) /* 64 bit */
   {
-    r = n % d;
-    if (remahi) *remahi = (u32)(r >> 32);
-    if (remalo) *remalo = (u32)(r & 0xfffffffful);
+    unsigned long n, d, r;
+    n = (((unsigned long)numerhi)<<32UL)+((unsigned long)numerlo);
+    d = (((unsigned long)denomhi)<<32UL)+((unsigned long)denomlo);
+    if (quothi || quotlo)
+    {
+      r = n / d;
+      if (quothi) *quothi = (u32)(r >> 32);
+      if (quotlo) *quotlo = (u32)(r & 0xfffffffful);
+    }
+    if (remahi || remalo)
+    {
+      r = n % d;
+      if (remahi) *remahi = (u32)(r >> 32);
+      if (remalo) *remalo = (u32)(r & 0xfffffffful);
+    }
   }
   #else /* 32bit - long division using rshift and sub */
-  if (numerhi == 0 && denomhi == 0) 
+  if ((numerhi == 0 && denomhi == 0) ||
+      (denomlo == 0 && denomhi == 0)) /* catch divide by zero here */
   {
+    TRACE_U64OPS((+1,"__u64div(%u:%u, %u:%u)\n",numerhi,numerlo,denomhi,denomlo));
     u32 n = numerlo, d = denomlo;
     if (remalo) *remalo = n % d;
     if (remahi) *remahi = 0;
     if (quotlo) *quotlo = n / d;
     if (quothi) *quothi = 0;
+    TRACE_U64OPS((-1,"__u64div()=>0:%u [rem=0:%u]\n",n/d,n%d));
   } 
   else 
   {
@@ -1444,6 +1463,7 @@ static void __u64div( u32 numerhi, u32 numerlo, u32 denomhi, u32 denomlo,
     u32 nhi = numerhi, nlo = numerlo;
     u32 dhi = denomhi, dlo = denomlo;
     int count = 0;
+    TRACE_U64OPS((+1,"__u64div(%u:%u, %u:%u)\n",numerhi,numerlo,denomhi,denomlo));
     while ((dhi & 0x80000000ul) == 0) 
     {
       if ((nhi < dhi) || ((nhi == dhi) && (nlo <= dlo)))
@@ -1482,6 +1502,7 @@ static void __u64div( u32 numerhi, u32 numerlo, u32 denomhi, u32 denomlo,
     if (remalo) *remalo = nlo;
     if (quothi) *quothi = qhi;
     if (quotlo) *quotlo = qlo;
+    TRACE_U64OPS((-1,"__u64div()=>%u:%u [rem=%u:%u]\n",qhi,qlo,nhi,nlo));
   }
   #endif
 }
@@ -1497,6 +1518,7 @@ static char *__u64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
    *  1=0+space between magna and number (or at end if no magnitude char)
    *  2=1+numstr_suffix
   */
+  TRACE_U64OPS((+1,"__u64stringify(%u:%u)\n",hi,lo));
   if (buffer && buflen)
   {
     char numbuf[32]; /* U64MAX is "18,446,744,073,709,551,615" (len=26) */
@@ -1616,6 +1638,7 @@ static char *__u64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
     if (numstr_style == 2) /* buflen has already been checked to ensure */
       strcat(buffer, numstr_suffix); /* this strcat() is ok */
   }
+  TRACE_U64OPS((-1,"__u64stringify()=>'%s'\n",((buffer)?(buffer):("(null)"))));
   return buffer;
 }
 
@@ -1630,15 +1653,20 @@ const char *ProblemComputeRate( unsigned int contestid,
                                 char *ratebuf, unsigned int ratebufsz )
 {
   u32 hi = iterhi, lo = iterlo;
-  if ((hi || lo) && (secs || usecs))
+  TRACE_U64OPS((+1,"ProblemComputeRate(%s,%u:%u,%u:%u)\n",
+               CliGetContestNameFromID(contestid),secs,usecs,iterhi,iterlo));
+  if (hi || lo)
   {
     u32 t, thi, tlo;
     __u64mul( 0, secs, 0, 1000, &thi, &tlo ); /* secs *= 1000 */
-    t = tlo + (usecs / 1000);
+    t = tlo + ((usecs+499) / 1000);
     if (t < tlo) thi++;
     tlo = t;                                  /* ms = secs*1000+usecs/1000 */
-    __u64mul( hi, lo, 0, 1000, &hi,  &lo ); /* iter *= 1000 */
-    __u64div( hi, lo, thi, tlo, &hi, &lo, 0, 0 ); /* (iter*1000)/millisecs */
+    if (thi || tlo)
+    {
+      __u64mul( hi, lo, 0, 1000, &hi,  &lo ); /* iter *= 1000 */
+      __u64div( hi, lo, thi, tlo, &hi, &lo, 0, 0 ); /* (iter*1000)/millisecs */
+    }
   }
   if (ratehi) *ratehi = hi;
   if (ratelo) *ratelo = lo;
@@ -1655,6 +1683,7 @@ const char *ProblemComputeRate( unsigned int contestid,
     }
     __u64stringify( ratebuf, ratebufsz, hi, lo, 2, unitname );
   }
+  TRACE_U64OPS((-1,"ProblemComputeRate() => %u:%u\n",hi,lo));
   return ratebuf;
 }
 
