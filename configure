@@ -4,21 +4,8 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.229 2001/02/05 18:37:11 ephraim Exp $
+# @(#)$Id: configure,v 1.222.2.230 2001/02/07 18:49:52 cyp Exp $
 
-# *** Notes for v2.8001+ ***
-#
-# - Adding CSC to the target:
-#   a) Add ${CSC_ANSI_SRCS} to your target's TARGET_ADDSRCS
-#      (x86 clients also have nasm cores. See linux/freebsd.)
-#   b) Add -DHAVE_CSC_CORES to your target's TARGET_CCFLAGS
-#
-# - Adding OGR to the targer:
-#   (with $OGR_ANSI_SRCS and -DHAVE_OGR_CORES of course :)
-#
-# - If you wish to continue supporting DES, *AND*YOU*DO*NOT*USE*MEGGS*,
-#   add -DHAVE_DES_CORES, otherwise remove all DES cores/references
-#
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
 #   for example: TARGET_TARBALL="linux-x86-libc4"
@@ -46,7 +33,7 @@ fi
 #
 TARGET_BINNAME="dnetc"
 TARGET_BINNAME_SUFFIX=""
-BUILDNAME=$1
+BUILDNAME="$1"
 #
 # Define the default compilation options
 #
@@ -61,8 +48,8 @@ TARGET_NASM="nasm"     #<- set this to "" if you have no nasm
 TARGET_NASM_FMT="elf"  #<- set this to "" if you have no nasm
 TARGET_ASFLAGS=""
 TARGET_STRIP="strip"
-TARGET_OS=""           #<-may be needed for cross-compile or special handling
 TARGET_OGR_MULTI=""    #<-can be used to compile ogr.cpp with differing gcc opts
+TARGET_IS_CROSSCOMPILE="" #
 
 TARGET_ADDSRCS=""
 TARGET_ADDASMS=""
@@ -285,8 +272,10 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi
     ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
     ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
-    TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+    if [ "$1" != "linux" ]; then # gcc 2.96 bombs
+      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+    fi
   #-----------------------------------------------------------------  
   elif [ "$2" = "68k" ]; then
     if [ "$1" = "amigaos" ]; then
@@ -670,6 +659,14 @@ generate_gcc_opts() {
 
   esac
 
+  # undefine everything we used locally
+  OPTS_GCC_WARN=
+  OPTS_GCC_BASE=
+  OPTS_272_PLUS=
+  OPTS_295_PLUS=
+  OPTS_GCC272=
+  OPTS_GCC295=
+
   # ------
 
   gccopts="$opts295" # 3.0
@@ -841,7 +838,7 @@ case "$1" in
        TARGET_DOCFILES="${OPTS_MIPSPRO_DOCS} readme.irix"
        TARGET_TARBALL="irix6.5-mips-n32"
        add_sources "irix" "mips"
-	     ;;
+       ;;
 
     *mips-cc-64)	# [lyndon]	Generic 64 bit client
        TARGET_CC="CC"
@@ -863,7 +860,7 @@ case "$1" in
        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
        TARGET_TARBALL="irix6-mips-ip19"
        add_sources "irix" "mips"
-	     ;;
+       ;;
 
     *mips-cc-ip20)	# [lyndon]
        TARGET_CC="CC"
@@ -885,7 +882,7 @@ case "$1" in
        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
        TARGET_TARBALL="irix6-mips-ip21"
        add_sources "irix" "mips"
-	     ;;
+       ;;
 
     *mips-cc-ip22_4k)	# [lyndon]
        TARGET_CC="CC"
@@ -907,7 +904,7 @@ case "$1" in
        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
        TARGET_TARBALL="irix6-mips-ip22_5k"
        add_sources "irix" "mips"
-	     ;;
+       ;;
 
     *mips-cc-ip24)	# [lyndon]
        TARGET_CC="CC"
@@ -929,7 +926,7 @@ case "$1" in
        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
        TARGET_TARBALL="irix6-mips-ip25"
        add_sources "irix" "mips"
-	     ;;
+       ;;
 
     *mips-cc-ip26)	# [lyndon]
        TARGET_CC="CC"
@@ -940,7 +937,7 @@ case "$1" in
        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
        TARGET_TARBALL="irix6-mips-ip26"
        add_sources "irix" "mips"
-	     ;;
+       ;;
 
     *mips-cc-ip27)	# [lyndon]
        TARGET_CC="CC"
@@ -951,7 +948,7 @@ case "$1" in
        TARGET_DOCFILES=${OPTS_MIPSPRO_DOCS}   #platform specific docfile
        TARGET_TARBALL="irix6-mips-ip27"
        add_sources "irix" "mips"
-	     ;;
+       ;;
 
     *mips-cc-ip27-64)	# [lyndon]
        TARGET_CC="CC"
@@ -1030,7 +1027,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-mips"
         add_sources "linux" "mips"
-	      ;;
+        ;;
 
     *mips-sni)	   #For MIPS SINIX
         TARGET_CC="g++"
@@ -1039,7 +1036,7 @@ case "$1" in
         TARGET_LIBS="-lsocket -lnsl -lc -L/usr/ucblib -lucb"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "sni" "mips"
-	      ;;
+        ;;
 
     *mips-irix5-gcc)	# gcc is faster because it can use mips-crunch.cpp
         # If compiling on Irix 5 you must -D_irix5_ now to get the usleep()
@@ -1049,7 +1046,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_GCC -D_irix5_"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "irix" "mips"
-	      ;;
+        ;;
 
     *mips-irix64-gcc)     #needs "very recent" egcs
         TARGET_CC="g++"
@@ -1113,7 +1110,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-mipsle"
         TARGET_GENMAN=
-        TARGET_OS="NTO2"     # cross-compilation
+        TARGET_IS_CROSSCOMPILE=1
         add_sources "nto2" "mips"
         ;;
 
@@ -1129,8 +1126,34 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-mipsbe"
         TARGET_GENMAN=
-        TARGET_OS="NTO2"     # cross-compilation
+        TARGET_IS_CROSSCOMPILE=1
         add_sources "nto2" "mips"
+        ;;
+
+    *linux-sh)   #  <Rule@freegates.be>
+        TARGET_CC="sh-linux-g++"
+        TARGET_AS="sh-linux-g++ -c"
+        TARGET_STRIP="sh-linux-strip"
+        generate_gcc_opts "sh" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -DMULTITHREAD"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="linux-sh" 
+        add_sources "linux" "sh4"
+        TARGET_IS_CROSSCOMPILE=1
+        ;;
+
+     *linux-hppa)   #  <Rule@freegates.be>
+        TARGET_CC="hppa-linux-g++"
+        TARGET_AS="hppa-linux-g++ -c"
+        TARGET_STRIP="hppa-linux-strip"
+        generate_gcc_opts "hppa" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -fno-unroll-loops -O1"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="linux-hppa"
+        add_sources "linux" "hppa" 
+        TARGET_IS_CROSSCOMPILE=1
         ;;
 
     *hpux-hppa-CC) # obsolete? Not used by Ivo...
@@ -1283,7 +1306,6 @@ case "$1" in
         TARGET_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DDEC_UNIX_CPU_SELECT \
                         -DMULTITHREAD -D_THREAD_SAFE -D_REENTRANT"
         TARGET_LIBS="-lpthread -lexc"
-        TARGET_OS="DIGITAL_UNIX" # need to treat some cores specially
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "digital-unix" "alpha" "mt"
         ;;
@@ -1295,9 +1317,27 @@ case "$1" in
         TARGET_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DDEC_UNIX_CPU_SELECT"
         TARGET_LIBS="-static"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_OS="DIGITAL_UNIX" # need to treat some cores specially
         TARGET_TARBALL="digital_unix-alpha"
         add_sources "digital-unix" "alpha"
+        ;;
+
+    *alpha-freebsd)       # FreeBSD
+        # note: although this client supports SMP (and is thus threaded),
+        # we NEED to link against libc, and NOT libc_r because the libc_r
+        # in 3.4 and above is incompatible with the pre-3.4 (specifically,
+        # the >=3.4 libc_r versions of select() and nanosleep() syscalls
+        # have their own new syscall numbers; they were emulated before).
+        # We don't really need the libc_r stuff anyway because the "threads"
+        # are really rfork()'d children.    -cyp Feb/13/2000
+        TARGET_AS="gcc -c"
+        TARGET_CC="g++"
+        generate_gcc_opts "alpha" "freebsd"
+        TARGET_CCFLAGS="$OPTS_GCC -Werror"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
+        TARGET_LIBS="-lc" # NOT libc_r
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="freebsd-alpha"
+        add_sources "freebsd" "alpha" 
         ;;
 
     *alpha-netbsd)
@@ -1332,7 +1372,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-alpha"
         add_sources "linux" "alpha"
-	      ;;
+        ;;
 
 ###### PowerPC/POWER
 
@@ -1345,7 +1385,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-ppc"
         add_sources "linux" "ppc"
-	      ;;
+        ;;
 
     *ppc-netbsd)
         TARGET_CC="g++"
@@ -1385,7 +1425,7 @@ case "$1" in
         TARGET_LIBS="-lCns"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "aix" "ppc" "aix4"
-	      ;;
+        ;;
 
     *ppc601-aix4-xlc)      # AIX 4.x PPC, 601 chip
         TARGET_CC="xlC"
@@ -1393,7 +1433,7 @@ case "$1" in
         TARGET_LIBS="-lCns"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "aix" "ppc" "aix4"
-	      ;;
+        ;;
 
     *ppc-aix32-xlc)	   # AIX 3.2.x PPC
         TARGET_CC="xlC"
@@ -1456,7 +1496,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-ppcbe"
         TARGET_GENMAN=
-        TARGET_OS="NTO2"     # cross-compilation
+        TARGET_IS_CROSSCOMPILE=1
         add_sources "nto2" "ppc"
         ;;
 
@@ -1475,7 +1515,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-sh4le"
         TARGET_GENMAN=
-        TARGET_OS="NTO2"     # cross-compilation
+        TARGET_IS_CROSSCOMPILE=1
         add_sources "nto2" "sh4" 
         ;;
 
@@ -1490,7 +1530,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-sh4be"
         TARGET_GENMAN=
-        TARGET_OS="NTO2"     # cross-compilation
+        TARGET_IS_CROSSCOMPILE=1
         add_sources "nto2" "sh4"
         ;;
 
@@ -1515,7 +1555,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-x86-elf"
         add_sources "linux" "x86" 
-	      ;;
+        ;;
 
     *x86-linux-pthread)         # not for distribution
         TARGET_AS="gcc -c"      
@@ -1534,7 +1574,7 @@ case "$1" in
         #TARGET_CCFLAGS="-g $TARGET_CCFLAGS" #for debugging
         #TARGET_STRIP="touch"                #for debugging
         add_sources "linux" "x86" 
-	      ;;
+        ;;
 
     *x86-linux-aout)	              # [jlawson] aout, no threads/smc/lurk
         TARGET_CC="gcc"               # old gcc doesn't know .cpp
@@ -1546,7 +1586,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-x86-aout"
         add_sources "linux" "x86" "aout"
-	      ;;
+        ;;
 
     *x86-linux-debug)	              # test/debug target
         TARGET_AS="gcc -c"
@@ -1560,7 +1600,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-x86-debug"
         add_sources "linux" "x86" 
-	      ;;
+        ;;
 
     *x86-freebsd-aout)             # FreeBSD 2.x experimental, snake
         TARGET_AS="gcc -c"
@@ -1574,7 +1614,7 @@ case "$1" in
         add_sources "freebsd" "x86" 
         ;;
 
-    *x86-freebsd-elf)       # FreeBSD >=3.x, elf, "threaded", cyp
+    *x86-freebsd-elf)       # FreeBSD >=2.2.4, elf, "threaded", cyp
         # note: although this client supports SMP (and is thus threaded),
         # we NEED to link against libc, and NOT libc_r because the libc_r
         # in 3.4 and above is incompatible with the pre-3.4 (specifically,
@@ -1591,7 +1631,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="freebsd-x86-elf"
         add_sources "freebsd" "x86" 
-	      ;;
+        ;;
 
     *x86-netbsd-aout)	# NetBSD 1.4.x, aout [bernd]
         TARGET_AS="gcc -c"
@@ -1603,7 +1643,7 @@ case "$1" in
         TARGET_NASM_FMT="aoutb"
         TARGET_TARBALL="netbsd-i386-aout"
         add_sources "netbsd" "x86" 
-	      ;;
+        ;;
 
     *x86-netbsd-elf)       # NetBSD > 1.4.x, elf, [bernd]
         TARGET_AS="gcc -c"
@@ -1615,7 +1655,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="netbsd-i386-elf"
         add_sources "netbsd" "x86" 
-	      ;;
+        ;;
 
     *x86-openbsd)	# snake
         TARGET_CC="g++"
@@ -1626,7 +1666,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="openbsd-x86-aout"
         add_sources "openbsd" "x86" 
-	      ;;
+        ;;
 
     *x86-bsdos-aout)                        # BSD/OS 2.x,3.x (aout) -snake
         TARGET_AS="g++ -c -DNO_BALIGN"
@@ -1638,7 +1678,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="bsdos2-x86-aout"
         add_sources "bsdos" "x86" 
-	      ;;
+	;;
 
     *x86-bsdos-elf)                        # BSD/OS 4.x+ (ELF) -snake
         # bsdos-4 client is still experimental, found a severe bug with 
@@ -1652,7 +1692,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="bsdos4-x86-elf"
         add_sources "bsdos" "x86" 
-	      ;;
+	;;
 
     *x86-qnx4)
         TARGET_AS="g++ -c -DNO_BALIGN"
@@ -1681,9 +1721,9 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-x86"
         TARGET_GENMAN=
-        TARGET_OS="NTO2"     # cross-compilation
+        TARGET_IS_CROSSCOMPILE=1
         add_sources "nto2" "x86" 
-	      ;;
+        ;;
 
     *x86-sco5)
         TARGET_AS="g++ -c"
@@ -1694,7 +1734,7 @@ case "$1" in
         TARGET_LIBS="-lsocket"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "sco" "x86" 
-	      ;;
+	;;
 
     *x86-dynix4)
         TARGET_CC="c++"
@@ -1702,7 +1742,7 @@ case "$1" in
         TARGET_LIBS="-lsocket -lnsl -lseq"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "dynix" "x86" 
-	      ;;
+	;;
 
     *x86-dynix2)
         TARGET_CC="g++"
@@ -1713,7 +1753,7 @@ case "$1" in
         TARGET_LIBS="-lsocket -linet -lnsl -lXbsd -lseq"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "dynix" "x86" 
-	      ;;
+	;;
 
 ###### NeXT (x86, m68k, sparc, hppa)
 
@@ -1725,7 +1765,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="next-x86"
         add_sources "next" "x86" 
-	      ;;
+        ;;
 
     *x86-macosx)
         # this one's for X86-Rhapsody which is quite similar to NeXTstep
@@ -1737,7 +1777,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="rhapsody-x86"
         add_sources "macosx" "x86" 
-	      ;;
+        ;;
 
     *m68k-next)
         TARGET_CC="gcc"
@@ -1746,7 +1786,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="next-m68k"
         add_sources "next" "68k" 
-	      ;;
+        ;;
 
     *sparc-next)
         TARGET_CC="cc++"
@@ -1754,7 +1794,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_SPARC -arch sparc -D_NeXT_ -D_OLD_NEXT_"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "next" "sparc" 
-	      ;;
+        ;;
 
     *hppa-next)
         TARGET_CC="cc++"
@@ -1762,7 +1802,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_HPPA -arch hppa -D_NeXT_ -D_OLD_NEXT_"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "next" "hppa" 
-	      ;;
+        ;;
 
     *m68k-netbsd) # NetBSD on NeXT, 68k Macs, 68k Amiga, sun3 etc, -snake
         # needs gas 2.9.1 to compile OGR
@@ -1790,9 +1830,10 @@ case "$1" in
         TARGET_DOCFILES="docs/readme.riscos"   #platform specific docfile
         TARGET_STRIP=touch
         TARGET_BINNAME_SUFFIX=",ff8"
-        TARGET_OS="RISCOS"     # cross-compilation
+        TARGET_IS_CROSSCOMPILE=1
         add_sources "riscos" "arm"
-	      ;; 
+	;; 
+
     *arm-riscos-prepare) #create tar archive for native compilation
         rm -rf dnetc_riscos
         mkdir dnetc_riscos
@@ -1857,7 +1898,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-arm-aout"
         add_sources "linux" "arm" "aout"
-	      ;;
+        ;;
 
     *arm-linux-elf)				# andrewm
         TARGET_CC="gcc"
@@ -1889,7 +1930,7 @@ case "$1" in
         TARGET_TARBALL="netbsd-arm32"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "netbsd" "arm"
-	      ;;
+        ;;
 
     *arm-nto2)
         TARGET_AS="qcc -Vgcc_ntoarmle -c"
@@ -1902,7 +1943,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="nto2-arm"
         TARGET_GENMAN=
-        TARGET_OS="NTO2"     # cross-compilation
+        TARGET_IS_CROSSCOMPILE=1
         add_sources "nto2" "arm"
         ;;
 
@@ -1959,7 +2000,7 @@ case "$1" in
         TARGET_DOCFILES="docs/readme.os390"   #platform specific docfile
         TARGET_TARBALL="os390-s390"
         add_sources "os390" "s390" 
-	      ;;
+        ;;
 
     *x86-beos)
         TARGET_AS="gcc -c"
@@ -1970,7 +2011,7 @@ case "$1" in
         TARGET_TARBALL="beos-x86"
         TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
         add_sources "beos" "x86" 
-	      ;;
+        ;;
 
     *ppc-beos)
         TARGET_AS="mwcc -c"
@@ -2001,7 +2042,6 @@ case "$1" in
         TARGET_NASM="nasm097.exe"
         TARGET_LIBS="-lsocket -lvideo"
         TARGET_DOCFILES="docs/readme.os2"   #platform specific docfile
-        TARGET_OS="OS2"
         TARGET_TARBALL="os2-x86"
         TARGET_BINNAME_SUFFIX=".exe"
         add_sources "os2" "x86"
@@ -2023,7 +2063,7 @@ case "$1" in
         TARGET_GENMAN=
         TARGET_ARCTYPE="lha"
         add_sources "amigaos" "68k"
-	      ;;
+        ;;
 
 
     *ppc-amigaos-wos)           # [oliver] <oliver@futaura.co.uk>
@@ -2038,11 +2078,10 @@ case "$1" in
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
         TARGET_STRIP="plat/amigaos/tools/strip_wos"
         TARGET_BINNAME_SUFFIX="_ppc"
-        TARGET_OS="AMIGAOS_PPC"
         TARGET_GENMAN=
         TARGET_ARCTYPE="lha"
         add_sources "amigaos" "ppc"
-	      ;;
+        ;;
 
     *ppc-amigaos-pup)           # [oliver] <oliver@futaura.co.uk>
         TARGET_AS="ppc-amigaos-gas"
@@ -2057,7 +2096,6 @@ case "$1" in
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
         TARGET_STRIP="plat/amigaos/tools/strip_pup"
         TARGET_BINNAME_SUFFIX="_ppc"
-        TARGET_OS="AMIGAOS_PPC"
         TARGET_GENMAN=
         TARGET_ARCTYPE="lha"
         add_sources "amigaos" "ppc"
@@ -2082,10 +2120,7 @@ echo "Platform target for \"$1\" recognized."
 #
 # Build the test program
 #
-if [ "${TARGET_OS}" = "NTO2" -o "${TARGET_OS}" = "OS2" \
-  -o "${TARGET_OS}" = "RISCOS" ]; then  #cross-compile
-  gcc common/testplat.cpp -o testplat
-else  
+if [ -z "${TARGET_IS_CROSSCOMPILE}" ]; then
   echo "Building test program..."
   echo "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
   ${SHELL} -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
@@ -2096,11 +2131,13 @@ else
     echo " ---------------------------------------------"
     exit 1
   fi
-  if [ "$TARGET_OS" = "OS2" ]; then
+  if [ "$BUILDNAME" = "x86-os2" ]; then
      emxbind testplat
   else
      ${TARGET_STRIP} testplat
   fi
+else
+  cc common/testplat.cpp -o testplat
 fi
 
 #
@@ -2132,7 +2169,9 @@ if [ -f docs/readme.1st ]; then
   TARGET_DOCFILES="docs/readme.1st ${TARGET_DOCFILES}"
 fi
 TARGET_DOCFILES="${TARGET_DOCFILES} docs/CHANGES.txt docs/${TARGET_BINNAME}.txt"
-if [ -n "$TARGET_GENMAN" ]; then
+if [ -n "$TARGET_IS_CROSSCOMPILE" ]; then
+  TARGET_GENMAN=""
+elif [ -n "$TARGET_GENMAN" ]; then
   TARGET_DOCFILES="${TARGET_DOCFILES} ${TARGET_BINNAME}.1"
 fi
 
@@ -2199,7 +2238,7 @@ fi
 # Generate the targets for supplementary resource files.
 #
 TARGET_RESBIND_CMD=""
-if [ "$TARGET_OS" = "OS2" ]; then
+if [ "$BUILDNAME" = "x86-os2" ]; then
   TARGET_RESBIND_CMD="emxbind -b -r plat/os2/${TARGET_BINNAME}.res \${BUILDNAME}"
 fi
 
@@ -2234,7 +2273,7 @@ echo "ALLOBJS = ${TARGET_ALLOBJS}" >> Makefile
 echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
 echo "BUILDNAME = $1" >> Makefile
 echo "DOCFILES = ${TARGET_DOCFILES}" >>Makefile
-if [ "$TARGET_OS" = "OS2" ]; then
+if [ "$BUILDNAME" = "x86-os2" ]; then
   echo "BUILDNUM:=\$(shell grep \" CLIENT_BUILD_FRAC \" common/version.h|tr -dc 0-9)" >>Makefile
 else
   echo "BUILDNUM:= \`grep \" CLIENT_BUILD_FRAC \" common/version.h|tr -dc 0-9\`" >>Makefile
@@ -2416,13 +2455,16 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       fi    
       #----------------
       CCFLAGS_SELECT="\${CCFLAGS}"
-      if [ "$TARGET_OS" = "DIGITAL_UNIX" ]; then
+      if [ "$BUILDNAME" = "alpha-digital_unix"  \
+        -o "$BUILDNAME" = "alpha-digital_unix-mt" ]; then
         if [ "$target" = "output/rc5-digital-unix-alpha-ev5.o" ]; then
           CCFLAGS_SELECT="-mcpu=ev5 ${CCFLAGS_SELECT}"
         else
           CCFLAGS_SELECT="-mcpu=ev4 ${CCFLAGS_SELECT}"
         fi  
-      elif [ "$TARGET_OS" = "AMIGAOS_PPC" -o "$BUILDNAME" = "ppc-linux" ]; then
+      elif [ "$BUILDNAME" = "ppc-amigaos-pup"  \
+          -o "$BUILDNAME" = "ppc-amigaos-wos"  \
+          -o "$BUILDNAME" = "ppc-linux" ]; then
         # get around gcc2.8/gcc2.9/egcs bugs
         if [ "$target" = "output/problem.o" \
           -o "$target" = "output/rc5_unit_func_lintilla.o" \
@@ -2489,7 +2531,7 @@ if [ "$TARGET_OGR_MULTI" = "68k" ]; then
   done
 fi
 
-if [ "$TARGET_OS" = "OS2" ]; then
+if [ "$BUILDNAME" = "x86-os2" ]; then
   echo "Generating rules for .res and .rc"
   echo "output/${TARGET_BINNAME}.rc:"         >>Makefile
   echo "	cd plat\os2"                  >>Makefile
