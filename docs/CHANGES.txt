@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.91 2001/05/01 19:16:00 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.92 2001/05/07 17:25:58 oliver Exp $
 ==========================================================================
 
 2.8000
@@ -35,6 +35,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.91 2001/05/01 19:16:00 andreasb Exp
 	    chg: all: The list of cores depends on the architecture only.
 	              Cores not applicable to a particular cpu/os will be 
 		      marked as 'n/a' and won't benchmark etc.
+            imp: some: faster 68k and PPC OGR cores.
 
 2.8014.468  fix: all: bad results caused by build .466.
             fix: all: packets were saved and reloaded after buffer update.
