@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.70 2003/03/30 19:52:44 snikkel Exp $
+# @(#)$Id: configure,v 1.288.2.71 2003/03/31 01:29:28 mfeiri Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -487,7 +487,8 @@ add_sources() # $1=os, $2=arch, $3=custom
       elif [ "$TARGET_CC" = "xlC" ]; then
         TARGET_ADDASMS="$TARGET_ADDASMS" # to be completed
       elif [ "${1}" = "macosx" ]; then  #... and macosxserver (apple cc)
-        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/ppc/r72-KKS2pipes.osx.s \
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/ppc/r72-ppc-mh-2.osx.s \
+                                        rc5-72/ppc/r72-KKS2pipes.osx.s \
                                         rc5-72/ppc/r72-KKS604e.osx.s"
       else # gas targets
         TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/ppc/r72-ppc-mh-2.gas.s \
