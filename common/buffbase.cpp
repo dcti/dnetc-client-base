@@ -3,6 +3,9 @@
  * Any other distribution or use of this source violates copyright.
  *
  * $Log: buffbase.cpp,v $
+ * Revision 1.2  1999/04/01 03:08:57  cyp
+ * Cleared an unused variable warning.
+ *
  * Revision 1.1  1999/04/01 01:49:55  cyp
  * Created BufferFetchFile()/BufferFlushFile() to fetch/flush from/to remote/
  * alternate buffers.
@@ -12,7 +15,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.1 1999/04/01 01:49:55 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.2 1999/04/01 03:08:57 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -902,7 +905,7 @@ long BufferImportFileRecords( Client *client, const char *source_file )
 long BufferFlushFile( Client *client, const char *loadermap_flags )
 {
   long combinedtrans = 0, combinedworkunits = 0;
-  const char *exchname = "Flush::";
+  //const char *exchname = "Flush::";
   char basename[128];
   unsigned int contest;
   int failed = 0;
@@ -941,7 +944,7 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
             wrdata.resultcode != RESULT_FOUND ) || 
             ((unsigned int)wrdata.contest) != contest)
       { /* buffer code should have handled this */
-        Log( "%sError - Bad Data - packet discarded.\n",exchname );
+        //Log( "%sError - Bad Data - packet discarded.\n",exchname );
         continue;
       }
       
@@ -1000,7 +1003,7 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
 long BufferFetchFile( Client *client, const char *loaderflags_map )
 {
   unsigned long combinedtrans = 0, combinedworkunits = 0;
-  const char *exchname = "Fetch::";
+  //const char *exchname = "Fetch::";
   char basename[128];
   unsigned int contest;
   int failed = 0;
@@ -1056,7 +1059,7 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
 
       if ( BufferGetFileRecord( remote_file, &wrdata, &remaining ) != 0 )
         break;
-      if (remaining < lefttotrans)
+      if (remaining < ((unsigned long)(lefttotrans)))
         lefttotrans = remaining;
       
       if (client->PutBufferRecord( &wrdata ) < 0)
