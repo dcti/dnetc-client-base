@@ -50,10 +50,8 @@ extern "C" {
     #define strcmpi(x,y)  strcasecmp(x,y)
     extern "C" int strcasecmp(char *s1, char *s2); // Keep g++ happy.
   #endif
-#elif defined(__MVS__)
-  #include <strings.h>
 #else
-  #if (CLIENT_OS == OS_AIX)
+  #if (CLIENT_OS == OS_AIX) || defined(__MVS__)
     #include <strings.h>
   #endif
   #include <unistd.h>
