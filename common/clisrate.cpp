@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.45.2.6 1999/12/16 19:24:28 cyp Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.45.2.7 1999/12/25 13:20:12 cyp Exp $"; }
 
 #include "cputypes.h"  // u32
 #include "problem.h"   // Problem class
@@ -169,7 +169,7 @@ const char *CliGetSummaryStringForContest( int contestid )
     case DES:
     case CSC:
     {
-      sprintf(str, "%d %s packet%s (%u*2^28 work units)\n"
+      sprintf(str, "%d %s packet%s (%u*2^28 keys)\n"
                    "%s%c- [%s%s/s]", 
            packets, name, ((packets==1)?(""):("s")), units,
            CliGetTimeString( &ttime, 2 ), ((!packets)?(0):(' ')), keyrateP,
