@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.75 2000/01/13 09:24:15 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.76 2000/01/16 04:54:14 michmarc Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -779,7 +779,7 @@ unsigned int LoadSaveProblems(Client *pass_client,
               ClientSetNumberOfProcessorsInUse(proc); /* client.cpp */
               tv.tv_usec = 0;
               tv.tv_sec = norm_count * 
-                        CliGetContestWorkUnitSpeed( cont_i, 1 ) / 
+                        CliGetContestWorkUnitSpeed( cont_i, 0 ) / 
                         proc;
               if (tv.tv_sec > 0)          
                 Log("Projected ideal time to completion: %s\n", 

@@ -6,9 +6,10 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.26 2000/01/13 09:24:14 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.27 2000/01/16 04:54:14 michmarc Exp $"; }
 
 #include "cputypes.h"
+#include "cpucheck.h"  // GetNumberOfDetectedProcessors()
 #include "client.h"   //client class
 #include "baseincs.h" //basic #includes
 #include "network.h"  //ntohl(), htonl()
@@ -1058,6 +1059,18 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
   if (client->noupdatefromfile || client->remote_update_dir[0] == '\0')
     return 0;
 
+  int proc, numcrunchers;
+  /* we need the correct number of cpus _used_ for time estimates */
+  /* but need the correct number of _crunchers_ for thresh */
+  proc = GetNumberOfDetectedProcessors();
+  if (proc < 1)
+    proc = 1;
+  numcrunchers = client->numcpu;
+  if (numcrunchers < 0)
+    numcrunchers = proc;
+  else if (numcrunchers == 0) /* force non-threaded */
+    numcrunchers = 1;
+
   if (client->in_buffer_basename[0] == '\0')
   {
     strcpy( basename, 
@@ -1080,6 +1093,7 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
   {
     unsigned long projtrans = 0, projworkunits = 0;
     unsigned long lefttotrans;
+    int packets;
     char remote_file[128];
 
     if (CheckExitRequestTriggerNoIO())  
@@ -1088,15 +1102,18 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
     if (loaderflags_map[contest] != 0) /* contest is closed or disabled */
       continue;
 
-    if (GetBufferCount( client, contest, 0, &lefttotrans) < 0)
+    if ((packets = GetBufferCount( client, contest, 0, &lefttotrans)) < 0)
       lefttotrans = 0;
     else
     {
-      int threshold = ClientGetInThreshold( client, contest, true );
-      if ( lefttotrans >= ((unsigned long)threshold) ) /* buffers full? */
-        lefttotrans = 0;
+      unsigned long threshold = ClientGetInThreshold( client, contest, 1 /* force */ );
+      if (lefttotrans >= threshold) /* buffers full? */
+        if (packets < numcrunchers)  /* Have at least one packet per cruncher? */
+          lefttotrans = numcrunchers - packets;
+        else
+          lefttotrans = 0;
       else
-        lefttotrans -= threshold;
+        lefttotrans = threshold - lefttotrans;
     }
 
     if (lefttotrans != 0)

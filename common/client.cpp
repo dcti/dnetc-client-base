@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.242 2000/01/09 20:32:38 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.243 2000/01/16 04:54:14 michmarc Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -130,48 +130,25 @@ int ClientGetInThreshold(Client *client, int contestid, int force)
 
   if (contestid < CONTEST_COUNT)
   {
-    thresh = client->inthreshold[contestid];
+    thresh = client->inthreshold[contestid];  
     if (thresh <= 0) 
-    {
-      /* use time limit */
       thresh = BUFTHRESHOLD_DEFAULT; /* default (if time is also zero) */
-      if (client->timethreshold[contestid] > 0) /* use time */
-      { 
-        unsigned int sec; int proc, numcrunchers;
-        /* we need the correct number of cpus _used_ for time estimates */
-        /* but need the correct number of _crunchers_ for thresh */
-        proc = GetNumberOfDetectedProcessors();
-        if (proc < 1)
-          proc = 1;
-        numcrunchers = client->numcpu;
-        if (numcrunchers < 0)
-          numcrunchers = proc;
-        else if (numcrunchers == 0) /* force non-threaded */
-          numcrunchers = 1;
-        if (numcrunchers < proc) /* get number of cpus _used_ */
-          proc = numcrunchers;
-        if (numcpusinuse >= 1) /* we have a 'good' number here */
-          proc = numcpusinuse;
 
-        // get the speed
-        sec = CliGetContestWorkUnitSpeed(contestid, force);
-              thresh = 0; /* fall into next 'if .. ' should secs be zero */
-        if (sec != 0) /* we have a rate */
-          thresh = 1 + (client->timethreshold[contestid] * 3600 * proc/sec);
-        if (numcrunchers > thresh) /* make sure we have one unit for each */
-        {                        
-          thresh = numcrunchers; 
-          /* this is not kosher since thresh is in workunits and 
-             numcrunchers == packets. Although the loader will
-             get more data (thresh units per connect) as needed, it
-             also means repeated connects/disconnects.
-          */
-          if (contestid != OGR)  /* HACK ALERT */
-            thresh *= 4; /* assume 4:1 workunit:packet ratio */
-        }
-      }  
-    }  
-  }    
+    unsigned int sec;
+    if (client->timethreshold[contestid] > 0) /* use time */
+    { 
+      int proc;
+      proc = GetNumberOfDetectedProcessors();
+      if (proc < 1)
+        proc = 1;
+
+      // get the speed
+      sec = CliGetContestWorkUnitSpeed(contestid, force);
+      if (sec != 0) /* we have a rate */
+        thresh = 1 + (client->timethreshold[contestid] * 3600 * proc/sec);
+    }
+  }  
+
   if (thresh > BUFTHRESHOLD_MAX)
     thresh = BUFTHRESHOLD_MAX;
   return thresh;
