@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.61  1999/01/15 20:22:49  michmarc
+// Fix GetProcessorType for Non-Digital-Unix Alpha platforms
+//
 // Revision 1.60  1999/01/14 23:02:12  pct
 // Updates for Digital Unix alpha client and ev5 related code.  This also
 // includes inital code for autodetection of CPU type and SMP.
@@ -209,7 +212,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.60 1999/01/14 23:02:12 pct Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.61 1999/01/15 20:22:49 michmarc Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -407,7 +410,7 @@ unsigned int ValidateProcessorCount( int numcpu, int quietly )
     (CLIENT_CPU != CPU_68K) && \
     (CLIENT_CPU != CPU_POWERPC) && \
     (CLIENT_CPU != CPU_ARM) && \
-    (CLIENT_CPU != CPU_ALPHA) && (CLIENT_OS != CPU_DIGITAL_UNIX)
+    ((CLIENT_CPU != CPU_ALPHA) || (CLIENT_OS != CPU_DIGITAL_UNIX))
 int GetProcessorType(int quietly)
 {
   if (!quietly)
