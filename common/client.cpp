@@ -107,7 +107,6 @@ Client::Client()
   blockcount = 0;
   minutes = 0;
   strcpy(hours,"0.0");
-  firemode = 1;
   keyproxy[0] = 0;
   keyport = 2064;
   httpproxy[0] = 0;
