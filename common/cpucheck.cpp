@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.52 2004/04/19 13:54:41 sod75 Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.53 2004/04/23 10:03:45 snake Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2171,7 +2171,9 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
   else
   {
     static char namebuf[200];
+  #if (CLIENT_CPU == CPU_X86)
     long x86features;
+  #endif
     if (cpuid_s == NULL) cpuid_s = "*unknown*";
     if (*cpuid_s =='\0') cpuid_s = "???";
   #if (CLIENT_CPU == CPU_ARM)
