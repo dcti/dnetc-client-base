@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.68  1999/01/11 23:39:34  michmarc
+// Fix printing of debug packets when default char type is signed.
+//
 // Revision 1.67  1999/01/08 03:34:25  dicamillo
 // Define ERRNO_IS_UNUSABLE for Mac OS.
 //
@@ -199,7 +202,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.67 1999/01/08 03:34:25 dicamillo Exp $"; }
+return "@(#)$Id: network.cpp,v 1.68 1999/01/11 23:39:34 michmarc Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -320,7 +323,7 @@ static void __print_packet( const char *label, const char *apacket, int alen )
     char *p=&buffer[0];
     p+=sprintf(buffer,"%s %04x: ", label, i );
     for (n=0;(n<16 && ((n+i)<alen));n++)
-      p+=sprintf(p,"%02x ", apacket[n+i]);
+      p+=sprintf(p,"%02x ", (unsigned char)apacket[n+i]);
     for (;n<16;n++)
       {*p++=' ';*p++=' ';*p++=' ';}
     for (n=0;(n<16 && ((n+i)<alen));n++)        
