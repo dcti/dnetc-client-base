@@ -137,6 +137,7 @@ TARGET_LDFLAGS=""
 TARGET_LIBS=""
 TARGET_AS="gas"
 TARGET_ASFLAGS=""
+TARGET_STRIP="strip"
 
 TARGET_ADDSRCS=""
 TARGET_ADDASMS=""
@@ -576,6 +577,32 @@ for target in ${TARGET_ADDASMS}; do
     eval "DEPEND_${SAFENAME}=$target"
     TARGET_ALLASOBJS="${TARGET_ALLASOBJS} ${TARGETOBJECT}"
 done
+
+
+#
+# Build the test program
+#
+echo "Building test program..."
+sh -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp -o testplat"
+if [ $? -ne 0 ]; then
+   echo "Compilation failed.  Check your target options."
+   exit
+fi
+${TARGET_STRIP} testplat
+
+
+#
+# Look up the platform and os types
+#
+CLIENTCPU=`./testplat cpu`
+CLIENTOS=`./testplat os`
+INTSIZES=`./testplat intsizes`
+CLIENTOSNAME=`grep "#define OS_.*\<$CLIENTOS\>" common/cputypes.h | cut -d' ' -f2`
+CLIENTCPUNAME=`grep "#define CPU_.*\<$CLIENTCPU\>" common/cputypes.h | cut -d' ' -f2`
+echo "CLIENT_CPU = $CLIENTCPUNAME ($CLIENTCPU)"
+echo "CLIENT_OS = $CLIENTOSNAME ($CLIENTOS)"
+echo "INTSIZES = $INTSIZES"
+TARGET_CCFLAGS="-DINTSIZES=${INTSIZES} ${TARGET_CCFLAGS}"
 
 
 #

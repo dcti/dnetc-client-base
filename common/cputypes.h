@@ -9,11 +9,31 @@
 #ifndef _CPUTYPES_H_
 #define _CPUTYPES_H_
 
-typedef unsigned long u32;
-typedef unsigned short u16;
+
+#if !defined(INTSIZES)
+#define INTSIZES 442
+#endif
+
+#if (INTSIZES == 422)       // (16-bit DOS/WIN):  long=32, int=16, short=16
+  typedef unsigned long u32;
+  typedef signed long s32;
+  typedef unsigned short u16;
+  typedef signed short s16;
+#elif (INTSIZES == 442)     // (typical):  long=32, int=32, short=16
+  typedef unsigned long u32;
+  typedef signed long s32;
+  typedef unsigned short u16;
+  typedef signed short s16;
+#elif (INTSIZES == 842)     // (primarily Alphas):  long=64, int=32, short=16
+  typedef unsigned int u32;
+  typedef signed int s32;
+  typedef unsigned short u16;
+  typedef signed short s16;
+#else
+  #error "Invalid INTSIZES"
+#endif
+
 typedef unsigned char u8;
-typedef signed long s32;
-typedef signed short s16;
 typedef signed char s8;
 typedef double f64;
 typedef float f32;
@@ -21,13 +41,8 @@ typedef float f32;
 struct fake_u64 { u32 hi, lo; };
 struct fake_s64 { s32 hi, lo; };
 
-#if defined(_CPU_32BIT_)
 typedef struct fake_u64 u64;
 typedef struct fake_s64 s64;
-#elif defined(_CPU_64BIT_)
-typedef unsigned long long u64;
-typedef signed long long s64;
-#endif
 
 struct u128 { u64 hi, lo; };
 struct s128 { s64 hi, lo; };
@@ -268,10 +283,14 @@ struct s128 { s64 hi, lo; };
   #define CLIENT_CPU    CPU_S390
 #endif
 
-#if !defined(CLIENT_OS) || !defined(CLIENT_CPU) || (CLIENT_OS == OS_UNKNOWN) || (CLIENT_CPU == CPU_UNKNOWN)
+#if !defined(CLIENT_OS) || !defined(CLIENT_CPU)
   #define CLIENT_OS     OS_UNKNOWN
   #define CLIENT_CPU    CPU_UNKNOWN
-  #error "Unknown CPU/OS detected in cputypes.h"
+#endif
+#if (CLIENT_OS == OS_UNKNOWN) || (CLIENT_CPU == CPU_UNKNOWN)
+  #if !defined(IGNOREUNKNOWNCPUOS)
+    #error "Unknown CPU/OS detected in cputypes.h"
+  #endif
 #endif
 
 // Some compilers/platforms don't yet support bool internally.

@@ -377,19 +377,19 @@ printf("------------------------------------------------------------\n\n");
           if (options[choice].type==1)
              {
              if (options[choice].thevariable != NULL)
-               printf("%ld)  %s ==> %s\n",
-                      choice + 1, options[choice].description,
+               printf("%d)  %s ==> %s\n",
+                      (int)(choice + 1), options[choice].description,
                       (char *)options[choice].thevariable);
              }
           else if (options[choice].type==2)
-             printf("%ld)  %s ==> %li\n",
-                    choice + 1, options[choice].description,
-                    *(s32 *)options[choice].thevariable);
+             printf("%d)  %s ==> %li\n",
+                    (int)(choice + 1), options[choice].description,
+                    (long)*(s32 *)options[choice].thevariable);
           else if (options[choice].type==3)
              {
              sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
-             printf("%ld)  %s ==> %s\n",
-                    choice + 1, options[choice].description,
+             printf("%d)  %s ==> %s\n",
+                    (int)(choice + 1), options[choice].description,
                     str);
              };
     }
@@ -461,7 +461,7 @@ printf("------------------------------------------------------------\n\n");
     else if (options[choice].type==2)
       printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: %li\nNew Setting --> ",
               options[choice].description, options[choice].comments,
-              options[choice].defaultsetting, *(s32 *)options[choice].thevariable);
+              options[choice].defaultsetting, (long)*(s32 *)options[choice].thevariable);
     else if (options[choice].type==3)
       {
       sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
