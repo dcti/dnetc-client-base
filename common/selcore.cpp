@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.44 2003/04/05 09:51:32 oliver Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.45 2003/04/09 02:10:28 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -1446,7 +1446,9 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
         #if !defined(HAVE_NO_NASM)
         switch (detected_type & 0xff) // FIXME remove &0xff
         {
-          case 0x00: cindex = 5; break; // P5             == SS 2-pipe
+          case 0x00: cindex = (have_mmx?4   // P5 MMX     == DG 3-pipe alt (#3233)
+                                       :2); // P5         == DG 2-pipe
+		                 break;
           case 0x01: cindex = 0; break; // 386/486        == SES 1-pipe
           case 0x02: cindex = 1; break; // PII/PIII       == SES 2-pipe
           case 0x03: cindex = 2; break; // Cx6x86         == DG 2-pipe
