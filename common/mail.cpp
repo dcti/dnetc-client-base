@@ -2,12 +2,12 @@
  * Created by Tim Charron (tcharron@interlog.com) 97.9.17
  * Complete rewrite by Cyrus Patel (cyp@fb14.uni-mainz.de) 1998/08/15
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2000 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.32.2.3 2000/01/01 21:24:33 cyp Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.32.2.4 2000/01/05 02:19:48 cyp Exp $"; }
 
 #include "baseincs.h"
 #include "network.h"
@@ -425,8 +425,8 @@ static char *rfc822Date(char *timestring)  //min 32 chars
     utctime.tm_wday=dow(loctime.tm_year+1900,loctime.tm_mon,loctime.tm_mday);
     #undef dow
   }
-                      //5    5   4    3   3    3    2  1 1  2   2 = 31
-  sprintf( timestring, "%s, %04d %s %02d %02d:%02d:%02d %c%02d%02d" ,
+                      //5    2   4    5   3    3    2  1 1  2   2 = 31
+  sprintf( timestring, "%s, %02d %s %04d %02d:%02d:%02d %c%02d%02d" ,
        wdaynames[loctime.tm_wday], loctime.tm_mday, monnames[loctime.tm_mon],
        loctime.tm_year+1900, loctime.tm_hour, loctime.tm_min,
        loctime.tm_sec, ((tzdiff<0)?('-'):('+')), abstzdiff/60, abstzdiff%60);
