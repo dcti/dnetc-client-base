@@ -4,7 +4,7 @@
  *
  * This file (ogr_deb.inc) contains all the OGR debug stuff
  *
- * $Id: ogr_deb.inc,v 1.1.2.1 2001/01/19 01:26:05 andreasb Exp $
+ * $Id: ogr_deb.inc,v 1.1.2.2 2001/02/14 21:11:42 andreasb Exp $
  */
 
 #ifdef OGR_DEBUG
@@ -33,7 +33,7 @@ static void dump_ruler(struct State *oState, int depth)
   printf("max %d ruler ", oState->max);
   for (i = 1; i < depth; i++) {
     #if (OGROPT_ALTERNATE_CYCLE == 0)
-    printf("%d ", oState->marks[i] - oState->marks[i-1]);
+    printf("%d ", oState->markpos[i] - oState->markpos[i-1]);
     #else
     printf("%d ", oState->Levels[i].cnt2 - oState->Levels[i-1].cnt2);
     #endif
