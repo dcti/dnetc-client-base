@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.41 2000/10/26 10:33:05 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.42 2000/10/27 02:15:30 cyp Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -984,7 +984,8 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
   for (pos = cont_start; pos < cont_count; pos++)
   {
     unsigned int cont_i = (unsigned int)(client->loadorder_map[pos]);
-    if (cont_i < CONTEST_COUNT) /* not disabled */
+    if (cont_i < CONTEST_COUNT && /* not user disabled */
+       IsProblemLoadPermitted(-1, cont_i)) /* core not disabled */
     {
       int isclosed = 0;
       char proj_flags = client->project_flags[cont_i];
