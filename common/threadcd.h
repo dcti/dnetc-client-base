@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: threadcd.h,v $
+// Revision 1.8  1998/06/30 06:37:39  ziggyb
+// OS/2 specific changes for threads.
+//
 // Revision 1.7  1998/06/29 06:58:14  jlawson
 // added new platform OS_WIN32S to make code handling easier.
 //
@@ -41,8 +44,8 @@
   #include <process.h>
   typedef unsigned long THREADID;
 #elif (CLIENT_OS == OS_OS2)
-  #error threadcd.h needs an include //replace this with appropriate includes
-  typedef long THREADID;
+// Headers defined elsewhere in a seperate file.
+   typedef long THREADID;
 #elif (CLIENT_OS == OS_NETWARE)
   #include <process.h>
   typedef long THREADID;
