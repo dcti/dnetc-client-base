@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.69  1999/01/13 19:49:09  cyp
+// Tried to fix http and connect. Lets see...
+//
 // Revision 1.68  1999/01/11 23:39:34  michmarc
 // Fix printing of debug packets when default char type is signed.
 //
@@ -202,7 +205,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.68 1999/01/11 23:39:34 michmarc Exp $"; }
+return "@(#)$Id: network.cpp,v 1.69 1999/01/13 19:49:09 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -555,20 +558,12 @@ int Network::Open( void )               // returns -1 on error, 0 on success
     /* ---------- create a new socket --------------- */
 
     success = (LowLevelCreateSocket() == 0);      
+    isnonblocking = 0;
 
     if (!success)
       {
       if (verbose_level > 0) 
         LogScreen("Network::failed to create network socket.\n");
-      }
-    else
-      {
-      isnonblocking = ((iotimeout < 0) ? (0) : ( MakeNonBlocking() == 0 ) );
-      if (verbose_level > 1) //debug
-        {
-        LogScreen("Network::Connected (%sblocking).\n", 
-            ((isnonblocking)?("non-"):("")) );
-        }
       }
 
     /* --- resolve the addresses(es) --- */
@@ -704,8 +699,32 @@ int Network::Open( void )               // returns -1 on error, 0 on success
                       fwall_hostname, (unsigned int)fwall_hostport );
           }
         }
+
+      #ifndef ENSURE_CONNECT_WITH_BLOCKING_SOCKET
+      if (iotimeout > 0)
+        {
+        isnonblocking = ( MakeNonBlocking() == 0 );
+        if (verbose_level > 1) //debug
+          {
+          LogScreen("Network::Connected (%sblocking).\n", 
+              ((isnonblocking)?("non-"):("")) );
+          }
+        }
+      #endif
       
       success = ( LowLevelConnectSocket( conn_hostaddr, conn_hostport ) == 0 );
+      
+      #ifdef ENSURE_CONNECT_WITH_BLOCKING_SOCKET
+      if (success && iotimeout > 0)
+        {
+        isnonblocking = ( MakeNonBlocking() == 0 );
+        if (verbose_level > 1) //debug
+          {
+          LogScreen("Network::Connected (%sblocking).\n", 
+              ((isnonblocking)?("non-"):("")) );
+          }
+        }
+      #endif
       
       if (success)
         reconnected = 1;
@@ -1073,13 +1092,19 @@ int Network::Close(void)
 s32 Network::Get( u32 length, char * data )
 {
   int need_close = 0;
-  time_t timestop = time(NULL)+((time_t)((isnonblocking)?(iotimeout):(0)));
 
-  if (verbose_level > 1)
-    Log("startget: time()==%u, timeout at %u\n", time(NULL), timestop );
+  time_t timestop = 0, timenow = 0;
 
-  while (netbuffer.GetLength() < length && time(NULL) <= timestop)
+  while ((netbuffer.GetLength() < length) && (timestop >= timenow))
   {
+    timenow = time(NULL);
+    if (isnonblocking && timestop == 0)
+      {
+      timestop = timenow + ((time_t)(iotimeout));
+      if (verbose_level > 1)
+         Log("startget: time()==%u, timeout at %u\n", timenow, timestop );
+      }
+  
     int nothing_done = 1;
 
     if ((mode & MODE_HTTP) && !gothttpend)
@@ -1500,125 +1525,89 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
 
     return(connect(sock, (struct sockaddr *)&sin, sizeof(sin)));
     
-#else
-  #if (defined( SOL_SOCKET ) && defined( SO_REUSEADDR ) && defined(AF_INET))
-    {
-    #if 0                      // don't need this. No bind() in sight 
-    // allow the socket to bind to "in use" ports
-    int on = 1;
-    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on));
-    #endif
+#elif defined(AF_INET) //BSD sox
 
-    // set up the address structure
-    struct sockaddr_in sin;
-    memset((void *) &sin, 0, sizeof(sin));
-    sin.sin_family = AF_INET;
-    sin.sin_port = htons( that_port ); 
-    sin.sin_addr.s_addr = that_address;
+  // set up the address structure
+  struct sockaddr_in sin;
+  memset((void *) &sin, 0, sizeof(sin));
+  sin.sin_family = AF_INET;
+  sin.sin_port = htons( that_port ); 
+  sin.sin_addr.s_addr = that_address;
 
-    #ifdef ENSURE_BLOCKING_SOCKET_AROUND_CONNECT
-    int tmp_isblocking = (isnonblocking==0);
-    if (tmp_isblocking==0)
-      tmp_isblocking = (MakeBlocking()==0);
-    if (tmp_isblocking==0)
-      return -1;
-    #endif
+  int rc = -1;
+  time_t starttime = time(NULL);
 
-    int rc = connect(sock, (struct sockaddr *)&sin, sizeof(sin));
-    
-    #ifdef ENSURE_BLOCKING_SOCKET_AROUND_CONNECT
-    if (isnonblocking)
-      isnonblocking = (MakeNonBlocking()==0);
-    else
-    #endif
-    
-    if (isnonblocking && rc < 0)
+  do{
+    if ( connect(sock, (struct sockaddr *)&sin, sizeof(sin)) >= 0 )
       {
-      timeval tv;
-      tv.tv_sec = (time_t)(1+((iotimeout<=0)?(0):(iotimeout)));
-      tv.tv_usec = 0;
-
-      if (MakeBlocking()==0)
-        {
-        while (rc < 0)
-          {
-          fd_set writefds, exceptfds;
-
-          #if defined(__WINDOWS_386__) /* hack against FAR * casts in macros*/
-          writefds.fd_array[0]=sock;  writefds.fd_count = 1;
-          exceptfds.fd_array[0]=sock; exceptfds.fd_count = 1;
-          #else
-          FD_ZERO(&writefds);    FD_SET(sock, &writefds);
-          FD_ZERO(&exceptfds);   FD_SET(sock, &exceptfds);
-          #endif
-
-          rc = select(sock + 1, NULL, &writefds, &exceptfds, &tv);
-          if (rc == 0) /* timeout */
-            {
-            #ifndef ERRNO_IS_UNUSABLE
-            errno = ETIMEDOUT;
-            #endif
-            rc = -1;
-            break;
-            }
-          else if (rc > 0) /* either writeready or exception */
-            {
-            #if defined(__WINDOWS_386__) /*hack against FAR * casts in macros*/
-            rc = ((__WSAFDIsSet(sock, &writefds) == 0)?(-1):(0));
-            #else
-            rc = ((FD_ISSET(sock, &writefds) == 0)?(-1):(0));
-            #endif
-            #if !defined(ERRNO_IS_UNUSABLE)
-            if (rc != 0) /* not writeready, so must be an exception */
-              errno = EAGAIN;
-            #endif
-            break;
-            }
-          else
-            {
-            rc = -1;
-            #ifndef ERRNO_IS_UNUSABLE
-            if (errno != EINTR)
-            #endif
-              break;
-            }
-          }
-        isnonblocking = (MakeNonBlocking() == 0);
-        }
-      #ifndef ERRNO_IS_UNUSABLE
-      else
-        {
-        tv.tv_sec += time(NULL);
-        do{
-          sleep(1);
-          rc = connect( sock, (struct sockaddr *)&sin, sizeof(sin));
-          if (rc >= 0 || errno == EISCONN)
-            {
-            rc = 0;
-            break;
-            }
-          rc = -1;
-          if ( (errno != EINPROGRESS) && (errno != EALREADY) )
-            break; 
-          if (time(NULL) > tv.tv_sec )
-            {
-            errno = ETIMEDOUT;
-            break;
-            }
-          } while (rc < 0);
-        }
-      #endif  
+      rc = 0;
+      break;
+      }
+    if (isnonblocking == 0)
+      {
+      rc = -1;
+      break;
       }
 
-    if (!( rc < 0))
-      return 0;
-    }
-  #else //no socket support
-  if (!that_address && !that_port)
-    return -1;  
-  #endif
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+    errno = WSAGetLastError();
+    #ifndef EISCONN
+    #define EISCONN WSAEISCONN
+    #endif
+    #ifndef EINPROGRESS
+    #define EINPROGRESS WSAEINPROGRESS
+    #endif
+    #ifndef EALREADY
+    #define EALREADY WSAEALREADY
+    #endif
+    #ifndef EINVAL 
+    #define EINVAL WSAEINVAL
+    #endif
+    #ifndef EWOULDBLOCK
+    #define EWOULDBLOCK WSAEWOULDBLOCK
+    #endif
+    #elif (CLIENT_OS == OS_OS2)
+    errno = sock_errno();
+    #endif
+
+    if (errno == EISCONN)
+      {
+      rc = 0;
+      break;
+      }
+
+    if (errno != EINPROGRESS && errno != EALREADY
+      #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+      && errno != EINVAL /* winsock 1.1 returns this instead of EALREADY */
+      #endif
+      && errno != EWOULDBLOCK )
+      {
+      rc = -1;
+      break;
+      }
+      
+    if ( (time(NULL)-starttime) > iotimeout )
+      {
+      rc = -1;
+      #ifndef ERRNO_IS_UNUSABLE
+      errno = ETIMEDOUT;
+      #endif
+      break;
+      }
+    sleep(1);
+    rc = -1;
+    } while (isnonblocking); /* always true */
+  
+  return rc;  
+
+#else //no socket support
+
+  int rc = -1;
+  if (!that_address && !that_port) /* use up variables */
+    rc = -1;  
+  return rc;
+
 #endif
-  return -1;
 }  
 
 //------------------------------------------------------------------------
