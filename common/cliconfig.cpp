@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.184  1998/10/04 11:43:24  remi
+// Print an error message if the luser do "./rc5des -config | somepager".
+// Wrapped Log comments.
+//
 // Revision 1.183  1998/10/03 23:46:52  remi
 // Use 'usemmx' .ini setting if any MMX core is compiled in.
 //
@@ -48,7 +52,9 @@
 // without mmx cores
 //
 // Revision 1.173  1998/08/14 00:23:19  silby
-// Changed WriteContestAndPrefixConfig so that it would not attempt to do so if nodiskbuffers was specified (aiming towards complete diskless operation aside from the inital .ini read)
+// Changed WriteContestAndPrefixConfig so that it would not attempt to
+// do so if nodiskbuffers was specified (aiming towards complete
+// diskless operation aside from the inital .ini read)
 //
 // Revision 1.172  1998/08/14 00:04:48  silby
 // Changes for rc5 mmx core integration.
@@ -57,7 +63,8 @@
 // xxxTrigger and pausefilefound flags are now wrapped in trigger.cpp 
 //
 // Revision 1.170  1998/08/07 05:28:47  silby
-// Changed lurk so that win32 users can now easily select the connection to use for dial on demand.
+// Changed lurk so that win32 users can now easily select the
+// connection to use for dial on demand.
 //
 // Revision 1.169  1998/08/05 19:04:14  cyruspatel
 // Changed some Log()/LogScreen()s to LogRaw()/LogScreenRaw()s, ensured that
@@ -72,16 +79,29 @@
 // synonymous)
 //
 // Revision 1.166  1998/08/02 03:16:20  silby
-// Major reorganization:  Log,LogScreen, and LogScreenf are now in logging.cpp, and are global functions - client.h #includes logging.h, which is all you need to use those functions.  Lurk handling has been added into the Lurk class, which resides in lurk.cpp, and is auto-included by client.h if lurk is defined as well. baseincs.h has had lurk-specific win32 includes moved to lurk.cpp, cliconfig.cpp has been modified to reflect the changes to log/logscreen/logscreenf, and mail.cpp uses logscreen now, instead of printf. client.cpp has had variable names changed as well, etc.
+// Major reorganization: Log,LogScreen, and LogScreenf are now in
+// logging.cpp, and are global functions - client.h #includes
+// logging.h, which is all you need to use those functions.  Lurk
+// handling has been added into the Lurk class, which resides in
+// lurk.cpp, and is auto-included by client.h if lurk is defined as
+// well. baseincs.h has had lurk-specific win32 includes moved to
+// lurk.cpp, cliconfig.cpp has been modified to reflect the changes to
+// log/logscreen/logscreenf, and mail.cpp uses logscreen now, instead
+// of printf. client.cpp has had variable names changed as well, etc.
 //
 // Revision 1.165  1998/07/30 05:08:52  silby
-// Fixed DONT_USE_PATHWORK handling, ini_etc strings were still being included, now they are not. Also, added the logic for dialwhenneeded, which is a new lurk feature.
+// Fixed DONT_USE_PATHWORK handling, ini_etc strings were still being
+// included, now they are not. Also, added the logic for
+// dialwhenneeded, which is a new lurk feature.
 //
 // Revision 1.164  1998/07/30 02:33:20  blast
 // Lowered minimum network timeout from 30 to 5 ...
 //
 // Revision 1.163  1998/07/29 05:14:33  silby
-// Changes to win32 so that LurkInitiateConnection now works - required the addition of a new .ini key connectionname=.  Username and password are automatically retrieved based on the connectionname.
+// Changes to win32 so that LurkInitiateConnection now works -
+// required the addition of a new .ini key connectionname=.  Username
+// and password are automatically retrieved based on the
+// connectionname.
 //
 // Revision 1.162  1998/07/29 01:49:44  cyruspatel
 // Fixed email address from not being editable (the option to return to the
@@ -97,7 +117,9 @@
 // constructor extended to take this as an argument.
 //
 // Revision 1.159  1998/07/25 05:29:43  silby
-// Changed all lurk options to use a LURK define (automatically set in client.h) so that lurk integration of mac/amiga clients needs only touch client.h and two functions in client.cpp
+// Changed all lurk options to use a LURK define (automatically set in
+// client.h) so that lurk integration of mac/amiga clients needs only
+// touch client.h and two functions in client.cpp
 //
 // Revision 1.158  1998/07/22 00:02:35  silby
 // Changes so that win32gui priorities will be more shutdown friendly.
@@ -213,11 +235,11 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.183 1998/10/03 23:46:52 remi Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.184 1998/10/04 11:43:24 remi Exp $"; }
 #endif
 
-#include "console.h"
 #include "cputypes.h"
+#include "console.h"
 #include "client.h"   // MAXCPUS, Packet, FileHeader, Client class, etc
 #include "baseincs.h" // basic (even if port-specific) #includes
 #include "version.h"
@@ -1110,6 +1132,12 @@ s32 Client::Configure( void )
   s32 choice;
   char parm[128];
   s32 returnvalue=0;
+
+  if (IS_STDIN_A_TTY()==0 || IS_STDOUT_A_TTY()==0)
+  {
+    ConOutErr("Can't configure when stdin or stdout is redirected.\n");
+    return -1;
+  }
 
   while (returnvalue == 0)
   {
