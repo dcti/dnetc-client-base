@@ -5,9 +5,11 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.96 1999/04/28 14:10:04 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97 1999/05/08 19:05:31 cyp Exp $"; }
 
 //----------------------------------------------------------------------
+
+//#define TRACE
 
 #include "cputypes.h"
 #include "baseincs.h"  // standard stuff
@@ -17,6 +19,7 @@ return "@(#)$Id: network.cpp,v 1.96 1999/04/28 14:10:04 cyp Exp $"; }
 #include "logstuff.h"  // LogScreen()
 #include "clitime.h"   // CliGetTimeString(NULL,1);
 #include "triggers.h"  // CheckExitRequestTrigger()
+#include "util.h"      // trace
 #include "network.h"   // thats us
 
 #if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_MACOS)
@@ -115,7 +118,7 @@ static const char *__inet_ntoa__(u32 addr)
   return buff;
 }  
 
-void __print_packet( const char *label, const char *apacket, unsigned int alen )
+const char *__print_packet( const char *label, const char *apacket, unsigned int alen )
 {
   unsigned int i;
   for (i = 0; i < alen; i += 16)
@@ -145,7 +148,7 @@ void __print_packet( const char *label, const char *apacket, unsigned int alen )
     LogRaw("%s\n",buffer);
   }
   LogRaw("%s total len: %d\n",label, alen);
-  return;
+  return "";
 }
 
 static void __hostnamecpy( char *dest,
@@ -534,11 +537,8 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       if (iotimeout > 0)
       {
         isnonblocking = ( LowLevelSetSocketOption( CONDSOCK_BLOCKMODE, 0 ) == 0 );
-        if (verbose_level > 1) //debug
-        {
-          LogScreen("Debug::Connecting with %sblocking socket.\n", 
-              ((isnonblocking) ? ("non-") : ("")) );
-        }
+        TRACE_OUT((0,"Debug::Connecting with %sblocking socket.\n", 
+              ((isnonblocking) ? ("non-") : ("")) ));
       }
       #endif
       
@@ -548,15 +548,17 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       if (success && iotimeout > 0)
       {
         isnonblocking = ( LowLevelSetSocketOption( CONDSOCK_BLOCKMODE, 0 ) == 0 );
-        if (verbose_level > 1) //debug
-        {
-          LogScreen("Debug::Connected (%sblocking).\n", 
-              ((isnonblocking) ? ("non-") : ("")) );
-        }
+        TRACE_OUT((0,"Debug::Connected (%sblocking).\n", 
+            ((isnonblocking) ? ("non-") : ("")) ));
       }
       #endif
-      
-      if (!success)   /* connect failed */
+
+      if (CheckExitRequestTriggerNoIO())
+      {
+        success = 0;
+        triesleft = 0;
+      }
+      else if (!success)   /* connect failed */
       {
         if (verbose_level > 0)
         {
@@ -964,8 +966,7 @@ int Network::Get( char * data, int length )
           if (!(Resolve( line + 13, &newaddr, svc_hostport ) < 0))
             {
             svc_hostaddr = newaddr;
-            if (verbose_level > 1)
-              Log("X-Keyserver: %s\n", __inet_ntoa__(svc_hostaddr));
+            TRACE_OUT((0,"X-Keyserver: %s\n", __inet_ntoa__(svc_hostaddr)));
             }
         }
         else if (line.GetLength() < 1)
@@ -1131,12 +1132,10 @@ int Network::Get( char * data, int length )
   {
     memmove(data, netbuffer.GetHead(), bytesfilled);
     netbuffer.RemoveHead((u32)bytesfilled);
-    if (verbose_level > 1) //DEBUG
-      __print_packet("Get", data, bytesfilled );
+    TRACE_OUT((0,__print_packet("Get", data, bytesfilled )));
   }
 
-  if (verbose_level > 1) //DEBUG
-    Log("Get: toread:%d read:%d\n", length, bytesfilled );
+  TRACE_OUT((0,"Get: toread:%d read:%d\n", length, bytesfilled ));
 
   return bytesfilled;
 }
@@ -1224,14 +1223,12 @@ int Network::Put( const char * data, int length )
     puthttpdone = 1;
   }
 
-  if (verbose_level > 1) //DEBUG
-    __print_packet("Put", outbuf, outbuf.GetLength() );
+  TRACE_OUT((0,__print_packet("Put", outbuf, outbuf.GetLength() )));
 
   int towrite = (int)outbuf.GetLength();
   int written = LowLevelPut(outbuf,towrite);
 
-  if (verbose_level > 1) //DEBUG
-    Log("Put: towrite:%d written:%d success:%d\n", towrite, written, (towrite==written) );
+  TRACE_OUT((0,"Put: towrite:%d written:%d success:%d\n", towrite, written, (towrite==written) ));
   
   return ((towrite == written)?(requested_length):(-1));
 }
@@ -1353,6 +1350,8 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
         time_t stoptime = time(NULL) + (time_t)iotimeout;
         while (rc == -1 && t_errno == TNODATA && time(NULL) <= stoptime)
         {
+          if (CheckExitRequestTriggerNoIO())
+            break;
           usleep(250000);
           if (t_rcvconnect(sock, NULL) != -1) 
             rc = 0;
@@ -1402,7 +1401,11 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
       rc = 0;
       break;
     }
-
+    if (CheckExitRequestTriggerNoIO())
+    {
+      rc = -1;
+      break;
+    }
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
     errno = WSAGetLastError();
     #undef  EISCONN
@@ -1436,8 +1439,7 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
       rc = -1;
       break;
     }
-      
-    if ( (time(NULL)-starttime) > iotimeout )
+    if ( CheckExitRequestTriggerNoIO() || ((time(NULL)-starttime)>iotimeout) )
     {
       rc = -1;
       #ifndef ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG
@@ -1475,7 +1477,7 @@ int Network::LowLevelPut(const char *data,int length)
     return -1;
   if (length == 0)
     return -1;
-    
+
   u32 totaltowrite = length;
   u32 totalwritten = 0;
   u32 sendquota = 1500; /* how much to send per send() call */
@@ -1645,9 +1647,8 @@ int Network::LowLevelPut(const char *data,int length)
     }
   } while (length);
 
-  if (verbose_level > 1)
-    Log("LLPut: towrite=%d, written=%d\n", totaltowrite, totalwritten );
-
+  TRACE_OUT((0,"LLPut: towrite=%d, written=%d\n", totaltowrite, totalwritten ));
+  totaltowrite = totaltowrite; //squash compiler warning
   return ((totalwritten != 0) ? ((int)totalwritten) : (-1));
 }
 
@@ -1735,8 +1736,7 @@ int Network::LowLevelGet(char *data,int length)
     }
     #endif /* TLI/XTI or BSD */
     
-    if (verbose_level > 1) //DEBUG
-      Log("LLGet: read(%d)-> %d\n", toread, bytesread );
+    TRACE_OUT((0,"LLGet: read(%d)-> %d\n", toread, bytesread ));
 
     if (bytesread == 0) /* sock closed */
     {
@@ -1768,9 +1768,8 @@ int Network::LowLevelGet(char *data,int length)
       usleep( sleepdur % 1000000UL );
   } while (length);
 
-  if (verbose_level > 1) //DEBUG
-    Log("LLGet: got %u (requested %u) sockclosed:%s\n", 
-              totalread, totalread+length, ((sockclosed)?("yes"):("no")));
+  TRACE_OUT((0,"LLGet: got %u (requested %u) sockclosed:%s\n", 
+              totalread, totalread+length, ((sockclosed)?("yes"):("no"))));
     
   if (totalread!=0)
     return (int)totalread;

@@ -4,9 +4,11 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.205 1999/04/22 18:28:54 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206 1999/05/08 19:05:30 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
+
+//#define TRACE
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -15,7 +17,7 @@ return "@(#)$Id: client.cpp,v 1.205 1999/04/22 18:28:54 cyp Exp $"; }
 #include "random.h"    // InitRandom()
 #include "pathwork.h"  // EXTN_SEP
 #include "clitime.h"   // CliTimer()
-#include "util.h"      // projectmap_build()
+#include "util.h"      // projectmap_build() and trace
 #include "modereq.h"   // ModeReqIsSet()/ModeReqRun()
 #include "triggers.h"  // [De]InitializeTriggers(),RestartRequestTrigger()
 #include "logstuff.h"  // [De]InitializeLogging(),Log()/LogScreen()
@@ -263,52 +265,73 @@ int Client::Main( int argc, const char *argv[] )
   int retcode = 0;
   int restart = 0;
 
+  TRACE_OUT((+1,"Client.Main()\n"));
   do
   {
     int restarted = restart;
     restart = 0;
-    __initialize_client_object(this); /* reset everything in the object */
 
+    __initialize_client_object(this); /* reset everything in the object */
     //ReadConfig() and parse command line - returns !0 if shouldn't continue
+
+    TRACE_OUT((0,"Client.parsecmdline restarted?: %d\n", restarted));
     if (ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0)
     {
       int domodes = (ModeReqIsSet(-1) != 0);
+      TRACE_OUT((0,"initializetriggers\n"));
       if (InitializeTriggers(((noexitfilecheck ||
                               domodes)?(NULL):("exitrc5" EXTN_SEP "now")),
                               ((domodes)?(NULL):(pausefile)) )==0)
       {
+        TRACE_OUT((0,"initializeconnectivity\n"));
         if (InitializeConnectivity() == 0) //do global initialization
         {
+          TRACE_OUT((0,"initializeconsole\n"));
           if (InitializeConsole(quietmode,domodes) == 0)
           {
+            TRACE_OUT((+1,"initializelogging\n"));
             InitializeLogging( (quietmode!=0), (percentprintingoff!=0),
                                logname, logfiletype, logfilelimit, 
                                messagelen, smtpsrvr, smtpport, smtpfrom, 
                                smtpdest, id );
+            TRACE_OUT((-1,"initializelogging\n"));
             PrintBanner(id,0,restarted);
+            TRACE_OUT((+1,"parsecmdline(1)\n"));
             ParseCommandline( 1, argc, argv, NULL, (quietmode==0)); //show overrides
+            TRACE_OUT((-1,"parsecmdline(1)\n"));
             InitRandom2( id );
 
             if (domodes)
             {
+              TRACE_OUT((+1,"modereqrun\n"));
               ModeReqRun( this );
+              TRACE_OUT((-1,"modereqrun\n"));
             }
             else
             {
               PrintBanner(id,1,restarted);
+              TRACE_OUT((+1,"selectcore\n"));
               SelectCore( 0 );
+              TRACE_OUT((-1,"selectcore\n"));
+              TRACE_OUT((+1,"client.run\n"));
               retcode = Run();
+              TRACE_OUT((-1,"client.run\n"));
               restart = CheckRestartRequestTrigger();
             }
             DeinitializeLogging();
             DeinitializeConsole();
           }
+          TRACE_OUT((0,"deinitializeconsole\n"));
           DeinitializeConnectivity(); //netinit.cpp
         }
+        TRACE_OUT((0,"deinitializeconnectivity\n"));
         DeinitializeTriggers();
       }
     }
+    TRACE_OUT((0,"client.parsecmdline restarting?: %d\n", restart));
   } while (restart);
+
+  TRACE_OUT((-1,"Client.Main()\n"));
   return retcode;
 }
 
@@ -324,6 +347,8 @@ int realmain( int argc, char *argv[] )
   int retcode = -1, init_success = 1;
   srand( (unsigned) time(NULL) );
   InitRandom();
+
+  TRACE_OUT((+1,"realmain()\n"));
 
   //------------------------------
 
@@ -391,6 +416,8 @@ int realmain( int argc, char *argv[] )
   if (clientP)
     delete clientP;
 
+  TRACE_OUT((-1,"realmain()\n"));
+
   return (retcode);
 }
 
@@ -408,7 +435,10 @@ int realmain( int argc, char *argv[] )
 #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
 { /* abstraction layer between WinMain() and realmain() */
-  return winClientPrelude( hInst, hPrevInst, lpszCmdLine, nCmdShow, realmain);
+  TRACE_OUT((+1,"WinMain()\n"));
+  int rc=winClientPrelude( hInst, hPrevInst, lpszCmdLine, nCmdShow, realmain);
+  TRACE_OUT((-1,"WinMain()\n"));
+  return rc;
 }
 #elif ((CLIENT_OS == OS_OS2) && defined(OS2_PM))
 // nothing

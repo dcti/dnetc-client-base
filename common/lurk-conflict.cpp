@@ -6,7 +6,7 @@
  * This module contains functions for both lurking and dial initiation/hangup.
  *
  * The workhorse function, IsConnected(), is needed to support both.
- * IsConnected() can be called at any time and *always* returns a valid yes/no.
+ * IsConnected() can be called at any time
  *
  * Lurk detection is trivial and contain no OS specific routines.
  *                  CheckIfConnectRequested() and CheckForStatusChange()
@@ -15,9 +15,10 @@
 */
 
 //#define LURKDEBUG
+//#define TRACE
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk-conflict.cpp,v 1.42 1999/05/07 04:28:19 cyp Exp $"; }
+return "@(#)$Id: lurk-conflict.cpp,v 1.43 1999/05/08 19:05:30 cyp Exp $"; }
 
 /* ---------------------------------------------------------- */
 #include <stdio.h>
@@ -27,6 +28,7 @@ return "@(#)$Id: lurk-conflict.cpp,v 1.42 1999/05/07 04:28:19 cyp Exp $"; }
 #include "globals.h"
 #else
 #include "logstuff.h"
+#include "util.h" //trace
 #endif
 
 Lurk dialup;
@@ -183,14 +185,21 @@ int Lurk::Stop(void)
 int Lurk::GetCapabilityFlags(void)
 {
   int what = 0;
+
+  TRACE_OUT((+1,"Lurk::GetCapabilityFlags()\n"));
+
 #if (CLIENT_OS == OS_WIN32)
   static int caps = -1;
   if (caps == -1)
   {
     OSVERSIONINFO osver;
     osver.dwOSVersionInfoSize = sizeof(osver);
-    if ( RasHangUp( (HRASCONN)-1 ) == ERROR_INVALID_HANDLE )
+    TRACE_OUT((+1,"Lurk::GetCapabilityFlags() ras check.\n"));
+    //if ( RasHangUp( (HRASCONN)-1 ) == ERROR_INVALID_HANDLE )
+    //  what |= (CONNECT_LURK|CONNECT_LURKONLY|CONNECT_DODBYPROFILE);
+    if (GetConnectionProfileList() != NULL)
       what |= (CONNECT_LURK|CONNECT_LURKONLY|CONNECT_DODBYPROFILE);
+    TRACE_OUT((-1,"Lurk::GetCapabilityFlags() ras checked. caps=0x%08x\n",what));
     if ( GetVersionEx( &osver ) != 0 )
     {
       int isok = 1;
@@ -199,6 +208,7 @@ int Lurk::GetCapabilityFlags(void)
       #ifndef OF_SEARCH
       #define OF_SEARCH 0x0400
       #endif
+      TRACE_OUT((+1,"Lurk::GetCapabilityFlags() ioctl check.\n"));
       if (osver.dwPlatformId == VER_PLATFORM_WIN32_NT)
       {
         #if !defined(_MSC_VER) || defined(_M_ALPHA) //strange, eh?
@@ -212,6 +222,7 @@ int Lurk::GetCapabilityFlags(void)
       }
       if (isok && OpenFile( "WS2_32.DLL", &ofstruct, OF_EXIST|OF_SEARCH)!=HFILE_ERROR)
         what |= (CONNECT_LURK|CONNECT_LURKONLY|CONNECT_IFACEMASK);
+      TRACE_OUT((-1,"end: Lurk::GetCapabilityFlags() ioctl check end. caps=0x%08x\n",what));
     }
     caps = what;
   }  
@@ -241,6 +252,9 @@ int Lurk::GetCapabilityFlags(void)
 #elif (CLIENT_OS == OS_OS2)
   what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYSCRIPT | CONNECT_IFACEMASK);
 #endif
+
+  TRACE_OUT((-1,"end: Lurk::GetCapabilityFlags() [1]. what=0x%08x\n",(u32)what));
+
   return what;
 }
 
@@ -248,8 +262,6 @@ int Lurk::GetCapabilityFlags(void)
 
 const char **Lurk::GetConnectionProfileList(void)
 {
-  if ((GetCapabilityFlags() & CONNECT_DODBYPROFILE) != 0)
-  {
   #if (CLIENT_OS == OS_WIN32)
     static const char *firstentry = ""; //the first entry is blank, ie use default
     static RASENTRYNAME rasentries[4];
@@ -291,7 +303,6 @@ const char **Lurk::GetConnectionProfileList(void)
       return (const char **)(&configptrs[0]);
     }
   #endif
-  }
   return NULL;
 }
 
@@ -300,6 +311,8 @@ const char **Lurk::GetConnectionProfileList(void)
 int Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
 {
   int flags = GetCapabilityFlags();
+
+  TRACE_OUT((+1,"Lurk::Start()\n"));
 
   if (lurkmode != CONNECT_LURKONLY && lurkmode != CONNECT_LURK)
     lurkmode = 0;           /* can only be one or the other */
@@ -392,17 +405,17 @@ int Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
       mask_default_only = 1;
     ifacestowatch[ptrindex] = NULL;
   }
-  #ifdef LURKDEBUG
-  FILE *f = fopen("debug.log","a");
-  fprintf(f,"mask flags: include_all=%d, defaults_only=%d\niface list:\n",
-                 mask_include_all, mask_default_only );
+  #ifdef TRACE
+  TRACE_OUT((0,"mask flags: include_all=%d, defaults_only=%d\niface list:\n",
+               mask_include_all, mask_default_only ));
   for (int ptrindex=0;ifacestowatch[ptrindex];ptrindex++)
-    fprintf(f,"  %d) '%s'\n",ptrindex+1,ifacestowatch[ptrindex]);
-  fprintf(f,"lurkmode=%d dialwhenneeded=%d\n",lurkmode,dialwhenneeded);
-  fclose(f);
+    TRACE_OUT((0,"  %d) '%s'\n",ptrindex+1,ifacestowatch[ptrindex]));
+  TRACE_OUT((0,"lurkmode=%d dialwhenneeded=%d\n",lurkmode,dialwhenneeded));
   #endif
 
   islurkstarted=1;
+
+  TRACE_OUT((-1,"Lurk::Start()\n"));
   return 0;
 }
 
@@ -444,18 +457,16 @@ static int __MatchMask( const char *ifrname, int mask_include_all,
                      strcmp(ifacestowatch[maskpos],wildmask)==0);
     }
   }
-  #ifdef LURKDEBUG
-  LogScreen("matched?=%s ifrname=='%s' matchname=='%s'\n",
-    (ismatched?"yes":"no"), ifrname, matchedname?matchedname:"(not found)" );
-  #endif
+  TRACE_OUT((0,"__Maskmatch: matched?=%s ifrname=='%s' matchname=='%s'\n",
+    (ismatched?"yes":"no"), ifrname, matchedname?matchedname:"(not found)" ));
   return ismatched;
 }
 #endif
 
 /* ---------------------------------------------------------- */
 
-int Lurk::IsConnected(void)  // always returns a valid yes/no (state of dialwhenneeded/lurkmode is irrelevant)
-{
+int Lurk::IsConnected(void) //must always returns a valid yes/no
+{                           
   conndevice[0]=0;
 
   if (!islurkstarted)
@@ -463,6 +474,8 @@ int Lurk::IsConnected(void)  // always returns a valid yes/no (state of dialwhen
     if (Start() != 0)
       return 0;
   }
+  if (!lurkmode && !dialwhenneeded)
+    return 1;
 
 #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN16S)
   if ( GetModuleHandle("WINSOCK") )
@@ -472,6 +485,7 @@ int Lurk::IsConnected(void)  // always returns a valid yes/no (state of dialwhen
   if ((GetCapabilityFlags() & CONNECT_IFACEMASK)!=0) /* have working WS2_32 */
   {
     #if !defined(_MSC_VER) || defined(_M_ALPHA) //some msvcs can't cast for shit
+    TRACE_OUT((+1,"ioctl IsConnected()\n"));
     HINSTANCE ws2lib = LoadLibrary( "WS2_32.DLL" );
     if (ws2lib)
     {
@@ -542,7 +556,7 @@ int Lurk::IsConnected(void)  // always returns a valid yes/no (state of dialwhen
               const char *ifp = if_info;
               if ((bytesReturned%sizeof(struct if_info_v6))!=0)
                 stepsize = sizeof(struct if_info_v4);
-//LogScreen("stage5 %u v4:%u v6:%u struct family=IPv%d\n",bytesReturned,sizeof(struct if_info_v4),sizeof(struct if_info_v6),(stepsize==sizeof(struct if_info_v6)?(6):(4)));
+              TRACE_OUT((0,"stage5 %u: v4:%u v6:%u struct family=IPv%d\n",bytesReturned,sizeof(struct if_info_v4),sizeof(struct if_info_v6),(stepsize==sizeof(struct if_info_v6)?(6):(4))));
               
               for (i=0; i<bytesReturned; i+=stepsize) 
               {
@@ -551,7 +565,7 @@ int Lurk::IsConnected(void)  // always returns a valid yes/no (state of dialwhen
                 /* if_addr is always (?) an AF_INET[4] addr because thats what our socket is */
                 ifp+=stepsize;
 
-//LogScreen("stage6: adapter: %u flags: 0x%08x %s\n", i/stepsize, if_flags,inet_ntoa(*((struct in_addr *)&if_addr)) );
+                TRACE_OUT((0,"stage6: adapter: %u flags: 0x%08x %s\n", i/stepsize, if_flags,inet_ntoa(*((struct in_addr *)&if_addr)) ));
 
                 if ((if_flags & IFF_LOOPBACK)==0 && if_addr != 0x0100007ful)
                 {
@@ -570,14 +584,14 @@ int Lurk::IsConnected(void)  // always returns a valid yes/no (state of dialwhen
                   //  wsprintf(devname,"sl%u",slipdev++);
                   else
                     wsprintf(devname,"ppp%u",pppdev++);
-//LogScreen("stage7: not lo. up?=%s, seqname=%s devname=%s\n", ((if_flags & IFF_UP)?"yes":"no"), seqname, devname );
+                  TRACE_OUT((0,"stage7: not lo. up?=%s, seqname=%s devname=%s\n", ((if_flags & IFF_UP)?"yes":"no"), seqname, devname ));
                   if ((if_flags & IFF_UP)==IFF_UP &&
                      (__MatchMask(devname,mask_include_all,
                          mask_default_only, &ifacestowatch[0] ) ||
                       __MatchMask(seqname,mask_include_all,
                          mask_default_only, &ifacestowatch[0] )))
                   {
-//LogScreen("stage8: mask matched. name=%s\n", devname );
+                    TRACE_OUT((0,"stage8: mask matched. name=%s\n", devname ));
                     strcat( devname, "/" );
                     strcat( devname, seqname );
                     strncpy( conndevice, devname, sizeof(conndevice) );
@@ -594,6 +608,7 @@ int Lurk::IsConnected(void)  // always returns a valid yes/no (state of dialwhen
       }
       FreeLibrary(ws2lib);
     }
+    TRACE_OUT((-1,"ioctl IsConnected() '%s'\n",conndevice));
     if (conndevice[0])
       return 1;
     #endif

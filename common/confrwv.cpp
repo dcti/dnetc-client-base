@@ -4,14 +4,16 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.59 1999/04/30 23:50:06 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60 1999/05/08 19:05:30 cyp Exp $"; }
+
+//#define TRACE
 
 #include "cputypes.h"
 #include "client.h"    // Client class
 #include "baseincs.h"  // atoi() etc
 #include "iniread.h"   // [Get|Write]Profile[Int|String]()
 #include "pathwork.h"  // GetFullPathForFilename()
-#include "util.h"      // projectmap_*()
+#include "util.h"      // projectmap_*() and trace
 #include "lurk.h"      // lurk stuff
 #include "cpucheck.h"  // GetProcessorType() for mmx stuff
 #include "triggers.h"  // RaiseRestartRequestTrigger()
@@ -41,6 +43,8 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
              "in3","out3","nodisk", "dialwhenneeded","connectionname" };
   char buffer[128];
   int i, modfail = 0;
+
+  TRACE_OUT((+1,"__remapObsoleteParameters()\n"));
 
   if (!GetPrivateProfileStringB( OPTION_SECTION, "quiet", "", buffer, sizeof(buffer), fn ))
   {
@@ -172,6 +176,8 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
   /* unconditional deletion of obsolete keys */
   for (i = 0; i < (int)(sizeof(obskeys) / sizeof(obskeys[0])); i++)
     modfail += (!WritePrivateProfileStringB( OPTION_SECTION, obskeys[i], NULL, fn ));
+
+  TRACE_OUT((-1,"__remapObsoleteParameters() modif failed?=%d\n", modfail));
   
   if (modfail)
     return -1;
@@ -216,6 +222,8 @@ int ReadConfig(Client *client)
   if ( access( fn, 0 ) != 0 ) 
     return +1; /* fall into config */
     
+  TRACE_OUT((+1,"ReadConfig()\n"));
+
   __remapObsoleteParameters( client, fn ); /* load obsolete options */
 
   if (!GetPrivateProfileStringB( sect, "id", "", client->id, sizeof(client->id), fn ))
@@ -275,8 +283,12 @@ int ReadConfig(Client *client)
   client->numcpu = GetPrivateProfileIntB( sect, "numcpu", client->numcpu, fn );
   client->preferred_blocksize = GetPrivateProfileIntB( sect, "preferredblocksize", client->preferred_blocksize, fn );
 
+  TRACE_OUT((0,"ReadConfig() [2 begin]\n"));
+
   GetPrivateProfileStringB( OPTSECT_MISC, "project-priority", "", buffer, sizeof(buffer), fn );
   projectmap_build(client->loadorder_map, buffer);
+
+  TRACE_OUT((0,"ReadConfig() [2 end]\n"));
     
   client->messagelen = GetPrivateProfileIntB( sect, "messagelen", client->messagelen, fn );
   client->smtpport = GetPrivateProfileIntB( sect, "smtpport", client->smtpport, fn );
@@ -309,6 +321,8 @@ int ReadConfig(Client *client)
   GetPrivateProfileStringB( OPTSECT_BUFFERS, "buffer-file-basename", client->in_buffer_basename, client->in_buffer_basename, sizeof(client->in_buffer_basename), fn );
   GetPrivateProfileStringB( OPTSECT_BUFFERS, "output-file-basename", client->out_buffer_basename, client->out_buffer_basename, sizeof(client->out_buffer_basename), fn );
 
+  TRACE_OUT((0,"ReadConfig() [3 begin]\n"));
+
   #if defined(LURK)
   i = dialup.GetCapabilityFlags();
   dialup.lurkmode = 0;
@@ -331,6 +345,9 @@ int ReadConfig(Client *client)
       GetPrivateProfileStringB( sect, "connectionname", dialup.connprofile, dialup.connprofile, sizeof(dialup.connprofile), fn );
   }
   #endif /* LURK */
+
+  TRACE_OUT((0,"ReadConfig() [3 end]\n"));
+  TRACE_OUT((-1,"ReadConfig()\n"));
 
   return 0;
 }
