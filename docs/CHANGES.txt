@@ -21,11 +21,16 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.68 2004/06/03 17:23:36 kakace Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.69 2004/06/16 18:37:46 kakace Exp $
 ==========================================================================
 
 2.9000
 ------
+2.9008-492  imp: ppc: Faster GARSP Vector core
+            fix: ppc: Select core #5 on PPC 601 (#3685)
+            fix: macosx: Now recognize PPC 750FX (#3675)
+            fix: macosx: No longer read the TAU on G4/G5.
+
 2.9008-491  chg: all: Disabled OGR (Phase 1) contest
             fix: all: Client didn't stop as instructed (#3672)
             fix: macosx: Fixed an issue caused by white spaces in file paths.
