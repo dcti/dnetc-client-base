@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.15  1998/06/14 11:24:14  ziggyb
+// Added os2defs.h and adjusted for the sleep defines. Now compile without
+// errors. Woohoo!
+//
 // Revision 1.14  1998/06/14 10:14:36  ziggyb
 // There are ^M's everywhere, got rid of them and some OS/2 header changes
 //
@@ -99,7 +103,6 @@ extern "C" {
   #include <gusi.h>
   typedef int SOCKET;
 #elif (CLIENT_OS == OS_OS2)
-  #include <dos.h>
   #include <process.h>
   #include <io.h>
 
@@ -109,14 +112,6 @@ extern "C" {
   // All the OS/2 specific headers are here
   // This is nessessary since the order of the OS/2 defines are important
   #include "platforms\os2cli\os2defs.h"
-  extern "C" {
-    #include <types.h>
-    #include <netinet/in.h>
-    #include <sys/socket.h>
-    #include <netdb.h>
-    #include <sys/ioctl.h>
-    #include <sys/stat.h>     /* for stat() */
-  }
   typedef int SOCKET;
   #define close(s) soclose(s)
   #define read(sock, buff, len) recv(sock, (char*)buff, len, 0)
