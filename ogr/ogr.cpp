@@ -5,7 +5,7 @@
  */
 
 const char *ogr_cpp(void) {
-return "@(#)$Id: ogr.cpp,v 1.3.2.14 2000/01/31 15:29:18 ivo Exp $"; }
+return "@(#)$Id: ogr.cpp,v 1.3.2.15 2000/02/02 07:39:46 gregh Exp $"; }
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -324,6 +324,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
       lev++;
       oState->depth++;
     }
+    oState->depth--; // externally visible depth is one less than internal
   }
 
   oState->startdepth = workstub->stub.length;
@@ -364,7 +365,7 @@ static void dump_ruler(struct State *oState, int depth)
 static int ogr_cycle(void *state, int *pnodes)
 {
   struct State *oState = (struct State *)state;
-  int depth = oState->depth;      /* the depth of recursion */
+  int depth = oState->depth+1;      /* the depth of recursion */
   struct Level *lev = &oState->Levels[depth];
   struct Level *lev2;
   int nodes = 0;
@@ -375,7 +376,7 @@ static int ogr_cycle(void *state, int *pnodes)
   U comp0;
 
 #ifdef OGR_DEBUG
-  //oState->LOGGING = 1;
+  oState->LOGGING = 1;
 #endif
   for (;;) {
 
@@ -467,7 +468,7 @@ up:
   }
 
   oState->Nodes += nodes;
-  oState->depth = depth;
+  oState->depth = depth-1;
 
   *pnodes = nodes;
 
