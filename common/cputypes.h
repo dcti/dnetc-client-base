@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.4 1999/10/17 22:52:23 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.5 1999/11/15 01:52:36 remi Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -608,8 +608,8 @@ extern "C" {
 #elif (defined(SIZEOF_LONG) && (SIZEOF_LONG == 8))
   #define HAVE_I64
   #define SIZEOF_LONGLONG 8
-  typedef unsigned int ui64;
-  typedef signed int si64;
+  typedef unsigned long ui64;
+  typedef signed long si64;
 #elif defined(__GCC__) || defined(__GNUC__)
   #define HAVE_I64
   #define SIZEOF_LONGLONG 8
