@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.25 2000/02/13 21:44:10 lyndon Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.26 2000/02/14 16:15:58 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -452,20 +452,18 @@ static void __init_signal_handlers( int doingmodes )
 // -----------------------------------------------------------------------
 
 #ifndef CLISIGHANDLER_IS_SPECIAL
-#if (CLIENT_OS == OS_IRIX)
+#if (CLIENT_OS == OS_IRIX) //or #if defined(SA_NOCLDSTOP) for posix compat
 static void (*SETSIGNAL(int signo, void (*proc)(int)))(int)
 {
   struct sigaction sa, osa;
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = 0;
-#ifdef MIPSpro
-  /* XXX gross hack to get around g++ non-portability */
-  sa.sa_handler = proc;
-#else
-  sa.sa_handler = (void (*)())proc;
-#endif
-  //if (!sigismember(&_sigintr, signo))
+  /* sa.sa_handler = proc; cast to get around c to c++ non-portability */
+  *((void **)(&(sa.sa_handler))) = *((void **)(&proc));
+  #if defined(SA_RESTART) /* SA_RESTART is not _POSIX_SOURCE */
+  /* if (!sigismember(&_sigintr, signo)) */
     sa.sa_flags |= SA_RESTART;
+  #endif
   if (sigaction(signo, &sa, &osa) < 0)
     return (void (*)(int))(SIG_ERR);
   return (void (*)(int))(osa.sa_handler);
