@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.49 2000/01/28 03:54:13 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.50 2000/01/28 07:26:17 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -188,10 +188,8 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       }
       else if (( det & (1L<<25) ) != 0) //have altivec
       {
-        #if (CLIENT_OS == OS_MACOS) //altivec support is currently macos only
         corenames_table[RC5][2] = "crunch-vec"; /* aka rc5_unit_func_vec() wrapper */
         corenames_table[RC5][3] = NULL;
-        #endif
       }
     }
     #endif
@@ -530,10 +528,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       int cindex = -1;
       if (( detected_type & (1L<<24) ) != 0) //ARCH_IS_POWER
         cindex = 0;                 //only one core - (ansi)
-      #if (CLIENT_OS == OS_MACOS) /* vec core is currently macos only */
       else if (( detected_type & (1L<<25) ) != 0) //OS supports altivec
         cindex = 2;                 // vector
-      #endif
       else if (detected_type == 1 ) //PPC 601
         cindex = 0;                 // lintilla
       else                          //the rest
@@ -546,10 +542,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     selcorestatics.corenum[CSC] = selcorestatics.user_cputype[CSC];
     if (selcorestatics.corenum[CSC] < 0 && detected_type > 0)
     {
-      int cindex = -1;
-      #if (CLIENT_OS == OS_MACOS) /* avoid micro benchmark */
-      cindex = 1; //6 bit called seems to be the "RightThing" for all PPCs
-      #endif
+      int cindex = -1;/* micro benchmark */
       selcorestatics.corenum[CSC] = cindex;
     }
   }
