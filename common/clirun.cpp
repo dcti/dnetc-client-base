@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.24  1998/11/02 04:40:18  cyp
+// Removed redundant ::numcputemp. ::numcpu does it all.
+//
 // Revision 1.23  1998/10/31 22:55:10  silby
 // freebsd non-mt changes completed, working perfectly.
 //
@@ -78,7 +81,7 @@
 //
 // Revision 1.5  1998/09/29 23:36:26  silby
 // Commented out call to pthreads_yield since it's not supported in all 
-// POSIX implementations (apparently.)
+// pthread implementations.
 //
 // Revision 1.4  1998/09/29 10:13:16  chrisb
 // Removed Remi's (CLIENT_OS == OS_NETWARE) stuff around yield_pump. Fixed a 
@@ -96,11 +99,9 @@
 // Revision 1.1  1998/09/28 03:39:58  cyp
 // Spun off from client.cpp
 //
-//
-//
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.23 1998/10/31 22:55:10 silby Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.24 1998/11/02 04:40:18 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -298,10 +299,8 @@ static void yield_pump( void *tv_p )
 
   #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
     thr_yield();
-  #elif ((CLIENT_OS == OS_FREEBSD) && defined(MULTITHREAD))
+  #elif (CLIENT_OS == OS_FREEBSD)
     sched_yield();
-  #elif ((CLIENT_OS == OS_FREEBSD) && !defined(MULTITHREAD))
-    NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_OS2)
     DosSleep(0);
   #elif (CLIENT_OS == OS_IRIX)
@@ -718,7 +717,7 @@ void Go_mt( void * parm )
         if (CheckPauseRequestTriggerNoIO() || targ->do_suspend) 
           {
           run = 0;
-          yield_pump(NULL); // don't race in this loop
+          NonPolledSleep(1); // don't race in this loop
           }
         else if (targ->do_refresh)
           {
@@ -877,7 +876,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
               (void *(*)(void*)) Go_mt, (void *)thrparams ) == 0)
           success = 1;
         SetGlobalPriority( 9 ); //back to normal
-      #elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && defined(MULTITHREAD) && (CLIENT_OS != OS_FREEBSD)
+      #elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && defined(MULTITHREAD)
         if (pthread_create( &(thrparams->threadID), NULL, 
            (void *(*)(void*)) Go_mt, (void *)thrparams[thread_i] ) == 0 )
           success = 1;
@@ -926,9 +925,8 @@ int Client::Run( void )
 {
   FileEntry fileentry;
   unsigned int thread_i, cont_i, prob_i;
-
+  unsigned int numthreads = (unsigned int)numcpu;
   Problem *mainprob = NULL; //used in single threaded mode
-
   struct thread_param_block *thread_data_table = NULL;
 
   #ifdef OLDNICENESS //fake priority if 'niceness' is used intead of 'priority'
@@ -941,6 +939,7 @@ int Client::Run( void )
   
   time_t timeNow;
   time_t timeRun=0, timeLast=0, timeNextCheckpoint=0, timeNextConnect=0;
+  int isPaused=0, wasPaused=0;
 
   // =======================================
   // Notes:
@@ -996,23 +995,23 @@ int Client::Run( void )
 
   if (!TimeToQuit)
     {
-    if (numcputemp == 0) //user requests non-mt
-      {
-      load_problem_count = numcputemp = 1;
-      #if (CLIENT_OS==OS_WIN32)   // win32 client _has_ to run multithreaded 
-         load_problem_count = 2;  // since the main thread _has_ to run at 
-      #endif                      // normal priority to keep the window responsive
-      }
-    #if (CLIENT_OS == OS_NETWARE)
-    else if (numcputemp == 1) // NetWare client prefers non-threading  
-      load_problem_count = 1; // if only one thread/processor is to used
+    #if (CLIENT_OS == OS_FREEBSD) //freeBSD multithreading is disabled
+    if (numthreads > 1)
+      LogScreen("Threading has been disabled for FreeBSD clients\n");
+    numthreads = 0;
     #endif
+    #if (CLIENT_OS == OS_NETWARE)
+    if (numthreads == 1) // NetWare client prefers non-threading  
+      numthreads = 0;    // if only one thread/processor is to used
+    #endif
+
+    if (numthreads == 0) //user requests non-mt
+      load_problem_count = numthreads = 1;
     else
       {
-      if (((unsigned int)(numcputemp)) > 
-              GetNumberOfSupportedProcessors()) //max by client instance
-        numcputemp = (s32)GetNumberOfSupportedProcessors();   //not by platform
-      load_problem_count = 2*((unsigned int)(numcputemp));
+      if (numthreads > GetNumberOfSupportedProcessors()) //max by cli instance
+        numthreads = GetNumberOfSupportedProcessors();   //not by platform
+      load_problem_count = (2 * numthreads);
       }
     }
 
@@ -1026,7 +1025,7 @@ int Client::Run( void )
     if ( load_problem_count > 1 )
       Log( "Loading two blocks per thread...\n" );
     load_problem_count = LoadSaveProblems( load_problem_count, 0 );
-    numcputemp = (load_problem_count + 1) >> 1;
+    numthreads = (load_problem_count + 1) >> 1;
     if (load_problem_count == 0)
       {
       TimeToQuit = 1;
@@ -1068,7 +1067,7 @@ int Client::Run( void )
     for ( thread_i = 0; thread_i < (load_problem_count>>1); thread_i++ )
       {
       struct thread_param_block *thrparams = 
-                __StartThread( thread_i, numcputemp, timeslice, priority );
+                __StartThread( thread_i, numthreads, timeslice, priority );
       
       if ( thrparams )
         {
@@ -1092,13 +1091,13 @@ int Client::Run( void )
     if (load_problem_count == 1)
       {
       Log("Switching to single-threaded mode.\n" );
-      numcputemp = 1;
+      numthreads = 1;
       }
     else
       {
       running_threaded = 1;
 
-      numcputemp = load_problem_count>>1;
+      numthreads = load_problem_count>>1;
       if (load_problem_count == 2)
         Log("1 Child thread has been started.\n");
       else if (load_problem_count > 2)
@@ -1146,13 +1145,15 @@ int Client::Run( void )
   // -------------------------------
   // create a yield pump for OSs that need one 
   // -------------------------------
-  
-  #if defined(NON_PREEMPTIVE_OS) || (CLIENT_OS == OS_WIN32)
+
+  #if defined(NON_PREEMPTIVE_OS)
   if (!TimeToQuit)
     {
     static struct timeval tv = {0,500};
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_MACOS)
-      tv.tv_usec = 1000;
+    #if (CLIENT_OS == OS_WIN32) 
+      tv.tv_usec = 1000; 
+    #elif (CLIENT_OS == OS_MACOS)
+      tv.tv_usec = 10000;
     #endif
    
     if (RegPolledProcedure(yield_pump, (void *)&tv, (timeval *)&tv, 32 ) == -1)
@@ -1228,7 +1229,7 @@ int Client::Run( void )
       // prevent the main thread from racing & bogging everything down.
       sleep(3);
       }
-    else if (CheckPauseRequestTrigger())
+    else if (isPaused)
       {
       sleep(1);
       }
@@ -1241,7 +1242,7 @@ int Client::Run( void )
         //Actually run a problem
         mainprob->Run( 0 ); //threadnum
           
-        #if (defined(NON_PREEMPTIVE_OS) || (CLIENT_OS == OS_WIN32))
+        #if defined(NON_PREEMPTIVE_OS) 
           yield_pump(NULL);
         #endif
         }
@@ -1275,12 +1276,27 @@ int Client::Run( void )
       TimeToQuit = 1;
       exitcode = 1;
       }
+    if (!TimeToQuit)
+      {
+      isPaused = CheckPauseRequestTrigger();
+      if (isPaused)
+        {
+        if (!wasPaused)
+          LogScreen("Paused...\n");
+        wasPaused = 1;
+        }
+      else if (wasPaused)
+        {
+        LogScreen("Running again after pause...\n");
+        wasPaused = 0;
+        }
+      }
 
     //------------------------------------
     //update the status bar, check all problems for change, do reloading etc
     //------------------------------------
 
-    if (!TimeToQuit && !CheckPauseRequestTrigger())
+    if (!TimeToQuit && !isPaused)
       {
       if (!percentprintingoff)
         LogScreenPercent( load_problem_count ); //logstuff.cpp
@@ -1401,7 +1417,6 @@ int Client::Run( void )
       //way around this is to suspend the threads.
       ModeReqRun(this);
       }
-      
     }  // End of MAIN LOOP
 
   //======================END OF MAIN LOOP =====================

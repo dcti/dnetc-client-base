@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.92  1998/11/02 04:40:10  cyp
+// Removed redundant ::numcputemp. ::numcpu does it all.
+//
 // Revision 1.91  1998/10/26 03:02:50  cyp
 // Version tag party.
 //
@@ -368,7 +371,7 @@ public:
   char checkpoint_file[2][128];
   char pausefile[128];
 
-  s32 numcpu, numcputemp;
+  s32 numcpu;
   s32 checkpoint_min;
   s32 percentprintingoff;
   s32 connectoften;
@@ -566,7 +569,7 @@ public:
     // to configure for cpu. called before Run() from main(), or for 
     // "modes" (Benchmark()/Test()) from ParseCommandLine().
 
-  void RandomWork( FileEntry * data );
+   void RandomWork( FileEntry * data );
     // returns a random block.
 
   unsigned int LoadSaveProblems(unsigned int load_problem_count, int retmode);

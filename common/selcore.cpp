@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore.cpp,v $
+// Revision 1.20  1998/11/02 04:40:07  cyp
+// Removed redundant ::numcputemp. ::numcpu does it all.
+//
 // Revision 1.19  1998/10/29 08:39:39  silby
 // Fixed the condition where core already specified would cause mmx des detection to be skipped and always enabled.
 //
@@ -80,7 +83,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.19 1998/10/29 08:39:39 silby Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.20 1998/11/02 04:40:07 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -163,7 +166,7 @@ int Client::SelectCore(int quietly)
   static s32 last_cputype = -123;
   static s32 detectedtype = -2;
 
-  numcputemp = ValidateProcessorCount( numcpu, quietly ); //in cpucheck.cpp
+  numcpu = ValidateProcessorCount( numcpu, quietly ); //in cpucheck.cpp
   
   if (cputype == last_cputype) //no change, so don't bother reselecting
     return 0;                  //(cputype can change when restarted)

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.150  1998/11/02 04:40:13  cyp
+// Removed redundant ::numcputemp. ::numcpu does it all.
+//
 // Revision 1.149  1998/10/26 02:51:41  cyp
 // out_buffer_file[0] was being initialized with the wrong suffix ('des'
 // instead of 'rc5') in the client constructor.
@@ -51,7 +54,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.149 1998/10/26 02:51:41 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.150 1998/11/02 04:40:13 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -92,27 +95,27 @@ Client::Client()
   outthreshold[1] = 10;
   blockcount = 0;
   minutes = 0;
-  strcpy(hours,"0.0");
+  hours[0] = 0;
   keyproxy[0] = 0;
   keyport = 2064;
   httpproxy[0] = 0;
   httpport = 80;
   uuehttpmode = 1;
-  strcpy(httpid,"");
-  totalBlocksDone[0] = totalBlocksDone[1] = 0;
+  httpid[0] = 0;
+  totalBlocksDone[0] = 0;
+  totalBlocksDone[1] = 0;
   cputype=-1;
   offlinemode = 0;
   autofindkeyserver = 1;  //implies 'only if keyproxy==dnetkeyserver'
 
-  strcpy(logname, "");
+  pausefile[0]=logname[0]=0;
   strcpy(inifilename, "rc5des" EXTN_SEP "ini");
   strcpy(in_buffer_file[0], "buff-in" EXTN_SEP "rc5");
   strcpy(out_buffer_file[0], "buff-out" EXTN_SEP "rc5");
   strcpy(in_buffer_file[1], "buff-in" EXTN_SEP "des");
   strcpy(out_buffer_file[1], "buff-out" EXTN_SEP "des");
   strcpy(exit_flag_file,     "exitrc5" EXTN_SEP "now" );
-  strcpy(checkpoint_file[1],"");
-  strcpy(pausefile,"");
+  checkpoint_file[0][0]=checkpoint_file[1][0]=0;
 
   messagelen = 0;
   smtpport = 25;
@@ -120,17 +123,13 @@ Client::Client()
   strcpy(smtpfrom,"RC5Notify");
   strcpy(smtpdest,"you@your.site");
   numcpu = -1;
-  numcputemp=1;
-  strcpy(checkpoint_file[0],"");
   checkpoint_min=5;
   percentprintingoff=0;
   connectoften=0;
   nodiskbuffers=0;
-  membuffcount[0][0]=0;
-  membuffcount[1][0]=0;
-  membuffcount[0][1]=0;
-  membuffcount[1][1]=0;
   for (int i1=0;i1<2;i1++) {
+    membuffcount[i1][0]=0;
+    membuffcount[i1][1]=0;
     for (int i2=0;i2<500;i2++) {
       for (int i3=0;i3<2;i3++) {
         membuff[i1][i2][i3]=NULL;
@@ -282,6 +281,7 @@ int Client::Main( int argc, const char *argv[], int restarted )
       }
     DeinitializeTriggers();
     }
+  
   return retcode;
 }  
 
@@ -296,7 +296,7 @@ int realmain( int argc, char *argv[] )
   Client *clientP = NULL;
   int retcode = -1, init_success = 1;
   int restarted = 0;
-  
+
   //------------------------------
   
   #if (CLIENT_OS == OS_RISCOS)
@@ -305,6 +305,18 @@ int realmain( int argc, char *argv[] )
     riscos_in_taskwindow = riscos_check_taskwindow();
     if (riscos_find_local_directory(argv[0])) 
       init_success = 0;
+    }
+  #endif
+
+  //-----------------------------
+
+  #if (CLIENT_OS == OS_WIN32)
+  HANDLE hmutex = NULL;
+  if (init_success) 
+    {
+    SetLastError(0); // only allow one running instance
+    hmutex = CreateMutex(NULL, TRUE, "Bovine RC5/DES Win32 Client");
+    init_success = (GetLastError() == 0);
     }
   #endif
 
@@ -353,6 +365,11 @@ int realmain( int argc, char *argv[] )
   if (clientP)
     delete clientP;
 
+  #if (CLIENT_OS == OS_WIN32)
+  if (hmutex)
+    ReleaseMutex( hmutex );
+  #endif  
+
   return (retcode);
 }
 
@@ -361,7 +378,7 @@ int realmain( int argc, char *argv[] )
 
 #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, 
-                                                               int nCmdShow) 
+    int nCmdShow) 
 { /* abstraction layer between WinMain() and realmain() */
   return winClientPrelude( hInst, hPrevInst, lpszCmdLine, nCmdShow, realmain);
 }
