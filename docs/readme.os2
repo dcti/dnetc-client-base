@@ -1,25 +1,25 @@
 
  distributed.net client for OS/2 3.0 or above
  Released by Trevor Hemsley <Trevor-Hemsley@dial.pipex.com>
- Previously coded by Oscar "ZiggyB" Chang <oscarc@divideby0.com>
- Document revision $Id: readme.os2,v 1.4.2.2 2000/02/24 18:50:28 trevorh Exp $
-
+ Document revision $Id: readme.os2,v 1.4.2.3 2000/04/21 13:27:46 cyp Exp $
                                                           
  Welcome to the distributed.net client.
 
  This document covers information specific to the client for OS/2.
  Refer to other enclosed documentation or browse the online FAQ at
-
  http://www.distributed.net/FAQ for non-platform-specific documentation.
 
     1.0  Getting started
-      1.1 Obtaining the EMX runtime library
+      1.1 Runtime library requirements
       1.2 Running the client
     2.0  OS/2 specific notes
 
  1.0  Getting started ------------------------------------------------
 
-   1.1  Obtaining the EMX runtime library-----------------------------
+   Beginning with v2.8008.459, the distributed.net client for OS/2
+   requires the EMX runtime libraries.
+
+   1.1  EMX runtime library requirements -----------------------------
 
     You MUST have the EMX runtime libraries installed on your machine
     in order to run version 2.8008.459 and higher. The easiest way to
@@ -28,7 +28,7 @@
     numbers are OK, lower ones mean that you should update to a newer
     version).
 
-    [F:\rc5]emxrev
+    emxrev
     EMX : revision = 60
     EMXIO : revision = 60
     EMXLIBC : revision = 60
@@ -41,15 +41,14 @@
     your output are all in the range 50-59 then you should upgrade to
     v0.9d. You can obtain the latest version of the EMX runtime library
     from your favorite OS/2 program archive. It can be definitely found
-    at ftp://hobbes.nmsu.edu/pub/os2/dev/emx/v0.9d/emxrt.zip. You must
-    follow the instructions within the zip file to install EMX once you
-    have downloaded it.
+    at ftp://hobbes.nmsu.edu/pub/os2/dev/emx/ [currently v0.9d/emxrt.zip]
+    Installation instructions are included in the archive.
 
    1.1  Running the client--------------------------------------------
 
     Once you have installed EMX then you are ready to run the latest
-    version of the OS/2 Distributed.Net client. Just unpack the client
-    in a directory of your choice and fire it up.
+    version of the distributed.net client for OS/2. Just unpack the 
+    client in a directory of your choice and fire it up.
 
     If you have never run the client before, it will initiate the
     menu-driven configuration. Save and quit when done, the 
