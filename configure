@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.99  1998/09/29 08:00:41  remi
+# Added a new Sparc-Linux entry.
+#
 # Revision 1.98  1998/09/28 04:41:20  cyp
 # new kids on the block: clirun, pollsys, probman, bench, probfill, setprio
 #
@@ -358,6 +361,7 @@ OPTS_GCC_SPARC="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
 OPTS_GCC_ULTRA="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
 OPTS_GAS_ULTRA=-Av9a
 OPTS_GCC_NONULTRA_SPARC="$OPTS_GCC -O6 -DASM_SPARC"
+OPTS_EGCS_NONULTRA_SPARC="$OPTS_EGCS -O6 -mtune=supersparc -DASM_SPARC"
 
 #--
 
@@ -611,9 +615,16 @@ case "$1" in
 
     *sparc-linux)
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_NONULTRA_SPARC -DPIPELINE_COUNT=2 -DSPARCLINUX=1 -DKWAN -DBIT_32"
+	TARGET_CCFLAGS="$OPTS_GCC_NONULTRA_SPARC -DPIPELINE_COUNT=2 -DKWAN -DBIT_32"
 	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
 	TARGET_LIBS="-ldl"
+	;;
+
+    *sparc-linux-mt-egcs)
+	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
+	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC -DMULTITHREAD -DPIPELINE_COUNT=2 -DKWAN -DMEGGS -DBIT_32"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	TARGET_LIBS="-lpthread -lncurses"
 	;;
 
     *sparc-cc)
