@@ -1,5 +1,8 @@
 //
 // $Log: deseval-meggs3.cpp,v $
+// Revision 1.13.2.1  1999/12/02 13:33:30  mfeiri
+// Removed MacOS yield inside cruncher
+//
 // Revision 1.13  1999/01/09 08:57:41  remi
 // Fixed the previous fix : it's only for alpha/nt + defined(bit_64) + msvc++
 // Removed the rcv copyright as we don't use rcv' sboxes anymore.
@@ -49,10 +52,10 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_cpp(void) {
-return "@(#)$Id: deseval-meggs3.cpp,v 1.13 1999/01/09 08:57:41 remi Exp $"; }
+return "@(#)$Id: deseval-meggs3.cpp,v 1.13.2.1 1999/12/02 13:33:30 mfeiri Exp $"; }
 #endif
 
-#include <cputypes.h>		/* Isn't this needed for using CLIENT_OS defines? */
+#include "cputypes.h"		/* Isn't this needed for using CLIENT_OS defines? */
 
 #if (CLIENT_OS != OS_MACOS)
 #include <stdio.h>
@@ -73,13 +76,6 @@ return "@(#)$Id: deseval-meggs3.cpp,v 1.13 1999/01/09 08:57:41 remi Exp $"; }
 #endif
 
 #include "kwan-sboxes.h"
-
-#if (CLIENT_OS == OS_MACOS)
-#define TICKS ((unsigned long *)0x16a)
-extern void DES_YieldToMain(void);
-extern unsigned long DES_ticks_to_use;
-extern unsigned long DES_yield_ticks;
-#endif
 
 static void
 f_s1 (
@@ -1043,12 +1039,6 @@ slice whack16(slice *P, slice *C, slice *K)
 				break;
 			}
 			// now step the tail
-            #if (CLIENT_OS == OS_MACOS)
-		      if (DES_yield_ticks < *TICKS) {
-	            DES_yield_ticks = *TICKS + DES_ticks_to_use;
-			    DES_YieldToMain();
-			  }
-            #endif
 
 			hs = 0;
 			K[49] = ~K[49];
