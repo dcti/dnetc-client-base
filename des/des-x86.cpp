@@ -3,8 +3,8 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-x86.cpp,v $
-// Revision 1.6  1998/06/16 22:10:24  silby
-// Fixes to get it to work on gcc systems
+// Revision 1.7  1998/06/16 22:12:29  silby
+// fixed second pro thread not working right
 //
 // Revision 1.5  1998/06/16 21:49:46  silby
 // Added p1bdespro and p2bdespro, really the "old" p5 bryddes cores until the pro ones are ported to .s
@@ -22,7 +22,7 @@
 
 // encapsulate the BrydDES library
 
-static char *id="@(#)$Id: des-x86.cpp,v 1.6 1998/06/16 22:10:24 silby Exp $";
+static char *id="@(#)$Id: des-x86.cpp,v 1.7 1998/06/16 22:12:29 silby Exp $";
 
 #include <stdio.h>
 #include <string.h>
@@ -552,36 +552,37 @@ u32 p2des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 nbbits )
   int result = p2bryd_des (plain, cypher, iv, key, bitmask);
 
   // have we found something ?
-  if (result == 0 || key_is_found)
+  if (result == 0 || Bkey_is_found)
   {
+
   #ifdef DEBUG
-      printf ("found = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
-        key_found[0],key_found[1],key_found[2],key_found[3],
-        key_found[4],key_found[5],key_found[6],key_found[7]);
+    printf ("found = %02X%02X%02X%02X:%02X%02X%02X%02X\n",
+      Bkey_found[0],Bkey_found[1],Bkey_found[2],Bkey_found[3],
+      Bkey_found[4],Bkey_found[5],Bkey_found[6],Bkey_found[7]);
   #endif
 
     // have we found the complementary key ?
     // we can test key_found[3] or key_found[4]
     // but no other bytes
-    if ((u32)key_found[3] == (~keyhi & 0xFF))
+    if ((u32)Bkey_found[3] == (~keyhi & 0xFF))
     {
       // report it as beeing on the non-complementary key
-      *(u32*)(&key_found[0]) = ~(*(u32*)(&key_found[0]));
-      *(u32*)(&key_found[4]) = ~(*(u32*)(&key_found[4]));
+      *(u32*)(&Bkey_found[0]) = ~(*(u32*)(&Bkey_found[0]));
+      *(u32*)(&Bkey_found[4]) = ~(*(u32*)(&Bkey_found[4]));
     }
 
     // convert key from 64 bits DES ordering with parity
     // to incrementable format (to do arithmetic on it)
     keyhi =
-        (key_found[0] << 24) |
-        (key_found[1] << 16) |
-        (key_found[2] <<  8) |
-        (key_found[3]      );
+      (Bkey_found[0] << 24) |
+      (Bkey_found[1] << 16) |
+      (Bkey_found[2] <<  8) |
+      (Bkey_found[3]      );
     keylo =
-        (key_found[4] << 24) |
-        (key_found[5] << 16) |
-        (key_found[6] <<  8) |
-        (key_found[7]      );
+      (Bkey_found[4] << 24) |
+      (Bkey_found[5] << 16) |
+      (Bkey_found[6] <<  8) |
+      (Bkey_found[7]      );
     convert_key_from_des_to_inc (&keyhi, &keylo);
 
   #ifdef DEBUG
@@ -598,4 +599,3 @@ u32 p2des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 nbbits )
     return 1 << nbbits;
   }
 }
-
