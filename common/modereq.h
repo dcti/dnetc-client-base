@@ -8,6 +8,9 @@
 */    
 //
 // $Log: modereq.h,v $
+// Revision 1.2  1998/10/11 00:40:10  cyp
+// Added MODEREQ_CONFIG.
+//
 // Revision 1.1  1998/10/08 20:49:42  cyp
 // Created.
 //
@@ -20,13 +23,14 @@
 #define MODEREQ_IDENT           0x01    
 #define MODEREQ_CPUINFO         0x02
 #define MODEREQ_TEST            0x04
+#define MODEREQ_CONFIG          0x08
 #define MODEREQ_FETCH           0x11
 #define MODEREQ_FLUSH           0x12
 #define MODEREQ_FFORCE          0x14
 #define MODEREQ_BENCHMARK_RC5   0x20
 #define MODEREQ_BENCHMARK_DES   0x21
 #define MODEREQ_BENCHMARK_QUICK 0x22
-#define MODEREQ_ALL             0x37 /* needed internally */
+#define MODEREQ_ALL             0x3F /* needed internally */
 
 /* get mode bit(s). if modemask is -1, all bits are returned */
 extern int ModeReqIsSet(int modemask);

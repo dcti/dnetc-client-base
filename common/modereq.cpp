@@ -8,6 +8,9 @@
 */    
 //
 // $Log: modereq.cpp,v $
+// Revision 1.2  1998/10/11 00:40:11  cyp
+// Added MODEREQ_CONFIG.
+//
 // Revision 1.1  1998/10/08 20:49:41  cyp
 // Created.
 //
@@ -15,15 +18,18 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.1 1998/10/08 20:49:41 cyp Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.2 1998/10/11 00:40:11 cyp Exp $"; }
 #endif
 
 #include "client.h"    //client class
-#include "cpucheck.h"  //DisplayProcessorInformation()
-#include "cliident.h"  //CliIdentifyModules();
 #include "triggers.h"  //CheckExitRequestTrigger() [used by bench stuff]
 #include "logstuff.h"  //LogScreen() [used by update/fetch/flush stuff]
 #include "modereq.h"   //our constants
+
+#include "cpucheck.h"  //"mode" DisplayProcessorInformation()
+#include "cliident.h"  //"mode" CliIdentifyModules();
+#include "selftest.h"  //"mode" SelfTest()
+#include "bench.h"     //"mode" Benchmark()
 
 /* --------------------------------------------------------------- */
 
@@ -91,20 +97,25 @@ int ModeReqRun(Client *client)
     
       if ((bits & (MODEREQ_BENCHMARK_DES | MODEREQ_BENCHMARK_RC5)) != 0)
         {
-	if (client)
-	  {
+        if (client)
+          {
           u32 benchsize = (1L<<23); /* long bench: 8388608 instead of 100000000 */
           if ((bits & (MODEREQ_BENCHMARK_QUICK))!=0)
             benchsize = (1L<<20); /* short bench: 1048576 instead of 10000000 */
           if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_RC5)!=0)
-            client->Benchmark( 0, benchsize );
+            Benchmark( 0, benchsize, client->cputype );
           if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_DES)!=0)
-            client->Benchmark( 1, benchsize );
-	  }
-	retval |= (MODEREQ_BENCHMARK_DES | 
+            Benchmark( 1, benchsize, client->cputype );
+          }
+        retval |= (MODEREQ_BENCHMARK_DES | 
                  MODEREQ_BENCHMARK_RC5 | MODEREQ_BENCHMARK_QUICK );
         modereq.reqbits &= ~(MODEREQ_BENCHMARK_DES | 
                  MODEREQ_BENCHMARK_RC5 | MODEREQ_BENCHMARK_QUICK );
+        }
+      if ((bits & (MODEREQ_CONFIG)) != 0)
+        {
+        if ( client->Configure() == 1 )
+          client->WriteFullConfig(); //full new build
         }
       if ((bits & (MODEREQ_FETCH | MODEREQ_FLUSH))!=0)
         {
@@ -115,9 +126,9 @@ int ModeReqRun(Client *client)
         unsigned char contest;
         int runcode, retcode = 0;
 
-	if (client)
-	  {
-  	  oldofflinemode = client->offlinemode;
+        if (client)
+          {
+          oldofflinemode = client->offlinemode;
           client->offlinemode=0;
           for (contest=0;contest<2;contest++)
             {
@@ -139,7 +150,7 @@ int ModeReqRun(Client *client)
               }
             }
           client->offlinemode = oldofflinemode;
-	  }
+          }
      
         if (retcode < 0)
           {
@@ -161,29 +172,29 @@ int ModeReqRun(Client *client)
           retcode = 0;
           }
   
-	retval |= (MODEREQ_FETCH | MODEREQ_FLUSH | MODEREQ_FFORCE);
+        retval |= (MODEREQ_FETCH | MODEREQ_FLUSH | MODEREQ_FFORCE);
         modereq.reqbits &= ~(MODEREQ_FETCH | MODEREQ_FLUSH | MODEREQ_FFORCE);
         }
       if ((bits & MODEREQ_IDENT)!=0)    
         {
         CliIdentifyModules();
         modereq.reqbits &= ~(MODEREQ_IDENT);
-	retval |= (MODEREQ_IDENT);
+        retval |= (MODEREQ_IDENT);
         }
       if ((bits & MODEREQ_CPUINFO)!=0)
         {
         DisplayProcessorInformation(); 
         modereq.reqbits &= ~(MODEREQ_CPUINFO);
-	retval |= (MODEREQ_CPUINFO);
+        retval |= (MODEREQ_CPUINFO);
         }
       if ((bits & MODEREQ_TEST)!=0)
         {
-	if (client)
-	  {
-          if ( client->SelfTest(1) > 0 ) 
-            client->SelfTest(2);
-	  }
-	retval |= (MODEREQ_TEST);
+        if (client)
+          {
+          if ( SelfTest(0, client->cputype ) > 0 ) 
+            SelfTest(1, client->cputype );
+          }
+        retval |= (MODEREQ_TEST);
         modereq.reqbits &= ~(MODEREQ_TEST);
         }
       } //end while
