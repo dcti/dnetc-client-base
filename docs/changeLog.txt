@@ -3,6 +3,9 @@ Dual mode (RC5DES) clients
 
 2.7100
 ------
+v2.7100.418 98.11.07 Randomprefix is now changed from buffer
+                     files; offline clients will now generate
+                     from the "correct" randomprefix.
 v2.7100.418 98.08.19 RC5 MMX cores are now in place. 50% speed
                      improvement on Pentium MMX processors.
 v2.7100.418 98.08.19 Complete rewrite of logging code; blocks now
