@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.36 2000/11/04 16:23:41 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.37 2000/11/04 19:59:25 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -505,6 +505,8 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
   if (( loggingTo & LOGTO_SCREEN ) != 0)
   {
     int scrwidth = ASSUMED_SCREEN_WIDTH; /* assume this for consistancy */
+    ConGetSize(&scrwidth,NULL); /* gets set to 80 or untouched, if not supported */
+
     #ifdef ASSERT_WIDTH_80  //"show" where badly formatted lines are cropping up
     //if (logstatics.stdoutisatty)
     {
@@ -754,7 +756,7 @@ void LogScreenPercent( unsigned int load_problem_count )
     // slows the 68K client down quite dramatically if both clients are running
     // in parallel.  So, we only do it once per minute, minus the time display.
     static int cnt = 11;
-    if (cnt++ > 10)
+    if (cnt++ > 10 || !logstatics.lastwasperc)
     {
       LogScreenRaw( "\r%s", buffer, NULL );
       cnt = 0;
