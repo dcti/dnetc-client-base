@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.26.2.14 2000/09/23 10:26:30 oliver Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.26.2.15 2000/10/16 13:48:21 oliver Exp $"; }
 
 //#define TRACE
 
@@ -105,7 +105,7 @@ static int __netInitAndDeinit( int doWhat )
     {
       __dialupsupport_action(doWhat);
       #if (CLIENT_OS == OS_AMIGAOS)
-      amigaSocketDeinit();
+      amigaNetworkingDeinit();
       #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
       WSACleanup();
       #endif
@@ -125,7 +125,7 @@ static int __netInitAndDeinit( int doWhat )
         #if defined(LURK)
         openalllibs = !dialup.IsWatching(); // some libs not needed if lurking
         #endif
-        if (!amigaSocketInit(openalllibs))
+        if (!amigaNetworkingInit(openalllibs))
           rc = -1;
       #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
         WSADATA wsaData;
@@ -157,7 +157,7 @@ static int __netInitAndDeinit( int doWhat )
       #if (!defined(AF_INET) || !defined(SOCK_STREAM))
         rc = -1;  //no networking capabilities
       #elif(CLIENT_OS == OS_AMIGAOS)
-      if (!amigaIsNetworkingActive())  //test if tcpip is still available
+      if (!amigaIsNetworkingActive())  // tcpip still available, if not lurking?
         rc = -1;
       #elif (CLIENT_OS == OS_NETWARE)  
       if (!FindNLMHandle("TCPIP.NLM")) /* tcpip is still loaded? */
