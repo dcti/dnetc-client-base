@@ -6,7 +6,7 @@
 */ 
 
 #ifndef __CONFOPT_H__
-#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.16.2.3 2000/02/04 08:29:58 cyp Exp $"
+#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.16.2.4 2000/04/15 16:57:10 cyp Exp $"
 
 #define CONF_MENU_MISC_PLACEHOLDER  0
 #define CONF_ID                     1 /* CONF_MENU_MISC */
@@ -18,18 +18,18 @@
 #define CONF_PAUSEPLIST             7 /* CONF_MENU_MISC */
 #define CONF_QUIETMODE              8 /* CONF_MENU_MISC */
 #define CONF_PERCENTOFF             9 /* CONF_MENU_MISC */
-#define CONF_CONTESTPRIORITY       10 /* CONF_MENU_BUFF "DES,OGR,RC5" */
 
-#define CONF_MENU_BUFF_PLACEHOLDER 11
-#define CONF_NODISK                12  /* CONF_MENU_BUFF */
-#define CONF_INBUFFERBASENAME      13  /* CONF_MENU_BUFF */
-#define CONF_OUTBUFFERBASENAME     14  /* CONF_MENU_BUFF */
-#define CONF_CHECKPOINT            15  /* CONF_MENU_BUFF */
+#define CONF_MENU_BUFF_PLACEHOLDER 10
+#define CONF_NODISK                11  /* CONF_MENU_BUFF */
+#define CONF_INBUFFERBASENAME      12  /* CONF_MENU_BUFF */
+#define CONF_OUTBUFFERBASENAME     13  /* CONF_MENU_BUFF */
+#define CONF_CHECKPOINT            14  /* CONF_MENU_BUFF */
 
-#define CONF_OFFLINEMODE           16  /* CONF_MENU_BUFF */
-#define CONF_MENU_NET_PLACEHOLDER  17  /* CONF_MENU_BUFF */
-#define CONF_REMOTEUPDATEDISABLED  18  /* CONF_MENU_BUFF */
-#define CONF_REMOTEUPDATEDIR       19  /* CONF_MENU_BUFF */
+#define CONF_OFFLINEMODE           15  /* CONF_MENU_BUFF */
+#define CONF_MENU_NET_PLACEHOLDER  16  /* CONF_MENU_BUFF */
+#define CONF_REMOTEUPDATEDISABLED  17  /* CONF_MENU_BUFF */
+#define CONF_REMOTEUPDATEDIR       18  /* CONF_MENU_BUFF */
+#define CONF_CONTESTPRIORITY       19  /* CONF_MENU_BUFF "DES,OGR,RC5" */
 #define CONF_FREQUENT              20  /* CONF_MENU_BUFF */
 #define CONF_PREFERREDBLOCKSIZE    21  /* CONF_MENU_BUFF */
 #define CONF_THRESHOLDI            22  /* CONF_MENU_BUFF */

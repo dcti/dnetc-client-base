@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.48 2000/04/14 18:11:49 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.49 2000/04/15 16:57:09 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1435,16 +1435,14 @@ int ClientRun( Client *client )
     #endif
     {
       local_connectoften = client->connectoften;
-      /* 0=none, &1 = in-buf, &2 = out-buf */ 
-      if (local_connectoften < 0 || local_connectoften > 3)
-        local_connectoften = 3;
+      /* 0=none, &1=in-buf, &2=out-buf, &4=sticky-flag (handled elsewhere) */ 
     }    
 
     //------------------------------------
     //handle 'connectoften' requests
     //------------------------------------
 
-    if (!TimeToQuit && local_connectoften && timeRun >= timeNextConnect)
+    if (!TimeToQuit && ((local_connectoften & 3)!=0) && timeRun>=timeNextConnect)
     {
       int doupd = 1;
       if (timeNextConnect != 0)

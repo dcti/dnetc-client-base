@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.34 2000/04/14 18:08:39 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.35 2000/04/15 16:57:11 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -287,33 +287,21 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 /* ----------------------------------------------------------------------- */
 
 #ifndef STRESS_RANDOMGEN
-// Routine description:
-//
 //     Internal function that loads 'wrdata' with a new workrecord
-//     from the next open contest with available blocks, possibly
-//     performing rotation (retrieving a block from the non-primary
-//     contest if are multiple open contests).
-//
-// Arguments:
-//
-//     client = pointer to the main Client object.
-//
-//     wrdata = optional pointer to the WorkRecord structure that is
-//     to be loaded with a new work packet.  If this argument is NULL,
-//     then no new work will be loaded, and this function will only
-//     return the total amount of work available for all contests.
-//
-//     prob_i = indicates the problem thread that this WorkRecord will
-//     eventually be executed on.  This argument is used to test for
-//     thread-safety when choosing a contest type to load.
-//
+//     from the next open contest with available blocks.
 // Return value:
-//
-//     Returns the *total* number of packets available for *all*
+//     if (return_single_count) is non-zero, returns number of packets
+//     left for the same project work was found for, otherwise it
+//     returns the *total* number of packets available for *all*
 //     contests for the thread in question.
-
-static long __loadapacket( Client *client, WorkRecord *wrdata, 
-                          int /*ign_closed*/,  unsigned int prob_i )
+//
+// Note that 'return_single_count' IS ALL IT TAKES TO DISABLE ROTATION.
+//
+static long __loadapacket( Client *client, 
+                           WorkRecord *wrdata /*where to load*/, 
+                           int /*ign_closed*/,  
+                           unsigned int prob_i /* for which 'thread' */, 
+                           int return_single_count /* see above */ )
 {                    
   unsigned int cont_i; 
   long bufcount, totalcount = -1;
@@ -344,6 +332,8 @@ static long __loadapacket( Client *client, WorkRecord *wrdata,
       if (totalcount < 0)
         totalcount = 0;
       totalcount += bufcount;
+      if (return_single_count)
+        break;
     }
   }
   return totalcount;
@@ -425,10 +415,12 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   WorkRecord wrdata;
   unsigned int norm_key_count = 0;
   int didload = 0, didrandom = 0;
+  int update_on_current_contest_exhaust_flag = (client->connectoften & 4);
   long bufcount = -1;
   
 #ifndef STRESS_RANDOMGEN
-  bufcount = __loadapacket( client, &wrdata, 1, prob_i );
+  bufcount = __loadapacket( client, &wrdata, 1, prob_i, 
+                            update_on_current_contest_exhaust_flag );
   if (bufcount < 0 && client->nonewblocks == 0)
   {
 //Log("3. BufferUpdate(client,(BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0)\n");
@@ -441,7 +433,8 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       if (didupdate!=0)
         *bufupd_pending&=~(didupdate&(BUFFERUPDATE_FLUSH|BUFFERUPDATE_FETCH));
       if ((didupdate & BUFFERUPDATE_FETCH) != 0) /* fetched successfully */
-        bufcount = __loadapacket( client, &wrdata, 0, prob_i );
+        bufcount = __loadapacket( client, &wrdata, 0, prob_i,
+                                  update_on_current_contest_exhaust_flag );
     }
   }
 #endif

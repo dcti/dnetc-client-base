@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.27 2000/04/14 18:11:50 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.28 2000/04/15 16:57:10 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -126,51 +126,20 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
 { CFGTXT("Disable the packet completion indicator?"),"0",
   CFGTXT(""
   ),CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL},
-//10
-{ CFGTXT("Load-work precedence"), "DES,CSC,OGR,RC5", 
-  /* CFGTXT( */
-  "The order specified here determines the order the client will look for work\n"
-  "each time it needs to load a packet from a buffer. For example, \"OGR,RC5,...\"\n"
-  "instructs the client to first look for work for OGR and if it doesn't find\n"
-  "any, to try RC5 next, and so on.\n"
-  "\n"
-  "You can turn off a project by setting \":0\" or \"=0\" after the project's\n"
-  "name - for instance, \"OGR:0\" tells your client not to work on, or request\n"
-  "work for, the OGR project.\n"
-  "\n"
-  "Projects not found in the list you enter here will be inserted in their\n"
-  "default position.\n"
-  "\n"
-  "It is possible to have the client rotate through this list, updating\n"
-  "its buffers only once for each pass. To do so, 'Dialup-link detection'\n"
-  "and 'Frequent buffer-level checks' must be disabled since a buffer update\n"
-  "(new work being made available) would otherwise cause the client to go back\n"
-  "to the beginning of the load order.\n"
-  /* if any flush setting is less than fetch, and the client then updates, 
-     it will also end up going back to the beginning of the loadorder 
-     since new work will then be available for that project.
-  */
-#if 0 
-  "Please note: when DES is active & enabled, the client will clear input\n"
-  "buffers for all other projects, thus ensuring that clients sharing those\n"
-  "buffer files do not inadvertantly work on the \"wrong\" project for the\n"
-  "few hours DES is active.\n"
-#endif  
-  /*) */,CONF_MENU_MISC,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
 
 /* ------------------------------------------------------------ */
 
-//11
+//10
 { CFGTXT("Buffer and Buffer Update Options"),"",
   CFGTXT(""),CONF_MENU_MAIN,CONF_TYPE_MENU,NULL,NULL,CONF_MENU_BUFF,0,NULL},
-//12
+//11
 {  CFGTXT("Buffer in memory only? (no disk I/O)"),"0",
    CFGTXT(
    "This option is for machines with permanent connections to a keyserver\n"
    "but without local disks. Note: This option will cause all buffered,\n"
    "unflushable work to be lost by a client shutdown.\n"
   ),CONF_MENU_BUFF,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL},
-//13
+//12
 { CFGTXT("In-Buffer Filename Prefix"), BUFFER_DEFAULT_IN_BASENAME,
   CFGTXT(
   "Enter the prefix (the base name, ie a filename without an 'extension') of\n"
@@ -188,7 +157,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "locking semantics; all buffers for all projects will be contained in a\n"
   "single file).\n"
   ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
-//14
+//13
 { CFGTXT("Out-Buffer Filename Prefix"), BUFFER_DEFAULT_OUT_BASENAME,
   CFGTXT(
   "Enter the prefix (the base name, ie a filename without an 'extension') of\n"
@@ -203,7 +172,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "(This option will eventually disappear. Refer to the \"In-Buffer\n"
   "Filename Prefix\" option for details).\n"
   ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
-//15
+//14
 { CFGTXT("Checkpoint Filename"),"",
   CFGTXT(
   "This option sets the location of the checkpoint file. The checkpoint is\n"
@@ -214,23 +183,23 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "files unless your client is running in an environment where it might not\n"
   "be able to shutdown properly.\n"
   ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
-//16
+//15
 { CFGTXT("Disable buffer updates from/to a keyserver"),"0",
   CFGTXT(
   "Yes: The client will never connect to a keyserver.\n"
   " No: The client will connect to a keyserver as needed.\n"
   ),CONF_MENU_BUFF,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL},
-//17
+//16
 { CFGTXT("Keyserver<->client connectivity options"),"",
   CFGTXT(""),CONF_MENU_BUFF,CONF_TYPE_MENU,NULL,NULL,CONF_MENU_NET,0,NULL,NULL},
-//18
+//17
 { CFGTXT("Disable buffer updates from/to remote buffers"),"0",
   CFGTXT(
   "Yes: The client will not use remote files.\n"
   " No: The client will use remote files if updating from a keyserver is\n"
   "     disabled or it fails or if insufficient packets were sent/received.\n"
   ),CONF_MENU_BUFF,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL},
-//19
+//18
 { CFGTXT("Remote buffer directory"),"",
   CFGTXT(
   "When a client runs out of work to do and cannot fetch more work from a\n"
@@ -243,23 +212,62 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "the alternate buffer directory is \"/there/\" then the alternate in-buffer-file\n"
   "for RC5 becomes \"/there/"BUFFER_DEFAULT_IN_BASENAME".rc5\"\n"
   ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
-//20
-{ CFGTXT("Frequent buffer-level check type"),"0 (disabled)",
-  CFGTXT(
-  "Enabling this option will cause the client to check buffers levels\n"
-  "every few minutes or so. You might want to use this if you have a\n"
-  "single computer with a network connection \"feeding\" other clients via\n"
-  "a common set of buffers, or if you want to ensure that buffers are kept\n"
-  "full, or if you want to ensure that completed work is flushed immediately.\n" 
+//19
+{ CFGTXT("Load-work precedence"), "DES,CSC,OGR,RC5", 
+  /* CFGTXT( */
+  "The order specified here determines the order the client will look for work\n"
+  "each time it needs to load a packet from a buffer. For example, \"OGR,RC5,...\"\n"
+  "instructs the client to first look for work for OGR and if it doesn't find\n"
+  "any, to try RC5 next, and so on.\n"
   "\n"
-  " 0) Disable frequent threshold checks.\n"  
-  " 1) in-buffer checks only. (checks that in-buffers are kept full).\n"
-  " 2) out-buffers checks only. (checks that all work is flushed).\n"
-  " 3) both in- and out-buffers.\n"
-  "\n"  
+  "You can turn off a project by setting \":0\" or \"=0\" after the project's\n"
+  "name - for instance, \"OGR:0\" tells your client not to work on, or request\n"
+  "work for, the OGR project.\n"
+  "\n"
+  "Projects not found in the list you enter here will be inserted in their\n"
+  "default position.\n"
+  "\n"
+  "It is possible to have the client rotate through this list, updating\n"
+  "its buffers only once for each pass. To do so, 'Dialup-link detection'\n"
+  "and 'Buffer-level check frequency' must be disabled since a buffer update\n"
+  "(new work being made available) would otherwise cause the client to go back\n"
+  "to the beginning of the load order.\n"
+  /* if any flush setting is less than fetch, and the client then updates, 
+     it will also end up going back to the beginning of the loadorder 
+     since new work will then be available for that project.
+  */
+#if 0 
+  "Please note: when DES is active & enabled, the client will clear input\n"
+  "buffers for all other projects, thus ensuring that clients sharing those\n"
+  "buffer files do not inadvertantly work on the \"wrong\" project for the\n"
+  "few hours DES is active.\n"
+#endif  
+  /*) */,CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
+//20
+{ CFGTXT("Additional buffer-level checking"),"0 (none)",
+  /*CFGTXT(*/
+  "The following options are extensions to normal threshold management and are\n"
+  "not usually necessary.\n"
+  "\n"
+  " 0) no additional buffer-level checking. (default)\n"
+  " 1) ensure that there is always work available.\n"
+  " 2) ensure that all completed work is kept flushed.\n"
+  " 3) both 1) and 2). (implied if 'Dialup detection options' are enabled)\n"
+  " 4) update on per-project buffer exhaustion.\n"
+  "\n"
+  "Options 1, 2 and 3 will cause the client to check buffers levels every few\n"
+  "minutes or so. You might want to use them if you have a single computer with\n"
+  "a network connection \"feeding\" other clients via a common set of buffers,\n"
+  "or if you want to ensure that completed work is flushed immediately.\n"
+  "Option 4 is a hint to the client to work on a single project as long as\n"
+  "possible (updating per-project buffers individually), rather than loop through\n"
+  "all active/enabled projects (one combined update per pass).\n"
+#if 0  
+  "\n"
   "Note: enabling (modem-) connection detection implies type 3, ie that\n" 
   "buffers will be updated frequently while a connection is detected.\n" 
-  ),CONF_MENU_BUFF,CONF_TYPE_INT,NULL,NULL,0,3,NULL,NULL},
+#endif
+  /*)*/,CONF_MENU_BUFF,CONF_TYPE_INT,NULL,NULL,0,4,NULL,NULL},
 //21
 { CFGTXT("Preferred packet size (2^X keys/packet)"), "-1 (auto)",
   /* CFGTXT( */
@@ -293,7 +301,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "should be used instead. If that too is unspecified, then the client will\n"
   "use defaults.\n"
   "\n"
-  "* See also: 'Frequent buffer-level checks'\n"
+  "* See also: 'Buffer-level check frequency'\n"
   ,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,1,0xffff,NULL,NULL},
 //23
 { CFGTXT("Fetch time threshold (in hours)"), "0 (use work threshold)",
@@ -310,7 +318,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "unprocessed packet cannot be predicted.\n"
 #endif
   "\n"
-  "* See also: 'Frequent buffer-level checks'\n"
+  "* See also: 'Buffer-level check frequency'\n"
   ,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,0,336,NULL,NULL},
 
 /* ------------------------------------------------------------ */
@@ -341,18 +349,14 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   /*) */,CONF_MENU_PERF,CONF_TYPE_INT,NULL,NULL,-1,128,NULL,NULL},
 //27
 { CFGTXT("Priority level to run at"), "0 (lowest/at-idle)",
+  /* CFGTXT( */
 #if (CLIENT_OS == OS_RISCOS)
-  CFGTXT(
   "The priority option is ignored on this machine. The distributed.net client\n"
   "for "CLIENT_OS_NAME" dynamically adjusts its process priority.\n"
-  )
-#elif (CLIENT_OS==OS_WIN16) //|| (CLIENT_OS==OS_WIN32)
-  CFGTXT(
+#elif (CLIENT_OS == OS_WIN16) //|| (CLIENT_OS==OS_WIN32)
   "The priority option is ignored on this machine. distributed.net clients\n"
-  "for Windows always run at lowest ('idle') priority.\n"
-  )
-#elif (CLIENT_OS==OS_NETWARE)
-  CFGTXT(
+  "for "CLIENT_OS_NAME" always run at lowest ('idle') priority.\n"
+#elif (CLIENT_OS == OS_NETWARE)
   "The priority option for the distributed.net client for NetWare is directly\n"
   "proportionate to the rate at which the client yields. While the formula\n"
   "itself is simple, (priority+1)*500 microseconds (ie priority 0 == 0.5\n"
@@ -361,9 +365,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "to environment. Thus, it is a really a matter of experimentation to find the\n"
   "best \"priority\" for your machine, and while \"priority\" zero will probably\n"
   "give you a less-than-ideal crunch rate, it will never be \"wrong\".\n" 
-  )
 #else
-  /* CFGTXT( */
   "The higher the client's priority, the greater will be its demand for\n"
   "processor time. The operating system will fulfill this demand only after\n"
   "the demands of other processes with a higher or equal priority are fulfilled\n"
@@ -372,8 +374,9 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "client will always get CPU time unless there is a time-critical process\n"
   "waiting to be run - this is obviously not a good idea unless the client is\n"
   "running on a machine that does nothing else.\n"
+  #if defined(__unix__)
   "On *nix'ish OSs, the higher the priority, the less nice(1) the process.\n"
-  #if (CLIENT_OS == OS_WIN32)
+  #elif (CLIENT_OS == OS_WIN32)
   "*Warning*: Running the Win32 client at any priority level other than zero is\n"
   "destructive to Operating System safety. Win32's thread scheduler is not nice.\n"
   "Besides, a zero priority does not mean that the client will run slower than at\n"
@@ -382,9 +385,8 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "time, the client will get it. Do *not* change the value of this option unless\n"
   "you are intimately familiar with the way Win32 thread scheduling works.\n"
   #endif
-  /* ) */
 #endif
-  ,CONF_MENU_PERF, CONF_TYPE_INT, NULL, NULL, 0, 9, NULL,NULL },
+  /*)*/,CONF_MENU_PERF, CONF_TYPE_INT, NULL, NULL, 0, 9, NULL,NULL },
 
 /* ------------------------------------------------------------ */
 

@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.25 2000/04/14 18:11:51 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.26 2000/04/15 16:57:10 cyp Exp $"; }
 
 //#define TRACE
 
@@ -511,7 +511,9 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
     {
       /* if we have _any_ key already in the new format, then we're done */
       if (GetPrivateProfileStringB( __getprojsectname(cont_i), "fetch-workunit-threshold", "", buffer, sizeof(buffer), fn )
+       #if !defined(NO_OUTBUFFER_THRESHOLDS)          
        || GetPrivateProfileStringB( __getprojsectname(cont_i), "flush-workunit-threshold", "", buffer, sizeof(buffer), fn )
+       #endif
        )
       {
         thresholdsdone = 1;
@@ -1038,45 +1040,8 @@ int ReadConfig(Client *client)
 
   /* --------------------- */
 
-  for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-  {
-    if ((cont_name = __getprojsectname(cont_i)) != ((const char *)0))
-    {
-      if (cont_i != OGR)
-      {
-        client->coretypes[cont_i] =
-           GetPrivateProfileIntB(cont_name, "core",
-                         client->coretypes[cont_i],fn);
-        /* note that the default preferred_blocksize is now <=0 (auto) */
-        client->preferred_blocksize[cont_i] =
-           GetPrivateProfileIntB(cont_name, "preferred-blocksize",
-                         client->preferred_blocksize[cont_i], fn );
-      }
-
-      client->inthreshold[cont_i] =
-           GetPrivateProfileIntB(cont_name, "fetch-workunit-threshold",
-                         client->inthreshold[cont_i], fn );
-      #if defined(NO_OUTBUFFER_THRESHOLDS)          
-      WritePrivateProfileIntB( cont_name, "flush-workunit-threshold",NULL,fn);
-      #else
-      client->outthreshold[cont_i] =
-           GetPrivateProfileIntB(cont_name, "flush-workunit-threshold",
-                         client->outthreshold[cont_i], fn );
-      if (client->outthreshold[cont_i] > client->inthreshold[cont_i])
-        client->outthreshold[cont_i] = client->inthreshold[cont_i];
-      #endif        
-      client->timethreshold[cont_i] =
-           GetPrivateProfileIntB(cont_name, "fetch-time-threshold",
-                         client->timethreshold[cont_i], fn);
-    }
-  }
-
-  /* --------------------- */
-
   TRACE_OUT((0,"ReadConfig() [2 begin]\n"));
 
-  GetPrivateProfileStringB( OPTSECT_MISC, "project-priority", "", buffer, sizeof(buffer), fn );
-  projectmap_build(client->loadorder_map, buffer);
   if (GetPrivateProfileStringB(OPTSECT_MISC,"run-time-limit","",buffer,sizeof(buffer),fn))
   {
     if ((client->minutes = __parse_timestring( buffer, 0 )) < 0)
@@ -1108,8 +1073,53 @@ int ReadConfig(Client *client)
   GetPrivateProfileStringB( OPTSECT_BUFFERS, "alternate-buffer-directory", client->remote_update_dir, client->remote_update_dir, sizeof(client->remote_update_dir), fn );
   GetPrivateProfileStringB( OPTSECT_BUFFERS, "checkpoint-filename", client->checkpoint_file, client->checkpoint_file, sizeof(client->checkpoint_file), fn );
   client->connectoften = GetPrivateProfileIntB( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften , fn );
+  GetPrivateProfileStringB( OPTSECT_MISC, "project-priority", "", buffer, sizeof(buffer), fn );
+  projectmap_build(client->loadorder_map, buffer);
 
   TRACE_OUT((0,"ReadConfig() [3 begin]\n"));
+
+  for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+  {
+    if ((cont_name = __getprojsectname(cont_i)) != ((const char *)0))
+    {
+      if (cont_i != OGR)
+      {
+        client->coretypes[cont_i] =
+           GetPrivateProfileIntB(cont_name, "core",
+                         client->coretypes[cont_i],fn);
+        /* note that the default preferred_blocksize is now <=0 (auto) */
+        client->preferred_blocksize[cont_i] =
+           GetPrivateProfileIntB(cont_name, "preferred-blocksize",
+                         client->preferred_blocksize[cont_i], fn );
+      }
+
+      client->inthreshold[cont_i] =
+           GetPrivateProfileIntB(cont_name, "fetch-workunit-threshold",
+                         client->inthreshold[cont_i], fn );
+      #if defined(NO_OUTBUFFER_THRESHOLDS)
+      if (client->connectoften == 0)
+      {
+        int ot=GetPrivateProfileIntB(cont_name,"flush-workunit-threshold",0,fn);
+        if (ot == 1)
+          client->connectoften = 1; /* frequent in-buf checks */
+        else if (ot > 0 && ot < client->inthreshold[cont_i])
+          client->connectoften = 4; /* sticky contests */
+        if (client->connectoften != 0) /* changed */ 
+          WritePrivateProfileIntB( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften, fn );
+      }
+      WritePrivateProfileStringB( cont_name,"flush-workunit-threshold",NULL,fn);
+      #else
+      client->outthreshold[cont_i] =
+           GetPrivateProfileIntB(cont_name, "flush-workunit-threshold",
+                         client->outthreshold[cont_i], fn );
+      if (client->outthreshold[cont_i] > client->inthreshold[cont_i])
+        client->outthreshold[cont_i] = client->inthreshold[cont_i];
+      #endif        
+      client->timethreshold[cont_i] =
+           GetPrivateProfileIntB(cont_name, "fetch-time-threshold",
+                         client->timethreshold[cont_i], fn);
+    }
+  }
   TRACE_OUT((0,"ReadConfig() [3 end]\n"));
 
   TRACE_OUT((-1,"ReadConfig()\n"));
