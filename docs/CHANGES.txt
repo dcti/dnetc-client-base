@@ -21,18 +21,22 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.96 2001/07/20 01:40:18 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.97 2001/10/05 22:52:13 mfeiri Exp $
 ==========================================================================
 
 2.8000
 ------
+
+2.8016.470  new: ppc: new AltiVec RC5 core for the PPC 7450 by Dan Oetting.
 
 2.8015.469a (currently no [pre-]release builds, may get .470)
             fix: all: flushed when 1 packet was left in in-buffer (#2209).
             fix: all: time threshold ignored on command line -update (#2286).
             fix: all: packets lost by -import and unwritable buffers (#2298).
             imp: all: suppress logfile pollution with remote buffer errors.
-
+            imp: macos: temperature sensing for dual G3 and G4 systems.
+            fix: macosx: the 7450 is now correctly recognized as a G4 CPU.
+            
 2.8015.469  new: x86: two OGR cores now.
             new: x86/win16/win32/netware: added support for the RC5 SMC core.
             new: win32: RAS profile names are now supported in the
@@ -42,7 +46,6 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.96 2001/07/20 01:40:18 andreasb Exp
                       Cores not applicable to a particular cpu/os will be 
                       marked as 'n/a' and won't benchmark etc.
             imp: some: faster 68k and PPC OGR cores.
-            
 
 2.8014.468  fix: all: bad results caused by build .466.
             fix: all: packets were saved and reloaded after buffer update.
