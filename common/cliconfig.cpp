@@ -2895,11 +2895,12 @@ void Client::PrintBanner(const char * clname)
 #if defined(KWAN)
               "DES Search routines Copyright Matthew Kwan\n"
 #endif
-              "Visit http://www.distributed.net/ for more information."
+              "Please visit http://www.distributed.net/ for up to date contest information."
 #if (CLIENT_OS == OS_NETWARE)
              "\n\n",CLIENT_CONTEST*100 + CLIENT_BUILD, CLIENT_BUILD_FRAC);
 #else
-              "  '%s HELP' for usage\n\n",
+              "\nExecute '%s HELP' for online help, or read rc5des.txt for more\n"
+              "detailed client option information.\n",
               CLIENT_CONTEST*100 + CLIENT_BUILD, CLIENT_BUILD_FRAC,clname);
 #endif
 }
