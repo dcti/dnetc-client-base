@@ -6,14 +6,14 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.33 2000/06/18 16:23:56 andreasb Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.34 2000/07/01 13:43:27 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
 #include "client.h"   //client class
 #include "baseincs.h" //basic #includes
 #include "network.h"  //ntohl(), htonl()
-#include "util.h"     //IsFilenameValid(), DoesFileExist(), __iter2norm()
+#include "util.h"     //IsFilenameValid(), DoesFileExist()
 #include "clievent.h" //event stuff
 #include "clicdata.h" //GetContestNameFromID()
 #include "logstuff.h" //Log()/LogScreen()/LogScreenPercent()/LogFlush()
@@ -24,6 +24,45 @@ return "@(#)$Id: buffbase.cpp,v 1.12.2.33 2000/06/18 16:23:56 andreasb Exp $"; }
 #include "buffupd.h"  // BUFFERUPDATE_FETCH / BUFFERUPDATE_FLUSH
 #include "buffbase.h" //ourselves
 
+/* --------------------------------------------------------------------- */
+
+const char *BufferGetDefaultFilename( unsigned int project, int is_out_type,
+                                                       const char *basename )
+{
+  static char filename[128];
+  const char *suffix = CliGetContestNameFromID( project );
+  unsigned int len, n;
+
+  filename[0] = '\0';
+  if (*basename)
+  {
+    while (*basename && isspace(*basename))
+      basename++;
+    if (*basename)
+    {
+      strncpy( filename, basename, sizeof(filename));
+      filename[sizeof(filename)-1]='\0';
+      len = strlen( filename );
+      while (len && isspace( filename[len-1] ) )
+        filename[--len] = '\0';
+    }
+  }
+
+  if (filename[0] == 0)
+  {
+    strcpy( filename, ((is_out_type) ?
+       BUFFER_DEFAULT_OUT_BASENAME /* "buff-out" */:
+       BUFFER_DEFAULT_IN_BASENAME  /* "buff-in" */  ) );
+  }
+
+  filename[sizeof(filename)-5]='\0';
+  strcat( filename, EXTN_SEP );
+  len = strlen( filename );
+  for (n=0;suffix[n] && n<3;n++)
+    filename[len++] = (char)tolower(suffix[n]);
+  filename[len]='\0';
+  return filename;
+}
 
 
 /* ===================================================================== */
@@ -836,3 +875,4 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
     return -((long)(totaltrans_pkts+1));
   return totaltrans_pkts;
 }
+

@@ -8,7 +8,7 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.1.2.4 2000/05/08 11:17:08 cyp Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.1.2.5 2000/07/01 13:43:28 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
@@ -71,7 +71,7 @@ static FILE *BufferOpenFile( const char *filename, unsigned long *countP )
   #endif
 
   FILE *file = NULL;
-  u32 filelen;
+  unsigned long filelen;
   int failed = 0;
   const char *qfname = GetFullPathForFilename( filename );
 

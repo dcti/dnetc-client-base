@@ -10,7 +10,7 @@
  * ------------------------------------------------------------------
 */
 #ifndef __BUFFBASE_H__
-#define __BUFFBASE_H__ "@(#)$Id: buffbase.h,v 1.1.2.4 2000/06/17 21:36:01 cyp Exp $"
+#define __BUFFBASE_H__ "@(#)$Id: buffbase.h,v 1.1.2.5 2000/07/01 13:43:28 cyp Exp $"
 
 /* ..Put() returns <0 on ioerr, else 0 on success */
 int BufferPutFileRecord( const char *filename, const WorkRecord * data, 
@@ -56,5 +56,8 @@ long GetBufferCount(Client *client, unsigned int contest,
 /* determine if an in-buffer is full. */
 int BufferAssertIsBufferFull( Client *client, unsigned int contest );
 
+const char *BufferGetDefaultFilename( unsigned int project, int is_out_type,
+                                                       const char *basename );
 #endif /* __BUFFBASE_H__ */
+
 

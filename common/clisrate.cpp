@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.45.2.11 2000/02/04 20:26:57 ivo Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.45.2.12 2000/07/01 13:43:28 cyp Exp $"; }
 
 #include "cputypes.h"  // u32
 #include "problem.h"   // Problem class
@@ -18,7 +18,6 @@ return "@(#)$Id: clisrate.cpp,v 1.45.2.11 2000/02/04 20:26:57 ivo Exp $"; }
 #include "clitime.h"   // CliTimer(), CliTimerDiff(), CliGetTimeString()
 #include "clirate.h"   // CliGetKeyrateFor[Problem|Contest]()
 #include "clicdata.h"  // CliGetContestInfo[Base|Summary]Data()
-#include "util.h"      // temporary home of ogr_stubstr()
 #include "clisrate.h"  // keep prototypes in sync
 
 /*
@@ -291,6 +290,7 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
     tv.tv_usec = prob->completion_timelo;
   }
   
+  str[0] = '\0';
   switch (contestid) 
   {
     case RC5:
@@ -315,7 +315,11 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
       sprintf( str, "Completed %s stub %s (%s nodes)\n"
                     "%s - [%snodes/sec]\n",  
                     name, 
+                    #ifdef HAVE_OGR_CORES
                     ogr_stubstr( &work.ogr.workstub.stub ),
+                    #else
+                    "??/??-??-??-??"
+                    #endif
                     num_sep(CliGetU64AsString(work.ogr.nodes.hi, 
                                               work.ogr.nodes.lo, 0, -1)),
                     CliGetTimeString( &tv, 2 ),

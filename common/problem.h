@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.30 2000/06/24 09:07:24 andreasb Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.31 2000/07/01 13:43:29 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -19,7 +19,6 @@
 int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
 /* result depends on #ifdefs, threadsafety issues etc */
 
-/* ---------------------------------------------------------------------- */
 
 #undef MAX_MEM_REQUIRED_BY_CORE
 #define MAX_MEM_REQUIRED_BY_CORE  8  //64 bits
@@ -175,9 +174,20 @@ public: /* anything public must be thread safe */
     /* Return the % completed in the current block, to nearest 0.1%. */
 };
 
-/* ----------------------------------------------------------------------- */
+/* ------------------------------------------------------------------- */
+
+/* RC5/DES/CSC 2^28 key count conversion.
+   belongs in ccoreio.c[pp], but that doesn't exist, and its not worth
+   creating for this itty-bitty thing.
+*/
+inline u32 __iter2norm( u32 iterlo, u32 iterhi )
+{
+  iterlo = ((iterlo >> 28) + (iterhi << 4));
+  if (!iterlo)
+    iterlo++;
+  return iterlo;
+}
 
 #endif /* __cplusplus */
 
 #endif /* __PROBLEM_H__ */
-

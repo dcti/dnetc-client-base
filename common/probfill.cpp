@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.36 2000/06/25 14:01:18 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.37 2000/07/01 13:43:28 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -19,7 +19,6 @@ return "@(#)$Id: probfill.cpp,v 1.58.2.36 2000/06/25 14:01:18 cyp Exp $"; }
 #include "logstuff.h"  // Log()/LogScreen()
 #include "clitime.h"   // CliGetTimeString()
 #include "cpucheck.h"  // GetNumberOfDetectedProcessors()
-#include "util.h"      // ogr_stubstr(), __iter2norm()
 #include "random.h"    // Random()
 #include "selcore.h"   // selcoreSelectCore()
 #include "clisrate.h"  // CliGetMessageFor... et al.
@@ -263,11 +262,13 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
                     (unsigned long) ( wrdata.work.crypto.key.lo ) );
             break;
           }
+          #ifdef HAVE_OGR_CORES
           case OGR:
           {
             sprintf(workpacket," stub %s", ogr_stubstr(&wrdata.work.ogr.workstub.stub) );
             break;
           }
+          #endif
         }
         char perdone[48]; 
         perdone[0]='\0';
@@ -503,6 +504,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
          expected_cpu, expected_core, expected_os, expected_build );
     thisprob->loaderflags = 0;
 
+    msgbuf[0] = '\0';
     switch (wrdata.contest) 
     {
       case RC5:
@@ -517,12 +519,14 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
                 (unsigned long) ( wrdata.work.crypto.key.lo ) );
         break;
       }
+      #ifdef HAVE_OGR_CORES
       case OGR:
       {
         norm_key_count = 1;
         sprintf(msgbuf," stub %s", ogr_stubstr(&wrdata.work.ogr.workstub.stub) );
         break;
       }
+      #endif
     }
 
     if (load_problem_count <= COMBINEMSG_THRESHOLD && msgbuf[0])

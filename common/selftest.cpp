@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.32 2000/06/23 13:33:24 oliver Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.33 2000/07/01 13:43:29 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -15,7 +15,6 @@ return "@(#)$Id: selftest.cpp,v 1.47.2.32 2000/06/23 13:33:24 oliver Exp $"; }
 #include "cpucheck.h"  // GetNumberOfDetectedProcessors() [for RISCOS]
 #include "clicdata.h"  // CliGetContestNameFromID() 
 #include "clievent.h"  // ClientEventSyncPost()
-#include "util.h"      // ogr_stubstr()
 
 // --------------------------------------------------------------------------
 
@@ -453,6 +452,7 @@ int SelfTest( unsigned int contest )
                expectedsolution_hi, expectedsolution_lo );
             break;
 
+          #ifdef HAVE_OGR_CORES
           case OGR:
             if (expectedsolution_lo & 0x80000000) { // no solution
               expectedsolution_lo = ~expectedsolution_lo;
@@ -479,6 +479,7 @@ int SelfTest( unsigned int contest )
                ogr_stubstr(&contestwork.ogr.workstub.stub),
                contestwork.ogr.nodes.lo, expectedsolution_lo );
             break;
+          #endif /* HAVE_OGR_CORES */
         } /* switch */
 
       } /* if (!userbreak) */
