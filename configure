@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.33  1998/06/14 10:15:17  skand
+# Use gcc/g++ -c when possible to assemble .S files.  Other systems than bsdi/NetBSD might need tweaking
+#
 # Revision 1.32  1998/06/14 08:45:34  friedbait
 # 'ident' target added, builds a formatted list of a 'bill of material' of the
 # rc5des binary executable.
@@ -104,7 +107,7 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
 
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
-OPTS_EGCS='-O2 -fomit-frame-pointer -Wall -Icommon'
+OPTS_EGCS='-O2 -fomit-frame-pointer -Wall -Icommon -Ides -Irc5 -Iplatforms'
 
 
 #
@@ -352,21 +355,15 @@ case "$1" in
     *x86-solaris)
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -Dsolaris -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="output/bdeslow-clean.s output/bbdeslow-clean.s output/x86ident-clean.s"
+	TARGET_ADDASMS="output/bdeslow.S output/bbdeslow.S output/x86ident.S"
 	TARGET_LIBS="-lnsl -lsocket -ldl"
-	sed -e 's/#.*$//' des/bdeslow.s > output/bdeslow-clean.s
-	sed -e 's/#.*$//' des/bbdeslow.s > output/bbdeslow-clean.s
-        sed -e 's/#.*$//' platforms/x86ident.s > output/x86ident-clean.s
 	;;
 
     *x86-solaris-mt)
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -Dsolaris -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="output/bdeslow-clean.s output/bbdeslow-clean.s output/x86ident-clean.s"
+	TARGET_ADDASMS="output/bdeslow.S output/bbdeslow.S output/x86ident.S"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
-	sed -e 's/#.*$//' des/bdeslow.s > output/bdeslow-clean.s
-	sed -e 's/#.*$//' des/bbdeslow.s > output/bbdeslow-clean.s
-        sed -e 's/#.*$//' platforms/x86ident.s > output/x86ident-clean.s
 	;;
 
 ###### Alpha
@@ -453,123 +450,124 @@ case "$1" in
 
 ###### Intel X86 Linux platforms
     *x86-linux-egcs)    # uses EGCS options
-	TARGET_AS="as"
+	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
 	;;
 
     *x86-linux-egcs-debug)    # debug version of x86-linux-egcs
-	TARGET_AS="as"
+	TARGET_AS="gcc -c"
 	TARGET_CC="gcc -g"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
 	TARGET_STRIP="touch"
 	;;
 
     *x86-linux-old)   # uses standard GCC options plus '-pipe'
-	TARGET_AS="as"
+	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
 	;;
 
     *x86-linux-aout)
-	TARGET_AS="i486-pc-linux-gnuaout-as"
+	TARGET_AS="i486-pc-linux-gnuaout-gcc -c"
 	TARGET_CC="i486-pc-linux-gnuaout-gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
 	;;
 
     *x86-linux-mt-egcs)
-	TARGET_AS="as"
+	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
 	TARGET_LIBS="-lpthread"
 	;;
 
     *x86-linux-mt-gcc)
-	TARGET_AS="as"
+	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
 	TARGET_LIBS="-lpthread"
 	;;
 
     *x86-linux-mt-slice-kwan-gcc)     # using slice not bryddes
-	TARGET_AS="as"
+	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DKWAN"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $KWAN_SLICE_SRCS4"
-	TARGET_ADDASMS="platforms/x86ident.s"
+	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_LIBS="-lpthread"
 	;;
 
 ###### Intel X86 FreeBSD/NetBSD/OpenBSD
 
     *x86-freebsd)
-	TARGET_AS="as"
+	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
 	;;
 
     *x86-freebsd-mt)
-	TARGET_AS="as"
+	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
 	TARGET_LIBS="-lc_r"
 	;;
 
     *x86-netbsd)
-	TARGET_AS="as"
+	TARGET_AS="g++ -c -DNO_BALIGN"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
 	;;
 
     *x86-openbsd)
-	TARGET_AS="as"
+	TARGET_AS="g++ -c"
 	TARGET_CCFLAGS="$OPTS_GCC_P5 -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
 	;;
 
     *x86-bsdi)
-       TARGET_AS="as"
-       TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
-       TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-       TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
-       ;;
+	TARGET_AS="g++ -c -DNO_BALIGN"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
+	;;
 
 ####### Intel X86 SCO5
 
     *x86-sco5)
+	TARGET_AS="g++ -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -belf -Dsco5"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
 	TARGET_LIBS="-lsocket"
 	;;
 
 ###### NeXT (x86, m68k, sparc, hppa)
 
     *x86-next)
-	TARGET_AS="as"
+	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -D_NeXT_ -DPIPELINE_COUNT=2 -DBIT_32"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S"
 	;;
 
     *m68k-next-gcc)
