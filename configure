@@ -5,6 +5,20 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.132  1998/12/01 22:29:28  silby
+# Recommitted.
+#
+# Revision 1.133  1998/11/29 14:40:19  cyp
+# Added SMC support to x86-linux-gcc
+#
+# Revision 1.132  1998/11/28 17:49:32  remi
+# Integration of the 386/486 self-modifying core.
+# To use this core on your platform :
+# * add -DSMC to TARGET_CFLAGS
+# * change TARGET_LDFLAGS to let the program write to his own text
+#   segment.
+# * add rc5/rc5-486-smc-rg.cpp to TARGET_ADDSRCS
+#
 # Revision 1.131  1998/11/26 16:14:26  cyp
 # New module: checkpt.cpp
 #
@@ -953,9 +967,9 @@ case "$1" in
     *x86-linux-libc5-nomt-gcc)         # [remi] nomt, libc5, static, gcc
 	TARGET_AS="i486-linuxlibc1-gcc -c"
 	TARGET_CC="i486-linuxlibc1-gcc"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC272_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_CCFLAGS="-pipe $OPTS_GCC272_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DSMC"
+	TARGET_LDFLAGS="-Xlinker -omagic -static"
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp $RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS=""
@@ -964,10 +978,10 @@ case "$1" in
     *x86-linux-aout-nomt-egcs)         # [remi] nomt, libc4, static, egcs
 	TARGET_AS="i486-pc-linux-gnuaout-gcc -c"
 	TARGET_CC="i486-pc-linux-gnuaout-gcc"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__"
-	TARGET_LDFLAGS="-static"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DSMC"
+	TARGET_LDFLAGS="-Xlinker -omagic -static"
 	TARGET_NASMFLAGS="-i rc5/nasm/ -f aout"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp $RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS=""
@@ -976,9 +990,9 @@ case "$1" in
     *x86-linux-libc5-mt-gcc)           # [remi] mt, libc5, static, gcc
 	TARGET_AS="i486-linuxlibc1-gcc -c"
 	TARGET_CC="i486-linuxlibc1-gcc"
-	TARGET_CCFLAGS="$OPTS_GCC272_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DMULTITHREAD"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_CCFLAGS="$OPTS_GCC272_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DMULTITHREAD -DSMC"
+	TARGET_LDFLAGS="-Xlinker -omagic -static"
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp $RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lpthread"
@@ -986,10 +1000,10 @@ case "$1" in
 
     *x86-linux-glibc2-mt-egcs)         # [remi] mt, glibc2, dynamic, egcs
 	TARGET_AS="g++ -c"
-	TARGET_CC="g++ -nodefaultlibs"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ -DMULTITHREAD"
-	TARGET_LDFLAGS=""
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_CC="g++"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ -DMULTITHREAD -DSMC"
+	TARGET_LDFLAGS="-Xlinker -omagic -static"
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp $RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS="-lgcc -lc -lm -lpthread"
@@ -1047,22 +1061,15 @@ case "$1" in
 
   ### Other targets
 
-    *x86-linux-gcc)                    # nomt, static, gcc
+    *x86-linux-gcc)			# nomt, static, gcc/pipe
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ -static -DSMC"
+	TARGET_LDFLAGS="-Xlinker -omagic -static"
+	TARGET_ADDSRCS="rc5/rc5-486-smc-rg.cpp $RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_LIBS=""
-	;;
-
-    *x86-linux-gcc-simple)             # nomt, dynamic, gcc
-	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
-        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	;;
 
     *x86-linux-gcc-debug)              # nomt, dynamic, gcc, debug
