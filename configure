@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.242 1999/11/14 20:12:10 cyp Exp $
+# @(#)$Id: configure,v 1.243 1999/11/14 20:12:54 cyp Exp $
 
 if [ -z "$1" ]; then
   echo "No platform specified on command line.";
@@ -21,7 +21,7 @@ fi
 #
 # Binary's name
 #
-TARGET_BINNAME="rc5des"
+TARGET_BINNAME="dnetc"
 TARGET_BINNAME_SUFFIX=""
 BUILDNAME=$1
 
