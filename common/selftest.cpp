@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.85.2.10 2004/05/22 15:46:37 kakace Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.85.2.11 2004/05/22 16:57:43 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -566,7 +566,7 @@ long SelfTest( unsigned int contest )
       if (thisprob)
       {
         u32 tslice = 0x4000;
-        u32 usec = 1000000;
+        u32 sec = 0;
         int non_preemptive_env = 0;
         int resultcode;
 
@@ -612,11 +612,12 @@ long SelfTest( unsigned int contest )
               break;
             }
 
-            usec += thisprob->pub_data.runtime_usec;
-            if (usec >= 1000000 && (contest == OGR || contest == OGR_P2)) {
+            if (contest == OGR || contest == OGR_P2) {
               /* show /some/ activity (the time changes) */
-              LogScreen("\r%s: Test %02d working...", contname, testnum + 1 );
-              usec -= 1000000;
+              if (thisprob->pub_data.runtime_sec >= sec) {
+                LogScreen("\r%s: Test %02d working...", contname, testnum + 1 );
+                sec = thisprob->pub_data.runtime_sec + 1;
+              }
             }
           } while ( ProblemRun(thisprob) == RESULT_WORKING );
 
