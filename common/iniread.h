@@ -3,6 +3,9 @@
 // INI file reading/processing class for C++
 //
 // $Log: iniread.h,v $
+// Revision 1.23  1999/01/29 19:19:13  jlawson
+// changed some int vars to bool.
+//
 // Revision 1.22  1999/01/28 00:51:49  cyp
 // fixed end of string check in IniString == operator.
 //
@@ -135,23 +138,24 @@ public:
 
 
   // conditional tests
-  inline int is_null(void) const
+  inline bool is_null(void) const
     { return (!buffer || !buffer[0]); }
-  inline friend int operator== (const IniString &s1, const char *s2)
-    { const char *z1 = s1.c_str(); 
-      if (!z1 && !s2) return 1; if (!z1 || !s2) return 0; 
-      //printf("comparing %s and %s == ", z1, s2 );
-      while (*z1 && *s2 && tolower(*z1)==tolower(*s2)) {z1++;s2++;} 
-      //printf("%d %d\n", *z1, *s2 );      
-      return (*z1 == 0 && *s2 == 0); }
-  inline friend int operator== (const IniString &s1, const IniString &s2)
+  inline friend bool operator== (const IniString &s1, const char *s2)
+    {
+      const char *z1 = s1.c_str(); 
+      if (!z1 && !s2) return true;
+      if (!z1 || !s2) return false; 
+      while (*z1 && *s2 && tolower(*z1) == tolower(*s2)) { z1++; s2++; }
+      return (*z1 == 0 && *s2 == 0);
+    }
+  inline friend bool operator== (const IniString &s1, const IniString &s2)
     { return (s1 == s2.c_str()); }
-  inline friend int operator!= (const IniString &s1, const IniString &s2)
+  inline friend bool operator!= (const IniString &s1, const IniString &s2)
     { return !(s1 == s2); }
-  inline int need_quotes(void) const
+  inline bool need_quotes(void) const
     {return (buffer && (strchr(buffer, ' ') || strchr(buffer, ',')) &&
-          *buffer != '"' && strlen(buffer) > 1 &&
-          buffer[strlen(buffer) - 1] != '"' );}
+          *buffer != '\"' && strlen(buffer) > 1 &&
+          buffer[strlen(buffer) - 1] != '\"' );}
 
   // appending and prepending
   friend IniString operator+ (const IniString &s1, const IniString &s2);
@@ -351,10 +355,6 @@ public:
 
   // record searching
   IniRecord *findnext();
-//    { for (; lastindex < records.GetCount(); lastindex++)
-//      { if (lastsearch.is_null() || records[lastindex].key == lastsearch)
-//        return &records[lastindex++]; }
-//      return NULL;}
   inline IniRecord *findfirst() 
   { lastindex = 0; lastsearch.clear(); return findnext(); }
   inline IniRecord *findfirst(const char *Key) 
@@ -443,7 +443,7 @@ public:
   // efficient alternate record retrieval (similar to Win32 api)
   inline int GetProfileInt(const char *Key, int DefValue)
     { return (int) getkey(Key, (long) DefValue); }
-  int GetProfileBool(const char *Key, int DefValue);
+  bool GetProfileBool(const char *Key, bool DefValue);
   inline void GetProfileStringA(const char *Key, const char *DefValue, char *buffer, int buffsize)
     {
       IniRecord *that = findfirst(Key);
@@ -482,8 +482,8 @@ public:
     { sections.Flush(); }
 
   // reading and writing
-  int ReadIniFile(const char *Filename = NULL, const char *Section = 0);
-  int WriteIniFile(const char *Filename = NULL);
+  bool ReadIniFile(const char *Filename = NULL, const char *Section = 0);
+  bool WriteIniFile(const char *Filename = NULL);
   void fwrite(FILE *out);
 
   
@@ -505,7 +505,7 @@ public:
     { IniSection *section = findsection(Section);
       if (section) return section->GetProfileInt(Key, DefValue);
       else return DefValue; }
-  inline int GetProfileBool(const char *Section, const char *Key, int DefValue)
+  inline bool GetProfileBool(const char *Section, const char *Key, bool DefValue)
     { IniSection *section = findsection(Section);
       if (section) return section->GetProfileBool(Key, DefValue);
       else return DefValue; }
