@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.34 2003/11/28 00:43:31 snake Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.35 2003/12/31 18:24:13 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -428,30 +428,30 @@ static long __GetRawProcessorID(const char **cpuname)
   struct { long rid;
            const char *name; }
     cpuridtable[] = {
-      {    0x0001, "601"               },
-      {    0x0003, "603"               },
-      {    0x0004, "604"               },
-      {    0x0006, "603e"              },
-      {    0x0007, "603r/603ev"        }, //ev=0x0007, r=0x1007
-      {    0x0008, "740/750 (G3)"      },
-      {    0x0009, "604e"              },
-      {    0x000A, "604ev"             },
-      {    0x000C, "7400 (G4)"         },
-      {    0x0020, "403G/403GC/403GCX" },
-      {    0x0039, "970 (G5)"          },
-      {    0x0050, "821"               },
-      {    0x0080, "860"               },
-      {    0x0081, "8240"              },
-      {    0x4011, "405GP"             },
-      {    0x8000, "7450 (G4)"         },
-      {    0x8001, "7455 (G4)"         },
-      {    0x8002, "7457 (G4)"         },
-      {    0x800C, "7410 (G4)"         },
-      { NONPVR(1), "620"               }, //not PVR based
-      { NONPVR(2), "630"               }, //not PVR based
-      { NONPVR(3), "A35"               }, //not PVR based
-      { NONPVR(4), "RS64II"            }, //not PVR based
-      { NONPVR(5), "RS64III"           }, //not PVR based
+      {    0x0001, "601"                 },
+      {    0x0003, "603"                 },
+      {    0x0004, "604"                 },
+      {    0x0006, "603e"                },
+      {    0x0007, "603r/603ev"          }, //ev=0x0007, r=0x1007
+      {    0x0008, "740/750 (G3)"        },
+      {    0x0009, "604e"                },
+      {    0x000A, "604ev"               },
+      {    0x000C, "7400 (G4)"           },
+      {    0x0020, "403G/403GC/403GCX"   },
+      {    0x0039, "970 (G5)"            },
+      {    0x0050, "821"                 },
+      {    0x0080, "860"                 },
+      {    0x0081, "8240"                },
+      {    0x4011, "405GP"               },
+      {    0x8000, "7441/7450/7451 (G4)" },
+      {    0x8001, "7445/7455 (G4)"      },
+      {    0x8002, "7447/7457 (G4)"      },
+      {    0x800C, "7410 (G4)"           },
+      { NONPVR(1), "620"                 }, //not PVR based
+      { NONPVR(2), "630"                 }, //not PVR based
+      { NONPVR(3), "A35"                 }, //not PVR based
+      { NONPVR(4), "RS64II"              }, //not PVR based
+      { NONPVR(5), "RS64III"             }, //not PVR based
     };
 
   #if (CLIENT_OS == OS_AIX)
@@ -619,8 +619,13 @@ static long __GetRawProcessorID(const char **cpuname)
            { "860",             0x0080  },
            { "8240",            0x0081  },
            { "405GP",           0x4011  },
+           { "7441",            0x8000  },
            { "7450",            0x8000  },
+           { "7451",            0x8000  },
+           { "7445",            0x8001  },
            { "7455",            0x8001  },
+           { "7447",            0x8002  },
+           { "7457",            0x8002  },
            { "7410",            0x800C  }
            };
           p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
@@ -715,6 +720,7 @@ static long __GetRawProcessorID(const char **cpuname)
       case 0x000C:   // 7400 (G4)
       case 0x8000:   // 7450 (G4)
       case 0x8001:   // 7455 (G4)
+      case 0x8002:   // 7447/7457 (G4)
       case 0x800C:   // 7410 (G4)
       detectedtype = cpu; break;
       default: // some PPC processor that we don't know about
