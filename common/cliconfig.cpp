@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.181  1998/08/28 22:18:21  cyp
+// Commandline parse function is now in cmdline.cpp. Also moved all non-config
+// functions (SetNiceness()/RunStartup()/[Un]Install()/PrintBanner()) to
+// client.cpp
+//
 // Revision 1.180  1998/08/21 23:44:31  cyruspatel
 // Spun off SelectCore() to selcore.cpp  Client::cputype _must_ be a valid
 // core type (and no longer -1) after a call to SelectCore() - Problem::Run()
@@ -202,7 +207,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.180 1998/08/21 23:44:31 cyruspatel Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.181 1998/08/28 22:18:21 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -763,34 +768,34 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
         case CONF_THRESHOLDI:
           choice=atoi(parm);
           if (choice > 0) 
-	    {
-	    outthreshold[0]=inthreshold[0]=choice;
+      {
+      outthreshold[0]=inthreshold[0]=choice;
             ValidateConfig();
-	    }
+      }
           break;
         case CONF_THRESHOLDO:
           choice=atoi(parm);
           if (choice > 0)
-	    { 
-	    outthreshold[0]=choice;
+      { 
+      outthreshold[0]=choice;
             ValidateConfig();
-	    }
+      }
           break;
         case CONF_THRESHOLDI2:
           choice=atoi(parm);
           if (choice > 0)
-	    { 
-	    outthreshold[1]=inthreshold[1]=choice;
+      { 
+      outthreshold[1]=inthreshold[1]=choice;
             ValidateConfig();
-	    }
+      }
           break;
         case CONF_THRESHOLDO2:
           choice=atoi(parm);
           if (choice > 0)
-	    { 
-	    outthreshold[1]=choice;
+      { 
+      outthreshold[1]=choice;
             ValidateConfig();
-	    }
+      }
           break;
         case CONF_COUNT:
           choice = atoi(parm);
@@ -798,20 +803,20 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
             blockcount = choice;
           break;
         case CONF_HOURS:
-	  if (atoi(parm)>=0)
-	    {
+    if (atoi(parm)>=0)
+      {
             minutes = (s32) (60. * atol(parm));
             if ( minutes < 0 ) minutes = 0;
             sprintf(hours,"%u.%02u", (unsigned)(minutes/60),
             (unsigned)(minutes%60)); //1.000000 hours looks silly
-	    }
+      }
           break;
         case CONF_TIMESLICE:        
           // *** To allows inis to be shared, don't use platform specific 
           // *** timeslice limits. Scale the generic 0-65536 one instead.
           choice = atoi(parm);   
           if (choice >= 1)
-	    timeslice = choice;
+      timeslice = choice;
           break;
         case CONF_NICENESS:
           choice = atoi(parm);
@@ -871,7 +876,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
         case CONF_UUEHTTPMODE:
           choice = atoi(parm);
           if ( choice < 0 || choice > 5 )
-	    break;
+      break;
           uuehttpmode = choice;
           #ifndef OLDRESOLVE
           autofindkeyserver=1;
@@ -952,7 +957,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
         case CONF_PREFERREDBLOCKSIZE:
           choice = atoi(parm);
           if (choice > 0 && choice <=1000) 
-	    preferred_blocksize = choice;
+      preferred_blocksize = choice;
           break;
         case CONF_PROCESSDES:
           choice = yesno(parm);
@@ -1001,7 +1006,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
         case CONF_OFFLINEMODE:
           choice=atoi(parm);
           if (choice >= 0 && choice <=2) 
-	    *(s32 *)options[CONF_OFFLINEMODE].thevariable=choice;
+      *(s32 *)options[CONF_OFFLINEMODE].thevariable=choice;
           break;
         case CONF_RC5IN:
           #ifdef DONT_USE_PATHWORK
@@ -1047,8 +1052,8 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
         #ifdef MMX_BITSLICER
         case CONF_MMX:
           choice = yesno(parm);
-	  if (choice>=0) 
-	    usemmx = choice;
+    if (choice>=0) 
+      usemmx = choice;
           break;
         #endif
         #ifdef LURK
@@ -1057,8 +1062,8 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           if (choice>=0 && choice<=2)
             {
             dialup.lurkmode=choice;
-	    if (choice!=1)
-	      connectoften=0;
+      if (choice!=1)
+        connectoften=0;
             }
           break;
         case CONF_DIALWHENNEEDED:
@@ -1325,14 +1330,12 @@ if (uuehttpmode > 1)
   options[CONF_HTTPPORT].optionscreen=0;
   options[CONF_HTTPID].optionscreen=0;
   };
-
-
 }
 #endif
 
 //----------------------------------------------------------------------------
 
-s32 Client::ReadConfig(void)
+s32 Client::ReadConfig(void)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
 {
   IniSection ini;
   s32 inierror, tempconfig;
@@ -1344,11 +1347,6 @@ s32 Client::ReadConfig(void)
   #else
   inierror = ini.ReadIniFile( GetFullPathForFilename( inifilename ) );
   #endif
-
-  if ( inierror )
-  {
-    LogScreenRaw( "Error reading ini file - Using defaults\n" );
-  }
 
 #define INIGETKEY(key) (ini.getkey(OPTION_SECTION, options[key].name, options[key].defaultsetting)[0])
 
@@ -1430,9 +1428,11 @@ s32 Client::ReadConfig(void)
   if (tempconfig) noexitfilecheck=1;
   tempconfig=ini.getkey(OPTION_SECTION, "exitfilechecktime", "30")[0];
   if (tempconfig) exitfilechecktime=max(tempconfig,1);
-#if ( (CLIENT_OS==OS_WIN32) && (!defined(WINNTSERVICE)) )
-  tempconfig=ini.getkey(OPTION_SECTION, "win95hidden", "0")[0];
-  if (tempconfig) win95hidden=1;
+#if ((CLIENT_OS==OS_WIN32) && (!defined(WINNTSERVICE)))
+  tempconfig=ini.getkey(OPTION_SECTION, "win95hidden", "0")[0]; //obsolete
+  if (tempconfig) runhidden=1;
+  tempconfig=ini.getkey(OPTION_SECTION, "runhidden", "0")[0]; //now known as...
+  if (tempconfig) runhidden=1;
 #endif
 #if defined(LURK)
   tempconfig=ini.getkey(OPTION_SECTION, "lurk", "0")[0];
@@ -1482,7 +1482,7 @@ INIGETKEY(CONF_LOGNAME).copyto(logname, sizeof(logname));
 
 // --------------------------------------------------------------------------
 
-void Client::ValidateConfig( void )
+void Client::ValidateConfig( void ) //DO NOT PRINT TO SCREEN HERE!
 {
   killwhitespace(id);
   killwhitespace(keyproxy);
@@ -1578,27 +1578,47 @@ if (isstringblank(logname))
   InternalValidateConfig();
 #endif
   InitRandom2( id );
-
-  if ( contestdone[0] && contestdone[1])
-  {
-    Log( "Both contests are marked as over.  Correct the ini file and restart\n" );
-    Log( "This may mean the contests are over.  Check at http://www.distributed.net/rc5/\n" );
-    exit(-1);
-  }
 }
 
 // --------------------------------------------------------------------------
 
-s32 Client::WriteConfig(void)
+//Some OS's write run-time stuff to the .ini, so we protect
+//the ini by only allowing that client's internal settings to change.
+
+s32 Client::WriteConfig(void)  
+{
+  IniSection ini;
+  #ifdef DONT_USE_PATHWORK
+  if ( ini.ReadIniFile( inifilename ) )
+    return WriteFullConfig();
+  #else
+  if ( ini.ReadIniFile( GetFullPathForFilename( inifilename ) ) )
+    return WriteFullConfig();
+  #endif
+    
+  #if defined(NEEDVIRTUALMETHODS)
+    InternalWriteConfig(ini);
+  #endif
+
+  IniRecord *tempptr;
+  while ((tempptr = ini.findfirst(OPTION_SECTION, "win95hidden"))!=NULL)
+    tempptr->key = "runhidden";
+  while ((tempptr = ini.findfirst(OPTION_SECTION, "os2hidden"))!=NULL)
+    tempptr->key = "runhidden";
+
+  #ifdef DONT_USE_PATHWORK
+  return( ini.WriteIniFile(inifilename) ? -1 : 0 );
+  #else
+  return( ini.WriteIniFile( GetFullPathForFilename( inifilename ) ) ? -1 : 0 );
+  #endif
+}
+
+// --------------------------------------------------------------------------
+
+s32 Client::WriteFullConfig(void) //construct a brand-spanking-new config
 {
   IniSection ini;
   char buffer[64];
-
-  #ifdef DONT_USE_PATHWORK
-  ini.ReadIniFile( inifilename );
-  #else
-  ini.ReadIniFile( GetFullPathForFilename( inifilename ) );
-  #endif
 
 #define INISETKEY(key, value) ini.setrecord(OPTION_SECTION, options[key].name, IniString(value))
 
@@ -1744,7 +1764,6 @@ INISETKEY( CONF_LOGNAME, logname );
 #endif
 
 #define INIFIND(key) ini.findfirst(OPTION_SECTION, options[key].name)
-
   if (uuehttpmode <= 1)
   {
     // wipe out httpproxy and httpport & httpid
@@ -1756,19 +1775,17 @@ INISETKEY( CONF_LOGNAME, logname );
     ptr = INIFIND( CONF_HTTPID );
     if (ptr) ptr->values.Erase();
   }
+#undef INIFIND
 
 #if defined(NEEDVIRTUALMETHODS)
   InternalWriteConfig(ini);
 #endif
-
-#undef INIFIND
 
   #ifdef DONT_USE_PATHWORK
   return( ini.WriteIniFile(inifilename) ? -1 : 0 );
   #else
   return( ini.WriteIniFile( GetFullPathForFilename( inifilename ) ) ? -1 : 0 );
   #endif
-
 }
 
 // --------------------------------------------------------------------------
@@ -1796,861 +1813,6 @@ s32 Client::WriteContestandPrefixConfig(void)
   #endif
 
   return( ini.WriteIniFile( GetFullPathForFilename( inifilename ) ) ? -1 : 0 );
-}
-
-//----------------------------------------------------------------------------
-
-
-#if defined(WINNTSERVICE)
-static SERVICE_STATUS_HANDLE serviceStatusHandle;
-
-void __stdcall ServiceCtrlHandler(DWORD controlCode)
-{
-  // update our status to stopped
-  SERVICE_STATUS serviceStatus;
-  serviceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
-  serviceStatus.dwWin32ExitCode = NO_ERROR;
-  serviceStatus.dwServiceSpecificExitCode = 0;
-  serviceStatus.dwCheckPoint = 0;
-  if (controlCode == SERVICE_CONTROL_SHUTDOWN ||
-      controlCode == SERVICE_CONTROL_STOP)
-  {
-    serviceStatus.dwCurrentState = SERVICE_STOP_PENDING;
-    serviceStatus.dwControlsAccepted = 0;
-    serviceStatus.dwWaitHint = 10000;
-    RaiseExitRequestTrigger();
-  } else {
-    // SERVICE_CONTROL_INTERROGATE
-    serviceStatus.dwCurrentState = SERVICE_RUNNING;
-    serviceStatus.dwWaitHint = 0;
-  }
-  SetServiceStatus(serviceStatusHandle, &serviceStatus);
-}
-#endif
-
-// ---------------------------------------------------------------------------
-
-#if defined(WINNTSERVICE)
-
-static Client *mainclient;
-
-#pragma argsused
-void ServiceMain(DWORD Argc, LPTSTR *Argv)
-{
-  SERVICE_STATUS serviceStatus;
-  serviceStatusHandle = RegisterServiceCtrlHandler(NTSERVICEID,
-      ServiceCtrlHandler);
-
-  // update our status to running
-  serviceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
-  serviceStatus.dwCurrentState = SERVICE_RUNNING;
-  serviceStatus.dwControlsAccepted = (SERVICE_ACCEPT_SHUTDOWN | SERVICE_ACCEPT_STOP);
-  serviceStatus.dwWin32ExitCode = NO_ERROR;
-  serviceStatus.dwServiceSpecificExitCode = 0;
-  serviceStatus.dwCheckPoint = 0;
-  serviceStatus.dwWaitHint = 0;
-  SetServiceStatus(serviceStatusHandle, &serviceStatus);
-
-  // start working
-  mainclient->ValidateConfig();
-
-  InitializeTriggers( ((mainclient->noexitfilecheck)?(NULL):
-                      ("exitrc5" EXTN_SEP "now")),mainclient->pausefile);
-  mainclient->InitializeLogging(); //in logstuff.cpp - copies the smtp ini settings over
-  mainclient->Run();
-  mainclient->DeinitializeLogging(); //flush and stop logging to file/mail
-  DeinitializeTriggers();
-
-  // update our status to stopped
-  serviceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
-  serviceStatus.dwCurrentState = SERVICE_STOPPED;
-  serviceStatus.dwControlsAccepted = 0;
-  serviceStatus.dwWin32ExitCode = NO_ERROR;
-  serviceStatus.dwServiceSpecificExitCode = 0;
-  serviceStatus.dwCheckPoint = 0;
-  serviceStatus.dwWaitHint = 0;
-  SetServiceStatus(serviceStatusHandle, &serviceStatus);
-}
-#endif
-
-// ---------------------------------------------------------------------------
-
-s32 Client::Install()
-{
-#if (!defined(WINNTSERVICE)) && (CLIENT_OS == OS_WIN32) && !defined(NOMAIN)
-  HKEY srvkey=NULL;
-  DWORD dwDisp=NULL;
-  char mypath[200];
-  GetModuleFileName(NULL, mypath, sizeof(mypath));
-
-  strcat( mypath, " -hide" );
-
-  // register a Win95 "RunService" item
-  if (RegCreateKeyEx(HKEY_LOCAL_MACHINE,
-      "Software\\Microsoft\\Windows\\CurrentVersion\\RunServices",0,"",
-            REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,
-            &srvkey,&dwDisp) == ERROR_SUCCESS)
-  {
-    RegSetValueEx(srvkey, "bovwin32", 0, REG_SZ, (unsigned const char *)mypath, strlen(mypath) + 1);
-    RegCloseKey(srvkey);
-  }
-
-  // unregister a Win95 "Run" item
-  if (RegOpenKey(HKEY_LOCAL_MACHINE,
-      "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-      &srvkey) == ERROR_SUCCESS)
-  {
-    RegDeleteValue(srvkey, "bovwin32");
-    RegCloseKey(srvkey);
-  }
-
-  LogScreen("Win95 Service installation complete.\n");
-#elif defined(WINNTSERVICE) && (CLIENT_OS == OS_WIN32)
-  char mypath[200];
-  GetModuleFileName(NULL, mypath, sizeof(mypath));
-  SC_HANDLE myService, scm;
-  scm = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
-  if (scm)
-  {
-    myService = CreateService(scm, NTSERVICEID,
-        "Distributed.Net RC5/DES Service Client",
-        SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS,
-        SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
-        mypath, 0, 0, 0, 0, 0);
-    if (myService)
-    {
-      LogScreen("Windows NT Service installation complete.\n"
-          "Click on the 'Services' icon in 'Control Panel' and ensure that the\n"
-          "Distributed.Net RC5/DES Service Client is set to startup automatically.\n");
-      CloseServiceHandle(myService);
-    } else {
-      LogScreen("Error creating service entry.\n");
-    }
-    CloseServiceHandle(scm);
-  } else {
-    LogScreen("Error opening service control manager.\n");
-  }
-#elif (CLIENT_OS == OS_OS2)
-  int rc;
-  const int len = 4068;
-
-  char   pszClassName[] = "WPProgram";
-  char   pszTitle[] = "RC5-DES Cracking Client";
-  char   pszLocation[] = "<WP_START>";    // Startup Folder
-  ULONG ulFlags = 0;
-
-  char   pszSetupString[len] =
-            "OBJECTID=<RC5DES-CLI>;"
-            "MINIMIZED=YES;"
-            "PROGTYPE=WINDOWABLEVIO;";
-
-  // Add full path of the program
-  strncat(pszSetupString, "EXENAME=",len);
-
-  if(os2hidden == 1)   // Run detached
-  {
-    strncat(pszSetupString, "CMD.EXE;", len);     // command processor
-    strncat(pszSetupString, "PARAMETERS=/c detach ", len);   // detach
-  }
-
-  // Add exepath and exename
-  strncat(pszSetupString, exepath, len);
-  strncat(pszSetupString, exename, len);
-  strncat(pszSetupString, ";", len);
-
-  // Add on Working Directory
-  strncat(pszSetupString, "STARTUPDIR=", len);
-  strncat(pszSetupString, exepath, len);
-  strncat(pszSetupString, ";", len);
-
-  rc = WinCreateObject(pszClassName, pszTitle, pszSetupString,
-              pszLocation, ulFlags);
-  if(rc == NULLHANDLE)
-    LogScreen("ERROR: RC5-DES Program object could not be added "
-            "into your Startup Folder\n"
-            "RC5-DES is probably already installed\n");
-  else
-    LogScreen("RC5-DES Program object has been added into your Startup Folder\n");
-#endif
-  return 0;
-}
-
-// ---------------------------------------------------------------------------
-
-s32 Client::Uninstall(void)
-{
-#if (!defined(WINNTSERVICE)) && (CLIENT_OS == OS_WIN32) && !defined(NOMAIN)
-  HKEY srvkey;
-
-  // unregister a Win95 "RunService" item
-  if (RegOpenKey(HKEY_LOCAL_MACHINE,
-      "Software\\Microsoft\\Windows\\CurrentVersion\\RunServices",
-      &srvkey) == ERROR_SUCCESS)
-  {
-    RegDeleteValue(srvkey, "bovwin32");
-    RegCloseKey(srvkey);
-  }
-
-  // unregister a Win95 "Run" item
-  if (RegOpenKey(HKEY_LOCAL_MACHINE,
-      "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-      &srvkey) == ERROR_SUCCESS)
-  {
-    RegDeleteValue(srvkey, "bovwin32");
-    RegCloseKey(srvkey);
-  }
-  LogScreen("Win95 Service uninstallation complete.\n");
-#elif defined(WINNTSERVICE) && (CLIENT_OS == OS_WIN32)
-  SC_HANDLE myService, scm;
-  SERVICE_STATUS status;
-  scm = OpenSCManager(0, 0, SC_MANAGER_CREATE_SERVICE);
-  if (scm)
-  {
-    myService = OpenService(scm, NTSERVICEID,
-        SERVICE_ALL_ACCESS | DELETE);
-    if (myService)
-    {
-      if (QueryServiceStatus(myService, &status) &&
-        status.dwCurrentState != SERVICE_STOPPED)
-      {
-        LogScreen("Service currently active.  Stopping service...\n");
-        if (!ControlService(myService, SERVICE_CONTROL_STOP, &status))
-          LogScreen("Failed to stop service!\n");
-      }
-      if (DeleteService(myService))
-      {
-        LogScreen("Windows NT Service uninstallation complete.\n");
-      } else {
-        LogScreen("Error deleting service entry.\n");
-      }
-      CloseServiceHandle(myService);
-    }
-    CloseServiceHandle(scm);
-  } else {
-    LogScreen("Error opening service control manager.\n");
-  }
-#elif (CLIENT_OS == OS_OS2)
-  int rc;
-  const int len = 4068;
-  char *cwd;
-
-  char pObjectID[len];
-  HOBJECT hObject;
-
-  hObject = WinQueryObject("<RC5DES-CLI>");
-
-  if(hObject == NULLHANDLE)
-    LogScreen("ERROR: RC5-DES Client object was not found\n"
-          "No RC5-DES client installed in the Startup folder\n");
-  else
-  {
-    LogScreen("RC5-DES Client object found in Startup Folder... ");
-
-    rc = WinDestroyObject(hObject);
-    if(rc == TRUE)
-      LogScreen("Object removed\n");
-    else
-      LogScreen("Object NOT removed\n");
-  }
-#endif
-  return 0;
-}
-
-// ---------------------------------------------------------------------------
-
-s32 Client::RunStartup(void)
-{
-#if (CLIENT_OS==OS_WIN32)
-OSVERSIONINFO osver;
-#endif
-
-#if ((!defined(WINNTSERVICE)) && (CLIENT_OS == OS_WIN32))
-  // register ourself as a Win95 service
-  SetConsoleTitle("Distributed.Net RC5/DES Client "CLIENT_VERSIONSTRING);
-  if (win95hidden)
-  {
-    HMODULE kernl = GetModuleHandle("KERNEL32");
-    if (kernl)
-    {
-      typedef DWORD (CALLBACK *ULPRET)(DWORD,DWORD);
-      ULPRET func = (ULPRET) GetProcAddress(kernl, "RegisterServiceProcess");
-      if (func) (*func)(0, 1);
-    }
-
-    // free the console window
-    osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
-    GetVersionEx(&osver);
-    if (VER_PLATFORM_WIN32_NT == osver.dwPlatformId)
-    {
-      LogScreen("\n This is not recommended under NT.  Please use the NT Service client"
-            "\n (There have been cases of this conflicting with system process csrss.exe)\n"
-            "Continuing...\n");
-      sleep(2);
-    }
-    FreeConsole();
-
-    // only allow one running instance
-    CreateMutex(NULL, TRUE, "Bovine RC5/DES Win32 Client");
-    if (GetLastError()) return -1;
-  }
-  return 0;
-#elif defined(WINNTSERVICE)
-  LogScreen("Attempting to start up NT service.\n");
-  mainclient = this;
-  SERVICE_TABLE_ENTRY serviceTable[] = {
-    {NTSERVICEID, (LPSERVICE_MAIN_FUNCTION) ServiceMain},
-    {NULL, NULL}};
-  if (!StartServiceCtrlDispatcher(serviceTable))
-  {
-    LogScreen("Error starting up NT service.  Please remember that this\n"
-          "client cannot be invoked directly.  If you wish to install it\n"
-          "as a service, use the -install option\n");
-    return -1;
-  }
-  return -1;
-#else
-  return 0;
-#endif
-}
-
-// ---------------------------------------------------------------------------
-
-void Client::SetNiceness(void)
-{
-  // renice maximally
-  #if (CLIENT_OS == OS_IRIX)
-    if ( niceness == 0 )     schedctl( NDPRI, 0, 200 );
-    // else                  /* nothing */;
-  #elif (CLIENT_OS == OS_OS2)
-    if ( niceness == 0 )      DosSetPriority( 2, PRTYC_IDLETIME, 0, 0 );
-    else if ( niceness == 1 ) DosSetPriority( 2, PRTYC_IDLETIME, 31, 0 );
-    // else                  /* nothing */;
-  #elif (CLIENT_OS == OS_WIN32)
-    if ( niceness != 2 )      SetPriorityClass( GetCurrentProcess(), IDLE_PRIORITY_CLASS );
-    if ( niceness == 0 )      SetThreadPriority( GetCurrentThread() ,THREAD_PRIORITY_IDLE );
-    // else                  /* nothing */;
-  #elif (CLIENT_OS == OS_MACOS)
-     // nothing
-  #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-     // nothing - could use the same setting as DOS though
-  #elif (CLIENT_OS == OS_NETWARE)
-     // nothing - netware sets timeslice dynamically
-  #elif (CLIENT_OS == OS_DOS)
-     timeslice = dosCliGetTimeslice(); //65536 or GetTimesliceBaseline if win16
-  #elif (CLIENT_OS == OS_BEOS)
-     // Main control thread runs at normal priority, since it does very little;
-     // priority of crunching threads is set when they are created.
-  #elif (CLIENT_OS == OS_RISCOS)
-     // nothing
-  #elif (CLIENT_OS == OS_VMS)
-    if ( niceness == 0 )      nice( 4 ); // Assumes base priority of 4, (the
-    else if ( niceness == 1 ) nice( 2 ); // default). 0 is highest priority.
-    // else                  /* nothing */; // GO-VMS.COM can also be used
-  #elif (CLIENT_OS == OS_AMIGAOS)
-    if ( niceness == 0 )      SetTaskPri(FindTask(NULL), -20);
-    else if ( niceness == 1 ) SetTaskPri(FindTask(NULL), -10);
-    // else                  /* nothing */;
-  #elif (CLIENT_OS == OS_QNX)
-    if ( niceness == 0 )      setprio( 0, getprio(0)-1 );
-    else if ( niceness == 1 ) setprio( 0, getprio(0)+1 );
-    // else                  /* nothing */;
-  #else
-    if ( niceness == 0 )      nice( 19 );
-    else if ( niceness == 1 ) nice( 10 );
-    // else                  /* nothing */;
-  #endif
-}
-
-// --------------------------------------------------------------------------
-
-void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
-{
-  int l_inimissing = (int)(*inimissing);
-
-  for (int i=1;i<Argc;i++)
-  {
-    if ( strcmp(Argv[i], "-percentoff" ) == 0) // This should be checked here, in case it
-    {
-      percentprintingoff = 1;                 // follows a -benchmark
-      Argv[i][0] = 0;
-    }
-    else if ( strcmp( Argv[i], "-nofallback" ) == 0 ) // Don't try rc5proxy.distributed.net
-    {                                                 // After multiple errors
-      nofallback=1;
-      Argv[i][0] = 0;
-    }
-    else if ( strcmp( Argv[i], "-quiet" ) == 0 ) // No messages
-    {
-      quietmode=1;
-      Argv[i][0] = 0;
-    }
-    else if ( strcmp( Argv[i], "-noquiet" ) == 0 ) // Yes messages
-    {
-      quietmode=0;
-      Argv[i][0] = 0;
-    }
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
-#if (!defined(WINNTSERVICE))
-    else if ( strcmp( Argv[i], "-hide" ) == 0 ) // Hide the client
-    {
-      quietmode=1;
-#if (CLIENT_OS == OS_OS2)
-      os2hidden=1;
-#else
-      win95hidden=1;
-#endif
-      Argv[i][0] = 0;
-    }
-#endif
-#endif
-
-#if defined(LURK)
-    else if ( strcmp( Argv[i], "-lurk" ) == 0 ) // Detect modem connections
-    {
-      dialup.lurkmode=1;
-      Argv[i][0] = 0;
-    }
-    else if ( strcmp( Argv[i], "-lurkonly" ) == 0 ) // Only connect when modem connects
-    {
-      dialup.lurkmode=2;
-      Argv[i][0] = 0;
-    }
-#endif
-    else if ( strcmp( Argv[i], "-noexitfilecheck" ) == 0 ) // Change network timeout
-    {
-      noexitfilecheck=1;
-      Argv[i][0] = 0;
-    }
-    else if ( strcmp( Argv[i], "-runoffline" ) == 0 ) // Run offline
-    {
-      offlinemode=1;
-      Argv[i][0] = 0;
-    }
-    else if ( strcmp( Argv[i], "-runbuffers" ) == 0 ) // Run offline & exit when buffer empty
-    {
-      offlinemode=2;
-      Argv[i][0] = 0;
-    }
-    else if ( strcmp( Argv[i], "-run" ) == 0 ) // Run online
-    {
-      offlinemode=0;
-      Argv[i][0] = 0;
-    }
-    else if ( strcmp( Argv[i], "-nodisk" ) == 0 ) // No disk buff-*.rc5 files.
-    {
-      nodiskbuffers=1;
-      strcpy(checkpoint_file[0],"none");
-      strcpy(checkpoint_file[1],"none");
-#ifdef DONT_USE_PATHWORK
-      strcpy(ini_checkpoint_file[0],"none");
-      strcpy(ini_checkpoint_file[1],"none");
-#endif
-      Argv[i][0] = 0;
-    }
-    else if ( strcmp(Argv[i], "-frequent" ) == 0)
-    {
-      LogScreenRaw("Setting connections to frequent\n");
-      connectoften=1;
-      Argv[i][0] = 0;
-    }
-#ifdef MMX_BITSLICER
-    else if ( strcmp(Argv[i], "-nommx" ) == 0)
-    {
-#if (CLIENT_CPU == CPU_X86) && defined(MMX_BITSLICER)
-      LogScreenRaw("Won't use MMX instructions\n");
-      usemmx=0;
-#elif (CLIENT_CPU == CPU_X86) // && !defined(MMX_BITSLICER)
-      LogScreenRaw("-nommx argument ignored on this client.\n");
-#else
-      LogScreenRaw("-nommx argument ignored on this non-x86 processor.\n");
-#endif
-      Argv[i][0] = 0;
-    }
-#endif
-    else if ((i+1) < Argc) {
-      if ( strcmp( Argv[i], "-b" ) == 0 ) // Buffer threshold size
-      {                                           // Here in case its with a fetch/flush/update
-        if ( (s32) atoi( Argv[i+1] ) > 0)
-           outthreshold[0] = inthreshold[0]  = (s32) atoi( Argv[i+1] );
-        ValidateConfig();
-        LogScreenRaw("Setting RC5 buffer size to %d\n",outthreshold[0]);
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-b2" ) == 0 ) // Buffer threshold size
-      {                                           // Here in case its with a fetch/flush/update
-        if ( (s32) atoi( Argv[i+1] ) > 0)
-           outthreshold[1] = inthreshold[1]  = (s32) atoi( Argv[i+1] );
-        ValidateConfig();
-        LogScreenRaw("Setting DES buffer size to %d\n",outthreshold[1]);
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-bin" ) == 0 ) // Buffer input threshold size
-      {                                           // Here in case its with a fetch/flush/update
-        if ( (s32) atoi( Argv[i+1] ) > 0)
-           inthreshold[0]  = (s32) atoi( Argv[i+1] );
-        ValidateConfig();
-        LogScreenRaw("Setting RC5 input buffer size to %d\n",inthreshold[0]);
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-bin2" ) == 0 ) // Buffer input threshold size
-      {                                           // Here in case its with a fetch/flush/update
-        if ( (s32) atoi( Argv[i+1] ) > 0)
-           inthreshold[1]  = (s32) atoi( Argv[i+1] );
-        ValidateConfig();
-        LogScreenRaw("Setting DES input buffer size to %d\n",inthreshold[1]);
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-bout" ) == 0 ) // Buffer output threshold size
-      {                                           // Here in case its with a fetch/flush/update
-        if ( (s32) atoi( Argv[i+1] ) > 0)
-           outthreshold[0]  = (s32) atoi( Argv[i+1] );
-        ValidateConfig();
-        LogScreenRaw("Setting RC5 output buffer size to %d\n",outthreshold[0]);
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-bout2" ) == 0 ) // Buffer output threshold size
-      {                                           // Here in case its with a fetch/flush/update
-        if ( (s32) atoi( Argv[i+1] ) > 0)
-           outthreshold[1]  = (s32) atoi( Argv[i+1] );
-        ValidateConfig();
-        LogScreenRaw("Setting DES output buffer size to %d\n",outthreshold[1]);
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-u" ) == 0 ) // UUE/HTTP Mode
-      {                                           // Here in case its with a fetch/flush/update
-        uuehttpmode = (s32) atoi( Argv[i+1] );
-        ValidateConfig();
-        LogScreenRaw("Setting uue/http mode to %d\n",uuehttpmode);
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp(Argv[i], "-in" ) == 0)
-      {                                           // Here in case its with a fetch/flush/update
-        LogScreenRaw("Setting RC5 buffer input file to %s\n",Argv[i+1]);
-        strcpy(in_buffer_file[0], Argv[i+1]);
-#ifdef DONT_USE_PATHWORK
-        strcpy(ini_in_buffer_file[0], Argv[i+1]);
-#endif
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp(Argv[i], "-in2" ) == 0)
-      {                                           // Here in case its with a fetch/flush/update
-        LogScreenRaw("Setting DES buffer input file to %s\n",Argv[i+1]);
-        strcpy(in_buffer_file[1], Argv[i+1]);
-#ifdef DONT_USE_PATHWORK
-        strcpy(ini_in_buffer_file[1], Argv[i+1]);
-#endif
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp(Argv[i], "-out" ) == 0)
-      {                                           // Here in case its with a fetch/flush/update
-        LogScreenRaw("Setting RC5 buffer output file to %s\n",Argv[i+1]);
-        strcpy(out_buffer_file[0], Argv[i+1]);
-#ifdef DONT_USE_PATHWORK
-        strcpy(ini_out_buffer_file[0], Argv[i+1]);
-#endif
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp(Argv[i], "-out2" ) == 0)
-      {                                           // Here in case its with a fetch/flush/update
-        LogScreenRaw("Setting DES buffer output file to %s\n",Argv[i+1]);
-        strcpy(out_buffer_file[1], Argv[i+1]);
-#ifdef DONT_USE_PATHWORK
-        strcpy(ini_out_buffer_file[1], Argv[i+1]);
-#endif
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-a" ) == 0 ) // Override the keyserver name
-      {
-        LogScreenRaw("Setting keyserver to %s\n",Argv[i+1]);
-        strcpy( keyproxy, Argv[i+1] );
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-p" ) == 0 ) // Override the keyserver port
-      {
-        keyport = (s32) atoi(Argv[i+1]);
-        ValidateConfig();
-        LogScreenRaw("Setting keyserver port to %d\n",keyport);
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-ha" ) == 0 ) // Override the http proxy name
-      {
-        LogScreenRaw("Setting http proxy to %s\n",Argv[i+1]);
-        strcpy( httpproxy, Argv[i+1] );
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-hp" ) == 0 ) // Override the http proxy port
-      {
-        LogScreenRaw("Setting http proxy port to %s\n",Argv[i+1]);
-        httpport = (s32) atoi(Argv[i+1]);
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-l" ) == 0 ) // Override the log file name
-      {
-        LogScreenRaw("Setting log file to %s\n",Argv[i+1]);
-        strcpy( logname, Argv[i+1] );
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-smtplen" ) == 0 ) // Override the mail message length
-      {
-        LogScreenRaw("Setting Mail message length to %s\n",Argv[i+1]);
-        messagelen = (s32) atoi(Argv[i+1]);
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-smtpport" ) == 0 ) // Override the smtp port for mailing
-      {
-        LogScreenRaw("Setting smtp port to %s\n",Argv[i+1]);
-        smtpport = (s32) atoi(Argv[i+1]);
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-smtpsrvr" ) == 0 ) // Override the smtp server name
-      {
-        LogScreenRaw("Setting smtp server to %s\n",Argv[i+1]);
-        strcpy(smtpsrvr, Argv[i+1]);
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-smtpfrom" ) == 0 ) // Override the smtp source id
-      {
-        LogScreenRaw("Setting smtp 'from' address to %s\n",Argv[i+1]);
-        strcpy(smtpfrom, Argv[i+1]);
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-smtpdest" ) == 0 ) // Override the smtp destination id
-      {
-        LogScreenRaw("Setting smtp 'To' address to %s\n",Argv[i+1]);
-        strcpy(smtpdest, Argv[i+1]);
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-nettimeout" ) == 0 ) // Change network timeout
-      {
-        LogScreenRaw("Setting network timeout to %s\n",Argv[i+1]);
-        nettimeout = (s32) min(300,max(5,atoi(Argv[i+1])));
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-exitfilechecktime" ) == 0 ) // Change network timeout
-      {
-        exitfilechecktime=max(1,atoi(Argv[i+1]));
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp(Argv[i], "-c" ) == 0)      // set cpu type
-      {
-        cputype = (s32) atoi( Argv[i+1] );
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-e" ) == 0 ) // Override the email id
-      {
-        LogScreenRaw("Setting email for notifications to %s\n",Argv[i+1]);
-        strcpy( id, Argv[i+1] );
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-nice" ) == 0 ) // Nice level
-      {
-        LogScreenRaw("Setting nice option to %s\n",Argv[i+1]);
-        niceness = (s32) atoi( Argv[i+1] );
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-h" ) == 0 ) // Hours to run
-      {
-        LogScreenRaw("Setting time limit to %s hours\n",Argv[i+1]);
-        minutes = (s32) (60. * atol( Argv[i+1] ));
-        strncpy(hours,Argv[i+1],sizeof(hours));
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-n" ) == 0 ) // Blocks to complete in a run
-      {
-        blockcount = max(0, (s32) atoi( Argv[i+1] ));
-        LogScreenRaw("Setting block completion limit to %d\n",blockcount);
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-until" ) == 0 ) // Exit time
-      {
-        time_t timenow = time( NULL );
-        struct tm *gmt = localtime(&timenow );
-        minutes = atoi( Argv[i+1] );
-        minutes = (int)( ( ((int)(minutes/100))*60 + (minutes%100) ) - ((60. * gmt->tm_hour) + gmt->tm_min));
-        if (minutes<0) minutes += 24*60;
-        if (minutes<0) minutes = 0;
-        LogScreenRaw("Setting time limit to %d minutes\n",minutes);
-        sprintf(hours,"%u.%02u",(unsigned int)(minutes/60),
-                                (unsigned int)(minutes%60));
-        //was sprintf(hours,"%f",minutes/60.); -> "0.000000" which looks silly
-        //and could cause a NetWare 3.x client to raise(SIGABRT)
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp( Argv[i], "-numcpu" ) == 0 ) // Override the number of cpus
-      {
-        //LogScreenRaw("Configuring for %s CPUs\n",Argv[i+1]);
-        //Message appears in SelectCore()
-        numcpu = (s32) atoi(Argv[i+1]);
-        l_inimissing=0; // Don't complain if the inifile is missing
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp(Argv[i], "-ckpoint" ) == 0)
-      {
-        LogScreenRaw("Setting RC5 checkpoint file to %s\n",Argv[i+1]);
-        strcpy(checkpoint_file[0], Argv[i+1]);
-#ifdef DONT_USE_PATHWORK
-        strcpy(ini_checkpoint_file[0], Argv[i+1]);
-#endif
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp(Argv[i], "-ckpoint2" ) == 0)
-      {
-        LogScreenRaw("Setting DES checkpoint file to %s\n",Argv[i+1]);
-        strcpy(checkpoint_file[1], Argv[i+1]);
-#ifdef DONT_USE_PATHWORK
-        strcpy(ini_checkpoint_file[1], Argv[i+1]);
-#endif
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp(Argv[i], "-cktime" ) == 0)
-      {
-        LogScreenRaw("Setting checkpointing to %s minutes\n",Argv[i+1]);
-        checkpoint_min=(s32) atoi(Argv[i+1]);
-        checkpoint_min=max(2, checkpoint_min);
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp(Argv[i], "-pausefile" ) == 0)
-      {
-        LogScreenRaw("Setting pause file to %s\n",Argv[i+1]);
-        strcpy(pausefile, Argv[i+1]);
-#ifdef DONT_USE_PATHWORK
-        strcpy(ini_pausefile, Argv[i+1]);
-#endif
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp(Argv[i], "-blsize" ) == 0)
-      {
-        preferred_blocksize = (s32) atoi(Argv[i+1]);
-        if (preferred_blocksize < 28) preferred_blocksize = 28;
-        if (preferred_blocksize > 31) preferred_blocksize = 31;
-        LogScreenRaw("Setting preferred blocksize to 2^%d\n",preferred_blocksize);
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-      else if ( strcmp(Argv[i], "-processdes" ) == 0)
-      {
-        preferred_contest_id = (s32) atoi(Argv[i+1]);
-        ValidateConfig();
-        if (preferred_contest_id == 0)
-          {
-          LogScreenRaw("Client will now NOT compete in DES contest(s).\n");
-          }
-        else
-          {
-          LogScreenRaw("Client will now compete in DES contest(s).\n");
-          preferred_contest_id = 1;
-          }
-        Argv[i][0] = Argv[i+1][0] = 0;
-        i++; // Don't try and parse the next argument
-      }
-    }
-  }
-  *inimissing = l_inimissing;
-  ValidateConfig();  // Some bad values are getting through
-}
-
-// --------------------------------------------------------------------------
-
-void Client::PrintBanner( const char * )
-{
-#if (CLIENT_OS == OS_RISCOS)
-  if (guiriscos && guirestart)
-      return;
-#endif
-  LogScreenRaw( "\nRC5DES " CLIENT_VERSIONSTRING 
-             " client - a project of distributed.net\n"
-             "Copyright distributed.net 1997-1998\n" );
-
-  #if defined(KWAN)
-  #if defined(MEGGS)
-  LogScreenRaw( "DES bitslice driver Copyright Andrew Meggs\n" 
-             "DES sboxes routines Copyright Matthew Kwan\n" );
-  #else
-  LogScreenRaw( "DES search routines Copyright Matthew Kwan\n" );
-  #endif
-  #endif
-
-  #if (CLIENT_CPU == CPU_X86)
-  LogScreenRaw( "DES search routines Copyright Svend Olaf Mikkelsen\n");
-  #endif
-  
-  #if (CLIENT_OS == OS_DOS)  //PMODE (c) string if not win16 
-  LogScreenRaw( "%s", dosCliGetPmodeCopyrightMsg() );
-  #endif
-
-  LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n"
-             "%s\n",
-          #if (CLIENT_OS == OS_RISCOS)
-          guiriscos ?
-          "Interactive help is available, or select 'Help contents' from the menu for\n"
-          "detailed client information.\n" :
-          #endif
-          "Execute with option '-help' for online help, or read rc5des" EXTN_SEP "txt\n"
-          "for a list of command line options.\n"
-          );
-
-  #if (CLIENT_OS == OS_DOS)
-    dosCliCheckPlatform(); //show warning if pure DOS client is in win/os2 VM
-  #endif
-  return;
 }
 
 // --------------------------------------------------------------------------
@@ -2769,4 +1931,3 @@ const char *Client::InternalGetLocalFilename(const char *filename)
 #endif
 
 // --------------------------------------------------------------------------
-
