@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.215 2001/01/01 21:16:23 teichp Exp $
+# @(#)$Id: configure,v 1.222.2.216 2001/01/01 22:48:56 trevorh Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1942,7 +1942,7 @@ case "$1" in
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "x86" "os2"
-        TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC -fexceptions -I. -I${C_INCLUDE_PATH}"
+        TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC -fexceptions -pedantic -Wno-long-long -I. -I${C_INCLUDE_PATH}"
         TARGET_LDFLAGS="-Zmt"
         TARGET_NASM_FMT="aout"
         TARGET_STRIP="touch"
@@ -2151,9 +2151,7 @@ fi
 #
 TARGET_RESBIND_CMD=""
 if [ "$TARGET_OS" = "OS2" ]; then
-  TARGET_RESBIND_CMD="emxbind -b -r output/${TARGET_BINNAME}.res ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}"
-  TARGET_ALLOBJS="${TARGET_ALLOBJS} output/${TARGET_BINNAME}.rc"
-  TARGET_ALLOBJS="${TARGET_ALLOBJS} output/${TARGET_BINNAME}.res"
+  TARGET_RESBIND_CMD="emxbind -b -r platforms/os2cli/rc5des.res \${BUILDNAME}"
 fi
 
 #
@@ -2427,10 +2425,7 @@ fi
 if [ "$TARGET_OS" = "OS2" ]; then
   echo "Generating rules for .res and .rc"
   echo "output/${TARGET_BINNAME}.rc:" >>Makefile
-  echo "	echo \"POINTER 1		 platforms\\os2cli\\dnet.ico\">output\\${TARGET_BINNAME}.rc">>Makefile
-  echo "" >> Makefile
-  echo "output/${TARGET_BINNAME}.res: output/${TARGET_BINNAME}.rc" >> Makefile
-  echo "	rc -r output\\${TARGET_BINNAME}.rc output\\${TARGET_BINNAME}.res" >> Makefile
+  echo "	platforms/os2cli/attachico.cmd">>Makefile
   echo "" >> Makefile
 fi
 
