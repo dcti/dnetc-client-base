@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version.h,v $
+// Revision 1.38  1999/01/17 12:57:57  remi
+// .432
+//
 // Revision 1.37  1999/01/15 05:15:54  cyp
 // .431
 //
@@ -133,10 +136,10 @@
 
 #define CLIENT_CONTEST      71
 #define CLIENT_BUILD        05
-#define CLIENT_BUILD_FRAC   431
+#define CLIENT_BUILD_FRAC   432
 
-#define CLIENT_VERSIONSTRING    "v2.7105.431"
-#define CLIENT_VERSIONSTRING2   "2.7105.431"        // no leading "v"
+#define CLIENT_VERSIONSTRING    "v2.7105.432"
+#define CLIENT_VERSIONSTRING2   "2.7105.432"        // no leading "v"
 
 // When releasing a beta client, please set the expiration time to
 // about two weeks into the future; that should be an adequate beta
