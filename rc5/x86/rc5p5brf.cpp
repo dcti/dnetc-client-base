@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5p5brf.cpp,v $
+// Revision 1.12.2.1  1999/11/02 19:17:07  remi
+// Upgraded RC5 .cpp cores to compile with gcc 2.95.x
+//
 // Revision 1.12  1999/04/06 13:30:35  cyp
 // removed #ifndef _32BIT_ guard
 //
@@ -20,7 +23,7 @@
 // Took out PIPELINE_COUNT checks inside .cpp x86 cores - they were causing build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.5  1998/07/08 22:59:53  remi
-// Lots of $Id: rc5p5brf.cpp,v 1.12 1999/04/06 13:30:35 cyp Exp $ stuff.
+// Lots of $Id: rc5p5brf.cpp,v 1.12.2.1 1999/11/02 19:17:07 remi Exp $ stuff.
 //
 // Revision 1.4  1998/07/08 18:47:42  remi
 // $Id fun ...
@@ -59,7 +62,7 @@
 //	http://announce.com/agner/assem
 
 const char *rc5p5brf_cpp (void) {
-return "@(#)$Id: rc5p5brf.cpp,v 1.12 1999/04/06 13:30:35 cyp Exp $"; }
+return "@(#)$Id: rc5p5brf.cpp,v 1.12.2.1 1999/11/02 19:17:07 remi Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 
@@ -703,12 +706,14 @@ _key_updated:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 
 _done:
-	movl	"work_save_ebp", %%ebp \n"
+	movl	"work_save_ebp", %%ebp
+	movl	%1, %%eax
+\n"
 
 : "=m"(work),
   "=m"(rc5unitwork)
 : "a" (rc5unitwork)
-: "%eax","%ebx","%ecx","%edx","%esi","%edi","cc");
+: "%ebx","%ecx","%edx","%esi","%edi","cc");
 
     return (timeslice - work.iterations) * 2 + work.add_iter;
 }

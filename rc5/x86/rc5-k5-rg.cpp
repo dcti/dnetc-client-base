@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-k5-rg.cpp,v $
+// Revision 1.15.2.1  1999/11/02 19:17:07  remi
+// Upgraded RC5 .cpp cores to compile with gcc 2.95.x
+//
 // Revision 1.15  1999/04/06 13:30:34  cyp
 // removed #ifndef _32BIT_ guard
 //
@@ -27,7 +30,7 @@
 // causing build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.6  1998/07/08 22:59:36  remi
-// Lots of $Id: rc5-k5-rg.cpp,v 1.15 1999/04/06 13:30:34 cyp Exp $ stuff.
+// Lots of $Id: rc5-k5-rg.cpp,v 1.15.2.1 1999/11/02 19:17:07 remi Exp $ stuff.
 //
 // Revision 1.5  1998/07/08 18:47:46  remi
 // $Id fun ...
@@ -89,7 +92,7 @@
 // PR??? =  75   / ??    v1=120 v2=215-225 rg=165   / 256-280 ?
 
 const char *rc5_k5_rg_cpp (void) {
-return "@(#)$Id: rc5-k5-rg.cpp,v 1.15 1999/04/06 13:30:34 cyp Exp $"; }
+return "@(#)$Id: rc5-k5-rg.cpp,v 1.15.2.1 1999/11/02 19:17:07 remi Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 
@@ -710,12 +713,14 @@ _next_inc_k5:
 
 "BALIGN4"
 _full_exit_k5:
-	movl	"work_save_ebp",%%ebp \n"
+	movl	"work_save_ebp",%%ebp 
+	movl	%1, %%eax
+\n"
 
 : "=m"(work),
   "=m"(rc5unitwork)
 : "a" (rc5unitwork)
-: "%eax","%ebx","%ecx","%edx","%esi","%edi","cc");
+: "%ebx","%ecx","%edx","%esi","%edi","cc");
 
     return (timeslice - work.iterations) * 2 + work.add_iter;
 }

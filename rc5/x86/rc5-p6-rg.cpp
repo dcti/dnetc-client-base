@@ -23,7 +23,7 @@
 //	- precalculate some things for ROUND1 & ROUND2
 
 const char *rc5_p6_rg_cpp (void) {
-return "@(#)$Id: rc5-p6-rg.cpp,v 1.15.2.2 1999/07/20 04:23:14 cyp Exp $"; }
+return "@(#)$Id: rc5-p6-rg.cpp,v 1.15.2.3 1999/11/02 19:17:07 remi Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 
@@ -638,12 +638,14 @@ _next_inc_p6:
 
 "BALIGN4"
 _full_exit_p6:
-	movl	"work_save_ebp",%%ebp \n"
+	movl	"work_save_ebp",%%ebp
+	movl	%1, %%eax
+\n"
 
 : "=m"(work),
   "=m"(rc5unitwork)
 : "a" (rc5unitwork)
-: "%eax","%ebx","%ecx","%edx","%esi","%edi","cc");
+: "%ebx","%ecx","%edx","%esi","%edi","cc");
 
     return (timeslice - work.iterations) * 2 + work.add_iter;
 }

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-486-rg.cpp,v $
+// Revision 1.14.2.1  1999/11/02 19:17:06  remi
+// Upgraded RC5 .cpp cores to compile with gcc 2.95.x
+//
 // Revision 1.14  1999/04/06 13:30:33  cyp
 // removed #ifndef _32BIT_ guard
 //
@@ -24,7 +27,7 @@
 // causing build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.6  1998/07/08 22:59:33  remi
-// Lots of $Id: rc5-486-rg.cpp,v 1.14 1999/04/06 13:30:33 cyp Exp $ stuff.
+// Lots of $Id: rc5-486-rg.cpp,v 1.14.2.1 1999/11/02 19:17:06 remi Exp $ stuff.
 //
 // Revision 1.5  1998/07/08 18:47:43  remi
 // $Id fun ...
@@ -63,7 +66,7 @@
 // probably because less load/store operations
 //
 const char *rc5_486_rg_cpp (void) {
-return "@(#)$Id: rc5-486-rg.cpp,v 1.14 1999/04/06 13:30:33 cyp Exp $"; }
+return "@(#)$Id: rc5-486-rg.cpp,v 1.14.2.1 1999/11/02 19:17:06 remi Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 
@@ -659,12 +662,14 @@ _next_inc_486:
 
 "BALIGN(4)"
 _full_exit_486:
-	movl	"work_save_ebp", %%ebp \n"
+	movl	"work_save_ebp", %%ebp 
+	movl	%1, %%eax
+\n"
 
 : "=m"(work),
   "=m"(rc5unitwork)
 : "a" (rc5unitwork)
-: "%eax","%ebx","%ecx","%edx","%esi","%edi","cc");
+: "%ebx","%ecx","%edx","%esi","%edi","cc");
 
     return (timeslice - work.iterations) * 2 + work.add_iter;
 }
