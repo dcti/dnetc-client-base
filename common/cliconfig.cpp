@@ -1133,7 +1133,13 @@ void Client::ValidateConfig( void )
   if ( outthreshold[1] < 1   ) outthreshold[1] = 1;
   if ( outthreshold[1] > 1000 ) outthreshold[1] = 1000;
   if ( blockcount < 0 ) blockcount = 0;
-  if ( timeslice < 1 ) timeslice = 0x10000;
+#if (CLIENT_OS == OS_WIN16)
+  if ( timeslice < 1 ) timeslice = 200;
+#elif (CLIENT_OS == OS_RISCOS)
+  if ( timeslice < 1 ) timeslice = 2048;
+#else
+  if ( timeslice < 1 ) timeslice = 65536;
+#endif
   if ( timeslice < PIPELINE_COUNT ) timeslice=PIPELINE_COUNT;
   if ( niceness < 0 || niceness > 2 ) niceness = 0;
   if ( uuehttpmode < 0 || uuehttpmode > 5 ) uuehttpmode = 0;
