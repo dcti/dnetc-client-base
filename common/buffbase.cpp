@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.53 2001/02/23 00:03:29 sampo Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.54 2001/03/02 01:15:42 andreasb Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -916,7 +916,8 @@ long BufferFlushFile( Client *client, int break_pending,
 int BufferUpdate( Client *client, int req_flags, int interactive )
 {
   int dofetch, doflush, didfetch, didflush, dontfetch, dontflush, didnews;
-  unsigned int i; char loaderflags_map[CONTEST_COUNT];
+  unsigned int i; 
+  char loaderflags_map[CONTEST_COUNT];
   const char *ffmsg = "--fetch and --flush services are not available.\n";
   int check_flags, updatefailflags, updatemodeflags, net_state_shown = 0;
   int fill_even_if_not_totally_empty = (client->connectoften || interactive);
