@@ -48,7 +48,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.23 2000/10/16 13:46:47 oliver Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.24 2000/10/19 13:45:52 cyp Exp $"; }
 
 //#define TRACE
 
@@ -238,8 +238,8 @@ int Lurk::CheckIfConnectRequested(void) //yes/no
 EndpointRef fEndPoint = kOTInvalidEndpointRef;
 
 #ifdef LURK_LISTENER
-pascal void __OTListener(void *context, OTEventCode code, OTResult result, void *cookie);
-int isonline=0;
+static pascal void __OTListener(void *context, OTEventCode code, OTResult result, void *cookie);
+static int isonline = -1; /* 0=no, 1=yes, -1=don't know yet */
 #endif
 
 #elif (CLIENT_OS == OS_WIN16)
@@ -336,7 +336,7 @@ int Lurk::GetCapabilityFlags(void)
       osver.dwOSVersionInfoSize = sizeof(osver);
       if ( GetVersionEx( &osver ) != 0 )
       {
-        int isok = 1;
+        int isok = 1; /* its always ok for win9x */
         OFSTRUCT ofstruct;
         ofstruct.cBytes = sizeof(ofstruct);
         #ifndef OF_SEARCH
@@ -391,28 +391,30 @@ int Lurk::GetCapabilityFlags(void)
     static int caps = -1;
     if (caps == -1)
     {
-	   long	response;
-      //	OpenTransport/Remote Access PPP must be present
-	   Gestalt(gestaltOpenTptRemoteAccess, &response);
-	   if (response & (1 << gestaltOpenTptPPPPresent))
+      long response;
+      //OpenTransport/Remote Access PPP must be present
+      Gestalt(gestaltOpenTptRemoteAccess, &response);
+      if (response & (1 << gestaltOpenTptPPPPresent))
       {
-         InitOpenTransport();
-         fEndPoint = OTOpenEndpoint(OTCreateConfiguration(kPPPControlName),0, nil, &response);  
-         if((response == kOTNoError) && (fEndPoint != kOTInvalidEndpointRef))
-         {
-            #ifdef LURK_LISTENER
-				if( fEndPoint->InstallNotifier((OTNotifyProcPtr)__OTListener,this) == kOTNoError) 
-				{
-					OTSetAsynchronous(fEndPoint);
-					if(OTIoctl(fEndPoint, I_OTGetMiscellaneousEvents, (void*)1) == kOTNoError )
-					{
-				#endif
-                  what = (CONNECT_LURK | CONNECT_LURKONLY );
-            #ifdef LURK_LISTENER
-               }
-				}
-				#endif
-		   }
+        InitOpenTransport();
+        fEndPoint = OTOpenEndpoint(OTCreateConfiguration(kPPPControlName),0, nil, &response);  
+        if ((response == kOTNoError) && (fEndPoint != kOTInvalidEndpointRef))
+        {
+          int canlurk = 1; 
+          #ifdef LURK_LISTENER
+          canlurk = 0;
+          if( fEndPoint->InstallNotifier((OTNotifyProcPtr)__OTListener,this) == kOTNoError) 
+          {
+            OTSetAsynchronous(fEndPoint);
+            if(OTIoctl(fEndPoint, I_OTGetMiscellaneousEvents, (void*)1) == kOTNoError )
+            {
+              canlurk = 1; /* OT Listener is now installed */
+            }
+          }
+          #endif
+          if (canlurk)
+             what = (CONNECT_LURK | CONNECT_LURKONLY );  
+        }
       }
       caps = what;
     }
@@ -793,24 +795,23 @@ static int __insdel_devname(const char *devname, int isup,
 
 /* ---------------------------------------------------------- */
 
-#ifdef LURK_LISTENER
-pascal void __OTListener(void *context, OTEventCode code, OTResult result, void *cookie)
+#ifdef LURK_LISTENER /* asynchronous callback */
+static pascal void __OTListener(void *context, OTEventCode code, OTResult result, void *cookie)
 {
-   //printf("default: %X\n",code);
-   switch (code)
-   {
-      case kPPPIPCPDownEvent:
-			   isonline=0;
-            break;
-            
-		case kPPPIPCPUpEvent:
-				if (result == kOTNoError)
-               isonline=1;
-		   	break;
-		
-		default:
-            break;
-	}
+  //printf("default: %X\n",code);
+  switch (code)
+  {
+    case kPPPIPCPDownEvent:
+         isonline=0;
+         break;
+    case kPPPIPCPUpEvent:
+         if (result == kOTNoError)
+           isonline=1;
+         break;
+    default:
+         break;
+  }
+  return;
 }
 #endif
 
@@ -999,7 +1000,7 @@ int Lurk::InternalIsConnected(void) //must always returns a valid yes/no
     #ifdef LURK_MULTIDEV_TRACK
     __insdel_devname(NULL,0,conndevices,sizeof(conndevices)); /* stop tracking */
     #endif
-    TRACE_OUT((-1,"ioctl InternalIsConnected() '%s'\n",conndevice));
+    TRACE_OUT((-1,"ioctl InternalIsConnected() =>%d\n",upcount));
 
     if (upcount)
     {
@@ -1345,12 +1346,12 @@ int Lurk::InternalIsConnected(void) //must always returns a valid yes/no
 
 #elif (CLIENT_OS == OS_MACOS)
 
-#ifdef LURK_LISTENER
-static init = -1;
-if (init == -1)
-{
-init=0;
-#endif
+   #ifdef LURK_LISTENER /* using an asychronous listen callback */
+   if (isonline != -1)  /* already determined yes or no? */
+     return isonline;   /* return the state if so */
+   isonline = 0;        /* the callback hasn't been called yet */
+   /* fallthrough */    /* so get initial state manually below */
+   #endif
 
    TOptMgmt cmd;
    TOption* option;
@@ -1370,20 +1371,15 @@ init=0;
 
    if ((option->status == T_SUCCESS) || (option->status == T_READONLY))
    {
-      CCMiscInfo *info = (CCMiscInfo *) &option->value[0];
-      if (info->connectionStatus == kPPPConnectionStatusConnected)
-      {
-         #ifdef LURK_LISTENER
-         isonline=1;
-         #endif
-         return 1;
-      }
+     CCMiscInfo *info = (CCMiscInfo *) &option->value[0];
+     if (info->connectionStatus == kPPPConnectionStatusConnected)
+     {
+       #ifdef LURK_LISTENER
+       isonline=1;
+       #endif
+       return 1;
+     }
    }
-
-#ifdef LURK_LISTENER
-}
-return isonline;
-#endif
 
 #else
   #error "InternalIsConnected() must always return a valid yes/no."
