@@ -2844,15 +2844,18 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-      else if ( strcmp(Argv[i], "-prefer" ) == 0)
+      else if ( strcmp(Argv[i], "-processdes" ) == 0)
       {
-        preferred_contest_id = (s32) atoi(Argv[i+1]) - 1;
-        if (preferred_contest_id == 0) {
-          LogScreen("Setting preferred contest to RC5\n");
-        } else {
-          LogScreen("Setting preferred contest to DES\n");
+        preferred_contest_id = (s32) atoi(Argv[i+1]);
+        if (preferred_contest_id == 0)
+          {
+          LogScreen("Client will now NOT compete in DES contest(s).\n");
+          }
+        else
+          {
+          LogScreen("Client will now compete in DES contest(s).\n");
           preferred_contest_id = 1;
-        }
+          }
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
