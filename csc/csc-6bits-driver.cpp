@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-6bits-driver.cpp,v $
+// Revision 1.2  1999/07/25 13:28:51  remi
+// Fix for 64-bit processors.
+//
 // Revision 1.1  1999/07/23 02:43:06  fordbr
 // CSC cores added
 //
@@ -18,7 +21,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_6bits_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-6bits-driver.cpp,v 1.1 1999/07/23 02:43:06 fordbr Exp $"; }
+return "@(#)$Id: csc-6bits-driver.cpp,v 1.2 1999/07/25 13:28:51 remi Exp $"; }
 #endif
 
 /*
@@ -152,7 +155,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
       if( j<32 )
 	keylo |= ((key[0][j] >> numkeyfound) & 1) << j;
       else
-	keyhi |= ((key[0][j] >> numkeyfound) & 1) << j;
+	keyhi |= ((key[0][j] >> numkeyfound) & 1) << (j-32);
 
     // convert key from CSC format to incrementable format
     convert_key_from_csc_to_inc( &keyhi, &keylo );
