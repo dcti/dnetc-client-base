@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.2 1999/05/13 00:14:44 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.3 1999/05/31 20:38:31 cyp Exp $"; }
 
 //#define TRACE
 //#define ENABLE_ARGV0_REWRITE
@@ -33,6 +33,11 @@ return "@(#)$Id: cmdline.cpp,v 1.133.2.2 1999/05/13 00:14:44 cyp Exp $"; }
 #include "confrwv.h"   // ValidateConfig()
 #include "clicdata.h"  // CliGetContestNameFromID()
 
+#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
+    (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD)
+#include <dirent.h> /* for direct read of /proc/ */
+#endif
+    
 /* -------------------------------------- */
 
 int Client::ParseCommandline( int run_level, int argc, const char *argv[], 
@@ -145,123 +150,189 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       {
         #if defined(__unix__)
         {
-	  //could some kind person please convert this to use popen()?
-          terminate_app = 1;
           char buffer[1024];
-          int sig = 0;
-          char *dowhat_descrip = NULL;
-          
+          int sig = SIGHUP; char *dowhat_descrip = "-HUP'ed";
+          unsigned int kill_ok = 0, kill_failed = 0; 
+          int last_errno = 0, kill_found = 0;
+          const char *binname = "rc5des"; /* this is what we look for */
+          #ifndef ENABLE_ARGV0_REWRITE
+          binname = (const char *)strrchr( argv[0], '/' );
+          binname = ((binname==NULL)?(argv[0]):(binname+1));
+          #endif
+            
           if ( strcmp( thisarg, "-kill" ) == 0 ||
                strcmp( thisarg, "-shutdown") == 0 )
-          {
-            sig = SIGTERM;
-            dowhat_descrip = "shutdown";
-          }
+          { sig = SIGTERM; dowhat_descrip = "shutdown"; }
           else if (strcmp( thisarg, "-pause" ) == 0)
-          {
-            sig = SIGSTOP;
-            dowhat_descrip = "paused";
-          }
+          { sig = SIGTSTP; dowhat_descrip = "paused";  }
           else if (strcmp( thisarg, "-unpause" ) == 0)
-          {
-            sig = SIGCONT;
-            dowhat_descrip = "unpaused";
-          }
+          { sig = SIGCONT; dowhat_descrip = "unpaused"; }
+
+          #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
+              (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD)
+          DIR *dirp = opendir("/proc");
+          if (!dirp)
+            kill_found = -1;
           else
           {
-            sig = SIGHUP;
-            dowhat_descrip = "-HUP'ed";
-          }
-          
-          if (nextarg != NULL && *nextarg == '[')
-          {
-            pid_t ourpid[2];
-            ourpid[0] = atol( nextarg+1 );
-            ourpid[1] = getpid();
-            pos += 2;
-            
-            if (pos >= argc || argv[pos] == NULL || !isdigit(argv[pos][0]) )
+            struct dirent *dp;
+            pid_t ourpid = getpid();
+    
+            while ((dp = readdir(dirp)) != ((struct dirent *)0))  
             {
-              if (!loop0_quiet)
-                ConOutErr( ((pos == argc || argv[pos] == NULL) ?
-                     ("Unable to get pid list.") : (argv[pos])) );
-            }
-            else 
-            {
-              unsigned int kill_ok = 0;
-              unsigned int kill_failed = 0;
-              int last_errno = 0;
-              buffer[0] = 0;
-              do
+              FILE *file; size_t len;
+              pid_t thatpid = (pid_t)atoi(dp->d_name);
+              if (thatpid == 0 /* .,..,curproc,etc */ || thatpid == ourpid) 
+                continue;
+              sprintf( buffer, "/proc/%s/status", dp->d_name );
+              if (( file = fopen( buffer, "r" ) ) == ((FILE *)0))
+                continue; /* already died */
+              len = fread( buffer, 1, sizeof(buffer), file );
+              fclose( file );
+              if (len != 0)
               {
-                pid_t tokill = atol( argv[pos++] );
-                if (tokill!=ourpid[0] && tokill!=ourpid[1] && tokill!=0)
+                char *q, *procname = &buffer[0];
+                buffer[len-1] = '\0';
+                //printf("%s: %60s\n", dp->d_name, buffer );
+                if (memcmp(buffer,"Name:",5)==0) /* linux */
+                  procname+=5;
+                while (*procname && isspace(*procname))
+                  procname++;
+                q = procname;
+                while (*q && !isspace(*q))
                 {
-                  if ( kill( tokill, sig ) == 0)
-                  {
+                  if (*q =='/')
+                    procname = q+1;
+                  q++;
+                }
+                *q = '\0';
+                if (strcmp(procname,binname) == 0)
+                {
+                  //printf("%s: %s\n",dp->d_name,procname);
+                  kill_found++;
+                  if ( kill( thatpid, sig ) == 0)
                     kill_ok++;
-                  }
                   else if ((errno != ESRCH) && (errno != ENOENT))
                   {
                     kill_failed++;
                     last_errno = errno;
                   }
                 }
-              } while (pos<argc && argv[pos]!=NULL && isdigit(argv[pos][0]));
-              if (!loop0_quiet)
-              {
-                if ((kill_ok + kill_failed) == 0)    
-                {
-                  sprintf(buffer,"No distributed.net clients are currently running.\n"
-                                 "None were %s.", dowhat_descrip );
-                  ConOutErr(buffer);
-                }
-                else 
-                {
-                  sprintf(buffer,"%u distributed.net client%s %s. %u failure%s%s%s%s.",
-                           kill_ok, 
-                           ((kill_ok==1)?(" was"):("s were")),
-                           dowhat_descrip, 
-                           kill_failed, (kill_failed==1)?(""):("s"),
-                           ((kill_failed==0)?(""):(" (")),
-                           ((kill_failed==0)?(""):(strerror(last_errno))),
-                           ((kill_failed==0)?(""):(")")) );
-                  ConOutErr(buffer);
-                }
               }
-            }
-          }
+            }  
+            closedir(dirp);
+          }  
+          #else
+          const char *pscmd = "ps -ax -o pid -o command"; 
+          //sprintf(buffer,"ps auxwww|grep \"%s\"|awk '{print$2}'", binname);
+          //"ps auxwww|grep \"%s\" |tr -s \' \'|cut -d\' \' -f2|tr \'\\n\' \' \'"
+          #if (CLIENT_OS == OS_SOLARIS) //CRAMER-/usr/bin/ps or /usr/ucb/ps?
+          pscmd = "/usr/bin/ps -ef|awk '{print$2\" \"$11}'";
+          #endif
+          FILE *file = popen( pscmd, "r" );
+          if (file == NULL)
+            kill_found = -1; /* spawn failed */
           else
           {
-            const char *binname = "rc5des"; /* this is what ps sees */
-	    #ifndef ENABLE_ARGV0_REWRITE
-            binname = (const char *)strrchr( argv[0], '/' );
-            binname = ((binname==NULL)?(argv[0]):(binname+1));
-	    #endif
-            
-            sprintf(buffer, "%s %s %s [%lu] `"
-#if (CLIENT_OS == OS_SOLARIS)
-                            // CRAMER - /usr/bin/ps or /usr/ucb/ps?
-                            "/usr/bin/ps -ef|grep \"%s\"|awk '{print$2}'"
-#else
-                            "ps auxwww|grep \"%s\"|awk '{print$2}'"
-                            // "ps auxwww|grep \"%s\" |tr -s \' \'"
-                            // "|cut -d\' \' -f2|tr \'\\n\' \' \'"
-#endif
-                            "`", argv[0], 
-                            (loop0_quiet ? " -quiet" : ""),
-                            thisarg,
-                            (unsigned long)(getpid()), binname );
-            if (system( buffer ) != 0)
-            {
-              if (!loop0_quiet)
-              {
-                //ConOutErr( buffer ); /* show the command */
-                sprintf(buffer, "%s failed. Unable to get pid list.", thisarg );
-                ConOutErr( buffer );
-              }
-            }
+	    pid_t ourpid = getpid();
+	    unsigned int linelen = 0;
+	    int got_output = 0, eof_count = 0;
+	    while (file) /* dummy while */
+	    {
+	      int ch;
+	      if (( ch = fgetc( file ) ) == EOF )
+	      {
+		if (ferror(file))
+		  break;
+	        if (linelen == 0)
+		{
+		  if ((++eof_count) > 2)
+		    break;
+	        }
+ 	        usleep(250000);
+	      }
+	      else if (ch == '\n')
+	      {
+	        eof_count = 0;
+		if (linelen == 0)
+		  continue;
+		if (linelen < sizeof(buffer)-1) /* otherwise, line too long */
+		{
+		  pid_t thatpid;
+		  char *q, *procname = &buffer[0];
+		  buffer[linelen]='\0';
+		  while (*procname && isspace(*procname))
+		    procname++;
+	          thatpid = (pid_t)atol(procname);
+                  if (thatpid == ourpid)  /* ignore it */
+                  {
+		    got_output = 1;
+                  //printf("%s pid='%d' ** THIS IS US ** \n",buffer,thatpid);
+		    thatpid = 0;
+                  }
+		  else if (thatpid != 0)
+		  {
+		    got_output = 1;
+		    while (*procname && (isdigit(*procname) || isspace(*procname)))
+		      procname++;
+		    q = procname;
+		    while (*q && !isspace(*q))
+		    {
+		      if (*q == '/')
+		        procname = q+1;
+	              q++;
+		    }
+		    *q = '\0';
+                    //printf("pid='%d' procname='%s'\n",thatpid,procname);
+		    if (strcmp(procname,binname) != 0)  
+		      thatpid = 0;
+		  }
+		  if (thatpid != 0)
+		  {
+                    kill_found++;
+                    if ( kill( thatpid, sig ) == 0)
+                      kill_ok++;
+                    else if ((errno != ESRCH) && (errno != ENOENT))
+                    {
+                      kill_failed++;
+                      last_errno = errno;
+                    }
+		  }
+		} /* if (linelen < sizeof(buffer)-1) */
+ 	        linelen = 0; /* prepare for next line */
+	      } /* if (ch == '\n') */
+	      else
+	      {
+		eof_count = 0;
+	        if (linelen < sizeof(buffer)-1)
+		  buffer[linelen++] = ch;
+	      }	
+	    } /* while (file) */
+	    if (!got_output)
+	      kill_found = -1;
+	    pclose(file);
           }
+          #endif /* either read /proc/ or spawn ps */
+
+          if (!loop0_quiet && kill_found >= -1)
+          {
+            if (kill_found == -1)
+              sprintf( buffer, "%s failed. Unable to get pid list", thisarg );
+            else if (kill_found == 0)    
+              sprintf(buffer,"No distributed.net clients were found. "
+                             "None %s.", dowhat_descrip );
+            else 
+              sprintf(buffer,"%u distributed.net client%s %s. %u failure%s%s%s%s.",
+                       kill_ok, 
+                       ((kill_ok==1)?(" was"):("s were")),
+                       dowhat_descrip, 
+                       kill_failed, (kill_failed==1)?(""):("s"),
+                       ((kill_failed==0)?(""):(" (")),
+                       ((kill_failed==0)?(""):(strerror(last_errno))),
+                       ((kill_failed==0)?(""):(")")) );
+            ConOutErr(buffer);
+          }
+          terminate_app = 1;
         }
         #elif ((CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S))
         {
