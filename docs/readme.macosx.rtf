@@ -88,9 +88,10 @@
 \
     It may be desirable to run the client in the background; that is,\
     to close the Terminal window that it is running in, but have it\
-    continue processing.\
+    continue processing. There are two ways of doing this; either\
+    temporarily, or by default.\
 \
-    To do so, first stop any running instances of the client:\
+    1. To always run in silent mode, first stop any running clients:\
 
 \f3\fs20         ./dnetc -shutdown
 \f2\fs24 \
@@ -106,14 +107,30 @@
     so that you can check its activity. This is option 4 on the main\
     menu. When you are finished, save and quit.\
 \
-    Finally, start the client using this command:\
+    Finally, start the client using the command:\
 
-\f3\fs20         ./dnetc &
+\f3\fs20         ./dnetc
 \f2\fs24 \
 \
     This will start the now-silent client into the background. You\
     may then close Terminal if you wish.\
 \
+    2. To run in silent mode just once, first stop any running clients:\
+
+\f3\fs20         ./dnetc -shutdown
+\f2\fs24 \
+\
+    Then start the client again with the following switch:\
+
+\f3\fs20         ./dnetc -quiet
+\f2\fs24 \
+\
+    This will start the now-silent client into the background. You\
+    may then close Terminal if you wish. Similarly, if you have\
+    configured the client to always run quiet as above, you can\
+    prevent it from doing so with the 
+\f3\fs20 -noquiet
+\f2\fs24  switch.\
 \
 
 \f0\b\fs28  3.0  Frequently Asked Questions on Mac OS X  ---------
