@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __LOGSTUFF_H__
-#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.9 1999/04/06 10:20:48 cyp Exp $"
+#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.10 1999/04/20 02:03:28 cyp Exp $"
 
 #define LOGFILETYPE_NONE    0x00 //
 #define LOGFILETYPE_NOLIMIT 0x01 //unlimited (or limit == -1)
@@ -54,7 +54,7 @@ extern const char *LogGetCurrentLogFilename( void );
 //init/deinit prototypes
 void DeinitializeLogging(void);
 void InitializeLogging( int noscreen, int nopercent, const char *logfilename, 
-                        unsigned int logfiletype, int logfilelimit, 
+                        const char *logfiletype, const char *logfilelimit, 
                         long mailmsglen, const char *smtpsrvr, 
                         unsigned int smtpport, const char *smtpfrom, 
                         const char *smtpdest, const char *id );

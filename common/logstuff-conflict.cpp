@@ -10,7 +10,7 @@
  * ----------------------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.33 1999/04/11 00:15:44 cyp Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.34 1999/04/20 02:03:28 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -137,14 +137,12 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
        (logstatics.loggingTo & LOGTO_FILE) == 0)
     return;
     
-  if ( logfileLimit == (unsigned int)(-1) ) 
-    logfileType = LOGFILETYPE_NOLIMIT;
   #ifdef FTRUNCATE_NOT_SUPPORTED
   if ( ( logfileType & LOGFILETYPE_FIFO ) != 0 ) 
     logfileType = LOGFILETYPE_NOLIMIT;
   #endif    
 
-  if (( logfileType & LOGFILETYPE_NOLIMIT ) != 0 ) 
+  if ( logfileType == LOGFILETYPE_NOLIMIT )
   {
     logstream = fopen( GetFullPathForFilename( logstatics.logfile ), "a" );
     if (logstream)
@@ -154,7 +152,7 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
     }
     logstatics.logfilestarted = 1;
   }
-  else if (( logfileType & LOGFILETYPE_RESTART ) != 0 ) 
+  else if ( logfileType == LOGFILETYPE_RESTART ) 
   {
     long filelen = (long)(-1);
     //if ( logfileLimit < 100 )
@@ -180,14 +178,18 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
     }
     logstatics.logfilestarted = 1;
   }
-  else if (( logfileType & LOGFILETYPE_ROTATE ) != 0)
+  else if ( logfileType == LOGFILETYPE_ROTATE )
   {
+    static logfilebaselen = 0;
     static unsigned int last_year = 0, last_mon = 0, last_day = 0;
     static unsigned long last_jdn = 0;
     unsigned int curr_year, curr_mon, curr_day;
     unsigned long curr_jdn;
     struct tm *currtmP;
     time_t ttime;
+
+    if (!logstatics.logfilestarted)
+      logfilebaselen = strlen( logstatics.logfile );
 
     ttime = time(NULL);
     currtmP = localtime( &ttime );
@@ -210,7 +212,7 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
         last_day  = curr_day;
       }
     }
-    sprintf( logstatics.logfile+logstatics.logfilebaselen, 
+    sprintf( logstatics.logfile+logfilebaselen, 
              "%02d%02d%02d.log", (int)(last_year%100), 
              (int)(last_mon), (int)(last_day) );
     logstream = fopen( GetFullPathForFilename( logstatics.logfile ), "a" );
@@ -221,11 +223,11 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
     }
     logstatics.logfilestarted = 1;
   }
-  else if ( ( logfileType & LOGFILETYPE_FIFO ) != 0 ) 
+  else if ( logfileType == LOGFILETYPE_FIFO ) 
   {
     unsigned long filelen = 0;
-    //if ( logfileLimit < 100 )
-    //  logfileLimit = 100;
+    if ( logfileLimit < 100 )
+      logfileLimit = 100;
     logstream = fopen( GetFullPathForFilename( logstatics.logfile ), "a" );
     if ( logstream )
     {
@@ -597,29 +599,134 @@ void DeinitializeLogging(void)
   {
     logstatics.mailmessage->Deinitialize(); //forces a send
     delete logstatics.mailmessage;
-    logstatics.mailmessage = NULL;
-    logstatics.loggingTo &= ~LOGTO_MAIL;    
   }
+  memset((void *)&logstatics, 0, sizeof(logstatics));
+  logstatics.loggingTo = LOGTO_NONE;
   logstatics.logfileType = LOGFILETYPE_NONE;
-  logstatics.loggingTo &= ~LOGTO_FILE;    
-
   return;
 }
 
 // ---------------------------------------------------------------------------
 
+static int fixup_logfilevars( const char *stype, const char *slimit,
+                              int *type, unsigned int *limit,
+                              const char *userslogname, char *logname,
+                              unsigned int maxlognamelen )
+{
+  unsigned int len;
+  int climit = 0;
+  char scratch[20];
+  long l = 0;
+
+  *type = LOGFILETYPE_NONE;
+  *limit = 0;
+  *logname = 0;
+  
+  if (!userslogname)
+    return 0;
+  while (*userslogname && isspace(*userslogname))
+    userslogname++;
+  strncpy( logname, userslogname, maxlognamelen );
+  logname[maxlognamelen-1]='\0';
+  len = strlen( logname );
+  while (len > 1 && isspace(logname[len-1]))
+    logname[--len]='\0';
+  if (!*logname || strcmp( logname, "none" )==0)
+  {
+    *logname='\0';
+    return 0;
+  }
+
+  *type = LOGFILETYPE_NOLIMIT;
+
+  if (slimit)
+  {
+    while (*slimit && isspace(*slimit))
+      slimit++;
+    while (isdigit(*slimit))
+      l=((l*10)+(*slimit++)-'0');
+    while (*slimit && isspace(*slimit))
+      slimit++;
+    climit = tolower(*slimit);
+  }
+  if (stype)
+  {
+    static struct { int type; const char *name; } logtypelist[] = {
+                   //nolimit is default, so we don't need it here.
+                  { LOGFILETYPE_NONE,    "none"   },
+                  { LOGFILETYPE_ROTATE,  "rotate" },
+                  { LOGFILETYPE_RESTART, "restart"},
+                  { LOGFILETYPE_FIFO,    "fifo"   } };
+    unsigned int i = 0;
+    while (*stype && isspace(*stype))
+      stype++;
+    len = strlen(stype);
+    while (len>1 && isspace(stype[len-1]))
+      len--;
+    while (i<len && i<(sizeof(scratch)-1))
+      scratch[i++]=(char)tolower(*stype++);
+    scratch[i]='\0';
+    
+    for (i=0;i<(sizeof(logtypelist)/sizeof(logtypelist[0]));i++)
+    {
+      if (strcmp(logtypelist[i].name, scratch ) == 0)
+      {
+        *type = logtypelist[i].type;
+        break;
+      }
+    }
+  }
+
+  if (*type == LOGFILETYPE_NONE)
+  {
+    *limit = 0; /* limit is ignored */
+  }
+  else if (*type == LOGFILETYPE_NOLIMIT)
+  {
+    *limit = 0; /* limit is ignored */
+  }
+  else if (*type == LOGFILETYPE_ROTATE)
+  {
+    /* convert to days */
+    if (climit == 'm')
+      l *= 30;
+    else if (climit == 'w')
+      l *= 7;
+    else if (climit == 'y')
+      l *= 365;
+    if (l > INT_MAX)
+      l = INT_MAX;
+    *limit = (unsigned int)l;
+  }
+  else //(*type == LOGFILETYPE_RESTART || *type == LOGFILETYPE_FIFO)
+  {
+    /* convert to Kb */
+    if (climit == 'g') /* dickheads! */
+    {
+      *type = LOGFILETYPE_NOLIMIT;
+      *limit = 0;
+    }
+    else 
+    {
+      if (climit == 'm')
+        l *= 1024;
+      if (l > INT_MAX)
+        l = INT_MAX;
+      *limit = (unsigned int)l;
+    }
+  }  
+  return 0;
+}  
+
 void InitializeLogging( int noscreen, int nopercent, const char *logfilename, 
-                        unsigned int logfiletype, int logfilelimit, 
+                        const char *logfiletype, const char *logfilelimit, 
                         long mailmsglen, const char *smtpsrvr, 
                         unsigned int smtpport, const char *smtpfrom, 
                         const char *smtpdest, const char *id )
 {
   DeinitializeLogging();
-  
-  logstatics.loggingTo = LOGTO_NONE;
-  logstatics.lastwasperc = 0;
-  logstatics.spoolson = 1;
   logstatics.percprint = (nopercent == 0);
+  logstatics.spoolson = 1;
 
   if ( noscreen == 0 )
   {
@@ -627,41 +734,14 @@ void InitializeLogging( int noscreen, int nopercent, const char *logfilename,
     logstatics.stableflag = 0;   //assume next log screen needs a '\n' first
   }
 
-  logstatics.logfileType = LOGFILETYPE_NONE;
-  logstatics.logfile[0] = 0;
-  if ( logfiletype != LOGFILETYPE_NONE && logfilename!=NULL)
-  {
-    while (*logfilename && isspace(*logfilename))
-      logfilename++;
-    strncpy( logstatics.logfile, logfilename, sizeof( logstatics.logfile )-1);
-    logstatics.logfile[sizeof( logstatics.logfile )-1]=0;
-    unsigned int len = strlen(logstatics.logfile);
-    while (len > 0 && isspace(logstatics.logfile[len-1]))
-      logstatics.logfile[--len]=0;
-    if (len > 0 && strcmpi( logstatics.logfile, "none" )==0 )
-    { len=0; logstatics.logfile[0]=0; }
-    
-    if (len > 0)
-    {
-      logstatics.logfilebaselen = len;
-      logstatics.logfilestarted = 0;
- 
-      if (logfiletype ==  LOGFILETYPE_ROTATE || 
-          logfiletype ==  LOGFILETYPE_RESTART ||
-          logfiletype ==  LOGFILETYPE_FIFO || 
-          logfiletype ==  LOGFILETYPE_NOLIMIT )
-      {
-        if (logfiletype == LOGFILETYPE_NOLIMIT || logfilelimit > 0)
-        {                          /* limit is ignored if *_NOLIMIT */
-          logstatics.loggingTo |= LOGTO_FILE;
-          logstatics.logfileType = logfiletype;
-          logstatics.logfileLimit = (unsigned int)logfilelimit;
-        }
-      }
-    }
-  }
+  fixup_logfilevars( logfiletype, logfilelimit,
+                     &logstatics.logfileType, &logstatics.logfileLimit,
+                     logfilename, logstatics.logfile, 
+                     (sizeof(logstatics.logfile)-10));
+  if (logstatics.logfileType != LOGFILETYPE_NONE)
+    logstatics.loggingTo |= LOGTO_FILE;
 
-  if (!logstatics.mailmessage && mailmsglen > 0)
+  if (mailmsglen > 0)
     logstatics.mailmessage = new MailMessage();
   if (logstatics.mailmessage)
   {
