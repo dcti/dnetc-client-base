@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.37 2000/12/21 16:56:44 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.38 2001/01/01 05:08:53 michmarc Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -349,7 +349,7 @@ int SelfTest( unsigned int contest )
           contestwork.crypto.iterations.hi = ( 0 );
           break;
         #if defined(HAVE_OGR_CORES)
-        case OGR:
+        case OGR: {
           contestwork.ogr.workstub.stub.marks = (u16)((*test_cases)[testnum][1]);
           contestwork.ogr.workstub.stub.length = 6;
           for (int i = 0; i < TEST_CASE_DATA-2; i++) {
@@ -361,6 +361,7 @@ int SelfTest( unsigned int contest )
           }
           contestwork.ogr.workstub.worklength = contestwork.ogr.workstub.stub.length;
           contestwork.ogr.nodes.lo = contestwork.ogr.nodes.hi = 0;
+          }
           break;
         #endif
         default:
