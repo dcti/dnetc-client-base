@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.5 2003/03/30 19:44:42 snikkel Exp $
+ * $Id: ogr.cpp,v 1.2.4.6 2003/05/09 12:39:16 mfeiri Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -368,7 +368,7 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 
 #if (OGROPT_ALTERNATE_CYCLE == 2) /* support macros for the vectorized ogr_cycle() routine */
 
-#if defined(__GNUC__)
+#if (defined(__GNUC__) && !defined(__APPLE_CC__))
   #define ZEROBIT_DECL {0, 0, 1, 0}
   #define ZEROS_DECL {0}
 #else
