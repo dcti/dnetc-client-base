@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice.cpp,v $
+// Revision 1.8  1998/12/20 03:16:15  cyp
+// Trivial change to suppress a pedantic compile-time warning.
+//
 // Revision 1.7  1998/12/14 12:12:54  cyp
 // Worked around BIT_64/BIT_32 conflicts when building x86 clients.
 //
@@ -29,7 +32,7 @@
 // encapsulate the bitslice SolNET code
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_cpp(void) {
-return "@(#)$Id: des-slice.cpp,v 1.7 1998/12/14 12:12:54 cyp Exp $"; }
+return "@(#)$Id: des-slice.cpp,v 1.8 1998/12/20 03:16:15 cyp Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -78,13 +81,14 @@ u32 des_unit_func_slice( RC5UnitWork * rc5unitwork, u32 nbbits )
     u32 i;
 
       // check if we have the right BIT_xx define
+    i = sizeof(unsigned long);
 #ifdef BIT_32
-    if (sizeof(unsigned long) != 4) {
+    if (i != 4) {
 	printf ("Bad BIT_32 define !\n");
 	exit (-1);
     }
 #elif BIT_64
-    if (sizeof(unsigned long) != 8) {
+    if (i != 8) {
 	printf ("Bad BIT_64 define !\n");
 	exit (-1);
     }
