@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.19  1998/10/27 22:22:27  remi
+// Added a missing '\'.
+//
 // Revision 1.18  1998/10/27 19:37:12  cyp
 // Synchronized again.
 //
@@ -85,7 +88,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.18 1998/10/27 19:37:12 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.19 1998/10/27 22:22:27 remi Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -160,7 +163,7 @@ struct thread_param_block
     int threadID;
   #elif (CLIENT_OS == OS_BEOS)
     thread_id threadID;
-  #elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H) || 
+  #elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H) || \
     defined(_POSIX_THREAD_PRIORITY_SCHEDULING)) && defined(MULTITHREAD)
     pthread_t threadID;
   #else
