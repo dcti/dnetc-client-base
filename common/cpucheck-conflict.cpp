@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.8  1998/07/05 06:55:06  silby
+// Change to the bitmask for intel CPUIDs so that secondary CPUs will be id'd correctly.
+//
 // Revision 1.7  1998/06/28 19:48:13  silby
 // Changed default amd 486 core selection to pentium core and changed strings to reflect that.
 //
@@ -32,7 +35,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cpucheck-conflict.cpp,v 1.7 1998/06/28 19:48:13 silby Exp $";
+static const char *id="@(#)$Id: cpucheck-conflict.cpp,v 1.8 1998/07/05 06:55:06 silby Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -237,7 +240,7 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
     vendorname = "Intel";
     if ((cpuidb == 0x30) || (cpuidb == 0x40))
       vendorname = ""; //generic 386/486
-    cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
+    cpuidb &= 0x0ff0; //strip last 4 bits, don't need stepping info
     static struct _cpuxref __cpuxref[]={
       {  0x0030, 0426,  1, "80386"    },   // generic 386/486 core
       {  0x0040, 1024,  1, "80486"    },   // - 946 ('95) + 1085 (NetWare) 
