@@ -11,15 +11,10 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.14 2004/01/07 02:50:51 piru Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.15 2004/01/08 00:44:25 oliver Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
-
-#if (CLIENT_OS == OS_MORPHOS)
-#  include <exec/tasks.h>
-#  include <emul/emulinterface.h>
-#endif
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -46,6 +41,10 @@ return "@(#)$Id: problem.cpp,v 1.177.2.14 2004/01/07 02:50:51 piru Exp $"; }
   #define offsetof(__typ,__id) ((size_t)&(((__typ*)0)->__id))
 #else
   #include <stddef.h> /* offsetof */
+#endif
+#if (CLIENT_OS == OS_MORPHOS)
+  #include <exec/tasks.h>
+  #include <emul/emulinterface.h>
 #endif
 
 /* ------------------------------------------------------------------- */
