@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.115  1998/11/08 18:50:58  cyp
+# Unix platforms no longer require curses.
+#
 # Revision 1.114  1998/11/08 08:27:10  dbaker
 # freebsd elf
 #
@@ -677,7 +680,7 @@ case "$1" in
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC -D__showids__ -fno-inline-functions -DMULTITHREAD -DPIPELINE_COUNT=2 -DKWAN -DMEGGS -DBIT_32"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
-	TARGET_LIBS="-lpthread -lncurses"
+	TARGET_LIBS="-lpthread"
 	;;
 
     *sparc-cc)
@@ -790,7 +793,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 -DBIT_64 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	TARGET_LDFLAGS="-static"
-	TARGET_LIBS="-lncurses"
+	TARGET_LIBS=""
 	;;
 
     *alpha-gcc-mt)
@@ -799,7 +802,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 -DBIT_64 -DMEGGS -DKWAN -DMULTITHREAD"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	TARGET_LDFLAGS="-static"
-	TARGET_LIBS="-lncurses -lpthread"
+	TARGET_LIBS="-lpthread"
 	;;
 
     *alpha-netbsd)
@@ -816,7 +819,7 @@ case "$1" in
     *ppc-gcc)
 	TARGET_CCFLAGS="$OPTS_GCC_PPC -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS rc5/crunch_allitnil_552.ppc.s rc5/crunch_lintilla_296.ppc.s"
-	TARGET_LIBS="-lncurses"
+	TARGET_LIBS=""
 	;;
 
     *power-gcc)
@@ -870,7 +873,7 @@ case "$1" in
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lncurses"
+	TARGET_LIBS=""
 	;;
 
     *x86-linux-egcs-cramer)       # special target for cramer's non-standard installation
@@ -881,7 +884,7 @@ case "$1" in
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lncurses"
+	TARGET_LIBS=""
 	;;
 
     *x86-linux-gcc)               # uses standard GCC options plus '-pipe'
@@ -891,7 +894,7 @@ case "$1" in
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lncurses"
+	TARGET_LIBS=""
 	;;
 
     *x86-linux-libc5-gcc)         # uses GCC options plus '-pipe' (libc5)
@@ -902,13 +905,12 @@ case "$1" in
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lncurses"
+	TARGET_LIBS=""
 	;;
 
-    *x86-linux-gcc-nocurses)      # standard GCC options, no curses/termios, non-static
+    *x86-linux-gcc-simple) # standard GCC options, non-static, non-threaded
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ -DNOCURSES -DNOTERMIOS"
-	#TARGET_LDFLAGS="-static"
+	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
@@ -922,7 +924,7 @@ case "$1" in
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_STRIP="touch"
-	TARGET_LIBS="-lncurses"
+	TARGET_LIBS=""
 	;;
 
     *x86-linux-egcs-debug-cramer) # debug version of x86-linux-egcs-cramer
@@ -933,7 +935,7 @@ case "$1" in
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_STRIP="touch"
-	TARGET_LIBS="-lncurses"
+	TARGET_LIBS=""
 	;;
 
     *x86-linux-gcc-debug)         # debug version of x86-linux-gcc
@@ -944,7 +946,7 @@ case "$1" in
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
 	TARGET_STRIP="touch"
-	TARGET_LIBS="-lncurses"
+	TARGET_LIBS=""
 	;;
 
     *x86-linux-aout-egcs)          # aout version, using EGCS options
@@ -956,7 +958,7 @@ case "$1" in
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lncurses"
+	TARGET_LIBS=""
 	;;
 
     *x86-linux-aout-egcs-cramer)   # special target for cramer's non-standard installation
@@ -967,7 +969,7 @@ case "$1" in
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S platforms/x86ident.S des/p1bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lncurses"
+	TARGET_LIBS=""
 	;;
 
     *x86-linux-mt-egcs)            # multithreaded build using EGCS options
@@ -978,7 +980,7 @@ case "$1" in
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lpthread -lncurses"
+	TARGET_LIBS="-lpthread"
 	;;
 
     *x86-linux-glibc2-mt-egcs)     # multithreaded build using EGCS options (dyn. linked w/glibc2)
@@ -989,7 +991,7 @@ case "$1" in
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lgcc -lc -lm /usr/lib/libpthread.a /usr/lib/libncurses.a"
+	TARGET_LIBS="-lgcc -lc -lm /usr/lib/libpthread.a"
 	;; # hacked a bit to avoid all dynamic linking but libc.so.6 and libm.so.6
 
     *x86-linux-mt-egcs-cramer)     # special target for cramer's non-standard installation
@@ -1000,7 +1002,7 @@ case "$1" in
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lpthread -lncurses"
+	TARGET_LIBS="-lpthread"
 	;;
 
     *x86-linux-mt-gcc)             # multithreaded build using GCC options
@@ -1010,7 +1012,7 @@ case "$1" in
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lpthread -lncurses"
+	TARGET_LIBS="-lpthread"
 	;;
 
     *x86-linux-libc5-mt-gcc)             # multithreaded build using GCC options (libc5)
@@ -1021,7 +1023,7 @@ case "$1" in
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lpthread -lncurses"
+	TARGET_LIBS="-lpthread"
 	;;
 
     *x86-linux-mt-slice-kwan-gcc)  # using slice not bryddes
@@ -1031,7 +1033,7 @@ case "$1" in
 	TARGET_ADDSRCS="$RC5X86_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="platforms/x86ident.S"
         TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
-	TARGET_LIBS="-lpthread -lncurses"
+	TARGET_LIBS="-lpthread"
 	;;
 
 ###### Intel X86 FreeBSD/NetBSD/OpenBSD
@@ -1187,7 +1189,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_ARM -DPIPELINE_COUNT=2 -DBIT_32 -Dlinux -DKWAN"
 	TARGET_ADDSRCS=""
 	TARGET_ADDASMS="rc5/rc5-sa-gnu.s rc5/rc5-arm-gnu.s des/des-slice-sa-gnu.s des/des-slice-arm-gnu.s"
-	TARGET_LIBS="-lm -lncurses"
+	TARGET_LIBS="-lm"
 	;;
 
     *arm-netbsd)
