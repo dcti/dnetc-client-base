@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mac_client.cpp,v $
+// Revision 1.9  1999/03/22 08:08:53  dicamillo
+// Update InitializeTriggers calls.
+//
 // Revision 1.8  1999/03/01 16:14:21  sampo
 // Update to accomadate change in ContestWork union
 //
@@ -30,7 +33,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *mac_client_cpp(void) {
-return "@(#)$Id: mac_client.cpp,v 1.8 1999/03/01 16:14:21 sampo Exp $"; }
+return "@(#)$Id: mac_client.cpp,v 1.9 1999/03/22 08:08:53 dicamillo Exp $"; }
 #endif
 
 // This file contains the routines added to the Client class for the Mac_Client
@@ -48,6 +51,7 @@ return "@(#)$Id: mac_client.cpp,v 1.8 1999/03/01 16:14:21 sampo Exp $"; }
 #include "probman.h"
 #include "problem.h"
 #include "logstuff.h"
+#include "pathwork.h"
 #include "Mac_Client.h"
 #include "String.h"
 #include "clirate.h"
@@ -77,7 +81,10 @@ double CliGetKeyrateForProblemNoSave( Problem *prob );
 
 int Mac_Client::InitializeClient(void)
 {
-	if (InitializeTriggers(((noexitfilecheck)?(NULL):(exit_flag_file)),pausefile)!=0) {
+     int domodes = (ModeReqIsSet(-1) != 0);
+     if (InitializeTriggers(((noexitfilecheck ||
+                              domodes)?(NULL):("exitrc5" EXTN_SEP "now")),
+                              ((domodes)?(NULL):(pausefile)) )!=0) {
 		return(1);
 	}
 	if (InitializeConnectivity() != 0) {
@@ -100,7 +107,10 @@ void Mac_Client::ReInitializeClient(void)
 void Mac_Client::ResetClient(void)
 {
 	DeinitializeTriggers();
-	InitializeTriggers(((noexitfilecheck)?(NULL):(exit_flag_file)),pausefile);
+    int domodes = (ModeReqIsSet(-1) != 0);
+    InitializeTriggers(((noexitfilecheck ||
+                         domodes)?(NULL):("exitrc5" EXTN_SEP "now")),
+                         ((domodes)?(NULL):(pausefile)) );
 }
 
 void Mac_Client::DeInitializeClient(void)
