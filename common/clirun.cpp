@@ -3,14 +3,6 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
-// Revision 1.60  1998/12/29 06:57:49  cyp
-// Removed redundant percbar event. Its covered by TFILL_STARTED.
-//
-// Revision 1.59  1998/12/29 20:36:23  silby
-// Added new event to cause GUIs to update their percent bars.
-// (Assumes percent bar routines have their own logic
-// similar to logscreen_percent.)
-//
 // Revision 1.58  1998/12/29 19:29:26  cyp
 // Cleaned up ::scheduledupdatetime: (a) clear scheduled time after a
 // successful fetch in that period [should really be in fetch/flush itself],
@@ -235,7 +227,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.60 1998/12/29 06:57:49 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.58 1998/12/29 19:29:26 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -1440,6 +1432,9 @@ int Client::Run( void )
         last_scheduledupdatetime = scheduledupdatetime;
         //flush_scheduled_count = 0;
         flush_scheduled_adj = (Random(NULL,0)%UPDATE_INTERVAL); 
+        struct timeval tv;
+        tv.tv_sec = timeNow + (time_t)flush_scheduled_adj;
+        tv.tv_usec = 0;
         Log("Buffer update scheduled in %u minutes %02u seconds.\n", 
              flush_scheduled_adj/60, flush_scheduled_adj%60 );
         }
@@ -1555,7 +1550,15 @@ int Client::Run( void )
       //at this point and threads are running at lower priority. If that is 
       //not the case, then benchmarks are going to return wrong results. 
       //The messy way around that is to suspend the threads.
-      ModeReqRun(this);
+      if ((ModeReqRun(this) & MODEREQ_FETCH)!=0)
+        {
+        if (scheduledupdatetime != 0 && (preferred_contest_id==1) && 
+          (timeNow >= scheduledupdatetime) && 
+          (timeNow < (scheduledupdatetime+TIME_AFTER_START_TO_UPDATE+10)) )
+          { 
+          scheduledupdatetime = 0;
+          }
+        }
       }
     }  // End of MAIN LOOP
 
