@@ -1,68 +1,69 @@
 
-$Id: TODO.txt,v 1.8.2.5 2000/01/17 07:41:48 cyp Exp $
+$Id: TODO.txt,v 1.8.2.6 2000/03/28 00:14:06 andreasb Exp $
 
-This file contains a list of mini-projects. Submissions as well as 
-volunteers :) are welcome. 
+This file contains a list of mini-projects. Submissions as well as
+volunteers :) are welcome.
 
-The list is maintained by Cyrus "cyp" Patel <cyp@fb14.uni-mainz.de>. 
+The list is maintained by Cyrus "cyp" Patel <cyp@fb14.uni-mainz.de>.
 To avoid having the wheel reinvented, please holler if you wish
-to tackle a project. 
+to tackle a project.
 
-*Do not* add bug reports or platform specific to-do (which are synonymous 
-with 'bug' or 'feature request') here. 
+*Do not* add bug reports or platform specific to-do (which are synonymous
+with 'bug' or 'feature request') here.
 
-If you have the expertise but lack the time to handle a project, 
+If you have the expertise but lack the time to handle a project,
 please post your willingness to assist to coders@lists.distributed.net.
 Perhaps someone else has what you don't. :)
 
 Quick and easy:
 
    - add exec(logcompressor) support
-   - auto-pause if non-client cpuusage exceeds a threshold, 
-     and remain suspended until the non-client cpuusage drops below 
+   - auto-pause if non-client cpuusage exceeds a threshold,
+     and remain suspended until the non-client cpuusage drops below
      another threshold
-   - (configurable) auto restart if .ini changes
 
 More difficult:
 
 -- Devise and write a better filebuffer scheme.       Priority: VERY HIGH
    a) better "locking". The current method of writing 0x1 to tag
-      a file as 'locked' is not ideal. Using a specific value to 
+      a file as 'locked' is not ideal. Using a specific value to
       identify the lock as the client's own would probably solve
       all locking problems.
-   b) contain both in and completed blocks in a single file. Even 
-      better would be a format that accomodates blocks from all 
+   b) contain both in and completed blocks in a single file. Even
+      better would be a format that accomodates blocks from all
       projects.
-   c) The buffer format must support FIFO. The current FIFO scheme 
-      uses a "find one more suitable than default" scheme. It works 
+   c) The buffer format must support FIFO. The current FIFO scheme
+      uses a "find one more suitable than default" scheme. It works
       well and has a low overhead but is contest specific.
    d) The buffer format should allow variable record size or sufficient
-      per record padding or record 'continuation' so that we can add 
+      per record padding or record 'continuation' so that we can add
       fields without having to redesign the whole mess again soon.
 
 -- Write a routine to import/export uuencoded buffers for/from users
    that can only update their buffers via mail. The functions to
    import binary buffer records already exists.           Priority: Medium
-        
+
 -- Add FTP as a supported buffer exchange protocol. The client could
    directly STOR buff-in.xx and requests to RETR rc5 would cause the
    keyserver to return a rc5 block from its ready queue.   Priority: Low
-    
--- Write a small routine to obtain a list of the local host's UP af_inet 
+
+-- Write a small routine to obtain a list of the local host's UP af_inet
    if's by using SNMP or ... Use ioctl() to do the same (for your port).
    Linux/OS2/Win32/FreeBSD/OpenBSD/NetBSD/BSDOS/MacOS are already implemented.
                                                            Priority: Low
 
 -- (remote) config via xml.
-                                                           
+
 -- Split network.cpp into netio primitives and high-level/wrapper handling
    functions. Something along the lines of whats used in the proxy would
-   be nice, but without the bloat please.             Priority: 
+   be nice, but without the bloat please.             Priority:
 
--- convert the "work unit size" to something human. :) 
+-- convert the "work unit size" to something human. :)
    "cpu-work-hours" maybe?                            Priority: Medium
 
--- Look into the MPI (message passing interface) API for parent<->child 
+-- Look into the MPI (message passing interface) API for parent<->child
    process communications.                            Priority: Medium
-   
-   
+
+-- Add configurable contest rotation.
+   Currently #define ROTATE_BETWEEN_CONTESTS switches contests before new
+   work is fetched.                                   Priority:
