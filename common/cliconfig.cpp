@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.178  1998/08/20 20:38:27  cyruspatel
+// Mail specific option validation removed. Mail.cpp is RFC aware and can
+// recognize/deal with invalid addresses better than ValidateConfig() can.
+//
 // Revision 1.177  1998/08/20 19:34:21  cyruspatel
 // Removed that terrible PIPELINE_COUNT hack: Timeslice and pipeline count
 // are now computed in Problem::LoadState(). Client::SelectCore() now saves
@@ -25,12 +29,7 @@
 // Changes for rc5 mmx core integration.
 //
 // Revision 1.171  1998/08/10 23:02:22  cyruspatel
-// Four changes: (a) xxxTrigger and pausefilefound flags are now wrapped in
-// functions in trigger.cpp (b) NetworkInitialize()/NetworkDeinitialize()
-// related changes: (see netinit.cpp for documentation): calls to those two
-// functions have been removed from main() and are used before network i/o is
-// actually attempted. (c) NO!NETWORK references have been removed. network.cpp
-// changelog has details. (d) Fetch()/Flush()/Update() are now in buffupd.cpp
+// xxxTrigger and pausefilefound flags are now wrapped in trigger.cpp 
 //
 // Revision 1.170  1998/08/07 05:28:47  silby
 // Changed lurk so that win32 users can now easily select the connection to use for dial on demand.
@@ -61,12 +60,7 @@
 //
 // Revision 1.162  1998/07/29 01:49:44  cyruspatel
 // Fixed email address from not being editable (the option to return to the
-// main menu is '0', and 0 is also the value of CONF_ID). Autofindkeyserver
-// changes: a) added a description that describes the new "(auto)" option.
-// b) when autofind is ON, the name of the keyproxy is no longer written to
-// the ini (was writing us.v27 which might be misleading). c) if the old
-// generic keyproxy name (rc5proxy.distributed.net) is read in from the ini,
-// autofind is automatically turned on.
+// main menu is '0', and 0 is also the value of CONF_ID). 
 //
 // Revision 1.161  1998/07/26 21:18:48  cyruspatel
 // Modified Client::ConfigureGeneral() to work with 'autofindkeyserver'.
@@ -179,16 +173,7 @@
 // eliminated printf warning again
 //
 // Revision 1.132  1998/07/07 21:55:10  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
+// client.h has been split into client.h and baseincs.h 
 //
 // Revision 1.131  1998/07/07 07:28:36  jlawson
 // eliminated printf type warning with gcc
@@ -203,7 +188,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.177 1998/08/20 19:34:21 cyruspatel Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.178 1998/08/20 20:38:27 cyruspatel Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -214,14 +199,14 @@ return "@(#)$Id: cliconfig.cpp,v 1.177 1998/08/20 19:34:21 cyruspatel Exp $"; }
 #include "network.h"  
 #include "problem.h"  // ___unit_func()
 #include "cpucheck.h" // cpu selection, GetTimesliceBaseline()
-#include "triggers.h" //[Check|Raise][Pause|Exit]RequestTrigger()/Init...Handler()
+#include "triggers.h" //[Check|Raise][Pause|Exit]RequestTrigger()/InitXHandler()
 #include "clirate.h"
 #include "scram.h"     // InitRandom2(id)
 #include "pathwork.h"
 #include "logstuff.h"  //Log()/LogScreen()/LogScreenPercent()/LogFlush()
 
 
-#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+#if (((CLIENT_OS == OS_OS2) || (CLIENT_OS==OS_WIN32)) && defined(MULTITHREAD))
 #include "lurk.h"      //lurk stuff
 #endif
 
@@ -962,38 +947,19 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
         #endif
         case CONF_MESSAGELEN:
           messagelen = atoi(parm);
-          ValidateConfig();
-          if (messagelen != 0)
-            {
-            options[CONF_SMTPSRVR].optionscreen=2;
-            options[CONF_SMTPPORT].optionscreen=2;
-            options[CONF_SMTPDEST].optionscreen=2;
-            options[CONF_SMTPFROM].optionscreen=2;
-            }
-          else
-            {
-            options[CONF_SMTPSRVR].optionscreen=0;
-            options[CONF_SMTPPORT].optionscreen=0;
-            options[CONF_SMTPDEST].optionscreen=0;
-            options[CONF_SMTPFROM].optionscreen=0;
-            };
-          break;
+          break; //mail options are validated by mail.cpp 1998/08/20 cyrus
         case CONF_SMTPPORT:
           smtpport = atoi(parm);
-          ValidateConfig();
-          break;
+          break; //mail options are validated by mail.cpp 1998/08/20 cyrus
         case CONF_SMTPSRVR:
           strncpy( smtpsrvr, parm, sizeof(smtpsrvr) - 1 );
-          ValidateConfig();
-          break;
+          break; //mail options are validated by mail.cpp 1998/08/20 cyrus
         case CONF_SMTPFROM:
           strncpy( smtpfrom, parm, sizeof(smtpfrom) - 1 );
-          ValidateConfig();
-          break;
+          break; //mail options are validated by mail.cpp 1998/08/20 cyrus
         case CONF_SMTPDEST:
           strncpy( smtpdest, parm, sizeof(smtpdest) - 1 );
-          ValidateConfig();
-          break;
+          break; //mail options are validated by mail.cpp 1998/08/20 cyrus
         case CONF_NUMCPU:
           numcpu = atoi(parm);
           break; //validation is done in SelectCore() 1998/06/21 cyrus
@@ -1376,8 +1342,6 @@ if (uuehttpmode > 1)
 
 //----------------------------------------------------------------------------
 
-//----------------------------------------------------------------------------
-
 s32 Client::ReadConfig(void)
 {
   IniSection ini;
@@ -1533,30 +1497,10 @@ s32 Client::ReadConfig(void)
 
 void Client::ValidateConfig( void )
 {
-  char *at;
-
   killwhitespace(id);
   killwhitespace(keyproxy);
   killwhitespace(httpproxy);
   killwhitespace(smtpsrvr);
-
-  killwhitespace(smtpfrom);
-  at = strchr(smtpfrom,'@');
-  if (!at && (isstringblank(smtpfrom) != 1)) {
-    strcat(smtpfrom,"@");
-    strcat(smtpfrom,smtpsrvr);
-  } else if (at && !at[1]) {
-    strcat(smtpfrom,smtpsrvr);
-  }
-
-  killwhitespace(smtpdest);
-  at = strchr(smtpdest,'@');
-  if (!at && (isstringblank(smtpdest) != 1)) {
-    strcat(smtpdest,"@");
-    strcat(smtpdest,smtpsrvr);
-  } else if (at && !at[1]) {
-    strcat(smtpdest,smtpsrvr);
-  }
 
   if ( inthreshold[0] < 1   ) inthreshold[0] = 1;
   if ( inthreshold[0] > 1000 ) inthreshold[0] = 1000;
