@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.48 2001/05/20 21:34:12 andreasb Exp $
+ * $Id: ogr.cpp,v 1.1.2.49 2001/07/21 18:41:18 mfeiri Exp $
  */
 #include <stdio.h>  /* printf for debugging */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
@@ -49,7 +49,11 @@
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
-    #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* MWC does benefit */
+    if (__MWERKS__ >= 0x2400)
+    #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* MWC is better    */
+    #else
+    #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* MWC benefits     */
+    #endif
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
     #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 2 /* use switch_asm   */
   #elif (__MRC__)
@@ -68,6 +72,7 @@
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* ACC does benefit */
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
     #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* ACC is better    */
+    #define OGROPT_CYCLE_CACHE_ALIGN              0 /* no balignl       */
   #elif (__GNUC__)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
@@ -124,6 +129,7 @@
   #undef OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
   #if (defined(__PPC__) || defined(ASM_PPC)) || defined(__POWERPC__) ||\
       (defined(__WATCOMC__) && defined(__386__)) || \
+      (defined(__MWERKS__) && defined(__INTEL__)) || \
       (defined(__ICC)) /* icc is Intel only (duh!) */ || \
       (defined(__GNUC__) && (defined(ASM_ALPHA) \
                              || defined(ASM_X86) \
@@ -2174,6 +2180,7 @@ static int found_one(const struct State *oState)
   { i = ~i; __asm__ ("cntlzw %0,%0" : "=r"(i) : "0" (i)); return i+1; }
 #elif defined(ASM_X86) && defined(__GNUC__) || \
       defined(__386__) && defined(__WATCOMC__) || \
+      defined(__INTEL__) && defined(__MWERKS__) || \
       defined(__ICC)
   /* If we were to cover the whole range of 0x00000000 ... 0xffffffff
      we would need ...
