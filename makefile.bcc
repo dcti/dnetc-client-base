@@ -31,7 +31,7 @@ BASEOBJS = rg-486.obj rg-6x86.obj rg-k5.obj rg-k6.obj \
 
 $(EXENAME):   $(BASESRCS:.cpp=.obj) $(BASEOBJS)
 	bcc32 @&&|
-$(BCCOPTS) -e$(EXENAME) $**
+$(BCCOPTS) -e$(EXENAME) noeh32.lib $**
 |
 
 # --------------------------------------------
