@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.16 2003/12/27 14:41:57 kakace Exp $
+ * $Id: ogr.cpp,v 1.2.4.17 2004/01/06 14:11:11 kakace Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -3109,37 +3109,26 @@ CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
 **
 **
 ** OGR-25 :
-** The method is based upon 3-diffs (4 marks), 4-diffs (5 marks) and 5-diffs
-** (6 marks) stubs :
+** The method is based upon 3-diffs (4 marks), 4-diffs (5 marks), 5-diffs
+** (6 marks) stubs, and regular 6-diffs stubs :
 ** + 3-diffs stubs : Check rulers that have the 5th mark at position >= 125.
 ** + 4-diffs stubs : Check rulers that have the 6th mark at position >= 115.
 ** + 5-diffs stubs : Check rulers that have the 7th mark at position > 100.
+** + 6-diffs stubs : Similar to classic OGR, but the threshold is 100 (vs 70).
 **
 ** Stated otherwise, let 25/a-b-c-d-e be a valid 5-diffs stub
 ** - If a+b+c+d >= 125, the client expects the 3-diffs stub 25/a-b-c
 ** - If a+b+c+d+e >= 115, the client expects the 4-diffs stub 25/a-b-c-d
 ** - If a+b+c+d+e < 115, the client expects the 5-diffs stub 25/a-b-c-d-e
 **
-** The code below is derived from the regular OGR cores (minor changes)
+** The real limits are specified on the keyserver. The client just knows how
+** to handle sub-normal stubs (which have one diff less than regular stubs).
+** Regular stubs are processed as usual (100% OGR compatible).
 */
 
-#define OGR24_THRESHOLD     70
-#define OGR24_4DIFFS_LIMIT  80
-
-#define OGR25_THRESHOLD    100
-#define OGR25_4DIFFS_LIMIT 125
-#define OGR25_5DIFFS_LIMIT 115
-
-
-/*
-** OGR Pass 2 :
-** The core should accept regular stubs (OGR-24/5-diffs, OGR-25/6-diffs) as
-** well as the new 'combined' stubs.
-** The changes in ogr_create_pass2 add extra checks to filter out spurious
-** combined stubs.
-*/
 static int ogr_create_pass2(void *input, int inputlen, void *state, int statelen)
 {
+  int finalization_stub = 0;
   struct State *oState;
   struct WorkStub *workstub = (struct WorkStub *)input;
 
@@ -3162,6 +3151,35 @@ static int ogr_create_pass2(void *input, int inputlen, void *state, int statelen
 
   if (((unsigned int)oState->maxdepth) > (sizeof(OGR)/sizeof(OGR[0]))) {
     return CORE_E_FORMAT;
+  }
+
+  /*
+  ** Sanity check.
+  ** Finalization stubs have one diff less than regular (OGR) stubs.
+  ** In order to skip already done work by the OGR contest, the minimum
+  ** position for the first mark is hidden in the distribution stub.
+  ** If worklength exceeds the stub length, then the stub has already been
+  ** processed (partially) and we no longer need the minimum position (which
+  ** has already been overwritten, anyhow).
+  ** If finalization_stub is set to 1, the main loop will iterate one more
+  ** time to place the next mark at its minimum position.
+  */
+  if (oState->maxdepth == 24) {
+    if (workstub->stub.length < 5 && workstub->worklength <= workstub->stub.length) {
+      finalization_stub = 1;
+      if(workstub->stub.diffs[workstub->stub.length] < 70)
+        return CORE_E_FORMAT;
+    }
+  }
+  else if (oState->maxdepth == 25) {
+    if (workstub->stub.length < 6 && workstub->worklength <= workstub->stub.length) {
+      finalization_stub = 1;
+      if (workstub->stub.diffs[workstub->stub.length] < 70)
+        return CORE_E_FORMAT;
+    }
+  }
+  else {
+     return CORE_E_FORMAT;
   }
 
   oState->max = OGR[oState->maxdepthm1];
@@ -3197,6 +3215,7 @@ static int ogr_create_pass2(void *input, int inputlen, void *state, int statelen
   {
     int i, n;
     struct Level *lev, *lev2;
+    U comp0;
 
     n = workstub->worklength;
     if (n < workstub->stub.length) {
@@ -3213,7 +3232,7 @@ static int ogr_create_pass2(void *input, int inputlen, void *state, int statelen
     */
     
     lev = &oState->Levels[1];
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < n + finalization_stub; i++) {
       int limit;
       if (oState->depth <= oState->half_depth2) {
         if (oState->depth <= oState->half_depth) {
@@ -3229,34 +3248,65 @@ static int ogr_create_pass2(void *input, int inputlen, void *state, int statelen
       lev->limit = limit;
       register int s = workstub->stub.diffs[i];
       
-      if (s <= (32*5))
-        if (lev->comp[(s-1)>>5] & BITOFLIST(s))
+      if (i == n) {
+        /*
+        ** Finalization stub
+        ** Skip to the minimum position specified by the keyserver, then
+        ** place the next mark at the first position available from here
+        ** (including the specified minimum position).
+        ** As a result, ogr_cycle() will start one level deeper, then
+        ** proceed as usual until it backtracks to depth oState->startdepth.
+        */
+        --s;
+        if (lev->cnt2 < s) {
+          int k = s - lev->cnt2;
+          while (k >= 32) {
+            COMP_LEFT_LIST_RIGHT_32(lev);
+            k -= 32;
+          }
+          if (k > 0) {
+            COMP_LEFT_LIST_RIGHT(lev, k);
+          }
+          lev->cnt2 = s;
+        }
+
+        stay:
+        comp0 = lev->comp[0];
+        if (comp0 < 0xfffffffe) {
+          s = LOOKUP_FIRSTBLANK( comp0 );
+          if ((lev->cnt2 += s) > limit)
+            return CORE_E_STUB;
+          COMP_LEFT_LIST_RIGHT(lev, s);
+        } 
+        else { /* s>32 */
+          if ((lev->cnt2 += 32) > limit)
+            return CORE_E_STUB;
+          COMP_LEFT_LIST_RIGHT_32(lev);
+          if (comp0 == 0xffffffff) goto stay;
+        }
+        oState->marks[i+1] = lev->cnt2;
+        s = lev->cnt2 - lev->cnt1;
+      }
+      else {
+        /*
+        ** Regular stubs
+        */
+        if (s <= (32*5))
+          if (lev->comp[(s-1)>>5] & BITOFLIST(s))
+            return CORE_E_STUB;     // Not golomb
+
+        oState->marks[i+1] = oState->marks[i] + s;
+        if ((lev->cnt2 += s) > limit)
           return CORE_E_STUB;
 
-      //dump(oState->depth, lev, 0);
-      oState->marks[i+1] = oState->marks[i] + s;
-      if ((lev->cnt2 += s) > limit)
-        return CORE_E_STUB;
-
-      // ### PASS-2 ### {
-      if (oState->maxdepth == 24) {
-        if (i == 3 && lev->cnt2 >= OGR24_4DIFFS_LIMIT)
-            return CORE_E_STUB;     // 4-diffs stub >= 80 : bad stub.
-      }
-      else if (oState->maxdepth == 25) {
-        if (  (i == 3 && lev->cnt2 >= OGR25_4DIFFS_LIMIT)
-           || (i == 4 && lev->cnt2 >= OGR25_5DIFFS_LIMIT) )
-            return CORE_E_STUB;     // Bad stub.
-      }
-      // } ### PASS-2 ###
-
-      register int t = s;
-      while (t >= 32) {
-        COMP_LEFT_LIST_RIGHT_32(lev);
-        t -= 32;
-      }
-      if (t > 0) {
-        COMP_LEFT_LIST_RIGHT(lev, t);
+        register int t = s;
+        while (t >= 32) {
+          COMP_LEFT_LIST_RIGHT_32(lev);
+          t -= 32;
+        }
+        if (t > 0) {
+          COMP_LEFT_LIST_RIGHT(lev, t);
+        }
       }
       lev2 = lev + 1;
       COPY_LIST_SET_BIT(lev2, lev, s);
@@ -3293,7 +3343,7 @@ static int ogr_create_pass2(void *input, int inputlen, void *state, int statelen
     const int oStateHalfLength = oState->half_length;
     int oStateDepth = oState->depth;
 
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < n + finalization_stub; i++) {
 
      #if (OGROPT_ALTERNATE_CYCLE == 2)
        U dist0 = VEC_TO_INT(distV0,3);
@@ -3315,45 +3365,66 @@ static int ogr_create_pass2(void *input, int inputlen, void *state, int statelen
       }
 
       int s = workstub->stub.diffs[i];
-      
-      #pragma warning This does not work
-//      if (s <= (32*5))
-//        if (lev->dist[(s-1)>>5] & (0x80000000>>((s-1)&0x1f)))//#define BITOFLIST(x) 0x80000000>>((x-1)&0x1f)
-//          return CORE_E_STUB;
-      #pragma warning This does not work
-      
-      //dump(oStateDepth, lev, 0);
 
-// The following line is the same as:  oState->Levels[i+1].cnt2 = oState->Levels[i].cnt2 + s;
-//   lev->cnt2 = lev[-1].cnt2 + s;
-// because:  lev == oState->Levels[i+1]
-// AND because we replace the count below, this assignment isn't needed at all!
+      if (i == n) {
+        /*
+        ** Finalization stub
+        ** Skip to the minimum position specified by the keyserver, then
+        ** place the next mark at the first position available from here
+        ** (including the specified minimum position)
+        ** As a result, ogr_cycle() will start one level deeper, then
+        ** proceed as usual until it backtracks to depth oState->startdepth.
+        */
+        --s;
+        if (cnt2 < s) {
+          int k = s - cnt2;
+          while (k >= 32) {
+            COMP_LEFT_LIST_RIGHT_32(lev);
+            k -= 32;
+          }
+          if (k > 0) {
+            COMP_LEFT_LIST_RIGHT(lev, k);
+          }
+          cnt2 = s;
+        }
 
-      if ((cnt2 += s) > limit)
-        return CORE_E_STUB;
-
-      // ### PASS-2 ### {
-      if (oState->maxdepth == 24) {
-        if (i == 3 && cnt2 >= OGR24_4DIFFS_LIMIT)
-            return CORE_E_STUB;     // 4-diffs stub >= 80 : bad stub
+        stay:
+        #if (OGROPT_ALTERNATE_CYCLE == 2)
+          U comp0 = VEC_TO_INT(compV0,3);
+        #endif
+        if (comp0 < 0xfffffffe) {
+          s = LOOKUP_FIRSTBLANK( comp0 );
+          if ((cnt2 += s) > limit)
+            return CORE_E_STUB;
+          COMP_LEFT_LIST_RIGHT(lev, s);
+        } 
+        else { /* s>32 */
+          U comp = comp0;
+          if ((cnt2 += 32) > limit)
+            return CORE_E_STUB;
+          COMP_LEFT_LIST_RIGHT_32(lev);
+          if (comp == 0xffffffff)    goto stay;
+        }
       }
-      else if (oState->maxdepth == 25) {
-        if (  (i == 3 && cnt2 >= OGR25_4DIFFS_LIMIT)
-           || (i == 4 && cnt2 >= OGR25_5DIFFS_LIMIT) )
-            return CORE_E_STUB;     // Bad stub.
-      }
-      // } ### PASS-2 ###
+      else {
+        /*
+        ** Regular stubs
+        */
+        if ((cnt2 += s) > limit)
+          return CORE_E_STUB;
 
-      while (s>=32) {
-        COMP_LEFT_LIST_RIGHT_32(lev);
-        s -= 32;
+        while (s>=32) {
+          COMP_LEFT_LIST_RIGHT_32(lev);
+          s -= 32;
+        }
+        if (s > 0) {
+          COMP_LEFT_LIST_RIGHT(lev, s);
+        }
       }
 
-      COMP_LEFT_LIST_RIGHT(lev, s);
       PUSH_LEVEL_UPDATE_STATE(lev);
       lev++;
       oStateDepth++;
-
     }
 
     SAVE_FINAL_STATE(oState,lev);
@@ -3363,293 +3434,9 @@ static int ogr_create_pass2(void *input, int inputlen, void *state, int statelen
 
   oState->startdepth = workstub->stub.length;
 
-#ifdef OGR_WINDOW
-   oState->wind = oState->depth;
-   oState->turn = 0;
-#endif
-#ifdef OGR_PROFILE
-   oState->prof.hd = 0;
-   oState->prof.hd2 = 0;
-   oState->prof.ghd = 0;
-   oState->prof.lt16 = 0;
-   oState->prof.lt32 = 0;
-   oState->prof.ge32 = 0;
-   oState->prof.fo = 0;
-   oState->prof.push = 0;
-#endif
   return CORE_S_OK;
 }
 
-
-#if (OGROPT_ALTERNATE_CYCLE == 2) || (OGROPT_ALTERNATE_CYCLE == 1)
-static int ogr_cycle_pass2(void *state, int *pnodes, int with_time_constraints)
-{
-   struct State *oState = (struct State *)state;
-   int depth = oState->depth+1;      /* the depth of recursion */
-   struct Level *lev = &oState->Levels[depth];
-   int nodes = 0;
-   int nodeslimit = *pnodes;
-    const int oStateMax = oState->max;
-    const int oStateMaxDepthM1 = oState->maxdepthm1;
-    const int oStateHalfDepth2 = oState->half_depth2;
-    const int oStateHalfDepth = oState->half_depth;
-    const int oStateHalfLength = oState->half_length;
-   struct Level *levHalfDepth = &oState->Levels[oStateHalfDepth];
-   struct Level *levMaxM1 = &oState->Levels[oStateMaxDepthM1];
-   int retval = CORE_S_CONTINUE;
-
-   SETUP_TOP_STATE(oState,lev);
-
-   OGR_CYCLE_CACHE_ALIGN;
-
-   for (;;) {
-
-   //continue:
-      #if (OGROPT_ALTERNATE_CYCLE == 2)
-         U dist0 = VEC_TO_INT(distV0,3);
-      #endif
-
-      int maxMinusDepth = oStateMaxDepthM1 - depth;
-
-      if (with_time_constraints) { /* if (...) is optimized away if unused */
-         #if !defined(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
-         if (nodes >= nodeslimit) {
-           break;
-         }  
-         #endif  
-      }
-
-      if (depth <= oStateHalfDepth2) {
-         if (depth <= oStateHalfDepth) {
-         
-            if (nodes >= nodeslimit) {
-               break;
-            }
-            
-            limit = oStateMax - OGR[maxMinusDepth];
-            limit = (limit < oStateHalfLength) ? limit : oStateHalfLength;
-         } else {
-            limit = oStateMax - choose(dist0 >> ttmDISTBITS, maxMinusDepth);
-            int tempLimit = oStateMax - levHalfDepth->cnt2 - 1;
-            limit = (limit < tempLimit) ? limit : tempLimit;
-         }
-      } else {
-         limit = oStateMax - choose(dist0 >> ttmDISTBITS, maxMinusDepth);
-      }
-
-      nodes++;
-
-      /* Find the next available mark location for this level */
-
-   stay:
-      #if (OGROPT_ALTERNATE_CYCLE == 2)
-         U comp0 = VEC_TO_INT(compV0,3);
-      #endif
-      if (comp0 < 0xfffffffe) {
-         int s = LOOKUP_FIRSTBLANK( comp0 );
-         if ((cnt2 += s) > limit)   goto up; /* no spaces left */
-         COMP_LEFT_LIST_RIGHT(lev, s);
-      } else { /* s>32 */
-         U comp = comp0;
-         if ((cnt2 += 32) > limit)  goto up; /* no spaces left */
-         COMP_LEFT_LIST_RIGHT_32(lev)
-         if (comp == 0xffffffff)    goto stay;
-      }
-
-      // ### PASS-2 ### {
-      if (depth < 7) {
-         if (oState->maxdepth == 25) {
-            if (   (depth == 4 && cnt2 < OGR25_4DIFFS_LIMIT)
-                || (depth == 5 && cnt2 < OGR25_5DIFFS_LIMIT)
-                || (depth == 6 && cnt2 <= OGR25_THRESHOLD) )
-               goto stay;    // Skip current position
-         }
-         else if (depth < 6 && oState->maxdepth == 24) {
-            if (   (depth == 4 && cnt2 < OGR24_4DIFFS_LIMIT)
-                || (depth == 5 && cnt2 <= OGR24_THRESHOLD) )
-               goto stay;    // Skip current position
-         }
-      }
-      // } ### PASS-2 ###
-
-      /* New ruler? */
-      if (depth == oStateMaxDepthM1) {
-         levMaxM1->cnt2 = cnt2;       /* not placed yet into list arrays! */
-         retval = found_one(oState);
-         if (retval != CORE_S_CONTINUE) {
-            break;
-         }
-         goto stay;
-      }
-
-      /* Go Deeper */
-      PUSH_LEVEL_UPDATE_STATE(lev);
-      lev++;
-      depth++;
-      continue;
-
-   up:
-      lev--;
-      depth--;
-      POP_LEVEL(lev);
-      if (depth <= oState->startdepth) {
-         retval = CORE_S_OK;
-         break;
-      }
-      goto stay; /* repeat this level till done */
-   }
-
-   SAVE_FINAL_STATE(oState,lev);
-   /* oState->Nodes += nodes; (unused, count is returned through *pnodes) */
-   oState->depth = depth-1;
-
-   *pnodes = nodes;
-
-   return retval;
-}
-#else
-static int ogr_cycle_pass2(void *state, int *pnodes, int with_time_constraints)
-{
-  struct State *oState = (struct State *)state;
-  /* oState->depth is the level of the last placed mark */
-  int depth = oState->depth+1;      /* the depth of recursion */
-  /* our depth is the level where the next mark will be placed */
-  struct Level *lev = &oState->Levels[depth];
-  struct Level *lev2;
-  int nodes = 0;
-  int nodeslimit = *pnodes;
-  int retval = CORE_S_CONTINUE;
-  int limit;
-  U comp0;
-
-#ifdef OGR_DEBUG
-  oState->LOGGING = 1;
-#endif
-
-  OGR_CYCLE_CACHE_ALIGN;
-
-  for (;;) {
-
-    if (with_time_constraints) { /* if (...) is optimized away if unused */
-       #if !defined(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
-       if (nodes >= nodeslimit) {
-         break;
-       }  
-       #endif  
-    }
-
-#ifdef OGR_DEBUG
-    if (oState->LOGGING) dump_ruler(oState, depth);
-#endif
-
-    if (depth <= oState->half_depth2) {
-      if (depth <= oState->half_depth) {
-
-        //dump_ruler(oState, depth);
-        if (nodes >= nodeslimit) {
-          break;
-        }
-
-        limit = oState->max - OGR[oState->maxdepthm1 - depth];
-        limit = limit < oState->half_length ? limit : oState->half_length;
-      } else {
-        limit = oState->max - choose(lev->dist[0] >> ttmDISTBITS, oState->maxdepthm1 - depth);
-        limit = limit < oState->max - oState->marks[oState->half_depth]-1 ? limit : oState->max - oState->marks[oState->half_depth]-1;
-      }
-    } else {
-      limit = oState->max - choose(lev->dist[0] >> ttmDISTBITS, oState->maxdepthm1 - depth);
-    }
-
-#ifdef OGR_DEBUG
-    if (oState->LOGGING) dump(depth, lev, limit);
-#endif
-
-    nodes++;
-
-    /* Find the next available mark location for this level */
-stay:
-    comp0 = lev->comp[0];
-#ifdef OGR_DEBUG
-    if (oState->LOGGING) printf("comp0=%08x\n", comp0);
-#endif
-    if (comp0 < 0xfffffffe) {
-      int s = LOOKUP_FIRSTBLANK( comp0 );
-#ifdef OGR_DEBUG
-  if (oState->LOGGING) printf("depth=%d s=%d len=%d limit=%d\n", depth, s+(lev->cnt2-lev->cnt1), lev->cnt2+s, limit);
-#endif
-      if ((lev->cnt2 += s) > limit) goto up; /* no spaces left */
-      COMP_LEFT_LIST_RIGHT(lev, s);
-    } else {
-      /* s>32 */
-      if ((lev->cnt2 += 32) > limit) goto up; /* no spaces left */
-      COMP_LEFT_LIST_RIGHT_32(lev);
-      if (comp0 == 0xffffffff) goto stay;
-    }
-
-    // ### PASS-2 ### {
-    if (depth < 7) {
-      if (oState->maxdepth == 25) {
-        if (   (depth == 4 && lev->cnt2 < OGR25_4DIFFS_LIMIT)
-            || (depth == 5 && lev->cnt2 < OGR25_5DIFFS_LIMIT)
-            || (depth == 6 && lev->cnt2 <= OGR25_THRESHOLD) )
-          goto stay;    // Skip current position
-      }
-      else if (depth < 6 && oState->maxdepth == 24) {
-        if (   (depth == 4 && lev->cnt2 < OGR24_4DIFFS_LIMIT)
-            || (depth == 5 && lev->cnt2 <= OGR24_THRESHOLD) )
-          goto stay;    // Skip current position
-      }
-    }
-    // } ### PASS-2 ###
-
-    /* New ruler? */
-    if (depth == oState->maxdepthm1) {
-      oState->marks[oState->maxdepthm1] = lev->cnt2;       /* not placed yet into list arrays! */
-      if (found_one(oState)) {
-        retval = CORE_S_SUCCESS;
-        break;
-      }
-      goto stay;
-    }
-
-    /* Go Deeper */
-    lev2 = lev + 1;
-#if (OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP == 1)
-    COPY_LIST_SET_BIT_COPY_DIST_COMP(lev2, lev, lev->cnt2-lev->cnt1);
-#else
-    COPY_LIST_SET_BIT(lev2, lev, lev->cnt2-lev->cnt1);
-    COPY_DIST_COMP(lev2, lev);
-#endif
-    oState->marks[depth] = lev->cnt2;
-    lev2->cnt1 = lev->cnt2;
-    lev2->cnt2 = lev->cnt2;
-    lev->limit = limit;
-    oState->depth = depth;
-    lev++;
-    depth++;
-
-    continue;
-
-up:
-    lev--;
-    depth--;
-    oState->depth = depth-1;
-    if (depth <= oState->startdepth) {
-      retval = CORE_S_OK;
-      break;
-    }
-    limit = lev->limit;
-
-    goto stay; /* repeat this level till done */
-  }
-
-  oState->depth = depth-1;
-
-  *pnodes = nodes;
-
-  return retval;
-}
-#endif
 
 static CoreDispatchTable dispatch_table_pass2;
 
@@ -3657,7 +3444,7 @@ CoreDispatchTable * OGR_P2_GET_DISPATCH_TABLE_FXN (void)
 {
   dispatch_table_pass2.init      = ogr_init;
   dispatch_table_pass2.create    = ogr_create_pass2;
-  dispatch_table_pass2.cycle     = ogr_cycle_pass2;
+  dispatch_table_pass2.cycle     = ogr_cycle;
   dispatch_table_pass2.getresult = ogr_getresult;
   dispatch_table_pass2.destroy   = ogr_destroy;
 #if defined(HAVE_OGR_COUNT_SAVE_LOAD_FUNCTIONS)
