@@ -9,6 +9,9 @@
 */
 //
 // $Log: setprio.cpp,v $
+// Revision 1.41  1998/12/04 17:09:30  silby
+// Fixed my last change
+//
 // Revision 1.40  1998/12/04 16:48:11  silby
 // Diversifying freebsd prio setting.
 //
@@ -52,7 +55,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.40 1998/12/04 16:48:11 silby Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.41 1998/12/04 17:09:30 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -242,9 +245,9 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
             schedctl( NDPRI, 0, (NDPLOMIN - NDPNORMMIN)/prio);
         }
       }
-  #elf (CLIENT_OS == OS_FREEBSD)
-    #define PRI_OTHER_MAX=10;
-    #define PRI_OTHER_MIN=20;
+  #elif (CLIENT_OS == OS_FREEBSD)
+    int PRI_OTHER_MAX = 10;
+    int PRI_OTHER_MIN = 20;
     if ( set_for_thread )
       {
       #if defined(_POSIX_THREADS_SUPPORTED) //defined in cputypes.h
