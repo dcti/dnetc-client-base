@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: client.h,v $
+// Revision 1.51  1998/06/28 23:40:23  silby
+// Changes to path handling code so that path validation+adding to filenames will be more reliable (especially on win32).
+//
 // Revision 1.50  1998/06/25 04:43:32  silby
 // Changes to Internalgetfilename for win32 (+ other platforms in the future) to make path handling better (now it won't miss / and : on win32)
 //
@@ -469,7 +472,7 @@ protected:
   s32 InternalPutBuffer( const char *filename, const FileEntry * data );
   s32 InternalGetBuffer( const char *filename, FileEntry * data, u32 *optype , u8 contest);
   s32 InternalCountBuffer( const char *filename , u8 contest);
-  static const char *InternalGetLocalFilename( const char *filename );
+  const char *InternalGetLocalFilename( const char *filename );
   s32 EnsureBufferConsistency( const char *filename );
 
 #if defined(NEEDVIRTUALMETHODS)

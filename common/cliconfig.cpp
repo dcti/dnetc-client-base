@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.116  1998/06/28 23:40:18  silby
+// Changes to path handling code so that path validation+adding to filenames will be more reliable (especially on win32).
+//
 // Revision 1.115  1998/06/28 19:48:08  silby
 // Changed default amd 486 core selection to pentium core and changed strings to reflect that.
 //
@@ -125,7 +128,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.115 1998/06/28 19:48:08 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.116 1998/06/28 23:40:18 silby Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -1352,154 +1355,21 @@ void Client::ValidateConfig( void )
     if (strlen(logname)!=0)
       CliValidateSinglePath( logname, sizeof(logname), "", 0, logname);
   }
-#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_RISCOS) || \
-      (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
-      (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_VMS) || \
-      (CLIENT_OS == OS_AMIGAOS)
+#else
   // now, add path of exe to filenames if path isn't specified
 
     strcpy(exit_flag_file,InternalGetLocalFilename(ini_exit_flag_file));
-
     strcpy(in_buffer_file[0],InternalGetLocalFilename(ini_in_buffer_file[0]));
-
     strcpy(out_buffer_file[0],InternalGetLocalFilename(ini_out_buffer_file[0]));
-
     strcpy(in_buffer_file[1],InternalGetLocalFilename(ini_in_buffer_file[1]));
-
     strcpy(out_buffer_file[1],InternalGetLocalFilename(ini_out_buffer_file[1]));
-
     strcpy(pausefile,InternalGetLocalFilename(ini_pausefile));
-
     strcpy(checkpoint_file[0],InternalGetLocalFilename(ini_checkpoint_file[0]));
-
     strcpy(checkpoint_file[1],InternalGetLocalFilename(ini_checkpoint_file[1]));
-
     strcpy(logname,InternalGetLocalFilename(ini_logname));
 
-  // generate the paths of the other files based on the ini filename
-#else
-  char buffer[200];
-  strcpy( buffer,inifilename );
-  char *slash = strrchr(buffer, PATH_SEP_C);
-  if (slash == NULL)
-    {
-    buffer[0]=0; // Blank the string, we have no path info
-    }
-  else *(slash+1) = 0; // we have to add path info in!
 
-    if (strrchr(ini_exit_flag_file,PATH_SEP_C) == NULL)
-      {
-      // no path already here, add it
-      strcpy(exit_flag_file,buffer);
-      strcat(exit_flag_file,ini_exit_flag_file);
-      }
-    else
-      {
-      // path here, DON'T TOUCH IT!
-      strcpy(exit_flag_file,ini_exit_flag_file);
-      };
-
-    if (strrchr(ini_in_buffer_file[0],PATH_SEP_C) == NULL)
-      {
-      // no path already here, add it
-      strcpy(in_buffer_file[0],buffer);
-      strcat(in_buffer_file[0],ini_in_buffer_file[0]);
-      }
-    else
-      {
-      // path here, DON'T TOUCH IT!
-      strcpy(in_buffer_file[0],ini_in_buffer_file[0]);
-      };
-
-    if (strrchr(ini_out_buffer_file[0],PATH_SEP_C) == NULL)
-      {
-      // no path already here, add it
-      strcpy(out_buffer_file[0],buffer);
-      strcat(out_buffer_file[0],ini_out_buffer_file[0]);
-      }
-    else
-      {
-      // path here, DON'T TOUCH IT!
-      strcpy(out_buffer_file[0],ini_out_buffer_file[0]);
-      };
-
-    if (strrchr(ini_in_buffer_file[1],PATH_SEP_C) == NULL)
-      {
-      // no path already here, add it
-      strcpy(in_buffer_file[1],buffer);
-      strcat(in_buffer_file[1],ini_in_buffer_file[1]);
-      }
-    else
-      {
-      // path here, DON'T TOUCH IT!
-      strcpy(in_buffer_file[1],ini_in_buffer_file[1]);
-      };
-
-    if (strrchr(ini_out_buffer_file[1],PATH_SEP_C) == NULL)
-      {
-      // no path already here, add it
-      strcpy(out_buffer_file[1],buffer);
-      strcat(out_buffer_file[1],ini_out_buffer_file[1]);
-      }
-    else
-      {
-      // path here, DON'T TOUCH IT!
-      strcpy(out_buffer_file[1],ini_out_buffer_file[1]);
-      };
-
-  if (strcmpi(ini_pausefile,"none") != 0)
-    if (strrchr(ini_pausefile,PATH_SEP_C) == NULL)
-      {
-      // no path already here, add it
-      strcpy(pausefile,buffer);
-      strcat(pausefile,ini_pausefile);
-      }
-    else
-      {
-      // path here, DON'T TOUCH IT!
-      strcpy(pausefile,ini_pausefile);
-      };
-
-  if (strcmpi(ini_checkpoint_file[0],"none") != 0)
-    if (strrchr(ini_checkpoint_file[0],PATH_SEP_C) == NULL)
-      {
-      // no path already here, add it
-      strcpy(checkpoint_file[0],buffer);
-      strcat(checkpoint_file[0],ini_checkpoint_file[0]);
-      }
-    else
-      {
-      // path here, DON'T TOUCH IT!
-      strcpy(checkpoint_file[0],ini_checkpoint_file[0]);
-      };
-
-  if (strcmpi(ini_checkpoint_file[1],"none") != 0)
-    if (strrchr(ini_checkpoint_file[1],PATH_SEP_C) == NULL)
-      {
-      // no path already here, add it
-      strcpy(checkpoint_file[1],buffer);
-      strcat(checkpoint_file[1],ini_checkpoint_file[1]);
-      }
-    else
-      {
-      // path here, DON'T TOUCH IT!
-      strcpy(checkpoint_file[1],ini_checkpoint_file[1]);
-      };
-
-  if (strcmpi(ini_logname,"none") != 0)
-    if (strrchr(ini_logname,PATH_SEP_C) == NULL)
-      {
-      // no path already here, add it
-      strcpy(logname,buffer);
-      strcat(logname,ini_logname);
-      }
-    else
-      {
-      // path here, DON'T TOUCH IT!
-      strcpy(logname,ini_logname);
-      };
-
-#endif //if netware else ((win32 || riscos) || nobasepath) else rest
+#endif 
 
 
 
@@ -2919,7 +2789,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       }
       else if ( strcmp( Argv[i], "-n" ) == 0 ) // Blocks to complete in a run
       {
-        blockcount = max(1, (s32) atoi( Argv[i+1] ));
+        blockcount = max(0, (s32) atoi( Argv[i+1] ));
         LogScreenf("Setting block completion limit to %d\n",blockcount);
         inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
