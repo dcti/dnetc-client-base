@@ -1,50 +1,13 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: convdes.cpp,v $
-// Revision 1.12  1999/01/01 02:45:15  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.11  1998/10/04 11:35:32  remi
-// Id tags fun.
-//
-// Revision 1.10  1998/07/07 21:55:33  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
-//
-// Revision 1.9  1998/06/29 08:44:09  jlawson
-// More OS_WIN32S/OS_WIN16 differences and long constants added.
-//
-// Revision 1.8  1998/06/29 04:22:21  jlawson
-// Updates for 16-bit Win16 support
-//
-// Revision 1.7  1998/06/15 12:03:56  kbracey
-// Lots of consts.
-//
-// Revision 1.6  1998/06/14 08:26:46  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-//
-// Revision 1.5  1998/06/14 08:12:48  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-//
-
-#if (!defined(lint) && defined(__showids__))
+/* 
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+*/ 
 const char *convdes_cpp(void) {
-return "@(#)$Id: convdes.cpp,v 1.12 1999/01/01 02:45:15 cramer Exp $"; }
-#endif
+return "@(#)$Id: convdes.cpp,v 1.13 1999/04/05 17:56:51 cyp Exp $"; }
 
-// DES convertion routines
+/* DES convertion routines */
 
 #include <stdio.h>
 #include <string.h>
@@ -228,10 +191,10 @@ void convert_key_from_des_to_inc (u32 *deshi, u32 *deslo)
 //
 void convert_key_from_inc_to_des (u32 *deshi, u32 *deslo)
 {
-
 #ifdef DEBUG
     printf ("convert key from %06X:%08X (inc to des)\n",*deshi,*deslo);
 #endif
+
 // convert to 28+28 bits
     *deshi = (*deshi << 4) | ((*deslo >> 28) & 0x0F);
     *deslo &= 0x0FFFFFFFL;
@@ -339,5 +302,5 @@ void convert_key_from_inc_to_des (u32 *deshi, u32 *deslo)
 // ------------------------------------------------------------------
 
 
-#endif // CLIENT_CPU != CPU_ARM
+#endif /* CPU_ARM */
 

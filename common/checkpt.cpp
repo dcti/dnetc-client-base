@@ -1,46 +1,21 @@
-/* Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
+/* 
  * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- *
- * ****************** THIS IS WORLD-READABLE SOURCE *********************
- *
- *
- * $Log: checkpt.cpp,v $
- * Revision 1.10  1999/03/20 07:45:01  cyp
- * Modified for/to use new WorkRecord structure.
- *
- * Revision 1.9  1999/03/18 03:42:43  cyp
- * Adjustment for new Problem::RetrieveState() syntax.
- *
- * Revision 1.8  1999/02/21 21:44:58  cyp
- * tossed all redundant byte order changing. all host<->net order conversion
- * as well as scram/descram/checksumming is done at [get|put][net|disk] points
- * and nowhere else.
- *
- * Revision 1.7  1999/02/03 05:41:40  cyp
- * fallback to rev 1.4
- *
- * Revision 1.4  1999/01/17 14:26:38  cyp
- * added leading/trailing whitespace stripping for checkpoint_file.
- *
- * Revision 1.3  1999/01/04 02:49:10  cyp
- * Enforced single checkpoint file for all contests.
- *
- * Revision 1.2  1999/01/01 02:45:14  cramer
- * Part 1 of 1999 Copyright updates...
- *
- * Revision 1.1  1998/11/26 07:09:44  cyp
- * Merged DoCheckpoint(), UndoCheckpoint() and checkpoint deletion 
- * functionality into one function and spun it off into checkpt.cpp
+ * -----------------------------------------------------------------
+ * Rewritten from scratch by Cyrus Patel <cyp@fb14.uni-mainz.de>
+ * Client::CheckpointAction( int action, unsigned int load_problem_count )
+ * is called with action == CHECKPOINT_[OPEN|REFRESH|CLOSE]. It uses the
+ * Problem manager table 'load_problem_count' times to walk the problem
+ * list when refreshing the checkpoint file. CheckpointAction() returns 
+ * non-zero if the client should not use checkpointing. The checkpoint 
+ * interval is controlled from Client::Run()
+ * -----------------------------------------------------------------
  *
 */
- 
-#if (!defined(lint) && defined(__showids__))
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.10 1999/03/20 07:45:01 cyp Exp $"; }
-#endif
+return "@(#)$Id: checkpt.cpp,v 1.11 1999/04/05 17:56:50 cyp Exp $"; }
 
 #include "client.h"   // FileHeader, Client class
 #include "baseincs.h" // memset(), strlen()
@@ -78,7 +53,7 @@ int Client::CheckpointAction( int action, unsigned int load_problem_count )
     {
       if ( DoesFileExist( checkpoint_file ))
       {
-        int recovered = BufferImportFileRecords( this, checkpoint_file );
+        long recovered = BufferImportFileRecords( this, checkpoint_file, 0 );
         if (recovered > 0)  
         {
           LogScreen("Recovered %d checkpoint block%s\n", recovered, 

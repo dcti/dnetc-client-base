@@ -1,64 +1,45 @@
-// Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// The polling process is essentially an event handler that gets called 
-// when "idle events" get queued, ie the main process sleeps. Procedures
-// registered with the polling process then get called synchronously 
-// (subject to priority and round-robin order).
-//
-// The advantages, from the client's perspective, are many-fold: 
-// For one, the line between "multi-threaded" and "single-threaded" clients 
-// vanishes (silly terminology from the client's perspective anyway; a
-// threaded client is not faster that a non-threaded one on a single
-// processor machine), which cuts down on the need to maintain separate
-// source or binaries. Secondly, its more efficient on platforms that do
-// not support threading: Multiple 'small problems' running back-to-back 
-// have less overhead that 'big problems' (still <3 seconds) since the
-// time-till-stop can be controlled precisely. Thirdly, it is more efficient 
-// on platforms that do support threading, but are non-preemptive. That is, 
-// the number of context switches can be kept at a minimum while still 
-// maintaining exact control over when when the client _should_ yield.
-// Fourthly, it is useful even in preemptive environments since routine 
-// work can be delegated (with a run-at time stamp if necessary) without
-// having to spin off another thread and without having oodles of 
-// platform-specific code mucking about in real client code. Fifth: it
-// does away with the 'timeslice factor' crutch.
-//
-// $Log: pollsys.cpp,v $
-// Revision 1.7  1999/01/29 18:46:43  jlawson
-// fixed formatting.
-//
-// Revision 1.6  1999/01/01 02:45:16  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.5  1998/11/06 04:26:26  cyp
-// Fixed a bug that would show up if the number of procedures registered was
-// an uneven number >= 11.
-//
-// Revision 1.4  1998/11/02 04:48:42  cyp
-// Minor fix to suppress looping if there are no events in the queue.
-// Previously it would suppress looping only if there was no queue (at all).
-//
-// Revision 1.3  1998/09/28 22:01:29  remi
-// Cleared a gcc 2.7.2.2 warning about 'register' parameters in
-// RegPolledProcedure.
-//
-// Revision 1.2  1998/09/28 21:07:24  remi
-// Cleared 3 "might be used uninitialised" warnings.
-//
-// Revision 1.1  1998/09/28 02:52:24  cyp
-// Created.
-//
-// 
-//
-#if (!defined(lint) && defined(__showids__))
+/* Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
+ *
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * --------------------------------------------------------------------
+ * The polling process is essentially an event handler that gets called 
+ * when "idle events" get queued, ie the main process sleeps. Procedures
+ * registered with the polling process then get called synchronously 
+ * (subject to priority and round-robin order).
+ *
+ * The advantages, from the client's perspective, are many-fold: 
+ * For one, the line between "multi-threaded" and "single-threaded" clients 
+ * vanishes (silly terminology from the client's perspective anyway; a
+ * threaded client is not faster that a non-threaded one on a single
+ * processor machine), which cuts down on the need to maintain separate
+ * source or binaries. Secondly, its more efficient on platforms that do
+ * not support threading: Multiple 'small problems' running back-to-back 
+ * have less overhead that 'big problems' (still <3 seconds) since the
+ * time-till-stop can be controlled precisely. Thirdly, it is more efficient 
+ * on platforms that do support threading, but are non-preemptive. That is, 
+ * the number of context switches can be kept at a minimum while still 
+ * maintaining exact control over when when the client _should_ yield.
+ * Fourthly, it is useful even in preemptive environments since routine 
+ * work can be delegated (with a run-at time stamp if necessary) without
+ * having to spin off another thread and without having oodles of 
+ * platform-specific code mucking about in real client code. Fifth: it
+ * does away with the 'timeslice factor' crutch.
+ *
+ * PolledSleep() and PolledUSleep() are automatic/default replacements for 
+ * sleep() and usleep() (see sleepdef.h) and allow the polling process to run.
+ *
+ * NonPolledSleep() and NonPolledUSleep() are "real" sleepers. This are 
+ * required for real threads (a la Go_mt()) that need to yield control to 
+ * other threads.
+ *
+ * Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
+ * --------------------------------------------------------------------
+*/
 const char *pollsys_cpp(void) {
-return "@(#)$Id: pollsys.cpp,v 1.7 1999/01/29 18:46:43 jlawson Exp $"; }
-#endif
-
-//-------------------------------------------------------------------------
+return "@(#)$Id: pollsys.cpp,v 1.8 1999/04/05 17:56:52 cyp Exp $"; }
 
 #include "baseincs.h"  /* NULL, malloc */
 #include "clitime.h"   /* CliTimer() */
@@ -76,7 +57,6 @@ void usleep( unsigned int usecs )
   select(0,NULL,NULL,NULL,&tv);
 }
 #endif
-
 
 /* -------------------------------------------------------------------- */
 

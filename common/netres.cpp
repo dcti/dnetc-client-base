@@ -1,104 +1,15 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: netres.cpp,v $
-// Revision 1.24  1999/03/18 04:28:17  cyp
-// Timezone detection was *not* reversed with last change.  Un-"Fixed".
-//
-// Revision 1.23  1999/03/09 21:33:10  silby
-// Timezone detection was reversed with last change.  Fixed.
-//
-// Revision 1.22  1999/03/03 04:33:27  cyp
-// a) limited japan proxy's zone of influence; b) now gets timezone offset
-// from CliTimeGetMinutesWest() (clitime.cpp)
-//
-// Revision 1.21  1999/01/21 23:29:26  cyp
-// fixed a #ifdef DEBUG that should have been an #ifdef RESDEBUG
-//
-// Revision 1.20  1999/01/13 08:50:26  cramer
-// changed maxaddr to a #define
-//
-// Revision 1.19  1999/01/11 23:39:11  michmarc
-// Fix compile error when DEBUG is defined
-//
-// Revision 1.18  1999/01/09 00:12:34  cyp
-// we now assume that nameservers do _not_ rotate. If they rotate, fine, if
-// they don't also fine. :)
-//
-// Revision 1.17  1999/01/08 10:06:53  chrisb
-// #defined tzset() to nothing for RISCOS
-//
-// Revision 1.16  1999/01/07 15:40:39  cyp
-// client>=424 will not work with oldresolve
-//
-// Revision 1.15  1999/01/07 04:01:58  cyp
-// resolve_hostname needed to be set before Resolve() returns _anything_. Its
-// (currently) used by socks5 if the lookup fails, so initializing it before
-// Resolve() is just about to return 'success' wouldn't help much. :)
-//
-// Revision 1.14  1999/01/06 22:19:42  dicamillo
-// hostaddress should have been *hostaddress in debugging code.
-//
-// Revision 1.13  1999/01/06 14:29:23  chrisb
-// hacked in a strcpy to the OLDRESOLVE version of Network::Resolve() 
-// so resolve_hostname isn't uninitialised
-//
-// Revision 1.12  1999/01/05 22:44:34  cyp
-// Resolve() copies the hostname being resolved (first if from a list) to a
-// buffer in the network object. This is later used by SOCKS5 if lookup fails.
-//
-// Revision 1.11  1999/01/03 06:20:32  cyp
-// Cleared an unused variable notice.
-//
-// Revision 1.10  1999/01/01 02:45:15  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.9  1998/12/31 17:50:45  cyp
-// Resolve makes no assumptions about the port. Both port and hostname must
-// be valid when passed to resolve, ie network::Open() must validate them.
-//
-// Revision 1.8  1998/12/08 05:54:26  dicamillo
-// For MacOS, delete call to tzset; add ".s_addr" to access result from
-// inet_addr.
-//
-// Revision 1.7  1998/10/26 02:55:08  cyp
-// win16 changes
-//
-// Revision 1.6  1998/10/04 11:35:46  remi
-// Id tags fun.
-//
-// Revision 1.5  1998/08/15 21:34:00  jlawson
-// corrected loss of precision warning
-//
-// Revision 1.4  1998/08/10 21:53:56  cyruspatel
-// The NO!NETWORK define is now obsolete. 
-//
-// Revision 1.3  1998/08/03 19:37:51  jlawson
-// changed order of "static" to eliminate gcc warning
-//
-// Revision 1.2  1998/07/26 13:20:51  cyruspatel
-// Fixed a signed vs unsigned comparison.
-//
-// Revision 1.1  1998/07/26 12:34:46  cyruspatel
-// Created.
-//
-
-#if (!defined(lint) && defined(__showids__))
+/* 
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/ 
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.24 1999/03/18 04:28:17 cyp Exp $"; }
-#endif
+return "@(#)$Id: netres.cpp,v 1.25 1999/04/05 17:56:52 cyp Exp $"; }
 
-//---------------------------------------------------------------------
 //#define TEST  //standalone test
-
-
 //#define RESDEBUG //to show what network::resolve() is resolving
 #ifdef RESDEBUG
   //#define RESDEBUGZONE +12  //the timezone we want to appear to be in 
-#endif
-#if (CLIENT_OS == OS_RISCOS)
-#define tzset() 
 #endif
 
 #if defined(TEST)

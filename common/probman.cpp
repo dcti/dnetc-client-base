@@ -1,46 +1,12 @@
-// Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
-//
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: probman.cpp,v $
-// Revision 1.8  1999/01/01 02:45:16  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.7  1998/12/14 11:47:36  cyp
-// Thread index (probman index) is assigned through the problem constructor.
-//
-// Revision 1.6  1998/11/14 13:57:42  cyp
-// ProbMan saves its index to the Problem object. (needed for chrisb's copro
-// board code)
-//
-// Revision 1.5  1998/11/13 21:08:49  cyp
-// Changed DeinitializeProblemManager() for chrisb's x86 option board support
-// so that the index is still valid when the problem is destroyed. This
-// change does not affect DeinitializeProblemManager()s functionality.
-//
-// Revision 1.4  1998/11/12 18:50:57  cyp
-// Created GetProblemIndexFromPointer(). Note that the function returns -1 if
-// the pointer is not to an object managed by ProblemManager (ie was created
-// from Benchmark etc).
-//
-// Revision 1.3  1998/11/06 03:55:01  cyp
-// Fixed InitializeProblemManager(): was returning 1 problem more than it was
-// being asked for.
-//
-// Revision 1.2  1998/11/06 02:32:27  cyp
-// Ok, no more restrictions (at least from the client's perspective) on the
-// number of processors that the client can run on.
-//
-// Revision 1.1  1998/09/28 02:36:33  cyp
-// Created. Just stubs for now.
-//
-// 
-#if (!defined(lint) && defined(__showids__))
+/* Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
+ *
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+*/ 
 const char *probman_cpp(void) {
-return "@(#)$Id: probman.cpp,v 1.8 1999/01/01 02:45:16 cramer Exp $"; }
-#endif
+return "@(#)$Id: probman.cpp,v 1.9 1999/04/05 17:56:52 cyp Exp $"; }
 
 #include "baseincs.h"  // malloc()/NULL/memset()
 #include "problem.h"   // Problem class

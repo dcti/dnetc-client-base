@@ -1,87 +1,15 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-/*
-   'prio' is a value on the scale of 0 to 9, where 0 is the lowest
-   priority and 9 is the highest priority [9 is what the priority would 
-   be if priority were not set, ie is 'normal' priority.] 
+/* Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * ------------------------------------------------------------------
+ *  'prio' is a value on the scale of 0 to 9, where 0 is the lowest
+ *  priority and 9 is the highest priority [9 is what the priority would 
+ *  be if priority were not set, ie is 'normal' priority.] 
+ * ------------------------------------------------------------------
 */
-//
-// $Log: setprio.cpp,v $
-// Revision 1.49  1999/02/14 05:13:40  cyp
-// default prio to lowest on range error.
-//
-// Revision 1.48  1999/02/13 00:11:21  silby
-// Win32 cruncher always runs at lowest prio
-//
-// Revision 1.47  1999/01/29 18:47:04  jlawson
-// fixed formatting.
-//
-// Revision 1.46  1999/01/17 13:27:42  cyp
-// SetPriority() does its own range validation.
-//
-// Revision 1.45  1999/01/01 02:45:16  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.44  1998/12/22 15:58:24  jcmichot
-// Fixed QNX prio.
-//
-// Revision 1.43  1998/12/09 08:33:20  silby
-// Freebsd fixes
-//
-// Revision 1.42  1998/12/04 17:15:51  cyp
-// OS/2 change: priority is only set for crunchers. Main thread always runs
-// at normal priority.
-//
-// Revision 1.41  1998/12/04 17:09:30  silby
-// Fixed my last change
-//
-// Revision 1.40  1998/12/04 16:48:11  silby
-// Diversifying freebsd prio setting.
-//
-// Revision 1.39  1998/12/04 11:04:12  cyp
-// erp. Fixed a #if defined(_POSIX_THREADS_SUPPORTED) I misplaced.
-//
-// Revision 1.38  1998/12/01 19:49:14  cyp
-// Cleaned up MULT1THREAD #define. See cputypes.h for more info.
-//
-// Revision 1.37  1998/12/01 15:06:31  cyp
-// Changed sucky win32 priorities again. This time with davehart's guidance,
-// so hopefully it can stay this way.
-//
-// Revision 1.36  1998/11/16 20:21:41  foxyloxy
-// Irix twiddling. No luck, but I thought I might as well sync up.
-//
-// Revision 1.35  1998/11/13 15:24:51  silby
-// win32 is back to 8,1
-//
-// Revision 1.34  1998/11/02 04:32:07  cyp
-// win32 main-thread priority is adjusted downwards too if running non-threaded.
-//
-// Revision 1.32  1998/10/29 04:13:19  foxyloxy
-//
-// Initial IRIX support of new priority handling. Not debugged yet,
-// but it won't lock up your system.
-//
-// Revision 1.31  1998/10/26 03:13:24  cyp
-// Changed win32 priority setting so that the main thread always runs at
-// normal priority (but in the idle class). Crunch threads are locked at idle.
-//
-// Revision 1.3  1998/10/20 17:20:17  remi
-// Added two missing #ifdef(MULT1THREAD) in __SetPriority()
-//
-// Revision 1.2  1998/10/11 08:20:34  silby
-// win32 is now locked at max idle priority for cracking threads.
-//
-// Revision 1.1  1998/09/28 01:31:40  cyp
-// Created. Note: priority is now on a scale of 0-9 (9 being "normal").
-//
-
-#if (!defined(lint) && defined(__showids__))
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.49 1999/02/14 05:13:40 cyp Exp $"; }
-#endif
+return "@(#)$Id: setprio.cpp,v 1.50 1999/04/05 17:56:52 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc

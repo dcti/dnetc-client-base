@@ -1,180 +1,20 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: cmdline.cpp,v $
-// Revision 1.127  1999/04/01 03:20:40  cyp
-// Updated to reflect changed [in|out]_buffer_[file->basename] semantics.
-//
-// Revision 1.126  1999/03/18 03:39:00  cyp
-// Minor adjustments for changed client class variables.
-//
-// Revision 1.125  1999/02/20 03:09:51  gregh
-// Use CliGetContestNameFromID instead of hard coding contest names.
-//
-// Revision 1.124  1999/02/07 16:00:09  cyp
-// Lurk changes: genericified variable names, made less OS-centric.
-//
-// Revision 1.123  1999/02/06 09:08:08  remi
-// Enhanced the lurk fonctionnality on Linux. Now it use a list of interfaces
-// to watch for online/offline status. If this list is empty (the default), any
-// interface up and running (besides the lookback one) will trigger the online
-// status.
-//
-// Revision 1.122  1999/02/04 07:48:05  cyp
-// added lurk.h
-//
-// Revision 1.121  1999/01/31 20:19:08  cyp
-// Discarded all 'bool' type wierdness. See cputypes.h for explanation.
-//
-// Revision 1.120  1999/01/29 18:59:07  jlawson
-// fixed formatting.  changed some int vars to bool.
-//
-// Revision 1.119  1999/01/28 01:34:10  cyp
-// fixed fork()
-//
-// Revision 1.118  1999/01/22 18:48:56  cyp
-// ignore a missing .ini if -nodisk
-//
-// Revision 1.117  1999/01/21 21:44:00  cyp
-// cleaned up behind 1.116
-//
-// Revision 1.116  1999/01/21 03:01:39  silby
-// Made -uninstall and -install "modes" so that they could honor
-// -quiet (to facilitate quiet installs in login scripts, etc.)
-//
-// Revision 1.115  1999/01/13 09:56:21  cramer
-// Fixed the -kill/hup/etc signal handling.
-// Fixed the "ps" command for Solaris -- other SysV's can follow.
-// Reworked that wicked "ps" command line as well.
-//
-// Revision 1.114  1999/01/13 09:48:56  cramer
-// Fixed a few compiler warnings (NULL ain't always a char *)
-// Reworked the -quiet handling for UNIX -- system() is VERY evil.
-//
-// Revision 1.113  1999/01/04 02:49:09  cyp
-// Enforced single checkpoint file for all contests.
-//
-// Revision 1.112  1999/01/01 02:45:15  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.111  1998/12/26 10:01:35  silby
-// cmdline now ignores -guistart when WIN32GUI defined
-//
-// Revision 1.110  1998/12/25 02:32:11  silby
-// ini writing functions are now not part of client object.
-// This allows the win32 (and other) guis to have
-// configure modules that act on a dummy client object.
-// (Client::Configure should be seperated as well.)
-// Also fixed bug with spaces being taken out of pathnames.
-//
-// Revision 1.109  1998/12/19 05:04:30  cyp
-// Fixed unix'ish -kill/-hup to ignore processes that are already dead.
-//
-// Revision 1.108  1998/12/16 05:55:53  cyp
-// MODEREQ_FFORCE doesn't do anything different from normal force/flush, so I
-// recycled it as MODEREQ_FQUIET for use with non-interactive BufferUpdate()
-//
-// Revision 1.107  1998/12/10 18:52:30  cyp
-// Fixed a LogScreen() that should have been a LogScreenRaw()
-//
-// Revision 1.106  1998/12/05 22:26:18  cyp
-// Added -kill/-shutdown and -hup/-restart support for win32/win16
-// (aka "waaah, how do I stop a hidden client?") and for *nixes.
-// Yes, unix support is ugly, but it works.
-//
-// Revision 1.105  1998/12/01 15:04:44  cyp
-// Both -run and -runbuffers give obsolete warnings and show the current
-// state of offlinemode and blockcount.
-//
-// Revision 1.104  1998/11/28 19:48:58  cyp
-// Added win16 -install/-uninstall support.
-//
-// Revision 1.103  1998/11/26 07:23:03  cyp
-// Added stopiniio flag to client object. Ini should not be updated with
-// randomprefix number if it didn't exist to begin with.
-//
-// Revision 1.102  1998/11/22 14:54:35  cyp
-// Adjusted to reflect changed -runonline, -runoffline, -n behaviour
-//
-// Revision 1.101  1998/11/21 13:08:09  remi
-// Fixed "Setting cputype to" when cputype < 0.
-//
-// Revision 1.100  1998/11/19 20:48:53  cyp
-// Rewrote -until/-h handling. Did away with useless client.hours (time-to-die
-// is handled by client.minutes anyway). -until/-h/hours all accept "hh:mm"
-// format now (although they do continue to support the asinine "hh.mm").
-//
-// Revision 1.99  1998/11/15 11:49:42  cyp
-// ModeReq(-1) == 0 (not != 0) before the unix the system call.
-//
-// Revision 1.98  1998/11/15 11:00:16  remi
-// Moved client->SelectCore() for -test and -benchmark* from cmdline.cpp to
-// modereq.cpp and told it to not be quiet.
-//
-// Revision 1.97  1998/11/14 13:51:07  cyp
-// -hidden/-quiet spawn of a new process for unix hosts is done here instead
-// of from main.
-//
-// Revision 1.96  1998/11/10 21:45:59  cyp
-// ParseCommandLine() is now one-pass. (a second pass is available so that
-// lusers can see the override messages on the screen)
-//
-// Revision 1.95  1998/11/09 20:05:20  cyp
-// Did away with client.cktime altogether. Time-to-Checkpoint is calculated
-// dynamically based on problem completion state and is now the greater of 1
-// minute and time_to_complete_1_percent (an average change of 1% that is).
-//
-// Revision 1.94  1998/11/09 01:59:20  remi
-// Fixed a bug where ./rc5des -help will print the help text and then go to
-// config mode if there isn't any .ini file.
-//
-// Revision 1.93  1998/11/08 19:03:22  cyp
-// -help (and invalid command line options) are now treated as "mode" requests.
-//
-// Revision 1.92  1998/11/04 21:28:19  cyp
-// Removed redundant ::hidden option. ::quiet was always equal to ::hidden.
-//
-// Revision 1.91  1998/10/26 03:19:57  cyp
-// More tags fun.
-//
-// Revision 1.9  1998/10/19 12:59:51  cyp
-// completed implementation of 'priority'.
-//
-// Revision 1.8  1998/10/19 12:42:18  cyp
-// win16 changes
-//
-// Revision 1.7  1998/10/11 00:41:22  cyp
-// Implemented ModeReq
-//
-// Revision 1.6  1998/10/08 20:54:39  cyp
-// Added buffwork.h to include list for UnlockBuffer() prototype.
-//
-// Revision 1.5  1998/10/04 20:38:45  remi
-// -benchmark shouldn't ask for something.
-//
-// Revision 1.4  1998/10/03 23:12:58  remi
-// -nommx is for both DES and RC5 mmx cores.
-// we don't need any .ini file for -ident, -cpuinfo, -test and -benchmark*
-//
-// Revision 1.3  1998/10/03 12:32:19  cyp
-// Removed a trailing ^Z
-//
-// Revision 1.2  1998/10/03 03:56:51  cyp
-// running "modes", excluding -fetch/-flush but including -config (or a
-// missing ini file) disables -hidden and -quiet. -install and -uninstall
-// are now run before all other checks. trap for argv[x]=="" added. -noquiet
-// now negates xxhidden as well as quiet.
-//
-// Revision 1.1  1998/08/28 21:35:42  cyp
-// Created (complete rewrite). The command line is now "reusable", and allows
-// main() to be re-startable. *All* option handling is done here.
-//
-
-#if (!defined(lint) && defined(__showids__))
+/* Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * -------------------------------------------------------------------
+ * *All* option handling is performed by ParseCommandLine(), including
+ * options loaded from an external .ini.
+ *
+ * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>                         
+ *
+ * Note to porters: your port is seriously out-of-bounds (and can be 
+ * expected to break frequently) if your implementation does not call this 
+ * or does start the client via the Client::Main() in client.cpp
+ * -------------------------------------------------------------------
+*/
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.127 1999/04/01 03:20:40 cyp Exp $"; }
-#endif
+return "@(#)$Id: cmdline.cpp,v 1.128 1999/04/05 17:56:51 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // Client class
@@ -1146,7 +986,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
       {
         havemode = 1; //nothing - handled in next loop
       }
-      else if ( strcmp( thisarg, "-forceunlock" ) == 0 ) 
+      else if (( strcmp( thisarg, "-forceunlock" ) == 0 ) ||
+               ( strcmp( thisarg, "-import" ) == 0 ))
       {
         skip_next = 1; //f'd up "mode" - handled in next loop
         havemode = 1;
@@ -1261,6 +1102,18 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           ModeReqClear(-1); //clear all - only do -forceunlock
           ModeReqSet(MODEREQ_UNLOCK);
           ModeReqSetArg(MODEREQ_UNLOCK,(void *)nextarg);
+          break;
+        }
+      }
+      else if ( strcmp( thisarg, "-import" ) == 0 )
+      {
+        if (!inimissing && nextarg)
+        {
+          quietmode = 0;
+          skip_next = 1;
+          ModeReqClear(-1); //clear all - only do -import
+          ModeReqSet(MODEREQ_IMPORT);
+          ModeReqSetArg(MODEREQ_IMPORT,(void *)nextarg);
           break;
         }
       }

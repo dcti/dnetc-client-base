@@ -1,18 +1,11 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: base64.cpp,v $
-// Revision 1.1  1999/03/18 03:52:44  cyp
-// Split from confmenu.cpp so Client::Configure() doesn't need to be virtual
-// for clients that don't use it.
-//
-//
-
-#if (!defined(lint) && defined(__showids__))
+/* 
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+*/ 
 const char *base64_cpp(void) {
-return "@(#)$Id: base64.cpp,v 1.1 1999/03/18 03:52:44 cyp Exp $"; }
-#endif
+return "@(#)$Id: base64.cpp,v 1.2 1999/04/05 17:56:50 cyp Exp $"; }
 
 static unsigned char base64table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
                                      "ghijklmnopqrstuvwxyz0123456789+/";

@@ -1,122 +1,16 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// ----------------------------------------------------------------------
-// Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
-// ----------------------------------------------------------------------
-//
-// $Log: logstuff-conflict.cpp,v $
-// Revision 1.30  1999/01/29 18:47:28  jlawson
-// fixed formatting.
-//
-// Revision 1.29  1999/01/21 21:55:56  cyp
-// added reentrancy protection (log->mail->network->log->mail->... ad nauseum)
-//
-// Revision 1.28  1999/01/17 14:41:16  cyp
-// Added leading/trailing whitespace stripping and "none" check to logfilename.
-//
-// Revision 1.27  1999/01/13 10:46:15  cramer
-// Cosmetic update (comments and indenting)
-//
-// Revision 1.26  1999/01/08 02:56:26  michmarc
-// Fix a trailing ; typo; plus change va_arg for those platforms
-// (like Alpha/NT) where va_arg is a structure, not a pointer
-//
-// Revision 1.25  1999/01/01 02:45:15  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.24  1998/12/29 20:59:41  silby
-// Removed guistuff.h.
-//
-// Revision 1.23  1998/12/08 05:46:15  dicamillo
-// Add MacOS as a client that doesn't support ftruncate.
-//
-// Revision 1.22  1998/11/28 19:44:34  cyp
-// InitializeLogging() and DeinitializeLogging() are no longer Client class
-// methods.
-//
-// Revision 1.21  1998/11/04 21:28:21  cyp
-// Removed redundant ::hidden option. ::quiet was always equal to ::hidden.
-//
-// Revision 1.20  1998/11/03 18:33:35  cyp
-// Stack overflows caused by LogScreenPercent() are fixed now.
-//
-// Revision 1.19  1998/11/03 00:38:11  cyp
-// Modified percbar stuff to deal with the one-problem/thread change.
-//
-// Revision 1.18  1998/10/26 04:14:35  cyp
-// Replaced IS_A_TTY() with ConIsScreen()
-//
-// Revision 1.16  1998/10/19 12:39:08  cyp
-// Percent bar code is ^C aware.
-//
-// Revision 1.15  1998/10/08 10:15:55  cyp
-// Fixed a bug in line width check. message length was not being recomputed
-// after the line width was adjusted.
-//
-// Revision 1.14  1998/10/07 12:38:45  remi
-// Fixed logstatistics' initializer.
-// Fixed a "computed value is not used" warning.
-//
-// Revision 1.13  1998/10/06 21:31:11  cyp
-// Modified InitializeLogging() so that logging to mail/file must be
-// explicitly enabled.
-//
-// Revision 1.12  1998/10/05 02:18:34  cyp
-// Resolved a "computed value is not used" warning.
-//
-// Revision 1.11  1998/10/05 01:58:05  cyp
-// Implemented automatic time stamping. Added LogSetTimeStampingMode(int) to
-// enable timestamps once the ::Run has started.
-//
-// Revision 1.10  1998/10/03 04:05:46  cyp
-// Removed CliClearScreen() [now in console.cpp], InternalLogScreen() now
-// calls ConOut() [likewise in console.cpp]
-//
-// Revision 1.9  1998/09/28 01:40:30  cyp
-// Modified percentage stuff to use problem table. Removed dead/obsolete OS2
-// priority boost code.
-//
-// Revision 1.8  1998/09/08 21:36:52  silby
-// Added guistuff to the tree - now all GUIs can hook at once place, so 
-// that the common tree doesn't become a mess.
-//
-// Revision 1.7  1998/09/07 18:10:34  blast
-// Changed a typo/AMIGAOS to list of OS'es without ftruncate().
-//
-// Revision 1.6  1998/09/06 02:01:28  cyp
-// Added isstable check to LogFlush() to suppress an unneccesary linefeed.
-//
-// Revision 1.5  1998/08/24 23:50:07  cyruspatel
-// added mailmessage.clear() so logstuff can clear the spool if necessary.
-//
-// Revision 1.4  1998/08/20 19:25:04  cyruspatel
-// Restored spooling via static buffer until Autobuffer growth can be
-// limited.
-//
-// Revision 1.3  1998/08/15 18:11:29  cyruspatel
-// Adjusted for mail.cpp changes.
-//
-// Revision 1.2  1998/08/03 21:13:38  cyruspatel
-// Fixed many bugs (especially percentbar related ones). New log file
-// types work correctly now. Added some functionality, eg a function for
-// obtaining the name of the last used log file (used for win32 gui graphing).
-//
-// Revision 1.1  1998/08/02 16:00:42  cyruspatel
-// Created. Please get in touch with me before implementing support for 
-// the extended file logging types (rotate/fifo/restart types).
-//
-//
-
-//-------------------------------------------------------------------------
-
-#if (!defined(lint) && defined(__showids__))
+/* Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * ----------------------------------------------------------------------
+ * Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
+ *
+ * Please get in touch with me before implementing support for 
+ * the extended file logging types (rotate/fifo/restart types).
+ * ----------------------------------------------------------------------
+*/
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.30 1999/01/29 18:47:28 jlawson Exp $"; }
-#endif
-
-//-------------------------------------------------------------------------
+return "@(#)$Id: logstuff-conflict.cpp,v 1.31 1999/04/05 17:56:51 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc

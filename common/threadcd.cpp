@@ -1,74 +1,23 @@
-// Copyright distributed.net 1998 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: threadcd.cpp,v $
-// Revision 1.14  1998/10/04 11:35:54  remi
-// Id tags fun.
-//
-// Revision 1.13  1998/07/14 00:45:29  cyruspatel
-// Added a second define to differenciate between OS_SUPPORTS_THREADING and
-// when special steps must be taken to support it, such as linking special
-// libraries or whatever.
-//
-// Revision 1.12  1998/07/13 03:31:59  cyruspatel
-// Added 'const's or 'register's where the compiler was complaining about
-// ambiguities. ("declaration/type or an expression")
-//
-// Revision 1.11  1998/07/07 21:55:53  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
-//
-// Revision 1.10  1998/07/05 22:57:16  cyruspatel
-// Added code to suppress compiler warnings that appear in non-mt makes.
-//
-// Revision 1.9  1998/06/29 04:22:30  jlawson
-// Updates for 16-bit Win16 support
-//
-// Revision 1.8  1998/06/18 23:25:49  remi
-// Cleared a (stupid) gcc warning.
-//
-// Revision 1.7  1998/06/15 12:04:08  kbracey
-// Lots of consts.
-//
-// Revision 1.6  1998/06/15 04:57:16  remi
-// Cleared a warning with gcc.
-//
-// Revision 1.5  1998/06/14 08:26:57  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-//
-// Revision 1.4  1998/06/14 08:13:12  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-//
-
-
-// This module encapsulates functions for the creation and destruction of
-// a single thread - used by client.cpp and piproxy.cpp
-
-#if (!defined(lint) && defined(__showids__))
+/*
+ * Copyright distributed.net 1998 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * This module encapsulates functions for the creation and destruction of
+ * a single thread - used by client.cpp and piproxy.cpp
+ * implementation and porting notes are in threadcd.h             - cyp
+ *
+*/
 const char *threadcd_cpp(void) { 
-return "@(#)$Id: threadcd.cpp,v 1.14 1998/10/04 11:35:54 remi Exp $"; } 
-#endif
+return "@(#)$Id: threadcd.cpp,v 1.15 1999/04/05 17:56:52 cyp Exp $"; } 
 
 #include <stdio.h>      //NULL
 #include "threadcd.h"   //includes implementation and porting notes.
 #include "sleepdef.h"   //sleep() and usleep()
 
-//-----------------------------------------------------------------------
-// ************** implementation and porting notes are in threadcd.h ****
-//-----------------------------------------------------------------------
+/* ---------------------------------------------------------------------- */
 
-// destroy a thread (block until dead)
+/* destroy a thread (block until dead) */
 int CliDestroyThread( THREADID cliThreadID )
 {
   int rescode = 0;
@@ -92,7 +41,7 @@ int CliDestroyThread( THREADID cliThreadID )
   return rescode;
 }
 
-//-----------------------------------------------------------------------
+/* --------------------------------------------------------------------- */
 
 // The thread is wrapped in a shell for two reasons:
 // 1. we can block until the thread has started

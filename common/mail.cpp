@@ -1,124 +1,13 @@
-// Created by Tim Charron (tcharron@interlog.com) 97.9.17
-// Complete rewrite by Cyrus Patel (cyp@fb14.uni-mainz.de) 1998/08/15
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: mail.cpp,v $
-// Revision 1.30  1999/02/03 17:49:38  cyp
-// Cleaned up CLIENT_VERSIONSTRING #define
-//
-// Revision 1.29  1999/01/29 04:10:27  cyp
-// default nettimeout for mail is -1
-//
-// Revision 1.28  1999/01/18 05:21:40  cyp
-// default addresses (to id) or hostname (to localhost) if in the d.net domain
-//
-// Revision 1.27  1999/01/01 02:45:15  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.26  1998/12/21 17:54:23  cyp
-// (a) Network connect is now non-blocking. (b) timeout param moved from
-// network::Get() to object scope.
-//
-// Revision 1.25  1998/08/24 23:50:03  cyp
-// added mailmessage.clear() so logstuff can clear the spool if necessary.
-//
-// Revision 1.24  1998/08/21 00:05:47  cyruspatel
-// Added a sendpendingflag so that smtp_deinitialize() (or the MailMessage
-// destructor) will attempt a send() before the spool is destroyed/cleared.
-//
-// Revision 1.23  1998/08/20 19:25:01  cyruspatel
-// Reverted to spooling by static buffer until infinite autobuffer 
-// growth can be restricted.
-//
-// Revision 1.22  1998/08/15 21:32:11  jlawson
-// updated mail to use autobuffer
-//
-// Revision 1.21  1998/08/15 18:09:45  cyruspatel
-// (a) completely restructured to remove the logical limit on the size of a
-// message. (b) mem bleeds cauterized - net object is now destroyed from only
-// one place. (c) completed fifo handling of spool buffer. (d) mail is now
-// also discarded on smtp error. (d) error messages are now in english :) -
-// they hint at possible hotspots. (f) many sanity checks added, eg address
-// handling is now RFC822 aware. (g) cleaned up a bit.
-//
-// Revision 1.20  1998/08/10 20:29:39  cyruspatel
-// Call to gethostname() is now a call to Network::GetHostName(). Updated
-// send routine to reflect new NetworkInitialize()/NetworkDeinitialize()
-// requirements. Removed all references to NO!NETWORK.
-//
-// Revision 1.19  1998/08/02 16:18:06  cyruspatel
-// Completed support for logging.
-//
-// Revision 1.18  1998/08/02 03:16:54  silby
-// Log,LogScreen, and LogScreenf are in logging.cpp, and are global functions 
-// Lurk handling has been added into the Lurk class, which resides in lurk.
-//
-// Revision 1.17  1998/07/26 12:46:07  cyruspatel
-// Network constructor extended to take 'autofindkeyserver' as an argument.
-//
-// Revision 1.16  1998/07/13 23:54:23  cyruspatel
-// Cleaned up NO!NETWORK handling.
-//
-// Revision 1.15  1998/07/13 03:30:05  cyruspatel
-// Added 'const's or 'register's where the compiler was complaining about
-// "declaration/type or an expression" ambiguities. 
-//
-// Revision 1.14  1998/07/08 05:19:32  jlawson
-// updates to get Borland C++ to compile under Win32.
-//
-// Revision 1.13  1998/07/07 21:55:43  cyruspatel
-// client.h has been split into client.h and baseincs.h
-//
-// Revision 1.12  1998/07/06 09:21:24  jlawson
-// added lint tags around cvs id's to suppress unused variable warnings.
-//
-// Revision 1.11  1998/06/15 12:04:01  kbracey
-// Lots of consts.
-//
-// Revision 1.10  1998/06/14 08:26:51  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-//
-// Revision 1.9  1998/06/14 08:12:56  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-// Revision 1.8  1998/06/11 09:43:27  jlawson
-// mail, network, and problem will no longer print any error messages if
-// the NEEDVIRTUALMETHODS item is defined.  Printing messages to stdout in
-// the Win32 GUI compile was causing the i/o queus to become backed up.
-//
-// Revision 1.7  1998/06/08 15:47:09  kbracey
-// Added lots of "const"s and "static"s to reduce compiler warnings, and
-// hopefully improve output code, too.
-//
-// Revision 1.6  1998/06/04 00:19:15  timc
-// Changed subject from RC5-64 to RC5DES
-//
-// Revision 1.5  1998/06/03 08:16:54  bovine
-// preliminary changes for win32s windows 3.1 client
-//
-// Revision 1.4  1998/05/29 08:01:16  bovine
-// copyright update, indents
-//
-// Revision 1.3  1998/05/25 07:16:47  bovine
-// fixed warnings on g++/solaris
-//
-// Revision 1.2  1998/05/25 05:58:34  bovine
-// fixed warnings for Borland C++
-//
-// Revision 1.1  1998/05/24 14:25:53  daa
-// Import 5/23/98 client tree
-//
-// Revision 1.0  1997/09/17 09:17:07  timc
-// Created
-//-------------------------------------------------------------------------
-
-#if (!defined(lint) && defined(__showids__))
+/*
+ * Created by Tim Charron (tcharron@interlog.com) 97.9.17
+ * Complete rewrite by Cyrus Patel (cyp@fb14.uni-mainz.de) 1998/08/15
+ *
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.30 1999/02/03 17:49:38 cyp Exp $"; }
-#endif
+return "@(#)$Id: mail.cpp,v 1.31 1999/04/05 17:56:51 cyp Exp $"; }
 
 #include "network.h"
 #include "version.h"
@@ -126,15 +15,12 @@ return "@(#)$Id: mail.cpp,v 1.30 1999/02/03 17:49:38 cyp Exp $"; }
 #include "cmpidefs.h"
 #include "logstuff.h"
 #include "mail.h"
+//#define SHOWMAIL    // define showmail to see mail transcript on stdout
 
 #if !defined(MAILSPOOL_IS_MALLOCBUFFER) && !defined(MAILSPOOL_IS_MEMFILE) && \
     !defined(MAILSPOOL_IS_AUTOBUFFER) && !defined(MAILSPOOL_IS_STATICBUFFER) 
 #error MAIL_SPOOL type is undefined
 #endif
-
-//-------------------------------------------------------------------------
-
-//#define SHOWMAIL    // define showmail to see mail transcript on stdout
 
 //-------------------------------------------------------------------------
 

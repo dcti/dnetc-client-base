@@ -1,70 +1,24 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// ----------------------------------------------------------------------
-// The file contains CliIdentifyModules() which lists the cvs id strings
-// to stdout. Users can assist us (when making bug reports) by telling us 
-// exactly which modules were actually in effect when the binary was made. 
-// Currently, starting the client with the '-ident' switch will exec the 
-// function.
-// ----------------------------------------------------------------------
-//
-// $Log: cliident.cpp,v $
-// Revision 1.13  1999/01/29 19:17:28  jlawson
-// fixed formatting.
-//
-// Revision 1.12  1999/01/01 02:45:14  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.11  1998/12/29 22:35:42  cyp
-// removed guistuff.cpp
-//
-// Revision 1.10  1998/12/26 21:23:05  cyp
-// Removed threadcd.
-//
-// Revision 1.9  1998/11/22 14:56:25  cyp
-// Removed cliconfig.cpp; Added confopt.cpp, confrwv.cpp
-//
-// Revision 1.8  1998/11/02 04:41:25  cyp
-// Removed references to netres_cpp.
-//
-// Revision 1.7  1998/10/04 20:46:11  remi
-// LogScreen -> LogScreenRaw
-//
-// Revision 1.6  1998/10/04 19:44:41  remi
-// Added guistuff, console and probman.
-//
-// Revision 1.5  1998/09/28 12:52:11  cyp
-// updated. woo-hoo.
-//
-// Revision 1.4  1998/08/02 16:17:52  cyruspatel
-// Completed support for logging.
-//
-// Revision 1.3  1998/07/13 23:39:32  cyruspatel
-// Added cpucheck.cpp
-//
-// Revision 1.2  1998/07/09 09:43:31  remi
-// Give an error message when the user ask for '-ident' and there is no support
-// for it in the client.
-//
-// Revision 1.1  1998/07/07 21:55:20  cyruspatel
-// Created.
-//
-
-#if (!defined(lint) && defined(__showids__))
+/* Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * ----------------------------------------------------------------------
+ * The file contains CliIdentifyModules() which lists the cvs id strings
+ * to stdout. Users can assist us (when making bug reports) by telling us 
+ * exactly which modules were actually in effect when the binary was made. 
+ * Currently, starting the client with the '-ident' switch will exec the 
+ * function.
+ * ----------------------------------------------------------------------
+*/ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.13 1999/01/29 19:17:28 jlawson Exp $"; } 
-#endif
+return "@(#)$Id: cliident.cpp,v 1.14 1999/04/05 17:56:51 cyp Exp $"; } 
 
-//-----------------------------------------------------------------------
+/* --------------------------------------------------------------------- */
 
 #include <stdio.h>
 #include <string.h>
 #include "logstuff.h" //LogScreen()
 #include "cliident.h" //just to keep the prototypes in sync.
-
-#if defined(__showids__) //not needed if we're not showing ids anyway
 
 extern const char *buffupd_cpp(void);
 extern const char *clicdata_cpp(void);
@@ -85,7 +39,7 @@ extern const char *mail_cpp(void);
 extern const char *pathwork_cpp(void);
 extern const char *problem_cpp(void);
 extern const char *logstuff_cpp(void);
-//extern const char *lurk_cpp(void);
+extern const char *lurk_cpp(void);
 extern const char *clisrate_cpp(void);
 //extern const char *netres_cpp(void);
 extern const char *triggers_cpp(void);
@@ -123,7 +77,9 @@ mail_cpp,
 pathwork_cpp,
 problem_cpp,
 logstuff_cpp,
-//lurk_cpp,
+#ifdef LURK
+lurk_cpp,
+#endif
 clisrate_cpp,
 //netres_cpp,
 triggers_cpp,
@@ -142,7 +98,7 @@ probman_cpp,
 console_cpp
 };
 
-//"@(#)$Id: cliident.cpp,v 1.13 1999/01/29 19:17:28 jlawson Exp $"
+//"@(#)$Id: cliident.cpp,v 1.14 1999/04/05 17:56:51 cyp Exp $"
 
 void CliIdentifyModules(void)
 {
@@ -180,14 +136,4 @@ void CliIdentifyModules(void)
   }
   return;
 }
-
-#else //#if defined(__showids__)
-
-void CliIdentifyModules(void)
-{
-  LogScreen( "No support for -ident in this client.\n" );
-}
-  
-#endif //#if defined(__showids__)
-
 

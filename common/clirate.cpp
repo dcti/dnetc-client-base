@@ -1,99 +1,14 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// ----------------------------------------------------------------------
-// This file contains functions for calculating the keyrate for a completed
-// problem and for obtaining the total/average keyrate for an entire contest.
-// ----------------------------------------------------------------------
-//
-// $Log: clirate.cpp,v $
-// Revision 1.19  1999/02/21 21:44:59  cyp
-// tossed all redundant byte order changing. all host<->net order conversion
-// as well as scram/descram/checksumming is done at [get|put][net|disk] points
-// and nowhere else.
-//
-// Revision 1.18  1999/01/29 18:57:36  jlawson
-// fixed formatting.
-//
-// Revision 1.17  1999/01/22 18:38:39  remi
-// Removed check of duplicate blocks done, since it was bogging
-// the summary line sometimes.
-//
-// Revision 1.16  1999/01/01 02:45:14  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.15  1998/10/04 11:35:25  remi
-// Id tags fun.
-//
-// Revision 1.14  1998/07/07 21:55:22  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
-//
-// Revision 1.13  1998/06/29 08:44:02  jlawson
-// More OS_WIN32S/OS_WIN16 differences and long constants added.
-//
-// Revision 1.12  1998/06/29 06:57:45  jlawson
-// added new platform OS_WIN32S to make code handling easier.
-//
-// Revision 1.11  1998/06/24 19:25:51  cyruspatel
-// Created function CliGetKeyrateForProblemNoSave(). Same as
-// CliGetKeyrateForProblem() but does not affect cumulative stats.
-//
-// Revision 1.10  1998/06/15 12:03:52  kbracey
-// Lots of consts.
-//
-// Revision 1.9  1998/06/14 08:26:41  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-//
-// Revision 1.8  1998/06/14 08:12:38  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-// Revision 1.7  1998/06/09 09:03:07  jlawson
-// Cast warning with Borland removed.
-//
-// Revision 1.6  1998/06/09 08:54:26  jlawson
-// changes from Cyrus Patel.  
-// 
-// Revision 1.5  1998/06/08 15:47:05  kbracey
-// added lots of "const"s and "static"s to reduce compiler warnings, and
-// hopefully improve output code, too.
-// 
-// Revision 1.4  1998/05/29 08:01:04  bovine
-// copyright update, indents
-// 
-// Revision 1.3  1998/05/28 14:09:37  daa
-// fix for 2 contest benchmarking
-//
-// Revision 1.2  1998/05/25 02:54:16  bovine
-// fixed indents
-// 
-// Revision 1.1  1998/05/24 14:25:49  daa
-// Import 5/23/98 client tree
-//
-// Revision 0.1  1998/05/23 23:05:08  cyruspatel
-// Corrected CliGetKeyrateForProblem so that blocks with the same block ID
-// but different contest IDs are recognized as being different problems.
-//
-// Revision 0.0  1998/05/01 05:01:08  cyruspatel
-// Created
-
-// ======================================================================
-
-
-#if (!defined(lint) && defined(__showids__))
+/* Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * ----------------------------------------------------------------------
+ * This file contains functions for calculating the keyrate for a completed
+ * problem and for obtaining the total/average keyrate for an entire contest.
+ * ----------------------------------------------------------------------
+*/
 const char *clirate_cpp(void) {
-return "@(#)$Id: clirate.cpp,v 1.19 1999/02/21 21:44:59 cyp Exp $"; }
-#endif
+return "@(#)$Id: clirate.cpp,v 1.20 1999/04/05 17:56:51 cyp Exp $"; }
 
 #include "cputypes.h" //for u64 define
 #include "problem.h"  //uses Problem and RC5Result class definitions 

@@ -1,33 +1,25 @@
-// Implementation of 64 bit unsigned integers using
-// 32 bit unsigned integers
-//
-// $Log: u64class.cpp,v $
-// Revision 1.3  1999/01/29 18:45:28  jlawson
-// fixed formatting.
-//
-// Revision 1.2  1998/10/05 11:32:47  fordbr
-// Bitwise complement (~) implemented.  Missing from Revision 1.1
-//
-// Revision 1.1  1998/10/05 11:04:49  fordbr
-// A reasonably complete implementation of a 64 bit unsigned integer(u64) using
-// 32 bit unsigned integers(u32).
-//
-// All arithmetic (+ - * / %), bitwise logical (& | ^ ~ << >>) and their assignment
-// equivalents (+= -= *= /= %= &= |= ^= <<= >>=) are overloaded as well as the
-// comparison operators (< <= > >= == !=).
-//
-// Explicit constructors from one u32, two u32 (a high and a low part) and another u64
-// are provided.
-//
-// Meant to be portable rather than fast.
-//
+/*
+ * -------------------------------------------------------------------------
+ * Implementation of 64 bit unsigned integers using 32 bit unsigned integers,
+ * by Bruce Ford
+ *
+ * All arithmetic (+ - * / %), bitwise logical (& | ^ ~ << >>) and their 
+ * assignment equivalents (+= -= *= /= %= &= |= ^= <<= >>=) are overloaded 
+ * as well as the comparison operators (< <= > >= == !=).
+ *
+ * Explicit constructors from one u32, two u32 (a high and a low part) and 
+ * another u64 are provided.
+ *
+ * Meant to be portable rather than fast.
+ * -------------------------------------------------------------------------
+*/ 
 
 #include "u64class.h"
 
 u64 operator + (const u64 &a, const u64 &b)
 {
   u32 carry;
-
+  
   carry = (a.lo & 0xffff) + (b.lo & 0xffff);
   carry = (a.lo >> 16) + (b.lo >> 16) + (carry >> 16);
   return u64(a.hi + b.hi + (carry >> 16), a.lo + b.lo);
