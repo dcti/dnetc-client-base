@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.223 1999/06/04 22:32:17 silby Exp $
+# @(#)$Id: configure,v 1.224 1999/06/09 09:47:10 ivo Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -378,9 +378,10 @@ case "$1" in
 	;;
 
     *mips-gcc-irix5-crunch)	# faster than mips-gcc for IRIX
+	DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/mips/mips-crunch.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 -D_irix5_ \
-			-DMIPS_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
+	TARGET_CCFLAGS="$OPTS_GCC_MIPS -D_irix5_ \
+			-DMIPS_CRUNCH=1 -D_CPU_32BIT_ -DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	;;
 

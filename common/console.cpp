@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.50 1999/06/04 21:48:29 silby Exp $"; }
+return "@(#)$Id: console.cpp,v 1.51 1999/06/09 09:47:10 ivo Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -593,7 +593,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     GetSizeOfScreen( &ht, &wt );
     height = ht; width = wt;
   #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_SOLARIS) || \
-        (CLIENT_OS == OS_SUNOS)
+        (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_IRIX)
     /* good for any non-sco flavour? */
     struct winsize winsz;
     winsz.ws_col = winsz.ws_row = 0;

@@ -6,6 +6,9 @@
  * Marco.Walther@mch.sni.de
  *
  * $Log: mips-crunch.cpp,v $
+ * Revision 1.13  1999/06/09 09:47:11  ivo
+ * Some patches to let mips-gcc-irix5-crunch cowpile once again
+ *
  * Revision 1.12  1999/02/06 23:00:31  foxyloxy
  * *** empty log message ***
  *
@@ -42,7 +45,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mips_crunch_cpp(void) {
-return "@(#)$Id: mips-crunch.cpp,v 1.12 1999/02/06 23:00:31 foxyloxy Exp $"; }
+return "@(#)$Id: mips-crunch.cpp,v 1.13 1999/06/09 09:47:11 ivo Exp $"; }
 #endif
 
 
@@ -55,10 +58,6 @@ return "@(#)$Id: mips-crunch.cpp,v 1.12 1999/02/06 23:00:31 foxyloxy Exp $"; }
 /* include files for version 2 code */
 #include "problem.h"
 #include "rotate.h"
-
-#if (PIPELINE_COUNT != 2)
-#error "Expecting pipeline count of 2"
-#endif
 
 #ifndef _CPU_32BIT_
 #error "everything assumes a 32bit CPU..."

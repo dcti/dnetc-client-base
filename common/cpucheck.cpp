@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79 1999/04/18 15:05:52 patrick Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.80 1999/06/09 09:47:11 ivo Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -801,7 +801,7 @@ static long __GetRawProcessorID(const char **cpuname)
   static int detectedtype = -2L; /* -1 == failed, -2 == not supported */
   static const char *detectedname = NULL;
   static char namebuf[30];
-  static struct { const char *name; int rid; } cpuridtable {
+  static struct { const char *name; int rid; } mips_chips[] = {
                 { "R2000"         ,       1  },
                 { "R3000"         ,       2  },
                 { "R3000A"        ,       3  },
