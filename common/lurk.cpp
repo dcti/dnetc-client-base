@@ -14,7 +14,7 @@
 //#define LURKDEBUG
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.40 1999/04/20 23:01:32 cyp Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.41 1999/05/04 04:11:23 cyp Exp $"; }
 
 /* ---------------------------------------------------------- */
 
@@ -112,10 +112,8 @@ static HINSTANCE hWinsockInst = NULL;
 #include <ras.h>
 #include <raserror.h>
 #include <string.h>
-#include "w32ras.cpp"
 
 static HRASCONN hRasDialConnHandle = NULL; /* conn we opened with RasDial */
-static int iRasIsInstalled = 0;
 
 #elif (CLIENT_OS == OS_OS2)
 
@@ -169,10 +167,6 @@ struct ifact
 
 int Lurk::Stop(void)
 {
-  #if (CLIENT_OS == OS_WIN32)
-  if (iRasIsInstalled)
-    DeinitRasAPIProcs();
-  #endif
   islurkstarted= lastcheckshowedconnect= dohangupcontrol=0;
   lurkmode = dialwhenneeded = 0;
   conndevice[0] = connprofile[0] = connifacemask[0] = 0;
@@ -187,8 +181,38 @@ int Lurk::GetCapabilityFlags(void)
 {
   int what = 0;
 #if (CLIENT_OS == OS_WIN32)
-  if (iRasIsInstalled)
-    what = (CONNECT_LURK|CONNECT_LURKONLY|CONNECT_DODBYPROFILE);
+  static int caps = -1;
+  if (caps == -1)
+  {
+    OSVERSIONINFO osver;
+    osver.dwOSVersionInfoSize = sizeof(osver);
+    if ( RasHangUp( (HRASCONN)-1 ) == ERROR_INVALID_HANDLE )
+      what |= (CONNECT_LURK|CONNECT_LURKONLY|CONNECT_DODBYPROFILE);
+    if ( GetVersionEx( &osver ) != 0 )
+    {
+      int isok = 1;
+      OFSTRUCT ofstruct;
+      ofstruct.cBytes = sizeof(ofstruct);
+      #ifndef OF_SEARCH
+      #define OF_SEARCH 0x0400
+      #endif
+      if (osver.dwPlatformId == VER_PLATFORM_WIN32_NT)
+      {
+        #if !defined(_MSC_VER) || defined(_M_ALPHA) //strange, eh?
+        isok = ((osver.dwMajorVersion > 4) ||
+                (osver.dwMajorVersion == 4 && 
+                 strncmp(osver.szCSDVersion,"Service Pack ",13)==0 && 
+                 atoi(&(osver.szCSDVersion[13])) >= 4));
+        //http://support.microsoft.com/support/kb/articles/q181/5/20.asp
+        //http://support.microsoft.com/support/kb/articles/q170/6/42.asp
+        #endif
+      }
+      if (isok && OpenFile( "WS2_32.DLL", &ofstruct, OF_EXIST|OF_SEARCH)!=HFILE_ERROR)
+        what |= (CONNECT_LURK|CONNECT_LURKONLY|CONNECT_IFACEMASK);
+    }
+    caps = what;
+  }  
+  what = caps;  
 #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
   OFSTRUCT ofstruct;
   ofstruct.cBytes = sizeof(ofstruct);
@@ -272,12 +296,7 @@ const char **Lurk::GetConnectionProfileList(void)
 
 int Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
 {
-  int flags;
-  #if (CLIENT_OS == OS_WIN32)
-  iRasIsInstalled = (InitRasAPIProcs() == 0);
-  #endif
-
-  flags = GetCapabilityFlags();
+  int flags = GetCapabilityFlags();
 
   if (lurkmode != CONNECT_LURKONLY && lurkmode != CONNECT_LURK)
     lurkmode = 0;           /* can only be one or the other */
@@ -352,7 +371,7 @@ int Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
           mask_include_all = 1;
           break;
         }
-        #if (CLIENT_OS == OS_OS2) //convert 'eth*' names to 'lan*'
+        #if (CLIENT_OS == OS_OS2)  //convert 'eth*' names to 'lan*'
         if (*p=='e' && p[1]=='t' && p[2]=='h' && (isdigit(p[3]) || p[3]=='*'))
         {*p='l'; p[1]='a'; p[2]='n'; }
         #endif
@@ -377,7 +396,7 @@ int Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
 
 /* ---------------------------------------------------------- */
 
-#if (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_FREEBSD)
+#if (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_FREEBSD) || (CLIENT_OS == OS_WIN32)
 static int __MatchMask( const char *ifrname, int mask_include_all,
                        int mask_default_only, const char *ifacestowatch[] )
 {
@@ -435,52 +454,177 @@ int Lurk::IsConnected(void)               // Checks status of connection
     return 1;
 
 #elif (CLIENT_OS == OS_WIN32)
-  RASCONN rasconn;
-  RASCONN *rasconnp = NULL;
-  DWORD cb, whichconn, cConnections;
-  int foundconn = 0;
-
-  cb = sizeof(rasconn);
-  rasconn.dwSize = sizeof(RASCONN);
-  rasconnp = &rasconn;
-  if (RasEnumConnections( rasconnp, &cb, &cConnections) != 0)
+  if ((GetCapabilityFlags() & CONNECT_IFACEMASK)!=0) /* have working WS2_32 */
   {
-    cConnections = 0;
-    if (cb > (DWORD)(sizeof(RASCONN)))
+    #if !defined(_MSC_VER) || defined(_M_ALPHA) //some msvcs can't cast for shit
+    HINSTANCE ws2lib = LoadLibrary( "WS2_32.DLL" );
+    if (ws2lib)
     {
-      rasconnp = (RASCONN *) malloc( (int)cb );
-      if (rasconnp)
+      FARPROC __WSAStartup  = GetProcAddress( ws2lib, "WSAStartup" );
+      FARPROC __WSASocket   = GetProcAddress( ws2lib, "WSASocketA" );
+      FARPROC __WSAIoctl    = GetProcAddress( ws2lib, "WSAIoctl" );
+      FARPROC __WSACleanup  = GetProcAddress( ws2lib, "WSACleanup" );
+      FARPROC __closesocket = GetProcAddress( ws2lib, "closesocket" );
+      if (__WSAStartup && __WSASocket && __WSAIoctl && __WSACleanup && __closesocket)
       {
-        rasconnp->dwSize = sizeof(RASCONN);
-        if (RasEnumConnections( rasconnp, &cb, &cConnections) != 0)
-          cConnections = 0;
+        WSADATA winsockData; 
+        if (( (*((int PASCAL FAR (*)(WORD, LPWSADATA))(__WSAStartup)))
+                                         (MAKEWORD(2,2), &winsockData)) == 0)
+        {
+          #define LPWSAPROTOCOL_INFO void *
+          #define GROUP unsigned int
+          SOCKET s = 
+          (*((int PASCAL FAR (*)(int,int,int,LPWSAPROTOCOL_INFO,GROUP,DWORD))
+            (__WSASocket)))(AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL, 0, 0);
+          if (s != INVALID_SOCKET)
+          {
+            #define SIO_GET_INTERFACE_LIST _IOR('t', 127, u_long) // <TBD>
+            #define LPWSAOVERLAPPED void *
+            #define LPWSAOVERLAPPED_COMPLETION_ROUTINE void *
+            #define IFF_UP           0x00000001 /* Interface is up */
+            #define IFF_BROADCAST    0x00000002 /* Broadcast is  supported */
+            #define IFF_LOOPBACK     0x00000004 /* this is loopback interface */
+            #define IFF_POINTTOPOINT 0x00000008 /* this is p2p interface*/
+            #define IFF_MULTICAST    0x00000010 /* multicast is supported */
+            DWORD bytesReturned;
+
+            #pragma pack(1)
+            struct if_info_v4 /* 4+(3*16) */
+            {
+              u_long   iiFlags;
+              struct { short   sin_family; /* AF_INET */
+                       u_short sin_port;
+                       u_long  sin_addr;
+                       char    sin_zero[8];
+                     } iiAddress, iiBroadcastaddress, iiNetmask;
+            };
+            struct if_info_v6  /* 4+(3*24) */
+            {
+              u_long   iiFlags;
+              struct { short   sin6_family; /* AF_INET6 */
+                       u_short sin6_port;
+                       u_long  sin6_flowinfo;
+                       u_char  sin6_addr[16];
+                     } iiAddress, iiBroadcastaddress, iiNetmask;
+            };
+            #pragma pack()
+            char if_info[sizeof(struct if_info_v6)*10]; // Assume no more than 10 IP interfaces 
+            memset((void *)(&if_info[0]),0,sizeof(if_info));
+                   
+            //don't use INTERFACE_INFO format due to NT4SP<4 not grokking IPV6
+            int wsError = (*((int PASCAL FAR (*)(
+                SOCKET,DWORD,LPVOID,DWORD,LPVOID,DWORD,LPDWORD,
+                LPWSAOVERLAPPED,LPWSAOVERLAPPED_COMPLETION_ROUTINE))
+                (__WSAIoctl)))(s, SIO_GET_INTERFACE_LIST, NULL, 0, 
+                (&(if_info[0])), sizeof(if_info), &bytesReturned, NULL, NULL);
+            if (wsError == 0)
+            {
+              unsigned int i, pppdev = 0, ethdev = 0, slipdev = 0;
+              unsigned int stepsize = sizeof(struct if_info_v6);
+              const char *ifp = if_info;
+              if ((bytesReturned%sizeof(struct if_info_v6))!=0)
+                stepsize = sizeof(struct if_info_v4);
+//LogScreen("stage5 %u v4:%u v6:%u struct family=IPv%d\n",bytesReturned,sizeof(struct if_info_v4),sizeof(struct if_info_v6),(stepsize==sizeof(struct if_info_v6)?(6):(4)));
+              
+              for (i=0; i<bytesReturned; i+=stepsize) 
+              {
+                u_long if_flags = ((struct if_info_v4 *)(ifp))->iiFlags;
+                u_long if_addr  = ((struct if_info_v4 *)(ifp))->iiAddress.sin_addr;
+                ifp+=stepsize;
+
+//LogScreen("stage6: adapter: %u flags: 0x%08x %s\n", i/stepsize, if_flags,inet_ntoa(*((struct in_addr *)&if_addr)) );
+
+                if ((if_flags & IFF_LOOPBACK)==0 && if_addr != 0x0100007ful)
+                {
+                  char seqname[20], devname[20];
+                  wsprintf(seqname,"lan%u",i/stepsize);
+                  if (if_addr==0 && (if_flags & IFF_POINTTOPOINT)==0)
+                  {
+                    //Dial-Up adapters are never down. They appear as normal
+                    //ether adapters, but have an zero address when not up.
+                    if_flags|=IFF_POINTTOPOINT;
+                    if_flags&=~IFF_UP;
+                  }
+                  if ((if_flags & IFF_POINTTOPOINT)!=IFF_POINTTOPOINT)
+                    wsprintf(devname,"eth%u",ethdev++);
+                  else if ((if_flags & (IFF_BROADCAST|IFF_MULTICAST))==0)
+                    wsprintf(devname,"sl%u",slipdev++);
+                  else
+                    wsprintf(devname,"ppp%u",pppdev++);
+//LogScreen("stage7: not lo. up?=%s, seqname=%s devname=%s\n", ((if_flags & IFF_UP)?"yes":"no"), seqname, devname );
+                  if ((if_flags & IFF_UP)==IFF_UP &&
+                     (__MatchMask(devname,mask_include_all,
+                         mask_default_only, &ifacestowatch[0] ) ||
+                      __MatchMask(seqname,mask_include_all,
+                         mask_default_only, &ifacestowatch[0] )))
+                  {
+//LogScreen("stage8: mask matched. name=%s\n", devname );
+                    strncpy( conndevice, devname, sizeof(conndevice) );
+                    conndevice[sizeof(conndevice)-1] = 0;
+                    break;
+                  }
+                }
+              }
+            }
+            (*((int PASCAL FAR (*)(SOCKET))(__closesocket)))(s);
+          }
+          (*((int PASCAL FAR (*)(void))(__WSACleanup)))();
+        }
+      }
+      FreeLibrary(ws2lib);
+    }
+    if (conndevice[0])
+      return 1;
+    #endif
+  }
+  if ((GetCapabilityFlags() & CONNECT_DODBYPROFILE)!=0) /* have ras */
+  {
+    RASCONN rasconn;
+    RASCONN *rasconnp = NULL;
+    DWORD cb, whichconn, cConnections;
+    int foundconn = 0;
+  
+    cb = sizeof(rasconn);
+    rasconn.dwSize = sizeof(RASCONN);
+    rasconnp = &rasconn;
+    if (RasEnumConnections( rasconnp, &cb, &cConnections) != 0)
+    {
+      cConnections = 0;
+      if (cb > (DWORD)(sizeof(RASCONN)))
+      {
+        rasconnp = (RASCONN *) malloc( (int)cb );
+        if (rasconnp)
+        {
+          rasconnp->dwSize = sizeof(RASCONN);
+          if (RasEnumConnections( rasconnp, &cb, &cConnections) != 0)
+            cConnections = 0;
+        }
       }
     }
-  }
-
-  for (whichconn = 0; whichconn < cConnections; whichconn++ )
-  {
-    HRASCONN hrasconn = rasconnp[whichconn].hrasconn;
-    char *connname = rasconnp[whichconn].szEntryName;
-    RASCONNSTATUS rasconnstatus;
-    rasconnstatus.dwSize = sizeof(RASCONNSTATUS);
-    if (RasGetConnectStatus(hrasconn,&rasconnstatus) == 0)
+  
+    for (whichconn = 0; whichconn < cConnections; whichconn++ )
     {
-      if (rasconnstatus.rasconnstate == RASCS_Connected)
+      HRASCONN hrasconn = rasconnp[whichconn].hrasconn;
+      char *connname = rasconnp[whichconn].szEntryName;
+      RASCONNSTATUS rasconnstatus;
+      rasconnstatus.dwSize = sizeof(RASCONNSTATUS);
+      if (RasGetConnectStatus(hrasconn,&rasconnstatus) == 0)
       {
-        foundconn = 1;
-        strncpy( conndevice, connname, sizeof(conndevice) );
-        conndevice[sizeof(conndevice)-1]=0;
-        break;
+        if (rasconnstatus.rasconnstate == RASCS_Connected)
+        {
+          foundconn = 1;
+          strncpy( conndevice, connname, sizeof(conndevice) );
+          conndevice[sizeof(conndevice)-1]=0;
+          break;
+        }
       }
     }
+  
+    if (rasconnp != NULL && rasconnp != &rasconn)
+      free((void *)rasconnp );
+    if (foundconn)
+      return 1;
   }
-
-  if (rasconnp != NULL && rasconnp != &rasconn)
-    free((void *)rasconnp );
-  if (foundconn)
-    return 1;
-
 #elif (CLIENT_OS == OS_OS2)
    int s, i, rc, j, foundif = 0;
    struct ifmib MyIFMib = {0};
@@ -694,88 +838,91 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
 
 #elif (CLIENT_OS == OS_WIN32)
 
-  RASDIALPARAMS dialparameters;
-  BOOL passwordretrieved;
-  DWORD returnvalue;
-  char buffer[260]; /* maximum registry key length */
-  const char *connname = (const char *)(&connprofile[0]);
-
-  dohangupcontrol = 0;           // whether we do HangupIfNeeded() or not
-
-  if (*connname == 0)
+  if ((GetCapabilityFlags() & CONNECT_DODBYPROFILE) != 0) /* have ras */
   {
-    HKEY hkey;
-    if (RegOpenKey(HKEY_CURRENT_USER,"RemoteAccess",&hkey) == ERROR_SUCCESS)
-    {
-      DWORD valuetype = REG_SZ;
-      DWORD valuesize = sizeof(buffer);
-      if ( RegQueryValueEx(hkey, "InternetProfile", NULL, &valuetype,
-               (unsigned char *)(&buffer[0]), &valuesize) == ERROR_SUCCESS )
-        connname = &buffer[0];
-      RegCloseKey(hkey);
-    }
+    RASDIALPARAMS dialparameters;
+    BOOL passwordretrieved;
+    DWORD returnvalue;
+    char buffer[260]; /* maximum registry key length */
+    const char *connname = (const char *)(&connprofile[0]);
+  
+    dohangupcontrol = 0;           // whether we do HangupIfNeeded() or not
+  
     if (*connname == 0)
     {
-      const char **connlist = GetConnectionProfileList();
-      if (connlist)
+      HKEY hkey;
+      if (RegOpenKey(HKEY_CURRENT_USER,"RemoteAccess",&hkey) == ERROR_SUCCESS)
       {
-        int j;
-        for (j=0;*connname==0 && connlist[j];j++)
-          connname = connlist[j];
+        DWORD valuetype = REG_SZ;
+        DWORD valuesize = sizeof(buffer);
+        if ( RegQueryValueEx(hkey, "InternetProfile", NULL, &valuetype,
+                 (unsigned char *)(&buffer[0]), &valuesize) == ERROR_SUCCESS )
+          connname = &buffer[0];
+        RegCloseKey(hkey);
       }
       if (*connname == 0)
-        return -1;
+      {
+        const char **connlist = GetConnectionProfileList();
+        if (connlist)
+        {
+          int j;
+          for (j=0;*connname==0 && connlist[j];j++)
+            connname = connlist[j];
+        }
+        if (*connname == 0)
+          return -1;
+      }
     }
-  }
-  dialparameters.dwSize=sizeof(RASDIALPARAMS);
-  strcpy(dialparameters.szEntryName,connname);
-  strcpy(dialparameters.szPhoneNumber,"");
-  strcpy(dialparameters.szCallbackNumber,"*");
-  strcpy(dialparameters.szUserName,"");
-  strcpy(dialparameters.szPassword,"");
-  strcpy(dialparameters.szDomain,"*");
-
-  returnvalue =
-    RasGetEntryDialParams(NULL,&dialparameters,&passwordretrieved);
-
-  if ( returnvalue==0 )
-  {
-    HRASCONN connhandle = NULL;
-
-    //if (passwordretrieved != TRUE)
-    //  LogScreen("Password could not be found, connection may fail.\n");
-
-    LogScreen("Dialing '%s'...\n",dialparameters.szEntryName);
-    returnvalue = RasDial(NULL,NULL,&dialparameters,NULL,NULL,&connhandle);
-
-    if (returnvalue == 0)
+    dialparameters.dwSize=sizeof(RASDIALPARAMS);
+    strcpy(dialparameters.szEntryName,connname);
+    strcpy(dialparameters.szPhoneNumber,"");
+    strcpy(dialparameters.szCallbackNumber,"*");
+    strcpy(dialparameters.szUserName,"");
+    strcpy(dialparameters.szPassword,"");
+    strcpy(dialparameters.szDomain,"*");
+  
+    returnvalue =
+      RasGetEntryDialParams(NULL,&dialparameters,&passwordretrieved);
+  
+    if ( returnvalue==0 )
     {
-      hRasDialConnHandle = connhandle; //we only hangup this connection
-      dohangupcontrol = 1;  // we also control hangup
-      return 0;
+      HRASCONN connhandle = NULL;
+  
+      //if (passwordretrieved != TRUE)
+      //  LogScreen("Password could not be found, connection may fail.\n");
+  
+      LogScreen("Dialing '%s'...\n",dialparameters.szEntryName);
+      returnvalue = RasDial(NULL,NULL,&dialparameters,NULL,NULL,&connhandle);
+  
+      if (returnvalue == 0)
+      {
+        hRasDialConnHandle = connhandle; //we only hangup this connection
+        dohangupcontrol = 1;  // we also control hangup
+        return 0;
+      }
+      else if (connhandle != NULL)
+      {
+        RasHangUp(connhandle);
+        Sleep(3000);
+      }
     }
-    else if (connhandle != NULL)
+  
+    if (returnvalue == ERROR_CANNOT_FIND_PHONEBOOK_ENTRY)
     {
-      RasHangUp(connhandle);
-      Sleep(3000);
+      LogScreen("Dial cancelled: Unable to find phonebook entry\n%s\n",
+                 dialparameters.szEntryName);
     }
-  }
-
-  if (returnvalue == ERROR_CANNOT_FIND_PHONEBOOK_ENTRY)
-  {
-    LogScreen("Dial cancelled: Unable to find phonebook entry\n%s\n",
-               dialparameters.szEntryName);
-  }
-  else if (returnvalue == ERROR_CANNOT_OPEN_PHONEBOOK)
-  {
-    LogScreen("Dial cancelled: Unable to open phonebook.\n");
-  }
-  else
-  {
-    if (RasGetErrorString(returnvalue,buffer,sizeof(buffer)) == 0)
-      LogScreen("Dial cancelled: %s\n", buffer);
+    else if (returnvalue == ERROR_CANNOT_OPEN_PHONEBOOK)
+    {
+      LogScreen("Dial cancelled: Unable to open phonebook.\n");
+    }
     else
-      LogScreen("Dial cancelled: Unknown RAS error %ld\n", (long) returnvalue);
+    {
+      if (RasGetErrorString(returnvalue,buffer,sizeof(buffer)) == 0)
+        LogScreen("Dial cancelled: %s\n", buffer);
+      else
+        LogScreen("Dial cancelled: Unknown RAS error %ld\n", (long) returnvalue);
+    }
   }
   return -1;
 
