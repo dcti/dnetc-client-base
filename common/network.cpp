@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.67  1999/01/08 03:34:25  dicamillo
+// Define ERRNO_IS_UNUSABLE for Mac OS.
+//
 // Revision 1.66  1999/01/07 22:01:41  cyp
 // fixed a bad #if in errno checking.
 //
@@ -196,7 +199,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.66 1999/01/07 22:01:41 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.67 1999/01/08 03:34:25 dicamillo Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -212,7 +215,8 @@ return "@(#)$Id: network.cpp,v 1.66 1999/01/07 22:01:41 cyp Exp $"; }
 #include "network.h"   // thats us
 
 #if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32) || \
-    (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+    (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || \
+    (CLIENT_OS == OS_MACOS)
 #define ERRNO_IS_UNUSABLE /* ... for network purposes */
 #endif
 
