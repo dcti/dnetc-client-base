@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.21 1999/12/14 03:04:12 dakidd Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.22 1999/12/16 00:28:09 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -90,16 +90,20 @@ static double __calc_rate( unsigned int contestid,
                            int last_run_result, 
                            const struct fake_u64 *keys_done_already,
                            const struct timeval *totalruntime, 
-                           int print_it )
+                           const char *contname, 
+                           int corenum, int corecpu, int print_it )
 {                         
   char ratestr[32];
   double rate;
   double keysdone;
-  rate = 0.0;
   struct fake_u64 keys_already_done;
+
+  rate = 0.0;
   keys_already_done.hi = keys_done_already->hi;
   keys_already_done.lo = keys_done_already->lo;
-
+  corecpu = corecpu; /* unused */
+  selcoreGetDisplayName(contestid, corenum );
+  
   switch (contestid)
   {
     case RC5:
@@ -120,9 +124,10 @@ static double __calc_rate( unsigned int contestid,
                  (((double)(totalruntime->tv_usec))/((double)(1000000L))));
       if (print_it)
       {
-        LogScreen("\rCompleted in %s [%skeys/sec]\n",  
-                 CliGetTimeString( totalruntime, 2 ),
-                 CliGetKeyrateAsString( ratestr, rate ) );
+        LogScreen("\r%s: Benchmarked core #%d (%s)\n%s: %s - [%skeys/sec]\n",
+                  contname, corenum, selcoreGetDisplayName(contestid, corenum),
+                  contname, CliGetTimeString( totalruntime, 2 ),
+                  CliGetKeyrateAsString( ratestr, rate ) );
       }
       break;
     }
@@ -137,9 +142,10 @@ static double __calc_rate( unsigned int contestid,
               (((double)(totalruntime->tv_usec))/((double)(1000000L))));
       if (print_it)
       {
-        LogScreen("\rCompleted in %s [%snodes/sec]\n",
-                 CliGetTimeString( totalruntime, 2 ),
-                 CliGetKeyrateAsString( ratestr, rate ) );
+        LogScreen("\r%s: Benchmarked core #%d (%s)\n%s: %s - [%snodes/sec]\n",
+                  contname, corenum, selcoreGetDisplayName(contestid, corenum),
+                  contname, CliGetTimeString( totalruntime, 2 ),
+                  CliGetKeyrateAsString( ratestr, rate ) );
       }
       break;
     }
@@ -295,7 +301,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     {
       scropen = 1;
       __show_notbest_msg(contestid);
-      LogScreen("Benchmarking %s ... ", contname );
+      LogScreen("%s: Benchmarking ... ", contname );
     }
     while ( run == RESULT_WORKING )
     {
@@ -308,7 +314,8 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
           if (problem->RetrieveState(&tmp_work, NULL, 0) >= 0)
           {
             double rate = __calc_rate(contestid, &tmp_work, run, 
-                                      &keysdone, &totalruntime, 0);
+                                      &keysdone, &totalruntime, contname, 
+                                      problem->coresel, problem->client_cpu, 0);
             u32 newtslice = (u32)(rate/((double)non_preemptive_os.yps));
             if (newtslice > (tslice + (tslice/10)))
             {
@@ -322,7 +329,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) /* win32s */
         w32Yield(); /* pump waiting messages */
         #elif (CLIENT_OS == OS_MACOS)
-        NonPolledUSleep(0); // was DoYieldToMain(0);
+        DoYieldToMain(0);
         #elif (CLIENT_OS == OS_RISCOS)
         riscos_upcall_6();
         #elif (CLIENT_OS == OS_NETWARE)
@@ -337,7 +344,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
       {
         run = -1; /* error */
         if (scropen > 0)
-          LogScreen("\rBenchmarking %s ... *Break*       ", contname );
+          LogScreen("\r%s: Benchmarking ... *Break*       ", contname );
         break;
       }
       else
@@ -358,7 +365,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
             permille = 1000;
           if (last_permille != permille)
           {    
-            LogScreen("\rBenchmarking %s ... %u.%02u%% done", 
+            LogScreen("\r%s: Benchmarking ... %u.%02u%% done", 
                        contname, (unsigned int)(permille/10), 
                                  (unsigned int)((permille%10)*10) );
             last_permille = permille;
@@ -408,7 +415,9 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   retvalue = -1; /* assume error */
   if (run >= 0) /* no errors, no ^C */
     retvalue = (long)__calc_rate(contestid, &contestwork, run, &keysdone, 
-                         &totalruntime, (!(flags & TBENCHMARK_QUIET)) );
+                         &totalruntime, contname, 
+                         problem->coresel, problem->client_cpu,
+                         (!(flags & TBENCHMARK_QUIET)) );
 
   return retvalue;
 }  
