@@ -1,6 +1,6 @@
 
 ;	OPT	O+,W-
-	XDEF	@ruf_mu
+	XDEF	@rc5_unit_func
 
 ;--------------------
 
@@ -30,7 +30,7 @@ KEYCNT:      equ          256          ;Must match with PIPELINE_COUNT
 
 	SECTION rc564,CODE
 
-@ruf_mu:	movem.l	d2-d7/a2-a6,-(a7)
+@rc5_unit_func:	movem.l	d2-d7/a2-a6,-(a7)
 
 	move.l	#KEYCNT-1,d7	;d7=number of keys
 	move.l	#P0QR3+P+Q,a2
