@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.16 2004/01/09 01:23:32 piru Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.17 2004/01/10 22:28:12 kakace Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -522,6 +522,9 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
     }
     #endif
     #if defined(HAVE_OGR_CORES)
+    #if defined(HAVE_OGR_PASS2)
+    case OGR_P2:
+    #endif
     case OGR:
     {
       //24/2-22-32-21-5-1-12
@@ -536,24 +539,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
       work->ogr.workstub.stub.diffs[4] = 10;  //5;
       work->ogr.workstub.stub.diffs[5] = 11;  //1;
       work->ogr.workstub.stub.diffs[6] = 0;  //12;
-      work->ogr.nodes.lo = 0;
-      work->ogr.nodes.hi = 0;
-      return contestid;
-    }
-    #endif
-    #if defined(HAVE_OGR_FINALIZE)
-    case OGR_P2:
-    {
-      //24/2-22-32-21-5-1-12
-      work->ogr.workstub.stub.marks = 24;
-      work->ogr.workstub.worklength = 5;
-      work->ogr.workstub.stub.length = 5;
-      work->ogr.workstub.stub.diffs[0] = 2;
-      work->ogr.workstub.stub.diffs[1] = 22;
-      work->ogr.workstub.stub.diffs[2] = 32;
-      work->ogr.workstub.stub.diffs[3] = 21;
-      work->ogr.workstub.stub.diffs[4] = 5;
-      work->ogr.workstub.stub.diffs[5] = 1;
+      work->ogr.workstub.minpos = 0;
       work->ogr.nodes.lo = 0;
       work->ogr.nodes.hi = 0;
       return contestid;
@@ -951,48 +937,6 @@ static int __InternalLoadState( InternalProblem *thisprob,
   #if defined(HAVE_OGR_CORES)
   #if defined(HAVE_OGR_PASS2)
   case OGR_P2:
-  {
-    int r;
-    thisprob->priv_data.contestwork.ogr = work->ogr;
-    if (thisprob->priv_data.contestwork.ogr.nodes.hi != 0 || thisprob->priv_data.contestwork.ogr.nodes.lo != 0)
-    {
-      if (thisprob->pub_data.client_cpu != expected_cputype || thisprob->pub_data.coresel != expected_corenum ||
-          CLIENT_OS != expected_os || CLIENT_VERSION != expected_build)
-      {
-        /* Once an OGR-P2 stub has been initialized (by a call to ogr_create()),
-        ** there is no way to recover the minimum position which is needed to
-        ** process sub-normal stubs.
-        */
-        Log("OGR-P2 stub discarded\nCannot resume from a different CPU/OS/build core/client\n");
-        return -1;
-      }
-    }
-
-    r = (thisprob->pub_data.unit_func.ogr)->init();
-    if (r == CORE_S_OK)
-    {
-      r = (thisprob->pub_data.unit_func.ogr)->create(&thisprob->priv_data.contestwork.ogr.workstub,
-                      sizeof(WorkStub), thisprob->priv_data.core_membuffer, MAX_MEM_REQUIRED_BY_CORE);
-    }
-    if (r != CORE_S_OK)
-    {
-      /* if it got here, then the stub is truly bad or init failed and
-      ** it is ok to discard the stub (and let the network recycle it)
-      */
-      const char *msg = "Unknown error";
-      if      (r == CORE_E_MEMORY)  msg = "CORE_E_MEMORY: Insufficient memory";
-      else if (r == CORE_E_FORMAT)  msg = "CORE_E_FORMAT: Format or range error";
-      Log("OGR load failure: %s\nStub discarded.\n", msg );
-      return -1;
-    }
-    if (thisprob->priv_data.contestwork.ogr.workstub.worklength > (u32)thisprob->priv_data.contestwork.ogr.workstub.stub.length)
-    {
-      thisprob->pub_data.startkeys.hi = thisprob->priv_data.contestwork.ogr.nodes.hi;
-      thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.ogr.nodes.lo;
-      thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
-    }
-    break;
-  }
   #endif
   case OGR:
   {
@@ -1020,10 +964,11 @@ static int __InternalLoadState( InternalProblem *thisprob,
       /* if it got here, then the stub is truly bad or init failed and
       ** it is ok to discard the stub (and let the network recycle it)
       */
+      const char *contname = CliGetContestNameFromID(thisprob->pub_data.contest);
       const char *msg = "Unknown error";
       if      (r == CORE_E_MEMORY)  msg = "CORE_E_MEMORY: Insufficient memory";
       else if (r == CORE_E_FORMAT)  msg = "CORE_E_FORMAT: Format or range error";
-      Log("OGR load failure: %s\nStub discarded.\n", msg );
+      Log("%s load failure: %s\nStub discarded.\n", contname, msg );
       return -1;
     }
     if (thisprob->priv_data.contestwork.ogr.workstub.worklength > (u32)thisprob->priv_data.contestwork.ogr.workstub.stub.length)
@@ -2190,7 +2135,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
     }
     case OGR_P2:
     {
-      #ifdef HAVE_OGR_FINALIZE
+      #if defined(HAVE_OGR_CORES) && defined (HAVE_OGR_PASS2)
       return 1;
       #else
       return 0;
@@ -2670,7 +2615,9 @@ int WorkGetSWUCount( const ContestWork *work,
       break;
 #endif
 #ifdef HAVE_OGR_CORES
+  #ifdef HAVE_OGR_PASS2
       case OGR_P2:
+  #endif
       case OGR:
       {
         if (swucount && rescode != RESULT_WORKING)
@@ -2866,9 +2813,9 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
             break;
   #endif /* HAVE_CRYPTO_V1 */
   #ifdef HAVE_OGR_CORES
-          #ifdef HAVE_OGR_PASS2
+        #ifdef HAVE_OGR_PASS2
             case OGR_P2:
-          #endif
+        #endif
             case OGR:
             {
               dcounthi = work.ogr.nodes.hi;
