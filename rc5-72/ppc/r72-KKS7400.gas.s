@@ -39,9 +39,12 @@
 #		8 keys at once, all keys (within such "block") having the same mid
 #		and lo values).
 #
-# $Id: r72-KKS7400.gas.s,v 1.1.2.1 2003/03/12 12:13:15 snake Exp $
+# $Id: r72-KKS7400.gas.s,v 1.1.2.2 2003/03/12 20:44:23 oliver Exp $
 #
 # $Log: r72-KKS7400.gas.s,v $
+# Revision 1.1.2.2  2003/03/12 20:44:23  oliver
+# replaced .data/.const with .rodata
+#
 # Revision 1.1.2.1  2003/03/12 12:13:15  snake
 # Added optimized gas compliant cores (like those for MacOS X)
 #
@@ -2097,8 +2100,7 @@ epilog:
 		
 #============================================================================
 
-		.data
-#		.const
+		.rodata
 		.align	4
 
 	.macro	gen_vec arg0
