@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.125 2004/03/19 12:40:43 pfeffi Exp $
+# @(#)$Id: configure,v 1.288.2.126 2004/03/19 16:51:50 pfeffi Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -118,7 +118,7 @@ add_sources() # $1=os, $2=arch, $3=custom
   # so that speed sensitive stuff can remain together at the 'bottom'
   if [ "$1" = "freebsd" -o "$1" = "netbsd" -o "$1" = "openbsd" \
     -o "$1" = "bsdos"   -o "$1" = "os2"    -o "$1" = "amigaos" \
-    -o "$1-$3" = "macosx-" -o "$1-$3" = "linux-" \
+    -o "$1-$3" = "macosx-" -o "$1-$3" = "linux-" -o "$1" = "uclibc" \
     -o "$1" = "digital-unix" -o "$1" = "morphos" ]; then
     COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DLURK"
@@ -145,6 +145,8 @@ add_sources() # $1=os, $2=arch, $3=custom
       #(obsolete) TARGET_CCFLAGS="$TARGET_CCFLAGS -DUNIVERSALRESOLVER"
       COMMON_SRCS="plat/linux/resolv.c ${COMMON_SRCS}"
     fi
+  elif [ "$1" = "uclibc" ]; then
+    COMMON_SRCS="plat/linux/li_inst.c ${COMMON_SRCS}"
   elif [ "$1" = "riscos" ]; then
     COMMON_SRCS="plat/riscos/riscos_sup.cpp \
                  plat/riscos/riscos_x86.cpp \
@@ -2227,13 +2229,14 @@ case "$1" in
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "${inferred_arch}" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -DBETA_PERIOD=2419200"
+#        TARGET_CCFLAGS="$OPTS_GCC -DBETA_PERIOD=2419200"
+        TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
         TARGET_LIBS=""
         TARGET_TARBALL="linux-${inferred_arch}-${TARGET_NASM_FMT}-uclibc"
         TARGET_DOCFILES="docs/readme.linux docs/readme.uclib"   #platform specific docfile
         TARGET_USES_GNUMAKE="yes"
-        add_sources "linux" "x86"
+        add_sources "uclibc" "x86"
         ;;
 
     *freebsd*)              # FreeBSD (autoselect Alpha/x86 and aout/elf)
