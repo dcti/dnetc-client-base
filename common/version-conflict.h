@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version-conflict.h,v $
+// Revision 1.14  1998/09/23 22:20:19  blast
+// Blargh Silby.
+// Changed my #if 0 to //
+//
 // Revision 1.13  1998/09/23 22:17:33  blast
 // Added #if 0 around the whole BETA client thing
 //
@@ -63,14 +67,12 @@
 #define CLIENT_VERSIONSTRING    "v2.7100.418-BETA2"
 #define CLIENT_VERSIONSTRING2   "2.7100.418-BETA2"        // no leading "v"
 
-#if 0
-#define BETA
+//#define BETA
 
 #if defined(BETA)
   s32 checkifbetaexpired(void);
 #define EXPIRATIONTIME 907394806
 #endif
-#endif // 0
 
 
 #endif // _VERSION_H
