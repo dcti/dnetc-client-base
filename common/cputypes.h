@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.30  1998/09/29 07:56:57  remi
+// #if defined(SPARCLINUX) is redundant.
+//
 // Revision 1.29  1998/09/25 04:30:32  pct
 // DEC Ultrix port changes
 //
@@ -204,7 +207,7 @@ struct s128 { s64 hi, lo; };
   #elif defined(ARM)
     #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_ARM
-  #elif defined(ASM_SPARC) || defined(SPARCLINUX)
+  #elif defined(ASM_SPARC)
     #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_SPARC
   #elif defined(ASM_PPC)
