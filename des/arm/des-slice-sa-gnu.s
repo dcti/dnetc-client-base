@@ -524,7 +524,7 @@ resettwiddles:
 	MOV     R12,#0
 	ADR     R3,twiddles
 	ADD     R2,R13,#0x0208      
-resettwiddleloop:	
+resettwiddleloop:
 	LDRB    R1,[R3,R0]
 	STR     R12,[R2,R1,LSL #2]
 	ADD     R0,R0,#1
@@ -554,8 +554,8 @@ inc_then_exit:
 	ADD     R1,R1,R0
 	STR     R1,[R4,#20]
 	LDMDB   R11,{R4-R9,R11,R13,PC}^
-
-odd_parity:
+	
+odd_parity:	
 	.word	0x02020101
 	.word	0x07070404
 	.word	0x0B0B0808
@@ -705,7 +705,7 @@ L000310J60:
 	LDR     R0,[R13,#0]
 	MVN     R0,R0
 	STR     R0,[R13,#0]
-L00033cJ62:
+L00033cJ62:	
 	MOV     R1,R13
 	ADD     R0,R13,#4
 	BL      _convert_key_from_des_to_inc__FPUlT0
@@ -716,23 +716,23 @@ L00033cJ62:
 	LDR     R1,[R13,#4]
 	STR     R1,[R4,#16]
 	LDMDB   R11,{R4-R9,R11,R13,PC}^
-s1:
-	STMDB   R13!,{R6,R14}
-	LDR     R7,[R12,#124]
-	LDMIA   R12,{R8-R12}
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
-	EOR     R3,R3,R10
+s1:	
+	STMDB   R13!,{R10,R14}
+	LDR     R6,[R12,#124]
+	LDMIA   R12,{R7-R9,R11,R12}
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
 	EOR     R4,R4,R11
 	EOR     R5,R5,R12
-	BIC     R6,R2,R4
-	EOR     R7,R6,R3
+	BIC     R10,R2,R4
+	EOR     R7,R10,R3
 	BIC     R9,R2,R3
 	ORR     R8,R9,R4
-	AND     R10,R5,R8
+	AND     R6,R5,R8
 	EOR     R12,R2,R3
-	EOR     R14,R4,R10
+	EOR     R14,R4,R6
 	AND     R14,R14,R12
 	EOR     R8,R9,R14
 	ORR     R8,R5,R8
@@ -741,86 +741,86 @@ s1:
 	ORR     R11,R1,R8
 	EOR     R11,R11,R14
 	AND     R11,R0,R11
-	ORR     R6,R6,R10
-	EOR     R6,R6,R12
-	EOR     R14,R7,R10
+	ORR     R10,R10,R6
+	EOR     R10,R10,R12
+	EOR     R14,R7,R6
 	BIC     R7,R8,R7
 	BIC     R12,R5,R12
 	BIC     R3,R3,R4
-	EOR     R10,R3,R12
-	ORR     R10,R1,R10
-	EOR     R10,R10,R14
-	EOR     R10,R10,R11
+	EOR     R6,R3,R12
+	ORR     R6,R1,R6
+	EOR     R6,R6,R14
+	EOR     R6,R6,R11
 	LDR     R11,[R13,#0]
 	ORR     R14,R14,R3
-	LDR     R3,[R11,#32]
-	MVN     R10,R10
-	EOR     R3,R3,R10
-	EOR     R10,R6,R12
-	STR     R3,[R11,#32]
-	BIC     R10,R8,R10
-	AND     R11,R1,R10
+	LDR     R3,[R11,#64]
+	MVN     R6,R6
+	EOR     R3,R3,R6
+	EOR     R6,R10,R12
+	STR     R3,[R11,#64]
+	BIC     R6,R8,R6
+	AND     R11,R1,R6
 	EOR     R11,R14,R11
 	EOR     R11,R7,R11
 	AND     R14,R2,R14
 	BIC     R7,R1,R7
-	EOR     R7,R6,R7
+	EOR     R7,R10,R7
 	BIC     R3,R8,R14
-	BIC     R6,R6,R3
-	ORR     R6,R6,R9
+	BIC     R10,R10,R3
+	ORR     R10,R10,R9
 	BIC     R12,R11,R12
 	AND     R11,R0,R11
 	EOR     R7,R7,R11
 	ORR     R11,R1,R9
 	EOR     R11,R11,R3
 	MVN     R11,R11
-	ORR     R10,R2,R10
-	BIC     R3,R6,R1
-	EOR     R10,R10,R3
-	BIC     R10,R0,R10
-	EOR     R10,R10,R11
+	ORR     R6,R2,R6
+	BIC     R3,R10,R1
+	EOR     R6,R6,R3
+	BIC     R6,R0,R6
+	EOR     R6,R6,R11
 	LDR     R3,[R13],#4
-	ORR     R8,R6,R8
-	LDR     R6,[R3,#0]
+	ORR     R8,R10,R8
+	LDR     R10,[R3,#32]
 	EOR     R8,R8,R4
-	EOR     R10,R6,R10
+	EOR     R6,R10,R6
 	ORR     R9,R9,R4
-	AND     R6,R5,R9
-	STR     R10,[R3,#0]
+	AND     R10,R5,R9
+	STR     R6,[R3,#32]
 	EOR     R9,R9,R14
-	BIC     R9,R9,R6
+	BIC     R9,R9,R10
 	BIC     R8,R1,R8
 	EOR     R8,R8,R9
 	ORR     R8,R0,R8
 	EOR     R8,R8,R11
 	EOR     R8,R8,R12
-	LDR     R12,[R3,#56]
-	LDR     R14,[R3,#88]
-	EOR     R12,R8,R12
-	EOR     R14,R7,R14
-	STR     R12,[R3,#56]
-	STR     R14,[R3,#88]
+	LDR     R12,[R3,#88]
+	LDR     R9,[R3,#120]
+	EOR     R8,R8,R12
+	EOR     R9,R7,R9
+	STR     R8,[R3,#88]
+	STR     R9,[R3,#120]
 	LDR     PC,[R13],#4
 s2:	
-	STMDB   R13!,{R6,R14}
-	LDMIA   R12,{R7-R12}
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
-	EOR     R3,R3,R10
+	STMDB   R13!,{R10,R14}
+	LDMIA   R12,{R6-R9,R11,R12}
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
 	EOR     R4,R4,R11
 	EOR     R5,R5,R12
 	EOR     R7,R0,R5
 	EOR     R8,R7,R4
 	AND     R9,R5,R4
-	BIC     R6,R0,R9
-	BIC     R11,R1,R6
+	BIC     R10,R0,R9
+	BIC     R11,R1,R10
 	EOR     R12,R8,R11
 	ORR     R11,R9,R11
 	BIC     R7,R11,R7
-	BIC     R11,R4,R6
+	BIC     R11,R4,R10
 	EOR     R4,R4,R1
-	BIC     R5,R5,R6
+	BIC     R5,R5,R10
 	ORR     R0,R12,R0
 	EOR     R0,R0,R1
 	ORR     R14,R2,R7
@@ -829,15 +829,15 @@ s2:
 	AND     R12,R1,R12
 	ORR     R11,R11,R1
 	BIC     R7,R4,R7
-	ORR     R10,R0,R12
-	AND     R4,R4,R10
+	ORR     R6,R0,R12
+	AND     R4,R4,R6
 	BIC     R4,R11,R4
 	ORR     R4,R3,R4
 	MVN     R14,R14
 	AND     R11,R3,R11
 	EOR     R11,R14,R11
-	AND     R10,R2,R10
-	EOR     R10,R10,R4
+	AND     R6,R2,R6
+	EOR     R6,R6,R4
 	BIC     R0,R2,R0
 	EOR     R0,R7,R0
 	ORR     R7,R7,R5
@@ -852,37 +852,37 @@ s2:
 	EOR     R9,R9,R4
 	BIC     R9,R3,R9
 	EOR     R9,R9,R14
-	EOR     R6,R6,R11
-	BIC     R6,R6,R1
-	EOR     R6,R8,R6
-	EOR     R8,R12,R5
-	AND     R8,R2,R8
-	ORR     R12,R3,R0
-	EOR     R12,R8,R12
-	LDR     R8,[R13],#4
-	EOR     R12,R6,R12
-	LDR     R14,[R8,#0]
-	EOR     R6,R7,R10
-	LDR     R7,[R8,#60]
-	EOR     R10,R14,R11
-	LDR     R14,[R8,#-44]
+	EOR     R10,R10,R11
+	BIC     R10,R10,R1
+	EOR     R10,R8,R10
+	EOR     R12,R12,R5
+	AND     R12,R2,R12
+	ORR     R8,R3,R0
+	EOR     R8,R8,R12
+	LDR     R12,[R13],#4
+	EOR     R8,R10,R8
+	LDR     R14,[R12,#48]
+	EOR     R10,R7,R6
+	LDR     R7,[R12,#108]
+	EOR     R6,R14,R11
+	LDR     R14,[R12,#4]
 	MVN     R9,R9
-	STR     R10,[R8,#0]
-	EOR     R11,R7,R9
-	LDR     R7,[R8,#20]
-	EOR     R12,R14,R12
-	STR     R11,[R8,#60]
-	EOR     R14,R7,R6
-	STR     R12,[R8,#-44]
-	STR     R14,[R8,#20]
+	STR     R6,[R12,#48]
+	EOR     R7,R7,R9
+	LDR     R9,[R12,#68]
+	EOR     R8,R14,R8
+	STR     R7,[R12,#108]
+	EOR     R9,R9,R10
+	STR     R8,[R12,#4]
+	STR     R9,[R12,#68]
 	LDR     PC,[R13],#4
 s3:	
 	STR     R14,[R13,#-4]!
-	LDMIA   R12,{R7-R12}
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
-	EOR     R3,R3,R10
+	LDMIA   R12,{R6-R9,R11,R12}
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
 	EOR     R4,R4,R11
 	EOR     R5,R5,R12
 	EOR     R9,R1,R2
@@ -891,27 +891,27 @@ s3:
 	EOR     R11,R2,R7
 	BIC     R12,R11,R4
 	ORR     R8,R4,R7
-	EOR     R10,R9,R8
+	EOR     R6,R9,R8
 	ORR     R14,R0,R12
-	EOR     R14,R10,R14
+	EOR     R14,R6,R14
 	BIC     R7,R5,R7
-	EOR     R10,R7,R4
-	AND     R7,R0,R10
+	EOR     R6,R7,R4
+	AND     R7,R0,R6
 	EOR     R7,R4,R7
 	ORR     R7,R3,R7
 	EOR     R7,R14,R7
-	LDR     R14,[R6,#-72]
-	STR     R6,[R13,#-4]!
+	LDR     R14,[R10,#20]
+	STR     R10,[R13,#-4]!
 	EOR     R14,R14,R7
 	AND     R7,R5,R7
-	STR     R14,[R6,#-72]
+	STR     R14,[R10,#20]
 	EOR     R7,R7,R11
 	BIC     R7,R7,R0
-	BIC     R6,R12,R2
-	ORR     R6,R0,R6
-	EOR     R6,R9,R6
+	BIC     R10,R12,R2
+	ORR     R10,R0,R10
+	EOR     R10,R9,R10
 	AND     R11,R2,R4
-	EOR     R6,R11,R6
+	EOR     R10,R11,R10
 	AND     R2,R2,R5
 	BIC     R11,R9,R12
 	ORR     R12,R1,R12
@@ -920,85 +920,84 @@ s3:
 	AND     R1,R1,R9
 	EOR     R9,R9,R8
 	EOR     R8,R8,R12
-	ORR     R10,R10,R11
+	ORR     R6,R6,R11
 	EOR     R11,R11,R2
 	ORR     R11,R0,R11
 	ORR     R2,R2,R1
-	EOR     R10,R10,R2
+	EOR     R6,R6,R2
 	EOR     R4,R2,R4
 	MVN     R4,R4
 	EOR     R14,R14,R4
 	EOR     R11,R11,R4
 	BIC     R1,R5,R1
-	ORR     R1,R1,R10
+	ORR     R1,R1,R6
 	EOR     R2,R5,R2
 	BIC     R2,R2,R9
 	AND     R2,R2,R0
 	EOR     R9,R1,R2
 	AND     R9,R3,R9
-	EOR     R9,R6,R9
+	EOR     R9,R10,R9
 	BIC     R12,R9,R12
 	ORR     R12,R0,R12
-	EOR     R6,R7,R12
-	AND     R6,R3,R6
-	EOR     R6,R14,R6
-	ORR     R10,R0,R10
-	EOR     R10,R8,R10
-	LDR     R7,[R13],#4
-	BIC     R10,R3,R10
-	LDR     R8,[R7,#-32]
-	EOR     R10,R11,R10
-	LDR     R12,[R7,#24]
-	EOR     R11,R8,R9
-	LDR     R9,[R7,#0]
-	EOR     R12,R12,R10
-	STR     R11,[R7,#-32]
-	EOR     R10,R9,R6
-	STR     R12,[R7,#24]
-	STR     R10,[R7,#0]
+	EOR     R10,R7,R12
+	AND     R10,R3,R10
+	EOR     R10,R14,R10
+	ORR     R6,R0,R6
+	EOR     R6,R8,R6
+	LDR     R12,[R13],#4
+	BIC     R6,R3,R6
+	LDR     R7,[R12,#60]
+	EOR     R6,R11,R6
+	LDR     R8,[R12,#116]
+	EOR     R7,R7,R9
+	LDR     R9,[R12,#92]
+	EOR     R8,R8,R6
+	STR     R7,[R12,#60]
+	EOR     R6,R9,R10
+	STR     R8,[R12,#116]
+	STR     R6,[R12,#92]
 	LDR     PC,[R13],#4
 s4:	
-	STR     R14,[R13,#-4]!
-	LDMIA   R12,{R7-R12}
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
-	EOR     R3,R3,R10
+	LDMIA   R12,{R6-R9,R11,R12}
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
 	EOR     R4,R4,R11
 	EOR     R5,R5,R12
-	ORR     R10,R0,R2
-	AND     R10,R4,R10
-	EOR     R9,R0,R10
-	EOR     R12,R2,R10
-	BIC     R10,R2,R0
-	ORR     R10,R10,R9
-	AND     R11,R1,R10
-	BIC     R14,R1,R12
-	EOR     R10,R10,R14
+	ORR     R6,R0,R2
+	AND     R6,R4,R6
+	EOR     R9,R0,R6
+	EOR     R12,R2,R6
+	BIC     R6,R2,R0
+	ORR     R6,R6,R9
+	AND     R11,R1,R6
+	BIC     R8,R1,R12
+	EOR     R6,R6,R8
 	ORR     R0,R12,R9
 	EOR     R12,R4,R11
-	AND     R14,R3,R12
-	EOR     R9,R9,R14
-	ORR     R14,R1,R2
-	EOR     R9,R9,R14
-	EOR     R14,R2,R4
-	BIC     R14,R14,R1
-	EOR     R11,R11,R14
+	AND     R8,R3,R12
+	EOR     R9,R9,R8
+	ORR     R8,R1,R2
+	EOR     R9,R9,R8
+	EOR     R8,R2,R4
+	BIC     R8,R8,R1
+	EOR     R11,R11,R8
 	EOR     R11,R2,R11
 	BIC     R11,R3,R11
 	EOR     R11,R0,R11
 	AND     R12,R1,R12
 	EOR     R11,R11,R12
-	EOR     R12,R0,R14
+	EOR     R12,R0,R8
 	ORR     R12,R3,R12
-	EOR     R14,R10,R12
-	ORR     R12,R5,R14
+	EOR     R8,R6,R12
+	ORR     R12,R5,R8
 	EOR     R12,R9,R12
-	LDR     R10,[R6,#0]
-	AND     R14,R5,R14
-	EOR     R10,R10,R12
+	LDR     R6,[R10,#100]
+	AND     R8,R5,R8
+	EOR     R6,R6,R12
 	EOR     R0,R9,R11
-	STR     R10,[R6,#0]
+	STR     R6,[R10,#100]
 	BIC     R7,R1,R0
 	BIC     R0,R0,R3
 	EOR     R7,R7,R0
@@ -1007,31 +1006,31 @@ s4:
 	EOR     R12,R12,R11
 	MVN     R12,R12
 	MVN     R9,R9
-	EOR     R0,R14,R9
-	EOR     R14,R14,R7
-	LDR     R11,[R6,#-24]
-	EOR     R14,R14,R12
-	LDR     R7,[R6,#-64]
-	EOR     R11,R11,R0
-	LDR     R0,[R6,#-100]
-	EOR     R12,R7,R12
-	STR     R11,[R6,#-24]
-	EOR     R14,R0,R14
-	STR     R12,[R6,#-64]
-	STR     R14,[R6,#-100]
-	LDR     PC,[R13],#4
+	EOR     R0,R8,R9
+	EOR     R11,R8,R7
+	LDR     R7,[R10,#76]
+	EOR     R11,R11,R12
+	LDR     R8,[R10,#36]
+	EOR     R7,R7,R0
+	LDR     R9,[R10,#0]
+	EOR     R8,R8,R12
+	STR     R7,[R10,#76]
+	EOR     R9,R9,R11
+	STR     R8,[R10,#36]
+	STR     R9,[R10,#0]
+	MOV     PC,R14
 s5:	
-	STMDB   R13!,{R6,R14}
-	LDMIA   R12,{R7-R12}
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
-	EOR     R3,R3,R10
+	STMDB   R13!,{R10,R14}
+	LDMIA   R12,{R6-R9,R11,R12}
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
 	EOR     R4,R4,R11
 	EOR     R5,R5,R12
-	BIC     R6,R0,R2
-	ORR     R10,R5,R6
-	EOR     R11,R3,R6
+	BIC     R10,R0,R2
+	ORR     R6,R5,R10
+	EOR     R11,R3,R10
 	ORR     R11,R5,R11
 	BIC     R12,R2,R3
 	EOR     R14,R3,R0
@@ -1040,20 +1039,20 @@ s5:
 	EOR     R12,R12,R0
 	AND     R7,R2,R8
 	EOR     R7,R7,R3
-	BIC     R6,R7,R6
-	EOR     R6,R6,R11
+	BIC     R10,R7,R10
+	EOR     R10,R10,R11
 	ORR     R11,R7,R11
-	ORR     R14,R4,R6
+	ORR     R14,R4,R10
 	EOR     R7,R7,R14
-	EOR     R14,R12,R10
-	AND     R10,R3,R10
-	EOR     R10,R10,R6
-	AND     R6,R6,R14
-	BIC     R8,R8,R6
+	EOR     R14,R12,R6
+	AND     R6,R3,R6
+	EOR     R6,R6,R10
+	AND     R10,R10,R14
+	BIC     R8,R8,R10
 	EOR     R9,R2,R5
 	BIC     R5,R5,R3
 	EOR     R5,R5,R2
-	EOR     R6,R9,R6
+	EOR     R10,R9,R10
 	ORR     R2,R4,R9
 	EOR     R14,R14,R2
 	BIC     R2,R7,R1
@@ -1061,69 +1060,69 @@ s5:
 	EOR     R9,R0,R9
 	AND     R12,R12,R9
 	BIC     R12,R4,R12
-	EOR     R10,R10,R12
+	EOR     R6,R6,R12
 	BIC     R7,R7,R8
 	AND     R12,R4,R5
 	EOR     R8,R8,R12
-	ORR     R12,R4,R6
+	ORR     R12,R4,R10
 	EOR     R11,R11,R12
 	ORR     R11,R1,R11
 	EOR     R8,R8,R11
-	ORR     R11,R10,R7
+	ORR     R11,R6,R7
 	EOR     R12,R3,R0
 	EOR     R11,R11,R12
 	BIC     R11,R4,R11
 	EOR     R11,R9,R11
 	EOR     R7,R7,R11
-	AND     R12,R12,R6
+	AND     R12,R12,R10
 	EOR     R12,R12,R5
 	ORR     R9,R3,R9
-	EOR     R6,R14,R6
-	BIC     R6,R9,R6
-	AND     R6,R4,R6
-	EOR     R6,R12,R6
-	ORR     R6,R1,R6
-	EOR     R6,R7,R6
+	EOR     R10,R14,R10
+	BIC     R10,R9,R10
+	AND     R10,R4,R10
+	EOR     R10,R12,R10
+	ORR     R10,R1,R10
+	EOR     R10,R7,R10
 	BIC     R7,R9,R1
-	LDR     R9,[R13],#4
-	EOR     R7,R10,R7
-	LDR     R10,[R9,#0]
+	LDR     R12,[R13],#4
+	EOR     R7,R6,R7
+	LDR     R6,[R12,#28]
 	MVN     R8,R8
-	LDR     R11,[R9,#24]
-	EOR     R10,R10,R6
-	LDR     R12,[R9,#68]
-	EOR     R11,R11,R7
-	LDR     R6,[R9,#-20]
-	EOR     R12,R12,R8
-	STR     R10,[R9,#0]
-	EOR     R14,R6,R14
-	STR     R11,[R9,#24]
-	STR     R12,[R9,#68]
-	STR     R14,[R9,#-20]
+	LDR     R11,[R12,#52]
+	EOR     R6,R6,R10
+	LDR     R10,[R12,#96]
+	EOR     R7,R11,R7
+	LDR     R11,[R12,#8]
+	EOR     R8,R10,R8
+	STR     R6,[R12,#28]
+	EOR     R9,R11,R14
+	STR     R7,[R12,#52]
+	STR     R8,[R12,#96]
+	STR     R9,[R12,#8]
 	LDR     PC,[R13],#4
 s6:	
-	STMDB   R13!,{R6,R14}
-	LDMIA   R12,{R7-R12}
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
-	EOR     R3,R3,R10
+	STMDB   R13!,{R10,R14}
+	LDMIA   R12,{R6-R9,R11,R12}
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
 	EOR     R4,R4,R11
 	EOR     R5,R5,R12
 	MVN     R2,R2
 	EOR     R7,R4,R0
 	EOR     R8,R7,R5
 	AND     R9,R0,R5
-	BIC     R10,R9,R4
-	BIC     R11,R3,R10
+	BIC     R6,R9,R4
+	BIC     R11,R3,R6
 	EOR     R12,R5,R9
-	ORR     R14,R10,R12
+	ORR     R14,R6,R12
 	BIC     R14,R14,R3
 	EOR     R14,R12,R14
 	AND     R12,R4,R12
 	BIC     R12,R3,R12
 	ORR     R12,R1,R12
-	ORR     R10,R10,R14
+	ORR     R6,R6,R14
 	EOR     R0,R8,R11
 	EOR     R9,R9,R0
 	BIC     R9,R9,R14
@@ -1131,90 +1130,90 @@ s6:
 	EOR     R14,R0,R14
 	ORR     R3,R5,R0
 	BIC     R3,R3,R4
-	BIC     R8,R1,R10
+	BIC     R8,R1,R6
 	EOR     R8,R3,R8
 	AND     R8,R8,R2
-	LDR     R3,[R6,#0]
+	LDR     R3,[R10,#12]
 	EOR     R8,R8,R14
 	MVN     R8,R8
 	EOR     R3,R3,R8
 	BIC     R8,R8,R7
-	STR     R3,[R6,#0]
-	EOR     R8,R8,R10
-	BIC     R6,R5,R8
-	EOR     R6,R6,R0
-	BIC     R10,R1,R6
+	STR     R3,[R10,#12]
+	EOR     R8,R8,R6
+	BIC     R10,R5,R8
+	EOR     R10,R10,R0
+	BIC     R6,R1,R10
 	ORR     R14,R4,R5
 	BIC     R0,R14,R7
 	EOR     R7,R7,R5
-	BIC     R3,R1,R10
+	BIC     R3,R1,R6
 	EOR     R0,R0,R3
 	ORR     R0,R2,R0
-	EOR     R10,R8,R10
-	EOR     R0,R10,R0
-	EOR     R10,R5,R10
-	BIC     R10,R4,R10
-	ORR     R6,R6,R10
-	EOR     R6,R6,R11
-	ORR     R11,R10,R7
+	EOR     R6,R8,R6
+	EOR     R0,R6,R0
+	EOR     R6,R5,R6
+	BIC     R6,R4,R6
+	ORR     R10,R10,R6
+	EOR     R10,R10,R11
+	ORR     R11,R6,R7
 	EOR     R11,R11,R12
 	AND     R14,R14,R9
 	EOR     R7,R14,R7
 	AND     R7,R1,R7
-	EOR     R7,R6,R7
+	EOR     R7,R10,R7
 	ORR     R7,R2,R7
 	EOR     R7,R11,R7
 	BIC     R12,R8,R4
 	BIC     R12,R2,R12
-	BIC     R11,R1,R10
-	LDR     R6,[R13],#4
+	BIC     R11,R1,R6
+	LDR     R10,[R13],#4
 	EOR     R12,R12,R11
-	LDR     R11,[R6,#100]
+	LDR     R11,[R10,#112]
 	EOR     R12,R12,R9
-	LDR     R14,[R6,#60]
-	EOR     R11,R7,R11
-	LDR     R7,[R6,#28]
-	EOR     R14,R14,R0
-	STR     R11,[R6,#100]
-	EOR     R12,R7,R12
-	STR     R14,[R6,#60]
-	STR     R12,[R6,#28]
+	LDR     R9,[R10,#72]
+	EOR     R7,R7,R11
+	LDR     R8,[R10,#40]
+	EOR     R9,R9,R0
+	STR     R7,[R10,#112]
+	EOR     R8,R8,R12
+	STR     R9,[R10,#72]
+	STR     R8,[R10,#40]
 	LDR     PC,[R13],#4
 s7:	
 	STR     R14,[R13,#-4]!
-	LDMIA   R12,{R7-R12}
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
-	EOR     R3,R3,R10
+	LDMIA   R12,{R6-R9,R11,R12}
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
 	EOR     R4,R4,R11
 	EOR     R5,R5,R12
 	AND     R7,R1,R3
 	EOR     R7,R7,R4
 	AND     R8,R3,R7
 	EOR     R9,R8,R1
-	BIC     R10,R2,R9
-	EOR     R7,R7,R10
-	EOR     R11,R2,R10
-	ORR     R10,R1,R3
-	ORR     R10,R10,R4
+	BIC     R6,R2,R9
+	EOR     R7,R7,R6
+	EOR     R11,R2,R6
+	ORR     R6,R1,R3
+	ORR     R6,R6,R4
 	BIC     R12,R4,R1
 	ORR     R12,R2,R12
-	EOR     R10,R10,R12
+	EOR     R6,R6,R12
 	BIC     R12,R5,R11
 	EOR     R12,R7,R12
 	EOR     R7,R8,R7
 	ORR     R14,R5,R7
-	EOR     R10,R10,R14
-	AND     R14,R0,R10
-	LDR     R10,[R6,#0]
+	EOR     R6,R6,R14
+	AND     R14,R0,R6
+	LDR     R6,[R10,#124]
 	EOR     R14,R12,R14
-	EOR     R10,R10,R14
+	EOR     R6,R6,R14
 	EOR     R9,R3,R9
-	STR     R10,[R6,#0]
-	ORR     R10,R1,R9
-	EOR     R10,R10,R14
-	BIC     R10,R10,R5
+	STR     R6,[R10,#124]
+	ORR     R6,R1,R9
+	EOR     R6,R6,R14
+	BIC     R6,R6,R5
 	ORR     R14,R2,R8
 	EOR     R14,R9,R14
 	EOR     R8,R2,R8
@@ -1230,74 +1229,74 @@ s7:
 	BIC     R14,R14,R2
 	ORR     R8,R14,R8
 	BIC     R8,R8,R0
-	EOR     R8,R10,R8
+	EOR     R8,R6,R8
 	EOR     R12,R11,R8
-	BIC     R10,R3,R2
-	ORR     R8,R4,R10
+	BIC     R6,R3,R2
+	ORR     R8,R4,R6
 	EOR     R11,R11,R8
 	EOR     R11,R11,R7
-	BIC     R10,R1,R10
-	AND     R10,R5,R10
-	AND     R8,R2,R10
+	BIC     R6,R1,R6
+	AND     R6,R5,R6
+	AND     R8,R2,R6
 	EOR     R8,R8,R7
 	ORR     R8,R0,R8
-	EOR     R7,R11,R8
-	EOR     R11,R10,R9
-	LDR     R14,[R6,#-80]
-	MVN     R11,R11
-	EOR     R11,R14,R11
-	LDR     R14,[R6,#-100]
-	STR     R11,[R6,#-80]
-	LDR     R8,[R6,#-40]
-	EOR     R14,R14,R7
-	EOR     R12,R8,R12
-	STR     R14,[R6,#-100]
-	STR     R12,[R6,#-40]
+	EOR     R11,R11,R8
+	EOR     R7,R6,R9
+	LDR     R9,[R10,#44]
+	MVN     R7,R7
+	EOR     R7,R9,R7
+	LDR     R9,[R10,#24]
+	STR     R7,[R10,#44]
+	LDR     R8,[R10,#84]
+	EOR     R9,R9,R11
+	EOR     R8,R8,R12
+	STR     R9,[R10,#24]
+	STR     R8,[R10,#84]
 	LDR     PC,[R13],#4
 s8:	
-	STMDB   R13!,{R6,R14}
-	LDMIA   R12,{R7-R11}
+	STMDB   R13!,{R10,R14}
+	LDMIA   R12,{R6-R9,R11}
 	LDR     R12,[R12,#-108]
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
-	EOR     R3,R3,R10
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
 	EOR     R4,R4,R11
 	EOR     R5,R5,R12
 	BIC     R7,R0,R2
 	EOR     R8,R7,R3
-	EOR     R10,R0,R2
+	EOR     R6,R0,R2
 	ORR     R11,R4,R8
-	EOR     R11,R10,R11
+	EOR     R11,R6,R11
 	BIC     R12,R11,R0
 	ORR     R14,R12,R3
-	EOR     R14,R14,R10
+	EOR     R14,R14,R6
 	EOR     R14,R14,R4
-	BIC     R10,R10,R4
-	ORR     R10,R10,R3
-	BIC     R6,R7,R14
-	EOR     R9,R4,R6
+	BIC     R6,R6,R4
+	ORR     R6,R6,R3
+	BIC     R10,R7,R14
+	EOR     R9,R4,R10
 	EOR     R9,R2,R9
 	BIC     R9,R9,R1
-	EOR     R9,R10,R9
+	EOR     R9,R6,R9
 	AND     R9,R5,R9
-	EOR     R10,R12,R2
+	EOR     R6,R12,R2
 	BIC     R8,R8,R14
-	EOR     R8,R8,R10
-	BIC     R10,R10,R4
-	EOR     R10,R3,R10
+	EOR     R8,R8,R6
+	BIC     R6,R6,R4
+	EOR     R6,R3,R6
 	BIC     R2,R2,R8
-	ORR     R2,R10,R2
+	ORR     R2,R6,R2
 	ORR     R12,R1,R12
 	EOR     R12,R2,R12
 	BIC     R8,R1,R8
 	EOR     R8,R14,R8
 	ORR     R8,R5,R8
-	BIC     R10,R1,R10
-	EOR     R14,R11,R10
+	BIC     R6,R1,R6
+	EOR     R14,R11,R6
 	MVN     R14,R14
 	ORR     R11,R11,R4
-	EOR     R10,R14,R8
+	EOR     R6,R14,R8
 	EOR     R9,R14,R9
 	ORR     R14,R14,R3
 	EOR     R8,R7,R3
@@ -1313,31 +1312,30 @@ s8:
 	EOR     R11,R14,R11
 	ORR     R7,R8,R11
 	BIC     R7,R1,R7
-	EOR     R7,R6,R7
+	EOR     R7,R10,R7
 	ORR     R7,R5,R7
-	LDR     R6,[R13],#4
+	LDR     R10,[R13],#4
 	EOR     R7,R12,R7
-	LDR     R12,[R6,#40]
+	LDR     R8,[R10,#56]
 	MVN     R7,R7
-	LDR     R14,[R6,#64]
-	EOR     R12,R12,R11
-	LDR     R11,[R6,#88]
-	EOR     R14,R14,R9
-	STR     R12,[R6,#40]
-	LDR     R8,[R6,#0]
-	EOR     R11,R11,R7
-	STR     R14,[R6,#64]
-	EOR     R10,R8,R10
-	STR     R11,[R6,#88]
-	STR     R10,[R6,#0]
+	LDR     R12,[R10,#80]
+	EOR     R8,R8,R11
+	LDR     R11,[R10,#104]
+	EOR     R9,R12,R9
+	STR     R8,[R10,#56]
+	LDR     R12,[R10,#16]
+	EOR     R7,R11,R7
+	STR     R9,[R10,#80]
+	EOR     R6,R12,R6
+	STR     R7,[R10,#104]
+	STR     R6,[R10,#16]
 	LDR     PC,[R13],#4
-
 timingloop:
 	ADD     R2,R13,#0x0208      
 	LDR     R0,[R2,R1,LSL #2]
 	MVN     R0,R0
 	STR     R0,[R2,R1,LSL #2]
-deseval:	
+deseval:
 	ADD     R1,R13,#8
 	MVN     R3,#0
 	STMDB   R13!,{R1-R11}
@@ -1357,9 +1355,9 @@ deseval:
 	STMDB   R13!,{R4-R11}
 	LDMDB   R2!,{R4-R11}
 	STMDB   R13!,{R4-R11}
-	ADD     R12,R13,#0x80       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x20        
+	ADD     R12,R13,#0x80       
+	MOV     R10,R13
 	LDR     R0,[R14,#188]
 	LDR     R1,[R14,#44]
 	LDR     R2,[R14,#104]
@@ -1367,9 +1365,9 @@ deseval:
 	LDR     R4,[R14,#52]
 	LDR     R5,[R14,#164]
 	BL      s1
-	ADD     R12,R13,#0x8C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x30        
+	ADD     R12,R13,#0x8C       
+	MOV     R10,R13
 	LDR     R0,[R14,#108]
 	LDR     R1,[R14,#24]
 	LDR     R2,[R14,#216]
@@ -1377,9 +1375,9 @@ deseval:
 	LDR     R4,[R14,#156]
 	LDR     R5,[R14,#76]
 	BL      s2
-	ADD     R12,R13,#0x9C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x5C        
+	ADD     R12,R13,#0x9C       
+	MOV     R10,R13
 	LDR     R0,[R14,#212]
 	LDR     R1,[R14,#100]
 	LDR     R2,[R14,#132]
@@ -1387,9 +1385,9 @@ deseval:
 	LDR     R4,[R14,#68]
 	LDR     R5,[R14,#20]
 	BL      s3
-	ADD     R12,R13,#0xAC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x64        
+	ADD     R12,R13,#0xAC       
+	MOV     R10,R13
 	LDR     R0,[R14,#16]
 	LDR     R1,[R14,#220]
 	LDR     R2,[R14,#96]
@@ -1397,9 +1395,9 @@ deseval:
 	LDR     R4,[R14,#160]
 	LDR     R5,[R14,#80]
 	BL      s4
-	ADD     R12,R13,#0xBC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x1C        
+	ADD     R12,R13,#0xBC       
+	MOV     R10,R13
 	LDR     R0,[R14,#144]
 	LDR     R1,[R14,#124]
 	LDR     R2,[R14,#84]
@@ -1407,9 +1405,9 @@ deseval:
 	LDR     R4,[R14,#92]
 	LDR     R5,[R14,#208]
 	BL      s5
-	ADD     R12,R13,#0xCC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x0C        
+	ADD     R12,R13,#0xCC       
+	MOV     R10,R13
 	LDR     R0,[R14,#56]
 	LDR     R1,[R14,#116]
 	LDR     R2,[R14,#204]
@@ -1417,9 +1415,9 @@ deseval:
 	LDR     R4,[R14,#140]
 	LDR     R5,[R14,#120]
 	BL      s6
-	ADD     R12,R13,#0xDC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x7C        
+	ADD     R12,R13,#0xDC       
+	MOV     R10,R13
 	LDR     R0,[R14,#8]
 	LDR     R1,[R14,#148]
 	LDR     R2,[R14,#88]
@@ -1427,9 +1425,9 @@ deseval:
 	LDR     R4,[R14,#168]
 	LDR     R5,[R14,#152]
 	BL      s7
-	ADD     R12,R13,#0xEC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x10        
+	ADD     R12,R13,#0xEC       
+	MOV     R10,R13
 	LDR     R0,[R14,#64]
 	LDR     R1,[R14,#172]
 	LDR     R2,[R14,#176]
@@ -1437,9 +1435,9 @@ deseval:
 	LDR     R4,[R14,#28]
 	LDR     R5,[R14,#112]
 	BL      s8
-	ADD     R12,R13,#0
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xA0        
+	MOV     R12,R13
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#216]
 	LDR     R1,[R14,#72]
 	LDR     R2,[R14,#132]
@@ -1447,9 +1445,9 @@ deseval:
 	LDR     R4,[R14,#80]
 	LDR     R5,[R14,#192]
 	BL      s1
-	ADD     R12,R13,#0x0C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xB0        
+	ADD     R12,R13,#0x0C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#136]
 	LDR     R1,[R14,#52]
 	LDR     R2,[R14,#16]
@@ -1457,9 +1455,9 @@ deseval:
 	LDR     R4,[R14,#184]
 	LDR     R5,[R14,#104]
 	BL      s2
-	ADD     R12,R13,#0x1C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xDC        
+	ADD     R12,R13,#0x1C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#12]
 	LDR     R1,[R14,#128]
 	LDR     R2,[R14,#160]
@@ -1467,9 +1465,9 @@ deseval:
 	LDR     R4,[R14,#96]
 	LDR     R5,[R14,#48]
 	BL      s3
-	ADD     R12,R13,#0x2C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xE4        
+	ADD     R12,R13,#0x2C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#44]
 	LDR     R1,[R14,#20]
 	LDR     R2,[R14,#24]
@@ -1477,9 +1475,9 @@ deseval:
 	LDR     R4,[R14,#188]
 	LDR     R5,[R14,#108]
 	BL      s4
-	ADD     R12,R13,#0x3C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x9C        
+	ADD     R12,R13,#0x3C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#172]
 	LDR     R1,[R14,#152]
 	LDR     R2,[R14,#112]
@@ -1487,9 +1485,9 @@ deseval:
 	LDR     R4,[R14,#120]
 	LDR     R5,[R14,#0]
 	BL      s5
-	ADD     R12,R13,#0x4C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x8C        
+	ADD     R12,R13,#0x4C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#84]
 	LDR     R1,[R14,#144]
 	LDR     R2,[R14,#124]
@@ -1497,9 +1495,9 @@ deseval:
 	LDR     R4,[R14,#168]
 	LDR     R5,[R14,#148]
 	BL      s6
-	ADD     R12,R13,#0x5C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xFC        
+	ADD     R12,R13,#0x5C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#36]
 	LDR     R1,[R14,#176]
 	LDR     R2,[R14,#116]
@@ -1507,9 +1505,9 @@ deseval:
 	LDR     R4,[R14,#196]
 	LDR     R5,[R14,#180]
 	BL      s7
-	ADD     R12,R13,#0x6C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x90        
+	ADD     R12,R13,#0x6C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#92]
 	LDR     R1,[R14,#200]
 	LDR     R2,[R14,#204]
@@ -1517,9 +1515,9 @@ deseval:
 	LDR     R4,[R14,#56]
 	LDR     R5,[R14,#140]
 	BL      s8
-	ADD     R12,R13,#0x80       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x20        
+	ADD     R12,R13,#0x80       
+	MOV     R10,R13
 	LDR     R0,[R14,#44]
 	LDR     R1,[R14,#128]
 	LDR     R2,[R14,#188]
@@ -1527,9 +1525,9 @@ deseval:
 	LDR     R4,[R14,#136]
 	LDR     R5,[R14,#20]
 	BL      s1
-	ADD     R12,R13,#0x8C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x30        
+	ADD     R12,R13,#0x8C       
+	MOV     R10,R13
 	LDR     R0,[R14,#192]
 	LDR     R1,[R14,#108]
 	LDR     R2,[R14,#72]
@@ -1537,9 +1535,9 @@ deseval:
 	LDR     R4,[R14,#12]
 	LDR     R5,[R14,#160]
 	BL      s2
-	ADD     R12,R13,#0x9C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x5C        
+	ADD     R12,R13,#0x9C       
+	MOV     R10,R13
 	LDR     R0,[R14,#68]
 	LDR     R1,[R14,#184]
 	LDR     R2,[R14,#216]
@@ -1547,9 +1545,9 @@ deseval:
 	LDR     R4,[R14,#52]
 	LDR     R5,[R14,#104]
 	BL      s3
-	ADD     R12,R13,#0xAC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x64        
+	ADD     R12,R13,#0xAC       
+	MOV     R10,R13
 	LDR     R0,[R14,#100]
 	LDR     R1,[R14,#76]
 	LDR     R2,[R14,#80]
@@ -1557,9 +1555,9 @@ deseval:
 	LDR     R4,[R14,#16]
 	LDR     R5,[R14,#164]
 	BL      s4
-	ADD     R12,R13,#0xBC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x1C        
+	ADD     R12,R13,#0xBC       
+	MOV     R10,R13
 	LDR     R0,[R14,#8]
 	LDR     R1,[R14,#208]
 	LDR     R2,[R14,#168]
@@ -1567,9 +1565,9 @@ deseval:
 	LDR     R4,[R14,#176]
 	LDR     R5,[R14,#56]
 	BL      s5
-	ADD     R12,R13,#0xCC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x0C        
+	ADD     R12,R13,#0xCC       
+	MOV     R10,R13
 	LDR     R0,[R14,#140]
 	LDR     R1,[R14,#200]
 	LDR     R2,[R14,#180]
@@ -1577,9 +1575,9 @@ deseval:
 	LDR     R4,[R14,#4]
 	LDR     R5,[R14,#204]
 	BL      s6
-	ADD     R12,R13,#0xDC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x7C        
+	ADD     R12,R13,#0xDC       
+	MOV     R10,R13
 	LDR     R0,[R14,#92]
 	LDR     R1,[R14,#124]
 	LDR     R2,[R14,#172]
@@ -1587,9 +1585,9 @@ deseval:
 	LDR     R4,[R14,#32]
 	LDR     R5,[R14,#0]
 	BL      s7
-	ADD     R12,R13,#0xEC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x10        
+	ADD     R12,R13,#0xEC       
+	MOV     R10,R13
 	LDR     R0,[R14,#148]
 	LDR     R1,[R14,#36]
 	LDR     R2,[R14,#152]
@@ -1597,9 +1595,9 @@ deseval:
 	LDR     R4,[R14,#112]
 	LDR     R5,[R14,#196]
 	BL      s8
-	ADD     R12,R13,#0
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xA0        
+	MOV     R12,R13
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#100]
 	LDR     R1,[R14,#184]
 	LDR     R2,[R14,#16]
@@ -1607,9 +1605,9 @@ deseval:
 	LDR     R4,[R14,#192]
 	LDR     R5,[R14,#76]
 	BL      s1
-	ADD     R12,R13,#0x0C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xB0        
+	ADD     R12,R13,#0x0C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#20]
 	LDR     R1,[R14,#164]
 	LDR     R2,[R14,#128]
@@ -1617,9 +1615,9 @@ deseval:
 	LDR     R4,[R14,#68]
 	LDR     R5,[R14,#216]
 	BL      s2
-	ADD     R12,R13,#0x1C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xDC        
+	ADD     R12,R13,#0x1C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#24]
 	LDR     R1,[R14,#12]
 	LDR     R2,[R14,#44]
@@ -1627,9 +1625,9 @@ deseval:
 	LDR     R4,[R14,#108]
 	LDR     R5,[R14,#160]
 	BL      s3
-	ADD     R12,R13,#0x2C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xE4        
+	ADD     R12,R13,#0x2C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#156]
 	LDR     R1,[R14,#132]
 	LDR     R2,[R14,#136]
@@ -1637,9 +1635,9 @@ deseval:
 	LDR     R4,[R14,#72]
 	LDR     R5,[R14,#220]
 	BL      s4
-	ADD     R12,R13,#0x3C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x9C        
+	ADD     R12,R13,#0x3C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#64]
 	LDR     R1,[R14,#28]
 	LDR     R2,[R14,#4]
@@ -1647,9 +1645,9 @@ deseval:
 	LDR     R4,[R14,#124]
 	LDR     R5,[R14,#112]
 	BL      s5
-	ADD     R12,R13,#0x4C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x8C        
+	ADD     R12,R13,#0x4C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#196]
 	LDR     R1,[R14,#36]
 	LDR     R2,[R14,#0]
@@ -1657,9 +1655,9 @@ deseval:
 	LDR     R4,[R14,#60]
 	LDR     R5,[R14,#152]
 	BL      s6
-	ADD     R12,R13,#0x5C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xFC        
+	ADD     R12,R13,#0x5C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#148]
 	LDR     R1,[R14,#180]
 	LDR     R2,[R14,#8]
@@ -1667,9 +1665,9 @@ deseval:
 	LDR     R4,[R14,#88]
 	LDR     R5,[R14,#56]
 	BL      s7
-	ADD     R12,R13,#0x6C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x90        
+	ADD     R12,R13,#0x6C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#204]
 	LDR     R1,[R14,#92]
 	LDR     R2,[R14,#208]
@@ -1677,9 +1675,9 @@ deseval:
 	LDR     R4,[R14,#168]
 	LDR     R5,[R14,#32]
 	BL      s8
-	ADD     R12,R13,#0x80       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x20        
+	ADD     R12,R13,#0x80       
+	MOV     R10,R13
 	LDR     R0,[R14,#156]
 	LDR     R1,[R14,#12]
 	LDR     R2,[R14,#72]
@@ -1687,9 +1685,9 @@ deseval:
 	LDR     R4,[R14,#20]
 	LDR     R5,[R14,#132]
 	BL      s1
-	ADD     R12,R13,#0x8C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x30        
+	ADD     R12,R13,#0x8C       
+	MOV     R10,R13
 	LDR     R0,[R14,#76]
 	LDR     R1,[R14,#220]
 	LDR     R2,[R14,#184]
@@ -1697,9 +1695,9 @@ deseval:
 	LDR     R4,[R14,#24]
 	LDR     R5,[R14,#44]
 	BL      s2
-	ADD     R12,R13,#0x9C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x5C        
+	ADD     R12,R13,#0x9C       
+	MOV     R10,R13
 	LDR     R0,[R14,#80]
 	LDR     R1,[R14,#68]
 	LDR     R2,[R14,#100]
@@ -1707,9 +1705,9 @@ deseval:
 	LDR     R4,[R14,#164]
 	LDR     R5,[R14,#216]
 	BL      s3
-	ADD     R12,R13,#0xAC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x64        
+	ADD     R12,R13,#0xAC       
+	MOV     R10,R13
 	LDR     R0,[R14,#212]
 	LDR     R1,[R14,#188]
 	LDR     R2,[R14,#192]
@@ -1717,9 +1715,9 @@ deseval:
 	LDR     R4,[R14,#128]
 	LDR     R5,[R14,#48]
 	BL      s4
-	ADD     R12,R13,#0xBC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x1C        
+	ADD     R12,R13,#0xBC       
+	MOV     R10,R13
 	LDR     R0,[R14,#120]
 	LDR     R1,[R14,#84]
 	LDR     R2,[R14,#60]
@@ -1727,9 +1725,9 @@ deseval:
 	LDR     R4,[R14,#180]
 	LDR     R5,[R14,#168]
 	BL      s5
-	ADD     R12,R13,#0xCC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x0C        
+	ADD     R12,R13,#0xCC       
+	MOV     R10,R13
 	LDR     R0,[R14,#32]
 	LDR     R1,[R14,#92]
 	LDR     R2,[R14,#56]
@@ -1737,9 +1735,9 @@ deseval:
 	LDR     R4,[R14,#116]
 	LDR     R5,[R14,#208]
 	BL      s6
-	ADD     R12,R13,#0xDC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x7C        
+	ADD     R12,R13,#0xDC       
+	MOV     R10,R13
 	LDR     R0,[R14,#204]
 	LDR     R1,[R14,#0]
 	LDR     R2,[R14,#64]
@@ -1747,9 +1745,9 @@ deseval:
 	LDR     R4,[R14,#144]
 	LDR     R5,[R14,#112]
 	BL      s7
-	ADD     R12,R13,#0xEC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x10        
+	ADD     R12,R13,#0xEC       
+	MOV     R10,R13
 	LDR     R0,[R14,#152]
 	LDR     R1,[R14,#148]
 	LDR     R2,[R14,#28]
@@ -1757,9 +1755,9 @@ deseval:
 	LDR     R4,[R14,#4]
 	LDR     R5,[R14,#88]
 	BL      s8
-	ADD     R12,R13,#0
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xA0        
+	MOV     R12,R13
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#212]
 	LDR     R1,[R14,#68]
 	LDR     R2,[R14,#128]
@@ -1767,9 +1765,9 @@ deseval:
 	LDR     R4,[R14,#76]
 	LDR     R5,[R14,#188]
 	BL      s1
-	ADD     R12,R13,#0x0C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xB0        
+	ADD     R12,R13,#0x0C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#132]
 	LDR     R1,[R14,#48]
 	LDR     R2,[R14,#12]
@@ -1777,9 +1775,9 @@ deseval:
 	LDR     R4,[R14,#80]
 	LDR     R5,[R14,#100]
 	BL      s2
-	ADD     R12,R13,#0x1C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xDC        
+	ADD     R12,R13,#0x1C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#136]
 	LDR     R1,[R14,#24]
 	LDR     R2,[R14,#156]
@@ -1787,9 +1785,9 @@ deseval:
 	LDR     R4,[R14,#220]
 	LDR     R5,[R14,#44]
 	BL      s3
-	ADD     R12,R13,#0x2C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xE4        
+	ADD     R12,R13,#0x2C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#40]
 	LDR     R1,[R14,#16]
 	LDR     R2,[R14,#20]
@@ -1797,9 +1795,9 @@ deseval:
 	LDR     R4,[R14,#184]
 	LDR     R5,[R14,#104]
 	BL      s4
-	ADD     R12,R13,#0x3C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x9C        
+	ADD     R12,R13,#0x3C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#176]
 	LDR     R1,[R14,#140]
 	LDR     R2,[R14,#116]
@@ -1807,9 +1805,9 @@ deseval:
 	LDR     R4,[R14,#0]
 	LDR     R5,[R14,#4]
 	BL      s5
-	ADD     R12,R13,#0x4C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x8C        
+	ADD     R12,R13,#0x4C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#88]
 	LDR     R1,[R14,#148]
 	LDR     R2,[R14,#112]
@@ -1817,9 +1815,9 @@ deseval:
 	LDR     R4,[R14,#172]
 	LDR     R5,[R14,#28]
 	BL      s6
-	ADD     R12,R13,#0x5C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xFC        
+	ADD     R12,R13,#0x5C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#152]
 	LDR     R1,[R14,#56]
 	LDR     R2,[R14,#120]
@@ -1827,9 +1825,9 @@ deseval:
 	LDR     R4,[R14,#200]
 	LDR     R5,[R14,#168]
 	BL      s7
-	ADD     R12,R13,#0x6C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x90        
+	ADD     R12,R13,#0x6C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#208]
 	LDR     R1,[R14,#204]
 	LDR     R2,[R14,#84]
@@ -1837,9 +1835,9 @@ deseval:
 	LDR     R4,[R14,#60]
 	LDR     R5,[R14,#144]
 	BL      s8
-	ADD     R12,R13,#0x80       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x20        
+	ADD     R12,R13,#0x80       
+	MOV     R10,R13
 	LDR     R0,[R14,#40]
 	LDR     R1,[R14,#24]
 	LDR     R2,[R14,#184]
@@ -1847,9 +1845,9 @@ deseval:
 	LDR     R4,[R14,#132]
 	LDR     R5,[R14,#16]
 	BL      s1
-	ADD     R12,R13,#0x8C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x30        
+	ADD     R12,R13,#0x8C       
+	MOV     R10,R13
 	LDR     R0,[R14,#188]
 	LDR     R1,[R14,#104]
 	LDR     R2,[R14,#68]
@@ -1857,9 +1855,9 @@ deseval:
 	LDR     R4,[R14,#136]
 	LDR     R5,[R14,#156]
 	BL      s2
-	ADD     R12,R13,#0x9C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x5C        
+	ADD     R12,R13,#0x9C       
+	MOV     R10,R13
 	LDR     R0,[R14,#192]
 	LDR     R1,[R14,#80]
 	LDR     R2,[R14,#212]
@@ -1867,9 +1865,9 @@ deseval:
 	LDR     R4,[R14,#48]
 	LDR     R5,[R14,#100]
 	BL      s3
-	ADD     R12,R13,#0xAC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x64        
+	ADD     R12,R13,#0xAC       
+	MOV     R10,R13
 	LDR     R0,[R14,#96]
 	LDR     R1,[R14,#72]
 	LDR     R2,[R14,#76]
@@ -1877,9 +1875,9 @@ deseval:
 	LDR     R4,[R14,#12]
 	LDR     R5,[R14,#160]
 	BL      s4
-	ADD     R12,R13,#0xBC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x1C        
+	ADD     R12,R13,#0xBC       
+	MOV     R10,R13
 	LDR     R0,[R14,#124]
 	LDR     R1,[R14,#196]
 	LDR     R2,[R14,#172]
@@ -1887,9 +1885,9 @@ deseval:
 	LDR     R4,[R14,#56]
 	LDR     R5,[R14,#60]
 	BL      s5
-	ADD     R12,R13,#0xCC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x0C        
+	ADD     R12,R13,#0xCC       
+	MOV     R10,R13
 	LDR     R0,[R14,#144]
 	LDR     R1,[R14,#204]
 	LDR     R2,[R14,#168]
@@ -1897,9 +1895,9 @@ deseval:
 	LDR     R4,[R14,#8]
 	LDR     R5,[R14,#84]
 	BL      s6
-	ADD     R12,R13,#0xDC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x7C        
+	ADD     R12,R13,#0xDC       
+	MOV     R10,R13
 	LDR     R0,[R14,#208]
 	LDR     R1,[R14,#112]
 	LDR     R2,[R14,#176]
@@ -1907,9 +1905,9 @@ deseval:
 	LDR     R4,[R14,#36]
 	LDR     R5,[R14,#4]
 	BL      s7
-	ADD     R12,R13,#0xEC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x10        
+	ADD     R12,R13,#0xEC       
+	MOV     R10,R13
 	LDR     R0,[R14,#28]
 	LDR     R1,[R14,#152]
 	LDR     R2,[R14,#140]
@@ -1917,9 +1915,9 @@ deseval:
 	LDR     R4,[R14,#116]
 	LDR     R5,[R14,#200]
 	BL      s8
-	ADD     R12,R13,#0
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xA0        
+	MOV     R12,R13
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#96]
 	LDR     R1,[R14,#80]
 	LDR     R2,[R14,#12]
@@ -1927,9 +1925,9 @@ deseval:
 	LDR     R4,[R14,#188]
 	LDR     R5,[R14,#72]
 	BL      s1
-	ADD     R12,R13,#0x0C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xB0        
+	ADD     R12,R13,#0x0C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#16]
 	LDR     R1,[R14,#160]
 	LDR     R2,[R14,#24]
@@ -1937,9 +1935,9 @@ deseval:
 	LDR     R4,[R14,#192]
 	LDR     R5,[R14,#212]
 	BL      s2
-	ADD     R12,R13,#0x1C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xDC        
+	ADD     R12,R13,#0x1C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#20]
 	LDR     R1,[R14,#136]
 	LDR     R2,[R14,#40]
@@ -1947,9 +1945,9 @@ deseval:
 	LDR     R4,[R14,#104]
 	LDR     R5,[R14,#156]
 	BL      s3
-	ADD     R12,R13,#0x2C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xE4        
+	ADD     R12,R13,#0x2C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#52]
 	LDR     R1,[R14,#128]
 	LDR     R2,[R14,#132]
@@ -1957,9 +1955,9 @@ deseval:
 	LDR     R4,[R14,#68]
 	LDR     R5,[R14,#216]
 	BL      s4
-	ADD     R12,R13,#0x3C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x9C        
+	ADD     R12,R13,#0x3C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#180]
 	LDR     R1,[R14,#32]
 	LDR     R2,[R14,#8]
@@ -1967,9 +1965,9 @@ deseval:
 	LDR     R4,[R14,#112]
 	LDR     R5,[R14,#116]
 	BL      s5
-	ADD     R12,R13,#0x4C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x8C        
+	ADD     R12,R13,#0x4C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#200]
 	LDR     R1,[R14,#152]
 	LDR     R2,[R14,#4]
@@ -1977,9 +1975,9 @@ deseval:
 	LDR     R4,[R14,#64]
 	LDR     R5,[R14,#140]
 	BL      s6
-	ADD     R12,R13,#0x5C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xFC        
+	ADD     R12,R13,#0x5C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#28]
 	LDR     R1,[R14,#168]
 	LDR     R2,[R14,#124]
@@ -1987,9 +1985,9 @@ deseval:
 	LDR     R4,[R14,#92]
 	LDR     R5,[R14,#60]
 	BL      s7
-	ADD     R12,R13,#0x6C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x90        
+	ADD     R12,R13,#0x6C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#84]
 	LDR     R1,[R14,#208]
 	LDR     R2,[R14,#196]
@@ -1997,9 +1995,9 @@ deseval:
 	LDR     R4,[R14,#172]
 	LDR     R5,[R14,#36]
 	BL      s8
-	ADD     R12,R13,#0x80       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x20        
+	ADD     R12,R13,#0x80       
+	MOV     R10,R13
 	LDR     R0,[R14,#24]
 	LDR     R1,[R14,#108]
 	LDR     R2,[R14,#40]
@@ -2007,9 +2005,9 @@ deseval:
 	LDR     R4,[R14,#216]
 	LDR     R5,[R14,#100]
 	BL      s1
-	ADD     R12,R13,#0x8C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x30        
+	ADD     R12,R13,#0x8C       
+	MOV     R10,R13
 	LDR     R0,[R14,#44]
 	LDR     R1,[R14,#188]
 	LDR     R2,[R14,#52]
@@ -2017,9 +2015,9 @@ deseval:
 	LDR     R4,[R14,#220]
 	LDR     R5,[R14,#12]
 	BL      s2
-	ADD     R12,R13,#0x9C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x5C        
+	ADD     R12,R13,#0x9C       
+	MOV     R10,R13
 	LDR     R0,[R14,#48]
 	LDR     R1,[R14,#164]
 	LDR     R2,[R14,#68]
@@ -2027,9 +2025,9 @@ deseval:
 	LDR     R4,[R14,#132]
 	LDR     R5,[R14,#184]
 	BL      s3
-	ADD     R12,R13,#0xAC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x64        
+	ADD     R12,R13,#0xAC       
+	MOV     R10,R13
 	LDR     R0,[R14,#80]
 	LDR     R1,[R14,#156]
 	LDR     R2,[R14,#160]
@@ -2037,9 +2035,9 @@ deseval:
 	LDR     R4,[R14,#96]
 	LDR     R5,[R14,#16]
 	BL      s4
-	ADD     R12,R13,#0xBC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x1C        
+	ADD     R12,R13,#0xBC       
+	MOV     R10,R13
 	LDR     R0,[R14,#208]
 	LDR     R1,[R14,#60]
 	LDR     R2,[R14,#36]
@@ -2047,9 +2045,9 @@ deseval:
 	LDR     R4,[R14,#140]
 	LDR     R5,[R14,#144]
 	BL      s5
-	ADD     R12,R13,#0xCC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x0C        
+	ADD     R12,R13,#0xCC       
+	MOV     R10,R13
 	LDR     R0,[R14,#8]
 	LDR     R1,[R14,#180]
 	LDR     R2,[R14,#32]
@@ -2057,9 +2055,9 @@ deseval:
 	LDR     R4,[R14,#92]
 	LDR     R5,[R14,#168]
 	BL      s6
-	ADD     R12,R13,#0xDC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x7C        
+	ADD     R12,R13,#0xDC       
+	MOV     R10,R13
 	LDR     R0,[R14,#56]
 	LDR     R1,[R14,#196]
 	LDR     R2,[R14,#152]
@@ -2067,9 +2065,9 @@ deseval:
 	LDR     R4,[R14,#120]
 	LDR     R5,[R14,#88]
 	BL      s7
-	ADD     R12,R13,#0xEC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x10        
+	ADD     R12,R13,#0xEC       
+	MOV     R10,R13
 	LDR     R0,[R14,#112]
 	LDR     R1,[R14,#0]
 	LDR     R2,[R14,#4]
@@ -2077,9 +2075,9 @@ deseval:
 	LDR     R4,[R14,#200]
 	LDR     R5,[R14,#64]
 	BL      s8
-	ADD     R12,R13,#0
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xA0        
+	MOV     R12,R13
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#80]
 	LDR     R1,[R14,#164]
 	LDR     R2,[R14,#96]
@@ -2087,9 +2085,9 @@ deseval:
 	LDR     R4,[R14,#44]
 	LDR     R5,[R14,#156]
 	BL      s1
-	ADD     R12,R13,#0x0C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xB0        
+	ADD     R12,R13,#0x0C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#100]
 	LDR     R1,[R14,#16]
 	LDR     R2,[R14,#108]
@@ -2097,9 +2095,9 @@ deseval:
 	LDR     R4,[R14,#48]
 	LDR     R5,[R14,#68]
 	BL      s2
-	ADD     R12,R13,#0x1C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xDC        
+	ADD     R12,R13,#0x1C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#104]
 	LDR     R1,[R14,#220]
 	LDR     R2,[R14,#24]
@@ -2107,9 +2105,9 @@ deseval:
 	LDR     R4,[R14,#188]
 	LDR     R5,[R14,#12]
 	BL      s3
-	ADD     R12,R13,#0x2C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xE4        
+	ADD     R12,R13,#0x2C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#136]
 	LDR     R1,[R14,#212]
 	LDR     R2,[R14,#216]
@@ -2117,9 +2115,9 @@ deseval:
 	LDR     R4,[R14,#52]
 	LDR     R5,[R14,#72]
 	BL      s4
-	ADD     R12,R13,#0x3C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x9C        
+	ADD     R12,R13,#0x3C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#28]
 	LDR     R1,[R14,#116]
 	LDR     R2,[R14,#92]
@@ -2127,9 +2125,9 @@ deseval:
 	LDR     R4,[R14,#196]
 	LDR     R5,[R14,#200]
 	BL      s5
-	ADD     R12,R13,#0x4C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x8C        
+	ADD     R12,R13,#0x4C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#64]
 	LDR     R1,[R14,#0]
 	LDR     R2,[R14,#88]
@@ -2137,9 +2135,9 @@ deseval:
 	LDR     R4,[R14,#148]
 	LDR     R5,[R14,#4]
 	BL      s6
-	ADD     R12,R13,#0x5C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xFC        
+	ADD     R12,R13,#0x5C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#112]
 	LDR     R1,[R14,#32]
 	LDR     R2,[R14,#208]
@@ -2147,9 +2145,9 @@ deseval:
 	LDR     R4,[R14,#176]
 	LDR     R5,[R14,#144]
 	BL      s7
-	ADD     R12,R13,#0x6C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x90        
+	ADD     R12,R13,#0x6C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#168]
 	LDR     R1,[R14,#56]
 	LDR     R2,[R14,#60]
@@ -2157,9 +2155,9 @@ deseval:
 	LDR     R4,[R14,#36]
 	LDR     R5,[R14,#120]
 	BL      s8
-	ADD     R12,R13,#0x80       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x20        
+	ADD     R12,R13,#0x80       
+	MOV     R10,R13
 	LDR     R0,[R14,#136]
 	LDR     R1,[R14,#220]
 	LDR     R2,[R14,#52]
@@ -2167,9 +2165,9 @@ deseval:
 	LDR     R4,[R14,#100]
 	LDR     R5,[R14,#212]
 	BL      s1
-	ADD     R12,R13,#0x8C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x30        
+	ADD     R12,R13,#0x8C       
+	MOV     R10,R13
 	LDR     R0,[R14,#156]
 	LDR     R1,[R14,#72]
 	LDR     R2,[R14,#164]
@@ -2177,9 +2175,9 @@ deseval:
 	LDR     R4,[R14,#104]
 	LDR     R5,[R14,#24]
 	BL      s2
-	ADD     R12,R13,#0x9C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x5C        
+	ADD     R12,R13,#0x9C       
+	MOV     R10,R13
 	LDR     R0,[R14,#160]
 	LDR     R1,[R14,#48]
 	LDR     R2,[R14,#80]
@@ -2187,9 +2185,9 @@ deseval:
 	LDR     R4,[R14,#16]
 	LDR     R5,[R14,#68]
 	BL      s3
-	ADD     R12,R13,#0xAC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x64        
+	ADD     R12,R13,#0xAC       
+	MOV     R10,R13
 	LDR     R0,[R14,#192]
 	LDR     R1,[R14,#40]
 	LDR     R2,[R14,#44]
@@ -2197,9 +2195,9 @@ deseval:
 	LDR     R4,[R14,#108]
 	LDR     R5,[R14,#128]
 	BL      s4
-	ADD     R12,R13,#0xBC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x1C        
+	ADD     R12,R13,#0xBC       
+	MOV     R10,R13
 	LDR     R0,[R14,#84]
 	LDR     R1,[R14,#172]
 	LDR     R2,[R14,#148]
@@ -2207,9 +2205,9 @@ deseval:
 	LDR     R4,[R14,#32]
 	LDR     R5,[R14,#36]
 	BL      s5
-	ADD     R12,R13,#0xCC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x0C        
+	ADD     R12,R13,#0xCC       
+	MOV     R10,R13
 	LDR     R0,[R14,#120]
 	LDR     R1,[R14,#56]
 	LDR     R2,[R14,#144]
@@ -2217,9 +2215,9 @@ deseval:
 	LDR     R4,[R14,#204]
 	LDR     R5,[R14,#60]
 	BL      s6
-	ADD     R12,R13,#0xDC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x7C        
+	ADD     R12,R13,#0xDC       
+	MOV     R10,R13
 	LDR     R0,[R14,#168]
 	LDR     R1,[R14,#88]
 	LDR     R2,[R14,#28]
@@ -2227,9 +2225,9 @@ deseval:
 	LDR     R4,[R14,#124]
 	LDR     R5,[R14,#200]
 	BL      s7
-	ADD     R12,R13,#0xEC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x10        
+	ADD     R12,R13,#0xEC       
+	MOV     R10,R13
 	LDR     R0,[R14,#4]
 	LDR     R1,[R14,#112]
 	LDR     R2,[R14,#116]
@@ -2237,9 +2235,9 @@ deseval:
 	LDR     R4,[R14,#92]
 	LDR     R5,[R14,#176]
 	BL      s8
-	ADD     R12,R13,#0
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xA0        
+	MOV     R12,R13
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#192]
 	LDR     R1,[R14,#48]
 	LDR     R2,[R14,#108]
@@ -2247,9 +2245,9 @@ deseval:
 	LDR     R4,[R14,#156]
 	LDR     R5,[R14,#40]
 	BL      s1
-	ADD     R12,R13,#0x0C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xB0        
+	ADD     R12,R13,#0x0C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#212]
 	LDR     R1,[R14,#128]
 	LDR     R2,[R14,#220]
@@ -2257,9 +2255,9 @@ deseval:
 	LDR     R4,[R14,#160]
 	LDR     R5,[R14,#80]
 	BL      s2
-	ADD     R12,R13,#0x1C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xDC        
+	ADD     R12,R13,#0x1C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#216]
 	LDR     R1,[R14,#104]
 	LDR     R2,[R14,#136]
@@ -2267,9 +2265,9 @@ deseval:
 	LDR     R4,[R14,#72]
 	LDR     R5,[R14,#24]
 	BL      s3
-	ADD     R12,R13,#0x2C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xE4        
+	ADD     R12,R13,#0x2C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#20]
 	LDR     R1,[R14,#96]
 	LDR     R2,[R14,#100]
@@ -2277,9 +2275,9 @@ deseval:
 	LDR     R4,[R14,#164]
 	LDR     R5,[R14,#184]
 	BL      s4
-	ADD     R12,R13,#0x3C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x9C        
+	ADD     R12,R13,#0x3C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#140]
 	LDR     R1,[R14,#8]
 	LDR     R2,[R14,#204]
@@ -2287,9 +2285,9 @@ deseval:
 	LDR     R4,[R14,#88]
 	LDR     R5,[R14,#92]
 	BL      s5
-	ADD     R12,R13,#0x4C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x8C        
+	ADD     R12,R13,#0x4C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#176]
 	LDR     R1,[R14,#112]
 	LDR     R2,[R14,#200]
@@ -2297,9 +2295,9 @@ deseval:
 	LDR     R4,[R14,#152]
 	LDR     R5,[R14,#116]
 	BL      s6
-	ADD     R12,R13,#0x5C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xFC        
+	ADD     R12,R13,#0x5C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#4]
 	LDR     R1,[R14,#144]
 	LDR     R2,[R14,#84]
@@ -2307,9 +2305,9 @@ deseval:
 	LDR     R4,[R14,#180]
 	LDR     R5,[R14,#36]
 	BL      s7
-	ADD     R12,R13,#0x6C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x90        
+	ADD     R12,R13,#0x6C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#60]
 	LDR     R1,[R14,#168]
 	LDR     R2,[R14,#172]
@@ -2317,9 +2315,9 @@ deseval:
 	LDR     R4,[R14,#148]
 	LDR     R5,[R14,#124]
 	BL      s8
-	ADD     R12,R13,#0x80       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x20        
+	ADD     R12,R13,#0x80       
+	MOV     R10,R13
 	LDR     R0,[R14,#20]
 	LDR     R1,[R14,#104]
 	LDR     R2,[R14,#164]
@@ -2327,9 +2325,9 @@ deseval:
 	LDR     R4,[R14,#212]
 	LDR     R5,[R14,#96]
 	BL      s1
-	ADD     R12,R13,#0x8C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x30        
+	ADD     R12,R13,#0x8C       
+	MOV     R10,R13
 	LDR     R0,[R14,#40]
 	LDR     R1,[R14,#184]
 	LDR     R2,[R14,#48]
@@ -2337,9 +2335,9 @@ deseval:
 	LDR     R4,[R14,#216]
 	LDR     R5,[R14,#136]
 	BL      s2
-	ADD     R12,R13,#0x9C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x5C        
+	ADD     R12,R13,#0x9C       
+	MOV     R10,R13
 	LDR     R0,[R14,#44]
 	LDR     R1,[R14,#160]
 	LDR     R2,[R14,#192]
@@ -2347,9 +2345,9 @@ deseval:
 	LDR     R4,[R14,#128]
 	LDR     R5,[R14,#80]
 	BL      s3
-	ADD     R12,R13,#0xAC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x64        
+	ADD     R12,R13,#0xAC       
+	MOV     R10,R13
 	LDR     R0,[R14,#76]
 	LDR     R1,[R14,#52]
 	LDR     R2,[R14,#156]
@@ -2357,9 +2355,9 @@ deseval:
 	LDR     R4,[R14,#220]
 	LDR     R5,[R14,#12]
 	BL      s4
-	ADD     R12,R13,#0xBC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x1C        
+	ADD     R12,R13,#0xBC       
+	MOV     R10,R13
 	LDR     R0,[R14,#196]
 	LDR     R1,[R14,#64]
 	LDR     R2,[R14,#152]
@@ -2367,9 +2365,9 @@ deseval:
 	LDR     R4,[R14,#144]
 	LDR     R5,[R14,#148]
 	BL      s5
-	ADD     R12,R13,#0xCC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x0C        
+	ADD     R12,R13,#0xCC       
+	MOV     R10,R13
 	LDR     R0,[R14,#124]
 	LDR     R1,[R14,#168]
 	LDR     R2,[R14,#36]
@@ -2377,9 +2375,9 @@ deseval:
 	LDR     R4,[R14,#208]
 	LDR     R5,[R14,#172]
 	BL      s6
-	ADD     R12,R13,#0xDC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x7C        
+	ADD     R12,R13,#0xDC       
+	MOV     R10,R13
 	LDR     R0,[R14,#60]
 	LDR     R1,[R14,#200]
 	LDR     R2,[R14,#140]
@@ -2387,9 +2385,9 @@ deseval:
 	LDR     R4,[R14,#0]
 	LDR     R5,[R14,#92]
 	BL      s7
-	ADD     R12,R13,#0xEC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x10        
+	ADD     R12,R13,#0xEC       
+	MOV     R10,R13
 	LDR     R0,[R14,#116]
 	LDR     R1,[R14,#4]
 	LDR     R2,[R14,#8]
@@ -2397,9 +2395,9 @@ deseval:
 	LDR     R4,[R14,#204]
 	LDR     R5,[R14,#180]
 	BL      s8
-	ADD     R12,R13,#0
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xA0        
+	MOV     R12,R13
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#76]
 	LDR     R1,[R14,#160]
 	LDR     R2,[R14,#220]
@@ -2407,9 +2405,9 @@ deseval:
 	LDR     R4,[R14,#40]
 	LDR     R5,[R14,#52]
 	BL      s1
-	ADD     R12,R13,#0x0C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xB0        
+	ADD     R12,R13,#0x0C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#96]
 	LDR     R1,[R14,#12]
 	LDR     R2,[R14,#104]
@@ -2417,9 +2415,9 @@ deseval:
 	LDR     R4,[R14,#44]
 	LDR     R5,[R14,#192]
 	BL      s2
-	ADD     R12,R13,#0x1C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xDC        
+	ADD     R12,R13,#0x1C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#100]
 	LDR     R1,[R14,#216]
 	LDR     R2,[R14,#20]
@@ -2427,9 +2425,9 @@ deseval:
 	LDR     R4,[R14,#184]
 	LDR     R5,[R14,#136]
 	BL      s3
-	ADD     R12,R13,#0x2C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xE4        
+	ADD     R12,R13,#0x2C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#132]
 	LDR     R1,[R14,#108]
 	LDR     R2,[R14,#212]
@@ -2437,9 +2435,9 @@ deseval:
 	LDR     R4,[R14,#48]
 	LDR     R5,[R14,#68]
 	BL      s4
-	ADD     R12,R13,#0x3C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x9C        
+	ADD     R12,R13,#0x3C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#32]
 	LDR     R1,[R14,#120]
 	LDR     R2,[R14,#208]
@@ -2447,9 +2445,9 @@ deseval:
 	LDR     R4,[R14,#200]
 	LDR     R5,[R14,#204]
 	BL      s5
-	ADD     R12,R13,#0x4C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x8C        
+	ADD     R12,R13,#0x4C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#180]
 	LDR     R1,[R14,#4]
 	LDR     R2,[R14,#92]
@@ -2457,9 +2455,9 @@ deseval:
 	LDR     R4,[R14,#28]
 	LDR     R5,[R14,#8]
 	BL      s6
-	ADD     R12,R13,#0x5C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xFC        
+	ADD     R12,R13,#0x5C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#116]
 	LDR     R1,[R14,#36]
 	LDR     R2,[R14,#196]
@@ -2467,9 +2465,9 @@ deseval:
 	LDR     R4,[R14,#56]
 	LDR     R5,[R14,#148]
 	BL      s7
-	ADD     R12,R13,#0x6C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x90        
+	ADD     R12,R13,#0x6C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#172]
 	LDR     R1,[R14,#60]
 	LDR     R2,[R14,#64]
@@ -2477,9 +2475,9 @@ deseval:
 	LDR     R4,[R14,#152]
 	LDR     R5,[R14,#0]
 	BL      s8
-	ADD     R12,R13,#0xAC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x64        
+	ADD     R12,R13,#0xAC       
+	MOV     R10,R13
 	LDR     R0,[R14,#188]
 	LDR     R1,[R14,#164]
 	LDR     R2,[R14,#40]
@@ -2490,20 +2488,20 @@ deseval:
 	LDR     R1,[R13,#256]
 	LDR     R0,[R13,#264]
 	ADD     R1,R1,#0xC0         
-	LDMIA   R1,{R6-R9}
-	EOR     R2,R14,R6
+	LDMIA   R1,{R10-R12,R14}
+	EOR     R2,R9,R10
 	BIC     R0,R0,R2
-	EOR     R2,R12,R7
+	EOR     R2,R8,R11
 	BIC     R0,R0,R2
-	EOR     R2,R11,R8
+	EOR     R2,R7,R12
 	BIC     R0,R0,R2
-	EOR     R2,R10,R9
+	EOR     R2,R6,R14
 	BICS    R0,R0,R2
 	BEQ     gotresult
 	STR     R0,[R13,#264]
-	ADD     R12,R13,#0xDC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x7C        
+	ADD     R12,R13,#0xDC       
+	MOV     R10,R13
 	LDR     R0,[R14,#172]
 	LDR     R1,[R14,#92]
 	LDR     R2,[R14,#32]
@@ -2513,22 +2511,22 @@ deseval:
 	BL      s7
 	LDR     R1,[R13,#256]
 	LDR     R0,[R13,#264]
-	LDR     R10,[R13,#124]
+	LDR     R6,[R13,#124]
 	ADD     R1,R1,#0x90         
-	LDMIA   R1,{R6-R9}
-	EOR     R2,R14,R6
+	LDMIA   R1,{R10-R12,R14}
+	EOR     R2,R9,R10
 	BIC     R0,R0,R2
-	EOR     R2,R12,R7
+	EOR     R2,R8,R11
 	BIC     R0,R0,R2
-	EOR     R2,R11,R8
+	EOR     R2,R7,R12
 	BIC     R0,R0,R2
-	EOR     R2,R10,R9
+	EOR     R2,R6,R14
 	BICS    R0,R0,R2
 	BEQ     gotresult
 	STR     R0,[R13,#264]
-	ADD     R12,R13,#0x8C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x30        
+	ADD     R12,R13,#0x8C       
+	MOV     R10,R13
 	LDR     R0,[R14,#52]
 	LDR     R1,[R14,#68]
 	LDR     R2,[R14,#160]
@@ -2539,20 +2537,20 @@ deseval:
 	LDR     R1,[R13,#256]
 	LDR     R0,[R13,#264]
 	ADD     R1,R1,#0xE0         
-	LDMIA   R1,{R6-R9}
-	EOR     R2,R14,R6
+	LDMIA   R1,{R10-R12,R14}
+	EOR     R2,R9,R10
 	BIC     R0,R0,R2
-	EOR     R2,R12,R7
+	EOR     R2,R8,R11
 	BIC     R0,R0,R2
-	EOR     R2,R11,R8
+	EOR     R2,R7,R12
 	BIC     R0,R0,R2
-	EOR     R2,R10,R9
+	EOR     R2,R6,R14
 	BICS    R0,R0,R2
 	BEQ     gotresult
 	STR     R0,[R13,#264]
-	ADD     R12,R13,#0xEC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x10        
+	ADD     R12,R13,#0xEC       
+	MOV     R10,R13
 	LDR     R0,[R14,#8]
 	LDR     R1,[R14,#116]
 	LDR     R2,[R14,#120]
@@ -2563,20 +2561,20 @@ deseval:
 	LDR     R1,[R13,#256]
 	LDR     R0,[R13,#264]
 	ADD     R1,R1,#0x80         
-	LDMIA   R1,{R6-R9}
-	EOR     R2,R14,R6
+	LDMIA   R1,{R10-R12,R14}
+	EOR     R2,R9,R10
 	BIC     R0,R0,R2
-	EOR     R2,R12,R7
+	EOR     R2,R8,R11
 	BIC     R0,R0,R2
-	EOR     R2,R11,R8
+	EOR     R2,R7,R12
 	BIC     R0,R0,R2
-	EOR     R2,R10,R9
+	EOR     R2,R6,R14
 	BICS    R0,R0,R2
 	BEQ     gotresult
 	STR     R0,[R13,#264]
-	ADD     R12,R13,#0xCC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x0C        
+	ADD     R12,R13,#0xCC       
+	MOV     R10,R13
 	LDR     R0,[R14,#0]
 	LDR     R1,[R14,#60]
 	LDR     R2,[R14,#148]
@@ -2586,22 +2584,22 @@ deseval:
 	BL      s6
 	LDR     R1,[R13,#256]
 	LDR     R0,[R13,#264]
-	LDR     R10,[R13,#12]
+	LDR     R6,[R13,#12]
 	ADD     R1,R1,#0xA0         
-	LDMIA   R1,{R6-R9}
-	EOR     R2,R14,R6
+	LDMIA   R1,{R10-R12,R14}
+	EOR     R2,R9,R10
 	BIC     R0,R0,R2
-	EOR     R2,R12,R7
+	EOR     R2,R8,R11
 	BIC     R0,R0,R2
-	EOR     R2,R11,R8
+	EOR     R2,R7,R12
 	BIC     R0,R0,R2
-	EOR     R2,R10,R9
+	EOR     R2,R6,R14
 	BICS    R0,R0,R2
 	BEQ     gotresult
 	STR     R0,[R13,#264]
-	ADD     R12,R13,#0x9C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x5C        
+	ADD     R12,R13,#0x9C       
+	MOV     R10,R13
 	LDR     R0,[R14,#156]
 	LDR     R1,[R14,#44]
 	LDR     R2,[R14,#76]
@@ -2611,22 +2609,22 @@ deseval:
 	BL      s3
 	LDR     R1,[R13,#256]
 	LDR     R0,[R13,#264]
-	LDR     R14,[R13,#20]
+	LDR     R9,[R13,#20]
 	ADD     R1,R1,#0xD0         
-	LDMIA   R1,{R6-R9}
-	EOR     R2,R14,R6
+	LDMIA   R1,{R10-R12,R14}
+	EOR     R2,R9,R10
 	BIC     R0,R0,R2
-	EOR     R2,R12,R7
+	EOR     R2,R8,R11
 	BIC     R0,R0,R2
-	EOR     R2,R11,R8
+	EOR     R2,R7,R12
 	BIC     R0,R0,R2
-	EOR     R2,R10,R9
+	EOR     R2,R6,R14
 	BICS    R0,R0,R2
 	BEQ     gotresult
 	STR     R0,[R13,#264]
-	ADD     R12,R13,#0xBC       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x1C        
+	ADD     R12,R13,#0xBC       
+	MOV     R10,R13
 	LDR     R0,[R14,#88]
 	LDR     R1,[R14,#176]
 	LDR     R2,[R14,#28]
@@ -2637,20 +2635,20 @@ deseval:
 	LDR     R1,[R13,#256]
 	LDR     R0,[R13,#264]
 	ADD     R1,R1,#0xB0         
-	LDMIA   R1,{R6-R9}
-	EOR     R2,R14,R6
+	LDMIA   R1,{R10-R12,R14}
+	EOR     R2,R9,R10
 	BIC     R0,R0,R2
-	EOR     R2,R12,R7
+	EOR     R2,R8,R11
 	BIC     R0,R0,R2
-	EOR     R2,R11,R8
+	EOR     R2,R7,R12
 	BIC     R0,R0,R2
-	EOR     R2,R10,R9
+	EOR     R2,R6,R14
 	BICS    R0,R0,R2
 	BEQ     gotresult
 	STR     R0,[R13,#264]
-	ADD     R12,R13,#0x80       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x20        
+	ADD     R12,R13,#0x80       
+	MOV     R10,R13
 	LDR     R0,[R14,#132]
 	LDR     R1,[R14,#216]
 	LDR     R2,[R14,#48]
@@ -2660,22 +2658,22 @@ deseval:
 	BL      s1
 	LDR     R1,[R13,#256]
 	LDR     R0,[R13,#264]
-	LDR     R11,[R13,#64]
+	LDR     R7,[R13,#64]
 	ADD     R1,R1,#0xF0         
-	LDMIA   R1,{R6-R9}
-	EOR     R2,R14,R6
+	LDMIA   R1,{R10-R12,R14}
+	EOR     R2,R9,R10
 	BIC     R0,R0,R2
-	EOR     R2,R12,R7
+	EOR     R2,R8,R11
 	BIC     R0,R0,R2
-	EOR     R2,R11,R8
+	EOR     R2,R7,R12
 	BIC     R0,R0,R2
-	EOR     R2,R10,R9
+	EOR     R2,R6,R14
 	BICS    R0,R0,R2
 	BEQ     gotresult
 	STR     R0,[R13,#264]
-	ADD     R12,R13,#0x2C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xE4        
+	ADD     R12,R13,#0x2C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#216]
 	LDR     R1,[R14,#192]
 	LDR     R2,[R14,#68]
@@ -2686,20 +2684,20 @@ deseval:
 	LDR     R1,[R13,#256]
 	LDR     R0,[R13,#264]
 	ADD     R1,R1,#0x40         
-	LDMIA   R1,{R6-R9}
-	EOR     R2,R14,R6
+	LDMIA   R1,{R10-R12,R14}
+	EOR     R2,R9,R10
 	BIC     R0,R0,R2
-	EOR     R2,R12,R7
+	EOR     R2,R8,R11
 	BIC     R0,R0,R2
-	EOR     R2,R11,R8
+	EOR     R2,R7,R12
 	BIC     R0,R0,R2
-	EOR     R2,R10,R9
+	EOR     R2,R6,R14
 	BICS    R0,R0,R2
 	BEQ     gotresult
 	STR     R0,[R13,#264]
-	ADD     R12,R13,#0x5C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xFC        
+	ADD     R12,R13,#0x5C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#200]
 	LDR     R1,[R14,#120]
 	LDR     R2,[R14,#60]
@@ -2709,22 +2707,22 @@ deseval:
 	BL      s7
 	LDR     R1,[R13,#256]
 	LDR     R0,[R13,#264]
-	LDR     R10,[R13,#252]
+	LDR     R6,[R13,#252]
 	ADD     R1,R1,#0x10         
-	LDMIA   R1,{R6-R9}
-	EOR     R2,R14,R6
+	LDMIA   R1,{R10-R12,R14}
+	EOR     R2,R9,R10
 	BIC     R0,R0,R2
-	EOR     R2,R12,R7
+	EOR     R2,R8,R11
 	BIC     R0,R0,R2
-	EOR     R2,R11,R8
+	EOR     R2,R7,R12
 	BIC     R0,R0,R2
-	EOR     R2,R10,R9
+	EOR     R2,R6,R14
 	BICS    R0,R0,R2
 	BEQ     gotresult
 	STR     R0,[R13,#264]
-	ADD     R12,R13,#0x0C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xB0        
+	ADD     R12,R13,#0x0C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#80]
 	LDR     R1,[R14,#96]
 	LDR     R2,[R14,#188]
@@ -2735,20 +2733,20 @@ deseval:
 	LDR     R1,[R13,#256]
 	LDR     R0,[R13,#264]
 	ADD     R1,R1,#0x60         
-	LDMIA   R1,{R6-R9}
-	EOR     R2,R14,R6
+	LDMIA   R1,{R10-R12,R14}
+	EOR     R2,R9,R10
 	BIC     R0,R0,R2
-	EOR     R2,R12,R7
+	EOR     R2,R8,R11
 	BIC     R0,R0,R2
-	EOR     R2,R11,R8
+	EOR     R2,R7,R12
 	BIC     R0,R0,R2
-	EOR     R2,R10,R9
+	EOR     R2,R6,R14
 	BICS    R0,R0,R2
 	BEQ     gotresult
 	STR     R0,[R13,#264]
-	ADD     R12,R13,#0x6C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x90        
+	ADD     R12,R13,#0x6C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#36]
 	LDR     R1,[R14,#144]
 	LDR     R2,[R14,#148]
@@ -2758,18 +2756,18 @@ deseval:
 	BL      s8
 	LDR     R1,[R13,#256]
 	LDR     R0,[R13,#264]
-	LDMIA   R1,{R6-R9}
-	EOR     R2,R14,R6
+	LDMIA   R1,{R10-R12,R14}
+	EOR     R2,R9,R10
 	BIC     R0,R0,R2
-	EOR     R2,R12,R7
+	EOR     R2,R8,R11
 	BIC     R0,R0,R2
-	EOR     R2,R11,R8
+	EOR     R2,R7,R12
 	BIC     R0,R0,R2
-	EOR     R2,R10,R9
+	EOR     R2,R6,R14
 	BICS    R0,R0,R2
-	ADD     R12,R13,#0x4C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x8C        
+	ADD     R12,R13,#0x4C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#28]
 	LDR     R1,[R14,#88]
 	LDR     R2,[R14,#176]
@@ -2779,22 +2777,22 @@ deseval:
 	BL      s6
 	LDR     R1,[R13,#256]
 	LDR     R0,[R13,#264]
-	LDR     R10,[R13,#140]
+	LDR     R6,[R13,#140]
 	ADD     R1,R1,#0x20         
-	LDMIA   R1,{R6-R9}
-	EOR     R2,R14,R6
+	LDMIA   R1,{R10-R12,R14}
+	EOR     R2,R9,R10
 	BIC     R0,R0,R2
-	EOR     R2,R12,R7
+	EOR     R2,R8,R11
 	BIC     R0,R0,R2
-	EOR     R2,R11,R8
+	EOR     R2,R7,R12
 	BIC     R0,R0,R2
-	EOR     R2,R10,R9
+	EOR     R2,R6,R14
 	BICS    R0,R0,R2
 	BEQ     gotresult
 	STR     R0,[R13,#264]
-	ADD     R12,R13,#0x1C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xDC        
+	ADD     R12,R13,#0x1C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#184]
 	LDR     R1,[R14,#72]
 	LDR     R2,[R14,#104]
@@ -2804,22 +2802,22 @@ deseval:
 	BL      s3
 	LDR     R1,[R13,#256]
 	LDR     R0,[R13,#264]
-	LDR     R14,[R13,#148]
+	LDR     R9,[R13,#148]
 	ADD     R1,R1,#0x50         
-	LDMIA   R1,{R6-R9}
-	EOR     R2,R14,R6
+	LDMIA   R1,{R10-R12,R14}
+	EOR     R2,R9,R10
 	BIC     R0,R0,R2
-	EOR     R2,R12,R7
+	EOR     R2,R8,R11
 	BIC     R0,R0,R2
-	EOR     R2,R11,R8
+	EOR     R2,R7,R12
 	BIC     R0,R0,R2
-	EOR     R2,R10,R9
+	EOR     R2,R6,R14
 	BICS    R0,R0,R2
 	BEQ     gotresult
 	STR     R0,[R13,#264]
-	ADD     R12,R13,#0x3C       
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0x9C        
+	ADD     R12,R13,#0x3C       
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#116]
 	LDR     R1,[R14,#204]
 	LDR     R2,[R14,#56]
@@ -2830,20 +2828,20 @@ deseval:
 	LDR     R1,[R13,#256]
 	LDR     R0,[R13,#264]
 	ADD     R1,R1,#0x30         
-	LDMIA   R1,{R6-R9}
-	EOR     R2,R14,R6
+	LDMIA   R1,{R10-R12,R14}
+	EOR     R2,R9,R10
 	BIC     R0,R0,R2
-	EOR     R2,R12,R7
+	EOR     R2,R8,R11
 	BIC     R0,R0,R2
-	EOR     R2,R11,R8
+	EOR     R2,R7,R12
 	BIC     R0,R0,R2
-	EOR     R2,R10,R9
+	EOR     R2,R6,R14
 	BICS    R0,R0,R2
 	BEQ     gotresult
 	STR     R0,[R13,#264]
-	ADD     R12,R13,#0
 	LDR     R14,[R13,#260]
-	ADD     R6,R13,#0xA0        
+	MOV     R12,R13
+	ADD     R10,R13,#0x80       
 	LDR     R0,[R14,#160]
 	LDR     R1,[R14,#16]
 	LDR     R2,[R14,#76]
@@ -2853,16 +2851,16 @@ deseval:
 	BL      s1
 	LDR     R1,[R13,#256]
 	LDR     R0,[R13,#264]
-	LDR     R11,[R13,#192]
+	LDR     R7,[R13,#192]
 	ADD     R1,R1,#0x70         
-	LDMIA   R1,{R6-R9}
-	EOR     R2,R14,R6
+	LDMIA   R1,{R10-R12,R14}
+	EOR     R2,R9,R10
 	BIC     R0,R0,R2
-	EOR     R2,R12,R7
+	EOR     R2,R8,R11
 	BIC     R0,R0,R2
-	EOR     R2,R11,R8
+	EOR     R2,R7,R12
 	BIC     R0,R0,R2
-	EOR     R2,R10,R9
+	EOR     R2,R6,R14
 	BICS    R0,R0,R2
 	BEQ     gotresult
 	STR     R0,[R13,#264]
@@ -2938,9 +2936,4 @@ deseval_end:
 	.word	0xE6000010
 
 this_shouldnt_happen:
-
-	B       this_shouldnt_happen
-
-
-
-
+	b	this_shouldnt_happen

@@ -12,7 +12,8 @@
 .endm
 	.text
 	.global	_des_unit_func_arm
-lowbits:	
+
+lowbits:
 	.word	0xAAAAAAAA
 	.word	0xCCCCCCCC
 	.word	0xF0F0F0F0
@@ -60,7 +61,7 @@ L000048J5:
 	MOV     R6,#0
 	MOV     R1,#0x20            
 	ADD     R12,R13,#0x0208     
-clearbits:
+clearbits:	
 	STMDB   R12!,{R5,R6}
 	STMDB   R12!,{R5,R6}
 	SUBS    R1,R1,#1
@@ -373,7 +374,7 @@ invertloop:
 	STR     R2,[R1],#4
 	BNE     invertloop
 	B       resettwiddles
-inc_then_exit:
+inc_then_exit:	
 	LDR     R1,[R4,#20]
 	MOV     R2,#1
 	LDR     R0,[R11,#-40]
@@ -381,8 +382,8 @@ inc_then_exit:
 	ADD     R1,R1,R0
 	STR     R1,[R4,#20]
 	LDMDB   R11,{R4-R9,R11,R13,PC}^
-	
-odd_parity:
+
+odd_parity:	
 	.word	0x02020101
 	.word	0x07070404
 	.word	0x0B0B0808
@@ -447,7 +448,6 @@ odd_parity:
 	.word	0xF7F7F4F4
 	.word	0xFBFBF8F8
 	.word	0xFEFEFDFD
-	
 twiddles:
 	.word	0x28120F0C
 	.word	0x2D2B2A29
@@ -459,12 +459,12 @@ foundkey:
 	MVN     R5,#0
 	MOV     R1,#0
 	MOV     R2,#1
-L000228J51:
+L000200J55:	
 	TST     R0,R2,LSL R1
 	MOVNE   R5,R1
 	ADD     R1,R1,#1
 	CMP     R1,#0x20            
-	BCC     L000228J51
+	BCC     L000200J55
 	MOV     R0,#0
 	STR     R0,[R13,#4]
 	MOV     R6,#0x31            
@@ -514,6 +514,7 @@ L000250J55:
 	ORR     R0,R1,R7,LSL R0
 	STR     R0,[R13,#4]
 	B       L000310J60
+	
 L000300J58:
 	MOV     R0,R0,LSL #3
 	LDR     R1,[R13,#0]
@@ -542,23 +543,23 @@ L00033cJ62:
 	LDR     R1,[R13,#4]
 	STR     R1,[R4,#16]
 	LDMDB   R11,{R4-R9,R11,R13,PC}^
-s1:
-	STMDB   R13!,{R6,R9}
-	LDR     R7,[R12,#124]
-	LDMIA   R12,{R8-R12}
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
-	EOR     R3,R3,R10
+s1:	
+	STMDB   R13!,{R10,R14}
+	LDR     R6,[R12,#124]
+	LDMIA   R12,{R7-R9,R11,R12}
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
 	EOR     R4,R4,R11
 	EOR     R5,R5,R12
-	BIC     R6,R2,R4
-	EOR     R7,R6,R3
+	BIC     R10,R2,R4
+	EOR     R7,R10,R3
 	BIC     R9,R2,R3
 	ORR     R8,R9,R4
-	AND     R10,R5,R8
+	AND     R6,R5,R8
 	EOR     R12,R2,R3
-	EOR     R14,R4,R10
+	EOR     R14,R4,R6
 	AND     R14,R14,R12
 	EOR     R8,R9,R14
 	ORR     R8,R5,R8
@@ -567,87 +568,87 @@ s1:
 	ORR     R11,R1,R8
 	EOR     R11,R11,R14
 	AND     R11,R0,R11
-	ORR     R6,R6,R10
-	EOR     R6,R6,R12
-	EOR     R14,R7,R10
+	ORR     R10,R10,R6
+	EOR     R10,R10,R12
+	EOR     R14,R7,R6
 	BIC     R7,R8,R7
 	BIC     R12,R5,R12
 	BIC     R3,R3,R4
-	EOR     R10,R3,R12
-	ORR     R10,R1,R10
-	EOR     R10,R10,R14
-	EOR     R10,R10,R11
+	EOR     R6,R3,R12
+	ORR     R6,R1,R6
+	EOR     R6,R6,R14
+	EOR     R6,R6,R11
 	LDR     R11,[R13,#0]
 	ORR     R14,R14,R3
-	LDR     R3,[R11,#32]
-	MVN     R10,R10
-	EOR     R3,R3,R10
-	EOR     R10,R6,R12
-	STR     R3,[R11,#32]
-	BIC     R10,R8,R10
-	AND     R11,R1,R10
+	LDR     R3,[R11,#64]
+	MVN     R6,R6
+	EOR     R3,R3,R6
+	EOR     R6,R10,R12
+	STR     R3,[R11,#64]
+	BIC     R6,R8,R6
+	AND     R11,R1,R6
 	EOR     R11,R14,R11
 	EOR     R11,R7,R11
 	AND     R14,R2,R14
 	BIC     R7,R1,R7
-	EOR     R7,R6,R7
+	EOR     R7,R10,R7
 	BIC     R3,R8,R14
-	BIC     R6,R6,R3
-	ORR     R6,R6,R9
+	BIC     R10,R10,R3
+	ORR     R10,R10,R9
 	BIC     R12,R11,R12
 	AND     R11,R0,R11
 	EOR     R7,R7,R11
 	ORR     R11,R1,R9
 	EOR     R11,R11,R3
 	MVN     R11,R11
-	ORR     R10,R2,R10
-	BIC     R3,R6,R1
-	EOR     R10,R10,R3
-	BIC     R10,R0,R10
-	EOR     R10,R10,R11
+	ORR     R6,R2,R6
+	BIC     R3,R10,R1
+	EOR     R6,R6,R3
+	BIC     R6,R0,R6
+	EOR     R6,R6,R11
 	LDR     R3,[R13],#4
-	ORR     R8,R6,R8
-	LDR     R6,[R3,#0]
+	ORR     R8,R10,R8
+	LDR     R10,[R3,#32]
 	EOR     R8,R8,R4
-	EOR     R10,R6,R10
+	EOR     R6,R10,R6
 	ORR     R9,R9,R4
-	AND     R6,R5,R9
-	STR     R10,[R3,#0]
+	AND     R10,R5,R9
+	STR     R6,[R3,#32]
 	EOR     R9,R9,R14
-	BIC     R9,R9,R6
+	BIC     R9,R9,R10
 	BIC     R8,R1,R8
 	EOR     R8,R8,R9
 	ORR     R8,R0,R8
 	EOR     R8,R8,R11
 	EOR     R8,R8,R12
-	LDR     R12,[R3,#56]
-	LDR     R14,[R3,#88]
-	EOR     R12,R8,R12
-	EOR     R14,R7,R14
-	STR     R12,[R3,#56]
-	STR     R14,[R3,#88]
-	LDR     R9,[R13],#4
+	LDR     R12,[R3,#88]
+	LDR     R9,[R3,#120]
+	EOR     R8,R8,R12
+	EOR     R9,R7,R9
+	STR     R8,[R3,#88]
+	STR     R9,[R3,#120]
+	LDR     R14,[R13],#4
 	B       s_call_loop
 s2:
-	STMDB   R13!,{R6,R9}
-	LDMIA   R12,{R7-R12}
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
-	EOR     R3,R3,R10
+	STMDB   R13!,{R10,R14}
+	LDMIA   R12,{R6-R9,R11,R12}
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
 	EOR     R4,R4,R11
 	EOR     R5,R5,R12
 	EOR     R7,R0,R5
 	EOR     R8,R7,R4
 	AND     R9,R5,R4
-	BIC     R6,R0,R9
-	BIC     R11,R1,R6
+	BIC     R10,R0,R9
+	BIC     R11,R1,R10
 	EOR     R12,R8,R11
 	ORR     R11,R9,R11
 	BIC     R7,R11,R7
-	BIC     R11,R4,R6
+	BIC     R11,R4,R10
 	EOR     R4,R4,R1
-	BIC     R5,R5,R6
+	BIC     R5,R5,R10
 	ORR     R0,R12,R0
 	EOR     R0,R0,R1
 	ORR     R14,R2,R7
@@ -656,15 +657,15 @@ s2:
 	AND     R12,R1,R12
 	ORR     R11,R11,R1
 	BIC     R7,R4,R7
-	ORR     R10,R0,R12
-	AND     R4,R4,R10
+	ORR     R6,R0,R12
+	AND     R4,R4,R6
 	BIC     R4,R11,R4
 	ORR     R4,R3,R4
 	MVN     R14,R14
 	AND     R11,R3,R11
 	EOR     R11,R14,R11
-	AND     R10,R2,R10
-	EOR     R10,R10,R4
+	AND     R6,R2,R6
+	EOR     R6,R6,R4
 	BIC     R0,R2,R0
 	EOR     R0,R7,R0
 	ORR     R7,R7,R5
@@ -679,38 +680,38 @@ s2:
 	EOR     R9,R9,R4
 	BIC     R9,R3,R9
 	EOR     R9,R9,R14
-	EOR     R6,R6,R11
-	BIC     R6,R6,R1
-	EOR     R6,R8,R6
-	EOR     R8,R12,R5
-	AND     R8,R2,R8
-	ORR     R12,R3,R0
-	EOR     R12,R8,R12
-	LDR     R8,[R13],#4
-	EOR     R12,R6,R12
-	LDR     R14,[R8,#0]
-	EOR     R6,R7,R10
-	LDR     R7,[R8,#60]
-	EOR     R10,R14,R11
-	LDR     R14,[R8,#-44]
+	EOR     R10,R10,R11
+	BIC     R10,R10,R1
+	EOR     R10,R8,R10
+	EOR     R12,R12,R5
+	AND     R12,R2,R12
+	ORR     R8,R3,R0
+	EOR     R8,R8,R12
+	LDR     R12,[R13],#4
+	EOR     R8,R10,R8
+	LDR     R14,[R12,#48]
+	EOR     R10,R7,R6
+	LDR     R7,[R12,#108]
+	EOR     R6,R14,R11
+	LDR     R14,[R12,#4]
 	MVN     R9,R9
-	STR     R10,[R8,#0]
-	EOR     R11,R7,R9
-	LDR     R7,[R8,#20]
-	EOR     R12,R14,R12
-	STR     R11,[R8,#60]
-	EOR     R14,R7,R6
-	STR     R12,[R8,#-44]
-	STR     R14,[R8,#20]
-	LDR     R9,[R13],#4
+	STR     R6,[R12,#48]
+	EOR     R7,R7,R9
+	LDR     R9,[R12,#68]
+	EOR     R8,R14,R8
+	STR     R7,[R12,#108]
+	EOR     R9,R9,R10
+	STR     R8,[R12,#4]
+	STR     R9,[R12,#68]
+	LDR     R14,[R13],#4
 	B       s_call_loop
 s3:	
-	STR     R9,[R13,#-4]!
-	LDMIA   R12,{R7-R12}
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
-	EOR     R3,R3,R10
+	STR     R14,[R13,#-4]!
+	LDMIA   R12,{R6-R9,R11,R12}
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
 	EOR     R4,R4,R11
 	EOR     R5,R5,R12
 	EOR     R9,R1,R2
@@ -719,27 +720,27 @@ s3:
 	EOR     R11,R2,R7
 	BIC     R12,R11,R4
 	ORR     R8,R4,R7
-	EOR     R10,R9,R8
+	EOR     R6,R9,R8
 	ORR     R14,R0,R12
-	EOR     R14,R10,R14
+	EOR     R14,R6,R14
 	BIC     R7,R5,R7
-	EOR     R10,R7,R4
-	AND     R7,R0,R10
+	EOR     R6,R7,R4
+	AND     R7,R0,R6
 	EOR     R7,R4,R7
 	ORR     R7,R3,R7
 	EOR     R7,R14,R7
-	LDR     R14,[R6,#-72]
-	STR     R6,[R13,#-4]!
+	LDR     R14,[R10,#20]
+	STR     R10,[R13,#-4]!
 	EOR     R14,R14,R7
 	AND     R7,R5,R7
-	STR     R14,[R6,#-72]
+	STR     R14,[R10,#20]
 	EOR     R7,R7,R11
 	BIC     R7,R7,R0
-	BIC     R6,R12,R2
-	ORR     R6,R0,R6
-	EOR     R6,R9,R6
+	BIC     R10,R12,R2
+	ORR     R10,R0,R10
+	EOR     R10,R9,R10
 	AND     R11,R2,R4
-	EOR     R6,R11,R6
+	EOR     R10,R11,R10
 	AND     R2,R2,R5
 	BIC     R11,R9,R12
 	ORR     R12,R1,R12
@@ -748,86 +749,85 @@ s3:
 	AND     R1,R1,R9
 	EOR     R9,R9,R8
 	EOR     R8,R8,R12
-	ORR     R10,R10,R11
+	ORR     R6,R6,R11
 	EOR     R11,R11,R2
 	ORR     R11,R0,R11
 	ORR     R2,R2,R1
-	EOR     R10,R10,R2
+	EOR     R6,R6,R2
 	EOR     R4,R2,R4
 	MVN     R4,R4
 	EOR     R14,R14,R4
 	EOR     R11,R11,R4
 	BIC     R1,R5,R1
-	ORR     R1,R1,R10
+	ORR     R1,R1,R6
 	EOR     R2,R5,R2
 	BIC     R2,R2,R9
 	AND     R2,R2,R0
 	EOR     R9,R1,R2
 	AND     R9,R3,R9
-	EOR     R9,R6,R9
+	EOR     R9,R10,R9
 	BIC     R12,R9,R12
 	ORR     R12,R0,R12
-	EOR     R6,R7,R12
-	AND     R6,R3,R6
-	EOR     R6,R14,R6
-	ORR     R10,R0,R10
-	EOR     R10,R8,R10
-	LDR     R7,[R13],#4
-	BIC     R10,R3,R10
-	LDR     R8,[R7,#-32]
-	EOR     R10,R11,R10
-	LDR     R12,[R7,#24]
-	EOR     R11,R8,R9
-	LDR     R9,[R7,#0]
-	EOR     R12,R12,R10
-	STR     R11,[R7,#-32]
-	EOR     R10,R9,R6
-	STR     R12,[R7,#24]
-	STR     R10,[R7,#0]
-	LDR     R9,[R13],#4
+	EOR     R10,R7,R12
+	AND     R10,R3,R10
+	EOR     R10,R14,R10
+	ORR     R6,R0,R6
+	EOR     R6,R8,R6
+	LDR     R12,[R13],#4
+	BIC     R6,R3,R6
+	LDR     R7,[R12,#60]
+	EOR     R6,R11,R6
+	LDR     R8,[R12,#116]
+	EOR     R7,R7,R9
+	LDR     R9,[R12,#92]
+	EOR     R8,R8,R6
+	STR     R7,[R12,#60]
+	EOR     R6,R9,R10
+	STR     R8,[R12,#116]
+	STR     R6,[R12,#92]
+	LDR     R14,[R13],#4
 	B       s_call_loop
-s4:	
-	STR     R9,[R13,#-4]!
-	LDMIA   R12,{R7-R12}
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
-	EOR     R3,R3,R10
+s4:
+	LDMIA   R12,{R6-R9,R11,R12}
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
 	EOR     R4,R4,R11
 	EOR     R5,R5,R12
-	ORR     R10,R0,R2
-	AND     R10,R4,R10
-	EOR     R9,R0,R10
-	EOR     R12,R2,R10
-	BIC     R10,R2,R0
-	ORR     R10,R10,R9
-	AND     R11,R1,R10
-	BIC     R14,R1,R12
-	EOR     R10,R10,R14
+	ORR     R6,R0,R2
+	AND     R6,R4,R6
+	EOR     R9,R0,R6
+	EOR     R12,R2,R6
+	BIC     R6,R2,R0
+	ORR     R6,R6,R9
+	AND     R11,R1,R6
+	BIC     R8,R1,R12
+	EOR     R6,R6,R8
 	ORR     R0,R12,R9
 	EOR     R12,R4,R11
-	AND     R14,R3,R12
-	EOR     R9,R9,R14
-	ORR     R14,R1,R2
-	EOR     R9,R9,R14
-	EOR     R14,R2,R4
-	BIC     R14,R14,R1
-	EOR     R11,R11,R14
+	AND     R8,R3,R12
+	EOR     R9,R9,R8
+	ORR     R8,R1,R2
+	EOR     R9,R9,R8
+	EOR     R8,R2,R4
+	BIC     R8,R8,R1
+	EOR     R11,R11,R8
 	EOR     R11,R2,R11
 	BIC     R11,R3,R11
 	EOR     R11,R0,R11
 	AND     R12,R1,R12
 	EOR     R11,R11,R12
-	EOR     R12,R0,R14
+	EOR     R12,R0,R8
 	ORR     R12,R3,R12
-	EOR     R14,R10,R12
-	ORR     R12,R5,R14
+	EOR     R8,R6,R12
+	ORR     R12,R5,R8
 	EOR     R12,R9,R12
-	LDR     R10,[R6,#0]
-	AND     R14,R5,R14
-	EOR     R10,R10,R12
+	LDR     R6,[R10,#100]
+	AND     R8,R5,R8
+	EOR     R6,R6,R12
 	EOR     R0,R9,R11
-	STR     R10,[R6,#0]
+	STR     R6,[R10,#100]
 	BIC     R7,R1,R0
 	BIC     R0,R0,R3
 	EOR     R7,R7,R0
@@ -836,32 +836,31 @@ s4:
 	EOR     R12,R12,R11
 	MVN     R12,R12
 	MVN     R9,R9
-	EOR     R0,R14,R9
-	EOR     R14,R14,R7
-	LDR     R11,[R6,#-24]
-	EOR     R14,R14,R12
-	LDR     R7,[R6,#-64]
-	EOR     R11,R11,R0
-	LDR     R0,[R6,#-100]
-	EOR     R12,R7,R12
-	STR     R11,[R6,#-24]
-	EOR     R14,R0,R14
-	STR     R12,[R6,#-64]
-	STR     R14,[R6,#-100]
-	LDR     R9,[R13],#4
+	EOR     R0,R8,R9
+	EOR     R11,R8,R7
+	LDR     R7,[R10,#76]
+	EOR     R11,R11,R12
+	LDR     R8,[R10,#36]
+	EOR     R7,R7,R0
+	LDR     R9,[R10,#0]
+	EOR     R8,R8,R12
+	STR     R7,[R10,#76]
+	EOR     R9,R9,R11
+	STR     R8,[R10,#36]
+	STR     R9,[R10,#0]
 	B       s_call_loop
 s5:	
-	STMDB   R13!,{R6,R9}
-	LDMIA   R12,{R7-R12}
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
-	EOR     R3,R3,R10
+	STMDB   R13!,{R10,R14}
+	LDMIA   R12,{R6-R9,R11,R12}
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
 	EOR     R4,R4,R11
 	EOR     R5,R5,R12
-	BIC     R6,R0,R2
-	ORR     R10,R5,R6
-	EOR     R11,R3,R6
+	BIC     R10,R0,R2
+	ORR     R6,R5,R10
+	EOR     R11,R3,R10
 	ORR     R11,R5,R11
 	BIC     R12,R2,R3
 	EOR     R14,R3,R0
@@ -870,20 +869,20 @@ s5:
 	EOR     R12,R12,R0
 	AND     R7,R2,R8
 	EOR     R7,R7,R3
-	BIC     R6,R7,R6
-	EOR     R6,R6,R11
+	BIC     R10,R7,R10
+	EOR     R10,R10,R11
 	ORR     R11,R7,R11
-	ORR     R14,R4,R6
+	ORR     R14,R4,R10
 	EOR     R7,R7,R14
-	EOR     R14,R12,R10
-	AND     R10,R3,R10
-	EOR     R10,R10,R6
-	AND     R6,R6,R14
-	BIC     R8,R8,R6
+	EOR     R14,R12,R6
+	AND     R6,R3,R6
+	EOR     R6,R6,R10
+	AND     R10,R10,R14
+	BIC     R8,R8,R10
 	EOR     R9,R2,R5
 	BIC     R5,R5,R3
 	EOR     R5,R5,R2
-	EOR     R6,R9,R6
+	EOR     R10,R9,R10
 	ORR     R2,R4,R9
 	EOR     R14,R14,R2
 	BIC     R2,R7,R1
@@ -891,70 +890,70 @@ s5:
 	EOR     R9,R0,R9
 	AND     R12,R12,R9
 	BIC     R12,R4,R12
-	EOR     R10,R10,R12
+	EOR     R6,R6,R12
 	BIC     R7,R7,R8
 	AND     R12,R4,R5
 	EOR     R8,R8,R12
-	ORR     R12,R4,R6
+	ORR     R12,R4,R10
 	EOR     R11,R11,R12
 	ORR     R11,R1,R11
 	EOR     R8,R8,R11
-	ORR     R11,R10,R7
+	ORR     R11,R6,R7
 	EOR     R12,R3,R0
 	EOR     R11,R11,R12
 	BIC     R11,R4,R11
 	EOR     R11,R9,R11
 	EOR     R7,R7,R11
-	AND     R12,R12,R6
+	AND     R12,R12,R10
 	EOR     R12,R12,R5
 	ORR     R9,R3,R9
-	EOR     R6,R14,R6
-	BIC     R6,R9,R6
-	AND     R6,R4,R6
-	EOR     R6,R12,R6
-	ORR     R6,R1,R6
-	EOR     R6,R7,R6
+	EOR     R10,R14,R10
+	BIC     R10,R9,R10
+	AND     R10,R4,R10
+	EOR     R10,R12,R10
+	ORR     R10,R1,R10
+	EOR     R10,R7,R10
 	BIC     R7,R9,R1
-	LDR     R9,[R13],#4
-	EOR     R7,R10,R7
-	LDR     R10,[R9,#0]
+	LDR     R12,[R13],#4
+	EOR     R7,R6,R7
+	LDR     R6,[R12,#28]
 	MVN     R8,R8
-	LDR     R11,[R9,#24]
-	EOR     R10,R10,R6
-	LDR     R12,[R9,#68]
-	EOR     R11,R11,R7
-	LDR     R6,[R9,#-20]
-	EOR     R12,R12,R8
-	STR     R10,[R9,#0]
-	EOR     R14,R6,R14
-	STR     R11,[R9,#24]
-	STR     R12,[R9,#68]
-	STR     R14,[R9,#-20]
-	LDR     R9,[R13],#4
+	LDR     R11,[R12,#52]
+	EOR     R6,R6,R10
+	LDR     R10,[R12,#96]
+	EOR     R7,R11,R7
+	LDR     R11,[R12,#8]
+	EOR     R8,R10,R8
+	STR     R6,[R12,#28]
+	EOR     R9,R11,R14
+	STR     R7,[R12,#52]
+	STR     R8,[R12,#96]
+	STR     R9,[R12,#8]
+	LDR     R14,[R13],#4
 	B       s_call_loop
 s6:	
-	STMDB   R13!,{R6,R9}
-	LDMIA   R12,{R7-R12}
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
-	EOR     R3,R3,R10
+	STMDB   R13!,{R10,R14}
+	LDMIA   R12,{R6-R9,R11,R12}
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
 	EOR     R4,R4,R11
 	EOR     R5,R5,R12
 	MVN     R2,R2
 	EOR     R7,R4,R0
 	EOR     R8,R7,R5
 	AND     R9,R0,R5
-	BIC     R10,R9,R4
-	BIC     R11,R3,R10
+	BIC     R6,R9,R4
+	BIC     R11,R3,R6
 	EOR     R12,R5,R9
-	ORR     R14,R10,R12
+	ORR     R14,R6,R12
 	BIC     R14,R14,R3
 	EOR     R14,R12,R14
 	AND     R12,R4,R12
 	BIC     R12,R3,R12
 	ORR     R12,R1,R12
-	ORR     R10,R10,R14
+	ORR     R6,R6,R14
 	EOR     R0,R8,R11
 	EOR     R9,R9,R0
 	BIC     R9,R9,R14
@@ -962,91 +961,91 @@ s6:
 	EOR     R14,R0,R14
 	ORR     R3,R5,R0
 	BIC     R3,R3,R4
-	BIC     R8,R1,R10
+	BIC     R8,R1,R6
 	EOR     R8,R3,R8
 	AND     R8,R8,R2
-	LDR     R3,[R6,#0]
+	LDR     R3,[R10,#12]
 	EOR     R8,R8,R14
 	MVN     R8,R8
 	EOR     R3,R3,R8
 	BIC     R8,R8,R7
-	STR     R3,[R6,#0]
-	EOR     R8,R8,R10
-	BIC     R6,R5,R8
-	EOR     R6,R6,R0
-	BIC     R10,R1,R6
+	STR     R3,[R10,#12]
+	EOR     R8,R8,R6
+	BIC     R10,R5,R8
+	EOR     R10,R10,R0
+	BIC     R6,R1,R10
 	ORR     R14,R4,R5
 	BIC     R0,R14,R7
 	EOR     R7,R7,R5
-	BIC     R3,R1,R10
+	BIC     R3,R1,R6
 	EOR     R0,R0,R3
 	ORR     R0,R2,R0
-	EOR     R10,R8,R10
-	EOR     R0,R10,R0
-	EOR     R10,R5,R10
-	BIC     R10,R4,R10
-	ORR     R6,R6,R10
-	EOR     R6,R6,R11
-	ORR     R11,R10,R7
+	EOR     R6,R8,R6
+	EOR     R0,R6,R0
+	EOR     R6,R5,R6
+	BIC     R6,R4,R6
+	ORR     R10,R10,R6
+	EOR     R10,R10,R11
+	ORR     R11,R6,R7
 	EOR     R11,R11,R12
 	AND     R14,R14,R9
 	EOR     R7,R14,R7
 	AND     R7,R1,R7
-	EOR     R7,R6,R7
+	EOR     R7,R10,R7
 	ORR     R7,R2,R7
 	EOR     R7,R11,R7
 	BIC     R12,R8,R4
 	BIC     R12,R2,R12
-	BIC     R11,R1,R10
-	LDR     R6,[R13],#4
+	BIC     R11,R1,R6
+	LDR     R10,[R13],#4
 	EOR     R12,R12,R11
-	LDR     R11,[R6,#100]
+	LDR     R11,[R10,#112]
 	EOR     R12,R12,R9
-	LDR     R14,[R6,#60]
-	EOR     R11,R7,R11
-	LDR     R7,[R6,#28]
-	EOR     R14,R14,R0
-	STR     R11,[R6,#100]
-	EOR     R12,R7,R12
-	STR     R14,[R6,#60]
-	STR     R12,[R6,#28]
-	LDR     R9,[R13],#4
+	LDR     R9,[R10,#72]
+	EOR     R7,R7,R11
+	LDR     R8,[R10,#40]
+	EOR     R9,R9,R0
+	STR     R7,[R10,#112]
+	EOR     R8,R8,R12
+	STR     R9,[R10,#72]
+	STR     R8,[R10,#40]
+	LDR     R14,[R13],#4
 	B       s_call_loop
-s7:
-	STR     R9,[R13,#-4]!
-	LDMIA   R12,{R7-R12}
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
-	EOR     R3,R3,R10
+s7:	
+	STR     R14,[R13,#-4]!
+	LDMIA   R12,{R6-R9,R11,R12}
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
 	EOR     R4,R4,R11
 	EOR     R5,R5,R12
 	AND     R7,R1,R3
 	EOR     R7,R7,R4
 	AND     R8,R3,R7
 	EOR     R9,R8,R1
-	BIC     R10,R2,R9
-	EOR     R7,R7,R10
-	EOR     R11,R2,R10
-	ORR     R10,R1,R3
-	ORR     R10,R10,R4
+	BIC     R6,R2,R9
+	EOR     R7,R7,R6
+	EOR     R11,R2,R6
+	ORR     R6,R1,R3
+	ORR     R6,R6,R4
 	BIC     R12,R4,R1
 	ORR     R12,R2,R12
-	EOR     R10,R10,R12
+	EOR     R6,R6,R12
 	BIC     R12,R5,R11
 	EOR     R12,R7,R12
 	EOR     R7,R8,R7
 	ORR     R14,R5,R7
-	EOR     R10,R10,R14
-	AND     R14,R0,R10
-	LDR     R10,[R6,#0]
+	EOR     R6,R6,R14
+	AND     R14,R0,R6
+	LDR     R6,[R10,#124]
 	EOR     R14,R12,R14
-	EOR     R10,R10,R14
+	EOR     R6,R6,R14
 	EOR     R9,R3,R9
-	STR     R10,[R6,#0]
-	ORR     R10,R1,R9
-	EOR     R10,R10,R14
-	BIC     R10,R10,R5
+	STR     R6,[R10,#124]
+	ORR     R6,R1,R9
+	EOR     R6,R6,R14
+	BIC     R6,R6,R5
 	ORR     R14,R2,R8
 	EOR     R14,R9,R14
 	EOR     R8,R2,R8
@@ -1062,75 +1061,75 @@ s7:
 	BIC     R14,R14,R2
 	ORR     R8,R14,R8
 	BIC     R8,R8,R0
-	EOR     R8,R10,R8
+	EOR     R8,R6,R8
 	EOR     R12,R11,R8
-	BIC     R10,R3,R2
-	ORR     R8,R4,R10
+	BIC     R6,R3,R2
+	ORR     R8,R4,R6
 	EOR     R11,R11,R8
 	EOR     R11,R11,R7
-	BIC     R10,R1,R10
-	AND     R10,R5,R10
-	AND     R8,R2,R10
+	BIC     R6,R1,R6
+	AND     R6,R5,R6
+	AND     R8,R2,R6
 	EOR     R8,R8,R7
 	ORR     R8,R0,R8
-	EOR     R7,R11,R8
-	EOR     R11,R10,R9
-	LDR     R14,[R6,#-80]
-	MVN     R11,R11
-	EOR     R11,R14,R11
-	LDR     R14,[R6,#-100]
-	STR     R11,[R6,#-80]
-	LDR     R8,[R6,#-40]
-	EOR     R14,R14,R7
-	EOR     R12,R8,R12
-	STR     R14,[R6,#-100]
-	STR     R12,[R6,#-40]
-	LDR     R9,[R13],#4
+	EOR     R11,R11,R8
+	EOR     R7,R6,R9
+	LDR     R9,[R10,#44]
+	MVN     R7,R7
+	EOR     R7,R9,R7
+	LDR     R9,[R10,#24]
+	STR     R7,[R10,#44]
+	LDR     R8,[R10,#84]
+	EOR     R9,R9,R11
+	EOR     R8,R8,R12
+	STR     R9,[R10,#24]
+	STR     R8,[R10,#84]
+	LDR     R14,[R13],#4
 	B       s_call_loop
 s8:	
-	STMDB   R13!,{R6,R9}
-	LDMIA   R12,{R7-R11}
+	STMDB   R13!,{R10,R14}
+	LDMIA   R12,{R6-R9,R11}
 	LDR     R12,[R12,#-108]
-	EOR     R0,R0,R7
-	EOR     R1,R1,R8
-	EOR     R2,R2,R9
-	EOR     R3,R3,R10
+	EOR     R0,R0,R6
+	EOR     R1,R1,R7
+	EOR     R2,R2,R8
+	EOR     R3,R3,R9
 	EOR     R4,R4,R11
 	EOR     R5,R5,R12
 	BIC     R7,R0,R2
 	EOR     R8,R7,R3
-	EOR     R10,R0,R2
+	EOR     R6,R0,R2
 	ORR     R11,R4,R8
-	EOR     R11,R10,R11
+	EOR     R11,R6,R11
 	BIC     R12,R11,R0
 	ORR     R14,R12,R3
-	EOR     R14,R14,R10
+	EOR     R14,R14,R6
 	EOR     R14,R14,R4
-	BIC     R10,R10,R4
-	ORR     R10,R10,R3
-	BIC     R6,R7,R14
-	EOR     R9,R4,R6
+	BIC     R6,R6,R4
+	ORR     R6,R6,R3
+	BIC     R10,R7,R14
+	EOR     R9,R4,R10
 	EOR     R9,R2,R9
 	BIC     R9,R9,R1
-	EOR     R9,R10,R9
+	EOR     R9,R6,R9
 	AND     R9,R5,R9
-	EOR     R10,R12,R2
+	EOR     R6,R12,R2
 	BIC     R8,R8,R14
-	EOR     R8,R8,R10
-	BIC     R10,R10,R4
-	EOR     R10,R3,R10
+	EOR     R8,R8,R6
+	BIC     R6,R6,R4
+	EOR     R6,R3,R6
 	BIC     R2,R2,R8
-	ORR     R2,R10,R2
+	ORR     R2,R6,R2
 	ORR     R12,R1,R12
 	EOR     R12,R2,R12
 	BIC     R8,R1,R8
 	EOR     R8,R14,R8
 	ORR     R8,R5,R8
-	BIC     R10,R1,R10
-	EOR     R14,R11,R10
+	BIC     R6,R1,R6
+	EOR     R14,R11,R6
 	MVN     R14,R14
 	ORR     R11,R11,R4
-	EOR     R10,R14,R8
+	EOR     R6,R14,R8
 	EOR     R9,R14,R9
 	ORR     R14,R14,R3
 	EOR     R8,R7,R3
@@ -1146,26 +1145,26 @@ s8:
 	EOR     R11,R14,R11
 	ORR     R7,R8,R11
 	BIC     R7,R1,R7
-	EOR     R7,R6,R7
+	EOR     R7,R10,R7
 	ORR     R7,R5,R7
-	LDR     R6,[R13],#4
+	LDR     R10,[R13],#4
 	EOR     R7,R12,R7
-	LDR     R12,[R6,#40]
+	LDR     R8,[R10,#56]
 	MVN     R7,R7
-	LDR     R14,[R6,#64]
-	EOR     R12,R12,R11
-	LDR     R11,[R6,#88]
-	EOR     R14,R14,R9
-	STR     R12,[R6,#40]
-	LDR     R8,[R6,#0]
-	EOR     R11,R11,R7
-	STR     R14,[R6,#64]
-	EOR     R10,R8,R10
-	STR     R11,[R6,#88]
-	STR     R10,[R6,#0]
-	LDR     R9,[R13],#4
+	LDR     R12,[R10,#80]
+	EOR     R8,R8,R11
+	LDR     R11,[R10,#104]
+	EOR     R9,R12,R9
+	STR     R8,[R10,#56]
+	LDR     R12,[R10,#16]
+	EOR     R7,R11,R7
+	STR     R9,[R10,#80]
+	EOR     R6,R12,R6
+	STR     R7,[R10,#104]
+	STR     R6,[R10,#16]
+	LDR     R14,[R13],#4
 	B       s_call_loop
-
+	
 timingloop:
 	ADD     R2,R13,#0x0208      
 	LDR     R0,[R2,R1,LSL #2]
@@ -1190,39 +1189,33 @@ deseval:
 	LDMDB   R2!,{R4-R11}
 	STMDB   R13!,{R4-R11}
 	LDMDB   R2!,{R4-R11}
-	STMDB   R13!,{R4-R11}
-	ADR     R9,s_param_table
+	STMDB   R13!,{R4-R11}	
+	ADR     R14,s_param_table
 s_call_loop:
-	LDR     R8,[R9],#4
-	TST     R8,#0x80000000
+	LDR     R11,[R14],#4
+	TST     R11,#1
 	BNE     do_check
 donecheck:
-	LDR     R14,[R13,#260]
-	AND     R0,R8,#0x3F000000
-	LDR     R0,[R14,R0,LSR #22]
-	AND     R1,R8,#0x00FC0000
-	LDR     R1,[R14,R1,LSR #16]
-	AND     R2,R8,#0x0003F000
-	LDR     R2,[R14,R2,LSR #10]
-	AND     R3,R8,#0x0FC0       
-	LDR     R3,[R14,R3,LSR #4]
-	AND     R4,R8,#0x3F         
-	LDR     R4,[R14,R4,LSL #2]
-	LDR     R10,[R9],#4
-	AND     R5,R10,#0x3F        
-	LDR     R5,[R14,R5,LSL #2]
-	AND     R6,R10,#0x1F800000
-	ADD     R6,R13,R6,LSR #21
-	ANDS    R12,R10,#0x10000000
-	MOVNE   R12,R13
-	ADDEQ   R12,R13,#0x80       
-	ANDS    R10,R10,#0xE0000000
-	ADDNE   R12,R12,R10,LSR #25
-	SUBNE   R12,R12,#4
-	LDR     PC,[PC,R10,LSR #27]
+	LDR     R9,[R13,#260]
+	LDR     R6,[R14],#4
+	LDR     R0,[R9,R11,LSR #24]
+	BIC     R11,R11,#0xFF000000
+	LDR     R1,[R9,R11,LSR #16]
+	BIC     R11,R11,#0x00FF0000
+	LDR     R2,[R9,R11,LSR #8]
+	BIC     R11,R11,#0xFF00
+	LDR     R3,[R9,R11]
+	LDR     R4,[R9,R6,LSR #24]
+	BIC     R6,R6,#0xFF000000
+	LDR     R5,[R9,R6,LSR #16]
+	BIC     R6,R6,#0x00FF0000
+	ADD     R12,R13,R6,LSR #8
+	AND     R10,R6,#1
+	ADD     R10,R13,R10,LSL #7
+	AND     R6,R6,#0x70         
+	LDR     PC,[PC,R6,LSR #2]
 
 	.word	0x12345678
-
 	.word	s1
 	.word	s2
 	.word	s3
@@ -1231,39 +1224,40 @@ donecheck:
 	.word	s6
 	.word	s7
 	.word	s8
-do_check:
-	TST     R8,#0x04000000
-	SUBEQ   R5,R13,#0x80        
-	MOVNE   R5,R13
-	ANDS    R4,R8,#0x03F00000
-	LDRNE   R10,[R5,R4,LSR #18]
-	ANDS    R4,R8,#0x000FC000
-	LDRNE   R11,[R5,R4,LSR #12]
-	ANDS    R4,R8,#0x3F00
-	LDRNE   R12,[R5,R4,LSR #6]
-	ANDS    R4,R8,#0xFC         
-	LDRNE   R14,[R5,R4]
+	
+do_check:	
+	AND     R5,R11,#2
+	SUB     R5,R13,R5,LSL #6
+	ANDS    R4,R11,#0x03F00000
+	LDRNE   R6,[R5,R4,LSR #18]
+	ANDS    R4,R11,#0x000FC000
+	LDRNE   R7,[R5,R4,LSR #12]
+	ANDS    R4,R11,#0x3F00
+	LDRNE   R8,[R5,R4,LSR #6]
+	ANDS    R4,R11,#0xFC        
+	LDRNE   R9,[R5,R4]
 	LDR     R1,[R13,#256]
-	AND     R4,R8,#0x78000000
+	AND     R4,R11,#0x78000000
 	ADD     R1,R1,R4,LSR #23
-	LDMIA   R1,{R3-R5,R7}
+	LDMIA   R1,{R2-R5}
 	LDR     R0,[R13,#264]
-	EOR     R2,R7,R10
-	BIC     R0,R0,R2
-	EOR     R2,R5,R11
-	BIC     R0,R0,R2
-	EOR     R2,R4,R12
-	BIC     R0,R0,R2
-	EOR     R2,R3,R14
+	EOR     R5,R5,R6
+	BIC     R0,R0,R5
+	EOR     R4,R4,R7
+	BIC     R0,R0,R4
+	EOR     R3,R3,R8
+	BIC     R0,R0,R3
+	EOR     R2,R2,R9
 	BICS    R0,R0,R2
 	BEQ     gotresult
 	STR     R0,[R13,#264]
-	LDR     R8,[R9],#4
-	TST     R8,#0x80000000
+	LDR     R11,[R14],#4
+	TST     R11,#1
 	BEQ     donecheck
 gotresult:
 	ADD     R13,R13,#0x010C     
 	LDMIA   R13!,{R4-R11}
+deseval_end:
 	BNE     foundkey
 	EOR     R6,R7,R7,LSR #1
 	ADD     R7,R7,#1
@@ -1330,282 +1324,279 @@ gotresult:
 	BNE     timingloop
 
 	.word	0xE6000010
-
 this_shouldnt_happen:
-	B	this_shouldnt_happen
-
+	b	this_shouldnt_happen
 s_param_table:
-	.word	0x2F2DA0CD
-	.word	0x0420B7A9
-	.word	0x1B1B6C27
-	.word	0x26360C53
-	.word	0x35661891
-	.word	0x4B9EE945
-	.word	0x04DD8828
-	.word	0x6CA64814
-	.word	0x247D5217
-	.word	0x839AC0B4
-	.word	0x0E773263
-	.word	0xA1B8549E
-	.word	0x0295602A
-	.word	0xCF96A9A6
-	.word	0x10AEC047
-	.word	0xE234751C
-	.word	0x364A1294
-	.word	0x1461B7B0
-	.word	0x22344DEE
-	.word	0x36770C5A
-	.word	0x03828A58
-	.word	0x5BDFE94C
-	.word	0x0B1469EF
-	.word	0x7CE7481B
-	.word	0x2B99C3DE
-	.word	0x93DBC080
-	.word	0x1591F42A
-	.word	0xB1F954A5
-	.word	0x09B1D1F1
-	.word	0xDFD7A9AD
-	.word	0x17CB320E
-	.word	0xF2757523
-	.word	0x0B82F622
-	.word	0x0420B785
-	.word	0x306D2303
-	.word	0x26360C68
-	.word	0x11BB6DCD
-	.word	0x4B9EE95A
-	.word	0x194D4D44
-	.word	0x6CA64829
-	.word	0x02D2A76C
-	.word	0x839AC08E
-	.word	0x23CAD781
-	.word	0xA1B854B3
-	.word	0x177EB548
-	.word	0xCF96A980
-	.word	0x2526659C
-	.word	0xE2347531
-	.word	0x19B84370
-	.word	0x1461B793
-	.word	0x05A60691
-	.word	0x36770C76
-	.word	0x060CB31B
-	.word	0x5BDFE968
-	.word	0x27862292
-	.word	0x7CE74837
-	.word	0x101C1ADF
-	.word	0x93DBC09C
-	.word	0x31240B0F
-	.word	0xB1F954A6
-	.word	0x25B428D6
-	.word	0xDFD7A98E
-	.word	0x335F492A
-	.word	0xF2757508
-	.word	0x270D26C5
-	.word	0x0420B7A1
-	.word	0x13DEEA06
-	.word	0x26360C4B
-	.word	0x144596A9
-	.word	0x4B9EE976
-	.word	0x35BF0620
-	.word	0x6CA6480C
-	.word	0x1E54F0AD
-	.word	0x839AC0AA
-	.word	0x085CE7DD
-	.word	0xA1B854B4
-	.word	0x33010C64
-	.word	0xCF96A99C
-	.word	0x26947C81
-	.word	0xE2347516
-	.word	0x35460A53
-	.word	0x1461B7AF
-	.word	0x21303D94
-	.word	0x36770C59
-	.word	0x221A7A37
-	.word	0x5BDFE94B
-	.word	0x0A10536E
-	.word	0x7CE7481A
-	.word	0x2C8DD400
-	.word	0x93DBC081
-	.word	0x1695CB6B
-	.word	0xB1F95487
-	.word	0x2639E232
-	.word	0xDFD7A9AA
-	.word	0x34CD524F
-	.word	0xF2757524
-	.word	0x0A1AEDE1
-	.word	0x0420B784
-	.word	0x2F6912E2
-	.word	0x26360C67
-	.word	0x30535D8C
-	.word	0x4B9EE959
-	.word	0x184936C3
-	.word	0x6CA64828
-	.word	0x1FC6B78E
-	.word	0x839AC08F
-	.word	0x24CEA002
-	.word	0xA1B85495
-	.word	0x3472C589
-	.word	0xCF96A981
-	.word	0x079A35DD
-	.word	0xE2347532
-	.word	0x1850332F
-	.word	0x1461B792
-	.word	0x04A06670
-	.word	0x36770C75
-	.word	0x0588A2DA
-	.word	0x5BDFE967
-	.word	0x0D821A51
-	.word	0x7CE74836
-	.word	0x2D202B1C
-	.word	0x93DBC09D
-	.word	0x32981390
-	.word	0xB1F954A3
-	.word	0x07A9F917
-	.word	0xDFD7A98F
-	.word	0x15D3196B
-	.word	0xF2757509
-	.word	0x066CA4F6
-	.word	0x0420B799
-	.word	0x0BBCD837
-	.word	0x26360C43
-	.word	0x0CA514A1
-	.word	0x4B9EE96E
-	.word	0x149E8C18
-	.word	0x6CA64804
-	.word	0x343C9CE3
-	.word	0x839AC0A4
-	.word	0x02B48557
-	.word	0xA1B854AA
-	.word	0x0EC66ADE
-	.word	0xCF96A996
-	.word	0x1C001B32
-	.word	0xE2347510
-	.word	0x14A5884B
-	.word	0x1461B7A7
-	.word	0x1911BB8C
-	.word	0x36770C51
-	.word	0x1ADC682F
-	.word	0x5BDFE943
-	.word	0x22D7614D
-	.word	0x7CE74812
-	.word	0x077579B1
-	.word	0x93DBC0B2
-	.word	0x100168E5
-	.word	0xB1F95481
-	.word	0x1C2340AC
-	.word	0xDFD7A9A4
-	.word	0x2A38F7C9
-	.word	0xF275751E
-	.word	0x22DCDBD9
-	.word	0x0420B7B5
-	.word	0x274A90DA
-	.word	0x26360C46
-	.word	0x28314B84
-	.word	0x4B9EE951
-	.word	0x3028B4DB
-	.word	0x6CA64820
-	.word	0x15AE5D08
-	.word	0x839AC089
-	.word	0x1E3A4C73
-	.word	0xA1B8548F
-	.word	0x2A58741F
-	.word	0xCF96A9B2
-	.word	0x0171DB57
-	.word	0xE234752C
-	.word	0x3031B127
-	.word	0x1461B78A
-	.word	0x35837468
-	.word	0x36770C54
-	.word	0x366A20D2
-	.word	0x5BDFE946
-	.word	0x05619869
-	.word	0x7CE7482E
-	.word	0x230B31D6
-	.word	0x93DBC097
-	.word	0x2C732226
-	.word	0xB1F9549D
-	.word	0x019157AD
-	.word	0xDFD7A989
-	.word	0x0FAAB025
-	.word	0xF275751F
-	.word	0x056A94B5
-	.word	0x0420B798
-	.word	0x0AB8C1B6
-	.word	0x26360C62
-	.word	0x0BA30460
-	.word	0x4B9EE954
-	.word	0x13367BF7
-	.word	0x6CA64803
-	.word	0x31426564
-	.word	0x839AC0A5
-	.word	0x1FA895B4
-	.word	0xA1B854AB
-	.word	0x0FCA3B00
-	.word	0xCF96A997
-	.word	0x1D0423B3
-	.word	0xE234752D
-	.word	0x13A3780A
-	.word	0x1461B78D
-	.word	0x180DA50B
-	.word	0x36770C70
-	.word	0x19D851AE
-	.word	0x5BDFE962
-	.word	0x216F510C
-	.word	0x7CE74811
-	.word	0x087B48F2
-	.word	0x93DBC0B3
-	.word	0x2D057907
-	.word	0xB1F95482
-	.word	0x1D2717CE
-	.word	0xDFD7A9A5
-	.word	0x2B3D0726
-	.word	0xF2757500
-	.word	0x2FA4A49A
-	.word	0x6CA64806
-	.word	0xE0000000
-	.word	0x2B5C8B5C
-	.word	0xCF96A9B3
-	.word	0xCBF00000
-	.word	0x0D468899
-	.word	0x26360C45
-	.word	0xF0000000
-	.word	0x0275EAB4
-	.word	0xE234750E
-	.word	0xC0000000
-	.word	0x003E5C95
-	.word	0xA1B85490
-	.word	0xD2300000
-	.word	0x272D3503
-	.word	0x4B9EE970
-	.word	0xE8000094
-	.word	0x16B07C49
-	.word	0x839AC0A6
-	.word	0xD8000000
-	.word	0x21D8CB98
-	.word	0x0420B79B
-	.word	0xF80C0000
-	.word	0x36C11661
-	.word	0x7CE7480D
-	.word	0xA4000000
-	.word	0x3278FD23
-	.word	0xDFD7A99F
-	.word	0x8FF00000
-	.word	0x1462FA60
-	.word	0x36770C4C
-	.word	0xB4000000
-	.word	0x09925C40
-	.word	0xF2757515
-	.word	0x84000000
-	.word	0x075AC09C
-	.word	0xB1F95497
-	.word	0x96300000
-	.word	0x2E49A6CA
-	.word	0x5BDFE977
-	.word	0xAC000094
-	.word	0x1DCCE050
-	.word	0x93DBC0AD
-	.word	0x9C000000
-	.word	0x28113D46
-	.word	0x1461B7A2
-	.word	0xBC0C0000
-
+	.word	0xBC2C680C
+	.word	0x34A48000
+	.word	0x6C18D8C0
+	.word	0x9C4C8C10
+	.word	0xD4648488
+	.word	0x44149C20
+	.word	0x10DC6080
+	.word	0xA050AC30
+	.word	0x907C5420
+	.word	0x5CD0BC40
+	.word	0x3874CC24
+	.word	0x8C78CC50
+	.word	0x08945800
+	.word	0xA898DC60
+	.word	0x40ACB004
+	.word	0x1C70EC70
+	.word	0xD8488428
+	.word	0x50C00001
+	.word	0x883410DC
+	.word	0xB8680C11
+	.word	0x0C80A0A4
+	.word	0x60301C21
+	.word	0x2C14189C
+	.word	0xBC6C2C31
+	.word	0xAC98703C
+	.word	0x78003C41
+	.word	0x54907C40
+	.word	0xA8944C51
+	.word	0x24B0741C
+	.word	0xC4B45C61
+	.word	0x5CC8CC20
+	.word	0x388C6C71
+	.word	0x2C80BC60
+	.word	0x88148000
+	.word	0xC06C4830
+	.word	0x0CA08C10
+	.word	0x44B8D8DC
+	.word	0x34689C20
+	.word	0x644C50D4
+	.word	0x10A4AC30
+	.word	0x08D0A874
+	.word	0xB038BC40
+	.word	0x8CC8B478
+	.word	0x04CCCC50
+	.word	0x5C7CAC54
+	.word	0x2000DC60
+	.word	0x94249858
+	.word	0x70C4EC70
+	.word	0x64B81034
+	.word	0xC04C0001
+	.word	0x14A48068
+	.word	0x44D80C11
+	.word	0x180C2C30
+	.word	0x6CA01C21
+	.word	0x9C848828
+	.word	0x48DC2C31
+	.word	0x401C04AC
+	.word	0x7C703C41
+	.word	0xC42400B0
+	.word	0x3C984C51
+	.word	0x94B4088C
+	.word	0x58385C61
+	.word	0xCC5CD090
+	.word	0xA8206C71
+	.word	0x9C0C486C
+	.word	0x14848000
+	.word	0x4CDCB8A0
+	.word	0x182C8C10
+	.word	0x50446468
+	.word	0xA4D89C20
+	.word	0xD4BCC060
+	.word	0x8030AC30
+	.word	0x78543C08
+	.word	0xB4A8BC40
+	.word	0x205C387C
+	.word	0x74D0CC50
+	.word	0xCC0040C4
+	.word	0x9070DC60
+	.word	0x98941CC8
+	.word	0x0458EC70
+	.word	0xD44480A4
+	.word	0x4CBC0001
+	.word	0x84300CD8
+	.word	0x50640C11
+	.word	0x88189CA0
+	.word	0xDC2C1C21
+	.word	0x28101434
+	.word	0xB8682C31
+	.word	0xB08C7440
+	.word	0x00043C41
+	.word	0x589470B4
+	.word	0xAC1C4C51
+	.word	0x98387820
+	.word	0xC8A85C61
+	.word	0xD0CC5424
+	.word	0x3C906C71
+	.word	0x2818B8DC
+	.word	0x84108000
+	.word	0xBC68442C
+	.word	0x889C8C10
+	.word	0xC050D4D8
+	.word	0x30649C20
+	.word	0x60484C6C
+	.word	0x0CA0AC30
+	.word	0x7CC4AC78
+	.word	0x383CBC40
+	.word	0x90CCA800
+	.word	0x0854CC50
+	.word	0xD070B058
+	.word	0x2404DC60
+	.word	0x1C988C5C
+	.word	0x74C8EC70
+	.word	0x60500C30
+	.word	0xBC480001
+	.word	0x10A01864
+	.word	0xC0D40C11
+	.word	0x1488282C
+	.word	0x689C1C21
+	.word	0x348084A4
+	.word	0x44D82C31
+	.word	0xB42008B0
+	.word	0x70743C41
+	.word	0xC8980438
+	.word	0x408C4C51
+	.word	0x1CA87C90
+	.word	0x5C3C5C61
+	.word	0x54D0C494
+	.word	0xAC246C71
+	.word	0x186C284C
+	.word	0xD8648000
+	.word	0x2CBC3480
+	.word	0xDC0C8C10
+	.word	0x30A44448
+	.word	0x84B89C20
+	.word	0x509CA0C0
+	.word	0x6010AC30
+	.word	0xD03C24CC
+	.word	0x8C90BC40
+	.word	0x08B42054
+	.word	0x5CA8CC50
+	.word	0x38C498AC
+	.word	0x7858DC60
+	.word	0x700004B0
+	.word	0xC840EC70
+	.word	0x50A46084
+	.word	0x2C9C0001
+	.word	0x64106CB8
+	.word	0x30440C11
+	.word	0x68DC1880
+	.word	0xBC0C1C21
+	.word	0x88D4D814
+	.word	0x34482C31
+	.word	0x1C745C98
+	.word	0xC4C83C41
+	.word	0x4000588C
+	.word	0x94044C51
+	.word	0x7020D008
+	.word	0xB0905C61
+	.word	0xA8383C7C
+	.word	0x24786C71
+	.word	0x88DC34BC
+	.word	0x64D48000
+	.word	0x9C48A40C
+	.word	0x68188C10
+	.word	0xA03050B8
+	.word	0x10449C20
+	.word	0xC0282C4C
+	.word	0x6C80AC30
+	.word	0x54AC94D0
+	.word	0x2024BC40
+	.word	0x783890C4
+	.word	0xCC3CCC50
+	.word	0xA8581C40
+	.word	0x7CC8DC60
+	.word	0x047074B4
+	.word	0x5CB0EC70
+	.word	0xC0306C10
+	.word	0x9C280001
+	.word	0xD480DC44
+	.word	0xA0500C11
+	.word	0xD868880C
+	.word	0x48181C21
+	.word	0x14606484
+	.word	0xA4B82C31
+	.word	0x8C08CC1C
+	.word	0x585C3C41
+	.word	0xB070C820
+	.word	0x98744C51
+	.word	0x04905478
+	.word	0xB4245C61
+	.word	0x3CA8AC00
+	.word	0x947C6C71
+	.word	0x1468A448
+	.word	0xD4608000
+	.word	0x28B83018
+	.word	0xD8888C10
+	.word	0x2CA0C044
+	.word	0x80509C20
+	.word	0x4C349CBC
+	.word	0xDC0CAC30
+	.word	0xC4409854
+	.word	0x9094BC40
+	.word	0x7CA82458
+	.word	0xD0ACCC50
+	.word	0x3CC88CB0
+	.word	0x005CDC60
+	.word	0x74040838
+	.word	0xCCB4EC70
+	.word	0x4CA0DC80
+	.word	0x28340001
+	.word	0x600C6850
+	.word	0x2CC00C11
+	.word	0x64D81418
+	.word	0xB8881C21
+	.word	0x846CD410
+	.word	0x30442C31
+	.word	0x2078D08C
+	.word	0xC8CC3C41
+	.word	0xB4045C90
+	.word	0x1C084C51
+	.word	0x7424C47C
+	.word	0x38945C61
+	.word	0xAC3C4070
+	.word	0x98006C71
+	.word	0xBCA42848
+	.word	0x6818AC30
+	.word	0x60000003
+	.word	0xAC5C20B4
+	.word	0x70CCDC60
+	.word	0x4BF00003
+	.word	0x3444A088
+	.word	0x64148C10
+	.word	0x70000003
+	.word	0x087478A8
+	.word	0xD038EC70
+	.word	0x40000003
+	.word	0x003C94C8
+	.word	0x5440CC50
+	.word	0x52300003
+	.word	0x9C2C4C50
+	.word	0x0CC09C20
+	.word	0x68000097
+	.word	0x58B01CC4
+	.word	0x2498BC40
+	.word	0x58000003
+	.word	0x84D830B8
+	.word	0x606C8000
+	.word	0x780C0003
+	.word	0xD8C04464
+	.word	0x84342C31
+	.word	0x20000001
+	.word	0xC8783CD0
+	.word	0x8C7C5C61
+	.word	0x0BF00001
+	.word	0x5060BCA4
+	.word	0x80300C11
+	.word	0x30000001
+	.word	0x249094C4
+	.word	0x00546C71
+	.word	0x00000001
+	.word	0x1C58B008
+	.word	0x705C4C51
+	.word	0x12300001
+	.word	0xB848686C
+	.word	0x28DC1C21
+	.word	0x28000095
+	.word	0x74CC3804
+	.word	0x40B43C41
+	.word	0x18000001
+	.word	0xA0104CD4
+	.word	0x18880001
+	.word	0x380C0001
 	.word	0xFFFFFFFF
