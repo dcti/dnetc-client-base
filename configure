@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.194 2000/10/20 21:44:01 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.195 2000/10/25 01:02:05 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -712,9 +712,8 @@ OPTS_MWCC_PPC604="$OPTS_MWCC -proc 604e"
 # Source C++ files making up the base client code.
 #
 # ---- speed sensitive things come last ----
-COMMON_SRCS="common/autobuff.cpp \
+COMMON_SRCS="\
 	     common/iniread.cpp  \
-	     common/network.cpp  \
 	     common/buffbase.cpp \
 	     common/mail.cpp     \
 	     common/convdes.cpp  \
@@ -732,8 +731,6 @@ COMMON_SRCS="common/autobuff.cpp \
 	     common/selcore.cpp  \
 	     common/cmdline.cpp  \
 	     common/selftest.cpp \
-	     common/bench.cpp    \
-	     common/client.cpp   \
 	     common/pollsys.cpp  \
 	     common/setprio.cpp  \
 	     common/console.cpp  \
@@ -747,7 +744,9 @@ COMMON_SRCS="common/autobuff.cpp \
 	     common/base64.cpp   \
 	     common/netbase.cpp  \
 	     common/netconn.cpp  \
+	     common/client.cpp   \
 	                         \
+	     common/bench.cpp    \
 	     common/probman.cpp  \
 	     common/probfill.cpp \
 	     common/clirun.cpp   \

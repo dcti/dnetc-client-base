@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.27.2.16 2000/10/20 21:44:00 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.17 2000/10/25 01:02:05 cyp Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -34,20 +34,44 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %DEFALL   = /DDYN_TIMESLICE /D__showids__ /IOGR #defines used everywhere
 %SYMALIAS = # symbols that need redefinition 
 %COREOBJS = # constructed at runtime
+# LINKOBJS is (somewhat) sorted by coherence - speed sentitive stuff first
 %LINKOBJS = output\problem.obj  &
-            output\confrwv.obj   output\autobuff.obj  output\buffbase.obj &
-            output\mail.obj      output\client.obj    output\disphelp.obj &
-            output\iniread.obj   output\network.obj   output\netconn.obj  &
-            output\clitime.obj   output\clicdata.obj  output\clirate.obj  &
-            output\clisrate.obj  output\cpucheck.obj  output\pathwork.obj &
-            output\cliident.obj  output\checkpt.obj   output\x86ident.obj &
-            output\logstuff.obj  output\triggers.obj  output\random.obj   &
-            output\selcore.obj   output\netbase.obj   output\cmdline.obj  &
-            output\selftest.obj  output\pollsys.obj   output\probman.obj  &
-            output\probfill.obj  output\clievent.obj  output\bench.obj    &
-            output\clirun.obj    output\setprio.obj   output\console.obj  &
-            output\modereq.obj   output\confmenu.obj  output\confopt.obj  &
-            output\util.obj      output\base64.obj
+            output\bench.obj    &
+            output\clirun.obj   &
+            output\pollsys.obj  &
+            output\selftest.obj &
+            output\probman.obj  &
+            output\probfill.obj &
+            output\checkpt.obj  &
+            output\random.obj   &
+            output\clicdata.obj &
+            output\clirate.obj  &
+            output\clisrate.obj &
+            output\base64.obj   &
+            output\netbase.obj  &
+            output\netconn.obj  &
+            output\mail.obj     &
+            output\logstuff.obj &
+            output\cpucheck.obj &
+            output\selcore.obj  &
+            output\x86ident.obj &
+            output\util.obj     &
+            output\cliident.obj &
+            output\modereq.obj  &
+            output\client.obj   &
+            output\cmdline.obj  &
+            output\iniread.obj  &
+            output\confrwv.obj  &
+            output\confmenu.obj &
+            output\confopt.obj  &
+            output\console.obj  &
+            output\disphelp.obj &
+            output\triggers.obj &
+            output\clitime.obj  &
+            output\clievent.obj &
+            output\setprio.obj  &
+            output\pathwork.obj &
+            output\buffbase.obj
 %PRIVMODS = common\buffpriv.cpp  common\buffupd.cpp   common\scram.cpp
 %PRIVOBJS = output\buffpriv.obj  output\buffupd.obj   output\scram.obj
 %PUBOBJS =  output\buffpub.obj
@@ -431,19 +455,11 @@ output\pathwork.obj : common\pathwork.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\autobuff.obj : common\autobuff.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
 output\netconn.obj : common\netconn.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\netbase.obj : common\netbase.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\network.obj : common\network.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 

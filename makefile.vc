@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.56.2.29 2000/10/20 21:44:00 cyp Exp $
+# $Id: makefile.vc,v 1.56.2.30 2000/10/25 01:02:05 cyp Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
@@ -88,7 +88,6 @@ RES_FILE = $(OUTPUTPATH)/$(BASENAME).res
 RC_FILE = $(PLATSRCPATH)/w32cons.rc
 
 COMMON_OBJS =                        \
-        $(OUTPUTPATH)/autobuff.obj   \
         $(OUTPUTPATH)/base64.obj     \
         $(OUTPUTPATH)/bench.obj      \
         $(OUTPUTPATH)/buffupd.obj    \
@@ -118,7 +117,6 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/modereq.obj    \
         $(OUTPUTPATH)/netbase.obj    \
         $(OUTPUTPATH)/netconn.obj    \
-        $(OUTPUTPATH)/network.obj    \
         $(OUTPUTPATH)/pathwork.obj   \
         $(OUTPUTPATH)/pollsys.obj    \
         $(OUTPUTPATH)/probfill.obj   \
