@@ -1,19 +1,22 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.77 2002/09/02 02:43:26 andreasb Exp $
+# $Id: makefile.vc,v 1.78 2002/09/28 02:52:46 andreasb Exp $
 #
 
 BASENAME = dnetc
 OUTPUTPATH = output
 COMMONPATH = common
-RC5SRCPATH = rc5
+RC564SRCPATH = rc5
+RC572SRCPATH = rc5-72
 DESSRCPATH = des
 OGRSRCPATH = ogr
 CSCSRCPATH = csc
 PLATSRCPATH = plat/win
 #EXECOMPRESSOR = upxw.exe -9 -qq --compress-resources=0
 
+#HAVE_RC5_64_CORES=1
+HAVE_RC5_72_CORES=1
 #HAVE_DES_CORES=1
 #HAVE_CSC_CORES=1
 HAVE_OGR_CORES=1
@@ -110,7 +113,6 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/confopt.obj    \
         $(OUTPUTPATH)/confrwv.obj    \
         $(OUTPUTPATH)/console.obj    \
-        $(OUTPUTPATH)/convdes.obj    \
         $(OUTPUTPATH)/coremem.obj    \
         $(OUTPUTPATH)/cpucheck.obj   \
         $(OUTPUTPATH)/disphelp.obj   \
@@ -181,13 +183,15 @@ CHIP_OBJS =
 CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj
 !endif
 
-# --------------------------------- RC5 ----------------------------
+# --------------------------------- RC5-64 -------------------------
 
-!if "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
-RC5_OBJS =                           \
+!ifndef HAVE_RC5_64_CORES
+RC5_64_OBJS =
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
+RC5_64_OBJS =                        \
         $(OUTPUTPATH)/rc5-alpha-nt.obj
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
-RC5_OBJS =                           \
+RC5_64_OBJS =                        \
         $(OUTPUTPATH)/brf-p5.obj     \
         $(OUTPUTPATH)/rg-k5.obj      \
         $(OUTPUTPATH)/rg-k6.obj      \
@@ -198,7 +202,19 @@ RC5_OBJS =                           \
         $(OUTPUTPATH)/rg-6x86.obj    \
         $(OUTPUTPATH)/hb-k7.obj      \
         $(OUTPUTPATH)/ak-p7.obj	
-OPTS_MSVC = $(OPTS_MSVC) -DSMC
+OPTS_MSVC = $(OPTS_MSVC) -DSMC -DHAVE_RC5_64_CORES
+!endif
+
+# --------------------------------- RC5-72 -------------------------
+
+!ifndef HAVE_RC5_72_CORES
+RC5_72_OBJS =
+!else
+RC5_72_OBJS =                        \
+        $(OUTPUTPATH)/rc5ansi1.obj   \
+        $(OUTPUTPATH)/rc5ansi2.obj   \
+        $(OUTPUTPATH)/rc5ansi4.obj
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
 !endif
 
 # --------------------------------- DES ----------------------------
@@ -207,11 +223,13 @@ OPTS_MSVC = $(OPTS_MSVC) -DSMC
 DES_OBJS =
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 DES_OBJS =                                   \
+        $(OUTPUTPATH)/convdes.obj            \
         $(OUTPUTPATH)/des-slice-dworz.obj    \
         $(OUTPUTPATH)/deseval-dworz3.obj
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_DES_CORES -DKWAN -DDWORZ
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 DES_OBJS =                                   \
+        $(OUTPUTPATH)/convdes.obj            \
         $(OUTPUTPATH)/bbdeslow.obj           \
         $(OUTPUTPATH)/bdeslow.obj            \
         $(OUTPUTPATH)/des-slice.obj          \
@@ -283,7 +301,7 @@ $(VC_CHECK):
 # --------------------------------------------
 
 !if "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
-{$(RC5SRCPATH)/alpha}.s{$(OUTPUTPATH)}.obj:
+{$(RC564SRCPATH)/alpha}.s{$(OUTPUTPATH)}.obj:
         asaxp $(OPTS_AS) -Fo$@ $<
 
 {$(DESSRCPATH)/alpha-asm}.s{$(OUTPUTPATH)}.obj:
@@ -300,8 +318,8 @@ $(VC_CHECK):
 {$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
 
-{$(RC5SRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
-        nasmw -o $(@:/=\) -f win32 -i $(RC5SRCPATH:/=\)\x86\ $(**:/=\)
+{$(RC564SRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
+        nasmw -o $(@:/=\) -f win32 -i $(RC564SRCPATH:/=\)\x86\ $(**:/=\)
 
 {$(DESSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
         tasm32 /t /m /ml /i$(DESSRCPATH:/=\)\x86 $(**:/=\), $(@:/=\)
@@ -326,6 +344,9 @@ $(VC_CHECK):
 
 !endif
 
+{$(RC572SRCPATH)/ansi}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
+
 {$(DESSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
         cl -c -Ox $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
@@ -346,7 +367,7 @@ $(RES_FILE):    $(RC_FILE)
 
 # --------------------------------------------
 
-$(BASENAME): $(VC_CHECK) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(SCR_OBJS) $(CUI_OBJS) $(RES_FILE)
+$(BASENAME): $(VC_CHECK) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_64_OBJS) $(RC5_72_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(SCR_OBJS) $(CUI_OBJS) $(RES_FILE)
 # the screensaver's 4.0 tag will be adjusted to 3.10 by the _client_ if running on a 3.x platform
         link $(OPTS_LINK) /SUBSYSTEM:WINDOWS,4.00 /OUT:$(BASENAME).scr $(OPTS_LIBS) $(SCR_OBJS) $(RES_FILE) 
         link $(OPTS_LINK) /SUBSYSTEM:CONSOLE,3.10 /OUT:$(BASENAME).com /NODEFAULTLIB $(OPTS_LIBS) $(CUI_OBJS)

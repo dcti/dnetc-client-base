@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.32 2002/09/02 00:35:41 andreasb Exp $
+## $Id: makefile.wat,v 1.33 2002/09/28 02:52:46 andreasb Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -97,18 +97,22 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %desstd_DEFALL   = -DHAVE_DES_CORES /DBRYD 
 %desstd_SYMALIAS = #
 #---
-%rc5std_LINKOBJS = output\rg-486.obj output\rg-k5.obj output\brf-p5.obj &
+%rc564std_LINKOBJS = output\rg-486.obj output\rg-k5.obj output\brf-p5.obj &
                    output\rg-k6.obj output\rg-p6.obj  output\rg-6x86.obj &
                    output\hb-k7.obj output\jp-mmx.obj output\ak-p7.obj
-%rc5std_DEFALL   = /DHAVE_RC5_CORES
-%rc5std_SYMALIAS = #
+%rc564std_DEFALL   = /DHAVE_RC5_64_CORES
+%rc564std_SYMALIAS = #
 #---
-%rc5smc_LINKOBJS = output\brf-smc.obj
-%rc5smc_DEFALL   = /DSMC
+%rc564smc_LINKOBJS = output\brf-smc.obj
+%rc564smc_DEFALL   = /DSMC
 #---
-#%rc5mmxamd_LINKOBJS = output\rc5mmx-k6-2.obj
-#%rc5mmxamd_DEFALL   = /DMMX_RC5_AMD
-#%rc5mmxamd_SYMALIAS = #
+#%rc564mmxamd_LINKOBJS = output\rc5mmx-k6-2.obj
+#%rc564mmxamd_DEFALL   = /DMMX_RC5_AMD
+#%rc564mmxamd_SYMALIAS = #
+#---
+%rc572std_LINKOBJS = output\rc5ansi1.obj output\rc5ansi2.obj output\rc5ansi4.obj
+%rc572std_DEFALL   = /DHAVE_RC5_72_CORES
+%rc572std_SYMALIAS = #
 #---
 %desmmx_LINKOBJS = output\des-slice-meggs.obj output\deseval-mmx.obj
 %desmmx_DEFALL   = /DMEGGS /DMMX_BITSLICER #/DBITSLICER_WITH_LESS_BITS
@@ -322,17 +326,21 @@ declare_for_desmmx : .symbolic
   @set DEFALL   = $(%desmmx_DEFALL) $(%DEFALL) 
   @set SYMALIAS = $(%desmmx_SYMALIAS) $(%SYMALIAS) 
 
-declare_for_rc5 : .symbolic
-  @set COREOBJS = $(%rc5std_LINKOBJS) $(%COREOBJS)
-  @set DEFALL   = $(%rc5std_DEFALL) $(%DEFALL) 
+declare_for_rc5_64 : .symbolic
+  @set COREOBJS = $(%rc564std_LINKOBJS) $(%COREOBJS)
+  @set DEFALL   = $(%rc564std_DEFALL) $(%DEFALL) 
 
-declare_for_rc5smc : .symbolic
-  @set COREOBJS = $(%rc5smc_LINKOBJS) $(%COREOBJS)
-  @set DEFALL   = $(%rc5smc_DEFALL) $(%DEFALL) 
+declare_for_rc5_64smc : .symbolic
+  @set COREOBJS = $(%rc564smc_LINKOBJS) $(%COREOBJS)
+  @set DEFALL   = $(%rc564smc_DEFALL) $(%DEFALL) 
 
-declare_for_rc5mmxamd : .symbolic
-  @set COREOBJS = $(%rc5mmxamd_LINKOBJS) $(%COREOBJS)
-  @set DEFALL   = $(%rc5mmxamd_DEFALL) $(%DEFALL) 
+declare_for_rc5_64mmxamd : .symbolic
+  @set COREOBJS = $(%rc564mmxamd_LINKOBJS) $(%COREOBJS)
+  @set DEFALL   = $(%rc564mmxamd_DEFALL) $(%DEFALL) 
+
+declare_for_rc5_72 : .symbolic
+  @set COREOBJS = $(%rc572std_LINKOBJS) $(%COREOBJS)
+  @set DEFALL   = $(%rc572std_DEFALL) $(%DEFALL) 
 
 #-----------------------------------------------------------------------
 
@@ -715,6 +723,20 @@ output\ogr_sup.obj : ogr\ansi\ogr_sup.cpp $(%dependall) .AUTODEPEND
 
 # ----------------------------------------------------------------
 
+output\rc5ansi1.obj : rc5-72\ansi\rc5ansi1.cpp $(%dependall) .AUTODEPEND
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\rc5ansi2.obj : rc5-72\ansi\rc5ansi2.cpp $(%dependall) .AUTODEPEND
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\rc5ansi4.obj : rc5-72\ansi\rc5ansi4.cpp $(%dependall) .AUTODEPEND
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+# ----------------------------------------------------------------
+
 output\netware.obj : plat\netware\netware.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
@@ -1049,8 +1071,9 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      @if $(%got_tcpnet).==1. @set CFLAGS=$(%CFLAGS) -DHAVE_WATT32
      @if $(%got_tcpnet).==1. @set STACKSIZE=210K
      
-     @%make declare_for_rc5
-     @%make declare_for_rc5smc
+#    @%make declare_for_rc5_64
+#    @%make declare_for_rc5_64smc
+     @%make declare_for_rc5_72
 ##   @%make declare_for_des
 ##   @%make declare_for_desmt
 ##   @%make declare_for_desmmx
@@ -1081,7 +1104,8 @@ os2: .symbolic                                       # OS/2
      @set LINKOBJS  = output\os2inst.obj output\lurk.obj $(%LINKOBJS)
      @if not $(%watcom).==. @set include=$(%include);$(%WATCOM)\h;$(%WATCOM)\os2
      #@if not $(%watcom).==. @set LIBPATH=$(%watcom)\lib386 $(%watcom)\lib386\os2
-     @%make declare_for_rc5
+#    @%make declare_for_rc5_64
+     @%make declare_for_rc5_72
 ##   @%make declare_for_des
 ##   @%make declare_for_desmt
 ##   @%make declare_for_desmmx
@@ -1119,11 +1143,12 @@ win16: .symbolic                                       # Windows/16
      @set READMETXT = docs\readme.w16
      @set BINNAME   = $(BASENAME).exe
      @set EXTRABIN  = $(BASENAME).scr
-     @%make declare_for_rc5
-     @%make declare_for_rc5smc
+#    @%make declare_for_rc5_64
+#    @%make declare_for_rc5_64smc
+     @%make declare_for_rc5_72
 ##   @%make declare_for_des
 ##   @%make declare_for_desmt
-##   #@%make declare_for_desmmx
+##   @%make declare_for_desmmx
      @%make declare_for_ogr
 #    @%make declare_for_csc
      @%make platform
@@ -1167,8 +1192,9 @@ win32: .symbolic                               # win32
      @set READMETXT = docs\readme.w32
      @set BINNAME   = $(BASENAME).exe
      @set EXTRABIN  = $(BASENAME).com $(BASENAME).scr
-     @%make declare_for_rc5
-     @%make declare_for_rc5smc
+#    @%make declare_for_rc5_64
+#    @%make declare_for_rc5_64smc
+     @%make declare_for_rc5_72
 ##   @%make declare_for_des
 ##   @%make declare_for_desmt
 ##   @%make declare_for_desmmx
@@ -1217,10 +1243,11 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
      @set COPYRIGHT = 'Copyright 1997-2002 Distributed Computing Technologies, Inc.\r\n  Visit http://www.distibuted.net/ for more information'
      @set FORMAT    = Novell NLM 'distributed.net client for NetWare'
      @set %dependall=
-     @%make declare_for_rc5
-     @%make declare_for_rc5smc
-#    @%make declare_for_des
-#    @%make declare_for_desmt
+#    @%make declare_for_rc5_64
+#    @%make declare_for_rc5_64smc
+     @%make declare_for_rc5_72
+##   @%make declare_for_des
+##   @%make declare_for_desmt
 ##   @%make declare_for_desmmx
      @%make declare_for_ogr
 #    @%make declare_for_csc

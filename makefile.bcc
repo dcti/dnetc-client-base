@@ -12,19 +12,22 @@
 # (replace ?? with a two letter country code, eg 'de', 'us', 'uk' etc)
 # A list of all mirrors is at http://www.kernel.org/mirrors/
 #
-# $Id: makefile.bcc,v 1.28 2002/09/02 00:35:40 andreasb Exp $
+# $Id: makefile.bcc,v 1.29 2002/09/28 02:52:46 andreasb Exp $
 
 BASENAME = dnetc
 OUTPUTPATH = output
 COMMONPATH = common
 DESPATH = des
-RC5PATH = rc5
+RC564PATH = rc5
+RC572PATH = rc5-72
 CSCPATH = csc
 OGRPATH = ogr
 CHIPSRCPATH = plat\x86
 PLATSRCPATH = plat\win
 #DEBUG=1
 
+#HAVE_RC5_64_CORES=1
+HAVE_RC5_72_CORES=1
 #HAVE_DES_CORES=1
 #HAVE_CSC_CORES=1
 HAVE_OGR_CORES=1
@@ -91,7 +94,6 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/confrwv.obj    \
         $(OUTPUTPATH)/console.obj    \
         $(OUTPUTPATH)/coremem.obj    \
-        $(OUTPUTPATH)/convdes.obj    \
         $(OUTPUTPATH)/cpucheck.obj   \
         $(OUTPUTPATH)/disphelp.obj   \
         $(OUTPUTPATH)/iniread.obj    \
@@ -150,9 +152,12 @@ CUI_OBJS =                           \
 
 CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj
 
-# --------------------------------- RC5 ----------------------------
+# --------------------------------- RC5-64 -------------------------
 
-RC5_OBJS =                           \
+!ifndef HAVE_RC5_64_CORES
+RC5_64_OBJS =
+!else
+RC5_64_OBJS =                        \
         $(OUTPUTPATH)/brf-p5.obj     \
         $(OUTPUTPATH)/rg-k5.obj      \
         $(OUTPUTPATH)/rg-k6.obj      \
@@ -163,7 +168,20 @@ RC5_OBJS =                           \
         $(OUTPUTPATH)/hb-k7.obj      \
         $(OUTPUTPATH)/ak-p7.obj      \
         $(OUTPUTPATH)/brf-smc.obj
-BCCOPTS = $(BCCOPTS) -DSMC 
+BCCOPTS = $(BCCOPTS) -DSMC -DHAVE_RC5_64_CORES
+!endif
+
+# --------------------------------- RC5-72 -------------------------
+
+!ifndef HAVE_RC5_72_CORES
+RC5_72_OBJS =
+!else
+RC5_72_OBJS =                        \
+        $(OUTPUTPATH)/rc5ansi1.obj   \
+        $(OUTPUTPATH)/rc5ansi2.obj   \
+        $(OUTPUTPATH)/rc5ansi4.obj
+BCCOPTS = $(BCCOPTS) -DSMC -DHAVE_RC5_72_CORES
+!endif
 
 # --------------------------------- DES ----------------------------
 
@@ -173,6 +191,7 @@ DES_OBJS =
 !else
 !message WARNING! DES unsupported and untested!
 DES_OBJS =                                   \
+        $(OUTPUTPATH)/convdes.obj            \
         $(OUTPUTPATH)/bbdeslow.obj           \
         $(OUTPUTPATH)/bdeslow.obj            \
         $(OUTPUTPATH)/des-slice.obj          \
@@ -222,7 +241,7 @@ BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES -I$(OGRPATH)
 .autodepend
 .suffixes: .asm .c .cpp # the order in which files are looked for
 .path.asm = $(RC5PATH)\x86;$(DESPATH)\x86;$(CSCPATH)\x86;$(CSCPATH)\x86\mmx;$(OGRPATH)\x86;$(CHIPSRCPATH)
-.path.cpp = $(COMMONPATH);$(DESPATH);$(OGRPATH)\x86;$(OGRPATH)\ansi;$(PLATSRCPATH)
+.path.cpp = $(COMMONPATH);$(DESPATH);$(OGRPATH)\x86;$(OGRPATH)\ansi;$(RC572PATH)\ansi;$(PLATSRCPATH)
 .path.c   = $(PLATSRCPATH)
 .path.obj = $(OUTPUTPATH)
 
@@ -294,7 +313,7 @@ $(DEF_FILE):
 # --------------------------------------------
 
 $(BASENAME).exe:   $(BCC_CHECK) $(COMMON_OBJS) $(PLAT_OBJS) $(CHIP_OBJS) \
-                   $(RC5_OBJS) $(DES_OBJS) $(CSC_OBJS) $(OGR_OBJS) \
+                   $(RC5_64_OBJS) $(RC5_72_OBJS) $(DES_OBJS) $(CSC_OBJS) $(OGR_OBJS) \
                    $(DEF_FILE) $(RES_FILE)
 !ifndef WHICHSRC
         @if     exist $(COMMONPATH:/=\)\buffpriv.cpp $(MAKE_CMD) -DWHICHSRC=0
