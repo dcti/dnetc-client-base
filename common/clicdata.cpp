@@ -1,94 +1,91 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// ----------------------------------------------------------------------
-// This file contains functions for obtaining contest constants (name, id,
-// iteration-to-keycount-multiplication-factor) or obtaining/adding to
-// contest summary data (totalblocks, totaliterations, totaltime).
-// The data itself is hidden from other modules to protect integrity and
-// ease maintenance.
-// ----------------------------------------------------------------------
-//
-//
-// $Log: clicdata.cpp,v $
-// Revision 1.15  1999/02/20 02:58:07  gregh
-// Added OGR contest data, plus routines to translate between client contest
-// IDs and proxy contest IDs.
-//
-// Revision 1.14  1999/01/29 19:05:08  jlawson
-// fixed formatting.
-//
-// Revision 1.13  1999/01/01 02:45:14  cramer
-// Part 1 of 1999 Copyright updates...
-//
-// Revision 1.12  1998/10/04 11:35:23  remi
-// Id tags fun.
-//
-// Revision 1.11  1998/07/07 21:55:07  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
-//
-// Revision 1.10  1998/06/29 08:43:45  jlawson
-// More OS_WIN32S/OS_WIN16 differences and long constants added.
-//
-// Revision 1.9  1998/06/29 06:57:28  jlawson
-// added new platform OS_WIN32S to make code handling easier.
-//
-// Revision 1.8  1998/06/22 11:25:44  cyruspatel
-// Created new function in clicdata.cpp: CliClearContestSummaryData(int c)
-// Needed to flush/clear accumulated statistics for a particular contest.
-// Inserted into all ::SelectCore() sections that use a benchmark to select
-// the fastest core. Would otherwise skew the statistics for any subsequent
-// completed problem.
-//
-// Revision 1.7  1998/06/15 12:03:45  kbracey
-// Lots of consts.
-//
-// Revision 1.6  1998/06/14 08:26:37  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-//
-// Revision 1.5  1998/06/14 08:12:30  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
+/*
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * ******************** THIS IS WORLD-READABLE SOURCE *****************
+ *
+ * ----------------------------------------------------------------------
+ * This file contains functions for obtaining contest constants (name, id,
+ * iteration-to-keycount-multiplication-factor) or obtaining/adding to
+ * contest summary data (totalblocks, totaliterations, totaltime).
+ * The data itself is hidden from other modules to protect integrity and
+ * ease maintenance.
+ * ----------------------------------------------------------------------
+ *
+ *
+ * $Log: clicdata.cpp,v $
+ * Revision 1.16  1999/03/20 07:40:04  cyp
+ * Moved contestid<->proxycontestid conversion routines out. proxycontestid
+ * is not in public-source scope.
+ *
+ * Revision 1.15  1999/02/20 02:58:07  gregh
+ * Added OGR contest data, plus routines to translate between client contest
+ * IDs and proxy contest IDs.
+ *
+ * Revision 1.14  1999/01/29 19:05:08  jlawson
+ * fixed formatting.
+ *
+ * Revision 1.13  1999/01/01 02:45:14  cramer
+ * Part 1 of 1999 Copyright updates...
+ *
+ * Revision 1.12  1998/10/04 11:35:23  remi
+ * Id tags fun.
+ *
+ * Revision 1.11  1998/07/07 21:55:07  cyruspatel
+ * client.h has been split into client.h and
+ * baseincs.h 
+ *
+ * Revision 1.10  1998/06/29 08:43:45  jlawson
+ * More OS_WIN32S/OS_WIN16 differences and long constants added.
+ *
+ * Revision 1.9  1998/06/29 06:57:28  jlawson
+ * added new platform OS_WIN32S to make code handling easier.
+ *
+ * Revision 1.8  1998/06/22 11:25:44  cyruspatel
+ * Created new function in clicdata.cpp: CliClearContestSummaryData(int c)
+ * Needed to flush/clear accumulated statistics for a particular contest.
+ * Inserted into all ::SelectCore() sections that use a benchmark to select
+ * the fastest core. Would otherwise skew the statistics for any subsequent
+ * completed problem.
+ *
+ * Revision 1.7  1998/06/15 12:03:45  kbracey
+ * Lots of consts.
+ *
+ * Revision 1.6  1998/06/14 08:26:37  friedbait
+ * 'Id' tags added in order to support 'ident' command to display a bill of
+ * material of the binary executable
+ *
+ * Revision 1.5  1998/06/14 08:12:30  friedbait
+ * 'Log' keywords added to maintain automatic change history
+*/
 
 #if (!defined(lint) && defined(__showids__))
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.15 1999/02/20 02:58:07 gregh Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.16 1999/03/20 07:40:04 cyp Exp $"; }
 #endif
 
 #include "baseincs.h" //for timeval
 #include "clitime.h" //required for CliTimerDiff() and CliClock()
-#include "client.h" // for IDCONTEST_*
 
-// ---------------------------------------------------------------------------
+/* ------------------------------------------------------------------------ */
 
 static struct contestInfo
 {
   const char *ContestName;
   int ContestID;
-  int ProxyContestID;
   unsigned int Iter2KeyFactor; /* by how much must iterations/keysdone
                         be multiplied to get the number of keys checked. */
   unsigned int BlocksDone;
   double IterDone;
   struct timeval TimeDone;
   struct timeval TimeStart;
-} conStats[] = {  { "RC5", 0, IDCONTEST_RC564, 1, 0, 0, {0,0}, {0,0} },
-                  { "DES", 1, IDCONTEST_DESII, 2, 0, 0, {0,0}, {0,0} },
-                  { "OGR", 2, IDCONTEST_OGR, 1, 0, 0, {0,0}, {0,0} },
-                  {  NULL,-1, -1, 0, 0, 0, {0,0}, {0,0} }  };
+} conStats[] = {  { "RC5", 0,  1, 0, 0, {0,0}, {0,0} },
+                  { "DES", 1,  2, 0, 0, {0,0}, {0,0} },
+                  { "OGR", 2,  1, 0, 0, {0,0}, {0,0} },
+                  {  NULL,-1,  0, 0, 0, {0,0}, {0,0} }  };
 
-// ---------------------------------------------------------------------------
+/* ----------------------------------------------------------------------- */
 
 static struct contestInfo *__internalCliGetContestInfoVectorForID( int contestid )
 {
@@ -232,27 +229,3 @@ const char *CliGetContestNameFromID(int contestid)
 }
 
 // ---------------------------------------------------------------------------
-
-// Return the corresponding contest ID that the proxy will understand.
-int CliGetContestProxyIDFromID(int contestid)
-{
-  struct contestInfo *conInfo =
-                     __internalCliGetContestInfoVectorForID( contestid );
-  if (conInfo)
-    return conInfo->ProxyContestID;
-  return -1;
-}
-
-// ---------------------------------------------------------------------------
-
-// Return the contest id for a given proxy contest id.
-int CliGetContestIDFromProxyID(int proxycontestid)
-{
-  for (int i = 0; conStats[i].ContestName != NULL; i++)
-  {
-    if (conStats[i].ProxyContestID == proxycontestid) {
-      return i;
-    }
-  }
-  return -1;
-}

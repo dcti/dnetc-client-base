@@ -4,6 +4,9 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
+// ****************** THIS IS WORLD-READABLE SOURCE *********************
+//
+//
 // ----------------------------------------------------------------------
 // This file contains functions for obtaining contest constants as 
 // well as name, id, iteration-to-keycount-multiplication-factor or 
@@ -13,6 +16,10 @@
 // ----------------------------------------------------------------------
 //
 // $Log: clicdata.h,v $
+// Revision 1.17  1999/03/20 07:40:04  cyp
+// Moved contestid<->proxycontestid conversion routines out. proxycontestid
+// is not in public-source scope.
+//
 // Revision 1.16  1999/02/20 02:58:07  gregh
 // Added OGR contest data, plus routines to translate between client contest
 // IDs and proxy contest IDs.
@@ -87,12 +94,6 @@ int CliAddContestInfoSummaryData( int contestid, unsigned int *addblocks,
 
 // Return a usable contest name, returns "???" if bad id.
 const char *CliGetContestNameFromID(int contestid);
-
-// Return the corresponding contest ID that the proxy will understand.
-int CliGetContestProxyIDFromID(int contestid);
-
-// Return the contest id for a given proxy contest id.
-int CliGetContestIDFromProxyID(int proxycontestid);
 
 #endif //ifndef _CLICDATA_H_
 
