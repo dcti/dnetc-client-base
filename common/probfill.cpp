@@ -8,20 +8,8 @@
 //#define STRESS_RANDOMGEN
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
-// no, we don't rotate by default.  DO NOT REVERT, CYP!
-//#define ROTATE_BETWEEN_PROJECTS
-// People who do not want to "do RC5 all their lives" will place other
-// contests (shorter-lived ones) before RC5.  With rotation enabled,
-// if they want to only participate in a single contest at a time, they
-// must explicitly modify their contest priority to disable all others
-// each time that contest starts or stops (on all of their machines)!
-// Although this is a nice experimental development, contest rotation
-// should not be forcefully enabled until a boolean enable/disable
-// option exists in the config to specifically allow rotation (default
-// enable, if you must insist).
-
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.31 2000/04/11 13:24:16 jlawson Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.32 2000/04/11 14:43:38 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -69,6 +57,58 @@ int SetProblemLoaderFlags( const char *loaderflags_map )
   }
   return ((prob_i == 0)?(-1):((int)prob_i));
 }  
+
+/* ----------------------------------------------------------------------- */
+
+/* determine if out buffer threshold has been crossed, and if so, set 
+   the flush_required flag
+*/
+static int __check_outbufthresh_limit( Client *client, unsigned int cont_i, 
+                                     long packet_count, unsigned long wu_count, 
+                                     int *bufupd_pending )
+{
+  if ((*bufupd_pending & BUFFERUPDATE_FLUSH) == 0)
+  {
+    unsigned int thresh = ClientGetOutThreshold( client, cont_i, 0 );
+    /* + if the outthreshold is <=0, then outthreshold is not checked
+         because <=0 is not a valid outthreshold. 
+         Result: Only inthreshold is effective and outthresh 
+         doesn't need to be checked.
+       + if the outthreshold (according to the .ini) was > inthresh
+         then inthreshold rules are effective because outthresh can never
+         be greater than inthresh (inthresh will have been checked first).
+         (The exception is when using shared buffers, and another client 
+         fetches but does not flush).
+         Result: Only inthreshold is effective and outthresh 
+         doesn't need to be checked.
+       + if the outthreshold (according to the .ini) was equal to inthresh
+         there there is usually no point checking outthresh because 
+         the result of both checks would be the same. (The exception is 
+         when using shared buffers, and another client fetches but does
+         not flush).
+         Result: inthreshold is effective and outthresh 
+         doesn't need to be checked.
+       = if any of the above applies, ClientGetOutThreshold()
+         will return outthresh=0 for simplicity. see client.cpp  
+       * Inthreshold is handled in __IndividualProblemLoad()
+    */
+    if (thresh > 0) /* threshold _does_ need to be checked. */
+    {               
+      if (packet_count < 0) /* not determined or error */
+      {
+        packet_count = GetBufferCount( client, cont_i, 1, &wu_count );
+      }
+      if (packet_count > 0) /* wu_count is valid */
+      {
+        if ((unsigned long)(wu_count) >= ((unsigned long)thresh))
+        {
+          *bufupd_pending |= BUFFERUPDATE_FLUSH;
+        }
+      }
+    }     
+  }
+  return ((*bufupd_pending & BUFFERUPDATE_FLUSH) != 0);
+}
 
 /* ----------------------------------------------------------------------- */
 
@@ -161,30 +201,12 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
             CliSetContestWorkUnitSpeed(cont_i, (int)((1<<28)/rate + 0.5));
         }
 
+        /* adjust bufupd_pending if outthresh has been crossed */
+        if (__check_outbufthresh_limit( client, cont_i, -1, 0,bufupd_pending))
         {
-          unsigned int thresh = ClientGetOutThreshold( client, cont_i, 0 );
-          #ifdef ROTATE_BETWEEN_PROJECTS
-            // thresh <= 0 means ignore output buffer threshold and rotate 
-            //             between projects before fetching new work
-          #else
-            // thresh <= 0 means use inbuffer threshold
-            if (thresh <= 0)
-              thresh = ClientGetInThreshold( client, cont_i, 0 );
-          #endif
-          if (thresh > 0) /* zero means ignore output buffer threshold */
-          {
-            unsigned long count;
-            if (GetBufferCount( client, cont_i, 1, &count ) > 0)
-            {
-              if ((unsigned long)(count) >= ((unsigned long)thresh))
-              {
-//Log("1. *bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
-                *bufupd_pending |= BUFFERUPDATE_FLUSH;
-              }
-            }
-          }     
-        }
-        
+          //Log("1. *bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
+        }       
+
       }
       ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, (long)prob_i );
     }
@@ -301,8 +323,6 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 //     to be loaded with a new work packet.  If this argument is NULL,
 //     then no new work will be loaded, and this function will only
 //     return the total amount of work available for all contests.
-//
-//     ign_closed = unused argument.
 //
 //     prob_i = indicates the problem thread that this WorkRecord will
 //     eventually be executed on.  This argument is used to test for
@@ -789,27 +809,18 @@ unsigned int LoadSaveProblems(Client *pass_client,
       {
         unsigned long norm_count;
         long block_count = GetBufferCount( client, cont_i, inout, &norm_count );
-        if (block_count >= 0) /* no error */
+        if (block_count >= 0) /* no error */ 
         {
           char buffer[128+sizeof(client->in_buffer_basename)];
           /* we don't check in-buffer here since we need cumulative count */
-          if (inout != 0)                              /* out-buffer */
+          if (inout != 0) /* out-buffer */ 
           {
-            unsigned int thresh = ClientGetOutThreshold(client, cont_i, 0);
-            #ifdef ROTATE_BETWEEN_PROJECTS
-              // thresh <= 0 means ignore output buffer threshold and rotate 
-              //             between projects before fetching new work
-              /* a zero outbuffer threshold means 'don't check it' */
-            #else
-              // thresh <= 0 means use inbuffer threshold
-              if (thresh <= 0)
-                thresh = ClientGetInThreshold( client, cont_i, 0 );
-            #endif
-            if (thresh > 0 && norm_count > thresh)
+            /* adjust bufupd_pending if outthresh has been crossed */
+            if (__check_outbufthresh_limit( client, cont_i, block_count, 
+                                            norm_count, &bufupd_pending ))
             {
-//Log("5. bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
-              bufupd_pending |= BUFFERUPDATE_FLUSH;
-            }  
+              //Log("5. bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
+            }
           }
           sprintf(buffer, 
               "%ld %s packet%s (%lu work unit%s) %s in\n%s",
