@@ -6,7 +6,7 @@
 */
 
 #ifndef __NETWORK_H__
-#define __NETWORK_H__ "@(#)$Id: network.h,v 1.65 1999/04/06 11:55:44 cyp Exp $"
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.66 1999/04/09 19:40:58 patrick Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
@@ -99,16 +99,18 @@ extern "C" {
   extern Boolean myNetInit(void);
 #elif (CLIENT_OS == OS_OS2)
   #define BSD_SELECT
+  #include <sys/types.h>
   #include <fcntl.h>
   #include <netdb.h>
   #include <netinet/in.h>
-  #include <sys/types.h>
   #include <sys/socket.h>
   #include <sys/time.h>
   #include <sys/select.h>
   #include <sys/ioctl.h>
-  #if !defined(__EMX__)
-  #define close(sock) soclose(sock)
+  #if defined(__EMX__)
+    // this has to stay as long as the define below is needed
+    #include <io.h>
+    #define close(sock) soclose(sock)
   #endif
   typedef int SOCKET;
   #define read(sock, buff, len) recv(sock, (char*)buff, len, 0)
