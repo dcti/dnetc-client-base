@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.195 2000/10/25 01:02:05 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.196 2000/10/28 14:42:17 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -150,56 +150,56 @@ add_sources() # $1=os, $2=arch, $3=custom
   # -------------------------------------------------------------------
 
   if [ "$2" = "x86" ]; then
-    RC5X86_SRCS="rc5/x86/rc5-486-rg.cpp \
-	     rc5/x86/rc5-6x86-rg.cpp \
-	     rc5/x86/rc5p5brf.cpp \
-	     rc5/x86/rc5-p6-rg.cpp \
-	     rc5/x86/rc5-k5-rg.cpp \
-	     rc5/x86/rc5-k6-rg.cpp"
-    NASM_RC5X86_SRCS="rc5/x86/nasm/rg486.asm \
-		   rc5/x86/nasm/rc5-rgk5.asm \
-	     rc5/x86/nasm/brfp5.asm \
-		   rc5/x86/nasm/rc5-rgk6.asm \
-		   rc5/x86/nasm/rc5-rgp6.asm \
-		   rc5/x86/nasm/rg6x86.asm \
-		   rc5/x86/nasm/rc5mmx.asm \
-		   rc5/x86/nasm/rc5-hbk7.asm"
-    CSC_ASM_SRCS="csc/x86/convcsc.asm \ #if adding x86 asm CSC, also -DMMX_CSC
-	     csc/x86/csc-1k-i.asm \
-	     csc/x86/csc-1k.asm \
-	     csc/x86/csc-6b-i.asm \
-	     csc/x86/csc-6b.asm \
-	     csc/x86/csc-comm.asm \
-       csc/x86/mmx/csc-mmx.asm"
-    DESX86_SRCS="des/des-x86.cpp"
-    DESMMX_SRCS="des/des-slice-meggs.cpp"
-    NASM_DESMMX_SRCS="des/mmx-bitslice/deseval-mmx.asm"
-
-    #-- ogr --
-    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
-    TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
+    # -- des common -- mmx is nasm only
+    ##des std## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES"
+    ##des std## TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bdeslow.S des/brydgnu/p1bdespro.S"
+    ##des std## TARGET_ADDSRCS="$TARGET_ADDSRCS des/des-x86.cpp common/convdes.cpp" 
+    ##des mt##  TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bbdeslow.S des/brydgnu/p2bdespro.S"
+    ##des mt##  TARGET_ADDSRCS="$TARGET_ADDSRCS $KWAN_SLICE_SRCS4"
+    ##des mt##  TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN"
     if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
-      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_NO_NASM"
+      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_NO_NASM"  # ****NOTE****
       TARGET_ADDASMS="$TARGET_ADDASMS platforms/x86ident.S"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5X86_SRCS"
+      # -- non-nasm/csc --
       ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
       ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
+      # -- non-nasm/rc5 --
+      TARGET_ADDSRCS="$TARGET_ADDSRCS \
+                      rc5/x86/rc5-486-rg.cpp rc5/x86/rc5-6x86-rg.cpp \
+                      rc5/x86/rc5p5brf.cpp   rc5/x86/rc5-p6-rg.cpp \
+                      rc5/x86/rc5-k5-rg.cpp  rc5/x86/rc5-k6-rg.cpp"
+      # -- non-nasm/ogr --
+      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
     else
       TARGET_ADDNASMS="$TARGET_ADDNASMS platforms/x86ident.asm"
       TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_RC5X86_SRCS"
-      TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_RC5"
       if [ "$1-$3" = "linux-" ]; then # linux-elf has SMC
         TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/x86/rc5-486-smc-rg.cpp"
         TARGET_CCFLAGS="$TARGET_CCFLAGS -DSMC"
         TARGET_LDFLAGS="$TARGET_LDFLAGS -static -Xlinker -omagic"
         #-Xlinker -omagic implies -static
       fi
-      ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_BITSLICER -DKWAN -DMEGGS -DHAVE_DES_CORES"
-      ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
-      ##des## TARGET_ADDASMS="$TARGET_ADDASMS des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-      ##des## TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_DESMMX_SRCS"
-      ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_CSC -DHAVE_CSC_CORES"
-      ##csc## TARGET_ADDNASMS="$TARGET_ADDNASMS $CSC_ASM_SRCS"
+      # -- nasm/des mmx --
+      ##des mmx## TARGET_ADDSRCS="$TARGET_ADDSRCS des/des-slice-meggs.cpp"
+      ##des mmx## TARGET_ADDNASMS="$TARGET_ADDNASMS des/mmx-bitslice/deseval-mmx.asm"
+      ##des mmx## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_BITSLICER -DMEGGS"
+      # -- nasm/csc --
+      ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
+      ##csc## TARGET_ADDNASMS="$TARGET_ADDNASMS \
+      #                       csc/x86/convcsc.asm csc/x86/csc-1k-i.asm \
+      #                       csc/x86/csc-1k.asm  csc/x86/csc-6b-i.asm \
+      #                       csc/x86/csc-6b.asm  csc/x86/csc-comm.asm \
+      #                       csc/x86/mmx/csc-mmx.asm"
+      # -- nasm/rc5 --
+      TARGET_ADDNASMS="$TARGET_ADDNASMS rc5/x86/nasm/rg486.asm \
+                       rc5/x86/nasm/rc5-rgk5.asm   rc5/x86/nasm/brfp5.asm \
+                       rc5/x86/nasm/rc5-rgk6.asm   rc5/x86/nasm/rc5-rgp6.asm \
+                       rc5/x86/nasm/rg6x86.asm     rc5/x86/nasm/rc5mmx.asm \
+                       rc5/x86/nasm/rc5-hbk7.asm"
+      # -- nasm/ogr --
+      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
     fi  
   #-----------------------------------------------------------------  
   elif [ "$2" = "sparc" ]; then
@@ -256,7 +256,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     else
       TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
     fi
-	  ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
+    ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
     ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
@@ -484,7 +484,7 @@ generate_gcc_opts() {
   	         -Wmissing-declarations -Wmissing-prototypes \
 	         -Wstrict-prototypes -Wconversion -Winline \
 	         -Waggregate-return -Wcast-qual -Woverloaded-virtual \
-	         -Wnested-externs" #-Wshadow needs fixes
+	         -Wnested-externs" #-Wshadow shows std header errors
   OPTS_GCC_BASE="-fcaller-saves -fomit-frame-pointer \
                  -fno-inline-functions -fno-rtti" 
   OPTS_272_PLUS="-fno-handle-exceptions"
@@ -718,7 +718,6 @@ COMMON_SRCS="\
 	     common/mail.cpp     \
 	     common/convdes.cpp  \
 	     common/clicdata.cpp \
-	     common/clirate.cpp  \
 	     common/clisrate.cpp \
 	     common/clitime.cpp  \
 	     common/disphelp.cpp \

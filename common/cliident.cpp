@@ -20,7 +20,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.17.2.17 2000/10/25 00:57:22 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.17.2.18 2000/10/28 14:46:16 cyp Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -34,7 +34,6 @@ return "@(#)$Id: cliident.cpp,v 1.17.2.17 2000/10/25 00:57:22 cyp Exp $"; }
 #include "clicdata.h"
 #include "clievent.h"
 #include "cliident.h"
-#include "clirate.h"
 #include "clisrate.h"
 #include "clitime.h"
 #include "cmdline.h"
@@ -66,6 +65,13 @@ return "@(#)$Id: cliident.cpp,v 1.17.2.17 2000/10/25 00:57:22 cyp Exp $"; }
 #include "triggers.h"
 #include "util.h"
 #include "version.h"
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+#include "w32sock.h"
+#include "w32cons.h"
+#include "w32pre.h"
+#include "w32util.h"
+#include "w32svc.h"
+#endif
 
 static const char *h_ident_table[] = 
 {
@@ -80,7 +86,6 @@ static const char *h_ident_table[] =
   (const char *)__CLIENT_H__,
   (const char *)__CLIEVENT_H__,
   (const char *)__CLIIDENT_H__,
-  (const char *)__CLIRATE_H__,
   (const char *)__CLISRATE_H__,
   (const char *)__CLITIME_H__,
   (const char *)__CMDLINE_H__,
@@ -112,7 +117,15 @@ static const char *h_ident_table[] =
   (const char *)__SLEEPDEF_H__,
   (const char *)__TRIGGERS_H__,
   (const char *)__UTIL_H__,
-  (const char *)__VERSION_H__
+  (const char *)__VERSION_H__,
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  (const char *)__W32SOCK_H__,
+  (const char *)__W32CONS_H__,
+  (const char *)__W32PRE_H__,
+  (const char *)__W32UTIL_H__,
+  (const char *)__W32SVC_H__,
+  #endif
+  (const char *)0
 };
 
 extern const char *base64_cpp(void);
@@ -124,7 +137,6 @@ extern const char *clicdata_cpp(void);
 extern const char *client_cpp(void);
 extern const char *clievent_cpp(void);
 //extern const char *cliident_cpp(void);
-extern const char *clirate_cpp(void);
 extern const char *clirun_cpp(void);
 extern const char *clisrate_cpp(void);
 extern const char *clitime_cpp(void);
@@ -154,8 +166,15 @@ extern const char *selftest_cpp(void);
 extern const char *setprio_cpp(void);
 extern const char *triggers_cpp(void);
 extern const char *util_cpp(void);
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+extern const char *w32sock_cpp(void);
+extern const char *w32cons_cpp(void);
+extern const char *w32pre_cpp(void);
+extern const char *w32util_cpp(void);
+extern const char *w32svc_cpp(void);
+#endif
 
-static const char * (*ident_table[])() = 
+static const char * (*ident_table[])(void) = 
 {
   base64_cpp,
   bench_cpp,
@@ -166,7 +185,6 @@ static const char * (*ident_table[])() =
   client_cpp,
   clievent_cpp,
   cliident_cpp,
-  clirate_cpp,
   clirun_cpp,
   clisrate_cpp,
   clitime_cpp,
@@ -197,7 +215,15 @@ static const char * (*ident_table[])() =
   selftest_cpp,
   setprio_cpp,
   triggers_cpp,
-  util_cpp
+  util_cpp,
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  w32sock_cpp,
+  w32cons_cpp,
+  w32pre_cpp,
+  w32util_cpp,
+  w32svc_cpp,
+  #endif
+  ((const char * (*)(void))0)  
 };
 
 
@@ -247,9 +273,12 @@ void CliIdentifyModules(void)
   unsigned int idline = sizeof(h_ident_table); /* squelch warning */
   for (idline = 0; idline < (sizeof(ident_table)/sizeof(ident_table[0])); idline++)
   {
-    char buffer[80];
-    if (split_line( buffer, (*ident_table[idline])(), sizeof(buffer)))
-      LogScreenRaw( "%s\n", buffer );
+    if (ident_table[idline])
+    {
+      char buffer[80];
+      if (split_line( buffer, (*ident_table[idline])(), sizeof(buffer)))
+        LogScreenRaw( "%s\n", buffer );
+    }
   }
   return;
 }  
@@ -274,7 +303,10 @@ time_t CliGetNewestModuleTime(void)
     {
       p = ((const char *)0);
       if (pos < cppidcount)
-        p = (*ident_table[pos])();
+      {
+        if (ident_table[pos])
+          p = (*ident_table[pos])();
+      }
       else
         p = h_ident_table[pos-cppidcount];
       if (split_line( buffer, p, sizeof(buffer)))
