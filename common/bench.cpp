@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: bench.cpp,v $
+// Revision 1.5  1998/10/11 00:46:29  cyp
+// Benchmark() is now standalone.
+//
 // Revision 1.4  1998/10/09 00:42:50  blast
 // Benchmark was looking at contest 2=DES, other=RC5 and cmdline.cpp
 // was setting 0=RC5, 1=DES, made it run two rc5 benchmarks. FIXED
@@ -24,27 +27,28 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.4 1998/10/09 00:42:50 blast Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.5 1998/10/11 00:46:29 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
-#include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
+#include "baseincs.h"  // general includes
 #include "problem.h"   // Problem class
 #include "network.h"   // ntohl()/htonl()
-#include "triggers.h"  //[Check|Raise][Pause|Exit]RequestTrigger()
-#include "clitime.h"
-#include "clirate.h"
-#include "clisrate.h"
-#include "cpucheck.h"  //GetTimesliceBaseline()
-#include "logstuff.h"  //Log()/LogScreen()/LogScreenPercent()/LogFlush()
-#include "baseincs.h"  //General includes
+#include "triggers.h"  // CheckExitRequestTriggerNoIO()
+#include "clitime.h"   // CliTimerDiff(), CliGetTimeString()
+#include "clirate.h"   // CliGetKeyrateForProblemNoSave()
+#include "client.h"    // needed for fileentry which is needed by clisrate.h
+#include "clisrate.h"  // CliGetKeyrateAsString()
+#include "cpucheck.h"  // GetTimesliceBaseline()
+#include "logstuff.h"  // LogScreen()
+#include "console.h"   // IS_STDOUT_A_TTY()
+#include "bench.h"     // ourselves
 
 // --------------------------------------------------------------------------
 
-u32 Client::Benchmark( unsigned int contest, u32 numk )
+//returns keys/sec or 0 if break
+u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
 {
-  static int done_selcore = 0;
-  
   ContestWork contestwork;
   Problem problem;
 
@@ -58,18 +62,14 @@ u32 Client::Benchmark( unsigned int contest, u32 numk )
   unsigned int contestid;
   u32 tslice;
 
-  if (!done_selcore && SelectCore()) 
-    return 0;
-  done_selcore = 1;
-
-  if (numk == 0)
-    itersize = 23;         //8388608 instead of 10000000L;
-  else if ( numk < (1<<20))   //max(numk,1000000L);
-    itersize = 20;         //1048576 instead of 1000000L
+  if (numkeys == 0)
+    itersize = 23;            //8388608 instead of 10000000L;
+  else if ( numkeys < (1<<20))   //max(numkeys,1000000L);
+    itersize = 20;            //1048576 instead of 1000000L
   else 
     {  
     itersize = 31;
-    while (( numk & (1<<itersize) ) == 0)
+    while (( numkeys & (1<<itersize) ) == 0)
       itersize--;
     }
 
@@ -114,11 +114,9 @@ u32 Client::Benchmark( unsigned int contest, u32 numk )
   problem.percent = 0;
   sm0 = "%cBenchmarking %s with 1*2^%d tests (%u keys):%s%c%u%%";
   cm1 = '\n'; 
-  #if (defined(NEEDVIRTUALMETHODS)) || (CLIENT_OS == OS_RISCOS)
-  cm3 = '\r';
-  #else
-  cm3 = ((isatty(fileno(stdout)))?('\r'):(0));
-  #endif
+  cm3 = 0;
+  if (IS_STDOUT_A_TTY()) //console.h
+    cm3 = '\r';
   sm4 = ((cm3)?(""):("\n"));
   cm2 = ((cm3)?(' '):(0));
   run = 0;
