@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.19 2004/02/14 14:16:26 kakace Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.20 2004/05/07 19:34:42 jlawson Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -2093,11 +2093,9 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
       case DES:
         retcode = Run_DES( core_prob, &iterations, &last_resultcode );
         break;
-      #ifdef HAVE_OGR_PASS2
       case OGR_P2:
         retcode = Run_OGR_P2( core_prob, &iterations, &last_resultcode );
         break;
-      #endif
       case OGR:
         retcode = Run_OGR( core_prob, &iterations, &last_resultcode );
         break;
