@@ -227,7 +227,7 @@ s32 Client::Configure( void )
       fgets(parm, 128, stdin);
       choice = atoi(parm);
 
-      if (choice == 0) return 0;
+      if (choice == 0) return 1;
       else choice--;
 
       if ((choice >= 0 && choice < 1+CONF_FIREMODE) ||
@@ -515,6 +515,57 @@ s32 Client::Configure( void )
       }
     }
   }
+}
+
+//----------------------------------------------------------------------------
+
+s32 Client::ConfigureGeneral( int currentmenu )
+{
+
+// Will be filled in soon, be worried :)
+
+return 0;
+}
+
+//----------------------------------------------------------------------------
+
+s32 Client::yesno(char *str)
+// checks for user to type yes or no.
+// Returns 1=yes, 0=no, -1=unknown
+
+{
+s32 returnvalue;
+
+returnvalue=-1;
+if (strcmpi(str, "yes")==0) returnvalue=1;
+if (strcmpi(str, "no")==0) returnvalue=0;
+fflush( stdin );
+return returnvalue;
+}
+
+//----------------------------------------------------------------------------
+
+void clearscreen( void )
+// Clears the screen. (Platform specific ifdefs go inside of it.)
+
+{
+#if (CLIENT_OS == OS_WIN32)
+//works under MSVC, may not work under watcom/borland
+  HANDLE hStdout;
+  CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
+  DWORD nLength;
+  COORD topleft = {0,0};
+
+  hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+  if (hStdout == INVALID_HANDLE_VALUE) return;
+  if (! GetConsoleScreenBufferInfo(hStdout, &csbiInfo)) return;
+  nLength = csbiInfo.dwSize.X * csbiInfo.dwSize.Y;
+
+  FillConsoleOutputCharacter(hStdout, ' ', nLength, topleft, NULL);
+  FillConsoleOutputAttribute(hStdout, csbiInfo.wAttributes, nLength, topleft, NULL);
+  SetConsoleCursorPosition(hStdout, topleft);
+#endif
+
 }
 
 //----------------------------------------------------------------------------
