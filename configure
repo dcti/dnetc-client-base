@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.147  1998/12/28 23:09:48  cramer
+# More tweaks to configure (ok, so I'm bored)
+#
 # Revision 1.146  1998/12/28 21:37:53  cramer
 # Misc. cleanups for the disappearing RC5CORECOPY junk and minor stuff to
 # get a solaris client to build.
@@ -525,7 +528,7 @@ OPTS_GCC272='-fomit-frame-pointer -fno-inline-functions -fno-handle-exceptions \
 
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
-OPTS_EGCS='-O2 -fstrict-aliasing -fno-exceptions -fomit-frame-pointer\
+OPTS_EGCS='-O2 -fstrict-aliasing -fno-exceptions -fomit-frame-pointer \
 	 -Wall -Icommon -Ides -Irc5 -Iplatforms'
 
 #
@@ -671,7 +674,7 @@ TARGET_NASM="nasm"
 TARGET_NASMFLAGS="-i rc5/nasm/ -f elf"
 TARGET_ASFLAGS=""
 TARGET_STRIP="strip"
-TARGET_COPY="cp"
+TARGET_CP="cp"
 
 TARGET_ADDSRCS=""
 TARGET_ADDASMS=""
@@ -1434,32 +1437,38 @@ TARGET_ALLCCOBJS=
 TARGET_ALLASOBJS=
 TARGET_ALLNASMOBJS=
 
-echo "Scanning output C++ dependencies..."
-for target in ${COMMON_SRCS} ${TARGET_ADDSRCS}; do
-    TARGETOBJECT=output/`basename $target .cpp`.o
-    SAFENAME=`echo ${TARGETOBJECT} | tr -d ${DELETECHARS}`
-    echo "  ${target} -> ${TARGETOBJECT} (${SAFENAME})"
-    eval "DEPEND_${SAFENAME}=${target}"
-    TARGET_ALLCCOBJS="${TARGET_ALLCCOBJS} ${TARGETOBJECT}"
-done
+if [ -n "${COMMON_SRCS}" -o -n "${TARGET_ADDSRCS}" ]; then
+  echo "Scanning output C++ dependencies..."
+  for target in ${COMMON_SRCS} ${TARGET_ADDSRCS}; do
+      TARGETOBJECT=output/`basename $target .cpp`.o
+      SAFENAME=`echo ${TARGETOBJECT} | tr -d ${DELETECHARS}`
+      echo "  ${target} -> ${TARGETOBJECT} (${SAFENAME})"
+      eval "DEPEND_${SAFENAME}=${target}"
+      TARGET_ALLCCOBJS="${TARGET_ALLCCOBJS} ${TARGETOBJECT}"
+  done
+fi
 
-echo "Scanning output AS dependencies..."
-for target in ${TARGET_ADDASMS}; do
-    TARGETOBJECT=output/`basename $target`.o
-    SAFENAME=`echo ${TARGETOBJECT} | tr -d ${DELETECHARS}`
-    echo "  $target -> $TARGETOBJECT ($SAFENAME)"
-    eval "DEPEND_${SAFENAME}=$target"
-    TARGET_ALLASOBJS="${TARGET_ALLASOBJS} ${TARGETOBJECT}"
-done
+if [ -n "${TARGET_ADDASMS}" ]; then
+  echo "Scanning output AS dependencies..."
+  for target in ${TARGET_ADDASMS}; do
+      TARGETOBJECT=output/`basename $target`.o
+      SAFENAME=`echo ${TARGETOBJECT} | tr -d ${DELETECHARS}`
+      echo "  $target -> $TARGETOBJECT ($SAFENAME)"
+      eval "DEPEND_${SAFENAME}=$target"
+      TARGET_ALLASOBJS="${TARGET_ALLASOBJS} ${TARGETOBJECT}"
+  done
+fi
 
-echo "Scanning output NASM dependencies..."
-for target in ${TARGET_ADDNASMS}; do
-    TARGETOBJECT=output/`basename $target`.o
-    SAFENAME=`echo ${TARGETOBJECT} | tr -d ${DELETECHARS}`
-    echo "  $target -> $TARGETOBJECT ($SAFENAME)"
-    eval "DEPEND_${SAFENAME}=$target"
-    TARGET_ALLNASMOBJS="${TARGET_ALLNASMOBJS} ${TARGETOBJECT}"
-done
+if [ -n "${TARGET_ADDNASMS}" ]; then
+  echo "Scanning output NASM dependencies..."
+  for target in ${TARGET_ADDNASMS}; do
+      TARGETOBJECT=output/`basename $target`.o
+      SAFENAME=`echo ${TARGETOBJECT} | tr -d ${DELETECHARS}`
+      echo "  $target -> $TARGETOBJECT ($SAFENAME)"
+      eval "DEPEND_${SAFENAME}=$target"
+      TARGET_ALLNASMOBJS="${TARGET_ALLNASMOBJS} ${TARGETOBJECT}"
+  done
+fi
 
 
 #
@@ -1467,15 +1476,16 @@ done
 #
 echo "Building test program..."
 if [ $1 = riscos ]; then
-#tum-te-tum
-rsh starman "cd rc5/src/client; gcc common/testplat.cpp -o testplat"
+  #tum-te-tum
+  rsh starman "cd rc5/src/client; gcc common/testplat.cpp -o testplat"
 else
-sh -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
-if [ $? -ne 0 ]; then
-   echo "Compilation failed.  Check your target options."
-   exit
-fi
-${TARGET_STRIP} testplat
+  ## echo "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
+  sh -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
+  if [ $? -ne 0 ]; then
+    echo "Compilation failed.  Check your target options."
+    exit
+  fi
+  ${TARGET_STRIP} testplat
 fi
 
 
@@ -1483,20 +1493,20 @@ fi
 # Look up the platform and os types
 #
 if [ $1 = riscos ]; then
-CLIENTCPU=11
-CLIENTOS=34
-INTSIZES=442
+  CLIENTCPU=11
+  CLIENTOS=34
+  INTSIZES=442
 else
-CLIENTCPU=`./testplat cpu`
-CLIENTOS=`./testplat os`
-INTSIZES=`./testplat intsizes`
+  CLIENTCPU=`./testplat cpu`
+  CLIENTOS=`./testplat os`
+  INTSIZES=`./testplat intsizes`
 fi
 CLIENTOSNAME=`grep "#define OS_.*\<$CLIENTOS\>" common/cputypes.h | head -1 | cut -d' ' -f2`
 CLIENTCPUNAME=`grep "#define CPU_.*\<$CLIENTCPU\>" common/cputypes.h | head -1 | cut -d' ' -f2`
 echo "CLIENT_CPU = $CLIENTCPUNAME ($CLIENTCPU)"
 echo "CLIENT_OS = $CLIENTOSNAME ($CLIENTOS)"
 echo "INTSIZES = $INTSIZES"
-TARGET_CCFLAGS="-DINTSIZES=${INTSIZES} ${TARGET_CCFLAGS}"
+TARGET_CCFLAGS="-DINTSIZES=${INTSIZES} -DBUILDNAME=\${BUILDNAME} ${TARGET_CCFLAGS}"
 
 
 #
@@ -1513,7 +1523,7 @@ echo "# see http://www.distributed.net/ for details." >> Makefile
 echo "" >> Makefile
 
 echo "CC = ${TARGET_CC}" >> Makefile
-echo "CP = ${TARGET_COPY}" >> Makefile
+echo "CP = ${TARGET_CP}" >> Makefile
 echo "CCFLAGS = ${TARGET_CCFLAGS}" >> Makefile
 echo "LDFLAGS = ${TARGET_LDFLAGS}" >> Makefile
 echo "LIBS = ${TARGET_LIBS}" >> Makefile
@@ -1545,12 +1555,17 @@ echo "" >> Makefile
 
 echo "clean:" >> Makefile
 echo "	rm -f \${ALLOBJS} ${EXENAME}" >> Makefile
-#echo "	sh $0 \${BUILDNAME}" >> Makefile
 echo "" >> Makefile
 
-echo "superclean:" >> Makefile
-echo "	rm -f \${ALLOBJS} ${EXENAME} Makefile buff-in.* buff-out.* *.ini testplat" >> Makefile
+echo "superclean: clean" >> Makefile
+echo "	rm -f Makefile buff-in.* buff-out.* *.ini testplat" >> Makefile
 echo "	find . -name '*~' -exec rm {} \\;" >> Makefile
+echo "" >> Makefile
+
+echo "distclean: superclean $0" >> Makefile
+echo "	rm -f \${BUILDNAME}" >> Makefile
+echo "	find . -name '.#*' -exec rm {} \\;" >> Makefile
+echo "	rm -f \`egrep \"^[ ]*\\*\" $0 | sed -e 's/\(^.*\*\)\(.*\)\().*\$\$\)/\2/'\`" >> Makefile
 echo "" >> Makefile
 
 echo "ident:	${EXENAME}" >> Makefile
@@ -1560,38 +1575,49 @@ echo "" >> Makefile
 #
 # Generate the dependency targets in the makefile
 #
-echo "Generating Makefile C++ dependency targets..."
 echo "# Dependency targets follow" >> Makefile
-for target in ${TARGET_ALLCCOBJS}; do
-  SAFENAME=`echo $target | tr -d ${DELETECHARS}`
-  eval TARGETSRC=$`echo DEPEND_$SAFENAME`
-  if [ -n "${RC5CORECOPY}" -a `basename ${TARGETSRC}` = problem.cpp ]; then
-    TARGET_HDEPS1=`./testplat build_dependancies ${TARGETSRC}`
-    TARGET_HDEPS2=`./testplat build_dependancies ${RC5CORECOPY}`
-    echo "$target:	${TARGETSRC} ${TARGET_HDEPS1} ${RC5CORECOPY} ${TARGET_HDEPS2}" >> Makefile
-    echo "	\${CC} -c \${CCFLAGS} -include ${RC5CORECOPY} ${TARGETSRC} -o $target" >> Makefile
-  else
-    TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
-    echo "$target:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
-    echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
-  fi
-  echo "" >> Makefile
-done
-echo "Generating Makefile AS dependency targets..."
-for target in ${TARGET_ALLASOBJS}; do
-  SAFENAME=`echo $target | tr -d ${DELETECHARS}`
-  eval TARGETSRC=$`echo DEPEND_$SAFENAME`
-  echo "$target:	${TARGETSRC}" >> Makefile
-  echo "	\${AS} \${ASFLAGS} ${TARGETSRC} -o $target" >> Makefile
-  echo "" >> Makefile
-done
-echo "Generating Makefile NASM dependency targets..."
-for target in ${TARGET_ALLNASMOBJS}; do
-  SAFENAME=`echo $target | tr -d ${DELETECHARS}`
-  eval TARGETSRC=$`echo DEPEND_$SAFENAME`
-  echo "$target:	${TARGETSRC}" >> Makefile
-  echo "	\${NASM} \${NASMFLAGS} ${TARGETSRC} -o $target" >> Makefile
-  echo "" >> Makefile
-done
+
+if [ -n "${TARGET_ALLCCOBJS}" ]; then
+  echo "Generating Makefile C++ dependency targets..."
+  for target in ${TARGET_ALLCCOBJS}; do
+    SAFENAME=`echo $target | tr -d ${DELETECHARS}`
+    eval TARGETSRC=$`echo DEPEND_$SAFENAME`
+    if [ -n "${RC5CORECOPY}" -a `basename ${TARGETSRC}` = problem.cpp ]; then
+      TARGET_HDEPS1=`./testplat build_dependancies ${TARGETSRC}`
+      TARGET_HDEPS2=`./testplat build_dependancies ${RC5CORECOPY}`
+      echo "$target:	${TARGETSRC} ${TARGET_HDEPS1} ${RC5CORECOPY} ${TARGET_HDEPS2}" >> Makefile
+      echo "	\${CC} -c \${CCFLAGS} -include ${RC5CORECOPY} ${TARGETSRC} -o $target" >> Makefile
+    else
+      TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
+      echo "$target:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
+      echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
+    fi
+    echo "" >> Makefile
+  done
+fi
+
+if [ -n "${TARGET_ALLASOBJS}" ]; then
+  echo "Generating Makefile AS dependency targets..."
+  for target in ${TARGET_ALLASOBJS}; do
+    SAFENAME=`echo $target | tr -d ${DELETECHARS}`
+    eval TARGETSRC=$`echo DEPEND_$SAFENAME`
+    echo "$target:	${TARGETSRC}" >> Makefile
+    echo "	\${AS} \${ASFLAGS} ${TARGETSRC} -o $target" >> Makefile
+    echo "" >> Makefile
+  done
+fi
+
+if [ -n "${TARGET_ALLNASMOBJS}" ]; then
+  echo "Generating Makefile NASM dependency targets..."
+  for target in ${TARGET_ALLNASMOBJS}; do
+    SAFENAME=`echo $target | tr -d ${DELETECHARS}`
+    eval TARGETSRC=$`echo DEPEND_$SAFENAME`
+    echo "$target:	${TARGETSRC}" >> Makefile
+    echo "	\${NASM} \${NASMFLAGS} ${TARGETSRC} -o $target" >> Makefile
+    echo "" >> Makefile
+  done
+fi
+
 echo "Makefile auto-generation complete!"
 echo ""
+
