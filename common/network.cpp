@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.59  1999/01/03 02:36:58  cyp
+// A strlwr() equivalent is not really needed here... It was a remnant of a
+// debug session.
+//
 // Revision 1.58  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -168,7 +172,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.58 1999/01/01 02:45:15 cramer Exp $"; }
+return "@(#)$Id: network.cpp,v 1.59 1999/01/03 02:36:58 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -181,7 +185,6 @@ return "@(#)$Id: network.cpp,v 1.58 1999/01/01 02:45:15 cramer Exp $"; }
 #include "clitime.h"   // CliGetTimeString(NULL,1);
 #include "triggers.h"  // CheckExitRequestTrigger()
 #include "network.h"   // thats us
-#include "dctistrg.h"  // lowercasestring()
 
 #if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32) || \
     (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
@@ -386,7 +389,6 @@ void Network::SetModeHTTP( const char *httphost, s16 httpport, const char *httpu
     fwall_hostport = httpport;
     strncpy( fwall_userpass, httpusername, 128);
     strncpy( fwall_hostname, httphost, 64);
-    lowercasestring( fwall_hostname );
     }
   else 
     {
@@ -411,7 +413,6 @@ void Network::SetModeSOCKS4(const char *sockshost, s16 socksport,
     fwall_userpass[0] = 0;
     if (socksusername && *socksusername)
       strncpy(fwall_userpass, socksusername, sizeof(fwall_userpass));
-    lowercasestring( fwall_hostname );
     }
   else
     {
@@ -590,7 +591,6 @@ int Network::Open( void )               // returns -1 on error, 0 on success
         }
       else /* resolve for non-proxied connect */
         {
-        lowercasestring( svc_hostname );
         if (Resolve( svc_hostname, &svc_hostaddr, svc_hostport ) < 0) 
           {
           success = 0;
