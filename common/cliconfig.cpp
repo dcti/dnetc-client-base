@@ -2176,64 +2176,10 @@ previouscputype=cputype;// Set this so we know next time this proc is run.
 #elif (CLIENT_CPU == CPU_X86)
   // benchmark all cores
   int fastcore = cputype;
-  if (fastcore == -1) fastcore = x86id(); // Will return -1 if unable to identify.
-  if (fastcore == -1)
-  {
-    const int benchsize = 50000;
-    double fasttime = 0;
+  if (fastcore == -1) fastcore = x86id(); // Will return 0 if unable to identify.
 
-    LogScreen("Automatically selecting fastest core...\n");
-    LogScreen("This is just a guess based on a small test of each core.  If you know what CPU\n");
-    LogScreenf("this machine has, then run 'rc5des -config', select option %d, and set it\n",CONF_CPUTYPE+1);
-    fflush(stdout);
-//    for (int i = 0; i < 6; i++)
-    for (int i = 0; i < 5; i++)
-    {
-      Problem problem;
-      ContestWork contestwork;
-      contestwork.key.lo = contestwork.key.hi = htonl( 0 );
-      contestwork.iv.lo = contestwork.iv.hi = htonl( 0 );
-      contestwork.plain.lo = contestwork.plain.hi = htonl( 0 );
-      contestwork.cypher.lo = contestwork.cypher.hi = htonl( 0 );
-      contestwork.keysdone.lo = contestwork.keysdone.hi = htonl( 0 );
-      contestwork.iterations.lo = htonl( benchsize );
-      contestwork.iterations.hi = htonl( 0 );
-      problem.LoadState( &contestwork , 0 ); // RC5 core selection
-
-      // select the correct core engine
-      switch(i)
-      {
-        case 1: rc5_unit_func = rc5_unit_func_486; break;
-        case 2: rc5_unit_func = rc5_unit_func_p6; break;
-        case 3: rc5_unit_func = rc5_unit_func_6x86; break;
-        case 4: rc5_unit_func = rc5_unit_func_k5; break;
-        case 5: rc5_unit_func = rc5_unit_func_k6; break;
-        default: rc5_unit_func = rc5_unit_func_p5; break;
-      }
-
-      #ifndef NEW_STATS_AND_LOGMSG_STUFF
-      struct timeval start, stop;
-      struct timezone dummy;
-      gettimeofday( &start, &dummy );
-      #endif
-
-      problem.Run( benchsize / PIPELINE_COUNT , 0 );
-
-      #ifdef NEW_STATS_AND_LOGMSG_STUFF
-        double elapsed = CliGetKeyrateForProblem( &problem );
-        if (fastcore < 0 || elapsed > fasttime)
-          {fastcore = i; fasttime = elapsed;}
-      #else
-      gettimeofday( &stop, &dummy );
-      double elapsed = (stop.tv_sec - start.tv_sec) +
-                       (((double)stop.tv_usec - (double)start.tv_usec)/1000000.0);
-
-      if (fastcore < 0 || elapsed < fasttime)
-        {fastcore = i; fasttime = elapsed;}
-      #endif
-//printf("Core %d: %f\n",i,elapsed);
-    }
-  }
+// Old "try every code" speed detect removed; it was never right, and
+// x86id gets almost all processors now anyway.
 
 LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
 
