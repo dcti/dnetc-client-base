@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.46  1998/06/17 21:31:10  remi
+# Renamed p?bdespro.s to p?bdespro.S
+#
 # Revision 1.45  1998/06/16 22:21:26  silby
 # added des/p1bdespro.s des/p2bdespro.s to configure for all bryddes using oses.
 #
@@ -420,14 +423,14 @@ case "$1" in
     *x86-solaris)
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -Dsolaris -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="output/bdeslow.S output/bbdeslow.S output/x86ident.S des/p1bdespro.s des/p2bdespro.s"
+	TARGET_ADDASMS="output/bdeslow.S output/bbdeslow.S output/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_LIBS="-lnsl -lsocket -ldl"
 	;;
 
     *x86-solaris-mt)
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -Dsolaris -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="output/bdeslow.S output/bbdeslow.S output/x86ident.S des/p1bdespro.s des/p2bdespro.s"
+	TARGET_ADDASMS="output/bdeslow.S output/bbdeslow.S output/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
 	;;
 
@@ -528,7 +531,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.s des/p2bdespro.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	;;
 
     *x86-linux-egcs-debug)    # debug version of x86-linux-egcs
@@ -536,7 +539,7 @@ case "$1" in
 	TARGET_CC="gcc -g"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.s des/p2bdespro.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_STRIP="touch"
 	;;
 
@@ -555,7 +558,7 @@ case "$1" in
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.s des/p2bdespro.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	;;
 
     *x86-linux-aout)
@@ -564,7 +567,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.s des/p2bdespro.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	;;
 
     *x86-linux-mt-egcs)
@@ -573,7 +576,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.s des/p2bdespro.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_LIBS="-lpthread"
 	;;
 
@@ -582,7 +585,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.s des/p2bdespro.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_LIBS="-lpthread"
 	;;
 
@@ -601,14 +604,14 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.s des/p2bdespro.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	;;
 
     *x86-freebsd-mt)
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.s des/p2bdespro.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_LIBS="-lc_r"
 	;;
 
@@ -616,21 +619,21 @@ case "$1" in
 	TARGET_AS="g++ -c -DNO_BALIGN"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.s des/p2bdespro.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	;;
 
     *x86-openbsd)
 	TARGET_AS="g++ -c"
 	TARGET_CCFLAGS="$OPTS_GCC_P5 -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.s des/p2bdespro.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	;;
 
     *x86-bsdi)
 	TARGET_AS="g++ -c -DNO_BALIGN"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.s des/p2bdespro.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
        ;;
 
 ####### Intel X86 SCO5
@@ -639,7 +642,7 @@ case "$1" in
 	TARGET_AS="g++ -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -belf -Dsco5"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.s des/p2bdespro.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_LIBS="-lsocket"
 	;;
 
@@ -650,7 +653,7 @@ case "$1" in
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -D_NeXT_ -DPIPELINE_COUNT=2 -DBIT_32"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.s des/p2bdespro.s"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	;;
 
     *m68k-next-gcc)
