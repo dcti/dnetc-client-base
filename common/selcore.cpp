@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.31 1999/12/23 18:45:24 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.32 1999/12/23 21:45:25 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -716,7 +716,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         memset( (void *)&contestwork, 0, sizeof(contestwork));
         contestwork.crypto.iterations.lo = benchsize;
         if (problem->LoadState( &contestwork, contestid, 
-                                benchsize, 0 /* unused */ ) == 0)
+                                benchsize, 0, 0, 0, 0 ) == 0)
         {
           if (!saidmsg)
           {

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.26 1999/12/19 19:23:28 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.27 1999/12/23 21:45:26 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -382,7 +382,7 @@ int SelfTest( unsigned int contest )
           break;
       }
   
-      problem->LoadState( &contestwork, contest, tslice, 0 /* unused */);
+      problem->LoadState( &contestwork, contest, tslice, 0, 0, 0, 0 );
 
       ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (long)(problem) );
 

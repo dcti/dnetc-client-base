@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.26 1999/12/18 15:56:40 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.27 1999/12/23 21:45:25 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -276,7 +276,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   while (((unsigned int)totalruntime.tv_sec) < numsecs)
   {
     run = RESULT_WORKING;
-    if ( problem->LoadState( &contestwork, contestid, tslice, 0 /*unused*/) != 0)
+    if ( problem->LoadState( &contestwork, contestid, tslice, 0, 0, 0, 0) != 0)
       run = -1;
     else if ((flags & TBENCHMARK_QUIET) == 0 && scropen < 0)
     {
