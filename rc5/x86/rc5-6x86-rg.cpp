@@ -1,7 +1,46 @@
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-//torment.ntr.net K6 233 sean@ntr.net
+// torment.ntr.net K6 233 sean@ntr.net
+//
+// $Log: rc5-6x86-rg.cpp,v $
+// Revision 1.14  1998/12/14 23:18:52  remi
+// Upgraded (sic) to the *last* version...
+//
+// Revision 1.11  1998/11/28 18:03:31  remi
+// Err, BALIGN4 != BALIGN(4)
+//
+// Revision 1.10  1998/11/28 18:00:13  remi
+// Fixed BALIGN4 macro for *BSD.
+//
+// Revision 1.9  1998/11/20 23:45:08  remi
+// Added FreeBSD support in the BALIGN macro.
+//
+// Revision 1.8  1998/08/20 00:25:18  silby
+// Took out PIPELINE_COUNT checks inside .cpp x86 cores - they were
+// causing build problems with new PIPELINE_COUNT architecture on x86.
+//
+// Revision 1.7  1998/07/08 22:59:34  remi
+// Lots of $Id: rc5-6x86-rg.cpp,v 1.14 1998/12/14 23:18:52 remi Exp $ stuff.
+//
+// Revision 1.6  1998/07/08 18:47:45  remi
+// $Id fun ...
+//
+// Revision 1.5  1998/06/16 08:25:29  remi
+// rc5_unit_func_6x86 should not be made "static".
+//
+// Revision 1.4  1998/06/14 10:03:55  skand
+// define and use a preprocessor macro to hide the .balign directive for
+// ancient assemblers
+//
+// Revision 1.3  1998/06/14 08:27:17  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
+// Revision 1.2  1998/06/14 08:13:34  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
 
 // Cyrix 6x86 optimized version
 //
@@ -69,14 +108,21 @@
 // PR150 = 120		PR200 = 166
 // PR133 = 110		PR166 = 150
 
+#if (!defined(lint) && defined(__showids__))
+const char *rc5_6x86_rg_cpp (void) {
+return "@(#)$Id: rc5-6x86-rg.cpp,v 1.14 1998/12/14 23:18:52 remi Exp $"; }
+#endif
+
 #define CORE_INCREMENTS_KEY
 
 // This file is included from rc5.cpp so we can use __inline__.
 #include "problem.h"
 
-#if (PIPELINE_COUNT != 2)
-#error "Expecting pipeline count of 2"
-#endif
+// With different pipeline counts for different cores, this check cannot
+// be done here
+//#if (PIPELINE_COUNT != 2)
+//#error "Expecting pipeline count of 2"
+//#endif
 
 #ifndef _CPU_32BIT_
 #error "everything assumes a 32bit CPU..."
@@ -87,6 +133,12 @@
 
 #define _(s)    __(s)
 #define __(s)   #s
+
+#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__))
+#define BALIGN4 ".align 2,0x90"
+#else
+#define BALIGN4 ".balign 4"
+#endif
 
 // The S0 values for key expansion round 1 are constants.
 
@@ -351,7 +403,6 @@ leal 12345678(%%edx,%%eax), %%eax takes two cycles and isn't pairable
 // Even worse, if '-fomit-frame-pointer' isn't used, gcc will compile
 // this function with local variables referenced with %ebp (!!).
 
-static
 u32 rc5_unit_func_6x86( RC5UnitWork * rc5unitwork, u32 timeslice )
 {
     work_struct work;
@@ -411,7 +462,7 @@ u32 rc5_unit_func_6x86( RC5UnitWork * rc5unitwork, u32 timeslice )
 	leal	(%%eax,%%ebx), %%ecx
 	movl	%%ecx, "work_pre3_r1"
 
-.balign 4
+"BALIGN4"
 _loaded_6x86:\n"
 
     /* ------------------------------ */
@@ -564,7 +615,7 @@ _loaded_6x86:\n"
 	cmpl	"work_C_1", %%edi
 	je	_full_exit_6x86
 
-.balign 4
+"BALIGN4"
 __exit_1_6x86: \n"
 
     /* Restore 2nd key parameters */
@@ -648,7 +699,7 @@ __exit_1_6x86: \n"
 	movl	$1, "work_add_iter"
 	jmp	_full_exit_6x86
 
-.balign 4
+"BALIGN4"
 __exit_2_6x86:
 
 	movl	"work_key_hi", %%edx
@@ -668,7 +719,7 @@ _next_iter_6x86:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_6x86
 
-.balign 4
+"BALIGN4"
 _next_iter2_6x86:
 	movl	%%ebx, "work_key_lo"
 	movl	%%edx, "work_key_hi"
@@ -681,7 +732,7 @@ _next_iter2_6x86:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_6x86
 
-.balign 4
+"BALIGN4"
 _next_inc_6x86:
 	addl	$0x00010000, %%edx
 	testl	$0x00FF0000, %%edx
@@ -720,7 +771,7 @@ _next_inc_6x86:
 	# Not much to do here, since we have finished the block ...
 
 
-.balign 4
+"BALIGN4"
 _full_exit_6x86:
 	movl	"work_save_ebp",%%ebp \n"
 

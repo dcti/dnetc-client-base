@@ -1,7 +1,39 @@
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-
+//
+// $Log: rc5-k5-rg.cpp,v $
+// Revision 1.12  1998/12/14 23:18:52  remi
+// Upgraded (sic) to the *last* version...
+//
+// Revision 1.9  1998/11/28 17:59:03  remi
+// Fixed BALIGN4 macro for *BSD.
+//
+// Revision 1.8  1998/11/20 23:45:09  remi
+// Added FreeBSD support in the BALIGN macro.
+//
+// Revision 1.7  1998/08/20 00:25:20  silby
+// Took out PIPELINE_COUNT checks inside .cpp x86 cores - they were
+// causing build problems with new PIPELINE_COUNT architecture on x86.
+//
+// Revision 1.6  1998/07/08 22:59:36  remi
+// Lots of $Id: rc5-k5-rg.cpp,v 1.12 1998/12/14 23:18:52 remi Exp $ stuff.
+//
+// Revision 1.5  1998/07/08 18:47:46  remi
+// $Id fun ...
+//
+// Revision 1.4  1998/06/14 10:03:56  skand
+// define and use a preprocessor macro to hide the .balign directive for
+// ancient assemblers
+//
+// Revision 1.3  1998/06/14 08:27:18  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
+// Revision 1.2  1998/06/14 08:13:36  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
 // AMD K5 optimized version
 // Rémi Guyomarch <rguyom@mail.dotcom.fr>
 //
@@ -46,14 +78,21 @@
 // PR120 =  90   / 60			   rg=193 ? / 307-336 ?
 // PR??? =  75   / ??    v1=120 v2=215-225 rg=165   / 256-280 ?
 
+#if (!defined(lint) && defined(__showids__))
+const char *rc5_k5_rg_cpp (void) {
+return "@(#)$Id: rc5-k5-rg.cpp,v 1.12 1998/12/14 23:18:52 remi Exp $"; }
+#endif
+
 #define CORE_INCREMENTS_KEY
 
 // This file is included from rc5.cpp so we can use __inline__.
 #include "problem.h"
 
-#if (PIPELINE_COUNT != 2)
-#error "Expecting pipeline count of 2"
-#endif
+// With different pipeline counts for different cores, this check cannot
+// be done here
+//#if (PIPELINE_COUNT != 2)
+//#error "Expecting pipeline count of 2"
+//#endif
 
 #ifndef _CPU_32BIT_
 #error "everything assumes a 32bit CPU..."
@@ -64,6 +103,12 @@
 
 #define _(s)    __(s)
 #define __(s)   #s
+
+#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__))
+#define BALIGN4 ".align 2, 0x90"
+#else
+#define BALIGN4 ".balign 4"
+#endif
 
 // The S0 values for key expansion round 1 are constants.
 
@@ -342,7 +387,7 @@ u32 rc5_unit_func_k5( RC5UnitWork * rc5unitwork, u32 timeslice )
 	leal	(%%eax,%%ebx), %%ecx		# 2
 	movl	%%ecx, "work_pre3_r1"		# 1
 
-.balign 4
+"BALIGN4"
 _loaded_k5:\n"
 
     /* ------------------------------ */
@@ -507,7 +552,7 @@ _loaded_k5:\n"
 	cmpl	"work_C_1", %%edi
 	je	_full_exit_k5
 
-.balign 4
+"BALIGN4"
 __exit_1_k5: \n"
 
     /* Restore 2nd key parameters */
@@ -591,7 +636,7 @@ __exit_1_k5: \n"
 	movl	$1, "work_add_iter"
 	jmp	_full_exit_k5
 
-.balign 4
+"BALIGN4"
 __exit_2_k5:
 
 	movl	"work_key_hi", %%edx
@@ -611,7 +656,7 @@ _next_iter_k5:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_k5
 
-.balign 4
+"BALIGN4"
 _next_iter2_k5:
 	movl	%%ebx, "work_key_lo"
 	movl	%%edx, "work_key_hi"
@@ -624,7 +669,7 @@ _next_iter2_k5:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_k5
 
-.balign 4
+"BALIGN4"
 _next_inc_k5:
 	addl	$0x00010000, %%edx
 	testl	$0x00FF0000, %%edx
@@ -663,7 +708,7 @@ _next_inc_k5:
 	# Not much to do here, since we have finished the block ...
 
 
-.balign 4
+"BALIGN4"
 _full_exit_k5:
 	movl	"work_save_ebp",%%ebp \n"
 

@@ -1,7 +1,36 @@
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-
+//
+// $Log: rc5-486-rg.cpp,v $
+// Revision 1.11  1998/12/14 23:18:51  remi
+// Upgraded (sic) to the *last* version...
+//
+// Revision 1.8  1998/11/20 23:45:07  remi
+// Added FreeBSD support in the BALIGN macro.
+//
+// Revision 1.7  1998/08/20 00:25:17  silby
+// Took out PIPELINE_COUNT checks inside .cpp x86 cores - they were
+// causing build problems with new PIPELINE_COUNT architecture on x86.
+//
+// Revision 1.6  1998/07/08 22:59:33  remi
+// Lots of $Id: rc5-486-rg.cpp,v 1.11 1998/12/14 23:18:51 remi Exp $ stuff.
+//
+// Revision 1.5  1998/07/08 18:47:43  remi
+// $Id fun ...
+//
+// Revision 1.4  1998/06/14 10:03:54  skand
+// define and use a preprocessor macro to hide the .balign directive for
+// ancient assemblers
+//
+// Revision 1.3  1998/06/14 08:27:16  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
+// Revision 1.2  1998/06/14 08:13:33  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
 // 386/486 optimized version
 // Rémi Guyomarch - rguyom@mail.dotcom.fr
 //
@@ -23,14 +52,21 @@
 // Checking two keys at once is still a (slight) win for a 486
 // probably because less load/store operations
 
+#if (!defined(lint) && defined(__showids__))
+const char *rc5_486_rg_cpp (void) {
+return "@(#)$Id: rc5-486-rg.cpp,v 1.11 1998/12/14 23:18:51 remi Exp $"; }
+#endif
+
 #define CORE_INCREMENTS_KEY
 
 // This file is included from rc5.cpp so we can use __inline__.
 #include "problem.h"
 
-#if (PIPELINE_COUNT != 2)
-#error "Expecting pipeline count of 2"
-#endif
+// With different pipeline counts for different cores, this check cannot
+// be done here
+//#if (PIPELINE_COUNT != 2)
+//#error "Expecting pipeline count of 2"
+//#endif
 
 #ifndef _CPU_32BIT_
 #error "everything assumes a 32bit CPU..."
@@ -41,6 +77,12 @@
 
 #define _(s)    __(s)
 #define __(s)   #s
+
+#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__))
+#define BALIGN(x)
+#else
+#define BALIGN(x) ".balign 4"
+#endif
 
 // The S0 values for key expansion round 1 are constants.
 
@@ -311,7 +353,7 @@ u32 rc5_unit_func_486( RC5UnitWork * rc5unitwork, u32 timeslice )
 	leal	(%%eax,%%ebx), %%ecx		# 2
 	movl	%%ecx, "work_pre3_r1"		# 1
 
-.balign 4
+"BALIGN(4)"
 _loaded_486:\n"
 
     /* ------------------------------ */
@@ -469,7 +511,7 @@ _loaded_486:\n"
 	cmpl	"work_C_1", %%edi
 	je	_full_exit_486
 
-.balign 4
+"BALIGN(4)"
 __exit_1_486: \n"
 
     /* Restore 2nd key parameters */
@@ -544,7 +586,7 @@ __exit_1_486: \n"
 	movl	$1, "work_add_iter"
 	jmp	_full_exit_486
 
-.balign 4
+"BALIGN(4)"
 __exit_2_486:
 
 	movl	"work_key_hi", %%edx
@@ -564,7 +606,7 @@ _next_iter_486:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_486
 
-.balign 4
+"BALIGN(4)"
 _next_iter2_486:
 	movl	%%ebx, "work_key_lo"
 	movl	%%edx, "work_key_hi"
@@ -577,7 +619,7 @@ _next_iter2_486:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_486
 
-.balign 4
+"BALIGN(4)"
 _next_inc_486:
 	addl	$0x00010000, %%edx
 	testl	$0x00FF0000, %%edx
@@ -616,7 +658,7 @@ _next_inc_486:
 	# Not much to do here, since we have finished the block ...
 
 
-.balign 4
+"BALIGN(4)"
 _full_exit_486:
 	movl	"work_save_ebp", %%ebp \n"
 

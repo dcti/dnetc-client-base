@@ -1,6 +1,29 @@
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+//
+// $Log: rc5p5brf.cpp,v $
+// Revision 1.9  1998/12/14 23:18:52  remi
+// Upgraded (sic) to the *last* version...
+//
+// Revision 1.6  1998/08/20 00:25:25  silby
+// Took out PIPELINE_COUNT checks inside .cpp x86 cores - they were causing build problems with new PIPELINE_COUNT architecture on x86.
+//
+// Revision 1.5  1998/07/08 22:59:53  remi
+// Lots of $Id: rc5p5brf.cpp,v 1.9 1998/12/14 23:18:52 remi Exp $ stuff.
+//
+// Revision 1.4  1998/07/08 18:47:42  remi
+// $Id fun ...
+//
+// Revision 1.3  1998/06/14 08:27:37  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
+// Revision 1.2  1998/06/14 08:13:54  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
+
 
 // Pentium optimized version
 // Rémi Guyomarch - rguyom@mail.dotcom.fr - 97/07/13
@@ -25,14 +48,21 @@
 // For a really *good* pentium optimization manual :
 //	http://announce.com/agner/assem
 
+#if (!defined(lint) && defined(__showids__))
+const char *rc5p5brf_cpp (void) {
+return "@(#)$Id: rc5p5brf.cpp,v 1.9 1998/12/14 23:18:52 remi Exp $"; }
+#endif
+
 #define CORE_INCREMENTS_KEY
 
 // This file is included from rc5.cpp so we can use __inline__.
 #include "problem.h"
 
-#if (PIPELINE_COUNT != 2)
-#error "Expecting pipeline count of 2"
-#endif
+// With different pipeline counts for different cores, this check cannot
+// be done here
+//#if (PIPELINE_COUNT != 2)
+//#error "Expecting pipeline count of 2"
+//#endif
 
 #ifndef _CPU_32BIT_
 #error "everything assumes a 32bit CPU..."

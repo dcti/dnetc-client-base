@@ -1,7 +1,53 @@
 // Copyright distributed.net 1997 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-
+//
+// $Log: rc5-k6-rg.cpp,v $
+// Revision 1.12  1998/12/14 23:18:52  remi
+// Upgraded (sic) to the *last* version...
+//
+// Revision 1.9  1998/11/28 17:55:04  remi
+// Faster K6 core :
+// 	query : K6/200 - Linux 2.1.129 - client running in the background
+// 				       - idle otherwise
+// 	(reported speed and %CPU usage for -benchmarkrc5)
+// 	previous :	this one :
+// 	350.7 (91.5%)	365.5 (91.2%)
+// 	348.0 (91.0%)	366.8 (91.5%)
+// 	351.5 (91.7%)	366.7 (91.5%)
+//
+// 	nodezero : K6-2/?? - FreeBSD 2.2.7-STABLE - client running
+// 			   - apache - dcti full proxy - mysql etc ...
+// 	(user time for -benchmarkrc5)
+// 	previous : 17.18, 17.25, 17.32
+// 	this one : 16.17, 16.12, 16.18
+//
+// Revision 1.8  1998/11/20 23:45:10  remi
+// Added FreeBSD support in the BALIGN macro.
+//
+// Revision 1.7  1998/08/20 00:25:22  silby
+// Took out PIPELINE_COUNT checks inside .cpp x86 cores - they were
+// causing build problems with new PIPELINE_COUNT architecture on x86.
+//
+// Revision 1.6  1998/07/08 22:59:37  remi
+// Lots of $Id: rc5-k6-rg.cpp,v 1.12 1998/12/14 23:18:52 remi Exp $ stuff.
+//
+// Revision 1.5  1998/07/08 18:47:47  remi
+// $Id fun ...
+//
+// Revision 1.4  1998/06/14 10:03:57  skand
+// define and use a preprocessor macro to hide the .balign directive for
+// ancient assemblers
+//
+// Revision 1.3  1998/06/14 08:27:19  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
+// Revision 1.2  1998/06/14 08:13:37  friedbait
+// 'Log' keywords added to maintain automatic change history
+//
+//
+//
 // K6 optimized version
 // Rémi Guyomarch - rguyom@mail.dotcom.fr
 //
@@ -9,14 +55,21 @@
 //	- Finally a K6 optimization that works ...
 //	- Based on the 486/980226 version
 
+#if (!defined(lint) && defined(__showids__))
+const char *rc5_k6_rg_cpp (void) {
+return "@(#)$Id: rc5-k6-rg.cpp,v 1.12 1998/12/14 23:18:52 remi Exp $"; }
+#endif
+
 #define CORE_INCREMENTS_KEY
 
 // This file is included from rc5.cpp so we can use __inline__.
 #include "problem.h"
 
-#if (PIPELINE_COUNT != 2)
-#error "Expecting pipeline count of 2"
-#endif
+// With different pipeline counts for different cores, this check cannot
+// be done here
+//#if (PIPELINE_COUNT != 2)
+//#error "Expecting pipeline count of 2"
+//#endif
 
 #ifndef _CPU_32BIT_
 #error "everything assumes a 32bit CPU..."
@@ -27,6 +80,12 @@
 
 #define _(s)    __(s)
 #define __(s)   #s
+
+#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__))
+#define BALIGN4 ".align 2, 0x90"
+#else
+#define BALIGN4 ".balign 4"
+#endif
 
 // The S0 values for key expansion round 1 are constants.
 
@@ -100,56 +159,64 @@ struct work_struct {
 // Llo1 = ROTL (Llo1 + A1 + Lhi1, A1 + Lhi1);
 // Llo2 = ROTL (Llo2 + A2 + Lhi2, A2 + Lhi2);
 #define ROUND_1_EVEN(N)	\
-"	addl	%%edx,%%eax		# 1 alu
-	addl	%%edi,%%ebp		#   alu
-	roll	$3,    %%eax		# 2 ?
-	movl	%%eax, "S1(N)"		# 1 st
-	leal	(%%eax,%%edx), %%ecx	#   st (will 'pair' with roll)
-	roll	$3,    %%ebp		# 2 ?
-	movl	%%ebp, "S2(N)"		# 1 st
-	addl	%%ecx, %%ebx		#   alu
-	roll	%%cl,  %%ebx		# 2 ?
-	leal	(%%ebp,%%edi), %%ecx	# 1 st
-	addl	$"S_not(N+1)", %%eax	#   alu
-	addl	%%ecx, %%esi		# 1 alu
-	addl	$"S_not(N+1)", %%ebp	#   alu
-	roll	%%cl,  %%esi		# 2 ?	sum = 12 \n"
+"	leal	"S_not(N)"(%%eax,%%edx),%%eax	# 1
+	leal	"S_not(N)"(%%ebp,%%edi),%%ebp	#
+	leal	(,%%eax,8), %%ecx		# 1 st
+	shrl	$29,    %%eax			#   aluX
+	orl	%%ecx,  %%eax			# 1 aluX
+	leal	(,%%ebp,8), %%ecx		#   st
+	shrl	$29,    %%ebp			# x aluX
+	orl	%%ecx,  %%ebp			#        aluY
+	movl	%%eax, "S1(N)"			# 1
+	leal	(%%eax,%%edx), %%ecx		# 
+	addl	%%ecx, %%ebx			# 1
+	movl	%%ebp, "S2(N)"			# 
+	roll	%%cl,  %%ebx			# 2
+	leal	(%%ebp,%%edi), %%ecx		# 1
+	addl	%%ecx, %%esi			# 
+	roll	%%cl,  %%esi			# 2	sum = 12 \n"
 
 // S1(N) = A1 = ROTL3 (A1 + Llo1 + S_not(N));
 // S2(N) = A2 = ROTL3 (A2 + Llo2 + S_not(N));
 // Lhi1 = ROTL (Lhi1 + A1 + Llo1, A1 + Llo1);
 // Lhi2 = ROTL (Lhi2 + A2 + Llo2, A2 + Llo2);
 #define ROUND_1_ODD(N) \
-"	addl	%%ebx,%%eax		# 1 alu
-	addl	%%esi,%%ebp		#   alu
-	roll	$3,    %%eax		# 2 ?
-	movl	%%eax, "S1(N)"		# 1 st
-	leal	(%%eax,%%ebx), %%ecx	#   st (will 'pair' with roll)
-	roll	$3,    %%ebp		# 2 ?
-	movl	%%ebp, "S2(N)"		# 1 st
-	addl	%%ecx, %%edx		#   alu
-	roll	%%cl,  %%edx		# 2 ?
-	leal	(%%ebp,%%esi), %%ecx	# 1 alu
-	addl	$"S_not(N+1)", %%eax	#   alu
-	addl	%%ecx, %%edi		# 1 alu
-	addl	$"S_not(N+1)", %%ebp	#   alu
-	roll	%%cl,  %%edi		# 2 ?	sum = 12 \n"
+"	leal	"S_not(N)"(%%eax,%%ebx),%%eax	# 1
+	leal	"S_not(N)"(%%ebp,%%esi),%%ebp	# 
+	leal	(,%%eax,8), %%ecx		# 1 st
+	shrl	$29,    %%eax			#   aluX
+	orl	%%ecx,  %%eax			# 1 aluX
+	leal	(,%%ebp,8), %%ecx		#   st
+	shrl	$29,    %%ebp			# x aluX
+	orl	%%ecx,  %%ebp			#        aluY
+	movl	%%eax, "S1(N)"			# 1
+	leal	(%%eax,%%ebx), %%ecx		# 
+	addl	%%ecx, %%edx			# 1
+	movl	%%ebp, "S2(N)"			# 
+	roll	%%cl,  %%edx			# 2
+	leal	(%%ebp,%%esi), %%ecx		# 1
+	addl	%%ecx, %%edi			# 
+	roll	%%cl,  %%edi			# 2	sum = 12 \n"
 
 #define ROUND_1_LAST(N) \
-"	addl	%%ebx,%%eax		# 1 alu
-	addl	%%esi,%%ebp		#   alu
-	roll	$3,    %%eax		# 2 ?
-	movl	%%eax, "S1(N)"		# 1 st
-	leal	(%%eax,%%ebx), %%ecx	#   st (will 'pair' with roll)
-	roll	$3,    %%ebp		# 2 ?
-	movl	%%ebp, "S2(N)"		# 1 st
-	addl	%%ecx, %%edx		#   alu
-	roll	%%cl,  %%edx		# 2 ?
-	leal	(%%ebp,%%esi), %%ecx	# 1 alu
-	addl	$"S0_ROTL3", %%eax	#   alu
-	addl	%%ecx, %%edi		# 1 alu
-	addl	$"S0_ROTL3", %%ebp	#   alu
-	roll	%%cl,  %%edi		# 2 ?	sum = 12 \n"
+"	leal	"S_not(N)"(%%eax,%%ebx),%%eax	# 1
+	leal	"S_not(N)"(%%ebp,%%esi),%%ebp	# 
+	leal	(,%%eax,8), %%ecx		# 1 st
+	shrl	$29,    %%eax			#   aluX
+	orl	%%ecx,  %%eax			# 1 aluX
+	leal	(,%%ebp,8), %%ecx		#   st
+	shrl	$29,    %%ebp			# x aluX
+	orl	%%ecx,  %%ebp			#        aluY
+	movl	%%eax, "S1(N)"			# 1
+	leal	(%%eax,%%ebx), %%ecx		# 
+	addl	$"S0_ROTL3", %%eax		#   alu
+	addl	%%ecx, %%edx			# 1
+	movl	%%ebp, "S2(N)"			# 
+	roll	%%cl,  %%edx			# 2
+	leal	(%%ebp,%%esi), %%ecx		# 1
+	addl	$"S0_ROTL3", %%ebp		#   alu
+	addl	%%ecx, %%edi			# 
+	roll	%%cl,  %%edi			# 2	sum = 12 \n"
 
 #define ROUND_1_ODD_AND_EVEN(N1,N2) \
 	ROUND_1_ODD (N1) \
@@ -163,12 +230,16 @@ struct work_struct {
 #define ROUND_2_EVEN(N) \
 "	addl	%%edx,  %%eax		# 1 alu
 	addl	%%edi,  %%ebp		#   alu
-	roll	$3,     %%eax		# 2 ?
-	roll	$3,     %%ebp		# 2 ?
-	movl	%%eax,  "S1(N)"		#   st
-	movl	%%ebp,  "S2(N)"		#   st
+	leal	(,%%eax,8), %%ecx	# 1 st
+	shrl	$29,    %%eax		#   aluX
+	orl	%%ecx,  %%eax		# 1 aluX
+	leal	(,%%ebp,8), %%ecx	#   st
+	shrl	$29,    %%ebp		# 2 aluX
+	orl	%%ecx,  %%ebp		#        aluX
+	movl	%%eax,  "S1(N)"		#        st
 	leal	(%%eax, %%edx), %%ecx	#   st
 	addl	%%ecx,  %%ebx		#   alu
+	movl	%%ebp,  "S2(N)"		# 2 st
 	roll	%%cl,   %%ebx		# 2 ?
 	leal	(%%ebp, %%edi), %%ecx	#   st
 	addl	"S1(N+1)",%%eax		#   ld  alu
@@ -183,12 +254,16 @@ struct work_struct {
 #define ROUND_2_ODD(N) \
 "	addl	%%ebx,  %%eax		#
 	addl	%%esi,  %%ebp		#
-	roll	$3,     %%eax		#
-	roll	$3,     %%ebp		#
+	leal	(,%%eax,8), %%ecx	#
+	shrl	$29,    %%eax		#
+	orl	%%ecx,  %%eax		#
+	leal	(,%%ebp,8), %%ecx	#
+	shrl	$29,    %%ebp		#
+	orl	%%ecx,  %%ebp		#
 	movl	%%eax,  "S1(N)"		#
-	movl	%%ebp,  "S2(N)"		#
 	leal	(%%eax, %%ebx), %%ecx	#
 	addl	%%ecx,  %%edx		#
+	movl	%%ebp,  "S2(N)"		#
 	roll	%%cl,   %%edx		#
 	leal	(%%ebp, %%esi), %%ecx	#
 	addl	"S1(N+1)",%%eax		#
@@ -199,12 +274,16 @@ struct work_struct {
 #define ROUND_2_LAST(N) \
 "	addl	%%ebx,  %%eax		#
 	addl	%%esi,  %%ebp		#
-	roll	$3,     %%eax		#
-	roll	$3,     %%ebp		#
+	leal	(,%%eax,8), %%ecx	#
+	shrl	$29,    %%eax		#
+	orl	%%ecx,  %%eax		#
+	leal	(,%%ebp,8), %%ecx	#
+	shrl	$29,    %%ebp		#
+	orl	%%ecx,  %%ebp		#
 	movl	%%eax,  "S1(N)"		#
-	movl	%%ebp,  "S2(N)"		#
 	leal	(%%eax, %%ebx), %%ecx	#
 	addl	%%ecx,  %%edx		#
+	movl	%%ebp,  "S2(N)"		#
 	roll	%%cl,   %%edx		#
 	leal	(%%ebp, %%esi), %%ecx	#
 	movl	%%ebp,"work_key2_ebp"
@@ -233,7 +312,7 @@ struct work_struct {
 "_round3_k6_"_(Sx)"_"_(N)":
 	addl	%%edx,    %%eax
 	addl	"Sx(N)",  %%eax
-	roll	$3,       %%eax
+	roll	$3,	  %%eax
 	movl	%%edi,    %%ecx
 	xorl	%%edi,    %%esi
 	roll	%%cl,     %%esi
@@ -244,7 +323,7 @@ struct work_struct {
 	
 	addl	%%ebx,    %%eax
 	addl	"Sx(N+1)",%%eax
-	roll	$3,       %%eax
+	roll	$3,	  %%eax
 	movl	%%esi,    %%ecx
 	xorl	%%esi,    %%edi
 	roll	%%cl,     %%edi
@@ -333,7 +412,7 @@ u32 rc5_unit_func_k6( RC5UnitWork * rc5unitwork, u32 timeslice )
 	leal	(%%eax,%%ebx), %%ecx		# 2
 	movl	%%ecx, "work_pre3_r1"		# 1
 
-.balign 4
+"BALIGN4"
 _loaded_k6:\n"
 
     /* ------------------------------ */
@@ -347,9 +426,9 @@ _loaded_k6:\n"
 
 	movl	"work_pre3_r1", %%ecx
 	addl	%%ecx, %%edx
-	addl	$"S_not(2)", %%eax
+	#addl	$"S_not(2)", %%eax
 	addl	%%ecx, %%edi
-	addl	$"S_not(2)", %%ebp
+	#addl	$"S_not(2)", %%ebp
 	roll	%%cl,  %%edx
 	roll	%%cl,  %%edi \n"
 
@@ -495,7 +574,7 @@ _loaded_k6:\n"
 	cmpl	"work_C_1", %%edi
 	je	_full_exit_k6
 
-.balign 4
+"BALIGN4"
 __exit_1_k6: \n"
 
     /* Restore 2nd key parameters */
@@ -570,7 +649,7 @@ __exit_1_k6: \n"
 	movl	$1, "work_add_iter"
 	jmp	_full_exit_k6
 
-.balign 4
+"BALIGN4"
 __exit_2_k6:
 
 	movl	"work_key_hi", %%edx
@@ -590,7 +669,7 @@ _next_iter_k6:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_k6
 
-.balign 4
+"BALIGN4"
 _next_iter2_k6:
 	movl	%%ebx, "work_key_lo"
 	movl	%%edx, "work_key_hi"
@@ -603,7 +682,7 @@ _next_iter2_k6:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_k6
 
-.balign 4
+"BALIGN4"
 _next_inc_k6:
 	addl	$0x00010000, %%edx
 	testl	$0x00FF0000, %%edx
@@ -642,7 +721,7 @@ _next_inc_k6:
 	# Not much to do here, since we have finished the block ...
 
 
-.balign 4
+"BALIGN4"
 _full_exit_k6:
 	movl	"work_save_ebp", %%ebp \n"
 
