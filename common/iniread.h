@@ -3,6 +3,9 @@
 // INI file reading/processing class for C++
 //
 // $Log: iniread.h,v $
+// Revision 1.25  1999/02/28 03:14:16  jlawson
+// added alternate iniread options for proxy compiles.
+//
 // Revision 1.24  1999/01/31 20:19:09  cyp
 // Discarded all 'bool' type wierdness. See cputypes.h for explanation.
 //
@@ -79,12 +82,20 @@
 #ifndef __INIREAD_H__
 #define __INIREAD_H__
 
-// define this value to not split ini values by commas.
-#define INIREAD_SINGLEVALUE
+#ifdef PROXYTYPE      // compiling proxy
+  // proxy needs automatic tokenizing of ini values.
+  #undef INIREAD_SINGLEVALUE
 
-// define this value to only provide a public win32-like interface.
-#define INIREAD_WIN32_LIKE
+  // proxy uses the full class interface.
+  #undef INIREAD_WIN32_LIKE
 
+#else                 // compiling client
+  // define this value to not split ini values by commas.
+  #define INIREAD_SINGLEVALUE
+
+  // define this value to only provide a public win32-like interface.
+  #define INIREAD_WIN32_LIKE
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 
