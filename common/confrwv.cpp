@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.20 2000/01/18 23:17:54 lyndon Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.21 2000/01/19 00:49:29 ctate Exp $"; }
 
 //#define TRACE
 
@@ -1195,7 +1195,7 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
         if (cont_i != OGR)
         {
           __XSetProfileInt( p, "core", client->coretypes[cont_i], fn, -1, 0 );
-          if (client->preferred_blocksize > 0 ||
+          if (client->preferred_blocksize[cont_i] > 0 ||
               GetPrivateProfileStringB(p,"preferred-blocksize","",buffer,2,fn))
           {      
             __XSetProfileInt( p, "preferred-blocksize", 

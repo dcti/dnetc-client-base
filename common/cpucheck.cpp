@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.33 2000/01/14 22:43:56 mfeiri Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.34 2000/01/19 00:49:30 ctate Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -509,6 +509,22 @@ static long __GetRawProcessorID(const char **cpuname)
         }
       }
       fclose(cpuinfo);
+    }
+  }
+  #elif (CLIENT_OS == OS_BEOS)	// BeOS PPC
+  if (detectedtype == -2L)
+  {
+    system_info sInfo;
+    get_system_info(&sInfo);
+    switch (sInfo.cpu_type)
+    {
+    case B_CPU_PPC_601: detectedtype = 1; break;
+    case B_CPU_PPC_603: detectedtype = 3; break;
+    case B_CPU_PPC_603e: detectedtype = 6; break;
+    case B_CPU_PPC_604: detectedtype = 4; break;
+    case B_CPU_PPC_604e: detectedtype = 9; break;
+    case B_CPU_PPC_750: detectedtype = 8; break;
+	default: detectedtype = -1;		// some PPC processor that we don't know about
     }
   }
   #endif

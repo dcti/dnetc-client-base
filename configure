@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.98 2000/01/18 20:08:10 lyndon Exp $
+# @(#)$Id: configure,v 1.222.2.99 2000/01/19 00:49:28 ctate Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1530,28 +1530,18 @@ case "$1" in
     *x86-beos)
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 -fno-pic -O3 -Wno-multichar -DMMX_RC5 -DMMX_CSC \
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -fno-pic -O3 -Wno-multichar -DMMX_RC5 \
 			-D__showids__ -DMULTITHREAD -DHAVE_OGR_CORES"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$KWAN_SLICE_SRCS4 $OGR_ANSI_SRCS"
 	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
 	TARGET_LIBS=""
+		TARGET_TARBALL="beos-x86"
         TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
 	;;
 
-    *ppc603-beos)
-	TARGET_AS="mwcc -c"
-	TARGET_CC="mwcc"
-	TARGET_CCFLAGS="$OPTS_MWCC_PPC603 -D__showids__ -DMULTITHREAD -DKWAN -DHAVE_OGR_CORES"
-	TARGET_LDFLAGS=""
-	TARGET_ADDSRCS="$RC5PPC_MWCC_SRCS $OGR_ANSI_SRCS"
-	TARGET_LIBS=""
-	TARGET_STRIP="touch"
-        TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
-	;;
-
-    *ppc604-beos)
+    *ppc-beos)
 	TARGET_AS="mwcc -c"
 	TARGET_CC="mwcc"
 	TARGET_CCFLAGS="$OPTS_MWCC_PPC604 -D__showids__ -DMULTITHREAD -DKWAN -DHAVE_OGR_CORES"
@@ -1559,6 +1549,7 @@ case "$1" in
 	TARGET_ADDSRCS="$RC5PPC_MWCC_SRCS $OGR_ANSI_SRCS"
 	TARGET_LIBS=""
 	TARGET_STRIP="touch"
+		TARGET_TARBALL="beos-ppc"
         TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
 	;;
 
