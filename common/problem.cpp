@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.134 1999/12/08 05:41:01 remi Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.135 1999/12/08 22:51:02 michmarc Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -123,7 +123,7 @@ return "@(#)$Id: problem.cpp,v 1.134 1999/12/08 05:41:01 remi Exp $"; }
     extern "C" u32 rc5_alpha_osf_ev5( RC5UnitWork *, u32 );
   #elif (CLIENT_OS == OS_WIN32) /* little-endian asm */
     //rc5/alpha/rc5-alpha-nt.s
-    extern "C" u32 rc5_unit_func( RC5UnitWork *, unsigned long iterations );
+    extern "C" u32 rc5_unit_func( RC5UnitWork *, u32 );
   #else
     //axp-bmeyer.cpp around axp-bmeyer.s
     extern "C" u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, u32 );
@@ -647,8 +647,10 @@ static int __core_picker(Problem *problem, unsigned int contestid)
                break;
       case 3 : problem->unit_func = csc_unit_func_1k;
                break;
+#if defined(MMX_CSC)
       case 4 : problem->unit_func = csc_unit_func_6b_mmx;
                break;
+#endif
     }
     return coresel;
   }
@@ -1067,12 +1069,7 @@ LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
 
   iterations /= pipeline_count;
 
-  #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
-    #error michmarc, please fix this
-    kiter = (iterations*pipeline_count)-(*rc5_unit_func)(&rc5unitwork,iterations);
-  #else
-    kiter = (*rc5_unit_func)(&rc5unitwork, iterations);
-  #endif
+  kiter = (*rc5_unit_func)(&rc5unitwork, iterations);
   
   iterations *= pipeline_count;
   *iterationsP = iterations;
