@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.80 2001/02/18 23:34:50 sampo Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.81 2001/02/19 08:11:08 mfeiri Exp $
 ==========================================================================
 
 2.8000
@@ -33,6 +33,9 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.80 2001/02/18 23:34:50 sampo Exp $
             new: ia64: new 4 pipeline ansi core, used by ia64.
             imp: all: add support for a second argument to -test/-bench, the
                  number to use.  example: 'dnetc -test rc5 8' 
+            imp: some: OGR behaves more predictably on non-preemptive systems.
+            new: macos: dnetc can now find its support files in the active
+                 systems "Application Support" or "Preferences" folder.
 
 2.8012.466  new: x86: most unix-ish clients now support the RC5/SMC core.
             imp: some: even faster OGR core.
