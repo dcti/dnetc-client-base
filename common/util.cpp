@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.30 2000/05/06 20:07:52 mfeiri Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.31 2000/05/08 11:16:18 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -1002,6 +1002,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           num_found++;
         }
       }
+    }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #elif (CLIENT_OS == OS_MACOS)
     {
