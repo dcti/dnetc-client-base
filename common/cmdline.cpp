@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.7 1999/06/01 05:12:00 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.8 1999/06/01 15:57:51 cyp Exp $"; }
 
 //#define TRACE
 
@@ -105,7 +105,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           unsigned int kill_ok = 0, kill_failed = 0; 
           int last_errno = 0, kill_found = 0;
           const char *binname = (const char *)strrchr( argv[0], '/' );
-	  char altbinname[] = {'r','c','5','d','e','s','\0'};
+          char altbinname[] = {'r','c','5','d','e','s','\0'};
           binname = ((binname==NULL)?(argv[0]):(binname+1));
             
           if ( strcmp( thisarg, "-kill" ) == 0 ||
@@ -752,6 +752,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           else
           {
             inimissing = 0; // Don't complain if the inifile is missing
+            autofindkeyserver = 0;
             strcpy( keyproxy, nextarg );
           }
         }
