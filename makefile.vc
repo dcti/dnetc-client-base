@@ -62,7 +62,8 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/w32pre.obj     \
 	$(OUTPUTPATH)/console.obj    \
 	$(OUTPUTPATH)/setprio.obj    \
-	$(OUTPUTPATH)/modereq.obj 
+	$(OUTPUTPATH)/modereq.obj    \
+	$(OUTPUTPATH)/checkpt.obj
 
 PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/rg-486.obj   \
