@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.126  1998/11/15 06:31:28  remi
+# Added the missing RC5CORECOPY to power-gcc target.
+#
 # Revision 1.125  1998/11/13 06:13:46  silby
 # Made freebsd targets static
 #
@@ -868,6 +871,7 @@ case "$1" in
 	;;
 
     *power-gcc)            # generic POWER target
+	RC5CORECOPY="rc5/rc5ansi1-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_GCC_POWER -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	;;
