@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.14 2003/09/07 19:15:32 mweiser Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.15 2003/09/12 13:22:37 mweiser Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -357,17 +357,18 @@
   #endif
   #define CLIENT_OS_NAME   "AIX"
   #define CLIENT_OS        OS_AIX
-  /* AIXALL hides itself as POWER, it's more easy to cope with this problem */
-  /* in the POWER tree, because this is used on AIX only */
-  #if defined(_ARCH_PPC) || defined(ASM_PPC) || defined(_AIXALL)
+
+  #if defined(_ARCH_PPC)
     #define CLIENT_CPU     CPU_POWERPC
-  #elif (defined(_ARCH_PWR) || defined(_ARCH_PWR2) || defined(ASM_POWER))
+  #elif defined(_ARCH_PWR) || defined(_ARCH_PWR2)
     #define CLIENT_CPU     CPU_POWER
   #endif
-  /* make shure we are only using threads if the compiler suuports it */
-  /* for egcs, we have to use -mthreads, for xlc, use cc_r */
+
+  /* make sure we are only using threads if the compiler supports it,
+  ** for egcs, we have to use -mthreads, for gcc > 3.1 use -pthread and
+  ** for xlc, use cc_r */
   #if defined(_THREAD_SAFE)
-  #define HAVE_POSIX_THREADS
+    #define HAVE_POSIX_THREADS
   #endif
 #elif defined(macintosh)
   #define CLIENT_OS_NAME   "Mac OS"
@@ -551,10 +552,16 @@
   #elif (CLIENT_OS == OS_LINUX) && defined(_MIT_POSIX_THREADS)
     #define pthread_sigmask(a,b,c) /*no*/
   #elif (CLIENT_OS == OS_AIX)
-	/* only for AIX 4.1??? */
     #define pthread_sigmask(a,b,c) sigthreadmask(a,b,c)
-        /* no use under AIX 4.1.5, all threads have same prio */
-    #undef _POSIX_THREAD_PRIORITY_SCHEDULING
+
+    /* we need to switch threads to system scheduling scope otherwise
+    ** they'll all run on one processor, _POSIX_THREAD_PRIORITY_
+    ** SCHEDULING is defined in unistd.h when _AIX_PTHREADS_D7 is
+    ** defined, no special libs are involved, xlC_r7 would add this
+    ** define but gcc doesn't have it so we do it by hand, actually
+    ** we're supposed to link against libpthread_compat.a but it works
+    ** fine without it */
+    #define _AIX_PTHREADS_D7 1
   #endif
 #elif defined(__unix__) && !defined(SINGLE_CRUNCHER_ONLY)
   typedef int /*pid_t*/ THREADID;
