@@ -21,7 +21,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.34 1999/04/08 06:56:41 dicamillo Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.35 1999/04/08 08:18:17 dicamillo Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -80,6 +80,8 @@ int CliTimeGetMinutesWest(void)
   minwest = GetGmtDelta(thisLocation);
   minwest = minwest/60;
   minwest = -minwest;
+  if (IsDaylightSavingsOn())
+    minwest += 60;
   precalced_minuteswest = minwest;
 #elif (CLIENT_OS==OS_SCO) || (CLIENT_OS==OS_AMIGA) || \
   ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
