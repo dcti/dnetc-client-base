@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.99 2003/08/25 23:30:04 mweiser Exp $
+# @(#)$Id: configure,v 1.288.2.100 2003/09/01 06:28:37 jlawson Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1153,6 +1153,11 @@ COMMON_SRCS="\
 	     common/triggers.cpp \
 	     common/coremem.cpp  \
 	     common/selcore.cpp  \
+	     common/core_rc5.cpp  \
+	     common/core_des.cpp  \
+	     common/core_csc.cpp  \
+	     common/core_ogr.cpp  \
+	     common/core_r72.cpp  \
 	     common/cmdline.cpp  \
 	     common/selftest.cpp \
 	     common/pollsys.cpp  \
