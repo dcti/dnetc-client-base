@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.184  1999/02/04 22:56:09  remi
+# Fixed a typo in alpha-linux.
+#
 # Revision 1.183  1999/02/04 22:44:22  remi
 # Replaced Meggs' bitslicer by DWorz's one in
 # alpha-{gcc,linux,openbsd,netbsd} targets.
@@ -1292,7 +1295,7 @@ case "$1" in
     *alpha-linux)
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
-	TARGET_CCFLAGS="OPTS_GCC_ALPHA -DPIPELINE_COUNT=2 \
+	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=2 \
 			-DBIT_64 -DKWAN -DDWORZ"
 	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS \
 			rc5/alphaasm/axp-bmeyer.cpp \
