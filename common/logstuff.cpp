@@ -11,7 +11,7 @@
  * ------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.12 2000/01/11 23:20:53 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.13 2000/01/23 00:33:18 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -485,10 +485,10 @@ static void InternalLogMail( const char *msgbuffer, unsigned int msglen, int /*f
 void LogWithPointer( int loggingTo, const char *format, va_list *arglist ) 
 {
   char msgbuffer[MAX_LOGENTRY_LEN];
-  unsigned int msglen = 0;
+  unsigned int msglen = 0, sel;
   char *buffptr, *obuffptr;
   const char *timestamp;
-  int sel, old_loggingTo = loggingTo;
+  int old_loggingTo = loggingTo;
   
   msgbuffer[0]=0;
   loggingTo &= (logstatics.loggingTo|LOGTO_RAWMODE);
@@ -496,14 +496,6 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
   if ( !format || !*format )
     loggingTo = LOGTO_NONE;
   
-  if ( loggingTo != LOGTO_NONE && *format == '\r' )   //can only be screen
-  {                                                 //(or nothing)
-    if (( loggingTo & LOGTO_SCREEN ) != 0 )
-      loggingTo = (LOGTO_SCREEN|LOGTO_RAWMODE);  //force into raw mode
-    else
-      loggingTo = LOGTO_NONE;
-  }
-
   if ( loggingTo != LOGTO_NONE )
   {
     if ( arglist == NULL )
@@ -550,11 +542,23 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
     msglen = strlen( msgbuffer );
   }
 
-  if (logstatics.spoolson && (loggingTo & LOGTO_FILE) != 0 )
-    InternalLogFile( msgbuffer, msglen, 0 );
-
-  if (logstatics.spoolson && (loggingTo & LOGTO_MAIL) != 0 )
-    InternalLogMail( msgbuffer, msglen, 0 );
+  if (logstatics.spoolson && (loggingTo & (LOGTO_FILE|LOGTO_MAIL)) != 0 )
+  {
+    sel = msglen;
+    buffptr = &msgbuffer[0];
+    while (sel > 0 && *buffptr == '\r')
+    {
+      buffptr++;
+      sel--;
+    }
+    if (sel > 0)
+    {
+      if ((loggingTo & LOGTO_FILE) != 0 )
+        InternalLogFile( buffptr, sel, 0 );
+      if ((loggingTo & LOGTO_MAIL) != 0 )
+        InternalLogMail( buffptr, sel, 0 );
+    }
+  }      
   
   if (( loggingTo & LOGTO_SCREEN ) != 0)
   {
