@@ -14,7 +14,7 @@
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.12 2001/03/24 16:57:47 cyp Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.13 2001/03/25 13:02:23 oliver Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -74,38 +74,41 @@
 
   #error "please check this"
 
-  typedef volatile long int fastlock_t __attribute__ ((__aligned__ (16)));
-  #define FASTLOCK_INITIALIZER_UNLOCKED 0L
+  typedef { volatile unsigned int spl; } fastlock_t __attribute__ ((__aligned__ (32)));
+  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
 
-  static __inline__ void fastlock_unlock(fastlock_t *__lock)
+  static __inline__ void fastlock_unlock(fastlock_t *v)
   {
-    __asm__ __volatile__ ("mb; stq $31, %0; mb"
-                          : "=m" (__lock));
+    __asm__ __volatile__("mb": : :"memory")
+    v->spl = 0;  
   }
-  static __inline__ int fastlock_trylock(fastlock_t *m)
+  /* http://lxr.linux.no/source/include/asm-alpha/bitops.h?v=2.4.0#L92 */
+  extern __inline__ int
+  test_and_set_bit(unsigned long nr, volatile void *addr)
   {
-    /* based on __cmpxchg_u64() in 
-       http://lxr.linux.no/source/include/asm-alpha/system.h?v=2.4.0 
-       see also
-       http://cvsweb.netbsd.org/bsdweb.cgi/syssrc/sys/arch/alpha/include/lock.h?1.3.2.3
-    */
-    unsigned long old = 0, new = 1;
-    unsigned long prev, cmp;
-    __asm__ __volatile__(
-          "1:     ldq_l %0,%5   \n\t"\
-          "       cmpeq %0,%3,%1\n\t"\
-          "       beq %1,2f     \n\t"\
-          "       mov %4,%1     \n\t"\
-          "       stq_c %1,%2   \n\t"\
-          "       beq %1,3f     \n\t"\
-          "       mb            \n\t"\
-          "2:                   \n\t"\
-          ".subsection 2        \n\t"\
-          "3:     br 1b         \n\t"\
-          ".previous"
-          : "=&r"(prev), "=&r"(cmp), "=m"(*m)
-          : "r"((long) old), "r"(new), "m"(*m) : "memory");
-    if (prev == 0)
+        unsigned long oldbit;
+        unsigned long temp;
+        int *m = ((int *) addr) + (nr >> 5);
+ 
+        __asm__ __volatile__(
+        "1:     ldl_l %0,%4   \n\t" \
+        "       and %0,%3,%2  \n\t" \
+        "       bne %2,2f     \n\t" \
+        "       xor %0,%3,%0  \n\t" \
+        "       stl_c %0,%1   \n\t" \
+        "       beq %0,3f     \n\t" \
+        "2:     mb            \n\t" \
+        ".subsection 2        \n\t" \
+        "3:     br 1b         \n\t" \
+        ".previous"
+        :"=&r" (temp), "=m" (*m), "=&r" (oldbit)
+        :"Ir" (1UL << (nr & 31)), "m" (*m) : "memory");
+
+        return oldbit != 0;
+  }
+  static __inline__ int fastlock_trylock(fastlock_t *v)
+  {
+    if (!test_and_set_bit(0, &(v->spl)))
       return +1;
     return 0;
   }
@@ -216,17 +219,18 @@
   http://cvsweb.netbsd.org/bsdweb.cgi/syssrc/sys/arch/powerpc/include/lock.h?rev=1.4.2.1
   approved by Dan Oetting
   */
-  typedef __volatile int fastlock_t __attribute__ ((__aligned__ (16)));
-  #define FASTLOCK_INITIALIZER_UNLOCKED 0
+  typedef struct { __volatile int spl; } fastlock_t __attribute__ ((__aligned__ (16)));
+  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
 
-  static __inline__ void fastlock_unlock(fastlock_t *alp)
+  static __inline__ void fastlock_unlock(fastlock_t *__alp)
   { 
     __asm __volatile ("sync");
-    *alp = FASTLOCK_INITIALIZER_UNLOCKED;
+    *__alp = FASTLOCK_INITIALIZER_UNLOCKED;
   }
-  static __inline int fastlock_trylock(fastlock_t *alp)
+  static __inline__ int fastlock_trylock(fastlock_t *__alp)
   {
     int old, dummy;
+    __volatile int *alp = &(__alp->spl);
     __asm__ __volatile__ ( /* compare_and_swap */
                    "1:  lwarx  %0,0,%1 \n\t"\
                    "    cmpwi  %0,%2   \n\t"\
@@ -267,25 +271,25 @@
   #pragma pack(4)
   typedef struct { volatile int spl; } fastlock_t;
   #pragma pack()
-  #define FASTLOCK_INITIALIZER_UNLOCKED {0}
+  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
 
-  static __inline__ void fastlock_unlock(fastlock_t *alp)
+  static __inline__ void fastlock_unlock(fastlock_t *__alp)
   { 
     asm { sync }
-    alp->spl = FASTLOCK_INITIALIZER_UNLOCKED;   
+    __alp->spl = FASTLOCK_INITIALIZER_UNLOCKED;   
   }
-  static __inline__ int fastlock_trylock(fastlock_t *alp)
+  static __inline__ int fastlock_trylock(fastlock_t *__alp)
   {
     int dummy;
     register int *dummyp = &dummy;
     register old, locked = 1;
-    volatile int *__alp = &(alp->spl);
+    volatile int *alp = &(__alp->spl);
     asm 
     {
-      @1:     lwarx   old,0,__alp
+      @1:     lwarx   old,0,alp
               cmpwi   old,FASTLOCK_INITIALIZER_UNLOCKED
               bne     @2
-              stwcx.  locked,0,__alp
+              stwcx.  locked,0,alp
               bne-    @1
       @2:     stwcx.  locked,0,dummyp
               isync
@@ -294,20 +298,38 @@
       return +1;  /* then success */
     return 0;
   }
+  #if (CLIENT_OS == OS_MACOS)
+  #include <Multiprocessing.h>
+  #endif
   static __inline__ void fastlock_lock(fastlock_t *m)
   {
+    #if (CLIENT_OS == OS_MACOS)
+    int need_mp_sleep = -1; /* unknown */
     while (fastlock_trylock(m) <= 0)
     {
-      #if (CLIENT_OS == OS_MACOS)
       /* the only way we could get here is if we are
       ** running on an MP system and the lock is being
-      ** held on another cpu, so busy spin until the
-      ** lock is released (it won't be long)
+      ** held on another cpu, so we could actually 
+      ** busy spin until the lock was released. But 
+      ** we'll play nice...
       */
-      #else
-        #error "What's up Doc?"
-      #endif
+      if (need_mp_sleep == -1) /* first time through */
+      {
+        need_mp_sleep = 0;
+        if (MPLibraryIsLoaded())
+        {
+          if (MPTaskIsPreemptive(kMPInvalidIDErr /* self */))
+            need_mp_sleep = +1;
+        }
+      }
+      if (need_mp_sleep)
+        MPYield();
+      else
+        macosSmartYield(6); /* shouldn't be needed, but doesn't hurt */
     }
+    #else
+      #error "What's up Doc?"
+    #endif
   }
 
 #elif (CLIENT_CPU == CPU_68K) && defined(__GNUC__)
@@ -352,11 +374,12 @@
 
 #elif (CLIENT_CPU == CPU_PA_RISC) && defined(__GNUC__)
 
-  typedef __volatile int fastlock_t __attribute__ ((__aligned__ (16)));
-  #define FASTLOCK_INITIALIZER_UNLOCKED -1 /* note! "unlocked"=-1 */
+  typedef struct { __volatile int spl; } fastlock_t __attribute__ ((__aligned__ (16)));
+  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){-1}) /* note! "unlocked"=-1 */
 
-  static __inline__ void fastlock_unlock(fastlock_t *__lock)
+  static __inline__ void fastlock_unlock(fastlock_t *__alp)
   {
+    __volatile int *__lock = &(__alp->spl);
     *__lock = -1;
   }
   static __inline__ int fastlock_trylock(fastlock_t *__lock)
@@ -364,6 +387,7 @@
     /* based on gnu libc source in
        sysdeps/mach/hppa/machine-lock.h
     */
+    __volatile int *__lock = &(__alp->spl);
     register int __result;
     /* LDCW, the only atomic read-write operation PA-RISC has.  Sigh. */
     __asm__ __volatile__ ("ldcws %0, %1" : "=m" (*__lock), "=r" (__result));
@@ -423,7 +447,7 @@
   #error "please check this"
 
   typedef struct { volatile unsigned long lock; } fastlock_t;
-  #define FASTLOCK_INITIALIZER_UNLOCKED (fastlock_t){0}
+  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t)({0UL}))
 
   static __inline__ void fastlock_unlock(fastlock_t *lp)
   {
@@ -449,42 +473,13 @@
     }
   }
 
-#elif (CLIENT_CPU == CPU_PA_RISC) && defined(__GNUC__)
-
-  typedef __volatile int fastlock_t __attribute__ ((__aligned__ (16)));
-  #define FASTLOCK_INITIALIZER_UNLOCKED -1 /* note! "unlocked"=-1 */
-
-  static __inline__ void fastlock_unlock(fastlock_t *__lock)
-  {
-    *__lock = -1;
-  }
-  static __inline__ int fastlock_trylock(fastlock_t *__lock)
-  {
-    /* based on gnu libc source in
-       sysdeps/mach/hppa/machine-lock.h
-    */
-    register int __result;
-    /* LDCW, the only atomic read-write operation PA-RISC has.  Sigh. */
-    __asm__ __volatile__ ("ldcws %0, %1" : "=m" (*__lock), "=r" (__result));
-    if (__result != 0) /* __result is non-zero if we locked it */
-      return +1;
-    return 0;
-  }
-  static __inline__ void fastlock_lock(fastlock_t *m)
-  {
-    while (fastlock_trylock(m) <= 0)
-    {
-      NonPolledUSleep(1);
-    }
-  }
-
 #elif defined(CLIENT_CPU == CPU_IA64) && defined(__GNUC__)
 
   /* based on 
      http://lxr.linux.no/source/include/asm-ia64/spinlock.h?v=2.4.0
   */
   typedef struct { volatile unsigned int lock; } spinlock_t;
-  #define FASTLOCK_INITIALIZER_UNLOCKED {0}
+  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t)({0}))
 
   static __inline__ void fastlock_unlock(fastlock_t *v)
   { 
@@ -517,12 +512,13 @@
     http://cvsweb.netbsd.org/bsdweb.cgi/syssrc/sys/arch/sparc/include/lock.h?rev=1.6.2.1 
     http://cvsweb.netbsd.org/bsdweb.cgi/syssrc/sys/arch/sparc64/include/lock.h?rev=1.4.2.1
   */
-  typedef __volatile int                fastlock_t;
-  #define FASTLOCK_INITIALIZER_UNLOCKED 0
-  #define FASTLOCK_INITIALIZER_LOCKED   0xff000000
+  typedef struct { __volatile int spl; } fastlock_t;
+  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t)({0}))
+  #define FASTLOCK_INITIALIZER_LOCKED   ((fastlock_t)({0xff000000}))
 
-  static __inline__ int fastlock_trylock(fastlock_t *alp)
+  static __inline__ int fastlock_trylock(fastlock_t *__alp)
   {
+    __volatile int *alp = &(__alp->spl);
     #define __ldstub(__addr)                  \
     ({                                        \
        int __v;                               \
@@ -535,67 +531,11 @@
     })
     return ((__ldstub(alp) == FASTLOCK_INITIALIZER_UNLOCKED) ? (+1) : (0));
   }
-  static __inline__ void fastlock_unlock(fastlock_t *alp)
+  static __inline__ void fastlock_unlock(fastlock_t *__alp)
   {
+    __volatile int *alp = &(__alp->spl);
     *alp = FASTLOCK_INITIALIZER_UNLOCKED;
   }
-  static __inline__ void fastlock_lock(fastlock_t *m)
-  {
-    while (fastlock_trylock(m) <= 0)
-    {
-      NonPolledUSleep(1);
-    }
-  }
-
-#elif (CLIENT_CPU == CPU_SPARC) && defined(__GNUC__)
-
-  #error "please check this"
-
-  /* based on
-     http://lxr.linux.no/source/include/asm-sparc[64]/system.h
-  */
-  #if (ULONG_MAX == 0xFFFFFFFFUL) /* 32bit */
-  static __inline__ unsigned long atomic_xchg_ulong(
-                    __volatile__ unsigned long *m, unsigned long val)
-  {
-     __asm__ __volatile__("swap [%2], %0"
-                          : "=&r" (val)
-                          : "" (val), "r" (m));
-     return val;
-  }
-  #else /* 64 bit */
-  static __inline__ unsigned long atomic_xchg_ulong(
-                    __volatile__ unsigned long *m, unsigned long val)
-  {
-    __asm__ __volatile__(
-                         "    mov       %0, %%g5          \n\t" \
-                         "1:  ldx       [%2], %%g7        \n\t" \
-                         "    casx      [%2], %%g7, %0    \n\t" \
-                         "    cmp       %%g7, %0          \n\t" \
-                         "    bne,a,pn  %%xcc, 1b         \n\t" \
-                         "    mov       %%g5, %0          \n\t" \
-                         "    membar    #StoreLoad | #StoreStore"
-                         : "=&r" (val)
-                         : "" (val), "r" (m)
-                         : "g5", "g7", "cc", "memory");
-    return val;
-  }
-  #endif
-
-  typedef struct { __volatile__ unsigned long spl; } fastlock_t;
-  #define FASTLOCK_INITIALIZER_UNLOCKED {0L}
-
-  static __inline__ void fastlock_unlock(fastlock_t *v)
-  { 
-    atomic_xchg_ulong( &(v->spl), 0 );
-  }  
-  /* _trylock returns -1 on EINVAL, 0 if could not lock, +1 if could lock */
-  static __inline__ int fastlock_trylock(fastlock_t *v)
-  { 
-    if (atomic_xchg_ulong( &(v->spl), 1 ) == 0)
-      return +1;
-    return 0;
-  }  
   static __inline__ void fastlock_lock(fastlock_t *m)
   {
     while (fastlock_trylock(m) <= 0)
@@ -608,18 +548,20 @@
 
   #error "please check this"
 
-  typedef __volatile int fastlock_t;
-  #define FASTLOCK_INITIALIZER_UNLOCKED 0
+  typedef struct { __volatile int spl; } fastlock_t;
+  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t)({0}))
   /* 
   based on  
   http://cvsweb.netbsd.org/bsdweb.cgi/syssrc/sys/arch/vax/include/lock.h?rev=1.5.2.1
   */
-  static __inline__ void fastlock_unlock(fastlock_t *v)
+  static __inline__ void fastlock_unlock(fastlock_t *__alp)
   {
-    *v = 0;
+    __volatile int *alp = &(__alp->spl);
+    *alp = 0;
   }
-  static __inline__ int fastlock_trylock(fastlock_t *v)
+  static __inline__ int fastlock_trylock(fastlock_t *__alp)
   { 
+    __volatile int *alp = &(__alp->spl);
     int ret;
     __asm__ __volatile ("movl $0,%0;bbssi $0,%1,1f;incl %0;1:"
                 : "=&r"(ret)
@@ -636,14 +578,14 @@
 
 #elif (CLIENT_CPU == CPU_SH4) && defined(__GNUC__)
 
-  #define fastlock_t int
-  #define FASTLOCK_INITIALIZER_UNLOCKED 0
+  typedef { __volatile int spl; } fastlock_t;
+  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t)({0}))
   /*
   * Have 'atomic test-and-set' instruction.  Attempt to acquire the lock,
   * but do not wait.  Returns 0 if successful, nonzero if unable
   * to acquire the lock.
   */
-  static __inline__ unsigned long __tas(volatile int *m)
+  static __inline__ unsigned long __tas(__volatile int *m)
   {
     unsigned long retval;
     __asm__ __volatile__ ("tas.b    @%1\n\t" \
@@ -651,17 +593,19 @@
                           : "=r" (retval): "r" (m): "t", "memory");
     return retval;
   }
-  static __inline__ void fastlock_unlock(volatile fastlock_t *v)
+  static __inline__ void fastlock_unlock(fastlock_t *__alp)
   {
-    *v = 0;
+    __volatile int *alp = &(__alp->spl);
+    *alp = 0;
   }
-  static __inline__ int fastlock_trylock(volatile fastlock_t *v)
+  static __inline__ int fastlock_trylock(fastlock_t *__alp)
   { 
-    if (__tas( v ) == 0)
+    __volatile int *alp = &(__alp->spl);
+    if (__tas( alp ) == 0)
       return +1;
     return 0;
   }  
-  static __inline__ void fastlock_lock(volatile fastlock_t *m)
+  static __inline__ void fastlock_lock(fastlock_t *m)
   {
     while (fastlock_trylock(m) <= 0)
     {
@@ -695,20 +639,22 @@
     return result;
   }
 
-  #define fastlock_t long
-  #define FASTLOCK_INITIALIZER_UNLOCKED 0L
+  typedef { volatile long int spl; } fastlock_t;
+  #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t)({0}))
 
-  static __inline__ void fastlock_unlock(volatile fastlock_t *v)
+  static __inline__ void fastlock_unlock(fastlock_t *__alp)
   {
-    *v = 0;
+    volatile long int *alp = &(__alp->spl);
+    *alp = 0;
   }
-  static __inline__ int fastlock_trylock(volatile fastlock_t *v)
+  static __inline__ int fastlock_trylock(fastlock_t *__alp)
   { 
-    if (__compare_and_swap(v, 0, 1) == 0)
+    volatile long int *alp = &(__alp->spl);
+    if (__compare_and_swap( alp, 0, 1) == 0)
       return +1;
     return 0;
   }  
-  static __inline__ void fastlock_lock(volatile fastlock_t *m)
+  static __inline__ void fastlock_lock(fastlock_t *m)
   {
     while (fastlock_trylock(m) <= 0)
     {
