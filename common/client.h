@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.132 1999/04/19 06:13:46 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133 1999/04/20 02:41:08 cyp Exp $"
 
 
 enum {
@@ -96,6 +96,8 @@ public:
 
   /* -- log -- */
   char logname[128];
+  char logfiletype[64]; /* "none", "no limit", "rotate", "restart", "fifo" */
+  char logfilelimit[64]; /* "nnn K|M|days" etc */
   s32  messagelen;
   char smtpsrvr[128];
   s32  smtpport;

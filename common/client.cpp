@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.203 1999/04/19 06:13:46 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.204 1999/04/20 02:41:08 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -102,6 +102,8 @@ static void __initialize_client_object(Client *client)
 
   /* -- log -- */
   client->logname[0]= 0;
+  client->logfiletype[0] = 0;
+  client->logfilelimit[0] = 0;
   client->messagelen = 0;
   client->smtpport = 25;
   client->smtpsrvr[0]=0;
@@ -257,54 +259,54 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
 int Client::Main( int argc, const char *argv[] )
 {
   int retcode = 0;
-  int domodes = 0;
   int restart = 0;
-  int restarted;
 
-  do{
-    restarted = restart;
+  do
+  {
+    int restarted = restart;
     restart = 0;
     __initialize_client_object(this); /* reset everything in the object */
 
     //ReadConfig() and parse command line - returns !0 if shouldn't continue
     if (ParseCommandline( 0, argc, argv, &retcode, 0 ) == 0)
-      {
-      domodes = (ModeReqIsSet(-1) != 0);
+    {
+      int domodes = (ModeReqIsSet(-1) != 0);
       if (InitializeTriggers(((noexitfilecheck ||
                               domodes)?(NULL):("exitrc5" EXTN_SEP "now")),
                               ((domodes)?(NULL):(pausefile)) )==0)
-        {
+      {
         if (InitializeConnectivity() == 0) //do global initialization
-          {
+        {
           if (InitializeConsole(quietmode,domodes) == 0)
-            {
+          {
             InitializeLogging( (quietmode!=0), (percentprintingoff!=0),
-                               logname, LOGFILETYPE_NOLIMIT, 0, messagelen,
-                               smtpsrvr, smtpport, smtpfrom, smtpdest, id );
+                               logname, logfiletype, logfilelimit, 
+                               messagelen, smtpsrvr, smtpport, smtpfrom, 
+                               smtpdest, id );
             PrintBanner(id,0,restarted);
             ParseCommandline( 1, argc, argv, NULL, (quietmode==0)); //show overrides
             InitRandom2( id );
 
             if (domodes)
-              {
+            {
               ModeReqRun( this );
-              }
+            }
             else
-              {
+            {
               PrintBanner(id,1,restarted);
               SelectCore( 0 );
               retcode = Run();
               restart = CheckRestartRequestTrigger();
-              }
+            }
             DeinitializeLogging();
             DeinitializeConsole();
-            }
-          DeinitializeConnectivity(); //netinit.cpp
           }
-        DeinitializeTriggers();
+          DeinitializeConnectivity(); //netinit.cpp
         }
+        DeinitializeTriggers();
       }
-    } while (restart);
+    }
+  } while (restart);
   return retcode;
 }
 
