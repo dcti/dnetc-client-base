@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: client.h,v $
+// Revision 1.42  1998/06/15 09:17:57  jlawson
+// removed include of pthread.h since threadcd.h knows when to include it
+//
 // Revision 1.41  1998/06/14 11:22:37  ziggyb
 // Fixed the OS/2 headers and added an os2defs.h and adjusted for the
 // seperate sleep defines header.
@@ -46,6 +49,7 @@
 #include "mail.h"
 #include "convdes.h"
 #include "sleepdef.h"
+#include "threadcd.h"
 
 #define OPTION_SECTION "parameters"
 
@@ -126,9 +130,9 @@ extern "C" {
   #include <ras.h>
   #include <conio.h>
   #include <share.h>
-#ifdef __TURBOC__
-  #include <dir.h>
-#endif
+  #ifdef __TURBOC__
+    #include <dir.h>
+  #endif
 #elif (CLIENT_OS == OS_DOS)
   #include <sys/timeb.h>
   #include <io.h>
@@ -211,11 +215,6 @@ extern "C" {
 #elif (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS)
   extern "C" int nice(int);
   extern "C" int gethostname(char *, int); // Keep g++ happy.
-#endif
-
-
-#if defined(MULTITHREAD) && (CLIENT_OS != OS_WIN32) && (CLIENT_OS != OS_OS2) && (CLIENT_OS != OS_NETWARE) && (CLIENT_OS != OS_BEOS)
-#include <pthread.h>
 #endif
 
 
