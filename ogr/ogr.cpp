@@ -14,11 +14,7 @@
 /* this is in choosedat.c */
 extern unsigned char choose_dat[];
 
-typedef unsigned long U;
-
 #define CHOOSEBITS 12
-#define BITMAPS     5       /* need to change macros when changing this */
-#define MAXDEPTH   40
 #define MAXBITS    12
 #define ttmMAXBITS (32-MAXBITS)
 
@@ -32,31 +28,6 @@ static int OGR[] = {
 };
 static char first[65537];  /* first blank in 16 bit COMP bitmap, range: 1..16 */
 static U bit[200];         /* which bit of LIST to update */
-
-struct Level {
-  U list[BITMAPS];
-  U dist[BITMAPS];
-  U comp[BITMAPS];
-  int cnt1;
-  int cnt2;
-  int limit;
-};
-
-struct State {
-  double Nodes;                   /* counts "tree branches" */
-  int max;                        /* maximum length of ruler */
-  int maxdepth;                   /* maximum number of marks in ruler */
-  int maxdepthm1;                 /* maxdepth-1 */
-  int half_length;                /* half of max */
-  int half_depth;                 /* half of maxdepth */
-  int half_depth2;                /* half of maxdepth, adjusted for 2nd mark */
-  int marks[MAXDEPTH+1];          /* current length */
-  int startdepth;
-  int depth;
-  int limit;
-  int LOGGING;
-  struct Level Levels[MAXDEPTH];
-};
 
 #define COMP_LEFT_LIST_RIGHT(lev,s)                             \
   {                                                             \
@@ -255,7 +226,7 @@ static void dump(int depth, struct Level *lev, int limit)
   //sleep(1);
 }
 
-static int ogr_create(void *input, int inputlen, void **state)
+static int ogr_create(void *input, int inputlen, void *state, int statelen)
 {
   struct State *State;
   struct WorkStub *workstub = (struct WorkStub *)input;
@@ -264,11 +235,13 @@ static int ogr_create(void *input, int inputlen, void **state)
     return CORE_E_FORMAT;
   }
 
-  State = (struct State *)malloc(sizeof(struct State));
+  if (statelen < sizeof(struct State)) {
+    return CORE_E_FORMAT;
+  }
+  State = (struct State *)state;
   if (State == NULL) {
     return CORE_E_MEMORY;
   }
-  *state = State;
 
   memset(State, 0, sizeof(struct State));
 
@@ -506,7 +479,6 @@ static int ogr_getresult(void *state, void *result, int resultlen)
 
 static int ogr_destroy(void *state)
 {
-  free(state);
   return CORE_S_OK;
 }
 

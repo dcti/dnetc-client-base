@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.16 1999/10/16 16:40:10 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.17 1999/10/22 06:12:57 gregh Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -725,7 +725,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
       int r = ogr->init();
       if (r != CORE_S_OK)
         return -1;
-      r = ogr->create(&contestwork.ogr.workstub, sizeof(WorkStub), &ogrstate);
+      r = ogr->create(&contestwork.ogr.workstub, sizeof(WorkStub), ogrstate, sizeof(ogrstate));
       if (r != CORE_S_OK)
         return -1;
       if (contestwork.ogr.workstub.worklength > contestwork.ogr.workstub.stub.length)
@@ -797,10 +797,7 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dop
         // nothing special needs to be done here
         break;
       case OGR:
-        if (ogrstate != NULL)
-        {
-          ogr->getresult(ogrstate, &contestwork.ogr.workstub, sizeof(WorkStub));
-        }
+        ogr->getresult(ogrstate, &contestwork.ogr.workstub, sizeof(WorkStub));
         break;
     }
     memcpy( (void *)work, (void *)&contestwork, sizeof(ContestWork));
@@ -1170,7 +1167,6 @@ int Problem::Run_OGR(u32 *timesliceP, int *resultcode)
       r = ogr->destroy(ogrstate);
       if (r == CORE_S_OK) 
       {
-        ogrstate = NULL;
         *resultcode = RESULT_NOTHING;
         return RESULT_NOTHING;
       }
