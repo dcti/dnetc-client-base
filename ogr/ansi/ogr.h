@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.5 2003/08/19 16:06:07 mweiser Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.6 2003/08/25 08:37:59 mweiser Exp $"
 
 #ifndef u16
 #include "cputypes.h"
@@ -43,19 +43,7 @@
 #define CORE_E_STOPPED  (-4)
 #define CORE_E_STUB     (-5)
 
-#undef DNETC_PACKED
-#define DNETC_PACKED
-
-#if !defined(__GNUC__) || (__GNUC__ < 2) || \
-    ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))
-# if !defined(MIPSpro) && !defined(__SUNPRO_CC)
-#  pragma pack(1)
-# endif
-#else
-  /* use attribute on >= egcs-1.1.2 */
-# undef DNETC_PACKED
-# define DNETC_PACKED __attribute__((packed))
-#endif
+#include "pack1.h"
 
 /*
  * Dispatch table structure. A pointer to one of these should be returned
@@ -140,8 +128,6 @@ typedef struct {
 # pragma pack()
 #endif
 
-/* DNETC_PACKED stays defined for below */
-
 /* ===================================================================== */
 
 // define this to enable LOGGING code
@@ -156,14 +142,6 @@ typedef struct {
 // network and buffer structure operations.
 #define STUB_MAX 10
 
-#if (!defined(__GNUC__) || (__GNUC__ < 2) || \
-     ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))) && \
-    !defined(MIPSpro)
-# pragma pack(1)
-#endif
-
-/* DNETC_PACKED still defined here */
-
 struct Stub { /* size is 24 */
   u16 marks;           /* N-mark ruler to which this stub applies */
   u16 length;          /* number of valid elements in the stub[] array */
@@ -175,12 +153,7 @@ struct WorkStub { /* size is 28 */
   u32 worklength;      /* depth of current state */
 } DNETC_PACKED;
 
-#if (!defined(__GNUC__) || (__GNUC__ < 2) || \
-     ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))) && \
-    !defined(MIPSpro)
-# pragma pack()
-#endif
-#undef DNETC_PACKED
+#include "pack0.h"
 
 // Internal stuff that's not part of the interface but we need for
 // declaring the problem work area size.

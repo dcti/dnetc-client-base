@@ -18,10 +18,11 @@
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.10 2003/08/19 16:06:07 mweiser Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.11 2003/08/25 08:37:59 mweiser Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
+#include "pack.h"               /* DNETC_ALIGNED* */
 
 #if !defined(CLIENT_SUPPORTS_SMP) /* non-threaded client */
 
@@ -35,13 +36,13 @@
 #elif (CLIENT_CPU == CPU_ALPHA) && defined(__GNUC__) && \
       (CLIENT_OS != OS_DEC_UNIX)
 
-  typedef struct { volatile unsigned int spl; } fastlock_t __attribute__ ((__aligned__ (32)));
+  typedef struct { volatile unsigned int spl; } fastlock_t DNETC_ALIGNED32;
   #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
 
   static __inline__ void fastlock_unlock(fastlock_t *v)
   {
     __asm__ __volatile__("mb": : :"memory");
-    v->spl = 0;  
+    v->spl = 0;
   }
   /* http://lxr.linux.no/source/include/asm-alpha/bitops.h?v=2.4.0#L92 */
   extern __inline__ int
@@ -84,12 +85,9 @@
 #elif (CLIENT_CPU == CPU_ALPHA) && defined(_MSC_VER)
    /* MS VC 6 has spinlock intrinsics */
 
-   typedef struct 
-   { 
-     #pragma pack(8)
-     long spl; 
-     #pragma pack()
-   } fastlock_t;
+# include "pack8.h"
+   typedef struct { long spl; } DNETC_PACKED fastlock_t;
+# include "pack0.h"
    #define FASTLOCK_INITIALIZER_UNLOCKED {0}
    extern "C" int _AcquireSpinLockCount(long *, int);
    extern "C" void _ReleaseSpinLock(long *);
@@ -112,19 +110,10 @@
    }
 
 #elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_X86_64)
-# undef __DNETC_ALIGN__
-# define __DNETC_ALIGN__
+# include "pack4.h"
+   typedef struct { long spl; } DNETC_PACKED fastlock_t;
+# include "pack0.h"
 
-# if !defined(__GNUC__) || (__GNUC__ < 2) || \
-     ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))
-#  pragma pack(4)
-# else
-   /* use attribute on >= egcs-1.1.2 */
-#  undef __DNETC_ALIGN__
-#  define __DNETC_ALIGN__ __attribute__((aligned(4)))
-# endif
-   typedef struct { long spl; } __DNETC_ALIGN__ fastlock_t;
-# undef __DNETC_ALIGN__
    #define FASTLOCK_INITIALIZER_UNLOCKED {0}
 
    /* _trylock returns -1 on EINVAL, 0 if could not lock, +1 if could lock */
@@ -189,11 +178,11 @@
   http://cvsweb.netbsd.org/bsdweb.cgi/syssrc/sys/arch/powerpc/include/lock.h?rev=1.4.2.1
   approved by Dan Oetting
   */
-  typedef struct { __volatile int spl; } fastlock_t __attribute__ ((__aligned__ (16)));
+  typedef struct { __volatile int spl; } fastlock_t DNETC_ALIGNED16;
   #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
 
   static __inline__ void fastlock_unlock(fastlock_t *__alp)
-  { 
+  {
     __volatile int *alp = &(__alp->spl);
     __asm __volatile ("sync");
     *alp = 0; /*FASTLOCK_INITIALIZER_UNLOCKED*/
@@ -235,17 +224,17 @@
 #elif (CLIENT_CPU == CPU_POWERPC) && (defined(__MWERKS__) || defined(__MRC__))
 
   /* based on
-  http://cvsweb.netbsd.org/bsdweb.cgi/syssrc/sys/arch/powerpc/include/lock.h?rev=1.4.2.1 
-  approved by Dan Oetting 
-  */ 
+  http://cvsweb.netbsd.org/bsdweb.cgi/syssrc/sys/arch/powerpc/include/lock.h?rev=1.4.2.1
+  approved by Dan Oetting
+  */
   #define __inline__ inline
-  #pragma pack(4)
-  typedef struct { volatile int spl; } fastlock_t;
-  #pragma pack()
+#include "pack4.h"
+  typedef struct { volatile int spl; } DNETC_PACKED fastlock_t;
+#include "pack0.h"
   #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
 
   static __inline__ void fastlock_unlock(fastlock_t *__alp)
-  { 
+  {
     volatile int *alp = &(__alp->spl);
     asm { sync }
     *alp = 0; /*FASTLOCK_INITIALIZER_UNLOCKED*/
@@ -356,7 +345,7 @@
 
 #elif (CLIENT_CPU == CPU_PA_RISC) && defined(__GNUC__)
 
-  typedef struct { __volatile int spl; } fastlock_t __attribute__ ((__aligned__ (16)));
+  typedef struct { __volatile int spl; } fastlock_t DNETC_ALIGNED16;
   #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){-1}) /* note! "unlocked"=-1 */
 
   static __inline__ void fastlock_unlock(fastlock_t *__alp)
@@ -397,7 +386,7 @@
   */
   #include <sys/atomic_op.h>
 
-  typedef struct { int lock; } fastlock_t __attribute__ ((aligned (8)));  
+  typedef struct { int lock; } fastlock_t DNETC_ALIGNED8;
   #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
 
   static __inline__ void fastlock_unlock(fastlock_t *v)

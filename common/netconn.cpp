@@ -17,7 +17,7 @@
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.3.2.4 2003/08/19 16:06:07 mweiser Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.3.2.5 2003/08/25 08:37:59 mweiser Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET
@@ -212,18 +212,7 @@ static int __close_connection(void *cookie)
 
 /* ====================================================================== */
 
-#undef DNETC_PACKED
-#define DNETC_PACKED
-
-#if !defined(__GNUC__) || (__GNUC__ < 2) || \
-    ((__GNUC__ == 2) &&(__GNUC_MINOR__ < 91))
-# if !defined(MIPSpro)
-#  pragma pack(1)
-# endif
-#else
-# undef DNETC_PACKED
-# define DNETC_PACKED __attribute__((packed)) /* use attribute on >= egcs-1.1.2 */
-#endif
+#include "pack1.h"
 
 // SOCKS4 protocol spec:  http://www.socks.nec.com/protocol/socks4.protocol
 typedef struct _socks4 {
@@ -260,12 +249,7 @@ typedef struct _socks5 {
     char end;
 } DNETC_PACKED SOCKS5;
 
-#if (!defined(__GNUC__) || (__GNUC__ < 2) || \
-     ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))) && \
-    !defined(MIPSpro)
-# pragma pack()
-#endif
-#undef DNETC_PACKED
+#include "pack0.h"
 
 const char *Socks5ErrorText[9] =
 {

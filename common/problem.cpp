@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.6 2003/08/19 16:06:07 mweiser Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.7 2003/08/25 08:37:59 mweiser Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -76,26 +76,10 @@ static unsigned int __problem_counter = 0;
 
 /* ------------------------------------------------------------------- */
 
-#undef DNETC_ALIGN
-#define DNETC_ALIGN
-
-#if !defined(__GNUC__) || (__GNUC__ < 2) || \
-    ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))
-# if !defined(MIPSpro)
-#  if (SIZEOF_LONG == 8)  /* SIZEOF_LONG is defined in cputypes.h */
-#   pragma pack(8)
-#  else
-#   pragma pack(4)
-#  endif
-# endif
+#if (SIZEOF_LONG == 8)  /* SIZEOF_LONG is defined in cputypes.h */
+# include "pack8.h"
 #else
-  /* use attribute on >= egcs-1.1.2 */
-# undef DNETC_ALIGN
-# if (SIZEOF_LONG == 8)
-#  define DNETC_ALIGN __attribute__((aligned(8)))
-# else
-#  define DNETC_ALIGN __attribute__((aligned(4)))
-# endif
+# include "pack4.h"
 #endif
 
 typedef struct
@@ -123,31 +107,14 @@ typedef struct
     int started;
     int initialized;
     unsigned int threadindex; /* 0-n (globally unique identifier) */
-  } DNETC_ALIGN priv_data;
-} DNETC_ALIGN InternalProblem;
+  } DNETC_PACKED priv_data;
+} DNETC_PACKED InternalProblem;
 
-#if (!defined(__GNUC__) || (__GNUC__ < 2) || \
-     ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))) && \
-    !defined(MIPSpro)
-# pragma pack()
-#endif
-#undef DNETC_ALIGN
+#include "pack0.h"
 
 /* ======================================================================= */
 
-#undef DNETC_PACKED
-#define DNETC_PACKED
-
-#if !defined(__GNUC__) || (__GNUC__ < 2) || \
-    ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))
-# if !defined(MIPSpro)
-#  pragma pack(1)
-# endif
-#else
-  /* use attribute on >= egcs-1.1.2 */
-# undef DNETC_PACKED
-# define DNETC_PACKED __attribute__((packed))
-#endif
+#include "pack1.h"
 
 /* SuperProblem() is an InternalInternal problem struct                */
 /* SuperProblem members are never accessed by any functions other than */
@@ -190,12 +157,7 @@ typedef struct
   fastlock_t copy_lock; /* locked when a sync is in progress */
 } DNETC_PACKED SuperProblem;
 
-#if (!defined(__GNUC__) || (__GNUC__ < 2) || \
-     ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))) && \
-    !defined(MIPSpro)
-# pragma pack()
-#endif
-#undef DNETC_PACKED
+#include "pack0.h"
 
 unsigned int ProblemGetSize(void)
 { /* needed by IPC/shmem */

@@ -21,7 +21,7 @@
  *   of the problem object (ie created when the object is new'd) 
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.13.2.4 2003/08/19 16:06:07 mweiser Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.13.2.5 2003/08/25 08:37:59 mweiser Exp $"
 
 #include "cputypes.h"   /* u32 etc. used here and in the cores */
 
@@ -45,19 +45,7 @@ typedef enum
   RESULT_FOUND   = 2
 } Resultcode;
 
-#undef DNETC_PACKED
-#define DNETC_PACKED
-
-#if !defined(__GNUC__) || (__GNUC__ < 2) || \
-    ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))
-# if !defined(MIPSpro)
-#  pragma pack(1)
-# endif
-#else
-  /* use attribute on >= egcs-1.1.2 */
-# undef DNETC_PACKED
-# define DNETC_PACKED __attribute__((packed))
-#endif
+#include "pack1.h"
 
 typedef struct
 {
@@ -74,11 +62,6 @@ typedef struct
   struct {u32 count; u32 hi,mid,lo;} check; /* counter-measure check */
 } DNETC_PACKED RC5_72UnitWork;
 
-#if (!defined(__GNUC__) || (__GNUC__ < 2) || \
-     ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))) && \
-    !defined(MIPSpro)
-# pragma pack()
-#endif
-#undef DNETC_PACKED
+#include "pack0.h"
 
 #endif /* __CCOREIO_H__ */

@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.94.2.4 2003/08/19 16:06:07 mweiser Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.94.2.5 2003/08/25 08:37:59 mweiser Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -90,19 +90,7 @@ enum {
 
 /* ---------------------------------------------------------------------- */
 
-#undef DNETC_PACKED
-#define DNETC_PACKED
-
-#if !defined(__GNUC__) || (__GNUC__ < 2) || \
-    ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))
-# if !defined(MIPSpro)
-#  pragma pack(1)
-# endif
-#else
-  /* use attribute on >= egcs-1.1.2 */
-# undef DNETC_PACKED
-# define DNETC_PACKED __attribute__((packed))
-#endif
+#include "pack1.h"
 
 typedef union
 {
@@ -154,12 +142,7 @@ typedef struct
   u32  core;       /* core used to process the packet */
 } DNETC_PACKED WorkRecord;
 
-#if (!defined(__GNUC__) || (__GNUC__ < 2) || \
-     ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))) && \
-    !defined(MIPSpro)
-# pragma pack()
-#endif
-#undef DNETC_PACKED
+#include "pack1.h"
 
 /* ---------------------------------------------------------------------- */
 
