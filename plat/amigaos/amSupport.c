@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amSupport.c,v 1.2.4.5 2004/01/09 01:23:32 piru Exp $
+ * $Id: amSupport.c,v 1.2.4.6 2004/01/09 02:25:01 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -54,7 +54,7 @@
 #ifndef __OS3PPC__
 
 #ifdef __MORPHOS__
-unsigned long __stack = 262144L;
+unsigned long __stack = 200000L;
 #else
 unsigned long __stack = 65536L;
 #endif
