@@ -14,10 +14,14 @@
 // -----------------------------------------------------------------
 
 const char *random_cpp(void) {
-return "@(#)$Id: random.cpp,v 1.4 1999/04/05 14:34:58 jlawson Exp $"; }
+return "@(#)$Id: random.cpp,v 1.4.2.1 2002/04/01 17:46:24 sampo Exp $"; }
 
 #include "cputypes.h" /* u32 */
 #include <time.h>     /* time() */
+
+#if (CLIENT_OS == OS_DEC_UNIX)
+#include "baseincs.h"
+#endif
 
 #define IL_RMULT 1103515245L
 static u32 IL_StandardRandom_seed;
