@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.60 1999/12/02 05:25:24 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.61 1999/12/04 15:33:32 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -71,8 +71,8 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
   #elif (CLIENT_CPU == CPU_68K)
     { /* RC5 */
-      "Motorola 68000", "Motorola 68010", "Motorola 68020", "Motorola 68030",
-      "Motorola 68040", "Motorola 68060", /* will never change :) */
+      "loopy",    /* 68000/10/20/30 */
+      "unrolled", /* 40/60 */
       NULL
     },
     { /* DES */
@@ -96,11 +96,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "ev3 and ev4 optimized",
       "ev5 and ev6 optimized",
       #else
-      "dworz/amazing core",
+      "dworz/amazing",
       #endif
       NULL
     },
-  #elif (CLIENT_CPU == CPU_POWERPC)
+  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_OS == OS_POWER)
     { /* RC5 */
       /* on OS's that don't support the 601 (core #0), core #0 and #1 are 
          equivalent.
@@ -109,6 +109,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
        */
       "allitnil", /* aka rc5_unit_func_g1() wrapper */
       "lintilla", /* aka rc5_unit_func_g2_g3() wrapper */
+      NULL, /* this may become the G4 vector core at runtime */
       NULL
     },
     { /* DES */
@@ -160,21 +161,24 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       }
     }
     #endif
-    #if (CLIENT_CPU == CPU_POWERPC)
+    #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
     {
-      #if defined(_AIXALL) //POWER/POWERPC hybrid client
-      if ( GetProcessorType(1) == 0) //this is a power CPU
+      long det = GetProcessorType(1);
+      if (det > 0)
       {
-    	corenames_table[RC5][0] = "RG AIXALL (Power CPU)",
-    	corenames_table[RC5][1] = NULL;
+        if (( det & 0x02000000L ) != 0) //ARCH_IS_POWER
+        {                               //only one core - (ansi)
+          corenames_table[RC5][0] = "RG AIXALL (Power CPU)",
+          corenames_table[RC5][1] = NULL;
+        }
+        #if (CLIENT_OS == OS_MACOS)
+        else if (( det & 0x00ffffffL ) == 12) //PPC 7500
+        {
+          corenames_table[RC5][2] = "crunch-vec"; /* aka rc5_unit_func_vec() wrapper */
+          corenames_table[RC5][3] = NULL;
+        }
+        #endif
       }
-      #elif (CLIENT_OS == OS_MACOS) // vec-core is currently macos only
-      if ( GetProcessorType(1) == 2)
-      {
-    	corenames_table[RC5][2] = "crunch-vec"; /* aka rc5_unit_func_vec() wrapper */
-    	corenames_table[RC5][3] = NULL;
-      }
-      #endif
     }
     #endif
     fixed_up = 1;  
@@ -410,14 +414,6 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       }
       if (!quietly)
         GetProcessorType(0);
-      #if defined(_AIXALL)
-      //POWER/POWERPC hybrid client returns 0 for POWER cpu, and >0
-      //maps to '1 plus "normal" PPC cpu ident'.
-      if (detected_type == 0) //POWER
-        ; //nothing to do, will have been caught in selcoreInitialize()
-      else if (detected_type > 0) //PPC
-        detected_type--; //map into "normal" PPC detected_type range.
-      #endif
     }
   }
 
@@ -452,59 +448,98 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     }
   }
   #elif (CLIENT_CPU == CPU_68K)
-  if (contestid == RC5 || contestid == DES) /* old style */
+  if (contestid == RC5)
   {
-    const char *corename = NULL;
-    selcorestatics.corenum[DES] = 0;  /* only one DES core */
     selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
-    if (selcorestatics.corenum[RC5] < 0)
-      selcorestatics.corenum[RC5] = detected_type;
-    if (selcorestatics.corenum[RC5] < 0)
+    if (selcorestatics.corenum[RC5] < 0 && detected_type >= 0)
+    {
+      const char *corename = "000/010/020/030";
       selcorestatics.corenum[RC5] = 0;
-    if (selcorestatics.corenum[RC5] == 4 || selcorestatics.corenum[RC5] == 5 ) 
-      corename = "040/060";  // there is no 68050, so type5=060
-    else //if (cputype == 0 || cputype == 1 || cputype == 2 || cputype == 3)
-      corename = "000/010/020/030";
-    LogScreen( "Selected code optimized for the Motorola 68%s.\n", corename );
-    corename_printed = 1;
+      if (detected_type >= 68040)
+      {
+        selcorestatics.corenum[RC5] = 1;
+        corename = "040/060";
+      }
+      LogScreen( "Selected code optimized for the Motorola 68%s.\n", corename);
+      corename_printed = 1;
+    }
   }
-  #elif (CLIENT_CPU == CPU_POWERPC)
+  else if (contestid == DES)
+  {
+    selcorestatics.corenum[DES] = 0; //only one core
+  }
+  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+  #if (!defined(_AIXALL)) //not a PPC/POWER hybrid client?
+  if (detected_type >= 0)
+  {
+    #if (CLIENT_CPU == CPU_POWER)
+    if ((detected_type & 0x02000000L ) != 0x02000000L ) //not power?
+    {
+      Log("PANIC::Can't run a PowerPC client on Power architecture\n");
+      return -1;
+    }
+    #else
+    if ((detected_type & 0x02000000L ) == 0x02000000L ) //is power?
+    {
+      Log("PANIC::Can't run a Power client on PowerPC architecture\n");
+      return -1;
+    }
+    #endif
+  }  
+  #endif
   if (contestid == DES)
   {
     selcorestatics.corenum[DES] = 0; /* only one DES core */
   }
   else if (contestid == RC5)
   {
-    #if ((CLIENT_OS==OS_BEOS) || (CLIENT_OS==OS_AMIGAOS) || (CLIENT_OS==OS_WIN32))
+    #if ((CLIENT_OS == OS_BEOS) || \
+         (CLIENT_OS == OS_AMIGAOS) || \
+         (CLIENT_OS == OS_WIN32))
       // BeOS and Win32 aren't supported on 601 machines
       // There is no 601 PPC board for the Amiga
-      selcorestatics.corenum[RC5] = 1; //"PowerPC 603/604/750"
+      selcorestatics.corenum[RC5] = 1; //allitnil (aka g2_g3)
     #else
-      selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
-      if (selcorestatics.corenum[RC5] < 0 && detected_type >= 0)
-        selcorestatics.corenum[RC5] = (int)detected_type;
+    selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
+    if (selcorestatics.corenum[RC5] < 0 && detected_type >= 0)
+    {
+      int cindex = -1;
+      if (( detected_type & 0x02000000L ) != 0) //ARCH_IS_POWER
+        cindex = 0;                 //only one core - (ansi)
+      else
+      {
+        long det =  ( detected_type & 0x00ffffffL );
+        if (det == 1 )              //PPC 601
+          cindex = 0;               // lintilla
+        #if (CLIENT_OS == OS_MACOS) /* vec core is currently macos only */
+        else if (det == 12)         //PPC 7500
+          cindex = 2;               // vector
+        #endif
+        else                        //the rest
+          cindex = 1;               // allitnil
+      }
+      selcorestatics.corenum[RC5] = cindex;
+    }
     #endif
   }
   else if (contestid == CSC)
   {
     selcorestatics.corenum[CSC] = selcorestatics.user_cputype[CSC];
-    if (selcorestatics.corenum[CSC] < 0)
+    if (selcorestatics.corenum[CSC] < 0 detected_type > 0)
     {
-      if (detected_type >= 0)
+      int cindex = -1;
+      if ((detected_type & 0x02000000L) != 0) //ARCH_IS_POWER
+        ; //don't know yet
+      else 
       {
-        int cindex = -1, det = ((int)detected_type);
-        #if defined(_AIXALL) //POWER/POWERPC hybrid
-        if (GetProcessorType(1) == 0) //POWER cpu
-          det = -1; //detected_type has a different meaning, so use micro_bench
-        #endif
-        switch (det)
-        {
-          case 0: cindex = 1; break; // G1: 16k L1 cache
-        //case 1: cindex = 1; break; // G2/G3: 16-64k L1 cache 
-          case 2: cindex = 0; break; // G4: L1 cache 64k
-        }
-        selcorestatics.corenum[CSC] = cindex;
+        long det = (detected_type & 0x00ffffffL);
+        if (det == 1)       //PPC 601
+          cindex = 1;       // G1: 16k L1 cache
+        else if (det == 12) //PPC 7500
+          cindex = 0;       // G4: L1 cache 64k
+        //don't know about the rest
       }
+      selcorestatics.corenum[CSC] = cindex;
     }
   }
   #elif (CLIENT_CPU == CPU_X86)
@@ -522,7 +557,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             case 0: cindex = 0; break; // P5
             case 1: cindex = 1; break; // 386/486
             case 2: cindex = 2; break; // PII/PIII
-            case 3: cindex = 3; break; // Cx6x86, AMD K7
+            case 3: cindex = 3; break; // Cx6x86
             case 4: cindex = 4; break; // K5
             case 5: cindex = 5; break; // K6/K6-2/K6-3
             #if defined(SMC)    
@@ -532,6 +567,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             #endif
             case 7: cindex = 2; break; // castrated Celeron
             case 8: cindex = 2; break; // PPro
+            case 9: cindex = 3; break; // AMD K7
             //no default
           }
           selcorestatics.corenum[RC5] = cindex;
@@ -556,12 +592,13 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
               case 0: cindex = 0; break; // P5             == standard Bryd
               case 1: cindex = 0; break; // 386/486        == standard Bryd
               case 2: cindex = 1; break; // PII/PIII       == movzx Bryd
-              case 3: cindex = 1; break; // Cx6x86, AMD K7 == movzx Bryd
+              case 3: cindex = 1; break; // Cx6x86         == movzx Bryd
               case 4: cindex = 0; break; // K5             == standard Bryd
               case 5: cindex = 1; break; // K6             == movzx Bryd
               case 6: cindex = 0; break; // Cx486          == movzx Bryd
               case 7: cindex = 1; break; // orig Celeron   == movzx Bryd
               case 8: cindex = 1; break; // PPro           == movzx Bryd
+              case 9: cindex = 1; break; // AMD K7         == movzx Bryd
               //no default
             }
           }
@@ -583,12 +620,13 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             case 0: cindex = 3; break; // P5             == 1key - called
             case 1: cindex = 3; break; // 386/486        == 1key - called
             case 2: cindex = 2; break; // PII/PIII       == 1key - inline
-            case 3: cindex = 0; break; // Cx6x86, AMD K7 == 6bit - inline
+            case 3: cindex = 3; break; // Cx6x86         == 1key - called
             case 4: cindex = 2; break; // K5             == 1key - inline
             case 5: cindex = 0; break; // K6/K6-2/K6-3   == 6bit - inline
             case 6: cindex = 3; break; // Cyrix 486      == 1key - called
             case 7: cindex = 3; break; // orig Celeron   == 1key - called
             case 8: cindex = 3; break; // PPro           == 1key - called
+            case 9: cindex = 0; break; // AMD K7         == 6bit - inline
             //no default
           }
           selcorestatics.corenum[CSC] = cindex;
@@ -597,15 +635,42 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     }
   }
   #elif (CLIENT_CPU == CPU_ARM)
-  if (contestid == RC5 || contestid == DES)
+  if (contestid == RC5)
   {
-    selcorestatics.corenum[contestid] = selcorestatics.user_cputype[contestid];
-    if (selcorestatics.corenum[contestid] < 0)
+    selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
+    if (selcorestatics.corenum[RC5] < 0 && detected_type > 0)
     {
-      if (detected_type >= 0)
-        selcorestatics.corenum[contestid] = (int)detected_type;
+      int cindex = -1;
+      if (detected_type == 0x3    || /* ARM 3 */ 
+          detected_type == 0x600  || /* ARM 600 */
+          detected_type == 0x610  || /* ARM 610 */
+          detected_type == 0x700  || /* ARM 700 */
+          detected_type == 0x710  || /* ARM 710 */
+          detected_type == 0x7500 || /* ARM 7500 */ 
+          detected_type == 0x7500FE) /* ARM 7500FE */
+        cindex = 0;
+      else if (detected_type == 0x810 || /* ARM 810 */
+          detected_type == 0xA10)    /* StrongARM 110 */
+        cindex = 1;
+      else if (detected_type == 0x200) /* ARM 2, 250 */
+        cindex = 2;
+      selcorestatics.corenum[RC5] = cindex;
     }
-    /* otherwise fall into bench */
+  }
+  else if (contestid == DES)
+  {
+    selcorestatics.corenum[DES] = selcorestatics.user_cputype[DES];
+    if (selcorestatics.corenum[DES] < 0 && detected_type > 0)
+    {
+      int cindex = -1;
+      if (detected_type == 0x810 ||  /* ARM 810 */
+          detected_type == 0xA10 ||  /* StrongARM 110 */
+          detected_type == 0x200)    /* ARM 2, 250 */
+        cindex = 1;
+      else /* "ARM 3, 610, 700, 7500, 7500FE" or  "ARM 710" */
+        cindex = 0;
+      selcorestatics.corenum[DES] = cindex;  
+    }  
   }
   #endif
 
