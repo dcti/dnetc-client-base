@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.21 2004/06/16 18:09:16 kakace Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.22 2004/06/20 18:30:56 kakace Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -449,6 +449,7 @@ static int ClientMain( int argc, char *argv[] )
                                  client->crunchmeter,
                                  0, /* nobaton */
                                  client->logname,
+                                 client->logrotateUTC,
                                  client->logfiletype,
                                  client->logfilelimit,
                                  ((domodes)?(0):(client->messagelen)),

@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.92.2.7 2004/05/27 20:28:01 snikkel Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.92.2.8 2004/06/20 18:30:56 kakace Exp $"; }
 
 //#define TRACE
 
@@ -1263,6 +1263,7 @@ int ConfigRead(Client *client)
   GetPrivateProfileStringB( OPTSECT_LOG, "mail-log-dest", client->smtpdest, client->smtpdest, sizeof(client->smtpdest), fn );
   GetPrivateProfileStringB( OPTSECT_LOG, "log-file", client->logname, client->logname, sizeof(client->logname), fn );
   GetPrivateProfileStringB( OPTSECT_LOG, "log-file-type", client->logfiletype, client->logfiletype, sizeof(client->logfiletype), fn );
+  client->logrotateUTC = GetPrivateProfileIntB( OPTSECT_LOG, "log-rotate-UTC", client->logrotateUTC, fn );
   GetPrivateProfileStringB( OPTSECT_LOG, "log-file-limit", client->logfilelimit, client->logfilelimit, sizeof(client->logfilelimit), fn );
 
   /* -------------------------------- */
@@ -1536,7 +1537,7 @@ int ConfigWrite(Client *client)
     if ((client->logfiletype[0] && strcmp(client->logfiletype,"none")!=0) ||
       GetPrivateProfileStringB(OPTSECT_LOG,"log-file-type","",buffer,2,fn))
       WritePrivateProfileStringB( OPTSECT_LOG,"log-file-type", client->logfiletype, fn );
-
+    __XSetProfileInt( OPTSECT_LOG, "log-rotate-UTC", client->logrotateUTC, fn, 0, 'n');
   } /* if (Write(id)) */
 
   TRACE_OUT((-1,"WriteConfig() =>%d\n", rc));

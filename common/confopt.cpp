@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.51.4.16 2004/05/27 20:28:01 snikkel Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.51.4.17 2004/06/20 18:30:56 kakace Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -677,6 +677,14 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "kilobytes. The \"fifo\" log type will enforce a minimum of 100kB to avoid\n"
   "excessive file I/O.\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
+},
+{
+  CONF_LOGROTATETIME           , /* CONF_MENU_LOG */
+  CFGTXT("Rotate logs at 0:00 UTC"), "no",
+  CFGTXT(
+  "For the \"rotate\" log type, this option determines whether the logs shall\n"
+  "be rotated at 0:00 local time or 0:00 UTC.\n"
+  ),CONF_MENU_LOG,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
 },
 { 
   CONF_MESSAGELEN              , /* CONF_MENU_LOG */

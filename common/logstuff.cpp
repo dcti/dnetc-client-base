@@ -15,7 +15,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.53.4.8 2004/06/20 15:51:29 kakace Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.53.4.9 2004/06/20 18:30:56 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -61,6 +61,7 @@ static struct
   int spoolson;             // mail/file logging and time stamping is on/off.
   int crunchmeter;          // progress ind style (-1=def,0=off,1=abs,2=rel)
   int percbaton;            // percent baton is enabled
+  int rotateUTC;            // rotate at 0:00 UTC
 
   void *mailmessage;         //handle returned from smtp_construct_message()
   char basedir[256];         //filled if user's 'logfile' is not qualified
@@ -84,6 +85,7 @@ static struct
   0,      // spoolson
   0,      // crunchmeter
   0,      // percbaton
+  0,      // rotateUTC
   NULL,   // *mailmessage
   {0},    // basedir[]
   {0},    // logfile[]
@@ -184,7 +186,7 @@ static const char *__get_logname( int logfileType, int logfileLimit,
         if (logfileLimit > 0 )
         {
           time_t ttime = time(NULL);
-          struct tm *currtm = localtime( &ttime );
+          struct tm *currtm = logstatics.rotateUTC ? gmtime(&ttime) : localtime(&ttime);
           if (currtm)
           {
             if (currtm->tm_mon  >= 0  && currtm->tm_mon  < 12 &&
@@ -1428,7 +1430,7 @@ static int fixup_logfilevars( const char *stype, const char *slimit,
 }
 
 void InitializeLogging( int noscreen, int crunchmeterstyle, int nopercbaton,
-                        const char *logfilename,
+                        const char *logfilename, int rotateUTC,
                         const char *logfiletype, const char *logfilelimit,
                         long mailmsglen, const char *smtpsrvr,
                         unsigned int smtpport, const char *smtpfrom,
@@ -1441,6 +1443,7 @@ void InitializeLogging( int noscreen, int crunchmeterstyle, int nopercbaton,
   logstatics.percbaton = (crunchmeterstyle != 0 && nopercbaton == 0 && 
                           !ConIsGUI() && logstatics.stdoutisatty);
                          /* baton not for macos or win GUI */
+  logstatics.rotateUTC = rotateUTC;
 
   if ( noscreen == 0 )
   {

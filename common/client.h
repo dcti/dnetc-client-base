@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.149.2.4 2004/05/27 20:48:43 snikkel Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.149.2.5 2004/06/20 18:30:56 kakace Exp $"
 
 #include "projdata.h" /* PROJECT_COUNT */
 #include "problem.h"  /* WorkRecord, CONTEST_COUNT */
@@ -104,6 +104,7 @@ typedef struct
   char logfiletype[MINCLIENTOPTSTRLEN]; /* "none", "no limit", "rotate", "restart", "fifo" */
   char logfilelimit[MINCLIENTOPTSTRLEN]; /* "nnn K|M|days" etc */
   int  messagelen;
+  int  logrotateUTC;                    /* true = UTC, false = local time */
   char smtpsrvr[MINCLIENTOPTSTRLEN];
   char smtpfrom[MINCLIENTOPTSTRLEN];
   char smtpdest[MINCLIENTOPTSTRLEN];

@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.62.2.11 2004/01/05 13:31:19 kakace Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.62.2.12 2004/06/20 18:30:56 kakace Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -448,6 +448,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   conf_options[CONF_LOGTYPE].choicemax=(int)((sizeof(logtypes)/sizeof(logtypes[0]))-1);
   conf_options[CONF_LOGNAME].thevariable=&(client->logname[0]);
   conf_options[CONF_LOGLIMIT].thevariable=&logkblimit[0];
+  conf_options[CONF_LOGROTATETIME].thevariable=&(client->logrotateUTC);
   conf_options[CONF_MESSAGELEN].thevariable=&(client->messagelen);
   conf_options[CONF_SMTPSRVR].thevariable=&(client->smtpsrvr[0]);
   conf_options[CONF_SMTPFROM].thevariable=&(client->smtpfrom[0]);
@@ -671,6 +672,9 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
       conf_options[CONF_LOGLIMIT].disabledtext=
                   ((logtype != LOGFILETYPE_NONE &&
                     logtype != LOGFILETYPE_NOLIMIT) ? (NULL) :
+                  ("n/a [inappropriate for log type]"));
+      conf_options[CONF_LOGROTATETIME].disabledtext=
+                  ((logtype == LOGFILETYPE_ROTATE) ? (NULL) :
                   ("n/a [inappropriate for log type]"));
       conf_options[CONF_SMTPSRVR].disabledtext=
       conf_options[CONF_SMTPDEST].disabledtext=

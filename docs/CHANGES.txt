@@ -21,13 +21,15 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.72 2004/06/20 15:51:40 kakace Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.73 2004/06/20 18:31:08 kakace Exp $
 ==========================================================================
 
 2.9000
 ------
 2.9008-492  imp: ppc: Faster GARSP Vector core
-            fix: all: Made weekly logs ISO 8601 compliant (#3336)
+            imp: all: Added an option to rotate log files at local time or UTC
+                      time (#2613)
+            fix: all: Made week number ISO 8601 compliant (#3336)
             imp: all: Display which cruncher load/save/complete work (#2954)
             imp: all: Log more error messages (#3611)
             imp: macosx: Made the buffer threshold limits hw-dependant (#3626)
