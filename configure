@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.222 2001/01/17 00:16:27 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.223 2001/01/18 13:52:15 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -242,9 +242,10 @@ add_sources() # $1=os, $2=arch, $3=custom
   #-----------------------------------------------------------------  
   elif [ "$2" = "mips" ]; then
     #-- rc5 --
-    if [ "$TARGET_CC" = "CC" ]; then # mips-crunch doesn't compile with IRIX CC
+    if [ "$TARGET_CC" = "CC" -o "$1" = "netbsd" ]; then # mips-crunch doesn't compile with IRIX CC
       TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
     else                             # gcc targets. mips-crunch.cpp is faster
+                                     # except for NetBSD, ansi is 2% faster
       TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/mips/mips-crunch.cpp"
     fi
     #-- ogr --
