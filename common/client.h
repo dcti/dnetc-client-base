@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: client.h,v $
+// Revision 1.55  1998/07/01 03:29:02  silby
+// Added prototype for CheckForcedKeyproxy (used in cliconfig)
+//
 // Revision 1.54  1998/06/29 08:43:59  jlawson
 // More OS_WIN32S/OS_WIN16 differences and long constants added.
 //
@@ -497,6 +500,7 @@ protected:
 #endif
 
   bool CheckForcedKeyport(void);
+  bool CheckForcedKeyproxy(void);
 
   void SetNiceness(void);
     // set the client niceness
