@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.39  1998/09/05 20:12:18  silby
+// Change so that disphelp is a valid function for the win32gui, it just doesn't do anything (perhaps a windows help file will open in the future?)
+//
 // Revision 1.38  1998/08/10 20:08:00  cyruspatel
 // Removed reference to NO!NETWORK
 //
@@ -129,7 +132,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-static const char *id="@(#)$Id: disphelp.cpp,v 1.38 1998/08/10 20:08:00 cyruspatel Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.39 1998/09/05 20:12:18 silby Exp $";
 return id; }
 #endif
 
@@ -364,9 +367,9 @@ static int gettermheight()
 
 // provide a full-screen, interactive help for an invalid option (argv[x])
 
-#if !defined(NOCONFIG)
 void Client::DisplayHelp( const char * unrecognized_option )
 {
+#if !defined(NOCONFIG)
   static const char *valid_help_requests[] =
   { "-help", "--help", "help", "-h", "/h", "/?", "-?", "?", "/help" };
 
@@ -649,8 +652,8 @@ void Client::DisplayHelp( const char * unrecognized_option )
     } //stdin is a tty
 
   return;
-}
 #endif
+}
 
 // --------------------------------------------------------------------------
 
