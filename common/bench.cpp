@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.9 1999/11/27 16:51:37 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.10 1999/11/27 20:27:11 remi Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -44,7 +44,7 @@ static void __show_notbest_msg(unsigned int contestid)
       #endif
     }
   }
-  else 
+  else if (contestid == DES)
   {
     if ((detectedtype & 0x100) != 0) /* mmx */
     {
@@ -302,7 +302,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
           break;
         }
       }
-    } 
+    }
     if ( run < 0 )
       break;
   }
