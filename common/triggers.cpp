@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.23 2000/02/10 17:33:02 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.24 2000/02/13 06:42:01 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -171,13 +171,13 @@ static void __CheckIniFileChangeStuff(void)
   if (trigstatics.inifile[0]) /* time_t */
   {
     time_t now = time(NULL);
-    if (trigstatics.nextinifilecheck == 0 ||
-        trigstatics.nextinifilecheck >= now)
+    if (now > trigstatics.nextinifilecheck)
     {
       time_t filetime = 0;
       struct stat statblk;
       if (stat( trigstatics.inifile, &statblk ) == 0)
         filetime = statblk.st_mtime;
+      trigstatics.nextinifilecheck = now + ((time_t)5);
       if (filetime)
       {
         if (!trigstatics.currinifiletime)                /* first time */
@@ -187,14 +187,14 @@ static void __CheckIniFileChangeStuff(void)
         else if (trigstatics.currinifiletime == ((time_t)1)) 
         {                                   /* got change some time ago */
           RaiseRestartRequestTrigger();
-          trigstatics.currinifiletime = filetime;
+          trigstatics.currinifiletime = 0;
+          trigstatics.nextinifilecheck = now + ((time_t)60);
         }
         else if (filetime != trigstatics.currinifiletime)
         {                                                /* mark change */
           trigstatics.currinifiletime = ((time_t)1);
         }
       }  
-      trigstatics.nextinifilecheck = now + ((time_t)60); /* one minute */
     }
   }
   return;
