@@ -6,177 +6,16 @@
 */
 
 #ifndef __NETWORK_H__
-#define __NETWORK_H__ "@(#)$Id: network.h,v 1.77 2000/06/02 06:24:57 jlawson Exp $"
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.78 2000/07/03 07:13:15 jlawson Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
-
+#include "baseincs.h"
+#include "netio.h"
 
 //#define SELECT_FIRST      // define to perform select() before reading
 //#define __VMS_UCX__       // define for UCX instead of Multinet on VMS
 
-#if ((CLIENT_OS == OS_AMIGAOS)|| (CLIENT_OS == OS_RISCOS))
-extern "C" {
-#endif
-
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>    // for offsetof
-#include <time.h>
-#include <errno.h>     // for errno and EINTR
-
-#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
-}
-#endif
-
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
-  #define WIN32_LEAN_AND_MEAN
-  #ifndef STRICT
-    #define STRICT
-  #endif
-  #include <windows.h>
-  #if (CLIENT_OS == OS_WIN32)
-  #include <winsock.h>
-  #else
-  #include "w32sock.h" //winsock wrappers
-  #endif
-  #include <io.h>
-#elif (CLIENT_OS == OS_RISCOS)
-  extern "C" {
-  #include <socklib.h>
-  #include <inetlib.h>
-  #include <unixlib.h>
-  #include <sys/ioctl.h>
-  #include <unistd.h>
-  #include <netdb.h>
-  #define SOCKET int
-  }
-#elif (CLIENT_OS == OS_DOS) 
-  //ntohl()/htonl() defines are in...
-  #include "platforms/dos/clidos.h" 
-#elif (CLIENT_OS == OS_VMS)
-  #include <signal.h>
-  #ifdef __VMS_UCX__
-    #include <sys/types.h>
-    #include <sys/socket.h>
-    #include <netinet/in.h>
-    #include <arpa/inet.h>
-    #include <sys/time.h>
-    #include <unistd.h>
-    #include <fcntl.h>
-    #include <netdb.h>
-    #include <unixio.h>
-  #elif defined(MULTINET)
-    #include "multinet_root:[multinet.include.sys]types.h"
-    #include "multinet_root:[multinet.include.sys]ioctl.h"
-    #include "multinet_root:[multinet.include.sys]param.h"
-    #include "multinet_root:[multinet.include.sys]time.h"
-    #include "multinet_root:[multinet.include.sys]socket.h"
-    #include "multinet_root:[multinet.include]netdb.h"
-    #include "multinet_root:[multinet.include.netinet]in.h"
-    #include "multinet_root:[multinet.include.netinet]in_systm.h"
-    #ifndef multinet_inet_addr
-      extern "C" unsigned long int inet_addr(const char *cp);
-    #endif
-    #ifndef multinet_inet_ntoa
-      extern "C" char *inet_ntoa(struct in_addr in);
-    #endif
-  #endif
-  typedef int SOCKET;
-#elif (CLIENT_OS == OS_MACOS)
-  #include "socket_glue.h" // includes ntohl()/htonl() etc.
-  #define write(sock, buff, len) socket_write(sock, buff, len)
-  #define read(sock, buff, len) socket_read(sock, buff, len)
-  #define close(sock) socket_close(sock)
-  #define ioctl(sock, request, arg) socket_ioctl(sock, request, arg)
-  typedef int SOCKET;
-#elif (CLIENT_OS == OS_OS2)
-  #define BSD_SELECT
-  #include <sys/types.h>
-  #include <fcntl.h>
-  #include <netdb.h>
-  #include <netinet/in.h>
-  #include <sys/socket.h>
-  #include <sys/time.h>
-  #include <sys/select.h>
-  #include <sys/ioctl.h>
-  #if defined(__EMX__)
-    // this has to stay as long as the define below is needed
-    #include <io.h>
-  #endif
-  typedef int SOCKET;
-#elif (CLIENT_OS == OS_AMIGAOS)
-  extern "C" {
-  #include "platforms/amiga/amiga.h"
-  #include <assert.h>
-  #include <clib/socket_protos.h>
-  #include <pragmas/socket_pragmas.h>
-  #include <sys/ioctl.h>
-  #include <sys/time.h>
-  #include <netdb.h>
-  extern struct Library *SocketBase;
-  #define inet_ntoa(addr) Inet_NtoA(addr.s_addr)
-  #ifndef __PPC__
-     #define inet_addr(host) inet_addr((unsigned char *)host)
-     #define gethostbyname(host) gethostbyname((unsigned char *)host)
-  #endif
-  typedef int SOCKET;
-  }
-#elif (CLIENT_OS == OS_BEOS)
-  #include <sys/types.h>
-  #include <sys/socket.h>
-  #include <netinet/in.h>
-  #include <sys/time.h>
-  #include <unistd.h>
-  #include <fcntl.h>
-  #include <netdb.h>
-  #include <ctype.h>
-  typedef int SOCKET;
-#else
-  #include <sys/types.h>
-  #include <sys/socket.h>
-  #include <netinet/in.h>
-  #include <arpa/inet.h>
-  #include <sys/time.h>
-  #include <unistd.h>
-  #include <fcntl.h>
-  #include <netdb.h>
-  typedef int SOCKET;
-  #if (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_ALPHA)
-    #include <asm/byteorder.h>
-  #elif (CLIENT_OS == OS_QNX)
-    #include <sys/select.h>
-  #elif (CLIENT_OS == OS_DYNIX) && defined(NTOHL)
-    #define ntohl(x)  NTOHL(x)
-    #define htonl(x)  HTONL(x)
-    #define ntohs(x)  NTOHS(x)
-    #define htons(x)  HTONS(x)
-  #elif ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU==CPU_68K))
-    #if defined(_SUNOS3_)
-      #define _SOCKET_H_ALREADY_
-      extern "C" int fcntl(int, int, int);
-    #endif
-    extern "C" {
-    int socket(int, int, int);
-    int setsockopt(int, int, int, char *, int);
-    int connect(int, struct sockaddr *, int);
-    }
-  #elif (CLIENT_OS == OS_ULTRIX)
-    extern "C" {
-      int socket(int, int, int);
-      int setsockopt(int, int, int, char *, int);
-      int connect(int, struct sockaddr *, int);
-    }
-  #elif (CLIENT_OS == OS_NETWARE)
-    #include "platforms/netware/netware.h" //symbol redefinitions
-    extern "C" {
-    #pragma pack(1)
-    #include <tiuser.h> //using TLI
-    #pragma pack()
-    }
-  #endif  
-#endif
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -187,12 +26,6 @@ extern "C" {
 #define MODE_SOCKS5           0x08
 #define DEFAULT_RRDNS           ""
 #define DEFAULT_PORT          2064
-#define CONDSOCK_BLOCKMODE       1
-#define CONDSOCK_KEEPALIVE       2   
-#define CONDSOCK_SETMINBUFSIZE   3
-#ifndef INVALID_SOCKET
-#define INVALID_SOCKET  ((SOCKET)(-1))
-#endif
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -214,7 +47,7 @@ protected:
   int  mode;              // startmode as modified at runtime
   SOCKET sock;            // socket file handle
   int isnonblocking;     // whether the socket could be set non-blocking
-  int reconnected;       // set to 1 once a connect succeeds 
+  int reconnected;       // set to 1 once a connect succeeds
   int shown_connection;
 
   char fwall_hostname[64]; //intermediate
@@ -240,26 +73,11 @@ protected:
   int gotuubegin, gothttpend, puthttpdone, gethttpdone;
   u32 httplength;
 
-  int LowLevelCreateSocket(void);
-    // Returns < 0 on error, else assigns fd to this->sock and returns 0.
-    
-  int LowLevelCloseSocket(void);
-    // destroys this->sock if (this->sock != INVALID_SOCKET) and returns 0.
+protected:
 
-  int LowLevelConnectSocket( u32 that_address, int that_port ); 
-    // connect to address:port.  Return < 0 if error
-
-  int LowLevelSetSocketOption( int cond_type, int parm );
-    // Returns < 0 if error - see CONDSOCK... defines above
-
-  int LowLevelGet(char *data, int length);
-    // returns 0 if sock closed, -1 if timeout, else length of rcvd data
-
-  int LowLevelPut(const char *data, int length);
-    // returns 0 if sock closed, -1 if timeout, else length of sent data
-
-  int InitializeConnection(void); //high level method. Used internally by Open
-    //currently only negotiates/authenticates the SOCKSx session. 
+  int InitializeConnection(void);
+    // high level method. Used internally by Open
+    // currently only negotiates/authenticates the SOCKSx session.
     // returns < 0 on error, 0 on success
 
   int  Close( void );
@@ -273,19 +91,19 @@ protected:
     // returns -1 on error, 0 on success
 
   ~Network( void );
-    // guess. 
- 
-  Network( const char *servname, int servport, 
-           int _nofallback = 1, int _iotimeout = -1, int _enctype = 0, 
-           const char *_fwallhost = NULL, int _fwallport = 0, 
+    // guess.
+
+  Network( const char *servname, int servport,
+           bool _nofallback = true, int _iotimeout = -1, int _enctype = 0,
+           const char *_fwallhost = NULL, int _fwallport = 0,
            const char *_fwalluid = NULL );
     // protected!: used by friend NetOpen() below.
 
 public:
 
-  friend Network *NetOpen( const char *servname, int servport, 
-           int _nofallback = 1, int _iotimeout = -1, int _enctype = 0, 
-           const char *_fwallhost = NULL, int _fwallport = 0, 
+  friend Network *NetOpen( const char *servname, int servport,
+           bool _nofallback = true, int _iotimeout = -1, int _enctype = 0,
+           const char *_fwallhost = NULL, int _fwallport = 0,
            const char *_fwalluid = NULL );
 
   friend int NetClose( Network *net );
@@ -298,24 +116,22 @@ public:
     // send data over the open connection, handle uue/http translation,
     // Returns length of sent buffer
 
-  int GetHostName( char *buffer, unsigned int len );
-    // used by mail.
-    // like gethostname(). returns !0 on error
-
-  int SetPeerAddress( u32 addr ) 
+  int SetPeerAddress( u32 addr )
     { if (svc_hostaddr == 0) svc_hostaddr = addr; return 0; }
     // used by buffupd when proxies return an address in a packet
-    
+
   int Reset( u32 thataddress );
     // reset the connection (if thataddress==0, then hard).
-    // the old connection is invalid on return (even if reset fails). 
-    
+    // the old connection is invalid on return (even if reset fails).
+
   u32 GetPeerAddress(void)  { return svc_hostaddr; }
     //for debugging
 
   void ShowConnection(void);
     //show who we are connected to. (::Open() no longer does this)
 };
+
+////////////////////////////////////////////////////////////////////////////
 
 #endif /* __NETWORK_H__ */
 

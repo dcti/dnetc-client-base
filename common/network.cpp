@@ -5,12 +5,12 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.119 2000/06/03 03:24:39 jlawson Exp $"; }
+return "@(#)$Id: network.cpp,v 1.120 2000/07/03 07:13:15 jlawson Exp $"; }
 
 //----------------------------------------------------------------------
 
-//#define TRACE
-//#define DEBUGTHIS
+#define TRACE
+#define DEBUGTHIS
 
 #include "cputypes.h"
 #include "baseincs.h"  // standard stuff
@@ -26,10 +26,27 @@ return "@(#)$Id: network.cpp,v 1.119 2000/06/03 03:24:39 jlawson Exp $"; }
 #include "netio.h"
 
 
-#if (CLIENT_OS == OS_QNX)
+#if (CLIENT_OS == OS_QNX) || !defined(offsetof)
   #undef offsetof
   #define offsetof(__typ,__id) ((size_t)&(((__typ*)0)->__id))
 #endif
+
+
+#if defined(__TURBOC__)
+  #define strcasecmp(x,y)  strcmpi(x,y)
+  #define strncasecmp(x,y,z) strncmpi(x,y,z)
+#elif defined(_MSC_VER)
+  #define strcasecmp(x,y)  _stricmp(x,y)
+  #define strncasecmp(x,y,n)  _strnicmp(x,y,n)
+#elif defined(__WATCOMC__) || defined(__IBMCPP__) || defined(__SASC__)
+  #define strcasecmp(x,y)  stricmp(x,y)
+  #define strncasecmp(x,y,n)  strnicmp(x,y,n)
+#elif (CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_MACOS) || \
+      (CLIENT_OS == OS_ULTRIX)
+  extern "C" int strcasecmp(const char *s1, const char *s2);
+  extern "C" int strncasecmp(const char *s1, const char *s2, size_t);
+#endif
+
 
 extern int NetCheckIsOK(void); // used before doing i/o
 
@@ -140,7 +157,7 @@ static void __print_packet( const char *label,
         if (!isprint(c) || /*isctrl(c)*/ c=='\r' || c=='\n' || c=='\t')
           c = '.';
       }
-      p+=2;
+      p += 2;
       *p++ = ' ';
       *q++ = (char)c;
     }
@@ -178,7 +195,7 @@ static int __fixup_dnethostname( char *host, int *portP, int mode,
                                   int *nofallback )
 {
   static char *dnet = ".distributed.net";
-  int faultport = 0, autofind = 0;
+  bool faultport = false, autofind = false;
 
   char *p = host;
   int len = 0;
@@ -201,30 +218,30 @@ static int __fixup_dnethostname( char *host, int *portP, int mode,
   else if ( len > 22 && memcmp( &host[len-22], ".proxy.", 7 ) == 0 )
     *nofallback |= (mode & MODE_HTTP); // direct connect or redir service
   else if ( len < 20 || memcmp( &host[len-20], ".v27.", 5 ) != 0 )
-    faultport = autofind = 1; // rc5proxy.distributed.net et al
+    faultport = autofind = true; // rc5proxy.distributed.net et al
   else
   {
     int i; const char *dzones[]={"us","euro","asia","aussie","jp"};
-    autofind = 1; /* assume this until we know better */
+    autofind = true; /* assume this until we know better */
     for (i=0;(autofind && i<((int)(sizeof(dzones)/sizeof(dzones[0]))));i++)
     {
       int len2 = strlen(dzones[i]);
       if ( memcmp( dzones[i], host, len2 )==0)
       {
-        int foundport = ((host[len2]=='.')?(2064):(atoi(&host[len2])));
+        int foundport = ((host[len2] == '.') ? (2064) : (atoi(&host[len2])));
         if (foundport != 80 && foundport != 23 && foundport != 2064)
           break;
         else if (*portP == 0) //note: the hostname determines port
           *portP = foundport; //not viceversa.
         else if (*portP != 3064 && (*portP != foundport))
           break;
-        autofind = 0; /* everything checks out */
+        autofind = false; /* everything checks out */
       }
     }
   }
   if (autofind)
   {
-    host[0]=0;
+    host[0] = '\0';
     if (faultport && *portP == 0 && (mode & MODE_HTTP) != 0 )
       *portP = 80;
   }
@@ -292,17 +309,17 @@ Network::Network( const char * servname, int servport, bool _nofallback,
   {
     iotimeout = -1;
     startmode |= MODE_HTTP;
-    if (_fwallhost && _fwallhost[0])
+    if (_fwallhost != NULL && _fwallhost[0])
     {
       fwall_hostport = _fwallport;
-      if (_fwalluid)
+      if (_fwalluid != NULL)
         strncpy( fwall_userpass, _fwalluid, sizeof(fwall_userpass));
       __hostnamecpy( fwall_hostname, _fwallhost, sizeof(fwall_hostname));
     }
   }
   else if (_enctype == 4 /*socks4*/ || _enctype == 5 /*socks5*/)
   {
-    if (_fwallhost && _fwallhost[0])
+    if (_fwallhost != NULL && _fwallhost[0])
     {
       startmode |= ((_enctype == 4)?(MODE_SOCKS4):(MODE_SOCKS5));
       fwall_hostport = _fwallport;
@@ -333,13 +350,13 @@ Network::Network( const char * servname, int servport, bool _nofallback,
 #endif
 
   // Adjust the verbosity level depending on the compilation mode.
-  #ifdef NETDEBUG
+#ifdef NETDEBUG
   verbose_level = 2;
-  #elif defined(VERBOSE_OPEN)
+#elif defined(VERBOSE_OPEN)
   verbose_level = 1;
-  #else
+#else
   verbose_level = 0; //quiet
-  #endif
+#endif
 }
 
 //----------------------------------------------------------------------
@@ -424,11 +441,12 @@ int Network::Open( SOCKET insock )
   sock = insock;
 
   // set communications settings
-  mode = startmode;
-  gotuubegin = gothttpend = puthttpdone = gethttpdone = false;
-  httplength = 0;
+  gethttpdone = puthttpdone = false;
   netbuffer.Clear();
   uubuffer.Clear();
+  gotuubegin = gothttpend = false;
+  httplength = 0;
+  mode = startmode;
 
   return 0;
 }
@@ -445,6 +463,7 @@ int Network::Open( void )
   bool didfallback;
   int whichtry, maxtries;
 
+  // set communications settings
   gethttpdone = puthttpdone = false;
   netbuffer.Clear();
   uubuffer.Clear();
@@ -529,9 +548,11 @@ int Network::Open( void )
         {                                              /* last chance */
 
 //BUGBUG: didn't __fixup_dnethostname already check for these?
-          if (autofindkeyserver || server_name[0]=='\0' ||
+          if (autofindkeyserver || server_name[0] == '\0' ||
               strstr(server_name,".distributed.net"))
-            ; /* can't fallback further than a fullserver */
+          {
+            /* can't fallback further than a fullserver */
+          }
           else
           {
             resolve_addrcount = -1;
@@ -544,7 +565,7 @@ int Network::Open( void )
         svc_hostname = server_name;
         svc_hostport = server_port;
 
-        if (svc_hostname[0] == 0)
+        if (svc_hostname[0] == '\0')
         {
 //BUGBUG: didn't __fixup_dnethostname already check for these?
           svc_hostaddr = 0;
@@ -560,7 +581,7 @@ int Network::Open( void )
         if (svc_hostport == 0)
         {
           svc_hostport = DEFAULT_PORT;
-          if ((startmode & MODE_PROXIED) != 0 && fwall_hostname[0] != 0)
+          if ((startmode & MODE_PROXIED) != 0 && fwall_hostname[0] != '\0')
           {
             if ((startmode & MODE_HTTP) != 0)
               svc_hostport = 80;
@@ -573,11 +594,11 @@ int Network::Open( void )
 
       if (!NetCheckIsOK())
       {
-        success = 0;
+        success = false;
         maxtries = 0;
         LogScreen(netcheckfailed);
       }
-      else if ((startmode & MODE_PROXIED) != 0 && fwall_hostname[0] != 0)
+      else if ((startmode & MODE_PROXIED) != 0 && fwall_hostname[0] != '\0')
       {
         if ((startmode & MODE_HTTP) == 0)
         {
@@ -588,9 +609,9 @@ int Network::Open( void )
           svc_hostaddr = 0;
         }
         if (NetResolve( fwall_hostname, fwall_hostport, 0,
-                        &fwall_hostaddr, 1, ((char *)0), 0 ) < 0)
+                        &fwall_hostaddr, 1, NULL, 0 ) < 0)
         {
-          success = 0;
+          success = false;
           fwall_hostaddr = 0;
           if (verbose_level > 0)
             LogScreen("Network::failed to resolve name \"%s\"\n",
@@ -604,10 +625,11 @@ int Network::Open( void )
           if (resolve_addrcount < 1)
           {
             resolve_addrcount =
-               NetResolve( svc_hostname, svc_hostport, autofindkeyserver,
-               &resolve_addrlist[0],
-               sizeof(resolve_addrlist)/sizeof(resolve_addrlist[0]),
-               resolve_hostname, sizeof(resolve_hostname) );
+               NetResolve( svc_hostname, svc_hostport,
+                           autofindkeyserver,
+                           &resolve_addrlist[0],
+                           sizeof(resolve_addrlist)/sizeof(resolve_addrlist[0]),
+                           resolve_hostname, sizeof(resolve_hostname) );
             if (resolve_addrcount > maxtries)
               maxtries = resolve_addrcount;
           }
@@ -638,9 +660,9 @@ int Network::Open( void )
         {
           resolve_addrcount =
              NetResolve( svc_hostname, svc_hostport, autofindkeyserver,
-             &resolve_addrlist[0],
-             sizeof(resolve_addrlist)/sizeof(resolve_addrlist[0]),
-             resolve_hostname, sizeof(resolve_hostname) );
+                         &resolve_addrlist[0],
+                         sizeof(resolve_addrlist)/sizeof(resolve_addrlist[0]),
+                         resolve_hostname, sizeof(resolve_hostname) );
           if (resolve_addrcount > maxtries) /* found! */
             maxtries = resolve_addrcount;
 //LogScreen("resolved: \"%s\" => %d addresses\n", resolve_hostname, resolve_addrcount);
@@ -655,7 +677,7 @@ int Network::Open( void )
         }
         else
         {
-          success = 0;
+          success = false;
           svc_hostaddr = 0;
           if (verbose_level > 0)
             LogScreen("Network::failed to resolve name \"%s\"\n",
@@ -668,27 +690,6 @@ int Network::Open( void )
       }
     }
 
-    /* ---------- create a new socket --------------- */
-
-    if (success)
-    {
-      if (LowLevelCreateSocket() != 0)
-      {
-        success = 0;
-        if (verbose_level > 0)
-        {
-          #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
-          LogScreen("Network::failed to create network socket. (err=%d)\n",
-                     WSAGetLastError());
-          #else
-          LogScreen("Network::failed to create network socket.\n");
-          #endif
-        }
-        /* no point retrying is we can't create a socket */
-        break; /* return -1; */
-      }
-    }
-
     /* ------ connect ------- */
 
     isnonblocking = false;
@@ -697,7 +698,7 @@ int Network::Open( void )
       #ifndef ENSURE_CONNECT_WITH_BLOCKING_SOCKET
       if (iotimeout > 0)
       {
-        isnonblocking = ( LowLevelSetSocketOption( CONDSOCK_BLOCKMODE, 0 ) == 0 );
+        isnonblocking = ( netio_setsockopt( sock, CONDSOCK_BLOCKMODE, 0 ) == 0 );
         #ifdef DEBUGTHIS
         Log("Debug::Connecting with %sblocking socket.\n",
               ((isnonblocking) ? ("non-") : ("")) );
@@ -705,12 +706,12 @@ int Network::Open( void )
       }
       #endif
 
-      success = ( LowLevelConnectSocket( conn_hostaddr, conn_hostport ) == 0 );
+      success = ( netio_lconnect( sock, conn_hostaddr, conn_hostport ) == 0 );
 
       #ifdef ENSURE_CONNECT_WITH_BLOCKING_SOCKET
       if (success && iotimeout > 0)
       {
-        isnonblocking = ( LowLevelSetSocketOption( CONDSOCK_BLOCKMODE, 0 ) == 0 );
+        isnonblocking = ( netio_setsockopt( sock, CONDSOCK_BLOCKMODE, 0 ) == 0 );
         #ifdef DEBUGTHIS
         Log("Debug::Connected (%sblocking).\n",
             ((isnonblocking) ? ("non-") : ("")) );
@@ -720,84 +721,17 @@ int Network::Open( void )
 
       if (iotimeout > 0 && CheckExitRequestTriggerNoIO())
       {
-        success = 0;
+        success = false;
         maxtries = 0;
       }
       else if (!success)   /* connect failed */
       {
         if (verbose_level > 0)
         {
-          char errreasonbuf[100];
-          const char *msg = (const char *)0;
-          int err = 0;
-          #if (defined(ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG))
-          /* nothing */
-          #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
-          err = errno; /* connect copies it from WSAGetLastError(); */
-          msg = "unrecognized error";
-          if      (err == WSAEADDRINUSE)
-            msg = "The specified address is already in use";
-          else if (err == WSAEADDRNOTAVAIL)
-            msg = "The specified address is not available from the local machine";
-          else if (err == WSAECONNREFUSED)
-            msg = "Connect was rejected. Destination may be busy.";
-          else if (err == WSAEISCONN)
-            msg = "The socket is already connected"; //udp only?
-          else if (err == WSAENETUNREACH)
-            msg = "The network cannot be reached from this host at this time";
-          else if (err == WSAENOBUFS)
-            msg = "No buffer space is currently available";
-          else if (err == WSAETIMEDOUT)
-            msg = "Attempt to connect timed out";
-          #elif defined(_TIUSER_)
-          char tlookerr[100];
-          err = t_errno;
-          msg = "undefined error";
-          if (err == TLOOK)
-          {
-            static int looknums[] = {
-            T_LISTEN,T_CONNECT,T_DATA,T_EXDATA,T_DISCONNECT,T_ORDREL,
-            T_UDERR,T_GODATA,T_GOEXDATA };
-            static const char *looknames[] = {
-            "t_listen","t_connect","t_data","t_exdata","t_disconnect",
-            "t_ordrel","t_uderr","t_godata","t_goexdata"};
-            int look = t_look(sock);
-            msg = "";
-            for (err=0;err<(int)(sizeof(looknums)/sizeof(looknums[0]));err++)
-            {
-              if (looknums[err] == look)
-              {
-                msg = looknames[err];
-                break;
-              }
-            }
-            err = TLOOK;
-            sprintf(tlookerr, "asynchronous event %d %s%s%soccurred",
-              look, ((*msg)?("("):("")), msg, ((*msg)?(") "):("")) );
-            msg = (const char *)&tlookerr[0];
-          }
-          else if (err == TSYSERR)
-          {
-            err = errno;
-            msg = strerror(errno);
-          }
-          else if (err > 0 && err < t_nerr)
-            msg = t_errlist[t_errno];
-          #else
-          err = errno;
-          msg = strerror(errno);
-          #endif
-          errreasonbuf[0]='\0';
-          if (msg)
-          {
-            int ml = sprintf(errreasonbuf,"Error %d (",err);
-            strncpy(&errreasonbuf[ml], msg, (sizeof(errreasonbuf)-1)-ml);
-            errreasonbuf[sizeof(errreasonbuf)-1] = '\0';
-            strcat(errreasonbuf,")\n");
-          }
+          const char *errreasonbuf = netio_describe_error();
           LogScreen( "Connect to host %s:%u failed.\n%s",
-             __inet_ntoa__(conn_hostaddr), (unsigned int)(conn_hostport),
-             errreasonbuf );
+             netio_ntoa(conn_hostaddr), (unsigned int)(conn_hostport),
+             errreasonbuf ? errreasonbuf : "unknown error" );
         }
       } //connect failed
     } // resolve succeeded
@@ -808,7 +742,7 @@ int Network::Open( void )
     {
       int rc = InitializeConnection();
       if (rc != 0)
-        success = 0;
+        success = false;
       if (rc < 0)           /* unrecoverable error (negotiation failure) */
         maxtries = 0; /* so don't retry */
     }
@@ -839,7 +773,7 @@ int Network::Open( void )
 int Network::InitializeConnection(void)
 {
   // set communications settings
-  gotuubegin = gothttpend = puthttpdone = gethttpdone = 0;
+  gotuubegin = gothttpend = puthttpdone = gethttpdone = false;
   httplength = 0;
   netbuffer.Clear();
   uubuffer.Clear();
@@ -851,7 +785,7 @@ int Network::InitializeConnection(void)
 
   if (startmode & MODE_HTTP)
   {
-    LowLevelSetSocketOption( CONDSOCK_KEEPALIVE, 1 );
+    netio_setsockopt( sock, CONDSOCK_KEEPALIVE, 1 );
   }
   else if (startmode & MODE_SOCKS5)
   {
@@ -878,13 +812,17 @@ int Network::InitializeConnection(void)
     int authaccepted = 0;
 
     len = 2 + psocks5mreq->nMethods;
-    if (LowLevelPut(socksreq, (int) len) != (int) len)
+    if (netio_send(sock, socksreq, (int) len,
+                   (isnonblocking ? iotimeout : 0),
+                  CheckExitRequestTriggerNoIO) != (int) len)
     {
       if (verbose_level > 0)
         LogScreen("SOCKS5: error sending negotiation request\n");
       recoverable = 1;
     }
-    else if (LowLevelGet(socksreq, 2) != 2)
+    else if (netio_recv(sock, socksreq, 2,
+                        (isnonblocking ? iotimeout : 0),
+                        CheckExitRequestTriggerNoIO) != 2)
     {
       if (verbose_level > 0)
         LogScreen("SOCKS5: failed to get negotiation request ack.\n");
@@ -930,13 +868,17 @@ int Network::InitializeConnection(void)
       memcpy(socksreq + len, password, (int) pwlen);
       len += pwlen;
 
-      if (LowLevelPut(socksreq, len) != (int) len)
+      if (netio_send(sock, socksreq, len,
+                     (isnonblocking ? iotimeout : 0),
+                     CheckExitRequestTriggerNoIO) != (int) len)
       {
         if (verbose_level > 0)
           LogScreen("SOCKS5: failed to send sub-negotiation request.\n");
         recoverable = 1;
       }
-      else if (LowLevelGet(socksreq, 2) != 2)
+      else if (netio_recv(sock, socksreq, 2,
+                          (isnonblocking ? iotimeout : 0),
+                        CheckExitRequestTriggerNoIO) != 2)
       {
         if (verbose_level > 0)
           LogScreen("SOCKS5: failed to get sub-negotiation response.\n");
@@ -995,13 +937,17 @@ int Network::InitializeConnection(void)
         packetsize = (10-sizeof(u32))+len;
       }
 
-      if (LowLevelPut(socksreq, packetsize) != packetsize)
+      if (netio_send(sock, socksreq, packetsize,
+                        (isnonblocking ? iotimeout : 0),
+                        CheckExitRequestTriggerNoIO) != packetsize)
       {
         if (verbose_level > 0)
           LogScreen("SOCKS5: failed to send connect request.\n");
         recoverable = 1;
       }
-      else if (LowLevelGet( socksreq, packetsize) < 10 /*ok for both atyps*/)
+      else if (netio_recv(sock,  socksreq, packetsize,
+                        (isnonblocking ? iotimeout : 0),
+                        CheckExitRequestTriggerNoIO) < 10 /*ok for both atyps*/)
       {
         if (verbose_level > 0)
           LogScreen("SOCKS5: failed to get connect request ack.\n");
@@ -1054,7 +1000,9 @@ int Network::InitializeConnection(void)
     strncpy(psocks4->USERID, fwall_userpass, sizeof(fwall_userpass));
 
     len = sizeof(*psocks4) - 1 + strlen(fwall_userpass) + 1;
-    if (LowLevelPut(socksreq, len) != (int) len)
+    if (netio_send(sock, socksreq, len,
+                  (isnonblocking ? iotimeout : 0),
+                  CheckExitRequestTriggerNoIO) != (int) len)
     {
       if (verbose_level > 0)
         LogScreen("SOCKS4: Error sending connect request\n");
@@ -1063,7 +1011,9 @@ int Network::InitializeConnection(void)
     else
     {
       len = sizeof(*psocks4) - 1;  // - 1 for the USERID[1]
-      int gotlen = LowLevelGet(socksreq,len);
+      int gotlen = netio_recv(sock, socksreq, len,
+                          (isnonblocking ? iotimeout : 0),
+                          CheckExitRequestTriggerNoIO);
       if (((u32)(gotlen)) != len )
       {
         if (verbose_level > 0)
@@ -1080,16 +1030,10 @@ int Network::InitializeConnection(void)
         else if (verbose_level > 0)
         {
           LogScreen("SOCKS4: request rejected%s.\n",
-            (psocks4->CD == 91)
-             ? ""
-             :
-             (psocks4->CD == 92)
-             ? ", no identd response"
-             :
-             (psocks4->CD == 93)
-             ? ", invalid identd response"
-             :
-             ", unexpected response");
+            (psocks4->CD == 91) ? ""
+             : (psocks4->CD == 92) ? ", no identd response"
+             : (psocks4->CD == 93) ? ", invalid identd response"
+             : ", unexpected response");
         }
       }
     }
@@ -1106,12 +1050,13 @@ int Network::InitializeConnection(void)
 
 int Network::Close(void)
 {
-  LowLevelCloseSocket();
-  gethttpdone = puthttpdone = 0;
+  netio_close(sock);
+
+  // set communications settings
+  gethttpdone = puthttpdone = false;
   netbuffer.Clear();
   uubuffer.Clear();
-
-  gotuubegin = gothttpend = 0;
+  gotuubegin = gothttpend = false;
   httplength = 0;
 
   return 0;
@@ -1119,34 +1064,22 @@ int Network::Close(void)
 
 // -----------------------------------------------------------------------
 
-#if defined(__TURBOC__)
-  #define strncasecmp(x,y,z) strncmpi(x,y,z)
-#elif defined(_MSC_VER)
-  #define strncasecmp(x,y,n)  _strnicmp(x,y,n)
-#elif defined(__WATCOMC__) || defined(__IBMCPP__) || defined(__SASC__)
-  #define strncasecmp(x,y,n)  strnicmp(x,y,n)
-#elif (CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_MACOS) || \
-      (CLIENT_OS == OS_ULTRIX)
-  extern "C" int strcasecmp(const char *s1, const char *s2);
-  extern "C" int strncasecmp(const char *s1, const char *s2, size_t);
-#endif
-
 // Receives data from the connection with any necessary decoding.
 // Returns length of read buffer.
 
 int Network::Get( char * data, int length )
 {
   time_t starttime = 0;
-  int need_close = 0;
-  int timed_out = 0;    //only used with blocking sockets
+  bool need_close = false;
+  bool timed_out = false;    //only used with blocking sockets
   char lcbuf[32]; unsigned int lcbufpos;
 
-  int tmp_isnonblocking = (isnonblocking != 0); //we handle timeout ourselves
-  isnonblocking = 0;                 //so stop LowLevelGet() from doing it.
+  bool tmp_isnonblocking = (isnonblocking != 0); //we handle timeout ourselves
+  isnonblocking = false;                 //so stop LowLevelGet() from doing it.
 
   while (netbuffer.GetLength() < (u32)length)
   {
-    int nothing_done = 1;
+    bool nothing_done = true;
 
     if (iotimeout > 0 && CheckExitRequestTrigger())
       break;
@@ -1164,7 +1097,10 @@ int Network::Get( char * data, int length )
       // |  Process HTTP headers on packets  |
       // []---------------------------------[]
       uubuffer.Reserve(500);
-      int numRead = LowLevelGet(uubuffer.GetTail(), (int)uubuffer.GetTailSlack());
+      int numRead = netio_recv(sock, uubuffer.GetTail(),
+                               (int)uubuffer.GetTailSlack(),
+                               (isnonblocking ? iotimeout : 0),
+                              CheckExitRequestTriggerNoIO);
       if (numRead > 0) uubuffer.MarkUsed((u32)numRead);
       else if (numRead == 0) need_close = 1;       // connection closed
       else if (numRead < 0 && !tmp_isnonblocking) timed_out = 1;
@@ -1172,7 +1108,7 @@ int Network::Get( char * data, int length )
       AutoBuffer line;
       while (uubuffer.RemoveLine(&line))
       {
-        nothing_done = 0;
+        nothing_done = false;
 
         strncpy( lcbuf, line.GetHead(), sizeof(lcbuf) );
         lcbuf[sizeof(lcbuf)-1] = '\0';
@@ -1196,19 +1132,19 @@ int Network::Get( char * data, int length )
             strncpy( resolve_hostname, newhostname, sizeof(resolve_hostname));
             resolve_hostname[sizeof(resolve_hostname)-1]='\0';
             #ifdef DEBUGTHIS
-            Log("Debug:X-Keyserver: %s\n", __inet_ntoa__(svc_hostaddr));
+            Log("Debug:X-Keyserver: %s\n", netio_ntoa(svc_hostaddr));
             #endif
           }
         }
         else if (line.GetLength() < 1)
         {
           // got blank line separating header from body
-          gothttpend = 1;
+          gothttpend = true;
           if (uubuffer.GetLength() >= 6 &&
             memcmp(uubuffer.GetHead(), "begin ", 6) == 0)
           {
             mode |= MODE_UUE;
-            gotuubegin = 0;
+            gotuubegin = false;
           }
           if (!(mode & MODE_UUE))
           {
@@ -1220,11 +1156,11 @@ int Network::Get( char * data, int length )
             } else {
               netbuffer += AutoBuffer(uubuffer, httplength);
               uubuffer.RemoveHead(httplength);
-              gothttpend = 0;
+              gothttpend = false;
               httplength = 0;
 
               // our http only allows one packet per socket
-              nothing_done = gethttpdone = 1;
+              nothing_done = gethttpdone = true;
             }
           }
           break;
@@ -1237,26 +1173,29 @@ int Network::Get( char * data, int length )
       // |  Process UU Encoded packets  |
       // []----------------------------[]
       uubuffer.Reserve(500);
-      int numRead = LowLevelGet(uubuffer.GetTail(), (int)uubuffer.GetTailSlack());
+      int numRead = netio_recv(sock, uubuffer.GetTail(),
+                               (int)uubuffer.GetTailSlack(),
+                               (isnonblocking ? iotimeout : 0),
+                              CheckExitRequestTriggerNoIO);
       if (numRead > 0) uubuffer.MarkUsed((u32)numRead);
-      else if (numRead == 0) need_close = 1;       // connection closed
-      else if (numRead < 0 && !tmp_isnonblocking) timed_out = 1;
+      else if (numRead == 0) need_close = true;       // connection closed
+      else if (numRead < 0 && !tmp_isnonblocking) timed_out = true;
 
       AutoBuffer line;
       while (uubuffer.RemoveLine(&line))
       {
-        nothing_done = 0;
+        nothing_done = false;
 
         strncpy( lcbuf, line, sizeof(lcbuf) );
         lcbuf[sizeof(lcbuf)-1] = '\0';
         for (lcbufpos=0;lcbuf[lcbufpos] && lcbufpos<sizeof(lcbuf);lcbufpos++)
           lcbuf[lcbufpos] = (char)tolower(lcbuf[lcbufpos]);
 
-        if (memcmp(lcbuf, "begin ", 6) == 0) gotuubegin = 1;
+        if (memcmp(lcbuf, "begin ", 6) == 0) gotuubegin = true;
         else if (memcmp(lcbuf, "post ", 5) == 0) mode |= MODE_HTTP; //"POST "
         else if (memcmp(lcbuf, "end", 3) == 0)
         {
-          gotuubegin = gothttpend = 0;
+          gotuubegin = gothttpend = false;
           httplength = 0;
           break;
         }
@@ -1304,14 +1243,17 @@ int Network::Get( char * data, int length )
       int wantedSize = ((mode & MODE_HTTP) && httplength) ? (int)httplength : 500;
       tempbuffer.Reserve((u32)wantedSize);
 
-      int numRead = LowLevelGet(tempbuffer.GetTail(),wantedSize);
+      int numRead = netio_recv(sock, tempbuffer.GetTail(),
+                               wantedSize,
+                               (isnonblocking ? iotimeout : 0),
+                              CheckExitRequestTriggerNoIO);
       if (numRead < 0 && !tmp_isnonblocking)
-        timed_out = 1; // timed out
+        timed_out = true; // timed out
       else if (numRead == 0)
-        need_close = 1;
+        need_close = true;
       else if (numRead > 0)
       {
-        nothing_done = 0;
+        nothing_done = false;
         tempbuffer.MarkUsed(numRead);
 
         // decrement from total if processing from a http body
@@ -1320,14 +1262,14 @@ int Network::Get( char * data, int length )
           httplength -= numRead;
 
           // our http only allows one packet per socket
-          if (httplength == 0) nothing_done = gethttpdone = 1;
+          if (httplength == 0) nothing_done = gethttpdone = true;
         }
 
         if ((lcbufpos = tempbuffer.GetLength()) > sizeof(lcbuf))
           lcbufpos = sizeof(lcbuf);
         strncpy( lcbuf, tempbuffer.GetHead(), lcbufpos );
         lcbuf[sizeof(lcbuf)-1] = '\0';
-        for (lcbufpos=0;lcbuf[lcbufpos] && lcbufpos<sizeof(lcbuf);lcbufpos++)
+        for (lcbufpos = 0; lcbuf[lcbufpos] && lcbufpos<sizeof(lcbuf); lcbufpos++)
           lcbuf[lcbufpos] = (char)tolower(lcbuf[lcbufpos]);
 
         // see if we should upgrade to different mode
@@ -1335,13 +1277,13 @@ int Network::Get( char * data, int length )
         {
           mode |= MODE_UUE;
           uubuffer = tempbuffer;
-          gotuubegin = 0;
+          gotuubegin = false;
         }
         else if ( memcmp( lcbuf, "post ",  5 ) == 0)
         {
           mode |= MODE_HTTP;
           uubuffer = tempbuffer;
-          gothttpend = 0;
+          gothttpend = false;
           httplength = 0;
         }
         else netbuffer += tempbuffer;
@@ -1362,7 +1304,7 @@ int Network::Get( char * data, int length )
     }
   } // while (netbuffer.GetLength() < blah)
 
-  isnonblocking = (tmp_isnonblocking!=0); //restore the old state
+  isnonblocking = (tmp_isnonblocking != 0); //restore the old state
 
   if (need_close)
     Close();
@@ -1463,7 +1405,7 @@ int Network::Put( const char * data, int length )
       if ( base64_encode( userpass, fwall_userpass,
                   sizeof(userpass), strlen(fwall_userpass)) < 0 )
         userpass[0] = '\0';
-      userpass[sizeof(userpass)-1]='\0';
+      userpass[sizeof(userpass)-1] = '\0';
     }
 
     header.Reserve(1024);
@@ -1474,8 +1416,8 @@ int Network::Put( const char * data, int length )
             "%s%s%s"
             "Content-Type: application/octet-stream\r\n"
             "Content-Length: %lu\r\n\r\n",
-            ((!nofallback && svc_hostaddr)?(__inet_ntoa__(svc_hostaddr)):
-                                           (svc_hostname)),
+            ((!nofallback && svc_hostaddr)?
+                  netio_ntoa(svc_hostaddr) : svc_hostname),
             ((unsigned int)(svc_hostport)),
             ((userpass[0])?("Proxy-authorization: Basic "):("")),
             ((userpass[0])?(userpass):("")),
@@ -1484,11 +1426,10 @@ int Network::Put( const char * data, int length )
     #if (CLIENT_OS == OS_OS390)
       __etoa(header.GetHead());
     #endif
-    //outbuf = header + outbuf;
     header += outbuf;
     outbuf = header;
 
-    puthttpdone = 1;
+    puthttpdone = true;
   }
 
   #ifdef DEBUGTHIS
@@ -1496,376 +1437,18 @@ int Network::Put( const char * data, int length )
   #endif
 
   int towrite = (int)outbuf.GetLength();
-  int written = LowLevelPut(outbuf,towrite);
+  int written = netio_send(sock, outbuf, towrite,
+                           (isnonblocking ? iotimeout : 0),
+                            CheckExitRequestTriggerNoIO);
 
   #ifdef DEBUGTHIS
-  Log("Put: towrite:%d written:%d success:%d\n", towrite, written, (towrite==written) );
+  Log("Put: towrite:%d written:%d success:%d\n",
+      towrite, written, (towrite == written) );
   #endif
 
-  return ((towrite == written)?(requested_length):(-1));
-}
-
-//=====================================================================
-// From here on down we have "bottom half" functions that (a) use socket
-// functions or (b) are TCP/IP specific or (c) actually do i/o.
-//---------------------------------------------------------------------
-
-// Retrieves the textual hostname for the machine that we are running on.
-// Returns -1 on error, 0 on success.
-
-int Network::GetHostName( char *buffer, unsigned int len )
-{
-  if (buffer && len)
-  {
-    #if ( defined(_TIUSER_) || (defined(AF_INET) && defined(SOCK_STREAM)) )
-    if (NetCheckIsOK())
-    {
-      if (gethostname(buffer, len) == 0)
-      {
-        /* BSD man page for gethostname(3) sez: "The returned name is
-           null-terminated, unless insufficient space is provided."
-        */
-        buffer[len-1] = '\0';
-        return 0;
-      }
-    }
-    #endif
-  }
-  return -1;
-}
-
-/* ----------------------------------------------------------------------- */
-
-// Internal low-level wrapper function around the platform specific
-// acitivies for creating a socket and initializing it with the appropriate
-// blocking-mode and other options.
-
-int Network::LowLevelCreateSocket(void)
-{
-  LowLevelCloseSocket(); //make sure the socket is closed already
-
-  if (!NetCheckIsOK())
-    return -1;
-
-  return netio_createsocket(sock, false);
+  return ((towrite == written) ? (requested_length) : (-1));
 }
 
 //------------------------------------------------------------------------
 
-// Internal low-level wrapper function around the platform specific
-// activities for closing and destroying a socket.
 
-int Network::LowLevelCloseSocket(void)
-{
-  return netio_close(sock);
-}
-
-// -----------------------------------------------------------------------
-
-#ifdef _TIUSER_
-#ifndef DEBUGTHIS
-#define debugtli(_x,_y) /* nothing */
-#else
-void debugtli(const char *label, int fd)
-{
-  int err = t_errno;
-  if (err == TLOOK)
-  {
-    static int looknums[] = {
-    T_LISTEN,T_CONNECT,T_DATA,T_EXDATA,T_DISCONNECT,T_ORDREL,
-    T_ERROR,T_UDERR,T_GODATA,T_GOEXDATA,T_EVENTS };
-    static const char *looknames[] = {
-    "T_LISTEN","T_CONNECT","T_DATA","T_EXDATA","T_DISCONNECT","T_ORDREL",
-    "T_ERROR","T_UDERR","T_GODATA","T_GOEXDATA","T_EVENTS"};
-    const char *msg = "";
-    int i, look = t_look(fd);
-    for (i=0;i<(int)(sizeof(looknums)/sizeof(looknums[0]));i++)
-    {
-      if (looknums[i] == look)
-      {
-        msg = looknames[i];
-        break;
-      }
-    }
-    Log("%s: TLOOK: \"%s\" (%d)\n", label, msg, look );
-  }
-  else if (err == TOUTSTATE)
-  {
-    static int nums[] = {T_UNBND,T_IDLE,T_OUTCON,T_INCON,T_DATAXFER,T_OUTREL};
-    static const char *names[] = {"T_UNBND","T_IDLE","T_OUTCON","T_INCON","T_DATAXFER","T_OUTREL"};
-    const char *msg = "unknown";
-    int i, state = t_getstate(fd);
-    t_errno = err;
-    if (state != -1)
-    {
-      for (i=0;i<(int)(sizeof(nums)/sizeof(nums[0]));i++)
-      {
-        if (nums[i] == state)
-        {
-          msg = names[i];
-          break;
-        }
-      }
-    }
-    Log("%s: TOUTSTATE: \"primitive issued in wrong sequence\" (%d)."
-           "currstate: %s (%d)\n", label, err, msg, state);
-  }
-  else if (err == TSYSERR)
-    Log("%s: TSYSERR: \"%s\" (%d)\n", label, strerror(errno), errno);
-  else if (err == 0)
-    ;
-  else if (err > 0 && err < t_nerr)
-    Log("%s: t_error: \"%s\" (%d)\n", label, t_errlist[err], err);
-  else
-    Log("%s: unknown error %d\n", label, err );
-  return;
-}
-#endif
-#endif
-
-// -----------------------------------------------------------------------
-
-// Internal low-level wrapper around platform specific socket connection
-// establishment activities.
-
-int Network::LowLevelConnectSocket( u32 that_address, int that_port )
-{
-  if ( sock == INVALID_SOCKET )
-    return -1;
-  if (!NetCheckIsOK())
-    return -1;
-  if (!that_address || !that_port)
-    return -1;
-
-#if defined(_TIUSER_)                                         //OSI/XTI/TLI
-  int rc = -1;
-  if ( t_bind( sock, NULL, NULL ) != -1 )
-  {
-    struct t_call *sndcall = (struct t_call *)t_alloc(sock, T_CALL, T_ADDR);
-    time_t stoptime = time(NULL) + 2;
-    #if 0
-    while (sndcall != ((struct t_call *)0) && t_getstate(sock) == T_UNBND)
-    {
-      if (time(NULL) > stoptime)
-      {
-        t_free((char *)sndcall, T_CALL);
-        sndcall = (struct t_call *)0;
-      }
-    }
-    #endif
-    if ( sndcall != ((struct t_call *)0) )
-    {
-      struct sockaddr_in *sin = (struct sockaddr_in *) sndcall->addr.buf;
-      sndcall->addr.len  = sizeof(struct sockaddr_in);
-      sndcall->opt.len   = 0;
-      sndcall->udata.len = 0;
-      sin->sin_addr.s_addr = that_address;
-      sin->sin_family = AF_INET;
-      sin->sin_port = htons(((u16)that_port));
-
-      rc = t_connect( sock, sndcall, NULL);
-      t_free((char *)sndcall, T_CALL);
-      if (rc < 0)
-      {
-        int err = t_errno;
-        debugtli("t_connect1", sock);
-        if (isnonblocking && err == TNODATA)
-        {
-          stoptime = time(NULL) + (time_t)iotimeout;
-          while (rc < 0 && err == TNODATA && time(NULL) <= stoptime)
-          {
-            if (!isnonblocking && CheckExitRequestTrigger())
-              break;
-            usleep(250000);
-            rc = t_rcvconnect(sock, NULL);
-            if (rc < 0)
-            {
-              err = t_errno;
-              debugtli("t_connect2", sock);
-              if (err == TLOOK)
-              {
-                if (t_look(sock) == T_CONNECT)
-                  rc = 0;
-              }
-            }
-          }
-        }
-        if (rc < 0 && err == TLOOK)
-        {
-          int look = t_look(sock);
-          if (look == T_CONNECT)
-            rc = 0;
-          else if (look == T_DISCONNECT)
-          {
-            struct t_discon tdiscon;
-            tdiscon.udata.buf = (char *)0;
-            tdiscon.udata.maxlen = 0;
-            tdiscon.udata.len = 0;
-            if (t_rcvdis(sock, &tdiscon) < 0)
-              tdiscon.reason = ECONNREFUSED;
-            t_errno = TSYSERR;
-            errno = tdiscon.reason;
-          }
-        }
-      }
-      #if 0
-      if (rc == 0)
-      {
-        int state = t_getstate(sock);
-        if ( state != T_DATAXFER && state != T_OUTCON )
-          rc = -1;
-      }
-      #endif
-    }
-  }
-  return rc;
-#elif (CLIENT_OS == OS_MACOS)
-  // The Mac OS client simulates just the most essential socket calls, as a
-  // convenience in interfacing to a non-socket network library. "Select" is
-  // not available, but the timeout for a connection can be specified.
-
-  // set up the address structure
-  struct sockaddr_in sin;
-  memset((void *) &sin, 0, sizeof(sin));
-  sin.sin_family = AF_INET;
-  sin.sin_port = htons(((u16)that_port));
-  sin.sin_addr.s_addr = that_address;
-
-  // set timeout for connect
-  if (iotimeout > 0)
-  {
-    // timeout for this call must be >0 to not have default used
-    socket_set_conn_timeout(sock, iotimeout);
-  }
-
-  return(connect(sock, (struct sockaddr *)&sin, sizeof(sin)));
-
-#elif defined(AF_INET) //BSD sox
-
-  // set up the address structure
-  struct sockaddr_in sin;
-  memset((void *) &sin, 0, sizeof(sin));
-  sin.sin_family = AF_INET;
-  sin.sin_port = htons(((u16)that_port));
-  sin.sin_addr.s_addr = that_address;
-
-  int rc = -1;
-  time_t starttime = time(NULL);
-
-  do
-  {
-    int retval;
-    if ( (retval = connect(sock, (struct sockaddr *)&sin, sizeof(sin))) >= 0 )
-    {
-      rc = 0;
-      break;
-    }
-    if (!isnonblocking && CheckExitRequestTrigger())
-    {
-      rc = -1;
-      break;
-    }
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
-    errno = WSAGetLastError();
-#ifdef DEBUGTHIS
-    Log( "failure (ret: %d, code: %d)\n", retval, errno);
-#endif
-    #undef  EISCONN
-    #define EISCONN WSAEISCONN
-    #undef  EINPROGRESS
-    #define EINPROGRESS WSAEINPROGRESS
-    #undef  EALREADY
-    #define EALREADY WSAEALREADY
-    #undef  EWOULDBLOCK
-    #define EWOULDBLOCK WSAEWOULDBLOCK
-    #undef  ETIMEDOUT
-    #define ETIMEDOUT WSAETIMEDOUT
-    if (errno == WSAEINVAL) /* ws1.1 returns WSAEINVAL instead of WSAEALREADY */
-      errno = EALREADY;
-    #elif (CLIENT_OS == OS_OS2) && !defined(__EMX__)
-    errno = sock_errno();
-    #endif
-
-    if (isnonblocking == 0)
-    {
-      rc = -1;
-      break;
-    }
-    if (errno == EISCONN)
-    {
-      rc = 0;
-      break;
-    }
-    if (errno != EINPROGRESS && errno != EALREADY && errno != EWOULDBLOCK )
-    {
-      rc = -1;
-      break;
-    }
-    if ( CheckExitRequestTriggerNoIO() || ((time(NULL)-starttime)>iotimeout) )
-    {
-      rc = -1;
-      #ifndef ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG
-      errno = ETIMEDOUT;
-      #endif
-      break;
-    }
-    sleep(1);
-    rc = -1;
-    if (CheckExitRequestTriggerNoIO())
-      break;
-  } while (isnonblocking); /* always 1 */
-
-  return rc;
-#else //no socket support
-  return -1;
-#endif
-}
-
-//------------------------------------------------------------------------
-
-// Internal low-level wrapper around platform specific socket connection
-// writing activities.  Returns length of sent data or 0 if the socket is
-// closed, or -1 if timeout/nodata
-
-int Network::LowLevelPut(const char *data, int length)
-{
-  if ( sock == INVALID_SOCKET )
-    return 0; //conn closed
-  if (!NetCheckIsOK())
-    return -1;
-
-  return netio_send(sock, data, length);
-}
-
-// ----------------------------------------------------------------------
-
-// Internal low-level wrapper around platform specific socket writing
-// activities.  Returns length of read buffer or 0 if connection closed
-// or -1 if no-data-waiting/timeout.
-
-int Network::LowLevelGet(char *data,int length)
-{
-  if ( sock == INVALID_SOCKET )
-    return 0; //conn closed
-  if (!NetCheckIsOK())
-    return -1;
-
-  return netio_recv(sock, data, length);
-}
-
-// ----------------------------------------------------------------------
-
-// Internal low-level wrapper around platform specific activities for
-// socket attribute/option setting.  The option types that can be
-// manipulated are specified via one of our CONDSOCK_* values.  The
-// nature of the parameter is dependent upon the particular value set.
-
-int Network::LowLevelSetSocketOption( int cond_type, int parm )
-{
-  if ( sock == INVALID_SOCKET )
-    return -1;
-
-  return netio_setsockopt(sock, cond_type, parm);
-}
-
-// ----------------------------------------------------------------------

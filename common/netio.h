@@ -6,12 +6,35 @@
 //
 
 #ifndef __NETIO_H__
-#define __NETIO_H__ "@(#)$Id: netio.h,v 1.3 2000/06/20 08:15:49 jlawson Exp $"
+#define __NETIO_H__ "@(#)$Id: netio.h,v 1.4 2000/07/03 07:13:14 jlawson Exp $"
 
 #include "cputypes.h"
 
-#if (CLIENT_OS == OS_WIN32)
-  #include <winsock2.h>
+// ------------------
+
+#ifdef UNSAFEHEADERS
+  // Some environments include old system headers that are not safe for
+  // direct inclusion within C++ programs and need to be explicitly
+  // wrapped with extern.  However, this should not be unconditionally
+  // done for all platforms, since some platform headers intentionally
+  // try to prototype C++ versions of functions
+  extern "C" {
+#endif
+
+// ------------------
+
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #define WIN32_LEAN_AND_MEAN
+  #ifndef STRICT
+    #define STRICT
+  #endif
+  #include <windows.h>
+  #if (CLIENT_OS == OS_WIN32)
+    #include <winsock.h>
+  #else
+    #include "w32sock.h" //winsock win16 wrappers
+  #endif
+  #include <io.h>
   #include <errno.h>
   #define EINPROGRESS WSAEWOULDBLOCK
   #define ECONNRESET  WSAECONNRESET
@@ -23,6 +46,7 @@
   #include <errno.h>
   #if defined(__EMX__)
     #include <sys/types.h>
+    #include <io.h>
   #else
     #include <types.h>
   #endif
@@ -30,6 +54,78 @@
   #include <sys/time.h>
   #include <sys/select.h>
   #include <sys/ioctl.h>
+  typedef int SOCKET;
+#elif (CLIENT_OS == OS_RISCOS)
+  #include <socklib.h>
+  #include <inetlib.h>
+  #include <unixlib.h>
+  #include <sys/ioctl.h>
+  #include <unistd.h>
+  #include <netdb.h>
+  typedef int SOCKET;
+#elif (CLIENT_OS == OS_DOS)
+  //ntohl()/htonl() defines are in...
+  #include "platforms/dos/clidos.h"
+#elif (CLIENT_OS == OS_VMS)
+  #include <signal.h>
+  #ifdef __VMS_UCX__
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    #include <sys/time.h>
+    #include <unistd.h>
+    #include <fcntl.h>
+    #include <netdb.h>
+    #include <unixio.h>
+  #elif defined(MULTINET)
+    #include "multinet_root:[multinet.include.sys]types.h"
+    #include "multinet_root:[multinet.include.sys]ioctl.h"
+    #include "multinet_root:[multinet.include.sys]param.h"
+    #include "multinet_root:[multinet.include.sys]time.h"
+    #include "multinet_root:[multinet.include.sys]socket.h"
+    #include "multinet_root:[multinet.include]netdb.h"
+    #include "multinet_root:[multinet.include.netinet]in.h"
+    #include "multinet_root:[multinet.include.netinet]in_systm.h"
+    #ifndef multinet_inet_addr
+      extern "C" unsigned long int inet_addr(const char *cp);
+    #endif
+    #ifndef multinet_inet_ntoa
+      extern "C" char *inet_ntoa(struct in_addr in);
+    #endif
+  #endif
+  typedef int SOCKET;
+#elif (CLIENT_OS == OS_MACOS)
+  #include "socket_glue.h" // includes ntohl()/htonl() etc.
+  #define write(sock, buff, len) socket_write(sock, buff, len)
+  #define read(sock, buff, len) socket_read(sock, buff, len)
+  #define close(sock) socket_close(sock)
+  #define ioctl(sock, request, arg) socket_ioctl(sock, request, arg)
+  typedef int SOCKET;
+#elif (CLIENT_OS == OS_AMIGAOS)
+  #include "platforms/amiga/amiga.h"
+  #include <assert.h>
+  #include <clib/socket_protos.h>
+  #include <pragmas/socket_pragmas.h>
+  #include <sys/ioctl.h>
+  #include <sys/time.h>
+  #include <netdb.h>
+  extern struct Library *SocketBase;
+  #define inet_ntoa(addr) Inet_NtoA(addr.s_addr)
+  #ifndef __PPC__
+     #define inet_addr(host) inet_addr((unsigned char *)host)
+     #define gethostbyname(host) gethostbyname((unsigned char *)host)
+  #endif
+  typedef int SOCKET;
+#elif (CLIENT_OS == OS_BEOS)
+  #include <sys/types.h>
+  #include <sys/socket.h>
+  #include <netinet/in.h>
+  #include <sys/time.h>
+  #include <unistd.h>
+  #include <fcntl.h>
+  #include <netdb.h>
+  #include <ctype.h>
   typedef int SOCKET;
 #else
   #include <errno.h>
@@ -44,6 +140,13 @@
   typedef int SOCKET;
 #endif
 
+// ------------------
+
+#ifdef UNSAFEHEADERS
+} // End the extern needed to handle unsafe system headers.
+#endif
+
+////////////////////////////////////////////////////////////////////////////
 
 // Use sigio handling on systems that provide it, since it offers the
 // potential for lower-overhead when polling a large number of very
@@ -72,6 +175,8 @@
 #else
   #undef USES_SIGIO
 #endif
+
+////////////////////////////////////////////////////////////////////////////
 
 /* Provide extended select() operations for platforms with
  * significantly impaired fd_set counts (ex: NetWare 3.1) */
@@ -110,6 +215,7 @@
   #undef XFD_SETSIZE
 #endif
 
+////////////////////////////////////////////////////////////////////////////
 
 /* Socket modes that can be adjusted with the netio_setsockopt
  * function, or retrieved with the netio_getsockopt function. */
@@ -121,6 +227,7 @@
 #define CONDSOCK_GETERROR         5
 #define CONDSOCK_ASYNCSIG         6
 
+////////////////////////////////////////////////////////////////////////////
 
 /* Symbolic constant to represent uninitialized/closed sockets */
 
@@ -128,6 +235,7 @@
 #define INVALID_SOCKET  ((SOCKET)(-1))
 #endif
 
+////////////////////////////////////////////////////////////////////////////
 
 /* Functions exported by netio.cpp */
 
@@ -145,23 +253,33 @@ extern int netio_bind( SOCKET sock, u32 addr, u16 port );
 extern int netio_listen( SOCKET sock, int backlog );
 extern int netio_openlisten(SOCKET &sock, u32 addr, u16 port,
     bool nonblocking = false);
+
 extern int netio_lconnect( SOCKET sock, u32 addr, u16 port );
 extern int netio_connect(SOCKET &sock, const char *host,
     u16 port, u32 &addr, u32 listenaddr, bool nonblocking = false);
+
 extern int netio_laccept(SOCKET sock, SOCKET *thatsock,
     u32 *thataddr, int *thatport);
 extern int netio_accept(SOCKET sock, SOCKET *snew,
     u32 *hostaddress, int *hostport, bool nonblocking = false);
-extern int netio_lrecv(SOCKET sock, void *data, int toread);
+
+extern int netio_lrecv(SOCKET sock, void *data, int toread,
+                      bool doprecheck = true);
 extern int netio_recv(SOCKET s, void *data, int length,
                int iotimeout, int (*exitcheckfn)(void) = NULL );
-extern int netio_lsend(SOCKET s, const void *ccdata, int towrite);
+
+extern int netio_lsend(SOCKET s, const void *ccdata, int towrite,
+                       bool doprecheck = true);
 extern int netio_send(SOCKET s, const void *ccdata, int length,
                int iotimeout, int (*exitcheckfn)(void) = NULL );
+
 extern int netio_select(int width, fd_set *, fd_set *, fd_set *,
     struct timeval *);
+
 extern int netio_setsockopt( SOCKET sock, int cond_type, int parm );
 extern int netio_getsockopt( SOCKET sock, int cond_type, int *parm );
+
+////////////////////////////////////////////////////////////////////////////
 
 #endif /* NETIO_H */
 
