@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.126 2002/09/02 02:43:26 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.127 2002/09/14 23:43:01 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -50,7 +50,9 @@ static struct __dyn_timeslice_struct
   {  RC5, 1000000, 0x80000000,  0x00100,  0x10000 },
   {  DES, 1000000, 0x80000000,  0x00100,  0x10000 },
   {  OGR,  200000,  0x8000000,  0x00010,  0x10000 },
-  {  CSC, 1000000, 0x80000000,  0x00100,  0x10000 }
+  {  CSC, 1000000, 0x80000000,  0x00100,  0x10000 },
+  {  OGR_NEXTGEN_SOMEDAY,  200000,  0x8000000,  0x00010,  0x10000 },
+  {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000 },
 };
 static struct __dyn_timeslice_struct
   non_preemptive_dyn_timeslice_table[CONTEST_COUNT] = /* for co-op crunchers */
@@ -58,8 +60,13 @@ static struct __dyn_timeslice_struct
   {  RC5, 1000000, 0x80000000,  0x00100,  0x10000 },
   {  DES, 1000000, 0x80000000,  0x00100,  0x10000 },
   {  OGR,  200000,  0x8000000,  0x00010,  0x10000 },
-  {  CSC, 1000000, 0x80000000,  0x00100,  0x10000 }
+  {  CSC, 1000000, 0x80000000,  0x00100,  0x10000 },
+  {  OGR_NEXTGEN_SOMEDAY,  200000,  0x8000000,  0x00010,  0x10000 },
+  {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000 },
 };
+#if (CONTEST_COUNT != 6)
+  #error timeslice_tables: static initializer need update (CONTEST_COUNT is not 6)
+#endif
 
 // =====================================================================
 
