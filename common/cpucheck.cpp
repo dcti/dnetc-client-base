@@ -1,13 +1,9 @@
-// notes: removed non-mt limit , removed MAXCPUS references, made static
-// function __GetProcessorCount() public GetNumberOfDetectedProcessors(), 
-// Created GetNumberOfSupportedProcessors() [by the client that is]
-
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
-// Revision 1.25  1998/09/28 02:41:32  cyp
+// Revision 1.26  1998/09/28 02:44:47  cyp
 // removed non-mt limit; removed references to MAXCPUS; turned static function
 // __GetProcessorCount() into public GetNumberOfDetectedProcessors(); created
 // GetNumberOfSupportedProcessors() ["supported" by the client that is]
@@ -101,7 +97,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.25 1998/09/28 02:41:32 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.26 1998/09/28 02:44:47 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
