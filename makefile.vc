@@ -57,6 +57,7 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/bench.obj      \
 	$(OUTPUTPATH)/w32cons.obj    \
 	$(OUTPUTPATH)/w32svc.obj     \
+        $(OUTPUTPATH)/w32pre.obj     \
 	$(OUTPUTPATH)/console.obj    \
 	$(OUTPUTPATH)/setprio.obj    \
 	$(OUTPUTPATH)/modereq.obj
@@ -77,7 +78,7 @@ PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/rc5mmx.obj \
 	$(OUTPUTPATH)/deseval-meggs3-mmx.obj
 
-RC5_LIBS = wsock32.lib advapi32.lib user32.lib
+RC5_LIBS = wsock32.lib advapi32.lib user32.lib gdi32.lib
 
 # --------------------------------------------
 
