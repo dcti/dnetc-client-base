@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.39 2000/08/25 20:35:42 patrick Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.40 2000/09/04 14:58:48 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -88,7 +88,7 @@ static int __GetTimeOfDay( struct timeval *tv )
     #elif (CLIENT_OS == OS_NETWARE)
     {
       unsigned long cas[3];
-      unsigned long secs, fsec;
+      unsigned long secs, fsec, hi, lo;
 
       /* emulated for nw3 in nwlemu.c */
       GetClockStatus(cas);
@@ -103,13 +103,10 @@ static int __GetTimeOfDay( struct timeval *tv )
       _asm xor edx, edx
       _asm mov ecx, 1000000
       _asm mul ecx
-      _asm xor ecx, ecx
-      _asm dec ecx
-      _asm div ecx
-      _asm mov fsec, eax
+      _asm mov fsec, edx
       #else
       fsec = (unsigned long)(((unsigned __int64)
-             (((unsigned __int64)fsec) * 1000000ul)) / 0xfffffffful);
+             (((unsigned __int64)fsec) * 1000000ul)) >> 32);
       #endif
 
       tv->tv_sec = (time_t)secs;
@@ -362,14 +359,15 @@ int CliGetMonotonicClock( struct timeval *tv )
     #elif (CLIENT_OS == OS_NETWARE)
     {
       /* atomic_xchg()/MPKYieldThread() are stubbed/emulated in nwmpk.c */
-      /* GetHighResolutionTimer() is stubbed/emulated in nwlemu.c */
-      static long splbuf[4] = {0,0,0,0}; /* space for 64bit alignment */
+      /* [NW]GetHighResolutionTimer() is stubbed/emulated in nwlemu.c */
+      static char splbuf[4] = {0,0,0,0}; /* 64bit buffer in data,not bss */
       static unsigned long wrap_count = 0, last_ctr = 0;
       char *splcp = (char *)&splbuf[0]; unsigned long *spllp;
       unsigned long ctr, l_wrap_count = 0;
       int locktries = 0, lacquired = 0;
 
-      splcp += (8-(((unsigned long)splcp) & 7));
+      while ((((unsigned long)splcp) & (sizeof(unsigned long)-1)) != 0)
+        splcp++;
       spllp = (unsigned long *)splcp;
       while (!lacquired)
       {
