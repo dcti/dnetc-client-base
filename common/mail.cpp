@@ -7,7 +7,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.39 2000/06/02 06:24:57 jlawson Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.40 2000/07/03 07:14:53 jlawson Exp $"; }
 
 //#define SHOWMAIL    // define showmail to see mail transcript on stdout
 
@@ -278,7 +278,7 @@ static int smtp_open_message_envelope(Network *net,
   {
     strcpy( out_data, "HELO " );
     pos = strlen( out_data );
-    if (net->GetHostName( out_data+pos, 256 )!=0)
+    if (netio_gethostname( out_data+pos, 256 ) < 0)
     {
       out_data[pos]=0;
       strcat( out_data, "127.0.0.1" );//wicked! try it anyway
@@ -468,32 +468,32 @@ static int smtp_send_message_header( Network * net,
 
   #if 0
   if (errcode == 0) //make sure mail forward agents don't screw with this
-  { 
+  {
     strcpy( buffer, "\r\nMIME-Version: 1.0"
         "\r\nContent-Type: text/plain; charset=\"us-ascii\"" );
     if ( put_smtp_line( buffer, strlen( buffer ), net ) )
-      errcode = -1; 
+      errcode = -1;
   }
   #endif
 
   if (errcode == 0) //send the subject
   {
     len = strlen( strcpy( buffer, "\r\nSubject: distributed.net client log (" ) );
-    if ((net->GetHostName( buffer+len, sizeof(buffer)>>1 ))!=0) 
+    if ((netio_gethostname( buffer+len, sizeof(buffer) >> 1 )) < 0)
       buffer[len] = '\0';
     else
     {
-      if ((!isdigit(buffer[len])) && ((p=strchr(buffer+len,'.'))!=NULL)) 
+      if ((!isdigit(buffer[len])) && ((p=strchr(buffer+len,'.'))!=NULL))
         *p = 0;
-      if ((buffer[len]) && ( statsid && *statsid )) 
+      if ((buffer[len]) && ( statsid && *statsid ))
         strcat( buffer+len, ":" );
     }
-    if ( statsid && *statsid ) 
+    if ( statsid && *statsid )
       strcat( buffer, statsid );
-    if ( !buffer[len] ) 
+    if ( !buffer[len] )
       buffer[len-1] = '\0';
     else
-      strcat( buffer, ")" ); 
+      strcat( buffer, ")" );
     if ( put_smtp_line( buffer, strlen(buffer), net ) )
       errcode = -1;
   }
@@ -536,7 +536,7 @@ static int smtp_send_message_text(Network * net, const AutoBuffer &txt)
 
     if ( put_smtp_line( netbuf, netbuf.GetLength(), net ) )
       errcode = -1;
-    else 
+    else
       sentsome = 1;
   }
   if (errcode != 0)
@@ -619,7 +619,7 @@ static int smtp_send_message_text(Network * net, const char *txt)
     {
       if ( put_smtp_line( netbuf, index, net ) )
         errcode = -1;
-      else 
+      else
         sentsome = 1;
       index = 0;
     }
@@ -757,7 +757,7 @@ int smtp_send_message( struct mailmessage *msg )
       }
       if (errcode <= 0)  /* only if no net error */
         smtp_close_message_envelope( net ); // QUIT unless net error
-    } 
+    }
     smtp_close_net(net);
   }
   //---------------
@@ -766,7 +766,7 @@ int smtp_send_message( struct mailmessage *msg )
   {
     LogScreen("Mail::%s%s\n", resmsg,
      ((deferred && !CheckExitRequestTriggerNoIO())?(" Send deferred."):("")));
-  }  
+  }
   return(errcode);
 }
 
@@ -811,12 +811,12 @@ int smtp_append_message( struct mailmessage *msg, const char *txt )
         else if ((msglen + txtlen + 2) > maxsize)
         {
           AutoBuffer linebuf;
-          while ((msglen + txtlen + 2) > maxsize && 
+          while ((msglen + txtlen + 2) > maxsize &&
                  msg->spoolbuff->RemoveLine(linebuf))
           {
             msglen = (unsigned long)(msg->spoolbuff->GetLength());
           }
-        }  
+        }
         if (txtlen && ( msglen + txtlen + 2 ) <= maxsize)
         {
           msg->spoolbuff->Reserve( txtlen + 2048 );
@@ -858,7 +858,7 @@ int smtp_append_message( struct mailmessage *msg, const char *txt )
           char cpybuff[128];
           unsigned int readsize;
           mfseek( msg->spoolbuff, roffset, SEEK_SET );
-          while ((readsize = mfread( cpybuff, sizeof(cpybuff), sizeof(char), 
+          while ((readsize = mfread( cpybuff, sizeof(cpybuff), sizeof(char),
                  msg->spoolbuff)) != 0)
           {
             unsigned int pos;
@@ -871,7 +871,7 @@ int smtp_append_message( struct mailmessage *msg, const char *txt )
                 while (readsize) /* dummy */
                 {
                   mfseek( msg->spoolbuff, roffset, SEEK_SET );
-                  if ((readsize = mfread( cpybuff, sizeof(cpybuff), 
+                  if ((readsize = mfread( cpybuff, sizeof(cpybuff),
                                  sizeof(char), msg->spoolbuff)) != 0)
                   {
                     p = cpybuff;
@@ -918,7 +918,7 @@ int smtp_append_message( struct mailmessage *msg, const char *txt )
     {
       register char *p;
       unsigned long maxsize;
-      
+
       #if defined(MAILSPOOL_IS_STATICBUFFER)
       msg->maxspoolsize = sizeof(msg->spoolbuff); /*MAILBUFFSIZE;*/
       if (msg->sendthreshold > ((msg->maxspoolsize/10)*9))
@@ -948,15 +948,15 @@ int smtp_append_message( struct mailmessage *msg, const char *txt )
           }
           maxsize -= 4096;
         } while (maxsize >= (4096*2));
-      }  
+      }
       #endif
 
       if (msg->maxspoolsize) /* msg->spoolbuff is not NULL */
       {
         unsigned long msglen = (unsigned long)strlen(msg->spoolbuff);
         maxsize = (unsigned long)msg->maxspoolsize;
-        
-        if ((txtlen + 2) > maxsize) 
+
+        if ((txtlen + 2) > maxsize)
         {
           txt += ((txtlen+2)-maxsize);
           while (*txt && (*txt != '\n' && *txt != '\r'))
@@ -1048,7 +1048,7 @@ static void cleanup_field( int atype, char *addr, const char *default_addr )
   const char sig[]="distributed.net";
   char *p = addr;
   unsigned int len;
-  
+
   while (*addr && isspace(*addr))
     addr++;
   if (addr != p)
@@ -1065,25 +1065,25 @@ static void cleanup_field( int atype, char *addr, const char *default_addr )
   while (len > 0 && isspace(addr[len-1]))
     addr[--len]=0;
 
-  /* reject if lc "^distributed.net$" or "*[\@|\.]distributed.net$" */ 
+  /* reject if lc "^distributed.net$" or "*[\@|\.]distributed.net$" */
   if (len>=(sizeof(sig)-1))
   {
     char scratch[sizeof(sig)+1];
     strncpy(scratch,&(addr[(len-(sizeof(sig)-1))]),sizeof(scratch));
     scratch[sizeof(scratch)-1] = '\0';
     p = scratch;
-    while (*p) 
+    while (*p)
     {
       *p = (char)tolower(*p);
       p++;
-    }  
+    }
     if ( strcmp( sig, scratch ) == 0 )
-    {  
+    {
       if (len==(sizeof(sig)-1))
         len = 0;
       else if (addr[(len-(sizeof(sig)-1))-1]=='.' || addr[(len-(sizeof(sig)-1))-1]=='@')
         len = 0;
-    }    
+    }
   }
 
   if (len == 0)
