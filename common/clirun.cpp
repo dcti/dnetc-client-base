@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.53  1998/12/21 02:03:32  silby
+// Client now does fetches at the time it's told to by the keyserver.
+// Only part left to implement is the client HUPing itself after
+// it gets some blocks.
+//
 // Revision 1.52  1998/12/16 05:55:53  cyp
 // MODEREQ_FFORCE doesn't do anything different from normal force/flush, so I
 // recycled it as MODEREQ_FQUIET for use with non-interactive BufferUpdate()
@@ -201,7 +206,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.52 1998/12/16 05:55:53 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.53 1998/12/21 02:03:32 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -1055,6 +1060,7 @@ int Client::Run( void )
   
   time_t timeNow;
   time_t timeRun=0, timeLast=0, timeNextConnect=0, timeNextCheckpoint = 0;
+  time_t timeNextScheduledUpdateCheck;
   int checkpointsDisabled = (nodiskbuffers != 0);
   unsigned int checkpointsPercent = 0;
   int isPaused=0, wasPaused=0;
@@ -1378,6 +1384,38 @@ int Client::Run( void )
       if (CheckExitRequestTriggerNoIO())
         continue;
       }
+
+    //------------------------------------
+    // Check for universally coordinated update
+    //------------------------------------
+
+    #define TIME_AFTER_START_TO_UPDATE 10800 // Three hours
+    #define UPDATE_INTERVAL 600 // Ten minutes
+
+    if ((scheduledupdatetime != 0) && (timeNow > scheduledupdatetime)
+       && (timeNow < scheduledupdatetime+TIME_AFTER_START_TO_UPDATE))
+      {
+      // Sanity check when next update check will occur
+      if ((timeNextScheduledUpdateCheck < scheduledupdatetime) ||
+         (timeNextScheduledUpdateCheck > scheduledupdatetime + TIME_AFTER_START_TO_UPDATE))
+        {
+        timeNextScheduledUpdateCheck = scheduledupdatetime;
+        Log("I've just detected that it's time to start another\n");
+        Log("DES contest.  I will now attempt to get blocks.\n");
+        };
+      if (timeNow > timeNextScheduledUpdateCheck)
+        {
+        // If we haven't gotten the des start signal yet, keep updating
+        if (contestdone[1] != 0) 
+          {
+          contestdone[1]=0; // Since we can't force a flush, we must
+                            // pretend the contest started so a
+                            // flush will occur
+          ModeReqSet(MODEREQ_FETCH);
+          };
+        timeNextScheduledUpdateCheck=timeNow+UPDATE_INTERVAL;
+        };
+      };
 
     //------------------------------------
     // Lurking
