@@ -21,11 +21,64 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.9 1999/12/02 16:25:23 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.10 2000/01/08 23:54:27 cyp Exp $
 ==========================================================================
 
 2.8000
 ------
+
+2.8005.453  chg: client supports thresholds either as a time-factor, or
+                 as a workunit-factor. -config documentation has more info.
+		 A review of your settings is *strongly* advised.
+
+2.8004.452  chg: all: .ini option spin off from the generic [parameters] 
+                 section into subsections is now complete. phew! Nothing
+		 left except "id".
+	    chg: reverted log file opening on win/dos/netware/os2 to 
+	         non-shared.
+
+2.8004.451  fix: OS/2: Fixed crash in -config by using different API calls
+            fix: OS/2: included the forgotten CSC-MMX core.
+            fix: win32 Alpha: network connect()
+            fix: all: 2 digit date in log-by-mail
+            fix: solaris x86: multithreading works correctly now (uses
+                 native threads bound to LWPs instead of pthreads)
+            chg: log file is opened shared on win/dos/netware/os2
+	    chg: log file is opened with persistant handles on *nix
+
+2.8004.450  new: Mac OS port including Altivec core support (twice as
+                 fast as MMX on otherwise comparable hardware)
+
+2.8003.449  chg: win32: client sleeps for 10secs immediately after starting
+                 as service to allow the rest of the system to fire up first
+            fix: all: not being able to -update if offlinemode
+            fix: solaris: time stamps/elapsed time on MP boxes
+            fix: all: clients will again reset work if the core # changes 
+                 (functionality was lost in 2.8002.446 - reset if client
+                 version or platform changes was unaffected).
+
+2.8003.448  new: x86: 50% faster CSC MMX core added. '6bit - bitslice' 
+                 replaces '6bit - called'
+            fix: all: lines in mail/logfile are no longer truncated
+            fix: all: pause by signal (by user) and pause by filename
+                 are additive, that is, pause remains in effect as
+                 long as either one is in effect.
+            fix: all: completed/summary time is now elapsed wall clock
+                 time again
+            fix: x86: Cyrix 6x86 auto-selects CSC core #3 now.
+            imp: all: threads no longer check external flags for shutdown/
+                 pause state. Flags are 'pushed' instead, which reduces 
+                 cache footprint.
+            fix: win32: win95B doesn't have a 'Lucinda Console' TrueType
+                 font, so client avoids it now.
+            chg: many: DES cores are no longer included
+            imp: all: benchmarks have greater time precision (no longer
+                 overshoot the end of the bench period)
+            chg: *nix: client setsid()s and dups std handles to /dev/null
+                 when started with -quiet/-hide
+            fix: dun config collision with no-networking resolved 
+                 (dun was still active even if the networking was disabled)
+            
 2.8002.447  chg: all: firewall settings in the .ini have moved to the network
                  section. socks user:pass is now saved encoded
             chg: if appropriate, 'Summary:' now also shows # of work units
@@ -44,6 +97,7 @@ Version change log: $Id: CHANGES.txt,v 1.9 1999/12/02 16:25:23 cyp Exp $
                  single project, eg '-benchmark csc' to bench only csc
             new: all: '-bench [project]' benches all cores for a given
                  project (or all projects if no project is specified)
+            new: all: benchmarks are time based now (8-10 secs/16-20 secs)
             new: win32: distribution includes a native cui wrapper
             new: win16/32: client saves window size and position
             chg: win32: service ID is 'dnetc' for client, 'dnetd' for pproxy
