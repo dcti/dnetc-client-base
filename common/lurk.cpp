@@ -49,7 +49,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.61.4.4 2003/05/11 07:59:03 pfeffi Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.61.4.5 2003/05/16 23:25:54 bdragon Exp $"; }
 
 //#define TRACE
 
@@ -248,8 +248,11 @@ int LurkCheckIfConnectRequested(void) //yes/no
     (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
     (CLIENT_OS == OS_BSDOS) || \
     ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
-    (CLIENT_OS == OS_PS2LINUX)
+    (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX)
 #include <sys/types.h>
+  #if (CLIENT_OS == OS_DEC_UNIX)
+  #define _SOCKADDR_LEN
+  #endif
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
@@ -462,7 +465,7 @@ int LurkGetCapabilityFlags(void)
       (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
       (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_OS2) || \
       ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
-      (CLIENT_OS == OS_PS2LINUX)
+      (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX)
   what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYSCRIPT | CONNECT_IFACEMASK);
 #elif (CLIENT_OS == OS_AMIGAOS)
   what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYPROFILE | CONNECT_IFACEMASK);
@@ -1354,7 +1357,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
       (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_AMIGAOS) || \
       ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
       ((CLIENT_OS == OS_OS2) && defined(__EMX__)) || \
-      (CLIENT_OS == OS_PS2LINUX)
+      (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX)
    struct ifconf ifc;
    struct ifreq *ifr;
    int n, foundif = 0;
@@ -1463,7 +1466,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
        #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
              (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_NETBSD) || \
              ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
-             (CLIENT_OS == OS_AMIGAOS)
+             (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_DEC_UNIX)
        /* Calculate size of ifreq - _SIZEOF_ADDR_IFREQ used by FreeBSD */
        #ifdef _SIZEOF_ADDR_IFREQ
        #define SIZEOF_ADDR_IFREQ(sa,ifr) (_SIZEOF_ADDR_IFREQ(*ifr))
@@ -1777,7 +1780,7 @@ int LurkDialIfNeeded(int force /* !0== override lurk-only */ )
      (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
      (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
      ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
-     (CLIENT_OS == OS_PS2LINUX)
+     (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX)
   lurker.dohangupcontrol = 0;
   if (lurker.conf.connstartcmd[0] == 0)  /* we don't do dialup */
   {
@@ -1955,7 +1958,7 @@ int LurkHangupIfNeeded(void) //returns 0 on success, -1 on fail
       (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
       (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
       ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
-      (CLIENT_OS == OS_PS2LINUX)
+      (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX)
 
   if (isconnected)
   {

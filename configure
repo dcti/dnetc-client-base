@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.85 2003/05/14 19:21:37 snikkel Exp $
+# @(#)$Id: configure,v 1.288.2.86 2003/05/16 23:25:54 bdragon Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -114,7 +114,8 @@ add_sources() # $1=os, $2=arch, $3=custom
   # so that speed sensitive stuff can remain together at the 'bottom'
   if [ "$1" = "freebsd" -o "$1" = "netbsd" -o "$1" = "openbsd" \
     -o "$1" = "bsdos"   -o "$1" = "os2"    -o "$1" = "amigaos" \
-    -o "$1-$3" = "macosx-" -o "$1-$3" = "linux-" ]; then
+    -o "$1-$3" = "macosx-" -o "$1-$3" = "linux-" \
+    -o "$1" = "digital-unix" ]; then
     COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DLURK"
   fi
