@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.16 2000/01/14 21:30:42 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.17 2000/01/27 00:22:21 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -128,8 +128,8 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   CFGTXT(
   "Enter the prefix (the base name, ie a filename without an 'extension') of\n"
   "the buffer files where unfinished work will be stored. The default is\n"
-  "\""BUFFER_DEFAULT_IN_BASENAME"\". The name of the project will concatenated\n"
-  "internally to this base name name to construct the full name of the buffer\n"
+  "\""BUFFER_DEFAULT_IN_BASENAME"\". The name of the project will be concatenated\n"
+  "internally to this base name to construct the full name of the buffer\n"
   "file. For example, \""BUFFER_DEFAULT_IN_BASENAME"\" becomes \""BUFFER_DEFAULT_IN_BASENAME""EXTN_SEP"rc5\"\n"
   "for the RC5 input buffer\n"
   "Note: if a path is not specified, the files will be created in the same\n"
@@ -146,8 +146,8 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   CFGTXT(
   "Enter the prefix (the base name, ie a filename without an 'extension') of\n"
   "the buffer files where finished work will be stored. The default is\n"
-  "\""BUFFER_DEFAULT_OUT_BASENAME"\". The name of the project will concatenated\n"
-  "internally to this base name name to construct the full name of the buffer\n"
+  "\""BUFFER_DEFAULT_OUT_BASENAME"\". The name of the project will be concatenated\n"
+  "internally to this base name to construct the full name of the buffer\n"
   "file. For example, \""BUFFER_DEFAULT_OUT_BASENAME"\" becomes \""BUFFER_DEFAULT_OUT_BASENAME""EXTN_SEP"rc5\"\n"
   "for the RC5 output buffer\n"
   "Note: if a path is not specified, the files will be created in the same\n"
@@ -365,7 +365,8 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "a new file will be opened. The interval may be specified as a number of days,\n"
   "or as \"daily\",\"weekly\",\"monthly\" etc.\n"
   "For other log types, this option determines the maximum file size in kilobytes.\n"
-  "The \"fifo\" log type will enforce a minimum of 100KB to avoid excessive file I/O.\n"
+  "The \"fifo\" log type will enforce a minimum of 100KB to avoid excessive\n"
+  "file I/O.\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
 //30
 { CFGTXT("Log by mail spool size (bytes)"), "0 (mail disabled)",
