@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.269 2002/03/29 20:34:49 sampo Exp $
+# @(#)$Id: configure,v 1.222.2.270 2002/03/30 06:15:58 sampo Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -338,18 +338,19 @@ add_sources() # $1=os, $2=arch, $3=custom
     TARGET_OGR_MULTI="68k"
     ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN"
     ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $SLICE_SRCS3"
-  #-----------------------------------------------------------------
+  #-----------------------------------------------------------------  
   elif [ "$2" = "alpha" ]; then
-    TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alpha/axp-bmeyer.cpp"
-    TARGET_ADDASMS="${TARGET_ADDASMS} rc5/alpha/axp-bmeyer.s"
-    TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev67.cpp"
-    if [ "$TARGET_CC" = "g++" ]; then
-      TARGET_CCFLAGS="${TARGET_CCFLAGS} -mcpu=ev67 -mno-fix -mno-max"
+    if [ "$1" = "digital-unix" ]; then
+      TARGET_ADDSRCS="${TARGET_ADDASMS} rc5/alpha/axp-bmeyer-osf.s"
+    else
+      TARGET_ADDASMS="${TARGET_ADDASMS} rc5/alpha/axp-bmeyer.s"
     fi
+    TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alpha/axp-bmeyer.cpp"
+    TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev67.cpp"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
     TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
-  #-----------------------------------------------------------------
+  #-----------------------------------------------------------------  
   elif [ "$2" = "ppc" -o "$2" = "power" ]; then
     XLC_LINTILLA_ASMS="rc5/ppc/crunch_lintilla.ppcxlc.s \
 	     rc5/ppc/crunch_allitnil.ppcxlc.s"
@@ -834,6 +835,7 @@ COMMON_SRCS="\
 	     common/iniread.cpp  \
 	     common/buffbase.cpp \
 	     common/mail.cpp     \
+	     common/random.cpp   \
 	     common/convdes.cpp  \
 	     common/clicdata.cpp \
 	     common/clitime.cpp  \
@@ -857,7 +859,6 @@ COMMON_SRCS="\
 	     common/confopt.cpp  \
 	     common/checkpt.cpp  \
 	     common/util.cpp     \
-	     common/random.cpp   \
 	     common/base64.cpp   \
 	     common/netbase.cpp  \
 	     common/netconn.cpp  \
@@ -926,13 +927,12 @@ case "$1" in
 
 # Alpha ****************************************************************
 
-
     *alpha-digital_unix)
         TARGET_CC="cxx"
         TARGET_AS="as"
-        TARGET_CCFLAGS="-pthread -DHAVE_POSIX_THREADS"
+        TARGET_CCFLAGS="-O3 -pthread -DHAVE_POSIX_THREADS"
         TARGET_ASFLAGS=""
-        TARGET_LIBS="-lpthread"
+        TARGET_LIBS="-lpthread -lrt"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "digital-unix" "alpha"
         ;;
@@ -2584,13 +2584,12 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       fi    
       #----------------
       CCFLAGS_SELECT="\${CCFLAGS}"
-      if [ "$BUILDNAME" = "alpha-digital_unix"  \
-        -o "$BUILDNAME" = "alpha-digital_unix-mt" ]; then
-        if [ "$target" = "output/rc5-digital-unix-alpha-ev5.o" ]; then
-          CCFLAGS_SELECT="-mcpu=ev5 ${CCFLAGS_SELECT}"
-        else
-          CCFLAGS_SELECT="-mcpu=ev4 ${CCFLAGS_SELECT}"
-        fi  
+      if [ "$target" = "output/ev67.o" ]; then
+          if [ "$TARGET_CC" = "g++" ]; then
+            CCFLAGS_SELECT="-mcpu=ev67 ${CCFLAGS_SELECT}"
+          else
+            CCFLAGS_SELECT="-march=ev67 ${CCFLAGS_SELECT}"
+          fi
       elif [ "${BUILDNAME}" = "aix-all" ]; then
         if [ "$target" = "output/rc5ansi_2-rg.o" ]; then
           CCFLAGS_SELECT="\${POWERFLAGS}"

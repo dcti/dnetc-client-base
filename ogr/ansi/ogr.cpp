@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.54 2002/03/29 08:51:54 sampo Exp $
+ * $Id: ogr.cpp,v 1.1.2.55 2002/03/30 06:16:00 sampo Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -139,8 +139,8 @@
       (defined(__WATCOMC__) && defined(__386__)) || \
       (defined(__MWERKS__) && defined(__INTEL__)) || \
       (defined(__ICC)) /* icc is Intel only (duh!) */ || \
-      (defined(__GNUC__) && ((defined(ASM_ALPHA) && defined(ALPHA_CIX)) \
-                             || defined(ASM_X86) \
+      (defined(ALPHA_CIX)) || \
+      (defined(__GNUC__) && (defined(ASM_X86) \
                              || (defined(ASM_68K) && (defined(mc68020) \
                              || defined(mc68030) || defined(mc68040) \
                              || defined(mc68060)))))
@@ -173,7 +173,7 @@
    compiler to align functions, the former by making found_one() non static]
 */
 #ifndef OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE
-#define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 2 /* 0 (no opt) or 1 or 2 */
+#define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 1 /* 0 (no opt) or 1 or 2 */
 #endif
 
 
@@ -2182,9 +2182,21 @@ static int found_one(const struct State *oState)
   #else
     #error "Please check this (define OGR_TEST_FIRSTBLANK to test)"
   #endif
-#elif defined(ASM_ALPHA) && defined(__GNUC__)
-  static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
-  { register unsigned long j = ~((unsigned long)i) << 32;  __asm__ ("ctlz %0,%0" : "=r"(j) : "0" (j)); return (int)(j & 0x1f)+1; }
+#elif defined(ALPHA_CIX)
+  #if defined(__GNUC__)
+    static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
+    { 
+      register unsigned long j = ~((unsigned long)i) << 32;
+      __asm__ ("ctlz %0,%0" : "=r"(j) : "0" (j));
+      return (int)(j & 0x1f)+1;
+    }
+  #else
+    static inline int LOOKUP_FIRSTBLANK(register unsigned int i)
+    {
+      __int64 r = asm("ctlz %a0, %v0;", ~((unsigned long)i) << 32);
+      return (int)(r)+1;
+    } 
+  #endif
 #elif defined(ASM_X86) && defined(__GNUC__) || \
       defined(__386__) && defined(__WATCOMC__) || \
       defined(__INTEL__) && defined(__MWERKS__) || \

@@ -5,20 +5,25 @@
  */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ev67.cpp,v 1.1.2.1 2002/03/29 08:51:54 sampo Exp $"; }
+return "@(#)$Id: ev67.cpp,v 1.1.2.2 2002/03/30 06:16:01 sampo Exp $"; }
 
-#if defined(__GCC__) || defined(__GNUC__)
-  #define ALPHA_CIX  /* to turn on CTLZ optimization in ogr.cpp */
+#if defined(__GNUC__)
+  #define OGROPT_BITOFLIST_DIRECT_BIT           1 /* seems to be a win */
+  #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* nope              */
+  #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* nope              */
+  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have ctlz      */
+  #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* nope              */
+#else /* Compaq CC */
+  #include <c_asm.h>
+  #define OGROPT_BITOFLIST_DIRECT_BIT           1 /* yep               */
+  #define OGROPT_COPY_LIST_SET_BIT_JUMPS        1 /* yep               */
+  #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 1 /* yep               */
+  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have ctlz      */
+  #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* nope              */
+#endif
 
-  #define OGROPT_BITOFLIST_DIRECT_BIT           1 /* 'no' irrelevant  */
-  #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
-  #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
-  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /*  we have ctlz    */
-  #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /*  does benefit ?  */
+#define ALPHA_CIX
+#define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table_cix
+#define OVERWRITE_DEFAULT_OPTIMIZATIONS
 
-  #define OGR_GET_DISPATCH_TABLE_FXN ogr_get_dispatch_table_cix
-  #define OVERWRITE_DEFAULT_OPTIMIZATIONS
-  #include "ansi/ogr.cpp"
-#else //__GCC__
-  #error depends on gcc inline assembly.
-#endif //
+#include "ansi/ogr.cpp"
