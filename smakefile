@@ -1,7 +1,3 @@
-#
-# distributed.net makefile for AmigaOS
-#
-
 PROGNAME_PPC = dnetc_ppc
 PROGNAME_68K = dnetc_68k
 
