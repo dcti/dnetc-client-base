@@ -33,7 +33,7 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
 
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
-OPTS_EGCS='-Os -fomit-frame-pointer -Wall -Icommon'
+OPTS_EGCS='-O2 -fomit-frame-pointer -Wall -Icommon'
 
 
 #
@@ -274,19 +274,21 @@ case "$1" in
     *x86-solaris)
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -Dsolaris -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="output/bdeslow-clean.s output/bbdeslow-clean.s"
+	TARGET_ADDASMS="output/bdeslow-clean.s output/bbdeslow-clean.s output/x86ident-clean.s"
 	TARGET_LIBS="-lnsl -lsocket -ldl"
 	sed -e 's/#.*$//' des/bdeslow.s > output/bdeslow-clean.s
 	sed -e 's/#.*$//' des/bbdeslow.s > output/bbdeslow-clean.s
+        sed -e 's/#.*$//' platforms/x86ident.s > output/x86ident-clean.s
 	;;
 
     *x86-solaris-mt)
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -Dsolaris -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="output/bdeslow-clean.s output/bbdeslow-clean.s"
+	TARGET_ADDASMS="output/bdeslow-clean.s output/bbdeslow-clean.s output/x86ident-clean.s"
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
 	sed -e 's/#.*$//' des/bdeslow.s > output/bdeslow-clean.s
 	sed -e 's/#.*$//' des/bbdeslow.s > output/bbdeslow-clean.s
+        sed -e 's/#.*$//' platforms/x86ident.s > output/x86ident-clean.s
 	;;
 
 ###### Alpha
@@ -370,7 +372,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
 	;;
 
     *x86-linux-old)   # uses standard GCC options plus '-pipe'
@@ -378,16 +380,16 @@ case "$1" in
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
 	;;
 
     *x86-linux-aout)
-	TARGET_AS="as"
+	TARGET_AS="i486-pc-linux-gnuaout-as"
 	TARGET_CC="i486-pc-linux-gnuaout-gcc"
-	TARGET_CCFLAGS="$(OPTS_EGCS_P5) -static -DPIPELINE_COUNT=2"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$(X86_CPP)"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
 	;;
 
     *x86-linux-mt)
@@ -396,7 +398,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
 	TARGET_LIBS="-lpthread"
 	;;
 
@@ -405,7 +407,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
 	TARGET_LIBS="-lpthread"
 	;;
 
@@ -414,6 +416,7 @@ case "$1" in
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DKWAN"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $SLICE_SRCS"
+	TARGET_ADDASMS="platforms/x86ident.s"
 	TARGET_LIBS="-lpthread"
 	;;
 
@@ -422,6 +425,7 @@ case "$1" in
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DBIT_32 -DMEGGS -DKWAN -DPIPELINE_COUNT=2 -DMULTITHREAD -DKWAN"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $SLICE_SRCS"
+	TARGET_ADDASMS="platforms/x86ident.s"
 	TARGET_LIBS="-lpthread"
 	;;
 
@@ -431,14 +435,14 @@ case "$1" in
 	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
 	;;
 
     *x86-freebsd-mt)
 	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
 	TARGET_LIBS="-lc_r"
 	;;
 
@@ -446,22 +450,29 @@ case "$1" in
 	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
 	;;
 
     *x86-openbsd)
 	TARGET_AS="as"
 	TARGET_CCFLAGS="$OPTS_GCC_P5 -static -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
 	;;
+
+     *x86-bsdi)
+       TARGET_AS="as"
+       TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
+       TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+       TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
+       ;;
 
 ####### Intel X86 SCO5
 
     *x86-sco5)
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -belf -Dsco5"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
 	TARGET_LIBS="-lsocket"
 	;;
 
@@ -472,7 +483,7 @@ case "$1" in
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -D_NeXT_ -DPIPELINE_COUNT=2 -DBIT_32"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
-	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
 	;;
 
     *m68k-next-gcc)
@@ -646,7 +657,7 @@ echo "	rm -f \${ALLOBJS} ${EXENAME}" >> Makefile
 echo "" >> Makefile
 echo "superclean:	clean" >> Makefile
 echo "	rm -f Makefile buff-in.* buff-out.* *.ini" >> Makefile
-echo "	rm -f `find . -name '*~' `" >> Makefile
+echo "	rm -f `find . -name '*~' -print %p\ `" >> Makefile
 echo "" >> Makefile
 
 

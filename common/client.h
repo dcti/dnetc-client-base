@@ -10,8 +10,13 @@
 // For GUIs and such
 //#define NOMAIN
 
+<<<<<<< client.h
+//#define NEW_STATS_AND_LOGMSG_STUFF   //if you want a 'better looking' screen
+//#define NEW_LOGSCREEN_PERCENT_SINGLE //if the percbar is to stay < 80 chars
+=======
 //#define NEW_STATS_AND_LOGMSG_STUFF   //if you want a 'better looking' screen
 #define NEW_LOGSCREEN_PERCENT_SINGLE //if the percbar is to stay < 80 chars
+>>>>>>> 1.11
 //#define PERCBAR_ON_ONE_LINE //prints percs for all (max 16) threads on one line
                      //platform must support "\r" to return to start of line
 
@@ -622,18 +627,26 @@ public:
 
 // --------------------------------------------------------------------------
 #if (CLIENT_CPU == CPU_X86)
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_OS2)
+//#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_OS2)
   #ifdef __WATCOMC__
     #define x86ident _x86ident
 //    #define checklocks _checklocks
   #endif
+  #if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
+  extern "C" u32 x86ident( void ) asm ("x86ident");
+  #else
   extern "C" u32 x86ident( void );
+  #endif
 //  extern "C" u16 checklocks( void );
-#endif
+//#endif
 #endif
 
 #ifndef NEW_STATS_AND_LOGMSG_STUFF
+<<<<<<< client.h
+#if (((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K)) ||   \
+=======
 #if ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K)) ||  \
+>>>>>>> 1.11
      (CLIENT_OS == OS_MACOS) ||                              \
      (CLIENT_OS == OS_SCO) ||                                \
      (CLIENT_OS == OS_OS2) ||                                \
@@ -642,7 +655,7 @@ public:
      (CLIENT_OS == OS_NETWARE) ||                            \
      (CLIENT_OS == OS_WIN16) ||                              \
      (CLIENT_OS == OS_DOS) ||                                \
-     ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
+     ((CLIENT_OS == OS_VMS) && !defined(MULTINET)))
   extern "C" gettimeofday(struct timeval *tv, struct timezone *);
 #endif
 #endif //#ifdef NEW_STATS_AND_LOGMSG_STUFF
