@@ -21,6 +21,9 @@
 //
 //
 // $Log: pathwork.cpp,v $
+// Revision 1.4  1998/07/05 22:26:13  silby
+// Changed a ':' to a ';'.
+//
 // Revision 1.3  1998/07/05 20:27:02  jlawson
 // headers for win32s and win16 and borland/dos
 //
@@ -39,7 +42,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: pathwork.cpp,v 1.3 1998/07/05 20:27:02 jlawson Exp $";
+static const char *id="@(#)$Id: pathwork.cpp,v 1.4 1998/07/05 22:26:13 silby Exp $";
 #endif
 
 #include <stdio.h>
@@ -90,7 +93,7 @@ static int IsFilenamePathified( const char *filename )
     slash2 = strrchr( filename, ':' );
     if (slash2 > slash) slash = slash2;
   #else
-    slash = strrchr( filename, '/' ):
+    slash = strrchr( filename, '/' );
   #endif
   return (( slash == NULL ) ? (0) : (( slash - filename )+1) );
 }      
