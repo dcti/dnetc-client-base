@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.39 2003/02/11 01:04:46 kamy Exp $
+# @(#)$Id: configure,v 1.288.2.40 2003/02/17 01:53:58 mfeiri Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -47,10 +47,10 @@ BUILDNAME="$1"
 #
 # Define the default compilation options
 #
-TARGET_CC="ccc"
+TARGET_CC="cc"
 TARGET_CP="cp"
 TARGET_TR="tr"
-TARGET_CCFLAGS="-I/usr/lib/compaq/ccc-6.5.6.002-1/alpha-linux/include/"
+TARGET_CCFLAGS=""
 TARGET_LD=""          # blank implies TARGET_CC
 TARGET_LDFLAGS=""
 TARGET_LIBS=""
