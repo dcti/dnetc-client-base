@@ -5,14 +5,17 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.48  1998/10/16 16:14:58  remi
+// Corrected my $Log comments.
+//
 // Revision 1.47  1998/10/16 16:09:13  remi
 // Fixed SOCKS4 / SOCKS5 support. In InitializeConnection() 'lastport' is the
 // SOCKS proxy port, not the keyproxy port.
-// SOCKS4 doesn't work on my machines, but that's perhaps a bug in my SOCKS server.
-// SOCKS5 seems Ok.
+// SOCKS4 doesn't work on my machines, but that's perhaps a bug in my SOCKS
+// server. SOCKS5 seems Ok.
 //
 // Revision 1.46  1998/09/30 22:27:55  remi
-// http connections should always be send to port 80 (?).
+// http connections should always be sent to port 80 (?).
 //
 // Revision 1.45  1998/09/28 03:44:16  cyp
 // Added no-support wrapper around shutdown()
@@ -128,7 +131,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.47 1998/10/16 16:09:13 remi Exp $"; }
+return "@(#)$Id: network.cpp,v 1.48 1998/10/16 16:14:58 remi Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
