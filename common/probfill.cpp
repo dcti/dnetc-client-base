@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.44 2000/10/28 21:56:43 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.45 2000/10/31 03:07:32 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -16,7 +16,6 @@ return "@(#)$Id: probfill.cpp,v 1.58.2.44 2000/10/28 21:56:43 cyp Exp $"; }
 #include "logstuff.h"  // Log()/LogScreen()
 #include "clitime.h"   // CliGetTimeString()
 #include "cpucheck.h"  // GetNumberOfDetectedProcessors()
-#include "clisrate.h"  // CliGetMessageFor... et al.
 #include "clicdata.h"  // CliGetContestNameFromID()
 #include "probman.h"   // GetProblemPointerFromIndex()
 #include "checkpt.h"   // CHECKPOINT_CLOSE define
@@ -88,7 +87,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
                 int *bufupd_pending, int unconditional_unload,
                 int abortive_action )
 {                    
-  unsigned int norm_key_count = 0;
+  unsigned int did_save = 0;
   prob_i = prob_i; /* shaddup compiler. we need this */
 
   *contest = 0;
@@ -108,17 +107,17 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       (thisprob->loaderflags & (PROBLDR_DISCARD|PROBLDR_FORCEUNLOAD)) != 0) 
     { 
       int finito = (resultcode==RESULT_FOUND || resultcode==RESULT_NOTHING);
-      const char *msg = NULL;
-      const char *msg2 = NULL;
+      const char *action_msg = NULL;
+      const char *reason_msg = NULL;
       int discarded = 0;
       unsigned int permille, swucount = 0;
       const char *contname, *unitname;
-      char pktid[32], ratebuf[32], tcountbuf[32]; 
-      u32 secs, usecs, ccounthi, ccountlo; double rate;
+      char pktid[32], ratebuf[32], ccountbuf[10];
+      u32 secs, usecs, ccounthi, ccountlo;
+      struct timeval tv;
 
       *contest = cont_i;
       *is_empty = 1; /* will soon be */
-      norm_key_count = 0; /* computed later if not discarded */
 
       wrdata.contest = (u8)(cont_i);
       wrdata.resultcode = resultcode;
@@ -148,25 +147,25 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 
       if ((thisprob->loaderflags & PROBLDR_DISCARD)!=0)
       {
-        msg = "Discarded";
-        msg2 = "\n(project disabled/closed)";
+        action_msg = "Discarded";
+        reason_msg = "\n(project disabled/closed)";
         discarded = 1;
       }
       else if (resultcode < 0)
       {
-        msg = "Discarded";
-        msg2 = " (core error)";
+        action_msg = "Discarded";
+        reason_msg = " (core error)";
         discarded = 1;
       }
       else if (PutBufferRecord( client, &wrdata ) < 0)
       {
-        msg = "Discarded";
-        msg2 = "\n(buffer error - unable to save)";
-        norm_key_count = 0;
+        action_msg = "Discarded";
+        reason_msg = "\n(buffer error - unable to save)";
         discarded = 1;
       }
       else
       {
+        did_save = 1;
         if (client->nodiskbuffers)
           *bufupd_pending |= BUFFERUPDATE_FLUSH;
         if (__check_outbufthresh_limit( client, cont_i, -1, 0,bufupd_pending))
@@ -174,63 +173,65 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
           //Log("1. *bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
         }       
         if (load_problem_count <= COMBINEMSG_THRESHOLD)
-          msg = "Saved";
+          action_msg = ((finito)?("Completed"):("Saved"));
       }
 
       if (thisprob->GetInfo( 0, &contname, 
                              &secs, &usecs,
                              &swucount, 1, 
-                             &unitname, &permille,
+                             &unitname, 
+                             &permille, 0, 1,
                              pktid, sizeof(pktid),
-                             &rate, ratebuf, sizeof(ratebuf),
                              0, 0, 
-                             tcountbuf, sizeof(tcountbuf),
+                             ratebuf, sizeof(ratebuf),
+                             0, 0, 
+                             0, 0,
                              &ccounthi, &ccountlo,
-                             0, 0 ) != -1)
+                             ccountbuf, sizeof(ccountbuf) ) != -1)
       {
-        if (!discarded)
-        {
-          norm_key_count = swucount;
-        }
+        tv.tv_sec = secs; tv.tv_usec = usecs;
+
         if (finito && !discarded)
         {
           if (swucount == 0) /* test packet (<1*2^28) */
           {
-            LogScreen("Test success was %sdetected!\n",
-               (resultcode == RESULT_NOTHING ? "not " : "") );
+            strcpy(ccountbuf,"Test:");
+            unitname = ((resultcode==RESULT_NOTHING)?
+                        ("RESULT_NOTHING"):("RESULT_FOUND"));
           }
           else /* adjust cumulative stats */
           {
-            struct timeval tv; tv.tv_sec = secs; tv.tv_usec = usecs;
-            CliAddContestInfoSummaryData(cont_i, ccounthi, ccountlo, &tv, swucount, rate);
-          }
-          if (msg)
-          {
-            struct timeval tv; tv.tv_sec = secs; tv.tv_usec = usecs;
-            //Log("Completed %s packet %s (%s%s)\n%s - [%s%s/sec]\n",
-            //     contname, pktid, tcountbuf, unitname,
-            //     CliGetTimeString( &tv, 2 ), ratebuf, unitname );           
-            // Completed RC5 68E0D85A:A0000000 4*2^28
-            // 123:45:67:89 - [987654321 keys/s]
-            // Completed OGR 22/1-3-5-7
-            //          123:45:67:89 - [987654321 nodes/s]
-            Log("Completed %s packet %s\n%s - [%s%s/sec]\n",
-              contname, pktid, CliGetTimeString( &tv, 2 ), ratebuf, unitname );
+            CliAddContestInfoSummaryData(cont_i,ccounthi,ccountlo,&tv,swucount);
+            sprintf(ccountbuf, "%u.%02u ", swucount/100, swucount%100 );
+            unitname = "stats units";
           }
         }
-        else if (msg)
+        if (action_msg)
         {
-          char percbuf[20]; percbuf[0] = '\0';
-          if (!discarded) /* not discarded == don't have discard reason */
+          char percbuf[20]; percbuf[0] ='\0';
+          if (!reason_msg) /* not discarded or finished */
           {
-            msg2 = percbuf;
-            if (permille > 0 && permille < 1000)
+            reason_msg = percbuf;
+            if (!finito && permille > 0 && permille < 1000)
               sprintf( percbuf, " (%u.%u0%% done)", permille/10, permille%10);
           }  
-          //Saved RC5 12345678:ABCDEF00 4*2^28 (5.20%% done)
-          //Saved OGR 25/1-6-13-8-16-18 (5.30% done)
-          //Discarded CSC 12345678:ABCDEF00 4*2^28\n(project disabled/closed)\n"
-          Log("%s: %s %s%s\n", contname, msg, pktid, msg2 );
+          //[....] Saved RC5 12345678:ABCDEF00 4*2^28 (5.20%% done)
+          //       1.23:45:67:89 - [987654321 keys/s] - 1234567 keys
+          //[....] Saved OGR 25/1-6-13-8-16-18 (5.30% done)
+          //       1.23:45:67:89 - [987654321 nodes/s] - 1234567 nodes
+          //[....] Discarded CSC 12345678:ABCDEF00 4*2^28
+          //       (project disabled/closed)
+          //[....] Completed RC5 68E0D85A:A0000000 4*2^28
+          //       1.23:45:67:89 - [987654321 keys/s] - 1234567 keys
+          //[....] Completed OGR 22/1-3-5-7
+          //       1.23:45:67:89 - [987654321 nodes/s] - 1234567 nodes
+          Log("%s %s %s%s\n%c%s - [%s/s] - %s%s\n", action_msg, 
+              contname, pktid, reason_msg, ((discarded)?('\0'):(' ')), 
+              CliGetTimeString( &tv, 2 ), ratebuf,
+              ccountbuf, unitname );
+          /* note that for incomplete packets we always print the number  */
+          /* of iters we did _this_ time and never the total number of iters */
+          /* in the packet */
         }
       } /* if (thisprob->GetInfo( ... ) != -1) */
     
@@ -241,7 +242,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
     } /* unload needed */
   } /* is initialized */
 
-  return norm_key_count;
+  return did_save;
 }
 
 /* ----------------------------------------------------------------------- */
@@ -309,7 +310,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
                     int *bufupd_pending )
 {
   WorkRecord wrdata;
-  unsigned int norm_key_count = 0;
+  unsigned int did_load = 0;
   int update_on_current_contest_exhaust_flag = (client->connectoften & 4);
   long bufcount;
   
@@ -374,32 +375,32 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
         *bufupd_pending |= BUFFERUPDATE_FETCH;
     }
 
-    /* loadstate can fail if it selcore fails or the previous problem
+    /* loadstate can fail if it selcore fails or the previous problem */
     /* hadn't been purged, or the contest isn't available or ... */
 
     if (thisprob->LoadState( work, *loaded_for_contest, timeslice, 
          expected_cpu, expected_core, expected_os, expected_build ) != -1)
     {
-      unsigned int permille, swucount = 0;
-      const char *contname; char pktid[32]; 
       *load_needed = 0;
+      did_load = 1; 
 
-      if (thisprob->GetInfo( loaded_for_contest, &contname, 
-                             0, 0,
-                             &swucount, 1, 
-                             0, &permille,
-                             pktid, sizeof(pktid),
-                             0, 0, 0,
-                             0, 0, 
-                             0, 0,
-                             0, 0,
-                             0, 0 ) != -1)
+      ClientEventSyncPost( CLIEVENT_PROBLEM_STARTED, (long)prob_i );
+
+      if (load_problem_count <= COMBINEMSG_THRESHOLD)
       {
-        if (swucount < 1) /* test packet */
-          swucount = 1;
-        norm_key_count = swucount;
-
-        if (load_problem_count <= COMBINEMSG_THRESHOLD)
+        unsigned int permille;
+        const char *contname; char pktid[32]; 
+        if (thisprob->GetInfo( loaded_for_contest, &contname, 
+                               0, 0,
+                               0, 1, 
+                               0, 
+                               0, &permille, 1,
+                               pktid, sizeof(pktid),
+                               0, 0, 0, 0,
+                               0, 0, 
+                               0, 0,
+                               0, 0,
+                               0, 0 ) != -1)
         {
           const char *extramsg = ""; 
           char perdone[20]; 
@@ -415,15 +416,37 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
           Log("Loaded %s %s%s%s\n",
                contname, ((thisprob->is_random)?("random "):("")), 
                pktid, extramsg );
-        }
-      } /* if (thisprob->GetInfo(...) != -1) */
-
-      ClientEventSyncPost( CLIEVENT_PROBLEM_STARTED, (long)prob_i );
+        } /* if (thisprob->GetInfo(...) != -1) */
+      } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
     } /* if (LoadState(...) != -1) */
-  } /* if (didload) */
+  } /* if (*load_needed == 0) */
 
-  return norm_key_count;
+  return did_load;
 }    
+
+// --------------------------------------------------------------------
+
+static int __post_summary_for_contest(unsigned int contestid)
+{
+  u32 iterhi, iterlo;
+  unsigned int packets, swucount;
+  struct timeval ttime;
+
+  if (CliGetContestInfoSummaryData( contestid, &packets, &iterhi, &iterlo,
+                                    &ttime, &swucount ) == 0)
+  {
+    char ratebuf[15]; const char *name = CliGetContestNameFromID(contestid);
+
+    Log("Summary: %u %s packet%s (%u.%02u stats units)\n%s%c- [%s/s]\n",
+        packets, name, ((packets==1)?(""):("s")), 
+        swucount/100, swucount%100, 
+        CliGetTimeString(&ttime,2), ((packets)?(' '):(0)), 
+        ProblemComputeRate( contestid, ttime.tv_sec, ttime.tv_usec, 
+                            iterhi, iterlo, 0, 0, ratebuf, sizeof(ratebuf)) );
+    return 0;
+  }
+  return -1;
+}
 
 // --------------------------------------------------------------------
 
@@ -445,12 +468,9 @@ unsigned int LoadSaveProblems(Client *client,
   int changed_flag;
 
   int allclosed, prob_step,bufupd_pending;  
-  unsigned int prob_for, prob_first, prob_last;
-  unsigned int norm_key_count, cont_i;
+  unsigned int cont_i, prob_for, prob_first, prob_last;
   unsigned int loaded_problems_count[CONTEST_COUNT];
-  unsigned int loaded_normalized_key_count[CONTEST_COUNT];
   unsigned int saved_problems_count[CONTEST_COUNT];
-  unsigned int saved_normalized_key_count[CONTEST_COUNT];
   unsigned long totalBlocksDone; /* all contests */
   
   unsigned int total_problems_loaded, total_problems_saved;
@@ -527,8 +547,8 @@ unsigned int LoadSaveProblems(Client *client,
     if (CliGetContestInfoSummaryData( cont_i, &blocksdone, NULL, NULL, NULL, NULL )==0)
       totalBlocksDone += blocksdone;
    
-    loaded_problems_count[cont_i]=loaded_normalized_key_count[cont_i]=0;
-    saved_problems_count[cont_i] =saved_normalized_key_count[cont_i]=0;
+    loaded_problems_count[cont_i]=0;
+    saved_problems_count[cont_i] = 0;
   }
 
   /* ============================================================= */
@@ -554,20 +574,18 @@ unsigned int LoadSaveProblems(Client *client,
     // -----------------------------------
 
     load_needed = 0;
-    norm_key_count = __IndividualProblemSave( thisprob, prob_i, client, 
-          &load_needed, load_problem_count, &cont_i, &bufupd_pending,
-          (mode == PROBFILL_UNLOADALL || mode == PROBFILL_RESIZETABLE ),
-          abortive_action );
-    if (load_needed)
-      empty_problems++;
-    if (norm_key_count)
+    if (__IndividualProblemSave( thisprob, prob_i, client, 
+        &load_needed, load_problem_count, &cont_i, &bufupd_pending,
+        (mode == PROBFILL_UNLOADALL || mode == PROBFILL_RESIZETABLE ),
+        abortive_action ))
     {
       changed_flag = 1;
       total_problems_saved++;
-      saved_normalized_key_count[cont_i] += norm_key_count;
       saved_problems_count[cont_i]++;
       totalBlocksDone++;
     }
+    if (load_needed)
+      empty_problems++;
 
     //---------------------------------------
 
@@ -581,8 +599,14 @@ unsigned int LoadSaveProblems(Client *client,
       else
       {
         load_needed = 0;
-        norm_key_count = __IndividualProblemLoad( thisprob, prob_i, client, 
-                &load_needed, load_problem_count, &cont_i, &bufupd_pending );
+        if (__IndividualProblemLoad( thisprob, prob_i, client, 
+            &load_needed, load_problem_count, &cont_i, &bufupd_pending ))
+        {
+          empty_problems--;
+          total_problems_loaded++;
+          loaded_problems_count[cont_i]++;
+          changed_flag = 1;
+        }
         if (load_needed)
         {
           getbuff_errs++;
@@ -593,14 +617,6 @@ unsigned int LoadSaveProblems(Client *client,
           }
           else if (load_needed == NOLOAD_NORANDOM)
             norandom_count++;
-        }
-        if (norm_key_count)
-        {
-          empty_problems--;
-          total_problems_loaded++;
-          loaded_normalized_key_count[cont_i] += norm_key_count;
-          loaded_problems_count[cont_i]++;
-          changed_flag = 1;
         }
       }
     } //if (load_needed)
@@ -701,11 +717,9 @@ unsigned int LoadSaveProblems(Client *client,
 
       if (loaded_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD )
       {
-        Log( "Loaded %u %s packet%s (%u work unit%s) from %s\n", 
+        Log( "Loaded %u %s packet%s from %s\n", 
               loaded_problems_count[cont_i], cont_name,
               ((loaded_problems_count[cont_i]==1)?(""):("s")),
-              loaded_normalized_key_count[cont_i],
-              ((loaded_normalized_key_count[cont_i]==1)?(""):("s")),
               (client->nodiskbuffers ? "(memory-in)" : 
               BufferGetDefaultFilename( cont_i, 0, 
                                         client->in_buffer_basename )) );
@@ -714,11 +728,9 @@ unsigned int LoadSaveProblems(Client *client,
       if (saved_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD
        && (client->nodiskbuffers == 0 || (mode != PROBFILL_UNLOADALL)))
       {
-        Log( "Saved %u %s packet%s (%u work unit%s) to %s\n", 
+        Log( "Saved %u %s packet%s to %s\n", 
               saved_problems_count[cont_i], cont_name,
               ((saved_problems_count[cont_i]==1)?(""):("s")),
-              saved_normalized_key_count[cont_i],
-              ((saved_normalized_key_count[cont_i]==1)?(""):("s")),
               (mode == PROBFILL_UNLOADALL)?
                 (client->nodiskbuffers ? "(memory-in)" : 
                 BufferGetDefaultFilename( cont_i, 0, 
@@ -743,7 +755,7 @@ unsigned int LoadSaveProblems(Client *client,
         if ((totalBlocksDone%cpus) == 0 )
         #endif
         {
-          CliPostSummaryStringForContest(cont_i);
+          __post_summary_for_contest(cont_i);
         }
       }
 

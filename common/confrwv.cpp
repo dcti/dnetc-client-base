@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.45 2000/10/27 02:14:41 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.46 2000/10/31 03:07:31 cyp Exp $"; }
 
 //#define TRACE
 
@@ -515,7 +515,7 @@ static int __parse_timestring(const char *source, int oldstyle_hours_compat )
   {
     /* "hours" was once-upon-a-time literally hours with a decimal */
     /* point; at first with six frac digits!; go! sprintf(%f)!!! */
-    /* and later "fixed" to two (still double) */
+    /* and later "fixed" to two (still duh-ble) */
     /* fwiw, we support that historical curiosity */
     colcount++; /* we have a seconds field */
     source++;
@@ -1106,7 +1106,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
   {
     if (GetPrivateProfileIntB(OPTION_SECTION, "percentoff", 0, fn ))
     {
-      client->percentprintingoff = 1;
+      client->crunchmeter = 0; /* off */
       modfail += (!WritePrivateProfileStringB( OPTSECT_DISPLAY, "progress-indicator", "off", fn));
     }
   }
@@ -1118,7 +1118,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
      doesn't exist) is not "", but thats all handled in confread().
   */
   if (GetPrivateProfileStringB( OPTSECT_TRIGGERS, "exit-flag-filename", "*", buffer, sizeof(buffer), fn )==1)
-  {      /* need a double test to ensure the key doesn't exist */
+  {      /* need two tests to ensure the key doesn't exist */
     if (buffer[0] == '*')
     {
       if ((GetPrivateProfileIntB(OPTSECT_TRIGGERS, "exit-flag-file-checks", 1, fn)==0)
@@ -1232,7 +1232,27 @@ int ConfigRead(Client *client)
   /* --------------------- */
 
   client->quietmode = GetPrivateProfileIntB( OPTSECT_DISPLAY, "detached", client->quietmode, fn );
-  client->percentprintingoff = !GetPrivateProfileIntB( OPTSECT_DISPLAY, "progress-indicator", !(client->percentprintingoff), fn );
+  client->crunchmeter = -1; /* default */
+  if (GetPrivateProfileStringB( OPTSECT_DISPLAY, "progress-indicator", "", buffer, sizeof(buffer), fn ))
+  {
+    client->crunchmeter = atoi(buffer);
+    if (client->crunchmeter || buffer[0]=='0')
+    {
+      if (client->crunchmeter > 2 || client->crunchmeter < 0)
+        client->crunchmeter = -1; /* default */
+    }
+    else if (buffer[0] == 'a' || buffer[0] == 'A') /* "abs[olute]" */
+      client->crunchmeter = 1;
+    else if (buffer[0] == 'r' || buffer[0] == 'R') /* "rel[ative]" */
+      client->crunchmeter = 2;
+    else if (buffer[0] != 'o' && buffer[0] != 'O')
+      client->crunchmeter = -1; /* default */
+    else if (buffer[1] == 'f' || buffer[1] == 'F') /* "off" */
+      client->crunchmeter = 0; /* off */
+    else
+      client->crunchmeter = -1; /* default */
+  }
+  //client->percentprintingoff = !GetPrivateProfileIntB( OPTSECT_DISPLAY, "progress-indicator", !(client->percentprintingoff), fn );
 
   /* --------------------- */
 
@@ -1374,18 +1394,22 @@ int ConfigRead(Client *client)
 static void __XSetProfileStr( const char *sect, const char *key,
             const char *newval, const char *fn, const char *defval )
 {
+  int dowrite = 1;
   if (sect == NULL)
     sect = OPTION_SECTION;
-  if (defval == NULL)
-    defval = "";
-  int dowrite = (strcmp( newval, defval )!=0);
-  if (!dowrite)
+  if (newval != NULL)
   {
-    char buffer[4];
-    dowrite = (GetPrivateProfileStringB( sect, key, "=", 
-                    buffer, sizeof(buffer), fn ) !=1 );
-    if (!dowrite) dowrite = (buffer[0] != '=' );
-  }  
+    if (defval == NULL)
+      defval = "";
+    dowrite = (strcmp( newval, defval )!=0);
+    if (!dowrite)
+    {
+      char buffer[4];
+      dowrite = (GetPrivateProfileStringB( sect, key, "=", 
+                      buffer, sizeof(buffer), fn ) !=1 );
+      if (!dowrite) dowrite = (buffer[0] != '=' );
+    }  
+  }
   if (dowrite)
     WritePrivateProfileStringB( sect, key, newval, fn );
   return;
@@ -1470,9 +1494,11 @@ int ConfigWrite(Client *client)
     __XSetProfileInt( OPTSECT_TRIGGERS, "pause-on-no-mains-power", !client->nopauseifnomainspower, fn, 1, 'y' );
     __XSetProfileInt( OPTSECT_TRIGGERS, "pause-on-high-cpu-temp", client->watchcputempthresh, fn, 0, 'n' );
     __XSetProfileStr( OPTSECT_TRIGGERS, "cpu-temperature-thresholds", client->cputempthresh, fn, NULL );
-
     __XSetProfileInt( OPTSECT_DISPLAY, "detached", client->quietmode, fn, 0, 'y' );
-    __XSetProfileInt( OPTSECT_DISPLAY, "progress-indicator", !client->percentprintingoff, fn, 1, 'o' );
+    static const char *meterstyle[]={"off","abs","rel"};
+    p = ((client->crunchmeter<0 || client->crunchmeter>2)?(NULL):(meterstyle[client->crunchmeter]));
+    __XSetProfileStr( OPTSECT_DISPLAY, "progress-indicator", p, fn, NULL );
+    //__XSetProfileInt( OPTSECT_DISPLAY, "progress-indicator", !client->percentprintingoff, fn, 1, 'o' );
 
     /* --- CONF_MENU_PERF -- */
 

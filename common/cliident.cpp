@@ -20,7 +20,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.17.2.18 2000/10/28 14:46:16 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.17.2.19 2000/10/31 03:07:29 cyp Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -34,7 +34,6 @@ return "@(#)$Id: cliident.cpp,v 1.17.2.18 2000/10/28 14:46:16 cyp Exp $"; }
 #include "clicdata.h"
 #include "clievent.h"
 #include "cliident.h"
-#include "clisrate.h"
 #include "clitime.h"
 #include "cmdline.h"
 #include "confopt.h"
@@ -86,7 +85,6 @@ static const char *h_ident_table[] =
   (const char *)__CLIENT_H__,
   (const char *)__CLIEVENT_H__,
   (const char *)__CLIIDENT_H__,
-  (const char *)__CLISRATE_H__,
   (const char *)__CLITIME_H__,
   (const char *)__CMDLINE_H__,
   (const char *)__CONFOPT_H__,
@@ -138,7 +136,6 @@ extern const char *client_cpp(void);
 extern const char *clievent_cpp(void);
 //extern const char *cliident_cpp(void);
 extern const char *clirun_cpp(void);
-extern const char *clisrate_cpp(void);
 extern const char *clitime_cpp(void);
 extern const char *cmdline_cpp(void);
 extern const char *confmenu_cpp(void);
@@ -186,7 +183,6 @@ static const char * (*ident_table[])(void) =
   clievent_cpp,
   cliident_cpp,
   clirun_cpp,
-  clisrate_cpp,
   clitime_cpp,
   cmdline_cpp,
   confmenu_cpp,

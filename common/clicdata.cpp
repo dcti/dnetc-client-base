@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.18.2.9 2000/10/27 17:58:42 cyp Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.18.2.10 2000/10/31 03:07:28 cyp Exp $"; }
 
 #include "baseincs.h" //for timeval
 #include "clitime.h" //required for CliTimerDiff() and CliClock()
@@ -28,15 +28,15 @@ static struct contestInfo
   unsigned int Iter2KeyFactor; /* by how much must iterations/keysdone
                         be multiplied to get the number of keys checked. */
   unsigned int BlocksDone;
-  double IterDone;
+  struct { u32 hi, lo; } IterDone, TotalIterDone;
   struct timeval TimeDone;
   unsigned int UnitsDone;
   unsigned int BestTime;  /* in seconds */
-} conStats[] = {  { "RC5", 0,  1, 0, 0, {0,0}, 0, 0 },
-                  { "DES", 1,  2, 0, 0, {0,0}, 0, 0 },
-                  { "OGR", 2,  1, 0, 0, {0,0}, 0, 0 },
-                  { "CSC", 3,  1, 0, 0, {0,0}, 0, 0 },
-                  {  NULL,-1,  0, 0, 0, {0,0}, 0, 0 }  };
+} conStats[] = {  { "RC5", 0,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0 },
+                  { "DES", 1,  2, 0, {0,0}, {0,0}, {0,0}, 0, 0 },
+                  { "OGR", 2,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0 },
+                  { "CSC", 3,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0 },
+                  {  NULL,-1,  0, 0, {0,0}, {0,0}, {0,0}, 0, 0 }  };
 
 /* ----------------------------------------------------------------------- */
 
@@ -138,7 +138,8 @@ int CliClearContestInfoSummaryData( int contestid )
   if (!conInfo)
     return -1;
   conInfo->BlocksDone = 0;
-  conInfo->IterDone = (double)(0);
+  conInfo->IterDone.hi = conInfo->IterDone.lo = 0;
+  conInfo->TotalIterDone.hi = conInfo->TotalIterDone.lo = 0;
   conInfo->TimeDone.tv_sec = conInfo->TimeDone.tv_usec = 0;
   conInfo->UnitsDone = 0;
   conInfo->BestTime = 0;
@@ -150,17 +151,19 @@ int CliClearContestInfoSummaryData( int contestid )
 // obtain summary data for a contest. unrequired args may be NULL
 // returns 0 if success, !0 if error (bad contestID).
 int CliGetContestInfoSummaryData( int contestid, unsigned int *totalblocks,
-                                  double *totaliter, struct timeval *totaltime, 
-                                  unsigned int *totalunits, double *avgrate)
+                                  u32 *doneiterhi, u32 *doneiterlo,
+                                  struct timeval *totaltime, 
+                                  unsigned int *totalunits )
 {
   struct contestInfo *conInfo =
                       __internalCliGetContestInfoVectorForID( contestid );
   if (!conInfo)
     return -1;
   if (totalblocks) *totalblocks = conInfo->BlocksDone;
-  if (totaliter)   *totaliter   = conInfo->IterDone;
+  if (doneiterhi)  *doneiterhi  = conInfo->IterDone.hi;
+  if (doneiterlo)  *doneiterlo  = conInfo->IterDone.lo;
   if (totalunits)  *totalunits  = conInfo->UnitsDone;
-  if (totaltime || avgrate)
+  if (totaltime)
   {
     struct timeval tv;
     tv.tv_sec = conInfo->TimeDone.tv_sec;
@@ -176,22 +179,8 @@ int CliGetContestInfoSummaryData( int contestid, unsigned int *totalblocks,
         tv.tv_usec = tv2.tv_usec;
       }
     }
-    if (totaltime)
-    {
-      totaltime->tv_sec = tv.tv_sec;
-      totaltime->tv_usec = tv.tv_usec;
-    }
-    if (avgrate)
-    {
-      double r = ((double)0); 
-      if (conInfo->BlocksDone)
-      {
-        r = conInfo->IterDone;
-        if (tv.tv_sec || tv.tv_usec)
-          r=r/(((double)tv.tv_sec)+(((double)tv.tv_usec)/((double)(1000000L))));
-      }
-      *avgrate = r;
-    }
+    totaltime->tv_sec = tv.tv_sec;
+    totaltime->tv_usec = tv.tv_usec;
   }
   return 0;
 }
@@ -203,21 +192,19 @@ int CliGetContestInfoSummaryData( int contestid, unsigned int *totalblocks,
 int CliAddContestInfoSummaryData( int contestid, 
                                   u32 iter_hi, u32 iter_lo, 
                                   const struct timeval *addtime,
-                                  unsigned int addunits,
-                                  double addrate )
+                                  unsigned int addunits )
+
 {
   struct contestInfo *conInfo =
                        __internalCliGetContestInfoVectorForID( contestid );
   if (!conInfo || !addtime)
     return -1;
   conInfo->BlocksDone++;
-  if (contestid != 2) /* OGR */
-  {
-    unsigned int sec = (unsigned int)((1<<28)/addrate + 0.5);
-    CliSetContestWorkUnitSpeed(contestid, sec);
-  }
-  conInfo->IterDone = conInfo->IterDone + 
-                       (((double)iter_hi)*4294967296.0)+((double)iter_lo);
+  iter_lo += conInfo->IterDone.lo;
+  if (iter_lo < conInfo->IterDone.lo)
+    conInfo->IterDone.hi++;
+  conInfo->IterDone.lo  = iter_lo;
+  conInfo->IterDone.hi += iter_hi;
   conInfo->UnitsDone += addunits;
   conInfo->TimeDone.tv_sec += addtime->tv_sec;
   conInfo->TimeDone.tv_usec += addtime->tv_usec;

@@ -6,7 +6,7 @@
 */ 
 
 #ifndef __CONFOPT_H__
-#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.16.2.8 2000/10/26 15:00:10 cyp Exp $"
+#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.16.2.9 2000/10/31 03:07:31 cyp Exp $"
 
 enum /* anonymous */
 {
@@ -22,7 +22,7 @@ enum /* anonymous */
   CONF_CPUTEMPTHRESHOLDS       , /* CONF_MENU_MISC */
   CONF_PAUSEIFBATTERY          , /* CONF_MENU_MISC */
   CONF_QUIETMODE               , /* CONF_MENU_MISC */
-  CONF_PERCENTOFF              , /* CONF_MENU_MISC */
+  CONF_CRUNCHMETER             , /* CONF_MENU_MISC */
   CONF_COMPLETIONSOUNDON       , /* CONF_MENU_MISC */
 
   CONF_MENU_BUFF_PLACEHOLDER   , /* 15 */

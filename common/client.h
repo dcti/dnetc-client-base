@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.17 2000/10/26 15:00:08 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.18 2000/10/31 03:07:29 cyp Exp $"
 
 
 // ------------------
@@ -90,7 +90,7 @@ typedef struct
   int  quietmode;
   int  blockcount;
   int  minutes;
-  int  percentprintingoff;
+  int  crunchmeter;
 
   /* -- buffers -- */
   int  nodiskbuffers;

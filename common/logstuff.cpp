@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.31 2000/10/27 17:58:43 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.32 2000/10/31 03:07:32 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -53,7 +53,7 @@ static struct
   int initlevel;
   int loggingTo;            // LOGTO_xxx bitfields
   int spoolson;             // mail/file logging and time stamping is on/off.
-  int percprint;            // percentprinting is enabled
+  int crunchmeter;          // progress ind style (-1=def,0=off,1=abs,2=rel)
   int percbaton;            // percent baton is enabled
 
   void *mailmessage;         //handle returned from smtp_construct_message()
@@ -77,7 +77,7 @@ static struct
   0,      // initlevel
   LOGTO_NONE,   // loggingTo
   0,      // spoolson
-  0,      // percprint
+  0,      // crunchmeter
   0,      // percbaton
   NULL,   // *mailmessage
   {0},    // basedir[]
@@ -668,13 +668,20 @@ void LogScreenPercent( unsigned int load_problem_count )
   unsigned int percent, restartperc, endperc, prob_i, cont_i;
   unsigned int selprob_i = logstatics.perc_callcount % load_problem_count;
   char buffer[128]; unsigned char pbuf[52]; /* 'a'-'z','A'-'Z' */
-  unsigned int prob_count[CONTEST_COUNT];
+  int use_alt_fmt; unsigned int prob_count[CONTEST_COUNT];
 
-  if (!logstatics.percprint || ( logstatics.loggingTo & LOGTO_SCREEN ) == 0 )
+  if (!logstatics.crunchmeter || ( logstatics.loggingTo & LOGTO_SCREEN ) == 0 )
     return;
 
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-    prob_count[cont_i] = 0;
+    prob_count[cont_i] = ProblemCountLoaded(cont_i); /* -1=all contests */
+
+  use_alt_fmt = 0;
+  if (logstatics.crunchmeter == 1)
+    use_alt_fmt = +1; 
+  else if (logstatics.crunchmeter < 0 && logstatics.stdoutisatty &&
+     (prob_count[OGR] > 0 || load_problem_count >= sizeof(pbuf)))
+    use_alt_fmt = -1;      
 
   buffer[0] = '\0';
   endperc = restartperc = 0;
@@ -684,45 +691,61 @@ void LogScreenPercent( unsigned int load_problem_count )
     pbuf[prob_i] = 0;
     if (selprob)
     {
-      char blkdone[32], blksig[32]; const char *contname;
-      unsigned int permille = 0;
+      unsigned int permille = 0, startpermille = 0;  int girc = -1;
       cont_i = 0;
-      if (-1 != selprob->GetInfo(&cont_i, &contname, 0, 0, 0, 0, 0, &permille,
-                         blksig, sizeof(blksig), 0, 0, 0, 0,0,0, 0,0,0,
-                         blkdone, sizeof(blkdone) ))
+
+      if (use_alt_fmt && (!buffer[0] || prob_i == selprob_i))
+      {
+        char blkdone[32], blksig[32]; const char *contname;
+        girc = selprob->GetInfo(&cont_i, &contname, 0, 0, 0, 0, 0, 
+                         &permille, &startpermille, 0,
+                         blksig, sizeof(blksig), 0, 0, 0, 0, 0,0,0, 0,0,0,
+                         blkdone, sizeof(blkdone) );
+        if (permille == 1000 &&  use_alt_fmt < 0) /* auto */
+          use_alt_fmt = 0;
+        else if (girc != -1)
+        {
+          sprintf(buffer, "#%u: %s:%s [%s]", 
+                  prob_i+1, contname, blksig, blkdone );
+          //there isn't enough space for percent so don't even think about it
+        }
+      }
+      else
+      {
+        girc = selprob->GetInfo(&cont_i, 0, 0, 0, 0, 0, 0,
+                         &permille, &startpermille, 0,
+                         0, 0, 0, 0, 0, 0, 0,0,0, 0,0,0, 0, 0 );
+      }
+      if (girc != -1)
       {
         percent = (permille+((permille < 995)?(5):(0)))/10;
         if (load_problem_count == 1 && percent != 100)
         {   /* don't do 'R' if multiple-problems */
-          restartperc = (selprob->startpermille)/10;
+          restartperc = (startpermille)/10;
           restartperc = (!restartperc || percent == 100) ? 0 :
               ( restartperc - ((restartperc > 90) ? (restartperc & 1) :
               (1 - (restartperc & 1))) );
         }
         if (percent > endperc)
-            endperc = percent;
+        {
+          endperc = percent;
+          if (endperc == 100 && use_alt_fmt < 0) /* auto */
+            use_alt_fmt = 0;
+        }
         if (percent && ((percent>90)?((percent&1)!=0):((percent&1)==0)))
+        {
           percent--;  /* make sure that it is visible */
+        }
         if (prob_i < sizeof(pbuf)) /* a-z,A-Z */
         {
           pbuf[prob_i] = (unsigned char)(percent);
           prob_count[cont_i]++;
         }
-        if ((!buffer[0] || prob_i == selprob_i) && 
-            endperc < 100 && logstatics.stdoutisatty)
-        {
-          /* impossible case: 5    6   32 32 1 1 4  1  1 1 => 84 */
-          sprintf(buffer,    "#%u: %s:%s [%s]%c(%u.%01u%%)", 
-                         prob_i+1, contname, blksig, blkdone,
-                         ((cont_i == OGR)?('\0'):(' ')),
-                         permille/10, permille%10 );
-        }
       }
     }      
   }
 
-  if (buffer[0] && endperc < 100 && logstatics.stdoutisatty &&
-     (prob_count[OGR] > 0 || load_problem_count >= sizeof(pbuf)) )
+  if (buffer[0] && use_alt_fmt)
   {
     LogScreen( "\r%s", buffer, NULL );
     logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0
@@ -978,7 +1001,7 @@ static int fixup_logfilevars( const char *stype, const char *slimit,
   return 0;
 }
 
-void InitializeLogging( int noscreen, int nopercent, int nopercbaton,
+void InitializeLogging( int noscreen, int crunchmeterstyle, int nopercbaton,
                         const char *logfilename,
                         const char *logfiletype, const char *logfilelimit,
                         long mailmsglen, const char *smtpsrvr,
@@ -988,8 +1011,8 @@ void InitializeLogging( int noscreen, int nopercent, int nopercbaton,
   DeinitializeLogging();
   logstatics.spoolson = 1;
   logstatics.stdoutisatty = ConIsScreen();
-  logstatics.percprint = (nopercent == 0);
-  logstatics.percbaton = (nopercent == 0 && nopercbaton == 0 && 
+  logstatics.crunchmeter = crunchmeterstyle;
+  logstatics.percbaton = (crunchmeterstyle != 0 && nopercbaton == 0 && 
                           !ConIsGUI() && logstatics.stdoutisatty);
                          /* baton not for macos or win GUI */
 

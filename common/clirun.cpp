@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.71 2000/10/28 17:30:04 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.72 2000/10/31 03:07:29 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1555,8 +1555,7 @@ int ClientRun( Client *client )
     if (!TimeToQuit && !isPaused)
     {
       int anychanged;
-      if (!client->percentprintingoff)
-        LogScreenPercent( load_problem_count ); //logstuff.cpp
+      LogScreenPercent( load_problem_count ); //logstuff.cpp
       anychanged = LoadSaveProblems(client,load_problem_count,PROBFILL_ANYCHANGED);
       __CheckClearIfRefillNeeded(thread_data_table,1);
       if (anychanged)      /* load/save action occurred */

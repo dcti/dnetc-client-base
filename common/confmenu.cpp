@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.24 2000/10/26 15:00:09 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.25 2000/10/31 03:07:31 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -284,7 +284,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   pauseifbattery = !client->nopauseifnomainspower;
   conf_options[CONF_PAUSEIFBATTERY].thevariable=&(pauseifbattery);
   conf_options[CONF_QUIETMODE].thevariable=&(client->quietmode);
-  conf_options[CONF_PERCENTOFF].thevariable=&(client->percentprintingoff);
+  conf_options[CONF_CRUNCHMETER].thevariable=&(client->crunchmeter);
   conf_options[CONF_QUIETMODE].thevariable=&(client->quietmode);
   conf_options[CONF_COMPLETIONSOUNDON].thevariable=NULL; /* not available yet */
 

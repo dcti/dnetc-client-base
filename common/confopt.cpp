@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.43 2000/10/26 15:00:09 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.44 2000/10/31 03:07:31 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -210,9 +210,25 @@ struct optionstruct conf_options[/*CONF_OPTION_COUNT*/] = {
   /*)*/,CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
 },
 { 
-  CONF_PERCENTOFF              , /* CONF_MENU_MISC */
-  CFGTXT("Disable the crunch-o-meter (packet progress indicator)?"),"no",
+  CONF_CRUNCHMETER              , /* CONF_MENU_MISC */
+  CFGTXT("Crunch-o-meter (progress indicator) style"),"-1",
   /*CFGTXT(*/
+#if 1
+  "-1) default:   Use the 'absolute style' when an OGR cruncher is active\n"
+  "               or there are more than 26 crunchers (a...z), otherwise\n"
+  "               use the 'relative style'.\n"
+  " 0) disabled:  Disable the crunch-o-meter entirely.\n"
+  " 1) absolute:  Always display the current position within the packet.\n"
+  " 2) relative:  Always display the current position as a percentage\n"
+  "               relative to the total amount of work in the packet.\n"
+  "               Since the total amount of work in a packet is known in\n"
+  "               advance only for linear, orthogonal projects such as\n"
+  "               RC5, DES and CSC, forcing the 'relative style' for projects\n"
+  "               other than those mentioned above may result in a display\n"
+  "               that may be confusing or may simply be too crude an\n"
+  "               approximation to be useful.\n"
+  /*)*/,CONF_MENU_MISC,CONF_TYPE_INT,NULL,NULL,-1,2,NULL,NULL
+#else
   "When left enabled, the client will display an indicator that reflects the\n"
   "approximate position of each of the first 26 crunchers (a...z) relative\n"
   "to the packet each cruncher is processing.\n"
@@ -222,6 +238,7 @@ struct optionstruct conf_options[/*CONF_OPTION_COUNT*/] = {
   "approximation since the total amount of work in a packet cannot be\n"
   "determined until the packet has been processed completely.\n"
   /*)*/,CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
+#endif
 },
 { 
   CONF_COMPLETIONSOUNDON       , /* CONF_MENU_MISC */

@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.37 2000/10/28 21:56:44 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.38 2000/10/31 03:07:33 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -198,22 +198,24 @@ public: /* anything public must be thread safe */
   int GetInfo(unsigned int *cont_id, const char **cont_name, 
                      u32 *elapsed_secs, u32 *elapsed_usecs, 
                      unsigned int *swucount, int pad_strings,
-                     const char **unit_name, unsigned int *permille_done,
+                     const char **unit_name, 
+                     unsigned int *c_permille, unsigned int *s_permille,
+                     int permille_only_if_exact,
                      char *idbuf, unsigned int idbufsz,
-                     double *rate, char *ratebuf, unsigned int ratebufsz,
+                     u32 *ratehi, u32 *ratelo,
+                     char *ratebuf, unsigned int ratebufsz,
                      u32 *ubtcounthi, u32 *ubtcountlo, 
                      char *tcountbuf, unsigned int tcountbufsz,
                      u32 *ubccounthi, u32 *ubccountlo, 
                      char *ccountbuf, unsigned int ccountbufsz);
-
-  // Return the % completed in the current block, to nearest 0.1%.
-  // used to be used by clirun for checkpoint management
-  //u32 CalcPermille() {
-  //   u32 ret = 0; 
-  //   GetInfo(0, 0, 0, 0, 0, 0, 0, &ret, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-  //  return ret;
-  //}      
 };
+
+unsigned int ProblemCountLoaded(int contestid); /* -1=total for all contests */
+
+const char *ProblemComputeRate( unsigned int contestid, 
+                                u32 secs, u32 usecs, u32 iterhi, u32 iterlo, 
+                                u32 *ratehi, u32 *ratelo,
+                                char *ratebuf, unsigned int ratebufsz ); 
 
 /* ------------------------------------------------------------------- */
 

@@ -13,14 +13,14 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.63 2000/10/26 15:00:08 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.64 2000/10/31 03:07:30 cyp Exp $"; }
 
 //#define TRACE
 
 #include "cputypes.h"
 #include "client.h"    // Client class
 #include "baseincs.h"  // basic (even if port-specific) #includes
-#include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
+#include "logstuff.h"  // Log()/LogScreen()
 #include "pathwork.h"  // InitWorkingDirectoryFromSamplePaths();
 #include "lurk.h"      // lurk bits
 #include "util.h"      // trace, utilGetAppName()
@@ -1001,7 +1001,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
       else if ( strcmp(thisarg, "-percentoff" ) == 0)
       {
         if (run_level == 0)
-          client->percentprintingoff = 1;
+          client->crunchmeter = 0;
       }
       else if ( strcmp( thisarg, "-nofallback" ) == 0 )
       {

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.91 2000/10/26 15:00:07 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.92 2000/10/31 03:07:28 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -46,6 +46,7 @@ void ResetClientData(Client *client)
 
   client->nettimeout=60;
   client->autofindkeyserver=1;
+  client->crunchmeter=-1;
   projectmap_build(client->loadorder_map,"");
   client->numcpu = -1;
   for (contest=0; contest<CONTEST_COUNT; contest++)
@@ -449,7 +450,7 @@ static int ClientMain( int argc, char *argv[] )
   
               TRACE_OUT((+1,"initializelogging\n"));
               InitializeLogging( (client->quietmode!=0),
-                                 (client->percentprintingoff!=0),
+                                 client->crunchmeter,
                                  0, /* nobaton */
                                  client->logname,
                                  client->logfiletype,
