@@ -21,6 +21,9 @@
 //
 //
 // $Log: pathwork.cpp,v $
+// Revision 1.2  1998/07/05 20:13:41  jlawson
+// modified headers for Win32
+//
 // Revision 1.1  1998/07/05 13:09:07  cyruspatel
 // Created new pathwork.cpp which contains functions for determining/setting
 // the "work directory" and pathifying a filename that has no dirspec.
@@ -33,20 +36,23 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: pathwork.cpp,v 1.1 1998/07/05 13:09:07 cyruspatel Exp $";
+static const char *id="@(#)$Id: pathwork.cpp,v 1.2 1998/07/05 20:13:41 jlawson Exp $";
 #endif
 
 #include <stdio.h>
 #include <string.h>
 #include "cputypes.h"
-#include "pathwork.h" //not really needed, just ensures prototypes are ok.
+#include "pathwork.h"
 
-#if ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_OS2))
-#include <dos.h>  //drive functions
-#include <ctype.h> //toupper
-#if (defined(__WATCOMC__))
-#include <direct.h> //getcwd
-#endif
+#if (CLIENT_OS == OS_WIN32)
+  #define WIN32_LEAN_AND_MEAN
+  #include <windows.h>
+#elif ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_OS2))
+  #include <dos.h>  //drive functions
+  #include <ctype.h> //toupper
+  #if (defined(__WATCOMC__))
+    #include <direct.h> //getcwd
+  #endif
 #endif
 
 #define MAX_FULLPATH_BUFFER_LENGTH (256)
@@ -67,10 +73,10 @@ static int IsFilenamePathified( const char *filename )
   #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
     (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || \
     (CLIENT_OS == OS_OS2) 
-    slash = strrchr( filename, '\\' );
-    char *slash2 = strrchr( filename, '//' );
+    slash = strrchr( (char*) filename, '\\' );
+    char *slash2 = strrchr( (char*) filename, '//' );
     if (slash2 > slash) slash = slash2;
-    slash2 = strrchr( filename, ':' );
+    slash2 = strrchr( (char*) filename, ':' );
     if (slash2 > slash) slash = slash2;
   #elif (CLIENT_OS == OS_NETWARE)
     slash = strrchr( filename, '\\' );
