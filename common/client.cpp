@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.36 1999/12/16 16:35:35 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.37 1999/12/16 17:17:49 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -348,6 +348,7 @@ static int ClientMain( int argc, char *argv[] )
     }
     ClientEventSyncPost( CLIEVENT_CLIENT_FINISHED, (long)restart );
     TRACE_OUT((0,"client.parsecmdline restarting?: %d\n", restart));
+    restarted = restarted; /* unused if !trace */
   } while (restart);
 
   free((void *)client);
