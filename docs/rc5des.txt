@@ -163,19 +163,18 @@ unauthorized installations is help in uninstalling them.
      e.  Start the client up again; it should now receive some
          blocks, and begin working.
 
-3e.  MS-DOS client installation instructions:
+3e.  MS-DOS/PC-DOS/Novell DOS/DR-DOS client installation instructions:
 
      a.  Unzip the compressed file into the directory in which
-         you will be running the client, most likely "c:\rc5des\".
+         you will be running the client, "c:\rc5des" for example.
      b.  Read the documentation (this file) through so that you
          completely understand how to operate the client.
      c.  Run rc5des.exe.  This will initiate the menu-driven
          configuration (described below.)  Set the options for your
          configuration.
-     d.  Start the client up again; it should now receive some
-         blocks, and begin working.
+     d.  Start the client up again.
      
-     Note: The MS-DOS client is not a standalone client; it requires 
+     Note: The DOS client is not a standalone client; it requires 
      "feeding" of buffer files from a networkable client. Please 
      refer to section 10b for more information on how to use it.
 
@@ -746,7 +745,7 @@ ARM CPU types:
 
 --------------------------------------------
 Command line argument: -l <path/logfilename>
-Config file entry: /logname=<path/logfilename>
+Config file entry: logname=<path/logfilename>
 Default setting: None
 
 This is the name of the file to which the client will log its activity.
@@ -1263,7 +1262,7 @@ how you read them.  The averages
     10b.  MS-DOS client
 
           The MS-DOS client operates in the same manner as the other
-          non-GUI clients, with three major differences:
+          non-GUI clients, with two major differences:
 
           1. Due to the fact that MS-DOS is not a multitasking operating
              system, this client has no way to run in the background 
@@ -1275,12 +1274,6 @@ how you read them.  The averages
              feed it buffer files (NFS, NetWare, SMB, etc are all
              acceptable). You may also transfer buffers to an offline
              MS-DOS machine via a floppy disk if you so desire.
-          3. For reasons of efficiency, the DOS client runs entirely
-             in protected mode, but requires the assistance of a
-             'DOS extender' to do so. One such 'extender' is dos4gw.exe
-             (so called because it makes upto 4 gigabytes of memory 
-             available to the client) and is distributed together with 
-             the client. 
              
     10c.  Amiga client
 
