@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.50 2000/12/17 02:53:51 mfeiri Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.51 2000/12/21 17:48:10 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -28,7 +28,7 @@ static const char *lurkmodetable[] =
 #define CFGTXT(x) (x)
 #define ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME "Additional buffer-level checking"
 
-struct optionstruct conf_options[/*CONF_OPTION_COUNT*/] = {
+struct optionstruct conf_options[CONF_OPTION_COUNT] = {
 { 
   CONF_MENU_MISC_PLACEHOLDER   , /* */
   CFGTXT("General Client Options"),"",
@@ -145,7 +145,7 @@ struct optionstruct conf_options[/*CONF_OPTION_COUNT*/] = {
   "the temperature of a processor exceeds the threshold specified in the\n"
   "\"Processor temperature thresholds\" option.\n"
   "\n"
-  "Processor temperature checking is not supported on all platforms.\n"
+  "Processor temperature checking is only supported on MacOS/PPC.\n"
   ,CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
 },
 { 
@@ -166,9 +166,10 @@ struct optionstruct conf_options[/*CONF_OPTION_COUNT*/] = {
   "silently disabled.\n"
   "\n"
   #if (CLIENT_OS == OS_MACOS)
-  "Processor temperature checking works only with single CPU G3 and G4 systems.\n"
+  "Processor temperature checking is only available on single processor G3 and\n"
+  "G4 systems.\n"
   #else
-  "Processor temperature checking is not available on all platforms.\n"
+  "Processor temperature checking is only available on MacOS/PPC.\n"
   #endif
   ,CONF_MENU_MISC,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
