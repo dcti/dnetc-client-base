@@ -3,6 +3,12 @@
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+// 
+// $Log: cputypes.h,v $
+// Revision 1.18  1998/06/13 21:46:52  friedbait
+// 'Log' keyword added such that we can easily track the change history
+//
+// 
 
 #if ( !defined(_CPU_32BIT_) && !defined(_CPU_64BIT_) )
 #define _CPU_32BIT_
