@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.10  1998/06/14 15:17:05  remi
+// UltraSparc DES core integration.
+//
 // Revision 1.9  1998/06/14 08:13:06  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -23,7 +26,7 @@
  #endif
 #endif
 
-#ifndef MEGGS
+#if !defined(MEGGS) && !defined(DES_ULTRA)
   #define MIN_DES_BITS  8
   #define MAX_DES_BITS 24
 #else
