@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.32 2004/07/16 13:19:20 kakace Exp $
+ * $Id: ogr.cpp,v 1.2.4.33 2004/07/19 20:29:23 snikkel Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -697,19 +697,19 @@ extern CoreDispatchTable * OGR_P2_GET_DISPATCH_TABLE_FXN (void);
   #error you dont have inline assembly for COMP_LEFT_LIST_RIGHT
 #endif
 #elif (OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 1)
-  #define COMP_LEFT_LIST_RIGHT_BASIC(k) {          \
+  #define COMP_LEFT_LIST_RIGHT_BASIC(k)            \
     comp0 = (comp0 << (k)) | (comp1 >> (32-(k)));  \
-    list4 = (list4 >> (k)) | (list3 << (32-(k));   \
-    comp1 = (comp1 << (k)) | (comp2 >> (32-(k));   \
-    list3 = (list3 >> (k)) | (list2 << (32-(k));   \
-    comp2 = (comp2 << (k)) | (comp3 >> (32-(k));   \
-    list2 = (list2 >> (k)) | (list1 << (32-(k));   \
-    comp3 = (comp3 << (k)) | (comp4 >> (32-(k));   \
-    list1 = (list1 >> (k)) | (list0 << (32-(k));   \
-    list0 = (list0 >> (k)) | (newbit << (32-(k));  \
-    comp4 = comp4 << (k);
+    list4 = (list4 >> (k)) | (list3 << (32-(k)));  \
+    comp1 = (comp1 << (k)) | (comp2 >> (32-(k)));  \
+    list3 = (list3 >> (k)) | (list2 << (32-(k)));  \
+    comp2 = (comp2 << (k)) | (comp3 >> (32-(k)));  \
+    list2 = (list2 >> (k)) | (list1 << (32-(k)));  \
+    comp3 = (comp3 << (k)) | (comp4 >> (32-(k)));  \
+    list1 = (list1 >> (k)) | (list0 << (32-(k)));  \
+    list0 = (list0 >> (k)) | (newbit << (32-(k))); \
+    comp4 = (comp4 << (k));
   
-  #define COMP_LEFT_LIST_RIGHT(lev, s) {           \
+  #define COMP_LEFT_LIST_RIGHT(lev, s)             \
     switch (s)                                     \
       {                                            \
       case 0:                                      \
@@ -820,8 +820,8 @@ extern CoreDispatchTable * OGR_P2_GET_DISPATCH_TABLE_FXN (void);
          list0 = newbit;                           \
          break;                                    \
       }                                            \
-   newbit = 0;                                     \
-}
+    newbit = 0;                                    
+
 #else // OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 0
   #define COMP_LEFT_LIST_RIGHT(lev, s) {           \
     int ss = 32 - s;                               \
