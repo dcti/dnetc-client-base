@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.205 2000/11/17 00:52:15 mfeiri Exp $
+# @(#)$Id: configure,v 1.222.2.206 2000/11/20 20:22:13 teichp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -577,7 +577,7 @@ generate_gcc_opts() {
 
     *internal-arm)
         opts272="$OPTS_GCC272 -DARM -DASM_ARM -funroll-loops"
-        opts295="$OPTS_GCC295 -O2 -DARM -DASM_ARM -funroll-loops"
+        opts295="$OPTS_GCC295 -O2 -mtune=strongarm -DARM -DASM_ARM -funroll-loops"
         ;;
 
     *internal-sparc)  # (sparc/v7 [SS1/2/IPX]) (v8 [supersparc] is below)
