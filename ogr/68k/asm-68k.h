@@ -5,7 +5,7 @@
 */
 
 #ifndef __ASM_68K_H__
-#define __ASM_68K_H__ "@(#)$Id: asm-68k.h,v 1.1.2.1 2004/08/10 17:03:20 jlawson Exp $"
+#define __ASM_68K_H__ "@(#)$Id: asm-68k.h,v 1.1.2.2 2004/08/10 19:00:36 oliver Exp $"
 
 #if defined(ASM_68K) && defined(__GNUC__)
 
@@ -43,7 +43,7 @@
                  : "1" (input), "a" (&bitarray[0]));
         return result;
       }
-      #define __CNTLZ_ARRAY_BASED(x) __CNTLZ__(x)
+      #define __CNTLZ_ARRAY_BASED(x,y) __CNTLZ__(x,y)
     #endif
 
   #else /* !__NeXT__ */
@@ -75,17 +75,15 @@
                  : "1" (input), "a" (bitarray));
         return result;
       }
-      #define __CNTLZ_ARRAY_BASED(x) __CNTLZ__(x)
+      #define __CNTLZ_ARRAY_BASED(x,y) __CNTLZ__(x,y)
     #endif
 
     #if defined(mc68040)
       /* align to 8-byte boundary - pad with nops */
-      // Fixme: Doesn't the "nop" be placed before ".balignw" ??
-      #define __BALIGN __asm__ __volatile__ (".balignw 8,0x4e71; nop" : : )
+      #define __BALIGN __asm__ __volatile__ (".balignw 8,0x4e71" : : )
     #elif defined(mc68060) || defined(mc68030) || defined(mc68020)
       /* align to 4-byte boundary - pad with nops */
-      // Fixme: Doesn't the "nop" be placed before ".balignw" ??
-      #define __BALIGN __asm__ __volatile__ (".balignw 4,0x4e71; nop" : : )
+      #define __BALIGN __asm__ __volatile__ (".balignw 4,0x4e71" : : )
     #endif
 
   #endif  /* !__NeXT__ */

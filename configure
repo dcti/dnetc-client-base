@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.136.2.2 2004/08/10 18:20:56 jlawson Exp $
+# @(#)$Id: configure,v 1.288.2.136.2.3 2004/08/10 19:00:35 oliver Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -3381,7 +3381,11 @@ if [ "$TARGET_OGR_MULTI" = "68k" ]; then
   TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
   OGR68K="000 020 030 040 060"
   for targetext in ${OGR68K}; do
-    echo "output/ogr${targetext}.o:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
+    deplist=""
+    for dep in $TARGET_HDEPS; do
+      deplist="$deplist $dep"
+    done
+    echo "output/ogr${targetext}.o:	${TARGETSRC} $deplist" >> Makefile
     echo "	\$(CC) \$(CCFLAGS) -DOGR_GET_DISPATCH_TABLE_FXN=ogr_get_dispatch_table_${targetext} \\" >>Makefile
 
     # fake 68060 optimisation with gcc < 2.95 - easiest way for now
@@ -3401,7 +3405,7 @@ if [ "$TARGET_OGR_MULTI" = "68k" ]; then
       echo "		-Dmc68${targetext} \\" >> Makefile
     fi
 
-    echo "		-c -o output/ogr${targetext}.o $OGR/ansi/ogr.cpp" >> Makefile
+    echo "		-c -o output/ogr${targetext}.o ${TARGETSRC}" >> Makefile
     echo "" >> Makefile
   done
 fi
