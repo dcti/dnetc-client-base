@@ -8,6 +8,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: iniread.cpp,v $
+// Revision 1.23  1999/02/14 04:42:46  cyp
+// strip leading and trailing quotes when reading.
+//
 // Revision 1.22  1999/02/04 10:38:05  cyp
 // fixed a bad charp[index] in GetPrivateProfileInt()
 //
@@ -92,7 +95,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.22 1999/02/04 10:38:05 cyp Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.23 1999/02/14 04:42:46 cyp Exp $"; }
 #endif
 
 #define COMPILING_INIREAD
@@ -504,14 +507,21 @@ unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
       if ((inirec = inisect->findfirst( key )) != NULL)
         {
         buffer[0] = 0;
-        foundentry = 1;
 #ifdef INIREAD_SINGLEVALUE
         inirec->values.copyto(buffer, buffsize );
 // printf("foundkey [%s]%s=%s\n",sect,key,buffer); 
+        foundentry = strlen( buffer );
+        if (buffer[0]=='"' || buffer[0]=='\'')
+          {
+          if (foundentry > 1 && buffer[foundentry-1]==buffer[0])
+            buffer[--foundentry]=0;
+          memmove((void *)&buffer[0],(void *)&buffer[1],foundentry);
+          }
 #else
         if (inirec->values.GetCount() > 0)
           inirec->values[0].copyto(buffer, buffsize);
 #endif
+        foundentry = 1;
         }
       }
 //else printf("find sect %s failed\n", sect );
