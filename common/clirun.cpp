@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.64 2000/07/05 03:09:43 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.65 2000/07/12 14:33:12 oliver Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -199,6 +199,15 @@ static void __cruncher_yield__(int is_non_preemptive_cruncher)
 
 void Go_mt( void * parm )
 {
+#if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
+  /* AmigaOS provides no way to pass parameters to sub-tasks! */
+  if (!(AttemptSemaphore(&StartThreadArgs.ts_Lock)))
+  {
+    parm = (thread_param_block *)StartThreadArgs.ts_Args;
+  }
+  ReleaseSemaphore(&StartThreadArgs.ts_Lock);
+#endif
+
   struct thread_param_block *thrparams = (thread_param_block *)parm;
   int is_non_preemptive_cruncher = thrparams->is_non_preemptive_cruncher;
   unsigned int threadnum = thrparams->threadnum;
@@ -304,6 +313,15 @@ void Go_mt( void * parm )
     sigaddset(&signals_to_block, SIGKILL);
     sigaddset(&signals_to_block, SIGHUP);
     thr_sigsetmask(SIG_BLOCK, &signals_to_block, NULL);
+  }
+#elif (CLIENT_OS == OS_AMIGAOS)
+  if (thrparams->realthread)
+  {
+    amigaThreadInit();
+    #if (CLIENT_CPU == CPU_POWERPC)
+    /* Only necessary when using 68k for time measurement */
+    thrparams->dyn_timeslice_table[0].usec = 8000000;
+    #endif
   }
 #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
   if (thrparams->realthread)
@@ -483,6 +501,9 @@ void Go_mt( void * parm )
   #if ((CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS))
   if (thrparams->realthread)
     thr_exit((void *)0);
+  #elif (CLIENT_OS == OS_AMIGAOS)
+  if (thrparams->realthread)
+    amigaThreadExit();
   #endif
 }
 
@@ -518,6 +539,8 @@ static int __StopThread( struct thread_param_block *thrparams )
         while (thrparams->threadID) delay(100);
         #elif (CLIENT_OS == OS_FREEBSD)
         while (thrparams->threadID) NonPolledUSleep(100000);
+        #elif (CLIENT_OS == OS_AMIGAOS)
+        while (thrparams->threadID) NonPolledUSleep(300000);
         #endif
       }
     }
@@ -575,7 +598,8 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       use_poll_process = 1;
     else
     {
-      #if (!defined(CLIENT_SUPPORTS_SMP)) //defined in cputypes.h
+      //defined in cputypes.h
+      #if (!defined(CLIENT_SUPPORTS_SMP) && (CLIENT_OS != OS_AMIGAOS))
         use_poll_process = 1; //no thread support or cores are not thread safe
       #elif (CLIENT_OS == OS_FREEBSD)
       //#define USE_THREADCODE_ONLY_WHEN_SMP_KERNEL_FOUND /* otherwise its for >=3.0 */
@@ -825,6 +849,45 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
             thrparams->is_non_preemptive_cruncher = is_non_preemptive_os;
         }
       }
+      #elif (CLIENT_OS == OS_AMIGAOS)
+      {
+        char threadname[64];
+        sprintf(threadname, "%s crunch #%d", utilGetAppName(),
+                                             thrparams->threadnum + 1 );
+        #if (CLIENT_CPU == CPU_68K)
+        ObtainSemaphore(&StartThreadArgs.ts_Lock);
+        StartThreadArgs.ts_Args = thrparams;
+        thrparams->threadID = (int)CreateNewProcTags(NP_Entry, (ULONG)Go_mt,
+                                                     NP_StackSize, 8192,
+                                                     NP_Name, (ULONG)threadname,
+                                                     TAG_END);
+        if (!thrparams->threadID)
+        {
+           ReleaseSemaphore(&StartThreadArgs.ts_Lock);
+        }
+        #else
+        #ifndef __POWERUP__
+        struct TagItem tags[5];
+        tags[0].ti_Tag = TASKATTR_CODE; tags[0].ti_Data = (ULONG)Go_mt;
+        tags[1].ti_Tag = TASKATTR_NAME; tags[1].ti_Data = (ULONG)threadname;
+        tags[2].ti_Tag = TASKATTR_STACKSIZE; tags[2].ti_Data = 8192;
+        tags[3].ti_Tag = TASKATTR_R3; tags[3].ti_Data = (ULONG)thrparams;
+        tags[4].ti_Tag = TAG_END;
+        thrparams->threadID = (int)CreateTaskPPC(tags);
+        #else
+        struct TagItem tags[4];
+        tags[0].ti_Tag = PPCTASKTAG_NAME; tags[0].ti_Data = (ULONG)threadname;
+        tags[1].ti_Tag = PPCTASKTAG_STACKSIZE; tags[1].ti_Data = 8192;
+        tags[2].ti_Tag = PPCTASKTAG_ARG1; tags[2].ti_Data = (ULONG)thrparams;
+        tags[3].ti_Tag = TAG_END;
+        thrparams->threadID = (int)PPCCreateTask(NULL,&Go_mt,tags);
+        #endif
+        #endif
+        if (thrparams->threadID)
+        {
+          success = 1;
+        }
+      }
       #elif ((CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS))
       {
          if (thr_create(NULL, 0, (void *(*)(void *))Go_mt, 
@@ -935,6 +998,8 @@ static int GetMaxCrunchersPermitted( void )
 #if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
   if (GetNumberOfDetectedProcessors() > 1)
     return 2; /* thread 0 is ARM, thread 1 is x86 */
+#elif (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
+  return 1; /* limit to single cruncher thread - cores not yet re-entrant */
 #endif
   return ( 128 ); /* just some arbitrary number */
 }
