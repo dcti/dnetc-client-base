@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.105 2000/01/23 19:20:49 remi Exp $
+# @(#)$Id: configure,v 1.222.2.106 2000/01/23 19:55:41 friedbait Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -373,6 +373,7 @@ OPTS_EGCS_S390_LINUX="$OPTS_EGCS -fno-caller-saves -D__S390__ -U__i386__"
 OPTS_RC5_S390_LINUX=""
 OPTS_DES_S390_LINUX="-DKWAN -DMEGGS -DHAVE_DES_CORES"
 OPTS_CSC_S390_LINUX="-DHAVE_CSC_CORES"
+OPTS_OGR_S390_LINUX="-DHAVE_OGR_CORES"
 
 #-- S390 - OS/390
 
@@ -1511,16 +1512,13 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_S390_LINUX -D__showids__ \
-                        $OPTS_CSC_S390_LINUX  \
-                        $OPTS_DES_S390_LINUX  \
                         $OPTS_RC5_S390_LINUX  \
+                        $OPTS_OGR_S390_LINUX  \
 			-DMULTITHREAD -DLURK"
 	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
 	TARGET_ADDSRCS="common/lurk.cpp \
                         rc5/ansi/rc5ansi_2-rg.cpp \
-                        $CSC_ANSI_SRCS \
                         $OGR_ANSI_SRCS \
-                        $MEGGS_SLICE_SRCS2 \
 			" # $KWAN_SLICE_SRCS4
 	TARGET_ADDASMS=""
 	TARGET_ADDNASMS=""
