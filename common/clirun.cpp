@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.37  1998/11/19 20:39:20  cyp
+// Fixed "not doing checkpoints" problem. There is only one checkpoint file
+// now.
+//
 // Revision 1.36  1998/11/12 03:13:10  silby
 // Changed freebsd message.
 //
@@ -140,7 +144,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.36 1998/11/12 03:13:10 silby Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.37 1998/11/19 20:39:20 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -923,9 +927,8 @@ int Client::Run( void )
   unsigned int getbuff_errs = 0;
   
   time_t timeNow;
-  time_t timeRun=0, timeLast=0, timeNextConnect=0;
-  time_t lastCheckpointTime = 0;
-  int checkpointsDisabled = (!nodiskbuffers);
+  time_t timeRun=0, timeLast=0, timeNextConnect=0, timeNextCheckpoint = 0;
+  int checkpointsDisabled = (nodiskbuffers != 0);
   unsigned int checkpointsPercent = 0;
   int isPaused=0, wasPaused=0;
 
@@ -962,15 +965,9 @@ int Client::Run( void )
 
   if (!checkpointsDisabled) //!nodiskbuffers
     { 
-    if (!IsFilenameValid( checkpoint_file[0] ) && 
-        !IsFilenameValid( checkpoint_file[1] ))
+    if (UndoCheckpoint()) //returns !0 if checkpoints disabled
       {
       checkpointsDisabled = 1;
-      }
-    else if (UndoCheckpoint()) //returns !0 on break req.
-      {
-      TimeToQuit = 1;
-      exitcode = -1;
       }
     }
 
@@ -1191,13 +1188,13 @@ int Client::Run( void )
     SetGlobalPriority( priority );
     if (isPaused)
       sleep(3);
-    else
+    else 
       {
-      if (!runstatics.refillneeded)
-        sleep(1);
-      if (!runstatics.refillneeded)
-        sleep(1);
-      if (!runstatics.refillneeded)
+      int i=0;
+      while ((i++)<3 
+            && !runstatics.refillneeded 
+            && !CheckExitRequestTriggerNoIO()
+            && ModeReqIsSet(-1)==0)
         sleep(1);
       }
     SetGlobalPriority( 9 );
@@ -1208,7 +1205,7 @@ int Client::Run( void )
 
     timeNow = CliTimer(NULL)->tv_sec;
     if (timeLast!=0 && timeNow > timeLast)
-      timeRun += timeLast - timeNow; //make sure time is monotonic
+      timeRun += (timeNow - timeLast); //make sure time is monotonic
     timeLast = timeNow;
 
     //----------------------------------------
@@ -1285,7 +1282,7 @@ int Client::Run( void )
 
     if ( !TimeToQuit && (minutes > 0) && (timeRun > (time_t)( minutes*60 )))
       {
-      Log( "Shutdown - %u.%02u hours expired\n", minutes/60, (minutes%60) );
+      Log( "Shutdown - reached time limit.\n" );
       TimeToQuit = 1;
       exitcode = 3;
       }
@@ -1349,9 +1346,8 @@ int Client::Run( void )
 
     if (!TimeToQuit && !checkpointsDisabled && !CheckPauseRequestTrigger())
       {
-      if (timeRun > (lastCheckpointTime + (time_t)(60)))
+      if (timeRun > timeNextCheckpoint)
         {
-        lastCheckpointTime = timeRun;
         unsigned long total_percent_now = 0;
         for ( prob_i = 0 ; prob_i < load_problem_count ; prob_i++)
           {
@@ -1361,10 +1357,12 @@ int Client::Run( void )
           }
         prob_i = checkpointsPercent;
         checkpointsPercent = (total_percent_now/load_problem_count);
+
         if (checkpointsPercent != prob_i)
           {
           if (DoCheckpoint(load_problem_count))
             checkpointsDisabled = 1;
+          timeNextCheckpoint = timeRun + (time_t)(60);
           }
         }
       } 
@@ -1415,15 +1413,15 @@ int Client::Run( void )
    LoadSaveProblems(load_problem_count, PROBFILL_UNLOADALL );
 
    // ----------------
-   // Shutting down: discard checkpoint files, do a net flush if nodiskbuffers
+   // Shutting down: do a net flush if nodiskbuffers
    // ----------------
 
    for (cont_i = 0; cont_i < 2; cont_i++ )
      {
-     if ( !checkpointsDisabled && DoesFileExist( checkpoint_file[cont_i] ) )
-       EraseCheckpointFile( checkpoint_file[cont_i] );
      if (nodiskbuffers)    // we had better flush everything.
        ForceFlush(cont_i);
+     if ( DoesFileExist( checkpoint_file[cont_i] ) )
+       EraseCheckpointFile( checkpoint_file[cont_i] );
      }
    if (randomchanged)  
      WriteContestandPrefixConfig();
@@ -1438,52 +1436,68 @@ int Client::Run( void )
 
 // ---------------------------------------------------------------------------
 
+#define COMBINE_ALL_CHECKPOINTS_IN_ONE_FILE
+
 int Client::UndoCheckpoint( void )
 {
   FileEntry fileentry;
-  unsigned int outcont_i, cont_i, recovered;
+  unsigned int outcont_i, cont_i, cont_count, recovered;
   int remaining, lastremaining;
-  int breakreq = 0;
+  int do_checkpoint = 0;
   u32 optype;
 
-  if (!nodiskbuffers)
+  cont_count = 2;
+  #ifdef COMBINE_ALL_CHECKPOINTS_IN_ONE_FILE
+  cont_count = 1;
+  if ( IsFilenameValid( checkpoint_file[1] ) )
+    unlink( checkpoint_file[1] );
+  #endif
+
+  for (cont_i = 0; cont_i < cont_count; cont_i++)
     {
-    for ( cont_i = 0; cont_i < 2; cont_i++ )
+    if ( IsFilenameValid( checkpoint_file[cont_i] ) )
+      do_checkpoint = 1;
+    }
+
+  if (do_checkpoint)
+    {
+    recovered = 0;
+
+    for ( cont_i = 0; cont_i < cont_count; cont_i++ )
       {
-      if ( IsFilenameValid( checkpoint_file[cont_i] ) &&
-           IsFilenameValid( in_buffer_file[cont_i] ) && 
-           DoesFileExist( checkpoint_file[cont_i] ) )
+      if ( DoesFileExist( checkpoint_file[cont_i] ))
         {
-        recovered = 0;
         lastremaining = -1;
         while ((remaining = (int)InternalGetBuffer( 
           checkpoint_file[cont_i], &fileentry, &optype, cont_i )) != -1)
           {
+          if (lastremaining!=-1 && lastremaining != (remaining+1))
+            {
+            recovered = 0;
+            break;
+            }
+          lastremaining = remaining;
+
           Descramble( ntohl( fileentry.scramble ),
                     (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
           outcont_i = (unsigned int)fileentry.contest;
           Scramble( ntohl( fileentry.scramble ),
                     (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
           
-          if (((lastremaining!=-1) && (lastremaining!=(remaining + 1))) ||
-            ( InternalPutBuffer( in_buffer_file[outcont_i], &fileentry )==-1)
-            || ((breakreq = ( CheckExitRequestTrigger() != 0 ))!=0) )
-            {
-            recovered = 0;
-            break;
-            }
-          recovered++;
-          lastremaining = remaining;
+          if ( IsFilenameValid( in_buffer_file[outcont_i] ) &&
+             InternalPutBuffer( in_buffer_file[outcont_i], &fileentry )!=-1)
+            recovered++;
           }
-        if (recovered)  
-          {
-          LogScreen("Recovered %u block%s from %s\n", recovered, 
-            ((recovered == 1)?(""):("s")), checkpoint_file[cont_i] );
-          }
+        EraseCheckpointFile( checkpoint_file[cont_i] );
         }
       }
+    if (recovered)  
+      {
+      LogScreen("Recovered %u checkpoint block%s\n", recovered, 
+            ((recovered == 1)?(""):("s")) );
+      }
     }
-  return ((breakreq)?(-1):(0));
+  return (do_checkpoint == 0); /* return !0 if don't do checkpoints */
 }  
 
 // ---------------------------------------------------------------------------
@@ -1491,20 +1505,27 @@ int Client::UndoCheckpoint( void )
 int Client::DoCheckpoint( unsigned int load_problem_count )
 {
   FileEntry fileentry;
-  unsigned int cont_i, prob_i;
-  int do_checkpoint = 0;
-  
-  for (cont_i = 0; cont_i < 2; cont_i++)
+  unsigned int cont_i, cont_count, prob_i;
+  char *ckfile;
+  int do_checkpoint = (nodiskbuffers == 0);
+
+  cont_count = 2;
+  #ifdef COMBINE_ALL_CHECKPOINTS_IN_ONE_FILE
+  cont_count = 1;
+  #endif
+
+  for (cont_i = 0; cont_i < cont_count; cont_i++)
     {
+    ckfile = &(checkpoint_file[cont_i][0]);
     // Remove prior checkpoint information (if any).
-    if ( IsFilenameValid( checkpoint_file[cont_i] ) )
+    if ( IsFilenameValid( ckfile ) )
       {
-      EraseCheckpointFile( checkpoint_file[cont_i] ); 
+      EraseCheckpointFile( ckfile ); 
       do_checkpoint = 1;
       }
     }
     
-  if ( !nodiskbuffers && do_checkpoint )
+  if ( do_checkpoint )
     {
     for ( prob_i = 0 ; prob_i < load_problem_count ; prob_i++)
       {
@@ -1515,7 +1536,13 @@ int Client::DoCheckpoint( unsigned int load_problem_count )
                                            (ContestWork *) &fileentry, 0);
         if (cont_i == 0 || cont_i == 1)
           {
-          if ( IsFilenameValid( checkpoint_file[cont_i] ) )
+          #ifdef COMBINE_ALL_CHECKPOINTS_IN_ONE_FILE
+          ckfile = &(checkpoint_file[0][0]);
+          #else
+          ckfile = &(checkpoint_file[cont_i][0]);
+          #endif
+
+          if ( IsFilenameValid( ckfile ) )
             {
             fileentry.contest = (u8)cont_i;
             fileentry.op      = htonl( OP_DATA );
@@ -1527,10 +1554,10 @@ int Client::DoCheckpoint( unsigned int load_problem_count )
                htonl( Checksum( (u32 *) &fileentry, (sizeof(FileEntry)/4)-2));
             Scramble( ntohl( fileentry.scramble ),
                          (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
-            if (InternalPutBuffer( checkpoint_file[cont_i], &fileentry )== -1)
+            if (InternalPutBuffer( ckfile, &fileentry )== -1)
               {
               //Log( "Checkpoint %d, Buffer Error \"%s\"\n", 
-              //                     cont_i, checkpoint_file[cont_i] );
+              //                     cont_i, ckfile );
               }
             }
           } 
@@ -1538,8 +1565,7 @@ int Client::DoCheckpoint( unsigned int load_problem_count )
       }  // for ( prob_i = 0 ; prob_i < load_problem_count ; prob_i++)
     } // if ( !nodiskbuffers )
 
-  return (do_checkpoint != 0);
+  return (do_checkpoint == 0); /* return !0 if don't do checkpoints */
 }
 
 // ---------------------------------------------------------------------------
-
