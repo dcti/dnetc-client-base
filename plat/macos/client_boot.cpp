@@ -5,7 +5,7 @@
 */
 
 const char *client_boot_cpp(void) {
-return "@(#)$Id: client_boot.cpp,v 1.1.2.2 2001/02/07 07:49:08 mfeiri Exp $"; }
+return "@(#)$Id: client_boot.cpp,v 1.1.2.3 2001/07/27 08:19:26 mfeiri Exp $"; }
 
 #pragma mark -
 
@@ -1008,31 +1008,29 @@ int macosCPUTemp()
    {
     int cpucount = MPProcessors();
 
-/*   We cant use the official API because it involves a call to MP 2.x which whould break MP 1.x support */
-//	   if ((Gestalt(gestaltPowerMgrVers, &result) == noErr) && (result >= 0x200))
-//	   {
-//         int cputemp2;
-//         MPCpuID cpuID;
-//	   
-//         while (cpucount>0)
-//         {
-//            if (MPGetNextCpuID(kInvalidID,&cpuID) != noErr) return -1; //invalid
-//            cputemp2=GetCoreProcessorTemperature(cpuID);
-//            if (cputemp2 < 0) return -1; //invalid
-//            if (cputemp2 > cputemp) cputemp=cputemp2;
-//            cpucount--;
-//         }
-//         cputemp += 273;
-//      }
-/*      else*/ if ((cpucount == 1) && (Gestalt(gestaltMachineType, &result) == noErr))
-      {
-         if ((result != gestaltMacOSCompatibility) && (Gestalt(gestaltNativeCPUtype, &result) == noErr))
+      /* We cant use the official API all the time because it involves a "MP 2.1 only" call */
+	   if (((UInt32)MPGetNextCpuID != (UInt32)kMPUnresolvedCFragSymbolAddress) &&
+	      (Gestalt(gestaltPowerMgrVers, &result) == noErr) && (result >= 0x200))
+	   {
+         int cputemp2;
+         MPCpuID cpuID;
+	   
+         while (cpucount>0)
          {
-            if ((result == gestaltCPU750) || (result == gestaltCPUG4))
-            {
-               // Single CPU G3/G4 but no MP and not inside a BlueBox. Do the deed!
-               cputemp = GetProcessorTemperature() + 273;
-            }
+            if (MPGetNextCpuID(kInvalidID,&cpuID) != noErr) return -1; //invalid
+            cputemp2=GetCoreProcessorTemperature(cpuID);
+            if (cputemp2 < 0) return -1; //invalid
+            if (cputemp2 > cputemp) cputemp=cputemp2;
+            cpucount--;
+         }
+         cputemp += 273;
+      }
+      else if ((cpucount == 1) && (Gestalt(gestaltNativeCPUtype, &result) == noErr))
+      {
+         if ((result == gestaltCPU750) || (result == gestaltCPUG4))
+         {
+            // Pre Mac OS 8.6 single CPU G3/G4. Do the deed!
+            cputemp = GetProcessorTemperature() + 273;
          }
       }
    }
@@ -1201,11 +1199,15 @@ void macosInitialize(void)
 
 #endif
 
-	/* Check if we run a supported OS ( System7 or higher ) */
+	/* Check if we run a supported OS ( System7, Mac OS 8.x, or Mac OS 9.x ) */
 	
 	err = Gestalt( gestaltSystemVersion, &result );
 	if ( err != noErr || result < 0x700 )
 		macosAlert( "Sorry, this client cannot be used because it requires Mac OS 7.0 or higher.", 1 );
+
+   err = Gestalt(gestaltMachineType, &result);
+   if (err != noErr || result == gestaltMacOSCompatibility)
+		macosAlert( "Sorry, this distributed.net client was built specifically for MacOS 7/8/9 and cannot run in Classic", 1 );
 
 #if !defined(MAC_FBA)
 
@@ -1303,8 +1305,5 @@ char * strdup(char * str)
 
    return(newstring);
 }
-
-#pragma mark -
-
 
 
