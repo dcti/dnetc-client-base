@@ -15,7 +15,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.17.2.3 1999/09/17 15:20:56 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.17.2.4 1999/09/18 18:02:29 cyp Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -416,10 +416,10 @@ int CliIsDevelVersion(void)
 
 const char *CliGetFullVersionDescriptor(void)
 {
-  static char buffer[10+sizeof("RC5DES v"CLIENT_VERSIONSTRING"-XXX-99071523-*dev* client for "CLIENT_OS_NAME)];
+  static char buffer[10+32+sizeof("v"CLIENT_VERSIONSTRING"-XXX-99071523-*dev* client for "CLIENT_OS_NAME)];
   struct timeval tv; tv.tv_usec = 0; 
   tv.tv_sec = CliGetNewestModuleTime();
-  sprintf( buffer, "RC5DES v" CLIENT_VERSIONSTRING "-"
+  sprintf( buffer, "%s v" CLIENT_VERSIONSTRING "-"
          "%c"  /* GUI == "G", CLI == "C" */
          #ifdef CLIENT_SUPPORTS_SMP
          "T"   /* threads */
@@ -429,6 +429,7 @@ const char *CliGetFullVersionDescriptor(void)
          "%c"  /* limited release or dev branch or public release */
          "-%s" /* date is in bugzilla format yymmddhh */ 
          "%s", /* "-*dev*" or " client for XXX" */
+         utilGetAppName(),
          ((ConIsGUI())?('G'):('C')),  
          ((CliIsDevelVersion())?('L'):('R')),
          CliGetTimeString(&tv,4),

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.1 1999/09/07 02:51:51 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.2 1999/09/18 18:02:34 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "client.h"   /* CONTEST_COUNT, stub definition */
@@ -320,3 +320,74 @@ const char *BufferGetDefaultFilename( unsigned int project, int is_out_type,
 }
 
 /* --------------------------------------------------------------------- */
+
+const char *utilSetAppName(const char *newname)
+{
+  static int initialized = -1;
+  static char appname[32];
+  unsigned int len;
+  if (newname)
+  {
+    const char *sep = EXTN_SEP;
+    while (*newname == ' ' || *newname == '\t')
+      newname++;
+    len = 0;
+    while (*newname && *newname != ' ' && *newname != '\t' && 
+           *newname != *sep && (len < (sizeof(appname)-1)))
+      appname[len++] = (char)tolower(*newname++);
+    appname[len] = '\0';
+    if (len && initialized < 0)
+      initialized = 1;
+  }
+  #if (CLIENT_OS == OS_NETWARE)
+  if (initialized < 0)
+  {
+    initialized = 0; /* protect against recursion */
+    strncpy( appname, nwCliGetNLMBaseName(), sizeof(appname));
+    appname[sizeof(appname)-1] = '\0';
+    for (len = 0; appname[len] && (len < (sizeof(appname)-1));len++)
+      appname[len] = (char)tolower(appname[len]);
+    if (len)
+      initialized = 1;
+  }  
+  #elif 0 //(CLIENT_OS == OS_WIN32)
+  if (initialized < 0)
+  {
+    char buff[MAX_PATH+1];
+    len = GetModuleFileName(NULL,buff,sizeof(buff));
+    while (len && buff[len] != '\\' && buff[len]!= '/' && buff[len]!= ':')
+      len--;
+    if (len)
+    {
+      newname = (const char *)&buff[++len];
+      len = 0;
+      while (*newname && *newname != ' ' && *newname != '\t' && 
+             *newname != '.' && (len < (sizeof(appname)-1)))
+        appname[len++] = (char)tolower(*newname++);
+      appname[len] = '\0';
+      if (len && initialized < 0)
+        initialized = 1;
+    }
+  }
+  #endif
+  if (initialized > 0)
+    return (const char *)&appname[0];
+  /* --- */
+  #if defined(__unix__) /* obfusciation 101 for argv[0] stuffing */
+  if (initialized <= 0) /* dummy if to suppress compiler warning */
+  {
+    appname[0] = 'r'; appname[1] = 'c'; appname[2] = '5'; 
+    appname[3] = 'd'; appname[4] = 'e'; appname[5] = 's';
+    appname[6] = '\0';
+    initialized = 1;
+    return (const char *)&appname[0];
+  }  
+  #endif
+  return "rc5des";
+}
+
+const char *utilGetAppName(void) 
+{
+  return utilSetAppName((const char *)0);
+}
+

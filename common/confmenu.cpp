@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.2 1999/08/09 16:35:11 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.3 1999/09/18 18:02:32 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -23,7 +23,7 @@ return "@(#)$Id: confmenu.cpp,v 1.41.2.2 1999/08/09 16:35:11 cyp Exp $"; }
 #include "confopt.h"  // the option table
 
 /* ----------------------------------------------------------------------- */
-static const char *CONFMENU_CAPTION="RC5DES Client Configuration: %s\n"
+static const char *CONFMENU_CAPTION="distributed.net client configuration: %s\n"
 "--------------------------------------------------------------------------\n";
 
 int Client::Configure( void ) /* returns >1==save, <1==DON'T save */

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.4 1999/06/17 12:20:00 cyp Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.5 1999/09/18 18:02:33 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -125,7 +125,7 @@ void DisplayHelp( const char * unrecognized_option )
   
   static const char *helpheader[] =
   {
-    "RC5DES v" CLIENT_VERSIONSTRING " client - a project of distributed.net",
+    "distributed.net v" CLIENT_VERSIONSTRING " client for " CLIENT_OS_NAME,
     "Visit http://www.distributed.net/FAQ/ for in-depth command line help",
     "-------------------------------------------------------------------------"
   };

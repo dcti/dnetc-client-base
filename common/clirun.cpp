@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.8 1999/09/17 17:32:26 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.9 1999/09/18 18:02:30 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -737,11 +737,11 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
                                  (void *)thrparams )) != -1);
       }
       #elif (CLIENT_OS == OS_BEOS)
-        char thread_name[32];
+        char thread_name[128];
         long be_priority = thrparams->priority+1;
-        // Be OS priority for rc5des should be adjustable from 1 to 10
+        // Be OS priority should be adjustable from 1 to 10
         // 1 is lowest, 10 is higest for non-realtime and non-system tasks
-        sprintf(thread_name, "RC5DES crunch#%d", thread_i + 1);
+        sprintf(thread_name, "%s crunch#%d", utilGetAppName(), thread_i + 1);
         thrparams->threadID = spawn_thread((long (*)(void *)) Go_mt,
                thread_name, be_priority, (void *)thrparams );
         if ( ((thrparams->threadID) >= B_NO_ERROR) &&

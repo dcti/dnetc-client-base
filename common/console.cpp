@@ -14,19 +14,22 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.7 1999/09/17 17:32:27 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.8 1999/09/18 18:02:32 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
+#define CLICONS_LONGNAME "distributed.net client " CLIENT_VERSIONSTRING ""
 
 #include "cputypes.h"
 #include "baseincs.h"
 #include "network.h"
 #include "clitime.h"
 #include "triggers.h"
-#include "console.h" //also has CLICONS_SHORTNAME, CLICONS_LONGNAME
 #include "modereq.h"
-#include "sleepdef.h" //usleep
+#include "util.h"     //utilGetAppName()
+#include "sleepdef.h" //usleep()
+#include "console.h"  //ourselves
+
 #if (CLIENT_OS==OS_AIX)
 #include <sys/select.h>   // only needed if compiled on AIX 4.1
 #endif
@@ -192,11 +195,12 @@ int ConOut(const char *msg)
 ** uninitialized and should be avoided. Not affected by -hidden/-quiet mode
 */
 
+#define CLICONS_LONGNAME "distributed.net client " CLIENT_VERSIONSTRING ""
+
 int ConOutModal(const char *msg)
 {
   #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-     MessageBox( NULL, msg, CLICONS_LONGNAME,
-           MB_OK | MB_ICONINFORMATION );
+     MessageBox( NULL, msg, CLICONS_LONGNAME,  MB_OK | MB_ICONINFORMATION );
   #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
     WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, msg,
        CLICONS_LONGNAME, NULL, MB_OK | MB_INFORMATION | MB_MOVEABLE );
@@ -210,7 +214,7 @@ int ConOutModal(const char *msg)
 /* ---------------------------------------------------- */
 
 /*
-** ConOutErr() does what fprintf(stderr "\nRC5DES: %s\n",msg) would do.
+** ConOutErr() does what fprintf(stderr "\nAPPNAME: %s\n",msg) would do.
 ** Can be blocking. Note the leading and trailing newlines.
 */
 
@@ -223,9 +227,9 @@ int ConOutErr(const char *msg)
      WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, (PSZ)msg,
            CLICONS_LONGNAME,  NULL, MB_OK | MB_APPLMODAL | MB_ERROR | MB_MOVEABLE );
   #elif (CLIENT_OS == OS_NETWARE)
-    ConsolePrintf( "%s: %s\r\n", CLICONS_SHORTNAME, msg );
+    ConsolePrintf( "%s: %s\r\n", utilGetAppName(), msg );
   #else
-    fprintf( stderr, "%s: %s\n", CLICONS_SHORTNAME, msg );
+    fprintf( stderr, "%s: %s\n", utilGetAppName(), msg );
     fflush( stderr );
   #endif
   return 0;

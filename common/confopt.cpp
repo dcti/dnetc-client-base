@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.4 1999/06/17 12:20:00 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.5 1999/09/18 18:02:32 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -129,7 +129,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "for the DES input buffer and \""BUFFER_DEFAULT_IN_BASENAME""EXTN_SEP"ogr\" for the OGR input\n"
   "buffer. Note: if a path is not specified, the files will be created in the\n"
   "same directory as the .ini file, which is - by default - created in the same\n"
-  "directory as rc5des itself.\n"
+  "directory as the client itself.\n"
   "*Note*: A new buffer file format is forthcoming. The new format will have\n"
   "native support for First-In-First-Out packets (this functionality is currently\n"
   "available but is not efficient when used with large buffers); improved locking\n"
@@ -146,7 +146,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "for the DES output buffer and \""BUFFER_DEFAULT_OUT_BASENAME""EXTN_SEP"ogr\" for the OGR output\n"
   "buffer. Note: if a path is not specified, the files will be created in the\n"
   "same directory as the .ini file, which is - by default - created in the same\n"
-  "directory as rc5des itself.\n"
+  "directory as the client itself.\n"
   "*Note*: this option will eventually disappear. Refer to the \"In-Buffer\n"
   "Filename Prefix\" option for details.\n"
   ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},

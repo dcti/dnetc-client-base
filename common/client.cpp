@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.14 1999/09/07 02:49:01 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.15 1999/09/18 18:02:29 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -158,7 +158,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
   {
     if (level == 0)
     {
-      LogScreenRaw( "\nRC5DES client - a project of distributed.net\n"
+      LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME "\n"
                     "Copyright 1997-1999 distributed.net\n");
 
       #if (CLIENT_CPU == CPU_68K)
@@ -445,7 +445,7 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int 
 int main( int argc, char *argv[] )
 {
   /* the SPT_* constants refer to sendmail source (conf.[c|h]) */
-  char defname[]={('r'),('c'),('5'),('d'),('e'),('s'),0};
+  const char *defname = utilGetAppName(); /* 'rc5/des' or 'dnetc' etc */
   int needchange = 0;
   if (argv && argv[0])
   {
@@ -456,7 +456,7 @@ int main( int argc, char *argv[] )
   if (needchange)
   {
     union pstun pst;
-    pst.pst_command = &defname[0];
+    pst.pst_command = (char *)defname;
     pstat(PSTAT_SETCMD,pst,strlen(defname),0,0);
   }
   #elif (CLIENT_OS == OS_SCO)                        //SPT_TYPE == SPT_SCO
@@ -486,7 +486,7 @@ int main( int argc, char *argv[] )
   if (needchange)
   {
     PS_STRINGS->ps_nargvstr = 1;
-    PS_STRINGS->ps_argvstr = defname;
+    PS_STRINGS->ps_argvstr = (char *)defname;
   }
   #elif 0                                     /*  SPT_TYPE == SPT_SYSMIPS */
   if (needchange)
@@ -497,7 +497,7 @@ int main( int argc, char *argv[] )
         //|| SPT_REUSEARGV (the rest)
   /* [Net|Free|Open|BSD[i]] are of type SPT_BUILTIN, ie use setproctitle() 
      which is a stupid smart-wrapper for SPT_PSSTRINGS (see above). The result
-     is exactly the same as when we reexec(): ps will show "rc5des (filename)"
+     is exactly the same as when we reexec(): ps will show "appname (filename)"
      so we gain nothing other than avoiding the exec() call, but the way /we/ 
      would use it is non-standard, so we'd better leave it be:
      __progname = defname; setproctitle(NULL); //uses default, ie __progname
@@ -568,7 +568,7 @@ int main( int argc, char *argv[] )
     }
       
     p = argv[0];
-    argv[0] = defname;
+    argv[0] = (char *)defname;
     if ((strlen(p) + 5) < sizeof(buffer))
     {
       char *s;

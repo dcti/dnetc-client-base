@@ -1,9 +1,9 @@
 /* Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ * -------------------------------------------------------------------
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>                         
  *
- * -------------------------------------------------------------------
  * *All* option handling is performed by ParseCommandLine(), including
  * options loaded from an external .ini.
  *
@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.22 1999/09/18 00:54:13 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.23 1999/09/18 18:02:31 cyp Exp $"; }
 
 //#define TRACE
 
@@ -23,7 +23,7 @@ return "@(#)$Id: cmdline.cpp,v 1.133.2.22 1999/09/18 00:54:13 cyp Exp $"; }
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "pathwork.h"  // InitWorkingDirectoryFromSamplePaths();
 #include "lurk.h"      // dialup object
-#include "util.h"      // trace
+#include "util.h"      // trace, utilGetAppName()
 #include "sleepdef.h"  // usleep()
 #include "modereq.h"   // get/set/clear mode request bits
 #include "console.h"   // ConOutErr()
@@ -102,11 +102,12 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         {
           if (!loop0_quiet)
           {
-            ConsolePrintf("RC5DES: %s cannot be used as a load time option.\r\n"
-            "\tPlease use 'rc5des [-quiet] %s'\r\n"
-            "\tinstead of 'load rc5des [-quiet] %s'\r\n"
+            const char *appname = nwCliGetNLMBaseName();
+            ConsolePrintf("%s: %s cannot be used as a load time option.\r\n"
+            "\tPlease use '%s [-quiet] %s'\r\n"
+            "\tinstead of 'LOAD %s [-quiet] %s'\r\n"
             "\t(note: this is only available when a client is running)\r\n",
-                     thisarg, thisarg, thisarg );
+                     appname, thisarg, appname, thisarg, appname, thisarg );
           }
           terminate_app = 1;
         }
@@ -117,8 +118,10 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           unsigned int kill_ok = 0, kill_failed = 0; 
           int last_errno = 0, kill_found = 0;
           const char *binname = (const char *)strrchr( argv[0], '/' );
-          char altbinname[] = {'r','c','5','d','e','s','\0'};
+          char altbinname[64];
           binname = ((binname==NULL)?(argv[0]):(binname+1));
+          strncpy(altbinname,utilGetAppName(),sizeof(altbinname));
+          altbinname[sizeof(altbinname)-1] = '\0';
             
           if ( strcmp( thisarg, "-kill" ) == 0 ||
                strcmp( thisarg, "-shutdown") == 0 )
@@ -142,7 +145,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             size_t len; FILE *file = fopen("/proc/curproc/cmdline","r"); 
             if (file)
             {
-              /* useless for OSs that do argv[0]="rc5des" in client.cpp */
+              /* useless for OSs that set argv[0] in client.cpp */
               len = fread( buffer, 1, sizeof(buffer), file );
               fclose( file );
               if (len!=0) 
@@ -226,14 +229,14 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             while ((count = pstat_getproc(pst, sizeof(pst[0]), 
                           (sizeof(pst)/sizeof(pst[0])), idx)) > 0) 
             {
-              int i;
+              int pspos;
               if (kill_found < 0)
                 kill_found = 0;
-              for (i=0; i < count; i++) 
+              for (pspos=0; pspos < count; pspos++) 
               {
-                //printf("pid: %d, cmd: %s\n",pst[i].pst_pid,pst[i].pst_ucomm);
-                char *procname = (char *)pst[i].pst_ucomm;
-                pid_t thatpid = (pid_t)pst[i].pst_pid;
+                //printf("pid: %d, cmd: %s\n",pst[pspos].pst_pid,pst[pspos].pst_ucomm);
+                char *procname = (char *)pst[pspos].pst_ucomm;
+                pid_t thatpid = (pid_t)pst[pspos].pst_pid;
                 if (thatpid != ourpid && (strcmp(procname,binname) == 0 || 
                     strcmp(procname,altbinname) == 0))
                 {
@@ -319,10 +322,10 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                     got_output = 1;
                     if (sigd_count != 0)
                     {
-                      unsigned int i;
-                      for (i=0;i<sigd_count;i++)
+                      unsigned int pid_pos;
+                      for (pid_pos=0;pid_pos<sigd_count;pid_pos++)
                       {
-                        if (already_sigd[i] == thatpid)
+                        if (already_sigd[pid_pos] == thatpid)
                         {
                           thatpid = 0;
                           break;
@@ -510,9 +513,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
            strcat( slash, ".ini" );
         }
         if ( inifilename[0] == 0 )
-          strcpy( inifilename, "rc5des.ini" );
+          strcat( strcpy( inifilename, utilGetAppName() ), ".ini" );
         #elif (CLIENT_OS == OS_VMS)
-        strcpy( inifilename, "rc5des" EXTN_SEP "ini" );
+          strcat( strcpy( inifilename, utilGetAppName() ), EXTN_SEP "ini" );
         #else
         strcpy( inifilename, argv[0] );
         strcat( inifilename, EXTN_SEP "ini" );
@@ -1061,6 +1064,27 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
         }
       }
+      else if ( strcmp( thisarg, "-csccore" ) == 0)
+      {
+        if (!argvalue)
+          missing_value = 1;
+        else
+        {
+          skip_next = 1;
+#ifdef CSC_TEST
+          if (run_level != 0)
+          {
+            if (logging_is_initialized)
+              LogScreenRaw("Setting csc core to %d\n", csc_core);
+          }
+          else
+          {
+            csc_core = atoi( argvalue );
+            inimissing = 0; // Don't complain if the inifile is missing
+          }
+#endif
+        }
+      }
       else if ( strcmp( thisarg, "-nice" ) == 0 ) // Nice level
       {
         if (!argvalue)
@@ -1397,9 +1421,13 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         if ( strcmp( thisarg, "rc5" ) == 0 )  
           do_mode |= MODEREQ_BENCHMARK_RC5;
         else if ( strcmp( thisarg, "des" ) == 0 )
-           do_mode |= MODEREQ_BENCHMARK_DES;
+          do_mode |= MODEREQ_BENCHMARK_DES;
+        else if ( strcmp( thisarg, "ogr" ) == 0 )
+          do_mode |= MODEREQ_BENCHMARK_OGR;
+        else if ( strcmp( thisarg, "csc" ) == 0 )
+          do_mode |= MODEREQ_BENCHMARK_CSC;
         else 
-          do_mode |= (MODEREQ_BENCHMARK_DES | MODEREQ_BENCHMARK_RC5);
+          do_mode |= MODEREQ_BENCHMARK_ALL;
 
         inimissing = 0; // Don't complain if the inifile is missing
         ModeReqClear(-1); //clear all - only do benchmark

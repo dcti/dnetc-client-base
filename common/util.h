@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------
 */ 
 #ifndef __UTIL_H__ 
-#define __UTIL_H__ "@(#)$Id: util.h,v 1.6 1999/05/08 19:07:50 cyp Exp $"
+#define __UTIL_H__ "@(#)$Id: util.h,v 1.6.2.1 1999/09/18 18:02:34 cyp Exp $"
 
 void trace_out( int indlevel, const char *fmt, ... );
 #ifdef TRACE
@@ -31,5 +31,9 @@ int DoesFileExist( const char *filename );
 /* convert a basename to a real buffer file name */
 const char *BufferGetDefaultFilename( unsigned int proj, int is_out_type,
                                                     const char *basename );
+
+const char *utilGetAppName(void); /* "rc5 des" or "dnetc" or whatever */
+const char *utilSetAppName(const char *newname); /* shouldn't be needed */
+
 #endif /* __UTIL_H__ */
 
