@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.11 2000/11/02 11:13:02 mfeiri Exp $
+ * $Id: ogr.cpp,v 1.1.2.12 2000/11/02 12:35:35 oliver Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,7 +45,15 @@
       #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* MWC=1  MrC=0  */
       #define OGROPT_ALTERNATE_CYCLE                1 /* oetting/cox   */
       #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* use original  */
-    #else // usually gcc
+    #elif (__GNUC__)
+      #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* we want 'no'  irrelev */
+      #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* important     irrelev */
+      #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* no optimization */
+      #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* cntlzw        */
+      #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* GCC=1         */
+      #define OGROPT_ALTERNATE_CYCLE                1 /* oetting/cox   */
+      #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 2 /* switch_asm    */
+    #else
       #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0    /* no optimization */
     #endif
   #endif  
@@ -336,6 +344,14 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 
 /* shift the list to add or extend the first mark */
 #if (OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 2)
+
+#if defined(__GNUC__)
+   #define __rlwinm(Rs,SH,MB,ME) \
+   ({ int Ra; __asm__ ("rlwinm %0,%1,%2,%3,%4" : "=r" (Ra) : "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
+   #define __rlwimi(Ra,Rs,SH,MB,ME) \
+   ({ __asm__ ("rlwimi %0,%2,%3,%4,%5" : "=r" (Ra) : "0" (Ra), "r" (Rs), "n" (SH), "n" (MB), "n" (ME)); Ra; })
+#endif /* __GNUC__ */
+
 #define COMP_LEFT_LIST_RIGHT(lev, s) {             \
    switch (s)                                      \
       {                                            \
@@ -1700,7 +1716,7 @@ static int found_one(const struct State *oState)
 static int found_one(const struct State *oState)
 {
    /* confirm ruler is golomb */
-   unsigned int i, j;
+   int i, j;
    const int maximum = oState->max;
    const int maximum2 = maximum >> 1;     // shouldn't this be rounded up?
    const int maxdepth = oState->maxdepth;
