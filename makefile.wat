@@ -5,7 +5,7 @@
 ##   where <platform> is one of [dos | netware | os2 | w32 | w_h | wsv ]
 ##                       or anything else defined at the end of this makefile
 ##
-## $Id: makefile.wat,v 1.8 1998/06/14 11:16:11 ziggyb Exp $
+## $Id: makefile.wat,v 1.9 1998/06/15 02:32:20 ziggyb Exp $
 ##
 ## Revision history:
 ## 1.6  cyp Added support for new disphelp.cpp, deleted obsolete "cd xxx" 
@@ -210,6 +210,10 @@ output\x86ident.obj : platforms\win32-os2\x86ident.asm makefile.wat
   *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
   @set isused=1
 
+output\dod.obj : platforms\os2cli\dod.cpp platforms\os2cli\dod.h makefile.wat 
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS);common
+  @set isused=1
+
 output\netware.obj : platforms\netware\netware.cpp common\client.h makefile.wat 
   *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS);common
   @set isused=1
@@ -295,6 +299,7 @@ os2: .symbolic                                       # OS/2
      @set IMPORTS   =
      @set BINNAME   = $(LNKbasename).exe
      @set STACKSIZE = 16384                 #Will slow down client if it's 32k
+     @set LINKOBJS  = $(%LINKOBJS) output\dod.obj
      @%make platform
 
 w32: .symbolic                               # win95/winnt standard executable
