@@ -1,16 +1,18 @@
-// Hey, Emacs, this a -*-C++-*- file !
-//
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-// 
+/* Hey, Emacs, this a -*-C++-*- file !
+ *
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * ** header may be included by cores, so guard around c++ constructs **
+*/ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.65 1999/10/11 17:06:26 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.66 1999/10/17 23:05:43 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
-// Major CPU architectures, we don't need (or want) very fine resolution
+/* Major CPU architectures, we don't need (or want) very fine resolution */
 #define CPU_UNKNOWN     0
 #define CPU_X86         1
 #define CPU_POWERPC     2
@@ -19,20 +21,20 @@
 #define CPU_PA_RISC     5
 #define CPU_68K         6
 #define CPU_SPARC       7
-//#define CPU_UNUSED_1  8
+/* #define CPU_UNUSED_1 8 */
 #define CPU_POWER       9
 #define CPU_VAX         10
 #define CPU_ARM         11
 #define CPU_88K         12
 #define CPU_KSR1        13
 #define CPU_S390        14
-//#define CPU_UNUSED_2  15
-#define CPU_DESCRACKER  16  // eff descracker
+/* #define CPU_UNUSED_2 15 */
+#define CPU_DESCRACKER  16  /* eff descracker */
 
-// Major OS Architectures.
+/* Major OS Architectures. */
 #define OS_UNKNOWN      0
-#define OS_WIN32        1  // win95 + win98 + winnt
-#define OS_DOS          2  // ms-dos, pc-dos, dr-dos, etc.
+#define OS_WIN32        1  /* win95 + win98 + winnt */
+#define OS_DOS          2  /* ms-dos, pc-dos, dr-dos, etc. */
 #define OS_FREEBSD      3
 #define OS_LINUX        4
 #define OS_BEOS         5
@@ -46,37 +48,37 @@
 #define OS_NETBSD       13
 #define OS_SUNOS        14
 #define OS_SOLARIS      15
-//#define OS_UNUSED_1   16    // never used. was os9
-//#define OS_UNUSED_2   17    // never used. was java-vm
+/* #define OS_UNUSED_1  16 */ /* never used. was os9 */
+/* #define OS_UNUSED_2  17 */ /* never used. was java-vm */
 #define OS_BSDI         18
 #define OS_NEXTSTEP     19
 #define OS_SCO          20
 #define OS_QNX          21
-//#define OS_UNUSED_3   22    // never used. was osf1 (oldname for DEC UNIX)
-//#define OS_UNUSED_4   23    // never used. was minix
-//#define OS_UNUSED_5   24    // never used. was mach10
+/* #define OS_UNUSED_3  22 */ /* never used. was osf1 (oldname for DEC UNIX)*/
+/* #define OS_UNUSED_4  23 */ /* never used. was minix */
+/* #define OS_UNUSED_5  24 */ /* never used. was mach10 */
 #define OS_AIX          25
-//#define OS_UNUSED_6   26    // never used. was AUX
-//#define OS_UNUSED_7   27    // never used. was rhapsody
+/* #define OS_UNUSED_6  26 */ /* never used. was AUX */
+/* #define OS_UNUSED_7  27 */ /* never used. was rhapsody */
 #define OS_AMIGAOS      28
 #define OS_OPENBSD      29
 #define OS_NETWARE      30
 #define OS_MVS          31
 #define OS_ULTRIX       32
-//define OS_UNUSED_8    33    // never used. was os400
+/* #define OS_UNUSED_8  33 */ /* never used. was os400 */
 #define OS_RISCOS       34
 #define OS_DGUX         35
-#define OS_WIN32S       36    // obsolete (32-bit Win32s) w16 client is 32bit
+/* #define OS_WIN32S    36 */ /*obsolete (32-bit Win32s) w16 client is 32bit*/
 #define OS_SINIX        37
 #define OS_DYNIX        38
 #define OS_OS390        39
-//#define OS_UNUSED4    40    // never used. was os_maspar
-#define OS_WIN16        41    // windows 3.1, 3.11, wfw (was 16bit, now 32bit)
-#define OS_DESCRACKER   42    // eff des cracker
+/* #define OS_UNUSED4   40 */ /* never used. was os_maspar */
+#define OS_WIN16        41 /* windows 3.1, 3.11, wfw (was 16bit, now 32bit) */
+#define OS_DESCRACKER   42 /* eff des cracker */
 
 /* ----------------------------------------------------------------- */
 
-// determine current compiling platform
+/* determine current compiling platform */
 #if defined(WIN32) || defined(__WIN32__) || defined(_Windows) || defined(_WIN32)
   #if defined(NTALPHA) || defined(_M_ALPHA)
     #define CLIENT_CPU    CPU_ALPHA
@@ -295,8 +297,8 @@
   #define __unix__
   #endif
   #define CLIENT_OS_NAME   "AIX"
-// AIXALL hides itself as POWER, it's more easy copy with this problem
-// in the POWER tree, because this is used on AIX only
+  /* AIXALL hides itself as POWER, it's more easy copy with this problem */
+  /* in the POWER tree, because this is used on AIX only */
   #if defined(_ARCH_PPC) || defined(ASM_PPC) || defined(_AIXALL)
     #define CLIENT_OS     OS_AIX
     #define CLIENT_CPU    CPU_POWERPC
@@ -376,7 +378,7 @@
   #define CLIENT_CPU    CPU_UNKNOWN
 #endif
 #if (CLIENT_OS == OS_UNKNOWN) || (CLIENT_CPU == CPU_UNKNOWN)
-  // ignoreunknowncpuos is used by the client's testplat.cpp utility.
+  /* ignoreunknowncpuos is used by the client's testplat.cpp utility. */
   #if !defined(IGNOREUNKNOWNCPUOS)
     #error "Unknown CPU/OS detected in cputypes.h"
   #endif
@@ -396,7 +398,7 @@
   typedef unsigned long THREADID;
   #define OS_SUPPORTS_SMP
 #elif (CLIENT_OS == OS_OS2)
-  //Headers defined elsewhere in a separate file.
+  /* Headers defined elsewhere in a separate file. */
   typedef long THREADID;
   #define OS_SUPPORTS_SMP
 #elif (CLIENT_OS == OS_NETWARE)
@@ -418,7 +420,7 @@
   #include <pthread.h>
   typedef pthread_t THREADID;
   #define OS_SUPPORTS_SMP
-  //egcs always includes pthreads.h, so use something other than PTHREAD_H 
+  /* egcs always includes pthreads.h, so use something other than PTHREAD_H */
   #define _POSIX_THREADS_SUPPORTED
 
   #if (CLIENT_OS == OS_DGUX)
@@ -429,20 +431,21 @@
   typedef int THREADID;
 #endif
 
-// Fix up MULTITHREAD to mean "SMP aware and thread safe"
+/* Fix up MULTITHREAD to mean "SMP aware and thread safe" */
 #if (defined(CORES_SUPPORT_SMP) && defined(OS_SUPPORTS_SMP))
    #define CLIENT_SUPPORTS_SMP
 #endif  
-#undef MULTITHREAD //undef it to avoid 'unsafe' meaning
+#undef MULTITHREAD /* undef it to avoid 'unsafe' meaning */
 
 /* ----------------------------------------------------------------- */
 
 #ifdef PROXYTYPE
-// Some compilers/platforms don't yet support bool internally.
-// When creating new rules here, please try to use compiler-specific
-// macro tests since not all compilers on a specific platform (or even
-// a newer version of your own compiler) may be missing bool.
-//
+/*
+ Some compilers/platforms don't yet support bool internally.
+ When creating new rules here, please try to use compiler-specific
+ macro tests since not all compilers on a specific platform (or even
+ a newer version of your own compiler) may be missing bool.
+*/
 #if defined(__VMS) || defined(__SUNPRO_CC) || defined(__DECCXX) || defined(__MVS__)
   #define NEED_FAKE_BOOL
 #elif defined(_HPUX) || defined(_OLD_NEXT_)
@@ -450,7 +453,7 @@
 #elif defined(__IBMCPP__)
   #define NEED_FAKE_BOOL
 #elif defined(__WATCOMC__) && (__WATCOMC__ < 1100)
-  //nothing - bool is defined
+  /* nothing - bool is defined */
 #elif defined(__xlc) || defined(__xlC) || defined(__xlC__) || defined(__XLC121__)
   #define NEED_FAKE_BOOL
 #elif (defined(__mips) && __mips < 3 && !defined(__GNUC__))
@@ -489,16 +492,16 @@ extern "C" {
       #define USHRT_MAX USHORT_MAX 
     #endif
     #if !defined(SIZEOF_SHORT) && defined(USHRT_MAX)
-      #if (USHRT_MAX == 0xFFUL)
+      #if (USHRT_MAX == 0xFF)
         #define SIZEOF_SHORT 1
       #elif (USHRT_MAX == 0xFFFFUL)
         #define SIZEOF_SHORT 2
-      #elif (USHRT_MAX == 0xFFFFFFFFUL)    
+      #elif (USHRT_MAX == 0xFFFFFFFFUL)
         #define SIZEOF_SHORT 4
       #elif (USHRT_MAX == 0xFFFFFFFFFFFFFFFFUL)
         #define SIZEOF_SHORT 8
       #else
-        #fixme: sizeof(unsigned short) !=1 and !=2 and !=4 and !=8?
+        #error fixme: sizeof(unsigned short) !=1 and !=2 and !=4 and !=8?
       #endif	
     #endif
     #if defined(SIZEOF_INT)
@@ -570,13 +573,13 @@ extern "C" {
       
 #if (defined(SIZEOF_SHORT) && (SIZEOF_SHORT == 2))
   typedef unsigned short u16;
-//typedef signed short s16;
+/* typedef signed short s16; */
 #elif (defined(SIZEOF_SHORT) && (SIZEOF_INT == 2))
   typedef unsigned int u16;
-//typedef signed int s16;
+/* typedef signed int s16; */
 #elif (defined(SIZEOF_LONG) && (SIZEOF_LONG == 2))
   typedef unsigned long u16;
-//typedef signed long s16;
+/* typedef signed long s16; */
 #else
   #error types u16 is undefined (try wchar_t)
 #endif
@@ -617,7 +620,7 @@ extern "C" {
   #define SIZEOF_LONGLONG 8
   typedef unsigned __int64 ui64;
   typedef __int64 si64;
-#elif (defined(_MSC_VER) && (_MSC_VER >= 11)) // VC++ >= 5.0  
+#elif (defined(_MSC_VER) && (_MSC_VER >= 11)) /* VC++ >= 5.0 */
   #define HAVE_I64
   #define SIZEOF_LONGLONG 8
   typedef unsigned __int64 ui64;
@@ -631,36 +634,14 @@ extern "C" {
   #error to enable 64bit integer math, please typedef your 64 bit int by compiler
 #endif  
 
-#if 0
-#if !defined(INTSIZES)
-    #define INTSIZES 442
-#endif
-#if (INTSIZES == 422)       // (16-bit DOS/WIN):  long=32, int=16, short=16
-  typedef unsigned long u32;
-  typedef signed long s32;
-  typedef unsigned short u16;
-  typedef signed short s16;
-#elif (INTSIZES == 442)     // (typical):  long=32, int=32, short=16
-  typedef unsigned long u32;
-  typedef signed long s32;
-  typedef unsigned short u16;
-  typedef signed short s16;
-#elif (INTSIZES == 842)     // (Alphas and 64bit MIPS): long=64, int=32, short=16
-  typedef unsigned int u32;
-  typedef signed int s32;
-  typedef unsigned short u16;
-  typedef signed short s16;
-#else
-  #error "Invalid INTSIZES"
-#endif
-#endif
-
 typedef unsigned char u8;
 typedef struct fake_u64 { u32 hi, lo; } u64;
 
-//typedef signed char s8;
-//typedef struct fake_u64 { s32 hi, lo; } s64;
-//struct u128 { u64 hi, lo; };
-//struct s128 { s64 hi, lo; };
+/*
+typedef signed char s8;
+typedef struct fake_u64 { s32 hi, lo; } s64;
+struct u128 { u64 hi, lo; };
+struct s128 { s64 hi, lo; };
+*/
 
 #endif /* __CPUTYPES_H__ */

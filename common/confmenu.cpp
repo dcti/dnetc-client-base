@@ -9,13 +9,13 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.46 1999/10/16 16:48:11 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.47 1999/10/17 23:05:42 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
-#include "cputypes.h" // CLIENT_OS, s32
+//#include "cputypes.h" // CLIENT_OS
 #include "console.h"  // ConOutErr()
-#include "client.h"   // Client class
+#include "client.h"   // client->members, MINCLIENTOPTSTRLEN
 #include "baseincs.h" // strlen() etc
 #include "cmpidefs.h" // strcmpi()
 #include "logstuff.h" // LogScreenRaw()
@@ -26,8 +26,8 @@ return "@(#)$Id: confmenu.cpp,v 1.46 1999/10/16 16:48:11 cyp Exp $"; }
 #include "lurk.h"     // lurk stuff
 #include "triggers.h" // CheckExitRequestTriggerNoIO()
 #include "confopt.h"  // the option table
-#include "confrwv.h"  // load configuration into client copy
 #include "confmenu.h" // ourselves
+
 //#define REVEAL_DISABLED /* this is for gregh :) */
 
 /* ----------------------------------------------------------------------- */
@@ -79,14 +79,11 @@ static int __enumcorenames(const char **corenames, int index, void * /*unused*/)
 int Configure( Client *client ) /* returns >0==success, <0==cancelled */
 {
   struct __userpass { 
-    char username[128]; 
-    char password[128]; 
+    char username[MINCLIENTOPTSTRLEN*2]; 
+    char password[MINCLIENTOPTSTRLEN*2]; 
   } userpass;
   unsigned int cont_i;
-  char loadorder[64];
-  char cputypelist[64];
-  char threshlist[64];
-  char blsizelist[64];
+  char loadorder[MINCLIENTOPTSTRLEN];
 
   // ---- Set all stuff that doesn't change during config ----   
   // note that some options rely on others, so watch the init order
@@ -95,42 +92,34 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
 
   if (strcmpi(client->id,"rc5@distributed.net") == 0)
     client->id[0] = 0; /*is later converted back to 'rc5@distributed.net' */
-  conf_options[CONF_ID].thevariable=(char *)(&(client->id[0]));
+  conf_options[CONF_ID].thevariable=&(client->id[0]);
   conf_options[CONF_COUNT].thevariable=&(client->blockcount);
   conf_options[CONF_HOURS].thevariable=&(client->minutes);
   conf_options[CONF_QUIETMODE].thevariable=&(client->quietmode);
   conf_options[CONF_NOEXITFILECHECK].thevariable=&(client->noexitfilecheck);
   conf_options[CONF_PERCENTOFF].thevariable=&(client->percentprintingoff);
-  conf_options[CONF_PAUSEFILE].thevariable=(char *)(&(client->pausefile[0]));
-  strcpy(loadorder, projectmap_expand( client->loadorder_map ) );
-  conf_options[CONF_CONTESTPRIORITY].thevariable=(char *)(&loadorder[0]);
+  conf_options[CONF_PAUSEFILE].thevariable=&(client->pausefile[0]);
+  conf_options[CONF_CONTESTPRIORITY].thevariable = 
+       strcpy(loadorder, projectmap_expand( client->loadorder_map ) );
 
   /* ------------------- CONF_MENU_BUFF ------------------ */  
 
-  strncpy(threshlist,utilGatherOptionArraysToList( 
-               &(client->inthreshold[0]), &(client->outthreshold[0])), 
-               sizeof(threshlist));
-  threshlist[sizeof(threshlist)-1] = '\0'; 
-  strncpy(blsizelist,utilGatherOptionArraysToList( 
-               &(client->preferred_blocksize[0]), NULL), sizeof(blsizelist));
-  blsizelist[sizeof(blsizelist)-1] = '\0'; 
-
   conf_options[CONF_NODISK].thevariable=&(client->nodiskbuffers);
-  conf_options[CONF_INBUFFERBASENAME].thevariable=(char *)(&(client->in_buffer_basename[0]));
-  conf_options[CONF_OUTBUFFERBASENAME].thevariable=(char *)(&(client->out_buffer_basename[0]));
-  conf_options[CONF_CHECKPOINT].thevariable=(char *)(&(client->checkpoint_file[0]));
+  conf_options[CONF_INBUFFERBASENAME].thevariable=&(client->in_buffer_basename[0]);
+  conf_options[CONF_OUTBUFFERBASENAME].thevariable=&(client->out_buffer_basename[0]);
+  conf_options[CONF_CHECKPOINT].thevariable=&(client->checkpoint_file[0]);
   conf_options[CONF_OFFLINEMODE].thevariable=&(client->offlinemode);
   conf_options[CONF_REMOTEUPDATEDISABLED].thevariable=&(client->noupdatefromfile);
-  conf_options[CONF_REMOTEUPDATEDIR].thevariable=(char *)(&(client->remote_update_dir[0]));
+  conf_options[CONF_REMOTEUPDATEDIR].thevariable=&(client->remote_update_dir[0]);
   conf_options[CONF_FREQUENT].thevariable=&(client->connectoften);
-  conf_options[CONF_PREFERREDBLOCKSIZE].thevariable=(char *)&(blsizelist[0]);
-  conf_options[CONF_THRESHOLDI].thevariable=(char *)&(threshlist[0]);
+  conf_options[CONF_PREFERREDBLOCKSIZE].thevariable=&(client->preferred_blocksize[0]);
+  conf_options[CONF_THRESHOLDI].thevariable=&(client->inthreshold[0]);
 
   /* ------------------- CONF_MENU_LOG  ------------------ */  
 
   static const char *logtypes[] = {"none","no limit","restart","fifo","rotate"};
   char logkblimit[sizeof(client->logfilelimit)], logrotlimit[sizeof(client->logfilelimit)];
-  s32 logtype = LOGFILETYPE_NOLIMIT;
+  int logtype = LOGFILETYPE_NOLIMIT;
   logkblimit[0] = logrotlimit[0] = '\0';
   
   if ( strcmp( client->logfiletype, "rotate" ) == 0)
@@ -151,23 +140,22 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   
   conf_options[CONF_LOGTYPE].thevariable=&logtype;
   conf_options[CONF_LOGTYPE].choicelist=&logtypes[0];
-  conf_options[CONF_LOGTYPE].choicemax=(s32)((sizeof(logtypes)/sizeof(logtypes[0]))-1);
-  conf_options[CONF_LOGNAME].thevariable=(char *)(&(client->logname[0]));
-  conf_options[CONF_LOGLIMIT].thevariable=(char *)(&logkblimit[0]);
+  conf_options[CONF_LOGTYPE].choicemax=(int)((sizeof(logtypes)/sizeof(logtypes[0]))-1);
+  conf_options[CONF_LOGNAME].thevariable=&(client->logname[0]);
+  conf_options[CONF_LOGLIMIT].thevariable=&logkblimit[0];
   conf_options[CONF_MESSAGELEN].thevariable=&(client->messagelen);
-  conf_options[CONF_SMTPSRVR].thevariable=(char *)(&(client->smtpsrvr[0]));
+  conf_options[CONF_SMTPSRVR].thevariable=&(client->smtpsrvr[0]);
   conf_options[CONF_SMTPPORT].thevariable=&(client->smtpport);
-  conf_options[CONF_SMTPFROM].thevariable=(char *)(&(client->smtpfrom[0]));
-  conf_options[CONF_SMTPDEST].thevariable=(char *)(&(client->smtpdest[0]));
+  conf_options[CONF_SMTPFROM].thevariable=&(client->smtpfrom[0]);
+  conf_options[CONF_SMTPDEST].thevariable=&(client->smtpdest[0]);
   conf_options[CONF_SMTPFROM].defaultsetting=(char *)conf_options[CONF_ID].thevariable;
   conf_options[CONF_SMTPDEST].defaultsetting=(char *)conf_options[CONF_ID].thevariable;
 
   /* ------------------- CONF_MENU_NET  ------------------ */  
 
   conf_options[CONF_NETTIMEOUT].thevariable=&(client->nettimeout);
-  s32 autofindks = ((client->autofindkeyserver)!=0);
-  conf_options[CONF_AUTOFINDKS].thevariable=&(autofindks);
-  conf_options[CONF_KEYSERVNAME].thevariable=(char *)(&(client->keyproxy[0]));
+  conf_options[CONF_AUTOFINDKS].thevariable=&(client->autofindkeyserver);
+  conf_options[CONF_KEYSERVNAME].thevariable=&(client->keyproxy[0]);
   conf_options[CONF_KEYSERVPORT].thevariable=&(client->keyport);
   conf_options[CONF_NOFALLBACK].thevariable=&(client->nofallback);
 
@@ -182,11 +170,11 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   #define FWALL_TYPE_HTTP      1
   #define FWALL_TYPE_SOCKS4    2
   #define FWALL_TYPE_SOCKS5    3
-  s32 fwall_type = FWALL_TYPE_NONE;
-  s32 use_http_regardless = (( client->uuehttpmode == UUEHTTPMODE_HTTP
+  int fwall_type = FWALL_TYPE_NONE;
+  int use_http_regardless = (( client->uuehttpmode == UUEHTTPMODE_HTTP
                             || client->uuehttpmode == UUEHTTPMODE_UUEHTTP)
                             && client->httpproxy[0] == '\0');
-  s32 use_uue_regardless =  (  client->uuehttpmode == UUEHTTPMODE_UUE 
+  int use_uue_regardless =  (  client->uuehttpmode == UUEHTTPMODE_UUE 
                             || client->uuehttpmode == UUEHTTPMODE_UUEHTTP);
   if (client->httpproxy[0])
   {                           
@@ -202,9 +190,9 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   conf_options[CONF_FORCEUUE].thevariable=&use_uue_regardless;
   conf_options[CONF_FWALLTYPE].thevariable=&fwall_type;
   conf_options[CONF_FWALLTYPE].choicelist=&fwall_types[0];
-  conf_options[CONF_FWALLTYPE].choicemax=(s32)((sizeof(fwall_types)/sizeof(fwall_types[0]))-1);
+  conf_options[CONF_FWALLTYPE].choicemax=(int)((sizeof(fwall_types)/sizeof(fwall_types[0]))-1);
   
-  conf_options[CONF_FWALLHOSTNAME].thevariable=(char *)(&(client->httpproxy[0]));
+  conf_options[CONF_FWALLHOSTNAME].thevariable=&(client->httpproxy[0]);
   conf_options[CONF_FWALLHOSTPORT].thevariable=&(client->httpport);
   userpass.username[0] = userpass.password[0] = 0;
   
@@ -237,8 +225,8 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
       strcpy( userpass.password, p );
     }
   }
-  conf_options[CONF_FWALLUSERNAME].thevariable = (char *)(&userpass.username[0]);
-  conf_options[CONF_FWALLPASSWORD].thevariable = (char *)(&userpass.password[0]);
+  conf_options[CONF_FWALLUSERNAME].thevariable = (&userpass.username[0]);
+  conf_options[CONF_FWALLPASSWORD].thevariable = (&userpass.password[0]);
 
   conf_options[CONF_LURKMODE].thevariable=
   conf_options[CONF_CONNIFACEMASK].thevariable=
@@ -249,8 +237,8 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
 
   #if defined(LURK)
   int dupcap = dialup.GetCapabilityFlags();
-  s32 lurkmode = dialup.lurkmode;
-  s32 dialwhenneeded = dialup.dialwhenneeded;
+  int lurkmode = dialup.lurkmode;
+  int dialwhenneeded = dialup.dialwhenneeded;
   char connifacemask[sizeof(dialup.connifacemask)];
   char connstartcmd[sizeof(dialup.connstartcmd)];
   char connstopcmd[sizeof(dialup.connstopcmd)];
@@ -289,7 +277,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
         if (maxconn > 1) /* the first option is "", ie default */
         {
           connectnames[0] = "<Use Control Panel Setting>";
-          conf_options[CONF_CONNPROFILE].choicemax = (s32)(maxconn-1);
+          conf_options[CONF_CONNPROFILE].choicemax = (int)(maxconn-1);
           conf_options[CONF_CONNPROFILE].choicelist = connectnames;
         }
       }
@@ -299,39 +287,9 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
 
   /* ------------------- CONF_MENU_PERF ------------------ */  
 
-
-  #if 0
-  conf_options[CONF_CPUTYPE].thevariable=NULL;
-  conf_options[CONF_CPUTYPE].choicemax=0;
-  conf_options[CONF_CPUTYPE].choicemin=0;
-  const char *corename = GetCoreNameFromCoreType(0);
-  if (corename && *corename)
-  {
-    static const char *cputypetable[10];
-    unsigned int tablesize = 2;
-    cputypetable[0]="Autodetect";
-    cputypetable[1]=corename;
-    do
-    {
-      corename = GetCoreNameFromCoreType(tablesize-1);
-      if (!corename || !*corename)
-        break;
-      cputypetable[tablesize++]=corename;
-    } while (tablesize<((sizeof(cputypetable)/sizeof(cputypetable[0]))));
-    conf_options[CONF_CPUTYPE].choicelist=&cputypetable[1];
-    conf_options[CONF_CPUTYPE].choicemin=-1;
-    conf_options[CONF_CPUTYPE].choicemax=tablesize-2;
-    conf_options[CONF_CPUTYPE].thevariable=&cputype;
-  }
-  #endif
-
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
      client->coretypes[cont_i] = selcoreValidateCoreIndex(cont_i,client->coretypes[cont_i]);
-  
-  strncpy(cputypelist,utilGatherOptionArraysToList( &(client->coretypes[0]), NULL),
-                     sizeof(cputypelist));
-  cputypelist[sizeof(cputypelist)-1] = '\0'; 
-  conf_options[CONF_CPUTYPE].thevariable = &cputypelist[0];
+  conf_options[CONF_CPUTYPE].thevariable = &(client->coretypes[0]);
   conf_options[CONF_NICENESS].thevariable = &(client->priority);
   conf_options[CONF_NUMCPU].thevariable = &(client->numcpu);
 
@@ -397,9 +355,9 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
     }
     else if (whichmenu == CONF_MENU_LOG)
     {
-      conf_options[CONF_LOGLIMIT].thevariable=(char *)(&logkblimit[0]);
+      conf_options[CONF_LOGLIMIT].thevariable=(&logkblimit[0]);
       if (logtype == LOGFILETYPE_ROTATE)
-        conf_options[CONF_LOGLIMIT].thevariable=(char *)(&logrotlimit[0]);
+        conf_options[CONF_LOGLIMIT].thevariable=(&logrotlimit[0]);
       conf_options[CONF_LOGNAME].disabledtext=
                   ((logtype != LOGFILETYPE_NONE) ? (NULL) : 
                   ("n/a [file log disabled]"));
@@ -452,7 +410,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
         }
       }     
       
-      if (autofindks)
+      if (client->autofindkeyserver)
       {
         conf_options[CONF_NOFALLBACK].disabledtext= "n/a"; //can't fallback to self
         conf_options[CONF_KEYSERVNAME].disabledtext = "n/a [autoselected]";
@@ -607,6 +565,15 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
                 if (!*descr)
                   descr = (char *)conf_options[menuoption].defaultsetting;
               }
+              else if (conf_options[menuoption].type==CONF_TYPE_IARRAY)
+              {
+                int *vectb = NULL;
+                if ( menuoption == CONF_THRESHOLDI )  // don't have a
+                  vectb = &(client->outthreshold[0]); // THRESHOLDO any more
+                utilGatherOptionArraysToList( parm, sizeof(parm),
+                    (int *)conf_options[menuoption].thevariable, vectb ); 
+                descr = parm;
+              }
               else if (conf_options[menuoption].type==CONF_TYPE_PASSWORD)
               {
                 int i = strlen((char *)conf_options[menuoption].thevariable);
@@ -616,33 +583,35 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
               }
               else if (conf_options[menuoption].type==CONF_TYPE_TIMESTR)
               {
-                long t = (long)*((s32 *)conf_options[menuoption].thevariable);
-                sprintf(parm, "%ld:%02u", (t/60), 
+                int t = *((int *)conf_options[menuoption].thevariable);
+                sprintf(parm, "%d:%02u", (t/60), 
                                (unsigned int)(((t<0)?(-t):(t))%60) );
                 descr = parm;
               }
               else if (conf_options[menuoption].type==CONF_TYPE_INT)
               {
-                long thevar = (long)*(s32 *)conf_options[menuoption].thevariable;
+                int thevar = *((int *)conf_options[menuoption].thevariable);
                 if ((conf_options[menuoption].choicelist != NULL) &&
-                     (thevar >= (long)(conf_options[menuoption].choicemin)) &&
-                     (thevar <= (long)(conf_options[menuoption].choicemax)) )
+                     (thevar >= conf_options[menuoption].choicemin) &&
+                     (thevar <= conf_options[menuoption].choicemax) )
                 {
                   descr = (char *)conf_options[menuoption].choicelist[thevar];
                 }
-                else if (thevar == (long)(atoi(conf_options[menuoption].defaultsetting)))
+                else if (thevar == atoi(conf_options[menuoption].defaultsetting))
                 {
                   descr = (char *)conf_options[menuoption].defaultsetting;
                 }
                 else
                 {
-                  sprintf(parm, "%li", thevar );
+                  sprintf(parm, "%d", thevar );
                   descr = parm;
                 }
               }
               else if (conf_options[menuoption].type == CONF_TYPE_BOOL)
               {
-                descr = (char *)(((*(s32 *)conf_options[menuoption].thevariable)?("yes"):("no")));
+                descr = "no";
+                if (*((int *)conf_options[menuoption].thevariable))
+                  descr = "yes";
               }
 
               if (descr)
@@ -718,7 +687,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
             {
               parentmenu = whichmenu;
               parentmenuname = menuname;
-              whichmenu = (int)conf_options[menuoption].choicemin;
+              whichmenu = conf_options[menuoption].choicemin;
               menuname = conf_options[menuoption].description;
               editthis = -2; //-1;
             }
@@ -758,20 +727,21 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
           LogScreenRaw("%s\n",p);
         }
 
-        if (editthis == CONF_CPUTYPE) /* ugh! */
-        {
-          selcoreEnumerateWide( __enumcorenames, NULL ); 
-          LogScreenRaw("\n");
-        }
 
         if ( conf_options[editthis].type == CONF_TYPE_ASCIIZ || 
              conf_options[editthis].type == CONF_TYPE_INT ||
-             conf_options[editthis].type == CONF_TYPE_PASSWORD )
+             conf_options[editthis].type == CONF_TYPE_PASSWORD ||
+             conf_options[editthis].type==CONF_TYPE_IARRAY )
         {
           p = "";
           char defaultbuff[30];
           int coninstrmode = CONINSTR_BYEXAMPLE;
           
+          if (editthis == CONF_CPUTYPE) /* ugh! */
+          {
+            selcoreEnumerateWide( __enumcorenames, NULL ); 
+            LogScreenRaw("\n");
+          }
           if (conf_options[editthis].choicelist !=NULL)
           {
             const char *ppp;
@@ -792,6 +762,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
                       conf_options[editthis].choicelist[listpos]);
             }
           }
+          
           if (conf_options[editthis].type==CONF_TYPE_PASSWORD)
           {
             int i = strlen((char *)conf_options[editthis].thevariable);
@@ -804,10 +775,19 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
             strcpy(parm, (char *)conf_options[editthis].thevariable);
             p = (char *)(conf_options[editthis].defaultsetting);
           }
+          else if (conf_options[editthis].type==CONF_TYPE_IARRAY)
+          {
+            int *vectb = NULL;
+            if ( editthis == CONF_THRESHOLDI )  // don't have a
+              vectb = &(client->outthreshold[0]); // THRESHOLDO any more
+            utilGatherOptionArraysToList( parm, sizeof(parm),
+                    (int *)conf_options[editthis].thevariable, vectb ); 
+            p = (char *)(conf_options[editthis].defaultsetting);
+          }
           else //if (conf_options[editthis].type==CONF_TYPE_INT)
           {
-            sprintf(parm, "%li", (long)*(s32 *)conf_options[editthis].thevariable);
-            sprintf(defaultbuff, "%li", atol(conf_options[editthis].defaultsetting));
+            sprintf(parm, "%d", *((int *)conf_options[editthis].thevariable) );
+            sprintf(defaultbuff, "%d", atoi(conf_options[editthis].defaultsetting));
             p = defaultbuff;
           }
           LogScreenRaw("Default Setting: %s\n"
@@ -841,12 +821,16 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
             if (newval_isok)
             {
               newval_d = atol(parm);
-              long selmin = conf_options[editthis].choicemin;
-              long selmax = conf_options[editthis].choicemax;
+              long selmin = (long)conf_options[editthis].choicemin;
+              long selmax = (long)conf_options[editthis].choicemax;
               if ((selmin != 0 || selmax != 0) && 
                 (newval_d < selmin || newval_d > selmax))
               newval_isok = 0;
             }
+          }
+          else if (conf_options[editthis].type == CONF_TYPE_IARRAY)
+          {
+            newval_isok = 1; /* never rejected */
           }
           else //if (conf_options[editthis].type==CONF_TYPE_ASCIIZ)
           {
@@ -866,9 +850,9 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
             if (parm[0] != 0 && conf_options[editthis].choicemax != 0 && 
                 conf_options[editthis].choicelist) /* int *and* asciiz */
             {
-              newval_d=atoi(parm);
+              newval_d = atol(parm);
               if ( ((newval_d > 0) || (parm[0] == '0')) &&
-                 (newval_d <= conf_options[editthis].choicemax) )
+                 (newval_d <= ((long)conf_options[editthis].choicemax)) )
               {
                 strncpy(parm, conf_options[editthis].choicelist[newval_d], sizeof(parm));
                 parm[sizeof(parm)-1]=0; 
@@ -880,8 +864,8 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
         }
         else if (conf_options[editthis].type == CONF_TYPE_TIMESTR)
         {
-          long t = (long)*((s32 *)conf_options[editthis].thevariable);
-          sprintf(parm,"%ld:%02u", (t/60), 
+          int t = *((int *)conf_options[editthis].thevariable);
+          sprintf(parm,"%d:%02u", (t/60), 
                            (unsigned int)(((t<0)?(-t):(t))%60) );
           LogScreenRaw("Default Setting: %s\n"
                        "Current Setting: %s\n"
@@ -949,7 +933,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
         }
         else if (conf_options[editthis].type==CONF_TYPE_BOOL)
         {
-          sprintf(parm, "%s", *(s32 *)conf_options[editthis].thevariable?"yes":"no");
+          strcpy(parm, (*((int *)conf_options[editthis].thevariable))?"yes":"no");
           LogScreenRaw("Default Setting: %s\n"
                        "Current Setting: %s\n"
                        "New Setting --> ",
@@ -1006,69 +990,53 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
         if (conf_options[editthis].type==CONF_TYPE_ASCIIZ ||
             conf_options[editthis].type==CONF_TYPE_PASSWORD)
         {
-          int newtypes[CONTEST_COUNT];
           strncpy( (char *)conf_options[editthis].thevariable, parm, 
-                   64 - 1 );
-          ((char *)conf_options[editthis].thevariable)[64-1]=0;
+                   MINCLIENTOPTSTRLEN );
+          ((char *)conf_options[editthis].thevariable)[MINCLIENTOPTSTRLEN-1]=0;
+        }
+        else if ( conf_options[editthis].type == CONF_TYPE_IARRAY)
+        {
+          int *vecta = (int *)conf_options[editthis].thevariable;
+          int *vectb = NULL;
+          unsigned int cont_i;
+          if ( editthis == CONF_THRESHOLDI )  // don't have a
+            vectb = &(client->outthreshold[0]); // THRESHOLDO any more
+          utilScatterOptionListToArraysEx(parm,vecta, vectb,NULL, NULL );
           if (editthis == CONF_CPUTYPE) 
-          { /* give immediate feedback */
-            utilScatterOptionListToArrays(cputypelist,&newtypes[0], NULL,-1);
-            for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-              newtypes[cont_i] = selcoreValidateCoreIndex(cont_i,newtypes[cont_i]);
-            strncpy(cputypelist,
-                    utilGatherOptionArraysToList(&newtypes[0],NULL),
-                    sizeof(cputypelist));
-            cputypelist[sizeof(cputypelist)-1] = '\0'; 
-          }
-          else if (editthis == CONF_PREFERREDBLOCKSIZE)
           {
-            int mmin = (int)conf_options[editthis].choicemin;
-            int mmax = (int)conf_options[editthis].choicemax;
-            utilScatterOptionListToArrays(blsizelist,&newtypes[0], NULL,31);
             for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-            {
-              if (newtypes[cont_i] < mmin)
-                newtypes[cont_i] = mmin;
-              else if (newtypes[cont_i] > mmax)
-                newtypes[cont_i] = mmax;
-            }
-            strncpy(blsizelist,
-                    utilGatherOptionArraysToList(&newtypes[0],NULL),
-                    sizeof(blsizelist));
-            blsizelist[sizeof(blsizelist)-1] = '\0'; 
+              vecta[cont_i] = selcoreValidateCoreIndex(cont_i,vecta[cont_i]);
           }
-          else if (editthis == CONF_THRESHOLDI)
+          else 
           {
-            int mmin = (int)conf_options[editthis].choicemin;
-            int mmax = (int)conf_options[editthis].choicemax;
-            int newtypesout[CONTEST_COUNT];
-            utilScatterOptionListToArrays(threshlist,&newtypes[0], &newtypesout[0],10);
-            for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+            int mmin = conf_options[editthis].choicemin;
+            int mmax = conf_options[editthis].choicemax;
+            if (mmin && mmax)
             {
-              if (newtypes[cont_i] < mmin)
-                newtypes[cont_i] = mmin;
-              else if (newtypes[cont_i] > mmax)
-                newtypes[cont_i] = mmax;
-              if (newtypesout[cont_i] < mmin)
-                newtypesout[cont_i] = mmin;
-              else if (newtypesout[cont_i] > mmax)
-                newtypesout[cont_i] = mmax;
+              for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+              {
+                if (vecta[cont_i] < mmin)
+                  vecta[cont_i] = mmin;
+                else if (vecta[cont_i] > mmax)
+                  vecta[cont_i] = mmax;
+                if (vectb)
+                {
+                  if (vectb[cont_i] < mmin)
+                    vectb[cont_i] = mmin;
+                  else if (vectb[cont_i] > mmax)
+                    vectb[cont_i] = mmax;
+                }
+              }
             }
-            strncpy(threshlist,
-                    utilGatherOptionArraysToList(&newtypes[0],&newtypesout[0]),
-                    sizeof(threshlist));
-            threshlist[sizeof(threshlist)-1] = '\0'; 
-          }
+          } 
         }
         else //bool or int types
         {
-          *(s32 *)conf_options[editthis].thevariable = (s32)newval_d;
+          *((int *)conf_options[editthis].thevariable) = (int)newval_d;
           if ( editthis == CONF_COUNT && newval_d < 0)
-            *(s32 *)conf_options[editthis].thevariable = -1;
-          //else if (editthis == CONF_THRESHOLDI)
-          //  inthreshold[0]=outthreshold[0]=inthreshold[1]=outthreshold[1]=newval_d;
+            *((int *)conf_options[editthis].thevariable) = -1;
           else if (editthis == CONF_NETTIMEOUT)
-            *(s32 *)conf_options[editthis].thevariable = ((newval_d<0)?(-1):((newval_d<5)?(5):(newval_d)));
+            *((int *)conf_options[editthis].thevariable) = ((newval_d<0)?(-1):((newval_d<5)?(5):(newval_d)));
         }
       } /* if (editthis >= 0 && newval_isok) */
       editthis = -1; /* no longer an editable option */
@@ -1088,7 +1056,7 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
     //if (client->id[0] == 0)
     //  strcpy(client->id, "rc5@distributed.net");
 
-    if (logtype >=0 && logtype < (s32)(sizeof(logtypes)/sizeof(logtypes[0])))
+    if (logtype >=0 && logtype < (int)(sizeof(logtypes)/sizeof(logtypes[0])))
     {
       if (logtype == LOGFILETYPE_ROTATE)
         strcpy( client->logfilelimit, logrotlimit );
@@ -1100,12 +1068,6 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
       }
       strcpy( client->logfiletype, logtypes[logtype] );
     }
-
-    client->autofindkeyserver = (autofindks!=0);
-
-    utilScatterOptionListToArrays(cputypelist,&(client->coretypes[0]), NULL, -1 );
-    utilScatterOptionListToArrays(blsizelist,&(client->preferred_blocksize[0]), NULL, 31);
-    utilScatterOptionListToArrays(threshlist,&(client->inthreshold[0]), &(client->outthreshold[0]),10);
 
     if (client->nettimeout < 0)
       client->nettimeout = -1;

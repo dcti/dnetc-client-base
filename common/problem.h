@@ -3,10 +3,12 @@
  * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * ** header is included from cores, so guard against c++ constructs **
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.67 1999/10/16 16:48:12 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.68 1999/10/17 23:05:44 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -50,11 +52,13 @@ typedef union
     u64 iterations;       // iterations to do
   } crypto;
   struct {
-    WorkStub workstub;    // stub to work on (28 bytes)
+    struct WorkStub workstub; // stub to work on (28 bytes)
     u64 nodes;            // nodes completed
     char unused[12];
   } ogr;
 } ContestWork;
+
+#ifdef __cplusplus
 
 class Problem
 {
@@ -154,6 +158,8 @@ public: /* anything public must be thread safe */
 #endif
 
 };
+
+#endif /* __cplusplus */
 
 #endif /* __PROBLEM_H__ */
 

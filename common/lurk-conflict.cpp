@@ -18,7 +18,7 @@
 //#define TRACE
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk-conflict.cpp,v 1.49 1999/10/11 17:06:27 cyp Exp $"; }
+return "@(#)$Id: lurk-conflict.cpp,v 1.50 1999/10/17 23:05:44 cyp Exp $"; }
 
 /* ---------------------------------------------------------- */
 #include <stdio.h>
@@ -483,7 +483,8 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
     return 1;
 
 #elif (CLIENT_OS == OS_WIN32)
-  if ((GetCapabilityFlags() & CONNECT_IFACEMASK)!=0) /* have working WS2_32 */
+  if ((GetCapabilityFlags() & CONNECT_IFACEMASK)!=0 /* have working WS2_32 */
+   && (!mask_default_only || (GetCapabilityFlags() & CONNECT_DODBYPROFILE)==0))
   {
     #if !defined(_MSC_VER) || defined(_M_ALPHA) //some msvcs can't cast for shit
     TRACE_OUT((+1,"ioctl IsConnected()\n"));
