@@ -17,10 +17,10 @@
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.1.2.5 2000/11/09 12:30:42 cyp Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.1.2.6 2000/11/09 22:56:01 cyp Exp $"; }
 
-#define TRACE
-#define DUMP_PACKET
+//#define TRACE
+//#define DUMP_PACKET
 
 #include "cputypes.h"
 #include "baseincs.h"  // standard stuff
