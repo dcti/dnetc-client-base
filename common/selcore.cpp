@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.70 2000/06/28 15:21:32 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.71 2000/07/03 22:41:56 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -226,6 +226,16 @@ static const char **__corenames_for_contest( unsigned int cont_i )
         //corenames_table[OGR][2] = NULL;
       }
     }
+    #elif (CLIENT_CPU == CPU_68K) && (CLIENT_OS == OS_AMIGAOS)
+      long det = GetProcessorType(1);
+      /* only make available ogr cores <= current cpu */
+      switch (det)
+      {
+        case 68000: corenames_table[OGR][1] = NULL;
+        case 68020: corenames_table[OGR][2] = NULL;
+        case 68030: corenames_table[OGR][3] = NULL;
+        case 68040: corenames_table[OGR][4] = NULL;
+      }
     #endif
     fixed_up = 1;  
   }
