@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.9 1999/10/18 02:52:18 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.10 1999/11/14 18:59:52 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -90,8 +90,8 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
 //8
 { CFGTXT("Project Priority"), "DES,CSC,OGR,RC5",
   CFGTXT(
-  "Enter the order in which the client will search for work, for instance\n"
-  "the oder \"OGR,RC5\" specifies that OGR work (if available) will be\n"
+  "Enter the order in which the client will load work, for instance\n"
+  "the order \"OGR,RC5\" specifies that OGR work (if available) will be\n"
   "crunched before RC5 work.\n"
   "To disable a project, append \":0\" (or \"=0\") to project's name. For\n"
   "example, \"DES,OGR=0,RC5\" will disable the client's OGR support.\n"
