@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.56.2.2 2003/01/19 22:49:50 snake Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.56.2.3 2003/04/26 15:16:48 pfeffi Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -719,6 +719,9 @@ int CliGetMonotonicClock( struct timeval *tv )
     }
     #elif (CLIENT_OS == OS_DYNIX)
     // This is bad, but I at a loss to find something better.
+    return __GetTimeOfDay( tv );
+    #elif (CLIENT_OS == OS_SCO)
+    // @TODO: fix this
     return __GetTimeOfDay( tv );
     #else
     // this is a bad thing because time-of-day is user modifiable.

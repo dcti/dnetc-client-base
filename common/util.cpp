@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.29.2.5 2003/04/22 11:44:51 andreasb Exp $"; }
+return "@(#)$Id: util.cpp,v 1.29.2.6 2003/04/26 15:16:48 pfeffi Exp $"; }
 
 //#define TRACE
 
@@ -1121,6 +1121,8 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           #else
           pscmd = "ps -A -F\"%p %c\" 2>/dev/null";
           #endif
+        #elif (CLIENT_OS == OS_SCO)
+          pscmd = "/bin/ps -A -o pid,comm 2>/dev/null";
         #else
         #error fixme: select an appropriate ps syntax (or use another method to get pidlist)
         #error "this part is only needed for OSs that do not have another way"

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.12 2003/04/03 21:18:31 oliver Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.13 2003/04/26 15:16:48 pfeffi Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -510,6 +510,8 @@ int main( int argc, char *argv[] )
     pstat(PSTAT_SETCMD,pst,strlen(defname),0,0);
   }
   #elif (CLIENT_OS == OS_SCO)                        //SPT_TYPE == SPT_SCO
+  #include <sys/user.h>                      // PSARGSZ
+  #include <sys/immu.h>                      // UVUBLK
   if (needchange)
   {
     #ifndef _PATH_KMEM /* should have been defined in <paths.h> */

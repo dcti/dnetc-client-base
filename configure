@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.80 2003/04/21 20:55:04 pfeffi Exp $
+# @(#)$Id: configure,v 1.288.2.81 2003/04/26 15:16:48 pfeffi Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2313,11 +2313,23 @@ case "$1" in
         TARGET_AS="g++ -c"
         TARGET_CC="g++"
         generate_gcc_opts "x86" "sco"
-        # TARGET_CCFLAGS="$OPTS_GCC -belf -Dsco5" # -belf doesn't work
         TARGET_CCFLAGS="$OPTS_GCC -Dsco5"
         TARGET_LDFLAGS="-static"
-        TARGET_TARBALL="sco5-x86"
+        TARGET_TARBALL="sco5-x86-elf"
         TARGET_LIBS="-lsocket"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        add_sources "sco" "x86"
+        ;;
+
+    *x86-sco5-coff)			# SCO OpenServer 5.0.x pfeffi
+        TARGET_AS="g++ -c"
+        TARGET_CC="g++"
+        generate_gcc_opts "x86" "sco"
+        TARGET_CCFLAGS="$OPTS_GCC -mcoff -Dsco5"
+        TARGET_LDFLAGS=""
+        TARGET_TARBALL="sco5-x86-coff"
+        TARGET_LIBS="-lsocket"
+        TARGET_NASM_FMT="coff"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "sco" "x86"
         ;;

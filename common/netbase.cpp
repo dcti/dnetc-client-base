@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.5.2.5 2003/04/03 21:24:12 oliver Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.5.2.6 2003/04/26 15:16:48 pfeffi Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -3132,6 +3132,10 @@ int net_gethostname(char *buffer, unsigned int len)
 int net_resolve( const char *hostname, u32 *addr_list, unsigned int *max_addrs)
 {
   int rc;
+#if (CLIENT_OS == OS_SCO)
+  /* SCO Openserver < 5.0.5 is missing h_errno in netdb.h */
+  extern int h_errno;
+#endif
 
   TRACE_NETDB((+1,"net_resolve('%s', ...)\n", ((hostname)?(hostname):("(null)")) ));
 

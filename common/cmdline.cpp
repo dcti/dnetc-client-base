@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.160.2.6 2003/02/20 00:07:19 mfeiri Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.160.2.7 2003/04/26 15:16:48 pfeffi Exp $"; }
 
 //#define TRACE
 
@@ -446,6 +446,8 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
             #else
             pscmd = "ps -A -F\"%p %c\" 2>/dev/null";
             #endif
+          #elif (CLIENT_OS == OS_SCO)
+             pscmd = "/bin/ps -A -o pid,comm 2>/dev/null";
           #else
           #error fixme: select an appropriate ps syntax
           #endif

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.6 2003/02/24 23:09:49 snake Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.7 2003/04/26 15:16:48 pfeffi Exp $"
 
 #include "cputypes.h"
 
@@ -100,6 +100,7 @@
     #include "multinet_root:[multinet.include.netinet]in.h"
   #endif
 #elif (CLIENT_OS == OS_SCO)
+  #include <unistd.h>
   #include <fcntl.h>
   #include <sys/time.h>
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
