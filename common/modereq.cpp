@@ -8,6 +8,9 @@
 */    
 //
 // $Log: modereq.cpp,v $
+// Revision 1.19  1999/01/15 20:21:59  michmarc
+// Fix the fact that Benchmark() in bench.cpp changed its prototype
+//
 // Revision 1.18  1999/01/08 10:05:42  chrisb
 // Added 'threadindex' parameter (defaults to -1L, as with Problem::Problem) to SelfTest(). Allows RISC OS to self test the x86 core.
 //
@@ -71,7 +74,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.18 1999/01/08 10:05:42 chrisb Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.19 1999/01/15 20:21:59 michmarc Exp $"; }
 #endif
 
 #include "client.h"   //client class
@@ -187,9 +190,9 @@ int ModeReqRun(Client *client)
           if ((bits & (MODEREQ_BENCHMARK_QUICK))!=0)
             benchsize = (1L<<20); /* short bench: 1048576 instead of 10000000 */
           if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_RC5)!=0) 
-            Benchmark( 0, benchsize, client->cputype );
+            Benchmark( 0, benchsize, client->cputype, NULL );
           if ( !CheckExitRequestTriggerNoIO() && (bits&MODEREQ_BENCHMARK_DES)!=0) 
-            Benchmark( 1, benchsize, client->cputype );
+            Benchmark( 1, benchsize, client->cputype, NULL );
           }
         retval |= (modereq.reqbits & (MODEREQ_BENCHMARK_DES | 
                  MODEREQ_BENCHMARK_RC5 | MODEREQ_BENCHMARK_QUICK ));

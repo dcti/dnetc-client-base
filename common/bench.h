@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: bench.h,v $
+// Revision 1.4  1999/01/15 20:21:59  michmarc
+// Fix the fact that Benchmark() in bench.cpp changed its prototype
+//
 // Revision 1.3  1999/01/01 02:45:14  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -22,6 +25,6 @@
 #define __BENCHMARK_H__
 
 /* returns keys/sec or 0 if break */
-u32 Benchmark( unsigned int contest, u32 numkeys, int cputype );
+u32 Benchmark( unsigned int contest, u32 numkeys, int cputype, int *numblocks );
 
 #endif /* __BENCHMARK_H__ */
