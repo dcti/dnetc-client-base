@@ -415,6 +415,10 @@ mode.)
         it will NOT trigger auto-dial, and will instead work
         on random blocks until a connection is detected.
 
+    Please note that lurk mode does *not* work with America Online
+    for Windows or the injoy dialer for OS/2 at this time. Support is
+    being worked on, and should appear in future versions.
+
 
 Distributed.Net RC5/DES Client build vX.XXXX.XXX config menu
 Performance Options
