@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.2 2002/12/10 16:04:50 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.3 2002/12/11 21:15:32 jt Exp $"; }
 
 //#define TRACE
 
@@ -1232,6 +1232,12 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     selcorestatics.corenum[RC5] = selcorestatics.user_cputype[RC5];
     if (selcorestatics.corenum[RC5] < 0)
       selcorestatics.corenum[RC5] = 1; // now we use mips-cruch.cpp
+  }
+  else if (contestid == RC5_72)
+  {
+    selcorestatics.corenum[RC5_72] = selcorestatics.user_cputype[RC5_72];
+    if (selcorestatics.corenum[RC5_72] < 0)
+      selcorestatics.corenum[RC5_72] = 1; // now we use ansi-2pipe
   }
   #endif
 
