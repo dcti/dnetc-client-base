@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.69 2004/08/28 20:19:11 oliver Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.70 2004/09/05 11:29:35 piru Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -472,7 +472,7 @@ static long __GetRawProcessorID(const char **cpuname)
 
   /* note: "PowerPC" will be prepended to the name
   ** note: always use PVR IDs :
-  ** http://e-www.motorola.com/files/archives/doc/support_info/PPCPVR.pdf 
+  ** http://www.freescale.com/files/archives/doc/support_info/PPCPVR.pdf
   */
   struct { long rid;
            const char *name; }
