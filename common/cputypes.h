@@ -1,12 +1,12 @@
-/* Hey, Emacs, this a -*-C++-*- file !
- *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
- * For use in distributed.net projects only.
- * Any other distribution or use of this source violates copyright.
-*/ 
+// Hey, Emacs, this a -*-C++-*- file !
+//
+// Copyright distributed.net 1997-1999 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+// 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.61 1999/04/11 15:37:31 sampo Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62 1999/04/13 12:41:25 jlawson Exp $"
 
 /* ----------------------------------------------------------------- */
 

@@ -11,7 +11,7 @@
 // ----------------------------------------------------------------
 
 #ifndef __RANDOM_H__
-#define __RANDOM_H__
+#define __RANDOM_H__ "@(#)$Id: random.h,v 1.7 1999/04/13 12:41:25 jlawson Exp $"
 
 u32  Random( const u32 * u32data, unsigned int u32count );
   // count = # of u32s of data...
