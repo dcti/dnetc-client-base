@@ -1,10 +1,11 @@
 // Hey, Emacs, this a -*-C++-*- file !
 // 
 // $Log: cmpidefs.h,v $
+// Revision 1.2  1998/06/26 10:02:49  cyruspatel
+// Fixed cmpidefs.h to be platform-centric instead of compiler-centric.
+//
 // Revision 1.1  1998/06/26 07:11:55  daa
-// move marco defs for strcmpi and strncmpi to a seperate header file
-//
-//
+// move macro defs for strcmpi and strncmpi to a seperate header file
 // 
 
 /*
@@ -15,17 +16,30 @@
   Copyright 1998 Distributed Computing Technologies Inc. 
 */
 
-#if defined(__TURBOC__) || defined(__QNX__)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) 
+  #if defined(__TURBOC__)
   // Borland already knows strcmpi
   // Borland already knows strncmpi
-#elif defined(_MSC_VER)
-  #define strcmpi(x,y)  _stricmp(x,y)
-  #define strncmpi(x,y.n)  _strnicmp(x,y,n)
-#elif defined(__WATCOMC__)
+  #elif defined(_MSC_VER)
+    #define strcmpi(x,y)  _stricmp(x,y)
+    #define strncmpi(x,y,n)  _strnicmp(x,y,n)
+  #elif defined(__WATCOMC__)
+    // watcom knows both
+  #else
+    //nada. Let the compiler generate the error if needed
+  #endif
+#elif (CLIENT_OS == OS_DOS) && defined(__WATCOMC__)
+  // watcom knows both
+#elif (CLIENT_OS == OS_NETWARE)
   #define strcmpi(x,y)  stricmp(x,y)
-  #define strncmpi(x,y.n)  strnicmp(x,y,n)
+  #define strncmpi(x,y,n)  strnicmp(x,y,n)
+  // SDK knows strcmpi but not strncmpi
+#elif (CLIENT_OS == OS_QNX)  
+  // already knows strcmpi
+  // already knows strncmpi
 #elif (CLIENT_OS == OS_VMS)
-  // strcmpi() has no equivalent in DEC C++ 5.0  (not true if based on MS C)  #define NO_STRCASECMP
+  // strcmpi() has no equivalent in DEC C++ 5.0  (not true if based 
+  // on MS C)  #define NO_STRCASECMP
   #define NO_STRCASECMP
   #define strcmpi(x,y)  strcasecmp(x,y)
   #define strncmpi(x,y,n)  strncasecmp(x,y,n)
