@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.20.2.8  1999/01/23 14:14:34  remi
+// Synced with :
+//
+//  Revision 1.28  1999/01/21 05:02:42  pct
+//  Minor updates for Digital Unix clients.
+//
 // Revision 1.20.2.7  1999/01/17 12:46:21  remi
 // Synced with :
 //
@@ -46,7 +52,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.20.2.7 1999/01/17 12:46:21 remi Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.20.2.8 1999/01/23 14:14:34 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -431,9 +437,11 @@ int Client::SelectCore(int quietly)
     LogScreen("Detected a %s type Alpha.\n",GetCoreNameFromCoreType(cputype));
     tmpcputype = cputype;
     GET_CPU_FAMILY(&tmpcputype);
+    #ifdef ALPHA_EV5_CORE
     if (tmpcputype != EV5_CPU)
 	LogScreen("Warning:  This client is optimised for the EV5 family.\n"
 		"There may be a faster client than this for your machine.\n");
+    #endif
   }
 #else
   cputype = 0;
