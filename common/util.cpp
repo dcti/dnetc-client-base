@@ -5,7 +5,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.37 2000/09/17 11:46:34 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.38 2000/10/13 21:50:23 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -19,6 +19,41 @@ return "@(#)$Id: util.cpp,v 1.11.2.37 2000/09/17 11:46:34 cyp Exp $"; }
 #define MAX_CONTEST_NAME_LEN 3
 
 /* ------------------------------------------------------------------- */
+
+static char __trace_tracing_filename[10] = {0};
+void trace_setsrc( const char *filename )
+{ 
+  unsigned int i;
+  register const char *q = (const char *)0;
+  register const char *p = "";
+  if (filename)
+  {
+    p = &filename[strlen(filename)];
+    while (p > filename)
+    {
+      --p;
+      #if (CLIENT_OS == OS_RISCOS)
+      if (*p == '.')
+      #else
+      if (*p == ':' || *p == '/' || *p == '\\')
+      #endif
+      {
+        p++;
+        break;
+      }
+      if (*p == '.')
+        q = p;      
+    }
+  }      
+  strncpy(__trace_tracing_filename,p,sizeof(__trace_tracing_filename));
+  i = ((q)?(q-p):(sizeof(__trace_tracing_filename)-1));
+  __trace_tracing_filename[i] = '\0';
+  i = strlen(__trace_tracing_filename);
+  while (i < (sizeof(__trace_tracing_filename)-1))
+    __trace_tracing_filename[i++] = ' ';
+  __trace_tracing_filename[sizeof(__trace_tracing_filename)-1] = '\0';
+  return;
+}  
 
 void trace_out( int indlevel, const char *format, ... )
 {
@@ -42,7 +77,8 @@ void trace_out( int indlevel, const char *format, ... )
     char buffer[64];
     time_t t = time(NULL);
     struct tm *lt = localtime( &t );
-    fprintf(file, "%02d:%02d:%02d: ", lt->tm_hour, lt->tm_min, lt->tm_sec);
+    fprintf(file, "%02d:%02d:%02d: %s", lt->tm_hour, lt->tm_min, lt->tm_sec,
+                  __trace_tracing_filename);
     if (indentlevel > 0)
     {
       size_t spcs = ((size_t)indentlevel);

@@ -12,11 +12,12 @@
  * ----------------------------------------------------------------
 */ 
 #ifndef __UTIL_H__ 
-#define __UTIL_H__ "@(#)$Id: util.h,v 1.6.2.9 2000/09/17 11:46:35 cyp Exp $"
+#define __UTIL_H__ "@(#)$Id: util.h,v 1.6.2.10 2000/10/13 21:50:23 cyp Exp $"
 
 void trace_out( int indlevel, const char *fmt, ... );
+void trace_setsrc( const char *src_filename );
 #ifdef TRACE
-#define TRACE_OUT(x) trace_out x
+#define TRACE_OUT(x) trace_setsrc(__FILE__); trace_out x
 #else
 #define TRACE_OUT(x) 
 #endif
