@@ -5,6 +5,11 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.109  1998/10/30 00:09:48  foxyloxy
+#
+# Start SGI clean up so it (make rc5des) will work on machines
+# other than my wacky Origin.
+#
 # Revision 1.108  1998/10/19 07:04:46  dbaker
 # freebsd elf target
 #
@@ -400,7 +405,6 @@ OPTS_GCC_SUN68K="$OPTS_GCC -O2 -DASM_68K -D_SUN68K_"
 
 #--
 
-#-mips1 -OPT:fold_arith_limit=2000 -OPT:Olimit=2396 -OPT:unroll_analysis=ON
 OPTS_CC_MIPS='-O2 -xansi -DASM_MIPS -Icommon -Ides -Irc5'
 OPTS_GCC_MIPS="$OPTS_GCC -O6 -DASM_MIPS"
 
@@ -548,8 +552,8 @@ case "$1" in
     *mips-cc-64)             # For 64bit MIPS processors
 	#  mips-crunch.cpp doesn't yet compile with CC
 	RC5CORECOPY="rc5/rc5ansi2-rg2.cpp"
-	TARGET_CC="/usr/lib64/cmplrs/CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -O3 -static -r10000 -64 -mips4 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -O3 -static -r5000 -IPA -64 -mips4 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
 	TARGET_LDFLAGS="-static -64 -IPA -mips4"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	;;
