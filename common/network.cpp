@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.29 2000/03/09 10:50:42 jlawson Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.30 2000/03/20 14:27:55 jbaker Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -27,6 +27,11 @@ return "@(#)$Id: network.cpp,v 1.97.2.29 2000/03/09 10:50:42 jlawson Exp $"; }
 
 #if (CLIENT_OS == OS_DOS)
 #define ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG
+#endif
+
+#if (CLIENT_OS == OS_QNX)
+  #undef offsetof
+  #define offsetof(__typ,__id) ((size_t)&(((__typ*)0)->__id))
 #endif
 
 extern int NetCheckIsOK(void); // used before doing i/o
@@ -2185,6 +2190,8 @@ int Network::LowLevelSetSocketOption( int cond_type, int parm )
         || (CLIENT_OS == OS_NETBSD)
       #define SOCKLEN_T socklen_t
       #elif ((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION > 199701))
+      #define SOCKLEN_T size_t
+      #elif ((CLIENT_OS == OS_NTO2) || (CLIENT_OS == OS_QNX))
       #define SOCKLEN_T size_t
       #else
       #define SOCKLEN_T int

@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.143 2000/03/14 22:57:01 mfeiri Exp $
+# @(#)$Id: configure,v 1.222.2.144 2000/03/20 14:27:52 jbaker Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1342,14 +1342,29 @@ case "$1" in
 
     *x86-qnx4)
 	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $KWAN_SLICE_SRCS4"
-	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S \
-	                des/brydgnu/p1bdespro.S"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_CCFLAGS="$OPTS_GCC272_X86 -DMMX_RC5 \
+			-DHAVE_OGR_CORES"
+  	TARGET_NASM="/home/jbaker/nasm.qnx4"
+	TARGET_LIBS="-lsocket"
+        TARGET_ADDSRCS="$OGR_ANSI_SRCS"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+	TARGET_ADDASMS="platforms/x86ident.S"
+	TARGET_DOCFILES="docs/readme._ix"
+	TARGET_TARBALL="qnx4-x86"
+    ;;
+    *x86-nto2)
+	TARGET_AS="g++ -c -DNO_BALIGN"
+	TARGET_NASM="//55/home/jbaker/nasm.nto2"
+	TARGET_NASM_FMT="elf"
+	TARGET_CCFLAGS="$OPTS_GCC295_X86 -DMMX_RC5 -DHAVE_OGR_CORES \
+			-DMULTITHREAD"
+	TARGET_LIBS="-lsocket"
+	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
+	TARGET_ADDASMS="platforms/x86ident.S"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+        TARGET_DOCFILES="docs/readme._ix"
+	TARGET_TARBALL="nto2-x86-elf"
 	;;
-
 ####### Intel X86 SCO5
 
     *x86-sco5)

@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.34 2000/03/14 23:11:24 mfeiri Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.35 2000/03/20 14:27:54 jbaker Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -36,7 +36,8 @@ return "@(#)$Id: console.cpp,v 1.48.2.34 2000/03/14 23:11:24 mfeiri Exp $"; }
   || (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
   || (CLIENT_OS==OS_FREEBSD) || ((CLIENT_OS==OS_OS2) && defined(__EMX__)) \
   || (CLIENT_OS==OS_AIX) || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==BSDOS) \
-  || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_HPUX) || (CLIENT_OS==OS_SUNOS) )
+  || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_HPUX) || (CLIENT_OS==OS_SUNOS) \
+  || (CLIENT_OS==OS_NTO2) )
 #include <termios.h>
 #define TERMIOS_IS_AVAILABLE
 #endif
@@ -326,7 +327,11 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         #if (CLIENT_OS == OS_BEOS)
         newios.c_lflag &= ~(ECHO|ECHONL);  /* BeOS does not have (non-Posix?) ECHOPRT and ECHOCTL */
         #else
+        #if (CLIENT_OS == OS_NTO2)
+        newios.c_lflag &= ~(ECHO|ECHONL|ECHOCTL);
+        #else
         newios.c_lflag &= ~(ECHO|ECHONL|ECHOPRT|ECHOCTL); /* no echo at all */
+        #endif
         #endif
         newios.c_lflag &= ~(ICANON);     /* not linemode and no translation */
         newios.c_cc[VTIME] = 0;          /* tsecs inter-char gap */
@@ -668,6 +673,8 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
       width   = winsz.ts_cols;
       height  = winsz.ts_lines;
     }
+  #elif (CLIENT_OS == OS_NTO2)
+    tcgetsize(fileno(stdout), &height, &width);
   #elif defined(TIOCGWINSZ)
     #error please add support for TIOCGWINSZ to avoid the following stuff
   #else

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.28 2000/03/09 11:42:06 jlawson Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.29 2000/03/20 14:27:53 jbaker Exp $"
 
 #include "cputypes.h"
 
@@ -231,7 +231,14 @@ extern "C" {
 #elif (CLIENT_OS == OS_QNX)
   #include <sys/time.h>
   #include <sys/select.h>
-  #define strncmpi strncasecmp
+  #include <process.h>
+  #include <env.h>
+#elif (CLIENT_OS == OS_NTO2)
+  #include <sys/time.h>
+  #include <strings.h>
+  #include <unistd.h>
+  #include <sched.h>
+  #include <sys/syspage.h>
 #elif (CLIENT_OS == OS_DYNIX)
   #include <unistd.h> // sleep(3c)
   struct timezone { int tz_minuteswest, tz_dsttime; };

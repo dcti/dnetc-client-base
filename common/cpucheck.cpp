@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.37 2000/01/28 07:40:02 mfeiri Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.38 2000/03/20 14:27:54 jbaker Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -178,6 +178,10 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     #elif (CLIENT_OS == OS_RISCOS)
     {
       cpucount = riscos_count_cpus();
+    }
+    #elif (CLIENT_OS == OS_NTO2)
+    {
+      cpucount = _syspage_ptr->num_cpu;
     }
     #elif (CLIENT_OS == OS_MACOS)
     {

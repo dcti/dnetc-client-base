@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.48 2000/03/18 00:30:17 andreasb Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.49 2000/03/20 14:27:53 jbaker Exp $"; }
 
 //#define TRACE
 
@@ -326,6 +326,10 @@ int ParseCommandline( Client *client,
           pscmd = "/usr/bin/ps -e |awk '{print$1\" \"$4\" \"$5\" \"$6\" \"$7\" \"$8\" \"$9}' 2>/dev/null";
           #elif (CLIENT_OS == OS_BEOS)
           pscmd = "/bin/ps | /bin/egrep zzz | /bin/egrep -v crunch 2>/dev/null";  /* get the (sleeping) main thread ID, not the team ID */
+          #elif (CLIENT_OS == OS_QNX)
+          pscmd = "ps -A -F"%p %c" 2>/dev/null";
+	  #elif (CLIENT_OS == OS_NTO2)
+          pscmd = "ps -A -o pid,comm 2>/dev/null";
           #else
           #error fixme: select an appropriate ps syntax
           #endif

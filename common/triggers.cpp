@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.30 2000/03/11 20:53:01 andreasb Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.31 2000/03/20 14:27:56 jbaker Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -550,8 +550,10 @@ static void __init_signal_handlers( int doingmodes )
     // porters : those calls are POSIX.1, 
     // - on BSD you might need to change setpgid(0,0) to setpgrp()
     // - on SYSV you might need to change getpgrp() to getpgid(0)
+  #if (CLIENT_OS != OS_NTO2)
     if( getpgrp() != getpid() )
       setpgid( 0, 0 );
+  #endif
     #endif
     SETSIGNAL( TRIGGER_PAUSE_SIGNAL, CliSignalHandler );  //pause
     SETSIGNAL( TRIGGER_UNPAUSE_SIGNAL, CliSignalHandler );  //continue

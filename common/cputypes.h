@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.27 2000/03/06 20:21:45 patrick Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.28 2000/03/20 14:27:55 jbaker Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -56,7 +56,7 @@
 #define OS_NEXTSTEP     19
 #define OS_SCO          20
 #define OS_QNX          21
-/* #define OS_UNUSED_3  22 */ /* never used. was osf1 (oldname for DEC UNIX)*/
+#define OS_NTO2		22
 /* #define OS_UNUSED_4  23 */ /* never used. was minix */
 /* #define OS_UNUSED_5  24 */ /* never used. was mach10 */
 #define OS_AIX          25
@@ -192,8 +192,13 @@
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
-  #define CLIENT_OS_NAME  "QNX"
-  #define CLIENT_OS       OS_QNX
+  #if defined(__QNXNTO__)
+    #define CLIENT_OS_NAME "Neutrino"
+    #define CLIENT_OS	    OS_NTO2
+  #else
+    #define CLIENT_OS_NAME  "QNX"
+    #define CLIENT_OS       OS_QNX
+  #endif
   #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU    CPU_X86
   #endif

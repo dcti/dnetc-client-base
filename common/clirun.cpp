@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.46 2000/03/18 00:29:43 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.47 2000/03/20 14:27:53 jbaker Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -182,6 +182,8 @@ static void __thread_yield__(void)
    #endif
   #elif (CLIENT_OS == OS_NEXTSTEP)
     NonPolledUSleep(0);
+  #elif (CLIENT_OS == OS_NTO2)
+    sched_yield();
   #else
     #error where is your yield function?
     NonPolledUSleep( 0 ); /* yield */

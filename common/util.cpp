@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.23 2000/03/10 03:04:50 jlawson Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.24 2000/03/20 14:27:56 jbaker Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -1385,6 +1385,8 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
         #elif (CLIENT_OS == OS_IRIX) || (CLIENT_OS == OS_HPUX)
         pscmd = "/usr/bin/ps -e |awk '{print$1\" \"$4\" \"$5\" \"$6\" \"$7\" \"$8\" \"$9}' 2>/dev/null";
+        #elif (CLIENT_OS == OS_NTO2)
+        pscmd = "ps -A -o pid,comm 2>/dev/null";
         #else
         #error fixme: select an appropriate ps syntax (or use another method to get pidlist)
         #error "this part is only needed for OSs that do not have another way"
