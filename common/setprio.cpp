@@ -11,10 +11,11 @@
 */
 //
 // $Log: setprio.cpp,v $
-// Revision 1.33  1998/10/31 17:34:51  cyp
-// more win32 priority adjustment.
+// Revision 1.34  1998/11/02 04:32:07  cyp
+// win32 main-thread priority is adjusted downwards too if running non-threaded.
 //
 // Revision 1.32  1998/10/29 04:13:19  foxyloxy
+//
 // Initial IRIX support of new priority handling. Not debugged yet,
 // but it won't lock up your system.
 //
@@ -31,12 +32,10 @@
 // Revision 1.1  1998/09/28 01:31:40  cyp
 // Created. Note: priority is now on a scale of 0-9 (9 being "normal").
 //
-//
-//
 
 #if (!defined(lint) && defined(__showids__))
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.33 1998/10/31 17:34:51 cyp Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.34 1998/11/02 04:32:07 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -109,24 +108,23 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
     HANDLE our_thrid = GetCurrentThread();
     if (!set_for_thread && !main_thrid)
       main_thrid = our_thrid;
-    if (set_for_thread)
-      {
-      int newprio=THREAD_PRIORITY_LOWEST;
-      if (prio >= 9)      newprio = THREAD_PRIORITY_NORMAL; /* +0 */
-      else if (prio >= 5) newprio = THREAD_PRIORITY_BELOW_NORMAL; /* -1 */
-      else if (prio >= 1) newprio = THREAD_PRIORITY_LOWEST; /* -2 */
-      //else if (prio == 0) newprio = THREAD_PRIORITY_IDLE;  /* -15 */
-      /* At thread_prio_idle, the crunch stops when a screen saver is active.
-         There is no priority level between -15 and -2! */
-      SetPriorityClass(GetCurrentProcess(),IDLE_PRIORITY_CLASS/* 0x20->4 */);
-      //setting priority class has no effect here since it is changed below
-      SetThreadPriority( our_thrid, newprio );
-      #if 0 /* old locked method */
-      SetThreadPriority( our_thrid, ((!set_for_thread || prio >=9)?
-        (THREAD_PRIORITY_NORMAL /* +0 */):( THREAD_PRIORITY_IDLE /* -15 */))); 
-      #endif
-      }
-    if (main_thrid)
+
+    int newprio=THREAD_PRIORITY_LOWEST;
+    if (prio >= 9)      newprio = THREAD_PRIORITY_NORMAL; /* +0 */
+    else if (prio >= 5) newprio = THREAD_PRIORITY_BELOW_NORMAL; /* -1 */
+    else if (prio >= 1) newprio = THREAD_PRIORITY_LOWEST; /* -2 */
+    //else if (prio == 0) newprio = THREAD_PRIORITY_IDLE;  /* -15 */
+    /* At thread_prio_idle, the crunch stops when a screen saver is active.
+       There is no priority level between -15 and -2! */
+    SetPriorityClass(GetCurrentProcess(),NORMAL_PRIORITY_CLASS);
+    //setting priority class has no effect here since it is changed below
+    SetThreadPriority( our_thrid, newprio );
+    #if 0 /* old locked method */
+    SetThreadPriority( our_thrid, ((!set_for_thread || prio >=9)?
+      (THREAD_PRIORITY_NORMAL /* +0 */):( THREAD_PRIORITY_IDLE /* -15 */))); 
+    #endif
+
+    if (set_for_thread && main_thrid)
       {
       SetPriorityClass( GetCurrentProcess(), NORMAL_PRIORITY_CLASS );
       SetThreadPriority( main_thrid, THREAD_PRIORITY_NORMAL );
@@ -218,14 +216,14 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
       }
     else
       {
-	if (prio == 0){
-	  schedctl( NDPRI, 0, NDPLOMIN );
-	  schedctl( RENICE, 0, 39);
-	}	
-	else{
-	  if (prio < 9)
-	    schedctl( NDPRI, 0, (NDPLOMIN - NDPNORMMIN)/prio);
-	}
+      if (prio == 0){
+        schedctl( NDPRI, 0, NDPLOMIN );
+        schedctl( RENICE, 0, 39);
+        } 
+      else{
+        if (prio < 9)
+          schedctl( NDPRI, 0, (NDPLOMIN - NDPNORMMIN)/prio);
+        }
       }
   #else
     if ( set_for_thread )
