@@ -3,16 +3,17 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: gentests72.cpp,v 1.3 2002/09/23 16:58:36 acidblood Exp $
+ * $Id: gentests72.cpp,v 1.4 2002/09/25 02:15:46 acidblood Exp $
 */
 /**************************************************************************/
 /*                                                                        */
-/* This code is used to provide test cases for RC5-32/12/8                */
-/*     the RSA data security secret key challenge RC5-32/12/8             */
+/* This code is used to provide test cases for RC5-32/12/9                */
+/*     the RSA data security secret key challenge RC5-32/12/9             */
 /*                                                                        */
 /* The RSA pseudo-contest solution is one of the generated codes          */
 /*                                                                        */
 /* Written by Tim Charron (tcharron@interlog.com) October 21, 1997        */
+/* Modified by Décio Luiz Gazzoni Filho (acidblood@distributed.net)       */
 /*                                                                        */
 /**************************************************************************/
 
@@ -103,19 +104,19 @@ int main ()
 
    for (int testcase = 0; testcase < TEST_CASE_COUNT ; testcase ++) {
       if (testcase == 0) {
-         key[0]=0x82;
-         key[1]=0xe5;
-         key[2]=0x1b;
-         key[3]=0x9f;
-         key[4]=0x9c;
-         key[5]=0xc7;
-         key[6]=0x18;
-         key[7]=0xf9;
-         key[8]=0x66;
-         iv[0]=0xf839a5d9;
-         iv[1]=0xc41f78c1;
-         bigcipher[0]= 0xb74be041;
-         bigcipher[1]= 0x496def29;
+         key[0]=0xc9;
+         key[1]=0x0c;
+         key[2]=0x03;
+         key[3]=0x53;
+         key[4]=0xc0;
+         key[5]=0xd4;
+         key[6]=0xe1;
+         key[7]=0xfe;
+         key[8]=0x85;
+         iv[0]=0x1f59ce07;
+         iv[1]=0x419a1486;
+         bigcipher[0]= 0x562d285a;
+         bigcipher[1]= 0x2fb7852a;
       } else {
          key[0]=Random( ) & 0x000000FF;
          key[1]=Random( ) & 0x000000FF;
