@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: sleepdef.h,v $
+// Revision 1.7  1998/06/25 20:57:08  foxyloxy
+// IRIX5's lack of usleep() rectified temporarily with sleep()... will change
+// to nanosleep() soon. (sleepdef.h) -MIPS4 changed to -mips4 (configure)
+//
 // Revision 1.6  1998/06/22 01:05:03  cyruspatel
 // DOS changes. Fixes various compile-time errors: removed extraneous ')' in
 // sleepdef.h, resolved htonl()/ntohl() conflict with same def in client.h
@@ -99,6 +103,11 @@
   #else // HP-UX 9.x doesn't have nanosleep() or usleep()
     #define usleep(x) sleep(1)
   #endif
+#elif (CLIENT_OS == OS_IRIX)
+  #include <unistd.h>
+  #ifdef _irix5_
+    #define usleep(x) sleep(1) //will use nanosleep() in next revision
+  #endif
 #elif (CLIENT_OS == OS_AMIGAOS)
   extern "C" {
   #include <unistd.h>
@@ -111,7 +120,7 @@
   #include <unistd.h> //gcc has both sleep() and usleep()
 #endif
 
-
-
 #endif
+
+
 

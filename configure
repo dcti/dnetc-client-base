@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.56  1998/06/25 20:57:05  foxyloxy
+# IRIX5's lack of usleep() rectified temporarily with sleep()... will change
+# to nanosleep() soon. (sleepdef.h) -MIPS4 changed to -mips4 (configure)
+#
 # Revision 1.55  1998/06/25 19:38:35  foxyloxy
 # mips-cc-64 and mips-gcc-irix5-crunch targets added; CCFLAGS tweaked for
 # mips targets; "cp -f ..." changed to "rm -f ...; cp ..." for irix5 compat.
@@ -338,8 +342,8 @@ case "$1" in
 	#  mips-crunch.cpp doesn't yet compile with CC
 	RC5CORECOPY="rc5ansi2-rg2.cpp"
 	TARGET_CC="/usr/lib64/cmplrs/CC"
-	TARGET_CCFLAGS="$OPTS_CC_MIPS -O3 -static -r10000 -64 -MIPS4 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
-	TARGET_LDFLAGS="-static -64 -IPA -MIPS4"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -O3 -static -r10000 -64 -mips4 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
+	TARGET_LDFLAGS="-static -64 -IPA -mips4"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	;;
 
