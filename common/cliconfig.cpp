@@ -174,6 +174,8 @@ optionstruct options[OPTION_COUNT]=
   "mode 2) Finish Buffers and exit mode. The client will never connect\n"
   "        to a keyserver, and when the block buffers empty, it will\n"
   "        terminate.\n",3,2,0},
+
+#if (CLIENT_OS == OS_WIN32)
 //38
 { "lurk", "Modem detection options","0",
   "\nmode 0) Normal mode; the client will send/receive blocks only when it\n"
@@ -190,6 +192,7 @@ optionstruct options[OPTION_COUNT]=
   "        it will NOT trigger auto-dial, and will instead work\n"
   "        on random blocks until a connection is detected.\n",
   3,2,0},
+#endif
 { "in",  "RC5 In-Buffer Path/Name", "[Current Path]\\buff-in.rc5","",4,1,0},
 { "out", "RC5 Out-Buffer Path/Name", "[Current Path]\\buff-out.rc5","",4,1,0},
 { "in2", "DES In-Buffer Path/Name", "[Current Path]\\buff-in.des","",4,1,0},
@@ -296,7 +299,10 @@ options[CONF_CKTIME].thevariable=&checkpoint_min;
 options[CONF_NETTIMEOUT].thevariable=&nettimeout;
 options[CONF_EXITFILECHECKTIME].thevariable=&exitfilechecktime;
 options[CONF_OFFLINEMODE].thevariable=&offlinemode;
+
+#if (CLIENT_OS == OS_WIN32)
 options[CONF_LURKMODE].thevariable=&lurk;
+#endif
 options[CONF_RC5IN].thevariable=&in_buffer_file[0];
 options[CONF_RC5OUT].thevariable=&out_buffer_file[0];
 options[CONF_DESIN].thevariable=&in_buffer_file[1];
@@ -744,6 +750,7 @@ printf("------------------------------------------------------------\n\n");
           if (choice < 0) choice=0;
           if (choice > 2) choice=2;
           *(s32 *)options[CONF_OFFLINEMODE].thevariable=choice;
+#if (CLIENT_OS == OS_WIN32)
         case CONF_LURKMODE:
           choice=atoi(parm);
           if (choice < 0) choice=0;
@@ -758,6 +765,7 @@ printf("------------------------------------------------------------\n\n");
             lurk=2;
             connectoften=0;
             };
+#endif
         case CONF_RC5IN:
           strncpy( in_buffer_file[0] , parm, sizeof(in_buffer_file)/2 -1 );
           break;
