@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.97 2001/02/12 05:01:51 sampo Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.98 2001/02/14 19:58:43 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -799,6 +799,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             }  
             case 0x0A: cindex = 1; break; // Centaur C6
             //no default
+            case 0x0B: cindex = 8; break; // P4
           }
           selcorestatics.corenum[RC5] = cindex;
         }
