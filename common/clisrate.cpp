@@ -8,7 +8,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.41 1999/04/06 19:24:53 cyp Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.42 1999/04/09 16:57:30 cyp Exp $"; }
 
 #include "cputypes.h"  // u64
 #include "problem.h"   // Problem class
@@ -107,24 +107,24 @@ static char *__CliGetKeyrateAsString( char *buffer, double rate, double limit )
   if (rate<=((double)(0)))  // unfinished (-2) or error (-1) or impossible (0)
     strcpy( buffer, "---.-- " );
   else
-    {
+  {
     unsigned int t1, t2 = 0;
     const char *t3[]={"","k","M","G","T"}; // "", "kilo", "mega", "giga", "tera"
     while (t2<=5 && (((double)(rate))>=((double)(limit))) )
-      {
+    {
       t2++;
       rate = ((double)(rate)) / ((double)(1000));
-      }
+    }
     if (t2 > 4)
       strcpy( buffer, "***.** " ); //overflow (rate>1.0 TKeys. Str>25 chars)
     else
-      {
+    {
       t1 = (unsigned int)(rate);
       sprintf( buffer, "%u.%02u %s", t1,
          ((unsigned int)((((double)(rate-((double)(t1)))))*((double)(100)))),
          t3[t2] );
-      }
     }
+  }
   return buffer;
 }
 
@@ -147,20 +147,20 @@ const char *CliGetSummaryStringForContest( int contestid )
   struct timeval ttime;
 
   if ( CliIsContestIDValid( contestid ) ) //clicdata.cpp
-    {
+  {
     CliGetContestInfoBaseData( contestid, &name, NULL ); //clicdata.cpp
     CliGetContestInfoSummaryData( contestid, &packets, NULL, &ttime ); //ditto
     keyrateP=__CliGetKeyrateAsString(keyrate,
           CliGetKeyrateForContest(contestid),((double)(1000)));
-    }
+  }
   else
-    {
+  {
     name = "???";
     packets = 0;
     ttime.tv_sec = 0;
     ttime.tv_usec = 0;
     keyrateP = "---.-- ";
-    }
+  }
 
   sprintf(str, "%d %s packet%s %s%c- [%skeys/s]", 
        packets, name, ((packets==1)?(""):("s")),
@@ -191,10 +191,10 @@ const char *CliGetU64AsString( u64 *u, int /*inNetOrder*/, int contestid )
   norm.lo = (unsigned int)(d - (((double)(norm.hi))*1000000000.0));
   d = d / 1000000000.0;
   if (d > 0)
-    {
+  {
     i = (unsigned int)(d / 1000000000.0);
     norm.hi = (unsigned int)(d - (((double)(i))*1000000000.0));
-    }
+  }
 
   if (i)            sprintf( str, "%u%09u%09u", (unsigned) i, (unsigned) norm.hi, (unsigned) norm.lo );
   else if (norm.hi) sprintf( str, "%u%09u", (unsigned) norm.hi, (unsigned) norm.lo );
@@ -219,10 +219,12 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
   unsigned int /* size=1, count=32, */ itermul;
   unsigned int mulfactor, contestid = 0;
   const char *keyrateP = "---.-- ", *name = "???";
-  
-  if (prob->IsInitialized() && prob->finished)
+  int resultcode = prob->RetrieveState( &work, &contestid, 0 );
+
+  if (resultcode != RESULT_NOTHING && resultcode != RESULT_FOUND)
+    memset((void *)&work,0,sizeof(work));
+  else
   {
-    prob->RetrieveState( &work, &contestid, 0 );
     if (CliGetContestInfoBaseData( contestid, &name, &mulfactor )==0) //clicdata
     {
       keyrateP = CliGetKeyrateAsString( keyrate, 
@@ -242,6 +244,7 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
   {
     case 0: // RC5
     case 1: // DES
+    case 3: // CSC
 //"Completed one RC5 packet 00000000:00000000 (4*2^28 keys)\n"
 //"%s - [%skeys/sec]\n"
       itermul = (((work.crypto.iterations.lo) >> 28) +
@@ -261,7 +264,7 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
       sprintf( str, "Completed one %s stub %s (%u nodes)\n"
                     "%s - [%snodes/sec]\n",  
                     name, 
-                    ogr_stubstr(&prob->contestwork.ogr.stub),
+                    ogr_stubstr( &work.ogr.stub ),
                     0, // node count
                     CliGetTimeString( &tv, 2 ),
                     keyrateP );
