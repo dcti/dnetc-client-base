@@ -9,7 +9,7 @@
 */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.3.4.9 2004/08/14 23:32:37 kakace Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.3.4.10 2004/08/15 21:20:08 piru Exp $"; }
 
 #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
 
@@ -257,7 +257,8 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.9 2004/08/14 23:32:37 kakace Exp $"; }
     static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
     {
       with_time_constraints = with_time_constraints;
-      return cycle_ppc_hybrid(state, pnodes, &choose(0,0), OGR, Varray);
+      return cycle_ppc_hybrid(state, pnodes, &choose(0,0), OGR,
+                              (const vector unsigned char *)Varray);
     }
   #endif
 
