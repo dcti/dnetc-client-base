@@ -1,10 +1,28 @@
 #!/bin/sh
 
-# Copyright distributed.net 1998 - All Rights Reserved
+# Copyright distributed.net 1998-1999 - All Rights Reserved
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 
 # $Log: configure,v $
+# Revision 1.113.2.15  1999/01/04 03:54:46  remi
+# Synced with :
+#
+#  Revision 1.152  1999/01/02 09:49:24  cramer
+#  Updated sparc-linux target (uses gcc)
+#
+#  Revision 1.151  1999/01/01 02:45:14  cramer
+#  Part 1 of 1999 Copyright updates...
+#
+#  Revision 1.150  1999/01/01 01:16:45  silby
+#  Added dctistrg.cpp
+#
+#  Revision 1.149  1998/12/30 07:46:57  cramer
+#  removed a redundant 'rm' from distclean
+#
+#  Revision 1.148  1998/12/29 20:59:01  silby
+#  Removed guistuff.cpp
+#
 # Revision 1.113.2.14  1998/12/29 19:41:21  remi
 # Synced with :
 #
@@ -290,7 +308,7 @@ COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
     common/cmdline.cpp common/selftest.cpp
     common/bench.cpp common/probman.cpp
     common/console.cpp common/modereq.cpp
-    common/clievent.cpp"
+    common/clievent.cpp common/dctistrg.cpp"
 #KWAN_SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
 #KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
 KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"
@@ -442,8 +460,8 @@ case "$1" in
 
     *sparc-linux)
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_NONULTRA_SPARC -DPIPELINE_COUNT=2 -DKWAN -DBIT_32"
-	TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
+	TARGET_CCFLAGS="$OPTS_GCC_NONULTRA_SPARC -fno-inline-functions  -DPIPELINE_COUNT=2 -DKWAN -DMEGGS -DBIT_32"
+	TARGET_ADDSRCS="des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
 	TARGET_LIBS="-ldl"
 	;;
 
@@ -989,7 +1007,6 @@ echo "	find . -name '*~' -exec rm {} \\;" >> Makefile
 echo "" >> Makefile
 
 echo "distclean: superclean $0" >> Makefile
-echo "	rm -f \${BUILDNAME}" >> Makefile
 echo "	find . -name '.#*' -exec rm {} \\;" >> Makefile
 echo "	rm -f \`egrep \"^[ ]*\\*\" $0 | sed -e 's/\(^.*\*\)\(.*\)\().*\$\$\)/\2/'\`" >> Makefile
 echo "" >> Makefile
