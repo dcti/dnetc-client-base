@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-x86.cpp,v $
+// Revision 1.25  1999/04/09 19:48:12  patrick
+//
+// removed check for CPU_32BIT
+//
 // Revision 1.24  1999/02/21 09:51:39  silby
 // Changes for large block support.
 //
@@ -78,7 +82,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_x86_cpp(void) {
-return "@(#)$Id: des-x86.cpp,v 1.24 1999/02/21 09:51:39 silby Exp $"; }
+return "@(#)$Id: des-x86.cpp,v 1.25 1999/04/09 19:48:12 patrick Exp $"; }
 #endif
 
 
@@ -88,9 +92,6 @@ return "@(#)$Id: des-x86.cpp,v 1.24 1999/02/21 09:51:39 silby Exp $"; }
 #include "../common/convdes.h"
 #include "../common/logstuff.h"
 
-#ifndef _CPU_32BIT_
-#error "everything assumes a 32bit CPU..."
-#endif
 #if (CLIENT_CPU != CPU_X86)
 #error "shoo, shoo. this is x86 only."
 #endif
