@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.50  1999/01/28 00:16:49  trevorh
+// Minor updates for OS/2 with Watcom
+//
 // Revision 1.49  1999/01/21 05:02:41  pct
 // Minor updates for Digital Unix clients.
 //
@@ -103,7 +106,7 @@
 // BSD/OS.
 //
 // Revision 1.21  1998/09/30 07:41:05  snake
-// BSD/OS also needs <errno.h>, maybe we should include it for all BSD 
+// BSD/OS also needs <errno.h>, maybe we should include it for all BSD
 // like OS's
 //
 // Revision 1.20  1998/09/29 23:14:19  silby
@@ -176,7 +179,7 @@
 // added time includes for Linux (probably will be needed for others)
 //
 // Revision 1.1  1998/07/07 21:55:01  cyruspatel
-// client.h has been split into client.h and baseincs.h 
+// client.h has been split into client.h and baseincs.h
 //
 
 #ifndef __BASEINCS_H__
@@ -219,16 +222,15 @@ extern "C" {
   #include <fcntl.h>
 #elif (CLIENT_OS == OS_OS2)
   #include <sys/timeb.h>
-  #include <conio.h>
   #include <share.h>
   #if defined(__WATCOMC__)
-    // patrick: not used with gcc (where, whom is this file, WATCOM ?)
     #include <direct.h>
   #endif
   #include <fcntl.h>
   #include <io.h>
   #include "platforms/os2cli/os2defs.h"
-  #if !defined(__EMX__)               // not currently supported (patrick)
+  #if !defined(__EMX__)               // supported in Watcom
+  #include <net/if.h>
   #include "platforms/os2cli/dod.h"   // needs to be included after Client
   #endif
   #include "lurk.h"
@@ -322,7 +324,7 @@ extern "C" {
   extern "C" int gethostname(char *, int);
 #elif (CLIENT_OS == OS_AIX)
   #include <unistd.h>		// nice()
-  #include <strings.h>		// bzero(), strcase..., 
+  #include <strings.h>		// bzero(), strcase...,
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS==OS_BSDI) || (CLIENT_OS == OS_OPENBSD)
   #include <sys/time.h>
   #include <unistd.h>
