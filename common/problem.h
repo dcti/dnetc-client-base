@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.11 1999/11/29 22:47:35 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.12 1999/11/30 00:04:52 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -21,9 +21,29 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
 
 /* ----------------------------------------------------------------------- */
 
-#if defined(MMX_BITSLICER) || defined(HAVE_CSC_CORES)
-  #define MAX_MEM_REQUIRED_BY_CORE (17*1024)
+#undef MAX_MEM_REQUIRED_BY_CORE
+#define MAX_MEM_REQUIRED_BY_CORE  8  //64 bits
+
+#if defined(HAVE_DES_CORES) && defined(MMX_BITSLICER)
+  #if MAX_MEM_REQUIRED_BY_CORE < (17*1024)
+     #undef MAX_MEM_REQUIRED_BY_CORE
+     #define MAX_MEM_REQUIRED_BY_CORE (17*1024)
+  #endif
 #endif
+#if defined(HAVE_CSC_CORES)
+  #if MAX_MEM_REQUIRED_BY_CORE < (17*1024)
+     #undef MAX_MEM_REQUIRED_BY_CORE
+     #define MAX_MEM_REQUIRED_BY_CORE (17*1024)
+  #endif      
+#endif
+#if defined(HAVE_OGR_CORES)
+  #if MAX_MEM_REQUIRED_BY_CORE < OGR_PROBLEM_SIZE
+     #undef MAX_MEM_REQUIRED_BY_CORE
+     #define MAX_MEM_REQUIRED_BY_CORE OGR_PROBLEM_SIZE
+  #endif     
+#endif    
+  
+/* ---------------------------------------------------------------------- */
 
 #if !defined(MEGGS) && !defined(DES_ULTRA) && !defined(DWORZ)
   #define MIN_DES_BITS  8
@@ -69,10 +89,6 @@ protected: /* these members *must* be protected for thread safety */
   ContestWork contestwork;
   CoreDispatchTable *ogr;
   /* --------------------------------------------------------------- */
-  union {
-    double __align_64_ogr;
-    char ogrstate[OGR_PROBLEM_SIZE];
-  };
   #ifdef MAX_MEM_REQUIRED_BY_CORE
   char core_membuffer[MAX_MEM_REQUIRED_BY_CORE];
   #endif
@@ -158,14 +174,6 @@ public: /* anything public must be thread safe */
 
   u32 CalcPermille();
     /* Return the % completed in the current block, to nearest 0.1%. */
-
-#if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-  u64 GetKeysDone() { return(contestwork.crypto.keysdone); }
-    // Returns keys completed for Mac GUI display.
-  int GetResultCode() { return(last_resultcode); }
-    // Returns result code at completion (no thread safety issue).
-#endif
-
 };
 
 #endif /* __cplusplus */
