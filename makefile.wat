@@ -6,6 +6,9 @@
 ##                       or anything else defined at the end of this makefile
 ##
 ## $Log: makefile.wat,v $
+## Revision 1.16  1998/07/09 05:45:37  silby
+## This neato file can build the nt service!
+##
 ## Revision 1.15  1998/07/07 14:51:51  ziggyb
 ## Added the pathwork.cpp file to the link objs and the make process. Also moved
 ## the Cyrix core around, it seems to speed up the core a bit. Well at least it
@@ -75,7 +78,7 @@
 ## Import 5/23/98 client tree
 ## 
 
-## $Id: makefile.wat,v 1.15 1998/07/07 14:51:51 ziggyb Exp $
+## $Id: makefile.wat,v 1.16 1998/07/09 05:45:37 silby Exp $
 
 CC=wpp386
 CCASM=wasm
@@ -84,7 +87,9 @@ LINK=wlink
 %VERSION  = 70.24          
 %VERSTRING= v2.7024.409
 
-%EXTOBJS =  des\brydmasm\p1bdespro.obj  des\brydmasm\p2bdespro.obj  
+%EXTOBJS =  des\brydmasm\p1bdespro.obj  des\brydmasm\p2bdespro.obj 
+            des\mmx-bitslice\sboxes-mmx.obj
+            des\mmx-bitslice\deseval-meggs3-mmx.obj
             #extra objs (made elsewhere) but need linking here
 
 %LINKOBJS = output\rg-486.obj output\rg-k5.obj output\rg-k6.obj &
@@ -95,7 +100,9 @@ LINK=wlink
             output\iniread.obj output\network.obj output\problem.obj &
             output\scram.obj output\des-x86.obj output\convdes.obj &
             output\clitime.obj output\clicdata.obj output\clirate.obj &
-            output\clisrate.obj output\cpucheck.obj output\pathwork.obj
+            output\clisrate.obj output\cpucheck.obj output\pathwork.obj &
+            output\des-slice-meggs.obj
+ 
             # this list can be added to in the platform specific section
 
 
@@ -358,7 +365,7 @@ dos: .symbolic                                       # DOS/DOS4GW
 os2: .symbolic                                       # OS/2
      @set AFLAGS    = /5s /fp5 /bt=DOS4GW /mf
      @set LFLAGS    = sys os2v2
-     @set CFLAGS    = /5s /fp5 /bm /mf /bt=os2 /DOS2 /DMULTITHREAD
+     @set CFLAGS    = /5s /fp5 /bm /mf /bt=os2 /DOS2 /DMULTITHREAD /DMMX_BITSLICER /DBIT_64 /DMEGGS /DKWAN
      @set OPT_SIZE  = /oantrlexi 
      @set OPT_SPEED = /oantrlexi 
      @set LIBFILES  = so32dll.lib,tcp32dll.lib
