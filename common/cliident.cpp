@@ -1,6 +1,7 @@
 /* Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * ----------------------------------------------------------------------
  * The file contains CliIdentifyModules() which lists the cvs id strings
@@ -15,7 +16,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.21 1999/11/23 22:42:41 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.22 1999/12/12 15:45:06 cyp Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -192,7 +193,7 @@ static const char * (*ident_table[])() =
 //memfile_cpp,
   modereq_cpp,
   netinit_cpp,
-//netres_cpp,
+  netres_cpp,
   network_cpp,
   pathwork_cpp,
   pollsys_cpp,
@@ -428,11 +429,12 @@ const char *CliGetFullVersionDescriptor(void)
          #endif
          "%c"  /* limited release or dev branch or public release */
          "-%s" /* date is in bugzilla format yymmddhh */ 
-         "%s", /* "-*dev*" or " client for XXX" */
+	 "%s"  /* "-*dev*" or "" */
+         " for "CLIENT_OS_NAME,
          utilGetAppName(),
          ((ConIsGUI())?('G'):('C')),  
          ((CliIsDevelVersion())?('L'):('R')),
          CliGetTimeString(&tv,4),
-         ((CliIsDevelVersion())?("-*dev*"):(" client for "CLIENT_OS_NAME)));
+         ((CliIsDevelVersion())?("-*dev*"):("")) );
   return buffer;
 }  

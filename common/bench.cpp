@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.43 1999/12/08 05:41:01 remi Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.44 1999/12/12 15:45:02 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -63,7 +63,7 @@ static void __show_notbest_msg(unsigned int contestid)
     }
   }
   if (not_supported)
-    LogScreen( "Note: this client does not support the %s core.\n", not_supported );
+    LogScreen( "Note: this client does not support\nthe %s core.\n", not_supported );
   #endif
 
   contestid = contestid;  
@@ -72,24 +72,33 @@ static void __show_notbest_msg(unsigned int contestid)
 
 /* ----------------------------------------------------------------- */
 
-static void __add_u64( u64 *result, u64 a, u64 b )
+static void __add_u64( struct fake_u64 *result, 
+                       const struct fake_u64 *a, 
+                       const struct fake_u64 *b )
 {
-  result->lo = a.lo + b.lo;
-  result->hi = a.hi + b.hi;
-  if( result->lo < a.lo || result->lo < b.lo )
-    result->hi ++;
+  u32 lo = a->lo + b->lo;
+  result->hi = a->hi + b->hi;
+  if( lo < a->lo || lo < b->lo )
+    result->hi++;
+  result->lo = lo;
 }
 
 /* ----------------------------------------------------------------- */
 
-static double __calc_rate( unsigned int contestid, ContestWork *contestwork, 
-			   int last_run_result, u64 keys_already_done, 
-			   struct timeval *totalruntime, int print_it )
+static double __calc_rate( unsigned int contestid, 
+                           const ContestWork *contestwork, 
+                           int last_run_result, 
+                           const struct fake_u64 *keys_done_already,
+                           const struct timeval *totalruntime, 
+                           int print_it )
 {                         
   char ratestr[32];
   double rate;
   double keysdone;
   rate = 0.0;
+  struct fake_u64 keys_already_done;
+  keys_already_done.hi = keys_done_already->hi;
+  keys_already_done.lo = keys_done_already->lo;
 
   switch (contestid)
   {
@@ -101,10 +110,10 @@ static double __calc_rate( unsigned int contestid, ContestWork *contestwork,
       if (CliGetContestInfoBaseData( contestid, NULL, &count ) != 0)
         count = 1;
       if( last_run_result == RESULT_WORKING )
-	__add_u64( &keys_already_done, keys_already_done, contestwork->crypto.keysdone );
+        __add_u64( &keys_already_done, &keys_already_done, &(contestwork->crypto.keysdone) );
       keysdone = 
-	(double)keys_already_done.lo + 
-	(double)keys_already_done.hi * 4294967296.0 /* 2^32 */;
+        (double)keys_already_done.lo + 
+        (double)keys_already_done.hi * 4294967296.0 /* 2^32 */;
       if (count>1) //iteration-to-keycount-multiplication-factor
         keysdone = (keysdone)*((double)(count));
       rate = keysdone / (((double)(totalruntime->tv_sec))+
@@ -120,10 +129,10 @@ static double __calc_rate( unsigned int contestid, ContestWork *contestwork,
     case OGR:
     {
       if( last_run_result == RESULT_WORKING )
-	__add_u64( &keys_already_done, keys_already_done, contestwork->ogr.nodes );
+        __add_u64( &keys_already_done, &keys_already_done, &(contestwork->ogr.nodes) );
       keysdone = 
-	(double)keys_already_done.lo + 
-	(double)keys_already_done.hi * 4294967296.0 /* 2^32 */;
+        (double)keys_already_done.lo + 
+        (double)keys_already_done.hi * 4294967296.0 /* 2^32 */;
       rate = keysdone / (((double)(totalruntime->tv_sec))+
               (((double)(totalruntime->tv_usec))/((double)(1000000L))));
       if (print_it)
@@ -153,7 +162,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   ContestWork contestwork;
   const char *contname;
   struct timeval totalruntime;
-  u64 keysdone;
+  struct fake_u64 keysdone;
 
   contname = CliGetContestNameFromID(contestid);
   if (!contname)
@@ -299,7 +308,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
           if (problem->RetrieveState(&tmp_work, NULL, 0) >= 0)
           {
             double rate = __calc_rate(contestid, &tmp_work, run, 
-				      keysdone, &totalruntime, 0);
+                                      &keysdone, &totalruntime, 0);
             u32 newtslice = (u32)(rate/((double)non_preemptive_os.yps));
             if (newtslice > (tslice + (tslice/10)))
             {
@@ -358,20 +367,20 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         if ( run != RESULT_WORKING) /* finished this block */
         {
           ContestWork tmp_work;
-	  switch( contestid ) 
-	  {
-	  case RC5:
-	  case DES:
-	  case CSC:
-	    if( problem->RetrieveState(&tmp_work, NULL, 0) >= 0 )
-	       __add_u64( &keysdone, keysdone, tmp_work.crypto.keysdone );
-	    break;
+          switch( contestid ) 
+          {
+          case RC5:
+          case DES:
+          case CSC:
+            if( problem->RetrieveState(&tmp_work, NULL, 0) >= 0 )
+               __add_u64( &keysdone, &keysdone, &(tmp_work.crypto.keysdone) );
+            break;
 
-	  case OGR:
-	    if( problem->RetrieveState(&tmp_work, NULL, 0) >= 0 )
-	      __add_u64( &keysdone, keysdone, tmp_work.ogr.nodes );
-	    break;
-	  }
+          case OGR:
+            if( problem->RetrieveState(&tmp_work, NULL, 0) >= 0 )
+              __add_u64( &keysdone, &keysdone, &(tmp_work.ogr.nodes) );
+            break;
+          }
           totalruntime.tv_sec = runtime.tv_sec;
           totalruntime.tv_usec = runtime.tv_usec;
         }
@@ -398,8 +407,8 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   
   retvalue = -1; /* assume error */
   if (run >= 0) /* no errors, no ^C */
-    retvalue = (long)__calc_rate(contestid, &contestwork, run, keysdone, 
-			 &totalruntime, (!(flags & TBENCHMARK_QUIET)) );
+    retvalue = (long)__calc_rate(contestid, &contestwork, run, &keysdone, 
+                         &totalruntime, (!(flags & TBENCHMARK_QUIET)) );
 
   return retvalue;
 }  

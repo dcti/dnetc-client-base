@@ -8,7 +8,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clirate_cpp(void) {
-return "@(#)$Id: clirate.cpp,v 1.25 1999/11/23 15:41:35 cyp Exp $"; }
+return "@(#)$Id: clirate.cpp,v 1.26 1999/12/12 15:45:06 cyp Exp $"; }
 
 #include "cputypes.h" //for u64 define
 #include "client.h"   //for project constants
@@ -54,7 +54,7 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
   if (resultcode < 0)
     return ((double)(-2));   // not initialized or core error
   if (doSave && resultcode != RESULT_NOTHING && resultcode != RESULT_FOUND)
-    return ((double)(-2));   // not finished
+    return ((double)(-2));   // not finished - completion_time is invalid
     
   /*
   tv.tv_usec = prob->timelo;
@@ -62,8 +62,10 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
   CliTimerDiff( &tv, &tv, NULL ); //get time difference as tv
   */
 
-  tv.tv_usec = prob->runtime_usec; /* actual core run time */
-  tv.tv_sec = prob->runtime_sec;
+  //tv.tv_usec = prob->runtime_usec; /* actual core crunch time */
+  //tv.tv_sec = prob->runtime_sec;
+  tv.tv_usec = prob->completion_timelo; /* real clock time between start/finish */
+  tv.tv_sec = prob->completion_timehi; /* including suspended/paused time */
   
   if (CliGetContestInfoBaseData( contestid, NULL, &count )) //clicdata.cpp
     return ((double)(0));   //clicdata.cpp says no such contest

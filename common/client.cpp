@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.233 1999/12/06 19:11:07 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.234 1999/12/12 15:45:04 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -168,7 +168,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
       LogScreenRaw( "RC5 68K assembly by John Girvin\n");
       #endif
       #if (CLIENT_CPU == CPU_POWERPC)
-      LogScreenRaw( "RC5 PowerPC assembly by Dan Oetting\n");
+      LogScreenRaw( "RC5 PowerPC and AltiVec assembly by Dan Oetting\n");
       #endif
       #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
       LogScreenRaw( "RC5 Alpha assembly by Mike Marcelais\n");
@@ -198,7 +198,9 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
       #endif
 
       LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n");
+      #if (!CLIENT_OS == OS_MACOS)
       LogScreenRaw( "Start the client with '-help' for a list of valid command line options.\n" );
+      #endif
       LogScreenRaw( "\n" );
     }
     else if ( level == 1 )
@@ -354,9 +356,13 @@ static int ClientMain( int argc, char *argv[] )
 #if (CLIENT_OS == OS_MACOS)
 int main( void )
 {
-  //extern int client_boot( int (*)(int argc, char *argv[]) );
-/* init toolbox etc, synthesise command line and callback */
-  return client_boot(ClientMain); 
+  extern void MacInitToolbox(void);
+  char *argv[2]; 
+  ((const char **)argv)[0] = utilGetAppName();
+  argv[1] = (char *)0;
+  MacInitToolbox();
+  ClientMain(1,argv);
+  return 0;
 }
 #elif (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
