@@ -1,0 +1,3 @@
+Set Dnetc$Dir <Obey$Dir>
+IfThere <Dnetc$Dir>.exitrc5/now Then Delete <Dnetc$Dir>.exitrc5/now
+TaskWindow "Run <Dnetc$Dir>.Dnetc -test" -wimpslot 540K -name "d.net client" -display -quit
