@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selftest.cpp,v $
+// Revision 1.44  1999/03/31 22:39:40  cyp
+// gcc squawks about '''s in comments within #if 0 sections. fixed.
+//
 // Revision 1.43  1999/03/31 21:47:45  cyp
 // a) Add of keysdone to key on RESULT_FOUND is done in Problem::Run() (where
 // it should have been in the first place), and not here. b) Cleaned up a bit.
@@ -68,7 +71,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.43 1999/03/31 21:47:45 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.44 1999/03/31 22:39:40 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -226,13 +229,13 @@ int SelfTest( unsigned int contest, int cputype )
           contname = ((threadpos == 0)?("RC5 ARM"):("RC5 X86"));
         #endif
 
-        #if 0
+        /*
         test case 1 is the RSA pseudo-contest solution
         test cases 2,3,4,5,6,7 are specially made to 
         stress the key incrementation system
         the other test cases are generic (random)
   
-        if test case N fails, then key & K insn't properly 
+        if test case N fails, then key & K isn't properly 
         incremented when key & W wrap :
   
         N         K                 W
@@ -269,7 +272,7 @@ int SelfTest( unsigned int contest, int cputype )
         keybyte_inside_core[0] == keybyte_outside_core[7] == key.hi & 0xFF000000,
         keybyte_inside_core[1] == keybyte_outside_core[6] == key.hi & 0x00FF0000,
         keybyte_inside_core[2] == keybyte_outside_core[5], etc...
-        #endif
+        */
 
         contestwork.crypto.key.lo = expectedsolution.lo & 0xFFFF0000L;
         contestwork.crypto.key.hi = expectedsolution.hi;
