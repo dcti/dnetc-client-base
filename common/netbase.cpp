@@ -59,7 +59,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.4 2000/10/24 21:36:35 cyp Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.5 2000/10/25 18:58:09 cyp Exp $"; }
 
 //#define TRACE /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -73,8 +73,7 @@ return "@(#)$Id: netbase.cpp,v 1.1.2.4 2000/10/24 21:36:35 cyp Exp $"; }
 #define TRACE_READ(x)     //TRACE_OUT(x) /* net_read() */
 #define TRACE_WRITE(x)    //TRACE_OUT(x) /* net_write() */
 #define TRACE_NETDB(x)    //TRACE_OUT(x) /* net_resolve() */
-
-
+                          
 #include "cputypes.h"
 #if ((CLIENT_OS == OS_AMIGAOS)|| (CLIENT_OS == OS_RISCOS))
 extern "C" {
@@ -420,8 +419,8 @@ static int __dialupsupport_action(int doWhat)
           }
         } /* request to initialize? */  
       } /* !dialup.IsConnected() */
+      TRACE_STACKIDC((-1,"__dialupsupport_action()=>%d\n",rc));
     } /* if dialup.IsWatching() */
-    TRACE_STACKIDC((-1,"__dialupsupport_action()=>%d\n",rc));
   } /* if defined(LURK) */
   #endif /* LURK */
   doWhat = doWhat; /* possible unused */
@@ -1153,9 +1152,9 @@ static int net_look( SOCKET fd, int events, int *revents, int mstimeout )
           if (rc > 0)
           {
             char ch;          
-            TRACE_POLL((+1,"recv(...,MSG_PEEK)\n"));
+            TRACE_POLL((+1,"a) recv(...,MSG_PEEK)\n"));
             rc = recv(fd, &ch, 1, MSG_PEEK);
-            TRACE_POLL((-1,"recv(...,MSG_PEEK) =>%d%s\n",rc,trace_expand_api_rc(rc,fd)));
+            TRACE_POLL((-1,"a) recv(...,MSG_PEEK) =>%d%s\n",rc,trace_expand_api_rc(rc,fd)));
             if (rc == 0) /* 0 means graceful shutdown */
             {
               result_events = ps_T_ORDREL;
@@ -1236,9 +1235,9 @@ static int net_look( SOCKET fd, int events, int *revents, int mstimeout )
           if (FD_ISSET(fd, rfdsP))
           {
             char ch;          
-            TRACE_POLL((+1,"recv(...,MSG_PEEK)\n"));
+            TRACE_POLL((+1,"b) recv(...,MSG_PEEK)\n"));
             rc = recv(fd, &ch, 1, MSG_PEEK);
-            TRACE_POLL((-1,"recv(...,MSG_PEEK) =>%d%s\n",rc,trace_expand_api_rc(rc,fd)));
+            TRACE_POLL((-1,"b) recv(...,MSG_PEEK) =>%d%s\n",rc,trace_expand_api_rc(rc,fd)));
             if (rc == 0) /* 0 means graceful shutdown */
             {
               result_events = ps_T_ORDREL;
@@ -1302,7 +1301,7 @@ static int net_look( SOCKET fd, int events, int *revents, int mstimeout )
       *revents = result_events;
   }
 
-  TRACE_POLL((-1,"net_look() => %d%s\n", rc, trace_expand_ps_rc(rc,fd) ));
+  TRACE_POLL((-1,"net_look() => %d%s [revents=%d]\n", rc, trace_expand_ps_rc(rc,fd), result_events ));
   return rc;
 }
 
@@ -1934,7 +1933,9 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
 {
   int rc = ps_ENETDOWN;
 
-  TRACE_CONNECT((+1, "net_connect(s, %s:%d, %d)\n", net_ntoa(that_address), that_port, iotimeout ));
+  TRACE_CONNECT((+1, "net_connect(s, %s:%d, %d)\n", 
+                     net_ntoa((that_address)?(*that_address):(0)), 
+                     ((that_port)?(*that_port):(0)), iotimeout ));
 
   if ( sock == INVALID_SOCKET )
   {
@@ -2083,7 +2084,7 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
           memset((void *) &saddr, 0, sizeof(saddr));
           saddr.sin_family = AF_INET;
           saddr.sin_addr.s_addr = *this_address;
-          TRACE_CONNECT((+1,"bind(fd,%s:%d,...)\n",net_ntoa(*local_addr),0));
+          TRACE_CONNECT((+1,"bind(fd,%s:%d,...)\n",net_ntoa(*this_address),0));
           while (bind(sock, (struct sockaddr *)&saddr, sizeof(saddr)) < 0)
           {
             if (net_match_errno(ps_EINTR)) /* caught a signal */
@@ -2091,7 +2092,7 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
             rc = ps_stdneterr;
             break;
           } 
-          TRACE_CONNECT((-1,"bind(fd,%s:%d,...) => %d%s\n",net_ntoa(local_addr),0,rc, trace_expand_ps_rc(rc,fd) ));
+          TRACE_CONNECT((-1,"bind(...) => %d%s\n",rc, trace_expand_ps_rc(rc,sock) ));
         }        
       }
 
@@ -2112,7 +2113,7 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
         }    
         #endif
 
-        TRACE_CONNECT((+1,"connect(s, %s:%d)\n", net_ntoa(that_address), that_port));
+        TRACE_CONNECT((+1,"connect(s, %s:%d)\n", net_ntoa(*that_address), *that_port));
         rc = connect(sock, (struct sockaddr *)&saddr, sizeof(saddr));
         TRACE_CONNECT((-1,"connect(s) => %d%s\n", rc, trace_expand_api_rc(rc,sock) ));
 
@@ -2177,6 +2178,29 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
               break;
             }
 #endif
+            #if ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32))
+            { 
+              /* wsock32.dll bug: does not set wfds on successful connect */
+              TRACE_CONNECT((+1,"2] connect(s, %s:%d)\n", net_ntoa(*that_address), *that_port));
+              rc = connect(sock, (struct sockaddr *)&saddr, sizeof(saddr));
+              TRACE_CONNECT((-1,"2] connect(s) => %d%s\n", rc, trace_expand_api_rc(rc,sock) ));
+              if (rc == 0)
+                break;
+              rc = WSAGetLastError();
+              if (rc == WSAEINVAL) /* Winsock 1.1 returns WSAEINVAL */
+                rc = WSAEALREADY;  /* instead of WSAEALREADY */
+              if (rc == WSAEISCONN)
+              {
+                rc = 0;
+                break;
+              }
+              if (rc != WSAEINPROGRESS && rc != WSAEALREADY && rc != WSAEWOULDBLOCK)
+              {
+                rc = ps_stdneterr;
+                break;
+              }
+            }
+            #endif
             if (!break_pending && CheckExitRequestTriggerNoIO())
             {
               rc = ps_EINTR;
