@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.22  1998/10/31 22:49:40  silby
+// Change for freebsd_nonmt.
+//
 // Revision 1.21  1998/10/31 22:36:11  silby
 // Hack to get freebsd-mt to build.  It seems to work fine, but should *really* be looked over by a pthreads familiar person.
 //
@@ -94,7 +97,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.21 1998/10/31 22:36:11 silby Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.22 1998/10/31 22:49:40 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -292,7 +295,7 @@ static void yield_pump( void *tv_p )
 
   #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
     thr_yield();
-  #elif (CLIENT_OS == OS_FREEBSD)
+  #elif ((CLIENT_OS == OS_FREEBSD) && defined(MULTITHREAD))
     sched_yield();
   #elif (CLIENT_OS == OS_OS2)
     DosSleep(0);
