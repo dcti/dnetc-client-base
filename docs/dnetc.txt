@@ -1,8 +1,8 @@
 
   distributed.net client documentation
-  document revision $Id: dnetc.txt,v 1.4 2002/09/02 00:35:45 andreasb Exp $
+  document revision $Id: dnetc.txt,v 1.4.4.1 2005/03/08 22:06:00 jlawson Exp $
 
-  Copyright distributed.net 1997-2002 - All Rights Reserved
+  Copyright distributed.net 1997-2005 - All Rights Reserved
   For use in distributed.net projects only.
   Any other distribution violates copyright.
 
@@ -16,7 +16,7 @@
          refer to platform specific readme.s for details
     3.0  Getting and starting the client
          refer to platform specific readme.s for details
-    4.0  Upgrading from a client older than the 2.7xxx
+    4.0  Upgrading from a client older than the 2.9xxx
     5.0  Fetching and flushing work
          5.1 over a TCP/IP network connection (and/or through a firewall)
          5.2 via e-mail
@@ -28,9 +28,9 @@
     Congratulations! This distributed.net client will make your computer 
     a part of the world's largest computer, distributed.net. The client 
     you have downloaded is capable of working on two of distributed.net's
-    ongoing projects: The brute-force decryption of a RC5-64 message, and
+    ongoing projects: The brute-force decryption of a RC5-72 message, and
     the search for Optimal Golomb Rulers (OGR). Both are long-term projects
-    that will go on for some time. Because the RC5-64 contest has a finite
+    that will go on for some time. Because the RC5-72 contest has a finite
     number of keys to test, however, the OGR contest is selected as the
     default.
 
@@ -92,19 +92,19 @@
     for sources of assistance.
 
     A complete step-by-step guide to running your first client is 
-    available at: http://www.distributed.net/docs/tutor_clients.html
+    available at: http://www.distributed.net/docs/tutor_clients.php
     There is also a great deal of useful information at the
-    FAQ-O-Matic: http://distributed.net/faq/
+    FAQ-O-Matic: http://faq.distributed.net/
 
     The client's configuration may be adjusted at any time by starting 
     the client with the -config switch. A list of other command line 
     options can be obtained by starting the client with -help.
 
 
- 4.0  Upgrading from a client older than the 2.7xxx ------------------
+ 4.0  Upgrading from a client older than the 2.9xxx ------------------
 
      If you are upgrading from a version of the client older than the 
-     2.7xxx series, please stop the existing client, flush its buffers, 
+     2.9xxx series, please stop the existing client, flush its buffers, 
      delete all of its files before installing the new client. Buffer 
      files formats have changed, and this will help prevent compatibility 
      problems. If you are sharing buffer files between multiple clients, 
@@ -112,8 +112,8 @@
 
      If you use a personal proxy with your client, please make sure
      that you upgrade it at the same time as your client. Clients in
-     version 2.800x or later will only work with personal proxy builds
-     of at least build 311 (313 or later recommended).
+     version 2.9xxx or later will only work with personal proxy builds
+     of at least build 330 or later.
 
                                                                           
  5.0  Fetching and flushing work -------------------------------------
@@ -130,7 +130,7 @@
      It connects to port TCP port 2064 by default. 
 
      distributed.net keyserver hostnames follow the following naming
-     convention: <us|euro|asia|aussie|jp>[port].v27.distributed.net .
+     convention: <us|euro|asia|aussie|jp>[port].v29.distributed.net
      The "port" is an optional field and may be either "80" or "23".
      All other numbers cause the client to ignore it and automatically
      select a hostname (see next paragraph).
@@ -216,7 +216,7 @@
 
      Software              Platform    Method       Download from
      --------------------- ----------- ------------ -------------------
-     Squid                 Unix        HTTP Proxy   http://squid.nlanr.net
+     Squid                 Unix        HTTP Proxy   http://www.squid-cache.org
      Internet Gate         OS/2        Port Mapping
      MS Proxy Server       WinNT       HTTP Proxy
      Novell BorderManager  NetWare     HTTP Proxy
@@ -236,7 +236,7 @@
         will reply with information on the proper options to use.
      2. Once you know the correct format, send a correctly formatted 
         message in. You should quickly receive a message back with 
-        the specified amount of work attached as "buff-in.rc5".
+        the specified amount of work attached as "buff-in.r72".
      3. Stop the client. 
      4. Save the file to the directory from which you are running the 
         client. 
@@ -246,10 +246,10 @@
      send in back via e-mail as follows:
 
      1. Create a message to flush@distributed.net with the file 
-        "buff-out.rc5" attached as a MIME/base64 or UUencoded (UUE) file. 
+        "buff-out.r72" attached as a MIME/base64 or UUencoded (UUE) file. 
         You will be send a "receipt" of the proper flushing within a few 
         minutes.
-     2. Delete the buff-out.rc5 file so that you do not accidently 
+     2. Delete the buff-out.r72 file so that you do not accidently 
         send part of its contents twice.
 
   5.3  Flushing and fetching using remote buffers ----
@@ -279,11 +279,11 @@
        IRC client at the server irc.distributed.net. This is an alias
        for all the public IRC servers on the network. For more info on
        using IRC and distributed.net, see the IRC Tutorial:
-       http://www.distributed.net/docs/tutor_irc.html
+       http://www.distributed.net/docs/tutor_irc.php
 
      - If you need further assistance with client use or operation, refer 
        to the distributed.net FAQ-O-Matic (Frequently Asked Questions)
-       available online at: http://www.distributed.net/faq/
+       available online at: http://faq.distributed.net/
        Documents there include every aspect of running the client,
        common questions about distributed.net projects, and the ever-
        popular statistics questions.
@@ -296,11 +296,11 @@
 
      - More user support is available from <help@distributed.net> 
        as well as from our regional support representatives listed at 
-       http://www.distributed.net/regional/index.html
+       http://www.distributed.net/regional/
      
      - If you believe you have found a bug in the client or would like 
        to make a suggestion, please use our Bugzilla bug tracking pages
-       located at: http://www.distributed.net/bugs/  
+       located at: http://bugs.distributed.net/
        DO NOT FORGET TO PROVIDE THE **FULL** VERSION NUMBER OF YOUR CLIENT
        Don't fret if you don't get a response right away - porters are 
        usually very busy and it may take weeks before they get around to 
