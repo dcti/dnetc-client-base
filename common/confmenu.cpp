@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.28 2001/01/17 00:14:17 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.29 2001/01/17 02:28:34 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -468,9 +468,11 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   conf_options[CONF_CPUTYPE].thevariable=NULL; /* assume not avail */
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
-    client->coretypes[cont_i] = selcoreValidateCoreIndex(cont_i,client->coretypes[cont_i]);
     if (__is_opt_available_for_project(cont_i, CONF_CPUTYPE))
+    {
+      client->coretypes[cont_i] = selcoreValidateCoreIndex(cont_i,client->coretypes[cont_i]);
       conf_options[CONF_CPUTYPE].thevariable = &(client->coretypes[0]);
+    }  
   }
   conf_options[CONF_NICENESS].thevariable = &(client->priority);
   conf_options[CONF_NUMCPU].thevariable = &(client->numcpu);
@@ -1053,7 +1055,8 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
               utilScatterOptionListToArraysEx(parm, &iarray[0], NULL,NULL, NULL );
               for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
               {
-                if (iarray[cont_i] != selcoreValidateCoreIndex(cont_i,iarray[cont_i]))
+                if (__is_opt_available_for_project(cont_i, CONF_CPUTYPE) &&
+                  iarray[cont_i] != selcoreValidateCoreIndex(cont_i,iarray[cont_i]))
                 {
                   newval_isok = 0; /* reject it */
                   break;
@@ -1230,17 +1233,36 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
         }
         else if ( conf_options[editthis].type == CONF_TYPE_IARRAY)
         {
-          int *vecta = (int *)conf_options[editthis].thevariable;
-          int *vectb = NULL;
+          int *vecta = NULL, *vectb = NULL;
+          int iarray_a[CONTEST_COUNT], iarray_b[CONTEST_COUNT];
+          iarray_a[0] = iarray_b[0] = 0;
+          vecta = (int *)conf_options[editthis].thevariable;
           #if !defined(NO_OUTBUFFER_THRESHOLDS)
           if ( editthis == CONF_THRESHOLDI )  // don't have a
             vectb = &(outthreshold[0]); // THRESHOLDO any more
           #endif  
+          for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+          {
+            iarray_a[cont_i] = vecta[cont_i];
+            if (vectb)
+             iarray_b[cont_i] = vectb[cont_i];
+          }   
+          vecta = &iarray_a[0];
+          if (vectb) 
+            vectb = &iarray_b[0];
           utilScatterOptionListToArraysEx(parm,vecta, vectb,NULL, NULL );
+          vecta = (int *)conf_options[editthis].thevariable;
+          #if !defined(NO_OUTBUFFER_THRESHOLDS)
+          if ( editthis == CONF_THRESHOLDI )  // don't have a
+            vectb = &(outthreshold[0]); // THRESHOLDO any more
+          #endif  
           if (editthis == CONF_CPUTYPE) 
           {
             for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-              vecta[cont_i] = selcoreValidateCoreIndex(cont_i,vecta[cont_i]);
+            {
+              if (__is_opt_available_for_project(cont_i, editthis))
+                vecta[cont_i] = selcoreValidateCoreIndex(cont_i,iarray_a[cont_i]);
+            }    
           }
           else 
           {
@@ -1251,26 +1273,30 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
             {
               for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
               {
-                if (vecta[cont_i] == mdef)
-                  ; /* default */
-                else if (vecta[cont_i] < mmin)
-                  vecta[cont_i] = mmin;
-                else if (vecta[cont_i] > mmax)
-                  vecta[cont_i] = mmax;
-                if (vectb)
+                if (__is_opt_available_for_project(cont_i, editthis))
                 {
-                  if (vectb[cont_i] == mdef)
-                    ; /* default */
-                  else if (editthis == CONF_THRESHOLDI)
-                  {  /* outthresh must only be < inthresh and can be <=0 */
-                    if (vectb[cont_i] > vecta[cont_i])
-                      vectb[cont_i] = vecta[cont_i];
-                  }
-                  else if (vectb[cont_i] < mmin)
-                    vectb[cont_i] = mmin;
-                  else if (vectb[cont_i] > mmax)
-                    vectb[cont_i] = mmax;
-                }
+                  int v = iarray_a[cont_i];
+                  if (v == mdef)      v = mdef;
+                  else if (v < mmin)  v = mmin;
+                  else if (v > mmax)  v = mmax;
+                  vecta[cont_i] = v;
+                  if (vectb)
+                  {
+                    v = iarray_b[cont_i];
+                    if (v == mdef)    v = mdef;
+                    else if (editthis == CONF_THRESHOLDI)
+                    { 
+                      /* outthresh must only be < inthresh and can be <=0 */
+                      if (v > iarray_a[cont_i])
+                        v = iarray_a[cont_i];
+                      else if (v < 0)
+                        v = -1;  
+                    }
+                    else if (v < mmin) v = mmin;
+                    else if (v > mmax) v = mmax;
+                    vectb[cont_i] = v;
+                  } 
+                }  
               }
             }
           } 
