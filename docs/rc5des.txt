@@ -57,7 +57,7 @@ intervention is required for this switchover.
 If you'd like more information on our current project status, you should
 view the RC5-64 and DES homepages.  RC5-64 may be found at
 "http://www.distributed.net/rc5/", and DES may be found at
-"http://www.distributed.net/des". In the next few months, Distributed.net
+"http://www.distributed.net/des/". In the next few months, Distributed.net
 will begin working on other (non-encryption related) projects. For
 information on other projects, please look at
 "http://www.distributed.net/projects/".
@@ -1148,7 +1148,7 @@ Q:  Do I need to join a team?
     No, you do not need to join a team.  Teams exist so that you can show
 group strength, help advocate a platform, etc. You can see a listing of
 teams based sorted by their type at
-http://stats.distributed.net/teamlist.html.
+http://stats.distributed.net/teamlist.html
 
 Q:  Are there any disadvantages to joining a team?
 
