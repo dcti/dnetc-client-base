@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.199 1999/04/04 16:15:14 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.200 1999/04/09 13:28:38 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -159,27 +159,28 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
   {
     if (level == 0)
     {
-      LogScreenRaw( "\nRC5DES v" CLIENT_VERSIONSTRING " client (Build: " 
-                    __DATE__") - a project of distributed.net\n"
-                    "Copyright 1997-1999 distributed.net\n" );
+      LogScreenRaw( "\nRC5DES v" CLIENT_VERSIONSTRING 
+                    #if (defined(BETA) || defined(BETA_PERIOD))
+		    "-BETA"
+		    #endif
+                    " client - a project of distributed.net\n"
+                    "Copyright 1997-1999 distributed.net\n");
 
       #if (CLIENT_CPU == CPU_68K)
       LogScreenRaw( "RC5 68K assembly by John Girvin\n");
       #endif
       #if (CLIENT_CPU == CPU_POWERPC)
-      LogScreenRaw( "PowerPC assembly by Dan Oetting\n");
+      LogScreenRaw( "RC5 PowerPC assembly by Dan Oetting\n");
       #endif
       #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
       LogScreenRaw( "RC5 Alpha assembly by Mike Marcelais\n");
       #endif
-
       #if (CLIENT_CPU == CPU_ARM)
       LogScreenRaw( "ARM assembly by Steve Lee\n");
       #if (CLIENT_OS == OS_RISCOS)
-      LogScreenRaw( "PC Card support by Dominic Plunkett\n");
+      LogScreenRaw( "RISCOS/PC Card support by Dominic Plunkett\n");
       #endif
       #endif
-
       #if defined(KWAN) && defined(MEGGS)
       LogScreenRaw( "DES bitslice driver Copyright 1997-1998, Andrew Meggs\n"
                     "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
@@ -195,6 +196,7 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
       #if (CLIENT_OS == OS_DOS)
       LogScreenRaw( "PMODE DOS extender Copyright 1994-1998, Charles Scheffold and Thomas Pytel\n");
       #endif
+
       LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n");
       LogScreenRaw(
         #if (CLIENT_OS == OS_RISCOS)
@@ -221,7 +223,7 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
         LogScreenRaw("Warning: The TZ= variable is not set in the environment. "
          "The client will\nprobably display the wrong time and/or select the "
          "wrong keyserver.\n");
-        putenv("TZ=GMT+0"); //use local, not redmond or armonk, time
+        putenv("TZ=GMT+0"); //use local, not redmond or armonk or saltlakecity time
       }
       #endif
 
@@ -231,7 +233,8 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
       LogRaw("\nRC5DES v%s %sClient for %s%s%s%s started.\n",
             CLIENT_VERSIONSTRING, ((ClientIsGUI())?("GUI "):("")),
             CLIENT_OS_NAME, ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
-
+      time_t builddate = CliTimeGetBuildDate();
+      LogRaw("Build date: %s", ctime(&builddate) /* CliGetTimeString(&tv,3) */ );
       LogRaw( "Using email address (distributed.net ID) \'%s\'\n\n", dnet_id );
     }
   }
