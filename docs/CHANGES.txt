@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.99 2002/03/23 23:11:05 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.100 2002/03/25 00:49:43 sampo Exp $
 ==========================================================================
 
 2.8000
@@ -35,6 +35,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.99 2002/03/23 23:11:05 andreasb Exp
             imp: x86: better intel and amd chip identification. (#2448, #2424)
             fix: ppc: linux kernel cpu string additions. (#2407)
             fix: x86: Win2K, WinXP: disabled crashing RC5 SMC core. (#2399)
+            fix: hpux: threading, timing fixes (#2371)
 
 2.8016.470  new: ppc: new AltiVec RC5 core for the PPC 7450 by Dan Oetting.
 
