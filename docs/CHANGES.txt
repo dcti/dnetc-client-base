@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.54 2000/06/27 13:47:27 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.55 2000/06/28 19:56:24 cyp Exp $
 ==========================================================================
 
 2.8000
@@ -35,6 +35,8 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.54 2000/06/27 13:47:27 cyp Exp $
             new: macosx: MP support is now available under MacOSX
             new: macosx: full LURK support under MacOSX
             chg: macos: GUSI is in again but this time with OT support
+            new: x86-NetBSD/x86-FreeBSD/Linux support battery-power checking
+                 (hint to *BSD kernel teams: add sysctl support to apm)
             chg: AmigaOS: now using the PowerPC OGR core
             chg: AmigaOS: lots more general changes and fixes
 
