@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.69 2000/06/27 13:43:24 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.70 2000/06/28 15:21:32 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -253,11 +253,11 @@ static unsigned int __corecount_for_contest( unsigned int cont_i )
 
 /* ===================================================================== */
 
-void selcoreEnumerateWide( int (*proc)(
+void selcoreEnumerateWide( int (*enumcoresproc)(
                             const char **corenames, int idx, void *udata ),
                        void *userdata )
 {
-  if (proc)
+  if (enumcoresproc)
   {
     unsigned int corenum;
     for (corenum = 0;;corenum++)
@@ -277,7 +277,7 @@ void selcoreEnumerateWide( int (*proc)(
       }
       if (!have_one)
         break;
-      if (! ((*proc)( &carray[0], (int)corenum, userdata )) )
+      if (! ((*enumcoresproc)( &carray[0], (int)corenum, userdata )) )
         break;
     }
   }  
@@ -286,11 +286,11 @@ void selcoreEnumerateWide( int (*proc)(
   
 /* ---------------------------------------------------------------------- */
 
-void selcoreEnumerate( int (*proc)(unsigned int cont, 
+void selcoreEnumerate( int (*enumcoresproc)(unsigned int cont, 
                             const char *corename, int idx, void *udata ),
                        void *userdata )
 {
-  if (proc)
+  if (enumcoresproc)
   {
     int stoploop = 0;
     unsigned int cont_i;
@@ -302,7 +302,7 @@ void selcoreEnumerate( int (*proc)(unsigned int cont,
         unsigned int coreindex;
         const char **corenames = __corenames_for_contest(cont_i);
         for (coreindex = 0; !stoploop && coreindex < corecount; coreindex++)
-          stoploop = (! ((*proc)(cont_i, 
+          stoploop = (! ((*enumcoresproc)(cont_i, 
                       corenames[coreindex], (int)coreindex, userdata )) );
       }
     }
