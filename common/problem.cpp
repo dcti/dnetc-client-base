@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.163 2002/09/24 20:50:38 jlawson Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.164 2002/09/24 23:48:04 acidblood Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -430,8 +430,11 @@ static void __IncrementKey(u32 *keyhi, u32 *keymid, u32 *keylo, u32 iters, int c
     case RC5_72:
       __SwitchRC572Format(keyhi,keymid,keylo);
       *keylo = *keylo + iters;
-      if (*keylo < iters) *keymid = *keymid + 1;
-      if (*keymid == 0) *keyhi = *keyhi + 1;
+      if (*keylo < iters)
+      {
+        *keymid = *keymid + 1;
+        if (*keymid == 0) *keyhi = *keyhi + 1;
+      }
       __SwitchRC572Format(keyhi,keymid,keylo);
       break;
 #ifdef HAVE_RC564_CORES
