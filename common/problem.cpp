@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.27  1998/07/13 12:40:33  kbracey
+// RISC OS update.
+// Added -noquiet option.
+//
 // Revision 1.26  1998/07/13 03:31:52  cyruspatel
 // Added 'const's or 'register's where the compiler was complaining about
 // ambiguities. ("declaration/type or an expression")
@@ -54,11 +58,12 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-static const char *id="@(#)$Id: problem.cpp,v 1.26 1998/07/13 03:31:52 cyruspatel Exp $";
+static const char *id="@(#)$Id: problem.cpp,v 1.27 1998/07/13 12:40:33 kbracey Exp $";
 return id; }
 #endif
 
 #include "cputypes.h"
+#include "baseincs.h"
 #include "problem.h"
 #include "network.h" // for timeval and htonl/ntohl
 #include "clitime.h" //for CliTimer() which gets a timeval of the current time

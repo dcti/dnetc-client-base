@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.152  1998/07/13 12:40:25  kbracey
+// RISC OS update.
+// Added -noquiet option.
+//
 // Revision 1.151  1998/07/13 03:29:45  cyruspatel
 // Added 'const's or 'register's where the compiler was complaining about
 // ambiguities. ("declaration/type or an expression")
@@ -38,7 +42,7 @@
 // Change to thread priorities for win32 gui.
 //
 // Revision 1.143  1998/07/09 17:08:09  silby
-// Ok, DES MMX core selection override code now works. The output of 
+// Ok, DES MMX core selection override code now works. The output of
 // cpucheck and usemmx are the only things it cares about; everyone who's
 // mmx capable will use it now.
 //
@@ -279,18 +283,19 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.151 1998/07/13 03:29:45 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.152 1998/07/13 12:40:25 kbracey Exp $";
 return id; }
 #endif
 
 #include "cputypes.h"
-#include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc 
+#include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "version.h"
 #include "iniread.h"
 #include "network.h"
 #include "problem.h"   // ___unit_func(), PIPELINE_COUNT
 #include "cpucheck.h"  // cpu selection, GetTimesliceBaseline()
+#include "clirate.h"
 #include "mail.h"      // MAXMAILSIZE
 #include "scram.h"     // InitRandom2(id)
 #ifndef DONT_USE_PATHWORK
@@ -303,7 +308,7 @@ return id; }
   #include "network.h" //NetworkInitialize()
 #else
   #include "sleepdef.h" //RunStartup()
-#endif  
+#endif
 #endif
 
 // --------------------------------------------------------------------------
@@ -635,7 +640,7 @@ static int isstringblank( const char *string )
       return 0;
     }
   return 1;
-}  
+}
 
 static void killwhitespace( char *string )
 {
@@ -643,13 +648,13 @@ static void killwhitespace( char *string )
   ipos = opos = string;
   while ( *ipos )
     {
-    if ( !isspace( *ipos ) ) 
+    if ( !isspace( *ipos ) )
       *opos++ = *ipos;
     ipos++;
     }
   *opos = 0;
   return;
-}  
+}
 #endif
 
 // --------------------------------------------------------------------------
@@ -1407,14 +1412,14 @@ s32 Client::ReadConfig(void)
   IniSection ini;
   s32 inierror, tempconfig;
   char buffer[64];
-  char *p; 
+  char *p;
 
   #ifdef DONT_USE_PATHWORK
   inierror = ini.ReadIniFile( inifilename );
   #else
   inierror = ini.ReadIniFile( GetFullPathForFilename( inifilename ) );
   #endif
-  
+
   if ( inierror )
   {
     LogScreen( "Error reading ini file - Using defaults\n" );
@@ -1623,13 +1628,13 @@ void Client::ValidateConfig( void )
     strcpy(in_buffer_file[1],"buff-in" EXTN_SEP "des");
   if (isstringblank(out_buffer_file[1]))
     strcpy(out_buffer_file[1],"buff-out" EXTN_SEP "des");
-  if (isstringblank(pausefile)) 
+  if (isstringblank(pausefile))
     strcpy(pausefile,"none");
-  if (isstringblank(checkpoint_file[0])) 
+  if (isstringblank(checkpoint_file[0]))
     strcpy(checkpoint_file[0],"none");
-  if (isstringblank(checkpoint_file[1])) 
+  if (isstringblank(checkpoint_file[1]))
     strcpy(checkpoint_file[1],"none");
-  if (isstringblank(logname)) 
+  if (isstringblank(logname))
     strcpy (logname,"none");
 
 #else //ie don't use pathwork
@@ -2316,7 +2321,7 @@ s32 Client::SelectCore(void)
   s32 fastcore = cputype;
   s32 detectedtype = GetProcessorType(); //was x86id() now in cpucheck.cpp
 
-  if (fastcore == -1) 
+  if (fastcore == -1)
     fastcore = detectedtype; //use autodetect
 
   LogScreenf("Selecting %s code.\n", cputypetable[(int)(fastcore & 0xFF)+1]);
@@ -2340,7 +2345,7 @@ s32 Client::SelectCore(void)
       #define DESUNITFUNC61 p1des_unit_func_pro
       #define DESUNITFUNC62 NULL
     #endif
-    
+
     case 1:
       rc5_unit_func = rc5_unit_func_486;
       des_unit_func = DESUNITFUNC51;  //p1des_unit_func_p5;
@@ -2371,7 +2376,7 @@ s32 Client::SelectCore(void)
       des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
       des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
       break;
-    
+
     #undef DESUNITFUNC61
     #undef DESUNITFUNC62
     #undef DESUNITFUNC51
@@ -2429,12 +2434,9 @@ s32 Client::SelectCore(void)
           break;
       }
 
-      struct timeval start, stop;
-      gettimeofday( &start, NULL );
       problem.Run( benchsize / PIPELINE_COUNT , 0 );
-      gettimeofday( &stop, NULL );
-      double elapsed = (stop.tv_sec - start.tv_sec) +
-                       (((double)stop.tv_usec - (double)start.tv_usec)/1000000.0);
+
+      double elapsed = CliGetKeyrateForProblemNoSave( &problem );
 //printf("%s Core %d: %f\n",j ? "DES" : "RC5",i,elapsed);
 
 
@@ -2480,17 +2482,17 @@ void Client::SetNiceness(void)
   // renice maximally
   #if (CLIENT_OS == OS_IRIX)
     if ( niceness == 0 )     schedctl( NDPRI, 0, 200 );
-    // else                  /* nothing */;  
+    // else                  /* nothing */;
   #elif (CLIENT_OS == OS_OS2)
     if ( niceness == 0 )      DosSetPriority( 2, PRTYC_IDLETIME, 0, 0 );
     else if ( niceness == 1 ) DosSetPriority( 2, PRTYC_IDLETIME, 31, 0 );
-    // else                  /* nothing */; 
+    // else                  /* nothing */;
   #elif (CLIENT_OS == OS_WIN32)
     #if !defined(USEVIRTUALMETHODS)
-    if ( niceness != 2 )      SetPriorityClass( GetCurrentProcess(), IDLE_PRIORITY_CLASS ); 
+    if ( niceness != 2 )      SetPriorityClass( GetCurrentProcess(), IDLE_PRIORITY_CLASS );
     if ( niceness == 0 )      SetThreadPriority( GetCurrentThread() ,THREAD_PRIORITY_IDLE );
     #endif
-    // else                  /* nothing */; 
+    // else                  /* nothing */;
   #elif (CLIENT_OS == OS_MACOS)
      // nothing
   #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
@@ -2511,15 +2513,15 @@ void Client::SetNiceness(void)
   #elif (CLIENT_OS == OS_AMIGAOS)
     if ( niceness == 0 )      SetTaskPri(FindTask(NULL), -20);
     else if ( niceness == 1 ) SetTaskPri(FindTask(NULL), -10);
-    // else                  /* nothing */; 
+    // else                  /* nothing */;
   #elif (CLIENT_OS == OS_QNX)
     if ( niceness == 0 )      setprio( 0, getprio(0)-1 );
     else if ( niceness == 1 ) setprio( 0, getprio(0)+1 );
-    // else                  /* nothing */; 
+    // else                  /* nothing */;
   #else
     if ( niceness == 0 )      nice( 19 );
     else if ( niceness == 1 ) nice( 10 );
-    // else                  /* nothing */; 
+    // else                  /* nothing */;
   #endif
 }
 
@@ -2585,7 +2587,7 @@ void CliSignalHandler( int )
   SignalTriggered = UserBreakTriggered = 1;
 
   #if (CLIENT_OS == OS_RISCOS)
-    if (!guiriscos) 
+    if (!guiriscos)
       fprintf(stderr, "*Break*\n");
     _kernel_escape_seen(); // clear escape flag for polling check in Problem::Run
     signal( SIGINT, CliSignalHandler );
@@ -2597,9 +2599,9 @@ void CliSignalHandler( int )
     signal( SIGTERM, CliSignalHandler );
   #elif (CLIENT_OS == OS_DOS)
     //break_off(); //break only on screen i/o (different from setup signals)
-    //- don't reset sighandlers or we may end up in an 
+    //- don't reset sighandlers or we may end up in an
     //  infinite loop (keyboard buffer isn't clear yet)
-  #else  
+  #else
     fprintf(stderr, "*Break*\n");
     CliSetupSignals(); //reset the signal handlers
     SignalTriggered = UserBreakTriggered = 1;
@@ -2625,7 +2627,7 @@ void CliSetupSignals( void )
     signal( SIGTERM, CliSignalHandler );
   #elif (CLIENT_OS == OS_DOS)
     break_on(); //break on any dos call (different from signal handler)
-    signal( SIGINT, CliSignalHandler );  //The  break_o functions can be used 
+    signal( SIGINT, CliSignalHandler );  //The  break_o functions can be used
     signal( SIGTERM, CliSignalHandler ); // with DOS to restrict break checking
     signal( SIGABRT, CliSignalHandler ); // break_off(): raise() on conio only
     signal( SIGBREAK, CliSignalHandler ); //break_on(): raise() on any dos call
@@ -2645,7 +2647,7 @@ void CliSetupSignals( void )
     signal( SIGQUIT, CliSignalHandler );
     signal( SIGTERM, CliSignalHandler );
     signal( SIGINT, CliSignalHandler );
-    signal( SIGSTOP, CliSignalHandler ); 
+    signal( SIGSTOP, CliSignalHandler );
     //workaround NW 3.x bug - printf "%f" handler is in mathlib not clib, which
     signal( SIGABRT, CliSignalHandler ); //raises abrt if mathlib isn't loaded
   #else
@@ -2678,6 +2680,11 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
     else if ( strcmp( Argv[i], "-quiet" ) == 0 ) // No messages
     {
       quietmode=1;
+      Argv[i][0] = 0;
+    }
+    else if ( strcmp( Argv[i], "-noquiet" ) == 0 ) // Yes messages
+    {
+      quietmode=0;
       Argv[i][0] = 0;
     }
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
@@ -2742,6 +2749,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       connectoften=1;
       Argv[i][0] = 0;
     }
+#ifdef MMX_BITSLICER
     else if ( strcmp(Argv[i], "-nommx" ) == 0)
     {
 #if (CLIENT_CPU == CPU_X86) && defined(MMX_BITSLICER)
@@ -2754,6 +2762,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
 #endif
       Argv[i][0] = 0;
     }
+#endif
     else if ((i+1) < Argc) {
       if ( strcmp( Argv[i], "-b" ) == 0 ) // Buffer threshold size
       {                                           // Here in case its with a fetch/flush/update
@@ -3001,7 +3010,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
         if (minutes<0) minutes += 24*60;
         if (minutes<0) minutes = 0;
         LogScreenf("Setting time limit to %d minutes\n",minutes);
-        sprintf(hours,"%u.%02u",(unsigned int)(minutes/60), 
+        sprintf(hours,"%u.%02u",(unsigned int)(minutes/60),
                                 (unsigned int)(minutes%60));
         //was sprintf(hours,"%f",minutes/60.); -> "0.000000" which looks silly
         //and could cause a NetWare 3.x client to raise(SIGABRT)
@@ -3113,7 +3122,7 @@ void Client::PrintBanner(const char * /*clname*/)
           "for a list of command line options.\n");
 #if (CLIENT_OS == OS_DOS)
   dosCliCheckPlatform();
-#endif  
+#endif
 }
 
 // --------------------------------------------------------------------------

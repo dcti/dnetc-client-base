@@ -1,6 +1,10 @@
 // Hey, Emacs, this a -*-C++-*- file !
-// 
+//
 // $Log: cmpidefs.h,v $
+// Revision 1.6  1998/07/13 12:40:28  kbracey
+// RISC OS update.
+// Added -noquiet option.
+//
 // Revision 1.5  1998/07/05 07:04:26  jlawson
 // changes for Win32s
 //
@@ -15,14 +19,14 @@
 //
 // Revision 1.1  1998/06/26 07:11:55  daa
 // move macro defs for strcmpi and strncmpi to a seperate header file
-// 
+//
 
 /*
-  Generic strcmpi and strncmpi macros        
+  Generic strcmpi and strncmpi macros
 
-  version 1.0 
-  by DCTI 
-  Copyright 1998 Distributed Computing Technologies Inc. 
+  version 1.0
+  by DCTI
+  Copyright 1998 Distributed Computing Technologies Inc.
 */
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)
@@ -45,11 +49,11 @@
   #define strcmpi(x,y)  stricmp(x,y)
   #define strncmpi(x,y,n)  strnicmp(x,y,n)
   // SDK knows strcmpi but not strncmpi
-#elif (CLIENT_OS == OS_QNX)  
+#elif (CLIENT_OS == OS_QNX)
   // already knows strcmpi
   // already knows strncmpi
 #elif (CLIENT_OS == OS_VMS)
-  // strcmpi() has no equivalent in DEC C++ 5.0  (not true if based 
+  // strcmpi() has no equivalent in DEC C++ 5.0  (not true if based
   // on MS C)  #define NO_STRCASECMP
   #define NO_STRCASECMP
   #define strcmpi(x,y)  strcasecmp(x,y)
@@ -59,7 +63,9 @@
   // but doesn't know strncmpi, translated to strnicmp
   #define strncmpi(x,y,n) strnicmp(x,y,n)
 #elif (CLIENT_OS == OS_RISCOS)
+  extern "C" {
   #include <unixlib.h>
+  }
   #define strcmpi(x,y)  strcasecmp(x,y)
   #define strncmpi(x,y,n)  strncasecmp(x,y,n)
 #elif (CLIENT_OS == OS_SUNOS)

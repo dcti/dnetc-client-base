@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.35  1998/07/13 12:40:30  kbracey
+// RISC OS update.
+// Added -noquiet option.
+//
 // Revision 1.34  1998/07/13 03:29:59  cyruspatel
 // Added 'const's or 'register's where the compiler was complaining about
 // ambiguities. ("declaration/type or an expression")
@@ -55,23 +59,23 @@
 // and DOS. IMO, this is getting ridiculous!
 //
 // Revision 1.24  1998/06/23 13:53:37  kbracey
-// Restored line ending type. 
+// Restored line ending type.
 // Fixed paging for RISC OS.
 //
 // Revision 1.23  1998/06/23 09:23:39  remi
 // - Added gettermheight support for Linux (and possibly for other *nixes)
-//   (Add your OS to the list and add -lcurses to configure if it fit your 
+//   (Add your OS to the list and add -lcurses to configure if it fit your
 //   needs)
 // - Turn off ECHO in readkeypress for Linux/NetBSD/BeOS
 //   (so we can clear "--More--" when the user hit CR)
 // - Resolved bad interaction between termios pager and external pager
 // - Don't screw up the common "rc5des --help | more"
-//   (Don't use our own pager if the user ask for help and stdout is 
+//   (Don't use our own pager if the user ask for help and stdout is
 //   redirected, use it if the user gives a bad option)
 // - The termios pager doesn't need an extra line at the bottom
-// - Catch ^C under Win32 etc ... so the user can abort in the "--More--" 
+// - Catch ^C under Win32 etc ... so the user can abort in the "--More--"
 //   pager (why it doesn't get caught by the signal handler ?)
-// - ^Break exit immediately under Win32 (not sure the kbhit()/usleep() 
+// - ^Break exit immediately under Win32 (not sure the kbhit()/usleep()
 //   hack is the right thing to do under DOS/Netware/Win16)
 //
 // Revision 1.22  1998/06/22 17:29:09  remi
@@ -119,14 +123,14 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-static const char *id="@(#)$Id: disphelp.cpp,v 1.34 1998/07/13 03:29:59 cyruspatel Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.35 1998/07/13 12:40:30 kbracey Exp $";
 return id; }
 #endif
 
 #include "cputypes.h"
 #include "version.h"  //CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
 #include "client.h"   //client class and signaltriggered/userbreaktriggered
-#include "baseincs.h" 
+#include "baseincs.h"
 #include "cmpidefs.h" //strcmpi()
 #include "sleepdef.h"
 
@@ -152,7 +156,7 @@ return id; }
 #endif
 #endif
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2) 
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
 #define SHELL_INSERT_NL_AT_END
 #endif
 
@@ -287,7 +291,7 @@ static int gettermheight()
   // search some standard (?) locations
   char *terminfo_locations[] = {
       "/usr/share/terminfo",       // ncurses 1.9.9g defaults
-      "/usr/local/share/terminfo", // 
+      "/usr/local/share/terminfo", //
       "/usr/lib/terminfo",         // Debian 1.3x use this one
       "/usr/local/lib/terminfo",   // variation
       "/etc/terminfo",             // found something here on my machine, doesn't hurt
@@ -300,12 +304,12 @@ static int gettermheight()
     if (setupterm( NULL, 1, &termerr ) == ERR) {
       if ((termerr == 0 || termerr == -1) && *location != NULL)
         setenv( "TERMINFO", *(location++), 1);
-      else 
+      else
         return -1;
     } else
       break;
   }
-      
+
   int nlines = tigetnum( "lines" );
   // check for insane values
   if (nlines <= 0 || nlines >= 300)
@@ -416,7 +420,8 @@ void Client::DisplayHelp( const char * unrecognized_option )
   "-hide              run detached (hidden)",
 #endif
   "-percentoff        don't display block completion as a running percentage",
-  "-quiet             suppress screen output"
+  "-quiet             suppress screen output",
+  "-noquiet           don't suppress screen output (override ini quiet setting)"
   };
 
   static const char *helpheader[] =
@@ -529,7 +534,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
           for (i = 0; (l < bodylines) && (i < n); i++ )
             fprintf( outstream, "%s\n", helpbody[l++] );
           n = maxscreenlines-2; //use a two line overlap
-          if (l<bodylines && !nostdin && !foundhelprequest) 
+          if (l<bodylines && !nostdin && !foundhelprequest)
             {  //NOLESS mode: stdin is ok
               #ifndef NOMORE // very obstinate people :)
               fprintf( outstream, "--More--" );

@@ -3,25 +3,29 @@
 // Any other distribution or use of this source violates copyright.
 //
 // This module contains functions for setting the "working directory"
-// and pathifying a filename that has no dirspec. Functions need to be 
+// and pathifying a filename that has no dirspec. Functions need to be
 // initialized from main() with InitWorkingDirectoryFromSamplePaths();
-// [ ...( inipath, apppath) where inipath should not have been previously 
+// [ ...( inipath, apppath) where inipath should not have been previously
 // merged from argv[0] + default, although it doesn't hurt if it has.]
 //
-// The "working directory" is assumed to be the app's directory, unless the 
-// ini filename contains a dirspec, in which case the path to the ini file 
+// The "working directory" is assumed to be the app's directory, unless the
+// ini filename contains a dirspec, in which case the path to the ini file
 // is used. The exception here is win32/win16 which, for reasons of backward
 // compatability, always use the app's directory.
 //
 // GetFullPathForFilename() is ideally intended for use in (or just prior to)
 // a call to fopen(). This obviates the necessity of having to pre-parse
-// filenames or maintain duplicate filename buffers. In addition, each 
-// platform has its own code sections to avoid cross-platform assumptions 
+// filenames or maintain duplicate filename buffers. In addition, each
+// platform has its own code sections to avoid cross-platform assumptions
 // altogether.
 //
 // --------------------------------------------------------------------
 //
 // $Log: pathwork.cpp,v $
+// Revision 1.7  1998/07/13 12:40:31  kbracey
+// RISC OS update.
+// Added -noquiet option.
+//
 // Revision 1.6  1998/07/05 23:32:12  cyruspatel
 // Fixed missing semicolon in *nix'ish code section.
 //
@@ -38,7 +42,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *pathwork_cpp(void) {
-static const char *id="@(#)$Id: pathwork.cpp,v 1.6 1998/07/05 23:32:12 cyruspatel Exp $";
+static const char *id="@(#)$Id: pathwork.cpp,v 1.7 1998/07/13 12:40:31 kbracey Exp $";
 return id; }
 #endif
 
@@ -58,9 +62,16 @@ return id; }
   #elif defined(__TURBOC__)
     #include <dir.h>
   #endif
+#elif (CLIENT_OS == OS_RISCOS)
+  #include <swis.h>
 #endif
 
+#if (CLIENT_OS == OS_RISCOS)
+#define DEBUG
+#define MAX_FULLPATH_BUFFER_LENGTH (1024)
+#else
 #define MAX_FULLPATH_BUFFER_LENGTH (256)
+#endif
 
 // ---------------------------------------------------------------------
 
@@ -77,7 +88,7 @@ static int IsFilenamePathified( const char *filename )
     slash = strrchr( filename, '.' );
   #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
     (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || \
-    (CLIENT_OS == OS_OS2) 
+    (CLIENT_OS == OS_OS2)
     slash = strrchr( (char*) filename, '\\' );
     char *slash2 = strrchr( (char*) filename, '//' );
     if (slash2 > slash) slash = slash2;
@@ -93,7 +104,7 @@ static int IsFilenamePathified( const char *filename )
     slash = strrchr( filename, '/' );
   #endif
   return (( slash == NULL ) ? (0) : (( slash - filename )+1) );
-}      
+}
 
 // ---------------------------------------------------------------------
 
@@ -118,7 +129,7 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
     char *slash = strrchr(cwdBuffer, ':');
     if (slash != NULL) *(slash+1) = 0;   //<peterd> On the Mac, the current
     else cwdBuffer[0] = 0; // directory is always the apps directory at startup.
-    }                    
+    }
   #elif (CLIENT_OS == OS_VMS)
     {
     strcpy( cwdBuffer, inipath );
@@ -130,7 +141,7 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
       }
     if (slash != NULL) *(slash+1) = 0;
     else cwdBuffer[0] = 0;  //current directory is also always the apps dir
-    }                  
+    }
   #elif (CLIENT_OS == OS_NETWARE)
     {
     strcpy( cwdBuffer, inipath );
@@ -153,9 +164,9 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
     else cwdBuffer[0] = 0;
     }
   #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || \
-        (CLIENT_OS == OS_WIN16) 
+        (CLIENT_OS == OS_WIN16)
     {
-    if ( *apppath == 0 && *inipath == 0) //post-main call 
+    if ( *apppath == 0 && *inipath == 0) //post-main call
       {
       cwdBuffer[0] = 0;
       ::GetModuleFileName(NULL, cwdBuffer, sizeof(cwdBuffer));
@@ -166,7 +177,7 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
     if (slash != NULL) *(slash+1) = 0;
     else cwdBuffer[0] = 0;
     }
-  #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_OS2)    
+  #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_OS2)
     {
     strcpy( cwdBuffer, inipath );
     char *slash = strrchr(cwdBuffer, '/');
@@ -179,7 +190,7 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
       strcpy( cwdBuffer, apppath );
       slash = strrchr(cwdBuffer, '\\');
       }
-    if ( slash == NULL )             
+    if ( slash == NULL )
       {
       cwdBuffer[0] = cwdBuffer[ sizeof( cwdBuffer )-2 ] = 0;
       if ( getcwd( cwdBuffer, sizeof( cwdBuffer )-2 )==NULL )
@@ -203,7 +214,7 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
           _dos_getdrive( &drive3 );
           if (drive2 != drive3 || getcwd( buffer, sizeof(buffer)-1 )==NULL)
             buffer[0]=0;
-          _dos_setdrive( drive1, &drive3 );  
+          _dos_setdrive( drive1, &drive3 );
           }
         #else
           #error FIXME: need to get the current directory on that drive
@@ -215,35 +226,39 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
           if ( cwdBuffer[ strlen( cwdBuffer )-1 ] != '\\' )
             strcat( cwdBuffer, "\\" );
           }
-        }  
+        }
       }
     }
   #elif ( CLIENT_OS == OS_RISCOS )
     {
-    #error Please check RISCOS path code in pathwork.cpp
-    strcpy( cwdBuffer, inipath );
-    char *slash = strrchr( cwdBuffer, '.' );
-    if (slash == NULL) 
+    if (inipath[0] == '\0')
       {
-      strcpy( cwdBuffer, apppath );
-      slash = strrchr( cwdBuffer, '.' );
+      _swi(OS_FSControl, _INR(0,5), 37, apppath, cwdBuffer,
+                         "Run$Path", NULL, sizeof cwdBuffer);
       }
-    if ( slash != NULL )             
+    else
+      {
+      _swi(OS_FSControl, _INR(0,5), 37, inipath, cwdBuffer,
+                         NULL, NULL, sizeof cwdBuffer);
+
+      }
+    char *slash = strrchr( cwdBuffer, '.' );
+    if ( slash != NULL )
       *(slash+1) = 0;
     else cwdBuffer[0]=0;
     }
-  #else 
+  #else
     {
     strcpy( cwdBuffer, inipath );
     char *slash = strrchr( cwdBuffer, '/' );
-    if (slash == NULL) 
+    if (slash == NULL)
       {
       strcpy( cwdBuffer, apppath );
       slash = strrchr( cwdBuffer, '/' );
       }
-    if ( slash != NULL )             
+    if ( slash != NULL )
       *(slash+1) = 0;
-    else 
+    else
       strcpy( cwdBuffer, "./" );
     }
   #endif
@@ -253,13 +268,13 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
   printf( "Working directory is \"%s\"\n", cwdBuffer );
   #endif
   return 0;
-}    
+}
 
 // ---------------------------------------------------------------------
 
 const char *GetWorkingDirectory( char *buffer, unsigned int maxlen )
 {
-  if ( buffer == NULL ) 
+  if ( buffer == NULL )
     return NULL;  //could do a malloc() here. naah.
   if ( maxlen == 0 )
     return "";
@@ -268,7 +283,7 @@ const char *GetWorkingDirectory( char *buffer, unsigned int maxlen )
     {
     if ( cwdBufferLength == 0xFFFFFFFFL )  //NOMAIN support
       InitWorkingDirectoryFromSamplePaths( "", "" );
-    }  
+    }
   #endif
   if ( cwdBufferLength == 0xFFFFFFFFL ) //not initialized
     buffer[0] = 0;
@@ -277,14 +292,14 @@ const char *GetWorkingDirectory( char *buffer, unsigned int maxlen )
   else
     strcpy( buffer, cwdBuffer );
   return buffer;
-}  
+}
 
 // ---------------------------------------------------------------------
 
 const char *GetFullPathForFilename( const char *filename )
 {
   static char pathBuffer[MAX_FULLPATH_BUFFER_LENGTH+2];
-  const char *outpath = (const char *)(&pathBuffer[0]);
+  const char *outpath;
 
   if ( filename == NULL || filename[0] == 0 )
     outpath = "";
@@ -292,16 +307,16 @@ const char *GetFullPathForFilename( const char *filename )
     outpath = filename;
   else if ( GetWorkingDirectory( pathBuffer, sizeof( pathBuffer ) )==NULL )
     outpath = "";
-  else if ((strlen(pathBuffer)+strlen(filename)+1) > sizeof( pathBuffer ))
+  else if (strlen(pathBuffer)+strlen(filename)+1 > sizeof pathBuffer)
     outpath = "";
   else
-    strcat( pathBuffer, filename );
+    outpath = strcat(pathBuffer, filename);
 
-  #ifdef DEBUG  
+  #ifdef DEBUG
   printf( "got \"%s\" returning \"%s\"\n", filename, outpath );
   #endif
 
-  return ( outpath );  
+  return ( outpath );
 }
 
 // ---------------------------------------------------------------------

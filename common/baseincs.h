@@ -6,10 +6,14 @@
 //
 // This file #includes the common header files that the client needs
 // almost everywhere.
-// 
+//
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.6  1998/07/13 12:40:23  kbracey
+// RISC OS update.
+// Added -noquiet option.
+//
 // Revision 1.5  1998/07/13 00:37:25  silby
 // Changes to make MMX_BITSLICE client buildable on freebsd
 //
@@ -82,6 +86,7 @@ extern "C" {
     #include <unistd.h>
     #include <stdarg.h>
     #include <machine/endian.h>
+    #include <sys/time.h>
     #include <swis.h>
     extern unsigned int ARMident(), IOMDident();
     extern void riscos_clear_screen();

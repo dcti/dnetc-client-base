@@ -1065,7 +1065,7 @@ enabled, you tend to loose hours worth of work if the computer crashes
 or restarts.
 
 -----------------------------
-Command line argument: -quiet
+Command line argument: -quiet/-noquiet
 Config file entry: quietmode=<0/1>
 Default setting: 0
 
