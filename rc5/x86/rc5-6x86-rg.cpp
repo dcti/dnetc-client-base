@@ -4,11 +4,15 @@
 // torment.ntr.net K6 233 sean@ntr.net
 //
 // $Log: rc5-6x86-rg.cpp,v $
+// Revision 1.9  1998/11/20 23:45:08  remi
+// Added FreeBSD support in the BALIGN macro.
+//
 // Revision 1.8  1998/08/20 00:25:18  silby
-// Took out PIPELINE_COUNT checks inside .cpp x86 cores - they were causing build problems with new PIPELINE_COUNT architecture on x86.
+// Took out PIPELINE_COUNT checks inside .cpp x86 cores - they were
+// causing build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.7  1998/07/08 22:59:34  remi
-// Lots of $Id: rc5-6x86-rg.cpp,v 1.8 1998/08/20 00:25:18 silby Exp $ stuff.
+// Lots of $Id: rc5-6x86-rg.cpp,v 1.9 1998/11/20 23:45:08 remi Exp $ stuff.
 //
 // Revision 1.6  1998/07/08 18:47:45  remi
 // $Id fun ...
@@ -97,7 +101,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5_6x86_rg_cpp (void) {
-return "@(#)$Id: rc5-6x86-rg.cpp,v 1.8 1998/08/20 00:25:18 silby Exp $"; }
+return "@(#)$Id: rc5-6x86-rg.cpp,v 1.9 1998/11/20 23:45:08 remi Exp $"; }
 #endif
 
 #define CORE_INCREMENTS_KEY
@@ -121,7 +125,7 @@ return "@(#)$Id: rc5-6x86-rg.cpp,v 1.8 1998/08/20 00:25:18 silby Exp $"; }
 #define _(s)    __(s)
 #define __(s)   #s
 
-#if defined(__NetBSD__) || defined(__bsdi__)
+#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__))
 #define BALIGN(x)
 #else
 #define BALIGN(x) ".balign 4"

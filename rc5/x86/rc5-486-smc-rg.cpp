@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-486-smc-rg.cpp,v $
+// Revision 1.3  1998/11/20 23:45:08  remi
+// Added FreeBSD support in the BALIGN macro.
+//
 // Revision 1.2  1998/11/18 16:04:19  remi
 // Nothing changed, just a few numbers :
 //
@@ -45,7 +48,7 @@
 // build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.6  1998/07/08 22:59:33  remi
-// Lots of $Id: rc5-486-smc-rg.cpp,v 1.2 1998/11/18 16:04:19 remi Exp $ stuff.
+// Lots of $Id: rc5-486-smc-rg.cpp,v 1.3 1998/11/20 23:45:08 remi Exp $ stuff.
 //
 // Revision 1.5  1998/07/08 18:47:43  remi
 // $Id fun ...
@@ -85,7 +88,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5_486_smc_rg_cpp (void) {
-return "@(#)$Id: rc5-486-smc-rg.cpp,v 1.2 1998/11/18 16:04:19 remi Exp $"; }
+return "@(#)$Id: rc5-486-smc-rg.cpp,v 1.3 1998/11/20 23:45:08 remi Exp $"; }
 #endif
 
 #define CORE_INCREMENTS_KEY
@@ -109,8 +112,8 @@ return "@(#)$Id: rc5-486-smc-rg.cpp,v 1.2 1998/11/18 16:04:19 remi Exp $"; }
 #define _(s)    __(s)
 #define __(s)   #s
 
-#if defined(__NetBSD__) || defined(__bsdi__)
-#define BALIGN(x)
+#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__))
+#define BALIGN(x) ".align 2"
 #else
 #define BALIGN(x) ".balign 4"
 #endif
