@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.90  1998/07/11 01:36:28  silby
+// switched order of lurk and connectrequested code so that it would work properly with the win32 gui, also fixed a bug with win32gui forced fetches.
+//
 // Revision 1.89  1998/07/10 04:34:55  silby
 // Changes to connectrequested variable to allow better GUI interface with the main thread for requested flushes,fetches, and updates.
 //
@@ -15,7 +18,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.89 1998/07/10 04:34:55 silby Exp $.
+// Tweaked $Id: client.cpp,v 1.90 1998/07/11 01:36:28 silby Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -191,7 +194,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.89 1998/07/10 04:34:55 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.90 1998/07/11 01:36:28 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -2120,55 +2123,12 @@ PreferredIsDone1:
     #endif
 
     //------------------------------------
-    // Lurking
-    //------------------------------------
-
-#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
-    {
-      if(lurk)
-         {
-         if (LurkStatus() == 0) // We're not connected
-            {
-            if(oldlurkstatus != 0)    // Lost the connection
-              {
-               Log("\nDialup Connection Disconnected");
-               oldlurkstatus = 0;// So we know next time through this loop
-               if(lurk == 2) // Lurk-only mode
-                  {
-                  Log(" - Connections will not be initiated by the client.");
-// setting offline mode is BAD for gui clients, different workaround needed
-//                  if (offlinemode == 0) offlinemode = 1; // set us offline,
-                    // lurkonly needs a live connect - also, don't
-                    // interfere if offlinemode already ==1 or ==2
-                  connectrequested = 0; // cancel any connection requests
-                  }
-               Log("\n");
-               }
-            }
-         else // We're connected!
-            {
-            connectrequested=2;// Trigger an update
-            if(oldlurkstatus != 1) // We previously weren't connected
-               {
-               // Only put out message the first time.
-               Log("\nDialup Connection Detected\n");
-               oldlurkstatus = 1;
-// setting offlinemode is bad for gui clients.
-//               if ((lurk == 2) && (offlinemode != 2))// lurk only mode
-//                  offlinemode = 0; // cancel previous offline setting
-               }
-            }
-         }
-    }
-#endif
-
-    //------------------------------------
     //special update request (by keyboard or by lurking) handling
     //------------------------------------
 
     #if (defined(MULTITHREAD) && !defined(NONETWORK))
     {
-      if ((connectoften && ((connectloops++)==19)) || connectrequested )
+      if ((connectoften && ((connectloops++)==19)) || (connectrequested > 0) )
       {
         // Connect every 20*3=60 seconds
         // Non-MT 60 + (time for a client.run())
@@ -2193,7 +2153,7 @@ PreferredIsDone1:
           LogScreen("Flush request completed.\n");
           connectrequested=0;
           }
-        else if (connectrequested == 3) // forced fetch
+        else if (connectrequested == 4) // forced fetch
           {
           Fetch(0,NULL,1);
           Fetch(1,NULL,1);
@@ -2205,6 +2165,45 @@ PreferredIsDone1:
       }
     }
     #endif
+
+    //------------------------------------
+    // Lurking
+    //------------------------------------
+
+#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+    {
+      if(lurk)
+         {
+         if (LurkStatus() == 0) // We're not connected
+            {
+            if(oldlurkstatus != 0)    // Lost the connection
+              {
+               Log("\nDialup Connection Disconnected");
+               oldlurkstatus = 0;// So we know next time through this loop
+               if(lurk == 2) // Lurk-only mode
+                  {
+                  Log(" - Connections will not be initiated by the client.");
+                    // lurkonly needs a live connect - also, don't
+                    // interfere if offlinemode already ==1 or ==2
+                  connectrequested = 0; // cancel any connection requests
+                  }
+               Log("\n");
+               }
+            }
+         else // We're connected!
+            {
+            connectrequested=2;// Trigger an update
+            if(oldlurkstatus != 1) // We previously weren't connected
+               {
+               // Only put out message the first time.
+               Log("\nDialup Connection Detected\n");
+               oldlurkstatus = 1;
+               }
+            }
+         }
+    }
+#endif
+
 
     //------------------------------------
     //sleep, run or pause...
