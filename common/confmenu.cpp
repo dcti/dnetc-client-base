@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.29  1999/02/14 03:50:08  silby
+// Fixed base64 encoding.
+//
 // Revision 1.28  1999/02/14 02:57:46  silby
 // Fixed two bugs with httpid handling.
 //
@@ -115,7 +118,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.28 1999/02/14 02:57:46 silby Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.29 1999/02/14 03:50:08 silby Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -172,7 +175,7 @@ static unsigned char base64table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
 
 int base64_encode(char *outbuf, const char *inbuf) //outbuff must be at least
 {                                                 //(strlen(inbuf))*4/3) bytes  
-  unsigned int length = strlen(inbuf)+1;           
+  unsigned int length = strlen(inbuf)-1;           
   
   #define B64_ENC(Ch) (char) (base64table[(char)(Ch) & 63])
 
