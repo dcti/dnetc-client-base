@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.16  1998/10/27 00:39:24  remi
+// - Added a few #ifdef to allow compilation of a glibc client without threads.
+// - #ifdef'ed the old niceness/priority code
+// - removed Client::SetContestDoneState() (already in buffupd.cpp)
+//
 // Revision 1.15  1998/10/25 11:26:35  silby
 // Added call to yield_pump in go_mt for win32 so that new CLI is responsive.
 //
@@ -64,7 +69,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.15 1998/10/25 11:26:35 silby Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.16 1998/10/27 00:39:24 remi Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -138,9 +143,9 @@ struct thread_param_block
     int threadID;
   #elif (CLIENT_OS == OS_BEOS)
     thread_id threadID;
-  #elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING) 
+  #elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && defined(MULTITHREAD)
     pthread_t threadID;
-  #elif defined(_POSIX_THREADS) || defined(_PTHREAD_H)
+  #elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && defined(MULTITHREAD)
     pthread_t threadID;
   #else
     int threadID;
@@ -732,8 +737,8 @@ static int __StopThread( struct thread_param_block *thrparams )
         wait_for_thread(thrparams->threadID, &be_exit_value);
         #elif (CLIENT_OS == OS_NETWARE)
         nwCliWaitForThreadExit( thrparams->threadID ); //in netware.cpp
-        #elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING) || \
-              defined(_POSIX_THREADS) || defined(_PTHREAD_H)
+        #elif (defined(_POSIX_THREAD_PRIORITY_SCHEDULING) || \
+              defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && defined(MULTITHREAD)
         pthread_join( thrparams->threadID, (void **)NULL);
         #endif
         }
@@ -878,8 +883,10 @@ int Client::Run( void )
 
   struct thread_param_block *thread_data_table = NULL;
 
+#ifdef OLD_NICENESS
   //priority is a temporary hack
   unsigned int priority = ((niceness==2)?(9):((niceness==1)?(4):(0)));
+#endif
   int TimeToQuit = 0, exitcode = 0, running_threaded = 0;
   unsigned int load_problem_count = 0, planned_problem_count = 0;
   unsigned int getbuff_errs = 0;
@@ -1500,42 +1507,6 @@ int Client::DoCheckpoint( unsigned int load_problem_count )
       }  // for ( prob_i = 0 ; prob_i < load_problem_count ; prob_i++)
     } // if ( !nodiskbuffers )
 
-  return 0;
-}
-
-// ---------------------------------------------------------------------------
-
-s32 Client::SetContestDoneState( Packet * packet)
-{
-  u32 detect;
-
-  // Set the contestdone state, if possible...
-  // Move contestdone[] from 0->1, or 1->0.
-  detect = 0;
-  if (packet->descontestdone == ntohl(0xBEEFF00DL)) {
-    if (contestdone[1]==0) {detect = 2; contestdone[1] = 1;}
-  } else {
-    if (contestdone[1]==1) {detect = 2; contestdone[1] = 0;}
-  }
-  if (detect == 2) {
-    Log( "Received notification: DES contest %s.\n",
-         (contestdone[(int)detect-1]?"is not currently active":"has started") );
-  }
-
-  if (packet->rc564contestdone == ntohl(0xBEEFF00DL)) {
-    if (contestdone[0] == 0) {detect = 1; contestdone[0] = 1;}
-  } else {
-    if (contestdone[0] == 1) {detect = 1; contestdone[0] = 0;}
-  }
-  if (detect == 1) {
-    Log( "Received notification: RC5 CONTEST %s\n",
-        (contestdone[(int)detect-1]?"IS OVER":"HAS STARTED") );
-  }
-
-  if (detect != 0) {
-    WriteContestandPrefixConfig();
-    return 1;
-  }
   return 0;
 }
 
