@@ -373,25 +373,23 @@ printf("------------------------------------------------------------\n\n");
            )
            && (options[choice].optionscreen==currentmenu)
           )
+          {
+          printf("%d)  %s ==> ",
+                  (int)(choice + 1), options[choice].description);
 
           if (options[choice].type==1)
              {
              if (options[choice].thevariable != NULL)
-               printf("%d)  %s ==> %s\n",
-                      (int)(choice + 1), options[choice].description,
-                      (char *)options[choice].thevariable);
+               printf("%s\n",(char *)options[choice].thevariable);
              }
           else if (options[choice].type==2)
-             printf("%d)  %s ==> %li\n",
-                    (int)(choice + 1), options[choice].description,
-                    (long)*(s32 *)options[choice].thevariable);
+             printf("%li\n",(long)*(s32 *)options[choice].thevariable);
           else if (options[choice].type==3)
              {
              sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
-             printf("%d)  %s ==> %s\n",
-                    (int)(choice + 1), options[choice].description,
-                    str);
+             printf("%s\n",str);
              };
+          };
     }
     printf("\n0)  Return to main menu\n");
 
@@ -452,23 +450,21 @@ printf("------------------------------------------------------------\n\n");
     }
 
 
+    printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: ",
+            options[choice].description, options[choice].comments,
+            options[choice].defaultsetting);
 
     // prompt for new value
     if (options[choice].type==1)
-      printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
-              options[choice].description, options[choice].comments,
-              options[choice].defaultsetting, (char *)options[choice].thevariable);
+      printf("%s\nNew Setting --> ",(char *)options[choice].thevariable);
     else if (options[choice].type==2)
-      printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: %li\nNew Setting --> ",
-              options[choice].description, options[choice].comments,
-              options[choice].defaultsetting, (long)*(s32 *)options[choice].thevariable);
+      printf("%li\nNew Setting --> ",(long)*(s32 *)options[choice].thevariable);
     else if (options[choice].type==3)
       {
       sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
-      printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
-              options[choice].description, options[choice].comments,
-              options[choice].defaultsetting, str);
+      printf("%s\nNew Setting --> ",str);
       };
+
     fflush( stdout );
     fgets(parm, sizeof(parm), stdin);
     for ( p = parm; *p; p++ )
