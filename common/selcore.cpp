@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.59 2000/02/23 14:17:51 snake Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.60 2000/04/19 23:21:48 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -859,8 +859,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     extern "C" u32 rc5_unit_func_ntalpha_michmarc( RC5UnitWork *, u32 );
   #else
     //axp-bmeyer.cpp around axp-bmeyer.s
-//    extern "C" u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, u32 );
-    u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, u32 );
+    extern "C" u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, u32 );
   #endif
 #else
   #error "How did you get here?" 
