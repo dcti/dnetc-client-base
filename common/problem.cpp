@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.17 1999/10/22 06:12:57 gregh Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.18 1999/10/23 07:01:33 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -657,7 +657,8 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
   contest = contestid;
   tslice = _timeslice;
   coresel = __core_picker(this, contestid );
-  if (coresel < 0 || coresel != selcoreValidateCoreIndex( contestid, coresel ))
+  if (coresel < 0 || 
+     (coresel > 0 && coresel != selcoreValidateCoreIndex(contestid, coresel)))
     return -1;
 
   //----------------------------------------------------------------
