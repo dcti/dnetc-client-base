@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34 1999/05/07 04:28:19 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.35 1999/05/30 17:14:43 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -92,14 +92,18 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
 { CFGTXT("Project Priority"), "DES,CSC,OGR,RC5",
   CFGTXT(
   "Enter the order in which the client will search for work, for instance\n"
-  "the oder \"DES,RC5\" specifies that DES packets (if found) will be\n"
+  "the oder \"OGR,RC5\" specifies that OGR packets (if available) will be\n"
   "crunched before RC5 packets.\n"
   "To disable a project, append \":0\" to project's name. For example,\n"
   "\"DES,OGR=0,RC5\" will disable the client's OGR support.\n"
   "Project names not found on the list when the client starts will be\n"
   "inserted automatically according to their default priority. Thus,\n"
-  "specifying \"DES,OGR\" is equivalent to specifying \"DES,CSC,OGR,RC5\",\n"
+  "specifying \"RC5,OGR\" is equivalent to specifying \"DES,CSC,RC5,OGR\",\n"
   "and \"OGR,DES\" is equivalent to \"CSC,OGR,DES,RC5\".\n"
+  "Note: DES micro-contests are of extremely short duration, and when active\n"
+  "(and not disabled) the client will clear the input buffers of all other\n"
+  "projects and so ensure that clients sharing buffers do not inadvertantly\n"
+  "work on the \"wrong\" project during the few hours that DES is running.\n"
   ),CONF_MENU_MISC,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 
 /* ------------------------------------------------------------ */
@@ -126,6 +130,10 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "buffer. Note: if a path is not specified, the files will be created in the\n"
   "same directory as the .ini file, which is - by default - created in the same\n"
   "directory as rc5des itself.\n"
+  "*Note*: A new buffer file format is forthcoming. The new format will have\n"
+  "native support for First-In-First-Out packets (this functionality is currently\n"
+  "available but is not efficient when used with large buffers); improved locking\n"
+  "semantics; all buffers for all projects will be contained in a single file.\n"
   ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 //12
 { CFGTXT("Out-Buffer Filename Prefix"), BUFFER_DEFAULT_OUT_BASENAME,
@@ -139,6 +147,8 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "buffer. Note: if a path is not specified, the files will be created in the\n"
   "same directory as the .ini file, which is - by default - created in the same\n"
   "directory as rc5des itself.\n"
+  "*Note*: this option will eventually disappear. Refer to the \"In-Buffer\n"
+  "Filename Prefix\" option for details.\n"
   ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 //13
 { CFGTXT("Checkpoint Filename"),"",
@@ -190,9 +200,9 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "updated frequently while a connection is detected.\n" 
   ),CONF_MENU_BUFF,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
 //19
-{ CFGTXT("Preferred RC5/DES packet size (2^X keys/packet)"),"31 (default)",
+{ CFGTXT("Preferred RC5 packet size (2^X keys/packet)"),"31 (default)",
   CFGTXT(
-  "When fetching RC5 or DES packets from a keyserver, the client will request\n"
+  "When fetching RC5 packets from a keyserver, the client will request\n"
   "packets with the size you specify in this option. Running the client with\n"
   "the -benchmark switch will give you a hint as to what the best packet size\n"
   "for this machine might be. Packet sizes are specified as powers of 2.\n"
@@ -200,6 +210,14 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "Note: the number you specify is the *preferred* size. Although the keyserver\n"
   "will do its best to serve that size, there is no guarantee that it will\n"
   "always do so.\n"
+  "*Warning*: clients older than v2.7106 do not know how to deal with packets\n"
+  "larger than 2^31 keys. Do not share buffers with such a client if you set\n"
+  "the preferred packet size to a value greater than 31.\n"
+  "*Note*: Currently, the preferred blocksize for DES is always 31 if the RC5\n"
+  "preferred packet size is less than or equal to 31, and is always 33 if the\n"
+  "RC5 preferred packet size is greater than 31. This is temporary: future\n"
+  "client releases will select the DES preferred packet size based on the\n"
+  "RC5:DES crunch speed ratio.\n"
   ),CONF_MENU_BUFF,CONF_TYPE_INT,NULL,NULL,28,33,NULL},
 //20
 { CFGTXT("Packet fetch/flush threshold"), "10 (default)",
@@ -213,11 +231,11 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "if you have a fixed (static) connection to the internet, or the cost of your\n"
   "dialup connection is negligible.\n"
   "In general, you should not buffer more than your client(s) can complete in\n"
-  "one day (running the client with -benchmark will give you a hint as what\n"
-  "might be accomplished by this machine in one day), and you should think twice\n"
-  "about buffering more than can be accomplished in 3 days.\n"
-  "You may also force a buffer exchange by starting the client with the -update\n"
-  "option.\n"
+  "one day (running the client with -benchmark will give you a hint)\n"
+  "You may also force a buffer exchange by starting the client with -update.\n"
+  "*Note*: this option is scheduled to disappear. It will be replaced by a\n"
+  "time-based option, ie something along the lines of \"Number of work-hours\n"
+  "to buffer\".\n"
   ),CONF_MENU_BUFF,CONF_TYPE_INT,NULL,NULL,1,MAXBLOCKSPERBUFFER,NULL},
 
 /* ------------------------------------------------------------ */
@@ -234,60 +252,51 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "processor is detected incorrectly.\n"
   ),CONF_MENU_PERF,CONF_TYPE_INT,NULL,NULL,0,0,NULL},
 //23
-{ CFGTXT("Number of processors available"), "-1 (autodetect)",
-#if (CLIENT_OS == OS_RISCOS)
+{ CFGTXT("Number of crunchers to run simultaneously"), "-1 (autodetect)",
+  /* CFGTXT( */
   "This option specifies the number of threads you want the client to work on.\n"
   "On multi-processor machines this should be set to the number of processors\n"
   "available or to -1 to have the client attempt to auto-detect the number of\n"
   "processors. Multi-threaded clients can be forced to run single-threaded by\n"
   "setting this option to zero.\n"
+#if (CLIENT_OS == OS_RISCOS)
   "Under RISC OS, processor 1 is the ARM, and processor 2 is an x86 processor\n"
   "card, if fitted.\n"
-#else
-  CFGTXT(
-  "This option specifies the number of threads you want the client to work on.\n"
-  "On multi-processor machines this should be set to the number of processors\n"
-  "available or to -1 to have the client attempt to auto-detect the number of\n"
-  "processors. Multi-threaded clients can be forced to run single-threaded by\n"
-  "setting this option to zero.\n"
-  )
 #endif
-  ,CONF_MENU_PERF,CONF_TYPE_INT,NULL,NULL,-1,128,NULL},
+  /*) */,CONF_MENU_PERF,CONF_TYPE_INT,NULL,NULL,-1,128,NULL},
 //24
-{ CFGTXT("Priority level to run at"), "0 (lowest/idle)",
-#if (CLIENT_OS == OS_NETWARE)
-  CFGTXT(
-  "The priority option is ignored on this machine. The distributed.net client\n"
-  "for NetWare dynamically adjusts its process priority.\n"
-  )
-#elif (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN32S)
-  CFGTXT(
-  "The priority option is ignored on this machine. distributed.net clients\n"
-  "for Windows always run at lowest ('idle') priority.\n"
-  "This does not mean that the client will run slower than at a higher\n"
-  "priority. It simply means that all other processes have a better chance\n"
-  "to get processor time than client. If none of them want/need processor\n"
-  "time, the client will get it.\n"
-  )
-#elif (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS)
+{ CFGTXT("Priority level to run at"), "0 (lowest/at-idle)",
+#if (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS)
   CFGTXT(
   "The priority option is ignored on this machine. The distributed.net client\n"
   "for "CLIENT_OS_NAME" dynamically adjusts its process priority.\n"
   )
-#else
+#elif (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S) //||(CLIENT_OS==OS_WIN32)
   CFGTXT(
+  "The priority option is ignored on this machine. distributed.net clients\n"
+  "for Windows always run at lowest ('idle') priority.\n"
+  )
+#else
+  /* CFGTXT( */
   "The higher the client's priority, the greater will be its demand for\n"
   "processor time. The operating system will fulfill this demand only after\n"
   "the demands of other processes with a higher or equal priority are fulfilled\n"
-  "first." /*" That is, the higher the priority, the more often a\n"
-  "a process will get a chance to run. Whether that process then actually\n"
-  "does something with the chance or simply allows the operating system to pass\n"
-  "it to another process (or the client) is another matter." */ " At priority zero,\n"
-  "the client will get processing time only when all other processes are idle\n"
-  "(give up their chance to run). At priority nine, the client will always get\n"
-  "CPU time unless there is a time-critical process waiting to be run - this is\n"
-  "obviously not a good idea unless the machine is running no other programs.\n"
-  )
+  "first. At priority zero, the client will get processing time only when all\n"
+  "other processes are idle (give up their chance to run). At priority nine, the\n"
+  "client will always get CPU time unless there is a time-critical process waiting\n"
+  "to be run - this is obviously not a good idea unless the client is running on\n"
+  "a machine that does nothing else.\n"
+  "On *nix'ish OSs, the higher the priority, the less nice(1) the process.\n"
+  #if (CLIENT_OS == OS_WIN32)
+  "*Warning*: Running the Win32 client at any priority level other than zero is\n"
+  "destructive to Operating System safety. Win32's thread scheduler is not nice.\n"
+  "Besides, a zero priority does not mean that the client will run slower than at\n"
+  "a higher priority. It simply means that all other processes have a better\n"
+  "*chance* to get processor time than client. If none of them want/need processor\n"
+  "time, the client will get it. Do *not* change the value of this option unless\n"
+  "you are intimately familiar with the way Win32 thread scheduling works.\n"
+  #endif
+  /* ) */
 #endif
   ,CONF_MENU_PERF, CONF_TYPE_INT, NULL, NULL, 0, 9, NULL },
 
