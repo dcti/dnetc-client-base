@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.41 2001/01/09 00:45:43 mfeiri Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.42 2001/01/10 01:51:29 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -103,41 +103,40 @@ static const u32 des_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
 // OGR test cases
 // [0] - expected number of nodes (~ if no solution expected to be found)
 // [1] - number of marks
-// [2..7] - first differences
+// [2..9] - first differences
 static const s32 ogr_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
-  { 0x000D1B52, 21, 2, 22, 32, 21, 5, 1},
-  {~0x0057102A, 21, 1, 2, 4, 5, 8, 10},
-  {~0x00A8EE70, 21, 2, 22, 32, 21, 5, 2},
-  {~0x007D1FD7, 22, 1, 2, 4, 5, 8, 10},
-  { 0x0015ACEC, 22, 1, 8, 5, 29, 27, 36},
-  {~0x001BE4B3, 22, 1, 8, 5, 29, 27, 37},
-  {~0x00441720, 23, 1, 2, 4, 5, 8, 10},
-  { 0x000EFA83, 23, 3, 4, 10, 44, 5, 25},
-  {~0x0027C638, 23, 3, 4, 10, 44, 5, 26},
-  {~0x01298F41, 24, 1, 2, 4, 5, 8, 10, 14},
-  { 0x000ADD64, 24, 9, 24, 4, 1, 59, 25},
-  {~0x003C3A07, 24, 9, 24, 4, 1, 59, 26},
-  {~0x0057102A, 21, 1, 2, 4, 5, 8, 10},
-  { 0x000D1B52, 21, 2, 22, 32, 21, 5, 1},
-  {~0x00A8EE70, 21, 2, 22, 32, 21, 5, 2},
-  {~0x007D1FD7, 22, 1, 2, 4, 5, 8, 10},
-  { 0x0015ACEC, 22, 1, 8, 5, 29, 27, 36},
-  {~0x001BE4B3, 22, 1, 8, 5, 29, 27, 37},
-  {~0x00441720, 23, 1, 2, 4, 5, 8, 10},
-  { 0x000EFA83, 23, 3, 4, 10, 44, 5, 25},
-  {~0x0027C638, 23, 3, 4, 10, 44, 5, 26},
-  {~0x01298F41, 24, 1, 2, 4, 5, 8, 10, 14},
-  { 0x000ADD64, 24, 9, 24, 4, 1, 59, 25},
-  {~0x003C3A07, 24, 9, 24, 4, 1, 59, 26},
-  {~0x0057102A, 21, 1, 2, 4, 5, 8, 10},
-  { 0x000D1B52, 21, 2, 22, 32, 21, 5, 1},
-  {~0x00A8EE70, 21, 2, 22, 32, 21, 5, 2},
-  {~0x007D1FD7, 22, 1, 2, 4, 5, 8, 10},
-  { 0x0015ACEC, 22, 1, 8, 5, 29, 27, 36},
-  {~0x001BE4B3, 22, 1, 8, 5, 29, 27, 37},
-  {~0x00441720, 23, 1, 2, 4, 5, 8, 10},
-  { 0x000EFA83, 23, 3, 4, 10, 44, 5, 25},
-  //{0, 25, 12, 17, 10, 33, 19, 55},
+  { 0x000D1B52, 21,  2, 22, 32, 21,  5,  1},
+  {~0x0057102A, 21,  1,  2,  4,  5,  8, 10},
+  {~0x00A8EE70, 21,  2, 22, 32, 21,  5,  2},
+  {~0x007D1FD7, 22,  1,  2,  4,  5,  8, 10},
+  { 0x0015ACEC, 22,  1,  8,  5, 29, 27, 36},
+  {~0x001BE4B3, 22,  1,  8,  5, 29, 27, 37},
+  {~0x00441720, 23,  1,  2,  4,  5,  8, 10},
+  { 0x000EFA83, 23,  3,  4, 10, 44,  5, 25},
+  {~0x0027C638, 23,  3,  4, 10, 44,  5, 26},
+  {~0x01298F41, 24,  1,  2,  4,  5,  8, 10, 14},
+  { 0x000ADD64, 24,  9, 24,  4,  1, 59, 25},
+  {~0x003C3A07, 24,  9, 24,  4,  1, 59, 26},
+  {~0x02EC64E8, 25,  1,  2,  4,  5,  8, 10, 14, 21},
+  { 0x0018EE3D, 25, 12, 17, 10, 33, 19, 55, 11},
+  {~0x0120C133, 25,  2,  7, 22,  5, 14,  4, 64, 37},
+  {~0x0057102A, 21,  1,  2,  4,  5,  8, 10},
+  { 0x000D1B52, 21,  2, 22, 32, 21,  5,  1},
+  {~0x00A8EE70, 21,  2, 22, 32, 21,  5,  2},
+  {~0x007D1FD7, 22,  1,  2,  4,  5,  8, 10},
+  { 0x0015ACEC, 22,  1,  8,  5, 29, 27, 36},
+  {~0x001BE4B3, 22,  1,  8,  5, 29, 27, 37},
+  {~0x00441720, 23,  1,  2,  4,  5,  8, 10},
+  { 0x000EFA83, 23,  3,  4, 10, 44,  5, 25},
+  {~0x0027C638, 23,  3,  4, 10, 44,  5, 26},
+  {~0x01298F41, 24,  1,  2,  4,  5,  8, 10, 14},
+  { 0x000ADD64, 24,  9, 24,  4,  1, 59, 25},
+  {~0x003C3A07, 24,  9, 24,  4,  1, 59, 26},
+  {~0x02EC64E8, 25,  1,  2,  4,  5,  8, 10, 14, 21},
+  { 0x0018EE3D, 25, 12, 17, 10, 33, 19, 55, 11},
+  {~0x0120C133, 25,  2,  7, 22,  5, 14,  4, 64, 37},
+  {~0x0057102A, 21,  1,  2,  4,  5,  8, 10},
+  { 0x000D1B52, 21,  2, 22, 32, 21,  5,  1},
   //{0, 26, 1, 32, 50, 21, 6, 14},
   //{0, 27, 3, 12, 26, 25, 29, 2},
   //{0, 28, 3, 12, 26, 25, 29, 2},
@@ -351,15 +350,13 @@ long SelfTest( unsigned int contest )
         #if defined(HAVE_OGR_CORES)
         case OGR: {
           contestwork.ogr.workstub.stub.marks = (u16)((*test_cases)[testnum][1]);
-          contestwork.ogr.workstub.stub.length = 6;
-          for (int i = 0; i < TEST_CASE_DATA-2; i++) {
+          contestwork.ogr.workstub.stub.length = 0;
+          for (int i = 0; i < TEST_CASE_DATA-2; i++, contestwork.ogr.workstub.stub.length++) {
             contestwork.ogr.workstub.stub.diffs[i] = (u16)((*test_cases)[testnum][2+i]);
-            if (contestwork.ogr.workstub.stub.diffs[i] == 0) {
-              contestwork.ogr.workstub.stub.length = (u16)i;
+            if (contestwork.ogr.workstub.stub.diffs[i] == 0)
               break;
-            }
           }
-          contestwork.ogr.workstub.worklength = contestwork.ogr.workstub.stub.length;
+          contestwork.ogr.workstub.worklength = 0;
           contestwork.ogr.nodes.lo = contestwork.ogr.nodes.hi = 0;
           }
           break;
