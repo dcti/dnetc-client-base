@@ -22,17 +22,16 @@ RC5PATH = rc5
 CSCPATH = csc
 OGRPATH = ogr
 PLATPATH = platforms
-NASMOMFSTUB = rc5\x86\nasm\omf32.asm
+MODULEDEFNAME = $(OUTPUTPATH)\dnetc.def
 
 
-# define variable to existence to enable debugging
+# define variable to existence to enable debugging.
 #DEBUG=1
 
-# define to do MMX RC5 or DES cores
-# (MMX RC5 currently doesn't work because no
-# 64-bit int type is available under Borland C++)
-#MMXRC5=1
-#MMXDES=1
+# define to control which additional contests are included.
+#HAVE_DES_CORES=1
+#HAVE_CSC_CORES=1
+HAVE_OGR_CORES=1
 
 
 
@@ -64,8 +63,8 @@ BCCOPTS = $(BCCOPTS) /DMMX_BITSLICER /DBIT_64 /DMEGGS /DKWAN
 !endif
 
 
-.path.asm = $(RC5PATH)\x86\nasm;$(DESPATH)\mmx-bitslice;$(PLATPATH)
-.path.cpp = $(COMMONPATH);$(DESPATH);$(RC5PATH);$(PLATPATH)/win32cli
+.path.asm = $(RC5PATH)\x86\nasm;$(DESPATH)\mmx-bitslice;$(CSCPATH)\x86;$(PLATPATH)
+.path.cpp = $(COMMONPATH);$(RC5PATH);$(DESPATH);$(CSCPATH);$(OGRPATH);$(PLATPATH)/win32cli
 .path.obj = $(OUTPUTPATH)
 
 all:	$(EXENAME)
@@ -133,6 +132,7 @@ SCR_OBJS =                           \
 CUI_OBJS =                           \
         $(OUTPUTPATH)/w32cuis.obj
 
+CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj
 
 CLI_LIBS = noeh32.lib cw32mt.lib import32.lib
 
@@ -201,8 +201,10 @@ BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES
 
 # --------------------------------------------
 
+#NASMOMFSTUB = rc5\x86\nasm\omf32.asm
+#nasmw $(NASMOPTS) -p$(NASMOMFSTUB) -i $(<D:/=\) $(<:/=\) -o $(@:/=\)
 .asm.obj:
-        nasmw $(NASMOPTS) -p$(NASMOMFSTUB) -i $(<D:/=\) $(<:/=\) -o $(@:/=\)
+        nasmw $(NASMOPTS) -DOS2 -i $(<D:/=\) $(<:/=\) -o $(@:/=\)
 
 
 .cpp.obj:
@@ -219,10 +221,32 @@ BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES
 
 # --------------------------------------------
 
-$(EXENAME):   $(COMMON_OBJS) $(PLAT_OBJS) $(RC5_OBJS) \
-		$(DES_OBJS) $(CSC_OBJS) $(OGR_OBJS) $(NASM_OBJS)
+# Apparently it is necessary to supply a module definition file (*.DEF)
+# for our exe, since ILINK32 says it contains "Additional segments".
+
+$(MODULEDEFNAME):
+	if exist $(MODULEDEFNAME:/=\) del $(MODULEDEFNAME:/=\)
+	copy &&|
+CODE	PRELOAD MOVEABLE DISCARDABLE
+DATA	PRELOAD MOVEABLE MULTIPLE   ; (for applications)
+	PRELOAD MOVEABLE SINGLE   ; (for DLLs)
+HEAPSIZE	4096
+STACKSIZE	1048576
+SEGMENTS
+	_TEXT
+	_DATA
+| $(MODULEDEFNAME:/=\)
+
+# --------------------------------------------
+
+# This is the main client exe compilation target rule.
+
+ALLCLIENTOBJS = $(COMMON_OBJS) $(PLAT_OBJS) $(CHIP_OBJS) \
+		$(RC5_OBJS) $(DES_OBJS) $(CSC_OBJS) $(OGR_OBJS)
+
+$(EXENAME):   $(MODULEDEFNAME) $(ALLCLIENTOBJS)
         ilink32 /ap $(TLINKOPTS) @&&|
-c0w32.obj $(**:/=\),$(EXENAME:/=\),,$(CLI_LIBS)
+c0w32.obj $(ALLCLIENTOBJS:/=\),$(EXENAME:/=\),,$(CLI_LIBS),$(MODULEDEFNAME)
 |
 
 # --------------------------------------------
