@@ -10,6 +10,9 @@
 */
 //
 // $Log: netinit.cpp,v $
+// Revision 1.14  1999/01/01 01:38:08  cramer
+// use explicit casts... NULL ain't always 'char *'.
+//
 // Revision 1.13  1998/12/31 19:58:13  silby
 // Commented out a line of debug code.
 //
@@ -59,7 +62,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.13 1998/12/31 19:58:13 silby Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.14 1999/01/01 01:38:08 cramer Exp $"; }
 #endif
 
 //--------------------------------------------------------------------------
@@ -412,7 +415,7 @@ Network *NetOpen(const char *keyserver, s32 keyserverport, int nofallback,
   if ( __netInitAndDeinit( +1 ) < 0)
     return NULL; 
 
-  net = new Network( ((keyserver && !*keyserver)?(NULL):(keyserver)), 
+  net = new Network( ((keyserver && !*keyserver)?((char *)NULL):(keyserver)), 
                      (s16)keyserverport, nofallback, autofindks, iotimeout );
   success = ( net != NULL );
     
