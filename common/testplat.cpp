@@ -7,9 +7,9 @@
  * Specify 'cpu', 'os', 'intsizes' or 'build_dependancies' as argument.
 */ 
 const char *testplat_cpp(void) { 
-return "@(#)$Id: testplat.cpp,v 1.4.2.2 2000/08/09 19:23:48 cyp Exp $"; } 
+return "@(#)$Id: testplat.cpp,v 1.4.2.3 2001/01/14 00:23:48 andreasb Exp $"; } 
 
-static const char *include_dirs[] = { "common", "rc5", "des", "ogr" };
+static const char *include_dirs[] = { "common", "rc5", "des", "ogr", "ogr/ansi" };
 
 #include <stdio.h>
 #include <string.h>
@@ -61,7 +61,7 @@ static unsigned int build_dependancies( char *cppname ) /* ${TARGETSRC} */
         if ( *p == '\"' || *p == '<' )
         {
           r = linebuf;
-	  foundbuf[0]= ((*p == '<') ? ('>') : ('\"'));
+          foundbuf[0]= ((*p == '<') ? ('>') : ('\"'));
           while (*(++p) != foundbuf[0] )
             *r++ = *p;
           *r = 0;
@@ -78,7 +78,7 @@ static unsigned int build_dependancies( char *cppname ) /* ${TARGETSRC} */
                 if (l >= (sizeof( include_dirs )/sizeof( include_dirs[0] )))
                   break;
                 strcpy( foundbuf, include_dirs[l] );
-		strcat( foundbuf, subdir_sep );
+                strcat( foundbuf, subdir_sep );
                 strcat( foundbuf, linebuf );
                 l++;
               }
@@ -115,4 +115,3 @@ int main(int argc, char *argv[])
     build_dependancies( argv[2] );    
   return 0;
 }
-
