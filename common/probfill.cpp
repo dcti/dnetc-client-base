@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.87.2.14 2004/06/26 19:37:01 kakace Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.87.2.15 2004/07/13 19:00:09 kakace Exp $"; }
 
 //#define TRACE
 
@@ -1113,8 +1113,8 @@ unsigned int LoadSaveProblems(Client *client,
        still at work, bump the limit.
        -------------------------------------------------------------
       */
-      if (client->blockcount > 0 &&
-         (totalBlocksDone >= (unsigned long)(client->blockcount)))
+      if (client->blockcount < 0 || (client->blockcount > 0
+                  && totalBlocksDone >= (unsigned long)(client->blockcount)))
       {
         if (empty_problems >= load_problem_count)
         {
