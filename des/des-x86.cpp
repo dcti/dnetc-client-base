@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-x86.cpp,v $
+// Revision 1.21  1998/12/02 20:56:42  silby
+// Changed Multithread -> CLIENT_SUPPORTS_SMP
+//
 // Revision 1.20  1998/11/28 19:21:40  silby
 // Fixed nasty define that broke win32 (and others?)
 //
@@ -62,7 +65,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_x86_cpp(void) {
-return "@(#)$Id: des-x86.cpp,v 1.20 1998/11/28 19:21:40 silby Exp $"; }
+return "@(#)$Id: des-x86.cpp,v 1.21 1998/12/02 20:56:42 silby Exp $"; }
 #endif
 
 
@@ -123,14 +126,14 @@ static const u8 bitmasks [][8] = {
 
 extern "C" int bryd_des (u8 *plain, u8 *cypher, u8 *iv, u8 *key, const u8 *bitmask);
 extern "C" int p1bryd_des (u8 *plain, u8 *cypher, u8 *iv, u8 *key, const u8 *bitmask);
-#if defined(MULTITHREAD)
+#if defined(CLIENT_SUPPORTS_SMP)
 extern "C" int bbryd_des (u8 *plain, u8 *cypher, u8 *iv, u8 *key, const u8 *bitmask);
 extern "C" int p2bryd_des (u8 *plain, u8 *cypher, u8 *iv, u8 *key, const u8 *bitmask);
 #endif
 
 static u8 key_found[8];
 static bool key_is_found;
-#if defined(MULTITHREAD)
+#if defined(CLIENT_SUPPORTS_SMP)
 static u8 Bkey_found[8];
 static bool Bkey_is_found;
 #endif
@@ -148,7 +151,7 @@ void bryd_key_found (u8 *bytekey)
   return;
 }
 
-#if defined(MULTITHREAD)
+#if defined(CLIENT_SUPPORTS_SMP)
 extern "C" void bbryd_key_found (u8 *bytekey);
 void bbryd_key_found (u8 *bytekey)
 {
@@ -173,7 +176,7 @@ int bryd_continue (void)
   return key_is_found ? 0 : 1;
 }
 
-#if defined(MULTITHREAD)
+#if defined(CLIENT_SUPPORTS_SMP)
 extern "C" int bbryd_continue (void);
 int bbryd_continue (void)
 {
@@ -294,7 +297,7 @@ u32 p1des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 nbbits )
 
 // ------------------------------------------------------------------
 
-#if defined(MULTITHREAD)
+#if defined(CLIENT_SUPPORTS_SMP)
 u32 p2des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 nbbits )
 {
   const u8 *bitmask;
@@ -512,7 +515,7 @@ u32 p1des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 nbbits )
 
 // rc5unitwork.LO in lo:hi 24+32 incrementable format
 
-#if defined(MULTITHREAD)
+#if defined(CLIENT_SUPPORTS_SMP)
 u32 p2des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 nbbits )
 {
   const u8 *bitmask;
