@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.53.2.2 2001/03/22 22:09:16 sampo Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.53.2.3 2001/03/22 22:12:50 sampo Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */

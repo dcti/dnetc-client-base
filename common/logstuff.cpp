@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.52.2.1 2001/03/22 22:03:56 sampo Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.52.2.2 2001/03/22 22:11:50 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
