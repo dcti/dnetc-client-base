@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.147 2000/07/11 03:49:02 mfeiri Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.148 2000/07/11 07:44:57 mfeiri Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -277,7 +277,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
   completion_timelo = completion_timehi = 0;
   last_runtime_sec = last_runtime_usec = 0;
   memset((void *)&profiling, 0, sizeof(profiling));
-  startpermille = permille = 0;
+  startpermille = 0;
   startkeys.lo = startkeys.hi = 0;
   loaderflags = 0;
   contest = contestid;
@@ -897,7 +897,7 @@ static void __compute_run_times(Problem *problem,
   /* ++++++++++++++++++++++++++ */
 
   /* do we need to compute elapsed wall clock time for this packet? */
-  if ( core_resultcode == RESULT_WORKING ) /* no, not yet */ 
+//  if ( core_resultcode == RESULT_WORKING ) /* no, not yet */ 
   {
     if (clock_stop_is_time_now /* we have determined 'now' */
     && *probstart_secs == 0xfffffffful) /* our start time was invalid */
@@ -906,7 +906,7 @@ static void __compute_run_times(Problem *problem,
       *probstart_usecs = clock_stop.tv_usec;
     }
   }
-  else /* _FOUND/_NOTHING. run is finished, compute elapsed wall clock time */
+//  else /* _FOUND/_NOTHING. run is finished, compute elapsed wall clock time */
   {
     timehi = *probstart_secs;
     timelo = *probstart_usecs;
