@@ -18,9 +18,10 @@
 //#define TRACE
 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk-conflict.cpp,v 1.43.2.6 1999/11/23 15:35:18 jlawson Exp $"; }
+return "@(#)$Id: lurk-conflict.cpp,v 1.43.2.7 1999/11/23 15:47:30 jlawson Exp $"; }
 
 /* ---------------------------------------------------------- */
+
 #include <stdio.h>
 #include "cputypes.h"
 #include "lurk.h"
@@ -132,13 +133,13 @@ static HRASCONN hRasDialConnHandle = NULL; /* conn we opened with RasDial */
 #include <string.h>
 #include <ctype.h>
 #if defined(__EMX__)
-#include <sys/process.h>
-#include <sys/types.h>
-#define MAXSOCKETS 2048
-#define soclose(s) close(s)     //handled by EMX
+  #include <sys/process.h>
+  #include <sys/types.h>
+  #define MAXSOCKETS 2048
+  #define soclose(s) close(s)     //handled by EMX
 #else //IBM distributed OS/2 developers toolkit
-#include <process.h>
-#include <types.h>
+  #include <process.h>
+  #include <types.h>
 #endif
 
 extern "C" {
@@ -423,7 +424,7 @@ int Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
 
 /* ---------------------------------------------------------- */
 
-#if (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_FREEBSD) || (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_WIN32)
 static int __MatchMask( const char *ifrname, int mask_include_all,
                        int mask_default_only, const char *ifacestowatch[] )
 {
@@ -484,7 +485,7 @@ int Lurk::IsConnected(void) //must always returns a valid yes/no
     return 1;
 
 #elif (CLIENT_OS == OS_WIN32)
-  if ((GetCapabilityFlags() & CONNECT_IFACEMASK)!=0 /* have working WS2_32 */
+  if ((GetCapabilityFlags() & CONNECT_IFACEMASK) != 0 /* have working WS2_32 */
    && (!mask_default_only || (GetCapabilityFlags() & CONNECT_DODBYPROFILE)==0))
   {
     #if !defined(_MSC_VER) || defined(_M_ALPHA) //some msvcs can't cast for shit
