@@ -14,7 +14,7 @@
  * -----------------------------------------------------------------
 */
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.21.2.1 2003/01/19 22:49:49 snake Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.21.2.2 2004/01/22 17:52:29 piru Exp $"; }
 
 #include "client.h"   // FileHeader, Client class
 #include "baseincs.h" // memset(), strlen()
@@ -103,6 +103,8 @@ int CheckpointAction( Client *client, int action, unsigned int load_problem_coun
                 work.os      = FILEENTRY_OS;
                 work.build   = FILEENTRY_BUILD; 
                 work.core    = FILEENTRY_CORE(thisprob->pub_data.coresel);
+                strncpy( work.id, client->id , sizeof(work.id));
+                work.id[sizeof(work.id)-1]=0;
 
                 if (BufferPutFileRecord( client->checkpoint_file, &work, 
                                          NULL, BUFFER_FLAGS_CHECKPOINT ) < 0) 

@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.48 2004/01/17 17:12:21 kakace Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.49 2004/01/22 17:52:29 piru Exp $
 ==========================================================================
 
 2.9000
@@ -30,6 +30,8 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.48 2004/01/17 17:12:21 kakace Exp 
                       shared buffer by a different user.
             new: morphos: MorphOS pre-release
             fix: all: Trashed OGR buffers (bug introduced in 2.9007-487)
+            fix: all: Fixed checkpoint file problem introduced by the user
+                      check.
 
 2.9007-487  fix: amigaos: 68k: fixed a race condition adding public port
             fix: amigaos: fixed a race quitting the cruncher thread
