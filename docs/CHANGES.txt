@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.18 2003/03/30 19:57:36 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.19 2003/03/31 17:55:40 snikkel Exp $
 ==========================================================================
 
 2.9000
@@ -30,7 +30,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.18 2003/03/30 19:57:36 snikkel Exp
 2.9005-483  fix: x86: re-added SS-2 core - new version fixes bug #3187
             fix: linux/ppc: no longer coredumps while resolving (#3213)
             new: ppc: support for altivec under linux (#1349)
-            new: sparc/solaris: optimized rc5-72 core by Didier Leve
+            new: sparc/solaris: optimized rc5-72 core by Didier Levet
             new: sparc/solaris: cpu detection
 
 2.9004-482  undo: x86: rc5-72 SS-2 core (Athlon optimized) removed due to 
