@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.136 2000/02/21 01:16:34 trevorh Exp $
+# @(#)$Id: configure,v 1.222.2.137 2000/02/21 11:55:58 myshkin Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -322,6 +322,7 @@ OPTS_GCC_PPC860="$OPTS_GCC -O6 -DASM_PPC -mcpu=860 -msoft-float"
 OPTS_GCC272_PPC="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=604"
 OPTS_GCC272_PPC860="$OPTS_GCC272 -O6 -DASM_PPC -mcpu=860 -msoft-float"
 OPTS_GCC_POWER="$OPTS_GCC -O6 -DASM_POWER -mcpu=power"
+OPTS_GCC295_PPC="$OPTS_GCC295 -O6 -DASM_PPC -mcpu=604"
 
 OPTS_EGCS_PPC601="$OPTS_EGCS -O6 -DASM_PPC -mcpu=601"
 OPTS_EGCS_PPC604="$OPTS_EGCS -O6 -DASM_PPC -mcpu=604"
@@ -338,6 +339,12 @@ OPTS_XLC3_POWER="$OPTS_XLC3 -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
 
 OPTS_MWCC_PPC603="$OPTS_MWCC -proc 603e"
 OPTS_MWCC_PPC604="$OPTS_MWCC -proc 604e"
+
+# XXX HACK XXX
+# Certain source files need to be compiled without optimization 
+# to get a working client. *sigh* This flag will get set in the 
+# target to -O0. -- myshkin
+OPTS_NOOPT=""
 
 #-- X86
 
@@ -962,95 +969,24 @@ case "$1" in
 ###### PowerPC/POWER
 
   ### generic targets
-
-    *ppc-601-linux-egcs)		# [cramer] PPC 601 target
-	TARGET_CC="gcc -pipe -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_PPC601 \
-			 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			$RC5PPC_SRCS"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *ppc-601-linux-mt-egcs)		# [cramer] PPC 601-mt target
-	TARGET_CC="gcc -pipe -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_PPC601 \
-			-DMULTITHREAD  -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			$RC5PPC_SRCS"
+    *ppc-linux-glibc21-static)		# [myshkin] linux-ppc
+	TARGET_CCFLAGS="$OPTS_GCC295_PPC -DLURK \
+			-DNO_ALTIVEC -DMULTITHREAD \
+			-DHAVE_OGR_CORES"
+	TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="common/lurk.cpp $RC5PPC_SRCS $OGR_ANSI_SRCS"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="linux-ppc-static-mt"
+	OPTS_NOOPT="-O0"
 	;;
 
-    *ppc-604-linux-egcs)		# [cramer] PPC 604 target
-	TARGET_CC="gcc -pipe -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_PPC604 \
-			 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			$RC5PPC_SRCS"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *ppc-604-linux-mt-egcs)		# [cramer] PPC 604-mt target
-	TARGET_CC="gcc -pipe -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_PPC604 \
-			-DMULTITHREAD  -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			$RC5PPC_SRCS"
+    *ppc-gcc)		# [myshkin] generic PPC target
+	TARGET_CCFLAGS="$OPTS_GCC295_PPC -DNO_ALTIVEC -DMULTITHREAD \
+			-DHAVE_OGR_CORES"
+	TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="$RC5PPC_SRCS $OGR_ANSI_SRCS"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *ppc-860-linux-egcs)		# [cramer] PPC 860 target
-	TARGET_CC="gcc -pipe -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_PPC860 \
-			 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			$RC5PPC_SRCS"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *ppc-860-linux-mt-egcs)		# [cramer] PPC 860-mt target
-	TARGET_CC="gcc -pipe -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_PPC860 \
-			-DMULTITHREAD  -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			$RC5PPC_SRCS"
-	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *ppc-gcc)		# [myshkin-out-of-date] generic PPC target
-	TARGET_CCFLAGS="$OPTS_GCC_PPC \
-			 -DHAVE_CSC_CORES"
-	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
-	TARGET_ADDSRCS="common/lurk.cpp $RC5PPC_SRCS $CSC_ANSI_SRCS"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="linux-ppc-glibc21-nomt"
-	;;
-
-    *ppc860-gcc)	# [myshkin-out-of-date] PPC 821/860 target
-	TARGET_CCFLAGS="$OPTS_GCC_PPC \
-			 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			$RC5PPC_SRCS"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
-
-    *ppc-gcc272)	# [myshkin] generic PPC target, gcc 2.7.2
-	TARGET_CCFLAGS="$OPTS_GCC272_PPC \
-			 -DHAVE_CSC_CORES -DNO_ALTIVEC"
-	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
-	TARGET_ADDSRCS="common/lurk.cpp $RC5PPC_SRCS $CSC_ANSI_SRCS"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	TARGET_TARBALL="linux-ppc-glibc2-nomt"
-	;;
-
-    *ppc860-gcc272)	# [myshkin-out-of-date] PPC 821/860 target, gcc 2.7.2
-	TARGET_CCFLAGS="$OPTS_GCC272_PPC860 \
-			 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-			$RC5PPC_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
@@ -1813,6 +1749,10 @@ echo "PPC601FLAGS = ${AIXPPC601FLAGS}" >> Makefile
 echo "PPC604FLAGS = ${AIXPPC604FLAGS}" >> Makefile
 echo "POWERFLAGS = ${AIXPOWERFLAGS}" >> Makefile
 fi
+if [ "$OPTS_NOOPT" != "" ]; then
+echo "OPTS_NOOPT = ${OPTS_NOOPT}" >> Makefile
+fi
+
 echo "LDFLAGS = ${TARGET_LDFLAGS}" >> Makefile
 echo "LIBS = ${TARGET_LIBS}" >> Makefile
 echo "AS = ${TARGET_AS}" >> Makefile
@@ -2009,6 +1949,18 @@ if [ "$AIXALL" = "TRUE" ]; then
 /rc5ansi_2-rg.cpp -o/ { print "\t\${CC} -c ${POWERFLAGS} " $4 " " $5 " " $6 ; next }
 { print $0 }' Makefile.tmp > Makefile
 rm Makefile.tmp
+fi
+
+if [ "$OPTS_NOOPT" != "" ]; then
+  echo "Removing optimization flags in Makefile for linux-ppc compilation..."
+  mv Makefile Makefile.tmp
+  awk '
+/problem.cpp -o/ { print "\t${CC} -c ${CCFLAGS} ${OPTS_NOOPT} common/problem.cpp -o output/problem.o"; next }
+/confmenu.cpp -o/ { print "\t${CC} -c ${CCFLAGS} ${OPTS_NOOPT} common/confmenu.cpp -o output/confmenu.o"; next }
+/rc5_unit_func_lintilla.cpp -o/ { print "\t\${CC} -c \${CCFLAGS} ${OPTS_NOOPT} rc5/ppc/rc5_unit_func_lintilla.cpp -o output/rc5_unit_func_lintilla.o"; next } 
+/rc5_unit_func_allitnil.cpp -o/ { print "\t\${CC} -c \${CCFLAGS} ${OPTS_NOOPT} rc5/ppc/rc5_unit_func_allitnil.cpp -o output/rc5_unit_func_allitnil.o"; next } 
+{ print $0 }' Makefile.tmp > Makefile
+  rm Makefile.tmp
 fi
 
 echo "Makefile auto-generation complete!"
