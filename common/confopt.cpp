@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confopt.cpp,v $
+// Revision 1.25  1999/03/02 04:26:39  foxyloxy
+// Upped the maximum for preferred block size to 33.
+//
 // Revision 1.24  1999/02/20 03:07:17  gregh
 // Add OGR options to configuration data.
 //
@@ -79,7 +82,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.24 1999/02/20 03:07:17 gregh Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.25 1999/03/02 04:26:39 foxyloxy Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -155,8 +158,8 @@ struct optionstruct conf_options[CONF_OPTION_COUNT]=
   "the size you specify in this option. Running the client with the -benchmark\n"
   "switch will give you a hint as to what the preferred block size for this\n"
   "machine might be. Block sizes are specified as powers of 2. The minimum and\n"
-  "maximum block sizes are 28 and 31 respectively.\n"
-  ),CONF_MENU_BUFF,CONF_TYPE_INT,4,NULL,NULL,28,31},
+  "maximum block sizes are 28 and 33 respectively.\n"
+  ),CONF_MENU_BUFF,CONF_TYPE_INT,4,NULL,NULL,28,33},
 //4
 { "threshold", CFGTXT("Block fetch/flush threshold"), "10 (default)",
   CFGTXT(
