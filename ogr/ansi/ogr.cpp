@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.9 2003/08/26 22:48:46 mweiser Exp $
+ * $Id: ogr.cpp,v 1.2.4.10 2003/09/07 00:03:28 oliver Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -71,7 +71,7 @@
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* MrC is better    */
     #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
     #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* MrC is better    */
-  #elif (__APPLE_CC__ <= 1175)
+  #elif defined(__APPLE_CC__) && (__APPLE_CC__ <= 1175)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
