@@ -4,7 +4,7 @@
  */                                                                                                                    
 
 const char *ogr_dat_cpp(void) {
-return "@(#)$Id: ogr_dat.cpp,v 1.1.2.4 2001/02/07 16:50:11 andreasb Exp $"; }
+return "@(#)$Id: ogr_dat.cpp,v 1.1.2.5 2001/03/19 16:51:09 andreasb Exp $"; }
 
 #include "ogr.h"
 

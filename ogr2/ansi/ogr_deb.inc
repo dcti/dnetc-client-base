@@ -4,7 +4,7 @@
  *
  * This file (ogr_deb.inc) contains all the OGR debug stuff
  *
- * $Id: ogr_deb.inc,v 1.1.2.2 2001/02/14 21:11:42 andreasb Exp $
+ * $Id: ogr_deb.inc,v 1.1.2.3 2001/03/19 16:51:09 andreasb Exp $
  */
 
 #ifdef OGR_DEBUG

@@ -6,7 +6,7 @@
  * This is based on GARSP 5.13 "Garry's adaptions of Rado's search principles".
  * There were many modifications ... can anyone tell?
  */
-#define __OGR_CORE__ "@(#)$Id: ogr_g_r.cor,v 1.1.2.10 2001/02/13 00:59:12 andreasb Exp $"
+#define __OGR_CORE__ "@(#)$Id: ogr_g_r.cor,v 1.1.2.11 2001/03/19 16:51:09 andreasb Exp $"
 
 #if (OGROPT_ALTERNATE_CYCLE == 0)
 

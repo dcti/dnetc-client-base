@@ -1,7 +1,7 @@
 /*
  * OGR support routines and data.
  *
- * $Id: ogr_sup.cpp,v 1.1.2.4 2001/02/02 13:41:05 cyp Exp $
+ * $Id: ogr_sup.cpp,v 1.1.2.5 2001/03/19 16:51:09 andreasb Exp $
 */
 #include <stdio.h>
 #include <string.h>

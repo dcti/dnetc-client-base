@@ -8,7 +8,7 @@
  * - use the processor cache better when many registers are available
  * - support altivec
  */
-#define __OGR_CORE__ "@(#)$Id: ogr_o_c.cor,v 1.1.2.7 2001/02/07 16:56:37 andreasb Exp $"
+#define __OGR_CORE__ "@(#)$Id: ogr_o_c.cor,v 1.1.2.8 2001/03/19 16:51:09 andreasb Exp $"
 
 #if ( (OGROPT_ALTERNATE_CYCLE == 1) || (OGROPT_ALTERNATE_CYCLE == 2))
 
