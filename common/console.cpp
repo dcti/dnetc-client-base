@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48 1999/04/22 03:52:35 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.1 1999/05/15 07:15:23 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -53,7 +53,8 @@ return "@(#)$Id: console.cpp,v 1.48 1999/04/22 03:52:35 cyp Exp $"; }
     (CLIENT_OS == OS_ULTRIX)      || (CLIENT_OS == OS_DGUX)    || \
     (CLIENT_OS == OS_VMS)         || (CLIENT_OS == OS_OS390)   || \
     (CLIENT_OS == OS_OS9)         || (CLIENT_OS == OS_BEOS)    || \
-    (CLIENT_OS == OS_MVS)         || (CLIENT_OS == OS_MACH10)
+    (CLIENT_OS == OS_MVS)         || (CLIENT_OS == OS_MACH10)  || \
+    (CLIENT_OS == OS_FREEBSD)
 #define TERM_IS_ANSI_COMPLIANT
 #endif
 
@@ -549,7 +550,10 @@ int ConSetPos( int col, int row )  /* zero-based */
 {
   if (constatics.initlevel > 0 && constatics.conisatty)
   {
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+    #if defined(TERM_IS_ANSI_COMPLIANT)
+    printf("\x1B" "[%d;%dH", row+1, col+1 );
+    return 0;
+    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
     return w32ConSetPos(col,row);
     #elif (CLIENT_OS == OS_NETWARE)
     short c = col, r = row;
