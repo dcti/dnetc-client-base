@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.30  1998/07/01 10:50:30  ziggyb
+// -lurk/-lurkonly shows up on the -help in OS/2
+//
 // Revision 1.29  1998/06/29 04:22:23  jlawson
 // Updates for 16-bit Win16 support
 //
@@ -89,7 +92,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: disphelp.cpp,v 1.29 1998/06/29 04:22:23 jlawson Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.30 1998/07/01 10:50:30 ziggyb Exp $";
 #endif
 
 #include "client.h"
@@ -366,9 +369,12 @@ void Client::DisplayHelp( const char * unrecognized_option )
   #else
   "-hide              hide the client from the desktop",
   #endif
+#endif
+#if (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)
   "-lurk              automatically detect modem connections",
   "-lurkonly          perform buffer updates only when a connection is detected",
-#elif (CLIENT_OS == OS_OS2)
+#endif
+#if (CLIENT_OS == OS_OS2)
   "-install           install the client in the startup folder",
   "-uninstall         remove the client from the startup folder",
   "-hide              run detached (hidden)",
