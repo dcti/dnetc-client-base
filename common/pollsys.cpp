@@ -39,7 +39,7 @@
  * --------------------------------------------------------------------
 */
 const char *pollsys_cpp(void) {
-return "@(#)$Id: pollsys.cpp,v 1.9.2.4 2000/06/24 14:48:59 oliver Exp $"; }
+return "@(#)$Id: pollsys.cpp,v 1.9.2.5 2000/06/24 19:38:17 oliver Exp $"; }
 
 #include "baseincs.h"  /* NULL, malloc */
 #include "clitime.h"   /* CliTimer() */
@@ -243,7 +243,7 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
   void *arg = NULL;
   unsigned int runprio;
   register void (*proc)(void *) = NULL;
-  int reclock, loopend, dorun;
+  int reclock, loopend, dorun, adj_time;
 
   if ((++isrunning) > 1)
   {
@@ -262,7 +262,9 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
   }
   else
   {
+    adj_time = CliTimerSetDelta(0);
     CliTimer( &now );
+    CliTimerSetDelta(adj_time);
     until.tv_usec = now.tv_usec;
     until.tv_sec = now.tv_sec;
     until.tv_usec += usecs;
@@ -345,8 +347,11 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
       }
 
       if (reclock)
+      {
+        adj_time = CliTimerSetDelta(0);
         CliTimer( &now );
-           
+        CliTimerSetDelta(adj_time);
+      }
     } while (( now.tv_sec < until.tv_sec ) || 
               (( now.tv_sec == until.tv_sec ) && 
                ( now.tv_usec < until.tv_usec )));
