@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.28 2003/01/20 13:09:20 snake Exp $
+# @(#)$Id: configure,v 1.288.2.29 2003/01/23 18:38:36 snake Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1944,6 +1944,7 @@ case "$1" in
         TARGET_LDFLAGS="-static"
         TARGET_LIBS="-ltermcap"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="netbsd-ppc"
         add_sources "netbsd" "ppc"
         ;;
 
