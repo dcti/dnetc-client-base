@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.6 1999/06/05 23:36:29 remi Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.7 1999/06/08 18:42:44 nsayer Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -516,7 +516,8 @@ int main( int argc, char *argv[] )
   */
   #if (CLIENT_OS != OS_FREEBSD) && (CLIENT_OS != OS_NETBSD) && \
       (CLIENT_OS != OS_BSDOS) && (CLIENT_OS != OS_OPENBSD) && \
-      (CLIENT_OS != OS_DGUX) && (CLIENT_OS != OS_DYNIX)
+      (CLIENT_OS != OS_DGUX) && (CLIENT_OS != OS_DYNIX) && \
+      (CLIENT_OS != OS_SOLARIS)
   /* ... all the SPT_REUSEARGV types */
   if (needchange && strlen(argv[0]) >= strlen(defname))
   {
@@ -561,8 +562,11 @@ int main( int argc, char *argv[] )
         strncpy( &buffer[7], argv[0], sizeof(buffer)-7 );
         buffer[sizeof(buffer)-5]='\0';
         strcat( buffer, ".ini" );
+#if (CLIENT_OS != OS_SOLARIS)
         setenv("RC5INI", &buffer[7], 1 );
-        //putenv( buffer );
+#else
+        putenv( buffer );
+#endif
       }
     }
       
