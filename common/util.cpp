@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.17 2000/02/20 13:29:45 jlawson Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.18 2000/02/20 14:34:52 jlawson Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -731,7 +731,7 @@ static int __utilGetPidUsingPerfCaps(const char *procname, long *pidlist, int ma
       }
       RegCloseKey( hKeyIndex );
     }
-LogScreen("szIndex_PROCESS='%s', dwIndex_IDPROCESS=0x%x\n",szIndex_PROCESS,dwIndex_IDPROCESS);
+//LogScreen("szIndex_PROCESS='%s', dwIndex_IDPROCESS=0x%x\n",szIndex_PROCESS,dwIndex_IDPROCESS);
   }
     
   if (szIndex_PROCESS[0] != '\0' && dwIndex_IDPROCESS != ((DWORD)-1))
@@ -764,13 +764,13 @@ LogScreen("szIndex_PROCESS='%s', dwIndex_IDPROCESS=0x%x\n",szIndex_PROCESS,dwInd
         */
         DWORD dwLastSize = dwBytes; /* save last size (see note above)*/
         Sleep(0); /* let system update the data */
-LogScreen("RegQueryValueEx 2a. mem size=%u\n", dwBytes);
+//LogScreen("RegQueryValueEx 2a. mem size=%u\n", dwBytes);
         lResult = RegQueryValueEx(HKEY_PERFORMANCE_DATA,
                             (LPTSTR)szIndex_PROCESS, NULL, NULL, 
                             (LPBYTE)pdb, &dwBytes);
         if (lResult == ERROR_SUCCESS)
         {
-LogScreen("RegQueryValueEx 2b == ERROR_SUCCESS\n");
+//LogScreen("RegQueryValueEx 2b == ERROR_SUCCESS\n");
           RegCloseKey( HKEY_PERFORMANCE_DATA );
           break;
         }
@@ -782,7 +782,7 @@ LogScreen("RegQueryValueEx 2b == ERROR_SUCCESS\n");
             break;
           newmem = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                                        (LPVOID)pdb, dwBytes );
-LogScreen("HeapReAlloc. size=%u =>%p\n", dwBytes, newmem);
+//LogScreen("HeapReAlloc. size=%u =>%p\n", dwBytes, newmem);
           if (newmem == NULL) /* couldn't realloc */
             break;
           pdb = (PPERF_DATA_BLOCK)newmem;
@@ -821,7 +821,7 @@ LogScreen("HeapReAlloc. size=%u =>%p\n", dwBytes, newmem);
         /* Get the first process instance definition */
         piddef= (PPERF_INSTANCE_DEFINITION)(((PBYTE)pot) + pot->DefinitionLength);
 
-LogScreen("getpidlist 3: numpids = %u\n", pot->NumInstances );
+//LogScreen("getpidlist 3: numpids = %u\n", pot->NumInstances );
      
         /* now walk the process definitions */
         totalcount = pot->NumInstances;
@@ -839,7 +839,7 @@ LogScreen("getpidlist 3: numpids = %u\n", pot->NumInstances );
           /* we have all the data we need, skip to the next pid */
           piddef = (PPERF_INSTANCE_DEFINITION) (((PBYTE)pcb) + pcb->ByteLength);
 
-LogScreen("getpidlist 3a: got pid=0x%x\n", thatpid );
+//LogScreen("getpidlist 3a: got pid=0x%x\n", thatpid );
 
           if (num_found < 0) /* our enumerator is working */
           {
@@ -859,7 +859,7 @@ LogScreen("getpidlist 3a: got pid=0x%x\n", thatpid );
             }
             #undef foundname_ansi
 
-LogScreen("getpidlist 3b: got name='%s'\n", foundname );
+//LogScreen("getpidlist 3b: got name='%s'\n", foundname );
         
             /* foundname and procname are both in ansi and are both
                just the basename (no path, no extension)
@@ -1459,4 +1459,5 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
   } /* if (procname) */
   
   return num_found;
-}    
+}
+
