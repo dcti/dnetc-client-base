@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.134 2000/02/21 00:11:54 remi Exp $
+# @(#)$Id: configure,v 1.222.2.135 2000/02/21 01:03:39 trevorh Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -20,8 +20,8 @@
 #   add -DHAVE_DES_CORES, otherwise remove all DES cores/references
 #
 # - If you wish to have the build automatically generate a .tar.gz ready
-#   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>" 
-#   for example: TARGET_TARBALL="linux-x86-libc4" 
+#   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
+#   for example: TARGET_TARBALL="linux-x86-libc4"
 #
 # - Avoid building separate MT and non-MT clients. MT is always preferred
 #   (from the client's perspective), and the user can always force non-MT
@@ -199,7 +199,7 @@ TARGET_DOCFILES="docs/readme._ix" # override where appropriate
 TARGET_GENMAN=1 # do we generate a man page or not
 
 #
-# Target specific tarball options. 
+# Target specific tarball options.
 #
 TARGET_TARBALL=""     # 'binnameNNN-' is auto prepended, ".tar.gz" is appended
 TARGET_TARBALL_COMMENT="" # special comments for tarball.readme (if needed)
@@ -289,7 +289,7 @@ OPTS_LD_MIPSPRO_64="${OPTS_MIPSPRO_CCFLAGS} ${OPTS_MIPSPRO_ABI_64}"
 ## GNU
 
 OPTS_GCC_MIPS="$OPTS_GCC295 -O6 -DASM_MIPS"
-OPTS_EGCS_MIPS="$OPTS_EGCS -Os -DASM_MIPS" 
+OPTS_EGCS_MIPS="$OPTS_EGCS -Os -DASM_MIPS"
 
 #-- Alpha
 
@@ -812,7 +812,7 @@ case "$1" in
 
     *sparc-sunos-gcc-nomt)   # [ivo sunos413/nomt]
         DELETECHARS="'/.\$\-'"
-        TARGET_CC="gcc" 
+        TARGET_CC="gcc"
         TARGET_CCFLAGS="$OPTS_GCC_SPARC1 -Dsunos \
                         -DHAVE_OGR_CORES"
         TARGET_ADDSRCS="rc5/ultra/rc5-ultra-crunch.cpp \
@@ -825,7 +825,7 @@ case "$1" in
 
     *sparc-solaris-gcc-nomt)   # [ivo solaris/nomt]
         #DELETECHARS="'/.\$\-'"
-        TARGET_CC="gcc -pipe" 
+        TARGET_CC="gcc -pipe"
         TARGET_CCFLAGS="$OPTS_GCC295_SPARC -Dsolaris \
                         -DHAVE_OGR_CORES"
         TARGET_ADDSRCS="rc5/ultra/rc5-ultra-crunch.cpp \
@@ -857,7 +857,7 @@ case "$1" in
         TARGET_ADDSRCS="rc5/ultra/rc5-ultra-crunch.cpp \
                         $DESULTRA_SRCS_ASM $OGR_ANSI_SRCS"
         TARGET_ADDASMS="des/ultrasparc/simple.handopt.s"
-        TARGET_ASFLAGS="$OPTS_AS_ULTRA"   
+        TARGET_ASFLAGS="$OPTS_AS_ULTRA"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="solaris26-ultrasparc"
@@ -899,7 +899,7 @@ case "$1" in
 	TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DDEC_UNIX_CPU_SELECT -DHAVE_OGR_CORES -DHAVE_CSC_CORES -DHAVE_DES_CORES"
 	TARGET_CCFLAGS="-mcpu=ev4 $TARGET_BASE_CCFLAGS"
 	TARGET_EV5_CCFLAGS="-mcpu=ev5 $TARGET_BASE_CCFLAGS"
-	TARGET_ADDSRCS="rc5/alpha/axp-bmeyer.cpp $OGR_ANSI_SRCS $CSC_ANSI_SRCS $DWORZ_SLICE_SRCS" 
+	TARGET_ADDSRCS="rc5/alpha/axp-bmeyer.cpp $OGR_ANSI_SRCS $CSC_ANSI_SRCS $DWORZ_SLICE_SRCS"
 	TARGET_ADDASMS="rc5/alpha/axp-bmeyer-osf.s"
 	TARGET_LIBS="-static"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -1151,8 +1151,8 @@ case "$1" in
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -DMMX_RC5 -D__showids__ \
 			-DMULTITHREAD -DLURK -DSMC -DHAVE_OGR_CORES"
-			##-DMMX_CSC -DHAVE_CSC_CORES 
-			##$OPTS_DES_MMX -DHAVE_DES_CORES 
+			##-DMMX_CSC -DHAVE_CSC_CORES
+			##$OPTS_DES_MMX -DHAVE_DES_CORES
 	TARGET_LDFLAGS="-Xlinker -omagic"  #NEVER STATIC FOR GLIBC!!!
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp \
 			common/lurk.cpp $OGR_ANSI_SRCS"
@@ -1196,7 +1196,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -DMMX_RC5 -D__showids__ \
 			-DMULTITHREAD -DSMC -DLURK -DHAVE_OGR_CORES"
 			##$OPTS_DES_MMX -DHAVE_DES_CORES
-			##-DMMX_CSC -DHAVE_CSC_CORES 
+			##-DMMX_CSC -DHAVE_CSC_CORES
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp \
 			common/lurk.cpp $OGR_ANSI_SRCS"
@@ -1217,7 +1217,7 @@ case "$1" in
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -DMMX_RC5 -D__showids__ \
 			-DSMC -DLURK -DHAVE_OGR_CORES"
-			##-DHAVE_DES_CORES $OPTS_DES_MMX 
+			##-DHAVE_DES_CORES $OPTS_DES_MMX
 			##-DMMX_CSC -DHAVE_CSC_CORES
 	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp \
@@ -1240,8 +1240,8 @@ case "$1" in
 	TARGET_CC="gcc -g"        # -g for debug
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -DMMX_RC5 -D__showids__ \
 			-DSMC -DMULTITHREAD -DLURK -DHAVE_OGR_CORES"
-			##-DMMX_CSC -DHAVE_CSC_CORES 
-			##-DHAVE_DES_CORES $OPTS_DES_MMX 
+			##-DMMX_CSC -DHAVE_CSC_CORES
+			##-DHAVE_DES_CORES $OPTS_DES_MMX
 	TARGET_LDFLAGS="-Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp \
 			common/lurk.cpp $OGR_ANSI_SRCS"
@@ -1260,19 +1260,19 @@ case "$1" in
 
 ###### Intel X86 FreeBSD
 
-    *x86-freebsd-aout)             # FreeBSD 2.x experimental, snake 
+    *x86-freebsd-aout)             # FreeBSD 2.x experimental, snake
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -Werror -DMMX_RC5 -DLURK -DHAVE_OGR_CORES"
 			#-DHAVE_CSC_CORES -DMMX_CSC"
-                        # -DHAVE_DES_CORES $OPTS_DES_MMX 
+                        # -DHAVE_DES_CORES $OPTS_DES_MMX
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp $OGR_ANSI_SRCS"
                         #$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4
 	TARGET_ADDASMS="" #des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			#des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
 	TARGET_NASM_FMT="aoutb"
-	TARGET_ADDNASMS="platforms/x86ident.asm $NASM_RC5X86_SRCS"  
-	                #$CSC_ASM_SRCS" $NASM_DESMMX_SRCS 
+	TARGET_ADDNASMS="platforms/x86ident.asm $NASM_RC5X86_SRCS"
+	                #$CSC_ASM_SRCS" $NASM_DESMMX_SRCS
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_TARBALL="freebsd-x86-aout"
         ;;
@@ -1281,27 +1281,27 @@ case "$1" in
         # note: although this client supports SMP (and is thus threaded),
         # we NEED to link against libc, and NOT libc_r because the libc_r
 	# in 3.4 and above is incompatible with the pre-3.4 (specifically,
-	# the >=3.4 libc_r versions of select() and nanosleep() syscalls 
-	# have their own new syscall numbers; they were emulated before). 
-        # We don't really need the libc_r stuff anyway because the "threads" 
+	# the >=3.4 libc_r versions of select() and nanosleep() syscalls
+	# have their own new syscall numbers; they were emulated before).
+        # We don't really need the libc_r stuff anyway because the "threads"
 	# are really rfork()'d children.
 	#                                  -cyp Feb/13/2000
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -Werror -DMMX_RC5 -DLURK -DHAVE_OGR_CORES"
 			#-DHAVE_CSC_CORES -DMMX_CSC"
-                        # -DHAVE_DES_CORES $OPTS_DES_MMX 
+                        # -DHAVE_DES_CORES $OPTS_DES_MMX
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp $OGR_ANSI_SRCS"
 	                #$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4
 	TARGET_ADDASMS="" #des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			#des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	TARGET_ADDNASMS="platforms/x86ident.asm $NASM_RC5X86_SRCS" 
+	TARGET_ADDNASMS="platforms/x86ident.asm $NASM_RC5X86_SRCS"
 	                #$CSC_ASM_SRCS $NASM_DESMMX_SRCS
 	TARGET_LIBS="-lc" # NOT libc_r
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="freebsd-x86-elf"
 	;;
- 
+
 ###### Intel X86 NetBSD
 
     *x86-netbsd)
@@ -1316,7 +1316,7 @@ case "$1" in
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S \
 	                des/brydgnu/p1bdespro.S"
 	TARGET_NASM_FMT="aoutb"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS 
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS
 	                 $CSC_ASM_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
@@ -1609,12 +1609,12 @@ case "$1" in
 	;;
 
 ####### OS/2 (x86, emx)
-    # requires EMX, gcc 2.72 
+    # requires EMX, gcc 2.72
     # if you don't have a basename command, you can use the following script:
     # just copy it to basename.cmd
         #@echo off
         #ksh -c "parm=%1 ; echo ${parm##*[\\/]}"
-       
+
     *x86-os2-gcc)               # [patrick] <patrick@skarabeus.de>
         basename ()
         {
@@ -1642,12 +1642,13 @@ case "$1" in
         }
 	TARGET_AS="gcc -c"
         TARGET_CC="gcc"
-	TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -I. -I${C_INCLUDE_PATH} -DMULTITHREAD -D__showids__"
+	TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC272_X86 -DMMX_RC5 -I. -I${C_INCLUDE_PATH} -DMULTITHREAD -DLURK -DHAVE_OGR_CORES -D__showids__"
 	TARGET_LDFLAGS="-Zmt"
-	TARGET_ADDSRCS="common/lurk.cpp rc5/x86/rc5-486-smc-rg.cpp $DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 platforms/os2cli/os2inst.cpp"
-	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
+	TARGET_ADDSRCS="common/lurk.cpp platforms/os2cli/os2inst.cpp $OGR_ANSI_SRCS"
+	TARGET_ADDASMS="platforms/x86ident.S"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
 	TARGET_NASM_FMT="aout"
+TARGET_NASM="nasm097.exe"
         TARGET_LIBS="-lsocket"
         TARGET_DOCFILES="docs/readme.os2"   #platform specific docfile
         TARGET_OS=OS2
@@ -1679,7 +1680,7 @@ TARGET_CCFLAGS="$TARGET_CCFLAGS -I./common -I./rc5 -I./des -I./ogr -I./csc"
 # Generate the list of output objects, making note of what
 # source file it was derrived from.
 #
- 
+
 
 TARGET_ALLCCOBJS=
 TARGET_ALLASOBJS=
@@ -1781,11 +1782,11 @@ fi
 #
 if [ -f docs/readme.1st ]; then
   TARGET_DOCFILES="docs/readme.1st ${TARGET_DOCFILES}"
-fi  
+fi
 TARGET_DOCFILES="${TARGET_DOCFILES} docs/CHANGES.txt docs/${TARGET_BINNAME}.txt"
 if [ "X$TARGET_GENMAN" = "X1" ]; then
   TARGET_DOCFILES="${TARGET_DOCFILES} ${TARGET_BINNAME}.1"
-fi  
+fi
 
 #
 # Start building the output makefile
@@ -1819,7 +1820,7 @@ echo "ASFLAGS = ${TARGET_ASFLAGS}" >> Makefile
 echo "NASM = ${TARGET_NASM}" >> Makefile
 if [ "X$TARGET_NASM_FMT" = "X" ]; then
   $TARGET_NASM_FMT="elf"
-fi  
+fi
 TARGET_NASMFLAGS="-f $TARGET_NASM_FMT \
                   -i rc5/x86/nasm/ -i des/mmx-bitslice/ -i csc/x86/ \
 		  -d__showids__"
@@ -1878,14 +1879,14 @@ echo "	\${CC} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o ${TARGET_BINNAME}$
 echo "	\${STRIP} ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
 if [ "X$TARGET_GENMAN" != "X" ]; then
     echo "	./${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} -genman" >> Makefile
-fi  
+fi
 if [ "X$TARGET_TARBALL" != "X" ]; then
   if  [ "$TARGET_ARCTYPE" = "zip" ]; then
-    echo "Zip support is not in place"  
+    echo "Zip support is not in place"
   else     # tgz
     echo "	tar -cvf - ${TARGET_BINNAME} \${DOCFILES} | gzip > ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.tar.gz" >>Makefile
   fi
-  echo "" >> Makefile  
+  echo "" >> Makefile
 
   # make rule to transfer the packaged tarball
   echo "ftp:" >> Makefile
@@ -1896,7 +1897,7 @@ if [ "X$TARGET_TARBALL" != "X" ]; then
   if [ "X$TARGET_TARBALL_COMMENT" != "X" ]; then
     echo "	rm -f ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
   fi
-fi  
+fi
 echo "" >> Makefile
 
 echo "dep: $0" >> Makefile
@@ -2015,5 +2016,5 @@ if [ "X$TARGET_TARBALL" = "X" ]; then
   echo "TARGET_TARBALL was not defined."
   echo "Upload-ready tarballs will not be auto-generated"
   echo "and Makefile does not have an 'ftp' target"
-fi  
+fi
 echo ""
