@@ -4,7 +4,7 @@
 //
 
 const char *netio_cpp(void) {
-return "@(#)$Id: netio.cpp,v 1.1.2.4 1999/04/22 09:15:36 jlawson Exp $"; }
+return "@(#)$Id: netio.cpp,v 1.1.2.5 1999/04/24 07:42:16 jlawson Exp $"; }
 
 #define __NETIO_CPP__ /* suppress redefinitions in netio.h */
 #include "netio.h"
@@ -106,8 +106,11 @@ int netio_createsocket(SOCKET &sock)
   sock = socket(AF_INET, SOCK_STREAM, 0);
   if ( !(( (int)(sock) ) < 0 ) )
   {
-    //LowLevelSetSocketOption( CONDSOCK_SETMINBUFSIZE, 2048/* at least this */);
-    //LowLevelSetSocketOption( CONDSOCK_BLOCKMODE, 1 ); /* really only needed for RISCOS */
+    // permit tcp packets of at least this size.
+    netio_setsockopt( sock, CONDSOCK_SETMINBUFSIZE, 2048);
+
+    // really only needed for RISCOS.
+    netio_setsockopt( sock, CONDSOCK_BLOCKMODE, 1 );
     return 0; //success
   }
   #endif
@@ -841,9 +844,16 @@ int netio_setsockopt( SOCKET sock, int cond_type, int parm )
     for (which = 0; which < 2; which++ )
     {
       int type = ((which == 0)?(SO_RCVBUF):(SO_SNDBUF));
-      int sz = 0, szint = (int)sizeof(int);
+      int sz = 0;
+#if (CLIENT_OS == OS_LINUX)
+      socklen_t szint = (socklen_t) sizeof(int);
+#else
+      int szint = (int)sizeof(int);
+#endif
       if (getsockopt(sock, SOL_SOCKET, type, (char *)&sz, &szint)<0)
-        ;
+      {
+        // nothing.
+      }
       else if (sz < parm)
       {
         sz = parm;
