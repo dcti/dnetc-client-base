@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.34 2000/05/03 00:01:00 andreasb Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.35 2000/05/04 21:50:09 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -813,7 +813,8 @@ static const char *_init_trigfile(const char *fn, char *buffer, unsigned int buf
 
 static void _init_cputemp( const char *p ) /* cpu temperature string */
 {
-  int K[2], which;
+  int K[2];
+  int which;
 
   trigstatics.cputemp.hithresh = trigstatics.cputemp.lothresh = 0;
   trigstatics.cputemp.marking_high = 0;
@@ -876,7 +877,7 @@ static void _init_cputemp( const char *p ) /* cpu temperature string */
       break;
     p++;
   }  
-  if (K[0] > 1) /* wierd but possible given that we allow fractions */
+  if (K[0] > 1) /* be gracious :) */
   {
     if (K[1] < 0) /* only single temp provided */
     {
