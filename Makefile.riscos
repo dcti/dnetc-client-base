@@ -7,7 +7,7 @@
 # Questions to teich-p@rcs.urz.tu-dresden.de please.
 
 # Toolflags:
-GCCflags = -c -O3 -mtune=strongarm -fomit-frame-pointer -fschedule-insns -fschedule-insns2 -fexpensive-optimizations -s -fno-rtti -fno-exceptions -mtune=strongarm -W -Wall -mthrowback -mstubs -mamu -ISockets_Dnetc: -IC: -Icommon -Irc5 -Ides -Iogr -Iplatforms.riscos -D__showids__ -D__riscos -DARM -DASM_ARM -DBIT_32 -DHAVE_OGR_CORES -DALTERNATE_DYNAMIC_TIMESLICE -DBUILDNAME=arm-riscos
+GCCflags = -c -O3 -mtune=strongarm -fomit-frame-pointer -fschedule-insns -fschedule-insns2 -fexpensive-optimizations -s -fno-rtti -fno-exceptions -mtune=strongarm -W -Wall -mthrowback -mstubs -mamu -ISockets_Dnetc: -IC: -Icommon -Irc5 -Ides -Iogr -Iplat.riscos -D__showids__ -D__riscos -DARM -DASM_ARM -DBIT_32 -DHAVE_OGR_CORES -DALTERNATE_DYNAMIC_TIMESLICE -DBUILDNAME=arm-riscos
 GCClinkflags = -o $@ -mthrowback -mstubs -mamu
 ObjAsmflags = -throwback -NoCache -depend !Depend
 
@@ -125,12 +125,12 @@ ObjAsmflags = -throwback -NoCache -depend !Depend
         objasm $(objasmflags) -from @.rc5.arm.s.rc5-arm-2 -to @.o.rc5-arm-2
 @.o.rc5-arm-3:   @.rc5.arm.s.rc5-arm-3
         objasm $(objasmflags) -from @.rc5.arm.s.rc5-arm-3 -to @.o.rc5-arm-3
-@.o.riscos_sup:   @.platforms.riscos.c++.riscos_sup
-        g++ $(gccflags) -o @.o.riscos_sup @.platforms.riscos.c++.riscos_sup 
-@.o.riscos_x86:   @.platforms.riscos.c++.riscos_x86
-        g++ $(gccflags) -o @.o.riscos_x86 @.platforms.riscos.c++.riscos_x86 
-@.o.riscos_asm:   @.platforms.riscos.s.riscos_asm
-        objasm $(objasmflags) -from @.platforms.riscos.s.riscos_asm -to @.o.riscos_asm
+@.o.riscos_sup:   @.plat.riscos.c++.riscos_sup
+        g++ $(gccflags) -o @.o.riscos_sup @.plat.riscos.c++.riscos_sup 
+@.o.riscos_x86:   @.plat.riscos.c++.riscos_x86
+        g++ $(gccflags) -o @.o.riscos_x86 @.plat.riscos.c++.riscos_x86 
+@.o.riscos_asm:   @.plat.riscos.s.riscos_asm
+        objasm $(objasmflags) -from @.plat.riscos.s.riscos_asm -to @.o.riscos_asm
 
 
 # Dynamic dependencies:

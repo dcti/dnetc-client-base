@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.47 2001/01/16 21:00:25 teichp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.48 2001/01/21 16:22:29 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -71,13 +71,13 @@
   #include <sys/time.h>         /* timeval */
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
   #if defined(OS2_PM)
-    #include "platforms/os2gui/os2cons.h"
+    #include "plat/os2/os2cons.h"
   #endif
   #ifndef QSV_NUMPROCESSORS       /* This is only defined in the SMP toolkit */
     #define QSV_NUMPROCESSORS     26
   #endif
 #elif (CLIENT_OS == OS_AMIGAOS)
-  #include "platforms/amiga/amiga.h"
+  #include "plat/amigaos/amiga.h"
   #include <sys/unistd.h>
   #include <fcntl.h>
 #elif (CLIENT_OS == OS_RISCOS)
@@ -172,7 +172,7 @@
   #include <share.h>
   #include <fcntl.h>
   #include <dos.h> //for drive functions in pathwork.cpp
-  #include "platforms/dos/clidos.h" //gettimeofday(), usleep() etc
+  #include "plat/dos/clidos.h" //gettimeofday(), usleep() etc
   #if defined(__WATCOMC__)
     #include <direct.h> //getcwd
   #elif defined(__TURBOC__)
@@ -192,7 +192,7 @@
   #include <nwfile.h> //sopen()
   #include <fcntl.h> //O_... constants
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
-  #include "platforms/netware/netware.h" //for stuff in netware.cpp
+  #include "plat/netware/netware.h" //for stuff in netware.cpp
 #elif (CLIENT_OS == OS_SUNOS)
   #include <fcntl.h>
   #include <unistd.h>

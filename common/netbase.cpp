@@ -59,7 +59,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.14 2001/01/13 22:40:50 andreasb Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.15 2001/01/21 16:22:29 cyp Exp $"; }
 
 #define TRACE /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -108,7 +108,7 @@ extern "C" {
   }
 #elif (CLIENT_OS == OS_DOS)
   //ntohl()/htonl() defines are in...
-  #include "platforms/dos/clidos.h"
+  #include "plat/dos/clidos.h"
 #elif (CLIENT_OS == OS_VMS)
   #include <signal.h>
   #ifdef __VMS_UCX__ // define for UCX instead of Multinet on VMS
@@ -153,7 +153,7 @@ extern "C" {
   #endif
 #elif (CLIENT_OS == OS_AMIGAOS)
   extern "C" {
-  #include "platforms/amiga/amiga.h"
+  #include "plat/amigaos/amiga.h"
   #include <assert.h>
   #define _KERNEL
   #include <sys/socket.h>

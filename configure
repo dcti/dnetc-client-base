@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.223 2001/01/18 13:52:15 snake Exp $
+# @(#)$Id: configure,v 1.222.2.224 2001/01/21 16:21:58 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -106,27 +106,27 @@ add_sources() # $1=os, $2=arch, $3=custom
   # additions to COMMON_SRCS need to be before ${COMMON_SRCS}
   # so that speed sensitive stuff can remain together at the 'bottom'
   if [ "$1" = "amigaos" ]; then 
-    COMMON_SRCS="platforms/amiga/amVersion.c \
-                 platforms/amiga/amSupport.c \
-                 platforms/amiga/amMemory.c \
-                 platforms/amiga/amTime.c \
-                 platforms/amiga/amNetwork.c \
-                 platforms/amiga/amConsole.c \
+    COMMON_SRCS="plat/amiga/amVersion.c \
+                 plat/amiga/amSupport.c \
+                 plat/amiga/amMemory.c \
+                 plat/amiga/amTime.c \
+                 plat/amiga/amNetwork.c \
+                 plat/amiga/amConsole.c \
                  ${COMMON_SRCS}"
   elif [ "$1" = "linux" ]; then 
-    COMMON_SRCS="platforms/linux/li_inst.c ${COMMON_SRCS}"
+    COMMON_SRCS="plat/linux/li_inst.c ${COMMON_SRCS}"
     if [ "$2" = "x86" ]; then #maybe others as well
-      COMMON_SRCS="platforms/linux/li_kthread.c ${COMMON_SRCS}"
+      COMMON_SRCS="plat/linux/li_kthread.c ${COMMON_SRCS}"
       #(obsolete) TARGET_CCFLAGS="$TARGET_CCFLAGS -DUNIVERSALRESOLVER"
-      COMMON_SRCS="platforms/linux/resolv.c ${COMMON_SRCS}"
+      COMMON_SRCS="plat/linux/resolv.c ${COMMON_SRCS}"
     fi
   elif [ "$1" = "riscos" ]; then
-    COMMON_SRCS="platforms/riscos/riscos_sup.cpp \
-                 platforms/riscos/riscos_x86.cpp \
+    COMMON_SRCS="plat/riscos/riscos_sup.cpp \
+                 plat/riscos/riscos_x86.cpp \
                  ${COMMON_SRCS}"
-    TARGET_ADDASMS="$TARGET_ADDASMS platforms/riscos/riscos_asm.s"
+    TARGET_ADDASMS="$TARGET_ADDASMS plat/riscos/riscos_asm.s"
   elif [ "$1" = "os2" ]; then
-    COMMON_SRCS="platforms/os2cli/os2inst.cpp ${COMMON_SRCS}"
+    COMMON_SRCS="plat/os2/os2inst.cpp ${COMMON_SRCS}"
   fi  
 
   # -------------------------------------------------------------------
@@ -162,7 +162,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
     if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
       TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_NO_NASM"  # ****NOTE****
-      TARGET_ADDASMS="$TARGET_ADDASMS platforms/x86ident.S"
+      TARGET_ADDASMS="$TARGET_ADDASMS plat/x86/x86ident.S"
       # -- non-nasm/csc --
       ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
       ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
@@ -174,7 +174,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       # -- non-nasm/ogr --
       TARGET_ADDASMS="$TARGET_ADDASMS ogr/x86/ogr.S"
     else
-      TARGET_ADDNASMS="$TARGET_ADDNASMS platforms/x86ident.asm"
+      TARGET_ADDNASMS="$TARGET_ADDNASMS plat/x86/x86ident.asm"
       TARGET_ADDNASMS="$TARGET_ADDNASMS $NASM_RC5X86_SRCS"
       if [ "$1-$3" = "linux-" \
            -o "$1" = "freebsd" -o "$1" = "netbsd" \
@@ -1215,10 +1215,10 @@ case "$1" in
 
     *sparc-solaris-gcc-ultra)   # [ivo ultra] very fast DES -> hence obsolete
         TARGET_CC="gcc"
-        # See Also: platforms/ultrasparc/s_paramaters.h
+        # See Also: ultrasparc/s_paramaters.h
         #OPTS_DES_ULTRA_C="-DDES_ULTRA -DINLINE=' ' -DIN_DCTI_CLIENT \
         #	  -DLOW_WORD_VALID -DMANUAL_REGISTER_ALLOCATION  \
-        #	  -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc"
+        #	  -DKWAN_LOOP_SLICE='unsigned long' -Iplat/ultrasparc"
         generate_gcc_opts "generic" "solaris"
         OPTS_DES_ULTRA_ASM="-DIN_DCTI_CLIENT -DDES_ULTRA -DINLINE=inline \
                             -DFULL_64_BIT_VALID -DASM \
@@ -1226,7 +1226,7 @@ case "$1" in
 		                        -DUSE_IDENTICAL_FLOAT_REGISTERS \
                             -DUSE_64_BIT_SENTINEL \
                             -DKWAN_LOOP_SLICE='unsigned long' \
-                            -Iplatforms/ultrasparc \
+                            -Iplat/ultrasparc \
 		                        -mtune=ultrasparc -fforce-mem -fstrict-aliasing\
 		                        -mv8plus -mvis -mepilogue -Wa,-xarch=v8plusa \
                             -mflat -Os -fcall-used-g4 -fcall-used-g5 \
@@ -1757,8 +1757,14 @@ case "$1" in
         TARGET_CC="armcpp -aif -nodebug -littleend -apcs 3/26bit/swst/hardfp/fpe2 -zps1 -nounusedareas -l/home/cberry/play/riscoslib/CLib/stubs.o"
         TARGET_AS="armasm"
         TARGET_ASFLAGS="-apcs 3/26bit"
-        TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -Iogr -Iplatforms -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -J/home/cberry/play/riscoslib/CLib -DCOMPAT_INET4 -D__riscos -DHAVE_OGR_CORES"
-        TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
+        TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -Iogr -Iplat/riscos \
+	                -I/home/cberry/play/riscoslib/OSLib \
+			-I/home/cberry/play/riscoslib/TCPIPLibs \
+			-J/home/cberry/play/riscoslib/CLib \
+			-DCOMPAT_INET4 -D__riscos -DHAVE_OGR_CORES"
+        TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o \
+	             /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o \
+		     /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
         TARGET_DOCFILES="docs/readme.riscos"   #platform specific docfile
         TARGET_STRIP=touch
         TARGET_BINNAME_SUFFIX=",ff8"
@@ -1779,11 +1785,11 @@ case "$1" in
         mkdir dnetc_riscos/ogr/ansi
         mkdir dnetc_riscos/ogr/ansi/c++
         mkdir dnetc_riscos/ogr/ansi/h
-        mkdir dnetc_riscos/platforms
-        mkdir dnetc_riscos/platforms/riscos
-        mkdir dnetc_riscos/platforms/riscos/c++
-        mkdir dnetc_riscos/platforms/riscos/h
-        mkdir dnetc_riscos/platforms/riscos/s
+        mkdir dnetc_riscos/plat
+        mkdir dnetc_riscos/plat/riscos
+        mkdir dnetc_riscos/plat/riscos/c++
+        mkdir dnetc_riscos/plat/riscos/h
+        mkdir dnetc_riscos/plat/riscos/s
         mkdir dnetc_riscos/o
         for file in common/*.h; do
           cp $file dnetc_riscos/common/h/`basename $file | sed -e s/[.]h//`
@@ -1803,14 +1809,14 @@ case "$1" in
         for file in ogr/ansi/*.cpp; do
           cp $file dnetc_riscos/ogr/ansi/c++/`basename $file | sed -e s/[.]cpp//`
         done
-        for file in platforms/riscos/*.cpp; do
-          cp $file dnetc_riscos/platforms/riscos/c++/`basename $file | sed -e s/[.]cpp//`
+        for file in plat/riscos/*.cpp; do
+          cp $file dnetc_riscos/plat/riscos/c++/`basename $file | sed -e s/[.]cpp//`
         done
-        for file in platforms/riscos/*.s; do
-          cp $file dnetc_riscos/platforms/riscos/s/`basename $file | sed -e s/[.]s//`
+        for file in plat/riscos/*.s; do
+          cp $file dnetc_riscos/plat/riscos/s/`basename $file | sed -e s/[.]s//`
         done
-        for file in platforms/riscos/*.h; do
-          cp $file dnetc_riscos/platforms/riscos/h/`basename $file | sed -e s/[.]h//`
+        for file in plat/riscos/*.h; do
+          cp $file dnetc_riscos/plat/riscos/h/`basename $file | sed -e s/[.]h//`
         done
         cp Makefile.riscos dnetc_riscos/Makefile
         rm -f riscos.tar.gz
@@ -1981,11 +1987,11 @@ case "$1" in
 
 ###### AmigaOS (m68k, PPC)
     *m68k-amigaos)              # [oliver] <oliver@futaura.co.uk>
-        TARGET_AS="platforms/amiga/tools/genam_wrapper"
+        TARGET_AS="plat/amiga/tools/genam_wrapper"
         TARGET_CC="g++ -V 2.95.2"
         generate_gcc_opts "68k" "amigaos"
         TARGET_CCFLAGS="$OPTS_GCC -m68000 -fpermissive -O6 -I./ -noixemul \
-                        -D__AMIGADATE__=\`platforms/amiga/tools/amigadate\` \
+                        -D__AMIGADATE__=\`plat/amiga/tools/amigadate\` \
                         -DDYN_TIMESLICE"
         TARGET_LDFLAGS="-noixemul"
         TARGET_ADDOBJS="/gg/lib/libnix/swapstack.o"
@@ -2004,11 +2010,11 @@ case "$1" in
         TARGET_ASFLAGS="-m603"
         generate_gcc_opts "ppc603e" "amigaos"
         TARGET_CCFLAGS="$OPTS_GCC -O6 -mmultiple -mstring -I./ \
-                        -D__AMIGADATE__=\`platforms/amiga/tools/amigadate\` \
+                        -D__AMIGADATE__=\`plat/amiga/tools/amigadate\` \
                         -DDYN_TIMESLICE"
         TARGET_TARBALL="amigaos-ppc-wos"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
-        TARGET_STRIP="platforms/amiga/tools/strip_wos"
+        TARGET_STRIP="plat/amiga/tools/strip_wos"
         TARGET_BINNAME_SUFFIX="_ppc"
         TARGET_OS="AMIGAOS_PPC"
         TARGET_GENMAN=
@@ -2022,12 +2028,12 @@ case "$1" in
         TARGET_ASFLAGS="-m603"
         generate_gcc_opts "ppc603e" "amigaos"
         TARGET_CCFLAGS="$OPTS_GCC -pup -D__POWERUP__ -O6 -mmultiple -mstring \
-                        -D__AMIGADATE__=\`platforms/amiga/tools/amigadate\` \
+                        -D__AMIGADATE__=\`plat/amiga/tools/amigadate\` \
                         -I./ -DDYN_TIMESLICE"
         TARGET_LDFLAGS="-pup"
         TARGET_TARBALL="amigaos-ppc-pup"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
-        TARGET_STRIP="platforms/amiga/tools/strip_pup"
+        TARGET_STRIP="plat/amiga/tools/strip_pup"
         TARGET_BINNAME_SUFFIX="_ppc"
         TARGET_OS="AMIGAOS_PPC"
         TARGET_GENMAN=
@@ -2173,7 +2179,7 @@ fi
 #
 TARGET_RESBIND_CMD=""
 if [ "$TARGET_OS" = "OS2" ]; then
-  TARGET_RESBIND_CMD="emxbind -b -r platforms/os2cli/rc5des.res \${BUILDNAME}"
+  TARGET_RESBIND_CMD="emxbind -b -r plat/os2/${TARGET_BINNAME}.res \${BUILDNAME}"
 fi
 
 #
@@ -2234,43 +2240,49 @@ if [ -n "$TARGET_GENMAN" ]; then
   echo "	./${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} -genman" >> Makefile
 fi
 if [ -n "$TARGET_TARBALL" ]; then
-  FULLTARNAME="${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}"
-  if [ "$TARGET_ARCTYPE" = "zip" ]; then
-    echo "	zip -9 $FULLTARNAME.zip ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} \${DOCFILES}" >> Makefile
-  elif [ "$TARGET_ARCTYPE" = "zipflat" ]; then  
-    # zip file with flat directory structure.
-    echo "	zip -9 -j $FULLTARNAME.zip ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} \${DOCFILES}" >> Makefile    
-  elif [ "$TARGET_ARCTYPE" = "tgz" ]; then
-    # tar.gz, with base+doc directory structure.
-    echo "	tar -cvf - ${TARGET_BINNAME} \${DOCFILES} | gzip -9 > $FULLTARNAME.tar.gz" >> Makefile
-  elif [ "$TARGET_ARCTYPE" = "tgzdir" ]; then
-    # tar.gz, with buildname(base+doc) directory structure.
-    echo "	-rm -rf $FULLTARNAME" >> Makefile
-    echo "	mkdir $FULLTARNAME" >> Makefile
-    echo "	cp ${TARGET_BINNAME} \${DOCFILES} $FULLTARNAME" >> Makefile
-    echo "	tar -cvf - $FULLTARNAME | gzip -9 > $FULLTARNAME.tar.gz" >> Makefile
-    echo "	rm -rf $FULLTARNAME" >> Makefile
-  elif [ "$TARGET_ARCTYPE" = "lha" ]; then
-    echo "	rm -f $FULLTARNAME.lha" >> Makefile
-    echo "	lha a $FULLTARNAME.lha ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} \${DOCFILES}" >> Makefile
-  else
-    echo "Warning: Unknown TARGET_ARCTYPE ${TARGET_ARCTYPE}"
-  fi
-  echo "" >> Makefile
+  if [ -f ./upload.sh ]; then
+    FULLTARNAME="${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}"
+    if [ "$TARGET_ARCTYPE" = "zip" ]; then
+      echo "	zip -9 $FULLTARNAME.zip ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} \${DOCFILES}" >> Makefile
+    elif [ "$TARGET_ARCTYPE" = "zipflat" ]; then  
+      # zip file with flat directory structure.
+      echo "	zip -9 -j $FULLTARNAME.zip ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} \${DOCFILES}" >> Makefile    
+    elif [ "$TARGET_ARCTYPE" = "tgz" ]; then
+      # tar.gz, with base+doc directory structure.
+      echo "	tar -cvf - ${TARGET_BINNAME} \${DOCFILES} | gzip -9 > $FULLTARNAME.tar.gz" >> Makefile
+    elif [ "$TARGET_ARCTYPE" = "tgzdir" ]; then
+      # tar.gz, with buildname(base+doc) directory structure.
+      echo "	-rm -rf $FULLTARNAME" >> Makefile
+      echo "	mkdir $FULLTARNAME" >> Makefile
+      echo "	cp ${TARGET_BINNAME} \${DOCFILES} $FULLTARNAME" >> Makefile
+      echo "	tar -cvf - $FULLTARNAME | gzip -9 > $FULLTARNAME.tar.gz" >> Makefile
+      echo "	rm -rf $FULLTARNAME" >> Makefile
+    elif [ "$TARGET_ARCTYPE" = "lha" ]; then
+      echo "	rm -f $FULLTARNAME.lha" >> Makefile
+      echo "	lha a $FULLTARNAME.lha ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} \${DOCFILES}" >> Makefile
+    else
+      echo "Warning: Unknown TARGET_ARCTYPE ${TARGET_ARCTYPE}"
+    fi
+  fi    
 fi
+echo "" >> Makefile
 
 #
 # Create the rule to ftp the packaged tarball.
 #
 if [ -n "$TARGET_TARBALL" ]; then
   echo "ftp:" >> Makefile
-  if [ -n "$TARGET_TARBALL_COMMENT" ]; then
-    echo "	echo \"${TARGET_TARBALL_COMMENT}\">${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
-  fi
-  echo "	\$(SHELL) ./upload.sh ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}" >>Makefile
-  if [ -n "$TARGET_TARBALL_COMMENT" ]; then
-    echo "	rm -f ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
-  fi
+  if [ -f ./upload.sh ]; then
+    if [ -n "$TARGET_TARBALL_COMMENT" ]; then
+      echo "	echo \"${TARGET_TARBALL_COMMENT}\">${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
+    fi
+    echo "	\$(SHELL) ./upload.sh ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}" >>Makefile
+    if [ -n "$TARGET_TARBALL_COMMENT" ]; then
+      echo "	rm -f ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
+    fi
+  else
+    echo "	echo Sorry, cannot do that." >> Makefile
+  fi    
   echo "" >> Makefile
 fi
 
@@ -2453,8 +2465,10 @@ fi
 
 if [ "$TARGET_OS" = "OS2" ]; then
   echo "Generating rules for .res and .rc"
-  echo "output/${TARGET_BINNAME}.rc:" >>Makefile
-  echo "	platforms/os2cli/attachico.cmd">>Makefile
+  echo "output/${TARGET_BINNAME}.rc:"         >>Makefile
+  echo "	cd plat\os2"                  >>Makefile
+  echo "	rc rc5des.rc ..\..\dnetc.exe" >>Makefile
+  echo "	cd ..\.."                     >>Makefile
   echo "" >> Makefile
 fi
 
@@ -2464,13 +2478,13 @@ fi
 #
 echo "Makefile auto-generation complete!"
 if [ -z "$TARGET_TARBALL" ]; then
-  echo "TARGET_TARBALL was not defined."
-  echo "Upload-ready tarballs will not be auto-generated"
-  echo "and Makefile does not have an 'ftp' target"
+  if [ -f ./upload.sh ]; then
+    echo "TARGET_TARBALL was not defined."
+    echo "Upload-ready tarballs will not be auto-generated"
+    echo "and Makefile does not have an 'ftp' target"
+  fi    
 fi
 rm -f testplat
 echo ""
 exit 0
-
-
 

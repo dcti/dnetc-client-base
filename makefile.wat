@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.27.2.20 2000/12/25 02:41:13 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.21 2001/01/21 16:21:59 cyp Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -88,7 +88,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %cscstd_SYMALIAS = 
 #---
 %ogrstd_LINKOBJS = output\ogr.obj output\ogr_dat.obj output\ogr_sup.obj
-%ogrstd_DEFALL   = -DHAVE_OGR_CORES -Iogr
+%ogrstd_DEFALL   = -DHAVE_OGR_CORES -Iogr/ansi
 %ogrstd_SYMALIAS = #
 #---
 %desstd_LINKOBJS = output\des-x86.obj output\convdes.obj &
@@ -328,7 +328,7 @@ output\rc5mmx-k6-2.obj : rc5\x86\nasm\rc5mmx-k6-2.asm $(%dependall)
 
 # ----------------------------------------------------------------
 
-output\x86ident.obj : platforms\x86ident.asm $(%dependall)
+output\x86ident.obj : plat\x86\x86ident.asm $(%dependall)
   $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
   #*$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
@@ -650,102 +650,102 @@ output\ogr_sup.obj : ogr\ansi\ogr_sup.cpp $(%dependall) .AUTODEPEND
 
 # ----------------------------------------------------------------
 
-output\netware.obj : platforms\netware\netware.cpp $(%dependall) .AUTODEPEND
+output\netware.obj : plat\netware\netware.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 # ----------------------------------------------------------------
 
-output\cdoscon.obj : platforms\dos\cdoscon.cpp $(%dependall) .AUTODEPEND
+output\cdoscon.obj : plat\dos\cdoscon.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\cdosidle.obj : platforms\dos\cdosidle.cpp $(%dependall) .AUTODEPEND
+output\cdosidle.obj : plat\dos\cdosidle.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\cdostime.obj : platforms\dos\cdostime.cpp $(%dependall) .AUTODEPEND
+output\cdostime.obj : plat\dos\cdostime.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\cdosemu.obj : platforms\dos\cdosemu.cpp $(%dependall) .AUTODEPEND
+output\cdosemu.obj : plat\dos\cdosemu.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\cdosinet.obj : platforms\dos\cdosinet.cpp $(%dependall) .AUTODEPEND
+output\cdosinet.obj : plat\dos\cdosinet.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\cdoskeyb.obj : platforms\dos\cdoskeyb.cpp $(%dependall) .AUTODEPEND
+output\cdoskeyb.obj : plat\dos\cdoskeyb.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\cdospmeh.obj : platforms\dos\cdospmeh.cpp $(%dependall) .AUTODEPEND
+output\cdospmeh.obj : plat\dos\cdospmeh.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 # ----------------------------------------------------------------
 
-output\w32svc.obj : platforms\win32cli\w32svc.cpp $(%dependall) .AUTODEPEND
+output\w32svc.obj : plat\win\w32svc.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\w32cons.obj : platforms\win32cli\w32cons.cpp $(%dependall) .AUTODEPEND
+output\w32cons.obj : plat\win\w32cons.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\w32pre.obj : platforms\win32cli\w32pre.cpp $(%dependall) .AUTODEPEND
+output\w32pre.obj : plat\win\w32pre.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\w32sock.obj : platforms\win32cli\w32sock.cpp $(%dependall) .AUTODEPEND
+output\w32sock.obj : plat\win\w32sock.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\w32ras.obj : platforms\win32cli\w32ras.cpp $(%dependall) .AUTODEPEND
+output\w32ras.obj : plat\win\w32ras.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\w32x86.obj : platforms\win32cli\w32x86.cpp $(%dependall) .AUTODEPEND
+output\w32x86.obj : plat\win\w32x86.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-#output\w32pid.obj : platforms\win32cli\w32pid.cpp $(%dependall) .AUTODEPEND
+#output\w32pid.obj : plat\win\w32pid.cpp $(%dependall) .AUTODEPEND
 #  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
 #  @set isused=1
 
-output\w32exe.obj : platforms\win32cli\w32exe.cpp $(%dependall) .AUTODEPEND
+output\w32exe.obj : plat\win\w32exe.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\w32ini.obj : platforms\win32cli\w32ini.cpp $(%dependall) .AUTODEPEND
+output\w32ini.obj : plat\win\w32ini.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\w32util.obj : platforms\win32cli\w32util.cpp $(%dependall) .AUTODEPEND
+output\w32util.obj : plat\win\w32util.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\w32ss.obj : platforms\win32cli\w32ss.cpp $(%dependall) .AUTODEPEND
+output\w32ss.obj : plat\win\w32ss.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\w32snapp.obj : platforms\win32cli\w32snapp.c $(%LINKOBJS) .AUTODEPEND
+output\w32snapp.obj : plat\win\w32snapp.c $(%LINKOBJS) .AUTODEPEND
   #*$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\w32cuis.obj $(BASENAME).com : platforms\win32cli\w32cuis.c
+output\w32cuis.obj $(BASENAME).com : plat\win\w32cuis.c
    @set include=$(%include);$(%WATCOM)\h;$(%WATCOM)\h\nt
    wcl386 /zl /s /3s /os /mf /l=nt /fe=$(BASENAME).com &
-           /fo=$^@ /"lib $(%LIBFILES) op start=main" $[@
+           /fo=$^@ /"lib $(%LIBFILES) op start=main op map" $[@
    #win32_binpack will have been validated in make platform
    @if not $(%WIN32_BINPACK).==. @-$(%WIN32_BINPACK) $(BASENAME).com
 
-output\w32ssb.obj $(BASENAME).scr : platforms\win32cli\w32ssb.cpp &
-     platforms\win32cli\w32cons.rc output\w32util.obj output\w32ss.obj &
+output\w32ssb.obj $(BASENAME).scr : plat\win\w32ssb.cpp &
+     plat\win\w32cons.rc output\w32util.obj output\w32ss.obj &
      output\w32ini.obj output\w32exe.obj $(%LINKOBJS)
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) platforms\win32cli\w32ssb.cpp &
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) plat\win\w32ssb.cpp &
                                     $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
   @if $(%OSNAME).==win16. @wlink $(%LFLAGS) name $(BASENAME).scr &
@@ -757,7 +757,7 @@ output\w32ssb.obj $(BASENAME).scr : platforms\win32cli\w32ssb.cpp &
                 -D "SCRNSAVE : distributed.net client" &
                 -R -q -30 -bt=windows -i$(%WATCOM)\h;$(%WATCOM)\h\win &
                    -fo=output\$(BASENAME).res &
-                   platforms\win32cli\w32cons.rc $(BASENAME).exe
+                   plat\win\w32cons.rc $(BASENAME).exe
   @if $(%OSNAME).==win16. @if exist $(BASENAME).scr @del $(BASENAME).scr
   @if $(%OSNAME).==win16. @ren $(BASENAME).exe $(BASENAME).scr
   @if $(%OSNAME).==win16. @if exist $(BASENAME).rex @del $(BASENAME).rex
@@ -767,13 +767,13 @@ output\w32ssb.obj $(BASENAME).scr : platforms\win32cli\w32ssb.cpp &
                 file output\w32ini.obj,output\w32exe.obj
   @if $(%OSNAME).==win32. @wrc -31 -bt=nt -q &
                 -i$(%WATCOM)\h;$(%WATCOM)\h\win -fo=output\$(BASENAME).res &
-                platforms\win32cli\w32cons.rc $(BASENAME).scr
+                plat\win\w32cons.rc $(BASENAME).scr
   #win32_binpack will have been validated in make platforms
   @if not $(%WIN32_BINPACK).==. @-$(%WIN32_BINPACK) $(BASENAME).scr
 
 # ----------------------------------------------------------------
 
-output\os2inst.obj : platforms\os2cli\os2inst.cpp $(%dependall) .AUTODEPEND
+output\os2inst.obj : plat\os2\os2inst.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
@@ -926,7 +926,7 @@ dolink : .symbolic
 dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      #one of the following must be valid or the make will stop
      @set DOS4GW_STUB=$(%watcom)\binw\wstubq.exe
-     @if exist platforms\dos\d4GwStUb.CoM @set DOS4GW_STUB=platforms\dos\d4GwStUb.CoM
+     @if exist plat\dos\d4GwStUb.CoM @set DOS4GW_STUB=plat\dos\d4GwStUb.CoM
      @set PMODEW_PATH=\develop\pmodew
 
      #automatically select dos/4gw or pmode/w build
@@ -949,13 +949,13 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      @set CFLAGS    = /zp8 /wx /we /6s /fp3 /fpc /zm /ei /mf &
                       /bt=dos /d__MSDOS__ /wcd=604 /wcd=594 /wcd=7 &
                       /DINIT_TIMESLICE=0x40000 /DDYN_TIMESLICE &
-                      /Iplatforms\dos /I$(%watcom)\h #;platforms\dos\libtcp
+                      /Iplat\dos /I$(%watcom)\h #;plat\dos\libtcp
      @set OPT_SIZE  = /s /os 
      @set OPT_SPEED = /oneatx /oh /oi+ 
      @set LINKOBJS  = $(%LINKOBJS) output\cdostime.obj output\cdosidle.obj &
                       output\cdoscon.obj output\cdosemu.obj output\cdosinet.obj &
                       output\cdospmeh.obj output\cdoskeyb.obj
-     @set LIBFILES  = #platforms\dos\libtcp\libtcp.a
+     @set LIBFILES  = #plat\dos\libtcp\libtcp.a
      @set MODULES   =
      @set IMPORTS   =
      @set ZIPPER    = 
@@ -982,7 +982,7 @@ os2: .symbolic                                       # OS/2
      @set TASMEXE   = 
      @set LFLAGS    = sys os2v2
      @set CFLAGS    = /zp8 /5s /fp5 /bm /mf /zm /bt=os2 /DOS2 /DLURK &
-                      /iplatforms\os2cli
+                      /iplat\os2
      @set OPT_SIZE  = /s /os
      @set OPT_SPEED = /oantrlexi 
      @set LIBFILES  = so32dll.lib,tcp32dll.lib
@@ -1012,7 +1012,7 @@ win16: .symbolic                                       # Windows/16
      @set TASMEXE   = tasm32.exe
      @set LFLAGS    = system win386 symtrace open #debug all op de 'SCRSAVE : distributed.net client for Windows'
      @set CFLAGS    = /3s /w4 /zW /bt=windows /d_Windows &
-                      /i$(%watcom)\h;$(%watcom)\h\win /iplatforms\win32cli &
+                      /i$(%watcom)\h;$(%watcom)\h\win /iplat\win &
                       /DBITSLICER_WITH_LESS_BITS /DDYN_TIMESLICE 
                       #/d2
                       #/zp8 /6s /fp3 /fpc /zm /ei /mf /bt=dos /d_Windows &
@@ -1047,7 +1047,7 @@ win16: .symbolic                                       # Windows/16
                 -D "distributed.net client" &
                 -R -q -30 -bt=windows -i$(%WATCOM)\h;$(%WATCOM)\h\win &
                    -fo=output\$(BASENAME).res &
-                   platforms\win32cli\w32cons.rc $(BASENAME).exe
+                   plat\win\w32cons.rc $(BASENAME).exe
      @if exist $(BASENAME).rex @del $(BASENAME).rex
 
 w32: .symbolic
@@ -1064,7 +1064,7 @@ win32: .symbolic                               # win32
      @set WLINKOPS  = alignment=64 map
      @set LFLAGS    = sys nt_win op de 'distributed.net client for Windows' #nt
      @set CFLAGS    = /zp8 /s /fpi87 /fp6 /6s /bm /mf /zmf /zc /bt=nt /DWIN32 /DLURK &
-                      /iplatforms\win32cli /i$(%watcom)\h;$(%watcom)\h\nt &
+                      /iplat\win /i$(%watcom)\h;$(%watcom)\h\nt &
                       /DINIT_TIMESLICE=0x40000 /DDYN_TIMESLICE
      @set OPT_SPEED = /oneatx /ok /ol+ /oh /oi+ /ei # ox=obiklmr
      @set OPT_SIZE  = /s /os #$(%OPT_SPEED) #
@@ -1091,7 +1091,7 @@ win32: .symbolic                               # win32
      #---------------------------------
      @wrc -31 -bt=nt -q &
           -i$(%WATCOM)\h;$(%WATCOM)\h\win -fo=output\$(BASENAME).res &
-          platforms\win32cli\w32cons.rc $(BASENAME).exe
+          plat\win\w32cons.rc $(BASENAME).exe
      #win32_binpack will have been validated in make platform
      @if not $(%WIN32_BINPACK).==. @-$(%WIN32_BINPACK) $(BASENAME).exe
 
@@ -1104,7 +1104,7 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
      @set TASMEXE   = tasm32.exe
      @set NASMEXE   = nasmw.exe
      @set WLINKOPS  = version=2.80 multiload nod map &
-                      xdcdata=platforms/netware/client.xdc osdomain
+                      xdcdata=plat/netware/client.xdc osdomain
      @set LFLAGS    = op scr 'none' op osname='NetWare NLM' symtrace spawnlp #sys netware
      @set OPT_SIZE  = /os /s  
      @set OPT_SPEED = /oneatx /oh /oi+  
@@ -1116,13 +1116,13 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
      @set LIBFILES  = nwwatemu,inetlib,plib3s #plibmt3s,clib3s,math387s,emu387
      @set MODULES   = clib a3112 tli # tcpip netdb
      @set LINKOBJS  = $(%LINKOBJS) output\netware.obj 
-     #@set EXTOBJS   = $(%EXTOBJS) platforms\netware\watavoid\i8s.obj
+     #@set EXTOBJS   = $(%EXTOBJS) plat\netware\watavoid\i8s.obj
      @set IMPORTS   = ImportPublicSymbol UnImportPublicSymbol &
                       GetCurrentTime OutputToScreen fmod &
                       GetServerConfigurationInfo Abend FEGetOpenFileInfo &
                       @$(%watcom)\novi\clib.imp @$(%watcom)\novi\tli.imp
                       # @$(%watcom)\novi\mathlib.imp
-     @set LIBPATH   = platforms\netware\misc platforms\netware\inet &
+     @set LIBPATH   = plat\netware\misc plat\netware\inet &
                       $(%watcom)\lib386 #$(%watcom)\lib386\netware
      @set ZIPPER    = 
      @set DOCFILES  = docs\readme.nw docs\$(BASENAME).txt docs\readme.txt

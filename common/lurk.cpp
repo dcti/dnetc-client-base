@@ -48,7 +48,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.43.2.32 2001/01/05 15:19:29 oliver Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.43.2.33 2001/01/21 16:22:29 cyp Exp $"; }
 
 //#define TRACE
 
@@ -343,7 +343,7 @@ struct ifact
 #include <net/if.h>
 #include <fcntl.h>
 #include <proto/miami.h>
-#include "platforms/amiga/amiga.h"
+#include "plat/amigaos/amiga.h"
 #define _KERNEL
 #include <sys/socket.h>
 #undef _KERNEL

@@ -1,11 +1,17 @@
 # makefile distributed.net client (Borland C++ for Win32).
 # For information about distributed.net, see http://www.distributed.net/
 #
-# $Id: makefile.bcc,v 1.23.2.20 2000/10/31 15:22:41 cyp Exp $
+# $Id: makefile.bcc,v 1.23.2.21 2001/01/21 16:21:59 cyp Exp $
 #
 # As of Feb 2000, Borland C++ 5.5 compiler is free for download.
 # http://www.borland.com/bcppbuilder/freecompiler/
 # ftp://ftpd.inprise.com/download/bcppbuilder/FreeCommandLineTools.exe
+#
+# Unfortunately, the Borland C++ 5.5 initial public release does not
+# include any of the include\*.rh files necessary to compile resources.
+# Workaround: unzip plat/win/bcc55-rh.zip to bccinstallpath\include.
+# The zip contains four one-line xxx.rh files including the xxx.h file.
+# This is enough to compile the client's .res file.
 
 .autodepend
 
@@ -24,8 +30,8 @@ DESPATH = des
 RC5PATH = rc5
 CSCPATH = csc
 OGRPATH = ogr
-CHIPSRCPATH = platforms
-PLATSRCPATH = platforms\win32cli
+CHIPSRCPATH = plat\x86
+PLATSRCPATH = plat\win
 
 #HAVE_DES_CORES=1
 #HAVE_CSC_CORES=1
@@ -240,7 +246,7 @@ $(RES_FILE):    $(RC_FILE)
 
 ### Unfortunately, the Borland C++ 5.5 initial public release does not
 ### include any of the include\*.rh files necessary to compile resources.
-### [andreasb] Workaround: unzip platform/bcc55-rh.zip to bccinstallpath\include.
+### [andreasb] Workaround: unzip plat/win/bcc55-rh.zip to bccinstallpath\include.
 ### The zip contains four one-line xxx.rh files including the xxx.h file.
 ### This is enough to compile the client's .res file. I don't know about other progs.
 

@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.56.2.34 2001/01/18 17:33:16 cyp Exp $
+# $Id: makefile.vc,v 1.56.2.35 2001/01/21 16:21:59 cyp Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
@@ -18,8 +18,8 @@ RC5SRCPATH = rc5
 DESSRCPATH = des
 OGRSRCPATH = ogr
 CSCSRCPATH = csc
-CHIPSRCPATH = platforms
-PLATSRCPATH = platforms/win32cli
+CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
+PLATSRCPATH = plat/win
 #EXECOMPRESSOR = upxw.exe -9 --compress-resources=0
 
 #HAVE_DES_CORES=1
