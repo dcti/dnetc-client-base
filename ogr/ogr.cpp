@@ -1,8 +1,9 @@
-// Copyright distributed.net 1997-1999 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-
+/* Copyright distributed.net 1997-1999 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * @(#)$Id: ogr.cpp,v 1.3.2.8 1999/11/07 18:27:13 cyp Exp $
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -235,7 +236,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
     return CORE_E_FORMAT;
   }
 
-  if (statelen < sizeof(struct State)) {
+  if (((unsigned int)statelen) < sizeof(struct State)) {
     return CORE_E_FORMAT;
   }
   State = (struct State *)state;
@@ -248,7 +249,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
   State->maxdepth = workstub->stub.marks;
   State->maxdepthm1 = State->maxdepth-1;
 
-  if (State->maxdepth > sizeof(OGR)/sizeof(OGR[0])) {
+  if (((unsigned int)State->maxdepth) > (sizeof(OGR)/sizeof(OGR[0]))) {
     return CORE_E_FORMAT;
   }
 
