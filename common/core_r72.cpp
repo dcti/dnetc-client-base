@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.31 2004/07/12 04:56:03 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.32 2004/11/24 18:11:12 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -438,7 +438,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case  8: cindex = 4; break; // microSPARC       == AnBe 1-pipe
         case  9: cindex = 4; break; // microSPARC II    == AnBe 1-pipe
         case 10: cindex = 4; break; // TurboSPARC       == AnBe 1-pipe
-        case 11: cindex = 4; break; // hyperSPARC       == AnBe 1-pipe
+        case 11: cindex = 5; break; // hyperSPARC       == AnBe 2-pipe (#3797)
         case 12: cindex = 5; break; // SuperSPARC       == AnBe 2-pipe
         case 13: cindex = 5; break; // SuperSPARC SC    == AnBe 2-pipe
         case 14: cindex = 5; break; // SuperSPARC II    == AnBe 2-pipe
