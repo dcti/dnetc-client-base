@@ -1,0 +1,1335 @@
+
+	.text
+	.global _rc5_unit_func_strongarm
+	.align
+pqtable:
+        .word   0xB7E15163
+        .word   0x5618CB1C
+        .word   0xF45044D5
+        .word   0x9287BE8E
+        .word   0x30BF3847
+        .word   0xCEF6B200
+        .word   0x6D2E2BB9
+        .word   0x0B65A572
+        .word   0xA99D1F2B
+        .word   0x47D498E4
+        .word   0xE60C129D
+        .word   0x84438C56
+        .word   0x227B060F
+        .word   0xC0B27FC8
+        .word   0x5EE9F981
+        .word   0xFD21733A
+        .word   0x9B58ECF3
+        .word   0x399066AC
+        .word   0xD7C7E065
+        .word   0x75FF5A1E
+        .word   0x1436D3D7
+        .word   0xB26E4D90
+        .word   0x50A5C749
+        .word   0xEEDD4102
+        .word   0x8D14BABB
+        .word   0x2B4C3474
+	
+_rc5_unit_func_strongarm:	
+	MOV     R12,R13
+	STMDB   R13!,{R4-R12,R14,PC}
+	SUB     R11,R12,#4
+	SUB     R12,R13,#0x0200
+/*
+	strange riscosism
+	CMP     R12,R10
+	BLLT    0x03FFFF98
+*/
+	STR     R11,[R13,#-4]!
+	TST     R1,#1
+	BNE     odd
+even:	
+	MOV     R14,R1
+now_its_even:	
+	LDMIA   R0!,{R4-R7}
+	LDMIA   R0,{R2,R3}
+	STMDB   R13!,{R4-R7}
+	SUB     R13,R13,#0xE4
+	STR     R0,[R13,#0]
+	ADD     R12,R13,#0x14
+timingloop:
+	ADDS    R4,R2,#0x01000000
+	BCS     carry_2nd
+done_2nd:	
+	MOV     R5,R3
+done_2nd_again:	
+	STMDB   R12,{R2-R5}
+
+	ADR     R6,pqtable
+	LDMIA   R6!,{R8,R10}
+	MOV     R7,R8
+	ADD     R3,R3,R7,ROR #29
+	ADD     R5,R5,R8,ROR #29
+	MOV     R3,R3,ROR #3
+	MOV     R5,R5,ROR #3
+	ADD     R0,R10,R7,ROR #29
+	ADD     R1,R10,R8,ROR #29
+	ADD     R9,R0,R3
+	ADD     R10,R1,R5
+	STMIA   R12!,{R7-R10}
+	ADD     R0,R3,R9,ROR #29
+	ADD     R1,R5,R10,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	LDMIA   R6!,{R8,R11}
+	ADD     R0,R8,R9,ROR #29
+	ADD     R1,R8,R10,ROR #29
+	ADD     R7,R0,R2
+	ADD     R8,R1,R4
+	ADD     R0,R2,R7,ROR #29
+	ADD     R1,R4,R8,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R11,R7,ROR #29
+	ADD     R1,R11,R8,ROR #29
+	ADD     R9,R0,R3
+	ADD     R11,R1,R5
+	STMIA   R12!,{R7-R9,R11}
+	ADD     R0,R3,R9,ROR #29
+	ADD     R1,R5,R11,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	LDMIA   R6!,{R8,R10}
+	ADD     R0,R8,R9,ROR #29
+	ADD     R1,R8,R11,ROR #29
+	ADD     R7,R0,R2
+	ADD     R8,R1,R4
+	ADD     R0,R2,R7,ROR #29
+	ADD     R1,R4,R8,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R10,R7,ROR #29
+	ADD     R1,R10,R8,ROR #29
+	ADD     R9,R0,R3
+	ADD     R10,R1,R5
+	STMIA   R12!,{R7-R10}
+	ADD     R0,R3,R9,ROR #29
+	ADD     R1,R5,R10,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	LDMIA   R6!,{R8,R11}
+	ADD     R0,R8,R9,ROR #29
+	ADD     R1,R8,R10,ROR #29
+	ADD     R7,R0,R2
+	ADD     R8,R1,R4
+	ADD     R0,R2,R7,ROR #29
+	ADD     R1,R4,R8,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R11,R7,ROR #29
+	ADD     R1,R11,R8,ROR #29
+	ADD     R9,R0,R3
+	ADD     R11,R1,R5
+	STMIA   R12!,{R7-R9,R11}
+	ADD     R0,R3,R9,ROR #29
+	ADD     R1,R5,R11,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	LDMIA   R6!,{R8,R10}
+	ADD     R0,R8,R9,ROR #29
+	ADD     R1,R8,R11,ROR #29
+	ADD     R7,R0,R2
+	ADD     R8,R1,R4
+	ADD     R0,R2,R7,ROR #29
+	ADD     R1,R4,R8,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R10,R7,ROR #29
+	ADD     R1,R10,R8,ROR #29
+	ADD     R9,R0,R3
+	ADD     R10,R1,R5
+	STMIA   R12!,{R7-R10}
+	ADD     R0,R3,R9,ROR #29
+	ADD     R1,R5,R10,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	LDMIA   R6!,{R8,R11}
+	ADD     R0,R8,R9,ROR #29
+	ADD     R1,R8,R10,ROR #29
+	ADD     R7,R0,R2
+	ADD     R8,R1,R4
+	ADD     R0,R2,R7,ROR #29
+	ADD     R1,R4,R8,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R11,R7,ROR #29
+	ADD     R1,R11,R8,ROR #29
+	ADD     R9,R0,R3
+	ADD     R11,R1,R5
+	STMIA   R12!,{R7-R9,R11}
+	ADD     R0,R3,R9,ROR #29
+	ADD     R1,R5,R11,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	LDMIA   R6!,{R8,R10}
+	ADD     R0,R8,R9,ROR #29
+	ADD     R1,R8,R11,ROR #29
+	ADD     R7,R0,R2
+	ADD     R8,R1,R4
+	ADD     R0,R2,R7,ROR #29
+	ADD     R1,R4,R8,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R10,R7,ROR #29
+	ADD     R1,R10,R8,ROR #29
+	ADD     R9,R0,R3
+	ADD     R10,R1,R5
+	STMIA   R12!,{R7-R10}
+	ADD     R0,R3,R9,ROR #29
+	ADD     R1,R5,R10,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	LDMIA   R6!,{R8,R11}
+	ADD     R0,R8,R9,ROR #29
+	ADD     R1,R8,R10,ROR #29
+	ADD     R7,R0,R2
+	ADD     R8,R1,R4
+	ADD     R0,R2,R7,ROR #29
+	ADD     R1,R4,R8,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R11,R7,ROR #29
+	ADD     R1,R11,R8,ROR #29
+	ADD     R9,R0,R3
+	ADD     R11,R1,R5
+	STMIA   R12!,{R7-R9,R11}
+	ADD     R0,R3,R9,ROR #29
+	ADD     R1,R5,R11,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	LDMIA   R6!,{R8,R10}
+	ADD     R0,R8,R9,ROR #29
+	ADD     R1,R8,R11,ROR #29
+	ADD     R7,R0,R2
+	ADD     R8,R1,R4
+	ADD     R0,R2,R7,ROR #29
+	ADD     R1,R4,R8,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R10,R7,ROR #29
+	ADD     R1,R10,R8,ROR #29
+	ADD     R9,R0,R3
+	ADD     R10,R1,R5
+	STMIA   R12!,{R7-R10}
+	ADD     R0,R3,R9,ROR #29
+	ADD     R1,R5,R10,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	LDMIA   R6!,{R8,R11}
+	ADD     R0,R8,R9,ROR #29
+	ADD     R1,R8,R10,ROR #29
+	ADD     R7,R0,R2
+	ADD     R8,R1,R4
+	ADD     R0,R2,R7,ROR #29
+	ADD     R1,R4,R8,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R11,R7,ROR #29
+	ADD     R1,R11,R8,ROR #29
+	ADD     R9,R0,R3
+	ADD     R11,R1,R5
+	STMIA   R12!,{R7-R9,R11}
+	ADD     R0,R3,R9,ROR #29
+	ADD     R1,R5,R11,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	LDMIA   R6!,{R8,R10}
+	ADD     R0,R8,R9,ROR #29
+	ADD     R1,R8,R11,ROR #29
+	ADD     R7,R0,R2
+	ADD     R8,R1,R4
+	ADD     R0,R2,R7,ROR #29
+	ADD     R1,R4,R8,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R10,R7,ROR #29
+	ADD     R1,R10,R8,ROR #29
+	ADD     R9,R0,R3
+	ADD     R10,R1,R5
+	STMIA   R12!,{R7-R10}
+	ADD     R0,R3,R9,ROR #29
+	ADD     R1,R5,R10,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	LDMIA   R6!,{R8,R11}
+	ADD     R0,R8,R9,ROR #29
+	ADD     R1,R8,R10,ROR #29
+	ADD     R7,R0,R2
+	ADD     R8,R1,R4
+	ADD     R0,R2,R7,ROR #29
+	ADD     R1,R4,R8,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R11,R7,ROR #29
+	ADD     R1,R11,R8,ROR #29
+	ADD     R9,R0,R3
+	ADD     R11,R1,R5
+	STMIA   R12!,{R7-R9,R11}
+	ADD     R0,R3,R9,ROR #29
+	ADD     R1,R5,R11,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	LDMIA   R6!,{R8,R10}
+	ADD     R0,R8,R9,ROR #29
+	ADD     R1,R8,R11,ROR #29
+	ADD     R7,R0,R2
+	ADD     R8,R1,R4
+	ADD     R0,R2,R7,ROR #29
+	ADD     R1,R4,R8,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R10,R7,ROR #29
+	ADD     R1,R10,R8,ROR #29
+	ADD     R9,R0,R3
+	ADD     R10,R1,R5
+	STMIA   R12!,{R7-R10}
+	ADD     R0,R3,R9,ROR #29
+	ADD     R1,R5,R10,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	SUB     R12,R12,#0xD0
+	ADD     R0,R2,R9,ROR #29
+	ADD     R1,R4,R10,ROR #29
+	LDMIA   R12,{R6-R11}
+	ADD     R6,R0,R6,ROR #29
+	ADD     R7,R1,R7,ROR #29
+	ADD     R0,R2,R6,ROR #29
+	ADD     R1,R4,R7,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R6,ROR #29
+	ADD     R1,R5,R7,ROR #29
+	ADD     R8,R0,R8,ROR #29
+	ADD     R9,R1,R9,ROR #29
+	ADD     R0,R3,R8,ROR #29
+	ADD     R1,R5,R9,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R8,ROR #29
+	ADD     R1,R4,R9,ROR #29
+	ADD     R10,R0,R10,ROR #29
+	ADD     R11,R1,R11,ROR #29
+	ADD     R0,R2,R10,ROR #29
+	ADD     R1,R4,R11,ROR #29
+	STMIA   R12!,{R6-R11}
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R10,ROR #29
+	ADD     R1,R5,R11,ROR #29
+	LDMIA   R12,{R6-R11}
+	ADD     R6,R0,R6,ROR #29
+	ADD     R7,R1,R7,ROR #29
+	ADD     R0,R3,R6,ROR #29
+	ADD     R1,R5,R7,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R6,ROR #29
+	ADD     R1,R4,R7,ROR #29
+	ADD     R8,R0,R8,ROR #29
+	ADD     R9,R1,R9,ROR #29
+	ADD     R0,R2,R8,ROR #29
+	ADD     R1,R4,R9,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R8,ROR #29
+	ADD     R1,R5,R9,ROR #29
+	ADD     R10,R0,R10,ROR #29
+	ADD     R11,R1,R11,ROR #29
+	ADD     R0,R3,R10,ROR #29
+	ADD     R1,R5,R11,ROR #29
+	STMIA   R12!,{R6-R11}
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R10,ROR #29
+	ADD     R1,R4,R11,ROR #29
+	LDMIA   R12,{R6-R11}
+	ADD     R6,R0,R6,ROR #29
+	ADD     R7,R1,R7,ROR #29
+	ADD     R0,R2,R6,ROR #29
+	ADD     R1,R4,R7,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R6,ROR #29
+	ADD     R1,R5,R7,ROR #29
+	ADD     R8,R0,R8,ROR #29
+	ADD     R9,R1,R9,ROR #29
+	ADD     R0,R3,R8,ROR #29
+	ADD     R1,R5,R9,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R8,ROR #29
+	ADD     R1,R4,R9,ROR #29
+	ADD     R10,R0,R10,ROR #29
+	ADD     R11,R1,R11,ROR #29
+	ADD     R0,R2,R10,ROR #29
+	ADD     R1,R4,R11,ROR #29
+	STMIA   R12!,{R6-R11}
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R10,ROR #29
+	ADD     R1,R5,R11,ROR #29
+	LDMIA   R12,{R6-R11}
+	ADD     R6,R0,R6,ROR #29
+	ADD     R7,R1,R7,ROR #29
+	ADD     R0,R3,R6,ROR #29
+	ADD     R1,R5,R7,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R6,ROR #29
+	ADD     R1,R4,R7,ROR #29
+	ADD     R8,R0,R8,ROR #29
+	ADD     R9,R1,R9,ROR #29
+	ADD     R0,R2,R8,ROR #29
+	ADD     R1,R4,R9,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R8,ROR #29
+	ADD     R1,R5,R9,ROR #29
+	ADD     R10,R0,R10,ROR #29
+	ADD     R11,R1,R11,ROR #29
+	ADD     R0,R3,R10,ROR #29
+	ADD     R1,R5,R11,ROR #29
+	STMIA   R12!,{R6-R11}
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R10,ROR #29
+	ADD     R1,R4,R11,ROR #29
+	LDMIA   R12,{R6-R11}
+	ADD     R6,R0,R6,ROR #29
+	ADD     R7,R1,R7,ROR #29
+	ADD     R0,R2,R6,ROR #29
+	ADD     R1,R4,R7,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R6,ROR #29
+	ADD     R1,R5,R7,ROR #29
+	ADD     R8,R0,R8,ROR #29
+	ADD     R9,R1,R9,ROR #29
+	ADD     R0,R3,R8,ROR #29
+	ADD     R1,R5,R9,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R8,ROR #29
+	ADD     R1,R4,R9,ROR #29
+	ADD     R10,R0,R10,ROR #29
+	ADD     R11,R1,R11,ROR #29
+	ADD     R0,R2,R10,ROR #29
+	ADD     R1,R4,R11,ROR #29
+	STMIA   R12!,{R6-R11}
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R10,ROR #29
+	ADD     R1,R5,R11,ROR #29
+	LDMIA   R12,{R6-R11}
+	ADD     R6,R0,R6,ROR #29
+	ADD     R7,R1,R7,ROR #29
+	ADD     R0,R3,R6,ROR #29
+	ADD     R1,R5,R7,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R6,ROR #29
+	ADD     R1,R4,R7,ROR #29
+	ADD     R8,R0,R8,ROR #29
+	ADD     R9,R1,R9,ROR #29
+	ADD     R0,R2,R8,ROR #29
+	ADD     R1,R4,R9,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R8,ROR #29
+	ADD     R1,R5,R9,ROR #29
+	ADD     R10,R0,R10,ROR #29
+	ADD     R11,R1,R11,ROR #29
+	ADD     R0,R3,R10,ROR #29
+	ADD     R1,R5,R11,ROR #29
+	STMIA   R12!,{R6-R11}
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R10,ROR #29
+	ADD     R1,R4,R11,ROR #29
+	LDMIA   R12,{R6-R11}
+	ADD     R6,R0,R6,ROR #29
+	ADD     R7,R1,R7,ROR #29
+	ADD     R0,R2,R6,ROR #29
+	ADD     R1,R4,R7,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R6,ROR #29
+	ADD     R1,R5,R7,ROR #29
+	ADD     R8,R0,R8,ROR #29
+	ADD     R9,R1,R9,ROR #29
+	ADD     R0,R3,R8,ROR #29
+	ADD     R1,R5,R9,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R8,ROR #29
+	ADD     R1,R4,R9,ROR #29
+	ADD     R10,R0,R10,ROR #29
+	ADD     R11,R1,R11,ROR #29
+	ADD     R0,R2,R10,ROR #29
+	ADD     R1,R4,R11,ROR #29
+	STMIA   R12!,{R6-R11}
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R10,ROR #29
+	ADD     R1,R5,R11,ROR #29
+	LDMIA   R12,{R6-R11}
+	ADD     R6,R0,R6,ROR #29
+	ADD     R7,R1,R7,ROR #29
+	ADD     R0,R3,R6,ROR #29
+	ADD     R1,R5,R7,ROR #29
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R6,ROR #29
+	ADD     R1,R4,R7,ROR #29
+	ADD     R8,R0,R8,ROR #29
+	ADD     R9,R1,R9,ROR #29
+	ADD     R0,R2,R8,ROR #29
+	ADD     R1,R4,R9,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R8,ROR #29
+	ADD     R1,R5,R9,ROR #29
+	ADD     R10,R0,R10,ROR #29
+	ADD     R11,R1,R11,ROR #29
+	ADD     R0,R3,R10,ROR #29
+	ADD     R1,R5,R11,ROR #29
+	STMIA   R12!,{R6-R11}
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R10,ROR #29
+	ADD     R1,R4,R11,ROR #29
+	LDMIA   R12,{R6-R9}
+	ADD     R6,R0,R6,ROR #29
+	ADD     R7,R1,R7,ROR #29
+	ADD     R0,R2,R6,ROR #29
+	ADD     R1,R4,R7,ROR #29
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R6,ROR #29
+	ADD     R1,R5,R7,ROR #29
+	ADD     R8,R0,R8,ROR #29
+	ADD     R9,R1,R9,ROR #29
+	ADD     R0,R3,R8,ROR #29
+	ADD     R1,R5,R9,ROR #29
+	STMIA   R12!,{R6-R9}
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	SUB     R12,R12,#0xD0
+	ADD     R0,R2,R8,ROR #29
+	ADD     R1,R4,R9,ROR #29
+	LDMIA   R12,{R6-R11}
+	ADD     R0,R0,R6,ROR #29
+	ADD     R1,R1,R7,ROR #29
+	MOV     R6,R0,ROR #29
+	MOV     R7,R1,ROR #29
+	ADD     R0,R2,R6
+	ADD     R1,R4,R7
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R6
+	ADD     R1,R5,R7
+	ADD     R0,R0,R8,ROR #29
+	ADD     R1,R1,R9,ROR #29
+	MOV     R8,R0,ROR #29
+	MOV     R9,R1,ROR #29
+	ADD     R0,R3,R8
+	ADD     R1,R5,R9
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R8
+	ADD     R1,R4,R9
+	ADD     R0,R0,R10,ROR #29
+	ADD     R1,R1,R11,ROR #29
+	MOV     R10,R0,ROR #29
+	MOV     R11,R1,ROR #29
+	ADD     R0,R2,R10
+	ADD     R1,R4,R11
+	STMIA   R12!,{R6-R11}
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R10
+	ADD     R1,R5,R11
+	LDMIA   R12,{R6-R11}
+	ADD     R0,R0,R6,ROR #29
+	ADD     R1,R1,R7,ROR #29
+	MOV     R6,R0,ROR #29
+	MOV     R7,R1,ROR #29
+	ADD     R0,R3,R6
+	ADD     R1,R5,R7
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R6
+	ADD     R1,R4,R7
+	ADD     R0,R0,R8,ROR #29
+	ADD     R1,R1,R9,ROR #29
+	MOV     R8,R0,ROR #29
+	MOV     R9,R1,ROR #29
+	ADD     R0,R2,R8
+	ADD     R1,R4,R9
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R8
+	ADD     R1,R5,R9
+	ADD     R0,R0,R10,ROR #29
+	ADD     R1,R1,R11,ROR #29
+	MOV     R10,R0,ROR #29
+	MOV     R11,R1,ROR #29
+	ADD     R0,R3,R10
+	ADD     R1,R5,R11
+	STMIA   R12!,{R6-R11}
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R10
+	ADD     R1,R4,R11
+	LDMIA   R12,{R6-R11}
+	ADD     R0,R0,R6,ROR #29
+	ADD     R1,R1,R7,ROR #29
+	MOV     R6,R0,ROR #29
+	MOV     R7,R1,ROR #29
+	ADD     R0,R2,R6
+	ADD     R1,R4,R7
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R6
+	ADD     R1,R5,R7
+	ADD     R0,R0,R8,ROR #29
+	ADD     R1,R1,R9,ROR #29
+	MOV     R8,R0,ROR #29
+	MOV     R9,R1,ROR #29
+	ADD     R0,R3,R8
+	ADD     R1,R5,R9
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R8
+	ADD     R1,R4,R9
+	ADD     R0,R0,R10,ROR #29
+	ADD     R1,R1,R11,ROR #29
+	MOV     R10,R0,ROR #29
+	MOV     R11,R1,ROR #29
+	ADD     R0,R2,R10
+	ADD     R1,R4,R11
+	STMIA   R12!,{R6-R11}
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R10
+	ADD     R1,R5,R11
+	LDMIA   R12,{R6-R11}
+	ADD     R0,R0,R6,ROR #29
+	ADD     R1,R1,R7,ROR #29
+	MOV     R6,R0,ROR #29
+	MOV     R7,R1,ROR #29
+	ADD     R0,R3,R6
+	ADD     R1,R5,R7
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R6
+	ADD     R1,R4,R7
+	ADD     R0,R0,R8,ROR #29
+	ADD     R1,R1,R9,ROR #29
+	MOV     R8,R0,ROR #29
+	MOV     R9,R1,ROR #29
+	ADD     R0,R2,R8
+	ADD     R1,R4,R9
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R8
+	ADD     R1,R5,R9
+	ADD     R0,R0,R10,ROR #29
+	ADD     R1,R1,R11,ROR #29
+	MOV     R10,R0,ROR #29
+	MOV     R11,R1,ROR #29
+	ADD     R0,R3,R10
+	ADD     R1,R5,R11
+	STMIA   R12!,{R6-R11}
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R10
+	ADD     R1,R4,R11
+	LDMIA   R12,{R6-R11}
+	ADD     R0,R0,R6,ROR #29
+	ADD     R1,R1,R7,ROR #29
+	MOV     R6,R0,ROR #29
+	MOV     R7,R1,ROR #29
+	ADD     R0,R2,R6
+	ADD     R1,R4,R7
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R6
+	ADD     R1,R5,R7
+	ADD     R0,R0,R8,ROR #29
+	ADD     R1,R1,R9,ROR #29
+	MOV     R8,R0,ROR #29
+	MOV     R9,R1,ROR #29
+	ADD     R0,R3,R8
+	ADD     R1,R5,R9
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R8
+	ADD     R1,R4,R9
+	ADD     R0,R0,R10,ROR #29
+	ADD     R1,R1,R11,ROR #29
+	MOV     R10,R0,ROR #29
+	MOV     R11,R1,ROR #29
+	ADD     R0,R2,R10
+	ADD     R1,R4,R11
+	STMIA   R12!,{R6-R11}
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R10
+	ADD     R1,R5,R11
+	LDMIA   R12,{R6-R11}
+	ADD     R0,R0,R6,ROR #29
+	ADD     R1,R1,R7,ROR #29
+	MOV     R6,R0,ROR #29
+	MOV     R7,R1,ROR #29
+	ADD     R0,R3,R6
+	ADD     R1,R5,R7
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R6
+	ADD     R1,R4,R7
+	ADD     R0,R0,R8,ROR #29
+	ADD     R1,R1,R9,ROR #29
+	MOV     R8,R0,ROR #29
+	MOV     R9,R1,ROR #29
+	ADD     R0,R2,R8
+	ADD     R1,R4,R9
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R8
+	ADD     R1,R5,R9
+	ADD     R0,R0,R10,ROR #29
+	ADD     R1,R1,R11,ROR #29
+	MOV     R10,R0,ROR #29
+	MOV     R11,R1,ROR #29
+	ADD     R0,R3,R10
+	ADD     R1,R5,R11
+	STMIA   R12!,{R6-R11}
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R10
+	ADD     R1,R4,R11
+	LDMIA   R12,{R6-R11}
+	ADD     R0,R0,R6,ROR #29
+	ADD     R1,R1,R7,ROR #29
+	MOV     R6,R0,ROR #29
+	MOV     R7,R1,ROR #29
+	ADD     R0,R2,R6
+	ADD     R1,R4,R7
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R6
+	ADD     R1,R5,R7
+	ADD     R0,R0,R8,ROR #29
+	ADD     R1,R1,R9,ROR #29
+	MOV     R8,R0,ROR #29
+	MOV     R9,R1,ROR #29
+	ADD     R0,R3,R8
+	ADD     R1,R5,R9
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R8
+	ADD     R1,R4,R9
+	ADD     R0,R0,R10,ROR #29
+	ADD     R1,R1,R11,ROR #29
+	MOV     R10,R0,ROR #29
+	MOV     R11,R1,ROR #29
+	ADD     R0,R2,R10
+	ADD     R1,R4,R11
+	STMIA   R12!,{R6-R11}
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R10
+	ADD     R1,R5,R11
+	LDMIA   R12,{R6-R9}
+	ADD     R0,R0,R6,ROR #29
+	ADD     R1,R1,R7,ROR #29
+	MOV     R6,R0,ROR #29
+	MOV     R7,R1,ROR #29
+	ADD     R0,R3,R6
+	ADD     R1,R5,R7
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R6
+	ADD     R1,R4,R7
+	ADD     R0,R0,R8,ROR #29
+	ADD     R1,R1,R9,ROR #29
+	MOV     R8,R0,ROR #29
+	MOV     R9,R1,ROR #29
+	ADD     R0,R2,R8
+	ADD     R1,R4,R9
+	STMIA   R12!,{R6-R9}
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R8
+	ADD     R1,R5,R9
+	LDMIA   R12,{R6-R11}
+	ADD     R0,R0,R6,ROR #29
+	ADD     R1,R1,R7,ROR #29
+	MOV     R6,R0,ROR #29
+	MOV     R7,R1,ROR #29
+	ADD     R0,R3,R6
+	ADD     R1,R5,R7
+	ADD     R2,R2,R0
+	ADD     R4,R4,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R2,R2,ROR R0
+	MOV     R4,R4,ROR R1
+	ADD     R0,R2,R6
+	ADD     R1,R4,R7
+	ADD     R0,R0,R8,ROR #29
+	ADD     R1,R1,R9,ROR #29
+	MOV     R8,R0,ROR #29
+	MOV     R9,R1,ROR #29
+	ADD     R0,R2,R8
+	ADD     R1,R4,R9
+	ADD     R3,R3,R0
+	ADD     R5,R5,R1
+	RSB     R0,R0,#0
+	RSB     R1,R1,#0
+	MOV     R3,R3,ROR R0
+	MOV     R5,R5,ROR R1
+	ADD     R0,R3,R8
+	ADD     R1,R5,R9
+	ADD     R0,R0,R10,ROR #29
+	ADD     R1,R1,R11,ROR #29
+	MOV     R10,R0,ROR #29
+	MOV     R11,R1,ROR #29
+	ADD     R0,R12,#0x18
+	LDMIA   R0,{R0-R3}
+	SUB     R4,R2,R11
+	SUB     R2,R2,R10
+	EOR     R4,R3,R4,ROR R3
+	EOR     R2,R3,R2,ROR R3
+	SUB     R5,R3,R9
+	SUB     R3,R3,R8
+	EOR     R3,R2,R3,ROR R2
+	EOR     R5,R4,R5,ROR R4
+	SUB     R2,R2,R6
+	SUB     R4,R4,R7
+	EOR     R2,R3,R2,ROR R3
+	EOR     R4,R5,R4,ROR R5
+	LDMDB   R12!,{R6-R11}
+	SUB     R3,R3,R10
+	SUB     R5,R5,R11
+	EOR     R3,R2,R3,ROR R2
+	EOR     R5,R4,R5,ROR R4
+	SUB     R2,R2,R8
+	SUB     R4,R4,R9
+	EOR     R2,R3,R2,ROR R3
+	EOR     R4,R5,R4,ROR R5
+	SUB     R3,R3,R6
+	SUB     R5,R5,R7
+	EOR     R3,R2,R3,ROR R2
+	EOR     R5,R4,R5,ROR R4
+	LDMDB   R12!,{R6-R11}
+	SUB     R2,R2,R10
+	SUB     R4,R4,R11
+	EOR     R2,R3,R2,ROR R3
+	EOR     R4,R5,R4,ROR R5
+	SUB     R3,R3,R8
+	SUB     R5,R5,R9
+	EOR     R3,R2,R3,ROR R2
+	EOR     R5,R4,R5,ROR R4
+	SUB     R2,R2,R6
+	SUB     R4,R4,R7
+	EOR     R2,R3,R2,ROR R3
+	EOR     R4,R5,R4,ROR R5
+	LDMDB   R12!,{R6-R11}
+	SUB     R3,R3,R10
+	SUB     R5,R5,R11
+	EOR     R3,R2,R3,ROR R2
+	EOR     R5,R4,R5,ROR R4
+	SUB     R2,R2,R8
+	SUB     R4,R4,R9
+	EOR     R2,R3,R2,ROR R3
+	EOR     R4,R5,R4,ROR R5
+	SUB     R3,R3,R6
+	SUB     R5,R5,R7
+	EOR     R3,R2,R3,ROR R2
+	EOR     R5,R4,R5,ROR R4
+	LDMDB   R12!,{R6-R11}
+	SUB     R2,R2,R10
+	SUB     R4,R4,R11
+	EOR     R2,R3,R2,ROR R3
+	EOR     R4,R5,R4,ROR R5
+	SUB     R3,R3,R8
+	SUB     R5,R5,R9
+	EOR     R3,R2,R3,ROR R2
+	EOR     R5,R4,R5,ROR R4
+	SUB     R2,R2,R6
+	SUB     R4,R4,R7
+	EOR     R2,R3,R2,ROR R3
+	EOR     R4,R5,R4,ROR R5
+	LDMDB   R12!,{R6-R11}
+	SUB     R3,R3,R10
+	SUB     R5,R5,R11
+	EOR     R3,R2,R3,ROR R2
+	EOR     R5,R4,R5,ROR R4
+	SUB     R2,R2,R8
+	SUB     R4,R4,R9
+	EOR     R2,R3,R2,ROR R3
+	EOR     R4,R5,R4,ROR R5
+	SUB     R3,R3,R6
+	SUB     R5,R5,R7
+	EOR     R3,R2,R3,ROR R2
+	EOR     R5,R4,R5,ROR R4
+	LDMDB   R12!,{R6-R11}
+	SUB     R2,R2,R10
+	SUB     R4,R4,R11
+	EOR     R2,R3,R2,ROR R3
+	EOR     R4,R5,R4,ROR R5
+	SUB     R3,R3,R8
+	SUB     R5,R5,R9
+	EOR     R3,R2,R3,ROR R2
+	EOR     R5,R4,R5,ROR R4
+	SUB     R2,R2,R6
+	SUB     R4,R4,R7
+	EOR     R2,R3,R2,ROR R3
+	EOR     R4,R5,R4,ROR R5
+	LDMDB   R12!,{R6-R11}
+	SUB     R3,R3,R10
+	SUB     R5,R5,R11
+	EOR     R3,R2,R3,ROR R2
+	EOR     R5,R4,R5,ROR R4
+	SUB     R2,R2,R8
+	SUB     R4,R4,R9
+	EOR     R2,R3,R2,ROR R3
+	EOR     R4,R5,R4,ROR R5
+	SUB     R3,R3,R6
+	SUB     R5,R5,R7
+	EOR     R3,R2,R3,ROR R2
+	EOR     R5,R4,R5,ROR R4
+	LDMDB   R12!,{R6-R9}
+	SUB     R2,R2,R8
+	SUB     R4,R4,R9
+check_r2:
+	TEQ     R0,R2
+	BEQ     check_r3
+check_r4:
+	TEQ     R0,R4	
+	BEQ     check_r5
+missed:
+	LDMDB   R12,{R2,R3}
+	SUBS    R14,R14,#2
+	BEQ     the_end
+inc_1st:
+	ADDS    R2,R2,#0x01000000
+	BCC     timingloop
+carry_1st:
+	ADD     R2,R2,#0x00010000
+	TST     R2,#0x00FF0000
+	BNE     timingloop
+	SUB     R2,R2,#0x01000000
+	ADD     R2,R2,#0x0100
+	TST     R2,#0xFF00
+	BNE     timingloop
+	SUB     R2,R2,#0x00010000
+	ADD     R2,R2,#1
+	ANDS    R2,R2,#0xFF
+	BNE     timingloop
+	ADDS    R3,R3,#0x01000000
+	BCC     timingloop
+carry_1st_again:
+	ADD     R3,R3,#0x00010000
+	TST     R3,#0x00FF0000
+	BNE     timingloop
+	SUB     R3,R3,#0x01000000
+	ADD     R3,R3,#0x0100
+	TST     R3,#0xFF00
+	BNE     timingloop
+	SUB     R3,R3,#0x00010000
+	ADD     R3,R3,#1
+	AND     R3,R3,#0xFF
+	B       timingloop
+carry_2nd:
+	ADD     R4,R4,#0x00010000
+	TST     R4,#0x00FF0000
+	BNE     done_2nd
+	SUB     R4,R4,#0x01000000
+	ADD     R4,R4,#0x0100
+	TST     R4,#0xFF00
+	BNE     done_2nd
+	SUB     R4,R4,#0x00010000
+	ADD     R4,R4,#1
+	ANDS    R4,R4,#0xFF
+	BNE     done_2nd
+	ADDS    R5,R3,#0x01000000
+	BCC     done_2nd_again
+	ADD     R5,R5,#0x00010000
+	TST     R5,#0x00FF0000
+	BNE     done_2nd_again
+	SUB     R5,R5,#0x01000000
+	ADD     R5,R5,#0x0100
+	TST     R5,#0xFF00
+	BNE     done_2nd_again
+	SUB     R5,R5,#0x00010000
+	ADD     R5,R5,#1
+	AND     R5,R5,#0xFF
+	B       done_2nd_again
+
+the_end:	
+	MOV     R0,#0
+inc_then_end:
+	LDMDB   R12,{R2,R3}
+	ADDS    R2,R2,#0x01000000
+	BCC     function_exit
+	ADD     R2,R2,#0x00010000
+	TST     R2,#0x00FF0000
+	BNE     function_exit
+	SUB     R2,R2,#0x01000000
+	ADD     R2,R2,#0x0100
+	TST     R2,#0xFF00
+	BNE     function_exit
+	SUB     R2,R2,#0x00010000
+	ADD     R2,R2,#1
+	ANDS    R2,R2,#0xFF
+	BNE     function_exit
+	ADDS    R3,R3,#0x01000000
+	BCC     function_exit
+	ADD     R3,R3,#0x00010000
+	TST     R3,#0x00FF0000
+	BNE     function_exit
+	SUB     R3,R3,#0x01000000
+	ADD     R3,R3,#0x0100
+	TST     R3,#0xFF00
+	BNE     function_exit
+	SUB     R3,R3,#0x00010000
+	ADD     R3,R3,#1
+	AND     R3,R3,#0xFF
+function_exit:
+	LDR     R1,[R13,#0]
+	STMIA   R1,{R2,R3}
+	LDR     R11,[R12,#0x0E0]
+	LDMDB   R11,{R4-R11,R13,PC}
+check_r5:
+	SUB     R5,R5,R7
+	TEQ     R1,R5
+	BNE     missed
+	LDMDB   R12,{R2-R5}
+	SUB     R0,R14,#1
+	B       function_exit
+check_r3:
+	SUB     R3,R3,R6
+	TEQ     R1,R3
+	BNE     check_r4
+	LDMDB   R12,{R2,R3}
+	MOV     R0,R14
+	B       function_exit
+
+odd:
+	MOV     R10,R0
+	MOV     R11,R1
+	MOV     R1,#1
+	BL      _rc5_unit_func_arm
+	CMP     R0,#0
+	BNE     found_on_single
+	BICS    R14,R11,#1
+	MOVNE   R0,R10
+	BNE     now_its_even
+found_on_single:
+	MOVNE   R0,R11
+	LDR     R11,[R13,#0]
+	LDMDB   R11,{R4-R11,R13,PC}
