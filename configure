@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.17 1999/07/20 04:10:16 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.18 1999/07/28 22:29:13 remi Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -524,7 +524,9 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
-    *sparc-linux-mt-egcs)
+    *sparc-linux-mt-egcs)	# [remi]
+	TARGET_CC="gcc"
+	TARGET_AS="gcc -c"
 	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC -fno-inline-functions \
 			-D__showids__ -DLURK \
@@ -534,7 +536,8 @@ case "$1" in
 			des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
 	TARGET_LDFLAGS="-static"
 	TARGET_LIBS="-lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+	TARGET_TARBALL="linux-sparc-elf-mt-glibc20"
 	;;
 
     *sparc-cc)
@@ -1765,7 +1768,7 @@ if [ "X$TARGET_TARBALL" != "X" ]; then
   if  [ "$TARGET_ARCTYPE" = "zip" ]; then
     echo "Zip support is not in place"  
   else     # tgz
-    echo "	tar -czf rc5des\${BUILDNUM}-${TARGET_TARBALL}.tar.gz ${EXENAME} \${DOCFILES}" >>Makefile
+    echo "	tar -cvzf rc5des\${BUILDNUM}-${TARGET_TARBALL}.tar.gz ${EXENAME} \${DOCFILES}" >>Makefile
   fi
   echo "" >> Makefile  
 
