@@ -5,34 +5,74 @@
 ##   where <platform> is one of [dos | netware | os2 | w32 | w_h | wsv ]
 ##                       or anything else defined at the end of this makefile
 ##
-## $Id: makefile.wat,v 1.11 1998/06/18 07:22:46 jlawson Exp $
+## $Id: makefile.wat,v 1.12 1998/06/18 08:19:17 cyruspatel Exp $
+## Revision 1.11  1998/06/18 07:22:46  jlawson
+## updated makefile with new paths to des/rc5 cores 
 ##
-## Revision history:
-## 1.6  cyp Added support for new disphelp.cpp, deleted obsolete "cd xxx" 
-##          and "cd .." commands. 
-## 1.7  cyp Important fix:Changed so that /zp is uniform across all modules.
+## Revision 1.10  1998/06/16 22:29:59  silby
+## added p1bdespro.obj and p2bdespro.obj so that they'll get linked (unless 
+## I did it wrong. <g>)
+##
+## Revision 1.9  1998/06/15 02:32:20  ziggyb
+## added os2 dod.obj  Also moved the rc5 cores to the front of the link 
+## list to speed up the keyrates a bit for os2
+##
+## Revision 1.8  1998/06/14 11:16:11  ziggyb
+## Moved the /fr and /fo options to %PATHOPS so that I can change them
+## easily. /fr doesn't work in Watcom 10 :( Also moved all the rc5/des 
+## core files to the front of the list of object files since it does 
+## seem to speed things up a bit.
+##
+## Revision 1.7  1998/06/14 01:43:16  cyruspatel
+## important fix: uniform-ified /zp compiler switch for all modules &
+## all platforms (yeah, I took the liberty). /zp must be uniform,
+## or else indirect pointers to class members (as in clirate's use of
+## prob->timelo) might end up being 'slightly' off.
+##
+## Revision 1.6  1998/06/14 01:43:16  cyruspatel
+## added support for new disphelp.cpp; removed obsolete chdir cmds;
 ##          
+## Revision 1.5  1998/06/09 08:54:12  jlawson
+## NetWare patches - NetWare no longer uses watcom static clib
+##
+## Revision 1.4  1998/06/07 08:39:14  ziggyb
+## Added a override to the stacksize for OS/2 builds. 32k stack size 
+## slows down the rc5 cores.
+##
+## Revision 1.3  1998/05/26 23:02:02  ziggyb
+## Another OS/2 Makefile change (taking out the default watcom/os2 directory)
+##
+## Revision 1.2  1998/05/26 21:02:16  ziggyb
+## Added the new cli source file into the makefile. Also changed some of 
+## the compile options under OS/2.
+##
+## Revision 1.1  1998/05/24 14:25:37  daa
+## Import 5/23/98 client tree
+## 
 
 CC=wpp386
 CCASM=wasm
 LINK=wlink
 
-%VERSION  = 70.21          
+%VERSION  = 70.24          
 %VERSTRING= v2.7024.409
 
-%LINKOBJS = output\RG-486.OBJ output\RG-6X86.OBJ &
-           output\RG-K5.OBJ output\RG-K6.OBJ output\RC5P5BRF.OBJ &
-           output\RG-P6.OBJ output\BDESLOW.OBJ output\BBDESLOW.OBJ &
-           output\cliconfig.obj output\autobuff.obj output\buffwork.obj &
-           output\mail.obj output\client.obj output\disphelp.obj &
-           output\iniread.obj output\network.obj output\problem.obj &
-           output\scram.obj output\des-x86.obj output\convdes.obj &
-           output\clitime.obj output\clicdata.obj output\clirate.obj &
-           output\clisrate.obj output\X86IDENT.OBJ &
-           output\p1bdespro.obj &
-           output\p2bdespro.obj
-           # this list can be added to in the platform specific section
+%EXTOBJS =  des\brydmasm\p1bdespro.obj  des\brydmasm\p2bdespro.obj  
+            #extra objs (made elsewhere) but need linking here
 
+%LINKOBJS = output\rg-486.obj output\rg-6x86.obj output\rg-k5.obj &
+            output\rg-k6.obj output\rc5p5brf.obj output\rg-p6.obj &
+            output\bdeslow.obj output\bbdeslow.obj output\x86ident.obj &
+            output\cliconfig.obj output\autobuff.obj output\buffwork.obj &
+            output\mail.obj output\client.obj output\disphelp.obj &
+            output\iniread.obj output\network.obj output\problem.obj &
+            output\scram.obj output\des-x86.obj output\convdes.obj &
+            output\clitime.obj output\clicdata.obj output\clirate.obj &
+            output\clisrate.obj 
+            # this list can be added to in the platform specific section
+
+
+LNKbasename = rc5des       # for 'rc564'.err 'rc564'.lnk 'rc5des'.err etc
 %STACKSIZE= 32767          #may be redefined in the platform specific section
 %AFLAGS   = /5s /fp3 /mf   #may be defined in the platform specific section
 %LFLAGS   =                #may be defined in the platform specific section
@@ -41,36 +81,33 @@ LINK=wlink
 %OPT_SPEED= /oneatx /oh /oi+ #redefine in platform specific section
 %LIBPATH  =                #may be defined in the platform specific section
 %LIBFILES =                #may be defined in the platform specific section
-%EXTOBJS  =                #extra objs (made elsewhere) but need linking here
 %MODULES  =                #may be defined in the platform specific section
 %IMPORTS  =                #may be defined in the platform specific section
 %BINNAME  =                #may be defined in the platform specific section
 %COPYRIGHT=                #may be defined in the platform specific section
 %FORMAT   =                #may be defined in the platform specific section
-%PATHOPS  = /fo=$^@ /fr=$[: /i$[: 
-                           #Puts the objs in the right directories needs
-                           # to be redefined for older versions of Watcom
 
-!ifdef SILENT
-.silent
-!endif
+%OBJDIROP = /fo=$$^@       #Puts the .err/.objs in the right directories
+%ERRDIROP = /fr=$$[:       #...redefine for older versions of Watcom
+                           
+#.silent
+.nocheck
 
 #-----------------------------------------------------------------------
 
-LNKbasename = rc5des     # for 'rc564'.err 'rc564'.lnk 'rc5des'.err etc
 noplatform: .symbolic
-  @echo .>CON:
-  @echo Platform has to be specified. >CON:
-  @echo      eg: WMAKE [-f makefile] os2 >CON:
-  @echo          WMAKE [-f makefile] netware >CON:
-  @echo .>CON:
-  @%abort
+  @%write con: 
+  @%write con:   Platform has to be specified. 
+  @%write con:      eg: WMAKE [-f makefile] os2 
+  @%write con:          WMAKE [-f makefile] netware 
+  @%write con:  
+  @%quit
 
 #-----------------------------------------------------------------------
 
 clean :
-  erase rc5des.lnk
-  erase rc5des*.exe
+  #erase rc5des.*
+  #erase rc5des*.*
   erase *.bak
   erase output\*.obj
   erase common\*.bak
@@ -83,185 +120,164 @@ clean :
 zip :
   *zip -r zip *
 
-output\cliconfig.obj : common\cliconfig.cpp common\client.h common\problem.h common\scram.h common\mail.h common\network.h common\iniread.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
+#-----------------------------------------------------------------------
+
+output\cliconfig.obj : common\cliconfig.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-output\client.obj : common\client.cpp common\client.h common\problem.h common\scram.h common\mail.h common\network.h common\iniread.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
+output\client.obj : common\client.cpp  makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-output\problem.obj : common\problem.cpp common\problem.h common\network.h common\cputypes.h common\autobuff.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%PATHOPS)
+output\problem.obj : common\problem.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-output\convdes.obj : common\convdes.cpp makefile.wat  
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%PATHOPS)
+output\convdes.obj : common\convdes.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-output\disphelp.obj : common\disphelp.cpp common\client.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
+output\disphelp.obj : common\disphelp.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-output\clitime.obj : common\clitime.cpp common\clitime.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
+output\clitime.obj : common\clitime.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-output\clicdata.obj : common\clicdata.cpp common\clicdata.h   makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
+output\clicdata.obj : common\clicdata.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-output\clirate.obj : common\clirate.cpp common\clirate.h  makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
+output\clirate.obj : common\clirate.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-output\clisrate.obj : common\clisrate.cpp common\clisrate.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
+output\clisrate.obj : common\clisrate.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-output\clistime.obj : common\clistime.cpp common\clistime.h makefile.wat  
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
+output\clistime.obj : common\clistime.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-output\deseval-meggs2.obj : des\deseval-meggs2.cpp makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%PATHOPS)
+output\deseval-meggs2.obj : des\deseval-meggs2.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-output\deseval-meggs3.obj : des\deseval-meggs3.cpp makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%PATHOPS)
+output\deseval-meggs3.obj : des\deseval-meggs3.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
 output\deseval-slice-meggs.obj : des\deseval-slice-meggs.cpp makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%PATHOPS)
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-output\des-x86.obj : des\des-x86.cpp common\problem.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%PATHOPS);common
+output\des-x86.obj : des\des-x86.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[: /icommon
   @set isused=1
 
-output\autobuff.obj : common\autobuff.cpp common\autobuff.h common\cputypes.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
+output\autobuff.obj : common\autobuff.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-output\network.obj : common\network.cpp common\network.h common\cputypes.h common\autobuff.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
+output\network.obj : common\network.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-output\iniread.obj : common\iniread.cpp common\iniread.h common\cputypes.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
+output\iniread.obj : common\iniread.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-output\scram.obj : common\scram.cpp common\scram.h common\cputypes.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
+output\scram.obj : common\scram.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-output\mail.obj : common\mail.cpp common\mail.h common\network.h common\client.h common\cputypes.h common\autobuff.h common\problem.h common\scram.h common\mail.h common\network.h common\iniread.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
+output\mail.obj : common\mail.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-output\buffwork.obj : common\buffwork.cpp common\buffwork.h common\client.h common\problem.h common\scram.h common\mail.h common\network.h common\iniread.h makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS) 
+output\buffwork.obj : common\buffwork.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[: 
   @set isused=1
 
 output\rg-486.obj : rc5\rg-486.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
+  *$(CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
 output\rg-6x86.obj : rc5\rg-6x86.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
+  *$(CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
 output\rc5p5brf.obj : rc5\rc5p5brf.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
+  *$(CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-### rc5p5brf is faster than rg-p5
-#output\rg-p5.obj : rc5\rg-p5.asm makefile.wat
-#  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
-#  @set isused=1
+output\rg-p5.obj : rc5\rg-p5.asm makefile.wat
+  *$(CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
+  @set isused=1
 
 output\rg-p6.obj : rc5\rg-p6.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
+  *$(CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
 output\rg-k5.obj : rc5\rg-k5.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
+  *$(CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
 output\rg-k6.obj : rc5\rg-k6.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
+  *$(CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-#---
-
-output\bdeslow.obj: des\brydwasm\bdeslow.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
+output\bdeslow.obj : des\brydwasm\bdeslow.asm 
+  *$(CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-output\Bbdeslow.obj: des\brydwasm\Bbdeslow.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
+output\bbdeslow.obj : des\brydwasm\bbdeslow.asm 
+  *$(CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
-
-output\p1bdespro.obj: des\brydwasm\p1bdespro.asm makefile.wat
-  @if exist output\p1bdespro.obj erase output\p1bdespro.obj
-  copy /y des\brydmasm\p1bdespro.obj output\p1bdespro.obj
-  touch output\p1bdespro.obj
-#  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
-#  @set isused=1
-
-output\p2bdespro.obj: des\brydwasm\p2bdespro.asm makefile.wat
-  @if exist output\p2bdespro.obj erase output\p2bdespro.obj
-  copy /y des\brydmasm\p2bdespro.obj output\p2bdespro.obj
-  touch output\p2bdespro.obj
-#  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
-#  @set isused=1
-
-#---
-
 
 output\x86ident.obj : platforms\x86ident.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
+  *$(CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-## OS/2 only
-output\dod.obj : platforms\os2cli\dod.cpp platforms\os2cli\dod.h makefile.wat 
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS);common
+output\netware.obj : platforms\netware\netware.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[: /icommon
   @set isused=1
 
-## Netware only
-output\netware.obj : platforms\netware\netware.cpp common\client.h makefile.wat 
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS);common
+output\hbyname.obj : platforms\netware\hbyname.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-## Netware only
-output\hbyname.obj : platforms\netware\hbyname.cpp makefile.wat
-  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%PATHOPS)
-  @set isused=1
-
-## DOS only
 output\chklocks.obj : platforms\dos\chklocks.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
+  *$(CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 
-## DOS only
 output\clearscr.obj : platforms\dos\clearscr.asm makefile.wat
-  *$(CCASM) $(%AFLAGS) $[@ $(%PATHOPS)
+  *$(CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
+  @set isused=1
+
+output\dod.obj : platforms\os2cli\dod.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[: /icommon
   @set isused=1
 
 #-----------------------------------------------------------------------
 
 platform: .symbolic
-  @set isused=
-  @set OPT_SIZE  = /zp8 $(%OPT_SIZE) /zp8     ## /zp has to be same for
-  @set OPT_SPEED = /zp8 $(%OPT_SPEED) /zp8    ## all modules, otherwise
-  @set CFLAGS    = /zp8 $(%CFLAGS) /zp8       ## we'll have big trouble
-  
-  @for %i in ($(%LINKOBJS)) do @%make %i
-  @if not exist $(%BINNAME) @set isused=1
-  @if $(%isused).==. @echo All targets are up to date
-  @if not $(%isused).==. @%make platlink
+  @set CFLAGS    = $(%CFLAGS) /zp1            ## always pragma pack(1)
+  ## /zp has to be same for all modules, otherwise we'll have big trouble.
+  ## no problems with network/buffwork structures if packing on byte boundary
 
-platlink: .symbolic
+  @set CFLAGS    = $(%CFLAGS) /zq             ## compile quietly
+  @set AFLAGS    = $(%AFLAGS) /q              ## assemble quietly
+  
+  @set isused=0
+  @if not exist $(%BINNAME) @set isused=1
+  @for %i in ($(%LINKOBJS)) do @%make %i
+  @if $(%isused).==0. @%write con: All targets are up to date
+  @if $(%isused).==0. @%quit
+
   @if exist  $(%BINNAME) @del $(%BINNAME)
   @if exist  $(LNKbasename).lnk @del $(LNKbasename).lnk
   @%append   $(LNKbasename).lnk Name $(%BINNAME)
@@ -284,7 +300,6 @@ platlink: .symbolic
   @for %i in ($(%COPYRIGHT)) do @set isused=1
   @if not $(%isused).==. @%append $(LNKbasename).lnk Op Copyright $(%COPYRIGHT)
   @set isused=
-
   *$(LINK) $(%LFLAGS) @$(LNKbasename).lnk > $(LNKbasename).err
   @if exist $(%BINNAME) @del $(LNKbasename).err
   @if exist $(LNKbasename).err @type $(LNKbasename).err
@@ -300,7 +315,6 @@ dos: .symbolic                                       # DOS/DOS4GW
      @set LINKOBJS  = $(%LINKOBJS) output\clearscr.obj
      @set LIBFILES  =
      @set MODULES   =
-     @set EXTOBJS   =
      @set IMPORTS   =
      @set BINNAME   = $(LNKbasename).com
      @%make platform
@@ -313,11 +327,11 @@ os2: .symbolic                                       # OS/2
      @set OPT_SPEED = /oantrlexi 
      @set LIBFILES  = so32dll.lib,tcp32dll.lib
      @set MODULES   =
-     @set EXTOBJS   =
      @set IMPORTS   =
      @set BINNAME   = $(LNKbasename).exe
      @set STACKSIZE = 16384                 #Will slow down client if it's 32k
      @set LINKOBJS  = $(%LINKOBJS) output\dod.obj
+     @set ERRDIROP  =                       # no /fr= option for Watcom 10.0
      @%make platform
 
 w32: .symbolic                               # win95/winnt standard executable
@@ -328,7 +342,6 @@ w32: .symbolic                               # win95/winnt standard executable
      @set OPT_SPEED = /oantrlexih /oi+ 
      @set LIBFILES  =
      @set MODULES   =
-     @set EXTOBJS   =
      @set IMPORTS   =
      @set BINNAME   = $(LNKbasename).exe
      @%make platform
@@ -341,7 +354,6 @@ w_h: .symbolic                               # win95 hidden executable
      @set OPT_SPEED = /oantrlexih /oi+ 
      @set LIBFILES  =
      @set MODULES   =
-     @set EXTOBJS   =
      @set IMPORTS   =
      @set BINNAME   = $(LNKbasename)h.exe
      @%make platform
@@ -354,21 +366,20 @@ wsv: .symbolic                               # winnt service
      @set OPT_SPEED = /oantrlexih /oi+ 
      @set LIBFILES  =
      @set MODULES   =
-     @set EXTOBJS   =
      @set IMPORTS   =
      @set BINNAME   = $(LNKbasename)srv.exe
      @%make platform
 
 netware: .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM! (May 24 '98)
-     @set STACKSIZE = 20K # 32767 #16384
+     @set STACKSIZE = 32767 #16384
      @set AFLAGS    = /5s /fp3 /bt=netware /ms
      @set LFLAGS    = op multiload op nod op scr 'none' op map op osname='NetWare NLM' # symtrace systemConsoleScreen  #sys netware
      @set OPT_SIZE  = /os /s  
-     @set OPT_SPEED = /oneatx /oh /oi+   
-     @set CFLAGS    = /6s /fp3 /ei /ms /d__NETWARE__ /dMULTITHREAD /i$(inc_386) $(wcc386opt) #/fpc /bt=netware /i$(%watcom)\novh #/bm
+     @set OPT_SPEED = /oneatx /oh /oi+  
+     @set CFLAGS    = /6s /fp3 /ei /ms /d__NETWARE__ /dMULTITHREAD /i$(inc_386) /we
+                      #/fpc /bt=netware /i$(%watcom)\novh #/bm
      @set LIBFILES =  nwwatemu,plib3s #plibmt3s,clib3s,math387s,emu387
      @set MODULES   = clib a3112 # tcpip netdb
-     @set EXTOBJS   =
      @set LINKOBJS  = $(%LINKOBJS) output\netware.obj output\hbyname.obj
      @set IMPORTS   = GetNestedInterruptLevel AllocateResourceTag &
                       GetCurrentTime OutputToScreenWithPointer OutputToScreen &
