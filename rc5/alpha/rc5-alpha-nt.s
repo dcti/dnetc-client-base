@@ -2,6 +2,8 @@
 //	Copyright (c) Mike Marcelais, 1998
 //	All Commercial Rights Reserved.
 //	Uses NT Calling conventions
+//
+// @(#)$Id: rc5-alpha-nt.s,v 1.1.2.1 1999/12/09 12:29:32 cyp Exp $
 
 // define NT register names
 #define v0    $0
@@ -40,12 +42,12 @@
 
 
      .text
-     .globl rc5_unit_func
-     .ent   rc5_unit_func
+     .globl rc5_unit_func_ntalpha_michmarc
+     .ent   rc5_unit_func_ntalpha_michmarc
      .frame sp,272,ra
      .set   noat
 
-rc5_unit_func:
+rc5_unit_func_ntalpha_michmarc:
 //   On entry:
 //      a0 --> RC5UnitWork
 //             0(a0)  = plaintext
@@ -67,7 +69,7 @@ rc5_unit_func:
 //   asaxp, so that the assembler will do instruction
 //   reordering after the macros are expanded.
 
-     lda    sp,-272(sp)             // Save registers
+     lda    sp,-288(sp)             // Save registers
      stq    ra,0(sp)
      stq    s0,8(sp)
      stq    s1,16(sp)
@@ -78,6 +80,7 @@ rc5_unit_func:
      stq    s6,56(sp)
      .prologue
      sll    a1,0x1,v0              // Convert timeslice to keycount
+     stq    v0,272(sp)             // Save away for final answer
 
      // We now have all of the registers to work with
 
@@ -524,7 +527,13 @@ EndSearch:
      ldq    s1,16(sp)
      ldq    s0,8(sp)
      ldq    ra,0(sp)
-     lda    sp,272(sp)
+
+// Adjust return value to be consistant with other cores
+// return values
+     ldq    at,272(sp)
+     subl   at,v0,v0
+
+     lda    sp,288(sp)
      ret    ra
 
 Carry:
@@ -614,4 +623,4 @@ Possible2:
      lda    v0,-1(v0)      // Offset keyvalue by one, b/c found on second pipe
      br     EndSearch
 
-     .end   rc5_unit_func
+     .end   rc5_unit_func_ntalpha_michmarc
