@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.49 2000/12/01 14:00:52 oliver Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.50 2000/12/17 02:53:51 mfeiri Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -165,8 +165,11 @@ struct optionstruct conf_options[/*CONF_OPTION_COUNT*/] = {
   "render the pair invalid and cause temperature threshold checking to be\n"
   "silently disabled.\n"
   "\n"
-  //"Processor temperature checking is currently only available on MacOS/PPC.\n"
+  #if (CLIENT_OS == OS_MACOS)
+  "Processor temperature checking works only with single CPU G3 and G4 systems.\n"
+  #else
   "Processor temperature checking is not available on all platforms.\n"
+  #endif
   ,CONF_MENU_MISC,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
 { 
