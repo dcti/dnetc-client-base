@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore-conflict.cpp,v $
+// Revision 1.3  1998/09/01 22:32:22  remi
+// Allow a P5-MMX to use the RC5 MMX core.
+//
 // Revision 1.2  1998/08/22 08:01:46  silby
 // Rewrote x86 core selection.
 //
@@ -16,7 +19,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.2 1998/08/22 08:01:46 silby Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.3 1998/09/01 22:32:22 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -203,7 +206,7 @@ s32 Client::SelectCore(void)
     des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
     }
   #ifdef MMX_BITSLICER
-  else if ( requestedtype == 6 ) // Pentium MMX ONLY
+  else if ( (requestedtype & 0xFF) == 6 ) // Pentium MMX ONLY
     {
     if ((detectedtype & 0x100) == 0x100)
       {
