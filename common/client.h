@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: client.h,v $
+// Revision 1.47  1998/06/24 16:24:05  cyruspatel
+// Added prototype for GetTimesliceBaseline() (in cpucheck.cpp)
+//
 // Revision 1.46  1998/06/24 15:54:18  jlawson
 // added pragma pack(1) around structures.
 //
@@ -674,6 +677,7 @@ extern Problem problem[2*MAXCPUS];
 extern volatile u32 SignalTriggered, UserBreakTriggered;
 extern volatile s32 pausefilefound;
 extern void CliSetupSignals( void );
+extern unsigned int GetTimesliceBaseline(void);
 
 // --------------------------------------------------------------------------
 
