@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.224 1999/06/09 09:47:10 ivo Exp $
+# @(#)$Id: configure,v 1.225 1999/06/09 12:47:02 ivo Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -426,7 +426,7 @@ case "$1" in
 
     *hpux-hppa-gcc)
 	RC5CORECOPY="rc5/parisc/parisc.cpp"
-	TARGET_CCFLAGS="$OPTS_GCC_HPUX -DPIPELINE_COUNT=2 \
+	TARGET_CCFLAGS="$OPTS_GCC_HPUX \
 			-DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
         TARGET_ADDASMS="rc5/parisc/parisc.s"
