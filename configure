@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.227 2001/02/02 13:39:22 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.228 2001/02/03 19:08:48 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -146,7 +146,7 @@ add_sources() # $1=os, $2=arch, $3=custom
   # -- CSC -- (needs -DHAVE_CSC_CORES)
   CSC_ANSI_SRCS="csc/convcsc.cpp csc/csc-common.cpp csc/csc-1k-i.cpp csc/csc-1k.cpp csc/csc-6b-i.cpp csc/csc-6b.cpp"
   # -- OGR -- (needs -DHAVE_OGR_CORES) -------------------------
-  OGR_ANSI_SRCS="ogr/ansi/ogr.cpp ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp ogr/ansi/ogr_dat2.cpp"
+  OGR_ANSI_SRCS="ogr/ansi/ogr.cpp ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
 
   # -------------------------------------------------------------------
 
@@ -203,16 +203,16 @@ add_sources() # $1=os, $2=arch, $3=custom
     # --------------- ogr ----------------
     if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
       # -- non-nasm/ogr --
-      ##old##TARGET_ADDASMS="$TARGET_ADDASMS ogr/x86/ogr.S"
-      ##old##TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
+      TARGET_ADDASMS="$TARGET_ADDASMS ogr/x86/ogr.S"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
+      ##TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
       TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
     else
       # -- nasm/ogr --
-      ##old##TARGET_ADDNASMS="$TARGET_ADDNASMS ogr/x86/ogr.asm"
-      ##old##TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
+      TARGET_ADDNASMS="$TARGET_ADDNASMS ogr/x86/ogr.asm"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
+      ##TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
       TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
     fi  
 
     # --------------- csc ----------------
@@ -298,8 +298,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/68k/rc5_68k_gcc_crunch.c"
     fi  
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
-    TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp \
-                                    ogr/ansi/ogr_dat.cpp ogr/ansi/ogr_dat2.cpp"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS ogr/ansi/ogr_sup.cpp ogr/ansi/ogr_dat.cpp"
     TARGET_ADDOBJS="$TARGET_ADDOBJS output/ogr000.o output/ogr020.o \
                                     output/ogr030.o output/ogr040.o \
                                     output/ogr060.o"
