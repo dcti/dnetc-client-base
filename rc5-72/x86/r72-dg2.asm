@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg2.asm,v 1.6 2002/10/22 02:49:03 andreasb Exp $
+; $Id: r72-dg2.asm,v 1.7 2002/10/22 21:30:33 acidblood Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -217,101 +217,89 @@ defwork save_ebp
 
 %macro KEYSETUP_BLOCK_j0 1
         add     B1, A1
-        add     A2, S_next
-        mov     S_next, S1(%1+1)
+        add     A2, B2
+        add     A1, S1(%1+1)
 
         mov     shiftreg, B1
         add     B1, L_next
-        add     A2, B2
+        rol     A2, 3
 
         mov     L_next, L2(0)
         rol     B1, shiftcount
-        rol     A2, 3
-
-        mov     L1(0), B1
         mov     S2(%1), A2
 
-
         add     B2, A2
-        add     A1, S_next
-        mov     S_next, S2(%1+1)
+        add     A1, B1
+        add     A2, S2(%1+1)
 
         mov     shiftreg, B2
         add     B2, L_next
-        add     A1, B1
+        rol     A1, 3
 
         mov     L_next, L1(1)
         rol     B2, shiftcount
-        rol     A1, 3
-
-        mov     L2(0), B2
         mov     S1(%1+1), A1
+
+        mov     L1(0), B1
+        mov     L2(0), B2
 %endmacro
 
 %macro KEYSETUP_BLOCK_j1 1
         add     B1, A1
-        add     A2, S_next
-        mov     S_next, S1(%1+1)
+        add     A2, B2
+        add     A1, S1(%1+1)
 
         mov     shiftreg, B1
         add     B1, L_next
-        add     A2, B2
+        rol     A2, 3
 
         mov     L_next, L2(1)
         rol     B1, shiftcount
-        rol     A2, 3
-
-        mov     L1(1), B1
         mov     S2(%1), A2
 
-
         add     B2, A2
-        add     A1, S_next
-        mov     S_next, S2(%1+1)
+        add     A1, B1
+        add     A2, S2(%1+1)
 
         mov     shiftreg, B2
         add     B2, L_next
-        add     A1, B1
+        rol     A1, 3
 
         mov     L_next, L1(2)
         rol     B2, shiftcount
-        rol     A1, 3
-
-        mov     L2(1), B2
         mov     S1(%1+1), A1
+
+        mov     L1(1), B1
+        mov     L2(1), B2
 %endmacro
 
 %macro KEYSETUP_BLOCK_j2 1
         add     B1, A1
-        add     A2, S_next
-        mov     S_next, S1(%1+1)
+        add     A2, B2
+        add     A1, S1(%1+1)
 
         mov     shiftreg, B1
         add     B1, L_next
-        add     A2, B2
+        rol     A2, 3
 
         mov     L_next, L2(2)
         rol     B1, shiftcount
-        rol     A2, 3
-
-        mov     L1(2), B1
         mov     S2(%1), A2
 
-
         add     B2, A2
-        add     A1, S_next
-        mov     S_next, S2(%1+1)
+        add     A1, B1
+        add     A2, S2(%1+1)
 
         mov     shiftreg, B2
         add     B2, L_next
-        add     A1, B1
+        rol     A1, 3
 
         mov     L_next, L1(0)
         rol     B2, shiftcount
-        rol     A1, 3
-
-        mov     L2(2), B2
         mov     S1(%1+1), A1
+
+        mov     L1(2), B1
+        mov     L2(2), B2
 %endmacro
 
 %macro ENCRYPTION_BLOCK 1
@@ -421,7 +409,6 @@ key_setup_1:
         rol     A1, 3
 
         mov     S1(1), A1
-        mov     S_next, 0xBF0A8B1D
 
 ;       S1[1]   L2[0]
 
@@ -476,8 +463,8 @@ key_setup_2:
 
 
         add     B2, A2
-        add     A1, S_next
-        mov     S_next, S2(0)
+        add     A1, 0xBF0A8B1D
+        add     A2, S2(0)
 
         mov     shiftreg, B2
         add     B2, L_next
@@ -527,35 +514,31 @@ key_setup_2:
 
 key_setup_3:
         add     B1, A1
-        add     A2, S_next
-        mov     S_next, S1(0)
+        add     A2, B2
+        add     A1, S1(0)
 
         mov     shiftreg, B1
         add     B1, L_next
-        add     A2, B2
+        rol     A2, 3
 
         mov     L_next, L2(0)
         rol     B1, shiftcount
-        rol     A2, 3
-
-        mov     L1(0), B1
         mov     S2(25), A2
 
-
         add     B2, A2
-        add     A1, S_next
-        mov     S_next, S2(0)
+        add     A1, B1
+        add     A2, S2(0)
 
         mov     shiftreg, B2
         add     B2, L_next
-        add     A1, B1
+        rol     A1, 3
 
         mov     L_next, L1(1)
         rol     B2, shiftcount
-        rol     A1, 3
-
-        mov     L2(0), B2
         mov     S1(0), A1
+
+        mov     L1(0), B1
+        mov     L2(0), B2
 
 ;       L1[1]   S2[0]
 ;       S1[1]   L2[1]
@@ -592,7 +575,6 @@ key_setup_3:
 ;               S2[25]
 
         mov     A1, [work_P_0]
-        add     A2, S_next
         mov     S1_next, S1(0)
 
         add     A2, B2
@@ -661,7 +643,7 @@ test_key_1:
         cmp     A1, [work_C_0]
         mov     eax, [RC5_72UnitWork]
 
-        jne     test_key_2
+        jne     short test_key_2
 
         inc     dword [RC5_72UnitWork_CMCcount]
 
@@ -675,7 +657,7 @@ test_key_1:
         mov     [RC5_72UnitWork_CMCmid], esi
         mov     [RC5_72UnitWork_CMClo], edi
 
-        jne     test_key_2
+        jne     short test_key_2
 
         mov     ecx, [work_iterations]
         mov     esi, [iterations]
@@ -717,7 +699,7 @@ test_key_2:
         mov     ecx, [RC5_72UnitWork_L0mid]
 
         mov     edx, [RC5_72UnitWork_L0lo]
-        jne     inc_key
+        jne     short inc_key
 
         inc     dword [RC5_72UnitWork_CMCcount]
 
@@ -727,7 +709,7 @@ test_key_2:
         mov     [RC5_72UnitWork_CMCmid], ecx
         mov     [RC5_72UnitWork_CMClo], edx
 
-        jne     inc_key
+        jne     short inc_key
 
         mov     ecx, [work_iterations]
         mov     esi, [iterations]
