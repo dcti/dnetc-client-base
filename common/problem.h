@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.84 2002/09/15 21:45:49 andreasb Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.85 2002/09/22 17:30:12 jlawson Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -82,6 +82,7 @@ PROJECT_NOT_HANDLED("enter your core mem alignment here");
 
 typedef union
 {
+  #if defined(HAVE_OLD_CRYPTO)
   struct {
     struct {u32 hi,lo;} key;              // starting key
     struct {u32 hi,lo;} iv;               // initialization vector
@@ -89,14 +90,26 @@ typedef union
     struct {u32 hi,lo;} cypher;           // cyphertext
     struct {u32 hi,lo;} keysdone;         // iterations done (also current position in block)
     struct {u32 hi,lo;} iterations;       // iterations to do
-  } crypto;
+  } crypto;        /* 48 bytes */
+  #endif
+  struct {
+    struct {u16 vhi; u32 hi,lo;} key;     // starting key
+    struct {u32 hi,lo;} iv;               // initialization vector
+    struct {u32 hi,lo;} plain;            // plaintext we're searching for
+    struct {u32 hi,lo;} cypher;           // cyphertext
+    struct {u32 hi,lo;} keysdone;         // iterations done (also current position in block)
+    struct {u32 hi,lo;} iterations;       // iterations to do
+    struct {u16 count; u16 vhi; u32 hi,lo;} check;   // keyid of last found counter-measure check.
+  } bigcrypto;     /* 62 bytes */
   #if defined(HAVE_OGR_CORES)
   struct {
-    struct WorkStub workstub; // stub to work on (28 bytes)
+    struct WorkStub workstub;             // stub to work on (28 bytes)
     struct {u32 hi,lo;} nodes;            // nodes completed
-    char unused[12];
-  } ogr;
+  } ogr;           /* 36 bytes */
   #endif
+  struct {
+    char unused[80];
+  } unused;
   #if 0
     PROJECT_NOT_HANDLED("in ContestWork");
   #endif
@@ -107,11 +120,11 @@ typedef struct
   ContestWork work;/* {key,iv,plain,cypher,keysdone,iter} or {stub,pad} */
   u32  resultcode; /* core state: RESULT_WORKING:0|NOTHING:1|FOUND:2 */
   char id[59];     /* d.net id of worker that last used this */
-  u8   contest;    /* 0=rc5,1=des,etc. If this is changed, make this u32 */
-  u8   cpu;        /* 97.11.25 If this is ever changed, make this u32 */
-  u8   os;         /* 97.11.25 If this is ever changed, make this u32 */
-  u8   buildhi;    /* 97.11.25 If this is ever changed, make this u32 */
-  u8   buildlo;    /* 97.11.25 If this is ever changed, make this u32 */
+  u32   contest;    /* 0=rc5,1=des,etc.  */
+  u32   cpu;        /*  */
+  u32   os;         /*  */
+  u32   buildhi;    /*  */
+  u32   buildlo;    /*  */
 } WorkRecord;
 
 #ifndef MIPSpro
