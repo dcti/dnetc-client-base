@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.62.2.2 2003/01/19 22:49:50 snake Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.62.2.3 2003/02/18 01:44:22 mfeiri Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -41,12 +41,6 @@ static int __is_opt_available_for_project(unsigned int projectid, int menuoption
 
   if ((flags & PROJECT_OK) == 0)
     return 0;     /* projectid not supported */
-
-  if (menuoption == CONF_CPUTYPE)
-  {
-    if (selcoreValidateCoreIndex(projectid,1) < 0) /* second core doesn't exist */
-      return 0;   /* ie only one core, so disable CONF_CPUTYPE opt */
-  }
 
   if (menuoption == CONF_THRESHOLDT && 
       (flags & PROJECTFLAG_TIME_THRESHOLD) == 0)
@@ -613,7 +607,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
     {
       conf_options[CONF_CPUTEMPTHRESHOLDS].disabledtext=
                   ((client->watchcputempthresh)?(NULL):("n/a"));
-      #if (CLIENT_OS != OS_MACOS)
+      #if (CLIENT_OS != OS_MACOS) || (CLIENT_OS != OS_MACOSX)
       conf_options[CONF_PAUSEIFCPUTEMPHIGH].disabledtext=
       conf_options[CONF_CPUTEMPTHRESHOLDS].disabledtext=
                   "n/a [only supported on MacOS/PPC]";
