@@ -2,6 +2,9 @@
 ; integer/mmx mixed version - 2 pipe
 ; Vyacheslav Chupyatov - goteam@mail.ru - 26/04/2003
 ; For use by distributed.net. 
+;
+; based on r72-dg2 and RC5-64 'RG/HB re-pair II' cores
+; $Id: r72-go2.asm,v 1.1.2.2 2003/05/22 00:16:34 andreasb Exp $
 
 %define P	  0xB7E15163
 %define Q	  0x9E3779B9
@@ -28,7 +31,6 @@ S_not_3		dd	S_not(3)
 %endif
 
 [GLOBAL _rc5_72_unit_func_go_2]
-[GLOBAL rc5_72_unit_func_go_2_]
 [GLOBAL rc5_72_unit_func_go_2]
 
 
@@ -117,9 +119,9 @@ defwork save_ebp
 	%else
 	    jmp short %%alend
 	    align %1
-	    %%alend:
 	%endif
     %endif
+    %%alend:
 %endmacro
 
 ; register allocation for the key setup blocks
