@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.269 2002/09/24 12:18:33 acidblood Exp $
+# @(#)$Id: configure,v 1.270 2002/09/25 00:56:12 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2288,7 +2288,9 @@ echo "Platform target for \"$1\" recognized."
 #
 # Parse the rest of the command line
 #
+TARGET_CONFIGUREFLAGS=""
 if [ "X$2" = "Xdebug" ]; then
+  TARGET_CONFIGUREFLAGS="${TARGET_CONFIGUREFLAGS} debug"
   if [ $gccver -ne 0 ]; then
     TARGET_STRIP="touch"      # do not strip
     TARGET_CCFLAGS="${TARGET_CCFLAGS} -g"
@@ -2540,7 +2542,7 @@ fi
 # Create the dependencies and reconfigure rules.
 #
 echo "dep: $0" >> Makefile
-echo "	\$(SHELL) $0 \${BUILDNAME}" >> Makefile
+echo "	\$(SHELL) $0 \${BUILDNAME} ${TARGET_CONFIGUREFLAGS}" >> Makefile
 echo "" >> Makefile
 echo "reconfigure: dep" >> Makefile
 echo "" >> Makefile
