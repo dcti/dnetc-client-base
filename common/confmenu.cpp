@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.7  1998/12/21 18:40:12  cyp
+// Removed 'unused'/'unimplemented' sil[l|b]yness committed in 1.3/1.4
+//
+// Revision 1.6  1998/12/21 01:21:39  remi
+// Recommitted to get the right modification time.
+//
 // Revision 1.5  1998/12/21 14:23:58  remi
 // Fixed the weirdness of proxy, keyport, uuehttpmode etc... handling :
 // - if keyproxy ends in .distributed.net, keyport and uuehttpmode are
@@ -43,7 +49,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.5 1998/12/21 14:23:58 remi Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.7 1998/12/21 18:40:12 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -175,8 +181,8 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
     // available only with a http(+uue) or socks5 proxy setup
     conf_options[CONF_HTTPID].thevariable=(char *)(&httpid[0]);
     conf_options[CONF_HTTPID].optionscreen=((uuehttpmode == 2 || 
-					     uuehttpmode == 3 || 
-					     uuehttpmode == 5)?(3):(0));
+                                             uuehttpmode == 3 || 
+                                             uuehttpmode == 5)?(3):(0));
 
     conf_options[CONF_MESSAGELEN].thevariable=&messagelen;
     conf_options[CONF_SMTPSRVR].thevariable=(char *)(&smtpsrvr[0]);
@@ -293,9 +299,6 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
       conf_options[CONF_SMTPFROM].optionscreen=0;
       };
 
-conf_options[CONF_DESCONTESTCLOSED].thevariable=(s32*)&descontestclosed;
-conf_options[CONF_SCHEDULEDUPDATETIME].thevariable=(s32*)&scheduledupdatetime;
-      
     /* -------------------- end setup options --------------------- */
     
     int lkg_autofind = (autofindkeyserver != 0);
@@ -495,22 +498,22 @@ conf_options[CONF_SCHEDULEDUPDATETIME].thevariable=(s32*)&scheduledupdatetime;
             logname[0]=0;
           break;
         case CONF_KEYPROXY:
-	  autofindkeyserver = 0; //OFF unless the user left it at auto
-	  if (( parm[0] && (strcmpi(parm,"(auto)")==0 || strcmpi(parm,"auto")==0)) || 
-	      (!parm[0] && (!lkg_keyproxy[0] || 
-			    confopt_IsHostnameDNetHost( lkg_keyproxy ))))
-	    {
-	    autofindkeyserver = 1;
-	    // if the keyproxy read from .ini is part of d.net
-	    // we keep it for backward compatibility
-	    if (confopt_IsHostnameDNetHost( lkg_keyproxy ))
-	      strcpy (keyproxy, lkg_keyproxy);
-	    // else we put in some known DNS alias
-	    else
-	      strcpy (keyproxy, "rc5proxy.distributed.net");
-	    break;
-	    }
-	  if (!parm[0]) strcpy( parm, lkg_keyproxy ); //copy whatever they had back
+          autofindkeyserver = 0; //OFF unless the user left it at auto
+          if (( parm[0] && (strcmpi(parm,"(auto)")==0 || strcmpi(parm,"auto")==0)) || 
+              (!parm[0] && (!lkg_keyproxy[0] || 
+                            confopt_IsHostnameDNetHost( lkg_keyproxy ))))
+            {
+            autofindkeyserver = 1;
+            // if the keyproxy read from .ini is part of d.net
+            // we keep it for backward compatibility
+            if (confopt_IsHostnameDNetHost( lkg_keyproxy ))
+              strcpy (keyproxy, lkg_keyproxy);
+            // else we put in some known DNS alias
+            else
+              strcpy (keyproxy, "rc5proxy.distributed.net");
+            break;
+            }
+          if (!parm[0]) strcpy( parm, lkg_keyproxy ); //copy whatever they had back
           strncpy( keyproxy, parm, sizeof(keyproxy) - 1 );
           keyproxy[sizeof(keyproxy)-1]=0;
           confopt_killwhitespace(keyproxy);
@@ -529,42 +532,42 @@ conf_options[CONF_SCHEDULEDUPDATETIME].thevariable=(s32*)&scheduledupdatetime;
             else
               keyport = 2064;
 
-	    switch (keyport) 
-	      {
-	      case 23 : // switch to UUE mode (telnet)
-		uuehttpmode = 1;
-	        strcpy( p, "23.v27.distributed.net");
-		break;
-	      
-	      case 80 : // switch to HTTP or HTTP+UUE mode
-		if (uuehttpmode != 3) uuehttpmode = 2;
-		strcpy( p, "80.v27.distributed.net");
-		break;
+            switch (keyport) 
+              {
+              case 23 : // switch to UUE mode (telnet)
+                uuehttpmode = 1;
+                strcpy( p, "23.v27.distributed.net");
+                break;
+              
+              case 80 : // switch to HTTP or HTTP+UUE mode
+                if (uuehttpmode != 3) uuehttpmode = 2;
+                strcpy( p, "80.v27.distributed.net");
+                break;
 
-	      default :
-		if (uuehttpmode != 0 && uuehttpmode != 4 && uuehttpmode != 5)
-		  uuehttpmode = 0;
-		// rc5proxy.v27.distributed.net is *NOT* a valid name
-		if (strcmpi(keyproxy,"rc5proxy.distributed.net") != 0)
-		    strcpy( p, ".v27.distributed.net");
-	      }
+              default :
+                if (uuehttpmode != 0 && uuehttpmode != 4 && uuehttpmode != 5)
+                  uuehttpmode = 0;
+                // rc5proxy.v27.distributed.net is *NOT* a valid name
+                if (strcmpi(keyproxy,"rc5proxy.distributed.net") != 0)
+                    strcpy( p, ".v27.distributed.net");
+              }
             }
           break;
         case CONF_KEYPORT:
           choice = atoi(parm);
           if (confopt_IsHostnameDNetHost( keyproxy ))
-	    {
-	    if ((uuehttpmode == 0 || uuehttpmode == 4 || uuehttpmode == 5) && 
-		choice != 2064 && choice != 3064)
-	      choice = 2064;
-	    else if (uuehttpmode == 1)
-	      choice = 23; // no other ports in d.net network accept telnet connections
-	    else if (uuehttpmode == 2 || uuehttpmode == 3)
-	      choice = 80; // no other ports in d.net network accept http connections
-	    keyport = choice;
-	    }
-	  else if (uuehttpmode == 2 || uuehttpmode == 3)
-	    keyport = 80; // for some reasons, http code has port 80 hardwired in it
+            {
+            if ((uuehttpmode == 0 || uuehttpmode == 4 || uuehttpmode == 5) && 
+                choice != 2064 && choice != 3064)
+              choice = 2064;
+            else if (uuehttpmode == 1)
+              choice = 23; // no other ports in d.net network accept telnet connections
+            else if (uuehttpmode == 2 || uuehttpmode == 3)
+              choice = 80; // no other ports in d.net network accept http connections
+            keyport = choice;
+            }
+          else if (uuehttpmode == 2 || uuehttpmode == 3)
+            keyport = 80; // for some reasons, http code has port 80 hardwired in it
           else if (choice > 0 && choice <= 65535)
             keyport = choice;
           break;
@@ -608,19 +611,19 @@ conf_options[CONF_SCHEDULEDUPDATETIME].thevariable=(s32*)&scheduledupdatetime;
               choice <= conf_options[CONF_UUEHTTPMODE].choicemax)
             {
             uuehttpmode = choice;
-	    autofindkeyserver=1; //we are using a default, so turn it back on
-	    switch (uuehttpmode)
+            autofindkeyserver=1; //we are using a default, so turn it back on
+            switch (uuehttpmode)
               {
-	      case 1: /* UUE mode (telnet) */ p = "23"; keyport = 23; break;   
-	      case 2: /* HTTP mode */
-	      case 3: /* HTTP+UUE mode */     p = "80"; keyport = 80; break;
-	      case 4: /* SOCKS4 */
-	      case 5: /* SOCKS5 */
-	      default:/* normal */            p = ""; keyport = 2064; break;
+              case 1: /* UUE mode (telnet) */ p = "23"; keyport = 23; break;   
+              case 2: /* HTTP mode */
+              case 3: /* HTTP+UUE mode */     p = "80"; keyport = 80; break;
+              case 4: /* SOCKS4 */
+              case 5: /* SOCKS5 */
+              default:/* normal */            p = ""; keyport = 2064; break;
               }
-	    strcpy(keyproxy,"rc5proxy.distributed.net");
-	    //sprintf(keyproxy,"us%s.v27.distributed.net", p );
-	    }
+            strcpy(keyproxy,"rc5proxy.distributed.net");
+            //sprintf(keyproxy,"us%s.v27.distributed.net", p );
+            }
           break;
         case CONF_CPUTYPE:
           choice = ((parm[0] == 0)?(-1):(atoi(parm)));
