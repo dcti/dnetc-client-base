@@ -1,5 +1,9 @@
 //
 // $Log: deseval-meggs3.cpp,v $
+// Revision 1.12  1999/01/08 02:53:37  michmarc
+// Added __int64 type support for Alpha/NT (whose "unsigned long" type
+// is only 32 bits)
+//
 // Revision 1.11  1999/01/06 06:54:24  dicamillo
 // Change MacOS yield routine.
 //
@@ -41,7 +45,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_cpp(void) {
-return "@(#)$Id: deseval-meggs3.cpp,v 1.11 1999/01/06 06:54:24 dicamillo Exp $"; }
+return "@(#)$Id: deseval-meggs3.cpp,v 1.12 1999/01/08 02:53:37 michmarc Exp $"; }
 #endif
 
 #include <cputypes.h>		/* Isn't this needed for using CLIENT_OS defines? */
@@ -60,8 +64,14 @@ return "@(#)$Id: deseval-meggs3.cpp,v 1.11 1999/01/06 06:54:24 dicamillo Exp $";
 /* S-Box design Copyright (C) 1997 by Rocke Verser.                              */
 /* See include file for details.                                                 */
 
-#include "kwan-sboxes.h"
+#if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
+// int and long are 32bits under Alpha/NT for compatability with x86/NT
+#define WORD_TYPE unsigned __int64
+#else
 #define WORD_TYPE unsigned long
+#endif
+
+#include "kwan-sboxes.h"
 
 #if (CLIENT_OS == OS_MACOS)
 #define TICKS ((unsigned long *)0x16a)
@@ -72,16 +82,16 @@ extern unsigned long DES_yield_ticks;
 
 static void
 f_s1 (
- unsigned long	in0,
- unsigned long	in1,
- unsigned long	in2,
- unsigned long	in3,
- unsigned long	in4,
- unsigned long	in5,
- unsigned long	&out0,
- unsigned long	&out1,
- unsigned long	&out2,
- unsigned long	&out3
+ WORD_TYPE	in0,
+ WORD_TYPE	in1,
+ WORD_TYPE	in2,
+ WORD_TYPE	in3,
+ WORD_TYPE	in4,
+ WORD_TYPE	in5,
+ WORD_TYPE	&out0,
+ WORD_TYPE	&out1,
+ WORD_TYPE	&out2,
+ WORD_TYPE	&out3
 ) {
 	SBOX_0_INIT( in0, in1, in2, in3, in4, in5 )
 	SBOX_0_BIT_0( out0, out0 )
@@ -92,16 +102,16 @@ f_s1 (
 
 static void
 f_s2 (
- unsigned long	in0,
- unsigned long	in1,
- unsigned long	in2,
- unsigned long	in3,
- unsigned long	in4,
- unsigned long	in5,
- unsigned long	&out0,
- unsigned long	&out1,
- unsigned long	&out2,
- unsigned long	&out3
+ WORD_TYPE	in0,
+ WORD_TYPE	in1,
+ WORD_TYPE	in2,
+ WORD_TYPE	in3,
+ WORD_TYPE	in4,
+ WORD_TYPE	in5,
+ WORD_TYPE	&out0,
+ WORD_TYPE	&out1,
+ WORD_TYPE	&out2,
+ WORD_TYPE	&out3
 ) {
 	SBOX_1_INIT( in0, in1, in2, in3, in4, in5 )
 	SBOX_1_BIT_0( out0, out0 )
@@ -112,16 +122,16 @@ f_s2 (
 
 static void
 f_s3 (
- unsigned long	in0,
- unsigned long	in1,
- unsigned long	in2,
- unsigned long	in3,
- unsigned long	in4,
- unsigned long	in5,
- unsigned long	&out0,
- unsigned long	&out1,
- unsigned long	&out2,
- unsigned long	&out3
+ WORD_TYPE	in0,
+ WORD_TYPE	in1,
+ WORD_TYPE	in2,
+ WORD_TYPE	in3,
+ WORD_TYPE	in4,
+ WORD_TYPE	in5,
+ WORD_TYPE	&out0,
+ WORD_TYPE	&out1,
+ WORD_TYPE	&out2,
+ WORD_TYPE	&out3
 ) {
 	SBOX_2_INIT( in0, in1, in2, in3, in4, in5 )
 	SBOX_2_BIT_0( out0, out0 )
@@ -132,16 +142,16 @@ f_s3 (
 
 static void
 f_s4 (
- unsigned long	in0,
- unsigned long	in1,
- unsigned long	in2,
- unsigned long	in3,
- unsigned long	in4,
- unsigned long	in5,
- unsigned long	&out0,
- unsigned long	&out1,
- unsigned long	&out2,
- unsigned long	&out3
+ WORD_TYPE	in0,
+ WORD_TYPE	in1,
+ WORD_TYPE	in2,
+ WORD_TYPE	in3,
+ WORD_TYPE	in4,
+ WORD_TYPE	in5,
+ WORD_TYPE	&out0,
+ WORD_TYPE	&out1,
+ WORD_TYPE	&out2,
+ WORD_TYPE	&out3
 ) {
 	SBOX_3_INIT( in0, in1, in2, in3, in4, in5 )
 	SBOX_3_BIT_0( out0, out0 )
@@ -152,16 +162,16 @@ f_s4 (
 
 static void
 f_s5 (
- unsigned long	in0,
- unsigned long	in1,
- unsigned long	in2,
- unsigned long	in3,
- unsigned long	in4,
- unsigned long	in5,
- unsigned long	&out0,
- unsigned long	&out1,
- unsigned long	&out2,
- unsigned long	&out3
+ WORD_TYPE	in0,
+ WORD_TYPE	in1,
+ WORD_TYPE	in2,
+ WORD_TYPE	in3,
+ WORD_TYPE	in4,
+ WORD_TYPE	in5,
+ WORD_TYPE	&out0,
+ WORD_TYPE	&out1,
+ WORD_TYPE	&out2,
+ WORD_TYPE	&out3
 ) {
 	SBOX_4_INIT( in0, in1, in2, in3, in4, in5 )
 	SBOX_4_BIT_0( out0, out0 )
@@ -172,16 +182,16 @@ f_s5 (
 
 static void
 f_s6 (
- unsigned long	in0,
- unsigned long	in1,
- unsigned long	in2,
- unsigned long	in3,
- unsigned long	in4,
- unsigned long	in5,
- unsigned long	&out0,
- unsigned long	&out1,
- unsigned long	&out2,
- unsigned long	&out3
+ WORD_TYPE	in0,
+ WORD_TYPE	in1,
+ WORD_TYPE	in2,
+ WORD_TYPE	in3,
+ WORD_TYPE	in4,
+ WORD_TYPE	in5,
+ WORD_TYPE	&out0,
+ WORD_TYPE	&out1,
+ WORD_TYPE	&out2,
+ WORD_TYPE	&out3
 ) {
 	SBOX_5_INIT( in0, in1, in2, in3, in4, in5 )
 	SBOX_5_BIT_0( out0, out0 )
@@ -192,16 +202,16 @@ f_s6 (
 
 static void
 f_s7 (
- unsigned long	in0,
- unsigned long	in1,
- unsigned long	in2,
- unsigned long	in3,
- unsigned long	in4,
- unsigned long	in5,
- unsigned long	&out0,
- unsigned long	&out1,
- unsigned long	&out2,
- unsigned long	&out3
+ WORD_TYPE	in0,
+ WORD_TYPE	in1,
+ WORD_TYPE	in2,
+ WORD_TYPE	in3,
+ WORD_TYPE	in4,
+ WORD_TYPE	in5,
+ WORD_TYPE	&out0,
+ WORD_TYPE	&out1,
+ WORD_TYPE	&out2,
+ WORD_TYPE	&out3
 ) {
 	SBOX_6_INIT( in0, in1, in2, in3, in4, in5 )
 	SBOX_6_BIT_0( out0, out0 )
@@ -212,16 +222,16 @@ f_s7 (
 
 static void
 f_s8 (
- unsigned long	in0,
- unsigned long	in1,
- unsigned long	in2,
- unsigned long	in3,
- unsigned long	in4,
- unsigned long	in5,
- unsigned long	&out0,
- unsigned long	&out1,
- unsigned long	&out2,
- unsigned long	&out3
+ WORD_TYPE	in0,
+ WORD_TYPE	in1,
+ WORD_TYPE	in2,
+ WORD_TYPE	in3,
+ WORD_TYPE	in4,
+ WORD_TYPE	in5,
+ WORD_TYPE	&out0,
+ WORD_TYPE	&out1,
+ WORD_TYPE	&out2,
+ WORD_TYPE	&out3
 ) {
 	SBOX_7_INIT( in0, in1, in2, in3, in4, in5 )
 	SBOX_7_BIT_0( out0, out0 )
@@ -358,7 +368,7 @@ inline
 #else
 static
 #endif
-void partialround( unsigned long S[32], unsigned long M[32], unsigned long D[32], unsigned long K[56], int ks, int select )
+void partialround( WORD_TYPE S[32], WORD_TYPE M[32], WORD_TYPE D[32], WORD_TYPE K[56], int ks, int select )
 {
 	const unsigned char *kb = keybits + ks;
 	
@@ -425,7 +435,7 @@ inline
 #else
 static
 #endif
-void multiround( unsigned long S[32], unsigned long N[32], unsigned long M[32], unsigned long D[32], unsigned long K[56] )
+void multiround( WORD_TYPE S[32], WORD_TYPE N[32], WORD_TYPE M[32], WORD_TYPE D[32], WORD_TYPE K[56] )
 {
 	const unsigned char *kb = keybits + 144;
 	
@@ -487,7 +497,7 @@ void multiround( unsigned long S[32], unsigned long N[32], unsigned long M[32], 
 			SBOX_7_BIT_3( M[20], D[20] )
 		}
 		kb += 48;
-		unsigned long *swap = D;
+		WORD_TYPE *swap = D;
 		D = N;
 		M = S;
 		S = N = swap;
@@ -496,7 +506,7 @@ void multiround( unsigned long S[32], unsigned long N[32], unsigned long M[32], 
 
 
 
-typedef unsigned long slice;
+typedef WORD_TYPE slice;
 #if ((CLIENT_OS == OS_MACOS) && defined(MRCPP_FOR_DES))
 extern "C" slice whack16(slice *P, slice *C, slice *K);
 #else

@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-meggs.cpp,v $
+// Revision 1.20  1999/01/08 02:53:37  michmarc
+// Added __int64 type support for Alpha/NT (whose "unsigned long" type
+// is only 32 bits)
+//
 // Revision 1.19  1998/12/14 01:56:21  dicamillo
 // MacOS: allow use of extern "C" for whack16.
 //
@@ -67,7 +71,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_meggs_cpp(void) {
-return "@(#)$Id: des-slice-meggs.cpp,v 1.19 1998/12/14 01:56:21 dicamillo Exp $"; }
+return "@(#)$Id: des-slice-meggs.cpp,v 1.20 1999/01/08 02:53:37 michmarc Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -95,8 +99,13 @@ return "@(#)$Id: des-slice-meggs.cpp,v 1.19 1998/12/14 01:56:21 dicamillo Exp $"
     #error "What's the 64-bit type on your compiler ?"
   #endif
 #else
-  #define BASIC_SLICE_TYPE unsigned long
-  #define NOTZERO ~(0ul)
+  #if defined(__WATCOMC__) || (_MSC_VER >= 11) // VC++ 5.0
+    #define BASIC_SLICE_TYPE unsigned __int64
+    #define NOTZERO ~((unsigned __int64)0)
+  #else
+    #define BASIC_SLICE_TYPE unsigned long
+    #define NOTZERO ~(0ul)
+  #endif
 #endif
 
 #ifdef BIT_32
