@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 
 # $Log: configure,v $
+# Revision 1.113.2.7  1998/11/15 17:30:41  remi
+# A bunch of -D__showids__
+#
 # Revision 1.113.2.6  1998/11/15 11:15:38  remi
 # Synced with :
 #  Revision 1.126  1998/11/15 06:31:28  remi
@@ -74,20 +77,20 @@ OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
     -fexpensive-optimizations -fomit-frame-pointer \
     -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
     -funroll-loops -Wall -Icommon -Irc5 -Ides -Iplatforms \
-    -fno-inline-functions -fno-exceptions '
+    -fno-inline-functions -fno-exceptions -D__showids__'
 
 OPTS_GCC272='-fomit-frame-pointer -fno-inline-functions -fno-handle-exceptions \
-    -fno-rtti -Wall -Icommon -Irc5 -Ides -Iplatforms '
+    -fno-rtti -Wall -Icommon -Irc5 -Ides -Iplatforms -D__showids__'
 
-OPTS_XLC3='-O3 -qansialias -qlibansi'
+OPTS_XLC3='-O3 -qansialias -qlibansi -D__showids__'
 
 OPTS_EGCS='-O2 -fno-exceptions -fomit-frame-pointer -Wall -Icommon -Ides \
-    -Irc5 -Iplatforms'
+    -Irc5 -Iplatforms -D__showids__'
 
 #
 # Common platform compiler options
 #
-OPTS_CC_SPARC='-fast -xO4 -xtarget=ultra1/140 -DASM_SPARC'
+OPTS_CC_SPARC='-fast -xO4 -xtarget=ultra1/140 -DASM_SPARC -D__showids__'
 OPTS_GCC_SPARC="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
 OPTS_GCC_ULTRA="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
 OPTS_GAS_ULTRA=-Av9a
@@ -100,20 +103,20 @@ OPTS_GCC_SUN68K="$OPTS_GCC -O2 -DASM_68K -D_SUN68K_"
 
 #--
 
-OPTS_CC_MIPS='-O2 -xansi -DASM_MIPS -Icommon -Ides -Irc5'
+OPTS_CC_MIPS='-O2 -xansi -DASM_MIPS -Icommon -Ides -Irc5 -D__showids__'
 OPTS_GCC_MIPS="$OPTS_GCC -O6 -DASM_MIPS"
 
 #--
 
-OPTS_CC_ALPHA_EV4='-O4 -tune ev4 -inline all'
-OPTS_CC_ALPHA_EV5='-O4 -tune ev5 -inline all'
-OPTS_CC_ALPHA='-O4 -fast -arch ev56 -tune ev56 -inline all -Icommon -Ides -Irc5'
+OPTS_CC_ALPHA_EV4='-O4 -tune ev4 -inline all -D__showids__'
+OPTS_CC_ALPHA_EV5='-O4 -tune ev5 -inline all -D__showids__'
+OPTS_CC_ALPHA='-O4 -fast -arch ev56 -tune ev56 -inline all -Icommon -Ides -Irc5 -D__showids__'
 OPTS_GCC_ALPHA="$OPTS_GCC -O6 -DASM_ALPHA"
 
 #--
 
 LDFLAGS_CC_HPUX='+A +DA2.0'
-OPTS_CC_HPUX="$LDFLAGS_CC_HPUX +a1 +O3 -D_HPUX -DASM_HPPA -Icommon -Ides -Irc5"
+OPTS_CC_HPUX="$LDFLAGS_CC_HPUX +a1 +O3 -D_HPUX -DASM_HPPA -Icommon -Ides -Irc5 -D__showids__"
 OPTS_GCC_HPUX="$OPTS_GCC -O6 -DASM_HPPA"
 OPTS_GCC_HPUX_M68K="$OPTS_GCC -D_HPUX_M68K"
 
@@ -144,8 +147,8 @@ OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentium -DASM_X86 -DPIPELINE_COUNT=2"
 
 #--
 
-OPTS_EPC_DYNIX="-relax -D_SEQUENT_ -Icommon -Ides -Irc5"
-OPTS_GCC_DYNIX="-D_SEQUENT_ -Icommon -Ides -Irc5"
+OPTS_EPC_DYNIX="-relax -D_SEQUENT_ -Icommon -Ides -Irc5 -D__showids__"
+OPTS_GCC_DYNIX="-D_SEQUENT_ -Icommon -Ides -Irc5 -D__showids__"
 
 #--
 
@@ -154,9 +157,9 @@ OPTS_GAS_M68K="-v -V --register-prefix-optional -m68040"
 OPTS_GCC_M68030K="$OPTS_GCC -m68030 -DASM_68K"
 OPTS_GAS_M68030K="-v -V --register-prefix-optional -m68030"
 
-OPTS_NEXT_M68K="$OPTS_GCC -O6 -m68040 -DASM_68K"
-OPTS_NEXT_SPARC="$OPTS_GCC -O6 -DASM_SPARC -D_OLD_NEXT_"
-OPTS_NEXT_HPPA="$OPTS_GCC -O6 -DASM_HPPA -D_OLD_NEXT_"
+OPTS_NEXT_M68K="$OPTS_GCC -O6 -m68040 -DASM_68K -D__showids__"
+OPTS_NEXT_SPARC="$OPTS_GCC -O6 -DASM_SPARC -D_OLD_NEXT_ -D__showids__"
+OPTS_NEXT_HPPA="$OPTS_GCC -O6 -DASM_HPPA -D_OLD_NEXT_ -D__showids__"
 
 #--
 
@@ -165,7 +168,7 @@ OPTS_GCC_ARM="$OPTS_GCC $OPT_FLAGS -DARM"
 #--
 
 #-D__STRING_CODE_SET__="ISO8859-1"
-OPTS_OS390="-D_ALL_SOURCE -I./common -I./rc5 -I./des"
+OPTS_OS390="-D_ALL_SOURCE -I./common -I./rc5 -I./des -D__showids__"
 
 #--
 # look in platforms/ultrasparc/s_paramaters.h for the meaning of all these defines
