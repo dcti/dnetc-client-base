@@ -4,19 +4,38 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.243 1999/11/14 20:12:54 cyp Exp $
+# @(#)$Id: configure,v 1.244 1999/11/15 03:55:25 cyp Exp $
 
-if [ -z "$1" ]; then
-  echo "No platform specified on command line.";
-  echo "Run with 'list' as an argument to see available platforms."
-  exit 1
-fi
+# *** Notes for v2.8001+ ***
+#
+# - Adding CSC/OGR to the target:
+#   a) Add ${CSC_ANSI_SRCS} to your target's TARGET_ADDSRCS
+#      (x86 clients also have nasm cores. See linux/freebsd.)
+#   b) Add -DHAVE_CSC_CORES to your target's TARGET_CCFLAGS
+#   The same applies to OGR ( $OGR_ANSI_SRCS and -DHAVE_OGR_CORES of course :)
+#
+# - If you wish to continue supporting DES, add -DHAVE_DES_CORES
+#
+# - If you wish to have the build automatically generate a .tar.gz ready
+#   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>" 
+#   for example: TARGET_TARBALL="linux-x86-libc4" 
+#
+# - Avoid building separate MT and non-MT clients. MT is always preferred
+#   (from the client's perspective), and the user can always force non-MT
+#   by setting numcpu=0
+#
 
 #####################################################################
 # Note to people making changes..  Do not put spaces around the '=' #
 # signs in the variable definitions below.  Some sh implementations #
 # will interpret such lines as statements rather than assignments.  #
 #####################################################################
+
+if [ -z "$1" ]; then
+  echo "No platform specified on command line.";
+  echo "Run with 'list' as an argument to see available platforms."
+  exit 1
+fi
 
 #
 # Binary's name
@@ -306,7 +325,7 @@ DESULTRA_SRCS_ASM="des/ultrasparc/des-slice-ultrasparc.cpp \
 # Source files making up the OGR core code
 #
 OGR_ANSI_SRCS="ogr/ogr.cpp ogr/crc32.cpp ogr/choosedat.cpp"
-OGR_ANSI_CCOPTS="-DGREGH -DHAVE_OGR_CORES"
+#if adding OGR, also -DHAVE_OGR_CORES
 
 #
 # Source files making up the CSC core code
@@ -314,7 +333,7 @@ OGR_ANSI_CCOPTS="-DGREGH -DHAVE_OGR_CORES"
 CSC_ANSI_SRCS="csc/convcsc.cpp csc/csc-common.cpp \
                csc/csc-1k-i.cpp csc/csc-1k.cpp \
                csc/csc-6b-i.cpp csc/csc-6b.cpp"
-CSC_ANSI_CCOPTS="-DHAVE_CSC_CORES"
+#if adding CSC, also -DHAVE_CSC_CORES
 
 CSC_ASM_SRCS="csc/x86/convcsc.asm  \
 		csc/x86/csc-1k-i.asm \
@@ -925,15 +944,35 @@ case "$1" in
 
 ###### Intel X86 Linux platforms
 
-  ### ***RELEASE*** targets - always mt, _never_ static for libc5
+  ### ***RELEASE*** targets - mt for all but libc4, _never_ static for glibc2
+
+    *x86-linux-glibc2)	                   # glibc2
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
+			-DMULTITHREAD -DLURK \
+			-DHAVE_OGR_CORES -DHAVE_CSC_CORES -DHAVE_DES_CORES"
+	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
+	TARGET_ADDSRCS="common/lurk.cpp \
+			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
+			$OGR_ANSI_SRCS "
+	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
+			platforms/x86ident.S \
+			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS $CSC_ASM_SRCS"
+	TARGET_NASM_FMT="elf"
+	TARGET_LIBS="-lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-x86-glibc2"
+	;;
 
     *x86-linux-libc5)	                   # libc5
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
 			-DMULTITHREAD -DSMC -DLURK \
-			$OGR_ANSI_CCOPTS $CSC_ANSI_CCOPTS"
-	TARGET_LDFLAGS="-Xlinker -omagic"  #NEVER STATIC FOR GLIBC!!!
+			-DHAVE_OGR_CORES -DHAVE_CSC_CORES -DHAVE_DES_CORES"
+	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
 			$OGR_ANSI_SRCS "
@@ -951,9 +990,9 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-D__showids__ -DSMC -DMULTITHREAD -DLURK \
-			$OGR_ANSI_CCOPTS $CSC_ANSI_CCOPTS"
-	TARGET_LDFLAGS="-Xlinker -omagic"
+			-D__showids__ -DSMC -DLURK \
+			-DHAVE_OGR_CORES -DHAVE_CSC_CORES -DHAVE_DES_CORES"
+	TARGET_LDFLAGS="-static -Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
 			$OGR_ANSI_SRCS "
@@ -962,7 +1001,6 @@ case "$1" in
 			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS $CSC_ASM_SRCS"
         TARGET_NASM_FMT="aout"
-	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-x86-libc4"
 	;;
@@ -974,7 +1012,7 @@ case "$1" in
 	TARGET_CC="gcc -g"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
 			-D__showids__ -DSMC -DMULTITHREAD -DLURK \
-			$OGR_ANSI_CCOPTS $CSC_ANSI_CCOPTS"
+			-DHAVE_OGR_CORES -DHAVE_CSC_CORES -DHAVE_DES_CORES"
 	TARGET_LDFLAGS="-Xlinker -omagic"
 	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
@@ -1013,7 +1051,7 @@ case "$1" in
     *x86-freebsd)             # [dbaker] aout
 	TARGET_AS="gcc -c"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -DLURK \
-			-DHAVE_CSC_CORES -DHAVE_OGR_CORES -DHAVE_OGR_CORES"
+			-DHAVE_CSC_CORES -DHAVE_OGR_CORES -DHAVE_DES_CORES"
         TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="common/lurk.cpp $DESX86_SRCS $DESMMX_SRCS \
 	                $KWAN_SLICE_SRCS4 $OGR_ANSI_SRCS"
@@ -1048,7 +1086,7 @@ case "$1" in
     *x86-netbsd)
 	TARGET_AS="g++ -c -DNO_BALIGN"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
-	                -DHAVE_CSC_CORES -DHAVE_OGR_CORES HAVE_DES_CORES"
+	                -DHAVE_CSC_CORES -DHAVE_OGR_CORES -DHAVE_DES_CORES"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
 	                $OGR_ANSI_SRCS"
@@ -1065,7 +1103,7 @@ case "$1" in
     *x86-openbsd)
 	TARGET_AS="g++ -c"
 	TARGET_CCFLAGS="$OPTS_GCC272_X86 $OPTS_DES_MMX -DMMX_RC5 \
-	                -DHAVE_CSC_CORES -DHAVE_OGR_CORES -HAVE_DES_CORES"
+	                -DHAVE_CSC_CORES -DHAVE_OGR_CORES -DHAVE_DES_CORES"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
 	                $OGR_ANSI_SRCS"
@@ -1082,7 +1120,7 @@ case "$1" in
     *x86-bsdi)                        # snake
 	TARGET_AS="g++ -c -DNO_BALIGN"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 -DKWAN $OPTS_DES_MMX -DMMX_RC5 \
-	                -DHAVE_CSC_CORES -DHAVE_OGR_CORES -HAVE_DES_CORES"
+	                -DHAVE_CSC_CORES -DHAVE_OGR_CORES -DHAVE_DES_CORES"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
 	                $OGR_ANSI_SRCS"
@@ -1361,7 +1399,7 @@ echo "Platform target for \"$1\" recognized."
 #
 TARGET_CCFLAGS="$TARGET_CCFLAGS -I./common -I./rc5 -I./des -I./ogr -I./csc"
 #TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS $OGR_ANSI_SRCS"
-TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES"
+#TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES -DHAVE_OGR_CORES"
 
 #
 # Generate the list of output objects, making note of what
