@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.54 2001/03/19 15:36:43 andreasb Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.55 2001/04/05 23:28:26 sampo Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -160,22 +160,6 @@ typedef struct
 
 /* ---------------------------------------------------------------------- */
 
-typedef struct
-{
-  int contest_id;
-  const char* contest_name;
-  const char* unit_name;
-  
-  int is_test_packet;                   /* RC5: iterations == 0x00100000 */
-//  int stats_units_are_integer;          /* crypto contests */
-  int show_exact_iterations_done;       /* OGR: log exact nodecount */
-  
-  /* move all the ProblemGetInfo() parameters here */
-  
-} ProblemInfo;
-
-/* ---------------------------------------------------------------------- */
-
 /*
  * in the following functions that take a __thisprob argument, __thisprob
  * must be a void * to suppress the name mangling for struct Problem.
@@ -218,30 +202,39 @@ int ProblemIsInitialized(void *__thisprob);
 // Returns RESULT_* or -1 if error.
 int ProblemRun(void *__thisprob);
 
-// more than you'll ever care to know :) any arg can be 0/null */
+typedef struct ProblemInfo {
+  u32 elapsed_secs;                 // elapsed core runtime so far.
+  u32 elapsed_usecs;
+  u32 swucount;                     // no. of work units problem has loaded
+  u32 c_permille;                   // current permille
+  u32 s_permille;                   // start   permille
+  int permille_only_if_exact;
+  int is_test_packet;               // RC5: iterations == 0x001000000
+  int show_exact_iterations_done;   // OGR: log exact nodecount
+  int stats_units_are_integer;
+  u32 ratehi, ratelo;               // core rate
+  u32 tcounthi, tcountlo;           // total number of iterations (n/a if not finished)
+  u32 ccounthi, ccountlo;           // number of iterations done this time
+  u32 dcounthi, dcountlo;           // number of iterations done ever
+  char ratebuf[32];
+  char sigbuf[32];                  // packet identifier
+  char cwpbuf[32];                  // current working position
+} ProblemInfo;
+
+#define P_INFO_E_TIME      0x00000001
+#define P_INFO_SWUCOUNT    0x00000002
+#define P_INFO_C_PERMIL    0x00000004
+#define P_INFO_S_PERMIL    0x00000008
+#define P_INFO_RATE        0x00000010
+#define P_INFO_TCOUNT      0x00000020
+#define P_INFO_CCOUNT      0x00000040
+#define P_INFO_DCOUNT      0x00000080
+#define P_INFO_RATEBUF     0x00000100
+#define P_INFO_SIGBUF      0x00000200
+#define P_INFO_CWPBUF      0x00000400
+
 // returns RESULT_* or -1 if bad state
-// *tcount* == total (n/a if not finished), *ccount* == numdone so far 
-// this time, *dcount* == numdone so far all times. 
-// numstring_style: -1=unformatted, 0=commas, 
-// 1=0+space between magna and number (or at end), 2=1+"nodes"/"keys"
-int ProblemGetInfo(void *__thisprob,
-                   ProblemInfo *info, int flags,
-                     unsigned int *cont_id, const char **cont_name, 
-                     u32 *elapsed_secs, u32 *elapsed_usecs, 
-                     unsigned int *swucount, int numstring_style,
-                     const char **unit_name, 
-                     unsigned int *c_permille, unsigned int *s_permille,
-                     int permille_only_if_exact,
-                     char *idbuf, unsigned int idbufsz,
-                     char *cwpbuf, unsigned int cwpbufsz,
-                     u32 *ratehi, u32 *ratelo,
-                     char *ratebuf, unsigned int ratebufsz,
-                     u32 *ubtcounthi, u32 *ubtcountlo, 
-                     char *tcountbuf, unsigned int tcountbufsz,
-                     u32 *ubccounthi, u32 *ubccountlo, 
-                     char *ccountbuf, unsigned int ccountbufsz,
-                     u32 *ubdcounthi, u32 *ubdcountlo, 
-                     char *dcountbuf, unsigned int dcountbufsz);
+int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags);
 
 Problem *ProblemAlloc(void);
 void ProblemFree(void *__thisprob);
@@ -259,11 +252,16 @@ const char *ProblemComputeRate( unsigned int contestid,
                                 u32 *ratehi, u32 *ratelo,
                                 char *ratebuf, unsigned int ratebufsz ); 
 
-int ProblemGetSWUCount( const ContestWork *work,
-                        int rescode, unsigned int contestid,
-                        unsigned int *swucount );
+int WorkGetSWUCount( const ContestWork *work,
+                     int rescode, unsigned int contestid,
+                     unsigned int *swucount );
 
-int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
+// numst_style: -1=unformatted, 0=commas, 1=0+space between magna and number (or at end),
+//               2=1+"nodes"/"keys"
+char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
+                            int numstr_style, const char *numstr_suffix );
+
 /* result depends on #ifdefs, threadsafety issues etc */
+int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
 
 #endif /* __PROBLEM_H__ */

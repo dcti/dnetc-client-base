@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.58 2001/03/19 15:34:25 andreasb Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.59 2001/04/05 23:28:23 sampo Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -181,13 +181,13 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
              && thisprob->pub_data.runtime_sec >= ((u32)(2+non_preemptive_os.did_adjust)))
           {
             u32 newtslice;
-            if (ProblemGetInfo(thisprob, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                               &ratelo, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0 ) == -1)
+            ProblemInfo info;
+            if (ProblemGetInfo(thisprob, &info, P_INFO_RATE) == -1)
             {
               run = -2;
               break;
             }
+            ratelo = info.ratelo;
             newtslice = (u32)(ratelo/((u32)non_preemptive_os.yps));
             if (newtslice > (tslice + (tslice/10)))
             {
@@ -210,18 +210,15 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         else /* preemptive environment */ 
              if (!thisprob->pub_data.last_runtime_is_invalid)
         {
-          u32 donehi, donelo;
-          if (ProblemGetInfo(thisprob, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                             &donehi, &donelo, 0, 0 ) == -1)
+          ProblemInfo info;
+          if (ProblemGetInfo(thisprob, &info, P_INFO_RATE) == -1)
           {
             run = -2;
             break;
           }
-          ProblemComputeRate( contestid, thisprob->pub_data.runtime_sec, 
-                                         thisprob->pub_data.runtime_usec,
-                              donehi, donelo, &ratehi, &ratelo, 0, 0 );
-
+          ratehi = info.ratehi;
+          ratelo = info.ratelo;
+          
           tslice = thisprob->pub_data.tslice;
           if (ratehi > besthi || (ratehi == besthi && ratelo > bestlo))
           {
@@ -272,41 +269,33 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         }                                 
         if (permille == 1000) /* time is up or ran out of work */
         {
-          char ratebuf[32]; u32 secs, usecs;
-          if (ProblemGetInfo(thisprob, 0, 0, 
-                                      0, 0, /* cont_id, cont_name */
-                                      &secs, &usecs, 
-                                      0, 0, 0, /* swucount, pad_strings, unit_name */
-                                      0, 0, 0, /* currpermille, startperm, poie */
-                                      0, 0,    /* idbuf, idbufsz */
-                                      0, 0,    /* cwpbuf, cwpbufsz */
-                                      &ratehi, &ratelo, 
-                                      ratebuf, sizeof(ratebuf),
-                                      0, 0, 0, 0,   0, 0, 0, 0, 
-                                      0, 0, 0, 0 ) == -1)
+          ProblemInfo info;
+          if (ProblemGetInfo(thisprob, &info, P_INFO_E_TIME | P_INFO_RATEBUF |
+                                              P_INFO_RATE) == -1)
           {
             run = -4;
             break;
           }
+          
           if (bestlo || besthi)
           {
-            ProblemComputeRate( contestid, 0, 0, besthi, bestlo, &ratehi, 
-                                &ratelo, ratebuf, sizeof(ratebuf) );                                       
+            ProblemComputeRate( contestid, 0, 0, besthi, bestlo, &(info.ratehi), 
+                                &(info.ratelo), info.ratebuf, 32 );                                       
           }
-          retvalue = (long)ratelo;
+          retvalue = (long)info.ratelo;
           #if (ULONG_MAX > 0xfffffffful)
-          retvalue = (long)((ratehi << 32)+(ratelo));
+          retvalue = (long)((info.ratehi << 32)+(info.ratelo));
           #endif
           __BenchSetBestRate(contestid, retvalue);
           if (!silent)
           {
             struct timeval tv; 
-            tv.tv_sec = secs; tv.tv_usec = usecs;
+            tv.tv_sec = info.elapsed_secs; tv.tv_usec = info.elapsed_usecs;
             LogScreen("\r");
             Log("%s: Benchmark for core #%d (%s)\n%s [%s/sec]\n",
                contname, thisprob->pub_data.coresel, 
                selcoreGetDisplayName(contestid, thisprob->pub_data.coresel),
-               CliGetTimeString( &tv, 2 ), ratebuf );
+               CliGetTimeString( &tv, 2 ), info.ratebuf );
           }
           //ClientEventSyncPost(CLIEVENT_BENCHMARK_FINISHED, (long)problem );
           break;
@@ -330,5 +319,3 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   }
   return retvalue;
 }  
-
-

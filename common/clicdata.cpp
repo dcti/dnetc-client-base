@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.18.2.12 2001/02/23 00:05:43 sampo Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.18.2.13 2001/04/05 23:28:24 sampo Exp $"; }
 
 #include "baseincs.h" //for timeval
 #include "clitime.h" //required for CliTimerDiff() and CliClock()
@@ -24,6 +24,7 @@ return "@(#)$Id: clicdata.cpp,v 1.18.2.12 2001/02/23 00:05:43 sampo Exp $"; }
 static struct contestInfo
 {
   const char *ContestName;
+  const char *UnitName;
   int ContestID;
   unsigned int Iter2KeyFactor; /* by how much must iterations/keysdone
                         be multiplied to get the number of keys checked. */
@@ -33,11 +34,11 @@ static struct contestInfo
   unsigned int UnitsDone;
   unsigned int BestTime;  /* in seconds */
   int BestTimeWasForced;
-} conStats[] = {  { "RC5", 0,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  { "DES", 1,  2, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  { "OGR", 2,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  { "CSC", 3,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  {  NULL,-1,  0, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 }  };
+} conStats[] = {  { "RC5", "keys",  0,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { "DES", "keys",  1,  2, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { "OGR", "nodes", 2,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { "CSC", "keys",  3,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  {  NULL,   NULL, -1,  0, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 }  };
 
 /* ----------------------------------------------------------------------- */
 
@@ -243,6 +244,18 @@ const char *CliGetContestNameFromID(int contestid)
                      __internalCliGetContestInfoVectorForID( contestid );
   if (conInfo)
     return conInfo->ContestName;
+  return ((const char *)("???"));
+}
+
+// ---------------------------------------------------------------------------
+
+// Return a usable contest unit name.
+const char *CliGetContestUnitFromID(int contestid)
+{
+  struct contestInfo *conInfo =
+                     __internalCliGetContestInfoVectorForID( contestid );
+  if (conInfo)
+    return conInfo->UnitName;
   return ((const char *)("???"));
 }
 
