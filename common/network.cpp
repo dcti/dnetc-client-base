@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.31 2000/04/15 14:18:32 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.32 2000/05/01 05:23:50 jlawson Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -1179,7 +1179,7 @@ int Network::Get( char * data, int length )
       {
         nothing_done = 0;
 
-        strncpy( lcbuf, line, sizeof(lcbuf) );
+        strncpy( lcbuf, line.GetHead(), sizeof(lcbuf) );
         lcbuf[sizeof(lcbuf)-1] = '\0';
         for (lcbufpos=0;lcbuf[lcbufpos] && lcbufpos<sizeof(lcbuf);lcbufpos++)
           lcbuf[lcbufpos] = (char)tolower(lcbuf[lcbufpos]);
@@ -1193,7 +1193,7 @@ int Network::Get( char * data, int length )
         {
           u32 newaddr = 0;
           char newhostname[64];
-          if (NetResolve( line + 13, svc_hostport, 0, &newaddr, 1,
+          if (NetResolve( (const char*)line + 13, svc_hostport, 0, &newaddr, 1,
                           newhostname, sizeof(newhostname) ) > 0)
           {
             resolve_addrlist[0] = svc_hostaddr = newaddr;
