@@ -5,6 +5,11 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.130  1998/11/25 05:53:21  dicamillo
+# Update for BeOS R4 for Intel.  Added x86-beos target.  Also added the
+# variable DELETECHARS for the argument of "tr", since since the argument
+# needs to be changed for the BeOS.
+#
 # Revision 1.129  1998/11/22 15:19:22  cyp
 # Removed cliconfig.cpp; Added confopt.cpp, confmenu.cpp, confrwv.cpp
 #
@@ -603,6 +608,10 @@ TARGET_ADDNASMS=""
 TARGET_ADDOBJS=""
 EXENAME="rc5des"
 
+#
+# Define characters to delete to form a safe name
+#
+DELETECHARS="'/.\$\-'"
 
 #
 # Determine the platform specific options for this target
@@ -1307,6 +1316,19 @@ case "$1" in
 	TARGET_LIBS="$SOCKS_LIBS"
 	;;
 
+###### Be OS (x86, PPC)
+    *x86-beos)
+	DELETECHARS="'[:punct:]'"
+	TARGET_AS="gcc -c"
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -static -D__showids__ -DMULTITHREAD"
+	TARGET_LDFLAGS="-static"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
+	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
+        TARGET_ADDNASMS="rc5/nasm/rc5mmx.asm"
+	TARGET_LIBS=""
+	;;
+
 ###### Unknown
     *list)
 	egrep "^[ ]*\*" $0 | more
@@ -1334,7 +1356,7 @@ TARGET_ALLNASMOBJS=
 echo "Scanning output C++ dependencies..."
 for target in ${COMMON_SRCS} ${TARGET_ADDSRCS}; do
     TARGETOBJECT=output/`basename $target .cpp`.o
-    SAFENAME=`echo ${TARGETOBJECT} | tr -d '/.\$\-'`
+    SAFENAME=`echo ${TARGETOBJECT} | tr -d ${DELETECHARS}`
     echo "  ${target} -> ${TARGETOBJECT} (${SAFENAME})"
     eval "DEPEND_${SAFENAME}=${target}"
     TARGET_ALLCCOBJS="${TARGET_ALLCCOBJS} ${TARGETOBJECT}"
@@ -1343,7 +1365,7 @@ done
 echo "Scanning output AS dependencies..."
 for target in ${TARGET_ADDASMS}; do
     TARGETOBJECT=output/`basename $target`.o
-    SAFENAME=`echo ${TARGETOBJECT} | tr -d '/.\$\-'`
+    SAFENAME=`echo ${TARGETOBJECT} | tr -d ${DELETECHARS}`
     echo "  $target -> $TARGETOBJECT ($SAFENAME)"
     eval "DEPEND_${SAFENAME}=$target"
     TARGET_ALLASOBJS="${TARGET_ALLASOBJS} ${TARGETOBJECT}"
@@ -1352,7 +1374,7 @@ done
 echo "Scanning output NASM dependencies..."
 for target in ${TARGET_ADDNASMS}; do
     TARGETOBJECT=output/`basename $target`.o
-    SAFENAME=`echo ${TARGETOBJECT} | tr -d '/.\$\-'`
+    SAFENAME=`echo ${TARGETOBJECT} | tr -d ${DELETECHARS}`
     echo "  $target -> $TARGETOBJECT ($SAFENAME)"
     eval "DEPEND_${SAFENAME}=$target"
     TARGET_ALLNASMOBJS="${TARGET_ALLNASMOBJS} ${TARGETOBJECT}"
@@ -1450,7 +1472,7 @@ echo "" >> Makefile
 echo "Generating Makefile C++ dependency targets..."
 echo "# Dependency targets follow" >> Makefile
 for target in ${TARGET_ALLCCOBJS}; do
-  SAFENAME=`echo $target | tr -d '/.\$\-'`
+  SAFENAME=`echo $target | tr -d ${DELETECHARS}`
   eval TARGETSRC=$`echo DEPEND_$SAFENAME`
   if [ -n "${RC5CORECOPY}" -a `basename ${TARGETSRC}` = problem.cpp ]; then
     echo "$target:	${TARGETSRC} ${RC5CORECOPY}" >> Makefile
@@ -1467,7 +1489,7 @@ for target in ${TARGET_ALLCCOBJS}; do
 done
 echo "Generating Makefile AS dependency targets..."
 for target in ${TARGET_ALLASOBJS}; do
-  SAFENAME=`echo $target | tr -d '/.\$\-'`
+  SAFENAME=`echo $target | tr -d ${DELETECHARS}`
   eval TARGETSRC=$`echo DEPEND_$SAFENAME`
   echo "$target:	${TARGETSRC}" >> Makefile
   echo "	\${AS} \${ASFLAGS} ${TARGETSRC} -o $target" >> Makefile
@@ -1475,7 +1497,7 @@ for target in ${TARGET_ALLASOBJS}; do
 done
 echo "Generating Makefile NASM dependency targets..."
 for target in ${TARGET_ALLNASMOBJS}; do
-  SAFENAME=`echo $target | tr -d '/.\$\-'`
+  SAFENAME=`echo $target | tr -d ${DELETECHARS}`
   eval TARGETSRC=$`echo DEPEND_$SAFENAME`
   echo "$target:	${TARGETSRC}" >> Makefile
   echo "	\${NASM} \${NASMFLAGS} ${TARGETSRC} -o $target" >> Makefile
