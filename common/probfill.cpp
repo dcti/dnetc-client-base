@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.17 1999/12/20 05:26:19 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.18 1999/12/21 04:02:10 gregh Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -337,11 +337,11 @@ static int __resetWork( WorkRecord *wrdata )
     case OGR:
     {
       work_was_reset = 0;
-      #error gregh please fix
-      if (wrdata->work.crypto.keysdone.hi != 0 || wrdata->work.crypto.keysdone.lo != 0)
+      if (wrdata->work.ogr.nodes.hi != 0 || wrdata->work.ogr.nodes.lo != 0)
       {
         work_was_reset = 1;
-        wrdata->work.crypto.keysdone.hi = wrdata->work.crypto.keysdone.lo = 0;
+        wrdata->work.ogr.workstub.worklength = wrdata->work.ogr.workstub.stub.length;
+        wrdata->work.ogr.nodes.hi = wrdata->work.ogr.nodes.lo = 0;
       }
       break;
     }
