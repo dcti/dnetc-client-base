@@ -8,6 +8,9 @@
 // problem and for obtaining the total/average keyrate for an entire contest.
 // 
 // $Log: clirate.h,v $
+// Revision 1.7  1998/06/24 22:36:45  remi
+// Fixed line ending.
+//
 // Revision 1.6  1998/06/24 19:25:53  cyruspatel
 // Created function CliGetKeyrateForProblemNoSave(). Same as
 // CliGetKeyrateForProblem() but does not affect cumulative stats.
