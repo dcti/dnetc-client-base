@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.21 2000/05/25 19:27:45 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.22 2000/05/26 02:38:44 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -319,7 +319,7 @@ int CliClock(struct timeval *tv)
 
 /* --------------------------------------------------------------------- */
 
-// CliGetMonotonicClock() must return a ...
+// CliGetMonotonicClock() should return a ...
 // real (not virtual per process, but secs that increment as a wall clock 
 // would), monotonic (won't speed up/slow down), linear time (won't go 
 // backward, won't wrap) and is not subject to resetting or the user changing 
@@ -414,13 +414,28 @@ int CliGetMonotonicClock( struct timeval *tv )
       tv.tv_sec = (time_t)(hirestime / 1000000);
       tv.tv_usec = (unsigned long)(hirestime % 1000000);
     }
+    #elif (CLIENT_OS == OS_LINUX) /*only RTlinux has clock_gettime/gethrtime*/ 
+    { 
+      /* we have no choice but to use getrusage() [we can */
+      /* do that because each thread has its own pid] */
+      struct rusage rus;
+      if (getrusage(RUSAGE_SELF,&rus) != 0)
+        return -1;
+      tv->tv_sec  = rus.ru_utime.tv_sec  + rus.ru_stime.tv_sec; 
+      tv->tv_usec = rus.ru_utime.tv_usec + rus.ru_stime.tv_usec;
+      if (tv->tv_usec >= 1000000)
+      {
+        tv->tv_usec -= 1000000;
+        tv->tv_sec++;
+      }  
+    }
     #elif 0
     {
       /* DO NOT USE THIS WITHOUT ENSURING ...
          a) that clock() does *not* return virtual time. 
-            (under unix clock() is often implemented as 
-            getrusage().usertime+kerneltime and is thus virtual.
-            posix 1b compatible OSs should have clock_gettime())
+            (under unix clock() is often implemented via
+            times() is thus virtual. posix 1b compatible OSs 
+            should have clock_gettime())
          b) that clock() is not dependant on system time
             (all watcom clibs have this bug)
          c) that the value from clock() does indeed count up to
