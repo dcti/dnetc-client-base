@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.66 2003/03/26 15:18:02 andreasb Exp $
+# @(#)$Id: configure,v 1.288.2.67 2003/03/27 10:51:05 snake Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1741,7 +1741,7 @@ case "$1" in
 
 ###### Sparc/UltraSparc
 
-    *sparc-openbsd)                   # snake, now without DES
+    *sparc-openbsd)                   # [snake]
         TARGET_CC="g++"
         generate_gcc_opts "sparc" "openbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -1751,9 +1751,19 @@ case "$1" in
         add_sources "openbsd" "sparc"
         ;;
 
-    *sparc-netbsd)                    # snake, for sun4[cdm]
+    *sparc-netbsd)                    # [snake], for sun4[cdm]
         TARGET_CC="g++"
         generate_gcc_opts "sparc" "netbsd"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="netbsd-sparc-elf"
+        add_sources "netbsd" "sparc"
+        ;;
+
+    *sparc64-netbsd)                    # [snake], for sun4u
+        TARGET_CC="g++"
+        generate_gcc_opts "sparc64" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="-static"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
