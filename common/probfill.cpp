@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.6  1998/11/06 04:31:25  cyp
+// Fixed InitializeProblemManager(): was returning 1 problem more than it was
+// being asked for.
+//
 // Revision 1.5  1998/11/06 02:32:25  cyp
 // Ok, no more restrictions (at least from the client's perspective) on the
 // number of processors that the client can run on.
@@ -26,7 +30,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.5 1998/11/06 02:32:25 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.6 1998/11/06 04:31:25 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -441,7 +445,7 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   changed_flag = (!done_initial_load);
   total_problems_loaded = 0;
   total_problems_saved = 0;
-  
+
   // ====================================================
 
   if (!done_initial_load)
@@ -461,7 +465,7 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 
   for (prob_for=0; prob_for<load_problem_count; prob_for++)
     {
-    prob_i= (prob_step < 0) ? ((load_problem_count-1)-prob_for) : (prob_step);
+    prob_i= (prob_step < 0) ? ((load_problem_count-1)-prob_for) : (prob_for);
 
     thisprob = GetProblemPointerFromIndex( prob_i );
     if (thisprob == NULL)
