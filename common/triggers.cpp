@@ -16,6 +16,9 @@
 // -----------------------------------------------------------------------
 //
 // $Log: triggers.cpp,v $
+// Revision 1.10  1998/12/08 06:01:58  dicamillo
+// Add MacOS definitions.
+//
 // Revision 1.9  1998/11/25 06:09:39  dicamillo
 // Update for BeOS R4.  Changes so that SIGHUP is not intercepted for BeOS.
 //
@@ -45,7 +48,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.9 1998/11/25 06:09:39 dicamillo Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.10 1998/12/08 06:01:58 dicamillo Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -364,6 +367,13 @@ void CliPollDrivenBreakCheck( void )
   return;  
 }      
 #define CLISIGHANDLER_IS_SPECIAL
+#endif
+
+// -----------------------------------------------------------------------
+#if (CLIENT_OS == OS_MACOS)
+#define CLISIGHANDLER_IS_SPECIAL
+// Mac framework code will raise requests by calling
+// RaiseExitRequestTrigger
 #endif
 
 // -----------------------------------------------------------------------
