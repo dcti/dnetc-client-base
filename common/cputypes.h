@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.33 2000/07/13 21:44:02 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.34 2000/08/25 19:49:40 patrick Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -502,6 +502,8 @@
   #elif (CLIENT_OS == OS_AIX)
 	/* only for AIX 4.1??? */
     #define pthread_sigmask(a,b,c) sigthreadmask(a,b,c)
+        /* no use under AIX 4.1.5, all threads have same prio */
+    #undef _POSIX_THREAD_PRIORITY_SCHEDULING
   #endif
 #else 
   typedef int THREADID;
