@@ -11,6 +11,9 @@
    to functions in modules in your own platform area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.13  1998/10/31 03:31:39  sampo
+// removed MacOS specific #include, checked for EOF input
+//
 // Revision 1.12  1998/10/29 03:15:26  sampo
 // Finally got a MacOS keyboard input thingie.  Not final, but close.
 //
@@ -50,7 +53,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.12 1998/10/29 03:15:26 sampo Exp $"; }
+return "@(#)$Id: console.cpp,v 1.13 1998/10/31 03:31:39 sampo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -67,9 +70,6 @@ return "@(#)$Id: console.cpp,v 1.12 1998/10/29 03:15:26 sampo Exp $"; }
 #endif
 #endif
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
-#if (CLIENT_OS == OS_MACOS)
-#include "vars.h"
-#endif
 /* ---------------------------------------------------- */
 
 static struct 
@@ -289,10 +289,13 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         }
       #elif (CLIENT_OS == OS_MACOS)
         {
+		unsigned long keys[4];
 		GetKeys(keys);
 		if (keys[0] != 0 || keys[1] != 0 || keys[2] != 0 || keys[3] != 0)
 			{
 				ch = getchar();
+				if (ch == EOF)
+					ch = 0;
 			}
         }
       #else
