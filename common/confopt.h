@@ -6,69 +6,71 @@
 */ 
 
 #ifndef __CONFOPT_H__
-#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.16.2.2 2000/01/08 23:18:04 cyp Exp $"
+#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.16.2.3 2000/02/04 08:29:58 cyp Exp $"
 
 #define CONF_MENU_MISC_PLACEHOLDER  0
 #define CONF_ID                     1 /* CONF_MENU_MISC */
 #define CONF_COUNT                  2 /* CONF_MENU_MISC -1 == runbuffers */
 #define CONF_HOURS                  3 /* CONF_MENU_MISC */
 #define CONF_PAUSEFILE              4 /* CONF_MENU_MISC */
-#define CONF_QUIETMODE              5 /* CONF_MENU_MISC */
-#define CONF_NOEXITFILECHECK        6 /* CONF_MENU_MISC */
-#define CONF_PERCENTOFF             7 /* CONF_MENU_MISC */
-#define CONF_CONTESTPRIORITY        8 /* CONF_MENU_BUFF "DES,OGR,RC5" */
+#define CONF_NOEXITFILECHECK        5 /* CONF_MENU_MISC */
+#define CONF_RESTARTONINICHANGE     6 /* CONF_MENU_MISC */
+#define CONF_PAUSEPLIST             7 /* CONF_MENU_MISC */
+#define CONF_QUIETMODE              8 /* CONF_MENU_MISC */
+#define CONF_PERCENTOFF             9 /* CONF_MENU_MISC */
+#define CONF_CONTESTPRIORITY       10 /* CONF_MENU_BUFF "DES,OGR,RC5" */
 
-#define CONF_MENU_BUFF_PLACEHOLDER  9
-#define CONF_NODISK                10  /* CONF_MENU_BUFF */
-#define CONF_INBUFFERBASENAME      11  /* CONF_MENU_BUFF */
-#define CONF_OUTBUFFERBASENAME     12  /* CONF_MENU_BUFF */
-#define CONF_CHECKPOINT            13  /* CONF_MENU_BUFF */
+#define CONF_MENU_BUFF_PLACEHOLDER 11
+#define CONF_NODISK                12  /* CONF_MENU_BUFF */
+#define CONF_INBUFFERBASENAME      13  /* CONF_MENU_BUFF */
+#define CONF_OUTBUFFERBASENAME     14  /* CONF_MENU_BUFF */
+#define CONF_CHECKPOINT            15  /* CONF_MENU_BUFF */
 
-#define CONF_OFFLINEMODE           14  /* CONF_MENU_BUFF */
-#define CONF_MENU_NET_PLACEHOLDER  15  /* CONF_MENU_BUFF */
-#define CONF_REMOTEUPDATEDISABLED  16  /* CONF_MENU_BUFF */
-#define CONF_REMOTEUPDATEDIR       17  /* CONF_MENU_BUFF */
-#define CONF_FREQUENT              18  /* CONF_MENU_BUFF */
-#define CONF_PREFERREDBLOCKSIZE    19  /* CONF_MENU_BUFF */
-#define CONF_THRESHOLDI            20  /* CONF_MENU_BUFF */
-#define CONF_THRESHOLDT            21  /* CONF_MENU_BUFF */
+#define CONF_OFFLINEMODE           16  /* CONF_MENU_BUFF */
+#define CONF_MENU_NET_PLACEHOLDER  17  /* CONF_MENU_BUFF */
+#define CONF_REMOTEUPDATEDISABLED  18  /* CONF_MENU_BUFF */
+#define CONF_REMOTEUPDATEDIR       19  /* CONF_MENU_BUFF */
+#define CONF_FREQUENT              20  /* CONF_MENU_BUFF */
+#define CONF_PREFERREDBLOCKSIZE    21  /* CONF_MENU_BUFF */
+#define CONF_THRESHOLDI            22  /* CONF_MENU_BUFF */
+#define CONF_THRESHOLDT            23  /* CONF_MENU_BUFF */
 
-#define CONF_MENU_PERF_PLACEHOLDER 22
-#define CONF_CPUTYPE               23 /* CONF_MENU_PERF */
-#define CONF_NUMCPU                24 /* CONF_MENU_PERF 0 ... */
-#define CONF_NICENESS              25 /* CONF_MENU_PERF priority */
+#define CONF_MENU_PERF_PLACEHOLDER 24
+#define CONF_CPUTYPE               25 /* CONF_MENU_PERF */
+#define CONF_NUMCPU                26 /* CONF_MENU_PERF 0 ... */
+#define CONF_NICENESS              27 /* CONF_MENU_PERF priority */
 
-#define CONF_MENU_LOG_PLACEHOLDER  26
-#define CONF_LOGTYPE               27 /* CONF_MENU_LOG */
-#define CONF_LOGNAME               28 /* CONF_MENU_LOG */
-#define CONF_LOGLIMIT              29 /* CONF_MENU_LOG */
-#define CONF_MESSAGELEN            30 /* CONF_MENU_LOG */
-#define CONF_SMTPSRVR              31 /* CONF_MENU_LOG */
-#define CONF_SMTPPORT              32 /* CONF_MENU_LOG */
-#define CONF_SMTPFROM              33 /* CONF_MENU_LOG */
-#define CONF_SMTPDEST              34 /* CONF_MENU_LOG */
+#define CONF_MENU_LOG_PLACEHOLDER  28
+#define CONF_LOGTYPE               29 /* CONF_MENU_LOG */
+#define CONF_LOGNAME               30 /* CONF_MENU_LOG */
+#define CONF_LOGLIMIT              31 /* CONF_MENU_LOG */
+#define CONF_MESSAGELEN            32 /* CONF_MENU_LOG */
+#define CONF_SMTPSRVR              33 /* CONF_MENU_LOG */
+#define CONF_SMTPPORT              34 /* CONF_MENU_LOG */
+#define CONF_SMTPFROM              35 /* CONF_MENU_LOG */
+#define CONF_SMTPDEST              36 /* CONF_MENU_LOG */
 
-#define CONF_NETTIMEOUT            35 /* CONF_MENU_NET */
-#define CONF_AUTOFINDKS            36 /* CONF_MENU_NET */
-#define CONF_KEYSERVNAME           37 /* CONF_MENU_NET */
-#define CONF_KEYSERVPORT           38 /* CONF_MENU_NET */
-#define CONF_NOFALLBACK            39 /* CONF_MENU_NET */
-#define CONF_FWALLTYPE             40 /* CONF_MENU_NET */
-#define CONF_FWALLHOSTNAME         41 /* CONF_MENU_NET */
-#define CONF_FWALLHOSTPORT         42 /* CONF_MENU_NET */
-#define CONF_FWALLUSERNAME         43 /* CONF_MENU_NET */
-#define CONF_FWALLPASSWORD         44 /* CONF_MENU_NET */
-#define CONF_FORCEHTTP             45 /* CONF_MENU_NET */
-#define CONF_FORCEUUE              46 /* CONF_MENU_NET */
+#define CONF_NETTIMEOUT            37 /* CONF_MENU_NET */
+#define CONF_AUTOFINDKS            38 /* CONF_MENU_NET */
+#define CONF_KEYSERVNAME           39 /* CONF_MENU_NET */
+#define CONF_KEYSERVPORT           40 /* CONF_MENU_NET */
+#define CONF_NOFALLBACK            41 /* CONF_MENU_NET */
+#define CONF_FWALLTYPE             42 /* CONF_MENU_NET */
+#define CONF_FWALLHOSTNAME         43 /* CONF_MENU_NET */
+#define CONF_FWALLHOSTPORT         44 /* CONF_MENU_NET */
+#define CONF_FWALLUSERNAME         45 /* CONF_MENU_NET */
+#define CONF_FWALLPASSWORD         46 /* CONF_MENU_NET */
+#define CONF_FORCEHTTP             47 /* CONF_MENU_NET */
+#define CONF_FORCEUUE              48 /* CONF_MENU_NET */
 
-#define CONF_LURKMODE              47 /* CONF_MENU_NET */
-#define CONF_CONNIFACEMASK         48 /* CONF_MENU_NET */
-#define CONF_DIALWHENNEEDED        49 /* CONF_MENU_NET */
-#define CONF_CONNPROFILE           50 /* CONF_MENU_NET */
-#define CONF_CONNSTARTCMD          51 /* CONF_MENU_NET */
-#define CONF_CONNSTOPCMD           52 /* CONF_MENU_NET */
+#define CONF_LURKMODE              49 /* CONF_MENU_NET */
+#define CONF_CONNIFACEMASK         50 /* CONF_MENU_NET */
+#define CONF_DIALWHENNEEDED        51 /* CONF_MENU_NET */
+#define CONF_CONNPROFILE           52 /* CONF_MENU_NET */
+#define CONF_CONNSTARTCMD          53 /* CONF_MENU_NET */
+#define CONF_CONNSTOPCMD           54 /* CONF_MENU_NET */
 
-#define CONF_OPTION_COUNT          53
+#define CONF_OPTION_COUNT          55
 
 #define CONF_MENU_MAIN             0
 #define CONF_MENU_BUFF             1

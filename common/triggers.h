@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __TRIGGERS_H__
-#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.6.2.4 2000/01/22 22:20:51 cyp Exp $"
+#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.6.2.5 2000/02/04 08:29:59 cyp Exp $"
 
 #if defined(__unix__)
   /* These constants define symbolically the signal names used by the
@@ -28,7 +28,9 @@
 
 //initialize... first call initializes the signal handler. args can be NULL
 extern int InitializeTriggers(int doingmodes, 
-                              const char *exitfile, const char *pausefile);
+                              const char *exitfile, const char *pausefile,
+                              const char *pauseplist, 
+                              int restartoninichange, const char *inifile );
 
 //deinitialize...
 extern int DeinitializeTriggers(void);

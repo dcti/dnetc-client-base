@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.15 2000/01/08 23:18:08 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.16 2000/02/04 08:29:57 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -95,10 +95,12 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
   conf_options[CONF_ID].thevariable=&(client->id[0]);
   conf_options[CONF_COUNT].thevariable=&(client->blockcount);
   conf_options[CONF_HOURS].thevariable=&(client->minutes);
-  conf_options[CONF_QUIETMODE].thevariable=&(client->quietmode);
-  conf_options[CONF_NOEXITFILECHECK].thevariable=&(client->noexitfilecheck);
-  conf_options[CONF_PERCENTOFF].thevariable=&(client->percentprintingoff);
   conf_options[CONF_PAUSEFILE].thevariable=&(client->pausefile[0]);
+  conf_options[CONF_NOEXITFILECHECK].thevariable=&(client->noexitfilecheck);
+  conf_options[CONF_RESTARTONINICHANGE].thevariable=&(client->restartoninichange);
+  conf_options[CONF_PAUSEPLIST].thevariable=&(client->pauseplist[0]);
+  conf_options[CONF_QUIETMODE].thevariable=&(client->quietmode);
+  conf_options[CONF_PERCENTOFF].thevariable=&(client->percentprintingoff);
   conf_options[CONF_CONTESTPRIORITY].thevariable = 
        strcpy(loadorder, projectmap_expand( client->loadorder_map ) );
 
@@ -1015,21 +1017,21 @@ int Configure( Client *client ) /* returns >0==success, <0==cancelled */
           {
             int mmin = conf_options[editthis].choicemin;
             int mmax = conf_options[editthis].choicemax;
-	    int mdef = atoi(conf_options[editthis].defaultsetting);
+            int mdef = atoi(conf_options[editthis].defaultsetting);
             if (mmin && mmax)
             {
               for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
               {
-	        if (vecta[cont_i] == mdef)
-		  ; /* default */
+                if (vecta[cont_i] == mdef)
+                  ; /* default */
                 else if (vecta[cont_i] < mmin)
                   vecta[cont_i] = mmin;
                 else if (vecta[cont_i] > mmax)
                   vecta[cont_i] = mmax;
                 if (vectb)
                 {
-	          if (vectb[cont_i] == mdef)
-		    ; /* default */
+                  if (vectb[cont_i] == mdef)
+                    ; /* default */
                   else if (vectb[cont_i] < mmin)
                     vectb[cont_i] = mmin;
                   else if (vectb[cont_i] > mmax)

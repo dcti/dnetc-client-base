@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.53 2000/01/21 23:48:54 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.54 2000/02/04 08:29:56 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -62,6 +62,8 @@ void ResetClientData(Client *client)
   client->minutes = 0;
   client->percentprintingoff=0;
   client->noexitfilecheck=0;
+  client->restartoninichange=0;
+  client->pauseplist[0]=0;
   client->pausefile[0]=0;
   projectmap_build(client->loadorder_map,"");
 
@@ -359,7 +361,10 @@ static int ClientMain( int argc, char *argv[] )
       TRACE_OUT((0,"initializetriggers\n"));
       if (InitializeTriggers(domodes, ((client->noexitfilecheck)?(NULL):
                                         ("exitrc5" EXTN_SEP "now")),
-                                       client->pausefile )==0)
+                                       client->pausefile,
+                                       client->pauseplist,
+                                       client->restartoninichange,
+                                       client->inifilename )==0)
       {
         TRACE_OUT((0,"initializeconnectivity\n"));
         if (InitializeConnectivity() == 0) //do global initialization

@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------
 */ 
 #ifndef __UTIL_H__ 
-#define __UTIL_H__ "@(#)$Id: util.h,v 1.6.2.5 2000/01/08 23:18:02 cyp Exp $"
+#define __UTIL_H__ "@(#)$Id: util.h,v 1.6.2.6 2000/02/04 08:29:59 cyp Exp $"
 
 void trace_out( int indlevel, const char *fmt, ... );
 #ifdef TRACE
@@ -47,6 +47,14 @@ const char *utilGetAppName(void); /* "rc5 des" or "dnetc" or whatever */
 const char *utilSetAppName(const char *newname); /* shouldn't be needed */
 
 int utilCheckIfBetaExpired(int print_msg); /* prints message if appropriate */
+
+/* get list of pid's for procname. if procname has a path, then search 
+   for exactly that, else search for basename. if pidlist or maxnumpids
+   is null/0, then return found count, else return number of pids now
+   in list. On error return < 0
+*/
+int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids );
+
 
 #endif /* __UTIL_H__ */
 

@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.21 2000/01/19 00:49:29 ctate Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.22 2000/02/04 08:29:58 cyp Exp $"; }
 
 //#define TRACE
 
@@ -939,6 +939,8 @@ int ReadConfig(Client *client)
 
   client->noexitfilecheck = !GetPrivateProfileIntB( OPTSECT_TRIGGERS, "exit-flag-file-checks", !(client->noexitfilecheck), fn );
   GetPrivateProfileStringB( OPTSECT_TRIGGERS, "pause-flag-filename", client->pausefile, client->pausefile, sizeof(client->pausefile), fn );
+  client->restartoninichange  = GetPrivateProfileIntB( OPTSECT_TRIGGERS, "restart-on-config-file-change", (client->restartoninichange), fn );
+  GetPrivateProfileStringB( OPTSECT_TRIGGERS, "pause-watch-plist", client->pauseplist, client->pauseplist, sizeof(client->pauseplist), fn );
 
   /* --------------------- */
 
@@ -1006,6 +1008,8 @@ int ReadConfig(Client *client)
       client->outthreshold[cont_i] = 
            GetPrivateProfileIntB(cont_name, "flush-workunit-threshold",
                          client->outthreshold[cont_i], fn );
+      if (client->outthreshold[cont_i] >= client->inthreshold[cont_i])
+        client->outthreshold[cont_i] = -1; /* ie, inthreshold rules */
 
       client->timethreshold[cont_i] =
            GetPrivateProfileIntB(cont_name, "fetch-time-threshold",
@@ -1171,9 +1175,11 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     }  
     __XSetProfileInt( OPTSECT_MISC, "run-work-limit", client->blockcount, fn, 0, 0 );
 
-    __XSetProfileStr( OPTSECT_TRIGGERS, "pause-flag-filename", client->pausefile, fn, NULL );
+    __XSetProfileInt( OPTSECT_TRIGGERS, "restart-on-config-file-change", client->restartoninichange, fn, 0, 'n' );
     __XSetProfileInt( OPTSECT_TRIGGERS, "exit-flag-file-checks", !client->noexitfilecheck, fn, 1, 'o' );
-
+    __XSetProfileStr( OPTSECT_TRIGGERS, "pause-flag-filename", client->pausefile, fn, NULL );
+    __XSetProfileStr( OPTSECT_TRIGGERS, "pause-watch-plist", client->pauseplist, fn, NULL );
+  
     __XSetProfileInt( OPTSECT_DISPLAY, "detached", client->quietmode, fn, 0, 'y' );
     __XSetProfileInt( OPTSECT_DISPLAY, "progress-indicator", !client->percentprintingoff, fn, 1, 'o' );
     

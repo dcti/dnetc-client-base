@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.8 2000/01/08 23:18:01 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.9 2000/02/04 08:29:57 cyp Exp $"
 
 
 enum {
@@ -77,6 +77,8 @@ public:
   int  minutes;
   int  percentprintingoff;
   int  noexitfilecheck;
+  int  restartoninichange;
+  char pauseplist[MINCLIENTOPTSTRLEN]; /* processname list */
   char pausefile[MINCLIENTOPTSTRLEN*2];
   char loadorder_map[CONTEST_COUNT];
 

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.10 2000/01/13 09:19:14 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.11 2000/02/04 08:29:59 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -15,7 +15,6 @@ return "@(#)$Id: util.cpp,v 1.11.2.10 2000/01/13 09:19:14 cyp Exp $"; }
 #include "clicdata.h" /* CliGetContestNameFromID() */
 #include "pathwork.h" /* GetFullPathForFilename() */
 #include "util.h"     /* ourselves */
-
 #define MAX_CONTEST_NAME_LEN 3
 
 /* ------------------------------------------------------------------- */
@@ -575,3 +574,453 @@ const char *utilGetAppName(void)
   return utilSetAppName((const char *)0);
 }
 
+/* --------------------------------------------------------------------- */
+
+/* get list of pid's for procname. if procname has a path, then search 
+   for exactly that, else compare with basename. if pidlist or maxnumpids
+   is null/0, then return found count, else return number of pids now
+   in list. On error return < 0
+*/
+#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
+      (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD)
+#  include <dirent.h>        /* for direct read of /proc/ */
+#elif (CLIENT_OS == OS_BEOS)
+#  include <kernel/OS.h>     /* get_next_team_info() */
+#  include <kernel/image.h>  /* get_next_image_info() */
+#elif (CLIENT_OS == OS_WIN32)
+#  include <tlhelp32.h>      /* toolhelp calls */
+#endif
+#ifdef __unix__
+#  include <fcntl.h>
+#endif /* __unix__ */
+int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
+{
+  int num_found = -1; /* assume all failed */
+
+  if (!pidlist || maxnumpids < 1)
+  {
+    maxnumpids = 0;
+    pidlist = (long *)0;
+  }
+
+  if (procname)
+  {
+    #if (CLIENT_OS == OS_BEOS)
+    {
+      team_info tInfo;
+      int32 ourteam = xxx /* fix me! ourteam == ourselves */
+      int32 team = 0;
+      /* procname is either a basename or a full path; determine which */
+      int usefullpathcmp = (strchr( procname, '/' ) != ((char *)0));
+  
+      while (get_next_team_info(&team, &tInfo) == B_OK)
+      {
+        if (num_found < 0) /* our scanner is working */
+        {
+          num_found = 0;
+        }
+        if (ourteam != tInfo.team) /* we don't include ourselves */
+        {
+          image_info iInfo;
+          int32 image = 0;
+          char * foundname;
+          /* get the app binary's full path */
+          get_next_image_info(tInfo.team, &image, &iInfo);  
+        
+          foundname = iInfo.name; /* if procname is a basename, use only */
+          if (!usefullpathcmp)    /* the basename from the app's path */
+          {
+            char *p = strrchr( foundname, '/' );
+            if (p)
+              foundname = p+1;
+          }
+          /* does the team name match? */
+          if (strcmp( procname, foundname ) == 0)
+          {  
+            if (pidlist) /* save the team number (pid) only if we have */
+            {            /* someplace to save it to */
+              pidlist[num_found] = (long)tInfo.team;
+            }
+            num_found++; /* track the number of pids found */
+            if (pidlist && num_found == maxnumpids) /* done all? */
+            {
+              break; /* while (get_next_team_info() == B_OK) */
+            }
+          }
+        }
+      }
+    }
+    #elif (CLIENT_OS == OS_HPUX)
+    {
+      struct pst_status pst[10];
+      pid_t ourpid = getpid();
+      int usefullpathcmp = (strchr( procname, '/' ) != ((char *)0));
+      int count, idx = 0; /* index within the context */
+      num_found = -1; /* assume all failed */
+    
+      /* loop until count == 0, will occur all have been returned */
+      while ((count = pstat_getproc(pst, sizeof(pst[0]), 
+                       (sizeof(pst)/sizeof(pst[0])), idx)) > 0) 
+      {
+        int pspos;
+        if (num_found < 0)
+        {
+          num_found = 0;
+        }
+        idx = pst[count-1].pst_idx + 1; /* start of next */
+        for (pspos=0; pspos < count; pspos++) 
+        {
+          //printf("pid: %d, cmd: %s\n",pst[pspos].pst_pid,pst[pspos].pst_ucomm);
+          pid_t thatpid = (pid_t)pst[pspos].pst_pid;
+          if (thatpid != ourpid)
+          {
+            char *foundname = ((char *)pst[pspos].pst_ucomm);
+            if (!usefullpathcmp)
+            {
+              char *p = strrchr( foundname, '/' );
+              if (p)
+                foundname = p+1;
+            }
+            if (strcmp( procname, foundname ) == 0)
+            {  
+              if (pidlist)
+              {
+                pidlist[num_found] = (long)thatpid;
+              }
+              num_found++;
+              if (pidlist && num_found == maxnumpids)
+              {
+                break; /* for (pospos < count) */
+              }
+            }
+          }
+        }
+        if (pidlist && num_found == maxnumpids)
+        {
+          break; /* while pstat_getproc() > 0 */
+        }
+      }
+    }  
+    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    {
+      #if (CLIENT_OS == OS_WIN32) 
+      if (winGetVersion() >= 400) /* not win32s please */
+      {
+        HINSTANCE hInst;
+        const char *libname = "kernel32.dll";
+        if (winGetVersion() >= 2000 && winGetVersion() < 2500)
+          libname = "toolhelp.dll"; /* NT3.x, NT4 */
+        hInst = LoadLibrary( libname ); 
+        if (hInst > ((HINSTANCE)32))
+        {
+          HMODULE hKernel32 = GetModuleHandle(libname);
+          if (hKernel32)
+          {
+            typedef HANDLE (WINAPI *CreateToolhelp32SnapshotT)(DWORD dwFlags, DWORD th32ProcessID);
+            typedef BOOL (WINAPI *Process32FirstT)(HANDLE hSnapshot, LPPROCESSENTRY32 lppe);
+            typedef BOOL (WINAPI *Process32NextT)(HANDLE hSnapshot, LPPROCESSENTRY32 lppe);
+            CreateToolhelp32SnapshotT fnCreateToolhelp32Snapshot =
+                        (CreateToolhelp32SnapshotT)
+                        GetProcAddress(hKernel32, "CreateToolhelp32Snapshot");
+            Process32FirstT fnProcess32First =
+                 (Process32FirstT)GetProcAddress(hKernel32, "Process32First");
+            Process32NextT fnProcess32Next =
+                   (Process32NextT)GetProcAddress(hKernel32, "Process32Next");
+            if (fnCreateToolhelp32Snapshot && 
+                fnProcess32First && fnProcess32Next)
+            {
+              HANDLE hSnapshot = (*fnCreateToolhelp32Snapshot)(TH32CS_SNAPPROCESS,0);
+              if (hSnapshot)
+              {
+                PROCESSENTRY32 pe;
+                int usefullpathcmp = 0;
+                const char *p = procname;
+                while (*p && *p != '\\' && *p != '/' && *p != ':')
+                  p++;
+                if (*p)
+                  usefullpathcmp = 1;
+                pe.dwSize = sizeof(pe);
+                if ((*fnProcess32First)(hSnapshot, &pe))
+                {
+                  do
+                  {
+                    if (pe.szExeFile[0])
+                    {
+                      if (num_found < 0)
+                      {
+                        num_found = 0;
+                      }
+                      p = (const char *)&(pe.szExeFile[0]);
+                      if (!usefullpathcmp)
+                      {
+                        p += strlen( p );
+                        while (p > ((const char *)&(pe.szExeFile[0])))
+                        {
+                          --p;
+                          if (*p == '\\' || *p == '/' || *p == ':')
+                          {
+                            p++;
+                            break;
+                          }
+                        }
+                      }
+                      if ( strcmpi( p, procname ) == 0 )
+                      {
+                        if (pidlist)
+                        {
+                          pidlist[num_found] = (long)pe.th32ProcessID;
+                        }
+                        num_found++;
+                        if (pidlist && num_found == maxnumpids)
+                        {
+                          break; /* while (next) */
+                        }
+                      }
+                    }
+                  } while ((*fnProcess32Next)(hSnapshot, &pe));
+                }
+              }
+              CloseHandle(hSnapshot);
+            }
+          }
+          FreeLibrary( hInst );
+        }
+      }
+      else /* not win32s please */
+      #endif
+      {
+        /* we should use taskfirst/tasknext, but thats a *bit* ]:)
+           cowplicated from within an extender
+        */
+        HMODULE hMod = GetModuleHandle(procname);
+        num_found = 0;
+        if (hMod)
+        {
+          if (pidlist)
+            pidlist[num_found] = (long)hMod;
+          num_found++;
+        }
+      }
+    }  
+    #elif (CLIENT_OS == OS_NETWARE)
+    {
+      int nlmHandle = FindNLMHandle( procname );
+      num_found = 0;
+      if (nlmHandle)
+      {
+        if (pidlist)
+          pidlist[num_found] = (long)nlmHandle;
+        num_found++;
+      }
+    }
+    #elif (defined(__unix__))
+    {
+      char *p, *foundname;
+      pid_t thatpid, ourpid = getpid();
+      size_t linelen; char buffer[1024];
+      int usefullpathcmp = (strchr( procname, '/' ) != ((char *)0));
+      #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
+          (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD)
+      {    
+        DIR *dirp = opendir("/proc");
+        if (dirp)
+        {
+          struct dirent *dp;
+          while ((dp = readdir(dirp)) != ((struct dirent *)0))
+          {
+            FILE *file;
+            pid_t thatpid = (pid_t)atoi(dp->d_name);
+            if (num_found < 0)
+              num_found = 0;
+            if (thatpid == 0 /* .,..,curproc,etc */ || thatpid == ourpid) 
+              continue;
+            sprintf( buffer, "/proc/%s/cmdline", dp->d_name );
+            if (( file = fopen( buffer, "r" ) ) == ((FILE *)0))
+              continue; /* already died */
+            linelen = fread( buffer, 1, sizeof(buffer), file );
+            fclose( file );
+            if (linelen != 0)
+            {
+              if (linelen == sizeof(buffer))
+                linelen--;
+              buffer[linelen] = '\0';
+              //printf("%s: %60s\n", dp->d_name, buffer );
+              foundname = &buffer[0];
+              if (memcmp( foundname, "Name:", 5 ) == 0 ) /* linux status*/
+                foundname += 5;
+              while (*foundname && isspace(*foundname))
+                foundname++;
+              p = foundname;
+              while (*p && !isspace(*p))
+                p++;
+              *p = '\0';
+              if (!usefullpathcmp)
+              {
+                p = strrchr( foundname, '/' );
+                if (p)
+                  foundname = p+1;
+              }
+              if (strcmp( procname, foundname ) == 0)
+              {  
+                if (pidlist)
+                {
+                  pidlist[num_found] = (long)thatpid;
+                }
+                num_found++;
+                if (pidlist && num_found == maxnumpids)
+                {
+                  break; /* while readdir() */
+                }
+              }
+            } /* if (len != 0) */
+          } /* while readdir */
+          closedir(dirp);
+        }  
+      }
+      #endif
+      #if (CLIENT_OS != OS_LINUX) && (CLIENT_OS != OS_HPUX)
+      {
+        /* this part is only needed for OSs that do not read /proc OR
+           do not have a reliable method to set the name as read from /proc
+           (as opposed to reading it from ps output)
+        */
+        FILE *file = ((FILE *)NULL);
+        const char *pscmd = ((char *)NULL);
+        #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
+            (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_LINUX) || \
+            (CLIENT_OS == OS_BSDOS)
+        pscmd = "ps ax|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
+        /* fbsd: "ps ax -o pid -o command 2>/dev/null"; */ /* bsd + -o ext */
+        /* lnux: "ps ax --format pid,comm 2>/dev/null"; */ /* bsd + gnu -o */
+        #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || \
+              (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX)
+        pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
+        #elif (CLIENT_OS == OS_IRIX) || (CLIENT_OS == OS_HPUX)
+        pscmd = "/usr/bin/ps -e |awk '{print$1\" \"$4\" \"$5\" \"$6\" \"$7\" \"$8\" \"$9}' 2>/dev/null";
+        #else
+        #error fixme: select an appropriate ps syntax (or use another method to get pidlist)
+        #error "this part is only needed for OSs that do not have another way"
+        #error "to get the pid+procname list (see linux/hpux above for alternative)"
+        #endif
+        file = (pscmd ? popen( pscmd, "r" ) : ((FILE *)NULL));
+        if (num_found == 0) /* /proc read also failed/wasn't done? */
+          num_found = -1;   /* assume spawn failed */
+        if (file != ((FILE *)NULL))
+        {
+          int eof_count = 0;
+          linelen = 0;
+          while (file) /* dummy while */
+          {
+            int ch;
+            if (( ch = fgetc( file ) ) == EOF )
+            {
+              if (ferror(file))
+                break;
+              if (linelen == 0)
+              {
+                if ((++eof_count) > 2)
+                  break;
+              }
+              usleep(250000);
+            }
+            else if (ch == '\n')
+            {
+              eof_count = 0;
+              if (linelen == 0)
+                continue;
+              if (linelen < (sizeof(buffer)-1)) /* otherwise line is unusable */
+              {
+                char *p;
+                buffer[linelen]='\0';
+                foundname = &buffer[0];
+                while (*foundname && isspace(*foundname))
+                  foundname++;
+                p = foundname;
+                while (isdigit(*foundname))
+                  foundname++;
+                if (p == foundname) /* no digits found. can't be pid */
+                {
+                  /* both linelen and buffer are about to be reset,
+                     so we can misuse them here 
+                  */
+                }
+                else /* got a pid */
+                {
+                  *foundname++ = '\0';
+                  thatpid = (pid_t)atol(p);
+                  if (num_found < 0)
+                    num_found = 0;
+                  #if (CLIENT_OS == OS_BEOS)
+                  if (fullpath[0])
+                  {
+                    foundname = fullpath;
+                    if ((++threadindex) != 1)
+                      thatpid = 0; /* ignore all but the main thread */
+                  }
+                  #endif
+                  if (thatpid != 0 && thatpid != ourpid)
+                  {
+                    while (*foundname && isspace(*foundname))
+                      foundname++;
+                    p = foundname;  
+                    while (*p && !isspace(*p))
+                      p++;
+                    *p = '\0';
+                    if (!usefullpathcmp)
+                    {
+                      p = strrchr( foundname, '/' );
+                      if (p)
+                        foundname = p+1;
+                    }
+                    /* printf("pid='%d' name='%s'\n",thatpid,foundname); */
+                    if ( strcmp( procname, foundname ) == 0 )
+                    {
+                      if (num_found < 0)
+                        num_found = 0;
+                      else if (num_found > 0 && pidlist)
+                      {
+                        int whichpid;
+                        for (whichpid = 0; whichpid < num_found; whichpid++)
+                        {
+                          if (((pid_t)(pidlist[whichpid])) == thatpid)
+                          {
+                            thatpid = 0;
+                            break;
+                          }
+                        }
+                      }
+                      if (thatpid != 0)
+                      {
+                        if (pidlist)
+                        {
+                          pidlist[num_found] = (long)thatpid;
+                        }
+                        num_found++;
+                        if (pidlist && num_found == maxnumpids)
+                        {
+                          break; /* while (file) */
+                        }
+                      }
+                    }
+                  } /* if (thatpid != 0 && thatpid != ourpid) */
+                } /* have digits */
+              } /* if (linelen < sizeof(buffer)-1) */
+              linelen = 0; /* prepare for next line */
+            } /* if (ch == '\n') */
+            else
+            {
+              eof_count = 0;
+              if (linelen < (sizeof(buffer)-1))
+                buffer[linelen++] = ch;
+            } 
+          } /* while (file) */
+          pclose(file);
+        } /* if (file != ((FILE *)NULL)) */
+      }
+      #endif /* spawn ps */
+    }
+    #endif /* #if (defined(__unix__)) */
+  } /* if (procname) */
+  
+  return num_found;
+}    
