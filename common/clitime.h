@@ -8,6 +8,10 @@
 // the time. 'time' is always stored/passed/returned in timeval format.
 // 
 // $Log: clitime.h,v $
+// Revision 1.12  1999/01/14 23:02:12  pct
+// Updates for Digital Unix alpha client and ev5 related code.  This also
+// includes inital code for autodetection of CPU type and SMP.
+//
 // Revision 1.11  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -42,7 +46,7 @@
 
 #ifndef _CLITIME_H_
 #define _CLITIME_H_
-#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_BEOS))
+#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_DEC_UNIX))
 #include <sys/time.h> // To make it compile, deine from this file needed..
 #endif
 

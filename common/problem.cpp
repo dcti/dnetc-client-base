@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.66  1999/01/14 23:02:12  pct
+// Updates for Digital Unix alpha client and ev5 related code.  This also
+// includes inital code for autodetection of CPU type and SMP.
+//
 // Revision 1.65  1999/01/11 20:59:34  patrick
 // updated to not raise an error if RC5ANSICORE is defined
 //
@@ -184,7 +188,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.65 1999/01/11 20:59:34 patrick Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.66 1999/01/14 23:02:12 pct Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -294,7 +298,6 @@ extern void CliSignalHandler(int);
   #else
      extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
      extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
-     #error Please verify these core prototypes
   #endif
 #else
   extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );

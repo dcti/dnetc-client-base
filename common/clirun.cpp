@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.70  1999/01/14 23:02:11  pct
+// Updates for Digital Unix alpha client and ev5 related code.  This also
+// includes inital code for autodetection of CPU type and SMP.
+//
 // Revision 1.69  1999/01/13 15:17:02  kbracey
 // Fixes to RISC OS processor detection and scheduling
 //
@@ -266,7 +270,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.69 1999/01/13 15:17:02 kbracey Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.70 1999/01/14 23:02:11 pct Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -483,7 +487,12 @@ static void yield_pump( void *tv_p )
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_ULTRIX)
     NonPolledUSleep( 0 ); /* yield */
->>>>>>> 1.67
+  #elif (CLIENT_OS == OS_DEC_UNIX)
+   #if defined(MULTITHREAD)
+     sched_yield();
+   #else
+     NonPolledUSleep(0);
+   #endif
   #else
     #error where is your yield function?
     NonPolledUSleep( 0 ); /* yield */

@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.60  1999/01/14 23:02:12  pct
+// Updates for Digital Unix alpha client and ev5 related code.  This also
+// includes inital code for autodetection of CPU type and SMP.
+//
 // Revision 1.59  1999/01/13 15:17:02  kbracey
 // Fixes to RISC OS processor detection and scheduling
 //
@@ -205,7 +209,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.59 1999/01/13 15:17:02 kbracey Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.60 1999/01/14 23:02:12 pct Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -219,6 +223,10 @@ return "@(#)$Id: cpucheck.cpp,v 1.59 1999/01/13 15:17:02 kbracey Exp $"; }
 #include <unistd.h>    // P.Hildenbrand - sysconf()
 #elif (CLIENT_OS == OS_IRIX)
 #include <sys/prctl.h>
+#elif ( (CLIENT_OS == OS_DEC_UNIX) && defined(OS_SUPPORTS_SMP) )
+// We really only want to do this for multithreaded clients.
+// Earlier versions of the Digital Unix don't support this.
+#include <unistd.h>
 #endif
 
 // --------------------------------------------------------------------------
@@ -330,6 +338,10 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       if (haveMP)
         cpucount = MPProcessors();
       }
+    #elif ( (CLIENT_OS == OS_DEC_UNIX) &&  defined(OS_SUPPORTS_SMP))
+      {
+	cpucount = sysconf(_SC_NPROCESSORS_ONLN);
+      }
     #endif
     if (cpucount < 1)  //not supported
       cpucount = -1;
@@ -394,7 +406,8 @@ unsigned int ValidateProcessorCount( int numcpu, int quietly )
 #if (CLIENT_CPU != CPU_X86) && \
     (CLIENT_CPU != CPU_68K) && \
     (CLIENT_CPU != CPU_POWERPC) && \
-    (CLIENT_CPU != CPU_ARM)
+    (CLIENT_CPU != CPU_ARM) && \
+    (CLIENT_CPU != CPU_ALPHA) && (CLIENT_OS != CPU_DIGITAL_UNIX)
 int GetProcessorType(int quietly)
 {
   if (!quietly)
@@ -882,6 +895,26 @@ int GetProcessorType(int quietly)
 }
 
 #endif /* CLIENT_CPU == CPU_ARM */
+
+#if ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_DEC_UNIX))
+
+#include <sys/sysinfo.h>
+#include <machine/hal_sysinfo.h>
+#include <machine/cpuconf.h>
+
+int GetProcessorType(int quietly)
+{
+  int     status=0;
+  long    buf;
+  int     st=0;
+
+  status = getsysinfo(GSI_PROC_TYPE, (char *) &buf, sizeof(buf), st, NULL,NULL);
+  if (status == -1)
+	return -1;
+  return (buf & 0xffff);
+}
+#endif /* ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_DEC_UNIX)) */
+
 
 // --------------------------------------------------------------------------
 
