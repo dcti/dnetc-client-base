@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: client.h,v $
+// Revision 1.45  1998/06/22 19:42:01  daa
+// bump to 2.7025.410 this is likely to become 2.7100.411
+//
 // Revision 1.44  1998/06/22 01:04:56  cyruspatel
 // DOS changes. Fixes various compile-time errors: removed extraneous ')' in
 // sleepdef.h, resolved htonl()/ntohl() conflict with same def in client.h
@@ -46,8 +49,8 @@
 // --------------------------------------------------------------------------
 
 #define CLIENT_CONTEST      70
-#define CLIENT_BUILD        24
-#define CLIENT_BUILD_FRAC   409
+#define CLIENT_BUILD        25
+#define CLIENT_BUILD_FRAC   410
 
 // all revision comments moved to the changeLog.txt
 
