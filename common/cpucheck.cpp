@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.31 2000/01/11 19:43:48 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.32 2000/01/14 20:05:34 friedbait Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -113,7 +113,9 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
         while(fgets(buffer, sizeof(buffer), cpuinfo))
         {
           buffer[sizeof(buffer) - 1] = '\0';
-          #if (CLIENT_CPU == CPU_X86 || CLIENT_CPU == CPU_POWERPC)
+          #if (CLIENT_CPU == CPU_X86      || \
+               CLIENT_CPU == CPU_POWERPC  || \
+               CLIENT_CPU == CPU_S390)
           if (strstr(buffer, "processor") == buffer)
             cpucount++;
           #elif (CLIENT_CPU == CPU_SPARC)
