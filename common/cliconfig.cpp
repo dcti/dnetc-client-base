@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.185  1998/10/09 22:23:07  remi
+// - Fixed nettimeout .ini setting not honored.
+// - Some indentation.
+//
 // Revision 1.184  1998/10/04 11:43:24  remi
 // Print an error message if the luser do "./rc5des -config | somepager".
 // Wrapped Log comments.
@@ -235,7 +239,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.184 1998/10/04 11:43:24 remi Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.185 1998/10/09 22:23:07 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -456,7 +460,7 @@ static optionstruct options[OPTION_COUNT]=
 { "cktime", CFGTXT("Interval between saving of checkpoints (minutes):"),"5",
   CFGTXT(""),5,2,11,NULL},
 //35
-{ "nettimeout", CFGTXT("Network Timeout (seconds)"), "60",CFGTXT(" "),3,2,8,NULL},
+{ "nettimeout", CFGTXT("Network Timeout (seconds)"), "60",CFGTXT(""),3,2,8,NULL},
 //36
 { "exitfilechecktime", CFGTXT("Exit file check time (seconds)"),"30",CFGTXT(""),5,2,12,NULL},
 //37
@@ -986,7 +990,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
         case CONF_PREFERREDBLOCKSIZE:
           choice = atoi(parm);
           if (choice > 0 && choice <=1000) 
-      preferred_blocksize = choice;
+	    preferred_blocksize = choice;
           break;
         case CONF_PROCESSDES:
           choice = yesno(parm);
@@ -1035,7 +1039,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
         case CONF_OFFLINEMODE:
           choice=atoi(parm);
           if (choice >= 0 && choice <=2) 
-      *(s32 *)options[CONF_OFFLINEMODE].thevariable=choice;
+	    *(s32 *)options[CONF_OFFLINEMODE].thevariable=choice;
           break;
         case CONF_RC5IN:
           #ifdef DONT_USE_PATHWORK
@@ -1090,8 +1094,8 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           if (choice>=0 && choice<=2)
             {
             dialup.lurkmode=choice;
-      if (choice!=1)
-        connectoften=0;
+	    if (choice!=1)
+		connectoften=0;
             }
           break;
         case CONF_DIALWHENNEEDED:
@@ -1457,7 +1461,7 @@ s32 Client::ReadConfig(void)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   tempconfig=ini.getkey(OPTION_SECTION, "cktime", "0")[0];
   if (tempconfig) checkpoint_min=max(2,tempconfig);
   tempconfig=ini.getkey(OPTION_SECTION, "nettimeout", "60")[0];
-  if (tempconfig) nettimeout=min(300,max(5,nettimeout));
+  if (tempconfig) nettimeout=min(300,max(5,tempconfig));
   tempconfig=ini.getkey(OPTION_SECTION, "noexitfilecheck", "0")[0];
   if (tempconfig) noexitfilecheck=1;
   tempconfig=ini.getkey(OPTION_SECTION, "exitfilechecktime", "30")[0];
