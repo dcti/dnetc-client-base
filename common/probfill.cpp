@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.33 2000/04/11 14:48:19 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.34 2000/04/14 18:08:39 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -70,33 +70,7 @@ static int __check_outbufthresh_limit( Client *client, unsigned int cont_i,
   if ((*bufupd_pending & BUFFERUPDATE_FLUSH) == 0)
   {
     unsigned int thresh = ClientGetOutThreshold( client, cont_i, 0 );
-    /*
-       *** Documentation on how rotation/failover works is in 
-       *** ClientGetOutThreshold()
-       + if the outthreshold is <=0, then outthreshold is not checked
-         because <=0 is not a valid outthreshold. 
-         Result: Only inthreshold is effective and outthresh 
-         doesn't need to be checked.
-       + if the outthreshold (according to the .ini) was > inthresh
-         then inthreshold rules are effective because outthresh can never
-         be greater than inthresh (inthresh will have been checked first).
-         (The exception is when using shared buffers, and another client 
-         fetches but does not flush).
-         Result: Only inthreshold is effective and outthresh 
-         doesn't need to be checked.
-       + if the outthreshold (according to the .ini) was equal to inthresh
-         there there is usually no point checking outthresh because 
-         the result of both checks would be the same. (The exception is 
-         when using shared buffers, and another client fetches but does
-         not flush).
-         Result: inthreshold is effective and outthresh 
-         doesn't need to be checked.
-       = if any of the above applies, ClientGetOutThreshold()
-         will return outthresh=0 for simplicity. see client.cpp  
-       * Inthreshold is handled in __IndividualProblemLoad()
-       *** Documentation on how rotation/failover works is in 
-       *** ClientGetOutThreshold()
-    */
+    /* ClientGetOutThreshold() returns 0 if thresh doesn't need checking */
     if (thresh > 0) /* threshold _does_ need to be checked. */
     {               
       if (packet_count < 0) /* not determined or error */
