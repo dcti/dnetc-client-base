@@ -66,12 +66,12 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/checkpt.obj
 
 PREBUILT_OBJS =                   \
-	$(OUTPUTPATH)/rg-486.obj   \
-	$(OUTPUTPATH)/rg-6x86.obj  \
-	$(OUTPUTPATH)/rg-k5.obj    \
-	$(OUTPUTPATH)/rg-k6.obj    \
-	$(OUTPUTPATH)/rc5p5brf.obj \
-	$(OUTPUTPATH)/rg-p6.obj    \
+	$(OUTPUTPATH)/rg486.obj   \
+	$(OUTPUTPATH)/rg6x86.obj  \
+	$(OUTPUTPATH)/rc5-rgk5.obj    \
+	$(OUTPUTPATH)/rc5-rgk6.obj    \
+	$(OUTPUTPATH)/brfp5.obj \
+	$(OUTPUTPATH)/rc5-rgp6.obj    \
 	$(OUTPUTPATH)/bdeslow.obj  \
 	$(OUTPUTPATH)/bbdeslow.obj \
 	$(OUTPUTPATH)/p1bdespro.obj  \
@@ -79,7 +79,10 @@ PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/x86ident.obj  \
 	$(OUTPUTPATH)/sboxes-mmx.obj \
 	$(OUTPUTPATH)/rc5mmx.obj \
-	$(OUTPUTPATH)/deseval-meggs3-mmx.gcc
+	$(OUTPUTPATH)/deseval-meggs3-mmx.gcc \
+        $(OUTPUTPATH)/deseval.obj \
+        $(OUTPUTPATH)/des-slice.obj \
+        $(OUTPUTPATH)/sboxes-kwan4.obj
 
 RC5_LIBS = wsock32.lib advapi32.lib user32.lib gdi32.lib
 
