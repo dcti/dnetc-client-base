@@ -10,6 +10,9 @@
    microseconds in tv_usec;
 */
 // $Log: clitime.cpp,v $
+// Revision 1.20  1998/10/29 23:16:16  sampo
+// MacOS doesn't use tzset()
+//
 // Revision 1.19  1998/08/10 20:04:55  cyruspatel
 // NetWare specific change: moved gettime code to a function in netware.cpp
 //
@@ -45,7 +48,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.19 1998/08/10 20:04:55 cyruspatel Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.20 1998/10/29 23:16:16 sampo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -268,7 +271,7 @@ const char *CliGetTimeString( struct timeval *tv, int strtype )
   }
   else if (strtype == 1 || strtype == -1) //new fmt = 1, old fmt = -1
   {
-#if (CLIENT_OS != OS_RISCOS)
+#if ((CLIENT_OS != OS_RISCOS) && (CLIENT_OS != OS_MACOS))
     tzset();
 #endif
     time_t timenow = ((tv)?(tv->tv_sec):(time(NULL)));
