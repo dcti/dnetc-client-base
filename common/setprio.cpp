@@ -9,7 +9,7 @@
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.50.2.12 2000/06/18 15:08:15 cyp Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.50.2.13 2000/06/21 22:30:43 oliver Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -199,12 +199,17 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
     }
     else
     {
-      #if (defined __PPC__) && !(defined __POWERUP__)
-      struct TaskPPC *task = FindTaskPPC(NULL);
-      int newnice = ((22*(9-prio))+5)/10;  /* scale from 0-9 to 20-0 */
-      SetNiceValue(task, newnice );
+      #ifdef __PPC__
+        #ifdef __POWERUP__
+        int pri = -(((133*(9-prio))+5)/10); /* scale from 0-9 to -120 to zero */
+        PPCSetTaskAttr(PPCTASKINFOTAG_PRIORITY,pri);
+        #else
+        struct TaskPPC *task = FindTaskPPC(NULL);
+        int newnice = ((22*(9-prio))+5)/10;  /* scale from 0-9 to 20-0 */
+        SetNiceValue(task, newnice );
+        #endif
       #else
-      int pri = -(((9-prio) * 10)/5); /* scale from 0-9 to -20 to zero */
+      int pri = -(((133*(9-prio))+5)/10); /* scale from 0-9 to -120 to zero */
       SetTaskPri(FindTask(NULL), pri );
       #endif
     }
