@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.80 2002/10/13 08:06:54 jlawson Exp $
+# $Id: makefile.vc,v 1.81 2002/10/20 08:13:36 jlawson Exp $
 #
 
 BASENAME = dnetc
@@ -214,8 +214,10 @@ RC5_72_OBJS =
 RC5_72_OBJS =                        \
         $(OUTPUTPATH)/rc5ansi1.obj   \
         $(OUTPUTPATH)/rc5ansi2.obj   \
-        $(OUTPUTPATH)/rc5ansi4.obj
-OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
+        $(OUTPUTPATH)/rc5ansi4.obj   \
+        $(OUTPUTPATH)/rc5-ses-2.obj  \
+        $(OUTPUTPATH)/rc5-ses.obj
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DHAVE_RC5_72_ASM_CORES
 !endif
 
 # --------------------------------- DES ----------------------------
@@ -319,20 +321,17 @@ $(VC_CHECK):
 {$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
 
+{$(RC572SRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
+        nasmw -o $(@:/=\) -f win32 -i $(RC572SRCPATH:/=\)\x86\ $(**:/=\)
+
 {$(RC564SRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(RC564SRCPATH:/=\)\x86\ $(**:/=\)
 
-{$(DESSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
-        tasm32 /t /m /ml /i$(DESSRCPATH:/=\)\x86 $(**:/=\), $(@:/=\)
+#{$(DESSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
+#        tasm32 /t /m /ml /i$(DESSRCPATH:/=\)\x86 $(**:/=\), $(@:/=\)
 
 {$(DESSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(DESSRCPATH:/=\)\x86\ $(**:/=\)
-
-{$(DESSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
-        nasmw -o $(@:/=\) -f win32 -i $(DESSRCPATH:/=\)\x86\ $(**:/=\)
-
-{$(CSCSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
-        nasmw -o $(@:/=\) -f win32 -i $(CSCSRCPATH:/=\)\x86\ $(**:/=\)
 
 {$(CSCSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(CSCSRCPATH:/=\)\x86\ $(**:/=\)
