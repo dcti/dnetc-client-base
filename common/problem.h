@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.23 2000/02/08 21:58:19 remi Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.24 2000/02/22 10:19:58 sampo Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -82,6 +82,9 @@ typedef union
     u32 (*rc5)( RC5UnitWork * , u32 iterations );
     #if defined(HAVE_DES_CORES)
     u32 (*des)( RC5UnitWork * , u32 *iterations, char *membuf );
+    #endif  
+    #if defined(HAVE_OGR_CORES)
+    CoreDispatchTable *ogr;
     #endif  
 } unit_func_union;
 
