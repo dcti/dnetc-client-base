@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.3  1998/09/28 22:19:17  remi
+// Cleared 2 warnings, and noticed that yield_pump() seems to be Netware-only.
+// BTW, I've not found pthread_yield() in libpthread 0.7 & glibc2 (RH 5.1 Sparc
+// and Debian 2.0 x86), nor in libpthread 0.6 & libc5.
+//
 // Revision 1.2  1998/09/28 13:29:28  cyp
 // Removed checkifbetaexpired() declaration conflict.
 //
@@ -13,7 +18,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.2 1998/09/28 13:29:28 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.3 1998/09/28 22:19:17 remi Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -194,7 +199,7 @@ static struct
 } runcounters = {0,0};  
 
 // ----------------------------------------------------------------------
-
+#if (CLIENT_OS == OS_NETWARE)
 static void yield_pump( void *tv_p )
 {
   static int pumps_without_run = 0;
@@ -241,7 +246,7 @@ static void yield_pump( void *tv_p )
     NonPolledUSleep( 0 ); /* yield */
   #endif
 }
-
+#endif // CLIENT_OS == OS_NETWARE
 // ----------------------------------------------------------------------
 
 #ifdef NON_PREEMPTIVE_OS_PROFILING
@@ -615,7 +620,7 @@ void Go_mt( void * parm )
           #endif
           } 
         else
-          run = -1;
+          run = (u32)(-1);
         }
       }
     NonPolledSleep( 1 ); 
@@ -761,7 +766,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         thrparams->timeslice = (1<<12);
       thrparams->threadID = RegPolledProcedure(Go_nonmt, 
                               (void *)thrparams , NULL, 0 );
-      success = (thrparams[thread_i].threadID != -1);
+      success = (thrparams[thread_i].threadID != (THREADID)(-1));
       }
         
     if (!success)
