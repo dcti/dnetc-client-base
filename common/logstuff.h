@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __LOGSTUFF_H__
-#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.11.2.1 2000/02/06 05:24:00 cyp Exp $"
+#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.11.2.2 2000/09/24 23:31:08 andreasb Exp $"
 
 #define LOGFILETYPE_NONE    0 //
 #define LOGFILETYPE_NOLIMIT 1 //unlimited (or limit == -1)
@@ -13,11 +13,14 @@
 #define LOGFILETYPE_FIFO    3 //then logLimit is in KByte (minimum 100K)
 #define LOGFILETYPE_ROTATE  4 //then logLimit is in days
 
-#define LOGTO_NONE       0x00 
+#define LOGTO_NONE       0x00
 #define LOGTO_SCREEN     0x01
 #define LOGTO_FILE       0x02
 #define LOGTO_MAIL       0x04
-#define LOGTO_RAWMODE    0x80    
+
+#define LOGTO_PERCENTBAR 0x40  // use together with _SCREEN and _RAWMODE
+#define LOGTO_RAWMODE    0x80
+#define LOGTO_ALLMODES   (LOGTO_RAWMODE | LOGTO_PERCENTBAR)
 
 #define MAX_LOGENTRY_LEN 1024 //don't make this smaller than 1K!
 
