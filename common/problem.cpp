@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.81  1999/02/19 03:29:04  silby
+// Updated hppa support, keyincrement for des does not
+// care about endianness now.
+//
 // Revision 1.80  1999/02/17 19:09:13  remi
 // Fix for non-x86 targets : an RC5 key should always be 'mangle-incremented',
 // whatever endianess we have. But htonl()/ntohl() does work for DES, so I
@@ -239,7 +243,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.80 1999/02/17 19:09:13 remi Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.81 1999/02/19 03:29:04 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -315,7 +319,6 @@ extern void CliSignalHandler(int);
 #elif (CLIENT_CPU == CPU_PA_RISC)
   extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
   extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
-  #error Please verify these core prototypes
 #elif (CLIENT_CPU == CPU_SPARC)
   #if (ULTRA_CRUNCH == 1)
   extern "C++" u32 crunch( register RC5UnitWork * rc5unitwork, u32 timeslice);
@@ -1035,6 +1038,15 @@ else if (contest == 1) // DES
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits);
     kiter = des_unit_func ( &rc5unitwork, nbits );
+  #elif (CLIENT_CPU == CPU_PA_RISC)
+    // protect the innocent
+    timeslice *= pipeline_count;
+    u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
+
+   if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
+   else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
+   timeslice = (1ul << nbits) / pipeline_count;
+   kiter = des_unit_func ( &rc5unitwork, nbits );
   #elif (CLIENT_CPU == CPU_68K)
     timeslice *= pipeline_count;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
@@ -1079,7 +1091,6 @@ else if (contest == 1) // DES
   IncrementKey(refL0, timeslice*pipeline_count, contest);
     // Increment reference key count
 
-#if (CLIENT_CPU != CPU_X86) // x86 increments in little-endian
   if (((refL0.hi != rc5unitwork.L0.hi) ||  // Compare ref to core
       (refL0.lo != rc5unitwork.L0.lo)) &&  // key incrementation
       (kiter >= timeslice*pipeline_count))
@@ -1089,7 +1100,6 @@ else if (contest == 1) // DES
         ntohl(rc5unitwork.L0.hi), ntohl(refL0.lo), ntohl(refL0.hi));
     return -1;
     };
-#endif
 
   contestwork.keysdone.lo+=kiter;
   if (contestwork.keysdone.lo < kiter)
@@ -1339,14 +1349,14 @@ void IncrementKey(u64 &key, u32 iters, int contest)
   if (contest == 1) // DES
     {
     u64 tempkey;
-    tempkey.hi=ntohl(key.lo); // Switch to host order
-    tempkey.lo=ntohl(key.hi);
+    tempkey.hi=key.hi;
+    tempkey.lo=key.lo;
 
     tempkey.lo+=iters; // Add dword
     if (tempkey.lo < iters) tempkey.hi++; // Account for carry
   
-    key.hi=htonl(tempkey.lo); // Return to network order
-    key.lo=htonl(tempkey.hi);
+    key.hi=tempkey.hi; 
+    key.lo=tempkey.lo;
     }
   else
     {
