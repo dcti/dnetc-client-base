@@ -21,11 +21,15 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.59 2000/07/15 18:40:27 oliver Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.60 2000/08/22 14:03:42 oliver Exp $
 ==========================================================================
 
 2.8000
 ------
+
+2.8011.464  new: AmigaOS: added full lurk functionality
+            new: AmigaOS: -shutdown, -restart and -(un)pause support added
+            new: AmigaOS: "Pause if running" support now enabled
 
 2.8010.463  fix: linux/x86: resoloved various dns lookup, lib and
                  portability issues by building against static libc5
