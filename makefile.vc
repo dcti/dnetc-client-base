@@ -13,7 +13,7 @@ W32CLIPATH = platforms/win32cli
 OPTS_MSVC = -nologo -W3 -O1 -MT -I$(RC5PATH) -I$(DESPATH) \
   -I$(COMMONPATH) -I$(W32CLIPATH) -D_CPU_32BIT_ \
   -DMULTITHREAD -D__WIN32__ -DNDEBUG -GR- -GX- -GA -GF \
-  -DMMX_BITSLICER -DBIT_64 -DMEGGS -DKWAN
+  -DMMX_BITSLICER -DBIT_64 -DMEGGS -DKWAN -DMMX_RC5
 
 all: rc5des
 
@@ -57,7 +57,7 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/bench.obj      \
 	$(OUTPUTPATH)/w32cons.obj    \
 	$(OUTPUTPATH)/w32svc.obj     \
-        $(OUTPUTPATH)/w32pre.obj     \
+	$(OUTPUTPATH)/w32pre.obj     \
 	$(OUTPUTPATH)/console.obj    \
 	$(OUTPUTPATH)/setprio.obj    \
 	$(OUTPUTPATH)/modereq.obj
