@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.35.2.1  1999/04/04 07:25:26  jlawson
+// network.h no longer needed.
+//
 // Revision 1.35  1999/04/01 03:20:39  cyp
 // Updated to reflect changed [in|out]_buffer_[file->basename] semantics.
 //
@@ -139,7 +142,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.35 1999/04/01 03:20:39 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.35.2.1 1999/04/04 07:25:26 jlawson Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -153,7 +156,6 @@ return "@(#)$Id: confmenu.cpp,v 1.35 1999/04/01 03:20:39 cyp Exp $"; }
 #include "base64.h"   // base64_[en|de]code()
 #include "lurk.h"     // lurk stuff
 #include "triggers.h" // CheckExitRequestTriggerNoIO()
-#include "network.h"  // base64_encode()
 #include "confopt.h"  // the option table
 
 // --------------------------------------------------------------------------
