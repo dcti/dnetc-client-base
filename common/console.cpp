@@ -11,6 +11,9 @@
    to functions in modules in your own platform area.   - cyp
 */
 // $Log: console.cpp,v $
+// Revision 1.30  1999/01/12 15:01:41  cyp
+// Created an itty-bitty ConBeep(). (used by Client::Configure())
+//
 // Revision 1.29  1999/01/09 05:46:08  cyp
 // x86dos clear screen fix.
 //
@@ -111,7 +114,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.29 1999/01/09 05:46:08 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.30 1999/01/12 15:01:41 cyp Exp $"; }
 #endif
 
 #define CONCLOSE_DELAY 15 /* secs to wait for keypress when not auto-close */
@@ -250,6 +253,21 @@ int ConIsScreen(void)
 /* ---------------------------------------------------- */
 
 /* 
+** ConBeep() does uh..., well..., like... causes the console speaker to beep
+*/ 
+int ConBeep(void)
+{
+  if (constatics.initlevel > 0 && constatics.conisatty) /*can't beep to file*/
+    {
+    ConOut("\a");
+    return 0;
+    }
+  return -1;
+}
+
+/* ---------------------------------------------------- */
+
+/* 
 ** ConOut() does what printf("%s",str) would do 
 */ 
 int ConOut(const char *msg)
@@ -258,7 +276,7 @@ int ConOut(const char *msg)
     {
     #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
       w32ConOut(msg);
-  	#elif (CLIENT_OS == OS_MACOS)
+    #elif (CLIENT_OS == OS_MACOS)
       macConOut(msg);
     #else
       fwrite( msg, sizeof(char), strlen(msg), stdout);
@@ -382,7 +400,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         if (ch == EOF) ch = 0;
         }
       #elif (CLIENT_OS == OS_MACOS)
-	    // Mac code never does console input
+      // Mac code never does console input
       #else
         {
         setvbuf(stdin, (char *)NULL, _IONBF, 0);
@@ -516,21 +534,7 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
 
      if (!exitreq)
        {
-       if (ch == 0x08 || ch == '\177') /* backspace */
-         {
-         if (pos > 0)  
-           {
-           #ifdef TERM_IS_ANSI_COMPLIANT
-           ConOut("\x1B" "[1D" " " "\x1B" "[1D");
-           #elif (CLIENT_OS == OS_RISCOS)
-           riscos_backspace();
-           #else
-           ConOut("\b \b");
-           #endif
-           pos--;
-           }
-         }
-       else if (ch == '\n' || ch == '\r') 
+       if (ch == '\n' || ch == '\r') 
          {
          ConOut("\n");
          exitreq = 1;
@@ -556,6 +560,24 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
            {
            redraw = (!boolistf || boolval);
            boolistf = 1; boolval = 0;
+           }
+         else
+           {
+           ConBeep();
+           }
+         }
+       else if (ch == 0x08 || ch == '\177') /* backspace */
+         {
+         if (pos > 0)  
+           {
+           #ifdef TERM_IS_ANSI_COMPLIANT
+           ConOut("\x1B" "[1D" " " "\x1B" "[1D");
+           #elif (CLIENT_OS == OS_RISCOS)
+           riscos_backspace();
+           #else
+           ConOut("\b \b");
+           #endif
+           pos--;
            }
          }
        else if (pos < (buflen-1)) 
@@ -596,6 +618,8 @@ int ConGetPos( int *col, int *row )  /* zero-based */
     return 0;
     #elif (CLIENT_OS == OS_DOS)
     return dosCliConGetPos( col, row );
+    #elif (CLIENT_OS == OS_OS2)
+    return ((VioGetCurPos( row, col, 0 /*handle*/) != 0)?(-1):(0));
     #else
     return ((row == NULL && col == NULL)?(0):(-1));
     #endif
@@ -617,9 +641,10 @@ int ConSetPos( int col, int row )  /* zero-based */
     return 0;
     #elif (CLIENT_OS == OS_DOS)
     return dosCliConSetPos( col, row );
+    #elif (CLIENT_OS == OS_OS2)
+    return ((VioSetCurPos(row, col, 0 /*handle*/) != 0)?(-1):(0));
     #else 
-    if (col < 0 || row < 0)
-      return -1;
+    return -1;
     #endif
     }
   return -1;

@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: console.h,v $
+// Revision 1.26  1999/01/12 15:01:41  cyp
+// Created an itty-bitty ConBeep(). (used by Client::Configure())
+//
 // Revision 1.25  1999/01/07 02:15:57  cyp
 // ConInStr() now has a special 'boolean' mode. woohoo!
 //
@@ -67,6 +70,10 @@ int ConInStr(char *buffer, unsigned int len, int flags );
 // ConClear() clears the screen. 
 // returns -1 if console is not a tty;
 int ConClear(void);
+
+//ConBeep() does uh..., well..., like... causes the console speaker to beep
+// returns -1 if console is not a tty;
+int ConBeep(void);
 
 // ConGetPos gets the cursor position (zero-based)
 // returns -1 if console is not a tty;
