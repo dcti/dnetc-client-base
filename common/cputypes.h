@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.12 2003/08/09 12:51:53 mweiser Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.13 2003/09/07 05:59:05 snikkel Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -25,14 +25,14 @@
 #define CPU_PA_RISC     5
 #define CPU_68K         6
 #define CPU_SPARC       7
-#define CPU_SH4         8  /* was JAVA_VM, never used */
+#define CPU_SH4         8  /* was JAVA_VM (never used) */
 #define CPU_POWER       9
 #define CPU_VAX         10
 #define CPU_ARM         11
 #define CPU_88K         12 /* DG/UX is no longer supported */
 #define CPU_IA64        13 /* was KSR1 */
 #define CPU_S390        14
-#define CPU_S390X       15 /* was MASPAR, never used */
+#define CPU_S390X       15 /* was MASPAR (never used) */
 #define CPU_DESCRACKER  16 /* eff descracker */
 #define CPU_X86_64      17
 
@@ -55,34 +55,34 @@
 #define OS_NETBSD       13
 #define OS_SUNOS        14
 #define OS_SOLARIS      15
-/* #define OS_UNUSED_1  16 */ /* never used. was OS9 */
-/* #define OS_UNUSED_2  17 */ /* never used. was JAVA-VM */
+/* #define OS_UNUSED_1  16 */ /* was OS9 (never used) */
+/* #define OS_UNUSED_2  17 */ /* was JAVA-VM (never used) */
 #define OS_BSDOS        18
 #define OS_NEXTSTEP     19
 #define OS_SCO          20
 #define OS_QNX          21 /* includes QNX Neutrino */
-/* #define OS_UNUSED_3  22 */ /* was OSF1, was NTO2 (QNX) */
-/* #define OS_UNUSED_4  23 */ /* never used. was MINIX */
-/* #define OS_UNUSED_5  24 */ /* never used. was MACH10 */
+/* #define OS_UNUSED_3  22 */ /* was OSF1 (never used), was NTO2 (QNX) */
+/* #define OS_UNUSED_4  23 */ /* was MINIX (never used) */
+/* #define OS_UNUSED_5  24 */ /* was MACH10 (never used) */
 #define OS_AIX          25
-/* #define OS_UNUSED_6  26 */ /* never used. was AUX */
+/* #define OS_UNUSED_6  26 */ /* was AUX (never used) */
 #define OS_MACOSX       27 /* was RHAPSODY. (MACOSX was 43) */
 #define OS_AMIGAOS      28
 #define OS_OPENBSD      29
 #define OS_NETWARE      30
 #define OS_MVS          31
 #define OS_ULTRIX       32
-/* #define OS_UNUSED_8  33 */ /* never used. was OS400, was NEWTON */
+/* #define OS_UNUSED_8  33 */ /* was NEWTON (never used), was OS400 (never used) */
 #define OS_RISCOS       34
 #define OS_DGUX         35
-/* #define OS_WIN32S    36 */ /* obsolete (32-bit Win32s) w16 client is 32bit */
+/* #define OS_WIN32S    36 */ /* obsolete (32-bit Win32s) w16 client is 32bit, was WIN16 */
 #define OS_SINIX        37
 #define OS_DYNIX        38
 #define OS_OS390        39
-/* #define OS_UNUSED_9  40 */ /* never used. was MASPAR */
-#define OS_WIN16        41 /* windows 3.1, 3.11, wfw (was 16bit, now 32bit) */
+/* #define OS_UNUSED_9  40 */ /* was MASPAR (never used) */
+#define OS_WIN16        41 /* windows 3.1, 3.11, wfw (was 16bit, now 32bit), was WIN32S */
 #define OS_DESCRACKER   42 /* eff des cracker */
-/* #define OS_MACOSX    43 */ /* obsolete, is now 27. */
+/* #define OS_MACOSX    43 */ /* obsolete, is now 27, was PS2LINUX */
 #define OS_PS2LINUX     44
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 
