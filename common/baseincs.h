@@ -10,6 +10,10 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.48  1999/01/19 12:51:01  patrick
+//
+// added strings.h for AIX
+//
 // Revision 1.47  1999/01/18 15:22:55  patrick
 //
 // added/changed some OS2 includes to work also for gcc.
@@ -315,6 +319,7 @@ extern "C" {
   extern "C" int gethostname(char *, int);
 #elif (CLIENT_OS == OS_AIX)
   #include <unistd.h>		// nice()
+  #include <strings.h>		// bzero(), strcase..., 
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS==OS_BSDI) || (CLIENT_OS == OS_OPENBSD)
   #include <sys/time.h>
   #include <unistd.h>
