@@ -2,10 +2,63 @@
 ; by Bruce Ford, based in part on Remi's smc core.
 ; Slight improvement over RG smc core. 104 kkeys/s on a 486/DX4-100
 ;
-; $Id: brf-smc.asm,v 1.1.2.1 2001/01/21 17:44:40 cyp Exp $
+; $Id: brf-smc.asm,v 1.1.2.2 2001/04/14 13:41:39 cyp Exp $
 
-[GLOBAL _rc5_unit_func_486_smc]
-[GLOBAL rc5_unit_func_486_smc]
+%macro calign 1  ; code align macro (arg = 'align to')
+                 ; [nasm's integral 'align' statement blindly inserts 'nop']
+  %assign sz  0
+  %if %1 > 0
+    %%szx equ ($ - $$)
+    %assign sz (%%szx & (%1 - 1))
+    %if sz != 0
+      %assign sz %1 - sz
+    %endif
+  %endif
+  %assign edinext 0
+  %rep %1
+    %assign edinext 0
+    %if sz >= 7
+      db 0x8D,0xB4,0x26,0x00,0x00,0x00,0x00  ; lea       esi,[esi]
+      %assign sz sz-7
+      %assign edinext 1
+    %elif sz >= 6 && edinext != 0
+      db 0x8d,0xBf,0x00,0x00,0x00,0x00       ; lea       edi,[edi]
+      %assign edinext 0
+      %assign sz sz-6
+    %elif sz >= 6
+      db 0x8D,0xB6,0x00,0x00,0x00,0x00       ; lea       esi,[esi]
+      %assign edinext 1
+      %assign sz sz-6
+    %elif sz >= 4   
+      db 0x8D,0x74,0x26,0x00                 ; lea       esi,[esi]
+      %assign sz sz-4
+      %assign edinext 1
+    %elif sz >= 3 && edinext != 0
+      db 0x8d,0x7f,0x00                      ; lea       edi,[edi]
+      %assign sz sz-3
+      %assign edinext 0
+    %elif sz >= 3
+      db 0x8D,0x76,0x00                      ; lea       esi,[esi] 
+      %assign sz sz-3
+      %assign edinext 1
+    %elif sz >= 2 && edinext != 0
+      db 0x8d,0x3f                           ; lea       edi,[edi]
+      %assign sz sz-2
+      %assign edinext 0
+    %elif sz >= 2
+      ;db 0x8D,0x36                          ; gas 2.7: lea esi,[esi]     
+      mov esi,esi                            ; gas 2.9: mov esi,esi   
+      %assign sz sz-2
+      %assign edinext 1
+    %elif sz >= 1
+      nop
+      %assign sz sz-1
+    %else 
+      %exitrep
+    %endif
+  %endrep  
+%endmacro
+
 
 %define work_size       56
 
@@ -216,6 +269,62 @@ _modif486_r3_%{1}_%{3}:
 [SECTION .text]
 %endif
 
+%ifdef USE_DPMI
+[GLOBAL smc_dpmi_ds_alias_alloc]
+[GLOBAL _smc_dpmi_ds_alias_alloc]
+[GLOBAL smc_dpmi_ds_alias_free]
+[GLOBAL _smc_dpmi_ds_alias_free]
+extern rc5_unit_func_486  ; where to jump to if no DS alias
+
+align 4
+dpmi_ds_alias_ref_count dd 0
+dpmi_ds_alias           dw 0
+
+align 4
+_smc_dpmi_ds_alias_alloc:
+smc_dpmi_ds_alias_alloc:
+        xor     eax, eax
+        mov     ax, [cs:dpmi_ds_alias]
+        or      ax, ax
+        jnz     _dsala1 
+;       Alias the code selector to the data selector using DPMI
+        push    ebx
+        xor     ebx, ebx
+        mov     bx, cs
+        mov     eax, 0x0a
+        int     0x31
+        pop     ebx
+        jc      _dsala2
+_dsala1:push    ds
+        mov     ds,ax
+        mov     [dpmi_ds_alias],ax
+        inc     dword [dpmi_ds_alias_ref_count]
+        pop     ds
+_dsala2:mov     eax,[cs:dpmi_ds_alias_ref_count]
+        ret
+
+_smc_dpmi_ds_alias_free:
+smc_dpmi_ds_alias_free:
+        mov     ax, [cs:dpmi_ds_alias]
+        or      ax, ax
+        jz      _dsalf2 
+        push    ds
+        mov     ds, ax
+        mov     eax,[dpmi_ds_alias_ref_count]
+        dec     eax
+        mov     [dpmi_ds_alias_ref_count],eax
+        jnz     _dsalf1
+        xchg    ax, [dpmi_ds_alias] 
+        push    ebx
+        mov     ebx, eax
+        mov     eax, 1
+        int     0x31
+        pop     ebx 
+        xor     eax,eax
+_dsalf1:pop     ds 
+_dsalf2:ret
+%endif
+
 ; ------------------------------------------------------------------
 ; rc5_unit will get passed an RC5WorkUnit to complete
 ; this is where all the actually work occurs, this is where you optimize.
@@ -226,12 +335,26 @@ _modif486_r3_%{1}_%{3}:
 ;      else if (result < timeslice*PIPELINE_COUNT) SOMETHING_FOUND at result+1
 ;      else SOMETHING_GET_WRONG... )
 
+[GLOBAL _rc5_unit_func_486_smc]
+[GLOBAL rc5_unit_func_486_smc]
+
 align 4
 _rc5_unit_func_486_smc:
 rc5_unit_func_486_smc:
 ;u32 rc5_unit_func_486_smc( RC5UnitWork * rc5unitwork, u32 timeslice )
 
         sub esp, work_size                      ; set up stack
+
+%ifdef USE_DPMI
+        mov  ax,[cs:dpmi_ds_alias]
+        or   ax,ax
+        jnz  _have_dpmi_ds
+        add  esp, work_size
+        jmp  rc5_unit_func_486 
+_have_dpmi_ds:
+        mov  [save_ds], ds
+        mov  ds,ax
+%endif
 
         mov [save_ebp], ebp                     ; save registers
         mov [save_edi], edi
@@ -244,17 +367,6 @@ rc5_unit_func_486_smc:
 
         mov [work_iterations], ebp
 
-%ifdef USE_DPMI
-        mov [save_ds], ds
-;       Alias the code selector to the data selector using DPMI
-        mov     ebx, cs
-        mov     eax, 0x0a
-        int     0x31
-;       Should really check for an error return here (carry flag set)
-;       The best option would be to pop the stack and jump to the
-;       standard 486 core rc5_unit_func_486 with a leading underscore if necessary
-        mov     ds, eax
-%endif
 
         mov     ecx, [RC5UnitWork]              ; load pointer to rc5unitwork into ecx
 
@@ -288,7 +400,7 @@ rc5_unit_func_486_smc:
         ; blocks)
         ; It means also that %%ebx == %%esi (Llo1 == Llo2)
 
-align 4
+calign 4
 _bigger_loop_486:
         add     ebx, S0_ROTL3                   ; 1
         rol     ebx, FIRST_ROTL                 ; 3
@@ -303,7 +415,7 @@ _bigger_loop_486:
 
         lea     esi,[esi+1]                     ; 1         Alignment 
 
-align 4
+calign 4
 _loaded_486:
     ; ------------------------------
     ; Begin round 1 of key expansion
@@ -529,7 +641,7 @@ _next_iter_486:
         mov     [RC5UnitWork_L0hi], edx         ; (used by caller)
         jmp     _full_exit_486
 
-align 4
+calign 4
 _next_iter2_486:
         mov     [work_key_lo], ebx
         mov     [work_key_hi], edx
@@ -542,7 +654,7 @@ _next_iter2_486:
         mov     [RC5UnitWork_L0hi], edx         ; (used by caller)
         jmp     _full_exit_486
 
-align 4
+calign 4
 _next_inc_486:
         add     edx, 0x00010000
         test    edx, 0x00FF0000
@@ -582,7 +694,7 @@ _next_inc_486:
         jmp     _full_exit_486
 
         ; Test of second half of ciphertext for key 1
-        ; No alignment needed.  Just lucky.
+        calign 4 ; No alignment needed.  Just lucky.
 test_C_1_1:
         mov     ecx, ebp                        ; 1
         add     ecx, edx                        ; 1     L0 = ROTL(L0 + A + L1, A + L1);
@@ -625,19 +737,11 @@ _modif486_work_C_1_2:
 
         lea     esi, [esi+1]                    ; Alignment
 
-align 4
+calign 4
 _full_exit_486:
         mov     ebp, [timeslice]
         sub     ebp, [work_iterations]
         mov     edx, [work_add_iter]
-
-%ifdef USE_DPMI
-;       Free the aliased data selector through DPMI
-        mov     ebx, ds
-        mov     eax, 1
-        int     0x31
-        mov     ds,  [save_ds]
-%endif
 
         lea     eax, [edx+ebp*2]
 
@@ -648,6 +752,9 @@ _full_exit_486:
         mov     esi, [save_esi]
         mov     edi, [save_edi]
         mov     ebp, [save_ebp]
+%ifdef USE_DPMI
+        mov     ds,  [save_ds]
+%endif
 
         add     esp, work_size                  ; restore stack pointer
 
