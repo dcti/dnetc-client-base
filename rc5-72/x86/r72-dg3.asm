@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg3.asm,v 1.3.2.7 2003/02/06 20:59:42 andreasb Exp $
+; $Id: r72-dg3.asm,v 1.3.2.8 2003/03/19 02:42:29 acidblood Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -223,52 +223,69 @@ _rc5_72_unit_func_dg_3:
         mov     [save_esi], esi
 
         mov     [save_edi], edi
-        mov     esi, [RC5_72UnitWork_plainlo]
+        mov     edx, [RC5_72UnitWork_plainlo]
         mov     edi, [RC5_72UnitWork_plainhi]
 
         mov     ebx, [RC5_72UnitWork_cipherlo]
         mov     ecx, [RC5_72UnitWork_cipherhi]
-        mov     edx, [iterations]
+        mov     esi, [iterations]
 
-        mov     [work_P_0], esi
+        mov     [work_P_0], edx
         mov     [work_P_1], edi
-        mov     esi, [RC5_72UnitWork_L0hi]
+        mov     edx, [RC5_72UnitWork_L0hi]
 
         mov     [work_C_0], ebx
         mov     [work_C_1], ecx
-        mov     edi, [edx]
+        mov     edi, [esi]
 
         imul    edi, 2863311531
         mov     ecx, [RC5_72UnitWork_L0mid]
         mov     ebx, [RC5_72UnitWork_L0lo]
 
         mov     [work_iterations], edi
-        mov     L1(2), esi
-        mov     L1backup(2), esi
-
-        inc     esi
-
-        mov     L2(2), esi
-        mov     L2backup(2), esi
-
-        inc     esi
-
-        mov     L3(2), esi
-        mov     L3backup(2), esi
-
+        mov     L1(2), edx
+        mov     L1backup(2), edx
         mov     L1(1), ecx
-        mov     L2(1), ecx
-        mov     L3(1), ecx
         mov     L1backup(1), ecx
-        mov     L2backup(1), ecx
-        mov     L3backup(1), ecx
-
         mov     L1(0), ebx
-        mov     L2(0), ebx
-        mov     L3(0), ebx
         mov     L1backup(0), ebx
+
+        add     dl, 1
+        bswap   ecx
+        bswap   ebx
+
+        adc     ecx, BYTE 0
+        adc     ebx, BYTE 0
+
+        bswap   ecx
+        bswap   ebx
+
+        mov     L2(2), edx
+        mov     L2(1), ecx
+        mov     L2(0), ebx
+
+        mov     L2backup(2), edx
+        mov     L2backup(1), ecx
         mov     L2backup(0), ebx
+
+        add     dl, 1
+        bswap   ecx
+        bswap   ebx
+
+        adc     ecx, BYTE 0
+        adc     ebx, BYTE 0
+
+        bswap   ecx
+        bswap   ebx
+
+        mov     L3(2), edx
+        mov     L3(1), ecx
+        mov     L3(0), ebx
+
+        mov     L3backup(2), edx
+        mov     L3backup(1), ecx
         mov     L3backup(0), ebx
+
 
 k7align 16
 key_setup_1:
@@ -520,16 +537,9 @@ test_key_1:
         cmp     B1, [work_C_1]
         jne     short test_key_2
 
-        mov     ecx, [work_iterations]
-        mov     esi, [iterations]
+        xor     ecx, ecx
 
-        lea     ecx, [ecx + 2*ecx]
-
-        sub     [esi], ecx
-
-        mov     eax, RESULT_FOUND
-
-        jmp     finished
+        jmp     finished_found
 
 k7align 16
 test_key_2:
@@ -550,17 +560,10 @@ test_key_2:
         cmp     B2, [work_C_1]
         jne     short test_key_3
 
-        mov     ecx, [work_iterations]
-        mov     esi, [iterations]
-
-        lea     ecx, [ecx + 2*ecx]
-
+        xor     ecx, ecx
         dec     ecx
 
-        sub     [esi], ecx
-        mov     eax, RESULT_FOUND
-
-        jmp     finished
+        jmp     finished_found
 
 k7align 16
 test_key_3:
@@ -583,22 +586,14 @@ test_key_3:
 
         jne     short inc_key
 
-        mov     ecx, [work_iterations]
-        mov     esi, [iterations]
+        mov     ecx, -2
 
-        lea     ecx, [ecx + 2*ecx]
-
-        sub     ecx, BYTE 2
-
-        sub     [esi], ecx
-        mov     eax, RESULT_FOUND
-
-        jmp     finished
+        jmp     finished_found
 
 
 k7align 16
 inc_key:
-        cmp     dl, 0xFB
+        cmp     dl, 0xFD
         mov     ecx, [RC5_72UnitWork_L0mid]
         mov     ebx, [RC5_72UnitWork_L0lo]
 
@@ -629,7 +624,7 @@ inc_key:
 
         jnz     key_setup_1
 
-        mov     eax, RESULT_NOTHING
+        xor     eax, eax
         jmp     finished
 
 k7align 16
@@ -695,10 +690,19 @@ complex_incr:
 
         jnz     key_setup_1
 
-        mov     eax, RESULT_NOTHING
+        xor     eax, eax
+        jmp     finished
+finished_found:
+        mov     esi, [iterations]
+        add     ecx, [work_iterations]
+        add     ecx, [work_iterations]
+        add     ecx, [work_iterations]
+        sub     [esi], ecx
 
-
+        xor     eax, eax
+        inc     eax
 finished:
+        inc     eax
         mov     ebx, [save_ebx]
         mov     esi, [save_esi]
 
