@@ -11,7 +11,7 @@
  * ----------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore-conflict.cpp,v 1.45 1999/04/09 18:46:03 patrick Exp $"; }
+return "@(#)$Id: selcore-conflict.cpp,v 1.46 1999/04/17 07:38:37 gregh Exp $"; }
 
 
 #include "cputypes.h"
@@ -215,13 +215,14 @@ int Client::SelectCore(int quietly)
   
     if (!quietly)
       LogScreen("Manually selecting fastest core...\n");
-    for ( contestid = 0; contestid < 2; contestid++)
+    for ( contestid = 0; contestid < CONTEST_COUNT; contestid++)
     {
       for ( whichcrunch = 0; whichcrunch < 3; whichcrunch++)
       {
         Problem problem;
         ContestWork contestwork;
 	unsigned long elapsed;
+        //!! This should probably be addressed for OGR, zero data is not valid input.
 	memset( (void *)&contestwork, 0, sizeof(contestwork));
         contestwork.crypto.iterations.lo = benchsize;
         problem.LoadState( &contestwork , contestid, benchsize, whichcrunch );
@@ -229,7 +230,7 @@ int Client::SelectCore(int quietly)
     
         elapsed = (((unsigned long)problem.runtime_sec) * 1000000UL)+
 	          (((unsigned long)problem.runtime_usec));
-        //printf("%s Core %d: %lu usec\n",contestid ? "DES" : "RC5",whichcrunch,elapsed);
+        //printf("%s Core %d: %lu usec\n", CliGetContestName(contestid),whichcrunch,elapsed);
     
         if (fastcoretest[contestid] < 0 || elapsed < fasttime[contestid])
         {

@@ -5,9 +5,16 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.129 1999/04/09 17:36:35 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.130 1999/04/17 07:38:35 gregh Exp $"
 
 #define MAXBLOCKSPERBUFFER  500
+
+enum {
+  RC5, // http://www.rsa.com/rsalabs/97challenge/
+  DES, // http://www.rsa.com/rsalabs/des3/index.html
+  OGR, // http://members.aol.com/golomb20/
+  CSC  // http://www.cie-signaux.fr/security/index.htm
+};
 #define CONTEST_COUNT       4  /* RC5,DES,OGR,CSC */
 
 #include "problem.h"          /* ContestWork structure */

@@ -8,9 +8,10 @@
  * ----------------------------------------------------------------------
 */
 const char *clirate_cpp(void) {
-return "@(#)$Id: clirate.cpp,v 1.23 1999/04/16 07:22:35 gregh Exp $"; }
+return "@(#)$Id: clirate.cpp,v 1.24 1999/04/17 07:38:35 gregh Exp $"; }
 
 #include "cputypes.h" //for u64 define
+#include "client.h"   //for project constants
 #include "problem.h"  //uses Problem::RetrieveState()
 #include "baseincs.h" //timeval
 #include "clicdata.h" //Cli[Add|Get]ContestInfoSummaryData, CliGetContestInfoBaseData
@@ -68,12 +69,12 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
     return ((double)(0));   //clicdata.cpp says no such contest
 
   switch (contestid) {
-    case 0: // RC5
-    case 1: // DES
-    case 3: // CSC
+    case RC5:
+    case DES:
+    case CSC:
       keys = U64TODOUBLE(work.crypto.keysdone.hi,work.crypto.keysdone.lo);
       break;
-    case 2: // OGR
+    case OGR:
       keys = U64TODOUBLE(work.ogr.nodes.hi,work.ogr.nodes.lo);
       break;
   }

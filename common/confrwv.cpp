@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.54 1999/04/16 00:03:46 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.55 1999/04/17 07:38:36 gregh Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // Client class
@@ -146,7 +146,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
           doneclient = 1;
           client->loadorder_map[i] |= 0x80;
         }
-        if (buffer[i] == 1 /* DES' contest id */)
+        if (buffer[i] == DES)
         {
           doneini = 1;
           buffer[i] |= 0x80; /* disable */

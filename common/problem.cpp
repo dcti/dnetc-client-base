@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.103 1999/04/17 05:42:08 gregh Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.104 1999/04/17 07:38:37 gregh Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -248,18 +248,18 @@ static void __IncrementKey(u64 *key, u32 iters, int contest)
 {                                                                   
   switch (contest)                                                  
   {                                                                 
-    case 0: // RC5
+    case RC5:
       __SwitchRC5Format (key);                                      
       key->lo += iters;                                             
       if (key->lo < iters) key->hi++;                               
       __SwitchRC5Format (key);                                      
       break;                                                        
-    case 1: // DES
-    case 3: // CSC
+    case DES:
+    case CSC:
       key->lo += iters;                                             
       if (key->lo < iters) key->hi++; /* Account for carry */       
       break;                                                        
-    case 2: // OGR
+    case OGR:
       /* This should never be called for OGR */                     
       break;                                                        
   }                                                                 
@@ -280,9 +280,9 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
     {
       switch (contest)
       {
-        case 0: //RC5
-        case 1: //DES
-        case 3: //CSC
+        case RC5:
+        case DES:
+        case CSC:
                 {
                 retpermille = (u32)( ((double)(1000.0)) *
                 (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
@@ -291,7 +291,7 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
                              ((double)(contestwork.crypto.iterations.lo)))) ); 
                 break;
                 }
-        case 2: //OGR
+        case OGR:
                 Stub curstub;
                 ogr->getresult(ogrstate, &curstub, sizeof(curstub));
                 // This is just a quick&dirty calculation that resembles progress.
@@ -426,7 +426,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   #endif
 // keep the next an ELIF !!!!
 #elif (CLIENT_CPU == CPU_POWERPC)
-  if (contest == 0)
+  if (contest == RC5)
   {
     rc5_unit_func = crunch_lintilla;
     #if ((CLIENT_OS != OS_BEOS) || (CLIENT_OS != OS_AMIGAOS))
@@ -446,7 +446,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
     cputype = 0;
 
   pipeline_count = 2; /* most cases */
-  if (contest == 1)
+  if (contest == DES)
   {
     #if defined(MMX_BITSLICER) 
     if ((detectedtype & 0x100) != 0) 
@@ -493,7 +493,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
       #endif
     }
   }
-  else if (contest == 0) 
+  else if (contest == RC5) 
   {
     if (cputype == 1)   // Intel 386/486
     {
@@ -532,9 +532,9 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
 
   switch (contest) 
   {
-    case 0: // RC5
-    case 1: // DES
-    case 3: // CSC - CSC_TEST
+    case RC5:
+    case DES:
+    case CSC: // CSC_TEST
 
       // copy over the state information
       contestwork.crypto.key.hi = ( work->crypto.key.hi );
@@ -565,7 +565,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
 
       rc5unitwork.L0.lo = key.lo;
       rc5unitwork.L0.hi = key.hi;
-      if (contest == 0)
+      if (contest == RC5)
         __SwitchRC5Format (&(rc5unitwork.L0));
 
       refL0 = rc5unitwork.L0;
@@ -580,7 +580,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
       }     
       break;
 
-    case 2: // OGR
+    case OGR:
 
       #ifndef GREGH
       return -1;
@@ -1024,7 +1024,7 @@ int Problem::Run_OGR(u32 *timesliceP, int *resultcode)
     {
       if (ogr->getresult(ogrstate, &contestwork.ogr.stub, sizeof(contestwork.ogr.stub)) == CORE_S_OK)
       {
-        Log("OGR Success!\n");
+        //Log("OGR Success!\n");
         *resultcode = RESULT_FOUND;
         return RESULT_FOUND;
       }
@@ -1060,7 +1060,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
     started=1;
 
 #ifdef STRESS_THREADS_AND_BUFFERS 
-    contest = 0;
+    contest = RC5;
     contestwork.crypto.key.hi = contestwork.crypto.key.lo = 0;
     contestwork.crypto.keysdone.hi = contestwork.crypto.iterations.hi;
     contestwork.crypto.keysdone.lo = contestwork.crypto.iterations.lo;
@@ -1093,14 +1093,14 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
 
   switch (contest)
   {
-    case 0:  retcode = Run_RC5( &timeslice, &core_resultcode );
-             break;
-    case 1:  retcode = Run_DES( &timeslice, &core_resultcode );
-             break;
-    case 2:  retcode = Run_OGR( &timeslice, &core_resultcode );
-             break;
-    case 3:  retcode = Run_CSC( &timeslice, &core_resultcode );
-             break;
+    case RC5: retcode = Run_RC5( &timeslice, &core_resultcode );
+              break;
+    case DES: retcode = Run_DES( &timeslice, &core_resultcode );
+              break;
+    case OGR: retcode = Run_OGR( &timeslice, &core_resultcode );
+              break;
+    case CSC: retcode = Run_CSC( &timeslice, &core_resultcode );
+              break;
     default: retcode = core_resultcode = last_resultcode = -1;
        break;
   }
@@ -1163,7 +1163,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
 //  timeslice *= pipeline_count;
 //  done in the cores.
 
-  if (contest == 0)
+  if (contest == RC5)
     {
 #if (CLIENT_OS == OS_RISCOS)
     if (threadindex == 0)

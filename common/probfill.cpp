@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.46 1999/04/09 13:31:58 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.47 1999/04/17 07:38:36 gregh Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -142,9 +142,9 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
 
       switch (cont_i) 
       {
-        case 0: // RC5
-        case 1: // DES
-	case 3: // CSC
+        case RC5:
+        case DES:
+	case CSC:
         {
           norm_key_count = 
              (unsigned int)__iter2norm( (wrdata.work.crypto.iterations.lo),
@@ -153,7 +153,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
             norm_key_count = 1;
           break;
         }
-        case 2: // OGR
+        case OGR:
         {
           norm_key_count = 1;
           break;
@@ -215,16 +215,16 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       {
         switch (cont_i) 
         {
-          case 0: // RC5
-          case 1: // DES
-          case 3: // CSC
+          case RC5:
+          case DES:
+          case CSC:
                   norm_key_count = (unsigned int)__iter2norm( 
 	                              (wrdata.work.crypto.iterations.lo),
                                       (wrdata.work.crypto.iterations.hi) );
                   if (norm_key_count == 0) /* test block */
                     norm_key_count = 1;
                   break;
-          case 2: // OGR
+          case OGR:
                   norm_key_count = 1;
                   break;
         }
@@ -239,14 +239,14 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         char workunit[80];
 	switch (cont_i)
 	{
-	  case 0: //RC5
-	  case 1: //DES
-          case 3: // CSC
+	  case RC5:
+	  case DES:
+          case CSC:
                  sprintf(workunit, "%08lX:%08lX", 
                        (long) ( wrdata.work.crypto.key.hi ),
                        (long) ( wrdata.work.crypto.key.lo ) );
 		 break;
-	  case 2: //OGR
+	  case OGR:
                  strcpy(workunit, ogr_stubstr(&wrdata.work.ogr.stub));
 		 break;
 	}
@@ -338,16 +338,16 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     
     switch (wrdata.contest) 
     {
-      case 0: // RC5
-      case 1: // DES
-      case 3: // CSC
+      case RC5:
+      case DES:
+      case CSC:
         if ( ((wrdata.work.crypto.keysdone.lo)!=0) || 
              ((wrdata.work.crypto.keysdone.hi)!=0) )
         {
           s32 cputype = client->cputype; /* needed for FILEENTRY_CPU macro */
 
           #if (CLIENT_OS == OS_RISCOS) /* second thread is x86 */
-          if (wrdata.contest == 0 && prob_i == 1) cputype = CPU_X86;
+          if (wrdata.contest == RC5 && prob_i == 1) cputype = CPU_X86;
           #endif
 
           // If this is a partial block, and completed by a different 
@@ -371,7 +371,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
           }
         }
         break;
-      case 2: // OGR
+      case OGR:
         break;
     }
   } 
@@ -410,7 +410,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       wrdata.cpu                   = 0;
       wrdata.buildhi               = 0;
       wrdata.buildlo               = 0;
-      wrdata.contest               = 0; // Random blocks are always RC5
+      wrdata.contest               = RC5; // Random blocks are always RC5
       wrdata.work.crypto.key.lo    = (rnd & 0xF0000000L);
       wrdata.work.crypto.key.hi    = (rnd & 0x00FFFFFFL) + (randomprefix<<24);
       //constants are in rsadata.h
@@ -445,9 +445,9 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
 
     switch (wrdata.contest) 
     {
-      case 0: // RC5
-      case 1: // DES
-      case 3: // CSC
+      case RC5:
+      case DES:
+      case CSC:
       {
         norm_key_count = (unsigned int)__iter2norm((wrdata.work.crypto.iterations.lo),
                                                    (wrdata.work.crypto.iterations.hi));
@@ -464,7 +464,7 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
         #endif
         break;
       }
-      case 2: // OGR
+      case OGR:
       {
         norm_key_count = wrdata.work.ogr.stub.marks;
         break;
@@ -480,9 +480,9 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
 
       switch (*contest) 
       {
-        case 0: // RC5
-        case 1: // DES
-        case 3: // CSC
+        case RC5:
+        case DES:
+        case CSC:
         {
           Log("Loaded %s%s %u*2^28 packet %08lX:%08lX%c(%u.%u0%% done)",
                   cont_name, ((didrandom)?(" random"):("")), norm_key_count,
@@ -492,7 +492,7 @@ Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Succes
                   (permille/10), (permille%10) );
           break;
         }
-        case 2: // OGR
+        case OGR:
         {
           Log("Loaded %s stub %s (%u.%u0%% done)",
                   cont_name,

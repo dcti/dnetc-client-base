@@ -8,7 +8,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.43 1999/04/16 07:22:35 gregh Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.44 1999/04/17 07:38:36 gregh Exp $"; }
 
 #include "cputypes.h"  // u64
 #include "problem.h"   // Problem class
@@ -165,7 +165,7 @@ const char *CliGetSummaryStringForContest( int contestid )
   sprintf(str, "%d %s packet%s %s%c- [%s%s/s]", 
        packets, name, ((packets==1)?(""):("s")),
        CliGetTimeString( &ttime, 2 ), ((!packets)?(0):(' ')), keyrateP,
-       contestid == 2 /* OGR */ ? "nodes" : "keys" );
+       contestid == OGR ? "nodes" : "keys" );
   return str;
 }
 
@@ -243,9 +243,9 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
   
   switch (contestid) 
   {
-    case 0: // RC5
-    case 1: // DES
-    case 3: // CSC
+    case RC5:
+    case DES:
+    case CSC:
 //"Completed one RC5 packet 00000000:00000000 (4*2^28 keys)\n"
 //"%s - [%skeys/sec]\n"
       itermul = (((work.crypto.iterations.lo) >> 28) +
@@ -259,7 +259,7 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
                     CliGetTimeString( &tv, 2 ),
                     keyrateP );
       break;
-    case 2: // OGR
+    case OGR:
 //"Completed one OGR stub 22/1-3-5-7 (123456789 nodes)\n"
 //"%s - [%snodes/sec]\n"
       sprintf( str, "Completed one %s stub %s (%s nodes)\n"

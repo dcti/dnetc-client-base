@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.6 1999/04/11 00:11:50 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.7 1999/04/17 07:38:33 gregh Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -109,13 +109,14 @@ static int BufferCountMemRecords( struct membuffstruct *membuff,
             packetcount++;
             switch (workrec.contest) 
             {
-              case 0: // RC5
-              case 1: // DES
+              case RC5:
+              case DES:
+              case CSC:
                 normcount += (unsigned int)
                    __iter2norm( workrec.work.crypto.iterations.lo, 
                                 workrec.work.crypto.iterations.hi );
                 break;
-              case 2: // OGR
+              case OGR:
                 normcount++;
                 break;
             }
@@ -324,15 +325,16 @@ static void  __switchborder( WorkRecord *dest, const WorkRecord *source )
   /* we don't do PDP byte order, so this is ok */
   switch (dest->workrec.contest) 
   {
-    case 0: // RC5
-    case 1: // DES
+    case RC5:
+    case DES:
+    case CSC:
     {
       u32 *w = (u32 *)(&(dest->workrec.work.crypto));
       for (i=0; i<(sizeof(dest->workrec.work.crypto)/sizeof(u32)); i++)
         w[i] = ntohl(w[i]);
       break;
     }
-    case 2: // OGR
+    case OGR:
     {
       dest->workrec.work.ogr.stub.marks  = ntohs(dest->workrec.work.ogr.stub.marks);
       dest->workrec.work.ogr.stub.length = ntohs(dest->workrec.work.ogr.stub.length);
@@ -585,15 +587,16 @@ int BufferCountFileRecords( const char *filename, unsigned int contest,
         {
           switch (contest) 
           {
-            case 0: // RC5
-            case 1: // DES
+            case RC5:
+            case DES:
+            case CSC:
             {
               normcount += (unsigned int)
                  __iter2norm( ntohl(scratch.work.crypto.iterations.lo),
                               ntohl(scratch.work.crypto.iterations.hi) );
               break;
             }
-            case 2: // OGR
+            case OGR:
             {
               normcount++;
               break;
@@ -623,7 +626,7 @@ int BufferCountFileRecords( const char *filename, unsigned int contest,
 
 static void __FixupRandomPrefix( const WorkRecord * data, Client *client )
 {
-  if (data->contest == 0 && data->work.crypto.iterations.hi == 0 /* < 2^32 */
+  if (data->contest == RC5 && data->work.crypto.iterations.hi == 0 /* < 2^32 */
      && (data->work.crypto.iterations.lo) != 0x00100000UL /*!test*/
      && (data->work.crypto.iterations.lo) != 0x10000000UL /* !2**28 */)
   {                                   
@@ -954,12 +957,13 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
       
       switch (contest) 
       {
-        case 0: // RC5
-        case 1: // DES
+        case RC5:
+        case DES:
+        case CSC:
           workunits =  __iter2norm(wrdata.work.crypto.iterations.lo,
                                    wrdata.work.crypto.iterations.hi);
           break;
-        case 2: // OGR
+        case OGR:
           workunits = 1;                   
           break;
       }
@@ -1068,12 +1072,13 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
       
       switch (contest) 
       {
-        case 0: // RC5
-        case 1: // DES
+        case RC5:
+        case DES:
+        case CSC:
           workunits =  __iter2norm(wrdata.work.crypto.iterations.lo,
                                    wrdata.work.crypto.iterations.hi);
           break;
-        case 2: // OGR
+        case OGR:
           workunits = 1;                   
           break;
       }

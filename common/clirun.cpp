@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.88 1999/04/17 05:40:58 gregh Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.89 1999/04/17 07:38:35 gregh Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -609,7 +609,7 @@ if (targ->realthread)
       #if (CLIENT_OS == OS_MACOS)
       thisprob->tslice = GetTimesliceToUse(thisprob->contest);
       #endif
-      if (thisprob->contest == 2) // OGR
+      if (thisprob->contest == OGR)
       {
         thisprob->tslice = runstatics.ogr_tslice;
         runtime_ms = (thisprob->runtime_sec*1000 + thisprob->runtime_usec/1000);
@@ -621,7 +621,7 @@ if (targ->realthread)
       run = thisprob->Run();
       targ->is_suspended = 1;
 
-      if (thisprob->contest == 2) // OGR
+      if (thisprob->contest == OGR)
       {
         runtime_ms = (thisprob->runtime_sec*1000 + thisprob->runtime_usec/1000) - runtime_ms;
         if (runtime_ms < OGR_TIMESLICE_MSEC/2 && runstatics.ogr_tslice < OGR_TIMESLICE_MAX)
