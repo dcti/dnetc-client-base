@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.3 1999/06/23 05:46:05 myshkin Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.4 1999/07/01 17:19:54 chrisb Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -164,15 +164,17 @@ Problem::Problem(long _threadindex /* defaults to -1L */)
      how objects are allocated/how rc5unitwork is addressed, so let me know.
                                                        -cyp Jun 14 1999
   */
+#if (!(CLIENT_CPU == CPU_ARM && \
+      ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD))))
   RC5UnitWork *w = &rc5unitwork;
   unsigned long ww = ((unsigned long)w);
   if ((ww & 0x7)!=0) 
   {
-    Log("rc5unitwork for problem %d is not 64bit aligned!\n");
+    Log("rc5unitwork for problem %d is not 64bit aligned!\n", threadindex);
     RaiseExitRequestTrigger();
     return;
   }  
-
+#endif
 //LogScreen("Problem created. threadindex=%u\n",threadindex);
 
   initialized = 0;
@@ -770,20 +772,7 @@ LogScreen("alignTimeslice: effective timeslice: %lu (0x%lx),\n"
     kiter = timeslice;
     *resultcode = (*unit_func)( &rc5unitwork, &kiter );
   #elif (CLIENT_CPU == CPU_ARM)
-    #if (CLIENT_OS == OS_RISCOS)
-    if (threadindex == 1) /* RISC OS specific x86 2nd thread magic. */
-    {
-      if (runtime_sec == 0 && runtime_usec == 0) /* first time */
-      {                          /* load the work onto the coprocessor */
-        return RESULT_WORKING; /* ... or -1 if load failed */
-        /* runtime_* will remain 0 as long as -1 is returned */
-      }
-      /* otherwise copy the state of the copro back to contestwork */
-      /* fall through if copy-back succeeded or return -1 if it failed */
-    }
-    else
-    #endif
-    /* do other ARM goodstuff */
+    kiter = rc5_unit_func(&rc5unitwork, timeslice);
   #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
     kiter = (timeslice * pipeline_count) - 
       rc5_unit_func(&rc5unitwork,timeslice);
@@ -1206,133 +1195,4 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
 /* ======================================================================= */
 /*                                 FINIS                                   */
 /* ======================================================================= */
-
-#if (CLIENT_CPU == CPU_ARM)
-// ARM looks like a mess, I'll wait for ARM porters to integrate it
-#error Chris, (the comment above is someone elses remark) I have migrated 
-#error ARM/DES into Run_DES() and added comments in Run_RC5() suggesting how 
-#error the rest could be done. The _kernel_escape_seen() poll is now handled
-#error from triggers.cpp                                               - cyp
-
-#if 0
-  {
-  unsigned long kiter;
-//  timeslice *= pipeline_count;
-//  done in the cores.
-
-  if (contest == RC5)
-    {
-#if (CLIENT_OS == OS_RISCOS)
-    if (threadindex == 0)
-      {
-#endif
-#ifdef DEBUG
-      static u32 ts;
-      if ((ts < timeslice-500) || (ts > timeslice+500))
-        {
-        ts = timeslice;
-        printf("timeslice = %d\n",timeslice);
-        }
-#endif
-//    printf("ARM thread running, ts=%08lx\n",timeslice);
-      if ((rc5_unit_func == rc5_unit_func_arm_2)&&( rc5unitwork.L0.hi&(1<<24)))
-        {
-        rc5unitwork.L0.hi -= 1<<24;
-        if (contestwork.keysdone.lo & 1)
-          {
-          contestwork.keysdone.lo--;
-          }
-        else
-          {
-          LogScreen("Something really bad has happened - the number of keys looks wrong.\n");
-          for(;;); // probably a bit bogus, but hey.
-          }
-        }
-      /*
-      Now returns number of keys processed!
-      (Since 5/8/1998, SA core 1.5, ARM core 1.6).
-      */
-      kiter = rc5_unit_func(&rc5unitwork, timeslice);
-      contestwork.keysdone.lo += kiter;
-         
-//    printf("kiter is %d\n",kiter);
-      if (kiter != (timeslice*pipeline_count))
-        {
-        // found it?
-        u32 keylo = contestwork.crypto.key.lo;
-        contestwork.crypto.key.lo += contestwork.crypto.keysdone.lo;
-        contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
-        if (contestwork.crypto.key.lo < keylo) 
-          contestwork.crypto.key.hi++; // wrap occured ?
-        resultcode = RESULT_FOUND;
-        return( 1 );
-        }
-#if (CLIENT_OS == OS_RISCOS)
-      }
-    else // threadindex == 1
-    {
-      /* This is the RISC OS specific x86 2nd thread magic. */
-      _kernel_swi_regs r;
-      _kernel_oserror *err;
-      volatile RC5PCstruct *rc5pcr;
-      err = _kernel_swi(RC5PC_BufferStatus,&r,&r);
-      if (err)
-        {
-        LogScreen("Error retrieving buffer status from x86 card");
-        }
-      else
-      {
-        /*
-        contestwork.keysdone.lo is 0 for a completed block,
-        so take care when setting it.
-        */
-        rc5pcr = (volatile RC5PCstruct *)r.r[1];
-        
-        if (r.r[2]==1)
-        {
-          /* block finished */
-          r.r[0] = 0;
-          err = _kernel_swi(RC5PC_RetriveBlock,&r,&r);
-          if (err)
-          {
-            LogScreen("Error retrieving block from x86 card");
-          }
-          else
-          {
-            rc5pcr = (volatile RC5PCstruct *)r.r[1];
-      
-            if (rc5pcr->result == RESULT_FOUND)
-            {
-              contestwork.keysdone.lo = rc5pcr->keysdone.lo;
-              contestwork.keysdone.hi = rc5pcr->keysdone.hi;
-//printf("x86:FF Keysdone %08lx\n",contestwork.keysdone.lo);
-              u32 keylo = contestwork.crypto.key.lo;
-              contestwork.crypto.key.lo += contestwork.crypto.keysdone.lo;
-              contestwork.crypto.key.hi += contestwork.crypto.keysdone.hi;
-              if (contestwork.crypto.key.lo < keylo) 
-                contestwork.crypto.key.hi++; // wrap occured ?
-              resultcode = RESULT_FOUND;
-              return( 1 );
-            }
-            else
-            {
-              contestwork.keysdone.lo = contestwork.iterations.lo;
-              contestwork.keysdone.hi = contestwork.iterations.hi;
-  //printf("x86:FN Keysdone %08lx\n",contestwork.keysdone.lo);
-             }
-          }
-        }
-        else
-        {
-          contestwork.keysdone.lo = rc5pcr->keysdone.lo;
-          contestwork.keysdone.hi = rc5pcr->keysdone.hi;
-//printf("x86:NF Keysdone %08lx\n",contestwork.keysdone.lo);
-        }
-      }
-    }
-#endif
-    }
-  }
-#endif
-#endif
 
