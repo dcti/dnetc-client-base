@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.28 2000/01/08 23:18:00 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.29 2000/01/22 00:15:39 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -125,11 +125,11 @@ static double __calc_rate( unsigned int contestid,
   if (print_it)
   {
     char ratestr[32];
-    LogScreen("\r%s: Benchmark completed in %s"
-              "\n%s: core #%d (%s) - [%s%s]\n",
-              contname, CliGetTimeString( totalruntime, 2 ),
-              contname, corenum, selcoreGetDisplayName(contestid, corenum),
-                        CliGetKeyrateAsString( ratestr, rate ), rateunit );
+    Log("\r%s: Benchmark completed in %s"
+        "\n%s: core #%d (%s) - [%s%s]\n",
+         contname, CliGetTimeString( totalruntime, 2 ),
+         contname, corenum, selcoreGetDisplayName(contestid, corenum),
+                   CliGetKeyrateAsString( ratestr, rate ), rateunit );
   }
   return (rate);
 }
