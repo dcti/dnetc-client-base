@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.26  1998/11/03 01:46:51  cyp
+// Commit to overwrite corrupted clirun in the tree.
+//
 // Revision 1.25  1998/11/03 00:42:36  cyp
 // Client now runs only one problem per thread. Merged go_nonmt into go_mt.
 //
@@ -104,7 +107,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.25 1998/11/03 00:42:36 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.26 1998/11/03 01:46:51 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -777,8 +780,6 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       #if ((CLIENT_CPU != CPU_X86) && (CLIENT_CPU != CPU_88K) && \
          (CLIENT_CPU != CPU_SPARC) && (CLIENT_CPU != CPU_POWERPC))
          use_poll_process = 1; //core routines are not thread safe
-      #elif (CLIENT_OS == OS_FREEBSD) /* pthreads disabled */
-         use_poll_process = 1;
       #elif (CLIENT_OS == OS_WIN32) 
         unsigned int thraddr;
         thrparams->threadID = _beginthread( Go_mt, 8192, (void *)thrparams );
@@ -945,7 +946,7 @@ int Client::Run( void )
     force_no_realthreads = 0; /* this is a hint. it does not reflect capability */
     unsigned int numcrunchers = (unsigned int)numcpu;
 
-    #if (CLIENT_OS == OS_FREEBSD) //freeBSD multithreading is disabled
+    #if (CLIENT_OS == OS_FREEBSD) //FleaBSD multithreading is disabled
     force_no_realthreads = 1;
     if (numcrunchers > 0)
       LogScreen("POSIX threads are disabled for FreeBSD clients.\n"
