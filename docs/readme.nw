@@ -1,13 +1,13 @@
 
- distributed.net RC5-DES Client for NetWare 3.11 and above
+ distributed.net client for NetWare 3.11 and above
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
- Document revision $Id: readme.nw,v 1.6 1999/06/03 20:39:24 cyp Exp $
+ Document revision $Id: readme.nw,v 1.7 1999/10/11 18:41:41 cyp Exp $
                                                           
- Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
+ Welcome to the distributed.net client.
  This version is a unified client for both SMP and non-SMP machines.
 
  This document covers information specific to the client for RISCOS.
- Refer to the enclosed rc5des.txt or browse the online FAQ at
+ Refer to other enclosed documentation or browse the online FAQ at
  http://www.distributed.net/FAQ for non-platform-specific documentation.
 
     1.0  Getting started
@@ -20,12 +20,11 @@
     users who do not have this file in their SYS:/SYSTEM directory may 
     obtain it from Novell (it is part of the latest (October '95) CLIB 
     update, ie LIB311.EXE or LIB312.EXE. The updates are also available 
-    from http://fb14.uni-mainz.de/~rc5des/
+    from http://fb14.uni-mainz.de/~cyp/
     
  1.0  Getting started ------------------------------------------------
  
-    Just copy the client into a directory of your choice and fire it up
-    with LOAD [path]RC5DES.NLM   
+    Just copy the client into a directory of your choice and fire it up.
     If you have never run the client before, it will prompt you with a
     list of options. Quit and save when done, and then reload the client.
     
@@ -48,7 +47,7 @@
     merged into one unified client. That is, it will run with only the
     'main' thread if running on a single processor machine and will run 
     with two blocks per 'crunch' thread on multi-processor (or 'numcpu' 
-    is specified in rc5des.ini to be greater than one) machines.
+    is specified in .ini to be greater than one) machines.
 
     Beginning with v2.7014, the client can also be loaded more than once. 
     Unloading and reloading the client for executing -fetch, -flush or 

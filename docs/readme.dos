@@ -1,12 +1,12 @@
 
- RC5-DES Client for x86 DOS (PC-,MS-,DR- or whatever) 5.0 and above
+ distributed.net client for x86 DOS (PC-,MS-,DR- or whatever) 5.0 and above
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
- document revision $Id: readme.dos,v 1.7 1999/06/03 20:39:24 cyp Exp $
+ document revision $Id: readme.dos,v 1.8 1999/10/11 18:41:41 cyp Exp $
 
- Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
+ Welcome to the distributed.net client.
 
  This document covers information specific to the client for DOS.
- Refer to the enclosed rc5des.txt or browse the online FAQ at
+ Refer to other enclosed documentation or browse the online FAQ at
  http://www.distributed.net/FAQ for non-platform-specific documentation.
 
     1.0  Getting started
@@ -14,8 +14,7 @@
    
  1.0  Getting started ------------------------------------------------
  
-    Just unpack the client in a directory of your choice and fire it up
-    with [path]RC5DES.COM   
+    Just unpack the client in a directory of your choice and fire it up.
 
     If you have never run the client before, it will initiate the
     menu-driven configuration. Save and quit when done, the 
@@ -28,8 +27,6 @@
     A list of command line options is available by starting the client 
     with '-help'.
 
-    A detailed guide to the various configuration options as well as 
-    applicable command line switches is in the enclosed rc5des.txt.
     FAQs are available online at http://www.distributed.net/FAQ/
 
  2.0  Notes: ---------------------------------------------------------

@@ -1,12 +1,12 @@
 
- RC5-DES Client for IBM S/390 servers running the OS/390 operating system.
+ distributed.net client for IBM S/390 servers running OS/390.
  Released by Friedemann Baitinger <fb@baiti.net>
- Document revision $Id: readme.os390,v 1.5 1999/05/06 18:35:51 cyp Exp $
+ Document revision $Id: readme.os390,v 1.6 1999/10/11 18:41:41 cyp Exp $
 
- Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
+ Welcome to the distributed.net client.
 
  This document covers information specific to the client for OS/390.
- Refer to the enclosed rc5des.txt or browse the online FAQ at
+ Refer to other enclosed documentation or browse the online FAQ at
  http://www.distributed.net/FAQ for non-platform-specific documentation.
 
     1.0  port specific notes
@@ -30,30 +30,26 @@
 
    1) download and unpack on a non S/390 system
       o  unpack the archive to some temp directory for instance like:
-         tar xvzf rc5des412-os390-nomt.tar.gz
-      o  you will get 3 files:
-            readme.OS390          (This file)
-            rc5des.txt            (generic documentation)
-            rc5des                (the binary)
+         tar xvzf xxxx-os390-nomt.tar.gz
       o  the Readmes are in ASCII and you can read them right away,
          in fact, you are reading them already ;)
-      o  The 'rc5des' is a binary file which only runs on an IBM S/390
+      o  The binary file only runs on an IBM S/390
          mainframe system. ftp it to the target system in binary, do
-         a 'chmod +x rc5des', then you can execute it as 'rc5des'
+         a 'chmod +x xxxx', then you can execute it
 
    2) download and unpack on a S/390 system
-      o  ftp the rc5des412-os390-nomt.tar.gz to the target IBM S/390 machine
-      o  gunzip rc5des412-os390-nomt.tar.gz
+      o  ftp the xxx-os390-nomt.tar.gz to the target IBM S/390 machine
+      o  gunzip xxxx-os390-nomt.tar.gz
          if you don't have 'gunzip', to obtain it, go to:
          http://www.s390.ibm.com/oe/bpxqp1.html
       o  export A2E='-o from=ISO8859-1,to=IBM-1047'
-      o  pax $A2E -rf rc5des412-os390-nomt.tar
-   *) o  pax -rf rc5des412-os390-nomt.tar rc5des
-      o  chmod +x rc5des
+      o  pax $A2E -rf xxxxxx-os390-nomt.tar
+   *) o  pax -rf xxxx-os390-nomt.tar binname
+      o  chmod +x xxxx
          *) The reason why this statement is there is because the tar 
 	    archive contains files which need to be translated from ASCII 
 	    to EBCDIC during extracting them from the archive, and it also 
-	    holds a binary executable (rc5des) which gets garbled by applying 
+	    holds a binary executable which gets garbled by applying 
 	    this translation.  the 2nd call to pax extracts the binary 
 	    'straight', without applying any conversion. Sorry for the 
 	    confusion, I don't know (yet) of a way to ship binary and 
@@ -70,8 +66,4 @@
     at any time by starting the client with the '-config' option.
     A list of command line options is available by starting the client 
     with '-help'.
-
-    A detailed guide to the various configuration options as well as 
-    applicable command line switches is in the enclosed rc5des.txt.
-    FAQs are available online at http://www.distributed.net/FAQ/
 
