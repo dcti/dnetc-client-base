@@ -1,4 +1,12 @@
-/* $Id: next_sup.cpp,v 1.1.2.2 2003/08/09 12:21:41 mweiser Exp $ */
+/* Hey, Emacs, this a -*-C++-*- file !
+ *
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+*/
+
+const char *next_sup_cpp(void) {
+return "@(#)$Id: next_sup.cpp,v 1.1.2.3 2003/08/25 09:33:27 mweiser Exp $"; }
 
 #include "next_sup.h"
 #include <stdlib.h>   /* malloc */
