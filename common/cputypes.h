@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.44 2001/02/05 19:00:36 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.45 2001/02/07 18:52:39 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -22,7 +22,7 @@
 #define CPU_PA_RISC     5
 #define CPU_68K         6
 #define CPU_SPARC       7
-#define CPU_SH4		8
+#define CPU_SH4         8
 #define CPU_POWER       9
 #define CPU_VAX         10
 #define CPU_ARM         11
@@ -131,6 +131,8 @@
   #define CLIENT_OS     OS_LINUX
   #if defined(ASM_HPPA) /* cross compile, ergo don't use __hppa/__hppa__ */
     #define CLIENT_CPU    CPU_PA_RISC
+  #elif defined(ASM_SH4) /* cross compile */
+    #define CLIENT_CPU   CPU_SH4
   #elif defined(ASM_ALPHA) || defined(__alpha__)
     #define CLIENT_CPU    CPU_ALPHA
   #elif defined(ASM_X86) || defined(__i386__)
@@ -158,6 +160,8 @@
     #define CLIENT_CPU    CPU_X86
   #elif defined(__alpha__) || defined(ASM_ALPHA)
     #define CLIENT_CPU    CPU_ALPHA
+  #elif defined(__ppc__) || defined(ASM_PPC)
+    #define CLIENT_CPU    CPU_PPC
   #endif
 #elif defined(__NetBSD__)
   #ifndef __unix__ /* should already be defined */
