@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.40 1999/12/16 17:21:52 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.41 1999/12/16 19:24:28 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -757,17 +757,17 @@ Problem::~Problem()
 // Note that DES has a similiar but far more complex system, but everything
 // is handled by des_unit_func().
 
-static void  __SwitchRC5Format(struct fake_u64 *_key)                               
+static void  __SwitchRC5Format(u32 *hi, u32 *lo)
 {                                                                       
-    register u32 tempkeylo = _key->hi; /* note: we switch the order */  
-    register u32 tempkeyhi = _key->lo;                                  
+    register u32 tempkeylo = *hi; /* note: we switch the order */  
+    register u32 tempkeyhi = *lo;                                  
                                                                         
-    _key->lo =                                                          
+    *lo =                                                          
       ((tempkeylo >> 24) & 0x000000FFL) |                               
       ((tempkeylo >>  8) & 0x0000FF00L) |                               
       ((tempkeylo <<  8) & 0x00FF0000L) |                               
       ((tempkeylo << 24) & 0xFF000000L);                                
-    _key->hi =                                                          
+    *hi =                                                          
       ((tempkeyhi >> 24) & 0x000000FFL) |                               
       ((tempkeyhi >>  8) & 0x0000FF00L) |                               
       ((tempkeyhi <<  8) & 0x00FF0000L) |                               
@@ -782,20 +782,20 @@ static void  __SwitchRC5Format(struct fake_u64 *_key)
 //
 // Output: the key incremented
 
-static void __IncrementKey(struct fake_u64 *key, u32 iters, int contest)        
+static void __IncrementKey(u32 *keyhi, u32 *keylo, u32 iters, int contest)        
 {                                                                   
   switch (contest)                                                  
   {                                                                 
     case RC5:
-      __SwitchRC5Format (key);                                      
-      key->lo += iters;                                             
-      if (key->lo < iters) key->hi++;                               
-      __SwitchRC5Format (key);                                      
+      __SwitchRC5Format(keyhi,keylo);                                      
+      *keylo = *keylo + iters;                                             
+      if (*keylo < iters) *keyhi = *keyhi + 1;
+      __SwitchRC5Format (keyhi,keylo);                                      
       break;                                                        
     case DES:
     case CSC:
-      key->lo += iters;                                             
-      if (key->lo < iters) key->hi++; /* Account for carry */       
+      *keylo = *keylo + iters;                                             
+      if (*keylo < iters) *keyhi = *keyhi + 1; /* Account for carry */
       break;                                                        
     case OGR:
       /* This should never be called for OGR */                     
@@ -910,8 +910,9 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
            ((contestwork.crypto.key.lo >> 16) + (contestwork.crypto.keysdone.lo >> 16))) >> 16);
       rc5unitwork.L0.lo = contestwork.crypto.key.lo + contestwork.crypto.keysdone.lo;
       if (contest == RC5)
-        __SwitchRC5Format (&(rc5unitwork.L0));
-      refL0 = rc5unitwork.L0;
+        __SwitchRC5Format(&(rc5unitwork.L0.hi), &(rc5unitwork.L0.lo));
+      refL0.lo = rc5unitwork.L0.lo;
+      refL0.hi = rc5unitwork.L0.hi;
 
       // set up the unitwork structure
       rc5unitwork.plain.hi = contestwork.crypto.plain.hi ^ contestwork.crypto.iv.hi;
@@ -1066,7 +1067,7 @@ LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
   kiter = (*rc5_unit_func)(&rc5unitwork, iterations/pipeline_count );
   *iterationsP = iterations;
 
-  __IncrementKey (&refL0, iterations, contest);
+  __IncrementKey(&refL0.hi, &refL0.lo, iterations, contest);
     // Increment reference key count
 
   if (((refL0.hi != rc5unitwork.L0.hi) ||  // Compare ref to core
@@ -1143,7 +1144,7 @@ int Problem::Run_CSC(u32 *iterationsP, int *resultcode)
   *resultcode = (int)rescode;
 
   // Increment reference key count
-  __IncrementKey (&refL0, *iterationsP, contest);
+  __IncrementKey (&refL0.hi, &refL0.lo, *iterationsP, contest);
 
   // Compare ref to core key incrementation
   if ((refL0.hi != rc5unitwork.L0.hi) || (refL0.lo != rc5unitwork.L0.lo))
@@ -1199,7 +1200,7 @@ int Problem::Run_DES(u32 *iterationsP, int *resultcode)
   //iterationsP == in: suggested iterations, out: effective iterations
   u32 kiter = (*des_unit_func)( &rc5unitwork, iterationsP, core_membuffer );
 
-  __IncrementKey (&refL0, *iterationsP, contest);
+  __IncrementKey ( &refL0.hi, &refL0.lo, *iterationsP, contest);
   // Increment reference key count
 
   if (((refL0.hi != rc5unitwork.L0.hi) ||  // Compare ref to core

@@ -1,6 +1,7 @@
-/* Copyright distributed.net 1998 - All Rights Reserved
+/* Copyright distributed.net 1998-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * ----------------------------------------------------------------------
  * This file contains functions for formatting keyrate/time/summary data
@@ -8,9 +9,9 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.45.2.5 1999/12/12 15:34:03 cyp Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.45.2.6 1999/12/16 19:24:28 cyp Exp $"; }
 
-#include "cputypes.h"  // struct fake_u64
+#include "cputypes.h"  // u32
 #include "problem.h"   // Problem class
 #include "client.h"    // Fileentry struct
 #include "baseincs.h"  // timeval, sprintf et al
@@ -192,15 +193,12 @@ const char *CliGetSummaryStringForContest( int contestid )
 
 // return iter/keysdone/whatever as string. 
 // set contestID = -1 to have the ID ignored
-const char *CliGetU64AsString( struct fake_u64 *u, int /*inNetOrder*/, int contestid )
+const char *CliGetU64AsString( u32 norm_hi, u32 norm_lo, 
+                               int /*inNetOrder*/, int contestid )
 {
   static char str[32];
   unsigned int i;
-  u32 norm_hi,norm_lo;
   double d;
-
-  norm_hi = u->hi;
-  norm_lo = u->lo;
 
   d = U64TODOUBLE(norm_hi, norm_lo);
   if (CliGetContestInfoBaseData( contestid, NULL, &i )==0 && i>1) //clicdata
@@ -292,7 +290,8 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
                     "%s - [%snodes/sec]\n",  
                     name, 
                     ogr_stubstr( &work.ogr.workstub.stub ),
-                    num_sep(CliGetU64AsString(&work.ogr.nodes, 0, -1)),
+                    num_sep(CliGetU64AsString(work.ogr.nodes.hi, 
+                                              work.ogr.nodes.lo, 0, -1)),
                     CliGetTimeString( &tv, 2 ),
                     keyrateP );
       break;

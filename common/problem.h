@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.16 1999/12/12 15:34:07 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.17 1999/12/16 19:24:31 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -48,16 +48,16 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
 typedef union
 {
   struct {
-    struct fake_u64 key;              // starting key
-    struct fake_u64 iv;               // initialization vector
-    struct fake_u64 plain;            // plaintext we're searching for
-    struct fake_u64 cypher;           // cyphertext
-    struct fake_u64 keysdone;         // iterations done (also current position in block)
-    struct fake_u64 iterations;       // iterations to do
+    struct {u32 hi,lo;} key;              // starting key
+    struct {u32 hi,lo;} iv;               // initialization vector
+    struct {u32 hi,lo;} plain;            // plaintext we're searching for
+    struct {u32 hi,lo;} cypher;           // cyphertext
+    struct {u32 hi,lo;} keysdone;         // iterations done (also current position in block)
+    struct {u32 hi,lo;} iterations;       // iterations to do
   } crypto;
   struct {
     struct WorkStub workstub; // stub to work on (28 bytes)
-    struct fake_u64 nodes;            // nodes completed
+    struct {u32 hi,lo;} nodes;            // nodes completed
     char unused[12];
   } ogr;
 } ContestWork;
@@ -69,7 +69,7 @@ class Problem
 protected: /* these members *must* be protected for thread safety */
   /* --------------------------------------------------------------- */
   RC5UnitWork rc5unitwork; /* MUST BE longword (64bit) aligned */
-  struct fake_u64 refL0;               
+  struct {u32 hi,lo;} refL0;               
   ContestWork contestwork;
   CoreDispatchTable *ogr;
   /* --------------------------------------------------------------- */

@@ -21,7 +21,7 @@
  *   of the problem object (ie created when the object is new'd) 
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.3.2.1 1999/12/12 15:34:03 cyp Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.3.2.2 1999/12/16 19:24:27 cyp Exp $"
 
 typedef enum
 {
@@ -32,9 +32,9 @@ typedef enum
 
 typedef struct
 {
-  struct fake_u64 plain;  /* plaintext (already mixed with iv!) */
-  struct fake_u64 cypher; /* cyphertext */
-  struct fake_u64 L0;     /* key, changes with every unit * PIPELINE_COUNT. */
+  struct {u32 hi,lo;} plain;  /* plaintext (already mixed with iv!) */
+  struct {u32 hi,lo;} cypher; /* cyphertext */
+  struct {u32 hi,lo;} L0;     /* key, changes with every unit * PIPELINE_COUNT. */
 } RC5UnitWork;
 
 #endif /* __CCOREIO_H__ */

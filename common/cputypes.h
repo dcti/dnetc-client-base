@@ -1,14 +1,14 @@
-/* Hey, Emacs, this a -*-C++-*- file !
+/* Hey, Emacs, this a -*-C-*- file !
  *
  * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * ** header may be included by cores, so guard around c++ constructs **
+ * ** header is included by cores, so guard around c++ constructs **
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.13 1999/12/13 13:10:49 snake Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.14 1999/12/16 19:24:28 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -639,7 +639,8 @@ extern "C" {
 #endif  
 
 typedef unsigned char u8;
-struct fake_u64 { u32 hi, lo; }; /* DO NOT TYPEDEF THIS TO A u64 again! */
-                                 /* One too many bugs have been caused by */
-                                 /* passing u64's as an argument. */
+#if 0 /* broken u_64 is no longer used */
+struct fake_u_64 { u32 hi, lo; };
+#endif
+
 #endif /* __CPUTYPES_H__ */
