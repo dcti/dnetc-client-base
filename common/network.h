@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.16  1998/06/14 13:07:23  ziggyb
+// Took out all OS/2 DOD stuff, being moved to platforms\os2cli\dod.h
+//
 // Revision 1.15  1998/06/14 11:24:14  ziggyb
 // Added os2defs.h and adjusted for the sleep defines. Now compile without
 // errors. Woohoo!
@@ -245,23 +248,6 @@ protected:
   bool gotuubegin, gothttpend, puthttpdone, gethttpdone;
   u32 httplength;
   char logstr[1024];
-
-#if (CLIENT_OS == OS_OS2)
-  // Dial on Demand support
-  int DOD_On, DOD_Sleeptime, nl;
-
-  char netstring[25];   // for testing to see if OS/2 is online
-
-  int rweonline();
-    // Checking to see if we're connected
-    // Returns 1 if online, 0 if not
-
-  void ensureonline();
-    // establishes connection if not connected already.
-
-  void checkoffline();
-    // disconnects if a connection had to be made before.
-#endif
 
   friend void MakeNonBlocking(SOCKET sock, bool nonblocking = true);
 
