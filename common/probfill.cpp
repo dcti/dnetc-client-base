@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.11 1999/11/19 00:14:33 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.12 1999/11/23 05:40:23 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -626,7 +626,7 @@ unsigned int LoadSaveProblems(Client *pass_client,
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
     unsigned int blocksdone;
-    if (CliGetContestInfoSummaryData( cont_i, &blocksdone, NULL, NULL )==0)
+    if (CliGetContestInfoSummaryData( cont_i, &blocksdone, NULL, NULL, NULL )==0)
       totalBlocksDone += blocksdone;
    
     loaded_problems_count[cont_i]=loaded_normalized_key_count[cont_i]=0;

@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */ 
 #ifndef __CLICDATA_H__
-#define __CLICDATA_H__ "@(#)$Id: clicdata.h,v 1.19 1999/04/06 11:55:43 cyp Exp $"
+#define __CLICDATA_H__ "@(#)$Id: clicdata.h,v 1.19.2.1 1999/11/23 05:40:23 cyp Exp $"
 
 // return 0 if contestID is invalid, non-zero if valid.
 int CliIsContestIDValid(int contestID);
@@ -25,14 +25,14 @@ int CliGetContestIDFromName( char *name );
 // obtain constant data for a contest. name/iter2key may be NULL
 // returns 0 if success, !0 if error (bad contestID).
 int CliGetContestInfoBaseData( int contestid, const char **name, 
-                                              unsigned int *iter2key );
+                                               unsigned int *iter2key );
 
 struct timeval; /* forward ref */
 
 // obtain summary data for a contest. unrequired args may be NULL
 // returns 0 if success, !0 if error (bad contestID).
 int CliGetContestInfoSummaryData( int contestid, unsigned int *totalblocks,
-                                double *totaliter, struct timeval *totaltime);
+    double *totaliter, struct timeval *totaltime, unsigned int *totalunits);
 
 // clear summary data for a contest.
 // returns 0 if success, !0 if error (bad contestID).
@@ -41,7 +41,7 @@ int CliClearContestInfoSummaryData( int contestid );
 // add data to the summary data for a contest.
 // returns 0 if added successfully, !0 if error (bad contestID).
 int CliAddContestInfoSummaryData( int contestid, unsigned int *addblocks,
-                                double *aditer, struct timeval *addtime );
+    double *aditer, struct timeval *addtime, unsigned int *addunits );
 
 // Return a usable contest name, returns "???" if bad id.
 const char *CliGetContestNameFromID(int contestid);

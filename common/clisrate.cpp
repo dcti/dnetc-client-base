@@ -8,7 +8,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.45.2.1 1999/11/14 18:55:11 cyp Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.45.2.2 1999/11/23 05:40:23 cyp Exp $"; }
 
 #include "cputypes.h"  // u64
 #include "problem.h"   // Problem class
@@ -140,30 +140,51 @@ const char *CliGetSummaryStringForContest( int contestid )
 {
   static char str[70];
   char keyrate[32];
+  double totaliter;
   const char *keyrateP, *name;
-  unsigned int packets;
+  unsigned int packets, units;
   struct timeval ttime;
 
   if ( CliIsContestIDValid( contestid ) ) //clicdata.cpp
   {
     CliGetContestInfoBaseData( contestid, &name, NULL ); //clicdata.cpp
-    CliGetContestInfoSummaryData( contestid, &packets, NULL, &ttime ); //ditto
+    CliGetContestInfoSummaryData( contestid, &packets, &totaliter, &ttime, &units ); //ditto
     keyrateP=__CliGetKeyrateAsString(keyrate,
           CliGetKeyrateForContest(contestid),((double)(1000)));
   }
   else
   {
     name = "???";
-    packets = 0;
+    units = packets = 0;
     ttime.tv_sec = 0;
     ttime.tv_usec = 0;
     keyrateP = "---.-- ";
   }
 
-  sprintf(str, "%d %s packet%s %s%c- [%s%s/s]", 
-       packets, name, ((packets==1)?(""):("s")),
-       CliGetTimeString( &ttime, 2 ), ((!packets)?(0):(' ')), keyrateP,
-       contestid == OGR ? "nodes" : "keys" );
+  str[0] = '\0';
+  switch (contestid)
+  {
+    case RC5:
+    case DES:
+    case CSC:
+    {
+      sprintf(str, "%d %s packet%s (%u*2^28 work units)\n"
+                   "%s%c- [%s%s/s]", 
+           packets, name, ((packets==1)?(""):("s")), units,
+           CliGetTimeString( &ttime, 2 ), ((!packets)?(0):(' ')), keyrateP,
+           contestid == OGR ? "nodes" : "keys" );
+      break;
+    }
+    case OGR:  /* old style */
+    {
+      sprintf(str, "%d %s packet%s %s%c- [%s%s/s]", 
+           packets, name, ((packets==1)?(""):("s")),
+           CliGetTimeString( &ttime, 2 ), ((!packets)?(0):(' ')), keyrateP,
+           contestid == OGR ? "nodes" : "keys" );
+      break;
+    }
+  }
+
   return str;
 }
 
