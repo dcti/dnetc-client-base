@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: threadcd.h,v $
+// Revision 1.10  1998/07/13 23:39:37  cyruspatel
+// Added functions to format and display raw cpu info for better management
+// of the processor detection functions and tables. Well, not totally raw,
+// but still less cooked than SelectCore(). All platforms are supported, but
+// the data may not be meaningful on all. The info is accessible to the user
+// though the -cpuinfo switch.
+//
 // Revision 1.9  1998/07/13 03:32:00  cyruspatel
 // Added 'const's or 'register's where the compiler was complaining about
 // ambiguities. ("declaration/type or an expression")
@@ -72,8 +79,11 @@
   #undef OS_SUPPORTS_THREADING
 #else
   #if !defined(MULTITHREAD)
-    typedef int THREADID ;
-    #undef OS_SUPPORTS_THREADING
+    typedef int THREADID ; //dummy
+    #if ((CLIENT_OS != OS_LINUX) && (CLIENT_OS != OS_DGUX) && \
+        (CLIENT_OS != OS_SOLARIS) && (CLIENT_OS != OS_FREEBSD))
+      #undef OS_SUPPORTS_THREADING
+    #endif 
   #else
     #include <pthread.h>
     typedef pthread_t THREADID;

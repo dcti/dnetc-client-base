@@ -9,6 +9,13 @@
 // function.
 //
 // $Log: cliident.cpp,v $
+// Revision 1.3  1998/07/13 23:39:32  cyruspatel
+// Added functions to format and display raw cpu info for better management
+// of the processor detection functions and tables. Well, not totally raw,
+// but still less cooked than SelectCore(). All platforms are supported, but
+// the data may not be meaningful on all. The info is accessible to the user
+// though the -cpuinfo switch.
+//
 // Revision 1.2  1998/07/09 09:43:31  remi
 // Give an error message when the user ask for '-ident' and there is no support
 // for it in the client.
@@ -29,13 +36,14 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliident_cpp(void) { 
-static const char *id="@(#)$Id: cliident.cpp,v 1.2 1998/07/09 09:43:31 remi Exp $";
+static const char *id="@(#)$Id: cliident.cpp,v 1.3 1998/07/13 23:39:32 cyruspatel Exp $";
 return id; } 
 #endif
 
 //-----------------------------------------------------------------------
 
 #include <stdio.h>
+#include <string.h>
 #include "cliident.h" //just to keep the prototypes in sync.
 
 #if defined(__showids__) //not needed if we're not showing ids anyway
@@ -66,11 +74,41 @@ static const char * (*ident_table[])() = {
    threadcd_cpp, iniread_cpp, autobuff_cpp, network_cpp, convdes_cpp,
    clirate_cpp, clicdata_cpp, mail_cpp, clisrate_cpp };
 
+//"@(#)$Id: cliident.cpp,v 1.3 1998/07/13 23:39:32 cyruspatel Exp $"
+
 void CliIdentifyModules(void)
 {
   unsigned int i;
   for (i=0;i<(sizeof(ident_table)/sizeof(ident_table[0]));i++)
-    printf( "%s\n", (*ident_table[i])() );
+    {
+    //printf( "%s\n", (*ident_table[i])() );
+    const char *p1 = (*ident_table[i])();
+    if ( p1 != NULL )
+      {              
+      char buffer[76];
+      char *p2 = &buffer[0];
+      char *p3 = &buffer[sizeof(buffer)-2];
+      p1 += 9;
+      for (unsigned int pos = 0; pos < 4; pos++)
+        {
+        while ( *p1 != 0 && *p1 == ' ' )
+          p1++;
+        unsigned int len = 0;
+        while ( p2<p3 && *p1 != 0 && *p1 != ' ' )
+          { *p2++ = *p1++; len++; }
+        if ( p2>=p3 || *p1 == 0 )
+          break;
+        if (pos != 0) 
+          len+=10;
+        do{ *p2++ = ' ';
+          } while (p2<p3 && (++len)<20);
+        }
+      *p2 = 0;
+      if ( p2 != &buffer[0] )
+        printf( "%s\n", buffer );
+      }  
+    }
+  return;
 }
 
 #else //#if defined(__showids__)

@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.17  1998/07/13 23:39:33  cyruspatel
+// Added functions to format and display raw cpu info for better management
+// of the processor detection functions and tables. Well, not totally raw,
+// but still less cooked than SelectCore(). All platforms are supported, but
+// the data may not be meaningful on all. The info is accessible to the user
+// though the -cpuinfo switch.
+//
 // Revision 1.16  1998/07/12 00:40:15  cyruspatel
 // Corrected a cosmetic boo-boo. ("... failed to detect an processor")
 //
@@ -72,7 +79,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.16 1998/07/12 00:40:15 cyruspatel Exp $";
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.17 1998/07/13 23:39:33 cyruspatel Exp $";
 }
 #endif
 
@@ -80,6 +87,7 @@ return "@(#)$Id: cpucheck-conflict.cpp,v 1.16 1998/07/12 00:40:15 cyruspatel Exp
 #include "baseincs.h"  // for platform specific header files
 #include "client.h"    // for the client class
 #include "cpucheck.h"  //just to keep the prototypes in sync.
+#include "threadcd.h"  //for the OS_SUPPORTS_THREADING define
 
 #if (CLIENT_OS == OS_SOLARIS)
 #include <unistd.h>    // cramer - sysconf()
@@ -394,10 +402,12 @@ static void ARMident_catcher(int)
   longjmp(ARMident_jmpbuf, 1);
 }
 
-int Client::GetProcessorType()
+static u32 GetARMIdentification(void)
 {
-  u32 realid, detectedvalue; // value ARMident returns, must be interpreted
-  int coretouse; // the core the client should use
+  static u32 detectedvalue = 0x0;
+
+  if ( detectedvalue != 0x0 )
+    return detectedvalue;
 
   // ARMident() will throw SIGILL on an ARM 2 or ARM 250, because
   // they don't have the system control coprocessor. (We ignore the
@@ -441,6 +451,13 @@ int Client::GetProcessorType()
     else if (detectediomd == 0xaa00)
       detectedvalue = 0x7500FE;
   }
+  return detectedvalue;
+}  
+
+int Client::GetProcessorType()
+{
+  u32 detectedvalue = GetARMIdentification(); //must be interpreted
+  int coretouse; // the core the client should use
 
   LogScreen("Automatic processor detection ");
 
@@ -472,7 +489,7 @@ int Client::GetProcessorType()
       coretouse=1;
       break;
     default:
-      LogScreenf("failed. (id: %08X)\n", realid);
+      LogScreenf("failed. (id: %08X)\n", detectedvalue);
       coretouse=-1;
       break;
   }
@@ -503,5 +520,78 @@ unsigned int GetTimesliceBaseline(void)
   return 0;
 #endif    
 }  
+
+// --------------------------------------------------------------------------
+
+// Originally intended as tool to assist in managing the processor ID table 
+// for x86, I now (after writing it) realize that it could also get users on
+// non-x86 platforms to send us *their* processor detection code. :) - Cyrus 
+
+void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxcpus, const char ** sfoundcpus )
+{
+  const char *maxcpu_s, *foundcpu_s, *cpuid_s; 
+#if (CLIENT_CPU == CPU_X86)    
+  static char cpuid_b[12];
+  int vendorid, cpuidb;                     
+  __GetProcessorXRef( &cpuidb, &vendorid, NULL, NULL );
+  sprintf( cpuid_b, "%04X:%04X", vendorid, cpuidb );
+  cpuid_s = ((const char *)(&cpuid_b[0]));      
+#elif ((CLIENT_CPU == CPU_ARM) && (CLIENT_OS == OS_RISCOS))
+  static char cpuid_b[10];
+  u32 cpuidb = GetARMIdentification();
+  if (cpuidb == 0x0200)
+    cpuid_s = "ARM 2 or ARM 250";
+  else if (cpuidb == 0x0A10)
+    cpuidb_s = "StrongARM 110";
+  else
+    {
+    sprintf( cpuid_b, "%X", cpuidb );
+    cpuid_s = ((const char *)(&cpuid_b[0]));      
+    }
+#else
+  cpuid_s = "none (client does not support identification)";
+#endif    
+  #if defined(MULTITHREAD)
+    static char maxcpu_b[6]; 
+    sprintf( maxcpu_b, "%d", MAXCPUS ); 
+    maxcpu_s = ((const char *)(&maxcpu_b[0]));
+  #elif defined(OS_SUPPORTS_THREADING) //from threadcd.h
+    maxcpu_s = "1 (client built without thread support)";
+  #elif ((CLIENT_CPU != CPU_X86) && (CLIENT_CPU != CPU_88K) && \
+        (CLIENT_CPU != CPU_SPARC) && (CLIENT_CPU != CPU_POWERPC))
+    maxcpu_s = "1 (client is not thread-safe)";
+  #else
+    maxcpu_s = "1 (OS does not support threads)";
+  #endif  
+
+  int cpucount = __GetProcessorCount();
+  if (cpucount < 1)
+    foundcpu_s = "1 (OS does not support detection)";
+  else
+    {  
+    static char foundcpu_b[6]; 
+    sprintf( foundcpu_b, "%d", cpucount );
+    foundcpu_s = ((const char *)(&foundcpu_b[0]));
+    }
+
+  if ( scpuid ) *scpuid = cpuid_s;
+  if ( smaxcpus ) *smaxcpus = maxcpu_s; 
+  if ( sfoundcpus ) *sfoundcpus = foundcpu_s; 
+  return;
+}  
+
+// --------------------------------------------------------------------------
+
+void DisplayProcessorInformation(void)
+{
+  const char *scpuid, *smaxcpus, *sfoundcpus;
+  GetProcessorInformationStrings( &scpuid, &smaxcpus, &sfoundcpus );
+  
+  printf("Automatic processor identification tag:\n\t%s\n"
+   "Number of processors detected by this client:\n\t%s\n"
+   "Number of processors supported by each instance of this client:\n\t%s\n",
+   scpuid, sfoundcpus, smaxcpus );
+  return;
+}     
  
 // --------------------------------------------------------------------------
