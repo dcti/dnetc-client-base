@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.12 2002/09/24 01:57:25 acidblood Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.13 2002/09/24 12:05:22 acidblood Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
@@ -17,6 +17,7 @@ typedef union
 {
     /* this is our generic prototype */
     s32 (*gen)( RC5UnitWork *, u32 *iterations, void *memblk );
+    s32 (*gen_72)( RC5_72UnitWork *, u32 *iterations, void *memblk );
     #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
     u32 __regargs (*rc5)( RC5UnitWork * , u32 iterations );
     #else

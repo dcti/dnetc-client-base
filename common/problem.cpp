@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.159 2002/09/24 11:14:54 acidblood Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.160 2002/09/24 12:05:22 acidblood Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -1051,6 +1051,7 @@ int ProblemRetrieveState( void *__thisprob,
 
 /* ------------------------------------------------------------- */
 
+#ifdef HAVE_OLD_CRYPTO
 static int Run_RC5(InternalProblem *thisprob, /* already validated */
                    u32 *keyscheckedP /* count of ... */, int *resultcode)
 {
@@ -1094,7 +1095,7 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
       //we _do_ need to care that the keystocheck and starting key are aligned.
 
       *keyscheckedP = keystocheck; /* Pass 'keystocheck', get back 'keyschecked'*/
-      rescode = (*(thisprob->pub_data.unit_func.gen))(&thisprob->priv_data.rc5_72unitwork,keyscheckedP,thisprob->priv_data.core_membuffer);
+      rescode = (*(thisprob->pub_data.unit_func.gen))(&thisprob->priv_data.rc5unitwork,keyscheckedP,thisprob->priv_data.core_membuffer);
 
       if (rescode >= 0 && thisprob->pub_data.cruncher_is_asynchronous) /* co-processor or similar */
       {
@@ -1127,7 +1128,7 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
     }
     else /* old style */
     {
-      *keyscheckedP = (*(thisprob->pub_data.unit_func.rc5_72))(&thisprob->priv_data.rc5_72unitwork,(keystocheck/thisprob->pub_data.pipeline_count));
+      *keyscheckedP = (*(thisprob->pub_data.unit_func.rc5))(&thisprob->priv_data.rc5unitwork,(keystocheck/thisprob->pub_data.pipeline_count));
       //don't use the next few lines as a guide for conversion to unified
       //prototypes!  look at the end of rc5/ansi/rc5ansi_2-rg.cpp instead.
       if (*keyscheckedP < keystocheck)
@@ -1151,48 +1152,41 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
   __IncrementKey(&thisprob->priv_data.refL0.hi, &thisprob->priv_data.refL0.mid, &thisprob->priv_data.refL0.lo, *keyscheckedP, thisprob->pub_data.contest);
 
   // Compare ref to core key incrementation
-  if (((thisprob->priv_data.refL0.hi  != thisprob->priv_data.rc5unitwork.L0.hi)  ||
-       (thisprob->priv_data.refL0.mid != thisprob->priv_data.rc5unitwork.L0.mid) ||
-       (thisprob->priv_data.refL0.lo  != thisprob->priv_data.rc5unitwork.L0.lo))
+  if (((thisprob->priv_data.refL0.hi != thisprob->priv_data.rc5unitwork.L0.hi) || (thisprob->priv_data.refL0.lo != thisprob->priv_data.rc5unitwork.L0.lo))
       && (*resultcode != RESULT_FOUND) )
   {
-    if (thisprob->priv_data.contestwork.bigcrypto.iterations.hi == 0 &&
-        thisprob->priv_data.contestwork.bigcrypto.iterations.lo == 0x20000) /* test case */
+    if (thisprob->priv_data.contestwork.crypto.iterations.hi == 0 &&
+        thisprob->priv_data.contestwork.crypto.iterations.lo == 0x20000) /* test case */
     {
       Log("RC5 incrementation mismatch:\n"
-          "Debug Information: %02x:%08x:%08x - %02x:%08x:%08x\n",
-          thisprob->priv_data.rc5_72unitwork.L0.hi, thisprob->priv_data.rc5_72unitwork.L0.mid, thisprob->priv_data.rc5_72unitwork.L0.lo,
-          thisprob->priv_data.refL0.hi, thisprob->priv_data.refL0.mid, thisprob->priv_data.refL0.lo);
+          "Debug Information: %08x:%08x - %08x:%08x\n",
+          thisprob->priv_data.rc5unitwork.L0.hi, thisprob->priv_data.rc5unitwork.L0.lo, thisprob->priv_data.refL0.hi, thisprob->priv_data.refL0.lo);
     }
     *resultcode = -1;
     return -1;
   };
 
   // Checks passed, increment keys done count.
-  thisprob->priv_data.contestwork.bigcrypto.keysdone.lo += *keyscheckedP;
-  if (thisprob->priv_data.contestwork.bigcrypto.keysdone.lo < *keyscheckedP)
-      thisprob->priv_data.contestwork.bigcrypto.keysdone.hi++;
+  thisprob->priv_data.contestwork.crypto.keysdone.lo += *keyscheckedP;
+  if (thisprob->priv_data.contestwork.crypto.keysdone.lo < *keyscheckedP)
+    thisprob->priv_data.contestwork.crypto.keysdone.hi++;
 
   // Update data returned to caller
   if (*resultcode == RESULT_FOUND)  //(*keyscheckedP < keystocheck)
   {
     // found it!
-    u32 keylo = thisprob->priv_data.contestwork.bigcryptocrypto.key.lo;
-    thisprob->priv_data.contestwork.bigcrypto.key.lo  += thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
-    thisprob->priv_data.contestwork.bigcrypto.key.mid += thisprob->priv_data.contestwork.bigcrypto.keysdone.mid;
-    thisprob->priv_data.contestwork.bigcrypto.key.hi  += thisprob->priv_data.contestwork.bigcrypto.keysdone.hi;
-    if (thisprob->priv_data.contestwork.bigcrypto.key.lo < keylo)
-    {
-      thisprob->priv_data.contestwork.bigcrypto.key.mid++; // wrap occured ?
-      if (thisprob->priv_data.contestwork.bigcrypto.key.mid == 0)
-        thisprob->priv_data.contestwork.bigcrypto.key.hi++;
-    }
+    u32 keylo = thisprob->priv_data.contestwork.crypto.key.lo;
+    thisprob->priv_data.contestwork.crypto.key.lo += thisprob->priv_data.contestwork.crypto.keysdone.lo;
+    thisprob->priv_data.contestwork.crypto.key.hi += thisprob->priv_data.contestwork.crypto.keysdone.hi;
+    if (thisprob->priv_data.contestwork.crypto.key.lo < keylo)
+      thisprob->priv_data.contestwork.crypto.key.hi++; // wrap occured ?
+
     return RESULT_FOUND;
   }
 
-  if ( ( thisprob->priv_data.contestwork.bigcrypto.keysdone.hi > thisprob->priv_data.contestwork.bigcrypto.iterations.hi ) ||
-       ( ( thisprob->priv_data.contestwork.bigcrypto.keysdone.hi == thisprob->priv_data.contestwork.bigcrypto.iterations.hi ) &&
-       ( thisprob->priv_data.contestwork.bigcrypto.keysdone.lo >= thisprob->priv_data.contestwork.bigcrypto.iterations.lo ) ) )
+  if ( ( thisprob->priv_data.contestwork.crypto.keysdone.hi > thisprob->priv_data.contestwork.crypto.iterations.hi ) ||
+       ( ( thisprob->priv_data.contestwork.crypto.keysdone.hi == thisprob->priv_data.contestwork.crypto.iterations.hi ) &&
+       ( thisprob->priv_data.contestwork.crypto.keysdone.lo >= thisprob->priv_data.contestwork.crypto.iterations.lo ) ) )
   {
     // done with this block and nothing found
     *resultcode = RESULT_NOTHING;
@@ -1200,17 +1194,15 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
   }
 
   #ifdef STRESS_THREADS_AND_BUFFERS
-  if (core_prob->priv_data.contestwork.bigcrypto.key.hi  ||
-      core_prob->priv_data.contestwork.bigcrypto.key.mid ||
-      core_prob->priv_data.contestwork.bigcrypto.key.lo) /* not bench */
+  if (core_prob->priv_data.contestwork.crypto.key.hi ||
+      core_prob->priv_data.contestwork.crypto.key.lo) /* not bench */
   {
-    core_prob->priv_data.contestwork.bigcrypto.key.hi = 0;
-    core_prob->priv_data.contestwork.bigcrypto.key.mid = 0;
-    core_prob->priv_data.contestwork.bigcrypto.key.lo = 0;
-    core_prob->priv_data.contestwork.bigcrypto.keysdone.hi = 
-      core_prob->priv_data.contestwork.bigcrypto.iterations.hi;
-    core_prob->priv_data.contestwork.bigcrypto.keysdone.lo = 
-      core_prob->priv_data.contestwork.bigcrypto.iterations.lo;
+    core_prob->priv_data.contestwork.crypto.key.hi = 0;
+    core_prob->priv_data.contestwork.crypto.key.lo = 0;
+    core_prob->priv_data.contestwork.crypto.keysdone.hi = 
+      core_prob->priv_data.contestwork.crypto.iterations.hi;
+    core_prob->priv_data.contestwork.crypto.keysdone.lo = 
+      core_prob->priv_data.contestwork.crypto.iterations.lo;
     *resultcode = RESULT_NOTHING;
   }
   #endif
@@ -1220,6 +1212,7 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
   return RESULT_WORKING;    // Done with this round
 #endif
 }
+#endif
 
 /* ------------------------------------------------------------- */
 
@@ -1422,6 +1415,179 @@ static int Run_OGR( InternalProblem *thisprob, /* already validated */
 #endif
  *resultcode = -1; /* this will cause the problem to be discarded */
  return -1;
+}
+
+static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
+                   u32 *keyscheckedP /* count of ... */, int *resultcode)
+{
+#ifndef HAVE_RC564_CORES
+  thisprob = thisprob;
+  *keyscheckedP = 0;
+  *resultcode = -1;
+  return -1;
+#else
+  s32 rescode = -1;
+
+  /* a brace to ensure 'keystocheck' is not referenced in the common part */
+  {
+    u32 keystocheck = *keyscheckedP;
+    // don't allow a too large of a keystocheck be used ie (>(iter-keysdone))
+    // (technically not necessary, but may save some wasted time)
+    if (thisprob->priv_data.contestwork.bigcrypto.keysdone.hi == thisprob->priv_data.contestwork.bigcrypto.iterations.hi)
+    {
+      u32 todo = thisprob->priv_data.contestwork.bigcrypto.iterations.lo-thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
+      if (todo < keystocheck)
+        keystocheck = todo;
+    }
+
+    if (keystocheck < MINIMUM_ITERATIONS)
+      keystocheck = MINIMUM_ITERATIONS;
+    else if ((keystocheck % MINIMUM_ITERATIONS) != 0)
+      keystocheck += (MINIMUM_ITERATIONS - (keystocheck % MINIMUM_ITERATIONS));
+
+    #if 0
+    LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
+              "suggested iterations: %lu (0x%lx)\n"
+              "thisprob->pub_data.pipeline_count = %lu, iterations%%thisprob->pub_data.pipeline_count = %lu\n",
+              (unsigned long)keystocheck, (unsigned long)keystocheck,
+              (unsigned long)(*keyscheckedP), (unsigned long)(*keyscheckedP),
+              thisprob->pub_data.pipeline_count, keystocheck%thisprob->pub_data.pipeline_count );
+    #endif
+
+    if (thisprob->pub_data.use_generic_proto)
+    {
+      //we don't care about thisprob->pub_data.pipeline_count when using unified cores.
+      //we _do_ need to care that the keystocheck and starting key are aligned.
+
+      *keyscheckedP = keystocheck; /* Pass 'keystocheck', get back 'keyschecked'*/
+      rescode = (*(thisprob->pub_data.unit_func.gen_72))(&thisprob->priv_data.rc5_72unitwork,keyscheckedP,thisprob->priv_data.core_membuffer);
+
+      if (rescode >= 0 && thisprob->pub_data.cruncher_is_asynchronous) /* co-processor or similar */
+      {
+        keystocheck = *keyscheckedP; /* always so */
+        /* how this works:
+         - for RESULT_FOUND, we don't need to do anything, since keyscheckedP
+           has the real count of iters done. If we were still using old style
+           method of determining RESULT_FOUND by (keyscheckedP < keystocheck),
+           then we would simply need to set 'keystocheck = 1 + *keyscheckedP'
+           to make it greater.
+         - for RESULT_NOTHING/RESULT_WORKING
+           unlike normal cores, where RESULT_NOTHING and RESULT_WORKING
+           are synonymous (RESULT_NOTHING from the core's perspective ==
+           RESULT_WORKING from the client's perspective), async cores tell
+           us which-is-which through the keyscheckedP pointer. As long as
+           they are _WORKING, the *keyscheckedP (ie iterations_done) will be
+           zero. (And of course, incrementations checks will pass as long
+           as iterations_done is zero :).
+        */
+        //(these next 3 lines are quite useless, since the actual state
+        //is set lower down, but leave them in anyway to show how it works)
+        //remember: keystocheck has already been set equal to *keyscheckedP
+        if (rescode != RESULT_FOUND) /* RESULT_NOTHING/RESULT_WORKING */
+        {
+          rescode = *resultcode = RESULT_NOTHING; //assume we know something
+          if (*keyscheckedP == 0)  /* still working */
+            rescode = *resultcode = RESULT_WORKING;
+        }
+      }
+    }
+    else /* old style */
+    {
+      *keyscheckedP = (*(thisprob->pub_data.unit_func.rc5_72))(&thisprob->priv_data.rc5_72unitwork,(keystocheck/thisprob->pub_data.pipeline_count));
+      //don't use the next few lines as a guide for conversion to unified
+      //prototypes!  look at the end of rc5/ansi/rc5ansi_2-rg.cpp instead.
+      if (*keyscheckedP < keystocheck)
+        rescode = RESULT_FOUND;
+      else if (*keyscheckedP == keystocheck)
+        rescode = RESULT_WORKING; /* synonymous with RESULT_NOTHING */
+      else
+        rescode = -1;
+    }
+  } /* brace to ensure that 'keystocheck' is not referenced beyond here */
+  /* -- the code from here on down is identical to that of CSC -- */
+
+  if (rescode < 0) /* "kiter" error */
+  {
+    *resultcode = -1;
+    return -1;
+  }
+  *resultcode = (int)rescode;
+
+  // Increment reference key count
+  __IncrementKey(&thisprob->priv_data.refL0.hi, &thisprob->priv_data.refL0.mid, &thisprob->priv_data.refL0.lo, *keyscheckedP, thisprob->pub_data.contest);
+
+  // Compare ref to core key incrementation
+  if (((thisprob->priv_data.refL0.hi  != thisprob->priv_data.rc5_72unitwork.L0.hi)  ||
+       (thisprob->priv_data.refL0.mid != thisprob->priv_data.rc5_72unitwork.L0.mid) ||
+       (thisprob->priv_data.refL0.lo  != thisprob->priv_data.rc5_72unitwork.L0.lo))
+      && (*resultcode != RESULT_FOUND) )
+  {
+    if (thisprob->priv_data.contestwork.bigcrypto.iterations.hi == 0 &&
+        thisprob->priv_data.contestwork.bigcrypto.iterations.lo == 0x20000) /* test case */
+    {
+      Log("RC5 incrementation mismatch:\n"
+          "Debug Information: %02x:%08x:%08x - %02x:%08x:%08x\n",
+          thisprob->priv_data.rc5_72unitwork.L0.hi, thisprob->priv_data.rc5_72unitwork.L0.mid, thisprob->priv_data.rc5_72unitwork.L0.lo,
+          thisprob->priv_data.refL0.hi, thisprob->priv_data.refL0.mid, thisprob->priv_data.refL0.lo);
+    }
+    *resultcode = -1;
+    return -1;
+  };
+
+  // Checks passed, increment keys done count.
+  thisprob->priv_data.contestwork.bigcrypto.keysdone.lo += *keyscheckedP;
+  if (thisprob->priv_data.contestwork.bigcrypto.keysdone.lo < *keyscheckedP)
+      thisprob->priv_data.contestwork.bigcrypto.keysdone.hi++;
+
+  // Update data returned to caller
+  if (*resultcode == RESULT_FOUND)  //(*keyscheckedP < keystocheck)
+  {
+    // found it!
+    u32 keylo  = thisprob->priv_data.contestwork.bigcrypto.key.lo;
+    u32 keymid = thisprob->priv_data.contestwork.bigcrypto.key.mid;
+    thisprob->priv_data.contestwork.bigcrypto.key.lo  += thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
+    if (thisprob->priv_data.contestwork.bigcrypto.key.lo < keylo)
+    {
+      thisprob->priv_data.contestwork.bigcrypto.key.mid++; // wrap occured ?
+      if (thisprob->priv_data.contestwork.bigcrypto.key.mid == 0)
+        thisprob->priv_data.contestwork.bigcrypto.key.hi++;
+    }
+    thisprob->priv_data.contestwork.bigcrypto.key.mid += thisprob->priv_data.contestwork.bigcrypto.keysdone.hi;
+    if (thisprob->priv_data.contestwork.bigcrypto.key.mid < keymid)
+        thisprob->priv_data.contestwork.bigcrypto.key.hi++;
+
+    return RESULT_FOUND;
+  }
+
+  if ( ( thisprob->priv_data.contestwork.bigcrypto.keysdone.hi > thisprob->priv_data.contestwork.bigcrypto.iterations.hi ) ||
+       ( ( thisprob->priv_data.contestwork.bigcrypto.keysdone.hi == thisprob->priv_data.contestwork.bigcrypto.iterations.hi ) &&
+       ( thisprob->priv_data.contestwork.bigcrypto.keysdone.lo >= thisprob->priv_data.contestwork.bigcrypto.iterations.lo ) ) )
+  {
+    // done with this block and nothing found
+    *resultcode = RESULT_NOTHING;
+    return RESULT_NOTHING;
+  }
+
+  #ifdef STRESS_THREADS_AND_BUFFERS
+  if (core_prob->priv_data.contestwork.bigcrypto.key.hi  ||
+      core_prob->priv_data.contestwork.bigcrypto.key.mid ||
+      core_prob->priv_data.contestwork.bigcrypto.key.lo) /* not bench */
+  {
+    core_prob->priv_data.contestwork.bigcrypto.key.hi = 0;
+    core_prob->priv_data.contestwork.bigcrypto.key.mid = 0;
+    core_prob->priv_data.contestwork.bigcrypto.key.lo = 0;
+    core_prob->priv_data.contestwork.bigcrypto.keysdone.hi = 
+      core_prob->priv_data.contestwork.bigcrypto.iterations.hi;
+    core_prob->priv_data.contestwork.bigcrypto.keysdone.lo = 
+      core_prob->priv_data.contestwork.bigcrypto.iterations.lo;
+    *resultcode = RESULT_NOTHING;
+  }
+  #endif
+
+  // more to do, come back later.
+  *resultcode = RESULT_WORKING;
+  return RESULT_WORKING;    // Done with this round
+#endif
 }
 
 /* ------------------------------------------------------------- */
@@ -1659,8 +1825,8 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
     switch (core_prob->pub_data.contest)
     {
 // TODO: acidblood/trashover
-      case RC5_72:
-// OK!
+      case RC5_72: retcode = Run_RC5_72( core_prob, &iterations, &last_resultcode );
+                   break;
       case RC5: retcode = Run_RC5( core_prob, &iterations, &last_resultcode );
                 break;
       case DES: retcode = Run_DES( core_prob, &iterations, &last_resultcode );
