@@ -13,13 +13,13 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.32 2000/06/13 00:34:11 mfeiri Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.33 2000/06/15 23:06:33 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
 #include "clitime.h"  // keep the prototypes in sync
 
-#if (CLIENT_OS == OS_MACOSX)
+#if (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_RHAPSODY)
   #include <sys/sysctl.h>
 #endif
 
