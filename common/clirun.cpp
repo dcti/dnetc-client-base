@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.80  1999/03/08 02:53:25  sampo
+// fix ambiguous function overload on abs()
+//
 // Revision 1.79  1999/03/04 01:30:15  cyp
 // Changed checkpoint interval to the greater of 10% change and 10 minutes.
 //
@@ -307,7 +310,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.79 1999/03/04 01:30:15 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.80 1999/03/08 02:53:25 sampo Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -1622,7 +1625,7 @@ int Client::Run( void )
         prob_i = checkpointsPercent;
         checkpointsPercent = (total_percent_now/load_problem_count);
 
-        if ( abs(checkpointsPercent - prob_i) >= CHECKPOINT_FREQ_PERCDIFF )
+        if ( abs((int)(checkpointsPercent - prob_i)) >= CHECKPOINT_FREQ_PERCDIFF )
           {
           if (CheckpointAction( CHECKPOINT_REFRESH, load_problem_count ))
             checkpointsDisabled = 1;
