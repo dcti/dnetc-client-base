@@ -1,7 +1,7 @@
 
  distributed.net client for AmigaOS (68k/PPC)
  Released by Oliver Roberts <oliver@futaura.co.uk>
- Document revision $Id: readme.amiga,v 1.10 2002/09/02 00:35:45 andreasb Exp $
+ Document revision $Id: readme.amiga,v 1.10.4.1 2003/01/07 15:07:33 oliver Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -50,6 +50,7 @@
      - Stack must be set to at least 200000 bytes.
      - Also works under WarpUp with PPCLibEmu 0.8a or higher (although
        you should really use the native WarpOS version instead, of course).
+     - This version is recommended for MorphOS users too.
 
  2.0  Getting started ------------------------------------------------
 
@@ -187,18 +188,19 @@
  
     -- Thanks to everybody involved in the development of the Amiga client
        and the beta testing process, who have helped make it what it is,
-       including (in no particular order):
+       including (in alphabetical order):
 
+       - John Girvin (68k optimized RC5-64 cores)
+       - Malcolm Howell (68k and PPC optimized RC5-72 cores)
        - Kriton Kyrimis (multi-core 68k OGR cores, support and ideas)
+       - Roberto Patriarca (Myzar)
        - Tony Preston (support, testing, views and overall managament)
-       - John Girvin (68k optimized RC5 cores)
-       - Roberto Ragusa (PPC 604e optimized RC5 core)
+       - Roberto Ragusa (PPC 604e optimized RC5-64 core)
+       - Jacek Rzeuski (keyrate chart class code for Myzar)
        - Stefan Smietanowski (for porting previous clients to the Amiga -
          some crucial parts of his code are used in this version)
-       - Roberto Patriarca (Myzar)
-       - Thomas Tavoly (coordinator of the Amiga RC5 Team)
-       - Jacek Rzeuski (keyrate chart class code for Myzar)
        - Dirk Stoecker (laborious testing of PowerUp client betas)
+       - Thomas Tavoly (coordinator of the Amiga RC5 Team)
 
     -- The whole Amiga RC5 Team
        Without you there wouldn't be much of a point in doing the client, 
