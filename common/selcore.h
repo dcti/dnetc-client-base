@@ -1,26 +1,16 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.16.2.2 2003/01/07 15:04:31 oliver Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.16.2.3 2003/01/15 22:55:01 andreasb Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
 #if defined(HAVE_OGR_CORES)
 #include "ogr.h"
-#endif
-
-
-#if (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__ )
-  #define CDECL cdecl
-#elif  (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
-  #define CDECL __regargs
-#endif
-#ifndef CDECL
-  #define CDECL /* nothing */
 #endif
 
 

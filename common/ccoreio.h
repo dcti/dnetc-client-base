@@ -1,6 +1,6 @@
 /* Hey, Emacs, this is *not* a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -21,9 +21,20 @@
  *   of the problem object (ie created when the object is new'd) 
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.13 2002/10/08 09:30:11 andreasb Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.13.2.1 2003/01/15 22:55:01 andreasb Exp $"
 
 #include "cputypes.h"   /* u32 etc. used here and in the cores */
+
+
+#if (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__ )
+  #define CDECL cdecl
+#elif  (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
+  #define CDECL __regargs
+#endif
+#ifndef CDECL
+  #define CDECL /* nothing */
+#endif
+
 
 typedef enum
 {
