@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selftest.cpp,v $
+// Revision 1.40  1999/01/26 17:28:50  michmarc
+// Made the failed test message look nicer.
+//
 // Revision 1.39  1999/01/18 12:12:35  cramer
 // - Added code for ncpu detection for linux/alpha
 // - Corrected the alpha RC5 core handling (support "timeslice")
@@ -53,7 +56,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.39 1999/01/18 12:12:35 cramer Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.40 1999/01/26 17:28:50 michmarc Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -337,7 +340,7 @@ int SelfTest( unsigned int contest, int cputype, int threadindex /* defaults to 
     else
       {
       // failure occurred (no solution)
-      LogScreen( "Test %d FAILED: %08X:%08X - %08X:%08X\n", testnum + 1,
+      LogScreen( "Test %02d FAILED: %08X:%08X - %08X:%08X\n", testnum + 1,
             0, 0, expectedsolution.hi, expectedsolution.lo );
       //successes = -successes;
       }
