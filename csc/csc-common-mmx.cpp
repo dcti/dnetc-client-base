@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-common-mmx.cpp,v $
+// Revision 1.1.2.2  1999/11/23 23:39:45  remi
+// csc_transP() optimized.
+// modified csc_transP() calling convention.
+//
 // Revision 1.1.2.1  1999/11/22 18:58:11  remi
 // Initial commit of MMX'fied CSC cores.
 //
@@ -26,7 +30,11 @@
 
 #include "csc-common-mmx.h"
 
-const ulong mmNOT = _1;
+const ulong mmNOT
+#if defined(__GNUC__)
+__attribute ((aligned (16)))
+#endif
+  = _1;
 
 // ------------------------------------------------------------------
 // bitslice version of c0..c8

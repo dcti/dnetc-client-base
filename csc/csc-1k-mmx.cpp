@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-1k-mmx.cpp,v $
+// Revision 1.1.2.2  1999/11/23 23:39:45  remi
+// csc_transP() optimized.
+// modified csc_transP() calling convention.
+//
 // Revision 1.1.2.1  1999/11/22 18:58:11  remi
 // Initial commit of MMX'fied CSC cores.
 //
@@ -16,7 +20,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *csc_1k_cpp(void) {
-return "@(#)$Id: csc-1k-mmx.cpp,v 1.1.2.1 1999/11/22 18:58:11 remi Exp $"; }
+return "@(#)$Id: csc-1k-mmx.cpp,v 1.1.2.2 1999/11/23 23:39:45 remi Exp $"; }
 #endif
 
 #include "problem.h"
@@ -25,6 +29,6 @@ return "@(#)$Id: csc-1k-mmx.cpp,v 1.1.2.1 1999/11/22 18:58:11 remi Exp $"; }
 
 //#define INLINE_TRANSP
 #include "csc-common-mmx.h"
-#include "csc-1key-bitslicer.cpp"
+#include "csc-1key-bitslicer-mmx.cpp"
 #include "csc-1key-driver-mmx.cpp"
 

@@ -3,53 +3,19 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-6bits-bitslicer-mmx.cpp,v $
+// Revision 1.1.2.2  1999/11/23 23:39:45  remi
+// csc_transP() optimized.
+// modified csc_transP() calling convention.
+//
 // Revision 1.1.2.1  1999/11/22 18:58:11  remi
 // Initial commit of MMX'fied CSC cores.
-//
-// Revision 1.1.2.6  1999/11/01 17:23:23  cyp
-// renamed transX(...) to csc_transX(...) to avoid potential (future) symbol
-// collisions.
-//
-// Revision 1.1.2.5  1999/10/30 14:59:01  remi
-// cosmetic improvements.
-//
-// Revision 1.1.2.4  1999/10/26 20:48:52  remi
-// Moved tp1[] and tp2[] to the 16-byte aligned memory pool.
-//
-// Revision 1.1.2.3  1999/10/24 23:54:53  remi
-// Use Problem::core_membuffer instead of stack for CSC cores.
-// Align frequently used memory to 16-byte boundary in CSC cores.
-//
-// Revision 1.1.2.2  1999/10/08 00:07:01  cyp
-// made (mostly) all extern "C" {}
-//
-// Revision 1.1.2.1  1999/10/07 18:41:14  cyp
-// sync'd from head
-//
-// Revision 1.1  1999/07/23 02:43:05  fordbr
-// CSC cores added
-//
-//
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_6bits_bitslicer_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-6bits-bitslicer-mmx.cpp,v 1.1.2.1 1999/11/22 18:58:11 remi Exp $"; }
+return "@(#)$Id: csc-6bits-bitslicer-mmx.cpp,v 1.1.2.2 1999/11/23 23:39:45 remi Exp $"; }
 #endif
 
 // ------------------------------------------------------------------
-// version 6 bits : 08/04 17:43
-//
-// -O2 == -fomit-frame-pointer -fstrict-aliasing -fno-gcse -O2 -m486
-// -O3 == -fomit-frame-pointer -fstrict-aliasing -fno-gcse -O3 -mcpu=pentium
-//
-//        -O2    -O3
-// 486  :  33     ..  egcs 2.93.17 19990405
-// K5   :  67     60      //
-// K6   : 220    300      //
-// K6-2 : 286    394      //
-// K6-2 : 255    247  gcc 2.7.2.1
-// alpha:  80     ..  egcs 2.93.?? 19990321 (-mcpu=ev5)
-//
 #ifdef __cplusplus
 extern "C" {
 ulong
@@ -95,6 +61,10 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
   ulong (*tp1)[4][8] = (ulong (*)[4][8])membuffer;
   membuffer += (sizeof(*tp1) + 15) & 0xFFFFFFF0;
   ulong (*tp2)[4][8] = (ulong (*)[4][8])membuffer;
+  membuffer += (sizeof(*tp2) + 15) & 0xFFFFFFF0;
+
+  // allocate parameters on the aligned membuffer
+  csc_mmxParameters *csc_params = (csc_mmxParameters*) membuffer;
 
 
   ulong *skp;  // subkey[n]
@@ -109,13 +79,15 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
   //exit( 0 );
 
 #define APPLY_MP0(adr, adl)						\
-  csc_transP( (*tp1)[adr/16][7], (*tp1)[adr/16][6],			\
+  csc_transP_call( 							\
+              (*tp1)[adr/16][7], (*tp1)[adr/16][6],			\
               (*tp1)[adr/16][5], (*tp1)[adr/16][4],			\
 	      (*tp1)[adr/16][3], (*tp1)[adr/16][2],			\
 	      (*tp1)[adr/16][1], (*tp1)[adr/16][0],			\
 	  (*cfr)[adl+7], (*cfr)[adl+6], (*cfr)[adl+5], (*cfr)[adl+4],	\
 	  (*cfr)[adl+3], (*cfr)[adl+2], (*cfr)[adl+1], (*cfr)[adl+0] );	\
-  csc_transP( (*tp2)[adr/16][7], (*tp2)[adr/16][6],			\
+  csc_transP_call( 							\
+	      (*tp2)[adr/16][7], (*tp2)[adr/16][6],			\
               (*tp2)[adr/16][5], (*tp2)[adr/16][4],			\
               (*tp2)[adr/16][3], (*tp2)[adr/16][2],			\
 	      (*tp2)[adr/16][1], (*tp2)[adr/16][0],			\
@@ -131,7 +103,7 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
   x5 = (*cfr)[adl+5] ^ (skp[5+8] ^= skp[5+8-128]);			\
   x6 = (*cfr)[adl+6] ^ (skp[6+8] ^= skp[6+8-128]);			\
   x7 = (*cfr)[adl+7] ^ (skp[7+8] ^= skp[7+8-128]);			\
-  csc_transP(                                                           \
+  csc_transP_call(                                                      \
           x7 ^ (y7   =      (*cfr)[adr+7] ^ (skp[7] ^= skp[7-128])),	\
 	  x6 ^ (xy56 = x5 ^ (*cfr)[adr+6] ^ (skp[6] ^= skp[6-128])),	\
 	  x5 ^ (y5   =      (*cfr)[adr+5] ^ (skp[5] ^= skp[5-128])),	\
@@ -142,7 +114,7 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 	  x0 ^ (xy70 = x7 ^ (*cfr)[adr+0] ^ (skp[0] ^= skp[0-128])),	\
 	  (*cfr)[adl+7], (*cfr)[adl+6], (*cfr)[adl+5], (*cfr)[adl+4],	\
 	  (*cfr)[adl+3], (*cfr)[adl+2], (*cfr)[adl+1], (*cfr)[adl+0] );	\
-  csc_transP(                                                           \
+  csc_transP_call(                                                      \
           x6 ^ y7, xy56, x4 ^ y5, xy34,					\
 	  x2 ^ y3, xy12, x0 ^ y1, xy70,					\
 	  (*cfr)[adr+7], (*cfr)[adr+6], (*cfr)[adr+5], (*cfr)[adr+4],	\
@@ -154,7 +126,8 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
   x2 = (*cfr)[adl+2] ^ tep[2+8]; x3 = (*cfr)[adl+3] ^ tep[3+8];		\
   x4 = (*cfr)[adl+4] ^ tep[4+8]; x5 = (*cfr)[adl+5] ^ tep[5+8];		\
   x6 = (*cfr)[adl+6] ^ tep[6+8]; x7 = (*cfr)[adl+7] ^ tep[7+8];		\
-  csc_transP( x7 ^ (y7   =      (*cfr)[adr+7] ^ tep[7]),		\
+  csc_transP_call( 							\
+	      x7 ^ (y7   =      (*cfr)[adr+7] ^ tep[7]),		\
 	      x6 ^ (xy56 = x5 ^ (*cfr)[adr+6] ^ tep[6]),		\
 	      x5 ^ (y5   =      (*cfr)[adr+5] ^ tep[5]),		\
 	      x4 ^ (xy34 = x3 ^ (*cfr)[adr+4] ^ tep[4]),		\
@@ -164,7 +137,8 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
 	      x0 ^ (xy70 = x7 ^ (*cfr)[adr+0] ^ tep[0]),		\
 	  (*cfr)[adl+7], (*cfr)[adl+6], (*cfr)[adl+5], (*cfr)[adl+4],	\
 	  (*cfr)[adl+3], (*cfr)[adl+2], (*cfr)[adl+1], (*cfr)[adl+0] );	\
-  csc_transP( x6 ^ y7, xy56, x4 ^ y5, xy34,				\
+  csc_transP_call( 							\
+	      x6 ^ y7, xy56, x4 ^ y5, xy34,				\
    	      x2 ^ y3, xy12, x0 ^ y1, xy70,				\
 	  (*cfr)[adr+7], (*cfr)[adr+6], (*cfr)[adr+5], (*cfr)[adr+4],	\
 	  (*cfr)[adr+3], (*cfr)[adr+2], (*cfr)[adr+1], (*cfr)[adr+0] );	\
@@ -185,7 +159,7 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
   skp1 = &(*subkey)[1][8];
   {
   for( int n=7; n; n--,tcp+=8,skp1+=8,skp++ )
-    csc_transP( 
+    csc_transP_call( 
             skp1[7] ^ tcp[7], skp1[6] ^ tcp[6], skp1[5] ^ tcp[5], skp1[4] ^ tcp[4],
 	    skp1[3] ^ tcp[3], skp1[2] ^ tcp[2], skp1[1] ^ tcp[1], skp1[0] ^ tcp[0],
 	    skp[56], skp[48], skp[40], skp[32], skp[24], skp[16], skp[ 8], skp[ 0] );
@@ -276,7 +250,7 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
     tcp = &csc_tabc[1][0];
     for( int sk=7; sk; sk-- ) {
       for( int n=8; n; n--,tcp+=8,skp1+=8,skp++ )
-	csc_transP( 
+	csc_transP_call( 
 	        skp1[7] ^ tcp[7], skp1[6] ^ tcp[6], skp1[5] ^ tcp[5], skp1[4] ^ tcp[4],
 		skp1[3] ^ tcp[3], skp1[2] ^ tcp[2], skp1[1] ^ tcp[1], skp1[0] ^ tcp[0],
 		skp[56], skp[48], skp[40], skp[32], skp[24], skp[16], skp[ 8], skp[ 0] );
@@ -302,9 +276,9 @@ PASTE(cscipher_bitslicer_,CSC_SUFFIX)
     ulong result = _1;
     {
     for( int n=0; n<8; n++,tcp+=8,skp1+=8,skp++ ) {
-      csc_transP( skp1[7] ^ tcp[7], skp1[6] ^ tcp[6], skp1[5] ^ tcp[5], skp1[4] ^ tcp[4],
-		  skp1[3] ^ tcp[3], skp1[2] ^ tcp[2], skp1[1] ^ tcp[1], skp1[0] ^ tcp[0],
-		  skp[56], skp[48], skp[40], skp[32], skp[24], skp[16], skp[ 8], skp[ 0] );
+      csc_transP_call( skp1[7] ^ tcp[7], skp1[6] ^ tcp[6], skp1[5] ^ tcp[5], skp1[4] ^ tcp[4],
+		       skp1[3] ^ tcp[3], skp1[2] ^ tcp[2], skp1[1] ^ tcp[1], skp1[0] ^ tcp[0],
+		       skp[56], skp[48], skp[40], skp[32], skp[24], skp[16], skp[ 8], skp[ 0] );
       result &= ~(cipher[56+n] ^ (*cfr)[56+n] ^ skp[56] ^ skp[56-128]); if( !result ) goto stepper;
       result &= ~(cipher[48+n] ^ (*cfr)[48+n] ^ skp[48] ^ skp[48-128]); if( !result ) goto stepper;
       result &= ~(cipher[40+n] ^ (*cfr)[40+n] ^ skp[40] ^ skp[40-128]); if( !result ) goto stepper;

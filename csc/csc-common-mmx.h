@@ -3,29 +3,15 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-common-mmx.h,v $
+// Revision 1.1.2.2  1999/11/23 23:39:45  remi
+// csc_transP() optimized.
+// modified csc_transP() calling convention.
+//
 // Revision 1.1.2.1  1999/11/22 18:58:12  remi
 // Initial commit of MMX'fied CSC cores.
-//
-// Revision 1.1.2.4  1999/11/01 17:23:23  cyp
-// renamed transX(...) to csc_transX(...) to avoid potential (future) symbol
-// collisions.
-//
-// Revision 1.1.2.3  1999/10/08 14:20:24  remi
-// More extern "C" declarations
-//
-// Revision 1.1.2.2  1999/10/07 23:33:01  cyp
-// added some things to help test/force use of 64bit 'registers' on '32bit' cpus
-//
-// Revision 1.1.2.1  1999/10/07 18:41:14  cyp
-// sync'd from head
-//
-// Revision 1.1  1999/07/23 02:43:06  fordbr
-// CSC cores added
-//
-//
 
 #ifndef __CSC_COMMON_H
-#define __CSC_COMMON_H "@(#)$Id: csc-common-mmx.h,v 1.1.2.1 1999/11/22 18:58:12 remi Exp $"
+#define __CSC_COMMON_H "@(#)$Id: csc-common-mmx.h,v 1.1.2.2 1999/11/23 23:39:45 remi Exp $"
 
 #include <stdlib.h>
 #include <string.h>
@@ -85,179 +71,96 @@ extern const ulong mmNOT;
 }
 #endif
 
+#if 0
+// just for reference, these functions aren't used anymore
 // ------------------------------------------------------------------
 inline void csc_transF( ulong t00, ulong t01, ulong t02, ulong t03,
 		        ulong &out1, ulong &out2, ulong &out3, ulong &out4 ) 
 {
-// out1 <- 0xff0f
-// out2 <- 0xf3f3
-// out3 <- 0xdddd
-// out4 <- 0xaaff
+  // out1 <- 0xff0f
+  // out2 <- 0xf3f3
+  // out3 <- 0xdddd
+  // out4 <- 0xaaff
 
 //ulong t00 = 0xff00;
 //ulong t01 = 0xf0f0;
 //ulong t02 = 0xcccc;
 //ulong t03 = 0xaaaa;
 
-#define _out1  "%0"
-#define _out2  "%1"
-#define _out3  "%2"
-#define _out4  "%3"
-#define _t00   "%4"
-#define _t01   "%5"
-#define _t02   "%6"
-#define _t03   "%7"
-#define _mmNOT "%8"
-
-//* ulong t04 = ~t00;              // 0x00ff
-//* out4     ^=  t04 | t03;        // 0xaaff <-----
-//* ulong t06 =  t01 | t00;        // 0xfff0
-//* ulong t07 =  t06 ^ t04;        // 0xff0f <-----
-//* out1     ^=  t07;
-//* ulong t08 =  t07 ^ t02;        // 0x33c3
-//* ulong t09 =  t08 | t01;        // 0xf3f3 <-----
-//* out2     ^=  t09;
-//* ulong t10 =  t09 ^ t03;        // 0x5959
-//* out3     ^=  t10 | t02;        // 0xdddd <-----
-
-//* ulong t04 = ~t00;           ulong t06 =  t01 | t00;
-//* out4     ^=  t04 | t03;     ulong t07 =  t06 ^ t04;
-//* ulong t08 =  t07 ^ t02;     out1     ^=  t07;	   
-//* ulong t09 =  t08 | t01;
-//* out2     ^=  t09;	        out3     ^=  (t09 ^ t03) | t02;
-
-  asm volatile ("
-	movq	"_t00", %%mm0	# mm0 = t00
-	movq	%%mm0, %%mm1	# mm1 = t00
-	movq	"_t01", %%mm3   # mm3 = t01
-	pxor	"_mmNOT", %%mm0	# mm0(t04) = ~t00
-
-	por	%%mm3, %%mm1	# mm1(t06) = t01 | t00
-
-	movq	%%mm0, %%mm2	# mm2 = t04
-	pxor	%%mm1, %%mm2	# mm2(t07) = t04 ^ t06
-
-	movq	"_t03", %%mm5
-	por	%%mm5, %%mm0	# mm0 = t04 | t03
-	pxor	"_out4", %%mm0	# out4 ^= t04 | t03
-	movq	%%mm0, "_out4"
-
-	movq	"_out1", %%mm4
-	pxor	%%mm2, %%mm4	# out1 ^= t07
-	movq	%%mm4, "_out1"
-
-	movq	"_t02", %%mm6
-	pxor	%%mm6, %%mm2	# mm2(t08) = t07 ^ t02
-	por	%%mm3, %%mm2	# mm2(t09) = t08 | t01
-
-	movq	"_out2", %%mm4
-	pxor	%%mm2, %%mm4	# out2 ^= t09
-	movq	%%mm4, "_out2"
-
-	pxor	%%mm5, %%mm2	# mm2(t10) = t09 ^ t03
-	por	%%mm6, %%mm2	# mm2 = t10 | t02
-	pxor	"_out3", %%mm2	# out3 ^= t10 | t02
-	movq	%%mm2, "_out3"
-
-  ": "=m"(out1)/*0*/, "=m"(out2)/*1*/, "=m"(out3)/*2*/, "=m"(out4)/*3*/
-   :  "m"(t00)/*4*/,   "m"(t01)/*5*/,   "m"(t02)/*6*/,   "m"(t03)/*7*/,  "m"(mmNOT)/*8*/
-  );
+  ulong t04 = ~t00;              // 0x00ff
+  out4     ^=  t04 | t03;        // 0xaaff <-----
+  ulong t06 =  t01 | t00;        // 0xfff0
+  ulong t07 =  t06 ^ t04;        // 0xff0f <-----
+  out1     ^=  t07;
+  ulong t08 =  t07 ^ t02;        // 0x33c3
+  ulong t09 =  t08 | t01;        // 0xf3f3 <-----
+  out2     ^=  t09;
+  ulong t10 =  t09 ^ t03;        // 0x5959
+  out3     ^=  t10 | t02;        // 0xdddd <-----
 }
 
 // ------------------------------------------------------------------
 inline void csc_transG( ulong t00, ulong t01, ulong t02, ulong t03,
 		        ulong &out1, ulong &out2, ulong &out3, ulong &out4 ) 
 {
-// out1 <- 0xb1b1
-// out2 <- 0x7722
-// out3 <- 0x583b
-// out4 <- 0xdd50
+  // out1 <- 0xb1b1
+  // out2 <- 0x7722
+  // out3 <- 0x583b
+  // out4 <- 0xdd50
 
 //ulong t00 = 0xff00;
 //ulong t01 = 0xf0f0;
 //ulong t02 = 0xcccc;
 //ulong t03 = 0xaaaa;
 
-#define _out1  "%0"
-#define _out2  "%1"
-#define _out3  "%2"
-#define _out4  "%3"
-#define _t00   "%4"
-#define _t01   "%5"
-#define _t02   "%6"
-#define _t03   "%7"
-#define _mmNOT "%8"
-
-//ulong t04 =  t03 | t00;        // 0xffaa
-//ulong t05 =  t03 & t02;        // 0x8888
-//ulong t06 =  t05 ^ t04;        // 0x7722 <-----
-//out2     ^=  t06;
-//ulong t07 =  t03 | t01;        // 0xfafa
-//ulong t08 =  t07 ^ t00;        // 0x05fa
-//ulong t09 =  t08 | t06;        // 0x77fa
-//ulong t10 =  t09 ^ t03;        // 0xdd50 <-----
-//out4     ^=  t10;
-//ulong t11 =  t03 | t02;        // 0xeeee
-//ulong t12 =  t03 & t01;        // 0xa0a0
-//ulong t13 =  t12 ^ t11;        // 0x4e4e
-//out1     ^= ~t13;              // 0xb1b1 <-----
-//ulong t15 =  t13 | t06;        // 0x7f6e
-//ulong t16 =  t10 ^ t08;        // 0xd8aa
-//ulong t17 =  t16 ^ t15;        // 0xa7c4
-//out3     ^= ~t17;              // 0x583b <-----
-
-
-  //ulong t06 =  (t03 & t02) ^ (t03 | t00);    ulong t08 =  (t03 | t01) ^ t00;
-  //out2     ^=  t06;                          ulong t10 =  (t08 | t06) ^ t03;
-  //                                           out4     ^=  t10;
-  //ulong t13 =  (t03 & t01) ^ (t03 | t02);
-  //out1     ^= ~t13;                          out3     ^= ~(t10 ^ t08 ^ (t13 | t06));
-
-  asm volatile ("
-	movq	"_t03",%%mm0	# mm0 = t03
-	movq	%%mm0, %%mm1	# mm1 = t03
-	movq	"_t00",%%mm3	# mm3 = t00
-	movq	%%mm0, %%mm5	# mm5 = t03
-	movq	"_t02",%%mm7	# mm7 = t02
-	movq	%%mm0, %%mm2	# mm2 = t03
-
-	por	%%mm3, %%mm0	# mm0 = t03 | t00
-	pand	%%mm7, %%mm1	# mm1 = t03 & t02
-	por	"_t01",%%mm2	# mm2 = t03 | t01
-	pxor	%%mm1, %%mm0	# mm0(t06) = (t03 | t00) ^ (t03 & t02)
-	movq	"_out2",%%mm1	# mm1 = out2
-	movq	%%mm5, %%mm6	# mm6 = t03
-	pxor	%%mm3, %%mm2	# mm2(t08) = (t03 | t01) ^ t00
-	movq	%%mm0, %%mm3	# mm3 = t06
-	pxor	%%mm0, %%mm1	# mm1 = out2 ^ t06
-	por	%%mm2, %%mm3	# mm3 = t06 | t08
-	movq	%%mm1,"_out2"	# ** out2 ^= t06
-	movq	%%mm0, %%mm1	# mm1 = t06
-	pxor	"_t03",%%mm3	# mm3(t10) = (t06 | t08) ^ t03
-	movq	%%mm3, %%mm4	# mm4 = t10
-	pxor	"_out4",%%mm3	# mm3 = out4 ^ t10
-	pxor	%%mm4, %%mm2	# mm2 = t10 ^ t08
-	movq	%%mm3, "_out4"  # ** out4 ^= t10
-	por	%%mm5, %%mm7	# mm7 = t03 | t02
-	pand	"_t01",%%mm5	# mm5 = t03 & t01
-	pxor	%%mm7, %%mm5	# mm5(t13) = (t03 & t01) ^ (t03 | t02)
-	movq	"_out1", %%mm0	# mm0 = out1
-	por	%%mm5, %%mm1	# mm1 = t13 | t06
-	movq	"_mmNOT", %%mm3	# mm3 = mmNOT
-	pxor	%%mm5, %%mm0	# mm0 = out1 ^ t13
-	pxor	%%mm2, %%mm1	# mm1 = t10 ^ t08 ^ (t13 | t06)
-	pxor	"_out3", %%mm1	# mm1 = out3 ^ t10 ^ t08 ^ (t13 | t06)
-	pxor	%%mm3, %%mm0	# mm0 = out1 ^ ~t13
-	pxor	%%mm3, %%mm1	# mm1 = out3 ^ ~(t10 ^ t08 ^ (t13 | t06))
-	movq	%%mm0, "_out1"	# ** out1 ^= t13
-	movq	%%mm1, "_out3"	# ** out3 ^= t10 ^ t08 ^ (t13 | t06)
-
-  ": "=m"(out1), "=m"(out2), "=m"(out3), "=m"(out4)
-   :  "m"(t00),   "m"(t01),   "m"(t02),   "m"(t03),  "m"(mmNOT)
-  );
+  ulong t04 =  t03 | t00;        // 0xffaa
+  ulong t05 =  t03 & t02;        // 0x8888
+  ulong t06 =  t05 ^ t04;        // 0x7722 <-----
+  out2     ^=  t06;
+  ulong t07 =  t03 | t01;        // 0xfafa
+  ulong t08 =  t07 ^ t00;        // 0x05fa
+  ulong t09 =  t08 | t06;        // 0x77fa
+  ulong t10 =  t09 ^ t03;        // 0xdd50 <-----
+  out4     ^=  t10;
+  ulong t11 =  t03 | t02;        // 0xeeee
+  ulong t12 =  t03 & t01;        // 0xa0a0
+  ulong t13 =  t12 ^ t11;        // 0x4e4e
+  out1     ^= ~t13;              // 0xb1b1 <-----
+  ulong t15 =  t13 | t06;        // 0x7f6e
+  ulong t16 =  t10 ^ t08;        // 0xd8aa
+  ulong t17 =  t16 ^ t15;        // 0xa7c4
+  out3     ^= ~t17;              // 0x583b <-----
 }
+#endif
 
 // ------------------------------------------------------------------
+
+typedef struct {
+  ulong in[8];
+  ulong *out[8];
+} csc_mmxParameters;
+
+#define csc_transP_call(in7, in6, in5, in4, in3, in2, in1, in0,		\
+			out7,out6,out5,out4,out3,out2,out1,out0)	\
+do {									\
+  csc_params->in[0] = (in0);						\
+  csc_params->in[1] = (in1);						\
+  csc_params->in[2] = (in2);						\
+  csc_params->in[3] = (in3);						\
+  csc_params->in[4] = (in4);						\
+  csc_params->in[5] = (in5);						\
+  csc_params->in[6] = (in6);						\
+  csc_params->in[7] = (in7);						\
+  csc_params->out[0] = &(out0);						\
+  csc_params->out[1] = &(out1);						\
+  csc_params->out[2] = &(out2);						\
+  csc_params->out[3] = &(out3);						\
+  csc_params->out[4] = &(out4);						\
+  csc_params->out[5] = &(out5);						\
+  csc_params->out[6] = &(out6);						\
+  csc_params->out[7] = &(out7);						\
+  csc_transP( csc_params );						\
+} while (0)
 
 #ifdef CSC_TRANSP_CLASS
 #undef CSC_TRANSP_CLASS
@@ -268,175 +171,170 @@ inline void csc_transG( ulong t00, ulong t01, ulong t02, ulong t03,
   //#define csc_transP csc_transPi
   #define CSC_TRANSP_CLASS inline
 #else                              /* reference the one in csc_common.cpp */
-  extern "C" void csc_transP( ulong in7, ulong in6, ulong in5, ulong in4, 
- 	                ulong in3, ulong in2, ulong in1, ulong in0,
-		        ulong &out7, ulong &out6, ulong &out5, ulong &out4, 
-  		        ulong &out3, ulong &out2, ulong &out1, ulong &out0 );
+  extern "C" void csc_transP( csc_mmxParameters *params );
 #endif
 #ifdef CSC_TRANSP_CLASS
-CSC_TRANSP_CLASS void csc_transP( ulong in7, ulong in6, ulong in5, ulong in4, 
-		        ulong in3, ulong in2, ulong in1, ulong in0,
-		        ulong &out7, ulong &out6, ulong &out5, ulong &out4, 
-  		        ulong &out3, ulong &out2, ulong &out1, ulong &out0 ) 
+CSC_TRANSP_CLASS void csc_transP( csc_mmxParameters *params )
 {
 
-/*
-  // csc_transF( in3, in2, in1, in0,	// in
-  //	         in7, in6, in5, in4 );	// xor-out
-  {
-  ulong t04 = ~in3;           ulong t06 =  in2 | in3;
-  in4      ^=  t04 | in0;     ulong t07 =  t06 ^ t04;
-  ulong t08 =  t07 ^ in1;     in7      ^=  t07;	   
-  ulong t09 =  t08 | in2;
-  in6      ^=  t09;           in5      ^=  (t09 ^ in0) | in1;
-  }
+#define _in0  " 0(%0)"
+#define _in1  " 8(%0)"
+#define _in2  "16(%0)"
+#define _in3  "24(%0)"
+#define _in4  "32(%0)"
+#define _in5  "40(%0)"
+#define _in6  "48(%0)"
+#define _in7  "56(%0)"
+#define _out0 " 0(%1)"
+#define _out1 " 4(%1)"
+#define _out2 " 8(%1)"
+#define _out3 "12(%1)"
+#define _out4 "16(%1)"
+#define _out5 "20(%1)"
+#define _out6 "24(%1)"
+#define _out7 "28(%1)"
+#define _mmNOT "%2"
+
+// mmNOT      = 4
+// in 5,6,7   = 4
+// in 0,1,2,3 = 5
+// in 4       = 8
+
+// global allocation : in4 == %%mm4
+  //		       in0 == %%mm0
+  //                   in1 == %%mm1
+  //                   in2 == %%mm2
+
   asm volatile ("
+
+  ## //csc_transF( in3, in2, in1, in0,	// in
+  ## //            in7, in6, in5, in4 );// xor-out
+  ## {
+  ## ulong t04 = ~in3;		    ulong t06 =  in2 | in3;
+  ## in4      ^=  t04 | in0;	    ulong t07 =  t06 ^ t04;
+  ## ulong t09 =  (t07 ^ in1) | in2;   in7      ^=  t07;
+  ## in6      ^=  t09;                 in5      ^=  (t09 ^ in0) | in1;
+  ## }
+	movq	"_in3", %%mm3	# mm3 = in3
+	movq	%%mm3, %%mm7	# mm7 = in3
+	pxor	"_mmNOT", %%mm3	# mm3 = t04 = ~in3
+	movq	"_in2", %%mm2	# mm2 = in2
+	movq	%%mm3, %%mm6	# mm6 = t04
+	movq	"_in0", %%mm0	# mm0 = in0
+	por	%%mm2, %%mm7	# mm7 = t06 = in2 | in3
+	movq	"_in4", %%mm4	# mm4 = in4
+	por	%%mm0, %%mm3	# mm3 = t04 | in0
+	movq	"_in1", %%mm1	# mm1 = in1
+	pxor	%%mm6, %%mm7	# mm7 = t07 = t06 ^ to4
+	pxor	%%mm3, %%mm4	# mm4 = in4 ^= t04 | in0
+	movq	%%mm7, %%mm5	# mm5 = t07
+	pxor	%%mm1, %%mm5	# mm5 = t07 ^ in1
+	pxor	"_in7", %%mm7	# mm7 = in7 ^= t07
+	por	%%mm2, %%mm5	# mm5 = t09 = (t07 ^ in1) | in2
+	movq	%%mm5, %%mm6	# mm6 = t09
+	pxor	"_in0", %%mm6	# mm6 = t09 ^ in0
+	pxor	"_in6", %%mm5	# mm5 = in6 ^= t09
+	por	%%mm1, %%mm6	# mm6 = (t09 ^ in0) | in1
+	pxor	"_in5", %%mm6	# mm6 = in5 ^= (t09 ^ in0) | in1
 	
-  ": "=m"(in7), "=m"(in6), "=m"(in5), "=m"(in4),
-     "=m"(in3), "=m"(in2), "=m"(in1), "=m"(in0) : "m"(mmNOT)
+  ## // csc_transG( in7, in6, in5, in4,  // in
+  ## //             in3, in2, in1, in0 );// xor-out
+  ## {
+  ## ulong t06 = (in4 & in5) ^ (in4 | in7);   ulong t08 = (in4 | in6) ^ in7;
+  ## out2 = (in2 ^= t06);                     ulong t10 = (t08 | t06) ^ in4;
+  ## ulong t13 = (in4 & in6) ^ (in4 | in5);   out0 = (in0 ^= t10);
+  ## out3 = (in3 ^= ~t13);                    out1 = (in1 ^= ~(t10 ^ t08) ^ (t13 | t06));
+  ## }
+
+	movq	%%mm6, "_in5"	# -- mm6 free
+	pand	%%mm4, %%mm6	# mm6 = in4 & in5
+	movq	%%mm7, "_in7"	# -- mm7 free
+	movq	%%mm7, %%mm3	# mm3 = in7
+	por	%%mm4, %%mm7	# mm7 = in4 | in7
+	movq	%%mm5, "_in6"	# mm5 free
+	pxor	%%mm6, %%mm7	# + mm7 = t06 = (in4 & in5) ^ (in4 | in7)
+				# -- mm6 free
+	por	%%mm4, %%mm5	# mm5 = in4 | in6
+	pxor	%%mm7, %%mm2	#### mm2 = out2 = in2 ^= t06
+	pxor	%%mm3, %%mm5	# + mm5 = t08 = (in4 | in6) ^ in7;
+	movq	%%mm7, %%mm3	# mm3 = t06
+	movl	"_out2",%%eax
+	movq	%%mm2, (%%eax)	# out2 = in2
+	movq	"_in6",%%mm6	# mm6 = in6
+	por	%%mm5, %%mm7	# mm7 = t08 | t06
+	pand	%%mm4, %%mm6	# mm6 = in4 & in6
+	pxor	%%mm4, %%mm7	# + mm7 = t10 = (t08 | t06) ^ in4
+	pxor	%%mm7, %%mm5	# mm5 = t10 ^ t08
+	pxor	%%mm7, %%mm0	#### mm0 = in0 ^= t10
+				# -- mm7 free
+	movq	"_in5",%%mm7	# mm7 = in5
+	pxor	"_mmNOT",%%mm5	# mm5 = ~(t10 ^ t08)
+	por	%%mm4, %%mm7	# mm7 = in4 | in5
+	movl	"_out0",%%eax
+	movq	%%mm0, (%%eax)	# out0 = in0
+	pxor	%%mm6, %%mm7	# + mm7 = t13 = (in4 & in6) ^ (in4 | in5)
+				# -- mm6 free
+	movq	%%mm7, %%mm6	# mm6 = t13
+	por	%%mm3, %%mm7	# mm7 = t13 | t06
+				# -- mm3 free
+	pxor	"_mmNOT",%%mm6	# mm6 = ~t13
+	pxor	%%mm7, %%mm5	# mm5 = ~(t10 ^ t08) ^ (t13 | t06)
+				# -- mm7 free
+	pxor	"_in3",%%mm6	#### mm6 = out3 = in3 ^ ~t13
+	pxor	%%mm5, %%mm1	#### mm1 = out1 = (in1 ^= ~(t10 ^ t08) ^ (t13 | t06))
+				# -- mm5 free
+
+  ## // csc_transF( in3, in2, in1, in0,	 // in
+  ## //             in7, in6, in5, in4 );// xor-out
+  ## {
+  ## ulong t04 = ~in3;           ulong t06 = in2 | in3;
+  ## out4 = in4 ^ (t04 | in0);   ulong t07 = t06 ^ t04;
+  ## ulong t08 = t07 ^ in1;      out7 = in7 ^ t07;	   
+  ## ulong t09 = t08 | in2;
+  ## out6 = in6 ^ t09;           out5 = in5 ^ ((t09 ^ in0) | in1);
+  ## }
+
+	movl	"_out3",%%eax
+	movq	%%mm6, %%mm3	# mm3 = in3
+	movq	%%mm6, (%%eax)
+	pxor	"_mmNOT", %%mm6	# mm6 = t04 = ~in3
+	por	%%mm2, %%mm3	# mm3 = t06 = in2 | in3
+	movl	"_out1",%%eax
+	movq	%%mm6, %%mm7	# mm7 = t04
+	movq	%%mm1, (%%eax)
+	por	%%mm0, %%mm6	# mm6 = t04 | in0
+	pxor	%%mm7, %%mm3	# mm3 = t07 = t06 ^ t04
+				# -- mm7 free
+	movq	"_in7", %%mm7	# mm7 = in7
+	pxor	%%mm4, %%mm6	### mm6 = out4 = in4 ^ (t04 | in0)
+				# -- mm4 free
+	movl	"_out4",%%eax
+	movq	%%mm3, %%mm4	# mm4 = t07
+	movq	"_in6", %%mm5	# mm5 = in6
+	pxor	%%mm1, %%mm3	# mm3 = t08 = t07 ^ in1
+	movq	%%mm6, (%%eax)	# -- mm6 free
+	pxor	%%mm4, %%mm7	### mm7 = out7 = in7 ^ t07
+				# -- mm4 free
+	por	%%mm2, %%mm3	# mm3 = t09 = t08 | in2
+				# -- mm2 free
+	movl	"_out7",%%eax
+	movq	%%mm7, (%%eax)	# -- mm7 free
+	movq	%%mm3, %%mm4	# mm4 = t09
+	movq	"_in5", %%mm2	# mm2 = in5
+	pxor	%%mm0, %%mm4	# mm4 = t09 ^ in0
+	pxor	%%mm5, %%mm3	### mm3 = out6 = in6 ^ t09
+	por	%%mm1, %%mm4	# mm4 = (t09 ^ in0) | in1
+	movl	"_out6",%%eax
+	movq	%%mm3, (%%eax)	# -- mm3 free
+	pxor	%%mm2, %%mm4	### mm4 = out5 = in5 ^ ((t09 ^ in0) | in1)
+	movl	"_out5",%%eax
+	movq	%%mm4, (%%eax)
+
+  ": : "c"(&(params->in[0])), "d"(&(params->out[0])), "m"(mmNOT)
+   : "%eax"
+
   );
 
-  // csc_transG( in7, in6, in5, in4,	// in
-  //	         in3, in2, in1, in0 );	// xor-out
-  {
-  ulong t06 =  (in4 & in5) ^ (in4 | in7);    ulong t08 =  (in4 | in6) ^ in7;
-  out2 = (in2 ^= t06);                       ulong t10 =  (t08 | t06) ^ in4;
-                                             out0 = (in0 ^= t10);
-  ulong t13 =  (in4 & in6) ^ (in4 | in5);
-  out3 = (in3 ^= ~t13);                      out1 = (in1 ^= ~(t10 ^ t08 ^ (t13 | t06)));
-  }
-
-  // csc_transF( in3, in2, in1, in0,	// in
-  // 	         in7, in6, in5, in4 );	// xor-out
-  {
-  ulong t04 = ~in3;           ulong t06 =  in2 | in3;
-  out4 = in4 ^ (t04 | in0);   ulong t07 =  t06 ^ t04;
-  ulong t08 =  t07 ^ in1;     out7 = in7 ^  t07;	   
-  ulong t09 =  t08 | in2;
-  out6 = in6 ^ t09;           out5 = in5 ^ ((t09 ^ in0) | in1);
-  }
-*/
-
-#define _in7 "%0"
-#define _in6 "%1"
-#define _in5 "%2"
-#define _in4 "%3"
-#define _in3 "%4"
-#define _in2 "%5"
-#define _in1 "%6"
-#define _in0 "%7"
-#define _mmNOT "%8"
-
-  asm volatile ("
-
-  # y = f(xr) ^ xl
-  # csc_transF( in3, in2, in1, in0,	// in
-  #	        in7, in6, in5, in4 );	// xor-out
-
-	movq	"_in3", %%mm0	# mm0 = t00
-	movq	%%mm0, %%mm1	# mm1 = t00
-	movq	"_in2", %%mm3   # mm3 = t01
-	pxor	"_mmNOT", %%mm0	# mm0(t04) = ~t00
-	por	%%mm3, %%mm1	# mm1(t06) = t01 | t00
-	movq	"_in0", %%mm5
-	movq	%%mm0, %%mm2	# mm2 = t04
-	por	%%mm5, %%mm0	# mm0 = t04 | t03
-	pxor	%%mm1, %%mm2	# mm2(t07) = t04 ^ t06
-	pxor	"_in4", %%mm0	# out4 ^= t04 | t03
-	movq	%%mm0, "_in4"
-	movq	"_in7", %%mm4
-	pxor	%%mm2, %%mm4	# out1 ^= t07
-	movq	%%mm4, "_in7"
-	movq	"_in1", %%mm6
-	pxor	%%mm6, %%mm2	# mm2(t08) = t07 ^ t02
-	por	%%mm3, %%mm2	# mm2(t09) = t08 | t01
-	movq	"_in6", %%mm4
-	pxor	%%mm2, %%mm4	# out2 ^= t09
-	movq	%%mm4, "_in6"
-	pxor	%%mm5, %%mm2	# mm2(t10) = t09 ^ t03
-	por	%%mm6, %%mm2	# mm2 = t10 | t02
-	pxor	"_in5", %%mm2	# out3 ^= t10 | t02
-	movq	%%mm2, "_in5"
-
-  # zr = g(y) ^ xr
-  # csc_transG( in7, in6, in5, in4,	// in
-  #	        in3, in2, in1, in0 );	// xor-out
-
-	movq	"_in4",%%mm0	# mm0 = t03
-	movq	%%mm0, %%mm1	# mm1 = t03
-	movq	"_in7",%%mm3	# mm3 = t00
-	movq	%%mm0, %%mm5	# mm5 = t03
-	movq	"_in5",%%mm7	# mm7 = t02
-	movq	%%mm0, %%mm2	# mm2 = t03
-
-	por	%%mm3, %%mm0	# mm0 = t03 | t00
-	pand	%%mm7, %%mm1	# mm1 = t03 & t02
-	por	"_in6",%%mm2	# mm2 = t03 | t01
-	pxor	%%mm1, %%mm0	# mm0(t06) = (t03 | t00) ^ (t03 & t02)
-	movq	"_in2",%%mm1	# mm1 = out2
-	movq	%%mm5, %%mm6	# mm6 = t03
-	pxor	%%mm3, %%mm2	# mm2(t08) = (t03 | t01) ^ t00
-	movq	%%mm0, %%mm3	# mm3 = t06
-	pxor	%%mm0, %%mm1	# mm1 = out2 ^ t06
-	por	%%mm2, %%mm3	# mm3 = t06 | t08
-	movq	%%mm1,"_in2"	# ** out2 ^= t06
-	movq	%%mm0, %%mm1	# mm1 = t06
-	pxor	"_in4",%%mm3	# mm3(t10) = (t06 | t08) ^ t03
-	movq	%%mm3, %%mm4	# mm4 = t10
-	pxor	"_in0",%%mm3	# mm3 = out4 ^ t10
-	pxor	%%mm4, %%mm2	# mm2 = t10 ^ t08
-	movq	%%mm3, "_in0"  # ** out4 ^= t10
-	por	%%mm5, %%mm7	# mm7 = t03 | t02
-	pand	"_in6",%%mm5	# mm5 = t03 & t01
-	pxor	%%mm7, %%mm5	# mm5(t13) = (t03 & t01) ^ (t03 | t02)
-	movq	"_in3", %%mm0	# mm0 = out1
-	por	%%mm5, %%mm1	# mm1 = t13 | t06
-	movq	"_mmNOT", %%mm3	# mm3 = mmNOT
-	pxor	%%mm5, %%mm0	# mm0 = out1 ^ t13
-	pxor	%%mm2, %%mm1	# mm1 = t10 ^ t08 ^ (t13 | t06)
-	pxor	"_in1", %%mm1	# mm1 = out3 ^ t10 ^ t08 ^ (t13 | t06)
-	pxor	%%mm3, %%mm0	# mm0 = out1 ^ ~t13
-	pxor	%%mm3, %%mm1	# mm1 = out3 ^ ~(t10 ^ t08 ^ (t13 | t06))
-	movq	%%mm0, "_in3"	# ** out1 ^= t13
-	movq	%%mm1, "_in1"	# ** out3 ^= t10 ^ t08 ^ (t13 | t06)
-
-  # zl = f(zr) ^ y
-  # csc_transF( in3, in2, in1, in0,	// in
-  # 	        in7, in6, in5, in4 );	// xor-out
-
-	movq	"_in3", %%mm0	# mm0 = t00
-	movq	%%mm0, %%mm1	# mm1 = t00
-	movq	"_in2", %%mm3   # mm3 = t01
-	pxor	"_mmNOT", %%mm0	# mm0(t04) = ~t00
-	por	%%mm3, %%mm1	# mm1(t06) = t01 | t00
-	movq	"_in0", %%mm5
-	movq	%%mm0, %%mm2	# mm2 = t04
-	por	%%mm5, %%mm0	# mm0 = t04 | t03
-	pxor	%%mm1, %%mm2	# mm2(t07) = t04 ^ t06
-	pxor	"_in4", %%mm0	# out4 ^= t04 | t03
-	movq	%%mm0, "_in4"
-	movq	"_in7", %%mm4
-	pxor	%%mm2, %%mm4	# out1 ^= t07
-	movq	%%mm4, "_in7"
-	movq	"_in1", %%mm6
-	pxor	%%mm6, %%mm2	# mm2(t08) = t07 ^ t02
-	por	%%mm3, %%mm2	# mm2(t09) = t08 | t01
-	movq	"_in6", %%mm4
-	pxor	%%mm2, %%mm4	# out2 ^= t09
-	movq	%%mm4, "_in6"
-	pxor	%%mm5, %%mm2	# mm2(t10) = t09 ^ t03
-	por	%%mm6, %%mm2	# mm2 = t10 | t02
-	pxor	"_in5", %%mm2	# out3 ^= t10 | t02
-	movq	%%mm2, "_in5"
-
-  ": "=m"(in7), "=m"(in6), "=m"(in5), "=m"(in4),
-     "=m"(in3), "=m"(in2), "=m"(in1), "=m"(in0) : "m"(mmNOT)
-  );
-
-
-  // Output
-  out7 = in7; out6 = in6; out5 = in5; out4 = in4;
-  out3 = in3; out2 = in2; out1 = in1; out0 = in0;
 }
 #undef CSC_TRANSP_CLASS
 #endif
