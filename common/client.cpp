@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.18 1999/10/11 19:15:48 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.19 1999/10/13 15:13:33 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -450,7 +450,7 @@ void main(void)
   return;                 /* UI will be initialized later via console.cpp */
 }  
 #endif
-#elif (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_WIN16) //|| (CLIENT_OS==OS_WIN32)
+#elif (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
 { /* parse the command line and call the bootstrap */
   TRACE_OUT((+1,"WinMain()\n"));
@@ -609,50 +609,6 @@ int main( int argc, char *argv[] )
   #endif
   return _realmain( argc, argv );
 }      
-#elif (CLIENT_OS == OS_WIN32)
-int main( int /*argc*/, char * /*argv[]*/ )
-{
-  char *cmdline = (char *)GetCommandLine();
-  char appName[20+MAX_PATH+1];
-  int nameLen, evarLen;
-  STARTUPINFO su;
- 
-  nameLen = evarLen = strlen(strcpy( appName, "dnetc.exe=" ));
-
-  if (!cmdline)  /* should never happen */
-    cmdline = "";
-  else
-  {
-    while (*cmdline == ' ' || *cmdline == '\t')
-      cmdline++;
-    if (*cmdline == '\"' || *cmdline == '\'')
-    {
-      char c = *cmdline++;
-      while (*cmdline && *cmdline != c)
-        appName[nameLen++] = *cmdline++;
-      if (*cmdline)
-        cmdline++;
-    }  
-    else 
-    {
-      while (*cmdline && *cmdline!=' ' && *cmdline != '\t')
-        appName[nameLen++] = *cmdline++;
-    }
-    while (*cmdline == ' ' || *cmdline == '\t')
-      cmdline++;
-  }
-  appName[nameLen] = '\0';
-  if (nameLen == evarLen)
-    GetModuleFileName(NULL, &appName[evarLen], (sizeof(appName)-evarLen));
-  putenv( appName );
-
-  su.cb = sizeof(STARTUPINFO);
-  GetStartupInfo(&su);
-  if ((su.dwFlags & STARTF_USESHOWWINDOW) == 0)
-    su.wShowWindow = SW_SHOWDEFAULT;
-  return winClientPrelude( GetModuleHandle(NULL), 0, 
-                           cmdline, su.wShowWindow, _realmain );
-}
 #else
 int main( int argc, char *argv[] )
 {
