@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.9  1998/12/23 00:41:45  silby
+// descontestclosed and scheduledupdatetime now read from the .ini file.
+//
 // Revision 1.8  1998/12/21 19:06:08  cyp
 // Removed 'unused'/'unimplemented' sil[l|b]yness added in recent version.
 // See client.h for full comment.
@@ -55,7 +58,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.8 1998/12/21 19:06:08 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.9 1998/12/23 00:41:45 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -273,6 +276,9 @@ int Client::ReadConfig(void)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
   contestdone[0] = (tempconfig != 0);
   tempconfig=ini.getkey(OPTION_SECTION, "contestdone2", "0")[0];
   contestdone[1]= (tempconfig != 0);
+
+  descontestclosed=ntohl(ini.getkey(OPTION_SECTION,"descontestclosed","0")[0]);
+  scheduledupdatetime=ntohl(ini.getkey(OPTION_SECTION,"scheduledupdatetime","0")[0]);
 
   #if defined(MMX_BITSLICER) || defined(MMX_RC5)
     usemmx=ini.getkey(OPTION_SECTION, "usemmx", "1")[0];
