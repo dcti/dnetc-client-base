@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version.h,v $
+// Revision 1.22  1998/10/29 15:00:47  chrisb
+// bumped expiry date by another couple of weeks
+//
 // Revision 1.21  1998/10/26 03:39:29  cyp
 // Enough changes to warrant a bump to beta 3. No date change.
 //
@@ -94,7 +97,7 @@
 // time period.
 
 #define BETA
-#define BETA_EXPIRATION_TIME    910000000  /* Nov 02 09:46:40 GMT */
+#define BETA_EXPIRATION_TIME    911433600  /* Nov 19 00:00:00 GMT */
 
 
 
