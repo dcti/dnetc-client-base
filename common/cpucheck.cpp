@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.65  1999/01/19 09:54:35  patrick
+//
+// move AIX include <unistd.h> to basincs.h
+//
 // Revision 1.64  1999/01/18 12:12:34  cramer
 // - Added code for ncpu detection for linux/alpha
 // - Corrected the alpha RC5 core handling (support "timeslice")
@@ -226,7 +230,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.64 1999/01/18 12:12:34 cramer Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.65 1999/01/19 09:54:35 patrick Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -236,8 +240,6 @@ return "@(#)$Id: cpucheck.cpp,v 1.64 1999/01/18 12:12:34 cramer Exp $"; }
 
 #if (CLIENT_OS == OS_SOLARIS)
 #include <unistd.h>    // cramer - sysconf()
-#elif (CLIENT_OS == OS_AIX)
-#include <unistd.h>    // P.Hildenbrand - sysconf()
 #elif (CLIENT_OS == OS_IRIX)
 #include <sys/prctl.h>
 #elif ( (CLIENT_OS == OS_DEC_UNIX) && defined(OS_SUPPORTS_SMP) )
