@@ -7,7 +7,7 @@
 # Questions to teich-p@rcs.urz.tu-dresden.de please.
 
 # Toolflags:
-GCCflags = -c -O3 -mtune=strongarm -fomit-frame-pointer -fschedule-insns -fschedule-insns2 -fexpensive-optimizations -s -fno-rtti -fno-exceptions -mtune=strongarm -W -Wall -mthrowback -mstubs -mamu -ISockets_Dnetc: -IC: -Icommon -Irc5 -Ides -Iogr -Iplatforms.riscos -D__showids__ -D__riscos -DARM -DASM_ARM -DBIT_32 -DHAVE_OGR_CORES -DBUILDNAME=arm-riscos
+GCCflags = -c -O3 -mtune=strongarm -fomit-frame-pointer -fschedule-insns -fschedule-insns2 -fexpensive-optimizations -s -fno-rtti -fno-exceptions -mtune=strongarm -W -Wall -mthrowback -mstubs -mamu -ISockets_Dnetc: -IC: -Icommon -Irc5 -Ides -Iogr -Iplatforms.riscos -D__showids__ -D__riscos -DARM -DASM_ARM -DBIT_32 -DHAVE_OGR_CORES -DALTERNATE_DYNAMIC_TIMESLICE -DBUILDNAME=arm-riscos
 GCClinkflags = -o $@ -mthrowback -mstubs -mamu
 ObjAsmflags = -throwback -NoCache -depend !Depend
 
