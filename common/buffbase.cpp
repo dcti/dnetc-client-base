@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.47 2000/11/21 03:27:34 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.48 2000/12/14 19:37:39 cyp Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -445,7 +445,7 @@ int BufferAssertIsBufferFull( Client *client, unsigned int contest )
 /* --------------------------------------------------------------------- */
 
 long GetBufferCount( Client *client, unsigned int contest,
-                     int use_out_file, unsigned long *normcountP )
+                     int use_out_file, unsigned long *swu_countP )
 {
   membuffstruct *membuff;
   const char *filename;
@@ -467,18 +467,23 @@ long GetBufferCount( Client *client, unsigned int contest,
       #ifdef PROFILE_DISK_HITS
       LogScreen("Diskhit: BufferCountFileRecords() <- GetBufferCount()\n");
       #endif
-      retcode = BufferCountFileRecords( filename, contest, &reccount, normcountP );
+      retcode = BufferCountFileRecords( filename, contest, &reccount, swu_countP );
     }
     else
     {
       membuff = &(client->membufftable[contest].in);
       if (use_out_file)
         membuff = &(client->membufftable[contest].out);
-      retcode = BufferCountMemRecords( membuff, contest, &reccount, normcountP );
+      retcode = BufferCountMemRecords( membuff, contest, &reccount, swu_countP );
+    }
+    if (retcode == 0 && swu_countP)
+    {
+      ProbfillCacheBufferCounts( client, contest, use_out_file,
+                                 reccount, *swu_countP);
     }
   }
-  if (retcode != 0 && normcountP)
-    *normcountP = 0;
+  if (retcode != 0 && swu_countP)
+    *swu_countP = 0;
   if (retcode != 0)
     return -1;
   return (long)reccount;
@@ -884,6 +889,12 @@ long BufferFlushFile( Client *client, int break_pending,
 
     if (projtrans_pkts != 0) /* transferred anything? */
     {
+      unsigned long swu_count_dummy;
+      /* have GetBufferCount() update Probfill's stats */
+      /* only necessary when flushing, since the fetchers will */
+      /* have implictely updated the counts when they load */  
+      GetBufferCount( client, contest, 1, &swu_count_dummy );
+
       totaltrans_pkts += projtrans_pkts;
 
       LogScreen("\r");
@@ -906,12 +917,8 @@ long BufferFlushFile( Client *client, int break_pending,
 */   
 int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
 {
-  #define PROJECTFLAGS_CLOSED_TTL 0 //(7*24*60*60) /* 7 days */
-  /* set PROJECTFLAGS_CLOSED_TTL to zero if closed flags are never to expire 
-     (only a buffer update will set/clear them)
-  */
   int check_flush, check_fetch, need_flush, need_fetch;
-  int closed_expired, pos, cont_start, cont_count;
+  int closed_expired, suspend_expired, pos, cont_start, cont_count;
   int ignore_closed_flags, fill_even_if_not_totally_empty, either_or;
 
   check_flush = check_fetch = 0;
@@ -956,7 +963,7 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
   TRACE_OUT((0,"ignore_closed_flags=%d\n", ignore_closed_flags));
 
   need_flush = need_fetch = 0; 
-  closed_expired = -1;
+  suspend_expired = closed_expired = -1;
   for (pos = cont_start; pos < cont_count; pos++)
   {
     unsigned int cont_i = (unsigned int)(client->loadorder_map[pos]);
@@ -966,46 +973,62 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
       int fetchable = 1, flushable = 1;
       char proj_flags = client->project_flags[cont_i];
       TRACE_OUT((0,"proj_flags[cont_i=%d] = 0x%x\n", cont_i, proj_flags));
+
       if (!ignore_closed_flags && 
-          (proj_flags & (PROJECTFLAGS_CLOSED|PROJECTFLAGS_SUSPENDED)) != 0)
+         (proj_flags & (PROJECTFLAGS_CLOSED|PROJECTFLAGS_SUSPENDED)) != 0)
       {
         /* this next bit is not a good candidate for a code hoist */
         if (closed_expired < 0) /* undetermined */
         {
           struct timeval tv;
 	  tv.tv_sec = 0; // shaddup compiler
+          suspend_expired = 0;
           closed_expired = 0;
           if (client->last_buffupd_time == 0)
           {
             closed_expired = 1;
+            suspend_expired = 1;
           }  
           else if ((client->scheduledupdatetime != 0 && 
             ((unsigned long)CliTimer(0)->tv_sec) >= 
      	      ((unsigned long)client->scheduledupdatetime)))
           {  
             closed_expired = 2;
+            suspend_expired = 2;
           }  
-          #if defined(PROJECTFLAGS_CLOSED_TTL) && \
-              (PROJECTFLAGS_CLOSED_TTL > 0) /* any expiry time at all? */
           else if (CliClock(&tv)==0)
           {
+            #define PROJECTFLAGS_SUSPENDED_TTL (15*60) /* 15 minutes */
+            //#define PROJECTFLAGS_CLOSED_TTL (7*24*60*60) /* 7 days */
+
+            if (((unsigned long)tv.tv_sec) > 
+              (unsigned long)(client->last_buffupd_time+PROJECTFLAGS_SUSPENDED_TTL)) 
+            {  
+              suspend_expired = 3;
+            }  
+            #if defined(PROJECTFLAGS_CLOSED_TTL) /* any expiry time at all? */
             if (((unsigned long)tv.tv_sec) > 
               (unsigned long)(client->last_buffupd_time+PROJECTFLAGS_CLOSED_TTL)) 
             {  
               closed_expired = 3;
             }  
+            #endif
           }      
-          #endif
         } /* if (closed_expired < 0) (undetermined) */
-        TRACE_OUT((0,"closed_expired = %d\n", closed_expired));
-        if (!closed_expired)
+        TRACE_OUT((0,"closed_expired = %d, suspend_expired = %d\n", 
+                           closed_expired, suspend_expired ));
+        if ((proj_flags & PROJECTFLAGS_CLOSED)!=0)
         {
-          if ((proj_flags & PROJECTFLAGS_CLOSED) != 0)
+          if (!closed_expired)
             fetchable = flushable = 0;
-          else /* suspended */
+        }
+        else if ((proj_flags & PROJECTFLAGS_SUSPENDED)!=0)
+        {
+          if (!suspend_expired)
             fetchable = 0;
         }
       }	  
+
       TRACE_OUT((0,"contest %d, fetchable=%d flushable=%d\n", cont_i, fetchable, flushable));
       if (check_flush && !need_flush && flushable)
       {

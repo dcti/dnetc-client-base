@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.55 2000/11/27 19:31:04 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.56 2000/12/14 19:37:39 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -109,6 +109,83 @@ static unsigned int __get_thresh_secs(Client *client, int contestid,
 
 /* ----------------------------------------------------------------------- */
 
+/* Buffer counts obtained from ProbfillGetBufferInfo() are for 
+** informational use (by frontends etc) only. Don't shortcut 
+** any of the common code calls to GetBufferCount()
+*/
+static struct { 
+  struct { 
+      long blk;
+      long swu; 
+  } counts[2];
+  long threshold; 
+  unsigned int till_completion; 
+} buffer_counts[CONTEST_COUNT] = {
+  { { 0, 0 }, 0, 0 },
+  { { 0, 0 }, 0, 0 },
+  { { 0, 0 }, 0, 0 },
+  { { 0, 0 }, 0, 0 }
+  #if (CONTEST_COUNT != 4)
+  #error static initializer expects CONTEST_COUNT == 4
+  #endif
+};
+
+int ProbfillGetBufferCounts( unsigned int contest, int is_out_type,
+                             long *threshold, int *thresh_in_swu,
+                             long *blk_count, long *swu_count, 
+                             unsigned int *till_completion )
+{
+  int rc = -1;
+  if (contest < CONTEST_COUNT)
+  {
+    if (threshold) 
+      *threshold = buffer_counts[contest].threshold;
+    if (thresh_in_swu)
+      *thresh_in_swu = (contest != OGR);
+    if (till_completion)
+      *till_completion = buffer_counts[contest].till_completion;
+    if (is_out_type)
+      is_out_type = 1;
+    if (blk_count)
+      *blk_count = buffer_counts[contest].counts[is_out_type].blk;
+    if (swu_count)
+      *swu_count = buffer_counts[contest].counts[is_out_type].swu;
+    rc = 0;
+  }
+  return rc;
+}
+
+/* --------------------------------------------------------------------- */
+
+/* called by GetBufferCount() [buffbase.cpp] whenever both
+** swu_count and blk_count were determined.
+** In-buffer:
+**     When fetching and when a block is loaded, and
+**     if 'frequent-check'ing is enabled, then every frequent check cycle
+** Out-buffer:
+**     When flushing and when a block is completed.
+*/
+int ProbfillCacheBufferCounts( Client *client,
+                               unsigned int cont_i, int is_out_type,
+                               long blk_count, long swu_count)
+{
+  if (cont_i < CONTEST_COUNT && blk_count >= 0 && swu_count >= 0)
+  {
+    if (is_out_type)
+      is_out_type = 1;
+    buffer_counts[cont_i].counts[is_out_type].blk = blk_count;
+    buffer_counts[cont_i].counts[is_out_type].swu = swu_count;
+    if (!is_out_type && client)
+    {
+      buffer_counts[cont_i].till_completion = 
+             __get_thresh_secs(client, cont_i, 0, swu_count, 0 );
+    }
+  }
+  return 0;
+}
+
+/* --------------------------------------------------------------------- */
+
 unsigned int ClientGetInThreshold(Client *client, 
                                   int contestid, int force /*=0*/)
 {
@@ -154,6 +231,7 @@ unsigned int ClientGetInThreshold(Client *client,
   {                                     /* units per per cruncher */
     bufthresh = numcrunchers * 100;
   }
+  buffer_counts[contestid].threshold = bufthresh;  
   return bufthresh;
 }
 
@@ -537,7 +615,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   *load_needed = 0;
   if (bufcount >= 0) /* load from file suceeded */
     *load_needed = 0;
-  else if (client->rc564closed || client->blockcount < 0) /* runbuffers */
+  else if (client->rc564closed)
     *load_needed = NOLOAD_NORANDOM; /* -1 */
   else if (client->nonewblocks)
     *load_needed = NOLOAD_NONEWBLOCKS;
@@ -680,7 +758,7 @@ unsigned int LoadSaveProblems(Client *client,
   static int abortive_action = 0;
 
   unsigned int retval = 0;
-  int changed_flag;
+  int changed_flag, first_time;
 
   int allclosed, prob_step,bufupd_pending;  
   unsigned int cont_i, prob_for, prob_first, prob_last;
@@ -740,6 +818,7 @@ unsigned int LoadSaveProblems(Client *client,
     prob_first = 0;
     prob_last  = (load_problem_count - 1);
     prob_step  = 1; 
+    first_time = 1;
   }
   else if (mode == PROBFILL_RESIZETABLE)
   {            /* [(previousload_problem_count-1) ... load_problem_count] */
@@ -761,8 +840,7 @@ unsigned int LoadSaveProblems(Client *client,
     unsigned int blocksdone;
     if (CliGetContestInfoSummaryData( cont_i, &blocksdone, NULL, NULL, NULL, NULL )==0)
       totalBlocksDone += blocksdone;
-   
-    loaded_problems_count[cont_i]=0;
+    loaded_problems_count[cont_i] = 0;
     saved_problems_count[cont_i] = 0;
   }
 
@@ -926,8 +1004,13 @@ unsigned int LoadSaveProblems(Client *client,
 
   for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++) //once for each contest
   {
+    int show_totals = 0;
     if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
+      show_totals = 1;
+
+    if (first_time || show_totals)
     {
+      unsigned int inout;
       const char *cont_name = CliGetContestNameFromID(cont_i);
 
       if (loaded_problems_count[cont_i] && load_problem_count > COMBINEMSG_THRESHOLD )
@@ -955,7 +1038,7 @@ unsigned int LoadSaveProblems(Client *client,
                                           client->out_buffer_basename )) );
       }
 
-      if (totalBlocksDone > 0)
+      if (show_totals && totalBlocksDone > 0)
       {
         // To suppress "odd" problem completion count summaries (and not be
         // quite so verbose) we only display summaries if the number of
@@ -976,12 +1059,12 @@ unsigned int LoadSaveProblems(Client *client,
 
       /* -------------------------------------------------------------- */
 
-      unsigned int inout;
       for (inout=0;inout<=1;inout++)
       {
         unsigned long stats_count;
         long block_count = GetBufferCount( client, cont_i, inout, &stats_count );
-        if (block_count >= 0) /* no error */ 
+
+        if (show_totals && block_count >= 0) /* no error */ 
         {
           char buffer[(3*80)+sizeof(client->in_buffer_basename)];
           int len;
@@ -1031,8 +1114,8 @@ unsigned int LoadSaveProblems(Client *client,
             }
           }
           Log( "%s\n", buffer );
-
         } //if (block_count >= 0)
+
       } //  for (inout=0;inout<=1;inout++)
     } //if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
   } //for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
