@@ -1,8 +1,13 @@
+// Hey, Emacs, this a -*-C++-*- file !
+
 // Copyright distributed.net 1997-1999 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliident.h,v $
+// Revision 1.3  1999/01/29 19:17:51  jlawson
+// fixed formatting.
+//
 // Revision 1.2  1999/01/01 02:45:14  cramer
 // Part 1 of 1999 Copyright updates...
 //

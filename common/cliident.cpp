@@ -2,15 +2,18 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-/*
-   The file contains CliIdentifyModules() which lists the cvs id strings
-   to stdout. Users can assist us (when making bug reports) by telling us 
-   exactly which modules were actually in effect when the binary was made. 
-   Currently, starting the client with the '-ident' switch will exec the 
-   function.
-*/ 
+// ----------------------------------------------------------------------
+// The file contains CliIdentifyModules() which lists the cvs id strings
+// to stdout. Users can assist us (when making bug reports) by telling us 
+// exactly which modules were actually in effect when the binary was made. 
+// Currently, starting the client with the '-ident' switch will exec the 
+// function.
+// ----------------------------------------------------------------------
 //
 // $Log: cliident.cpp,v $
+// Revision 1.13  1999/01/29 19:17:28  jlawson
+// fixed formatting.
+//
 // Revision 1.12  1999/01/01 02:45:14  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -51,7 +54,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.12 1999/01/01 02:45:14 cramer Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.13 1999/01/29 19:17:28 jlawson Exp $"; } 
 #endif
 
 //-----------------------------------------------------------------------
@@ -139,23 +142,23 @@ probman_cpp,
 console_cpp
 };
 
-//"@(#)$Id: cliident.cpp,v 1.12 1999/01/01 02:45:14 cramer Exp $"
+//"@(#)$Id: cliident.cpp,v 1.13 1999/01/29 19:17:28 jlawson Exp $"
 
 void CliIdentifyModules(void)
 {
   unsigned int i;
-  for (i=0;i<(sizeof(ident_table)/sizeof(ident_table[0]));i++)
-    {
+  for (i = 0; i < (sizeof(ident_table)/sizeof(ident_table[0])); i++)
+  {
     //LogScreen( "%s\n", (*ident_table[i])() );
     const char *p1 = (*ident_table[i])();
     if ( p1 != NULL )
-      {              
+    {
       char buffer[76];
       char *p2 = &buffer[0];
       char *p3 = &buffer[sizeof(buffer)-2];
       p1 += 9;
       for (unsigned int pos = 0; pos < 4; pos++)
-        {
+      {
         while ( *p1 != 0 && *p1 == ' ' )
           p1++;
         unsigned int len = 0;
@@ -165,14 +168,16 @@ void CliIdentifyModules(void)
           break;
         if (pos != 0) 
           len+=10;
-        do{ *p2++ = ' ';
-          } while (p2<p3 && (++len)<20);
-        }
+        do
+        {
+          *p2++ = ' ';
+        } while (p2 < p3 && (++len) < 20);
+      }
       *p2 = 0;
       if ( p2 != &buffer[0] )
         LogScreen( "%s\n", buffer );
-      }  
     }
+  }
   return;
 }
 
