@@ -4,6 +4,9 @@
 // torment.ntr.net K6 233 sean@ntr.net
 //
 // $Log: rc5-6x86-rg.cpp,v $
+// Revision 1.11  1998/11/28 18:03:31  remi
+// Err, BALIGN4 != BALIGN(4)
+//
 // Revision 1.10  1998/11/28 18:00:13  remi
 // Fixed BALIGN4 macro for *BSD.
 //
@@ -15,7 +18,7 @@
 // causing build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.7  1998/07/08 22:59:34  remi
-// Lots of $Id: rc5-6x86-rg.cpp,v 1.10 1998/11/28 18:00:13 remi Exp $ stuff.
+// Lots of $Id: rc5-6x86-rg.cpp,v 1.11 1998/11/28 18:03:31 remi Exp $ stuff.
 //
 // Revision 1.6  1998/07/08 18:47:45  remi
 // $Id fun ...
@@ -104,7 +107,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5_6x86_rg_cpp (void) {
-return "@(#)$Id: rc5-6x86-rg.cpp,v 1.10 1998/11/28 18:00:13 remi Exp $"; }
+return "@(#)$Id: rc5-6x86-rg.cpp,v 1.11 1998/11/28 18:03:31 remi Exp $"; }
 #endif
 
 #define CORE_INCREMENTS_KEY
@@ -456,7 +459,7 @@ u32 rc5_unit_func_6x86( RC5UnitWork * rc5unitwork, u32 timeslice )
 	leal	(%%eax,%%ebx), %%ecx
 	movl	%%ecx, "work_pre3_r1"
 
-"BALIGN(4)"
+"BALIGN4"
 _loaded_6x86:\n"
 
     /* ------------------------------ */
@@ -609,7 +612,7 @@ _loaded_6x86:\n"
 	cmpl	"work_C_1", %%edi
 	je	_full_exit_6x86
 
-"BALIGN(4)"
+"BALIGN4"
 __exit_1_6x86: \n"
 
     /* Restore 2nd key parameters */
@@ -693,7 +696,7 @@ __exit_1_6x86: \n"
 	movl	$1, "work_add_iter"
 	jmp	_full_exit_6x86
 
-"BALIGN(4)"
+"BALIGN4"
 __exit_2_6x86:
 
 	movl	"work_key_hi", %%edx
@@ -713,7 +716,7 @@ _next_iter_6x86:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_6x86
 
-"BALIGN(4)"
+"BALIGN4"
 _next_iter2_6x86:
 	movl	%%ebx, "work_key_lo"
 	movl	%%edx, "work_key_hi"
@@ -726,7 +729,7 @@ _next_iter2_6x86:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_6x86
 
-"BALIGN(4)"
+"BALIGN4"
 _next_inc_6x86:
 	addl	$0x00010000, %%edx
 	testl	$0x00FF0000, %%edx
@@ -765,7 +768,7 @@ _next_inc_6x86:
 	# Not much to do here, since we have finished the block ...
 
 
-"BALIGN(4)"
+"BALIGN4"
 _full_exit_6x86:
 	movl	"work_save_ebp",%%ebp \n"
 
