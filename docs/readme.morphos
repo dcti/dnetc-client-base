@@ -1,7 +1,7 @@
 
  distributed.net client for MorphOS (PPC)
  Released by Harry Sintonen <sintonen@iki.fi>
- Document revision $Id: readme.morphos,v 1.1.2.5 2004/01/22 18:21:35 piru Exp $
+ Document revision $Id: readme.morphos,v 1.1.2.6 2004/08/16 01:31:58 piru Exp $
 
  Welcome to the distributed.net client.
 
@@ -54,15 +54,18 @@
 
  3.0  Notes ----------------------------------------------------------
 
-    If you want to contribute to the Amiga RC5 Team Effort, visit the effort
-    homepage at http://distributed.amiga.org/, it contains all the necessary
-    info along with extensive information on usage, configuration, trouble
-    shooting etc.
+    If you want to contribute to the Distributed Pegasos Team, visit the
+    effort home page at http://distributed.pegasosforum.de/, it contains all
+    the necessary info along with extensive information on usage,
+    configuration etc.
+
+    If you want to contribute to the Distributed Amiga Effort, visit the
+    effort home page at http://distributed.amiga.org/.
 
     IMPORTANT: the client's default distributed.net ID is rc5@distributed.net.
     Unless you change this your work is wasted effort.
-    The usage section on the Amiga effort pages contains all you need to
-    know to change this.
+    The How To section on the Distributed Pegasos effort pages contains all
+    you need to know to change this.
 
   3.1  Setting the time zone -----------------------------------------
 
