@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.12 1999/11/08 05:51:01 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.13 1999/11/11 21:28:37 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -237,6 +237,13 @@ int SelfTest( unsigned int contest )
       ContestWork contestwork;
       Problem *problem = new Problem(threadindex);
 
+      u32 tslice = 0x1000;
+      #if (CLIENT_OS == OS_NETWARE)
+      tslice = GetTimesliceBaseline();
+      #elif (CLIENT_OS == OS_MACOS)
+      tslice = GetTimesliceToUse(contestid);
+      #endif
+
       if (contest == RC5)
       { 
         test_cases = (const u32 (*)[TEST_CASE_COUNT][TEST_CASE_DATA])&rc5_test_cases[0][0];
@@ -374,8 +381,8 @@ int SelfTest( unsigned int contest )
           break;
       }
   
-      problem->LoadState( &contestwork, contest, 0x1000, 0 /* unused */);
-  
+      problem->LoadState( &contestwork, contest, tslice, 0 /* unused */);
+
       ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (long)(problem) );
 
       do
