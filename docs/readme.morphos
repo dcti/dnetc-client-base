@@ -1,7 +1,7 @@
 
  distributed.net client for MorphOS (PPC)
  Released by Harry Sintonen <sintonen@iki.fi>
- Document revision $Id: readme.morphos,v 1.1.2.3 2004/01/11 19:45:43 piru Exp $
+ Document revision $Id: readme.morphos,v 1.1.2.4 2004/01/19 08:00:54 piru Exp $
 
  Welcome to the distributed.net client.
 
@@ -140,6 +140,8 @@
  5.0  Credits & thank yous -------------------------------------------
 
     -- Ilkka Lehtoranta (MUI dnetcgui.library)
+
+    -- Grzegorz Kraszewski (spotted some really nasty bug)
 
     -- MorphOS client is based on the AmigaOS port:
        - Oliver Roberts (AmigaOS port) and all who contributed to
