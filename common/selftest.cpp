@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.10 1999/11/08 01:15:58 gregh Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.11 1999/11/08 05:17:55 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -191,6 +191,7 @@ static const u32 csc_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
 
 // ---------------------------------------------------------------------------
 
+// returns 0 if not supported, <0 on failed or break
 int SelfTest( unsigned int contest )
 {
   int threadpos, threadcount = 1;
@@ -204,10 +205,10 @@ int SelfTest( unsigned int contest )
   if (contest >= CONTEST_COUNT)
   {
     LogScreen("test::error. invalid contest %u\n", contest );
-    return -TEST_CASE_COUNT;
+    return 0;
   }
   if (!IsProblemLoadPermitted(-1, contest)) /* also checks HAVE_xxx_CORES */
-    return -TEST_CASE_COUNT;
+    return 0;
   #if (CLIENT_OS == OS_RISCOS)
   if (contest == RC5 && GetNumberOfDetectedProcessors() == 2)
     threadcount = 2;
@@ -471,7 +472,9 @@ int SelfTest( unsigned int contest )
 
     } /* for ( testnum = 0 ; testnum < TEST_CASE_COUNT ; testnum++ ) */
 
-    if (!userbreak)
+    if (userbreak)
+      successes = -1;
+    else 
     {
       if (successes > 0)
       {
