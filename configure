@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.111 2000/01/26 02:59:07 snake Exp $
+# @(#)$Id: configure,v 1.222.2.112 2000/01/26 13:03:04 jlawson Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1125,17 +1125,19 @@ case "$1" in
     *x86-linux-glibc2)	                   # glibc2
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 -D__showids__ \
-			-DMULTITHREAD -DLURK -DMMX_CSC \
-			-DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -DMMX_RC5 -D__showids__ \
+			-DMULTITHREAD -DLURK "    #-DHAVE_OGR_CORES
+			##-DMMX_CSC -DHAVE_CSC_CORES 
+			##$OPTS_DES_MMX -DHAVE_DES_CORES 
 	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
-	TARGET_ADDSRCS="common/lurk.cpp \
-			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
-			" #$OGR_ANSI_SRCS
-	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
-			platforms/x86ident.S \
-			des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS $CSC_ASM_SRCS"
+	TARGET_ADDSRCS="common/lurk.cpp"
+			##$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4
+			##$OGR_ANSI_SRCS
+	TARGET_ADDASMS="platforms/x86ident.S"
+			##des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S
+			##des/brydgnu/p1bdespro.S des/brydgnu/p2bdespro.S
+	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
+			##$NASM_DESMMX_SRCS $CSC_ASM_SRCS
 	TARGET_NASM_FMT="elf"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
