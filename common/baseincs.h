@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.8  1998/07/16 21:23:01  nordquist
+// More DYNIX port changes.
+//
 // Revision 1.7  1998/07/15 05:47:42  ziggyb
 // added io.h for Watcom, which has some IO functions not in stdio.h
 //
@@ -168,6 +171,14 @@ extern "C" {
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)
   #include <sys/time.h>
   #include <unistd.h>
+#elif (CLIENT_OS == OS_DYNIX)
+  #include <unistd.h> // sleep(3c)
+  struct timezone
+  {
+    int  tz_minuteswest;    /* of Greenwich */
+    int  tz_dsttime;        /* type of dst correction to apply */
+  };
+  extern "C" int gethostname(char *, int);
 #endif
 
 // --------------------------------------------------------------------------

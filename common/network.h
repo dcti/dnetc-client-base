@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.28  1998/07/16 21:23:04  nordquist
+// More DYNIX port changes.
+//
 // Revision 1.27  1998/07/08 09:24:58  jlawson
 // eliminated integer size warnings on win16
 //
@@ -209,8 +212,13 @@ extern "C" {
   typedef int SOCKET;
   #if (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_ALPHA)
     #include <asm/byteorder.h>
+  #elif (CLIENT_OS == OS_DYNIX) && defined(NTOHL)
+    #define ntohl(x)	NTOHL(x)
+    #define htonl(x)	HTONL(x)
+    #define ntohs(x)	NTOHS(x)
+    #define htons(x)	HTONS(x)
   #endif
-  #if (CLIENT_OS == OS_AIX)
+  #if (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_DYNIX)
     #include <errno.h>
   #endif
   #if ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU==CPU_68K))

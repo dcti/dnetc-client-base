@@ -1,6 +1,9 @@
 // Hey, Emacs, this a -*-C++-*- file !
 //
 // $Log: cmpidefs.h,v $
+// Revision 1.7  1998/07/16 21:23:03  nordquist
+// More DYNIX port changes.
+//
 // Revision 1.6  1998/07/13 12:40:28  kbracey
 // RISC OS update.
 // Added -noquiet option.
@@ -83,4 +86,8 @@
   #include <unistd.h>
   #define strcmpi(x,y)  strcasecmp(x,y)
   #define strncmpi(x,y,n)  strncasecmp(x,y,n)
+  #if (CLIENT_OS == OS_DYNIX)
+    extern "C" int strcasecmp(const char *s1, const char *s2);
+    extern "C" int strncasecmp(const char *s1, const char *s2, size_t);
+  #endif
 #endif
