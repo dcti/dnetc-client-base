@@ -2859,7 +2859,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
 
 // --------------------------------------------------------------------------
 
-void Client::PrintBanner(char * clname)
+void Client::PrintBanner(const char * clname)
 {
 #if (CLIENT_OS == OS_RISCOS)
   if (guiriscos)

@@ -78,7 +78,7 @@ typedef struct _socks5 {
 
 #pragma pack()
 
-char *Socks5ErrorText[9] =
+const char *Socks5ErrorText[9] =
 {
  /* 0 */ NULL,                              // success
   "general SOCKS server failure",

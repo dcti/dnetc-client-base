@@ -12,7 +12,7 @@
    23 May 1998 - corrected CliGetKeyrateForProblem so that blocks
                  with the same key but different contest ids
                  are recognized as unique problems.
-*/   
+*/
 
 #include "clirate.h" //includes client.h, clicdata.h, clitime.h
 
@@ -40,7 +40,7 @@ double CliGetKeyrateForContest( int contestid )
 // return keyrate for a single problem. Problem must be finished.
 double CliGetKeyrateForProblem( Problem *prob )
 {
-  static struct { u64 key; char contest; } addedqueue[MAXCPUS*2];
+  static struct { u64 key; signed char contest; } addedqueue[MAXCPUS*2];
   static int addedqpos = -1;
 
   RC5Result rc5result;
@@ -48,8 +48,8 @@ double CliGetKeyrateForProblem( Problem *prob )
   struct timeval tv;
   int contestid, additive;
   double keys;
-  
-  if (!prob)  
+
+  if (!prob)
     return ((double)(-1));
   if ((!(prob->finished)) || (!(prob->started)) || (!(prob->IsInitialized())))
     return ((double)(-2));
@@ -57,7 +57,7 @@ double CliGetKeyrateForProblem( Problem *prob )
   tv.tv_usec = prob->timelo;
   tv.tv_sec = prob->timehi;
   CliTimerDiff( &tv, &tv, NULL ); //get time difference as tv
-  if (!tv.tv_sec && !tv.tv_usec) 
+  if (!tv.tv_sec && !tv.tv_usec)
     tv.tv_usec = 1; //don't divide by zero
 
   contestid = prob->GetResult( &rc5result );
@@ -80,8 +80,8 @@ double CliGetKeyrateForProblem( Problem *prob )
         addedqueue[i].contest = -1;
         if (i==((MAXCPUS*2)-1)) addedqpos = 0;
       }
-    else if (addedqueue[i].key.hi==rc5result.key.hi && 
-        addedqueue[i].key.lo==rc5result.key.lo && 
+    else if (addedqueue[i].key.hi==rc5result.key.hi &&
+        addedqueue[i].key.lo==rc5result.key.lo &&
         addedqueue[i].contest == contestid )
       {
       additive=0;
@@ -91,7 +91,7 @@ double CliGetKeyrateForProblem( Problem *prob )
 
   if (additive)
     {
-    addedqueue[addedqpos].key.hi=rc5result.key.hi; 
+    addedqueue[addedqpos].key.hi=rc5result.key.hi;
     addedqueue[addedqpos].key.lo=rc5result.key.lo;
     addedqueue[addedqpos].contest=contestid;
     if ((++addedqpos)>=(MAXCPUS*2))
@@ -100,7 +100,7 @@ double CliGetKeyrateForProblem( Problem *prob )
     count = 1; //number of blocks to add to clicdata.cpp information
     CliAddContestInfoSummaryData( contestid, &count, &keys, &tv );
     }
-    
+
   return ((double)(keys))/
        (((double)(tv.tv_sec))+(((double)(tv.tv_usec))/((double)(1000000))));
 }

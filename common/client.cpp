@@ -1436,9 +1436,7 @@ u32 log2x(u32 x)
 s32 Client::Run( void )
 {
   FileEntry fileentry;
-#if !defined(MULTITHREAD)
-  s32 run;
-#else
+#if defined(MULTITHREAD)
   char buffer[MAXCPUS][4][40];
   #if (CLIENT_OS == OS_BEOS)
     static char * thstart[MAXCPUS][4];
@@ -1834,13 +1832,13 @@ PreferredIsDone1:
         if (numcputemp > 1)
         {
           LogScreenPercentMulti((u32) cpu_i%numcputemp,
-            (u32) problem[cpu_i].percent, 0, (bool) problem[cpu_i].restart );
+            (u32) problem[cpu_i].percent, 0, problem[cpu_i].restart );
           cpu_i++;
         }
         else
           LogScreenPercentSingle((u32) problem[cpu_i].percent, 0,
-                                        (bool)problem[cpu_i].restart );
-        problem[cpu_i].restart = 0;
+                                        problem[cpu_i].restart );
+        problem[cpu_i].restart = false;
       }
     }
   } //if (!percentprintingoff)
@@ -2093,12 +2091,12 @@ PreferredIsDone1:
           {
             if (numcputemp > 1)
                 LogScreenPercentMulti((u32) cpu_i%numcputemp, (u32) percent2,
-                (u32) problem[cpu_i].percent, (bool) problem[cpu_i].restart);
+                (u32) problem[cpu_i].percent, problem[cpu_i].restart);
             else
               LogScreenPercentSingle((u32) percent2, (u32) problem[cpu_i].percent,
-                (bool) problem[cpu_i].restart);
+                problem[cpu_i].restart);
               problem[cpu_i].percent = percent2;
-              problem[cpu_i].restart = 0;
+              problem[cpu_i].restart = false;
           }
         }
       }

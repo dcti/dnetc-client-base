@@ -138,7 +138,7 @@ s32 Problem::LoadState( ContestWork * work , u32 contesttype )
      ( (double) (contestwork.keysdone.lo) /
        (double) (contestwork.iterations.lo) ) );
   percent=0;
-  restart = ( work->keysdone.lo > 0 ) ? 1 : 0;
+  restart = ( work->keysdone.lo > 0 );
 
   initialized = 1;
   finished = 0;

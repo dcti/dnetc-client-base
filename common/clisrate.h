@@ -49,7 +49,7 @@ const char *CliGetMessageForProblemCompleted( Problem *problem );
 
 // breaks 'message' into (max) two lines with correct word wrap
 // forced newlines ('\n') and non-breaking space ('\xFF') are supported
-const char *CliReformatMessage( char *header, char *message );
+const char *CliReformatMessage( const char *header, const char *message );
 
 #endif // ifdef _CLICSTAT_H_
 

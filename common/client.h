@@ -489,7 +489,7 @@ protected:
   s32 InternalPutBuffer( const char *filename, const FileEntry * data );
   s32 InternalGetBuffer( const char *filename, FileEntry * data, u32 *optype , u8 contest);
   s32 InternalCountBuffer( const char *filename , u8 contest);
-  char *InternalGetLocalFilename( char *filename );
+  const char *InternalGetLocalFilename( const char *filename );
   s32 EnsureBufferConsistency( const char *filename );
 
 #if defined(NEEDVIRTUALMETHODS)
@@ -509,7 +509,7 @@ public:
   Client();
   ~Client();
 
-  void PrintBanner(char * clname);
+  void PrintBanner(const char * clname);
     // prints out a version banner to screen
 
   void ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing);

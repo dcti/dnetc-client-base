@@ -22,7 +22,7 @@ char *CliGetKeyrateAsString( char *buffer, double rate )
   else
   {
     unsigned int t1, t2 = 0;
-    char *t3[]={"","k","M","G","T"}; // "", "kilo", "mega", "giga", "tera"
+    const char *t3[]={"","k","M","G","T"}; // "", "kilo", "mega", "giga", "tera"
     while (t2<=5 && (((double)(rate))>((double)(_U32LimitDouble_))) )
     {
       t2++;
@@ -47,7 +47,8 @@ char *CliGetKeyrateAsString( char *buffer, double rate )
 const char *CliGetSummaryStringForContest( int contestid )
 {
   static char str[70];
-  char keyrate[32], *keyrateP, *name;
+  char keyrate[32];
+  const char *name, *keyrateP;
   unsigned blocks;
   struct timeval ttime;
 
@@ -117,7 +118,7 @@ const char *CliGetU64AsString( u64 *u, int inNetOrder, int contestid )
 const char *CliGetMessageForFileentryLoaded( FileEntry *fileentry )
 {
   static char str[84];
-  char *name;
+  const char *name;
   unsigned int size=1, count=32, iter = ntohl(fileentry->iterations.lo);
   unsigned int startpercent = (unsigned int) ( (double) 10000.0 *
            ( (double) (ntohl(fileentry->keysdone.lo)) / (double)(iter) ) );
@@ -156,7 +157,8 @@ const char *CliGetMessageForProblemCompleted( Problem *prob )
   static char str[160];
   RC5Result rc5result;
   struct timeval tv;
-  char keyrate[32], *keyrateP, *name;
+  char keyrate[32];
+  const char *keyrateP, *name;
   int contestid = prob->GetResult( &rc5result );
 
   if (CliGetContestInfoBaseData( contestid, &name, NULL )==0) //clicdata
@@ -185,11 +187,12 @@ const char *CliGetMessageForProblemCompleted( Problem *prob )
 
 // ---------------------------------------------------------------------------
 
-const char *CliReformatMessage( char *header, char *message )
+const char *CliReformatMessage( const char *header, const char *message )
 {
   static char strspace[160];
   unsigned int prelen, linelen, doquote = (header!=NULL);
-  char buffer[84], *bptr, *sptr, *mptr = message;
+  char buffer[84], *bptr, *sptr;
+  const char *mptr = message;
 
   strspace[0]=0;
   if (mptr && *mptr)

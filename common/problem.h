@@ -113,7 +113,7 @@ public:
   u32 finished;
   u32 startpercent;
   u32 percent;
-  u32 restart;
+  bool restart;
   u32 timehi, timelo;
   u32 started;
   u32 contest;

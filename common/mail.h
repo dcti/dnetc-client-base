@@ -47,10 +47,10 @@ public:
   int sendmessage(void);
   int prepare_smtp_message(Network * net);
   int send_smtp_edit_data (Network * net);
-  int get_smtp_line(Network * net);
-  int put_smtp_line(char * line, unsigned int nchars , Network * net);
-  void smtp_error (Network * net, char * message);
-  int finish_smtp_message(Network * net);
+  static int get_smtp_line(Network * net);
+  static int put_smtp_line(const char * line, unsigned int nchars , Network * net);
+  static void smtp_error (Network * net, const char * message);
+  static int finish_smtp_message(Network * net);
   int transform_and_send_edit_data(Network * net);
 #endif
 };

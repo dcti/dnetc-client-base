@@ -5,14 +5,14 @@
 
 
 #undef SHOWMAIL               // define showmail to see mail transcript on stdout
-#define GEN_HEADER_AT_SEND    // if defined, then the message header is 
-                              // generated and sent at message send time, and 
+#define GEN_HEADER_AT_SEND    // if defined, then the message header is
+                              // generated and sent at message send time, and
                               // is not pre-made as part of the message itself
-#define FIFO_ON_BUFF_OVERFLOW // if defined, lines are thrown out as needed. 
+#define FIFO_ON_BUFF_OVERFLOW // if defined, lines are thrown out as needed.
                               // if !defined, then all old text is discarded.
 
 #if defined(FIFO_ON_BUFF_OVERFLOW) && !defined(GEN_HEADER_AT_SEND)
-#define GEN_HEADER_AT_SEND    // FIFO buffer requires generating headers at 
+#define GEN_HEADER_AT_SEND    // FIFO buffer requires generating headers at
 #endif                        // send time rather than at msg creation time.
 
 #include "network.h"
@@ -52,7 +52,7 @@ void MailMessage::checktosend( u32 forcesend)
          retry=0;
 #ifdef FIFO_ON_BUFF_OVERFLOW
          while ((this->sendmessage() == -1) && retry++ < 3) {
-            printf("Mail::sendmessage %d - Unable to send mail message\n", 
+            printf("Mail::sendmessage %d - Unable to send mail message\n",
                   (int) retry );
             if (retry < 3) sleep(1);
          }
@@ -81,9 +81,9 @@ void MailMessage::addtomessage(char *txt ) {
         if ( ((len=strlen(txt))+1) >= MAILBUFFSIZE ) // should never happen
           return;
         else
-          {  
+          {
           char *p=strchr(messagetext+len,'\n');
-          if (p != NULL) 
+          if (p != NULL)
             strcpy( messagetext, p+1 ); // move the whole lot up
           else
             messagetext[0]=0; //no '\n' terminated lines in buffer anyway.
@@ -205,10 +205,10 @@ int MailMessage::sendmessage()
   s32 retry;
   Network *net;
 
-#if (CLIENT_OS == OS_NETWARE)          
+#if (CLIENT_OS == OS_NETWARE)
   if ( !CliIsNetworkAvailable(0) )    //This should be made a generic
     return 0;                         //function in network.cpp
-#endif  
+#endif
 
 
 #ifndef GEN_HEADER_AT_SEND
@@ -379,10 +379,10 @@ int MailMessage::get_smtp_line( Network * net )
   char in_data[10];
   int index = 0;
   in_data[3] = 0;
-  
-  while (1) 
+
+  while (1)
     {
-    if ( net->Get( 1, &in_data[index], 2*NETTIMEOUT ) != 1) 
+    if ( net->Get( 1, &in_data[index], 2*NETTIMEOUT ) != 1)
       {
       printf("recv error\n");
       return(-1);
@@ -392,7 +392,7 @@ printf("%s%c", ((index==0)?("GET: "):("")), in_data[index] );
 #endif
     if (in_data[index] == '\n')
       {
-      if ( in_data[3] != '-') //if not an ESMPT multi-line reply 
+      if ( in_data[3] != '-') //if not an ESMPT multi-line reply
         break;
       index = 0;
       }
@@ -402,7 +402,7 @@ printf("%s%c", ((index==0)?("GET: "):("")), in_data[index] );
   return( atoi( in_data ) );
 }
 
-int MailMessage::put_smtp_line( char * line, unsigned int nchars , Network *net)
+int MailMessage::put_smtp_line( const char * line, unsigned int nchars , Network *net)
 {
 
 #ifdef SHOWMAIL
@@ -425,21 +425,21 @@ int MailMessage::finish_smtp_message(Network * net)
 int send_message_header( Network * net, char *desthost, char *fromhost,
                  char *destid, char *fromid, char *statsid, char *date )
 {
-   //fromid, destid and desthost would have been validated 
-   //during the EHLO/MAIL/RCPT exchange, so only need to check for 
+   //fromid, destid and desthost would have been validated
+   //during the EHLO/MAIL/RCPT exchange, so only need to check for
    //statsid and fromhost
 
-   if ( net->Put( 6, "From: " ) ) return(-1); 
+   if ( net->Put( 6, "From: " ) ) return(-1);
    if ( net->Put( strlen(fromid), fromid ) ) return(-1);
-   if (!strchr(fromid, '@') ) 
+   if (!strchr(fromid, '@') )
      {
      if ( net->Put( 1, "@" ) ) return(-1);
      if ( net->Put( strlen(desthost), desthost ) ) return(-1);
      }
    if ( net->Put( 6, "\r\nTo: " ) ) return(-1);
    if ( net->Put( strlen(destid), destid ) ) return(-1);
-   if (!strchr(fromid, '@') ) 
-     { 
+   if (!strchr(fromid, '@') )
+     {
      if ( net->Put( 1, "@" ) ) return(-1);
      if ( net->Put( strlen(desthost), desthost ) ) return(-1);
      }
@@ -459,9 +459,9 @@ int send_message_header( Network * net, char *desthost, char *fromhost,
      if ( net->Put( strlen(statsid), statsid ) ) return(-1);
      }
    if ( net->Put( 5, ")\r\n\r\n" ) ) return(-1);
-   
+
    return 0;
-}   
+}
 
 int MailMessage::transform_and_send_edit_data(Network * net)
 {
@@ -477,13 +477,13 @@ int MailMessage::transform_and_send_edit_data(Network * net)
   index = messagetext;
 
 #ifdef GEN_HEADER_AT_SEND
-  if ( send_message_header( net, smtp,   my_hostname, 
+  if ( send_message_header( net, smtp,   my_hostname,
                           destid, fromid, rc5id, rfc822Date() ) )
     return -1;
   header_end = messagetext;
 #else
   header_end = strstr (messagetext, "\r\n\r\n");
-#endif  
+#endif
 
   while (!done)
   {
@@ -541,7 +541,7 @@ printf("%c",this_char);
   return (0);
 }
 
-void MailMessage::smtp_error (Network *net, char * message)
+void MailMessage::smtp_error (Network *net, const char * message)
 {
  printf("%s\n",message);
  put_smtp_line("QUIT\r\n", 6,net);
@@ -555,9 +555,9 @@ char *rfc822Date(void)
   struct tm * tmP;
   static char timestring[32];
 
-  static char *monnames[12] = {"Jan","Feb","Mar","Apr","May","Jun",
-                               "Jul","Aug","Sep","Oct","Nov","Dec" };
-  static char *wdaynames[7] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
+  static const char *monnames[12] = {"Jan","Feb","Mar","Apr","May","Jun",
+                                     "Jul","Aug","Sep","Oct","Nov","Dec" };
+  static const char *wdaynames[7] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
   struct tm loctime, utctime;
   int haveutctime, haveloctime, tzdiff, abstzdiff;
 
