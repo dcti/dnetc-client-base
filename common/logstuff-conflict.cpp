@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff-conflict.cpp,v $
+// Revision 1.23  1998/12/08 05:46:15  dicamillo
+// Add MacOS as a client that doesn't support ftruncate.
+//
 // Revision 1.22  1998/11/28 19:44:34  cyp
 // InitializeLogging() and DeinitializeLogging() are no longer Client class
 // methods.
@@ -86,7 +89,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.22 1998/11/28 19:44:34 cyp Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.23 1998/12/08 05:46:15 dicamillo Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -130,7 +133,8 @@ return "@(#)$Id: logstuff-conflict.cpp,v 1.22 1998/11/28 19:44:34 cyp Exp $"; }
      CLIENT_OS == OS_OS2 || CLIENT_OS == OS_WIN16 || \
      CLIENT_OS == OS_WIN32 || CLIENT_OS == OS_WIN32S )
   #define ftruncate( fd, sz )  chsize( fd, sz )
-#elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_RISCOS || CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_RISCOS || \
+     CLIENT_OS == OS_AMIGAOS || CLIENT_OS == OS_MACOS)
   #define ftruncate( fd, sz ) //nada, not supported
   #define FTRUNCATE_NOT_SUPPORTED
 #endif  
