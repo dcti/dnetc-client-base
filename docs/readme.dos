@@ -45,6 +45,30 @@
     Beginning with v2.7100.416, the DOS client no longer assumes that the 
     buffer files are in the current directory. The default path is now
     the client's directory.
+    
+    Note: the DOS, NetWare and Win16 clients do not support MMX for DES.
+    This is due to a technical problem with the porter's linker and will
+    hopefully be fixed soon. As you can probably well imagine, it is not 
+    particularly high priority.
+    
+    Note: DOS, Win16 and OS/2 ports may squawk about a missing TZ= variable
+    in the environment. Set it in your autoexec (or wherever). For example:
+    "SET TZ=EST+5" for eastern standard time or "SET TZ=EST+5DST" when 
+    daylight savings time is in effect (ie in the summer). If you live on
+    the other side of the zero meridian, ie east of Greenwich, England,
+    your TZ will have a negative offset. For example CET-1 for Central 
+    European Time, or NZT-12 if you live in New Zealand.
+    
+    TZ (TimeZone) is used by all (not only by the client) software that is 
+    sensitive to time to properly compute the computer clock's offset to 
+    UTC (aka GMT). If you have used the DOS client before, (and you do not 
+    live in Great Britain or in East Africa) you probably also noticed that 
+    the time was wrong. Well, now you know why: On MS-DOS, TZ is by default 
+    set to PST+9 (Pacific Standard Time). Other DOSs have different defaults.
+    Note that the timezone offsets are inverted from ones used in the Unix
+    world - DOS adds the number of hours to local time to determine what
+    GMT/UTC time is. Unix adds the offset to GMT/UTC to determine what 
+    local time is.
 
  3.0  Help: ----------------------------------------------------------
 
