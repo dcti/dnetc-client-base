@@ -10,6 +10,9 @@
    microseconds in tv_usec;
 */
 // $Log: clitime.cpp,v $
+// Revision 1.22  1998/12/08 05:37:27  dicamillo
+// MacOS update: use standard time routines instead of Microseconds.
+//
 // Revision 1.21  1998/11/19 10:49:04  cyp
 // Timestrings are now "UTC" instead of "GMT"
 //
@@ -51,7 +54,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.21 1998/11/19 10:49:04 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.22 1998/12/08 05:37:27 dicamillo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -100,12 +103,7 @@ struct timeval *CliTimer( struct timeval *tv )
 {
   static struct timeval stv = {0,0};
 
-#if (CLIENT_OS == OS_MACOS)
-  unsigned long long t;
-  Microseconds( (UnsignedWide *)&t );
-  stv.tv_sec = t / 1000000U;
-  stv.tv_usec = t % 1000000U;
-#elif (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_DOS) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
+#if (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_DOS) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
   struct timeb tb;
   ftime(&tb);
   stv.tv_sec = tb.time;
