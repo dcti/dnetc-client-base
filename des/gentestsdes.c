@@ -1,6 +1,11 @@
-
 /*
  * $Log: gentestsdes.c,v $
+ * Revision 1.6  1999/12/12 15:39:16  cyp
+ * sync
+ *
+ * Revision 1.5.2.1  1999/12/12 15:11:56  cyp
+ * removed reference to u64
+ *
  * Revision 1.5  1998/06/18 22:50:15  remi
  * This is a C file, not a C++ one.
  *
@@ -16,6 +21,9 @@
  *
  */
 
+static char *id="@(#)$Id: gentestsdes.c,v 1.6 1999/12/12 15:39:16 cyp Exp $";
+
+
 /*
 Date sent:        Sun, 11 Jan 1998 19:37:00 +0100
 From:             Remi Guyomarch <rguyom@mail.dotcom.fr>
@@ -25,23 +33,13 @@ Copies to:        tcharron@interlog.com, jlawson@hmc.edu, beberg@distributed.net
 Subject:          Re: (Fwd) DES x86-core news
 */
 
-static char *id="@(#)$Id: gentestsdes.c,v 1.5 1998/06/18 22:50:15 remi Exp $";
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "des.h"
 
-typedef struct fake_u64 u64;
 typedef unsigned int u32;
-typedef unsigned short u16;
 typedef unsigned char u8;
-typedef struct fake_s64 s64;
-typedef signed int s32;
-typedef signed short s16;
-typedef signed char s8;
-typedef double f64;
-typedef float f32;
 
 static const u8 odd_parity[256]={
   1,  1,  2,  2,  4,  4,  7,  7,  8,  8, 11, 11, 13, 13, 14, 14,
