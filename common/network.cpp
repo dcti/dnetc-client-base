@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.39  1998/09/03 16:01:32  cyp
+// Added TLI support. Any other SYSV (-type) takers?
+//
 // Revision 1.38  1998/08/28 22:04:49  cyp
 // Cleaned up/extended the division between "high level" and "low level"
 // methods: inet/socket functions/structures are encapsulated in small
@@ -98,7 +101,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.38 1998/08/28 22:04:49 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.39 1998/09/03 16:01:32 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -341,7 +344,7 @@ void Network::SetModeSOCKS5(const char *sockshost, s16 socksport,
 /* ----------------------------------------------------------------------- */
 
 // returns -1 on error, 0 on success
-s32 Network::Open( SOCKET insock)
+int Network::Open( SOCKET insock)
 {
   sock = insock;
 
@@ -359,7 +362,7 @@ s32 Network::Open( SOCKET insock)
 
 /* ----------------------------------------------------------------------- */
 
-s32 Network::Open( void )               // returns -1 on error, 0 on success
+int Network::Open( void )               // returns -1 on error, 0 on success
 {
   int success;
   mode = startmode;
@@ -509,12 +512,17 @@ s32 Network::Open( void )               // returns -1 on error, 0 on success
           lastaddress = 0; //reset
         else
           {
+          #if defined(_TIUSER)
+            LogScreen( " %s  Error %d (%s)\n",CliGetTimeString(NULL,0), 
+                                    t_errno, t_error("TLI") );
+          #else
           int my_errno = errno;
           if (verbose_level > 0 )
             LogScreen( " %s  Error %d (%s)\n",CliGetTimeString(NULL,0), 
                                     my_errno, strerror(my_errno) );
           #ifdef EINTR
           if (my_errno != EINTR) //should retry
+          #endif
           #endif
           lastaddress = 0; //or reset
           }
@@ -755,7 +763,7 @@ Socks5InitEnd:
 
 // -----------------------------------------------------------------------
 
-s32 Network::Close(void)
+int Network::Close(void)
 {
   LowLevelCloseSocket();
   retries = 0;
@@ -1116,24 +1124,23 @@ char * Network::base64_encode(char *username, char *password)
 }
 
 //=====================================================================
-// From here on down we have "bottom half" functions that (a) use the BSD 
-// socket API or (b) are TCP/IP specific or (c) actually do i/o.
+// From here on down we have "bottom half" functions that (a) use socket
+// functions or (b) are TCP/IP specific or (c) actually do i/o.
 //---------------------------------------------------------------------
 
 int Network::GetHostName( char *buffer, unsigned int len )
 {  
-  if (!buffer || !len)
+  if (!buffer)
     return -1;
   buffer[0]=0;
-  #if (defined(AF_INET) && defined(SOCK_STREAM))  
+  if (!len)
+    return -1;
+  if (len >= sizeof( "127.0.0.1" ))
+    strcpy( buffer, "127.0.0.1" );
+  #if ( defined(_TIUSER_) || (defined(AF_INET) && defined(SOCK_STREAM)) )
   if (NetCheckIsOK())
     return gethostname(buffer, len);
   #endif
-  if (len >= sizeof( "127.0.0.1" ))
-    {
-    strcpy( buffer, "127.0.0.1" );
-    return 0;
-    }
   return -1;
 }  
 
@@ -1143,36 +1150,61 @@ int Network::LowLevelCreateSocket(void)
 {
   Close(); //make sure the socket is closed already
 
-  #if (defined(AF_INET) && defined(SOCK_STREAM))
-  if (NetCheckIsOK())
+  if (!NetCheckIsOK())
+    return -1;
+
+#if defined(_TIUSER_)                                              //TLI
+  sock = t_open("/dev/tcp", O_RDWR, NULL);
+  if ( sock != -1 ) 
+    return 0;
+  sock = INVALID_SOCKET;
+  return -1;
+#else
+  #if (defined(AF_INET) && defined(SOCK_STREAM)) //BSD socks
+  sock = socket(AF_INET, SOCK_STREAM, 0);
+  if ( !(( (int)(sock) ) < 0 ) )
     {
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (( (int)(sock) ) < 0 )
-      sock = INVALID_SOCKET;
-    else
-      {
-      #if (CLIENT_OS == OS_RISCOS)
-        int on = 1;
-        // allow blocking socket calls to preemptively multitask
-        ioctl(sock, FIOSLEEPTW, &on);
-      #endif
-      return 0; //success
-      }
+    #if (CLIENT_OS == OS_RISCOS)
+      int on = 1;
+      // allow blocking socket calls to preemptively multitask
+      ioctl(sock, FIOSLEEPTW, &on);
+    #endif
+    return 0; //success
     }
   #endif
+  sock = INVALID_SOCKET;
   return -1;
+#endif
 }
 
 //------------------------------------------------------------------------
 
 int Network::LowLevelCloseSocket(void)
 {
+#if defined( _TIUSER_ ) //TLI
+   if ( sock != INVALID_SOCKET )
+     {
+     t_blocking( sock ); /* turn blocking back on */
+     if ( t_getstate( sock )!= T_UNBND )
+       {
+       t_sndrel( sock );   /* initiate close */
+       t_rcvrel( sock );   /* wait for conn release by peer */
+       t_unbind( sock );   /* close our own socket */
+       }
+     int rc = t_close( sock );
+     sock = INVALID_SOCKET;
+     return rc;
+     }
+#else //BSD socks
    if ( sock != INVALID_SOCKET )
      {
      LowLevelConditionSocket( CONDSOCK_BLOCKING_ON );
-     close( sock );
+     shutdown( sock, 2 );
+     int retcode = (int)close( sock );
      sock = INVALID_SOCKET;
+     return (retcode);
      }
+#endif
    return 0;
 }   
 
@@ -1182,32 +1214,50 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
 {
   if ( sock == INVALID_SOCKET )
     return -1;
+  if (!NetCheckIsOK())
+    return -1;
+
+#if defined(_TIUSER_)                                            //TLI
+  if ( t_bind( sock, NULL, NULL ) == -1 )
+    return -1;
+  struct t_call *sndcall = (struct t_call *)t_alloc(sock, T_CALL, T_ADDR);
+  if ( sndcall == NULL )
+    return -1;
+  sndcall->addr.len  = sizeof(struct sockaddr_in);
+  sndcall->opt.len   = 0;
+  sndcall->udata.len = 0;
+  struct sockaddr_in *sin = (struct sockaddr_in *) sndcall->addr.buf;
+  sin->sin_addr.s_addr = that_address;
+  sin->sin_family = AF_INET;
+  sin->sin_port = htons(that_port);
+  int rc = t_connect( sock, sndcall, NULL);
+  t_free((char *)sndcall, T_CALL);
+  return rc;
+#else
   #if (defined( SOL_SOCKET ) && defined( SO_REUSEADDR ) && defined(AF_INET))
     {
-    if (NetCheckIsOK())
-      {
-      #if 0                      // don't need this. No bind() in sight 
-      // allow the socket to bind to "in use" ports
-      int on = 1;
-      setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on));
-      #endif
+    #if 0                      // don't need this. No bind() in sight 
+    // allow the socket to bind to "in use" ports
+    int on = 1;
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on));
+    #endif
 
-      // set up the address structure
-      struct sockaddr_in sin;
-      memset((void *) &sin, 0, sizeof(sin));
-      sin.sin_family = AF_INET;
-      sin.sin_port = htons( that_port ); 
-      sin.sin_addr.s_addr = that_address;
+    // set up the address structure
+    struct sockaddr_in sin;
+    memset((void *) &sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
+    sin.sin_port = htons( that_port ); 
+    sin.sin_addr.s_addr = that_address;
 
-      if (connect(sock, (struct sockaddr *) &sin, sizeof(sin)) < 0)
-        return -1;
-      return 0;
-      }
+    if (connect(sock, (struct sockaddr *) &sin, sizeof(sin)) < 0)
+      return -1;
+    return 0;
     }
-  #else
+  #else //no socket support
   if (!that_address && !that_port)
     return -1;  
   #endif
+#endif
   return -1;
 }  
 
@@ -1229,9 +1279,19 @@ s32 Network::LowLevelPut(u32 length, const char *data)
     return -1;
   if (!NetCheckIsOK())                                  
     return -1;
-
+#if defined(_TIUSER_)                                          //TLI
+  if (!length) return 0;
+  int rc;
+  do{
+    rc = t_snd(sock, (char *)data, (unsigned int)length, 0);
+    if ( rc == -1 && t_errno == TFLOW ) /* sending too fast */
+      usleep(500000); // 0.5 secs
+    } while ( rc == -1 && t_errno == TFLOW );
+  return (s32)(rc);
+#else                                                         //BSD sox
   u32 writelen = write(sock, (char*)data, length);
   return (s32) (writelen != length ? -1 : (s32)writelen);
+#endif  
 }
 
 // ----------------------------------------------------------------------
@@ -1244,6 +1304,16 @@ s32 Network::LowLevelGet(u32 length, char *data)
   if (!NetCheckIsOK())
     return -1;
 
+#if defined(_TIUSER_)                                     //TLI
+  int flags, rc;
+  if (( rc = t_rcv( sock, data, length, &flags ) ) == -1 )
+    {
+    if ( t_errno == TNODATA ) 
+      return (s32)(-1); 
+    return 0; /* TLOOK (async event) or TSYSERR */
+    }
+  return (s32)(rc);
+#else                                                     //BSD 4.3 sockets
   #if defined(SELECT_FIRST)
     fd_set rs;
     timeval tv = {0,0};
@@ -1263,6 +1333,7 @@ s32 Network::LowLevelGet(u32 length, char *data)
   #endif
 
   return numRead;
+#endif //TLI or BSD sockets
 }
 
 // ----------------------------------------------------------------------
@@ -1274,7 +1345,12 @@ int Network::LowLevelConditionSocket( unsigned long cond_type )
 
   if ( cond_type==CONDSOCK_BLOCKING_ON || cond_type==CONDSOCK_BLOCKING_OFF )
     {
-    #if (!defined(FIONBIO) && !(defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK))))
+    #if defined(_TIUSER_)                                    //TLI
+      if ( cond_type == CONDSOCK_BLOCKING_ON )
+        return ( t_blocking( sock ) );
+      else         /* same as an ioctl call with I_SETDELAY and 1 as args. */
+        return ( t_nonblocking( sock ) );
+    #elif (!defined(FIONBIO) && !(defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK))))
       return -1;
     #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
       unsigned long flagon = ((cond_type == CONDSOCK_BLOCKING_OFF)?(1):(0));

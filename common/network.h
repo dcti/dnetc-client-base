@@ -5,8 +5,8 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
-// Revision 1.35  1998/08/29 08:06:49  cyp
-// Worked around coincidence: INVALID_SOCKET is already defined for win32
+// Revision 1.36  1998/09/03 16:01:35  cyp
+// Added TLI support. Any other SYSV (-type) takers?
 //
 // Revision 1.34  1998/08/28 22:05:49  cyp
 // Added prototypes for new/extended "low level" methods.
@@ -256,6 +256,11 @@ extern "C" {
   #endif
   #if (CLIENT_OS == OS_NETWARE)
     #include "platforms/netware/netware.h" //symbol redefinitions
+    extern "C" {
+    #pragma pack(1)
+    #include <tiuser.h> //using TLI
+    #pragma pack()
+    }
   #endif  
 #endif
 
@@ -302,9 +307,9 @@ protected:
   char server_name[64];
   char rrdns_name[64];
   s16  port;
-  s32  mode, startmode;
+  int  mode, startmode;
   SOCKET sock;          // socket file handle
-  s32  retries;         // 3 retries, then do RRDNS lookup
+  int  retries;         // 3 retries, then do RRDNS lookup
   u32  lastaddress;
   s16  lastport;
   int  isnonblocking;    // whether the socket could be set non-blocking
@@ -343,13 +348,12 @@ protected:
     // Returns < 0 if error - see CONDSOCK... defines above
 
   s32 LowLevelGet(u32 length, char *data);
-    // Returns length of read buffer
-    //    or 0 if connection closed
-    //    or < 0 if no data waiting
+    // returns 0 if success/-1 if error. 
+    // length of read buffer stored back into 'length'
 
   s32 LowLevelPut(u32 length, const char *data);
-    // Returns length of sent buffer
-    //    or -1 on error
+    // returns 0 if success/-1 if error. 
+    // length of sent buffer stored back into 'length'
 
   Network( const char * preferred, const char * roundrobin, 
            s16 port, int AutoFindKeyServer );
@@ -361,11 +365,11 @@ protected:
   ~Network( void );
     // guess. 
 
-  s32  Open( SOCKET insock );
+  int  Open( SOCKET insock );
     // takes over a preconnected socket to a client.
     // returns -1 on error, 0 on success
 
-  s32  Open( void );
+  int  Open( void );
     // [re]open the connection using the current settings.
     // returns -1 on error, 0 on success
 
@@ -399,7 +403,7 @@ public:
     // usernamepw is username:pw
     // An empty or NULL usernamepw means use only no authentication method
 
-  s32  Close( void );
+  int  Close( void );
     // close the connection
 
   s32  Get( u32 length, char * data, u32 timeout = 10 );
