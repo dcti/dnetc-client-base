@@ -6,6 +6,11 @@
 
 /*
  * $Log: s_paramaters.h,v $
+ * Revision 1.4  1998/06/16 06:27:42  remi
+ * - Integrated some patches in the UltraSparc DES code.
+ * - Cleaned-up C++ style comments in the UltraSparc DES code.
+ * - Replaced "rm `find ..`" by "find . -name ..." in superclean.
+ *
  * Revision 1.3  1998/06/15 02:44:29  djones
  * First build of UltraSPARC 64-bit/VIS DES client:
  * - many configure file tweaks: split up C++, ASM and C files; make "gcc" the
@@ -90,3 +95,12 @@
 /* define this if the UltraSparc might stomp the upper 32 bits of registers. */
 
 #define USE_64_BIT_SENTINEL
+
+
+/* define this to control the size of the operands in the lower-level "c" code.
+ * This has been tested when used as a "long" on an Ultra, with the top-level
+ * code told that only the HIGH word is valid.
+ */
+
+typedef unsigned long KWAN_LOOP_SLICE; /* assuming 32-bit kwan work */
+

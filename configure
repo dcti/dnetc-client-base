@@ -5,6 +5,11 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.42  1998/06/16 06:27:33  remi
+# - Integrated some patches in the UltraSparc DES code.
+# - Cleaned-up C++ style comments in the UltraSparc DES code.
+# - Replaced "rm `find ..`" by "find . -name ..." in superclean.
+#
 # Revision 1.41  1998/06/15 20:57:49  remi
 # Fixed \n espace sequence in ident: rule.
 #
@@ -220,8 +225,8 @@ OPTS_OS390="-D_ALL_SOURCE -I./common -I./rc5 -I./des"
 
 #--
 # look in platforms/ultrasparc/s_paramaters.h for the meaning of all these defines
-OPTS_DES_ULTRA_C="-DDES_ULTRA -DINLINE=' ' -DIN_DCTI_CLIENT -DLOW_WORD_VALID -DMANUAL_REGISTER_ALLOCATION -DBIT_32 -Iplatforms/ultrasparc"
-OPTS_DES_ULTRA_ASM="-DIN_DCTI_CLIENT -DDES_ULTRA -DINLINE=inline -DFULL_64_BIT_VALID -DASM -DMANUAL_REGISTER_ALLOCATION -DDO_FLOAT_PIPE -DUSE_IDENTICAL_FLOAT_REGISTERS -DUSE_64_BIT_SENTINEL -DBIT_64 -Iplatforms/ultrasparc"
+OPTS_DES_ULTRA_C="-DDES_ULTRA -DINLINE=' ' -DIN_DCTI_CLIENT -DLOW_WORD_VALID -DMANUAL_REGISTER_ALLOCATION -DBIT_32 -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc"
+OPTS_DES_ULTRA_ASM="-DIN_DCTI_CLIENT -DDES_ULTRA -DINLINE=inline -DFULL_64_BIT_VALID -DASM -DMANUAL_REGISTER_ALLOCATION -DDO_FLOAT_PIPE -DUSE_IDENTICAL_FLOAT_REGISTERS -DUSE_64_BIT_SENTINEL -DBIT_64 -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc"
 
 
 #
@@ -823,7 +828,7 @@ echo "	rm -f \${ALLOBJS} ${EXENAME}" >> Makefile
 echo "" >> Makefile
 echo "superclean:	clean" >> Makefile
 echo "	rm -f Makefile buff-in.* buff-out.* *.ini testplat" >> Makefile
-echo "	rm -f \`find . -name '*~' -printf %p\ \`" >> Makefile
+echo "	find . -name '*~' -exec rm {} \\;" >> Makefile
 echo "" >> Makefile
 
 echo "ident:	${EXENAME}" >> Makefile

@@ -2,6 +2,11 @@
 
 /*
  * $Log: kwan_from_to.c,v $
+ * Revision 1.3  1998/06/16 06:27:39  remi
+ * - Integrated some patches in the UltraSparc DES code.
+ * - Cleaned-up C++ style comments in the UltraSparc DES code.
+ * - Replaced "rm `find ..`" by "find . -name ..." in superclean.
+ *
  * Revision 1.2  1998/06/14 15:18:46  remi
  * Avoid tons of warnings due to a brain-dead CVS.
  *
@@ -12,7 +17,7 @@
 
 #include "des.h"
 
-static char *id="@(#)$Id: kwan_from_to.c,v 1.2 1998/06/14 15:18:46 remi Exp $";
+static char *id="@(#)$Id: kwan_from_to.c,v 1.3 1998/06/16 06:27:39 remi Exp $";
 
 /*
  * Generated S-box files.
@@ -25,59 +30,59 @@ static char *id="@(#)$Id: kwan_from_to.c,v 1.2 1998/06/14 15:18:46 remi Exp $";
  *
  * Well, almost unmodified.
  * An example Kwan modified routine looks like this:
- */
-// INLINE void
-// example_s1 (
-// 	KWAN_LOOP_SLICE	a1,	KWAN_LOOP_SLICE	a2,
-// 	KWAN_LOOP_SLICE	a3,	KWAN_LOOP_SLICE	a4,
-// 	KWAN_LOOP_SLICE	a5,	KWAN_LOOP_SLICE	a6,
-// 	KWAN_LOOP_SLICE	*merge1, KWAN_LOOP_SLICE *merge2,
-// 	KWAN_LOOP_SLICE	*merge3, KWAN_LOOP_SLICE *merge4,
-// 	KWAN_LOOP_SLICE	*out1,	KWAN_LOOP_SLICE	*out2,
-// 	KWAN_LOOP_SLICE	*out3,	KWAN_LOOP_SLICE	*out4
-// ) {
-// 	KWAN_LOOP_SLICE	x1, x2, x3, x4, x5, x6, x7, x8;
-// 	KWAN_LOOP_SLICE	x9, x10, x11, x12, x13, x14, x15, x16;
-// 	KWAN_LOOP_SLICE	x17, x18, x19, x20, x21, x22, x23, x24;
-// 	KWAN_LOOP_SLICE	x25, x26, x27, x28, x29, x30, x31, x32;
-// 	KWAN_LOOP_SLICE	x33, x34, x35, x36, x37, x38, x39, x40;
-// 	KWAN_LOOP_SLICE	x41, x42, x43, x44, x45, x46, x47, x48;
-// 	KWAN_LOOP_SLICE	x49, x50, x51, x52, x53, x54, x55, x56;
-// 	KWAN_LOOP_SLICE	Preload_1, Preload_2, Preload_3, Preload_4;
+ *
+ * INLINE void
+ * example_s1 (
+ * 	KWAN_LOOP_SLICE	a1,	KWAN_LOOP_SLICE	a2,
+ * 	KWAN_LOOP_SLICE	a3,	KWAN_LOOP_SLICE	a4,
+ * 	KWAN_LOOP_SLICE	a5,	KWAN_LOOP_SLICE	a6,
+ * 	KWAN_LOOP_SLICE	*merge1, KWAN_LOOP_SLICE *merge2,
+ * 	KWAN_LOOP_SLICE	*merge3, KWAN_LOOP_SLICE *merge4,
+ * 	KWAN_LOOP_SLICE	*out1,	KWAN_LOOP_SLICE	*out2,
+ * 	KWAN_LOOP_SLICE	*out3,	KWAN_LOOP_SLICE	*out4
+ * ) {
+ * 	KWAN_LOOP_SLICE	x1, x2, x3, x4, x5, x6, x7, x8;
+ * 	KWAN_LOOP_SLICE	x9, x10, x11, x12, x13, x14, x15, x16;
+ * 	KWAN_LOOP_SLICE	x17, x18, x19, x20, x21, x22, x23, x24;
+ * 	KWAN_LOOP_SLICE	x25, x26, x27, x28, x29, x30, x31, x32;
+ * 	KWAN_LOOP_SLICE	x33, x34, x35, x36, x37, x38, x39, x40;
+ * 	KWAN_LOOP_SLICE	x41, x42, x43, x44, x45, x46, x47, x48;
+ * 	KWAN_LOOP_SLICE	x49, x50, x51, x52, x53, x54, x55, x56;
+ * 	KWAN_LOOP_SLICE	Preload_1, Preload_2, Preload_3, Preload_4;
 
-// 	x1 = a3 & ~a5;
-// 	x2 = x1 ^ a4;
-// /* ... */
-// 	x21 = a1 & x20;
-// 	x22 = x12 ^ ~x21;
-// 	Preload_2 = *merge2;
-// 	Preload_2 = Preload_2 ^ x22;
-// 	*out2 = Preload_2;
-// 	x23 = x1 | x5;
-// 	x24 = x23 ^ x8;
-// /* ... */
-// 	x34 = a1 & x33;
-// 	x35 = x27 ^ x34;
-// 	Preload_4 = *merge4;
-// 	Preload_4 = Preload_4 ^ x35;
-// 	*out4 = Preload_4;
-// 	x36 = a3 & x28;
-// 	x37 = x18 & ~x36;
-// /* ... */
-// 	x45 = a1 & ~x44;
-// 	x46 = x39 ^ ~x45;
-// 	Preload_1 = *merge1;
-// 	Preload_1 = Preload_1 ^ x46;
-// 	*out1 = Preload_1;
-// 	x47 = x33 & ~x9;
-// 	x48 = x47 ^ x39;
-// /* ... */
-// 	x55 = a1 | x54;
-// 	x56 = x48 ^ ~x55;
-// 	Preload_3 = *merge3;
-// 	Preload_3 = Preload_3 ^ x56;
-// 	*out3 = Preload_3;
-// }
+ * 	x1 = a3 & ~a5;
+ * 	x2 = x1 ^ a4;
+ *  ...
+ * 	x21 = a1 & x20;
+ * 	x22 = x12 ^ ~x21;
+ * 	Preload_2 = *merge2;
+ * 	Preload_2 = Preload_2 ^ x22;
+ * 	*out2 = Preload_2;
+ * 	x23 = x1 | x5;
+ * 	x24 = x23 ^ x8;
+ *  ...
+ * 	x34 = a1 & x33;
+ * 	x35 = x27 ^ x34;
+ * 	Preload_4 = *merge4;
+ * 	Preload_4 = Preload_4 ^ x35;
+ * 	*out4 = Preload_4;
+ * 	x36 = a3 & x28;
+ * 	x37 = x18 & ~x36;
+ *  ...
+ * 	x45 = a1 & ~x44;
+ * 	x46 = x39 ^ ~x45;
+ * 	Preload_1 = *merge1;
+ * 	Preload_1 = Preload_1 ^ x46;
+ * 	*out1 = Preload_1;
+ * 	x47 = x33 & ~x9;
+ * 	x48 = x47 ^ x39;
+ *  ... 
+ * 	x55 = a1 | x54;
+ * 	x56 = x48 ^ ~x55;
+ * 	Preload_3 = *merge3;
+ * 	Preload_3 = Preload_3 ^ x56;
+ * 	*out3 = Preload_3;
+ * }
 
 INLINE void s1 ( KWAN_LOOP_SLICE a1, KWAN_LOOP_SLICE a2,
 		 KWAN_LOOP_SLICE a3, KWAN_LOOP_SLICE a4,

@@ -22,9 +22,10 @@
 #
 
 gcc -Wa,-xarch=v8plusa -O3 -g -c -o simple.o simple.c
-# cc -xarch=v8plusa -O -g des_ultra_crunch.c simple.o
+# cc -xarch=v8plusa -O -p -g des_ultra_crunch.c simple.o
+cc -xarch=v8plusa -O -g des_ultra_crunch.c simple.o
+# gcc -Wa,-xarch=v8plusa -O -g des_ultra_crunch.c simple.o
 
-# cc -xarch=v8plusa -O -g des_ultra_crunch.c simple.o
-cc -xarch=v8plusa -O -g des_ultra_crunch.c simple.o kwan_from_to.c do_s1.c do_s2.c do_s3.c do_s4.c do_s5.c do_s6.c do_s7.c do_s8.c do_s1_s3.c do_all.c do_all_fancy.c
+# cc -xarch=v8plusa -O -g des_ultra_crunch.c simple.o kwan_from_to.c do_s1.c do_s2.c do_s3.c do_s4.c do_s5.c do_s6.c do_s7.c do_s8.c do_s1_s3.c do_all.c do_all_fancy.c
 gcc -Wa,-xarch=v8plusa -O3 -S simple.c
 

@@ -1,7 +1,13 @@
-/* des-ultra-crunch.c v4.0 */
+/* des-ultra-crunch.c v4.1 */
+/* THIS SEEMS TO WORK BEST WHEN COMPILED WITH SUN'S CC */
 
 /*
  * $Log: des_ultra_crunch.c,v $
+ * Revision 1.4  1998/06/16 06:27:37  remi
+ * - Integrated some patches in the UltraSparc DES code.
+ * - Cleaned-up C++ style comments in the UltraSparc DES code.
+ * - Replaced "rm `find ..`" by "find . -name ..." in superclean.
+ *
  * Revision 1.3  1998/06/14 15:18:32  remi
  * Avoid tons of warnings due to a brain-dead CVS.
  *
@@ -13,7 +19,7 @@
  *
  */
 
-static char *id="@(#)$Id: des_ultra_crunch.c,v 1.3 1998/06/14 15:18:32 remi Exp $";
+static char *id="@(#)$Id: des_ultra_crunch.c,v 1.4 1998/06/16 06:27:37 remi Exp $";
 
 /* defines are set in configure & Makefile when compiling DCTI client */
 #ifndef IN_DCTI_CLIENT
@@ -119,6 +125,7 @@ OUTER_LOOP_SLICE whack16 (OUTER_LOOP_SLICE *plain_base,
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <malloc.h> /* for memalign */
 
 static int Round1_Key[] =	/* applies against the Right data */
     {	47, 11, 26,  3, 13, 41,
@@ -1171,10 +1178,10 @@ struct Contest_Work
 	struct OUTER_OFFSET_DISTANCES pass_16_work;
 	struct OUTER_OFFSET_DISTANCES inverse_pass_14_work;
 	struct CACHED_RESULTS_ARRAY Cached_Results[256];
+	struct SLICE_ARRAY Right13[16];
 	struct OUTER_OFFSET_DISTANCES inverse_pass_14_work_list[16];
 	struct OUTER_OFFSET_DISTANCES inverse_pass_15_work_list[16];
 	struct OUTER_OFFSET_DISTANCES inverse_pass_16_work_list[16];
-	struct SLICE_ARRAY Right13[256];	/* TOADS could be 16 long. */
 	struct SLICE_ARRAY Right14[256];
 	struct SLICE_ARRAY Right15[256];
 	struct SLICE_ARRAY Right16;
@@ -1210,6 +1217,7 @@ do_inverse_list_fancy (register struct Contest_Work *work, int Pass, int Funct
 	if (Pass == 15) /* pass 15 different sources to different destinations */
 	{	/* make the source point to the appropriate place */
 		/* make the destination point to the appropriate place */
+/* these address calculations are done slowly */
 	    for (i = 0; i < 16; i++)
 	    {	work->inverse_pass_15_work_list[i].Source =
 				&work->Right15[(16 * j) + i].Data[0];
@@ -1252,8 +1260,10 @@ do_inverse_list_fancy (register struct Contest_Work *work, int Pass, int Funct
 				&work->Right14[(16 * j) + i].Data[0];
 		work->inverse_pass_14_work_list[i].Merge =
 				&work->Right15[(16 * j) + i].Data[0];
+/* already set in initialization code
 		work->inverse_pass_14_work_list[i].Dest =
-				&work->Right13[(16 * j) + i].Data[0];
+				&work->Right13[i].Data[0];
+ */
 	    }
 
 /* make the next source point to the appropriate place */
@@ -1279,8 +1289,9 @@ do_inverse_list_fancy (register struct Contest_Work *work, int Pass, int Funct
 	    }
 
 /* collect the results into the result array to speed the key test */
+/* these moves are done quite slowly.  Can we get this to do load doubles? */
 	    for (i = 0; i < 16; i++)
-	    {	Cached_Data_Src = &work->Right13[(16 * j) + i];
+	    {	Cached_Data_Src = &work->Right13[i];
 		Cached_Data_Dest = &work->Cached_Results[(16 * j) + i];
 		Cached_Data_Dest->Cached_Data_5 = Cached_Data_Src->Data[5];
 		Cached_Data_Dest->Cached_Data_8 = Cached_Data_Src->Data[8];
@@ -1712,6 +1723,7 @@ whack16 (OUTER_LOOP_SLICE *plain_base,
     register OUTER_LOOP_SLICE result;
     unsigned long return_val;
     register unsigned long required_return_value = 0x5a3cf012ul;
+    register OUTER_LOOP_SLICE Prefetch1, Prefetch2, Prefetch3, Prefetch4;
 
 /* malloc a single structure, consisting of key data, working data, and
  * then a bunch of work elements.  By putting these into a struct, we
@@ -1874,6 +1886,14 @@ whack16 (OUTER_LOOP_SLICE *plain_base,
 			return_val = DO_ALL_FANCY (&work->pass_1_work, 0);
 		}
 	    }
+
+	} while (return_val != required_return_value);
+
+/* calculate 2 sboxes of pass 12, and compare them with precalculated data */
+/* if that succeeds (47%), go on to next key.  first fails 5%, second fails 48% */
+
+	do {
+	    return_val = DO_S1_S3 (&work->pass_12_work);
 	} while (return_val != required_return_value);
 
 /* TOADS make this -1 to test that both halves calculate the same result */
@@ -1888,37 +1908,42 @@ whack16 (OUTER_LOOP_SLICE *plain_base,
 #endif /* FULL_64_BIT_VALID */
 
 	k = j & 0x00ff;	/* index to saved data */
-
-/* calculate 2 sboxes of pass 12, and compare them with precalculated data */
-/* if that succeeds (47%), go on to next key.  first fails 5%, second fails 48% */
 	cached_inverse_data = &work->Cached_Results[k];
 
-#if 0
-	do {
-	    return_val = DO_S1 (&work->pass_12_work);
-	} while (return_val != required_return_value);
-	do {
-	    return_val = DO_S3 (&work->pass_12_work);
-	} while (return_val != required_return_value);
-#else
-	do {
-	    return_val = DO_S1_S3 (&work->pass_12_work);
-	} while (return_val != required_return_value);
-#endif
+/* TOADS these are VERY SLOW, and could be pipelined better */
+	Prefetch1 = work->Right6.Data[8];
+	Prefetch2 = cached_inverse_data->Cached_Data_8;
 
-	result &= ((work->Right6.Data[8]  ^ ~cached_inverse_data->Cached_Data_8)
-		 & (work->Right6.Data[16] ^ ~cached_inverse_data->Cached_Data_16)
-		 & (work->Right6.Data[22] ^ ~cached_inverse_data->Cached_Data_22)
-		 & (work->Right6.Data[30] ^ ~cached_inverse_data->Cached_Data_30));
-	if (result == SLICE_0)
-	{   stat_printf ("early 1\n");
-	    continue;
-	}
+	Prefetch3 = work->Right6.Data[16];
+	Prefetch4 = cached_inverse_data->Cached_Data_16;
+	result &= (Prefetch1 ^ ~Prefetch2);
 
-	result &= ((work->Right6.Data[5]  ^ ~cached_inverse_data->Cached_Data_5)
-		 & (work->Right6.Data[15] ^ ~cached_inverse_data->Cached_Data_15)
-		 & (work->Right6.Data[23] ^ ~cached_inverse_data->Cached_Data_23)
-		 & (work->Right6.Data[29] ^ ~cached_inverse_data->Cached_Data_29));
+	Prefetch1 = work->Right6.Data[22];
+	Prefetch2 = cached_inverse_data->Cached_Data_22;
+	result &= (Prefetch3 ^ ~Prefetch4);
+
+	Prefetch3 = work->Right6.Data[30];
+	Prefetch4 = cached_inverse_data->Cached_Data_30;
+	result &= (Prefetch1 ^ ~Prefetch2);
+
+	Prefetch1 = work->Right6.Data[5];
+	Prefetch2 = cached_inverse_data->Cached_Data_5;
+	result &= (Prefetch3 ^ ~Prefetch4);
+
+	Prefetch3 = work->Right6.Data[15];
+	Prefetch4 = cached_inverse_data->Cached_Data_15;
+	result &= (Prefetch1 ^ ~Prefetch2);
+
+	Prefetch1 = work->Right6.Data[23];
+	Prefetch2 = cached_inverse_data->Cached_Data_23;
+	result &= (Prefetch3 ^ ~Prefetch4);
+
+	Prefetch3 = work->Right6.Data[29];
+	Prefetch4 = cached_inverse_data->Cached_Data_29;
+	result &= (Prefetch1 ^ ~Prefetch2);
+
+	result &= (Prefetch3 ^ ~Prefetch4);
+
 	if (result == SLICE_0)
 	{   stat_printf ("early 2\n");
 	    continue;
@@ -1926,20 +1951,34 @@ whack16 (OUTER_LOOP_SLICE *plain_base,
 
 /* if that succeeds, calculate 1 forward, 1 backward, compare */
 /* if that succeeds (3%), go on to next key.  fails 44% */
- 	calculated_inverse_data = &work->Right13[k].Data[0];
 
+/* these address calculations are pretty slow, and could be cached */
 /* Set up operand pointers for the inverse sbox calculation */
 	work->pass_12_forward_14_back_work[0].Source = &work->Right14[k].Data[0];
 	work->pass_12_forward_14_back_work[0].Merge = &work->Right15[k].Data[0];
-	work->pass_12_forward_14_back_work[0].Dest = &work->Right13[k].Data[0];
 
 	do {
 	    return_val = DO_S4 (&work->pass_12_forward_14_back_work[0]);
 	} while (return_val != required_return_value);
-	result &= ((work->Right6.Data[0]  ^ ~calculated_inverse_data[0])
-		 & (work->Right6.Data[9]  ^ ~calculated_inverse_data[9])
-		 & (work->Right6.Data[19] ^ ~calculated_inverse_data[19])
-		 & (work->Right6.Data[25] ^ ~calculated_inverse_data[25]));
+
+ 	calculated_inverse_data = &work->Right13[0].Data[0];
+
+	Prefetch1 = work->Right6.Data[0];
+	Prefetch2 = calculated_inverse_data[0];
+
+	Prefetch3 = work->Right6.Data[9];
+	Prefetch4 = calculated_inverse_data[9];
+	result &= (Prefetch1 ^ ~Prefetch2);
+
+	Prefetch1 = work->Right6.Data[19];
+	Prefetch2 = calculated_inverse_data[19];
+	result &= (Prefetch3 ^ ~Prefetch4);
+
+	Prefetch3 = work->Right6.Data[25];
+	Prefetch4 = calculated_inverse_data[25];
+	result &= (Prefetch1 ^ ~Prefetch2);
+
+	result &= (Prefetch3 ^ ~Prefetch4);
 
 	if (result == SLICE_0)
 	{   stat_printf ("early 3\n");
@@ -1951,10 +1990,23 @@ whack16 (OUTER_LOOP_SLICE *plain_base,
 	do {
 	    return_val = DO_S2 (&work->pass_12_forward_14_back_work[0]);
 	} while (return_val != required_return_value);
-	result &= ((work->Right6.Data[1]  ^ ~calculated_inverse_data[1])
-		 & (work->Right6.Data[12] ^ ~calculated_inverse_data[12])
-		 & (work->Right6.Data[17] ^ ~calculated_inverse_data[17])
-		 & (work->Right6.Data[27] ^ ~calculated_inverse_data[27]));
+
+	Prefetch1 = work->Right6.Data[1];
+	Prefetch2 = calculated_inverse_data[1];
+
+	Prefetch3 = work->Right6.Data[12];
+	Prefetch4 = calculated_inverse_data[12];
+	result &= (Prefetch1 ^ ~Prefetch2);
+
+	Prefetch1 = work->Right6.Data[17];
+	Prefetch2 = calculated_inverse_data[17];
+	result &= (Prefetch3 ^ ~Prefetch4);
+
+	Prefetch3 = work->Right6.Data[27];
+	Prefetch4 = calculated_inverse_data[27];
+	result &= (Prefetch1 ^ ~Prefetch2);
+
+	result &= (Prefetch3 ^ ~Prefetch4);
 
 	if (result == SLICE_0)
 	{   stat_printf ("early 4\n");
@@ -1970,10 +2022,16 @@ whack16 (OUTER_LOOP_SLICE *plain_base,
 
 	calculated_inverse_data = &work->Right14[k].Data[0];
 
-	for (i = 0; i < 32; i++)
+	for (i = 0; i < 16; i++)
 	    result &= (work->Right7.Data[i] ^ ~calculated_inverse_data[i]);
 	if (result == SLICE_0)
 	{   stat_printf ("early 5\n");
+	    continue;
+	}
+	for (i = 16; i < 32; i++)
+	    result &= (work->Right7.Data[i] ^ ~calculated_inverse_data[i]);
+	if (result == SLICE_0)
+	{   stat_printf ("early 6\n");
 	    continue;
 	}
 
@@ -1989,7 +2047,7 @@ whack16 (OUTER_LOOP_SLICE *plain_base,
 	for (i = 0; i < 32; i++)
 	    result &= (work->Right8.Data[i] ^ ~calculated_inverse_data[i]);
 	if (result == SLICE_0)
-	{   stat_printf ("early 6\n");
+	{   stat_printf ("early 7\n");
 	    continue;
 	}
 

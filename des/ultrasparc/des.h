@@ -2,6 +2,11 @@
 
 /*
  * $Log: des.h,v $
+ * Revision 1.3  1998/06/16 06:27:36  remi
+ * - Integrated some patches in the UltraSparc DES code.
+ * - Cleaned-up C++ style comments in the UltraSparc DES code.
+ * - Replaced "rm `find ..`" by "find . -name ..." in superclean.
+ *
  * Revision 1.2  1998/06/14 15:18:30  remi
  * Avoid tons of warnings due to a brain-dead CVS.
  *
@@ -62,8 +67,6 @@ extern unsigned long do_all (
 		struct INNER_OFFSET_DISTANCES *Offset_List, int Special_Case );
 extern unsigned long do_all_fancy (
 		struct INNER_OFFSET_DISTANCES *Offset_List, int Special_Case );
-
-typedef unsigned long KWAN_LOOP_SLICE; /* assuming 32-bit kwan work */
 
 /* constants used to do loads and stores in the assembler code.  The assembler
  * code is not aware that data items are unsigned long long.  Instead, it
