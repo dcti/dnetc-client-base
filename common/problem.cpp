@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.97 1999/04/08 20:04:11 patrick Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.98 1999/04/09 06:11:33 gregh Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -480,6 +480,9 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
 
   //----------------------------------------------------------------
 
+  startpercent = 0;
+  restart = 0;
+
   switch (contest) 
   {
     case 0: // RC5
@@ -518,6 +521,14 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
         __SwitchRC5Format (&(rc5unitwork.L0));
 
       refL0 = rc5unitwork.L0;
+
+      startpercent = (u32)( ((double)(100000.0)) *
+            (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
+                               ((double)(contestwork.crypto.keysdone.lo))) /
+            ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
+                            ((double)(contestwork.crypto.iterations.lo)))) );
+      restart = ( contestwork.crypto.keysdone.lo!=0 || contestwork.crypto.keysdone.hi!=0 );
+
       break;
 
     case 2: // OGR
@@ -546,14 +557,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
 
   //--------------------------------------------------------------- 
  
-  startpercent = (u32)( ((double)(100000.0)) *
-        (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
-                           ((double)(contestwork.crypto.keysdone.lo))) /
-        ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
-                        ((double)(contestwork.crypto.iterations.lo)))) );
-  percent=0;
-  restart = ( contestwork.crypto.keysdone.lo!=0 || contestwork.crypto.keysdone.hi!=0 );
-
+  percent = 0;
   initialized = 1;
   finished = 0;
   started = 0;
@@ -1006,6 +1010,23 @@ s32 Problem::Run( u32 /*unused*/ )
   }
 
   return retcode;
+}
+
+
+u32 Problem::CalcPercent()
+{
+  switch (contest) {
+    case 0: // RC5
+    case 1: // DES
+      return (u32)( ((double)(100.0)) *
+        (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
+                                 ((double)(contestwork.crypto.keysdone.lo))) /
+        ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
+                                 ((double)(contestwork.crypto.iterations.lo)))) );
+    case 2: // OGR
+      return 0; //!! need to compute this
+  }
+  return 0;
 }
 
 /* ======================================================================= */

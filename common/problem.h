@@ -6,7 +6,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.55 1999/04/08 20:05:50 patrick Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.56 1999/04/09 06:11:33 gregh Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -127,12 +127,8 @@ public:
     //   0 if more work to be done
     //   1 if we're done, go get results
 
-  u32 CalcPercent() { return (u32)( ((double)(100.0)) *
+  u32 CalcPercent();
     /* Return the % completed in the current block, to nearest 1%. */
-        (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
-                                 ((double)(contestwork.crypto.keysdone.lo))) /
-        ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
-                                 ((double)(contestwork.crypto.iterations.lo)))) ); }
 
 #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
   u32 GetKeysDone() { return(contestwork.crypto.keysdone.lo); }
