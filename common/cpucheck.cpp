@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.12  1998/07/08 09:50:36  remi
+// Added support for the MMX bitslicer.
+// GetProcessorType() & 0x100 != 0 if we should use the MMX DES core.
+// GetProcessorType() & 0x200 != 0 if we should use the MMX RC5 core.
+//
 // Revision 1.11  1998/07/07 21:55:37  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -53,7 +58,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-static const char *id="@(#)$Id: cpucheck.cpp,v 1.11 1998/07/07 21:55:37 cyruspatel Exp $";
+static const char *id="@(#)$Id: cpucheck.cpp,v 1.12 1998/07/08 09:50:36 remi Exp $";
 return id; }
 #endif
 
@@ -191,8 +196,9 @@ int Client::GetProcessorType()
 #endif
 
 struct _cpuxref { int cpuidb;
-                  unsigned int kKeysPerMhz; //numbers are from Alde's tables
-                  int coretouse; 
+                  unsigned int kKeysPerMhz; // numbers are from Alde's tables
+                  int coretouse;            // & 0x100 == prefer MMX DES core
+                                            // & 0x200 == prefer MMX RC5 core
                   char *cpuname; };
 
 struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
@@ -215,13 +221,13 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
     vendorname = "Cyrix";
     cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
     static struct _cpuxref __cpuxref[]={
-      {    0x40, 1024,   0, "486"     }, // use Pentium core
-      {  0x0440, 1024,   0, "MediaGX" },
-      {  0x0490, 1185,   0, "5x86"    },
-      {  0x0520, 2090,   3, "6x86"    }, // "Cyrix 6x86/6x86MX/M2"
-      {  0x0540, 1200,   0, "GXm"     }, // use Pentium core here too
-      {  0x0600, 2115,   3, "6x86MX"  },
-      {  0x0000, 2115,   3, NULL      } //default core == 6x86
+      {    0x40, 1024,     0, "486"     }, // use Pentium core
+      {  0x0440, 1024,     0, "MediaGX" },
+      {  0x0490, 1185,     0, "5x86"    },
+      {  0x0520, 2090,     3, "6x86"    }, // "Cyrix 6x86/6x86MX/M2"
+      {  0x0540, 1200,     0, "GXm"     }, // use Pentium core here too
+      {  0x0600, 2115, 0x103, "6x86MX"  },
+      {  0x0000, 2115,     3, NULL      } //default core == 6x86
       }; cpuxref = &__cpuxref[0];
     }
   else if ( vendorid == 0x6543) //centaur/IDT cpu
@@ -240,22 +246,22 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
     vendorname = "AMD";
     cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
     static struct _cpuxref __cpuxref[]={
-      {  0x0040, 1024,   0, "486"      },   // "Pentium, Pentium MMX, Cyrix 486/5x86/MediaGX, AMD 486",
-      {  0x0430, 1024,   0, "486DX2"   },
-      {  0x0470, 1024,   0, "486DX2WB" },
-      {  0x0480, 1024,   0, "486DX4"   },
-      {  0x0490, 1024,   0, "486DX4WB" },
-      {  0x04E0, 1185,   0, "5x86"     },
-      {  0x04F0, 1185,   0, "5x86WB"   },
-      {  0x0500, 2353,   4, "K5 PR75, PR90, or PR100" }, // use K5 core
-      {  0x0510, 2353,   4, "K5 PR120 or PR133" },
-      {  0x0520, 2353,   4, "K5 PR166" },
-      {  0x0530, 2353,   4, "K5 PR200" },
-      {  0x0560, 1611,   5, "K6"       },
-      {  0x0570, 1611,   5, "K6"       },
-      {  0x0580, 1611,   5, "K6-2"     },
-      {  0x0590, 1611,   5, "K6-3"     },
-      {  0x0000, 1611,   5, NULL       }   // for the future - default core = K6
+      {  0x0040, 1024,     0, "486"      },   // "Pentium, Pentium MMX, Cyrix 486/5x86/MediaGX, AMD 486",
+      {  0x0430, 1024,     0, "486DX2"   },
+      {  0x0470, 1024,     0, "486DX2WB" },
+      {  0x0480, 1024,     0, "486DX4"   },
+      {  0x0490, 1024,     0, "486DX4WB" },
+      {  0x04E0, 1185,     0, "5x86"     },
+      {  0x04F0, 1185,     0, "5x86WB"   },
+      {  0x0500, 2353,     4, "K5 PR75, PR90, or PR100" }, // use K5 core
+      {  0x0510, 2353,     4, "K5 PR120 or PR133" },
+      {  0x0520, 2353,     4, "K5 PR166" },
+      {  0x0530, 2353,     4, "K5 PR200" },
+      {  0x0560, 1611, 0x105, "K6"       },
+      {  0x0570, 1611, 0x105, "K6"       },
+      {  0x0580, 1611, 0x105, "K6-2"     },
+      {  0x0590, 1611, 0x105, "K6-3"     },
+      {  0x0000, 1611,     5, NULL       }   // for the future - default core = K6
       }; cpuxref = &__cpuxref[0];
     }
   else if (vendorid == 0x6E49 || vendorid == 0x6547) // Intel CPU
@@ -266,29 +272,29 @@ struct _cpuxref *__GetProcessorXRef( int *cpuidbP, int *vendoridP,
       vendorname = ""; //generic 386/486
     cpuidb &= 0x0ff0; //strip last 4 bits, don't need stepping info
     static struct _cpuxref __cpuxref[]={
-      {  0x0030, 0426,  1, "80386"    },   // generic 386/486 core
-      {  0x0040, 1024,  1, "80486"    },   // - 946 ('95) + 1085 (NetWare) 
-      {  0x0400, 1024,  1, "486DX 25 or 33" },
-      {  0x0410, 1024,  1, "486DX 50" },
-      {  0x0420, 1024,  1, "486SX" },
-      {  0x0430, 1024,  1, "486DX2" },
-      {  0x0440, 1024,  1, "486SL" },
-      {  0x0450, 1024,  1, "486SX2" },
-      {  0x0470, 1024,  1, "486DX2WB" },
-      {  0x0480, 1024,  1, "486DX4" },
-      {  0x0490, 1024,  1, "486DX4WB" },
-      {  0x0500, 1416,  0, "Pentium" }, //stepping A
-      {  0x0510, 1416,  0, "Pentium" },    
-      {  0x0520, 1416,  0, "Pentium" },
-      {  0x0530, 1416,  0, "Pentium Overdrive" },
-      {  0x0540, 1432,  0, "Pentium MMX" },
-      {  0x0570, 1416,  0, "Pentium" },
-      {  0x0580, 1432,  0, "Pentium MMX" },
-      {  0x0600, 2785,  2, "Pentium Pro" },
-      {  0x0610, 2785,  2, "Pentium Pro" },
-      {  0x0630, 2785,  2, "Pentium II" },
-      {  0x0650, 2785,  2, "Pentium II" },
-      {  0x0000, 2785,  2, NULL         }  // default core = PPro/PII
+      {  0x0030, 0426,     1, "80386"    },   // generic 386/486 core
+      {  0x0040, 1024,     1, "80486"    },   // - 946 ('95) + 1085 (NetWare) 
+      {  0x0400, 1024,     1, "486DX 25 or 33" },
+      {  0x0410, 1024,     1, "486DX 50" },
+      {  0x0420, 1024,     1, "486SX" },
+      {  0x0430, 1024,     1, "486DX2" },
+      {  0x0440, 1024,     1, "486SL" },
+      {  0x0450, 1024,     1, "486SX2" },
+      {  0x0470, 1024,     1, "486DX2WB" },
+      {  0x0480, 1024,     1, "486DX4" },
+      {  0x0490, 1024,     1, "486DX4WB" },
+      {  0x0500, 1416,     0, "Pentium" }, //stepping A
+      {  0x0510, 1416,     0, "Pentium" },    
+      {  0x0520, 1416,     0, "Pentium" },
+      {  0x0530, 1416,     0, "Pentium Overdrive" },
+      {  0x0540, 1432, 0x100, "Pentium MMX" },
+      {  0x0570, 1416,     0, "Pentium" },
+      {  0x0580, 1432, 0x100, "Pentium MMX" },
+      {  0x0600, 2785,     2, "Pentium Pro" },
+      {  0x0610, 2785,     2, "Pentium Pro" },
+      {  0x0630, 2785, 0x102, "Pentium II" },
+      {  0x0650, 2785, 0x102, "Pentium II" },
+      {  0x0000, 2785,     2, NULL         }  // default core = PPro/PII
       }; cpuxref = &__cpuxref[0];
     }
 
