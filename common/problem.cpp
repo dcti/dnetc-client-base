@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.4 1999/07/01 17:19:54 chrisb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.5 1999/07/07 18:48:28 sampo Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -164,8 +164,8 @@ Problem::Problem(long _threadindex /* defaults to -1L */)
      how objects are allocated/how rc5unitwork is addressed, so let me know.
                                                        -cyp Jun 14 1999
   */
-#if (!(CLIENT_CPU == CPU_ARM && \
-      ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD))))
+#if ((CLIENT_CPU != CPU_ARM) && \
+      ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD)))
   RC5UnitWork *w = &rc5unitwork;
   unsigned long ww = ((unsigned long)w);
   if ((ww & 0x7)!=0) 
