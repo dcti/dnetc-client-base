@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.42 2000/06/04 10:17:33 oliver Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.43 2000/06/05 22:13:21 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -250,7 +250,7 @@ static long __GetRawProcessorID(const char **cpuname)
     else if (flags & AFF_68010)
       detectedtype = 68010L; // 68010
     else
-      detectedtype = -1;
+      detectedtype = 68000L; // 68000
   }
   #elif (CLIENT_OS == OS_MACOS)
   if (detectedtype == -2)
