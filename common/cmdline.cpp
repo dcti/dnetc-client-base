@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.16 1999/07/10 15:57:35 ivo Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.17 1999/07/10 17:36:49 cyp Exp $"; }
 
 //#define TRACE
 
@@ -129,34 +129,34 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           {
             struct dirent *dp;
             pid_t ourpid = getpid();
-	    char realbinname[64];
+            char realbinname[64];
             size_t len; FILE *file = fopen("/proc/curproc/cmdline","r"); 
-	    if (file)
-	    {
-	      /* useless for OSs that do argv[0]="rc5des" in client.cpp */
+            if (file)
+            {
+              /* useless for OSs that do argv[0]="rc5des" in client.cpp */
               len = fread( buffer, 1, sizeof(buffer), file );
               fclose( file );
               if (len!=0) 
               { 
-		char *p, *q=&buffer[0];
-		if (len == sizeof(buffer))
-		  len--;
+                char *p, *q=&buffer[0];
+                if (len == sizeof(buffer))
+                  len--;
                 buffer[len] = '\0';
                 while (*q && isspace(*q))
                   q++;
-		p = q;
-		while (*q && !isspace(*q))
-		{
-		  if (*q=='/')
-		    p = q+1;
-		  q++;
-		}
-	        *q = '\0'; 
-		strncpy(realbinname,p,sizeof(realbinname));   
-		realbinname[sizeof(realbinname)-1]='\0';
-		binname = (const char *)&realbinname[0];
-	      }
-	    }
+                p = q;
+                while (*q && !isspace(*q))
+                {
+                  if (*q=='/')
+                    p = q+1;
+                  q++;
+                }
+                *q = '\0'; 
+                strncpy(realbinname,p,sizeof(realbinname));   
+                realbinname[sizeof(realbinname)-1]='\0';
+                binname = (const char *)&realbinname[0];
+              }
+            }
             while ((dp = readdir(dirp)) != ((struct dirent *)0))  
             {
               pid_t thatpid = (pid_t)atoi(dp->d_name);
@@ -170,8 +170,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
               if (len != 0)
               {
                 char *q, *procname = &buffer[0];
-		if (len == sizeof(buffer))
-		  len--;
+                if (len == sizeof(buffer))
+                  len--;
                 buffer[len] = '\0';
                 //printf("%s: %60s\n", dp->d_name, buffer );
                 if (memcmp(buffer,"Name:",5)==0) /* linux status*/
@@ -191,11 +191,11 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                 {
                   kill_found++;
                   if ( kill( thatpid, sig ) == 0)
-		  {
-		    if (sigd_count < (sizeof(already_sigd)/sizeof(pid_t)-1))
-		      already_sigd[sigd_count++] = thatpid;
+                  {
+                    if (sigd_count < (sizeof(already_sigd)/sizeof(pid_t)-1))
+                      already_sigd[sigd_count++] = thatpid;
                     kill_ok++;
-		  }
+                  }
                   else if ((errno != ESRCH) && (errno != ENOENT))
                   {
                     kill_failed++;
@@ -206,8 +206,41 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             }  
             closedir(dirp);
           }  
+          #elif (CLIENT_OS == OS_HPUX)
+          {
+            struct pst_status pst[10];
+            int count, idx = 0; /* index within the context */
+            kill_found = -1; /* assume all failed */
+
+            /* loop until count == 0, will occur all have been returned */
+            while ((count = pstat_getproc(pst, sizeof(pst[0]), 
+                          (sizeof(pst)/sizeof(pst[0])), idx)) > 0) 
+            {
+              int i;
+              if (kill_found < 0)
+                kill_found = 0;
+              for (i=0; i < count; i++) 
+              {
+                //printf("pid: %d, cmd: %s\n",pst[i].pst_pid,pst[i].pst_ucomm);
+                char *procname = (char *)pst[i].pst_ucomm;
+                pid_t thatpid = (pid_t)pst[i].pst_pid;
+                if (!strcmp(procname,binname) || !strcmp(procname,altbinname))
+                {
+                  kill_found++;
+                  if ( kill( thatpid, sig ) == 0)
+                    kill_ok++;
+                  else if ((errno != ESRCH) && (errno != EINVAL))
+                  {
+                    kill_failed++;
+                    last_errno = errno;
+                  }
+                }
+              }
+              idx = pst[count-1].pst_idx + 1;
+            }
+          }
           #endif
-          #if (CLIENT_OS != OS_LINUX)
+          #if (CLIENT_OS != OS_LINUX) && (CLIENT_OS != OS_HPUX)
           // this part is only needed for OSs that do not read /proc OR
           // do not have a reliable method to set the name as read from /proc
           // (as opposed to reading it from ps output)
@@ -218,10 +251,9 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           //fbsd: "ps ax -o pid -o command 2>/dev/null";  /* bsd + -o ext */
           //lnux: "ps ax --format pid,comm 2>/dev/null";  /* bsd + gnu -o */
           #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || \
-                (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX)
+                (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX) || \
+                (CLIENT_OS == OS_IRIX)
           pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
-	  #elif (CLIENT_OS == OS_IRIX) || (CLIENT_OS == OS_HPUX)
-          pscmd = "/usr/bin/ps -e |awk '{print$1\" \"$4}' 2>/dev/null";
           #else
           #error fixme: select an appropriate ps syntax
           #endif
@@ -233,77 +265,77 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
           else
           {
-	    pid_t ourpid = getpid();
-	    unsigned int linelen = 0;
-	    int got_output = 0, eof_count = 0;
+            pid_t ourpid = getpid();
+            unsigned int linelen = 0;
+            int got_output = 0, eof_count = 0;
             //ConOutModal(pscmd);
-	    while (file) /* dummy while */
-	    {
-	      int ch;
-	      if (( ch = fgetc( file ) ) == EOF )
-	      {
-		if (ferror(file))
-		  break;
-	        if (linelen == 0)
-		{
-		  if ((++eof_count) > 2)
-		    break;
-	        }
- 	        usleep(250000);
-	      }
-	      else if (ch == '\n')
-	      {
-	        eof_count = 0;
-		if (linelen == 0)
-		  continue;
-		if (linelen < sizeof(buffer)-1) /* otherwise, line too long */
-		{
-		  pid_t thatpid;
-		  char *q, *procname = &buffer[0];
-		  buffer[linelen]='\0';
-		  while (*procname && isspace(*procname))
-		    procname++;
-	          thatpid = (pid_t)atol(procname);
+            while (file) /* dummy while */
+            {
+              int ch;
+              if (( ch = fgetc( file ) ) == EOF )
+              {
+                if (ferror(file))
+                  break;
+                if (linelen == 0)
+                {
+                  if ((++eof_count) > 2)
+                    break;
+                }
+                usleep(250000);
+              }
+              else if (ch == '\n')
+              {
+                eof_count = 0;
+                if (linelen == 0)
+                  continue;
+                if (linelen < sizeof(buffer)-1) /* otherwise, line too long */
+                {
+                  pid_t thatpid;
+                  char *q, *procname = &buffer[0];
+                  buffer[linelen]='\0';
+                  while (*procname && isspace(*procname))
+                    procname++;
+                  thatpid = (pid_t)atol(procname);
                   if (thatpid == ourpid)  /* ignore it */
                   {
-		    got_output = 1;
+                    got_output = 1;
                     //printf("'%s' ** THIS IS US ** \n",buffer,thatpid);
-		    thatpid = 0;
+                    thatpid = 0;
                   }
-		  else if (thatpid != 0)
-		  {
-		    got_output = 1;
-		    if (sigd_count != 0)
-		    {
-		      unsigned int i;
-		      for (i=0;i<sigd_count;i++)
-		      {
-		        if (already_sigd[i] == thatpid)
-			{
+                  else if (thatpid != 0)
+                  {
+                    got_output = 1;
+                    if (sigd_count != 0)
+                    {
+                      unsigned int i;
+                      for (i=0;i<sigd_count;i++)
+                      {
+                        if (already_sigd[i] == thatpid)
+                        {
                           thatpid = 0;
-			  break;
-			}
-	              }
-		    }
-		    if (thatpid != 0)
-		    {
-		      while (*procname && (isdigit(*procname) || isspace(*procname)))
-		        procname++;
-		      q = procname;
-		      while (*q && !isspace(*q))
-		      {
-		        if (*q == '/')
-		          procname = q+1;
-	                q++;
-		      }
-		      *q = '\0';
+                          break;
+                        }
+                      }
+                    }
+                    if (thatpid != 0)
+                    {
+                      while (*procname && (isdigit(*procname) || isspace(*procname)))
+                        procname++;
+                      q = procname;
+                      while (*q && !isspace(*q))
+                      {
+                        if (*q == '/')
+                          procname = q+1;
+                        q++;
+                      }
+                      *q = '\0';
                       //printf("pid='%d' procname='%s'\n",thatpid,procname);
-		      if (strcmp(procname,binname) && strcmp(procname,altbinname))
-		        thatpid = 0;
-		    }
-		  }
-		  if (thatpid != 0)
-		  {
+                      if (strcmp(procname,binname) && strcmp(procname,altbinname))
+                        thatpid = 0;
+                    }
+                  }
+                  if (thatpid != 0)
+                  {
                     kill_found++;
                     if ( kill( thatpid, sig ) == 0)
                       kill_ok++;
@@ -312,20 +344,20 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
                       kill_failed++;
                       last_errno = errno;
                     }
-		  }
-		} /* if (linelen < sizeof(buffer)-1) */
- 	        linelen = 0; /* prepare for next line */
-	      } /* if (ch == '\n') */
-	      else
-	      {
-		eof_count = 0;
-	        if (linelen < sizeof(buffer)-1)
-		  buffer[linelen++] = ch;
-	      }	
-	    } /* while (file) */
-	    if (!got_output && kill_found == 0)
-	      kill_found = -1;
-	    pclose(file);
+                  }
+                } /* if (linelen < sizeof(buffer)-1) */
+                linelen = 0; /* prepare for next line */
+              } /* if (ch == '\n') */
+              else
+              {
+                eof_count = 0;
+                if (linelen < sizeof(buffer)-1)
+                  buffer[linelen++] = ch;
+              } 
+            } /* while (file) */
+            if (!got_output && kill_found == 0)
+              kill_found = -1;
+            pclose(file);
           }
           #endif /* either read /proc/ or spawn ps */
 
