@@ -5,7 +5,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.47 2001/03/21 13:37:04 ephraim Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.48 2001/03/26 16:31:33 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -744,7 +744,6 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           if (Process32First(hSnapshot, &pe))
           {
             DWORD ourownpid = GetCurrentProcessId();
-            int dirmatch_optimization_rule = -1; /* not determined yet */
             unsigned int basenamepos, basenamelen, suffixlen;
 
             /* Name matching: if any component (path,name,extension) of 
