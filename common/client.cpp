@@ -3,6 +3,19 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: client.cpp,v $
+// Revision 1.152.2.16  1999/01/30 15:55:53  remi
+// Synced with :
+//
+//  Revision 1.187  1999/01/27 16:34:23  cyp
+//  if one variable wasn't being initialized, there could have been others.
+//  Consequently, added priority that had been missing as well.
+//
+//  Revision 1.186  1999/01/27 02:47:30  silby
+//  timeslice is now initialized during client creation.
+//
+//  Revision 1.185  1999/01/26 17:27:58  michmarc
+//  Updated banner messages for new DES slicing routines
+//
 // Revision 1.152.2.15  1999/01/30 15:46:11  remi
 // No need for InitRandom2() here...
 //
@@ -104,7 +117,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.152.2.15 1999/01/30 15:46:11 remi Exp $"; }
+return "@(#)$Id: client.cpp,v 1.152.2.16 1999/01/30 15:55:53 remi Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -138,11 +151,7 @@ static void __initialize_client_object(Client *client)
 {
   client->totalBlocksDone[0] = client->totalBlocksDone[1] = 0;
   client->cputype=-1;
-#if (CLIENT_OS == OS_QNX)
-   srand( (unsigned) time(NULL)/*(unsigned) CliTimer( NULL )->tv_usec*/ );
-#else
-   srand( (unsigned) CliTimer( NULL )->tv_usec );
-#endif
+  srand( (unsigned) time(NULL) );
 }
 
 // --------------------------------------------------------------------------
@@ -187,6 +196,9 @@ void PrintBanner(const char */*dnet_id*/,int level,int restarted)
       #if (CLIENT_CPU == CPU_POWERPC)
       LogScreenRaw( "PowerPC assembly by Dan Oetting\n");
       #endif
+      #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
+      LogScreenRaw( "RC5 Alpha assembly by Mike Marcelais\n");
+      #endif
 
       #if (CLIENT_CPU == CPU_ARM)
       LogScreenRaw( "ARM assembly by Steve Lee\n");
@@ -195,9 +207,11 @@ void PrintBanner(const char */*dnet_id*/,int level,int restarted)
       #endif
       #endif
 
-
       #if defined(KWAN) && defined(MEGGS)
       LogScreenRaw( "DES bitslice driver Copyright 1997-1998, Andrew Meggs\n" 
+                    "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
+      #elif defined(KWAN) && defined(DWORZ)
+      LogScreenRaw( "DES bitslice driver Copyright 1999, Christoph Dworzak\n"
                     "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
       #elif defined(KWAN) 
       LogScreenRaw( "DES search routines Copyright 1997-1998, Matthew Kwan\n" );
@@ -208,19 +222,18 @@ void PrintBanner(const char */*dnet_id*/,int level,int restarted)
       #if (CLIENT_OS == OS_DOS)  
       LogScreenRaw( "PMODE DOS extender Copyright 1994-1998, Charles Scheffold and Thomas Pytel\n");
       #endif
-      LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n"
-                 "%s\n",
-              #if (CLIENT_OS == OS_RISCOS)
-              guiriscos ?
-              "Interactive help is available, or select 'Help contents' from the menu for\n"
-              "detailed client information.\n" :
-              #endif
-			  #if (CLIENT_OS == OS_MACOS)
-                "Select ""Help..."" from the Apple menu for detailed client information.\n"
-			  #else
-              "Start the client with '-help' for a list of valid command line options.\n"
-			  #endif
-              );
+      LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n");
+      LogScreenRaw( 
+        #if (CLIENT_OS == OS_RISCOS)
+        guiriscos ?
+        "Interactive help is available, or select 'Help contents' from the menu for\n"
+        "detailed client information.\n\n" :
+        #elif (CLIENT_OS == OS_MACOS)
+        "Select ""Help..."" from the Apple menu for detailed client information.\n\n"
+        #else
+        "Start the client with '-help' for a list of valid command line options.\n\n"
+        #endif
+        );
       }
     else if ( level == 1 )
       {  
