@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.54 1999/11/23 23:20:15 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.55 1999/11/24 07:54:47 remi Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -581,7 +581,7 @@ case "$1" in
 	TARGET_CC="egcc"
 	TARGET_AS="egcc -c"
 	RC5CORECOPY="rc5/ansi/rc5ansi2-rg.cpp"
-	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC \
+	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC -DHAVE_CSC_CORES \
 			-D__showids__ -DLURK -DMULTITHREAD \
 			-DBIT_32 -DKWAN -DMEGGS $CSC_ANSI_CCOPTS"
 	TARGET_ADDSRCS="common/lurk.cpp \
