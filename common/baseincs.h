@@ -5,6 +5,12 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: baseincs.h,v $
+// Revision 1.30.2.9  1999/01/17 12:19:25  remi
+// Synced with :
+//
+//  Revision 1.46  1999/01/11 11:52:35  snake
+//  small openbsd fix
+//
 // Revision 1.30.2.8  1999/01/09 11:12:26  remi
 // Synced with :
 //
@@ -208,7 +214,7 @@ extern "C" {
   #include <unistd.h>
   extern "C" int nice(int);
   extern "C" int gethostname(char *, int);
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS==OS_BSDI)
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS==OS_BSDI) || (CLIENT_OS == OS_OPENBSD)
   #include <sys/time.h>
   #include <unistd.h>
   #if (((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS==OS_FREEBSD) || (CLIENT_OS==OS_BSDI))
