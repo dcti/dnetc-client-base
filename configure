@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.129 2000/02/14 04:23:08 petermack Exp $
+# @(#)$Id: configure,v 1.222.2.130 2000/02/16 00:27:17 snake Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1343,11 +1343,11 @@ case "$1" in
 	# nasm doesn't support BSD/OS aout format, so please don't do it again!!
     *x86-bsdos)                        # snake
 	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="$OPTS_GCC272_X86 -DLURK" 
-		 # -DHAVE_CSC_CORES -DHAVE_OGR_CORES
+	TARGET_CCFLAGS="-DLURK -DHAVE_OGR_CORES"
+		 # -DHAVE_CSC_CORES
 	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS common/lurk.cpp"
-		 #$CSC_ANSI_SRCS $OGR_ANSI_SRCS
+	TARGET_ADDSRCS="$RC5X86_SRCS common/lurk.cpp $OGR_ANSI_SRCS"
+		 #$CSC_ANSI_SRCS
 	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_TARBALL="bsdos2-x86-aout"
@@ -1356,13 +1356,14 @@ case "$1" in
     # bsdos-4 client is still experimental, found a severe bug with PentiumII
     *x86-bsdos4)      # BSD/OS 4.0 with ELF format, now without DES -snake
 	TARGET_AS="g++ -c -DNO_BALIGN"
-	TARGET_CCFLAGS="-g $OPTS_GCC272_X86 -DMMX_RC5"
+	#TARGET_CCFLAGS="-g $OPTS_GCC272_X86 -DMMX_RC5 -DHAVE_OGR_CORES -DLURK"
+	TARGET_CCFLAGS="-g $OPTS_GCC272_X86 -DHAVE_OGR_CORES -DLURK"
 		#  -DHAVE_CSC_CORES" -DMMX_CSC -DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
-	#TARGET_ADDSRCS="$CSC_ANSI_SRCS" #$OGR_ANSI_SRCS
+	TARGET_ADDSRCS="$OGR_ANSI_SRCS common/lurk.cpp $RC5X86_SRCS"
 	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_NASM_FMT="elf"
-	TARGET_ADDNASMS="$NASM_RC5X86_SRCS" # $CSC_ASM_SRCS"
+	#TARGET_ADDNASMS="$NASM_RC5X86_SRCS" # $CSC_ASM_SRCS"
 	TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_TARBALL="bsdos4-x86-elf"
        ;;
