@@ -113,32 +113,32 @@ void Client::DisplayHelp( const char * unrecognized_option )
   "-------------------------------------------------------------------------"
   };
 
-  unsigned int headerlines, bodylines, footerlines;
-  unsigned int maxscreenlines, maxpagesize;
+  int headerlines, bodylines, footerlines;
+  int maxscreenlines, maxpagesize;
   int i, done, startline;
   char whoami[64];
 
   if (unrecognized_option && *unrecognized_option)
-    {
+  {
     done = 0;
-    for (i=0;i<(sizeof(valid_help_requests)/sizeof(char *));i++)
-      {
+    for (i = 0; i < (int) (sizeof(valid_help_requests)/sizeof(char *)); i++)
+    {
       if (strcmpi(unrecognized_option,valid_help_requests[i])==0)
-        {
+      {
         done = 1;
         break;
-        }
       }
+    }
     if (!done)
-      {
+    {
       printf( "Unrecognized option '%s'\n"
            "Press enter to display a list of valid command line options\n"
             "or press any other key to quit... ", unrecognized_option );
       i=0;
       while (!i)
-        {
+      {
         if ((i=getch())==0) //non-blocking or DOS-style getch()
-          {
+        {
           #if (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS) || \
               (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || \
               (CLIENT_OS == OS_NETWARE)
@@ -146,8 +146,8 @@ void Client::DisplayHelp( const char * unrecognized_option )
           #else
             usleep(250000);
           #endif
-          }
         }
+      }
       if (i!='\n' && i!='\r')
         return;
       } // if (!found)
@@ -168,9 +168,9 @@ void Client::DisplayHelp( const char * unrecognized_option )
     {
     clearscreen();
 
-    for (i=0;i<headerlines;i++)
+    for (i = 0; i < headerlines; i++)
       printf("%s\n", helpheader[i] );
-    for (i=startline;i<(startline+maxpagesize);i++)
+    for (i = startline; i < (startline+maxpagesize); i++)
       printf("%s\n", helpbody[i] );
 
     if (startline == 0)
@@ -182,9 +182,9 @@ void Client::DisplayHelp( const char * unrecognized_option )
 
     i = 0;
     while (!i)
-      {
+    {
       if ((i=getch())==0) //non-blocking or DOS-style getch()
-        {
+      {
         #if (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS) || \
             (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || \
             (CLIENT_OS == OS_NETWARE)
@@ -192,25 +192,25 @@ void Client::DisplayHelp( const char * unrecognized_option )
         #else
           usleep(250000);
         #endif
-        }
-      else if (i=='+' || i=='\r' || i=='\n')
-        {
+      }
+      else if (i == '+' || i == ' ' || i == 'f' || i == '\r' || i == '\n')
+      {
         startline += maxpagesize;
         if ( startline >= (bodylines-maxpagesize))
           startline = (bodylines-maxpagesize)-1;
-        }
-      else if (i=='-')
-        {
+      }
+      else if (i == '-' || i == 'b')
+      {
         startline -= maxpagesize;
         if ( startline < 0 )
           startline = 0;
-        }
-      else
-        {
-        done = 1;
-        }
       }
-    } // while !done
+      else
+      {
+        done = 1;
+      }
+    }
+  } // while !done
 
   clearscreen();
   return;
