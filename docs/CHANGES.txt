@@ -21,13 +21,15 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.53 2004/03/04 17:06:00 piru Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.54 2004/03/04 17:26:32 snikkel Exp $
 ==========================================================================
 
 2.9000
 ------
 2.9007-489  new: x86: new rc5-72 cores (#3265, #3398)
             fix: ppc: now detects 745/755 (G3) cpu under linux
+            chg: x86: core preselection (#3477, #3580, #3602)
+            imp: x86: xbox cpu identification (#3593)
 
 2.9007-488  fix: macosx: Undefined symbol issue (10.1.5, #3578)
             imp: all: Force partial work to be restarted when fetched from a
