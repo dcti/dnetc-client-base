@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.69 1999/10/11 17:06:21 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.70 1999/10/16 17:16:42 dakidd Exp $"
 
 #include "cputypes.h"
 
@@ -199,6 +199,9 @@ extern "C" {
   extern "C" int gethostname(char *, int);
   extern "C" int gettimeofday(struct timeval *, struct timezone *);
 #elif (CLIENT_OS == OS_MACOS)
+#ifdef DAKIDD
+#include "Dakidd.h"
+#else
   #include <sys_time.h>
   #include <stat.mac.h>
   #include <machine_endian.h>
@@ -222,6 +225,7 @@ extern "C" {
   #if defined(MAC_GUI)
     #include "gui_incs.h"
   #endif
+#endif
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
 #endif
