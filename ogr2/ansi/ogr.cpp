@@ -8,7 +8,7 @@
  * - it #includes all neccessary .cor (core functions/macros), 
  *   .mac (general macros), .inc (general stuff) files
  */
-#define __OGR_CPP__ "@(#)$Id: ogr.cpp,v 1.2 2002/09/02 00:35:47 andreasb Exp $"
+#define __OGR_CPP__ "@(#)$Id: ogr.cpp,v 1.2.4.1 2004/01/22 05:15:31 bdragon Exp $"
 
 #include <stdio.h>      /* printf for debugging */
 #include <stdlib.h>     /* malloc (if using non-static choose dat) */
@@ -133,7 +133,7 @@
   #if (defined(__PPC__) || defined(ASM_PPC)) || defined(__POWERPC__) ||\
       (defined(__WATCOMC__) && defined(__386__)) || \
       (defined(__ICC)) /* icc is Intel only (duh!) */ || \
-      (defined(__GNUC__) && (defined(ASM_ALPHA) \
+      (defined(__GNUC__) && ((defined(ASM_ALPHA) && defined(ALPHA_CIX)) \
                              || defined(ASM_X86) \
                              || defined(ASM_ARM) \
                              || (defined(ASM_68K) && (defined(mc68020) \

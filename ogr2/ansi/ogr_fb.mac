@@ -5,7 +5,7 @@
  * This file (ogr_fb.mac) contains all the macros etc. for LOOKUP_FIRSTBLANK
  * on all the different architectures.
  */
-#define __OGR_FB_MAC__ "@(#)$Id: ogr_fb.mac,v 1.2.4.1 2003/10/15 03:11:26 jr_brady Exp $"
+#define __OGR_FB_MAC__ "@(#)$Id: ogr_fb.mac,v 1.2.4.2 2004/01/22 05:15:31 bdragon Exp $"
 
 #if !defined(OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM) /* 0 <= x < 0xfffffffe */
   static const char ogr_first_blank_8bit[256] = {
@@ -70,10 +70,26 @@
   #else
     #error "Please check this (define OGR_TEST_FIRSTBLANK to test)"
   #endif
-#elif defined(ASM_ALPHA) && defined(__GNUC__)
-  #error "Please check this (define OGR_TEST_FIRSTBLANK to test)"
-  static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
-  { i = ~i; __asm__ ("cntlzw %0,%0" : "=r"(i) : "0" (i)); return i+1; }
+#elif defined(ASM_ALPHA)
+  #if defined(ALPHA_CIX)
+    #if defined(__GNUC__)
+      static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
+      {
+        register unsigned long j = ~((unsigned long)i) << 32;
+        __asm__ ("ctlz %0,%0" : "=r"(j) : "0" (j));
+        return (int)(j & 0x1f)+1;
+      }
+    #else
+    #error "Please check this (define OGR_TEST_FIRSTBLANK to test)"
+      static inline int LOOKUP_FIRSTBLANK(register unsigned int i)
+      {
+        __int64 r = asm("ctlz %a0, %v0;", ~((unsigned long)i) << 32);
+        return (int)(r)+1;
+      }
+    #endif
+  #else
+  #error OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM is defined, and no code to match
+  #endif
 #elif defined(ASM_X86) && defined(__GNUC__) || \
       defined(__386__) && defined(__WATCOMC__) || \
       defined(__ICC)
