@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.158  1998/07/22 00:02:35  silby
+// Changes so that win32gui priorities will be more shutdown friendly.
+//
 // Revision 1.157  1998/07/18 18:06:36  cyruspatel
 // Fixed a ');' I misplaced.
 //
@@ -301,7 +304,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.157 1998/07/18 18:06:36 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.158 1998/07/22 00:02:35 silby Exp $";
 return id; }
 #endif
 
@@ -2507,10 +2510,8 @@ void Client::SetNiceness(void)
     else if ( niceness == 1 ) DosSetPriority( 2, PRTYC_IDLETIME, 31, 0 );
     // else                  /* nothing */;
   #elif (CLIENT_OS == OS_WIN32)
-    #if !defined(USEVIRTUALMETHODS)
     if ( niceness != 2 )      SetPriorityClass( GetCurrentProcess(), IDLE_PRIORITY_CLASS );
     if ( niceness == 0 )      SetThreadPriority( GetCurrentThread() ,THREAD_PRIORITY_IDLE );
-    #endif
     // else                  /* nothing */;
   #elif (CLIENT_OS == OS_MACOS)
      // nothing
