@@ -174,7 +174,7 @@ Client::Client()
   #endif
 #endif
 #if (CLIENT_OS == OS_OS2)
-	 os2hidden=0;
+  os2hidden=0;
 #endif
   contestdone[0]=contestdone[1]=0;
   srand( time( NULL ) );
@@ -245,7 +245,8 @@ s32 Client::ForceFetch( u8 contest, Network *netin )
 
   temp1 = CountBufferInput(contest);
   temp2 = temp1-1;
-  while ((!UserBreakTriggered) && (temp2 < temp1) && (temp1 < inthreshold[contest])) {
+  while ((!UserBreakTriggered) && (temp2 < temp1) && (temp1 < inthreshold[contest]))
+  {
     // If we're actually making the buffer file bigger, then keep trying to fetch...
     ret = Fetch(contest, netin);
     temp2 = temp1;
@@ -324,7 +325,8 @@ s32 Client::Fetch( u8 contest, Network *netin )
   retry = 0;
   while ( net->Open() && ( retry++ < FETCH_RETRY ) )
   {
-    if ( retry == FETCH_RETRY ) {
+    if ( retry == FETCH_RETRY )
+    {
       if (!netin) delete net;
       return( -1 );
     }
@@ -400,7 +402,8 @@ s32 Client::Fetch( u8 contest, Network *netin )
 #endif
 
   SetContestDoneState(&packet);
-  if (contestdone[contest]) {
+  if (contestdone[contest])
+  {
     if (!netin) delete net;
     return( -1 );
   }
@@ -413,7 +416,7 @@ s32 Client::Fetch( u8 contest, Network *netin )
     // x86 cores require <=31
     packet.iterations = htonl( 1 << min(31,preferred_blocksize) );
 #else
-    //packet.iterations = 0x10000000L ; // Request 1 block
+    //packet.iterations = 0x10000000L;     // Request 1 block
     packet.iterations = htonl( 1 << preferred_blocksize );
 #endif
     packet.version = htonl( PACKET_VERSION );
@@ -490,8 +493,8 @@ s32 Client::Fetch( u8 contest, Network *netin )
       thisrandomprefix = (ntohl(packet.key.hi) & 0xFF000000L) >> 24;
       if (thisrandomprefix != ((u32) randomprefix) ) { // Has the high byte changed?  If so, then remember it.
         if (ntohl(packet.iterations) > 0x08000000L) { // only if this wasn't a test block...
-	        randomprefix=thisrandomprefix;                 // and use it to generate random blocks.
-	        randomchanged=1;
+          randomprefix=thisrandomprefix;                 // and use it to generate random blocks.
+          randomchanged=1;
         }
       }
     }
@@ -503,7 +506,8 @@ s32 Client::Fetch( u8 contest, Network *netin )
     data.cypher.lo = packet.cypher.lo;
     data.keysdone.hi = 0;
     data.keysdone.lo = 0;
-    if (packet.iterations == 0) {
+    if (packet.iterations == 0)
+    {
       packet.iterations = (u32) 1<<31;
       LogScreenf("\n[%s] Received 2^32 block.  Truncating to 2^31\n", Time());
     }
@@ -553,8 +557,8 @@ s32 Client::Fetch( u8 contest, Network *netin )
       proxymessage[0]=0;
     }
 #ifdef NEW_STATS_AND_LOGMSG_STUFF
-      u32 percent2 = ((count*10000)/((inthreshold[contest]-more)+count));
-      LogScreenf( "\r[%s] Retrieved block %u of %u (%u.%02u%% transferred) ",
+    u32 percent2 = ((count*10000)/((inthreshold[contest]-more)+count));
+    LogScreenf( "\r[%s] Retrieved block %u of %u (%u.%02u%% transferred) ",
         CliGetTimeString(NULL,1), count, ((inthreshold[contest]-more)+count),
                   percent2/100, percent2%100 ); 
 #else
@@ -802,9 +806,9 @@ s32 Client::Flush( u8 contest , Network *netin )
       packet.os = htonl( CLIENT_OS );
       packet.cpu = htonl( CLIENT_CPU );
       packet.build = htonl( 6401 );
-      } 
+    } 
     else 
-      {
+    {
       // This block was written to the file by a client ver > 6401
       strncpy( packet.id, data.id, sizeof(data.id) - 1 );
       packet.id[sizeof(data.id)-1]=0; // in case data.id was >58 bytes
@@ -830,14 +834,12 @@ s32 Client::Flush( u8 contest , Network *netin )
     packet.plain.lo = data.plain.lo;
     packet.cypher.hi = data.cypher.hi;
     packet.cypher.lo = data.cypher.lo;
-    if ( data.contest == 0 ) 
-      {
+
+    if ( data.contest == 0 ) {
         packet.contestid = htonl( IDCONTEST_RC564 );
-      } 
-    else 
-      {
+    } else {
         packet.contestid = htonl( IDCONTEST_DESII );
-      }
+    }
 
     if ( (oper == OP_DONE) || (oper == OP_DONE_MULTI) )
     {
@@ -910,7 +912,7 @@ s32 Client::Flush( u8 contest , Network *netin )
       }
       count++;
       if (proxymessage[0] != 0) 
-        {
+      {
 #ifdef NEW_STATS_AND_LOGMSG_STUFF       //handles linewrap
         Log( CliReformatMessage( "The proxy says: ", proxymessage ) ); 
 #else
@@ -936,13 +938,14 @@ s32 Client::Flush( u8 contest , Network *netin )
                 (u32 *) &data, ( sizeof(FileEntry) / 4 ) - 1 );
       PutBufferOutput( &data );
       return( count ? count : -1 );
-  }
+    }
 
 #if (CLIENT_OS == OS_AMIGA)
     if (SetSignal(0L,0L) & SIGBREAKF_CTRL_C)
       SignalTriggered = UserBreakTriggered = 1;
 #endif
-    } while ( more != -1 && !(SignalTriggered==1));
+  }
+  while (more != -1 && !(SignalTriggered == 1));
 
   // close this connection
   if (!netin) delete net;
@@ -1053,8 +1056,8 @@ u32 Client::Benchmark( u8 contest, u32 numk )
   u32 percent2;
 
 #if (CLIENT_OS == OS_NETWARE)  //non-preemptive, so better do a task switch
-  usleep(225000);//sleep quart sec so we don't get suspended for hogging cpu time
-#endif        //after all, this is probably the first switch since app start
+  usleep(225000);    //sleep quart sec so we don't get suspended for hogging cpu time
+#endif               //after all, this is probably the first switch since app start
 
   if (SelectCore()) return 0;
   if (numk != 0) numkeys=max(numk,1000000L);
@@ -1114,7 +1117,6 @@ u32 Client::Benchmark( u8 contest, u32 numk )
   u32 rate = (u32)CliGetKeyrateForProblem( &(problem[0]) ); //and update stats
   LogScreenf("\nCompleted %s\n", CliGetSummaryStringForContest( contest-1 ) );
   return rate;
-
 #else //old_timing here
   lenhi = (double) ((problem[0]).timehi);
   lenlo = (double) ((problem[0]).timelo);
@@ -1124,14 +1126,14 @@ u32 Client::Benchmark( u8 contest, u32 numk )
   // DES cores *might* check more keys than asked
   // for small benchmarks it could be problematic
   if (contest == 2) {
-      RC5Result result;
-      (problem[0]).GetResult( &result );
-      numkeys = htonl( result.keysdone.lo ) * 2;
+    RC5Result result;
+    (problem[0]).GetResult( &result );
+    numkeys = htonl( result.keysdone.lo ) * 2;
   }
 
   LogScreenf(contest == 1 ?
-	     "\nComplete in %02d.%02d seconds. [%.2f RC5 keys/sec]\n" :
-	     "\nComplete in %02d.%02d seconds. [%.2f DES keys/sec]\n",
+       "\nComplete in %02d.%02d seconds. [%.2f RC5 keys/sec]\n" :
+       "\nComplete in %02d.%02d seconds. [%.2f DES keys/sec]\n",
     (int) (len), ((int) (len*100))%100,
     (double) ((double) numkeys / len )     );
 
@@ -1167,7 +1169,7 @@ s32 Client::SelfTest( u8 contest )
 
       convert_key_from_des_to_inc ( (u32 *) &expectedsolution.hi, (u32 *) &expectedsolution.lo);
 
-	    // to test also success on complementary keys
+      // to test also success on complementary keys
       if (expectedsolution.hi & 0x00800000L)
       {
         expectedsolution.hi ^= 0x00FFFFFFL;
@@ -1495,11 +1497,11 @@ s32 Client::Run( void )
 
   timeStarted = time( NULL );
   #ifndef NEW_STATS_AND_LOGMSG_STUFF
-    {
-  gettimeofday( &stop, &dummy );
-  global_timehi = stop.tv_sec;
-  global_timelo = stop.tv_usec;
-    }
+  {
+    gettimeofday( &stop, &dummy );
+    global_timehi = stop.tv_sec;
+    global_timelo = stop.tv_usec;
+  }
   #endif
 
   exitchecktime = timeStarted + 5;
@@ -1520,10 +1522,10 @@ s32 Client::Run( void )
   #ifdef MULTITHREAD
     int load_problem_count = 2*numcputemp;
     #if (CLIENT_OS == OS_NETWARE)
-      {
+    {
       if (numcputemp == 1)         //NetWare client prefers non-MT if only
         load_problem_count = 1;    //one thread/processor is to used
-      }
+    }
     #endif
 #else
     int load_problem_count = 1;
@@ -1549,75 +1551,77 @@ s32 Client::Run( void )
       } 
     else 
 #endif
-      {
+    {
       if (getbuff_errs == 0) 
-        {
+      {
         if (!contestdone[ preferred_contest_id ])
-          {
+        {
           // Neither contest is done...
           count = GetBufferInput( &fileentry , (u8) preferred_contest_id);
           if (contestdone[ preferred_contest_id ]) // This contest just finished.
-            {
+          {
             goto PreferredIsDone1;
-            }
+          }
           else 
-            {
+          {
             if (count == -3) 
-              { // No DES blocks available while in offline mode.  Do rc5...
+            {
+              // No DES blocks available while in offline mode.  Do rc5...
               count = GetBufferInput( &fileentry , (u8) ( ! preferred_contest_id));
-              }
             }
           }
+        }
         else 
-          {
+        {
           // Preferred contest is done...
 PreferredIsDone1:
           count = GetBufferInput( &fileentry , (u8) ( ! preferred_contest_id));
           if (contestdone[ ! preferred_contest_id ])
-            { // This contest just finished.
+          {
+            // This contest just finished.
             count = -2; // Both contests finished!
-            }
           }
         }
       }
+    }
 
     if (count == -1) 
-      {
-        getbuff_errs++;
-      } 
+    {
+      getbuff_errs++;
+    } 
     else if ((!nonewblocks) && (count != -2))
-        {
-          // LoadWork expects things descrambled.
-          Descramble( ntohl( fileentry.scramble ),
+    {
+      // LoadWork expects things descrambled.
+      Descramble( ntohl( fileentry.scramble ),
                      (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
-          // If a block was finished with an 'odd' number of keys done, then make it redo the last
-          // key -- this will prevent a 2-pipelined core from looping forever.
+      // If a block was finished with an 'odd' number of keys done, then make it redo the last
+      // key -- this will prevent a 2-pipelined core from looping forever.
       if ((ntohl(fileentry.iterations.lo) & 0x00000001L) == 1) 
-        {
-              fileentry.iterations.lo = htonl((ntohl(fileentry.iterations.lo) & 0xFFFFFFFEL) + 1);
-              fileentry.key.lo = htonl(ntohl(fileentry.key.lo) & 0xFEFFFFFFL);
-        }
+      {
+        fileentry.iterations.lo = htonl((ntohl(fileentry.iterations.lo) & 0xFFFFFFFEL) + 1);
+        fileentry.key.lo = htonl(ntohl(fileentry.key.lo) & 0xFEFFFFFFL);
+      }
       if (fileentry.contest != 1) 
         fileentry.contest=0;
 
           // If this is a partial DES block, and completed by a different cpu/os/build, then
           // reset the keysdone to 0...
       if (fileentry.contest == 1) 
+      {
+        if ( (ntohl(fileentry.keysdone.lo)!=0) || (ntohl(fileentry.keysdone.hi)!=0) ) 
         {
-          if ( (ntohl(fileentry.keysdone.lo)!=0) || (ntohl(fileentry.keysdone.hi)!=0) ) 
+          if ((fileentry.cpu != CLIENT_CPU) || (fileentry.os != CLIENT_OS) ||
+              (fileentry.buildhi != CLIENT_CONTEST) || (fileentry.buildlo != CLIENT_BUILD)) 
           {
-              if ((fileentry.cpu != CLIENT_CPU) || (fileentry.os != CLIENT_OS) ||
-                (fileentry.buildhi != CLIENT_CONTEST) || (fileentry.buildlo != CLIENT_BUILD)) 
-            {
-                fileentry.keysdone.lo = fileentry.keysdone.hi = htonl(0);
-                LogScreen("Read partial DES block from another cpu/os/build.\n");
-                LogScreen("Marking entire block as unchecked.\n");
-              }
-            }
+            fileentry.keysdone.lo = fileentry.keysdone.hi = htonl(0);
+            LogScreen("Read partial DES block from another cpu/os/build.\n");
+            LogScreen("Marking entire block as unchecked.\n");
           }
+        }
+      }
 
       #ifdef NEW_STATS_AND_LOGMSG_STUFF
-        {
+      {
         if (cpu_i==0 && load_problem_count>1)
           Log( "[%s] %s\n", CliGetTimeString(NULL,1), 
                                   "Loading two blocks per thread...");
@@ -1630,7 +1634,7 @@ PreferredIsDone1:
         have_loaded_buffers[fileentry.contest]=1;
 
         if (cpu_i == (load_problem_count-1)) //last loop?
-          {
+        {
           if (load_problem_count == 2)
             Log("[%s] 1 Child thread has been started.\n", Time());
           else if (load_problem_count > 2)
@@ -1640,9 +1644,9 @@ PreferredIsDone1:
               'A'+((load_problem_count>>1)-1));
 
           for (tmpcontest=0;tmpcontest<2;tmpcontest++) //once for each contest
-            {
+          {
             if (have_loaded_buffers[tmpcontest]) //load any of this type?
-              {
+            {
               Log( "[%s] %d %s Blocks remain in file %s\n", CliGetTimeString(NULL,1), 
                 CountBufferInput(tmpcontest), 
                 CliGetContestNameFromID(tmpcontest),
@@ -1651,18 +1655,18 @@ PreferredIsDone1:
                 CountBufferOutput(tmpcontest), 
                 CliGetContestNameFromID(tmpcontest),
                 (nodiskbuffers? "(memory-out)":out_buffer_file[tmpcontest]) );
-              }
             }
           }
         }
+      }
       #else
-        {
-          tmpblksize = log2x(ntohl(fileentry.iterations.lo));
-          tmpblkcnt = ntohl(fileentry.iterations.lo) / (1<<tmpblksize);
+      {
+        tmpblksize = log2x(ntohl(fileentry.iterations.lo));
+        tmpblkcnt = ntohl(fileentry.iterations.lo) / (1<<tmpblksize);
 #if defined(MULTITHREAD)
-            Log( "[%s] %s %d*2^%d Block: %08lX:%08lX ready to process\n"
+        Log( "[%s] %s %d*2^%d Block: %08lX:%08lX ready to process\n"
 #else
-            Log( "[%s] %s %d*2^%d Block: %08lX:%08lX being processed\n"
+        Log( "[%s] %s %d*2^%d Block: %08lX:%08lX being processed\n"
 #endif
              "[%s] %d Blocks remain in file %s\n"
              "[%s] %d Blocks are in file %s\n",
@@ -1670,90 +1674,90 @@ PreferredIsDone1:
                  ntohl( fileentry.key.hi ), ntohl( fileentry.key.lo ),
              Time(), count, (nodiskbuffers? "(memory-in)":in_buffer_file[fileentry.contest]),
              Time(), CountBufferOutput(fileentry.contest), (nodiskbuffers? "(memory-out)":out_buffer_file[fileentry.contest]) );
-          gettimeofday( &stop, &dummy );
-          (problem[cpu_i]).timehi = stop.tv_sec;
-          (problem[cpu_i]).timelo = stop.tv_usec;
-        }
+        gettimeofday( &stop, &dummy );
+        (problem[cpu_i]).timehi = stop.tv_sec;
+        (problem[cpu_i]).timelo = stop.tv_usec;
+      }
       #endif //NEW_STATS_AND_LOGMSG_STUFF
 
-          (problem[cpu_i]).LoadState( (ContestWork *) &fileentry , (u32) (fileentry.contest) );
+      (problem[cpu_i]).LoadState( (ContestWork *) &fileentry , (u32) (fileentry.contest) );
         
       //----------------------------
       //spin off a thread for this problem
       //----------------------------
         
 #if defined(MULTITHREAD)
-        {
+      {
         //Only launch a thread if we have really loaded 2*threadcount buffers
         if ((load_problem_count > 1) && (cpu_i < numcputemp))
-          {
-            // Start the thread for this cpu
-            sprintf(buffer[cpu_i][0],"%d",(int)cpu_i);
-            sprintf(buffer[cpu_i][1],"%d",(int)numcputemp);
-            sprintf(buffer[cpu_i][2],"%d",(int)timeslice);
-            sprintf(buffer[cpu_i][3],"%d",(int)niceness);
-            thstart[cpu_i][0] = &buffer[cpu_i][0][0];
-            thstart[cpu_i][1] = &buffer[cpu_i][1][0];
-            thstart[cpu_i][2] = &buffer[cpu_i][2][0];
-            thstart[cpu_i][3] = &buffer[cpu_i][3][0];
+        {
+          // Start the thread for this cpu
+          sprintf(buffer[cpu_i][0],"%d",(int)cpu_i);
+          sprintf(buffer[cpu_i][1],"%d",(int)numcputemp);
+          sprintf(buffer[cpu_i][2],"%d",(int)timeslice);
+          sprintf(buffer[cpu_i][3],"%d",(int)niceness);
+          thstart[cpu_i][0] = &buffer[cpu_i][0][0];
+          thstart[cpu_i][1] = &buffer[cpu_i][1][0];
+          thstart[cpu_i][2] = &buffer[cpu_i][2][0];
+          thstart[cpu_i][3] = &buffer[cpu_i][3][0];
 #if (CLIENT_OS == OS_WIN32)
-            threadid[cpu_i] = _beginthread( Go_mt, 8192, thstart[cpu_i]);
-            //if ( threadid[cpu_i] == 0)
-            //  threadid[cpu_i] = NULL; //0
+          threadid[cpu_i] = _beginthread( Go_mt, 8192, thstart[cpu_i]);
+          //if ( threadid[cpu_i] == 0)
+          //  threadid[cpu_i] = NULL; //0
 #elif (CLIENT_OS == OS_OS2)
-            threadid[cpu_i] = _beginthread( Go_mt, NULL, 8192, thstart[cpu_i]);
-            if ( threadid[cpu_i] == -1)
-              threadid[cpu_i] = NULL; //0
+          threadid[cpu_i] = _beginthread( Go_mt, NULL, 8192, thstart[cpu_i]);
+          if ( threadid[cpu_i] == -1)
+            threadid[cpu_i] = NULL; //0
 #elif (CLIENT_OS == OS_NETWARE)
-            threadid[cpu_i] = BeginThread( Go_mt, NULL, 8192, thstart[cpu_i]);
-            if ( threadid[cpu_i] == -1)
-              threadid[cpu_i] = NULL; //0
+          threadid[cpu_i] = BeginThread( Go_mt, NULL, 8192, thstart[cpu_i]);
+          if ( threadid[cpu_i] == -1)
+            threadid[cpu_i] = NULL; //0
 #elif (CLIENT_OS == OS_BEOS)
-            switch(niceness)
-            {
-              case 0: be_priority = B_LOW_PRIORITY; break;
-              case 1: be_priority = (B_LOW_PRIORITY + B_NORMAL_PRIORITY) / 2; break;
-              case 2: be_priority = B_NORMAL_PRIORITY; break;
-              default: be_priority = B_LOW_PRIORITY; break;
-            }
-            if (fileentry.contest == 0) 
-              sprintf(thread_name, "crunch#%d (RC5)", cpu_i + 1);
-            else 
-              sprintf(thread_name, "crunch#%d (DES)", cpu_i + 1);
-            the_threads[cpu_i] = spawn_thread((long (*)(void *)) Go_mt, thread_name,
-												be_priority, (void *)thstart[cpu_i]);
-            thread_error = (the_threads[cpu_i] < B_NO_ERROR);
-            if (!thread_error)
-              thread_error =  (resume_thread(the_threads[cpu_i]) != B_NO_ERROR);
-            if (thread_error)
-              threadid[cpu_i] = NULL; //0
+          switch(niceness)
+          {
+            case 0: be_priority = B_LOW_PRIORITY; break;
+            case 1: be_priority = (B_LOW_PRIORITY + B_NORMAL_PRIORITY) / 2; break;
+            case 2: be_priority = B_NORMAL_PRIORITY; break;
+            default: be_priority = B_LOW_PRIORITY; break;
+          }
+          if (fileentry.contest == 0) 
+            sprintf(thread_name, "crunch#%d (RC5)", cpu_i + 1);
+          else 
+            sprintf(thread_name, "crunch#%d (DES)", cpu_i + 1);
+          the_threads[cpu_i] = spawn_thread((long (*)(void *)) Go_mt, thread_name,
+                be_priority, (void *)thstart[cpu_i]);
+          thread_error = (the_threads[cpu_i] < B_NO_ERROR);
+          if (!thread_error)
+            thread_error =  (resume_thread(the_threads[cpu_i]) != B_NO_ERROR);
+          if (thread_error)
+            threadid[cpu_i] = NULL; //0
 #elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
-            pthread_attr_init(&thread_sched[cpu_i]);
-            pthread_attr_setscope(&thread_sched[cpu_i],PTHREAD_SCOPE_SYSTEM);
-            pthread_attr_setinheritsched(&thread_sched[cpu_i],PTHREAD_INHERIT_SCHED);
-            if (pthread_create( &threadid[cpu_i], &thread_sched[cpu_i], (void *) Go_mt, thstart[cpu_i]) )
-              threadid[cpu_i] = NULL; //0
+          pthread_attr_init(&thread_sched[cpu_i]);
+          pthread_attr_setscope(&thread_sched[cpu_i],PTHREAD_SCOPE_SYSTEM);
+          pthread_attr_setinheritsched(&thread_sched[cpu_i],PTHREAD_INHERIT_SCHED);
+          if (pthread_create( &threadid[cpu_i], &thread_sched[cpu_i], (void *) Go_mt, thstart[cpu_i]) )
+            threadid[cpu_i] = NULL; //0
 #else
-            if (pthread_create( &threadid[cpu_i], NULL, (void *) Go_mt, thstart[cpu_i]) )
-              threadid[cpu_i] = NULL; //0
+          if (pthread_create( &threadid[cpu_i], NULL, (void *) Go_mt, thstart[cpu_i]) )
+            threadid[cpu_i] = NULL; //0
 #endif
 
           if ( !threadid[cpu_i] )
-            {
+          {
             Log("[%s] Could not start child thread '%c'.\n",Time(),cpu_i+'A');
             return(-1);  //All those loaded blocks are gonna get lost
-            } 
+          } 
           else 
-            {
+          {
             #ifndef NEW_STATS_AND_LOGMSG_STUFF
               Log("[%s] Child thread '%c' has been started.\n",Time(),cpu_i+'A');
-#endif
-            }
+            #endif
           }
         }
+      }
 #endif
-      } //if ((!nonewblocks) && (count != -2))
-    } //for (cpu_i = 0; cpu_i < load_problem_count; cpu_i ++)
+    } //if ((!nonewblocks) && (count != -2))
+  } //for (cpu_i = 0; cpu_i < load_problem_count; cpu_i ++)
     
 
   //------------------------------------
@@ -1761,13 +1765,13 @@ PreferredIsDone1:
   //------------------------------------
 
   if (!percentprintingoff)
-    {
+  {
     #if (defined(PERCBAR_ON_ONE_LINE) && (MAXCPUS<=16))
     if (numcputemp > 1)
-      {
+    {
       char percbar[((MAXCPUS+1)*(sizeof(char)*6))];
       for (cpu_i = 0; cpu_i < numcputemp; cpu_i++)
-        {
+      {
         int percent2 = ((problem[cpu_i]).startpercent / 1000 );
         problem[cpu_i].percent = percent2;
         problem[cpu_i+numcputemp].percent =
@@ -1776,21 +1780,22 @@ PreferredIsDone1:
           percent2 = 99;
         sprintf(percbar+(cpu_i*(sizeof(char)*6)),
                                "%c:%02d%% ", cpu_i+'A', percent2 );
-            }
+      }
       char *t = (char *)Time();
       if ((strlen(t)+sizeof("[] ")+strlen(percbar))<79)
         LogScreenf("[%s] %s", t, percbar );
       else
         LogScreen( percbar );
-          }
+    }
     else
 #endif
-      {
+    {
       for (cpu_i = 0; cpu_i < numcputemp; cpu_i++)
-        {                            //startpercent is 1/100000 not 1/100
+      {
+        //startpercent is 1/100000 not 1/100
         problem[cpu_i].percent = ((problem[cpu_i]).startpercent / 1000);
         if (numcputemp > 1)
-          {
+        {
           LogScreenPercentMulti((u32) cpu_i%numcputemp, 
             (u32) problem[cpu_i].percent, 0, (bool) problem[cpu_i].restart );
           cpu_i++;
@@ -1799,9 +1804,9 @@ PreferredIsDone1:
           LogScreenPercentSingle((u32) problem[cpu_i].percent, 0,
                                         (bool)problem[cpu_i].restart );
         problem[cpu_i].restart = 0;
-     }
-  }
-    } //if (!percentprintingoff)
+      }
+    }
+  } //if (!percentprintingoff)
 
   //============================= MAIN LOOP =====================
   //now begin looping until we have a reason to quit
@@ -1822,28 +1827,28 @@ PreferredIsDone1:
     //------------------------------------
 
     #if (!defined(NOMAIN) && ((CLIENT_OS == OS_DOSWIN16) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)))
-      {
-    while ( kbhit() )
     {
-      int hitchar = getch();
-        if (hitchar == 0) //extended keystroke
-          getch();
-        else 
-          {
-          if (hitchar == 3 || hitchar == 'X' || hitchar == 'x' || hitchar == '!')
+      while ( kbhit() )
       {
-        // exit after current blocks
-        blockcount = min(blockcount,totalBlocksDone[0] + totalBlocksDone[1] + numcputemp);
-        Log("Exiting after current block\n");
-        exitcode = 1;
-      }
-          #if (defined(MULTITHREAD) && !defined(NONETWORK))
-          if (hitchar == 'u' || hitchar == 'U') 
+        int hitchar = getch();
+          if (hitchar == 0) //extended keystroke
+            getch();
+          else 
+          {
+            if (hitchar == 3 || hitchar == 'X' || hitchar == 'x' || hitchar == '!')
             {
-        Log("Keyblock Update forced\n");
-        connectrequested = 1;
-      }
-          #endif
+              // exit after current blocks
+              blockcount = min(blockcount,totalBlocksDone[0] + totalBlocksDone[1] + numcputemp);
+              Log("Exiting after current block\n");
+              exitcode = 1;
+            }
+        #if (defined(MULTITHREAD) && !defined(NONETWORK))
+            if (hitchar == 'u' || hitchar == 'U') 
+            {
+              Log("Keyblock Update forced\n");
+              connectrequested = 1;
+            }
+        #endif
           }
         }
     }
@@ -1851,37 +1856,38 @@ PreferredIsDone1:
       //In the event that we get suspended (for hogging the cpu), the AES
       //process will resume the main thread so we can shut down gracefully.
       CliKickWatchdog(); //wonder what the RSPCA will say to that?
-#endif
+    #endif
+
 
     //------------------------------------
     //Modem detection stuff for WinNT/Win95 
     //------------------------------------
 
 #if (CLIENT_OS == OS_WIN32)
-      {
-    //detect modem connection in win95/nt...
-    if (lurk && rasenumconnections && rasgetconnectstatus)
     {
-      RASCONN rasconn[8];
-      DWORD cb;
-      DWORD cConnections;
-      RASCONNSTATUS rasconnstatus;
-      (rasconn[0]).dwSize = sizeof(RASCONN);
-      cb = sizeof(rasconn);
-      if (rasenumconnections(&rasconn[0], &cb, &cConnections) == 0)
+      //detect modem connection in win95/nt...
+      if (lurk && rasenumconnections && rasgetconnectstatus)
       {
-        if (cConnections > 0)
+        RASCONN rasconn[8];
+        DWORD cb;
+        DWORD cConnections;
+        RASCONNSTATUS rasconnstatus;
+        (rasconn[0]).dwSize = sizeof(RASCONN);
+        cb = sizeof(rasconn);
+        if (rasenumconnections(&rasconn[0], &cb, &cConnections) == 0)
         {
-          rasconnstatus.dwSize = sizeof(RASCONNSTATUS);
-          for (DWORD whichconn = 1; whichconn <= cConnections; whichconn++)
+          if (cConnections > 0)
           {
-            if (rasgetconnectstatus((rasconn[whichconn-1]).hrasconn,
-              &rasconnstatus) == 0 && rasconnstatus.rasconnstate == RASCS_Connected)
-                connectrequested = 2;
+            rasconnstatus.dwSize = sizeof(RASCONNSTATUS);
+            for (DWORD whichconn = 1; whichconn <= cConnections; whichconn++)
+            {
+              if (rasgetconnectstatus((rasconn[whichconn-1]).hrasconn,
+                &rasconnstatus) == 0 && rasconnstatus.rasconnstate == RASCS_Connected)
+                  connectrequested = 2;
+            }
           }
         }
       }
-        }
     }
 #endif
 
@@ -1890,20 +1896,20 @@ PreferredIsDone1:
     //------------------------------------
 
     #if (defined(MULTITHREAD) && !defined(NONETWORK))
-      {
-    if ((connectoften && ((connectloops++)==19)) || connectrequested )
     {
-      // Connect every 20*3=60 seconds
-      // Non-MT 60 + (time for a client.run())
-      connectloops=0;
-      Update(0 ,0,0);  // RC5 We don't care about any of the errors.
-      Update(1 ,0,0);  // DES We don't care about any of the errors.
-      if (connectrequested)
+      if ((connectoften && ((connectloops++)==19)) || connectrequested )
       {
-        if (connectrequested == 1) Log("Keyblock Update completed\n");
-        connectrequested=0;
-      }
+        // Connect every 20*3=60 seconds
+        // Non-MT 60 + (time for a client.run())
+        connectloops=0;
+        Update(0 ,0,0);  // RC5 We don't care about any of the errors.
+        Update(1 ,0,0);  // DES We don't care about any of the errors.
+        if (connectrequested)
+        {
+          if (connectrequested == 1) Log("Keyblock Update completed\n");
+          connectrequested=0;
         }
+      }
     }
     #endif
 
@@ -1912,9 +1918,10 @@ PreferredIsDone1:
     //------------------------------------
 
     if (load_problem_count > 1) //ie MUTLITHREAD
-      {                 // prevent the main thread from racing 
-      sleep(3);         // & bogging everything down.
-      }                  
+    {
+      // prevent the main thread from racing & bogging everything down.
+      sleep(3);
+    }                  
     else if (pausefilefound) //threads have their own sleep section
     {
       #if (CLIENT_OS == OS_WIN16)
@@ -1923,46 +1930,46 @@ PreferredIsDone1:
         sleep(1);
       #endif
         continue; //go back to top and check the keyboard for release
-      }
+    }
     else //only one problem and we are not paused
-      {
+    {
       //Actually run a problem
       #if (CLIENT_OS == OS_NETWARE)
-        {
+      {
         //sets up and uses a polling procedure that runs as 
         //an OS callback when the system enters an idle loop.
         CliRunProblemAsCallback( &(problem[0]), 
                                 timeslice/PIPELINE_COUNT, 0 , niceness );
-        }
+      }
       #else
-        {
+      {
         (problem[0]).Run( timeslice / PIPELINE_COUNT , 0 );      
 #if (CLIENT_OS == OS_WIN16)
         SurrenderCPU();
 #endif
-        }
-      #endif //if non-mt, netware or not
       }
+      #endif //if non-mt, netware or not
+    }
 
     //------------------------------------
     //now check all problems for change, do checkpointing, reloading etc
     //------------------------------------
 
     for (cpu_i = 0; ((!SignalTriggered) && (cpu_i < load_problem_count)); cpu_i++)
-      {
+    {
       // -------------
       //  update the percent bar
       // -------------
       if (!percentprintingoff) 
-        {
+      {
         #if (defined(PERCBAR_ON_ONE_LINE) && MAXCPUS<=16)
         if (numcputemp > 1)
-          {
+        {
           if (cpu_i == 0) //only once per loop
-            {
+          {
             char percbar[((MAXCPUS+1)*(sizeof(char)*6))];
             for (int cpu_i2 = 0; cpu_i2 < numcputemp; cpu_i2++)
-              {
+            {
               //first try to figure out which problem to print perc for
               int percent2;
               if (problem[cpu_i2].started)
@@ -1976,21 +1983,21 @@ PreferredIsDone1:
               sprintf(percbar+(cpu_i2*(sizeof(char)*6)),
                 ((percent2<100)?("%c:%02d%% "):("%c:%d ")),
                 cpu_i2+'A', percent2 );
-              }
+            }
             char *t = (char *)Time();
             if ((strlen(t)+sizeof("[] ")+strlen(percbar))<79)
               LogScreenf("\r[%s] %s", t, percbar );
             else
               LogScreenf( "\r%s", percbar );
-            }
           }
-              else
+        }
+        else
         #endif
         if (problem[cpu_i].started == 1)
-          {
+        {
           int percent2 = problem[cpu_i].CalcPercent();
           if ( percent2 > problem[cpu_i].percent )
-            {
+          {
             if (numcputemp > 1)
                 LogScreenPercentMulti((u32) cpu_i%numcputemp, (u32) percent2,
                 (u32) problem[cpu_i].percent, (bool) problem[cpu_i].restart);
@@ -1999,18 +2006,18 @@ PreferredIsDone1:
                 (bool) problem[cpu_i].restart);
               problem[cpu_i].percent = percent2;
               problem[cpu_i].restart = 0;
-            }
           }
         }
+      }
 
       // -------------
       // now check for finished blocks that need reloading
       // -------------
 
-        // Did any threads finish a block???
-        if ((problem[cpu_i]).finished == 1)
-        {
-          tmpcontest = (problem[cpu_i]).GetResult( &rc5result );
+      // Did any threads finish a block???
+      if ((problem[cpu_i]).finished == 1)
+      {
+        tmpcontest = (problem[cpu_i]).GetResult( &rc5result );
 
         //-----------------
         //only do something if RESULT_FOUND or RESULT_NOTHING
@@ -2018,22 +2025,22 @@ PreferredIsDone1:
         //-----------------
         
         if ((rc5result.result == RESULT_FOUND) || (rc5result.result == RESULT_NOTHING))
-          {
+        {
           //---------------------
           //print the keyrate and update the totals for this contest
           //---------------------
 
           #ifdef NEW_STATS_AND_LOGMSG_STUFF
-            {
+          {
             Log( "\n[%s] %s", CliGetTimeString(NULL,1), /* == Time() */
                    CliGetMessageForProblemCompleted( &(problem[cpu_i]) ) );
-            }
+          }
           #else
-            {
+          {
             gettimeofday( &stop, &dummy );
-          lenhi = (double) ((problem[cpu_i]).timehi);
-          lenlo = (double) ((problem[cpu_i]).timelo);
-          len = max(.01, ((double)stop.tv_sec - lenhi) + ((double)stop.tv_usec - lenlo)/1000000.0 );
+            lenhi = (double) ((problem[cpu_i]).timehi);
+            lenlo = (double) ((problem[cpu_i]).timelo);
+            len = max(.01, ((double)stop.tv_sec - lenhi) + ((double)stop.tv_usec - lenlo)/1000000.0 );
 
             (problem[cpu_i]).timehi = (u32) len;
             (problem[cpu_i]).timelo = (u32) ( ((u32) (len*1000000.0)) % 1000000L);
@@ -2055,9 +2062,9 @@ PreferredIsDone1:
                 ( ( (double) (problem[cpu_i]).timehi) + (((double)((problem[cpu_i]).timelo))/1000000.0) ) ) *
                 ( 100000.0 - (double) (problem[cpu_i]).startpercent ) / 100000.0 )
                 );
-              } 
+            } 
             else 
-              {
+            {
               Log( "\n[%s] Completed block %08lX:%08lX (%s keys)\n"
                  "                        %02d:%02d:%02d.%02d - [--- keys/sec]\n",
                  Time(), ntohl( rc5result.key.hi ) , ntohl( rc5result.key.lo ),
@@ -2068,45 +2075,45 @@ PreferredIsDone1:
             totkeyscount[tmpcontest] += (u32) ((ntohl( rc5result.keysdone.lo ) *
               ( ( 100000.0 - (double) (problem[cpu_i]).startpercent ) / 100000.0 ) )
               / (tmpcontest == 0 ? 32768. : 16384.));
-            }
+          }
           #endif //statistics are smart or not
 
           //---------------------
           //put the completed problem away
           //---------------------
 
-            tmpcontest = fileentry.contest = (u8) (problem[cpu_i]).RetrieveState( (ContestWork *) &fileentry , 1 );
+          tmpcontest = fileentry.contest = (u8) (problem[cpu_i]).RetrieveState( (ContestWork *) &fileentry , 1 );
 
-            // make it into a reply
+          // make it into a reply
           if (rc5result.result == RESULT_FOUND) 
-            {
-              consecutivesolutions[fileentry.contest]++;
-              if (keyport == 3064) 
+          {
+            consecutivesolutions[fileentry.contest]++;
+            if (keyport == 3064) 
                 LogScreen("Success\n");
-              fileentry.op = htonl( OP_SUCCESS_MULTI );
-              fileentry.key.lo = htonl( ntohl( fileentry.key.lo ) +
-                                    ntohl( fileentry.keysdone.lo ) );
-            } 
+            fileentry.op = htonl( OP_SUCCESS_MULTI );
+            fileentry.key.lo = htonl( ntohl( fileentry.key.lo ) +
+                                ntohl( fileentry.keysdone.lo ) );
+          } 
           else 
-            {
-              if (keyport == 3064) 
-                LogScreen("Success was not detected!\n");
-              fileentry.op = htonl( OP_DONE_MULTI );
-            }
+          {
+            if (keyport == 3064) 
+              LogScreen("Success was not detected!\n");
+            fileentry.op = htonl( OP_DONE_MULTI );
+          }
 
-            fileentry.os = CLIENT_OS;
-            fileentry.cpu = CLIENT_CPU;
-            fileentry.buildhi = CLIENT_CONTEST;
-            fileentry.buildlo = CLIENT_BUILD;
-            strncpy( fileentry.id, id , sizeof(fileentry.id)-1); // set id for this block
-            fileentry.id[sizeof(fileentry.id)-1]=0;  // in case id>58 bytes, truncate.
+          fileentry.os = CLIENT_OS;
+          fileentry.cpu = CLIENT_CPU;
+          fileentry.buildhi = CLIENT_CONTEST;
+          fileentry.buildlo = CLIENT_BUILD;
+          strncpy( fileentry.id, id , sizeof(fileentry.id)-1); // set id for this block
+          fileentry.id[sizeof(fileentry.id)-1]=0;  // in case id>58 bytes, truncate.
 
-            fileentry.checksum =
+          fileentry.checksum =
               htonl( Checksum( (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 2 ) );
-            Scramble( ntohl( fileentry.scramble ),
-                       (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
+          Scramble( ntohl( fileentry.scramble ),
+                     (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
 
-            // send it back...
+          // send it back...
           if ( PutBufferOutput( &fileentry ) == -1 ) 
             Log( "PutBuffer Error\n" );
           totalBlocksDone[tmpcontest]++;
@@ -2115,7 +2122,7 @@ PreferredIsDone1:
           //delete the checkpoint file, info is outdated
           //---------------------
 
-            // Checkpoint info just became outdated...
+          // Checkpoint info just became outdated...
           if (strcmp(checkpoint_file[0],"none") != 0) 
             unlink(checkpoint_file[0]);
           if (strcmp(checkpoint_file[1],"none") != 0) 
@@ -2125,103 +2132,105 @@ PreferredIsDone1:
           //now load another block for this contest
           //---------------------
 
-            // Get another block...
+          // Get another block...
           
 #if ((CLIENT_CPU == CPU_X86) || (CLIENT_OS == OS_BEOS))
           if ((cpu_i%numcputemp)>=2)
-            {
+          {
               // Not the 1st or 2nd cracking thread...
               // Must do RC5.  DES x86 cores aren't multithread safe.
               // Note that if rc5 contest is over, this will return -2...
               count = GetBufferInput( &fileentry , 0);
             if (contestdone[0]) 
               count = -2;
-            } 
+          } 
           else
 #endif
-            {
+          {
             if (getbuff_errs == 0)
-              {
+            {
               if (!contestdone[ preferred_contest_id ])
-                {
+              {
                 // Neither contest is done...
                 count = GetBufferInput( &fileentry , (u8) preferred_contest_id);
                 if (contestdone[ preferred_contest_id ]) // This contest just finished.
-                  {
+                {
                   goto PreferredIsDone2;
-                  }
+                }
                 else
-                  {
+                {
                   if (count == -3)
-                    { // No DES blocks available while in offline mode.  Do rc5...
+                  {
+                    // No DES blocks available while in offline mode.  Do rc5...
                     count = GetBufferInput( &fileentry , (u8) ( ! preferred_contest_id));
-                    }
                   }
                 }
+              }
               else
-                {
+              {
                 // Preferred contest is done...
       PreferredIsDone2:
                 count = GetBufferInput( &fileentry , (u8) ( ! preferred_contest_id));
                 if (contestdone[ ! preferred_contest_id ])
-                  { // This contest just finished.
+                {
+                  // This contest just finished.
                   count = -2; // Both contests finished!
-                  }
                 }
               }
             }
+          }
 
 
           if (count < 0) 
-            {
-              getbuff_errs++;
-              TimeToQuit=1; // Force blocks to be saved
-              exitcode = -2;
+          {
+            getbuff_errs++;
+            TimeToQuit=1; // Force blocks to be saved
+            exitcode = -2;
             continue;  //break out of the next cpu_i loop
-            } 
+          } 
 
           //---------------------
           // correct any potential problems in the freshly loaded fileentry
           //---------------------
 
           if ((!nonewblocks) && (count != -2)) 
-            {
-                // LoadWork expects things descrambled.
-                Descramble( ntohl( fileentry.scramble ),
+          {
+            // LoadWork expects things descrambled.
+            Descramble( ntohl( fileentry.scramble ),
                        (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
-                // If a block was finished with an 'odd' number of keys done, then make it redo the last
-                // key -- this will prevent a 2-pipelined core from looping forever.
+            // If a block was finished with an 'odd' number of keys done, then make it redo the last
+            // key -- this will prevent a 2-pipelined core from looping forever.
             if ((ntohl(fileentry.iterations.lo) & 0x00000001L) == 1) 
-              {
-                    fileentry.iterations.lo = htonl((ntohl(fileentry.iterations.lo) & 0xFFFFFFFE) + 1);
-                    fileentry.key.lo = htonl(ntohl(fileentry.key.lo) & 0xFEFFFFFFL);
-                }
+            {
+              fileentry.iterations.lo = htonl((ntohl(fileentry.iterations.lo) & 0xFFFFFFFE) + 1);
+              fileentry.key.lo = htonl(ntohl(fileentry.key.lo) & 0xFEFFFFFFL);
+            }
             if (fileentry.contest != 1) 
               fileentry.contest=0;
 
             // If this is a partial DES block, and completed by a different 
             // cpu/os/build, then reset the keysdone to 0...
             if (fileentry.contest == 1) 
-              {
+            {
               if ( (ntohl(fileentry.keysdone.lo)!=0) || (ntohl(fileentry.keysdone.hi)!=0) ) 
+              {
+                if ((fileentry.cpu != CLIENT_CPU) || (fileentry.os != CLIENT_OS) ||
+                    (fileentry.buildhi != CLIENT_CONTEST) || (fileentry.buildlo != CLIENT_BUILD)) 
                 {
-                    if ((fileentry.cpu != CLIENT_CPU) || (fileentry.os != CLIENT_OS) ||
-                        (fileentry.buildhi != CLIENT_CONTEST) || (fileentry.buildlo != CLIENT_BUILD)) 
-                  {
-                      fileentry.keysdone.lo = fileentry.keysdone.hi = htonl(0);
-                      LogScreen("Read partial DES block from another cpu/os/build.\n");
-                      LogScreen("Marking entire block as unchecked.\n");
-                    }
-                  }
-              }
+                  fileentry.keysdone.lo = fileentry.keysdone.hi = htonl(0);
+                  LogScreen("Read partial DES block from another cpu/os/build.\n");
+                  LogScreen("Marking entire block as unchecked.\n");
                 }
+              }
+            }
+          }
 
           //---------------------
           // display the status of the file buffers
           //---------------------
 
           #ifdef NEW_STATS_AND_LOGMSG_STUFF
-            {
+          {
             Log( "[%s] %s\n", CliGetTimeString(NULL,1), /* == Time() */
                               CliGetMessageForFileentryLoaded( &fileentry ) );
             Log( "[%s] %d %s Blocks remain in file %s\n"
@@ -2229,36 +2238,36 @@ PreferredIsDone1:
                  CliGetTimeString(NULL,1), count, CliGetContestNameFromID(fileentry.contest),(nodiskbuffers? "(memory-in)":in_buffer_file[fileentry.contest]),
                  CliGetTimeString(NULL,0), CountBufferOutput(fileentry.contest), CliGetContestNameFromID(fileentry.contest), (nodiskbuffers? "(memory-out)":out_buffer_file[fileentry.contest]) );
 
-            }                         
+          }                         
           #else          
-            {
-                tmpblksize=log2x(ntohl(fileentry.iterations.lo));
-                tmpblkcnt = ntohl(fileentry.iterations.lo) / (1<<tmpblksize);
+          {
+            tmpblksize=log2x(ntohl(fileentry.iterations.lo));
+            tmpblkcnt = ntohl(fileentry.iterations.lo) / (1<<tmpblksize);
 
             Log( "[%s] %s %d*2^%d Block: %08lX:%08lX %s\n"
-                      "[%s] %d Blocks remain in file %s\n"
-                      "[%s] %d Blocks are in file %s\n",
-             Time(), (fileentry.contest == 1 ? "DES":"RC5"),tmpblkcnt,tmpblksize,
-                      ntohl( fileentry.key.hi ), ntohl( fileentry.key.lo ),
-                      Time(), count, (nodiskbuffers? "(memory-in)":in_buffer_file[fileentry.contest]),
+                 "[%s] %d Blocks remain in file %s\n"
+                 "[%s] %d Blocks are in file %s\n",
+                 Time(), (fileentry.contest == 1 ? "DES":"RC5"),tmpblkcnt,tmpblksize,
+                 ntohl( fileentry.key.hi ), ntohl( fileentry.key.lo ),
+                 Time(), count, (nodiskbuffers? "(memory-in)":in_buffer_file[fileentry.contest]),
                  Time(), CountBufferOutput(fileentry.contest), (nodiskbuffers? "(memory-out)":out_buffer_file[fileentry.contest]), 
                  ((load_problem_count>1)?("ready to process"):("being processed")));
 
-                gettimeofday( &stop, &dummy );
-                (problem[cpu_i]).timehi = stop.tv_sec;
-                (problem[cpu_i]).timelo = stop.tv_usec;
-            }
+            gettimeofday( &stop, &dummy );
+            (problem[cpu_i]).timehi = stop.tv_sec;
+            (problem[cpu_i]).timelo = stop.tv_usec;
+          }
           #endif
 
           //---------------------
           // now load the problem with the fileentry
           //---------------------
          
-                (problem[cpu_i]).LoadState( (ContestWork *) &fileentry , (u32) (fileentry.contest) );
-          } // end (if 'found' or 'nothing')
-          DoCheckpoint();
-        } // end(if finished)
-      } // endfor(cpu_i)
+          (problem[cpu_i]).LoadState( (ContestWork *) &fileentry , (u32) (fileentry.contest) );
+        } // end (if 'found' or 'nothing')
+        DoCheckpoint();
+      } // end(if finished)
+    } // endfor(cpu_i)
 
     //----------------------------------------
     // Check for time limit...
@@ -2299,9 +2308,9 @@ PreferredIsDone1:
       const char *contname = ((tmpcontest)?("DES"):("RC5"));
       #endif
       if ((consecutivesolutions[tmpcontest] >= 32) && !contestdone[tmpcontest])
-    {
-      Log( "\n[%s] Too many consecutive %s solutions detected.\n", Time(), contname );
-      Log( "[%s] Either the contest is over, or this client is pointed at a test port.\n", Time() );
+      {
+        Log( "\n[%s] Too many consecutive %s solutions detected.\n", Time(), contname );
+        Log( "[%s] Either the contest is over, or this client is pointed at a test port.\n", Time() );
         Log( "[%s] Marking %s contest as over\n", Time(), contname );
         Log( "[%s] Further %s blocks will not be processed.\n", Time(), contname );
         contestdone[tmpcontest] = 1;
@@ -2320,10 +2329,10 @@ PreferredIsDone1:
     //----------------------------------------
 
     if (nonewblocks == load_problem_count)
-      { 
+    { 
       TimeToQuit = 1; 
       exitcode = 4; 
-      }
+    }
 
     //----------------------------------------
     // Reached the -b limit?
@@ -2342,12 +2351,12 @@ PreferredIsDone1:
     //----------------------------------------
 
     if (!noexitfilecheck) // Check if file "exitrc5.now" exists...
-      {
+    {
       if ( time( NULL ) > exitchecktime ) 
-        {
+      {
         exitchecktime = time( NULL ) + exitfilechecktime; // At most once every 30 seconds by default
         if( stat( exit_flag_file, &buf ) != -1 ) 
-          {
+        {
           Log( "[%s] Found \"exitrc5.now\" file.  Exiting.\n", Time() );
           TimeToQuit = 1;
           exitcode = 2;
@@ -2369,22 +2378,22 @@ PreferredIsDone1:
       LogScreen("Quitting...\n");
 
       #if defined(MULTITHREAD)
-        {
-// Wait for all threads to end...
-      for (cpu_i = 0; cpu_i < numcputemp; cpu_i++)
       {
+        // Wait for all threads to end...
+        for (cpu_i = 0; cpu_i < numcputemp; cpu_i++)
+        {
 #if (CLIENT_OS == OS_OS2)
-        DosWaitThread(&threadid[cpu_i], DCWW_WAIT);
+          DosWaitThread(&threadid[cpu_i], DCWW_WAIT);
 #elif (CLIENT_OS == OS_WIN32)
-        WaitForSingleObject((HANDLE)threadid[cpu_i], INFINITE);
+          WaitForSingleObject((HANDLE)threadid[cpu_i], INFINITE);
 #elif (CLIENT_OS == OS_BEOS)
-        wait_for_thread(the_threads[cpu_i], &be_exit_value);
+          wait_for_thread(the_threads[cpu_i], &be_exit_value);
 #elif (CLIENT_OS == OS_NETWARE)
-             CliWaitForThreadExit( threadid[cpu_i] );
+          CliWaitForThreadExit( threadid[cpu_i] );
 #else
-        pthread_join(threadid[cpu_i], NULL);
+          pthread_join(threadid[cpu_i], NULL);
 #endif
-          }
+        }
       }
 #endif
 
@@ -2420,10 +2429,10 @@ PreferredIsDone1:
             Log( "Buffer Error\n" );
           }
           else 
-            {
+          {
             Log( "[%s] Saved block %08lX:%08lX (%d.%02d percent complete)\n",
                 Time(), temphi , templo , percent2/100, percent2%100 );
-            }
+          }
         }
       } //endfor(cpu_i)
 
@@ -2456,18 +2465,18 @@ PreferredIsDone1:
     //----------------------------------------
 
     if (!TimeToQuit)
-      {
-    // Time to checkpoint?
-    if ( ((strcmp(checkpoint_file[0],"none") != 0) || (strcmp(checkpoint_file[1],"none") != 0))
-         && (!nodiskbuffers) && (!pausefilefound))
     {
-      if ( (!TimeToQuit ) && ( ( (s32) time( NULL ) ) > ( (s32) ( timeStarted + 60*ckminutes ) ) ) )
+      // Time to checkpoint?
+      if ( ((strcmp(checkpoint_file[0],"none") != 0) || (strcmp(checkpoint_file[1],"none") != 0))
+           && (!nodiskbuffers) && (!pausefilefound))
       {
-        ckminutes += checkpoint_min ;
-        DoCheckpoint();
-      }
-    } // Checkpointing
-      }
+        if ( (!TimeToQuit ) && ( ( (s32) time( NULL ) ) > ( (s32) ( timeStarted + 60*ckminutes ) ) ) )
+        {
+          ckminutes += checkpoint_min ;
+          DoCheckpoint();
+        }
+      } // Checkpointing
+    }
 
     //----------------------------------------
     // Print contest totals if the number of completed blocks has changed
@@ -2477,12 +2486,12 @@ PreferredIsDone1:
     if ((old_totalBlocksDone[0] != totalBlocksDone[0]) || (old_totalBlocksDone[1] != totalBlocksDone[1]) )
     {
       #ifdef NEW_STATS_AND_LOGMSG_STUFF
-        {
+      {
         //display summaries only of *active* contests otherwise we get
         //something like "341 DES Blocks 1421:25:51.96 - [0.02 keys/sec]"
         int i=1;
         for (tmpcontest=0;tmpcontest<2;tmpcontest++)
-          {
+        {
           if (old_totalBlocksDone[tmpcontest] != totalBlocksDone[tmpcontest])
           {
             Log( "%c%s%c Summary: %s\n", 
@@ -2490,17 +2499,17 @@ PreferredIsDone1:
              ((i==1)?(']'):(' ')), CliGetSummaryStringForContest(tmpcontest) );
             if ((--i)<0) i=0;
           }
-          }
         }
+      }
 #else
-        {
+      {
         gettimeofday( &stop, &dummy );
 
         len = max(.01, ((double)stop.tv_sec - global_timehi) + ((double)stop.tv_usec - global_timelo)/1000000.0 );
         global_timehi2 = (u32) len;
         global_timelo2 = (u32) ( ((u32) (len*1000000.0)) % 1000000L);
 
-      Log( "[%s] Tot: %d RC5 blocks %02d:%02d:%02d.%02d - [%.2f keys/sec]\n"
+        Log( "[%s] Tot: %d RC5 blocks %02d:%02d:%02d.%02d - [%.2f keys/sec]\n"
            "                        Tot: %d DES blocks %02d:%02d:%02d.%02d - [%.2f keys/sec]\n",
            Time(), totalBlocksDone[0],
            global_timehi2 / 3600 , (global_timehi2 % 3600) / 60, global_timehi2 % 60, global_timelo2/10000L,
@@ -2510,7 +2519,7 @@ PreferredIsDone1:
         global_timehi2 / 3600 , (global_timehi2 % 3600) / 60, global_timehi2 % 60, global_timelo2/10000L,
         ( ( ( (double) totkeyscount[1]) /
         ( ( (double) (global_timehi2) + (((double) global_timelo2)/1000000.0) ) / 32768.0 ) ) ) );
-        }
+      }
 #endif
       old_totalBlocksDone[0] = totalBlocksDone[0];
       old_totalBlocksDone[1] = totalBlocksDone[1];
@@ -2531,20 +2540,22 @@ PreferredIsDone1:
 void Client::DoCheckpoint()
 {
   FileEntry fileentry;
-  s32 cpu_i,j;
 
-  for (j=0;j<2;j++) {
-    if (strcmp(checkpoint_file[j],"none") != 0) {
+  for (s32 j = 0; j < 2; j++)
+  {
+    if (strcmp(checkpoint_file[j],"none") != 0)
+    {
       unlink(checkpoint_file[j]); // Remove prior checkpoint information (if any).
 #if defined(MULTITHREAD)
-      for (cpu_i=0 ; cpu_i < 2 * numcputemp ; cpu_i++)
+      for (s32 cpu_i=0 ; cpu_i < 2 * numcputemp ; cpu_i++)
 #else
-      for (cpu_i=0 ; cpu_i < 1 ; cpu_i++)
+      for (s32 cpu_i=0 ; cpu_i < 1 ; cpu_i++)
                         //numcputemp will be 1 in this case
 #endif
       {
         fileentry.contest = (u8) (problem[cpu_i]).RetrieveState( (ContestWork *) &fileentry , 0 );
-        if (fileentry.contest == j) {
+        if (fileentry.contest == j)
+        {
           fileentry.op = htonl( OP_DATA );
 
           fileentry.os = CLIENT_OS;
@@ -2557,7 +2568,7 @@ void Client::DoCheckpoint()
           Scramble( ntohl( fileentry.scramble ),
                       (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
 
-        // send it back...
+          // send it back...
           if (InternalPutBuffer( this->checkpoint_file[j], &fileentry ) == -1)
             Log( "Checkpoint Buffer Error\n" );
         }
@@ -2565,16 +2576,17 @@ void Client::DoCheckpoint()
     }
   }
 }
+
 // ---------------------------------------------------------------------------
 
 // gui clients will override this function in their derrived classes
 void Client::LogScreen ( const char *text)
 {
   if (!quietmode)
-    {
+  {
     fwrite(text, 1, strlen(text), stdout);
     fflush(stdout);
-    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -2619,9 +2631,9 @@ void Client::Log( const char *format, ...)
   LogScreen(logstr);
 
   if (( strlen( logname ) > 0 ) && (file = fopen ( logname, "a" ))!=NULL)
-    {
-      fprintf( file, "%s", logstr );
-         fclose( file );
+  {
+    fprintf( file, "%s", logstr );
+    fclose( file );
   }
 }
 
@@ -2637,12 +2649,12 @@ void Client::LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted
               (!restarted || percent==100) ? 0 :
               ( percent - ((percent>90)?(percent&1):(1-(percent&1))) );
   for ( u32 p = (lastpercent + 1) ; p < (percent+1) ; p++ )
-{
+  {
     if ( p == 100 ) LogScreen("100");
     else if ( p == restartpercent ) LogScreen("R");
     else if ( ( p % 10 ) == 0 ) LogScreenf("%d%%",p);
     else if ( ( p<90 && p&1 ) || ( p>90 && (!(p&1)) ) ) LogScreen(".");
-    }
+  }
   return;
 #else
   for ( u32 p = lastpercent + 1 ; p < percent + 1 ; p++ )
@@ -2745,7 +2757,7 @@ int main( int argc, char *argv[] )
   else
   {
 #if (CLIENT_OS == OS_DOSWIN16) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
-   #ifndef DJGPP // __WATCOM__ || __TURBOC__ || MSVC
+  #ifndef DJGPP // __WATCOM__ || __TURBOC__ || MSVC
     char fndrive[_MAX_DRIVE], fndir[_MAX_DIR], fname[_MAX_FNAME], fext[_MAX_FNAME];
     _splitpath(argv[0], fndrive, fndir, fname, fext);
     _makepath(client.inifilename, fndrive, fndir, fname, ".ini");
@@ -2763,24 +2775,24 @@ int main( int argc, char *argv[] )
     strcat(client.exename, fext);      // tack on extention
   #endif
 #elif (CLIENT_OS == OS_NETWARE) //also ok for dos,win,os2,vms,mac,amiga,*ix
-  client.inifilename[0] = 0;
-  if (argv[0] != NULL && ((strlen(argv[0])+5) < sizeof(client.inifilename)) )
+    client.inifilename[0] = 0;
+    if (argv[0] != NULL && ((strlen(argv[0])+5) < sizeof(client.inifilename)) )
     {
       strcpy( client.inifilename, argv[0] );
-    char *slash = NULL;
-    #if (CLIENT_OS != OS_MACOS) && (CLIENT_OS != OS_VMS) && (CLIENT_OS != OS_RISCOS)
-    slash = strrchr( client.inifilename, '/' );
-    #endif
-    #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_DOSWIN) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)
-    slash = max( slash, strrchr( client.inifilename, '\\') );
-    #endif
-    #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_DOSWIN) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_VMS)
-    slash = max( slash, strrchr( client.inifilename, ':') );
-    #endif
-    if (slash) *(slash+1) = 0;
-    else client.inifilename[0] = 0;
+      char *slash = NULL;
+      #if (CLIENT_OS != OS_MACOS) && (CLIENT_OS != OS_VMS) && (CLIENT_OS != OS_RISCOS)
+      slash = strrchr( client.inifilename, '/' );
+      #endif
+      #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_DOSWIN) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)
+      slash = max( slash, strrchr( client.inifilename, '\\') );
+      #endif
+      #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_DOSWIN) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_VMS)
+      slash = max( slash, strrchr( client.inifilename, ':') );
+      #endif
+      if (slash) *(slash+1) = 0;
+      else client.inifilename[0] = 0;
     }
-  strcat( client.inifilename, "rc5des.ini" );
+    strcat( client.inifilename, "rc5des.ini" );
 #elif (CLIENT_OS == OS_VMS)
     strcpy( client.inifilename, "rc5des.ini" );
 #elif (CLIENT_OS == OS_RISCOS)
@@ -2842,7 +2854,8 @@ int main( int argc, char *argv[] )
   // See if there's a command line parameter for the quiet setting...
   for (i = 1; i < argc; i++)
   {
-    if ( strcmp(argv[i], "-quiet" ) == 0) {
+    if ( strcmp(argv[i], "-quiet" ) == 0)
+    {
       client.quietmode=1;
       argv[i][0] = 0;
     }
@@ -3041,13 +3054,13 @@ int main( int argc, char *argv[] )
 #if (CLIENT_OS == OS_WIN32)
               "-install     Install service             -uninstall   Uninstall service\n"
               "-lurk        Detect modem connections    -lurkonly    Only comm. on mdm connect\n"
-#if !defined(WINNTSERVICE)
+  #if !defined(WINNTSERVICE)
               "-hide        Hide from the win95 desktop "
-#endif
+  #endif
 #endif
 #if (CLIENT_OS == OS_OS2)
-				 "-install     Install into Startup Folder -uninstall   Uninstall from Startup\n"
-				 "-hide        Run detached (hidden)       "
+              "-install     Install into Startup Folder -uninstall   Uninstall from Startup\n"
+              "-hide        Run detached (hidden)       "
 #endif
 #if defined(MULTITHREAD)
               "-numcpu n    Configure for 'n' CPUs.\n"
@@ -3125,3 +3138,4 @@ int main( int argc, char *argv[] )
 #endif
 
 // ---------------------------------------------------------------------------
+
