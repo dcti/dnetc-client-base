@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff-conflict.cpp,v $
+// Revision 1.28  1999/01/17 14:41:16  cyp
+// Added leading/trailing whitespace stripping and "none" check to logfilename.
+//
 // Revision 1.27  1999/01/13 10:46:15  cramer
 // Cosmetic update (comments and indenting)
 //
@@ -102,7 +105,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.27 1999/01/13 10:46:15 cramer Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.28 1999/01/17 14:41:16 cyp Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -790,23 +793,34 @@ void InitializeLogging( int noscreen, int nopercent, const char *logfilename,
 
   logstatics.logfileType = LOGFILETYPE_NONE;
   logstatics.logfile[0] = 0;
-  if ( logfiletype != LOGFILETYPE_NONE && logfilename!=NULL && logfilename[0])
+  if ( logfiletype != LOGFILETYPE_NONE && logfilename!=NULL)
     {
+    while (*logfilename && isspace(*logfilename))
+      logfilename++;
     strncpy( logstatics.logfile, logfilename, sizeof( logstatics.logfile )-1);
     logstatics.logfile[sizeof( logstatics.logfile )-1]=0;
-    logstatics.logfilebaselen = strlen( logstatics.logfile );
-    logstatics.logfilestarted = 0;
- 
-    if (logfiletype ==  LOGFILETYPE_ROTATE || 
-        logfiletype ==  LOGFILETYPE_RESTART ||
-        logfiletype ==  LOGFILETYPE_FIFO || 
-        logfiletype ==  LOGFILETYPE_NOLIMIT )
+    unsigned int len = strlen(logstatics.logfile);
+    while (len > 0 && isspace(logstatics.logfile[len-1]))
+      logstatics.logfile[--len]=0;
+    if (len > 0 && strcmpi( logstatics.logfile, "none" )==0 )
+      { len=0; logstatics.logfile[0]=0; }
+    
+    if (len > 0)
       {
-      if (logfiletype == LOGFILETYPE_NOLIMIT || logfilelimit > 0)
-        {                          /* limit is ignored if *_NOLIMIT */
-        logstatics.loggingTo |= LOGTO_FILE;
-        logstatics.logfileType = logfiletype;
-        logstatics.logfileLimit = (unsigned int)logfilelimit;
+      logstatics.logfilebaselen = len;
+      logstatics.logfilestarted = 0;
+ 
+      if (logfiletype ==  LOGFILETYPE_ROTATE || 
+          logfiletype ==  LOGFILETYPE_RESTART ||
+          logfiletype ==  LOGFILETYPE_FIFO || 
+          logfiletype ==  LOGFILETYPE_NOLIMIT )
+        {
+        if (logfiletype == LOGFILETYPE_NOLIMIT || logfilelimit > 0)
+          {                          /* limit is ignored if *_NOLIMIT */
+          logstatics.loggingTo |= LOGTO_FILE;
+          logstatics.logfileType = logfiletype;
+          logstatics.logfileLimit = (unsigned int)logfilelimit;
+          }
         }
       }
     }
