@@ -3,13 +3,15 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.153  1998/07/13 23:54:19  cyruspatel
+// Cleaned up NONETWORK handling.
+//
 // Revision 1.152  1998/07/13 12:40:25  kbracey
-// RISC OS update.
-// Added -noquiet option.
+// RISC OS update. Added -noquiet option.
 //
 // Revision 1.151  1998/07/13 03:29:45  cyruspatel
 // Added 'const's or 'register's where the compiler was complaining about
-// ambiguities. ("declaration/type or an expression")
+// "declaration/type or an expression" ambiguities.
 //
 // Revision 1.150  1998/07/11 23:49:28  cyruspatel
 // Added a check for OS2/Win/WinNT VMs to the DOS client - it spits out an
@@ -283,7 +285,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.152 1998/07/13 12:40:25 kbracey Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.153 1998/07/13 23:54:19 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -1393,7 +1395,7 @@ void Client::clearscreen( void )
   VioScrollUp(0, 0, -1, -1, -1, space, 0);
   VioSetCurPos(0, 0, 0);      // move cursor to upper left
 #elif (CLIENT_OS == OS_DOS)
-  __clearscreen();  //in platform/dos/clearscr.asm
+  dosCliClearScreen(); //in platform/dos/clidos.cpp
 #elif (CLIENT_OS == OS_NETWARE)
   clrscr();
 #elif (CLIENT_OS == OS_RISCOS)
@@ -2500,7 +2502,7 @@ void Client::SetNiceness(void)
   #elif (CLIENT_OS == OS_NETWARE)
      // nothing - netware sets timeslice dynamically
   #elif (CLIENT_OS == OS_DOS)
-     timeslice = GetTimesliceBaseline() * 10; // thats a lot!
+     timeslice = dosCliGetTimeslice();
   #elif (CLIENT_OS == OS_BEOS)
      // Main control thread runs at normal priority, since it does very little;
      // priority of crunching threads is set when they are created.

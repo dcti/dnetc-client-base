@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.30  1998/07/13 23:54:25  cyruspatel
+// Cleaned up NONETWORK handling.
+//
 // Revision 1.29  1998/07/13 03:30:07  cyruspatel
 // Added 'const's or 'register's where the compiler was complaining about
 // ambiguities. ("declaration/type or an expression")
@@ -62,7 +65,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-static const char *id="@(#)$Id: network.cpp,v 1.29 1998/07/13 03:30:07 cyruspatel Exp $";
+static const char *id="@(#)$Id: network.cpp,v 1.30 1998/07/13 23:54:25 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -201,9 +204,14 @@ void NetworkDeinitialize(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
+#if defined(NONETWORK)
+
+Network::Network( const char * , const char * , s16 ) { retries = 0; return; }
+
+#else
+
 Network::Network( const char * Preferred, const char * Roundrobin, s16 Port)
 {
-#if !defined(NONETWORK)
   // intialize communication parameters
   strncpy(server_name, (Preferred ? Preferred : ""), sizeof(server_name));
   strncpy(rrdns_name, (Roundrobin ? Roundrobin : ""), sizeof(rrdns_name));
@@ -215,17 +223,15 @@ Network::Network( const char * Preferred, const char * Roundrobin, s16 Port)
   httplength = 0;
   lasthttpaddress = lastaddress = 0;
   httpid[0] = 0;
-
-#endif
 }
+
+#endif //NONETWORK
 
 //////////////////////////////////////////////////////////////////////////////
 
 Network::~Network(void)
 {
-#if !defined(NONETWORK)
   Close();
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -309,10 +315,15 @@ void Network::SetModeSOCKS5(const char *sockshost, s16 socksport,
 
 //////////////////////////////////////////////////////////////////////////////
 
+#if defined(NONETWORK)
+
+s32 Network::Resolve(const char *, u32 & ) { return -1; } 
+
+#else
+
 // returns -1 on error, 0 on success
 s32 Network::Resolve(const char *host, u32 &hostaddress)
 {
-#if !defined(NONETWORK)
   if ((hostaddress = inet_addr((char*)host)) == 0xFFFFFFFFL)
   {
 #if (CLIENT_OS == OS_WIN16)
@@ -333,9 +344,10 @@ s32 Network::Resolve(const char *host, u32 &hostaddress)
     memcpy((void*) &hostaddress, (void*) hp->h_addr_list[index], sizeof(u32));
 #endif
   }
-#endif
   return 0;
 }
+
+#endif //NONETWORK
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -350,10 +362,15 @@ void Network::LogScreen ( const char * text) const
 
 //////////////////////////////////////////////////////////////////////////////
 
+#if defined(NONETWORK)
+
+s32 Network::Open( SOCKET ) { return -1; }
+
+#else
+
 // returns -1 on error, 0 on success
 s32 Network::Open( SOCKET insock)
 {
-#if !defined(NONETWORK)
   // set communications settings
   mode = startmode;
   gotuubegin = gothttpend = puthttpdone = gethttpdone = false;
@@ -364,16 +381,19 @@ s32 Network::Open( SOCKET insock)
   // make socket non-blocking
   sock = insock;
   MakeNonBlocking(sock, true);
-#endif
   return 0;
 }
+
+#endif //NONETWORK
 
 //////////////////////////////////////////////////////////////////////////////
 
 // returns -1 on error, 0 on success
 s32 Network::Open( void )
 {
-#if !defined(NONETWORK)
+#if defined(NONETWORK)
+  return -1;
+#else  
   Close();
   mode = startmode;
 
@@ -728,16 +748,17 @@ Socks5Failure:
   // change socket to non-blocking
   MakeNonBlocking(sock, true);
 
-
-#endif
   return 0;
+#endif //NONETWORK
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 s32 Network::Close(void)
 {
-#if !defined(NONETWORK)
+#if defined(NONETWORK)
+  return -1;
+#else  
   if ( sock )
   {
     close( sock );
@@ -747,16 +768,21 @@ s32 Network::Close(void)
     netbuffer.Clear();
     uubuffer.Clear();
   }
-#endif
   return 0;
+#endif //NONETWORK
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
+#if defined(NONETWORK)
+
+s32 Network::Get( u32 , char *, u32 ) { return -1; }
+
+#else
+
 // Returns length of read buffer.
 s32 Network::Get( u32 length, char * data, u32 timeout )
 {
-#if !defined(NONETWORK)
   NetTimer timer;
   bool need_close = false;
 
@@ -947,17 +973,22 @@ s32 Network::Get( u32 length, char * data, u32 timeout )
 
   if (need_close) Close();
   return bytesfilled;
-#else
   return 0;
-#endif
 }
 
+#endif //NONETWORK
+
 //////////////////////////////////////////////////////////////////////////////
+
+#if defined(NONETWORK)
+
+s32 Network::Put( u32 , const char * ) { return -1; }
+
+#else
 
 // returns -1 on error, or 0 on success
 s32 Network::Put( u32 length, const char * data )
 {
-#if !defined(NONETWORK)
   AutoBuffer outbuf;
 
   // if the connection is closed, try to reopen it once.
@@ -1050,10 +1081,9 @@ s32 Network::Put( u32 length, const char * data )
   }
 
   return (LowLevelPut(outbuf.GetLength(), outbuf) != -1 ? 0 : -1);
-#else
-  return 0;
-#endif
 }
+
+#endif //NONETWORK
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -1104,12 +1134,16 @@ void Network::MakeBlocking()
 
 //////////////////////////////////////////////////////////////////////////////
 
+#if defined(NONETWORK)
+
+void MakeNonBlocking( SOCKET , bool )  { return; }
+
+#else
+
 void MakeNonBlocking(SOCKET socket, bool nonblocking)
 {
   // change socket to non-blocking
-#if defined(NONETWORK)
-  // nothing
-#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
   unsigned long flagon = nonblocking;
   ioctlsocket(socket, FIONBIO, &flagon);
 #elif (CLIENT_OS == OS_VMS)
@@ -1134,6 +1168,8 @@ void MakeNonBlocking(SOCKET socket, bool nonblocking)
   fcntl(socket, F_SETFL, nonblocking ? O_NONBLOCK : 0);
 #endif
 }
+
+#endif //NONETWORK
 
 //////////////////////////////////////////////////////////////////////////////
 

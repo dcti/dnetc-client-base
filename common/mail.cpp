@@ -4,6 +4,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mail.cpp,v $
+// Revision 1.16  1998/07/13 23:54:23  cyruspatel
+// Cleaned up NONETWORK handling.
+//
 // Revision 1.15  1998/07/13 03:30:05  cyruspatel
 // Added 'const's or 'register's where the compiler was complaining about
 // ambiguities. ("declaration/type or an expression")
@@ -42,7 +45,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mail_cpp(void) {
-static const char *id="@(#)$Id: mail.cpp,v 1.15 1998/07/13 03:30:05 cyruspatel Exp $";
+static const char *id="@(#)$Id: mail.cpp,v 1.16 1998/07/13 23:54:23 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -86,9 +89,14 @@ MailMessage::~MailMessage()
   timeoffset=0; // nothing to do. - suppress compiler warning.
 }
 
+#ifdef NONETWORK
+
+void MailMessage::checktosend( u32 /* forcesend */ ) { return; };
+
+#else
+
 void MailMessage::checktosend( u32 forcesend)
 {
-#ifndef NONETWORK
    s32 retry;
    if (strlen(messagetext) == 0) {
       this->inittext(0);
@@ -121,8 +129,9 @@ void MailMessage::checktosend( u32 forcesend)
 #endif
       }
    }
-#endif
 }
+
+#endif //NONETWORK
 
 void MailMessage::addtomessage(char *txt ) {
    if (messagelen != 0) {
