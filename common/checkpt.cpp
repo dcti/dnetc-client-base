@@ -15,7 +15,7 @@
  *
 */
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.11.2.13 2001/04/20 16:11:47 cyp Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.11.2.14 2001/07/16 18:29:18 cyp Exp $"; }
 
 #include "client.h"   // FileHeader, Client class
 #include "baseincs.h" // memset(), strlen()
@@ -105,7 +105,8 @@ int CheckpointAction( Client *client, int action, unsigned int load_problem_coun
                 work.buildhi = FILEENTRY_BUILDHI; 
                 work.buildlo = FILEENTRY_BUILDLO;
 
-                if (BufferPutFileRecord( client->checkpoint_file, &work, NULL ) < 0) 
+                if (BufferPutFileRecord( client->checkpoint_file, &work, 
+                                         NULL, BUFFER_FLAGS_CHECKPOINT ) < 0) 
                 {                        /* returns <0 on ioerr */
                   //Log( "Checkpoint %u, Buffer Error \"%s\"\n", 
                   //                     prob_i+1, client->checkpoint_file );

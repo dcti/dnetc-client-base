@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.64 2001/07/07 14:56:16 andreasb Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.65 2001/07/16 18:29:17 cyp Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -265,7 +265,8 @@ long PutBufferRecord(Client *client,const WorkRecord *data)
       #ifdef PROFILE_DISK_HITS
       LogScreen("Diskhit: BufferPutFileRecord() called from PutBufferRecord()\n");
       #endif
-      tmp_retcode = BufferPutFileRecord( filename, data, &count );
+      tmp_retcode = BufferPutFileRecord( filename, data, 
+                                         &count, BUFFER_FLAGS_NONE );
                     /* returns <0 on ioerr, >0 if norecs */
     }
     else
@@ -318,7 +319,8 @@ long GetBufferRecord( Client *client, WorkRecord* data,
       #ifdef PROFILE_DISK_HITS
       LogScreen("Diskhit: BufferGetFileRecord() <- GetBufferRecord()\n");
       #endif
-      retcode = BufferGetFileRecord( filename, data, &count );
+      retcode = BufferGetFileRecord( filename, data, 
+                                     &count, BUFFER_FLAGS_NONE );
 //LogScreen("b:%d\n", retcode);
     }
     else
@@ -377,7 +379,8 @@ long GetBufferRecord( Client *client, WorkRecord* data,
           #ifdef PROFILE_DISK_HITS
           LogScreen("Diskhit: BufferPutFileRecord() <- GetBufferRecord()\n");
           #endif
-          tmp_retcode = BufferPutFileRecord( filename, data, NULL );
+          tmp_retcode = BufferPutFileRecord( filename, data, 
+                                             NULL, BUFFER_FLAGS_NONE );
         }
         else
         {
@@ -514,8 +517,11 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
     #ifdef PROFILE_DISK_HITS
     LogScreen("Diskhit: BufferGetFileRecordNoOpt() <- BufferImportFileRecords()\n");
     #endif
-    if (BufferGetFileRecordNoOpt( source_file, &data, &remaining ) != 0)
+    if (BufferGetFileRecord( source_file, &data, 
+                             &remaining, BUFFER_FLAGS_REMOTEBUF ) != 0)
+    {
       break;  //returned <0 on ioerr/corruption, > 0 if norecs
+    }
     if (lastremaining != 0)
     {
       if (lastremaining <= remaining)
@@ -536,7 +542,8 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
     {
       // failed to save packet into regular buffer, so put it back in the source file
       // error message for regular buffer has been printed
-      if (BufferPutFileRecord( source_file, &data, NULL ) >= 0)
+      if (BufferPutFileRecord( source_file, &data, 
+                               NULL, BUFFER_FLAGS_NONE ) >= 0)
       {
         if (interactive)
           Log("Import: Resaved packet to source file.\n");
@@ -700,7 +707,8 @@ long BufferFetchFile( Client *client, int break_pending,
         #ifdef PROFILE_DISK_HITS
         LogScreen("Diskhit: BufferGetFileRecordNoOpt() <- BufferFetchFile()\n");
         #endif
-        if ( BufferGetFileRecordNoOpt( remote_file, &wrdata, &remaining ) != 0 )
+        if ( BufferGetFileRecord( remote_file, &wrdata, 
+                                  &remaining, BUFFER_FLAGS_REMOTEBUF ) != 0 )
         {
           //lefttotrans_su = 0; /* move to next contest on file error */
           break; /* move to next contest - error msg has been printed */
@@ -713,7 +721,8 @@ long BufferFetchFile( Client *client, int break_pending,
           #ifdef PROFILE_DISK_HITS
           LogScreen("Diskhit: BufferPutFileRecord() <- BufferFetchFile()\n");
           #endif
-          BufferPutFileRecord( remote_file, &wrdata, NULL );
+          BufferPutFileRecord( remote_file, &wrdata, 
+                               NULL, BUFFER_FLAGS_REMOTEBUF );
           //lefttotrans_su = 0; /* move to next contest on file error */
           break; /* move to next contest - error msg has been printed */
         }
@@ -722,7 +731,8 @@ long BufferFetchFile( Client *client, int break_pending,
           #ifdef PROFILE_DISK_HITS
           LogScreen("Diskhit: BufferPutFileRecord() <- BufferFetchFile()\n");
           #endif
-          BufferPutFileRecord( remote_file, &wrdata, NULL );
+          BufferPutFileRecord( remote_file, &wrdata, 
+                               NULL, BUFFER_FLAGS_REMOTEBUF );
           failed = -1; /* stop further local buffer I/O */
           //lefttotrans_su = 0; /* move to next contest on file error */
           break; /* move to next contest - error msg has been printed */
@@ -863,7 +873,8 @@ long BufferFlushFile( Client *client, int break_pending,
       #ifdef PROFILE_DISK_HITS
       LogScreen("Diskhit: BufferPutFileRecord() <- BufferFlushFile()\n");
       #endif
-      if ( BufferPutFileRecord( remote_file, &wrdata, NULL ) != 0 )
+      if ( BufferPutFileRecord( remote_file, &wrdata, 
+                                NULL, BUFFER_FLAGS_REMOTEBUF ) != 0 )
       {
         PutBufferRecord( client, &wrdata );
         failed = -1;

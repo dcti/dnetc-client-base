@@ -8,7 +8,7 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.1.2.15 2001/03/07 00:21:06 sampo Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.1.2.16 2001/07/16 18:29:18 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -68,7 +68,8 @@ int BufferZapFileRecords( const char *filename )
 
 /* --------------------------------------------------------------------- */
 
-static FILE *BufferOpenFile( const char *filename, unsigned long *countP )
+static FILE *BufferOpenFile( const char *filename, 
+                             unsigned long *countP, int flags )
 {
   /* OSs that require "b" for fopen() */
   #if ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_NEXTSTEP) || \
@@ -84,8 +85,15 @@ static FILE *BufferOpenFile( const char *filename, unsigned long *countP )
   FILE *file = NULL;
   long filelen;
   int failed = 0;
-  const char *qfname = GetFullPathForFilename( filename );
+  const char *qfname;
 
+  if ((flags & BUFFER_FLAGS_REMOTEBUF)!=0)
+  {
+    /* the remote file might be from a full client */
+    LogScreen("Remote buffer fetch/flush is not supported\n");
+    return NULL;
+  }
+  qfname = GetFullPathForFilename( filename );
   if (access(qfname, 0)!=0) // file doesn't exist, so create it
   {
     file = fopen( qfname, "w+" BUFFOPEN_MODE );
@@ -153,7 +161,7 @@ static int BufferCloseFile( FILE *file )
 
 int UnlockBuffer( const char *filename )
 {
-  FILE *file = BufferOpenFile( filename, NULL );
+  FILE *file = BufferOpenFile( filename, NULL, BUFFER_FLAGS_OVERRIDELOCKS );
   if (file)
   {
     BufferCloseFile( file );
@@ -165,12 +173,8 @@ int UnlockBuffer( const char *filename )
 
 /* --------------------------------------------------------------------- */
 
-int BufferNetUpdate(Client *client,int updatereq_flags, int break_pending, 
-                    int interactive, char *loaderflags_map)
+int BufferNetUpdate(Client *,int, int, int, char *)
 {
-  client = client; updatereq_flags = updatereq_flags; 
-  break_pending = break_pending; interactive = interactive; 
-  loaderflags_map = loaderflags_map;
   return 0; /* nothing done */
 }		    
 
@@ -237,10 +241,10 @@ static void __switch_byte_order( WorkRecord *dest, const WorkRecord *source,
 
 /* on failure returns -1, else 0 */
 int BufferPutFileRecord( const char *filename, const WorkRecord * data,
-                         unsigned long *countP )
+                         unsigned long *countP, int flags )
 {
   unsigned long reccount;
-  FILE *file = BufferOpenFile( filename, &reccount );
+  FILE *file = BufferOpenFile( filename, &reccount, flags );
   long count = -1L;
   if ( file )
   {
@@ -288,11 +292,12 @@ int BufferPutFileRecord( const char *filename, const WorkRecord * data,
 
 /* --------------------------------------------------------------------- */
 
-int BufferGetFileRecordNoOpt( const char *filename, WorkRecord * data,
-             unsigned long *countP ) /* returns <0 on ioerr, >0 if norecs */
+int BufferGetFileRecord( const char *filename, WorkRecord * data,
+                         unsigned long *countP, int flags ) 
+                        /* returns <0 on ioerr, >0 if norecs */
 {
   unsigned long reccount = 0;
-  FILE *file = BufferOpenFile( filename, &reccount );
+  FILE *file = BufferOpenFile( filename, &reccount, flags );
   int rc = -1;
   if ( file )
   {
@@ -336,19 +341,11 @@ int BufferGetFileRecordNoOpt( const char *filename, WorkRecord * data,
 
 /* --------------------------------------------------------------------- */
 
-int BufferGetFileRecord( const char *filename, WorkRecord * data,
-               unsigned long *countP ) /* returns <0 on ioerr, >0 if norecs */
-{
-  return BufferGetFileRecordNoOpt( filename, data, countP );
-}
-
-/* --------------------------------------------------------------------- */
-
 int BufferCountFileRecords( const char *filename, unsigned int contest,
                        unsigned long *packetcountP, unsigned long *normcountP )
 {
   unsigned long normcount = 0, reccount = 0;
-  FILE *file = BufferOpenFile( filename, &reccount );
+  FILE *file = BufferOpenFile( filename, &reccount, BUFFER_FLAGS_NOLWRITE );
   int failed = -1;
   if ( file )
   {

@@ -10,20 +10,23 @@
  * ------------------------------------------------------------------
 */
 #ifndef __BUFFBASE_H__
-#define __BUFFBASE_H__ "@(#)$Id: buffbase.h,v 1.1.2.8 2001/01/13 17:09:55 cyp Exp $"
+#define __BUFFBASE_H__ "@(#)$Id: buffbase.h,v 1.1.2.9 2001/07/16 18:29:18 cyp Exp $"
+
+//efficiency hints/open mode modifiers
+#define BUFFER_FLAGS_NONE           (0x00) //regular local buffer
+#define BUFFER_FLAGS_OVERRIDELOCKS  (0x01) //for UnlockBuffer()/-forceunlock
+#define BUFFER_FLAGS_NOLWRITE       (0x02) //hint:no changes follow (countonly)
+#define BUFFER_FLAGS_REMOTEBUF      (0x04) //hint:no scan/no msg on create err
+#define BUFFER_FLAGS_CHECKPOINT     (0x08) //hint:no scan/truncate, not unlink
 
 /* ..Put() returns <0 on ioerr, else 0 on success */
 int BufferPutFileRecord( const char *filename, const WorkRecord * data, 
-               unsigned long *countP ); 
+                         unsigned long *countP, int flags ); 
                
-/* ..Get() returns <0 on err (ioerr ==-1, corrupt==-123), else 0 if ok */
+/* ..Get() returns <0 on err (ioerr ==-1, corrupt==-123), else >=0 if ok */
 int BufferGetFileRecord( const char *filename, WorkRecord * data, 
-               unsigned long *countP ); //returns <0 on err, ==0 if norecs
+                         unsigned long *countP, int flags ); 
                
-/* ..GetNoOpt() is like Get() but is non-optimized/faster/for chkpt etc */
-int BufferGetFileRecordNoOpt( const char *filename, WorkRecord * data, 
-               unsigned long *countP );
-
 /* ..Count() returns <0 on ioerr, else 0 on success */
 int BufferCountFileRecords( const char *filename, unsigned int contest, 
                unsigned long *countP, unsigned long *normcountP );
