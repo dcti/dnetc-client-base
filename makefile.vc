@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.56.2.13 1999/12/12 07:41:58 jlawson Exp $
+# $Id: makefile.vc,v 1.56.2.14 1999/12/13 03:29:49 cyp Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
@@ -21,7 +21,20 @@ CSCSRCPATH = csc
 CHIPSRCPATH = platforms
 PLATSRCPATH = platforms/win32cli
 
+#HAVE_DES_CORES=1
+HAVE_CSC_CORES=1
+#HAVE_OGR_CORES=1
+
 # --------------------------------------------
+
+!ifdef ALPHA
+OPTS_CC_CPU = -DNTALPHA 
+OPTS_M_PLAT = ALPHA
+OPTS_AS = -Gy -Zi -O1
+!else
+OPTS_CC_CPU = 
+OPTS_M_PLAT = IX86
+!endif
 
 !ifdef DEBUG
 OPTS_CC_DEBUG = -Zi -DDEBUG
@@ -29,15 +42,6 @@ OPTS_LINK_DEBUG = /debug /pdb:none /pdbtype:consolidate
 !else
 OPTS_CC_DEBUG = -DNDEBUG
 OPTS_LINK_DEBUG = /release
-!endif
-
-!ifdef ALPHA
-OPTS_CC_CPU = -DNTALPHA -DKWAN -DDWORZ
-OPTS_M_PLAT = ALPHA
-OPTS_AS = -Gy -Zi -O1
-!else
-OPTS_CC_CPU = -DMMX_BITSLICER -DMEGGS -DKWAN -DMMX_RC5
-OPTS_M_PLAT = IX86
 !endif
 
 # a little blurb about options
@@ -64,17 +68,14 @@ OPTS_M_PLAT = IX86
 # -O2 == -Og -Oi -Ot -Oy -Ob1 -Gs -Gf -Gy
 # -Ox == -Og -Oi -Ot -Oy -Ob1 -Gs
 
-OPTS_MSVC = -nologo -I$(COMMONPATH) -I$(PLATSRCPATH) \
-            -I$(DESSRCPATH) -I$(OGRSRCPATH) -I$(CSCSRCPATH) \
-            -DMULTITHREAD -D__WIN32__ -D_CPU_32BIT_ -DLURK \
-            -DHAVE_DES_CORES -DHAVE_OGR_CORES -DHAVE_CSC_CORES \
+OPTS_MSVC = -nologo -I$(COMMONPATH) -I$(PLATSRCPATH) -I$(OGRSRCPATH) \
+            -DMULTITHREAD -D__WIN32__ -DLURK \
             -W3 -MT -GR- -GX- -GA -GF \
             -D_M_$(OPTS_M_PLAT) $(OPTS_CC_CPU) $(OPTS_CC_DEBUG) 
 OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib
 OPTS_LINK = /nologo /incremental:no /version:3.10 \
             /machine:$(OPTS_M_PLAT) $(OPTS_LINK_DEBUG)
 OPTS_RC   = -d_Windows -d_M_{$(OPTS_M_PLAT)}
-
 
 # --------------------------------------------
 
@@ -154,13 +155,13 @@ CHIP_OBJS =
 CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj
 !endif
 
-# -------
+# --------------------------------- RC5 ----------------------------
 
 !ifdef ALPHA
-RC5_OBJS_CHIP =                      \
+RC5_OBJS =                           \
         $(OUTPUTPATH)/rc5-alpha-nt.obj
 !else
-RC5_OBJS_CHIP =                      \
+RC5_OBJS =                           \
         $(OUTPUTPATH)/brfp5.obj      \
         $(OUTPUTPATH)/rc5-rgk5.obj   \
         $(OUTPUTPATH)/rc5-rgk6.obj   \
@@ -168,16 +169,21 @@ RC5_OBJS_CHIP =                      \
         $(OUTPUTPATH)/rc5mmx.obj     \
         $(OUTPUTPATH)/rg486.obj      \
         $(OUTPUTPATH)/rg6x86.obj
+OPTS_MSVC = $(OPTS_MSVC) -DMMX_RC5
 !endif
 
-# -------
+# --------------------------------- DES ----------------------------
 
+!ifndef HAVE_DES_CORES
+DES_OBJS =
+!else
 !ifdef ALPHA
-DES_OBJS_CHIP =                              \
+DES_OBJS =                                   \
         $(OUTPUTPATH)/des-slice-dworz.obj    \
         $(OUTPUTPATH)/deseval-dworz3.obj
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_DES_CORES -DKWAN -DDWORZ
 !else                                
-DES_OBJS_CHIP =                              \
+DES_OBJS =                                   \
         $(OUTPUTPATH)/bbdeslow.obj           \
         $(OUTPUTPATH)/bdeslow.obj            \
         $(OUTPUTPATH)/des-slice.obj          \
@@ -190,10 +196,15 @@ DES_OBJS_CHIP =                              \
         $(OUTPUTPATH)/p2bdespro.obj          \
         $(OUTPUTPATH)/sboxes-kwan4.obj       \
 #       $(OUTPUTPATH)/sboxes-mmx.obj
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_DES_CORES -DMMX_BITSLICER -DMEGGS -DKWAN 
+!endif
 !endif
 
-# -------
+# --------------------------------- CSC ----------------------------
 
+!ifndef HAVE_CSC_CORES
+CSC_OBJS =
+!else
 !ifdef ALPHA
 CSC_OBJS =                           \
         $(OUTPUTPATH)/convcsc.obj    \
@@ -202,6 +213,7 @@ CSC_OBJS =                           \
         $(OUTPUTPATH)/csc-6b.obj     \
         $(OUTPUTPATH)/csc-6b-i.obj   \
         $(OUTPUTPATH)/csc-common.obj
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_CSC_CORES
 !else
 CSC_OBJS =                           \
          $(OUTPUTPATH)/convcsc.obj   \
@@ -209,20 +221,23 @@ CSC_OBJS =                           \
          $(OUTPUTPATH)/csc-1k-i.obj  \
          $(OUTPUTPATH)/csc-6b.obj    \
          $(OUTPUTPATH)/csc-6b-i.obj  \
-         $(OUTPUTPATH)/csc-comm.obj
-
-# Enable the following two lines for MMX-enabled CSC.
-CSC_OBJS = $(CSC_OBJS)  $(OUTPUTPATH)/csc-mmx.obj
-OPTS_MSVC = $(OPTS_MSVC) -DMMX_CSC
-
+         $(OUTPUTPATH)/csc-comm.obj  \
+         $(OUTPUTPATH)/csc-mmx.obj
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_CSC_CORES -DMMX_CSC
+!endif
 !endif
 
-# -------
+# --------------------------------- OGR ----------------------------
 
+!ifndef HAVE_OGR_CORES
+CSC_OBJS =
+!else
 OGR_OBJS =                           \
         $(OUTPUTPATH)/choosedat.obj  \
         $(OUTPUTPATH)/crc32.obj      \
         $(OUTPUTPATH)/ogr.obj
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_CORES
+!endif
 
 # --------------------------------------------
 
@@ -256,6 +271,10 @@ OGR_OBJS =                           \
 
 {$(CSCSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(CSCSRCPATH:/=\)\x86\ $(**:/=\)
+
+{$(CSCSRCPATH)/x86/mmx}.asm{$(OUTPUTPATH)}.obj:
+        nasmw -o $(@:/=\) -f win32 -i $(CSCSRCPATH:/=\)\x86\ $(**:/=\)
+
 !endif
 
 {$(DESSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
@@ -278,10 +297,16 @@ $(RES_FILE):    $(RC_FILE)
 
 # --------------------------------------------
 
-$(BASENAME): $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_OBJS_CHIP) $(DES_OBJS_CHIP) $(OGR_OBJS) $(CSC_OBJS) $(SCR_OBJS) $(CUI_OBJS) $(RES_FILE)
-        link $(OPTS_LINK) /SUBSYSTEM:WINDOWS /OUT:$(BASENAME).scr /version:4.0 $(OPTS_LIBS) $(SCR_OBJS) $(RES_FILE) 
-        link $(OPTS_LINK) /SUBSYSTEM:CONSOLE /OUT:$(BASENAME).com $(OPTS_LIBS) $(CUI_OBJS)
-        link $(OPTS_LINK) /SUBSYSTEM:WINDOWS /OUT:$(BASENAME).exe $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_OBJS_CHIP) $(DES_OBJS_CHIP) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
+$(BASENAME): $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(SCR_OBJS) $(CUI_OBJS) $(RES_FILE)
+        #the screensaver's 4.0 tag will be adjusted to 3.10 by the _client_ if running on a 3.x platform
+        link $(OPTS_LINK) /SUBSYSTEM:WINDOWS /OUT:$(BASENAME).scr /version:4.00 $(OPTS_LIBS) $(SCR_OBJS) $(RES_FILE) 
+        link $(OPTS_LINK) /SUBSYSTEM:CONSOLE /OUT:$(BASENAME).com /version:3.10 $(OPTS_LIBS) $(CUI_OBJS)
+        link $(OPTS_LINK) /SUBSYSTEM:WINDOWS /OUT:$(BASENAME).exe /version:3.10 $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
+!ifdef EXECOMPRESSOR
+        $(EXECOMPRESSOR) $(BASENAME).scr
+        $(EXECOMPRESSOR) $(BASENAME).com
+        $(EXECOMPRESSOR) $(BASENAME).exe
+!endif
 
 clean:
         -del $(OUTPUTPATH:/=\)\*.obj $(RES_FILE:/=\)
