@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.14  1999/01/06 22:19:42  dicamillo
+// hostaddress should have been *hostaddress in debugging code.
+//
 // Revision 1.13  1999/01/06 14:29:23  chrisb
 // hacked in a strcpy to the OLDRESOLVE version of Network::Resolve() so resolve_hostname isn't uninitialised.
 //
@@ -48,7 +51,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.13 1999/01/06 14:29:23 chrisb Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.14 1999/01/06 22:19:42 dicamillo Exp $"; }
 #endif
 
 //---------------------------------------------------------------------
@@ -404,8 +407,8 @@ int Network::Resolve(const char *host, u32 *hostaddress, int resport )
 
   #ifdef RESDEBUG                                           
   printf(" total adds==%d  Selected add=%d.%d.%d.%d\n", //screw inet_ntoa()
-               addrcount, (int)(hostaddress & 0xff), (int)((hostaddress >> 8) & 0xff),
-               (int)((hostaddress >> 16) & 0xff), (int)((hostaddress >> 24) & 0xff) );
+               addrcount, (int)(*hostaddress & 0xff), (int)((*hostaddress >> 8) & 0xff),
+               (int)((*hostaddress >> 16) & 0xff), (int)((*hostaddress >> 24) & 0xff) );
   #endif
   return 0;
 }
