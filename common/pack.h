@@ -6,24 +6,22 @@
 */
 
 #ifndef __PACK_H__
-#define __PACK_H__  "@(#)$Id: pack.h,v 1.1.2.3 2003/09/01 07:17:26 jlawson Exp $"
+#define __PACK_H__  "@(#)$Id: pack.h,v 1.1.2.4 2003/09/01 19:36:39 jlawson Exp $"
 
 
-#if defined(__GNUC__) && ((__GNUC__ > 2) || \
-     ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 91)))
-
-  /* newer versions of gcc use a vendor-specific attribute. */
-  #define DNETC_PACKED1   __attribute__((packed))
-  #define DNETC_ALIGNED2  __attribute__((aligned(2)))
-  #define DNETC_ALIGNED4  __attribute__((aligned(4)))
-  #define DNETC_ALIGNED8  __attribute__((aligned(8)))
-  #define DNETC_ALIGNED16 __attribute__((aligned(16)))
-  #define DNETC_ALIGNED32 __attribute__((aligned(32)))
-
-#elif defined(__GNUC__) && ((__GNUC__ < 2) || \
-     ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91)))
-  /* use pack() on old gcc's. */
-  #define DNETC_USE_PACK 1
+#if defined(__GNUC__) 
+  #if (__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 91))
+    /* newer versions of gcc use a vendor-specific attribute. */
+    #define DNETC_PACKED1   __attribute__((packed))
+    #define DNETC_ALIGNED2  __attribute__((aligned(2)))
+    #define DNETC_ALIGNED4  __attribute__((aligned(4)))
+    #define DNETC_ALIGNED8  __attribute__((aligned(8)))
+    #define DNETC_ALIGNED16 __attribute__((aligned(16)))
+    #define DNETC_ALIGNED32 __attribute__((aligned(32)))
+  #else
+    /* use pack() on old gcc's. */
+    #define DNETC_USE_PACK 1
+  #endif
 
 #elif defined(MIPSpro)
   /* don't use anything on MIPSpro. */
