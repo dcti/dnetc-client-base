@@ -10,14 +10,6 @@
  */ 
 //
 // $Log: clievent.h,v $
-// Revision 1.5  1998/12/29 06:57:49  cyp
-// Removed redundant percbar event. Its covered by TFILL_STARTED.
-//
-// Revision 1.4  1998/12/29 20:36:23  silby
-// Added new event to cause GUIs to update their percent bars.
-// (Assumes percent bar routines have their own logic
-// similar to logscreen_percent.)
-//
 // Revision 1.3  1998/12/29 19:18:24  cyp
 // Added ..._PROBLEM_TFILL[STARTED|FINISHED] for client.LoadSaveProblems()
 //
