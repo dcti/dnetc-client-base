@@ -8,6 +8,10 @@
 // the time. 'time' is always stored/passed/returned in timeval format.
 // 
 // $Log: clitime.h,v $
+// Revision 1.13  1999/01/19 09:36:58  patrick
+//
+// OS2-EMX needs sys/time.h
+//
 // Revision 1.12  1999/01/14 23:02:12  pct
 // Updates for Digital Unix alpha client and ev5 related code.  This also
 // includes inital code for autodetection of CPU type and SMP.
@@ -46,8 +50,9 @@
 
 #ifndef _CLITIME_H_
 #define _CLITIME_H_
-#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_DEC_UNIX))
-#include <sys/time.h> // To make it compile, deine from this file needed..
+#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_BEOS) || \
+     (CLIENT_OS == OS_DEC_UNIX) || ((CLIENT_OS == OS_OS2) && defined(__EMX__)))
+#include <sys/time.h> // To make it compile, define from this file needed..
 #endif
 
 struct timeval;     // prototype
