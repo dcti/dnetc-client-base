@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.20 2003/02/21 12:03:30 snake Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.21 2003/02/22 13:44:16 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -883,37 +883,23 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
     #if defined(HAVE_OGR_CORES) && defined(HAVE_MULTICRUNCH_VIA_FORK)
     // HACK! for bug #3006
     // call the functions once to initialize the static tables before the client forks
-      #if CLIENT_OS == OS_LINUX
-        #if CLIENT_CPU == CPU_X86
-          ogr_get_dispatch_table();
-          ogr_get_dispatch_table_nobsr();
-        #elif CLIENT_CPU == CPU_POWERPC
-          ogr_get_dispatch_table();
-          #if defined(__VEC__)      /* compiler supports AltiVec */
-            vec_ogr_get_dispatch_table();
-          #endif
-        #else
-          #error FIXME! call all your *ogr_get_dispatch_table* functions here once
+      #if CLIENT_CPU == CPU_X86
+        ogr_get_dispatch_table();
+        ogr_get_dispatch_table_nobsr();
+      #elif CLIENT_CPU == CPU_POWERPC
+        ogr_get_dispatch_table();
+        #if defined(__VEC__)      /* compiler supports AltiVec */
+          vec_ogr_get_dispatch_table();
         #endif
-      #elif (CLIENT_OS == OS_NETBSD)
-        #if (CLIENT_CPU == CPU_68K)
-          ogr_get_dispatch_table_000();
-          ogr_get_dispatch_table_020();
-          ogr_get_dispatch_table_030();
-          ogr_get_dispatch_table_040();
-          ogr_get_dispatch_table_060();
-        #else
-          ogr_get_dispatch_table();
-          #if (CLIENT_CPU == CPU_X86)
-            ogr_get_dispatch_table_nobsr();
-          #elif (CLIENT_CPU == CPU_POWERPC)
-            #if defined(__VEC__)      /* compiler supports AltiVec */
-              vec_ogr_get_dispatch_table();
-            #endif
-          #elif (CLIENT_CPU == CPU_ALPHA)
-            vec_ogr_get_dispatch_table_cix();
-          #endif
-        #endif
+      #elif (CLIENT_CPU == CPU_68K)
+        ogr_get_dispatch_table_000();
+        ogr_get_dispatch_table_020();
+        ogr_get_dispatch_table_030();
+        ogr_get_dispatch_table_040();
+        ogr_get_dispatch_table_060();
+      #elif (CLIENT_CPU == CPU_ALPHA)
+        ogr_get_dispatch_table();
+        vec_ogr_get_dispatch_table_cix();
       #else
         #error FIXME! call all your *ogr_get_dispatch_table* functions here once
       #endif
