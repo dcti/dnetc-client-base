@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg3a.asm,v 1.2.2.6 2003/01/29 01:29:58 andreasb Exp $
+; $Id: r72-dg3a.asm,v 1.2.2.7 2003/02/06 20:28:39 andreasb Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -563,6 +563,7 @@ test_key_1:
         jmp     finished
 
 k7align 16
+k7align 16
 test_key_2:
         cmp     A2, [work_C_0]
 
@@ -593,6 +594,7 @@ test_key_2:
 
         jmp     finished
 
+k7align 16
 k7align 16
 test_key_3:
         cmp     A3, [work_C_0]
@@ -627,6 +629,7 @@ test_key_3:
         jmp     finished
 
 
+k7align 16
 k7align 16
 inc_key:
         cmp     dl, 0xFB
