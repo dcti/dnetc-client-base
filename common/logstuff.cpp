@@ -10,7 +10,7 @@
  * ----------------------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.36 1999/04/22 01:53:57 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37 1999/05/05 00:26:56 remi Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -180,8 +180,8 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
   }
   else if ( logfileType == LOGFILETYPE_ROTATE )
   {
+    static unsigned logfilebaselen = 0;
     static unsigned int last_year = 0, last_mon = 0, last_day = 0;
-    static logfilebaselen = 0;
     time_t ttime = time(NULL);
     struct tm *currtmP = localtime( &ttime );
     int abortwrite = 0;
