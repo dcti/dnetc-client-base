@@ -9,7 +9,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.95 2001/05/09 21:38:13 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.96 2001/05/14 21:30:06 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1481,7 +1481,7 @@ int ClientRun( Client *client )
           {
             /* OGR need special treatment because it doesnt always do what its told */
 //            if (tsinitd == OGR)
-//               non_preemptive_dyn_timeslice_table[tsinitd].usec = 10000*pow((client->priority+1),2);
+//               non_preemptive_dyn_timeslice_table[tsinitd].usec = 10000*(2<<((client->priority+1));
 //            else
                non_preemptive_dyn_timeslice_table[tsinitd].usec = 100000*(client->priority+1);
 
@@ -1507,12 +1507,14 @@ int ClientRun( Client *client )
               quantum = 5000; /* 5ms good enough for NetWare 3x */
               if (GetFileServerMajorVersionNumber() >= 4) /* just guess */
               {
+                #if 0
                 long det_type = (GetProcessorType(1) & 0xff);
                 //if (det_type > 0x0A) /* not what we know about */
                 //  ConsolePrintf("\rDNETC: unknown CPU type for quantum selection in "__FILE__").\r\n");
                 if (det_type==0x02 || det_type==0x07 || det_type==0x09 || det_type == 0x0B)
                   quantum = 250; /* 250 PII/PIII || Celeron-A || AMD-K7 || P4 */
                 else /* the rest */
+                #endif
                   quantum = 100; /* 100 */
               }
               #endif
@@ -1633,6 +1635,7 @@ int ClientRun( Client *client )
     //sleep, run or pause...
     //------------------------------------
 
+    #define MAIN_LOOP_RUN_INTERVAL 5 /* secs */
     if (!dontSleep)
     {
       int i = 0;
@@ -1663,24 +1666,31 @@ int ClientRun( Client *client )
       struct timeval tv;
       if (CliClock(&tv) == 0)
       {
-        if ( ((unsigned long)tv.tv_sec) < ((unsigned long)timeRun) )
-        {
-          if (timeMonoError == 0)
-          {
-            Log("ERROR: monotonic time found to be going backwards! (%lu < %lu)\n",
-                  ((unsigned long)tv.tv_sec), ((unsigned long)timeRun) );
-          }
-          timeRun = tv.tv_sec; /* assume its ok on the next round */
-          if ((++timeMonoError) > 12) /* 12 passes through here == 60 secs */
-          {
-            Log("Way too many timer adjustments within one minute. Quitting...\n");
-            TimeToQuit = 1;
-          }
-        }
-        else
+        if ( ((unsigned long)tv.tv_sec) >= ((unsigned long)timeRun) )
         {
           timeRun = tv.tv_sec;
           timeMonoError = 0;
+        }
+        else
+        {
+          if (timeMonoError == 0)
+          {
+            if (is_non_preemptive_os &&
+                ( ((unsigned long)timeRun) - ((unsigned long)tv.tv_sec) ) > 2)
+            {
+              Log("Clock error: monotonic time found to be going backwards.\n"
+                  "(%lu < %lu but ignored unless it occurs too often)\n",
+                    ((unsigned long)tv.tv_sec), ((unsigned long)timeRun) );
+            }
+          }
+          timeRun = tv.tv_sec; /* assume its ok on the next round */
+          if ((++timeMonoError) > (60/MAIN_LOOP_RUN_INTERVAL)) 
+          {
+            Log("Monotonic time found to be going backwards more than\n"
+                "%d times within the space off one minute. Quitting...\n",
+                (60/MAIN_LOOP_RUN_INTERVAL) );
+            TimeToQuit = 1;
+          }
         }
       }
     }
