@@ -9,7 +9,7 @@
  * and are therefore intended to behave more like spinlocks than mutexes.
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.7 2001/02/09 08:47:16 mfeiri Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.8 2001/03/02 01:19:08 andreasb Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -134,12 +134,18 @@
                 : "=r"(lacquired)
                 : "m"(*((struct __fool_gcc_volatile *)(splptr)))
                 : "memory");
+     #elif defined(__BORLANDC__) /* BCC can't do inline assembler in inline functions */
+     _EDX = (unsigned long)splptr;
+     _EAX = 1;
+     __emit__(0x87, 0x02); /* xchg [edx],eax */
+     _EAX ^= 1;
+     lacquired = _EAX;
      #else
      _asm mov edx, splptr
      _asm mov eax, 1
      _asm xchg eax,[edx]
      _asm xor eax, 1
-     _asm mov lacquired,eax       
+     _asm mov lacquired,eax
      #endif
      if (lacquired)
        return +1;
