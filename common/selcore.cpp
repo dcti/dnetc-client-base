@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.55 2000/02/21 00:11:55 remi Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.56 2000/02/21 00:46:45 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -543,6 +543,19 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     {
       int cindex = -1;/* micro benchmark */
       selcorestatics.corenum[CSC] = cindex;
+    }
+  }
+  else if (contestid == OGR)
+  {
+    selcorestatics.corenum[OGR] = selcorestatics.user_cputype[OGR];
+    if (selcorestatics.corenum[OGR] < 0 && detected_type > 0)
+    {
+      int cindex = -1;
+      if (( detected_type & (1L<<25) ) != 0) //OS supports altivec
+        cindex = 1;                 // vector
+      else                          //the rest
+        cindex = 0;                 // scalar
+      selcorestatics.corenum[OGR] = cindex;
     }
   }
   #elif (CLIENT_CPU == CPU_X86)
@@ -1115,7 +1128,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
           pipeline_count = 1;
           gotcore = 1;
         }  
-        else if (!gotcore && coresel == 2) // G4 (PPC 7500)
+        else if (!gotcore && coresel == 2) // G4 (PPC 7400)
         {
           unit_func.rc5 = rc5_unit_func_vec_compat;
           pipeline_count = 1;
@@ -1310,15 +1323,9 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
 
   #if defined(HAVE_OGR_CORES)
   if (contestid == OGR)
-    if (CLIENT_CPU == CPU_POWERPC)
-    {
-      if (coresel == 2) // G4 (PPC 7500)
-        coresel = 1;
-      else
-        coresel = 0;
-    }
-    else
+    #if (CLIENT_CPU != CPU_POWERPC)
       coresel = 0;
+    #endif
   #endif
 
   /* ================================================================== */
