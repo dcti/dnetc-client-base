@@ -4,6 +4,9 @@
 // torment.ntr.net K6 233 sean@ntr.net
 //
 // $Log: rc5-6x86-rg.cpp,v $
+// Revision 1.10  1998/11/28 18:00:13  remi
+// Fixed BALIGN4 macro for *BSD.
+//
 // Revision 1.9  1998/11/20 23:45:08  remi
 // Added FreeBSD support in the BALIGN macro.
 //
@@ -12,7 +15,7 @@
 // causing build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.7  1998/07/08 22:59:34  remi
-// Lots of $Id: rc5-6x86-rg.cpp,v 1.9 1998/11/20 23:45:08 remi Exp $ stuff.
+// Lots of $Id: rc5-6x86-rg.cpp,v 1.10 1998/11/28 18:00:13 remi Exp $ stuff.
 //
 // Revision 1.6  1998/07/08 18:47:45  remi
 // $Id fun ...
@@ -101,7 +104,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5_6x86_rg_cpp (void) {
-return "@(#)$Id: rc5-6x86-rg.cpp,v 1.9 1998/11/20 23:45:08 remi Exp $"; }
+return "@(#)$Id: rc5-6x86-rg.cpp,v 1.10 1998/11/28 18:00:13 remi Exp $"; }
 #endif
 
 #define CORE_INCREMENTS_KEY
@@ -126,9 +129,9 @@ return "@(#)$Id: rc5-6x86-rg.cpp,v 1.9 1998/11/20 23:45:08 remi Exp $"; }
 #define __(s)   #s
 
 #if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__))
-#define BALIGN(x)
+#define BALIGN4 ".align 2,0x90"
 #else
-#define BALIGN(x) ".balign 4"
+#define BALIGN4 ".balign 4"
 #endif
 
 // The S0 values for key expansion round 1 are constants.

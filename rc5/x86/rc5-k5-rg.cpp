@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-k5-rg.cpp,v $
+// Revision 1.9  1998/11/28 17:59:03  remi
+// Fixed BALIGN4 macro for *BSD.
+//
 // Revision 1.8  1998/11/20 23:45:09  remi
 // Added FreeBSD support in the BALIGN macro.
 //
@@ -11,7 +14,7 @@
 // causing build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.6  1998/07/08 22:59:36  remi
-// Lots of $Id: rc5-k5-rg.cpp,v 1.8 1998/11/20 23:45:09 remi Exp $ stuff.
+// Lots of $Id: rc5-k5-rg.cpp,v 1.9 1998/11/28 17:59:03 remi Exp $ stuff.
 //
 // Revision 1.5  1998/07/08 18:47:46  remi
 // $Id fun ...
@@ -74,7 +77,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5_k5_rg_cpp (void) {
-return "@(#)$Id: rc5-k5-rg.cpp,v 1.8 1998/11/20 23:45:09 remi Exp $"; }
+return "@(#)$Id: rc5-k5-rg.cpp,v 1.9 1998/11/28 17:59:03 remi Exp $"; }
 #endif
 
 #define CORE_INCREMENTS_KEY
@@ -99,9 +102,9 @@ return "@(#)$Id: rc5-k5-rg.cpp,v 1.8 1998/11/20 23:45:09 remi Exp $"; }
 #define __(s)   #s
 
 #if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__))
-#define BALIGN(x)
+#define BALIGN4 ".align 2, 0x90"
 #else
-#define BALIGN(x) ".balign 4"
+#define BALIGN4 ".balign 4"
 #endif
 
 // The S0 values for key expansion round 1 are constants.
@@ -381,7 +384,7 @@ u32 rc5_unit_func_k5( RC5UnitWork * rc5unitwork, u32 timeslice )
 	leal	(%%eax,%%ebx), %%ecx		# 2
 	movl	%%ecx, "work_pre3_r1"		# 1
 
-"BALIGN(4)"
+"BALIGN4"
 _loaded_k5:\n"
 
     /* ------------------------------ */
@@ -546,7 +549,7 @@ _loaded_k5:\n"
 	cmpl	"work_C_1", %%edi
 	je	_full_exit_k5
 
-"BALIGN(4)"
+"BALIGN4"
 __exit_1_k5: \n"
 
     /* Restore 2nd key parameters */
@@ -630,7 +633,7 @@ __exit_1_k5: \n"
 	movl	$1, "work_add_iter"
 	jmp	_full_exit_k5
 
-"BALIGN(4)"
+"BALIGN4"
 __exit_2_k5:
 
 	movl	"work_key_hi", %%edx
@@ -650,7 +653,7 @@ _next_iter_k5:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_k5
 
-"BALIGN(4)"
+"BALIGN4"
 _next_iter2_k5:
 	movl	%%ebx, "work_key_lo"
 	movl	%%edx, "work_key_hi"
@@ -663,7 +666,7 @@ _next_iter2_k5:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_k5
 
-"BALIGN(4)"
+"BALIGN4"
 _next_inc_k5:
 	addl	$0x00010000, %%edx
 	testl	$0x00FF0000, %%edx
@@ -702,7 +705,7 @@ _next_inc_k5:
 	# Not much to do here, since we have finished the block ...
 
 
-"BALIGN(4)"
+"BALIGN4"
 _full_exit_k5:
 	movl	"work_save_ebp",%%ebp \n"
 
