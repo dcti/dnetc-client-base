@@ -15,7 +15,7 @@
  *
 */
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.11.2.11 2000/11/12 02:00:13 cyp Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.11.2.12 2001/02/23 03:24:21 sampo Exp $"; }
 
 #include "client.h"   // FileHeader, Client class
 #include "baseincs.h" // memset(), strlen()
@@ -94,7 +94,7 @@ int CheckpointAction( Client *client, int action, unsigned int load_problem_coun
             WorkRecord work;
             unsigned int cont_i;
             memset((void *)&work, 0, sizeof(WorkRecord));
-            if (ProblemRetrieveState(thisprob, (ContestWork *)&work, &cont_i, 0, 0) >= 0)
+            if (ProblemRetrieveState(thisprob, &work.work, &cont_i, 0, 0) >= 0)
             {
               if (cont_i < CONTEST_COUNT)
               {
