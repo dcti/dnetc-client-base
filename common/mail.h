@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: mail.h,v $
+// Revision 1.9  1998/08/15 18:11:27  cyruspatel
+// Adjusted for mail.cpp changes.
+//
 // Revision 1.8  1998/08/10 20:29:36  cyruspatel
 // Call to gethostname() is now a call to Network::GetHostName(). Updated
 // send routine to reflect new NetworkInitialize()/NetworkDeinitialize()
@@ -18,52 +21,53 @@
 //
 // 
 
-#ifndef MAIL_H
-#define MAIL_H
+//#define MAILTEST
 
-#if (INTSIZES == 422) //#if (CLIENT_OS == OS_WIN16)
+#ifndef __MAIL_H__
+#define __MAIL_H__
+
+#include <limits.h>
+#define  MAILBUFFSIZE 150000L
+#if (UINT_MAX < MAILBUFFSIZE) 
+  //was #if (INTSIZES == 422) //#if (CLIENT_OS==OS_WIN16)
+  #undef MAILBUFFSIZE
   #define MAILBUFFSIZE 32000
-  #define MAXMAILSIZE 31000
-#else
-  #define MAILBUFFSIZE 150000
-  #define MAXMAILSIZE 125000
+#endif
+
+#ifdef  MAILTEST
+#undef  MAILBUFFSIZE
+#define MAILBUFFSIZE 1024
+#define SHOWMAIL
 #endif
 
 class MailMessage
 {
 public:
-  u32 messagelen;
-  int port;
-  char fromid[255];
-  char smtp[255];
-  char destid[255];
-  char my_hostname[255];
-  char rc5id[255];
-  s32 quietmode;
+  size_t sendthreshold;   //send threshold
+  const size_t spoolbuffmaxsize = MAILBUFFSIZE; //so the code uses a variable
+    
+  char spoolbuff[MAILBUFFSIZE];
+  char fromid[256];
+  char destid[256];
+  char rc5id[256];
+  char smtphost[256];
+  unsigned int smtpport;
 
-protected:
-  char messagetext[MAILBUFFSIZE];
-  int timeoffset;
+  int append(const char *txt);
+  int send(void);
 
-public:
-  MailMessage(void);
-  ~MailMessage(void);
-  int inittext(int x);
-  void checktosend( u32 forcesend );
-  void addtomessage(char *txt );
-
-  int sendmessage(void);
-  //sendmessage returns 0 if success, <0 if send error, >0 no network (defer)
-
-  
-  int prepare_smtp_message(Network * net);
-  int send_smtp_edit_data (Network * net);
-  static int get_smtp_line(Network * net);
-  static int put_smtp_line(const char * line, unsigned int nchars , Network * net);
-  static void smtp_error (Network * net, const char * message);
-  static int finish_smtp_message(Network * net);
-  int transform_and_send_edit_data(Network * net);
+  int clear(void)            { spoolbuff[0]=0; return 0; } 
+  size_t countspooled(void)  { return strlen(spoolbuff); }
+  int checktosend(int force) { return ((force || (countspooled()>
+                               ((sendthreshold/10)*9)))?(send()):(0)); }
+  MailMessage(void)          { fromid[0]=destid[0]=rc5id[0]=smtphost[0]=0;
+			       #if defined(MAILTEST)
+			       printf("** MAILTEST:ON spoolmaxsize=%u **\n",
+			         spoolbuffmaxsize);
+			       #endif
+                               spoolbuff[0]=0;sendthreshold=0;smtpport=0;}
+  ~MailMessage(void)         { send(); }
 };
 
-#endif
-
+#undef MAILBUFFSIZE
+#endif //__MAIL_H__

@@ -4,6 +4,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff.cpp,v $
+// Revision 1.3  1998/08/15 18:11:29  cyruspatel
+// Adjusted for mail.cpp changes.
+//
 // Revision 1.2  1998/08/03 21:13:38  cyruspatel
 // Fixed many bugs (especially percentbar related ones). New log file
 // types work correctly now. Added some functionality, eg a function for
@@ -19,7 +22,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.2 1998/08/03 21:13:38 cyruspatel Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.3 1998/08/15 18:11:29 cyruspatel Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -83,9 +86,8 @@ static struct
   char stdoutisatty;         //log screen can handle lines not ending in '\n'
   char stableflag;           //last log screen didn't end in '\n'
   char lastwasperc;          //last log screen was a percentbar
-  char mailpending;          //a best guess only
   
-} logstatics = { LOGTO_NONE, NULL, {0}, 0, LOGFILETYPE_NONE, 0,0,0,0,0,0 };
+} logstatics = { LOGTO_NONE, NULL, {0}, 0, LOGFILETYPE_NONE, 0,0,0,0,0 };
 
 // ========================================================================
 
@@ -268,13 +270,10 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
 
 // ------------------------------------------------------------------------
 
-static void InternalLogMail( char *msgbuffer, unsigned int msglen, int /*flags*/ )
+static void InternalLogMail( const char *msgbuffer, unsigned int msglen, int /*flags*/ )
 {
-  if ( msglen && logstatics.mailmessage && logstatics.mailmessage->messagelen )
-    {
-    logstatics.mailmessage->addtomessage( msgbuffer ); //takes a char *
-    logstatics.mailpending = 1;
-    }
+  if ( msglen && logstatics.mailmessage )
+    logstatics.mailmessage->append( msgbuffer ); 
   return;
 }
 
@@ -368,14 +367,8 @@ void LogFlush( int forceflush )
     }
   if (( logstatics.loggingTo & LOGTO_MAIL ) != 0)
     {
-    if ( logstatics.mailpending && logstatics.mailmessage && logstatics.mailmessage->messagelen )
-      {
-      logstatics.mailpending = 0;
-      //int quietly = logstatics.mailmessage->quietmode;
-      //logstatics.mailmessage->quietmode = (( loggingTo & LOGTO_SCREEN ) != 0);
+    if ( logstatics.mailmessage )
       logstatics.mailmessage->checktosend(forceflush);
-      //logstatics.mailmessage->quietmode = quietly;
-      }
     }
   return;
 }
@@ -650,11 +643,9 @@ void Client::LogScreenPercentMulti(u32 cpu, u32, u32, bool)
 
 void Client::DeinitializeLogging(void)
 {
-  LogFlush( 1 );
-  if (logstatics.mailmessage)
+  if (logstatics.mailmessage) //deleting the object will force a send 
     {
     delete logstatics.mailmessage;
-    logstatics.mailpending = 0;
     logstatics.mailmessage = NULL;
     logstatics.loggingTo &= ~LOGTO_MAIL;    
     }
@@ -682,25 +673,17 @@ void Client::InitializeLogging(void)
     #endif
     }
 
-  unsigned int mailmsglen = messagelen;
-  if ( ((int)(mailmsglen)) < 0) mailmsglen = 0;
-  if ( mailmsglen > MAXMAILSIZE) mailmsglen = MAXMAILSIZE;
-
-  if (!logstatics.mailmessage && mailmsglen && !offlinemode)
+  if (!logstatics.mailmessage && messagelen && !offlinemode)
     logstatics.mailmessage = new MailMessage();
   if (logstatics.mailmessage)
     {
-    logstatics.mailpending = 0;
     logstatics.loggingTo |= LOGTO_MAIL;
+    strcpy(logstatics.mailmessage->rc5id,id);
     strcpy(logstatics.mailmessage->destid,smtpdest);
     strcpy(logstatics.mailmessage->fromid,smtpfrom);
-    strcpy(logstatics.mailmessage->smtp,smtpsrvr);
-    strcpy(logstatics.mailmessage->rc5id,id);
-    logstatics.mailmessage->port = (int)smtpport;
-    if (logstatics.mailmessage->port < 0) logstatics.mailmessage->port=25;
-    if (logstatics.mailmessage->port > 65535L) logstatics.mailmessage->port=25;
-    logstatics.mailmessage->quietmode = ((logstatics.loggingTo & LOGTO_SCREEN )!=0);
-    logstatics.mailmessage->messagelen = mailmsglen;
+    strcpy(logstatics.mailmessage->smtphost,smtpsrvr);
+    logstatics.mailmessage->smtpport = smtpport;
+    logstatics.mailmessage->sendthreshold = messagelen;
     }
 
   if ( logname[0] && strcmpi( logname, "none" )!= 0)
