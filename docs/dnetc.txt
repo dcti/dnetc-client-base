@@ -1,8 +1,8 @@
 
   distributed.net client documentation
-  document revision $Id: dnetc.txt,v 1.1.2.1 1999/11/15 04:09:37 cyp Exp $
+  document revision $Id: dnetc.txt,v 1.1.2.2 1999/12/31 20:27:19 michmarc Exp $
 
-  Copyright distributed.net 1997-1999 - All Rights Reserved
+  Copyright distributed.net 1997-2000 - All Rights Reserved
   For use in distributed.net projects only.
   Any other distribution violates copyright.
 
