@@ -6,6 +6,9 @@
 //
 //
 // $Log: network.cpp,v $
+// Revision 1.21  1998/06/14 13:08:09  ziggyb
+// Took out all OS/2 DOD stuff, being moved to platforms\os2cli\dod.cpp
+//
 // Revision 1.20  1998/06/14 10:13:29  ziggyb
 // There was a stray '\' on line 567 that's not supposed to be there
 //
@@ -22,7 +25,7 @@
 //                      (which should now warn if macros are not the same)
 //
 
-static char *id="@(#)$Id: network.cpp,v 1.20 1998/06/14 10:13:29 ziggyb Exp $";
+static char *id="@(#)$Id: network.cpp,v 1.21 1998/06/14 13:08:09 ziggyb Exp $";
 
 #include "network.h"
 #include "sleepdef.h"    //  Fix sleep()/usleep() macros there! <--
@@ -171,10 +174,6 @@ Network::Network( const char * Preferred, const char * Roundrobin, s16 Port)
   lasthttpaddress = lastaddress = 0;
   httpid[0] = 0;
 
-#if (CLIENT_OS == OS_OS2)
-  ensureonline();
-#endif
-
 #endif
 }
 
@@ -184,11 +183,6 @@ Network::~Network(void)
 {
 #if !defined(NONETWORK)
   Close();
-
-#if (CLIENT_OS == OS_OS2)
-  checkoffline();
-#endif
-
 #endif
 }
 
@@ -1116,122 +1110,6 @@ void MakeNonBlocking(SOCKET socket, bool nonblocking)
   fcntl(socket, F_SETFL, nonblocking ? O_NONBLOCK : 0);
 #endif
 }
-
-//////////////////////////////////////////////////////////////////////////////
-
-#if (CLIENT_OS == OS_OS2)
-void Network::ensureonline()
-{
-  // DOD stuff
-  DOD_On = 0;
-/* Future stuff
-  DOD_Retries = 0;
-*/
-  // If no DOD files, don't bother
-  if(!(access(StartDOD, R_OK) || access(StopDOD, R_OK)))
-  {
-    DOD_Sleeptime = 60;
-
-    if(!access(DODCfg, R_OK))      // read DOD config file if there is one
-    {
-#ifdef VERBOSE_OPEN
-      sprintf(logstr,"Reading %s for DOD parameters...\n", DODCfg);
-      LogScreen(logstr);
-#endif
-
-      FILE *cfg;
-      cfg = fopen(DODCfg, "r+t");
-
-      fgets(netstring, 25, cfg);     // Use netstring as temp buffer
-      DOD_Sleeptime = atoi(netstring);   // Get sleep time
-
-      fgets(netstring, 25, cfg);     // Get the real netstring
-
-      nl = strlen(netstring) - 1;    // make sure there's no \n
-      if(netstring[nl] == '\n')
-        netstring[nl] = '\0';
-/*
-      fgets(netstring, 25, cfg);     // Get max retries
-      if(atoi(netstring) > 0)
-        DOD_Retries = atoi(netstring);
-*/
-      fclose(cfg);
-    }
-    else
-      strcpy(netstring, "default");  // default for english OS/2
-
-    if(!rweonline())
-    {
-#ifdef VERBOSE_OPEN
-      sprintf(logstr, "Not Connected, Starting StartDOD.cmd...\n"
-          "Waiting for %d seconds to be connected.\n", DOD_Sleeptime);
-      LogScreen(logstr);
-#endif
-      do
-      {
-        spawnl( P_NOWAIT, StartDOD, (char *)NULL );
-        sleep( DOD_Sleeptime );
-        if(!rweonline())   // Still not connected.
-        {
-#ifdef VERBOSE_OPEN
-          sprintf(logstr,"Could not connect, hanging up and trying again...\n");
-          LogScreen(logstr);
-#endif
-          spawnl( P_NOWAIT, StopDOD, (char *)NULL );
-          sleep( 10 );     // Give it time to run whatever program that hangs up
-        }
-        else
-          DOD_On = 1;
-      } while(!rweonline());
-    }
-  }
-}
-#endif
-
-//////////////////////////////////////////////////////////////////////////////
-
-#if (CLIENT_OS == OS_OS2)
-void Network::checkoffline()
-{
-  if(DOD_On)
-  {
-#ifdef VERBOSE_OPEN
-    sprintf(logstr,"Dialed in with DOD, disconnecting...\n");
-    LogScreen(logstr);
-    flushall();
-#endif
-    spawnl( P_NOWAIT, StopDOD, (char *)NULL );
-  }
-}
-#endif
-
-//////////////////////////////////////////////////////////////////////////////
-
-#if (CLIENT_OS == OS_OS2)
-int Network::rweonline(void)
-{
-  FILE *fp;
-  char line[80];
-  int online = 0, len;
-
-  system("netstat -r > netstat.dat");
-
-  fp = fopen("netstat.dat", "r+t");
-
-  while(!feof(fp))
-  {
-    fgets( line, sizeof(line), fp );
-    if(strstr( line, "default" ) != 0 )
-      // found default route!
-      online = 1;
-  }
-
-  // Clean up
-  fclose(fp);
-  unlink("netstat.dat");
-  return online;
-}
-#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
