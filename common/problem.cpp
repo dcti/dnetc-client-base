@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.128 1999/11/28 18:05:48 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.129 1999/12/02 05:15:03 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -47,16 +47,12 @@ extern "C" void riscos_upcall_6(void);
   extern "C" u32 rc5_unit_func_p5_mmx( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_k6_mmx( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
-#elif (CLIENT_OS == OS_AIX)     // this has to stay BEFORE CPU_POWERPC
-  #if defined(_AIXALL) || (CLIENT_CPU == CPU_POWER)
-  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
-  #endif
-  #if defined(_AIXALL) || (CLIENT_CPU == CPU_POWERPC)
-  extern "C" s32 crunch_allitnil( RC5UnitWork *work, u32 iterations);
-  extern "C" s32 crunch_lintilla( RC5UnitWork *work, u32 iterations);
-  #endif
-#elif (CLIENT_CPU == CPU_POWERPC)
-  #if (CLIENT_OS == OS_WIN32) //NT PPC has poor assembly
+#elif (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
+  #if (CLIENT_OS == OS_AIX)
+    extern "C" s32 crunch_allitnil( RC5UnitWork *work, u32 iterations);
+    extern "C" s32 crunch_lintilla( RC5UnitWork *work, u32 iterations);
+    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
+  #elif (CLIENT_OS == OS_WIN32) //NT PPC has poor assembly
     #define HAVE_ANSI2RG_UNIT_FUNC
     extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
   #else
@@ -64,6 +60,9 @@ extern "C" void riscos_upcall_6(void);
     extern "C" s32 rc5_unit_func_g2_g3( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
     extern "C" s32 rc5_unit_func_vec( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
   #endif
+#elif (CLIENT_CPU == CPU_POWER) //CPU_POWER must always come _after_ CPU_POWERPC
+  #define HAVE_ANSI2RG_UNIT_FUNC
+  extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
 #elif (CLIENT_CPU == CPU_68K)
   #if defined(__GCC__) || defined(__GNUC__) /* hpux, next, linux, sun3 */
     #define RC5_SINGLE_STEPPER
@@ -93,10 +92,10 @@ extern "C" void riscos_upcall_6(void);
     extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
   #endif
 #elif (CLIENT_CPU == CPU_MIPS)
-  #if (CLIENT_OS == OS_ULTRIX)
+  #if (CLIENT_OS == OS_ULTRIX) || (CLIENT_OS == OS_IRIX)
     #define HAVE_ANSI2RG_UNIT_FUNC
     extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
-  #elif (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_SINIX) || (CLIENT_OS==OS_IRIX)
+  #elif (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_SINIX)
     //rc5/mips/mips-crunch.cpp or rc5/mips/mips-irix.S
     extern "C" u32 rc5_unit_func_mips_crunch( register RC5UnitWork *, u32 iterations );
   #else
@@ -330,7 +329,7 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
                 }
         case OGR:
                 WorkStub curstub;
-                ogr->getresult(ogrstate, &curstub, sizeof(curstub));
+                ogr->getresult(core_membuffer, &curstub, sizeof(curstub));
                 // This is just a quick&dirty calculation that resembles progress.
                 retpermille = curstub.stub.diffs[contestwork.ogr.workstub.stub.length]*10
                             + curstub.stub.diffs[contestwork.ogr.workstub.stub.length+1]/10;
@@ -375,85 +374,72 @@ static int __core_picker(Problem *problem, unsigned int contestid)
     }
     #elif (CLIENT_CPU == CPU_68K)
     {
-      if (coresel < 0 || coresel > 5) /* just to be safe */
-        coresel = 0;
       if (coresel == 4 || coresel == 5 ) // there is no 68050, so type5=060
         problem->rc5_unit_func = rc5_unit_func_040_060;
       else //if (coresel == 0 || coresel == 1 || coresel == 2 || coresel == 3)
+      {
         problem->rc5_unit_func = rc5_unit_func_000_030;
-      problem->pipeline_count = 2;
-    }
-    #elif (CLIENT_OS == OS_AIX)
-    {
-      static int detectedtype = -1;
-      if (detectedtype == -1)
-        detectedtype = GetProcessorType(1 /* quietly */);
-      #if defined(_AIXALL) || (CLIENT_CPU == CPU_POWERPC)
-      switch (detectedtype) 
-      {
-         case 1:                  // PPC 601
-            coresel = 1;
-            problem->rc5_unit_func = crunch_allitnil;
-            problem->pipeline_count = 1;
-            break;
-         case 2:                  // other PPC
-            coresel = 2;
-            problem->rc5_unit_func = crunch_lintilla;
-            problem->pipeline_count = 1;
-            break;
-         case 0:                  // that's POWER
-         default:
-            coresel = 0;
-            #ifdef _AIXALL
-            problem->rc5_unit_func = rc5_ansi_2_rg_unit_func ;
-            problem->pipeline_count = 2;
-            #else                 // no POWER support
-            problem->rc5_unit_func = crunch_allitnil;
-            problem->pipeline_count = 1;
-            #endif
-            break;
-      } /* endswitch */
-      #elif (CLIENT_CPU == CPU_POWER)
-      problem->rc5_unit_func = rc5_ansi_2_rg_unit_func;
-      problem->pipeline_count = 2;
-      coresel = 0;
-      #else
-      #error "Systemtype not supported"
-      #endif
-    }
-    #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_AIX)
-    {
-      #if (CLIENT_OS == OS_MACOS)
-      static int detectedtype = -1;
-      if (detectedtype == -1)
-        detectedtype = GetProcessorType(1 /* quietly */);
-      switch (detectedtype) 
-      {
-         case 0:                  // PPC 601
-            coresel = 0;
-            problem->rc5_unit_func = rc5_unit_func_g1;
-            problem->pipeline_count = 1;
-            break;
-         default:
-         case 1:                  // PPC 603-750
-            coresel = 1;
-            problem->rc5_unit_func = rc5_unit_func_g2_g3;
-            problem->pipeline_count = 1;
-            break;
-         case 2:                  // AltiVec
-         	coresel = 2;
-            problem->rc5_unit_func = rc5_unit_func_vec;
-            problem->pipeline_count = 1;        	
-            break;
+        coresel = 0;
       }
-      #else
-      problem->rc5_unit_func = rc5_unit_func_g2_g3;
-      problem->pipeline_count = 1;
-      #if ((CLIENT_OS != OS_BEOS) || (CLIENT_OS != OS_AMIGAOS))
-      if (coresel == 0)
-        problem->rc5_unit_func = rc5_unit_func_g1;
+      problem->pipeline_count = 2;
+    }
+    #elif (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
+    {
+      #if defined(_AIXALL) //ie POWER/POWERPC hybrid client
+      //our coresel numbers have different meanings, depending on what
+      //architecture we are running on. By default, the coresel values
+      //(ie, what selcore returns) are the same as "normal" PPC.
+      if (coresel == 0) //core #0 is "RG AIXALL" on POWER, and lintilla on PPC
+      {                 //there is no #1 core on POWER.
+        if (GetProcessorType(1) == 0) //this is POWER!
+          coresel = 2; //that was easy. Only one usable core.
+      }
       #endif
-      #endif /* OS_MACOS */
+      
+      if (coresel == 0) // G1 (PPC 601)
+      {  
+        #if (CLIENT_OS == OS_AIX)
+          problem->rc5_unit_func = crunch_allitnil;
+          problem->pipeline_count = 1;
+        #elif ((CLIENT_OS != OS_AMIGAOS) && (CLIENT_OS != OS_BEOS) && \
+           (CLIENT_OS != OS_WIN32))
+          problem->rc5_unit_func = rc5_unit_func_g1;  // G1 (PPC 601)
+          problem->pipeline_count = 1;
+        #else
+          coresel = 1; //fall through
+        #endif
+      }
+      if (coresel == 2) // POWER or G4
+      {
+        #if defined(_AIXALL)
+          problem->rc5_unit_func = rc5_ansi_2_rg_unit_func ; //POWER cpu
+          problem->pipeline_count = 2;
+        #elif (CLIENT_OS == OS_MACOS)
+          problem->rc5_unit_func = rc5_unit_func_vec; // G4
+          problem->pipeline_count = 1;
+        #else
+          coresel = 1; //fall through
+        #endif
+      }
+      if (coresel != 0 && coresel != 2)
+      {
+        #if (CLIENT_OS == OS_AIX)
+          problem->rc5_unit_func = crunch_lintilla;
+          problem->pipeline_count = 1;
+        #elif (CLIENT_OS == OS_WIN32) //win32 has poor assembly
+          problem->rc5_unit_func = rc5_ansi_2_rg_unit_func;
+          problem->pipeline_count = 2;
+        #else
+          problem->rc5_unit_func = rc5_unit_func_g2_g3; // G2-G3 (PPC 603-750)
+          problem->pipeline_count = 1;
+        #endif
+        coresel = 1;
+      }
+    }
+    #elif (CLIENT_CPU == CPU_POWER) //POWER must always come _after_ POWERPC
+    {
+      problem->rc5_unit_func = rc5_ansi_2_rg_unit_func ; //POWER cpu
+      problem->pipeline_count = 2;
     }
     #elif (CLIENT_CPU == CPU_X86)
     {
@@ -757,7 +743,8 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
       int r = ogr->init();
       if (r != CORE_S_OK)
         return -1;
-      r = ogr->create(&contestwork.ogr.workstub, sizeof(WorkStub), ogrstate, sizeof(ogrstate));
+      r = ogr->create(&contestwork.ogr.workstub, 
+                      sizeof(WorkStub), core_membuffer, sizeof(core_membuffer));
       if (r != CORE_S_OK)
         return -1;
       if (contestwork.ogr.workstub.worklength > contestwork.ogr.workstub.stub.length)
@@ -829,7 +816,7 @@ int Problem::RetrieveState( ContestWork * work, unsigned int *contestid, int dop
         // nothing special needs to be done here
         break;
       case OGR:
-        ogr->getresult(ogrstate, &contestwork.ogr.workstub, sizeof(WorkStub));
+        ogr->getresult(core_membuffer, &contestwork.ogr.workstub, sizeof(WorkStub));
         break;
     }
     memcpy( (void *)work, (void *)&contestwork, sizeof(ContestWork));
@@ -914,7 +901,7 @@ LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
   #elif (CLIENT_CPU == CPU_X86)
     kiter = (*x86_unit_func)( &rc5unitwork, iterations );
   #elif (CLIENT_CPU == CPU_MIPS) && \
-        (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_SINIX) || (CLIENT_OS==OS_IRIX)
+        (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_SINIX)
     //rc5/mips/mips-crunch.cpp or rc5/mips/mips-irix.S
     kiter = rc5_unit_func_mips_crunch( &rc5unitwork, iterations );
   #elif (CLIENT_CPU == CPU_SPARC) && \
@@ -923,11 +910,17 @@ LogScreen("align iterations: effective iterations: %lu (0x%lx),\n"
     kiter = rc5_unit_func_ultrasparc_crunch( &rc5unitwork, iterations);
   #elif (CLIENT_CPU == CPU_68K)
     kiter = (*rc5_unit_func)( &rc5unitwork, iterations );
-  #elif (CLIENT_CPU == CPU_POWER) || (CLIENT_OS == OS_AIX)
+  #elif (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
+    #if (CLIENT_OS == OS_AIX) || (CLIENT_OS == OS_WIN32) \
+      || (CLIENT_OS == OS_BEOS) || (CLIENT_OS == AMIGAOS)
+    //lintilla or allitnill or ansi core  
     kiter = (*rc5_unit_func)( &rc5unitwork, iterations );
-  #elif (CLIENT_CPU == CPU_POWERPC)
+    #else //rc5_unit_func_g[*] wrappers around lintilla/allitnil
     kiter = iterations; 
-    *resultcode = (*rc5_unit_func)( &rc5unitwork, &kiter );
+    *resultcode = (*rc5_unit_func)( &rc5unitwork,&kiter);
+    #endif
+  #elif (CLIENT_CPU == CPU_POWER) //POWER must always come _after_ PPC
+    kiter = (*rc5_unit_func)( &rc5unitwork, iterations );
   #elif (CLIENT_CPU == CPU_ARM)
     kiter = rc5_unit_func(&rc5unitwork, iterations);
   #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
@@ -1191,7 +1184,7 @@ int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
     *iterationsP = 0x100000UL;
 
   nodes = (int)(*iterationsP);
-  r = ogr->cycle(ogrstate, &nodes);
+  r = ogr->cycle(core_membuffer, &nodes);
   *iterationsP = (u32)nodes;
 
   u32 newnodeslo = contestwork.ogr.nodes.lo + nodes;
@@ -1204,7 +1197,7 @@ int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
   {
     case CORE_S_OK:
     {
-      r = ogr->destroy(ogrstate);
+      r = ogr->destroy(core_membuffer);
       if (r == CORE_S_OK) 
       {
         *resultcode = RESULT_NOTHING;
@@ -1219,7 +1212,7 @@ int Problem::Run_OGR(u32 *iterationsP, int *resultcode)
     }
     case CORE_S_SUCCESS:
     {
-      if (ogr->getresult(ogrstate, &contestwork.ogr.workstub, sizeof(WorkStub)) == CORE_S_OK)
+      if (ogr->getresult(core_membuffer, &contestwork.ogr.workstub, sizeof(WorkStub)) == CORE_S_OK)
       {
         //Log("OGR Success!\n");
         contestwork.ogr.workstub.stub.length = 

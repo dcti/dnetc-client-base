@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.69 1999/11/27 06:23:44 sampo Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.70 1999/12/02 05:15:00 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -265,7 +265,14 @@
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
-  #define CLIENT_OS_NAME  "Irix"
+  /*
+   * Let the Makefile override the presentation name. This is
+   * used by the MIPSpro build targets, letting us set the
+   * specific platform the build was for (e.g. "Irix (IP19)").
+   */
+  #ifndef CLIENT_OS_NAME
+    #define CLIENT_OS_NAME  "Irix"
+  #endif /* ! CLIENT_OS_NAME */
   #define CLIENT_OS       OS_IRIX
   #define CLIENT_CPU    CPU_MIPS
 #elif defined(__VMS)
@@ -409,10 +416,6 @@
   #include <OS.h>
   typedef thread_id THREADID;
   #define OS_SUPPORTS_SMP
-/*#elif (CLIENT_OS == OS_MACOS) Mindmorph */
-/*  #include <Multiprocessing.h> Mindmorph */
-/*  typedef MPTaskID THREADID; Mindmorph */
-/*  #define OS_SUPPORTS_SMP Mindmorph */
 #elif (CLIENT_OS == OS_FREEBSD)
   typedef int /*pid_t*/ THREADID;
   #define OS_SUPPORTS_SMP
@@ -626,12 +629,12 @@ extern "C" {
   typedef unsigned __int64 ui64;
   typedef __int64 si64;
 #elif (CLIENT_OS == OS_MACOS)
+  #error HEY YOU!!! FOR THE ZILLIONTH TIME!!! ***BY**COMPILER**NOT**BY**CLIENT_OS***!!!
+  #error for example, elif defined(__MWERKS__) (if thats what it is)
   #define HAVE_I64
   #define SIZEOF_LONGLONG 8
   typedef unsigned long long ui64;
   typedef signed long long si64;
-#elif (CLIENT_OS == OS_AMIGAOS)
-  #error to enable 64bit integer math, please typedef your 64 bit int by compiler
 #endif  
 
 typedef unsigned char u8;

@@ -20,7 +20,7 @@
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.33 1999/11/26 13:08:50 cyp Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.34 1999/12/02 05:15:00 cyp Exp $"; }
 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
@@ -56,7 +56,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
   char *data = NULL;
   long i,n,filelen = 0;
   unsigned long success = 0;
-  char *quotechar = "";
+  const char *quotechar = "";
 
   if (dowrite && !sect && !key && !value ) /* flush */
   {
@@ -83,7 +83,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
         {
           char c=value[i];
           if (c=='\"' || c=='\'')
-            quotechar = (char *)((c=='\"')?("\'"):("\""));
+            quotechar = (const char *)((c=='\"')?("\'"):("\""));
           else if (c == ' ' || c=='\t')
             qn = 1;
           #ifdef ALLOW_EMBEDDED_COMMENTS

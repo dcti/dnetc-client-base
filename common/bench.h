@@ -5,11 +5,13 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __BENCH_H__
-#define __BENCH_H__ "@(#)$Id: bench.h,v 1.9 1999/11/08 02:02:34 cyp Exp $"
+#define __BENCH_H__ "@(#)$Id: bench.h,v 1.10 1999/12/02 05:14:57 cyp Exp $"
 
 /* returns "rate", or -1 if core error/^C, or 0 if not supported */
 long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags );
-#define TBENCHMARK_QUIET  0x01
-#define TBENCHMARK_IGNBRK 0x02
+#define TBENCHMARK_QUIET       0x01
+#define TBENCHMARK_IGNBRK      0x02
+// do not use 0x80, it's internal to TBenchmark
+//#define TBENCHMARK_CALIBRATION 0x80
 
 #endif /* __BENCH_H__ */

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.109 1999/11/27 09:20:45 sampo Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.110 1999/12/02 05:14:58 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -102,8 +102,6 @@ struct thread_param_block
     int threadID;
   #elif (CLIENT_OS == OS_BEOS)
     thread_id threadID;
-  /*#elif (CLIENT_OS == OS_MACOS) Mindmorph */
-  /*  MPTaskID threadID; Mindmorph */
   #else
     int threadID;
   #endif
@@ -129,11 +127,7 @@ struct thread_param_block
 
 static void __thread_sleep__(int secs)
 {
-  /*#if (CLIENT_OS == OS_MACOS) Mindmorph */
-  /*  mp_sleep(secs); Mindmorph */  // Mac needs special sleep call in MP threads
-  /*#else Mindmorph */
     NonPolledSleep(secs);
-  /*#endif Mindmorph */
 }
 
 static void __thread_yield__(void)
@@ -168,11 +162,6 @@ static void __thread_yield__(void)
     NonPolledUSleep( 0 ); /* yield */
     #endif
   #elif (CLIENT_OS == OS_MACOS)
-    // Mac non-MP code yields in problem.cpp because it needs
-    // to know the contest
-    // MP code yields here because it can do only pure computing
-    // (no toolbox or mixed-mode calls)
-    /* tick_sleep(0); Mindmorph */ /* yield */
     DoYieldToMain(0);
   #elif (CLIENT_OS == OS_BEOS)
     NonPolledUSleep( 0 ); /* yield */
@@ -205,11 +194,7 @@ static void __thread_yield__(void)
 
 // ----------------------------------------------------------------------
 
-/*#if (CLIENT_OS == OS_MACOS) Mindmorph */
-/*  OSStatus Go_mt( void * parm ) Mindmorph */
-/*#else Mindmorph */
-  void Go_mt( void * parm )
-/*#endif Mindmorph */
+void Go_mt( void * parm )
 {
   struct thread_param_block *thrparams = (thread_param_block *)parm;
   Problem *thisprob = NULL;
@@ -254,14 +239,6 @@ static void __thread_yield__(void)
       usepollprocess = 1;
     }
   }
-/*#elif (CLIENT_OS == OS_MACOS) Mindmorph */
-  /* Multiprocessing changed/improved fundamentally -> must be done again - Mindmorph */
-  /*if (thrparams->realthread) Mindmorph */
-  /*{ Mindmorph */
-  /*  MPEnterCriticalRegion(MP_count_region, kDurationForever); Mindmorph */
-  /*  MP_active++; Mindmorph */
-  /*  MPExitCriticalRegion(MP_count_region); Mindmorph */
-  /*} Mindmorph */
 #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
   if (thrparams->realthread)
   {
@@ -307,23 +284,14 @@ static void __thread_yield__(void)
       unsigned int contest_i = thisprob->contest;
       u32 last_count = thisprob->core_run_count; 
                   
-      /*#if (CLIENT_OS == OS_MACOS) Mindmorph */
-      /*{ Mindmorph */
-      /*  thisprob->tslice = GetTimesliceToUse(contest_i); Mindmorph */
-      /*  optimal_timeslice = 0; Mindmorph */
-      /*} Mindmorph */
-      /*#else Mindmorph */
-      /*{ Mindmorph */
-        #if (!defined(DYN_TIMESLICE)) /* compile time override */
-        if (thrparams->is_non_preemptive_os || contest_i == OGR)
-        #endif
-        {
-          if (last_count == 0) /* prob hasn't started yet */
-            thisprob->tslice = thrparams->dyn_timeslice_table[contest_i].optimal;
-          optimal_timeslice = thisprob->tslice;
-        }
-      /*} Mindmorph */
-      /*#endif Mindmorph */
+      #if (!defined(DYN_TIMESLICE)) /* compile time override */
+      if (thrparams->is_non_preemptive_os || contest_i == OGR)
+      #endif
+      {
+        if (last_count == 0) /* prob hasn't started yet */
+          thisprob->tslice = thrparams->dyn_timeslice_table[contest_i].optimal;
+        optimal_timeslice = thisprob->tslice;
+      }
 
       elapsed_sec = thisprob->runtime_sec;
       elapsed_usec = thisprob->runtime_usec;
@@ -461,16 +429,6 @@ static void __thread_yield__(void)
   if (thrparams->realthread)
     exit(0);
   #endif
-  /*#if (CLIENT_OS == OS_MACOS) Mindmorph */
-  /*if (thrparams->realthread) Mindmorph */
-  /*{ Mindmorph */
-  /*  ThreadIsDone[threadnum] = 1; Mindmorph */
-  /*  MPEnterCriticalRegion(MP_count_region, kDurationForever); Mindmorph */
-  /*  MP_active--; Mindmorph */
-  /*  MPExitCriticalRegion(MP_count_region); Mindmorph */
-  /*} Mindmorph */
-  /*return(noErr); Mindmorph */
-  /*#endif Mindmorph */
 }
 
 // -----------------------------------------------------------------------
@@ -496,8 +454,6 @@ static int __StopThread( struct thread_param_block *thrparams )
         wait_for_thread(thrparams->threadID, &be_exit_value);
         #elif (CLIENT_OS == OS_NETWARE)
         while (thrparams->threadID) delay(100);
-        /*#elif (CLIENT_OS == OS_MACOS) Mindmorph */
-        /*while (thrparams->threadID) tick_sleep(60); Mindmorph */
         #elif (CLIENT_OS == OS_FREEBSD)
         while (thrparams->threadID) NonPolledUSleep(1000);
         #endif
@@ -741,17 +697,6 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         if ( ((thrparams->threadID) >= B_NO_ERROR) &&
              (resume_thread(thrparams->threadID) == B_NO_ERROR) )
           success = 1;
-      /*#elif (CLIENT_OS == OS_MACOS) Mindmorph */
-      /*  OSErr thread_error; Mindmorph */
-      /*  MPTaskID new_threadid; Mindmorph */
-      /*  ThreadIsDone[thread_i] = 0; Mindmorph */
-      /*  thread_error = MPCreateTask(Go_mt, (void *)thrparams, (unsigned long)0, (OpaqueMPQueueID *)kMPNoID, Mindmorph */
-      /*          (void *)0, (void *)0, (unsigned long)0, &new_threadid); Mindmorph */
-      /*  if (thread_error != noErr) Mindmorph */
-      /*    new_threadid = NULL; Mindmorph */
-      /*  else Mindmorph */
-      /*    success = 1; Mindmorph */
-      /*  thrparams->threadID = new_threadid; Mindmorph */
       #elif defined(_POSIX_THREADS_SUPPORTED) //defined in cputypes.h
         #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
           SetGlobalPriority( thrparams->priority );
@@ -777,13 +722,8 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     {
       thrparams->realthread = 0;            /* int */
       thrparams->dyn_timeslice_table = &(default_dyn_timeslice_table[0]);
-      /*#if (CLIENT_OS == OS_MACOS) Mindmorph */
-      /*thrparams->threadID = (MPTaskID)RegPolledProcedure((void (*)(void *))Go_mt, Mindmorph */
-      /*                          (void *)thrparams , NULL, 0 ); Mindmorph */
-      /*#else Mindmorph */
       thrparams->threadID = RegPolledProcedure(Go_mt,
                                 (void *)thrparams , NULL, 0 );
-      /*#endif Mindmorph */
       success = ((int)thrparams->threadID != -1);
     }
 
@@ -909,10 +849,6 @@ int ClientRun( Client *client )
     //  numcrunchers = 0;    // if only one thread/processor is to used
     #endif
 
-    /*#if (CLIENT_OS == OS_MACOS) Mindmorph */
-    /*if ((!haveMP) || (!useMP())) numcrunchers = 0; Mindmorph */  // no real threads if MP not present or not wanted
-    /*#endif Mindmorph */
-
     if (numcrunchers < 1) /* == 0 = user requested non-mt */
     {
       force_no_realthreads = 1;
@@ -989,9 +925,9 @@ int ClientRun( Client *client )
   if (!TimeToQuit)
   {
     is_non_preemptive_os = 0;  /* assume this until we know better */
-    #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || \
+    #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || \
         (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_NETWARE) || \
-        (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_MACOS) /* need to check for win32s */
+        (CLIENT_OS == OS_MACOS) 
     is_non_preemptive_os = 1; /* assume this until we know better */
     #if (CLIENT_OS == OS_WIN32)                /* only if win32s */
     if (winGetVersion()>=400)

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.94 1999/12/01 02:03:29 sampo Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.95 1999/12/02 05:15:00 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -64,10 +64,6 @@ unsigned int GetNumberOfSupportedProcessors( void )
 {
 #if (CLIENT_OS == OS_RISCOS)
   return ( 2 ); /* not just some arbitrary number */
-#elif (CLIENT_OS == OS_MACOS)
-/*  if (haveMP)  Mindmorph */
-/*    return( MAC_MAXCPUS );  Mindmorph */
-  return(1);
 #else
   return ( 128 ); /* just some arbitrary number */
 #endif
@@ -196,16 +192,6 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     #elif (CLIENT_OS == OS_RISCOS)
     {
       cpucount = riscos_count_cpus();
-    }
-    #elif (CLIENT_OS == OS_QNX)
-    {
-      cpucount = 1;
-    }
-    #elif (CLIENT_OS == OS_MACOS)
-    {
-      cpucount = 1;
-      /*if (haveMP)  Mindmorph */
-      /*  cpucount = MPProcessors();  Mindmorph */
     }
     #elif ( (CLIENT_OS == OS_DEC_UNIX) && defined(OS_SUPPORTS_SMP))
     {
@@ -492,7 +478,7 @@ static long __GetRawProcessorID(const char **cpuname)
                 {       8, "740/750/G3"      },
                 {       9, "604e"            },
                 {      10, "604ev"           },
-                {	   12, "7400/G4"         }
+                {      11, "7400/G4"         }
                 };
 
   #if (CLIENT_OS == OS_MACOS)
@@ -500,19 +486,14 @@ static long __GetRawProcessorID(const char **cpuname)
   {
     // Note: need to use gestaltNativeCPUtype in order to get the correct
     // value for G3 upgrade cards in a 601 machine.
-    long result;
+    long result, processorAttributes = 0;
     detectedtype = -1;
-    long processorAttributes;
-	Boolean hasAltiVec = false;
-	if(Gestalt(gestaltPowerPCProcessorFeatures, &processorAttributes) == noErr)
-		hasAltiVec = 16 & processorAttributes;
-	/*if (Mac_PPC_prototype)   Mindmoprh */
-    /*  detectedtype = 1L;  // old developer machines - 601  Mindmoprh */
-    /*else  Mindmoprh */
-    if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
-    	detectedtype = result - 0x100L;
-  	if(hasAltiVec)
-		detectedtype = 12;
+    if (Gestalt(gestaltPowerPCProcessorFeatures, &processorAttributes) != noErr)
+      processorAttributes = 0;
+    if ((gestaltPowerPCHasVectorInstructions & processorAttributes) != 0)
+      detectedtype = 11; // AltiVec
+    else if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
+      detectedtype = result - 0x100L;
   }
   #elif (CLIENT_OS == OS_LINUX)
   if (detectedtype == -2L)
@@ -535,9 +516,9 @@ static long __GetRawProcessorID(const char **cpuname)
            { "604",                  4  },
            { "603e",                 6  },
            { "603ev",                7  },
-           { "750",                      8  },
+           { "750",                  8  },
            { "604e",                 9  },
-           { "604ev",                           10  }
+           { "604ev",               10  }
            };
           p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
           for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
@@ -1315,8 +1296,8 @@ int GetProcessorType(int quietly)
         coretouse=2;            // PowerPC 603 and up
 
     #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_AIX)
-    if (rawid == 12)
-    	coretouse = 2;	//	PowerPC 7400/G4
+    if (rawid > 10)
+    	coretouse = 2;	//	PowerPC 7400
     else if (rawid > 1)
     	coretouse = 1;	//	PowerPC 603 and up
     else if (rawid > 0)

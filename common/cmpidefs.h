@@ -10,7 +10,7 @@
 */ 
 
 #ifndef __CMPIDEFS_H__
-#define __CMPIDEFS_H__ "@(#)$Id: cmpidefs.h,v 1.23 1999/11/27 06:23:14 sampo Exp $"
+#define __CMPIDEFS_H__ "@(#)$Id: cmpidefs.h,v 1.24 1999/12/02 05:14:59 cyp Exp $"
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16)
   #if defined(__TURBOC__)
@@ -55,7 +55,7 @@
   #define strncmpi(x,y,n)  strncasecmp(x,y,n)
 #elif (CLIENT_OS == OS_AMIGAOS)
   // SAS/C already knows strcmpi
-  // but doesn't know strncmpi, translated to strnicmp
+  // but doesn't know strncmpi, translated to strnicmp
   #define strncmpi(x,y,n) strnicmp(x,y,n)
 #elif (CLIENT_OS == OS_RISCOS)
   extern "C" {
@@ -72,12 +72,6 @@
     extern "C" int strcasecmp(char *s1, char *s2); // Keep g++ happy.
     extern "C" int strncasecmp(char *s1, char *s2, size_t); // Keep g++ happy.
   #endif
-#elif (CLIENT_OS == OS_MACOS)
-  /*#include <stat.mac.h>  Mindmorph */
-  /*#include "mac_extras.h" Mindmorph */
-  #define strcmpi(x,y)  stricmp(x,y)
-  #define strncmpi(x,y,n)  strnicmp(x,y,n)
-  /* not sure if this will work but i dont have no stricmp - Mindmorph */
 #else
   #if defined(__MVS__)
     #include <strings.h>
@@ -85,7 +79,7 @@
   #include <unistd.h>
   #define strcmpi(x,y)  strcasecmp(x,y)
   #define strncmpi(x,y,n)  strncasecmp(x,y,n)
-  #if (CLIENT_OS == OS_DYNIX)
+  #if (CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_MACOS)
     extern "C" int strcasecmp(const char *s1, const char *s2);
     extern "C" int strncasecmp(const char *s1, const char *s2, size_t);
   #elif (CLIENT_OS == OS_ULTRIX)

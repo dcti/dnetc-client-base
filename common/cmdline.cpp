@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.145 1999/11/23 22:42:42 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.146 1999/12/02 05:14:59 cyp Exp $"; }
 
 //#define TRACE
 
@@ -36,6 +36,9 @@ return "@(#)$Id: cmdline.cpp,v 1.145 1999/11/23 22:42:42 cyp Exp $"; }
     (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD)
 #include <dirent.h> /* for direct read of /proc/ */
 #endif
+#ifdef __unix__
+# include <fcntl.h>
+#endif /* __unix__ */
     
 /* -------------------------------------- */
 
@@ -1573,19 +1576,27 @@ int ParseCommandline( Client *client,
     }
     else /* child */
     { 
-      /* don't/can't use these anymore */
-      #ifndef _PATH_DEVNULL //paths.h
-      #define _PATH_DEVNULL "/dev/null"
-      #endif
-      //if (isatty(fileno(stdin)))
-        freopen(_PATH_DEVNULL,"r",stdin);
-      if (isatty(fileno(stdout)))
-        freopen(_PATH_DEVNULL,"w",stdout);
-      if (isatty(fileno(stderr)))
-        freopen(_PATH_DEVNULL,"w",stderr);
+      int fd;
+
+      if (setsid() == -1)
+      {
+	terminate_app = 1;
+	ConOutErr("setsid() failed. Unable to start quiet/hidden.");
+      }
+      else
+      {
+        if ((fd = open("/dev/null", O_RDWR, 0)) != -1)
+        {
+  	  (void) dup2(fd, 0);
+	  (void) dup2(fd, 1);
+	  (void) dup2(fd, 2);
+	  if (fd > 2)
+	    (void) close(fd);
+        }
+      }
     }
   }
-  #endif
+  #endif /* __unix__ */
   
   if (retcodeP) 
     *retcodeP = 0;

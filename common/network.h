@@ -6,7 +6,7 @@
 */
 
 #ifndef __NETWORK_H__
-#define __NETWORK_H__ "@(#)$Id: network.h,v 1.71 1999/11/27 06:23:52 sampo Exp $"
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.72 1999/12/02 05:15:02 cyp Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
@@ -42,9 +42,6 @@ extern "C" {
   #include "w32sock.h" //winsock wrappers
   #endif
   #include <io.h>
-  #define write(sock, buff, len) send(sock, (char*)buff, (int)len, 0)
-  #define read(sock, buff, len) recv(sock, (char*)buff, (int)len, 0)
-  #define close(sock) closesocket(sock)
 #elif (CLIENT_OS == OS_RISCOS)
   extern "C" {
   #include <socklib.h>
@@ -85,19 +82,8 @@ extern "C" {
     #ifndef multinet_inet_ntoa
       extern "C" char *inet_ntoa(struct in_addr in);
     #endif
-    #define write(sock, buff, len) socket_write(sock, buff, len)
-    #define read(sock, buff, len) socket_read(sock, buff, len)
-    #define close(sock) socket_close(sock)
   #endif
   typedef int SOCKET;
-#elif (CLIENT_OS == OS_MACOS)
-  #include "socket_glue.h"
-  #define write(sock, buff, len) socket_write(sock, buff, len)
-  #define read(sock, buff, len) socket_read(sock, buff, len)
-  #define close(sock) socket_close(sock)
-  #define ioctl(sock, request, arg) socket_ioctl(sock, request, arg)
-  extern Boolean myNetInit(void);
-  #include <machine/endian.h>
 #elif (CLIENT_OS == OS_OS2)
   #define BSD_SELECT
   #include <sys/types.h>
@@ -111,11 +97,8 @@ extern "C" {
   #if defined(__EMX__)
     // this has to stay as long as the define below is needed
     #include <io.h>
-    #define soclose(sock) close(sock)
   #endif
   typedef int SOCKET;
-  #define read(sock, buff, len) recv(sock, (char*)buff, len, 0)
-  #define write(sock, buff, len) send(sock, (char*)buff, len, 0)
 #elif (CLIENT_OS == OS_AMIGAOS)
   extern "C" {
   #include "platforms/amiga/amiga.h"
@@ -126,9 +109,6 @@ extern "C" {
   #include <sys/time.h>
   #include <netdb.h>
   extern struct Library *SocketBase;
-  #define write(sock, buff, len) send(sock, (unsigned char*)buff, len, 0)
-  #define read(sock, buff, len) recv(sock, (unsigned char*)buff, len, 0)
-  #define close(sock) CloseSocket(sock)
   #define inet_ntoa(addr) Inet_NtoA(addr.s_addr)
   #ifndef __PPC__
      #define inet_addr(host) inet_addr((unsigned char *)host)
@@ -146,9 +126,6 @@ extern "C" {
   #include <netdb.h>
   #include <ctype.h>
   typedef int SOCKET;
-  #define write(sock, buff, len) send(sock, (unsigned char*)buff, len, 0)
-  #define read(sock, buff, len) recv(sock, (unsigned char*)buff, len, 0)
-  #define close(sock) closesocket(sock)
 #else
   #include <sys/types.h>
   #include <sys/socket.h>
@@ -159,7 +136,9 @@ extern "C" {
   #include <fcntl.h>
   #include <netdb.h>
   typedef int SOCKET;
-  #if (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_ALPHA)
+  #if (CLIENT_OS == OS_MACOS)
+    #include <machine/endian.h>
+  #elif (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_ALPHA)
     #include <asm/byteorder.h>
   #elif (CLIENT_OS == OS_QNX)
     #include <sys/select.h>

@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.106 1999/11/23 22:42:43 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.107 1999/12/02 05:15:01 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -51,7 +51,9 @@ extern int NetCheckIsOK(void); // used before doing i/o
 
 //----------------------------------------------------------------------
 
-#pragma pack(1)               // no padding allowed
+#ifndef MIPSpro
+# pragma pack(1)               // no padding allowed
+#endif /* ! MIPSpro */
 
 typedef struct _socks4 {
   unsigned char VN;           // version == 4
@@ -97,7 +99,9 @@ typedef struct _socks5 {
   char end;
 } SOCKS5;
 
-#pragma pack()
+#ifndef MIPSpro
+# pragma pack()
+#endif /* ! MIPSpro */
 
 //----------------------------------------------------------------------
 
@@ -1472,6 +1476,16 @@ int Network::LowLevelCloseSocket(void)
      #endif
      #if (CLIENT_OS == OS_OS2)
      int retcode = (int)soclose( sock );
+     #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+     int retcode = (int)closesocket( sock );
+     #elif (CLIENT_OS == OS_MACOS)
+     int retcode = (int)socket_close( sock );
+     #elif (CLIENT_OS == OS_AMIGAOS)
+     int retcode = (int)CloseSocket( sock );
+     #elif (CLIENT_OS == OS_BEOS)
+     int retcode = (int)closesocket( sock );
+     #elif (CLIENT_OS == OS_VMS) && defined(MULTINET)
+     int retcode = (int)socket_close( sock );
      #else
      int retcode = (int)close( sock );
      #endif
@@ -2166,7 +2180,7 @@ int Network::LowLevelSetSocketOption( int cond_type, int parm )
       return ((parm == 0 /* off */)?(0):(-1)); //always non-blocking
     #elif (CLIENT_OS == OS_MACOS)
       char flagon = ((parm == 0 /* off */) ? (1): (0));
-      return ioctl(sock, FIONBIO, &flagon);
+      return socket_ioctl(sock, FIONBIO, &flagon);
     #elif (defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK)))
     {
       int flag, res, arg;

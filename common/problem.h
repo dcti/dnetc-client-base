@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.69 1999/11/08 02:02:44 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.70 1999/12/02 05:15:05 cyp Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -21,9 +21,29 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
 
 /* ----------------------------------------------------------------------- */
 
-#if defined(MMX_BITSLICER) || defined(HAVE_CSC_CORES)
-  #define MAX_MEM_REQUIRED_BY_CORE (17*1024)
+#undef MAX_MEM_REQUIRED_BY_CORE
+#define MAX_MEM_REQUIRED_BY_CORE  8  //64 bits
+
+#if defined(HAVE_DES_CORES) && defined(MMX_BITSLICER)
+  #if MAX_MEM_REQUIRED_BY_CORE < (17*1024)
+     #undef MAX_MEM_REQUIRED_BY_CORE
+     #define MAX_MEM_REQUIRED_BY_CORE (17*1024)
+  #endif
 #endif
+#if defined(HAVE_CSC_CORES)
+  #if MAX_MEM_REQUIRED_BY_CORE < (17*1024)
+     #undef MAX_MEM_REQUIRED_BY_CORE
+     #define MAX_MEM_REQUIRED_BY_CORE (17*1024)
+  #endif      
+#endif
+#if defined(HAVE_OGR_CORES)
+  #if MAX_MEM_REQUIRED_BY_CORE < OGR_PROBLEM_SIZE
+     #undef MAX_MEM_REQUIRED_BY_CORE
+     #define MAX_MEM_REQUIRED_BY_CORE OGR_PROBLEM_SIZE
+  #endif     
+#endif    
+  
+/* ---------------------------------------------------------------------- */
 
 #if !defined(MEGGS) && !defined(DES_ULTRA) && !defined(DWORZ)
   #define MIN_DES_BITS  8
@@ -69,10 +89,6 @@ protected: /* these members *must* be protected for thread safety */
   ContestWork contestwork;
   CoreDispatchTable *ogr;
   /* --------------------------------------------------------------- */
-  union {
-    double __align_64_ogr;
-    char ogrstate[OGR_PROBLEM_SIZE];
-  };
   #ifdef MAX_MEM_REQUIRED_BY_CORE
   char core_membuffer[MAX_MEM_REQUIRED_BY_CORE];
   #endif
@@ -119,10 +135,16 @@ public: /* anything public must be thread safe */
   #elif (CLIENT_CPU == CPU_ALPHA)
   u32 (*rc5_unit_func)( RC5UnitWork * , unsigned long iterations );
   u32 (*des_unit_func)( RC5UnitWork * , u32 nbits );
-  #elif (CLIENT_OS == OS_AIX)
+  #elif (CLIENT_CPU == CPU_POWERPC) || defined(_AIXALL)
+    #if (CLIENT_OS == OS_AIX)     //straight lintilla (or even ansi for POWER)
+    s32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
+    #elif (CLIENT_OS == OS_WIN32) //ansi core
+    s32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
+    #else                         //lintilla wrappers
+    s32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 *timeslice );
+    #endif
+  #elif (CLIENT_CPU == CPU_POWER) //POWER must always be _after_ PPC
   s32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
-  #elif (CLIENT_CPU == CPU_POWERPC)
-  s32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 *timeslice );
   #endif
 
   int Run_RC5(u32 *timeslice,int *core_retcode); /* \  run for n timeslices.                */
@@ -152,14 +174,6 @@ public: /* anything public must be thread safe */
 
   u32 CalcPermille();
     /* Return the % completed in the current block, to nearest 0.1%. */
-
-#if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-  u64 GetKeysDone() { return(contestwork.crypto.keysdone); }
-    // Returns keys completed for Mac GUI display.
-  int GetResultCode() { return(last_resultcode); }
-    // Returns result code at completion (no thread safety issue).
-#endif
-
 };
 
 #endif /* __cplusplus */

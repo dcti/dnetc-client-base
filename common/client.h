@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.139 1999/11/08 02:02:36 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.140 1999/12/02 05:14:58 cyp Exp $"
 
 
 enum {
@@ -17,7 +17,9 @@ enum {
 #define CONTEST_COUNT       4  /* RC5,DES,OGR,CSC */
 
 #include "problem.h"          /* ContestWork structure */
+#ifndef MIPSpro
 #pragma pack(1)               /* no padding allowed */
+#endif /* ! MIPSpro */
 
 typedef struct
 {
@@ -31,7 +33,9 @@ typedef struct
   u8   buildlo;    /* 97.11.25 If this is ever changed, make this u32 */
 } WorkRecord;
 
-#pragma pack()
+#ifndef MIPSpro
+# pragma pack()
+#endif /* ! MIPSpro */
 
 
 #define MAXBLOCKSPERBUFFER              500
