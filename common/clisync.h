@@ -55,18 +55,17 @@
  *   platform-wise implements initialisation for fastlock_t however
  *   it likes
  *
- * - fastlock_t is reverted to a simple volatile typedef but still
- *   given alignment attributes where it makes sense in case someone
- *   ever uses it somewhere else than in SuperProblem. Otherwise
- *   alignment has to be done on usage not definition.
+ * - fastlock_t is reverted to a simple volatile typedef. Alignment
+ *   attributes shouldn't be necessary because compilers align the
+ *   datatype to its natural boundary anyway. When used in packed
+ *   structures alignment has to be done on usage not definition anyway.
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.13 2003/09/05 14:09:39 mweiser Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.14 2003/09/05 14:30:55 mweiser Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
-#include "pack.h"               /* DNETC_ALIGNED* */
 
 #if !defined(CLIENT_SUPPORTS_SMP) /* non-threaded client */
 
