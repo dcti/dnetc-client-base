@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.106  1998/12/21 01:38:34  silby
+// scheduledtime should've been a signed integer, fixed.
+//
 // Revision 1.105  1998/12/21 00:56:56  silby
 // Connectrequested is no longer used, removed the variable.
 //
@@ -453,7 +456,7 @@ public:
   s32 preferred_blocksize;
   s32 contestdone[CONTEST_COUNT];
   u32 descontestclosed;
-  u32 scheduledupdatetime;
+  s32 scheduledupdatetime;
 
 #if defined(MMX_BITSLICER) || defined(MMX_RC5)
   int usemmx;
