@@ -2207,7 +2207,7 @@ void Client::PrintBanner(char * clname)
 
 #if (CLIENT_CPU == CPU_X86)
 int Client::x86id()
-#if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_DOS)
+#if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_OS2)
 {
   u32 detectedvalue; //valye x86ident returns, must be interpreted
   int coretouse; // the core the client should use of the 5(6?)
