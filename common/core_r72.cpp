@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.25 2004/05/29 00:33:11 piru Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.26 2004/06/16 18:20:25 kakace Exp $"; }
 
 //#define TRACE
 
@@ -194,8 +194,7 @@ int apply_selcore_substitution_rules_rc572(int cindex)
 
 # if defined(__VEC__) || defined(__ALTIVEC__)
   /* OS+compiler support altivec */
-  long det = GetProcessorType(1);
-  have_vec = (det >= 0 && (det & 1L<<25)!=0); /* have altivec */
+  have_vec = GetProcessorFeatureFlags() & CPU_F_ALTIVEC;
 # endif
 
   if (!have_vec && cindex == 3)   /* KKS 7400 */
@@ -289,6 +288,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
     {
       switch ( detected_type & 0xffff) // only compare the low PVR bits
       {
+        case 0x0001: cindex = 5; break; // 601            == MH 1-pipe
         case 0x0003: cindex = 5; break; // 603            == MH 1-pipe
         case 0x0004: cindex = 6; break; // 604            == MH 1-pipe 604e
         case 0x0006: cindex = 5; break; // 603e           == MH 1-pipe
@@ -296,6 +296,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 0x0008: cindex = 5; break; // 740/750 (G3)   == MH 1-pipe
         case 0x0009: cindex = 6; break; // 604e           == MH 1-pipe 604e
         case 0x000A: cindex = 6; break; // 604ev          == MH 1-pipe 604e
+        case 0x7000: cindex = 5; break; // 750FX          == MH 1-pipe
         #if (CLIENT_OS == OS_MORPHOS)
         /* non-altivec defaults, if no OS support */
         case 0x8000: cindex = -1; break; // 7450 (G4+)    == ?
@@ -310,7 +311,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
       }
 
       #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
-      if (( detected_type & (1L<<25) ) != 0) //altivec?
+      if ((detected_flags & CPU_F_ALTIVEC) != 0) //altivec?
       {
         switch ( detected_type & 0xffff) // only compare the low PVR bits
         {
@@ -684,6 +685,64 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
   }
 
   return -1; /* core selection failed */
+}
+
+/* ------------------------------------------------------------- */
+
+/*
+** Estimate the number of work units that can be processed on a daily
+** basis.
+*/
+unsigned int estimate_nominal_rate_rc572()
+{
+  unsigned int rate = 0;   /* Not available */
+
+  #if (CLIENT_CPU == CPU_POWERPC)
+    static long detected_type = -123;
+    static int  cpu_count = 0;
+    static unsigned long detected_flags = 0;
+    static unsigned int  frequency = 0;
+    unsigned int keyrate = 0;   /* keys/s/MHz */
+
+    if (detected_type == -123) {
+      detected_type  = GetProcessorType(1);
+      detected_flags = GetProcessorFeatureFlags();
+      frequency      = GetProcessorFrequency();
+      cpu_count      = GetNumberOfDetectedProcessors();
+    }
+
+    if (detected_type > 0) {
+      switch (detected_type & 0xffff) { // only compare the low PVR bits
+        case 0x0001:      // 601
+          keyrate = 1700; break;
+        case 0x0003:      // 603
+        case 0x0004:      // 604
+        case 0x0006:      // 603e
+        case 0x0007:      // 603r/603ev
+        case 0x0008:      // 740/750
+        case 0x0009:      // 604e
+        case 0x000A:      // 604ev
+        case 0x7000:      // 750FX
+          keyrate = 3250; break;
+        case 0x000C:      // 7400
+        case 0x800C:      // 7410
+          keyrate = (detected_flags & CPU_F_ALTIVEC) ? 9200: 3250; break;
+        case 0x8000:      // 7450
+        case 0x8001:      // 7455
+        case 0x8002:      // 7457/7447
+        case 0x8003:      // 7447A
+          keyrate = (detected_flags & CPU_F_ALTIVEC) ? 10700 : 3500; break;
+        case 0x0039:      // 970
+        case 0x003C:      // 970FX
+          keyrate = (detected_flags & CPU_F_ALTIVEC) ? 7500 : 2450; break;
+      }
+
+      if (cpu_count > 0)
+        rate = (keyrate * frequency * cpu_count) / 49710;  /* 49710 = 2^32 / 86400 */
+    }
+  #endif
+
+  return rate;
 }
 
 /* ------------------------------------------------------------- */
