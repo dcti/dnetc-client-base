@@ -344,6 +344,7 @@ os2: .symbolic                                       # OS/2
      @set EXTOBJS   =
      @set IMPORTS   =
      @set BINNAME   = $(LNKbasename).exe
+     @set STACKSIZE = 16384                 #Will slow down client if it's 32k
      @%make platform
 
 w32: .symbolic                               # win95/winnt standard executable
