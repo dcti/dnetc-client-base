@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.40 2000/06/14 08:58:46 oliver Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.41 2000/06/21 22:23:09 oliver Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -464,8 +464,7 @@ int ConInStr(char *buffer, unsigned int buflen, int flags )
     if (asbool && redraw)
     {
       char scratch[8];
-      strcpy(scratch, ((boolval)?((boolistf)?("1 "):("yes  ")):
-                                ((boolistf)?("0"):("no   "))) );
+      strcpy(scratch, (boolval)?("yes  "):("no   ") );
       #if (CLIENT_OS == OS_RISCOS)
       if (redraw) /* not the first round */
         riscos_backspace();
