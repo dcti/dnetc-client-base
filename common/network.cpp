@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.7 1999/11/19 00:04:53 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.8 1999/11/23 05:45:10 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -18,6 +18,7 @@ return "@(#)$Id: network.cpp,v 1.97.2.7 1999/11/19 00:04:53 cyp Exp $"; }
 #include "autobuff.h"  // Autobuffer class
 #include "cmpidefs.h"  // strncmpi(), strcmpi()
 #include "logstuff.h"  // LogScreen()
+#include "base64.h"    // base64_encode()
 #include "clitime.h"   // CliGetTimeString(NULL,1);
 #include "triggers.h"  // CheckExitRequestTrigger()
 #include "util.h"      // trace
@@ -171,50 +172,51 @@ static void __hostnamecpy( char *dest,
   return;
 }
 
-static int __fixup_dnethostname( char *host, int *portP, int mode )
+static int __fixup_dnethostname( char *host, int *portP, int mode, 
+                                  int *nofallback )
 {
+  static char *dnet = ".distributed.net";
   int faultport = 0, autofind = 0;
-  if (host[0]==0 || strcmpi(host,"auto")==0 || strcmpi(host,"(auto)")==0)
+
+  char *p = host;
+  int len = 0;
+
+  while (*p && isspace(*p))
+    p++;
+  while (*p && !isspace(*p))
+    host[len++] = (char)tolower(*p++);
+  host[len]=0;
+
+  if (len==0 || strcmp(host,"auto")==0 || strcmp(host,"(auto)")==0 ||
+                strcmp( host, dnet ) == 0 || strcmp( host, dnet+1 ) == 0 )
     faultport = autofind = 1;
-  else if (!autofind && strchr( host, '.' )!=NULL)
+  else if ( len < 16 )
+    ; //not distributed.net, do nothing
+  else if ( strcmp( &host[len-16], dnet ) != 0 )
+    ; //not distributed.net, do nothing
+  else if ( len == 21 && memcmp( host, "n0cgi.", 6 ) == 0 )
+    *nofallback |= (mode & MODE_HTTP); //for (win32gui) newer-client check
+  else if ( len > 22 && memcmp( &host[len-22], ".proxy.", 7 ) == 0 )
+    *nofallback |= (mode & MODE_HTTP); // direct connect or redir service
+  else if ( len < 20 || memcmp( &host[len-20], ".v27.", 5 ) != 0 )
+    faultport = autofind = 1; // rc5proxy.distributed.net et al
+  else
   {
-    char *p = host;
-    int len = 0;
-    while (*p && isspace(*p))
-      p++;
-    while (*p && !isspace(*p))
-      host[len++]=(char)tolower(*p++);
-    host[len]=0;
-    if ( len>15 && strcmp( &host[len-15], "distributed.net" )==0 &&
-         (( len == 15 ) || host[len-16]=='.'))
+    int i; const char *dzones[]={"us","euro","asia","aussie","jp"};
+    autofind = 1; /* assume this until we know better */
+    for (i=0;(autofind && i<((int)(sizeof(dzones)/sizeof(dzones[0]))));i++)
     {
-      if (len == 15)
-        faultport = autofind = 1;
-      else if ( strcmp( host, "n0cgi.distributed.net")==0 )
-        autofind = 0;
-      else if ( strcmp( strchr( host, '.' ), ".v27.distributed.net" )!=0 )
-        faultport = autofind = 1;
-      else
+      int len2 = strlen(dzones[i]);
+      if ( memcmp( dzones[i], host, len2 )==0)
       {
-        int i, isvalid=0;
-        const char *dzones[]={"us","euro","asia","aussie","jp"};
-        for (i=0;(!isvalid && i<((int)(sizeof(dzones)/sizeof(dzones[0]))));i++)
-        {
-          int len2 = strlen(dzones[i]);
-          if ( memcmp( dzones[i], host, len2 )==0)
-          {
-            int foundport = ((host[len2]=='.')?(2064):(atoi(&host[len2])));
-            if (foundport != 80 && foundport != 23 && foundport != 2064)
-              break;
-            else if (*portP == 0) //note: the hostname determines port
-              *portP = foundport; //not viceversa.
-            else if (*portP != 3064 && (*portP != foundport))
-              break;
-            isvalid = 1;
-          }
-        }
-        if (!isvalid)
-          autofind = 1;
+        int foundport = ((host[len2]=='.')?(2064):(atoi(&host[len2])));
+        if (foundport != 80 && foundport != 23 && foundport != 2064)
+          break;
+        else if (*portP == 0) //note: the hostname determines port
+          *portP = foundport; //not viceversa.
+        else if (*portP != 3064 && (*portP != foundport))
+          break;
+        autofind = 0; /* everything checks out */
       }
     }
   }
@@ -254,6 +256,7 @@ Network::Network( const char * servname, int servport, int _nofallback,
   nofallback = _nofallback;
   sock = INVALID_SOCKET;
   iotimeout = _iotimeout; /* if iotimeout is <0, use blocking calls */
+  isnonblocking = 0;      /* used later */
 
   gotuubegin = gothttpend = 0;
   httplength = 0;
@@ -301,11 +304,11 @@ Network::Network( const char * servname, int servport, int _nofallback,
   }
   mode = startmode;
 
-  autofindkeyserver = __fixup_dnethostname(server_name,&server_port,startmode);
+  autofindkeyserver = __fixup_dnethostname(server_name, &server_port,
+                                           startmode, &nofallback);
 
-  isnonblocking = 0;      /* could be set non-blocking? */
-#if (CLIENT_OS == OS_NETWARE)
-  //iotimeout = -1;
+#if (CLIENT_OS == OS_RISCOS)
+  iotimeout = -1; // always blocking please
 #endif    
   if (iotimeout < 0)
     iotimeout = -1;
@@ -1336,17 +1339,27 @@ int Network::Put( const char * data, int length )
 
   if (mode & MODE_HTTP)
   {
+    char userpass[((sizeof(fwall_userpass)+1)*4)/3];
     char header[500];
+    userpass[0] = '\0';
+    if (fwall_userpass[0])
+    {
+      if (base64_encode(userpass, fwall_userpass, 
+                  sizeof(userpass), strlen(fwall_userpass))<0)
+        userpass[0]='\0';
+      userpass[sizeof(userpass)-1]='\0';
+    }
     sprintf(header,
             "POST http://%s:%u/cgi-bin/rc5.cgi HTTP/1.0\r\n"
             "%s%s%s"
             "Content-Type: application/octet-stream\r\n"
             "Content-Length: %lu\r\n\r\n",
-            ((svc_hostaddr)?(__inet_ntoa__(svc_hostaddr)):(svc_hostname)),
+            ((!nofallback && svc_hostaddr)?(__inet_ntoa__(svc_hostaddr)):
+                                           (svc_hostname)),
             ((unsigned int)(svc_hostport)),
-            ((fwall_userpass[0])?("Proxy-authorization: Basic "):("")),
-            ((fwall_userpass[0])?(fwall_userpass):("")),
-            ((fwall_userpass[0])?("\r\nProxy-Connection: Keep-Alive\r\n"):("")),
+            ((userpass[0])?("Proxy-authorization: Basic "):("")),
+            ((userpass[0])?(userpass):("")),
+            ((userpass[0])?("\r\nProxy-Connection: Keep-Alive\r\n"):("")),
             (unsigned long) outbuf.GetLength());
     #if (CLIENT_OS == OS_OS390)
       __etoa(header);
