@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.10 1999/06/15 13:22:01 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.11 1999/07/20 03:43:42 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -26,13 +26,11 @@ return "@(#)$Id: client.cpp,v 1.206.2.10 1999/06/15 13:22:01 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
-#if (CLIENT_OS == OS_AMIGAOS)
-#if (CLIENT_CPU == CPU_68K)
+#if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
 #error please put this in your ./platforms/amigaos/
 long __near __stack  = 65536L;  // AmigaOS has no automatic stack extension
       // seems standard stack isn't enough
-#endif // (CLIENT_CPU == CPU_68K)
-#endif // (CLIENT_OS == OS_AMIGAOS)
+#endif 
 
 #if (CLIENT_OS == OS_RISCOS)
 #error please put this in your ./platforms/riscos/ and make it
@@ -159,7 +157,7 @@ int ClientIsGUI(void)
 
 /* ---------------------------------------------------------------------- */
 
-void PrintBanner(const char *dnet_id,int level,int restarted)
+static void PrintBanner(const char *dnet_id,int level,int restarted)
 {
   /* level = 0 = show copyright/version,  1 = show startup message */
   restarted = 0; /* yes, always show everything */
@@ -341,7 +339,7 @@ int Client::Main( int argc, const char *argv[] )
 
 /* ---------------------------------------------------------------------- */
 
-int realmain( int argc, char *argv[] )
+static int realmain( int argc, char *argv[] ) /* YES, *STATIC* */
 {
   // This is the main client object.  we 'new'/malloc it, rather than make
   // it static in the hope that people will think twice about using exit()
@@ -431,32 +429,22 @@ int realmain( int argc, char *argv[] )
 #if (CLIENT_OS == OS_MACOS)
 //
 // nothing - Mac framework provides main
-//
-#elif ((CLIENT_OS == OS_WIN32) && defined(WIN32GUI))
-//
-// nothing - realmain() is called from elsewhere
+#error That may be so. But realmain is static and stays that way.
+#error example code follows (yes, wow, its vewwy komplikated!)
+#error extern void macCliMain(int (*)(int,char **));
+#error void main(void) { macCliMain(realmain); return; }
 //
 #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
-{ /* abstraction layer between WinMain() and realmain() */
+{ /* simply parses the command line and call the bootstrap */
   TRACE_OUT((+1,"WinMain()\n"));
   int rc=winClientPrelude( hInst, hPrevInst, lpszCmdLine, nCmdShow, realmain);
   TRACE_OUT((-1,"WinMain()\n"));
   return rc;
 }
-#elif ((CLIENT_OS == OS_OS2) && defined(OS2_PM))
-// nothing
 #elif defined(__unix__)
 int main( int argc, char *argv[] )
 {
-  // stop the shell from seeing SIGTSTP and putting the client
-  // into the background when we '-pause' it.
-  // porters : those calls are POSIX.1, 
-  // - on BSD you might need to change setpgid(0,0) to setpgrp()
-  // - on SYSV you might need to change getpgrp() to getpgid(0)
-  if( getpgrp() != getpid() )
-    setpgid( 0, 0 );
-
   /* the SPT_* constants refer to sendmail source (conf.[c|h]) */
   char defname[]={('r'),('c'),('5'),('d'),('e'),('s'),0};
   int needchange = 0;
