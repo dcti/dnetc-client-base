@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.4 2003/08/09 12:41:06 mweiser Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.5 2003/08/19 16:06:07 mweiser Exp $"
 
 #ifndef u16
 #include "cputypes.h"
@@ -43,17 +43,18 @@
 #define CORE_E_STOPPED  (-4)
 #define CORE_E_STUB     (-5)
 
-#if !defined(PACKED)
-# define PACKED
-#endif
+#undef DNETC_PACKED
+#define DNETC_PACKED
 
-#if !defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)
+#if !defined(__GNUC__) || (__GNUC__ < 2) || \
+    ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))
 # if !defined(MIPSpro) && !defined(__SUNPRO_CC)
 #  pragma pack(1)
 # endif
 #else
-# undef PACKED
-# define PACKED __attribute__((packed)) /* use attribute on >= egcs-1.1.2 */
+  /* use attribute on >= egcs-1.1.2 */
+# undef DNETC_PACKED
+# define DNETC_PACKED __attribute__((packed))
 #endif
 
 /*
@@ -131,12 +132,15 @@ typedef struct {
    */
   int (*cleanup)(void);
 
-} PACKED CoreDispatchTable;
+} DNETC_PACKED CoreDispatchTable;
 
-#if (!defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)) && \
+#if (!defined(__GNUC__) || (__GNUC__ < 2) || \
+     ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))) && \
     !defined(MIPSpro) && !defined(__SUNPRO_CC)
 # pragma pack()
 #endif
+
+/* DNETC_PACKED stays defined for below */
 
 /* ===================================================================== */
 
@@ -152,27 +156,31 @@ typedef struct {
 // network and buffer structure operations.
 #define STUB_MAX 10
 
-#if (!defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)) && \
+#if (!defined(__GNUC__) || (__GNUC__ < 2) || \
+     ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))) && \
     !defined(MIPSpro)
 # pragma pack(1)
 #endif
+
+/* DNETC_PACKED still defined here */
 
 struct Stub { /* size is 24 */
   u16 marks;           /* N-mark ruler to which this stub applies */
   u16 length;          /* number of valid elements in the stub[] array */
   u16 diffs[STUB_MAX]; /* first <length> differences in ruler */
-} PACKED;
+} DNETC_PACKED;
 
 struct WorkStub { /* size is 28 */
   Stub stub;           /* stub we're working on */
   u32 worklength;      /* depth of current state */
-} PACKED;
+} DNETC_PACKED;
 
-#if (!defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)) && \
+#if (!defined(__GNUC__) || (__GNUC__ < 2) || \
+     ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))) && \
     !defined(MIPSpro)
 # pragma pack()
 #endif
-#undef PACKED
+#undef DNETC_PACKED
 
 // Internal stuff that's not part of the interface but we need for
 // declaring the problem work area size.

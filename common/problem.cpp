@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.5 2003/08/09 12:39:27 mweiser Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.6 2003/08/19 16:06:07 mweiser Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -76,24 +76,25 @@ static unsigned int __problem_counter = 0;
 
 /* ------------------------------------------------------------------- */
 
-#if !defined(ALIGN)
-# define ALIGN
-#endif
+#undef DNETC_ALIGN
+#define DNETC_ALIGN
 
-#if !defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)
+#if !defined(__GNUC__) || (__GNUC__ < 2) || \
+    ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))
 # if !defined(MIPSpro)
 #  if (SIZEOF_LONG == 8)  /* SIZEOF_LONG is defined in cputypes.h */
 #   pragma pack(8)
-#  else    
+#  else
 #   pragma pack(4)
-#  endif    
+#  endif
 # endif
 #else
-# undef ALIGN
+  /* use attribute on >= egcs-1.1.2 */
+# undef DNETC_ALIGN
 # if (SIZEOF_LONG == 8)
-#  define ALIGN __attribute__((packed,aligned(8))) /* use attribute on >= egcs-1.1.2 */
-# else    
-#  define ALIGN __attribute__((packed,aligned(4)))
+#  define DNETC_ALIGN __attribute__((aligned(8)))
+# else
+#  define DNETC_ALIGN __attribute__((aligned(4)))
 # endif
 #endif
 
@@ -122,28 +123,30 @@ typedef struct
     int started;
     int initialized;
     unsigned int threadindex; /* 0-n (globally unique identifier) */
-  } ALIGN priv_data;
-} ALIGN InternalProblem;
+  } DNETC_ALIGN priv_data;
+} DNETC_ALIGN InternalProblem;
 
-#if (!defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)) && \
+#if (!defined(__GNUC__) || (__GNUC__ < 2) || \
+     ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))) && \
     !defined(MIPSpro)
 # pragma pack()
 #endif
-#undef ALIGN
+#undef DNETC_ALIGN
 
 /* ======================================================================= */
 
-#if !defined(PACKED)
-# define PACKED
-#endif
+#undef DNETC_PACKED
+#define DNETC_PACKED
 
-#if !defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)
+#if !defined(__GNUC__) || (__GNUC__ < 2) || \
+    ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))
 # if !defined(MIPSpro)
 #  pragma pack(1)
 # endif
 #else
-# undef PACKED
-# define PACKED __attribute__((packed)) /* use attribute on >= egcs-1.1.2 */
+  /* use attribute on >= egcs-1.1.2 */
+# undef DNETC_PACKED
+# define DNETC_PACKED __attribute__((packed))
 #endif
 
 /* SuperProblem() is an InternalInternal problem struct                */
@@ -165,7 +168,7 @@ typedef struct
 /*     modifies: PICKPROB_CORE                                         */
 /*     on success and if the PICKPROB_MAIN initialized/started state   */
 /*     hasn't changed (that is, RetrieveState() hasn't purged it in    */
-/*     meantime), locked copy from PICKPROB_CORE -> PICKPROB_MAIN      */       
+/*     meantime), locked copy from PICKPROB_CORE -> PICKPROB_MAIN      */
 /*                                                                     */
 /*  **NOTE**: this scheme implies that the cores may NOT have          */
 /*  absolute pointers in their mem buffers that point to other         */
@@ -176,27 +179,28 @@ typedef struct
 /*    to do a benchmark. If that happens, and Run() starts, it will    */
 /*    spin in the lock and (minimally) skew the results.               */
 /* b) LoadState() can fail at anytime during the intitalization,       */
-/*    which could leave the problem in an inconsistant state.          */  
+/*    which could leave the problem in an inconsistant state.          */
 
-typedef struct 
+typedef struct
 {
-  InternalProblem iprobs[3]; 
+  InternalProblem iprobs[3];
   #define PICKPROB_MAIN 0 /* MAIN must be first */
   #define PICKPROB_CORE 1
   #define PICKPROB_TEMP 2 /* temporary copy used by load */
   fastlock_t copy_lock; /* locked when a sync is in progress */
-} PACKED SuperProblem;  
+} DNETC_PACKED SuperProblem;
 
-#if (!defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)) && \
+#if (!defined(__GNUC__) || (__GNUC__ < 2) || \
+     ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))) && \
     !defined(MIPSpro)
 # pragma pack()
 #endif
-#undef PACKED
+#undef DNETC_PACKED
 
 unsigned int ProblemGetSize(void)
 { /* needed by IPC/shmem */
   return sizeof(SuperProblem);
-}  
+}
 
 void ProblemFree(void *__thisprob)
 {

@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.94.2.3 2003/08/09 12:39:27 mweiser Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.94.2.4 2003/08/19 16:06:07 mweiser Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -90,17 +90,18 @@ enum {
 
 /* ---------------------------------------------------------------------- */
 
-#if !defined(PACKED)
-# define PACKED
-#endif
+#undef DNETC_PACKED
+#define DNETC_PACKED
 
-#if !defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)
+#if !defined(__GNUC__) || (__GNUC__ < 2) || \
+    ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))
 # if !defined(MIPSpro)
 #  pragma pack(1)
 # endif
 #else
-# undef PACKED
-# define PACKED __attribute__((packed)) /* use attribute on >= egcs-1.1.2 */
+  /* use attribute on >= egcs-1.1.2 */
+# undef DNETC_PACKED
+# define DNETC_PACKED __attribute__((packed))
 #endif
 
 typedef union
@@ -113,7 +114,7 @@ typedef union
     struct {u32 hi,lo;} cypher;           // cyphertext
     struct {u32 hi,lo;} keysdone;         // iterations done (also current position in block)
     struct {u32 hi,lo;} iterations;       // iterations to do
-  } PACKED crypto;        /* 48 bytes */
+  } DNETC_PACKED crypto;                  /* 48 bytes */
   #endif
   #if defined(HAVE_CRYPTO_V2)
   struct {
@@ -125,21 +126,21 @@ typedef union
     struct {u32 hi,lo;} iterations;       // iterations to do
     u32 randomsubspace;                   // subspace for random generation.
     struct {u32 count; u32 hi,mid,lo;} check;   // keyid of last found counter-measure check.
-  } PACKED bigcrypto;     /* 68 bytes */
+  } DNETC_PACKED bigcrypto;               /* 68 bytes */
   #endif
   #if defined(HAVE_OGR_CORES)
   struct {
     struct WorkStub workstub;             // stub to work on (28 bytes)
     struct {u32 hi,lo;} nodes;            // nodes completed
-  } PACKED ogr;           /* 36 bytes */
+  } DNETC_PACKED ogr;                     /* 36 bytes */
   #endif
   struct {
     char unused[80];
-  } PACKED unused;
+  } DNETC_PACKED unused;
 //  #if 0
 //    PROJECT_NOT_HANDLED("in ContestWork");
 //  #endif
-} PACKED ContestWork;
+} DNETC_PACKED ContestWork;
 
 typedef struct
 {
@@ -151,13 +152,14 @@ typedef struct
   u32  os;         /* CLIENT_OS */
   u32  build;      /* CLIENT_VERSION - combined build identifier */
   u32  core;       /* core used to process the packet */
-} PACKED WorkRecord;
+} DNETC_PACKED WorkRecord;
 
-#if (!defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)) && \
+#if (!defined(__GNUC__) || (__GNUC__ < 2) || \
+     ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))) && \
     !defined(MIPSpro)
 # pragma pack()
 #endif
-#undef PACKED
+#undef DNETC_PACKED
 
 /* ---------------------------------------------------------------------- */
 

@@ -17,7 +17,7 @@
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.3.2.3 2003/08/09 12:39:27 mweiser Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.3.2.4 2003/08/19 16:06:07 mweiser Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET
@@ -212,17 +212,17 @@ static int __close_connection(void *cookie)
 
 /* ====================================================================== */
 
-#if !defined(PACKED)
-# define PACKED
-#endif
+#undef DNETC_PACKED
+#define DNETC_PACKED
 
-#if !defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)
+#if !defined(__GNUC__) || (__GNUC__ < 2) || \
+    ((__GNUC__ == 2) &&(__GNUC_MINOR__ < 91))
 # if !defined(MIPSpro)
 #  pragma pack(1)
 # endif
 #else
-# undef PACKED
-# define PACKED __attribute__((packed)) /* use attribute on >= egcs-1.1.2 */
+# undef DNETC_PACKED
+# define DNETC_PACKED __attribute__((packed)) /* use attribute on >= egcs-1.1.2 */
 #endif
 
 // SOCKS4 protocol spec:  http://www.socks.nec.com/protocol/socks4.protocol
@@ -232,24 +232,24 @@ typedef struct _socks4 {
     u16 DSTPORT;                // destination port, network order
     u32 DSTIP;                  // destination IP, network order
     char USERID[1];             // variable size, null terminated
-} PACKED SOCKS4;
+} DNETC_PACKED SOCKS4;
 // SOCKS5 protocol RFC:  http://www.socks.nec.com/rfc/rfc1928.txt
 // SOCKS5 authentication RFC:  http://www.socks.nec.com/rfc/rfc1929.txt
 typedef struct _socks5methodreq {
     unsigned char ver;          // version == 5
     unsigned char nMethods;     // number of allowable methods following
     unsigned char Methods[2];   // this program will request at most two
-} PACKED SOCKS5METHODREQ;
+} DNETC_PACKED SOCKS5METHODREQ;
 typedef struct _socks5methodreply {
     unsigned char ver;          // version == 1
     unsigned char Method;       // server chose method ...
     char end;
-} PACKED SOCKS5METHODREPLY;
+} DNETC_PACKED SOCKS5METHODREPLY;
 typedef struct _socks5userpwreply {
     unsigned char ver;          // version == 1
     unsigned char status;       // 0 == success
     char end;
-} PACKED SOCKS5USERPWREPLY;
+} DNETC_PACKED SOCKS5USERPWREPLY;
 typedef struct _socks5 {
     unsigned char ver;          // version == 5
     unsigned char cmdORrep;     // cmd: 1 == connect, rep: 0 == success
@@ -258,13 +258,14 @@ typedef struct _socks5 {
     u32 addr;                   // network order
     u16 port;                   // network order
     char end;
-} PACKED SOCKS5;
+} DNETC_PACKED SOCKS5;
 
-#if (!defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)) && \
+#if (!defined(__GNUC__) || (__GNUC__ < 2) || \
+     ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))) && \
     !defined(MIPSpro)
 # pragma pack()
 #endif
-#undef PACKED
+#undef DNETC_PACKED
 
 const char *Socks5ErrorText[9] =
 {

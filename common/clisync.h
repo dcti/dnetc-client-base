@@ -18,7 +18,7 @@
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.9 2003/08/10 17:12:21 mweiser Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.10 2003/08/19 16:06:07 mweiser Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -112,16 +112,19 @@
    }
 
 #elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_X86_64)
+# undef __DNETC_ALIGN__
+# define __DNETC_ALIGN__
 
-#define ALIGN
-#if !defined(__GNUC__) || (__GNUC__ < 2) || (__GNUC_MINOR__ < 91)
-# pragma pack(4)
-#else
-# undef ALIGN
-# define ALIGN __attribute__((packed,aligned(4))) /* use attribute on >= egcs-1.1.2 */
-#endif
-   typedef struct { long spl; } ALIGN fastlock_t;
-#undef ALIGN
+# if !defined(__GNUC__) || (__GNUC__ < 2) || \
+     ((__GNUC__ == 2) && (__GNUC_MINOR__ < 91))
+#  pragma pack(4)
+# else
+   /* use attribute on >= egcs-1.1.2 */
+#  undef __DNETC_ALIGN__
+#  define __DNETC_ALIGN__ __attribute__((aligned(4)))
+# endif
+   typedef struct { long spl; } __DNETC_ALIGN__ fastlock_t;
+# undef __DNETC_ALIGN__
    #define FASTLOCK_INITIALIZER_UNLOCKED {0}
 
    /* _trylock returns -1 on EINVAL, 0 if could not lock, +1 if could lock */
