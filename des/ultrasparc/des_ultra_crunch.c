@@ -1,11 +1,14 @@
 /* des-ultra-crunch.c v4.0 */
 
 /* $Log: des_ultra_crunch.c,v $
-/* Revision 1.1  1998/06/14 14:23:49  remi
-/* Initial revision
+/* Revision 1.2  1998/06/14 14:32:23  remi
+/* Added the right key to the list of internal test-cases.
+/*
+/* Revision 1.1.1.1  1998/06/14 14:23:49  remi
+/* Initial integration.
 /* */
 
-static char *id="@(#)$Id: des_ultra_crunch.c,v 1.1 1998/06/14 14:23:49 remi Exp $";
+static char *id="@(#)$Id: des_ultra_crunch.c,v 1.2 1998/06/14 14:32:23 remi Exp $";
 
 /* defines are set in configure & Makefile when compiling DCTI client */
 #ifndef IN_DCTI_CLIENT
@@ -716,8 +719,9 @@ unsigned long des_test_cases[][8] = {
   {0xE997049E,0x37D5E085,0x07C372A8,0x3669C801,0x689B4583,0xDA05F0A2,0xFA70DACD,0x3F031F6C},
   {0x4C2F1083,0x5D8A6B32,0xC38544FA,0x017883F5,0xD06D9EAA,0xEE0DFBF6,0xB1A728B7,0x12C311C4},
   {0x5225BCB0,0xE51C98B6,0x2B7ABF2D,0xD714717E,0xC867B0B7,0xF24322B6,0x0A6BF211,0xB0B7C1CA},
-/* This next key is believed to be intentionally invalid */
-/* {0xCE6823E9,0x16A8A476,0xCDC4DBA4,0xD93B6603,0xC6E231B9,0xD84C2204,0xDB623F7C,0x3477E4B2}, */
+/*This next key is the *complement* of the good key */
+/*{0xCE6823E9,0x16A8A476,0xCDC4DBA4,0xD93B6603,0xC6E231B9,0xD84C2204,0xDB623F7C,0x3477E4B2}, */
+  {0x3197DC16,0xE9575B89,0xCDC4DBA4,0xD93B6603,0xC6E231B9,0xD84C2204,0xDB623F7C,0x3477E4B2},
   {0x11111111,0x11111111,0x00000000,0x00000000,0x00000000,0x00000000,0xb4624df5,0x82e13665},
   {0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0xc1b123a7,0x8ca64de9},
 #ifdef TEST_TONS_OF_KEYS
