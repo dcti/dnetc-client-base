@@ -5,15 +5,19 @@
 ##   where <platform> is one of [dos | netware | os2 | w32 | w_h | wsv ]
 ##                       or anything else defined at the end of this makefile
 ##
-## $Id: makefile.wat,v 1.6 1998/06/13 19:12:19 cyruspatel Exp $
-##                     Added support for new disphelp.cpp, remv'd old 'cd's
-## 
+## $Id: makefile.wat,v 1.7 1998/06/14 01:43:16 cyruspatel Exp $
+##
+## Revision history:
+## 1.6  cyp Added support for new disphelp.cpp, deleted obsolete "cd xxx" 
+##          and "cd .." commands. 
+## 1.7  cyp Important fix:Changed so that /zp is uniform across all modules.
+##          
 
 CC=wpp386
 CCASM=wasm
 LINK=wlink
 
-%VERSION  = 70.24          
+%VERSION  = 70.21          
 %VERSTRING= v2.7024.409
 
 %LINKOBJS = output\cliconfig.obj output\autobuff.obj output\buffwork.obj &
@@ -32,8 +36,8 @@ LINK=wlink
 %AFLAGS   = /5s /fp3 /mf   #may be defined in the platform specific section
 %LFLAGS   =                #may be defined in the platform specific section
 %CFLAGS   = /6s /fp3 /ei /mf #may be defined in the platform specific section
-%OPT_SIZE = /s /os /zp1    #may be redefined in the platform specific section
-%OPT_SPEED= /oneatx /oh /oi+ /zp8 #redefine in platform specific section
+%OPT_SIZE = /s /os         #may be redefined in the platform specific section
+%OPT_SPEED= /oneatx /oh /oi+ #redefine in platform specific section
 %LIBPATH  =                #may be defined in the platform specific section
 %LIBFILES =                #may be defined in the platform specific section
 %EXTOBJS  =                #extra objs (made elsewhere) but need linking here
@@ -224,6 +228,10 @@ output\clearscr.obj : platforms\win32-os2\clearscr.asm makefile.wat
 
 platform: .symbolic
   @set isused=
+  @set OPT_SIZE  = /zp8 $(%OPT_SIZE) /zp8     ## /zp has to be same for
+  @set OPT_SPEED = /zp8 $(%OPT_SPEED) /zp8    ## all modules, otherwise
+  @set CFLAGS    = /zp8 $(%CFLAGS) /zp8       ## we'll have big trouble
+  
   @for %i in ($(%LINKOBJS)) do @%make %i
   @if not exist $(%BINNAME) @set isused=1
   @if $(%isused).==. @echo All targets are up to date
@@ -263,8 +271,8 @@ dos: .symbolic                                       # DOS/DOS4GW
      @set AFLAGS    = /5s /fp3 /bt=dos /mf # no such thing as /bt=dos4g
      @set LFLAGS    = sys dos4g op dosseg op eliminate op stub=platform/dos/d4GwStUb.CoM
      @set CFLAGS    = /6s /fp3 /fpc /zm /ei /mf /bt=dos /dDOS4G /DNONETWORK /I$(%watcom)\h
-     @set OPT_SIZE  = /s /os /zp1
-     @set OPT_SPEED = /oneatx /oh /oi+ /zp8
+     @set OPT_SIZE  = /s /os 
+     @set OPT_SPEED = /oneatx /oh /oi+ 
      @set LINKOBJS  = $(%LINKOBJS) output\clearscr.obj
      @set LIBFILES  =
      @set MODULES   =
@@ -277,8 +285,8 @@ os2: .symbolic                                       # OS/2
      @set AFLAGS    = /5s /fp5 /bt=DOS4GW /mf
      @set LFLAGS    = sys os2v2
      @set CFLAGS    = /5s /fp5 /bm /mf /bt=os2 /DOS2 /DMULTITHREAD
-     @set OPT_SIZE  = /oantrlexi /zp4
-     @set OPT_SPEED = /oantrlexi /zp8
+     @set OPT_SIZE  = /oantrlexi 
+     @set OPT_SPEED = /oantrlexi 
      @set LIBFILES  = so32dll.lib,tcp32dll.lib
      @set MODULES   =
      @set EXTOBJS   =
@@ -291,8 +299,8 @@ w32: .symbolic                               # win95/winnt standard executable
      @set AFLAGS    = /5s /fp5 /bt=DOS4GW /mf
      @set LFLAGS    = sys nt
      @set CFLAGS    = /fpd /5s /fp5 /bm /mf /bt=nt /DWIN32 /DMULTITHREAD
-     @set OPT_SIZE  = /oantrlexih /zp4
-     @set OPT_SPEED = /oantrlexih /oi+ /zp8
+     @set OPT_SIZE  = /oantrlexih 
+     @set OPT_SPEED = /oantrlexih /oi+ 
      @set LIBFILES  =
      @set MODULES   =
      @set EXTOBJS   =
@@ -304,8 +312,8 @@ w_h: .symbolic                               # win95 hidden executable
      @set AFLAGS    = /5s /fp5 /bt=DOS4GW /mf
      @set LFLAGS    = sys nt_win
      @set CFLAGS    = /fpd /6s /fp6 /bm /mf /bt=nt /DWIN32 /DMULTITHREAD
-     @set OPT_SIZE  = /oantrlexih /zp4
-     @set OPT_SPEED = /oantrlexih /oi+ /zp8
+     @set OPT_SIZE  = /oantrlexih 
+     @set OPT_SPEED = /oantrlexih /oi+ 
      @set LIBFILES  =
      @set MODULES   =
      @set EXTOBJS   =
@@ -317,8 +325,8 @@ wsv: .symbolic                               # winnt service
      @set AFLAGS    = /5s /fp5 /bt=DOS4GW /mf
      @set LFLAGS    = sys nt
      @set CFLAGS    = /fpd /6s /fp6 /bm /mf /bt=nt /DWIN32 /DMULTITHREAD /DWINNTSERVICE="bovrc5nt"
-     @set OPT_SIZE  = /oantrlexih /zp4
-     @set OPT_SPEED = /oantrlexih /oi+ /zp8
+     @set OPT_SIZE  = /oantrlexih 
+     @set OPT_SPEED = /oantrlexih /oi+ 
      @set LIBFILES  =
      @set MODULES   =
      @set EXTOBJS   =
@@ -327,11 +335,11 @@ wsv: .symbolic                               # winnt service
      @%make platform
 
 netware: .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM! (May 24 '98)
-     @set STACKSIZE = 32767 #16384
+     @set STACKSIZE = 20K # 32767 #16384
      @set AFLAGS    = /5s /fp3 /bt=netware /ms
      @set LFLAGS    = op multiload op nod op scr 'none' op map op osname='NetWare NLM' # symtrace systemConsoleScreen  #sys netware
-     @set OPT_SIZE  = /os /s /zp1 
-     @set OPT_SPEED = /oneatx /oh /oi+ /zp8  
+     @set OPT_SIZE  = /os /s  
+     @set OPT_SPEED = /oneatx /oh /oi+   
      @set CFLAGS    = /6s /fp3 /ei /ms /d__NETWARE__ /dMULTITHREAD /i$(inc_386) $(wcc386opt) #/fpc /bt=netware /i$(%watcom)\novh #/bm
      @set LIBFILES =  nwwatemu,plib3s #plibmt3s,clib3s,math387s,emu387
      @set MODULES   = clib a3112 # tcpip netdb
