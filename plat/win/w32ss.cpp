@@ -8,7 +8,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *w32ss_cpp(void) {
-return "@(#)$Id: w32ss.cpp,v 1.1.2.1 2001/01/21 15:10:26 cyp Exp $"; }
+return "@(#)$Id: w32ss.cpp,v 1.1.2.2 2001/03/26 18:00:02 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -373,16 +373,17 @@ struct _ish /* size 40 */
 /* end of fixed headers */
 struct _irde 
 {
-  union {
-   struct { DWORD NameOffset:31;
-            DWORD NameIsString:1;
-          };
-   DWORD  Name;
+  union __dummy1 {
+    struct __dummy2 
+    { DWORD NameOffset:31;
+      DWORD NameIsString:1;
+    };
+    DWORD  Name;
     WORD  Id;
   };
-  union {
+  union __dummy3 {
     DWORD   OffsetToData;
-    struct {
+    struct __dummy4 {
       DWORD   OffsetToDirectory:31;
       DWORD   DataIsDirectory:1;
     };
@@ -771,8 +772,8 @@ void *SSLaunchProcess( const char *filename, const char *args,
         if (waitMode)
         {
           UINT hTimer = SetTimer(NULL,0, 250, NULL);
-          int orefcount = -1, refcount = prio; /* use up prio variable */
           #if (CLIENT_OS != OS_WIN32)
+          int orefcount = -1;
           int os32file32 = 0;
           //if (winGetVersion()>=400 && SSGetFileData(filename,0,0,0,0)>=2000)
           //  os32file32 = 1;
@@ -784,8 +785,9 @@ void *SSLaunchProcess( const char *filename, const char *args,
             #if (CLIENT_OS != OS_WIN32)
             if (!os32file32)
             {
+              int refcount = prio; /* use up prio variable */
               if ((refcount = GetModuleUsage( ((HINSTANCE)that) )) == 0)
-              break;
+                break;
               if (orefcount == -1)
                 orefcount = refcount;
               else if (refcount != orefcount)
@@ -955,6 +957,10 @@ static int SSSetiControl(const char *ssname)
   */        
   //static char seti[]={'S'|0x80,'E'|0x80,'T'|0x80,'I'|0x80,'@'|0x80,'H'|0x80,'o'|0x80,'m'|0x80,'e'|0x80,' '|0x80,
   //                    'C'|0x80,'l'|0x80,'i'|0x80,'e'|0x80,'n'|0x80,'t'|0x80,'\0'};
+  #ifdef _MSC_VER
+  #pragma warning(disable:4305) /* warning C4305: 'initializing' : truncation from 'const int' to 'char' */
+  #pragma warning(disable:4310) /* warning C4310: cast truncates constant value */
+  #endif
   static char seticlass[]={(char)('S'|0x80),(char)('e'|0x80),(char)('t'|0x80),(char)('i'|0x80),
                            (char)('C'|0x80),(char)('l'|0x80),(char)('i'|0x80),(char)('e'|0x80),(char)('n'|0x80),(char)('t'|0x80),
                            (char)('P'|0x80),(char)('a'|0x80),(char)('r'|0x80),(char)('e'|0x80),(char)('n'|0x80),(char)('t'|0x80),'\0'};
@@ -1600,7 +1606,7 @@ static int SSCB_FINDSTRINGEXACT(HWND hwnd,const char *screenname)
 }  
 #else
 #define SSCB_FINDSTRINGEXACT(_hwnd,_sname) \
-        SendMessage(_hwnd,CB_FINDSTRINGEXACT,-1,(LPARAM)(_sname))
+   ((int)SendMessage(_hwnd,CB_FINDSTRINGEXACT,((WPARAM)-1),(LPARAM)(_sname)))
 #endif     
 
 /* ---------------------------------------------------- */
@@ -1763,7 +1769,7 @@ static int _ConstructSSList(HWND hwnd, int *oseltype, const char *selname)
   }
   
   if (addcount != 0)
-    SendMessage( hwnd, CB_SELECTSTRING, -1, (LPARAM)((LPCSTR)selstring));
+    SendMessage( hwnd, CB_SELECTSTRING, ((WPARAM)-1), (LPARAM)((LPCSTR)selstring));
   
   *oseltype = seltype;
   EnableWindow( hwnd, (addcount>1) );
