@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.86  1998/08/20 02:37:08  silby
+# Fixed configure, now works properly with NASM rc5 mmx cores.
+#
 # Revision 1.85  1998/08/20 01:52:29  silby
 # Adddition of NASM to configure
 #
@@ -461,7 +464,7 @@ TARGET_LDFLAGS=""
 TARGET_LIBS=""
 TARGET_AS="gas"
 TARGET_NASM="nasm"
-TARGET_NASMFLAGS=""
+TARGET_NASMFLAGS="-i rc5/nasm/ -f elf"
 TARGET_ASFLAGS=""
 TARGET_STRIP="strip"
 
@@ -1162,6 +1165,7 @@ echo "LIBS = ${TARGET_LIBS}" >> Makefile
 echo "AS = ${TARGET_AS}" >> Makefile
 echo "ASFLAGS = ${TARGET_ASFLAGS}" >> Makefile
 echo "NASM = ${TARGET_NASM}" >> Makefile
+echo "NASMFLAGS = ${TARGET_NASMFLAGS}" >> Makefile
 echo "STRIP = ${TARGET_STRIP}" >> Makefile
 echo "ALLOBJS = ${TARGET_ALLCCOBJS} ${TARGET_ALLASOBJS} ${TARGET_ALLNASMOBJS}" >> Makefile
 echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
