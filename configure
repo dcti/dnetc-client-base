@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.228 2001/02/03 19:08:48 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.229 2001/02/05 18:37:11 ephraim Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1697,9 +1697,9 @@ case "$1" in
 	      ;;
 
     *x86-dynix4)
-        TARGET_CC="ec++"
-        TARGET_CCFLAGS="-relax -D_SEQUENT_"
-        TARGET_LIBS="-lsocket -lnsl -lseq -L/opt/epc/ec++/lib -lec++"
+        TARGET_CC="c++"
+        TARGET_CCFLAGS="-DASM_X86"
+        TARGET_LIBS="-lsocket -lnsl -lseq"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "dynix" "x86" 
 	      ;;
