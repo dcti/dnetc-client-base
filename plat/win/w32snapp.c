@@ -5,28 +5,28 @@
  * The crazy stuff with mailslots is my doing.
  *
  * This module contains stubs for toolhelp32's CreateToolhelp32Snapshot(),
- * Process32First() and Process32Next(), and emulation routines thereof 
+ * Process32First() and Process32Next(), and emulation routines thereof
  * for NT3/NT4 which don't have these functions in the kernel. Selection
  * of emulation method (NtQuerySystemInformation() or Performance Counters)
  * is automatic when real toolhelp is not available.
  *
- * For emulation, we use a mailslot because handles returned from 
- * CreateToolhelp32Snapshot() need to be closable with CloseHandle(), and 
+ * For emulation, we use a mailslot because handles returned from
+ * CreateToolhelp32Snapshot() need to be closable with CloseHandle(), and
  * because mailslots are convenient. :)
- * caveats: a) only does TH32CS_SNAPPROCESS, b) Process32First will not 
- * 'rewind' the snap, it gets the next. (this could be fixed by making the 
- * mailslot a closed loop, or reading/rewriting a single message, but both 
+ * caveats: a) only does TH32CS_SNAPPROCESS, b) Process32First will not
+ * 'rewind' the snap, it gets the next. (this could be fixed by making the
+ * mailslot a closed loop, or reading/rewriting a single message, but both
  * solutions would be computationally expensive.)
  *
- * On NT, irrespective of which method was used to obtain the data [real 
- * toolhelp, performance counters, NtQuerySystemInformation], the pe.cntUsage 
+ * On NT, irrespective of which method was used to obtain the data [real
+ * toolhelp, performance counters, NtQuerySystemInformation], the pe.cntUsage
  * and pe.th32DefaultHeapID are always zero and pe.szExeFile has no dirspec.
- * In addition, if using performance counters, the pe.cntThreads, 
+ * In addition, if using performance counters, the pe.cntThreads,
  * pe.th32ParentProcessID and pe.pcPriClassBase fields are zero as well,
  * and pe.szExeFile usually (I've seen a few ".com"s, but not all .com's
  * appear with ".com") does not have an extension.
  *
- * $Id: w32snapp.c,v 1.1.2.2 2001/04/12 14:56:42 cyp Exp $
+ * $Id: w32snapp.c,v 1.1.2.3 2002/03/12 22:55:13 jlawson Exp $
 */
 
 #define WIN32_LEAN_AND_MEAN
@@ -42,11 +42,11 @@
 #if defined(TEST_WITH_MAIN)
   #include <stdio.h>
 #endif
- 
+
 /* ---------------------------------------------------- */
 
 #pragma pack(1)
-typedef struct _SYSTEM_PROCESS_INFORMATION 
+typedef struct _SYSTEM_PROCESS_INFORMATION
 {
   ULONG NextEntryOffset;
   ULONG NumberOfThreads;
@@ -78,26 +78,26 @@ typedef struct _SYSTEM_PROCESS_INFORMATION
   ULONG PrivatePageCount;
 } SYSTEM_PROCESS_INFORMATION, *PSYSTEM_PROCESS_INFORMATION;
 #pragma pack()
-    
+
 typedef DWORD (WINAPI *NtQuerySystemInformationT) (
         DWORD SystemInformationClass, PVOID SystemInformation,
         ULONG SystemInformationLength, PULONG ReturnLength);
 
 
-static HANDLE WINAPI NtQuery_CreateToolhelp32Snapshot(DWORD dwFlags, 
+static HANDLE WINAPI NtQuery_CreateToolhelp32Snapshot(DWORD dwFlags,
                                                       DWORD th32ProcessID)
 {
   /* emulate toolhelp32's CreateToolhelp32Snapshot() function using
-     the undocumented NtQuerySystemInformation.   
-     
+     the undocumented NtQuerySystemInformation.
+
      Yes, it does work on NT5 as well, but toolhelp is available there.
      Whether its available on NT3 is unknown.
-     
-     NtQuerySystemInformation is an undocumented internal function in 
+
+     NtQuerySystemInformation is an undocumented internal function in
      ntdll.dll that is not intended for external-MS use since they those
      are subject to change between system releases. It should be safe on NT4
-     though given that that it hasn't changed between 4 and 5. 
-     Moreover, there do exist other external-MS utilities that use this call, 
+     though given that that it hasn't changed between 4 and 5.
+     Moreover, there do exist other external-MS utilities that use this call,
      such as http://www.sysinternals.com/listdlls.htm, and Fred Forester's
      EnTeHandle http://www.cyberenet.net/~fforest/handle.html
   */
@@ -113,7 +113,7 @@ static HANDLE WINAPI NtQuery_CreateToolhelp32Snapshot(DWORD dwFlags,
   {
     static int issupported = -1;
     static NtQuerySystemInformationT fnNtQuerySystemInformation = 0;
- 
+
     if (issupported == -1)
     {
       const char *loadname = "ntdll.dll";
@@ -124,29 +124,29 @@ static HANDLE WINAPI NtQuery_CreateToolhelp32Snapshot(DWORD dwFlags,
         HINSTANCE hWeLoadedItInst = LoadLibrary( loadname );
         if (hWeLoadedItInst)
           hNtdll = GetModuleHandle( loadname );
-      }            
+      }
       if (hNtdll == NULL)
         fnNtQuerySystemInformation = (NtQuerySystemInformationT)0;
-      else   
+      else
         fnNtQuerySystemInformation = (NtQuerySystemInformationT)
                 GetProcAddress(hNtdll, "NtQuerySystemInformation");
       issupported = ((fnNtQuerySystemInformation)?(+1):(0));
       if (!issupported && hWeLoadedItInst)
         FreeLibrary( (HMODULE)hWeLoadedItInst );
       /* otherwise keep it loaded for speed */
-    }                
+    }
     if (issupported && fnNtQuerySystemInformation)
     {
       HANDLE hProcessHeap = GetProcessHeap();
       if (hProcessHeap)
       {
         static DWORD dwStartingBytes = 8192;
-        DWORD dwNumBytesRet;
+        DWORD dwNumBytesRet = 0;
         PSYSTEM_PROCESS_INFORMATION pProcessList;
 
-        if (dwStartingBytes < 8192) 
+        if (dwStartingBytes < 8192)
           dwStartingBytes = 8192;
-        
+
         /* Ask the system for the list of running processes */
         pProcessList = (PSYSTEM_PROCESS_INFORMATION)
             HeapAlloc( hProcessHeap, HEAP_ZERO_MEMORY, dwStartingBytes );
@@ -172,7 +172,7 @@ static HANDLE WINAPI NtQuery_CreateToolhelp32Snapshot(DWORD dwFlags,
 
         /* Now walk the process list, convert each to a PROCESSENTRY32 entry
            and stuff those into the mailslot.
-        */   
+        */
         if (pProcessList != NULL)
         {
           BOOL bWeCreatedSnapHandle = FALSE;
@@ -185,14 +185,14 @@ static HANDLE WINAPI NtQuery_CreateToolhelp32Snapshot(DWORD dwFlags,
             {
               hSnapshot = NULL;
               bWeCreatedSnapHandle = FALSE;
-            } 
+            }
           }
           if (hSnapshot != NULL)
           {
             DWORD num_added = 0;
             HANDLE hSpool = CreateFile( mailslotname, GENERIC_WRITE,
                                         FILE_SHARE_READ, NULL,
-                                        OPEN_EXISTING, 
+                                        OPEN_EXISTING,
                                         FILE_ATTRIBUTE_NORMAL,
                                         (HANDLE)NULL );
 //printf("hspool=%p\n", hSpool);
@@ -206,10 +206,10 @@ static HANDLE WINAPI NtQuery_CreateToolhelp32Snapshot(DWORD dwFlags,
                 if (pWalk->ImageName.Buffer != NULL)
                 {
                   PROCESSENTRY32 pe;
-                  DWORD dwBytes = WideCharToMultiByte( CP_ACP, 0, 
-                                  pWalk->ImageName.Buffer, 
+                  DWORD dwBytes = WideCharToMultiByte( CP_ACP, 0,
+                                  pWalk->ImageName.Buffer,
                                   pWalk->ImageName.Length / sizeof(WCHAR),
-                                  pe.szExeFile, sizeof(pe.szExeFile), 
+                                  pe.szExeFile, sizeof(pe.szExeFile),
                                   NULL, NULL);
                   if (dwBytes != 0 && dwBytes < sizeof(pe.szExeFile))
                   {
@@ -231,10 +231,10 @@ static HANDLE WINAPI NtQuery_CreateToolhelp32Snapshot(DWORD dwFlags,
                       if (pe.th32ProcessID == 0)
                         lstrcpy(pe.szExeFile,"[System Process]");
                       else
-                      {  
+                      {
                         /* synthesize a record that matches the first one
-                           returned by toolhelp and perfcaps 
-                        */       
+                           returned by toolhelp and perfcaps
+                        */
                         PROCESSENTRY32 syspe;
                         lstrcpy(syspe.szExeFile,"[System Process]");
                         syspe.dwSize = sizeof(pe);
@@ -251,8 +251,8 @@ static HANDLE WINAPI NtQuery_CreateToolhelp32Snapshot(DWORD dwFlags,
                         if (dwBytes != sizeof(syspe))
                           break;
                         num_added++;
-                      }  
-                    }  
+                      }
+                    }
                     else if (pe.th32ProcessID == 0)
                     {
                       pe.szExeFile[0] = '\0';
@@ -265,14 +265,14 @@ static HANDLE WINAPI NtQuery_CreateToolhelp32Snapshot(DWORD dwFlags,
                       if (dwBytes != sizeof(pe))
                         break;
                       num_added++;
-                    }  
+                    }
                   }
                 }
                 /* move onto the next record. */
-                if (pWalk->NextEntryOffset < 
+                if (pWalk->NextEntryOffset <
                            sizeof(SYSTEM_PROCESS_INFORMATION))
                   break;
-                pWalk = (PSYSTEM_PROCESS_INFORMATION) 
+                pWalk = (PSYSTEM_PROCESS_INFORMATION)
                           ( ((BYTE*)pWalk) + pWalk->NextEntryOffset);
               }  /* while pWalk ... */
               CloseHandle( hSpool );
@@ -288,10 +288,10 @@ static HANDLE WINAPI NtQuery_CreateToolhelp32Snapshot(DWORD dwFlags,
       } /* if (hProcessHeap) */
     } /* if (issupported && fnNtQuerySystemInformation) */
   } /* if ((dwFlags & THCS_SNAPPROCESS) != 0) */
-  
+
   th32ProcessID = th32ProcessID; /* shaddup compiler */
   return hSnapshot;
-}  
+}
 
 /* ---------------------------------------------------- */
 
@@ -308,11 +308,11 @@ static DWORD my_atoi(const char *str)
   return num;
 }
 
-static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags, 
+static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
                                                       DWORD th32ProcessID)
 {
-  /* 
-    This method uses Windows NT Performance Counters, as seen in 
+  /*
+    This method uses Windows NT Performance Counters, as seen in
     http://msdn.microsoft.com/library/psdk/pdh/perfdata_9feb.htm
     http://support.microsoft.com/support/kb/articles/Q119/1/63.asp
     The following code will work on all versions of NT (3x, 4x, win2k)
@@ -320,18 +320,18 @@ static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
     However, the perfcap specification allows third-party libraries
     to extend standard system counters, which means that these custom
     third-party perfcap libraries may also be indirectly loaded when this is
-    used, which in turn may impose a large memory footprint. This is 
+    used, which in turn may impose a large memory footprint. This is
     particularly noticable in conjunction with an Oracle (server) installation
     which adds *6*MB overhead.
 
     For NT4 and above, there is a PSAPI.DLL as shipped with the platform sdk
     (and consequently not a standard component), that provides a fairly simple
     method of obtaining a list of process IDs. Although PSAPI.DLL uses the
-    undocumented NtQuerySystemInformation() call, it requires the caller 
-    to use OpenProcess() to obtain anything (even the basename) other than 
+    undocumented NtQuerySystemInformation() call, it requires the caller
+    to use OpenProcess() to obtain anything (even the basename) other than
     the pid, which makes its usage doggone slow. PSAPI is documented at
     http://msdn.microsoft.com/library/psdk/winbase/psapi_1ulh.htm
-  */    
+  */
   char mailslotname[128];
   FILETIME ftUnique, ftJunk;
   HANDLE hSnapshot = (HANDLE)0; /* assume failure */
@@ -355,7 +355,7 @@ static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
       */
       if (dwIndex_PROCESS == (DWORD) -1 || dwIndex_IDPROCESS == (DWORD) -1)
       {
-        HKEY hKeyIndex; 
+        HKEY hKeyIndex;
         if (RegOpenKeyEx( HKEY_LOCAL_MACHINE,
              "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Perflib\\009",
               0, KEY_READ, &hKeyIndex ) == ERROR_SUCCESS)
@@ -374,38 +374,38 @@ static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
               /* Get the titles and counters. (REG_MULTI_SZ).  This registry
                  key is an alternating set of names and corresponding integers
                  that represent them.  We look for the ones we want by name.
-              */   
+              */
               if (RegQueryValueEx( hKeyIndex, "Counter", NULL, NULL,
                         (LPBYTE)pszBuffer, &dwBytes ) == ERROR_SUCCESS )
               {
                 DWORD pos = 0;
-    
+
                 while( dwIndex_PROCESS == (DWORD) -1 ||
                        dwIndex_IDPROCESS == (DWORD) -1 )
                 {
                   /* save the current position in "valpos", and skip to the
                      end of the first string (the numeric value), while also
                      counting the length of it in "vallen".
-                  */   
+                  */
                   DWORD valpos = pos, vallen = 0, cmppos;
                   while (pos < dwBytes && pszBuffer[pos] != '\0')
                   {
                     pos++;
                     vallen++;
                   }
-                  if (pos >= dwBytes) 
+                  if (pos >= dwBytes)
                     break;
-                  /* 
+                  /*
                     save the position of the start of the name in "cmpppos"
                     and then skip to the end of the string.
-                  */  
+                  */
                   cmppos = (++pos); /* skip the '\0' */
                   while (pos < dwBytes && pszBuffer[pos] != '\0')
                     pos++;
-                  if (pos >= dwBytes) 
+                  if (pos >= dwBytes)
                     break;
                   pos++; /* skip the '\0' */
-    
+
                   /* See if this value is one that we are looking for. */
 //printf("Counter='%s', value=%u\n", &pszBuffer[cmppos], my_atoi(&pszBuffer[valpos]));
                   if (lstrcmpi( &pszBuffer[cmppos], "Process") == 0 )
@@ -418,7 +418,7 @@ static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
                     if (dwIndex_IDPROCESS == (DWORD)-1)
                       dwIndex_IDPROCESS = (DWORD)my_atoi(&pszBuffer[valpos]);
                   }
-    
+
                 }
               }
               HeapFree( hProcessHeap, 0, (LPVOID)pszBuffer );
@@ -427,7 +427,7 @@ static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
           RegCloseKey( hKeyIndex );
         }
       }
-    
+
       /*
          Now that we have identified the performance counter that we are
          interested in, actually do the query to retrieve the data
@@ -439,7 +439,7 @@ static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
         PPERF_DATA_BLOCK pdb; LONG lResult;
         char szIndexName[sizeof(DWORD)*3];
         DWORD dwBytes;
-    
+
         /* Read in all object table/counters/instrecords for "Process".
            We call RegQueryValueEx in a loop because "If hKey specifies
            HKEY_PERFORMANCE_DATA and the lpData buffer is too small,
@@ -449,7 +449,7 @@ static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
            this case, you must increase the buffer size and call
            RegQueryValueEx again passing the updated buffer size in the
            lpcbData parameter. Repeat this until the function succeeds"
-        */  
+        */
         dwBytes = dwStartingBytes;
         if (dwBytes < 8192)
           dwBytes = 8192;
@@ -490,7 +490,7 @@ static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
             dwStartingBytes = dwBytes;
           }
         }
-    
+
         if (pdb != NULL)  /* got perfdata? */
         {
           if (lResult == ERROR_SUCCESS) /* is that perfdata valid? */
@@ -505,14 +505,14 @@ static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
               {
                 hSnapshot = NULL;
                 bWeCreatedSnapHandle = FALSE;
-              } 
+              }
             }
             if (hSnapshot != NULL)
             {
               DWORD num_added = 0;
               HANDLE hSpool = CreateFile( mailslotname, GENERIC_WRITE,
                                           FILE_SHARE_READ, NULL,
-                                          OPEN_EXISTING, 
+                                          OPEN_EXISTING,
                                           FILE_ATTRIBUTE_NORMAL,
                                           (HANDLE)NULL );
 //printf("hspool=%p\n", hSpool);
@@ -524,13 +524,13 @@ static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
                 PPERF_INSTANCE_DEFINITION piddef;
                 DWORD dwProcessIdOffset = 0;
                 BOOL bDonePidZero = FALSE;
-    
+
                 /* Get the PERF_OBJECT_TYPE. */
                 pot = (PPERF_OBJECT_TYPE)(((PBYTE)pdb) + pdb->HeaderLength);
-    
+
                 /* Get the first counter definition. */
                 pcd = (PPERF_COUNTER_DEFINITION)(((PBYTE)pot) + pot->HeaderLength);
-    
+
                 /* walk the counters to find the offset to the ProcessID */
                 totalcount = pot->NumCounters;
                 for ( i=0; i < totalcount; i++ )
@@ -543,12 +543,12 @@ static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
                   }
                   pcd = ((PPERF_COUNTER_DEFINITION)(((PBYTE)pcd) + pcd->ByteLength));
                 }
-    
+
                 /* Get the first process instance definition */
                 piddef = (PPERF_INSTANCE_DEFINITION)(((PBYTE)pot) + pot->DefinitionLength);
-    
+
     //printf("getpidlist 3: numpids = %u\n", pot->NumInstances );
-    
+
                 /* now walk the process definitions */
                 totalcount = pot->NumInstances;
                 for ( i = 0; i < totalcount; i++ )
@@ -557,17 +557,17 @@ static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
                   PWSTR foundname;
                   DWORD namelen;
                   DWORD thatpid;
-     
+
                   pcb = (PPERF_COUNTER_BLOCK) (((PBYTE)piddef) + piddef->ByteLength);
                   thatpid = *((DWORD *) (((PBYTE)pcb) + dwProcessIdOffset));
                   namelen = piddef->NameLength;
                   foundname = (PWSTR)0;
                   if (piddef->NameOffset)
                     foundname = (PWSTR)(((PBYTE)piddef) + piddef->NameOffset);
-    
+
                   /* we have all the data we need, skip to the next pid. */
                   piddef = (PPERF_INSTANCE_DEFINITION) (((PBYTE)pcb) + pcb->ByteLength);
-      
+
                   /* if (thatpid != 0) */
                   {
                     PROCESSENTRY32 pe;
@@ -575,9 +575,9 @@ static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
                     if (thatpid == 0) /* "Idle", "_Total" */
                     {
                       dwBytes = 0;
-                      if (!bDonePidZero)  
+                      if (!bDonePidZero)
                       {
-                        /* convert the first instance of pid 0 to what 
+                        /* convert the first instance of pid 0 to what
                            both NtQuerySystemInformation and toolhelp
                            give us: "[System Process]"
                         */
@@ -589,12 +589,12 @@ static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
                     else if (foundname && namelen > 1)
                     {
                       /* Namelen is "Length in bytes of name; 0 = none;
-                         this length includes the characters in the string 
+                         this length includes the characters in the string
                          plus the size of the terminating NULL char."
                       */
-                      dwBytes = WideCharToMultiByte( CP_ACP, 0, 
+                      dwBytes = WideCharToMultiByte( CP_ACP, 0,
                                    foundname,  namelen/sizeof(WCHAR),
-                                   pe.szExeFile, sizeof(pe.szExeFile), 
+                                   pe.szExeFile, sizeof(pe.szExeFile),
                                    NULL, NULL);
                     }
                     /* WCTMB return value includes trailing null */
@@ -611,7 +611,7 @@ static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
                       pe.th32ParentProcessID = 0; /* unknown */
                       pe.pcPriClassBase = 0; /* unknown */
                       pe.dwFlags = 0; /* toolhelp "reserved" */
-    
+
                       if (!WriteFile( hSpool, &pe, sizeof(pe), &dwBytes, NULL))
                         break;
                       if (dwBytes != sizeof(pe))
@@ -629,14 +629,14 @@ static HANDLE WINAPI perfCaps_CreateToolhelp32Snapshot(DWORD dwFlags,
               }
             } /* if (hSnapshot != NULL) */
           } /* if RegQueryValueEx == ERROR_SUCCESS */
-    
+
           HeapFree(hProcessHeap, 0, (LPVOID)pdb );
         } /* if (pdb != NULL) */
-    
+
       } /* if (dwIndex_PROCESS && dwIndex_IDPROCESS) */
     } /* if (hProcessHeap) */
   } /* if ((dwFlags & TH32CS_SNAPPROCESS)!=0) */
-    
+
   th32ProcessID = th32ProcessID; /* shaddup compiler */
   return hSnapshot;
 }
@@ -675,7 +675,7 @@ static BOOL WINAPI msrw_Process32Next(HANDLE hSnapshot, LPPROCESSENTRY32 lppe)
 }
 
 static BOOL WINAPI msrw_Process32First(HANDLE hSnap, LPPROCESSENTRY32 lppe)
-{  
+{
   return msrw_Process32Next(hSnap, lppe);
 }
 
@@ -717,8 +717,8 @@ static int __getstubptrs( CreateToolhelp32SnapshotT *create,
         #if defined(TEST_WITH_MAIN) || defined(FORCE_SOMETHING)
         printf("Using real toolhelp\n");
         #endif
-      }    
-    }  
+      }
+    }
 #endif
 #if !defined(FORCE_SOMETHING) || defined(FORCE_NTQUERY) || defined(FORCE_PERFCAPS)
     if (winver == -1L) /* still not there */
@@ -736,14 +736,14 @@ static int __getstubptrs( CreateToolhelp32SnapshotT *create,
           fnCreateToolhelp32Snapshot = perfCaps_CreateToolhelp32Snapshot;
         }
         #if defined(TEST_WITH_MAIN) || defined(FORCE_SOMETHING)
-        printf("Using %s\n", ((fnCreateToolhelp32Snapshot == 
+        printf("Using %s\n", ((fnCreateToolhelp32Snapshot ==
           NtQuery_CreateToolhelp32Snapshot)?("NtQuerySystemInformation"):
                                             ("Perf Counters")) );
         #endif
         fnProcess32First = msrw_Process32First;
         fnProcess32Next = msrw_Process32Next;
         winver = 2000+(osver.dwMajorVersion*100); /* 2300, 2400 */
-      }    
+      }
     }
 #endif
     if (winver == -1L) /* still not there */
@@ -757,7 +757,7 @@ static int __getstubptrs( CreateToolhelp32SnapshotT *create,
     if (procfirst) *procfirst = fnProcess32First;
     if (procnext) *procnext = fnProcess32Next;
   }
-  return winver;  
+  return winver;
 }
 
 /* ---------------------------------------------------- */
@@ -780,7 +780,7 @@ BOOL WINAPI Process32First(HANDLE hSnapshot, LPPROCESSENTRY32 lppe)
     if (__getstubptrs(0, &procfirst, 0))
       return (*procfirst)( hSnapshot, lppe);
   }
-  return FALSE;        
+  return FALSE;
 }
 
 /* ---------------------------------------------------- */
@@ -793,7 +793,7 @@ BOOL WINAPI Process32Next(HANDLE hSnapshot, LPPROCESSENTRY32 lppe)
     if (__getstubptrs(0, 0, &procnext))
       return (*procnext)( hSnapshot, lppe);
   }
-  return FALSE;        
+  return FALSE;
 }
 
 /* ---------------------------------------------------- */
@@ -801,10 +801,10 @@ BOOL WINAPI Process32Next(HANDLE hSnapshot, LPPROCESSENTRY32 lppe)
 #if defined(TEST_WITH_MAIN)
 int main(int argc, char **argv)
 {
-  /* display list of found processes. if an argument is provided, show 
+  /* display list of found processes. if an argument is provided, show
      matches with an '='. Show our own process with an '@'.
 
-     Name matching: if any component (path,name,extension) of the provided 
+     Name matching: if any component (path,name,extension) of the provided
      name OR the found name is not available, those match anything.
   */
 
@@ -855,7 +855,7 @@ int main(int argc, char **argv)
         //if (pe.szExeFile[0])
         {
           int cmpresult = -1;
-          
+
           if (argc > 1 && pe.szExeFile[0])
           {
             char *foundname = pe.szExeFile;
@@ -880,7 +880,7 @@ int main(int argc, char **argv)
             if (basenamepos == 0) /* no path in template */
             {
               foundname += len; /* then skip dir in foundname */
-            }  
+            }
             else if (len == 0) /*dir in template, but no dir in foundname */
             {
               procname += basenamepos; /* then skip dir in template */
@@ -892,7 +892,7 @@ int main(int argc, char **argv)
               /* if either template OR foundname have no suffix, (but
                  not both, which will have been checked above) then
                  allow a match if the basenames (sans-suffix) are equal.
-              */  
+              */
               int fsuffixlen = 0;
               if (fbasenamelen > 3)
               {
@@ -902,7 +902,7 @@ int main(int argc, char **argv)
                   fsuffixlen = 3;
                   fbasenamelen -= 4;
                 }
-              }  
+              }
               if (suffixlen != fsuffixlen && basenamelen == fbasenamelen)
               {
                 cmpresult = memicmp( foundname, procname, basenamelen );
@@ -915,19 +915,19 @@ int main(int argc, char **argv)
           num_found++;
 
           /*
-            On NT, irrespective of which method was used to obtain the data 
-            [real toolhelp, performance counters, NtQuerySystemInformation], 
-            the pe.cntUsage and pe.th32DefaultHeapID are always zero and 
-            pe.szExeFile has no dirspec. In addition, if using performance 
-            counters, the pe.cntThreads, pe.th32ParentProcessID and 
-            pe.pcPriClassBase fields are zero as well and pe.szExeFile 
+            On NT, irrespective of which method was used to obtain the data
+            [real toolhelp, performance counters, NtQuerySystemInformation],
+            the pe.cntUsage and pe.th32DefaultHeapID are always zero and
+            pe.szExeFile has no dirspec. In addition, if using performance
+            counters, the pe.cntThreads, pe.th32ParentProcessID and
+            pe.pcPriClassBase fields are zero as well and pe.szExeFile
             usually does not have an extension.
           */
           printf("%c %c %08x '%s'\n"
           "             cnt=%u, heap=%p, #thr=%u, ppid=%p, priobase=0x%x\n",
                   ((cmpresult == 0)?('='):(' ')),
                   ((pe.th32ProcessID == ourpid)?('@'):(' ')),
-                  pe.th32ProcessID, 
+                  pe.th32ProcessID,
                   pe.szExeFile,
                   pe.cntUsage,
                   pe.th32DefaultHeapID,
@@ -939,7 +939,7 @@ int main(int argc, char **argv)
       } while (Process32Next(hSnapshot, &pe));
     } /* if (Process32First(hSnapshot, &pe)) */
     CloseHandle( hSnapshot );
-    
+
     printf("\nTotal found: %u\n", num_found );
     if (argc > 1)
       printf("Matched: %u\n", num_matched );

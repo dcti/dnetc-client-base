@@ -1,13 +1,13 @@
 /*
  * This is the console driver backend, and supports the GUI window,
  * the pipe interface and a native console interface through the
- * common w32ConXXX() layer. Interface selection is automatic, and the 
+ * common w32ConXXX() layer. Interface selection is automatic, and the
  * caller does not need to know what kind of interface is in use.
  *
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.1.2.8 2001/04/08 14:22:15 cyp Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.1.2.9 2002/03/12 22:55:05 jlawson Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE
@@ -58,8 +58,8 @@ return "@(#)$Id: w32cons.cpp,v 1.1.2.8 2001/04/08 14:22:15 cyp Exp $"; }
 #else
   #define SetForegroundWindow BringWindowToTop
   #define SetBrushOrgEx( __0, __1, __2, __3 ) SetBrushOrg( __0, __1, __2 )
-  #define MAKEWORD(a, b) \ 
-    ((WORD) (((BYTE) (a)) | ((WORD) ((BYTE) (b))) << 8)) 
+  #define MAKEWORD(a, b) \
+    ((WORD) (((BYTE) (a)) | ((WORD) ((BYTE) (b))) << 8))
 #endif
 #if defined(__BORLANDC__) /* BC5 windows.h needs whacking */
 #undef MAKEWORD
@@ -77,7 +77,7 @@ return "@(#)$Id: w32cons.cpp,v 1.1.2.8 2001/04/08 14:22:15 cyp Exp $"; }
 // caution: WM_USER is also used for control messages (grr!).
 #define WM_USER_SHELLNOTIFYICON      (WM_USER+1) /* for tray icon */
 #define WM_USER_W16CONS              (WM_USER+0)
-// WM_USER_W16CONS wParams command message constants 
+// WM_USER_W16CONS wParams command message constants
    #define W16CONS_CMD_CLEARSCREEN   0x01
    #define W16CONS_CMD_PRINTSTR      0x02
    #define W16CONS_CMD_ISKBHIT       0x03
@@ -91,22 +91,22 @@ return "@(#)$Id: w32cons.cpp,v 1.1.2.8 2001/04/08 14:22:15 cyp Exp $"; }
 // public ones are 0.... (DNETC_WCMD_INTERNAL_FIRST-1)
 // See w32cons.h for list (they're also duplicated here)
    #define WMCMD_SHUTDOWN             DNETC_WCMD_INTERNAL_FIRST /* 512 */
-   #define WMCMD_RESTART              (1+WMCMD_SHUTDOWN)        /* 513 */ 
-   #define WMCMD_PAUSE                (1+WMCMD_RESTART)         /* 514 */ 
-   #define WMCMD_UNPAUSE              (1+WMCMD_PAUSE)           /* 515 */ 
-   #define WMCMD_UPDATE               (1+WMCMD_UNPAUSE)         /* 516 */ 
-   #define WMCMD_FETCH                (1+WMCMD_UPDATE)          /* 517 */ 
-   #define WMCMD_FLUSH                (1+WMCMD_FETCH)           /* 518 */ 
-   #define WMCMD_SVCINSTALL           (1+WMCMD_FLUSH)           /* 519 */ 
-   #define WMCMD_SWITCHVIEW           (1+WMCMD_SVCINSTALL)      /* 520 */ 
-   #define WMCMD_CLOSEVIEW            (1+WMCMD_SWITCHVIEW)      /* 521 */ 
-   #define WMCMD_REFRESHVIEW          (1+WMCMD_CLOSEVIEW)       /* 522 */ 
-   #define WMCMD_ABOUT                (1+WMCMD_REFRESHVIEW)     /* 523 */ 
-   #define WMCMD_HELP_DOC             (1+WMCMD_ABOUT)           /* 524 */ 
-   #define WMCMD_HELP_FAQ             (1+WMCMD_HELP_DOC)        /* 525 */ 
-   #define WMCMD_HELP_BUG             (1+WMCMD_HELP_FAQ)        /* 526 */ 
-   #define WMCMD_HELP_MAILTO          (1+WMCMD_HELP_BUG)        /* 527 */ 
-   #define WMCMD_BENCHMARK            (1+WMCMD_HELP_MAILTO)     /* 528 */ 
+   #define WMCMD_RESTART              (1+WMCMD_SHUTDOWN)        /* 513 */
+   #define WMCMD_PAUSE                (1+WMCMD_RESTART)         /* 514 */
+   #define WMCMD_UNPAUSE              (1+WMCMD_PAUSE)           /* 515 */
+   #define WMCMD_UPDATE               (1+WMCMD_UNPAUSE)         /* 516 */
+   #define WMCMD_FETCH                (1+WMCMD_UPDATE)          /* 517 */
+   #define WMCMD_FLUSH                (1+WMCMD_FETCH)           /* 518 */
+   #define WMCMD_SVCINSTALL           (1+WMCMD_FLUSH)           /* 519 */
+   #define WMCMD_SWITCHVIEW           (1+WMCMD_SVCINSTALL)      /* 520 */
+   #define WMCMD_CLOSEVIEW            (1+WMCMD_SWITCHVIEW)      /* 521 */
+   #define WMCMD_REFRESHVIEW          (1+WMCMD_CLOSEVIEW)       /* 522 */
+   #define WMCMD_ABOUT                (1+WMCMD_REFRESHVIEW)     /* 523 */
+   #define WMCMD_HELP_DOC             (1+WMCMD_ABOUT)           /* 524 */
+   #define WMCMD_HELP_FAQ             (1+WMCMD_HELP_DOC)        /* 525 */
+   #define WMCMD_HELP_BUG             (1+WMCMD_HELP_FAQ)        /* 526 */
+   #define WMCMD_HELP_MAILTO          (1+WMCMD_HELP_BUG)        /* 527 */
+   #define WMCMD_BENCHMARK            (1+WMCMD_HELP_MAILTO)     /* 528 */
    #define WMCMD_CONFIG               (1+WMCMD_BENCHMARK+1+(CONTEST_COUNT*2))
    #define WMCMD_EVENT                (1+WMCMD_CONFIG)
    #define WMCMD_PASTE   WM_PASTE     /* 0x0302 */
@@ -384,7 +384,7 @@ static HINSTANCE my_ShellExecute( HWND hParent, const char *lpOper,
   int weloaded = 0;           /* shell32 postloads SHLWAPI.DLL COMCTL32.DL */
   HMODULE hShell32 = GetModuleHandle("shell32.dll");
   if (!hShell32)
-  { 
+  {
     UINT olderrmode = SetErrorMode(SEM_NOOPENFILEERRORBOX);
     hShell32 = LoadLibrary( "shell32.dll" );
     SetErrorMode(olderrmode);
@@ -394,7 +394,7 @@ static HINSTANCE my_ShellExecute( HWND hParent, const char *lpOper,
   {
     typedef HINSTANCE (WINAPI *ShellExecuteA_t)(HWND,LPCTSTR,LPCTSTR,LPCTSTR,LPCTSTR,INT);
     ShellExecuteA_t _ShellExecute = (ShellExecuteA_t) GetProcAddress(hShell32, "ShellExecuteA");
-    if (_ShellExecute) 
+    if (_ShellExecute)
       hInst = (*_ShellExecute)(hParent,lpOper,lpFile,lpParams,lpDir,nShowCmd);
     if (weloaded)
       FreeLibrary(hShell32);
@@ -431,7 +431,7 @@ static int GetShell32Version(void)
                                 GetProcAddress(hShell32, "DllGetVersion");
       if (proc)
       {
-        my_DllVersionInfo dvi; 
+        my_DllVersionInfo dvi;
         memset(&dvi,0,sizeof(dvi));
         dvi.cbSize = sizeof(dvi);
         if (((*proc)(&dvi)) == NOERROR)
@@ -452,13 +452,13 @@ static int GetShell32Version(void)
 
 #if 0 //!defined(NOTIFYICONDATA_V1_SIZE)
 #pragma pack(1)
-typedef struct _NOTIFYICONDATAA_V2 { 
+typedef struct _NOTIFYICONDATAA_V2 {
    DWORD cbSize;
-   HWND hWnd; 
-   UINT uID; 
-   UINT uFlags; 
-   UINT uCallbackMessage; 
-   HICON hIcon; 
+   HWND hWnd;
+   UINT uID;
+   UINT uFlags;
+   UINT uCallbackMessage;
+   HICON hIcon;
    CHAR  szTip[128]; //64 in <5.0
    DWORD dwState; //Version 5.0
    DWORD dwStateMask; //Version 5.0
@@ -467,7 +467,7 @@ typedef struct _NOTIFYICONDATAA_V2 {
    //union with uTimeout: UINT uVersion; //Version 5.0
    CHAR szInfoTitle[64]; //Version 5.0
    DWORD dwInfoFlags; //Version 5.0
-} NOTIFYICONDATAA_V2, *PNOTIFYICONDATAA_V2; 
+} NOTIFYICONDATAA_V2, *PNOTIFYICONDATAA_V2;
 #pragma pack()
 #define NOTIFYICONDATA_V1_SIZE \
         (4+sizeof(HWND)+(sizeof(UINT)*3)+sizeof(HICON)+(sizeof(CHAR)*64))
@@ -477,7 +477,7 @@ typedef struct _NOTIFYICONDATAA_V2 {
 #define PNOTIFYICONDATA PNOTIFYICONDATAA_V2
 #define NIM_SETFOCUS    0x00000003
 #define NIM_SETVERSION  0x00000004
-#define NIF_STATE       0x00000008 
+#define NIF_STATE       0x00000008
 #define NIF_INFO        0x00000010
 #define NIIF_INFO       0x00000001
 #define NIIF_WARNING    0x00000002
@@ -635,7 +635,7 @@ static int __DoTrayStuff( HWND hwnd, int action, const char *tip,
               strncpy(tnd.szTip, szTitle, sizeof(tnd.szTip));
               tnd.szTip[63] = '\0';
               tnd.uFlags |= NIF_TIP;
-            } 
+            }
             if (tip)
             {
               if (*tip)
@@ -661,7 +661,7 @@ static int __DoTrayStuff( HWND hwnd, int action, const char *tip,
 
             if (intray)
             {
-              TRACE_TRAY((+1,"if (intray) {\n")); 
+              TRACE_TRAY((+1,"if (intray) {\n"));
               tnd.uFlags &= ~NIF_ICON;
               /* NIM_MODIFY fails if explorer just got restarted */
               if (my_Shell_NotifyIcon(NIM_MODIFY, &tnd))
@@ -671,18 +671,18 @@ static int __DoTrayStuff( HWND hwnd, int action, const char *tip,
                 tnd.uFlags|=((tnd.hIcon)?(NIF_ICON):(0));
                 my_Shell_NotifyIcon(NIM_DELETE, &tnd);
               }
-              TRACE_TRAY((-1,"} => retcode=%d\n",retcode)); 
+              TRACE_TRAY((-1,"} => retcode=%d\n",retcode));
             }
-            if (retcode != 0)  
+            if (retcode != 0)
             {
               if (my_Shell_NotifyIcon(NIM_ADD, &tnd))
               {
                 intray = 1;
                 if (IsWindowVisible(hwnd))
                 {
-                  TRACE_TRAY((+1,"ShowWindow(SW_HIDE)\n")); 
+                  TRACE_TRAY((+1,"ShowWindow(SW_HIDE)\n"));
                   ShowWindow(hwnd, SW_HIDE);
-                  TRACE_TRAY((-1,"ShowWindow(SW_HIDE)\n")); 
+                  TRACE_TRAY((-1,"ShowWindow(SW_HIDE)\n"));
                 }
                 retcode = 0;
               }
@@ -766,14 +766,14 @@ static inline DWORD my_InitMapperFlags(HDC hdc) /* used by fontomatic and wmpain
 
 /* find a monospaced font whose extents are */
 /* *nearest* to the requested height/width. */
-static BOOL __w16Fontomatic( HWND hwnd, HDC hdc, SIZE *newfontsize, 
+static BOOL __w16Fontomatic( HWND hwnd, HDC hdc, SIZE *newfontsize,
                              int textarea_width, int textarea_height,
-                             int numcols, int numrows, 
+                             int numcols, int numrows,
                              HFONT *hfontP, int *isstockfont,
                              LOGFONT *logfontP, int *varpitchfont )
                              /* returns TRUE if font changed */
 {
-  BOOL fontchanged = FALSE;              
+  BOOL fontchanged = FALSE;
   int oldMapMode, newfontx, newfonty, turn, varpitch, owndc;
   DWORD mapperFlags;
 
@@ -809,7 +809,8 @@ static BOOL __w16Fontomatic( HWND hwnd, HDC hdc, SIZE *newfontsize,
     int isstock = 0, lastchance = 0;
 
     //how the font mapper works is well (and understandably) documented
-    //in http://msdn.microsoft.com/library/techart/msdn_fontmap.htm
+    //in http://msdn.microsoft.com/library/en-us/dngdi/html/msdn_fontmap.asp
+    memset(&lfont,0,sizeof(lfont));
 
     if (turn == 0)
     {
@@ -898,11 +899,11 @@ static BOOL __w16Fontomatic( HWND hwnd, HDC hdc, SIZE *newfontsize,
             (tm.tmPitchAndFamily & 0xf0) != FF_SCRIPT)
         {
           /* SDK note on TEXTMETRIC:
-             TMPF_FIXED_PITCH    If this bit is set the font is a 
-                                 variable pitch font. If this bit is clear 
-                                 the font is a fixed pitch font. 
-                                 Note very carefully that those meanings 
-                                 are the opposite of what the constant 
+             TMPF_FIXED_PITCH    If this bit is set the font is a
+                                 variable pitch font. If this bit is clear
+                                 the font is a fixed pitch font.
+                                 Note very carefully that those meanings
+                                 are the opposite of what the constant
                                  name implies.
           */
           int fixedpitch = ((tm.tmPitchAndFamily & TMPF_FIXED_PITCH) == 0);
@@ -941,7 +942,7 @@ static BOOL __w16Fontomatic( HWND hwnd, HDC hdc, SIZE *newfontsize,
         fontchanged = TRUE; /* we _have_ to take it */
         varpitch = FALSE;
         if ((tm.tmPitchAndFamily & TMPF_FIXED_PITCH) == 0)
-          varpitch = TRUE; 
+          varpitch = TRUE;
       }
       if (fontchanged)
       {
@@ -1040,7 +1041,7 @@ static LRESULT __w16AdjustRect( W16CONP console, HWND hwnd, UINT message, WPARAM
       nctheight -= height;
       oldwidth  = (console->dispcols * console->fontx)+(console->indentx<<1);
       oldheight = (console->disprows * console->fonty)+(console->indenty<<1);
-     
+
       /* ------------------------------------------- */
       /* oldwidth/oldheight == old client dimentions */
       /* width/height == requested client dimensions */
@@ -1086,7 +1087,7 @@ static LRESULT __w16AdjustRect( W16CONP console, HWND hwnd, UINT message, WPARAM
       TRACE_ADJRECT((0,"non-client width=%d, height=%d\n", nctwidth, nctheight));
       TRACE_ADJRECT((0,"requested width=%d height=%d\n", width, height));
       TRACE_ADJRECT((0,"current width=%d height=%d\n", oldwidth, oldheight));
-      TRACE_ADJRECT((0,"current font=%d x %d (text_area=>%d x %d)\n", 
+      TRACE_ADJRECT((0,"current font=%d x %d (text_area=>%d x %d)\n",
                            console->fontx, console->fonty,
                            console->fontx * console->dispcols,
                            console->fonty * console->disprows ));
@@ -1101,11 +1102,11 @@ static LRESULT __w16AdjustRect( W16CONP console, HWND hwnd, UINT message, WPARAM
         oldfx = console->fontx;
         oldfy = console->fonty;
 
-        if (__w16Fontomatic( hwnd, NULL, &newfontsize, 
+        if (__w16Fontomatic( hwnd, NULL, &newfontsize,
                              (width - (console->indentx << 1)), //textarea.cx
                              (height - (console->indenty << 1)), //textarea.cy
                              console->dispcols, console->disprows,
-                             &(console->hfont), &(console->fontisstock), 
+                             &(console->hfont), &(console->fontisstock),
                              NULL, &console->fontisvarpitch ))
         {
           /* font has changed */
@@ -1115,7 +1116,7 @@ static LRESULT __w16AdjustRect( W16CONP console, HWND hwnd, UINT message, WPARAM
           console->fonty = newfontsize.cy;
           console->fontchecked = 0;
 
-          TRACE_ADJRECT((0,"new font=%d x %d (text_area=>%d x %d)\n", 
+          TRACE_ADJRECT((0,"new font=%d x %d (text_area=>%d x %d)\n",
                             console->fontx, console->fonty,
                             console->fontx * console->dispcols,
                             console->fonty * console->disprows ));
@@ -1256,8 +1257,8 @@ static void __w16DrawRecessedFrame( HDC hDC, const RECT *rect, HBRUSH hBGBrush)
 ** WM_SIZING messages, and also for win32 if SPI_GETDRAGFULLWINDOWS
 ** is disabled or running on win95 with WindowsPlus! or running on NT4.
 ** In essence __w16Handle_NCLBUTTONDOWN() makes the window modal, and
-** snapping the resize frame to the next best size when the user 
-** moves the mouse. This is approximately what happens when dragfullwindows 
+** snapping the resize frame to the next best size when the user
+** moves the mouse. This is approximately what happens when dragfullwindows
 ** is supported but disabled.
 */
 /* our emulation is so good, we emulate dragfullwindows unless debugging */
@@ -1279,7 +1280,7 @@ static void __DrawResizeRect(HWND hwnd, const RECT *rect)
     HBITMAP hbm;
     hwnd = hwnd; /* shaddup compiler */
 
-    // See the KB Article Q68569 for information about how to draw the 
+    // See the KB Article Q68569 for information about how to draw the
     // resizing rectangle.  That's where this pattern comes from.
     WORD aZigzag[] = { 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA };
 
@@ -1293,20 +1294,20 @@ static void __DrawResizeRect(HWND hwnd, const RECT *rect)
     bm.bmBits = aZigzag;
 
     hbm = CreateBitmapIndirect(&bm);
-    hb = CreatePatternBrush(hbm);   
-  
+    hb = CreatePatternBrush(hbm);
+
     cxFrame = GetSystemMetrics(SM_CXFRAME);
     cyFrame = GetSystemMetrics(SM_CYFRAME);
 
     oldbrush = (HBRUSH)SelectObject(hdc, hb);
 
     PatBlt(hdc, rect->left, rect->top, width, cyFrame, PATINVERT);
-    PatBlt(hdc, rect->left, (rect->top + cyFrame), cxFrame, height - cyFrame, 
+    PatBlt(hdc, rect->left, (rect->top + cyFrame), cxFrame, height - cyFrame,
                 PATINVERT);
     PatBlt(hdc, rect->left + cxFrame, rect->bottom - cyFrame, width - cxFrame,
-			cyFrame, PATINVERT);
+            cyFrame, PATINVERT);
     PatBlt(hdc, rect->right - cxFrame, rect->top + cyFrame, cxFrame,
-  		    height - cyFrame - cyFrame, PATINVERT);
+            height - cyFrame - cyFrame, PATINVERT);
 
     SelectObject(hdc,oldbrush);
     ReleaseDC(NULL, hdc);
@@ -1316,7 +1317,7 @@ static void __DrawResizeRect(HWND hwnd, const RECT *rect)
   return;
 }
 
-static BOOL __w16FixupRect( W16CONP console, HWND hwnd, 
+static BOOL __w16FixupRect( W16CONP console, HWND hwnd,
                             UINT message, UINT hittest,
                             const RECT *oldrect, RECT *rect )
 {
@@ -1326,7 +1327,7 @@ static BOOL __w16FixupRect( W16CONP console, HWND hwnd,
     BOOL grow = (rect->top < oldrect->top || rect->bottom > oldrect->bottom ||
                  rect->left < oldrect->left || rect->right > oldrect->right);
 
-    message = message;     
+    message = message;
     #if defined(WM_SIZING)
     if (message == WM_SIZING)
     {
@@ -1351,7 +1352,7 @@ static BOOL __w16FixupRect( W16CONP console, HWND hwnd,
     if (adjtype.bottom) adjtype.bottom = ((grow)?(+1):(-1));
     if (adjtype.left)   adjtype.left = ((grow)?(-1):(+1));
     if (adjtype.right)  adjtype.right = ((grow)?(+1):(-1));
-     
+
     if (winGetVersion() <= 400) /* assume slow machine */
     {
       /* primitive optimization by assuming that the window has to */
@@ -1361,22 +1362,22 @@ static BOOL __w16FixupRect( W16CONP console, HWND hwnd,
       adjtype.left *= console->dispcols;
       adjtype.right *= console->dispcols;
     }
-        
+
     memcpy( &newrect, rect, sizeof(RECT));
     for (;;)
     {
-      RECT tmprect; 
+      RECT tmprect;
       memcpy( &tmprect, &newrect, sizeof(RECT));
       __w16AdjustRect( console, hwnd, WM_SIZING_3X, hittest, (LPARAM)&tmprect);
       if ( memcmp( &tmprect, rect, sizeof(RECT) ) != 0)
-      { 
-        memcpy( rect, &tmprect, sizeof(RECT));      
+      {
+        memcpy( rect, &tmprect, sizeof(RECT));
         return TRUE;
       }
       if ((adjtype.top || adjtype.bottom) && console->fonty <= 4)
-        break;  
+        break;
       if ((adjtype.left || adjtype.right) && console->fontx <= 2)
-        break;  
+        break;
       newrect.top += adjtype.top;
       newrect.bottom += adjtype.bottom;
       newrect.left += adjtype.left;
@@ -1386,14 +1387,14 @@ static BOOL __w16FixupRect( W16CONP console, HWND hwnd,
   return FALSE;
 }
 
-static LRESULT __w16Handle_NCLBUTTONDOWN(W16CONP console, HWND hwnd, 
+static LRESULT __w16Handle_NCLBUTTONDOWN(W16CONP console, HWND hwnd,
                            UINT message, WPARAM wParam, LPARAM lParam)
-                                         
-{                                         
-  if (console) 
+
+{
+  if (console)
   {
     if (wParam >= HTLEFT && wParam <= HTBOTTOMRIGHT)
-    { 
+    {
       int minheight, minwidth, ncheight, ncwidth, maxright, maxbottom;
       RECT rect, cliprect, adjtype; POINT lastpos;
 
@@ -1434,7 +1435,7 @@ static LRESULT __w16Handle_NCLBUTTONDOWN(W16CONP console, HWND hwnd,
         {
           RECT framerect; POINT pos;
           GetCursorPos(&pos); /* don't use lParam */
-          memcpy( &framerect, &rect, sizeof(framerect)); 
+          memcpy( &framerect, &rect, sizeof(framerect));
 
           if (adjtype.left)
             framerect.left = pos.x;
@@ -1447,20 +1448,20 @@ static LRESULT __w16Handle_NCLBUTTONDOWN(W16CONP console, HWND hwnd,
 
           lastpos.x = pos.x;
           lastpos.y = pos.y;
-          
+
           if (__w16FixupRect(console, hwnd, message, wParam, &rect, &framerect))
-          { 
+          {
             if (memcmp(&rect, &framerect, sizeof(RECT))!=0)
             {
               __DrawResizeRect(hwnd, &rect);
               if (SHOWDRAGGING) /* don't shock the user */
               {
-                MoveWindow(hwnd, framerect.left, framerect.top, 
-                                 framerect.right-framerect.left+1, 
-                                 framerect.bottom-framerect.top+1, TRUE);  
+                MoveWindow(hwnd, framerect.left, framerect.top,
+                                 framerect.right-framerect.left+1,
+                                 framerect.bottom-framerect.top+1, TRUE);
               }
               memcpy(&rect,&framerect,sizeof(rect));
-              __DrawResizeRect(hwnd, &rect); 
+              __DrawResizeRect(hwnd, &rect);
             }
           }
         } /* if (msg.message == WM_MOUSEMOVE) */
@@ -1469,11 +1470,11 @@ static LRESULT __w16Handle_NCLBUTTONDOWN(W16CONP console, HWND hwnd,
       ClipCursor(&cliprect);
       ReleaseCapture();
       SetWindowPos(hwnd,HWND_NOTOPMOST,0,0,0,0,SWP_NOMOVE|SWP_NOSIZE);
-      MoveWindow(hwnd, rect.left, rect.top, rect.right-rect.left+1, 
-                 rect.bottom-rect.top+1, TRUE);  
+      MoveWindow(hwnd, rect.left, rect.top, rect.right-rect.left+1,
+                 rect.bottom-rect.top+1, TRUE);
       return 0;
     }
-  } 
+  }
   return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
@@ -1485,7 +1486,7 @@ static int __win16AdjustCaret(HWND hwnd, W16CONP console, int destroy_first )
   {
     if (destroy_first)
       DestroyCaret();
-  
+
     if (console->rate_view.hwnd)
     {
       ; //nothing
@@ -1497,7 +1498,7 @@ static int __win16AdjustCaret(HWND hwnd, W16CONP console, int destroy_first )
         col = console->curcol * console->fontx;
       CreateCaret( hwnd, NULL, console->fontx, console->fonty / 6);
       SetCaretPos( console->indentx + col,
-                   console->indenty + 
+                   console->indenty +
                   (console->currow + 1) * console->fonty -(console->fonty / 6) );
       ShowCaret( hwnd );
     }
@@ -1506,7 +1507,7 @@ static int __win16AdjustCaret(HWND hwnd, W16CONP console, int destroy_first )
       RECT clirect;
       int row, col, cwidth, cheight;
       GetClientRect( hwnd, &clirect );
-    
+
       clirect.top += console->indenty;
       clirect.left += console->indentx;
       clirect.bottom -= console->indenty;
@@ -1523,7 +1524,7 @@ static int __win16AdjustCaret(HWND hwnd, W16CONP console, int destroy_first )
         col = console->caretpos;
 
       CreateCaret( hwnd, NULL, cwidth, cheight / 6);
-      SetCaretPos( console->indentx+col, 
+      SetCaretPos( console->indentx+col,
                    console->indenty+row+(cheight-cheight/6) );
       ShowCaret( hwnd );
     }
@@ -1583,7 +1584,7 @@ static void __w16WindowDestroyMenu(HMENU hMenu)
   return;
 }
 
-static HMENU __w16WindowConstructMenu(W16CONP console, HWND hwnd, 
+static HMENU __w16WindowConstructMenu(W16CONP console, HWND hwnd,
                                       int message, int intray)
 {
   HMENU hretmenu = NULL;
@@ -1592,7 +1593,7 @@ static HMENU __w16WindowConstructMenu(W16CONP console, HWND hwnd,
   hwnd = hwnd; /* shaddup compiler */
 
   TRACE_MENU((+1,"__w16WindowConstructMenu(aspopup=%d, exiting=%d)\n",aspopup,exiting));
-  if (!(aspopup && exiting)) /* popup+exiting => no popup menu */ 
+  if (!(aspopup && exiting)) /* popup+exiting => no popup menu */
   {
     int israteview = 0, isconsview = 0; /* yes, we need both */
     int havemarked = 0;
@@ -1661,7 +1662,7 @@ static HMENU __w16WindowConstructMenu(W16CONP console, HWND hwnd,
         }
         #endif
 
-        hbench = NULL;  
+        hbench = NULL;
         if (!exiting && !intray && isconsview &&
            (modebits & (MODEREQ_CONFIG|MODEREQ_BENCHMARK)) == 0)
         {
@@ -1718,7 +1719,7 @@ static HMENU __w16WindowConstructMenu(W16CONP console, HWND hwnd,
       BOOL appended;
       TRACE_MENU((0,"2. CreateMenu()=%p\n",hpopup));
       if (hpopup)
-      {  
+      {
         HMENU hswap = hretmenu;
         hretmenu = hpopup;
         hpopup = hswap;
@@ -1726,7 +1727,7 @@ static HMENU __w16WindowConstructMenu(W16CONP console, HWND hwnd,
         TRACE_MENU((0,"AppendMenu(Client)=>%s\n",((appended)?("ok"):("failed")) ));
         hpopup = CreateMenu();
       }
-      if (hpopup) 
+      if (hpopup)
       {
         if (!isconsview)
         {
@@ -1736,7 +1737,7 @@ static HMENU __w16WindowConstructMenu(W16CONP console, HWND hwnd,
         {
           AppendMenu(hpopup, ((havemarked)?(MF_ENABLED):(MF_GRAYED)),
                             WMCMD_COPY, "Copy" );
-          AppendMenu(hpopup, (((modebits & MODEREQ_CONFIG)!=0 && 
+          AppendMenu(hpopup, (((modebits & MODEREQ_CONFIG)!=0 &&
                          IsClipboardFormatAvailable(CF_TEXT))?MF_ENABLED:MF_GRAYED),
                          WMCMD_PASTE, "Paste");
           appended = AppendMenu(hretmenu, MF_ENABLED|MF_POPUP, (UINT)hpopup, "&Edit" );
@@ -1793,15 +1794,15 @@ static HFONT __w16FixupDlgFont(HWND hdlg, HFONT hFixedUpFont)
     else if (hfontDlg && !hFixedUpFont) /* ie set */
     {
       LOGFONT lFont;
-      if (!GetObject(hfontDlg, sizeof(LOGFONT), (LPSTR) &lFont)) 
+      if (!GetObject(hfontDlg, sizeof(LOGFONT), (LPSTR) &lFont))
         hfontDlg = (HFONT)NULL;
-      else 
+      else
       {
         lFont.lfWeight = FW_NORMAL;
         hfontDlg = CreateFontIndirect(&lFont);
       }
     }
-    if (hfontDlg) 
+    if (hfontDlg)
     {
       HWND hCtrl = GetWindow(hdlg, GW_CHILD);
       while (hCtrl && IsChild(hdlg, hCtrl))
@@ -1828,7 +1829,7 @@ static void __w16Set_BS_OWNERDRAW(HWND button_hwnd)
     LONG x_styles = BS_3STATE|BS_AUTO3STATE|BS_AUTOCHECKBOX|BS_USERBUTTON|
                     BS_CHECKBOX|BS_DEFPUSHBUTTON|BS_GROUPBOX|BS_LEFTTEXT|
                     BS_PUSHBUTTON|BS_RADIOBUTTON|BS_AUTORADIOBUTTON;
-    SetWindowLong( button_hwnd, GWL_STYLE, 
+    SetWindowLong( button_hwnd, GWL_STYLE,
         ((GetWindowLong( button_hwnd, GWL_STYLE ) & ~x_styles)|BS_OWNERDRAW) );
   }
   return;
@@ -1848,7 +1849,7 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
     HFONT hFont;
   } *dd;
   char buffer[64];
-  HWND hwnd; 
+  HWND hwnd;
   HDC hDC;
 
   switch (msg)
@@ -1879,10 +1880,10 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
       dd->http_uri_able = __have_uri_support('h' /*http*/);
       dd->mail_uri_able = __have_uri_support('m' /*mail*/);
       dd->hFont = __w16FixupDlgFont(dialog, NULL);
-     
+
       if (dd->hOwner)
       {
-        hwnd = dd->hOwner; 
+        hwnd = dd->hOwner;
         #if defined(WM_GETICON)
         /* although dialog boxes don't have an icon, do this so that */
         /* alt-tab will show something other than the microsoft flag */
@@ -1891,7 +1892,7 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
         #endif
         GetWindowText(hwnd,buffer,sizeof(buffer));
         strcat(buffer," "); /* hide from other clients */
-        SetWindowText(dialog,buffer); 
+        SetWindowText(dialog,buffer);
       }
 
       if ((hwnd = GetDlgItem( dialog, 201 )) != NULL)
@@ -1914,7 +1915,7 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
         __w16Set_BS_OWNERDRAW(hwnd);
       }
       if ((hwnd = GetDlgItem( dialog, 204 )) != NULL)
-      { 
+      {
         SetWindowText( hwnd, "help@distributed.net" );
         __w16Set_BS_OWNERDRAW(hwnd);
       }
@@ -1940,18 +1941,18 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
           hDC = lpdis->hDC;
           if (id == 205)
           {
-          
+
           }
           else if ((id == 203 && dd->http_uri_able) ||
                    (id == 204 && dd->mail_uri_able) )
           {
-            LOGFONT lf; 
+            LOGFONT lf;
             hFont = (HFONT)SelectObject(hDC,GetStockObject(SYSTEM_FONT));
             SelectObject(hDC, hFont);
             GetObject(hFont,sizeof(lf), &lf);
             lf.lfUnderline = TRUE;
             hFont = CreateFontIndirect(&lf);
-            need_refocus = 0; 
+            need_refocus = 0;
             if (hFont)
             {
               int mute_color = 0;
@@ -1981,7 +1982,7 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
           SelectObject( hDC, dd->hBGBrush );
           TextOut( hDC, 0, 0, buffer, (short)len ); /* short for win16 */
           if (hFont)
-            DeleteObject(SelectObject(hDC,hFont)); 
+            DeleteObject(SelectObject(hDC,hFont));
           if (need_refocus)
             SetFocus(GetDlgItem(dialog,IDOK));
         }
@@ -1992,7 +1993,7 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
     #if defined(WM_CTLCOLOREDIT) /* win32 and win32s */
     case WM_CTLCOLOREDIT:
     {
-      if (GetDlgCtrlID((HWND)lParam) != 205) 
+      if (GetDlgCtrlID((HWND)lParam) != 205)
         break;
       /* fallthrough */
     }
@@ -2010,7 +2011,7 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
         SetBkColor(hDC, dd->clrBG);
         SetBkMode( hDC, TRANSPARENT);
         SetBrushOrgEx( hDC, 0, 0, NULL );
-        if (msg != WM_CTLCOLOR) 
+        if (msg != WM_CTLCOLOR)
         {
           SelectObject( hDC, dd->hBGBrush );
           SetWindowLong(dialog, DWL_MSGRESULT, (LONG)dd->hBGBrush );
@@ -2023,7 +2024,7 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
     {
       if (LOWORD(wParam) == IDOK )
         PostMessage(dialog, WM_CLOSE, 0, 0 );
-      else 
+      else
       {
         dd = (struct dlgdata *)GetWindowLong(dialog, DWL_USER);
         if (dd)
@@ -2041,7 +2042,7 @@ DWORD CALLBACK __w16AboutBox( HWND dialog, UINT msg, WORD wParam, LONG lParam )
           SetFocus(GetDlgItem(dialog,IDOK));
           dd->bugs_uri_visited = 1;
           PostMessage( dd->hOwner, WM_COMMAND, WMCMD_HELP_BUG, 0);
-        }  
+        }
       }
       return FALSE;
     }
@@ -2085,7 +2086,7 @@ static void __launch_about_box(HWND hParent)
     if (FindResource( hInst, MAKEINTRESOURCE(1), RT_DIALOG ))
     {
       FARPROC func = MakeProcInstance( (FARPROC)__w16AboutBox, hInst);
-      DialogBoxParam( hInst, MAKEINTRESOURCE(1), hParent, 
+      DialogBoxParam( hInst, MAKEINTRESOURCE(1), hParent,
                       (DLGPROC)func, (LPARAM)hParent );
       (void)FreeProcInstance( func );
     }
@@ -2111,13 +2112,13 @@ static int __IsViewable(HWND hwnd) /* whether part of a window is visible */
   return isvis;
 }
 
-static void __w16DrawList( HWND hwnd, W16CONP console, 
+static void __w16DrawList( HWND hwnd, W16CONP console,
                            int font_height, int __tab_width,
                            DRAWITEMSTRUCT far *lpdis) /*far needed for w16*/
 {
   HDC hDC = lpdis->hDC;
   UINT mapmode = SetMapMode(hDC, MM_TEXT);
-  HBRUSH hBrush; //HPEN hPen; 
+  HBRUSH hBrush; //HPEN hPen;
   RECT rect;
   rect.top = lpdis->rcItem.top; rect.left = lpdis->rcItem.left;
   rect.right = lpdis->rcItem.right; rect.bottom = lpdis->rcItem.bottom;
@@ -2156,10 +2157,10 @@ static void __w16DrawList( HWND hwnd, W16CONP console,
       if (!buffer[linelen])
         linelen = 0;
       else
-      {        
+      {
         if (buffer[0] == ' ')
         {
-          buffer[--linelen] = '\t'; 
+          buffer[--linelen] = '\t';
           linep = &buffer[linelen];
         }
         else if (buffer[0] == '[')
@@ -2171,8 +2172,8 @@ static void __w16DrawList( HWND hwnd, W16CONP console,
               *q = '\t';
           }
         }
-        linelen = strlen(linep); 
-        while (linelen > 0 && linep[linelen-1]==' ') 
+        linelen = strlen(linep);
+        while (linelen > 0 && linep[linelen-1]==' ')
           linelen--;
         TRACE_DLG((0,"draw list: line='%s', linelen=%d\n", linep, linelen));
       }
@@ -2184,7 +2185,7 @@ static void __w16DrawList( HWND hwnd, W16CONP console,
       #else
       int tab_width = __tab_width;
       #endif
-      SIZE fsize; 
+      SIZE fsize;
       fsize.cy = (rect.bottom + rect.top - font_height) / 2;
       fsize.cx = 0;
       TabbedTextOut(hDC,fsize.cx,fsize.cy,linep,(UINT)linelen,1,&tab_width,0);
@@ -2206,7 +2207,7 @@ static int __w16GetSliderDims(const RECT *slider_area, RECT *slider_rect)
   btn.left   = slider_area->left;
   btn.bottom = slider_area->bottom - 2;
   btn.right  = btn.left + ((btn.bottom - btn.top)+1)/2;
-  range = ((slider_area->right - slider_area->left)-2)-((btn.right-btn.left)-1); 
+  range = ((slider_area->right - slider_area->left)-2)-((btn.right-btn.left)-1);
   if (slider_rect)
     memcpy(slider_rect, &btn, sizeof(RECT));
   return range;
@@ -2225,34 +2226,34 @@ static void __ShadeRect(HDC hDC, const RECT *lpRect, BOOL dark)
     {
       HBRUSH hBrush = CreatePatternBrush( hBrushBitmap );
       if (hBrush)
-      { 
+      {
         UINT nWidth = lpRect->right - lpRect->left + 1;
         UINT nHeight = lpRect->bottom - lpRect->top + 1;
         HBITMAP hBitmap = CreateCompatibleBitmap( hDC, nWidth, nHeight );
         if (hBitmap)
         {
-          RECT rc; COLORREF oldfgcolor, oldbgcolor; UINT oldbkmode;           
+          RECT rc; COLORREF oldfgcolor, oldbgcolor; UINT oldbkmode;
           rc.top = rc.left = 0; rc.right = nWidth; rc.bottom = nHeight;
-    
+
           hBitmap = (HBITMAP)SelectObject( hMemDC, hBitmap );
-    
-          //fill the memory object with the pattern 
+
+          //fill the memory object with the pattern
           FillRect( hMemDC, &rc, hBrush );
-          //BitBlt the source image over the pattern using SRCAND so that 
-          //only the "on" destination pixels are transferred. 
+          //BitBlt the source image over the pattern using SRCAND so that
+          //only the "on" destination pixels are transferred.
           BitBlt( hMemDC, rc.left, rc.top, rc.right, rc.bottom, hDC,
                   lpRect->left, lpRect->top, SRCAND );
-   
-          oldfgcolor = SetTextColor( hDC, 
+
+          oldfgcolor = SetTextColor( hDC,
                 GetSysColor( (dark)?(COLOR_BTNSHADOW):(COLOR_HIGHLIGHT) ));
-          oldbgcolor = SetBkColor( hDC, RGB(0,0,0) ); 
+          oldbgcolor = SetBkColor( hDC, RGB(0,0,0) );
           oldbkmode  = SetBkMode( hDC, OPAQUE );
-        
+
           //hBrush = SelectObject( hDC, hBrush );
           FillRect( hDC, lpRect, hBrush );
           BitBlt( hDC, lpRect->left, lpRect->top, nWidth, nHeight,
                   hMemDC, 0, 0, SRCPAINT );
-          //hBrush = SelectObject( hDC, hBrush ); 
+          //hBrush = SelectObject( hDC, hBrush );
 
           SetBkMode( hDC, oldbkmode );
           SetBkColor( hDC, oldbgcolor );
@@ -2261,7 +2262,7 @@ static void __ShadeRect(HDC hDC, const RECT *lpRect, BOOL dark)
           hBitmap = (HBITMAP)SelectObject( hMemDC, hBitmap );
           DeleteObject( hBitmap );
         } /* if (hBitmap) */
-        DeleteObject(hBrush);  
+        DeleteObject(hBrush);
       } /* if (hBrush) */
       DeleteObject(hBrushBitmap);
     } /* if (hBrushBitmap) */
@@ -2270,21 +2271,21 @@ static void __ShadeRect(HDC hDC, const RECT *lpRect, BOOL dark)
   return;
 }
 
-#define GRAPH_DIALOG	    2
-#define IDC_PROJLIST	  101
-#define IDC_CURRATE	  102
-#define IDC_GRAPH	  103
-#define IDC_CRUNCHCOUNT	  104
+#define GRAPH_DIALOG        2
+#define IDC_PROJLIST      101
+#define IDC_CURRATE   102
+#define IDC_GRAPH     103
+#define IDC_CRUNCHCOUNT   104
 #define IDC_AMP_FRAME     105
 #define IDC_AMP           106
 #define IDC_FREQ_FRAME    107
 #define IDC_FREQ          108
-#define IDC_LOG	          109
+#define IDC_LOG           109
 #define IDC_BUFIN_PKTS    110
 #define IDC_BUFIN_SWU     111
 #define IDC_BUFIN_TIME    112
-#define IDC_BUFOUT_SWU	  113
-#define IDC_BUFOUT_PKTS	  114
+#define IDC_BUFOUT_SWU    113
+#define IDC_BUFOUT_PKTS   114
 #define IDC_SUM_TIME      115
 #define IDC_SUM_RATE      116
 #define IDC_SUM_SWU       117
@@ -2309,11 +2310,11 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
     int show_avg;
     int mode_pending;
     unsigned long effmax;
-    int numcrunch_total; 
+    int numcrunch_total;
     struct {
       unsigned long rate[120]; /* 120 seconds */
       int numcrunchers;
-      struct 
+      struct
       {
         long threshold;
         int thresh_in_swu;
@@ -2323,7 +2324,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
       } buffers[2];
       u32 last_ratelo;
       /* sizeof avgrate array => tray refresh interval in secs */
-      struct {u32 hi,lo;} avgrate[5]; 
+      struct {u32 hi,lo;} avgrate[5];
       unsigned int avgrate_count;
     } cdata[CONTEST_COUNT];
     unsigned int cont_sel;
@@ -2352,7 +2353,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
   } *dd;
   char buffer[128]; /* NO LESS THAN 128!! */
   unsigned int cont_i;
-  HDC hDC; RECT rect; 
+  HDC hDC; RECT rect;
   HMENU hmenu;
   HWND hwnd;
 
@@ -2371,8 +2372,8 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
       /* networking is in progress, so gray the graph in that period. */
       #if (CLIENT_OS == OS_WIN32)
       if (winGetVersion() < 400)
-      #endif   
-      {  
+      #endif
+      {
         dd->mode_pending = (evdata->id == CLIEVENT_BUFFER_UPDATEBEGIN);
         InvalidateRect(GetDlgItem(dialog,IDC_GRAPH),0,0);
       }
@@ -2383,7 +2384,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
     if (dd->timer)
       return 0;
     msg = WM_TIMER;
-  }  
+  }
 
   switch (msg)
   {
@@ -2413,8 +2414,8 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
       dd->console = __win16GetHwndConsole( hwnd );
       dd->cont_sel_uncertain = 1;
       dd->cont_sel_explicit = -1;
-      dd->timer_cont_sel = -1; 
-      dd->cont_sel = 0; 
+      dd->timer_cont_sel = -1;
+      dd->cont_sel = 0;
       dd->effmax = 1000;
       dd->hFont = __w16FixupDlgFont(dialog, NULL);
       if (GetNumberOfDetectedProcessors() > 1)
@@ -2427,14 +2428,14 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
 
       dd->numcrunch_total = ProblemCountLoaded(-1);
       dd->scale.amp = GetDCTIProfileInt( "scale", "ry", 0 );
-      if (dd->scale.amp < 0 || dd->scale.amp > 100) 
+      if (dd->scale.amp < 0 || dd->scale.amp > 100)
         dd->scale.amp = 0;
       dd->scale.freq = GetDCTIProfileInt( "scale", "rx", 0 );
-      if (dd->scale.freq < 1 || dd->scale.freq > 100) 
+      if (dd->scale.freq < 1 || dd->scale.freq > 100)
         dd->scale.freq = 1;
       dd->show_noise = !GetDCTIProfileInt( "scale", "squelch", 1 );
       dd->show_avg = GetDCTIProfileInt( "scale", "savg", 0 );
- 
+
       if (!GetParent(dialog)) /* not a child of console */
       {
         hmenu = GetMenu(dialog);
@@ -2442,7 +2443,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
         __w16WindowDestroyMenu(hmenu);
         if (dd->hOwner) /* this is the console */
         {
-          hwnd = dd->hOwner; 
+          hwnd = dd->hOwner;
           #if defined(WM_GETICON)
           /* although dialog boxes don't have an icon, do this so that */
           /* alt-tab will show something other than the microsoft flag */
@@ -2451,7 +2452,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
           #endif
           GetWindowText(hwnd,buffer,sizeof(buffer));
           strcat(buffer," "); /* hide from other clients */
-          SetWindowText(dialog,buffer); 
+          SetWindowText(dialog,buffer);
         }
       }
 
@@ -2482,23 +2483,23 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
           {
             dd->cont_sel = (int)cont_i;
             dd->cont_sel_uncertain = 0;
-          } 
-        } 
+          }
+        }
         SendMessage(hwnd,LB_SETCURSEL,
                (WPARAM)((dd->cont_sel_uncertain)?(-1):(dd->cont_sel)), 0);
         //ShowScrollBar(hwnd, SB_VERT, TRUE);
-        SetFocus(hwnd);  
+        SetFocus(hwnd);
       }
       hwnd = GetDlgItem(dialog, IDC_SHOWNOISE);
       if (hwnd)
-      {     
+      {
         SetWindowText(hwnd,"Plot Impurity");
         SendMessage(hwnd,BM_SETCHECK,dd->show_noise,0);
         //EnableWindow(hwnd,  (dd->scale.amp >= 5));
       }
       hwnd = GetDlgItem(dialog, IDC_SHOWAVG);
       if (hwnd)
-      {     
+      {
         SetWindowText(hwnd,"Plot Average");
         SendMessage(hwnd,BM_SETCHECK,dd->show_avg,0);
       }
@@ -2532,13 +2533,13 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
           rect.bottom -= 4;
           rect.right -= 4;
           MoveWindow(hwnd,rect.left,rect.top,(rect.right-rect.left),
-                          (rect.bottom-rect.top),FALSE);   
-        } 
+                          (rect.bottom-rect.top),FALSE);
+        }
       }
       TRACE_DLG((-1,"WM_INITDIALOG\n"));
       return FALSE; /* we changed focus */
     }
-    case WM_KILLFOCUS: 
+    case WM_KILLFOCUS:
     {
       if (IsChild(dialog, ((HWND) wParam))) /* a control is receiving focus? */
       {
@@ -2557,7 +2558,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
     case WM_CTLCOLOR:
     {
       if (HIWORD(lParam) != CTLCOLOR_BTN) /* includes BS_GROUPBOX */
-      {	
+      {
         dd = (struct dlgdata *)GetWindowLong(dialog, DWL_USER);
         if (dd)
         {
@@ -2583,11 +2584,11 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
         DWORD tick_count = GetTickCount();
 
         if (dd->cont_sel_uncertain) /* no contest selected yet */
-        { 
+        {
           for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
           {
             if (ProblemCountLoaded(cont_i) > 0)
-            { 
+            {
               dd->cont_sel = cont_i;
               dd->cont_sel_uncertain = 0;
               SendDlgItemMessage(dialog, IDC_PROJLIST,
@@ -2598,7 +2599,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
         }
         for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
         {
-          u32 ratehi,ratelo,wtimehi,wtimelo,ctimehi,ctimelo; 
+          u32 ratehi,ratelo,wtimehi,wtimelo,ctimehi,ctimelo;
           unsigned long efficiency = 0;
           int numcrunchers;
           int curpos;
@@ -2619,12 +2620,12 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
               efficiency = (((unsigned long)ctimelo) * 1000ul)/wtimelo;
               if (efficiency > dd->effmax)
                 efficiency = dd->effmax;
-            } 
-          }  
+            }
+          }
           if (efficiency == 0)
             efficiency = 1;
 
-          /* +++++++++++++++++++++++ */  
+          /* +++++++++++++++++++++++ */
 
           if (cont_i == dd->cont_sel)
           {
@@ -2633,7 +2634,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
             rate_ratehi = ratehi;
             rate_ratelo = ratelo;
 
-            if (numcrunchers == 0 && (dd->cont_sel_explicit != ((int)cont_i) 
+            if (numcrunchers == 0 && (dd->cont_sel_explicit != ((int)cont_i)
               || (dd->cont_sel_exptime/10000) != (tick_count/10000)))
             {
               /* contest switched. Switch to another in the display */
@@ -2649,20 +2650,20 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
             {
               ; /* nothing */
             }
-            else if (buffers_changed || crunch_count_change || 
-                     (((tick_count+499)/1000)%4) == 0) 
+            else if (buffers_changed || crunch_count_change ||
+                     (((tick_count+499)/1000)%4) == 0)
             {
               int sel_buf;
               for (sel_buf = 0; sel_buf < 2; sel_buf++)
               {
-                long threshold, blk_count, swu_count; 
+                long threshold, blk_count, swu_count;
                 unsigned int till_completion;
-                int thresh_in_swu; 
+                int thresh_in_swu;
                 if (ProbfillGetBufferCounts( cont_i, sel_buf,
                              &threshold, &thresh_in_swu,
                              &blk_count, &swu_count, &till_completion )>=0)
-                {                               
-                  if (buffers_changed 
+                {
+                  if (buffers_changed
                    || dd->cdata[cont_i].buffers[sel_buf].threshold != threshold
                    || dd->cdata[cont_i].buffers[sel_buf].thresh_in_swu != thresh_in_swu
                    || dd->cdata[cont_i].buffers[sel_buf].blk_count != blk_count
@@ -2680,12 +2681,12 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
                   }
                 }
               } /* for sel_buf ... */
-            } /* need buffer level check */ 
+            } /* need buffer level check */
 
             if (buffers_changed || ratelo > dd->cdata[cont_i].last_ratelo)
             {
               long ll;
-              
+
               if (buffers_changed)
               {
                 ll = dd->cdata[cont_i].buffers[1].swu_count;
@@ -2693,10 +2694,10 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
                 SetDlgItemText(dialog,IDC_BUFOUT_SWU, buffer);
                 SetDlgItemInt(dialog,IDC_BUFOUT_PKTS,
                      (UINT)(dd->cdata[cont_i].buffers[1].blk_count), FALSE);
-  
+
                 SetDlgItemInt(dialog,IDC_BUFIN_PKTS,
                      (UINT)(dd->cdata[cont_i].buffers[0].blk_count), FALSE);
-        
+
                 buffer[0] = '\0';
                 if (dd->cdata[cont_i].buffers[0].swu_count == 0 &&
                     dd->cdata[cont_i].buffers[0].blk_count != 0)
@@ -2733,7 +2734,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
                   if (days >= 0 && days <= 365)
                   {
                     sprintf( buffer,  "%d.%02d:%02d:%02d", days,
-                              (int) ((ll % 86400L) / 3600UL), 
+                              (int) ((ll % 86400L) / 3600UL),
                               (int) ((ll % 3600UL)/60),
                               (int) (ll % 60) );
                   }
@@ -2750,11 +2751,11 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
                 unsigned int packets, swucount;
                 struct timeval ttime;
 
-                if (CliGetContestInfoSummaryData( cont_i, 
+                if (CliGetContestInfoSummaryData( cont_i,
                      &packets, &iterhi, &iterlo,
                      &ttime, &swucount ) == 0)
                 {
-                  ProblemComputeRate( cont_i, ttime.tv_sec, ttime.tv_usec, 
+                  ProblemComputeRate( cont_i, ttime.tv_sec, ttime.tv_usec,
                             iterhi, iterlo, 0, 0, buffer, sizeof(buffer) );
                   char *p = strchr(buffer,' ');
                   if (p) *p = '\0';
@@ -2764,7 +2765,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
                   SetDlgItemText(dialog,IDC_SUM_SWU,buffer);
                   ll = ttime.tv_sec;
                   sprintf( buffer,  "%d.%02d:%02d:%02d", (ll / 86400UL),
-                           (int) ((ll % 86400L) / 3600UL), 
+                           (int) ((ll % 86400L) / 3600UL),
                            (int) ((ll % 3600UL)/60),
                            (int) (ll % 60) );
                   SetDlgItemText(dialog,IDC_SUM_TIME,buffer);
@@ -2776,11 +2777,11 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
 
           /* must come after (cont_i == dd->cont_sel) section */
           dd->cdata[cont_i].avgrate_count++;
-          if (dd->cdata[cont_i].avgrate_count > 
+          if (dd->cdata[cont_i].avgrate_count >
                    (sizeof(dd->cdata[cont_i].avgrate)/
                    sizeof(dd->cdata[cont_i].avgrate[0])))
           {
-            dd->cdata[cont_i].avgrate_count = 
+            dd->cdata[cont_i].avgrate_count =
                    (sizeof(dd->cdata[cont_i].avgrate)/
                    sizeof(dd->cdata[cont_i].avgrate[0]));
             memmove( &(dd->cdata[cont_i].avgrate[0]),
@@ -2803,7 +2804,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
 
         } /* for (cont_i = 0; ... ) */
 
-        dd->timer_cont_sel = dd->cont_sel; 
+        dd->timer_cont_sel = dd->cont_sel;
 
         /* +++++++++++ */
         {
@@ -2811,38 +2812,38 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
                               sizeof(dd->cdata[cont_i].avgrate[0]));
           int in_tray = 0, rate_disp_due = 0;
 
-          if (dd->hOwner && (winGetVersion()%2000)>=400 && 
+          if (dd->hOwner && (winGetVersion()%2000)>=400 &&
                !IsWindowVisible(dd->hOwner) && IsIconic(dd->hOwner))
           {
             in_tray = 1;
           }
-          if (buffers_changed || crunch_count_change 
+          if (buffers_changed || crunch_count_change
              #if 1 /* update every second if not in tray */
-             || !in_tray 
+             || !in_tray
              #endif
-             || dd->last_in_tray != in_tray 
+             || dd->last_in_tray != in_tray
              || dd->last_rate_disp != (tick_count/(avg_interval*1000)) )
           {
             rate_disp_due = 1;
             dd->last_in_tray = in_tray;
             dd->last_rate_disp = (tick_count/(avg_interval*1000));
           }
- 
+
           buffer[0] = '\0';
           if (in_tray && rate_disp_due && CheckPauseRequestTrigger())
           {
             if (!GetWindowText(dd->hOwner,buffer,sizeof(buffer)-30))
               buffer[0] = '\0';
-            strcat(buffer," (paused)");  
+            strcat(buffer," (paused)");
           }
-          else if (rate_disp_due && 
+          else if (rate_disp_due &&
               (rate_cont_i >= 0 && rate_cont_i < CONTEST_COUNT))
           {
             unsigned int len;
             char avg_ratebuf[sizeof("n,nnn,nnn,nnn xxxxx\0")];
             {
               u32 avg_ratehi = 0, avg_ratelo = 0;
-              unsigned __int64 tot;  
+              unsigned __int64 tot;
               for (len = 0; len < dd->cdata[rate_cont_i].avgrate_count;
                    len++)
               {
@@ -2859,7 +2860,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
               ProblemComputeRate( rate_cont_i, 0, 0, avg_ratehi,avg_ratelo, 0, 0,
                                     avg_ratebuf, sizeof(avg_ratebuf) );
             }
- 
+
             if (in_tray)
             {
               len = sprintf(buffer,"%s: %s/sec\n-in: %lu packets",
@@ -2878,7 +2879,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
                         (dd->cdata[rate_cont_i].buffers[0].swu_count % 100));
               }
               buffer[len] = '\0';
-            }  
+            }
             else
             {
               #if 0
@@ -2895,7 +2896,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
           }
 
           if (in_tray)
-          { 
+          {
             if (rate_disp_due)
             {
               /* buffer[0] may be '\0' here */
@@ -2913,11 +2914,11 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
             if (buffers_changed)
             {
               InvalidateRect(dialog,0,0);
-            } 
+            }
             else /* invalidate individually */
             {
               hwnd = GetDlgItem(dialog,IDC_GRAPH);
-              if (hwnd) 
+              if (hwnd)
               {
                 if (__IsViewable(hwnd))
                 {
@@ -2930,7 +2931,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
                 if (hwnd && __IsViewable(hwnd))
                   InvalidateRect(hwnd,0,0);
               }
-            } 
+            }
           } /* in tray or not */
         } /* +++++++++++ */
       } /* if (dd) */
@@ -2968,11 +2969,11 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
       {
         if ((msg == WM_MOUSEMOVE && (wParam & MK_LBUTTON)!=0) ||
             (msg == WM_SETCURSOR && HIWORD(lParam) == WM_LBUTTONDOWN))
-        { 
+        {
           POINT pt;
           int id = IDC_AMP;
           GetCursorPos(&pt);
-          
+
           while (id != -1)
           {
             hwnd = GetDlgItem(dialog, id);
@@ -3011,7 +3012,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
                     {
                       toff = pt.x - dd->scale.mouse_x;
                       if (toff < rect.left)
-                        new_pos = 0;   
+                        new_pos = 0;
                       else
                         new_pos = ((toff - rect.left)*100)/slide_range;
                     }
@@ -3026,28 +3027,28 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
                       thumb.right -= toff;
                       toff = pt.x - (thumb.right-thumb.left)/2;
                       if (toff < rect.left)
-                        new_pos = 0;   
+                        new_pos = 0;
                       else
                         new_pos = ((toff - rect.left)*100)/slide_range;
                       toff = (new_pos * slide_range)/100;
                       thumb.left += toff;
                       dd->scale.mouse_x = pt.x - thumb.left;
-                    }  
+                    }
                   }
                   if (new_pos > 100)
                     new_pos = 100;
                   if (old_pos != new_pos)
-                  {  
-                    HWND hOther; 
+                  {
+                    HWND hOther;
                     if (id == IDC_AMP)
                     {
-                      dd->scale.amp = new_pos; 
+                      dd->scale.amp = new_pos;
                       #if 0
-                      if ((new_pos >= 5 && old_pos < 5) || 
-                          (old_pos >= 5 && new_pos < 5))  
+                      if ((new_pos >= 5 && old_pos < 5) ||
+                          (old_pos >= 5 && new_pos < 5))
                       {
                         hOther = GetDlgItem(dialog, IDC_SHOWNOISE);
-                        if (hOther) 
+                        if (hOther)
                           EnableWindow(hOther, (new_pos >= 5));
                       }
                       #endif
@@ -3062,7 +3063,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
                       InvalidateRect(hOther,NULL,FALSE);
                   } /* if position changed */
                 } /* if (slide_range > 0) */
-                break;  
+                break;
               } /* if (PointInRect()) */
               hwnd = NULL;
             }
@@ -3109,8 +3110,8 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
           if (dd->logwindow.font_height == 0)
             PostMessage(dialog,WM_COMMAND,WMCMD_REFRESHVIEW,0); //POST!!
           else
-            __w16DrawList( hwnd, dd->console, dd->logwindow.font_height, 
-                           dd->logwindow.tab_width, lpdis); 
+            __w16DrawList( hwnd, dd->console, dd->logwindow.font_height,
+                           dd->logwindow.tab_width, lpdis);
           hwnd = NULL; /* don't fall through */
         }
         else if (id == IDC_FREQ || id == IDC_AMP)
@@ -3127,16 +3128,16 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
           GetClientRect(hwnd,&rect);
           bmp_height = (rect.bottom - rect.top)+1;
           bmp_width  = (rect.right - rect.left)+1;
-       
+
           if (!dd->hMemDC && id == IDC_GRAPH) /* need the bigger bitmap */
-          { 
+          {
             dd->hMemDC = CreateCompatibleDC(lpdis->hDC);
             if (dd->hMemDC)
             {
               dd->hMemBitmap = CreateCompatibleBitmap(lpdis->hDC, bmp_width, bmp_height);
               if (dd->hMemBitmap)
                 dd->hMemBitmap = (HBITMAP)SelectObject(dd->hMemDC, dd->hMemBitmap);
-              else 
+              else
               {
                 DeleteDC(dd->hMemDC);
                 dd->hMemDC = NULL;
@@ -3169,7 +3170,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
               sprintf(buffer,"Freq: %d sec%s", pos, ((pos==1)?(""):("s")));
               SetDlgItemText(dialog, IDC_FREQ_FRAME, buffer);
             }
-      
+
             xrange = __w16GetSliderDims(&rect /*IN:area*/, &rect/*OUT:knob*/);
             pos = (pos * xrange)/100;
 
@@ -3201,7 +3202,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
           }
           else if (id == IDC_CRUNCHCOUNT)
           {
-            LOGFONT lf; 
+            LOGFONT lf;
             HFONT hFont = (HFONT)GetStockObject(ANSI_VAR_FONT);
 
             rect.top += 2;
@@ -3226,7 +3227,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
                     dd->numcrunch_total > 9)
                 {
                   fmt = "%d/%d";
-                } 
+                }
                 len = sprintf(buffer, fmt, dd->cdata[cont_i].numcrunchers,
                                            dd->numcrunch_total );
                 hFont = (HFONT)SelectObject(hDC,hFont);
@@ -3249,7 +3250,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
             int amp = dd->scale.amp;
             unsigned long x, y, last_y, sigma = 0;
 
-            rect.bottom -= 2+1; 
+            rect.bottom -= 2+1;
             rect.top += 2;
             rect.right -= 2;
             rect.left += 2;
@@ -3273,7 +3274,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
               y += ((x - y)*(100 /* max_amp */ - amp))/(100 /* max_amp */);
               MoveToEx(hDC, rect.left, rect.top+height-((UINT)y), NULL);
               LineTo(hDC, rect.right, rect.top+height-((UINT)y));
-            }  
+            }
             DeleteObject(SelectObject(hDC, hPen));
 
             last_y = (unsigned long)-1;
@@ -3290,7 +3291,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
                   break;
                 if (y == 1) /* magic - means set to 0.0 */
                   y = 0;
-          
+
                 if (czone == 0)
                 {
                   y = (y * height)/dd->effmax;
@@ -3300,17 +3301,17 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
                   else if (amp == 0)
                     ; /* nothing */
                   else
-                  #endif 
+                  #endif
                   if (y > 0)
                   {
                     y -= ((height - y) * amp)/100;
-                    if (((long)y) < 0) 
+                    if (((long)y) < 0)
                       y = 0;
                   }
                 }
                 else
                 {
-                  unsigned long z = y;   
+                  unsigned long z = y;
                   y = (z * z * height)/(dd->effmax * dd->effmax); /* min pos */
                   x = (z * 1 * height)/(dd->effmax * 1);          /* max pos */
                   y += ((x - y)*(100 /* max_amp */ - amp))/(100 /* max_amp */);
@@ -3332,7 +3333,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
               }
               if (donecount < 2)
                 break;
-              hPen = CreatePen(PS_SOLID, 1, 
+              hPen = CreatePen(PS_SOLID, 1,
                               ((czone == 0)?(RGB(255,0,0)):(RGB(0,255,0))));
               hPen = (HPEN)SelectObject(hDC, hPen);
               Polyline(hDC,&polys[0],donecount);
@@ -3344,7 +3345,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
                 {
                   UINT oldmode = SetBkMode(hDC, TRANSPARENT);
                   polys[0].y = rect.top + height - ((UINT)y);
-                              
+
                   hPen = CreatePen(PS_DOT, 1, RGB(255,255,0));
                   hPen = (HPEN)SelectObject(hDC, hPen);
                   MoveToEx(hDC, polys[0].x, polys[0].y, NULL);
@@ -3353,8 +3354,8 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
                   SetBkMode(hDC, oldmode);
                 }
               }
-            } /* for (czone) */  
-  
+            } /* for (czone) */
+
             if (dd->mode_pending)
             {
               COLORREF fg; UINT bkmode;
@@ -3362,7 +3363,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
 
               fg = SetTextColor(hDC, RGB(0,255,0));
               bkmode = SetBkMode(hDC, TRANSPARENT);
-              DrawText(hDC, "Please Wait...", -1, &rect, 
+              DrawText(hDC, "Please Wait...", -1, &rect,
                        DT_CENTER|DT_NOPREFIX|DT_SINGLELINE|DT_VCENTER);
               SetBkMode(hDC,bkmode);
               SetTextColor(hDC,fg);
@@ -3406,7 +3407,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
         HWND hwnd = (HWND)lParam;         /*|         | cmd          | hwnd |*/
         WORD cmd  = (WORD)HIWORD(wParam); /*|---------+--------------+------|*/
         #else                             /*|menu opt | 0            | NULL |*/
-        HWND hwnd = (HWND)LOWORD(lParam); /*|accel    | 1            | NULL |*/  
+        HWND hwnd = (HWND)LOWORD(lParam); /*|accel    | 1            | NULL |*/
         WORD cmd  = (WORD)HIWORD(lParam); /*|control  | notification | hwnd |*/
         #endif                            /*'---------'--------------'------'*/
 
@@ -3423,7 +3424,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
             KillTimer(dialog,dd->timer);
             dd->timer = 0;
           }
-          if (dd->hOwner && (winGetVersion()%2000)>=400 && 
+          if (dd->hOwner && (winGetVersion()%2000)>=400 &&
                    !IsWindowVisible(dd->hOwner) && IsIconic(dd->hOwner))
           {
             __DoTrayStuff(dd->hOwner, +1, NULL, "ScopeView" );
@@ -3438,7 +3439,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
           if (dd->hFont)
           {
             __w16FixupDlgFont(dialog, dd->hFont);
-            dd->hFont = NULL; 
+            dd->hFont = NULL;
           }
           if (dd->hMemDC)
           {
@@ -3453,7 +3454,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
           {
             hmenu = GetMenu(dialog);
             SetMenu(dialog,NULL);
-            __w16WindowDestroyMenu(hmenu); 
+            __w16WindowDestroyMenu(hmenu);
             EndDialog(dialog,0);
           }
         }
@@ -3462,17 +3463,17 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
           TRACE_DLG((0,"WMCMD_REFRESHVIEW\n"));
           hwnd = GetDlgItem(dialog,IDC_LOG);
           if (hwnd)
-          { 
+          {
             int newcount = dd->console->currow;
             int curcount = dd->logwindow.rowcount;
             if (newcount > curcount)
             {
               while (curcount < newcount)
               {
-                SendMessage(hwnd, LB_INSERTSTRING, (WORD)curcount, 
+                SendMessage(hwnd, LB_INSERTSTRING, (WORD)curcount,
                             (LPARAM)(&(dd->console->buff[curcount][0])) );
                 curcount++;
-              }  
+              }
               dd->logwindow.rowcount = newcount;
             }
             if (dd->logwindow.font_height == 0)
@@ -3500,9 +3501,9 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
                 SetScrollRange(hwnd, SB_VERT, 0, W16CONS_HEIGHT-1, FALSE);
                 SetScrollPos(hwnd, SB_VERT, W16CONS_HEIGHT-1, TRUE);
                 ShowScrollBar(hwnd, SB_VERT, TRUE);
-                SendMessage( hwnd, LB_SETITEMHEIGHT, 0, 
+                SendMessage( hwnd, LB_SETITEMHEIGHT, 0,
                                    (WORD)(dd->logwindow.font_height) );
-              }   
+              }
             }
             InvalidateRect(hwnd,NULL,FALSE);
           }
@@ -3517,7 +3518,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
         }
         else if (hwnd && id == IDC_PROJLIST &&
            (cmd == LBN_SELCHANGE || cmd == 0))
-        { 
+        {
           TRACE_DLG((0,"IDC_PROJLIST LBN_SELCHANGE\n"));
           short pos = (short)SendMessage(hwnd,LB_GETCURSEL,0,0);
           if (pos >= 0 && pos < CONTEST_COUNT)
@@ -3531,7 +3532,7 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
           }
         }
         else if (id >= 1 && id <= 7)  /* IDCANCEL etc */
-        { 
+        {
           TRACE_DLG((0,"unhandled WM_COMMAND %d (id=%d, hwnd=%p)\n", wParam, id, hwnd));
           ; /* ignore it */
         }
@@ -3545,11 +3546,11 @@ DWORD CALLBACK __w16GraphView( HWND dialog, UINT msg, WORD wParam, LONG lParam )
             SetMenu(dialog,__w16WindowConstructMenu(dd->console,dialog,WM_INITMENU,0));
             __w16WindowDestroyMenu(hmenu);
             DrawMenuBar(dialog);
-          }        
+          }
         }
       }
       TRACE_DLG((-1,"WM_COMMAND\n"));
-      return FALSE; 
+      return FALSE;
     }
 
   } /* case */
@@ -3587,10 +3588,10 @@ static int __w16WindowHandle_DNETC_WCMD(HWND hwnd, UINT message,
   int handled = 0;
   hwnd = hwnd; lParam = lParam; // shaddup compiler
 
-  /* the reason we have two forms is 
-  ** a) the DNETC_WCMD_* forms are constant between all versions of the 
-  **    client, the WMCMD_* forms are volatile. 
-  ** b) the DNETC_WCMD_* forms have the same identifiers as standard 
+  /* the reason we have two forms is
+  ** a) the DNETC_WCMD_* forms are constant between all versions of the
+  **    client, the WMCMD_* forms are volatile.
+  ** b) the DNETC_WCMD_* forms have the same identifiers as standard
   **    dialog IDOK etc identifiers.
   */
   if (message == WM_COMMAND)
@@ -3677,9 +3678,9 @@ static void __w16PaintProc(HWND hwnd, W16CONP console)
               {
                 oldbitmap = CreateCompatibleBitmap( paintdc,
                     #ifdef RESIZE_AFTER_PAINT
-                               (clirect.right*2)+1, 
+                               (clirect.right*2)+1,
                     #else
-                               (clirect.right)+1, 
+                               (clirect.right)+1,
                     #endif
                                clirect.bottom+1 );
                 if (oldbitmap)
@@ -3713,7 +3714,7 @@ static void __w16PaintProc(HWND hwnd, W16CONP console)
 
               //FillRect(workdc, &clirect, hBrush[0]);
               __w16DrawRecessedFrame( workdc, &clirect, hBrush[0] );
-   
+
               clirect.top += console->indenty;
               clirect.left += console->indentx;
               clirect.bottom -= console->indenty;
@@ -3761,13 +3762,13 @@ static void __w16PaintProc(HWND hwnd, W16CONP console)
                     dispcols -= blen;
                     dtr.left += rectlen;
                     skipped = 1;
-                  }  
+                  }
                   n = dispcols;
                   while (n > 0 && line[n-1]==' ')
                     n--;
                   if (n > 0)
                   {
-                    DrawText(workdc, line, n, &dtr, 
+                    DrawText(workdc, line, n, &dtr,
                           DT_NOCLIP|DT_SINGLELINE|DT_LEFT|DT_NOPREFIX|DT_TOP);
                     #ifdef RESIZE_AFTER_PAINT
                     if (DrawText( workdc,line, n, &dtr, DT_CALCRECT|
@@ -3776,9 +3777,9 @@ static void __w16PaintProc(HWND hwnd, W16CONP console)
                       n = dtr.right - dtr.left;
                       if (skipped)
                         n += rectlen;
-                      if (n > longestline) 
-                        longestline = n; 
-                    }  
+                      if (n > longestline)
+                        longestline = n;
+                    }
                     #endif
                     if (!skipped && row == console->currow && console->curcol>0)
                     {
@@ -3786,7 +3787,7 @@ static void __w16PaintProc(HWND hwnd, W16CONP console)
                           DT_NOCLIP|DT_SINGLELINE|DT_LEFT|DT_NOPREFIX|DT_TOP))
                       {
                         console->caretpos = dtr.right-dtr.left;
-                      }                       
+                      }
                     }
                   }
                 }
@@ -3794,24 +3795,24 @@ static void __w16PaintProc(HWND hwnd, W16CONP console)
               else
 #endif
               {
-                //if (winGetVersion() < 400) 
+                //if (winGetVersion() < 400)
                 {
                   int row;
-                  UINT oldalignment = SetTextAlign(workdc, TA_LEFT|TA_TOP ); 
+                  UINT oldalignment = SetTextAlign(workdc, TA_LEFT|TA_TOP );
                   for (row = 0; row < console->disprows; row++)
-                  {  
-                    TextOut(workdc, clirect.left, 
+                  {
+                    TextOut(workdc, clirect.left,
                                     clirect.top + (row * console->fonty),
-                                    &(console->buff[row][0]), 
+                                    &(console->buff[row][0]),
                                     console->dispcols );
                   }
-                  SetTextAlign(workdc, oldalignment ); 
+                  SetTextAlign(workdc, oldalignment );
                 }
                 #if 0
                 else
                 {
                   if (!console->literal_buff_is_valid)
-                  {              
+                  {
                     int row; char *dest = console->literal_buff;
                     char blankline[W16CONS_WIDTH];
                     memset( blankline, ' ', sizeof(blankline) );
@@ -3838,7 +3839,7 @@ static void __w16PaintProc(HWND hwnd, W16CONP console)
                 int row, rowstart = -1, rowcount = 0;
                 for (row = 0; row < console->disprows; row++)
                 {
-                  if (console->marked_buff[row]) 
+                  if (console->marked_buff[row])
                   {
                     if (rowstart < 0)
                       rowstart = row;
@@ -3852,7 +3853,7 @@ static void __w16PaintProc(HWND hwnd, W16CONP console)
                     clirect.bottom = clirect.top + rowcount * console->fonty;
                     InvertRect( workdc, &clirect );
                     rowstart = -1;
-                    rowcount = 0;  
+                    rowcount = 0;
                   }
                 }
                 done_paint = 1;
@@ -3871,7 +3872,7 @@ static void __w16PaintProc(HWND hwnd, W16CONP console)
               SetTextColor( workdc, oldTClr );
               SelectObject(workdc, oldFont );
               SetMapperFlags( workdc, mapperFlags );
-              SetMapMode( workdc, oldMapMode );     
+              SetMapMode( workdc, oldMapMode );
 
               if (workdc != paintdc)
               {
@@ -3937,9 +3938,9 @@ static void __w16UpdateSysMenu(W16CONP console, HWND hwnd)
     hmenu = GetSystemMenu(hwnd, FALSE);
     if (hmenu)
     {
-      UINT newbits, oldbits; 
-      char text[64]; 
-          
+      UINT newbits, oldbits;
+      char text[64];
+
       oldbits = GetMenuState(hmenu, SC_SIZE, MF_BYCOMMAND);
       if (oldbits != ((UINT)-1))
       {
@@ -3967,10 +3968,10 @@ static void __w16UpdateSysMenu(W16CONP console, HWND hwnd)
     } /* if (hMenu) */
   } /* if (console) */
   return;
-}    
+}
 
 
-static LRESULT __w16WindowHandleMouse(W16CONP console, HWND hwnd, UINT message, 
+static LRESULT __w16WindowHandleMouse(W16CONP console, HWND hwnd, UINT message,
                                       WPARAM wParam, LPARAM lParam )
 {
   switch (message)
@@ -3982,9 +3983,9 @@ static LRESULT __w16WindowHandleMouse(W16CONP console, HWND hwnd, UINT message,
     {
       // The mouse selection is designed such that:
       //    * Dragging within the window allows you to select multiple
-      //      rows at a time.      
+      //      rows at a time.
       //    * You must drag at least GetSystemMetrics(SM_CXDRAG|SM_CYDRAG)
-      //      before the "dragthreshold" is satisfied and rows become 
+      //      before the "dragthreshold" is satisfied and rows become
       //      automatically selected.
       //      This has the purpose of eliminating selections caused by
       //      accidental single-clicks within the window (that is
@@ -4012,7 +4013,7 @@ static LRESULT __w16WindowHandleMouse(W16CONP console, HWND hwnd, UINT message,
             console->mark_ignorenextlbdown = 1;
           console = NULL; /* nothing more to do with this message */
         }
-        else 
+        else
         {
           prevmpos.x = currmpos.x = LOWORD(lParam);
           prevmpos.y = currmpos.y = HIWORD(lParam);
@@ -4030,7 +4031,7 @@ static LRESULT __w16WindowHandleMouse(W16CONP console, HWND hwnd, UINT message,
           }
           else if (message == WM_MOUSEMOVE)
           {
-            //note that we need *both* these tests, otherwise an 
+            //note that we need *both* these tests, otherwise an
             //an intervening window size/move will mess up the logic
             if ((wParam & MK_LBUTTON) == 0 || !console->mark_down)
               console = NULL; /* don't do anything with the message */
@@ -4055,32 +4056,32 @@ static LRESULT __w16WindowHandleMouse(W16CONP console, HWND hwnd, UINT message,
         }
         if (row >= 0 && row < W16CONS_HEIGHT)
         {
-          int need_refresh = 0;   
+          int need_refresh = 0;
           /*
-           * The wParam bits need to be tested _first_. Click+shift or 
+           * The wParam bits need to be tested _first_. Click+shift or
            * click+control would be converted by windows into a move+xxx
            * if there was even a one pixel difference in position.
           */
           if ((wParam & MK_SHIFT) != 0) /* WM_LBUTTONDOWN is implicit */
           {
-            if (console->have_marked && 
+            if (console->have_marked &&
                 console->mark_lastrow >= 0 && /* should be true */
-                console->mark_lastrow < W16CONS_HEIGHT)                 
-            { 
+                console->mark_lastrow < W16CONS_HEIGHT)
+            {
               /* mark range between last marked row and current. */
-              /* note that unlike MK_CONTROL, the anchor (mark_lastrow) 
+              /* note that unlike MK_CONTROL, the anchor (mark_lastrow)
                  doesn't change: Imagine 3 shift-clicks - the first sets an
                  anchor. The second marks an area on one side of the anchor.
                  Now, if the third is further away from the anchor AND on the
                  same side (up/down) as the second click, then the marked
-                 area is extended as expected. Inversely, if the third is 
-                 closer to the anchor than the second (and on the same side) 
+                 area is extended as expected. Inversely, if the third is
+                 closer to the anchor than the second (and on the same side)
                  the area between second and third needs to be unmarked; or
                  looking at it from another angle, the entire area is unmarked
                  and then remarked upto the third shift-click. The same
                  thing then applies when the anchor is on the _other_ side of
                  the anchor: unmark all, then mark from anchor to third click.
-                 This conforms to the way shift-click is handled for both 
+                 This conforms to the way shift-click is handled for both
                  listbox and edit control.
               */
               need_refresh = 1;
@@ -4094,8 +4095,8 @@ static LRESULT __w16WindowHandleMouse(W16CONP console, HWND hwnd, UINT message,
                   console->marked_buff[i++] = 1;
                 while (i >= console->mark_lastrow)
                   console->marked_buff[i--] = 1;
-              }  
-            } 
+              }
+            }
             else
             {
               for (i = 0; i < W16CONS_HEIGHT; i++)
@@ -4142,29 +4143,29 @@ static LRESULT __w16WindowHandleMouse(W16CONP console, HWND hwnd, UINT message,
               console->mark_down = 1;
               console->have_marked = 1;
             }
-            need_refresh = 1; 
+            need_refresh = 1;
           }
           else if (message == WM_MOUSEMOVE) /* (wParam & MK_LBUTTON) is implicit */
-          { 
+          {
             /* extend marked area for as many lines as the mouse was moved. */
             /* This conforms to the way shift-click is handled for both */
             /* listbox and edit control. */
             if (console->have_marked) /* already marking? */
             {                       /* extend/shrink marked scope then */
               if (console->marked_buff[row]) /* marked? then undo */
-              {           
+              {
                 /* note that we undo in the direction opposite to which
                    the mouse is moving, and don't include the 'current'
                    row in the undo (otherwise we'll end up without a
                    visible anchor). This is similar to what shift+click
                    does.
-                */ 
+                */
                 if (row > console->mark_lastrow) /* moving down */
-                {                         
+                {
                   i = row-1;
                   need_refresh = 1;
                   while (i >= console->mark_lastrow)
-                    console->marked_buff[i--] = 0;  
+                    console->marked_buff[i--] = 0;
                 }
                 else if (row < console->mark_lastrow) /* moving up */
                 {
@@ -4183,19 +4184,19 @@ static LRESULT __w16WindowHandleMouse(W16CONP console, HWND hwnd, UINT message,
                 /* note that its possible that the number of lines affected
                    is greater than one. This is because the mouse could be
                    moved faster than windows sends WM_MOUSEMOVE messages
-                */                   
+                */
                 if (console->mark_lastrow < 0 || /* shouldn't happen */
                     console->mark_lastrow >= W16CONS_HEIGHT)
                   console->mark_lastrow = row;
                 int i = row;
                 while (i > console->mark_lastrow) /* moving down? */
-                  console->marked_buff[i--] = 1;                  
+                  console->marked_buff[i--] = 1;
                 while (i < console->mark_lastrow) /* moving up? */
-                  console->marked_buff[i++] = 1;                
+                  console->marked_buff[i++] = 1;
                 console->have_marked = 1;
                 console->marked_buff[row] = 1;
                 console->mark_lastrow = row;
-                need_refresh = 1; 
+                need_refresh = 1;
               }
             } /* if (console->mark_down) */
             else                                /* were not marking */
@@ -4227,7 +4228,7 @@ static LRESULT __w16WindowHandleMouse(W16CONP console, HWND hwnd, UINT message,
                 absdiffy = prevmpos.y - currmpos.y;
               if (absdiffx > dragthreshx || absdiffy > dragthreshy)
               {
-                need_refresh = 1; 
+                need_refresh = 1;
                 for (i = 0; i < W16CONS_HEIGHT; i++)
                   console->marked_buff[i] = 0;
                 console->mark_down = 1;
@@ -4244,7 +4245,7 @@ static LRESULT __w16WindowHandleMouse(W16CONP console, HWND hwnd, UINT message,
                     if (i != row && i < W16CONS_HEIGHT)
                     {
                       while (i < row)
-                        console->marked_buff[i++] = 1; 
+                        console->marked_buff[i++] = 1;
                       while (i > row)
                         console->marked_buff[i--] = 1;
                     }
@@ -4269,9 +4270,9 @@ static LRESULT __w16WindowHandleMouse(W16CONP console, HWND hwnd, UINT message,
               console->marked_buff[i] = 0;
             console->have_marked = 0;
             console->mark_lastrow = row;
-            /* mark_down must be set for move tracking */ 
+            /* mark_down must be set for move tracking */
             console->mark_down = 1;
-            need_refresh = 1; 
+            need_refresh = 1;
           }
           if (need_refresh)
           {
@@ -4283,7 +4284,7 @@ static LRESULT __w16WindowHandleMouse(W16CONP console, HWND hwnd, UINT message,
       return DefWindowProc(hwnd, message, wParam, lParam);
     }
   } /* switch */
-  return DefWindowProc(hwnd, message, wParam, lParam); 
+  return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
 
@@ -4291,7 +4292,7 @@ static LRESULT __w16WindowHandleMouse(W16CONP console, HWND hwnd, UINT message,
 static void __GetViewWindowRect(HWND hwnd, W16CONP console, RECT *rect)
 {
   /* note that is function will not work with windows in iconic state.
-  ** Windows 95 (all) has a broken GetWindowSize() and 
+  ** Windows 95 (all) has a broken GetWindowSize() and
   ** GetWindowPlacement() where the size of the "restored" window
   ** is always the size of the icon.
   */
@@ -4309,7 +4310,7 @@ static void __GetViewWindowRect(HWND hwnd, W16CONP console, RECT *rect)
   }
 #endif
   TRACE_ADJRECT((0,"H=%p/%p, wrect=%d,%d,%d,%d\n",
-     hwnd, console->rate_view.hwnd, wrect.left, wrect.top, 
+     hwnd, console->rate_view.hwnd, wrect.left, wrect.top,
      wrect.right-wrect.left, wrect.bottom-wrect.top));
   GetClientRect(hwnd, &crect);
   ncheight = (wrect.bottom - wrect.top)-(crect.bottom - crect.top);
@@ -4343,7 +4344,7 @@ static void __w16_WM_WININICHANGE(W16CONP console, HWND hwnd)
     #ifdef W16CONS_SMOOTHSIZING
     if (console->havewinextn)
     {
-      #if !defined(SPI_GETFONTSMOOTHING) 
+      #if !defined(SPI_GETFONTSMOOTHING)
       #define SPI_GETFONTSMOOTHING 74
       #endif
       UINT oldval = 0;
@@ -4416,14 +4417,14 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
     case WM_NCHITTEST:
     {
       LRESULT lResult = DefWindowProc(hwnd, message, wParam, lParam);
-      if (console && (lResult == HTTOPLEFT || lResult == HTTOPRIGHT || 
-                      lResult == HTBOTTOMLEFT || lResult == HTBOTTOMRIGHT || 
-                      lResult == HTTOP || lResult == HTBOTTOM || 
+      if (console && (lResult == HTTOPLEFT || lResult == HTTOPRIGHT ||
+                      lResult == HTBOTTOMLEFT || lResult == HTBOTTOMRIGHT ||
+                      lResult == HTTOP || lResult == HTBOTTOM ||
                       lResult == HTLEFT || lResult == HTRIGHT))
       {
         if (console->rate_view.hwnd)
-          lResult = HTNOWHERE;   
-      } 
+          lResult = HTNOWHERE;
+      }
       return lResult;
     }
     case WM_CREATE:
@@ -4528,8 +4529,8 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
         if (winGetVersion() > 400) /* NT4+ or win98+ */
           console->havewinextn = 1;
         else
-        { 
-          #if !defined(SPI_GETWINDOWSEXTENSION) 
+        {
+          #if !defined(SPI_GETWINDOWSEXTENSION)
           #define SPI_GETWINDOWSEXTENSION    92
           #endif
           if (SystemParametersInfo(SPI_GETWINDOWSEXTENSION,1,0,0))
@@ -4558,7 +4559,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
         if (console->rate_view.func)
         {
           (void)FreeProcInstance(console->rate_view.func);
-        }  
+        }
         free((void *)console);
         conscreate_data->create_pending = 0; /* failed */
         conscreate_data->create_errorcode = W16CONS_ERR_NOFONT;
@@ -4567,7 +4568,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
       }
 
       /* ---- unimportant doo-wah from here on --------- */
- 
+
       #if defined(WM_GETICON) && defined(WM_SETICON)
       if ((winGetVersion() % 2000) >= 400)        // Win95+, NT4+
       {
@@ -4604,7 +4605,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
 
       __win16SetHwndConsole( hwnd, console );
 
-      if (console->rate_view.func && 
+      if (console->rate_view.func &&
             GetDCTIProfileInt( "client", "view", 'c' ) == 'r')
       {
         TRACE_INITEXIT((0,"WM_CREATE,PostMessage(hwnd,WM_COMMAND,WMCMD_SWITCHVIEW,WM_CREATE)\n"));
@@ -4623,7 +4624,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
     case WM_WININICHANGE: /* aka WM_SETTINGCHANGE for WINVER >= 0x0400 */
     {
       __w16_WM_WININICHANGE(console,hwnd);
-      return DefWindowProc(hwnd,message,wParam,lParam); 
+      return DefWindowProc(hwnd,message,wParam,lParam);
     }
     case WM_CLOSE:
     {
@@ -4657,7 +4658,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
           return 1;  /* if we are running as a service. don't exit */
         if (console)
         {
-          int *client_run_startstop_level_ptr = 
+          int *client_run_startstop_level_ptr =
                    console->client_run_startstop_level_ptr;
           if (*client_run_startstop_level_ptr > 0)
           {
@@ -4673,7 +4674,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
         RaiseExitRequestTrigger();
         CheckExitRequestTrigger(); /* print "*break* message to log */
         __w16ClientHardStop();
-      }  
+      }
       break;
     }
     case WM_DESTROY:
@@ -4736,8 +4737,8 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
               RECT rect;
               GetClientRect(hwnd, &rect);
               hBrush = (HBRUSH)SelectObject(hDC, hBrush);
-              FillRect(hDC, &rect, hBrush); 
-              DeleteObject(SelectObject(hDC, hBrush)); 
+              FillRect(hDC, &rect, hBrush);
+              DeleteObject(SelectObject(hDC, hBrush));
             }
           }
         }
@@ -4772,7 +4773,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
       #endif
       /* approximation of NC space without menu or scrollbars */
       UINT cxframe = 2 * GetSystemMetrics(SM_CXFRAME);
-      UINT cyframe = 2 * GetSystemMetrics(SM_CYFRAME) + 
+      UINT cyframe = 2 * GetSystemMetrics(SM_CYFRAME) +
                          GetSystemMetrics(SM_CYCAPTION);
 
       lpmmi->ptMinTrackSize.x = cxframe + (W16CONS_WIDTH * 2);
@@ -4825,7 +4826,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
       if (console)
       {
         if (!console->no_handle_wm_poschanged)
-        { 
+        {
           __conssize_saveupdateload(console, hwnd, 0 /*saveupdateload=-1,0,+1*/);
           /* this may cause taskbar/tray to get rearranged, so don't do it
              if a popup menu is in progress or we are WM_DESTROYing
@@ -4852,7 +4853,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
     case WM_SIZE:
     {
       if (console)
-      { 
+      {
         /* we only need to catch SIZE_MAXIMIZED because the others
         ** will not influence (or not have influenced) the size of the
         ** client rect since we handle WM_SIZING (win32) or track/adjust
@@ -4890,7 +4891,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
             GetCursorPos(&ptPos);
           else
           {
-            ptPos.x = LOWORD(lParam); 
+            ptPos.x = LOWORD(lParam);
             ptPos.y = HIWORD(lParam);
             ClientToScreen(hwnd, &ptPos);
           }
@@ -4914,14 +4915,14 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
     {
       if (message == WM_INITMENUPOPUP && HIWORD(lParam)) /* system menu */
         __w16UpdateSysMenu(console, hwnd);
-      return DefWindowProc(hwnd, message, wParam, lParam); 
+      return DefWindowProc(hwnd, message, wParam, lParam);
     }
     case WM_SYSCOMMAND:
     {
       if ((wParam & 0xfff0) == SC_MOUSEMENU ||
           (wParam & 0xfff0) == SC_KEYMENU)
       {
-        /* menu needs to be updated here, rather than via 
+        /* menu needs to be updated here, rather than via
         ** WM_INITMENU/WM_INITPOPUP due to differences in
         ** WM_*MENU handling by various versions of windows.
         ** For W9x, changing it at WM_INITMENU time is useless,
@@ -4933,11 +4934,11 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
                (wParam & 0xfff0) == SC_SIZE)
       {
         if (console)
-        { 
+        {
           if (console->rate_view.hwnd)
           {
             break;
-          }  
+          }
         }
       }
       return DefWindowProc(hwnd, message, wParam, lParam);
@@ -4949,7 +4950,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
         SendMessage(hwnd,WM_RBUTTONUP,0,((LPARAM)0xfedccdefL));
       }
       else if (lParam == WM_LBUTTONDBLCLK)
-      { 
+      {
         TRACE_TRAY((+1,"WM_USER_SHELLNOTIFYICON: WM_LBUTTONDBLCLK\n"));
         #if (CLIENT_OS == OS_WIN32)
         UINT t = GetDoubleClickTime()>>1; //was 300
@@ -4957,7 +4958,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
         Sleep(t); //was 300 //absorb "extra-" click
         TRACE_TRAY((-1,"Sleep(%d)\n", t));
         #endif
-        PostMessage(hwnd,WM_COMMAND,WMCMD_RESTORE,0); 
+        PostMessage(hwnd,WM_COMMAND,WMCMD_RESTORE,0);
         TRACE_TRAY((-1,"WM_USER_SHELLNOTIFYICON: WM_LBUTTONDBLCLK\n"));
       }
       else if (lParam == WM_USER_SHELLNOTIFYICON)
@@ -4975,8 +4976,8 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
       if (wParam == WMCMD_EVENT)
       {
         if ((console)?(console->rate_view.hwnd):(NULL))
-        {  
-          SendMessage(console->rate_view.hwnd, message, wParam, lParam ); 
+        {
+          SendMessage(console->rate_view.hwnd, message, wParam, lParam );
         }
         else if (((struct WMCMD_EVENT_DATA *)lParam)->id == CLIEVENT_CLIENT_CRUNCHOMETER)
         {
@@ -4984,7 +4985,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
           {
             const char *p = (const char *)(((struct WMCMD_EVENT_DATA *)lParam)->parm);
             while (*p == '\r' || *p == '\n')
-              p++;  
+              p++;
             __DoTrayStuff(hwnd, 0, p, "WMCMD_CLIENTEVENT_CRUNCHOMETER" );
           }
         }
@@ -4999,7 +5000,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
           ShowWindow(hwnd,SW_RESTORE); /* needed by __GetViewWindowRect */
           SetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0,
                         SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE);
-          return 0;  
+          return 0;
         }
         ShowWindow(hwnd, ((IsZoomed(hwnd))?(SW_SHOW):(SW_SHOWNORMAL)) );
       }
@@ -5085,7 +5086,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
       {
         if (console)
         {
-          int nCmdShow;  
+          int nCmdShow;
           RECT rect;
           if (console->rate_view.hwnd)
           {
@@ -5104,7 +5105,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
               WriteDCTIProfileInt("client", "view", 'c' );
               nCmdShow = SW_SHOWNORMAL;
               if (IsZoomed(hwnd))
-                nCmdShow = SW_SHOWMAXIMIZED;  
+                nCmdShow = SW_SHOWMAXIMIZED;
               /* we can only switch back to a normal or maximized state */
               /* iconic is off limits because it causes */
               /* __GetViewWindowRect() to fail on win95 (only) */
@@ -5115,14 +5116,14 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
               __GetViewWindowRect(hwnd,console,&rect);
               SetWindowPos( hwnd, 0,rect.left,rect.top,
                             rect.right-rect.left+1, rect.bottom-rect.top+1,
-                            /*SWP_NOREDRAW|*/SWP_NOZORDER); 
-              SetFocus(hwnd); /* needed for caret update and WM_CHAR handling */ 
+                            /*SWP_NOREDRAW|*/SWP_NOZORDER);
+              SetFocus(hwnd); /* needed for caret update and WM_CHAR handling */
               SetForegroundWindow(hwnd);
               __w16UpdateSysMenu(console, hwnd);
             }
           }
           else if (console->rate_view.func) /* switch possible */
-          {  
+          {
             nCmdShow = SW_SHOW;
             if (lParam == WM_CREATE)
               nCmdShow = console->nCmdShow;
@@ -5135,9 +5136,9 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
             if (nCmdShow != SW_HIDE)
             {
               console->rate_view.hwnd = CreateDialogParam(
-                            (HINSTANCE)GetWindowLong(hwnd, GWL_HINSTANCE), 
-                            MAKEINTRESOURCE(GRAPH_DIALOG), 
-                            hwnd, (DLGPROC)console->rate_view.func, 
+                            (HINSTANCE)GetWindowLong(hwnd, GWL_HINSTANCE),
+                            MAKEINTRESOURCE(GRAPH_DIALOG),
+                            hwnd, (DLGPROC)console->rate_view.func,
                             (LPARAM)hwnd );
               if (console->rate_view.hwnd)
               {
@@ -5155,7 +5156,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
                 __w16UpdateSysMenu(console, hwnd);
               }
             }
-          } 
+          }
         }
       }
       else if (wParam == WMCMD_ABOUT)
@@ -5193,7 +5194,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
       if (URL)
       {
         HCURSOR hCursor;
-        SetFocus(NULL);  
+        SetFocus(NULL);
         hCursor = LoadCursor(NULL,MAKEINTRESOURCE(IDC_WAIT));
         if (hCursor)
           hCursor = SetCursor(hCursor);
@@ -5244,7 +5245,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
 
         if (((int)(wParam)) == 0x03 /* ^C */ && console->have_marked)
           wParam = 24; /* convert to ^X since copy accel is usually ^C */
-        if (((wParam>='A' && wParam<='Z') || (wParam>='a' && wParam<='z')) 
+        if (((wParam>='A' && wParam<='Z') || (wParam>='a' && wParam<='z'))
           && (GetAsyncKeyState(VK_CONTROL) & 0x8000)!=0)
         {
           wParam -= 'A';
@@ -5524,7 +5525,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
             else if (ch == '\t')   /* \t    horizontal tab  */
             {
               console->curcol += (console->curcol%8);
-            }  
+            }
             else if (ch == '\a')   /* \a  bell (alert)      */
               MessageBeep(MB_OK);
             else if (ch == '\f')   /* \f    form-feed       */
@@ -5534,10 +5535,10 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
               console->curcol = 0;
             }
             else if (ch == '\b')   /* \b  backspace         */
-            { 
+            {
               if (console->curcol > 0)
               {
-                console->curcol--; 
+                console->curcol--;
               }
             }
             else if (ch == '\v')   /* \v  vertical tab      */
@@ -5716,7 +5717,7 @@ static BOOL my_IsDialogMessage(HWND hwnd, MSG *msg)
     //{
     //  needcheck = (GetClassWord(GetParent(hwnd), GCW_ATOM) == 32770);
     //  if (!needcheck)
-    //    
+    //
     //}
     if (needcheck)
       return IsDialogMessage(hwnd,msg);
@@ -5785,7 +5786,7 @@ static void w16Sleep(unsigned int millisecs)
     if (millisecs)
     {
       now = GetTickCount();
-      if (last) 
+      if (last)
       {
         DWORD elapsed = now - last;
         if (now < last)
@@ -5796,7 +5797,7 @@ static void w16Sleep(unsigned int millisecs)
       }
       last = now;
     }
-    gotmsg = 0; 
+    gotmsg = 0;
     while (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE ))
     {
       if (!GetMessage(&msg, NULL, 0, 0))
@@ -5824,7 +5825,7 @@ static void w16Sleep(unsigned int millisecs)
       #endif
       {
         for (;;)
-        { 
+        {
           if (GetQueueStatus(QS_KEY|QS_MOUSE|QS_PAINT|QS_POSTMESSAGE|
                 QS_SENDMESSAGE|QS_TIMER) != 0)
             break;
@@ -5873,14 +5874,14 @@ static void __win16WinCreateHelper( void *xarg )
   createdata.nCmdShow = arg->nCmdShow;
   createdata.create_pending = 1;
   createdata.create_errorcode = W16CONS_ERR_NCCREATE;
-  createdata.client_run_startstop_level_ptr = 
+  createdata.client_run_startstop_level_ptr =
                           &constatics.client_run_startstop_level;
   TRACE_INITEXIT((0,"pre_createwin,conscreate_data*=%p\n", &createdata));
 
   /* don't use WS_EX_CLIENTEDGE - the client will do this itself */
   /* don't use any WS_EX_* that Win(NT)3.x doesn't explicitely support */
   TRACE_INITEXIT((+0,"begin createwindow\n" ));
-  hwnd = CreateWindow( constatics.szClassName, 
+  hwnd = CreateWindow( constatics.szClassName,
                        (W32CLI_CONSOLE_NAME" "),
                        (WS_OVERLAPPEDWINDOW|WS_VSCROLL),
                        CW_USEDEFAULT, CW_USEDEFAULT, 0, 0,
@@ -6171,8 +6172,8 @@ int w16ConSetPos(int col, int row)
   w16Yield();
   if (constatics.hwndList[0] == NULL)
     return -1;
-  SendMessage( constatics.hwndList[0], WM_USER_W16CONS, W16CONS_CMD_SETPOS, 
-               MAKELONG(row,col) ); 
+  SendMessage( constatics.hwndList[0], WM_USER_W16CONS, W16CONS_CMD_SETPOS,
+               MAKELONG(row,col) );
      //((LONG)(((WORD)(row))|(((DWORD)((WORD)(col)))<<16))) /*MAKELONG(row,col)*/);
   return 0;
 }
@@ -6325,15 +6326,15 @@ TRACE_PIPE((+1,"__pipe_getchar()\n"));
       }
       rc = 0;
     }
-    else 
-    {    
+    else
+    {
       ch = (((int)buffer[0]) & 0xff);
       TRACE_PIPE((0, "__pipe_getchar: %c (%d,0x%02x)\n", ch, ch, ch ));
       if (chP)
         *chP = ch;
       rc = +1;
     }
-  } 
+  }
 TRACE_PIPE((-1,"__pipe_getchar()=>%d\n",rc));
   return rc;
 }
@@ -6347,12 +6348,12 @@ TRACE_PIPE((+1,"__pipe_puts_noclear('%s',%u)\n",msg, len));
   {
     DWORD numberOfBytesWritten = 0;
 TRACE_PIPE((+1,"1. WriteFile(...) towrite = %u\n", len));
-    BOOL ok = WriteFile(hPipe, (LPCVOID)msg, len, 
+    BOOL ok = WriteFile(hPipe, (LPCVOID)msg, len,
          &numberOfBytesWritten, NULL);
 TRACE_PIPE((-1,"1. WriteFile(...)=>%s, numwritten=%u\n", (ok)?("ok"):("fail"), numberOfBytesWritten ));
     if (!ok)
     {
-      // win9x has a broken pipe implementation which causes WriteFile to 
+      // win9x has a broken pipe implementation which causes WriteFile to
       // _sometimes_ fail with an invalid file handle.
       if (GetLastError() == ERROR_BROKEN_PIPE)
       {
@@ -6399,7 +6400,7 @@ static int __pipe_putchar(int ch)
 // position and size is always one based,
 // unless no tty, in which case the pipe server ansi returns 0,0
 */
-static int __pipe_getsizeorposisatty(int assize, int *width, int *height, 
+static int __pipe_getsizeorposisatty(int assize, int *width, int *height,
                                      int *istty)
 {
   static int __isatty_asserted = -1; /* not yet asserted */
@@ -6430,7 +6431,7 @@ TRACE_PIPE((0,"__pipe_getsizeorposisatty: __pipe_puts_noclear()\n"));
       {
         broken_pipe = 1;
         break; /* broken pipe */
-      } 
+      }
       while (!CheckExitRequestTriggerNoIO())
       {
         int ch, kbstate;
@@ -6560,9 +6561,9 @@ static void __ClientEventCallback(int event_id, const void *parm, int isize)
 {
   if (event_id == CLIEVENT_CLIENT_RUNIDLE ||
       event_id == CLIEVENT_BUFFER_UPDATEBEGIN ||
-      event_id == CLIEVENT_BUFFER_UPDATEEND ||  
+      event_id == CLIEVENT_BUFFER_UPDATEEND ||
       event_id == CLIEVENT_CLIENT_CRUNCHOMETER)
-  {  
+  {
     if (constatics.hwndList[0])
     {
       struct WMCMD_EVENT_DATA evdata;
@@ -6800,7 +6801,7 @@ static void __win32ShimWatcher(void *) /* lives as long as the client */
   return;
 }
 char *my_getenvvar(const char *envvar,char *buffer,unsigned int buflen)
-{                               
+{
   char fn[MAX_PATH+1];
   int len = GetModuleFileName(NULL,fn,sizeof(fn)-1);
   char *q;
@@ -6809,7 +6810,7 @@ char *my_getenvvar(const char *envvar,char *buffer,unsigned int buflen)
   {
     while (len > 0 && fn[len-1]!='\\' && fn[len-1]!='/' && fn[len-1]!=':')
     {
-      if (fn[len] == '.') 
+      if (fn[len] == '.')
         fn[len] = '\0';
       len--;
     }
@@ -6817,7 +6818,7 @@ char *my_getenvvar(const char *envvar,char *buffer,unsigned int buflen)
     {
       q = &fn[len];
       len = 0;
-      while (*q) 
+      while (*q)
         fn[len++] = *q++;
       strcpy(&fn[len],envvar);
     }
@@ -6829,7 +6830,7 @@ char *my_getenvvar(const char *envvar,char *buffer,unsigned int buflen)
   envvar = fn;
   /* there is something buggy in windows 95's GetEnvironmentVariable(), */
   /* so we use getenv() instead (which uses GetEnvironmentStrings()) */
-  q = getenv(envvar); 
+  q = getenv(envvar);
   if (q)
   {
     strncpy(buffer,q,buflen);
@@ -6857,13 +6858,13 @@ BOOL my_SetStdHandle(DWORD nStdHandle, HANDLE hHandle)
       if (fd != -1)
       {
         dup2(fd, tgt_fd );
-        if (nStdHandle == STD_OUTPUT_HANDLE && 
+        if (nStdHandle == STD_OUTPUT_HANDLE &&
           GetStdHandle(STD_ERROR_HANDLE)==INVALID_HANDLE_VALUE)
         {
           SetStdHandle(STD_ERROR_HANDLE,hHandle);
           dup2(fd, 2);
-        }  
-        else if (nStdHandle == STD_ERROR_HANDLE && 
+        }
+        else if (nStdHandle == STD_ERROR_HANDLE &&
           GetStdHandle(STD_OUTPUT_HANDLE)==INVALID_HANDLE_VALUE)
         {
           SetStdHandle(STD_OUTPUT_HANDLE,hHandle);
@@ -6878,7 +6879,7 @@ BOOL my_SetStdHandle(DWORD nStdHandle, HANDLE hHandle)
 int __pipe_init_pair(HANDLE pstdin, HANDLE pstdout)
 {
   int isanonpipe = 1; /* assume a bidirectional anon pipe */
-  
+
   /* at this point pstdout should never be INVALID_HANDLE_VALUE */
   if (pstdout == INVALID_HANDLE_VALUE)
     return -1;
@@ -6988,7 +6989,7 @@ int w32InitializeConsole(int runhidden, int runmodes)
 
       if ((si.cbReserved2 != 0) &&  (si.lpReserved2 != NULL))
       {
-        int num,numhandles; HANDLE *posfhnd; 
+        int num,numhandles; HANDLE *posfhnd;
         char *posfile = (char *)(si.lpReserved2);
         numhandles = *((int *)posfile); posfile += sizeof(int);
         posfhnd = (HANDLE *)(posfile + numhandles);
@@ -7009,7 +7010,7 @@ int w32InitializeConsole(int runhidden, int runmodes)
 
           /* GetFileType() will block if its a pipe with input pending */
           if ((posfile[num] & m_FPIPE)==0)
-          { 
+          {
             DWORD ftype = GetFileType( posfhnd[num] );
             if (ftype == FILE_TYPE_UNKNOWN)
               posfile[num] = 0;
@@ -7032,13 +7033,13 @@ int w32InitializeConsole(int runhidden, int runmodes)
               si.hStdError = posfhnd[num];
             si.dwFlags |= STARTF_USESTDHANDLES;
           }
-          else if (num == 1 && (posfile[1] & m_FPIPE)!=0 && 
+          else if (num == 1 && (posfile[1] & m_FPIPE)!=0 &&
                                (posfile[0] & m_FPIPE)!=0 )
           {
             __pipe_init_pair(posfhnd[0], posfhnd[1]);
             break;
           }
-        } 
+        }
         TRACE_INITEXIT((+0,"end try console 1\n" ));
       }
       if ((si.dwFlags & STARTF_USESTDHANDLES)!=0)
@@ -7114,14 +7115,14 @@ int w32InitializeConsole(int runhidden, int runmodes)
         pipe = CreateFile(scratch, GENERIC_READ|GENERIC_WRITE, 0,
                                    NULL, OPEN_EXISTING, 0, 0 );
       }
-      if (!gotpipeprompt &&  
+      if (!gotpipeprompt &&
          my_getenvvar(".apipe.out",scratch,sizeof(scratch)))
       {
         gotpipeprompt = anonpipe = 1;
         if (isdigit(scratch[0]) || (scratch[0] == '-' && isdigit(scratch[1])))
         {
           pipe = (HANDLE)atol(scratch);
-          if (pipe != INVALID_HANDLE_VALUE && 
+          if (pipe != INVALID_HANDLE_VALUE &&
             my_getenvvar(".apipe.in",scratch,sizeof(scratch)))
           {
             if (isdigit(scratch[0]) || (scratch[0]=='-' && isdigit(scratch[1])))
@@ -7430,7 +7431,7 @@ static int __w32ConOutX(const char *text, int iserr)
       if ((si.cbReserved2 != 0) &&  (si.lpReserved2 != NULL))
       {
         HANDLE *handles;
-        char *p = (char *)si.lpReserved2; 
+        char *p = (char *)si.lpReserved2;
         int numhandles = *((int *)p);
         char *modes = (p += sizeof(int));
         p += numhandles;
@@ -7439,7 +7440,7 @@ static int __w32ConOutX(const char *text, int iserr)
            (modes[2] & 0x09)==0x09 && /* 0x09 is m_FOPEN+m_FPIPE */
             handles[2] != INVALID_HANDLE_VALUE)
           constatics.devpipe = handles[2];
-        else if (numhandles >= 2 && 
+        else if (numhandles >= 2 &&
            (modes[1] & 0x09)==0x09 && /* 0x09 is m_FOPEN+m_FPIPE */
             handles[1] != INVALID_HANDLE_VALUE)
           constatics.devpipe = handles[1];
@@ -7502,7 +7503,7 @@ int w32ConOut(const char *text)
     if (len)
       len = __pipe_puts(text,len);
     /* we don't need to flush since pipes are unbuffered */
-    return len;     
+    return len;
   }
   else if (constatics.nativecons)
   {
@@ -7733,7 +7734,7 @@ int w32ConGetType(void)
     {
       int isvis = IsWindowVisible(constatics.hwndList[0]);
       int isico = IsIconic(constatics.hwndList[0]);
-      int rc = MAKEWORD('g',0); /* assume normal */  
+      int rc = MAKEWORD('g',0); /* assume normal */
       if (!isvis && isico) /* in tray */
         rc = MAKEWORD('g','t');
       else if (!isvis && !isico) /* hidden */
@@ -7742,10 +7743,10 @@ int w32ConGetType(void)
         rc = MAKEWORD('g','m');
       return rc;
     }
-  }      
+  }
   //full GUI should return 'G';
   return 0;
-}  
+}
 
 /* ------------------------------------------------ */
 
